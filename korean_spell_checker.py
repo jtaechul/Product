@@ -1,6 +1,7 @@
 import sys
 import re
 from collections import Counter
+import requests
 
 # 필수 라이브러리 임포트 확인
 try:
@@ -29,15 +30,25 @@ class KoreanSpellChecker:
     def _load_default_dictionary(self):
         """
         기본적인 한국어 단어들을 사전에 등록합니다.
-        실제 운영 시에는 국립국어원 표준국어대사전 등의 데이터를 파일로 로드하여 사용해야 합니다.
+        웹에서 공개된 단어 목록 파일을 다운로드하여 사용합니다.
         """
-        defaults = [
-            "안녕하세요", "반갑습니다", "한국어", "분석", "테스트", "입니다", "오류", "교정", 
-            "데이터", "딥러닝", "인공지능", "개발자", "파이썬", "프로그래밍", "API", 
-            "통신", "사전", "맞춤법", "띄어쓰기", "형태소", "라이브러리", "알고리즘",
-            "편집거리", "유사도", "추천", "기능", "작성", "코드", "실행", "결과"
-        ]
-        self.dictionary.update(defaults)
+        url = "https://raw.githubusercontent.com/spellcheck-ko/spellcheck-ko/master/pkg/spellcheck/data/dictionary/pre.txt"
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # HTTP 오류 발생 시 예외 발생
+            words = response.text.split()
+            self.dictionary.update(words)
+            print(f">> 웹 사전 로드 완료: {len(words)}개 단어 추가됨")
+        except requests.exceptions.RequestException as e:
+            print(f"[경고] 웹 사전 다운로드 실패: {e}")
+            print(">> 기본 내장 사전만 사용합니다.")
+            defaults = [
+                "안녕하세요", "반갑습니다", "한국어", "분석", "테스트", "입니다", "오류", "교정", 
+                "데이터", "딥러닝", "인공지능", "개발자", "파이썬", "프로그래밍", "API", 
+                "통신", "사전", "맞춤법", "띄어쓰기", "형태소", "라이브러리", "알고리즘",
+                "편집거리", "유사도", "추천", "기능", "작성", "코드", "실행", "결과"
+            ]
+            self.dictionary.update(defaults)
 
     def load_user_dictionary(self, path):
         """텍스트 파일에서 단어를 읽어 사전에 추가합니다. (한 줄에 한 단어)"""
@@ -86,8 +97,7 @@ class KoreanSpellChecker:
         """
         전체 파이프라인 실행: 띄어쓰기 -> 형태소 분석 -> 미등록어 탐지 -> 교정
         """
-        print("
-" + "="*50)
+        print("\n" + "="*50)
         print(f"입력 텍스트: {text}")
         print("="*50)
 
@@ -104,9 +114,8 @@ class KoreanSpellChecker:
         corrections = []
 
         for word, pos in pos_results:
-            # 명사(Noun)이면서 사전에 없는 경우 교정 시도
-            # (조사, 어미 등은 교정 대상에서 제외하여 오판 방지)
-            if pos in ['Noun'] and word not in self.dictionary:
+            # 명사(Noun), 동사(Verb), 형용사(Adjective)이면서 사전에 없는 경우 교정 시도
+            if pos in ['Noun', 'Verb', 'Adjective'] and word not in self.dictionary:
                 suggestion = self.find_best_match(word)
                 
                 if suggestion != word:
@@ -123,15 +132,13 @@ class KoreanSpellChecker:
             original, new = correction.split(" -> ")
             final_text = final_text.replace(original, new)
 
-        print("
-" + "="*50)
+        print("\n" + "="*50)
         print(f"최종 교정 결과: {final_text}")
         if corrections:
             print(f"교정된 단어 목록: {', '.join(corrections)}")
         else:
             print("교정된 단어가 없습니다.")
-        print("="*50 + "
-")
+        print("="*50 + "\n")
         
         return final_text
 
