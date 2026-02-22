@@ -1,26 +1,62 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF 문맥 검사기</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FastPack - Shipping Supplies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+  <link href='/style.css' rel='stylesheet'>
 </head>
 <body>
-    <header>
-        <h1>PDF 문맥 검사기</h1>
-        <p>PDF 파일의 오탈자 및 문맥 오류를 확인하세요.</p>
-    </header>
-    <main>
-        <div class="upload-container">
-            <input type="file" id="pdf-upload" accept="application/pdf">
-            <button id="check-button">검사 시작</button>
+  
+  <header>
+    <div class="container header-content">
+      <div class="logo">FastPack 📦</div>
+      <nav>
+        <a href="#products">Products</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <div class="cart-summary">
+        Cart: <span id="cart-count">0</span> items
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Quality Shipping Materials for Your Business</h1>
+      <p>Boxes, Tape, Protection & More. Delivered Fast.</p>
+    </section>
+
+    <div class="content-layout">
+      <section id="products" class="product-grid">
+        <div id="product-list">
+          <!-- Products will be injected here by main.js -->
         </div>
-        <div id="pdf-viewer-container">
-            <!-- PDF 뷰어가 여기에 표시됩니다. -->
+      </section>
+
+      <aside class="cart-sidebar">
+        <h2>Your Cart</h2>
+        <ul id="cart-items">
+          <li class="empty-msg">Your cart is empty.</li>
+        </ul>
+        <div class="cart-footer">
+          <div class="total">Total: <span id="cart-total">₩0</span></div>
+          <button class="checkout-btn" onclick="alert('Checkout functionality coming soon!')">Checkout</button>
         </div>
-    </main>
-    <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
-    <script src="main.js"></script>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 FastPack Supplies. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script defer type="text/javascript" src="/main.js"></script>
 </body>
 </html>

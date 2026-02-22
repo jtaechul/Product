@@ -1,44 +1,113 @@
-const pdfUpload = document.getElementById('pdf-upload');
-const checkButton = document.getElementById('check-button');
-const pdfViewerContainer = document.getElementById('pdf-viewer-container');
+const products = [
+  {
+    id: 1,
+    name: 'Standard Cardboard Box (10x10x10)',
+    price: 1500,
+    image: 'https://placehold.co/200x200?text=Box',
+    category: 'Boxes'
+  },
+  {
+    id: 2,
+    name: 'Heavy Duty Tape (1 Roll)',
+    price: 3000,
+    image: 'https://placehold.co/200x200?text=Tape',
+    category: 'Tape'
+  },
+  {
+    id: 3,
+    name: 'Bubble Wrap (10m)',
+    price: 8000,
+    image: 'https://placehold.co/200x200?text=Bubble+Wrap',
+    category: 'Protection'
+  },
+  {
+    id: 4,
+    name: 'Shipping Labels (100 pack)',
+    price: 5000,
+    image: 'https://placehold.co/200x200?text=Labels',
+    category: 'Labels'
+  },
+  {
+    id: 5,
+    name: 'Stretch Film',
+    price: 12000,
+    image: 'https://placehold.co/200x200?text=Stretch+Film',
+    category: 'Protection'
+  },
+  {
+    id: 6,
+    name: 'Mailers (Padded Envelopes)',
+    price: 800,
+    image: 'https://placehold.co/200x200?text=Mailers',
+    category: 'Envelopes'
+  }
+];
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://mozilla.github.io/pdf.js/build/pdf.worker.js';
+let cart = [];
 
-checkButton.addEventListener('click', () => {
-    const file = pdfUpload.files[0];
-    if (!file) {
-        alert('PDF 파일을 선택해주세요.');
-        return;
-    }
+function init() {
+  renderProducts();
+  updateCartUI();
+}
 
-    const fileReader = new FileReader();
-    fileReader.onload = function() {
-        const typedarray = new Uint8Array(this.result);
-        pdfjsLib.getDocument(typedarray).promise.then(pdf => {
-            pdfViewerContainer.innerHTML = ''; // 이전 뷰어 내용 삭제
-            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                pdf.getPage(pageNum).then(page => {
-                    const canvas = document.createElement('canvas');
-                    pdfViewerContainer.appendChild(canvas);
+function renderProducts() {
+  const productContainer = document.getElementById('product-list');
+  productContainer.innerHTML = '';
 
-                    const viewport = page.getViewport({ scale: 1.5 });
-                    const context = canvas.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
+  products.forEach(product => {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    card.innerHTML = `
+      <img src="${product.image}" alt="${product.name}">
+      <div class="product-info">
+        <h3>${product.name}</h3>
+        <p class="price">₩${product.price.toLocaleString()}</p>
+        <button onclick="addToCart(${product.id})">Add to Cart</button>
+      </div>
+    `;
+    productContainer.appendChild(card);
+  });
+}
 
-                    const renderContext = {
-                        canvasContext: context,
-                        viewport: viewport
-                    };
-                    page.render(renderContext);
+function addToCart(id) {
+  const product = products.find(p => p.id === id);
+  const existingItem = cart.find(item => item.id === id);
 
-                    page.getTextContent().then(textContent => {
-                        // 여기에 텍스트 검사 로직을 추가합니다.
-                        console.log(textContent.items.map(item => item.str).join(' '));
-                    });
-                });
-            }
-        });
-    };
-    fileReader.readAsArrayBuffer(file);
-});
+  if (existingItem) {
+    existingItem.quantity += 1;
+  } else {
+    cart.push({ ...product, quantity: 1 });
+  }
+  
+  updateCartUI();
+}
+
+function updateCartUI() {
+  const cartItemsContainer = document.getElementById('cart-items');
+  const cartTotalElement = document.getElementById('cart-total');
+  const cartCountElement = document.getElementById('cart-count');
+  
+  cartItemsContainer.innerHTML = '';
+  
+  let total = 0;
+  let count = 0;
+
+  cart.forEach(item => {
+    total += item.price * item.quantity;
+    count += item.quantity;
+    
+    const li = document.createElement('li');
+    li.className = 'cart-item';
+    li.innerHTML = `
+      <span>${item.name} (x${item.quantity})</span>
+      <span>₩${(item.price * item.quantity).toLocaleString()}</span>
+    `;
+    cartItemsContainer.appendChild(li);
+  });
+
+  cartTotalElement.textContent = `₩${total.toLocaleString()}`;
+  cartCountElement.textContent = count;
+}
+
+window.addToCart = addToCart; // Make accessible globally for onclick
+document.addEventListener('DOMContentLoaded', init);
