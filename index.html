@@ -1,62 +1,74 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FastPack - Shipping Supplies</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
-  <link href='/style.css' rel='stylesheet'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acrobat OCR & Checker</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-  
-  <header>
-    <div class="container header-content">
-      <div class="logo">FastPack 📦</div>
-      <nav>
-        <a href="#products">Products</a>
-        <a href="#about">About</a>
-        <a href="#contact">Contact</a>
-      </nav>
-      <div class="cart-summary">
-        Cart: <span id="cart-count">0</span> items
-      </div>
+    <div class="app-container">
+        <!-- Top Toolbar -->
+        <header class="toolbar">
+            <div class="logo">
+                <i data-lucide="file-text" style="color: #ED1C24;"></i>
+                <span>Acrobat OCR</span>
+            </div>
+            <div class="tools">
+                <button title="파일 열기" id="open-file-btn"><i data-lucide="folder-open"></i></button>
+                <input type="file" id="file-input" accept="application/pdf" style="display: none;">
+                <button title="저장"><i data-lucide="save"></i></button>
+                <div class="separator"></div>
+                <button title="이전 페이지"><i data-lucide="chevron-left"></i></button>
+                <input type="text" value="1" class="page-num"> / <span id="total-pages">0</span>
+                <button title="다음 페이지"><i data-lucide="chevron-right"></i></button>
+                <div class="separator"></div>
+                <button title="축소"><i data-lucide="zoom-out"></i></button>
+                <button title="확대"><i data-lucide="zoom-in"></i></button>
+            </div>
+        </header>
+
+        <main class="content">
+            <!-- Left Sidebar -->
+            <aside class="sidebar-left">
+                <div class="nav-item active"><i data-lucide="layers"></i></div>
+                <div class="nav-item"><i data-lucide="bookmark"></i></div>
+                <div class="nav-item"><i data-lucide="search"></i></div>
+            </aside>
+
+            <!-- PDF Viewer -->
+            <section class="viewer-container">
+                <div id="pdf-viewer" class="pdf-canvas-wrapper">
+                    <p class="placeholder">PDF 파일을 불러와 주세요.</p>
+                </div>
+            </section>
+
+            <!-- Right Tools Panel -->
+            <aside class="sidebar-right">
+                <div class="panel-header">도구</div>
+                <div class="action-list">
+                    <button class="action-btn" id="ocr-extract-btn">
+                        <i data-lucide="scan-text"></i> OCR 텍스트 추출
+                    </button>
+                    <button class="action-btn" id="grammar-check-btn">
+                        <i data-lucide="spell-check"></i> 오타 및 문맥 교정
+                    </button>
+                    <button class="action-btn">
+                        <i data-lucide="file-output"></i> 텍스트 내보내기
+                    </button>
+                </div>
+                <div class="result-box" id="result-box">
+                    <p class="hint">추출된 텍스트와 분석 결과가 여기에 표시됩니다.</p>
+                </div>
+            </aside>
+        </main>
     </div>
-  </header>
 
-  <main class="container">
-    <section class="hero">
-      <h1>Quality Shipping Materials for Your Business</h1>
-      <p>Boxes, Tape, Protection & More. Delivered Fast.</p>
-    </section>
-
-    <div class="content-layout">
-      <section id="products" class="product-grid">
-        <div id="product-list">
-          <!-- Products will be injected here by main.js -->
-        </div>
-      </section>
-
-      <aside class="cart-sidebar">
-        <h2>Your Cart</h2>
-        <ul id="cart-items">
-          <li class="empty-msg">Your cart is empty.</li>
-        </ul>
-        <div class="cart-footer">
-          <div class="total">Total: <span id="cart-total">₩0</span></div>
-          <button class="checkout-btn" onclick="alert('Checkout functionality coming soon!')">Checkout</button>
-        </div>
-      </aside>
-    </div>
-  </main>
-
-  <footer>
-    <div class="container">
-      <p>&copy; 2026 FastPack Supplies. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <script defer type="text/javascript" src="/main.js"></script>
+    <!-- OCR & PDF Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
