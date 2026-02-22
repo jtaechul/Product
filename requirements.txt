@@ -1,0 +1,3 @@
+git+https://github.com/haven-jeon/PyKoSpacing.git
+konlpy
+python-Levenshtein

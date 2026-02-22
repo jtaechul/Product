@@ -2,7 +2,6 @@
 lucide.createIcons();
 
 // Elements
-const ocrBtn = document.getElementById('ocr-extract-btn');
 const grammarBtn = document.getElementById('grammar-check-btn');
 const exportBtn = document.getElementById('export-text-btn');
 const searchBtn = document.getElementById('search-nav-btn');
@@ -265,7 +264,6 @@ function runSearch() {
 }
 
 // Event Listeners
-ocrBtn.addEventListener('click', runFullAnalysis); // 추출 버튼도 전체 분석으로 연결
 grammarBtn.addEventListener('click', runFullAnalysis);
 exportBtn.addEventListener('click', runExportText);
 searchBtn.addEventListener('click', runSearch);
