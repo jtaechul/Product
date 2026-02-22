@@ -7,9 +7,16 @@
   packages = [
     pkgs.nodejs_20
     pkgs.python3
+    pkgs.noto-fonts-cjk
+    pkgs.glibcLocales
+    pkgs.fontconfig
   ];
   # Sets environment variables in the workspace
-  env = {};
+  env = {
+    LANG = "C.UTF-8";
+    LC_ALL = "C.UTF-8";
+    LOCALE_ARCHIVE = "${pkgs.glibcLocales}/lib/locale/locale-archive";
+  };
   idx = {
     # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
@@ -38,7 +45,8 @@
       # Runs when the workspace is (re)started
       onStart = {
         # Example: start a background task to watch and re-build backend code
-        # watch-backend = "npm run watch-backend";
+# watch-backend = "npm run watch-backend";
+        create-inputrc = "echo 'set input-meta on\nset output-meta on\nset convert-meta off' > ~/.inputrc";
       };
     };
   };
