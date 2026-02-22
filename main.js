@@ -1,3 +1,4 @@
+
 // Initialize Lucide Icons
 lucide.createIcons();
 
@@ -40,7 +41,7 @@ fileInput.onchange = async (e) => {
                 renderPage(currentPageNum);
                 extractedText = "";
                 pageResults = [];
-                resultBox.innerHTML = '<p class="hint">파일이 로드되었습니다. "오타 및 문맥 교정"을 눌러 분석을 시작하세요.</p>';
+                resultBox.innerHTML = '<p class="hint">파일이 로드되었습니다. \"오타 및 문맥 교정\"을 눌러 분석을 시작하세요.</p>';
             } catch (err) {
                 console.error("PDF 로드 오류:", err);
                 alert("PDF 파일을 불러오는 데 실패했습니다.");
@@ -84,86 +85,93 @@ nextBtn.onclick = () => {
     renderPage(currentPageNum);
 };
 
-// 2. Core Processing Logic (Extract + Grammar Check for All Pages)
+// 2. Core Processing Logic (NEW: Using Gemini API via Backend)
+
+/**
+ * Sends text to the backend for correction by the Gemini API.
+ * @param {string} text The text to correct.
+ * @returns {Promise<string>} The corrected text.
+ */
+async function getGeminiCorrection(text) {
+    // 텍스트가 비어 있거나 공백만 있으면 API를 호출하지 않습니다.
+    if (!text || !text.trim()) {
+        return text;
+    }
+    try {
+        const response = await fetch('/spellcheck', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ text: text }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('API Error:', errorData.details || response.statusText);
+            // 오류 발생 시 원본 텍스트를 반환합니다.
+            return text;
+        }
+
+        const data = await response.json();
+        return data.corrected_text;
+    } catch (error) {
+        console.error('Fetch Error:', error);
+        // 네트워크 오류 등 발생 시 원본 텍스트를 반환합니다.
+        return text;
+    }
+}
+
 async function runFullAnalysis() {
     if (!pdfDoc) {
         alert("먼저 PDF 파일을 불러와 주세요.");
         return;
     }
 
-    resultBox.innerHTML = '<p style="color: #666; text-align: center;">전체 문서 분석 시작 (총 ' + pdfDoc.numPages + '페이지)...</p>';
+    resultBox.innerHTML = `<p style="color: #666; text-align: center;">전체 문서 분석 시작 (총 ${pdfDoc.numPages}페이지)...</p>`;
     extractedText = "";
     pageResults = [];
 
-    const commonErrors = [
-        { pattern: /반갑습니가/g, replacement: "반갑습니다", reason: "오타 교정" },
-        { pattern: /있슴니다/g, replacement: "있습니다", reason: "종결 어미 오류" },
-        { pattern: /않돼요/g, replacement: "안 돼요", reason: "부정어 표기 오류" },
-        { pattern: /되요/g, replacement: "돼요", reason: "어미 활용 오류" },
-        { pattern: /애양환경공단/g, replacement: "해양환경공단", reason: "OCR 인식 오류 수정" }
-    ];
-
     try {
-        const worker = await Tesseract.createWorker({
-            logger: m => {
-                if (m.status === 'recognizing text') {
-                    const progress = Math.round(m.progress * 100);
-                    const pageInfo = `[${currentPageNum}/${pdfDoc.numPages} 페이지]`;
-                    resultBox.innerHTML = `<p style="text-align: center;">${pageInfo} OCR 인식 중: ${progress}%</p>`;
-                }
-            }
-        });
-        await worker.loadLanguage('kor+eng');
-        await worker.initialize('kor+eng');
-
         for (let i = 1; i <= pdfDoc.numPages; i++) {
             currentPageNum = i;
             await renderPage(i);
-            
-            resultBox.innerHTML = `<p style="text-align: center;">${i} / ${pdfDoc.numPages} 페이지 분석 중...</p>`;
 
+            // 텍스트 추출
             const page = await pdfDoc.getPage(i);
             const textContent = await page.getTextContent();
-            let pageText = "";
+            let pageText = textContent.items.map(item => item.str).join('\n');
+            
+            resultBox.innerHTML = `<p style="text-align: center;">${i}/${pdfDoc.numPages} 페이지 교정 중 (Gemini API 호출)...</p>`;
 
-            if (textContent.items.length > 0) {
-                pageText = textContent.items.map(item => item.str).join(' ');
-            } else {
-                const { data: { text } } = await worker.recognize(canvas);
-                pageText = text;
-            }
-
-            // Grammar Check for this page
+            // Gemini API를 통해 텍스트 교정
+            const correctedText = await getGeminiCorrection(pageText);
+            
             let corrections = [];
-            let processedText = pageText;
-            commonErrors.forEach(item => {
-                const regex = new RegExp(item.pattern.source, 'g');
-                if (regex.test(pageText)) {
-                    corrections.push({
-                        original: item.pattern.source,
-                        replacement: item.replacement,
-                        reason: item.reason
-                    });
-                    processedText = processedText.replace(regex, `<span style="background-color: #ffff00; font-weight: bold;">${item.replacement}</span>`);
-                }
-            });
+            // 교정된 내용이 원본과 다를 경우에만 기록합니다.
+            if (pageText.trim() !== correctedText.trim()) {
+                corrections.push({
+                    original: pageText,
+                    replacement: correctedText,
+                    reason: "Gemini API 교정"
+                });
+            }
 
             pageResults.push({
                 pageNum: i,
                 originalText: pageText,
-                processedText: processedText,
+                correctedText: correctedText, // 교정된 텍스트 저장
                 corrections: corrections
             });
 
             extractedText += `\n[Page ${i}]\n${pageText}\n`;
         }
 
-        await worker.terminate();
         displayResults();
 
     } catch (error) {
         console.error(error);
-        resultBox.innerHTML = '<p style="color: red;">분석 중 오류가 발생했습니다.</p>';
+        resultBox.innerHTML = '<p style="color: red; text-align: center;">분석 중 오류가 발생했습니다. 개발자 콘솔을 확인하세요.</p>';
     }
 }
 
@@ -174,32 +182,40 @@ function displayResults() {
 
     pageResults.forEach(res => {
         if (res.corrections.length > 0) {
-            res.corrections.forEach(c => {
-                totalCorrections++;
-                allCorrectionsHTML += `<li style="margin-bottom: 6px;">
-                    <span style="color: #666; font-weight: bold;">[${res.pageNum}쪽]</span> 
-                    <span style="color: red;">${c.original}</span> → <b style="color: green;">${c.replacement}</b> (${res.reason || '오타/문맥'})
+            totalCorrections++;
+             // 원본과 교정본을 비교하여 보여주는 형식으로 변경
+            allCorrectionsHTML += `
+                <li style="margin-bottom: 1rem; border: 1px solid #ddd; padding: 10px; border-radius: 5px; background: #fafafa;">
+                    <p style="font-weight: bold; color: #333; margin: 0 0 8px 0;">[${res.pageNum}쪽 교정 제안]</p>
+                    <div style="border-left: 3px solid red; padding-left: 8px; margin-bottom: 8px;">
+                        <p style="margin:0; font-size:10px; color:#666;"><b>원본</b></p>
+                        <p style="margin:0; font-size:11px; color:#555; white-space: pre-wrap;">${res.corrections[0].original}</p>
+                    </div>
+                    <div style="border-left: 3px solid green; padding-left: 8px;">
+                        <p style="margin:0; font-size:10px; color:#666;"><b>교정본</b></p>
+                        <p style="margin:0; font-size:11px; color:#006400; white-space: pre-wrap;">${res.corrections[0].replacement}</p>
+                    </div>
                 </li>`;
-            });
         }
+        // 페이지별 텍스트는 교정된 버전을 보여줍니다.
         fullTextHTML += `
             <div style="margin-bottom: 20px; border-bottom: 1px dashed #ddd; padding-bottom: 10px;">
                 <p style="font-weight: bold; color: var(--acrobat-red); margin: 0;">Page ${res.pageNum}</p>
-                <div style="white-space: pre-wrap; line-height: 1.6; font-size: 11px;">${res.processedText}</div>
+                <div style="white-space: pre-wrap; line-height: 1.6; font-size: 11px;">${res.correctedText}</div>
             </div>`;
     });
 
     if (totalCorrections === 0) {
         resultBox.innerHTML = `
             <div style="padding: 10px; border-bottom: 2px solid #eee; margin-bottom: 10px;">
-                <p style="color: green; font-weight: bold; margin: 0;">✔ 전체 분석 결과: 문제가 발견되지 않았습니다.</p>
+                <p style="color: green; font-weight: bold; margin: 0; text-align:center;">✔ Gemini 분석 결과: 문제가 발견되지 않았습니다.</p>
             </div>
             <div style="padding: 10px;">${fullTextHTML}</div>`;
     } else {
         resultBox.innerHTML = `
             <div style="padding: 10px; border-bottom: 2px solid #eee; margin-bottom: 15px; background-color: #fff9f9;">
                 <p style="font-weight: bold; margin-top: 0; color: #d32f2f;">[전체 문서 교정 권장 사항 - 총 ${totalCorrections}건]</p>
-                <ul style="margin: 0; padding-left: 15px; font-size: 11px; list-style: none;">
+                <ul style="margin: 0; padding-left: 0; font-size: 11px; list-style: none;">
                     ${allCorrectionsHTML}
                 </ul>
             </div>
@@ -210,7 +226,8 @@ function displayResults() {
     }
 }
 
-// 3. Export & Search (Updated for all pages)
+
+// 3. Export & Search
 function runExportText() {
     if (!extractedText) {
         alert("내보낼 데이터가 없습니다. 먼저 분석을 완료해 주세요.");
@@ -244,6 +261,7 @@ function runSearch() {
     const regex = new RegExp(keyword, 'gi');
 
     pageResults.forEach(res => {
+        // 검색은 원본 텍스트에서 수행합니다.
         const matches = res.originalText.match(regex);
         if (matches) {
             foundCount += matches.length;
@@ -267,3 +285,4 @@ function runSearch() {
 grammarBtn.addEventListener('click', runFullAnalysis);
 exportBtn.addEventListener('click', runExportText);
 searchBtn.addEventListener('click', runSearch);
+
