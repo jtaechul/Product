@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 문맥 검사기</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>PDF 문맥 검사기</h1>
+        <p>PDF 파일의 오탈자 및 문맥 오류를 확인하세요.</p>
+    </header>
+    <main>
+        <div class="upload-container">
+            <input type="file" id="pdf-upload" accept="application/pdf">
+            <button id="check-button">검사 시작</button>
+        </div>
+        <div id="pdf-viewer-container">
+            <!-- PDF 뷰어가 여기에 표시됩니다. -->
+        </div>
+    </main>
+    <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

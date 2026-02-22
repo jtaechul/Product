@@ -1,0 +1,18 @@
+body {
+    font-family: sans-serif;
+    margin: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.upload-container {
+    margin-bottom: 20px;
+}
+
+#pdf-viewer-container {
+    border: 1px solid #ccc;
+    padding: 10px;
+}
