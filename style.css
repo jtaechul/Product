@@ -1,197 +1,197 @@
-:root {
-    --acrobat-red: #ED1C24;
-    --toolbar-bg: #323232;
-    --sidebar-bg: #F5F5F5;
-    --sidebar-border: #DCDCDC;
-    --primary-text: #333333;
-    --white: #FFFFFF;
-}
-
-body, html {
+body {
     margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    height: 100vh;
     overflow: hidden;
+    background-color: #050505;
+    font-family: 'Inter', sans-serif;
+    user-select: none;
+    color: #fff;
 }
 
-.app-container {
+#game-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+#gameCanvas {
+    display: block;
+}
+
+#ui {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    color: white;
+    pointer-events: none;
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    z-index: 5;
 }
 
-/* Toolbar Style */
-.toolbar {
-    background-color: var(--toolbar-bg);
-    color: white;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    padding: 0 15px;
-    justify-content: space-between;
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: bold;
-    font-size: 14px;
-}
-
-.tools {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.tools button {
-    background: none;
-    border: none;
-    color: #CCC;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    transition: 0.2s;
-}
-
-.tools button:hover {
-    color: white;
-}
-
-.separator {
-    width: 1px;
-    height: 20px;
-    background-color: #555;
-    margin: 0 5px;
-}
-
-.page-num {
-    width: 30px;
-    background: #444;
-    border: 1px solid #555;
-    color: white;
-    text-align: center;
-    border-radius: 4px;
-}
-
-/* Main Content Area */
-.content {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-}
-
-/* Sidebars */
-.sidebar-left {
-    width: 50px;
-    background-color: var(--sidebar-bg);
-    border-right: 1px solid var(--sidebar-border);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 20px;
-    gap: 20px;
-}
-
-.nav-item {
-    color: #666;
-    cursor: pointer;
-    padding: 10px;
-}
-
-.nav-item.active {
-    background-color: #E6E6E6;
-    border-left: 2px solid var(--acrobat-red);
-    color: var(--acrobat-red);
-}
-
-.sidebar-right {
-    width: 250px;
-    background-color: var(--sidebar-bg);
-    border-left: 1px solid var(--sidebar-border);
-    padding: 15px;
+#hud-top {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
-.panel-header {
-    font-weight: bold;
-    color: #666;
-    font-size: 12px;
-    text-transform: uppercase;
-}
-
-.action-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.action-btn {
-    background-color: white;
-    border: 1px solid #CCC;
-    border-radius: 4px;
-    padding: 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    font-size: 13px;
-    color: var(--primary-text);
-    transition: 0.2s;
-}
-
-.action-btn:hover {
-    background-color: #F0F0F0;
-    border-color: #999;
-}
-
-.action-btn i {
-    color: var(--acrobat-red);
-}
-
-.result-box {
-    flex: 1;
-    background: white;
-    border: 1px solid #CCC;
-    border-radius: 4px;
-    padding: 10px;
-    font-size: 12px;
-    line-height: 1.5;
-    overflow-y: auto;
-}
-
-/* Viewer Wrapper */
-.viewer-container {
-    flex: 1;
-    background-color: #E1E1E1;
-    display: flex;
-    justify-content: center;
-    padding: 20px;
-    overflow-y: auto;
-}
-
-.pdf-canvas-wrapper {
-    background-color: white;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+/* XP Bar Styles */
+#xp-container {
     width: 100%;
-    max-width: 800px;
-    min-height: 1000px;
+    height: 6px;
+    background-color: rgba(0, 0, 0, 0.5);
+    position: relative;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+#xp-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#level-text {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+#stats-row {
     display: flex;
+    justify-content: space-between;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin-top: 5px;
+}
+
+#timer {
+    font-variant-numeric: tabular-nums;
+    opacity: 0.8;
+}
+
+#hp-bar-container {
+    width: 280px;
+    height: 8px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+#hp-bar-fill {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #ef4444, #f87171);
+    transition: width 0.3s ease-out;
+}
+
+/* Glassmorphism Screens */
+#level-up-screen, #game-over-screen {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+    color: white;
+    z-index: 100;
 }
 
-.placeholder {
-    color: #999;
-    font-style: italic;
+#level-up-screen h1 {
+    font-size: 56px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    letter-spacing: -2px;
 }
 
-.hint {
-    color: #AAA;
-    text-align: center;
-    margin-top: 50%;
+#level-up-screen p {
+    font-size: 18px;
+    margin-bottom: 40px;
+    opacity: 0.7;
+}
+
+#skill-options {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 90%;
+    max-width: 450px;
+}
+
+.skill-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 16px;
+    transition: all 0.3s ease;
+}
+
+.skill-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.skill-btn .skill-name {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    display: block;
+    color: #fff;
+}
+
+.skill-btn .skill-desc {
+    font-size: 14px;
+    opacity: 0.6;
+    line-height: 1.5;
+    display: block;
+}
+
+/* Game Over Screen */
+#game-over-screen h1 {
+    font-size: 72px;
+    font-weight: 800;
+    color: #ff4444;
+    margin-bottom: 20px;
+}
+
+#game-over-screen p {
+    font-size: 24px;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+#game-over-screen button {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 16px 40px;
+    background-color: #fff;
+    color: #000;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    margin-top: 40px;
+    transition: all 0.3s ease;
+}
+
+#game-over-screen button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
 }
