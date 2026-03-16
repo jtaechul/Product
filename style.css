@@ -1,16 +1,17 @@
+
 body {
     margin: 0;
-    padding: 0;
     overflow: hidden;
     background-color: #050505;
     font-family: 'Inter', sans-serif;
     user-select: none;
     color: #fff;
-    -webkit-tap-highlight-color: transparent;
 }
 
 #game-container {
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
 }
@@ -28,14 +29,7 @@ body {
     pointer-events: none;
     display: flex;
     flex-direction: column;
-    z-index: 30;
-}
-
-#language-selector {
-    pointer-events: auto;
-    margin-top: 10px;
-    display: flex;
-    gap: 5px;
+    z-index: 5;
 }
 
 #hud-top {
@@ -44,6 +38,7 @@ body {
     gap: 15px;
 }
 
+/* XP Bar Styles */
 #xp-container {
     width: 100%;
     height: 6px;
@@ -79,6 +74,11 @@ body {
     margin-top: 5px;
 }
 
+#timer {
+    font-variant-numeric: tabular-nums;
+    opacity: 0.8;
+}
+
 #hp-bar-container {
     width: 280px;
     height: 8px;
@@ -95,6 +95,7 @@ body {
     transition: width 0.3s ease-out;
 }
 
+/* Glassmorphism Screens */
 #level-up-screen, #game-over-screen {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -107,7 +108,19 @@ body {
     align-items: center;
     color: white;
     z-index: 100;
-    text-align: center;
+}
+
+#level-up-screen h1 {
+    font-size: 56px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    letter-spacing: -2px;
+}
+
+#level-up-screen p {
+    font-size: 18px;
+    margin-bottom: 40px;
+    opacity: 0.7;
 }
 
 #skill-options {
@@ -116,7 +129,6 @@ body {
     gap: 16px;
     width: 90%;
     max-width: 450px;
-    margin-top: 20px;
 }
 
 .skill-btn {
@@ -129,76 +141,47 @@ body {
     text-align: left;
     border-radius: 16px;
     transition: all 0.3s ease;
-    pointer-events: auto;
 }
 
 .skill-btn:hover {
     background: rgba(255, 255, 255, 0.2);
-    border-color: #3b82f6;
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
-.skill-name {
-    display: block;
-    font-weight: bold;
-    font-size: 16px;
-    margin-bottom: 4px;
-}
-
-.skill-desc {
-    display: block;
-    font-size: 13px;
-    opacity: 0.7;
-}
-
-#language-selector button {
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 12px;
+.skill-btn .skill-name {
+    font-size: 18px;
     font-weight: 700;
-    transition: all 0.2s ease;
+    margin-bottom: 4px;
+    display: block;
+    color: #fff;
 }
 
-#joystick-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10;
-    pointer-events: auto;
-    touch-action: none;
+.skill-btn .skill-desc {
+    font-size: 14px;
+    opacity: 0.6;
+    line-height: 1.5;
+    display: block;
 }
 
-#joystick-base {
-    position: absolute;
-    width: 120px;
-    height: 120px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    backdrop-filter: blur(4px);
+/* Game Over Screen */
+#game-over-screen h1 {
+    font-size: 72px;
+    font-weight: 800;
+    color: #ff4444;
+    margin-bottom: 20px;
 }
 
-#joystick-handle {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 50px;
-    height: 50px;
-    background: rgba(255, 255, 255, 0.4);
-    border: 2px solid rgba(255, 255, 255, 0.6);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
+#game-over-screen p {
+    font-size: 24px;
+    margin-bottom: 15px;
+    font-weight: 500;
 }
 
-#restart-btn {
+#game-over-screen button {
     font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
     padding: 16px 40px;
     background-color: #fff;
     color: #000;
@@ -206,11 +189,10 @@ body {
     border-radius: 30px;
     cursor: pointer;
     margin-top: 40px;
-    pointer-events: auto;
-    font-weight: 700;
+    transition: all 0.3s ease;
 }
 
-#game-over-labels {
-    margin-top: 20px;
-    font-size: 18px;
+#game-over-screen button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
 }

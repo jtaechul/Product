@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dino Survivors Deluxe</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
@@ -17,40 +18,28 @@
                     <div id="level-text">LV. 1</div>
                 </div>
                 <div id="stats-row">
-                    <div id="score"><span id="score-label">Score</span>: <span id="score-value">0</span></div>
-                    <div id="timer"><span id="timer-label">Time</span>: <span id="timer-value">00:00</span></div>
+                    <div id="score">Score: 0</div>
+                    <div id="timer">00:00</div>
                 </div>
                 <div id="hp-bar-container">
                     <div id="hp-bar-fill"></div>
                 </div>
             </div>
-            <div id="language-selector">
-                <button onclick="setLanguage('ko')">KO</button>
-                <button onclick="setLanguage('en')">EN</button>
-            </div>
-        </div>
-
-        <div id="joystick-container">
-            <div id="joystick-base">
-                <div id="joystick-handle"></div>
-            </div>
         </div>
 
         <div id="level-up-screen" style="display: none;">
-            <h1 id="lvl-up-title">LEVEL UP!</h1>
-            <p id="lvl-up-subtitle">Choose an Upgrade</p>
+            <h1>LEVEL UP!</h1>
+            <p>Choose an Upgrade</p>
             <div id="skill-options">
                 <!-- Skill buttons will be injected here -->
             </div>
         </div>
 
         <div id="game-over-screen" style="display: none;">
-            <h1 id="game-over-title">GAME OVER</h1>
-            <div id="game-over-labels">
-                <p><span id="final-score-label">Score</span>: <span id="final-score-value">0</span></p>
-                <p><span id="final-time-label">Time</span>: <span id="final-time-value">00:00</span></p>
-            </div>
-            <button id="restart-btn" onclick="restartGame()">RESTART</button>
+            <h1>GAME OVER</h1>
+            <p>Score: <span id="final-score">0</span></p>
+            <p>Time: <span id="final-time">00:00</span></p>
+            <button onclick="restartGame()">RESTART</button>
         </div>
     </div>
     <script src="main.js"></script>
