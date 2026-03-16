@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -10,9 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const scoreEl = document.getElementById('score-value');
     const timerEl = document.getElementById('timer-value');
     const levelUpScreen = document.getElementById('level-up-screen');
+    const skillOptionsEl = document.getElementById('skill-options');
     const gameOverScreen = document.getElementById('game-over-screen');
 
-    // --- Multi-language Support ---
     const translations = {
         ko: {
             score: "점수",
@@ -59,16 +58,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     let currentLang = 'ko';
 
-    // --- NEW: Player Sprite Images ---
     const dinoIdleImg = new Image();
     dinoIdleImg.src = 'dino_idle.png';
-
     const dinoWalkImg = new Image();
     dinoWalkImg.src = 'dino_walk.png';
-    // ---
 
-    let player, enemies, projectiles, xpOrbs, score, time, gameInterval, gameOver, isPaused;
-    let gameFrameCounter = 0; // For animations
+    let player, enemies, projectiles, xpOrbs, score, time, gameOver, isPaused;
+    let spawnTimer = 0;
+    let timerInterval;
 
     function resizeCanvas() {
         canvas.width = window.innerWidth;
@@ -80,25 +77,25 @@ document.addEventListener('DOMContentLoaded', () => {
         constructor(x, y, radius) {
             this.x = x;
             this.y = y;
-            this.radius = radius; // For collision detection
+            this.radius = radius;
             this.speed = 3;
             this.hp = 100;
             this.maxHp = 100;
             this.xp = 0;
             this.xpToNext = 100;
             this.level = 1;
-            this.attackSpeed = 1; // attacks per second
+            this.attackSpeed = 1;
             this.attackCooldown = 0;
             this.damage = 10;
             this.dodgeChance = 0;
             this.multiShot = 1;
+            this.chainLightning = 0;
 
-            // --- NEW: Animation and State ---
-            this.state = 'idle'; // 'idle', 'walking'
-            this.facing = 'right'; // 'left', 'right'
+            this.state = 'idle';
+            this.facing = 'right';
             this.animationFrame = 0;
-            this.walkSpriteFrames = 5; // Number of frames in the walk animation
-            this.animationSpeed = 8; // Animation speed, lower is faster
+            this.walkSpriteFrames = 5;
+            this.animationSpeed = 8;
             this.internalFrameCounter = 0;
         }
 
@@ -115,32 +112,35 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (currentSprite.complete && currentSprite.naturalWidth > 0) {
-                const spriteSheetWidth = currentSprite.width;
-                const spriteSheetHeight = currentSprite.height;
-                const spriteWidth = spriteSheetWidth / frameCount;
-                const spriteHeight = spriteSheetHeight;
-
-                if (this.state === 'walking') {
-                    this.animationFrame = Math.floor(this.internalFrameCounter / this.animationSpeed) % frameCount;
-                } else {
-                    this.animationFrame = 0;
-                }
-
+                const spriteWidth = currentSprite.width / frameCount;
+                const spriteHeight = currentSprite.height;
+                this.animationFrame = Math.floor(this.internalFrameCounter / this.animationSpeed) % frameCount;
+                
                 const aspectRatio = spriteWidth / spriteHeight;
                 const drawHeight = this.radius * 3.5;
                 const drawWidth = drawHeight * aspectRatio;
 
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                if (this.facing === 'left') {
-                    ctx.scale(-1, 1);
-                }
+                if (this.facing === 'left') ctx.scale(-1, 1);
                 ctx.drawImage(
                     currentSprite,
                     this.animationFrame * spriteWidth, 0, spriteWidth, spriteHeight,
                     -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight
                 );
                 ctx.restore();
+            } else {
+                // Fallback: simple circle
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#4CAF50';
+                ctx.fill();
+                // Add a simple "eye" to show direction
+                ctx.fillStyle = 'white';
+                const eyeX = this.facing === 'right' ? this.x + 10 : this.x - 10;
+                ctx.beginPath();
+                ctx.arc(eyeX, this.y - 5, 5, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
 
@@ -160,21 +160,19 @@ document.addEventListener('DOMContentLoaded', () => {
             this.x += dx * this.speed;
             this.y += dy * this.speed;
             
-            // Boundary checks
             this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
             this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
 
-            // Attack cooldown
             if (this.attackCooldown > 0) {
-                this.attackCooldown -= 1 / 60; // Assuming 60 FPS
+                this.attackCooldown -= 1 / 60;
+            } else {
+                autoAttack();
+                this.attackCooldown = 1 / this.attackSpeed;
             }
         }
 
         takeDamage(amount) {
-            if (Math.random() < this.dodgeChance) {
-                // Dodge successful
-                return;
-            }
+            if (Math.random() < this.dodgeChance) return;
             this.hp -= amount;
             if (this.hp <= 0) {
                 this.hp = 0;
@@ -199,13 +197,12 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUI() {
             const t = translations[currentLang];
             xpBarEl.style.width = (this.xp / this.xpToNext * 100) + '%';
-            levelTextEl.textContent = \`${t.level} ${this.level}\`;
+            levelTextEl.textContent = `${t.level} ${this.level}`;
             hpBarEl.style.width = (this.hp / this.maxHp * 100) + '%';
-            scoreEl.textContent = \`${t.score}: ${score}\`;
+            scoreEl.textContent = score;
         }
     }
-    
-    // ... (Keep Enemy, Projectile, XpOrb classes the same)
+
     class Enemy {
         constructor(x, y, radius, color, speed, hp, damage) {
             this.x = x;
@@ -214,6 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.color = color;
             this.speed = speed;
             this.hp = hp;
+            this.maxHp = hp;
             this.damage = damage;
         }
 
@@ -222,6 +220,14 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
             ctx.fillStyle = this.color;
             ctx.fill();
+            
+            // HP Bar for enemies
+            const barWidth = this.radius * 2;
+            const barHeight = 4;
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(this.x - this.radius, this.y - this.radius - 10, barWidth, barHeight);
+            ctx.fillStyle = '#ff4d4d';
+            ctx.fillRect(this.x - this.radius, this.y - this.radius - 10, barWidth * (this.hp / this.maxHp), barHeight);
         }
 
         update(player) {
@@ -232,14 +238,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     class Projectile {
-        constructor(x, y, radius, color, velocity, damage) {
+        constructor(x, y, radius, color, velocity, damage, chainCount = 0) {
             this.x = x;
             this.y = y;
             this.radius = radius;
             this.color = color;
             this.velocity = velocity;
             this.damage = damage;
-            this.chainTargets = 0; // for chain lightning
+            this.chainCount = chainCount;
+            this.hitEnemies = new Set();
         }
 
         draw(ctx) {
@@ -266,11 +273,13 @@ document.addEventListener('DOMContentLoaded', () => {
         draw(ctx) {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = 'cyan';
+            ctx.fillStyle = '#00f2ff';
             ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 1;
+            ctx.stroke();
         }
     }
-
 
     function init() {
         resizeCanvas();
@@ -278,85 +287,106 @@ document.addEventListener('DOMContentLoaded', () => {
         time = 0;
         gameOver = false;
         isPaused = false;
+        spawnTimer = 0;
         
         player = new Player(canvas.width / 2, canvas.height / 2, 20);
         enemies = [];
         projectiles = [];
         xpOrbs = [];
         
-        spawnEnemy();
-
-        gameInterval = setInterval(gameLoop, 1000 / 60);
-        setInterval(updateTimer, 1000);
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(updateTimer, 1000);
         
         levelUpScreen.style.display = 'none';
         gameOverScreen.style.display = 'none';
 
         updateLanguageUI();
-        animate();
+        requestAnimationFrame(animate);
     }
     
-    function gameLoop() {
-        if (isPaused) return;
-        gameFrameCounter++;
-
-        // Player attack
-        if (player.attackCooldown <= 0) {
-            autoAttack();
-            player.attackCooldown = 1 / player.attackSpeed;
-        }
-    }
-
     function animate() {
-        if (isPaused || gameOver) return;
+        if (gameOver) return;
+        if (isPaused) {
+            requestAnimationFrame(animate);
+            return;
+        }
         
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
+        // Spawn enemies
+        spawnTimer -= 1/60;
+        if (spawnTimer <= 0) {
+            spawnEnemy();
+            spawnTimer = Math.max(0.5, 3 - time * 0.01);
+        }
+
         player.update(joystick);
         player.draw(ctx);
         
-        enemies.forEach((enemy, eIndex) => {
+        // Update enemies
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            const enemy = enemies[i];
             enemy.update(player);
             enemy.draw(ctx);
-            // Player-Enemy collision
+            
             if (checkCollision(player, enemy)) {
                 player.takeDamage(enemy.damage);
             }
-        });
+        }
         
-        projectiles.forEach((proj, pIndex) => {
+        // Update projectiles
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+            const proj = projectiles[i];
             proj.update();
             proj.draw(ctx);
             
-            // Projectile-Enemy collision
-            enemies.forEach((enemy, eIndex) => {
-                if (checkCollision(proj, enemy)) {
+            let hit = false;
+            for (let j = enemies.length - 1; j >= 0; j--) {
+                const enemy = enemies[j];
+                if (checkCollision(proj, enemy) && !proj.hitEnemies.has(enemy)) {
                     enemy.hp -= proj.damage;
+                    proj.hitEnemies.add(enemy);
+                    
                     if (enemy.hp <= 0) {
                         score += 10;
                         xpOrbs.push(new XpOrb(enemy.x, enemy.y));
-                        enemies.splice(eIndex, 1);
+                        enemies.splice(j, 1);
                     }
-                    projectiles.splice(pIndex, 1);
+                    
+                    if (proj.chainCount > 0) {
+                        proj.chainCount--;
+                        // Find next target
+                        const nextEnemy = enemies.find(e => e !== enemy && !proj.hitEnemies.has(e) && Math.hypot(e.x - proj.x, e.y - proj.y) < 200);
+                        if (nextEnemy) {
+                            const angle = Math.atan2(nextEnemy.y - proj.y, nextEnemy.x - proj.x);
+                            proj.velocity = { x: Math.cos(angle) * 7, y: Math.sin(angle) * 7 };
+                        } else {
+                            hit = true;
+                        }
+                    } else {
+                        hit = true;
+                    }
+                    break;
                 }
-            });
-            
-            // Remove off-screen projectiles
-            if (proj.x < 0 || proj.x > canvas.width || proj.y < 0 || proj.y > canvas.height) {
-                projectiles.splice(pIndex, 1);
             }
-        });
+            
+            if (hit || proj.x < 0 || proj.x > canvas.width || proj.y < 0 || proj.y > canvas.height) {
+                projectiles.splice(i, 1);
+            }
+        }
         
-        xpOrbs.forEach((orb, oIndex) => {
+        // Update XP Orbs
+        for (let i = xpOrbs.length - 1; i >= 0; i--) {
+            const orb = xpOrbs[i];
             orb.draw(ctx);
             if (checkCollision(player, orb)) {
                 player.gainXp(orb.value);
-                xpOrbs.splice(oIndex, 1);
+                xpOrbs.splice(i, 1);
             }
-        });
+        }
 
         player.updateUI();
-        
         requestAnimationFrame(animate);
     }
     
@@ -366,40 +396,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function spawnEnemy() {
-        if (isPaused || gameOver) return;
         const radius = 15 + Math.random() * 10;
         const edge = Math.floor(Math.random() * 4);
         let x, y;
-        if (edge === 0) { x = 0 - radius; y = Math.random() * canvas.height; }
+        if (edge === 0) { x = -radius; y = Math.random() * canvas.height; }
         else if (edge === 1) { x = canvas.width + radius; y = Math.random() * canvas.height; }
-        else if (edge === 2) { x = Math.random() * canvas.width; y = 0 - radius; }
+        else if (edge === 2) { x = Math.random() * canvas.width; y = -radius; }
         else { x = Math.random() * canvas.width; y = canvas.height + radius; }
         
-        const speed = 1 + (time / 60);
-        const hp = 20 + (time / 10);
+        const speed = 1 + (time * 0.01);
+        const hp = 20 + (time * 0.5);
         const damage = 5;
-        enemies.push(new Enemy(x, y, radius, 'red', speed, hp, damage));
-        
-        setTimeout(spawnEnemy, Math.max(500, 3000 - time * 10));
+        enemies.push(new Enemy(x, y, radius, '#ff4d4d', speed, hp, damage));
     }
     
     function autoAttack() {
         if (enemies.length === 0) return;
-        let closestEnemy = null;
-        let minDistance = Infinity;
-
-        enemies.forEach(enemy => {
-            const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestEnemy = enemy;
-            }
+        
+        // Sort enemies by distance
+        const sortedEnemies = [...enemies].sort((a, b) => {
+            return Math.hypot(player.x - a.x, player.y - a.y) - Math.hypot(player.x - b.x, player.y - b.y);
         });
 
-        if (closestEnemy) {
-            const angle = Math.atan2(closestEnemy.y - player.y, closestEnemy.x - player.x);
-            const velocity = { x: Math.cos(angle) * 5, y: Math.sin(angle) * 5 };
-            projectiles.push(new Projectile(player.x, player.y, 5, 'yellow', velocity, player.damage));
+        for (let i = 0; i < Math.min(player.multiShot, sortedEnemies.length); i++) {
+            const target = sortedEnemies[i];
+            const angle = Math.atan2(target.y - player.y, target.x - player.x);
+            const velocity = { x: Math.cos(angle) * 7, y: Math.sin(angle) * 7 };
+            projectiles.push(new Projectile(player.x, player.y, 5, '#ffff00', velocity, player.damage, player.chainLightning));
         }
     }
     
@@ -408,19 +431,54 @@ document.addEventListener('DOMContentLoaded', () => {
         time++;
         const minutes = Math.floor(time / 60).toString().padStart(2, '0');
         const seconds = (time % 60).toString().padStart(2, '0');
-        timerEl.textContent = \`${minutes}:${seconds}\`;
+        timerEl.textContent = `${minutes}:${seconds}`;
     }
     
     function showLevelUpScreen() {
         isPaused = true;
         levelUpScreen.style.display = 'flex';
-        // Logic to show 3 random skills
+        skillOptionsEl.innerHTML = '';
+        
+        const skillKeys = Object.keys(translations[currentLang].skills);
+        const shuffled = skillKeys.sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 3);
+        
+        selected.forEach(key => {
+            const skill = translations[currentLang].skills[key];
+            const btn = document.createElement('button');
+            btn.className = 'skill-btn';
+            btn.innerHTML = `
+                <span class="skill-name">${skill.name}</span>
+                <span class="skill-desc">${skill.desc}</span>
+            `;
+            btn.onclick = () => applySkill(key);
+            skillOptionsEl.appendChild(btn);
+        });
+    }
+
+    function applySkill(key) {
+        switch(key) {
+            case 'atk_speed': player.attackSpeed *= 1.2; break;
+            case 'damage': player.damage *= 1.3; break;
+            case 'move_speed': player.speed *= 1.15; break;
+            case 'multi_shot': player.multiShot += 1; break;
+            case 'chain_lightning': player.chainLightning += 2; break;
+            case 'dodge': player.dodgeChance += 0.1; break;
+            case 'heal': player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.4); break;
+            case 'max_hp': 
+                const gain = player.maxHp * 0.25;
+                player.maxHp += gain;
+                player.hp += gain;
+                break;
+        }
+        isPaused = false;
+        levelUpScreen.style.display = 'none';
     }
     
     function endGame() {
         gameOver = true;
         isPaused = true;
-        clearInterval(gameInterval);
+        if (timerInterval) clearInterval(timerInterval);
         gameOverScreen.style.display = 'flex';
         document.getElementById('final-score-value').textContent = score;
         document.getElementById('final-time-value').textContent = timerEl.textContent;
@@ -433,17 +491,20 @@ document.addEventListener('DOMContentLoaded', () => {
     window.setLanguage = function(lang) {
         currentLang = lang;
         updateLanguageUI();
+        if (isPaused && levelUpScreen.style.display === 'flex') {
+            showLevelUpScreen(); // Refresh skill options in new language
+        }
     }
     
     function updateLanguageUI() {
         const t = translations[currentLang];
-        document.querySelector('#hud-top #stats-row #score-label').textContent = \`${t.score}:\`;
-        document.querySelector('#hud-top #stats-row #timer-label').textContent = \`${t.timer}:\`;
-        document.querySelector('#level-up-screen h1').textContent = t.lvlUpTitle;
-        document.querySelector('#level-up-screen p').textContent = t.lvlUpSubtitle;
-        document.querySelector('#game-over-screen h1').textContent = t.gameOverTitle;
-        document.querySelector('#game-over-labels p:nth-child(1)').textContent = t.finalScoreLabel;
-        document.querySelector('#game-over-labels p:nth-child(2)').textContent = t.finalTimeLabel;
+        document.getElementById('score-label').textContent = t.score;
+        document.getElementById('timer-label').textContent = t.timer;
+        document.getElementById('lvl-up-title').textContent = t.lvlUpTitle;
+        document.getElementById('lvl-up-subtitle').textContent = t.lvlUpSubtitle;
+        document.getElementById('game-over-title').textContent = t.gameOverTitle;
+        document.getElementById('final-score-label').textContent = t.finalScoreLabel;
+        document.getElementById('final-time-label').textContent = t.finalTimeLabel;
         document.getElementById('restart-btn').textContent = t.restartBtn;
     }
     
@@ -456,15 +517,21 @@ document.addEventListener('DOMContentLoaded', () => {
     let joystickStartY = 0;
     
     function onJoystickStart(e) {
+        if (isPaused || gameOver) return;
         joystickActive = true;
         const touch = e.type === 'touchstart' ? e.touches[0] : e;
+        
+        // Reset joystick position to where the user touched/clicked
+        joystickContainer.style.left = (touch.clientX - 75) + 'px';
+        joystickContainer.style.bottom = (window.innerHeight - touch.clientY - 75) + 'px';
+        joystickContainer.style.display = 'block';
+        
         joystickStartX = touch.clientX;
         joystickStartY = touch.clientY;
         joystickContainer.style.opacity = '1';
     }
     function onJoystickMove(e) {
         if (!joystickActive) return;
-        e.preventDefault();
         const touch = e.type === 'touchmove' ? e.touches[0] : e;
         const deltaX = touch.clientX - joystickStartX;
         const deltaY = touch.clientY - joystickStartY;
@@ -474,24 +541,23 @@ document.addEventListener('DOMContentLoaded', () => {
         joystick.horizontal = Math.cos(angle) * (distance / 75);
         joystick.vertical = Math.sin(angle) * (distance / 75);
         
-        joystickHandle.style.transform = \`translate(\${Math.cos(angle) * distance}px, \${Math.sin(angle) * distance}px)\`;
+        joystickHandle.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
     }
-    function onJoystickEnd(e) {
+    function onJoystickEnd() {
         joystickActive = false;
         joystick.horizontal = 0;
         joystick.vertical = 0;
-        joystickHandle.style.transform = \`translate(0px, 0px)\`;
+        joystickHandle.style.transform = `translate(0px, 0px)`;
         joystickContainer.style.opacity = '0.5';
     }
     
-    gameContainer.addEventListener('mousedown', onJoystickStart);
-    gameContainer.addEventListener('mousemove', onJoystickMove);
-    gameContainer.addEventListener('mouseup', onJoystickEnd);
-    gameContainer.addEventListener('mouseleave', onJoystickEnd);
-    gameContainer.addEventListener('touchstart', onJoystickStart, { passive: false });
-    gameContainer.addEventListener('touchmove', onJoystickMove, { passive: false });
-    gameContainer.addEventListener('touchend', onJoystickEnd);
+    // Desktop and mobile support
+    window.addEventListener('mousedown', onJoystickStart);
+    window.addEventListener('mousemove', onJoystickMove);
+    window.addEventListener('mouseup', onJoystickEnd);
+    window.addEventListener('touchstart', onJoystickStart, { passive: false });
+    window.addEventListener('touchmove', onJoystickMove, { passive: false });
+    window.addEventListener('touchend', onJoystickEnd);
 
-    // Init and start the game
     init();
 });

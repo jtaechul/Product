@@ -1,16 +1,20 @@
-body {
+* {
     margin: 0;
-    overflow: hidden;
-    background-color: #050505;
-    font-family: 'Inter', sans-serif;
+    padding: 0;
+    box-sizing: border-box;
     user-select: none;
-    color: #fff;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    overflow: hidden;
+    background: #1a1a1a;
+    font-family: 'Inter', sans-serif;
+    color: white;
 }
 
 #game-container {
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: relative;
     width: 100vw;
     height: 100vh;
 }
@@ -21,178 +25,187 @@ body {
 
 #ui {
     position: absolute;
-    top: 20px;
-    left: 20px;
-    right: 20px;
-    color: white;
-    pointer-events: none; /* UI container itself shouldn't block */
-    display: flex;
-    flex-direction: column;
-    z-index: 30; /* Higher than joystick to be clickable */
-}
-
-#language-selector {
-    pointer-events: auto; /* Enable clicks for language buttons */
-    margin-top: 10px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px;
+    pointer-events: none;
 }
 
 #hud-top {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
-/* XP Bar Styles */
 #xp-container {
     width: 100%;
-    height: 6px;
-    background-color: rgba(0, 0, 0, 0.5);
-    position: relative;
-    border-radius: 3px;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 6px;
     overflow: hidden;
+    position: relative;
 }
 
 #xp-bar-fill {
-    width: 0%;
     height: 100%;
-    background: linear-gradient(90deg, #3b82f6, #60a5fa);
-    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+    background: #00f2ff;
+    transition: width 0.3s ease-out;
 }
 
 #level-text {
     position: absolute;
-    top: 10px;
-    left: 0;
+    right: 10px;
+    top: -20px;
     font-size: 14px;
-    font-weight: 700;
-    color: #fff;
-    letter-spacing: 1px;
+    font-weight: bold;
 }
 
 #stats-row {
     display: flex;
     justify-content: space-between;
     font-size: 18px;
-    font-weight: 600;
-    color: #fff;
-    margin-top: 5px;
-}
-
-#timer {
-    font-variant-numeric: tabular-nums;
-    opacity: 0.8;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 #hp-bar-container {
-    width: 280px;
+    width: 100%;
     height: 8px;
-    background-color: rgba(0, 0, 0, 0.5);
+    background: rgba(255, 0, 0, 0.2);
     border-radius: 4px;
     overflow: hidden;
-    margin-top: 5px;
 }
 
 #hp-bar-fill {
-    width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, #ef4444, #f87171);
-    transition: width 0.3s ease-out;
+    width: 100%;
+    background: #ff4d4d;
+    transition: width 0.2s ease-out;
 }
 
-/* Glassmorphism Screens */
-#level-up-screen, #game-over-screen {
+#language-selector {
     position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    top: 20px;
+    right: 20px;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    z-index: 100;
-}
-
-#skill-options {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    width: 90%;
-    max-width: 450px;
-}
-
-.skill-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 20px;
-    color: white;
-    font-family: 'Inter', sans-serif;
-    cursor: pointer;
-    text-align: left;
-    border-radius: 16px;
-    transition: all 0.3s ease;
+    gap: 10px;
     pointer-events: auto;
 }
 
 #language-selector button {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: white;
-    padding: 6px 12px;
-    border-radius: 8px;
+    padding: 5px 10px;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 12px;
-    font-weight: 700;
-    margin-right: 5px;
-    transition: all 0.2s ease;
 }
 
-/* Floating Joystick Styles */
 #joystick-container {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10; /* Lower than UI but covers the canvas */
-    pointer-events: auto;
-    touch-action: none; /* Prevent scrolling while moving */
+    bottom: 50px;
+    left: 50px;
+    width: 150px;
+    height: 150px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 #joystick-base {
-    position: absolute;
-    width: 120px;
-    height: 120px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    backdrop-filter: blur(4px);
-    display: none;
+    position: relative;
+    width: 100%;
+    height: 100%;
 }
 
 #joystick-handle {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 50px;
-    height: 50px;
-    background: rgba(255, 255, 255, 0.4);
-    border: 2px solid rgba(255, 255, 255, 0.6);
+    width: 60px;
+    height: 60px;
+    background: white;
     border-radius: 50%;
-    transform: translate(-50%, -50%);
+    margin-top: -30px;
+    margin-left: -30px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-#game-over-screen button {
-    font-family: 'Inter', sans-serif;
-    padding: 16px 40px;
-    background-color: #fff;
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.modal {
+    background: #2a2a2a;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 90%;
+    width: 400px;
+    border: 2px solid #444;
+}
+
+#skill-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.skill-btn {
+    background: #3a3a3a;
+    border: 1px solid #555;
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.skill-btn:hover {
+    background: #4a4a4a;
+    border-color: #00f2ff;
+}
+
+.skill-name {
+    display: block;
+    font-weight: bold;
+    font-size: 16px;
+    color: #00f2ff;
+}
+
+.skill-desc {
+    font-size: 13px;
+    color: #ccc;
+}
+
+#restart-btn {
+    margin-top: 20px;
+    padding: 15px 40px;
+    font-size: 18px;
+    font-weight: bold;
+    background: #00f2ff;
     color: #000;
     border: none;
-    border-radius: 30px;
+    border-radius: 10px;
     cursor: pointer;
-    margin-top: 40px;
-    pointer-events: auto;
+}
+
+#game-over-stats {
+    margin: 20px 0;
 }
