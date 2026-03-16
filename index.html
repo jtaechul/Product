@@ -36,25 +36,21 @@
             </div>
         </div>
 
-        <div id="level-up-screen" class="overlay" style="display: none;">
-            <div class="modal">
-                <h1 id="lvl-up-title">LEVEL UP!</h1>
-                <p id="lvl-up-subtitle">Choose an Upgrade</p>
-                <div id="skill-options">
-                    <!-- Skill buttons will be injected here -->
-                </div>
+        <div id="level-up-screen" style="display: none;">
+            <h1 id="lvl-up-title">LEVEL UP!</h1>
+            <p id="lvl-up-subtitle">Choose an Upgrade</p>
+            <div id="skill-options">
+                <!-- Skill buttons will be injected here -->
             </div>
         </div>
 
-        <div id="game-over-screen" class="overlay" style="display: none;">
-            <div class="modal">
-                <h1 id="game-over-title">GAME OVER</h1>
-                <div id="game-over-stats">
-                    <p><span id="final-score-label">Score</span>: <span id="final-score-value">0</span></p>
-                    <p><span id="final-time-label">Time</span>: <span id="final-time-value">00:00</span></p>
-                </div>
-                <button id="restart-btn" onclick="restartGame()">RESTART</button>
+        <div id="game-over-screen" style="display: none;">
+            <h1 id="game-over-title">GAME OVER</h1>
+            <div id="game-over-labels">
+                <p><span id="final-score-label">Score</span>: <span id="final-score-value">0</span></p>
+                <p><span id="final-time-label">Time</span>: <span id="final-time-value">00:00</span></p>
             </div>
+            <button id="restart-btn" onclick="restartGame()">RESTART</button>
         </div>
     </div>
     <script src="main.js"></script>

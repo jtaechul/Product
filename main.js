@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    const gameContainer = document.getElementById('game-container');
     const xpBarEl = document.getElementById('xp-bar-fill');
     const levelTextEl = document.getElementById('level-text');
     const hpBarEl = document.getElementById('hp-bar-fill');
@@ -58,11 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     let currentLang = 'ko';
 
-    const dinoIdleImg = new Image();
-    dinoIdleImg.src = 'dino_idle.png';
-    const dinoWalkImg = new Image();
-    dinoWalkImg.src = 'dino_walk.png';
-
     let player, enemies, projectiles, xpOrbs, score, time, gameOver, isPaused;
     let spawnTimer = 0;
     let timerInterval;
@@ -84,78 +78,48 @@ document.addEventListener('DOMContentLoaded', () => {
             this.xp = 0;
             this.xpToNext = 100;
             this.level = 1;
-            this.attackSpeed = 1;
+            this.attackSpeed = 1.2;
             this.attackCooldown = 0;
             this.damage = 10;
             this.dodgeChance = 0;
             this.multiShot = 1;
             this.chainLightning = 0;
-
-            this.state = 'idle';
             this.facing = 'right';
-            this.animationFrame = 0;
-            this.walkSpriteFrames = 5;
-            this.animationSpeed = 8;
-            this.internalFrameCounter = 0;
         }
 
         draw(ctx) {
-            let currentSprite;
-            let frameCount;
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            
+            // Body
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#4CAF50';
+            ctx.fill();
+            ctx.strokeStyle = '#2E7D32';
+            ctx.lineWidth = 3;
+            ctx.stroke();
 
-            if (this.state === 'walking') {
-                currentSprite = dinoWalkImg;
-                frameCount = this.walkSpriteFrames;
-            } else {
-                currentSprite = dinoIdleImg;
-                frameCount = 1;
-            }
-
-            if (currentSprite.complete && currentSprite.naturalWidth > 0) {
-                const spriteWidth = currentSprite.width / frameCount;
-                const spriteHeight = currentSprite.height;
-                this.animationFrame = Math.floor(this.internalFrameCounter / this.animationSpeed) % frameCount;
-                
-                const aspectRatio = spriteWidth / spriteHeight;
-                const drawHeight = this.radius * 3.5;
-                const drawWidth = drawHeight * aspectRatio;
-
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                if (this.facing === 'left') ctx.scale(-1, 1);
-                ctx.drawImage(
-                    currentSprite,
-                    this.animationFrame * spriteWidth, 0, spriteWidth, spriteHeight,
-                    -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight
-                );
-                ctx.restore();
-            } else {
-                // Fallback: simple circle
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = '#4CAF50';
-                ctx.fill();
-                // Add a simple "eye" to show direction
-                ctx.fillStyle = 'white';
-                const eyeX = this.facing === 'right' ? this.x + 10 : this.x - 10;
-                ctx.beginPath();
-                ctx.arc(eyeX, this.y - 5, 5, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            // Eye
+            ctx.fillStyle = 'white';
+            const eyeX = this.facing === 'right' ? 8 : -8;
+            ctx.beginPath();
+            ctx.arc(eyeX, -5, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(eyeX + (this.facing === 'right' ? 2 : -2), -5, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
         }
 
         update(joystick) {
-            this.internalFrameCounter++;
             const dx = joystick.horizontal;
             const dy = joystick.vertical;
 
-            if (dx === 0 && dy === 0) {
-                this.state = 'idle';
-            } else {
-                this.state = 'walking';
-                if (dx > 0) this.facing = 'right';
-                else if (dx < 0) this.facing = 'left';
-            }
+            if (dx > 0) this.facing = 'right';
+            else if (dx < 0) this.facing = 'left';
 
             this.x += dx * this.speed;
             this.y += dy * this.speed;
@@ -220,8 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
             ctx.fillStyle = this.color;
             ctx.fill();
+            ctx.strokeStyle = '#B71C1C';
+            ctx.lineWidth = 2;
+            ctx.stroke();
             
-            // HP Bar for enemies
             const barWidth = this.radius * 2;
             const barHeight = 4;
             ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -254,6 +220,10 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
             ctx.fillStyle = this.color;
             ctx.fill();
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = this.color;
+            ctx.fill();
+            ctx.shadowBlur = 0;
         }
 
         update() {
@@ -311,20 +281,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        ctx.fillStyle = '#1a1a1a';
+        ctx.fillStyle = '#050505';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Spawn enemies
         spawnTimer -= 1/60;
         if (spawnTimer <= 0) {
             spawnEnemy();
-            spawnTimer = Math.max(0.5, 3 - time * 0.01);
+            spawnTimer = Math.max(0.4, 2.5 - time * 0.01);
         }
 
         player.update(joystick);
         player.draw(ctx);
         
-        // Update enemies
         for (let i = enemies.length - 1; i >= 0; i--) {
             const enemy = enemies[i];
             enemy.update(player);
@@ -335,7 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // Update projectiles
         for (let i = projectiles.length - 1; i >= 0; i--) {
             const proj = projectiles[i];
             proj.update();
@@ -356,11 +323,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     if (proj.chainCount > 0) {
                         proj.chainCount--;
-                        // Find next target
                         const nextEnemy = enemies.find(e => e !== enemy && !proj.hitEnemies.has(e) && Math.hypot(e.x - proj.x, e.y - proj.y) < 200);
                         if (nextEnemy) {
                             const angle = Math.atan2(nextEnemy.y - proj.y, nextEnemy.x - proj.x);
-                            proj.velocity = { x: Math.cos(angle) * 7, y: Math.sin(angle) * 7 };
+                            proj.velocity = { x: Math.cos(angle) * 8, y: Math.sin(angle) * 8 };
                         } else {
                             hit = true;
                         }
@@ -376,7 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // Update XP Orbs
         for (let i = xpOrbs.length - 1; i >= 0; i--) {
             const orb = xpOrbs[i];
             orb.draw(ctx);
@@ -404,16 +369,15 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (edge === 2) { x = Math.random() * canvas.width; y = -radius; }
         else { x = Math.random() * canvas.width; y = canvas.height + radius; }
         
-        const speed = 1 + (time * 0.01);
-        const hp = 20 + (time * 0.5);
+        const speed = 1.2 + (time * 0.012);
+        const hp = 20 + (time * 0.6);
         const damage = 5;
-        enemies.push(new Enemy(x, y, radius, '#ff4d4d', speed, hp, damage));
+        enemies.push(new Enemy(x, y, radius, '#D32F2F', speed, hp, damage));
     }
     
     function autoAttack() {
         if (enemies.length === 0) return;
         
-        // Sort enemies by distance
         const sortedEnemies = [...enemies].sort((a, b) => {
             return Math.hypot(player.x - a.x, player.y - a.y) - Math.hypot(player.x - b.x, player.y - b.y);
         });
@@ -421,8 +385,8 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < Math.min(player.multiShot, sortedEnemies.length); i++) {
             const target = sortedEnemies[i];
             const angle = Math.atan2(target.y - player.y, target.x - player.x);
-            const velocity = { x: Math.cos(angle) * 7, y: Math.sin(angle) * 7 };
-            projectiles.push(new Projectile(player.x, player.y, 5, '#ffff00', velocity, player.damage, player.chainLightning));
+            const velocity = { x: Math.cos(angle) * 8, y: Math.sin(angle) * 8 };
+            projectiles.push(new Projectile(player.x, player.y, 6, '#FFEB3B', velocity, player.damage, player.chainLightning));
         }
     }
     
@@ -492,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentLang = lang;
         updateLanguageUI();
         if (isPaused && levelUpScreen.style.display === 'flex') {
-            showLevelUpScreen(); // Refresh skill options in new language
+            showLevelUpScreen();
         }
     }
     
@@ -508,8 +472,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('restart-btn').textContent = t.restartBtn;
     }
     
-    // Joystick Logic
+    // Floating Joystick Logic
     const joystickContainer = document.getElementById('joystick-container');
+    const joystickBase = document.getElementById('joystick-base');
     const joystickHandle = document.getElementById('joystick-handle');
     const joystick = { horizontal: 0, vertical: 0 };
     let joystickActive = false;
@@ -521,41 +486,41 @@ document.addEventListener('DOMContentLoaded', () => {
         joystickActive = true;
         const touch = e.type === 'touchstart' ? e.touches[0] : e;
         
-        // Reset joystick position to where the user touched/clicked
-        joystickContainer.style.left = (touch.clientX - 75) + 'px';
-        joystickContainer.style.bottom = (window.innerHeight - touch.clientY - 75) + 'px';
-        joystickContainer.style.display = 'block';
-        
         joystickStartX = touch.clientX;
         joystickStartY = touch.clientY;
-        joystickContainer.style.opacity = '1';
+        
+        joystickBase.style.left = joystickStartX + 'px';
+        joystickBase.style.top = joystickStartY + 'px';
+        joystickBase.style.display = 'block';
+        joystickBase.style.opacity = '1';
     }
+
     function onJoystickMove(e) {
         if (!joystickActive) return;
         const touch = e.type === 'touchmove' ? e.touches[0] : e;
         const deltaX = touch.clientX - joystickStartX;
         const deltaY = touch.clientY - joystickStartY;
-        const distance = Math.min(75, Math.hypot(deltaX, deltaY));
+        const distance = Math.min(60, Math.hypot(deltaX, deltaY));
         const angle = Math.atan2(deltaY, deltaX);
         
-        joystick.horizontal = Math.cos(angle) * (distance / 75);
-        joystick.vertical = Math.sin(angle) * (distance / 75);
+        joystick.horizontal = Math.cos(angle) * (distance / 60);
+        joystick.vertical = Math.sin(angle) * (distance / 60);
         
-        joystickHandle.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
+        joystickHandle.style.transform = `translate(calc(-50% + ${Math.cos(angle) * distance}px), calc(-50% + ${Math.sin(angle) * distance}px))`;
     }
+
     function onJoystickEnd() {
         joystickActive = false;
         joystick.horizontal = 0;
         joystick.vertical = 0;
-        joystickHandle.style.transform = `translate(0px, 0px)`;
-        joystickContainer.style.opacity = '0.5';
+        joystickBase.style.display = 'none';
+        joystickHandle.style.transform = `translate(-50%, -50%)`;
     }
     
-    // Desktop and mobile support
-    window.addEventListener('mousedown', onJoystickStart);
+    joystickContainer.addEventListener('mousedown', onJoystickStart);
     window.addEventListener('mousemove', onJoystickMove);
     window.addEventListener('mouseup', onJoystickEnd);
-    window.addEventListener('touchstart', onJoystickStart, { passive: false });
+    joystickContainer.addEventListener('touchstart', onJoystickStart, { passive: false });
     window.addEventListener('touchmove', onJoystickMove, { passive: false });
     window.addEventListener('touchend', onJoystickEnd);
 
