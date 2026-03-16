@@ -8,6 +8,125 @@ const timerEl = document.getElementById('timer');
 const levelUpScreen = document.getElementById('level-up-screen');
 const skillOptionsEl = document.getElementById('skill-options');
 
+// --- Multi-language Support ---
+const translations = {
+    ko: {
+        score: "점수",
+        timer: "시간",
+        level: "레벨",
+        lvlUpTitle: "레벨 업!",
+        lvlUpSubtitle: "강화 능력을 선택하세요",
+        gameOverTitle: "게임 오버",
+        finalScoreLabel: "최종 점수",
+        finalTimeLabel: "최종 시간",
+        restartBtn: "다시 시작",
+        skills: {
+            atk_speed: { name: "신속한 타격", desc: "공격 속도가 20% 빨라집니다." },
+            damage: { name: "날카로운 발톱", desc: "공격력이 30% 증가합니다." },
+            move_speed: { name: "정글의 포식자", desc: "이동 속도가 15% 증가합니다." },
+            multi_shot: { name: "무리 사냥꾼", desc: "추가 투사체를 발사합니다." },
+            chain_lightning: { name: "연쇄 번개", desc: "공격이 주변 적 2명에게 전이됩니다." },
+            dodge: { name: "회피", desc: "적의 공격을 회피할 확률이 10% 생깁니다." },
+            heal: { name: "원시의 활력", desc: "체력을 40% 회복합니다." },
+            max_hp: { name: "고대의 체력", desc: "최대 체력이 25% 증가합니다." }
+        }
+    },
+    en: {
+        score: "Score",
+        timer: "Time",
+        level: "LV.",
+        lvlUpTitle: "LEVEL UP!",
+        lvlUpSubtitle: "Choose an Upgrade",
+        gameOverTitle: "GAME OVER",
+        finalScoreLabel: "Score",
+        finalTimeLabel: "Time",
+        restartBtn: "RESTART",
+        skills: {
+            atk_speed: { name: "Rapid Strikes", desc: "Attack 20% faster." },
+            damage: { name: "Serrated Claws", desc: "Increase damage by 30%." },
+            move_speed: { name: "Jungle Predator", desc: "Increase speed by 15%." },
+            multi_shot: { name: "Pack Hunter", desc: "Fire extra projectiles." },
+            chain_lightning: { name: "Chain Lightning", desc: "Attacks jump to 2 nearby enemies" },
+            dodge: { name: "Evasion", desc: "10% chance to dodge enemy attacks" },
+            heal: { name: "Primal Vitality", desc: "Restore 40% health." },
+            max_hp: { name: "Ancient Constitution", desc: "Increase Max HP by 25%." }
+        }
+    }
+};
+
+let currentLang = 'ko';
+
+function setLanguage(lang) {
+    currentLang = lang;
+    const t = translations[lang];
+    
+    // Update static UI
+    document.getElementById('lvl-up-title').textContent = t.lvlUpTitle;
+    document.getElementById('lvl-up-subtitle').textContent = t.lvlUpSubtitle;
+    document.getElementById('game-over-title').textContent = t.gameOverTitle;
+    document.getElementById('final-score-label').textContent = t.finalScoreLabel;
+    document.getElementById('final-time-label').textContent = t.finalTimeLabel;
+    document.getElementById('restart-btn').textContent = t.restartBtn;
+    
+    // Update active HUD
+    scoreEl.textContent = `${t.score}: ${score}`;
+    levelTextEl.textContent = `${t.level} ${player.level}`;
+}
+
+// --- Joystick Logic ---
+const joystickContainer = document.getElementById('joystick-container');
+const joystickBase = document.getElementById('joystick-base');
+const joystickHandle = document.getElementById('joystick-handle');
+let joystickActive = false;
+let joystickStartPos = { x: 0, y: 0 };
+let joystickCurrentDir = { x: 0, y: 0 };
+
+function initJoystick() {
+    if (!('ontouchstart' in window)) return;
+    
+    joystickContainer.style.display = 'block';
+    
+    joystickContainer.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        joystickActive = true;
+        joystickStartPos = { x: touch.clientX, y: touch.clientY };
+        
+        joystickBase.style.display = 'block';
+        joystickBase.style.left = `${joystickStartPos.x}px`;
+        joystickBase.style.top = `${joystickStartPos.y}px`;
+        joystickHandle.style.left = '50%';
+        joystickHandle.style.top = '50%';
+    });
+    
+    joystickContainer.addEventListener('touchmove', (e) => {
+        if (!joystickActive) return;
+        const touch = e.touches[0];
+        const dx = touch.clientX - joystickStartPos.x;
+        const dy = touch.clientY - joystickStartPos.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const maxDist = 60;
+        
+        const angle = Math.atan2(dy, dx);
+        const moveDist = Math.min(dist, maxDist);
+        
+        const handleX = Math.cos(angle) * moveDist;
+        const handleY = Math.sin(angle) * moveDist;
+        
+        joystickHandle.style.left = `calc(50% + ${handleX}px)`;
+        joystickHandle.style.top = `calc(50% + ${handleY}px)`;
+        
+        joystickCurrentDir = { x: Math.cos(angle) * (moveDist/maxDist), y: Math.sin(angle) * (moveDist/maxDist) };
+    });
+    
+    joystickContainer.addEventListener('touchend', () => {
+        joystickActive = false;
+        joystickBase.style.display = 'none';
+        joystickCurrentDir = { x: 0, y: 0 };
+    });
+}
+
+initJoystick();
+
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;

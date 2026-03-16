@@ -24,21 +24,31 @@
                     <div id="hp-bar-fill"></div>
                 </div>
             </div>
+            <div id="language-selector" style="pointer-events: auto; margin-top: 10px;">
+                <button onclick="setLanguage('ko')">KO</button>
+                <button onclick="setLanguage('en')">EN</button>
+            </div>
+        </div>
+
+        <div id="joystick-container" style="display: none;">
+            <div id="joystick-base">
+                <div id="joystick-handle"></div>
+            </div>
         </div>
 
         <div id="level-up-screen" style="display: none;">
-            <h1>LEVEL UP!</h1>
-            <p>Choose an Upgrade</p>
+            <h1 id="lvl-up-title">LEVEL UP!</h1>
+            <p id="lvl-up-subtitle">Choose an Upgrade</p>
             <div id="skill-options">
                 <!-- Skill buttons will be injected here -->
             </div>
         </div>
 
         <div id="game-over-screen" style="display: none;">
-            <h1>GAME OVER</h1>
-            <p>Score: <span id="final-score">0</span></p>
-            <p>Time: <span id="final-time">00:00</span></p>
-            <button onclick="restartGame()">RESTART</button>
+            <h1 id="game-over-title">GAME OVER</h1>
+            <p><span id="final-score-label">Score</span>: <span id="final-score">0</span></p>
+            <p><span id="final-time-label">Time</span>: <span id="final-time">00:00</span></p>
+            <button id="restart-btn" onclick="restartGame()">RESTART</button>
         </div>
     </div>
     <script src="main.js"></script>
