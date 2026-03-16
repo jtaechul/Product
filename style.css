@@ -25,10 +25,15 @@ body {
     left: 20px;
     right: 20px;
     color: white;
-    pointer-events: none;
+    pointer-events: none; /* UI container itself shouldn't block */
     display: flex;
     flex-direction: column;
-    z-index: 5;
+    z-index: 30; /* Higher than joystick to be clickable */
+}
+
+#language-selector {
+    pointer-events: auto; /* Enable clicks for language buttons */
+    margin-top: 10px;
 }
 
 #hud-top {
@@ -109,19 +114,6 @@ body {
     z-index: 100;
 }
 
-#level-up-screen h1 {
-    font-size: 56px;
-    font-weight: 800;
-    margin-bottom: 10px;
-    letter-spacing: -2px;
-}
-
-#level-up-screen p {
-    font-size: 18px;
-    margin-bottom: 40px;
-    opacity: 0.7;
-}
-
 #skill-options {
     display: flex;
     flex-direction: column;
@@ -140,27 +132,7 @@ body {
     text-align: left;
     border-radius: 16px;
     transition: all 0.3s ease;
-}
-
-.skill-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.4);
-}
-
-.skill-btn .skill-name {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 4px;
-    display: block;
-    color: #fff;
-}
-
-.skill-btn .skill-desc {
-    font-size: 14px;
-    opacity: 0.6;
-    line-height: 1.5;
-    display: block;
+    pointer-events: auto;
 }
 
 #language-selector button {
@@ -176,19 +148,16 @@ body {
     transition: all 0.2s ease;
 }
 
-#language-selector button:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
-
 /* Floating Joystick Styles */
 #joystick-container {
     position: absolute;
-    bottom: 0;
+    top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 20;
+    z-index: 10; /* Lower than UI but covers the canvas */
     pointer-events: auto;
+    touch-action: none; /* Prevent scrolling while moving */
 }
 
 #joystick-base {
@@ -201,6 +170,7 @@ body {
     transform: translate(-50%, -50%);
     pointer-events: none;
     backdrop-filter: blur(4px);
+    display: none;
 }
 
 #joystick-handle {
@@ -215,24 +185,8 @@ body {
     transform: translate(-50%, -50%);
 }
 
-/* Game Over Screen */
-#game-over-screen h1 {
-    font-size: 72px;
-    font-weight: 800;
-    color: #ff4444;
-    margin-bottom: 20px;
-}
-
-#game-over-screen p {
-    font-size: 24px;
-    margin-bottom: 15px;
-    font-weight: 500;
-}
-
 #game-over-screen button {
     font-family: 'Inter', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
     padding: 16px 40px;
     background-color: #fff;
     color: #000;
@@ -240,10 +194,5 @@ body {
     border-radius: 30px;
     cursor: pointer;
     margin-top: 40px;
-    transition: all 0.3s ease;
-}
-
-#game-over-screen button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    pointer-events: auto;
 }

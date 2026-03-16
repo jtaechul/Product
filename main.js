@@ -56,11 +56,10 @@ const translations = {
 
 let currentLang = 'ko';
 
-function setLanguage(lang) {
+window.setLanguage = function(lang) {
     currentLang = lang;
     const t = translations[lang];
     
-    // Update static UI
     document.getElementById('lvl-up-title').textContent = t.lvlUpTitle;
     document.getElementById('lvl-up-subtitle').textContent = t.lvlUpSubtitle;
     document.getElementById('game-over-title').textContent = t.gameOverTitle;
@@ -68,9 +67,9 @@ function setLanguage(lang) {
     document.getElementById('final-time-label').textContent = t.finalTimeLabel;
     document.getElementById('restart-btn').textContent = t.restartBtn;
     
-    // Update active HUD
-    scoreEl.textContent = `${t.score}: ${score}`;
-    levelTextEl.textContent = `${t.level} ${player.level}`;
+    if (player) {
+        player.updateUI();
+    }
 }
 
 // --- Joystick Logic ---
@@ -82,27 +81,26 @@ let joystickStartPos = { x: 0, y: 0 };
 let joystickCurrentDir = { x: 0, y: 0 };
 
 function initJoystick() {
-    if (!('ontouchstart' in window)) return;
-    
+    // Always enable for debugging and cross-platform support
     joystickContainer.style.display = 'block';
     
-    joystickContainer.addEventListener('touchstart', (e) => {
-        const touch = e.touches[0];
+    const handleStart = (e) => {
+        const input = e.touches ? e.touches[0] : e;
         joystickActive = true;
-        joystickStartPos = { x: touch.clientX, y: touch.clientY };
+        joystickStartPos = { x: input.clientX, y: input.clientY };
         
         joystickBase.style.display = 'block';
         joystickBase.style.left = `${joystickStartPos.x}px`;
         joystickBase.style.top = `${joystickStartPos.y}px`;
         joystickHandle.style.left = '50%';
         joystickHandle.style.top = '50%';
-    });
-    
-    joystickContainer.addEventListener('touchmove', (e) => {
+    };
+
+    const handleMove = (e) => {
         if (!joystickActive) return;
-        const touch = e.touches[0];
-        const dx = touch.clientX - joystickStartPos.x;
-        const dy = touch.clientY - joystickStartPos.y;
+        const input = e.touches ? e.touches[0] : e;
+        const dx = input.clientX - joystickStartPos.x;
+        const dy = input.clientY - joystickStartPos.y;
         const dist = Math.sqrt(dx*dx + dy*dy);
         const maxDist = 60;
         
@@ -115,17 +113,27 @@ function initJoystick() {
         joystickHandle.style.left = `calc(50% + ${handleX}px)`;
         joystickHandle.style.top = `calc(50% + ${handleY}px)`;
         
-        joystickCurrentDir = { x: Math.cos(angle) * (moveDist/maxDist), y: Math.sin(angle) * (moveDist/maxDist) };
-    });
-    
-    joystickContainer.addEventListener('touchend', () => {
+        joystickCurrentDir = { 
+            x: Math.cos(angle) * (moveDist / maxDist), 
+            y: Math.sin(angle) * (moveDist / maxDist) 
+        };
+    };
+
+    const handleEnd = () => {
         joystickActive = false;
         joystickBase.style.display = 'none';
         joystickCurrentDir = { x: 0, y: 0 };
-    });
-}
+    };
 
-initJoystick();
+    joystickContainer.addEventListener('touchstart', handleStart);
+    joystickContainer.addEventListener('touchmove', handleMove);
+    joystickContainer.addEventListener('touchend', handleEnd);
+    
+    // Mouse fallback for debugging
+    joystickContainer.addEventListener('mousedown', handleStart);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+}
 
 function resizeCanvas() {
     canvas.width = window.innerWidth;
@@ -193,14 +201,14 @@ function spawnParticles(x, y, color, count, type) {
 
 // --- Skill Definitions ---
 const SKILLS = [
-    { id: 'atk_speed', name: 'Rapid Strikes', desc: 'Attack 20% faster.', effect: (p) => p.attackSpeedMod *= 0.8 },
-    { id: 'damage', name: 'Serrated Claws', desc: 'Increase damage by 30%.', effect: (p) => p.damageMod *= 1.3 },
-    { id: 'move_speed', name: 'Jungle Predator', desc: 'Increase speed by 15%.', effect: (p) => p.speed += 0.8 },
-    { id: 'multi_shot', name: 'Pack Hunter', desc: 'Fire extra projectiles.', effect: (p) => p.multiShot += 1 },
-    { id: 'chain_lightning', name: 'Chain Lightning', desc: 'Attacks jump to 2 nearby enemies', effect: (p) => p.chainLightningCount += 2 },
-    { id: 'dodge', name: 'Evasion', desc: '10% chance to dodge enemy attacks', effect: (p) => p.dodgeChance += 0.1 },
-    { id: 'heal', name: 'Primal Vitality', desc: 'Restore 40% health.', effect: (p) => p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.4) },
-    { id: 'max_hp', name: 'Ancient Constitution', desc: 'Increase Max HP by 25%.', effect: (p) => { p.maxHp *= 1.25; p.hp *= 1.25; } }
+    { id: 'atk_speed', effect: (p) => p.attackSpeedMod *= 0.8 },
+    { id: 'damage', effect: (p) => p.damageMod *= 1.3 },
+    { id: 'move_speed', effect: (p) => p.speed += 0.8 },
+    { id: 'multi_shot', effect: (p) => p.multiShot += 1 },
+    { id: 'chain_lightning', effect: (p) => p.chainLightningCount += 2 },
+    { id: 'dodge', effect: (p) => p.dodgeChance += 0.1 },
+    { id: 'heal', effect: (p) => p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.4) },
+    { id: 'max_hp', effect: (p) => { p.maxHp *= 1.25; p.hp *= 1.25; } }
 ];
 
 class XPGem {
@@ -286,10 +294,16 @@ class Player {
         if (keys['ArrowLeft'] || keys['KeyA']) dx -= 1;
         if (keys['ArrowRight'] || keys['KeyD']) dx += 1;
 
+        // Joystick Input
+        if (joystickActive) {
+            dx += joystickCurrentDir.x;
+            dy += joystickCurrentDir.y;
+        }
+
         // Dash logic
-        if (keys['ShiftLeft'] && this.dashCooldown <= 0 && (dx !== 0 || dy !== 0)) {
-            this.dashTimer = 60; // 1 second at 60fps
-            this.dashCooldown = 180; // 3 seconds
+        if ((keys['ShiftLeft'] || (joystickActive && Math.sqrt(dx*dx + dy*dy) > 0.8)) && this.dashCooldown <= 0 && (dx !== 0 || dy !== 0)) {
+            this.dashTimer = 40; 
+            this.dashCooldown = 180;
             spawnParticles(this.x, this.y, '#fff', 10, 'dust');
         }
 
@@ -331,7 +345,7 @@ class Player {
     takeDamage(amount, fromX, fromY) {
         if (Math.random() < this.dodgeChance) {
             spawnParticles(this.x, this.y - 30, '#fff', 5, 'spark');
-            return; // Dodged!
+            return;
         }
         this.hp -= amount;
         const dx = this.x - fromX;
@@ -358,9 +372,11 @@ class Player {
     }
 
     updateUI() {
+        const t = translations[currentLang];
         xpBarEl.style.width = (this.xp / this.xpToNext * 100) + '%';
-        levelTextEl.textContent = `LV. ${this.level}`;
+        levelTextEl.textContent = `${t.level} ${this.level}`;
         hpBarEl.style.width = (this.hp / this.maxHp * 100) + '%';
+        scoreEl.textContent = `${t.score}: ${score}`;
     }
 
     draw(ctx, camX, camY) {
@@ -553,7 +569,8 @@ function showLevelUpScreen() {
     shuffled.slice(0, 3).forEach(skill => {
         const btn = document.createElement('button');
         btn.className = 'skill-btn';
-        btn.innerHTML = `<span class="skill-name">${skill.name}</span><span class="skill-desc">${skill.desc}</span>`;
+        const tSkill = translations[currentLang].skills[skill.id];
+        btn.innerHTML = `<span class="skill-name">${tSkill.name}</span><span class="skill-desc">${tSkill.desc}</span>`;
         btn.onclick = () => {
             skill.effect(player);
             isPaused = false;
@@ -599,7 +616,6 @@ function applyChainLightning(targetEnemy, count) {
     const jumps = candidates.slice(0, count);
     jumps.forEach(e => {
         e.takeDamage(10 * player.damageMod, targetEnemy.x, targetEnemy.y);
-        // Visual effect
         ctx.save();
         ctx.strokeStyle = '#67e8f9'; ctx.lineWidth = 3; ctx.shadowBlur = 10; ctx.shadowColor = '#67e8f9';
         ctx.beginPath(); ctx.moveTo(targetEnemy.x - camera.x, targetEnemy.y - camera.y); ctx.lineTo(e.x - camera.x, e.y - camera.y); ctx.stroke();
@@ -645,7 +661,6 @@ function animate() {
     updateCamera();
     drawBackground();
     
-    // Pickups
     for(let i = xpGems.length - 1; i >= 0; i--) {
         const gem = xpGems[i]; gem.draw(ctx, camera.x, camera.y);
         const dist = Math.sqrt((gem.x - player.x)**2 + (gem.y - player.y)**2);
@@ -665,7 +680,6 @@ function animate() {
     player.update();
     player.draw(ctx, camera.x, camera.y);
 
-    // Combat
     if (player.attackCooldown <= 0 && enemies.length > 0) {
         let nearest = null; let minDist = 800;
         enemies.forEach(e => {
@@ -693,7 +707,7 @@ function animate() {
                 projectiles.splice(i, 1);
                 if (e.hp <= 0) {
                     score += e.isBoss ? 5000 : (e.isElite ? 150 : 20);
-                    scoreEl.textContent = `Score: ${score}`;
+                    scoreEl.textContent = `${translations[currentLang].score}: ${score}`;
                     spawnParticles(e.x, e.y, '#fff', 15, 'spark');
                     xpGems.push(new XPGem(e.x, e.y, e.isBoss ? 1000 : (e.isElite ? 100 : 30)));
                     if (Math.random() < 0.05) healDrops.push(new HealDrop(e.x, e.y));
@@ -704,11 +718,8 @@ function animate() {
         }
     }
 
-    // Spawning
     spawnTimer++;
-    if (gameTime > 0 && gameTime % (180 * 60) === 0) { // Every 3 minutes
-        enemies.push(new Enemy(false, true));
-    }
+    if (gameTime > 0 && gameTime % (180 * 60) === 0) { enemies.push(new Enemy(false, true)); }
     const spawnRate = Math.max(8, 45 - Math.floor(gameTime / 600));
     if (spawnTimer > spawnRate) { enemies.push(new Enemy(gameTime % 2400 < 120, false)); spawnTimer = 0; }
 
@@ -726,4 +737,7 @@ function animate() {
     }
     drawLighting();
 }
+
+initJoystick();
+setLanguage('ko');
 animate();
