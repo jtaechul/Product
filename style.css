@@ -95,4 +95,68 @@ body {
     backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     white-space: nowrap;
+    /* D-pad가 있을 때 힌트가 겹치지 않게 왼쪽 여백 확보 */
+    margin-left: 80px;
+}
+
+/* ─── 플로팅 D-pad ────────────────────────────────────────────── */
+#dpad {
+    position: fixed;
+    bottom: 36px;
+    left: 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    z-index: 20;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.dpad-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.dpad-btn {
+    width: 68px;
+    height: 68px;
+    background: rgba(15, 20, 40, 0.78);
+    color: rgba(200, 220, 255, 0.9);
+    border: 2px solid rgba(100, 140, 255, 0.30);
+    border-radius: 14px;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+
+    /* 터치 기본 동작 방지 */
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background 0.08s, border-color 0.08s, transform 0.06s;
+
+    /* 텍스트 선택 방지 */
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.dpad-btn:active,
+.dpad-btn.pressed {
+    background: rgba(50, 100, 220, 0.85);
+    border-color: rgba(120, 170, 255, 0.70);
+    transform: scale(0.93);
+    color: #ffffff;
+}
+
+/* D-pad 중앙 빈 칸 */
+.dpad-center {
+    width: 68px;
+    height: 68px;
+    background: rgba(15, 20, 40, 0.45);
+    border: 2px solid rgba(100, 140, 255, 0.12);
+    border-radius: 14px;
+    pointer-events: none;
 }
