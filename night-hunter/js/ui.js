@@ -14,12 +14,12 @@ const GameUI = {
         const container = document.createElement('div');
         container.id = 'minimap-container';
         container.style.cssText = `
-            position:fixed; right:16px; bottom:90px;
+            position:fixed; right:12px; top:60px;
             width:${this.minimapSize}px; height:${this.minimapSize}px;
             border-radius:50%; overflow:hidden;
             border:2px solid rgba(255,255,255,0.3);
             background:rgba(0,0,0,0.5);
-            z-index:30; pointer-events:none;
+            z-index:25; pointer-events:none;
         `;
         const canvas = document.createElement('canvas');
         canvas.id = 'minimap';
@@ -182,11 +182,11 @@ const GameUI = {
             el = document.createElement('div');
             el.id = 'hint-counter';
             el.style.cssText = `
-                position:fixed; right:16px; bottom:220px;
+                position:fixed; right:12px; top:190px;
                 background:rgba(0,0,0,0.5); backdrop-filter:blur(4px);
-                padding:4px 12px; border-radius:12px;
-                font-size:12px; color:#fbbf24; font-weight:700;
-                z-index:30; pointer-events:none;
+                padding:4px 10px; border-radius:12px;
+                font-size:11px; color:#fbbf24; font-weight:700;
+                z-index:25; pointer-events:none;
             `;
             document.body.appendChild(el);
         }

@@ -90,21 +90,18 @@ body {
 
 #hud-bottom {
     position: absolute;
-    bottom: 16px;
-    left: 0;
-    right: 0;
+    top: 44px;
+    left: 16px;
     display: flex;
-    justify-content: center;
     align-items: center;
-    padding: 0 16px;
 }
 
 #arrest-count {
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 700;
     background: rgba(0,0,0,0.5);
     backdrop-filter: blur(4px);
-    padding: 8px 18px;
+    padding: 5px 12px;
     border-radius: 20px;
     border: 1px solid rgba(255,255,255,0.15);
 }
