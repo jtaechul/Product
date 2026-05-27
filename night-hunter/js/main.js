@@ -264,7 +264,7 @@ function createPlayer() {
     hatBadge.position.set(0, 2.08, 0.26);
     playerGroup.add(hatBadge);
 
-    playerGroup.position.set(0, 0, 80);
+    playerGroup.position.set(0, 0, 92);
     scene.add(playerGroup);
 }
 
