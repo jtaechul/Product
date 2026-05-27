@@ -27,6 +27,7 @@ function createWorld(scene) {
     const zoneBuildings = createZoneBuildings(worldGroup);
     buildingData.push(...zoneBuildings);
 
+    connectBuildingsToRoads(worldGroup, buildingData);
     createStreetProps(worldGroup);
     createParks(worldGroup);
 
@@ -378,6 +379,76 @@ function createZoneBuildings(group) {
     }
 
     return buildings;
+}
+
+function connectBuildingsToRoads(group, buildings) {
+    const roadMat = new THREE.MeshLambertMaterial({ color: 0x444444 });
+    const sidewalkMat = new THREE.MeshLambertMaterial({ color: 0x999999 });
+
+    // Main road lines (axis-aligned)
+    const mainRoads = [
+        { axis: 'z', pos: 0, min: -150, max: 150 },   // vertical center
+        { axis: 'x', pos: 50, min: -150, max: 150 },   // horizontal upper
+        { axis: 'x', pos: -40, min: -100, max: 100 },  // horizontal lower
+        { axis: 'z', pos: -50, min: -25, max: 75 },    // left connector
+        { axis: 'z', pos: 50, min: -25, max: 75 },     // right connector
+    ];
+
+    buildings.forEach(b => {
+        const bx = b.x || 0;
+        const bz = b.z || 0;
+        const bw = b.w || 6;
+        const bd = b.d || 6;
+        const frontZ = bz + bd / 2 + 4;
+
+        // Find nearest main road
+        let bestDist = Infinity;
+        let bestTarget = null;
+
+        mainRoads.forEach(r => {
+            if (r.axis === 'x') {
+                // Horizontal road at z=r.pos
+                const dist = Math.abs(frontZ - r.pos);
+                if (dist < bestDist && bx >= r.min && bx <= r.max) {
+                    bestDist = dist;
+                    bestTarget = { x: bx, z: r.pos };
+                }
+            } else {
+                // Vertical road at x=r.pos
+                const dist = Math.abs(bx - r.pos);
+                if (dist < bestDist && bz >= r.min && bz <= r.max) {
+                    bestDist = dist;
+                    bestTarget = { x: r.pos, z: bz };
+                }
+            }
+        });
+
+        if (!bestTarget || bestDist < 3) return;
+
+        // Draw connecting road from building front to nearest main road
+        const dx = bestTarget.x - bx;
+        const dz = bestTarget.z - frontZ;
+        const len = Math.sqrt(dx * dx + dz * dz);
+        if (len < 2) return;
+
+        const cx = (bx + bestTarget.x) / 2;
+        const cz = (frontZ + bestTarget.z) / 2;
+        const angle = Math.atan2(dx, dz);
+
+        // Sidewalk (wider)
+        const sw = new THREE.Mesh(new THREE.BoxGeometry(4, 0.04, len + 1), sidewalkMat);
+        sw.position.set(cx, 0.02, cz);
+        sw.rotation.y = angle;
+        sw.receiveShadow = true;
+        group.add(sw);
+
+        // Road surface
+        const road = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.06, len), roadMat);
+        road.position.set(cx, 0.03, cz);
+        road.rotation.y = angle;
+        road.receiveShadow = true;
+        group.add(road);
+    });
 }
 
 function createStreetLight(group, x, z) {

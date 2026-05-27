@@ -133,22 +133,36 @@ const Shop = {
         document.getElementById('inv-close').addEventListener('click', () => this.toggleInventory());
     },
 
+    // Police station also acts as shop
+    policeShopX: 0,
+    policeShopZ: 80,
+    policeShopDist: 12,
+
     update(playerPos) {
         if (!gameState.isDay || DayNight.isTransitioning) {
             this.hideShopPrompt();
             return;
         }
 
-        const dx = playerPos.x - this.shopX;
-        const dz = playerPos.z - this.shopZ;
-        const dist = Math.sqrt(dx * dx + dz * dz);
+        // Check distance to shop NPC
+        const dx1 = playerPos.x - this.shopX;
+        const dz1 = playerPos.z - this.shopZ;
+        const dist1 = Math.sqrt(dx1 * dx1 + dz1 * dz1);
+
+        // Check distance to police station
+        const dx2 = playerPos.x - this.policeShopX;
+        const dz2 = playerPos.z - this.policeShopZ;
+        const dist2 = Math.sqrt(dx2 * dx2 + dz2 * dz2);
+
+        const nearShop = dist1 < this.shopDistance;
+        const nearPolice = dist2 < this.policeShopDist;
 
         const interactBtn = document.getElementById('btn-interact');
-        if (dist < this.shopDistance && !this.isOpen && !HintSystem.nearbyHint) {
+        if ((nearShop || nearPolice) && !this.isOpen && !HintSystem.nearbyHint) {
             interactBtn.style.display = 'flex';
             interactBtn.textContent = '🛒';
             interactBtn.onclick = () => this.openShop();
-            HintSystem.showPrompt('E키로 상점 이용');
+            HintSystem.showPrompt(nearPolice && !nearShop ? 'E키로 경찰서 상점 이용' : 'E키로 상점 이용');
         } else if (!HintSystem.nearbyHint && !this.isOpen) {
             if (interactBtn.textContent === '🛒') {
                 interactBtn.style.display = 'none';
