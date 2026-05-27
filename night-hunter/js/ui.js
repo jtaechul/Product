@@ -8,6 +8,7 @@ const GameUI = {
     init() {
         this.createMinimap();
         this.createActionButtons();
+        this.createLandscapeOverlay();
     },
 
     createMinimap() {
@@ -49,7 +50,33 @@ const GameUI = {
         }
     },
 
-    updateMinimap(playerPos, playerAngle) {
+    createLandscapeOverlay() {
+        const overlay = document.createElement('div');
+        overlay.id = 'landscape-overlay';
+        overlay.style.cssText = `
+            display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+            background:#000; z-index:9999;
+            flex-direction:column; align-items:center; justify-content:center;
+            color:#fff; font-family:'Inter',sans-serif; text-align:center;
+        `;
+        overlay.innerHTML = `
+            <div style="font-size:48px; margin-bottom:16px;">📱🔄</div>
+            <div style="font-size:18px; font-weight:700;">화면을 가로로 돌려주세요</div>
+            <div style="font-size:13px; color:#888; margin-top:8px;">이 게임은 가로 모드에서만 플레이할 수 있습니다.</div>
+        `;
+        document.body.appendChild(overlay);
+
+        const check = () => {
+            const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+            const isPortrait = window.innerHeight > window.innerWidth;
+            overlay.style.display = (isMobile && isPortrait) ? 'flex' : 'none';
+        };
+        window.addEventListener('resize', check);
+        window.addEventListener('orientationchange', () => setTimeout(check, 200));
+        check();
+    },
+
+    updateMinimap(playerPos, playerAngle, cameraAngle) {
         const ctx = this.minimapCtx;
         const size = this.minimapSize;
         const half = size / 2;
@@ -57,7 +84,6 @@ const GameUI = {
 
         ctx.clearRect(0, 0, size, size);
 
-        // Background circle
         ctx.save();
         ctx.beginPath();
         ctx.arc(half, half, half, 0, Math.PI * 2);
@@ -66,13 +92,19 @@ const GameUI = {
         ctx.fillStyle = '#1a2e1a';
         ctx.fillRect(0, 0, size, size);
 
+        // Rotate entire minimap content with camera
+        ctx.save();
+        ctx.translate(half, half);
+        ctx.rotate(cameraAngle);
+        ctx.translate(-half, -half);
+
         // Roads
         ctx.strokeStyle = 'rgba(80,80,80,0.6)';
         ctx.lineWidth = 2;
         const roads = [
-            { x1: -150, z1: 50, x2: 150, z2: 50, w: 8 },
-            { x1: 0, z1: -150, x2: 0, z2: 150, w: 8 },
-            { x1: -100, z1: -40, x2: 100, z2: -40, w: 6 },
+            { x1: -150, z1: 50, x2: 150, z2: 50 },
+            { x1: 0, z1: -150, x2: 0, z2: 150 },
+            { x1: -100, z1: -40, x2: 100, z2: -40 },
         ];
         roads.forEach(r => {
             const sx = half + (r.x1 - playerPos.x) * scale;
@@ -85,19 +117,23 @@ const GameUI = {
             ctx.stroke();
         });
 
-        // Buildings
+        // Buildings — colored by zone only
         buildingData.forEach(b => {
             const bx = half + ((b.x || 0) - playerPos.x) * scale;
             const bz = half + ((b.z || 0) - playerPos.z) * scale;
             const bw = (b.w || 6) * scale;
             const bd = (b.d || 6) * scale;
 
-            if (bx < -20 || bx > size + 20 || bz < -20 || bz > size + 20) return;
+            if (bx < -30 || bx > size + 30 || bz < -30 || bz > size + 30) return;
 
-            if (b.type === 'hideout') {
-                ctx.fillStyle = 'rgba(255,60,60,0.6)';
-            } else if (b.type === 'police') {
+            if (b.type === 'police') {
                 ctx.fillStyle = 'rgba(30,100,200,0.7)';
+            } else if (b.zone === 'RESIDENTIAL') {
+                ctx.fillStyle = 'rgba(180,140,80,0.5)';
+            } else if (b.zone === 'COMMERCIAL') {
+                ctx.fillStyle = 'rgba(100,140,180,0.5)';
+            } else if (b.zone === 'FACTORY') {
+                ctx.fillStyle = 'rgba(120,120,120,0.5)';
             } else {
                 ctx.fillStyle = 'rgba(150,150,150,0.4)';
             }
@@ -149,13 +185,11 @@ const GameUI = {
             }
         }
 
-        // Player (blue triangle pointing forward)
-        // playerAngle: 0=+Z(south), PI/2=+X(east) in world
-        // Canvas: -Y=up=north. Unrotated triangle points up(-Y).
-        // Need: facing +Z(south) → point down = rotate PI
+        ctx.restore(); // end camera rotation
+
+        // Player arrow (always center, always points up = camera forward)
         ctx.save();
         ctx.translate(half, half);
-        ctx.rotate(Math.PI - playerAngle);
         ctx.fillStyle = '#60a5fa';
         ctx.beginPath();
         ctx.moveTo(0, -6);
@@ -168,13 +202,23 @@ const GameUI = {
         ctx.stroke();
         ctx.restore();
 
-        // Border circle
+        // Border
         ctx.strokeStyle = 'rgba(255,255,255,0.2)';
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.arc(half, half, half - 1, 0, Math.PI * 2);
         ctx.stroke();
 
+        ctx.restore();
+
+        // North indicator
+        ctx.save();
+        ctx.translate(half, half);
+        ctx.rotate(cameraAngle);
+        ctx.fillStyle = '#ef4444';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('N', 0, -half + 12);
         ctx.restore();
     },
 

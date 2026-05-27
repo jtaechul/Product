@@ -167,6 +167,22 @@ function createBuilding(group, x, z, w, d, h, color, label) {
     door.position.set(x, 1.25, z + d / 2 + 0.08);
     group.add(door);
 
+    // Front road/sidewalk
+    const frontRoad = new THREE.Mesh(
+        new THREE.BoxGeometry(w + 2, 0.06, 3),
+        new THREE.MeshLambertMaterial({ color: 0x555555 })
+    );
+    frontRoad.position.set(x, 0.03, z + d / 2 + 2.5);
+    frontRoad.receiveShadow = true;
+    group.add(frontRoad);
+    const sidewalk = new THREE.Mesh(
+        new THREE.BoxGeometry(w + 3, 0.05, 1.5),
+        new THREE.MeshLambertMaterial({ color: 0xaaaaaa })
+    );
+    sidewalk.position.set(x, 0.025, z + d / 2 + 0.75);
+    sidewalk.receiveShadow = true;
+    group.add(sidewalk);
+
     mesh.userData = { label, x, z, w, d, h };
     return mesh;
 }
