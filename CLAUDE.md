@@ -67,3 +67,13 @@ There is no build tool, no test framework, no linter, and no CI pipeline. Change
 - **World coordinates**: the game world is 4000×4000. Camera follows the player with clamping at edges.
 - **Frame-based timing**: game time is counted in frames at 60fps (e.g., `180 * 60` frames = 3 minutes). There is no delta-time normalization.
 - **Difficulty scaling**: enemy stats and spawn rate scale with `gameTime`. Bosses spawn every 3 minutes.
+
+## Night Hunter Development
+
+Night Hunter는 `night-hunter/` 디렉토리에서 개발 중인 3D 웹 게임 (Three.js).
+
+### 개발 규칙
+
+- **매 단계 완료 후 반드시 테스트**: 코딩 완료 → 로컬 서버 기동 → 브라우저에서 게임 정상 작동 검증 → 문제 발견 시 즉시 수정 → 검증 통과 후 커밋/배포
+- **배포**: 각 단계 완료 시 main 브랜치 머지 후 GitHub Pages 자동 배포
+- **파일 구조**: `index.html`, `style.css`, `js/` 하위 모듈별 분리 (world.js, main.js, daynight.js 등)
