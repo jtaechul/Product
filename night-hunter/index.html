@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>NIGHT HUNTER</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="hud">
+            <div id="hud-top">
+                <div id="health-bar">
+                    <span class="heart">&#10084;</span>
+                    <span class="heart">&#10084;</span>
+                    <span class="heart">&#10084;</span>
+                    <span class="heart">&#10084;</span>
+                    <span class="heart">&#10084;</span>
+                </div>
+                <div id="time-display">
+                    <span id="time-icon">&#9728;&#65039;</span>
+                    <span id="timer">7:00</span>
+                    <span id="day-text">1일차</span>
+                </div>
+                <div id="coin-display">&#128176; <span id="coin-amount">30</span></div>
+            </div>
+            <div id="hud-bottom">
+                <div id="arrest-count">&#128110; 검거 0/3</div>
+            </div>
+        </div>
+        <div id="message-box" style="display:none;"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="js/world.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
