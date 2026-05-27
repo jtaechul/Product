@@ -84,133 +84,99 @@ const GameUI = {
 
         ctx.clearRect(0, 0, size, size);
 
+        // Clip circle
         ctx.save();
         ctx.beginPath();
         ctx.arc(half, half, half, 0, Math.PI * 2);
         ctx.clip();
-
         ctx.fillStyle = '#1a2e1a';
         ctx.fillRect(0, 0, size, size);
 
-        // World content (fixed north=up)
+        // Rotate world with camera (camera forward = up)
+        ctx.save();
+        ctx.translate(half, half);
+        ctx.rotate(cameraAngle);
+        ctx.translate(-half, -half);
+
+        // Helper: world→minimap coords (before camera rotation)
+        const mx = (wx) => half + (wx - playerPos.x) * scale;
+        const mz = (wz) => half + (wz - playerPos.z) * scale;
 
         // Roads
         ctx.strokeStyle = 'rgba(80,80,80,0.6)';
         ctx.lineWidth = 2;
-        const roads = [
-            { x1: -150, z1: 50, x2: 150, z2: 50 },
-            { x1: 0, z1: -150, x2: 0, z2: 150 },
-            { x1: -100, z1: -40, x2: 100, z2: -40 },
-        ];
-        roads.forEach(r => {
-            const sx = half + (r.x1 - playerPos.x) * scale;
-            const sy = half + (r.z1 - playerPos.z) * scale;
-            const ex = half + (r.x2 - playerPos.x) * scale;
-            const ey = half + (r.z2 - playerPos.z) * scale;
-            ctx.beginPath();
-            ctx.moveTo(sx, sy);
-            ctx.lineTo(ex, ey);
-            ctx.stroke();
+        [[- 150, 50, 150, 50], [0, -150, 0, 150], [-100, -40, 100, -40]].forEach(([x1,z1,x2,z2]) => {
+            ctx.beginPath(); ctx.moveTo(mx(x1), mz(z1)); ctx.lineTo(mx(x2), mz(z2)); ctx.stroke();
         });
 
-        // Buildings — colored by zone only
+        // Buildings
         buildingData.forEach(b => {
-            const bx = half + ((b.x || 0) - playerPos.x) * scale;
-            const bz = half + ((b.z || 0) - playerPos.z) * scale;
-            const bw = (b.w || 6) * scale;
-            const bd = (b.d || 6) * scale;
-
-            if (bx < -30 || bx > size + 30 || bz < -30 || bz > size + 30) return;
-
-            if (b.type === 'police') {
-                ctx.fillStyle = 'rgba(30,100,200,0.7)';
-            } else if (b.zone === 'RESIDENTIAL') {
-                ctx.fillStyle = 'rgba(180,140,80,0.5)';
-            } else if (b.zone === 'COMMERCIAL') {
-                ctx.fillStyle = 'rgba(100,140,180,0.5)';
-            } else if (b.zone === 'FACTORY') {
-                ctx.fillStyle = 'rgba(120,120,120,0.5)';
-            } else {
-                ctx.fillStyle = 'rgba(150,150,150,0.4)';
-            }
-            ctx.fillRect(bx - bw / 2, bz - bd / 2, bw, bd);
+            const bx = mx(b.x||0), bz = mz(b.z||0);
+            const bw = (b.w||6)*scale, bd = (b.d||6)*scale;
+            if (bx<-30||bx>size+30||bz<-30||bz>size+30) return;
+            if (b.type==='police') ctx.fillStyle='rgba(30,100,200,0.7)';
+            else if (b.zone==='RESIDENTIAL') ctx.fillStyle='rgba(180,140,80,0.5)';
+            else if (b.zone==='COMMERCIAL') ctx.fillStyle='rgba(100,140,180,0.5)';
+            else if (b.zone==='FACTORY') ctx.fillStyle='rgba(120,120,120,0.5)';
+            else ctx.fillStyle='rgba(150,150,150,0.4)';
+            ctx.fillRect(bx-bw/2, bz-bd/2, bw, bd);
         });
 
         // Hints
-        if (typeof HintSystem !== 'undefined') {
+        if (typeof HintSystem!=='undefined') {
             HintSystem.hints.forEach(h => {
                 if (h.collected) return;
-                const hx = half + (h.x - playerPos.x) * scale;
-                const hz = half + (h.z - playerPos.z) * scale;
-                if (hx < -10 || hx > size + 10 || hz < -10 || hz > size + 10) return;
-                const showOnMap = (typeof Shop !== 'undefined' && Shop.hasItem('radio')) || gameState.isDay;
-                if (showOnMap && gameState.isDay) {
-                    ctx.fillStyle = '#fbbf24';
-                    ctx.font = 'bold 10px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('★', hx, hz + 4);
+                const hx=mx(h.x), hz=mz(h.z);
+                if (hx<-10||hx>size+10||hz<-10||hz>size+10) return;
+                if ((typeof Shop!=='undefined'&&Shop.hasItem('radio'))||gameState.isDay) {
+                    if (gameState.isDay) { ctx.fillStyle='#fbbf24'; ctx.font='bold 10px sans-serif'; ctx.textAlign='center'; ctx.fillText('★',hx,hz+4); }
                 }
             });
         }
 
         // Enemies
-        if (!gameState.isDay && typeof EnemySystem !== 'undefined') {
+        if (!gameState.isDay&&typeof EnemySystem!=='undefined') {
             EnemySystem.enemies.forEach(e => {
-                if (e.arrested || e.state === 'hidden') return;
-                const ex = half + (e.currentX - playerPos.x) * scale;
-                const ez = half + (e.currentZ - playerPos.z) * scale;
-                if (ex < -10 || ex > size + 10 || ez < -10 || ez > size + 10) return;
-                ctx.fillStyle = '#ff3333';
-                ctx.beginPath();
-                ctx.arc(ex, ez, 3, 0, Math.PI * 2);
-                ctx.fill();
+                if (e.arrested||e.state==='hidden') return;
+                const ex=mx(e.currentX), ez=mz(e.currentZ);
+                if (ex<-10||ex>size+10||ez<-10||ez>size+10) return;
+                ctx.fillStyle='#ff3333'; ctx.beginPath(); ctx.arc(ex,ez,3,0,Math.PI*2); ctx.fill();
             });
         }
 
         // Shop
-        if (typeof Shop !== 'undefined') {
-            const sx = half + (Shop.shopX - playerPos.x) * scale;
-            const sz = half + (Shop.shopZ - playerPos.z) * scale;
-            if (sx > -10 && sx < size + 10 && sz > -10 && sz < size + 10) {
-                ctx.fillStyle = '#3b82f6';
-                ctx.beginPath();
-                ctx.arc(sx, sz, 3, 0, Math.PI * 2);
-                ctx.fill();
-            }
+        if (typeof Shop!=='undefined') {
+            const sx=mx(Shop.shopX), sz=mz(Shop.shopZ);
+            if (sx>-10&&sx<size+10&&sz>-10&&sz<size+10) { ctx.fillStyle='#3b82f6'; ctx.beginPath(); ctx.arc(sx,sz,3,0,Math.PI*2); ctx.fill(); }
         }
 
-        // Player arrow (rotates with character facing direction)
-        // playerAngle 0=+Z, on minimap +Z=down, so rotate PI-angle
+        ctx.restore(); // end camera rotation
+
+        // Player arrow — rotates with character direction relative to camera
+        // charAngleOnMap = character world angle - camera angle, then flip for canvas
+        const charRelAngle = Math.PI - playerAngle + cameraAngle;
         ctx.save();
         ctx.translate(half, half);
-        ctx.rotate(Math.PI - playerAngle);
+        ctx.rotate(charRelAngle);
         ctx.fillStyle = '#60a5fa';
         ctx.beginPath();
-        ctx.moveTo(0, -7);
-        ctx.lineTo(-5, 5);
-        ctx.lineTo(5, 5);
+        ctx.moveTo(0, -7); ctx.lineTo(-5, 5); ctx.lineTo(5, 5);
         ctx.closePath();
         ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
         ctx.restore();
 
         // Border
-        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(half, half, half - 1, 0, Math.PI * 2);
-        ctx.stroke();
-
+        ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.arc(half,half,half-1,0,Math.PI*2); ctx.stroke();
         ctx.restore();
 
-        // North indicator (fixed top)
+        // North indicator (rotates with camera)
         ctx.save();
-        ctx.fillStyle = '#ef4444';
-        ctx.font = 'bold 9px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('N', half, 11);
+        ctx.translate(half, half);
+        ctx.rotate(cameraAngle);
+        ctx.fillStyle='#ef4444'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center';
+        ctx.fillText('N', 0, -half+12);
         ctx.restore();
     },
 

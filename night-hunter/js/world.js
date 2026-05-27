@@ -36,20 +36,39 @@ function createWorld(scene) {
 }
 
 function createGround(group) {
-    const geo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE);
-    const mat = new THREE.MeshLambertMaterial({ color: 0x2d5a1e });
+    // Main ground with gradient-like look
+    const geo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 20, 20);
+    const mat = new THREE.MeshLambertMaterial({ color: 0x3a6b2a });
     const ground = new THREE.Mesh(geo, mat);
     ground.rotation.x = -Math.PI / 2;
     ground.position.set(0, 0, 0);
     ground.receiveShadow = true;
     group.add(ground);
 
-    const boundary = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.BoxGeometry(WORLD_SIZE, 0.5, WORLD_SIZE)),
-        new THREE.LineBasicMaterial({ color: 0x444444 })
-    );
-    boundary.position.y = 0.25;
-    group.add(boundary);
+    // Grass patches for visual variety
+    const patchColors = [0x2d5a1e, 0x3a7a2e, 0x4a8a3e, 0x2e6622];
+    for (let i = 0; i < 40; i++) {
+        const px = (Math.random() - 0.5) * WORLD_SIZE * 0.9;
+        const pz = (Math.random() - 0.5) * WORLD_SIZE * 0.9;
+        const ps = 8 + Math.random() * 20;
+        const patch = new THREE.Mesh(
+            new THREE.CircleGeometry(ps, 12),
+            new THREE.MeshLambertMaterial({ color: patchColors[i % patchColors.length] })
+        );
+        patch.rotation.x = -Math.PI / 2;
+        patch.position.set(px, 0.01, pz);
+        group.add(patch);
+    }
+
+    // City boundary wall
+    const wallMat = new THREE.MeshLambertMaterial({ color: 0x555555 });
+    const wallH = 3;
+    [[-1,0,1,WORLD_SIZE],[1,0,1,WORLD_SIZE],[0,-1,WORLD_SIZE,1],[0,1,WORLD_SIZE,1]].forEach(([dx,dz,w,d]) => {
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(w === 1 ? 1 : WORLD_SIZE, wallH, d === 1 ? 1 : WORLD_SIZE), wallMat);
+        wall.position.set(dx * WORLD_SIZE / 2, wallH / 2, dz * WORLD_SIZE / 2);
+        wall.castShadow = true;
+        group.add(wall);
+    });
 }
 
 function createRoads(group) {
@@ -139,28 +158,47 @@ function createPoliceStation(group) {
 }
 
 function createBuilding(group, x, z, w, d, h, color, label) {
+    // Main body with slight color variation on sides
+    const mat = new THREE.MeshPhongMaterial({ color, flatShading: false });
     const geo = new THREE.BoxGeometry(w, h, d);
-    const mat = new THREE.MeshLambertMaterial({ color });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.set(x, h / 2, z);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     group.add(mesh);
 
-    // Windows
-    const winMat = new THREE.MeshPhongMaterial({ color: 0x88ccff, emissive: 0x112233 });
+    // Base/foundation
+    const base = new THREE.Mesh(
+        new THREE.BoxGeometry(w + 0.3, 0.4, d + 0.3),
+        new THREE.MeshLambertMaterial({ color: 0x666666 })
+    );
+    base.position.set(x, 0.2, z);
+    base.receiveShadow = true;
+    group.add(base);
+
+    // Windows on front and back
+    const winMat = new THREE.MeshPhongMaterial({ color: 0x88ccff, emissive: 0x223344 });
     const floors = Math.floor(h / 3);
     for (let f = 0; f < floors; f++) {
         for (let wi = 0; wi < Math.floor(w / 2.5); wi++) {
+            // Front windows
             const win = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.1), winMat);
-            win.position.set(
-                x - w / 2 + 1.5 + wi * 2.5,
-                1.5 + f * 3,
-                z + d / 2 + 0.06
-            );
+            win.position.set(x - w / 2 + 1.5 + wi * 2.5, 1.5 + f * 3, z + d / 2 + 0.06);
             group.add(win);
+            // Back windows
+            const win2 = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.1), winMat);
+            win2.position.set(x - w / 2 + 1.5 + wi * 2.5, 1.5 + f * 3, z - d / 2 - 0.06);
+            group.add(win2);
         }
     }
+
+    // Roof ledge
+    const ledge = new THREE.Mesh(
+        new THREE.BoxGeometry(w + 0.5, 0.2, d + 0.5),
+        new THREE.MeshLambertMaterial({ color: 0x555555 })
+    );
+    ledge.position.set(x, h + 0.1, z);
+    group.add(ledge);
 
     // Door
     const doorMat = new THREE.MeshLambertMaterial({ color: 0x4a3520 });

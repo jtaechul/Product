@@ -36,6 +36,7 @@ const DayNight = {
         this.createStars();
         this.createFlashlight();
         this.hideMoon();
+        this.initStreetLightPool();
     },
 
     createMoon() {
@@ -192,6 +193,19 @@ const DayNight = {
         return false;
     },
 
+    initStreetLightPool() {
+        const lights = window._streetLights || [];
+        // Pre-create PointLights for every 4th lamp (max ~10 lights)
+        lights.forEach((lamp, i) => {
+            if (i % 4 === 0) {
+                const pl = new THREE.PointLight(0xffdd88, 0, 18);
+                pl.position.copy(lamp.position);
+                this.scene.add(pl);
+                lamp.userData.pointLight = pl;
+            }
+        });
+    },
+
     updateStreetLights(progress, turningOn) {
         const lights = window._streetLights || [];
         const total = lights.length;
@@ -199,29 +213,14 @@ const DayNight = {
 
         lights.forEach((lamp, i) => {
             const threshold = (i / total) * 0.8;
-            if (turningOn) {
-                if (progress > threshold) {
-                    lamp.material.emissive.setHex(0xffaa44);
-                    lamp.material.emissiveIntensity = 1.0;
-
-                    if (!lamp.userData.pointLight) {
-                        const pl = new THREE.PointLight(0xffdd88, 0.8, 15);
-                        pl.position.copy(lamp.position);
-                        this.scene.add(pl);
-                        lamp.userData.pointLight = pl;
-                    }
-                }
-            } else {
-                if (progress > threshold) {
-                    lamp.material.emissive.setHex(0x332200);
-                    lamp.material.emissiveIntensity = 0;
-
-                    if (lamp.userData.pointLight) {
-                        this.scene.remove(lamp.userData.pointLight);
-                        lamp.userData.pointLight.dispose();
-                        lamp.userData.pointLight = null;
-                    }
-                }
+            if (turningOn && progress > threshold) {
+                lamp.material.emissive.setHex(0xffaa44);
+                lamp.material.emissiveIntensity = 1.0;
+                if (lamp.userData.pointLight) lamp.userData.pointLight.intensity = 0.8;
+            } else if (!turningOn && progress > threshold) {
+                lamp.material.emissive.setHex(0x332200);
+                lamp.material.emissiveIntensity = 0;
+                if (lamp.userData.pointLight) lamp.userData.pointLight.intensity = 0;
             }
         });
     },
