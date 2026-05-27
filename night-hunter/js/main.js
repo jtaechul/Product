@@ -276,6 +276,9 @@ DayNight.init(scene, playerGroup);
 // ── Hint System Init ──
 HintSystem.init(scene);
 
+// ── Enemy System Init ──
+EnemySystem.init(scene);
+
 // ── Camera ──
 let cameraAngleY = 0;
 let cameraAngleX = 0.3;
@@ -724,6 +727,7 @@ function animate() {
         updateCamera();
         updateHUD();
         HintSystem.update(playerGroup.position, delta, clock.elapsedTime);
+        EnemySystem.update(playerGroup.position, delta, clock.elapsedTime);
     }
 
     renderer.render(scene, camera);
