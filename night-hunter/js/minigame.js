@@ -130,7 +130,8 @@ const Minigame = {
 
             // Damage player on fail based on resistance
             if (this.targetEnemy.resistance > 0) {
-                gameState.health = Math.max(0, gameState.health - 1);
+                const dmg = (typeof Shop !== 'undefined' && Shop.hasItem('vest')) ? 0.5 : 1;
+                gameState.health = Math.max(0, gameState.health - dmg);
                 if (gameState.health <= 0) {
                     setTimeout(() => this.triggerGameOver(), 1000);
                 }
