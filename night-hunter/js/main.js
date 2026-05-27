@@ -273,12 +273,6 @@ createPlayer();
 // ── Day/Night System Init ──
 DayNight.init(scene, playerGroup);
 
-// ── Hint System Init ──
-HintSystem.init(scene);
-
-// ── Enemy System Init ──
-EnemySystem.init(scene);
-
 // ── Camera ──
 let cameraAngleY = 0;
 let cameraAngleX = 0.3;
@@ -441,6 +435,10 @@ const staminaBarDiv = document.createElement('div');
 staminaBarDiv.id = 'stamina-bar';
 staminaBarDiv.innerHTML = '<div id="stamina-fill"></div>';
 document.getElementById('hud').appendChild(staminaBarDiv);
+
+// ── System Init (DOM 요소 생성 이후) ──
+HintSystem.init(scene);
+EnemySystem.init(scene);
 
 // D-pad touch handlers
 const activeDirs = new Set();
