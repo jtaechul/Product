@@ -1,47 +1,61 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dino Survivors Deluxe</title>
+    <title>Web 3D 도시 맵</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "/lib/three/three.module.js",
+            "three/addons/": "/lib/three/addons/"
+        }
+    }
+    </script>
 </head>
 <body>
-    <div id="game-container">
-        <canvas id="gameCanvas"></canvas>
-        <div id="ui">
-            <div id="hud-top">
-                <div id="xp-container">
-                    <div id="xp-bar-fill"></div>
-                    <div id="level-text">LV. 1</div>
+    <canvas id="game-canvas"></canvas>
+
+    <div id="ui-overlay">
+        <div id="info-panel">
+            <h2>3D 도시 맵</h2>
+            <div class="legend">
+                <div class="legend-item">
+                    <span class="dot residential"></span>주택가
                 </div>
-                <div id="stats-row">
-                    <div id="score">Score: 0</div>
-                    <div id="timer">00:00</div>
+                <div class="legend-item">
+                    <span class="dot commercial"></span>상업지구
                 </div>
-                <div id="hp-bar-container">
-                    <div id="hp-bar-fill"></div>
+                <div class="legend-item">
+                    <span class="dot industrial"></span>공장지대
                 </div>
             </div>
-        </div>
-
-        <div id="level-up-screen" style="display: none;">
-            <h1>LEVEL UP!</h1>
-            <p>Choose an Upgrade</p>
-            <div id="skill-options">
-                <!-- Skill buttons will be injected here -->
+            <div class="stats">
+                <div>건물: 15개</div>
+                <div>가로등: 10개</div>
             </div>
         </div>
-
-        <div id="game-over-screen" style="display: none;">
-            <h1>GAME OVER</h1>
-            <p>Score: <span id="final-score">0</span></p>
-            <p>Time: <span id="final-time">00:00</span></p>
-            <button onclick="restartGame()">RESTART</button>
+        <div id="controls-hint">
+            ◀▲▼▶ 방향키로 이동 &nbsp;|&nbsp; 좌우 키는 캐릭터 회전
         </div>
     </div>
-    <script src="main.js"></script>
+
+    <!-- 플로팅 D-pad -->
+    <div id="dpad">
+        <div class="dpad-row">
+            <button id="dpad-up" class="dpad-btn" aria-label="위">▲</button>
+        </div>
+        <div class="dpad-row">
+            <button id="dpad-left"  class="dpad-btn" aria-label="왼쪽">◀</button>
+            <div class="dpad-center"></div>
+            <button id="dpad-right" class="dpad-btn" aria-label="오른쪽">▶</button>
+        </div>
+        <div class="dpad-row">
+            <button id="dpad-down" class="dpad-btn" aria-label="아래">▼</button>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>
