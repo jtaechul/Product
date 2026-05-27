@@ -278,6 +278,7 @@ let cameraAngleY = 0;
 let cameraAngleX = 0.3;
 const cameraDistance = 10;
 const cameraHeight = 5;
+let playerFacingAngle = 0;
 
 function updateCamera() {
     const px = playerGroup.position.x;
@@ -441,6 +442,7 @@ document.getElementById('hud').appendChild(staminaBarDiv);
 // ── System Init (DOM 요소 생성 이후) ──
 HintSystem.init(scene);
 EnemySystem.init(scene);
+Minigame.init();
 
 // ── Joystick Logic ──
 let joystickActive = false;
@@ -631,18 +633,29 @@ function updatePlayer(delta) {
         dz = moveDir.z;
     }
 
-    // Camera-relative movement
+    // Camera-relative movement (Roblox-style)
     if (dx !== 0 || dz !== 0) {
         const len = Math.sqrt(dx * dx + dz * dz);
         dx /= len;
         dz /= len;
 
+        // Transform input to world space based on camera orientation
         const sinA = Math.sin(cameraAngleY);
         const cosA = Math.cos(cameraAngleY);
         const worldDx = dx * cosA - dz * sinA;
         const worldDz = dx * sinA + dz * cosA;
 
-        // Speed & stamina
+        // Target angle = direction of movement
+        const targetAngle = Math.atan2(worldDx, worldDz);
+
+        // Smooth rotation toward movement direction
+        let angleDiff = targetAngle - playerFacingAngle;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        playerFacingAngle += angleDiff * Math.min(1, 12 * delta);
+        playerGroup.rotation.y = playerFacingAngle;
+
+        // Move in the direction the character faces
         let speed = gameState.moveSpeed;
         if (gameState.isRunning && gameState.stamina > 0) {
             speed = gameState.runSpeed;
@@ -655,8 +668,10 @@ function updatePlayer(delta) {
             gameState.stamina = Math.min(gameState.maxStamina, gameState.stamina + 15 * delta);
         }
 
-        const nx = playerGroup.position.x + worldDx * speed * delta * 60;
-        const nz = playerGroup.position.z + worldDz * speed * delta * 60;
+        const moveX = Math.sin(playerFacingAngle) * speed * delta * 60;
+        const moveZ = Math.cos(playerFacingAngle) * speed * delta * 60;
+        const nx = playerGroup.position.x + moveX;
+        const nz = playerGroup.position.z + moveZ;
 
         // Boundary & collision
         const half = WORLD_SIZE / 2 - 1;
@@ -671,10 +686,6 @@ function updatePlayer(delta) {
         } else if (!checkBuildingCollision(playerGroup.position.x, clampedZ)) {
             playerGroup.position.z = clampedZ;
         }
-
-        // Face movement direction
-        const angle = Math.atan2(worldDx, worldDz);
-        playerGroup.rotation.y = angle;
 
         // Walk animation
         walkTime += delta * (gameState.isRunning ? 12 : 8);
@@ -787,7 +798,9 @@ function animate() {
         updateHUD();
         HintSystem.update(playerGroup.position, delta, clock.elapsedTime);
         EnemySystem.update(playerGroup.position, delta, clock.elapsedTime);
+        Minigame.checkCatchable(playerGroup.position);
     }
+    Minigame.update(delta);
 
     renderer.render(scene, camera);
 }
