@@ -275,6 +275,18 @@ const EnemySystem = {
             }
 
             enemy.mesh.position.set(enemy.currentX, 0, enemy.currentZ);
+
+            // Contact damage
+            if (dist < 1.2 && !Minigame.active) {
+                enemy.contactTimer = (enemy.contactTimer || 0) + delta;
+                if (enemy.contactTimer > 0.5) {
+                    const dmg = (typeof Shop !== 'undefined' && Shop.hasItem('vest')) ? 0.25 : 0.5;
+                    gameState.health = Math.max(0, gameState.health - dmg);
+                    enemy.contactTimer = 0;
+                }
+            } else {
+                enemy.contactTimer = 0;
+            }
         });
 
         // Alert bar

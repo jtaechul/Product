@@ -148,9 +148,11 @@ const Shop = {
             interactBtn.style.display = 'flex';
             interactBtn.textContent = '🛒';
             interactBtn.onclick = () => this.openShop();
+            HintSystem.showPrompt('E키로 상점 이용');
         } else if (!HintSystem.nearbyHint && !this.isOpen) {
             if (interactBtn.textContent === '🛒') {
                 interactBtn.style.display = 'none';
+                HintSystem.hidePrompt();
             }
         }
     },

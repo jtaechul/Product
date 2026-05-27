@@ -824,6 +824,8 @@ function animate() {
         GameUI.updateHintCounter();
     }
     Minigame.update(delta);
+    Minigame.updateRescueChildren(delta);
+    DayNight.updateStarTwinkle(clock.elapsedTime);
 
     renderer.render(scene, camera);
 }
