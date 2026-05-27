@@ -262,10 +262,10 @@ const HintSystem = {
             el = document.createElement('div');
             el.id = 'interact-prompt';
             el.style.cssText = `
-                position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
-                background:rgba(0,0,0,0.7); backdrop-filter:blur(4px);
-                padding:6px 16px; border-radius:16px; border:1px solid rgba(255,220,0,0.4);
-                font-size:13px; color:#fbbf24; font-weight:700; z-index:35;
+                position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+                background:rgba(0,0,0,0.75); backdrop-filter:blur(4px);
+                padding:10px 24px; border-radius:20px; border:1px solid rgba(255,220,0,0.4);
+                font-size:15px; color:#fbbf24; font-weight:700; z-index:35;
                 pointer-events:none;
             `;
             document.body.appendChild(el);

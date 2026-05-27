@@ -19,7 +19,10 @@ const gameState = {
     runSpeed: 0.24,
     isRunning: false,
     stamina: 100,
-    maxStamina: 100
+    maxStamina: 100,
+    isJumping: false,
+    jumpVelocity: 0,
+    jumpHeight: 0
 };
 
 // ── Three.js Setup ──
@@ -306,6 +309,7 @@ window.addEventListener('keydown', e => {
     if (e.code === 'KeyE') HintSystem.collectNearbyHint();
     if (e.code === 'KeyI') Shop.toggleInventory();
     if (e.code === 'KeyM') HintSystem.toggleMemo();
+    if (e.code === 'Space') { e.preventDefault(); triggerJump(); }
 });
 window.addEventListener('keyup', e => {
     keys[e.code] = false;
@@ -319,10 +323,14 @@ const joystickInner = document.createElement('div');
 joystickInner.id = 'joystick-inner';
 joystickOuter.appendChild(joystickInner);
 
-// Run button
+// Run + Jump buttons
 const runBtn = document.createElement('button');
 runBtn.id = 'run-btn';
 runBtn.textContent = 'RUN';
+
+const jumpBtn = document.createElement('button');
+jumpBtn.id = 'jump-btn';
+jumpBtn.textContent = 'JUMP';
 
 const joystickStyle = document.createElement('style');
 joystickStyle.textContent = `
@@ -351,18 +359,14 @@ joystickStyle.textContent = `
     pointer-events: none;
     transition: none;
 }
-#run-btn {
+#run-btn, #jump-btn {
     position: fixed;
-    right: 90px;
-    bottom: 30px;
-    width: 60px;
-    height: 60px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    border: 2px solid rgba(255,160,0,0.5);
-    background: rgba(255,160,0,0.2);
     backdrop-filter: blur(4px);
     color: #fff;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     font-family: 'Inter', sans-serif;
     cursor: pointer;
@@ -370,17 +374,27 @@ joystickStyle.textContent = `
     z-index: 30;
     pointer-events: auto;
 }
-#run-btn.active {
-    background: rgba(255,160,0,0.5);
-    transform: scale(0.92);
+#run-btn {
+    right: 80px;
+    bottom: 25px;
+    border: 2px solid rgba(255,160,0,0.5);
+    background: rgba(255,160,0,0.2);
 }
+#jump-btn {
+    right: 80px;
+    bottom: 90px;
+    border: 2px solid rgba(100,200,255,0.5);
+    background: rgba(100,200,255,0.2);
+}
+#run-btn.active { background: rgba(255,160,0,0.5); transform: scale(0.92); }
+#jump-btn.active { background: rgba(100,200,255,0.5); transform: scale(0.92); }
 #action-buttons {
     position: fixed;
-    right: 16px;
-    bottom: 30px;
+    right: 14px;
+    bottom: 25px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     z-index: 30;
 }
 .action-btn {
@@ -424,6 +438,7 @@ joystickStyle.textContent = `
 document.head.appendChild(joystickStyle);
 document.getElementById('hud').appendChild(joystickOuter);
 document.getElementById('hud').appendChild(runBtn);
+document.getElementById('hud').appendChild(jumpBtn);
 
 // Action buttons
 const actionBtnContainer = document.createElement('div');
@@ -538,6 +553,12 @@ runBtn.addEventListener('mousedown', e => { e.preventDefault(); gameState.isRunn
 runBtn.addEventListener('mouseup', () => { gameState.isRunning = false; runBtn.classList.remove('active'); });
 runBtn.addEventListener('mouseleave', () => { gameState.isRunning = false; runBtn.classList.remove('active'); });
 
+// Jump button
+jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); triggerJump(); jumpBtn.classList.add('active'); }, { passive: false });
+jumpBtn.addEventListener('touchend', e => { e.preventDefault(); jumpBtn.classList.remove('active'); }, { passive: false });
+jumpBtn.addEventListener('mousedown', e => { e.preventDefault(); triggerJump(); jumpBtn.classList.add('active'); });
+jumpBtn.addEventListener('mouseup', () => { jumpBtn.classList.remove('active'); });
+
 // Camera drag (right side of screen / touch)
 const canvas = document.getElementById('gameCanvas');
 let cameraTouchId = null;
@@ -614,6 +635,13 @@ function checkBuildingCollision(nx, nz) {
         }
     }
     return false;
+}
+
+function triggerJump() {
+    if (!gameState.isJumping && !gameState.isPaused) {
+        gameState.isJumping = true;
+        gameState.jumpVelocity = 5;
+    }
 }
 
 // ── Player Movement ──
@@ -696,6 +724,18 @@ function updatePlayer(delta) {
         // Idle animation
         gameState.stamina = Math.min(gameState.maxStamina, gameState.stamina + 15 * delta);
         animateIdle(clock.elapsedTime);
+    }
+
+    // Jump physics
+    if (gameState.isJumping) {
+        gameState.jumpVelocity -= 15 * delta;
+        gameState.jumpHeight += gameState.jumpVelocity * delta;
+        if (gameState.jumpHeight <= 0) {
+            gameState.jumpHeight = 0;
+            gameState.isJumping = false;
+            gameState.jumpVelocity = 0;
+        }
+        playerGroup.position.y = gameState.jumpHeight;
     }
 
     // Police station heal (within 15 units)
@@ -820,7 +860,7 @@ function animate() {
         EnemySystem.update(playerGroup.position, delta, clock.elapsedTime);
         Shop.update(playerGroup.position);
         Minigame.checkCatchable(playerGroup.position);
-        GameUI.updateMinimap(playerGroup.position, playerFacingAngle);
+        GameUI.updateMinimap(playerGroup.position, playerFacingAngle, cameraAngleY);
         GameUI.updateHintCounter();
     }
     Minigame.update(delta);
