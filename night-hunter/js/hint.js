@@ -244,14 +244,39 @@ const HintSystem = {
         if (this.nearbyHint) {
             interactBtn.style.display = 'flex';
             interactBtn.textContent = 'E';
+            this.showPrompt('E키로 수집');
         } else {
-            interactBtn.style.display = 'none';
+            this.hidePrompt();
         }
     },
 
     hideInteractPrompt() {
         const btn = document.getElementById('btn-interact');
         if (btn) btn.style.display = 'none';
+        this.hidePrompt();
+    },
+
+    showPrompt(text) {
+        let el = document.getElementById('interact-prompt');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'interact-prompt';
+            el.style.cssText = `
+                position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+                background:rgba(0,0,0,0.7); backdrop-filter:blur(4px);
+                padding:6px 16px; border-radius:16px; border:1px solid rgba(255,220,0,0.4);
+                font-size:13px; color:#fbbf24; font-weight:700; z-index:35;
+                pointer-events:none;
+            `;
+            document.body.appendChild(el);
+        }
+        el.textContent = text;
+        el.style.display = 'block';
+    },
+
+    hidePrompt() {
+        const el = document.getElementById('interact-prompt');
+        if (el) el.style.display = 'none';
     },
 
     collectNearbyHint() {

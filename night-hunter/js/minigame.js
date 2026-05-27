@@ -11,6 +11,7 @@ const Minigame = {
     result: null,
     resultTimer: 0,
     catchDistance: 1.5,
+    rescueChildren: [],
 
     init() {
         this.createUI();
@@ -115,13 +116,16 @@ const Minigame = {
             resultEl.style.color = '#4ade80';
             if (typeof SoundManager !== 'undefined') SoundManager.playSFX('arrest_success');
 
+            const rescueX = this.targetEnemy.hideoutX;
+            const rescueZ = this.targetEnemy.hideoutZ;
             EnemySystem.arrestEnemy(this.targetEnemy);
 
-            // Child rescue message
+            // Child rescue animation + message
             setTimeout(() => {
+                this.spawnRescueChild(rescueX, rescueZ);
                 showMessage('👶 아이를 구출했습니다! (' + gameState.arrests + '/3)');
                 if (gameState.arrests >= gameState.totalArrests) {
-                    setTimeout(() => this.triggerVictory(), 1500);
+                    setTimeout(() => this.triggerVictory(), 3000);
                 }
             }, 800);
         } else {
@@ -238,6 +242,55 @@ const Minigame = {
         const { enemy, distance } = EnemySystem.getNearestEnemy(playerPos);
         if (enemy && distance < this.catchDistance) {
             this.startMinigame(enemy);
+        }
+    },
+
+    spawnRescueChild(fromX, fromZ) {
+        const group = new THREE.Group();
+        const bodyMat = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.45, 0.25), bodyMat);
+        body.position.y = 0.5;
+        body.castShadow = true;
+        group.add(body);
+        const head = new THREE.Mesh(
+            new THREE.SphereGeometry(0.18, 12, 12),
+            new THREE.MeshLambertMaterial({ color: 0xffdbac })
+        );
+        head.position.y = 0.9;
+        group.add(head);
+        const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.3, 6), bodyMat);
+        leftLeg.position.set(-0.1, 0.15, 0);
+        leftLeg.userData.partName = 'childLeg';
+        group.add(leftLeg);
+        const rightLeg = leftLeg.clone();
+        rightLeg.position.set(0.1, 0.15, 0);
+        group.add(rightLeg);
+
+        group.position.set(fromX, 0, fromZ);
+        scene.add(group);
+        this.rescueChildren.push({ mesh: group, targetX: 0, targetZ: 92, time: 0 });
+    },
+
+    updateRescueChildren(delta) {
+        for (let i = this.rescueChildren.length - 1; i >= 0; i--) {
+            const child = this.rescueChildren[i];
+            child.time += delta;
+            const dx = child.targetX - child.mesh.position.x;
+            const dz = child.targetZ - child.mesh.position.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+            if (dist < 2 || child.time > 15) {
+                scene.remove(child.mesh);
+                this.rescueChildren.splice(i, 1);
+                continue;
+            }
+            const speed = 0.08 * delta * 60;
+            child.mesh.position.x += (dx / dist) * speed;
+            child.mesh.position.z += (dz / dist) * speed;
+            child.mesh.rotation.y = Math.atan2(dx, dz);
+            const swing = Math.sin(child.time * 8) * 0.25;
+            child.mesh.children.forEach(c => {
+                if (c.userData.partName === 'childLeg') c.rotation.x = swing;
+            });
         }
     },
 

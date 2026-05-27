@@ -290,5 +290,17 @@ const DayNight = {
         if (!gameState.isDay && gameState.timeRemaining <= 60 && gameState.timeRemaining > 59) {
             showMessage(this.radioMessages.lastMinute);
         }
+    },
+
+    updateStarTwinkle(time) {
+        if (!this.starField || !this.starField.visible) return;
+        const sizes = this.starField.geometry.attributes.position;
+        if (!this._starBaseSize) {
+            this._starBaseSize = [];
+            for (let i = 0; i < sizes.count; i++) {
+                this._starBaseSize.push(0.8 + Math.random() * 1.2);
+            }
+        }
+        this.starField.material.size = 1.5 + Math.sin(time * 2) * 0.5;
     }
 };

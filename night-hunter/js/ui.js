@@ -150,9 +150,12 @@ const GameUI = {
         }
 
         // Player (blue triangle pointing forward)
+        // playerAngle: 0=+Z(south), PI/2=+X(east) in world
+        // Canvas: -Y=up=north. Unrotated triangle points up(-Y).
+        // Need: facing +Z(south) → point down = rotate PI
         ctx.save();
         ctx.translate(half, half);
-        ctx.rotate(playerAngle);
+        ctx.rotate(Math.PI - playerAngle);
         ctx.fillStyle = '#60a5fa';
         ctx.beginPath();
         ctx.moveTo(0, -6);
