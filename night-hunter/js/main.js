@@ -811,7 +811,83 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// ── Start ──
-showMessage('🚔 도시 어딘가에 아이들이 납치되어 있습니다.\n힌트를 찾아 수사를 시작하세요.');
-updateCamera();
-animate();
+// ── Start Screen ──
+function createStartScreen() {
+    const screen = document.createElement('div');
+    screen.id = 'start-screen';
+    screen.style.cssText = `
+        position:fixed; top:0; left:0; right:0; bottom:0;
+        background: linear-gradient(180deg, #050510 0%, #0a1628 40%, #1a1a3a 100%);
+        z-index:300; display:flex; flex-direction:column;
+        align-items:center; justify-content:center;
+        font-family:'Inter',sans-serif; color:#fff;
+    `;
+
+    // Animated city silhouette
+    const cityCanvas = document.createElement('canvas');
+    cityCanvas.width = 400; cityCanvas.height = 100;
+    const cctx = cityCanvas.getContext('2d');
+    cctx.fillStyle = '#0d1b2a';
+    const heights = [30,50,70,40,80,35,60,45,75,55,40,65,50,35,70,45,55,60,40,50];
+    heights.forEach((h, i) => {
+        cctx.fillRect(i * 20, 100 - h, 16, h);
+        // windows
+        cctx.fillStyle = '#fbbf24';
+        for (let wy = 100 - h + 6; wy < 96; wy += 10) {
+            if (Math.random() > 0.4) cctx.fillRect(i * 20 + 4, wy, 3, 4);
+            if (Math.random() > 0.4) cctx.fillRect(i * 20 + 10, wy, 3, 4);
+        }
+        cctx.fillStyle = '#0d1b2a';
+    });
+
+    screen.innerHTML = `
+        <div style="font-size:14px; letter-spacing:6px; color:#fbbf24; margin-bottom:8px; opacity:0.7;">🚔 DETECTIVE GAME</div>
+        <h1 style="font-size:52px; font-weight:800; letter-spacing:-2px; margin:0 0 4px 0;
+            background:linear-gradient(135deg,#fff 0%,#60a5fa 50%,#fbbf24 100%);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;">NIGHT HUNTER</h1>
+        <p style="font-size:15px; color:#999; margin:8px 0 32px 0;">납치된 아이들을 구출하라</p>
+        <div style="margin-bottom:40px; text-align:center; line-height:2; font-size:13px; color:#667;">
+            <div>🔍 낮에 힌트를 모아 은거지를 찾고</div>
+            <div>🌙 밤에 납치범을 추격해 검거하세요</div>
+            <div>👶 아이 3명을 모두 구출하면 승리!</div>
+        </div>
+        <button id="start-btn" style="
+            padding:16px 48px; border:none; border-radius:30px;
+            background:linear-gradient(135deg,#3b82f6,#2563eb);
+            color:#fff; font-size:18px; font-weight:700;
+            cursor:pointer; font-family:'Inter',sans-serif;
+            box-shadow:0 4px 20px rgba(37,99,235,0.4);
+            transition:transform 0.2s, box-shadow 0.2s;
+            touch-action:manipulation;
+        ">게임 시작</button>
+        <div style="margin-top:16px; display:flex; gap:20px; font-size:12px; color:#555;">
+            <span>WASD 이동</span><span>Shift 달리기</span><span>E 상호작용</span>
+        </div>
+        <div style="margin-top:40px; font-size:11px; color:#333;">v1.0</div>
+    `;
+    document.body.appendChild(screen);
+
+    const btn = document.getElementById('start-btn');
+    btn.addEventListener('mouseenter', () => { btn.style.transform = 'scale(1.05)'; });
+    btn.addEventListener('mouseleave', () => { btn.style.transform = 'scale(1)'; });
+    btn.addEventListener('click', startGame);
+    btn.addEventListener('touchstart', e => { e.preventDefault(); startGame(); }, { passive: false });
+}
+
+function startGame() {
+    const screen = document.getElementById('start-screen');
+    if (screen) {
+        screen.style.transition = 'opacity 0.5s';
+        screen.style.opacity = '0';
+        setTimeout(() => screen.remove(), 500);
+    }
+
+    SoundManager.init();
+    SoundManager.playBGM('day');
+
+    showMessage('📻 도시 어딘가에 아이들이 납치되어 있습니다.\n힌트를 찾아 수사를 시작하세요.');
+    updateCamera();
+    animate();
+}
+
+createStartScreen();

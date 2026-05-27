@@ -220,6 +220,7 @@ const Shop = {
         if (item.type === 'passive' && item.owned) return;
 
         gameState.coins -= item.price;
+        if (typeof SoundManager !== 'undefined') SoundManager.playSFX('buy');
 
         if (item.type === 'passive') {
             item.owned = true;
