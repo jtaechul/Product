@@ -310,67 +310,67 @@ window.addEventListener('keyup', e => {
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') gameState.isRunning = false;
 });
 
-// Mobile floating D-pad
-const dpadContainer = document.createElement('div');
-dpadContainer.id = 'dpad';
-dpadContainer.innerHTML = `
-    <button class="dpad-btn dpad-up" data-dir="up">&#9650;</button>
-    <button class="dpad-btn dpad-left" data-dir="left">&#9664;</button>
-    <button class="dpad-btn dpad-center dpad-run" data-dir="run">&#9679;</button>
-    <button class="dpad-btn dpad-right" data-dir="right">&#9654;</button>
-    <button class="dpad-btn dpad-down" data-dir="down">&#9660;</button>
-`;
+// ── Virtual Joystick (원형) ──
+const joystickOuter = document.createElement('div');
+joystickOuter.id = 'joystick-outer';
+const joystickInner = document.createElement('div');
+joystickInner.id = 'joystick-inner';
+joystickOuter.appendChild(joystickInner);
 
-const dpadStyle = document.createElement('style');
-dpadStyle.textContent = `
-#dpad {
+// Run button
+const runBtn = document.createElement('button');
+runBtn.id = 'run-btn';
+runBtn.textContent = 'RUN';
+
+const joystickStyle = document.createElement('style');
+joystickStyle.textContent = `
+#joystick-outer {
     position: fixed;
-    left: 30px;
-    bottom: 100px;
-    width: 160px;
-    height: 160px;
+    left: 24px;
+    bottom: 90px;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.25);
     z-index: 30;
     pointer-events: auto;
-    display: grid;
-    grid-template-columns: 50px 50px 50px;
-    grid-template-rows: 50px 50px 50px;
-    gap: 3px;
-    justify-items: center;
-    align-items: center;
-}
-.dpad-btn {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.3);
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(4px);
-    color: #fff;
-    font-size: 18px;
+    touch-action: none;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+#joystick-inner {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+    border: 2px solid rgba(255,255,255,0.5);
+    pointer-events: none;
+    transition: none;
+}
+#run-btn {
+    position: fixed;
+    left: 170px;
+    bottom: 100px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,160,0,0.5);
+    background: rgba(255,160,0,0.2);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
     cursor: pointer;
     touch-action: none;
-    user-select: none;
-    transition: transform 0.1s, background 0.1s;
+    z-index: 30;
+    pointer-events: auto;
 }
-.dpad-btn:active, .dpad-btn.active {
-    background: rgba(255,255,255,0.4);
-    transform: scale(0.9);
-}
-.dpad-up { grid-column: 2; grid-row: 1; }
-.dpad-left { grid-column: 1; grid-row: 2; }
-.dpad-center { grid-column: 2; grid-row: 2; }
-.dpad-right { grid-column: 3; grid-row: 2; }
-.dpad-down { grid-column: 2; grid-row: 3; }
-.dpad-run {
-    background: rgba(255,160,0,0.3);
-    border-color: rgba(255,160,0,0.5);
-    font-size: 22px;
-}
-.dpad-run:active, .dpad-run.active {
-    background: rgba(255,160,0,0.6);
+#run-btn.active {
+    background: rgba(255,160,0,0.5);
+    transform: scale(0.92);
 }
 #action-buttons {
     position: fixed;
@@ -396,6 +396,7 @@ dpadStyle.textContent = `
     cursor: pointer;
     touch-action: none;
     transition: transform 0.1s;
+    pointer-events: auto;
 }
 .action-btn:active { transform: scale(0.9); }
 .action-btn-interact { background: rgba(255,220,0,0.25); border-color: rgba(255,220,0,0.5); }
@@ -419,8 +420,9 @@ dpadStyle.textContent = `
     border-radius: 4px;
 }
 `;
-document.head.appendChild(dpadStyle);
-document.getElementById('hud').appendChild(dpadContainer);
+document.head.appendChild(joystickStyle);
+document.getElementById('hud').appendChild(joystickOuter);
+document.getElementById('hud').appendChild(runBtn);
 
 // Action buttons
 const actionBtnContainer = document.createElement('div');
@@ -440,80 +442,139 @@ document.getElementById('hud').appendChild(staminaBarDiv);
 HintSystem.init(scene);
 EnemySystem.init(scene);
 
-// D-pad touch handlers
-const activeDirs = new Set();
+// ── Joystick Logic ──
+let joystickActive = false;
+let joystickTouchId = null;
+const joystickMaxDist = 40;
 
-function handleDpadInput(e) {
-    e.preventDefault();
-    const dir = e.target.dataset.dir;
-    if (!dir) return;
-    if (dir === 'run') {
-        gameState.isRunning = true;
-        e.target.classList.add('active');
-        return;
-    }
-    activeDirs.add(dir);
-    e.target.classList.add('active');
-    updateMoveDir();
+function getJoystickCenter() {
+    const rect = joystickOuter.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
 }
 
-function handleDpadRelease(e) {
-    e.preventDefault();
-    const dir = e.target.dataset.dir;
-    if (!dir) return;
-    if (dir === 'run') {
-        gameState.isRunning = false;
-        e.target.classList.remove('active');
-        return;
+function handleJoystickMove(cx, cy) {
+    const center = getJoystickCenter();
+    let dx = cx - center.x;
+    let dy = cy - center.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist > joystickMaxDist) {
+        dx = (dx / dist) * joystickMaxDist;
+        dy = (dy / dist) * joystickMaxDist;
     }
-    activeDirs.delete(dir);
-    e.target.classList.remove('active');
-    updateMoveDir();
+
+    joystickInner.style.transform = `translate(${dx}px, ${dy}px)`;
+
+    const deadzone = 8;
+    if (dist > deadzone) {
+        moveDir.x = dx / joystickMaxDist;
+        moveDir.z = dy / joystickMaxDist;
+        isTouchMoving = true;
+    } else {
+        moveDir.x = 0;
+        moveDir.z = 0;
+        isTouchMoving = false;
+    }
 }
 
-function updateMoveDir() {
+function resetJoystick() {
+    joystickInner.style.transform = 'translate(0px, 0px)';
+    joystickActive = false;
+    joystickTouchId = null;
     moveDir.x = 0;
     moveDir.z = 0;
-    if (activeDirs.has('up')) moveDir.z = -1;
-    if (activeDirs.has('down')) moveDir.z = 1;
-    if (activeDirs.has('left')) moveDir.x = -1;
-    if (activeDirs.has('right')) moveDir.x = 1;
-    isTouchMoving = activeDirs.size > 0;
+    isTouchMoving = false;
 }
 
-dpadContainer.querySelectorAll('.dpad-btn').forEach(btn => {
-    btn.addEventListener('touchstart', handleDpadInput, { passive: false });
-    btn.addEventListener('touchend', handleDpadRelease, { passive: false });
-    btn.addEventListener('mousedown', handleDpadInput);
-    btn.addEventListener('mouseup', handleDpadRelease);
-    btn.addEventListener('mouseleave', handleDpadRelease);
-});
+joystickOuter.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    joystickActive = true;
+    joystickTouchId = t.identifier;
+    handleJoystickMove(t.clientX, t.clientY);
+}, { passive: false });
 
-// Camera drag (right side of screen / mouse)
+window.addEventListener('touchmove', e => {
+    if (!joystickActive) return;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === joystickTouchId) {
+            e.preventDefault();
+            handleJoystickMove(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+            return;
+        }
+    }
+}, { passive: false });
+
+window.addEventListener('touchend', e => {
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === joystickTouchId) {
+            resetJoystick();
+            return;
+        }
+    }
+});
+window.addEventListener('touchcancel', () => resetJoystick());
+
+// Mouse joystick (PC)
+joystickOuter.addEventListener('mousedown', e => {
+    e.preventDefault();
+    joystickActive = true;
+    handleJoystickMove(e.clientX, e.clientY);
+});
+window.addEventListener('mousemove', e => {
+    if (!joystickActive) return;
+    handleJoystickMove(e.clientX, e.clientY);
+});
+window.addEventListener('mouseup', () => { if (joystickActive) resetJoystick(); });
+
+// Run button
+runBtn.addEventListener('touchstart', e => { e.preventDefault(); gameState.isRunning = true; runBtn.classList.add('active'); }, { passive: false });
+runBtn.addEventListener('touchend', e => { e.preventDefault(); gameState.isRunning = false; runBtn.classList.remove('active'); }, { passive: false });
+runBtn.addEventListener('mousedown', e => { e.preventDefault(); gameState.isRunning = true; runBtn.classList.add('active'); });
+runBtn.addEventListener('mouseup', () => { gameState.isRunning = false; runBtn.classList.remove('active'); });
+runBtn.addEventListener('mouseleave', () => { gameState.isRunning = false; runBtn.classList.remove('active'); });
+
+// Camera drag (right side of screen / touch)
 const canvas = document.getElementById('gameCanvas');
+let cameraTouchId = null;
 
 canvas.addEventListener('touchstart', e => {
-    const touch = e.touches[0];
-    if (touch.clientX > window.innerWidth * 0.4) {
-        cameraDragging = true;
-        lastTouchX = touch.clientX;
-        lastTouchY = touch.clientY;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        if (touch.clientX > window.innerWidth * 0.35 && cameraTouchId === null) {
+            cameraDragging = true;
+            cameraTouchId = touch.identifier;
+            lastTouchX = touch.clientX;
+            lastTouchY = touch.clientY;
+        }
     }
 }, { passive: true });
 
 canvas.addEventListener('touchmove', e => {
     if (!cameraDragging) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    const dx = touch.clientX - lastTouchX;
-    const dy = touch.clientY - lastTouchY;
-    cameraAngleY -= dx * 0.005;
-    cameraAngleX = Math.max(0.05, Math.min(1.2, cameraAngleX + dy * 0.005));
-    lastTouchX = touch.clientX;
-    lastTouchY = touch.clientY;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        if (touch.identifier === cameraTouchId) {
+            e.preventDefault();
+            const dx = touch.clientX - lastTouchX;
+            const dy = touch.clientY - lastTouchY;
+            cameraAngleY -= dx * 0.005;
+            cameraAngleX = Math.max(0.05, Math.min(1.2, cameraAngleX + dy * 0.005));
+            lastTouchX = touch.clientX;
+            lastTouchY = touch.clientY;
+            return;
+        }
+    }
 }, { passive: false });
 
-canvas.addEventListener('touchend', () => { cameraDragging = false; });
+canvas.addEventListener('touchend', e => {
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === cameraTouchId) {
+            cameraDragging = false;
+            cameraTouchId = null;
+        }
+    }
+});
 
 // Mouse camera drag
 let mouseDown = false;
