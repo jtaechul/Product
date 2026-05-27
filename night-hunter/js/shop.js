@@ -157,23 +157,40 @@ const Shop = {
         const nearShop = dist1 < this.shopDistance;
         const nearPolice = dist2 < this.policeShopDist;
 
-        const interactBtn = document.getElementById('btn-interact');
-        if ((nearShop || nearPolice) && !this.isOpen && !HintSystem.nearbyHint) {
-            interactBtn.style.display = 'flex';
-            interactBtn.textContent = '🛒';
-            interactBtn.onclick = () => this.openShop();
-            HintSystem.showPrompt(nearPolice && !nearShop ? 'E키로 경찰서 상점 이용' : 'E키로 상점 이용');
-        } else if (!HintSystem.nearbyHint && !this.isOpen) {
-            if (interactBtn.textContent === '🛒') {
-                interactBtn.style.display = 'none';
-                HintSystem.hidePrompt();
-            }
+        if ((nearShop || nearPolice) && !this.isOpen) {
+            this.showShopButton(true);
+        } else if (!this.isOpen) {
+            this.showShopButton(false);
         }
     },
 
+    showShopButton(show) {
+        let btn = document.getElementById('btn-shop-open');
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.id = 'btn-shop-open';
+            btn.style.cssText = `
+                position:fixed; top:50%; left:42%; transform:translate(-50%,-50%);
+                width:60px; height:60px; border-radius:50%;
+                border:2px solid rgba(59,130,246,0.6); background:rgba(59,130,246,0.2);
+                backdrop-filter:blur(4px); color:#60a5fa; font-size:18px; font-weight:800;
+                font-family:'Inter',sans-serif; cursor:pointer; touch-action:none;
+                z-index:40; pointer-events:auto; display:none;
+            `;
+            btn.textContent = 'P';
+            btn.addEventListener('click', () => this.openShop());
+            btn.addEventListener('touchstart', e => { e.preventDefault(); this.openShop(); }, { passive: false });
+            document.body.appendChild(btn);
+        }
+        btn.style.display = show ? 'flex' : 'none';
+        btn.style.alignItems = 'center';
+        btn.style.justifyContent = 'center';
+        if (show) HintSystem.showPrompt('P키로 상점 이용');
+        else if (!HintSystem.nearbyHint) HintSystem.hidePrompt();
+    },
+
     hideShopPrompt() {
-        const btn = document.getElementById('btn-interact');
-        if (btn && btn.textContent === '🛒') btn.style.display = 'none';
+        this.showShopButton(false);
     },
 
     openShop() {

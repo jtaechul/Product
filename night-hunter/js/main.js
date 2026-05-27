@@ -44,20 +44,24 @@ window.addEventListener('resize', () => {
 });
 
 // ── Lighting (Daytime) ──
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+const ambientLight = new THREE.AmbientLight(0xc8d8f0, 0.7);
 scene.add(ambientLight);
 
-const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
-sunLight.position.set(50, 80, 50);
+const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x3a6b2a, 0.4);
+scene.add(hemiLight);
+
+const sunLight = new THREE.DirectionalLight(0xfff5e0, 1.0);
+sunLight.position.set(60, 100, 40);
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.width = 2048;
 sunLight.shadow.mapSize.height = 2048;
 sunLight.shadow.camera.near = 0.5;
-sunLight.shadow.camera.far = 300;
-sunLight.shadow.camera.left = -100;
-sunLight.shadow.camera.right = 100;
-sunLight.shadow.camera.top = 100;
-sunLight.shadow.camera.bottom = -100;
+sunLight.shadow.camera.far = 250;
+sunLight.shadow.camera.left = -80;
+sunLight.shadow.camera.right = 80;
+sunLight.shadow.camera.top = 80;
+sunLight.shadow.camera.bottom = -80;
+sunLight.shadow.bias = -0.001;
 scene.add(sunLight);
 
 // ── Create World ──
@@ -306,10 +310,8 @@ let lastTouchX = 0, lastTouchY = 0;
 window.addEventListener('keydown', e => {
     keys[e.code] = true;
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') gameState.isRunning = true;
-    if (e.code === 'KeyE') {
-        if (HintSystem.nearbyHint) HintSystem.collectNearbyHint();
-        else if (document.getElementById('btn-interact').textContent === '🛒') Shop.openShop();
-    }
+    if (e.code === 'KeyH') HintSystem.collectNearbyHint();
+    if (e.code === 'KeyP') { if (!Shop.isOpen) Shop.openShop(); else Shop.closeShop(); }
     if (e.code === 'KeyI') Shop.toggleInventory();
     if (e.code === 'KeyM') HintSystem.toggleMemo();
     if (e.code === 'Space') { e.preventDefault(); triggerJump(); }
@@ -447,7 +449,7 @@ document.getElementById('hud').appendChild(jumpBtn);
 const actionBtnContainer = document.createElement('div');
 actionBtnContainer.id = 'action-buttons';
 actionBtnContainer.innerHTML = `
-    <button class="action-btn action-btn-interact" id="btn-interact" style="display:none;" onclick="HintSystem.collectNearbyHint()">E</button>
+    <button class="action-btn action-btn-interact" id="btn-interact" style="display:none !important;">E</button>
 `;
 document.getElementById('hud').appendChild(actionBtnContainer);
 

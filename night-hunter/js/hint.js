@@ -242,12 +242,35 @@ const HintSystem = {
         });
 
         if (this.nearbyHint) {
-            interactBtn.style.display = 'flex';
-            interactBtn.textContent = 'E';
-            this.showPrompt('E키로 수집');
+            this.showHintButton(true);
         } else {
-            this.hidePrompt();
+            this.showHintButton(false);
         }
+    },
+
+    showHintButton(show) {
+        let btn = document.getElementById('btn-hint-collect');
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.id = 'btn-hint-collect';
+            btn.style.cssText = `
+                position:fixed; top:50%; left:55%; transform:translate(-50%,-50%);
+                width:60px; height:60px; border-radius:50%;
+                border:2px solid rgba(255,220,0,0.6); background:rgba(255,220,0,0.2);
+                backdrop-filter:blur(4px); color:#fbbf24; font-size:18px; font-weight:800;
+                font-family:'Inter',sans-serif; cursor:pointer; touch-action:none;
+                z-index:40; pointer-events:auto; display:none;
+            `;
+            btn.textContent = 'H';
+            btn.addEventListener('click', () => this.collectNearbyHint());
+            btn.addEventListener('touchstart', e => { e.preventDefault(); this.collectNearbyHint(); }, { passive: false });
+            document.body.appendChild(btn);
+        }
+        btn.style.display = show ? 'flex' : 'none';
+        btn.style.alignItems = 'center';
+        btn.style.justifyContent = 'center';
+        if (show) this.showPrompt('H키로 수집');
+        else this.hidePrompt();
     },
 
     hideInteractPrompt() {
