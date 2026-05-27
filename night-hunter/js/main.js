@@ -445,6 +445,7 @@ HintSystem.init(scene);
 EnemySystem.init(scene);
 Minigame.init();
 Shop.init(scene);
+GameUI.init();
 
 // ── Joystick Logic ──
 let joystickActive = false;
@@ -802,6 +803,8 @@ function animate() {
         EnemySystem.update(playerGroup.position, delta, clock.elapsedTime);
         Shop.update(playerGroup.position);
         Minigame.checkCatchable(playerGroup.position);
+        GameUI.updateMinimap(playerGroup.position, playerFacingAngle);
+        GameUI.updateHintCounter();
     }
     Minigame.update(delta);
 
