@@ -642,10 +642,12 @@ function updatePlayer(delta) {
         dz /= len;
 
         // Transform input to world space based on camera orientation
+        // Camera is at angle cameraAngleY from player
+        // Forward (camera→player) = (-sinA, -cosA), Right = (cosA, -sinA)
         const sinA = Math.sin(cameraAngleY);
         const cosA = Math.cos(cameraAngleY);
-        const worldDx = dx * cosA - dz * sinA;
-        const worldDz = dx * sinA + dz * cosA;
+        const worldDx = dx * cosA + dz * sinA;
+        const worldDz = -dx * sinA + dz * cosA;
 
         // Target angle = direction of movement
         const targetAngle = Math.atan2(worldDx, worldDz);
@@ -694,6 +696,19 @@ function updatePlayer(delta) {
         // Idle animation
         gameState.stamina = Math.min(gameState.maxStamina, gameState.stamina + 15 * delta);
         animateIdle(clock.elapsedTime);
+    }
+
+    // Police station heal (within 15 units)
+    const psDist = Math.sqrt(playerGroup.position.x * playerGroup.position.x + (playerGroup.position.z - 80) * (playerGroup.position.z - 80));
+    if (psDist < 15 && gameState.health < gameState.maxHealth) {
+        gameState.healTimer = (gameState.healTimer || 0) + delta;
+        if (gameState.healTimer > 3) {
+            gameState.health = Math.min(gameState.maxHealth, gameState.health + 1);
+            gameState.healTimer = 0;
+            showMessage('🏥 경찰서에서 체력이 회복됩니다 (+1)');
+        }
+    } else {
+        gameState.healTimer = 0;
     }
 
     // Update stamina bar
@@ -790,6 +805,11 @@ function animate() {
     const now = performance.now();
     const delta = Math.min((now - lastTime) / 1000, 0.1);
     lastTime = now;
+
+    if (gameState.health <= 0 && !Minigame.active) {
+        Minigame.triggerGameOver();
+        return;
+    }
 
     if (!gameState.isPaused) {
         updatePlayer(delta);
