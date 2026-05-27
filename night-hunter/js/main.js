@@ -328,10 +328,10 @@ const joystickStyle = document.createElement('style');
 joystickStyle.textContent = `
 #joystick-outer {
     position: fixed;
-    left: 24px;
-    bottom: 90px;
-    width: 130px;
-    height: 130px;
+    left: 20px;
+    bottom: 30px;
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
     background: rgba(255,255,255,0.08);
     border: 2px solid rgba(255,255,255,0.25);
@@ -343,8 +343,8 @@ joystickStyle.textContent = `
     justify-content: center;
 }
 #joystick-inner {
-    width: 50px;
-    height: 50px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
     background: rgba(255,255,255,0.35);
     border: 2px solid rgba(255,255,255,0.5);
@@ -353,10 +353,10 @@ joystickStyle.textContent = `
 }
 #run-btn {
     position: fixed;
-    left: 170px;
-    bottom: 100px;
-    width: 56px;
-    height: 56px;
+    right: 90px;
+    bottom: 30px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     border: 2px solid rgba(255,160,0,0.5);
     background: rgba(255,160,0,0.2);
@@ -376,22 +376,22 @@ joystickStyle.textContent = `
 }
 #action-buttons {
     position: fixed;
-    right: 20px;
-    bottom: 120px;
+    right: 16px;
+    bottom: 30px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     z-index: 30;
 }
 .action-btn {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     border: 2px solid rgba(255,255,255,0.3);
     background: rgba(255,255,255,0.15);
     backdrop-filter: blur(4px);
     color: #fff;
-    font-size: 20px;
+    font-size: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -404,11 +404,10 @@ joystickStyle.textContent = `
 .action-btn-interact { background: rgba(255,220,0,0.25); border-color: rgba(255,220,0,0.5); }
 #stamina-bar {
     position: fixed;
-    bottom: 70px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 180px;
-    height: 8px;
+    bottom: 10px;
+    left: 160px;
+    width: 140px;
+    height: 6px;
     background: rgba(0,0,0,0.4);
     border-radius: 4px;
     overflow: hidden;
@@ -658,7 +657,7 @@ function updatePlayer(delta) {
         playerFacingAngle += angleDiff * Math.min(1, 12 * delta);
         playerGroup.rotation.y = playerFacingAngle;
 
-        // Move in the direction the character faces
+        // Move in camera-relative world direction
         let speed = gameState.moveSpeed;
         if (gameState.isRunning && gameState.stamina > 0) {
             speed = gameState.runSpeed;
@@ -671,10 +670,8 @@ function updatePlayer(delta) {
             gameState.stamina = Math.min(gameState.maxStamina, gameState.stamina + 15 * delta);
         }
 
-        const moveX = Math.sin(playerFacingAngle) * speed * delta * 60;
-        const moveZ = Math.cos(playerFacingAngle) * speed * delta * 60;
-        const nx = playerGroup.position.x + moveX;
-        const nz = playerGroup.position.z + moveZ;
+        const nx = playerGroup.position.x + worldDx * speed * delta * 60;
+        const nz = playerGroup.position.z + worldDz * speed * delta * 60;
 
         // Boundary & collision
         const half = WORLD_SIZE / 2 - 1;
