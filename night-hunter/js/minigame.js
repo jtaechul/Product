@@ -113,6 +113,7 @@ const Minigame = {
             this.result = 'success';
             resultEl.textContent = '검거 성공! 🎉';
             resultEl.style.color = '#4ade80';
+            if (typeof SoundManager !== 'undefined') SoundManager.playSFX('arrest_success');
 
             EnemySystem.arrestEnemy(this.targetEnemy);
 
@@ -127,6 +128,7 @@ const Minigame = {
             this.result = 'fail';
             resultEl.textContent = '도주했습니다 😱';
             resultEl.style.color = '#ef4444';
+            if (typeof SoundManager !== 'undefined') SoundManager.playSFX('arrest_fail');
 
             // Damage player on fail based on resistance
             if (this.targetEnemy.resistance > 0) {
@@ -242,6 +244,7 @@ const Minigame = {
     triggerVictory() {
         gameState.gameOver = true;
         gameState.isPaused = true;
+        if (typeof SoundManager !== 'undefined') { SoundManager.stopBGM(); SoundManager.playSFX('victory'); }
         this.close();
 
         const overlay = document.createElement('div');
@@ -282,6 +285,7 @@ const Minigame = {
     triggerGameOver() {
         gameState.gameOver = true;
         gameState.isPaused = true;
+        if (typeof SoundManager !== 'undefined') { SoundManager.stopBGM(); SoundManager.playSFX('gameover'); }
         this.close();
 
         const overlay = document.createElement('div');

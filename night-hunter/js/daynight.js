@@ -112,6 +112,8 @@ const DayNight = {
         this.transitionProgress = 0;
         this.transitionType = type;
 
+        if (typeof SoundManager !== 'undefined') SoundManager.playSFX('transition');
+
         if (type === 'toNight') {
             showMessage('🌙 밤이 되었습니다…');
         } else {
@@ -226,11 +228,13 @@ const DayNight = {
 
     finishTransition() {
         if (this.transitionType === 'toNight') {
+            if (typeof SoundManager !== 'undefined') SoundManager.playBGM('night');
             gameState.isDay = false;
             gameState.timeRemaining = gameState.nightDuration;
             document.getElementById('time-icon').textContent = '🌙';
             showMessage(this.radioMessages.night);
         } else {
+            if (typeof SoundManager !== 'undefined') SoundManager.playBGM('day');
             gameState.day++;
             gameState.isDay = true;
             gameState.timeRemaining = gameState.dayDuration;

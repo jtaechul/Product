@@ -270,6 +270,7 @@ const HintSystem = {
 
         gameState.hintsCollected = this.collectedHints.length;
         gameState.coins += 10;
+        if (typeof SoundManager !== 'undefined') SoundManager.playSFX('collect');
 
         // Show popup
         const popup = document.getElementById('hint-popup');
