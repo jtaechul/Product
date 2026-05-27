@@ -304,7 +304,8 @@ window.addEventListener('keydown', e => {
     keys[e.code] = true;
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') gameState.isRunning = true;
     if (e.code === 'KeyE') HintSystem.collectNearbyHint();
-    if (e.code === 'KeyI') HintSystem.toggleMemo();
+    if (e.code === 'KeyI') Shop.toggleInventory();
+    if (e.code === 'KeyM') HintSystem.toggleMemo();
 });
 window.addEventListener('keyup', e => {
     keys[e.code] = false;
@@ -443,6 +444,7 @@ document.getElementById('hud').appendChild(staminaBarDiv);
 HintSystem.init(scene);
 EnemySystem.init(scene);
 Minigame.init();
+Shop.init(scene);
 
 // ── Joystick Logic ──
 let joystickActive = false;
@@ -798,6 +800,7 @@ function animate() {
         updateHUD();
         HintSystem.update(playerGroup.position, delta, clock.elapsedTime);
         EnemySystem.update(playerGroup.position, delta, clock.elapsedTime);
+        Shop.update(playerGroup.position);
         Minigame.checkCatchable(playerGroup.position);
     }
     Minigame.update(delta);
