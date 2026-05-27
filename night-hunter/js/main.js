@@ -273,6 +273,9 @@ createPlayer();
 // ── Day/Night System Init ──
 DayNight.init(scene, playerGroup);
 
+// ── Hint System Init ──
+HintSystem.init(scene);
+
 // ── Camera ──
 let cameraAngleY = 0;
 let cameraAngleX = 0.3;
@@ -302,6 +305,8 @@ let lastTouchX = 0, lastTouchY = 0;
 window.addEventListener('keydown', e => {
     keys[e.code] = true;
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') gameState.isRunning = true;
+    if (e.code === 'KeyE') HintSystem.collectNearbyHint();
+    if (e.code === 'KeyI') HintSystem.toggleMemo();
 });
 window.addEventListener('keyup', e => {
     keys[e.code] = false;
@@ -424,7 +429,7 @@ document.getElementById('hud').appendChild(dpadContainer);
 const actionBtnContainer = document.createElement('div');
 actionBtnContainer.id = 'action-buttons';
 actionBtnContainer.innerHTML = `
-    <button class="action-btn action-btn-interact" id="btn-interact" style="display:none;">E</button>
+    <button class="action-btn action-btn-interact" id="btn-interact" style="display:none;" onclick="HintSystem.collectNearbyHint()">E</button>
 `;
 document.getElementById('hud').appendChild(actionBtnContainer);
 
@@ -718,6 +723,7 @@ function animate() {
         updateTimer(delta);
         updateCamera();
         updateHUD();
+        HintSystem.update(playerGroup.position, delta, clock.elapsedTime);
     }
 
     renderer.render(scene, camera);
