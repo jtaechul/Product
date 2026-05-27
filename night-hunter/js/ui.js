@@ -92,11 +92,7 @@ const GameUI = {
         ctx.fillStyle = '#1a2e1a';
         ctx.fillRect(0, 0, size, size);
 
-        // Rotate entire minimap content with camera
-        ctx.save();
-        ctx.translate(half, half);
-        ctx.rotate(cameraAngle);
-        ctx.translate(-half, -half);
+        // World content (fixed north=up)
 
         // Roads
         ctx.strokeStyle = 'rgba(80,80,80,0.6)';
@@ -140,14 +136,13 @@ const GameUI = {
             ctx.fillRect(bx - bw / 2, bz - bd / 2, bw, bd);
         });
 
-        // Hints (star markers)
+        // Hints
         if (typeof HintSystem !== 'undefined') {
             HintSystem.hints.forEach(h => {
                 if (h.collected) return;
                 const hx = half + (h.x - playerPos.x) * scale;
                 const hz = half + (h.z - playerPos.z) * scale;
                 if (hx < -10 || hx > size + 10 || hz < -10 || hz > size + 10) return;
-
                 const showOnMap = (typeof Shop !== 'undefined' && Shop.hasItem('radio')) || gameState.isDay;
                 if (showOnMap && gameState.isDay) {
                     ctx.fillStyle = '#fbbf24';
@@ -158,14 +153,13 @@ const GameUI = {
             });
         }
 
-        // Enemies (at night)
+        // Enemies
         if (!gameState.isDay && typeof EnemySystem !== 'undefined') {
             EnemySystem.enemies.forEach(e => {
                 if (e.arrested || e.state === 'hidden') return;
                 const ex = half + (e.currentX - playerPos.x) * scale;
                 const ez = half + (e.currentZ - playerPos.z) * scale;
                 if (ex < -10 || ex > size + 10 || ez < -10 || ez > size + 10) return;
-
                 ctx.fillStyle = '#ff3333';
                 ctx.beginPath();
                 ctx.arc(ex, ez, 3, 0, Math.PI * 2);
@@ -173,7 +167,7 @@ const GameUI = {
             });
         }
 
-        // Shop NPC
+        // Shop
         if (typeof Shop !== 'undefined') {
             const sx = half + (Shop.shopX - playerPos.x) * scale;
             const sz = half + (Shop.shopZ - playerPos.z) * scale;
@@ -185,16 +179,16 @@ const GameUI = {
             }
         }
 
-        ctx.restore(); // end camera rotation
-
-        // Player arrow (always center, always points up = camera forward)
+        // Player arrow (rotates with character facing direction)
+        // playerAngle 0=+Z, on minimap +Z=down, so rotate PI-angle
         ctx.save();
         ctx.translate(half, half);
+        ctx.rotate(Math.PI - playerAngle);
         ctx.fillStyle = '#60a5fa';
         ctx.beginPath();
-        ctx.moveTo(0, -6);
-        ctx.lineTo(-4, 4);
-        ctx.lineTo(4, 4);
+        ctx.moveTo(0, -7);
+        ctx.lineTo(-5, 5);
+        ctx.lineTo(5, 5);
         ctx.closePath();
         ctx.fill();
         ctx.strokeStyle = '#fff';
@@ -211,14 +205,12 @@ const GameUI = {
 
         ctx.restore();
 
-        // North indicator
+        // North indicator (fixed top)
         ctx.save();
-        ctx.translate(half, half);
-        ctx.rotate(cameraAngle);
         ctx.fillStyle = '#ef4444';
-        ctx.font = 'bold 10px sans-serif';
+        ctx.font = 'bold 9px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('N', 0, -half + 12);
+        ctx.fillText('N', half, 11);
         ctx.restore();
     },
 

@@ -306,7 +306,10 @@ let lastTouchX = 0, lastTouchY = 0;
 window.addEventListener('keydown', e => {
     keys[e.code] = true;
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') gameState.isRunning = true;
-    if (e.code === 'KeyE') HintSystem.collectNearbyHint();
+    if (e.code === 'KeyE') {
+        if (HintSystem.nearbyHint) HintSystem.collectNearbyHint();
+        else if (document.getElementById('btn-interact').textContent === '🛒') Shop.openShop();
+    }
     if (e.code === 'KeyI') Shop.toggleInventory();
     if (e.code === 'KeyM') HintSystem.toggleMemo();
     if (e.code === 'Space') { e.preventDefault(); triggerJump(); }
