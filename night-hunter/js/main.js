@@ -1,4 +1,4 @@
-// main.js — Game loop, camera, state management, player (Stage 1+2)
+// main.js — Game loop, camera, state management, player (Stage 1+2+3)
 
 // ── Game State ──
 const gameState = {
@@ -269,6 +269,9 @@ function createPlayer() {
 }
 
 createPlayer();
+
+// ── Day/Night System Init ──
+DayNight.init(scene, playerGroup);
 
 // ── Camera ──
 let cameraAngleY = 0;
@@ -652,45 +655,37 @@ let lastTime = performance.now();
 
 function updateTimer(delta) {
     if (gameState.gameOver || gameState.isPaused) return;
+
+    // Handle active transition
+    if (DayNight.isTransitioning) {
+        const finished = DayNight.updateTransition(delta);
+        if (finished) {
+            DayNight.updateWindowGlow(!gameState.isDay);
+        }
+        updateTimerDisplay();
+        return;
+    }
+
     gameState.timeRemaining -= delta;
 
     if (gameState.timeRemaining <= 0) {
         if (gameState.isDay) {
-            transitionToNight();
+            DayNight.startTransition('toNight');
         } else {
-            transitionToDay();
+            DayNight.startTransition('toDay');
         }
+        gameState.timeRemaining = 0;
     }
 
+    DayNight.checkLastMinuteWarning();
+    DayNight.updateFlashlight();
+    updateTimerDisplay();
+}
+
+function updateTimerDisplay() {
     const mins = Math.floor(Math.abs(gameState.timeRemaining) / 60);
     const secs = Math.floor(Math.abs(gameState.timeRemaining) % 60);
     document.getElementById('timer').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
-function transitionToNight() {
-    gameState.isDay = false;
-    gameState.timeRemaining = gameState.nightDuration;
-    document.getElementById('time-icon').textContent = '🌙';
-    showMessage('🌙 밤이 되었습니다\n납치범들이 움직입니다…');
-
-    scene.background = new THREE.Color(0x050510);
-    scene.fog = new THREE.Fog(0x050510, 30, 120);
-    ambientLight.intensity = 0.15;
-    sunLight.intensity = 0.05;
-}
-
-function transitionToDay() {
-    gameState.day++;
-    gameState.isDay = true;
-    gameState.timeRemaining = gameState.dayDuration;
-    document.getElementById('time-icon').textContent = '☀️';
-    document.getElementById('day-text').textContent = gameState.day + '일차';
-    showMessage('☀️ 새벽이 밝았습니다\n' + gameState.day + '일차 수사를 시작하세요');
-
-    scene.background = new THREE.Color(0x87CEEB);
-    scene.fog = new THREE.Fog(0x87CEEB, 80, 200);
-    ambientLight.intensity = 0.8;
-    sunLight.intensity = 1.0;
 }
 
 function showMessage(text) {
