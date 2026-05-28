@@ -133,10 +133,10 @@ const Shop = {
         document.getElementById('inv-close').addEventListener('click', () => this.toggleInventory());
     },
 
-    // Police station also acts as shop
+    // Police station also acts as shop (보급실)
     policeShopX: 0,
-    policeShopZ: 80,
-    policeShopDist: 12,
+    policeShopZ: 110,
+    policeShopDist: 15,
 
     update(playerPos) {
         if (!gameState.isDay || DayNight.isTransitioning) {
@@ -158,13 +158,13 @@ const Shop = {
         const nearPolice = dist2 < this.policeShopDist;
 
         if ((nearShop || nearPolice) && !this.isOpen) {
-            this.showShopButton(true);
+            this.showShopButton(true, nearPolice && !nearShop);
         } else if (!this.isOpen) {
             this.showShopButton(false);
         }
     },
 
-    showShopButton(show) {
+    showShopButton(show, isPolice) {
         let btn = document.getElementById('btn-shop-open');
         if (!btn) {
             btn = document.createElement('button');
@@ -172,10 +172,11 @@ const Shop = {
             btn.style.cssText = `
                 position:fixed; top:50%; left:42%; transform:translate(-50%,-50%);
                 width:60px; height:60px; border-radius:50%;
-                border:2px solid rgba(59,130,246,0.6); background:rgba(59,130,246,0.2);
-                backdrop-filter:blur(4px); color:#60a5fa; font-size:18px; font-weight:800;
+                border:2px solid rgba(59,130,246,0.7); background:rgba(59,130,246,0.25);
+                backdrop-filter:blur(8px); color:#fff; font-size:18px; font-weight:800;
                 font-family:'Inter',sans-serif; cursor:pointer; touch-action:none;
                 z-index:40; pointer-events:auto; display:none;
+                box-shadow:0 4px 20px rgba(59,130,246,0.4);
             `;
             btn.textContent = 'P';
             btn.addEventListener('click', () => this.openShop());
@@ -185,8 +186,12 @@ const Shop = {
         btn.style.display = show ? 'flex' : 'none';
         btn.style.alignItems = 'center';
         btn.style.justifyContent = 'center';
-        if (show) HintSystem.showPrompt('P키로 상점 이용');
-        else if (!HintSystem.nearbyHint) HintSystem.hidePrompt();
+        if (show) {
+            this._isPolice = isPolice;
+            HintSystem.showPrompt(isPolice ? 'P키로 경찰서 보급실' : 'P키로 상점 이용');
+        } else {
+            HintSystem.hidePrompt();
+        }
     },
 
     hideShopPrompt() {
@@ -196,8 +201,13 @@ const Shop = {
     openShop() {
         this.isOpen = true;
         gameState.isPaused = true;
-        document.getElementById('shop-panel').style.display = 'block';
-        document.getElementById('btn-interact').style.display = 'none';
+        // Update title based on context
+        const panel = document.getElementById('shop-panel');
+        const titleEl = panel.querySelector('h3');
+        if (titleEl) titleEl.textContent = this._isPolice ? '🚔 경찰서 보급실' : '🛒 상점';
+        panel.style.display = 'block';
+        const btnI = document.getElementById('btn-interact');
+        if (btnI) btnI.style.display = 'none';
         this.renderShopItems();
     },
 

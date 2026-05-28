@@ -15,7 +15,9 @@ const GameUI = {
         const container = document.createElement('div');
         container.id = 'minimap-container';
         container.style.cssText = `
-            position:fixed; right:12px; top:60px;
+            position:fixed;
+            right:calc(12px + env(safe-area-inset-right, 0px));
+            top:calc(60px + env(safe-area-inset-top, 0px));
             width:${this.minimapSize}px; height:${this.minimapSize}px;
             border-radius:50%; overflow:hidden;
             border:2px solid rgba(255,255,255,0.3);
@@ -177,7 +179,9 @@ const GameUI = {
             el = document.createElement('div');
             el.id = 'hint-counter';
             el.style.cssText = `
-                position:fixed; right:12px; top:190px;
+                position:fixed;
+                right:calc(12px + env(safe-area-inset-right, 0px));
+                top:calc(190px + env(safe-area-inset-top, 0px));
                 background:rgba(0,0,0,0.5); backdrop-filter:blur(4px);
                 padding:4px 10px; border-radius:12px;
                 font-size:11px; color:#fbbf24; font-weight:700;

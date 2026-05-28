@@ -38,11 +38,23 @@ const EnemySystem = {
         }
     ],
 
-    init(scene) {
+    init(scene, buildingData) {
         this.scene = scene;
         this.enemies = [];
         this.enemyMeshes = [];
         this.createAlertUI();
+
+        // Randomize hideout positions based on actual hideout buildings
+        if (buildingData) {
+            const hideouts = buildingData.filter(b => b.type === 'hideout');
+            hideouts.forEach(h => {
+                const idx = h.hideoutIndex;
+                if (idx >= 0 && idx < this.enemyData.length) {
+                    this.enemyData[idx].hideoutX = h.x;
+                    this.enemyData[idx].hideoutZ = h.z + h.d / 2 + 5; // in front of building
+                }
+            });
+        }
 
         this.enemyData.forEach(data => {
             const enemy = this.createEnemy(data);
@@ -52,64 +64,88 @@ const EnemySystem = {
 
     createEnemy(data) {
         const group = new THREE.Group();
+        const bodyMat = new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.85 });
+        const blackMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 });
 
-        // Body
-        const bodyMat = new THREE.MeshStandardMaterial({ color: data.color });
-        const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.7, 0.35), bodyMat);
-        body.position.y = 1.0;
-        body.castShadow = true;
-        group.add(body);
+        // Articulated legs (hip groups for animation)
+        const leftHip = new THREE.Group();
+        leftHip.position.set(-0.1, 0.6, 0);
+        const lThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.32, 10), blackMat);
+        lThigh.position.y = -0.16; lThigh.castShadow = true;
+        leftHip.add(lThigh);
+        const lShin = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.32, 10), blackMat);
+        lShin.position.y = -0.48; lShin.castShadow = true;
+        leftHip.add(lShin);
+        const lShoe = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.3), blackMat);
+        lShoe.position.set(0, -0.66, 0.05); lShoe.castShadow = true;
+        leftHip.add(lShoe);
+        leftHip.userData.partName = 'leftLeg';
+        group.add(leftHip);
 
-        // Head
+        const rightHip = leftHip.clone(true);
+        rightHip.position.set(0.1, 0.6, 0);
+        rightHip.userData.partName = 'rightLeg';
+        group.add(rightHip);
+
+        // Torso (hoodie)
+        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.7, 0.32), bodyMat);
+        torso.position.y = 0.95;
+        torso.castShadow = true;
+        group.add(torso);
+
+        // Articulated arms
+        const leftShoulder = new THREE.Group();
+        leftShoulder.position.set(-0.32, 1.2, 0);
+        const lUpperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.06, 0.3, 10), bodyMat);
+        lUpperArm.position.y = -0.15; lUpperArm.castShadow = true;
+        leftShoulder.add(lUpperArm);
+        const lForearm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.3, 10), bodyMat);
+        lForearm.position.y = -0.45; lForearm.castShadow = true;
+        leftShoulder.add(lForearm);
+        const lHand = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), new THREE.MeshStandardMaterial({ color: 0xddbb99 }));
+        lHand.position.y = -0.6;
+        leftShoulder.add(lHand);
+        leftShoulder.userData.partName = 'leftArm';
+        group.add(leftShoulder);
+
+        const rightShoulder = leftShoulder.clone(true);
+        rightShoulder.position.set(0.32, 1.2, 0);
+        rightShoulder.userData.partName = 'rightArm';
+        group.add(rightShoulder);
+
+        // Head with hood
         const head = new THREE.Mesh(
-            new THREE.SphereGeometry(0.25, 16, 16),
-            new THREE.MeshStandardMaterial({ color: 0xddbb99 })
+            new THREE.SphereGeometry(0.2, 20, 20),
+            new THREE.MeshStandardMaterial({ color: 0xddbb99, roughness: 0.6 })
         );
-        head.position.y = 1.6;
+        head.position.y = 1.5;
         head.castShadow = true;
         group.add(head);
 
-        // Hood/mask
+        // Hood (hooded sweatshirt)
         const hood = new THREE.Mesh(
-            new THREE.SphereGeometry(0.27, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.6),
-            new THREE.MeshStandardMaterial({ color: 0x222222 })
+            new THREE.SphereGeometry(0.24, 20, 20, 0, Math.PI * 2, 0, Math.PI * 0.65),
+            blackMat
         );
-        hood.position.y = 1.65;
+        hood.position.y = 1.55;
         group.add(hood);
 
-        // Eyes (menacing)
-        const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), eyeMat);
-        leftEye.position.set(-0.08, 1.6, 0.23);
+        // Menacing red eyes
+        const eyeMat = new THREE.MeshStandardMaterial({ color: 0xff2222, emissive: 0xff0000, emissiveIntensity: 0.8 });
+        const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 10), eyeMat);
+        leftEye.position.set(-0.06, 1.5, 0.18);
         group.add(leftEye);
-        const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), eyeMat);
-        rightEye.position.set(0.08, 1.6, 0.23);
+        const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 10), eyeMat);
+        rightEye.position.set(0.06, 1.5, 0.18);
         group.add(rightEye);
 
-        // Legs
-        const legMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-        const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.6, 8), legMat);
-        leftLeg.position.set(-0.15, 0.3, 0);
-        leftLeg.castShadow = true;
-        leftLeg.userData.partName = 'leftLeg';
-        group.add(leftLeg);
-        const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.6, 8), legMat);
-        rightLeg.position.set(0.15, 0.3, 0);
-        rightLeg.castShadow = true;
-        rightLeg.userData.partName = 'rightLeg';
-        group.add(rightLeg);
-
-        // Arms
-        const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), bodyMat);
-        leftArm.position.set(-0.38, 1.0, 0);
-        leftArm.rotation.z = 0.15;
-        leftArm.userData.partName = 'leftArm';
-        group.add(leftArm);
-        const rightArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), bodyMat);
-        rightArm.position.set(0.38, 1.0, 0);
-        rightArm.rotation.z = -0.15;
-        rightArm.userData.partName = 'rightArm';
-        group.add(rightArm);
+        // Mask (black bandana over mouth)
+        const mask = new THREE.Mesh(
+            new THREE.BoxGeometry(0.22, 0.1, 0.05),
+            blackMat
+        );
+        mask.position.set(0, 1.4, 0.16);
+        group.add(mask);
 
         // "!" alert sprite (hidden by default)
         const alertCanvas = document.createElement('canvas');
@@ -192,6 +228,14 @@ const EnemySystem = {
         this.enemies.forEach(enemy => {
             if (enemy.arrested) {
                 enemy.mesh.visible = false;
+                return;
+            }
+
+            // Only appear at night IF all hints for this criminal are collected
+            const revealed = HintSystem.hasAllHintsFor(enemy.id);
+            if (!revealed) {
+                enemy.mesh.visible = false;
+                enemy.state = 'hidden';
                 return;
             }
 
@@ -407,6 +451,11 @@ const EnemySystem = {
             }
         });
         return { enemy: nearest, distance: minDist };
+    },
+
+    markRevealed(criminalId) {
+        // No-op marker — visibility now driven by HintSystem.hasAllHintsFor()
+        // Could be used for additional effects in future
     },
 
     arrestEnemy(enemy) {
