@@ -191,12 +191,7 @@ const HintSystem = {
         gameState.coins += 10;
         if (typeof SoundManager !== 'undefined') SoundManager.playSFX('collect');
 
-        const popup = document.getElementById('hint-popup');
-        document.getElementById('hint-popup-criminal').textContent =
-            this.criminalNames[criminal] + ' — 단서 ' + (order + 1) + '/' + this.hintsRequired[criminal];
-        document.getElementById('hint-popup-text').textContent = '"' + text + '"';
-        popup.style.display = 'block';
-        setTimeout(() => { popup.style.display = 'none'; }, 2500);
+        // hint-popup disabled — NPC dialog already shows the hint to prevent overlap
 
         // Check if all hints for this criminal collected
         const crimHints = this.collectedHints.filter(h => h.criminal === criminal);

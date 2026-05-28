@@ -588,15 +588,17 @@ function createStreetLight(group, x, z) {
     pole.castShadow = true;
     group.add(pole);
 
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.08, 0.08), poleMat);
-    arm.position.set(x + 0.75, 5, z);
-    group.add(arm);
-
+    // Lamp directly on top of pole — no overhang arm (avoids extending over road)
     const lampMat = new THREE.MeshStandardMaterial({ color: 0xffdd88, emissive: 0x332200, emissiveIntensity: 0, roughness: 0.5 });
-    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 12), lampMat);
-    lamp.position.set(x + 1.5, 4.8, z);
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 12), lampMat);
+    lamp.position.set(x, 5.15, z);
     lamp.userData.isStreetLight = true;
     group.add(lamp);
+
+    // Small cap on top of lamp
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.18, 8), poleMat);
+    cap.position.set(x, 5.4, z);
+    group.add(cap);
 
     return lamp;
 }
