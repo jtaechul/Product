@@ -293,6 +293,31 @@ const NPCSystem = {
         document.getElementById('npc-ok').addEventListener('click', () => this.closeDialog());
     },
 
+    _collidesWithBuilding(x, z) {
+        if (!window._buildingPositions) return false;
+        const r = 0.5;
+        for (const b of window._buildingPositions) {
+            if (Math.abs(x - b.x) < b.w / 2 + r && Math.abs(z - b.z) < b.d / 2 + r) return true;
+        }
+        return false;
+    },
+
+    _tryMove(npc, dx, dz) {
+        const nx = npc.mesh.position.x + dx;
+        const nz = npc.mesh.position.z + dz;
+        const half = WORLD_SIZE / 2 - 2;
+        const cx = Math.max(-half, Math.min(half, nx));
+        const cz = Math.max(-half, Math.min(half, nz));
+        if (!this._collidesWithBuilding(cx, cz)) {
+            npc.mesh.position.x = cx;
+            npc.mesh.position.z = cz;
+        } else if (!this._collidesWithBuilding(cx, npc.mesh.position.z)) {
+            npc.mesh.position.x = cx;
+        } else if (!this._collidesWithBuilding(npc.mesh.position.x, cz)) {
+            npc.mesh.position.z = cz;
+        }
+    },
+
     update(playerPos, delta, time) {
         if (!gameState.isDay) {
             // Hide all suspects at night
@@ -323,12 +348,7 @@ const NPCSystem = {
                 if (d > 0.01) {
                     let fx = -(dx / d);
                     let fz = -(dz / d);
-                    // Clamp to world bounds
-                    const nx = npc.mesh.position.x + fx * speed * delta * 60;
-                    const nz = npc.mesh.position.z + fz * speed * delta * 60;
-                    const half = WORLD_SIZE / 2 - 2;
-                    npc.mesh.position.x = Math.max(-half, Math.min(half, nx));
-                    npc.mesh.position.z = Math.max(-half, Math.min(half, nz));
+                    this._tryMove(npc, fx * speed * delta * 60, fz * speed * delta * 60);
                     npc.mesh.rotation.y = Math.atan2(fx, fz);
                 }
                 // Run animation
@@ -352,8 +372,7 @@ const NPCSystem = {
                 const td = Math.sqrt(tdx * tdx + tdz * tdz);
                 if (td > 0.3) {
                     const speed = 0.4;
-                    npc.mesh.position.x += (tdx / td) * speed * delta;
-                    npc.mesh.position.z += (tdz / td) * speed * delta;
+                    this._tryMove(npc, (tdx / td) * speed * delta, (tdz / td) * speed * delta);
                     npc.mesh.rotation.y = Math.atan2(tdx, tdz);
                     const swing = Math.sin(time * 4) * 0.3;
                     if (npc.leftHip) npc.leftHip.rotation.x = swing;

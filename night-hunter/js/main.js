@@ -210,147 +210,195 @@ function createPlayer() {
     head.castShadow = true;
     playerGroup.add(head);
 
-    // Cheeks
-    const cheekMat = new THREE.MeshStandardMaterial({ color: 0xffb3b3, transparent: true, opacity: 0.6 });
-    const leftCheek = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), cheekMat);
-    leftCheek.position.set(-0.16, 1.65, 0.22);
+    // Subtle cheek blush (smaller, softer)
+    const cheekMat = new THREE.MeshStandardMaterial({ color: 0xffa8a8, transparent: true, opacity: 0.4 });
+    const leftCheek = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), cheekMat);
+    leftCheek.position.set(-0.17, 1.62, 0.235);
+    leftCheek.scale.set(1, 0.7, 0.3);
     playerGroup.add(leftCheek);
-    const rightCheek = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), cheekMat);
-    rightCheek.position.set(0.16, 1.65, 0.22);
+    const rightCheek = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), cheekMat);
+    rightCheek.position.set(0.17, 1.62, 0.235);
+    rightCheek.scale.set(1, 0.7, 0.3);
     playerGroup.add(rightCheek);
 
-    // Eyebrows
-    const browMat = new THREE.MeshStandardMaterial({ color: 0x3b1f0a });
-    const leftBrow = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.025, 0.02), browMat);
-    leftBrow.position.set(-0.1, 1.75, 0.27);
-    leftBrow.rotation.z = 0.15;
+    // === REFINED FACE (referenced pixel art) ===
+    // Clean anime-style female face with big blue eyes, twin braided pigtails
+
+    // Eyebrows — thin slightly arched
+    const browMat = new THREE.MeshStandardMaterial({ color: 0x1a0a00, roughness: 0.7 });
+    const leftBrow = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.022, 0.015), browMat);
+    leftBrow.position.set(-0.1, 1.76, 0.275);
+    leftBrow.rotation.z = 0.12;
     playerGroup.add(leftBrow);
-    const rightBrow = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.025, 0.02), browMat);
-    rightBrow.position.set(0.1, 1.75, 0.27);
-    rightBrow.rotation.z = -0.15;
+    const rightBrow = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.022, 0.015), browMat);
+    rightBrow.position.set(0.1, 1.76, 0.275);
+    rightBrow.rotation.z = -0.12;
     playerGroup.add(rightBrow);
 
-    // Eyes
-    const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const eyeBlackMat = new THREE.MeshStandardMaterial({ color: 0x1a0a00 });
-    const highlightMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    // BIG BLUE eyes (anime style — larger ratio)
+    const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+    const eyeBlueMat = new THREE.MeshStandardMaterial({ color: 0x3a82d4, roughness: 0.4 });
+    const eyePupilMat = new THREE.MeshStandardMaterial({ color: 0x0a1a3a, roughness: 0.3 });
+    const highlightMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.3 });
 
-    const leftEyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.065, 12, 12), eyeWhiteMat);
-    leftEyeWhite.position.set(-0.1, 1.68, 0.25);
-    playerGroup.add(leftEyeWhite);
-    const rightEyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.065, 12, 12), eyeWhiteMat);
-    rightEyeWhite.position.set(0.1, 1.68, 0.25);
-    playerGroup.add(rightEyeWhite);
+    // Eye whites (bigger)
+    const lEyeW = new THREE.Mesh(new THREE.SphereGeometry(0.078, 16, 16), eyeWhiteMat);
+    lEyeW.position.set(-0.105, 1.69, 0.245);
+    lEyeW.scale.set(1, 1.1, 0.6);
+    playerGroup.add(lEyeW);
+    const rEyeW = new THREE.Mesh(new THREE.SphereGeometry(0.078, 16, 16), eyeWhiteMat);
+    rEyeW.position.set(0.105, 1.69, 0.245);
+    rEyeW.scale.set(1, 1.1, 0.6);
+    playerGroup.add(rEyeW);
 
-    const leftPupil = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), eyeBlackMat);
-    leftPupil.position.set(-0.1, 1.68, 0.285);
-    playerGroup.add(leftPupil);
-    const rightPupil = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), eyeBlackMat);
-    rightPupil.position.set(0.1, 1.68, 0.285);
-    playerGroup.add(rightPupil);
+    // Blue iris (large)
+    const lIris = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), eyeBlueMat);
+    lIris.position.set(-0.105, 1.685, 0.295);
+    lIris.scale.set(1, 1, 0.4);
+    playerGroup.add(lIris);
+    const rIris = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), eyeBlueMat);
+    rIris.position.set(0.105, 1.685, 0.295);
+    rIris.scale.set(1, 1, 0.4);
+    playerGroup.add(rIris);
 
-    const leftHighlight = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 6), highlightMat);
-    leftHighlight.position.set(-0.09, 1.695, 0.3);
-    playerGroup.add(leftHighlight);
-    const rightHighlight = new THREE.Mesh(new THREE.SphereGeometry(0.015, 6, 6), highlightMat);
-    rightHighlight.position.set(0.11, 1.695, 0.3);
-    playerGroup.add(rightHighlight);
+    // Pupils (small dark center)
+    const lPupil = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 10), eyePupilMat);
+    lPupil.position.set(-0.105, 1.685, 0.31);
+    playerGroup.add(lPupil);
+    const rPupil = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 10), eyePupilMat);
+    rPupil.position.set(0.105, 1.685, 0.31);
+    playerGroup.add(rPupil);
 
-    // Eyelashes
-    const lashMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
-    [-0.13, -0.10, -0.07].forEach(lx => {
-        const lash = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.04, 0.01), lashMat);
-        lash.position.set(lx, 1.735, 0.27);
-        playerGroup.add(lash);
-    });
-    [0.07, 0.10, 0.13].forEach(lx => {
-        const lash = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.04, 0.01), lashMat);
-        lash.position.set(lx, 1.735, 0.27);
-        playerGroup.add(lash);
-    });
+    // Sparkle highlights (top-left of each eye)
+    const lHi = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 8), highlightMat);
+    lHi.position.set(-0.12, 1.705, 0.318);
+    playerGroup.add(lHi);
+    const rHi = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 8), highlightMat);
+    rHi.position.set(0.09, 1.705, 0.318);
+    playerGroup.add(rHi);
 
-    // Nose
-    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), new THREE.MeshStandardMaterial({ color: 0xe8b88a }));
-    nose.position.set(0, 1.63, 0.285);
+    // Small lower highlights
+    const lHi2 = new THREE.Mesh(new THREE.SphereGeometry(0.008, 6, 6), highlightMat);
+    lHi2.position.set(-0.09, 1.67, 0.315);
+    playerGroup.add(lHi2);
+    const rHi2 = new THREE.Mesh(new THREE.SphereGeometry(0.008, 6, 6), highlightMat);
+    rHi2.position.set(0.12, 1.67, 0.315);
+    playerGroup.add(rHi2);
+
+    // Nose — minimal (small subtle bump)
+    const nose = new THREE.Mesh(
+        new THREE.SphereGeometry(0.018, 8, 8),
+        new THREE.MeshStandardMaterial({ color: 0xe8a888, roughness: 0.6 })
+    );
+    nose.position.set(0, 1.625, 0.295);
+    nose.scale.set(1, 0.8, 0.7);
     playerGroup.add(nose);
 
-    // Lips
-    const lipMat = new THREE.MeshStandardMaterial({ color: 0xe05080 });
-    const upperLip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.025, 0.02), lipMat);
-    upperLip.position.set(0, 1.56, 0.275);
-    playerGroup.add(upperLip);
-    const lowerLip = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.03, 0.02), lipMat);
-    lowerLip.position.set(0, 1.535, 0.275);
-    playerGroup.add(lowerLip);
-    const smileLine = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.012, 0.01), new THREE.MeshStandardMaterial({ color: 0x8b4513 }));
-    smileLine.position.set(0, 1.548, 0.285);
-    playerGroup.add(smileLine);
+    // Mouth — small smile (curved line via box rotated)
+    const mouthMat = new THREE.MeshStandardMaterial({ color: 0xc04060, roughness: 0.5 });
+    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.018, 0.012), mouthMat);
+    mouth.position.set(0, 1.55, 0.295);
+    playerGroup.add(mouth);
+    // Tiny upturned corners (smile)
+    const lCorner = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.018, 0.012), mouthMat);
+    lCorner.position.set(-0.045, 1.555, 0.293);
+    lCorner.rotation.z = 0.35;
+    playerGroup.add(lCorner);
+    const rCorner = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.018, 0.012), mouthMat);
+    rCorner.position.set(0.045, 1.555, 0.293);
+    rCorner.rotation.z = -0.35;
+    playerGroup.add(rCorner);
 
-    // Hair — full coverage with sphere base + back volume
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x2a1208, roughness: 0.85 });
+    // === HAIR — clean black with braided pigtails ===
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.6, metalness: 0.05 });
 
-    // Hair sphere base (covers top + back of head)
-    const hairBase = new THREE.Mesh(
-        new THREE.SphereGeometry(0.31, 24, 24, 0, Math.PI * 2, 0, Math.PI * 0.65),
+    // Hair cap (covers top + back) — clean smooth coverage
+    const hairCap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.305, 28, 28, 0, Math.PI * 2, 0, Math.PI * 0.62),
         hairMat
     );
-    hairBase.position.set(0, 1.68, 0);
-    hairBase.castShadow = true;
-    playerGroup.add(hairBase);
+    hairCap.position.set(0, 1.68, -0.005);
+    hairCap.castShadow = true;
+    playerGroup.add(hairCap);
 
-    // Back hair volume (longer, behind head)
-    const backHairVol = new THREE.Mesh(
-        new THREE.SphereGeometry(0.25, 20, 20, 0, Math.PI * 2, 0, Math.PI * 0.7),
+    // Back of head hair (lower coverage)
+    const backHair = new THREE.Mesh(
+        new THREE.SphereGeometry(0.28, 24, 24, 0, Math.PI, Math.PI * 0.2, Math.PI * 0.6),
         hairMat
     );
-    backHairVol.position.set(0, 1.52, -0.15);
-    backHairVol.scale.set(1.0, 1.4, 0.7);
-    backHairVol.castShadow = true;
-    playerGroup.add(backHairVol);
+    backHair.position.set(0, 1.68, 0);
+    backHair.rotation.y = Math.PI;
+    backHair.castShadow = true;
+    playerGroup.add(backHair);
 
-    // Side hair (shoulder-length)
-    const leftSideHair = new THREE.Mesh(
-        new THREE.BoxGeometry(0.08, 0.55, 0.18),
+    // Side-swept bangs (asymmetric, smooth)
+    const bangsLeft = new THREE.Mesh(
+        new THREE.BoxGeometry(0.32, 0.1, 0.1),
         hairMat
     );
-    leftSideHair.position.set(-0.27, 1.5, -0.05);
-    leftSideHair.castShadow = true;
-    playerGroup.add(leftSideHair);
-
-    const rightSideHair = new THREE.Mesh(
-        new THREE.BoxGeometry(0.08, 0.55, 0.18),
+    bangsLeft.position.set(-0.05, 1.86, 0.21);
+    bangsLeft.rotation.z = 0.15;
+    bangsLeft.rotation.x = -0.15;
+    playerGroup.add(bangsLeft);
+    const bangsRight = new THREE.Mesh(
+        new THREE.BoxGeometry(0.22, 0.1, 0.1),
         hairMat
     );
-    rightSideHair.position.set(0.27, 1.5, -0.05);
-    rightSideHair.castShadow = true;
-    playerGroup.add(rightSideHair);
+    bangsRight.position.set(0.15, 1.85, 0.2);
+    bangsRight.rotation.z = -0.2;
+    bangsRight.rotation.x = -0.15;
+    playerGroup.add(bangsRight);
 
-    // Front bangs
-    const frontBangs = new THREE.Mesh(
-        new THREE.BoxGeometry(0.5, 0.14, 0.12),
-        hairMat
-    );
-    frontBangs.position.set(0, 1.88, 0.2);
-    frontBangs.rotation.x = -0.2;
-    playerGroup.add(frontBangs);
+    // === TWIN BRAIDED PIGTAILS ===
+    // Each braid = 3 segments stacked (slightly varied) to suggest texture
+    function makeBraid(side) {
+        const x = side * 0.32;
+        const braidGroup = new THREE.Group();
+        // Top junction (where pigtail attaches)
+        const junction = new THREE.Mesh(
+            new THREE.SphereGeometry(0.09, 12, 12),
+            hairMat
+        );
+        junction.position.set(x, 1.55, -0.03);
+        playerGroup.add(junction);
 
-    // Ponytail (longer & thicker)
-    const ponytail = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.09, 0.05, 0.7, 12),
-        hairMat
-    );
-    ponytail.position.set(0, 1.25, -0.28);
-    ponytail.rotation.x = 0.35;
-    ponytail.castShadow = true;
-    playerGroup.add(ponytail);
+        // Hair tie (green ribbon as in pixel art)
+        const tie = new THREE.Mesh(
+            new THREE.BoxGeometry(0.13, 0.05, 0.08),
+            new THREE.MeshStandardMaterial({ color: 0x4a9d4a, roughness: 0.6 })
+        );
+        tie.position.set(x, 1.5, -0.02);
+        playerGroup.add(tie);
 
-    // Hair tie
-    const hairTie = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.06, 0.06, 0.04, 8),
-        new THREE.MeshStandardMaterial({ color: 0xcc1a1a, roughness: 0.5 })
-    );
-    hairTie.position.set(0, 1.5, -0.25);
-    playerGroup.add(hairTie);
+        // Braid segments (3 cylinders, each tapering)
+        for (let i = 0; i < 3; i++) {
+            const seg = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.075 - i * 0.012, 0.07 - i * 0.012, 0.22, 12),
+                hairMat
+            );
+            seg.position.set(x, 1.4 - i * 0.22, -0.05 - i * 0.02);
+            seg.castShadow = true;
+            playerGroup.add(seg);
+        }
+
+        // Braid end (small bulb)
+        const end = new THREE.Mesh(
+            new THREE.SphereGeometry(0.055, 10, 10),
+            hairMat
+        );
+        end.position.set(x, 0.74, -0.1);
+        playerGroup.add(end);
+
+        // Lower tie (green)
+        const lowerTie = new THREE.Mesh(
+            new THREE.BoxGeometry(0.1, 0.04, 0.06),
+            new THREE.MeshStandardMaterial({ color: 0x4a9d4a })
+        );
+        lowerTie.position.set(x, 0.8, -0.09);
+        playerGroup.add(lowerTie);
+    }
+    makeBraid(-1);
+    makeBraid(1);
 
     // Hat
     const hatMat = new THREE.MeshStandardMaterial({ color: 0x0d1b2a });

@@ -171,13 +171,13 @@ const Shop = {
             btn = document.createElement('button');
             btn.id = 'btn-shop-open';
             btn.style.cssText = `
-                position:fixed; top:42%; left:50%; transform:translate(-50%,-50%);
-                width:54px; height:54px; border-radius:50%;
-                border:2px solid rgba(59,130,246,0.7); background:rgba(59,130,246,0.3);
+                position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+                width:56px; height:56px; border-radius:50%;
+                border:2px solid rgba(59,130,246,0.7); background:rgba(59,130,246,0.35);
                 backdrop-filter:blur(8px); color:#fff; font-size:18px; font-weight:800;
                 font-family:'Inter',sans-serif; cursor:pointer; touch-action:none;
                 z-index:40; pointer-events:auto; display:none;
-                box-shadow:0 4px 20px rgba(59,130,246,0.4);
+                box-shadow:0 4px 16px rgba(59,130,246,0.4);
                 align-items:center; justify-content:center;
             `;
             btn.textContent = 'P';
@@ -186,11 +186,9 @@ const Shop = {
             document.body.appendChild(btn);
         }
         btn.style.display = show ? 'flex' : 'none';
-        btn.style.alignItems = 'center';
-        btn.style.justifyContent = 'center';
         if (show) {
             this._isPolice = isPolice;
-            HintSystem.showPrompt(isPolice ? 'P키로 경찰서 보급실' : 'P키로 상점 이용');
+            HintSystem.showPrompt(isPolice ? 'P 키 → 경찰서 보급실' : 'P 키 → 상점');
         } else {
             HintSystem.hidePrompt();
         }
