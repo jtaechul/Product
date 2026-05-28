@@ -281,12 +281,11 @@ function createPoliceStation(group) {
     return { mesh: building, x, z, w, d, h, type: 'police', zone: 'POLICE' };
 }
 
-function createBuilding(group, x, z, w, d, h, color, label) {
-    const mat = new THREE.MeshStandardMaterial({
-        color,
-        roughness: 0.85,
-        metalness: 0.05
-    });
+function createBuilding(group, x, z, w, d, h, color, label, glass) {
+    // Glass towers (tall commercial) get reflective material; others matte stucco
+    const mat = glass
+        ? new THREE.MeshStandardMaterial({ color, roughness: 0.18, metalness: 0.45 })
+        : new THREE.MeshStandardMaterial({ color, roughness: 0.85, metalness: 0.05 });
     const geo = new THREE.BoxGeometry(w, h, d);
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.set(x, h / 2, z);
@@ -446,7 +445,8 @@ function createGridBuildings(group) {
     // Create the buildings
     candidateBuildings.forEach(b => {
         const label = b.isHideout ? `${b.zone} 은거지` : `${b.zone}`;
-        const mesh = createBuilding(group, b.bx, b.bz, b.bw, b.bd, b.bh, b.bcolor, label);
+        const isGlass = (b.zone === 'COMMERCIAL' && b.bh >= 15);
+        const mesh = createBuilding(group, b.bx, b.bz, b.bw, b.bd, b.bh, b.bcolor, label, isGlass);
         buildings.push({
             mesh, x: b.bx, z: b.bz, w: b.bw, d: b.bd, h: b.bh,
             type: b.isHideout ? 'hideout' : 'normal',
