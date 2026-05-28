@@ -514,7 +514,7 @@ document.getElementById('hud').appendChild(staminaBarDiv);
 
 // ── System Init (DOM 요소 생성 이후) ──
 HintSystem.init(scene);
-EnemySystem.init(scene);
+EnemySystem.init(scene, buildingData);
 Minigame.init();
 Shop.init(scene);
 NPCSystem.init(scene);
