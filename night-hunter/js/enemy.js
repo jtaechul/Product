@@ -54,7 +54,7 @@ const EnemySystem = {
         const group = new THREE.Group();
 
         // Body
-        const bodyMat = new THREE.MeshLambertMaterial({ color: data.color });
+        const bodyMat = new THREE.MeshStandardMaterial({ color: data.color });
         const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.7, 0.35), bodyMat);
         body.position.y = 1.0;
         body.castShadow = true;
@@ -63,7 +63,7 @@ const EnemySystem = {
         // Head
         const head = new THREE.Mesh(
             new THREE.SphereGeometry(0.25, 16, 16),
-            new THREE.MeshLambertMaterial({ color: 0xddbb99 })
+            new THREE.MeshStandardMaterial({ color: 0xddbb99 })
         );
         head.position.y = 1.6;
         head.castShadow = true;
@@ -72,7 +72,7 @@ const EnemySystem = {
         // Hood/mask
         const hood = new THREE.Mesh(
             new THREE.SphereGeometry(0.27, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.6),
-            new THREE.MeshLambertMaterial({ color: 0x222222 })
+            new THREE.MeshStandardMaterial({ color: 0x222222 })
         );
         hood.position.y = 1.65;
         group.add(hood);
@@ -87,7 +87,7 @@ const EnemySystem = {
         group.add(rightEye);
 
         // Legs
-        const legMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
+        const legMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
         const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.6, 8), legMat);
         leftLeg.position.set(-0.15, 0.3, 0);
         leftLeg.castShadow = true;

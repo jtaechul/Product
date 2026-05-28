@@ -30,7 +30,7 @@ const Shop = {
         // Body (blue capsule-like)
         const body = new THREE.Mesh(
             new THREE.CylinderGeometry(0.4, 0.35, 1.2, 12),
-            new THREE.MeshLambertMaterial({ color: 0x2563eb })
+            new THREE.MeshStandardMaterial({ color: 0x2563eb })
         );
         body.position.y = 1.0;
         body.castShadow = true;
@@ -39,7 +39,7 @@ const Shop = {
         // Head
         const head = new THREE.Mesh(
             new THREE.SphereGeometry(0.3, 16, 16),
-            new THREE.MeshLambertMaterial({ color: 0xffdbac })
+            new THREE.MeshStandardMaterial({ color: 0xffdbac })
         );
         head.position.y = 1.85;
         head.castShadow = true;
@@ -48,7 +48,7 @@ const Shop = {
         // Hat
         const hat = new THREE.Mesh(
             new THREE.CylinderGeometry(0.15, 0.35, 0.25, 12),
-            new THREE.MeshLambertMaterial({ color: 0x2563eb })
+            new THREE.MeshStandardMaterial({ color: 0x2563eb })
         );
         hat.position.y = 2.1;
         group.add(hat);

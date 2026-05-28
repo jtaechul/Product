@@ -27,20 +27,73 @@ const gameState = {
 
 // ── Three.js Setup ──
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87CEEB);
-scene.fog = new THREE.Fog(0x87CEEB, 80, 200);
+
+// Gradient sky background (procedural)
+function makeSkyTexture(topColor, bottomColor) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 2; canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    const grd = ctx.createLinearGradient(0, 0, 0, 256);
+    grd.addColorStop(0, topColor);
+    grd.addColorStop(0.5, bottomColor);
+    grd.addColorStop(1, bottomColor);
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, 2, 256);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
+    return tex;
+}
+scene.background = makeSkyTexture('#7ec0ee', '#cfeaff');
+scene.fog = new THREE.Fog(0xcfeaff, 70, 220);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
-const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas'), antialias: true });
+const renderer = new THREE.WebGLRenderer({
+    canvas: document.getElementById('gameCanvas'),
+    antialias: true,
+    powerPreference: 'high-performance'
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+renderer.physicallyCorrectLights = true;
+
+// Post-processing (bloom for nighttime glow)
+let composer = null;
+let bloomPass = null;
+let fxaaPass = null;
+try {
+    composer = new THREE.EffectComposer(renderer);
+    composer.addPass(new THREE.RenderPass(scene, camera));
+    bloomPass = new THREE.UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        0.4, 0.8, 0.85
+    );
+    composer.addPass(bloomPass);
+    fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
+    fxaaPass.material.uniforms['resolution'].value.set(
+        1 / (window.innerWidth * renderer.getPixelRatio()),
+        1 / (window.innerHeight * renderer.getPixelRatio())
+    );
+    composer.addPass(fxaaPass);
+} catch (e) {
+    console.warn('Postprocessing not available, falling back to basic render');
+}
 
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    if (composer) composer.setSize(window.innerWidth, window.innerHeight);
+    if (fxaaPass) {
+        fxaaPass.material.uniforms['resolution'].value.set(
+            1 / (window.innerWidth * renderer.getPixelRatio()),
+            1 / (window.innerHeight * renderer.getPixelRatio())
+        );
+    }
 });
 
 // ── Lighting (Daytime) ──
@@ -72,7 +125,7 @@ const playerGroup = new THREE.Group();
 
 function createPlayer() {
     // Legs
-    const legMat = new THREE.MeshLambertMaterial({ color: 0x1a2a4a });
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x1a2a4a, roughness: 0.7, metalness: 0.1 });
     const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.7, 8), legMat);
     leftLeg.position.set(-0.2, 0.35, 0);
     leftLeg.castShadow = true;
@@ -86,7 +139,7 @@ function createPlayer() {
     playerGroup.add(rightLeg);
 
     // Shoes
-    const shoeMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
     const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.3), shoeMat);
     leftShoe.position.set(-0.2, 0.0, 0.05);
     leftShoe.castShadow = true;
@@ -107,7 +160,7 @@ function createPlayer() {
     // Necktie
     const tie = new THREE.Mesh(
         new THREE.BoxGeometry(0.1, 0.3, 0.05),
-        new THREE.MeshLambertMaterial({ color: 0x003399 })
+        new THREE.MeshStandardMaterial({ color: 0x003399 })
     );
     tie.position.set(0, 1.15, 0.18);
     playerGroup.add(tie);
@@ -115,7 +168,7 @@ function createPlayer() {
     // Badge
     const badge = new THREE.Mesh(
         new THREE.CylinderGeometry(0.08, 0.08, 0.03, 16),
-        new THREE.MeshPhongMaterial({ color: 0xFFD700, emissive: 0x332200 })
+        new THREE.MeshStandardMaterial({ color: 0xFFD700, emissive: 0x332200 })
     );
     badge.rotation.x = Math.PI / 2;
     badge.position.set(-0.18, 1.25, 0.18);
@@ -137,7 +190,7 @@ function createPlayer() {
     playerGroup.add(rightArm);
 
     // Hands
-    const skinMat = new THREE.MeshLambertMaterial({ color: 0xffdbac });
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
     const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), skinMat);
     leftHand.position.set(-0.44, 0.78, 0);
     playerGroup.add(leftHand);
@@ -153,7 +206,7 @@ function createPlayer() {
     playerGroup.add(head);
 
     // Cheeks
-    const cheekMat = new THREE.MeshLambertMaterial({ color: 0xffb3b3, transparent: true, opacity: 0.6 });
+    const cheekMat = new THREE.MeshStandardMaterial({ color: 0xffb3b3, transparent: true, opacity: 0.6 });
     const leftCheek = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), cheekMat);
     leftCheek.position.set(-0.16, 1.65, 0.22);
     playerGroup.add(leftCheek);
@@ -162,7 +215,7 @@ function createPlayer() {
     playerGroup.add(rightCheek);
 
     // Eyebrows
-    const browMat = new THREE.MeshLambertMaterial({ color: 0x3b1f0a });
+    const browMat = new THREE.MeshStandardMaterial({ color: 0x3b1f0a });
     const leftBrow = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.025, 0.02), browMat);
     leftBrow.position.set(-0.1, 1.75, 0.27);
     leftBrow.rotation.z = 0.15;
@@ -173,9 +226,9 @@ function createPlayer() {
     playerGroup.add(rightBrow);
 
     // Eyes
-    const eyeWhiteMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-    const eyeBlackMat = new THREE.MeshLambertMaterial({ color: 0x1a0a00 });
-    const highlightMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const eyeBlackMat = new THREE.MeshStandardMaterial({ color: 0x1a0a00 });
+    const highlightMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
 
     const leftEyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.065, 12, 12), eyeWhiteMat);
     leftEyeWhite.position.set(-0.1, 1.68, 0.25);
@@ -199,7 +252,7 @@ function createPlayer() {
     playerGroup.add(rightHighlight);
 
     // Eyelashes
-    const lashMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
+    const lashMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
     [-0.13, -0.10, -0.07].forEach(lx => {
         const lash = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.04, 0.01), lashMat);
         lash.position.set(lx, 1.735, 0.27);
@@ -212,24 +265,24 @@ function createPlayer() {
     });
 
     // Nose
-    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), new THREE.MeshLambertMaterial({ color: 0xe8b88a }));
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), new THREE.MeshStandardMaterial({ color: 0xe8b88a }));
     nose.position.set(0, 1.63, 0.285);
     playerGroup.add(nose);
 
     // Lips
-    const lipMat = new THREE.MeshLambertMaterial({ color: 0xe05080 });
+    const lipMat = new THREE.MeshStandardMaterial({ color: 0xe05080 });
     const upperLip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.025, 0.02), lipMat);
     upperLip.position.set(0, 1.56, 0.275);
     playerGroup.add(upperLip);
     const lowerLip = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.03, 0.02), lipMat);
     lowerLip.position.set(0, 1.535, 0.275);
     playerGroup.add(lowerLip);
-    const smileLine = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.012, 0.01), new THREE.MeshLambertMaterial({ color: 0x8b4513 }));
+    const smileLine = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.012, 0.01), new THREE.MeshStandardMaterial({ color: 0x8b4513 }));
     smileLine.position.set(0, 1.548, 0.285);
     playerGroup.add(smileLine);
 
     // Hair
-    const hairMat = new THREE.MeshLambertMaterial({ color: 0x1a0a00 });
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x1a0a00 });
     const backHair = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.15), hairMat);
     backHair.position.set(0, 1.65, -0.18);
     playerGroup.add(backHair);
@@ -250,7 +303,7 @@ function createPlayer() {
     playerGroup.add(ponytail);
 
     // Hat
-    const hatMat = new THREE.MeshLambertMaterial({ color: 0x0d1b2a });
+    const hatMat = new THREE.MeshStandardMaterial({ color: 0x0d1b2a });
     const hatBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.04, 32), hatMat);
     hatBrim.position.set(0, 1.9, 0);
     playerGroup.add(hatBrim);
@@ -259,13 +312,13 @@ function createPlayer() {
     playerGroup.add(hatBody);
     const hatBand = new THREE.Mesh(
         new THREE.CylinderGeometry(0.295, 0.295, 0.04, 32),
-        new THREE.MeshPhongMaterial({ color: 0xFFD700, emissive: 0x332200 })
+        new THREE.MeshStandardMaterial({ color: 0xFFD700, emissive: 0x332200 })
     );
     hatBand.position.set(0, 1.93, 0);
     playerGroup.add(hatBand);
     const hatBadge = new THREE.Mesh(
         new THREE.CylinderGeometry(0.06, 0.06, 0.02, 16),
-        new THREE.MeshPhongMaterial({ color: 0xFFD700, emissive: 0x332200 })
+        new THREE.MeshStandardMaterial({ color: 0xFFD700, emissive: 0x332200 })
     );
     hatBadge.rotation.x = Math.PI / 2;
     hatBadge.position.set(0, 2.08, 0.26);
@@ -872,7 +925,8 @@ function animate() {
     Minigame.updateRescueChildren(delta);
     DayNight.updateStarTwinkle(clock.elapsedTime);
 
-    renderer.render(scene, camera);
+    if (composer) composer.render();
+    else renderer.render(scene, camera);
 }
 
 // ── Start Screen ──
