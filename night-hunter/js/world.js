@@ -467,13 +467,7 @@ function createGridBuildings(group) {
             roof.castShadow = true;
             group.add(roof);
 
-            // Front fence
-            const fence = new THREE.Mesh(
-                new THREE.BoxGeometry(b.bw + 1, 0.6, 0.08),
-                new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.6 })
-            );
-            fence.position.set(b.bx, 0.3, b.bz + b.bd / 2 + 1.2);
-            group.add(fence);
+            // Front fence removed (was rendering as tall white panels)
 
             if (b.marker === 'mailbox') {
                 const mailbox = new THREE.Mesh(
