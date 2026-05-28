@@ -603,16 +603,26 @@ function createStreetLight(group, x, z) {
 function createStreetProps(group) {
     const streetLights = [];
 
-    // Place streetlights along main roads
+    function lightOnRoad(x, z) {
+        for (const rr of MAIN_ROADS) {
+            if (rr.type === 'H' && Math.abs(z - rr.z) < rr.w / 2 + 1) return true;
+            if (rr.type === 'V' && Math.abs(x - rr.x) < rr.w / 2 + 1) return true;
+        }
+        return false;
+    }
+
+    // Place streetlights along main roads — skip if on another road
     MAIN_ROADS.forEach(r => {
         if (r.type === 'H') {
             for (let x = -r.length/2 + 10; x < r.length/2; x += 18) {
-                streetLights.push(createStreetLight(group, x, r.z + r.w/2 + 2.5));
-                streetLights.push(createStreetLight(group, x, r.z - r.w/2 - 2.5));
+                const z1 = r.z + r.w/2 + 2.5, z2 = r.z - r.w/2 - 2.5;
+                if (!lightOnRoad(x, z1)) streetLights.push(createStreetLight(group, x, z1));
+                if (!lightOnRoad(x, z2)) streetLights.push(createStreetLight(group, x, z2));
             }
         } else {
             for (let z = -r.length/2 + 10; z < r.length/2; z += 18) {
-                streetLights.push(createStreetLight(group, r.x + r.w/2 + 2.5, z));
+                const x1 = r.x + r.w/2 + 2.5;
+                if (!lightOnRoad(x1, z)) streetLights.push(createStreetLight(group, x1, z));
             }
         }
     });
@@ -641,55 +651,69 @@ function createStreetProps(group) {
         return false;
     }
 
-    // Place trees along road edges
+    // Check if position overlaps any road (including the road's full width + buffer)
+    function onAnyRoad(x, z) {
+        for (const rr of MAIN_ROADS) {
+            if (rr.type === 'H' && Math.abs(z - rr.z) < rr.w / 2 + 2.5) return true;
+            if (rr.type === 'V' && Math.abs(x - rr.x) < rr.w / 2 + 2.5) return true;
+        }
+        return false;
+    }
+
+    // Place trees along horizontal road edges only (off any road, off buildings)
     MAIN_ROADS.forEach(r => {
-        if (r.type === 'H') {
-            for (let x = -r.length/2 + 14; x < r.length/2 - 6; x += 14) {
-                [r.z + r.w/2 + 4, r.z - r.w/2 - 4].forEach(z => {
-                    if (!nearBuilding(x, z) && !tooClose(x, z)) {
-                        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 2, 6), trunkMat);
-                        trunk.position.set(x, 1, z);
-                        trunk.castShadow = true;
-                        group.add(trunk);
-                        const canopy = new THREE.Mesh(new THREE.SphereGeometry(1.4, 8, 8), treeMat);
-                        canopy.position.set(x, 3, z);
-                        canopy.castShadow = true;
-                        group.add(canopy);
-                        treesPlaced.push({ x, z });
-                    }
-                });
-            }
+        if (r.type !== 'H') return;
+        for (let x = -r.length / 2 + 14; x < r.length / 2 - 6; x += 14) {
+            [r.z + r.w / 2 + 4.5, r.z - r.w / 2 - 4.5].forEach(z => {
+                if (onAnyRoad(x, z)) return;
+                if (nearBuilding(x, z)) return;
+                if (tooClose(x, z)) return;
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 2, 6), trunkMat);
+                trunk.position.set(x, 1, z);
+                trunk.castShadow = true;
+                group.add(trunk);
+                const canopy = new THREE.Mesh(new THREE.SphereGeometry(1.4, 8, 8), treeMat);
+                canopy.position.set(x, 3, z);
+                canopy.castShadow = true;
+                group.add(canopy);
+                treesPlaced.push({ x, z });
+            });
         }
     });
 }
 
 function createParks(group) {
-    // Central plaza
+    // Plaza moved OFF the road — only at police-zone block centers (safe spot)
+    const safeX = 28, safeZ = 75;
     const plaza = new THREE.Mesh(
-        new THREE.CircleGeometry(10, 32),
+        new THREE.CircleGeometry(6, 32),
         new THREE.MeshStandardMaterial({ color: 0x999988, roughness: 0.9 })
     );
     plaza.rotation.x = -Math.PI / 2;
-    plaza.position.set(0, 0.07, 70);
+    plaza.position.set(safeX, 0.07, safeZ);
     group.add(plaza);
 
-    // Fountain
     const fountainBase = new THREE.Mesh(
-        new THREE.CylinderGeometry(2.8, 3.2, 0.8, 24),
+        new THREE.CylinderGeometry(1.8, 2.0, 0.6, 24),
         new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.7 })
     );
-    fountainBase.position.set(0, 0.4, 70);
+    fountainBase.position.set(safeX, 0.3, safeZ);
     group.add(fountainBase);
     const water = new THREE.Mesh(
-        new THREE.CylinderGeometry(2.3, 2.3, 0.3, 24),
+        new THREE.CylinderGeometry(1.5, 1.5, 0.25, 24),
         new THREE.MeshStandardMaterial({ color: 0x4488cc, transparent: true, opacity: 0.75, roughness: 0.1, metalness: 0.3 })
     );
     water.position.set(0, 0.65, 70);
     group.add(water);
     const pillar = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.3, 0.4, 2.5, 12),
+        new THREE.CylinderGeometry(0.25, 0.35, 2.0, 12),
         new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.6 })
     );
-    pillar.position.set(0, 1.8, 70);
+    pillar.position.set(28, 1.5, 75);
     group.add(pillar);
+
+    // Register plaza as obstacle to prevent trees/objects on it
+    if (window._buildingPositions) {
+        window._buildingPositions.push({ x: 28, z: 75, w: 12, d: 12 });
+    }
 }

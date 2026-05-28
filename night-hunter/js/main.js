@@ -60,7 +60,7 @@ renderer.shadowMap.enabled = !isMobile;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
+renderer.toneMappingExposure = 0.78;
 renderer.physicallyCorrectLights = false;
 
 // Post-processing — disable on mobile for battery/performance
@@ -101,13 +101,13 @@ window.addEventListener('resize', () => {
 });
 
 // ── Lighting (Daytime) ──
-const ambientLight = new THREE.AmbientLight(0xc8d8f0, 0.7);
+const ambientLight = new THREE.AmbientLight(0xc8d8f0, 0.45);
 scene.add(ambientLight);
 
-const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x3a6b2a, 0.4);
+const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x3a6b2a, 0.25);
 scene.add(hemiLight);
 
-const sunLight = new THREE.DirectionalLight(0xfff5e0, 1.0);
+const sunLight = new THREE.DirectionalLight(0xfff5e0, 0.85);
 sunLight.position.set(60, 100, 40);
 sunLight.castShadow = !isMobile;
 const shadowSize = isMobile ? 512 : 1024;

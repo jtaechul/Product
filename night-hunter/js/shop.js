@@ -105,12 +105,12 @@ const Shop = {
         invBtn.textContent = '🎒';
         invBtn.style.cssText = `
             position:fixed;
-            right:calc(14px + env(safe-area-inset-right, 0px));
-            bottom:calc(155px + env(safe-area-inset-bottom, 0px));
-            width:52px; height:52px; border-radius:50%;
+            left:calc(160px + env(safe-area-inset-left, 0px));
+            bottom:calc(25px + env(safe-area-inset-bottom, 0px));
+            width:46px; height:46px; border-radius:50%;
             border:2px solid rgba(34,197,94,0.5);
             background:rgba(34,197,94,0.25);
-            backdrop-filter:blur(8px); color:#fff; font-size:22px;
+            backdrop-filter:blur(8px); color:#fff; font-size:20px;
             cursor:pointer; touch-action:none; z-index:30;
             pointer-events:auto;
             display:flex; align-items:center; justify-content:center;
@@ -171,13 +171,14 @@ const Shop = {
             btn = document.createElement('button');
             btn.id = 'btn-shop-open';
             btn.style.cssText = `
-                position:fixed; top:50%; left:42%; transform:translate(-50%,-50%);
-                width:60px; height:60px; border-radius:50%;
-                border:2px solid rgba(59,130,246,0.7); background:rgba(59,130,246,0.25);
+                position:fixed; top:42%; left:50%; transform:translate(-50%,-50%);
+                width:54px; height:54px; border-radius:50%;
+                border:2px solid rgba(59,130,246,0.7); background:rgba(59,130,246,0.3);
                 backdrop-filter:blur(8px); color:#fff; font-size:18px; font-weight:800;
                 font-family:'Inter',sans-serif; cursor:pointer; touch-action:none;
                 z-index:40; pointer-events:auto; display:none;
                 box-shadow:0 4px 20px rgba(59,130,246,0.4);
+                align-items:center; justify-content:center;
             `;
             btn.textContent = 'P';
             btn.addEventListener('click', () => this.openShop());

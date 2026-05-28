@@ -163,11 +163,11 @@ const HintSystem = {
             el = document.createElement('div');
             el.id = 'interact-prompt';
             el.style.cssText = `
-                position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-                background:rgba(0,0,0,0.75); backdrop-filter:blur(4px);
-                padding:10px 24px; border-radius:20px; border:1px solid rgba(255,220,0,0.4);
-                font-size:15px; color:#fbbf24; font-weight:700; z-index:35;
-                pointer-events:none;
+                position:fixed; top:35%; left:50%; transform:translate(-50%,-50%);
+                background:rgba(0,0,0,0.78); backdrop-filter:blur(4px);
+                padding:8px 20px; border-radius:18px; border:1px solid rgba(255,220,0,0.4);
+                font-size:13px; color:#fbbf24; font-weight:700; z-index:35;
+                pointer-events:none; white-space:nowrap;
             `;
             document.body.appendChild(el);
         }
