@@ -192,109 +192,65 @@ const SoundManager = {
     },
 
     _playDayBGM() {
+        // Single-track: melody only with light percussion (no overlapping chord pad)
         const beatLen = 0.45;
-        let measure = 0;
-
-        const playMeasure = () => {
-            if (!this.bgmActive || this.bgmType !== 'day') return;
-            const chord = this.dayChords[measure % 4];
-
-            // Bass walking pattern (4 quarter notes per measure)
-            const bassNotes = [chord.root, chord.root * 1.125, chord.root * 1.25, chord.root * 1.5];
-            for (let i = 0; i < 4; i++) {
-                this._playOsc(bassNotes[i], beatLen * 0.95, 'triangle', this.bgmGain, {
-                    delay: i * beatLen, vol: 0.18, attack: 0.02, release: 0.1
-                });
-            }
-            // Chord pad (held)
-            chord.notes.forEach((n, idx) => {
-                this._playOsc(n, beatLen * 4 * 0.95, 'sine', this.bgmGain, {
-                    delay: 0, vol: 0.04, attack: 0.4, release: 1.0
-                });
-            });
-
-            // Hi-hat pattern (8th notes)
-            for (let i = 0; i < 8; i++) {
-                this._playHihat(i * beatLen * 0.5, i % 2 === 1);
-            }
-            // Kick + snare
-            this._playKick(0);
-            this._playKick(beatLen * 2);
-            this._playSnare(beatLen * 1);
-            this._playSnare(beatLen * 3);
-
-            measure++;
-        };
-        playMeasure();
-        const measureLen = beatLen * 4 * 1000;
-        this.bgmTimers.push(setInterval(playMeasure, measureLen));
-
-        // Melody (separate loop, slightly offset)
         let mIdx = 0;
+        let beatCount = 0;
+
         const playMelodyNote = () => {
             if (!this.bgmActive || this.bgmType !== 'day') return;
             const [freq, dur] = this.dayMelody[mIdx % this.dayMelody.length];
-            this._playOsc(freq, dur * beatLen * 0.95, 'triangle', this.bgmGain, {
-                vol: 0.1, attack: 0.05, release: 0.2,
-                filter: { type: 'lowpass', freq: 3000, q: 1 }
+            this._playOsc(freq, dur * beatLen * 0.9, 'triangle', this.bgmGain, {
+                vol: 0.15, attack: 0.05, release: 0.2,
+                filter: { type: 'lowpass', freq: 2800, q: 1 }
             });
+            // Subtle bass note matching melody timing
+            this._playOsc(freq / 4, dur * beatLen * 0.85, 'sine', this.bgmGain, {
+                vol: 0.08, attack: 0.05, release: 0.15
+            });
+            // Light hihat on each note
+            this._playHihat(0, false);
+            beatCount++;
+            // Kick every 4 beats
+            if (beatCount % 4 === 1) this._playKick(0);
+            if (beatCount % 4 === 3) this._playSnare(0);
+
             mIdx++;
             this.bgmTimers.push(setTimeout(playMelodyNote, dur * beatLen * 1000));
         };
-        setTimeout(playMelodyNote, beatLen * 1000);
+        playMelodyNote();
     },
 
     _playNightBGM() {
+        // Single-track: eerie melody with bass drone only (no overlapping chord pad)
         const beatLen = 0.55;
-        let measure = 0;
-
-        const playMeasure = () => {
-            if (!this.bgmActive || this.bgmType !== 'night') return;
-            const chord = this.nightChords[measure % 4];
-
-            // Deep bass drone
-            this._playOsc(chord.root, beatLen * 4 * 0.95, 'sawtooth', this.bgmGain, {
-                vol: 0.06, attack: 0.5, release: 1.5,
-                filter: { type: 'lowpass', freq: 400, q: 2 }
-            });
-            this._playOsc(chord.root * 0.5, beatLen * 4 * 0.95, 'sine', this.bgmGain, {
-                vol: 0.12, attack: 0.3, release: 1.5
-            });
-
-            // Chord pads (slow attack)
-            chord.notes.forEach((n) => {
-                this._playOsc(n, beatLen * 4 * 0.95, 'sine', this.bgmGain, {
-                    vol: 0.03, attack: 0.8, release: 1.5
-                });
-            });
-
-            // Subtle heartbeat-like kick on beat 1
-            this._playKick(0);
-            this._playKick(beatLen * 0.5);
-
-            measure++;
-        };
-        playMeasure();
-        const measureLen = beatLen * 4 * 1000;
-        this.bgmTimers.push(setInterval(playMeasure, measureLen));
-
-        // Eerie melody
         let mIdx = 0;
+        let beatCount = 0;
+
         const playMelodyNote = () => {
             if (!this.bgmActive || this.bgmType !== 'night') return;
             const [freq, dur] = this.nightMelody[mIdx % this.nightMelody.length];
             this._playOsc(freq, dur * beatLen * 0.9, 'sine', this.bgmGain, {
-                vol: 0.07, attack: 0.15, release: 0.4,
+                vol: 0.12, attack: 0.15, release: 0.4,
                 filter: { type: 'lowpass', freq: 1500, q: 1.5 }
             });
-            // Octave shimmer
-            this._playOsc(freq * 2, dur * beatLen * 0.9, 'sine', this.bgmGain, {
-                vol: 0.02, attack: 0.2, release: 0.3
+            // Bass drone matching root note
+            this._playOsc(freq / 4, dur * beatLen * 0.95, 'sawtooth', this.bgmGain, {
+                vol: 0.06, attack: 0.2, release: 0.3,
+                filter: { type: 'lowpass', freq: 350, q: 2 }
             });
+
+            beatCount++;
+            // Heartbeat kick every 8 beats
+            if (beatCount % 6 === 1) {
+                this._playKick(0);
+                this._playKick(beatLen * 0.4);
+            }
+
             mIdx++;
             this.bgmTimers.push(setTimeout(playMelodyNote, dur * beatLen * 1000));
         };
-        setTimeout(playMelodyNote, beatLen * 2 * 1000);
+        playMelodyNote();
     },
 
     stopBGM() {
@@ -357,6 +313,15 @@ const SoundManager = {
                 break;
             case 'footstep':
                 this._playOsc(80 + Math.random() * 40, 0.05, 'square', this.sfxGain, { vol: 0.06 });
+                break;
+            case 'jump':
+                this._playOsc(280, 0.15, 'sine', this.sfxGain, { vol: 0.18, glide: 580 });
+                break;
+            case 'land':
+                this._playOsc(140, 0.1, 'square', this.sfxGain, { vol: 0.12 });
+                break;
+            case 'run_step':
+                this._playOsc(60 + Math.random() * 30, 0.04, 'square', this.sfxGain, { vol: 0.08 });
                 break;
         }
     }

@@ -19,7 +19,7 @@ const Shop = {
 
     init(scene) {
         this.scene = scene;
-        this.createShopNpc();
+        // No more standalone shop NPC — police station handles shopping
         this.createShopUI();
         this.createInventoryUI();
     },
@@ -101,15 +101,23 @@ const Shop = {
 
     createInventoryUI() {
         const invBtn = document.createElement('button');
-        invBtn.className = 'action-btn';
         invBtn.id = 'btn-inventory';
         invBtn.textContent = '🎒';
-        invBtn.style.background = 'rgba(34,197,94,0.25)';
-        invBtn.style.borderColor = 'rgba(34,197,94,0.5)';
-        invBtn.style.pointerEvents = 'auto';
+        invBtn.style.cssText = `
+            position:fixed;
+            right:calc(14px + env(safe-area-inset-right, 0px));
+            bottom:calc(155px + env(safe-area-inset-bottom, 0px));
+            width:52px; height:52px; border-radius:50%;
+            border:2px solid rgba(34,197,94,0.5);
+            background:rgba(34,197,94,0.25);
+            backdrop-filter:blur(8px); color:#fff; font-size:22px;
+            cursor:pointer; touch-action:none; z-index:30;
+            pointer-events:auto;
+            display:flex; align-items:center; justify-content:center;
+        `;
         invBtn.addEventListener('click', () => this.toggleInventory());
         invBtn.addEventListener('touchstart', e => { e.preventDefault(); this.toggleInventory(); }, { passive: false });
-        document.getElementById('action-buttons').appendChild(invBtn);
+        document.body.appendChild(invBtn);
 
         const panel = document.createElement('div');
         panel.id = 'inventory-panel';
@@ -144,21 +152,14 @@ const Shop = {
             return;
         }
 
-        // Check distance to shop NPC
-        const dx1 = playerPos.x - this.shopX;
-        const dz1 = playerPos.z - this.shopZ;
-        const dist1 = Math.sqrt(dx1 * dx1 + dz1 * dz1);
+        // Only police station — shop NPC removed
+        const dx = playerPos.x - this.policeShopX;
+        const dz = playerPos.z - this.policeShopZ;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        const nearPolice = dist < this.policeShopDist;
 
-        // Check distance to police station
-        const dx2 = playerPos.x - this.policeShopX;
-        const dz2 = playerPos.z - this.policeShopZ;
-        const dist2 = Math.sqrt(dx2 * dx2 + dz2 * dz2);
-
-        const nearShop = dist1 < this.shopDistance;
-        const nearPolice = dist2 < this.policeShopDist;
-
-        if ((nearShop || nearPolice) && !this.isOpen) {
-            this.showShopButton(true, nearPolice && !nearShop);
+        if (nearPolice && !this.isOpen) {
+            this.showShopButton(true, true);
         } else if (!this.isOpen) {
             this.showShopButton(false);
         }

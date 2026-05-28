@@ -4,13 +4,20 @@
     box-sizing: border-box;
 }
 
-body {
+html, body {
     overflow: hidden;
     background: #000;
     font-family: 'Inter', sans-serif;
     user-select: none;
     color: #fff;
     touch-action: none;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+}
+
+@supports (height: 100dvh) {
+    html, body { height: 100dvh; }
 }
 
 #game-container {

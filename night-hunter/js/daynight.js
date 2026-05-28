@@ -253,16 +253,14 @@ const DayNight = {
         if (!gameState.isDay || this.isTransitioning) {
             const px = this.playerGroup.position.x;
             const pz = this.playerGroup.position.z;
-            const dir = new THREE.Vector3(
-                -Math.sin(this.playerGroup.rotation.y),
-                -0.3,
-                -Math.cos(this.playerGroup.rotation.y)
-            );
-            this.flashlight.position.set(px, 2, pz);
+            // Forward direction matches playerGroup.rotation.y (0=+Z)
+            const fx = Math.sin(this.playerGroup.rotation.y);
+            const fz = Math.cos(this.playerGroup.rotation.y);
+            this.flashlight.position.set(px, 1.8, pz);
             this.flashlight.target.position.set(
-                px + dir.x * 10,
+                px + fx * 10,
                 0,
-                pz + dir.z * 10
+                pz + fz * 10
             );
         }
     },

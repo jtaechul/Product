@@ -37,19 +37,24 @@ const GameUI = {
     },
 
     createActionButtons() {
-        const memoBtn = document.getElementById('btn-memo');
-        if (!memoBtn) {
-            const mb = document.createElement('button');
-            mb.className = 'action-btn';
-            mb.id = 'btn-memo-ui';
-            mb.textContent = '📋';
-            mb.style.background = 'rgba(59,130,246,0.25)';
-            mb.style.borderColor = 'rgba(59,130,246,0.5)';
-            mb.style.pointerEvents = 'auto';
-            mb.addEventListener('click', () => HintSystem.toggleMemo());
-            mb.addEventListener('touchstart', e => { e.preventDefault(); HintSystem.toggleMemo(); }, { passive: false });
-            document.getElementById('action-buttons').appendChild(mb);
-        }
+        const mb = document.createElement('button');
+        mb.id = 'btn-memo-ui';
+        mb.textContent = '📋';
+        mb.style.cssText = `
+            position:fixed;
+            right:calc(14px + env(safe-area-inset-right, 0px));
+            bottom:calc(215px + env(safe-area-inset-bottom, 0px));
+            width:52px; height:52px; border-radius:50%;
+            border:2px solid rgba(59,130,246,0.5);
+            background:rgba(59,130,246,0.25);
+            backdrop-filter:blur(8px); color:#fff; font-size:22px;
+            cursor:pointer; touch-action:none; z-index:30;
+            pointer-events:auto;
+            display:flex; align-items:center; justify-content:center;
+        `;
+        mb.addEventListener('click', () => HintSystem.toggleMemo());
+        mb.addEventListener('touchstart', e => { e.preventDefault(); HintSystem.toggleMemo(); }, { passive: false });
+        document.body.appendChild(mb);
     },
 
     createLandscapeOverlay() {
@@ -136,11 +141,7 @@ const GameUI = {
             });
         }
 
-        // Shop
-        if (typeof Shop!=='undefined') {
-            const sx=mx(Shop.shopX), sz=mz(Shop.shopZ);
-            if (sx>-10&&sx<size+10&&sz>-10&&sz<size+10) { ctx.fillStyle='#3b82f6'; ctx.beginPath(); ctx.arc(sx,sz,3,0,Math.PI*2); ctx.fill(); }
-        }
+        // Shop NPC removed — police station shown via building color
 
         ctx.restore(); // end camera rotation
 

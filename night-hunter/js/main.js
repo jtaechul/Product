@@ -46,41 +46,45 @@ function makeSkyTexture(topColor, bottomColor) {
 scene.background = makeSkyTexture('#7ec0ee', '#cfeaff');
 scene.fog = new THREE.Fog(0xcfeaff, 70, 220);
 
+const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
 const renderer = new THREE.WebGLRenderer({
     canvas: document.getElementById('gameCanvas'),
-    antialias: true,
+    antialias: !isMobile,
     powerPreference: 'high-performance'
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.2 : 2));
+renderer.shadowMap.enabled = !isMobile;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
-renderer.physicallyCorrectLights = true;
+renderer.physicallyCorrectLights = false;
 
-// Post-processing (bloom for nighttime glow)
+// Post-processing — disable on mobile for battery/performance
 let composer = null;
 let bloomPass = null;
 let fxaaPass = null;
-try {
-    composer = new THREE.EffectComposer(renderer);
-    composer.addPass(new THREE.RenderPass(scene, camera));
-    bloomPass = new THREE.UnrealBloomPass(
-        new THREE.Vector2(window.innerWidth, window.innerHeight),
-        0.4, 0.8, 0.85
-    );
-    composer.addPass(bloomPass);
-    fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
-    fxaaPass.material.uniforms['resolution'].value.set(
-        1 / (window.innerWidth * renderer.getPixelRatio()),
-        1 / (window.innerHeight * renderer.getPixelRatio())
-    );
-    composer.addPass(fxaaPass);
-} catch (e) {
-    console.warn('Postprocessing not available, falling back to basic render');
+if (!isMobile) {
+    try {
+        composer = new THREE.EffectComposer(renderer);
+        composer.addPass(new THREE.RenderPass(scene, camera));
+        bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            0.3, 0.7, 0.85
+        );
+        composer.addPass(bloomPass);
+        fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
+        fxaaPass.material.uniforms['resolution'].value.set(
+            1 / (window.innerWidth * renderer.getPixelRatio()),
+            1 / (window.innerHeight * renderer.getPixelRatio())
+        );
+        composer.addPass(fxaaPass);
+    } catch (e) {
+        console.warn('Postprocessing not available');
+    }
 }
 
 window.addEventListener('resize', () => {
@@ -105,15 +109,16 @@ scene.add(hemiLight);
 
 const sunLight = new THREE.DirectionalLight(0xfff5e0, 1.0);
 sunLight.position.set(60, 100, 40);
-sunLight.castShadow = true;
-sunLight.shadow.mapSize.width = 2048;
-sunLight.shadow.mapSize.height = 2048;
+sunLight.castShadow = !isMobile;
+const shadowSize = isMobile ? 512 : 1024;
+sunLight.shadow.mapSize.width = shadowSize;
+sunLight.shadow.mapSize.height = shadowSize;
 sunLight.shadow.camera.near = 0.5;
-sunLight.shadow.camera.far = 250;
-sunLight.shadow.camera.left = -80;
-sunLight.shadow.camera.right = 80;
-sunLight.shadow.camera.top = 80;
-sunLight.shadow.camera.bottom = -80;
+sunLight.shadow.camera.far = 200;
+sunLight.shadow.camera.left = -60;
+sunLight.shadow.camera.right = 60;
+sunLight.shadow.camera.top = 60;
+sunLight.shadow.camera.bottom = -60;
 sunLight.shadow.bias = -0.001;
 scene.add(sunLight);
 
@@ -281,26 +286,71 @@ function createPlayer() {
     smileLine.position.set(0, 1.548, 0.285);
     playerGroup.add(smileLine);
 
-    // Hair
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x1a0a00 });
-    const backHair = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.15), hairMat);
-    backHair.position.set(0, 1.65, -0.18);
-    playerGroup.add(backHair);
-    const frontHair = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.12, 0.1), hairMat);
-    frontHair.position.set(0, 1.88, 0.18);
-    playerGroup.add(frontHair);
-    const leftHair = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.45, 0.1), hairMat);
-    leftHair.position.set(-0.28, 1.65, 0.05);
-    playerGroup.add(leftHair);
-    const rightHair = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.45, 0.1), hairMat);
-    rightHair.position.set(0.28, 1.65, 0.05);
-    playerGroup.add(rightHair);
+    // Hair — full coverage with sphere base + back volume
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x2a1208, roughness: 0.85 });
 
-    // Ponytail
-    const ponytail = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.04, 0.5, 8), hairMat);
-    ponytail.position.set(0, 1.3, -0.25);
-    ponytail.rotation.x = 0.3;
+    // Hair sphere base (covers top + back of head)
+    const hairBase = new THREE.Mesh(
+        new THREE.SphereGeometry(0.31, 24, 24, 0, Math.PI * 2, 0, Math.PI * 0.65),
+        hairMat
+    );
+    hairBase.position.set(0, 1.68, 0);
+    hairBase.castShadow = true;
+    playerGroup.add(hairBase);
+
+    // Back hair volume (longer, behind head)
+    const backHairVol = new THREE.Mesh(
+        new THREE.SphereGeometry(0.25, 20, 20, 0, Math.PI * 2, 0, Math.PI * 0.7),
+        hairMat
+    );
+    backHairVol.position.set(0, 1.52, -0.15);
+    backHairVol.scale.set(1.0, 1.4, 0.7);
+    backHairVol.castShadow = true;
+    playerGroup.add(backHairVol);
+
+    // Side hair (shoulder-length)
+    const leftSideHair = new THREE.Mesh(
+        new THREE.BoxGeometry(0.08, 0.55, 0.18),
+        hairMat
+    );
+    leftSideHair.position.set(-0.27, 1.5, -0.05);
+    leftSideHair.castShadow = true;
+    playerGroup.add(leftSideHair);
+
+    const rightSideHair = new THREE.Mesh(
+        new THREE.BoxGeometry(0.08, 0.55, 0.18),
+        hairMat
+    );
+    rightSideHair.position.set(0.27, 1.5, -0.05);
+    rightSideHair.castShadow = true;
+    playerGroup.add(rightSideHair);
+
+    // Front bangs
+    const frontBangs = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5, 0.14, 0.12),
+        hairMat
+    );
+    frontBangs.position.set(0, 1.88, 0.2);
+    frontBangs.rotation.x = -0.2;
+    playerGroup.add(frontBangs);
+
+    // Ponytail (longer & thicker)
+    const ponytail = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.09, 0.05, 0.7, 12),
+        hairMat
+    );
+    ponytail.position.set(0, 1.25, -0.28);
+    ponytail.rotation.x = 0.35;
+    ponytail.castShadow = true;
     playerGroup.add(ponytail);
+
+    // Hair tie
+    const hairTie = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.06, 0.06, 0.04, 8),
+        new THREE.MeshStandardMaterial({ color: 0xcc1a1a, roughness: 0.5 })
+    );
+    hairTie.position.set(0, 1.5, -0.25);
+    playerGroup.add(hairTie);
 
     // Hat
     const hatMat = new THREE.MeshStandardMaterial({ color: 0x0d1b2a });
@@ -384,11 +434,11 @@ joystickOuter.appendChild(joystickInner);
 // Run + Jump buttons
 const runBtn = document.createElement('button');
 runBtn.id = 'run-btn';
-runBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="13" cy="4" r="2"/><path d="M4 22l3-8 6-4 4 3 4-1"/><path d="M11 14l-2 6"/></svg>';
+runBtn.textContent = 'RUN';
 
 const jumpBtn = document.createElement('button');
 jumpBtn.id = 'jump-btn';
-jumpBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v8"/><path d="M8 6l4-4 4 4"/><path d="M5 16h14"/><path d="M5 20h14"/></svg>';
+jumpBtn.textContent = 'JUMP';
 
 const joystickStyle = document.createElement('style');
 joystickStyle.textContent = `
@@ -700,6 +750,7 @@ function triggerJump() {
     if (!gameState.isJumping && !gameState.isPaused) {
         gameState.isJumping = true;
         gameState.jumpVelocity = 5;
+        if (typeof SoundManager !== 'undefined') SoundManager.playSFX('jump');
     }
 }
 
@@ -777,7 +828,12 @@ function updatePlayer(delta) {
         }
 
         // Walk animation
+        const prevStep = Math.floor(walkTime / Math.PI);
         walkTime += delta * (gameState.isRunning ? 12 : 8);
+        const newStep = Math.floor(walkTime / Math.PI);
+        if (newStep !== prevStep && gameState.isRunning && !gameState.isJumping && typeof SoundManager !== 'undefined') {
+            SoundManager.playSFX('run_step');
+        }
         animateWalk(walkTime);
     } else {
         // Idle animation
@@ -792,6 +848,7 @@ function updatePlayer(delta) {
         if (gameState.jumpHeight <= 0) {
             gameState.jumpHeight = 0;
             gameState.isJumping = false;
+            if (typeof SoundManager !== 'undefined') SoundManager.playSFX('land');
             gameState.jumpVelocity = 0;
         }
         playerGroup.position.y = gameState.jumpHeight;
@@ -897,6 +954,7 @@ function updateHUD() {
 }
 
 // ── Game Loop ──
+let minimapTimer = 0;
 function animate() {
     if (gameState.gameOver) return;
     requestAnimationFrame(animate);
@@ -910,6 +968,8 @@ function animate() {
         return;
     }
 
+    minimapTimer += delta;
+
     if (!gameState.isPaused) {
         updatePlayer(delta);
         updateTimer(delta);
@@ -920,8 +980,12 @@ function animate() {
         Shop.update(playerGroup.position);
         NPCSystem.update(playerGroup.position, delta, clock.elapsedTime);
         Minigame.checkCatchable(playerGroup.position);
-        GameUI.updateMinimap(playerGroup.position, playerFacingAngle, cameraAngleY);
-        GameUI.updateHintCounter();
+        // Throttle minimap to ~6 FPS (mobile battery saver)
+        if (minimapTimer > 0.16) {
+            GameUI.updateMinimap(playerGroup.position, playerFacingAngle, cameraAngleY);
+            GameUI.updateHintCounter();
+            minimapTimer = 0;
+        }
     }
     Minigame.update(delta);
     Minigame.updateRescueChildren(delta);

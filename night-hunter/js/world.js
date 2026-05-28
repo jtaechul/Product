@@ -82,6 +82,10 @@ function createWorld(scene) {
 
     const zoneBuildings = createGridBuildings(worldGroup);
     buildingData.push(...zoneBuildings);
+    // Add police station to global building positions list
+    if (window._buildingPositions) {
+        window._buildingPositions.push({ x: 0, z: 110, w: 18, d: 14 });
+    }
 
     createStreetProps(worldGroup);
     createParks(worldGroup);
@@ -572,6 +576,7 @@ function createGridBuildings(group) {
         }
     });
 
+    window._buildingPositions = buildings.map(b => ({ x: b.x, z: b.z, w: b.w, d: b.d }));
     return buildings;
 }
 
@@ -614,46 +619,48 @@ function createStreetProps(group) {
 
     window._streetLights = streetLights;
 
-    // Benches at intersections
-    const benchMat = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.8 });
-    [[-25, 50], [25, 50], [-25, 5], [25, 5], [0, 0]].forEach(([bx, bz]) => {
-        const seat = new THREE.Mesh(new THREE.BoxGeometry(2, 0.15, 0.6), benchMat);
-        seat.position.set(bx, 0.5, bz + 7);
-        seat.castShadow = true;
-        group.add(seat);
-        const back = new THREE.Mesh(new THREE.BoxGeometry(2, 0.6, 0.1), benchMat);
-        back.position.set(bx, 0.8, bz + 6.75);
-        group.add(back);
-    });
+    // Benches removed from road areas — placed only in central plaza (createParks)
 
-    // Trees along sidewalks (in park strips)
+    // Trees on sidewalk strips (parallel to roads, just outside road edge)
     const treeMat = new THREE.MeshStandardMaterial({ color: 0x2d6a1e, roughness: 0.85 });
     const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.9 });
-    for (let i = 0; i < 35; i++) {
-        // Place near road edges but not on roads/buildings
-        let tx, tz;
-        let valid = false;
-        for (let a = 0; a < 20; a++) {
-            tx = -140 + Math.random() * 280;
-            tz = -140 + Math.random() * 280;
-            // Avoid main roads
-            let onRoad = false;
-            for (const r of MAIN_ROADS) {
-                if (r.type === 'H' && Math.abs(tz - r.z) < r.w/2 + 5) { onRoad = true; break; }
-                if (r.type === 'V' && Math.abs(tx - r.x) < r.w/2 + 5) { onRoad = true; break; }
+    const treesPlaced = [];
+
+    function nearBuilding(x, z) {
+        if (typeof window !== 'undefined' && window._buildingPositions) {
+            for (const b of window._buildingPositions) {
+                if (Math.abs(x - b.x) < b.w / 2 + 1.5 && Math.abs(z - b.z) < b.d / 2 + 1.5) return true;
             }
-            if (!onRoad) { valid = true; break; }
         }
-        if (!valid) continue;
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 2, 6), trunkMat);
-        trunk.position.set(tx, 1, tz);
-        trunk.castShadow = true;
-        group.add(trunk);
-        const canopy = new THREE.Mesh(new THREE.SphereGeometry(1.5 + Math.random(), 8, 8), treeMat);
-        canopy.position.set(tx, 3 + Math.random(), tz);
-        canopy.castShadow = true;
-        group.add(canopy);
+        return false;
     }
+    function tooClose(x, z) {
+        for (const t of treesPlaced) {
+            if (Math.abs(x - t.x) < 4 && Math.abs(z - t.z) < 4) return true;
+        }
+        return false;
+    }
+
+    // Place trees along road edges
+    MAIN_ROADS.forEach(r => {
+        if (r.type === 'H') {
+            for (let x = -r.length/2 + 14; x < r.length/2 - 6; x += 14) {
+                [r.z + r.w/2 + 4, r.z - r.w/2 - 4].forEach(z => {
+                    if (!nearBuilding(x, z) && !tooClose(x, z)) {
+                        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 2, 6), trunkMat);
+                        trunk.position.set(x, 1, z);
+                        trunk.castShadow = true;
+                        group.add(trunk);
+                        const canopy = new THREE.Mesh(new THREE.SphereGeometry(1.4, 8, 8), treeMat);
+                        canopy.position.set(x, 3, z);
+                        canopy.castShadow = true;
+                        group.add(canopy);
+                        treesPlaced.push({ x, z });
+                    }
+                });
+            }
+        }
+    });
 }
 
 function createParks(group) {
