@@ -1,0 +1,10 @@
+{
+  "name": "Night Hunter",
+  "short_name": "NightHunter",
+  "description": "납치범 검거 3D 수사 액션 게임",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0d1b2a",
+  "theme_color": "#0d1b2a"
+}

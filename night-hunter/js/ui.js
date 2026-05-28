@@ -122,17 +122,7 @@ const GameUI = {
             ctx.fillRect(bx-bw/2, bz-bd/2, bw, bd);
         });
 
-        // Hints
-        if (typeof HintSystem!=='undefined') {
-            HintSystem.hints.forEach(h => {
-                if (h.collected) return;
-                const hx=mx(h.x), hz=mz(h.z);
-                if (hx<-10||hx>size+10||hz<-10||hz>size+10) return;
-                if ((typeof Shop!=='undefined'&&Shop.hasItem('radio'))||gameState.isDay) {
-                    if (gameState.isDay) { ctx.fillStyle='#fbbf24'; ctx.font='bold 10px sans-serif'; ctx.textAlign='center'; ctx.fillText('★',hx,hz+4); }
-                }
-            });
-        }
+        // Hints removed from minimap (player must explore)
 
         // Enemies
         if (!gameState.isDay&&typeof EnemySystem!=='undefined') {
@@ -195,6 +185,6 @@ const GameUI = {
             `;
             document.body.appendChild(el);
         }
-        el.textContent = '🔍 ' + collected + '/9';
+        el.textContent = '🔍 ' + collected + '/12';
     }
 };
