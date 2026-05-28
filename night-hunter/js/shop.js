@@ -105,11 +105,11 @@ const Shop = {
         invBtn.textContent = '🎒';
         invBtn.style.cssText = `
             position:fixed;
-            left:calc(160px + env(safe-area-inset-left, 0px));
+            right:calc(150px + env(safe-area-inset-right, 0px));
             bottom:calc(25px + env(safe-area-inset-bottom, 0px));
-            width:46px; height:46px; border-radius:50%;
-            border:2px solid rgba(34,197,94,0.5);
-            background:rgba(34,197,94,0.25);
+            width:48px; height:48px; border-radius:50%;
+            border:2px solid rgba(34,197,94,0.55);
+            background:rgba(34,197,94,0.28);
             backdrop-filter:blur(8px); color:#fff; font-size:20px;
             cursor:pointer; touch-action:none; z-index:30;
             pointer-events:auto;

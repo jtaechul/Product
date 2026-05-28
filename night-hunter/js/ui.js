@@ -42,11 +42,11 @@ const GameUI = {
         mb.textContent = '📋';
         mb.style.cssText = `
             position:fixed;
-            left:calc(160px + env(safe-area-inset-left, 0px));
-            bottom:calc(80px + env(safe-area-inset-bottom, 0px));
-            width:46px; height:46px; border-radius:50%;
-            border:2px solid rgba(59,130,246,0.5);
-            background:rgba(59,130,246,0.25);
+            right:calc(150px + env(safe-area-inset-right, 0px));
+            bottom:calc(85px + env(safe-area-inset-bottom, 0px));
+            width:48px; height:48px; border-radius:50%;
+            border:2px solid rgba(59,130,246,0.55);
+            background:rgba(59,130,246,0.28);
             backdrop-filter:blur(8px); color:#fff; font-size:20px;
             cursor:pointer; touch-action:none; z-index:30;
             pointer-events:auto;

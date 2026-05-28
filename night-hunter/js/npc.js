@@ -351,12 +351,14 @@ const NPCSystem = {
                     this._tryMove(npc, fx * speed * delta * 60, fz * speed * delta * 60);
                     npc.mesh.rotation.y = Math.atan2(fx, fz);
                 }
-                // Run animation
-                const swing = Math.sin(time * 10) * 0.55;
+                // Run animation with subtle bob
+                const swing = Math.sin(time * 10) * 0.6;
+                const bob = Math.abs(Math.sin(time * 10)) * 0.04;
+                npc.mesh.position.y = bob;
                 if (npc.leftHip) npc.leftHip.rotation.x = swing;
                 if (npc.rightHip) npc.rightHip.rotation.x = -swing;
-                if (npc.leftShoulder) npc.leftShoulder.rotation.x = -swing;
-                if (npc.rightShoulder) npc.rightShoulder.rotation.x = swing;
+                if (npc.leftShoulder) npc.leftShoulder.rotation.x = -swing * 1.1;
+                if (npc.rightShoulder) npc.rightShoulder.rotation.x = swing * 1.1;
             } else {
                 // Wander
                 npc.walkTime += delta;

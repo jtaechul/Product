@@ -2,8 +2,8 @@
 
 // ── Game State ──
 const gameState = {
-    health: 5,
-    maxHealth: 5,
+    health: 3,
+    maxHealth: 3,
     coins: 30,
     day: 1,
     isDay: true,
@@ -129,31 +129,37 @@ const { worldGroup, buildingData } = createWorld(scene);
 const playerGroup = new THREE.Group();
 
 function createPlayer() {
-    // Legs
+    // Articulated legs — hip group with thigh, knee group with shin + shoe
     const legMat = new THREE.MeshStandardMaterial({ color: 0x1a2a4a, roughness: 0.7, metalness: 0.1 });
-    const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.7, 8), legMat);
-    leftLeg.position.set(-0.2, 0.35, 0);
-    leftLeg.castShadow = true;
-    leftLeg.userData.partName = 'leftLeg';
-    playerGroup.add(leftLeg);
+    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 });
 
-    const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.7, 8), legMat);
-    rightLeg.position.set(0.2, 0.35, 0);
-    rightLeg.castShadow = true;
-    rightLeg.userData.partName = 'rightLeg';
-    playerGroup.add(rightLeg);
+    function makeLeg(side) {
+        const hip = new THREE.Group();
+        hip.position.set(side * 0.16, 0.7, 0);
 
-    // Shoes
-    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-    const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.3), shoeMat);
-    leftShoe.position.set(-0.2, 0.0, 0.05);
-    leftShoe.castShadow = true;
-    playerGroup.add(leftShoe);
+        const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.36, 12), legMat);
+        thigh.position.y = -0.18;
+        thigh.castShadow = true;
+        hip.add(thigh);
 
-    const rightShoe = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.3), shoeMat);
-    rightShoe.position.set(0.2, 0.0, 0.05);
-    rightShoe.castShadow = true;
-    playerGroup.add(rightShoe);
+        const knee = new THREE.Group();
+        knee.position.y = -0.36;
+        const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.34, 12), legMat);
+        shin.position.y = -0.17;
+        shin.castShadow = true;
+        knee.add(shin);
+        const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.3), shoeMat);
+        shoe.position.set(0, -0.36, 0.05);
+        shoe.castShadow = true;
+        knee.add(shoe);
+        hip.add(knee);
+
+        hip.userData.partName = side < 0 ? 'leftLeg' : 'rightLeg';
+        hip.userData.knee = knee;
+        return hip;
+    }
+    playerGroup.add(makeLeg(-1));
+    playerGroup.add(makeLeg(1));
 
     // Body
     const body = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.75, 0.35), legMat);
@@ -180,29 +186,36 @@ function createPlayer() {
     playerGroup.add(badge);
 
     // Arms
-    const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.6, 8), legMat);
-    leftArm.position.set(-0.42, 1.1, 0);
-    leftArm.rotation.z = 0.15;
-    leftArm.castShadow = true;
-    leftArm.userData.partName = 'leftArm';
-    playerGroup.add(leftArm);
+    // Articulated arms — shoulder group with upper arm, elbow group with forearm + hand
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.6 });
 
-    const rightArm = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.6, 8), legMat);
-    rightArm.position.set(0.42, 1.1, 0);
-    rightArm.rotation.z = -0.15;
-    rightArm.castShadow = true;
-    rightArm.userData.partName = 'rightArm';
-    playerGroup.add(rightArm);
+    function makeArm(side) {
+        const shoulder = new THREE.Group();
+        shoulder.position.set(side * 0.34, 1.42, 0);
+        shoulder.rotation.z = side * -0.08;
 
-    // Hands
-    const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
-    const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), skinMat);
-    leftHand.position.set(-0.44, 0.78, 0);
-    playerGroup.add(leftHand);
+        const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.32, 12), legMat);
+        upper.position.y = -0.16;
+        upper.castShadow = true;
+        shoulder.add(upper);
 
-    const rightHand = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), skinMat);
-    rightHand.position.set(0.44, 0.78, 0);
-    playerGroup.add(rightHand);
+        const elbow = new THREE.Group();
+        elbow.position.y = -0.32;
+        const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.06, 0.3, 12), legMat);
+        forearm.position.y = -0.15;
+        forearm.castShadow = true;
+        elbow.add(forearm);
+        const hand = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), skinMat);
+        hand.position.y = -0.3;
+        elbow.add(hand);
+        shoulder.add(elbow);
+
+        shoulder.userData.partName = side < 0 ? 'leftArm' : 'rightArm';
+        shoulder.userData.elbow = elbow;
+        return shoulder;
+    }
+    playerGroup.add(makeArm(-1));
+    playerGroup.add(makeArm(1));
 
     // Head
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 32, 32), skinMat);
@@ -309,45 +322,44 @@ function createPlayer() {
     rCorner.rotation.z = -0.35;
     playerGroup.add(rCorner);
 
-    // === HAIR — clean black with braided pigtails ===
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.6, metalness: 0.05 });
+    // === HAIR — positioned high + back so face stays exposed ===
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x1a0e08, roughness: 0.65 });
 
-    // Hair cap (covers top + back) — clean smooth coverage
+    // Top cap — small, high, slightly back so doesn't reach face front
     const hairCap = new THREE.Mesh(
-        new THREE.SphereGeometry(0.305, 28, 28, 0, Math.PI * 2, 0, Math.PI * 0.62),
+        new THREE.SphereGeometry(0.29, 24, 24, 0, Math.PI * 2, 0, Math.PI * 0.55),
         hairMat
     );
-    hairCap.position.set(0, 1.68, -0.005);
+    hairCap.position.set(0, 1.82, -0.05);
     hairCap.castShadow = true;
     playerGroup.add(hairCap);
 
-    // Back of head hair (lower coverage)
+    // Back hair (hangs behind head, doesn't touch face)
     const backHair = new THREE.Mesh(
-        new THREE.SphereGeometry(0.28, 24, 24, 0, Math.PI, Math.PI * 0.2, Math.PI * 0.6),
+        new THREE.BoxGeometry(0.42, 0.4, 0.18),
         hairMat
     );
-    backHair.position.set(0, 1.68, 0);
-    backHair.rotation.y = Math.PI;
+    backHair.position.set(0, 1.6, -0.2);
     backHair.castShadow = true;
     playerGroup.add(backHair);
 
-    // Side-swept bangs (asymmetric, smooth)
-    const bangsLeft = new THREE.Mesh(
-        new THREE.BoxGeometry(0.32, 0.1, 0.1),
+    // Bangs — only over forehead (above brows, not reaching eyes)
+    const bangsCenter = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 0.09, 0.1),
         hairMat
     );
-    bangsLeft.position.set(-0.05, 1.86, 0.21);
-    bangsLeft.rotation.z = 0.15;
-    bangsLeft.rotation.x = -0.15;
-    playerGroup.add(bangsLeft);
-    const bangsRight = new THREE.Mesh(
-        new THREE.BoxGeometry(0.22, 0.1, 0.1),
-        hairMat
-    );
-    bangsRight.position.set(0.15, 1.85, 0.2);
-    bangsRight.rotation.z = -0.2;
-    bangsRight.rotation.x = -0.15;
-    playerGroup.add(bangsRight);
+    bangsCenter.position.set(0, 1.86, 0.24);
+    bangsCenter.rotation.x = -0.18;
+    playerGroup.add(bangsCenter);
+    // Side wisps
+    const lWisp = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 0.06), hairMat);
+    lWisp.position.set(-0.21, 1.77, 0.18);
+    lWisp.rotation.z = -0.2;
+    playerGroup.add(lWisp);
+    const rWisp = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 0.06), hairMat);
+    rWisp.position.set(0.21, 1.77, 0.18);
+    rWisp.rotation.z = 0.2;
+    playerGroup.add(rWisp);
 
     // === TWIN BRAIDED PIGTAILS ===
     // Each braid = 3 segments stacked (slightly varied) to suggest texture
@@ -902,19 +914,7 @@ function updatePlayer(delta) {
         playerGroup.position.y = gameState.jumpHeight;
     }
 
-    // Police station heal (within 15 units)
-    const psDist = Math.sqrt(playerGroup.position.x * playerGroup.position.x + (playerGroup.position.z - 80) * (playerGroup.position.z - 80));
-    if (psDist < 15 && gameState.health < gameState.maxHealth) {
-        gameState.healTimer = (gameState.healTimer || 0) + delta;
-        if (gameState.healTimer > 3) {
-            gameState.health = Math.min(gameState.maxHealth, gameState.health + 1);
-            gameState.healTimer = 0;
-            showMessage('🏥 경찰서에서 체력이 회복됩니다 (+1)');
-        }
-    } else {
-        gameState.healTimer = 0;
-    }
-
+    // Police station auto-healing removed — must rely on energy drink item
     // Update stamina bar
     document.getElementById('stamina-fill').style.width = (gameState.stamina / gameState.maxStamina * 100) + '%';
     const staminaPct = gameState.stamina / gameState.maxStamina;
@@ -925,13 +925,34 @@ function updatePlayer(delta) {
 }
 
 function animateWalk(time) {
-    const swing = Math.sin(time) * 0.3;
+    // Hip swing + knee bend (knee bends when leg is going forward)
+    const hipSwing = Math.sin(time) * 0.5;
+    // Knee bend: bend most when leg is at apex of forward swing
+    const leftKneeBend = Math.max(0, Math.sin(time)) * 0.6;
+    const rightKneeBend = Math.max(0, Math.sin(time + Math.PI)) * 0.6;
+    // Arm swing (opposite to legs)
+    const armSwing = -Math.sin(time) * 0.45;
+    const leftElbowBend = Math.max(0, -Math.sin(time)) * 0.35 + 0.2;
+    const rightElbowBend = Math.max(0, Math.sin(time)) * 0.35 + 0.2;
+
     playerGroup.children.forEach(child => {
         const name = child.userData.partName;
-        if (name === 'leftLeg') child.rotation.x = swing;
-        if (name === 'rightLeg') child.rotation.x = -swing;
-        if (name === 'leftArm') child.rotation.x = -swing;
-        if (name === 'rightArm') child.rotation.x = swing;
+        if (name === 'leftLeg') {
+            child.rotation.x = hipSwing;
+            if (child.userData.knee) child.userData.knee.rotation.x = -leftKneeBend;
+        }
+        if (name === 'rightLeg') {
+            child.rotation.x = -hipSwing;
+            if (child.userData.knee) child.userData.knee.rotation.x = -rightKneeBend;
+        }
+        if (name === 'leftArm') {
+            child.rotation.x = armSwing;
+            if (child.userData.elbow) child.userData.elbow.rotation.x = -leftElbowBend;
+        }
+        if (name === 'rightArm') {
+            child.rotation.x = -armSwing;
+            if (child.userData.elbow) child.userData.elbow.rotation.x = -rightElbowBend;
+        }
     });
 }
 
@@ -942,7 +963,12 @@ function animateIdle(time) {
             child.position.y = 1.1 + Math.sin(time * 1.5) * 0.01;
         }
         if (name === 'leftLeg' || name === 'rightLeg' || name === 'leftArm' || name === 'rightArm') {
-            child.rotation.x *= 0.9;
+            child.rotation.x *= 0.85;
+            if (child.userData.knee) child.userData.knee.rotation.x *= 0.85;
+            if (child.userData.elbow) {
+                // Slight resting elbow bend
+                child.userData.elbow.rotation.x += (-0.15 - child.userData.elbow.rotation.x) * 0.1;
+            }
         }
     });
 }
