@@ -10,19 +10,24 @@ const HintSystem = {
     memoOpen: false,
 
     hintData: [
-        // 납치범 1호 (주택가)
+        // 납치범 1호 (3개) — 쉬움
         { criminal: 0, order: 0, text: '주택가에 있는 건물이야', x: -5, z: 75 },
         { criminal: 0, order: 1, text: '파란색 3층짜리야', x: -40, z: 30 },
         { criminal: 0, order: 2, text: '앞에 빨간 우체통이 있어', x: -80, z: -10 },
-        // 납치범 2호 (상업지구)
-        { criminal: 1, order: 0, text: '상업지구에 있어', x: 30, z: 60 },
-        { criminal: 1, order: 1, text: '흰색 5층짜리야', x: 60, z: -15 },
+        // 납치범 2호 (4개) — 보통
+        { criminal: 1, order: 0, text: '상업지구 어딘가에 있어', x: 30, z: 60 },
+        { criminal: 1, order: 1, text: '흰색 건물이고 5층이야', x: 60, z: -15 },
         { criminal: 1, order: 2, text: "간판에 'CAFE'라고 써있어", x: 100, z: 30 },
-        // 납치범 3호 (공장지대)
-        { criminal: 2, order: 0, text: '공장지대에 있어', x: -20, z: 55 },
-        { criminal: 2, order: 1, text: '회색 7층짜리야', x: 40, z: -60 },
-        { criminal: 2, order: 2, text: '옥상에 빨간 물탱크가 있어', x: -60, z: -90 },
+        { criminal: 1, order: 3, text: '큰 도로 옆에 위치해 있어', x: 95, z: -45 },
+        // 납치범 3호 (5개) — 어려움
+        { criminal: 2, order: 0, text: '공장지대에 숨어있어', x: -20, z: 55 },
+        { criminal: 2, order: 1, text: '회색 건물이고 키가 큰 편', x: 40, z: -60 },
+        { criminal: 2, order: 2, text: '7층짜리 공장이야', x: -60, z: -90 },
+        { criminal: 2, order: 3, text: '옥상에 빨간 물탱크가 있어', x: 60, z: -100 },
+        { criminal: 2, order: 4, text: '주변에 굴뚝과 철조망이 있어', x: -100, z: -120 },
     ],
+
+    hintsRequired: [3, 4, 5],
 
     criminalNames: ['1호 납치범', '2호 납치범', '3호 납치범'],
 
@@ -61,21 +66,22 @@ const HintSystem = {
             );
             group.add(glow);
 
-            // Floating "?" text sprite
+            // Exclamation mark sprite
             const canvas = document.createElement('canvas');
-            canvas.width = 64;
-            canvas.height = 64;
+            canvas.width = 128; canvas.height = 128;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 48px Inter, sans-serif';
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 96px Inter, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('?', 32, 32);
+            ctx.shadowColor = '#ff8800';
+            ctx.shadowBlur = 12;
+            ctx.fillText('!', 64, 64);
             const texture = new THREE.CanvasTexture(canvas);
             const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
             const sprite = new THREE.Sprite(spriteMat);
-            sprite.scale.set(0.6, 0.6, 1);
-            sprite.position.y = 1.2;
+            sprite.scale.set(0.9, 0.9, 1);
+            sprite.position.y = 1.5;
             group.add(sprite);
 
             group.position.set(data.x, 1.2, data.z);
@@ -135,7 +141,7 @@ const HintSystem = {
             </div>
             <div id="memo-content"></div>
             <div style="margin-top:16px; text-align:center; opacity:0.5; font-size:13px;">
-                수집한 힌트: <span id="memo-count">0</span>/9
+                수집한 힌트: <span id="memo-count">0</span>/12
             </div>
         `;
         document.body.appendChild(memoPanel);
@@ -193,7 +199,7 @@ const HintSystem = {
             html += `<div style="margin-bottom:14px; padding:12px; background:rgba(255,255,255,0.05); border-radius:10px; border-left:3px solid ${colors[c]};">`;
             html += `<div style="font-size:14px; font-weight:700; color:${colors[c]}; margin-bottom:8px;">${names[c]}</div>`;
 
-            for (let o = 0; o < 3; o++) {
+            for (let o = 0; o < this.hintsRequired[c]; o++) {
                 const found = criminalHints.find(h => h.order === o);
                 if (found) {
                     html += `<div style="font-size:13px; padding:4px 0; color:#eee;">✅ "${found.text}"</div>`;

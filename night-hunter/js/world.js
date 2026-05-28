@@ -264,193 +264,226 @@ function createBuilding(group, x, z, w, d, h, color, label) {
 
 function createZoneBuildings(group) {
     const buildings = [];
-    const placed = [];
 
-    function canPlace(px, pz, pw, pd) {
-        const margin = 3;
-        for (const p of placed) {
-            if (Math.abs(px - p.x) < (pw + p.w) / 2 + margin &&
-                Math.abs(pz - p.z) < (pd + p.d) / 2 + margin) {
-                return false;
-            }
-        }
-        if (Math.abs(px) < 6 && Math.abs(pz - 50) < 6) return false;
-        if (Math.abs(px) < 6 && Math.abs(pz) < 6) return false;
-        return true;
-    }
+    // Grid-based realistic city layout
+    // Each zone has rows of buildings facing roads, with narrow gaps between them
 
-    // Police zone buildings (6 more, total 7 with station)
+    // ── Police Zone (around police station) ──
+    // Small commercial: cafe, convenience, pharmacy on either side
     const policeBuildings = [
-        { x: -20, z: 90, w: 6, d: 5, h: 6, color: 0x889977, label: '편의점' },
-        { x: 20, z: 90, w: 7, d: 5, h: 6, color: 0x997766, label: '카페' },
-        { x: -25, z: 70, w: 5, d: 5, h: 9, color: 0x667788, label: '아파트' },
-        { x: 25, z: 70, w: 6, d: 6, h: 9, color: 0x776655, label: '사무실' },
-        { x: -15, z: 65, w: 5, d: 5, h: 6, color: 0x998877, label: '약국' },
-        { x: 15, z: 65, w: 7, d: 5, h: 6, color: 0x778899, label: '식당' }
+        { x: -28, z: 92, w: 9, d: 6, h: 6, color: 0xa8b59a, label: '편의점' },
+        { x: -16, z: 92, w: 7, d: 6, h: 5, color: 0xc4a882, label: '꽃집' },
+        { x: 16, z: 92, w: 8, d: 6, h: 6, color: 0xb5a085, label: '카페' },
+        { x: 28, z: 92, w: 9, d: 6, h: 5, color: 0x9eb7a8, label: '약국' },
+        { x: -28, z: 68, w: 8, d: 7, h: 12, color: 0x8b9aa8, label: '오피스텔' },
+        { x: 28, z: 68, w: 8, d: 7, h: 12, color: 0x99a8b8, label: '오피스' },
     ];
     policeBuildings.forEach(b => {
         const mesh = createBuilding(group, b.x, b.z, b.w, b.d, b.h, b.color, b.label);
         buildings.push({ mesh, ...b, type: 'normal', zone: 'POLICE' });
-        placed.push(b);
     });
 
-    // Residential zone A (15 buildings, including hideout 1)
-    const resColors = [0x8B4513, 0xCD853F, 0xA0522D, 0xD2691E, 0xBC8F8F, 0xF5DEB3, 0xDEB887, 0xC4A882];
-    for (let i = 0; i < 15; i++) {
-        let bx, bz, bw, bd, bh, bcolor, blabel, isHideout = false;
+    // ── Residential Zone A (-140 to -20 x, -100 to 50 z) ──
+    // Suburban houses in grid: 5 rows × 4 cols = 20 houses
+    const resColors = [0xc8a888, 0xb8a890, 0xa89878, 0xd0c0a8, 0xc8b8a0, 0xb09880];
+    const resRows = [-90, -60, -30, 0, 30];
+    const resCols = [-130, -110, -90, -70, -45];
 
-        if (i === 0) {
-            // Hideout 1: blue 3-floor in residential
-            bx = -70; bz = 15; bw = 8; bd = 7;
-            bh = 9; bcolor = 0x4488cc; blabel = '파란 3층집';
-            isHideout = true;
-        } else {
-            const attempts = 50;
-            let found = false;
-            for (let a = 0; a < attempts; a++) {
-                bx = -130 + Math.random() * 110;
-                bz = -60 + Math.random() * 120;
-                bw = 5 + Math.random() * 4;
-                bd = 5 + Math.random() * 3;
-                if (canPlace(bx, bz, bw, bd)) { found = true; break; }
-            }
-            if (!found) continue;
-            const floors = 2 + Math.floor(Math.random() * 3);
-            bh = floors * 3;
-            bcolor = resColors[Math.floor(Math.random() * resColors.length)];
-            blabel = '주택 ' + (i + 1);
-        }
+    // Hideout 1 placeholder
+    let h1Placed = false;
 
-        const mesh = createBuilding(group, bx, bz, bw, bd, bh, bcolor, blabel);
-        buildings.push({ mesh, x: bx, z: bz, w: bw, d: bd, h: bh, type: isHideout ? 'hideout' : 'normal', zone: 'RESIDENTIAL', hideoutIndex: isHideout ? 0 : -1 });
-        placed.push({ x: bx, z: bz, w: bw, d: bd });
+    resRows.forEach((rz, ri) => {
+        resCols.forEach((rx, ci) => {
+            // Skip cells that would conflict with main road
+            if (Math.abs(rz - 50) < 8 || Math.abs(rz + 40) < 8) return;
 
-        if (isHideout) {
-            // Red mailbox
-            const mailbox = new THREE.Mesh(
-                new THREE.BoxGeometry(0.6, 1.2, 0.5),
-                new THREE.MeshStandardMaterial({ color: 0xcc0000 })
-            );
-            mailbox.position.set(bx + bw / 2 + 1, 0.6, bz + bd / 2);
-            mailbox.castShadow = true;
-            group.add(mailbox);
-        }
+            const isH1Spot = !h1Placed && ri === 3 && ci === 2;
+            const isHideout = isH1Spot;
 
-        // Triangular roofs for residential
-        if (!isHideout || i === 0) {
-            const roofGeo = new THREE.ConeGeometry(Math.max(bw, bd) * 0.7, 2, 4);
-            const roofMat = new THREE.MeshStandardMaterial({ color: 0x8B0000 });
+            const bw = isHideout ? 8 : (5.5 + Math.random() * 1.5);
+            const bd = isHideout ? 7 : (5 + Math.random() * 1.5);
+            const bh = isHideout ? 9 : (3 + Math.floor(Math.random() * 2) * 3);
+            const bcolor = isHideout ? 0x4488cc : resColors[Math.floor(Math.random() * resColors.length)];
+            const blabel = isHideout ? '파란 3층집' : `주택 ${ri}-${ci}`;
+
+            const mesh = createBuilding(group, rx, rz, bw, bd, bh, bcolor, blabel);
+            buildings.push({ mesh, x: rx, z: rz, w: bw, d: bd, h: bh,
+                type: isHideout ? 'hideout' : 'normal', zone: 'RESIDENTIAL',
+                hideoutIndex: isHideout ? 0 : -1 });
+
+            // Pitched roof
+            const roofGeo = new THREE.ConeGeometry(Math.max(bw, bd) * 0.75, 1.8, 4);
+            const roofMat = new THREE.MeshStandardMaterial({
+                color: isHideout ? 0x4488cc : [0x8b4513, 0x6b3410, 0xa0522d][Math.floor(Math.random() * 3)],
+                roughness: 0.8
+            });
             const roof = new THREE.Mesh(roofGeo, roofMat);
-            roof.position.set(bx, bh + 1, bz);
+            roof.position.set(rx, bh + 0.9, rz);
             roof.rotation.y = Math.PI / 4;
             roof.castShadow = true;
             group.add(roof);
-        }
-    }
 
-    // Commercial zone B (18 buildings, including hideout 2)
-    const comColors = [0x6688aa, 0x556677, 0x778899, 0x8899aa, 0x445566, 0x99aabb, 0x667788, 0x889999];
-    for (let i = 0; i < 18; i++) {
-        let bx, bz, bw, bd, bh, bcolor, blabel, isHideout = false;
-
-        if (i === 0) {
-            // Hideout 2: white 5-floor in commercial, CAFE sign
-            bx = 70; bz = 10; bw = 7; bd = 7;
-            bh = 15; bcolor = 0xeeeeee; blabel = 'CAFE 건물';
-            isHideout = true;
-        } else {
-            const attempts = 50;
-            let found = false;
-            for (let a = 0; a < attempts; a++) {
-                bx = 25 + Math.random() * 110;
-                bz = -60 + Math.random() * 120;
-                bw = 5 + Math.random() * 5;
-                bd = 5 + Math.random() * 4;
-                if (canPlace(bx, bz, bw, bd)) { found = true; break; }
-            }
-            if (!found) continue;
-            const floors = 4 + Math.floor(Math.random() * 5);
-            bh = floors * 3;
-            bcolor = comColors[Math.floor(Math.random() * comColors.length)];
-            blabel = '빌딩 ' + (i + 1);
-        }
-
-        const mesh = createBuilding(group, bx, bz, bw, bd, bh, bcolor, blabel);
-        buildings.push({ mesh, x: bx, z: bz, w: bw, d: bd, h: bh, type: isHideout ? 'hideout' : 'normal', zone: 'COMMERCIAL', hideoutIndex: isHideout ? 1 : -1 });
-        placed.push({ x: bx, z: bz, w: bw, d: bd });
-
-        if (isHideout) {
-            // CAFE sign
-            const cafeGeo = new THREE.BoxGeometry(4, 1.2, 0.3);
-            const cafeMat = new THREE.MeshStandardMaterial({ color: 0xff6600, emissive: 0x331100 });
-            const cafeSign = new THREE.Mesh(cafeGeo, cafeMat);
-            cafeSign.position.set(bx, bh * 0.6, bz + bd / 2 + 0.2);
-            group.add(cafeSign);
-        }
-    }
-
-    // Factory zone C (10 buildings, including hideout 3)
-    const facColors = [0x555555, 0x666666, 0x777777, 0x4a4a4a, 0x5a5a5a];
-    for (let i = 0; i < 10; i++) {
-        let bx, bz, bw, bd, bh, bcolor, blabel, isHideout = false;
-
-        if (i === 0) {
-            // Hideout 3: gray 7-floor in factory, red water tank on roof
-            bx = 10; bz = -100; bw = 10; bd = 9;
-            bh = 21; bcolor = 0x888888; blabel = '회색 공장';
-            isHideout = true;
-        } else {
-            const attempts = 50;
-            let found = false;
-            for (let a = 0; a < attempts; a++) {
-                bx = -110 + Math.random() * 220;
-                bz = -140 + Math.random() * 80;
-                bw = 8 + Math.random() * 8;
-                bd = 6 + Math.random() * 6;
-                if (canPlace(bx, bz, bw, bd)) { found = true; break; }
-            }
-            if (!found) continue;
-            const floors = 2 + Math.floor(Math.random() * 3);
-            bh = floors * 3;
-            bcolor = facColors[Math.floor(Math.random() * facColors.length)];
-            blabel = '창고 ' + (i + 1);
-        }
-
-        const mesh = createBuilding(group, bx, bz, bw, bd, bh, bcolor, blabel);
-        buildings.push({ mesh, x: bx, z: bz, w: bw, d: bd, h: bh, type: isHideout ? 'hideout' : 'normal', zone: 'FACTORY', hideoutIndex: isHideout ? 2 : -1 });
-        placed.push({ x: bx, z: bz, w: bw, d: bd });
-
-        if (isHideout) {
-            // Red water tank on roof
-            const tank = new THREE.Mesh(
-                new THREE.CylinderGeometry(1.5, 1.5, 3, 16),
-                new THREE.MeshStandardMaterial({ color: 0xcc0000 })
+            // Front yard fence
+            const fence = new THREE.Mesh(
+                new THREE.BoxGeometry(bw + 1.5, 0.6, 0.08),
+                new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.7 })
             );
-            tank.position.set(bx + 2, bh + 1.5, bz - 1);
-            tank.castShadow = true;
-            group.add(tank);
-        }
-
-        // Chimneys for factory buildings
-        if (Math.random() > 0.3) {
-            const chimney = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.5, 0.7, 4, 8),
-                new THREE.MeshStandardMaterial({ color: 0x444444 })
-            );
-            chimney.position.set(bx - bw / 4, bh + 2, bz);
-            chimney.castShadow = true;
-            group.add(chimney);
-        }
-
-        // Fences for factory zone
-        if (!isHideout && Math.random() > 0.5) {
-            const fenceGeo = new THREE.BoxGeometry(bw + 4, 1.5, 0.1);
-            const fenceMat = new THREE.MeshStandardMaterial({ color: 0x666666, wireframe: true });
-            const fence = new THREE.Mesh(fenceGeo, fenceMat);
-            fence.position.set(bx, 0.75, bz + bd / 2 + 2);
+            fence.position.set(rx, 0.3, rz + bd / 2 + 1.5);
             group.add(fence);
-        }
-    }
+
+            if (isHideout) {
+                // Red mailbox in front
+                const mailbox = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.5, 1.0, 0.4),
+                    new THREE.MeshStandardMaterial({ color: 0xcc0000, roughness: 0.5, metalness: 0.3 })
+                );
+                mailbox.position.set(rx + bw / 2 + 0.5, 0.5, rz + bd / 2 + 1);
+                mailbox.castShadow = true;
+                group.add(mailbox);
+                const mboxPole = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.05, 0.05, 1, 8),
+                    new THREE.MeshStandardMaterial({ color: 0x666666 })
+                );
+                mboxPole.position.set(rx + bw / 2 + 0.5, 0.0, rz + bd / 2 + 1);
+                group.add(mboxPole);
+                h1Placed = true;
+            }
+        });
+    });
+
+    // ── Commercial Zone B (25 to 140 x, -100 to 50 z) ──
+    // Taller mixed buildings in tighter grid
+    const comColors = [0x6680a0, 0x5a7090, 0x708090, 0x90a0b0, 0x556677, 0x8090a0, 0x607080];
+    const comRows = [-90, -60, -25, 5, 35];
+    const comCols = [40, 65, 90, 120];
+
+    let h2Placed = false;
+
+    comRows.forEach((rz, ri) => {
+        comCols.forEach((rx, ci) => {
+            if (Math.abs(rz - 50) < 8) return;
+
+            const isH2Spot = !h2Placed && ri === 2 && ci === 1;
+            const isHideout = isH2Spot;
+
+            const bw = isHideout ? 8 : (6 + Math.random() * 3);
+            const bd = isHideout ? 7 : (6 + Math.random() * 2);
+            const bh = isHideout ? 15 : (9 + Math.floor(Math.random() * 4) * 3);
+            const bcolor = isHideout ? 0xf0f0e8 : comColors[Math.floor(Math.random() * comColors.length)];
+            const blabel = isHideout ? 'CAFE 건물' : `빌딩 ${ri}-${ci}`;
+
+            const mesh = createBuilding(group, rx, rz, bw, bd, bh, bcolor, blabel);
+            buildings.push({ mesh, x: rx, z: rz, w: bw, d: bd, h: bh,
+                type: isHideout ? 'hideout' : 'normal', zone: 'COMMERCIAL',
+                hideoutIndex: isHideout ? 1 : -1 });
+
+            // AC unit on roof (commercial feature)
+            if (Math.random() > 0.5) {
+                const ac = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.2, 0.6, 0.8),
+                    new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.5 })
+                );
+                ac.position.set(rx + (Math.random() - 0.5) * (bw - 2), bh + 0.5, rz + (Math.random() - 0.5) * (bd - 2));
+                ac.castShadow = true;
+                group.add(ac);
+            }
+
+            if (isHideout) {
+                // Glowing CAFE sign
+                const cafeSign = new THREE.Mesh(
+                    new THREE.BoxGeometry(4.5, 1.4, 0.35),
+                    new THREE.MeshStandardMaterial({ color: 0xff6600, emissive: 0xff6600, emissiveIntensity: 0.4, roughness: 0.4 })
+                );
+                cafeSign.position.set(rx, bh * 0.5, rz + bd / 2 + 0.25);
+                group.add(cafeSign);
+
+                // Sign text via canvas
+                const cv = document.createElement('canvas');
+                cv.width = 256; cv.height = 80;
+                const ct = cv.getContext('2d');
+                ct.fillStyle = '#ff6600'; ct.fillRect(0, 0, 256, 80);
+                ct.fillStyle = '#fff';
+                ct.font = 'bold 56px Inter, sans-serif';
+                ct.textAlign = 'center'; ct.textBaseline = 'middle';
+                ct.fillText('CAFE', 128, 42);
+                const tex = new THREE.CanvasTexture(cv);
+                const signMesh = new THREE.Mesh(
+                    new THREE.PlaneGeometry(4.5, 1.4),
+                    new THREE.MeshBasicMaterial({ map: tex })
+                );
+                signMesh.position.set(rx, bh * 0.5, rz + bd / 2 + 0.43);
+                group.add(signMesh);
+                h2Placed = true;
+            }
+        });
+    });
+
+    // ── Factory Zone C (-130 to 130 x, -150 to -100 z) ──
+    // Wide industrial warehouses
+    const facColors = [0x6a6a6a, 0x5a5a5a, 0x7a7a7a, 0x4a4a4a, 0x808080];
+    const facRows = [-145, -118];
+    const facCols = [-100, -65, -30, 5, 40, 75, 110];
+
+    let h3Placed = false;
+
+    facRows.forEach((rz, ri) => {
+        facCols.forEach((rx, ci) => {
+            const isH3Spot = !h3Placed && ri === 1 && ci === 4;
+            const isHideout = isH3Spot;
+
+            const bw = isHideout ? 12 : (8 + Math.random() * 4);
+            const bd = isHideout ? 10 : (8 + Math.random() * 3);
+            const bh = isHideout ? 21 : (6 + Math.floor(Math.random() * 3) * 3);
+            const bcolor = isHideout ? 0x888888 : facColors[Math.floor(Math.random() * facColors.length)];
+            const blabel = isHideout ? '회색 공장' : `창고 ${ri}-${ci}`;
+
+            const mesh = createBuilding(group, rx, rz, bw, bd, bh, bcolor, blabel);
+            buildings.push({ mesh, x: rx, z: rz, w: bw, d: bd, h: bh,
+                type: isHideout ? 'hideout' : 'normal', zone: 'FACTORY',
+                hideoutIndex: isHideout ? 2 : -1 });
+
+            // Chimney
+            if (Math.random() > 0.4) {
+                const chimney = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.5, 0.7, 4, 12),
+                    new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.9 })
+                );
+                chimney.position.set(rx - bw / 4, bh + 2, rz);
+                chimney.castShadow = true;
+                group.add(chimney);
+                // Smoke (visible in day too)
+                const smoke = new THREE.Mesh(
+                    new THREE.SphereGeometry(1.0, 12, 12),
+                    new THREE.MeshStandardMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.4 })
+                );
+                smoke.position.set(rx - bw / 4, bh + 5, rz);
+                group.add(smoke);
+            }
+
+            if (isHideout) {
+                // Red water tank
+                const tank = new THREE.Mesh(
+                    new THREE.CylinderGeometry(1.6, 1.6, 3.2, 20),
+                    new THREE.MeshStandardMaterial({ color: 0xcc1a1a, roughness: 0.6, metalness: 0.2 })
+                );
+                tank.position.set(rx + 2, bh + 1.6, rz - 1);
+                tank.castShadow = true;
+                group.add(tank);
+                // Tank legs
+                for (let lx = -1; lx <= 1; lx += 2) {
+                    for (let lz = -1; lz <= 1; lz += 2) {
+                        const leg = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.1, 0.1, 1, 8),
+                            new THREE.MeshStandardMaterial({ color: 0x444444 })
+                        );
+                        leg.position.set(rx + 2 + lx * 0.8, bh + 0.5, rz - 1 + lz * 0.8);
+                        group.add(leg);
+                    }
+                }
+                h3Placed = true;
+            }
+        });
+    });
 
     return buildings;
 }

@@ -384,18 +384,18 @@ joystickOuter.appendChild(joystickInner);
 // Run + Jump buttons
 const runBtn = document.createElement('button');
 runBtn.id = 'run-btn';
-runBtn.textContent = 'RUN';
+runBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="13" cy="4" r="2"/><path d="M4 22l3-8 6-4 4 3 4-1"/><path d="M11 14l-2 6"/></svg>';
 
 const jumpBtn = document.createElement('button');
 jumpBtn.id = 'jump-btn';
-jumpBtn.textContent = 'JUMP';
+jumpBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v8"/><path d="M8 6l4-4 4 4"/><path d="M5 16h14"/><path d="M5 20h14"/></svg>';
 
 const joystickStyle = document.createElement('style');
 joystickStyle.textContent = `
 #joystick-outer {
     position: fixed;
-    left: 20px;
-    bottom: 30px;
+    left: calc(20px + env(safe-area-inset-left, 0px));
+    bottom: calc(30px + env(safe-area-inset-bottom, 0px));
     width: 120px;
     height: 120px;
     border-radius: 50%;
@@ -433,14 +433,14 @@ joystickStyle.textContent = `
     pointer-events: auto;
 }
 #run-btn {
-    right: 80px;
-    bottom: 25px;
+    right: calc(80px + env(safe-area-inset-right, 0px));
+    bottom: calc(25px + env(safe-area-inset-bottom, 0px));
     border: 2px solid rgba(255,160,0,0.5);
     background: rgba(255,160,0,0.2);
 }
 #jump-btn {
-    right: 80px;
-    bottom: 90px;
+    right: calc(80px + env(safe-area-inset-right, 0px));
+    bottom: calc(90px + env(safe-area-inset-bottom, 0px));
     border: 2px solid rgba(100,200,255,0.5);
     background: rgba(100,200,255,0.2);
 }
@@ -448,8 +448,8 @@ joystickStyle.textContent = `
 #jump-btn.active { background: rgba(100,200,255,0.5); transform: scale(0.92); }
 #action-buttons {
     position: fixed;
-    right: 14px;
-    bottom: 25px;
+    right: calc(14px + env(safe-area-inset-right, 0px));
+    bottom: calc(25px + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -517,6 +517,7 @@ HintSystem.init(scene);
 EnemySystem.init(scene);
 Minigame.init();
 Shop.init(scene);
+NPCSystem.init(scene);
 GameUI.init();
 
 // ── Joystick Logic ──
@@ -917,6 +918,7 @@ function animate() {
         HintSystem.update(playerGroup.position, delta, clock.elapsedTime);
         EnemySystem.update(playerGroup.position, delta, clock.elapsedTime);
         Shop.update(playerGroup.position);
+        NPCSystem.update(playerGroup.position, delta, clock.elapsedTime);
         Minigame.checkCatchable(playerGroup.position);
         GameUI.updateMinimap(playerGroup.position, playerFacingAngle, cameraAngleY);
         GameUI.updateHintCounter();
@@ -934,59 +936,104 @@ function createStartScreen() {
     const screen = document.createElement('div');
     screen.id = 'start-screen';
     screen.style.cssText = `
-        position:fixed; top:0; left:0; right:0; bottom:0;
-        background: linear-gradient(180deg, #050510 0%, #0a1628 40%, #1a1a3a 100%);
-        z-index:300; display:flex; flex-direction:column;
-        align-items:center; justify-content:center;
+        position:fixed; inset:0; z-index:300;
+        background:
+            radial-gradient(ellipse at top, rgba(96,165,250,0.15), transparent 60%),
+            radial-gradient(ellipse at bottom, rgba(251,191,36,0.08), transparent 60%),
+            linear-gradient(180deg, #020617 0%, #0f172a 50%, #1e293b 100%);
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
         font-family:'Inter',sans-serif; color:#fff;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        overflow:hidden;
     `;
 
-    // Animated city silhouette
-    const cityCanvas = document.createElement('canvas');
-    cityCanvas.width = 400; cityCanvas.height = 100;
-    const cctx = cityCanvas.getContext('2d');
-    cctx.fillStyle = '#0d1b2a';
-    const heights = [30,50,70,40,80,35,60,45,75,55,40,65,50,35,70,45,55,60,40,50];
-    heights.forEach((h, i) => {
-        cctx.fillRect(i * 20, 100 - h, 16, h);
-        // windows
-        cctx.fillStyle = '#fbbf24';
-        for (let wy = 100 - h + 6; wy < 96; wy += 10) {
-            if (Math.random() > 0.4) cctx.fillRect(i * 20 + 4, wy, 3, 4);
-            if (Math.random() > 0.4) cctx.fillRect(i * 20 + 10, wy, 3, 4);
-        }
-        cctx.fillStyle = '#0d1b2a';
-    });
+    // Animated rain effect with canvas
+    const rainCanvas = document.createElement('canvas');
+    rainCanvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0.3;';
+    rainCanvas.width = window.innerWidth;
+    rainCanvas.height = window.innerHeight;
+    screen.appendChild(rainCanvas);
+    const rctx = rainCanvas.getContext('2d');
+    const drops = Array.from({length: 80}, () => ({
+        x: Math.random() * rainCanvas.width,
+        y: Math.random() * rainCanvas.height,
+        speed: 4 + Math.random() * 6,
+        len: 8 + Math.random() * 12
+    }));
+    let rainAnim;
+    const drawRain = () => {
+        rctx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
+        rctx.strokeStyle = 'rgba(150,200,255,0.4)';
+        rctx.lineWidth = 1;
+        drops.forEach(d => {
+            rctx.beginPath();
+            rctx.moveTo(d.x, d.y);
+            rctx.lineTo(d.x, d.y + d.len);
+            rctx.stroke();
+            d.y += d.speed;
+            if (d.y > rainCanvas.height) { d.y = -d.len; d.x = Math.random() * rainCanvas.width; }
+        });
+        rainAnim = requestAnimationFrame(drawRain);
+    };
+    drawRain();
+    screen._rainCleanup = () => cancelAnimationFrame(rainAnim);
 
-    screen.innerHTML = `
-        <div style="font-size:14px; letter-spacing:6px; color:#fbbf24; margin-bottom:8px; opacity:0.7;">🚔 DETECTIVE GAME</div>
-        <h1 style="font-size:52px; font-weight:800; letter-spacing:-2px; margin:0 0 4px 0;
-            background:linear-gradient(135deg,#fff 0%,#60a5fa 50%,#fbbf24 100%);
-            -webkit-background-clip:text; -webkit-text-fill-color:transparent;">NIGHT HUNTER</h1>
-        <p style="font-size:15px; color:#999; margin:8px 0 32px 0;">납치된 아이들을 구출하라</p>
-        <div style="margin-bottom:40px; text-align:center; line-height:2; font-size:13px; color:#667;">
-            <div>🔍 낮에 힌트를 모아 은거지를 찾고</div>
-            <div>🌙 밤에 납치범을 추격해 검거하세요</div>
-            <div>👶 아이 3명을 모두 구출하면 승리!</div>
+    screen.innerHTML += `
+        <div style="position:relative; z-index:2; display:flex; flex-direction:column; align-items:center;">
+            <!-- Badge logo -->
+            <div style="
+                width:88px; height:88px; border-radius:50%;
+                background:linear-gradient(135deg,#1e3a8a,#0f172a);
+                border:3px solid rgba(96,165,250,0.5);
+                box-shadow:0 0 40px rgba(96,165,250,0.4), inset 0 0 20px rgba(96,165,250,0.2);
+                display:flex; align-items:center; justify-content:center;
+                margin-bottom:20px; position:relative;
+            ">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L4 7v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V7l-8-5z"/>
+                    <path d="M9 12l2 2 4-4"/>
+                </svg>
+            </div>
+
+            <div style="font-size:11px; letter-spacing:8px; color:#60a5fa; margin-bottom:10px; font-weight:600;">DETECTIVE CHRONICLES</div>
+            <h1 style="
+                font-size:64px; font-weight:900; letter-spacing:-3px; margin:0;
+                background:linear-gradient(135deg,#ffffff 0%,#cbd5e1 50%,#fbbf24 100%);
+                -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+                background-clip:text; text-shadow:0 4px 30px rgba(96,165,250,0.3);
+                line-height:1;
+            ">NIGHT HUNTER</h1>
+            <div style="
+                width:60%; height:1px; margin:20px 0;
+                background:linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            "></div>
+            <p style="font-size:14px; color:#94a3b8; margin:0 0 32px; letter-spacing:1px; text-align:center; max-width:400px; line-height:1.6;">
+                도시의 어둠 속에서 사라진 아이들.<br/>
+                당신만이 그들을 구할 수 있습니다.
+            </p>
+
+            <button id="start-btn" style="
+                position:relative;
+                padding:14px 52px; border:none; border-radius:8px;
+                background:linear-gradient(135deg,#1e40af,#2563eb,#3b82f6);
+                background-size:200% 200%;
+                color:#fff; font-size:15px; font-weight:700; letter-spacing:3px;
+                cursor:pointer; font-family:'Inter',sans-serif;
+                box-shadow:0 8px 30px rgba(59,130,246,0.5), 0 0 0 1px rgba(255,255,255,0.1) inset;
+                touch-action:manipulation; overflow:hidden;
+                transition:transform 0.2s;
+            ">START MISSION</button>
+
+            <div style="margin-top:32px; display:flex; gap:24px; font-size:10px; color:#64748b; letter-spacing:2px;">
+                <span>WASD MOVE</span><span>·</span><span>SHIFT RUN</span><span>·</span><span>SPACE JUMP</span>
+            </div>
+            <div style="margin-top:40px; font-size:10px; color:#334155; letter-spacing:3px;">VERSION 1.0</div>
         </div>
-        <button id="start-btn" style="
-            padding:16px 48px; border:none; border-radius:30px;
-            background:linear-gradient(135deg,#3b82f6,#2563eb);
-            color:#fff; font-size:18px; font-weight:700;
-            cursor:pointer; font-family:'Inter',sans-serif;
-            box-shadow:0 4px 20px rgba(37,99,235,0.4);
-            transition:transform 0.2s, box-shadow 0.2s;
-            touch-action:manipulation;
-        ">게임 시작</button>
-        <div style="margin-top:16px; display:flex; gap:20px; font-size:12px; color:#555;">
-            <span>WASD 이동</span><span>Shift 달리기</span><span>E 상호작용</span>
-        </div>
-        <div style="margin-top:40px; font-size:11px; color:#333;">v1.0</div>
     `;
     document.body.appendChild(screen);
 
     const btn = document.getElementById('start-btn');
-    btn.addEventListener('mouseenter', () => { btn.style.transform = 'scale(1.05)'; });
+    btn.addEventListener('mouseenter', () => { btn.style.transform = 'scale(1.04)'; });
     btn.addEventListener('mouseleave', () => { btn.style.transform = 'scale(1)'; });
     btn.addEventListener('click', startGame);
     btn.addEventListener('touchstart', e => { e.preventDefault(); startGame(); }, { passive: false });
