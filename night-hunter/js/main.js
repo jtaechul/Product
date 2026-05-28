@@ -48,79 +48,134 @@ scene.fog = new THREE.Fog(0xcfeaff, 70, 220);
 
 const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
+// ── Quality Tier System (상/중/하) ──
+// Auto-selected by device, can downgrade on low FPS
+const QUALITY = {
+    HIGH:   { shadow: 2048, bloom: true, vignette: true, smaa: true,  pixelRatio: 2,   segments: 32 },
+    MEDIUM: { shadow: 1024, bloom: true, vignette: false, smaa: false, pixelRatio: 1.5, segments: 24 },
+    LOW:    { shadow: 512,  bloom: false, vignette: false, smaa: false, pixelRatio: 1.0, segments: 16 }
+};
+let qualityTier = isMobile ? 'MEDIUM' : 'HIGH';
+let Q = QUALITY[qualityTier];
+window.GameQuality = { get tier() { return qualityTier; }, get cfg() { return Q; } };
+
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
 const renderer = new THREE.WebGLRenderer({
     canvas: document.getElementById('gameCanvas'),
-    antialias: !isMobile,
+    antialias: true,
     powerPreference: 'high-performance'
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.2 : 2));
-renderer.shadowMap.enabled = !isMobile;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pixelRatio));
+renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.outputColorSpace = THREE.SRGBColorSpace !== undefined ? THREE.SRGBColorSpace : undefined;
+renderer.outputEncoding = THREE.sRGBEncoding;  // fallback for r128
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.78;
+renderer.toneMappingExposure = 1.05;
 renderer.physicallyCorrectLights = false;
 
-// Post-processing — disable on mobile for battery/performance
+// ── Post-processing (EffectComposer) ──
 let composer = null;
 let bloomPass = null;
-let fxaaPass = null;
-if (!isMobile) {
+let smaaPass = null;
+let vignettePass = null;
+
+// Vignette shader (subtle darkened edges)
+const VignetteShader = {
+    uniforms: {
+        tDiffuse: { value: null },
+        offset: { value: 1.0 },
+        darkness: { value: 1.1 }
+    },
+    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader: `
+        uniform sampler2D tDiffuse; uniform float offset; uniform float darkness;
+        varying vec2 vUv;
+        void main(){
+            vec4 tex = texture2D(tDiffuse, vUv);
+            vec2 uv = (vUv - 0.5) * vec2(offset);
+            float vig = smoothstep(0.8, 0.2, dot(uv, uv) * darkness);
+            tex.rgb = mix(tex.rgb, tex.rgb * vig, 0.6);
+            gl_FragColor = tex;
+        }`
+};
+
+function buildComposer() {
     try {
         composer = new THREE.EffectComposer(renderer);
         composer.addPass(new THREE.RenderPass(scene, camera));
-        bloomPass = new THREE.UnrealBloomPass(
-            new THREE.Vector2(window.innerWidth, window.innerHeight),
-            0.3, 0.7, 0.85
-        );
-        composer.addPass(bloomPass);
-        fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
-        fxaaPass.material.uniforms['resolution'].value.set(
-            1 / (window.innerWidth * renderer.getPixelRatio()),
-            1 / (window.innerHeight * renderer.getPixelRatio())
-        );
-        composer.addPass(fxaaPass);
+
+        if (Q.bloom) {
+            bloomPass = new THREE.UnrealBloomPass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                0.2,   // strength (day default; night raises to 0.5)
+                0.6,   // radius
+                0.85   // threshold
+            );
+            composer.addPass(bloomPass);
+        }
+
+        if (Q.vignette) {
+            vignettePass = new THREE.ShaderPass(VignetteShader);
+            composer.addPass(vignettePass);
+        }
+
+        // SMAA (better than FXAA for stylized edges) — fallback to FXAA
+        if (Q.smaa && THREE.SMAAPass) {
+            smaaPass = new THREE.SMAAPass(
+                window.innerWidth * renderer.getPixelRatio(),
+                window.innerHeight * renderer.getPixelRatio()
+            );
+            composer.addPass(smaaPass);
+        } else if (Q.smaa && THREE.FXAAShader) {
+            smaaPass = new THREE.ShaderPass(THREE.FXAAShader);
+            smaaPass.material.uniforms['resolution'].value.set(
+                1 / (window.innerWidth * renderer.getPixelRatio()),
+                1 / (window.innerHeight * renderer.getPixelRatio())
+            );
+            composer.addPass(smaaPass);
+        }
     } catch (e) {
-        console.warn('Postprocessing not available');
+        console.warn('Postprocessing unavailable:', e);
+        composer = null;
     }
 }
+buildComposer();
 
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     if (composer) composer.setSize(window.innerWidth, window.innerHeight);
-    if (fxaaPass) {
-        fxaaPass.material.uniforms['resolution'].value.set(
-            1 / (window.innerWidth * renderer.getPixelRatio()),
-            1 / (window.innerHeight * renderer.getPixelRatio())
-        );
-    }
 });
 
-// ── Lighting (Daytime) ──
-const ambientLight = new THREE.AmbientLight(0xc8d8f0, 0.45);
-scene.add(ambientLight);
-
-const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x3a6b2a, 0.25);
+// ── Lighting (stylized: warm sun / cool ambient, hemisphere fill) ──
+const hemiLight = new THREE.HemisphereLight(0xbcd4ff, 0x6b5a3e, 0.55);
 scene.add(hemiLight);
 
-const sunLight = new THREE.DirectionalLight(0xfff5e0, 0.85);
-sunLight.position.set(60, 100, 40);
-sunLight.castShadow = !isMobile;
-const shadowSize = isMobile ? 512 : 1024;
-sunLight.shadow.mapSize.width = shadowSize;
-sunLight.shadow.mapSize.height = shadowSize;
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
+scene.add(ambientLight);
+
+const sunLight = new THREE.DirectionalLight(0xfff4e0, 1.15);
+sunLight.position.set(80, 120, 60);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.width = Q.shadow;
+sunLight.shadow.mapSize.height = Q.shadow;
 sunLight.shadow.camera.near = 0.5;
-sunLight.shadow.camera.far = 200;
-sunLight.shadow.camera.left = -60;
-sunLight.shadow.camera.right = 60;
-sunLight.shadow.camera.top = 60;
-sunLight.shadow.camera.bottom = -60;
-sunLight.shadow.bias = -0.001;
+sunLight.shadow.camera.far = 350;
+sunLight.shadow.camera.left = -160;
+sunLight.shadow.camera.right = 160;
+sunLight.shadow.camera.top = 160;
+sunLight.shadow.camera.bottom = -160;
+sunLight.shadow.bias = -0.0005;
+sunLight.shadow.normalBias = 0.02;
 scene.add(sunLight);
+
+// Rim/fill light for character separation (subtle cool backlight)
+const rimLight = new THREE.DirectionalLight(0xaac4ff, 0.25);
+rimLight.position.set(-60, 40, -80);
+scene.add(rimLight);
 
 // ── Create World ──
 const { worldGroup, buildingData } = createWorld(scene);
@@ -1027,6 +1082,42 @@ function updateHUD() {
     document.getElementById('arrest-count').textContent = `👮 검거 ${gameState.arrests}/${gameState.totalArrests}`;
 }
 
+// ── FPS auto-quality downgrade ──
+let fpsAccum = 0, fpsFrames = 0, fpsCheckTimer = 0, lowFpsStreak = 0;
+function monitorFPS(delta) {
+    fpsAccum += delta;
+    fpsFrames++;
+    fpsCheckTimer += delta;
+    if (fpsCheckTimer >= 2) {
+        const fps = fpsFrames / fpsAccum;
+        fpsAccum = 0; fpsFrames = 0; fpsCheckTimer = 0;
+        if (fps < 30) {
+            lowFpsStreak++;
+            if (lowFpsStreak >= 2) { downgradeQuality(); lowFpsStreak = 0; }
+        } else {
+            lowFpsStreak = 0;
+        }
+    }
+}
+
+function downgradeQuality() {
+    if (qualityTier === 'HIGH') qualityTier = 'MEDIUM';
+    else if (qualityTier === 'MEDIUM') qualityTier = 'LOW';
+    else return; // already lowest
+    Q = QUALITY[qualityTier];
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pixelRatio));
+    sunLight.shadow.mapSize.width = Q.shadow;
+    sunLight.shadow.mapSize.height = Q.shadow;
+    if (sunLight.shadow.map) { sunLight.shadow.map.dispose(); sunLight.shadow.map = null; }
+    if (!Q.bloom && bloomPass && composer) {
+        const i = composer.passes.indexOf(bloomPass);
+        if (i >= 0) composer.passes.splice(i, 1);
+        bloomPass = null;
+    }
+    console.log('Quality downgraded to', qualityTier);
+}
+
 // ── Game Loop ──
 let minimapTimer = 0;
 function animate() {
@@ -1036,6 +1127,7 @@ function animate() {
     const now = performance.now();
     const delta = Math.min((now - lastTime) / 1000, 0.1);
     lastTime = now;
+    monitorFPS(delta);
 
     if (gameState.health <= 0 && !Minigame.active) {
         Minigame.triggerGameOver();

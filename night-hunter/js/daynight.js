@@ -137,9 +137,14 @@ const DayNight = {
             this.scene.fog.near = 80 - 50 * smooth;
             this.scene.fog.far = 200 - 80 * smooth;
 
-            // Ambient + sun
-            ambientLight.intensity = 0.8 - 0.65 * smooth;
-            sunLight.intensity = 1.0 - 0.95 * smooth;
+            // Lighting: warm day → cool night
+            ambientLight.intensity = 0.25 - 0.12 * smooth;
+            sunLight.intensity = 1.15 - 1.0 * smooth;
+            if (typeof hemiLight !== 'undefined') hemiLight.intensity = 0.55 - 0.4 * smooth;
+            // Sun color shifts warm→cool (moon)
+            sunLight.color.lerpColors(new THREE.Color(0xfff4e0), new THREE.Color(0x3a4a8a), smooth);
+            // Bloom intensifies at night
+            if (typeof bloomPass !== 'undefined' && bloomPass) bloomPass.strength = 0.2 + 0.3 * smooth;
 
             // Stars fade in
             this.starField.visible = true;
@@ -167,8 +172,11 @@ const DayNight = {
             this.scene.fog.near = 30 + 50 * smooth;
             this.scene.fog.far = 120 + 80 * smooth;
 
-            ambientLight.intensity = 0.15 + 0.65 * smooth;
-            sunLight.intensity = 0.05 + 0.95 * smooth;
+            ambientLight.intensity = 0.13 + 0.12 * smooth;
+            sunLight.intensity = 0.15 + 1.0 * smooth;
+            if (typeof hemiLight !== 'undefined') hemiLight.intensity = 0.15 + 0.4 * smooth;
+            sunLight.color.lerpColors(new THREE.Color(0x3a4a8a), new THREE.Color(0xfff4e0), smooth);
+            if (typeof bloomPass !== 'undefined' && bloomPass) bloomPass.strength = 0.5 - 0.3 * smooth;
 
             // Stars fade out
             this.starField.material.opacity = 1 - smooth;
@@ -272,11 +280,12 @@ const DayNight = {
                 const c = obj.material.color.getHex();
                 if (c === 0x88ccff) {
                     if (isNight) {
-                        obj.material.emissive.setHex(0x445566);
-                        obj.material.emissiveIntensity = 0.8;
+                        // Lit warm-yellow windows for bloom
+                        obj.material.emissive.setHex(0xffdd88);
+                        obj.material.emissiveIntensity = 1.5;
                     } else {
-                        obj.material.emissive.setHex(0x112233);
-                        obj.material.emissiveIntensity = 0.3;
+                        obj.material.emissive.setHex(0x223344);
+                        obj.material.emissiveIntensity = 0.2;
                     }
                 }
             }
