@@ -35,10 +35,42 @@ function createWorld(scene) {
     return { worldGroup, buildingData };
 }
 
+function makeProceduralTexture(baseColor, noiseAmount, size) {
+    const c = document.createElement('canvas');
+    c.width = c.height = size || 256;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = baseColor;
+    ctx.fillRect(0, 0, c.width, c.height);
+    const img = ctx.getImageData(0, 0, c.width, c.height);
+    for (let i = 0; i < img.data.length; i += 4) {
+        const n = (Math.random() - 0.5) * noiseAmount;
+        img.data[i] = Math.max(0, Math.min(255, img.data[i] + n));
+        img.data[i + 1] = Math.max(0, Math.min(255, img.data[i + 1] + n));
+        img.data[i + 2] = Math.max(0, Math.min(255, img.data[i + 2] + n));
+    }
+    ctx.putImageData(img, 0, 0);
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+}
+
 function createGround(group) {
-    // Main ground with gradient-like look
-    const geo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 20, 20);
-    const mat = new THREE.MeshLambertMaterial({ color: 0x3a6b2a });
+    // Main ground — PBR with procedural grass texture
+    const grassTex = makeProceduralTexture('#3a6b2a', 60, 512);
+    grassTex.repeat.set(20, 20);
+    const geo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 60, 60);
+    // Add slight bumpiness to vertices
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+        pos.setZ(i, Math.random() * 0.15);
+    }
+    geo.computeVertexNormals();
+    const mat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        map: grassTex,
+        roughness: 0.95,
+        metalness: 0
+    });
     const ground = new THREE.Mesh(geo, mat);
     ground.rotation.x = -Math.PI / 2;
     ground.position.set(0, 0, 0);
@@ -53,7 +85,7 @@ function createGround(group) {
         const ps = 8 + Math.random() * 20;
         const patch = new THREE.Mesh(
             new THREE.CircleGeometry(ps, 12),
-            new THREE.MeshLambertMaterial({ color: patchColors[i % patchColors.length] })
+            new THREE.MeshStandardMaterial({ color: patchColors[i % patchColors.length], roughness: 0.9 })
         );
         patch.rotation.x = -Math.PI / 2;
         patch.position.set(px, 0.01, pz);
@@ -61,7 +93,7 @@ function createGround(group) {
     }
 
     // City boundary wall
-    const wallMat = new THREE.MeshLambertMaterial({ color: 0x555555 });
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
     const wallH = 3;
     [[-1,0,1,WORLD_SIZE],[1,0,1,WORLD_SIZE],[0,-1,WORLD_SIZE,1],[0,1,WORLD_SIZE,1]].forEach(([dx,dz,w,d]) => {
         const wall = new THREE.Mesh(new THREE.BoxGeometry(w === 1 ? 1 : WORLD_SIZE, wallH, d === 1 ? 1 : WORLD_SIZE), wallMat);
@@ -72,8 +104,8 @@ function createGround(group) {
 }
 
 function createRoads(group) {
-    const roadMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
-    const sidewalkMat = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+    const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
 
     function makeRoad(x, z, w, d) {
         const sw = new THREE.Mesh(new THREE.BoxGeometry(w + 2, 0.06, d + 2), sidewalkMat);
@@ -89,7 +121,7 @@ function createRoads(group) {
         for (let i = -d / 2 + 3; i < d / 2; i += 6) {
             const stripe = new THREE.Mesh(
                 new THREE.BoxGeometry(0.3, 0.09, 2),
-                new THREE.MeshLambertMaterial({ color: 0xffffff })
+                new THREE.MeshStandardMaterial({ color: 0xffffff })
             );
             stripe.position.set(x, 0.045, z + i);
             group.add(stripe);
@@ -107,7 +139,7 @@ function createRoads(group) {
     makeRoad(50, 25, 6, 100);
 
     // Crosswalks at intersections
-    const cwMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    const cwMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
     const crosswalkPositions = [
         [0, 50], [-50, 50], [50, 50], [0, -40], [-50, 0], [50, 0]
     ];
@@ -127,21 +159,21 @@ function createPoliceStation(group) {
 
     // Police sign
     const signGeo = new THREE.BoxGeometry(6, 1.5, 0.2);
-    const signMat = new THREE.MeshLambertMaterial({ color: 0x003399 });
+    const signMat = new THREE.MeshStandardMaterial({ color: 0x003399 });
     const sign = new THREE.Mesh(signGeo, signMat);
     sign.position.set(x, h - 1, z + d / 2 + 0.15);
     group.add(sign);
 
     // Police light on top
     const lightGeo = new THREE.SphereGeometry(0.5, 16, 16);
-    const lightMat = new THREE.MeshPhongMaterial({ color: 0x0066ff, emissive: 0x0033aa });
+    const lightMat = new THREE.MeshStandardMaterial({ color: 0x0066ff, emissive: 0x0033aa });
     const policeLight = new THREE.Mesh(lightGeo, lightMat);
     policeLight.position.set(x - 1, h + 0.5, z);
     group.add(policeLight);
 
     const lightRed = new THREE.Mesh(
         new THREE.SphereGeometry(0.5, 16, 16),
-        new THREE.MeshPhongMaterial({ color: 0xff0000, emissive: 0xaa0000 })
+        new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xaa0000 })
     );
     lightRed.position.set(x + 1, h + 0.5, z);
     group.add(lightRed);
@@ -149,7 +181,7 @@ function createPoliceStation(group) {
     // Flagpole
     const pole = new THREE.Mesh(
         new THREE.CylinderGeometry(0.08, 0.08, 8),
-        new THREE.MeshLambertMaterial({ color: 0xcccccc })
+        new THREE.MeshStandardMaterial({ color: 0xcccccc })
     );
     pole.position.set(x + 8, 4, z + 6);
     group.add(pole);
@@ -158,8 +190,12 @@ function createPoliceStation(group) {
 }
 
 function createBuilding(group, x, z, w, d, h, color, label) {
-    // Main body with slight color variation on sides
-    const mat = new THREE.MeshPhongMaterial({ color, flatShading: false });
+    // PBR material with stucco-like roughness
+    const mat = new THREE.MeshStandardMaterial({
+        color,
+        roughness: 0.85,
+        metalness: 0.05
+    });
     const geo = new THREE.BoxGeometry(w, h, d);
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.set(x, h / 2, z);
@@ -170,14 +206,14 @@ function createBuilding(group, x, z, w, d, h, color, label) {
     // Base/foundation
     const base = new THREE.Mesh(
         new THREE.BoxGeometry(w + 0.3, 0.4, d + 0.3),
-        new THREE.MeshLambertMaterial({ color: 0x666666 })
+        new THREE.MeshStandardMaterial({ color: 0x666666 })
     );
     base.position.set(x, 0.2, z);
     base.receiveShadow = true;
     group.add(base);
 
     // Windows on front and back
-    const winMat = new THREE.MeshPhongMaterial({ color: 0x88ccff, emissive: 0x223344 });
+    const winMat = new THREE.MeshStandardMaterial({ color: 0x88ccff, emissive: 0x223344 });
     const floors = Math.floor(h / 3);
     for (let f = 0; f < floors; f++) {
         for (let wi = 0; wi < Math.floor(w / 2.5); wi++) {
@@ -195,13 +231,13 @@ function createBuilding(group, x, z, w, d, h, color, label) {
     // Roof ledge
     const ledge = new THREE.Mesh(
         new THREE.BoxGeometry(w + 0.5, 0.2, d + 0.5),
-        new THREE.MeshLambertMaterial({ color: 0x555555 })
+        new THREE.MeshStandardMaterial({ color: 0x555555 })
     );
     ledge.position.set(x, h + 0.1, z);
     group.add(ledge);
 
     // Door
-    const doorMat = new THREE.MeshLambertMaterial({ color: 0x4a3520 });
+    const doorMat = new THREE.MeshStandardMaterial({ color: 0x4a3520 });
     const door = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.5, 0.15), doorMat);
     door.position.set(x, 1.25, z + d / 2 + 0.08);
     group.add(door);
@@ -209,14 +245,14 @@ function createBuilding(group, x, z, w, d, h, color, label) {
     // Front road/sidewalk
     const frontRoad = new THREE.Mesh(
         new THREE.BoxGeometry(w + 2, 0.06, 3),
-        new THREE.MeshLambertMaterial({ color: 0x555555 })
+        new THREE.MeshStandardMaterial({ color: 0x555555 })
     );
     frontRoad.position.set(x, 0.03, z + d / 2 + 2.5);
     frontRoad.receiveShadow = true;
     group.add(frontRoad);
     const sidewalk = new THREE.Mesh(
         new THREE.BoxGeometry(w + 3, 0.05, 1.5),
-        new THREE.MeshLambertMaterial({ color: 0xaaaaaa })
+        new THREE.MeshStandardMaterial({ color: 0xaaaaaa })
     );
     sidewalk.position.set(x, 0.025, z + d / 2 + 0.75);
     sidewalk.receiveShadow = true;
@@ -293,7 +329,7 @@ function createZoneBuildings(group) {
             // Red mailbox
             const mailbox = new THREE.Mesh(
                 new THREE.BoxGeometry(0.6, 1.2, 0.5),
-                new THREE.MeshLambertMaterial({ color: 0xcc0000 })
+                new THREE.MeshStandardMaterial({ color: 0xcc0000 })
             );
             mailbox.position.set(bx + bw / 2 + 1, 0.6, bz + bd / 2);
             mailbox.castShadow = true;
@@ -303,7 +339,7 @@ function createZoneBuildings(group) {
         // Triangular roofs for residential
         if (!isHideout || i === 0) {
             const roofGeo = new THREE.ConeGeometry(Math.max(bw, bd) * 0.7, 2, 4);
-            const roofMat = new THREE.MeshLambertMaterial({ color: 0x8B0000 });
+            const roofMat = new THREE.MeshStandardMaterial({ color: 0x8B0000 });
             const roof = new THREE.Mesh(roofGeo, roofMat);
             roof.position.set(bx, bh + 1, bz);
             roof.rotation.y = Math.PI / 4;
@@ -346,7 +382,7 @@ function createZoneBuildings(group) {
         if (isHideout) {
             // CAFE sign
             const cafeGeo = new THREE.BoxGeometry(4, 1.2, 0.3);
-            const cafeMat = new THREE.MeshPhongMaterial({ color: 0xff6600, emissive: 0x331100 });
+            const cafeMat = new THREE.MeshStandardMaterial({ color: 0xff6600, emissive: 0x331100 });
             const cafeSign = new THREE.Mesh(cafeGeo, cafeMat);
             cafeSign.position.set(bx, bh * 0.6, bz + bd / 2 + 0.2);
             group.add(cafeSign);
@@ -388,7 +424,7 @@ function createZoneBuildings(group) {
             // Red water tank on roof
             const tank = new THREE.Mesh(
                 new THREE.CylinderGeometry(1.5, 1.5, 3, 16),
-                new THREE.MeshLambertMaterial({ color: 0xcc0000 })
+                new THREE.MeshStandardMaterial({ color: 0xcc0000 })
             );
             tank.position.set(bx + 2, bh + 1.5, bz - 1);
             tank.castShadow = true;
@@ -399,7 +435,7 @@ function createZoneBuildings(group) {
         if (Math.random() > 0.3) {
             const chimney = new THREE.Mesh(
                 new THREE.CylinderGeometry(0.5, 0.7, 4, 8),
-                new THREE.MeshLambertMaterial({ color: 0x444444 })
+                new THREE.MeshStandardMaterial({ color: 0x444444 })
             );
             chimney.position.set(bx - bw / 4, bh + 2, bz);
             chimney.castShadow = true;
@@ -409,7 +445,7 @@ function createZoneBuildings(group) {
         // Fences for factory zone
         if (!isHideout && Math.random() > 0.5) {
             const fenceGeo = new THREE.BoxGeometry(bw + 4, 1.5, 0.1);
-            const fenceMat = new THREE.MeshLambertMaterial({ color: 0x666666, wireframe: true });
+            const fenceMat = new THREE.MeshStandardMaterial({ color: 0x666666, wireframe: true });
             const fence = new THREE.Mesh(fenceGeo, fenceMat);
             fence.position.set(bx, 0.75, bz + bd / 2 + 2);
             group.add(fence);
@@ -420,8 +456,8 @@ function createZoneBuildings(group) {
 }
 
 function connectBuildingsToRoads(group, buildings) {
-    const roadMat = new THREE.MeshLambertMaterial({ color: 0x444444 });
-    const sidewalkMat = new THREE.MeshLambertMaterial({ color: 0x999999 });
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+    const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x999999 });
 
     // Main road lines (axis-aligned)
     const mainRoads = [
@@ -490,7 +526,7 @@ function connectBuildingsToRoads(group, buildings) {
 }
 
 function createStreetLight(group, x, z) {
-    const poleMat = new THREE.MeshLambertMaterial({ color: 0x555555 });
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 5, 8), poleMat);
     pole.position.set(x, 2.5, z);
     pole.castShadow = true;
@@ -501,7 +537,7 @@ function createStreetLight(group, x, z) {
     group.add(arm);
 
     const lampGeo = new THREE.SphereGeometry(0.3, 8, 8);
-    const lampMat = new THREE.MeshPhongMaterial({ color: 0xffdd88, emissive: 0x332200 });
+    const lampMat = new THREE.MeshStandardMaterial({ color: 0xffdd88, emissive: 0x332200 });
     const lamp = new THREE.Mesh(lampGeo, lampMat);
     lamp.position.set(x + 1.5, 4.8, z);
     lamp.userData.isStreetLight = true;
@@ -525,7 +561,7 @@ function createStreetProps(group) {
     window._streetLights = streetLights;
 
     // Benches (15)
-    const benchMat = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+    const benchMat = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
     const benchPositions = [
         [10, 85], [-10, 85], [30, 55], [-30, 55], [10, 55],
         [-10, 30], [10, 30], [-40, 10], [40, 10], [0, 10],
@@ -539,7 +575,7 @@ function createStreetProps(group) {
         const back = new THREE.Mesh(new THREE.BoxGeometry(2, 0.6, 0.1), benchMat);
         back.position.set(bx, 0.8, bz - 0.25);
         group.add(back);
-        const leg1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 0.6), new THREE.MeshLambertMaterial({ color: 0x333333 }));
+        const leg1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 0.6), new THREE.MeshStandardMaterial({ color: 0x333333 }));
         leg1.position.set(bx - 0.8, 0.25, bz);
         group.add(leg1);
         const leg2 = leg1.clone();
@@ -555,14 +591,14 @@ function createStreetProps(group) {
     trashPositions.forEach(([tx, tz]) => {
         const can = new THREE.Mesh(
             new THREE.CylinderGeometry(0.3, 0.35, 1, 8),
-            new THREE.MeshLambertMaterial({ color: 0x336633 })
+            new THREE.MeshStandardMaterial({ color: 0x336633 })
         );
         can.position.set(tx, 0.5, tz);
         can.castShadow = true;
         group.add(can);
         const lid = new THREE.Mesh(
             new THREE.CylinderGeometry(0.35, 0.35, 0.08, 8),
-            new THREE.MeshLambertMaterial({ color: 0x444444 })
+            new THREE.MeshStandardMaterial({ color: 0x444444 })
         );
         lid.position.set(tx, 1.04, tz);
         group.add(lid);
@@ -576,14 +612,14 @@ function createStreetProps(group) {
     tlPositions.forEach(([tlx, tlz]) => {
         const tlPole = new THREE.Mesh(
             new THREE.CylinderGeometry(0.08, 0.08, 4, 6),
-            new THREE.MeshLambertMaterial({ color: 0x333333 })
+            new THREE.MeshStandardMaterial({ color: 0x333333 })
         );
         tlPole.position.set(tlx, 2, tlz);
         group.add(tlPole);
 
         const tlBox = new THREE.Mesh(
             new THREE.BoxGeometry(0.5, 1.2, 0.4),
-            new THREE.MeshLambertMaterial({ color: 0x222222 })
+            new THREE.MeshStandardMaterial({ color: 0x222222 })
         );
         tlBox.position.set(tlx, 4.2, tlz);
         group.add(tlBox);
@@ -591,7 +627,7 @@ function createStreetProps(group) {
         [0xff0000, 0xffaa00, 0x00ff00].forEach((c, ci) => {
             const light = new THREE.Mesh(
                 new THREE.SphereGeometry(0.12, 8, 8),
-                new THREE.MeshPhongMaterial({ color: c, emissive: ci === 2 ? 0x003300 : 0x000000 })
+                new THREE.MeshStandardMaterial({ color: c, emissive: ci === 2 ? 0x003300 : 0x000000 })
             );
             light.position.set(tlx, 4.6 - ci * 0.35, tlz + 0.22);
             group.add(light);
@@ -599,8 +635,8 @@ function createStreetProps(group) {
     });
 
     // Trees (30)
-    const treeMat = new THREE.MeshLambertMaterial({ color: 0x2d5a1e });
-    const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5c3a1e });
+    const treeMat = new THREE.MeshStandardMaterial({ color: 0x2d5a1e });
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c3a1e });
     for (let i = 0; i < 30; i++) {
         let tx, tz;
         let attempts = 0;
@@ -628,7 +664,7 @@ function createStreetProps(group) {
 function createParks(group) {
     // Central plaza with fountain
     const plazaGeo = new THREE.CircleGeometry(12, 32);
-    const plazaMat = new THREE.MeshLambertMaterial({ color: 0x999988 });
+    const plazaMat = new THREE.MeshStandardMaterial({ color: 0x999988 });
     const plaza = new THREE.Mesh(plazaGeo, plazaMat);
     plaza.rotation.x = -Math.PI / 2;
     plaza.position.set(0, 0.05, 50);
@@ -637,7 +673,7 @@ function createParks(group) {
     // Fountain base
     const fountainBase = new THREE.Mesh(
         new THREE.CylinderGeometry(3, 3.5, 0.8, 24),
-        new THREE.MeshLambertMaterial({ color: 0x888888 })
+        new THREE.MeshStandardMaterial({ color: 0x888888 })
     );
     fountainBase.position.set(0, 0.4, 50);
     group.add(fountainBase);
@@ -645,7 +681,7 @@ function createParks(group) {
     // Fountain water
     const water = new THREE.Mesh(
         new THREE.CylinderGeometry(2.5, 2.5, 0.3, 24),
-        new THREE.MeshPhongMaterial({ color: 0x4488cc, transparent: true, opacity: 0.7 })
+        new THREE.MeshStandardMaterial({ color: 0x4488cc, transparent: true, opacity: 0.7 })
     );
     water.position.set(0, 0.65, 50);
     group.add(water);
@@ -653,7 +689,7 @@ function createParks(group) {
     // Fountain center pillar
     const pillar = new THREE.Mesh(
         new THREE.CylinderGeometry(0.3, 0.4, 2.5, 12),
-        new THREE.MeshLambertMaterial({ color: 0x777777 })
+        new THREE.MeshStandardMaterial({ color: 0x777777 })
     );
     pillar.position.set(0, 1.8, 50);
     group.add(pillar);
@@ -663,7 +699,7 @@ function createParks(group) {
     parkPositions.forEach(([px, pz]) => {
         const parkGround = new THREE.Mesh(
             new THREE.PlaneGeometry(15, 15),
-            new THREE.MeshLambertMaterial({ color: 0x3a7a2e })
+            new THREE.MeshStandardMaterial({ color: 0x3a7a2e })
         );
         parkGround.rotation.x = -Math.PI / 2;
         parkGround.position.set(px, 0.02, pz);
@@ -675,7 +711,7 @@ function createParks(group) {
             const oz = (Math.random() - 0.5) * 10;
             const trunk = new THREE.Mesh(
                 new THREE.CylinderGeometry(0.12, 0.18, 1.8, 6),
-                new THREE.MeshLambertMaterial({ color: 0x5c3a1e })
+                new THREE.MeshStandardMaterial({ color: 0x5c3a1e })
             );
             trunk.position.set(px + ox, 0.9, pz + oz);
             trunk.castShadow = true;
@@ -683,7 +719,7 @@ function createParks(group) {
 
             const canopy = new THREE.Mesh(
                 new THREE.SphereGeometry(1.2, 8, 8),
-                new THREE.MeshLambertMaterial({ color: 0x2d6a1e })
+                new THREE.MeshStandardMaterial({ color: 0x2d6a1e })
             );
             canopy.position.set(px + ox, 2.5, pz + oz);
             canopy.castShadow = true;
@@ -693,7 +729,7 @@ function createParks(group) {
         // Park bench
         const seat = new THREE.Mesh(
             new THREE.BoxGeometry(2, 0.12, 0.5),
-            new THREE.MeshLambertMaterial({ color: 0x8B4513 })
+            new THREE.MeshStandardMaterial({ color: 0x8B4513 })
         );
         seat.position.set(px, 0.45, pz + 5);
         group.add(seat);

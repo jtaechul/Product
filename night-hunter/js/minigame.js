@@ -247,14 +247,14 @@ const Minigame = {
 
     spawnRescueChild(fromX, fromZ) {
         const group = new THREE.Group();
-        const bodyMat = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffcc00 });
         const body = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.45, 0.25), bodyMat);
         body.position.y = 0.5;
         body.castShadow = true;
         group.add(body);
         const head = new THREE.Mesh(
             new THREE.SphereGeometry(0.18, 12, 12),
-            new THREE.MeshLambertMaterial({ color: 0xffdbac })
+            new THREE.MeshStandardMaterial({ color: 0xffdbac })
         );
         head.position.y = 0.9;
         group.add(head);

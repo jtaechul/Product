@@ -41,7 +41,7 @@ const DayNight = {
 
     createMoon() {
         const moonGeo = new THREE.SphereGeometry(8, 32, 32);
-        const moonMat = new THREE.MeshPhongMaterial({
+        const moonMat = new THREE.MeshStandardMaterial({
             color: 0xffffee,
             emissive: 0xaaaaaa,
             emissiveIntensity: 0.5

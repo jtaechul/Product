@@ -39,7 +39,7 @@ const HintSystem = {
             // Glowing yellow sphere
             const sphere = new THREE.Mesh(
                 new THREE.SphereGeometry(0.5, 16, 16),
-                new THREE.MeshPhongMaterial({
+                new THREE.MeshStandardMaterial({
                     color: 0xffdd00,
                     emissive: 0xffaa00,
                     emissiveIntensity: 0.8,
