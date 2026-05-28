@@ -191,34 +191,99 @@ const SoundManager = {
         }
     },
 
+    // Jazz noir composition — "Detective's Theme"
+    // Tempo: 100 BPM, 4/4, swing feel
+    // Progression: Cm7 → Fm7 → Bb7 → Ebmaj7 → Am7b5 → D7 → Gm7 → Gm7
     _playDayBGM() {
-        // Single-track: melody only with light percussion (no overlapping chord pad)
-        const beatLen = 0.45;
-        let mIdx = 0;
-        let beatCount = 0;
+        const beatSec = 0.4;  // 150 BPM swing
+        const swing = 0.6;     // swing ratio (long-short)
 
+        // Walking bass notes — one per beat (16 beats over 4 bars looped)
+        // Cm: C-Eb-G-Bb | Fm: F-Ab-C-Eb | Bb7: Bb-D-F-Ab | Ebmaj7: Eb-G-Bb-D
+        const bass = [
+            65.4, 77.8, 98.0, 116.5,    // Cm bar 1
+            87.3, 103.8, 130.8, 155.6,  // Fm bar 2
+            116.5, 146.8, 174.6, 207.7, // Bb7 bar 3
+            155.6, 196.0, 233.1, 277.2, // Ebmaj7 bar 4
+        ];
+
+        // Melody — jazzy phrases with rests (null = rest)
+        // Format: [freq or null, duration in beats]
+        const melody = [
+            // Bar 1 (Cm) — opening phrase
+            [392, 1], [466, 0.5], [392, 0.5], [349, 1], [311, 1],
+            // Bar 2 (Fm) — answer
+            [349, 0.5], [415, 0.5], [466, 1], [415, 0.5], [349, 0.5], [311, 1],
+            // Bar 3 (Bb7) — rise
+            [466, 0.5], [523, 0.5], [622, 1], [698, 1], [622, 1],
+            // Bar 4 (Ebmaj7) — resolution
+            [587, 0.5], [466, 0.5], [415, 1], [311, 1], [null, 1],
+        ];
+
+        // Chord stabs on beat 2 and 4 of each bar (jazz comping)
+        // 3-note voicing per chord
+        const chordVoicings = [
+            [261.6, 311.1, 392.0],  // Cm (C-Eb-G)
+            [349.2, 415.3, 523.3],  // Fm (F-Ab-C)
+            [466.2, 587.3, 698.5],  // Bb7 (Bb-D-F)
+            [311.1, 392.0, 466.2],  // Ebmaj7 (Eb-G-Bb)
+        ];
+
+        let beat = 0;  // 0..15 within 4-bar loop
+
+        // Bass + comping scheduler (called every beat)
+        const playBeat = () => {
+            if (!this.bgmActive || this.bgmType !== 'day') return;
+            const bar = Math.floor(beat / 4);
+            const inBar = beat % 4;
+
+            // Walking bass
+            this._playOsc(bass[beat], beatSec * 0.9, 'triangle', this.bgmGain, {
+                vol: 0.16, attack: 0.02, release: 0.1
+            });
+
+            // Drum kit
+            if (inBar === 0) this._playKick(0);
+            if (inBar === 2) this._playSnare(0);
+            this._playHihat(0, false);
+            this._playHihat(beatSec * swing, true);  // swing 8th
+
+            // Chord stabs (comping) — beats 2 and 4 only
+            if (inBar === 1 || inBar === 3) {
+                const voicing = chordVoicings[bar];
+                voicing.forEach(f => {
+                    this._playOsc(f, beatSec * 0.4, 'sawtooth', this.bgmGain, {
+                        vol: 0.03, attack: 0.01, release: 0.15,
+                        filter: { type: 'lowpass', freq: 1800, q: 0.8 }
+                    });
+                });
+            }
+
+            beat = (beat + 1) % 16;
+        };
+        playBeat();
+        this.bgmTimers.push(setInterval(playBeat, beatSec * 1000));
+
+        // Melody scheduler — independent timing
+        let mIdx = 0;
         const playMelodyNote = () => {
             if (!this.bgmActive || this.bgmType !== 'day') return;
-            const [freq, dur] = this.dayMelody[mIdx % this.dayMelody.length];
-            this._playOsc(freq, dur * beatLen * 0.9, 'triangle', this.bgmGain, {
-                vol: 0.15, attack: 0.05, release: 0.2,
-                filter: { type: 'lowpass', freq: 2800, q: 1 }
-            });
-            // Subtle bass note matching melody timing
-            this._playOsc(freq / 4, dur * beatLen * 0.85, 'sine', this.bgmGain, {
-                vol: 0.08, attack: 0.05, release: 0.15
-            });
-            // Light hihat on each note
-            this._playHihat(0, false);
-            beatCount++;
-            // Kick every 4 beats
-            if (beatCount % 4 === 1) this._playKick(0);
-            if (beatCount % 4 === 3) this._playSnare(0);
-
+            const [freq, dur] = melody[mIdx % melody.length];
+            if (freq !== null) {
+                this._playOsc(freq, dur * beatSec * 0.85, 'triangle', this.bgmGain, {
+                    vol: 0.13, attack: 0.04, release: 0.15,
+                    filter: { type: 'lowpass', freq: 2400, q: 1 }
+                });
+                // Octave shimmer for jazz character
+                this._playOsc(freq * 2, dur * beatSec * 0.4, 'sine', this.bgmGain, {
+                    vol: 0.03, attack: 0.02, release: 0.1
+                });
+            }
             mIdx++;
-            this.bgmTimers.push(setTimeout(playMelodyNote, dur * beatLen * 1000));
+            this.bgmTimers.push(setTimeout(playMelodyNote, dur * beatSec * 1000));
         };
-        playMelodyNote();
+        // Melody starts after 1 bar of intro
+        this.bgmTimers.push(setTimeout(playMelodyNote, beatSec * 4 * 1000));
     },
 
     _playNightBGM() {
