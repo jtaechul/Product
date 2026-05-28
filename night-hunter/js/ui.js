@@ -129,7 +129,16 @@ const GameUI = {
             ctx.fillRect(bx-bw/2, bz-bd/2, bw, bd);
         });
 
-        // Hints removed from minimap (player must explore)
+        // Suspects (수배범) — visible if radio item owned, during day
+        if (gameState.isDay && typeof NPCSystem !== 'undefined' && typeof Shop !== 'undefined' && Shop.hasItem('radio')) {
+            NPCSystem.npcs.forEach(n => {
+                if (n.caught) return;
+                const nx = mx(n.mesh.position.x), nz = mz(n.mesh.position.z);
+                if (nx<-10||nx>size+10||nz<-10||nz>size+10) return;
+                ctx.fillStyle = '#fbbf24';
+                ctx.beginPath(); ctx.arc(nx, nz, 3, 0, Math.PI*2); ctx.fill();
+            });
+        }
 
         // Enemies
         if (!gameState.isDay&&typeof EnemySystem!=='undefined') {

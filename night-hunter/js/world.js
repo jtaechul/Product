@@ -22,8 +22,8 @@ const MAIN_ROADS = [
     { type: 'H', z: -85, w: 10, length: 280 }, // Factory border main
     { type: 'H', z: -135, w: 6, length: 240 }, // Factory back
 
-    // North-South arterials
-    { type: 'V', x: 0, w: 10, length: 280 },   // Central N-S main
+    // North-South arterials (x=0 stops short to leave police plaza clean)
+    { type: 'V', x: 0, w: 10, length: 230, offsetZ: -25 },   // Central — z range -140 to 90 (stops before police)
     { type: 'V', x: -50, w: 8, length: 200 },  // West main
     { type: 'V', x: 50, w: 8, length: 200 },   // East main
     { type: 'V', x: -100, w: 6, length: 180 }, // Far west
@@ -183,12 +183,13 @@ function createRoadNetwork(group) {
                 group.add(stripe);
             }
         } else {
-            // Vertical road
+            // Vertical road (optional offsetZ to shift center)
+            const oz = r.offsetZ || 0;
             const sidewalk = new THREE.Mesh(
                 new THREE.BoxGeometry(sw, 0.06, r.length),
                 sidewalkMat
             );
-            sidewalk.position.set(r.x, 0.05, 0);
+            sidewalk.position.set(r.x, 0.05, oz);
             sidewalk.receiveShadow = true;
             group.add(sidewalk);
 
@@ -196,7 +197,7 @@ function createRoadNetwork(group) {
                 new THREE.BoxGeometry(w, 0.06, r.length),
                 roadMat
             );
-            road.position.set(r.x, 0.08, 0);
+            road.position.set(r.x, 0.08, oz);
             road.receiveShadow = true;
             group.add(road);
 
@@ -205,7 +206,7 @@ function createRoadNetwork(group) {
                     new THREE.BoxGeometry(0.3, 0.05, 3),
                     stripeMat
                 );
-                stripe.position.set(r.x, 0.12, z);
+                stripe.position.set(r.x, 0.12, oz + z);
                 group.add(stripe);
             }
         }
@@ -606,7 +607,10 @@ function createStreetProps(group) {
     function lightOnRoad(x, z) {
         for (const rr of MAIN_ROADS) {
             if (rr.type === 'H' && Math.abs(z - rr.z) < rr.w / 2 + 1) return true;
-            if (rr.type === 'V' && Math.abs(x - rr.x) < rr.w / 2 + 1) return true;
+            if (rr.type === 'V') {
+                const oz = rr.offsetZ || 0;
+                if (Math.abs(x - rr.x) < rr.w / 2 + 1 && z >= oz - rr.length/2 - 1 && z <= oz + rr.length/2 + 1) return true;
+            }
         }
         return false;
     }
@@ -655,7 +659,10 @@ function createStreetProps(group) {
     function onAnyRoad(x, z) {
         for (const rr of MAIN_ROADS) {
             if (rr.type === 'H' && Math.abs(z - rr.z) < rr.w / 2 + 2.5) return true;
-            if (rr.type === 'V' && Math.abs(x - rr.x) < rr.w / 2 + 2.5) return true;
+            if (rr.type === 'V') {
+                const oz = rr.offsetZ || 0;
+                if (Math.abs(x - rr.x) < rr.w / 2 + 2.5 && z >= oz - rr.length/2 - 2 && z <= oz + rr.length/2 + 2) return true;
+            }
         }
         return false;
     }
