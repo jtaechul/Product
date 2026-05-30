@@ -71,84 +71,178 @@ const Minigame = {
     },
 
     startMinigame(enemy) {
+        // Entry for kidnappers (납치범) — uses Dredge-style multi-target
+        this.startKidnapperMinigame(enemy);
+    },
+
+    // === KIDNAPPER MINIGAME (Dredge-style, harder) ===
+    // 3-5 small target zones placed on circular gauge.
+    // Rotating indicator. Player taps when indicator is over a zone.
+    // Hit zones disappear. Hit all = success. Miss = penalty timer.
+    startKidnapperMinigame(enemy) {
         this.active = true;
+        this.mode = 'kidnapper';
         this.targetEnemy = enemy;
+        this.targetCallback = null;
         this.gaugeProgress = 0;
         this.gaugeDirection = 1;
         this.result = null;
         this.resultTimer = 0;
 
-        // Speed based on enemy difficulty
-        const speeds = [0.8, 1.3, 2.0];
-        this.gaugeSpeed = speeds[enemy.id] || 1.0;
+        // Speed + target count by difficulty
+        const speeds = [0.55, 0.75, 0.95];
+        const counts = [3, 4, 5];
+        const zoneSizes = [0.08, 0.07, 0.06];
+        this.gaugeSpeed = speeds[enemy.id] || 0.7;
+        const numTargets = counts[enemy.id] || 3;
+        const zoneSize = zoneSizes[enemy.id] || 0.07;
 
-        // Success zone narrows with difficulty
-        const zones = [
-            { start: 0.3, end: 0.7 },
-            { start: 0.35, end: 0.65 },
-            { start: 0.4, end: 0.6 }
-        ];
-        const zone = zones[enemy.id] || zones[0];
-        this.successZoneStart = zone.start;
-        this.successZoneEnd = zone.end;
+        // Place targets at varied positions
+        this.targets = [];
+        for (let i = 0; i < numTargets; i++) {
+            const center = (i / numTargets) + (Math.random() - 0.5) * (1 / numTargets * 0.5);
+            this.targets.push({
+                center: (center + 1) % 1,
+                size: zoneSize,
+                hit: false
+            });
+        }
+        this.misses = 0;
+        this.maxMisses = 3;
 
         gameState.isPaused = true;
         document.getElementById('minigame-overlay').style.display = 'flex';
         document.getElementById('mg-result').style.display = 'none';
         document.getElementById('mg-instruction').style.display = 'block';
-        document.getElementById('mg-title').textContent =
-            '⚡ ' + enemy.name + ' 검거 시도!';
+        document.getElementById('mg-instruction').textContent = '타이밍 ' + numTargets + '연속 적중!';
+        document.getElementById('mg-title').textContent = '🚨 납치범 검거: ' + enemy.name;
+    },
+
+    // === SUSPECT MINIGAME (single-target, easier) ===
+    startSuspectMinigame(npc, callback) {
+        this.active = true;
+        this.mode = 'suspect';
+        this.targetEnemy = null;
+        this.targetNpc = npc;
+        this.targetCallback = callback;
+        this.gaugeProgress = 0;
+        this.gaugeDirection = 1;
+        this.result = null;
+        this.resultTimer = 0;
+
+        // Easier: slower gauge, wider success zone
+        this.gaugeSpeed = 0.5;
+        this.successZoneStart = 0.32;
+        this.successZoneEnd = 0.68;
+
+        gameState.isPaused = true;
+        document.getElementById('minigame-overlay').style.display = 'flex';
+        document.getElementById('mg-result').style.display = 'none';
+        document.getElementById('mg-instruction').style.display = 'block';
+        document.getElementById('mg-instruction').textContent = 'SPACE/탭으로 검거';
+        document.getElementById('mg-title').textContent = '🚓 수배범 체포: ' + npc.name;
     },
 
     attempt() {
         if (this.result !== null) return;
+        if (this.mode === 'kidnapper') return this._attemptKidnapper();
+        if (this.mode === 'suspect') return this._attemptSuspect();
+    },
 
+    _attemptSuspect() {
         const inZone = this.gaugeProgress >= this.successZoneStart &&
                        this.gaugeProgress <= this.successZoneEnd;
-
         const resultEl = document.getElementById('mg-result');
         resultEl.style.display = 'block';
         document.getElementById('mg-instruction').style.display = 'none';
 
         if (inZone) {
             this.result = 'success';
-            resultEl.textContent = '검거 성공! 🎉';
+            resultEl.textContent = '체포! 단서 획득 🎉';
             resultEl.style.color = '#4ade80';
             if (typeof SoundManager !== 'undefined') SoundManager.playSFX('arrest_success');
-
-            const rescueX = this.targetEnemy.hideoutX;
-            const rescueZ = this.targetEnemy.hideoutZ;
-            const crimId = this.targetEnemy.id;
-            EnemySystem.arrestEnemy(this.targetEnemy);
-
-            // Child rescue animation — child follows player back to police station
-            setTimeout(() => {
-                this.spawnRescueChild(rescueX, rescueZ, crimId);
-                showMessage('👶 아이가 따라옵니다! 경찰서로 데려가세요. (' + gameState.arrests + '/3 체포)');
-            }, 800);
         } else {
             this.result = 'fail';
-            resultEl.textContent = '도주했습니다 😱';
+            resultEl.textContent = '도망쳤다! 😱';
             resultEl.style.color = '#ef4444';
             if (typeof SoundManager !== 'undefined') SoundManager.playSFX('arrest_fail');
-
-            // Damage player on fail based on resistance
-            if (this.targetEnemy.resistance > 0) {
-                const dmg = (typeof Shop !== 'undefined' && Shop.hasItem('vest')) ? 0.5 : 1;
-                gameState.health = Math.max(0, gameState.health - dmg);
-                if (gameState.health <= 0) {
-                    setTimeout(() => this.triggerGameOver(), 1000);
-                }
-            }
-
-            // Relocate enemy
-            this.targetEnemy.state = 'patrol';
-            this.targetEnemy.patrolTarget = EnemySystem.getPatrolTarget(this.targetEnemy);
-            const angle = Math.random() * Math.PI * 2;
-            this.targetEnemy.currentX = this.targetEnemy.hideoutX + Math.cos(angle) * 15;
-            this.targetEnemy.currentZ = this.targetEnemy.hideoutZ + Math.sin(angle) * 15;
         }
+        this.resultTimer = 0;
+    },
 
+    _attemptKidnapper() {
+        // Find which target is closest to current indicator position
+        let hitIndex = -1;
+        let minDist = Infinity;
+        this.targets.forEach((t, i) => {
+            if (t.hit) return;
+            // Circular distance
+            let d = Math.abs(this.gaugeProgress - t.center);
+            if (d > 0.5) d = 1 - d;
+            if (d < t.size && d < minDist) {
+                minDist = d;
+                hitIndex = i;
+            }
+        });
+
+        if (hitIndex >= 0) {
+            this.targets[hitIndex].hit = true;
+            if (typeof SoundManager !== 'undefined') SoundManager.playSFX('collect');
+            // Check all hit
+            if (this.targets.every(t => t.hit)) {
+                this._completeKidnapperSuccess();
+            }
+        } else {
+            this.misses++;
+            if (typeof SoundManager !== 'undefined') SoundManager.playSFX('arrest_fail');
+            if (this.misses >= this.maxMisses) {
+                this._completeKidnapperFail();
+            }
+        }
+    },
+
+    _completeKidnapperSuccess() {
+        this.result = 'success';
+        const resultEl = document.getElementById('mg-result');
+        resultEl.style.display = 'block';
+        document.getElementById('mg-instruction').style.display = 'none';
+        resultEl.textContent = '검거 성공! 🎉';
+        resultEl.style.color = '#4ade80';
+        if (typeof SoundManager !== 'undefined') SoundManager.playSFX('arrest_success');
+
+        const rescueX = this.targetEnemy.hideoutX;
+        const rescueZ = this.targetEnemy.hideoutZ;
+        const crimId = this.targetEnemy.id;
+        EnemySystem.arrestEnemy(this.targetEnemy);
+
+        setTimeout(() => {
+            this.spawnRescueChild(rescueX, rescueZ, crimId);
+            showMessage('👶 아이가 따라옵니다! 경찰서로 데려가세요. (' + gameState.arrests + '/3 체포)');
+        }, 800);
+        this.resultTimer = 0;
+    },
+
+    _completeKidnapperFail() {
+        this.result = 'fail';
+        const resultEl = document.getElementById('mg-result');
+        resultEl.style.display = 'block';
+        document.getElementById('mg-instruction').style.display = 'none';
+        resultEl.textContent = '도주했습니다 😱';
+        resultEl.style.color = '#ef4444';
+        if (typeof SoundManager !== 'undefined') SoundManager.playSFX('arrest_fail');
+
+        if (this.targetEnemy.resistance > 0) {
+            const dmg = (typeof Shop !== 'undefined' && Shop.hasItem('vest')) ? 0.5 : 1;
+            gameState.health = Math.max(0, gameState.health - dmg);
+            if (gameState.health <= 0) {
+                setTimeout(() => this.triggerGameOver(), 1000);
+            }
+        }
+        this.targetEnemy.state = 'patrol';
+        this.targetEnemy.patrolTarget = EnemySystem.getPatrolTarget(this.targetEnemy);
+        const angle = Math.random() * Math.PI * 2;
+        this.targetEnemy.currentX = this.targetEnemy.hideoutX + Math.cos(angle) * 15;
+        this.targetEnemy.currentZ = this.targetEnemy.hideoutZ + Math.sin(angle) * 15;
         this.resultTimer = 0;
     },
 
@@ -180,58 +274,105 @@ const Minigame = {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         const cx = 140, cy = 140, r = 110;
-
         ctx.clearRect(0, 0, 280, 280);
 
-        // Background circle
+        // Background ring
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(255,255,255,0.15)';
         ctx.lineWidth = 20;
         ctx.stroke();
 
-        // Success zone (green arc)
-        const startAngle = -Math.PI / 2 + this.successZoneStart * Math.PI * 2;
-        const endAngle = -Math.PI / 2 + this.successZoneEnd * Math.PI * 2;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, startAngle, endAngle);
-        ctx.strokeStyle = 'rgba(74, 222, 128, 0.5)';
-        ctx.lineWidth = 20;
-        ctx.stroke();
+        // Mode-specific overlays
+        if (this.mode === 'kidnapper' && this.targets) {
+            // Draw remaining target zones
+            this.targets.forEach(t => {
+                if (t.hit) return;
+                const a1 = -Math.PI / 2 + (t.center - t.size) * Math.PI * 2;
+                const a2 = -Math.PI / 2 + (t.center + t.size) * Math.PI * 2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, a1, a2);
+                ctx.strokeStyle = 'rgba(251,191,36,0.7)';
+                ctx.lineWidth = 20;
+                ctx.stroke();
+            });
+            // Hit zones (green check)
+            this.targets.forEach(t => {
+                if (!t.hit) return;
+                const a1 = -Math.PI / 2 + (t.center - t.size) * Math.PI * 2;
+                const a2 = -Math.PI / 2 + (t.center + t.size) * Math.PI * 2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, a1, a2);
+                ctx.strokeStyle = 'rgba(74,222,128,0.4)';
+                ctx.lineWidth = 20;
+                ctx.stroke();
+            });
+            // Miss counter
+            ctx.fillStyle = '#ef4444';
+            ctx.font = 'bold 12px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('실패 ' + this.misses + '/' + this.maxMisses, cx, cy + 28);
+        } else {
+            // Suspect: single success zone
+            const startAngle = -Math.PI / 2 + this.successZoneStart * Math.PI * 2;
+            const endAngle = -Math.PI / 2 + this.successZoneEnd * Math.PI * 2;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, startAngle, endAngle);
+            ctx.strokeStyle = 'rgba(74, 222, 128, 0.5)';
+            ctx.lineWidth = 20;
+            ctx.stroke();
+        }
 
         // Moving indicator
         const indicatorAngle = -Math.PI / 2 + this.gaugeProgress * Math.PI * 2;
         const ix = cx + Math.cos(indicatorAngle) * r;
         const iy = cy + Math.sin(indicatorAngle) * r;
 
-        const inZone = this.gaugeProgress >= this.successZoneStart &&
-                       this.gaugeProgress <= this.successZoneEnd;
+        // Determine if over any target
+        let glow = false;
+        if (this.mode === 'kidnapper' && this.targets) {
+            glow = this.targets.some(t => {
+                if (t.hit) return false;
+                let d = Math.abs(this.gaugeProgress - t.center);
+                if (d > 0.5) d = 1 - d;
+                return d < t.size;
+            });
+        } else {
+            glow = this.gaugeProgress >= this.successZoneStart && this.gaugeProgress <= this.successZoneEnd;
+        }
 
         ctx.beginPath();
         ctx.arc(ix, iy, 14, 0, Math.PI * 2);
-        ctx.fillStyle = inZone ? '#4ade80' : '#ffffff';
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = inZone ? '#4ade80' : '#ffffff';
+        ctx.fillStyle = glow ? '#4ade80' : '#ffffff';
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = glow ? '#4ade80' : '#ffffff';
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // Center text
+        // Center label
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 14px Inter, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(this.targetEnemy ? this.targetEnemy.name : '', cx, cy - 8);
-
-        const diffLabels = ['★☆☆', '★★☆', '★★★'];
-        ctx.font = '12px Inter, sans-serif';
+        const targetName = this.targetEnemy ? this.targetEnemy.name :
+                           (this.targetNpc ? this.targetNpc.name : '');
+        ctx.fillText(targetName, cx, cy - 8);
+        ctx.font = '11px Inter, sans-serif';
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.fillText(diffLabels[this.targetEnemy ? this.targetEnemy.id : 0], cx, cy + 12);
+        ctx.fillText(this.mode === 'kidnapper' ? '연속 적중' : '타이밍', cx, cy + 10);
     },
 
     close() {
+        const cb = this.targetCallback;
+        const wasSuccess = this.result === 'success';
         this.active = false;
         this.targetEnemy = null;
+        this.targetNpc = null;
+        this.targetCallback = null;
+        this.targets = null;
+        this.mode = null;
         gameState.isPaused = false;
         document.getElementById('minigame-overlay').style.display = 'none';
+        if (cb) try { cb(wasSuccess); } catch(e) { console.warn(e); }
     },
 
     checkCatchable(playerPos) {
