@@ -822,37 +822,5 @@ function createStreetProps(group) {
 }
 
 function createParks(group) {
-    // Plaza moved OFF the road — only at police-zone block centers (safe spot)
-    const safeX = 28, safeZ = 75;
-    const plaza = new THREE.Mesh(
-        new THREE.CircleGeometry(6, 32),
-        new THREE.MeshStandardMaterial({ color: 0x999988, roughness: 0.9 })
-    );
-    plaza.rotation.x = -Math.PI / 2;
-    plaza.position.set(safeX, 0.07, safeZ);
-    group.add(plaza);
-
-    const fountainBase = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.8, 2.0, 0.6, 24),
-        new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.7 })
-    );
-    fountainBase.position.set(safeX, 0.3, safeZ);
-    group.add(fountainBase);
-    const water = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.5, 1.5, 0.25, 24),
-        new THREE.MeshStandardMaterial({ color: 0x4488cc, transparent: true, opacity: 0.75, roughness: 0.1, metalness: 0.3 })
-    );
-    water.position.set(0, 0.65, 70);
-    group.add(water);
-    const pillar = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.25, 0.35, 2.0, 12),
-        new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.6 })
-    );
-    pillar.position.set(28, 1.5, 75);
-    group.add(pillar);
-
-    // Register plaza as obstacle to prevent trees/objects on it
-    if (window._buildingPositions) {
-        window._buildingPositions.push({ x: 28, z: 75, w: 12, d: 12 });
-    }
+    // Plaza / fountain removed per design — open ground only
 }

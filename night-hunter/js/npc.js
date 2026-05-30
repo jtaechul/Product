@@ -73,7 +73,6 @@ const NPCSystem = {
     ],
 
     spawnNPCs() {
-        // Shuffle hint assignments for randomness
         const assignments = [...this.hintAssignments];
         for (let i = assignments.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -81,10 +80,68 @@ const NPCSystem = {
         }
 
         this.npcArchetypes.forEach((arch, i) => {
+            // Snap NPC to safe outdoor position before creating mesh
+            const safe = this._findSafePosition(arch.x, arch.z);
+            const safeArch = { ...arch, x: safe.x, z: safe.z };
             const assignment = assignments[i] || null;
-            const npc = this.createNPCMesh(arch, assignment);
+            const npc = this.createNPCMesh(safeArch, assignment);
+            // Also update baseX/baseZ to the safe position
+            npc.baseX = safe.x;
+            npc.baseZ = safe.z;
+            npc.wanderTarget = { x: safe.x, z: safe.z };
             this.npcs.push(npc);
         });
+    },
+
+    _spawnNightExtras() {
+        // Lazily spawn 4 extra night-only wanted suspects (no hint, just bounty)
+        if (this._nightExtras) {
+            this._nightExtras.forEach(e => { e.mesh.visible = !e.caught; });
+            return;
+        }
+        this._nightExtras = [];
+        const positions = [
+            [-60, 60], [70, 60], [-80, -20], [80, -20]
+        ];
+        positions.forEach(([px, pz]) => {
+            const safe = this._findSafePosition(px, pz);
+            const arch = {
+                x: safe.x, z: safe.z, role: 'suspect',
+                hair: [0x1a0a00, 0x4a2510, 0x222222][Math.floor(Math.random()*3)],
+                skin: 0xddbb99,
+                clothing: [0x4a3520, 0x2d3748, 0x553355][Math.floor(Math.random()*3)],
+                name: '밤 수배범',
+                story: '으윽... 들켰군.'
+            };
+            const npc = this.createNPCMesh(arch, null);
+            npc.baseX = safe.x; npc.baseZ = safe.z;
+            npc.wanderTarget = { x: safe.x, z: safe.z };
+            this.npcs.push(npc);
+            this._nightExtras.push(npc);
+        });
+    },
+
+    _hideNightExtras() {
+        if (!this._nightExtras) return;
+        this._nightExtras.forEach(e => { e.mesh.visible = false; });
+    },
+
+    _findSafePosition(x, z) {
+        // If the position is inside a building, push it outward to nearest safe spot
+        if (!window._buildingPositions) return { x, z };
+        const inside = window._buildingPositions.find(b =>
+            Math.abs(x - b.x) < b.w / 2 + 0.5 && Math.abs(z - b.z) < b.d / 2 + 0.5
+        );
+        if (!inside) return { x, z };
+        // Push outside the closest edge
+        const dx = x - inside.x;
+        const dz = z - inside.z;
+        const pushX = (dx >= 0 ? 1 : -1) * (inside.w / 2 + 2);
+        const pushZ = (dz >= 0 ? 1 : -1) * (inside.d / 2 + 2);
+        // Pick whichever direction has less existing overlap
+        return Math.abs(dx) > Math.abs(dz)
+            ? { x: inside.x + pushX, z }
+            : { x, z: inside.z + pushZ };
     },
 
     createNPCMesh(arch, assignment) {
@@ -329,28 +386,28 @@ const NPCSystem = {
 
     update(playerPos, delta, time) {
         if (!gameState.isDay) {
-            // At night: civilians hide. Suspects: 1-2 of them visible (more at night per design).
+            // Night: civilians hide. All suspects visible PLUS extra wanted appear.
             this.npcs.forEach((npc, i) => {
                 if (npc.role === 'civilian') {
                     npc.mesh.visible = false;
                 } else {
-                    // Suspects mostly appear at night
                     npc.mesh.visible = !npc.caught;
                 }
             });
-            // Skip rest at night for civilians but allow suspect chase
-            // (fall through to update logic below)
+            // Extra: spawn additional roving wanted suspects at night
+            this._spawnNightExtras();
         } else {
-            // Day: suspects appear sometimes (~30%), civilians always visible
+            // Day: suspects 약 33%만 노출, 시민은 항상 보임
             this.npcs.forEach((npc, i) => {
                 if (npc.role === 'civilian') {
                     npc.mesh.visible = !npc.caught;
                 } else {
-                    // Suspects appear partially in day (every 3rd one visible)
                     if (npc._dayVisible === undefined) npc._dayVisible = (i % 3 === 0);
                     npc.mesh.visible = !npc.caught && npc._dayVisible;
                 }
             });
+            // Hide night extras
+            this._hideNightExtras();
         }
         // Common: find nearest visible NPC for interaction
 
@@ -497,7 +554,7 @@ const NPCSystem = {
         }
         document.getElementById('npc-dialog').style.display = 'block';
         this.dialogOpen = true;
-        gameState.coins += 5;
+        // Civilians do NOT pay — only suspects (per gameplay design)
         if (typeof SoundManager !== 'undefined') SoundManager.playSFX('collect');
     },
 
@@ -523,7 +580,10 @@ const NPCSystem = {
 
         document.getElementById('npc-dialog').style.display = 'block';
         this.dialogOpen = true;
-        gameState.coins += 5;
+        // Suspect bounty: +25 coins on successful catch
+        const reward = 25;
+        gameState.coins += reward;
+        try { showMessage('💰 수배범 검거 보수: +' + reward + ' 코인'); } catch(e) {}
         if (typeof SoundManager !== 'undefined') SoundManager.playSFX('arrest_success');
     },
 

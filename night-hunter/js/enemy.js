@@ -130,14 +130,85 @@ const EnemySystem = {
         hood.position.y = 1.55;
         group.add(hood);
 
-        // Menacing red eyes
-        const eyeMat = new THREE.MeshStandardMaterial({ color: 0xff2222, emissive: 0xff0000, emissiveIntensity: 0.8 });
-        const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 10), eyeMat);
-        leftEye.position.set(-0.06, 1.5, 0.18);
+        // Detailed face — eye sockets, brows, nose, scar (per criminal)
+        const skinDark = new THREE.MeshStandardMaterial({ color: 0xc09875, roughness: 0.7 });
+        const browMat = new THREE.MeshStandardMaterial({ color: 0x1a0e08, roughness: 0.6 });
+
+        // Eye sockets (deeper, shadowed)
+        const lSocket = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 12), skinDark);
+        lSocket.position.set(-0.07, 1.51, 0.16); lSocket.scale.set(1, 0.7, 0.4);
+        group.add(lSocket);
+        const rSocket = lSocket.clone();
+        rSocket.position.set(0.07, 1.51, 0.16);
+        group.add(rSocket);
+
+        // Glowing red eyes (smaller, more menacing)
+        const eyeMat = new THREE.MeshStandardMaterial({ color: 0xff2222, emissive: 0xff0000, emissiveIntensity: 1.0 });
+        const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.022, 12, 12), eyeMat);
+        leftEye.position.set(-0.07, 1.5, 0.185);
         group.add(leftEye);
-        const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 10), eyeMat);
-        rightEye.position.set(0.06, 1.5, 0.18);
+        const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.022, 12, 12), eyeMat);
+        rightEye.position.set(0.07, 1.5, 0.185);
         group.add(rightEye);
+
+        // Angled eyebrows (angry)
+        const lBrow = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.018, 0.015), browMat);
+        lBrow.position.set(-0.07, 1.555, 0.18);
+        lBrow.rotation.z = -0.25;
+        group.add(lBrow);
+        const rBrow = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.018, 0.015), browMat);
+        rBrow.position.set(0.07, 1.555, 0.18);
+        rBrow.rotation.z = 0.25;
+        group.add(rBrow);
+
+        // Nose (small triangular)
+        const nose = new THREE.Mesh(
+            new THREE.ConeGeometry(0.022, 0.06, 6),
+            new THREE.MeshStandardMaterial({ color: 0xc09875, roughness: 0.7 })
+        );
+        nose.rotation.x = Math.PI / 2;
+        nose.position.set(0, 1.46, 0.205);
+        group.add(nose);
+
+        // Scar on cheek (criminal-specific marker)
+        if (data.id === 1) {
+            // 2호 철수: 얼굴 흉터
+            const scar = new THREE.Mesh(
+                new THREE.BoxGeometry(0.008, 0.06, 0.005),
+                new THREE.MeshStandardMaterial({ color: 0x8b2020, roughness: 0.5 })
+            );
+            scar.position.set(0.1, 1.45, 0.18);
+            scar.rotation.z = -0.5;
+            group.add(scar);
+        }
+        if (data.id === 2) {
+            // 3호 영수: 눈 위 흉터
+            const scar = new THREE.Mesh(
+                new THREE.BoxGeometry(0.012, 0.05, 0.005),
+                new THREE.MeshStandardMaterial({ color: 0x8b2020, roughness: 0.5 })
+            );
+            scar.position.set(-0.08, 1.58, 0.18);
+            scar.rotation.z = 0.3;
+            group.add(scar);
+        }
+
+        // Stubble/beard (1호: clean, 2호: slight, 3호: heavy)
+        if (data.id >= 1) {
+            const stubble = new THREE.Mesh(
+                new THREE.SphereGeometry(0.16, 16, 16, 0, Math.PI * 2, Math.PI * 0.55, Math.PI * 0.4),
+                new THREE.MeshStandardMaterial({ color: 0x2a1d10, roughness: 0.9, transparent: true, opacity: data.id === 2 ? 0.8 : 0.5 })
+            );
+            stubble.position.y = 1.5;
+            group.add(stubble);
+        }
+
+        // Cheekbones (subtle shadow)
+        const lCheek = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 10), skinDark);
+        lCheek.position.set(-0.13, 1.46, 0.13); lCheek.scale.set(1, 0.7, 0.3);
+        group.add(lCheek);
+        const rCheek = lCheek.clone();
+        rCheek.position.set(0.13, 1.46, 0.13);
+        group.add(rCheek);
 
         // Mask (black bandana over mouth)
         const mask = new THREE.Mesh(
