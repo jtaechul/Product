@@ -195,38 +195,36 @@ const SoundManager = {
     // Tempo: 100 BPM, 4/4, swing feel
     // Progression: Cm7 → Fm7 → Bb7 → Ebmaj7 → Am7b5 → D7 → Gm7 → Gm7
     _playDayBGM() {
-        const beatSec = 0.4;  // 150 BPM swing
-        const swing = 0.6;     // swing ratio (long-short)
+        // Bright detective theme in C major — ii-V-I progression with bossa feel
+        // Tempo 100 BPM
+        const beatSec = 0.55;
 
-        // Walking bass notes — one per beat (16 beats over 4 bars looped)
-        // Cm: C-Eb-G-Bb | Fm: F-Ab-C-Eb | Bb7: Bb-D-F-Ab | Ebmaj7: Eb-G-Bb-D
+        // Walking bass: Dm7 - G7 - Cmaj7 - Am7 (classic ii-V-I-vi)
         const bass = [
-            65.4, 77.8, 98.0, 116.5,    // Cm bar 1
-            87.3, 103.8, 130.8, 155.6,  // Fm bar 2
-            116.5, 146.8, 174.6, 207.7, // Bb7 bar 3
-            155.6, 196.0, 233.1, 277.2, // Ebmaj7 bar 4
+            73.4, 87.3, 110.0, 130.8,   // Dm7 bar 1 (D-F-A-C)
+            98.0, 116.5, 146.8, 174.6,  // G7 bar 2 (G-B-D-F)
+            65.4, 82.4, 98.0, 130.8,    // Cmaj7 bar 3 (C-E-G-C)
+            55.0, 65.4, 82.4, 98.0,     // Am7 bar 4 (A-C-E-G)
         ];
 
-        // Melody — jazzy phrases with rests (null = rest)
-        // Format: [freq or null, duration in beats]
+        // Melody — singable detective theme (in C major)
         const melody = [
-            // Bar 1 (Cm) — opening phrase
-            [392, 1], [466, 0.5], [392, 0.5], [349, 1], [311, 1],
-            // Bar 2 (Fm) — answer
-            [349, 0.5], [415, 0.5], [466, 1], [415, 0.5], [349, 0.5], [311, 1],
-            // Bar 3 (Bb7) — rise
-            [466, 0.5], [523, 0.5], [622, 1], [698, 1], [622, 1],
-            // Bar 4 (Ebmaj7) — resolution
-            [587, 0.5], [466, 0.5], [415, 1], [311, 1], [null, 1],
+            // Bar 1 (Dm7)
+            [587, 0.5], [659, 0.5], [698, 1], [659, 1], [587, 1],
+            // Bar 2 (G7)
+            [523, 0.5], [659, 0.5], [784, 1], [698, 0.5], [659, 0.5], [587, 1],
+            // Bar 3 (Cmaj7) — main motif
+            [523, 0.75], [659, 0.25], [784, 1], [880, 0.5], [784, 0.5], [659, 1],
+            // Bar 4 (Am7) — resolve with descend
+            [659, 0.5], [587, 0.5], [523, 0.5], [440, 0.5], [523, 2],
         ];
 
-        // Chord stabs on beat 2 and 4 of each bar (jazz comping)
-        // 3-note voicing per chord
+        // Chord voicings (3-note jazz voicings)
         const chordVoicings = [
-            [261.6, 311.1, 392.0],  // Cm (C-Eb-G)
-            [349.2, 415.3, 523.3],  // Fm (F-Ab-C)
-            [466.2, 587.3, 698.5],  // Bb7 (Bb-D-F)
-            [311.1, 392.0, 466.2],  // Ebmaj7 (Eb-G-Bb)
+            [293.7, 349.2, 440.0],  // Dm7 (D-F-A)
+            [392.0, 493.9, 587.3],  // G7 (G-B-D)
+            [261.6, 329.6, 392.0],  // Cmaj7 (C-E-G)
+            [220.0, 261.6, 329.6],  // Am7 (A-C-E)
         ];
 
         let beat = 0;  // 0..15 within 4-bar loop

@@ -8,41 +8,94 @@ const HintSystem = {
     nearbyHint: null,   // legacy, always null
     memoOpen: false,
 
-    // Hints generated dynamically per game — NPCs distribute them
-    hintTexts: {
-        0: [
-            '주택가 어딘가에 있는 집이에요...',
-            '파란색 외벽이 인상적이었어요.',
-            '3층짜리 단독주택이에요.',
-            '집 앞에 빨간 우체통이 있어요.',
-        ],
-        1: [
-            '상업지구 빌딩 중 하나예요.',
-            '외벽이 흰색인 건물이에요.',
-            '5층 정도 되는 건물이었어요.',
-            'CAFE 간판이 크게 걸려있어요.',
-            '큰 도로 옆에 있는 건물이에요.',
-        ],
-        2: [
-            '공장지대 쪽에 있는 건물이에요...',
-            '회색 콘크리트 외벽이에요.',
-            '7층 정도로 꽤 높아요.',
-            '옥상에 빨간 물탱크가 있어요.',
-            '주변에 굴뚝이 있는 공장이에요.',
-            '철조망이 둘러진 곳 안쪽이에요.',
-        ]
+    // Story-driven hints — generated per game from hideout features
+    // Each criminal has a backstory + clues that reference the random features
+    criminalStories: {
+        0: { // 1호 길동 — 전직 학원 강사
+            name: '1호 납치범 (길동)',
+            backstory: '전직 학원 강사. 학교에서 해고된 후 분노를 아이들에게 풀고 있어요.',
+            chunks: [
+                '제가 그날 봤어요. 한 남자가 아이를 끌고 주택가로 가더라구요.',
+                '40대 남자였어요. 안경 쓰고, 회색 코트를 입었어요. 학원에서 잘렸다는 소문이...',
+                '주택가 안쪽 골목에 자주 나타나요. {color} 외벽 집이에요.',
+                '그 집 앞에는 {marker_desc}가 있어요. 분명히 그 집이에요!',
+            ]
+        },
+        1: { // 2호 철수 — 가짜 카페 사장
+            name: '2호 납치범 (철수)',
+            backstory: '겉으로는 카페 사장. 실제로는 미성년자 거래상.',
+            chunks: [
+                '상업지구에서 본 적 있어요. 검은 정장에 흉터가 있는 남자...',
+                '낮에는 멀쩡한 가게를 운영하는 척하지만, 밤에는 이상한 사람들이 드나들어요.',
+                '큰 도로 옆 빌딩이에요. {color} 외벽이고 키가 좀 큰 편이에요.',
+                '간판이 {marker_desc}이에요. 그게 그 자의 위장 사업이에요.',
+                '제가 한번 그 안을 봤는데 지하에서 비명 소리가...',
+            ]
+        },
+        2: { // 3호 영수 — 폐공장의 비밀
+            name: '3호 납치범 (영수)',
+            backstory: '폐공장을 점거한 인신매매 조직 두목. 가장 위험한 범인.',
+            chunks: [
+                '공장지대... 거기에 그 자가 있어요. 험상궂은 60대 남자예요.',
+                '폐공장 단지에 자기 조직이 있어요. 부하들이 많아서 조심하세요.',
+                '{color} 외벽의 큰 건물이에요. 일반 공장보다 키가 커요.',
+                '옥상에 특이한 게 있어요... {marker_desc}이 있어서 멀리서도 보여요.',
+                '주변에는 굴뚝에서 매캐한 연기가 나는데, 그건 위장이에요.',
+                '아이들을 거기서 트럭으로 옮긴다는 소문을 들었어요...',
+            ]
+        }
     },
+
+    // Color name lookup (hex → Korean)
+    colorNames: {
+        0x4488cc: '파란색', 0x88cc44: '연두색', 0xcc6644: '주황색',
+        0xaa44cc: '보라색', 0x44ccaa: '청록색', 0xcccc44: '노란색',
+        0xf0f0e8: '흰색', 0xddccaa: '베이지색', 0xccaadd: '연보라색',
+        0xaaccdd: '하늘색', 0xeecccc: '연분홍색',
+        0x888888: '회색', 0x777733: '카키색', 0x664433: '갈색',
+        0x553355: '진보라색', 0x336666: '청록회색'
+    },
+    markerDescs: {
+        mailbox: '빨간 우체통', gnome: '난쟁이 정원 인형',
+        birdhouse: '새집(birdhouse)', flowerpot: '큰 화분의 꽃들',
+        cafe: 'CAFE 간판', neon: 'BAR 네온 간판',
+        shop: 'SHOP 간판', clinic: 'CLINIC 간판',
+        tank: '옥상의 빨간 물탱크', antenna: '높은 통신 안테나',
+        silo: '거대한 곡물 사일로', crane: '노란색 타워 크레인'
+    },
+
+    // Generated per-game from world's _hideoutFeatures
+    hintTexts: { 0: [], 1: [], 2: [] },
 
     criminalNames: ['1호 납치범 (길동)', '2호 납치범 (철수)', '3호 납치범 (영수)'],
 
-    hintsRequired: [3, 4, 5], // total hints needed per criminal
+    hintsRequired: [3, 4, 5],
 
     init(scene) {
         this.scene = scene;
         this.collectedHints = [];
         this.nearbyHint = null;
+        this.generateHintTexts();
         this.createMemoUI();
         this.createPopupUI();
+    },
+
+    generateHintTexts() {
+        // Build hints from criminal stories + hideout features
+        const features = window._hideoutFeatures || {};
+        const zoneMap = { 0: 'RESIDENTIAL', 1: 'COMMERCIAL', 2: 'FACTORY' };
+        for (let c = 0; c < 3; c++) {
+            const story = this.criminalStories[c];
+            if (!story) continue;
+            const f = features[zoneMap[c]] || {};
+            const colorName = this.colorNames[f.color] || '회색';
+            const markerDesc = this.markerDescs[f.marker] || '특이한 표식';
+            this.hintTexts[c] = story.chunks.map(chunk =>
+                chunk.replace('{color}', colorName).replace('{marker_desc}', markerDesc)
+            );
+            // Take only as many as hintsRequired allows
+            this.hintTexts[c] = this.hintTexts[c].slice(0, this.hintsRequired[c]);
+        }
     },
 
     createMemoUI() {

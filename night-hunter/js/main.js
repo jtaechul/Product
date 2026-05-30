@@ -683,6 +683,7 @@ EnemySystem.init(scene, buildingData);
 Minigame.init();
 Shop.init(scene);
 NPCSystem.init(scene);
+AmbientCity.init(scene);
 GameUI.init();
 
 // ── Joystick Logic ──
@@ -1145,6 +1146,7 @@ function animate() {
         EnemySystem.update(playerGroup.position, delta, clock.elapsedTime);
         Shop.update(playerGroup.position);
         NPCSystem.update(playerGroup.position, delta, clock.elapsedTime);
+        AmbientCity.update(delta, clock.elapsedTime);
         Minigame.checkCatchable(playerGroup.position);
         // Throttle minimap to ~6 FPS (mobile battery saver)
         if (minimapTimer > 0.16) {

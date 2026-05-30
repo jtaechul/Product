@@ -343,6 +343,32 @@ const EnemySystem = {
         }
     },
 
+    _collidesWithBuilding(x, z, enemyHideoutIdx) {
+        if (!window._buildingPositions) return false;
+        const r = 0.4;
+        for (const b of window._buildingPositions) {
+            if (b.hideoutIndex === enemyHideoutIdx) continue; // pass through own hideout
+            if (Math.abs(x - b.x) < b.w / 2 + r && Math.abs(z - b.z) < b.d / 2 + r) return true;
+        }
+        return false;
+    },
+
+    _tryMoveEnemy(enemy, dx, dz) {
+        const nx = enemy.currentX + dx;
+        const nz = enemy.currentZ + dz;
+        const half = WORLD_SIZE / 2 - 2;
+        const cx = Math.max(-half, Math.min(half, nx));
+        const cz = Math.max(-half, Math.min(half, nz));
+        const idx = enemy.id;
+        if (!this._collidesWithBuilding(cx, cz, idx)) {
+            enemy.currentX = cx; enemy.currentZ = cz;
+        } else if (!this._collidesWithBuilding(cx, enemy.currentZ, idx)) {
+            enemy.currentX = cx;
+        } else if (!this._collidesWithBuilding(enemy.currentX, cz, idx)) {
+            enemy.currentZ = cz;
+        }
+    },
+
     updatePatrol(enemy, delta, time) {
         if (!enemy.patrolTarget) {
             enemy.patrolTarget = this.getPatrolTarget(enemy);
@@ -360,8 +386,7 @@ const EnemySystem = {
         }
 
         const speed = enemy.patrolSpeed * delta * 60;
-        enemy.currentX += (dx / dist) * speed;
-        enemy.currentZ += (dz / dist) * speed;
+        this._tryMoveEnemy(enemy, (dx / dist) * speed, (dz / dist) * speed);
 
         const angle = Math.atan2(dx, dz);
         enemy.mesh.rotation.y = angle;
@@ -375,15 +400,7 @@ const EnemySystem = {
 
         if (dist > 0) {
             const speed = enemy.fleeSpeed * delta * 60;
-            let nx = enemy.currentX + (dx / dist) * speed;
-            let nz = enemy.currentZ + (dz / dist) * speed;
-
-            const half = WORLD_SIZE / 2 - 2;
-            nx = Math.max(-half, Math.min(half, nx));
-            nz = Math.max(-half, Math.min(half, nz));
-
-            enemy.currentX = nx;
-            enemy.currentZ = nz;
+            this._tryMoveEnemy(enemy, (dx / dist) * speed, (dz / dist) * speed);
 
             const angle = Math.atan2(dx, dz);
             enemy.mesh.rotation.y = angle;
@@ -404,8 +421,7 @@ const EnemySystem = {
 
         if (dist > 1) {
             const speed = enemy.fleeSpeed * 0.7 * delta * 60;
-            enemy.currentX += (dx / dist) * speed;
-            enemy.currentZ += (dz / dist) * speed;
+            this._tryMoveEnemy(enemy, (dx / dist) * speed, (dz / dist) * speed);
             const angle = Math.atan2(dx, dz);
             enemy.mesh.rotation.y = angle;
         }

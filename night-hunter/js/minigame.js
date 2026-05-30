@@ -118,15 +118,13 @@ const Minigame = {
 
             const rescueX = this.targetEnemy.hideoutX;
             const rescueZ = this.targetEnemy.hideoutZ;
+            const crimId = this.targetEnemy.id;
             EnemySystem.arrestEnemy(this.targetEnemy);
 
-            // Child rescue animation + message
+            // Child rescue animation — child follows player back to police station
             setTimeout(() => {
-                this.spawnRescueChild(rescueX, rescueZ);
-                showMessage('👶 아이를 구출했습니다! (' + gameState.arrests + '/3)');
-                if (gameState.arrests >= gameState.totalArrests) {
-                    setTimeout(() => this.triggerVictory(), 3000);
-                }
+                this.spawnRescueChild(rescueX, rescueZ, crimId);
+                showMessage('👶 아이가 따라옵니다! 경찰서로 데려가세요. (' + gameState.arrests + '/3 체포)');
             }, 800);
         } else {
             this.result = 'fail';
@@ -245,52 +243,198 @@ const Minigame = {
         }
     },
 
-    spawnRescueChild(fromX, fromZ) {
+    spawnRescueChild(fromX, fromZ, criminalId) {
         const group = new THREE.Group();
-        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffcc00 });
-        const body = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.45, 0.25), bodyMat);
-        body.position.y = 0.5;
-        body.castShadow = true;
-        group.add(body);
-        const head = new THREE.Mesh(
-            new THREE.SphereGeometry(0.18, 12, 12),
-            new THREE.MeshStandardMaterial({ color: 0xffdbac })
-        );
-        head.position.y = 0.9;
+        // Different colors/outfits per criminal (boy/girl variations)
+        const outfits = [
+            { shirt: 0xfacc15, pants: 0x3b82f6, hair: 0x2a1808, ribbon: null },     // boy yellow
+            { shirt: 0xec4899, pants: 0x6b21a8, hair: 0x4a2510, ribbon: 0xff6b9d }, // girl pink
+            { shirt: 0x06c167, pants: 0x713f12, hair: 0x1a0a00, ribbon: null }      // boy green
+        ];
+        const o = outfits[(criminalId !== undefined ? criminalId : 0) % 3];
+
+        // Articulated legs (hip groups)
+        const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.6 });
+        const pantsMat = new THREE.MeshStandardMaterial({ color: o.pants, roughness: 0.8 });
+        const shirtMat = new THREE.MeshStandardMaterial({ color: o.shirt, roughness: 0.85 });
+        const shoeMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 });
+
+        function makeChildLeg(side) {
+            const hip = new THREE.Group();
+            hip.position.set(side * 0.08, 0.36, 0);
+            const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.058, 0.18, 10), pantsMat);
+            thigh.position.y = -0.09; thigh.castShadow = true;
+            hip.add(thigh);
+            const knee = new THREE.Group();
+            knee.position.y = -0.18;
+            const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.058, 0.05, 0.18, 10), skinMat);
+            shin.position.y = -0.09; shin.castShadow = true;
+            knee.add(shin);
+            const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.07, 0.16), shoeMat);
+            shoe.position.set(0, -0.18, 0.03); shoe.castShadow = true;
+            knee.add(shoe);
+            hip.add(knee);
+            hip.userData.partName = side < 0 ? 'cLeftHip' : 'cRightHip';
+            hip.userData.knee = knee;
+            return hip;
+        }
+        group.add(makeChildLeg(-1));
+        group.add(makeChildLeg(1));
+
+        // Torso (shirt)
+        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.32, 0.18), shirtMat);
+        torso.position.y = 0.54; torso.castShadow = true;
+        group.add(torso);
+
+        // Articulated arms
+        function makeChildArm(side) {
+            const sh = new THREE.Group();
+            sh.position.set(side * 0.17, 0.66, 0);
+            const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.17, 10), shirtMat);
+            upper.position.y = -0.085; upper.castShadow = true;
+            sh.add(upper);
+            const elbow = new THREE.Group();
+            elbow.position.y = -0.17;
+            const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.16, 10), skinMat);
+            forearm.position.y = -0.08; forearm.castShadow = true;
+            elbow.add(forearm);
+            const hand = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), skinMat);
+            hand.position.y = -0.16;
+            elbow.add(hand);
+            sh.add(elbow);
+            sh.userData.partName = side < 0 ? 'cLeftShoulder' : 'cRightShoulder';
+            sh.userData.elbow = elbow;
+            return sh;
+        }
+        group.add(makeChildArm(-1));
+        group.add(makeChildArm(1));
+
+        // Head (slightly bigger proportion = child)
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 20, 20), skinMat);
+        head.position.y = 0.86; head.castShadow = true;
         group.add(head);
-        const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.3, 6), bodyMat);
-        leftLeg.position.set(-0.1, 0.15, 0);
-        leftLeg.userData.partName = 'childLeg';
-        group.add(leftLeg);
-        const rightLeg = leftLeg.clone();
-        rightLeg.position.set(0.1, 0.15, 0);
-        group.add(rightLeg);
+
+        // Hair
+        const hairMat = new THREE.MeshStandardMaterial({ color: o.hair, roughness: 0.7 });
+        const hair = new THREE.Mesh(
+            new THREE.SphereGeometry(0.165, 20, 20, 0, Math.PI*2, 0, Math.PI*0.55),
+            hairMat
+        );
+        hair.position.y = 0.88;
+        group.add(hair);
+
+        // Eyes (big anime-style)
+        const eyeWMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        const eyeBMat = new THREE.MeshStandardMaterial({ color: 0x1a0a00 });
+        const lEW = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 12), eyeWMat);
+        lEW.position.set(-0.055, 0.87, 0.13); lEW.scale.set(1,1.2,0.6);
+        group.add(lEW);
+        const rEW = lEW.clone(); rEW.position.x = 0.055;
+        group.add(rEW);
+        const lP = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), eyeBMat);
+        lP.position.set(-0.055, 0.865, 0.16);
+        group.add(lP);
+        const rP = lP.clone(); rP.position.x = 0.055;
+        group.add(rP);
+
+        // Small smile
+        const mouth = new THREE.Mesh(
+            new THREE.BoxGeometry(0.05, 0.012, 0.008),
+            new THREE.MeshStandardMaterial({ color: 0xc04060 })
+        );
+        mouth.position.set(0, 0.78, 0.155);
+        group.add(mouth);
+
+        // Optional ribbon (girl)
+        if (o.ribbon) {
+            const ribbon = new THREE.Mesh(
+                new THREE.BoxGeometry(0.06, 0.04, 0.04),
+                new THREE.MeshStandardMaterial({ color: o.ribbon, roughness: 0.5 })
+            );
+            ribbon.position.set(0, 1.02, 0);
+            group.add(ribbon);
+        }
+
+        // Cheek blush
+        const cheekMat = new THREE.MeshStandardMaterial({ color: 0xff9999, transparent: true, opacity: 0.5 });
+        const lC = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), cheekMat);
+        lC.position.set(-0.09, 0.82, 0.13); lC.scale.set(1,0.6,0.3);
+        group.add(lC);
+        const rC = lC.clone(); rC.position.x = 0.09;
+        group.add(rC);
 
         group.position.set(fromX, 0, fromZ);
         scene.add(group);
-        this.rescueChildren.push({ mesh: group, targetX: 0, targetZ: 92, time: 0 });
+        this.rescueChildren.push({
+            mesh: group,
+            time: 0,
+            following: true,  // following player
+            criminalId,
+            arrivedAtPolice: false
+        });
     },
 
     updateRescueChildren(delta) {
+        const policeX = 0, policeZ = 92;
         for (let i = this.rescueChildren.length - 1; i >= 0; i--) {
             const child = this.rescueChildren[i];
             child.time += delta;
-            const dx = child.targetX - child.mesh.position.x;
-            const dz = child.targetZ - child.mesh.position.z;
+
+            if (child.arrivedAtPolice) continue;
+
+            // Check arrival at police
+            const pdx = policeX - child.mesh.position.x;
+            const pdz = policeZ - child.mesh.position.z;
+            const pdist = Math.sqrt(pdx*pdx + pdz*pdz);
+
+            // Player position to follow (slightly behind)
+            const followOffset = 1.6 + (i * 0.3);
+            const tx = playerGroup.position.x - Math.sin(playerGroup.rotation.y) * followOffset;
+            const tz = playerGroup.position.z - Math.cos(playerGroup.rotation.y) * followOffset;
+            const dx = tx - child.mesh.position.x;
+            const dz = tz - child.mesh.position.z;
             const dist = Math.sqrt(dx * dx + dz * dz);
-            if (dist < 2 || child.time > 15) {
-                scene.remove(child.mesh);
-                this.rescueChildren.splice(i, 1);
+
+            // If player at police station, count this child as rescued
+            const playerAtPolice = Math.sqrt(playerGroup.position.x ** 2 + (playerGroup.position.z - policeZ) ** 2) < 14;
+            if (playerAtPolice && pdist < 16) {
+                child.arrivedAtPolice = true;
+                gameState.rescued = (gameState.rescued || 0) + 1;
+                showMessage('👧 아이가 안전하게 도착했습니다! (' + gameState.rescued + '/3)');
+                // Fade out child
+                setTimeout(() => {
+                    scene.remove(child.mesh);
+                    this.rescueChildren.splice(this.rescueChildren.indexOf(child), 1);
+                    if (gameState.rescued >= 3) {
+                        setTimeout(() => this.triggerVictory(), 1500);
+                    }
+                }, 1200);
                 continue;
             }
-            const speed = 0.08 * delta * 60;
-            child.mesh.position.x += (dx / dist) * speed;
-            child.mesh.position.z += (dz / dist) * speed;
-            child.mesh.rotation.y = Math.atan2(dx, dz);
-            const swing = Math.sin(child.time * 8) * 0.25;
-            child.mesh.children.forEach(c => {
-                if (c.userData.partName === 'childLeg') c.rotation.x = swing;
-            });
+
+            // Follow player
+            if (dist > 0.5) {
+                const speed = Math.min(0.16, dist * 0.12) * delta * 60;
+                child.mesh.position.x += (dx / dist) * speed;
+                child.mesh.position.z += (dz / dist) * speed;
+                child.mesh.rotation.y = Math.atan2(dx, dz);
+
+                // Walk animation
+                const swing = Math.sin(child.time * 10) * 0.5;
+                const kbend = Math.max(0, Math.sin(child.time * 10)) * 0.55;
+                child.mesh.children.forEach(c => {
+                    if (c.userData.partName === 'cLeftHip') {
+                        c.rotation.x = swing;
+                        if (c.userData.knee) c.userData.knee.rotation.x = -kbend;
+                    }
+                    if (c.userData.partName === 'cRightHip') {
+                        c.rotation.x = -swing;
+                        if (c.userData.knee) c.userData.knee.rotation.x = -Math.max(0, Math.sin(child.time * 10 + Math.PI)) * 0.55;
+                    }
+                    if (c.userData.partName === 'cLeftShoulder') c.rotation.x = -swing * 0.8;
+                    if (c.userData.partName === 'cRightShoulder') c.rotation.x = swing * 0.8;
+                });
+            }
         }
     },
 
