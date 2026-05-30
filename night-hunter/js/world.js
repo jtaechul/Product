@@ -84,7 +84,7 @@ function createWorld(scene) {
     buildingData.push(...zoneBuildings);
     // Add police station to global building positions list
     if (window._buildingPositions) {
-        window._buildingPositions.push({ x: 0, z: 110, w: 18, d: 14 });
+        window._buildingPositions.push({ x: 0, z: 110, w: 18, d: 14, hideoutIndex: -1 });
     }
 
     createStreetProps(worldGroup);
@@ -682,7 +682,10 @@ function createGridBuildings(group) {
         }
     });
 
-    window._buildingPositions = buildings.map(b => ({ x: b.x, z: b.z, w: b.w, d: b.d }));
+    window._buildingPositions = buildings.map(b => ({
+        x: b.x, z: b.z, w: b.w, d: b.d,
+        hideoutIndex: typeof b.hideoutIndex === 'number' ? b.hideoutIndex : -1
+    }));
     return buildings;
 }
 

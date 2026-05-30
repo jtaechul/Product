@@ -127,21 +127,25 @@ const NPCSystem = {
     },
 
     _findSafePosition(x, z) {
-        // If the position is inside a building, push it outward to nearest safe spot
+        // Iteratively push position out of any building it overlaps with.
+        // Up to 6 passes handles dense areas where pushing out of one building lands inside another.
         if (!window._buildingPositions) return { x, z };
-        const inside = window._buildingPositions.find(b =>
-            Math.abs(x - b.x) < b.w / 2 + 0.5 && Math.abs(z - b.z) < b.d / 2 + 0.5
-        );
-        if (!inside) return { x, z };
-        // Push outside the closest edge
-        const dx = x - inside.x;
-        const dz = z - inside.z;
-        const pushX = (dx >= 0 ? 1 : -1) * (inside.w / 2 + 2);
-        const pushZ = (dz >= 0 ? 1 : -1) * (inside.d / 2 + 2);
-        // Pick whichever direction has less existing overlap
-        return Math.abs(dx) > Math.abs(dz)
-            ? { x: inside.x + pushX, z }
-            : { x, z: inside.z + pushZ };
+        let cx = x, cz = z;
+        for (let pass = 0; pass < 6; pass++) {
+            const inside = window._buildingPositions.find(b =>
+                Math.abs(cx - b.x) < b.w / 2 + 0.8 && Math.abs(cz - b.z) < b.d / 2 + 0.8
+            );
+            if (!inside) return { x: cx, z: cz };
+            const dx = cx - inside.x;
+            const dz = cz - inside.z;
+            // Push in dominant axis direction; if dead-centered, pick a side.
+            if (Math.abs(dx) >= Math.abs(dz)) {
+                cx = inside.x + (dx >= 0 ? 1 : -1) * (inside.w / 2 + 2.5);
+            } else {
+                cz = inside.z + (dz >= 0 ? 1 : -1) * (inside.d / 2 + 2.5);
+            }
+        }
+        return { x: cx, z: cz };
     },
 
     createNPCMesh(arch, assignment) {
@@ -427,10 +431,9 @@ const NPCSystem = {
                 // Light wander
                 npc.walkTime += delta;
                 if (npc.walkTime > 5 + Math.random() * 5) {
-                    npc.wanderTarget = {
-                        x: npc.baseX + (Math.random() - 0.5) * 4,
-                        z: npc.baseZ + (Math.random() - 0.5) * 4
-                    };
+                    const tx = npc.baseX + (Math.random() - 0.5) * 4;
+                    const tz = npc.baseZ + (Math.random() - 0.5) * 4;
+                    npc.wanderTarget = this._findSafePosition(tx, tz);
                     npc.walkTime = 0;
                 }
                 const tdx = npc.wanderTarget.x - npc.mesh.position.x;
@@ -472,10 +475,9 @@ const NPCSystem = {
                 // Wander
                 npc.walkTime += delta;
                 if (npc.walkTime > 4 + Math.random() * 4) {
-                    npc.wanderTarget = {
-                        x: npc.baseX + (Math.random() - 0.5) * 6,
-                        z: npc.baseZ + (Math.random() - 0.5) * 6
-                    };
+                    const tx = npc.baseX + (Math.random() - 0.5) * 6;
+                    const tz = npc.baseZ + (Math.random() - 0.5) * 6;
+                    npc.wanderTarget = this._findSafePosition(tx, tz);
                     npc.walkTime = 0;
                 }
                 const tdx = npc.wanderTarget.x - npc.mesh.position.x;
