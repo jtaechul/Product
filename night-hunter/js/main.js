@@ -167,7 +167,60 @@ const { worldGroup, buildingData } = createWorld(scene);
 // ── Player Character ──
 const playerGroup = new THREE.Group();
 
+// === CHARACTER CONFIGS ===
+const CHARACTERS = {
+    soyun: {
+        name: '소윤',
+        title: '베테랑 형사',
+        desc: '도시의 어둠을 비추는 신예 강력반.\n갈색 눈빛으로 진실을 꿰뚫는다.',
+        hairStyle: 'long',           // long flowing
+        hairColor: 0x5a3a1f,          // warm brown
+        hairHighlight: 0x7a5230,
+        eyeColor: 0x7a4d28,           // brown
+        pupilColor: 0x2a1408,
+        browColor: 0x3a2010,
+        lipColor: 0xc97560,           // peach
+        accessory: 'redClip'          // red hair clip
+    },
+    hayun: {
+        name: '하윤',
+        title: '통신반 형사',
+        desc: '날카로운 푸른 눈빛.\n헤드셋으로 본부와 끊임없이 소통한다.',
+        hairStyle: 'braids',          // twin braids
+        hairColor: 0x4a2a10,          // darker brown
+        hairHighlight: 0x6a4020,
+        eyeColor: 0x3a82d4,           // blue
+        pupilColor: 0x0a1a3a,
+        browColor: 0x2a1808,
+        lipColor: 0xd07060,           // peach-pink
+        accessory: 'headset'          // headset with mic
+    }
+};
+
+let currentCharacter = 'soyun'; // default; may be changed by selection screen
+window.CHARACTERS = CHARACTERS;
+
 function createPlayer() {
+    buildCharacter(CHARACTERS[currentCharacter]);
+}
+
+function swapCharacter(charId) {
+    if (!CHARACTERS[charId]) return;
+    currentCharacter = charId;
+    gameState.playerName = CHARACTERS[charId].name;
+    // Clear current player meshes
+    while (playerGroup.children.length > 0) {
+        const child = playerGroup.children[0];
+        playerGroup.remove(child);
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) child.material.dispose();
+    }
+    // Rebuild with new config
+    buildCharacter(CHARACTERS[charId]);
+}
+window.swapCharacter = swapCharacter;
+
+function buildCharacter(cfg) {
     // Articulated legs — hip group with thigh, knee group with shin + shoe
     const legMat = new THREE.MeshStandardMaterial({ color: 0x1a2a4a, roughness: 0.7, metalness: 0.1 });
     const shoeMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 });
@@ -278,7 +331,7 @@ function createPlayer() {
 
     // Eyebrows — thin slightly arched
     // 소윤: warm brown brows matching hair
-    const browMat = new THREE.MeshStandardMaterial({ color: 0x3a2010, roughness: 0.7 });
+    const browMat = new THREE.MeshStandardMaterial({ color: cfg.browColor, roughness: 0.7 });
     const leftBrow = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.022, 0.015), browMat);
     leftBrow.position.set(-0.1, 1.76, 0.275);
     leftBrow.rotation.z = 0.12;
@@ -291,8 +344,8 @@ function createPlayer() {
     // BIG BLUE eyes (anime style — larger ratio)
     const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
     // Warm brown eyes (per reference image — 소윤)
-    const eyeBlueMat = new THREE.MeshStandardMaterial({ color: 0x7a4d28, roughness: 0.4 });
-    const eyePupilMat = new THREE.MeshStandardMaterial({ color: 0x2a1408, roughness: 0.3 });
+    const eyeBlueMat = new THREE.MeshStandardMaterial({ color: cfg.eyeColor, roughness: 0.4 });
+    const eyePupilMat = new THREE.MeshStandardMaterial({ color: cfg.pupilColor, roughness: 0.3 });
     const highlightMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.3 });
 
     // Eye whites (bigger)
@@ -350,7 +403,7 @@ function createPlayer() {
 
     // Mouth — small smile (curved line via box rotated)
     // 소윤: soft peach lips per reference
-    const mouthMat = new THREE.MeshStandardMaterial({ color: 0xc97560, roughness: 0.4 });
+    const mouthMat = new THREE.MeshStandardMaterial({ color: cfg.lipColor, roughness: 0.4 });
     const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.018, 0.012), mouthMat);
     mouth.position.set(0, 1.55, 0.295);
     playerGroup.add(mouth);
@@ -365,8 +418,8 @@ function createPlayer() {
     playerGroup.add(rCorner);
 
     // === HAIR — 소윤: 따뜻한 갈색 (reference image) ===
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x5a3a1f, roughness: 0.55 });
-    const hairHighlightMat = new THREE.MeshStandardMaterial({ color: 0x7a5230, roughness: 0.5 });
+    const hairMat = new THREE.MeshStandardMaterial({ color: cfg.hairColor, roughness: 0.55 });
+    const hairHighlightMat = new THREE.MeshStandardMaterial({ color: cfg.hairHighlight, roughness: 0.5 });
 
     // Top cap
     const hairCap = new THREE.Mesh(
@@ -424,52 +477,104 @@ function createPlayer() {
     rWisp.rotation.z = 0.15;
     playerGroup.add(rWisp);
 
-    // === 빨간 머리핀 (red hair clip — visible on right side per reference) ===
-    const clipMat = new THREE.MeshStandardMaterial({
-        color: 0xcc1a1a, roughness: 0.35, metalness: 0.3,
-        emissive: 0x440000, emissiveIntensity: 0.1
-    });
-    const hairClip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 0.04), clipMat);
-    hairClip.position.set(0.22, 1.82, 0.21);
-    hairClip.rotation.z = 0.3;
-    playerGroup.add(hairClip);
-    // Small clip bead
-    const clipBead = new THREE.Mesh(
-        new THREE.SphereGeometry(0.022, 10, 10),
-        clipMat
-    );
-    clipBead.position.set(0.26, 1.83, 0.215);
-    playerGroup.add(clipBead);
-
-    // 소윤: 긴 생머리 (no braids) — long flowing hair down past shoulders
-    function makeLongHair(side) {
-        const x = side * 0.22;
-        // Upper section
-        const upper = new THREE.Mesh(
-            new THREE.BoxGeometry(0.13, 0.45, 0.1),
-            hairMat
+    // === Accessory: red clip (소윤) or headset (하윤) ===
+    if (cfg.accessory === 'redClip') {
+        const clipMat = new THREE.MeshStandardMaterial({
+            color: 0xcc1a1a, roughness: 0.35, metalness: 0.3,
+            emissive: 0x440000, emissiveIntensity: 0.1
+        });
+        const hairClip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 0.04), clipMat);
+        hairClip.position.set(0.22, 1.82, 0.21);
+        hairClip.rotation.z = 0.3;
+        playerGroup.add(hairClip);
+        const clipBead = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 10), clipMat);
+        clipBead.position.set(0.26, 1.83, 0.215);
+        playerGroup.add(clipBead);
+    } else if (cfg.accessory === 'headset') {
+        const headsetMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.5, metalness: 0.4 });
+        // Earpiece (right side)
+        const earpiece = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 16), headsetMat);
+        earpiece.position.set(0.29, 1.66, 0.05);
+        playerGroup.add(earpiece);
+        // Mic boom arm
+        const micArm = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.18, 8), headsetMat);
+        micArm.position.set(0.18, 1.58, 0.16);
+        micArm.rotation.z = -0.6;
+        playerGroup.add(micArm);
+        // Mic head
+        const micHead = new THREE.Mesh(new THREE.SphereGeometry(0.024, 12, 12), headsetMat);
+        micHead.position.set(0.08, 1.52, 0.22);
+        playerGroup.add(micHead);
+        // Mic ball cover (foam)
+        const foam = new THREE.Mesh(
+            new THREE.SphereGeometry(0.032, 12, 12),
+            new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.95 })
         );
-        upper.position.set(x, 1.2, -0.08);
-        upper.castShadow = true;
-        playerGroup.add(upper);
-        // Lower section (tapers slightly)
-        const lower = new THREE.Mesh(
-            new THREE.BoxGeometry(0.11, 0.4, 0.09),
-            hairMat
-        );
-        lower.position.set(x, 0.78, -0.12);
-        lower.castShadow = true;
-        playerGroup.add(lower);
-        // Lighter highlights (lock of lighter hair for depth)
-        const hi = new THREE.Mesh(
-            new THREE.BoxGeometry(0.04, 0.55, 0.04),
-            hairHighlightMat
-        );
-        hi.position.set(x + side * 0.04, 1.0, -0.06);
-        playerGroup.add(hi);
+        foam.position.set(0.08, 1.52, 0.22);
+        playerGroup.add(foam);
     }
-    makeLongHair(-1);
-    makeLongHair(1);
+
+    // === HAIR STYLE: 'long' (소윤) or 'braids' (하윤) ===
+    if (cfg.hairStyle === 'braids') {
+        // 하윤: twin braided pigtails with green ribbon ties
+        const ribbonMat = new THREE.MeshStandardMaterial({ color: 0x4a9d4a, roughness: 0.6 });
+        function makeBraid(side) {
+            const x = side * 0.27;
+            // Top junction
+            const junction = new THREE.Mesh(new THREE.SphereGeometry(0.085, 14, 14), hairMat);
+            junction.position.set(x, 1.55, -0.04);
+            playerGroup.add(junction);
+            // Upper ribbon tie
+            const tie = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.05, 0.08), ribbonMat);
+            tie.position.set(x, 1.48, -0.03);
+            playerGroup.add(tie);
+            // Braid segments (3 cylinders, each tapering for woven look)
+            for (let i = 0; i < 4; i++) {
+                const seg = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.072 - i * 0.011, 0.066 - i * 0.011, 0.21, 12),
+                    hairMat
+                );
+                seg.position.set(x, 1.36 - i * 0.21, -0.06 - i * 0.01);
+                seg.castShadow = true;
+                playerGroup.add(seg);
+                // Highlight stripe (woven texture)
+                if (i % 2 === 0) {
+                    const stripe = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.04, 0.06, 0.04),
+                        hairHighlightMat
+                    );
+                    stripe.position.set(x, 1.36 - i * 0.21, -0.04);
+                    playerGroup.add(stripe);
+                }
+            }
+            // Braid end bulb
+            const end = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), hairMat);
+            end.position.set(x, 0.54, -0.1);
+            playerGroup.add(end);
+            // Lower ribbon
+            const lowerTie = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.04, 0.06), ribbonMat);
+            lowerTie.position.set(x, 0.6, -0.09);
+            playerGroup.add(lowerTie);
+        }
+        makeBraid(-1);
+        makeBraid(1);
+    } else {
+        // 소윤: 긴 생머리 (default — long flowing hair down past shoulders)
+        function makeLongHair(side) {
+            const x = side * 0.22;
+            const upper = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.45, 0.1), hairMat);
+            upper.position.set(x, 1.2, -0.08); upper.castShadow = true;
+            playerGroup.add(upper);
+            const lower = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.4, 0.09), hairMat);
+            lower.position.set(x, 0.78, -0.12); lower.castShadow = true;
+            playerGroup.add(lower);
+            const hi = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.55, 0.04), hairHighlightMat);
+            hi.position.set(x + side * 0.04, 1.0, -0.06);
+            playerGroup.add(hi);
+        }
+        makeLongHair(-1);
+        makeLongHair(1);
+    }
 
     // Hat
     const hatMat = new THREE.MeshStandardMaterial({ color: 0x0d1b2a });
@@ -493,8 +598,10 @@ function createPlayer() {
     hatBadge.position.set(0, 2.08, 0.26);
     playerGroup.add(hatBadge);
 
-    playerGroup.position.set(0, 0, 92);
-    scene.add(playerGroup);
+    if (!playerGroup.parent) {
+        playerGroup.position.set(0, 0, 92);
+        scene.add(playerGroup);
+    }
 }
 
 createPlayer();
@@ -1297,17 +1404,252 @@ function startGame() {
         setTimeout(() => screen.remove(), 500);
     }
 
-    // Defensive: each step independently — failures in audio MUST NOT block render loop
     try { SoundManager.init(); } catch (e) { console.warn('SoundManager.init failed:', e); }
     try { SoundManager.playBGM('day'); } catch (e) { console.warn('SoundManager.playBGM failed:', e); }
-    try { updateCamera(); } catch (e) { console.warn('updateCamera failed:', e); }
 
-    // Show wanted poster intro (game starts AFTER user dismisses)
-    try { showWantedPoster(true); } catch (e) {
-        console.warn('Wanted poster failed:', e);
-        animate();
+    // Show character select first, then wanted poster, then animate
+    try { showCharacterSelect(); } catch (e) {
+        console.warn('Char select failed:', e);
+        try { updateCamera(); } catch (e2) {}
+        try { showWantedPoster(true); } catch (e3) { animate(); }
     }
 }
+
+// === CHARACTER SELECT SCREEN ===
+function showCharacterSelect() {
+    const modal = document.createElement('div');
+    modal.id = 'char-select-modal';
+    modal.style.cssText = `
+        position:fixed; inset:0; z-index:280;
+        background: linear-gradient(135deg, #0a1628 0%, #1a1a3a 100%);
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        font-family:'Inter',sans-serif; color:#fff;
+        padding:env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px);
+        overflow-y:auto;
+    `;
+
+    // Portrait SVG factory
+    function portrait(charId) {
+        if (charId === 'soyun') {
+            // 소윤: long brown hair, brown eyes, red hair clip
+            return `<svg viewBox="0 0 200 240" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                    <radialGradient id="bgS" cx="50%" cy="40%"><stop offset="0%" stop-color="#3a2a4a"/><stop offset="100%" stop-color="#1a0e20"/></radialGradient>
+                </defs>
+                <rect width="200" height="240" fill="url(#bgS)"/>
+                <!-- shoulders/uniform -->
+                <path d="M 15 240 L 15 195 Q 100 175, 185 195 L 185 240 Z" fill="#1a2a4a"/>
+                <!-- collar -->
+                <path d="M 75 192 L 100 215 L 125 192 L 125 200 L 75 200 Z" fill="#fff"/>
+                <!-- tie -->
+                <path d="M 95 200 L 100 240 L 105 240 L 110 200 Z" fill="#0d1b4a"/>
+                <!-- badge -->
+                <circle cx="100" cy="225" r="8" fill="#d4a800" stroke="#5a3a00" stroke-width="1"/>
+                <text x="100" y="228" text-anchor="middle" font-size="6" fill="#5a3a00">★</text>
+                <!-- BACK hair (long, behind shoulders) -->
+                <path d="M 60 80 Q 50 130, 45 200 L 60 220 L 60 130 Z" fill="#5a3a1f"/>
+                <path d="M 140 80 Q 150 130, 155 200 L 140 220 L 140 130 Z" fill="#5a3a1f"/>
+                <!-- Face -->
+                <ellipse cx="100" cy="115" rx="38" ry="48" fill="#f0d4b0" stroke="#a07a50" stroke-width="0.7"/>
+                <!-- Hair top -->
+                <path d="M 62 95 Q 100 35, 138 95 L 138 75 Q 100 50, 62 75 Z" fill="#5a3a1f"/>
+                <!-- Side hair -->
+                <path d="M 62 75 Q 55 110, 65 150 L 78 150 L 75 90 Z" fill="#5a3a1f"/>
+                <path d="M 138 75 Q 145 110, 135 150 L 122 150 L 125 90 Z" fill="#5a3a1f"/>
+                <!-- Bangs (soft, side swept) -->
+                <path d="M 65 78 Q 100 60, 135 78 L 130 95 Q 100 78, 70 95 Z" fill="#5a3a1f"/>
+                <!-- Hair highlight -->
+                <path d="M 85 80 Q 100 70, 115 80 L 113 95 Q 100 88, 87 95 Z" fill="#7a5230" opacity="0.7"/>
+                <!-- Red hair clip (right side) -->
+                <rect x="125" y="78" width="14" height="6" fill="#cc1a1a" rx="1"/>
+                <circle cx="142" cy="81" r="3" fill="#cc1a1a"/>
+                <!-- Eyebrows -->
+                <path d="M 78 105 Q 87 102, 95 106" fill="none" stroke="#3a2010" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M 105 106 Q 113 102, 122 105" fill="none" stroke="#3a2010" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Eyes (BROWN) -->
+                <ellipse cx="85" cy="118" rx="6" ry="4" fill="#fff"/>
+                <ellipse cx="115" cy="118" rx="6" ry="4" fill="#fff"/>
+                <circle cx="85" cy="118" r="3.5" fill="#7a4d28"/>
+                <circle cx="115" cy="118" r="3.5" fill="#7a4d28"/>
+                <circle cx="85" cy="118" r="1.8" fill="#2a1408"/>
+                <circle cx="115" cy="118" r="1.8" fill="#2a1408"/>
+                <circle cx="83" cy="116" r="0.9" fill="#fff"/>
+                <circle cx="113" cy="116" r="0.9" fill="#fff"/>
+                <!-- Lashes -->
+                <path d="M 79 115 Q 85 112, 91 115" fill="none" stroke="#1a0a00" stroke-width="0.8"/>
+                <path d="M 109 115 Q 115 112, 121 115" fill="none" stroke="#1a0a00" stroke-width="0.8"/>
+                <!-- Cheek blush -->
+                <ellipse cx="75" cy="130" rx="6" ry="3" fill="#ff9090" opacity="0.4"/>
+                <ellipse cx="125" cy="130" rx="6" ry="3" fill="#ff9090" opacity="0.4"/>
+                <!-- Nose -->
+                <path d="M 100 125 L 97 138 Q 100 140, 103 138 Z" fill="#e0b890"/>
+                <!-- Mouth (peach) -->
+                <path d="M 92 148 Q 100 152, 108 148" fill="none" stroke="#c97560" stroke-width="2.2" stroke-linecap="round"/>
+                <!-- Hat -->
+                <ellipse cx="100" cy="68" rx="56" ry="11" fill="#0d1b2a"/>
+                <rect x="60" y="38" width="80" height="32" fill="#0d1b2a" rx="6"/>
+                <rect x="60" y="58" width="80" height="6" fill="#FFD700"/>
+                <!-- Hat badge -->
+                <circle cx="100" cy="52" r="9" fill="#FFD700"/>
+                <text x="100" y="55" text-anchor="middle" font-size="10" fill="#1a1a4a" font-weight="bold">★</text>
+            </svg>`;
+        } else {
+            // 하윤: twin braids, blue eyes, headset
+            return `<svg viewBox="0 0 200 240" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                    <radialGradient id="bgH" cx="50%" cy="40%"><stop offset="0%" stop-color="#2a3a5a"/><stop offset="100%" stop-color="#0e1828"/></radialGradient>
+                </defs>
+                <rect width="200" height="240" fill="url(#bgH)"/>
+                <!-- shoulders/uniform -->
+                <path d="M 15 240 L 15 195 Q 100 175, 185 195 L 185 240 Z" fill="#1a2a4a"/>
+                <!-- collar -->
+                <path d="M 75 192 L 100 215 L 125 192 L 125 200 L 75 200 Z" fill="#fff"/>
+                <path d="M 95 200 L 100 240 L 105 240 L 110 200 Z" fill="#0d1b4a"/>
+                <circle cx="100" cy="225" r="8" fill="#d4a800" stroke="#5a3a00" stroke-width="1"/>
+                <text x="100" y="228" text-anchor="middle" font-size="6" fill="#5a3a00">★</text>
+                <!-- Braided pigtails (LONG, both sides past shoulders) -->
+                <!-- Left braid -->
+                <g transform="translate(60, 110)">
+                    ${[0,1,2,3].map(i => `<ellipse cx="0" cy="${i*22}" rx="11" ry="13" fill="#4a2a10"/>`).join('')}
+                    ${[0,2].map(i => `<rect x="-5" y="${i*22}" width="10" height="6" fill="#6a4020" opacity="0.7"/>`).join('')}
+                    <ellipse cx="0" cy="100" rx="9" ry="11" fill="#4a2a10"/>
+                    <rect x="-6" y="-12" width="12" height="6" fill="#4a9d4a" rx="1"/>
+                    <rect x="-5" y="106" width="10" height="5" fill="#4a9d4a" rx="1"/>
+                </g>
+                <!-- Right braid -->
+                <g transform="translate(140, 110)">
+                    ${[0,1,2,3].map(i => `<ellipse cx="0" cy="${i*22}" rx="11" ry="13" fill="#4a2a10"/>`).join('')}
+                    ${[0,2].map(i => `<rect x="-5" y="${i*22}" width="10" height="6" fill="#6a4020" opacity="0.7"/>`).join('')}
+                    <ellipse cx="0" cy="100" rx="9" ry="11" fill="#4a2a10"/>
+                    <rect x="-6" y="-12" width="12" height="6" fill="#4a9d4a" rx="1"/>
+                    <rect x="-5" y="106" width="10" height="5" fill="#4a9d4a" rx="1"/>
+                </g>
+                <!-- Face -->
+                <ellipse cx="100" cy="115" rx="38" ry="48" fill="#f0d4b0" stroke="#a07a50" stroke-width="0.7"/>
+                <!-- Hair top -->
+                <path d="M 62 95 Q 100 35, 138 95 L 138 75 Q 100 50, 62 75 Z" fill="#4a2a10"/>
+                <!-- Bangs (centered) -->
+                <path d="M 70 78 Q 100 62, 130 78 L 128 96 Q 100 80, 72 96 Z" fill="#4a2a10"/>
+                <!-- Hair highlight -->
+                <path d="M 88 78 Q 100 70, 112 78 L 110 95 Q 100 86, 90 95 Z" fill="#6a4020" opacity="0.7"/>
+                <!-- Eyebrows -->
+                <path d="M 78 105 Q 87 102, 95 106" fill="none" stroke="#2a1808" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M 105 106 Q 113 102, 122 105" fill="none" stroke="#2a1808" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Eyes (BLUE) -->
+                <ellipse cx="85" cy="118" rx="6" ry="4.5" fill="#fff"/>
+                <ellipse cx="115" cy="118" rx="6" ry="4.5" fill="#fff"/>
+                <circle cx="85" cy="118" r="3.8" fill="#3a82d4"/>
+                <circle cx="115" cy="118" r="3.8" fill="#3a82d4"/>
+                <circle cx="85" cy="118" r="1.8" fill="#0a1a3a"/>
+                <circle cx="115" cy="118" r="1.8" fill="#0a1a3a"/>
+                <circle cx="83" cy="116" r="1" fill="#fff"/>
+                <circle cx="113" cy="116" r="1" fill="#fff"/>
+                <!-- Lashes -->
+                <path d="M 78 115 Q 85 111, 92 115" fill="none" stroke="#1a0a00" stroke-width="1"/>
+                <path d="M 108 115 Q 115 111, 122 115" fill="none" stroke="#1a0a00" stroke-width="1"/>
+                <!-- Cheek blush + freckles -->
+                <ellipse cx="75" cy="132" rx="7" ry="3" fill="#ff9090" opacity="0.45"/>
+                <ellipse cx="125" cy="132" rx="7" ry="3" fill="#ff9090" opacity="0.45"/>
+                <circle cx="78" cy="130" r="0.8" fill="#a06040"/>
+                <circle cx="82" cy="134" r="0.8" fill="#a06040"/>
+                <circle cx="118" cy="130" r="0.8" fill="#a06040"/>
+                <circle cx="122" cy="134" r="0.8" fill="#a06040"/>
+                <!-- Nose -->
+                <path d="M 100 125 L 97 138 Q 100 140, 103 138 Z" fill="#e0b890"/>
+                <!-- Slight smile -->
+                <path d="M 92 148 Q 100 153, 108 148" fill="none" stroke="#d07060" stroke-width="2.2" stroke-linecap="round"/>
+                <!-- Headset earpiece (right ear) -->
+                <ellipse cx="140" cy="120" rx="6" ry="8" fill="#1a1a1a"/>
+                <!-- Mic boom -->
+                <path d="M 140 124 Q 130 138, 120 148" fill="none" stroke="#1a1a1a" stroke-width="2.5"/>
+                <circle cx="118" cy="150" r="4" fill="#444"/>
+                <!-- Hat -->
+                <ellipse cx="100" cy="68" rx="56" ry="11" fill="#0d1b2a"/>
+                <rect x="60" y="38" width="80" height="32" fill="#0d1b2a" rx="6"/>
+                <rect x="60" y="58" width="80" height="6" fill="#FFD700"/>
+                <!-- Hat badge -->
+                <circle cx="100" cy="52" r="9" fill="#FFD700"/>
+                <text x="100" y="55" text-anchor="middle" font-size="10" fill="#1a1a4a" font-weight="bold">★</text>
+            </svg>`;
+        }
+    }
+
+    function card(charId) {
+        const c = CHARACTERS[charId];
+        return `
+            <div class="char-card" data-char="${charId}" style="
+                width:42vw; max-width:280px; min-width:160px;
+                background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+                border:2px solid rgba(255,255,255,0.15); border-radius:12px;
+                padding:12px; margin:0 8px; cursor:pointer;
+                display:flex; flex-direction:column; align-items:center;
+                transition:all 0.25s;
+                touch-action:manipulation;
+            ">
+                <div style="
+                    width:100%; aspect-ratio:200/240; border-radius:10px;
+                    overflow:hidden; box-shadow:0 6px 24px rgba(0,0,0,0.5);
+                    border:1px solid rgba(255,255,255,0.1);
+                ">${portrait(charId)}</div>
+                <div style="margin-top:10px; font-size:18px; font-weight:900; letter-spacing:1px;">${c.name} <span style="color:#fbbf24;">형사</span></div>
+                <div style="font-size:11px; color:#94a3b8; letter-spacing:2px; margin-top:2px;">${c.title}</div>
+                <div style="margin-top:8px; font-size:11px; color:#cbd5e1; line-height:1.5; text-align:center; white-space:pre-line; opacity:0.85;">${c.desc}</div>
+            </div>
+        `;
+    }
+
+    modal.innerHTML = `
+        <div style="font-size:11px; letter-spacing:8px; color:#60a5fa; margin-bottom:6px; font-weight:600;">CHARACTER SELECT</div>
+        <h2 style="margin:0 0 16px; font-size:32px; letter-spacing:-1px;
+            background:linear-gradient(135deg,#fff,#cbd5e1,#fbbf24);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+            background-clip:text; font-weight:900;
+        ">담당 형사를 선택하세요</h2>
+        <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:8px; width:100%; max-width:680px;">
+            ${card('soyun')}
+            ${card('hayun')}
+        </div>
+        <div style="margin-top:18px; font-size:11px; color:#64748b; letter-spacing:2px;">탭하여 선택</div>
+    `;
+    document.body.appendChild(modal);
+
+    // Hover/select styling + click handlers
+    modal.querySelectorAll('.char-card').forEach(card => {
+        const select = () => {
+            const charId = card.dataset.char;
+            modal.querySelectorAll('.char-card').forEach(c => {
+                c.style.borderColor = 'rgba(255,255,255,0.15)';
+                c.style.transform = 'scale(1)';
+            });
+            card.style.borderColor = '#fbbf24';
+            card.style.transform = 'scale(1.03)';
+            card.style.boxShadow = '0 0 30px rgba(251,191,36,0.4)';
+            // Confirm after brief highlight
+            setTimeout(() => {
+                modal.style.transition = 'opacity 0.4s';
+                modal.style.opacity = '0';
+                setTimeout(() => modal.remove(), 400);
+                try { swapCharacter(charId); } catch (e) { console.warn('swapCharacter failed:', e); }
+                try { updateCamera(); } catch (e) {}
+                try { showWantedPoster(true); } catch (e) {
+                    console.warn('Wanted poster failed:', e);
+                    animate();
+                }
+            }, 400);
+        };
+        card.addEventListener('click', select);
+        card.addEventListener('touchstart', e => { e.preventDefault(); select(); }, { passive: false });
+        card.addEventListener('mouseenter', () => {
+            card.style.borderColor = 'rgba(96,165,250,0.5)';
+            card.style.transform = 'translateY(-4px)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.borderColor = 'rgba(255,255,255,0.15)';
+            card.style.transform = 'translateY(0)';
+        });
+    });
+}
+window.showCharacterSelect = showCharacterSelect;
 
 // === WANTED POSTER (수배전단) ===
 // Shown at game start as briefing, accessible later from inventory
