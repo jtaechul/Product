@@ -15,6 +15,10 @@ const SoundManager = {
         if (this.initialized) return;
         try {
             this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            // Mobile browsers start AudioContext in 'suspended' state — resume on user gesture
+            if (this.ctx.state === 'suspended') {
+                this.ctx.resume().catch(e => console.warn('AudioCtx resume failed:', e));
+            }
             this.masterGain = this.ctx.createGain();
             this.masterGain.gain.value = 0.4;
             this.masterGain.connect(this.ctx.destination);
@@ -180,15 +184,20 @@ const SoundManager = {
 
     playBGM(type) {
         if (!this.ctx) return;
+        // Ensure context is running (mobile may still be suspended)
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume().then(() => this._actuallyPlayBGM(type)).catch(() => this._actuallyPlayBGM(type));
+        } else {
+            this._actuallyPlayBGM(type);
+        }
+    },
+
+    _actuallyPlayBGM(type) {
         this.stopBGM();
         this.bgmActive = true;
         this.bgmType = type;
-
-        if (type === 'day') {
-            this._playDayBGM();
-        } else {
-            this._playNightBGM();
-        }
+        if (type === 'day') this._playDayBGM();
+        else this._playNightBGM();
     },
 
     // Jazz noir composition — "Detective's Theme"

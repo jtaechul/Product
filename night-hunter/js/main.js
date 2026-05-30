@@ -44,22 +44,26 @@ function makeSkyTexture(topColor, bottomColor) {
     return tex;
 }
 scene.background = makeSkyTexture('#7ec0ee', '#cfeaff');
-scene.fog = new THREE.Fog(0xcfeaff, 70, 220);
+scene.fog = new THREE.Fog(0xcfeaff, 60, 180);
 
 const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
 // ── Quality Tier System (상/중/하) ──
 // Auto-selected by device, can downgrade on low FPS
 const QUALITY = {
-    HIGH:   { shadow: 2048, bloom: true, vignette: true, smaa: true,  pixelRatio: 2,   segments: 32 },
-    MEDIUM: { shadow: 1024, bloom: true, vignette: false, smaa: false, pixelRatio: 1.5, segments: 24 },
-    LOW:    { shadow: 512,  bloom: false, vignette: false, smaa: false, pixelRatio: 1.0, segments: 16 }
+    HIGH:   { shadow: 2048, shadowEnabled: true,  bloom: true,  fogFar: 220, far: 500, pixelRatio: 2,   segments: 32 },
+    MEDIUM: { shadow: 1024, shadowEnabled: true,  bloom: true,  fogFar: 160, far: 300, pixelRatio: 1.3, segments: 24 },
+    LOW:    { shadow: 0,    shadowEnabled: false, bloom: false, fogFar: 120, far: 200, pixelRatio: 1.0, segments: 16 }
 };
-let qualityTier = isMobile ? 'MEDIUM' : 'HIGH';
+// Detect low-end mobile (older iPhones, low memory)
+const lowEnd = isMobile && (navigator.deviceMemory && navigator.deviceMemory < 4)
+    || (window.innerWidth * window.innerHeight < 700000);
+let qualityTier = lowEnd ? 'LOW' : (isMobile ? 'MEDIUM' : 'HIGH');
 let Q = QUALITY[qualityTier];
 window.GameQuality = { get tier() { return qualityTier; }, get cfg() { return Q; } };
 
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, Q.far);
+scene.fog.far = Q.fogFar;
 const renderer = new THREE.WebGLRenderer({
     canvas: document.getElementById('gameCanvas'),
     antialias: true,
@@ -67,7 +71,7 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pixelRatio));
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = Q.shadowEnabled;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // r128 uses outputEncoding (newer r150+ uses outputColorSpace)
 renderer.outputEncoding = THREE.sRGBEncoding;
@@ -138,7 +142,7 @@ scene.add(ambientLight);
 
 const sunLight = new THREE.DirectionalLight(0xfff4e0, 1.15);
 sunLight.position.set(80, 120, 60);
-sunLight.castShadow = true;
+sunLight.castShadow = Q.shadowEnabled;
 sunLight.shadow.mapSize.width = Q.shadow;
 sunLight.shadow.mapSize.height = Q.shadow;
 sunLight.shadow.camera.near = 0.5;
@@ -1302,40 +1306,141 @@ function showWantedPoster(firstTime) {
     `;
 
     // Build mugshots as inline SVG (3 suspects)
-    function mugshot(criminal, color, name, traits) {
+    function mugshot(criminal, idx, name, traits) {
+        // Detailed face per criminal id
+        const detail = {
+            0: { // 1호 길동 — 전직 학원 강사, 안경, 깔끔
+                skinFill: '#d4a884', hoodFill: '#2a2a2a',
+                browAngle: -10, scar: false, beard: false, glasses: true, mole: false, faceShape: 'long'
+            },
+            1: { // 2호 철수 — 카페 사장, 흉터, 짧은 수염
+                skinFill: '#c89070', hoodFill: '#1a1a1a',
+                browAngle: -15, scar: true, beard: true, glasses: false, mole: false, faceShape: 'square'
+            },
+            2: { // 3호 영수 — 폐공장 두목, 큰 흉터, 두꺼운 수염
+                skinFill: '#b88060', hoodFill: '#0a0a0a',
+                browAngle: -20, scar: true, beard: true, glasses: false, mole: true, faceShape: 'wide'
+            }
+        }[idx] || {};
+
+        const faceWidth = detail.faceShape === 'wide' ? 24 : (detail.faceShape === 'square' ? 22 : 20);
+        const faceHeight = detail.faceShape === 'long' ? 28 : (detail.faceShape === 'square' ? 24 : 25);
+
         return `
             <div style="display:flex; flex-direction:column; align-items:center; margin:0 6px;">
                 <div style="
-                    width:90px; height:110px; background:#fff;
-                    border:3px solid #222; border-radius:4px; padding:4px;
-                    box-shadow:2px 2px 0 #555;
+                    width:110px; height:140px; background:#fff;
+                    border:3px solid #1a1a1a; border-radius:3px; padding:3px;
+                    box-shadow:3px 3px 0 #555;
                 ">
-                    <svg viewBox="0 0 90 100" width="100%" height="100%">
-                        <rect x="0" y="0" width="90" height="100" fill="#e8d4a8"/>
+                    <svg viewBox="0 0 110 130" width="100%" height="100%">
+                        <!-- BG: police mugshot grid -->
+                        <defs>
+                            <linearGradient id="bg${idx}" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#e8d8b8"/>
+                                <stop offset="100%" stop-color="#c8b89a"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="0" y="0" width="110" height="130" fill="url(#bg${idx})"/>
                         <!-- height markers -->
-                        <line x1="0" y1="25" x2="90" y2="25" stroke="#666" stroke-width="0.4"/>
-                        <line x1="0" y1="50" x2="90" y2="50" stroke="#666" stroke-width="0.4"/>
-                        <line x1="0" y1="75" x2="90" y2="75" stroke="#666" stroke-width="0.4"/>
-                        <!-- silhouette / face -->
-                        <ellipse cx="45" cy="45" rx="20" ry="25" fill="#${color}"/>
-                        <!-- hood -->
-                        <path d="M 22 38 Q 45 15, 68 38 L 68 50 L 22 50 Z" fill="#1a1a1a"/>
-                        <!-- eyes -->
-                        <circle cx="38" cy="45" r="2.5" fill="#fff"/>
-                        <circle cx="52" cy="45" r="2.5" fill="#fff"/>
-                        <circle cx="38" cy="45" r="1.4" fill="#ff2222"/>
-                        <circle cx="52" cy="45" r="1.4" fill="#ff2222"/>
-                        <!-- mask -->
-                        <rect x="32" y="55" width="26" height="8" fill="#1a1a1a"/>
-                        <!-- shoulders -->
-                        <path d="M 18 100 L 18 80 Q 45 70, 72 80 L 72 100 Z" fill="#1a1a1a"/>
+                        ${[20,40,60,80,100].map(y =>
+                            `<line x1="0" y1="${y}" x2="110" y2="${y}" stroke="#7a5a3a" stroke-width="0.3" stroke-dasharray="2,2"/>`
+                        ).join('')}
+                        ${[6,7,8].map(h => `<text x="3" y="${20+(h-6)*30+4}" font-size="5" fill="#7a5a3a" font-family="monospace">${h}'</text>`).join('')}
+
+                        <!-- Neck shadow -->
+                        <rect x="40" y="92" width="30" height="20" fill="#${detail.skinFill ? detail.skinFill.substring(1) : 'd4a884'}" opacity="0.7"/>
+
+                        <!-- Shoulders (clothing) -->
+                        <path d="M 15 130 L 15 100 Q 55 88, 95 100 L 95 130 Z" fill="${detail.hoodFill || '#1a1a1a'}"/>
+                        <!-- Collar -->
+                        <path d="M 40 95 L 55 105 L 70 95 L 70 100 L 40 100 Z" fill="${detail.hoodFill || '#1a1a1a'}"/>
+
+                        <!-- Face shape (more realistic) -->
+                        <path d="M 55 30
+                                 Q ${55 + faceWidth} 33, ${55 + faceWidth} 55
+                                 Q ${55 + faceWidth - 2} 75, ${55 + faceWidth - 8} 85
+                                 Q 55 95, ${55 - faceWidth + 8} 85
+                                 Q ${55 - faceWidth + 2} 75, ${55 - faceWidth} 55
+                                 Q ${55 - faceWidth} 33, 55 30 Z"
+                              fill="${detail.skinFill}" stroke="#7a5a3a" stroke-width="0.5"/>
+
+                        <!-- Forehead shading -->
+                        <path d="M 55 30 Q ${55 + faceWidth - 2} 35, ${55 + faceWidth} 50 L ${55 - faceWidth} 50 Q ${55 - faceWidth + 2} 35, 55 30"
+                              fill="#000" opacity="0.08"/>
+
+                        <!-- Hair / hood top -->
+                        <path d="M ${55 - faceWidth + 2} 35 Q 55 12, ${55 + faceWidth - 2} 35 L ${55 + faceWidth - 4} 42 L ${55 - faceWidth + 4} 42 Z"
+                              fill="${detail.hoodFill}"/>
+
+                        <!-- Ears -->
+                        <ellipse cx="${55 - faceWidth + 1}" cy="58" rx="2.5" ry="5" fill="${detail.skinFill}" stroke="#7a5a3a" stroke-width="0.3"/>
+                        <ellipse cx="${55 + faceWidth - 1}" cy="58" rx="2.5" ry="5" fill="${detail.skinFill}" stroke="#7a5a3a" stroke-width="0.3"/>
+
+                        <!-- Eye sockets (shadow) -->
+                        <ellipse cx="45" cy="55" rx="5" ry="3" fill="#000" opacity="0.15"/>
+                        <ellipse cx="65" cy="55" rx="5" ry="3" fill="#000" opacity="0.15"/>
+
+                        <!-- Eye whites -->
+                        <ellipse cx="45" cy="55" rx="3.5" ry="2.2" fill="#fff"/>
+                        <ellipse cx="65" cy="55" rx="3.5" ry="2.2" fill="#fff"/>
+                        <!-- Iris (cold dark) -->
+                        <circle cx="45" cy="55" r="2" fill="#3a2a1a"/>
+                        <circle cx="65" cy="55" r="2" fill="#3a2a1a"/>
+                        <!-- Pupils -->
+                        <circle cx="45" cy="55" r="1.1" fill="#000"/>
+                        <circle cx="65" cy="55" r="1.1" fill="#000"/>
+                        <!-- Eye highlight -->
+                        <circle cx="44" cy="54" r="0.5" fill="#fff"/>
+                        <circle cx="64" cy="54" r="0.5" fill="#fff"/>
+
+                        <!-- Glasses (1호) -->
+                        ${detail.glasses ? `
+                            <circle cx="45" cy="55" r="6" fill="none" stroke="#222" stroke-width="1.2"/>
+                            <circle cx="65" cy="55" r="6" fill="none" stroke="#222" stroke-width="1.2"/>
+                            <line x1="51" y1="55" x2="59" y2="55" stroke="#222" stroke-width="1.2"/>
+                        ` : ''}
+
+                        <!-- Eyebrows (angled = angry) -->
+                        <path d="M 39 49 Q 45 ${49 + (detail.browAngle || 0) * 0.1}, 51 ${50 + (detail.browAngle || 0) * 0.15}"
+                              fill="none" stroke="#1a0e08" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 59 ${50 + (detail.browAngle || 0) * 0.15} Q 65 ${49 + (detail.browAngle || 0) * 0.1}, 71 49"
+                              fill="none" stroke="#1a0e08" stroke-width="2" stroke-linecap="round"/>
+
+                        <!-- Nose -->
+                        <path d="M 55 56 L 53 68 Q 55 70, 57 68 Z" fill="${detail.skinFill}" stroke="#7a5a3a" stroke-width="0.4"/>
+                        <ellipse cx="53.5" cy="69" rx="0.8" ry="0.5" fill="#000" opacity="0.4"/>
+                        <ellipse cx="56.5" cy="69" rx="0.8" ry="0.5" fill="#000" opacity="0.4"/>
+
+                        <!-- Mouth (stern frown) -->
+                        <path d="M 47 78 Q 55 76, 63 78" fill="none" stroke="#5a2a1a" stroke-width="1.5" stroke-linecap="round"/>
+
+                        <!-- Stubble/beard -->
+                        ${detail.beard ? `
+                            <ellipse cx="55" cy="82" rx="${faceWidth - 5}" ry="6" fill="#1a0e08" opacity="${idx === 2 ? 0.7 : 0.4}"/>
+                            <ellipse cx="55" cy="73" rx="3" ry="1.5" fill="#1a0e08" opacity="0.35"/>
+                        ` : ''}
+
+                        <!-- Scar -->
+                        ${detail.scar ? `
+                            <line x1="${idx === 1 ? 67 : 38}" y1="${idx === 1 ? 60 : 48}"
+                                  x2="${idx === 1 ? 72 : 44}" y2="${idx === 1 ? 75 : 56}"
+                                  stroke="#8b2020" stroke-width="1.2" stroke-linecap="round"/>
+                            <line x1="${idx === 1 ? 68 : 39}" y1="${idx === 1 ? 63 : 51}"
+                                  x2="${idx === 1 ? 70 : 41}" y2="${idx === 1 ? 65 : 53}"
+                                  stroke="#5a1010" stroke-width="0.4"/>
+                        ` : ''}
+
+                        <!-- Mole -->
+                        ${detail.mole ? `<circle cx="62" cy="75" r="0.9" fill="#3a1a08"/>` : ''}
+
                         <!-- ID plate -->
-                        <rect x="22" y="86" width="46" height="10" fill="#fff" stroke="#000" stroke-width="0.5"/>
-                        <text x="45" y="93" text-anchor="middle" font-size="6" font-family="monospace">${criminal}</text>
+                        <rect x="20" y="113" width="70" height="13" fill="#fff" stroke="#000" stroke-width="0.5"/>
+                        <text x="55" y="122" text-anchor="middle" font-size="7" font-family="monospace" font-weight="bold">${criminal}</text>
                     </svg>
                 </div>
                 <div style="margin-top:6px; font-size:11px; font-weight:800; color:#fff; letter-spacing:1px;">${name}</div>
-                <div style="margin-top:2px; font-size:9px; color:#bbb; text-align:center; max-width:90px; line-height:1.3;">${traits}</div>
+                <div style="margin-top:2px; font-size:9px; color:#bbb; text-align:center; max-width:110px; line-height:1.3;">${traits}</div>
             </div>
         `;
     }
@@ -1352,9 +1457,9 @@ function showWantedPoster(firstTime) {
             <h2 style="margin:0 0 4px; font-size:26px; color:#3a1a0a; letter-spacing:2px; font-weight:900;">⚠ 수배 전단 ⚠</h2>
             <div style="font-size:11px; color:#7a4a1a; margin-bottom:14px;">아이들을 납치한 흉악범 3명. 반드시 검거하라.</div>
             <div style="display:flex; justify-content:center; flex-wrap:wrap; background:#1a1a1a; padding:14px 8px; border-radius:6px;">
-                ${mugshot('CR-001', 'd4a884', '1호 길동', '전직 학원 강사<br/>주택가 잠복')}
-                ${mugshot('CR-002', 'c89070', '2호 철수', '가짜 카페 사장<br/>상업지구')}
-                ${mugshot('CR-003', 'b88060', '3호 영수', '폐공장 조직 두목<br/>공장지대')}
+                ${mugshot('CR-001', 0, '1호 길동', '전직 학원 강사<br/>안경, 깡마름<br/>주택가 잠복')}
+                ${mugshot('CR-002', 1, '2호 철수', '가짜 카페 사장<br/>볼 흉터, 짧은 수염<br/>상업지구')}
+                ${mugshot('CR-003', 2, '3호 영수', '폐공장 조직 두목<br/>눈썹 흉터, 짙은 수염<br/>공장지대')}
             </div>
             ${firstTime ? `
             <div style="margin-top:14px; padding:12px; background:rgba(122,74,26,0.15); border-radius:6px; font-size:12px; color:#3a1a0a; text-align:left; line-height:1.6;">
