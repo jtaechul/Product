@@ -2,6 +2,7 @@
 
 // ── Game State ──
 const gameState = {
+    playerName: '소윤',
     health: 3,
     maxHealth: 3,
     coins: 30,
@@ -276,7 +277,8 @@ function createPlayer() {
     // Clean anime-style female face with big blue eyes, twin braided pigtails
 
     // Eyebrows — thin slightly arched
-    const browMat = new THREE.MeshStandardMaterial({ color: 0x1a0a00, roughness: 0.7 });
+    // 소윤: warm brown brows matching hair
+    const browMat = new THREE.MeshStandardMaterial({ color: 0x3a2010, roughness: 0.7 });
     const leftBrow = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.022, 0.015), browMat);
     leftBrow.position.set(-0.1, 1.76, 0.275);
     leftBrow.rotation.z = 0.12;
@@ -288,8 +290,9 @@ function createPlayer() {
 
     // BIG BLUE eyes (anime style — larger ratio)
     const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
-    const eyeBlueMat = new THREE.MeshStandardMaterial({ color: 0x3a82d4, roughness: 0.4 });
-    const eyePupilMat = new THREE.MeshStandardMaterial({ color: 0x0a1a3a, roughness: 0.3 });
+    // Warm brown eyes (per reference image — 소윤)
+    const eyeBlueMat = new THREE.MeshStandardMaterial({ color: 0x7a4d28, roughness: 0.4 });
+    const eyePupilMat = new THREE.MeshStandardMaterial({ color: 0x2a1408, roughness: 0.3 });
     const highlightMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.3 });
 
     // Eye whites (bigger)
@@ -346,7 +349,8 @@ function createPlayer() {
     playerGroup.add(nose);
 
     // Mouth — small smile (curved line via box rotated)
-    const mouthMat = new THREE.MeshStandardMaterial({ color: 0xc04060, roughness: 0.5 });
+    // 소윤: soft peach lips per reference
+    const mouthMat = new THREE.MeshStandardMaterial({ color: 0xc97560, roughness: 0.4 });
     const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.018, 0.012), mouthMat);
     mouth.position.set(0, 1.55, 0.295);
     playerGroup.add(mouth);
@@ -360,10 +364,11 @@ function createPlayer() {
     rCorner.rotation.z = -0.35;
     playerGroup.add(rCorner);
 
-    // === HAIR — positioned high + back so face stays exposed ===
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x1a0e08, roughness: 0.65 });
+    // === HAIR — 소윤: 따뜻한 갈색 (reference image) ===
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x5a3a1f, roughness: 0.55 });
+    const hairHighlightMat = new THREE.MeshStandardMaterial({ color: 0x7a5230, roughness: 0.5 });
 
-    // Top cap — small, high, slightly back so doesn't reach face front
+    // Top cap
     const hairCap = new THREE.Mesh(
         new THREE.SphereGeometry(0.29, 24, 24, 0, Math.PI * 2, 0, Math.PI * 0.55),
         hairMat
@@ -372,83 +377,99 @@ function createPlayer() {
     hairCap.castShadow = true;
     playerGroup.add(hairCap);
 
-    // Back hair (hangs behind head, doesn't touch face)
+    // Back hair — longer, more volume (per reference, 가슴까지 오는 긴 머리)
     const backHair = new THREE.Mesh(
-        new THREE.BoxGeometry(0.42, 0.4, 0.18),
+        new THREE.BoxGeometry(0.5, 0.7, 0.2),
         hairMat
     );
-    backHair.position.set(0, 1.6, -0.2);
+    backHair.position.set(0, 1.35, -0.22);
     backHair.castShadow = true;
     playerGroup.add(backHair);
 
-    // Bangs — only over forehead (above brows, not reaching eyes)
+    // Bangs — soft side-swept (per reference, 부드러운 앞머리)
     const bangsCenter = new THREE.Mesh(
-        new THREE.BoxGeometry(0.4, 0.09, 0.1),
+        new THREE.BoxGeometry(0.42, 0.1, 0.1),
         hairMat
     );
     bangsCenter.position.set(0, 1.86, 0.24);
-    bangsCenter.rotation.x = -0.18;
+    bangsCenter.rotation.x = -0.2;
     playerGroup.add(bangsCenter);
-    // Side wisps
-    const lWisp = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 0.06), hairMat);
-    lWisp.position.set(-0.21, 1.77, 0.18);
-    lWisp.rotation.z = -0.2;
+
+    // Bangs highlight (lighter strands)
+    const bangsHi = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 0.05, 0.08),
+        hairHighlightMat
+    );
+    bangsHi.position.set(0.08, 1.88, 0.245);
+    bangsHi.rotation.x = -0.2;
+    playerGroup.add(bangsHi);
+
+    // Side hair — falling down each side past shoulder
+    const lSide = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.55, 0.12), hairMat);
+    lSide.position.set(-0.25, 1.42, 0.02);
+    lSide.castShadow = true;
+    playerGroup.add(lSide);
+    const rSide = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.55, 0.12), hairMat);
+    rSide.position.set(0.25, 1.42, 0.02);
+    rSide.castShadow = true;
+    playerGroup.add(rSide);
+
+    // Side wisps near face
+    const lWisp = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.2, 0.05), hairMat);
+    lWisp.position.set(-0.22, 1.74, 0.18);
+    lWisp.rotation.z = -0.15;
     playerGroup.add(lWisp);
-    const rWisp = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 0.06), hairMat);
-    rWisp.position.set(0.21, 1.77, 0.18);
-    rWisp.rotation.z = 0.2;
+    const rWisp = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.2, 0.05), hairMat);
+    rWisp.position.set(0.22, 1.74, 0.18);
+    rWisp.rotation.z = 0.15;
     playerGroup.add(rWisp);
 
-    // === TWIN BRAIDED PIGTAILS ===
-    // Each braid = 3 segments stacked (slightly varied) to suggest texture
-    function makeBraid(side) {
-        const x = side * 0.32;
-        const braidGroup = new THREE.Group();
-        // Top junction (where pigtail attaches)
-        const junction = new THREE.Mesh(
-            new THREE.SphereGeometry(0.09, 12, 12),
+    // === 빨간 머리핀 (red hair clip — visible on right side per reference) ===
+    const clipMat = new THREE.MeshStandardMaterial({
+        color: 0xcc1a1a, roughness: 0.35, metalness: 0.3,
+        emissive: 0x440000, emissiveIntensity: 0.1
+    });
+    const hairClip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 0.04), clipMat);
+    hairClip.position.set(0.22, 1.82, 0.21);
+    hairClip.rotation.z = 0.3;
+    playerGroup.add(hairClip);
+    // Small clip bead
+    const clipBead = new THREE.Mesh(
+        new THREE.SphereGeometry(0.022, 10, 10),
+        clipMat
+    );
+    clipBead.position.set(0.26, 1.83, 0.215);
+    playerGroup.add(clipBead);
+
+    // 소윤: 긴 생머리 (no braids) — long flowing hair down past shoulders
+    function makeLongHair(side) {
+        const x = side * 0.22;
+        // Upper section
+        const upper = new THREE.Mesh(
+            new THREE.BoxGeometry(0.13, 0.45, 0.1),
             hairMat
         );
-        junction.position.set(x, 1.55, -0.03);
-        playerGroup.add(junction);
-
-        // Hair tie (green ribbon as in pixel art)
-        const tie = new THREE.Mesh(
-            new THREE.BoxGeometry(0.13, 0.05, 0.08),
-            new THREE.MeshStandardMaterial({ color: 0x4a9d4a, roughness: 0.6 })
-        );
-        tie.position.set(x, 1.5, -0.02);
-        playerGroup.add(tie);
-
-        // Braid segments (3 cylinders, each tapering)
-        for (let i = 0; i < 3; i++) {
-            const seg = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.075 - i * 0.012, 0.07 - i * 0.012, 0.22, 12),
-                hairMat
-            );
-            seg.position.set(x, 1.4 - i * 0.22, -0.05 - i * 0.02);
-            seg.castShadow = true;
-            playerGroup.add(seg);
-        }
-
-        // Braid end (small bulb)
-        const end = new THREE.Mesh(
-            new THREE.SphereGeometry(0.055, 10, 10),
+        upper.position.set(x, 1.2, -0.08);
+        upper.castShadow = true;
+        playerGroup.add(upper);
+        // Lower section (tapers slightly)
+        const lower = new THREE.Mesh(
+            new THREE.BoxGeometry(0.11, 0.4, 0.09),
             hairMat
         );
-        end.position.set(x, 0.74, -0.1);
-        playerGroup.add(end);
-
-        // Lower tie (green)
-        const lowerTie = new THREE.Mesh(
-            new THREE.BoxGeometry(0.1, 0.04, 0.06),
-            new THREE.MeshStandardMaterial({ color: 0x4a9d4a })
+        lower.position.set(x, 0.78, -0.12);
+        lower.castShadow = true;
+        playerGroup.add(lower);
+        // Lighter highlights (lock of lighter hair for depth)
+        const hi = new THREE.Mesh(
+            new THREE.BoxGeometry(0.04, 0.55, 0.04),
+            hairHighlightMat
         );
-        lowerTie.position.set(x, 0.8, -0.09);
-        playerGroup.add(lowerTie);
+        hi.position.set(x + side * 0.04, 1.0, -0.06);
+        playerGroup.add(hi);
     }
-    makeBraid(-1);
-    makeBraid(1);
+    makeLongHair(-1);
+    makeLongHair(1);
 
     // Hat
     const hatMat = new THREE.MeshStandardMaterial({ color: 0x0d1b2a });
@@ -1455,6 +1476,7 @@ function showWantedPoster(firstTime) {
         ">
             <div style="font-size:11px; letter-spacing:6px; color:#7a4a1a; margin-bottom:4px; font-weight:700;">DETECTIVE BRIEFING</div>
             <h2 style="margin:0 0 4px; font-size:26px; color:#3a1a0a; letter-spacing:2px; font-weight:900;">⚠ 수배 전단 ⚠</h2>
+            <div style="font-size:12px; color:#3a1a0a; margin-bottom:4px;">담당 형사: <b>소윤</b></div>
             <div style="font-size:11px; color:#7a4a1a; margin-bottom:14px;">아이들을 납치한 흉악범 3명. 반드시 검거하라.</div>
             <div style="display:flex; justify-content:center; flex-wrap:wrap; background:#1a1a1a; padding:14px 8px; border-radius:6px;">
                 ${mugshot('CR-001', 0, '1호 길동', '전직 학원 강사<br/>안경, 깡마름<br/>주택가 잠복')}
@@ -1486,7 +1508,7 @@ function showWantedPoster(firstTime) {
         modal.style.opacity = '0';
         setTimeout(() => modal.remove(), 300);
         if (firstTime) {
-            try { showMessage('📻 시민들에게 말을 걸어 단서를 수집하세요.'); } catch(e) {}
+            try { showMessage('📻 소윤 형사, 시민들에게 말을 걸어 단서를 수집하세요.'); } catch(e) {}
             animate();
         }
     };
