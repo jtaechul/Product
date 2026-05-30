@@ -32,19 +32,44 @@ const NPCSystem = {
     },
 
     npcArchetypes: [
-        // Spread across zones
-        { x: -25, z: 72, name: '카페 점원',     hair: 0x4a2510, skin: 0xffdbac, clothing: 0xff6b9d, zone: 'POLICE' },
-        { x: 25, z: 72, name: '편의점 알바',    hair: 0x1a0a00, skin: 0xf5d5b8, clothing: 0x60a5fa, zone: 'POLICE' },
-        { x: -30, z: 25, name: '주민 김씨',     hair: 0x2a1808, skin: 0xfff2dc, clothing: 0x9b8b9d, zone: 'RESIDENTIAL' },
-        { x: -70, z: -25, name: '학생 이씨',    hair: 0x4a2510, skin: 0xffdbac, clothing: 0xfbbf24, zone: 'RESIDENTIAL' },
-        { x: -110, z: 20, name: '아주머니 박씨', hair: 0x1a0a00, skin: 0xf5d5b8, clothing: 0xe05080, zone: 'RESIDENTIAL' },
-        { x: -25, z: -25, name: '할아버지 최씨', hair: 0xdddddd, skin: 0xefcfa8, clothing: 0x718096, zone: 'RESIDENTIAL' },
-        { x: 30, z: 25, name: '직장인 정씨',    hair: 0x1a0a00, skin: 0xffdbac, clothing: 0x1e3a8a, zone: 'COMMERCIAL' },
-        { x: 75, z: -10, name: '학생 윤씨',     hair: 0x4a2510, skin: 0xf5d5b8, clothing: 0x06c167, zone: 'COMMERCIAL' },
-        { x: 110, z: 20, name: '바리스타',      hair: 0x2a1808, skin: 0xfff2dc, clothing: 0x8b4513, zone: 'COMMERCIAL' },
-        { x: 30, z: -60, name: '경비원 한씨',   hair: 0x222222, skin: 0xefcfa8, clothing: 0x2d3748, zone: 'COMMERCIAL' },
-        { x: -50, z: -110, name: '근로자 송씨', hair: 0x1a0a00, skin: 0xddaa88, clothing: 0xff8800, zone: 'FACTORY' },
-        { x: 30, z: -110, name: '공장장 조씨',  hair: 0x444444, skin: 0xffdbac, clothing: 0x4a5568, zone: 'FACTORY' },
+        // role: 'civilian' (stationary, talkable) | 'suspect' (runs, catch via minigame)
+        // Civilians: tell their story + give a hint when talked to
+        { x: -25, z: 72, name: '카페 점원 민지', role: 'civilian',
+          hair: 0x4a2510, skin: 0xffdbac, clothing: 0xff6b9d, zone: 'POLICE',
+          story: '경찰 아저씨, 도와주세요. 손님이 이상한 사람을 봤다고 해요...' },
+        { x: 25, z: 72, name: '편의점 알바 호석', role: 'civilian',
+          hair: 0x1a0a00, skin: 0xf5d5b8, clothing: 0x60a5fa, zone: 'POLICE',
+          story: '늦은 밤 자주 오는 손님이 있는데, 항상 모자를 깊게 눌러쓰고 와요.' },
+        { x: -30, z: 25, name: '주민 김씨', role: 'suspect',
+          hair: 0x2a1808, skin: 0xfff2dc, clothing: 0x9b8b9d, zone: 'RESIDENTIAL',
+          story: '저는... 그냥 살려고 했을 뿐이에요. 시키는 대로 했을 뿐...' },
+        { x: -70, z: -25, name: '학생 이지수', role: 'civilian',
+          hair: 0x4a2510, skin: 0xffdbac, clothing: 0xfbbf24, zone: 'RESIDENTIAL',
+          story: '학교 가는 길에 이상한 차가 자주 서있었어요. 너무 무서워요.' },
+        { x: -110, z: 20, name: '아주머니 박씨', role: 'civilian',
+          hair: 0x1a0a00, skin: 0xf5d5b8, clothing: 0xe05080, zone: 'RESIDENTIAL',
+          story: '우리 동네에 아이들이 사라졌어요. 형사님, 꼭 찾아주세요.' },
+        { x: -25, z: -25, name: '할아버지 최씨', role: 'suspect',
+          hair: 0xdddddd, skin: 0xefcfa8, clothing: 0x718096, zone: 'RESIDENTIAL',
+          story: '항복합니다... 솔직히 말씀드릴게요...' },
+        { x: 30, z: 25, name: '직장인 정현우', role: 'civilian',
+          hair: 0x1a0a00, skin: 0xffdbac, clothing: 0x1e3a8a, zone: 'COMMERCIAL',
+          story: '퇴근길에 본 게 있어요. 누군가 아이를 끌고 가는 모습을...' },
+        { x: 75, z: -10, name: '학생 윤서연', role: 'suspect',
+          hair: 0x4a2510, skin: 0xf5d5b8, clothing: 0x06c167, zone: 'COMMERCIAL',
+          story: '죄송해요... 돈이 필요해서 그랬어요...' },
+        { x: 110, z: 20, name: '바리스타 다은', role: 'civilian',
+          hair: 0x2a1808, skin: 0xfff2dc, clothing: 0x8b4513, zone: 'COMMERCIAL',
+          story: '카페에 자주 오는 손님이 있어요. 검은 정장에 흉터가 있는...' },
+        { x: 30, z: -60, name: '경비원 한대수', role: 'suspect',
+          hair: 0x222222, skin: 0xefcfa8, clothing: 0x2d3748, zone: 'COMMERCIAL',
+          story: '저도 그자에게 협박당했어요. 모든 걸 말씀드릴게요...' },
+        { x: -50, z: -110, name: '근로자 송기철', role: 'civilian',
+          hair: 0x1a0a00, skin: 0xddaa88, clothing: 0xff8800, zone: 'FACTORY',
+          story: '공장에서 일하다가 본 게 있어요. 밤에 트럭들이 들락날락해요.' },
+        { x: 30, z: -110, name: '공장장 조경석', role: 'suspect',
+          hair: 0x444444, skin: 0xffdbac, clothing: 0x4a5568, zone: 'FACTORY',
+          story: '저 사실은... 그 조직의 일원이었어요. 다 말씀드릴게요...' },
     ],
 
     spawnNPCs() {
@@ -222,25 +247,8 @@ const NPCSystem = {
         mouth.position.set(0, headY - 0.06, headRadius - 0.01);
         group.add(mouth);
 
-        // === Wanted indicator (red circle with !) ===
-        const cv = document.createElement('canvas');
-        cv.width = 64; cv.height = 64;
-        const ctx = cv.getContext('2d');
-        ctx.fillStyle = 'rgba(239,68,68,0.95)';
-        ctx.beginPath();
-        ctx.arc(32, 30, 22, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 36px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('!', 32, 30);
-        const tex = new THREE.CanvasTexture(cv);
-        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
-        sprite.scale.set(0.4, 0.4, 1);
-        sprite.position.y = headY + 0.5;
-        sprite.userData.talkIcon = true;
-        group.add(sprite);
+        // No head indicator (per design requirement — players must approach to identify)
+        const sprite = null;
 
         group.position.set(arch.x, 0, arch.z);
         group.rotation.y = Math.random() * Math.PI * 2;
@@ -321,27 +329,70 @@ const NPCSystem = {
 
     update(playerPos, delta, time) {
         if (!gameState.isDay) {
-            // Hide all suspects at night
-            this.npcs.forEach(npc => { npc.mesh.visible = false; });
-            return;
+            // At night: civilians hide. Suspects: 1-2 of them visible (more at night per design).
+            this.npcs.forEach((npc, i) => {
+                if (npc.role === 'civilian') {
+                    npc.mesh.visible = false;
+                } else {
+                    // Suspects mostly appear at night
+                    npc.mesh.visible = !npc.caught;
+                }
+            });
+            // Skip rest at night for civilians but allow suspect chase
+            // (fall through to update logic below)
+        } else {
+            // Day: suspects appear sometimes (~30%), civilians always visible
+            this.npcs.forEach((npc, i) => {
+                if (npc.role === 'civilian') {
+                    npc.mesh.visible = !npc.caught;
+                } else {
+                    // Suspects appear partially in day (every 3rd one visible)
+                    if (npc._dayVisible === undefined) npc._dayVisible = (i % 3 === 0);
+                    npc.mesh.visible = !npc.caught && npc._dayVisible;
+                }
+            });
         }
+        // Common: find nearest visible NPC for interaction
 
         this.nearbyNpc = null;
         let nearest = null;
         let minDist = this.interactDistance;
 
         this.npcs.forEach(npc => {
-            if (npc.caught) {
-                npc.mesh.visible = false;
-                return;
-            }
-            npc.mesh.visible = true;
+            if (npc.caught || !npc.mesh.visible) return;
 
             const dx = playerPos.x - npc.mesh.position.x;
             const dz = playerPos.z - npc.mesh.position.z;
             const d = Math.sqrt(dx * dx + dz * dz);
 
-            // Behavior: detect & flee from player
+            // Civilians: don't flee, just wander idly. Talk via T button.
+            if (npc.role === 'civilian') {
+                // Light wander
+                npc.walkTime += delta;
+                if (npc.walkTime > 5 + Math.random() * 5) {
+                    npc.wanderTarget = {
+                        x: npc.baseX + (Math.random() - 0.5) * 4,
+                        z: npc.baseZ + (Math.random() - 0.5) * 4
+                    };
+                    npc.walkTime = 0;
+                }
+                const tdx = npc.wanderTarget.x - npc.mesh.position.x;
+                const tdz = npc.wanderTarget.z - npc.mesh.position.z;
+                const td = Math.sqrt(tdx * tdx + tdz * tdz);
+                if (td > 0.4) {
+                    this._tryMove(npc, (tdx / td) * 0.35 * delta, (tdz / td) * 0.35 * delta);
+                    npc.mesh.rotation.y = Math.atan2(tdx, tdz);
+                    const swing = Math.sin(time * 3.5) * 0.3;
+                    if (npc.leftHip) npc.leftHip.rotation.x = swing;
+                    if (npc.rightHip) npc.rightHip.rotation.x = -swing;
+                    if (npc.leftShoulder) npc.leftShoulder.rotation.x = -swing * 0.5;
+                    if (npc.rightShoulder) npc.rightShoulder.rotation.x = swing * 0.5;
+                }
+                if (d < minDist) { minDist = d; nearest = npc; }
+                return;
+            }
+
+            // Suspect: detect & flee from player
             if (d < this.detectDistance) {
                 // Flee — speed based on assigned criminal difficulty
                 const crimId = npc.assignment ? npc.assignment.criminal : 0;
@@ -388,11 +439,7 @@ const NPCSystem = {
                 }
             }
 
-            // Talk icon visibility
-            if (npc.talkIcon) {
-                npc.talkIcon.visible = true;
-                npc.talkIcon.scale.setScalar(0.4 + Math.sin(time * 3) * 0.05);
-            }
+            // Head indicators removed by design
 
             if (d < minDist) {
                 minDist = d;
@@ -402,10 +449,56 @@ const NPCSystem = {
 
         this.nearbyNpc = nearest;
 
-        // Auto-catch when very close — no button needed
+        // Civilian: direct talk on proximity. Suspect: trigger minigame.
         if (nearest && !this.dialogOpen) {
-            this.catch(nearest);
+            if (nearest.role === 'civilian') {
+                this.talkCivilian(nearest);
+            } else {
+                this.tryCatchSuspect(nearest);
+            }
         }
+    },
+
+    tryCatchSuspect(npc) {
+        if (npc.caught || npc._inMinigame) return;
+        // If Minigame is busy or paused, defer
+        if (typeof Minigame === 'undefined' || Minigame.active || gameState.isPaused) return;
+        npc._inMinigame = true;
+        // Use Minigame.startSuspectMinigame (easier mode)
+        Minigame.startSuspectMinigame(npc, (success) => {
+            npc._inMinigame = false;
+            if (success) this.catch(npc);
+            else {
+                // Escape: relocate
+                const ang = Math.random() * Math.PI * 2;
+                npc.mesh.position.x = npc.baseX + Math.cos(ang) * 6;
+                npc.mesh.position.z = npc.baseZ + Math.sin(ang) * 6;
+            }
+        });
+    },
+
+    talkCivilian(npc) {
+        if (npc.visited) return; // only first encounter shows full hint
+        npc.visited = true;
+        document.getElementById('npc-name').textContent = '👤 ' + npc.name;
+        document.getElementById('npc-text').textContent = npc.story || '안녕하세요 형사님.';
+
+        const hintBox = document.getElementById('npc-hint-box');
+        if (npc.assignment) {
+            const colors = ['#ef4444', '#f97316', '#a855f7'];
+            const names = HintSystem.criminalNames;
+            hintBox.style.display = 'block';
+            hintBox.style.borderColor = colors[npc.assignment.criminal];
+            hintBox.style.color = colors[npc.assignment.criminal];
+            hintBox.innerHTML = `<div style="font-size:11px; opacity:0.7; margin-bottom:4px;">${names[npc.assignment.criminal]}</div>"${npc.assignment.text}"`;
+            HintSystem.collectHintFromNPC(npc.assignment.criminal, npc.assignment.order, npc.assignment.text);
+        } else {
+            hintBox.style.display = 'none';
+        }
+        document.getElementById('npc-dialog').style.display = 'block';
+        this.dialogOpen = true;
+        gameState.coins += 5;
+        if (typeof SoundManager !== 'undefined') SoundManager.playSFX('collect');
     },
 
     catch(npc) {

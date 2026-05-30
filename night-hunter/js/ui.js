@@ -37,6 +37,7 @@ const GameUI = {
     },
 
     createActionButtons() {
+        // Memo (수사 노트)
         const mb = document.createElement('button');
         mb.id = 'btn-memo-ui';
         mb.textContent = '📋';
@@ -55,6 +56,26 @@ const GameUI = {
         mb.addEventListener('click', () => HintSystem.toggleMemo());
         mb.addEventListener('touchstart', e => { e.preventDefault(); HintSystem.toggleMemo(); }, { passive: false });
         document.body.appendChild(mb);
+
+        // Wanted poster (수배 전단) — re-openable from inventory
+        const wp = document.createElement('button');
+        wp.id = 'btn-wanted-poster';
+        wp.textContent = '📜';
+        wp.style.cssText = `
+            position:fixed;
+            right:calc(202px + env(safe-area-inset-right, 0px));
+            bottom:calc(85px + env(safe-area-inset-bottom, 0px));
+            width:48px; height:48px; border-radius:50%;
+            border:2px solid rgba(180,120,40,0.6);
+            background:rgba(180,120,40,0.3);
+            backdrop-filter:blur(8px); color:#fff; font-size:20px;
+            cursor:pointer; touch-action:none; z-index:30;
+            pointer-events:auto;
+            display:flex; align-items:center; justify-content:center;
+        `;
+        wp.addEventListener('click', () => { if (window.showWantedPoster) window.showWantedPoster(false); });
+        wp.addEventListener('touchstart', e => { e.preventDefault(); if (window.showWantedPoster) window.showWantedPoster(false); }, { passive: false });
+        document.body.appendChild(wp);
     },
 
     createLandscapeOverlay() {

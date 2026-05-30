@@ -1275,9 +1275,120 @@ function startGame() {
     // Defensive: each step independently — failures in audio MUST NOT block render loop
     try { SoundManager.init(); } catch (e) { console.warn('SoundManager.init failed:', e); }
     try { SoundManager.playBGM('day'); } catch (e) { console.warn('SoundManager.playBGM failed:', e); }
-    try { showMessage('📻 도시 어딘가에 아이들이 납치되어 있습니다.\n힌트를 찾아 수사를 시작하세요.'); } catch (e) {}
     try { updateCamera(); } catch (e) { console.warn('updateCamera failed:', e); }
-    animate();
+
+    // Show wanted poster intro (game starts AFTER user dismisses)
+    try { showWantedPoster(true); } catch (e) {
+        console.warn('Wanted poster failed:', e);
+        animate();
+    }
 }
+
+// === WANTED POSTER (수배전단) ===
+// Shown at game start as briefing, accessible later from inventory
+function showWantedPoster(firstTime) {
+    let modal = document.getElementById('wanted-poster-modal');
+    if (modal) modal.remove();
+
+    modal = document.createElement('div');
+    modal.id = 'wanted-poster-modal';
+    modal.style.cssText = `
+        position:fixed; inset:0; z-index:250;
+        background:rgba(0,0,0,0.85); backdrop-filter:blur(8px);
+        display:flex; align-items:center; justify-content:center;
+        padding:env(safe-area-inset-top, 10px) env(safe-area-inset-right, 10px) env(safe-area-inset-bottom, 10px) env(safe-area-inset-left, 10px);
+        font-family:'Inter',sans-serif; color:#222;
+        animation:msgIn 0.4s ease;
+    `;
+
+    // Build mugshots as inline SVG (3 suspects)
+    function mugshot(criminal, color, name, traits) {
+        return `
+            <div style="display:flex; flex-direction:column; align-items:center; margin:0 6px;">
+                <div style="
+                    width:90px; height:110px; background:#fff;
+                    border:3px solid #222; border-radius:4px; padding:4px;
+                    box-shadow:2px 2px 0 #555;
+                ">
+                    <svg viewBox="0 0 90 100" width="100%" height="100%">
+                        <rect x="0" y="0" width="90" height="100" fill="#e8d4a8"/>
+                        <!-- height markers -->
+                        <line x1="0" y1="25" x2="90" y2="25" stroke="#666" stroke-width="0.4"/>
+                        <line x1="0" y1="50" x2="90" y2="50" stroke="#666" stroke-width="0.4"/>
+                        <line x1="0" y1="75" x2="90" y2="75" stroke="#666" stroke-width="0.4"/>
+                        <!-- silhouette / face -->
+                        <ellipse cx="45" cy="45" rx="20" ry="25" fill="#${color}"/>
+                        <!-- hood -->
+                        <path d="M 22 38 Q 45 15, 68 38 L 68 50 L 22 50 Z" fill="#1a1a1a"/>
+                        <!-- eyes -->
+                        <circle cx="38" cy="45" r="2.5" fill="#fff"/>
+                        <circle cx="52" cy="45" r="2.5" fill="#fff"/>
+                        <circle cx="38" cy="45" r="1.4" fill="#ff2222"/>
+                        <circle cx="52" cy="45" r="1.4" fill="#ff2222"/>
+                        <!-- mask -->
+                        <rect x="32" y="55" width="26" height="8" fill="#1a1a1a"/>
+                        <!-- shoulders -->
+                        <path d="M 18 100 L 18 80 Q 45 70, 72 80 L 72 100 Z" fill="#1a1a1a"/>
+                        <!-- ID plate -->
+                        <rect x="22" y="86" width="46" height="10" fill="#fff" stroke="#000" stroke-width="0.5"/>
+                        <text x="45" y="93" text-anchor="middle" font-size="6" font-family="monospace">${criminal}</text>
+                    </svg>
+                </div>
+                <div style="margin-top:6px; font-size:11px; font-weight:800; color:#fff; letter-spacing:1px;">${name}</div>
+                <div style="margin-top:2px; font-size:9px; color:#bbb; text-align:center; max-width:90px; line-height:1.3;">${traits}</div>
+            </div>
+        `;
+    }
+
+    modal.innerHTML = `
+        <div style="
+            background:linear-gradient(180deg, #f4e9d0 0%, #e8d4a8 100%);
+            border:6px double #5a3a1a; border-radius:8px;
+            padding:18px 22px; max-width:92vw; max-height:90vh; overflow-y:auto;
+            box-shadow:0 12px 50px rgba(0,0,0,0.7);
+            text-align:center; position:relative;
+        ">
+            <div style="font-size:11px; letter-spacing:6px; color:#7a4a1a; margin-bottom:4px; font-weight:700;">DETECTIVE BRIEFING</div>
+            <h2 style="margin:0 0 4px; font-size:26px; color:#3a1a0a; letter-spacing:2px; font-weight:900;">⚠ 수배 전단 ⚠</h2>
+            <div style="font-size:11px; color:#7a4a1a; margin-bottom:14px;">아이들을 납치한 흉악범 3명. 반드시 검거하라.</div>
+            <div style="display:flex; justify-content:center; flex-wrap:wrap; background:#1a1a1a; padding:14px 8px; border-radius:6px;">
+                ${mugshot('CR-001', 'd4a884', '1호 길동', '전직 학원 강사<br/>주택가 잠복')}
+                ${mugshot('CR-002', 'c89070', '2호 철수', '가짜 카페 사장<br/>상업지구')}
+                ${mugshot('CR-003', 'b88060', '3호 영수', '폐공장 조직 두목<br/>공장지대')}
+            </div>
+            ${firstTime ? `
+            <div style="margin-top:14px; padding:12px; background:rgba(122,74,26,0.15); border-radius:6px; font-size:12px; color:#3a1a0a; text-align:left; line-height:1.6;">
+                <b>📋 수사 지침</b><br/>
+                • 시민들에게 말을 걸어 단서를 수집하세요<br/>
+                • 도망치는 수배범을 검거하면 추가 단서 획득<br/>
+                • 단서를 모두 모으면 밤에 납치범이 출현합니다<br/>
+                • 납치한 아이를 구출해 경찰서로 안전히 데려가세요
+            </div>
+            ` : ''}
+            <button id="wp-close" style="
+                margin-top:14px; padding:10px 30px; border:none; border-radius:6px;
+                background:linear-gradient(135deg,#3a1a0a, #5a3a1a);
+                color:#f4e9d0; font-size:13px; font-weight:800; letter-spacing:2px;
+                cursor:pointer; font-family:'Inter',sans-serif;
+                touch-action:manipulation;
+            ">${firstTime ? '수사 시작' : '닫기'}</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    const close = () => {
+        modal.style.transition = 'opacity 0.3s';
+        modal.style.opacity = '0';
+        setTimeout(() => modal.remove(), 300);
+        if (firstTime) {
+            try { showMessage('📻 시민들에게 말을 걸어 단서를 수집하세요.'); } catch(e) {}
+            animate();
+        }
+    };
+    const btn = document.getElementById('wp-close');
+    btn.addEventListener('click', close);
+    btn.addEventListener('touchstart', e => { e.preventDefault(); close(); }, { passive: false });
+}
+window.showWantedPoster = showWantedPoster;
 
 createStartScreen();
