@@ -18,14 +18,15 @@ const NPCSystem = {
     },
 
     distributeHints() {
-        // Build list of (criminal, order, text) tuples
         this.hintAssignments = [];
-        const hintTexts = HintSystem.hintTexts;
+        const hintTexts = (HintSystem && HintSystem.hintTexts) || { 0: [], 1: [], 2: [] };
+        const hintsRequired = (HintSystem && HintSystem.hintsRequired) || [3, 4, 5];
         for (let c = 0; c < 3; c++) {
-            const texts = hintTexts[c];
-            const required = HintSystem.hintsRequired[c];
+            const texts = hintTexts[c] || [];
+            const required = hintsRequired[c] || 3;
             for (let o = 0; o < required; o++) {
-                this.hintAssignments.push({ criminal: c, order: o, text: texts[o] });
+                const t = texts[o] || ('단서 ' + (o + 1));
+                this.hintAssignments.push({ criminal: c, order: o, text: t });
             }
         }
     },

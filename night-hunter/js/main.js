@@ -69,8 +69,8 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pixelRatio));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputColorSpace = THREE.SRGBColorSpace !== undefined ? THREE.SRGBColorSpace : undefined;
-renderer.outputEncoding = THREE.sRGBEncoding;  // fallback for r128
+// r128 uses outputEncoding (newer r150+ uses outputColorSpace)
+renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.physicallyCorrectLights = false;
@@ -102,42 +102,21 @@ const VignetteShader = {
 };
 
 function buildComposer() {
+    if (!THREE.EffectComposer || !THREE.RenderPass) return;
     try {
         composer = new THREE.EffectComposer(renderer);
         composer.addPass(new THREE.RenderPass(scene, camera));
 
-        if (Q.bloom) {
+        if (Q.bloom && THREE.UnrealBloomPass) {
             bloomPass = new THREE.UnrealBloomPass(
                 new THREE.Vector2(window.innerWidth, window.innerHeight),
-                0.2,   // strength (day default; night raises to 0.5)
-                0.6,   // radius
-                0.85   // threshold
+                0.25, 0.6, 0.85
             );
             composer.addPass(bloomPass);
         }
-
-        if (Q.vignette) {
-            vignettePass = new THREE.ShaderPass(VignetteShader);
-            composer.addPass(vignettePass);
-        }
-
-        // SMAA (better than FXAA for stylized edges) — fallback to FXAA
-        if (Q.smaa && THREE.SMAAPass) {
-            smaaPass = new THREE.SMAAPass(
-                window.innerWidth * renderer.getPixelRatio(),
-                window.innerHeight * renderer.getPixelRatio()
-            );
-            composer.addPass(smaaPass);
-        } else if (Q.smaa && THREE.FXAAShader) {
-            smaaPass = new THREE.ShaderPass(THREE.FXAAShader);
-            smaaPass.material.uniforms['resolution'].value.set(
-                1 / (window.innerWidth * renderer.getPixelRatio()),
-                1 / (window.innerHeight * renderer.getPixelRatio())
-            );
-            composer.addPass(smaaPass);
-        }
+        // SMAA/Vignette removed for stability — Bloom is enough for atmosphere
     } catch (e) {
-        console.warn('Postprocessing unavailable:', e);
+        console.warn('Postprocessing build failed, falling back to basic render:', e);
         composer = null;
     }
 }
@@ -678,13 +657,13 @@ staminaBarDiv.innerHTML = '<div id="stamina-fill"></div>';
 document.getElementById('hud').appendChild(staminaBarDiv);
 
 // ── System Init (DOM 요소 생성 이후) ──
-HintSystem.init(scene);
-EnemySystem.init(scene, buildingData);
-Minigame.init();
-Shop.init(scene);
-NPCSystem.init(scene);
-AmbientCity.init(scene);
-GameUI.init();
+try { HintSystem.init(scene); } catch (e) { console.error('HintSystem.init failed:', e); }
+try { EnemySystem.init(scene, buildingData); } catch (e) { console.error('EnemySystem.init failed:', e); }
+try { Minigame.init(); } catch (e) { console.error('Minigame.init failed:', e); }
+try { Shop.init(scene); } catch (e) { console.error('Shop.init failed:', e); }
+try { NPCSystem.init(scene); } catch (e) { console.error('NPCSystem.init failed:', e); }
+try { AmbientCity.init(scene); } catch (e) { console.error('AmbientCity.init failed:', e); }
+try { GameUI.init(); } catch (e) { console.error('GameUI.init failed:', e); }
 
 // ── Joystick Logic ──
 let joystickActive = false;
@@ -1138,29 +1117,35 @@ function animate() {
     minimapTimer += delta;
 
     if (!gameState.isPaused) {
-        updatePlayer(delta);
-        updateTimer(delta);
-        updateCamera();
-        updateHUD();
-        HintSystem.update(playerGroup.position, delta, clock.elapsedTime);
-        EnemySystem.update(playerGroup.position, delta, clock.elapsedTime);
-        Shop.update(playerGroup.position);
-        NPCSystem.update(playerGroup.position, delta, clock.elapsedTime);
-        AmbientCity.update(delta, clock.elapsedTime);
-        Minigame.checkCatchable(playerGroup.position);
-        // Throttle minimap to ~6 FPS (mobile battery saver)
+        try { updatePlayer(delta); } catch(e) { console.warn('updatePlayer', e); }
+        try { updateTimer(delta); } catch(e) { console.warn('updateTimer', e); }
+        try { updateCamera(); } catch(e) { console.warn('updateCamera', e); }
+        try { updateHUD(); } catch(e) { console.warn('updateHUD', e); }
+        try { HintSystem.update(playerGroup.position, delta, clock.elapsedTime); } catch(e) { console.warn('HintSystem', e); }
+        try { EnemySystem.update(playerGroup.position, delta, clock.elapsedTime); } catch(e) { console.warn('EnemySystem', e); }
+        try { Shop.update(playerGroup.position); } catch(e) { console.warn('Shop', e); }
+        try { NPCSystem.update(playerGroup.position, delta, clock.elapsedTime); } catch(e) { console.warn('NPCSystem', e); }
+        try { if (typeof AmbientCity !== 'undefined') AmbientCity.update(delta, clock.elapsedTime); } catch(e) { console.warn('AmbientCity', e); }
+        try { Minigame.checkCatchable(playerGroup.position); } catch(e) { console.warn('Minigame.check', e); }
         if (minimapTimer > 0.16) {
-            GameUI.updateMinimap(playerGroup.position, playerFacingAngle, cameraAngleY);
-            GameUI.updateHintCounter();
+            try { GameUI.updateMinimap(playerGroup.position, playerFacingAngle, cameraAngleY); } catch(e) { console.warn('minimap', e); }
+            try { GameUI.updateHintCounter(); } catch(e) {}
             minimapTimer = 0;
         }
     }
-    Minigame.update(delta);
-    Minigame.updateRescueChildren(delta);
-    DayNight.updateStarTwinkle(clock.elapsedTime);
+    try { Minigame.update(delta); } catch(e) { console.warn('Minigame.update', e); }
+    try { Minigame.updateRescueChildren(delta); } catch(e) { console.warn('Minigame.rescue', e); }
+    try { DayNight.updateStarTwinkle(clock.elapsedTime); } catch(e) {}
 
-    if (composer) composer.render();
-    else renderer.render(scene, camera);
+    // Render with composer fallback
+    try {
+        if (composer) composer.render();
+        else renderer.render(scene, camera);
+    } catch (e) {
+        console.warn('Render failed, falling back:', e);
+        composer = null;
+        try { renderer.render(scene, camera); } catch (e2) { console.error('Renderer fatal:', e2); }
+    }
 }
 
 // ── Start Screen ──
@@ -1287,11 +1272,11 @@ function startGame() {
         setTimeout(() => screen.remove(), 500);
     }
 
-    SoundManager.init();
-    SoundManager.playBGM('day');
-
-    showMessage('📻 도시 어딘가에 아이들이 납치되어 있습니다.\n힌트를 찾아 수사를 시작하세요.');
-    updateCamera();
+    // Defensive: each step independently — failures in audio MUST NOT block render loop
+    try { SoundManager.init(); } catch (e) { console.warn('SoundManager.init failed:', e); }
+    try { SoundManager.playBGM('day'); } catch (e) { console.warn('SoundManager.playBGM failed:', e); }
+    try { showMessage('📻 도시 어딘가에 아이들이 납치되어 있습니다.\n힌트를 찾아 수사를 시작하세요.'); } catch (e) {}
+    try { updateCamera(); } catch (e) { console.warn('updateCamera failed:', e); }
     animate();
 }
 
