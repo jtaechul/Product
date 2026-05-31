@@ -20,15 +20,15 @@ const SoundManager = {
                 this.ctx.resume().catch(e => console.warn('AudioCtx resume failed:', e));
             }
             this.masterGain = this.ctx.createGain();
-            this.masterGain.gain.value = 0.4;
+            this.masterGain.gain.value = 0.85;
             this.masterGain.connect(this.ctx.destination);
 
             this.bgmGain = this.ctx.createGain();
-            this.bgmGain.gain.value = 0.5;
+            this.bgmGain.gain.value = 0.95;
             this.bgmGain.connect(this.masterGain);
 
             this.sfxGain = this.ctx.createGain();
-            this.sfxGain.gain.value = 0.7;
+            this.sfxGain.gain.value = 0.9;
             this.sfxGain.connect(this.masterGain);
 
             // Convolver reverb
@@ -44,9 +44,72 @@ const SoundManager = {
             this.bgmGain.connect(this.reverbSend);
 
             this.initialized = true;
+            // Register global gesture/visibility listeners ONCE for ctx unlock + BGM restart
+            this._registerRecoveryListeners();
         } catch (e) {
             console.warn('Audio API not available', e);
         }
+    },
+
+    // Aggressive AudioContext unlock + BGM auto-restart
+    _registerRecoveryListeners() {
+        if (this._recoveryArmed) return;
+        this._recoveryArmed = true;
+
+        const tryUnlock = () => {
+            if (!this.ctx) return;
+            if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
+                this.ctx.resume().then(() => {
+                    this._playSilentTick();
+                    if (this._pendingBGMType && !this.bgmActive) {
+                        this._actuallyPlayBGM(this._pendingBGMType);
+                    } else if (this.bgmActive && this.bgmType) {
+                        // Re-kick: BGM was thought running but ctx was suspended; restart cleanly
+                        this._actuallyPlayBGM(this.bgmType);
+                    }
+                }).catch(() => {});
+            } else {
+                // Already running: if BGM should be playing but isn't, start it
+                if (this._pendingBGMType && !this.bgmActive) {
+                    this._actuallyPlayBGM(this._pendingBGMType);
+                }
+            }
+        };
+
+        // Unlock on ANY user gesture
+        ['click', 'touchstart', 'touchend', 'keydown', 'pointerdown'].forEach(ev => {
+            window.addEventListener(ev, tryUnlock, { passive: true });
+        });
+        // Re-check on visibility/orientation/focus
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) tryUnlock();
+        });
+        window.addEventListener('focus', tryUnlock);
+        window.addEventListener('orientationchange', () => setTimeout(tryUnlock, 200));
+        window.addEventListener('resize', () => setTimeout(tryUnlock, 200));
+
+        // Heartbeat watchdog: every 2s, if BGM should be playing but ctx is dead, recover
+        setInterval(() => {
+            if (!this.ctx) return;
+            if (this._pendingBGMType && !this.bgmActive && this.ctx.state === 'running') {
+                this._actuallyPlayBGM(this._pendingBGMType);
+            }
+            if (this.bgmActive && this.ctx.state !== 'running') {
+                this.ctx.resume().catch(() => {});
+            }
+        }, 2000);
+    },
+
+    // Play a near-silent ultrashort sample to force iOS audio pipeline alive
+    _playSilentTick() {
+        if (!this.ctx) return;
+        try {
+            const buf = this.ctx.createBuffer(1, 1, this.ctx.sampleRate);
+            const src = this.ctx.createBufferSource();
+            src.buffer = buf;
+            src.connect(this.ctx.destination);
+            src.start(0);
+        } catch (e) {}
     },
 
     _makeImpulseResponse(duration, decay, reverse) {
@@ -184,9 +247,16 @@ const SoundManager = {
 
     playBGM(type) {
         if (!this.ctx) return;
-        // Ensure context is running (mobile may still be suspended)
-        if (this.ctx.state === 'suspended') {
-            this.ctx.resume().then(() => this._actuallyPlayBGM(type)).catch(() => this._actuallyPlayBGM(type));
+        this._pendingBGMType = type;
+        // Ensure pipeline alive (no-op if already running)
+        this._playSilentTick();
+        if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
+            this.ctx.resume().then(() => {
+                this._playSilentTick();
+                this._actuallyPlayBGM(type);
+            }).catch(() => {
+                // Recovery listeners will retry on next gesture
+            });
         } else {
             this._actuallyPlayBGM(type);
         }
@@ -196,8 +266,13 @@ const SoundManager = {
         this.stopBGM();
         this.bgmActive = true;
         this.bgmType = type;
-        if (type === 'day') this._playDayBGM();
-        else this._playNightBGM();
+        this._pendingBGMType = null;
+        try {
+            if (type === 'day') this._playDayBGM();
+            else this._playNightBGM();
+        } catch (err) {
+            console.warn('BGM start error:', err);
+        }
     },
 
     // Jazz noir composition — "Detective's Theme"
@@ -237,36 +312,41 @@ const SoundManager = {
         ];
 
         let beat = 0;  // 0..15 within 4-bar loop
+        const swing = 0.66;  // swing 8th delay ratio
 
         // Bass + comping scheduler (called every beat)
         const playBeat = () => {
-            if (!this.bgmActive || this.bgmType !== 'day') return;
-            const bar = Math.floor(beat / 4);
-            const inBar = beat % 4;
+            try {
+                if (!this.bgmActive || this.bgmType !== 'day') return;
+                const bar = Math.floor(beat / 4);
+                const inBar = beat % 4;
 
-            // Walking bass
-            this._playOsc(bass[beat], beatSec * 0.9, 'triangle', this.bgmGain, {
-                vol: 0.16, attack: 0.02, release: 0.1
-            });
-
-            // Drum kit
-            if (inBar === 0) this._playKick(0);
-            if (inBar === 2) this._playSnare(0);
-            this._playHihat(0, false);
-            this._playHihat(beatSec * swing, true);  // swing 8th
-
-            // Chord stabs (comping) — beats 2 and 4 only
-            if (inBar === 1 || inBar === 3) {
-                const voicing = chordVoicings[bar];
-                voicing.forEach(f => {
-                    this._playOsc(f, beatSec * 0.4, 'sawtooth', this.bgmGain, {
-                        vol: 0.03, attack: 0.01, release: 0.15,
-                        filter: { type: 'lowpass', freq: 1800, q: 0.8 }
-                    });
+                // Walking bass
+                this._playOsc(bass[beat], beatSec * 0.9, 'triangle', this.bgmGain, {
+                    vol: 0.16, attack: 0.02, release: 0.1
                 });
-            }
 
-            beat = (beat + 1) % 16;
+                // Drum kit
+                if (inBar === 0) this._playKick(0);
+                if (inBar === 2) this._playSnare(0);
+                this._playHihat(0, false);
+                this._playHihat(beatSec * swing, true);  // swing 8th
+
+                // Chord stabs (comping) — beats 2 and 4 only
+                if (inBar === 1 || inBar === 3) {
+                    const voicing = chordVoicings[bar];
+                    voicing.forEach(f => {
+                        this._playOsc(f, beatSec * 0.4, 'sawtooth', this.bgmGain, {
+                            vol: 0.03, attack: 0.01, release: 0.15,
+                            filter: { type: 'lowpass', freq: 1800, q: 0.8 }
+                        });
+                    });
+                }
+
+                beat = (beat + 1) % 16;
+            } catch (err) {
+                console.warn('Day BGM beat error:', err);
+            }
         };
         playBeat();
         this.bgmTimers.push(setInterval(playBeat, beatSec * 1000));
@@ -274,20 +354,24 @@ const SoundManager = {
         // Melody scheduler — independent timing
         let mIdx = 0;
         const playMelodyNote = () => {
-            if (!this.bgmActive || this.bgmType !== 'day') return;
-            const [freq, dur] = melody[mIdx % melody.length];
-            if (freq !== null) {
-                this._playOsc(freq, dur * beatSec * 0.85, 'triangle', this.bgmGain, {
-                    vol: 0.13, attack: 0.04, release: 0.15,
-                    filter: { type: 'lowpass', freq: 2400, q: 1 }
-                });
-                // Octave shimmer for jazz character
-                this._playOsc(freq * 2, dur * beatSec * 0.4, 'sine', this.bgmGain, {
-                    vol: 0.03, attack: 0.02, release: 0.1
-                });
+            try {
+                if (!this.bgmActive || this.bgmType !== 'day') return;
+                const [freq, dur] = melody[mIdx % melody.length];
+                if (freq !== null) {
+                    this._playOsc(freq, dur * beatSec * 0.85, 'triangle', this.bgmGain, {
+                        vol: 0.13, attack: 0.04, release: 0.15,
+                        filter: { type: 'lowpass', freq: 2400, q: 1 }
+                    });
+                    // Octave shimmer for jazz character
+                    this._playOsc(freq * 2, dur * beatSec * 0.4, 'sine', this.bgmGain, {
+                        vol: 0.03, attack: 0.02, release: 0.1
+                    });
+                }
+                mIdx++;
+                this.bgmTimers.push(setTimeout(playMelodyNote, dur * beatSec * 1000));
+            } catch (err) {
+                console.warn('Day BGM melody error:', err);
             }
-            mIdx++;
-            this.bgmTimers.push(setTimeout(playMelodyNote, dur * beatSec * 1000));
         };
         // Melody starts after 1 bar of intro
         this.bgmTimers.push(setTimeout(playMelodyNote, beatSec * 4 * 1000));

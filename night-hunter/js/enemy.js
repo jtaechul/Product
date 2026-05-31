@@ -56,10 +56,39 @@ const EnemySystem = {
             });
         }
 
+        // Snap all enemy hideouts + hide spots outside any buildings
+        this.enemyData.forEach(data => {
+            const safe = this._findSafePosition(data.hideoutX, data.hideoutZ);
+            data.hideoutX = safe.x;
+            data.hideoutZ = safe.z;
+            if (Array.isArray(data.hideSpots)) {
+                data.hideSpots = data.hideSpots.map(s => this._findSafePosition(s.x, s.z));
+            }
+        });
+
         this.enemyData.forEach(data => {
             const enemy = this.createEnemy(data);
             this.enemies.push(enemy);
         });
+    },
+
+    _findSafePosition(x, z) {
+        if (!window._buildingPositions) return { x, z };
+        let cx = x, cz = z;
+        for (let pass = 0; pass < 6; pass++) {
+            const inside = window._buildingPositions.find(b =>
+                Math.abs(cx - b.x) < b.w / 2 + 0.8 && Math.abs(cz - b.z) < b.d / 2 + 0.8
+            );
+            if (!inside) return { x: cx, z: cz };
+            const dx = cx - inside.x;
+            const dz = cz - inside.z;
+            if (Math.abs(dx) >= Math.abs(dz)) {
+                cx = inside.x + (dx >= 0 ? 1 : -1) * (inside.w / 2 + 2.5);
+            } else {
+                cz = inside.z + (dz >= 0 ? 1 : -1) * (inside.d / 2 + 2.5);
+            }
+        }
+        return { x: cx, z: cz };
     },
 
     createEnemy(data) {
@@ -508,12 +537,23 @@ const EnemySystem = {
     },
 
     getPatrolTarget(enemy) {
+        // Try up to 8 random points; pick first that is not inside any building.
+        for (let i = 0; i < 8; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const r = Math.random() * enemy.patrolRadius;
+            const tx = enemy.hideoutX + Math.cos(angle) * r;
+            const tz = enemy.hideoutZ + Math.sin(angle) * r;
+            if (!this._collidesWithBuilding(tx, tz, enemy.id)) {
+                return { x: tx, z: tz };
+            }
+        }
+        // Fallback: snap any random point to safe position
         const angle = Math.random() * Math.PI * 2;
         const r = Math.random() * enemy.patrolRadius;
-        return {
-            x: enemy.hideoutX + Math.cos(angle) * r,
-            z: enemy.hideoutZ + Math.sin(angle) * r
-        };
+        return this._findSafePosition(
+            enemy.hideoutX + Math.cos(angle) * r,
+            enemy.hideoutZ + Math.sin(angle) * r
+        );
     },
 
     getDistanceToPlayer(enemyIndex, playerPos) {
