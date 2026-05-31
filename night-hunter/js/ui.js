@@ -80,6 +80,36 @@ const GameUI = window.GameUI = {
         this.minimapCanvas = canvas;
         this.minimapCtx = canvas.getContext('2d');
 
+        // 미니맵 외부 (원형 클립 바깥)에 범례 표시 — 캔버스 안에 그리면 원형 마스크에 잘림
+        const legend = document.createElement('div');
+        legend.id = 'minimap-legend';
+        legend.style.cssText = `
+            position:fixed;
+            right:calc(12px + env(safe-area-inset-right, 0px));
+            top:calc(${60 + this.minimapSize + 6}px + env(safe-area-inset-top, 0px));
+            width:${this.minimapSize}px;
+            display:flex; justify-content:space-between;
+            background:rgba(0,0,0,0.55); backdrop-filter:blur(4px);
+            border:1px solid rgba(255,255,255,0.18); border-radius:8px;
+            padding:4px 6px; z-index:25; pointer-events:none;
+            font-family:'Inter',sans-serif;
+        `;
+        legend.innerHTML = `
+            <span style="display:flex;align-items:center;gap:3px;font-size:9px;color:#fff;font-weight:600;">
+                <span style="display:inline-block;width:8px;height:8px;background:rgba(180,140,80,0.95);border-radius:1px;"></span>주택
+            </span>
+            <span style="display:flex;align-items:center;gap:3px;font-size:9px;color:#fff;font-weight:600;">
+                <span style="display:inline-block;width:8px;height:8px;background:rgba(100,140,180,0.95);border-radius:1px;"></span>상업
+            </span>
+            <span style="display:flex;align-items:center;gap:3px;font-size:9px;color:#fff;font-weight:600;">
+                <span style="display:inline-block;width:8px;height:8px;background:rgba(120,120,120,0.95);border-radius:1px;"></span>공업
+            </span>
+            <span style="display:flex;align-items:center;gap:3px;font-size:9px;color:#fff;font-weight:600;">
+                <span style="display:inline-block;width:8px;height:8px;background:rgba(30,100,200,0.95);border-radius:1px;"></span>경찰
+            </span>
+        `;
+        document.body.appendChild(legend);
+
         // 클릭으로 전체 지도 모달 열기
         const openFull = (e) => { e?.preventDefault?.(); this.openFullMap(); };
         container.addEventListener('click', openFull);
@@ -430,20 +460,6 @@ const GameUI = window.GameUI = {
         ctx.rotate(cameraAngle);
         ctx.fillStyle='#ef4444'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center';
         ctx.fillText('N', 0, -half+12);
-        ctx.restore();
-
-        // Zone legend — bottom arc of minimap
-        ctx.save();
-        ctx.font = 'bold 6px sans-serif';
-        ctx.textAlign = 'left';
-        [['rgba(180,140,80,0.95)', '주택', 23],
-         ['rgba(100,140,180,0.95)', '상업', 53],
-         ['rgba(120,120,120,0.95)', '공업', 83]].forEach(([color, label, x]) => {
-            ctx.fillStyle = color;
-            ctx.fillRect(x, size - 14, 6, 6);
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.fillText(label, x + 8, size - 9);
-        });
         ctx.restore();
     },
 
