@@ -75,5 +75,23 @@ Night Hunter는 `night-hunter/` 디렉토리에서 개발 중인 3D 웹 게임 (
 ### 개발 규칙
 
 - **매 단계 완료 후 반드시 테스트**: 코딩 완료 → 로컬 서버 기동 → 브라우저에서 게임 정상 작동 검증 → 문제 발견 시 즉시 수정 → 검증 통과 후 커밋/배포
-- **배포**: 각 단계 완료 시 main 브랜치 머지 후 GitHub Pages 자동 배포
 - **파일 구조**: `index.html`, `style.css`, `js/` 하위 모듈별 분리 (world.js, main.js, daynight.js 등)
+
+## 자동 배포 규칙 (기본 동작)
+
+**코드 수정 작업이 완료되면 항상 자동으로 다음을 수행한다 (사용자가 명시적으로 막지 않는 한):**
+
+1. 작업 브랜치(예: `claude/*`)에 커밋 후 push
+2. `main` 브랜치로 checkout → 최신 pull
+3. 작업 브랜치를 `main`에 `--no-ff` 머지
+4. `main` push → GitHub Pages 자동 배포 트리거
+5. 사용자에게 다음을 보고:
+   - 머지된 커밋 목록
+   - 배포 URL: `https://jtaechul.github.io/Product/night-hunter/` (Night Hunter 기준)
+   - 브라우저 캐시 강력 새로고침 안내 (Ctrl/Cmd+Shift+R)
+6. 작업 브랜치로 다시 checkout (다음 작업 준비)
+
+**예외:**
+- 사용자가 "머지 금지", "PR만 생성해", "main 푸시 금지" 등을 명시한 경우
+- 머지 충돌 발생 시: 자동 해결 시도 후 실패하면 사용자에게 보고
+- 작업이 중단됐거나 QA 미완료 상태인 경우
