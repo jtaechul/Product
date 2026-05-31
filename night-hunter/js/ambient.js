@@ -13,8 +13,10 @@ const AmbientCity = window.AmbientCity = {
         this.initialized = true;
     },
 
-    // Spawn 6 cars on main roads at random positions, moving along the road
+    // Spawn cars on main roads at random positions, moving along the road
     spawnInitialCars() {
+        const Q = window.GameQuality?.cfg || {};
+        const carCount = Q.carCount || 6;
         const roads = [
             { type: 'H', z: 50, dirChoice: [-1, 1] },
             { type: 'H', z: 5,  dirChoice: [-1, 1] },
@@ -22,7 +24,7 @@ const AmbientCity = window.AmbientCity = {
             { type: 'V', x: -50, dirChoice: [-1, 1] },
             { type: 'V', x: 50,  dirChoice: [-1, 1] },
             { type: 'V', x: 100, dirChoice: [-1, 1] },
-        ];
+        ].slice(0, carCount);
         const carColors = [0xcc1a1a, 0x1a44cc, 0xdddddd, 0x111111, 0xffcc00, 0x22aa44, 0x884488];
         roads.forEach((road, i) => {
             const dir = road.dirChoice[Math.floor(Math.random() * 2)];
@@ -104,12 +106,14 @@ const AmbientCity = window.AmbientCity = {
     },
 
     spawnInitialWalkers() {
-        // Spawn 10 pedestrians on sidewalks (near roads, walking along)
+        // Spawn pedestrians on sidewalks (near roads, walking along)
+        const Q = window.GameQuality?.cfg || {};
+        const walkerCount = Q.walkerCount || 10;
         const sidewalkSpots = [
             [-90, 56], [-30, 56], [30, 56], [90, 56],
             [-90, 11], [-30, 11], [30, 11], [90, 11],
             [-60, -39], [60, -39],
-        ];
+        ].slice(0, walkerCount);
         sidewalkSpots.forEach(([x, z]) => {
             const walker = this.makeWalker();
             walker.mesh.position.set(x, 0, z);

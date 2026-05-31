@@ -148,3 +148,103 @@ html, body {
     from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
     to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
+
+/* ===== iPhone 가로 모드 컴팩트 UI (높이 < 500 = 가로 보이는 모바일) ===== */
+@media (max-height: 500px) and (orientation: landscape) {
+    /* HUD top: 패딩 감소 + 크기 축소 */
+    #hud-top {
+        padding: calc(4px + env(safe-area-inset-top, 0px)) calc(8px + env(safe-area-inset-right, 0px)) 4px calc(8px + env(safe-area-inset-left, 0px));
+    }
+    #health-bar .heart { font-size: 14px; }
+    #time-display, #coin-display {
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 12px;
+    }
+    #day-text { font-size: 9px; }
+    /* HUD bottom (arrest count): 더 위로 (top 패딩 줄어들었으니까) */
+    #hud-bottom {
+        top: calc(34px + env(safe-area-inset-top, 0px));
+    }
+    #arrest-count { font-size: 10px; padding: 3px 8px; }
+
+    /* Joystick: 작게 + 우측 패딩 보장 */
+    #joystick-outer {
+        width: 90px !important; height: 90px !important;
+        left: calc(12px + env(safe-area-inset-left, 0px)) !important;
+        bottom: calc(15px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+    #joystick-inner { width: 36px !important; height: 36px !important; }
+
+    /* RUN 버튼 위치 */
+    #run-btn {
+        width: 48px !important; height: 48px !important;
+        right: calc(72px + env(safe-area-inset-right, 0px)) !important;
+        bottom: calc(15px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    /* 우측 액션 버튼들: 한 줄로 정렬 */
+    #btn-inventory {
+        width: 40px !important; height: 40px !important;
+        right: calc(130px + env(safe-area-inset-right, 0px)) !important;
+        bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+        font-size: 16px !important;
+    }
+    #btn-memo-ui {
+        width: 40px !important; height: 40px !important;
+        right: calc(180px + env(safe-area-inset-right, 0px)) !important;
+        bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+        font-size: 16px !important;
+    }
+    #btn-wanted-poster {
+        width: 40px !important; height: 40px !important;
+        right: calc(230px + env(safe-area-inset-right, 0px)) !important;
+        bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+        font-size: 16px !important;
+    }
+    #btn-bgm-toggle {
+        width: 38px !important; height: 38px !important;
+        right: calc(14px + env(safe-area-inset-right, 0px)) !important;
+        bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important;
+        font-size: 15px !important;
+    }
+
+    /* 미니맵 사이즈 축소 */
+    #minimap-container {
+        width: 90px !important; height: 90px !important;
+        top: calc(40px + env(safe-area-inset-top, 0px)) !important;
+    }
+    #hint-counter {
+        top: calc(140px + env(safe-area-inset-top, 0px)) !important;
+        font-size: 10px !important;
+        padding: 3px 8px !important;
+    }
+
+    /* 스태미나 바: 작게 + 위치 조정 */
+    #stamina-bar {
+        left: calc(110px + env(safe-area-inset-left, 0px)) !important;
+        bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+        width: 100px !important;
+        height: 4px !important;
+    }
+
+    /* 메시지 박스: 컴팩트 */
+    #message-box {
+        top: 18% !important;
+        font-size: 12px !important;
+        padding: 10px 18px !important;
+        max-width: 70vw !important;
+    }
+}
+
+/* 추가: 매우 작은 가로 (iPhone SE 등) */
+@media (max-height: 380px) and (orientation: landscape) {
+    #joystick-outer { width: 75px !important; height: 75px !important; }
+    #joystick-inner { width: 30px !important; height: 30px !important; }
+    #run-btn { width: 42px !important; height: 42px !important; right: calc(60px + env(safe-area-inset-right, 0px)) !important; }
+    #btn-inventory, #btn-memo-ui, #btn-wanted-poster { width: 36px !important; height: 36px !important; font-size: 14px !important; }
+    #btn-inventory { right: calc(110px + env(safe-area-inset-right, 0px)) !important; }
+    #btn-memo-ui { right: calc(155px + env(safe-area-inset-right, 0px)) !important; }
+    #btn-wanted-poster { right: calc(200px + env(safe-area-inset-right, 0px)) !important; }
+    #minimap-container { width: 75px !important; height: 75px !important; }
+}

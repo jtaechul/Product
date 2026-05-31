@@ -49,17 +49,21 @@ scene.fog = new THREE.Fog(0xcfeaff, 60, 180);
 
 const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
-// ── Quality Tier System (상/중/하) ──
+// ── Quality Tier System (상/중/하/최저) ──
 // Auto-selected by device, can downgrade on low FPS
 const QUALITY = {
-    HIGH:   { shadow: 2048, shadowEnabled: true,  bloom: true,  fogFar: 220, far: 500, pixelRatio: 2,   segments: 32 },
-    MEDIUM: { shadow: 1024, shadowEnabled: true,  bloom: true,  fogFar: 160, far: 300, pixelRatio: 1.3, segments: 24 },
-    LOW:    { shadow: 0,    shadowEnabled: false, bloom: false, fogFar: 120, far: 200, pixelRatio: 1.0, segments: 16 }
+    HIGH:   { shadow: 2048, shadowEnabled: true,  bloom: true,  fogFar: 220, far: 500, pixelRatio: 2,   segments: 32, antialias: true,  carCount: 6, walkerCount: 10 },
+    MEDIUM: { shadow: 1024, shadowEnabled: true,  bloom: true,  fogFar: 160, far: 300, pixelRatio: 1.3, segments: 24, antialias: true,  carCount: 6, walkerCount: 10 },
+    LOW:    { shadow: 0,    shadowEnabled: false, bloom: false, fogFar: 120, far: 200, pixelRatio: 1.0, segments: 16, antialias: false, carCount: 4, walkerCount: 6  },
+    POTATO: { shadow: 0,    shadowEnabled: false, bloom: false, fogFar: 80,  far: 150, pixelRatio: 0.75, segments: 10, antialias: false, carCount: 2, walkerCount: 3  }
 };
-// Detect low-end mobile (older iPhones, low memory)
-const lowEnd = isMobile && (navigator.deviceMemory && navigator.deviceMemory < 4)
+// Detect low-end mobile (older iPhones, low memory, low CPU count)
+const lowEnd = (isMobile && navigator.deviceMemory && navigator.deviceMemory <= 4)
+    || (isMobile && navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4)
     || (window.innerWidth * window.innerHeight < 700000);
-let qualityTier = lowEnd ? 'LOW' : (isMobile ? 'MEDIUM' : 'HIGH');
+const veryLowEnd = (isMobile && navigator.deviceMemory && navigator.deviceMemory <= 2)
+    || (isMobile && navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2);
+let qualityTier = veryLowEnd ? 'POTATO' : (lowEnd ? 'LOW' : (isMobile ? 'MEDIUM' : 'HIGH'));
 let Q = QUALITY[qualityTier];
 window.GameQuality = { get tier() { return qualityTier; }, get cfg() { return Q; } };
 
@@ -67,10 +71,10 @@ const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerH
 scene.fog.far = Q.fogFar;
 const renderer = new THREE.WebGLRenderer({
     canvas: document.getElementById('gameCanvas'),
-    antialias: true,
-    powerPreference: 'high-performance'
+    antialias: Q.antialias !== false,
+    powerPreference: Q.pixelRatio <= 1 ? 'low-power' : 'high-performance'
 });
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(window.innerWidth, window.innerHeight, true);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pixelRatio));
 renderer.shadowMap.enabled = Q.shadowEnabled;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -127,12 +131,36 @@ function buildComposer() {
 }
 buildComposer();
 
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
+// === 강건한 리사이즈 (좌측 반쪽 노출 버그 수정) ===
+// 모바일/iPad에서 layout이 안정화되기 전에 setSize가 호출되어 캔버스 크기가
+// viewport보다 작게 잡히는 문제를 다중 trigger로 보정한다.
+function resizeRendererToViewport() {
+    const w = Math.max(window.innerWidth, document.documentElement.clientWidth);
+    const h = Math.max(window.innerHeight, document.documentElement.clientHeight);
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    if (composer) composer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(w, h, true);  // updateStyle=true → CSS도 정확히 맞춤
+    if (composer) composer.setSize(w, h);
+    // Canvas CSS를 강제로 컨테이너에 맞춤 (Safari iOS 백업)
+    const canvas = renderer.domElement;
+    if (canvas) {
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.display = 'block';
+    }
+}
+window.addEventListener('resize', resizeRendererToViewport);
+window.addEventListener('orientationchange', () => {
+    // Safari iOS는 orientationchange 직후 innerWidth가 즉시 갱신되지 않음 → 두 단계 재호출
+    setTimeout(resizeRendererToViewport, 100);
+    setTimeout(resizeRendererToViewport, 400);
 });
+window.addEventListener('load', () => setTimeout(resizeRendererToViewport, 50));
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) setTimeout(resizeRendererToViewport, 100);
+});
+// 게임 시작 직후 layout 안정화를 위해 RAF 안에서 한 번 더 호출
+requestAnimationFrame(() => requestAnimationFrame(resizeRendererToViewport));
 
 // ── Lighting (stylized: warm sun / cool ambient, hemisphere fill) ──
 const hemiLight = new THREE.HemisphereLight(0xbcd4ff, 0x6b5a3e, 0.55);
@@ -1196,6 +1224,7 @@ function monitorFPS(delta) {
 function downgradeQuality() {
     if (qualityTier === 'HIGH') qualityTier = 'MEDIUM';
     else if (qualityTier === 'MEDIUM') qualityTier = 'LOW';
+    else if (qualityTier === 'LOW') qualityTier = 'POTATO';
     else return; // already lowest
     Q = QUALITY[qualityTier];
 
