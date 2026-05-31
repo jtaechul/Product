@@ -913,6 +913,18 @@ const canvas = document.getElementById('gameCanvas');
 let cameraTouchId = null;
 
 canvas.addEventListener('touchstart', e => {
+    // Self-healing: cameraTouchId가 더이상 존재하지 않는 터치를 가리키면 리셋
+    // (앱 전환 시 touchend가 누락되어 stale identifier가 남는 경우 방지)
+    if (cameraTouchId !== null) {
+        let stillExists = false;
+        for (let i = 0; i < e.touches.length; i++) {
+            if (e.touches[i].identifier === cameraTouchId) { stillExists = true; break; }
+        }
+        if (!stillExists) {
+            cameraDragging = false;
+            cameraTouchId = null;
+        }
+    }
     for (let i = 0; i < e.changedTouches.length; i++) {
         const touch = e.changedTouches[i];
         if (touch.clientX > window.innerWidth * 0.35 && cameraTouchId === null) {
@@ -1007,19 +1019,20 @@ canvas.addEventListener('touchend', e => {
 
 // 앱 전환 / 탭 숨김 시 카메라 드래그 상태 초기화
 // (포인터/터치 업 이벤트가 누락되어 카메라가 고정되는 버그 방지)
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) return;
+// iOS Safari는 visibilitychange가 touchstart 뒤에 처리되거나 누락되는 경우가 있어
+// hide/show/blur/focus/pageshow/pagehide + touchcancel 모두에서 reset 한다.
+const _resetCameraInput = () => {
     mouseDown = false;
     cameraDragging = false;
     cameraTouchId = null;
     pinchStartDist = 0;
-});
-window.addEventListener('blur', () => {
-    mouseDown = false;
-    cameraDragging = false;
-    cameraTouchId = null;
-    pinchStartDist = 0;
-});
+};
+document.addEventListener('visibilitychange', _resetCameraInput);
+window.addEventListener('blur', _resetCameraInput);
+window.addEventListener('focus', _resetCameraInput);
+window.addEventListener('pageshow', _resetCameraInput);
+window.addEventListener('pagehide', _resetCameraInput);
+canvas.addEventListener('touchcancel', _resetCameraInput);
 
 // ── Collision Detection ──
 function checkBuildingCollision(nx, nz) {
