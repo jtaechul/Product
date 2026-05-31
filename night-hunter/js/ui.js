@@ -8,7 +8,50 @@ const GameUI = {
     init() {
         this.createMinimap();
         this.createActionButtons();
+        this.createBGMIndicator();
         this.createLandscapeOverlay();
+    },
+
+    createBGMIndicator() {
+        const btn = document.createElement('button');
+        btn.id = 'btn-bgm-toggle';
+        btn.title = 'BGM 토글';
+        btn.style.cssText = `
+            position:fixed;
+            left:calc(12px + env(safe-area-inset-left, 0px));
+            top:calc(60px + env(safe-area-inset-top, 0px));
+            width:42px; height:42px; border-radius:50%;
+            border:2px solid rgba(96,165,250,0.6);
+            background:rgba(15,23,42,0.7);
+            backdrop-filter:blur(8px); color:#fff; font-size:18px;
+            cursor:pointer; touch-action:none; z-index:30;
+            pointer-events:auto;
+            display:flex; align-items:center; justify-content:center;
+        `;
+        btn.textContent = '🔇';
+        const toggle = () => {
+            if (typeof SoundManager === 'undefined') return;
+            try { SoundManager.init(); } catch(e) {}
+            if (SoundManager.ctx && SoundManager.ctx.state !== 'running') {
+                SoundManager.ctx.resume().catch(() => {});
+            }
+            if (SoundManager.bgmActive) {
+                SoundManager.stopBGM();
+                SoundManager._pendingBGMType = null;
+            } else {
+                SoundManager.playBGM(gameState.isDay ? 'day' : 'night');
+            }
+        };
+        btn.addEventListener('click', toggle);
+        btn.addEventListener('touchstart', e => { e.preventDefault(); toggle(); }, { passive: false });
+        document.body.appendChild(btn);
+        // Live status updater
+        setInterval(() => {
+            if (typeof SoundManager === 'undefined') return;
+            const playing = SoundManager.bgmActive && SoundManager.ctx && SoundManager.ctx.state === 'running';
+            btn.textContent = playing ? '🔊' : '🔇';
+            btn.style.borderColor = playing ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)';
+        }, 500);
     },
 
     createMinimap() {

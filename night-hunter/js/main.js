@@ -1630,6 +1630,16 @@ function showCharacterSelect() {
             card.style.borderColor = '#fbbf24';
             card.style.transform = 'scale(1.03)';
             card.style.boxShadow = '0 0 30px rgba(251,191,36,0.4)';
+            // Robust audio unlock: this click is a guaranteed user gesture
+            try {
+                if (typeof SoundManager !== 'undefined') {
+                    SoundManager.init();
+                    if (SoundManager.ctx && SoundManager.ctx.state !== 'running') {
+                        SoundManager.ctx.resume().catch(() => {});
+                    }
+                    SoundManager.playBGM('day');
+                }
+            } catch (e) { console.warn('BGM kick on charselect failed:', e); }
             // Confirm after brief highlight
             setTimeout(() => {
                 modal.style.transition = 'opacity 0.4s';

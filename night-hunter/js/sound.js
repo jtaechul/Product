@@ -20,15 +20,15 @@ const SoundManager = {
                 this.ctx.resume().catch(e => console.warn('AudioCtx resume failed:', e));
             }
             this.masterGain = this.ctx.createGain();
-            this.masterGain.gain.value = 0.4;
+            this.masterGain.gain.value = 0.85;
             this.masterGain.connect(this.ctx.destination);
 
             this.bgmGain = this.ctx.createGain();
-            this.bgmGain.gain.value = 0.5;
+            this.bgmGain.gain.value = 0.95;
             this.bgmGain.connect(this.masterGain);
 
             this.sfxGain = this.ctx.createGain();
-            this.sfxGain.gain.value = 0.7;
+            this.sfxGain.gain.value = 0.9;
             this.sfxGain.connect(this.masterGain);
 
             // Convolver reverb
