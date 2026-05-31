@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roblox R15 Character Preview</title>
+<style>
+    body { margin: 0; overflow: hidden; background: #1a2030; font-family: 'Inter', sans-serif; color: #fff; }
+    #info {
+        position: fixed; top: 12px; left: 12px; z-index: 10;
+        background: rgba(0,0,0,0.55); backdrop-filter: blur(8px);
+        padding: 10px 14px; border-radius: 12px; font-size: 13px;
+        line-height: 1.6; max-width: 320px;
+    }
+    .controls { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+    button {
+        background: #3b82f6; color: #fff; border: none;
+        padding: 6px 12px; border-radius: 6px;
+        cursor: pointer; font-size: 12px; font-weight: 600;
+    }
+    button:hover { background: #2563eb; }
+    button.active { background: #fbbf24; color: #000; }
+    .lbl { font-size: 11px; color: #94a3b8; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+<div id="info">
+    <div style="font-size:11px; letter-spacing:3px; color:#60a5fa; font-weight:700;">ROBLOX R15 PREVIEW</div>
+    <div style="font-size:16px; font-weight:800; margin: 4px 0 8px;">소윤 / 하윤 형사 캐릭터</div>
+    <div class="lbl">캐릭터</div>
+    <div class="controls">
+        <button id="btn-soyun" class="active">소윤 (Soyun)</button>
+        <button id="btn-hayun">하윤 (Hayun)</button>
+    </div>
+    <div class="lbl" style="margin-top:8px;">애니메이션</div>
+    <div class="controls">
+        <button id="btn-idle" class="active">Idle</button>
+        <button id="btn-walk">Walk</button>
+        <button id="btn-salute">Salute</button>
+        <button id="btn-tpose">T-Pose</button>
+    </div>
+    <div style="margin-top:8px; font-size:11px; color:#94a3b8;">
+        마우스 드래그: 카메라 회전 · 휠: 줌
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="js/robloxCharacter.js"></script>
+<script>
+// === 씬 세팅 ===
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xeaf2ff);
+scene.fog = new THREE.Fog(0xeaf2ff, 5, 18);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(1.5, 1.5, 2.8);
+camera.lookAt(0, 1.0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// 플라스틱 톤매핑 + 그림자
+RobloxCharacters.configureRenderer(renderer);
+
+// 조명
+RobloxCharacters.setupLighting(scene);
+
+// 바닥 (그림자 받기)
+const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(10, 10),
+    new THREE.MeshStandardMaterial({ color: 0xe0e8f0, roughness: 0.6 })
+);
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+
+// === 캐릭터 ===
+let character = new RobloxCharacters.Soyun();
+scene.add(character);
+
+// 모드 (idle | walk | salute | tpose)
+let mode = 'idle';
+
+function switchCharacter(klass) {
+    scene.remove(character);
+    character.dispose();
+    character = new klass();
+    scene.add(character);
+    if (mode === 'salute') character.poseSalute();
+    if (mode === 'tpose') {
+        character.setJointRotation('LeftShoulder', 0, 0, Math.PI / 2);
+        character.setJointRotation('RightShoulder', 0, 0, -Math.PI / 2);
+    }
+}
+
+// OrbitControls
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1.0, 0);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 1.5;
+controls.maxDistance = 6;
+
+// === 애니메이션 루프 ===
+const clock = new THREE.Clock();
+function animate() {
+    requestAnimationFrame(animate);
+    const t = clock.getElapsedTime();
+    if (mode === 'idle') character.updateIdle(t);
+    else if (mode === 'walk') character.updateWalk(t, 1.0);
+    // salute / tpose는 정적
+    controls.update();
+    renderer.render(scene, camera);
+}
+animate();
+
+// === UI 이벤트 ===
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+const setActiveChar = (id) => {
+    document.getElementById('btn-soyun').classList.toggle('active', id === 'soyun');
+    document.getElementById('btn-hayun').classList.toggle('active', id === 'hayun');
+};
+document.getElementById('btn-soyun').onclick = () => {
+    switchCharacter(RobloxCharacters.Soyun);
+    setActiveChar('soyun');
+};
+document.getElementById('btn-hayun').onclick = () => {
+    switchCharacter(RobloxCharacters.Hayun);
+    setActiveChar('hayun');
+};
+
+const setActiveMode = (m) => {
+    ['idle', 'walk', 'salute', 'tpose'].forEach(n => {
+        document.getElementById('btn-' + n).classList.toggle('active', n === m);
+    });
+    mode = m;
+};
+document.getElementById('btn-idle').onclick = () => {
+    setActiveMode('idle');
+    character._setDefaultPose();
+};
+document.getElementById('btn-walk').onclick = () => setActiveMode('walk');
+document.getElementById('btn-salute').onclick = () => {
+    character._setDefaultPose();
+    character.poseSalute();
+    setActiveMode('salute');
+};
+document.getElementById('btn-tpose').onclick = () => {
+    character._setDefaultPose();
+    character.setJointRotation('LeftShoulder', 0, 0, Math.PI / 2);
+    character.setJointRotation('RightShoulder', 0, 0, -Math.PI / 2);
+    setActiveMode('tpose');
+};
+</script>
+</body>
+</html>
