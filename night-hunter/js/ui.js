@@ -151,7 +151,10 @@ const GameUI = window.GameUI = {
         const ctx = this.minimapCtx;
         const size = this.minimapSize;
         const half = size / 2;
-        const scale = size / 80;
+        // 무전기 보유 시 더 넓은 범위 (200 → 거의 월드 전체)
+        const hasRadio = typeof Shop !== 'undefined' && Shop.hasItem('radio');
+        const viewRange = hasRadio ? 200 : 80;
+        const scale = size / viewRange;
 
         ctx.clearRect(0, 0, size, size);
 
@@ -193,33 +196,56 @@ const GameUI = window.GameUI = {
             ctx.fillRect(bx-bw/2, bz-bd/2, bw, bd);
         });
 
-        // 힌트는 무전기(radio) 아이템이 있을 때만 미니맵에 표시
-        // 시간대별 컨텐츠는 시간대별 미니맵에만 — 낮: 수배범(NPC), 밤: 납치범(Enemy)
-        const hasRadio = typeof Shop !== 'undefined' && Shop.hasItem('radio');
+        // === 무전기(radio) 힌트 마커 ===
+        // 무전기 = 추적 장치 — 보이지 않는(은신 중인) 대상도 위치를 송신해 미니맵에 표시.
+        // 미니맵 범위를 벗어난 대상은 가장자리에 클램프된 작은 점으로 방향만 표시.
+        const drawHintMarker = (worldX, worldZ, color) => {
+            let nx = mx(worldX), nz = mz(worldZ);
+            const margin = 4;
+            const outOfRange = (nx < margin || nx > size - margin ||
+                                nz < margin || nz > size - margin);
+            if (outOfRange) {
+                // 미니맵 가장자리로 클램프 (방향 화살표 대용)
+                const dx = nx - half, dz = nz - half;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                if (dist < 1e-3) return;
+                const r = half - margin - 2;
+                nx = half + (dx / dist) * r;
+                nz = half + (dz / dist) * r;
+                ctx.fillStyle = color;
+                ctx.globalAlpha = 0.7;
+                ctx.beginPath(); ctx.arc(nx, nz, 2.5, 0, Math.PI * 2); ctx.fill();
+                ctx.globalAlpha = 1;
+            } else {
+                // 범위 내 — 큰 마커 + 펄스 링
+                ctx.fillStyle = color;
+                ctx.beginPath(); ctx.arc(nx, nz, 3.5, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+                // 펄스 외곽 (애니메이션)
+                const pulse = (Date.now() % 1000) / 1000;
+                ctx.strokeStyle = color;
+                ctx.globalAlpha = 1 - pulse;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.arc(nx, nz, 3.5 + pulse * 5, 0, Math.PI * 2); ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+        };
 
-        // [낮 전용 힌트] 수배범 위치 — 낮에 radio 보유 시
+        // [낮] 수배범(suspect) 위치 — radio 보유 시 모두 표시 (visible 무관)
         if (hasRadio && gameState.isDay && typeof NPCSystem !== 'undefined') {
             NPCSystem.npcs.forEach(n => {
                 if (n.caught) return;
-                if (!n.mesh.visible) return;  // 보이지 않는 NPC는 미니맵에도 표시 안 함
-                if (n.role !== 'suspect') return;  // 시민(civilian)은 단서이지 검거 대상 아님
-                const nx = mx(n.mesh.position.x), nz = mz(n.mesh.position.z);
-                if (nx<-10||nx>size+10||nz<-10||nz>size+10) return;
-                ctx.fillStyle = '#fbbf24';
-                ctx.beginPath(); ctx.arc(nx, nz, 3.5, 0, Math.PI*2); ctx.fill();
-                ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.8; ctx.stroke();
+                if (n.role !== 'suspect') return;
+                drawHintMarker(n.mesh.position.x, n.mesh.position.z, '#fbbf24');
             });
         }
 
-        // [밤 전용 힌트] 납치범 위치 — 밤에 radio 보유 시
+        // [밤] 납치범(enemy) 위치 — radio 보유 시 모두 표시 (arrested만 제외)
+        // hidden 상태여도 위치는 송신됨 — 단서 미수집이라도 추적 가능
         if (hasRadio && !gameState.isDay && typeof EnemySystem !== 'undefined') {
             EnemySystem.enemies.forEach(e => {
-                if (e.arrested||e.state==='hidden') return;
-                const ex=mx(e.currentX), ez=mz(e.currentZ);
-                if (ex<-10||ex>size+10||ez<-10||ez>size+10) return;
-                ctx.fillStyle='#ff3333';
-                ctx.beginPath(); ctx.arc(ex, ez, 3.5, 0, Math.PI*2); ctx.fill();
-                ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.8; ctx.stroke();
+                if (e.arrested) return;
+                drawHintMarker(e.currentX, e.currentZ, '#ff3333');
             });
         }
 
