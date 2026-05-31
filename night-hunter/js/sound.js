@@ -58,8 +58,10 @@ const SoundManager = {
 
         const tryUnlock = () => {
             if (!this.ctx) return;
+            if (this._isHidden) return;  // 백그라운드에서는 BGM 재개 금지
             if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
                 this.ctx.resume().then(() => {
+                    if (this._isHidden) return;
                     this._playSilentTick();
                     if (this._pendingBGMType && !this.bgmActive) {
                         this._actuallyPlayBGM(this._pendingBGMType);
@@ -80,17 +82,26 @@ const SoundManager = {
         ['click', 'touchstart', 'touchend', 'keydown', 'pointerdown'].forEach(ev => {
             window.addEventListener(ev, tryUnlock, { passive: true });
         });
-        // Re-check on visibility/orientation/focus
+        // 게임이 백그라운드로 가면 BGM pause, 다시 돌아오면 resume
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) tryUnlock();
+            if (document.hidden) {
+                this._handleHide();
+            } else {
+                this._handleShow();
+                tryUnlock();
+            }
         });
-        window.addEventListener('focus', tryUnlock);
+        window.addEventListener('blur', () => this._handleHide());
+        window.addEventListener('focus', () => { this._handleShow(); tryUnlock(); });
+        window.addEventListener('pagehide', () => this._handleHide());
+        window.addEventListener('pageshow', () => { this._handleShow(); tryUnlock(); });
         window.addEventListener('orientationchange', () => setTimeout(tryUnlock, 200));
         window.addEventListener('resize', () => setTimeout(tryUnlock, 200));
 
         // Heartbeat watchdog: every 2s, if BGM should be playing but ctx is dead, recover
         setInterval(() => {
             if (!this.ctx) return;
+            if (this._isHidden) return;  // 백그라운드에서는 자동 복구 금지
             if (this._pendingBGMType && !this.bgmActive && this.ctx.state === 'running') {
                 this._actuallyPlayBGM(this._pendingBGMType);
             }
@@ -98,6 +109,58 @@ const SoundManager = {
                 this.ctx.resume().catch(() => {});
             }
         }, 2000);
+    },
+
+    // 페이지가 백그라운드로 갈 때 — BGM 즉시 정지 + 재개 타입 기억
+    _handleHide() {
+        this._isHidden = true;
+        if (!this.bgmActive) return;
+        this._resumeOnShowType = this.bgmType;
+        // procedural BGM scheduler 즉시 종료
+        this.bgmTimers.forEach(t => { clearTimeout(t); clearInterval(t); });
+        this.bgmTimers = [];
+        this.bgmActive = false;
+        // MP3 일시정지 (현재 위치 보존)
+        if (this.dayAudio && !this.dayAudio.paused) {
+            try { this.dayAudio.pause(); } catch (e) {}
+        }
+        // AudioContext도 일시정지 (CPU/배터리 절약 + 안전)
+        if (this.ctx && this.ctx.state === 'running') {
+            this.ctx.suspend().catch(() => {});
+        }
+    },
+
+    // 페이지가 포그라운드로 돌아올 때 — 멈췄던 BGM 재개
+    _handleShow() {
+        const wasHidden = this._isHidden;
+        this._isHidden = false;
+        if (!wasHidden || !this._resumeOnShowType) return;
+        const type = this._resumeOnShowType;
+        this._resumeOnShowType = null;
+        if (type === 'day' && this.dayAudio) {
+            // MP3는 pause된 위치에서 이어 재생
+            this.bgmActive = true;
+            this.bgmType = 'day';
+            if (this.ctx && this.ctx.state !== 'running') {
+                this.ctx.resume().catch(() => {});
+            }
+            try {
+                const p = this.dayAudio.play();
+                if (p && typeof p.catch === 'function') {
+                    p.catch(() => {
+                        // 자동재생 정책 차단 시 다음 제스처에서 재생되도록 pending에 등록
+                        this._pendingBGMType = 'day';
+                        this.bgmActive = false;
+                    });
+                }
+            } catch (e) {
+                this._pendingBGMType = 'day';
+                this.bgmActive = false;
+            }
+        } else {
+            // procedural BGM은 처음부터 다시 재생
+            this.playBGM(type);
+        }
     },
 
     // Play a near-silent ultrashort sample to force iOS audio pipeline alive
@@ -288,6 +351,11 @@ const SoundManager = {
     },
 
     _actuallyPlayBGM(type) {
+        if (this._isHidden) {
+            // 백그라운드: 즉시 재생 대신 visible 복귀 시 재생되도록 큐잉
+            this._resumeOnShowType = type;
+            return;
+        }
         this.stopBGM();
         this.bgmActive = true;
         this.bgmType = type;
