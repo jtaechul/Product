@@ -1,6 +1,6 @@
 // shop.js — 상점 & 인벤토리 (7단계)
 
-const Shop = {
+const Shop = window.Shop = {
     isOpen: false,
     shopNpcMesh: null,
     shopDistance: 3,

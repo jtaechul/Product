@@ -1,6 +1,6 @@
 // npc.js — 수배범 NPC (도망가는 정보원, 잡으면 힌트 제공)
 
-const NPCSystem = {
+const NPCSystem = window.NPCSystem = {
     npcs: [],
     interactDistance: 1.5,  // catch distance (closer for catch mechanic)
     nearbyNpc: null,
