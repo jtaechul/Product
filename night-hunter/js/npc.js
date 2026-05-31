@@ -36,7 +36,7 @@ const NPCSystem = window.NPCSystem = {
         // Civilians: tell their story + give a hint when talked to
         { x: -25, z: 72, name: '카페 점원 민지', role: 'civilian',
           hair: 0x4a2510, skin: 0xffdbac, clothing: 0xff6b9d, zone: 'POLICE',
-          story: '경찰 아저씨, 도와주세요. 손님이 이상한 사람을 봤다고 해요...' },
+          story: '형사님, 도와주세요. 손님이 이상한 사람을 봤다고 해요...' },
         { x: 25, z: 72, name: '편의점 알바 호석', role: 'civilian',
           hair: 0x1a0a00, skin: 0xf5d5b8, clothing: 0x60a5fa, zone: 'POLICE',
           story: '늦은 밤 자주 오는 손님이 있는데, 항상 모자를 깊게 눌러쓰고 와요.' },
