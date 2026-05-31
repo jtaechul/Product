@@ -215,7 +215,32 @@ const SoundManager = {
         noise.start(now); noise.stop(now + 0.16);
     },
 
-    // === Day BGM: Detective-style jazz noir ===
+    // === Day BGM: MP3 파일 재생 (assets/day-bgm.mp3) ===
+    // Web Audio MediaElementSource로 bgmGain 경유 — BGM 토글/믹스 그대로 사용
+    _loadDayBGMAudio() {
+        if (this.dayAudio) return this.dayAudio;
+        try {
+            const a = new Audio('assets/day-bgm.mp3');
+            a.loop = true;
+            a.preload = 'auto';
+            this.dayAudio = a;
+            // bgmGain 경유 라우팅 (한번만 연결 가능)
+            try {
+                const src = this.ctx.createMediaElementSource(a);
+                src.connect(this.bgmGain);
+                this.dayAudioRouted = true;
+            } catch (e) {
+                console.warn('Day BGM MediaElementSource failed, falling back to native playback:', e);
+                this.dayAudioRouted = false;
+            }
+            return a;
+        } catch (e) {
+            console.warn('Day BGM audio load failed:', e);
+            return null;
+        }
+    },
+
+    // === Day BGM: Detective-style jazz noir (LEGACY procedural, MP3 로드 실패 시 fallback) ===
     // C minor blues progression with walking bass and ride pattern
     // Cm - Fm - G7 - Cm
     dayChords: [
@@ -275,12 +300,27 @@ const SoundManager = {
         }
     },
 
-    // Jazz noir composition — "Detective's Theme"
-    // Tempo: 100 BPM, 4/4, swing feel
-    // Progression: Cm7 → Fm7 → Bb7 → Ebmaj7 → Am7b5 → D7 → Gm7 → Gm7
     _playDayBGM() {
-        // Bright detective theme in C major — ii-V-I progression with bossa feel
-        // Tempo 100 BPM
+        // MP3 우선 — 파일 로드 성공 시 procedural 코드는 실행하지 않음
+        const a = this._loadDayBGMAudio();
+        if (a) {
+            try {
+                a.currentTime = 0;
+                // dayAudioRouted=true면 native volume은 1로 두고 bgmGain으로 제어
+                // 라우팅 실패한 경우 element volume으로 직접 제어
+                a.volume = this.dayAudioRouted ? 1.0 : 0.8;
+                const p = a.play();
+                if (p && typeof p.catch === 'function') {
+                    p.catch(err => {
+                        console.warn('Day BGM autoplay blocked — will retry on next gesture:', err);
+                    });
+                }
+                return;
+            } catch (err) {
+                console.warn('Day BGM play error, falling back to procedural:', err);
+            }
+        }
+        // === Fallback: procedural jazz noir (MP3 실패 시) ===
         const beatSec = 0.55;
 
         // Walking bass: Dm7 - G7 - Cmaj7 - Am7 (classic ii-V-I-vi)
@@ -414,6 +454,9 @@ const SoundManager = {
         this.bgmType = null;
         this.bgmTimers.forEach(t => { clearTimeout(t); clearInterval(t); });
         this.bgmTimers = [];
+        if (this.dayAudio) {
+            try { this.dayAudio.pause(); } catch (e) {}
+        }
     },
 
     playSFX(name) {
