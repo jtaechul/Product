@@ -1,7 +1,7 @@
 // enemy.js — 납치범 AI (5단계)
 // 3명의 납치범: 밤에만 출현, 순찰/도망/숨기 패턴
 
-const EnemySystem = {
+const EnemySystem = window.EnemySystem = {
     enemies: [],
     enemyMeshes: [],
     detectDistance: 8,

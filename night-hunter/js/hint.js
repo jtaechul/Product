@@ -1,6 +1,6 @@
 // hint.js — NPC 기반 힌트 수집 시스템 (구체 제거)
 
-const HintSystem = {
+const HintSystem = window.HintSystem = {
     hints: [],          // legacy compatibility (empty)
     collectedHints: [], // {criminal, order, text}
     hintMeshes: [],     // empty

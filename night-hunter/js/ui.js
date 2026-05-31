@@ -1,6 +1,6 @@
 // ui.js — 미니맵 + 전체 UI (8단계)
 
-const GameUI = {
+const GameUI = window.GameUI = {
     minimapCanvas: null,
     minimapCtx: null,
     minimapSize: 120,
@@ -18,9 +18,9 @@ const GameUI = {
         btn.title = 'BGM 토글';
         btn.style.cssText = `
             position:fixed;
-            left:calc(12px + env(safe-area-inset-left, 0px));
-            top:calc(60px + env(safe-area-inset-top, 0px));
-            width:42px; height:42px; border-radius:50%;
+            right:calc(14px + env(safe-area-inset-right, 0px));
+            bottom:calc(145px + env(safe-area-inset-bottom, 0px));
+            width:44px; height:44px; border-radius:50%;
             border:2px solid rgba(96,165,250,0.6);
             background:rgba(15,23,42,0.7);
             backdrop-filter:blur(8px); color:#fff; font-size:18px;
@@ -193,24 +193,33 @@ const GameUI = {
             ctx.fillRect(bx-bw/2, bz-bd/2, bw, bd);
         });
 
-        // Suspects (수배범) — visible if radio item owned, during day
-        if (gameState.isDay && typeof NPCSystem !== 'undefined' && typeof Shop !== 'undefined' && Shop.hasItem('radio')) {
+        // 힌트는 무전기(radio) 아이템이 있을 때만 미니맵에 표시
+        // 시간대별 컨텐츠는 시간대별 미니맵에만 — 낮: 수배범(NPC), 밤: 납치범(Enemy)
+        const hasRadio = typeof Shop !== 'undefined' && Shop.hasItem('radio');
+
+        // [낮 전용 힌트] 수배범 위치 — 낮에 radio 보유 시
+        if (hasRadio && gameState.isDay && typeof NPCSystem !== 'undefined') {
             NPCSystem.npcs.forEach(n => {
                 if (n.caught) return;
+                if (!n.mesh.visible) return;  // 보이지 않는 NPC는 미니맵에도 표시 안 함
+                if (n.role !== 'suspect') return;  // 시민(civilian)은 단서이지 검거 대상 아님
                 const nx = mx(n.mesh.position.x), nz = mz(n.mesh.position.z);
                 if (nx<-10||nx>size+10||nz<-10||nz>size+10) return;
                 ctx.fillStyle = '#fbbf24';
-                ctx.beginPath(); ctx.arc(nx, nz, 3, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(nx, nz, 3.5, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.8; ctx.stroke();
             });
         }
 
-        // Enemies
-        if (!gameState.isDay&&typeof EnemySystem!=='undefined') {
+        // [밤 전용 힌트] 납치범 위치 — 밤에 radio 보유 시
+        if (hasRadio && !gameState.isDay && typeof EnemySystem !== 'undefined') {
             EnemySystem.enemies.forEach(e => {
                 if (e.arrested||e.state==='hidden') return;
                 const ex=mx(e.currentX), ez=mz(e.currentZ);
                 if (ex<-10||ex>size+10||ez<-10||ez>size+10) return;
-                ctx.fillStyle='#ff3333'; ctx.beginPath(); ctx.arc(ex,ez,3,0,Math.PI*2); ctx.fill();
+                ctx.fillStyle='#ff3333';
+                ctx.beginPath(); ctx.arc(ex, ez, 3.5, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.8; ctx.stroke();
             });
         }
 

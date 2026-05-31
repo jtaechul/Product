@@ -1,6 +1,6 @@
 // ambient.js — 자동차 + 보행자 (시민) 동적 시스템
 
-const AmbientCity = {
+const AmbientCity = window.AmbientCity = {
     cars: [],
     walkers: [],
     scene: null,
@@ -81,7 +81,7 @@ const AmbientCity = {
             group.add(wheel);
         });
 
-        // Headlights
+        // Headlights — emissive material updated dynamically (brighter at night)
         const hlMat = new THREE.MeshStandardMaterial({ color: 0xffffcc, emissive: 0xffffcc, emissiveIntensity: 0.4 });
         const hl1 = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), hlMat);
         hl1.position.set(-0.55, 0.55, 1.8);
@@ -90,7 +90,7 @@ const AmbientCity = {
         hl2.position.set(0.55, 0.55, 1.8);
         group.add(hl2);
 
-        // Taillights
+        // Taillights — emissive material updated dynamically
         const tlMat = new THREE.MeshStandardMaterial({ color: 0xff2222, emissive: 0xff2222, emissiveIntensity: 0.5 });
         const tl1 = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), tlMat);
         tl1.position.set(-0.6, 0.55, -1.8);
@@ -100,7 +100,7 @@ const AmbientCity = {
         group.add(tl2);
 
         this.scene.add(group);
-        return { mesh: group };
+        return { mesh: group, hlMat, tlMat };
     },
 
     spawnInitialWalkers() {
@@ -184,16 +184,19 @@ const AmbientCity = {
     },
 
     update(delta, time) {
-        // Hide at night
-        if (typeof gameState !== 'undefined' && !gameState.isDay) {
-            this.cars.forEach(c => c.mesh.visible = true);  // cars still drive at night
-            this.walkers.forEach(w => w.mesh.visible = false);
-            return;
-        }
-        this.cars.forEach(c => c.mesh.visible = true);
-        this.walkers.forEach(w => w.mesh.visible = true);
+        const isNight = typeof gameState !== 'undefined' && !gameState.isDay;
 
-        // Update cars (drive along their road)
+        // 자동차는 낮/밤 모두 표시 + 주행 (밤엔 헤드라이트가 더 강조됨)
+        this.cars.forEach(c => {
+            c.mesh.visible = true;
+            if (c.hlMat) c.hlMat.emissiveIntensity = isNight ? 2.2 : 0.4;
+            if (c.tlMat) c.tlMat.emissiveIntensity = isNight ? 1.6 : 0.5;
+        });
+
+        // 보행자는 낮에만 (밤엔 안전상 귀가)
+        this.walkers.forEach(w => { w.mesh.visible = !isNight; });
+
+        // === 자동차 주행 (시간대 관계없이 항상 동작) ===
         this.cars.forEach(car => {
             const dist = car.speed * delta;
             const r = car.road;
@@ -208,7 +211,10 @@ const AmbientCity = {
             }
         });
 
-        // Update walkers
+        // 밤이면 보행자 업데이트 건너뜀
+        if (isNight) return;
+
+        // === 보행자 업데이트 (낮에만) ===
         this.walkers.forEach(w => {
             w.t += delta;
             const tdx = w.target.x - w.mesh.position.x;

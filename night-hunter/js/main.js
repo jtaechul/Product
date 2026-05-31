@@ -644,7 +644,6 @@ window.addEventListener('keydown', e => {
     if (e.code === 'KeyP') { if (!Shop.isOpen) Shop.openShop(); else Shop.closeShop(); }
     if (e.code === 'KeyI') Shop.toggleInventory();
     if (e.code === 'KeyM') HintSystem.toggleMemo();
-    if (e.code === 'Space') { e.preventDefault(); triggerJump(); }
 });
 window.addEventListener('keyup', e => {
     keys[e.code] = false;
@@ -658,14 +657,10 @@ const joystickInner = document.createElement('div');
 joystickInner.id = 'joystick-inner';
 joystickOuter.appendChild(joystickInner);
 
-// Run + Jump buttons
+// Run button (Jump 버튼 제거됨)
 const runBtn = document.createElement('button');
 runBtn.id = 'run-btn';
 runBtn.textContent = 'RUN';
-
-const jumpBtn = document.createElement('button');
-jumpBtn.id = 'jump-btn';
-jumpBtn.textContent = 'JUMP';
 
 const joystickStyle = document.createElement('style');
 joystickStyle.textContent = `
@@ -694,11 +689,15 @@ joystickStyle.textContent = `
     pointer-events: none;
     transition: none;
 }
-#run-btn, #jump-btn {
+#run-btn {
     position: fixed;
+    right: calc(80px + env(safe-area-inset-right, 0px));
+    bottom: calc(25px + env(safe-area-inset-bottom, 0px));
     width: 56px;
     height: 56px;
     border-radius: 50%;
+    border: 2px solid rgba(255,160,0,0.5);
+    background: rgba(255,160,0,0.2);
     backdrop-filter: blur(4px);
     color: #fff;
     font-size: 10px;
@@ -709,20 +708,7 @@ joystickStyle.textContent = `
     z-index: 30;
     pointer-events: auto;
 }
-#run-btn {
-    right: calc(80px + env(safe-area-inset-right, 0px));
-    bottom: calc(25px + env(safe-area-inset-bottom, 0px));
-    border: 2px solid rgba(255,160,0,0.5);
-    background: rgba(255,160,0,0.2);
-}
-#jump-btn {
-    right: calc(80px + env(safe-area-inset-right, 0px));
-    bottom: calc(90px + env(safe-area-inset-bottom, 0px));
-    border: 2px solid rgba(100,200,255,0.5);
-    background: rgba(100,200,255,0.2);
-}
 #run-btn.active { background: rgba(255,160,0,0.5); transform: scale(0.92); }
-#jump-btn.active { background: rgba(100,200,255,0.5); transform: scale(0.92); }
 #action-buttons {
     position: fixed;
     right: calc(14px + env(safe-area-inset-right, 0px));
@@ -773,7 +759,6 @@ joystickStyle.textContent = `
 document.head.appendChild(joystickStyle);
 document.getElementById('hud').appendChild(joystickOuter);
 document.getElementById('hud').appendChild(runBtn);
-document.getElementById('hud').appendChild(jumpBtn);
 
 // Action buttons
 const actionBtnContainer = document.createElement('div');
@@ -891,11 +876,6 @@ runBtn.addEventListener('mouseup', () => { gameState.isRunning = false; runBtn.c
 runBtn.addEventListener('mouseleave', () => { gameState.isRunning = false; runBtn.classList.remove('active'); });
 
 // Jump button
-jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); triggerJump(); jumpBtn.classList.add('active'); }, { passive: false });
-jumpBtn.addEventListener('touchend', e => { e.preventDefault(); jumpBtn.classList.remove('active'); }, { passive: false });
-jumpBtn.addEventListener('mousedown', e => { e.preventDefault(); triggerJump(); jumpBtn.classList.add('active'); });
-jumpBtn.addEventListener('mouseup', () => { jumpBtn.classList.remove('active'); });
-
 // Camera drag (right side of screen / touch)
 const canvas = document.getElementById('gameCanvas');
 let cameraTouchId = null;
