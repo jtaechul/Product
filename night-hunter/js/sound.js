@@ -44,9 +44,72 @@ const SoundManager = {
             this.bgmGain.connect(this.reverbSend);
 
             this.initialized = true;
+            // Register global gesture/visibility listeners ONCE for ctx unlock + BGM restart
+            this._registerRecoveryListeners();
         } catch (e) {
             console.warn('Audio API not available', e);
         }
+    },
+
+    // Aggressive AudioContext unlock + BGM auto-restart
+    _registerRecoveryListeners() {
+        if (this._recoveryArmed) return;
+        this._recoveryArmed = true;
+
+        const tryUnlock = () => {
+            if (!this.ctx) return;
+            if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
+                this.ctx.resume().then(() => {
+                    this._playSilentTick();
+                    if (this._pendingBGMType && !this.bgmActive) {
+                        this._actuallyPlayBGM(this._pendingBGMType);
+                    } else if (this.bgmActive && this.bgmType) {
+                        // Re-kick: BGM was thought running but ctx was suspended; restart cleanly
+                        this._actuallyPlayBGM(this.bgmType);
+                    }
+                }).catch(() => {});
+            } else {
+                // Already running: if BGM should be playing but isn't, start it
+                if (this._pendingBGMType && !this.bgmActive) {
+                    this._actuallyPlayBGM(this._pendingBGMType);
+                }
+            }
+        };
+
+        // Unlock on ANY user gesture
+        ['click', 'touchstart', 'touchend', 'keydown', 'pointerdown'].forEach(ev => {
+            window.addEventListener(ev, tryUnlock, { passive: true });
+        });
+        // Re-check on visibility/orientation/focus
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) tryUnlock();
+        });
+        window.addEventListener('focus', tryUnlock);
+        window.addEventListener('orientationchange', () => setTimeout(tryUnlock, 200));
+        window.addEventListener('resize', () => setTimeout(tryUnlock, 200));
+
+        // Heartbeat watchdog: every 2s, if BGM should be playing but ctx is dead, recover
+        setInterval(() => {
+            if (!this.ctx) return;
+            if (this._pendingBGMType && !this.bgmActive && this.ctx.state === 'running') {
+                this._actuallyPlayBGM(this._pendingBGMType);
+            }
+            if (this.bgmActive && this.ctx.state !== 'running') {
+                this.ctx.resume().catch(() => {});
+            }
+        }, 2000);
+    },
+
+    // Play a near-silent ultrashort sample to force iOS audio pipeline alive
+    _playSilentTick() {
+        if (!this.ctx) return;
+        try {
+            const buf = this.ctx.createBuffer(1, 1, this.ctx.sampleRate);
+            const src = this.ctx.createBufferSource();
+            src.buffer = buf;
+            src.connect(this.ctx.destination);
+            src.start(0);
+        } catch (e) {}
     },
 
     _makeImpulseResponse(duration, decay, reverse) {
@@ -185,23 +248,15 @@ const SoundManager = {
     playBGM(type) {
         if (!this.ctx) return;
         this._pendingBGMType = type;
-        // Ensure context is running (mobile may still be suspended)
-        if (this.ctx.state === 'suspended') {
-            this.ctx.resume().then(() => this._actuallyPlayBGM(type)).catch(() => this._actuallyPlayBGM(type));
-            // Fallback: arm a one-time click/touch listener to retry on next user gesture
-            if (!this._resumeArmed) {
-                this._resumeArmed = true;
-                const retry = () => {
-                    this.ctx.resume().then(() => {
-                        if (this._pendingBGMType && !this.bgmActive) {
-                            this._actuallyPlayBGM(this._pendingBGMType);
-                        }
-                    }).catch(() => {});
-                };
-                window.addEventListener('click', retry, { once: true, passive: true });
-                window.addEventListener('touchstart', retry, { once: true, passive: true });
-                window.addEventListener('keydown', retry, { once: true, passive: true });
-            }
+        // Ensure pipeline alive (no-op if already running)
+        this._playSilentTick();
+        if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
+            this.ctx.resume().then(() => {
+                this._playSilentTick();
+                this._actuallyPlayBGM(type);
+            }).catch(() => {
+                // Recovery listeners will retry on next gesture
+            });
         } else {
             this._actuallyPlayBGM(type);
         }

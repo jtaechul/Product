@@ -1576,6 +1576,7 @@ function showCharacterSelect() {
 
     function card(charId) {
         const c = CHARACTERS[charId];
+        const imgSrc = charId === 'soyun' ? 'assets/portrait-soyun.svg' : 'assets/portrait-hayun.svg';
         return `
             <div class="char-card" data-char="${charId}" style="
                 width:42vw; max-width:280px; min-width:160px;
@@ -1587,16 +1588,21 @@ function showCharacterSelect() {
                 touch-action:manipulation;
             ">
                 <div style="
-                    width:100%; aspect-ratio:200/240; border-radius:10px;
+                    width:100%; aspect-ratio:400/520; border-radius:10px;
                     overflow:hidden; box-shadow:0 6px 24px rgba(0,0,0,0.5);
-                    border:1px solid rgba(255,255,255,0.1);
-                ">${portrait(charId)}</div>
+                    border:1px solid rgba(255,255,255,0.1); background:#0a0e18;
+                ">
+                    <img src="${imgSrc}" alt="${c.name}" style="width:100%; height:100%; display:block; object-fit:cover;"
+                         onerror="this.style.display='none'; this.parentNode.insertAdjacentHTML('beforeend', window._portraitFallback ? window._portraitFallback('${charId}') : '');"/>
+                </div>
                 <div style="margin-top:10px; font-size:18px; font-weight:900; letter-spacing:1px;">${c.name} <span style="color:#fbbf24;">형사</span></div>
                 <div style="font-size:11px; color:#94a3b8; letter-spacing:2px; margin-top:2px;">${c.title}</div>
                 <div style="margin-top:8px; font-size:11px; color:#cbd5e1; line-height:1.5; text-align:center; white-space:pre-line; opacity:0.85;">${c.desc}</div>
             </div>
         `;
     }
+    // Expose inline-SVG fallback in case the SVG file fails to load
+    window._portraitFallback = portrait;
 
     modal.innerHTML = `
         <div style="font-size:11px; letter-spacing:8px; color:#60a5fa; margin-bottom:6px; font-weight:600;">CHARACTER SELECT</div>
@@ -1818,7 +1824,7 @@ function showWantedPoster(firstTime) {
         ">
             <div style="font-size:11px; letter-spacing:6px; color:#7a4a1a; margin-bottom:4px; font-weight:700;">DETECTIVE BRIEFING</div>
             <h2 style="margin:0 0 4px; font-size:26px; color:#3a1a0a; letter-spacing:2px; font-weight:900;">⚠ 수배 전단 ⚠</h2>
-            <div style="font-size:12px; color:#3a1a0a; margin-bottom:4px;">담당 형사: <b>소윤</b></div>
+            <div style="font-size:12px; color:#3a1a0a; margin-bottom:4px;">담당 형사: <b>${gameState.playerName || '소윤'}</b></div>
             <div style="font-size:11px; color:#7a4a1a; margin-bottom:14px;">아이들을 납치한 흉악범 3명. 반드시 검거하라.</div>
             <div style="display:flex; justify-content:center; flex-wrap:wrap; background:#1a1a1a; padding:14px 8px; border-radius:6px;">
                 ${mugshot('CR-001', 0, '1호 길동', '전직 학원 강사<br/>안경, 깡마름<br/>주택가 잠복')}
@@ -1850,7 +1856,7 @@ function showWantedPoster(firstTime) {
         modal.style.opacity = '0';
         setTimeout(() => modal.remove(), 300);
         if (firstTime) {
-            try { showMessage('📻 소윤 형사, 시민들에게 말을 걸어 단서를 수집하세요.'); } catch(e) {}
+            try { showMessage('📻 ' + (gameState.playerName || '소윤') + ' 형사, 시민들에게 말을 걸어 단서를 수집하세요.'); } catch(e) {}
             animate();
         }
     };
