@@ -1557,7 +1557,10 @@ function showCharacterSelect() {
 
     function card(charId) {
         const c = CHARACTERS[charId];
-        const imgSrc = charId === 'soyun' ? 'assets/portrait-soyun.svg' : 'assets/portrait-hayun.svg';
+        // 우선순위: PNG → SVG → 인라인 SVG 폴백
+        // assets/portrait-<charId>.png 가 있으면 자동 사용, 없으면 SVG로 폴백
+        const pngSrc = `assets/portrait-${charId}.png`;
+        const svgSrc = `assets/portrait-${charId}.svg`;
         return `
             <div class="char-card" data-char="${charId}" style="
                 width:42vw; max-width:280px; min-width:160px;
@@ -1573,8 +1576,8 @@ function showCharacterSelect() {
                     overflow:hidden; box-shadow:0 6px 24px rgba(0,0,0,0.5);
                     border:1px solid rgba(255,255,255,0.1); background:#0a0e18;
                 ">
-                    <img src="${imgSrc}" alt="${c.name}" style="width:100%; height:100%; display:block; object-fit:cover;"
-                         onerror="this.style.display='none'; this.parentNode.insertAdjacentHTML('beforeend', window._portraitFallback ? window._portraitFallback('${charId}') : '');"/>
+                    <img src="${pngSrc}" alt="${c.name}" style="width:100%; height:100%; display:block; object-fit:cover;"
+                         onerror="if(this.dataset.fb!=='svg'){this.dataset.fb='svg';this.src='${svgSrc}';}else{this.style.display='none';this.parentNode.insertAdjacentHTML('beforeend', window._portraitFallback ? window._portraitFallback('${charId}') : '');}"/>
                 </div>
                 <div style="margin-top:10px; font-size:18px; font-weight:900; letter-spacing:1px;">${c.name} <span style="color:#fbbf24;">형사</span></div>
                 <div style="font-size:11px; color:#94a3b8; letter-spacing:2px; margin-top:2px;">${c.title}</div>
