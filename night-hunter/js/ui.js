@@ -118,7 +118,7 @@ const GameUI = window.GameUI = {
                 </div>
                 <div style="position:absolute; bottom:10px; left:0; right:0; text-align:center;
                     font-size:11px; color:#94a3b8; pointer-events:none;">
-                    🟦 경찰서 · 🟨 수배범 · 🟥 납치범 · 🔵 현재 위치
+                    🟦 경찰서 · 🟨 수배범 · 🟩 목격자 · 🟥 납치범 · 🔵 현재 위치
                 </div>
             </div>
         `;
@@ -187,12 +187,17 @@ const GameUI = window.GameUI = {
                 ctx.fillRect(wx(bx) - bw / 2, wz(bz) - bd / 2, bw, bd);
             });
         }
-        // 무전기 보유 시 모든 힌트 표시
+        // 무전기 보유 시 힌트 NPC / 납치범 표시
         const hasRadio = typeof Shop !== 'undefined' && Shop.hasItem('radio');
         if (hasRadio && gameState.isDay && typeof NPCSystem !== 'undefined') {
             NPCSystem.npcs.forEach(n => {
-                if (n.caught || n.role !== 'suspect') return;
-                ctx.fillStyle = '#fbbf24';
+                if (n.role === 'suspect') {
+                    if (n.caught) return;
+                    ctx.fillStyle = '#fbbf24';
+                } else if (n.role === 'civilian') {
+                    if (n.visited || !n.assignment) return;
+                    ctx.fillStyle = '#86efac';
+                } else return;
                 ctx.beginPath(); ctx.arc(wx(n.mesh.position.x), wz(n.mesh.position.z), 6, 0, Math.PI*2); ctx.fill();
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
             });
@@ -200,6 +205,7 @@ const GameUI = window.GameUI = {
         if (hasRadio && !gameState.isDay && typeof EnemySystem !== 'undefined') {
             EnemySystem.enemies.forEach(e => {
                 if (e.arrested) return;
+                if (typeof HintSystem !== 'undefined' && !HintSystem.hasAllHintsFor(e.id)) return;
                 ctx.fillStyle = '#ff3333';
                 ctx.beginPath(); ctx.arc(wx(e.currentX), wz(e.currentZ), 6, 0, Math.PI*2); ctx.fill();
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
@@ -372,20 +378,25 @@ const GameUI = window.GameUI = {
             }
         };
 
-        // [낮] 수배범(suspect) 위치 — radio 보유 시 모두 표시 (visible 무관)
+        // [낮] 힌트 제공 NPC 위치 — 수배범(suspect): 미검거 / 목격자(civilian): 미대화+힌트보유
         if (hasRadio && gameState.isDay && typeof NPCSystem !== 'undefined') {
             NPCSystem.npcs.forEach(n => {
-                if (n.caught) return;
-                if (n.role !== 'suspect') return;
-                drawHintMarker(n.mesh.position.x, n.mesh.position.z, '#fbbf24');
+                if (n.role === 'suspect') {
+                    if (n.caught) return;
+                    drawHintMarker(n.mesh.position.x, n.mesh.position.z, '#fbbf24');
+                } else if (n.role === 'civilian') {
+                    if (n.visited) return;      // 이미 대화함 — 힌트 획득 완료
+                    if (!n.assignment) return;  // 힌트 없는 시민 제외
+                    drawHintMarker(n.mesh.position.x, n.mesh.position.z, '#86efac');
+                }
             });
         }
 
-        // [밤] 납치범(enemy) 위치 — radio 보유 시 모두 표시 (arrested만 제외)
-        // hidden 상태여도 위치는 송신됨 — 단서 미수집이라도 추적 가능
+        // [밤] 납치범(enemy) — 단서 수집 완료(revealed) + 미검거인 경우만 표시
         if (hasRadio && !gameState.isDay && typeof EnemySystem !== 'undefined') {
             EnemySystem.enemies.forEach(e => {
                 if (e.arrested) return;
+                if (typeof HintSystem !== 'undefined' && !HintSystem.hasAllHintsFor(e.id)) return;
                 drawHintMarker(e.currentX, e.currentZ, '#ff3333');
             });
         }
@@ -419,6 +430,20 @@ const GameUI = window.GameUI = {
         ctx.rotate(cameraAngle);
         ctx.fillStyle='#ef4444'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center';
         ctx.fillText('N', 0, -half+12);
+        ctx.restore();
+
+        // Zone legend — bottom arc of minimap
+        ctx.save();
+        ctx.font = 'bold 6px sans-serif';
+        ctx.textAlign = 'left';
+        [['rgba(180,140,80,0.95)', '주택', 23],
+         ['rgba(100,140,180,0.95)', '상업', 53],
+         ['rgba(120,120,120,0.95)', '공업', 83]].forEach(([color, label, x]) => {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, size - 14, 6, 6);
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            ctx.fillText(label, x + 8, size - 9);
+        });
         ctx.restore();
     },
 

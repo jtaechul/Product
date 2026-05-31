@@ -1005,6 +1005,22 @@ canvas.addEventListener('touchend', e => {
     if (e.touches.length < 2) pinchStartDist = 0;
 });
 
+// 앱 전환 / 탭 숨김 시 카메라 드래그 상태 초기화
+// (포인터/터치 업 이벤트가 누락되어 카메라가 고정되는 버그 방지)
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) return;
+    mouseDown = false;
+    cameraDragging = false;
+    cameraTouchId = null;
+    pinchStartDist = 0;
+});
+window.addEventListener('blur', () => {
+    mouseDown = false;
+    cameraDragging = false;
+    cameraTouchId = null;
+    pinchStartDist = 0;
+});
+
 // ── Collision Detection ──
 function checkBuildingCollision(nx, nz) {
     const playerRadius = 0.5;
