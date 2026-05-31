@@ -199,6 +199,7 @@ const CHARACTERS = {
 
 let currentCharacter = 'soyun'; // default; may be changed by selection screen
 window.CHARACTERS = CHARACTERS;
+window.gameState = gameState; // expose for debugging + downstream UI updates
 
 function createPlayer() {
     buildCharacter(CHARACTERS[currentCharacter]);
@@ -1630,6 +1631,11 @@ function showCharacterSelect() {
             card.style.borderColor = '#fbbf24';
             card.style.transform = 'scale(1.03)';
             card.style.boxShadow = '0 0 30px rgba(251,191,36,0.4)';
+            // CRITICAL: set playerName SYNCHRONOUSLY on click — no race with downstream UI
+            currentCharacter = charId;
+            if (CHARACTERS[charId]) {
+                gameState.playerName = CHARACTERS[charId].name;
+            }
             // Robust audio unlock: this click is a guaranteed user gesture
             try {
                 if (typeof SoundManager !== 'undefined') {
