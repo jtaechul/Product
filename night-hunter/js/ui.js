@@ -65,18 +65,159 @@ const GameUI = window.GameUI = {
             border-radius:50%; overflow:hidden;
             border:2px solid rgba(255,255,255,0.3);
             background:rgba(0,0,0,0.5);
-            z-index:25; pointer-events:none;
+            z-index:25; pointer-events:auto;
+            cursor:pointer;
         `;
+        container.title = '클릭하여 전체 지도 보기';
         const canvas = document.createElement('canvas');
         canvas.id = 'minimap';
         canvas.width = this.minimapSize;
         canvas.height = this.minimapSize;
-        canvas.style.cssText = 'width:100%;height:100%;';
+        canvas.style.cssText = 'width:100%;height:100%; pointer-events:none;';
         container.appendChild(canvas);
         document.body.appendChild(container);
 
         this.minimapCanvas = canvas;
         this.minimapCtx = canvas.getContext('2d');
+
+        // 클릭으로 전체 지도 모달 열기
+        const openFull = (e) => { e?.preventDefault?.(); this.openFullMap(); };
+        container.addEventListener('click', openFull);
+        container.addEventListener('touchend', openFull);
+
+        // 전체 지도 모달 생성 (초기 hidden)
+        this._createFullMapModal();
+    },
+
+    _createFullMapModal() {
+        const modal = document.createElement('div');
+        modal.id = 'fullmap-modal';
+        modal.style.cssText = `
+            display:none; position:fixed; inset:0; z-index:240;
+            background:rgba(0,0,0,0.85); backdrop-filter:blur(8px);
+            padding:env(safe-area-inset-top,16px) env(safe-area-inset-right,16px)
+                    env(safe-area-inset-bottom,16px) env(safe-area-inset-left,16px);
+            justify-content:center; align-items:center;
+            font-family:'Inter',sans-serif;
+        `;
+        modal.innerHTML = `
+            <div style="position:relative; width:min(92vw, 92vh); height:min(92vw, 92vh);">
+                <canvas id="fullmap-canvas" style="width:100%; height:100%; display:block;
+                    background:rgba(15,23,42,0.95); border:2px solid rgba(255,255,255,0.25);
+                    border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,0.7);"></canvas>
+                <button id="fullmap-close" style="
+                    position:absolute; top:8px; right:8px;
+                    width:40px; height:40px; border-radius:50%;
+                    background:rgba(15,23,42,0.85); color:#fff; border:1px solid rgba(255,255,255,0.2);
+                    cursor:pointer; font-size:18px; font-weight:700;
+                    display:flex; align-items:center; justify-content:center;
+                ">✕</button>
+                <div style="position:absolute; top:14px; left:18px;
+                    font-size:11px; letter-spacing:3px; color:#60a5fa; font-weight:700;">
+                    FULL MAP
+                </div>
+                <div style="position:absolute; bottom:10px; left:0; right:0; text-align:center;
+                    font-size:11px; color:#94a3b8; pointer-events:none;">
+                    🟦 경찰서 · 🟨 수배범 · 🟥 납치범 · 🔵 현재 위치
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const close = () => { modal.style.display = 'none'; this._fullMapOpen = false; };
+        document.getElementById('fullmap-close').addEventListener('click', close);
+        modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+        this.fullMapCanvas = document.getElementById('fullmap-canvas');
+        this.fullMapCtx = this.fullMapCanvas.getContext('2d');
+        this._fullMapOpen = false;
+    },
+
+    openFullMap() {
+        const modal = document.getElementById('fullmap-modal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        this._fullMapOpen = true;
+        // 캔버스 해상도를 화면 크기에 맞춤
+        const rect = this.fullMapCanvas.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        this.fullMapCanvas.width = rect.width * dpr;
+        this.fullMapCanvas.height = rect.height * dpr;
+        this.fullMapCtx.scale(dpr, dpr);
+    },
+
+    drawFullMap(playerPos, playerAngle) {
+        if (!this._fullMapOpen || !this.fullMapCtx) return;
+        const ctx = this.fullMapCtx;
+        const c = this.fullMapCanvas;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const size = c.width / dpr;
+        const half = size / 2;
+        const W = (typeof WORLD_SIZE !== 'undefined') ? WORLD_SIZE : 300;
+        const scale = size / W;
+        const wx = (x) => half + x * scale;
+        const wz = (z) => half + z * scale;
+
+        ctx.clearRect(0, 0, size, size);
+        // 배경 (잔디)
+        ctx.fillStyle = '#1a2e1a';
+        ctx.fillRect(0, 0, size, size);
+        // 도로 (메인 격자)
+        ctx.strokeStyle = 'rgba(120,120,120,0.5)';
+        ctx.lineWidth = 3;
+        const mainRoads = [
+            [-150, 95, 150, 95], [-150, 50, 150, 50], [-150, 5, 150, 5],
+            [-150, -45, 150, -45], [-150, -85, 150, -85], [-150, -135, 150, -135],
+            [0, -140, 0, 90], [-50, -100, -50, 100], [50, -100, 50, 100],
+            [-100, -90, -100, 90], [100, -90, 100, 90]
+        ];
+        mainRoads.forEach(([x1,z1,x2,z2]) => {
+            ctx.beginPath(); ctx.moveTo(wx(x1), wz(z1)); ctx.lineTo(wx(x2), wz(z2)); ctx.stroke();
+        });
+        // 건물
+        if (typeof buildingData !== 'undefined') {
+            buildingData.forEach(b => {
+                const bx = b.x || 0, bz = b.z || 0;
+                const bw = (b.w || 6) * scale, bd = (b.d || 6) * scale;
+                if (b.type === 'police') ctx.fillStyle = 'rgba(30,100,200,0.85)';
+                else if (b.zone === 'RESIDENTIAL') ctx.fillStyle = 'rgba(180,140,80,0.55)';
+                else if (b.zone === 'COMMERCIAL') ctx.fillStyle = 'rgba(100,140,180,0.55)';
+                else if (b.zone === 'FACTORY') ctx.fillStyle = 'rgba(120,120,120,0.55)';
+                else ctx.fillStyle = 'rgba(150,150,150,0.45)';
+                ctx.fillRect(wx(bx) - bw / 2, wz(bz) - bd / 2, bw, bd);
+            });
+        }
+        // 무전기 보유 시 모든 힌트 표시
+        const hasRadio = typeof Shop !== 'undefined' && Shop.hasItem('radio');
+        if (hasRadio && gameState.isDay && typeof NPCSystem !== 'undefined') {
+            NPCSystem.npcs.forEach(n => {
+                if (n.caught || n.role !== 'suspect') return;
+                ctx.fillStyle = '#fbbf24';
+                ctx.beginPath(); ctx.arc(wx(n.mesh.position.x), wz(n.mesh.position.z), 6, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+            });
+        }
+        if (hasRadio && !gameState.isDay && typeof EnemySystem !== 'undefined') {
+            EnemySystem.enemies.forEach(e => {
+                if (e.arrested) return;
+                ctx.fillStyle = '#ff3333';
+                ctx.beginPath(); ctx.arc(wx(e.currentX), wz(e.currentZ), 6, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+            });
+        }
+        // 플레이어 (큰 화살표)
+        ctx.save();
+        ctx.translate(wx(playerPos.x), wz(playerPos.z));
+        ctx.rotate(Math.PI - playerAngle);
+        ctx.fillStyle = '#60a5fa';
+        ctx.beginPath();
+        ctx.moveTo(0, -12); ctx.lineTo(-9, 9); ctx.lineTo(9, 9);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.restore();
+        // 북쪽 표시
+        ctx.fillStyle = '#ef4444'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('N', size / 2, 22);
     },
 
     createActionButtons() {

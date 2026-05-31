@@ -468,13 +468,13 @@ function buildCharacter(cfg) {
     backHair.castShadow = true;
     playerGroup.add(backHair);
 
-    // Bangs — soft side-swept (per reference, 부드러운 앞머리)
+    // Bangs — soft side-swept (이마 위쪽, 눈썹 가리지 않게)
     const bangsCenter = new THREE.Mesh(
-        new THREE.BoxGeometry(0.42, 0.1, 0.1),
+        new THREE.BoxGeometry(0.36, 0.08, 0.08),
         hairMat
     );
-    bangsCenter.position.set(0, 1.86, 0.24);
-    bangsCenter.rotation.x = -0.2;
+    bangsCenter.position.set(0, 1.87, 0.245);
+    bangsCenter.rotation.x = -0.22;
     playerGroup.add(bangsCenter);
 
     // Bangs highlight (lighter strands)
@@ -496,14 +496,14 @@ function buildCharacter(cfg) {
     rSide.castShadow = true;
     playerGroup.add(rSide);
 
-    // Side wisps near face
-    const lWisp = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.2, 0.05), hairMat);
-    lWisp.position.set(-0.22, 1.74, 0.18);
-    lWisp.rotation.z = -0.15;
+    // Side wisps near face — 얼굴 옆쪽 침범 방지: x를 더 바깥으로, z를 더 뒤로
+    const lWisp = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.18, 0.05), hairMat);
+    lWisp.position.set(-0.255, 1.74, 0.12);
+    lWisp.rotation.z = -0.18;
     playerGroup.add(lWisp);
-    const rWisp = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.2, 0.05), hairMat);
-    rWisp.position.set(0.22, 1.74, 0.18);
-    rWisp.rotation.z = 0.15;
+    const rWisp = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.18, 0.05), hairMat);
+    rWisp.position.set(0.255, 1.74, 0.12);
+    rWisp.rotation.z = 0.18;
     playerGroup.add(rWisp);
 
     // === Accessory: red clip (소윤) or headset (하윤) ===
@@ -640,9 +640,11 @@ DayNight.init(scene, playerGroup);
 
 // ── Camera ──
 let cameraAngleY = 0;
-let cameraAngleX = 0.3;
-const cameraDistance = 10;
-const cameraHeight = 5;
+let cameraAngleX = 0.5;          // 기본 각도를 더 아래로 (0.3 → 0.5, 약 28도 ↓)
+let cameraDistance = 9;          // 줌 가능하도록 변수화 (range 4~18)
+const CAMERA_DISTANCE_MIN = 4;
+const CAMERA_DISTANCE_MAX = 18;
+let cameraHeight = 4;            // 거리에 비례하여 자동 조정됨
 let playerFacingAngle = 0;
 
 function updateCamera() {
@@ -650,6 +652,8 @@ function updateCamera() {
     const py = playerGroup.position.y;
     const pz = playerGroup.position.z;
 
+    // 거리에 따라 높이도 자연스럽게 조정 (가까울수록 낮게)
+    cameraHeight = 1.5 + cameraDistance * 0.35;
     const camX = px + Math.sin(cameraAngleY) * cameraDistance * Math.cos(cameraAngleX);
     const camY = py + cameraHeight + Math.sin(cameraAngleX) * cameraDistance;
     const camZ = pz + Math.cos(cameraAngleY) * cameraDistance * Math.cos(cameraAngleX);
@@ -929,7 +933,7 @@ canvas.addEventListener('touchmove', e => {
             const dx = touch.clientX - lastTouchX;
             const dy = touch.clientY - lastTouchY;
             cameraAngleY -= dx * 0.005;
-            cameraAngleX = Math.max(0.05, Math.min(1.2, cameraAngleX + dy * 0.005));
+            cameraAngleX = Math.max(0.05, Math.min(1.4, cameraAngleX + dy * 0.005));
             lastTouchX = touch.clientX;
             lastTouchY = touch.clientY;
             return;
@@ -960,12 +964,46 @@ canvas.addEventListener('mousemove', e => {
     const dx = e.clientX - lastTouchX;
     const dy = e.clientY - lastTouchY;
     cameraAngleY -= dx * 0.005;
-    cameraAngleX = Math.max(0.05, Math.min(1.2, cameraAngleX + dy * 0.005));
+    cameraAngleX = Math.max(0.05, Math.min(1.4, cameraAngleX + dy * 0.005));
     lastTouchX = e.clientX;
     lastTouchY = e.clientY;
 });
 canvas.addEventListener('mouseup', () => { mouseDown = false; });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+// === 줌 인/아웃 (휠 + 모바일 핀치) ===
+canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const dir = Math.sign(e.deltaY);    // +1 = 줌아웃, -1 = 줌인
+    cameraDistance = Math.max(CAMERA_DISTANCE_MIN,
+        Math.min(CAMERA_DISTANCE_MAX, cameraDistance + dir * 0.8));
+}, { passive: false });
+
+// 모바일 핀치 줌 (두 손가락 거리 변화로 줌)
+let pinchStartDist = 0;
+let pinchStartCamDist = 0;
+canvas.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        pinchStartDist = Math.sqrt(dx * dx + dy * dy);
+        pinchStartCamDist = cameraDistance;
+    }
+}, { passive: true });
+canvas.addEventListener('touchmove', e => {
+    if (e.touches.length === 2 && pinchStartDist > 0) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const ratio = pinchStartDist / dist;  // 손가락이 벌어지면 ratio < 1 (줌인)
+        cameraDistance = Math.max(CAMERA_DISTANCE_MIN,
+            Math.min(CAMERA_DISTANCE_MAX, pinchStartCamDist * ratio));
+    }
+}, { passive: false });
+canvas.addEventListener('touchend', e => {
+    if (e.touches.length < 2) pinchStartDist = 0;
+});
 
 // ── Collision Detection ──
 function checkBuildingCollision(nx, nz) {
@@ -1271,6 +1309,7 @@ function animate() {
         try { Minigame.checkCatchable(playerGroup.position); } catch(e) { console.warn('Minigame.check', e); }
         if (minimapTimer > 0.16) {
             try { GameUI.updateMinimap(playerGroup.position, playerFacingAngle, cameraAngleY); } catch(e) { console.warn('minimap', e); }
+            try { GameUI.drawFullMap(playerGroup.position, playerFacingAngle); } catch(e) {}
             try { GameUI.updateHintCounter(); } catch(e) {}
             minimapTimer = 0;
         }
