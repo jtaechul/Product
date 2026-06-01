@@ -635,6 +635,51 @@ function buildCharacter(cfg) {
 
 createPlayer();
 
+// ── FBX 캐릭터 업그레이드 시도 (비동기) ──
+// 성공 시: 절차적 메시 숨기고 ChibiInstance를 playerGroup에 추가, AnimationMixer 사용
+// 실패 시: 기존 절차적 캐릭터 그대로 사용 (fallback)
+let _chibiInstance = null;
+let _chibiState = 'idle';
+function _hideProceduralMesh() {
+    playerGroup.children.forEach(c => {
+        if (c !== _chibiInstance) c.visible = false;
+    });
+}
+function tryUpgradeToFBXCharacter() {
+    if (typeof ChibiCharacter === 'undefined') return;
+    ChibiCharacter.preload().then(ok => {
+        if (!ok) return;
+        const inst = ChibiCharacter.create(CHARACTERS[currentCharacter]);
+        if (!inst) return;
+        _hideProceduralMesh();
+        playerGroup.add(inst);
+        _chibiInstance = inst;
+        window._chibiInstance = inst;
+        console.log('[ChibiCharacter] FBX 캐릭터 활성화:', currentCharacter);
+    });
+}
+tryUpgradeToFBXCharacter();
+
+// swapCharacter에서도 FBX 인스턴스 교체
+const _origSwapCharacter = window.swapCharacter;
+window.swapCharacter = function(charId) {
+    _origSwapCharacter(charId);
+    if (_chibiInstance) {
+        _chibiInstance.dispose();
+        _chibiInstance = null;
+        window._chibiInstance = null;
+    }
+    if (ChibiCharacter && ChibiCharacter.loaded) {
+        const inst = ChibiCharacter.create(CHARACTERS[charId]);
+        if (inst) {
+            _hideProceduralMesh();
+            playerGroup.add(inst);
+            _chibiInstance = inst;
+            window._chibiInstance = inst;
+        }
+    }
+};
+
 // ── Day/Night System Init ──
 DayNight.init(scene, playerGroup);
 
@@ -1137,11 +1182,20 @@ function updatePlayer(delta) {
         if (newStep !== prevStep && gameState.isRunning && !gameState.isJumping && typeof SoundManager !== 'undefined') {
             SoundManager.playSFX('run_step');
         }
-        animateWalk(walkTime);
+        if (_chibiInstance) {
+            const target = gameState.isRunning ? 'run' : 'walk';
+            if (target !== _chibiState) { _chibiInstance.setState(target); _chibiState = target; }
+        } else {
+            animateWalk(walkTime);
+        }
     } else {
         // Idle animation
         gameState.stamina = Math.min(gameState.maxStamina, gameState.stamina + 15 * delta);
-        animateIdle(clock.elapsedTime);
+        if (_chibiInstance) {
+            if (_chibiState !== 'idle') { _chibiInstance.setState('idle'); _chibiState = 'idle'; }
+        } else {
+            animateIdle(clock.elapsedTime);
+        }
     }
 
     // Jump physics
@@ -1327,6 +1381,7 @@ function animate() {
 
     if (!gameState.isPaused) {
         try { updatePlayer(delta); } catch(e) { console.warn('updatePlayer', e); }
+        if (_chibiInstance) { try { _chibiInstance.update(delta); } catch(e) { console.warn('chibi.update', e); } }
         try { updateTimer(delta); } catch(e) { console.warn('updateTimer', e); }
         try { updateCamera(); } catch(e) { console.warn('updateCamera', e); }
         try { updateHUD(); } catch(e) { console.warn('updateHUD', e); }
