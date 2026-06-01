@@ -278,6 +278,60 @@ function createPoliceStation(group) {
     pole.position.set(x + 10, 5, z + 7);
     group.add(pole);
 
+    // Standalone POLICE signpost in front of entrance
+    const spMat = new THREE.MeshStandardMaterial({ color: 0x222244, roughness: 0.6, metalness: 0.5 });
+    const signPost = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 4.5, 8), spMat);
+    signPost.position.set(x, 2.25, z + d / 2 + 3);
+    group.add(signPost);
+
+    const spCV = document.createElement('canvas');
+    spCV.width = 320; spCV.height = 160;
+    const spCtx = spCV.getContext('2d');
+    // Background gradient (dark blue → navy)
+    const grad = spCtx.createLinearGradient(0, 0, 0, 160);
+    grad.addColorStop(0, '#0033aa'); grad.addColorStop(1, '#001166');
+    spCtx.fillStyle = grad; spCtx.fillRect(0, 0, 320, 160);
+    // White border
+    spCtx.strokeStyle = '#ffffff'; spCtx.lineWidth = 5;
+    spCtx.strokeRect(5, 5, 310, 150);
+    // Star badge (simple circle emblem)
+    spCtx.fillStyle = '#ffdd00';
+    spCtx.beginPath(); spCtx.arc(36, 80, 22, 0, Math.PI * 2); spCtx.fill();
+    spCtx.fillStyle = '#003399';
+    spCtx.beginPath(); spCtx.arc(36, 80, 16, 0, Math.PI * 2); spCtx.fill();
+    spCtx.fillStyle = '#ffdd00';
+    spCtx.beginPath(); spCtx.arc(36, 80, 9, 0, Math.PI * 2); spCtx.fill();
+    // POLICE text
+    spCtx.fillStyle = '#ffffff';
+    spCtx.font = 'bold 62px Inter, sans-serif';
+    spCtx.textAlign = 'left'; spCtx.textBaseline = 'middle';
+    spCtx.fillText('POLICE', 68, 68);
+    spCtx.font = 'bold 30px Inter, sans-serif';
+    spCtx.fillStyle = '#99ccff';
+    spCtx.fillText('경    찰    서', 68, 118);
+    const spTex = new THREE.CanvasTexture(spCV);
+    // Front face
+    const spBoard = new THREE.Mesh(
+        new THREE.PlaneGeometry(5, 2.5),
+        new THREE.MeshStandardMaterial({ map: spTex, emissive: 0x001133, emissiveIntensity: 0.5 })
+    );
+    spBoard.position.set(x, 5.5, z + d / 2 + 3.07);
+    group.add(spBoard);
+    // Back face (mirrored)
+    const spBoardBack = new THREE.Mesh(
+        new THREE.PlaneGeometry(5, 2.5),
+        new THREE.MeshStandardMaterial({ map: spTex, emissive: 0x001133, emissiveIntensity: 0.5, side: THREE.BackSide })
+    );
+    spBoardBack.position.set(x, 5.5, z + d / 2 + 2.93);
+    group.add(spBoardBack);
+    // Sign cap (top of board)
+    const spCap = new THREE.Mesh(
+        new THREE.BoxGeometry(5.3, 0.25, 0.35),
+        new THREE.MeshStandardMaterial({ color: 0x001166, roughness: 0.5 })
+    );
+    spCap.position.set(x, 6.75, z + d / 2 + 3);
+    group.add(spCap);
+
     return { mesh: building, x, z, w, d, h, type: 'police', zone: 'POLICE' };
 }
 
