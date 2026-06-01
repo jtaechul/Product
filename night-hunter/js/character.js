@@ -1,6 +1,7 @@
-// character.js — FBX 애니메이션 기반 chibi 캐릭터 시스템 (소윤/하윤)
-// Mixamo 스타일 FBX(스켈레톤 + 애니메이션) + 절차적 chibi 메시 부착
-// 모델 로드 실패 시 main.js의 기존 절차적 캐릭터(fallback)로 동작.
+// character.js — Chibi 3D 여경 캐릭터 (절차적, 비율 1:2.5)
+// 전체 높이 ~2.27, 머리 0.7, 몸통 0.65, 다리 0.52, 팔 0.50
+// 모든 파츠는 characterGroup(ChibiInstance) 하위로 묶이며,
+// 머리/몸통/팔/다리는 개별 그룹/메시 변수로 참조 가능.
 
 (function () {
     'use strict';
@@ -9,478 +10,415 @@
         return;
     }
 
-    const MODEL_PATHS = {
-        idle: 'assets/models/idle.fbx',
-        walk: 'assets/models/walk.fbx',
-        run:  'assets/models/run.fbx'
-    };
-
-    // mixamorig: prefix 정규화
-    function cleanBoneName(name) {
-        return (name || '').replace(/^mixamorig[:\d]*/i, '').replace(/^_+/, '');
-    }
-
-    function findBone(root, candidates) {
-        let found = null;
-        root.traverse(obj => {
-            if (found) return;
-            if (!obj.isBone && obj.type !== 'Bone') return;
-            const clean = cleanBoneName(obj.name);
-            if (candidates.includes(clean)) found = obj;
-        });
-        return found;
-    }
-
-    // ── 모듈 상태 (싱글톤) ─────────────────────────────────
+    // ── 싱글톤 API (main.js 호환) ──
     const ChibiCharacter = {
-        cache: { idle: null, walk: null, run: null },
         loaded: false,
         loading: null,
-
-        // 페이지 로드 시 1회 호출. 성공 여부 boolean 반환.
         preload() {
-            if (this.loaded) return Promise.resolve(true);
-            if (this.loading) return this.loading;
-            if (typeof THREE.FBXLoader === 'undefined') {
-                console.warn('[ChibiCharacter] FBXLoader 미포함 — fallback 사용');
-                return Promise.resolve(false);
-            }
-            const loader = new THREE.FBXLoader();
-            const loadOne = (key, path) => new Promise(res => {
-                loader.load(path,
-                    obj => { this.cache[key] = obj; res(true); },
-                    undefined,
-                    err => {
-                        console.warn('[ChibiCharacter] ' + path + ' 로드 실패:', err && err.message || err);
-                        res(false);
-                    }
-                );
-            });
-            this.loading = Promise.all([
-                loadOne('idle', MODEL_PATHS.idle),
-                loadOne('walk', MODEL_PATHS.walk),
-                loadOne('run',  MODEL_PATHS.run)
-            ]).then(results => {
-                this.loaded = results.every(Boolean);
-                if (this.loaded) {
-                    console.log('[ChibiCharacter] FBX 3개 로드 완료 (idle/walk/run)');
-                } else {
-                    console.warn('[ChibiCharacter] 일부 FBX 로드 실패 — fallback 사용');
-                }
-                return this.loaded;
-            });
-            return this.loading;
+            this.loaded = true;
+            return Promise.resolve(true);
         },
-
-        // 새 인스턴스 생성. 로드 안된 경우 null 반환 (호출측 fallback).
         create(cfg) {
-            if (!this.loaded) return null;
-            try {
-                return new ChibiInstance(cfg || {}, this.cache);
-            } catch (err) {
-                console.error('[ChibiCharacter] 인스턴스 생성 실패:', err);
-                return null;
-            }
+            try { return new ChibiInstance(cfg || {}); }
+            catch (err) { console.error('[ChibiCharacter] create failed:', err); return null; }
         }
     };
 
-    // ── 인스턴스 ─────────────────────────────────────────
+    function mkMat(color, opts) {
+        return new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.6 }, opts || {}));
+    }
+
+    // ── characterGroup ── (instance)
     class ChibiInstance extends THREE.Group {
-        constructor(cfg, animCache) {
+        constructor(cfg) {
             super();
-            this.cfg = Object.assign({
-                name: 'soyun',
-                skinColor:  0xfde0c8,
-                hairColor:  0x5d3a1c,
-                eyeColor:   0x7a4d28,
-                pupilColor: 0x1a0a04,
-                lipColor:   0xc97560,
-                browColor:  0x3a2010,
-                hairStyle:  'long',     // 'long' | 'braids'
-                accessory:  'redClip',  // 'redClip' | 'headset' | null
-                shirtColor: 0xf5f3ec,
-                coatColor:  0x1a1f2e,
-                pantsColor: 0x222a3a,
-                shoeColor:  0x0a0a0a,
-                scale: 1.0
-            }, cfg);
+            this.cfg = cfg;
 
-            // 1) 베이스 스켈레톤: idle FBX 클론
-            const base = THREE.SkeletonUtils
-                ? THREE.SkeletonUtils.clone(animCache.idle)
-                : animCache.idle.clone(true);
-            base.traverse(obj => {
-                if (obj.isMesh) {
-                    // Mixamo가 placeholder 메시를 갖고 있을 수 있음 — 숨김
-                    obj.visible = false;
-                }
-            });
-            this.skeletonRoot = base;
-            this.add(base);
-
-            // 모델 크기 정규화 — Mixamo는 보통 100단위, 우리 월드는 m 단위
-            // 캐릭터의 발-머리 높이가 약 1.8m가 되도록 자동 스케일
-            const box = new THREE.Box3().setFromObject(base);
-            const sz = new THREE.Vector3(); box.getSize(sz);
-            const targetH = 1.8;
-            if (sz.y > 0.01) {
-                const s = targetH / sz.y;
-                base.scale.setScalar(s);
-            }
-            // 발이 y=0 (지면)에 닿도록 보정
-            const box2 = new THREE.Box3().setFromObject(base);
-            if (box2.min.y < 0 || box2.min.y > 0.01) {
-                base.position.y -= box2.min.y;
-            }
-
-            // 2) 본 찾기 (mixamorig: prefix 정규화)
-            this.bones = {
-                hips:     findBone(base, ['Hips', 'hips']),
-                spine:    findBone(base, ['Spine', 'Spine1', 'Spine2']),
-                chest:    findBone(base, ['Spine2', 'Spine1', 'Chest']),
-                neck:     findBone(base, ['Neck']),
-                head:     findBone(base, ['Head']),
-                leftArm:  findBone(base, ['LeftArm', 'LeftUpperArm']),
-                rightArm: findBone(base, ['RightArm', 'RightUpperArm']),
-                leftForeArm:  findBone(base, ['LeftForeArm', 'LeftLowerArm']),
-                rightForeArm: findBone(base, ['RightForeArm', 'RightLowerArm']),
-                leftHand:  findBone(base, ['LeftHand']),
-                rightHand: findBone(base, ['RightHand']),
-                leftUpLeg:  findBone(base, ['LeftUpLeg', 'LeftHip']),
-                rightUpLeg: findBone(base, ['RightUpLeg', 'RightHip']),
-                leftLeg:    findBone(base, ['LeftLeg', 'LeftKnee']),
-                rightLeg:   findBone(base, ['RightLeg', 'RightKnee']),
-                leftFoot:   findBone(base, ['LeftFoot']),
-                rightFoot:  findBone(base, ['RightFoot'])
+            // 캐릭터별 색상 (cfg 오버라이드 가능 — 소윤/하윤 분기 지원)
+            const C = this._colors = {
+                skin:    cfg.skinColor  || 0xffdbac,
+                hair:    cfg.hairColor  || 0x5c3d1e,
+                eye:     cfg.eyeColor   || 0x1a0a00,
+                lip:     cfg.lipColor   || 0xe05080,
+                brow:    cfg.browColor  || 0x3b1f0a,
+                uniform: cfg.coatColor  || 0x1a2444,
+                hat:     0x0d1b2a,
+                gold:    0xFFD700,
+                shoe:    0x111111
             };
 
-            // 3) 절차적 chibi 메시 빌드 (본에 부착)
-            this._buildMaterials();
-            this._buildChibiMesh();
+            this._buildHead();
+            this._buildBody();
+            this._buildArms();
+            this._buildLegs();
 
-            // 4) AnimationMixer + 클립 등록
-            this.mixer = new THREE.AnimationMixer(base);
-            this.actions = {};
-            ['idle', 'walk', 'run'].forEach(k => {
-                const src = animCache[k];
-                if (src && src.animations && src.animations[0]) {
-                    const clip = src.animations[0];
-                    const act = this.mixer.clipAction(clip);
-                    act.play();
-                    act.setEffectiveWeight(k === 'idle' ? 1 : 0);
-                    this.actions[k] = act;
-                }
+            // 모든 파츠 castShadow
+            this.traverse(o => {
+                if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; }
             });
-            this.currentState = 'idle';
 
-            if (this.cfg.scale !== 1.0) this.scale.setScalar(this.cfg.scale);
+            // 절차적 애니메이션 상태
+            this._state = 'idle';
+            this._phase = 0;
+            this._amp = 0;
+            this._targetAmp = 0;
+            this._targetSpeed = 1.5;
         }
 
-        _buildMaterials() {
-            const c = this.cfg;
-            this.mats = {
-                skin:  new THREE.MeshStandardMaterial({ color: c.skinColor, roughness: 0.55 }),
-                hair:  new THREE.MeshStandardMaterial({ color: c.hairColor, roughness: 0.45 }),
-                shirt: new THREE.MeshStandardMaterial({ color: c.shirtColor, roughness: 0.50 }),
-                coat:  new THREE.MeshStandardMaterial({ color: c.coatColor, roughness: 0.55, metalness: 0.10 }),
-                pants: new THREE.MeshStandardMaterial({ color: c.pantsColor, roughness: 0.60 }),
-                shoe:  new THREE.MeshStandardMaterial({ color: c.shoeColor, roughness: 0.35, metalness: 0.25 }),
-                eyeW:  new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.20 }),
-                eyeI:  new THREE.MeshStandardMaterial({ color: c.eyeColor, roughness: 0.22 }),
-                eyeP:  new THREE.MeshStandardMaterial({ color: c.pupilColor, roughness: 0.18 }),
-                hi:    new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.4 }),
-                brow:  new THREE.MeshStandardMaterial({ color: c.browColor, roughness: 0.60 }),
-                lip:   new THREE.MeshStandardMaterial({ color: c.lipColor, roughness: 0.40 }),
-                cheek: new THREE.MeshStandardMaterial({ color: 0xffaaaa, transparent: true, opacity: 0.45 }),
-                badge: new THREE.MeshStandardMaterial({ color: 0xdaa520, roughness: 0.20, metalness: 0.90, emissive: 0x5a3a00, emissiveIntensity: 0.25 }),
-                red:   new THREE.MeshStandardMaterial({ color: 0xc01818, roughness: 0.40 }),
-                green: new THREE.MeshStandardMaterial({ color: 0x4a8a3e, roughness: 0.50 })
+        // ──────────────────────────────────────
+        //  [머리 그룹 - headGroup]
+        // ──────────────────────────────────────
+        _buildHead() {
+            const headGroup = new THREE.Group();
+            this.headGroup = headGroup;
+            const C = this._colors;
+
+            // 얼굴
+            const face = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 32, 32),
+                mkMat(C.skin)
+            );
+            face.position.set(0, 1.65, 0);
+            headGroup.add(face);
+            this.face = face;
+
+            // 볼 홍조 (좌우)
+            const cheekMat = new THREE.MeshStandardMaterial({
+                color: 0xffb3b3, transparent: true, opacity: 0.6, roughness: 0.55
+            });
+            [-0.22, 0.22].forEach(x => {
+                const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 16), cheekMat);
+                cheek.position.set(x, 1.62, 0.28);
+                headGroup.add(cheek);
+            });
+
+            // 눈 흰자 (좌우)
+            const eyeWMat = mkMat(0xffffff, { roughness: 0.2 });
+            [-0.13, 0.13].forEach(x => {
+                const w = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 16), eyeWMat);
+                w.position.set(x, 1.68, 0.30);
+                headGroup.add(w);
+            });
+
+            // 눈동자 (좌우)
+            const pupilMat = mkMat(C.eye, { roughness: 0.25 });
+            [-0.13, 0.13].forEach(x => {
+                const p = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 16), pupilMat);
+                p.position.set(x, 1.68, 0.345);
+                headGroup.add(p);
+            });
+
+            // 눈 하이라이트 (좌우)
+            const hiMat = new THREE.MeshStandardMaterial({
+                color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.45
+            });
+            [-0.14, 0.14].forEach(x => {
+                const h = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 8), hiMat);
+                h.position.set(x, 1.70, 0.36);
+                headGroup.add(h);
+            });
+
+            // 눈썹 (좌우)
+            const browMat = mkMat(C.brow, { roughness: 0.7 });
+            [{ x: -0.13, rz:  0.12 },
+             { x:  0.13, rz: -0.12 }].forEach(p => {
+                const b = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.03, 0.02), browMat);
+                b.position.set(p.x, 1.78, 0.32);
+                b.rotation.z = p.rz;
+                headGroup.add(b);
+            });
+
+            // 속눈썹 (좌우 각 3개 — fan 형태)
+            const lashMat = mkMat(0x000000, { roughness: 0.6 });
+            [-1, 1].forEach(side => {
+                for (let i = 0; i < 3; i++) {
+                    const lash = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.05, 0.01), lashMat);
+                    // 눈 위쪽 바깥으로 펼침
+                    const outOffset = side * (0.10 + 0.022 * i);
+                    lash.position.set(outOffset, 1.745, 0.345);
+                    lash.rotation.z = side * (0.18 + 0.18 * i);
+                    headGroup.add(lash);
+                }
+            });
+
+            // 코
+            const nose = new THREE.Mesh(
+                new THREE.SphereGeometry(0.03, 8, 8),
+                mkMat(0xe8b88a)
+            );
+            nose.position.set(0, 1.60, 0.34);
+            headGroup.add(nose);
+
+            // 윗입술
+            const lipUp = new THREE.Mesh(
+                new THREE.BoxGeometry(0.15, 0.03, 0.02),
+                mkMat(C.lip, { roughness: 0.45 })
+            );
+            lipUp.position.set(0, 1.52, 0.33);
+            headGroup.add(lipUp);
+
+            // 아랫입술
+            const lipDn = new THREE.Mesh(
+                new THREE.BoxGeometry(0.12, 0.035, 0.02),
+                mkMat(C.lip, { roughness: 0.45 })
+            );
+            lipDn.position.set(0, 1.49, 0.33);
+            headGroup.add(lipDn);
+
+            // 미소 라인
+            const smileLine = new THREE.Mesh(
+                new THREE.BoxGeometry(0.10, 0.015, 0.01),
+                mkMat(0x8b4513, { roughness: 0.6 })
+            );
+            smileLine.position.set(0, 1.505, 0.34);
+            headGroup.add(smileLine);
+
+            // 뒷머리
+            const hairBack = new THREE.Mesh(
+                new THREE.SphereGeometry(0.36, 32, 32),
+                mkMat(C.hair, { roughness: 0.5 })
+            );
+            hairBack.position.set(0, 1.66, -0.05);
+            hairBack.scale.z = 0.85;
+            headGroup.add(hairBack);
+
+            // 앞머리
+            const bangs = new THREE.Mesh(
+                new THREE.BoxGeometry(0.64, 0.14, 0.12),
+                mkMat(C.hair, { roughness: 0.5 })
+            );
+            bangs.position.set(0, 1.90, 0.22);
+            headGroup.add(bangs);
+
+            // 옆머리 (좌우)
+            [-0.36, 0.36].forEach(x => {
+                const sh = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.12, 0.55, 0.12),
+                    mkMat(C.hair, { roughness: 0.5 })
+                );
+                sh.position.set(x, 1.60, 0.04);
+                headGroup.add(sh);
+            });
+
+            // 긴 머리카락 (어깨까지)
+            const longHair = new THREE.Mesh(
+                new THREE.BoxGeometry(0.58, 0.50, 0.10),
+                mkMat(C.hair, { roughness: 0.5 })
+            );
+            longHair.position.set(0, 1.25, -0.18);
+            headGroup.add(longHair);
+
+            // 경찰 모자 챙
+            const brim = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.44, 0.44, 0.04, 32),
+                mkMat(C.hat, { roughness: 0.4, metalness: 0.05 })
+            );
+            brim.position.set(0, 1.92, 0);
+            headGroup.add(brim);
+
+            // 경찰 모자 몸체
+            const hatBody = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.30, 0.34, 0.25, 32),
+                mkMat(C.hat, { roughness: 0.4, metalness: 0.05 })
+            );
+            hatBody.position.set(0, 2.04, 0);
+            headGroup.add(hatBody);
+
+            // 금색 띠 + 배지 공통 머티리얼
+            const goldMat = mkMat(C.gold, {
+                roughness: 0.25, metalness: 0.9,
+                emissive: 0x5a3a00, emissiveIntensity: 0.2
+            });
+
+            // 모자 금색 띠
+            const goldBand = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.335, 0.335, 0.04, 32),
+                goldMat
+            );
+            goldBand.position.set(0, 1.95, 0);
+            headGroup.add(goldBand);
+
+            // 모자 배지 (전면)
+            const hatBadge = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.07, 0.07, 0.02, 16),
+                goldMat
+            );
+            hatBadge.rotation.x = Math.PI / 2;
+            hatBadge.position.set(0, 2.12, 0.30);
+            headGroup.add(hatBadge);
+
+            this.add(headGroup);
+        }
+
+        // ──────────────────────────────────────
+        //  [몸통 그룹 - bodyGroup]
+        // ──────────────────────────────────────
+        _buildBody() {
+            const bodyGroup = new THREE.Group();
+            this.bodyGroup = bodyGroup;
+            const C = this._colors;
+
+            // 몸통
+            const torso = new THREE.Mesh(
+                new THREE.BoxGeometry(0.70, 0.65, 0.38),
+                mkMat(C.uniform, { roughness: 0.55, metalness: 0.05 })
+            );
+            torso.position.set(0, 1.05, 0);
+            bodyGroup.add(torso);
+            this.torso = torso;
+
+            // 넥타이
+            const tie = new THREE.Mesh(
+                new THREE.BoxGeometry(0.11, 0.28, 0.05),
+                mkMat(0x0d1b3e, { roughness: 0.4 })
+            );
+            tie.position.set(0, 1.08, 0.20);
+            bodyGroup.add(tie);
+
+            // 가슴 배지
+            const chestBadge = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.07, 0.07, 0.03, 16),
+                mkMat(C.gold, {
+                    roughness: 0.25, metalness: 0.9,
+                    emissive: 0x5a3a00, emissiveIntensity: 0.2
+                })
+            );
+            chestBadge.rotation.x = Math.PI / 2;
+            chestBadge.position.set(-0.18, 1.18, 0.20);
+            bodyGroup.add(chestBadge);
+
+            this.add(bodyGroup);
+        }
+
+        // ──────────────────────────────────────
+        //  [팔 그룹 - leftArm, rightArm]
+        //  피벗: 어깨 (위쪽 끝)
+        // ──────────────────────────────────────
+        _buildArms() {
+            const C = this._colors;
+            const sleeveMat = mkMat(C.uniform, { roughness: 0.55, metalness: 0.05 });
+            const skinMat   = mkMat(C.skin);
+
+            const mkArm = (side) => {
+                // 그룹: 어깨 피벗
+                const arm = new THREE.Group();
+                arm.position.set(side * 0.44, 1.30, 0);
+                arm.rotation.z = side * 0.15;  // 자연스럽게 바깥쪽 살짝 벌어짐
+
+                // 팔(소매 — 위에서 아래로 내려가는 원통)
+                const sleeve = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.10, 0.10, 0.50, 16),
+                    sleeveMat
+                );
+                sleeve.position.set(0, -0.25, 0);
+                arm.add(sleeve);
+
+                // 손 (어깨 그룹 안 — 함께 흔들림)
+                const hand = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 16), skinMat);
+                hand.position.set(0, -0.52, 0);
+                arm.add(hand);
+
+                return { arm, hand };
             };
+
+            const L = mkArm(-1);
+            const R = mkArm(1);
+            this.add(L.arm); this.add(R.arm);
+            this.leftArm   = L.arm;   this.leftHand   = L.hand;
+            this.rightArm  = R.arm;   this.rightHand  = R.hand;
+            this._leftArmRestZ  =  0.15;
+            this._rightArmRestZ = -0.15;
         }
 
-        _buildChibiMesh() {
-            const m = this.mats;
-            const cfg = this.cfg;
+        // ──────────────────────────────────────
+        //  [다리 그룹 - leftLeg, rightLeg]
+        //  피벗: 엉덩이 (위쪽 끝)
+        // ──────────────────────────────────────
+        _buildLegs() {
+            const C = this._colors;
+            const pantsMat = mkMat(C.uniform, { roughness: 0.55 });
+            const shoeMat  = mkMat(C.shoe, { roughness: 0.35, metalness: 0.2 });
 
-            // FBX 스켈레톤이 실제 m 단위로 정규화되었으므로 비율 그대로 사용
-            // 단, 본의 local 좌표계는 FBX 원본 스케일 기준이므로
-            // skeletonRoot.scale로 글로벌 보정됨. 본 자식으로 부착하는 메시는
-            // 원본 단위 기준(약 100x)으로 그릴 필요가 있음.
-            // → 본 자식에 sub-group을 만들어 (1/100) 스케일로 보정
-            const fbxUnitScale = 1 / (this.skeletonRoot.scale.x || 1);
-            const Smk = (parentBone) => {
-                if (!parentBone) return null;
-                const holder = new THREE.Group();
-                holder.scale.setScalar(fbxUnitScale);
-                parentBone.add(holder);
-                return holder;
+            const mkLeg = (side) => {
+                // 다리 원통: 위치 y 0.50, 높이 0.52 → 상단 y=0.76 (엉덩이 피벗)
+                const leg = new THREE.Group();
+                leg.position.set(side * 0.19, 0.76, 0);
+
+                const cyl = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.13, 0.13, 0.52, 16),
+                    pantsMat
+                );
+                cyl.position.set(0, -0.26, 0);
+                leg.add(cyl);
+
+                // 신발: 발 위치 y 0.20 (지면 위 살짝) → 그룹 기준 y=-0.56, z 약간 앞
+                const foot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.10, 0.28), shoeMat);
+                foot.position.set(0, -0.56, 0.04);
+                leg.add(foot);
+
+                return { leg, foot };
             };
 
-            // ─ 머리 (chibi 비율 — 크게) ─
-            const headHolder = Smk(this.bones.head);
-            if (headHolder) {
-                const HEAD_R = 0.30;
-                // 두개골
-                const skull = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 24, 20), m.skin);
-                skull.castShadow = true;
-                skull.scale.set(1.0, 1.05, 1.0);
-                headHolder.add(skull);
-
-                // 볼터치
-                const cheekL = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 10), m.cheek);
-                cheekL.position.set(-0.17, -0.05, 0.22); cheekL.scale.set(1, 0.7, 0.3);
-                headHolder.add(cheekL);
-                const cheekR = cheekL.clone(); cheekR.position.x = 0.17;
-                headHolder.add(cheekR);
-
-                // 큰 눈 (흰자 + 홍채 + 동공 + 하이라이트)
-                const mkEye = (sx) => {
-                    const g = new THREE.Group();
-                    const w = new THREE.Mesh(new THREE.SphereGeometry(0.085, 16, 16), m.eyeW);
-                    w.scale.set(1, 1.15, 0.55); g.add(w);
-                    const i = new THREE.Mesh(new THREE.SphereGeometry(0.055, 14, 14), m.eyeI);
-                    i.position.set(0, 0, 0.04); i.scale.set(1, 1, 0.4); g.add(i);
-                    const p = new THREE.Mesh(new THREE.SphereGeometry(0.028, 12, 12), m.eyeP);
-                    p.position.set(0, 0, 0.07); p.scale.set(1, 1, 0.4); g.add(p);
-                    const h1 = new THREE.Mesh(new THREE.SphereGeometry(0.014, 10, 10), m.hi);
-                    h1.position.set(-0.012, 0.018, 0.085); g.add(h1);
-                    const h2 = new THREE.Mesh(new THREE.SphereGeometry(0.008, 10, 10), m.hi);
-                    h2.position.set(0.018, -0.015, 0.085); g.add(h2);
-                    g.position.set(sx, 0.005, 0.24);
-                    return g;
-                };
-                headHolder.add(mkEye(-0.11));
-                headHolder.add(mkEye(0.11));
-
-                // 눈썹
-                const browL = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.022, 0.015), m.brow);
-                browL.position.set(-0.11, 0.085, 0.275); browL.rotation.z = 0.12;
-                headHolder.add(browL);
-                const browR = browL.clone(); browR.position.x = 0.11; browR.rotation.z = -0.12;
-                headHolder.add(browR);
-
-                // 코 (살짝)
-                const nose = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 8), m.skin);
-                nose.position.set(0, -0.025, 0.295);
-                headHolder.add(nose);
-
-                // 입
-                const mouth = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 10), m.lip);
-                mouth.position.set(0, -0.105, 0.285);
-                mouth.scale.set(1.4, 0.5, 0.3);
-                headHolder.add(mouth);
-
-                // 헤어 — 캡(두피 덮개)
-                const hairCap = new THREE.Mesh(
-                    new THREE.SphereGeometry(HEAD_R + 0.015, 24, 18, 0, Math.PI*2, 0, Math.PI*0.55),
-                    m.hair
-                );
-                hairCap.position.y = 0.0;
-                headHolder.add(hairCap);
-
-                // 앞머리 (뱅)
-                const bangs = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.21, 18, 14, 0, Math.PI*2, 0, Math.PI*0.45),
-                    m.hair
-                );
-                bangs.position.set(0, 0.13, 0.16);
-                bangs.scale.set(1.4, 0.65, 0.55);
-                headHolder.add(bangs);
-
-                // 헤어스타일
-                if (cfg.hairStyle === 'braids') {
-                    // 양갈래
-                    [-1, 1].forEach(side => {
-                        const br = new THREE.Mesh(
-                            new THREE.CylinderGeometry(0.045, 0.06, 0.42, 10),
-                            m.hair
-                        );
-                        br.position.set(side * 0.27, -0.18, -0.05);
-                        br.rotation.z = side * 0.20;
-                        br.castShadow = true;
-                        headHolder.add(br);
-                        // 끝 매듭
-                        const tip = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 10), m.hair);
-                        tip.position.set(side * 0.32, -0.39, -0.05);
-                        headHolder.add(tip);
-                        // 헤어밴드 (녹색)
-                        const band = new THREE.Mesh(
-                            new THREE.TorusGeometry(0.055, 0.012, 6, 14),
-                            m.green
-                        );
-                        band.position.set(side * 0.28, -0.07, -0.05);
-                        band.rotation.x = Math.PI / 2;
-                        headHolder.add(band);
-                    });
-                } else {
-                    // 긴 생머리 — 뒤로 흐름
-                    const back = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.32, 18, 16, 0, Math.PI*2, 0, Math.PI*0.55),
-                        m.hair
-                    );
-                    back.position.set(0, -0.04, -0.06);
-                    back.scale.set(1.0, 1.4, 0.85);
-                    headHolder.add(back);
-                    // 사이드
-                    [-1, 1].forEach(side => {
-                        const s = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.32, 0.12), m.hair);
-                        s.position.set(side * 0.22, -0.10, 0.06);
-                        s.rotation.z = side * 0.20;
-                        headHolder.add(s);
-                    });
-                }
-
-                // 액세서리
-                if (cfg.accessory === 'redClip') {
-                    const clip = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.025, 0.05), m.red);
-                    clip.position.set(-0.16, 0.20, 0.22);
-                    clip.rotation.z = 0.4;
-                    headHolder.add(clip);
-                } else if (cfg.accessory === 'headset') {
-                    const band = new THREE.Mesh(
-                        new THREE.TorusGeometry(0.30, 0.018, 6, 18, Math.PI),
-                        new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.4, metalness: 0.4 })
-                    );
-                    band.rotation.x = Math.PI / 2;
-                    band.position.y = 0.21;
-                    headHolder.add(band);
-                    [-1, 1].forEach(side => {
-                        const cup = new THREE.Mesh(
-                            new THREE.SphereGeometry(0.055, 12, 12),
-                            new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.45 })
-                        );
-                        cup.position.set(side * 0.30, 0.05, 0);
-                        cup.scale.set(0.7, 1, 0.7);
-                        headHolder.add(cup);
-                    });
-                    // 마이크
-                    const mic = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.015, 0.18), m.shoe);
-                    mic.position.set(0.21, -0.06, 0.10); mic.rotation.y = -0.4;
-                    headHolder.add(mic);
-                }
-            }
-
-            // ─ 상체 (코트 + 셔츠) ─
-            const spineHolder = Smk(this.bones.spine || this.bones.chest);
-            if (spineHolder) {
-                const torso = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.20, 0.22, 0.55, 14),
-                    m.coat
-                );
-                torso.position.y = 0.18;
-                torso.castShadow = true;
-                spineHolder.add(torso);
-                // 셔츠 V
-                const shirt = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.19, 0.21, 0.30, 14, 1, false, -Math.PI/6, Math.PI/3),
-                    m.shirt
-                );
-                shirt.position.set(0, 0.30, 0.005);
-                spineHolder.add(shirt);
-                // 형사 배지
-                const badge = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.045, 0.045, 0.012, 12),
-                    m.badge
-                );
-                badge.rotation.x = Math.PI / 2;
-                badge.position.set(-0.13, 0.32, 0.18);
-                spineHolder.add(badge);
-            }
-
-            // ─ 골반/하체 ─
-            const hipHolder = Smk(this.bones.hips);
-            if (hipHolder) {
-                const pelvis = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.20, 0.18, 14), m.pants);
-                pelvis.position.y = -0.05;
-                hipHolder.add(pelvis);
-            }
-
-            // ─ 팔 (어깨 → 팔뚝 → 손) ─
-            const armR = 0.07;
-            [
-                { bone: this.bones.leftArm,  fore: this.bones.leftForeArm,  hand: this.bones.leftHand,  side: -1 },
-                { bone: this.bones.rightArm, fore: this.bones.rightForeArm, hand: this.bones.rightHand, side: 1 }
-            ].forEach(({ bone, fore, hand, side }) => {
-                const up = Smk(bone);
-                if (up) {
-                    // 어깨 본 → 팔뚝 본 사이를 채우는 원통
-                    const upMesh = new THREE.Mesh(new THREE.CylinderGeometry(armR, armR*0.9, 0.30, 12), m.coat);
-                    upMesh.position.y = -0.15;
-                    upMesh.castShadow = true;
-                    up.add(upMesh);
-                }
-                const fo = Smk(fore);
-                if (fo) {
-                    const fmesh = new THREE.Mesh(new THREE.CylinderGeometry(armR*0.9, armR*0.8, 0.28, 12), m.coat);
-                    fmesh.position.y = -0.14;
-                    fmesh.castShadow = true;
-                    fo.add(fmesh);
-                }
-                const ha = Smk(hand);
-                if (ha) {
-                    const h = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 12), m.skin);
-                    h.scale.set(0.9, 1.0, 0.7);
-                    ha.add(h);
-                }
-            });
-
-            // ─ 다리 (허벅지 → 종아리 → 발) ─
-            const legR = 0.085;
-            [
-                { up: this.bones.leftUpLeg,  lo: this.bones.leftLeg,  ft: this.bones.leftFoot },
-                { up: this.bones.rightUpLeg, lo: this.bones.rightLeg, ft: this.bones.rightFoot }
-            ].forEach(({ up, lo, ft }) => {
-                const u = Smk(up);
-                if (u) {
-                    const t = new THREE.Mesh(new THREE.CylinderGeometry(legR, legR*0.92, 0.36, 12), m.pants);
-                    t.position.y = -0.18;
-                    t.castShadow = true;
-                    u.add(t);
-                }
-                const l = Smk(lo);
-                if (l) {
-                    const s = new THREE.Mesh(new THREE.CylinderGeometry(legR*0.92, legR*0.78, 0.34, 12), m.pants);
-                    s.position.y = -0.17;
-                    s.castShadow = true;
-                    l.add(s);
-                }
-                const f = Smk(ft);
-                if (f) {
-                    const boot = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.10, 0.26), m.shoe);
-                    boot.position.set(0, -0.05, 0.04);
-                    boot.castShadow = true;
-                    f.add(boot);
-                }
-            });
+            const L = mkLeg(-1);
+            const R = mkLeg(1);
+            this.add(L.leg); this.add(R.leg);
+            this.leftLeg  = L.leg;  this.leftFoot  = L.foot;
+            this.rightLeg = R.leg;  this.rightFoot = R.foot;
         }
 
+        // ──────────────────────────────────────
+        //  상태 전환 (부드러운 amp/speed 보간)
+        // ──────────────────────────────────────
         setState(name) {
-            if (!this.actions[name] || name === this.currentState) return;
-            const from = this.actions[this.currentState];
-            const to   = this.actions[name];
-            const FADE = 0.20;
-            if (from) from.fadeOut(FADE);
-            to.reset().fadeIn(FADE);
-            this.currentState = name;
+            if (name === this._state) return;
+            this._state = name;
+            if (name === 'idle')      { this._targetAmp = 0;    this._targetSpeed = 1.6;  }
+            else if (name === 'walk') { this._targetAmp = 0.45; this._targetSpeed = 7.0;  }
+            else if (name === 'run')  { this._targetAmp = 0.70; this._targetSpeed = 11.0; }
         }
 
         update(dt) {
-            if (this.mixer) this.mixer.update(dt);
+            // amp/speed 부드러운 보간 (대략 0.2초 fade)
+            this._amp += (this._targetAmp - this._amp) * Math.min(1, 5 * dt);
+            this._phase += dt * this._targetSpeed;
+
+            const swing = Math.sin(this._phase) * this._amp;
+
+            // 팔: 좌우 반대로 (어깨 기준 X축 회전)
+            this.leftArm.rotation.x  = -swing;
+            this.rightArm.rotation.x =  swing;
+            // 어깨 자연 벌림 유지
+            this.leftArm.rotation.z  = this._leftArmRestZ;
+            this.rightArm.rotation.z = this._rightArmRestZ;
+
+            // 다리: 팔과 반대 위상 (엉덩이 기준 X축 회전)
+            this.leftLeg.rotation.x  =  swing;
+            this.rightLeg.rotation.x = -swing;
+
+            // 상하 바운스 — idle은 호흡, walk/run은 발걸음 박자
+            if (this._state === 'idle') {
+                const bob = Math.sin(this._phase) * 0.02;
+                this.headGroup.position.y = bob;
+                this.bodyGroup.position.y = bob * 0.5;
+            } else {
+                const bob = Math.abs(Math.sin(this._phase)) * (this._state === 'run' ? 0.07 : 0.035);
+                this.headGroup.position.y = bob;
+                this.bodyGroup.position.y = bob * 0.6;
+            }
         }
 
         setPosition(x, y, z) { this.position.set(x, y, z); }
         setRotation(yRad)    { this.rotation.y = yRad; }
 
         dispose() {
-            this.traverse(obj => {
-                if (obj.geometry) obj.geometry.dispose();
-                if (obj.material) {
-                    if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
-                    else obj.material.dispose();
+            this.traverse(o => {
+                if (o.geometry) o.geometry.dispose();
+                if (o.material) {
+                    if (Array.isArray(o.material)) o.material.forEach(m => m.dispose());
+                    else o.material.dispose();
                 }
             });
             if (this.parent) this.parent.remove(this);
-            this.mixer = null;
         }
     }
 
