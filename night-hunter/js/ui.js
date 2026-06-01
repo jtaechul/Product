@@ -172,12 +172,12 @@ const GameUI = window.GameUI = {
         if (!modal) return;
         modal.style.display = 'flex';
         this._fullMapOpen = true;
-        // 캔버스 해상도를 화면 크기에 맞춤
+        // 캔버스 해상도를 화면 크기에 맞춤 (transform 리셋 — 반복 호출 시 scale 누적 방지)
         const rect = this.fullMapCanvas.getBoundingClientRect();
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         this.fullMapCanvas.width = rect.width * dpr;
         this.fullMapCanvas.height = rect.height * dpr;
-        this.fullMapCtx.scale(dpr, dpr);
+        this.fullMapCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     },
 
     drawFullMap(playerPos, playerAngle) {
@@ -185,17 +185,20 @@ const GameUI = window.GameUI = {
         const ctx = this.fullMapCtx;
         const c = this.fullMapCanvas;
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const size = c.width / dpr;
-        const half = size / 2;
+        // 캔버스가 정사각형이 아닐 수 있음 → 가로/세로 모두 사용해 fit
+        const sizeW = c.width / dpr;
+        const sizeH = c.height / dpr;
         const W = (typeof WORLD_SIZE !== 'undefined') ? WORLD_SIZE : 300;
-        const scale = size / W;
-        const wx = (x) => half + x * scale;
-        const wz = (z) => half + z * scale;
+        const scale = Math.min(sizeW, sizeH) / W;  // 작은 쪽에 맞춰 전체 월드 표시
+        const cx = sizeW / 2;
+        const cy = sizeH / 2;
+        const wx = (x) => cx + x * scale;
+        const wz = (z) => cy + z * scale;
 
-        ctx.clearRect(0, 0, size, size);
+        ctx.clearRect(0, 0, sizeW, sizeH);
         // 배경 (잔디)
         ctx.fillStyle = '#1a2e1a';
-        ctx.fillRect(0, 0, size, size);
+        ctx.fillRect(0, 0, sizeW, sizeH);
         // 도로 (메인 격자)
         ctx.strokeStyle = 'rgba(120,120,120,0.5)';
         ctx.lineWidth = 3;
@@ -214,6 +217,7 @@ const GameUI = window.GameUI = {
                 const bx = b.x || 0, bz = b.z || 0;
                 const bw = (b.w || 6) * scale, bd = (b.d || 6) * scale;
                 if (b.type === 'police') ctx.fillStyle = 'rgba(30,100,200,0.95)';
+                else if (b.zone === 'POLICE') ctx.fillStyle = 'rgba(60,140,220,0.75)';
                 else if (b.zone === 'RESIDENTIAL') ctx.fillStyle = 'rgba(180,140,80,0.75)';
                 else if (b.zone === 'COMMERCIAL') ctx.fillStyle = 'rgba(80,200,180,0.75)';
                 else if (b.zone === 'FACTORY') ctx.fillStyle = 'rgba(120,120,120,0.75)';
@@ -370,6 +374,7 @@ const GameUI = window.GameUI = {
             const bw = (b.w||6)*scale, bd = (b.d||6)*scale;
             if (bx<-30||bx>size+30||bz<-30||bz>size+30) return;
             if (b.type==='police') ctx.fillStyle='rgba(30,100,200,0.85)';
+            else if (b.zone==='POLICE') ctx.fillStyle='rgba(60,140,220,0.65)';
             else if (b.zone==='RESIDENTIAL') ctx.fillStyle='rgba(180,140,80,0.6)';
             else if (b.zone==='COMMERCIAL') ctx.fillStyle='rgba(80,200,180,0.6)';
             else if (b.zone==='FACTORY') ctx.fillStyle='rgba(120,120,120,0.6)';
