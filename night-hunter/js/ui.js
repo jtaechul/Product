@@ -127,7 +127,7 @@ const GameUI = window.GameUI = {
                     padding:8px 10px; font-family:'Inter',sans-serif;">
                     <div style="display:flex; gap:6px 14px; flex-wrap:wrap; justify-content:center;">
                         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
-                            <span style="display:inline-block;width:11px;height:11px;background:rgba(180,140,80,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>주택지구
+                            <span style="display:inline-block;width:11px;height:11px;background:rgba(180,140,80,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>주거지구
                         </span>
                         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
                             <span style="display:inline-block;width:11px;height:11px;background:rgba(80,200,180,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>상업지구
