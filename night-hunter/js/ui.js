@@ -116,25 +116,39 @@ const GameUI = window.GameUI = {
                     font-size:11px; letter-spacing:3px; color:#60a5fa; font-weight:700;">
                     FULL MAP
                 </div>
-                <div style="position:absolute; top:14px; right:60px;
-                    display:flex; gap:10px; pointer-events:none;
-                    font-family:'Inter',sans-serif;">
-                    <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#fff;font-weight:600;">
-                        <span style="display:inline-block;width:11px;height:11px;background:rgba(180,140,80,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>주택지구
-                    </span>
-                    <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#fff;font-weight:600;">
-                        <span style="display:inline-block;width:11px;height:11px;background:rgba(80,200,180,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>상업지구
-                    </span>
-                    <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#fff;font-weight:600;">
-                        <span style="display:inline-block;width:11px;height:11px;background:rgba(120,120,120,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>공업지구
-                    </span>
-                    <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#fff;font-weight:600;">
-                        <span style="display:inline-block;width:11px;height:11px;background:rgba(30,100,200,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>경찰서
-                    </span>
-                </div>
-                <div style="position:absolute; bottom:10px; left:0; right:0; text-align:center;
-                    font-size:11px; color:#94a3b8; pointer-events:none;">
-                    🟨 수배범 · 🟩 목격자 · 🟥 납치범 · 🔵 현재 위치
+                <div style="position:absolute; left:10px; right:10px; bottom:10px;
+                    display:flex; flex-direction:column; gap:6px; pointer-events:none;
+                    background:rgba(15,23,42,0.85); backdrop-filter:blur(6px);
+                    border:1px solid rgba(255,255,255,0.15); border-radius:10px;
+                    padding:8px 10px; font-family:'Inter',sans-serif;">
+                    <div style="display:flex; gap:6px 14px; flex-wrap:wrap; justify-content:center;">
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
+                            <span style="display:inline-block;width:11px;height:11px;background:rgba(180,140,80,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>주택지구
+                        </span>
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
+                            <span style="display:inline-block;width:11px;height:11px;background:rgba(80,200,180,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>상업지구
+                        </span>
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
+                            <span style="display:inline-block;width:11px;height:11px;background:rgba(120,120,120,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>공업지구
+                        </span>
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
+                            <span style="display:inline-block;width:11px;height:11px;background:rgba(30,100,200,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>경찰서
+                        </span>
+                    </div>
+                    <div style="display:flex; gap:6px 14px; flex-wrap:wrap; justify-content:center;">
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#e2e8f0;font-weight:600;white-space:nowrap;">
+                            <span style="display:inline-block;width:11px;height:11px;background:#fbbf24;border-radius:50%;border:1px solid #fff;"></span>수배범
+                        </span>
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#e2e8f0;font-weight:600;white-space:nowrap;">
+                            <span style="display:inline-block;width:11px;height:11px;background:#86efac;border-radius:50%;border:1px solid #fff;"></span>목격자
+                        </span>
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#e2e8f0;font-weight:600;white-space:nowrap;">
+                            <span style="display:inline-block;width:11px;height:11px;background:#ff3333;border-radius:50%;border:1px solid #fff;"></span>납치범
+                        </span>
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#e2e8f0;font-weight:600;white-space:nowrap;">
+                            <span style="display:inline-block;width:11px;height:11px;background:#60a5fa;border:1px solid #fff;clip-path:polygon(50% 0%, 0% 100%, 100% 100%);"></span>현재 위치
+                        </span>
+                    </div>
                 </div>
             </div>
         `;
