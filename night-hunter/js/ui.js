@@ -80,36 +80,6 @@ const GameUI = window.GameUI = {
         this.minimapCanvas = canvas;
         this.minimapCtx = canvas.getContext('2d');
 
-        // 미니맵 외부 (원형 클립 바깥)에 범례 표시 — 캔버스 안에 그리면 원형 마스크에 잘림
-        const legend = document.createElement('div');
-        legend.id = 'minimap-legend';
-        legend.style.cssText = `
-            position:fixed;
-            right:calc(12px + env(safe-area-inset-right, 0px));
-            top:calc(${60 + this.minimapSize + 6}px + env(safe-area-inset-top, 0px));
-            width:${this.minimapSize}px;
-            display:flex; justify-content:space-between;
-            background:rgba(0,0,0,0.55); backdrop-filter:blur(4px);
-            border:1px solid rgba(255,255,255,0.18); border-radius:8px;
-            padding:4px 6px; z-index:25; pointer-events:none;
-            font-family:'Inter',sans-serif;
-        `;
-        legend.innerHTML = `
-            <span style="display:flex;align-items:center;gap:3px;font-size:9px;color:#fff;font-weight:600;">
-                <span style="display:inline-block;width:8px;height:8px;background:rgba(180,140,80,0.95);border-radius:1px;"></span>주택
-            </span>
-            <span style="display:flex;align-items:center;gap:3px;font-size:9px;color:#fff;font-weight:600;">
-                <span style="display:inline-block;width:8px;height:8px;background:rgba(100,140,180,0.95);border-radius:1px;"></span>상업
-            </span>
-            <span style="display:flex;align-items:center;gap:3px;font-size:9px;color:#fff;font-weight:600;">
-                <span style="display:inline-block;width:8px;height:8px;background:rgba(120,120,120,0.95);border-radius:1px;"></span>공업
-            </span>
-            <span style="display:flex;align-items:center;gap:3px;font-size:9px;color:#fff;font-weight:600;">
-                <span style="display:inline-block;width:8px;height:8px;background:rgba(30,100,200,0.95);border-radius:1px;"></span>경찰
-            </span>
-        `;
-        document.body.appendChild(legend);
-
         // 클릭으로 전체 지도 모달 열기
         const openFull = (e) => { e?.preventDefault?.(); this.openFullMap(); };
         container.addEventListener('click', openFull);
@@ -146,9 +116,25 @@ const GameUI = window.GameUI = {
                     font-size:11px; letter-spacing:3px; color:#60a5fa; font-weight:700;">
                     FULL MAP
                 </div>
+                <div style="position:absolute; top:14px; right:60px;
+                    display:flex; gap:10px; pointer-events:none;
+                    font-family:'Inter',sans-serif;">
+                    <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#fff;font-weight:600;">
+                        <span style="display:inline-block;width:11px;height:11px;background:rgba(180,140,80,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>주택지구
+                    </span>
+                    <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#fff;font-weight:600;">
+                        <span style="display:inline-block;width:11px;height:11px;background:rgba(80,200,180,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>상업지구
+                    </span>
+                    <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#fff;font-weight:600;">
+                        <span style="display:inline-block;width:11px;height:11px;background:rgba(120,120,120,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>공업지구
+                    </span>
+                    <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#fff;font-weight:600;">
+                        <span style="display:inline-block;width:11px;height:11px;background:rgba(30,100,200,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>경찰서
+                    </span>
+                </div>
                 <div style="position:absolute; bottom:10px; left:0; right:0; text-align:center;
                     font-size:11px; color:#94a3b8; pointer-events:none;">
-                    🟦 경찰서 · 🟨 수배범 · 🟩 목격자 · 🟥 납치범 · 🔵 현재 위치
+                    🟨 수배범 · 🟩 목격자 · 🟥 납치범 · 🔵 현재 위치
                 </div>
             </div>
         `;
@@ -209,11 +195,11 @@ const GameUI = window.GameUI = {
             buildingData.forEach(b => {
                 const bx = b.x || 0, bz = b.z || 0;
                 const bw = (b.w || 6) * scale, bd = (b.d || 6) * scale;
-                if (b.type === 'police') ctx.fillStyle = 'rgba(30,100,200,0.85)';
-                else if (b.zone === 'RESIDENTIAL') ctx.fillStyle = 'rgba(180,140,80,0.55)';
-                else if (b.zone === 'COMMERCIAL') ctx.fillStyle = 'rgba(100,140,180,0.55)';
-                else if (b.zone === 'FACTORY') ctx.fillStyle = 'rgba(120,120,120,0.55)';
-                else ctx.fillStyle = 'rgba(150,150,150,0.45)';
+                if (b.type === 'police') ctx.fillStyle = 'rgba(30,100,200,0.95)';
+                else if (b.zone === 'RESIDENTIAL') ctx.fillStyle = 'rgba(180,140,80,0.75)';
+                else if (b.zone === 'COMMERCIAL') ctx.fillStyle = 'rgba(80,200,180,0.75)';
+                else if (b.zone === 'FACTORY') ctx.fillStyle = 'rgba(120,120,120,0.75)';
+                else ctx.fillStyle = 'rgba(150,150,150,0.55)';
                 ctx.fillRect(wx(bx) - bw / 2, wz(bz) - bd / 2, bw, bd);
             });
         }
@@ -365,10 +351,10 @@ const GameUI = window.GameUI = {
             const bx = mx(b.x||0), bz = mz(b.z||0);
             const bw = (b.w||6)*scale, bd = (b.d||6)*scale;
             if (bx<-30||bx>size+30||bz<-30||bz>size+30) return;
-            if (b.type==='police') ctx.fillStyle='rgba(30,100,200,0.7)';
-            else if (b.zone==='RESIDENTIAL') ctx.fillStyle='rgba(180,140,80,0.5)';
-            else if (b.zone==='COMMERCIAL') ctx.fillStyle='rgba(100,140,180,0.5)';
-            else if (b.zone==='FACTORY') ctx.fillStyle='rgba(120,120,120,0.5)';
+            if (b.type==='police') ctx.fillStyle='rgba(30,100,200,0.85)';
+            else if (b.zone==='RESIDENTIAL') ctx.fillStyle='rgba(180,140,80,0.6)';
+            else if (b.zone==='COMMERCIAL') ctx.fillStyle='rgba(80,200,180,0.6)';
+            else if (b.zone==='FACTORY') ctx.fillStyle='rgba(120,120,120,0.6)';
             else ctx.fillStyle='rgba(150,150,150,0.4)';
             ctx.fillRect(bx-bw/2, bz-bd/2, bw, bd);
         });
