@@ -124,6 +124,9 @@ const SoundManager = {
         if (this.dayAudio && !this.dayAudio.paused) {
             try { this.dayAudio.pause(); } catch (e) {}
         }
+        if (this.nightAudio && !this.nightAudio.paused) {
+            try { this.nightAudio.pause(); } catch (e) {}
+        }
         // AudioContext도 일시정지 (CPU/배터리 절약 + 안전)
         if (this.ctx && this.ctx.state === 'running') {
             this.ctx.suspend().catch(() => {});
@@ -157,8 +160,27 @@ const SoundManager = {
                 this._pendingBGMType = 'day';
                 this.bgmActive = false;
             }
+        } else if (type === 'night' && this.nightAudio) {
+            // 밤 MP3도 동일한 방식으로 이어 재생
+            this.bgmActive = true;
+            this.bgmType = 'night';
+            if (this.ctx && this.ctx.state !== 'running') {
+                this.ctx.resume().catch(() => {});
+            }
+            try {
+                const p = this.nightAudio.play();
+                if (p && typeof p.catch === 'function') {
+                    p.catch(() => {
+                        this._pendingBGMType = 'night';
+                        this.bgmActive = false;
+                    });
+                }
+            } catch (e) {
+                this._pendingBGMType = 'night';
+                this.bgmActive = false;
+            }
         } else {
-            // procedural BGM은 처음부터 다시 재생
+            // procedural BGM(또는 audio 미로드)은 처음부터 다시 재생
             this.playBGM(type);
         }
     },
@@ -299,6 +321,29 @@ const SoundManager = {
             return a;
         } catch (e) {
             console.warn('Day BGM audio load failed:', e);
+            return null;
+        }
+    },
+
+    // === Night BGM: MP3 파일 재생 (assets/night-bgm.mp3) ===
+    _loadNightBGMAudio() {
+        if (this.nightAudio) return this.nightAudio;
+        try {
+            const a = new Audio('assets/night-bgm.mp3');
+            a.loop = true;
+            a.preload = 'auto';
+            this.nightAudio = a;
+            try {
+                const src = this.ctx.createMediaElementSource(a);
+                src.connect(this.bgmGain);
+                this.nightAudioRouted = true;
+            } catch (e) {
+                console.warn('Night BGM MediaElementSource failed, falling back to native playback:', e);
+                this.nightAudioRouted = false;
+            }
+            return a;
+        } catch (e) {
+            console.warn('Night BGM audio load failed:', e);
             return null;
         }
     },
@@ -486,7 +531,24 @@ const SoundManager = {
     },
 
     _playNightBGM() {
-        // Single-track: eerie melody with bass drone only (no overlapping chord pad)
+        // MP3 우선 — 파일 로드 성공 시 procedural 코드는 실행하지 않음
+        const a = this._loadNightBGMAudio();
+        if (a) {
+            try {
+                a.currentTime = 0;
+                a.volume = this.nightAudioRouted ? 1.0 : 0.8;
+                const p = a.play();
+                if (p && typeof p.catch === 'function') {
+                    p.catch(err => {
+                        console.warn('Night BGM autoplay blocked — will retry on next gesture:', err);
+                    });
+                }
+                return;
+            } catch (err) {
+                console.warn('Night BGM play error, falling back to procedural:', err);
+            }
+        }
+        // === Fallback: procedural eerie melody (MP3 실패 시) ===
         const beatLen = 0.55;
         let mIdx = 0;
         let beatCount = 0;
@@ -524,6 +586,9 @@ const SoundManager = {
         this.bgmTimers = [];
         if (this.dayAudio) {
             try { this.dayAudio.pause(); } catch (e) {}
+        }
+        if (this.nightAudio) {
+            try { this.nightAudio.pause(); } catch (e) {}
         }
     },
 

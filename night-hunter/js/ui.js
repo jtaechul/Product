@@ -101,23 +101,27 @@ const GameUI = window.GameUI = {
             font-family:'Inter',sans-serif;
         `;
         modal.innerHTML = `
-            <div style="position:relative; width:min(92vw, 92vh); height:min(92vw, 92vh);">
-                <canvas id="fullmap-canvas" style="width:100%; height:100%; display:block;
-                    background:rgba(15,23,42,0.95); border:2px solid rgba(255,255,255,0.25);
-                    border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,0.7);"></canvas>
-                <button id="fullmap-close" style="
-                    position:absolute; top:8px; right:8px;
-                    width:40px; height:40px; border-radius:50%;
-                    background:rgba(15,23,42,0.85); color:#fff; border:1px solid rgba(255,255,255,0.2);
-                    cursor:pointer; font-size:18px; font-weight:700;
-                    display:flex; align-items:center; justify-content:center;
-                ">✕</button>
-                <div style="position:absolute; top:14px; left:18px;
-                    font-size:11px; letter-spacing:3px; color:#60a5fa; font-weight:700;">
-                    FULL MAP
+            <div style="display:flex; flex-direction:column; align-items:center; gap:8px;
+                width:min(92vw, 92vh); max-height:96vh;">
+                <div style="position:relative; width:100%; aspect-ratio:1/1;
+                    max-height:calc(96vh - 110px);">
+                    <canvas id="fullmap-canvas" style="width:100%; height:100%; display:block;
+                        background:rgba(15,23,42,0.95); border:2px solid rgba(255,255,255,0.25);
+                        border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,0.7);"></canvas>
+                    <button id="fullmap-close" style="
+                        position:absolute; top:8px; right:8px;
+                        width:40px; height:40px; border-radius:50%;
+                        background:rgba(15,23,42,0.85); color:#fff; border:1px solid rgba(255,255,255,0.2);
+                        cursor:pointer; font-size:18px; font-weight:700;
+                        display:flex; align-items:center; justify-content:center;
+                    ">✕</button>
+                    <div style="position:absolute; top:14px; left:18px;
+                        font-size:11px; letter-spacing:3px; color:#60a5fa; font-weight:700;">
+                        FULL MAP
+                    </div>
                 </div>
-                <div style="position:absolute; left:10px; right:10px; bottom:10px;
-                    display:flex; flex-direction:column; gap:6px; pointer-events:none;
+                <div style="width:100%;
+                    display:flex; flex-direction:column; gap:6px;
                     background:rgba(15,23,42,0.85); backdrop-filter:blur(6px);
                     border:1px solid rgba(255,255,255,0.15); border-radius:10px;
                     padding:8px 10px; font-family:'Inter',sans-serif;">
