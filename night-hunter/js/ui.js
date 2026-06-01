@@ -127,7 +127,7 @@ const GameUI = window.GameUI = {
                     padding:8px 10px; font-family:'Inter',sans-serif;">
                     <div style="display:flex; gap:6px 14px; flex-wrap:wrap; justify-content:center;">
                         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
-                            <span style="display:inline-block;width:11px;height:11px;background:rgba(180,140,80,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>주거지구
+                            <span style="display:inline-block;width:11px;height:11px;background:rgba(180,140,80,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>주택지구
                         </span>
                         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
                             <span style="display:inline-block;width:11px;height:11px;background:rgba(80,200,180,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>상업지구
@@ -217,7 +217,7 @@ const GameUI = window.GameUI = {
                 const bx = b.x || 0, bz = b.z || 0;
                 const bw = (b.w || 6) * scale, bd = (b.d || 6) * scale;
                 if (b.type === 'police') ctx.fillStyle = 'rgba(30,100,200,0.95)';
-                else if (b.zone === 'POLICE') ctx.fillStyle = 'rgba(60,140,220,0.75)';
+                else if (b.zone === 'POLICE') ctx.fillStyle = 'rgba(180,140,80,0.75)';
                 else if (b.zone === 'RESIDENTIAL') ctx.fillStyle = 'rgba(180,140,80,0.75)';
                 else if (b.zone === 'COMMERCIAL') ctx.fillStyle = 'rgba(80,200,180,0.75)';
                 else if (b.zone === 'FACTORY') ctx.fillStyle = 'rgba(120,120,120,0.75)';
@@ -374,7 +374,7 @@ const GameUI = window.GameUI = {
             const bw = (b.w||6)*scale, bd = (b.d||6)*scale;
             if (bx<-30||bx>size+30||bz<-30||bz>size+30) return;
             if (b.type==='police') ctx.fillStyle='rgba(30,100,200,0.85)';
-            else if (b.zone==='POLICE') ctx.fillStyle='rgba(60,140,220,0.65)';
+            else if (b.zone==='POLICE') ctx.fillStyle='rgba(180,140,80,0.6)';
             else if (b.zone==='RESIDENTIAL') ctx.fillStyle='rgba(180,140,80,0.6)';
             else if (b.zone==='COMMERCIAL') ctx.fillStyle='rgba(80,200,180,0.6)';
             else if (b.zone==='FACTORY') ctx.fillStyle='rgba(120,120,120,0.6)';
