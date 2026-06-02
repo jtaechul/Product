@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>소윤 GLB 미리보기</title>
+<title>캐릭터 GLB 미리보기</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body { background:#111; color:#fff; font-family:sans-serif; overflow:hidden; }
@@ -26,19 +26,17 @@ canvas { display:block; }
 </style>
 </head>
 <body>
-<div id="info">🔄 드래그: 회전 &nbsp;|&nbsp; 휠: 줌 &nbsp;|&nbsp; 우클릭 드래그: 이동</div>
+<div id="info">로딩 중...</div>
 <div id="anim-btns">
-    <button onclick="playAnim('Idle')"  class="active">💤 Idle</button>
-    <button onclick="playAnim('Walking')">🚶 Walk</button>
-    <button onclick="playAnim('Running')">🏃 Run</button>
-    <button onclick="playAnim('Wave')">👋 Wave</button>
-    <button onclick="playAnim('Dance')">💃 Dance</button>
-    <button onclick="playAnim('Jump')">🦘 Jump</button>
+    <button onclick="playAnim('idle')" class="active">💤 Idle</button>
+    <button onclick="playAnim('walk')">🚶 Walk</button>
+    <button onclick="playAnim('run')">🏃 Run</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="js/character.js?v=6"></script>
 <script>
 const W = window.innerWidth, H = window.innerHeight;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -57,12 +55,11 @@ const camera = new THREE.PerspectiveCamera(45, W/H, 0.01, 100);
 camera.position.set(0, 1.2, 3.5);
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 0.7, 0);
+controls.target.set(0, 0.9, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.update();
 
-// 조명
 scene.add(new THREE.AmbientLight(0x8899bb, 0.8));
 const sun = new THREE.DirectionalLight(0xfff4e0, 1.4);
 sun.position.set(2, 4, 3);
@@ -72,49 +69,26 @@ const fill = new THREE.DirectionalLight(0x6688cc, 0.4);
 fill.position.set(-2, 1, -2);
 scene.add(fill);
 
-// 그리드
 const grid = new THREE.GridHelper(4, 20, 0x334466, 0x223355);
 scene.add(grid);
 
-// 모델 로드
-let mixer, actions = {}, currentAction = null;
+let character = null;
 
-const loader = new THREE.GLTFLoader();
-loader.load('assets/models/soyun.glb',
-    (gltf) => {
-        const model = gltf.scene;
-        model.traverse(o => {
-            if (o.isMesh) {
-                o.castShadow = true;
-                o.receiveShadow = true;
-            }
-        });
-        scene.add(model);
-
-        mixer = new THREE.AnimationMixer(model);
-        gltf.animations.forEach(clip => {
-            actions[clip.name] = mixer.clipAction(clip);
-        });
-        console.log('애니메이션:', Object.keys(actions));
-        playAnim('Idle');
+ChibiCharacter.preload().then(() => {
+    character = ChibiCharacter.create({ name: 'soyun' });
+    if (character) {
+        scene.add(character);
         document.getElementById('info').textContent =
-            '✅ 소윤 로드 완료 — 애니: ' + Object.keys(actions).join(' / ');
-    },
-    (xhr) => {
-        const pct = (xhr.loaded / xhr.total * 100).toFixed(0);
-        document.getElementById('info').textContent = `로딩 중... ${pct}%`;
-    },
-    (err) => {
-        document.getElementById('info').textContent = '❌ 로드 실패: ' + err.message;
-        console.error(err);
+            '✅ 로드 완료 — 드래그: 회전 | 휠: 줌 | 우클릭: 이동';
+    } else {
+        document.getElementById('info').textContent = '❌ 캐릭터 생성 실패';
     }
-);
+}).catch(err => {
+    document.getElementById('info').textContent = '❌ 로드 실패: ' + err.message;
+});
 
 function playAnim(name) {
-    if (!actions[name]) return;
-    if (currentAction) currentAction.fadeOut(0.2);
-    currentAction = actions[name];
-    currentAction.reset().fadeIn(0.2).play();
+    if (character) character.setState(name);
     document.querySelectorAll('#anim-btns button').forEach(b => {
         b.classList.toggle('active', b.getAttribute('onclick').includes(`'${name}'`));
     });
@@ -125,7 +99,7 @@ const clock = new THREE.Clock();
 (function animate() {
     requestAnimationFrame(animate);
     const dt = clock.getDelta();
-    if (mixer) mixer.update(dt);
+    if (character) character.update(dt);
     controls.update();
     renderer.render(scene, camera);
 })();
