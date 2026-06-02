@@ -1,5 +1,6 @@
-// character.js v5 — GLB 기반 캐릭터 (RobotExpressive 모델 사용)
-// 14개 애니메이션 포함: Idle, Walking, Running, Jump, Wave, Dance, ThumbsUp, ...
+// character.js v6 — Feminine GLB 기반 (베이스 메시 + 분리 애니메이션)
+// 베이스: assets/models/soyun.glb (Feminine_TPose)
+// 애니: assets/models/idle.glb / walk.glb / run.glb
 // API: ChibiCharacter.preload(), .create(cfg), instance.setState('idle'|'walk'|'run')
 
 (function () {
@@ -12,14 +13,14 @@
     }
 
     // ── 캐시 ──
-    const cache = {};      // { 'soyun': gltf, 'hayun': gltf }
-    let loaded = false;
-    let loadingPromise = null;
+    const meshCache  = {};   // { 'soyun': gltf, 'hayun': gltf }
+    const animCache  = {};   // { 'idle': clip, 'walk': clip, 'run': clip }
 
-    function loadOne(name, path) {
+    function loadGLB(path) {
         return new Promise((resolve, reject) => {
-            new THREE.GLTFLoader().load(path,
-                (gltf) => { cache[name] = gltf; resolve(gltf); },
+            new THREE.GLTFLoader().load(
+                path,
+                resolve,
                 undefined,
                 (err) => { console.warn('[ChibiCharacter] 로드 실패', path, err); reject(err); }
             );
@@ -29,19 +30,31 @@
     const ChibiCharacter = {
         loaded: false,
         preload() {
-            if (loadingPromise) return loadingPromise;
-            loadingPromise = Promise.all([
-                loadOne('soyun', 'assets/models/soyun.glb'),
-                loadOne('hayun', 'assets/models/hayun.glb'),
+            if (this._promise) return this._promise;
+            this._promise = Promise.all([
+                // 메시 (T-Pose 베이스)
+                loadGLB('assets/models/soyun.glb').then(g => { meshCache['soyun'] = g; }),
+                loadGLB('assets/models/hayun.glb').then(g => { meshCache['hayun'] = g; }),
+                // 공통 애니메이션
+                loadGLB('assets/models/idle.glb').then(g => {
+                    if (g.animations.length) animCache['idle'] = g.animations[0];
+                }),
+                loadGLB('assets/models/walk.glb').then(g => {
+                    if (g.animations.length) animCache['walk'] = g.animations[0];
+                }),
+                loadGLB('assets/models/run.glb').then(g => {
+                    if (g.animations.length) animCache['run'] = g.animations[0];
+                }),
             ]).then(() => {
                 this.loaded = true;
-                console.log('[ChibiCharacter] GLB 로드 완료', Object.keys(cache));
+                console.log('[ChibiCharacter] 로드 완료 — 메시:', Object.keys(meshCache),
+                            '애니:', Object.keys(animCache));
                 return true;
             }).catch(err => {
                 console.error('[ChibiCharacter] preload 실패', err);
                 return false;
             });
-            return loadingPromise;
+            return this._promise;
         },
         create(cfg) {
             try { return new ChibiInstance(cfg || {}); }
@@ -55,7 +68,7 @@
             super();
             this.cfg = cfg;
             const name = cfg.name || 'soyun';
-            const gltf = cache[name] || cache['soyun'];
+            const gltf = meshCache[name] || meshCache['soyun'];
             if (!gltf) { console.error('[ChibiCharacter] 캐시 미스', name); return; }
 
             // 모델 복제 (각 인스턴스 독립)
@@ -63,8 +76,8 @@
                 ? THREE.SkeletonUtils.clone(gltf.scene)
                 : gltf.scene.clone(true);
 
-            // RobotExpressive는 약 2m 키 → 캐릭터 크기 2.2 비율에 맞춰 스케일
-            this._model.scale.set(0.5, 0.5, 0.5);
+            // 여성 캐릭터 스케일 조정 (약 1.7m 키 기준)
+            this._model.scale.set(1.0, 1.0, 1.0);
             this._model.position.y = 0;
             this.add(this._model);
 
@@ -76,16 +89,16 @@
             // ── AnimationMixer ──
             this._mixer = new THREE.AnimationMixer(this._model);
             this._actions = {};
-            gltf.animations.forEach(clip => {
-                this._actions[clip.name] = this._mixer.clipAction(clip);
-            });
 
-            // 상태 → 액션 매핑 (RobotExpressive 명칭)
-            this._stateMap = {
-                idle: 'Idle',
-                walk: 'Walking',
-                run:  'Running'
-            };
+            // 분리 애니메이션 클립을 믹서에 등록
+            ['idle', 'walk', 'run'].forEach(key => {
+                const clip = animCache[key];
+                if (clip) {
+                    this._actions[key] = this._mixer.clipAction(clip);
+                } else {
+                    console.warn('[ChibiCharacter] 애니 없음:', key);
+                }
+            });
 
             this._state = null;
             this.setState('idle');
@@ -93,11 +106,10 @@
 
         setState(name) {
             if (name === this._state) return;
-            const targetName = this._stateMap[name] || 'Idle';
-            const next = this._actions[targetName];
+            const next = this._actions[name] || this._actions['idle'];
             if (!next) return;
             const prev = this._currentAction;
-            if (prev) prev.fadeOut(0.2);
+            if (prev && prev !== next) prev.fadeOut(0.2);
             next.reset().fadeIn(0.2).play();
             this._currentAction = next;
             this._state = name;
