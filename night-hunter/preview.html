@@ -29,8 +29,11 @@ canvas { display:block; }
 <div id="info">🔄 드래그: 회전 &nbsp;|&nbsp; 휠: 줌 &nbsp;|&nbsp; 우클릭 드래그: 이동</div>
 <div id="anim-btns">
     <button onclick="playAnim('Idle')"  class="active">💤 Idle</button>
-    <button onclick="playAnim('Walk')">🚶 Walk</button>
-    <button onclick="playAnim('Run')">🏃 Run</button>
+    <button onclick="playAnim('Walking')">🚶 Walk</button>
+    <button onclick="playAnim('Running')">🏃 Run</button>
+    <button onclick="playAnim('Wave')">👋 Wave</button>
+    <button onclick="playAnim('Dance')">💃 Dance</button>
+    <button onclick="playAnim('Jump')">🦘 Jump</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -113,7 +116,7 @@ function playAnim(name) {
     currentAction = actions[name];
     currentAction.reset().fadeIn(0.2).play();
     document.querySelectorAll('#anim-btns button').forEach(b => {
-        b.classList.toggle('active', b.textContent.includes(name));
+        b.classList.toggle('active', b.getAttribute('onclick').includes(`'${name}'`));
     });
 }
 window.playAnim = playAnim;
