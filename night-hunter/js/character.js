@@ -1,8 +1,9 @@
-// character.js v7 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션)
+// character.js v8 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션)
 // 베이스: assets/models/soyun.glb (스킨드 메시, Mixamo 스켈레톤)
 // 애니: assets/models/idle.glb / walk.glb / run.glb (동일 스켈레톤 retarget)
 // API: ChibiCharacter.preload(), .create(cfg), instance.setState('idle'|'walk'|'run')
 // 주의: 스킨드 메시 복제에 THREE.SkeletonUtils 필수 (index.html 에서 로드)
+// v8: Hips 수평 root motion 제거 → 제자리 재생 (게임이 위치를 직접 제어)
 
 (function () {
     'use strict';
@@ -28,6 +29,27 @@
         });
     }
 
+    // ── Root Motion 제거 ──
+    // Mixamo/FBX 걷기·달리기 클립은 Hips(루트) 본에 전진 이동(translation)이 들어있다.
+    // 게임이 playerGroup.position 으로 이동을 직접 제어하므로, 클립의 수평 이동(X,Z)을
+    // 첫 프레임 값으로 고정해 "제자리(in-place)" 애니메이션으로 만든다.
+    // Y(상하 바운스)는 유지해 자연스러움을 살린다.
+    function stripHorizontalRootMotion(clip) {
+        if (!clip || !clip.tracks) return clip;
+        clip.tracks.forEach(t => {
+            if (/\.position$/.test(t.name) && t.values && t.values.length >= 3) {
+                const v = t.values;          // [x,y,z, x,y,z, ...]
+                const x0 = v[0], z0 = v[2];
+                for (let i = 0; i < v.length; i += 3) {
+                    v[i]     = x0;           // X 고정 (수평 전진 제거)
+                    v[i + 2] = z0;           // Z 고정
+                    // v[i + 1] (Y) 는 그대로 두어 상하 바운스 유지
+                }
+            }
+        });
+        return clip;
+    }
+
     const ChibiCharacter = {
         loaded: false,
         preload() {
@@ -36,15 +58,15 @@
                 // 메시 (T-Pose 베이스)
                 loadGLB('assets/models/soyun.glb').then(g => { meshCache['soyun'] = g; }),
                 loadGLB('assets/models/hayun.glb').then(g => { meshCache['hayun'] = g; }),
-                // 공통 애니메이션
+                // 공통 애니메이션 (root motion 제거 → 제자리 재생)
                 loadGLB('assets/models/idle.glb').then(g => {
-                    if (g.animations.length) animCache['idle'] = g.animations[0];
+                    if (g.animations.length) animCache['idle'] = stripHorizontalRootMotion(g.animations[0]);
                 }),
                 loadGLB('assets/models/walk.glb').then(g => {
-                    if (g.animations.length) animCache['walk'] = g.animations[0];
+                    if (g.animations.length) animCache['walk'] = stripHorizontalRootMotion(g.animations[0]);
                 }),
                 loadGLB('assets/models/run.glb').then(g => {
-                    if (g.animations.length) animCache['run'] = g.animations[0];
+                    if (g.animations.length) animCache['run'] = stripHorizontalRootMotion(g.animations[0]);
                 }),
             ]).then(() => {
                 this.loaded = true;
