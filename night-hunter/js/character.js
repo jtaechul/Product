@@ -1,7 +1,8 @@
-// character.js v6 — Feminine GLB 기반 (베이스 메시 + 분리 애니메이션)
-// 베이스: assets/models/soyun.glb (Feminine_TPose)
-// 애니: assets/models/idle.glb / walk.glb / run.glb
+// character.js v7 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션)
+// 베이스: assets/models/soyun.glb (스킨드 메시, Mixamo 스켈레톤)
+// 애니: assets/models/idle.glb / walk.glb / run.glb (동일 스켈레톤 retarget)
 // API: ChibiCharacter.preload(), .create(cfg), instance.setState('idle'|'walk'|'run')
+// 주의: 스킨드 메시 복제에 THREE.SkeletonUtils 필수 (index.html 에서 로드)
 
 (function () {
     'use strict';
@@ -71,12 +72,15 @@
             const gltf = meshCache[name] || meshCache['soyun'];
             if (!gltf) { console.error('[ChibiCharacter] 캐시 미스', name); return; }
 
-            // 모델 복제 (각 인스턴스 독립)
-            this._model = THREE.SkeletonUtils
-                ? THREE.SkeletonUtils.clone(gltf.scene)
-                : gltf.scene.clone(true);
+            // 모델 복제 (각 인스턴스 독립) — 스킨드 메시는 SkeletonUtils 필수
+            if (THREE.SkeletonUtils) {
+                this._model = THREE.SkeletonUtils.clone(gltf.scene);
+            } else {
+                console.warn('[ChibiCharacter] SkeletonUtils 미로드 — 스킨 바인딩이 깨질 수 있음');
+                this._model = gltf.scene.clone(true);
+            }
 
-            // 여성 캐릭터 스케일 조정 (약 1.7m 키 기준)
+            // 캐릭터 스케일 (약 1.7m 키 기준, 게임 월드 스케일에 맞춤)
             this._model.scale.set(1.0, 1.0, 1.0);
             this._model.position.y = 0;
             this.add(this._model);
