@@ -127,16 +127,13 @@ const GameUI = window.GameUI = {
                     padding:8px 10px; font-family:'Inter',sans-serif;">
                     <div style="display:flex; gap:6px 14px; flex-wrap:wrap; justify-content:center;">
                         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
-                            <span style="display:inline-block;width:11px;height:11px;background:rgba(180,140,80,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>주택지구
+                            <span style="display:inline-block;width:11px;height:11px;background:rgba(200,200,200,0.85);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>건물
                         </span>
                         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
-                            <span style="display:inline-block;width:11px;height:11px;background:rgba(80,200,180,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>상업지구
+                            <span style="display:inline-block;width:11px;height:11px;background:rgba(60,60,60,0.9);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>도로/골목
                         </span>
                         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
-                            <span style="display:inline-block;width:11px;height:11px;background:rgba(120,120,120,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>공업지구
-                        </span>
-                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
-                            <span style="display:inline-block;width:11px;height:11px;background:rgba(30,100,200,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>경찰서
+                            <span style="display:inline-block;width:11px;height:11px;background:rgba(30,100,220,0.95);border-radius:50%;border:1.5px solid #fff;"></span>🚔 경찰서
                         </span>
                     </div>
                     <div style="display:flex; gap:6px 14px; flex-wrap:wrap; justify-content:center;">
@@ -149,8 +146,8 @@ const GameUI = window.GameUI = {
                         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#e2e8f0;font-weight:600;white-space:nowrap;">
                             <span style="display:inline-block;width:11px;height:11px;background:#ff3333;border-radius:50%;border:1px solid #fff;"></span>납치범
                         </span>
-                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#e2e8f0;font-weight:600;white-space:nowrap;">
-                            <span style="display:inline-block;width:11px;height:11px;background:#60a5fa;border:1px solid #fff;clip-path:polygon(50% 0%, 0% 100%, 100% 100%);"></span>현재 위치
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#60a5fa;font-weight:600;white-space:nowrap;">
+                            <span style="display:inline-block;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid #3a82d4;"></span>나
                         </span>
                     </div>
                 </div>
@@ -197,63 +194,103 @@ const GameUI = window.GameUI = {
 
         ctx.clearRect(0, 0, sizeW, sizeH);
 
-        // STEP 2: citypack 모드 전체지도 — 충돌 박스 기반
+        // citypack 전체지도: 도시 전체를 한 화면에 fit
         if (window._citypackCollision) {
-            // citypack은 워낙 커서 fit에 별도 스케일 필요 (워월드 범위 크게)
             const boxes = window._citypackCollision;
-            // 도시 bbox 계산
-            let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
-            boxes.forEach(b => {
-                if (b.minX < minX) minX = b.minX;
-                if (b.maxX > maxX) maxX = b.maxX;
-                if (b.minZ < minZ) minZ = b.minZ;
-                if (b.maxZ > maxZ) maxZ = b.maxZ;
-            });
-            const cityW = maxX - minX;
-            const cityD = maxZ - minZ;
-            const cityScale = Math.min(sizeW / cityW, sizeH / cityD) * 0.95;
-            const cityCX = (minX + maxX) / 2;
-            const cityCZ = (minZ + maxZ) / 2;
+            const cb = window._citypackBounds || { minX: -300, maxX: 300, minZ: -300, maxZ: 300 };
+            const cityW = cb.maxX - cb.minX;
+            const cityD = cb.maxZ - cb.minZ;
+            const cityScale = Math.min(sizeW / cityW, sizeH / cityD) * 0.92;
+            const cityCX = (cb.minX + cb.maxX) / 2;
+            const cityCZ = (cb.minZ + cb.maxZ) / 2;
             const cwx = (x) => sizeW / 2 + (x - cityCX) * cityScale;
             const cwz = (z) => sizeH / 2 + (z - cityCZ) * cityScale;
 
-            ctx.fillStyle = '#2a2a2a';
+            // 도로 톤 배경
+            ctx.fillStyle = '#3a3a3a';
             ctx.fillRect(0, 0, sizeW, sizeH);
-            ctx.fillStyle = 'rgba(180,180,180,0.9)';
+            // 건물
+            ctx.fillStyle = 'rgba(220,210,190,0.92)';
+            ctx.strokeStyle = 'rgba(80,70,60,0.55)';
+            ctx.lineWidth = 0.5;
             boxes.forEach(b => {
-                ctx.fillRect(cwx(b.minX), cwz(b.minZ), (b.maxX - b.minX) * cityScale, (b.maxZ - b.minZ) * cityScale);
+                const x = cwx(b.minX), z = cwz(b.minZ);
+                const w = (b.maxX - b.minX) * cityScale;
+                const h = (b.maxZ - b.minZ) * cityScale;
+                ctx.fillRect(x, z, w, h);
+                if (w > 2 && h > 2) ctx.strokeRect(x, z, w, h);
             });
-            // 경찰서
+            // 경찰서 (가장 눈에 띄게)
             if (window._policeStation) {
-                ctx.fillStyle = 'rgba(30,100,220,0.95)';
+                const px = cwx(window._policeStation.x);
+                const pz = cwz(window._policeStation.z);
+                ctx.fillStyle = 'rgba(30,100,220,0.3)';
                 ctx.beginPath();
-                ctx.arc(cwx(window._policeStation.x), cwz(window._policeStation.z), 8, 0, Math.PI * 2);
+                ctx.arc(px, pz, 18, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(30,120,240,1)';
+                ctx.beginPath();
+                ctx.arc(px, pz, 9, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 2.5;
                 ctx.stroke();
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 11px Inter';
+                ctx.font = 'bold 14px Inter';
                 ctx.textAlign = 'center';
-                ctx.fillText('🚔', cwx(window._policeStation.x), cwz(window._policeStation.z) - 14);
+                ctx.fillStyle = '#fff';
+                ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+                ctx.lineWidth = 3;
+                ctx.strokeText('🚔 경찰서', px, pz - 18);
+                ctx.fillText('🚔 경찰서', px, pz - 18);
             }
-            // 플레이어 위치 (파란 화살표 — atan2(x,z) 기준 π - playerAngle 보정)
-            // 이유: canvas Y+가 world Z+로 매핑되어 있고 ctx.rotate는 시계방향
+            // NPC/적 (무전기 보유 시)
+            const hasRadio = typeof Shop !== 'undefined' && Shop.hasItem('radio');
+            if (hasRadio && typeof NPCSystem !== 'undefined') {
+                NPCSystem.npcs.forEach(n => {
+                    if (!n.mesh || !n.mesh.visible || n.caught) return;
+                    const nx = cwx(n.mesh.position.x), nz = cwz(n.mesh.position.z);
+                    if (n.role === 'suspect') {
+                        ctx.fillStyle = '#fbbf24';
+                    } else if (n.assignment) {
+                        ctx.fillStyle = '#86efac';
+                    } else return;
+                    ctx.beginPath();
+                    ctx.arc(nx, nz, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                });
+                if (typeof EnemySystem !== 'undefined') {
+                    EnemySystem.enemies.forEach(e => {
+                        if (!e.mesh || !e.mesh.visible || e.arrested) return;
+                        const ex = cwx(e.mesh.position.x), ez = cwz(e.mesh.position.z);
+                        ctx.fillStyle = '#ff3333';
+                        ctx.beginPath();
+                        ctx.arc(ex, ez, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                    });
+                }
+            }
+            // 플레이어 화살표
             ctx.save();
             ctx.translate(cwx(playerPos.x), cwz(playerPos.z));
             ctx.rotate(Math.PI - playerAngle);
             ctx.fillStyle = '#3a82d4';
             ctx.beginPath();
-            ctx.moveTo(0, -10);
-            ctx.lineTo(7, 7);
-            ctx.lineTo(-7, 7);
+            ctx.moveTo(0, -12);
+            ctx.lineTo(8, 8);
+            ctx.lineTo(-8, 8);
             ctx.closePath();
             ctx.fill();
             ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 2;
             ctx.stroke();
             ctx.restore();
-            return; // 절차적 그리기 skip
+            return;
         }
 
         // 절차적 모드: 기존 표시
@@ -401,27 +438,39 @@ const GameUI = window.GameUI = {
         const mx = (wx) => half + (wx - playerPos.x) * scale;
         const mz = (wz) => half + (wz - playerPos.z) * scale;
 
-        // STEP 2: citypack 모드면 충돌 박스를 건물로 그림 (zone 무관, 단일 색)
+        // citypack 미니맵: 도로 어두운 배경 + 건물 밝은 사각형 + 경찰서 강조
         if (window._citypackCollision) {
-            // 도로/빈공간: 어두운 회색 배경 (citypack 도로 톤)
-            ctx.fillStyle = '#2a2a2a';
+            // 1) 도로/빈공간 배경 (아스팔트 톤)
+            ctx.fillStyle = '#3a3a3a';
             ctx.fillRect(0, 0, size, size);
-            // 건물: 밝은 회색 직사각형
-            ctx.fillStyle = 'rgba(180,180,180,0.85)';
+            // 2) 건물: 살짝 따뜻한 베이지/회색 (가시성 ↑)
+            ctx.fillStyle = 'rgba(220,210,190,0.92)';
+            ctx.strokeStyle = 'rgba(80,70,60,0.6)';
+            ctx.lineWidth = 0.5;
             window._citypackCollision.forEach(b => {
                 const x1 = mx(b.minX), x2 = mx(b.maxX);
                 const z1 = mz(b.minZ), z2 = mz(b.maxZ);
-                if (x2 < -10 || x1 > size + 10 || z2 < -10 || z1 > size + 10) return;
-                ctx.fillRect(x1, z1, x2 - x1, z2 - z1);
+                const w = x2 - x1, h = z2 - z1;
+                if (x2 < -5 || x1 > size + 5 || z2 < -5 || z1 > size + 5) return;
+                ctx.fillRect(x1, z1, w, h);
+                if (w > 2 && h > 2) ctx.strokeRect(x1, z1, w, h);
             });
-            // 경찰서 마커 (파란 큰 점)
+            // 3) 경찰서: 파란 펄스 (가까울수록 큼, 멀어도 보이게 살짝 크게)
             if (window._policeStation) {
-                ctx.fillStyle = 'rgba(30,100,220,0.95)';
+                const psx = mx(window._policeStation.x);
+                const psz = mz(window._policeStation.z);
+                // glow ring
+                ctx.fillStyle = 'rgba(30,100,220,0.25)';
                 ctx.beginPath();
-                ctx.arc(mx(window._policeStation.x), mz(window._policeStation.z), 5, 0, Math.PI * 2);
+                ctx.arc(psx, psz, 11, 0, Math.PI * 2);
+                ctx.fill();
+                // main dot
+                ctx.fillStyle = 'rgba(30,120,240,1)';
+                ctx.beginPath();
+                ctx.arc(psx, psz, 6, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 1.5;
+                ctx.lineWidth = 2;
                 ctx.stroke();
             }
         } else {

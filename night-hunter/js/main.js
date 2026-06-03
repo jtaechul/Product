@@ -70,15 +70,11 @@ const veryLowEnd = (isMobile && navigator.deviceMemory && navigator.deviceMemory
 // iOS(아이패드/아이폰) 는 Safari 가 deviceMemory 를 노출하지 않아 lowEnd 감지가
 // 안 되어 MEDIUM 으로 잡혀 끊김. retina 디스플레이 부담도 큼.
 // → iOS 는 강제 LOW 부터 시작 (자동 FPS 다운그레이드 로직이 더 낮춰갈 수 있음)
-// ?hires=1 강제 HIGH 모드 (모바일에서 고해상도 테스트용)
-const forceHires = new URLSearchParams(location.search).get('hires') === '1';
-let qualityTier = forceHires ? 'HIGH'
-    : veryLowEnd ? 'POTATO'
+let qualityTier = veryLowEnd ? 'POTATO'
     : (isIOSDevice ? 'LOW'
     : (lowEnd ? 'LOW'
     : (isMobile ? 'MEDIUM' : 'HIGH')));
 let Q = QUALITY[qualityTier];
-if (forceHires) console.log('[Quality] forced HIGH via ?hires=1');
 window.GameQuality = { get tier() { return qualityTier; }, get cfg() { return Q; } };
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, Q.far);
@@ -279,20 +275,23 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                 }
                 city.updateMatrixWorld(true);
 
-                // 그림자 설정 — ?hires=1면 castShadow도 활성
-                const enableShadowCast = new URLSearchParams(location.search).get('hires') === '1';
+                // 그림자: castShadow는 모바일 성능 위해 비활성, 받기만 활성
                 city.traverse(o => {
                     if (o.isMesh) {
-                        o.castShadow = enableShadowCast;
+                        o.castShadow = false;
                         o.receiveShadow = true;
                     }
                 });
 
                 scene.add(city);
 
-                // 2) 건물 충돌 박스 + 도시 경계 + 가장 큰 건물(경찰서 후보)
+                // 2) 건물 충돌 박스 + 도시 경계
+                // 큰 묶음 박스(여러 건물 + 골목 포함)는 골목을 막아버리니까 제외:
+                // 한 변이 60 유닛 이상인 박스는 "단일 건물"이 아닌 군집 → 충돌에서 빼고
+                // 작은 박스들이 그 안에 따로 등록되어 있을 가능성 높음.
                 const boxes = [];
                 const MIN_BUILDING_HEIGHT = 3;
+                const MAX_BUILDING_DIM = 60;
                 let cityMinX = Infinity, cityMaxX = -Infinity;
                 let cityMinZ = Infinity, cityMaxZ = -Infinity;
                 let largestBuilding = null;
@@ -303,12 +302,12 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                     const b = new THREE.Box3().setFromObject(o);
                     const size = new THREE.Vector3();
                     b.getSize(size);
-                    // 도시 전체 경계는 모든 mesh 포함
                     cityMinX = Math.min(cityMinX, b.min.x);
                     cityMaxX = Math.max(cityMaxX, b.max.x);
                     cityMinZ = Math.min(cityMinZ, b.min.z);
                     cityMaxZ = Math.max(cityMaxZ, b.max.z);
                     if (size.y < MIN_BUILDING_HEIGHT) return; // 도로/인도/평면 제외
+                    if (size.x > MAX_BUILDING_DIM || size.z > MAX_BUILDING_DIM) return; // 군집 박스 제외
                     const box = {
                         minX: b.min.x, maxX: b.max.x,
                         minZ: b.min.z, maxZ: b.max.z,
@@ -330,6 +329,7 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                 };
                 window._citypackLargestBuilding = largestBuilding;
                 console.log(`[Citypack] bounds: X=[${cityMinX.toFixed(0)}, ${cityMaxX.toFixed(0)}] Z=[${cityMinZ.toFixed(0)}, ${cityMaxZ.toFixed(0)}]`);
+                console.log(`[Citypack] collision boxes: ${boxes.length} (군집 ${MAX_BUILDING_DIM}u 이상 제외)`);
                 console.log(`[Citypack] largest building: area=${largestArea.toFixed(0)}, height=${largestBuilding?.height.toFixed(1)}`);
 
                 // STEP 1: NPC/적 도로 위 자동 재배치용 글로벌 헬퍼
@@ -388,18 +388,9 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                     playerGroup.position.set(safe.x, 0, safe.z);
                     console.log(`[Citypack] player respawned at (${safe.x.toFixed(1)}, 0, ${safe.z.toFixed(1)})`);
 
-                    // 경찰서: 가장 큰 건물 앞 도로 위 (없으면 spawn 좌표)
-                    let psX = safe.x, psZ = safe.z;
-                    if (largestBuilding) {
-                        // 큰 건물 앞 — Z+ 방향에서 5유닛 떨어진 안전 위치
-                        const candidate = window.findCitypackSafeSpawn(
-                            largestBuilding.cx,
-                            largestBuilding.maxZ + 5,
-                            3
-                        );
-                        psX = candidate.x;
-                        psZ = candidate.z;
-                    }
+                    // 경찰서: 플레이어 spawn 위치 = 경찰서 (접근 보장)
+                    // 가장 큰 건물 앞은 다른 건물에 막힐 수 있어서 안전한 spawn 좌표 사용
+                    const psX = safe.x, psZ = safe.z;
                     window._policeStation = { x: psX, z: psZ };
                     const stationMarker = new THREE.Group();
                     // 파란 빔 (50유닛 높이, 멀리서도 보임)
@@ -1378,18 +1369,19 @@ canvas.addEventListener('touchcancel', _resetCameraInput);
 
 // ── Collision Detection ──
 function checkBuildingCollision(nx, nz) {
-    const playerRadius = 0.5;
-    // Citypack 모드: GLB에서 추출한 AABB 충돌 박스 사용
+    // Citypack 모드: GLB에서 추출한 AABB. 좁은 골목 접근 위해 마진 0.2
     if (window._citypackCollision) {
+        const r = 0.2;
         for (const b of window._citypackCollision) {
-            if (nx + playerRadius > b.minX && nx - playerRadius < b.maxX
-             && nz + playerRadius > b.minZ && nz - playerRadius < b.maxZ) {
+            if (nx + r > b.minX && nx - r < b.maxX
+             && nz + r > b.minZ && nz - r < b.maxZ) {
                 return true;
             }
         }
         return false;
     }
-    // 절차적 도시 모드 (기본)
+    // 절차적 도시 모드
+    const playerRadius = 0.5;
     for (const b of buildingData) {
         const bx = b.x || b.mesh.position.x;
         const bz = b.z || b.mesh.position.z;
