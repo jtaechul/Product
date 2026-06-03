@@ -89,6 +89,23 @@ const NPCSystem = window.NPCSystem = {
         npcMesh.userData.animState = state;
     },
 
+    // STEP 1: citypack 도로 위로 NPC 재배치 (citypack 로드 후 main.js가 호출)
+    snapToCitypackRoads() {
+        if (!this.npcs || !window.findCitypackSafeSpawn) return;
+        let moved = 0;
+        this.npcs.forEach(npc => {
+            const cur = npc.mesh.position;
+            const safe = window.findCitypackSafeSpawn(cur.x, cur.z, 2);
+            if (safe.x !== cur.x || safe.z !== cur.z) moved++;
+            npc.baseX = safe.x;
+            npc.baseZ = safe.z;
+            npc.mesh.position.x = safe.x;
+            npc.mesh.position.z = safe.z;
+            if (npc.wanderTarget) npc.wanderTarget = { x: safe.x, z: safe.z };
+        });
+        console.log(`[NPC] ${moved}/${this.npcs.length} NPC snapped to citypack roads`);
+    },
+
     distributeHints() {
         this.hintAssignments = [];
         const hintTexts = (HintSystem && HintSystem.hintTexts) || { 0: [], 1: [], 2: [] };

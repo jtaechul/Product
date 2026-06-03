@@ -149,6 +149,28 @@ const EnemySystem = window.EnemySystem = {
         mesh.userData.animState = state;
     },
 
+    // STEP 1: citypack 도로 위로 적/은신처 재배치
+    snapToCitypackRoads() {
+        if (!this.enemies || !window.findCitypackSafeSpawn) return;
+        let moved = 0;
+        this.enemies.forEach(e => {
+            const cur = e.mesh.position;
+            const safe = window.findCitypackSafeSpawn(cur.x, cur.z, 3);
+            if (safe.x !== cur.x || safe.z !== cur.z) moved++;
+            e.currentX = safe.x;
+            e.currentZ = safe.z;
+            e.data.hideoutX = safe.x;
+            e.data.hideoutZ = safe.z;
+            e.patrolTarget = { x: safe.x, z: safe.z };
+            e.mesh.position.set(safe.x, 0, safe.z);
+            // hideSpots도 재배치
+            if (Array.isArray(e.hideSpots)) {
+                e.hideSpots = e.hideSpots.map(s => window.findCitypackSafeSpawn(s.x, s.z, 3));
+            }
+        });
+        console.log(`[Enemy] ${moved}/${this.enemies.length} enemies snapped to citypack roads`);
+    },
+
     _createAlertSprite() {
         const c = document.createElement('canvas');
         c.width = c.height = 64;
