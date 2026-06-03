@@ -200,7 +200,7 @@ rimLight.position.set(-60, 40, -80);
 scene.add(rimLight);
 
 // ── Create World ──
-const { worldGroup, buildingData } = createWorld(scene);
+const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGroup } = createWorld(scene);
 
 // ── Citypack 시뮬레이션 모드 (?citypack=1 [&scale=N]) ──
 // ithappy City 1 GLB를 게임 월드로 사용.
@@ -216,13 +216,32 @@ const { worldGroup, buildingData } = createWorld(scene);
 (function tryLoadCitypack() {
     try {
         const params = new URLSearchParams(location.search);
-        if (params.get('citypack') !== '1') return;
+        // STEP 0: citypack을 기본 모드로. 절차적 도시는 ?procedural=1로 opt-out.
+        if (params.get('procedural') === '1') {
+            console.log('[Citypack] disabled (procedural mode requested)');
+            return;
+        }
 
         const scale = parseFloat(params.get('scale')) || 10;
         const rotDeg = parseFloat(params.get('rot')) || 15;
 
-        worldGroup.visible = false;
-        console.log(`[Citypack] mode ON  scale=${scale}  rot=${rotDeg}°`);
+        // STEP 6: 절차적 건물/지면/소품은 숨기되, 도로는 NPC/적 배치 가이드로 유지
+        groundGroup.visible = false;
+        buildingGroup.visible = false;
+        propsGroup.visible = false;
+        roadGroup.visible = true;
+        // 도로를 살짝 투명하게 (citypack 위에 겹쳐 보이도록)
+        roadGroup.traverse(o => {
+            if (o.isMesh && o.material) {
+                const mats = Array.isArray(o.material) ? o.material : [o.material];
+                mats.forEach(m => {
+                    m.transparent = true;
+                    m.opacity = 0.35;
+                    m.depthWrite = false;
+                });
+            }
+        });
+        console.log(`[Citypack] mode ON  scale=${scale}  rot=${rotDeg}°  (절차적 도로 가이드 유지)`);
 
         const loader = new THREE.GLTFLoader();
         const startTime = performance.now();
@@ -326,7 +345,17 @@ const { worldGroup, buildingData } = createWorld(scene);
             undefined,
             (err) => {
                 console.error('[Citypack] load failed, falling back to procedural:', err);
-                worldGroup.visible = true;
+                // 모든 절차적 그룹 복구
+                groundGroup.visible = true;
+                buildingGroup.visible = true;
+                propsGroup.visible = true;
+                roadGroup.visible = true;
+                roadGroup.traverse(o => {
+                    if (o.isMesh && o.material) {
+                        const mats = Array.isArray(o.material) ? o.material : [o.material];
+                        mats.forEach(m => { m.transparent = false; m.opacity = 1; m.depthWrite = true; });
+                    }
+                });
                 window._citypackCollision = null;
             }
         );

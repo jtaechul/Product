@@ -74,24 +74,35 @@ function createWorld(scene) {
     const worldGroup = new THREE.Group();
     const buildingData = [];
 
+    // 서브 그룹 — citypack 모드에서 도로만 보여주려면 분리 필요
+    const roadGroup = new THREE.Group();
+    roadGroup.name = 'roads';
+    const buildingGroup = new THREE.Group();
+    buildingGroup.name = 'buildings';
+    const groundGroup = new THREE.Group();
+    groundGroup.name = 'ground';
+    const propsGroup = new THREE.Group();
+    propsGroup.name = 'props';
+
     defineBlocks();
-    createGround(worldGroup);
-    createRoadNetwork(worldGroup);
-    const policeStation = createPoliceStation(worldGroup);
+    createGround(groundGroup);
+    createRoadNetwork(roadGroup);
+    const policeStation = createPoliceStation(buildingGroup);
     buildingData.push(policeStation);
 
-    const zoneBuildings = createGridBuildings(worldGroup);
+    const zoneBuildings = createGridBuildings(buildingGroup);
     buildingData.push(...zoneBuildings);
     // Add police station to global building positions list
     if (window._buildingPositions) {
         window._buildingPositions.push({ x: 0, z: 110, w: 18, d: 14, hideoutIndex: -1 });
     }
 
-    createStreetProps(worldGroup);
-    createParks(worldGroup);
+    createStreetProps(propsGroup);
+    createParks(propsGroup);
 
+    worldGroup.add(groundGroup, roadGroup, buildingGroup, propsGroup);
     scene.add(worldGroup);
-    return { worldGroup, buildingData };
+    return { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGroup };
 }
 
 function makeProceduralTexture(baseColor, noiseAmount, size) {
