@@ -202,47 +202,90 @@ scene.add(rimLight);
 // ── Create World ──
 const { worldGroup, buildingData } = createWorld(scene);
 
-// ── Citypack 시뮬레이션 모드 (?citypack=1) ──
-// 사용자가 citypack-test.html에서 튜닝한 값을 적용해 메인 게임에서 시각 시뮬레이션.
-// 절차적 도시(worldGroup)를 숨기고 ithappy City 1 모델을 로드.
-// NPC/적/플레이어 등은 그대로 작동하지만 충돌 지오메트리는 절차적 도시 기준 유지됨.
+// ── Citypack 시뮬레이션 모드 (?citypack=1 [&scale=N]) ──
+// ithappy City 1 GLB를 게임 월드로 사용.
+// URL 파라미터:
+//   ?citypack=1         citypack 모드 활성
+//   &scale=6            도시 스케일 (기본 6, 분당/일산 10층 아파트 수준)
+//   &rot=15             회전 각도(도, 기본 15)
+// 자동 처리:
+//   · 절차적 도시(worldGroup) 숨김
+//   · 도시 자동 중심 정렬 + 지면을 Y=0으로
+//   · 높이 3유닛 이상 mesh를 건물 충돌 박스로 등록
+//   · checkBuildingCollision()이 citypack 충돌 박스를 사용
 (function tryLoadCitypack() {
     try {
         const params = new URLSearchParams(location.search);
         if (params.get('citypack') !== '1') return;
 
-        // 절차적 도시 시각적으로 숨김 (NPC/적의 좌표/충돌 로직은 그대로 유지)
+        const scale = parseFloat(params.get('scale')) || 6;
+        const rotDeg = parseFloat(params.get('rot')) || 15;
+
         worldGroup.visible = false;
+        console.log(`[Citypack] mode ON  scale=${scale}  rot=${rotDeg}°`);
 
         const loader = new THREE.GLTFLoader();
         const startTime = performance.now();
         loader.load('assets/models/citypack.glb',
             (gltf) => {
                 const city = gltf.scene;
-                // 사용자 튜닝값: scale=31.623, Y=-14, rotation Y=15°
-                city.scale.setScalar(31.623);
-                city.position.y = -14;
-                city.rotation.y = 15 * Math.PI / 180;
+                city.scale.setScalar(scale);
+                city.rotation.y = rotDeg * Math.PI / 180;
+                city.updateMatrixWorld(true);
+
+                // 1) bbox 계산 → 수평 중심을 (0,0)으로, 지면(min Y)을 Y=0으로 정렬
+                let bbox = new THREE.Box3().setFromObject(city);
+                const center = new THREE.Vector3();
+                bbox.getCenter(center);
+                city.position.x = -center.x;
+                city.position.z = -center.z;
+                city.position.y = -bbox.min.y;
+                city.updateMatrixWorld(true);
+
+                // 그림자 설정
                 city.traverse(o => {
                     if (o.isMesh) {
-                        // 263k 트라이앵글에 그림자 캐스팅 시 모바일 성능 저하 → 그림자 받기만 활성
-                        o.castShadow = false;
+                        o.castShadow = false;   // 263k tri × shadow = 모바일 발열
                         o.receiveShadow = true;
                     }
                 });
+
                 scene.add(city);
+
+                // 2) 건물 충돌 박스 추출: 높이 3유닛 이상인 메시만
+                const boxes = [];
+                const MIN_BUILDING_HEIGHT = 3;
+                city.traverse(o => {
+                    if (!o.isMesh) return;
+                    o.updateMatrixWorld(true);
+                    const b = new THREE.Box3().setFromObject(o);
+                    const size = new THREE.Vector3();
+                    b.getSize(size);
+                    if (size.y < MIN_BUILDING_HEIGHT) return; // 도로/인도/평면 제외
+                    boxes.push({
+                        minX: b.min.x, maxX: b.max.x,
+                        minZ: b.min.z, maxZ: b.max.z
+                    });
+                });
+                window._citypackCollision = boxes;
+
+                const finalBbox = new THREE.Box3().setFromObject(city);
+                const finalSize = new THREE.Vector3();
+                finalBbox.getSize(finalSize);
                 const ms = (performance.now() - startTime).toFixed(0);
-                console.log(`Citypack 로드 완료 (${ms}ms)`);
+                console.log(`[Citypack] loaded ${ms}ms  size=${finalSize.x.toFixed(0)}×${finalSize.y.toFixed(0)}×${finalSize.z.toFixed(0)}  collision_boxes=${boxes.length}`);
+
                 window._citypackModel = city;
             },
             undefined,
             (err) => {
-                console.error('Citypack 로드 실패, 절차적 도시로 폴백:', err);
+                console.error('[Citypack] load failed, falling back to procedural:', err);
                 worldGroup.visible = true;
+                window._citypackCollision = null;
             }
         );
     } catch (e) {
-        console.error('Citypack 모드 초기화 실패:', e);
+        console.error('[Citypack] init failed:', e);
     }
 })();
 
@@ -1138,6 +1181,17 @@ canvas.addEventListener('touchcancel', _resetCameraInput);
 // ── Collision Detection ──
 function checkBuildingCollision(nx, nz) {
     const playerRadius = 0.5;
+    // Citypack 모드: GLB에서 추출한 AABB 충돌 박스 사용
+    if (window._citypackCollision) {
+        for (const b of window._citypackCollision) {
+            if (nx + playerRadius > b.minX && nx - playerRadius < b.maxX
+             && nz + playerRadius > b.minZ && nz - playerRadius < b.maxZ) {
+                return true;
+            }
+        }
+        return false;
+    }
+    // 절차적 도시 모드 (기본)
     for (const b of buildingData) {
         const bx = b.x || b.mesh.position.x;
         const bz = b.z || b.mesh.position.z;
