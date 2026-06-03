@@ -1,4 +1,4 @@
-// character.js v14 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
+// character.js v15 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
 // 베이스: assets/models/soyun.glb (스킨드 메시, Mixamo 스켈레톤)
 // 애니: assets/models/idle.glb / walk.glb / run.glb (동일 스켈레톤 retarget)
 // 머리: assets/models/hairstyles.glb (Sketchfab 모음, 9종)
@@ -8,6 +8,8 @@
 //      instance.applyHeadCrop({yMin,yMax,zMin,zMax}) — 박스 안 정점 면 제거
 // v13: 헤어 기본값 사용자 확정 / 회전 순서 YXZ / 머리 크롭 Y·Z 박스
 // v14: 머리 크롭에 X축 추가 (6면 박스) + 헤어 메시는 크롭 대상에서 제외
+// v15: 헤어 기본값 재확정 (y=0.2, z=-0.08, rz=21°, s=0.0128)
+//      크롭 박스에 Y/Z 회전 지원 — 박스를 기울여서 자를 수 있음
 
 (function () {
     'use strict';
@@ -31,12 +33,12 @@
     // 사용자가 미리보기로 직접 조정해 확정한 값 (2025-06-03)
     const HAIR_DEFAULT = {
         x:    0,
-        y:    0.195,
-        z:   -0.095,
+        y:    0.2,
+        z:   -0.08,
         rx:   0,
         ry:  270 * DEG,             // Sketchfab → Mixamo 좌표계 보정
-        rz:   17 * DEG,
-        s:    0.013
+        rz:   21 * DEG,
+        s:    0.0128
     };
 
     function loadGLB(path) {
@@ -251,12 +253,13 @@
         }
 
         // soyun 본체 영역 면 제거 — 새 헤어로 덮을 때 기존 머리카락 숨김
-        // 인자: { xMin, xMax, yMin, yMax, zMin, zMax } (소윤 메시 로컬 좌표, m)
-        //   xMin ≤ x ≤ xMax AND yMin ≤ y ≤ yMax AND zMin ≤ z ≤ zMax 박스 안에
-        //   들어오는 정점이 하나라도 포함된 face 를 인덱스 버퍼에서 제거.
-        //   값을 생략하면 그 축은 무한대(제한 없음)로 처리.
-        //   모든 값이 무한대면 아무것도 자르지 않고 원상복구.
-        //   userData.isHair === true 마커가 붙은 메시는 건너뜀 (헤어는 보호).
+        // 인자: { xMin, xMax, yMin, yMax, zMin, zMax, ryDeg, rzDeg }
+        //   xMin ≤ x ≤ xMax AND ... 박스 안 정점이 하나라도 포함된 face 를
+        //   인덱스 버퍼에서 제거. 값을 생략하면 그 축은 무제한(±무한대).
+        //   모든 값이 무한대면 원상복구.
+        //   ryDeg/rzDeg: 박스 자체를 박스 중심 기준으로 Y/Z 축으로 회전.
+        //     (Y 먼저, Z 다음 적용 — 정점은 역순으로 역회전 후 axis-aligned 검사)
+        //   userData.isHair === true 마커 메시는 건너뜀 (헤어는 보호).
         // 비파괴: 원본 인덱스를 보관하므로 매번 재계산해도 안전.
         applyHeadCrop(opts = {}) {
             if (!this._model) return;
@@ -269,6 +272,22 @@
             const noBox = !isFinite(xMin) && !isFinite(xMax) &&
                           !isFinite(yMin) && !isFinite(yMax) &&
                           !isFinite(zMin) && !isFinite(zMax);
+
+            // 박스 회전 → 정점을 박스 좌표계로 역변환할 행렬 계산
+            const ryRad = (opts.ryDeg || 0) * DEG;
+            const rzRad = (opts.rzDeg || 0) * DEG;
+            const hasRot = ryRad !== 0 || rzRad !== 0;
+            // 박스 회전 = R_Y(ry) → R_Z(rz) 순. 정점에 R^-1 = R_Z(-rz) ∘ R_Y(-ry) 적용
+            let mInv = null;
+            if (hasRot) {
+                mInv = new THREE.Matrix4().makeRotationY(-ryRad);
+                mInv.premultiply(new THREE.Matrix4().makeRotationZ(-rzRad));
+            }
+            // 박스 중심 (무제한 축은 0)
+            const cx = (isFinite(xMin) && isFinite(xMax)) ? (xMin + xMax) / 2 : 0;
+            const cy = (isFinite(yMin) && isFinite(yMax)) ? (yMin + yMax) / 2 : 0;
+            const cz = (isFinite(zMin) && isFinite(zMax)) ? (zMin + zMax) / 2 : 0;
+            const tmpV = hasRot ? new THREE.Vector3() : null;
 
             this._model.traverse(o => {
                 if (!o.isSkinnedMesh && !o.isMesh) return;
@@ -292,9 +311,16 @@
                 const positions = geo.attributes.position.array;
                 const removeVert = new Uint8Array(positions.length / 3);
                 for (let i = 0; i < removeVert.length; i++) {
-                    const x = positions[i * 3 + 0];
-                    const y = positions[i * 3 + 1];
-                    const z = positions[i * 3 + 2];
+                    let x = positions[i * 3 + 0];
+                    let y = positions[i * 3 + 1];
+                    let z = positions[i * 3 + 2];
+                    if (hasRot) {
+                        // 박스 중심 기준으로 평행이동 → 역회전 → 다시 평행이동
+                        tmpV.set(x - cx, y - cy, z - cz).applyMatrix4(mInv);
+                        x = tmpV.x + cx;
+                        y = tmpV.y + cy;
+                        z = tmpV.z + cz;
+                    }
                     if (x >= xMin && x <= xMax &&
                         y >= yMin && y <= yMax &&
                         z >= zMin && z <= zMax) {
