@@ -48,6 +48,10 @@ scene.background = makeSkyTexture('#7ec0ee', '#cfeaff');
 scene.fog = new THREE.Fog(0xcfeaff, 60, 180);
 
 const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+// iPad/iPhone 정밀 감지 — iPadOS 13+ Safari 는 user agent 가 Mac 으로 위장됨
+// (Mac platform + touch points 로 판별)
+const isIOSDevice = /iPad|iPhone|iPod/i.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 // ── Quality Tier System (상/중/하/최저) ──
 // Auto-selected by device, can downgrade on low FPS
@@ -63,7 +67,13 @@ const lowEnd = (isMobile && navigator.deviceMemory && navigator.deviceMemory <= 
     || (window.innerWidth * window.innerHeight < 700000);
 const veryLowEnd = (isMobile && navigator.deviceMemory && navigator.deviceMemory <= 2)
     || (isMobile && navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2);
-let qualityTier = veryLowEnd ? 'POTATO' : (lowEnd ? 'LOW' : (isMobile ? 'MEDIUM' : 'HIGH'));
+// iOS(아이패드/아이폰) 는 Safari 가 deviceMemory 를 노출하지 않아 lowEnd 감지가
+// 안 되어 MEDIUM 으로 잡혀 끊김. retina 디스플레이 부담도 큼.
+// → iOS 는 강제 LOW 부터 시작 (자동 FPS 다운그레이드 로직이 더 낮춰갈 수 있음)
+let qualityTier = veryLowEnd ? 'POTATO'
+    : (isIOSDevice ? 'LOW'
+    : (lowEnd ? 'LOW'
+    : (isMobile ? 'MEDIUM' : 'HIGH')));
 let Q = QUALITY[qualityTier];
 window.GameQuality = { get tier() { return qualityTier; }, get cfg() { return Q; } };
 
