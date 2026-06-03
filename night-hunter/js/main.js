@@ -2270,9 +2270,9 @@ function showWantedPoster(firstTime) {
             <div style="font-size:12px; color:#3a1a0a; margin-bottom:4px;">담당 형사: <b>${gameState.playerName || '소윤'}</b></div>
             <div style="font-size:11px; color:#7a4a1a; margin-bottom:14px;">아이들을 납치한 흉악범 3명. 반드시 검거하라.</div>
             <div style="display:flex; justify-content:center; flex-wrap:wrap; background:#1a1a1a; padding:14px 8px; border-radius:6px;">
-                ${mugshot('CR-001', 0, '1호 길동', '전직 학원 강사<br/>안경, 깡마름<br/>주택가 잠복')}
-                ${mugshot('CR-002', 1, '2호 철수', '가짜 카페 사장<br/>볼 흉터, 짧은 수염<br/>상업지구')}
-                ${mugshot('CR-003', 2, '3호 영수', '폐공장 조직 두목<br/>눈썹 흉터, 짙은 수염<br/>공장지대')}
+                ${mugshot('CR-001', 0, '1호 길동', '전직 학원 강사<br/>안경, 깡마름<br/>도심 골목 잠복')}
+                ${mugshot('CR-002', 1, '2호 철수', '위장 사업가<br/>볼 흉터, 짧은 수염<br/>도심 사무용 빌딩')}
+                ${mugshot('CR-003', 2, '3호 영수', '인신매매 조직 두목<br/>눈썹 흉터, 짙은 수염<br/>도심 빌딩 옥상')}
             </div>
             ${firstTime ? `
             <div style="margin-top:14px; padding:12px; background:rgba(122,74,26,0.15); border-radius:6px; font-size:12px; color:#3a1a0a; text-align:left; line-height:1.6;">
