@@ -58,14 +58,14 @@ canvas { display:block; }
         <!-- 동적 생성 -->
     </div>
     <div id="tuner">
-        <label>Y 오프셋 <span class="val" id="yval">-1.42</span>
-            <input type="range" id="yslider" min="-3" max="0" step="0.01" value="-1.42">
+        <label>Y 오프셋 <span class="val" id="yval">0.16</span>
+            <input type="range" id="yslider" min="-0.5" max="0.5" step="0.005" value="0.16">
         </label>
-        <label>스케일 <span class="val" id="sval">0.010</span>
-            <input type="range" id="sslider" min="0.001" max="0.05" step="0.001" value="0.01">
+        <label>스케일 <span class="val" id="sval">0.011</span>
+            <input type="range" id="sslider" min="0.005" max="0.02" step="0.0005" value="0.011">
         </label>
-        <label>Y 회전 (°) <span class="val" id="rval">180</span>
-            <input type="range" id="rslider" min="0" max="360" step="1" value="180">
+        <label>Y 회전 (°) <span class="val" id="rval">270</span>
+            <input type="range" id="rslider" min="0" max="360" step="5" value="270">
         </label>
     </div>
 </div>
@@ -80,7 +80,7 @@ canvas { display:block; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
-<script src="js/character.js?v=10"></script>
+<script src="js/character.js?v=11"></script>
 <script>
 const W = window.innerWidth, H = window.innerHeight;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
