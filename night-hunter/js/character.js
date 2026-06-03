@@ -1,4 +1,4 @@
-// character.js v16 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
+// character.js v17 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
 // 베이스: assets/models/soyun.glb (스킨드 메시, Mixamo 스켈레톤)
 // 애니: assets/models/idle.glb / walk.glb / run.glb (동일 스켈레톤 retarget)
 // 머리: assets/models/hairstyles.glb (Sketchfab 모음, 9종)
@@ -12,6 +12,8 @@
 //      크롭 박스에 Y/Z 회전 지원 — 박스를 기울여서 자를 수 있음
 // v16: 박스 회전을 명시적 Euler('YXZ') 로 통일 (헤어 짐벌과 일치)
 //      (preview 에 박스 와이어프레임 시각화 추가)
+// v17: 사용자 확정값으로 헤어/헤드크롭 고정 + 인스턴스 생성 시 자동 크롭 적용
+//      캐릭터별 hairstyleIndex 지원 (cfg.hairstyleIndex)
 
 (function () {
     'use strict';
@@ -40,7 +42,14 @@
         rx:   0,
         ry:  270 * DEG,             // Sketchfab → Mixamo 좌표계 보정
         rz:   21 * DEG,
-        s:    0.0128
+        s:    0.01302
+    };
+    // soyun 본체 머리뭉치 자르기 박스 (사용자 확정값) — 모든 인스턴스 생성 시 자동 적용
+    const HEAD_CROP_DEFAULT = {
+        xMin: -Infinity, xMax: Infinity,    // X 무제한
+        yMin:  1.64,      yMax: 1.80,
+        zMin: -0.20,      zMax: 0.015,
+        ryDeg: 10,        rzDeg: 0
     };
 
     function loadGLB(path) {
@@ -176,6 +185,9 @@
             this._hair = null;
             this._hairIndex = -1;
             this.setState('idle');
+
+            // soyun 본체 머리뭉치 자르기 — 헤어 부착 전에 적용해 새 헤어가 잘 덮이도록
+            this.applyHeadCrop(HEAD_CROP_DEFAULT);
 
             // 머리스타일 기본값 (cfg.hairstyleIndex 또는 0)
             if (hairCache.length > 0) {

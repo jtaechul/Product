@@ -59,6 +59,14 @@ canvas { display:block; }
 <div id="info">로딩 중...</div>
 
 <div id="panel">
+    <h3>👤 캐릭터</h3>
+    <div style="display:flex; gap:4px; margin-bottom:8px;">
+        <button id="char-soyun" onclick="switchChar('soyun')"
+            style="flex:1; padding:6px; background:#FFD700; color:#000; border:none; border-radius:5px; cursor:pointer; font-size:12px;">소윤 (헤어 3)</button>
+        <button id="char-hayun" onclick="switchChar('hayun')"
+            style="flex:1; padding:6px; background:#2a3a60; color:#fff; border:none; border-radius:5px; cursor:pointer; font-size:12px;">하윤 (헤어 8)</button>
+    </div>
+
     <h3>💇 머리스타일</h3>
     <div id="hair-btns"></div>
 
@@ -75,8 +83,8 @@ canvas { display:block; }
         <input type="range" id="ry-slider" min="0" max="360" step="1" value="270"></div>
     <div class="slider"><label>Z 회전 (°) <span class="val" id="rzval">21</span></label>
         <input type="range" id="rz-slider" min="-180" max="180" step="1" value="21"></div>
-    <div class="slider"><label>스케일 <span class="val" id="sval">0.01280</span></label>
-        <input type="range" id="s-slider" min="0.005" max="0.025" step="0.00001" value="0.0128"></div>
+    <div class="slider"><label>스케일 <span class="val" id="sval">0.01302</span></label>
+        <input type="range" id="s-slider" min="0.005" max="0.025" step="0.00001" value="0.01302"></div>
     <div style="font-size:10px; color:#aaa; margin-top:2px;">
         ※ 회전 순서: Y→X→Z (Y는 좌우 돌리기, X는 앞뒤 기울임, Z는 좌우 기울임)
     </div>
@@ -94,8 +102,8 @@ canvas { display:block; }
         <input type="range" id="cxmin-slider" min="-0.50" max="0.50" step="0.01" value="-0.50"></div>
     <div class="slider"><label>X 최대 <span class="val" id="cxmaxval">0.50</span></label>
         <input type="range" id="cxmax-slider" min="-0.50" max="0.50" step="0.01" value="0.50"></div>
-    <div class="slider"><label>Y 최소 <span class="val" id="cyminval">1.65</span></label>
-        <input type="range" id="cymin-slider" min="0.00" max="1.80" step="0.01" value="1.65"></div>
+    <div class="slider"><label>Y 최소 <span class="val" id="cyminval">1.64</span></label>
+        <input type="range" id="cymin-slider" min="0.00" max="1.80" step="0.01" value="1.64"></div>
     <div class="slider"><label>Y 최대 <span class="val" id="cymaxval">1.80</span></label>
         <input type="range" id="cymax-slider" min="0.00" max="1.80" step="0.01" value="1.80"></div>
     <div class="slider"><label>Z 최소 <span class="val" id="czminval">-0.20</span></label>
@@ -103,8 +111,8 @@ canvas { display:block; }
     <div class="slider"><label>Z 최대 <span class="val" id="czmaxval">0.015</span></label>
         <input type="range" id="czmax-slider" min="-0.20" max="0.25" step="0.005" value="0.015"></div>
     <div style="font-size:10px; color:#aaa; margin:6px 0 2px;">박스 회전 (중심 기준)</div>
-    <div class="slider"><label>Y 회전 (°) <span class="val" id="cryval">0</span></label>
-        <input type="range" id="cry-slider" min="-90" max="90" step="1" value="0"></div>
+    <div class="slider"><label>Y 회전 (°) <span class="val" id="cryval">10</span></label>
+        <input type="range" id="cry-slider" min="-90" max="90" step="1" value="10"></div>
     <div class="slider"><label>Z 회전 (°) <span class="val" id="crzval">0</span></label>
         <input type="range" id="crz-slider" min="-90" max="90" step="1" value="0"></div>
 
@@ -121,7 +129,7 @@ canvas { display:block; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
-<script src="js/character.js?v=16"></script>
+<script src="js/character.js?v=17"></script>
 <script>
 const W = window.innerWidth, H = window.innerHeight;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -171,8 +179,35 @@ scene.add(boxParent);
 
 let character = null;
 
+// 게임 본체와 동일한 캐릭터 매핑 (cfg.hairstyleIndex 자동 적용 확인용)
+const CHAR_CFG = {
+    soyun: { name: 'soyun', hairstyleIndex: 2 },
+    hayun: { name: 'hayun', hairstyleIndex: 7 }
+};
+
+function switchChar(charId) {
+    if (!ChibiCharacter.loaded) return;
+    if (character) {
+        character.dispose();
+        scene.remove(character);
+    }
+    character = ChibiCharacter.create(CHAR_CFG[charId]);
+    if (character) scene.add(character);
+    document.getElementById('char-soyun').style.background = (charId==='soyun') ? '#FFD700' : '#2a3a60';
+    document.getElementById('char-soyun').style.color      = (charId==='soyun') ? '#000'    : '#fff';
+    document.getElementById('char-hayun').style.background = (charId==='hayun') ? '#FFD700' : '#2a3a60';
+    document.getElementById('char-hayun').style.color      = (charId==='hayun') ? '#000'    : '#fff';
+    // 헤어 버튼 active 동기화
+    const idx = CHAR_CFG[charId].hairstyleIndex;
+    document.querySelectorAll('#hair-btns button').forEach((b, i) => {
+        const btnIdx = (i === 0) ? -1 : (i - 1);
+        b.classList.toggle('active', btnIdx === idx);
+    });
+}
+window.switchChar = switchChar;
+
 ChibiCharacter.preload().then(() => {
-    character = ChibiCharacter.create({ name: 'soyun' });
+    character = ChibiCharacter.create(CHAR_CFG.soyun);
     if (!character) {
         document.getElementById('info').textContent = '❌ 캐릭터 생성 실패';
         return;
@@ -182,7 +217,10 @@ ChibiCharacter.preload().then(() => {
     document.getElementById('info').textContent =
         `✅ 머리 ${hairCount}종 | 드래그: 회전 | 휠: 줌`;
     buildHairButtons(hairCount);
-    // 초기 크롭 적용
+    // 초기엔 소윤 헤어(3번=index 2) 활성 상태로 표시
+    document.querySelectorAll('#hair-btns button').forEach((b, i) => {
+        b.classList.toggle('active', (i - 1) === 2);
+    });
     applyCrop();
 }).catch(err => {
     document.getElementById('info').textContent = '❌ 로드 실패: ' + err.message;
