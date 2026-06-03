@@ -305,7 +305,7 @@ const SoundManager = {
     _loadDayBGMAudio() {
         if (this.dayAudio) return this.dayAudio;
         try {
-            const a = new Audio('assets/day-bgm.mp3?v=2');
+            const a = new Audio('assets/day-bgm.v3.mp3');
             a.loop = true;
             a.preload = 'auto';
             this.dayAudio = a;
