@@ -1,4 +1,4 @@
-// character.js v13 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
+// character.js v14 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
 // 베이스: assets/models/soyun.glb (스킨드 메시, Mixamo 스켈레톤)
 // 애니: assets/models/idle.glb / walk.glb / run.glb (동일 스켈레톤 retarget)
 // 머리: assets/models/hairstyles.glb (Sketchfab 모음, 9종)
@@ -6,9 +6,8 @@
 //      instance.setHairstyle(index), instance.getHairstyleCount()
 //      instance.setHairTransform({x,y,z,rx,ry,rz,s})
 //      instance.applyHeadCrop({yMin,yMax,zMin,zMax}) — 박스 안 정점 면 제거
-// v13: 헤어 기본값 사용자 확정 (y=0.195, z=-0.095, ry=270°, rz=17°, s=0.013)
-//      회전 순서 YXZ 로 변경 (X 슬라이더가 시각적 X축으로 작동)
-//      머리 크롭을 Y/Z 임계+상한 박스로 확장 (4축)
+// v13: 헤어 기본값 사용자 확정 / 회전 순서 YXZ / 머리 크롭 Y·Z 박스
+// v14: 머리 크롭에 X축 추가 (6면 박스) + 헤어 메시는 크롭 대상에서 제외
 
 (function () {
     'use strict';
@@ -212,6 +211,9 @@
             hair.geometry = hair.geometry.clone();
             hair.geometry.translate(0, -HAIR_REF_Y, 0);
             hair.castShadow = true;
+            // 마커: applyHeadCrop 이 본체만 자르고 헤어는 건너뛰도록
+            hair.userData.isHair = true;
+            hair.traverse(o => { o.userData.isHair = true; });
 
             // 현재 transform 값(없으면 기본값) 적용
             const t = this._hairXf || Object.assign({}, HAIR_DEFAULT);
@@ -248,23 +250,30 @@
             return Object.assign({}, this._hairXf || HAIR_DEFAULT);
         }
 
-        // soyun 머리(헤어 셸) 영역 면 제거 — 새 헤어로 덮을 때 기존 머리카락 숨김
-        // 인자: { yMin, yMax, zMin, zMax } (소윤 메시 로컬 좌표, m)
-        //   yMin ≤ y ≤ yMax AND zMin ≤ z ≤ zMax 박스 안에 들어오는
-        //   정점이 하나라도 포함된 face 를 인덱스 버퍼에서 제거한다.
+        // soyun 본체 영역 면 제거 — 새 헤어로 덮을 때 기존 머리카락 숨김
+        // 인자: { xMin, xMax, yMin, yMax, zMin, zMax } (소윤 메시 로컬 좌표, m)
+        //   xMin ≤ x ≤ xMax AND yMin ≤ y ≤ yMax AND zMin ≤ z ≤ zMax 박스 안에
+        //   들어오는 정점이 하나라도 포함된 face 를 인덱스 버퍼에서 제거.
         //   값을 생략하면 그 축은 무한대(제한 없음)로 처리.
         //   모든 값이 무한대면 아무것도 자르지 않고 원상복구.
+        //   userData.isHair === true 마커가 붙은 메시는 건너뜀 (헤어는 보호).
         // 비파괴: 원본 인덱스를 보관하므로 매번 재계산해도 안전.
         applyHeadCrop(opts = {}) {
             if (!this._model) return;
+            const xMin = (opts.xMin !== undefined) ? opts.xMin : -Infinity;
+            const xMax = (opts.xMax !== undefined) ? opts.xMax :  Infinity;
             const yMin = (opts.yMin !== undefined) ? opts.yMin : -Infinity;
             const yMax = (opts.yMax !== undefined) ? opts.yMax :  Infinity;
             const zMin = (opts.zMin !== undefined) ? opts.zMin : -Infinity;
             const zMax = (opts.zMax !== undefined) ? opts.zMax :  Infinity;
-            const noBox = !isFinite(yMin) && !isFinite(yMax) && !isFinite(zMin) && !isFinite(zMax);
+            const noBox = !isFinite(xMin) && !isFinite(xMax) &&
+                          !isFinite(yMin) && !isFinite(yMax) &&
+                          !isFinite(zMin) && !isFinite(zMax);
 
             this._model.traverse(o => {
                 if (!o.isSkinnedMesh && !o.isMesh) return;
+                // 헤어는 본에 부착되어 traverse 에 잡히므로 명시적으로 제외
+                if (o.userData && o.userData.isHair) return;
                 const geo = o.geometry;
                 if (!geo || !geo.attributes || !geo.attributes.position) return;
 
@@ -283,9 +292,12 @@
                 const positions = geo.attributes.position.array;
                 const removeVert = new Uint8Array(positions.length / 3);
                 for (let i = 0; i < removeVert.length; i++) {
+                    const x = positions[i * 3 + 0];
                     const y = positions[i * 3 + 1];
                     const z = positions[i * 3 + 2];
-                    if (y >= yMin && y <= yMax && z >= zMin && z <= zMax) {
+                    if (x >= xMin && x <= xMax &&
+                        y >= yMin && y <= yMax &&
+                        z >= zMin && z <= zMax) {
                         removeVert[i] = 1;
                     }
                 }
