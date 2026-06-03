@@ -10,11 +10,83 @@ const NPCSystem = window.NPCSystem = {
     // criminal flee speeds: 1호=0.06, 2호=0.09, 3호=0.13
     fleeSpeeds: [0.04, 0.065, 0.09],
 
+    assets: null,         // GLB 자산 ({template, anims:{idle,walk,run}})
+    _assetsLoading: false,
+
     init(scene) {
         this.scene = scene;
         this.createDialogUI();
         this.distributeHints();
-        this.spawnNPCs();
+        // GLB 자산 비동기 로드 후 NPC 스폰. 로드 실패 시 절차적 모드로 폴백.
+        this._loadAssets().then(() => {
+            console.log('[NPC] GLB 자산 로드 완료, NPC 생성');
+            this.spawnNPCs();
+        }).catch(err => {
+            console.warn('[NPC] GLB 로드 실패, 절차적 폴백:', err);
+            this.spawnNPCs();
+        });
+    },
+
+    async _loadAssets() {
+        if (this.assets) return this.assets;
+        const loader = new THREE.GLTFLoader();
+        const load = (p) => new Promise((res, rej) => loader.load(p, res, undefined, rej));
+        const [npcGltf, idleGltf, walkGltf, runGltf] = await Promise.all([
+            load('assets/models/npc-normal.glb'),
+            load('assets/models/idle.glb'),
+            load('assets/models/walk.glb'),
+            load('assets/models/run.glb')
+        ]);
+        this.assets = {
+            template: npcGltf.scene,
+            anims: {
+                idle: idleGltf.animations[0],
+                walk: walkGltf.animations[0],
+                run: runGltf.animations[0]
+            }
+        };
+        return this.assets;
+    },
+
+    _createGLBNPCMesh(arch) {
+        if (!THREE.SkeletonUtils) {
+            console.warn('[NPC] SkeletonUtils 미로드, 절차적 폴백');
+            return null;
+        }
+        const npc = THREE.SkeletonUtils.clone(this.assets.template);
+        // 피부색 적용 (arch.skin)
+        npc.traverse(o => {
+            if (o.isMesh) {
+                const m = o.material.clone();
+                m.color.setHex(arch.skin || 0xe8c4a0);
+                o.material = m;
+                o.castShadow = true;
+                o.receiveShadow = true;
+            }
+        });
+        npc.scale.setScalar(2.8); // 약 5유닛 = 플레이어 키
+        // Mixer + 3개 액션
+        const mixer = new THREE.AnimationMixer(npc);
+        const actions = {
+            idle: mixer.clipAction(this.assets.anims.idle),
+            walk: mixer.clipAction(this.assets.anims.walk),
+            run: mixer.clipAction(this.assets.anims.run)
+        };
+        actions.idle.play();
+        npc.userData.mixer = mixer;
+        npc.userData.actions = actions;
+        npc.userData.animState = 'idle';
+        return npc;
+    },
+
+    _setAnimState(npcMesh, state) {
+        if (!npcMesh.userData.actions) return; // 절차적 NPC면 무시
+        if (npcMesh.userData.animState === state) return;
+        const oldAction = npcMesh.userData.actions[npcMesh.userData.animState];
+        const newAction = npcMesh.userData.actions[state];
+        if (oldAction) oldAction.fadeOut(0.2);
+        newAction.reset().fadeIn(0.2).play();
+        npcMesh.userData.animState = state;
     },
 
     distributeHints() {
@@ -149,6 +221,12 @@ const NPCSystem = window.NPCSystem = {
     },
 
     createNPCMesh(arch, assignment) {
+        // GLB 자산이 로드되어 있으면 GLB로 생성
+        if (this.assets) {
+            const glbMesh = this._createGLBNPCMesh(arch);
+            if (glbMesh) return glbMesh;
+        }
+        // 폴백: 기존 절차적 메시
         const group = new THREE.Group();
 
         const bodyHeight = 0.7;
@@ -422,6 +500,11 @@ const NPCSystem = window.NPCSystem = {
         this.npcs.forEach(npc => {
             if (npc.caught || !npc.mesh.visible) return;
 
+            // GLB NPC: 매 프레임 mixer 진행
+            if (npc.mesh.userData.mixer) {
+                npc.mesh.userData.mixer.update(delta);
+            }
+
             const dx = playerPos.x - npc.mesh.position.x;
             const dz = playerPos.z - npc.mesh.position.z;
             const d = Math.sqrt(dx * dx + dz * dz);
@@ -442,11 +525,15 @@ const NPCSystem = window.NPCSystem = {
                 if (td > 0.4) {
                     this._tryMove(npc, (tdx / td) * 0.35 * delta, (tdz / td) * 0.35 * delta);
                     npc.mesh.rotation.y = Math.atan2(tdx, tdz);
+                    this._setAnimState(npc.mesh, 'walk');
+                    // 절차적 폴백 swing
                     const swing = Math.sin(time * 3.5) * 0.3;
                     if (npc.leftHip) npc.leftHip.rotation.x = swing;
                     if (npc.rightHip) npc.rightHip.rotation.x = -swing;
                     if (npc.leftShoulder) npc.leftShoulder.rotation.x = -swing * 0.5;
                     if (npc.rightShoulder) npc.rightShoulder.rotation.x = swing * 0.5;
+                } else {
+                    this._setAnimState(npc.mesh, 'idle');
                 }
                 if (d < minDist) { minDist = d; nearest = npc; }
                 return;
@@ -463,10 +550,12 @@ const NPCSystem = window.NPCSystem = {
                     this._tryMove(npc, fx * speed * delta * 60, fz * speed * delta * 60);
                     npc.mesh.rotation.y = Math.atan2(fx, fz);
                 }
-                // Run animation with subtle bob
+                this._setAnimState(npc.mesh, 'run');
+                // 절차적 폴백 swing + bob
                 const swing = Math.sin(time * 10) * 0.6;
                 const bob = Math.abs(Math.sin(time * 10)) * 0.04;
-                npc.mesh.position.y = bob;
+                // GLB NPC는 mixer가 Y를 관리하므로 bob 적용 안 함
+                if (!npc.mesh.userData.mixer) npc.mesh.position.y = bob;
                 if (npc.leftHip) npc.leftHip.rotation.x = swing;
                 if (npc.rightHip) npc.rightHip.rotation.x = -swing;
                 if (npc.leftShoulder) npc.leftShoulder.rotation.x = -swing * 1.1;
@@ -487,12 +576,14 @@ const NPCSystem = window.NPCSystem = {
                     const speed = 0.4;
                     this._tryMove(npc, (tdx / td) * speed * delta, (tdz / td) * speed * delta);
                     npc.mesh.rotation.y = Math.atan2(tdx, tdz);
+                    this._setAnimState(npc.mesh, 'walk');
                     const swing = Math.sin(time * 4) * 0.3;
                     if (npc.leftHip) npc.leftHip.rotation.x = swing;
                     if (npc.rightHip) npc.rightHip.rotation.x = -swing;
                     if (npc.leftShoulder) npc.leftShoulder.rotation.x = -swing * 0.5;
                     if (npc.rightShoulder) npc.rightShoulder.rotation.x = swing * 0.5;
                 } else {
+                    this._setAnimState(npc.mesh, 'idle');
                     if (npc.leftHip) npc.leftHip.rotation.x *= 0.85;
                     if (npc.rightHip) npc.rightHip.rotation.x *= 0.85;
                 }
