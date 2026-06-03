@@ -8,66 +8,86 @@
 body { background:#111; color:#fff; font-family:sans-serif; overflow:hidden; }
 canvas { display:block; }
 #info {
-    position:fixed; top:12px; left:50%; transform:translateX(-50%);
-    background:rgba(0,0,0,.6); padding:6px 16px; border-radius:20px;
-    font-size:13px; pointer-events:none;
+    position:fixed; top:8px; left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,.6); padding:5px 14px; border-radius:20px;
+    font-size:12px; pointer-events:none;
 }
 #anim-btns {
-    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
-    display:flex; gap:10px;
+    position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
+    display:flex; gap:8px;
 }
 #anim-btns button {
-    padding:8px 20px; border:none; border-radius:8px;
-    background:#1e3060; color:#fff; cursor:pointer; font-size:14px;
-    transition:.15s;
+    padding:6px 14px; border:none; border-radius:6px;
+    background:#1e3060; color:#fff; cursor:pointer; font-size:13px;
 }
 #anim-btns button:hover { background:#3a5aa0; }
 #anim-btns button.active { background:#FFD700; color:#000; }
 
-#hair-panel {
-    position:fixed; top:60px; right:12px;
-    background:rgba(0,0,0,.65); padding:10px 12px; border-radius:10px;
-    font-size:13px; max-width:200px;
+#panel {
+    position:fixed; top:40px; right:8px; bottom:60px;
+    width:240px;
+    background:rgba(0,0,0,.72); border-radius:10px;
+    padding:10px 12px; font-size:12px;
+    overflow-y:auto;
 }
-#hair-panel h3 { font-size:13px; margin-bottom:8px; color:#FFD700; }
-#hair-btns { display:flex; flex-wrap:wrap; gap:4px; }
+#panel h3 { font-size:12px; color:#FFD700; margin:8px 0 4px; }
+#panel h3:first-child { margin-top:0; }
+#hair-btns { display:flex; flex-wrap:wrap; gap:3px; margin-bottom:6px; }
 #hair-btns button {
-    width:36px; height:36px; border:none; border-radius:6px;
-    background:#2a3a60; color:#fff; cursor:pointer; font-size:13px;
-    transition:.15s;
+    width:30px; height:30px; border:none; border-radius:5px;
+    background:#2a3a60; color:#fff; cursor:pointer; font-size:12px;
 }
 #hair-btns button:hover { background:#4a6090; }
 #hair-btns button.active { background:#FFD700; color:#000; }
 #hair-btns button.off { background:#553333; }
 
-#tuner {
-    margin-top:12px; padding-top:8px; border-top:1px solid #334;
-    font-size:11px; color:#aac;
+.slider { margin:4px 0; }
+.slider label { display:flex; justify-content:space-between; font-size:11px; color:#aac; }
+.slider .val { color:#FFD700; font-weight:bold; }
+.slider input { width:100%; }
+.section { border-top:1px solid #334; padding-top:6px; margin-top:6px; }
+
+#copy-btn {
+    width:100%; padding:6px; margin-top:8px;
+    background:#22b455; color:#fff; border:none; border-radius:5px;
+    cursor:pointer; font-size:11px;
 }
-#tuner label { display:block; margin:4px 0; }
-#tuner input { width:100%; }
-.val { color:#FFD700; font-weight:bold; }
+#copy-btn:hover { background:#33cc66; }
 </style>
 </head>
 <body>
 <div id="info">로딩 중...</div>
 
-<div id="hair-panel">
+<div id="panel">
     <h3>💇 머리스타일</h3>
-    <div id="hair-btns">
-        <!-- 동적 생성 -->
+    <div id="hair-btns"></div>
+
+    <h3 class="section">📐 헤어 위치/회전/크기</h3>
+    <div class="slider"><label>X 오프셋 <span class="val" id="xval">0.00</span></label>
+        <input type="range" id="x-slider" min="-0.3" max="0.3" step="0.005" value="0"></div>
+    <div class="slider"><label>Y 오프셋 <span class="val" id="yval">0.26</span></label>
+        <input type="range" id="y-slider" min="-0.3" max="0.6" step="0.005" value="0.26"></div>
+    <div class="slider"><label>Z 오프셋 <span class="val" id="zval">0.00</span></label>
+        <input type="range" id="z-slider" min="-0.3" max="0.3" step="0.005" value="0"></div>
+    <div class="slider"><label>X 회전 (°) <span class="val" id="rxval">0</span></label>
+        <input type="range" id="rx-slider" min="-180" max="180" step="1" value="0"></div>
+    <div class="slider"><label>Y 회전 (°) <span class="val" id="ryval">270</span></label>
+        <input type="range" id="ry-slider" min="0" max="360" step="1" value="270"></div>
+    <div class="slider"><label>Z 회전 (°) <span class="val" id="rzval">0</span></label>
+        <input type="range" id="rz-slider" min="-180" max="180" step="1" value="0"></div>
+    <div class="slider"><label>스케일 <span class="val" id="sval">0.011</span></label>
+        <input type="range" id="s-slider" min="0.005" max="0.025" step="0.0005" value="0.011"></div>
+
+    <h3 class="section">✂️ 머리뭉치 자르기 (soyun)</h3>
+    <div class="slider"><label>Y 임계 (이상 자르기) <span class="val" id="cyval">1.55</span></label>
+        <input type="range" id="cy-slider" min="1.40" max="1.80" step="0.01" value="1.55"></div>
+    <div class="slider"><label>Z 보호선 (앞쪽 보존) <span class="val" id="czval">-0.02</span></label>
+        <input type="range" id="cz-slider" min="-0.15" max="0.15" step="0.005" value="-0.02"></div>
+    <div style="font-size:10px; color:#aaa; margin-top:4px;">
+        ※ Y 이상 + Z 이상 영역 면 제거. Z 보호선이 작을수록 얼굴 안전.
     </div>
-    <div id="tuner">
-        <label>Y 오프셋 <span class="val" id="yval">0.16</span>
-            <input type="range" id="yslider" min="-0.5" max="0.5" step="0.005" value="0.16">
-        </label>
-        <label>스케일 <span class="val" id="sval">0.011</span>
-            <input type="range" id="sslider" min="0.005" max="0.02" step="0.0005" value="0.011">
-        </label>
-        <label>Y 회전 (°) <span class="val" id="rval">270</span>
-            <input type="range" id="rslider" min="0" max="360" step="5" value="270">
-        </label>
-    </div>
+
+    <button id="copy-btn" onclick="copyValues()">📋 현재 값 복사</button>
 </div>
 
 <div id="anim-btns">
@@ -80,7 +100,7 @@ canvas { display:block; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
-<script src="js/character.js?v=11"></script>
+<script src="js/character.js?v=12"></script>
 <script>
 const W = window.innerWidth, H = window.innerHeight;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -91,15 +111,15 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
 document.body.appendChild(renderer.domElement);
 
-const scene  = new THREE.Scene();
+const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a2030);
 scene.fog = new THREE.Fog(0x1a2030, 10, 30);
 
 const camera = new THREE.PerspectiveCamera(45, W/H, 0.01, 100);
-camera.position.set(0, 1.5, 2.5);
+camera.position.set(0, 1.6, 2.0);
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 1.4, 0);   // 머리 정렬 확인 위해 머리 높이로
+controls.target.set(0, 1.5, 0);  // 머리 정렬 보기 위해 머리 높이
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.update();
@@ -109,26 +129,25 @@ const sun = new THREE.DirectionalLight(0xfff4e0, 1.4);
 sun.position.set(2, 4, 3);
 sun.castShadow = true;
 scene.add(sun);
-const fill = new THREE.DirectionalLight(0x6688cc, 0.4);
-fill.position.set(-2, 1, -2);
-scene.add(fill);
+scene.add(new THREE.DirectionalLight(0x6688cc, 0.4).translateOnAxis(new THREE.Vector3(-1,0.5,-1).normalize(), 5));
 
-const grid = new THREE.GridHelper(4, 20, 0x334466, 0x223355);
-scene.add(grid);
+scene.add(new THREE.GridHelper(4, 20, 0x334466, 0x223355));
 
 let character = null;
 
 ChibiCharacter.preload().then(() => {
     character = ChibiCharacter.create({ name: 'soyun' });
-    if (character) {
-        scene.add(character);
-        const hairCount = ChibiCharacter.getHairstyleCount();
-        document.getElementById('info').textContent =
-            `✅ 로드 완료 — 머리 ${hairCount}종 | 드래그: 회전 | 휠: 줌`;
-        buildHairButtons(hairCount);
-    } else {
+    if (!character) {
         document.getElementById('info').textContent = '❌ 캐릭터 생성 실패';
+        return;
     }
+    scene.add(character);
+    const hairCount = ChibiCharacter.getHairstyleCount();
+    document.getElementById('info').textContent =
+        `✅ 머리 ${hairCount}종 | 드래그: 회전 | 휠: 줌`;
+    buildHairButtons(hairCount);
+    // 초기 크롭 적용
+    applyCrop();
 }).catch(err => {
     document.getElementById('info').textContent = '❌ 로드 실패: ' + err.message;
 });
@@ -136,14 +155,9 @@ ChibiCharacter.preload().then(() => {
 function buildHairButtons(count) {
     const panel = document.getElementById('hair-btns');
     panel.innerHTML = '';
-    // OFF 버튼
-    const offBtn = document.createElement('button');
-    offBtn.textContent = '✗';
-    offBtn.className = 'off';
-    offBtn.title = '머리 없음';
-    offBtn.onclick = () => selectHair(-1);
-    panel.appendChild(offBtn);
-    // 머리 1~N
+    const off = document.createElement('button');
+    off.textContent = '✗'; off.className = 'off'; off.onclick = () => selectHair(-1);
+    panel.appendChild(off);
     for (let i = 0; i < count; i++) {
         const b = document.createElement('button');
         b.textContent = (i + 1);
@@ -163,22 +177,72 @@ function selectHair(index) {
 }
 window.selectHair = selectHair;
 
-// ── 튜너 (Y offset / scale 실시간 조정) ──
-document.getElementById('yslider').addEventListener('input', e => {
-    const y = parseFloat(e.target.value);
-    document.getElementById('yval').textContent = y.toFixed(2);
-    if (character && character._hair) character._hair.position.y = y;
+// ── 6축 transform 슬라이더 ──
+const transformIds = [
+    ['x',  'xval',  v => parseFloat(v),                    'x'],
+    ['y',  'yval',  v => parseFloat(v),                    'y'],
+    ['z',  'zval',  v => parseFloat(v),                    'z'],
+    ['rx', 'rxval', v => parseFloat(v) * Math.PI / 180,   'rx'],
+    ['ry', 'ryval', v => parseFloat(v) * Math.PI / 180,   'ry'],
+    ['rz', 'rzval', v => parseFloat(v) * Math.PI / 180,   'rz'],
+    ['s',  'sval',  v => parseFloat(v),                    's']
+];
+transformIds.forEach(([id, valId, conv, key]) => {
+    const sl = document.getElementById(id + '-slider');
+    const lbl = document.getElementById(valId);
+    sl.addEventListener('input', () => {
+        const raw = parseFloat(sl.value);
+        lbl.textContent = (id.startsWith('r') ? raw.toFixed(0) : raw.toFixed(3));
+        if (character) {
+            const xf = {};
+            xf[key] = conv(sl.value);
+            character.setHairTransform(xf);
+        }
+    });
 });
-document.getElementById('sslider').addEventListener('input', e => {
-    const s = parseFloat(e.target.value);
-    document.getElementById('sval').textContent = s.toFixed(3);
-    if (character && character._hair) character._hair.scale.setScalar(s);
+
+// ── 머리 크롭 슬라이더 ──
+function applyCrop() {
+    if (!character) return;
+    const yMin   = parseFloat(document.getElementById('cy-slider').value);
+    const zFront = parseFloat(document.getElementById('cz-slider').value);
+    character.applyHeadCrop({ yMin, zFront });
+}
+document.getElementById('cy-slider').addEventListener('input', e => {
+    document.getElementById('cyval').textContent = parseFloat(e.target.value).toFixed(2);
+    applyCrop();
 });
-document.getElementById('rslider').addEventListener('input', e => {
-    const deg = parseFloat(e.target.value);
-    document.getElementById('rval').textContent = deg.toFixed(0);
-    if (character && character._hair) character._hair.rotation.y = deg * Math.PI / 180;
+document.getElementById('cz-slider').addEventListener('input', e => {
+    document.getElementById('czval').textContent = parseFloat(e.target.value).toFixed(3);
+    applyCrop();
 });
+
+// 현재 값 복사 → 클립보드
+function copyValues() {
+    const vals = {
+        hair: {
+            x:  parseFloat(document.getElementById('x-slider').value),
+            y:  parseFloat(document.getElementById('y-slider').value),
+            z:  parseFloat(document.getElementById('z-slider').value),
+            rx_deg: parseFloat(document.getElementById('rx-slider').value),
+            ry_deg: parseFloat(document.getElementById('ry-slider').value),
+            rz_deg: parseFloat(document.getElementById('rz-slider').value),
+            s:  parseFloat(document.getElementById('s-slider').value)
+        },
+        headCrop: {
+            yMin:   parseFloat(document.getElementById('cy-slider').value),
+            zFront: parseFloat(document.getElementById('cz-slider').value)
+        }
+    };
+    const text = JSON.stringify(vals, null, 2);
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = '✓ 복사됨';
+        setTimeout(() => btn.textContent = '📋 현재 값 복사', 1500);
+    });
+    console.log(text);
+}
+window.copyValues = copyValues;
 
 function playAnim(name) {
     if (character) character.setState(name);
