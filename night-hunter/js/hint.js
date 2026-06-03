@@ -8,45 +8,42 @@ const HintSystem = window.HintSystem = {
     nearbyHint: null,   // legacy, always null
     memoOpen: false,
 
-    // Story-driven hints — generated per game from hideout features
-    // Each criminal has a backstory + clues that reference the random features
+    // Story-driven hints — downtown citypack context (STEP 4)
+    // Zone/marker 의존성 제거, 도심 분위기 텍스트로 작성
     criminalStories: {
         0: { // 1호 길동 — 전직 학원 강사
             name: '1호 납치범 (길동)',
             backstory: '전직 학원 강사. 학교에서 해고된 후 분노를 아이들에게 풀고 있어요.',
             chunks: [
-                '제가 그날 봤어요. 한 남자가 아이를 끌고 주택가로 가더라구요.',
-                '40대 남자였어요. 안경 쓰고, 회색 코트를 입었어요. 학원에서 잘렸다는 소문이...',
-                '주택가 안쪽 골목에 자주 나타나요. {color} 외벽 집이에요.',
-                '그 집 앞에는 {marker_desc}가 있어요. 분명히 그 집이에요!',
+                '그날 봤어요. 한 남자가 아이를 끌고 도심 골목 안쪽으로 사라졌어요.',
+                '40대 남자였어요. 안경 쓰고, 회색 코트. 학원에서 잘렸다는 소문이...',
+                '도심 좁은 골목 사이를 자주 다녀요. 큰 길에서 벗어난 곳에 숨어 있어요.',
             ]
         },
-        1: { // 2호 철수 — 가짜 카페 사장
+        1: { // 2호 철수 — 가짜 사업 위장
             name: '2호 납치범 (철수)',
-            backstory: '겉으로는 카페 사장. 실제로는 미성년자 거래상.',
+            backstory: '겉으로는 멀쩡한 사업가. 실제로는 미성년자 거래상.',
             chunks: [
-                '상업지구에서 본 적 있어요. 검은 정장에 흉터가 있는 남자...',
-                '낮에는 멀쩡한 가게를 운영하는 척하지만, 밤에는 이상한 사람들이 드나들어요.',
-                '큰 도로 옆 빌딩이에요. {color} 외벽이고 키가 좀 큰 편이에요.',
-                '간판이 {marker_desc}이에요. 그게 그 자의 위장 사업이에요.',
-                '제가 한번 그 안을 봤는데 지하에서 비명 소리가...',
+                '검은 정장에 볼 흉터가 있는 남자예요. 도심 상업 거리에서 자주 봤어요.',
+                '낮에는 가게를 운영하는 척, 밤에는 이상한 사람들이 드나들어요.',
+                '큰 도로 옆 사무용 빌딩이에요. 입구가 좀 어둑한 곳.',
+                '지하에서 비명 소리가... 그 안에서 아이들을 가둔다는 소문이에요.',
             ]
         },
-        2: { // 3호 영수 — 폐공장의 비밀
+        2: { // 3호 영수 — 도심 거점 두목
             name: '3호 납치범 (영수)',
-            backstory: '폐공장을 점거한 인신매매 조직 두목. 가장 위험한 범인.',
+            backstory: '도심 한복판에 거점을 둔 인신매매 조직 두목. 가장 위험한 범인.',
             chunks: [
-                '공장지대... 거기에 그 자가 있어요. 험상궂은 60대 남자예요.',
-                '폐공장 단지에 자기 조직이 있어요. 부하들이 많아서 조심하세요.',
-                '{color} 외벽의 큰 건물이에요. 일반 공장보다 키가 커요.',
-                '옥상에 특이한 게 있어요... {marker_desc}이 있어서 멀리서도 보여요.',
-                '주변에는 굴뚝에서 매캐한 연기가 나는데, 그건 위장이에요.',
-                '아이들을 거기서 트럭으로 옮긴다는 소문을 들었어요...',
+                '60대 험상궂은 남자. 도심에서 부하들을 데리고 다니는 걸 봤어요.',
+                '도심 큰 빌딩 중 하나에 거점이 있어요. 부하들이 많아서 조심해요.',
+                '눈썹에 흉터, 짙은 수염. 그 자만의 특징이에요.',
+                '옥상에서 헬기 소리가 자주 들려요. 아이들 옮길 때 쓴다고...',
+                '다가가지 마세요. 부하들이 무장하고 있을 가능성이 높아요.',
             ]
         }
     },
 
-    // Color name lookup (hex → Korean)
+    // Color/marker 룩업은 절차적 모드 폴백용으로 유지
     colorNames: {
         0x4488cc: '파란색', 0x88cc44: '연두색', 0xcc6644: '주황색',
         0xaa44cc: '보라색', 0x44ccaa: '청록색', 0xcccc44: '노란색',
@@ -81,20 +78,24 @@ const HintSystem = window.HintSystem = {
     },
 
     generateHintTexts() {
-        // Build hints from criminal stories + hideout features
+        // citypack 모드는 placeholder 없는 도심 텍스트 그대로 사용
+        // 절차적 모드는 zone feature로 치환 (폴백)
+        const isCitypack = !window.location.search.includes('procedural=1');
         const features = window._hideoutFeatures || {};
         const zoneMap = { 0: 'RESIDENTIAL', 1: 'COMMERCIAL', 2: 'FACTORY' };
         for (let c = 0; c < 3; c++) {
             const story = this.criminalStories[c];
             if (!story) continue;
-            const f = features[zoneMap[c]] || {};
-            const colorName = this.colorNames[f.color] || '회색';
-            const markerDesc = this.markerDescs[f.marker] || '특이한 표식';
-            this.hintTexts[c] = story.chunks.map(chunk =>
-                chunk.replace('{color}', colorName).replace('{marker_desc}', markerDesc)
-            );
-            // Take only as many as hintsRequired allows
-            this.hintTexts[c] = this.hintTexts[c].slice(0, this.hintsRequired[c]);
+            if (isCitypack) {
+                this.hintTexts[c] = story.chunks.slice(0, this.hintsRequired[c]);
+            } else {
+                const f = features[zoneMap[c]] || {};
+                const colorName = this.colorNames[f.color] || '회색';
+                const markerDesc = this.markerDescs[f.marker] || '특이한 표식';
+                this.hintTexts[c] = story.chunks.map(chunk =>
+                    chunk.replace('{color}', colorName).replace('{marker_desc}', markerDesc)
+                ).slice(0, this.hintsRequired[c]);
+            }
         }
     },
 
