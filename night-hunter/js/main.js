@@ -231,15 +231,56 @@ const { worldGroup, buildingData } = createWorld(scene);
                 const city = gltf.scene;
                 city.scale.setScalar(scale);
                 city.rotation.y = rotDeg * Math.PI / 180;
+                city.position.set(0, 0, 0);
                 city.updateMatrixWorld(true);
 
-                // 1) bbox 계산 → 수평 중심을 (0,0)으로, 지면(min Y)을 Y=0으로 정렬
+                // 1) 수평 중심을 (0,0)으로
                 let bbox = new THREE.Box3().setFromObject(city);
                 const center = new THREE.Vector3();
                 bbox.getCenter(center);
                 city.position.x = -center.x;
                 city.position.z = -center.z;
-                city.position.y = -bbox.min.y;
+                city.updateMatrixWorld(true);
+
+                // 2) 레이캐스트로 도로 높이 검출
+                // bbox.min.y는 건물 지하 foundation 같은 underground 지오메트리라서
+                // 그걸 Y=0에 맞추면 도로가 더 위에 있어 캐릭터가 묻힘.
+                // 정확한 도로 = 빈 공간(건물 없는 곳)에서 위→아래 레이가 1번만 맞은 Y의 중앙값.
+                const raycaster = new THREE.Raycaster();
+                const groundHits = [];
+                const allFirstHits = [];
+                const sampleStep = Math.max(20, scale * 3);
+                const sampleRange = Math.min(120, scale * 10);
+                for (let sx = -sampleRange; sx <= sampleRange; sx += sampleStep) {
+                    for (let sz = -sampleRange; sz <= sampleRange; sz += sampleStep) {
+                        raycaster.set(new THREE.Vector3(sx, 2000, sz), new THREE.Vector3(0, -1, 0));
+                        const hits = raycaster.intersectObject(city, true);
+                        if (hits.length > 0) {
+                            allFirstHits.push(hits[0].point.y);
+                            if (hits.length === 1) groundHits.push(hits[0].point.y);
+                        }
+                    }
+                }
+                let roadY;
+                if (groundHits.length > 0) {
+                    groundHits.sort((a, b) => a - b);
+                    roadY = groundHits[Math.floor(groundHits.length / 2)];
+                    console.log(`[Citypack] road detected (${groundHits.length} clean samples): Y=${roadY.toFixed(2)}`);
+                } else if (allFirstHits.length > 0) {
+                    roadY = Math.min(...allFirstHits);
+                    console.log(`[Citypack] road Y fallback (all hit buildings): ${roadY.toFixed(2)}`);
+                } else {
+                    roadY = bbox.min.y;
+                    console.log(`[Citypack] no hits, using bbox.min.y: ${roadY.toFixed(2)}`);
+                }
+
+                const yOverride = parseFloat(params.get('y'));
+                if (!isNaN(yOverride)) {
+                    city.position.y = yOverride;
+                    console.log(`[Citypack] URL y override: ${yOverride}`);
+                } else {
+                    city.position.y = -roadY;
+                }
                 city.updateMatrixWorld(true);
 
                 // 그림자 설정
