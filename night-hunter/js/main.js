@@ -202,6 +202,50 @@ scene.add(rimLight);
 // ── Create World ──
 const { worldGroup, buildingData } = createWorld(scene);
 
+// ── Citypack 시뮬레이션 모드 (?citypack=1) ──
+// 사용자가 citypack-test.html에서 튜닝한 값을 적용해 메인 게임에서 시각 시뮬레이션.
+// 절차적 도시(worldGroup)를 숨기고 ithappy City 1 모델을 로드.
+// NPC/적/플레이어 등은 그대로 작동하지만 충돌 지오메트리는 절차적 도시 기준 유지됨.
+(function tryLoadCitypack() {
+    try {
+        const params = new URLSearchParams(location.search);
+        if (params.get('citypack') !== '1') return;
+
+        // 절차적 도시 시각적으로 숨김 (NPC/적의 좌표/충돌 로직은 그대로 유지)
+        worldGroup.visible = false;
+
+        const loader = new THREE.GLTFLoader();
+        const startTime = performance.now();
+        loader.load('assets/models/citypack.glb',
+            (gltf) => {
+                const city = gltf.scene;
+                // 사용자 튜닝값: scale=31.623, Y=-14, rotation Y=15°
+                city.scale.setScalar(31.623);
+                city.position.y = -14;
+                city.rotation.y = 15 * Math.PI / 180;
+                city.traverse(o => {
+                    if (o.isMesh) {
+                        // 263k 트라이앵글에 그림자 캐스팅 시 모바일 성능 저하 → 그림자 받기만 활성
+                        o.castShadow = false;
+                        o.receiveShadow = true;
+                    }
+                });
+                scene.add(city);
+                const ms = (performance.now() - startTime).toFixed(0);
+                console.log(`Citypack 로드 완료 (${ms}ms)`);
+                window._citypackModel = city;
+            },
+            undefined,
+            (err) => {
+                console.error('Citypack 로드 실패, 절차적 도시로 폴백:', err);
+                worldGroup.visible = true;
+            }
+        );
+    } catch (e) {
+        console.error('Citypack 모드 초기화 실패:', e);
+    }
+})();
+
 // ── Player Character ──
 const playerGroup = new THREE.Group();
 
