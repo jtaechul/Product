@@ -202,15 +202,18 @@ scene.add(rimLight);
 // ── Create World ──
 const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGroup } = createWorld(scene);
 
-// ── Citypack 시뮬레이션 모드 (?citypack=1 [&scale=N]) ──
-// ithappy City 1 GLB를 게임 월드로 사용.
+// ── Citypack 정식 모드 (기본 ON, STEP 0+F) ──
+// ithappy City 1 GLB가 게임 기본 월드.
 // URL 파라미터:
-//   ?citypack=1         citypack 모드 활성
-//   &scale=6            도시 스케일 (기본 6, 분당/일산 10층 아파트 수준)
-//   &rot=15             회전 각도(도, 기본 15)
+//   ?procedural=1       절차적 모드로 opt-out (디버그용)
+//   &scale=N            도시 스케일 (기본 10)
+//   &y=N                Y 위치 강제 지정 (기본 -scale/2)
+//   &rot=N              회전 각도 (기본 15도)
+//   &ambient=0          자동차/보행자 비활성
+//   &debug=1            FPS 카운터 표시
 // 자동 처리:
-//   · 절차적 도시(worldGroup) 숨김
-//   · 도시 자동 중심 정렬 + 지면을 Y=0으로
+//   · 절차적 도시(buildings/ground/props) 숨김, 도로만 35% 투명도 가이드
+//   · 도시 자동 중심 정렬 + Y=-scale/2로 도로 정렬
 //   · 높이 3유닛 이상 mesh를 건물 충돌 박스로 등록
 //   · checkBuildingCollision()이 citypack 충돌 박스를 사용
 (function tryLoadCitypack() {
@@ -1594,17 +1597,44 @@ function monitorFPS(delta) {
     fpsAccum += delta;
     fpsFrames++;
     fpsCheckTimer += delta;
-    if (fpsCheckTimer >= 2) {
+    if (fpsCheckTimer >= 0.5) {
         const fps = fpsFrames / fpsAccum;
-        fpsAccum = 0; fpsFrames = 0; fpsCheckTimer = 0;
-        if (fps < 30) {
-            lowFpsStreak++;
-            if (lowFpsStreak >= 2) { downgradeQuality(); lowFpsStreak = 0; }
-        } else {
-            lowFpsStreak = 0;
+        // STEP 7: ?debug=1면 화면에 FPS 표시
+        if (window._fpsDebugEl) {
+            window._fpsDebugEl.textContent =
+                `FPS: ${fps.toFixed(0)} · 품질: ${qualityTier} · NPC: ${(NPCSystem.npcs||[]).length} · 적: ${(EnemySystem.enemies||[]).length}`;
+            window._fpsDebugEl.style.color = fps < 30 ? '#ff6666' : fps < 50 ? '#ffcc44' : '#66ff99';
+        }
+        fpsCheckTimer = 0;
+        // 2초 누적치로만 quality downgrade 판단
+        if (fpsAccum >= 2) {
+            if (fps < 30) {
+                lowFpsStreak++;
+                if (lowFpsStreak >= 2) { downgradeQuality(); lowFpsStreak = 0; }
+            } else {
+                lowFpsStreak = 0;
+            }
+            fpsAccum = 0; fpsFrames = 0;
         }
     }
 }
+
+// STEP 7: ?debug=1면 FPS HUD 부착 (한 번만)
+(function setupFPSDebug() {
+    if (new URLSearchParams(location.search).get('debug') !== '1') return;
+    const el = document.createElement('div');
+    el.id = 'fps-debug';
+    el.style.cssText = `
+        position:fixed; top:10px; left:50%; transform:translateX(-50%);
+        background:rgba(0,0,0,0.75); color:#66ff99;
+        padding:6px 12px; border-radius:6px;
+        font:600 12px/1.2 Inter,monospace; z-index:9999;
+        backdrop-filter:blur(8px); pointer-events:none;
+    `;
+    el.textContent = 'FPS: --';
+    document.body.appendChild(el);
+    window._fpsDebugEl = el;
+})();
 
 function downgradeQuality() {
     if (qualityTier === 'HIGH') qualityTier = 'MEDIUM';
