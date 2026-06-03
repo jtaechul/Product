@@ -40,19 +40,24 @@ const DayNight = {
     },
 
     createMoon() {
-        const moonGeo = new THREE.SphereGeometry(8, 32, 32);
+        // STEP E: citypack 모드는 건물이 높아 달도 더 높이 띄움
+        const params = new URLSearchParams(location.search);
+        const isCitypack = params.get('procedural') !== '1';
+        const moonRadius = isCitypack ? 18 : 8;
+        const moonY = isCitypack ? 350 : 120;
+        const moonGeo = new THREE.SphereGeometry(moonRadius, 32, 32);
         const moonMat = new THREE.MeshStandardMaterial({
             color: 0xffffee,
             emissive: 0xaaaaaa,
             emissiveIntensity: 0.5
         });
         this.moon = new THREE.Mesh(moonGeo, moonMat);
-        this.moon.position.set(80, 120, -80);
+        this.moon.position.set(80, moonY, -80);
         this.moon.visible = false;
         this.scene.add(this.moon);
 
-        // Moon glow
-        const glowGeo = new THREE.SphereGeometry(12, 32, 32);
+        // Moon glow (스케일 매칭)
+        const glowGeo = new THREE.SphereGeometry(isCitypack ? 28 : 12, 32, 32);
         const glowMat = new THREE.MeshBasicMaterial({
             color: 0x4466aa,
             transparent: true,
@@ -274,13 +279,12 @@ const DayNight = {
     },
 
     updateWindowGlow(isNight) {
-        // Make windows glow at night
+        // 절차적 도시 창문 (color 0x88ccff)
         this.scene.traverse(obj => {
             if (obj.isMesh && obj.material && obj.material.color) {
                 const c = obj.material.color.getHex();
                 if (c === 0x88ccff) {
                     if (isNight) {
-                        // Lit warm-yellow windows for bloom
                         obj.material.emissive.setHex(0xffdd88);
                         obj.material.emissiveIntensity = 1.5;
                     } else {
@@ -290,6 +294,26 @@ const DayNight = {
                 }
             }
         });
+
+        // STEP E: citypack 건물 모든 머티리얼에 야간 emissive 약하게 부여
+        // (정확한 창문 분리는 불가하므로 전체 표면을 살짝 따뜻하게)
+        if (window._citypackModel) {
+            window._citypackModel.traverse(obj => {
+                if (obj.isMesh && obj.material) {
+                    const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+                    mats.forEach(m => {
+                        if (!m.emissive) return;
+                        if (isNight) {
+                            m.emissive.setHex(0x554422);
+                            m.emissiveIntensity = 0.35;
+                        } else {
+                            m.emissive.setHex(0x000000);
+                            m.emissiveIntensity = 0;
+                        }
+                    });
+                }
+            });
+        }
     },
 
     checkLastMinuteWarning() {
