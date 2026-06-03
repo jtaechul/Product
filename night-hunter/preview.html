@@ -23,10 +23,50 @@ canvas { display:block; }
 }
 #anim-btns button:hover { background:#3a5aa0; }
 #anim-btns button.active { background:#FFD700; color:#000; }
+
+#hair-panel {
+    position:fixed; top:60px; right:12px;
+    background:rgba(0,0,0,.65); padding:10px 12px; border-radius:10px;
+    font-size:13px; max-width:200px;
+}
+#hair-panel h3 { font-size:13px; margin-bottom:8px; color:#FFD700; }
+#hair-btns { display:flex; flex-wrap:wrap; gap:4px; }
+#hair-btns button {
+    width:36px; height:36px; border:none; border-radius:6px;
+    background:#2a3a60; color:#fff; cursor:pointer; font-size:13px;
+    transition:.15s;
+}
+#hair-btns button:hover { background:#4a6090; }
+#hair-btns button.active { background:#FFD700; color:#000; }
+#hair-btns button.off { background:#553333; }
+
+#tuner {
+    margin-top:12px; padding-top:8px; border-top:1px solid #334;
+    font-size:11px; color:#aac;
+}
+#tuner label { display:block; margin:4px 0; }
+#tuner input { width:100%; }
+.val { color:#FFD700; font-weight:bold; }
 </style>
 </head>
 <body>
 <div id="info">로딩 중...</div>
+
+<div id="hair-panel">
+    <h3>💇 머리스타일</h3>
+    <div id="hair-btns">
+        <!-- 동적 생성 -->
+    </div>
+    <div id="tuner">
+        <label>Y 오프셋 <span class="val" id="yval">-1.42</span>
+            <input type="range" id="yslider" min="-3" max="0" step="0.01" value="-1.42">
+        </label>
+        <label>스케일 <span class="val" id="sval">0.010</span>
+            <input type="range" id="sslider" min="0.001" max="0.05" step="0.001" value="0.01">
+        </label>
+    </div>
+</div>
+
 <div id="anim-btns">
     <button onclick="playAnim('idle')" class="active">💤 Idle</button>
     <button onclick="playAnim('walk')">🚶 Walk</button>
@@ -37,7 +77,7 @@ canvas { display:block; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
-<script src="js/character.js?v=8"></script>
+<script src="js/character.js?v=9"></script>
 <script>
 const W = window.innerWidth, H = window.innerHeight;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -53,10 +93,10 @@ scene.background = new THREE.Color(0x1a2030);
 scene.fog = new THREE.Fog(0x1a2030, 10, 30);
 
 const camera = new THREE.PerspectiveCamera(45, W/H, 0.01, 100);
-camera.position.set(0, 1.2, 3.5);
+camera.position.set(0, 1.5, 2.5);
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 0.9, 0);
+controls.target.set(0, 1.4, 0);   // 머리 정렬 확인 위해 머리 높이로
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.update();
@@ -79,13 +119,57 @@ ChibiCharacter.preload().then(() => {
     character = ChibiCharacter.create({ name: 'soyun' });
     if (character) {
         scene.add(character);
+        const hairCount = ChibiCharacter.getHairstyleCount();
         document.getElementById('info').textContent =
-            '✅ 로드 완료 — 드래그: 회전 | 휠: 줌 | 우클릭: 이동';
+            `✅ 로드 완료 — 머리 ${hairCount}종 | 드래그: 회전 | 휠: 줌`;
+        buildHairButtons(hairCount);
     } else {
         document.getElementById('info').textContent = '❌ 캐릭터 생성 실패';
     }
 }).catch(err => {
     document.getElementById('info').textContent = '❌ 로드 실패: ' + err.message;
+});
+
+function buildHairButtons(count) {
+    const panel = document.getElementById('hair-btns');
+    panel.innerHTML = '';
+    // OFF 버튼
+    const offBtn = document.createElement('button');
+    offBtn.textContent = '✗';
+    offBtn.className = 'off';
+    offBtn.title = '머리 없음';
+    offBtn.onclick = () => selectHair(-1);
+    panel.appendChild(offBtn);
+    // 머리 1~N
+    for (let i = 0; i < count; i++) {
+        const b = document.createElement('button');
+        b.textContent = (i + 1);
+        b.onclick = () => selectHair(i);
+        if (i === 0) b.classList.add('active');
+        panel.appendChild(b);
+    }
+}
+
+function selectHair(index) {
+    if (!character) return;
+    character.setHairstyle(index);
+    document.querySelectorAll('#hair-btns button').forEach((b, i) => {
+        const btnIdx = (i === 0) ? -1 : (i - 1);
+        b.classList.toggle('active', btnIdx === index);
+    });
+}
+window.selectHair = selectHair;
+
+// ── 튜너 (Y offset / scale 실시간 조정) ──
+document.getElementById('yslider').addEventListener('input', e => {
+    const y = parseFloat(e.target.value);
+    document.getElementById('yval').textContent = y.toFixed(2);
+    if (character && character._hair) character._hair.position.y = y;
+});
+document.getElementById('sslider').addEventListener('input', e => {
+    const s = parseFloat(e.target.value);
+    document.getElementById('sval').textContent = s.toFixed(3);
+    if (character && character._hair) character._hair.scale.setScalar(s);
 });
 
 function playAnim(name) {
