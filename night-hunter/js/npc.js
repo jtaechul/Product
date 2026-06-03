@@ -48,14 +48,14 @@ const NPCSystem = window.NPCSystem = {
         return this.assets;
     },
 
-    _createGLBNPCMesh(arch) {
+    _createGLBNPCMesh(arch, assignment) {
         if (!THREE.SkeletonUtils) {
             console.warn('[NPC] SkeletonUtils 미로드, 절차적 폴백');
             return null;
         }
-        const npc = THREE.SkeletonUtils.clone(this.assets.template);
+        const glb = THREE.SkeletonUtils.clone(this.assets.template);
         // 피부색 적용 (arch.skin)
-        npc.traverse(o => {
+        glb.traverse(o => {
             if (o.isMesh) {
                 const m = o.material.clone();
                 m.color.setHex(arch.skin || 0xe8c4a0);
@@ -64,19 +64,33 @@ const NPCSystem = window.NPCSystem = {
                 o.receiveShadow = true;
             }
         });
-        npc.scale.setScalar(2.8); // 약 5유닛 = 플레이어 키
+        glb.scale.setScalar(2.8); // 약 5유닛 = 플레이어 키
+        glb.position.set(arch.x, 0, arch.z);
+        glb.rotation.y = Math.random() * Math.PI * 2;
         // Mixer + 3개 액션
-        const mixer = new THREE.AnimationMixer(npc);
+        const mixer = new THREE.AnimationMixer(glb);
         const actions = {
             idle: mixer.clipAction(this.assets.anims.idle),
             walk: mixer.clipAction(this.assets.anims.walk),
             run: mixer.clipAction(this.assets.anims.run)
         };
         actions.idle.play();
-        npc.userData.mixer = mixer;
-        npc.userData.actions = actions;
-        npc.userData.animState = 'idle';
-        return npc;
+        glb.userData.mixer = mixer;
+        glb.userData.actions = actions;
+        glb.userData.animState = 'idle';
+        this.scene.add(glb);
+        // 절차적과 동일한 wrapper 구조 반환
+        return {
+            mesh: glb,
+            ...arch,
+            assignment,
+            visited: false,
+            walkTime: Math.random() * 10,
+            wanderTarget: { x: arch.x, z: arch.z },
+            baseX: arch.x,
+            baseZ: arch.z,
+            talkIcon: null
+        };
     },
 
     _setAnimState(npcMesh, state) {
@@ -240,8 +254,8 @@ const NPCSystem = window.NPCSystem = {
     createNPCMesh(arch, assignment) {
         // GLB 자산이 로드되어 있으면 GLB로 생성
         if (this.assets) {
-            const glbMesh = this._createGLBNPCMesh(arch);
-            if (glbMesh) return glbMesh;
+            const wrapper = this._createGLBNPCMesh(arch, assignment);
+            if (wrapper) return wrapper;
         }
         // 폴백: 기존 절차적 메시
         const group = new THREE.Group();
