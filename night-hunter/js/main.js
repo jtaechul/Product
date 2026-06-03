@@ -70,11 +70,15 @@ const veryLowEnd = (isMobile && navigator.deviceMemory && navigator.deviceMemory
 // iOS(아이패드/아이폰) 는 Safari 가 deviceMemory 를 노출하지 않아 lowEnd 감지가
 // 안 되어 MEDIUM 으로 잡혀 끊김. retina 디스플레이 부담도 큼.
 // → iOS 는 강제 LOW 부터 시작 (자동 FPS 다운그레이드 로직이 더 낮춰갈 수 있음)
-let qualityTier = veryLowEnd ? 'POTATO'
+// ?hires=1 강제 HIGH 모드 (모바일에서 고해상도 테스트용)
+const forceHires = new URLSearchParams(location.search).get('hires') === '1';
+let qualityTier = forceHires ? 'HIGH'
+    : veryLowEnd ? 'POTATO'
     : (isIOSDevice ? 'LOW'
     : (lowEnd ? 'LOW'
     : (isMobile ? 'MEDIUM' : 'HIGH')));
 let Q = QUALITY[qualityTier];
+if (forceHires) console.log('[Quality] forced HIGH via ?hires=1');
 window.GameQuality = { get tier() { return qualityTier; }, get cfg() { return Q; } };
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, Q.far);
@@ -275,32 +279,58 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                 }
                 city.updateMatrixWorld(true);
 
-                // 그림자 설정
+                // 그림자 설정 — ?hires=1면 castShadow도 활성
+                const enableShadowCast = new URLSearchParams(location.search).get('hires') === '1';
                 city.traverse(o => {
                     if (o.isMesh) {
-                        o.castShadow = false;   // 263k tri × shadow = 모바일 발열
+                        o.castShadow = enableShadowCast;
                         o.receiveShadow = true;
                     }
                 });
 
                 scene.add(city);
 
-                // 2) 건물 충돌 박스 추출: 높이 3유닛 이상인 메시만
+                // 2) 건물 충돌 박스 + 도시 경계 + 가장 큰 건물(경찰서 후보)
                 const boxes = [];
                 const MIN_BUILDING_HEIGHT = 3;
+                let cityMinX = Infinity, cityMaxX = -Infinity;
+                let cityMinZ = Infinity, cityMaxZ = -Infinity;
+                let largestBuilding = null;
+                let largestArea = 0;
                 city.traverse(o => {
                     if (!o.isMesh) return;
                     o.updateMatrixWorld(true);
                     const b = new THREE.Box3().setFromObject(o);
                     const size = new THREE.Vector3();
                     b.getSize(size);
+                    // 도시 전체 경계는 모든 mesh 포함
+                    cityMinX = Math.min(cityMinX, b.min.x);
+                    cityMaxX = Math.max(cityMaxX, b.max.x);
+                    cityMinZ = Math.min(cityMinZ, b.min.z);
+                    cityMaxZ = Math.max(cityMaxZ, b.max.z);
                     if (size.y < MIN_BUILDING_HEIGHT) return; // 도로/인도/평면 제외
-                    boxes.push({
+                    const box = {
                         minX: b.min.x, maxX: b.max.x,
-                        minZ: b.min.z, maxZ: b.max.z
-                    });
+                        minZ: b.min.z, maxZ: b.max.z,
+                        cx: (b.min.x + b.max.x) / 2,
+                        cz: (b.min.z + b.max.z) / 2,
+                        area: (b.max.x - b.min.x) * (b.max.z - b.min.z),
+                        height: size.y
+                    };
+                    boxes.push(box);
+                    if (box.area > largestArea) {
+                        largestArea = box.area;
+                        largestBuilding = box;
+                    }
                 });
                 window._citypackCollision = boxes;
+                window._citypackBounds = {
+                    minX: cityMinX, maxX: cityMaxX,
+                    minZ: cityMinZ, maxZ: cityMaxZ
+                };
+                window._citypackLargestBuilding = largestBuilding;
+                console.log(`[Citypack] bounds: X=[${cityMinX.toFixed(0)}, ${cityMaxX.toFixed(0)}] Z=[${cityMinZ.toFixed(0)}, ${cityMaxZ.toFixed(0)}]`);
+                console.log(`[Citypack] largest building: area=${largestArea.toFixed(0)}, height=${largestBuilding?.height.toFixed(1)}`);
 
                 // STEP 1: NPC/적 도로 위 자동 재배치용 글로벌 헬퍼
                 window.findCitypackSafeSpawn = function(targetX, targetZ, margin) {
@@ -358,8 +388,19 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                     playerGroup.position.set(safe.x, 0, safe.z);
                     console.log(`[Citypack] player respawned at (${safe.x.toFixed(1)}, 0, ${safe.z.toFixed(1)})`);
 
-                    // STEP C: 경찰서 위치 지정 (spawn 좌표) + 시각 마커
-                    window._policeStation = { x: safe.x, z: safe.z };
+                    // 경찰서: 가장 큰 건물 앞 도로 위 (없으면 spawn 좌표)
+                    let psX = safe.x, psZ = safe.z;
+                    if (largestBuilding) {
+                        // 큰 건물 앞 — Z+ 방향에서 5유닛 떨어진 안전 위치
+                        const candidate = window.findCitypackSafeSpawn(
+                            largestBuilding.cx,
+                            largestBuilding.maxZ + 5,
+                            3
+                        );
+                        psX = candidate.x;
+                        psZ = candidate.z;
+                    }
+                    window._policeStation = { x: psX, z: psZ };
                     const stationMarker = new THREE.Group();
                     // 파란 빔 (50유닛 높이, 멀리서도 보임)
                     const beam = new THREE.Mesh(
@@ -401,9 +442,9 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                     sign.position.y = 10;
                     stationMarker.add(sign);
 
-                    stationMarker.position.set(safe.x, 0, safe.z);
+                    stationMarker.position.set(psX, 0, psZ);
                     scene.add(stationMarker);
-                    console.log(`[Citypack] police station marker at (${safe.x.toFixed(1)}, ${safe.z.toFixed(1)})`);
+                    console.log(`[Citypack] police station at (${psX.toFixed(1)}, ${psZ.toFixed(1)})`);
                 } else if (!safe) {
                     console.warn('[Citypack] no safe spawn found within 150 units!');
                 }
@@ -1429,9 +1470,19 @@ function updatePlayer(delta) {
         const nz = playerGroup.position.z + worldDz * speed * delta * 60;
 
         // Boundary & collision
-        const half = WORLD_SIZE / 2 - 1;
-        const clampedX = Math.max(-half, Math.min(half, nx));
-        const clampedZ = Math.max(-half, Math.min(half, nz));
+        // citypack 모드: 도시 bbox만큼 이동 범위 확장. 절차적: WORLD_SIZE/2-1
+        let halfX, halfZ;
+        if (window._citypackBounds) {
+            const b = window._citypackBounds;
+            halfX = { min: b.minX + 2, max: b.maxX - 2 };
+            halfZ = { min: b.minZ + 2, max: b.maxZ - 2 };
+        } else {
+            const half = WORLD_SIZE / 2 - 1;
+            halfX = { min: -half, max: half };
+            halfZ = { min: -half, max: half };
+        }
+        const clampedX = Math.max(halfX.min, Math.min(halfX.max, nx));
+        const clampedZ = Math.max(halfZ.min, Math.min(halfZ.max, nz));
 
         if (!checkBuildingCollision(clampedX, clampedZ)) {
             playerGroup.position.x = clampedX;
@@ -2270,9 +2321,9 @@ function showWantedPoster(firstTime) {
             <div style="font-size:12px; color:#3a1a0a; margin-bottom:4px;">담당 형사: <b>${gameState.playerName || '소윤'}</b></div>
             <div style="font-size:11px; color:#7a4a1a; margin-bottom:14px;">아이들을 납치한 흉악범 3명. 반드시 검거하라.</div>
             <div style="display:flex; justify-content:center; flex-wrap:wrap; background:#1a1a1a; padding:14px 8px; border-radius:6px;">
-                ${mugshot('CR-001', 0, '1호 길동', '전직 학원 강사<br/>안경, 깡마름<br/>도심 골목 잠복')}
-                ${mugshot('CR-002', 1, '2호 철수', '위장 사업가<br/>볼 흉터, 짧은 수염<br/>도심 사무용 빌딩')}
-                ${mugshot('CR-003', 2, '3호 영수', '인신매매 조직 두목<br/>눈썹 흉터, 짙은 수염<br/>도심 빌딩 옥상')}
+                ${mugshot('CR-001', 0, '1호 길동', '학원 강사 출신<br/>안경, 깡마름, 40대<br/>도심 좁은 골목 옥탑방')}
+                ${mugshot('CR-002', 1, '2호 철수', '무역회사 위장 사업가<br/>볼 흉터, 짧은 수염<br/>도심 사무용 빌딩 지하실')}
+                ${mugshot('CR-003', 2, '3호 영수', '인신매매 조직 두목<br/>눈썹 흉터, 짙은 수염, 60대<br/>도심 최대 빌딩 옥상 + 무장 부하')}
             </div>
             ${firstTime ? `
             <div style="margin-top:14px; padding:12px; background:rgba(122,74,26,0.15); border-radius:6px; font-size:12px; color:#3a1a0a; text-align:left; line-height:1.6;">

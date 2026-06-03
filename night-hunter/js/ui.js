@@ -237,10 +237,11 @@ const GameUI = window.GameUI = {
                 ctx.textAlign = 'center';
                 ctx.fillText('🚔', cwx(window._policeStation.x), cwz(window._policeStation.z) - 14);
             }
-            // 플레이어 위치 (빨간 화살표 — 회전 적용)
+            // 플레이어 위치 (파란 화살표 — atan2(x,z) 기준 π - playerAngle 보정)
+            // 이유: canvas Y+가 world Z+로 매핑되어 있고 ctx.rotate는 시계방향
             ctx.save();
             ctx.translate(cwx(playerPos.x), cwz(playerPos.z));
-            ctx.rotate(playerAngle);
+            ctx.rotate(Math.PI - playerAngle);
             ctx.fillStyle = '#3a82d4';
             ctx.beginPath();
             ctx.moveTo(0, -10);
