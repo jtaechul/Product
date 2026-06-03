@@ -330,6 +330,53 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                 if (safe && typeof playerGroup !== 'undefined') {
                     playerGroup.position.set(safe.x, 0, safe.z);
                     console.log(`[Citypack] player respawned at (${safe.x.toFixed(1)}, 0, ${safe.z.toFixed(1)})`);
+
+                    // STEP C: 경찰서 위치 지정 (spawn 좌표) + 시각 마커
+                    window._policeStation = { x: safe.x, z: safe.z };
+                    const stationMarker = new THREE.Group();
+                    // 파란 빔 (50유닛 높이, 멀리서도 보임)
+                    const beam = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.3, 0.3, 50, 8),
+                        new THREE.MeshBasicMaterial({
+                            color: 0x4fc3f7, transparent: true, opacity: 0.6,
+                            depthWrite: false
+                        })
+                    );
+                    beam.position.y = 25;
+                    stationMarker.add(beam);
+                    // 바닥에 발광 디스크
+                    const disc = new THREE.Mesh(
+                        new THREE.CircleGeometry(2.5, 24),
+                        new THREE.MeshBasicMaterial({
+                            color: 0x4fc3f7, transparent: true, opacity: 0.7,
+                            depthWrite: false, side: THREE.DoubleSide
+                        })
+                    );
+                    disc.rotation.x = -Math.PI / 2;
+                    disc.position.y = 0.05;
+                    stationMarker.add(disc);
+                    // 머리 위 "🚔 경찰서" 라벨 (sprite)
+                    const c = document.createElement('canvas');
+                    c.width = 256; c.height = 64;
+                    const ctx = c.getContext('2d');
+                    ctx.fillStyle = 'rgba(30,100,200,0.9)';
+                    ctx.fillRect(0, 0, 256, 64);
+                    ctx.font = 'bold 28px Inter, sans-serif';
+                    ctx.fillStyle = '#fff';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('🚔 경찰서', 128, 32);
+                    const tex = new THREE.CanvasTexture(c);
+                    const sign = new THREE.Sprite(new THREE.SpriteMaterial({
+                        map: tex, transparent: true, depthTest: false, depthWrite: false
+                    }));
+                    sign.scale.set(6, 1.5, 1);
+                    sign.position.y = 10;
+                    stationMarker.add(sign);
+
+                    stationMarker.position.set(safe.x, 0, safe.z);
+                    scene.add(stationMarker);
+                    console.log(`[Citypack] police station marker at (${safe.x.toFixed(1)}, ${safe.z.toFixed(1)})`);
                 } else if (!safe) {
                     console.warn('[Citypack] no safe spawn found within 150 units!');
                 }
