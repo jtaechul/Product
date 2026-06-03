@@ -269,6 +269,41 @@ const { worldGroup, buildingData } = createWorld(scene);
                 });
                 window._citypackCollision = boxes;
 
+                // 3) 안전한 spawn 위치 찾기 (충돌 박스에서 최소 3유닛 떨어진 곳)
+                const isSafe = (x, z, minClear) => {
+                    for (const b of boxes) {
+                        if (x + minClear > b.minX && x - minClear < b.maxX
+                         && z + minClear > b.minZ && z - minClear < b.maxZ) return false;
+                    }
+                    return true;
+                };
+                const findSafeSpawn = () => {
+                    const margin = 3; // player radius 0.5 + 여유 2.5
+                    // 우선 좌표 후보 (도시 중심부터)
+                    const preferred = [[0,0],[0,20],[20,0],[0,-20],[-20,0],[0,40],[0,-40],[40,0],[-40,0]];
+                    for (const [x, z] of preferred) {
+                        if (isSafe(x, z, margin)) return { x, z };
+                    }
+                    // 스파이럴 스캔 (반경 2~150, step 2)
+                    for (let r = 2; r < 150; r += 2) {
+                        const steps = Math.max(12, Math.floor(r * Math.PI));
+                        for (let i = 0; i < steps; i++) {
+                            const a = (i / steps) * Math.PI * 2;
+                            const x = Math.cos(a) * r;
+                            const z = Math.sin(a) * r;
+                            if (isSafe(x, z, margin)) return { x, z };
+                        }
+                    }
+                    return null;
+                };
+                const safe = findSafeSpawn();
+                if (safe && typeof playerGroup !== 'undefined') {
+                    playerGroup.position.set(safe.x, 0, safe.z);
+                    console.log(`[Citypack] player respawned at (${safe.x.toFixed(1)}, 0, ${safe.z.toFixed(1)})`);
+                } else if (!safe) {
+                    console.warn('[Citypack] no safe spawn found within 150 units!');
+                }
+
                 const finalBbox = new THREE.Box3().setFromObject(city);
                 const finalSize = new THREE.Vector3();
                 finalBbox.getSize(finalSize);
