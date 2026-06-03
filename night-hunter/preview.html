@@ -65,18 +65,18 @@ canvas { display:block; }
     <h3 class="section">📐 헤어 위치/회전/크기</h3>
     <div class="slider"><label>X 오프셋 <span class="val" id="xval">0.000</span></label>
         <input type="range" id="x-slider" min="-0.3" max="0.3" step="0.005" value="0"></div>
-    <div class="slider"><label>Y 오프셋 <span class="val" id="yval">0.195</span></label>
-        <input type="range" id="y-slider" min="-0.3" max="0.6" step="0.005" value="0.195"></div>
-    <div class="slider"><label>Z 오프셋 <span class="val" id="zval">-0.095</span></label>
-        <input type="range" id="z-slider" min="-0.3" max="0.3" step="0.005" value="-0.095"></div>
+    <div class="slider"><label>Y 오프셋 <span class="val" id="yval">0.200</span></label>
+        <input type="range" id="y-slider" min="-0.3" max="0.6" step="0.005" value="0.2"></div>
+    <div class="slider"><label>Z 오프셋 <span class="val" id="zval">-0.080</span></label>
+        <input type="range" id="z-slider" min="-0.3" max="0.3" step="0.005" value="-0.08"></div>
     <div class="slider"><label>X 회전 (°) <span class="val" id="rxval">0</span></label>
         <input type="range" id="rx-slider" min="-180" max="180" step="1" value="0"></div>
     <div class="slider"><label>Y 회전 (°) <span class="val" id="ryval">270</span></label>
         <input type="range" id="ry-slider" min="0" max="360" step="1" value="270"></div>
-    <div class="slider"><label>Z 회전 (°) <span class="val" id="rzval">17</span></label>
-        <input type="range" id="rz-slider" min="-180" max="180" step="1" value="17"></div>
-    <div class="slider"><label>스케일 <span class="val" id="sval">0.013</span></label>
-        <input type="range" id="s-slider" min="0.005" max="0.025" step="0.0005" value="0.013"></div>
+    <div class="slider"><label>Z 회전 (°) <span class="val" id="rzval">21</span></label>
+        <input type="range" id="rz-slider" min="-180" max="180" step="1" value="21"></div>
+    <div class="slider"><label>스케일 <span class="val" id="sval">0.01280</span></label>
+        <input type="range" id="s-slider" min="0.005" max="0.025" step="0.00001" value="0.0128"></div>
     <div style="font-size:10px; color:#aaa; margin-top:2px;">
         ※ 회전 순서: Y→X→Z (Y는 좌우 돌리기, X는 앞뒤 기울임, Z는 좌우 기울임)
     </div>
@@ -90,14 +90,19 @@ canvas { display:block; }
         <input type="range" id="cxmin-slider" min="-0.50" max="0.50" step="0.01" value="-0.50"></div>
     <div class="slider"><label>X 최대 <span class="val" id="cxmaxval">0.50</span></label>
         <input type="range" id="cxmax-slider" min="-0.50" max="0.50" step="0.01" value="0.50"></div>
-    <div class="slider"><label>Y 최소 <span class="val" id="cyminval">1.55</span></label>
-        <input type="range" id="cymin-slider" min="0.00" max="1.80" step="0.01" value="1.55"></div>
+    <div class="slider"><label>Y 최소 <span class="val" id="cyminval">1.65</span></label>
+        <input type="range" id="cymin-slider" min="0.00" max="1.80" step="0.01" value="1.65"></div>
     <div class="slider"><label>Y 최대 <span class="val" id="cymaxval">1.80</span></label>
         <input type="range" id="cymax-slider" min="0.00" max="1.80" step="0.01" value="1.80"></div>
     <div class="slider"><label>Z 최소 <span class="val" id="czminval">-0.20</span></label>
         <input type="range" id="czmin-slider" min="-0.20" max="0.25" step="0.005" value="-0.20"></div>
-    <div class="slider"><label>Z 최대 <span class="val" id="czmaxval">0.25</span></label>
-        <input type="range" id="czmax-slider" min="-0.20" max="0.25" step="0.005" value="0.25"></div>
+    <div class="slider"><label>Z 최대 <span class="val" id="czmaxval">0.015</span></label>
+        <input type="range" id="czmax-slider" min="-0.20" max="0.25" step="0.005" value="0.015"></div>
+    <div style="font-size:10px; color:#aaa; margin:6px 0 2px;">박스 회전 (중심 기준)</div>
+    <div class="slider"><label>Y 회전 (°) <span class="val" id="cryval">0</span></label>
+        <input type="range" id="cry-slider" min="-90" max="90" step="1" value="0"></div>
+    <div class="slider"><label>Z 회전 (°) <span class="val" id="crzval">0</span></label>
+        <input type="range" id="crz-slider" min="-90" max="90" step="1" value="0"></div>
 
     <button id="copy-btn" onclick="copyValues()">📋 현재 값 복사</button>
 </div>
@@ -112,7 +117,7 @@ canvas { display:block; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
-<script src="js/character.js?v=14"></script>
+<script src="js/character.js?v=15"></script>
 <script>
 const W = window.innerWidth, H = window.innerHeight;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -204,7 +209,9 @@ transformIds.forEach(([id, valId, conv, key]) => {
     const lbl = document.getElementById(valId);
     sl.addEventListener('input', () => {
         const raw = parseFloat(sl.value);
-        lbl.textContent = (id.startsWith('r') ? raw.toFixed(0) : raw.toFixed(3));
+        // 스케일은 5자리, 회전은 정수, 오프셋은 3자리
+        const dec = (id === 's') ? 5 : (id.startsWith('r') ? 0 : 3);
+        lbl.textContent = raw.toFixed(dec);
         if (character) {
             const xf = {};
             xf[key] = conv(sl.value);
@@ -228,10 +235,13 @@ function applyCrop() {
     const x = readCropAxis('cxmin-slider', 'cxmax-slider', -0.50, 0.50);
     const y = readCropAxis('cymin-slider', 'cymax-slider',  0.00, 1.80);
     const z = readCropAxis('czmin-slider', 'czmax-slider', -0.20, 0.25);
+    const ryDeg = parseFloat(document.getElementById('cry-slider').value);
+    const rzDeg = parseFloat(document.getElementById('crz-slider').value);
     character.applyHeadCrop({
         xMin: x.min, xMax: x.max,
         yMin: y.min, yMax: y.max,
-        zMin: z.min, zMax: z.max
+        zMin: z.min, zMax: z.max,
+        ryDeg, rzDeg
     });
 }
 [
@@ -240,7 +250,9 @@ function applyCrop() {
     ['cymin-slider', 'cyminval', 2],
     ['cymax-slider', 'cymaxval', 2],
     ['czmin-slider', 'czminval', 3],
-    ['czmax-slider', 'czmaxval', 3]
+    ['czmax-slider', 'czmaxval', 3],
+    ['cry-slider',   'cryval',   0],
+    ['crz-slider',   'crzval',   0]
 ].forEach(([sid, lid, dec]) => {
     document.getElementById(sid).addEventListener('input', e => {
         document.getElementById(lid).textContent = parseFloat(e.target.value).toFixed(dec);
@@ -261,12 +273,14 @@ function copyValues() {
             s:  parseFloat(document.getElementById('s-slider').value)
         },
         headCrop: {
-            xMin: parseFloat(document.getElementById('cxmin-slider').value),
-            xMax: parseFloat(document.getElementById('cxmax-slider').value),
-            yMin: parseFloat(document.getElementById('cymin-slider').value),
-            yMax: parseFloat(document.getElementById('cymax-slider').value),
-            zMin: parseFloat(document.getElementById('czmin-slider').value),
-            zMax: parseFloat(document.getElementById('czmax-slider').value)
+            xMin:  parseFloat(document.getElementById('cxmin-slider').value),
+            xMax:  parseFloat(document.getElementById('cxmax-slider').value),
+            yMin:  parseFloat(document.getElementById('cymin-slider').value),
+            yMax:  parseFloat(document.getElementById('cymax-slider').value),
+            zMin:  parseFloat(document.getElementById('czmin-slider').value),
+            zMax:  parseFloat(document.getElementById('czmax-slider').value),
+            ryDeg: parseFloat(document.getElementById('cry-slider').value),
+            rzDeg: parseFloat(document.getElementById('crz-slider').value)
         }
     };
     const text = JSON.stringify(vals, null, 2);
