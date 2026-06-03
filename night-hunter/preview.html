@@ -81,18 +81,22 @@ canvas { display:block; }
         ※ 회전 순서: Y→X→Z (Y는 좌우 돌리기, X는 앞뒤 기울임, Z는 좌우 기울임)
     </div>
 
-    <h3 class="section">✂️ 머리뭉치 자르기 (soyun)</h3>
+    <h3 class="section">✂️ 캐릭터 본체 자르기 (헤어 보호)</h3>
     <div style="font-size:10px; color:#aaa; margin-bottom:4px;">
-        4개 축이 만드는 박스 <b>안</b>에 들어오는 정점의 면이 제거됨.<br>
-        값을 끝까지 밀면 그 축은 제한 없음(=무한대)으로 처리.
+        6면 박스 <b>안</b>의 정점이 포함된 면만 제거 (헤어는 영향 X).<br>
+        슬라이더가 끝점에 닿으면 그 축은 무제한.
     </div>
-    <div class="slider"><label>Y 최소 (박스 하단 ↑) <span class="val" id="cyminval">1.55</span></label>
+    <div class="slider"><label>X 최소 <span class="val" id="cxminval">-0.50</span></label>
+        <input type="range" id="cxmin-slider" min="-0.50" max="0.50" step="0.01" value="-0.50"></div>
+    <div class="slider"><label>X 최대 <span class="val" id="cxmaxval">0.50</span></label>
+        <input type="range" id="cxmax-slider" min="-0.50" max="0.50" step="0.01" value="0.50"></div>
+    <div class="slider"><label>Y 최소 <span class="val" id="cyminval">1.55</span></label>
         <input type="range" id="cymin-slider" min="0.00" max="1.80" step="0.01" value="1.55"></div>
-    <div class="slider"><label>Y 최대 (박스 상단 ↓) <span class="val" id="cymaxval">1.80</span></label>
+    <div class="slider"><label>Y 최대 <span class="val" id="cymaxval">1.80</span></label>
         <input type="range" id="cymax-slider" min="0.00" max="1.80" step="0.01" value="1.80"></div>
-    <div class="slider"><label>Z 최소 (박스 ←쪽 한계) <span class="val" id="czminval">-0.02</span></label>
-        <input type="range" id="czmin-slider" min="-0.20" max="0.25" step="0.005" value="-0.02"></div>
-    <div class="slider"><label>Z 최대 (박스 →쪽 한계) <span class="val" id="czmaxval">0.25</span></label>
+    <div class="slider"><label>Z 최소 <span class="val" id="czminval">-0.20</span></label>
+        <input type="range" id="czmin-slider" min="-0.20" max="0.25" step="0.005" value="-0.20"></div>
+    <div class="slider"><label>Z 최대 <span class="val" id="czmaxval">0.25</span></label>
         <input type="range" id="czmax-slider" min="-0.20" max="0.25" step="0.005" value="0.25"></div>
 
     <button id="copy-btn" onclick="copyValues()">📋 현재 값 복사</button>
@@ -108,7 +112,7 @@ canvas { display:block; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
-<script src="js/character.js?v=13"></script>
+<script src="js/character.js?v=14"></script>
 <script>
 const W = window.innerWidth, H = window.innerHeight;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -221,11 +225,18 @@ function readCropAxis(minId, maxId, sliderMin, sliderMax) {
 }
 function applyCrop() {
     if (!character) return;
-    const y = readCropAxis('cymin-slider', 'cymax-slider', 0.00, 1.80);
+    const x = readCropAxis('cxmin-slider', 'cxmax-slider', -0.50, 0.50);
+    const y = readCropAxis('cymin-slider', 'cymax-slider',  0.00, 1.80);
     const z = readCropAxis('czmin-slider', 'czmax-slider', -0.20, 0.25);
-    character.applyHeadCrop({ yMin: y.min, yMax: y.max, zMin: z.min, zMax: z.max });
+    character.applyHeadCrop({
+        xMin: x.min, xMax: x.max,
+        yMin: y.min, yMax: y.max,
+        zMin: z.min, zMax: z.max
+    });
 }
 [
+    ['cxmin-slider', 'cxminval', 2],
+    ['cxmax-slider', 'cxmaxval', 2],
     ['cymin-slider', 'cyminval', 2],
     ['cymax-slider', 'cymaxval', 2],
     ['czmin-slider', 'czminval', 3],
@@ -250,6 +261,8 @@ function copyValues() {
             s:  parseFloat(document.getElementById('s-slider').value)
         },
         headCrop: {
+            xMin: parseFloat(document.getElementById('cxmin-slider').value),
+            xMax: parseFloat(document.getElementById('cxmax-slider').value),
             yMin: parseFloat(document.getElementById('cymin-slider').value),
             yMax: parseFloat(document.getElementById('cymax-slider').value),
             zMin: parseFloat(document.getElementById('czmin-slider').value),
