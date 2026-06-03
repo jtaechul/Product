@@ -1,13 +1,12 @@
-// character.js v11 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
+// character.js v12 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
 // 베이스: assets/models/soyun.glb (스킨드 메시, Mixamo 스켈레톤)
 // 애니: assets/models/idle.glb / walk.glb / run.glb (동일 스켈레톤 retarget)
 // 머리: assets/models/hairstyles.glb (Sketchfab 모음, 9종)
 // API: ChibiCharacter.preload(), .create(cfg), instance.setState('idle'|'walk'|'run')
 //      instance.setHairstyle(index), instance.getHairstyleCount()
-// 주의: 스킨드 메시 복제에 THREE.SkeletonUtils 필수 (index.html 에서 로드)
-// v9: hairstyles.glb 통합 — Head 본에 부착, 9종 토글 가능
-// v10: 헤어 Y축 180° 회전 추가 (Sketchfab/Mixamo 좌표계 차이 보정)
-// v11: 270° 회전 확정 + 지오메트리 정수리 기준 재정렬(스케일↔Y 분리) + 크기 키움
+//      instance.setHairTransform({x,y,z,rx,ry,rz,s}) — 미리보기 튜닝용
+//      instance.applyHeadCrop({yMin, zFront}) — 머리 정점 면 제거 (헤어 셸 숨김)
+// v12: 6축 transform API + 머리 크롭 (Y>yMin AND Z>zFront 면 제거)
 
 (function () {
     'use strict';
@@ -24,10 +23,18 @@
     const hairCache  = [];   // [mesh0, mesh1, ...] 머리스타일 메시 원본
 
     // 머리 부착 변환 — Sketchfab cm 단위 모델 → soyun 미터 단위 스켈레톤 부착
+    // 지오메트리는 공통 정수리(Y=HAIR_REF_Y cm) 기준으로 재정렬되어
+    // 스케일 피벗이 정수리에 고정되고 모든 헤어가 동일 기준으로 정렬된다.
     const HAIR_REF_Y     = 160;                 // 헤어팩 공통 정수리 높이(cm) — 스케일 피벗 기준
-    const HAIR_SCALE     = 0.011;               // cm → m (얼굴 대비 살짝 키움)
-    const HAIR_Y_OFFSET  = 0.16;                // Head 본 로컬 기준 정수리 위치(m)
-    const HAIR_ROTATE_Y  = 3 * Math.PI / 2;     // 270° (Sketchfab→Mixamo 좌표계 보정)
+    const HAIR_DEFAULT = {
+        x:   0,
+        y:   0.26,                  // Head 본 로컬 기준 정수리 위치(m, 사용자 확정값)
+        z:   0,
+        rx:  0,
+        ry:  3 * Math.PI / 2,       // 270° (Sketchfab→Mixamo 좌표계 보정)
+        rz:  0,
+        s:   0.011                  // cm → m (얼굴 대비 살짝 키움)
+    };
 
     function loadGLB(path) {
         return new Promise((resolve, reject) => {
@@ -200,10 +207,14 @@
             // 모든 헤어스타일이 동일 기준으로 정렬됨
             hair.geometry = hair.geometry.clone();
             hair.geometry.translate(0, -HAIR_REF_Y, 0);
-            hair.scale.setScalar(HAIR_SCALE);
-            hair.position.set(0, HAIR_Y_OFFSET, 0);
-            hair.rotation.set(0, HAIR_ROTATE_Y, 0);   // 270° 좌표계 보정
             hair.castShadow = true;
+
+            // 현재 transform 값(없으면 기본값) 적용
+            const t = this._hairXf || Object.assign({}, HAIR_DEFAULT);
+            this._hairXf = t;
+            hair.scale.setScalar(t.s);
+            hair.position.set(t.x, t.y, t.z);
+            hair.rotation.set(t.rx, t.ry, t.rz);
 
             // Head 본의 자식으로 부착 → 머리와 함께 회전/이동
             if (this._headBone) {
@@ -215,6 +226,70 @@
         }
 
         getHairstyleIndex() { return this._hairIndex; }
+
+        // 헤어 6축 transform 미세조정 (미리보기 튜닝용)
+        // 인자: { x, y, z, rx, ry, rz, s } — 일부만 지정해도 됨
+        setHairTransform(xf) {
+            this._hairXf = Object.assign(this._hairXf || Object.assign({}, HAIR_DEFAULT), xf);
+            if (!this._hair) return;
+            const t = this._hairXf;
+            this._hair.position.set(t.x, t.y, t.z);
+            this._hair.rotation.set(t.rx, t.ry, t.rz);
+            this._hair.scale.setScalar(t.s);
+        }
+
+        getHairTransform() {
+            return Object.assign({}, this._hairXf || HAIR_DEFAULT);
+        }
+
+        // soyun 머리(헤어 셸) 영역 면 제거 — 새 헤어로 덮을 때 기존 머리카락 숨김
+        // 인자: { yMin, zFront }
+        //   - yMin: 이 Y 이상의 정점이 포함된 면을 제거 후보로 표시 (m, soyun 메시 자체 좌표)
+        //   - zFront: 이보다 Z가 작은(앞쪽=얼굴) 정점은 보호 → 뒤통수만 제거
+        // 두 조건 모두 만족하는 정점이 하나라도 포함된 face는 indices에서 제거.
+        // 결과는 메시 인덱스 버퍼에 비파괴적으로 적용 (원본 보관 → 슬라이더로 재적용 가능)
+        applyHeadCrop({ yMin = 1.55, zFront = -0.02 } = {}) {
+            if (!this._model) return;
+            this._model.traverse(o => {
+                if (!o.isSkinnedMesh && !o.isMesh) return;
+                const geo = o.geometry;
+                if (!geo || !geo.attributes || !geo.attributes.position) return;
+
+                // 원본 인덱스 보관 (최초 1회)
+                if (!geo.userData._origIndex) {
+                    geo.userData._origIndex = geo.index ? geo.index.array.slice() : null;
+                }
+                const orig = geo.userData._origIndex;
+                if (!orig) return;  // 비인덱스 메시 (드물지만 안전 가드)
+
+                const positions = geo.attributes.position.array;
+                const removeVert = new Uint8Array(positions.length / 3);
+                for (let i = 0; i < removeVert.length; i++) {
+                    const y = positions[i * 3 + 1];
+                    const z = positions[i * 3 + 2];
+                    if (y >= yMin && z >= zFront) removeVert[i] = 1;
+                }
+
+                const newIdx = [];
+                for (let i = 0; i < orig.length; i += 3) {
+                    const a = orig[i], b = orig[i + 1], c = orig[i + 2];
+                    if (!removeVert[a] && !removeVert[b] && !removeVert[c]) {
+                        newIdx.push(a, b, c);
+                    }
+                }
+                geo.setIndex(newIdx);
+            });
+        }
+
+        // 머리 크롭 원상복구
+        clearHeadCrop() {
+            if (!this._model) return;
+            this._model.traverse(o => {
+                if (!o.geometry) return;
+                const orig = o.geometry.userData._origIndex;
+                if (orig) o.geometry.setIndex(Array.from(orig));
+            });
+        }
 
         update(dt) {
             if (this._mixer) this._mixer.update(dt);
