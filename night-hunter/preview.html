@@ -64,6 +64,9 @@ canvas { display:block; }
         <label>스케일 <span class="val" id="sval">0.010</span>
             <input type="range" id="sslider" min="0.001" max="0.05" step="0.001" value="0.01">
         </label>
+        <label>Y 회전 (°) <span class="val" id="rval">180</span>
+            <input type="range" id="rslider" min="0" max="360" step="1" value="180">
+        </label>
     </div>
 </div>
 
@@ -77,7 +80,7 @@ canvas { display:block; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
-<script src="js/character.js?v=9"></script>
+<script src="js/character.js?v=10"></script>
 <script>
 const W = window.innerWidth, H = window.innerHeight;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -170,6 +173,11 @@ document.getElementById('sslider').addEventListener('input', e => {
     const s = parseFloat(e.target.value);
     document.getElementById('sval').textContent = s.toFixed(3);
     if (character && character._hair) character._hair.scale.setScalar(s);
+});
+document.getElementById('rslider').addEventListener('input', e => {
+    const deg = parseFloat(e.target.value);
+    document.getElementById('rval').textContent = deg.toFixed(0);
+    if (character && character._hair) character._hair.rotation.y = deg * Math.PI / 180;
 });
 
 function playAnim(name) {
