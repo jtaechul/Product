@@ -299,6 +299,30 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                 });
                 window._citypackCollision = boxes;
 
+                // STEP 1: NPC/적 도로 위 자동 재배치용 글로벌 헬퍼
+                window.findCitypackSafeSpawn = function(targetX, targetZ, margin) {
+                    const M = margin || 2;
+                    const inside = (x, z) => {
+                        for (const b of boxes) {
+                            if (x + M > b.minX && x - M < b.maxX
+                             && z + M > b.minZ && z - M < b.maxZ) return true;
+                        }
+                        return false;
+                    };
+                    if (!inside(targetX, targetZ)) return { x: targetX, z: targetZ };
+                    // 스파이럴 검색 (반경 2~60)
+                    for (let r = 2; r < 60; r += 2) {
+                        const steps = Math.max(8, Math.floor(r * Math.PI));
+                        for (let i = 0; i < steps; i++) {
+                            const a = (i / steps) * Math.PI * 2;
+                            const x = targetX + Math.cos(a) * r;
+                            const z = targetZ + Math.sin(a) * r;
+                            if (!inside(x, z)) return { x, z };
+                        }
+                    }
+                    return { x: targetX, z: targetZ };
+                };
+
                 // 3) 안전한 spawn 위치 찾기 (충돌 박스에서 최소 3유닛 떨어진 곳)
                 const isSafe = (x, z, minClear) => {
                     for (const b of boxes) {
@@ -379,6 +403,14 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                     console.log(`[Citypack] police station marker at (${safe.x.toFixed(1)}, ${safe.z.toFixed(1)})`);
                 } else if (!safe) {
                     console.warn('[Citypack] no safe spawn found within 150 units!');
+                }
+
+                // STEP 1: NPC/적이 이미 스폰됐다면 도로 위로 재배치
+                if (typeof NPCSystem !== 'undefined' && NPCSystem.snapToCitypackRoads) {
+                    NPCSystem.snapToCitypackRoads();
+                }
+                if (typeof EnemySystem !== 'undefined' && EnemySystem.snapToCitypackRoads) {
+                    EnemySystem.snapToCitypackRoads();
                 }
 
                 const finalBbox = new THREE.Box3().setFromObject(city);
