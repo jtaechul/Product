@@ -1,4 +1,4 @@
-// character.js v10 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
+// character.js v11 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
 // 베이스: assets/models/soyun.glb (스킨드 메시, Mixamo 스켈레톤)
 // 애니: assets/models/idle.glb / walk.glb / run.glb (동일 스켈레톤 retarget)
 // 머리: assets/models/hairstyles.glb (Sketchfab 모음, 9종)
@@ -7,6 +7,7 @@
 // 주의: 스킨드 메시 복제에 THREE.SkeletonUtils 필수 (index.html 에서 로드)
 // v9: hairstyles.glb 통합 — Head 본에 부착, 9종 토글 가능
 // v10: 헤어 Y축 180° 회전 추가 (Sketchfab/Mixamo 좌표계 차이 보정)
+// v11: 270° 회전 확정 + 지오메트리 정수리 기준 재정렬(스케일↔Y 분리) + 크기 키움
 
 (function () {
     'use strict';
@@ -23,9 +24,10 @@
     const hairCache  = [];   // [mesh0, mesh1, ...] 머리스타일 메시 원본
 
     // 머리 부착 변환 — Sketchfab cm 단위 모델 → soyun 미터 단위 스켈레톤 부착
-    const HAIR_SCALE     = 0.01;        // cm → m
-    const HAIR_Y_OFFSET  = -1.42;       // Head 본 기준 vertical 정렬 (정수리 일치 추정값)
-    const HAIR_ROTATE_Y  = Math.PI;     // Sketchfab(+Z forward) → Mixamo(-Z forward) 반전
+    const HAIR_REF_Y     = 160;                 // 헤어팩 공통 정수리 높이(cm) — 스케일 피벗 기준
+    const HAIR_SCALE     = 0.011;               // cm → m (얼굴 대비 살짝 키움)
+    const HAIR_Y_OFFSET  = 0.16;                // Head 본 로컬 기준 정수리 위치(m)
+    const HAIR_ROTATE_Y  = 3 * Math.PI / 2;     // 270° (Sketchfab→Mixamo 좌표계 보정)
 
     function loadGLB(path) {
         return new Promise((resolve, reject) => {
@@ -183,6 +185,7 @@
         setHairstyle(index) {
             if (this._hair) {
                 if (this._hair.parent) this._hair.parent.remove(this._hair);
+                if (this._hair.geometry) this._hair.geometry.dispose();
                 this._hair = null;
             }
             this._hairIndex = index;
@@ -191,11 +194,15 @@
             const src = hairCache[index];
             if (!src) return;
 
-            // 원본 메시는 공유 자원이라 clone (지오메트리·텍스처는 공유, transform만 독립)
+            // 원본 메시는 공유 자원이라 clone (텍스처는 공유, geometry는 독립 복제 후 가공)
             const hair = src.clone(true);
+            // 지오메트리를 공통 정수리 기준점(cm)으로 이동 → 스케일이 Y를 끌고가지 않음 +
+            // 모든 헤어스타일이 동일 기준으로 정렬됨
+            hair.geometry = hair.geometry.clone();
+            hair.geometry.translate(0, -HAIR_REF_Y, 0);
             hair.scale.setScalar(HAIR_SCALE);
             hair.position.set(0, HAIR_Y_OFFSET, 0);
-            hair.rotation.set(0, HAIR_ROTATE_Y, 0);   // 좌표계 반전 (얼굴 앞이 가려지던 문제)
+            hair.rotation.set(0, HAIR_ROTATE_Y, 0);   // 270° 좌표계 보정
             hair.castShadow = true;
 
             // Head 본의 자식으로 부착 → 머리와 함께 회전/이동
