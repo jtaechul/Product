@@ -1808,7 +1808,7 @@ function startGame() {
     try { showCharacterSelect(); } catch (e) {
         console.warn('Char select failed:', e);
         try { updateCamera(); } catch (e2) {}
-        try { showWantedPoster(true); } catch (e3) { animate(); }
+        animate();
     }
 }
 
@@ -2052,10 +2052,8 @@ function showCharacterSelect() {
                 setTimeout(() => modal.remove(), 400);
                 try { swapCharacter(charId); } catch (e) { console.warn('swapCharacter failed:', e); }
                 try { updateCamera(); } catch (e) {}
-                try { showWantedPoster(true); } catch (e) {
-                    console.warn('Wanted poster failed:', e);
-                    animate();
-                }
+                // STEP 5: 수배 전단 자동 표시 제거. 게임 바로 시작.
+                animate();
             }, 400);
         };
         card.addEventListener('click', select);
