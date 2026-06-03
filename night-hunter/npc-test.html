@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NPC 미리보기 - Night Hunter</title>
+    <title>NPC 애니메이션 미리보기 - Night Hunter</title>
     <style>
         body { margin: 0; overflow: hidden; background: #0d1b2a; font-family: 'Inter', sans-serif; color: #fff; }
         #canvas { display: block; }
@@ -17,8 +17,8 @@
         #info .row { display: flex; justify-content: space-between; padding: 2px 0; }
         #info .label { color: #aaa; }
         #info .value { color: #fff; font-weight: 600; }
-        #info .warn { color: #ff9966; padding: 4px 0; font-size: 11px; }
         #info .ok { color: #66ff99; padding: 4px 0; font-size: 11px; }
+        #info .warn { color: #ff9966; padding: 4px 0; font-size: 11px; }
         #info .credit { color: #888; font-size: 10px; margin-top: 8px; border-top: 1px solid #333; padding-top: 6px; }
         #controls {
             position: fixed; bottom: 10px; left: 10px;
@@ -32,46 +32,52 @@
             cursor: pointer; font-size: 11px;
         }
         #controls button:hover { background: #2a4080; }
+        #controls button.active { background: #4fc3f7; color: #000; }
         #controls .group-label { color: #4fc3f7; font-size: 11px; margin: 6px 0 4px; }
+        #controls input[type=range] { width: 160px; vertical-align: middle; }
+        #controls .slider-row { display: flex; align-items: center; gap: 8px; font-size: 11px; }
         #loading {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 18px; color: #4fc3f7;
+            font-size: 18px; color: #4fc3f7; text-align: center;
         }
-        #labels { position: fixed; pointer-events: none; }
-        .npc-label {
-            position: absolute; transform: translate(-50%, -100%);
-            background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 4px;
-            font-size: 11px; white-space: nowrap;
+        #fps {
+            position: fixed; top: 10px; right: 10px;
+            background: rgba(0,0,0,0.75); padding: 8px 12px;
+            border-radius: 6px; font-size: 12px; backdrop-filter: blur(8px);
         }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
-    <div id="loading">⏳ npc-normal.glb 로딩 중...</div>
+    <div id="loading">⏳ 로딩 중... <span id="load-stage">npc-normal.glb</span></div>
 
     <div id="info" style="display:none;">
-        <h2>👤 NPC 모델 정보</h2>
-        <div class="row"><span class="label">출처</span><span class="value">decodigo</span></div>
-        <div class="row"><span class="label">라이선스</span><span class="value">CC-BY-4.0</span></div>
-        <div class="row"><span class="label">파일 크기</span><span class="value">35 KB</span></div>
-        <div class="row"><span class="label">정점</span><span class="value" id="vertex-count">-</span></div>
-        <div class="row"><span class="label">메시</span><span class="value" id="mesh-count">-</span></div>
-        <div class="row"><span class="label">머티리얼</span><span class="value" id="mat-count">-</span></div>
-        <div class="row"><span class="label">본/스켈레톤</span><span class="value" id="skeleton">-</span></div>
-        <div class="row"><span class="label">애니메이션</span><span class="value" id="anims">-</span></div>
-        <div class="row"><span class="label">실제 높이</span><span class="value" id="height">-</span></div>
-        <div class="row"><span class="label">실제 너비</span><span class="value" id="width">-</span></div>
-        <div class="ok" id="ok-color">✅ 색상 변경 가능 (5개 베리에이션 표시 중)</div>
-        <div class="warn" id="warn-anim">⚠️ 본 없음 → idle/walk/run 애니메이션 적용 불가</div>
-        <div class="warn">→ Mixamo 자동 리깅 후 재업로드 필요</div>
-        <div class="credit">"Low-poly Male Base Mesh" by decodigo<br>(Sketchfab, CC-BY-4.0)</div>
+        <h2>👤 NPC + 애니메이션</h2>
+        <div class="row"><span class="label">메시 크기</span><span class="value" id="size">-</span></div>
+        <div class="row"><span class="label">정점</span><span class="value" id="verts">-</span></div>
+        <div class="row"><span class="label">본</span><span class="value" id="bones">-</span></div>
+        <div class="row"><span class="label">스킨</span><span class="value" id="skins">-</span></div>
+        <div class="row"><span class="label">애니메이션</span><span class="value" id="anims">idle / walk / run</span></div>
+        <div class="row"><span class="label">현재 동작</span><span class="value" id="current-anim">idle</span></div>
+        <div class="row"><span class="label">현재 스케일</span><span class="value" id="current-scale">2.8</span></div>
+        <div class="ok" id="status-anim">✅ 본 매칭 OK — 애니메이션 적용됨</div>
+        <div class="credit">"Low-poly Male Base Mesh" by decodigo<br>(Sketchfab, CC-BY-4.0) + Mixamo 자동 리깅</div>
     </div>
 
+    <div id="fps">FPS: <span id="fps-val">-</span></div>
+
     <div id="controls">
-        <div class="group-label">표시</div>
-        <button id="btn-wireframe">와이어프레임</button>
-        <button id="btn-grid">그리드</button>
-        <button id="btn-axes">축</button>
+        <div class="group-label">애니메이션</div>
+        <button id="btn-idle" class="active">Idle</button>
+        <button id="btn-walk">Walk</button>
+        <button id="btn-run">Run</button>
+        <button id="btn-pause">⏸ Pause</button>
+        <div class="group-label">스케일 (현재: <span id="scale-val">2.8</span>)</div>
+        <div class="slider-row">
+            <span>1.0</span>
+            <input type="range" id="scale-slider" min="0.5" max="6" step="0.1" value="2.8">
+            <span>6.0</span>
+        </div>
         <div class="group-label">카메라</div>
         <button id="btn-front">정면</button>
         <button id="btn-top">탑뷰</button>
@@ -80,18 +86,17 @@
         <div style="margin-top:6px; color:#aaa; font-size:10px;">드래그=회전 · 휠=줌</div>
     </div>
 
-    <div id="labels"></div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
     <script>
         const canvas = document.getElementById('canvas');
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x223344);
 
         const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
-        camera.position.set(0, 6, 14);
+        camera.position.set(0, 4, 12);
 
         const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -102,159 +107,195 @@
         const controls = new THREE.OrbitControls(camera, canvas);
         controls.enableDamping = true;
         controls.dampingFactor = 0.08;
-        controls.target.set(0, 2, 0);
+        controls.target.set(0, 2.5, 0);
 
         // Lighting
         scene.add(new THREE.HemisphereLight(0xffffbb, 0x080820, 0.7));
         const sun = new THREE.DirectionalLight(0xfff4e0, 1.2);
         sun.position.set(5, 10, 7);
         sun.castShadow = true;
+        sun.shadow.mapSize.width = 1024;
+        sun.shadow.mapSize.height = 1024;
         scene.add(sun);
         scene.add(new THREE.AmbientLight(0xffffff, 0.25));
 
-        // Grid + axes
-        const grid = new THREE.GridHelper(30, 30, 0x4fc3f7, 0x444444);
-        scene.add(grid);
-        const axes = new THREE.AxesHelper(3);
-        scene.add(axes);
+        // Ground
+        const ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(40, 40),
+            new THREE.MeshStandardMaterial({ color: 0x3a4a55, roughness: 0.9 })
+        );
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
 
-        // Reference: 5-unit chibi cylinder (player size)
+        // Grid + reference player (5-unit chibi)
+        scene.add(new THREE.GridHelper(40, 40, 0x4fc3f7, 0x335566));
         const refChar = new THREE.Mesh(
             new THREE.CylinderGeometry(0.5, 0.5, 5, 8),
-            new THREE.MeshStandardMaterial({ color: 0xff4488, transparent: true, opacity: 0.4 })
+            new THREE.MeshStandardMaterial({ color: 0xff4488, transparent: true, opacity: 0.5 })
         );
-        refChar.position.set(-7, 2.5, 0);
+        refChar.position.set(-8, 2.5, 0);
         scene.add(refChar);
 
-        // Load NPC GLB
-        const COLORS = [
-            { name: '회색(원본)', hex: 0xcccccc },
-            { name: '빨강', hex: 0xff5555 },
-            { name: '파랑', hex: 0x5588ff },
-            { name: '초록', hex: 0x66cc77 },
-            { name: '노랑', hex: 0xffcc33 }
-        ];
-        const labelsDiv = document.getElementById('labels');
-        const npcInstances = [];
-
+        // Loader
         const loader = new THREE.GLTFLoader();
-        loader.load('assets/models/npc-normal.glb',
-            (gltf) => {
-                const base = gltf.scene;
+        const loadStage = (s) => document.getElementById('load-stage').textContent = s;
+        const loadPromise = (path) => new Promise((res, rej) => loader.load(path, res, undefined, rej));
 
-                // Inspect
-                let meshes = 0, verts = 0, mats = new Set();
-                base.traverse(o => {
+        // Setup
+        const COLORS = [
+            { name: 'Original', hex: 0xcccccc },
+            { name: 'Red', hex: 0xee5555 },
+            { name: 'Blue', hex: 0x5588ee },
+            { name: 'Green', hex: 0x55cc77 },
+            { name: 'Yellow', hex: 0xeebb33 }
+        ];
+
+        let npcInstances = [];
+        let mixers = [];
+        let clips = {};
+        let currentAnim = 'idle';
+        let currentScale = 2.8;
+
+        async function init() {
+            // Load NPC base
+            loadStage('npc-normal.glb');
+            const npcGltf = await loadPromise('assets/models/npc-normal.glb');
+            const base = npcGltf.scene;
+
+            // Analyze
+            let meshes = 0, verts = 0, bones = 0;
+            base.traverse(o => {
+                if (o.isMesh) {
+                    meshes++;
+                    verts += o.geometry.attributes.position.count;
+                }
+                if (o.isSkinnedMesh && o.skeleton) bones = o.skeleton.bones.length;
+            });
+            const bbox = new THREE.Box3().setFromObject(base);
+            const size = new THREE.Vector3();
+            bbox.getSize(size);
+            document.getElementById('size').textContent = `${size.x.toFixed(2)}×${size.y.toFixed(2)}×${size.z.toFixed(2)}`;
+            document.getElementById('verts').textContent = verts.toLocaleString();
+            document.getElementById('bones').textContent = bones;
+            document.getElementById('skins').textContent = bones > 0 ? 'O' : 'X';
+
+            // Load animations
+            loadStage('idle.glb');
+            const idleGltf = await loadPromise('assets/models/idle.glb');
+            loadStage('walk.glb');
+            const walkGltf = await loadPromise('assets/models/walk.glb');
+            loadStage('run.glb');
+            const runGltf = await loadPromise('assets/models/run.glb');
+
+            clips.idle = idleGltf.animations[0];
+            clips.walk = walkGltf.animations[0];
+            clips.run = runGltf.animations[0];
+
+            console.log('Animation clips loaded:', {
+                idle: clips.idle ? clips.idle.name : 'none',
+                walk: clips.walk ? clips.walk.name : 'none',
+                run: clips.run ? clips.run.name : 'none'
+            });
+
+            // Spawn 5 colored instances
+            spawnInstances(base);
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('info').style.display = 'block';
+        }
+
+        function spawnInstances(base) {
+            const spacing = 2.5;
+            COLORS.forEach((c, i) => {
+                // Clone using SkeletonUtils (preserves skeleton)
+                const clone = THREE.SkeletonUtils.clone(base);
+                clone.position.set(i * spacing - (COLORS.length - 1) * spacing / 2, 0, 0);
+                clone.scale.setScalar(currentScale);
+
+                // Apply color
+                clone.traverse(o => {
                     if (o.isMesh) {
-                        meshes++;
-                        verts += o.geometry.attributes.position.count;
-                        const ms = Array.isArray(o.material) ? o.material : [o.material];
-                        ms.forEach(m => mats.add(m.uuid));
+                        o.castShadow = true;
+                        o.receiveShadow = true;
+                        const mat = o.material.clone();
+                        mat.color.setHex(c.hex);
+                        o.material = mat;
                     }
                 });
+                scene.add(clone);
 
-                const bbox = new THREE.Box3().setFromObject(base);
-                const size = new THREE.Vector3();
-                bbox.getSize(size);
-
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('info').style.display = 'block';
-                document.getElementById('vertex-count').textContent = verts.toLocaleString();
-                document.getElementById('mesh-count').textContent = meshes;
-                document.getElementById('mat-count').textContent = mats.size;
-                document.getElementById('skeleton').textContent = gltf.scene.children.some(c => c.isSkinnedMesh) ? 'O' : '❌ 없음';
-                document.getElementById('anims').textContent = gltf.animations.length > 0 ? gltf.animations.length + '개' : '❌ 없음';
-                document.getElementById('height').textContent = size.y.toFixed(2) + ' units';
-                document.getElementById('width').textContent = size.x.toFixed(2) + ' units';
-
-                // Spawn 5 colored instances side by side
-                const spacing = 2.5;
-                COLORS.forEach((c, i) => {
-                    const clone = base.clone(true);
-                    // Apply color to all materials
-                    clone.traverse(o => {
-                        if (o.isMesh) {
-                            o.castShadow = true;
-                            o.receiveShadow = true;
-                            const matClone = o.material.clone();
-                            matClone.color.setHex(c.hex);
-                            o.material = matClone;
-                        }
-                    });
-                    // Position: align to ground (offset by -bbox.min.y)
-                    clone.position.set(i * spacing - (COLORS.length - 1) * spacing / 2, -bbox.min.y, 0);
-                    scene.add(clone);
-                    npcInstances.push({ mesh: clone, color: c, index: i });
-                });
-
-                // Position labels
-                updateLabels();
-
-                console.log('npc-normal.glb 분석:', {
-                    verts, meshes, mats: mats.size,
-                    skinned: false, anims: gltf.animations.length,
-                    size: size.toArray()
-                });
-            },
-            undefined,
-            (err) => {
-                document.getElementById('loading').textContent = `❌ 로드 실패: ${err.message}`;
-                console.error(err);
-            }
-        );
-
-        function updateLabels() {
-            labelsDiv.innerHTML = '';
-            npcInstances.forEach(({ mesh, color, index }) => {
-                const v = new THREE.Vector3();
-                mesh.getWorldPosition(v);
-                v.y += 4.5;
-                v.project(camera);
-                if (v.z > 1) return;
-                const x = (v.x * 0.5 + 0.5) * window.innerWidth;
-                const y = (-v.y * 0.5 + 0.5) * window.innerHeight;
-                const el = document.createElement('div');
-                el.className = 'npc-label';
-                el.style.left = x + 'px';
-                el.style.top = y + 'px';
-                el.style.color = '#' + color.hex.toString(16).padStart(6, '0');
-                el.textContent = color.name;
-                labelsDiv.appendChild(el);
+                // Create mixer + play idle
+                const mixer = new THREE.AnimationMixer(clone);
+                const action = mixer.clipAction(clips[currentAnim]);
+                action.play();
+                mixers.push({ mixer, clone, currentAction: action });
+                npcInstances.push(clone);
             });
         }
 
-        // Controls
-        let wireframeOn = false, gridOn = true, axesOn = true, autoOrbit = false;
-        document.getElementById('btn-wireframe').onclick = () => {
-            wireframeOn = !wireframeOn;
-            npcInstances.forEach(({mesh}) => mesh.traverse(o => {
-                if (o.isMesh) {
-                    const ms = Array.isArray(o.material) ? o.material : [o.material];
-                    ms.forEach(m => m.wireframe = wireframeOn);
-                }
-            }));
+        function switchAnim(name) {
+            currentAnim = name;
+            document.getElementById('current-anim').textContent = name;
+            ['idle','walk','run'].forEach(n => {
+                document.getElementById('btn-' + n).classList.toggle('active', n === name);
+            });
+            mixers.forEach(m => {
+                if (m.currentAction) m.currentAction.fadeOut(0.2);
+                const newAction = m.mixer.clipAction(clips[name]);
+                newAction.reset().fadeIn(0.2).play();
+                m.currentAction = newAction;
+            });
+        }
+
+        function setScale(s) {
+            currentScale = s;
+            document.getElementById('scale-val').textContent = s.toFixed(1);
+            document.getElementById('current-scale').textContent = s.toFixed(1);
+            npcInstances.forEach(n => n.scale.setScalar(s));
+        }
+
+        // UI handlers
+        document.getElementById('btn-idle').onclick = () => switchAnim('idle');
+        document.getElementById('btn-walk').onclick = () => switchAnim('walk');
+        document.getElementById('btn-run').onclick = () => switchAnim('run');
+        let paused = false;
+        document.getElementById('btn-pause').onclick = (e) => {
+            paused = !paused;
+            e.target.textContent = paused ? '▶ Play' : '⏸ Pause';
         };
-        document.getElementById('btn-grid').onclick = () => { gridOn = !gridOn; grid.visible = gridOn; };
-        document.getElementById('btn-axes').onclick = () => { axesOn = !axesOn; axes.visible = axesOn; };
-        document.getElementById('btn-front').onclick = () => { camera.position.set(0, 4, 14); controls.target.set(0, 2, 0); controls.update(); };
-        document.getElementById('btn-top').onclick = () => { camera.position.set(0, 18, 0.01); controls.target.set(0, 0, 0); controls.update(); };
-        document.getElementById('btn-side').onclick = () => { camera.position.set(14, 4, 0); controls.target.set(0, 2, 0); controls.update(); };
+        document.getElementById('scale-slider').oninput = (e) => setScale(parseFloat(e.target.value));
+
+        document.getElementById('btn-front').onclick = () => { camera.position.set(0, 4, 12); controls.target.set(0, 2.5, 0); controls.update(); };
+        document.getElementById('btn-top').onclick = () => { camera.position.set(0, 20, 0.01); controls.target.set(0, 0, 0); controls.update(); };
+        document.getElementById('btn-side').onclick = () => { camera.position.set(12, 4, 0); controls.target.set(0, 2.5, 0); controls.update(); };
+        let autoOrbit = false;
         document.getElementById('btn-orbit').onclick = (e) => {
             autoOrbit = !autoOrbit;
             e.target.textContent = autoOrbit ? '회전 정지' : '자동 회전';
         };
 
+        // Animation loop with delta time
+        const clock = new THREE.Clock();
+        let fpsAccum = 0, fpsFrames = 0;
         function animate() {
             requestAnimationFrame(animate);
+            const dt = clock.getDelta();
+            if (!paused) mixers.forEach(m => m.mixer.update(dt));
             if (autoOrbit) {
                 const t = performance.now() * 0.0003;
-                camera.position.set(Math.cos(t) * 14, 5, Math.sin(t) * 14);
-                camera.lookAt(0, 2, 0);
+                camera.position.set(Math.cos(t) * 12, 5, Math.sin(t) * 12);
+                camera.lookAt(0, 2.5, 0);
             } else {
                 controls.update();
             }
             renderer.render(scene, camera);
-            updateLabels();
+            // FPS
+            fpsAccum += dt; fpsFrames++;
+            if (fpsAccum >= 0.5) {
+                document.getElementById('fps-val').textContent = (fpsFrames / fpsAccum).toFixed(0);
+                fpsAccum = 0; fpsFrames = 0;
+            }
         }
         animate();
 
@@ -262,6 +303,11 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init().catch(err => {
+            console.error(err);
+            document.getElementById('loading').innerHTML = `❌ 로드 실패: ${err.message}`;
         });
     </script>
 </body>
