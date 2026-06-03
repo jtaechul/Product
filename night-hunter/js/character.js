@@ -1,4 +1,4 @@
-// character.js v15 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
+// character.js v16 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
 // 베이스: assets/models/soyun.glb (스킨드 메시, Mixamo 스켈레톤)
 // 애니: assets/models/idle.glb / walk.glb / run.glb (동일 스켈레톤 retarget)
 // 머리: assets/models/hairstyles.glb (Sketchfab 모음, 9종)
@@ -10,6 +10,8 @@
 // v14: 머리 크롭에 X축 추가 (6면 박스) + 헤어 메시는 크롭 대상에서 제외
 // v15: 헤어 기본값 재확정 (y=0.2, z=-0.08, rz=21°, s=0.0128)
 //      크롭 박스에 Y/Z 회전 지원 — 박스를 기울여서 자를 수 있음
+// v16: 박스 회전을 명시적 Euler('YXZ') 로 통일 (헤어 짐벌과 일치)
+//      (preview 에 박스 와이어프레임 시각화 추가)
 
 (function () {
     'use strict';
@@ -274,14 +276,15 @@
                           !isFinite(zMin) && !isFinite(zMax);
 
             // 박스 회전 → 정점을 박스 좌표계로 역변환할 행렬 계산
+            // 박스는 Euler('YXZ', X=0) 으로 회전 — 헤어와 동일한 짐벌
+            // (Y 가 가장 바깥쪽: ry 는 항상 절대 Y축 기준)
             const ryRad = (opts.ryDeg || 0) * DEG;
             const rzRad = (opts.rzDeg || 0) * DEG;
             const hasRot = ryRad !== 0 || rzRad !== 0;
-            // 박스 회전 = R_Y(ry) → R_Z(rz) 순. 정점에 R^-1 = R_Z(-rz) ∘ R_Y(-ry) 적용
             let mInv = null;
             if (hasRot) {
-                mInv = new THREE.Matrix4().makeRotationY(-ryRad);
-                mInv.premultiply(new THREE.Matrix4().makeRotationZ(-rzRad));
+                const e = new THREE.Euler(0, ryRad, rzRad, 'YXZ');
+                mInv = new THREE.Matrix4().makeRotationFromEuler(e).invert();
             }
             // 박스 중심 (무제한 축은 0)
             const cx = (isFinite(xMin) && isFinite(xMax)) ? (xMin + xMax) / 2 : 0;
