@@ -1,12 +1,14 @@
-// character.js v12 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
+// character.js v13 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
 // 베이스: assets/models/soyun.glb (스킨드 메시, Mixamo 스켈레톤)
 // 애니: assets/models/idle.glb / walk.glb / run.glb (동일 스켈레톤 retarget)
 // 머리: assets/models/hairstyles.glb (Sketchfab 모음, 9종)
 // API: ChibiCharacter.preload(), .create(cfg), instance.setState('idle'|'walk'|'run')
 //      instance.setHairstyle(index), instance.getHairstyleCount()
-//      instance.setHairTransform({x,y,z,rx,ry,rz,s}) — 미리보기 튜닝용
-//      instance.applyHeadCrop({yMin, zFront}) — 머리 정점 면 제거 (헤어 셸 숨김)
-// v12: 6축 transform API + 머리 크롭 (Y>yMin AND Z>zFront 면 제거)
+//      instance.setHairTransform({x,y,z,rx,ry,rz,s})
+//      instance.applyHeadCrop({yMin,yMax,zMin,zMax}) — 박스 안 정점 면 제거
+// v13: 헤어 기본값 사용자 확정 (y=0.195, z=-0.095, ry=270°, rz=17°, s=0.013)
+//      회전 순서 YXZ 로 변경 (X 슬라이더가 시각적 X축으로 작동)
+//      머리 크롭을 Y/Z 임계+상한 박스로 확장 (4축)
 
 (function () {
     'use strict';
@@ -26,14 +28,16 @@
     // 지오메트리는 공통 정수리(Y=HAIR_REF_Y cm) 기준으로 재정렬되어
     // 스케일 피벗이 정수리에 고정되고 모든 헤어가 동일 기준으로 정렬된다.
     const HAIR_REF_Y     = 160;                 // 헤어팩 공통 정수리 높이(cm) — 스케일 피벗 기준
+    const DEG = Math.PI / 180;
+    // 사용자가 미리보기로 직접 조정해 확정한 값 (2025-06-03)
     const HAIR_DEFAULT = {
-        x:   0,
-        y:   0.26,                  // Head 본 로컬 기준 정수리 위치(m, 사용자 확정값)
-        z:   0,
-        rx:  0,
-        ry:  3 * Math.PI / 2,       // 270° (Sketchfab→Mixamo 좌표계 보정)
-        rz:  0,
-        s:   0.011                  // cm → m (얼굴 대비 살짝 키움)
+        x:    0,
+        y:    0.195,
+        z:   -0.095,
+        rx:   0,
+        ry:  270 * DEG,             // Sketchfab → Mixamo 좌표계 보정
+        rz:   17 * DEG,
+        s:    0.013
     };
 
     function loadGLB(path) {
@@ -214,7 +218,9 @@
             this._hairXf = t;
             hair.scale.setScalar(t.s);
             hair.position.set(t.x, t.y, t.z);
-            hair.rotation.set(t.rx, t.ry, t.rz);
+            // YXZ 순서: Y(좌우 돌리기)를 먼저 → X(앞뒤 기울임) → Z(좌우 기울임)
+            // 기본 XYZ 로 두면 270° Y 회전이 X/Z 축을 회전시켜 직관 무너짐
+            hair.rotation.set(t.rx, t.ry, t.rz, 'YXZ');
 
             // Head 본의 자식으로 부착 → 머리와 함께 회전/이동
             if (this._headBone) {
@@ -234,7 +240,7 @@
             if (!this._hair) return;
             const t = this._hairXf;
             this._hair.position.set(t.x, t.y, t.z);
-            this._hair.rotation.set(t.rx, t.ry, t.rz);
+            this._hair.rotation.set(t.rx, t.ry, t.rz, 'YXZ');
             this._hair.scale.setScalar(t.s);
         }
 
@@ -243,13 +249,20 @@
         }
 
         // soyun 머리(헤어 셸) 영역 면 제거 — 새 헤어로 덮을 때 기존 머리카락 숨김
-        // 인자: { yMin, zFront }
-        //   - yMin: 이 Y 이상의 정점이 포함된 면을 제거 후보로 표시 (m, soyun 메시 자체 좌표)
-        //   - zFront: 이보다 Z가 작은(앞쪽=얼굴) 정점은 보호 → 뒤통수만 제거
-        // 두 조건 모두 만족하는 정점이 하나라도 포함된 face는 indices에서 제거.
-        // 결과는 메시 인덱스 버퍼에 비파괴적으로 적용 (원본 보관 → 슬라이더로 재적용 가능)
-        applyHeadCrop({ yMin = 1.55, zFront = -0.02 } = {}) {
+        // 인자: { yMin, yMax, zMin, zMax } (소윤 메시 로컬 좌표, m)
+        //   yMin ≤ y ≤ yMax AND zMin ≤ z ≤ zMax 박스 안에 들어오는
+        //   정점이 하나라도 포함된 face 를 인덱스 버퍼에서 제거한다.
+        //   값을 생략하면 그 축은 무한대(제한 없음)로 처리.
+        //   모든 값이 무한대면 아무것도 자르지 않고 원상복구.
+        // 비파괴: 원본 인덱스를 보관하므로 매번 재계산해도 안전.
+        applyHeadCrop(opts = {}) {
             if (!this._model) return;
+            const yMin = (opts.yMin !== undefined) ? opts.yMin : -Infinity;
+            const yMax = (opts.yMax !== undefined) ? opts.yMax :  Infinity;
+            const zMin = (opts.zMin !== undefined) ? opts.zMin : -Infinity;
+            const zMax = (opts.zMax !== undefined) ? opts.zMax :  Infinity;
+            const noBox = !isFinite(yMin) && !isFinite(yMax) && !isFinite(zMin) && !isFinite(zMax);
+
             this._model.traverse(o => {
                 if (!o.isSkinnedMesh && !o.isMesh) return;
                 const geo = o.geometry;
@@ -260,14 +273,21 @@
                     geo.userData._origIndex = geo.index ? geo.index.array.slice() : null;
                 }
                 const orig = geo.userData._origIndex;
-                if (!orig) return;  // 비인덱스 메시 (드물지만 안전 가드)
+                if (!orig) return;
+
+                if (noBox) {
+                    geo.setIndex(Array.from(orig));
+                    return;
+                }
 
                 const positions = geo.attributes.position.array;
                 const removeVert = new Uint8Array(positions.length / 3);
                 for (let i = 0; i < removeVert.length; i++) {
                     const y = positions[i * 3 + 1];
                     const z = positions[i * 3 + 2];
-                    if (y >= yMin && z >= zFront) removeVert[i] = 1;
+                    if (y >= yMin && y <= yMax && z >= zMin && z <= zMax) {
+                        removeVert[i] = 1;
+                    }
                 }
 
                 const newIdx = [];
