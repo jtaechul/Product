@@ -86,6 +86,10 @@ canvas { display:block; }
         6면 박스 <b>안</b>의 정점이 포함된 면만 제거 (헤어는 영향 X).<br>
         슬라이더가 끝점에 닿으면 그 축은 무제한.
     </div>
+    <label style="font-size:11px; display:flex; gap:4px; align-items:center; margin-bottom:4px;">
+        <input type="checkbox" id="box-vis" checked>
+        <span>박스 와이어프레임 표시 (X=빨강, Y=초록, Z=파랑)</span>
+    </label>
     <div class="slider"><label>X 최소 <span class="val" id="cxminval">-0.50</span></label>
         <input type="range" id="cxmin-slider" min="-0.50" max="0.50" step="0.01" value="-0.50"></div>
     <div class="slider"><label>X 최대 <span class="val" id="cxmaxval">0.50</span></label>
@@ -117,7 +121,7 @@ canvas { display:block; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
-<script src="js/character.js?v=15"></script>
+<script src="js/character.js?v=16"></script>
 <script>
 const W = window.innerWidth, H = window.innerHeight;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -149,6 +153,21 @@ scene.add(sun);
 scene.add(new THREE.DirectionalLight(0x6688cc, 0.4).translateOnAxis(new THREE.Vector3(-1,0.5,-1).normalize(), 5));
 
 scene.add(new THREE.GridHelper(4, 20, 0x334466, 0x223355));
+
+// 크롭 박스 와이어프레임 — character.applyHeadCrop 과 동일 좌표/회전 적용
+// 박스 X/Y/Z 색상으로 축 구분: X=빨강, Y=초록, Z=파랑 (Three.js 표준 RGB)
+const boxParent = new THREE.Group();   // 박스 중심에 배치
+const boxLines = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)),
+    new THREE.LineBasicMaterial({ color: 0xff3366, depthTest: false, transparent: true, opacity: 0.85 })
+);
+boxLines.renderOrder = 999;
+boxParent.add(boxLines);
+const axes = new THREE.AxesHelper(0.15);
+axes.renderOrder = 1000;
+axes.material.depthTest = false;
+boxParent.add(axes);
+scene.add(boxParent);
 
 let character = null;
 
@@ -230,6 +249,9 @@ function readCropAxis(minId, maxId, sliderMin, sliderMax) {
         max: (hi >= sliderMax - 1e-6) ?  Infinity : hi
     };
 }
+// 무한대 축은 와이어프레임 시각화 시 적당히 큰 값(폴백)으로 그림
+function finiteOr(v, fallback) { return isFinite(v) ? v : fallback; }
+
 function applyCrop() {
     if (!character) return;
     const x = readCropAxis('cxmin-slider', 'cxmax-slider', -0.50, 0.50);
@@ -243,6 +265,15 @@ function applyCrop() {
         zMin: z.min, zMax: z.max,
         ryDeg, rzDeg
     });
+
+    // 와이어프레임 동기화 (character.applyHeadCrop 과 동일한 박스/회전)
+    const xMin = finiteOr(x.min, -0.75), xMax = finiteOr(x.max, 0.75);
+    const yMin = finiteOr(y.min,  0.00), yMax = finiteOr(y.max, 1.80);
+    const zMin = finiteOr(z.min, -0.35), zMax = finiteOr(z.max, 0.35);
+    boxParent.position.set((xMin+xMax)/2, (yMin+yMax)/2, (zMin+zMax)/2);
+    boxParent.rotation.set(0, ryDeg * Math.PI/180, rzDeg * Math.PI/180, 'YXZ');
+    boxLines.scale.set(xMax-xMin, yMax-yMin, zMax-zMin);
+    axes.scale.set(1, 1, 1);  // axes 는 박스 회전에 같이 따라 회전
 }
 [
     ['cxmin-slider', 'cxminval', 2],
@@ -258,6 +289,9 @@ function applyCrop() {
         document.getElementById(lid).textContent = parseFloat(e.target.value).toFixed(dec);
         applyCrop();
     });
+});
+document.getElementById('box-vis').addEventListener('change', e => {
+    boxParent.visible = e.target.checked;
 });
 
 // 현재 값 복사 → 클립보드
