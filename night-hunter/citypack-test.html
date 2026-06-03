@@ -108,6 +108,21 @@
                 <span>360°</span>
             </div>
         </div>
+        <div class="group" style="border-top:1px solid #4fc3f7; padding-top:8px; margin-top:8px;">
+            <div class="group-label">📍 참조 캐릭터 위치</div>
+            <div class="slider-row">
+                <span>X</span>
+                <input type="range" id="ref-x-slider" min="-500" max="500" step="5" value="0">
+                <span id="ref-x-val">0</span>
+            </div>
+            <div class="slider-row">
+                <span>Z</span>
+                <input type="range" id="ref-z-slider" min="-500" max="500" step="5" value="0">
+                <span id="ref-z-val">0</span>
+            </div>
+            <button id="btn-ref-here">🎯 카메라 시점에 배치</button>
+            <button id="btn-ref-toggle-beam">🔆 빔 토글</button>
+        </div>
         <div class="group">
             <button id="btn-reset-camera">카메라 리셋</button>
             <button id="btn-top-view">탑뷰</button>
@@ -172,20 +187,50 @@
         );
         scene.add(worldBoundary);
 
-        // Reference: 5-unit tall character (chibi size)
+        // Reference character group (5-unit tall chibi)
+        const refGroup = new THREE.Group();
+        scene.add(refGroup);
+
         const refChar = new THREE.Mesh(
             new THREE.CylinderGeometry(0.5, 0.5, 5, 8),
-            new THREE.MeshStandardMaterial({ color: 0xff4488 })
+            new THREE.MeshStandardMaterial({
+                color: 0xff4488,
+                emissive: 0xff4488,
+                emissiveIntensity: 0.6
+            })
         );
-        refChar.position.set(0, 2.5, 0);
-        scene.add(refChar);
+        refChar.position.y = 2.5;
+        // Always on top: never hidden by buildings
+        refChar.material.depthTest = false;
+        refChar.material.depthWrite = false;
+        refChar.renderOrder = 999;
+        refGroup.add(refChar);
+
+        // Vertical beam from ground to sky (always visible)
+        const beam = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.15, 0.15, 500, 6),
+            new THREE.MeshBasicMaterial({
+                color: 0xff4488,
+                transparent: true,
+                opacity: 0.5,
+                depthTest: false,
+                depthWrite: false
+            })
+        );
+        beam.position.y = 250;
+        beam.renderOrder = 998;
+        refGroup.add(beam);
+
         const refLabel = new THREE.Sprite(new THREE.SpriteMaterial({
             map: makeTextTexture('소윤 (5유닛)', '#ff4488'),
-            transparent: true
+            transparent: true,
+            depthTest: false,
+            depthWrite: false
         }));
         refLabel.position.set(0, 8, 0);
         refLabel.scale.set(10, 2.5, 1);
-        scene.add(refLabel);
+        refLabel.renderOrder = 1000;
+        refGroup.add(refLabel);
 
         function makeTextTexture(text, color) {
             const c = document.createElement('canvas');
@@ -339,6 +384,32 @@
             const deg = parseFloat(e.target.value);
             document.getElementById('rot-val').textContent = `${deg}°`;
             if (cityModel) cityModel.rotation.y = deg * Math.PI / 180;
+        };
+
+        // Reference character position controls
+        document.getElementById('ref-x-slider').oninput = (e) => {
+            const x = parseFloat(e.target.value);
+            document.getElementById('ref-x-val').textContent = x.toFixed(0);
+            refGroup.position.x = x;
+        };
+        document.getElementById('ref-z-slider').oninput = (e) => {
+            const z = parseFloat(e.target.value);
+            document.getElementById('ref-z-val').textContent = z.toFixed(0);
+            refGroup.position.z = z;
+        };
+        document.getElementById('btn-ref-here').onclick = () => {
+            // Place reference at OrbitControls target point
+            const t = controls.target;
+            refGroup.position.set(t.x, 0, t.z);
+            document.getElementById('ref-x-slider').value = t.x;
+            document.getElementById('ref-z-slider').value = t.z;
+            document.getElementById('ref-x-val').textContent = t.x.toFixed(0);
+            document.getElementById('ref-z-val').textContent = t.z.toFixed(0);
+        };
+        let beamOn = true;
+        document.getElementById('btn-ref-toggle-beam').onclick = () => {
+            beamOn = !beamOn;
+            beam.visible = beamOn;
         };
 
         document.getElementById('btn-reset-camera').onclick = () => {
