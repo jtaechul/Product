@@ -360,23 +360,31 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
 
                 // STEP 1: NPC/적 도로 위 자동 재배치용 글로벌 헬퍼
                 window.findCitypackSafeSpawn = function(targetX, targetZ, margin) {
-                    const M = margin || 2;
-                    const inside = (x, z) => {
+                    const inside = (x, z, M) => {
                         for (const b of boxes) {
                             if (x + M > b.minX && x - M < b.maxX
                              && z + M > b.minZ && z - M < b.maxZ) return true;
                         }
                         return false;
                     };
-                    if (!inside(targetX, targetZ)) return { x: targetX, z: targetZ };
-                    // 스파이럴 검색 (반경 2~60)
-                    for (let r = 2; r < 60; r += 2) {
-                        const steps = Math.max(8, Math.floor(r * Math.PI));
-                        for (let i = 0; i < steps; i++) {
-                            const a = (i / steps) * Math.PI * 2;
-                            const x = targetX + Math.cos(a) * r;
-                            const z = targetZ + Math.sin(a) * r;
-                            if (!inside(x, z)) return { x, z };
+                    // 점진적 완화
+                    const passes = [
+                        { margin: margin || 2, maxR: 80, step: 3 },
+                        { margin: 1.5,         maxR: 200, step: 4 },
+                        { margin: 1,           maxR: 400, step: 5 }
+                    ];
+                    for (const pass of passes) {
+                        if (!inside(targetX, targetZ, pass.margin)) {
+                            return { x: targetX, z: targetZ };
+                        }
+                        for (let r = pass.step; r < pass.maxR; r += pass.step) {
+                            const steps = Math.max(8, Math.floor(r * Math.PI / pass.step));
+                            for (let i = 0; i < steps; i++) {
+                                const a = (i / steps) * Math.PI * 2;
+                                const x = targetX + Math.cos(a) * r;
+                                const z = targetZ + Math.sin(a) * r;
+                                if (!inside(x, z, pass.margin)) return { x, z };
+                            }
                         }
                     }
                     return { x: targetX, z: targetZ };
@@ -391,23 +399,33 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                     return true;
                 };
                 const findSafeSpawn = () => {
-                    const margin = 3; // player radius 0.5 + 여유 2.5
-                    // 우선 좌표 후보 (도시 중심부터)
+                    // 점진적 완화: 큰 여유 → 작은 여유, 작은 반경 → 큰 반경
+                    const passes = [
+                        { margin: 3,   maxR: 200, step: 3 },
+                        { margin: 2,   maxR: 400, step: 4 },
+                        { margin: 1.5, maxR: 600, step: 5 },
+                        { margin: 1,   maxR: 800, step: 6 }
+                    ];
                     const preferred = [[0,0],[0,20],[20,0],[0,-20],[-20,0],[0,40],[0,-40],[40,0],[-40,0]];
-                    for (const [x, z] of preferred) {
-                        if (isSafe(x, z, margin)) return { x, z };
-                    }
-                    // 스파이럴 스캔 (반경 2~150, step 2)
-                    for (let r = 2; r < 150; r += 2) {
-                        const steps = Math.max(12, Math.floor(r * Math.PI));
-                        for (let i = 0; i < steps; i++) {
-                            const a = (i / steps) * Math.PI * 2;
-                            const x = Math.cos(a) * r;
-                            const z = Math.sin(a) * r;
-                            if (isSafe(x, z, margin)) return { x, z };
+                    for (const pass of passes) {
+                        for (const [x, z] of preferred) {
+                            if (isSafe(x, z, pass.margin)) return { x, z };
+                        }
+                        for (let r = pass.step; r < pass.maxR; r += pass.step) {
+                            const steps = Math.max(12, Math.floor(r * Math.PI / pass.step));
+                            for (let i = 0; i < steps; i++) {
+                                const a = (i / steps) * Math.PI * 2;
+                                const x = Math.cos(a) * r;
+                                const z = Math.sin(a) * r;
+                                if (isSafe(x, z, pass.margin)) return { x, z };
+                            }
                         }
                     }
-                    return null;
+                    // 그래도 못 찾으면 도시 경계 모서리 (반드시 빈 공간)
+                    return {
+                        x: cityMinX + 5,
+                        z: cityMinZ + 5
+                    };
                 };
                 const safe = findSafeSpawn();
                 if (safe && typeof playerGroup !== 'undefined') {
@@ -462,8 +480,6 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                     stationMarker.position.set(psX, 0, psZ);
                     scene.add(stationMarker);
                     console.log(`[Citypack] police station at (${psX.toFixed(1)}, ${psZ.toFixed(1)})`);
-                } else if (!safe) {
-                    console.warn('[Citypack] no safe spawn found within 150 units!');
                 }
 
                 // STEP 1: NPC/적이 이미 스폰됐다면 도로 위로 재배치
