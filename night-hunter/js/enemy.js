@@ -124,7 +124,7 @@ const EnemySystem = window.EnemySystem = {
                 o.receiveShadow = true;
             }
         });
-        mesh.scale.setScalar(3.0); // NPC(2.8)보다 약간 크게 — 위협감
+        mesh.scale.setScalar(1.15); // 플레이어보다 살짝 크게 (위협감)
         // Mixer
         const mixer = new THREE.AnimationMixer(mesh);
         const actions = {

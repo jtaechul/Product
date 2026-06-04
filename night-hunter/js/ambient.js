@@ -8,16 +8,19 @@ const AmbientCity = window.AmbientCity = {
 
     init(scene) {
         this.scene = scene;
-        // STEP D: URL ?ambient=0이면 자동차/보행자 비활성
         const params = new URLSearchParams(location.search);
         if (params.get('ambient') === '0') {
             console.log('[Ambient] disabled by URL param');
             this.initialized = true;
             return;
         }
-        // citypack 모드면 절차적 도로 좌표에서 자동차/보행자 생성 (소수)
-        // 절차적 도로가 35% 투명도로 살아있어서 그 위에서 움직임
-        this._citypackMode = (params.get('procedural') !== '1');
+        // citypack 모드는 절차적 자동차/보행자 비활성 (도로 좌표가 안 맞음)
+        const isCitypack = (params.get('procedural') !== '1');
+        if (isCitypack) {
+            console.log('[Ambient] citypack 모드 → 자동차/보행자 비활성');
+            this.initialized = true;
+            return;
+        }
         this.spawnInitialCars();
         this.spawnInitialWalkers();
         this.initialized = true;
