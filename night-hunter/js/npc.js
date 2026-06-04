@@ -64,7 +64,7 @@ const NPCSystem = window.NPCSystem = {
                 o.receiveShadow = true;
             }
         });
-        glb.scale.setScalar(1.0); // 플레이어 (soyun/hayun)와 동일한 1.79m 키
+        glb.scale.setScalar(1.2); // 플레이어와 동일 (1.79m × 1.2 ≈ 2.15유닛)
         glb.position.set(arch.x, 0, arch.z);
         glb.rotation.y = Math.random() * Math.PI * 2;
         // Mixer + 3개 액션
@@ -106,10 +106,24 @@ const NPCSystem = window.NPCSystem = {
     // STEP 1: citypack 도로 위로 NPC 재배치 (citypack 로드 후 main.js가 호출)
     snapToCitypackRoads() {
         if (!this.npcs || !window.findCitypackSafeSpawn) return;
+        const bounds = window._citypackBounds;
         let moved = 0;
-        this.npcs.forEach(npc => {
+        this.npcs.forEach((npc, i) => {
             const cur = npc.mesh.position;
-            const safe = window.findCitypackSafeSpawn(cur.x, cur.z, 2);
+            // 절차적 좌표 그대로면 citypack 안에서는 한 곳에 다 모여있음
+            // → bounds 기반으로 spread 후 도로 위로 snap
+            let baseX = cur.x, baseZ = cur.z;
+            if (bounds) {
+                // 12명을 도시 전역에 펼침 (원형 분포, 반경 = 도시 절반의 60%)
+                const cityCX = (bounds.minX + bounds.maxX) / 2;
+                const cityCZ = (bounds.minZ + bounds.maxZ) / 2;
+                const radius = Math.min(bounds.maxX - bounds.minX, bounds.maxZ - bounds.minZ) * 0.3;
+                const angle = (i / this.npcs.length) * Math.PI * 2;
+                baseX = cityCX + Math.cos(angle) * radius;
+                baseZ = cityCZ + Math.sin(angle) * radius;
+            }
+            // 마진 4로 도로 위 안전 자리 검색 (건물에서 충분히 떨어짐)
+            const safe = window.findCitypackSafeSpawn(baseX, baseZ, 4);
             if (safe.x !== cur.x || safe.z !== cur.z) moved++;
             npc.baseX = safe.x;
             npc.baseZ = safe.z;
@@ -117,7 +131,7 @@ const NPCSystem = window.NPCSystem = {
             npc.mesh.position.z = safe.z;
             if (npc.wanderTarget) npc.wanderTarget = { x: safe.x, z: safe.z };
         });
-        console.log(`[NPC] ${moved}/${this.npcs.length} NPC snapped to citypack roads`);
+        console.log(`[NPC] ${moved}/${this.npcs.length} NPC snapped to citypack roads (spread + margin 4)`);
     },
 
     distributeHints() {
