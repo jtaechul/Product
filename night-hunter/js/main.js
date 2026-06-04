@@ -275,18 +275,17 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                 scene.add(city);
 
                 // 2) 건물 충돌 박스 + 도시 경계
-                // 충돌 박스 추출 — 큰 mesh는 raycast로 sub-cell 분석 (벽/통로 정확 구분)
+                // 충돌 박스 추출 — 거대 mesh(276×1064 같은 LOD/스카이박스) 제외
+                // sub-cell raycast는 ~110k cell 생성 → 플레이어 갇힘, 폐기
                 const boxes = [];
-                const MIN_BUILDING_HEIGHT = 3;    // 인도(0.3~1)/도로(0)는 자동 제외
-                const SUBDIVIDE_THRESHOLD = 30;   // 한 변이 30 이상이면 sub-cell 검사
-                const SUBDIVIDE_CELL = 6;          // 6×6 유닛 cell 단위
-                const MAX_FLOAT_BOTTOM = 1.5;     // 떠있는 canopy 제외
+                const MIN_BUILDING_HEIGHT = 3;
+                const MAX_BUILDING_DIM = 200;  // 200유닛 이상은 개별 건물이 아닌 LOD/배경
+                const MAX_FLOAT_BOTTOM = 1.5;
                 let cityMinX = Infinity, cityMaxX = -Infinity;
                 let cityMinZ = Infinity, cityMaxZ = -Infinity;
                 let largestBuilding = null;
                 let largestArea = 0;
-                const raycaster = new THREE.Raycaster();
-                const downDir = new THREE.Vector3(0, -1, 0);
+                let excludedMega = 0;
                 city.traverse(o => {
                     if (!o.isMesh) return;
                     o.updateMatrixWorld(true);
@@ -297,57 +296,27 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                     cityMaxX = Math.max(cityMaxX, b.max.x);
                     cityMinZ = Math.min(cityMinZ, b.min.z);
                     cityMaxZ = Math.max(cityMaxZ, b.max.z);
-                    if (size.y < MIN_BUILDING_HEIGHT) return;
-                    if (b.min.y > MAX_FLOAT_BOTTOM) return;
-
-                    // 작은 mesh는 그대로 AABB
-                    if (size.x < SUBDIVIDE_THRESHOLD && size.z < SUBDIVIDE_THRESHOLD) {
-                        boxes.push({
-                            minX: b.min.x, maxX: b.max.x,
-                            minZ: b.min.z, maxZ: b.max.z,
-                            cx: (b.min.x + b.max.x) / 2,
-                            cz: (b.min.z + b.max.z) / 2,
-                            area: size.x * size.z,
-                            height: size.y
-                        });
-                        return;
+                    if (size.y < MIN_BUILDING_HEIGHT) return;     // 도로/인도
+                    if (b.min.y > MAX_FLOAT_BOTTOM) return;        // 떠있는 awning
+                    if (size.x > MAX_BUILDING_DIM || size.z > MAX_BUILDING_DIM) {
+                        excludedMega++;
+                        return; // LOD/배경 mesh
                     }
-                    // 큰 mesh: SUBDIVIDE_CELL 그리드로 분할, raycast로 실제 geometry 있는 cell만 충돌 박스로
-                    const stepX = SUBDIVIDE_CELL;
-                    const stepZ = SUBDIVIDE_CELL;
-                    const rayOriginY = b.max.y + 5;
-                    for (let cx = b.min.x; cx < b.max.x; cx += stepX) {
-                        for (let cz = b.min.z; cz < b.max.z; cz += stepZ) {
-                            const cellMaxX = Math.min(cx + stepX, b.max.x);
-                            const cellMaxZ = Math.min(cz + stepZ, b.max.z);
-                            const centerX = (cx + cellMaxX) / 2;
-                            const centerZ = (cz + cellMaxZ) / 2;
-                            raycaster.set(
-                                new THREE.Vector3(centerX, rayOriginY, centerZ),
-                                downDir
-                            );
-                            raycaster.far = b.max.y - b.min.y + 10;
-                            const hits = raycaster.intersectObject(o, true);
-                            // hit이 있고, hit 높이가 인도 수준 이상이면 = 건물 cell
-                            if (hits.length > 0 && hits[0].point.y > b.min.y + MIN_BUILDING_HEIGHT) {
-                                boxes.push({
-                                    minX: cx, maxX: cellMaxX,
-                                    minZ: cz, maxZ: cellMaxZ,
-                                    cx: centerX, cz: centerZ,
-                                    area: stepX * stepZ,
-                                    height: hits[0].point.y - b.min.y
-                                });
-                            }
-                        }
-                    }
-                });
-                // largestBuilding은 가장 큰 단일 cell이 아니라 전체 mesh 면적 기준 → 재계산
-                boxes.forEach(box => {
+                    const box = {
+                        minX: b.min.x, maxX: b.max.x,
+                        minZ: b.min.z, maxZ: b.max.z,
+                        cx: (b.min.x + b.max.x) / 2,
+                        cz: (b.min.z + b.max.z) / 2,
+                        area: size.x * size.z,
+                        height: size.y
+                    };
+                    boxes.push(box);
                     if (box.area > largestArea) {
                         largestArea = box.area;
                         largestBuilding = box;
                     }
                 });
+                console.log(`[Citypack] excluded ${excludedMega} mega-meshes (>${MAX_BUILDING_DIM}u)`);
                 window._citypackCollision = boxes;
                 window._citypackBounds = {
                     minX: cityMinX, maxX: cityMaxX,
