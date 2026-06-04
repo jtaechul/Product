@@ -228,23 +228,12 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
         const scale = parseFloat(params.get('scale')) || 10;
         const rotDeg = parseFloat(params.get('rot')) || 15;
 
-        // STEP 6: 절차적 건물/지면/소품은 숨기되, 도로는 NPC/적 배치 가이드로 유지
+        // citypack은 자체 도로/인도를 가지고 있으므로 절차적 도시는 전부 숨김
         groundGroup.visible = false;
         buildingGroup.visible = false;
         propsGroup.visible = false;
-        roadGroup.visible = true;
-        // 도로를 살짝 투명하게 (citypack 위에 겹쳐 보이도록)
-        roadGroup.traverse(o => {
-            if (o.isMesh && o.material) {
-                const mats = Array.isArray(o.material) ? o.material : [o.material];
-                mats.forEach(m => {
-                    m.transparent = true;
-                    m.opacity = 0.35;
-                    m.depthWrite = false;
-                });
-            }
-        });
-        console.log(`[Citypack] mode ON  scale=${scale}  rot=${rotDeg}°  (절차적 도로 가이드 유지)`);
+        roadGroup.visible = false;
+        console.log(`[Citypack] mode ON  scale=${scale}  rot=${rotDeg}°  (절차적 도시 전부 숨김)`);
 
         const loader = new THREE.GLTFLoader();
         const startTime = performance.now();
@@ -290,8 +279,9 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                 // 한 변이 60 유닛 이상인 박스는 "단일 건물"이 아닌 군집 → 충돌에서 빼고
                 // 작은 박스들이 그 안에 따로 등록되어 있을 가능성 높음.
                 const boxes = [];
-                const MIN_BUILDING_HEIGHT = 3;
-                const MAX_BUILDING_DIM = 60;
+                const MIN_BUILDING_HEIGHT = 3;    // 인도(0.3~1)/도로(0)는 자동 제외
+                const MAX_BUILDING_DIM = 60;       // 군집 AABB 제외 → 골목 접근 가능
+                const MAX_FLOAT_BOTTOM = 1.0;      // 떠있는 canopy/간판 제외
                 let cityMinX = Infinity, cityMaxX = -Infinity;
                 let cityMinZ = Infinity, cityMaxZ = -Infinity;
                 let largestBuilding = null;
@@ -308,6 +298,7 @@ const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGr
                     cityMaxZ = Math.max(cityMaxZ, b.max.z);
                     if (size.y < MIN_BUILDING_HEIGHT) return; // 도로/인도/평면 제외
                     if (size.x > MAX_BUILDING_DIM || size.z > MAX_BUILDING_DIM) return; // 군집 박스 제외
+                    if (b.min.y > MAX_FLOAT_BOTTOM) return; // 떠있는 mesh(awning 등) 제외
                     const box = {
                         minX: b.min.x, maxX: b.max.x,
                         minZ: b.min.z, maxZ: b.max.z,

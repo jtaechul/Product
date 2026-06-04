@@ -209,16 +209,13 @@ const GameUI = window.GameUI = {
             // 도로 톤 배경
             ctx.fillStyle = '#3a3a3a';
             ctx.fillRect(0, 0, sizeW, sizeH);
-            // 건물
-            ctx.fillStyle = 'rgba(220,210,190,0.92)';
-            ctx.strokeStyle = 'rgba(80,70,60,0.55)';
-            ctx.lineWidth = 0.5;
+            // 건물 — fill만 (외곽선 없이 인접 건물 자연스럽게 합쳐 보임)
+            ctx.fillStyle = 'rgba(225,215,195,0.95)';
             boxes.forEach(b => {
                 const x = cwx(b.minX), z = cwz(b.minZ);
                 const w = (b.maxX - b.minX) * cityScale;
                 const h = (b.maxZ - b.minZ) * cityScale;
-                ctx.fillRect(x, z, w, h);
-                if (w > 2 && h > 2) ctx.strokeRect(x, z, w, h);
+                ctx.fillRect(x - 0.5, z - 0.5, w + 1, h + 1);
             });
             // 경찰서 (가장 눈에 띄게)
             if (window._policeStation) {
@@ -438,22 +435,19 @@ const GameUI = window.GameUI = {
         const mx = (wx) => half + (wx - playerPos.x) * scale;
         const mz = (wz) => half + (wz - playerPos.z) * scale;
 
-        // citypack 미니맵: 도로 어두운 배경 + 건물 밝은 사각형 + 경찰서 강조
+        // citypack 미니맵: 도로 어두운 배경 + 건물 단일 fill (외곽선 없음 → 인접 건물 자연스럽게 합쳐 보임)
         if (window._citypackCollision) {
-            // 1) 도로/빈공간 배경 (아스팔트 톤)
+            // 1) 도로 배경
             ctx.fillStyle = '#3a3a3a';
             ctx.fillRect(0, 0, size, size);
-            // 2) 건물: 살짝 따뜻한 베이지/회색 (가시성 ↑)
-            ctx.fillStyle = 'rgba(220,210,190,0.92)';
-            ctx.strokeStyle = 'rgba(80,70,60,0.6)';
-            ctx.lineWidth = 0.5;
+            // 2) 건물 — fill만 (외곽선 X → 붙은 건물 합쳐서 보임)
+            ctx.fillStyle = 'rgba(225,215,195,0.95)';
             window._citypackCollision.forEach(b => {
                 const x1 = mx(b.minX), x2 = mx(b.maxX);
                 const z1 = mz(b.minZ), z2 = mz(b.maxZ);
                 const w = x2 - x1, h = z2 - z1;
                 if (x2 < -5 || x1 > size + 5 || z2 < -5 || z1 > size + 5) return;
-                ctx.fillRect(x1, z1, w, h);
-                if (w > 2 && h > 2) ctx.strokeRect(x1, z1, w, h);
+                ctx.fillRect(x1 - 0.5, z1 - 0.5, w + 1, h + 1); // 0.5 overlap → 인접 박스 사이 틈 없앰
             });
             // 3) 경찰서: 파란 펄스 (가까울수록 큼, 멀어도 보이게 살짝 크게)
             if (window._policeStation) {

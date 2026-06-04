@@ -64,7 +64,7 @@ const NPCSystem = window.NPCSystem = {
                 o.receiveShadow = true;
             }
         });
-        glb.scale.setScalar(2.8); // 약 5유닛 = 플레이어 키
+        glb.scale.setScalar(1.0); // 플레이어 (soyun/hayun)와 동일한 1.79m 키
         glb.position.set(arch.x, 0, arch.z);
         glb.rotation.y = Math.random() * Math.PI * 2;
         // Mixer + 3개 액션
@@ -230,8 +230,11 @@ const NPCSystem = window.NPCSystem = {
     },
 
     _findSafePosition(x, z) {
-        // Iteratively push position out of any building it overlaps with.
-        // Up to 6 passes handles dense areas where pushing out of one building lands inside another.
+        // citypack 모드: 전역 헬퍼 사용
+        if (window.findCitypackSafeSpawn) {
+            return window.findCitypackSafeSpawn(x, z, 1);
+        }
+        // 절차적 모드: 건물 밀어내기 반복
         if (!window._buildingPositions) return { x, z };
         let cx = x, cz = z;
         for (let pass = 0; pass < 6; pass++) {
@@ -473,6 +476,15 @@ const NPCSystem = window.NPCSystem = {
     },
 
     _collidesWithBuilding(x, z) {
+        // citypack 모드: GLB 충돌 박스 사용 (마진 0.3)
+        if (window._citypackCollision) {
+            const r = 0.3;
+            for (const b of window._citypackCollision) {
+                if (x + r > b.minX && x - r < b.maxX
+                 && z + r > b.minZ && z - r < b.maxZ) return true;
+            }
+            return false;
+        }
         if (!window._buildingPositions) return false;
         const r = 0.5;
         for (const b of window._buildingPositions) {
@@ -484,9 +496,17 @@ const NPCSystem = window.NPCSystem = {
     _tryMove(npc, dx, dz) {
         const nx = npc.mesh.position.x + dx;
         const nz = npc.mesh.position.z + dz;
-        const half = WORLD_SIZE / 2 - 2;
-        const cx = Math.max(-half, Math.min(half, nx));
-        const cz = Math.max(-half, Math.min(half, nz));
+        // citypack 모드는 도시 경계, 절차적은 WORLD_SIZE
+        let cx, cz;
+        if (window._citypackBounds) {
+            const b = window._citypackBounds;
+            cx = Math.max(b.minX + 2, Math.min(b.maxX - 2, nx));
+            cz = Math.max(b.minZ + 2, Math.min(b.maxZ - 2, nz));
+        } else {
+            const half = WORLD_SIZE / 2 - 2;
+            cx = Math.max(-half, Math.min(half, nx));
+            cz = Math.max(-half, Math.min(half, nz));
+        }
         if (!this._collidesWithBuilding(cx, cz)) {
             npc.mesh.position.x = cx;
             npc.mesh.position.z = cz;
