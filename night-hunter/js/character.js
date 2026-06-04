@@ -151,8 +151,8 @@
                 this._model = gltf.scene.clone(true);
             }
 
-            // 캐릭터 스케일 (약 1.7m 키 기준, 게임 월드 스케일에 맞춤)
-            this._model.scale.set(1.0, 1.0, 1.0);
+            // 캐릭터 스케일 1.2배 (NPC와 동일)
+            this._model.scale.set(1.2, 1.2, 1.2);
             this._model.position.y = 0;
             this.add(this._model);
 

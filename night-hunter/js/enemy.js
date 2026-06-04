@@ -124,7 +124,7 @@ const EnemySystem = window.EnemySystem = {
                 o.receiveShadow = true;
             }
         });
-        mesh.scale.setScalar(1.15); // 플레이어보다 살짝 크게 (위협감)
+        mesh.scale.setScalar(1.35); // 플레이어/NPC (1.2)보다 살짝 크게 — 위협감
         // Mixer
         const mixer = new THREE.AnimationMixer(mesh);
         const actions = {
@@ -152,10 +152,21 @@ const EnemySystem = window.EnemySystem = {
     // STEP 1: citypack 도로 위로 적/은신처 재배치
     snapToCitypackRoads() {
         if (!this.enemies || !window.findCitypackSafeSpawn) return;
+        const bounds = window._citypackBounds;
         let moved = 0;
-        this.enemies.forEach(e => {
+        this.enemies.forEach((e, i) => {
+            // 3명을 도시 외곽 3분점에 분산 (서로 멀리, 경찰서에서도 멀게)
+            let baseX = e.mesh.position.x, baseZ = e.mesh.position.z;
+            if (bounds) {
+                const cityCX = (bounds.minX + bounds.maxX) / 2;
+                const cityCZ = (bounds.minZ + bounds.maxZ) / 2;
+                const radius = Math.min(bounds.maxX - bounds.minX, bounds.maxZ - bounds.minZ) * 0.4;
+                const angle = (i / this.enemies.length) * Math.PI * 2 + Math.PI / 6;
+                baseX = cityCX + Math.cos(angle) * radius;
+                baseZ = cityCZ + Math.sin(angle) * radius;
+            }
+            const safe = window.findCitypackSafeSpawn(baseX, baseZ, 4);
             const cur = e.mesh.position;
-            const safe = window.findCitypackSafeSpawn(cur.x, cur.z, 3);
             if (safe.x !== cur.x || safe.z !== cur.z) moved++;
             e.currentX = safe.x;
             e.currentZ = safe.z;
@@ -163,12 +174,11 @@ const EnemySystem = window.EnemySystem = {
             e.data.hideoutZ = safe.z;
             e.patrolTarget = { x: safe.x, z: safe.z };
             e.mesh.position.set(safe.x, 0, safe.z);
-            // hideSpots도 재배치
             if (Array.isArray(e.hideSpots)) {
-                e.hideSpots = e.hideSpots.map(s => window.findCitypackSafeSpawn(s.x, s.z, 3));
+                e.hideSpots = e.hideSpots.map(s => window.findCitypackSafeSpawn(s.x, s.z, 4));
             }
         });
-        console.log(`[Enemy] ${moved}/${this.enemies.length} enemies snapped to citypack roads`);
+        console.log(`[Enemy] ${moved}/${this.enemies.length} enemies snapped to citypack (spread + margin 4)`);
     },
 
     _createAlertSprite() {
