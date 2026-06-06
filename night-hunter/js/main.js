@@ -202,6 +202,11 @@ scene.add(rimLight);
 // ── Create World ──
 const { worldGroup, buildingData } = createWorld(scene);
 
+// ── Commercial Signs (52개 분당 상권 간판) ──
+if (typeof window.loadSigns === 'function') {
+    window.loadSigns(scene, buildingData);
+}
+
 // ── Player Character ──
 const playerGroup = new THREE.Group();
 
