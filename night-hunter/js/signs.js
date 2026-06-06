@@ -1,18 +1,17 @@
-// signs.js — 분당 상권 가로 간판 52개
-// 1) assets/models/signs/{id}.glb 로딩 시도 (사용자 SketchUp 작업물)
-// 2) GLB 없으면 절차적 Box + CanvasTexture로 폴백 (즉시 동작)
+// signs.js — 분당 상권 가로 간판 (실사풍 절차적 + GLB 폴백)
+// 배치 규칙: 상업지구 모든 건물의 창문 사이 (2층 ~ 옥상 직전) 에 부착.
 
 (function () {
 
-// 사이즈 (게임 단위 ≈ 1m)
+// 사이즈 (게임 단위 ≈ 1m) — 창문 사이 1.7m 공간에 들어가도록 조정
 const SIZES = {
-    L: { w: 4.5, h: 1.10, d: 0.28, bw: 0.06, ew: 0.85 },
-    M: { w: 3.5, h: 0.95, d: 0.22, bw: 0.05, ew: 0.72 },
-    S: { w: 2.5, h: 0.80, d: 0.18, bw: 0.05, ew: 0.58 }
+    L: { w: 4.5, h: 1.20, d: 0.28, bw: 0.07, ew: 0.95 },
+    M: { w: 3.5, h: 1.05, d: 0.22, bw: 0.06, ew: 0.85 },
+    S: { w: 2.5, h: 0.90, d: 0.18, bw: 0.06, ew: 0.70 }
 };
 
-// 52개 간판 데이터
-const SIGNS = [
+// ── 기본 52개 ──────────────────────────────────────
+const BASE_SIGNS = [
     // 카페/커피 8
     { id:'starlucks',   en:'STARLUCKS',      kr:'스타락스',     sz:'L', bg:'#007048', fg:'#ffffff', bd:'#00462d', bx:'#ffd700' },
     { id:'edia',        en:'EDIA COFFEE',    kr:'이지아커피',   sz:'M', bg:'#1b2a6b', fg:'#ffffff', bd:'#0f1950', bx:'#ffc800' },
@@ -80,12 +79,66 @@ const SIGNS = [
     { id:'noraebang',   en:'STAR SINGING',   kr:'스타노래방',   sz:'M', bg:'#1e0a32', fg:'#c800ff', bd:'#c800ff', bx:'#ffd700' }
 ];
 
-// 색상 문자열 → THREE.Color
-function hexToColor(h) {
-    return new THREE.Color(h);
-}
+// ── 추가 40개 (실제 분당 상권 추가 업종) ────────
+const EXTRA_SIGNS = [
+    // 카페/디저트 추가 6
+    { id:'baskinrobbin',en:'BASKIN ROBBIN',  kr:'배스킨라빈',   sz:'L', bg:'#e6007e', fg:'#ffffff', bd:'#a3005a', bx:'#1976d2' },
+    { id:'tousles',     en:'TOUSLES JOURS',  kr:'뚜레쥬르',     sz:'M', bg:'#3e2723', fg:'#ffd700', bd:'#1a0a04', bx:'#d4af37' },
+    { id:'paribag',     en:'PARI BAGUETTE',  kr:'파리바게뜨',   sz:'L', bg:'#0a3d8c', fg:'#ffffff', bd:'#062862', bx:'#ffd700' },
+    { id:'sulbings',    en:'SULBINGS',       kr:'설빙스',       sz:'M', bg:'#ffffff', fg:'#5d4037', bd:'#5d4037', bx:'#a1887f' },
+    { id:'jujuboba',    en:'JUJU BOBA',      kr:'쥬쥬버블티',   sz:'S', bg:'#fce4ec', fg:'#880e4f', bd:'#ad1457', bx:'#ec407a' },
+    { id:'gongcha',     en:'GONGTEA',        kr:'공테라',       sz:'M', bg:'#3e2723', fg:'#ffc107', bd:'#1a0a04', bx:'#ffc107' },
 
-// 약간 밝게 (LED 발광)
+    // 음식점 추가 10
+    { id:'pizzahole',   en:'PIZZA HOLE',     kr:'피자홀',       sz:'L', bg:'#c62828', fg:'#ffd54f', bd:'#7f0000', bx:'#ffd54f' },
+    { id:'mrpizza',     en:'MR PIZZA',       kr:'미스터피자',   sz:'L', bg:'#212121', fg:'#ffd700', bd:'#000000', bx:'#dc0000' },
+    { id:'goobne',      en:'GOOBNES',        kr:'굽네치킨',     sz:'M', bg:'#ff5722', fg:'#ffffff', bd:'#bf360c', bx:'#ffd700' },
+    { id:'norangtong',  en:'NORANG CHICKEN', kr:'노랑통닭',     sz:'M', bg:'#ffd600', fg:'#212121', bd:'#aa8800', bx:'#212121' },
+    { id:'sinjeon',     en:'SINJEON BUSAN',  kr:'신전떡볶이',   sz:'S', bg:'#d32f2f', fg:'#ffeb3b', bd:'#8c0000', bx:'#ffeb3b' },
+    { id:'jjajangmen',  en:'JJAJANG HOUSE',  kr:'짜장마을',     sz:'M', bg:'#3e2723', fg:'#ffd54f', bd:'#1a0a04', bx:'#ff6f00' },
+    { id:'ihop',        en:'I HOPPING',      kr:'아이호핑',     sz:'M', bg:'#1565c0', fg:'#ffffff', bd:'#0a3c96', bx:'#ff5722' },
+    { id:'ssamzy',      en:'SSAMZY GRILL',   kr:'쌈지구이',     sz:'M', bg:'#558b2f', fg:'#ffffff', bd:'#33691e', bx:'#ffeb3b' },
+    { id:'donkatsu',    en:'DONKATSU MARU',  kr:'돈가스마루',   sz:'S', bg:'#5d4037', fg:'#ffe0b2', bd:'#3e2723', bx:'#ffb74d' },
+    { id:'kfcwing',     en:'KFC WING',       kr:'케이프씨윙',   sz:'L', bg:'#d32f2f', fg:'#ffffff', bd:'#7f0000', bx:'#ffffff' },
+
+    // 병원/의원 추가 6
+    { id:'wellbeing',   en:'WELLBEING INT',  kr:'웰빙내과',     sz:'S', bg:'#00838f', fg:'#ffffff', bd:'#005662', bx:'#ffffff' },
+    { id:'soulpsy',     en:'SOUL PSY',       kr:'마음정신과',   sz:'S', bg:'#7b1fa2', fg:'#ffffff', bd:'#4a0072', bx:'#ce93d8' },
+    { id:'newlife',     en:'NEW LIFE OBGY',  kr:'새생명산부인과', sz:'S', bg:'#f06292', fg:'#ffffff', bd:'#ba2d65', bx:'#ffffff' },
+    { id:'pawsvet',     en:'PAWS ANIMAL',    kr:'발도장동물병원', sz:'S', bg:'#5d4037', fg:'#ffeb3b', bd:'#3e2723', bx:'#ffeb3b' },
+    { id:'happyfoot',   en:'HAPPY FOOT',     kr:'해피발족부과', sz:'S', bg:'#0277bd', fg:'#ffffff', bd:'#01579b', bx:'#ffd700' },
+    { id:'oneear',      en:'ONE EAR ENT',    kr:'원이비인후과', sz:'S', bg:'#0d47a1', fg:'#ffffff', bd:'#0a2e6b', bx:'#ffffff' },
+
+    // 학원/교육 추가 4
+    { id:'ybmlang',     en:'YBM LANGUAGE',   kr:'YBM어학원',    sz:'M', bg:'#d32f2f', fg:'#ffffff', bd:'#7f0000', bx:'#ffffff' },
+    { id:'jeishakwon',  en:'JEI SCHOOL',     kr:'재이학원',     sz:'M', bg:'#1565c0', fg:'#ffeb3b', bd:'#0a3c96', bx:'#ffeb3b' },
+    { id:'codeking',    en:'CODE KING',      kr:'코딩왕국',     sz:'M', bg:'#212121', fg:'#00e676', bd:'#000000', bx:'#00e676' },
+    { id:'pianoworld',  en:'PIANO WORLD',    kr:'피아노세상',   sz:'M', bg:'#ffffff', fg:'#212121', bd:'#212121', bx:'#212121' },
+
+    // 의류/뷰티 추가 6
+    { id:'spaolic',     en:'SPAOLIC',        kr:'스파올릭',     sz:'L', bg:'#ff5252', fg:'#ffffff', bd:'#c50e29', bx:'#ffffff' },
+    { id:'aritaom',     en:'ARITA OM',       kr:'아리타옴',     sz:'M', bg:'#ffffff', fg:'#5d4037', bd:'#5d4037', bx:'#a1887f' },
+    { id:'beanpot',     en:'BEANPOT JEAN',   kr:'빈포트진',     sz:'M', bg:'#1565c0', fg:'#ffffff', bd:'#0a3c96', bx:'#ffd700' },
+    { id:'modahous',    en:'MODA HOUS',      kr:'모다하우스',   sz:'M', bg:'#ad1457', fg:'#ffffff', bd:'#78002e', bx:'#fce4ec' },
+    { id:'glowfacial',  en:'GLOW FACIAL',    kr:'글로우페이셜', sz:'S', bg:'#fce4ec', fg:'#880e4f', bd:'#ec407a', bx:'#ec407a' },
+    { id:'nailpop',     en:'NAIL POP',       kr:'네일팝',       sz:'S', bg:'#e91e63', fg:'#ffffff', bd:'#ad1457', bx:'#ffd700' },
+
+    // 편의점/생활/기타 추가 8
+    { id:'emart24',     en:'EMARK 24',       kr:'이마크24',     sz:'L', bg:'#ffc107', fg:'#000000', bd:'#c89100', bx:'#ff5722' },
+    { id:'minicvs',     en:'MINI CVS',       kr:'미니씨브이',   sz:'M', bg:'#388e3c', fg:'#ffffff', bd:'#1b5e20', bx:'#ffeb3b' },
+    { id:'cleanlaundr', en:'CLEAN LAUNDRY',  kr:'크린세탁소',   sz:'S', bg:'#0277bd', fg:'#ffffff', bd:'#01579b', bx:'#ffffff' },
+    { id:'mrbarber',    en:'MR BARBER',      kr:'미스터바버',   sz:'S', bg:'#212121', fg:'#ffd700', bd:'#000000', bx:'#dc0000' },
+    { id:'goldjewel',   en:'GOLD JEWEL',     kr:'골드주얼리',   sz:'M', bg:'#3e2723', fg:'#ffd700', bd:'#ffd700', bx:'#ffd700' },
+    { id:'flowershop',  en:'FLOWER SHOP',    kr:'꽃집',         sz:'S', bg:'#fff3e0', fg:'#388e3c', bd:'#ff7043', bx:'#ec407a' },
+    { id:'realestate',  en:'BUNDANG REAL',   kr:'분당부동산',   sz:'M', bg:'#1a237e', fg:'#ffd700', bd:'#0d164e', bx:'#ffd700' },
+    { id:'sportsclub',  en:'SPORTS CLUB',    kr:'스포츠클럽',   sz:'M', bg:'#d32f2f', fg:'#ffffff', bd:'#7f0000', bx:'#ffeb3b' }
+];
+
+const SIGNS = BASE_SIGNS.concat(EXTRA_SIGNS);  // 총 92개
+
+// ── 헬퍼 ────────────────────────────────────────
+function hexToColor(h) { return new THREE.Color(h); }
+
 function lighten(hex, amount) {
     const c = new THREE.Color(hex);
     c.r = Math.min(1, c.r + amount);
@@ -94,114 +147,207 @@ function lighten(hex, amount) {
     return c;
 }
 
-// Canvas 텍스처 — 간판 앞면 (배경 + 엠블럼 + 영문 + 한글)
+function darken(hex, amount) {
+    const c = new THREE.Color(hex);
+    c.r = Math.max(0, c.r - amount);
+    c.g = Math.max(0, c.g - amount);
+    c.b = Math.max(0, c.b - amount);
+    return '#' + c.getHexString();
+}
+
+// ── 실사풍 메인 보드 텍스처 ──────────────────────
 function makeBoardTexture(sign) {
     const cv = document.createElement('canvas');
-    cv.width = 512; cv.height = 128;
+    cv.width = 1024; cv.height = 256;
     const ctx = cv.getContext('2d');
 
-    // 배경
-    ctx.fillStyle = sign.bg;
-    ctx.fillRect(0, 0, 512, 128);
+    // 1) 배경 — 세로 그라디언트 (상단 약간 어둡게: 차양 그림자)
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, 256);
+    bgGrad.addColorStop(0, darken(sign.bg, 0.08));
+    bgGrad.addColorStop(0.15, sign.bg);
+    bgGrad.addColorStop(0.85, sign.bg);
+    bgGrad.addColorStop(1, darken(sign.bg, 0.05));
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 1024, 256);
 
-    // 엠블럼 박스 (좌측)
+    // 2) 미세 노이즈 (실사 텍스처 — 미세한 알루미늄 결)
+    const img = ctx.getImageData(0, 0, 1024, 256);
+    for (let i = 0; i < img.data.length; i += 4) {
+        const n = (Math.random() - 0.5) * 10;
+        img.data[i]     = Math.max(0, Math.min(255, img.data[i]     + n));
+        img.data[i + 1] = Math.max(0, Math.min(255, img.data[i + 1] + n));
+        img.data[i + 2] = Math.max(0, Math.min(255, img.data[i + 2] + n));
+    }
+    ctx.putImageData(img, 0, 0);
+
+    // 3) 상단 하이라이트 (LED 광원 반사)
+    const hi = ctx.createLinearGradient(0, 0, 0, 30);
+    hi.addColorStop(0, 'rgba(255,255,255,0.18)');
+    hi.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = hi;
+    ctx.fillRect(0, 0, 1024, 30);
+
+    // 4) 엠블럼 박스 (좌측, 둥근 모서리 + 안쪽 그림자)
+    const emX = 22, emY = 22, emS = 212;
     ctx.fillStyle = sign.bx;
-    ctx.fillRect(10, 10, 108, 108);
-    // 엠블럼 안쪽 테두리
+    ctx.beginPath();
+    const r = 16;
+    ctx.moveTo(emX + r, emY);
+    ctx.lineTo(emX + emS - r, emY);
+    ctx.quadraticCurveTo(emX + emS, emY, emX + emS, emY + r);
+    ctx.lineTo(emX + emS, emY + emS - r);
+    ctx.quadraticCurveTo(emX + emS, emY + emS, emX + emS - r, emY + emS);
+    ctx.lineTo(emX + r, emY + emS);
+    ctx.quadraticCurveTo(emX, emY + emS, emX, emY + emS - r);
+    ctx.lineTo(emX, emY + r);
+    ctx.quadraticCurveTo(emX, emY, emX + r, emY);
+    ctx.closePath();
+    ctx.fill();
+    // 엠블럼 내부 광택 (상단)
+    const emHi = ctx.createLinearGradient(0, emY, 0, emY + emS);
+    emHi.addColorStop(0, 'rgba(255,255,255,0.35)');
+    emHi.addColorStop(0.4, 'rgba(255,255,255,0)');
+    ctx.fillStyle = emHi;
+    ctx.fill();
+    // 엠블럼 테두리 (살짝 어두운 외곽선)
     ctx.strokeStyle = sign.bd;
     ctx.lineWidth = 4;
-    ctx.strokeRect(12, 12, 104, 104);
+    ctx.stroke();
+    // 엠블럼 안에 영문 이니셜 (영문 첫 글자)
+    ctx.fillStyle = sign.bd;
+    ctx.font = 'bold 130px "Inter", "Noto Sans KR", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(sign.en.charAt(0), emX + emS / 2, emY + emS / 2 + 8);
 
-    // 영문 상호명
+    // 5) 영문 상호명 — 큰 글씨 + 드롭 섀도우
+    const tx = 270;
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
     ctx.fillStyle = sign.fg;
-    ctx.font = 'bold 34px "Inter", "Noto Sans KR", sans-serif';
+    ctx.font = 'bold 80px "Inter", "Noto Sans KR", sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillText(sign.en, 132, 55);
+    ctx.fillText(sign.en, tx, 115);
 
-    // 한글 상호명
-    ctx.font = 'bold 28px "Noto Sans KR", sans-serif';
-    ctx.fillText(sign.kr, 132, 100);
+    // 6) 한글 상호명
+    ctx.font = 'bold 60px "Noto Sans KR", "Inter", sans-serif';
+    ctx.fillText(sign.kr, tx, 200);
+
+    // 7) 그림자 리셋 + 좌하단 작은 부가 정보 (전화 아이콘 패턴)
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+
+    // 8) 우측 상단 작은 별표 (LED 점등 표시)
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.beginPath();
+    ctx.arc(990, 30, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(970, 30, 3, 0, Math.PI * 2);
+    ctx.fill();
 
     const tex = new THREE.CanvasTexture(cv);
-    tex.anisotropy = 4;
+    tex.anisotropy = 8;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
     return tex;
 }
 
-// 절차적 간판 메시 (Group)
+// ── 절차적 간판 (실사풍 박스) ──────────────────
 function buildProceduralSign(sign) {
     const sz = SIZES[sign.sz];
     const W = sz.w, H = sz.h, D = sz.d, BW = sz.bw;
     const group = new THREE.Group();
     group.name = `Sign_${sign.id}`;
 
-    // 메인 보드 — 앞면에 텍스트 텍스처
+    // 메인 보드 — 앞면(+Z)에만 텍스트 텍스처
     const boardTex = makeBoardTexture(sign);
     const matFront = new THREE.MeshStandardMaterial({
         map: boardTex,
-        emissive: hexToColor(sign.bg),
+        emissive: hexToColor('#ffffff'),
         emissiveMap: boardTex,
-        emissiveIntensity: 0.35,
-        roughness: 0.45,
+        emissiveIntensity: 0.5,
+        roughness: 0.38,
         metalness: 0.25
     });
     const matSide = new THREE.MeshStandardMaterial({
-        color: hexToColor(sign.bg),
-        emissive: hexToColor(sign.bg),
-        emissiveIntensity: 0.15,
-        roughness: 0.55,
-        metalness: 0.2
+        color: hexToColor(darken(sign.bg, 0.1)),
+        roughness: 0.6,
+        metalness: 0.3
     });
-    // 6면 material: +x, -x, +y, -y, +z(front), -z
+    const innerW = W - BW * 2;
+    const innerH = H - BW * 2;
     const board = new THREE.Mesh(
-        new THREE.BoxGeometry(W - BW * 2, H - BW * 2, D),
+        new THREE.BoxGeometry(innerW, innerH, D),
         [matSide, matSide, matSide, matSide, matFront, matSide]
     );
-    board.position.set(0, 0, 0);
     board.castShadow = true;
+    board.receiveShadow = true;
     group.add(board);
 
-    // 테두리 4면 (포인트 컬러)
+    // 알루미늄 테두리 4면 — 약간 메탈릭 광택
     const borderMat = new THREE.MeshStandardMaterial({
         color: hexToColor(sign.bd),
         emissive: hexToColor(sign.bd),
-        emissiveIntensity: 0.2,
-        roughness: 0.5,
-        metalness: 0.3
+        emissiveIntensity: 0.12,
+        roughness: 0.35,
+        metalness: 0.7
     });
-    const bTop = new THREE.Mesh(new THREE.BoxGeometry(W, BW, D + 0.02), borderMat);
-    bTop.position.set(0, H / 2 - BW / 2, 0);
+    const bTop = new THREE.Mesh(new THREE.BoxGeometry(W, BW, D + 0.03), borderMat);
+    bTop.position.set(0, H / 2 - BW / 2, 0.005);
+    bTop.castShadow = true;
     group.add(bTop);
-    const bBot = new THREE.Mesh(new THREE.BoxGeometry(W, BW, D + 0.02), borderMat);
-    bBot.position.set(0, -H / 2 + BW / 2, 0);
+    const bBot = new THREE.Mesh(new THREE.BoxGeometry(W, BW, D + 0.03), borderMat);
+    bBot.position.set(0, -H / 2 + BW / 2, 0.005);
+    bBot.castShadow = true;
     group.add(bBot);
-    const bL = new THREE.Mesh(new THREE.BoxGeometry(BW, H, D + 0.02), borderMat);
-    bL.position.set(-W / 2 + BW / 2, 0, 0);
+    const bL = new THREE.Mesh(new THREE.BoxGeometry(BW, H, D + 0.03), borderMat);
+    bL.position.set(-W / 2 + BW / 2, 0, 0.005);
+    bL.castShadow = true;
     group.add(bL);
-    const bR = new THREE.Mesh(new THREE.BoxGeometry(BW, H, D + 0.02), borderMat);
-    bR.position.set(W / 2 - BW / 2, 0, 0);
+    const bR = new THREE.Mesh(new THREE.BoxGeometry(BW, H, D + 0.03), borderMat);
+    bR.position.set(W / 2 - BW / 2, 0, 0.005);
+    bR.castShadow = true;
     group.add(bR);
 
-    // LED 하단 조명띠 (앞으로 살짝 돌출, 밝은 색)
-    const ledColor = lighten(sign.bg, 0.25);
+    // LED 하단 조명띠 (실제 형광튜브 느낌 — 얇은 실린더 + 발광 박스)
+    const ledColor = lighten(sign.bg, 0.35);
     const ledMat = new THREE.MeshStandardMaterial({
         color: ledColor,
         emissive: ledColor,
-        emissiveIntensity: 0.85,
-        roughness: 0.3,
-        metalness: 0.1
+        emissiveIntensity: 1.0,
+        roughness: 0.2,
+        metalness: 0.05
     });
     const led = new THREE.Mesh(
-        new THREE.BoxGeometry(W, 0.08, D + 0.05),
+        new THREE.BoxGeometry(W - 0.05, 0.07, D + 0.08),
         ledMat
     );
-    led.position.set(0, -H / 2 - 0.07, 0.03);
+    led.position.set(0, -H / 2 - 0.05, 0.04);
     group.add(led);
+
+    // 벽 부착 브래킷 (간판 뒷면 2개 — 살짝 보이는 디테일)
+    const brackMat = new THREE.MeshStandardMaterial({
+        color: 0x333333, roughness: 0.8, metalness: 0.4
+    });
+    [-W * 0.3, W * 0.3].forEach(bx => {
+        const bracket = new THREE.Mesh(
+            new THREE.BoxGeometry(0.08, H * 0.5, D * 1.4),
+            brackMat
+        );
+        bracket.position.set(bx, 0, -D * 0.55);
+        group.add(bracket);
+    });
 
     return group;
 }
 
-// GLB 로드 → 텍스트 텍스처 적용 → 메인 보드 메시에 매핑
+// ── GLB 폴백 텍스처 적용 ───────────────────────
 function applyTextureToGLB(root, sign) {
     const tex = makeBoardTexture(sign);
     root.traverse(child => {
@@ -210,10 +356,10 @@ function applyTextureToGLB(root, sign) {
         if (name.includes('main_board') || name.includes('mainboard')) {
             child.material = new THREE.MeshStandardMaterial({
                 map: tex,
-                emissive: hexToColor(sign.bg),
                 emissiveMap: tex,
-                emissiveIntensity: 0.35,
-                roughness: 0.45,
+                emissive: hexToColor('#ffffff'),
+                emissiveIntensity: 0.5,
+                roughness: 0.38,
                 metalness: 0.25
             });
         }
@@ -221,7 +367,6 @@ function applyTextureToGLB(root, sign) {
     });
 }
 
-// GLB 로딩 (실패 시 절차적 폴백)
 function loadSignMesh(sign, onReady) {
     const url = `assets/models/signs/${sign.id}.glb`;
     const loader = new THREE.GLTFLoader();
@@ -234,39 +379,32 @@ function loadSignMesh(sign, onReady) {
             onReady(root);
         },
         undefined,
-        (_err) => {
-            // 404 또는 로드 실패 → 절차적 폴백
-            onReady(buildProceduralSign(sign));
-        }
+        (_err) => { onReady(buildProceduralSign(sign)); }
     );
 }
 
-// 빌딩 1개에 간판 부착 (앞면 = +Z 면)
+// ── 빌딩 1개에 간판 부착 (창문 사이, 2층부터) ──
+// 창문 중심: y = 1.5 + f*3 (f=0,1,2...). 창문 사이 = y = 3, 6, 9, 12...
+// "2층부터" = 최저 y=3 (1F 창문 위, 2F 창문 아래)
 function attachSignsToBuilding(scene, building, signList) {
     const { x, z, w, d, h } = building;
-    const frontZ = z + d / 2 + 0.18;
+    const frontZ = z + d / 2 + 0.20;
 
-    // 빌딩 높이에 맞춰 슬롯 개수 결정
-    let slots;
-    if (h >= 18) slots = 4;
-    else if (h >= 12) slots = 3;
-    else if (h >= 8) slots = 2;
-    else slots = 1;
+    // 가용 y 슬롯 산출 (y=3,6,9,... up to h-1.2)
+    const slots = [];
+    for (let y = 3.0; y <= h - 1.2; y += 3.0) slots.push(y);
+    if (slots.length === 0) return;
 
-    const count = Math.min(slots, signList.length);
+    const count = Math.min(slots.length, signList.length);
     if (count === 0) return;
-
-    // 최상단 슬롯 z 위치 — 옥상 아래 1.2m
-    const topY = h - 1.4;
-    const slotGap = 1.5;
 
     for (let i = 0; i < count; i++) {
         const sign = signList[i];
         const sz = SIZES[sign.sz];
-        // 간판이 빌딩 폭보다 크면 스케일 다운
+        // 빌딩 폭보다 크면 스케일 다운 (양쪽 0.3 여유)
         const maxW = w - 0.6;
         const scale = sz.w > maxW ? maxW / sz.w : 1.0;
-        const yPos = topY - i * slotGap;
+        const yPos = slots[i];
 
         loadSignMesh(sign, (mesh) => {
             mesh.scale.setScalar(scale);
@@ -276,29 +414,24 @@ function attachSignsToBuilding(scene, building, signList) {
     }
 }
 
-// 메인 진입점 — createWorld 직후 호출
+// ── 메인 진입점 ────────────────────────────────
 window.loadSigns = function (scene, buildingData) {
     if (!buildingData || !Array.isArray(buildingData)) return;
     const commercial = buildingData.filter(b => b.zone === 'COMMERCIAL');
     if (commercial.length === 0) return;
 
-    // 빌딩 큰 순으로 정렬 (간판 많이 다는 빌딩 = 큰 빌딩)
-    commercial.sort((a, b) => (b.w * b.h) - (a.w * a.h));
-
-    // 52개 간판을 빌딩에 라운드로빈 분배
-    const signQueue = SIGNS.slice();
-    let idx = 0;
+    // 빌딩별 슬롯 합산해서 필요한 만큼 시작 인덱스 분산 — 모든 빌딩이 채워지도록 modulo cycling
+    let cursor = 0;
     for (const b of commercial) {
-        if (idx >= signQueue.length) break;
-        // 빌딩 높이별 슬롯 개수와 동일하게 잘라서 전달
-        let slots;
-        if (b.h >= 18) slots = 4;
-        else if (b.h >= 12) slots = 3;
-        else if (b.h >= 8) slots = 2;
-        else slots = 1;
-        const portion = signQueue.slice(idx, idx + slots);
+        // 빌딩 높이에서 가용 슬롯 계산
+        const slotsCount = Math.max(1, Math.floor((b.h - 1.2 - 3.0) / 3.0) + 1);
+        // signList 만들기 — 풀에서 순환 추출
+        const portion = [];
+        for (let i = 0; i < slotsCount; i++) {
+            portion.push(SIGNS[cursor % SIGNS.length]);
+            cursor++;
+        }
         attachSignsToBuilding(scene, b, portion);
-        idx += portion.length;
     }
 };
 

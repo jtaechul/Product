@@ -702,10 +702,12 @@ DayNight.init(scene, playerGroup);
 
 // ── Camera ──
 let cameraAngleY = 0;
-let cameraAngleX = 0.5;          // 기본 각도를 더 아래로 (0.3 → 0.5, 약 28도 ↓)
+let cameraAngleX = 0.3;          // 기본 각도 완만 — 간판이 보이도록 위쪽 여유 확보
 let cameraDistance = 9;          // 줌 가능하도록 변수화 (range 4~18)
 const CAMERA_DISTANCE_MIN = 4;
 const CAMERA_DISTANCE_MAX = 18;
+const CAMERA_ANGLE_MIN = -0.35;  // 상향 시점 허용 (간판 보기)
+const CAMERA_ANGLE_MAX = 1.4;
 let cameraHeight = 4;            // 거리에 비례하여 자동 조정됨
 let playerFacingAngle = 0;
 
@@ -715,13 +717,15 @@ function updateCamera() {
     const pz = playerGroup.position.z;
 
     // 거리에 따라 높이도 자연스럽게 조정 (가까울수록 낮게)
-    cameraHeight = 1.5 + cameraDistance * 0.35;
+    cameraHeight = 1.0 + cameraDistance * 0.28;
     const camX = px + Math.sin(cameraAngleY) * cameraDistance * Math.cos(cameraAngleX);
     const camY = py + cameraHeight + Math.sin(cameraAngleX) * cameraDistance;
     const camZ = pz + Math.cos(cameraAngleY) * cameraDistance * Math.cos(cameraAngleX);
 
     camera.position.set(camX, camY, camZ);
-    camera.lookAt(px, py + 1.5, pz);
+    // 위쪽 각도일수록 시선 타겟을 살짝 올려서 간판이 화면 중앙에 들어오게
+    const lookUpBoost = Math.max(0, -cameraAngleX) * 6;
+    camera.lookAt(px, py + 1.5 + lookUpBoost, pz);
 }
 
 // ── Input ──
@@ -1007,7 +1011,7 @@ canvas.addEventListener('touchmove', e => {
             const dx = touch.clientX - lastTouchX;
             const dy = touch.clientY - lastTouchY;
             cameraAngleY -= dx * 0.005;
-            cameraAngleX = Math.max(0.05, Math.min(1.4, cameraAngleX + dy * 0.005));
+            cameraAngleX = Math.max(CAMERA_ANGLE_MIN, Math.min(CAMERA_ANGLE_MAX, cameraAngleX + dy * 0.005));
             lastTouchX = touch.clientX;
             lastTouchY = touch.clientY;
             return;
@@ -1038,7 +1042,7 @@ canvas.addEventListener('mousemove', e => {
     const dx = e.clientX - lastTouchX;
     const dy = e.clientY - lastTouchY;
     cameraAngleY -= dx * 0.005;
-    cameraAngleX = Math.max(0.05, Math.min(1.4, cameraAngleX + dy * 0.005));
+    cameraAngleX = Math.max(CAMERA_ANGLE_MIN, Math.min(CAMERA_ANGLE_MAX, cameraAngleX + dy * 0.005));
     lastTouchX = e.clientX;
     lastTouchY = e.clientY;
 });
