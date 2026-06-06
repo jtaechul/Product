@@ -607,46 +607,8 @@ function createGridBuildings(group) {
                 ac.castShadow = true;
                 group.add(ac);
             }
-            // Signage
-            if (Math.random() > 0.5) {
-                const signCol = [0xff6b35, 0x06c167, 0x4361ee, 0xf72585][Math.floor(Math.random() * 4)];
-                const sign = new THREE.Mesh(
-                    new THREE.BoxGeometry(b.bw * 0.6, 0.8, 0.15),
-                    new THREE.MeshStandardMaterial({ color: signCol, emissive: signCol, emissiveIntensity: 0.3 })
-                );
-                sign.position.set(b.bx, b.bh - 1, b.bz + b.bd / 2 + 0.15);
-                group.add(sign);
-            }
-            if (['cafe', 'neon', 'shop', 'clinic'].includes(b.marker)) {
-                const signConfig = {
-                    cafe:   { text: 'CAFE',   bg: '#ff6600', emissive: 0xff6600 },
-                    neon:   { text: 'BAR',    bg: '#ff00aa', emissive: 0xff00aa },
-                    shop:   { text: 'SHOP',   bg: '#22dd66', emissive: 0x22dd66 },
-                    clinic: { text: 'CLINIC', bg: '#3366ff', emissive: 0x3366ff }
-                }[b.marker];
-                const signBg = new THREE.Mesh(
-                    new THREE.BoxGeometry(5, 1.5, 0.35),
-                    new THREE.MeshStandardMaterial({ color: signConfig.emissive, emissive: signConfig.emissive, emissiveIntensity: 0.7, roughness: 0.4 })
-                );
-                signBg.position.set(b.bx, b.bh * 0.55, b.bz + b.bd / 2 + 0.25);
-                group.add(signBg);
-
-                const cv = document.createElement('canvas');
-                cv.width = 256; cv.height = 80;
-                const ct = cv.getContext('2d');
-                ct.fillStyle = signConfig.bg; ct.fillRect(0, 0, 256, 80);
-                ct.fillStyle = '#fff';
-                ct.font = 'bold 56px Inter, sans-serif';
-                ct.textAlign = 'center'; ct.textBaseline = 'middle';
-                ct.fillText(signConfig.text, 128, 42);
-                const tex = new THREE.CanvasTexture(cv);
-                const signMesh = new THREE.Mesh(
-                    new THREE.PlaneGeometry(5, 1.5),
-                    new THREE.MeshBasicMaterial({ map: tex })
-                );
-                signMesh.position.set(b.bx, b.bh * 0.55, b.bz + b.bd / 2 + 0.44);
-                group.add(signMesh);
-            }
+            // 옛 절차적 간판(핑크 BAR/CAFE/SHOP/CLINIC + 랜덤 박스)은 제거.
+            // 상업지구 간판은 js/signs.js (loadSigns) 에서 일괄 부착.
         }
         if (b.zone === 'FACTORY') {
             // Chimney
