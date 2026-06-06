@@ -383,14 +383,26 @@ function loadSignMesh(sign, onReady) {
     );
 }
 
-// ── 빌딩 1개에 간판 부착 (창문 사이, 2층부터) ──
-// 창문 중심: y = 1.5 + f*3 (f=0,1,2...). 창문 사이 = y = 3, 6, 9, 12...
-// "2층부터" = 최저 y=3 (1F 창문 위, 2F 창문 아래)
+// ── 빌딩 1개에 간판 부착 — facing 방향에 따라 부착면 결정 ──
+// facing: '+Z' (default, 남쪽 향함) / '-Z' (북쪽 향함) / '+X' / '-X'
+// 창문 사이 위치: y = 3, 6, 9, 12… (2층 라인부터)
 function attachSignsToBuilding(scene, building, signList) {
     const { x, z, w, d, h } = building;
-    const frontZ = z + d / 2 + 0.20;
+    const facing = building.signFacing || '+Z';
 
-    // 가용 y 슬롯 산출 (y=3,6,9,... up to h-1.2)
+    // 부착 면별 위치 + 회전 + 가용 폭(building.w 또는 d)
+    let frontX, frontZ, rotY, maxFaceW;
+    if (facing === '+Z') {
+        frontX = x; frontZ = z + d / 2 + 0.20; rotY = 0;        maxFaceW = w;
+    } else if (facing === '-Z') {
+        frontX = x; frontZ = z - d / 2 - 0.20; rotY = Math.PI;  maxFaceW = w;
+    } else if (facing === '+X') {
+        frontX = x + w / 2 + 0.20; frontZ = z; rotY = -Math.PI / 2; maxFaceW = d;
+    } else { // '-X'
+        frontX = x - w / 2 - 0.20; frontZ = z; rotY = Math.PI / 2;  maxFaceW = d;
+    }
+
+    // 가용 y 슬롯 산출 (y=3,6,9,… up to h-1.2)
     const slots = [];
     for (let y = 3.0; y <= h - 1.2; y += 3.0) slots.push(y);
     if (slots.length === 0) return;
@@ -401,14 +413,15 @@ function attachSignsToBuilding(scene, building, signList) {
     for (let i = 0; i < count; i++) {
         const sign = signList[i];
         const sz = SIZES[sign.sz];
-        // 빌딩 폭보다 크면 스케일 다운 (양쪽 0.3 여유)
-        const maxW = w - 0.6;
+        // 부착 면 폭 - 0.6m 여유에 맞춰 스케일
+        const maxW = maxFaceW - 0.6;
         const scale = sz.w > maxW ? maxW / sz.w : 1.0;
         const yPos = slots[i];
 
         loadSignMesh(sign, (mesh) => {
             mesh.scale.setScalar(scale);
-            mesh.position.set(x, yPos, frontZ);
+            mesh.position.set(frontX, yPos, frontZ);
+            mesh.rotation.y = rotY;
             scene.add(mesh);
         });
     }

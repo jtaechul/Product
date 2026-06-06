@@ -711,22 +711,45 @@ const CAMERA_ANGLE_MAX = 1.4;
 let cameraHeight = 4;            // 거리에 비례하여 자동 조정됨
 let playerFacingAngle = 0;
 
+// 카메라 모드 — '3rd' (3인칭, 기본) / '1st' (1인칭)
+window.cameraMode = '3rd';
+
 function updateCamera() {
     const px = playerGroup.position.x;
     const py = playerGroup.position.y;
     const pz = playerGroup.position.z;
 
-    // 거리에 따라 높이도 자연스럽게 조정 (가까울수록 낮게)
-    cameraHeight = 1.0 + cameraDistance * 0.28;
-    const camX = px + Math.sin(cameraAngleY) * cameraDistance * Math.cos(cameraAngleX);
-    const camY = py + cameraHeight + Math.sin(cameraAngleX) * cameraDistance;
-    const camZ = pz + Math.cos(cameraAngleY) * cameraDistance * Math.cos(cameraAngleX);
-
-    camera.position.set(camX, camY, camZ);
-    // 위쪽 각도일수록 시선 타겟을 살짝 올려서 간판이 화면 중앙에 들어오게
-    const lookUpBoost = Math.max(0, -cameraAngleX) * 6;
-    camera.lookAt(px, py + 1.5 + lookUpBoost, pz);
+    if (window.cameraMode === '1st') {
+        // 1인칭 — 카메라가 플레이어 머리 위치에서 cameraAngleY/X 방향을 바라봄
+        const headY = 1.7;
+        const lookDist = 10;
+        camera.position.set(px, py + headY, pz);
+        // 시선 방향: 3인칭의 카메라→플레이어 forward 방향(-sinA, -cosA) 과 동일
+        const lookX = px - Math.sin(cameraAngleY) * lookDist * Math.cos(cameraAngleX);
+        const lookY = py + headY - Math.sin(cameraAngleX) * lookDist;
+        const lookZ = pz - Math.cos(cameraAngleY) * lookDist * Math.cos(cameraAngleX);
+        camera.lookAt(lookX, lookY, lookZ);
+        // 1인칭에서는 본인 메시 숨김 (얼굴 안 보임)
+        playerGroup.visible = false;
+    } else {
+        // 3인칭 (기본) — 거리에 따라 높이도 자연스럽게 조정 (가까울수록 낮게)
+        cameraHeight = 1.0 + cameraDistance * 0.28;
+        const camX = px + Math.sin(cameraAngleY) * cameraDistance * Math.cos(cameraAngleX);
+        const camY = py + cameraHeight + Math.sin(cameraAngleX) * cameraDistance;
+        const camZ = pz + Math.cos(cameraAngleY) * cameraDistance * Math.cos(cameraAngleX);
+        camera.position.set(camX, camY, camZ);
+        const lookUpBoost = Math.max(0, -cameraAngleX) * 6;
+        camera.lookAt(px, py + 1.5 + lookUpBoost, pz);
+        playerGroup.visible = true;
+    }
 }
+
+// 외부에서 호출 가능 — UI 버튼 등
+window.toggleCameraMode = function () {
+    window.cameraMode = (window.cameraMode === '1st') ? '3rd' : '1st';
+    try { updateCamera(); } catch (e) {}
+    return window.cameraMode;
+};
 
 // ── Input ──
 const keys = {};
@@ -1830,21 +1853,24 @@ function showCharacterSelect() {
 window.showCharacterSelect = showCharacterSelect;
 
 // === STORY INTRO (인트로 시퀀스) ===
-// 캐릭터 선택 후 게임 시작 전 — 5개 신을 페이드 인/아웃, 총 ~14초
+// 캐릭터 선택 후 게임 시작 전 — 5신 페이드 인/아웃, 총 20초 (각 신 4초)
 function showStoryIntro() {
     const charName = (gameState && gameState.playerName) || '소윤';
     const scenes = [
-        { sub: '분당 신도시 · 23시 47분', main: '도시는 잠들지 않는다.',
+        { sub: '남양주시 평내동 · 23시 47분', main: '도시는 잠들지 않는다.',
           desc: '간판 불빛이 거리를 비추고, 형사들의 무전이 골목 사이를 가로지른다.' },
         { sub: '긴급 신고 접수', main: '아이 셋이 사라졌다.',
           desc: '같은 시간, 같은 방식으로 — 부모도, 목격자도, 모두 놓쳤다.' },
-        { sub: '범인 셋', main: '학원 강사. 가게 사장. 공장의 그림자.',
-          desc: '세 명의 그림자가 도시 어딘가에 숨었다. 어디서 시작해야 할까.' },
-        { sub: '수사 방침', main: '낮엔 단서를, 밤엔 추적을.',
-          desc: '시민에게 말을 걸어라. 간판을, 단지 이름을, 공장 이름을 기억하라.' },
-        { sub: charName + ' 형사', main: '오늘 밤, 도시를 너에게 맡긴다.',
+        { sub: '단서는 시민의 입에', main: '평내동 주민에게 물어라.',
+          desc: '누가 무엇을 봤는지, 어느 골목으로 사라졌는지 — 답은 거리에 있다.' },
+        { sub: '도망치는 자를 멈춰라', main: '수배범을 잡으면 입을 연다.',
+          desc: '낮엔 단서를 모으고, 밤엔 그들을 추적하라.' },
+        { sub: charName + ' 형사', main: '오늘 밤, 평내동을 너에게 맡긴다.',
           desc: '시간은 흐른다. 아이들이 기다린다.' }
     ];
+
+    const SCENE_DURATION = 4000;  // 신 1개 = 4초 (페이드 포함)
+    const FADE_DURATION  = 1000;  // 페이드 1초 (in/out 각각)
 
     const root = document.createElement('div');
     root.id = 'story-intro-root';
@@ -1856,7 +1882,6 @@ function showStoryIntro() {
         padding:env(safe-area-inset-top,16px) env(safe-area-inset-right,16px) env(safe-area-inset-bottom,16px) env(safe-area-inset-left,16px);
         overflow:hidden;
     `;
-    // 배경 무드 — 가로 라인 (네온 광선)
     root.innerHTML = `
         <div style="
             position:absolute; left:0; right:0; top:38%;
@@ -1868,7 +1893,7 @@ function showStoryIntro() {
             opacity:0.25;"></div>
         <div id="intro-scene" style="
             max-width:720px; width:100%; text-align:center;
-            opacity:0; transition:opacity 0.9s ease;
+            opacity:0; transition:opacity ${FADE_DURATION}ms ease;
         ">
             <div id="intro-sub" style="
                 font-size:11px; letter-spacing:6px; color:#60a5fa;
@@ -1897,27 +1922,35 @@ function showStoryIntro() {
     const descEl  = document.getElementById('intro-desc');
     const skipBtn = document.getElementById('intro-skip');
 
-    let idx = 0;
-    let timer = null;
     let finished = false;
+    const timers = [];
 
     function showScene(i) {
+        if (finished) return;
         if (i >= scenes.length) { finish(); return; }
         const s = scenes[i];
+
+        // 1) 현재 텍스트 완전 fade-out (이미 보였다면)
         sceneEl.style.opacity = '0';
-        timer = setTimeout(() => {
+
+        // 2) FADE_DURATION 후 텍스트 교체 (완전히 안 보이는 시점)
+        timers.push(setTimeout(() => {
+            if (finished) return;
             subEl.textContent  = s.sub;
             mainEl.textContent = s.main;
             descEl.textContent = s.desc;
+            // 3) fade-in 시작
             sceneEl.style.opacity = '1';
-            timer = setTimeout(() => { showScene(i + 1); }, 2600);
-        }, 700);
+            // 4) 다음 신 호출 시점 = 신 총 시간(4s) 에서 fade-out(1s) 만큼 미리
+            timers.push(setTimeout(() => showScene(i + 1),
+                SCENE_DURATION - FADE_DURATION));
+        }, FADE_DURATION));
     }
 
     function finish() {
         if (finished) return;
         finished = true;
-        if (timer) clearTimeout(timer);
+        timers.forEach(t => clearTimeout(t));
         root.style.transition = 'opacity 0.6s ease';
         root.style.opacity = '0';
         setTimeout(() => {
@@ -1930,8 +1963,8 @@ function showStoryIntro() {
     skipBtn.addEventListener('click', finish);
     skipBtn.addEventListener('touchstart', e => { e.preventDefault(); finish(); }, { passive: false });
 
-    // 시작 — 첫 신은 0.4s 뒤에 페이드 인
-    setTimeout(() => showScene(0), 400);
+    // 시작 — 첫 신은 즉시 호출 (이미 opacity 0 상태)
+    showScene(0);
 }
 window.showStoryIntro = showStoryIntro;
 

@@ -1,18 +1,18 @@
-// world.js — 한국 신도시 풍 도로 우선 도시 설계
-// 분당/일산 격자형 도시 모델: 메인 간선도로 + 보조도로 + 골목, 도로에 면하는 건물 배치
+// world.js — 남양주시 평내동 풍 도로 우선 도시 설계
+// 격자형 도시 모델: 메인 간선도로 + 보조도로, 도로에 면하는 건물 배치 + 로데오거리
 
 const WORLD_SIZE = 300;
 
-// 주거지구 아파트 단지 (분당 시범단지/정자동/효자촌/장미마을 참고)
+// 주거지구 아파트 단지 (남양주시 평내동 실제 단지 참고)
 // 7개 단지, 각 단지당 2~4동 고층 슬랩형 아파트
 const APARTMENT_COMPLEXES = [
-    { kr: '시범현대아파트',     en: 'SIBEOM HYUNDAI',   dong: [101, 102, 103] },
-    { kr: '정자한라아파트',     en: 'JEONGJA HALLA',    dong: [101, 102, 103, 104] },
-    { kr: '효자삼성아파트',     en: 'HYOJA SAMSUNG',    dong: [201, 202, 203] },
-    { kr: '장미우성아파트',     en: 'JANGMI WOOSUNG',   dong: [301, 302, 303] },
-    { kr: '까치선경아파트',     en: 'KKACHI SUNKYUNG',  dong: [101, 102] },
-    { kr: '매화건영아파트',     en: 'MAEHWA KUNYOUNG',  dong: [501, 502] },
-    { kr: '양지금호아파트',     en: 'YANGJI KUMHO',     dong: [701, 702, 703] }
+    { kr: '평내금호어울림',     en: 'PYEONGNAE KUMHO',    dong: [101, 102, 103] },
+    { kr: '평내중흥아파트',     en: 'PYEONGNAE JUNGHEUNG',dong: [101, 102, 103, 104] },
+    { kr: '평내우림아파트',     en: 'PYEONGNAE WOORIM',   dong: [201, 202, 203] },
+    { kr: '평내일성트루엘',     en: 'PYEONGNAE ILSEONG',  dong: [301, 302, 303] },
+    { kr: '평내휴먼시아',       en: 'PYEONGNAE HUMANSIA', dong: [101, 102] },
+    { kr: '평내한솔리체',       en: 'PYEONGNAE HANSOL',   dong: [501, 502] },
+    { kr: '평내신우아파트',     en: 'PYEONGNAE SHINWOO',  dong: [701, 702, 703] }
 ];
 
 // 공업지구 기업명 풀 (양각 글자로 공장 외벽에 부착)
@@ -89,12 +89,18 @@ function defineBlocks() {
     BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -125, maxX: -105, minZ: -40, maxZ: 0, density: 'apt', complexIdx: 5 });
     BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -95, maxX: -55, minZ: -80, maxZ: -50, density: 'apt', complexIdx: 6 });
 
-    // Commercial blocks (5 < x < 95, -40 < z < 45)
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 5, maxX: 45, minZ: 10, maxZ: 45, density: 'high' });
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 55, maxX: 95, minZ: 10, maxZ: 45, density: 'high' });
+    // === ROOFEO ZONE — 평내 로데오 거리 (서현역 로데오 참고) ===
+    // 차가 다니지 않는 보행자 거리(z=21~31)를 중심으로 양쪽에 더 큰 상가
+    // 북쪽 행: z=34~46 — 간판은 -Z (남쪽 로데오 방향)
+    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 5, maxX: 125, minZ: 34, maxZ: 46,
+                           density: 'rodeo', facing: '-Z', rodeo: true });
+    // 남쪽 행: z=8~20 — 간판은 +Z (북쪽 로데오 방향, default)
+    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 5, maxX: 125, minZ: 8, maxZ: 20,
+                           density: 'rodeo', facing: '+Z', rodeo: true });
+
+    // 일반 상가 블록 — 도로변 (z=-40~0)
     BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 5, maxX: 45, minZ: -40, maxZ: 0, density: 'high' });
     BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 55, maxX: 95, minZ: -40, maxZ: 0, density: 'high' });
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 105, maxX: 125, minZ: 10, maxZ: 45, density: 'medium' });
     BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 105, maxX: 125, minZ: -40, maxZ: 0, density: 'medium' });
     BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 55, maxX: 95, minZ: -80, maxZ: -50, density: 'medium' });
 
@@ -112,6 +118,7 @@ function createWorld(scene) {
     defineBlocks();
     createGround(worldGroup);
     createRoadNetwork(worldGroup);
+    createRodeoStreet(worldGroup);
     const policeStation = createPoliceStation(worldGroup);
     buildingData.push(policeStation);
 
@@ -265,6 +272,155 @@ function createRoadNetwork(group) {
     });
 }
 
+// 평내 로데오 거리 — 차 안다니는 보행자 광장 + 가로수/벤치/조명
+function createRodeoStreet(group) {
+    const RX_MIN = 5, RX_MAX = 125;  // x range
+    const RZ_MIN = 21, RZ_MAX = 33;  // z range (12m wide)
+    const RW = RX_MAX - RX_MIN;
+    const RD = RZ_MAX - RZ_MIN;
+    const RCX = (RX_MIN + RX_MAX) / 2;
+    const RCZ = (RZ_MIN + RZ_MAX) / 2;
+
+    // 메인 타일 보도 — 베이지 톤 + 가로 줄무늬 패턴
+    const tileTex = makeProceduralTexture('#d4c8a8', 28, 256);
+    tileTex.repeat.set(20, 6);
+    const tileMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff, map: tileTex, roughness: 0.88
+    });
+    const plaza = new THREE.Mesh(
+        new THREE.BoxGeometry(RW, 0.08, RD), tileMat
+    );
+    plaza.position.set(RCX, 0.10, RCZ);
+    plaza.receiveShadow = true;
+    group.add(plaza);
+
+    // 중앙 라인 (장식 띠)
+    const stripeMat = new THREE.MeshStandardMaterial({
+        color: 0xc8a878, roughness: 0.75
+    });
+    const stripe = new THREE.Mesh(
+        new THREE.BoxGeometry(RW - 4, 0.05, 0.8), stripeMat
+    );
+    stripe.position.set(RCX, 0.16, RCZ);
+    group.add(stripe);
+
+    // 보행자 벤치 (좌우 라인에 6개)
+    const benchMat = new THREE.MeshStandardMaterial({ color: 0x6b3f2a, roughness: 0.7 });
+    const benchLegMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.6, roughness: 0.4 });
+    const benchSpacing = 18;
+    for (let bx = RX_MIN + 12; bx <= RX_MAX - 6; bx += benchSpacing) {
+        [RCZ - 3.5, RCZ + 3.5].forEach(bz => {
+            // 좌석
+            const seat = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.12, 0.5), benchMat);
+            seat.position.set(bx, 0.5, bz);
+            seat.castShadow = true;
+            group.add(seat);
+            // 다리
+            for (const dx of [-0.7, 0.7]) {
+                const leg = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.45, 0.45), benchLegMat);
+                leg.position.set(bx + dx, 0.22, bz);
+                group.add(leg);
+            }
+            // 등받이
+            const back = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.55, 0.08), benchMat);
+            back.position.set(bx, 0.85, bz + (bz > RCZ ? 0.22 : -0.22));
+            group.add(back);
+        });
+    }
+
+    // 중앙 가로수 + 화분 + 가로등
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.9 });
+    const folMat = new THREE.MeshStandardMaterial({ color: 0x3a7a2e, roughness: 0.85 });
+    const lampPoleMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.6, roughness: 0.35 });
+    const lampGlobeMat = new THREE.MeshStandardMaterial({
+        color: 0xffeeaa, emissive: 0x553300, emissiveIntensity: 0, roughness: 0.4
+    });
+    const planterMat = new THREE.MeshStandardMaterial({ color: 0x9a8770, roughness: 0.9 });
+    const treeSpacing = 9;
+    for (let tx = RX_MIN + 6; tx <= RX_MAX - 4; tx += treeSpacing) {
+        // 사각 화분
+        const planter = new THREE.Mesh(
+            new THREE.BoxGeometry(1.4, 0.4, 1.4), planterMat
+        );
+        planter.position.set(tx, 0.32, RCZ);
+        planter.castShadow = true;
+        group.add(planter);
+        // 가로수
+        const trunkH = 2.6;
+        const trunk = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.15, 0.25, trunkH, 8), trunkMat
+        );
+        trunk.position.set(tx, 0.52 + trunkH / 2, RCZ);
+        trunk.castShadow = true;
+        group.add(trunk);
+        const foliage = new THREE.Mesh(
+            new THREE.SphereGeometry(1.2, 12, 12), folMat
+        );
+        foliage.position.set(tx, 0.52 + trunkH + 0.7, RCZ);
+        foliage.castShadow = true;
+        group.add(foliage);
+
+        // 가로등 (가로수 옆마다)
+        const poleH = 4.0;
+        const pole = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.07, 0.10, poleH, 10), lampPoleMat
+        );
+        pole.position.set(tx + 3.5, poleH / 2 + 0.05, RCZ);
+        pole.castShadow = true;
+        group.add(pole);
+        const globe = new THREE.Mesh(
+            new THREE.SphereGeometry(0.22, 12, 12), lampGlobeMat
+        );
+        globe.position.set(tx + 3.5, poleH + 0.05, RCZ);
+        globe.userData.isStreetLight = true;
+        group.add(globe);
+    }
+
+    // 입구 표지 — 양끝에 작은 아치형 게이트 느낌의 기둥 2쌍
+    const pillarMat = new THREE.MeshStandardMaterial({ color: 0xa89878, roughness: 0.75 });
+    [RX_MIN + 1, RX_MAX - 1].forEach(px => {
+        [RCZ - 5.5, RCZ + 5.5].forEach(pz => {
+            const pillar = new THREE.Mesh(
+                new THREE.BoxGeometry(0.6, 4.5, 0.6), pillarMat
+            );
+            pillar.position.set(px, 2.3, pz);
+            pillar.castShadow = true;
+            group.add(pillar);
+            const top = new THREE.Mesh(
+                new THREE.BoxGeometry(0.9, 0.25, 0.9), pillarMat
+            );
+            top.position.set(px, 4.6, pz);
+            group.add(top);
+        });
+    });
+
+    // "RODEO" 입구 사인 (양끝 상단)
+    [RX_MIN + 1, RX_MAX - 1].forEach((px, idx) => {
+        const cv = document.createElement('canvas');
+        cv.width = 512; cv.height = 128;
+        const ctx = cv.getContext('2d');
+        ctx.fillStyle = '#1a1a2a';
+        ctx.fillRect(0, 0, 512, 128);
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 56px "Inter","Noto Sans KR",sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('RODEO', 256, 50);
+        ctx.font = 'bold 28px "Noto Sans KR",sans-serif';
+        ctx.fillStyle = '#fff';
+        ctx.fillText('평내 로데오 거리', 256, 95);
+        const tex = new THREE.CanvasTexture(cv);
+        const sign = new THREE.Mesh(
+            new THREE.PlaneGeometry(8, 2),
+            new THREE.MeshStandardMaterial({
+                map: tex, emissive: 0x222244, emissiveIntensity: 0.5
+            })
+        );
+        sign.position.set(px, 5.5, RCZ);
+        sign.rotation.y = idx === 0 ? Math.PI / 2 : -Math.PI / 2;
+        group.add(sign);
+    });
+}
+
 function createPoliceStation(group) {
     const x = 0, z = 110;
     const w = 18, d = 14, h = 14;
@@ -371,21 +527,20 @@ function createPoliceStation(group) {
 }
 
 // 주거지구 아파트 단지명 + 동번호 양각 라벨
-// 옆면(긴 면)에 세로로 큰 동번호, 정면에 단지명을 부착
+// 좌우 측면 (창문 없는 외벽)에 단지명 + 거대 동번호 통합 배치
 function createApartmentLabel(group, b) {
     const cplx = b.complex;
     if (!cplx) return;
 
-    // ── 1) 옆면 (좌측 외벽: -X 방향) 에 거대한 동번호
-    // 분당 아파트는 옆면에 큰 글자로 "101" 같이 동번호만 큼지막하게 표시
+    // 통합 캔버스 — 상단 단지명 + 하단 거대 동번호
     const dongStr = String(b.dong);
-    const sideW = Math.min(b.bd * 0.85, 7.0);
-    const sideH = Math.min(b.bh * 0.32, 12.0);
+    const sideW = Math.min(b.bd * 0.92, 7.4);
+    const sideH = Math.min(b.bh * 0.62, 22.0);
 
     const cv1 = document.createElement('canvas');
-    cv1.width = 512; cv1.height = 1024;
+    cv1.width = 512; cv1.height = 1536;
     const ctx1 = cv1.getContext('2d');
-    ctx1.clearRect(0, 0, 512, 1024);
+    ctx1.clearRect(0, 0, 512, 1536);
     function bevelText(ctx, text, font, x, y) {
         ctx.font = font;
         ctx.textAlign = 'center';
@@ -404,8 +559,12 @@ function createApartmentLabel(group, b) {
         ctx.fillStyle = grad;
         ctx.fillText(text, x, y);
     }
-    bevelText(ctx1, dongStr, 'bold 380px "Inter", "Noto Sans KR", sans-serif', 256, 380);
-    bevelText(ctx1, '동', 'bold 240px "Noto Sans KR", sans-serif', 256, 680);
+    // 상단 단지명 (한글 + 영문)
+    bevelText(ctx1, cplx.kr, 'bold 100px "Noto Sans KR", "Inter", sans-serif', 256, 140);
+    bevelText(ctx1, cplx.en, 'bold 44px "Inter", "Noto Sans KR", sans-serif', 256, 230);
+    // 거대 동번호
+    bevelText(ctx1, dongStr, 'bold 420px "Inter", "Noto Sans KR", sans-serif', 256, 720);
+    bevelText(ctx1, '동', 'bold 260px "Noto Sans KR", sans-serif', 256, 1100);
 
     const tex1 = new THREE.CanvasTexture(cv1);
     tex1.anisotropy = 8;
@@ -416,39 +575,17 @@ function createApartmentLabel(group, b) {
             roughness: 0.5, metalness: 0.4, side: THREE.DoubleSide
         })
     );
-    // 좌측 옆면 (-X 방향) 외벽에 부착, 약간 떨어뜨려 그림자 효과
-    sideLabel.position.set(b.bx - b.bw / 2 - 0.12, b.bh * 0.55, b.bz);
+    // 좌측 옆면 (-X 방향) 외벽 — 창문 없는 면
+    sideLabel.position.set(b.bx - b.bw / 2 - 0.10, b.bh * 0.50, b.bz);
     sideLabel.rotation.y = Math.PI / 2;
     group.add(sideLabel);
 
-    // 우측 옆면(+X)에도 동일 라벨 — 양쪽에서 보이도록
+    // 우측 옆면(+X)에도 동일 라벨 (양쪽에서 보이도록)
     const sideLabel2 = sideLabel.clone();
-    sideLabel2.position.set(b.bx + b.bw / 2 + 0.12, b.bh * 0.55, b.bz);
+    sideLabel2.position.set(b.bx + b.bw / 2 + 0.10, b.bh * 0.50, b.bz);
     sideLabel2.rotation.y = -Math.PI / 2;
     group.add(sideLabel2);
-
-    // ── 2) 정면(+Z) 상부에 단지명 (작게)
-    const cv2 = document.createElement('canvas');
-    cv2.width = 1024; cv2.height = 192;
-    const ctx2 = cv2.getContext('2d');
-    ctx2.clearRect(0, 0, 1024, 192);
-    bevelText(ctx2, cplx.kr, 'bold 110px "Noto Sans KR", "Inter", sans-serif', 512, 70);
-    bevelText(ctx2, cplx.en + '  ' + b.dong + '동',
-              'bold 50px "Inter", "Noto Sans KR", sans-serif', 512, 150);
-
-    const tex2 = new THREE.CanvasTexture(cv2);
-    tex2.anisotropy = 8;
-    const frontW = Math.min(b.bw * 0.9, 9.5);
-    const frontH = 1.8;
-    const frontLabel = new THREE.Mesh(
-        new THREE.PlaneGeometry(frontW, frontH),
-        new THREE.MeshStandardMaterial({
-            map: tex2, transparent: true, alphaTest: 0.05,
-            roughness: 0.5, metalness: 0.4
-        })
-    );
-    frontLabel.position.set(b.bx, b.bh * 0.82, b.bz + b.bd / 2 + 0.18);
-    group.add(frontLabel);
+    // 정면 라벨은 제거 — 통창 샷시와 겹치지 않도록
 }
 
 // 공업지구 양각 기업명 글자 생성 (건물 정면 +Z 외벽)
@@ -456,9 +593,9 @@ function createEmbossedCompanyName(group, b) {
     const company = b.company;
     if (!company) return;
 
-    // 글자 크기 — 건물 폭의 ~70%, 높이 ~25%
-    const textW = Math.min(b.bw * 0.78, 9.5);
-    const textH = Math.max(1.4, Math.min(b.bh * 0.28, 2.4));
+    // 글자 크기 — 폭은 건물 폭의 ~80%, 높이는 창문 사이 빈 띠(1.4m)에 들어가게
+    const textW = Math.min(b.bw * 0.82, 9.5);
+    const textH = 1.35; // 창문(높이 1.3m) 사이 빈 띠 약 1.5m 안에 안전하게 들어감
 
     // Canvas 텍스처 — 한글+영문 양각 느낌 (베벨 셰이딩)
     const cv = document.createElement('canvas');
@@ -510,8 +647,13 @@ function createEmbossedCompanyName(group, b) {
             side: THREE.DoubleSide
         })
     );
-    // y 위치: 건물 중간보다 약간 위 (h * 0.6)
-    plane.position.set(b.bx, b.bh * 0.62, b.bz + b.bd / 2 + 0.18);
+    // y 위치 — 창문 사이 빈 띠 (3, 6, 9, 12…) 중 가능한 가장 높은 위치
+    // 창문 중심: y=1.5, 4.5, 7.5… 창문 사이 = y=3, 6, 9…
+    const stripStep = 3.0;
+    const maxStripY = b.bh - 0.4 - textH / 2; // 옥상 아래로 여유
+    let stripY = Math.floor((maxStripY) / stripStep) * stripStep;
+    if (stripY < 3.0) stripY = 3.0;
+    plane.position.set(b.bx, stripY, b.bz + b.bd / 2 + 0.18);
     plane.castShadow = true;
     group.add(plane);
 
@@ -526,11 +668,11 @@ function createEmbossedCompanyName(group, b) {
             opacity: 0.55
         })
     );
-    shadowPlane.position.set(b.bx + 0.05, b.bh * 0.62 - 0.05, b.bz + b.bd / 2 + 0.12);
+    shadowPlane.position.set(b.bx + 0.05, stripY - 0.05, b.bz + b.bd / 2 + 0.12);
     group.add(shadowPlane);
 }
 
-function createBuilding(group, x, z, w, d, h, color, label, glass) {
+function createBuilding(group, x, z, w, d, h, color, label, glass, windowStyle) {
     // Glass towers (tall commercial) get reflective material; others matte stucco
     const mat = glass
         ? new THREE.MeshStandardMaterial({ color, roughness: 0.18, metalness: 0.45 })
@@ -563,26 +705,103 @@ function createBuilding(group, x, z, w, d, h, color, label, glass) {
     const winRowsW = Math.max(1, Math.floor(w / 2.5));
     const winRowsD = Math.max(1, Math.floor(d / 2.5));
 
-    for (let f = 0; f < floors; f++) {
-        for (let wi = 0; wi < winRowsW; wi++) {
-            // Front
-            const winF = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.3, 0.08), winMat);
-            winF.position.set(x - w / 2 + (w / winRowsW) * (wi + 0.5), 1.5 + f * 3, z + d / 2 + 0.05);
-            group.add(winF);
-            // Back
-            const winB = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.3, 0.08), winMat);
-            winB.position.set(x - w / 2 + (w / winRowsW) * (wi + 0.5), 1.5 + f * 3, z - d / 2 - 0.05);
-            group.add(winB);
+    if (windowStyle === 'apartment') {
+        // 평내동 아파트 스타일 — 앞/뒤만 큰 샷시(통창) 형태, 좌우는 무창 외벽
+        const sashMat = new THREE.MeshStandardMaterial({
+            color: 0xbcd6ee, emissive: 0x344c66, emissiveIntensity: 0.22,
+            roughness: 0.18, metalness: 0.55
+        });
+        const mullionMat = new THREE.MeshStandardMaterial({
+            color: 0xf0f0f0, roughness: 0.55, metalness: 0.35
+        });
+        const balconyMat = new THREE.MeshStandardMaterial({
+            color: 0xd4c8b4, roughness: 0.78, metalness: 0.06
+        });
+        const sashH = 1.95;
+        const sashW = w * 0.92;
+        const unitCount = Math.max(2, Math.round(w / 3.0));
+        for (let f = 0; f < floors; f++) {
+            const sashY = 1.6 + f * 3;
+            // 발코니 하단 (콘크리트 띠) — 층간 구분
+            const balcony = new THREE.Mesh(
+                new THREE.BoxGeometry(sashW + 0.4, 0.45, 0.18),
+                balconyMat
+            );
+            balcony.position.set(x, sashY - sashH/2 - 0.15, z + d/2 + 0.10);
+            group.add(balcony);
+            const balconyB = balcony.clone();
+            balconyB.position.set(x, sashY - sashH/2 - 0.15, z - d/2 - 0.10);
+            group.add(balconyB);
+
+            // 앞면 통창 (가로로 길게)
+            const sashF = new THREE.Mesh(
+                new THREE.BoxGeometry(sashW, sashH, 0.08),
+                sashMat
+            );
+            sashF.position.set(x, sashY, z + d/2 + 0.05);
+            group.add(sashF);
+            // 뒷면 통창
+            const sashB = new THREE.Mesh(
+                new THREE.BoxGeometry(sashW, sashH, 0.08),
+                sashMat
+            );
+            sashB.position.set(x, sashY, z - d/2 - 0.05);
+            group.add(sashB);
+            // 세로 멀리언 (집 사이 구분, 통창 위에 부착)
+            for (let u = 0; u <= unitCount; u++) {
+                const mx = x - sashW/2 + (sashW / unitCount) * u;
+                const muF = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.12, sashH + 0.1, 0.10),
+                    mullionMat
+                );
+                muF.position.set(mx, sashY, z + d/2 + 0.10);
+                group.add(muF);
+                const muB = muF.clone();
+                muB.position.set(mx, sashY, z - d/2 - 0.10);
+                group.add(muB);
+            }
+            // 가로 멀리언 (샷시 상/하단)
+            const horBarTop = new THREE.Mesh(
+                new THREE.BoxGeometry(sashW + 0.15, 0.10, 0.10),
+                mullionMat
+            );
+            horBarTop.position.set(x, sashY + sashH/2, z + d/2 + 0.10);
+            group.add(horBarTop);
+            const horBarTopB = horBarTop.clone();
+            horBarTopB.position.set(x, sashY + sashH/2, z - d/2 - 0.10);
+            group.add(horBarTopB);
         }
-        for (let di = 0; di < winRowsD; di++) {
-            // Right
-            const winR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.3, 0.9), winMat);
-            winR.position.set(x + w / 2 + 0.05, 1.5 + f * 3, z - d / 2 + (d / winRowsD) * (di + 0.5));
-            group.add(winR);
-            // Left
-            const winL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.3, 0.9), winMat);
-            winL.position.set(x - w / 2 - 0.05, 1.5 + f * 3, z - d / 2 + (d / winRowsD) * (di + 0.5));
-            group.add(winL);
+        // 좌우 외벽 — 무창. 페인트 그라데이션 띠만 살짝 (포인트)
+        const stripeMat = new THREE.MeshStandardMaterial({
+            color: 0xc8b89a, roughness: 0.85
+        });
+        for (let s = 0; s < 2; s++) {
+            const stripe = new THREE.Mesh(
+                new THREE.BoxGeometry(0.05, h * 0.7, d * 0.4),
+                stripeMat
+            );
+            stripe.position.set(x + (s === 0 ? -1 : 1) * (w/2 + 0.025), h * 0.5, z);
+            group.add(stripe);
+        }
+    } else {
+        // 일반 빌딩 (상업/공업/경찰서) — 4면 균등한 사각 창문
+        for (let f = 0; f < floors; f++) {
+            for (let wi = 0; wi < winRowsW; wi++) {
+                const winF = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.3, 0.08), winMat);
+                winF.position.set(x - w / 2 + (w / winRowsW) * (wi + 0.5), 1.5 + f * 3, z + d / 2 + 0.05);
+                group.add(winF);
+                const winB = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.3, 0.08), winMat);
+                winB.position.set(x - w / 2 + (w / winRowsW) * (wi + 0.5), 1.5 + f * 3, z - d / 2 - 0.05);
+                group.add(winB);
+            }
+            for (let di = 0; di < winRowsD; di++) {
+                const winR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.3, 0.9), winMat);
+                winR.position.set(x + w / 2 + 0.05, 1.5 + f * 3, z - d / 2 + (d / winRowsD) * (di + 0.5));
+                group.add(winR);
+                const winL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.3, 0.9), winMat);
+                winL.position.set(x - w / 2 - 0.05, 1.5 + f * 3, z - d / 2 + (d / winRowsD) * (di + 0.5));
+                group.add(winL);
+            }
         }
     }
 
@@ -637,7 +856,7 @@ function createGridBuildings(group) {
     window._hideoutFeatures = hideoutTargets;  // share with hint system
     const hideoutPlaced = { RESIDENTIAL: false, COMMERCIAL: false, FACTORY: false };
 
-    // Color palettes per zone — 분당 아파트 외벽: 베이지/크림/연한 다홍
+    // Color palettes per zone — 평내동 아파트 외벽: 베이지/크림/연한 다홍
     const palette = {
         POLICE: [0x889977, 0xa8a896, 0x8b9aa8, 0x99a8b8],
         RESIDENTIAL: [0xe8dcc4, 0xddc9a8, 0xe0d2b8, 0xd4bf9d, 0xeed8b8, 0xd8c4a0, 0xe6d4bc],
@@ -659,10 +878,15 @@ function createGridBuildings(group) {
         if (zone === 'POLICE') {
             bw = 7; bd = 7; bhMin = 6; bhMax = 12; spacing = 10;
         } else if (zone === 'RESIDENTIAL') {
-            // 고층 아파트 슬랩형 (분당 시범단지 스타일)
+            // 고층 아파트 슬랩형 (평내동 스타일)
             bw = 11; bd = 8; bhMin = 32; bhMax = 42; spacing = 17;
         } else if (zone === 'COMMERCIAL') {
-            bw = 8; bd = 7; bhMin = 12; bhMax = 24; spacing = 11;
+            if (block.rodeo) {
+                // 로데오 거리 양쪽 — 조금 더 큰 상가건물
+                bw = 14; bd = 10; bhMin = 14; bhMax = 22; spacing = 16;
+            } else {
+                bw = 8; bd = 7; bhMin = 12; bhMax = 24; spacing = 11;
+            }
         } else if (zone === 'FACTORY') {
             bw = 12; bd = 11; bhMin = 8; bhMax = 14; spacing = 15;
         }
@@ -688,8 +912,8 @@ function createGridBuildings(group) {
                 const bcolor = palette[zone][Math.floor(Math.random() * palette[zone].length)];
                 const candidate = {
                     bx, bz,
-                    bw: zone === 'RESIDENTIAL' ? bw : bw + (Math.random() - 0.5) * 1.5,
-                    bd: zone === 'RESIDENTIAL' ? bd : bd + (Math.random() - 0.5) * 1.5,
+                    bw: (zone === 'RESIDENTIAL' || block.rodeo) ? bw : bw + (Math.random() - 0.5) * 1.5,
+                    bd: (zone === 'RESIDENTIAL' || block.rodeo) ? bd : bd + (Math.random() - 0.5) * 1.5,
                     bh, bcolor, zone, blockIdx
                 };
                 if (zone === 'RESIDENTIAL' && typeof block.complexIdx === 'number') {
@@ -699,6 +923,11 @@ function createGridBuildings(group) {
                         candidate.dong = cplx.dong[dongCursor % cplx.dong.length];
                         dongCursor++;
                     }
+                }
+                // 간판 부착 면 — 블록의 facing 속성을 그대로 상속 (signs.js 가 읽음)
+                if (zone === 'COMMERCIAL') {
+                    candidate.signFacing = block.facing || '+Z';
+                    candidate.rodeo = !!block.rodeo;
                 }
                 candidateBuildings.push(candidate);
             }
@@ -746,17 +975,20 @@ function createGridBuildings(group) {
     candidateBuildings.forEach(b => {
         const label = b.isHideout ? `${b.zone} 은거지` : `${b.zone}`;
         const isGlass = (b.zone === 'COMMERCIAL' && b.bh >= 15);
-        const mesh = createBuilding(group, b.bx, b.bz, b.bw, b.bd, b.bh, b.bcolor, label, isGlass);
+        const winStyle = (b.zone === 'RESIDENTIAL') ? 'apartment' : 'normal';
+        const mesh = createBuilding(group, b.bx, b.bz, b.bw, b.bd, b.bh, b.bcolor, label, isGlass, winStyle);
         buildings.push({
             mesh, x: b.bx, z: b.bz, w: b.bw, d: b.bd, h: b.bh,
             type: b.isHideout ? 'hideout' : 'normal',
             zone: b.zone,
-            hideoutIndex: b.isHideout ? b.criminal : -1
+            hideoutIndex: b.isHideout ? b.criminal : -1,
+            signFacing: b.signFacing || '+Z',
+            rodeo: !!b.rodeo
         });
 
         // Add zone-specific decorations
         if (b.zone === 'RESIDENTIAL') {
-            // 옥상 물탱크 + 안테나 (분당 아파트 옥상 디테일)
+            // 옥상 물탱크 + 안테나 (평내동 아파트 옥상 디테일)
             const tank = new THREE.Mesh(
                 new THREE.CylinderGeometry(1.2, 1.2, 1.4, 16),
                 new THREE.MeshStandardMaterial({ color: 0xaaaaaa, roughness: 0.6, metalness: 0.4 })

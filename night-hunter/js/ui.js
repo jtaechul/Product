@@ -286,6 +286,39 @@ const GameUI = window.GameUI = {
         document.body.appendChild(mb);
 
         // 수배 전단(📜) UI 제거됨 — 인트로 스토리로 대체
+
+        // 1인칭/3인칭 카메라 토글
+        const cam = document.createElement('button');
+        cam.id = 'btn-camera-mode';
+        cam.textContent = '👀 3인칭';
+        cam.style.cssText = `
+            position:fixed;
+            right:calc(202px + env(safe-area-inset-right, 0px));
+            bottom:calc(85px + env(safe-area-inset-bottom, 0px));
+            min-width:74px; height:48px; border-radius:24px;
+            border:2px solid rgba(252,211,77,0.55);
+            background:rgba(180,140,30,0.32);
+            backdrop-filter:blur(8px); color:#fff; font-size:13px; font-weight:700;
+            cursor:pointer; touch-action:none; z-index:30;
+            pointer-events:auto; padding:0 12px;
+            display:flex; align-items:center; justify-content:center; gap:4px;
+            font-family:'Inter','Noto Sans KR',sans-serif;
+        `;
+        const updateCamLabel = () => {
+            const mode = window.cameraMode === '1st' ? '1인칭' : '3인칭';
+            const eye  = window.cameraMode === '1st' ? '🎯' : '👀';
+            cam.textContent = eye + ' ' + mode;
+        };
+        const onToggle = () => {
+            if (typeof window.toggleCameraMode === 'function') {
+                window.toggleCameraMode();
+                updateCamLabel();
+            }
+        };
+        cam.addEventListener('click', onToggle);
+        cam.addEventListener('touchstart', e => { e.preventDefault(); onToggle(); }, { passive: false });
+        document.body.appendChild(cam);
+        updateCamLabel();
     },
 
     createLandscapeOverlay() {
