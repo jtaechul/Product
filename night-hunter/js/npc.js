@@ -10,128 +10,11 @@ const NPCSystem = window.NPCSystem = {
     // criminal flee speeds: 1호=0.06, 2호=0.09, 3호=0.13
     fleeSpeeds: [0.04, 0.065, 0.09],
 
-    assets: null,         // GLB 자산 ({template, anims:{idle,walk,run}})
-    _assetsLoading: false,
-
     init(scene) {
         this.scene = scene;
         this.createDialogUI();
         this.distributeHints();
-        // GLB 자산 비동기 로드 후 NPC 스폰. 로드 실패 시 절차적 모드로 폴백.
-        this._loadAssets().then(() => {
-            console.log('[NPC] GLB 자산 로드 완료, NPC 생성');
-            this.spawnNPCs();
-        }).catch(err => {
-            console.warn('[NPC] GLB 로드 실패, 절차적 폴백:', err);
-            this.spawnNPCs();
-        });
-    },
-
-    async _loadAssets() {
-        if (this.assets) return this.assets;
-        const loader = new THREE.GLTFLoader();
-        const load = (p) => new Promise((res, rej) => loader.load(p, res, undefined, rej));
-        const [npcGltf, idleGltf, walkGltf, runGltf] = await Promise.all([
-            load('assets/models/npc-normal.glb'),
-            load('assets/models/idle.glb'),
-            load('assets/models/walk.glb'),
-            load('assets/models/run.glb')
-        ]);
-        this.assets = {
-            template: npcGltf.scene,
-            anims: {
-                idle: idleGltf.animations[0],
-                walk: walkGltf.animations[0],
-                run: runGltf.animations[0]
-            }
-        };
-        return this.assets;
-    },
-
-    _createGLBNPCMesh(arch, assignment) {
-        if (!THREE.SkeletonUtils) {
-            console.warn('[NPC] SkeletonUtils 미로드, 절차적 폴백');
-            return null;
-        }
-        const glb = THREE.SkeletonUtils.clone(this.assets.template);
-        // 피부색 적용 (arch.skin)
-        glb.traverse(o => {
-            if (o.isMesh) {
-                const m = o.material.clone();
-                m.color.setHex(arch.skin || 0xe8c4a0);
-                o.material = m;
-                o.castShadow = true;
-                o.receiveShadow = true;
-            }
-        });
-        glb.scale.setScalar(1.2); // 플레이어와 동일 (1.79m × 1.2 ≈ 2.15유닛)
-        glb.position.set(arch.x, 0, arch.z);
-        glb.rotation.y = Math.random() * Math.PI * 2;
-        // Mixer + 3개 액션
-        const mixer = new THREE.AnimationMixer(glb);
-        const actions = {
-            idle: mixer.clipAction(this.assets.anims.idle),
-            walk: mixer.clipAction(this.assets.anims.walk),
-            run: mixer.clipAction(this.assets.anims.run)
-        };
-        actions.idle.play();
-        glb.userData.mixer = mixer;
-        glb.userData.actions = actions;
-        glb.userData.animState = 'idle';
-        this.scene.add(glb);
-        // 절차적과 동일한 wrapper 구조 반환
-        return {
-            mesh: glb,
-            ...arch,
-            assignment,
-            visited: false,
-            walkTime: Math.random() * 10,
-            wanderTarget: { x: arch.x, z: arch.z },
-            baseX: arch.x,
-            baseZ: arch.z,
-            talkIcon: null
-        };
-    },
-
-    _setAnimState(npcMesh, state) {
-        if (!npcMesh.userData.actions) return; // 절차적 NPC면 무시
-        if (npcMesh.userData.animState === state) return;
-        const oldAction = npcMesh.userData.actions[npcMesh.userData.animState];
-        const newAction = npcMesh.userData.actions[state];
-        if (oldAction) oldAction.fadeOut(0.2);
-        newAction.reset().fadeIn(0.2).play();
-        npcMesh.userData.animState = state;
-    },
-
-    // STEP 1: citypack 도로 위로 NPC 재배치 (citypack 로드 후 main.js가 호출)
-    snapToCitypackRoads() {
-        if (!this.npcs || !window.findCitypackSafeSpawn) return;
-        const bounds = window._citypackBounds;
-        let moved = 0;
-        this.npcs.forEach((npc, i) => {
-            const cur = npc.mesh.position;
-            // 절차적 좌표 그대로면 citypack 안에서는 한 곳에 다 모여있음
-            // → bounds 기반으로 spread 후 도로 위로 snap
-            let baseX = cur.x, baseZ = cur.z;
-            if (bounds) {
-                // 12명을 도시 전역에 펼침 (원형 분포, 반경 = 도시 절반의 60%)
-                const cityCX = (bounds.minX + bounds.maxX) / 2;
-                const cityCZ = (bounds.minZ + bounds.maxZ) / 2;
-                const radius = Math.min(bounds.maxX - bounds.minX, bounds.maxZ - bounds.minZ) * 0.3;
-                const angle = (i / this.npcs.length) * Math.PI * 2;
-                baseX = cityCX + Math.cos(angle) * radius;
-                baseZ = cityCZ + Math.sin(angle) * radius;
-            }
-            // 마진 4로 도로 위 안전 자리 검색 (건물에서 충분히 떨어짐)
-            const safe = window.findCitypackSafeSpawn(baseX, baseZ, 4);
-            if (safe.x !== cur.x || safe.z !== cur.z) moved++;
-            npc.baseX = safe.x;
-            npc.baseZ = safe.z;
-            npc.mesh.position.x = safe.x;
-            npc.mesh.position.z = safe.z;
-            if (npc.wanderTarget) npc.wanderTarget = { x: safe.x, z: safe.z };
-        });
-        console.log(`[NPC] ${moved}/${this.npcs.length} NPC snapped to citypack roads (spread + margin 4)`);
+        this.spawnNPCs();
     },
 
     distributeHints() {
@@ -244,11 +127,8 @@ const NPCSystem = window.NPCSystem = {
     },
 
     _findSafePosition(x, z) {
-        // citypack 모드: 전역 헬퍼 사용
-        if (window.findCitypackSafeSpawn) {
-            return window.findCitypackSafeSpawn(x, z, 1);
-        }
-        // 절차적 모드: 건물 밀어내기 반복
+        // Iteratively push position out of any building it overlaps with.
+        // Up to 6 passes handles dense areas where pushing out of one building lands inside another.
         if (!window._buildingPositions) return { x, z };
         let cx = x, cz = z;
         for (let pass = 0; pass < 6; pass++) {
@@ -269,12 +149,6 @@ const NPCSystem = window.NPCSystem = {
     },
 
     createNPCMesh(arch, assignment) {
-        // GLB 자산이 로드되어 있으면 GLB로 생성
-        if (this.assets) {
-            const wrapper = this._createGLBNPCMesh(arch, assignment);
-            if (wrapper) return wrapper;
-        }
-        // 폴백: 기존 절차적 메시
         const group = new THREE.Group();
 
         const bodyHeight = 0.7;
@@ -490,15 +364,6 @@ const NPCSystem = window.NPCSystem = {
     },
 
     _collidesWithBuilding(x, z) {
-        // citypack 모드: GLB 충돌 박스 사용 (마진 0.3)
-        if (window._citypackCollision) {
-            const r = 0.3;
-            for (const b of window._citypackCollision) {
-                if (x + r > b.minX && x - r < b.maxX
-                 && z + r > b.minZ && z - r < b.maxZ) return true;
-            }
-            return false;
-        }
         if (!window._buildingPositions) return false;
         const r = 0.5;
         for (const b of window._buildingPositions) {
@@ -510,17 +375,9 @@ const NPCSystem = window.NPCSystem = {
     _tryMove(npc, dx, dz) {
         const nx = npc.mesh.position.x + dx;
         const nz = npc.mesh.position.z + dz;
-        // citypack 모드는 도시 경계, 절차적은 WORLD_SIZE
-        let cx, cz;
-        if (window._citypackBounds) {
-            const b = window._citypackBounds;
-            cx = Math.max(b.minX + 2, Math.min(b.maxX - 2, nx));
-            cz = Math.max(b.minZ + 2, Math.min(b.maxZ - 2, nz));
-        } else {
-            const half = WORLD_SIZE / 2 - 2;
-            cx = Math.max(-half, Math.min(half, nx));
-            cz = Math.max(-half, Math.min(half, nz));
-        }
+        const half = WORLD_SIZE / 2 - 2;
+        const cx = Math.max(-half, Math.min(half, nx));
+        const cz = Math.max(-half, Math.min(half, nz));
         if (!this._collidesWithBuilding(cx, cz)) {
             npc.mesh.position.x = cx;
             npc.mesh.position.z = cz;
@@ -565,11 +422,6 @@ const NPCSystem = window.NPCSystem = {
         this.npcs.forEach(npc => {
             if (npc.caught || !npc.mesh.visible) return;
 
-            // GLB NPC: 매 프레임 mixer 진행
-            if (npc.mesh.userData.mixer) {
-                npc.mesh.userData.mixer.update(delta);
-            }
-
             const dx = playerPos.x - npc.mesh.position.x;
             const dz = playerPos.z - npc.mesh.position.z;
             const d = Math.sqrt(dx * dx + dz * dz);
@@ -590,15 +442,11 @@ const NPCSystem = window.NPCSystem = {
                 if (td > 0.4) {
                     this._tryMove(npc, (tdx / td) * 0.35 * delta, (tdz / td) * 0.35 * delta);
                     npc.mesh.rotation.y = Math.atan2(tdx, tdz);
-                    this._setAnimState(npc.mesh, 'walk');
-                    // 절차적 폴백 swing
                     const swing = Math.sin(time * 3.5) * 0.3;
                     if (npc.leftHip) npc.leftHip.rotation.x = swing;
                     if (npc.rightHip) npc.rightHip.rotation.x = -swing;
                     if (npc.leftShoulder) npc.leftShoulder.rotation.x = -swing * 0.5;
                     if (npc.rightShoulder) npc.rightShoulder.rotation.x = swing * 0.5;
-                } else {
-                    this._setAnimState(npc.mesh, 'idle');
                 }
                 if (d < minDist) { minDist = d; nearest = npc; }
                 return;
@@ -615,12 +463,10 @@ const NPCSystem = window.NPCSystem = {
                     this._tryMove(npc, fx * speed * delta * 60, fz * speed * delta * 60);
                     npc.mesh.rotation.y = Math.atan2(fx, fz);
                 }
-                this._setAnimState(npc.mesh, 'run');
-                // 절차적 폴백 swing + bob
+                // Run animation with subtle bob
                 const swing = Math.sin(time * 10) * 0.6;
                 const bob = Math.abs(Math.sin(time * 10)) * 0.04;
-                // GLB NPC는 mixer가 Y를 관리하므로 bob 적용 안 함
-                if (!npc.mesh.userData.mixer) npc.mesh.position.y = bob;
+                npc.mesh.position.y = bob;
                 if (npc.leftHip) npc.leftHip.rotation.x = swing;
                 if (npc.rightHip) npc.rightHip.rotation.x = -swing;
                 if (npc.leftShoulder) npc.leftShoulder.rotation.x = -swing * 1.1;
@@ -641,14 +487,12 @@ const NPCSystem = window.NPCSystem = {
                     const speed = 0.4;
                     this._tryMove(npc, (tdx / td) * speed * delta, (tdz / td) * speed * delta);
                     npc.mesh.rotation.y = Math.atan2(tdx, tdz);
-                    this._setAnimState(npc.mesh, 'walk');
                     const swing = Math.sin(time * 4) * 0.3;
                     if (npc.leftHip) npc.leftHip.rotation.x = swing;
                     if (npc.rightHip) npc.rightHip.rotation.x = -swing;
                     if (npc.leftShoulder) npc.leftShoulder.rotation.x = -swing * 0.5;
                     if (npc.rightShoulder) npc.rightShoulder.rotation.x = swing * 0.5;
                 } else {
-                    this._setAnimState(npc.mesh, 'idle');
                     if (npc.leftHip) npc.leftHip.rotation.x *= 0.85;
                     if (npc.rightHip) npc.rightHip.rotation.x *= 0.85;
                 }

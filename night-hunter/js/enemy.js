@@ -38,8 +38,6 @@ const EnemySystem = window.EnemySystem = {
         }
     ],
 
-    assets: null,
-
     init(scene, buildingData) {
         this.scene = scene;
         this.enemies = [];
@@ -68,136 +66,10 @@ const EnemySystem = window.EnemySystem = {
             }
         });
 
-        // GLB 자산 로드 후 적 생성 (NPCSystem과 공유). 실패 시 절차적 폴백.
-        this._loadAssets().then(() => {
-            console.log('[Enemy] GLB 자산 로드 완료');
-            this._spawnAll();
-        }).catch(err => {
-            console.warn('[Enemy] GLB 로드 실패, 절차적 폴백:', err);
-            this._spawnAll();
-        });
-    },
-
-    _spawnAll() {
         this.enemyData.forEach(data => {
             const enemy = this.createEnemy(data);
             this.enemies.push(enemy);
         });
-    },
-
-    async _loadAssets() {
-        if (this.assets) return this.assets;
-        // NPCSystem 자산 재사용 가능하면 그대로
-        if (typeof NPCSystem !== 'undefined' && NPCSystem.assets) {
-            this.assets = NPCSystem.assets;
-            return this.assets;
-        }
-        const loader = new THREE.GLTFLoader();
-        const load = (p) => new Promise((res, rej) => loader.load(p, res, undefined, rej));
-        const [npcGltf, idleGltf, walkGltf, runGltf] = await Promise.all([
-            load('assets/models/npc-normal.glb'),
-            load('assets/models/idle.glb'),
-            load('assets/models/walk.glb'),
-            load('assets/models/run.glb')
-        ]);
-        this.assets = {
-            template: npcGltf.scene,
-            anims: {
-                idle: idleGltf.animations[0],
-                walk: walkGltf.animations[0],
-                run: runGltf.animations[0]
-            }
-        };
-        return this.assets;
-    },
-
-    _createGLBEnemyMesh(data) {
-        if (!THREE.SkeletonUtils) return null;
-        const mesh = THREE.SkeletonUtils.clone(this.assets.template);
-        // 범인 색상으로 머티리얼 틴팅 (옷처럼 보이도록)
-        mesh.traverse(o => {
-            if (o.isMesh) {
-                const m = o.material.clone();
-                m.color.setHex(data.color);
-                o.material = m;
-                o.castShadow = true;
-                o.receiveShadow = true;
-            }
-        });
-        mesh.scale.setScalar(1.35); // 플레이어/NPC (1.2)보다 살짝 크게 — 위협감
-        // Mixer
-        const mixer = new THREE.AnimationMixer(mesh);
-        const actions = {
-            idle: mixer.clipAction(this.assets.anims.idle),
-            walk: mixer.clipAction(this.assets.anims.walk),
-            run: mixer.clipAction(this.assets.anims.run)
-        };
-        actions.idle.play();
-        mesh.userData.mixer = mixer;
-        mesh.userData.actions = actions;
-        mesh.userData.animState = 'idle';
-        return mesh;
-    },
-
-    _setAnimState(mesh, state) {
-        if (!mesh.userData.actions) return;
-        if (mesh.userData.animState === state) return;
-        const oldAction = mesh.userData.actions[mesh.userData.animState];
-        const newAction = mesh.userData.actions[state];
-        if (oldAction) oldAction.fadeOut(0.2);
-        newAction.reset().fadeIn(0.2).play();
-        mesh.userData.animState = state;
-    },
-
-    // STEP 1: citypack 도로 위로 적/은신처 재배치
-    snapToCitypackRoads() {
-        if (!this.enemies || !window.findCitypackSafeSpawn) return;
-        const bounds = window._citypackBounds;
-        let moved = 0;
-        this.enemies.forEach((e, i) => {
-            // 3명을 도시 외곽 3분점에 분산 (서로 멀리, 경찰서에서도 멀게)
-            let baseX = e.mesh.position.x, baseZ = e.mesh.position.z;
-            if (bounds) {
-                const cityCX = (bounds.minX + bounds.maxX) / 2;
-                const cityCZ = (bounds.minZ + bounds.maxZ) / 2;
-                const radius = Math.min(bounds.maxX - bounds.minX, bounds.maxZ - bounds.minZ) * 0.4;
-                const angle = (i / this.enemies.length) * Math.PI * 2 + Math.PI / 6;
-                baseX = cityCX + Math.cos(angle) * radius;
-                baseZ = cityCZ + Math.sin(angle) * radius;
-            }
-            const safe = window.findCitypackSafeSpawn(baseX, baseZ, 4);
-            const cur = e.mesh.position;
-            if (safe.x !== cur.x || safe.z !== cur.z) moved++;
-            e.currentX = safe.x;
-            e.currentZ = safe.z;
-            e.data.hideoutX = safe.x;
-            e.data.hideoutZ = safe.z;
-            e.patrolTarget = { x: safe.x, z: safe.z };
-            e.mesh.position.set(safe.x, 0, safe.z);
-            if (Array.isArray(e.hideSpots)) {
-                e.hideSpots = e.hideSpots.map(s => window.findCitypackSafeSpawn(s.x, s.z, 4));
-            }
-        });
-        console.log(`[Enemy] ${moved}/${this.enemies.length} enemies snapped to citypack (spread + margin 4)`);
-    },
-
-    _createAlertSprite() {
-        const c = document.createElement('canvas');
-        c.width = c.height = 64;
-        const ctx = c.getContext('2d');
-        ctx.fillStyle = 'rgba(255,68,68,0.95)';
-        ctx.beginPath();
-        ctx.arc(32, 32, 28, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 56px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('!', 32, 32);
-        const tex = new THREE.CanvasTexture(c);
-        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
-        sprite.scale.set(1.0, 1.0, 1);
-        return sprite;
     },
 
     _findSafePosition(x, z) {
@@ -220,28 +92,6 @@ const EnemySystem = window.EnemySystem = {
     },
 
     createEnemy(data) {
-        // GLB 우선
-        if (this.assets) {
-            const glbMesh = this._createGLBEnemyMesh(data);
-            if (glbMesh) {
-                glbMesh.position.set(data.hideoutX, 0, data.hideoutZ);
-                this.scene.add(glbMesh);
-                // 경보 스프라이트 추가
-                const alertSprite = this._createAlertSprite();
-                alertSprite.position.set(0, 4, 0);
-                alertSprite.visible = false;
-                glbMesh.add(alertSprite);
-                return {
-                    mesh: glbMesh, data,
-                    state: 'hidden', stateTimer: 0,
-                    currentX: data.hideoutX, currentZ: data.hideoutZ,
-                    patrolTarget: { x: data.hideoutX, z: data.hideoutZ },
-                    hideTarget: null, hideSpots: data.hideSpots || [],
-                    walkTime: 0, contactTimer: 0,
-                    alertSprite, _isGLB: true
-                };
-            }
-        }
         const group = new THREE.Group();
         const bodyMat = new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.85 });
         const blackMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 });
@@ -556,17 +406,7 @@ const EnemySystem = window.EnemySystem = {
                     break;
             }
 
-            // GLB 애니메이션 상태 + mixer 진행
-            if (enemy.mesh.userData.mixer) {
-                enemy.mesh.userData.mixer.update(delta);
-                const animState =
-                    enemy.state === 'flee'   ? 'run' :
-                    enemy.state === 'patrol' ? 'walk' :
-                                               'idle';
-                this._setAnimState(enemy.mesh, animState);
-            }
-
-            // 절차적 폴백 swing
+            // Walk animation
             if (enemy.state === 'patrol' || enemy.state === 'flee') {
                 enemy.walkTime += delta * (enemy.state === 'flee' ? 12 : 6);
                 const swing = Math.sin(enemy.walkTime) * 0.3;

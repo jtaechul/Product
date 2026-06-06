@@ -300,52 +300,29 @@ const SoundManager = {
         noise.start(now); noise.stop(now + 0.16);
     },
 
-    // === Day BGM: MP3 파일 재생 (fetch + blob URL로 캐시 완전 우회) ===
-    // iOS Safari가 ?쿼리/파일명 다 무시하고 캐시하는 문제 해결:
-    // fetch({cache:'no-store'})로 강제 fresh 다운로드 → Blob URL로 Audio 생성.
-    // Blob URL은 페이지 로드마다 고유라 캐싱 불가능.
+    // === Day BGM: MP3 파일 재생 (assets/day-bgm.mp3) ===
+    // Web Audio MediaElementSource로 bgmGain 경유 — BGM 토글/믹스 그대로 사용
     _loadDayBGMAudio() {
         if (this.dayAudio) return this.dayAudio;
-        if (this._dayAudioPending) return null;
-        this._dayAudioPending = true;
-
-        const url = 'assets/day-bgm.v3.mp3';
-        console.log('[BGM] Fetching day BGM (no-store):', url);
-        fetch(url, { cache: 'no-store' })
-            .then(r => {
-                console.log('[BGM] Day BGM response:', r.status, 'size=', r.headers.get('content-length'));
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                return r.blob();
-            })
-            .then(blob => {
-                console.log('[BGM] Day BGM blob loaded:', blob.size, 'bytes, type=', blob.type);
-                const blobUrl = URL.createObjectURL(blob);
-                const a = new Audio(blobUrl);
-                a.loop = true;
-                a.preload = 'auto';
-                this.dayAudio = a;
-                try {
-                    const src = this.ctx.createMediaElementSource(a);
-                    src.connect(this.bgmGain);
-                    this.dayAudioRouted = true;
-                } catch (e) {
-                    console.warn('Day BGM MediaElementSource failed:', e);
-                    this.dayAudioRouted = false;
-                }
-                this._dayAudioPending = false;
-                // 게임이 day BGM 재생 중이면 즉시 시작
-                if (this.bgmActive && this.bgmType === 'day') {
-                    a.currentTime = 0;
-                    a.volume = this.dayAudioRouted ? 1.0 : 0.8;
-                    a.play().catch(err => console.warn('Day BGM autoplay blocked:', err));
-                }
-            })
-            .catch(err => {
-                console.warn('[BGM] Day BGM fetch failed:', err);
-                this._dayAudioPending = false;
-            });
-
-        return null;
+        try {
+            const a = new Audio('assets/day-bgm.mp3');
+            a.loop = true;
+            a.preload = 'auto';
+            this.dayAudio = a;
+            // bgmGain 경유 라우팅 (한번만 연결 가능)
+            try {
+                const src = this.ctx.createMediaElementSource(a);
+                src.connect(this.bgmGain);
+                this.dayAudioRouted = true;
+            } catch (e) {
+                console.warn('Day BGM MediaElementSource failed, falling back to native playback:', e);
+                this.dayAudioRouted = false;
+            }
+            return a;
+        } catch (e) {
+            console.warn('Day BGM audio load failed:', e);
+            return null;
+        }
     },
 
     // === Night BGM: MP3 파일 재생 (assets/night-bgm.mp3) ===
@@ -455,11 +432,6 @@ const SoundManager = {
             } catch (err) {
                 console.warn('Day BGM play error, falling back to procedural:', err);
             }
-        }
-        // fetch 중이면 procedural 폴백 안 함 (로드 완료 시 자동 재생됨)
-        if (this._dayAudioPending) {
-            console.log('[BGM] Day BGM async loading, will play when ready');
-            return;
         }
         // === Fallback: procedural jazz noir (MP3 실패 시) ===
         const beatSec = 0.55;

@@ -8,19 +8,6 @@ const AmbientCity = window.AmbientCity = {
 
     init(scene) {
         this.scene = scene;
-        const params = new URLSearchParams(location.search);
-        if (params.get('ambient') === '0') {
-            console.log('[Ambient] disabled by URL param');
-            this.initialized = true;
-            return;
-        }
-        // citypack 모드는 절차적 자동차/보행자 비활성 (도로 좌표가 안 맞음)
-        const isCitypack = (params.get('procedural') !== '1');
-        if (isCitypack) {
-            console.log('[Ambient] citypack 모드 → 자동차/보행자 비활성');
-            this.initialized = true;
-            return;
-        }
         this.spawnInitialCars();
         this.spawnInitialWalkers();
         this.initialized = true;
@@ -29,9 +16,7 @@ const AmbientCity = window.AmbientCity = {
     // Spawn cars on main roads at random positions, moving along the road
     spawnInitialCars() {
         const Q = window.GameQuality?.cfg || {};
-        // citypack 모드에서는 자동차 수 절반 (citypack 자체에 시각적 요소 많아 부담)
-        let carCount = Q.carCount || 6;
-        if (this._citypackMode) carCount = Math.max(2, Math.floor(carCount / 2));
+        const carCount = Q.carCount || 6;
         const roads = [
             { type: 'H', z: 50, dirChoice: [-1, 1] },
             { type: 'H', z: 5,  dirChoice: [-1, 1] },
@@ -123,8 +108,7 @@ const AmbientCity = window.AmbientCity = {
     spawnInitialWalkers() {
         // Spawn pedestrians on sidewalks (near roads, walking along)
         const Q = window.GameQuality?.cfg || {};
-        let walkerCount = Q.walkerCount || 10;
-        if (this._citypackMode) walkerCount = Math.max(3, Math.floor(walkerCount / 2));
+        const walkerCount = Q.walkerCount || 10;
         const sidewalkSpots = [
             [-90, 56], [-30, 56], [30, 56], [90, 56],
             [-90, 11], [-30, 11], [30, 11], [90, 11],
