@@ -1561,11 +1561,11 @@ function startGame() {
     try { SoundManager.init(); } catch (e) { console.warn('SoundManager.init failed:', e); }
     try { SoundManager.playBGM('day'); } catch (e) { console.warn('SoundManager.playBGM failed:', e); }
 
-    // Show character select first, then wanted poster, then animate
+    // Show character select first, then story intro, then animate
     try { showCharacterSelect(); } catch (e) {
         console.warn('Char select failed:', e);
         try { updateCamera(); } catch (e2) {}
-        try { showWantedPoster(true); } catch (e3) { animate(); }
+        try { showStoryIntro(); } catch (e3) { animate(); }
     }
 }
 
@@ -1809,8 +1809,8 @@ function showCharacterSelect() {
                 setTimeout(() => modal.remove(), 400);
                 try { swapCharacter(charId); } catch (e) { console.warn('swapCharacter failed:', e); }
                 try { updateCamera(); } catch (e) {}
-                try { showWantedPoster(true); } catch (e) {
-                    console.warn('Wanted poster failed:', e);
+                try { showStoryIntro(); } catch (e) {
+                    console.warn('Story intro failed:', e);
                     animate();
                 }
             }, 400);
@@ -1829,8 +1829,113 @@ function showCharacterSelect() {
 }
 window.showCharacterSelect = showCharacterSelect;
 
-// === WANTED POSTER (수배전단) ===
-// Shown at game start as briefing, accessible later from inventory
+// === STORY INTRO (인트로 시퀀스) ===
+// 캐릭터 선택 후 게임 시작 전 — 5개 신을 페이드 인/아웃, 총 ~14초
+function showStoryIntro() {
+    const charName = (gameState && gameState.playerName) || '소윤';
+    const scenes = [
+        { sub: '분당 신도시 · 23시 47분', main: '도시는 잠들지 않는다.',
+          desc: '간판 불빛이 거리를 비추고, 형사들의 무전이 골목 사이를 가로지른다.' },
+        { sub: '긴급 신고 접수', main: '아이 셋이 사라졌다.',
+          desc: '같은 시간, 같은 방식으로 — 부모도, 목격자도, 모두 놓쳤다.' },
+        { sub: '범인 셋', main: '학원 강사. 가게 사장. 공장의 그림자.',
+          desc: '세 명의 그림자가 도시 어딘가에 숨었다. 어디서 시작해야 할까.' },
+        { sub: '수사 방침', main: '낮엔 단서를, 밤엔 추적을.',
+          desc: '시민에게 말을 걸어라. 간판을, 단지 이름을, 공장 이름을 기억하라.' },
+        { sub: charName + ' 형사', main: '오늘 밤, 도시를 너에게 맡긴다.',
+          desc: '시간은 흐른다. 아이들이 기다린다.' }
+    ];
+
+    const root = document.createElement('div');
+    root.id = 'story-intro-root';
+    root.style.cssText = `
+        position:fixed; inset:0; z-index:300;
+        background: radial-gradient(ellipse at center,#0a1428 0%,#000 80%);
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        font-family:'Inter','Noto Sans KR',sans-serif; color:#e8efff;
+        padding:env(safe-area-inset-top,16px) env(safe-area-inset-right,16px) env(safe-area-inset-bottom,16px) env(safe-area-inset-left,16px);
+        overflow:hidden;
+    `;
+    // 배경 무드 — 가로 라인 (네온 광선)
+    root.innerHTML = `
+        <div style="
+            position:absolute; left:0; right:0; top:38%;
+            height:1px; background:linear-gradient(90deg,transparent,#3b82f6,transparent);
+            opacity:0.35;"></div>
+        <div style="
+            position:absolute; left:0; right:0; bottom:32%;
+            height:1px; background:linear-gradient(90deg,transparent,#f59e0b,transparent);
+            opacity:0.25;"></div>
+        <div id="intro-scene" style="
+            max-width:720px; width:100%; text-align:center;
+            opacity:0; transition:opacity 0.9s ease;
+        ">
+            <div id="intro-sub" style="
+                font-size:11px; letter-spacing:6px; color:#60a5fa;
+                margin-bottom:18px; text-transform:uppercase; font-weight:700;"></div>
+            <div id="intro-main" style="
+                font-size:32px; font-weight:900; letter-spacing:-0.5px;
+                line-height:1.3; margin-bottom:18px; color:#fff;
+                text-shadow:0 0 24px rgba(96,165,250,0.4);"></div>
+            <div id="intro-desc" style="
+                font-size:14px; color:#94a3b8; line-height:1.7;
+                max-width:540px; margin:0 auto;"></div>
+        </div>
+        <button id="intro-skip" style="
+            position:absolute; bottom:24px; right:24px;
+            background:rgba(255,255,255,0.06); color:#94a3b8;
+            border:1px solid rgba(255,255,255,0.15); border-radius:20px;
+            padding:8px 18px; font-size:12px; letter-spacing:2px; cursor:pointer;
+            font-family:inherit; touch-action:manipulation;
+        ">SKIP ▶</button>
+    `;
+    document.body.appendChild(root);
+
+    const sceneEl = document.getElementById('intro-scene');
+    const subEl   = document.getElementById('intro-sub');
+    const mainEl  = document.getElementById('intro-main');
+    const descEl  = document.getElementById('intro-desc');
+    const skipBtn = document.getElementById('intro-skip');
+
+    let idx = 0;
+    let timer = null;
+    let finished = false;
+
+    function showScene(i) {
+        if (i >= scenes.length) { finish(); return; }
+        const s = scenes[i];
+        sceneEl.style.opacity = '0';
+        timer = setTimeout(() => {
+            subEl.textContent  = s.sub;
+            mainEl.textContent = s.main;
+            descEl.textContent = s.desc;
+            sceneEl.style.opacity = '1';
+            timer = setTimeout(() => { showScene(i + 1); }, 2600);
+        }, 700);
+    }
+
+    function finish() {
+        if (finished) return;
+        finished = true;
+        if (timer) clearTimeout(timer);
+        root.style.transition = 'opacity 0.6s ease';
+        root.style.opacity = '0';
+        setTimeout(() => {
+            root.remove();
+            try { showMessage('📻 ' + charName + ' 형사, 시민들에게 말을 걸어 단서를 수집하세요.'); } catch(e) {}
+            animate();
+        }, 600);
+    }
+
+    skipBtn.addEventListener('click', finish);
+    skipBtn.addEventListener('touchstart', e => { e.preventDefault(); finish(); }, { passive: false });
+
+    // 시작 — 첫 신은 0.4s 뒤에 페이드 인
+    setTimeout(() => showScene(0), 400);
+}
+window.showStoryIntro = showStoryIntro;
+
+// === WANTED POSTER (수배전단) — 보존만, 기본 노출 없음 ===
 function showWantedPoster(firstTime) {
     let modal = document.getElementById('wanted-poster-modal');
     if (modal) modal.remove();
