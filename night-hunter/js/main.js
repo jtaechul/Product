@@ -200,294 +200,7 @@ rimLight.position.set(-60, 40, -80);
 scene.add(rimLight);
 
 // ── Create World ──
-const { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGroup } = createWorld(scene);
-
-// ── Citypack 정식 모드 (기본 ON, STEP 0+F) ──
-// ithappy City 1 GLB가 게임 기본 월드.
-// URL 파라미터:
-//   ?procedural=1       절차적 모드로 opt-out (디버그용)
-//   &scale=N            도시 스케일 (기본 10)
-//   &y=N                Y 위치 강제 지정 (기본 -scale/2)
-//   &rot=N              회전 각도 (기본 15도)
-//   &ambient=0          자동차/보행자 비활성
-//   &debug=1            FPS 카운터 표시
-// 자동 처리:
-//   · 절차적 도시(buildings/ground/props) 숨김, 도로만 35% 투명도 가이드
-//   · 도시 자동 중심 정렬 + Y=-scale/2로 도로 정렬
-//   · 높이 3유닛 이상 mesh를 건물 충돌 박스로 등록
-//   · checkBuildingCollision()이 citypack 충돌 박스를 사용
-(function tryLoadCitypack() {
-    try {
-        const params = new URLSearchParams(location.search);
-        // STEP 0: citypack을 기본 모드로. 절차적 도시는 ?procedural=1로 opt-out.
-        if (params.get('procedural') === '1') {
-            console.log('[Citypack] disabled (procedural mode requested)');
-            return;
-        }
-
-        const scale = parseFloat(params.get('scale')) || 10;
-        const rotDeg = parseFloat(params.get('rot')) || 15;
-
-        // citypack은 자체 도로/인도를 가지고 있으므로 절차적 도시는 전부 숨김
-        groundGroup.visible = false;
-        buildingGroup.visible = false;
-        propsGroup.visible = false;
-        roadGroup.visible = false;
-        console.log(`[Citypack] mode ON  scale=${scale}  rot=${rotDeg}°  (절차적 도시 전부 숨김)`);
-
-        const loader = new THREE.GLTFLoader();
-        const startTime = performance.now();
-        loader.load('assets/models/citypack.glb',
-            (gltf) => {
-                const city = gltf.scene;
-                city.scale.setScalar(scale);
-                city.rotation.y = rotDeg * Math.PI / 180;
-                city.position.set(0, 0, 0);
-                city.updateMatrixWorld(true);
-
-                // 1) 수평 중심을 (0,0)으로
-                let bbox = new THREE.Box3().setFromObject(city);
-                const center = new THREE.Vector3();
-                bbox.getCenter(center);
-                city.position.x = -center.x;
-                city.position.z = -center.z;
-
-                // 2) Y 위치 — 경험적으로 y = -scale/2 가 도로 높이와 일치
-                // (scale=10 → y=-5 가 사용자 검증된 '딱 좋다' 값)
-                const yOverride = parseFloat(params.get('y'));
-                if (!isNaN(yOverride)) {
-                    city.position.y = yOverride;
-                    console.log(`[Citypack] URL y override: ${yOverride}`);
-                } else {
-                    city.position.y = -scale / 2;
-                    console.log(`[Citypack] default y = -scale/2 = ${(-scale/2).toFixed(2)}`);
-                }
-                city.updateMatrixWorld(true);
-
-                // 그림자: castShadow는 모바일 성능 위해 비활성, 받기만 활성
-                city.traverse(o => {
-                    if (o.isMesh) {
-                        o.castShadow = false;
-                        o.receiveShadow = true;
-                    }
-                });
-
-                scene.add(city);
-
-                // 2) 건물 충돌 박스 + 도시 경계
-                // 충돌 박스 추출 — 거대 mesh(276×1064 같은 LOD/스카이박스) 제외
-                // sub-cell raycast는 ~110k cell 생성 → 플레이어 갇힘, 폐기
-                const boxes = [];
-                const MIN_BUILDING_HEIGHT = 3;
-                const MAX_BUILDING_DIM = 200;  // 200유닛 이상은 개별 건물이 아닌 LOD/배경
-                const MAX_FLOAT_BOTTOM = 1.5;
-                let cityMinX = Infinity, cityMaxX = -Infinity;
-                let cityMinZ = Infinity, cityMaxZ = -Infinity;
-                let largestBuilding = null;
-                let largestArea = 0;
-                let excludedMega = 0;
-                city.traverse(o => {
-                    if (!o.isMesh) return;
-                    o.updateMatrixWorld(true);
-                    const b = new THREE.Box3().setFromObject(o);
-                    const size = new THREE.Vector3();
-                    b.getSize(size);
-                    cityMinX = Math.min(cityMinX, b.min.x);
-                    cityMaxX = Math.max(cityMaxX, b.max.x);
-                    cityMinZ = Math.min(cityMinZ, b.min.z);
-                    cityMaxZ = Math.max(cityMaxZ, b.max.z);
-                    if (size.y < MIN_BUILDING_HEIGHT) return;     // 도로/인도
-                    if (b.min.y > MAX_FLOAT_BOTTOM) return;        // 떠있는 awning
-                    if (size.x > MAX_BUILDING_DIM || size.z > MAX_BUILDING_DIM) {
-                        excludedMega++;
-                        return; // LOD/배경 mesh
-                    }
-                    const box = {
-                        minX: b.min.x, maxX: b.max.x,
-                        minZ: b.min.z, maxZ: b.max.z,
-                        cx: (b.min.x + b.max.x) / 2,
-                        cz: (b.min.z + b.max.z) / 2,
-                        area: size.x * size.z,
-                        height: size.y
-                    };
-                    boxes.push(box);
-                    if (box.area > largestArea) {
-                        largestArea = box.area;
-                        largestBuilding = box;
-                    }
-                });
-                console.log(`[Citypack] excluded ${excludedMega} mega-meshes (>${MAX_BUILDING_DIM}u)`);
-                window._citypackCollision = boxes;
-                window._citypackBounds = {
-                    minX: cityMinX, maxX: cityMaxX,
-                    minZ: cityMinZ, maxZ: cityMaxZ
-                };
-                window._citypackLargestBuilding = largestBuilding;
-                console.log(`[Citypack] bounds: X=[${cityMinX.toFixed(0)}, ${cityMaxX.toFixed(0)}] Z=[${cityMinZ.toFixed(0)}, ${cityMaxZ.toFixed(0)}]`);
-                console.log(`[Citypack] collision boxes: ${boxes.length} (군집 ${MAX_BUILDING_DIM}u 이상 제외)`);
-                console.log(`[Citypack] largest building: area=${largestArea.toFixed(0)}, height=${largestBuilding?.height.toFixed(1)}`);
-
-                // STEP 1: NPC/적 도로 위 자동 재배치용 글로벌 헬퍼
-                window.findCitypackSafeSpawn = function(targetX, targetZ, margin) {
-                    const inside = (x, z, M) => {
-                        for (const b of boxes) {
-                            if (x + M > b.minX && x - M < b.maxX
-                             && z + M > b.minZ && z - M < b.maxZ) return true;
-                        }
-                        return false;
-                    };
-                    // 점진적 완화
-                    const passes = [
-                        { margin: margin || 2, maxR: 80, step: 3 },
-                        { margin: 1.5,         maxR: 200, step: 4 },
-                        { margin: 1,           maxR: 400, step: 5 }
-                    ];
-                    for (const pass of passes) {
-                        if (!inside(targetX, targetZ, pass.margin)) {
-                            return { x: targetX, z: targetZ };
-                        }
-                        for (let r = pass.step; r < pass.maxR; r += pass.step) {
-                            const steps = Math.max(8, Math.floor(r * Math.PI / pass.step));
-                            for (let i = 0; i < steps; i++) {
-                                const a = (i / steps) * Math.PI * 2;
-                                const x = targetX + Math.cos(a) * r;
-                                const z = targetZ + Math.sin(a) * r;
-                                if (!inside(x, z, pass.margin)) return { x, z };
-                            }
-                        }
-                    }
-                    return { x: targetX, z: targetZ };
-                };
-
-                // 3) 안전한 spawn 위치 찾기 (충돌 박스에서 최소 3유닛 떨어진 곳)
-                const isSafe = (x, z, minClear) => {
-                    for (const b of boxes) {
-                        if (x + minClear > b.minX && x - minClear < b.maxX
-                         && z + minClear > b.minZ && z - minClear < b.maxZ) return false;
-                    }
-                    return true;
-                };
-                const findSafeSpawn = () => {
-                    // 점진적 완화: 큰 여유 → 작은 여유, 작은 반경 → 큰 반경
-                    const passes = [
-                        { margin: 3,   maxR: 200, step: 3 },
-                        { margin: 2,   maxR: 400, step: 4 },
-                        { margin: 1.5, maxR: 600, step: 5 },
-                        { margin: 1,   maxR: 800, step: 6 }
-                    ];
-                    const preferred = [[0,0],[0,20],[20,0],[0,-20],[-20,0],[0,40],[0,-40],[40,0],[-40,0]];
-                    for (const pass of passes) {
-                        for (const [x, z] of preferred) {
-                            if (isSafe(x, z, pass.margin)) return { x, z };
-                        }
-                        for (let r = pass.step; r < pass.maxR; r += pass.step) {
-                            const steps = Math.max(12, Math.floor(r * Math.PI / pass.step));
-                            for (let i = 0; i < steps; i++) {
-                                const a = (i / steps) * Math.PI * 2;
-                                const x = Math.cos(a) * r;
-                                const z = Math.sin(a) * r;
-                                if (isSafe(x, z, pass.margin)) return { x, z };
-                            }
-                        }
-                    }
-                    // 그래도 못 찾으면 도시 경계 모서리 (반드시 빈 공간)
-                    return {
-                        x: cityMinX + 5,
-                        z: cityMinZ + 5
-                    };
-                };
-                const safe = findSafeSpawn();
-                if (safe && typeof playerGroup !== 'undefined') {
-                    playerGroup.position.set(safe.x, 0, safe.z);
-                    console.log(`[Citypack] player respawned at (${safe.x.toFixed(1)}, 0, ${safe.z.toFixed(1)})`);
-
-                    // 경찰서: 플레이어 spawn 위치 = 경찰서 (접근 보장)
-                    // 가장 큰 건물 앞은 다른 건물에 막힐 수 있어서 안전한 spawn 좌표 사용
-                    const psX = safe.x, psZ = safe.z;
-                    window._policeStation = { x: psX, z: psZ };
-                    const stationMarker = new THREE.Group();
-                    // 파란 빔 (50유닛 높이, 멀리서도 보임)
-                    const beam = new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.3, 0.3, 50, 8),
-                        new THREE.MeshBasicMaterial({
-                            color: 0x4fc3f7, transparent: true, opacity: 0.6,
-                            depthWrite: false
-                        })
-                    );
-                    beam.position.y = 25;
-                    stationMarker.add(beam);
-                    // 바닥에 발광 디스크
-                    const disc = new THREE.Mesh(
-                        new THREE.CircleGeometry(2.5, 24),
-                        new THREE.MeshBasicMaterial({
-                            color: 0x4fc3f7, transparent: true, opacity: 0.7,
-                            depthWrite: false, side: THREE.DoubleSide
-                        })
-                    );
-                    disc.rotation.x = -Math.PI / 2;
-                    disc.position.y = 0.05;
-                    stationMarker.add(disc);
-                    // 머리 위 "🚔 경찰서" 라벨 (sprite)
-                    const c = document.createElement('canvas');
-                    c.width = 256; c.height = 64;
-                    const ctx = c.getContext('2d');
-                    ctx.fillStyle = 'rgba(30,100,200,0.9)';
-                    ctx.fillRect(0, 0, 256, 64);
-                    ctx.font = 'bold 28px Inter, sans-serif';
-                    ctx.fillStyle = '#fff';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('🚔 경찰서', 128, 32);
-                    const tex = new THREE.CanvasTexture(c);
-                    const sign = new THREE.Sprite(new THREE.SpriteMaterial({
-                        map: tex, transparent: true, depthTest: false, depthWrite: false
-                    }));
-                    sign.scale.set(6, 1.5, 1);
-                    sign.position.y = 10;
-                    stationMarker.add(sign);
-
-                    stationMarker.position.set(psX, 0, psZ);
-                    scene.add(stationMarker);
-                    console.log(`[Citypack] police station at (${psX.toFixed(1)}, ${psZ.toFixed(1)})`);
-                }
-
-                // STEP 1: NPC/적이 이미 스폰됐다면 도로 위로 재배치
-                if (typeof NPCSystem !== 'undefined' && NPCSystem.snapToCitypackRoads) {
-                    NPCSystem.snapToCitypackRoads();
-                }
-                if (typeof EnemySystem !== 'undefined' && EnemySystem.snapToCitypackRoads) {
-                    EnemySystem.snapToCitypackRoads();
-                }
-
-                const finalBbox = new THREE.Box3().setFromObject(city);
-                const finalSize = new THREE.Vector3();
-                finalBbox.getSize(finalSize);
-                const ms = (performance.now() - startTime).toFixed(0);
-                console.log(`[Citypack] loaded ${ms}ms  size=${finalSize.x.toFixed(0)}×${finalSize.y.toFixed(0)}×${finalSize.z.toFixed(0)}  collision_boxes=${boxes.length}`);
-
-                window._citypackModel = city;
-            },
-            undefined,
-            (err) => {
-                console.error('[Citypack] load failed, falling back to procedural:', err);
-                // 모든 절차적 그룹 복구
-                groundGroup.visible = true;
-                buildingGroup.visible = true;
-                propsGroup.visible = true;
-                roadGroup.visible = true;
-                roadGroup.traverse(o => {
-                    if (o.isMesh && o.material) {
-                        const mats = Array.isArray(o.material) ? o.material : [o.material];
-                        mats.forEach(m => { m.transparent = false; m.opacity = 1; m.depthWrite = true; });
-                    }
-                });
-                window._citypackCollision = null;
-            }
-        );
-    } catch (e) {
-        console.error('[Citypack] init failed:', e);
-    }
-})();
+const { worldGroup, buildingData } = createWorld(scene);
 
 // ── Player Character ──
 const playerGroup = new THREE.Group();
@@ -1380,18 +1093,6 @@ canvas.addEventListener('touchcancel', _resetCameraInput);
 
 // ── Collision Detection ──
 function checkBuildingCollision(nx, nz) {
-    // Citypack 모드: GLB에서 추출한 AABB. 좁은 골목 접근 위해 마진 0.2
-    if (window._citypackCollision) {
-        const r = 0.2;
-        for (const b of window._citypackCollision) {
-            if (nx + r > b.minX && nx - r < b.maxX
-             && nz + r > b.minZ && nz - r < b.maxZ) {
-                return true;
-            }
-        }
-        return false;
-    }
-    // 절차적 도시 모드
     const playerRadius = 0.5;
     for (const b of buildingData) {
         const bx = b.x || b.mesh.position.x;
@@ -1473,19 +1174,9 @@ function updatePlayer(delta) {
         const nz = playerGroup.position.z + worldDz * speed * delta * 60;
 
         // Boundary & collision
-        // citypack 모드: 도시 bbox만큼 이동 범위 확장. 절차적: WORLD_SIZE/2-1
-        let halfX, halfZ;
-        if (window._citypackBounds) {
-            const b = window._citypackBounds;
-            halfX = { min: b.minX + 2, max: b.maxX - 2 };
-            halfZ = { min: b.minZ + 2, max: b.maxZ - 2 };
-        } else {
-            const half = WORLD_SIZE / 2 - 1;
-            halfX = { min: -half, max: half };
-            halfZ = { min: -half, max: half };
-        }
-        const clampedX = Math.max(halfX.min, Math.min(halfX.max, nx));
-        const clampedZ = Math.max(halfZ.min, Math.min(halfZ.max, nz));
+        const half = WORLD_SIZE / 2 - 1;
+        const clampedX = Math.max(-half, Math.min(half, nx));
+        const clampedZ = Math.max(-half, Math.min(half, nz));
 
         if (!checkBuildingCollision(clampedX, clampedZ)) {
             playerGroup.position.x = clampedX;
@@ -1651,44 +1342,17 @@ function monitorFPS(delta) {
     fpsAccum += delta;
     fpsFrames++;
     fpsCheckTimer += delta;
-    if (fpsCheckTimer >= 0.5) {
+    if (fpsCheckTimer >= 2) {
         const fps = fpsFrames / fpsAccum;
-        // STEP 7: ?debug=1면 화면에 FPS 표시
-        if (window._fpsDebugEl) {
-            window._fpsDebugEl.textContent =
-                `FPS: ${fps.toFixed(0)} · 품질: ${qualityTier} · NPC: ${(NPCSystem.npcs||[]).length} · 적: ${(EnemySystem.enemies||[]).length}`;
-            window._fpsDebugEl.style.color = fps < 30 ? '#ff6666' : fps < 50 ? '#ffcc44' : '#66ff99';
-        }
-        fpsCheckTimer = 0;
-        // 2초 누적치로만 quality downgrade 판단
-        if (fpsAccum >= 2) {
-            if (fps < 30) {
-                lowFpsStreak++;
-                if (lowFpsStreak >= 2) { downgradeQuality(); lowFpsStreak = 0; }
-            } else {
-                lowFpsStreak = 0;
-            }
-            fpsAccum = 0; fpsFrames = 0;
+        fpsAccum = 0; fpsFrames = 0; fpsCheckTimer = 0;
+        if (fps < 30) {
+            lowFpsStreak++;
+            if (lowFpsStreak >= 2) { downgradeQuality(); lowFpsStreak = 0; }
+        } else {
+            lowFpsStreak = 0;
         }
     }
 }
-
-// STEP 7: ?debug=1면 FPS HUD 부착 (한 번만)
-(function setupFPSDebug() {
-    if (new URLSearchParams(location.search).get('debug') !== '1') return;
-    const el = document.createElement('div');
-    el.id = 'fps-debug';
-    el.style.cssText = `
-        position:fixed; top:10px; left:50%; transform:translateX(-50%);
-        background:rgba(0,0,0,0.75); color:#66ff99;
-        padding:6px 12px; border-radius:6px;
-        font:600 12px/1.2 Inter,monospace; z-index:9999;
-        backdrop-filter:blur(8px); pointer-events:none;
-    `;
-    el.textContent = 'FPS: --';
-    document.body.appendChild(el);
-    window._fpsDebugEl = el;
-})();
 
 function downgradeQuality() {
     if (qualityTier === 'HIGH') qualityTier = 'MEDIUM';
@@ -1892,7 +1556,7 @@ function startGame() {
     try { showCharacterSelect(); } catch (e) {
         console.warn('Char select failed:', e);
         try { updateCamera(); } catch (e2) {}
-        animate();
+        try { showWantedPoster(true); } catch (e3) { animate(); }
     }
 }
 
@@ -2136,8 +1800,10 @@ function showCharacterSelect() {
                 setTimeout(() => modal.remove(), 400);
                 try { swapCharacter(charId); } catch (e) { console.warn('swapCharacter failed:', e); }
                 try { updateCamera(); } catch (e) {}
-                // STEP 5: 수배 전단 자동 표시 제거. 게임 바로 시작.
-                animate();
+                try { showWantedPoster(true); } catch (e) {
+                    console.warn('Wanted poster failed:', e);
+                    animate();
+                }
             }, 400);
         };
         card.addEventListener('click', select);
@@ -2324,9 +1990,9 @@ function showWantedPoster(firstTime) {
             <div style="font-size:12px; color:#3a1a0a; margin-bottom:4px;">담당 형사: <b>${gameState.playerName || '소윤'}</b></div>
             <div style="font-size:11px; color:#7a4a1a; margin-bottom:14px;">아이들을 납치한 흉악범 3명. 반드시 검거하라.</div>
             <div style="display:flex; justify-content:center; flex-wrap:wrap; background:#1a1a1a; padding:14px 8px; border-radius:6px;">
-                ${mugshot('CR-001', 0, '1호 길동', '학원 강사 출신<br/>안경, 깡마름, 40대<br/>도심 좁은 골목 옥탑방')}
-                ${mugshot('CR-002', 1, '2호 철수', '무역회사 위장 사업가<br/>볼 흉터, 짧은 수염<br/>도심 사무용 빌딩 지하실')}
-                ${mugshot('CR-003', 2, '3호 영수', '인신매매 조직 두목<br/>눈썹 흉터, 짙은 수염, 60대<br/>도심 최대 빌딩 옥상 + 무장 부하')}
+                ${mugshot('CR-001', 0, '1호 길동', '전직 학원 강사<br/>안경, 깡마름<br/>주택가 잠복')}
+                ${mugshot('CR-002', 1, '2호 철수', '가짜 카페 사장<br/>볼 흉터, 짧은 수염<br/>상업지구')}
+                ${mugshot('CR-003', 2, '3호 영수', '폐공장 조직 두목<br/>눈썹 흉터, 짙은 수염<br/>공장지대')}
             </div>
             ${firstTime ? `
             <div style="margin-top:14px; padding:12px; background:rgba(122,74,26,0.15); border-radius:6px; font-size:12px; color:#3a1a0a; text-align:left; line-height:1.6;">

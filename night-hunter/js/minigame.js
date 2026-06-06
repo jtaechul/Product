@@ -516,10 +516,7 @@ const Minigame = {
     },
 
     updateRescueChildren(delta) {
-        // citypack 모드는 동적 경찰서 좌표, 절차적 모드는 기본값 (0, 92)
-        const ps = window._policeStation;
-        const policeX = ps ? ps.x : 0;
-        const policeZ = ps ? ps.z : 92;
+        const policeX = 0, policeZ = 92;
         for (let i = this.rescueChildren.length - 1; i >= 0; i--) {
             const child = this.rescueChildren[i];
             child.time += delta;

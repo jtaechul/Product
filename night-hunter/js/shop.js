@@ -141,7 +141,7 @@ const Shop = window.Shop = {
         document.getElementById('inv-close').addEventListener('click', () => this.toggleInventory());
     },
 
-    // Police station also acts as shop (보급실) — citypack 모드는 동적 좌표 사용
+    // Police station also acts as shop (보급실)
     policeShopX: 0,
     policeShopZ: 110,
     policeShopDist: 15,
@@ -152,12 +152,9 @@ const Shop = window.Shop = {
             return;
         }
 
-        // citypack 모드면 window._policeStation 사용
-        const ps = window._policeStation;
-        const psX = ps ? ps.x : this.policeShopX;
-        const psZ = ps ? ps.z : this.policeShopZ;
-        const dx = playerPos.x - psX;
-        const dz = playerPos.z - psZ;
+        // Only police station — shop NPC removed
+        const dx = playerPos.x - this.policeShopX;
+        const dz = playerPos.z - this.policeShopZ;
         const dist = Math.sqrt(dx * dx + dz * dz);
         const nearPolice = dist < this.policeShopDist;
 

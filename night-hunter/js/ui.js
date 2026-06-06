@@ -127,13 +127,16 @@ const GameUI = window.GameUI = {
                     padding:8px 10px; font-family:'Inter',sans-serif;">
                     <div style="display:flex; gap:6px 14px; flex-wrap:wrap; justify-content:center;">
                         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
-                            <span style="display:inline-block;width:11px;height:11px;background:rgba(200,200,200,0.85);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>건물
+                            <span style="display:inline-block;width:11px;height:11px;background:rgba(180,140,80,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>주택지구
                         </span>
                         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
-                            <span style="display:inline-block;width:11px;height:11px;background:rgba(60,60,60,0.9);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>도로/골목
+                            <span style="display:inline-block;width:11px;height:11px;background:rgba(80,200,180,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>상업지구
                         </span>
                         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
-                            <span style="display:inline-block;width:11px;height:11px;background:rgba(30,100,220,0.95);border-radius:50%;border:1.5px solid #fff;"></span>🚔 경찰서
+                            <span style="display:inline-block;width:11px;height:11px;background:rgba(120,120,120,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>공업지구
+                        </span>
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
+                            <span style="display:inline-block;width:11px;height:11px;background:rgba(30,100,200,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>경찰서
                         </span>
                     </div>
                     <div style="display:flex; gap:6px 14px; flex-wrap:wrap; justify-content:center;">
@@ -146,8 +149,8 @@ const GameUI = window.GameUI = {
                         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#e2e8f0;font-weight:600;white-space:nowrap;">
                             <span style="display:inline-block;width:11px;height:11px;background:#ff3333;border-radius:50%;border:1px solid #fff;"></span>납치범
                         </span>
-                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#60a5fa;font-weight:600;white-space:nowrap;">
-                            <span style="display:inline-block;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid #3a82d4;"></span>나
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#e2e8f0;font-weight:600;white-space:nowrap;">
+                            <span style="display:inline-block;width:11px;height:11px;background:#60a5fa;border:1px solid #fff;clip-path:polygon(50% 0%, 0% 100%, 100% 100%);"></span>현재 위치
                         </span>
                     </div>
                 </div>
@@ -193,109 +196,10 @@ const GameUI = window.GameUI = {
         const wz = (z) => cy + z * scale;
 
         ctx.clearRect(0, 0, sizeW, sizeH);
-
-        // citypack 전체지도: 도시 전체를 한 화면에 fit
-        if (window._citypackCollision) {
-            const boxes = window._citypackCollision;
-            const cb = window._citypackBounds || { minX: -300, maxX: 300, minZ: -300, maxZ: 300 };
-            const cityW = cb.maxX - cb.minX;
-            const cityD = cb.maxZ - cb.minZ;
-            const cityScale = Math.min(sizeW / cityW, sizeH / cityD) * 0.92;
-            const cityCX = (cb.minX + cb.maxX) / 2;
-            const cityCZ = (cb.minZ + cb.maxZ) / 2;
-            const cwx = (x) => sizeW / 2 + (x - cityCX) * cityScale;
-            const cwz = (z) => sizeH / 2 + (z - cityCZ) * cityScale;
-
-            // 도로 톤 배경
-            ctx.fillStyle = '#3a3a3a';
-            ctx.fillRect(0, 0, sizeW, sizeH);
-            // 건물 — 단일 톤 + 외곽선
-            ctx.fillStyle = 'rgba(220,210,190,0.95)';
-            ctx.strokeStyle = 'rgba(70,60,50,0.75)';
-            ctx.lineWidth = 0.8;
-            boxes.forEach(b => {
-                const x = cwx(b.minX), z = cwz(b.minZ);
-                const w = (b.maxX - b.minX) * cityScale;
-                const h = (b.maxZ - b.minZ) * cityScale;
-                ctx.fillRect(x, z, w, h);
-                ctx.strokeRect(x, z, w, h);
-            });
-            // 경찰서 (가장 눈에 띄게)
-            if (window._policeStation) {
-                const px = cwx(window._policeStation.x);
-                const pz = cwz(window._policeStation.z);
-                ctx.fillStyle = 'rgba(30,100,220,0.3)';
-                ctx.beginPath();
-                ctx.arc(px, pz, 18, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = 'rgba(30,120,240,1)';
-                ctx.beginPath();
-                ctx.arc(px, pz, 9, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2.5;
-                ctx.stroke();
-                ctx.font = 'bold 14px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillStyle = '#fff';
-                ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-                ctx.lineWidth = 3;
-                ctx.strokeText('🚔 경찰서', px, pz - 18);
-                ctx.fillText('🚔 경찰서', px, pz - 18);
-            }
-            // NPC/적 (무전기 보유 시)
-            const hasRadio = typeof Shop !== 'undefined' && Shop.hasItem('radio');
-            if (hasRadio && typeof NPCSystem !== 'undefined') {
-                NPCSystem.npcs.forEach(n => {
-                    if (!n.mesh || !n.mesh.visible || n.caught) return;
-                    const nx = cwx(n.mesh.position.x), nz = cwz(n.mesh.position.z);
-                    if (n.role === 'suspect') {
-                        ctx.fillStyle = '#fbbf24';
-                    } else if (n.assignment) {
-                        ctx.fillStyle = '#86efac';
-                    } else return;
-                    ctx.beginPath();
-                    ctx.arc(nx, nz, 4, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.strokeStyle = '#fff';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                });
-                if (typeof EnemySystem !== 'undefined') {
-                    EnemySystem.enemies.forEach(e => {
-                        if (!e.mesh || !e.mesh.visible || e.arrested) return;
-                        const ex = cwx(e.mesh.position.x), ez = cwz(e.mesh.position.z);
-                        ctx.fillStyle = '#ff3333';
-                        ctx.beginPath();
-                        ctx.arc(ex, ez, 5, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.strokeStyle = '#fff';
-                        ctx.lineWidth = 1.5;
-                        ctx.stroke();
-                    });
-                }
-            }
-            // 플레이어 화살표
-            ctx.save();
-            ctx.translate(cwx(playerPos.x), cwz(playerPos.z));
-            ctx.rotate(Math.PI - playerAngle);
-            ctx.fillStyle = '#3a82d4';
-            ctx.beginPath();
-            ctx.moveTo(0, -12);
-            ctx.lineTo(8, 8);
-            ctx.lineTo(-8, 8);
-            ctx.closePath();
-            ctx.fill();
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.restore();
-            return;
-        }
-
-        // 절차적 모드: 기존 표시
+        // 배경 (잔디)
         ctx.fillStyle = '#1a2e1a';
         ctx.fillRect(0, 0, sizeW, sizeH);
+        // 도로 (메인 격자)
         ctx.strokeStyle = 'rgba(120,120,120,0.5)';
         ctx.lineWidth = 3;
         const mainRoads = [
@@ -307,6 +211,7 @@ const GameUI = window.GameUI = {
         mainRoads.forEach(([x1,z1,x2,z2]) => {
             ctx.beginPath(); ctx.moveTo(wx(x1), wz(z1)); ctx.lineTo(wx(x2), wz(z2)); ctx.stroke();
         });
+        // 건물
         if (typeof buildingData !== 'undefined') {
             buildingData.forEach(b => {
                 const bx = b.x || 0, bz = b.z || 0;
@@ -380,7 +285,25 @@ const GameUI = window.GameUI = {
         mb.addEventListener('touchstart', e => { e.preventDefault(); HintSystem.toggleMemo(); }, { passive: false });
         document.body.appendChild(mb);
 
-        // STEP 5: 수배 전단(📜) 버튼 제거됨
+        // Wanted poster (수배 전단) — re-openable from inventory
+        const wp = document.createElement('button');
+        wp.id = 'btn-wanted-poster';
+        wp.textContent = '📜';
+        wp.style.cssText = `
+            position:fixed;
+            right:calc(202px + env(safe-area-inset-right, 0px));
+            bottom:calc(85px + env(safe-area-inset-bottom, 0px));
+            width:48px; height:48px; border-radius:50%;
+            border:2px solid rgba(180,120,40,0.6);
+            background:rgba(180,120,40,0.3);
+            backdrop-filter:blur(8px); color:#fff; font-size:20px;
+            cursor:pointer; touch-action:none; z-index:30;
+            pointer-events:auto;
+            display:flex; align-items:center; justify-content:center;
+        `;
+        wp.addEventListener('click', () => { if (window.showWantedPoster) window.showWantedPoster(false); });
+        wp.addEventListener('touchstart', e => { e.preventDefault(); if (window.showWantedPoster) window.showWantedPoster(false); }, { passive: false });
+        document.body.appendChild(wp);
     },
 
     createLandscapeOverlay() {
@@ -438,60 +361,26 @@ const GameUI = window.GameUI = {
         const mx = (wx) => half + (wx - playerPos.x) * scale;
         const mz = (wz) => half + (wz - playerPos.z) * scale;
 
-        // citypack 미니맵: 도로 배경 + 건물 단일 톤 + 외곽선 유지
-        if (window._citypackCollision) {
-            ctx.fillStyle = '#3a3a3a';
-            ctx.fillRect(0, 0, size, size);
-            // 모든 건물 동일 색상 + 외곽선
-            ctx.fillStyle = 'rgba(220,210,190,0.95)';
-            ctx.strokeStyle = 'rgba(70,60,50,0.75)';
-            ctx.lineWidth = 0.8;
-            window._citypackCollision.forEach(b => {
-                const x1 = mx(b.minX), x2 = mx(b.maxX);
-                const z1 = mz(b.minZ), z2 = mz(b.maxZ);
-                const w = x2 - x1, h = z2 - z1;
-                if (x2 < -5 || x1 > size + 5 || z2 < -5 || z1 > size + 5) return;
-                ctx.fillRect(x1, z1, w, h);
-                ctx.strokeRect(x1, z1, w, h);
-            });
-            // 3) 경찰서: 파란 펄스 (가까울수록 큼, 멀어도 보이게 살짝 크게)
-            if (window._policeStation) {
-                const psx = mx(window._policeStation.x);
-                const psz = mz(window._policeStation.z);
-                // glow ring
-                ctx.fillStyle = 'rgba(30,100,220,0.25)';
-                ctx.beginPath();
-                ctx.arc(psx, psz, 11, 0, Math.PI * 2);
-                ctx.fill();
-                // main dot
-                ctx.fillStyle = 'rgba(30,120,240,1)';
-                ctx.beginPath();
-                ctx.arc(psx, psz, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            }
-        } else {
-            // 절차적 모드: 기존 도로/건물 표시
-            ctx.strokeStyle = 'rgba(80,80,80,0.6)';
-            ctx.lineWidth = 2;
-            [[- 150, 50, 150, 50], [0, -150, 0, 150], [-100, -40, 100, -40]].forEach(([x1,z1,x2,z2]) => {
-                ctx.beginPath(); ctx.moveTo(mx(x1), mz(z1)); ctx.lineTo(mx(x2), mz(z2)); ctx.stroke();
-            });
-            buildingData.forEach(b => {
-                const bx = mx(b.x||0), bz = mz(b.z||0);
-                const bw = (b.w||6)*scale, bd = (b.d||6)*scale;
-                if (bx<-30||bx>size+30||bz<-30||bz>size+30) return;
-                if (b.type==='police') ctx.fillStyle='rgba(30,100,200,0.85)';
-                else if (b.zone==='POLICE') ctx.fillStyle='rgba(180,140,80,0.6)';
-                else if (b.zone==='RESIDENTIAL') ctx.fillStyle='rgba(180,140,80,0.6)';
-                else if (b.zone==='COMMERCIAL') ctx.fillStyle='rgba(80,200,180,0.6)';
-                else if (b.zone==='FACTORY') ctx.fillStyle='rgba(120,120,120,0.6)';
-                else ctx.fillStyle='rgba(150,150,150,0.4)';
-                ctx.fillRect(bx-bw/2, bz-bd/2, bw, bd);
-            });
-        }
+        // Roads
+        ctx.strokeStyle = 'rgba(80,80,80,0.6)';
+        ctx.lineWidth = 2;
+        [[- 150, 50, 150, 50], [0, -150, 0, 150], [-100, -40, 100, -40]].forEach(([x1,z1,x2,z2]) => {
+            ctx.beginPath(); ctx.moveTo(mx(x1), mz(z1)); ctx.lineTo(mx(x2), mz(z2)); ctx.stroke();
+        });
+
+        // Buildings
+        buildingData.forEach(b => {
+            const bx = mx(b.x||0), bz = mz(b.z||0);
+            const bw = (b.w||6)*scale, bd = (b.d||6)*scale;
+            if (bx<-30||bx>size+30||bz<-30||bz>size+30) return;
+            if (b.type==='police') ctx.fillStyle='rgba(30,100,200,0.85)';
+            else if (b.zone==='POLICE') ctx.fillStyle='rgba(180,140,80,0.6)';
+            else if (b.zone==='RESIDENTIAL') ctx.fillStyle='rgba(180,140,80,0.6)';
+            else if (b.zone==='COMMERCIAL') ctx.fillStyle='rgba(80,200,180,0.6)';
+            else if (b.zone==='FACTORY') ctx.fillStyle='rgba(120,120,120,0.6)';
+            else ctx.fillStyle='rgba(150,150,150,0.4)';
+            ctx.fillRect(bx-bw/2, bz-bd/2, bw, bd);
+        });
 
         // === 무전기(radio) 힌트 마커 ===
         // 무전기 = 추적 장치 — 보이지 않는(은신 중인) 대상도 위치를 송신해 미니맵에 표시.

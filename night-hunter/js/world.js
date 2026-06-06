@@ -1,5 +1,5 @@
-// world.js — 절차적 도시 (citypack 모드의 fallback / ?procedural=1 전용)
-// 한국 신도시 풍 격자 도시 모델: 메인 간선 + 보조 도로, 도로에 면하는 건물 배치
+// world.js — 한국 신도시 풍 도로 우선 도시 설계
+// 분당/일산 격자형 도시 모델: 메인 간선도로 + 보조도로 + 골목, 도로에 면하는 건물 배치
 
 const WORLD_SIZE = 300;
 
@@ -74,35 +74,24 @@ function createWorld(scene) {
     const worldGroup = new THREE.Group();
     const buildingData = [];
 
-    // 서브 그룹 — citypack 모드에서 도로만 보여주려면 분리 필요
-    const roadGroup = new THREE.Group();
-    roadGroup.name = 'roads';
-    const buildingGroup = new THREE.Group();
-    buildingGroup.name = 'buildings';
-    const groundGroup = new THREE.Group();
-    groundGroup.name = 'ground';
-    const propsGroup = new THREE.Group();
-    propsGroup.name = 'props';
-
     defineBlocks();
-    createGround(groundGroup);
-    createRoadNetwork(roadGroup);
-    const policeStation = createPoliceStation(buildingGroup);
+    createGround(worldGroup);
+    createRoadNetwork(worldGroup);
+    const policeStation = createPoliceStation(worldGroup);
     buildingData.push(policeStation);
 
-    const zoneBuildings = createGridBuildings(buildingGroup);
+    const zoneBuildings = createGridBuildings(worldGroup);
     buildingData.push(...zoneBuildings);
     // Add police station to global building positions list
     if (window._buildingPositions) {
         window._buildingPositions.push({ x: 0, z: 110, w: 18, d: 14, hideoutIndex: -1 });
     }
 
-    createStreetProps(propsGroup);
-    createParks(propsGroup);
+    createStreetProps(worldGroup);
+    createParks(worldGroup);
 
-    worldGroup.add(groundGroup, roadGroup, buildingGroup, propsGroup);
     scene.add(worldGroup);
-    return { worldGroup, buildingData, roadGroup, buildingGroup, groundGroup, propsGroup };
+    return { worldGroup, buildingData };
 }
 
 function makeProceduralTexture(baseColor, noiseAmount, size) {
