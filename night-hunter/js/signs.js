@@ -431,6 +431,15 @@ window.loadSigns = function (scene, buildingData) {
             portion.push(SIGNS[cursor % SIGNS.length]);
             cursor++;
         }
+        // 상업 hideout 빌딩의 대표 간판명을 힌트 시스템에 노출
+        if (b.hideoutIndex === 1 && portion.length > 0 && window._hideoutFeatures) {
+            window._hideoutFeatures.COMMERCIAL.signKr = portion[0].kr;
+            window._hideoutFeatures.COMMERCIAL.signEn = portion[0].en;
+            // hint.js 가 이미 generateHintTexts 를 한 후라면 재생성
+            if (typeof HintSystem !== 'undefined' && HintSystem.generateHintTexts) {
+                HintSystem.generateHintTexts();
+            }
+        }
         attachSignsToBuilding(scene, b, portion);
     }
 };
