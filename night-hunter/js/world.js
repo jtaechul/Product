@@ -12,12 +12,18 @@ window.WORLD_Z_NORTH = WORLD_Z_NORTH;
 window.WORLD_Z_SOUTH = WORLD_Z_SOUTH;
 
 // 주거지구 아파트 단지 (남양주시 평내동 실제 단지 참고)
-// 4개 단지로 통합 (북측 행 삭제로 블록 감소)
+// 10개 단지 (실제 평내동 아파트단지 이름 사용)
 const APARTMENT_COMPLEXES = [
-    { kr: '평내금호어울림', en: 'PYEONGNAE KUMHO',     dong: [101, 102, 103, 104] },
-    { kr: '평내중흥아파트', en: 'PYEONGNAE JUNGHEUNG', dong: [201, 202, 203, 204] },
-    { kr: '평내우림아파트', en: 'PYEONGNAE WOORIM',    dong: [301, 302, 303] },
-    { kr: '평내일성트루엘', en: 'PYEONGNAE ILSEONG',   dong: [401, 402, 403] }
+    { kr: '평내금호어울림', en: 'KUMHO EOULLIM',       dong: [101, 102, 103, 104] },
+    { kr: '평내중흥아파트', en: 'JUNGHEUNG APT',       dong: [201, 202, 203, 204] },
+    { kr: '평내우림아파트', en: 'WOORIM APT',          dong: [301, 302, 303] },
+    { kr: '평내일성트루엘', en: 'ILSEONG TRUELL',      dong: [401, 402, 403] },
+    { kr: '대주평내파크빌', en: 'DAEJOO PARKVILLE',    dong: [501, 502, 503, 504] },
+    { kr: '신명스카이뷰', en: 'SHINMYUNG SKYVIEW',     dong: [601, 602, 603] },
+    { kr: '상록데시앙', en: 'SANGNOK DECIAN',          dong: [701, 702, 703, 704] },
+    { kr: 'e편한세상', en: 'E-PYEONHAN WORLD',        dong: [801, 802, 803] },
+    { kr: '어울림공동주택', en: 'EOULLIM RESIDENCE',   dong: [901, 902, 903, 904] },
+    { kr: '평내한신타운', en: 'HANSHIN TOWN',          dong: [1001, 1002, 1003] }
 ];
 
 // 공업지구 기업명 풀 (양각 글자로 공장 외벽에 부착)
@@ -110,11 +116,16 @@ function defineBlocks() {
     BUILDING_BLOCKS.push({ zone: 'POLICE', minX:   54, maxX:   96, minZ: 15, maxZ: 50, density: 'low' });
     BUILDING_BLOCKS.push({ zone: 'POLICE', minX:  104, maxX:  135, minZ: 15, maxZ: 50, density: 'low' });
 
-    // 아파트 단지 — 4 블록
-    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -90, maxX: -55, minZ: -40, maxZ: 0,  density: 'apt', complexIdx: 0 });
-    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -45, maxX: -5,  minZ: -40, maxZ: 0,  density: 'apt', complexIdx: 1 });
-    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -135, maxX: -105, minZ: -40, maxZ: 0, density: 'apt', complexIdx: 2 });
-    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -90, maxX: -55, minZ: -85, maxZ: -50, density: 'apt', complexIdx: 3 });
+    // 아파트 단지 — 6 블록 (V 도로 간 안전 구간만 사용)
+    // 상단행 (z=-40~0, H z=-45 도로 위쪽)
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -135, maxX: -105, minZ: -40, maxZ: 0,  density: 'apt', complexIdx: 0 });
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -90, maxX: -55,  minZ: -40, maxZ: 0,  density: 'apt', complexIdx: 1 });
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -45, maxX: -5,   minZ: -40, maxZ: 0,  density: 'apt', complexIdx: 2 });
+
+    // 하단행 (z=-85~-50, H z=-45 도로 아래쪽) — 3개 블록
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -135, maxX: -105, minZ: -85, maxZ: -50, density: 'apt', complexIdx: 3 });
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -90, maxX: -55,   minZ: -85, maxZ: -50, density: 'apt', complexIdx: 4 });
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -45, maxX: -5,    minZ: -85, maxZ: -50, density: 'apt', complexIdx: 5 });
 
     // === 상업지구 전체 = 로데오 거리 (분당/평촌 번화 풍) ===
     // 4개 긴 가로 행: 2개 로데오(z=-15~-22, z=-55~-62) 좌우 양옆에 상가 행
