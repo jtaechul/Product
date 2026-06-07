@@ -23,7 +23,9 @@ const APARTMENT_COMPLEXES = [
     { kr: '상록데시앙', en: 'SANGNOK DECIAN',          dong: [701, 702, 703, 704] },
     { kr: 'e편한세상', en: 'E-PYEONHAN WORLD',        dong: [801, 802, 803] },
     { kr: '어울림공동주택', en: 'EOULLIM RESIDENCE',   dong: [901, 902, 903, 904] },
-    { kr: '평내한신타운', en: 'HANSHIN TOWN',          dong: [1001, 1002, 1003] }
+    { kr: '평내한신타운', en: 'HANSHIN TOWN',          dong: [1001, 1002, 1003] },
+    { kr: '평내쌍용아파트', en: 'SSANGYONG APT',       dong: [1101, 1102, 1103, 1104] },
+    { kr: '평내현대아파트', en: 'HYUNDAI APT',         dong: [1201, 1202, 1203] }
 ];
 
 // 공업지구 기업명 풀 (양각 글자로 공장 외벽에 부착)
@@ -108,13 +110,13 @@ const BUILDING_BLOCKS = [];
 function defineBlocks() {
     BUILDING_BLOCKS.length = 0;
 
-    // 경찰서 zone — z=15~50, V 도로 (x=±100, ±50, 0) 와 겹치지 않게 6개 분할
-    BUILDING_BLOCKS.push({ zone: 'POLICE', minX: -135, maxX: -104, minZ: 15, maxZ: 50, density: 'low' });
-    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:  -96, maxX:  -54, minZ: 15, maxZ: 50, density: 'low' });
-    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:  -46, maxX:   -6, minZ: 15, maxZ: 50, density: 'low' });
-    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:    6, maxX:   46, minZ: 15, maxZ: 50, density: 'low' });
-    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:   54, maxX:   96, minZ: 15, maxZ: 50, density: 'low' });
-    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:  104, maxX:  135, minZ: 15, maxZ: 50, density: 'low' });
+    // 경찰서 앞 구역(z=15~50) — 아파트 단지로 전환 (V 도로 ±100/±50/0 와 겹치지 않게 6개 분할 유지)
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -135, maxX: -104, minZ: 15, maxZ: 50, density: 'apt', complexIdx: 6 });
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX:  -96, maxX:  -54, minZ: 15, maxZ: 50, density: 'apt', complexIdx: 7 });
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX:  -46, maxX:   -6, minZ: 15, maxZ: 50, density: 'apt', complexIdx: 8 });
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX:    6, maxX:   46, minZ: 15, maxZ: 50, density: 'apt', complexIdx: 9 });
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX:   54, maxX:   96, minZ: 15, maxZ: 50, density: 'apt', complexIdx: 10 });
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX:  104, maxX:  135, minZ: 15, maxZ: 50, density: 'apt', complexIdx: 11 });
 
     // 아파트 단지 — 6 블록 (V 도로 간 안전 구간만 사용)
     // 상단행 (z=-40~0, H z=-45 도로 위쪽)
