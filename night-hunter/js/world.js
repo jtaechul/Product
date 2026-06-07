@@ -51,28 +51,36 @@ const ZONES = {
 };
 
 // Korean city road network - inspired by Bundang/Ilsan grid
-// Main arterial roads — 사각형 perimeter + 내부 격자 모두 연결
-// Z 범위: -140 ~ 85 (월드 -150 ~ 90 내), X 범위: -140 ~ 140 (월드 ±150 내)
+// Main arterial roads — 사각형 perimeter + 내부 격자
+// CORE RULE: 상업지구 내부(z=-90~5, x=5~135) 에는 차량 도로 없음 — 전체가 로데오
+// Z 범위: -140 ~ 85, X 범위: -140 ~ 140
 const MAIN_ROADS = [
     // ── Perimeter (sealed rectangle) ──
-    { type: 'H', z: 85,  w: 8,  length: 290 },   // 북측 perimeter (경찰서 위쪽)
+    { type: 'H', z: 85,  w: 8,  length: 290 },   // 북측 perimeter
     { type: 'H', z: -140, w: 8, length: 290 },   // 남측 perimeter
     { type: 'V', x: -140, w: 8, length: 240 },   // 서측 perimeter
     { type: 'V', x: 140,  w: 8, length: 240 },   // 동측 perimeter
 
-    // ── East-West arterials (내부) ──
-    { type: 'H', z: 55,  w: 8, length: 290 },    // 경찰서 정면 도로 (shifted from z=95)
-    { type: 'H', z: 5,   w: 8, length: 290 },    // R/C divider
-    { type: 'H', z: -45, w: 8, length: 290 },    // 중부 arterial
-    { type: 'H', z: -90, w: 10, length: 290 },   // 공업지대 경계 (shifted from z=-85)
+    // ── East-West arterials (상업지구 경계 + 위/아래 zone) ──
+    { type: 'H', z: 55,  w: 8, length: 290 },    // 경찰서 정면 도로
+    { type: 'H', z: 5,   w: 8, length: 290 },    // R/C divider — 상업지구 북측 경계
+    { type: 'H', z: -90, w: 10, length: 290 },   // 상업/공업 경계 — 상업지구 남측 경계
 
-    // ── North-South arterials (모두 perimeter 까지 연결) ──
-    // V x=0 — 경찰서(z=53~67) 회피로 남측 z=-140~50 만 운영
-    { type: 'V', x: 0,   w: 10, length: 190, offsetZ: -45 },
-    { type: 'V', x: -50, w: 8,  length: 225, offsetZ: -27.5 }, // z=-140~85
-    { type: 'V', x: 50,  w: 8,  length: 225, offsetZ: -27.5 },
-    { type: 'V', x: -100, w: 6, length: 225, offsetZ: -27.5 },
-    { type: 'V', x: 100,  w: 6, length: 225, offsetZ: -27.5 }
+    // ── V 도로 — 경찰지구 섹션 (z=5~85) ──
+    // 모든 V 도로는 H z=5 (상업 북측 경계) 위쪽만 존재
+    { type: 'V', x: 0,    w: 10, length: 50, offsetZ: 30  }, // 경찰 중앙 (z=5~55, 경찰서 회피)
+    { type: 'V', x: -50,  w: 8,  length: 80, offsetZ: 45  }, // 경찰 좌측
+    { type: 'V', x: 50,   w: 8,  length: 80, offsetZ: 45  }, // 경찰 우측
+    { type: 'V', x: -100, w: 6,  length: 80, offsetZ: 45  },
+    { type: 'V', x: 100,  w: 6,  length: 80, offsetZ: 45  },
+
+    // ── V 도로 — 공업지구 섹션 (z=-140~-90) ──
+    // 모든 V 도로는 H z=-90 (상업 남측 경계) 아래쪽만 존재
+    { type: 'V', x: 0,    w: 8, length: 50, offsetZ: -115 },
+    { type: 'V', x: -50,  w: 8, length: 50, offsetZ: -115 },
+    { type: 'V', x: 50,   w: 8, length: 50, offsetZ: -115 },
+    { type: 'V', x: -100, w: 6, length: 50, offsetZ: -115 },
+    { type: 'V', x: 100,  w: 6, length: 50, offsetZ: -115 }
 ];
 window.MAIN_ROADS = MAIN_ROADS;
 
@@ -83,12 +91,13 @@ const BUILDING_BLOCKS = [];
 function defineBlocks() {
     BUILDING_BLOCKS.length = 0;
 
-    // 경찰서 시프트 후 — 경찰 zone 블록은 z=15~50 (도로 z=55 남쪽, R/C divider z=5 북쪽)
-    // 4개 블록: 도로 양옆 + 안쪽
-    BUILDING_BLOCKS.push({ zone: 'POLICE', minX: -125, maxX: -95, minZ: 15, maxZ: 50, density: 'low' });
-    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:  -90, maxX: -55, minZ: 15, maxZ: 50, density: 'low' });
-    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:   55, maxX:  90, minZ: 15, maxZ: 50, density: 'low' });
-    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:   95, maxX: 125, minZ: 15, maxZ: 50, density: 'low' });
+    // 경찰서 zone — z=15~50, V 도로 (x=±100, ±50, 0) 와 겹치지 않게 6개 분할
+    BUILDING_BLOCKS.push({ zone: 'POLICE', minX: -135, maxX: -104, minZ: 15, maxZ: 50, density: 'low' });
+    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:  -96, maxX:  -54, minZ: 15, maxZ: 50, density: 'low' });
+    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:  -46, maxX:   -6, minZ: 15, maxZ: 50, density: 'low' });
+    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:    6, maxX:   46, minZ: 15, maxZ: 50, density: 'low' });
+    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:   54, maxX:   96, minZ: 15, maxZ: 50, density: 'low' });
+    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:  104, maxX:  135, minZ: 15, maxZ: 50, density: 'low' });
 
     // 아파트 단지 — 4 블록
     BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -90, maxX: -55, minZ: -40, maxZ: 0,  density: 'apt', complexIdx: 0 });
@@ -96,33 +105,33 @@ function defineBlocks() {
     BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -135, maxX: -105, minZ: -40, maxZ: 0, density: 'apt', complexIdx: 2 });
     BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -90, maxX: -55, minZ: -85, maxZ: -50, density: 'apt', complexIdx: 3 });
 
-    // === 평내 로데오 거리 (서현역 로데오 / 평촌 번화 참고) ===
-    // 보행자 거리 (z=-24~-16) 를 중심으로 양쪽에 더 큰 상가 — V 도로 x=0, x=50 사이라 도로 교차 없음
-    // 북측 행 (z=-16~-5) — 간판 -Z (남쪽 로데오 방향)
+    // === 상업지구 전체 = 로데오 거리 (분당/평촌 번화 풍) ===
+    // 4개 긴 가로 행: 2개 로데오(z=-15~-22, z=-55~-62) 좌우 양옆에 상가 행
+    // 차량 도로 없음 — perimeter 와 H z=5 / z=-90 외부에서만 진입
     BUILDING_BLOCKS.push({
-        zone: 'COMMERCIAL', minX: 5, maxX: 45, minZ: -16, maxZ: -5,
-        density: 'rodeo', facing: '-Z', rodeo: true
+        zone: 'COMMERCIAL', minX: 5, maxX: 135, minZ: -14, maxZ: -1,
+        density: 'rodeo', facing: '-Z', rodeo: true  // 북측 행, 간판 남쪽 N로데오 향함
     });
-    // 남측 행 (z=-35~-24) — 간판 +Z (북쪽 로데오 방향)
     BUILDING_BLOCKS.push({
-        zone: 'COMMERCIAL', minX: 5, maxX: 45, minZ: -35, maxZ: -24,
-        density: 'rodeo', facing: '+Z', rodeo: true
+        zone: 'COMMERCIAL', minX: 5, maxX: 135, minZ: -36, maxZ: -23,
+        density: 'rodeo', facing: '+Z', rodeo: true  // N로데오 남측 행, 간판 북쪽 향함
+    });
+    BUILDING_BLOCKS.push({
+        zone: 'COMMERCIAL', minX: 5, maxX: 135, minZ: -54, maxZ: -41,
+        density: 'rodeo', facing: '-Z', rodeo: true  // S로데오 북측 행
+    });
+    BUILDING_BLOCKS.push({
+        zone: 'COMMERCIAL', minX: 5, maxX: 135, minZ: -76, maxZ: -63,
+        density: 'rodeo', facing: '+Z', rodeo: true  // S로데오 남측 행
     });
 
-    // 일반 상가 블록 — 도로변 (분당/평촌 번화 스타일)
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:  55, maxX:  90, minZ: -40, maxZ: 0, density: 'high' });
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:  95, maxX: 135, minZ: -40, maxZ: 0, density: 'high' });
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:  55, maxX:  90, minZ: -85, maxZ: -50, density: 'medium' });
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:   5, maxX:  45, minZ: -85, maxZ: -50, density: 'medium' });
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:  95, maxX: 135, minZ: -85, maxZ: -50, density: 'medium' });
-
-    // 공업 블록 (z<-95)
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX: -135, maxX: -100, minZ: -135, maxZ: -95, density: 'sparse' });
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  -95, maxX:  -55, minZ: -135, maxZ: -95, density: 'sparse' });
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  -50, maxX:  -5,  minZ: -135, maxZ: -95, density: 'sparse' });
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:    5, maxX:   50, minZ: -135, maxZ: -95, density: 'sparse' });
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:   55, maxX:   95, minZ: -135, maxZ: -95, density: 'sparse' });
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  100, maxX:  135, minZ: -135, maxZ: -95, density: 'sparse' });
+    // 공업 블록 — V 도로 (factory section) 와 겹치지 않게 6개 분할
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX: -135, maxX: -104, minZ: -135, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  -96, maxX:  -54, minZ: -135, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  -46, maxX:   -6, minZ: -135, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:    6, maxX:   46, minZ: -135, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:   54, maxX:   96, minZ: -135, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  104, maxX:  135, minZ: -135, maxZ: -95, density: 'sparse' });
 
     // === PRINCIPLES.md #4 검증: 블록 vs 도로 asphalt 교차 검사 ===
     validateBlocksVsRoads();
@@ -320,15 +329,16 @@ function createRoadNetwork(group) {
         }
     });
 
-    // === 표준 zebra 횡단보도 — 교차로 4면에만 (가운데 비움) ===
+    // === 한국 표준 zebra 횡단보도 — 교차로 4면에만, 가운데 비움 ===
+    // 줄 폭 l1=0.5m, 간격 l2=0.7m (1.5*l1), 6줄, D1≈4m, 진행방향에 수직
     const cwMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
     const hRoads = MAIN_ROADS.filter(r => r.type === 'H');
     const vRoads = MAIN_ROADS.filter(r => r.type === 'V');
 
-    const STRIPE_W   = 0.45;   // 각 흰 띠 폭 (보행 방향)
-    const STRIPE_GAP = 0.45;   // 띠 간격
-    const N_STRIPES  = 5;      // 띠 개수
-    const CW_OFFSET  = 0.5;    // 도로 끝에서 횡단보도 시작까지 여유
+    const STRIPE_W   = 0.50;   // l1 (각 줄 폭)
+    const STRIPE_GAP = 0.70;   // l2 (간격)
+    const N_STRIPES  = 6;      // 줄 개수
+    const CW_OFFSET  = 1.0;    // 교차로 가장자리에서 횡단보도 시작 거리
 
     hRoads.forEach(h => {
         vRoads.forEach(v => {
@@ -340,45 +350,54 @@ function createRoadNetwork(group) {
             if (!(inH && inV)) return;
 
             const cx = v.x, cz = h.z;
+            const bandD = N_STRIPES * STRIPE_W + (N_STRIPES - 1) * STRIPE_GAP;
 
-            // ── 북측 횡단보도 (V 도로를 가로지름) ──
-            // 위치: cz + h.w/2 + CW_OFFSET (H 도로 북쪽 인도)
-            // stripes: V 도로 가로지름, BoxGeom(v.w, ., STRIPE_W), Z 방향 spaced
+            // V 도로를 가로지르는 횡단보도 (N/S) — 줄들이 길이 X (v.w), 폭 STRIPE_W
             const drawZebraAcrossV = (centerZ) => {
                 for (let k = 0; k < N_STRIPES; k++) {
                     const zPos = centerZ + (k - (N_STRIPES - 1) / 2) * (STRIPE_W + STRIPE_GAP);
                     const stripe = new THREE.Mesh(
-                        new THREE.BoxGeometry(v.w * 0.9, 0.05, STRIPE_W), cwMat
+                        new THREE.BoxGeometry(v.w * 0.92, 0.05, STRIPE_W), cwMat
                     );
                     stripe.position.set(cx, 0.13, zPos);
                     group.add(stripe);
                 }
             };
+            // H 도로를 가로지르는 횡단보도 (E/W) — 줄들이 길이 Z (h.w), 폭 STRIPE_W
             const drawZebraAcrossH = (centerX) => {
                 for (let k = 0; k < N_STRIPES; k++) {
                     const xPos = centerX + (k - (N_STRIPES - 1) / 2) * (STRIPE_W + STRIPE_GAP);
                     const stripe = new THREE.Mesh(
-                        new THREE.BoxGeometry(STRIPE_W, 0.05, h.w * 0.9), cwMat
+                        new THREE.BoxGeometry(STRIPE_W, 0.05, h.w * 0.92), cwMat
                     );
                     stripe.position.set(xPos, 0.13, cz);
                     group.add(stripe);
                 }
             };
 
-            // 4면 횡단보도 (각각 도로 한쪽 인도 끝에)
-            drawZebraAcrossV(cz + h.w / 2 + CW_OFFSET + (N_STRIPES * (STRIPE_W + STRIPE_GAP)) / 2);
-            drawZebraAcrossV(cz - h.w / 2 - CW_OFFSET - (N_STRIPES * (STRIPE_W + STRIPE_GAP)) / 2);
-            drawZebraAcrossH(cx + v.w / 2 + CW_OFFSET + (N_STRIPES * (STRIPE_W + STRIPE_GAP)) / 2);
-            drawZebraAcrossH(cx - v.w / 2 - CW_OFFSET - (N_STRIPES * (STRIPE_W + STRIPE_GAP)) / 2);
+            // 4면 횡단보도 (도로 끝에서 CW_OFFSET 후 밴드 중심)
+            drawZebraAcrossV(cz + h.w / 2 + CW_OFFSET + bandD / 2);
+            drawZebraAcrossV(cz - h.w / 2 - CW_OFFSET - bandD / 2);
+            drawZebraAcrossH(cx + v.w / 2 + CW_OFFSET + bandD / 2);
+            drawZebraAcrossH(cx - v.w / 2 - CW_OFFSET - bandD / 2);
         });
     });
 }
 
-// 평내 로데오 거리 — 차 안다니는 보행자 광장 + 가로수/조명
-// 위치: x=5~45 (V x=0, x=50 사이), z=-24~-16 (H z=5, z=-45 사이) → 도로 교차 없음
+// 상업지구 전체 = 로데오 거리 — 가로 2줄 로데오 + 양옆 상가
+// 차량 도로 없음 (CORE RULE 준수)
 function createRodeoStreet(group) {
-    const RX_MIN = 5, RX_MAX = 45;
-    const RZ_MIN = -24, RZ_MAX = -16;
+    // 2개 로데오 생성 (N: z=-22~-15, S: z=-62~-55)
+    const RODEOS = [
+        { rzMin: -22, rzMax: -15, name: 'N' },
+        { rzMin: -62, rzMax: -55, name: 'S' }
+    ];
+    RODEOS.forEach((rodeo, idx) => buildRodeoStrip(group, rodeo.rzMin, rodeo.rzMax, idx));
+}
+
+// 단일 로데오 스트립 생성
+function buildRodeoStrip(group, RZ_MIN, RZ_MAX, idx) {
+    const RX_MIN = 5, RX_MAX = 135;
     const RW = RX_MAX - RX_MIN;
     const RD = RZ_MAX - RZ_MIN;
     const RCX = (RX_MIN + RX_MAX) / 2;
@@ -1494,15 +1513,14 @@ function createCityParks(group) {
     });
     const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.9 });
 
-    // 공원 후보 영역들 (빌딩 블록과 겹치지 않는 빈 공간)
-    // 1) 경찰서 동측 빈 공간 (x=5~50, z=53~85) — 경찰서 광장
-    // 2) 경찰서 서측 빈 공간 (x=-50~-5, z=53~85)
-    // 3) 공업 ↔ 상가 사이 (z=-95~-90 도로 주변 + 일부 buffer)
+    // 공원 후보 — 도로/건물 안 겹치게 안전 위치 (PRINCIPLES.md #1 준수)
+    // 1) 경찰서 동측 광장 (V x=0 ↔ V x=50 사이, H z=55 ↔ z=85 사이)
+    // 2) 경찰서 서측 광장 (V x=-50 ↔ V x=0 사이)
+    // 3) 주거 ↔ 상업 사이 좁은 녹지 (x=-5 ↔ x=5)
     const parks = [
-        { cx:  27, cz: 70, w: 35, d: 22, hasFountain: true,  treeCount: 14 }, // 경찰서 동측 광장
-        { cx: -27, cz: 70, w: 35, d: 22, hasFountain: false, treeCount: 12 }, // 경찰서 서측 잔디공원
-        { cx: -50, cz: -47, w: 14, d: 8, hasFountain: false, treeCount: 6  }, // 거리공원
-        { cx:  50, cz: -47, w: 14, d: 8, hasFountain: false, treeCount: 6  }
+        { cx:  27, cz: 70, w: 35, d: 14, hasFountain: true,  treeCount: 12 },
+        { cx: -27, cz: 70, w: 35, d: 14, hasFountain: false, treeCount: 10 },
+        { cx:   0, cz: -20, w: 8, d: 18, hasFountain: false, treeCount:  6 }
     ];
 
     parks.forEach(p => {
