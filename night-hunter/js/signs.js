@@ -155,8 +155,11 @@ function darken(hex, amount) {
     return '#' + c.getHexString();
 }
 
-// ── 실사풍 메인 보드 텍스처 ──────────────────────
-function makeBoardTexture(sign) {
+// ── 실사풍 메인 보드 텍스처 (4가지 디자인 변형) ──
+// styleVariant: 0=정사각 엠블럼+우측 텍스트, 1=원형 엠블럼,
+//               2=텍스트 중앙 (엠블럼 없음), 3=세로 분할 (엠블럼 우측)
+function makeBoardTexture(sign, styleVariant) {
+    const sv = (typeof styleVariant === 'number') ? styleVariant : 0;
     const cv = document.createElement('canvas');
     cv.width = 1024; cv.height = 256;
     const ctx = cv.getContext('2d');
@@ -187,54 +190,74 @@ function makeBoardTexture(sign) {
     ctx.fillStyle = hi;
     ctx.fillRect(0, 0, 1024, 30);
 
-    // 4) 엠블럼 박스 (좌측, 둥근 모서리 + 안쪽 그림자)
-    const emX = 22, emY = 22, emS = 212;
-    ctx.fillStyle = sign.bx;
-    ctx.beginPath();
-    const r = 16;
-    ctx.moveTo(emX + r, emY);
-    ctx.lineTo(emX + emS - r, emY);
-    ctx.quadraticCurveTo(emX + emS, emY, emX + emS, emY + r);
-    ctx.lineTo(emX + emS, emY + emS - r);
-    ctx.quadraticCurveTo(emX + emS, emY + emS, emX + emS - r, emY + emS);
-    ctx.lineTo(emX + r, emY + emS);
-    ctx.quadraticCurveTo(emX, emY + emS, emX, emY + emS - r);
-    ctx.lineTo(emX, emY + r);
-    ctx.quadraticCurveTo(emX, emY, emX + r, emY);
-    ctx.closePath();
-    ctx.fill();
-    // 엠블럼 내부 광택 (상단)
-    const emHi = ctx.createLinearGradient(0, emY, 0, emY + emS);
-    emHi.addColorStop(0, 'rgba(255,255,255,0.35)');
-    emHi.addColorStop(0.4, 'rgba(255,255,255,0)');
-    ctx.fillStyle = emHi;
-    ctx.fill();
-    // 엠블럼 테두리 (살짝 어두운 외곽선)
-    ctx.strokeStyle = sign.bd;
-    ctx.lineWidth = 4;
-    ctx.stroke();
-    // 엠블럼 안에 영문 이니셜 (영문 첫 글자)
-    ctx.fillStyle = sign.bd;
-    ctx.font = 'bold 130px "Inter", "Noto Sans KR", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(sign.en.charAt(0), emX + emS / 2, emY + emS / 2 + 8);
+    // 4) 엠블럼 — 변형별 모양 (정사각 / 원 / 다이아 / 우측)
+    let textStartX = 270;
+    if (sv !== 2) {
+        const emS = (sv === 3) ? 200 : 212;
+        const emX = (sv === 3) ? (1024 - emS - 22) : 22;
+        const emY = (256 - emS) / 2;
+        ctx.fillStyle = sign.bx;
+        ctx.beginPath();
+        if (sv === 1) {
+            // 원형 엠블럼
+            ctx.arc(emX + emS / 2, emY + emS / 2, emS / 2, 0, Math.PI * 2);
+        } else {
+            // 둥근 사각 (sv=0 좌측, sv=3 우측)
+            const r = 18;
+            ctx.moveTo(emX + r, emY);
+            ctx.lineTo(emX + emS - r, emY);
+            ctx.quadraticCurveTo(emX + emS, emY, emX + emS, emY + r);
+            ctx.lineTo(emX + emS, emY + emS - r);
+            ctx.quadraticCurveTo(emX + emS, emY + emS, emX + emS - r, emY + emS);
+            ctx.lineTo(emX + r, emY + emS);
+            ctx.quadraticCurveTo(emX, emY + emS, emX, emY + emS - r);
+            ctx.lineTo(emX, emY + r);
+            ctx.quadraticCurveTo(emX, emY, emX + r, emY);
+            ctx.closePath();
+        }
+        ctx.fill();
+        ctx.strokeStyle = sign.bd;
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        // 엠블럼 내부 광택
+        const emHi = ctx.createLinearGradient(0, emY, 0, emY + emS);
+        emHi.addColorStop(0, 'rgba(255,255,255,0.35)');
+        emHi.addColorStop(0.4, 'rgba(255,255,255,0)');
+        ctx.fillStyle = emHi;
+        ctx.fillRect(emX, emY, emS, emS / 2);
+        // 엠블럼 안에 영문 이니셜
+        ctx.fillStyle = sign.bd;
+        ctx.font = 'bold 130px "Inter", "Noto Sans KR", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(sign.en.charAt(0), emX + emS / 2, emY + emS / 2 + 8);
+
+        textStartX = (sv === 3) ? 30 : 270;
+    }
 
     // 5) 영문 상호명 — 큰 글씨 + 드롭 섀도우
-    const tx = 270;
     ctx.shadowColor = 'rgba(0,0,0,0.35)';
     ctx.shadowBlur = 6;
     ctx.shadowOffsetX = 2;
     ctx.shadowOffsetY = 2;
     ctx.fillStyle = sign.fg;
-    ctx.font = 'bold 80px "Inter", "Noto Sans KR", sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText(sign.en, tx, 115);
-
-    // 6) 한글 상호명
-    ctx.font = 'bold 60px "Noto Sans KR", "Inter", sans-serif';
-    ctx.fillText(sign.kr, tx, 200);
+    if (sv === 2) {
+        // 중앙 정렬 (엠블럼 없음)
+        ctx.font = 'bold 92px "Inter", "Noto Sans KR", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(sign.en, 512, 115);
+        ctx.font = 'bold 64px "Noto Sans KR", "Inter", sans-serif';
+        ctx.fillText(sign.kr, 512, 200);
+    } else {
+        ctx.font = 'bold 80px "Inter", "Noto Sans KR", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(sign.en, textStartX, 115);
+        // 6) 한글 상호명
+        ctx.font = 'bold 60px "Noto Sans KR", "Inter", sans-serif';
+        ctx.fillText(sign.kr, textStartX, 200);
+    }
 
     // 7) 그림자 리셋 + 좌하단 작은 부가 정보 (전화 아이콘 패턴)
     ctx.shadowColor = 'transparent';
@@ -259,14 +282,14 @@ function makeBoardTexture(sign) {
 }
 
 // ── 절차적 간판 (실사풍 박스) ──────────────────
-function buildProceduralSign(sign) {
+function buildProceduralSign(sign, styleVariant) {
     const sz = SIZES[sign.sz];
     const W = sz.w, H = sz.h, D = sz.d, BW = sz.bw;
     const group = new THREE.Group();
     group.name = `Sign_${sign.id}`;
 
     // 메인 보드 — 앞면(+Z)에만 텍스트 텍스처
-    const boardTex = makeBoardTexture(sign);
+    const boardTex = makeBoardTexture(sign, styleVariant);
     const matFront = new THREE.MeshStandardMaterial({
         map: boardTex,
         emissive: hexToColor('#ffffff'),
@@ -367,20 +390,9 @@ function applyTextureToGLB(root, sign) {
     });
 }
 
-function loadSignMesh(sign, onReady) {
-    const url = `assets/models/signs/${sign.id}.glb`;
-    const loader = new THREE.GLTFLoader();
-    loader.load(
-        url,
-        (gltf) => {
-            const root = gltf.scene;
-            applyTextureToGLB(root, sign);
-            root.name = `Sign_${sign.id}_GLB`;
-            onReady(root);
-        },
-        undefined,
-        (_err) => { onReady(buildProceduralSign(sign)); }
-    );
+function loadSignMesh(sign, styleVariant, onReady) {
+    // 절차적만 사용 — GLB 로딩 실패가 잦아 즉시 절차적 폴백 사용 (성능 + 다양성)
+    onReady(buildProceduralSign(sign, styleVariant));
 }
 
 // ── 빌딩 1개에 간판 부착 — facing 방향에 따라 부착면 결정 ──
@@ -410,17 +422,43 @@ function attachSignsToBuilding(scene, building, signList) {
     const count = Math.min(slots.length, signList.length);
     if (count === 0) return;
 
-    for (let i = 0; i < count; i++) {
-        const sign = signList[i];
-        const sz = SIZES[sign.sz];
-        // 부착 면 폭 - 0.6m 여유에 맞춰 스케일
-        const maxW = maxFaceW - 0.6;
-        const scale = sz.w > maxW ? maxW / sz.w : 1.0;
-        const yPos = slots[i];
+    // 한 슬롯에 다중 간판 배치 — 부착 면 폭에 맞춰 1~3개
+    // 작은 빌딩(w<6m)은 1개, 중(6~10m) 2개, 대(10m+) 3개
+    let perSlot = 1;
+    if (maxFaceW >= 10) perSlot = 3;
+    else if (maxFaceW >= 6) perSlot = 2;
 
-        loadSignMesh(sign, (mesh) => {
+    const totalSigns = Math.min(slots.length * perSlot, signList.length);
+    if (totalSigns === 0) return;
+
+    for (let i = 0; i < totalSigns; i++) {
+        const sign = signList[i];
+        const slotIdx = Math.floor(i / perSlot);
+        const subIdx = i % perSlot;
+        if (slotIdx >= slots.length) break;
+
+        const sz = SIZES[sign.sz];
+        // 한 슬롯 내 간판 폭 — 면 폭 / perSlot, 마진 적용
+        const perSignMax = (maxFaceW - 0.4 * (perSlot + 1)) / perSlot;
+        const scale = sz.w > perSignMax ? perSignMax / sz.w : 1.0;
+
+        // 가로 위치 — 슬롯 내 균등 분포 (face 축에 따라)
+        const offsetCenter = (subIdx - (perSlot - 1) / 2) * (perSignMax + 0.4);
+
+        const yPos = slots[slotIdx];
+        let px = frontX, pz = frontZ;
+        if (facing === '+Z' || facing === '-Z') {
+            px = x + offsetCenter * (facing === '-Z' ? -1 : 1);
+        } else {
+            pz = z + offsetCenter * (facing === '-X' ? -1 : 1);
+        }
+
+        // 디자인 변형 (id 와 위치 조합으로 결정 — 같은 간판도 위치별로 다른 variant)
+        const styleVariant = (i + sign.id.length) % 4;
+
+        loadSignMesh(sign, styleVariant, (mesh) => {
             mesh.scale.setScalar(scale);
-            mesh.position.set(frontX, yPos, frontZ);
+            mesh.position.set(px, yPos, pz);
             mesh.rotation.y = rotY;
             scene.add(mesh);
         });

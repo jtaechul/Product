@@ -516,7 +516,9 @@ const Minigame = {
     },
 
     updateRescueChildren(delta) {
-        const policeX = 0, policeZ = 92;
+        // PRINCIPLES.md #9 — _policeStation 동적 읽음
+        const ps = window._policeStation || { x: 0, z: 60 };
+        const policeX = ps.x, policeZ = ps.z;
         for (let i = this.rescueChildren.length - 1; i >= 0; i--) {
             const child = this.rescueChildren[i];
             child.time += delta;
