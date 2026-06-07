@@ -269,8 +269,7 @@ const GameUI = window.GameUI = {
         // 공원 — 분당신도시 스타일 (실 맵과 동일 좌표)
         const PARKS = [
             { cx:  27, cz: 70, w: 35, d: 14 },
-            { cx: -27, cz: 70, w: 35, d: 14 },
-            { cx:   0, cz: -20, w: 8, d: 18 }
+            { cx: -27, cz: 70, w: 35, d: 14 }
         ];
         ctx.fillStyle = 'rgba(74,140,58,0.55)';
         PARKS.forEach(p => {
