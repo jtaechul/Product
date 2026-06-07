@@ -44,7 +44,7 @@ const FACTORY_COMPANIES = [
 
 // Zone definitions (경찰서 시프트 후)
 const ZONES = {
-    POLICE:      { name: '경찰서 구역', cx: 0, cz: 60 },
+    POLICE:      { name: '경찰서 구역', cx: 0, cz: 67 },
     RESIDENTIAL: { name: '주택가',     cx: -80, cz: -25 },
     COMMERCIAL:  { name: '상업지구',   cx: 80, cz: -25 },
     FACTORY:     { name: '공장지대',   cx: 0, cz: -100 }
@@ -178,9 +178,9 @@ function createWorld(scene) {
 
     const zoneBuildings = createGridBuildings(worldGroup);
     buildingData.push(...zoneBuildings);
-    // 경찰서 collision 박스 (z=60 으로 시프트됨)
+    // 경찰서 collision 박스 (z=67 — H z=55 / H z=85 도로 사이 공터, 도로 비충돌 위치)
     if (window._buildingPositions) {
-        window._buildingPositions.push({ x: 0, z: 60, w: 18, d: 14, hideoutIndex: -1 });
+        window._buildingPositions.push({ x: 0, z: 67, w: 18, d: 14, hideoutIndex: -1 });
     }
 
     createStreetProps(worldGroup);
@@ -522,7 +522,10 @@ function buildRodeoStrip(group, RZ_MIN, RZ_MAX, idx) {
 }
 
 function createPoliceStation(group) {
-    const x = 0, z = 60;  // 시프트: z=110 → z=60 (북측 영역 압축)
+    // z=67: H z=55 도로(asphalt 51~59) 와 H z=85 도로(asphalt 81~89) 사이 공터.
+    // 경찰서 풋프린트(±d/2=±7) 가 두 도로 asphalt 와 전혀 겹치지 않는 유일한 안전 구간(z 66~74).
+    // (남쪽 z<59 구간은 V x=0 도로(z 5~55) + H z=55 도로가 전부 점유 — 이동 불가)
+    const x = 0, z = 67;
     const w = 18, d = 14, h = 14;
     const building = createBuilding(group, x, z, w, d, h, 0x1a3a5c, '경찰서');
 
@@ -1519,8 +1522,7 @@ function createCityParks(group) {
     // 3) 주거 ↔ 상업 사이 좁은 녹지 (x=-5 ↔ x=5)
     const parks = [
         { cx:  27, cz: 70, w: 35, d: 14, hasFountain: true,  treeCount: 12 },
-        { cx: -27, cz: 70, w: 35, d: 14, hasFountain: false, treeCount: 10 },
-        { cx:   0, cz: -20, w: 8, d: 18, hasFountain: false, treeCount:  6 }
+        { cx: -27, cz: 70, w: 35, d: 14, hasFountain: false, treeCount: 10 }
     ];
 
     parks.forEach(p => {

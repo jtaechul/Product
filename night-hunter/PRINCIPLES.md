@@ -3,6 +3,27 @@
 이 문서는 도시 레이아웃 관련 **불변 규칙**을 정의한다. 어떤 변경도 이 규칙을
 위반해서는 안 된다. 위반 시 즉시 수정 + 회귀 검증.
 
+## 🚨 SYNC RULE (절대 위반 금지) — 실 맵 = 미니맵
+
+### **실제 맵(world.js)과 미니맵(ui.js)은 항상 100% 동일해야 한다.**
+
+- **데이터 중복 금지**: 공원·로데오·건물·도로 등 좌표·치수 배열을
+  world.js 와 ui.js 양쪽에 따로 적지 않는다. 가능한 한 `window.*`
+  단일 export(`window.MAIN_ROADS`, `window._policeStation`,
+  `window._buildingPositions` 등)를 통해 ui.js 가 world.js 의 데이터를
+  그대로 읽어 그린다.
+- 부득이하게 ui.js 에 좌표 배열을 별도로 둬야 한다면(`PARKS`, `RODEOS`
+  같은 시각 보조 배열), **world.js 의 원본 배열과 항목 수·좌표·치수가
+  1:1로 정확히 일치**해야 하며, world.js 를 수정하면 **반드시 같은 커밋에서**
+  ui.js 의 대응 배열도 함께 수정한다.
+- **검증 절차**: world.js 의 `createCityParks`, `createRodeoStreet`,
+  `defineBlocks`, `createPoliceStation` 등 좌표를 변경할 때마다
+  ui.js 의 `updateMinimap`/`drawFullMap` 안의 대응 배열을 grep 하여
+  일치 여부를 확인하고, 불일치 시 즉시 수정한다.
+- 실 맵에서 삭제한 오브젝트(공원, 건물, props 등)는 **같은 작업에서**
+  미니맵에서도 삭제한다 — 한쪽만 지우는 것은 CORE RULE 의
+  "실 맵/미니맵 모두 적용" 조항 위반이다.
+
 ## 🚨 CORE RULE (절대 위반 금지)
 
 ### **도로 위에는 그 어떤 고정된 물체나 건물도 있을 수 없다.**
