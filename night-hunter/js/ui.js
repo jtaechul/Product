@@ -13,20 +13,30 @@ const GameUI = window.GameUI = {
     },
 
     createBGMIndicator() {
+        // 좌우 나란히 컨테이너 — BGM(좌) + 1/3인칭(우)
+        const bar = document.createElement('div');
+        bar.id = 'btn-bar-bottom-right';
+        bar.style.cssText = `
+            position:fixed;
+            right:calc(14px + env(safe-area-inset-right, 0px));
+            bottom:calc(145px + env(safe-area-inset-bottom, 0px));
+            display:flex; flex-direction:row; align-items:center; gap:8px;
+            z-index:30; pointer-events:auto;
+        `;
+        document.body.appendChild(bar);
+
+        // BGM 토글 (좌측)
         const btn = document.createElement('button');
         btn.id = 'btn-bgm-toggle';
         btn.title = 'BGM 토글';
         btn.style.cssText = `
-            position:fixed;
-            right:calc(14px + env(safe-area-inset-right, 0px));
-            bottom:calc(145px + env(safe-area-inset-bottom, 0px));
-            width:44px; height:44px; border-radius:50%;
+            width:60px; height:44px; border-radius:22px;
             border:2px solid rgba(96,165,250,0.6);
             background:rgba(15,23,42,0.7);
             backdrop-filter:blur(8px); color:#fff; font-size:18px;
-            cursor:pointer; touch-action:none; z-index:30;
-            pointer-events:auto;
+            cursor:pointer; touch-action:none; pointer-events:auto;
             display:flex; align-items:center; justify-content:center;
+            font-family:'Inter','Noto Sans KR',sans-serif; padding:0;
         `;
         btn.textContent = '🔇';
         const toggle = () => {
@@ -44,7 +54,7 @@ const GameUI = window.GameUI = {
         };
         btn.addEventListener('click', toggle);
         btn.addEventListener('touchstart', e => { e.preventDefault(); toggle(); }, { passive: false });
-        document.body.appendChild(btn);
+        bar.appendChild(btn);
         // Live status updater
         setInterval(() => {
             if (typeof SoundManager === 'undefined') return;
@@ -53,21 +63,17 @@ const GameUI = window.GameUI = {
             btn.style.borderColor = playing ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)';
         }, 500);
 
-        // 1인칭/3인칭 카메라 토글 — BGM 버튼 바로 옆 (왼쪽으로 8px 간격)
+        // 1인칭/3인칭 카메라 토글 (우측 — BGM 옆)
         const cam = document.createElement('button');
         cam.id = 'btn-camera-mode';
         cam.style.cssText = `
-            position:fixed;
-            right:calc(66px + env(safe-area-inset-right, 0px));
-            bottom:calc(145px + env(safe-area-inset-bottom, 0px));
             width:60px; height:44px; border-radius:22px;
             border:2px solid rgba(252,211,77,0.6);
             background:rgba(15,23,42,0.7);
             backdrop-filter:blur(8px); color:#fff; font-size:13px; font-weight:700;
-            cursor:pointer; touch-action:none; z-index:30;
-            pointer-events:auto; padding:0;
+            cursor:pointer; touch-action:none; pointer-events:auto;
             display:flex; align-items:center; justify-content:center;
-            font-family:'Inter','Noto Sans KR',sans-serif;
+            font-family:'Inter','Noto Sans KR',sans-serif; padding:0;
         `;
         const updateCamLabel = () => {
             cam.textContent = window.cameraMode === '1st' ? '1인칭' : '3인칭';
@@ -80,7 +86,7 @@ const GameUI = window.GameUI = {
         };
         cam.addEventListener('click', onCamToggle);
         cam.addEventListener('touchstart', e => { e.preventDefault(); onCamToggle(); }, { passive: false });
-        document.body.appendChild(cam);
+        bar.appendChild(cam);
         updateCamLabel();
     },
 
@@ -168,6 +174,9 @@ const GameUI = window.GameUI = {
                         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
                             <span style="display:inline-block;width:11px;height:11px;background:rgba(30,100,200,0.95);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>경찰서
                         </span>
+                        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;">
+                            <span style="display:inline-block;width:11px;height:11px;background:rgba(74,140,58,0.85);border-radius:2px;border:1px solid rgba(255,255,255,0.3);"></span>공원
+                        </span>
                     </div>
                     <div style="display:flex; gap:6px 14px; flex-wrap:wrap; justify-content:center;">
                         <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#e2e8f0;font-weight:600;white-space:nowrap;">
@@ -215,31 +224,59 @@ const GameUI = window.GameUI = {
         const ctx = this.fullMapCtx;
         const c = this.fullMapCanvas;
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        // 캔버스가 정사각형이 아닐 수 있음 → 가로/세로 모두 사용해 fit
         const sizeW = c.width / dpr;
         const sizeH = c.height / dpr;
-        const W = (typeof WORLD_SIZE !== 'undefined') ? WORLD_SIZE : 300;
-        const scale = Math.min(sizeW, sizeH) / W;  // 작은 쪽에 맞춰 전체 월드 표시
+        // 비대칭 월드 — X=300, Z=240 (월드 z=-150~90)
+        const W_X = (typeof window.WORLD_SIZE !== 'undefined') ? window.WORLD_SIZE
+                  : (typeof WORLD_SIZE !== 'undefined' ? WORLD_SIZE : 300);
+        const Z_N = (typeof window.WORLD_Z_NORTH !== 'undefined') ? window.WORLD_Z_NORTH : 90;
+        const Z_S = (typeof window.WORLD_Z_SOUTH !== 'undefined') ? window.WORLD_Z_SOUTH : -150;
+        const W_Z = Z_N - Z_S;
+        const scaleX = sizeW / (W_X * 1.05);
+        const scaleZ = sizeH / (W_Z * 1.05);
+        const scale = Math.min(scaleX, scaleZ);
         const cx = sizeW / 2;
         const cy = sizeH / 2;
+        // 월드 중심은 (0, (Z_N+Z_S)/2)
+        const worldCz = (Z_N + Z_S) / 2;
         const wx = (x) => cx + x * scale;
-        const wz = (z) => cy + z * scale;
+        const wz = (z) => cy + (z - worldCz) * scale;
 
         ctx.clearRect(0, 0, sizeW, sizeH);
-        // 배경 (잔디)
+        // 배경 (잔디 — 월드 영역만)
         ctx.fillStyle = '#1a2e1a';
-        ctx.fillRect(0, 0, sizeW, sizeH);
-        // 도로 (메인 격자)
-        ctx.strokeStyle = 'rgba(120,120,120,0.5)';
-        ctx.lineWidth = 3;
-        const mainRoads = [
-            [-150, 95, 150, 95], [-150, 50, 150, 50], [-150, 5, 150, 5],
-            [-150, -45, 150, -45], [-150, -85, 150, -85], [-150, -135, 150, -135],
-            [0, -140, 0, 90], [-50, -100, -50, 100], [50, -100, 50, 100],
-            [-100, -90, -100, 90], [100, -90, 100, 90]
+        ctx.fillRect(wx(-W_X / 2), wz(Z_S), W_X * scale, W_Z * scale);
+        // 도로 — MAIN_ROADS 동적
+        ctx.strokeStyle = 'rgba(150,150,150,0.6)';
+        const ROADS = (typeof window.MAIN_ROADS !== 'undefined') ? window.MAIN_ROADS : [];
+        ROADS.forEach(r => {
+            ctx.lineWidth = Math.max(2, r.w * scale * 0.5);
+            if (r.type === 'H') {
+                const half = r.length / 2;
+                ctx.beginPath();
+                ctx.moveTo(wx(-half), wz(r.z));
+                ctx.lineTo(wx(half), wz(r.z));
+                ctx.stroke();
+            } else {
+                const oz = r.offsetZ || 0;
+                const half = r.length / 2;
+                ctx.beginPath();
+                ctx.moveTo(wx(r.x), wz(oz - half));
+                ctx.lineTo(wx(r.x), wz(oz + half));
+                ctx.stroke();
+            }
+        });
+        // 공원 (분당신도시 스타일) — 녹지로 표시
+        const PARKS = [
+            { cx:  27, cz: 70, w: 35, d: 22 },
+            { cx: -27, cz: 70, w: 35, d: 22 },
+            { cx: -50, cz: -47, w: 14, d: 8 },
+            { cx:  50, cz: -47, w: 14, d: 8 }
         ];
-        mainRoads.forEach(([x1,z1,x2,z2]) => {
-            ctx.beginPath(); ctx.moveTo(wx(x1), wz(z1)); ctx.lineTo(wx(x2), wz(z2)); ctx.stroke();
+        ctx.fillStyle = 'rgba(74,140,58,0.55)';
+        PARKS.forEach(p => {
+            ctx.fillRect(wx(p.cx) - p.w * scale / 2, wz(p.cz) - p.d * scale / 2,
+                         p.w * scale, p.d * scale);
         });
         // 건물
         if (typeof buildingData !== 'undefined') {
@@ -291,7 +328,7 @@ const GameUI = window.GameUI = {
         ctx.restore();
         // 북쪽 표시
         ctx.fillStyle = '#ef4444'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('N', size / 2, 22);
+        ctx.fillText('N', sizeW / 2, 22);
     },
 
     createActionButtons() {
@@ -374,11 +411,25 @@ const GameUI = window.GameUI = {
         const mx = (wx) => half + (wx - playerPos.x) * scale;
         const mz = (wz) => half + (wz - playerPos.z) * scale;
 
-        // Roads
-        ctx.strokeStyle = 'rgba(80,80,80,0.6)';
-        ctx.lineWidth = 2;
-        [[- 150, 50, 150, 50], [0, -150, 0, 150], [-100, -40, 100, -40]].forEach(([x1,z1,x2,z2]) => {
-            ctx.beginPath(); ctx.moveTo(mx(x1), mz(z1)); ctx.lineTo(mx(x2), mz(z2)); ctx.stroke();
+        // Roads — MAIN_ROADS 에서 동적으로 읽음 (월드와 항상 동일)
+        ctx.strokeStyle = 'rgba(120,120,120,0.6)';
+        const ROADS = (typeof window.MAIN_ROADS !== 'undefined') ? window.MAIN_ROADS : [];
+        ROADS.forEach(r => {
+            ctx.lineWidth = Math.max(1.5, r.w * scale * 0.5);
+            if (r.type === 'H') {
+                const half = r.length / 2;
+                ctx.beginPath();
+                ctx.moveTo(mx(-half), mz(r.z));
+                ctx.lineTo(mx(half), mz(r.z));
+                ctx.stroke();
+            } else {
+                const oz = r.offsetZ || 0;
+                const half = r.length / 2;
+                ctx.beginPath();
+                ctx.moveTo(mx(r.x), mz(oz - half));
+                ctx.lineTo(mx(r.x), mz(oz + half));
+                ctx.stroke();
+            }
         });
 
         // Buildings

@@ -1573,12 +1573,23 @@ function createStartScreen() {
     btn.addEventListener('touchstart', e => { e.preventDefault(); startGame(); }, { passive: false });
 }
 
+// 다중 클릭 방지
+let _gameStarted = false;
 function startGame() {
+    if (_gameStarted) return;
+    _gameStarted = true;
+
     const screen = document.getElementById('start-screen');
     if (screen) {
+        // 즉시 클릭 차단 + rain 애니메이션 중지
+        screen.style.pointerEvents = 'none';
+        try { if (screen._rainCleanup) screen._rainCleanup(); } catch(e) {}
         screen.style.transition = 'opacity 0.5s';
         screen.style.opacity = '0';
-        setTimeout(() => screen.remove(), 500);
+        // 페이드 안정성 안전망: transition 무시되는 기기 대응 — 강제 제거
+        setTimeout(() => {
+            try { if (screen.parentNode) screen.parentNode.removeChild(screen); } catch(e) {}
+        }, 600);
     }
 
     try { SoundManager.init(); } catch (e) { console.warn('SoundManager.init failed:', e); }
@@ -1589,7 +1600,10 @@ function startGame() {
     try { showCharacterSelect(); } catch (e) {
         console.warn('Char select failed:', e);
         try { updateCamera(); } catch (e2) {}
-        try { showStoryIntro(); } catch (e3) { animate(); }
+        try { showStoryIntro(); } catch (e3) {
+            console.warn('Story intro failed in startGame fallback:', e3);
+            try { animate(); } catch (e4) { console.error('animate failed:', e4); }
+        }
     }
 }
 
@@ -1823,8 +1837,10 @@ function showCharacterSelect() {
                     if (SoundManager.ctx && SoundManager.ctx.state !== 'running') {
                         SoundManager.ctx.resume().catch(() => {});
                     }
-                    // 캐릭터 선택 직후엔 인트로 BGM 계속 유지 (showStoryIntro 가 재가동)
-                    SoundManager.playBGM('intro');
+                    // 인트로 BGM 이 이미 재생 중이면 그대로 두기 — 재시작 시 처음으로 돌아가는 버그 방지
+                    if (!(SoundManager.bgmActive && SoundManager.bgmType === 'intro')) {
+                        SoundManager.playBGM('intro');
+                    }
                 }
             } catch (e) { console.warn('BGM kick on charselect failed:', e); }
             // Confirm after brief highlight
@@ -1862,14 +1878,16 @@ function showStoryIntro() {
     // 중복 실행 방지 (idempotency)
     if (document.getElementById('story-intro-root')) return;
 
-    // 인트로 BGM (assets/intro.mp3) 재생
+    // 인트로 BGM — 이미 재생 중이면 그대로 유지 (캐릭터 선택 → 스토리 인트로 사이 끊김 방지)
     try {
         if (typeof SoundManager !== 'undefined') {
             SoundManager.init();
             if (SoundManager.ctx && SoundManager.ctx.state !== 'running') {
                 SoundManager.ctx.resume().catch(() => {});
             }
-            SoundManager.playBGM('intro');
+            if (!(SoundManager.bgmActive && SoundManager.bgmType === 'intro')) {
+                SoundManager.playBGM('intro');
+            }
         }
     } catch (e) { console.warn('Intro BGM failed:', e); }
 
@@ -2008,16 +2026,31 @@ function showStoryIntro() {
         finished = true;
         root.style.transition = 'opacity 0.6s ease';
         root.style.opacity = '0';
+        // 인트로 → 게임 전환 — animate 는 페이드와 무관하게 즉시 시작 가능하지만
+        // 페이드아웃 후 BGM 전환 + 인트로 모달 제거 (일부 기기에서 transition 무시 대비)
         setTimeout(() => {
-            root.remove();
-            // 게임 BGM 으로 전환 (intro → day)
+            try { if (root.parentNode) root.parentNode.removeChild(root); } catch(e) {}
+            // BGM 전환 — intro → day/night. 안정성: stopBGM 먼저 호출 후 day 재생
             try {
                 if (typeof SoundManager !== 'undefined') {
-                    SoundManager.playBGM(gameState.isDay ? 'day' : 'night');
+                    // resume context (일부 모바일에서 절전 후 suspended 상태)
+                    if (SoundManager.ctx && SoundManager.ctx.state !== 'running') {
+                        SoundManager.ctx.resume().catch(() => {});
+                    }
+                    SoundManager.stopBGM();
+                    SoundManager._pendingBGMType = null;
+                    // 약간 지연 후 day BGM (브라우저 audio element transition 안정화)
+                    setTimeout(() => {
+                        try {
+                            const t = (typeof gameState !== 'undefined' && gameState.isDay === false) ? 'night' : 'day';
+                            SoundManager.playBGM(t);
+                        } catch(e) { console.warn('switch to day BGM failed:', e); }
+                    }, 100);
                 }
-            } catch(e) {}
+            } catch(e) { console.warn('BGM transition failed:', e); }
             try { showMessage('📻 ' + charName + ' 형사, 시민들에게 말을 걸어 단서를 수집하세요.'); } catch(e) {}
-            animate();
+            // 가장 중요: animate 보장 호출
+            try { animate(); } catch(e) { console.error('animate failed after intro:', e); }
         }, 600);
     }
 
