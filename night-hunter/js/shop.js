@@ -142,8 +142,7 @@ const Shop = window.Shop = {
     },
 
     // Police station also acts as shop (보급실)
-    policeShopX: 0,
-    policeShopZ: 110,
+    // PRINCIPLES.md #9 — window._policeStation 단일 출처 참조
     policeShopDist: 15,
 
     update(playerPos) {
@@ -152,9 +151,10 @@ const Shop = window.Shop = {
             return;
         }
 
-        // Only police station — shop NPC removed
-        const dx = playerPos.x - this.policeShopX;
-        const dz = playerPos.z - this.policeShopZ;
+        // _policeStation 에서 좌표 동적 읽음 (경찰서 위치 변경 시 자동 추종)
+        const ps = window._policeStation || { x: 0, z: 60 };
+        const dx = playerPos.x - ps.x;
+        const dz = playerPos.z - ps.z;
         const dist = Math.sqrt(dx * dx + dz * dz);
         const nearPolice = dist < this.policeShopDist;
 

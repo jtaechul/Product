@@ -645,7 +645,11 @@ function buildCharacter(cfg) {
     playerGroup.add(hatBadge);
 
     if (!playerGroup.parent) {
-        playerGroup.position.set(0, 0, 92);
+        // 경찰서 앞 (도로 z=55 쪽) 인도에 스폰
+        const ps = window._policeStation;
+        const spawnZ = ps ? ps.frontZ - 4 : 49;  // 경찰서 정면 (-Z) 에서 4m 떨어진 인도
+        const spawnX = ps ? ps.x : 0;
+        playerGroup.position.set(spawnX, 0, spawnZ);
         scene.add(playerGroup);
     }
 }

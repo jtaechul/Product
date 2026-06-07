@@ -90,27 +90,70 @@ function defineBlocks() {
     BUILDING_BLOCKS.push({ zone: 'POLICE', minX:   55, maxX:  90, minZ: 15, maxZ: 50, density: 'low' });
     BUILDING_BLOCKS.push({ zone: 'POLICE', minX:   95, maxX: 125, minZ: 15, maxZ: 50, density: 'low' });
 
-    // 아파트 단지 — 4 블록 (북측 z=10~45 행은 삭제됨)
+    // 아파트 단지 — 4 블록
     BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -90, maxX: -55, minZ: -40, maxZ: 0,  density: 'apt', complexIdx: 0 });
     BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -45, maxX: -5,  minZ: -40, maxZ: 0,  density: 'apt', complexIdx: 1 });
     BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -135, maxX: -105, minZ: -40, maxZ: 0, density: 'apt', complexIdx: 2 });
     BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -90, maxX: -55, minZ: -85, maxZ: -50, density: 'apt', complexIdx: 3 });
 
-    // 상가 블록 — 로데오 및 z=8~46 행은 삭제됨, 남측 행만 유지
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:   5, maxX:  45, minZ: -40, maxZ: 0, density: 'high' });
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:  55, maxX:  95, minZ: -40, maxZ: 0, density: 'high' });
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 105, maxX: 135, minZ: -40, maxZ: 0, density: 'medium' });
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:  55, maxX:  95, minZ: -85, maxZ: -50, density: 'medium' });
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:   5, maxX:  45, minZ: -85, maxZ: -50, density: 'medium' });
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 105, maxX: 135, minZ: -85, maxZ: -50, density: 'medium' });
+    // === 평내 로데오 거리 (서현역 로데오 / 평촌 번화 참고) ===
+    // 보행자 거리 (z=-24~-16) 를 중심으로 양쪽에 더 큰 상가 — V 도로 x=0, x=50 사이라 도로 교차 없음
+    // 북측 행 (z=-16~-5) — 간판 -Z (남쪽 로데오 방향)
+    BUILDING_BLOCKS.push({
+        zone: 'COMMERCIAL', minX: 5, maxX: 45, minZ: -16, maxZ: -5,
+        density: 'rodeo', facing: '-Z', rodeo: true
+    });
+    // 남측 행 (z=-35~-24) — 간판 +Z (북쪽 로데오 방향)
+    BUILDING_BLOCKS.push({
+        zone: 'COMMERCIAL', minX: 5, maxX: 45, minZ: -35, maxZ: -24,
+        density: 'rodeo', facing: '+Z', rodeo: true
+    });
 
-    // 공업 블록 (z<-90)
+    // 일반 상가 블록 — 도로변 (분당/평촌 번화 스타일)
+    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:  55, maxX:  90, minZ: -40, maxZ: 0, density: 'high' });
+    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:  95, maxX: 135, minZ: -40, maxZ: 0, density: 'high' });
+    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:  55, maxX:  90, minZ: -85, maxZ: -50, density: 'medium' });
+    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:   5, maxX:  45, minZ: -85, maxZ: -50, density: 'medium' });
+    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:  95, maxX: 135, minZ: -85, maxZ: -50, density: 'medium' });
+
+    // 공업 블록 (z<-95)
     BUILDING_BLOCKS.push({ zone: 'FACTORY', minX: -135, maxX: -100, minZ: -135, maxZ: -95, density: 'sparse' });
     BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  -95, maxX:  -55, minZ: -135, maxZ: -95, density: 'sparse' });
     BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  -50, maxX:  -5,  minZ: -135, maxZ: -95, density: 'sparse' });
     BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:    5, maxX:   50, minZ: -135, maxZ: -95, density: 'sparse' });
     BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:   55, maxX:   95, minZ: -135, maxZ: -95, density: 'sparse' });
     BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  100, maxX:  135, minZ: -135, maxZ: -95, density: 'sparse' });
+
+    // === PRINCIPLES.md #4 검증: 블록 vs 도로 asphalt 교차 검사 ===
+    validateBlocksVsRoads();
+}
+
+// 도로 asphalt vs 빌딩 블록 AABB 검증 — 경고 출력 + 자동 보정
+function validateBlocksVsRoads() {
+    const issues = [];
+    BUILDING_BLOCKS.forEach((b, i) => {
+        MAIN_ROADS.forEach(r => {
+            let roadMinX, roadMaxX, roadMinZ, roadMaxZ;
+            if (r.type === 'H') {
+                const half = r.length / 2;
+                roadMinX = -half; roadMaxX = half;
+                roadMinZ = r.z - r.w / 2; roadMaxZ = r.z + r.w / 2;
+            } else {
+                const oz = r.offsetZ || 0;
+                const half = r.length / 2;
+                roadMinX = r.x - r.w / 2; roadMaxX = r.x + r.w / 2;
+                roadMinZ = oz - half; roadMaxZ = oz + half;
+            }
+            // AABB intersection
+            if (b.maxX > roadMinX && b.minX < roadMaxX &&
+                b.maxZ > roadMinZ && b.minZ < roadMaxZ) {
+                issues.push({ block: i, zone: b.zone, road: r });
+            }
+        });
+    });
+    if (issues.length > 0) {
+        console.error('[PRINCIPLES.md #1] 도로-블록 교차 검출:', issues);
+    }
 }
 
 function createWorld(scene) {
@@ -120,7 +163,7 @@ function createWorld(scene) {
     defineBlocks();
     createGround(worldGroup);
     createRoadNetwork(worldGroup);
-    // 로데오 거리 제거 — z=10~45 영역이 경찰서 zone 으로 시프트됨
+    createRodeoStreet(worldGroup);
     const policeStation = createPoliceStation(worldGroup);
     buildingData.push(policeStation);
 
@@ -331,10 +374,11 @@ function createRoadNetwork(group) {
     });
 }
 
-// 평내 로데오 거리 — 차 안다니는 보행자 광장 + 가로수/벤치/조명
+// 평내 로데오 거리 — 차 안다니는 보행자 광장 + 가로수/조명
+// 위치: x=5~45 (V x=0, x=50 사이), z=-24~-16 (H z=5, z=-45 사이) → 도로 교차 없음
 function createRodeoStreet(group) {
-    const RX_MIN = 5, RX_MAX = 125;  // x range
-    const RZ_MIN = 21, RZ_MAX = 33;  // z range (12m wide)
+    const RX_MIN = 5, RX_MAX = 45;
+    const RZ_MIN = -24, RZ_MAX = -16;
     const RW = RX_MAX - RX_MIN;
     const RD = RZ_MAX - RZ_MIN;
     const RCX = (RX_MIN + RX_MAX) / 2;
@@ -556,6 +600,8 @@ function createPoliceStation(group) {
     spCap.position.set(x, 6.75, SP_Z);
     group.add(spCap);
 
+    // 단일 출처 — PRINCIPLES.md #9 (다른 모듈은 window._policeStation 참조)
+    window._policeStation = { x, z, w, d, h, frontZ: z - d / 2, backZ: z + d / 2 };
     return { mesh: building, x, z, w, d, h, type: 'police', zone: 'POLICE' };
 }
 
@@ -623,14 +669,15 @@ function createApartmentLabel(group, b) {
         })
     );
     // 좌측 옆면 (-X 방향) 외벽 — 창문 없는 면
+    // PlaneGeometry 기본 normal=+Z. rotation y=-π/2 시 normal=-X (외부 바라봄) → 정상 글씨
     sideLabel.position.set(b.bx - b.bw / 2 - 0.10, b.bh * 0.50, b.bz);
-    sideLabel.rotation.y = Math.PI / 2;
+    sideLabel.rotation.y = -Math.PI / 2;
     group.add(sideLabel);
 
-    // 우측 옆면(+X)에도 동일 라벨 (양쪽에서 보이도록)
+    // 우측 옆면(+X) — rotation y=+π/2 시 normal=+X (외부 바라봄) → 정상 글씨
     const sideLabel2 = sideLabel.clone();
     sideLabel2.position.set(b.bx + b.bw / 2 + 0.10, b.bh * 0.50, b.bz);
-    sideLabel2.rotation.y = -Math.PI / 2;
+    sideLabel2.rotation.y = Math.PI / 2;
     group.add(sideLabel2);
     // 정면 라벨은 제거 — 통창 샷시와 겹치지 않도록
 }
@@ -831,8 +878,119 @@ function createBuilding(group, x, z, w, d, h, color, label, glass, windowStyle) 
             stripe.position.set(x + (s === 0 ? -1 : 1) * (w/2 + 0.025), h * 0.5, z);
             group.add(stripe);
         }
+    } else if (windowStyle === 'commercial') {
+        // 분당/평촌 번화 스타일 — 앞뒤좌우 4면 모두 통창 샷시 연결
+        const sashMat = new THREE.MeshStandardMaterial({
+            color: 0xa8d0ee, emissive: 0x2c4860, emissiveIntensity: 0.32,
+            roughness: 0.16, metalness: 0.6
+        });
+        const mullionMat = new THREE.MeshStandardMaterial({
+            color: 0x2a2a2a, roughness: 0.5, metalness: 0.4
+        });
+        const sashH = 1.85;
+        // 1F 는 유리문 (입구) — 2F+ 는 통창
+        // 유리 1F
+        const door1FMat = new THREE.MeshStandardMaterial({
+            color: 0x84b5d8, emissive: 0x2c4860, emissiveIntensity: 0.45,
+            roughness: 0.18, metalness: 0.55, transparent: true, opacity: 0.85
+        });
+        const doorFrameMat = new THREE.MeshStandardMaterial({
+            color: 0x1a1a1a, roughness: 0.4, metalness: 0.6
+        });
+        const doorCount = Math.max(3, Math.round(w / 1.8));
+        const doorW = w / doorCount;
+        for (let dx = 0; dx < doorCount; dx++) {
+            const dCenterX = x - w / 2 + doorW * (dx + 0.5);
+            // 앞면 유리문
+            const glassF = new THREE.Mesh(
+                new THREE.BoxGeometry(doorW * 0.88, 2.4, 0.08), door1FMat
+            );
+            glassF.position.set(dCenterX, 1.35, z + d / 2 + 0.05);
+            group.add(glassF);
+            // 문 프레임 (양옆 세로)
+            const frameLF = new THREE.Mesh(
+                new THREE.BoxGeometry(0.08, 2.5, 0.10), doorFrameMat
+            );
+            frameLF.position.set(dCenterX - doorW * 0.44, 1.4, z + d / 2 + 0.07);
+            group.add(frameLF);
+            // 뒷면 유리문 (서비스 입구)
+            const glassB = glassF.clone();
+            glassB.position.set(dCenterX, 1.35, z - d / 2 - 0.05);
+            group.add(glassB);
+        }
+        // 1F 좌우는 통창
+        const sashWX = d * 0.9;  // 측면 통창 길이 (depth 방향)
+        const sash1L = new THREE.Mesh(
+            new THREE.BoxGeometry(0.08, sashH, sashWX), sashMat
+        );
+        sash1L.position.set(x - w / 2 - 0.05, 1.5, z);
+        group.add(sash1L);
+        const sash1R = sash1L.clone();
+        sash1R.position.set(x + w / 2 + 0.05, 1.5, z);
+        group.add(sash1R);
+
+        // 2F+ — 앞뒤좌우 4면 통창
+        for (let f = 1; f < floors; f++) {
+            const sashY = 1.5 + f * 3;
+            // 앞면
+            const sashF = new THREE.Mesh(
+                new THREE.BoxGeometry(w * 0.93, sashH, 0.08), sashMat
+            );
+            sashF.position.set(x, sashY, z + d / 2 + 0.05);
+            group.add(sashF);
+            // 뒷면
+            const sashB = sashF.clone();
+            sashB.position.set(x, sashY, z - d / 2 - 0.05);
+            group.add(sashB);
+            // 좌측 통창
+            const sashL = new THREE.Mesh(
+                new THREE.BoxGeometry(0.08, sashH, d * 0.93), sashMat
+            );
+            sashL.position.set(x - w / 2 - 0.05, sashY, z);
+            group.add(sashL);
+            // 우측 통창
+            const sashR = sashL.clone();
+            sashR.position.set(x + w / 2 + 0.05, sashY, z);
+            group.add(sashR);
+
+            // 세로 멀리언 (앞뒤)
+            const unitX = Math.max(2, Math.round(w / 3.5));
+            for (let u = 1; u < unitX; u++) {
+                const mx = x - w / 2 + (w / unitX) * u;
+                const muF = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.10, sashH + 0.1, 0.10), mullionMat
+                );
+                muF.position.set(mx, sashY, z + d / 2 + 0.10);
+                group.add(muF);
+                const muB = muF.clone();
+                muB.position.set(mx, sashY, z - d / 2 - 0.10);
+                group.add(muB);
+            }
+            // 좌우 멀리언
+            const unitZ = Math.max(2, Math.round(d / 3.5));
+            for (let u = 1; u < unitZ; u++) {
+                const mz = z - d / 2 + (d / unitZ) * u;
+                const muL = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.10, sashH + 0.1, 0.10), mullionMat
+                );
+                muL.position.set(x - w / 2 - 0.10, sashY, mz);
+                group.add(muL);
+                const muR = muL.clone();
+                muR.position.set(x + w / 2 + 0.10, sashY, mz);
+                group.add(muR);
+            }
+            // 가로 멀리언 (각 층 상단)
+            const horBar = new THREE.Mesh(
+                new THREE.BoxGeometry(w + 0.2, 0.10, 0.10), mullionMat
+            );
+            horBar.position.set(x, sashY + sashH / 2, z + d / 2 + 0.10);
+            group.add(horBar);
+            const horBarB = horBar.clone();
+            horBarB.position.set(x, sashY + sashH / 2, z - d / 2 - 0.10);
+            group.add(horBarB);
+        }
     } else {
-        // 일반 빌딩 (상업/공업/경찰서) — 4면 균등한 사각 창문
+        // 일반 빌딩 (공업/경찰서) — 4면 균등한 사각 창문
         for (let f = 0; f < floors; f++) {
             for (let wi = 0; wi < winRowsW; wi++) {
                 const winF = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.3, 0.08), winMat);
@@ -1024,7 +1182,9 @@ function createGridBuildings(group) {
         const label = b.isHideout ? `${b.zone} 은거지` : `${b.zone}`;
         const isGlass = (b.zone === 'COMMERCIAL' && b.bh >= 15);
         const winStyle = (b.zone === 'RESIDENTIAL') ? 'apartment' : 'normal';
-        const mesh = createBuilding(group, b.bx, b.bz, b.bw, b.bd, b.bh, b.bcolor, label, isGlass, winStyle);
+        // 상가는 통창 + 1F 유리문 스타일 적용
+        const finalStyle = (b.zone === 'COMMERCIAL') ? 'commercial' : winStyle;
+        const mesh = createBuilding(group, b.bx, b.bz, b.bw, b.bd, b.bh, b.bcolor, label, isGlass, finalStyle);
         buildings.push({
             mesh, x: b.bx, z: b.bz, w: b.bw, d: b.bd, h: b.bh,
             type: b.isHideout ? 'hideout' : 'normal',
