@@ -1131,8 +1131,10 @@ canvas.addEventListener('touchcancel', _resetCameraInput);
 function checkBuildingCollision(nx, nz) {
     const playerRadius = 0.5;
     for (const b of buildingData) {
-        const bx = b.x || b.mesh.position.x;
-        const bz = b.z || b.mesh.position.z;
+        // BUG FIX: b.x === 0 falls back to b.mesh.position.x with `||` (0 is falsy).
+        // 경찰서 북측 벽 collider 처럼 x=0 + mesh 없는 경우 TypeError 로 updatePlayer 전체 throw → 이동 불가.
+        const bx = (typeof b.x === 'number') ? b.x : (b.mesh ? b.mesh.position.x : 0);
+        const bz = (typeof b.z === 'number') ? b.z : (b.mesh ? b.mesh.position.z : 0);
         const bw = (b.w || 6) / 2 + playerRadius;
         const bd = (b.d || 6) / 2 + playerRadius;
         if (Math.abs(nx - bx) < bw && Math.abs(nz - bz) < bd) {

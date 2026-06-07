@@ -99,7 +99,11 @@ const MAIN_ROADS = [
 
     // ── H 연결도로 — 주거지구 내부 횡단 (서측 perimeter ↔ V x=0, z=-45) ──
     // offsetX 로 서쪽 절반만 깔아 상업지구(로데오) 내부를 가로지르지 않음 (PRINCIPLES.md #11)
-    { type: 'H', z: -45,  w: 8, length: 146, offsetX: -70 }
+    { type: 'H', z: -45,  w: 8, length: 146, offsetX: -70 },
+
+    // ── H 도로 — 공업지구 내부 횡단 (남측 perimeter z=-140 ↔ 상업/공업 경계 z=-90 사이 중심선) ──
+    // FACTORY 블록을 남·북 2행으로 나누는 격자 도로 — V x=±100/±50/0 (factory section) 와 교차해 그리드 완성
+    { type: 'H', z: -115, w: 8, length: 290 }
 ];
 window.MAIN_ROADS = MAIN_ROADS;
 
@@ -149,13 +153,21 @@ function defineBlocks() {
         density: 'rodeo', facing: '+Z', rodeo: true  // S로데오 남측 행
     });
 
-    // 공업 블록 — V 도로 (factory section) 와 겹치지 않게 6개 분할
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX: -135, maxX: -104, minZ: -135, maxZ: -95, density: 'sparse' });
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  -96, maxX:  -54, minZ: -135, maxZ: -95, density: 'sparse' });
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  -46, maxX:   -6, minZ: -135, maxZ: -95, density: 'sparse' });
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:    6, maxX:   46, minZ: -135, maxZ: -95, density: 'sparse' });
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:   54, maxX:   96, minZ: -135, maxZ: -95, density: 'sparse' });
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  104, maxX:  135, minZ: -135, maxZ: -95, density: 'sparse' });
+    // 공업 블록 — V 도로 (factory section) + H z=-115 횡단 도로와 겹치지 않게 12개 분할 (6 x 2행)
+    // 남측 행 (z=-135 ~ -120, H z=-115 asphalt 남쪽)
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX: -135, maxX: -104, minZ: -135, maxZ: -120, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  -96, maxX:  -54, minZ: -135, maxZ: -120, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  -46, maxX:   -6, minZ: -135, maxZ: -120, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:    6, maxX:   46, minZ: -135, maxZ: -120, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:   54, maxX:   96, minZ: -135, maxZ: -120, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  104, maxX:  135, minZ: -135, maxZ: -120, density: 'sparse' });
+    // 북측 행 (z=-110 ~ -95, H z=-115 asphalt 북쪽)
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX: -135, maxX: -104, minZ: -110, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  -96, maxX:  -54, minZ: -110, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  -46, maxX:   -6, minZ: -110, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:    6, maxX:   46, minZ: -110, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:   54, maxX:   96, minZ: -110, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  104, maxX:  135, minZ: -110, maxZ: -95, density: 'sparse' });
 
     // === PRINCIPLES.md #4 검증: 블록 vs 도로 asphalt 교차 검사 ===
     validateBlocksVsRoads();
