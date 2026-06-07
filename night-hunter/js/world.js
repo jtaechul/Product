@@ -203,13 +203,19 @@ function createWorld(scene) {
 
     const zoneBuildings = createGridBuildings(worldGroup);
     buildingData.push(...zoneBuildings);
-    // 경찰서 collision 박스 (z=67 — H z=55 / H z=85 도로 사이 공터, 도로 비충돌 위치)
-    if (window._buildingPositions) {
-        window._buildingPositions.push({ x: 0, z: 67, w: 18, d: 14, hideoutIndex: -1 });
-    }
+    // 경찰서는 더 이상 단일 충돌 박스로 처리하지 않음 — createPoliceInterior 에서 벽 segment 로 등록 (통과 가능 입구 포함)
 
     createStreetProps(worldGroup);
     createCityParks(worldGroup);
+
+    // 경찰서 내부 충돌 등록 — 벽/구치소/책상 (입구 갭은 충돌 박스에 미포함 → 통과 가능)
+    if (typeof window._policeColliders !== 'undefined' && window._buildingPositions) {
+        window._policeColliders.forEach(c => window._buildingPositions.push(c));
+        // buildingData 에도 추가 (main.js checkBuildingCollision 이 buildingData 순회)
+        window._policeColliders.forEach(c => {
+            buildingData.push({ x: c.x, z: c.z, w: c.w, d: c.d, h: c.h || 3, type: 'policeWall', hideoutIndex: -1 });
+        });
+    }
 
     scene.add(worldGroup);
     return { worldGroup, buildingData };
@@ -560,10 +566,12 @@ function buildRodeoStrip(group, RZ_MIN, RZ_MAX, idx) {
 function createPoliceStation(group) {
     // z=67: H z=55 도로(asphalt 51~59) 와 H z=85 도로(asphalt 81~89) 사이 공터.
     // 경찰서 풋프린트(±d/2=±7) 가 두 도로 asphalt 와 전혀 겹치지 않는 유일한 안전 구간(z 66~74).
-    // (남쪽 z<59 구간은 V x=0 도로(z 5~55) + H z=55 도로가 전부 점유 — 이동 불가)
+    // 도로(남쪽 z=55) 방향 -Z 에 입구 — 통과 가능 + 내부 진입
     const x = 0, z = 67;
     const w = 18, d = 14, h = 14;
-    const building = createBuilding(group, x, z, w, d, h, 0x1a3a5c, '경찰서');
+    const building = createPoliceStationShell(group, x, z, w, d, h);
+    // 내부 가구·구치소·취조실 + 충돌 박스 등록
+    createPoliceInterior(group, x, z, w, d, h);
 
     // Police signage (KOREAN POLICE) — 도로(남쪽) 방향 외벽 상단
     const cv = document.createElement('canvas');
@@ -580,7 +588,7 @@ function createPoliceStation(group) {
         new THREE.PlaneGeometry(10, 1.8),
         new THREE.MeshStandardMaterial({ map: tex, emissive: 0x001144, emissiveIntensity: 0.3, side: THREE.DoubleSide })
     );
-    signMesh.position.set(x, h - 1.5, z - d / 2 - 0.15);
+    signMesh.position.set(x, h - 1.5, z - d / 2 - 0.30);  // 외벽 표면(z=60-0.2) 보다 살짝 앞
     signMesh.rotation.y = Math.PI; // -Z (남쪽 도로) 방향
     group.add(signMesh);
 
@@ -661,6 +669,451 @@ function createPoliceStation(group) {
     // 단일 출처 — PRINCIPLES.md #9 (다른 모듈은 window._policeStation 참조)
     window._policeStation = { x, z, w, d, h, frontZ: z - d / 2, backZ: z + d / 2 };
     return { mesh: building, x, z, w, d, h, type: 'police', zone: 'POLICE' };
+}
+
+// 경찰서 외피 — 4벽(남측 입구 갭) + 옥상 + 콘크리트 베이스. 단일 박스 아닌 분할 벽으로 내부 가시화.
+function createPoliceStationShell(group, x, z, w, d, h) {
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x1a3a5c, roughness: 0.78, metalness: 0.08 });
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.95 });
+    const winMat = new THREE.MeshStandardMaterial({
+        color: 0x88ccff, emissive: 0x334455, emissiveIntensity: 0.3,
+        roughness: 0.3, metalness: 0.5
+    });
+    const ledgeMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.8 });
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x6e6a64, roughness: 0.85 });
+
+    const wt = 0.4;  // 벽 두께
+    const halfW = w / 2, halfD = d / 2;
+    const ENTRANCE_W = 4.5;  // 입구 갭 (도로 -Z 방향)
+    const halfE = ENTRANCE_W / 2;
+
+    // 콘크리트 베이스
+    const base = new THREE.Mesh(new THREE.BoxGeometry(w + 0.4, 0.5, d + 0.4), baseMat);
+    base.position.set(x, 0.25, z);
+    base.receiveShadow = true;
+    group.add(base);
+
+    // 실내 바닥 (타일/콘크리트)
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(w - 0.6, 0.04, d - 0.6), floorMat);
+    floor.position.set(x, 0.52, z);
+    floor.receiveShadow = true;
+    group.add(floor);
+
+    // 남측 벽 (z = z - halfD) — 입구 갭 좌우 2조각
+    const southZ = z - halfD;
+    const southSegW = (w - ENTRANCE_W) / 2;
+    const southSegHalfW = southSegW / 2;
+    const sLeft = new THREE.Mesh(new THREE.BoxGeometry(southSegW, h, wt), wallMat);
+    sLeft.position.set(x - halfE - southSegHalfW, h / 2, southZ);
+    sLeft.castShadow = true; sLeft.receiveShadow = true;
+    group.add(sLeft);
+    const sRight = sLeft.clone();
+    sRight.position.set(x + halfE + southSegHalfW, h / 2, southZ);
+    group.add(sRight);
+
+    // 남측 입구 상단 — 입구 위 가로 도리 (h>3 부분)
+    const sTop = new THREE.Mesh(new THREE.BoxGeometry(ENTRANCE_W, h - 3, wt), wallMat);
+    sTop.position.set(x, 3 + (h - 3) / 2, southZ);
+    sTop.castShadow = true;
+    group.add(sTop);
+
+    // 북측 벽 (z = z + halfD) — solid
+    const northZ = z + halfD;
+    const north = new THREE.Mesh(new THREE.BoxGeometry(w, h, wt), wallMat);
+    north.position.set(x, h / 2, northZ);
+    north.castShadow = true; north.receiveShadow = true;
+    group.add(north);
+
+    // 동측 벽
+    const east = new THREE.Mesh(new THREE.BoxGeometry(wt, h, d), wallMat);
+    east.position.set(x + halfW, h / 2, z);
+    east.castShadow = true; east.receiveShadow = true;
+    group.add(east);
+
+    // 서측 벽
+    const west = east.clone();
+    west.position.set(x - halfW, h / 2, z);
+    group.add(west);
+
+    // 옥상 슬래브
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 0.3, d + 0.6), ledgeMat);
+    roof.position.set(x, h + 0.15, z);
+    roof.castShadow = true; roof.receiveShadow = true;
+    group.add(roof);
+
+    // 외벽 창문 (남측 입구 좌우, 동/서 측면, 북측 — 각 층)
+    const floors = Math.max(1, Math.floor(h / 3));
+    for (let f = 0; f < floors; f++) {
+        const wy = 1.5 + f * 3;
+        // 남측 좌측 벽에 창문 2개
+        for (let i = 0; i < 2; i++) {
+            const winS = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.3, 0.08), winMat);
+            winS.position.set(x - halfE - southSegHalfW + (i - 0.5) * 2.0, wy, southZ - 0.05);
+            group.add(winS);
+        }
+        for (let i = 0; i < 2; i++) {
+            const winS = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.3, 0.08), winMat);
+            winS.position.set(x + halfE + southSegHalfW + (i - 0.5) * 2.0, wy, southZ - 0.05);
+            group.add(winS);
+        }
+        // 북측 창문 3개
+        for (let i = 0; i < 3; i++) {
+            const winN = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.3, 0.08), winMat);
+            winN.position.set(x + (i - 1) * 5.0, wy, northZ + 0.05);
+            group.add(winN);
+        }
+        // 동/서 창문 각 2개
+        for (let i = 0; i < 2; i++) {
+            const winE = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.3, 0.9), winMat);
+            winE.position.set(x + halfW + 0.05, wy, z + (i - 0.5) * 4.5);
+            group.add(winE);
+            const winW = winE.clone();
+            winW.position.set(x - halfW - 0.05, wy, z + (i - 0.5) * 4.5);
+            group.add(winW);
+        }
+    }
+
+    // 남측 입구 유리 자동문 (도로 방향 -Z, rotY=Math.PI)
+    createGlassScreenDoor(group, x, 0, southZ - 0.02, ENTRANCE_W - 0.3, 2.9, Math.PI);
+
+    return roof; // 옥상 메쉬 반환 (mesh 참조용)
+}
+
+// 경찰서 내부 — 3 구치소, 취조실, 형사 책상/의자 + 충돌 박스 등록
+function createPoliceInterior(group, x, z, w, d, h) {
+    window._policeColliders = window._policeColliders || [];
+    const colliders = window._policeColliders;
+    colliders.length = 0;
+
+    // 외피 4벽 충돌 등록 (남측은 입구 좌우 2조각만 — 입구 갭은 통과 가능)
+    const halfW = w / 2, halfD = d / 2;
+    const ENTRANCE_W = 4.5;
+    const halfE = ENTRANCE_W / 2;
+    const southZ = z - halfD;
+    const northZ = z + halfD;
+    const southSegW = (w - ENTRANCE_W) / 2;
+
+    // 남측 좌·우 외벽
+    colliders.push({ x: x - halfE - southSegW / 2, z: southZ, w: southSegW, d: 0.4, hideoutIndex: -1 });
+    colliders.push({ x: x + halfE + southSegW / 2, z: southZ, w: southSegW, d: 0.4, hideoutIndex: -1 });
+    // 북측 외벽
+    colliders.push({ x: x, z: northZ, w: w, d: 0.4, hideoutIndex: -1 });
+    // 동측 외벽
+    colliders.push({ x: x + halfW, z: z, w: 0.4, d: d, hideoutIndex: -1 });
+    // 서측 외벽
+    colliders.push({ x: x - halfW, z: z, w: 0.4, d: d, hideoutIndex: -1 });
+
+    // === 내부 자재 / 가구 ===
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xd6d2c8, roughness: 0.85 });
+    const cellWallMat = new THREE.MeshStandardMaterial({ color: 0xa8a8a8, roughness: 0.88 });
+    const barMat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.4, metalness: 0.85 });
+    const deskMat = new THREE.MeshStandardMaterial({ color: 0x6b3f2a, roughness: 0.72 });
+    const deskTopMat = new THREE.MeshStandardMaterial({ color: 0x4a2a1a, roughness: 0.6 });
+    const chairMat = new THREE.MeshStandardMaterial({ color: 0x222232, roughness: 0.7, metalness: 0.2 });
+    const cellBedMat = new THREE.MeshStandardMaterial({ color: 0x6a6a78, roughness: 0.85 });
+    const cellMattressMat = new THREE.MeshStandardMaterial({ color: 0x88c0d0, roughness: 0.7 });
+    const interrogTableMat = new THREE.MeshStandardMaterial({ color: 0x4a4a52, roughness: 0.55, metalness: 0.4 });
+    const interrogLightMat = new THREE.MeshStandardMaterial({
+        color: 0xfff1c4, emissive: 0xfff1a0, emissiveIntensity: 1.2, roughness: 0.3
+    });
+
+    // 1) 구치소 행 (북측 z = z+halfD-4 ~ z+halfD) — 3 칸
+    // 셀 구역: z ∈ [northZ - 4, northZ - 0.2], x 전체 [x-halfW+0.2, x+halfW-0.2]
+    const cellRowZ = northZ - 2;           // 셀 중앙 z
+    const cellRowDepth = 3.6;              // 셀 깊이
+    const cellRowMinX = x - halfW + 0.4;
+    const cellRowMaxX = x + halfW - 0.4;
+    const cellRowW = cellRowMaxX - cellRowMinX;
+    const cellW = cellRowW / 3;            // 각 셀 폭 ≈ 5.7m
+
+    // 셀 전면 (남측) 벽 — 셀 코리도 분리, 각 셀마다 1m 짜리 출입구 갭
+    const cellFrontZ = cellRowZ - cellRowDepth / 2 + 0.1;  // 셀 전면 z
+    const cellWallH = h - 0.6;
+    // 셀 전면 벽: 각 셀당 5.7m, 가운데 1.2m 출입구 갭 (양옆 2.25m씩 벽)
+    for (let i = 0; i < 3; i++) {
+        const cx = cellRowMinX + cellW * (i + 0.5);
+        const segHalf = (cellW - 1.2) / 2 / 2;   // 양옆 짧은 벽 폭의 절반
+        const segW = (cellW - 1.2) / 2;
+        // 좌측 짧은 벽 (출입구 좌측)
+        const segL = new THREE.Mesh(new THREE.BoxGeometry(segW, cellWallH, 0.2), cellWallMat);
+        segL.position.set(cx - 0.6 - segHalf, cellWallH / 2 + 0.54, cellFrontZ);
+        group.add(segL);
+        colliders.push({ x: cx - 0.6 - segHalf, z: cellFrontZ, w: segW, d: 0.2, hideoutIndex: -1 });
+        const segR = segL.clone();
+        segR.position.set(cx + 0.6 + segHalf, cellWallH / 2 + 0.54, cellFrontZ);
+        group.add(segR);
+        colliders.push({ x: cx + 0.6 + segHalf, z: cellFrontZ, w: segW, d: 0.2, hideoutIndex: -1 });
+
+        // 셀 출입구 위 도리 (상단 가로 바)
+        const lintel = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 0.2), cellWallMat);
+        lintel.position.set(cx, 2.7 + 0.2, cellFrontZ);
+        group.add(lintel);
+
+        // 셀 출입구 — 검은 철창 (BARS) 5줄 세로
+        for (let b = 0; b < 5; b++) {
+            const bar = new THREE.Mesh(
+                new THREE.BoxGeometry(0.08, 2.6, 0.08), barMat
+            );
+            bar.position.set(cx - 0.5 + (b * 1.0 / 4), 1.84, cellFrontZ);
+            group.add(bar);
+        }
+        // 가로 바 2줄
+        for (let h2 = 0; h2 < 2; h2++) {
+            const hbar = new THREE.Mesh(
+                new THREE.BoxGeometry(1.2, 0.06, 0.06), barMat
+            );
+            hbar.position.set(cx, 0.6 + h2 * 2.0, cellFrontZ);
+            group.add(hbar);
+        }
+
+        // 셀 내부 침상 (각 셀 안 침대)
+        const bedFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(cellW * 0.6, 0.4, 1.8), cellBedMat
+        );
+        bedFrame.position.set(cx, 0.74, cellRowZ + 0.6);
+        group.add(bedFrame);
+        const mattress = new THREE.Mesh(
+            new THREE.BoxGeometry(cellW * 0.55, 0.15, 1.6), cellMattressMat
+        );
+        mattress.position.set(cx, 1.01, cellRowZ + 0.6);
+        group.add(mattress);
+        colliders.push({ x: cx, z: cellRowZ + 0.6, w: cellW * 0.6, d: 1.8, hideoutIndex: -1 });
+
+        // 셀 번호 표지 (간단한 사각 사인)
+        const cellSignCV = document.createElement('canvas');
+        cellSignCV.width = 128; cellSignCV.height = 64;
+        const csCtx = cellSignCV.getContext('2d');
+        csCtx.fillStyle = '#0a1a2a';
+        csCtx.fillRect(0, 0, 128, 64);
+        csCtx.fillStyle = '#ffdd66';
+        csCtx.font = 'bold 36px Inter, sans-serif';
+        csCtx.textAlign = 'center'; csCtx.textBaseline = 'middle';
+        csCtx.fillText('구치소 ' + (i + 1), 64, 32);
+        const csTex = new THREE.CanvasTexture(cellSignCV);
+        const cellSign = new THREE.Mesh(
+            new THREE.PlaneGeometry(1.4, 0.7),
+            new THREE.MeshStandardMaterial({ map: csTex, emissive: 0x222244, emissiveIntensity: 0.4, side: THREE.DoubleSide })
+        );
+        cellSign.position.set(cx, 3.3, cellFrontZ - 0.12);
+        cellSign.rotation.y = Math.PI;
+        group.add(cellSign);
+    }
+    // 셀 간 칸막이 벽 (x = cellRowMinX + cellW, cellRowMinX + 2*cellW)
+    for (let i = 1; i < 3; i++) {
+        const divX = cellRowMinX + cellW * i;
+        const div = new THREE.Mesh(
+            new THREE.BoxGeometry(0.2, cellWallH, cellRowDepth), cellWallMat
+        );
+        div.position.set(divX, cellWallH / 2 + 0.54, cellRowZ);
+        group.add(div);
+        colliders.push({ x: divX, z: cellRowZ, w: 0.2, d: cellRowDepth, hideoutIndex: -1 });
+    }
+
+    // 2) 취조실 — 서남쪽 코너 (x ∈ [x-halfW+0.2, x-halfW+0.2+5.5], z ∈ [southZ+0.2, cellFrontZ-0.4])
+    const irMinX = x - halfW + 0.4;
+    const irMaxX = x - halfW + 5.8;
+    const irMinZ = southZ + 0.4;
+    const irMaxZ = cellFrontZ - 0.5;
+    const irCx = (irMinX + irMaxX) / 2;
+    const irCz = (irMinZ + irMaxZ) / 2;
+    const irW = irMaxX - irMinX;
+    const irD = irMaxZ - irMinZ;
+
+    // 취조실 동측 벽 (x = irMaxX) — 도어 갭 z ∈ [irCz-0.7, irCz+0.7]
+    const irDoorGapHalf = 0.7;
+    const irEastWallSegD = (irD - irDoorGapHalf * 2) / 2;
+    const irEastUp = new THREE.Mesh(
+        new THREE.BoxGeometry(0.2, cellWallH, irEastWallSegD), wallMat
+    );
+    irEastUp.position.set(irMaxX, cellWallH / 2 + 0.54, irMinZ + irEastWallSegD / 2);
+    group.add(irEastUp);
+    colliders.push({ x: irMaxX, z: irMinZ + irEastWallSegD / 2, w: 0.2, d: irEastWallSegD, hideoutIndex: -1 });
+    const irEastDown = irEastUp.clone();
+    irEastDown.position.set(irMaxX, cellWallH / 2 + 0.54, irMaxZ - irEastWallSegD / 2);
+    group.add(irEastDown);
+    colliders.push({ x: irMaxX, z: irMaxZ - irEastWallSegD / 2, w: 0.2, d: irEastWallSegD, hideoutIndex: -1 });
+
+    // 취조실 북측 벽 (z = irMaxZ) — solid (셀 전면 벽과 분리)
+    const irNorth = new THREE.Mesh(
+        new THREE.BoxGeometry(irW, cellWallH, 0.2), wallMat
+    );
+    irNorth.position.set(irCx, cellWallH / 2 + 0.54, irMaxZ);
+    group.add(irNorth);
+    colliders.push({ x: irCx, z: irMaxZ, w: irW, d: 0.2, hideoutIndex: -1 });
+
+    // 취조실 책상 (메탈 톤, 강제 조명 아래)
+    const irTable = new THREE.Mesh(
+        new THREE.BoxGeometry(1.8, 0.06, 0.9), interrogTableMat
+    );
+    irTable.position.set(irCx, 0.92, irCz);
+    irTable.castShadow = true;
+    group.add(irTable);
+    // 책상 다리 4개
+    for (let lx = -1; lx <= 1; lx += 2) {
+        for (let lz = -1; lz <= 1; lz += 2) {
+            const leg = new THREE.Mesh(
+                new THREE.BoxGeometry(0.08, 0.9, 0.08), interrogTableMat
+            );
+            leg.position.set(irCx + lx * 0.78, 0.45, irCz + lz * 0.35);
+            group.add(leg);
+        }
+    }
+    colliders.push({ x: irCx, z: irCz, w: 1.8, d: 0.9, hideoutIndex: -1 });
+
+    // 취조실 의자 2개 (책상 양옆)
+    [-1, 1].forEach(dir => {
+        const seat = new THREE.Mesh(
+            new THREE.BoxGeometry(0.5, 0.08, 0.5), chairMat
+        );
+        seat.position.set(irCx, 0.6, irCz + dir * 0.95);
+        group.add(seat);
+        const back = new THREE.Mesh(
+            new THREE.BoxGeometry(0.5, 0.7, 0.06), chairMat
+        );
+        back.position.set(irCx, 0.95, irCz + dir * (0.95 + (dir > 0 ? 0.22 : -0.22)));
+        group.add(back);
+        colliders.push({ x: irCx, z: irCz + dir * 0.95, w: 0.5, d: 0.5, hideoutIndex: -1 });
+    });
+
+    // 취조실 천장 스포트라이트 (강제 조명 — emissive 큰 구체)
+    const irLight = new THREE.Mesh(
+        new THREE.SphereGeometry(0.22, 12, 12), interrogLightMat
+    );
+    irLight.position.set(irCx, 2.6, irCz);
+    group.add(irLight);
+    const irLightCord = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.02, 0.02, 0.8, 6),
+        new THREE.MeshStandardMaterial({ color: 0x222222 })
+    );
+    irLightCord.position.set(irCx, 3.0, irCz);
+    group.add(irLightCord);
+
+    // 취조실 표지판 ("취조실")
+    const irSignCV = document.createElement('canvas');
+    irSignCV.width = 256; irSignCV.height = 80;
+    const irCtx = irSignCV.getContext('2d');
+    irCtx.fillStyle = '#1a1a2a';
+    irCtx.fillRect(0, 0, 256, 80);
+    irCtx.fillStyle = '#ffaa44';
+    irCtx.font = 'bold 42px "Noto Sans KR", Inter, sans-serif';
+    irCtx.textAlign = 'center'; irCtx.textBaseline = 'middle';
+    irCtx.fillText('취조실', 128, 40);
+    const irSignTex = new THREE.CanvasTexture(irSignCV);
+    const irSign = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.4, 0.75),
+        new THREE.MeshStandardMaterial({ map: irSignTex, emissive: 0x442200, emissiveIntensity: 0.5, side: THREE.DoubleSide })
+    );
+    irSign.position.set(irMaxX + 0.12, 3.0, irCz);
+    irSign.rotation.y = -Math.PI / 2;  // +X 방향 (코리도 쪽)
+    group.add(irSign);
+
+    // 3) 형사 업무 공간 — 동쪽 절반 (취조실 옆) 책상 3개 + 의자
+    // 책상 영역: x ∈ [irMaxX + 0.8, x + halfW - 0.6], z ∈ [southZ + 0.8, cellFrontZ - 0.6]
+    const deskAreaMinX = irMaxX + 1.2;
+    const deskAreaMaxX = x + halfW - 0.6;
+    const deskAreaMinZ = southZ + 1.0;
+    const deskAreaMaxZ = cellFrontZ - 0.8;
+    const deskCount = 3;
+    const deskSpacing = (deskAreaMaxX - deskAreaMinX) / deskCount;
+    for (let dk = 0; dk < deskCount; dk++) {
+        const dcx = deskAreaMinX + deskSpacing * (dk + 0.5);
+        const dcz = deskAreaMinZ + 1.0;
+        // 책상 상판
+        const top = new THREE.Mesh(
+            new THREE.BoxGeometry(1.6, 0.08, 0.85), deskTopMat
+        );
+        top.position.set(dcx, 0.95, dcz);
+        top.castShadow = true;
+        group.add(top);
+        // 다리 4개
+        for (let lx = -1; lx <= 1; lx += 2) {
+            for (let lz = -1; lz <= 1; lz += 2) {
+                const leg = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.08, 0.92, 0.08), deskMat
+                );
+                leg.position.set(dcx + lx * 0.7, 0.46, dcz + lz * 0.34);
+                group.add(leg);
+            }
+        }
+        colliders.push({ x: dcx, z: dcz, w: 1.6, d: 0.85, hideoutIndex: -1 });
+
+        // 책상 위 모니터 (어두운 박스 + 글로우)
+        const monitor = new THREE.Mesh(
+            new THREE.BoxGeometry(0.9, 0.6, 0.08),
+            new THREE.MeshStandardMaterial({
+                color: 0x111122, emissive: 0x2244aa, emissiveIntensity: 0.4, roughness: 0.3, metalness: 0.4
+            })
+        );
+        monitor.position.set(dcx, 1.35, dcz - 0.25);
+        group.add(monitor);
+        const monStand = new THREE.Mesh(
+            new THREE.BoxGeometry(0.08, 0.18, 0.08),
+            new THREE.MeshStandardMaterial({ color: 0x222222 })
+        );
+        monStand.position.set(dcx, 1.08, dcz - 0.25);
+        group.add(monStand);
+        // 키보드
+        const kbd = new THREE.Mesh(
+            new THREE.BoxGeometry(0.7, 0.04, 0.25),
+            new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.4 })
+        );
+        kbd.position.set(dcx, 1.01, dcz + 0.05);
+        group.add(kbd);
+        // 종이 파일 더미
+        const paper = new THREE.Mesh(
+            new THREE.BoxGeometry(0.4, 0.06, 0.3),
+            new THREE.MeshStandardMaterial({ color: 0xddccaa, roughness: 0.85 })
+        );
+        paper.position.set(dcx + 0.5, 1.02, dcz + 0.15);
+        group.add(paper);
+        // 머그컵
+        const mug = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.07, 0.07, 0.13, 12),
+            new THREE.MeshStandardMaterial({ color: 0xeedd88, roughness: 0.5 })
+        );
+        mug.position.set(dcx - 0.6, 1.05, dcz - 0.2);
+        group.add(mug);
+
+        // 의자 (책상 남쪽 - 형사 앉는 자리)
+        const seat = new THREE.Mesh(
+            new THREE.BoxGeometry(0.55, 0.08, 0.55), chairMat
+        );
+        seat.position.set(dcx, 0.55, dcz + 0.95);
+        group.add(seat);
+        const back = new THREE.Mesh(
+            new THREE.BoxGeometry(0.55, 0.7, 0.06), chairMat
+        );
+        back.position.set(dcx, 0.92, dcz + 1.17);
+        group.add(back);
+        const chairPole = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.04, 0.04, 0.5, 8),
+            new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.7 })
+        );
+        chairPole.position.set(dcx, 0.3, dcz + 0.95);
+        group.add(chairPole);
+        colliders.push({ x: dcx, z: dcz + 0.95, w: 0.55, d: 0.55, hideoutIndex: -1 });
+    }
+
+    // 안내 표지 — 입구 안쪽 (도로 방향에서 들어올 때 보이도록)
+    const infoCV = document.createElement('canvas');
+    infoCV.width = 256; infoCV.height = 96;
+    const iCtx = infoCV.getContext('2d');
+    iCtx.fillStyle = '#001a4a';
+    iCtx.fillRect(0, 0, 256, 96);
+    iCtx.fillStyle = '#ffdd66';
+    iCtx.font = 'bold 32px "Noto Sans KR", Inter, sans-serif';
+    iCtx.textAlign = 'center'; iCtx.textBaseline = 'middle';
+    iCtx.fillText('남양주경찰서', 128, 28);
+    iCtx.font = 'bold 20px Inter, sans-serif';
+    iCtx.fillStyle = '#aaccff';
+    iCtx.fillText('NAMYANGJU POLICE', 128, 60);
+    const infoTex = new THREE.CanvasTexture(infoCV);
+    const infoSign = new THREE.Mesh(
+        new THREE.PlaneGeometry(3.0, 1.1),
+        new THREE.MeshStandardMaterial({ map: infoTex, emissive: 0x001144, emissiveIntensity: 0.4, side: THREE.DoubleSide })
+    );
+    infoSign.position.set(x, 3.5, southZ + 0.12);  // 입구 도리(y=3~) 위쪽 안쪽 표지
+    group.add(infoSign);
 }
 
 // 주거지구 아파트 단지명 + 동번호 양각 라벨
@@ -824,7 +1277,73 @@ function createEmbossedCompanyName(group, b) {
     group.add(shadowPlane);
 }
 
-function createBuilding(group, x, z, w, d, h, color, label, glass, windowStyle) {
+// 유리 스크린 도어 (자동문 스타일) — 모든 건물 입구 공용
+// rotY: 0=+Z 정면, Math.PI=-Z 정면, Math.PI/2=-X 정면, -Math.PI/2=+X 정면
+function createGlassScreenDoor(group, cx, cy, cz, doorW, doorH, rotY) {
+    const glassMat = new THREE.MeshStandardMaterial({
+        color: 0xaad4ee, transparent: true, opacity: 0.55,
+        roughness: 0.12, metalness: 0.55,
+        emissive: 0x224466, emissiveIntensity: 0.28,
+        side: THREE.DoubleSide
+    });
+    const frameMat = new THREE.MeshStandardMaterial({
+        color: 0x333333, roughness: 0.35, metalness: 0.75
+    });
+    const handleMat = new THREE.MeshStandardMaterial({
+        color: 0xcccccc, roughness: 0.25, metalness: 0.85
+    });
+
+    const halfW = doorW / 2;
+    const sin = Math.sin(rotY || 0);
+    const cos = Math.cos(rotY || 0);
+    // 패널은 두 짝 (양 옆으로 슬라이딩 갭 살짝) — 5cm 갭
+    const panelW = halfW - 0.05;
+    const panelCx = halfW / 2 + 0.025;
+
+    // 우측 패널
+    const panelR = new THREE.Mesh(
+        new THREE.BoxGeometry(panelW, doorH * 0.92, 0.06), glassMat
+    );
+    panelR.position.set(cx + cos * panelCx, doorH * 0.46 + (cy || 0), cz - sin * panelCx);
+    panelR.rotation.y = rotY || 0;
+    group.add(panelR);
+
+    // 좌측 패널
+    const panelL = panelR.clone();
+    panelL.position.set(cx - cos * panelCx, doorH * 0.46 + (cy || 0), cz + sin * panelCx);
+    group.add(panelL);
+
+    // 프레임 (상단 가로 바)
+    const frameTop = new THREE.Mesh(
+        new THREE.BoxGeometry(doorW + 0.15, 0.12, 0.10), frameMat
+    );
+    frameTop.position.set(cx, doorH * 0.92 + 0.06 + (cy || 0), cz);
+    frameTop.rotation.y = rotY || 0;
+    group.add(frameTop);
+
+    // 프레임 (좌측 세로 바)
+    const frameLeft = new THREE.Mesh(
+        new THREE.BoxGeometry(0.10, doorH + 0.15, 0.10), frameMat
+    );
+    frameLeft.position.set(cx - cos * (halfW + 0.05), doorH * 0.5 + (cy || 0), cz + sin * (halfW + 0.05));
+    frameLeft.rotation.y = rotY || 0;
+    group.add(frameLeft);
+
+    // 프레임 (우측 세로 바)
+    const frameRight = frameLeft.clone();
+    frameRight.position.set(cx + cos * (halfW + 0.05), doorH * 0.5 + (cy || 0), cz - sin * (halfW + 0.05));
+    group.add(frameRight);
+
+    // 손잡이 (양 패널 가운데, 세로 슬림 바)
+    const handle = new THREE.Mesh(
+        new THREE.BoxGeometry(0.04, doorH * 0.45, 0.04), handleMat
+    );
+    handle.position.set(cx + cos * 0.06, doorH * 0.46 + (cy || 0), cz - sin * 0.06);
+    handle.rotation.y = rotY || 0;
+    group.add(handle);
+}
+
+function createBuilding(group, x, z, w, d, h, color, label, glass, windowStyle, skipDoor) {
     // Glass towers (tall commercial) get reflective material; others matte stucco
     const mat = glass
         ? new THREE.MeshStandardMaterial({ color, roughness: 0.18, metalness: 0.45 })
@@ -1069,18 +1588,10 @@ function createBuilding(group, x, z, w, d, h, color, label, glass, windowStyle) 
         }
     }
 
-    // Door (always faces nearest road)
-    const doorMat = new THREE.MeshStandardMaterial({ color: 0x3a2510, roughness: 0.7 });
-    const door = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.6, 0.15), doorMat);
-    door.position.set(x, 1.3, z + d / 2 + 0.08);
-    group.add(door);
-    // Doorknob
-    const knob = new THREE.Mesh(
-        new THREE.SphereGeometry(0.06, 8, 8),
-        new THREE.MeshStandardMaterial({ color: 0xffcc33, roughness: 0.3, metalness: 0.8 })
-    );
-    knob.position.set(x + 0.5, 1.3, z + d / 2 + 0.18);
-    group.add(knob);
+    // 유리 스크린 도어 (자동문 슬라이딩 글래스 패널 — 모든 일반 건물 공용)
+    if (!skipDoor) {
+        createGlassScreenDoor(group, x, 0, z + d / 2 + 0.05, 2.0, 2.6, 0);
+    }
 
     // Roof ledge
     const ledge = new THREE.Mesh(
