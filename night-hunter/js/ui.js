@@ -266,15 +266,24 @@ const GameUI = window.GameUI = {
                 ctx.stroke();
             }
         });
-        // 공원 (분당신도시 스타일) — 녹지로 표시
+        // 공원 — 분당신도시 스타일 (실 맵과 동일 좌표)
         const PARKS = [
-            { cx:  27, cz: 70, w: 35, d: 22 },
-            { cx: -27, cz: 70, w: 35, d: 22 },
-            { cx: -50, cz: -47, w: 14, d: 8 },
-            { cx:  50, cz: -47, w: 14, d: 8 }
+            { cx:  27, cz: 70, w: 35, d: 14 },
+            { cx: -27, cz: 70, w: 35, d: 14 },
+            { cx:   0, cz: -20, w: 8, d: 18 }
         ];
         ctx.fillStyle = 'rgba(74,140,58,0.55)';
         PARKS.forEach(p => {
+            ctx.fillRect(wx(p.cx) - p.w * scale / 2, wz(p.cz) - p.d * scale / 2,
+                         p.w * scale, p.d * scale);
+        });
+        // 로데오 거리 (보행자 plaza) — 베이지 톤
+        const RODEOS = [
+            { cx: 70, cz: -18.5, w: 130, d: 7 },  // N 로데오 (z=-22~-15)
+            { cx: 70, cz: -58.5, w: 130, d: 7 }   // S 로데오 (z=-62~-55)
+        ];
+        ctx.fillStyle = 'rgba(212,192,168,0.65)';
+        RODEOS.forEach(p => {
             ctx.fillRect(wx(p.cx) - p.w * scale / 2, wz(p.cz) - p.d * scale / 2,
                          p.w * scale, p.d * scale);
         });
