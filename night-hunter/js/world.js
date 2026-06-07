@@ -1,18 +1,23 @@
 // world.js — 남양주시 평내동 풍 도로 우선 도시 설계
 // 격자형 도시 모델: 메인 간선도로 + 보조도로, 도로에 면하는 건물 배치 + 로데오거리
 
-const WORLD_SIZE = 300;
+// 월드 비대칭 — 북쪽은 단축 (빨간 영역 삭제로 경찰서 + 도로 시프트 후 짧아짐)
+const WORLD_X_HALF = 150;
+const WORLD_Z_NORTH = 90;   // 북쪽 끝 — 경찰서 위쪽
+const WORLD_Z_SOUTH = -150; // 남쪽 끝
+const WORLD_SIZE = 300;     // 기존 호환용 (X 방향 풀 폭)
+const WORLD_Z_LEN = WORLD_Z_NORTH - WORLD_Z_SOUTH;  // 240
+window.WORLD_SIZE = WORLD_SIZE;
+window.WORLD_Z_NORTH = WORLD_Z_NORTH;
+window.WORLD_Z_SOUTH = WORLD_Z_SOUTH;
 
 // 주거지구 아파트 단지 (남양주시 평내동 실제 단지 참고)
-// 7개 단지, 각 단지당 2~4동 고층 슬랩형 아파트
+// 4개 단지로 통합 (북측 행 삭제로 블록 감소)
 const APARTMENT_COMPLEXES = [
-    { kr: '평내금호어울림',     en: 'PYEONGNAE KUMHO',    dong: [101, 102, 103] },
-    { kr: '평내중흥아파트',     en: 'PYEONGNAE JUNGHEUNG',dong: [101, 102, 103, 104] },
-    { kr: '평내우림아파트',     en: 'PYEONGNAE WOORIM',   dong: [201, 202, 203] },
-    { kr: '평내일성트루엘',     en: 'PYEONGNAE ILSEONG',  dong: [301, 302, 303] },
-    { kr: '평내휴먼시아',       en: 'PYEONGNAE HUMANSIA', dong: [101, 102] },
-    { kr: '평내한솔리체',       en: 'PYEONGNAE HANSOL',   dong: [501, 502] },
-    { kr: '평내신우아파트',     en: 'PYEONGNAE SHINWOO',  dong: [701, 702, 703] }
+    { kr: '평내금호어울림', en: 'PYEONGNAE KUMHO',     dong: [101, 102, 103, 104] },
+    { kr: '평내중흥아파트', en: 'PYEONGNAE JUNGHEUNG', dong: [201, 202, 203, 204] },
+    { kr: '평내우림아파트', en: 'PYEONGNAE WOORIM',    dong: [301, 302, 303] },
+    { kr: '평내일성트루엘', en: 'PYEONGNAE ILSEONG',   dong: [401, 402, 403] }
 ];
 
 // 공업지구 기업명 풀 (양각 글자로 공장 외벽에 부착)
@@ -37,34 +42,39 @@ const FACTORY_COMPANIES = [
     { kr: '한국태광',       en: 'KOREA TAEKWANG' }
 ];
 
-// Zone definitions
+// Zone definitions (경찰서 시프트 후)
 const ZONES = {
-    POLICE:      { name: '경찰서 구역', cx: 0, cz: 100 },
-    RESIDENTIAL: { name: '주택가',     cx: -80, cz: 0 },
-    COMMERCIAL:  { name: '상업지구',   cx: 80, cz: 0 },
+    POLICE:      { name: '경찰서 구역', cx: 0, cz: 60 },
+    RESIDENTIAL: { name: '주택가',     cx: -80, cz: -25 },
+    COMMERCIAL:  { name: '상업지구',   cx: 80, cz: -25 },
     FACTORY:     { name: '공장지대',   cx: 0, cz: -100 }
 };
 
 // Korean city road network - inspired by Bundang/Ilsan grid
-// Main arterial roads (큰 도로, 8 wide)
+// Main arterial roads — 사각형 perimeter + 내부 격자 모두 연결
+// Z 범위: -140 ~ 85 (월드 -150 ~ 90 내), X 범위: -140 ~ 140 (월드 ±150 내)
 const MAIN_ROADS = [
-    // East-West arterials
-    { type: 'H', z: 95, w: 8, length: 280 },   // Police district main
-    { type: 'H', z: 50, w: 10, length: 280 },  // Central arterial (main)
-    { type: 'H', z: 5, w: 8, length: 280 },    // Residential/Commercial divider
-    { type: 'H', z: -45, w: 8, length: 280 },  // Lower arterial
-    { type: 'H', z: -85, w: 10, length: 280 }, // Factory border main
-    { type: 'H', z: -135, w: 6, length: 240 }, // Factory back
+    // ── Perimeter (sealed rectangle) ──
+    { type: 'H', z: 85,  w: 8,  length: 290 },   // 북측 perimeter (경찰서 위쪽)
+    { type: 'H', z: -140, w: 8, length: 290 },   // 남측 perimeter
+    { type: 'V', x: -140, w: 8, length: 240 },   // 서측 perimeter
+    { type: 'V', x: 140,  w: 8, length: 240 },   // 동측 perimeter
 
-    // North-South arterials (x=0 stops short to leave police plaza clean)
-    { type: 'V', x: 0, w: 10, length: 230, offsetZ: -25 },   // Central — z range -140 to 90 (stops before police)
-    { type: 'V', x: -50, w: 8, length: 200 },  // West main
-    { type: 'V', x: 50, w: 8, length: 200 },   // East main
-    { type: 'V', x: -100, w: 6, length: 180 }, // Far west
-    { type: 'V', x: 100, w: 6, length: 180 },  // Far east
-    { type: 'V', x: -130, w: 5, length: 150 },
-    { type: 'V', x: 130, w: 5, length: 150 },
+    // ── East-West arterials (내부) ──
+    { type: 'H', z: 55,  w: 8, length: 290 },    // 경찰서 정면 도로 (shifted from z=95)
+    { type: 'H', z: 5,   w: 8, length: 290 },    // R/C divider
+    { type: 'H', z: -45, w: 8, length: 290 },    // 중부 arterial
+    { type: 'H', z: -90, w: 10, length: 290 },   // 공업지대 경계 (shifted from z=-85)
+
+    // ── North-South arterials (모두 perimeter 까지 연결) ──
+    // V x=0 — 경찰서(z=53~67) 회피로 남측 z=-140~50 만 운영
+    { type: 'V', x: 0,   w: 10, length: 190, offsetZ: -45 },
+    { type: 'V', x: -50, w: 8,  length: 225, offsetZ: -27.5 }, // z=-140~85
+    { type: 'V', x: 50,  w: 8,  length: 225, offsetZ: -27.5 },
+    { type: 'V', x: -100, w: 6, length: 225, offsetZ: -27.5 },
+    { type: 'V', x: 100,  w: 6, length: 225, offsetZ: -27.5 }
 ];
+window.MAIN_ROADS = MAIN_ROADS;
 
 // Building blocks defined by road grid intersections
 // Each block has 4 sides; buildings face outward (toward roads)
@@ -73,42 +83,34 @@ const BUILDING_BLOCKS = [];
 function defineBlocks() {
     BUILDING_BLOCKS.length = 0;
 
-    // Police zone blocks (between z=70 and z=120)
-    BUILDING_BLOCKS.push({ zone: 'POLICE', minX: -45, maxX: -10, minZ: 55, maxZ: 90, density: 'low' });
-    BUILDING_BLOCKS.push({ zone: 'POLICE', minX: 10, maxX: 45, minZ: 55, maxZ: 90, density: 'low' });
-    BUILDING_BLOCKS.push({ zone: 'POLICE', minX: -95, maxX: -55, minZ: 55, maxZ: 90, density: 'low' });
-    BUILDING_BLOCKS.push({ zone: 'POLICE', minX: 55, maxX: 95, minZ: 55, maxZ: 90, density: 'low' });
+    // 경찰서 시프트 후 — 경찰 zone 블록은 z=15~50 (도로 z=55 남쪽, R/C divider z=5 북쪽)
+    // 4개 블록: 도로 양옆 + 안쪽
+    BUILDING_BLOCKS.push({ zone: 'POLICE', minX: -125, maxX: -95, minZ: 15, maxZ: 50, density: 'low' });
+    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:  -90, maxX: -55, minZ: 15, maxZ: 50, density: 'low' });
+    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:   55, maxX:  90, minZ: 15, maxZ: 50, density: 'low' });
+    BUILDING_BLOCKS.push({ zone: 'POLICE', minX:   95, maxX: 125, minZ: 15, maxZ: 50, density: 'low' });
 
-    // Residential apartment complexes — 7개 단지를 8 블록에 분배 (블록 idx → complex idx)
-    // 단지명/동번호는 complexIdx 로 매핑됨 (createGridBuildings 에서)
-    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -95, maxX: -55, minZ: 10, maxZ: 45,  density: 'apt', complexIdx: 0 });
-    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -45, maxX: -5,  minZ: 10, maxZ: 45,  density: 'apt', complexIdx: 1 });
-    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -95, maxX: -55, minZ: -40, maxZ: 0,  density: 'apt', complexIdx: 2 });
-    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -45, maxX: -5,  minZ: -40, maxZ: 0,  density: 'apt', complexIdx: 3 });
-    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -125, maxX: -105, minZ: 10, maxZ: 45, density: 'apt', complexIdx: 4 });
-    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -125, maxX: -105, minZ: -40, maxZ: 0, density: 'apt', complexIdx: 5 });
-    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -95, maxX: -55, minZ: -80, maxZ: -50, density: 'apt', complexIdx: 6 });
+    // 아파트 단지 — 4 블록 (북측 z=10~45 행은 삭제됨)
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -90, maxX: -55, minZ: -40, maxZ: 0,  density: 'apt', complexIdx: 0 });
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -45, maxX: -5,  minZ: -40, maxZ: 0,  density: 'apt', complexIdx: 1 });
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -135, maxX: -105, minZ: -40, maxZ: 0, density: 'apt', complexIdx: 2 });
+    BUILDING_BLOCKS.push({ zone: 'RESIDENTIAL', minX: -90, maxX: -55, minZ: -85, maxZ: -50, density: 'apt', complexIdx: 3 });
 
-    // === ROOFEO ZONE — 평내 로데오 거리 (서현역 로데오 참고) ===
-    // 차가 다니지 않는 보행자 거리(z=21~31)를 중심으로 양쪽에 더 큰 상가
-    // 북쪽 행: z=34~46 — 간판은 -Z (남쪽 로데오 방향)
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 5, maxX: 125, minZ: 34, maxZ: 46,
-                           density: 'rodeo', facing: '-Z', rodeo: true });
-    // 남쪽 행: z=8~20 — 간판은 +Z (북쪽 로데오 방향, default)
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 5, maxX: 125, minZ: 8, maxZ: 20,
-                           density: 'rodeo', facing: '+Z', rodeo: true });
+    // 상가 블록 — 로데오 및 z=8~46 행은 삭제됨, 남측 행만 유지
+    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:   5, maxX:  45, minZ: -40, maxZ: 0, density: 'high' });
+    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:  55, maxX:  95, minZ: -40, maxZ: 0, density: 'high' });
+    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 105, maxX: 135, minZ: -40, maxZ: 0, density: 'medium' });
+    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:  55, maxX:  95, minZ: -85, maxZ: -50, density: 'medium' });
+    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX:   5, maxX:  45, minZ: -85, maxZ: -50, density: 'medium' });
+    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 105, maxX: 135, minZ: -85, maxZ: -50, density: 'medium' });
 
-    // 일반 상가 블록 — 도로변 (z=-40~0)
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 5, maxX: 45, minZ: -40, maxZ: 0, density: 'high' });
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 55, maxX: 95, minZ: -40, maxZ: 0, density: 'high' });
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 105, maxX: 125, minZ: -40, maxZ: 0, density: 'medium' });
-    BUILDING_BLOCKS.push({ zone: 'COMMERCIAL', minX: 55, maxX: 95, minZ: -80, maxZ: -50, density: 'medium' });
-
-    // Factory blocks (z < -90)
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX: -100, maxX: -55, minZ: -125, maxZ: -95, density: 'sparse' });
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX: -45, maxX: -5, minZ: -125, maxZ: -95, density: 'sparse' });
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX: 5, maxX: 45, minZ: -125, maxZ: -95, density: 'sparse' });
-    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX: 55, maxX: 100, minZ: -125, maxZ: -95, density: 'sparse' });
+    // 공업 블록 (z<-90)
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX: -135, maxX: -100, minZ: -135, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  -95, maxX:  -55, minZ: -135, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  -50, maxX:  -5,  minZ: -135, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:    5, maxX:   50, minZ: -135, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:   55, maxX:   95, minZ: -135, maxZ: -95, density: 'sparse' });
+    BUILDING_BLOCKS.push({ zone: 'FACTORY', minX:  100, maxX:  135, minZ: -135, maxZ: -95, density: 'sparse' });
 }
 
 function createWorld(scene) {
@@ -118,19 +120,19 @@ function createWorld(scene) {
     defineBlocks();
     createGround(worldGroup);
     createRoadNetwork(worldGroup);
-    createRodeoStreet(worldGroup);
+    // 로데오 거리 제거 — z=10~45 영역이 경찰서 zone 으로 시프트됨
     const policeStation = createPoliceStation(worldGroup);
     buildingData.push(policeStation);
 
     const zoneBuildings = createGridBuildings(worldGroup);
     buildingData.push(...zoneBuildings);
-    // Add police station to global building positions list
+    // 경찰서 collision 박스 (z=60 으로 시프트됨)
     if (window._buildingPositions) {
-        window._buildingPositions.push({ x: 0, z: 110, w: 18, d: 14, hideoutIndex: -1 });
+        window._buildingPositions.push({ x: 0, z: 60, w: 18, d: 14, hideoutIndex: -1 });
     }
 
     createStreetProps(worldGroup);
-    createParks(worldGroup);
+    createCityParks(worldGroup);
 
     scene.add(worldGroup);
     return { worldGroup, buildingData };
@@ -156,10 +158,12 @@ function makeProceduralTexture(baseColor, noiseAmount, size) {
 }
 
 function createGround(group) {
-    // Grass at y=0 (low)
+    // Grass — 월드 비대칭 (북측 단축)
     const grassTex = makeProceduralTexture('#3a6b2a', 60, 512);
-    grassTex.repeat.set(20, 20);
-    const geo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE);
+    grassTex.repeat.set(20, 18);
+    const groundCx = 0;
+    const groundCz = (WORLD_Z_NORTH + WORLD_Z_SOUTH) / 2; // -30
+    const geo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_Z_LEN);
     const mat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         map: grassTex,
@@ -168,24 +172,33 @@ function createGround(group) {
     });
     const ground = new THREE.Mesh(geo, mat);
     ground.rotation.x = -Math.PI / 2;
-    ground.position.set(0, 0, 0);
+    ground.position.set(groundCx, 0, groundCz);
     ground.receiveShadow = true;
     group.add(ground);
 
-    // City boundary wall
+    // 경계벽 (비대칭) — 북측 z=WORLD_Z_NORTH, 남측 z=WORLD_Z_SOUTH
     const wallMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.9 });
     const wallH = 3;
-    [[-1,0,1,WORLD_SIZE],[1,0,1,WORLD_SIZE],[0,-1,WORLD_SIZE,1],[0,1,WORLD_SIZE,1]].forEach(([dx,dz,w,d]) => {
-        const wall = new THREE.Mesh(new THREE.BoxGeometry(w === 1 ? 1 : WORLD_SIZE, wallH, d === 1 ? 1 : WORLD_SIZE), wallMat);
-        wall.position.set(dx * WORLD_SIZE / 2, wallH / 2, dz * WORLD_SIZE / 2);
-        wall.castShadow = true;
-        group.add(wall);
-    });
+    // 북측 벽 (z=WORLD_Z_NORTH)
+    const wallN = new THREE.Mesh(new THREE.BoxGeometry(WORLD_SIZE, wallH, 1), wallMat);
+    wallN.position.set(0, wallH / 2, WORLD_Z_NORTH);
+    wallN.castShadow = true;
+    group.add(wallN);
+    // 남측 벽
+    const wallS = new THREE.Mesh(new THREE.BoxGeometry(WORLD_SIZE, wallH, 1), wallMat);
+    wallS.position.set(0, wallH / 2, WORLD_Z_SOUTH);
+    wallS.castShadow = true;
+    group.add(wallS);
+    // 동/서측 벽 (월드 Z 범위 따라 길이 조정)
+    const wallE = new THREE.Mesh(new THREE.BoxGeometry(1, wallH, WORLD_Z_LEN), wallMat);
+    wallE.position.set(WORLD_SIZE / 2, wallH / 2, groundCz);
+    wallE.castShadow = true;
+    group.add(wallE);
+    const wallW = new THREE.Mesh(new THREE.BoxGeometry(1, wallH, WORLD_Z_LEN), wallMat);
+    wallW.position.set(-WORLD_SIZE / 2, wallH / 2, groundCz);
+    wallW.castShadow = true;
+    group.add(wallW);
 }
-
-// 로데오 영역 (V 도로가 우회해야 하는 z 범위)
-const RODEO_Z_MIN = 19;
-const RODEO_Z_MAX = 35;
 
 function createRoadNetwork(group) {
     const asphaltTex = makeProceduralTexture('#2a2a2a', 30, 256);
@@ -256,32 +269,26 @@ function createRoadNetwork(group) {
                 group.add(stripe);
             }
         } else {
-            // Vertical road — 로데오 통과 시 두 세그먼트로 분리
+            // Vertical road — 단일 세그먼트 (로데오 제거됨)
             const oz = r.offsetZ || 0;
             const zStart = oz - r.length / 2;
             const zEnd   = oz + r.length / 2;
-
-            // 로데오 통과(x=50, x=100) 인지 판단
-            const passesThroughRodeo = (r.x === 50 || r.x === 100) &&
-                                       zStart < RODEO_Z_MIN && zEnd > RODEO_Z_MAX;
-
-            if (passesThroughRodeo) {
-                drawVRoadSegment(r.x, w, zStart, RODEO_Z_MIN);
-                drawVRoadSegment(r.x, w, RODEO_Z_MAX, zEnd);
-            } else {
-                drawVRoadSegment(r.x, w, zStart, zEnd);
-            }
+            drawVRoadSegment(r.x, w, zStart, zEnd);
         }
     });
 
-    // === 모든 교차로에 횡단보도 — H × V 자동 계산 ===
+    // === 표준 zebra 횡단보도 — 교차로 4면에만 (가운데 비움) ===
     const cwMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
     const hRoads = MAIN_ROADS.filter(r => r.type === 'H');
     const vRoads = MAIN_ROADS.filter(r => r.type === 'V');
 
+    const STRIPE_W   = 0.45;   // 각 흰 띠 폭 (보행 방향)
+    const STRIPE_GAP = 0.45;   // 띠 간격
+    const N_STRIPES  = 5;      // 띠 개수
+    const CW_OFFSET  = 0.5;    // 도로 끝에서 횡단보도 시작까지 여유
+
     hRoads.forEach(h => {
         vRoads.forEach(v => {
-            // 교차 가능 여부
             const oz = v.offsetZ || 0;
             const vZmin = oz - v.length / 2;
             const vZmax = oz + v.length / 2;
@@ -289,55 +296,37 @@ function createRoadNetwork(group) {
             const inV = h.z >= vZmin && h.z <= vZmax;
             if (!(inH && inV)) return;
 
-            // 로데오 우회로 인해 끊어진 V 도로 교차로는 스킵
-            const splitByRodeo = (v.x === 50 || v.x === 100) &&
-                                 vZmin < RODEO_Z_MIN && vZmax > RODEO_Z_MAX &&
-                                 h.z > RODEO_Z_MIN && h.z < RODEO_Z_MAX;
-            if (splitByRodeo) return;
-
             const cx = v.x, cz = h.z;
-            const hOff = h.w / 2 + 0.6;  // H 도로 양옆 인도쪽
-            const vOff = v.w / 2 + 0.6;  // V 도로 양옆 인도쪽
 
-            // H 도로를 가로지르는 stripes (V 도로 진입 양쪽) — 가로 막대
-            const stripeLenH = v.w + 1.6;
-            for (let i = -3; i <= 3; i += 1.0) {
-                // 남쪽 진입
-                const sN = new THREE.Mesh(new THREE.BoxGeometry(stripeLenH, 0.05, 0.35), cwMat);
-                sN.position.set(cx + i * 0.0, 0.13, cz - hOff);
-                group.add(sN);
-                // 북쪽 진입
-                const sS = new THREE.Mesh(new THREE.BoxGeometry(stripeLenH, 0.05, 0.35), cwMat);
-                sS.position.set(cx + i * 0.0, 0.13, cz + hOff);
-                group.add(sS);
-                break; // single line of crosswalks not needed; use loop variant below
-            }
-            // 실제 횡단보도 띠 — H 도로 양쪽 (남/북), V 도로 양쪽 (동/서)
-            // 1) H 도로 횡단 (V 도로 방향으로 걷는 사람용) — stripe 가 H 도로를 가로지름
-            const stripeCountH = 6;
-            const stripeStepH = (h.w * 0.9) / stripeCountH;
-            for (let k = 0; k < stripeCountH; k++) {
-                const zOff = -h.w * 0.45 + stripeStepH * (k + 0.5);
-                const sN = new THREE.Mesh(new THREE.BoxGeometry(stripeLenH, 0.05, 0.32), cwMat);
-                sN.position.set(cx - vOff - 0.4, 0.13, cz + zOff);
-                group.add(sN);
-                const sS = new THREE.Mesh(new THREE.BoxGeometry(stripeLenH, 0.05, 0.32), cwMat);
-                sS.position.set(cx + vOff + 0.4, 0.13, cz + zOff);
-                group.add(sS);
-            }
-            // 2) V 도로 횡단 (H 도로 방향으로 걷는 사람용)
-            const stripeLenV = h.w + 1.6;
-            const stripeCountV = 6;
-            const stripeStepV = (v.w * 0.9) / stripeCountV;
-            for (let k = 0; k < stripeCountV; k++) {
-                const xOff = -v.w * 0.45 + stripeStepV * (k + 0.5);
-                const sE = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.05, stripeLenV), cwMat);
-                sE.position.set(cx + xOff, 0.13, cz - hOff - 0.4);
-                group.add(sE);
-                const sW = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.05, stripeLenV), cwMat);
-                sW.position.set(cx + xOff, 0.13, cz + hOff + 0.4);
-                group.add(sW);
-            }
+            // ── 북측 횡단보도 (V 도로를 가로지름) ──
+            // 위치: cz + h.w/2 + CW_OFFSET (H 도로 북쪽 인도)
+            // stripes: V 도로 가로지름, BoxGeom(v.w, ., STRIPE_W), Z 방향 spaced
+            const drawZebraAcrossV = (centerZ) => {
+                for (let k = 0; k < N_STRIPES; k++) {
+                    const zPos = centerZ + (k - (N_STRIPES - 1) / 2) * (STRIPE_W + STRIPE_GAP);
+                    const stripe = new THREE.Mesh(
+                        new THREE.BoxGeometry(v.w * 0.9, 0.05, STRIPE_W), cwMat
+                    );
+                    stripe.position.set(cx, 0.13, zPos);
+                    group.add(stripe);
+                }
+            };
+            const drawZebraAcrossH = (centerX) => {
+                for (let k = 0; k < N_STRIPES; k++) {
+                    const xPos = centerX + (k - (N_STRIPES - 1) / 2) * (STRIPE_W + STRIPE_GAP);
+                    const stripe = new THREE.Mesh(
+                        new THREE.BoxGeometry(STRIPE_W, 0.05, h.w * 0.9), cwMat
+                    );
+                    stripe.position.set(xPos, 0.13, cz);
+                    group.add(stripe);
+                }
+            };
+
+            // 4면 횡단보도 (각각 도로 한쪽 인도 끝에)
+            drawZebraAcrossV(cz + h.w / 2 + CW_OFFSET + (N_STRIPES * (STRIPE_W + STRIPE_GAP)) / 2);
+            drawZebraAcrossV(cz - h.w / 2 - CW_OFFSET - (N_STRIPES * (STRIPE_W + STRIPE_GAP)) / 2);
+            drawZebraAcrossH(cx + v.w / 2 + CW_OFFSET + (N_STRIPES * (STRIPE_W + STRIPE_GAP)) / 2);
+            drawZebraAcrossH(cx - v.w / 2 - CW_OFFSET - (N_STRIPES * (STRIPE_W + STRIPE_GAP)) / 2);
         });
     });
 }
@@ -470,7 +459,7 @@ function createRodeoStreet(group) {
 }
 
 function createPoliceStation(group) {
-    const x = 0, z = 110;
+    const x = 0, z = 60;  // 시프트: z=110 → z=60 (북측 영역 압축)
     const w = 18, d = 14, h = 14;
     const building = createBuilding(group, x, z, w, d, h, 0x1a3a5c, '경찰서');
 
@@ -576,15 +565,25 @@ function createApartmentLabel(group, b) {
     const cplx = b.complex;
     if (!cplx) return;
 
-    // 통합 캔버스 — 상단 단지명 + 하단 거대 동번호
+    // 단지명을 2줄로 분리 — "평내" + 브랜드명 (글자 잘림 방지)
     const dongStr = String(b.dong);
-    const sideW = Math.min(b.bd * 0.92, 7.4);
-    const sideH = Math.min(b.bh * 0.62, 22.0);
+    let krL1, krL2;
+    if (cplx.kr.startsWith('평내')) {
+        krL1 = '평내';
+        krL2 = cplx.kr.substring(2);
+    } else {
+        const half = Math.ceil(cplx.kr.length / 2);
+        krL1 = cplx.kr.substring(0, half);
+        krL2 = cplx.kr.substring(half);
+    }
+
+    const sideW = Math.min(b.bd * 0.95, 7.6);
+    const sideH = Math.min(b.bh * 0.55, 18.0);
 
     const cv1 = document.createElement('canvas');
-    cv1.width = 512; cv1.height = 1536;
+    cv1.width = 512; cv1.height = 1280;
     const ctx1 = cv1.getContext('2d');
-    ctx1.clearRect(0, 0, 512, 1536);
+    ctx1.clearRect(0, 0, 512, 1280);
     function bevelText(ctx, text, font, x, y) {
         ctx.font = font;
         ctx.textAlign = 'center';
@@ -603,11 +602,16 @@ function createApartmentLabel(group, b) {
         ctx.fillStyle = grad;
         ctx.fillText(text, x, y);
     }
-    // 상단 단지명 — 크게 (잘 보이도록)
-    bevelText(ctx1, cplx.kr, 'bold 220px "Noto Sans KR", "Inter", sans-serif', 256, 320);
-    bevelText(ctx1, cplx.en, 'bold 88px "Inter", "Noto Sans KR", sans-serif', 256, 510);
-    // 동번호 — 단지명과 동일 크기 (220px)
-    bevelText(ctx1, dongStr + '동', 'bold 220px "Inter", "Noto Sans KR", sans-serif', 256, 1100);
+    // 단지명 2줄로 표시 — 잘리지 않게 폰트 축소
+    // L2 가 5글자 이상이면 더 줄여서 좌우 안 잘림
+    const l2Font = krL2.length >= 5
+        ? 'bold 100px "Noto Sans KR", "Inter", sans-serif'
+        : 'bold 130px "Noto Sans KR", "Inter", sans-serif';
+    bevelText(ctx1, krL1, 'bold 140px "Noto Sans KR", "Inter", sans-serif', 256, 180);
+    bevelText(ctx1, krL2, l2Font, 256, 340);
+    bevelText(ctx1, cplx.en, 'bold 50px "Inter", "Noto Sans KR", sans-serif', 256, 430);
+    // 동번호 — 단지명보다 살짝 크지만 옆면 폭에 꽉 차지 않게 적당히
+    bevelText(ctx1, dongStr + '동', 'bold 150px "Inter", "Noto Sans KR", sans-serif', 256, 880);
 
     const tex1 = new THREE.CanvasTexture(cv1);
     tex1.anisotropy = 8;
@@ -1313,5 +1317,155 @@ function createStreetProps(group) {
 }
 
 function createParks(group) {
-    // Plaza / fountain removed per design — open ground only
+    // legacy: noop. createCityParks 가 분당신도시 스타일 공원을 배치.
+}
+
+// 분당신도시 / 일산 호수공원 스타일 — 도시 빈 공터에 공원 조성
+function createCityParks(group) {
+    const grassTex = makeProceduralTexture('#4a8c3a', 50, 256);
+    grassTex.repeat.set(6, 6);
+    const parkMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff, map: grassTex, roughness: 0.95
+    });
+    const pathTex = makeProceduralTexture('#d2c0a8', 25, 128);
+    pathTex.repeat.set(4, 4);
+    const pathMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff, map: pathTex, roughness: 0.85
+    });
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.9 });
+
+    // 공원 후보 영역들 (빌딩 블록과 겹치지 않는 빈 공간)
+    // 1) 경찰서 동측 빈 공간 (x=5~50, z=53~85) — 경찰서 광장
+    // 2) 경찰서 서측 빈 공간 (x=-50~-5, z=53~85)
+    // 3) 공업 ↔ 상가 사이 (z=-95~-90 도로 주변 + 일부 buffer)
+    const parks = [
+        { cx:  27, cz: 70, w: 35, d: 22, hasFountain: true,  treeCount: 14 }, // 경찰서 동측 광장
+        { cx: -27, cz: 70, w: 35, d: 22, hasFountain: false, treeCount: 12 }, // 경찰서 서측 잔디공원
+        { cx: -50, cz: -47, w: 14, d: 8, hasFountain: false, treeCount: 6  }, // 거리공원
+        { cx:  50, cz: -47, w: 14, d: 8, hasFountain: false, treeCount: 6  }
+    ];
+
+    parks.forEach(p => {
+        // 잔디 베이스
+        const grass = new THREE.Mesh(
+            new THREE.BoxGeometry(p.w, 0.06, p.d), parkMat
+        );
+        grass.position.set(p.cx, 0.045, p.cz);
+        grass.receiveShadow = true;
+        group.add(grass);
+
+        // 산책로 (X 자형)
+        const path1 = new THREE.Mesh(
+            new THREE.BoxGeometry(p.w * 0.85, 0.05, 1.5), pathMat
+        );
+        path1.position.set(p.cx, 0.10, p.cz);
+        path1.receiveShadow = true;
+        group.add(path1);
+        const path2 = new THREE.Mesh(
+            new THREE.BoxGeometry(1.5, 0.05, p.d * 0.85), pathMat
+        );
+        path2.position.set(p.cx, 0.10, p.cz);
+        path2.receiveShadow = true;
+        group.add(path2);
+
+        // 중앙 분수 / 화단
+        if (p.hasFountain) {
+            const basin = new THREE.Mesh(
+                new THREE.CylinderGeometry(2.0, 2.2, 0.5, 24),
+                new THREE.MeshStandardMaterial({ color: 0xc8b89a, roughness: 0.65 })
+            );
+            basin.position.set(p.cx, 0.30, p.cz);
+            basin.castShadow = true;
+            group.add(basin);
+            const water = new THREE.Mesh(
+                new THREE.CylinderGeometry(1.7, 1.7, 0.06, 24),
+                new THREE.MeshStandardMaterial({
+                    color: 0x4a8cdc, roughness: 0.2, metalness: 0.55,
+                    emissive: 0x1a3a64, emissiveIntensity: 0.2
+                })
+            );
+            water.position.set(p.cx, 0.55, p.cz);
+            group.add(water);
+            const spout = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.10, 0.15, 1.4, 12),
+                new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.6, roughness: 0.4 })
+            );
+            spout.position.set(p.cx, 1.0, p.cz);
+            group.add(spout);
+        } else {
+            // 화단
+            const flowerbed = new THREE.Mesh(
+                new THREE.CylinderGeometry(2.2, 2.4, 0.35, 16),
+                new THREE.MeshStandardMaterial({ color: 0x6c543a, roughness: 0.85 })
+            );
+            flowerbed.position.set(p.cx, 0.22, p.cz);
+            flowerbed.receiveShadow = true;
+            group.add(flowerbed);
+            const flowers = new THREE.Mesh(
+                new THREE.CylinderGeometry(2.05, 2.05, 0.05, 16),
+                new THREE.MeshStandardMaterial({ color: 0xee7080, roughness: 0.7 })
+            );
+            flowers.position.set(p.cx, 0.42, p.cz);
+            group.add(flowers);
+        }
+
+        // 가로수 (공원 둘레)
+        const greens = [0x2d6a1e, 0x3a7a2e, 0x4a8a3e, 0x356622];
+        for (let t = 0; t < p.treeCount; t++) {
+            const angle = (t / p.treeCount) * Math.PI * 2;
+            const rx = (p.w / 2 - 1.5) * Math.cos(angle);
+            const rz = (p.d / 2 - 1.5) * Math.sin(angle);
+            const tx = p.cx + rx, tz = p.cz + rz;
+            // 십자 산책로 영역 회피
+            if (Math.abs(rx) < 1.2 && Math.abs(rz) < 1.2) continue;
+
+            const tH = 2.0 + Math.random() * 0.8;
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.12, 0.20, tH, 8), trunkMat
+            );
+            trunk.position.set(tx, tH / 2 + 0.06, tz);
+            trunk.castShadow = true;
+            group.add(trunk);
+            const folColor = greens[Math.floor(Math.random() * greens.length)];
+            const fol = new THREE.Mesh(
+                new THREE.SphereGeometry(1.0 + Math.random() * 0.3, 10, 8),
+                new THREE.MeshStandardMaterial({ color: folColor, roughness: 0.85 })
+            );
+            fol.position.set(tx, tH + 0.5, tz);
+            fol.castShadow = true;
+            group.add(fol);
+        }
+
+        // 벤치 4개 (산책로 십자 끝)
+        const benchMat = new THREE.MeshStandardMaterial({ color: 0x6b3f2a, roughness: 0.7 });
+        const benchPos = [
+            { x: p.cx, z: p.cz + p.d * 0.35, rot: 0 },
+            { x: p.cx, z: p.cz - p.d * 0.35, rot: 0 },
+            { x: p.cx + p.w * 0.35, z: p.cz, rot: Math.PI / 2 },
+            { x: p.cx - p.w * 0.35, z: p.cz, rot: Math.PI / 2 }
+        ];
+        benchPos.forEach(bp => {
+            const seat = new THREE.Mesh(
+                new THREE.BoxGeometry(1.6, 0.10, 0.45), benchMat
+            );
+            seat.position.set(bp.x, 0.45, bp.z);
+            seat.rotation.y = bp.rot;
+            seat.castShadow = true;
+            group.add(seat);
+            const back = new THREE.Mesh(
+                new THREE.BoxGeometry(1.6, 0.5, 0.08), benchMat
+            );
+            back.position.set(bp.x, 0.75, bp.z);
+            back.rotation.y = bp.rot;
+            group.add(back);
+        });
+
+        // 공원 collision 영역 — 공원 자체는 통과 가능, 분수/화단만 차단
+        if (window._buildingPositions) {
+            // 분수/화단 차단
+            window._buildingPositions.push({
+                x: p.cx, z: p.cz, w: 4.5, d: 4.5, hideoutIndex: -1
+            });
+        }
+    });
 }
