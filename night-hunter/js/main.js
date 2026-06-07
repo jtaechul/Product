@@ -228,8 +228,8 @@ const CHARACTERS = {
     },
     hayun: {
         name: '하윤',
-        title: '통신반 형사',
-        desc: '날카로운 푸른 눈빛.\n헤드셋으로 본부와 끊임없이 소통한다.',
+        title: '특수수사대 에이스',
+        desc: '5년 연속 검거율 1위.\n분석력과 정보망으로 거악을 사냥한다.',
         hairStyle: 'braids',          // twin braids
         hairColor: 0x4a2a10,          // darker brown
         hairHighlight: 0x6a4020,
@@ -1131,8 +1131,9 @@ canvas.addEventListener('touchcancel', _resetCameraInput);
 function checkBuildingCollision(nx, nz) {
     const playerRadius = 0.5;
     for (const b of buildingData) {
+        // 경찰서처럼 walkable: true 표시된 entry 는 외피 벽 collider 가 별도 등록되므로 큰 박스는 무시
+        if (b.walkable) continue;
         // BUG FIX: b.x === 0 falls back to b.mesh.position.x with `||` (0 is falsy).
-        // 경찰서 북측 벽 collider 처럼 x=0 + mesh 없는 경우 TypeError 로 updatePlayer 전체 throw → 이동 불가.
         const bx = (typeof b.x === 'number') ? b.x : (b.mesh ? b.mesh.position.x : 0);
         const bz = (typeof b.z === 'number') ? b.z : (b.mesh ? b.mesh.position.z : 0);
         const bw = (b.w || 6) / 2 + playerRadius;

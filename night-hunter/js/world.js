@@ -107,6 +107,26 @@ const MAIN_ROADS = [
 ];
 window.MAIN_ROADS = MAIN_ROADS;
 
+// 전역 헬퍼 — 좌표가 도로 asphalt 영역 내부인지 검사 (NPC/보행자 도로 회피용)
+// margin > 0 → 도로 바깥쪽 buffer 포함 (인도까지 회피)
+window.isOnRoadAsphalt = function(x, z, margin) {
+    const m = margin || 0;
+    for (const r of MAIN_ROADS) {
+        if (r.type === 'H') {
+            const ox = r.offsetX || 0;
+            const half = r.length / 2;
+            if (Math.abs(z - r.z) < r.w / 2 + m &&
+                x >= ox - half - m && x <= ox + half + m) return true;
+        } else {
+            const oz = r.offsetZ || 0;
+            const half = r.length / 2;
+            if (Math.abs(x - r.x) < r.w / 2 + m &&
+                z >= oz - half - m && z <= oz + half + m) return true;
+        }
+    }
+    return false;
+};
+
 // Building blocks defined by road grid intersections
 // Each block has 4 sides; buildings face outward (toward roads)
 const BUILDING_BLOCKS = [];
@@ -680,7 +700,8 @@ function createPoliceStation(group) {
 
     // 단일 출처 — PRINCIPLES.md #9 (다른 모듈은 window._policeStation 참조)
     window._policeStation = { x, z, w, d, h, frontZ: z - d / 2, backZ: z + d / 2 };
-    return { mesh: building, x, z, w, d, h, type: 'police', zone: 'POLICE' };
+    // walkable: true → checkBuildingCollision 이 무시. 외피 4벽 collider 만 차단(입구 갭 통과 가능).
+    return { mesh: building, x, z, w, d, h, type: 'police', zone: 'POLICE', walkable: true };
 }
 
 // 경찰서 외피 — 4벽(남측 입구 갭) + 옥상 + 콘크리트 베이스. 단일 박스 아닌 분할 벽으로 내부 가시화.
@@ -1355,7 +1376,8 @@ function createGlassScreenDoor(group, cx, cy, cz, doorW, doorH, rotY) {
     group.add(handle);
 }
 
-function createBuilding(group, x, z, w, d, h, color, label, glass, windowStyle, skipDoor) {
+// signFacing: '+Z' / '-Z' — 상가건물 입구가 로데오 거리(이웃한 보행자 plaza)를 향하도록
+function createBuilding(group, x, z, w, d, h, color, label, glass, windowStyle, skipDoor, signFacing) {
     // Glass towers (tall commercial) get reflective material; others matte stucco
     const mat = glass
         ? new THREE.MeshStandardMaterial({ color, roughness: 0.18, metalness: 0.45 })
@@ -1488,25 +1510,38 @@ function createBuilding(group, x, z, w, d, h, color, label, glass, windowStyle, 
         });
         const doorCount = Math.max(3, Math.round(w / 1.8));
         const doorW = w / doorCount;
+        // task 4: signFacing 기준으로 입구 1F 유리문 방향 결정
+        // signFacing === '-Z' → 입구는 -Z 면 (남쪽), signFacing === '+Z' → 입구는 +Z 면 (북쪽)
+        const entranceOnPlusZ = (signFacing !== '-Z');  // 기본 +Z
+        const entranceZ = entranceOnPlusZ ? (z + d / 2 + 0.05) : (z - d / 2 - 0.05);
+        const wallZ      = entranceOnPlusZ ? (z - d / 2 - 0.05) : (z + d / 2 + 0.05);
+        const wallSashY  = 1.5;
+        const wallSashH  = 1.85;
+        const wallMatBack = new THREE.MeshStandardMaterial({
+            color: 0xb8a888, roughness: 0.85, metalness: 0.05
+        });
         for (let dx = 0; dx < doorCount; dx++) {
             const dCenterX = x - w / 2 + doorW * (dx + 0.5);
-            // 앞면 유리문
+            // 입구 유리문 (rodeo 방향 1F)
             const glassF = new THREE.Mesh(
                 new THREE.BoxGeometry(doorW * 0.88, 2.4, 0.08), door1FMat
             );
-            glassF.position.set(dCenterX, 1.35, z + d / 2 + 0.05);
+            glassF.position.set(dCenterX, 1.35, entranceZ);
             group.add(glassF);
             // 문 프레임 (양옆 세로)
             const frameLF = new THREE.Mesh(
                 new THREE.BoxGeometry(0.08, 2.5, 0.10), doorFrameMat
             );
-            frameLF.position.set(dCenterX - doorW * 0.44, 1.4, z + d / 2 + 0.07);
+            const frameOff = entranceOnPlusZ ? 0.07 : -0.07;
+            frameLF.position.set(dCenterX - doorW * 0.44, 1.4, entranceZ + (entranceOnPlusZ ? 0.02 : -0.02));
             group.add(frameLF);
-            // 뒷면 유리문 (서비스 입구)
-            const glassB = glassF.clone();
-            glassB.position.set(dCenterX, 1.35, z - d / 2 - 0.05);
-            group.add(glassB);
         }
+        // 반대측 (로데오 반대편) 1F — 입구 대신 통창 한 줄 (창문)
+        const backSash = new THREE.Mesh(
+            new THREE.BoxGeometry(w * 0.93, wallSashH, 0.08), sashMat
+        );
+        backSash.position.set(x, wallSashY, wallZ);
+        group.add(backSash);
         // 1F 좌우는 통창
         const sashWX = d * 0.9;  // 측면 통창 길이 (depth 방향)
         const sash1L = new THREE.Mesh(
@@ -1675,7 +1710,8 @@ function createGridBuildings(group) {
                 bw = 8; bd = 7; bhMin = 12; bhMax = 24; spacing = 11;
             }
         } else if (zone === 'FACTORY') {
-            bw = 12; bd = 11; bhMin = 8; bhMax = 14; spacing = 15;
+            // task 5: 공업지구 공장 밀도 강화 — 더 작은 footprint + 좁은 spacing 으로 공장 수 증가
+            bw = 9; bd = 8; bhMin = 9; bhMax = 18; spacing = 11;
         }
 
         const cols = Math.max(1, Math.floor(blockW / spacing));
@@ -1693,7 +1729,8 @@ function createGridBuildings(group) {
                 const bh = bhMin + Math.random() * (bhMax - bhMin);
 
                 // Sparse density: skip some
-                if (density === 'sparse' && Math.random() < 0.3) continue;
+                // task 5: 공업지구는 sparse skip 율 30% → 10% 로 낮춰 공장 개수 증가
+                if (density === 'sparse' && Math.random() < 0.10) continue;
                 if (density === 'medium' && Math.random() < 0.15) continue;
 
                 const bcolor = palette[zone][Math.floor(Math.random() * palette[zone].length)];
@@ -1765,7 +1802,7 @@ function createGridBuildings(group) {
         const winStyle = (b.zone === 'RESIDENTIAL') ? 'apartment' : 'normal';
         // 상가는 통창 + 1F 유리문 스타일 적용
         const finalStyle = (b.zone === 'COMMERCIAL') ? 'commercial' : winStyle;
-        const mesh = createBuilding(group, b.bx, b.bz, b.bw, b.bd, b.bh, b.bcolor, label, isGlass, finalStyle);
+        const mesh = createBuilding(group, b.bx, b.bz, b.bw, b.bd, b.bh, b.bcolor, label, isGlass, finalStyle, false, b.signFacing);
         buildings.push({
             mesh, x: b.bx, z: b.bz, w: b.bw, d: b.bd, h: b.bh,
             type: b.isHideout ? 'hideout' : 'normal',
