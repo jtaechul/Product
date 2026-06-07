@@ -183,6 +183,10 @@ function createGround(group) {
     });
 }
 
+// 로데오 영역 (V 도로가 우회해야 하는 z 범위)
+const RODEO_Z_MIN = 19;
+const RODEO_Z_MAX = 35;
+
 function createRoadNetwork(group) {
     const asphaltTex = makeProceduralTexture('#2a2a2a', 30, 256);
     asphaltTex.repeat.set(8, 8);
@@ -192,6 +196,33 @@ function createRoadNetwork(group) {
     const roadMat = new THREE.MeshStandardMaterial({ color: 0xffffff, map: asphaltTex, roughness: 0.85 });
     const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0xffffff, map: sidewalkTex, roughness: 0.9 });
     const stripeMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.5, emissive: 0x553300, emissiveIntensity: 0.1 });
+
+    // 세그먼트 도로 그리기 — 시작/끝 z 로 구간 도로 한 조각
+    function drawVRoadSegment(x, w, zStart, zEnd) {
+        const len = zEnd - zStart;
+        if (len < 1) return;
+        const cz = (zStart + zEnd) / 2;
+        const sw = w + 6;
+        const sidewalk = new THREE.Mesh(
+            new THREE.BoxGeometry(sw, 0.06, len), sidewalkMat
+        );
+        sidewalk.position.set(x, 0.05, cz);
+        sidewalk.receiveShadow = true;
+        group.add(sidewalk);
+        const road = new THREE.Mesh(
+            new THREE.BoxGeometry(w, 0.06, len), roadMat
+        );
+        road.position.set(x, 0.08, cz);
+        road.receiveShadow = true;
+        group.add(road);
+        for (let z = zStart + 4; z < zEnd; z += 8) {
+            const stripe = new THREE.Mesh(
+                new THREE.BoxGeometry(0.3, 0.05, 3), stripeMat
+            );
+            stripe.position.set(x, 0.12, z);
+            group.add(stripe);
+        }
+    }
 
     // Y positions: grass 0, sidewalk 0.05, road 0.08, stripe 0.12 — clear z-order
     MAIN_ROADS.forEach(r => {
@@ -225,50 +256,89 @@ function createRoadNetwork(group) {
                 group.add(stripe);
             }
         } else {
-            // Vertical road (optional offsetZ to shift center)
+            // Vertical road — 로데오 통과 시 두 세그먼트로 분리
             const oz = r.offsetZ || 0;
-            const sidewalk = new THREE.Mesh(
-                new THREE.BoxGeometry(sw, 0.06, r.length),
-                sidewalkMat
-            );
-            sidewalk.position.set(r.x, 0.05, oz);
-            sidewalk.receiveShadow = true;
-            group.add(sidewalk);
+            const zStart = oz - r.length / 2;
+            const zEnd   = oz + r.length / 2;
 
-            const road = new THREE.Mesh(
-                new THREE.BoxGeometry(w, 0.06, r.length),
-                roadMat
-            );
-            road.position.set(r.x, 0.08, oz);
-            road.receiveShadow = true;
-            group.add(road);
+            // 로데오 통과(x=50, x=100) 인지 판단
+            const passesThroughRodeo = (r.x === 50 || r.x === 100) &&
+                                       zStart < RODEO_Z_MIN && zEnd > RODEO_Z_MAX;
 
-            for (let z = -r.length/2 + 4; z < r.length/2; z += 8) {
-                const stripe = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.3, 0.05, 3),
-                    stripeMat
-                );
-                stripe.position.set(r.x, 0.12, oz + z);
-                group.add(stripe);
+            if (passesThroughRodeo) {
+                drawVRoadSegment(r.x, w, zStart, RODEO_Z_MIN);
+                drawVRoadSegment(r.x, w, RODEO_Z_MAX, zEnd);
+            } else {
+                drawVRoadSegment(r.x, w, zStart, zEnd);
             }
         }
     });
 
-    // Crosswalks at major intersections
+    // === 모든 교차로에 횡단보도 — H × V 자동 계산 ===
     const cwMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
-    const intersections = [
-        [0, 50], [-50, 50], [50, 50], [0, 5], [-50, 5], [50, 5],
-        [0, -45], [-50, -45], [50, -45], [0, -85]
-    ];
-    intersections.forEach(([cx, cz]) => {
-        for (let i = -3; i <= 3; i += 1.2) {
-            const cw1 = new THREE.Mesh(new THREE.BoxGeometry(5, 0.05, 0.4), cwMat);
-            cw1.position.set(cx + i, 0.13, cz - 6);
-            group.add(cw1);
-            const cw2 = new THREE.Mesh(new THREE.BoxGeometry(5, 0.05, 0.4), cwMat);
-            cw2.position.set(cx + i, 0.13, cz + 6);
-            group.add(cw2);
-        }
+    const hRoads = MAIN_ROADS.filter(r => r.type === 'H');
+    const vRoads = MAIN_ROADS.filter(r => r.type === 'V');
+
+    hRoads.forEach(h => {
+        vRoads.forEach(v => {
+            // 교차 가능 여부
+            const oz = v.offsetZ || 0;
+            const vZmin = oz - v.length / 2;
+            const vZmax = oz + v.length / 2;
+            const inH = Math.abs(v.x) < h.length / 2;
+            const inV = h.z >= vZmin && h.z <= vZmax;
+            if (!(inH && inV)) return;
+
+            // 로데오 우회로 인해 끊어진 V 도로 교차로는 스킵
+            const splitByRodeo = (v.x === 50 || v.x === 100) &&
+                                 vZmin < RODEO_Z_MIN && vZmax > RODEO_Z_MAX &&
+                                 h.z > RODEO_Z_MIN && h.z < RODEO_Z_MAX;
+            if (splitByRodeo) return;
+
+            const cx = v.x, cz = h.z;
+            const hOff = h.w / 2 + 0.6;  // H 도로 양옆 인도쪽
+            const vOff = v.w / 2 + 0.6;  // V 도로 양옆 인도쪽
+
+            // H 도로를 가로지르는 stripes (V 도로 진입 양쪽) — 가로 막대
+            const stripeLenH = v.w + 1.6;
+            for (let i = -3; i <= 3; i += 1.0) {
+                // 남쪽 진입
+                const sN = new THREE.Mesh(new THREE.BoxGeometry(stripeLenH, 0.05, 0.35), cwMat);
+                sN.position.set(cx + i * 0.0, 0.13, cz - hOff);
+                group.add(sN);
+                // 북쪽 진입
+                const sS = new THREE.Mesh(new THREE.BoxGeometry(stripeLenH, 0.05, 0.35), cwMat);
+                sS.position.set(cx + i * 0.0, 0.13, cz + hOff);
+                group.add(sS);
+                break; // single line of crosswalks not needed; use loop variant below
+            }
+            // 실제 횡단보도 띠 — H 도로 양쪽 (남/북), V 도로 양쪽 (동/서)
+            // 1) H 도로 횡단 (V 도로 방향으로 걷는 사람용) — stripe 가 H 도로를 가로지름
+            const stripeCountH = 6;
+            const stripeStepH = (h.w * 0.9) / stripeCountH;
+            for (let k = 0; k < stripeCountH; k++) {
+                const zOff = -h.w * 0.45 + stripeStepH * (k + 0.5);
+                const sN = new THREE.Mesh(new THREE.BoxGeometry(stripeLenH, 0.05, 0.32), cwMat);
+                sN.position.set(cx - vOff - 0.4, 0.13, cz + zOff);
+                group.add(sN);
+                const sS = new THREE.Mesh(new THREE.BoxGeometry(stripeLenH, 0.05, 0.32), cwMat);
+                sS.position.set(cx + vOff + 0.4, 0.13, cz + zOff);
+                group.add(sS);
+            }
+            // 2) V 도로 횡단 (H 도로 방향으로 걷는 사람용)
+            const stripeLenV = h.w + 1.6;
+            const stripeCountV = 6;
+            const stripeStepV = (v.w * 0.9) / stripeCountV;
+            for (let k = 0; k < stripeCountV; k++) {
+                const xOff = -v.w * 0.45 + stripeStepV * (k + 0.5);
+                const sE = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.05, stripeLenV), cwMat);
+                sE.position.set(cx + xOff, 0.13, cz - hOff - 0.4);
+                group.add(sE);
+                const sW = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.05, stripeLenV), cwMat);
+                sW.position.set(cx + xOff, 0.13, cz + hOff + 0.4);
+                group.add(sW);
+            }
+        });
     });
 }
 
@@ -304,29 +374,7 @@ function createRodeoStreet(group) {
     stripe.position.set(RCX, 0.16, RCZ);
     group.add(stripe);
 
-    // 보행자 벤치 (좌우 라인에 6개)
-    const benchMat = new THREE.MeshStandardMaterial({ color: 0x6b3f2a, roughness: 0.7 });
-    const benchLegMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.6, roughness: 0.4 });
-    const benchSpacing = 18;
-    for (let bx = RX_MIN + 12; bx <= RX_MAX - 6; bx += benchSpacing) {
-        [RCZ - 3.5, RCZ + 3.5].forEach(bz => {
-            // 좌석
-            const seat = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.12, 0.5), benchMat);
-            seat.position.set(bx, 0.5, bz);
-            seat.castShadow = true;
-            group.add(seat);
-            // 다리
-            for (const dx of [-0.7, 0.7]) {
-                const leg = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.45, 0.45), benchLegMat);
-                leg.position.set(bx + dx, 0.22, bz);
-                group.add(leg);
-            }
-            // 등받이
-            const back = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.55, 0.08), benchMat);
-            back.position.set(bx, 0.85, bz + (bz > RCZ ? 0.22 : -0.22));
-            group.add(back);
-        });
-    }
+    // 벤치는 제거 (사용자 요청)
 
     // 중앙 가로수 + 화분 + 가로등
     const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.9 });
@@ -426,7 +474,7 @@ function createPoliceStation(group) {
     const w = 18, d = 14, h = 14;
     const building = createBuilding(group, x, z, w, d, h, 0x1a3a5c, '경찰서');
 
-    // Police signage (KOREAN POLICE)
+    // Police signage (KOREAN POLICE) — 도로(남쪽) 방향 외벽 상단
     const cv = document.createElement('canvas');
     cv.width = 512; cv.height = 96;
     const ctx = cv.getContext('2d');
@@ -439,9 +487,10 @@ function createPoliceStation(group) {
     const tex = new THREE.CanvasTexture(cv);
     const signMesh = new THREE.Mesh(
         new THREE.PlaneGeometry(10, 1.8),
-        new THREE.MeshStandardMaterial({ map: tex, emissive: 0x001144, emissiveIntensity: 0.3 })
+        new THREE.MeshStandardMaterial({ map: tex, emissive: 0x001144, emissiveIntensity: 0.3, side: THREE.DoubleSide })
     );
-    signMesh.position.set(x, h - 1.5, z + d / 2 + 0.15);
+    signMesh.position.set(x, h - 1.5, z - d / 2 - 0.15);
+    signMesh.rotation.y = Math.PI; // -Z (남쪽 도로) 방향
     group.add(signMesh);
 
     // Police lights (blue+red flashing on roof)
@@ -469,10 +518,11 @@ function createPoliceStation(group) {
     pole.position.set(x + 10, 5, z + 7);
     group.add(pole);
 
-    // Standalone POLICE signpost in front of entrance
+    // Standalone POLICE signpost — 도로(남쪽) 쪽 인도에 배치
     const spMat = new THREE.MeshStandardMaterial({ color: 0x222244, roughness: 0.6, metalness: 0.5 });
     const signPost = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 4.5, 8), spMat);
-    signPost.position.set(x, 2.25, z + d / 2 + 3);
+    const SP_Z = z - d / 2 - 3; // 경찰서 남쪽 3m (도로 z=95 와 경찰서 z=103 사이의 인도)
+    signPost.position.set(x, 2.25, SP_Z);
     group.add(signPost);
 
     const spCV = document.createElement('canvas');
@@ -501,26 +551,20 @@ function createPoliceStation(group) {
     spCtx.fillStyle = '#99ccff';
     spCtx.fillText('경    찰    서', 68, 118);
     const spTex = new THREE.CanvasTexture(spCV);
-    // Front face
+    // DoubleSide 로 한 장만 — 도로(남쪽 -Z) 향함, 양면에서 보임
     const spBoard = new THREE.Mesh(
         new THREE.PlaneGeometry(5, 2.5),
-        new THREE.MeshStandardMaterial({ map: spTex, emissive: 0x001133, emissiveIntensity: 0.5 })
+        new THREE.MeshStandardMaterial({ map: spTex, emissive: 0x001133, emissiveIntensity: 0.5, side: THREE.DoubleSide })
     );
-    spBoard.position.set(x, 5.5, z + d / 2 + 3.07);
+    spBoard.position.set(x, 5.5, SP_Z);
+    spBoard.rotation.y = Math.PI; // 도로(남쪽) 방향 향함
     group.add(spBoard);
-    // Back face (mirrored)
-    const spBoardBack = new THREE.Mesh(
-        new THREE.PlaneGeometry(5, 2.5),
-        new THREE.MeshStandardMaterial({ map: spTex, emissive: 0x001133, emissiveIntensity: 0.5, side: THREE.BackSide })
-    );
-    spBoardBack.position.set(x, 5.5, z + d / 2 + 2.93);
-    group.add(spBoardBack);
     // Sign cap (top of board)
     const spCap = new THREE.Mesh(
         new THREE.BoxGeometry(5.3, 0.25, 0.35),
         new THREE.MeshStandardMaterial({ color: 0x001166, roughness: 0.5 })
     );
-    spCap.position.set(x, 6.75, z + d / 2 + 3);
+    spCap.position.set(x, 6.75, SP_Z);
     group.add(spCap);
 
     return { mesh: building, x, z, w, d, h, type: 'police', zone: 'POLICE' };
@@ -559,12 +603,11 @@ function createApartmentLabel(group, b) {
         ctx.fillStyle = grad;
         ctx.fillText(text, x, y);
     }
-    // 상단 단지명 (한글 + 영문)
-    bevelText(ctx1, cplx.kr, 'bold 100px "Noto Sans KR", "Inter", sans-serif', 256, 140);
-    bevelText(ctx1, cplx.en, 'bold 44px "Inter", "Noto Sans KR", sans-serif', 256, 230);
-    // 거대 동번호
-    bevelText(ctx1, dongStr, 'bold 420px "Inter", "Noto Sans KR", sans-serif', 256, 720);
-    bevelText(ctx1, '동', 'bold 260px "Noto Sans KR", sans-serif', 256, 1100);
+    // 상단 단지명 — 크게 (잘 보이도록)
+    bevelText(ctx1, cplx.kr, 'bold 220px "Noto Sans KR", "Inter", sans-serif', 256, 320);
+    bevelText(ctx1, cplx.en, 'bold 88px "Inter", "Noto Sans KR", sans-serif', 256, 510);
+    // 동번호 — 단지명과 동일 크기 (220px)
+    bevelText(ctx1, dongStr + '동', 'bold 220px "Inter", "Noto Sans KR", sans-serif', 256, 1100);
 
     const tex1 = new THREE.CanvasTexture(cv1);
     tex1.anisotropy = 8;
@@ -719,7 +762,8 @@ function createBuilding(group, x, z, w, d, h, color, label, glass, windowStyle) 
         });
         const sashH = 1.95;
         const sashW = w * 0.92;
-        const unitCount = Math.max(2, Math.round(w / 3.0));
+        // 모바일 부담 줄이기: 멀리언 칸 수 축소 (각 칸 4m 폭)
+        const unitCount = Math.max(2, Math.round(w / 4.0));
         for (let f = 0; f < floors; f++) {
             const sashY = 1.6 + f * 3;
             // 발코니 하단 (콘크리트 띠) — 층간 구분
@@ -1013,9 +1057,10 @@ function createGridBuildings(group) {
             ant.position.set(b.bx + b.bw / 4, b.bh + 1.5, b.bz);
             group.add(ant);
 
-            // 아파트 단지명 + 동번호 양각 라벨 (옆면 + 정면)
+            // 아파트 단지명 + 동번호 양각 라벨 (좌우 측면)
             if (b.complex && b.dong) {
-                createApartmentLabel(group, b);
+                try { createApartmentLabel(group, b); }
+                catch (e) { console.warn('apartment label failed', e); }
             }
         }
         if (b.zone === 'COMMERCIAL') {
@@ -1035,7 +1080,8 @@ function createGridBuildings(group) {
         if (b.zone === 'FACTORY') {
             // 양각 기업명 글자 — 건물 정면(+Z) 외벽에 부착
             if (b.company) {
-                createEmbossedCompanyName(group, b);
+                try { createEmbossedCompanyName(group, b); }
+                catch (e) { console.warn('embossed company failed', e); }
             }
             // Chimney
             if (Math.random() > 0.3) {

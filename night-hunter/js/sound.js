@@ -348,6 +348,48 @@ const SoundManager = {
         }
     },
 
+    // === Intro BGM: 캐릭터 선택 + 스토리 인트로 (assets/intro.mp3) ===
+    _loadIntroBGMAudio() {
+        if (this.introAudio) return this.introAudio;
+        try {
+            const a = new Audio('assets/intro.mp3');
+            a.loop = true;
+            a.preload = 'auto';
+            this.introAudio = a;
+            try {
+                const src = this.ctx.createMediaElementSource(a);
+                src.connect(this.bgmGain);
+                this.introAudioRouted = true;
+            } catch (e) {
+                console.warn('Intro BGM MediaElementSource failed, falling back to native playback:', e);
+                this.introAudioRouted = false;
+            }
+            return a;
+        } catch (e) {
+            console.warn('Intro BGM audio load failed:', e);
+            return null;
+        }
+    },
+
+    _playIntroBGM() {
+        const a = this._loadIntroBGMAudio();
+        if (a) {
+            try {
+                a.currentTime = 0;
+                a.volume = this.introAudioRouted ? 1.0 : 0.8;
+                const p = a.play();
+                if (p && typeof p.catch === 'function') {
+                    p.catch(err => {
+                        console.warn('Intro BGM autoplay blocked — will retry on next gesture:', err);
+                    });
+                }
+                return;
+            } catch (err) {
+                console.warn('Intro BGM play error:', err);
+            }
+        }
+    },
+
     // === Day BGM: Detective-style jazz noir (LEGACY procedural, MP3 로드 실패 시 fallback) ===
     // C minor blues progression with walking bass and ride pattern
     // Cm - Fm - G7 - Cm
@@ -407,6 +449,7 @@ const SoundManager = {
         this._pendingBGMType = null;
         try {
             if (type === 'day') this._playDayBGM();
+            else if (type === 'intro') this._playIntroBGM();
             else this._playNightBGM();
         } catch (err) {
             console.warn('BGM start error:', err);
@@ -589,6 +632,9 @@ const SoundManager = {
         }
         if (this.nightAudio) {
             try { this.nightAudio.pause(); } catch (e) {}
+        }
+        if (this.introAudio) {
+            try { this.introAudio.pause(); } catch (e) {}
         }
     },
 

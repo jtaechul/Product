@@ -1582,7 +1582,8 @@ function startGame() {
     }
 
     try { SoundManager.init(); } catch (e) { console.warn('SoundManager.init failed:', e); }
-    try { SoundManager.playBGM('day'); } catch (e) { console.warn('SoundManager.playBGM failed:', e); }
+    // 캐릭터 선택 + 스토리 인트로 동안 intro BGM (assets/intro.mp3)
+    try { SoundManager.playBGM('intro'); } catch (e) { console.warn('SoundManager.playBGM(intro) failed:', e); }
 
     // Show character select first, then story intro, then animate
     try { showCharacterSelect(); } catch (e) {
@@ -1822,7 +1823,8 @@ function showCharacterSelect() {
                     if (SoundManager.ctx && SoundManager.ctx.state !== 'running') {
                         SoundManager.ctx.resume().catch(() => {});
                     }
-                    SoundManager.playBGM('day');
+                    // 캐릭터 선택 직후엔 인트로 BGM 계속 유지 (showStoryIntro 가 재가동)
+                    SoundManager.playBGM('intro');
                 }
             } catch (e) { console.warn('BGM kick on charselect failed:', e); }
             // Confirm after brief highlight
@@ -1853,8 +1855,24 @@ function showCharacterSelect() {
 window.showCharacterSelect = showCharacterSelect;
 
 // === STORY INTRO (인트로 시퀀스) ===
-// 캐릭터 선택 후 게임 시작 전 — 5신 페이드 인/아웃, 총 20초 (각 신 4초)
+// 캐릭터 선택 후 게임 시작 전 — 5신 페이드 인/아웃, 총 20초
+// 각 신: fade-out(1s) → blank(0.4s, 텍스트 비움) → fade-in(1s) → hold(1.6s) = 4s
+// 텍스트 교체는 opacity=0 시점에 명시적으로 실행 → 전후 글자 절대 겹치지 않음
 function showStoryIntro() {
+    // 중복 실행 방지 (idempotency)
+    if (document.getElementById('story-intro-root')) return;
+
+    // 인트로 BGM (assets/intro.mp3) 재생
+    try {
+        if (typeof SoundManager !== 'undefined') {
+            SoundManager.init();
+            if (SoundManager.ctx && SoundManager.ctx.state !== 'running') {
+                SoundManager.ctx.resume().catch(() => {});
+            }
+            SoundManager.playBGM('intro');
+        }
+    } catch (e) { console.warn('Intro BGM failed:', e); }
+
     const charName = (gameState && gameState.playerName) || '소윤';
     const scenes = [
         { sub: '남양주시 평내동 · 23시 47분', main: '도시는 잠들지 않는다.',
@@ -1869,8 +1887,9 @@ function showStoryIntro() {
           desc: '시간은 흐른다. 아이들이 기다린다.' }
     ];
 
-    const SCENE_DURATION = 4000;  // 신 1개 = 4초 (페이드 포함)
-    const FADE_DURATION  = 1000;  // 페이드 1초 (in/out 각각)
+    const FADE_DURATION  = 1000;  // 페이드 1초
+    const BLANK_PAUSE    = 400;   // 텍스트 비운 채 정지 0.4s
+    const HOLD_DURATION  = 1600;  // 신 표시 후 정지 1.6s
 
     const root = document.createElement('div');
     root.id = 'story-intro-root';
@@ -1923,38 +1942,80 @@ function showStoryIntro() {
     const skipBtn = document.getElementById('intro-skip');
 
     let finished = false;
-    const timers = [];
 
-    function showScene(i) {
-        if (finished) return;
-        if (i >= scenes.length) { finish(); return; }
-        const s = scenes[i];
+    const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
-        // 1) 현재 텍스트 완전 fade-out (이미 보였다면)
-        sceneEl.style.opacity = '0';
+    // 트랜지션 안전 페이드 — opacity 변화 후 실제 종료까지 대기
+    function fadeTo(target) {
+        return new Promise(resolve => {
+            let done = false;
+            const finish = () => {
+                if (done) return;
+                done = true;
+                sceneEl.removeEventListener('transitionend', onEnd);
+                resolve();
+            };
+            const onEnd = (e) => {
+                if (e.propertyName === 'opacity') finish();
+            };
+            sceneEl.addEventListener('transitionend', onEnd);
+            // 명시적 reflow 후 opacity 적용 (CSS 트랜지션 보장)
+            void sceneEl.offsetWidth;
+            sceneEl.style.opacity = String(target);
+            // 안전망 — transitionend 누락 대비 (브라우저 dropped frame 대응)
+            setTimeout(finish, FADE_DURATION + 250);
+        });
+    }
 
-        // 2) FADE_DURATION 후 텍스트 교체 (완전히 안 보이는 시점)
-        timers.push(setTimeout(() => {
+    async function runIntro() {
+        // 초기 상태 — opacity 0 (CSS 에서 이미 0)
+        for (let i = 0; i < scenes.length; i++) {
             if (finished) return;
+
+            // 첫 신이 아니면 이전 신을 완전히 fade-out
+            if (i > 0) {
+                await fadeTo(0);
+                if (finished) return;
+                // 텍스트 비우기 (안전: opacity 0 시점에 명시 클리어)
+                subEl.textContent = '';
+                mainEl.textContent = '';
+                descEl.textContent = '';
+                // 짧은 공백 — 전후 신이 명확히 분리됨
+                await sleep(BLANK_PAUSE);
+                if (finished) return;
+            }
+
+            // 새 텍스트 채우기 (opacity 0 상태 → 사용자에게 안 보임)
+            const s = scenes[i];
             subEl.textContent  = s.sub;
             mainEl.textContent = s.main;
             descEl.textContent = s.desc;
-            // 3) fade-in 시작
-            sceneEl.style.opacity = '1';
-            // 4) 다음 신 호출 시점 = 신 총 시간(4s) 에서 fade-out(1s) 만큼 미리
-            timers.push(setTimeout(() => showScene(i + 1),
-                SCENE_DURATION - FADE_DURATION));
-        }, FADE_DURATION));
+
+            // fade-in
+            await fadeTo(1);
+            if (finished) return;
+
+            // hold
+            await sleep(HOLD_DURATION);
+        }
+        // 마지막 fade-out 후 종료
+        if (!finished) await fadeTo(0);
+        finish();
     }
 
     function finish() {
         if (finished) return;
         finished = true;
-        timers.forEach(t => clearTimeout(t));
         root.style.transition = 'opacity 0.6s ease';
         root.style.opacity = '0';
         setTimeout(() => {
             root.remove();
+            // 게임 BGM 으로 전환 (intro → day)
+            try {
+                if (typeof SoundManager !== 'undefined') {
+                    SoundManager.playBGM(gameState.isDay ? 'day' : 'night');
+                }
+            } catch(e) {}
             try { showMessage('📻 ' + charName + ' 형사, 시민들에게 말을 걸어 단서를 수집하세요.'); } catch(e) {}
             animate();
         }, 600);
@@ -1963,8 +2024,7 @@ function showStoryIntro() {
     skipBtn.addEventListener('click', finish);
     skipBtn.addEventListener('touchstart', e => { e.preventDefault(); finish(); }, { passive: false });
 
-    // 시작 — 첫 신은 즉시 호출 (이미 opacity 0 상태)
-    showScene(0);
+    runIntro();
 }
 window.showStoryIntro = showStoryIntro;
 
