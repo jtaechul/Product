@@ -33,43 +33,83 @@ const NPCSystem = window.NPCSystem = {
 
     npcArchetypes: [
         // role: 'civilian' (stationary, talkable) | 'suspect' (runs, catch via minigame)
-        // Civilians: tell their story + give a hint when talked to
+        // 스토리: 평내동 인신매매 조직 + 3명의 납치범 (길동/철수/영수) 추적
+        // ── 경찰서 주변 (POLICE zone) ──
         { x: -25, z: 72, name: '카페 점원 민지', role: 'civilian',
           hair: 0x4a2510, skin: 0xffdbac, clothing: 0xff6b9d, zone: 'POLICE',
-          story: '형사님, 도와주세요. 손님이 이상한 사람을 봤다고 해요...' },
+          story: '형사님 오셨군요. 오늘 아침에 가게에 무서운 손님이 왔어요. 안경 쓴 40대 남자가 아이 사진을 들고 와서 본 적 있냐고 물어보더라구요. 분명히 그 사람이 길동이에요.' },
         { x: 25, z: 72, name: '편의점 알바 호석', role: 'civilian',
           hair: 0x1a0a00, skin: 0xf5d5b8, clothing: 0x60a5fa, zone: 'POLICE',
-          story: '늦은 밤 자주 오는 손님이 있는데, 항상 모자를 깊게 눌러쓰고 와요.' },
+          story: '늦은 밤 자주 오는 손님이 있어요. 항상 모자를 깊게 눌러쓰고, 검은 정장에 흉터가 있어요. 카드를 안 쓰고 늘 현금만 내고 가요. 뭔가 수상해요.' },
+        { x: -70, z: 70, name: '공원 산책 어르신 정씨', role: 'civilian',
+          hair: 0xcccccc, skin: 0xefcfa8, clothing: 0x556677, zone: 'POLICE',
+          story: '평내동에 30년 살았는데, 요즘처럼 무서운 적이 없어요. 어제 새벽에 검은색 트럭이 우리 단지 앞을 지나갔어요. 공장 쪽으로 가더라구요.' },
+        { x: 70, z: 70, name: '신문 배달원 영찬', role: 'civilian',
+          hair: 0x222222, skin: 0xffdbac, clothing: 0xee9933, zone: 'POLICE',
+          story: '새벽에 신문 돌리다 보면 별의별 걸 다 봐요. 로데오 거리 어떤 상가 지하에서 비명 소리가 들린 적이 있어요. 무서워서 그냥 도망쳤어요.' },
+        // ── 주거지구 (RESIDENTIAL) ──
         { x: -30, z: 25, name: '주민 김씨', role: 'suspect',
           hair: 0x2a1808, skin: 0xfff2dc, clothing: 0x9b8b9d, zone: 'RESIDENTIAL',
           story: '저는... 그냥 살려고 했을 뿐이에요. 시키는 대로 했을 뿐...' },
         { x: -70, z: -25, name: '학생 이지수', role: 'civilian',
           hair: 0x4a2510, skin: 0xffdbac, clothing: 0xfbbf24, zone: 'RESIDENTIAL',
-          story: '학교 가는 길에 이상한 차가 자주 서있었어요. 너무 무서워요.' },
+          story: '학교 가는 길에 이상한 차가 자주 서있었어요. 운전석에 안경 쓴 아저씨가 있었는데, 학교 앞에서 우리를 빤히 쳐다봤어요. 너무 무서워요.' },
         { x: -110, z: 20, name: '아주머니 박씨', role: 'civilian',
           hair: 0x1a0a00, skin: 0xf5d5b8, clothing: 0xe05080, zone: 'RESIDENTIAL',
-          story: '우리 동네에 아이들이 사라졌어요. 형사님, 꼭 찾아주세요.' },
+          story: '우리 동네에서 아이들이 두 명이나 사라졌어요. 형사님, 꼭 찾아주세요. 저쪽 큰 아파트 단지에서 밤마다 이상한 소리가 들린다는 얘기가 돌아요.' },
         { x: -25, z: -25, name: '할아버지 최씨', role: 'suspect',
           hair: 0xdddddd, skin: 0xefcfa8, clothing: 0x718096, zone: 'RESIDENTIAL',
           story: '항복합니다... 솔직히 말씀드릴게요...' },
+        { x: -110, z: -25, name: '주민회 회장 정혜영', role: 'civilian',
+          hair: 0x2a1808, skin: 0xffdbac, clothing: 0xcc4488, zone: 'RESIDENTIAL',
+          story: '아파트 CCTV 영상을 확인해 봤어요. 회색 코트의 남자가 새벽 3시쯤 우리 단지 안으로 들어갔어요. 동 입구에서 사라졌는데, 어느 동인지 정확히 기억해요.' },
+        { x: -90, z: -60, name: '택배 기사 김태수', role: 'civilian',
+          hair: 0x1a0a00, skin: 0xddaa88, clothing: 0xff5522, zone: 'RESIDENTIAL',
+          story: '저 단지 사람들이요, 한 호수만 이상하게 택배를 받아도 답이 없어요. 벨 누르면 잠깐 후에 문 사이로 손만 쑥 나와요. 얼굴을 절대 안 보여줘요.' },
+        { x: -30, z: -65, name: '경비실 이씨 아저씨', role: 'civilian',
+          hair: 0x555555, skin: 0xefcfa8, clothing: 0x2d3748, zone: 'RESIDENTIAL',
+          story: '경비실에서 야간 근무하면서 의심스러운 출입자 다 기록해놨어요. 안경 쓴 40대 남자가 자주 들락날락하는데, 가끔 큰 가방을 들고 와요. 한밤중에도요.' },
+        { x: -70, z: -65, name: '동네 슈퍼 이모', role: 'civilian',
+          hair: 0x4a2510, skin: 0xfff2dc, clothing: 0x4080cc, zone: 'RESIDENTIAL',
+          story: '아침마다 그 안경잡이가 와서 라면이랑 빵을 한 가득 사가요. 혼자 사는 사람이 그렇게 많이 사? 집에 누구를 가둬놨나 의심스러워요.' },
+        // ── 상업지구 (COMMERCIAL) ──
         { x: 30, z: 25, name: '직장인 정현우', role: 'civilian',
           hair: 0x1a0a00, skin: 0xffdbac, clothing: 0x1e3a8a, zone: 'COMMERCIAL',
-          story: '퇴근길에 본 게 있어요. 누군가 아이를 끌고 가는 모습을...' },
+          story: '퇴근길에 본 게 있어요. 검은 정장의 남자가 아이를 끌고 가는 모습을... 로데오 거리 한 가게로 들어갔어요. 간판이 분명히 기억나요.' },
         { x: 75, z: -10, name: '학생 윤서연', role: 'suspect',
           hair: 0x4a2510, skin: 0xf5d5b8, clothing: 0x06c167, zone: 'COMMERCIAL',
           story: '죄송해요... 돈이 필요해서 그랬어요...' },
         { x: 110, z: 20, name: '바리스타 다은', role: 'civilian',
           hair: 0x2a1808, skin: 0xfff2dc, clothing: 0x8b4513, zone: 'COMMERCIAL',
-          story: '카페에 자주 오는 손님이 있어요. 검은 정장에 흉터가 있는...' },
+          story: '카페에 자주 오는 손님이 있어요. 검은 정장에 흉터가 있는 남자. 매일 같은 자리에 앉아서 누군가와 통화하는데, "물건 옮겨", "처리해" 같은 말을 해요.' },
         { x: 30, z: -60, name: '경비원 한대수', role: 'suspect',
           hair: 0x222222, skin: 0xefcfa8, clothing: 0x2d3748, zone: 'COMMERCIAL',
           story: '저도 그자에게 협박당했어요. 모든 걸 말씀드릴게요...' },
-        { x: -50, z: -110, name: '근로자 송기철', role: 'civilian',
+        { x: 110, z: -30, name: '가게 사장 강민호', role: 'civilian',
+          hair: 0x222222, skin: 0xddaa88, clothing: 0x884444, zone: 'COMMERCIAL',
+          story: '제 옆 가게요, 낮에는 정상 영업하는 척하는데 밤만 되면 다른 가게가 돼요. 손님이 들어갔다 나오는데 다 표정이 이상해요. 술집 같지도 않은데 새벽 4시까지 불이 켜져 있어요.' },
+        { x: 30, z: -10, name: '청소부 황씨', role: 'civilian',
+          hair: 0x555555, skin: 0xefcfa8, clothing: 0x44aa44, zone: 'COMMERCIAL',
+          story: '새벽에 로데오 거리를 청소하다 보면 가끔 검은 봉투에 담긴 물건들이 가게 뒷문으로 옮겨져요. 흉터 있는 남자가 직접 옮기더라구요. 무서워서 못 본 척했어요.' },
+        { x: 75, z: -70, name: '꽃집 사장 미영', role: 'civilian',
+          hair: 0x4a2510, skin: 0xffdbac, clothing: 0xff88aa, zone: 'COMMERCIAL',
+          story: '그 흉터남이 우리 가게에 와서 꽃 시켰는데, 카드 안 받고 무조건 현금만 내요. 영수증도 거부하더라구요. 모든 게 너무 비밀스러워요.' },
+        // ── 공업지구 (FACTORY) ──
+        { x: -65, z: -110, name: '근로자 송기철', role: 'civilian',
           hair: 0x1a0a00, skin: 0xddaa88, clothing: 0xff8800, zone: 'FACTORY',
-          story: '공장에서 일하다가 본 게 있어요. 밤에 트럭들이 들락날락해요.' },
+          story: '공장에서 일하다가 본 게 있어요. 밤마다 같은 트럭들이 들락날락해요. 짐칸이 무거워 보이는데 정작 화물 서류는 비어있어요. 그 회사 사장이 60대 험상궂은 남자예요.' },
         { x: 30, z: -110, name: '공장장 조경석', role: 'suspect',
           hair: 0x444444, skin: 0xffdbac, clothing: 0x4a5568, zone: 'FACTORY',
           story: '저 사실은... 그 조직의 일원이었어요. 다 말씀드릴게요...' },
+        { x: -115, z: -125, name: '용접공 박철민', role: 'civilian',
+          hair: 0x222222, skin: 0xc8a878, clothing: 0xaa7733, zone: 'FACTORY',
+          story: '제가 일하는 공장 옆에 이상한 공장이 있어요. 양각으로 회사 이름이 큼지막하게 박혀있는데, 거기 직원은 거의 안 보여요. 굴뚝에선 연기만 펑펑 나는데 정작 생산하는 건 없어요.' },
+        { x: 80, z: -125, name: '트럭 운전기사 윤형식', role: 'civilian',
+          hair: 0x666666, skin: 0xddaa88, clothing: 0x55aaee, zone: 'FACTORY',
+          story: '여기서 트럭 몰면서 봤어요. 그 공장 뒷문에서 가끔 작은 화물칸에서 사람 소리 같은 게 들렸어요. 한밤중에요. 신고하려다 협박당해서 입을 닫고 있었어요.' },
+        { x: -30, z: -125, name: '경리 이수민', role: 'civilian',
+          hair: 0x2a1808, skin: 0xffdbac, clothing: 0xaa66cc, zone: 'FACTORY',
+          story: '회계 장부를 보면 그 공장 매출이 너무 비정상이에요. 생산 기록은 거의 없는데 매달 거액이 들어와요. 입금 출처는 다 다른 명의의 차명 계좌예요.' },
     ],
 
     spawnNPCs() {
@@ -127,8 +167,20 @@ const NPCSystem = window.NPCSystem = {
     },
 
     _findSafePosition(x, z) {
-        // Iteratively push position out of any building it overlaps with.
-        // Up to 6 passes handles dense areas where pushing out of one building lands inside another.
+        // 1) 도로 위에 spawn 되면 가까운 인도 방향으로 push (최대 8회, 매번 7m)
+        if (typeof window.isOnRoadAsphalt === 'function') {
+            let cx = x, cz = z;
+            for (let pass = 0; pass < 8; pass++) {
+                if (!window.isOnRoadAsphalt(cx, cz, 0.3)) break;
+                // z 우선 push (H 도로는 ±z 로 빠져나감), 안 되면 x push 도 시도
+                cz += (cz >= 0 ? 7 : -7);
+                if (window.isOnRoadAsphalt(cx, cz, 0.3)) {
+                    cx += (cx >= 0 ? 7 : -7);
+                }
+            }
+            x = cx; z = cz;
+        }
+        // 2) 빌딩 안에 있으면 외부로 push
         if (!window._buildingPositions) return { x, z };
         let cx = x, cz = z;
         for (let pass = 0; pass < 6; pass++) {
@@ -372,18 +424,25 @@ const NPCSystem = window.NPCSystem = {
         return false;
     },
 
+    // 도로 회피 — NPC 는 인도/공원에서만 다닌다 (task 2)
+    _isBlockedForNpc(x, z) {
+        if (this._collidesWithBuilding(x, z)) return true;
+        if (typeof window.isOnRoadAsphalt === 'function' && window.isOnRoadAsphalt(x, z, 0.3)) return true;
+        return false;
+    },
+
     _tryMove(npc, dx, dz) {
         const nx = npc.mesh.position.x + dx;
         const nz = npc.mesh.position.z + dz;
         const half = WORLD_SIZE / 2 - 2;
         const cx = Math.max(-half, Math.min(half, nx));
         const cz = Math.max(-half, Math.min(half, nz));
-        if (!this._collidesWithBuilding(cx, cz)) {
+        if (!this._isBlockedForNpc(cx, cz)) {
             npc.mesh.position.x = cx;
             npc.mesh.position.z = cz;
-        } else if (!this._collidesWithBuilding(cx, npc.mesh.position.z)) {
+        } else if (!this._isBlockedForNpc(cx, npc.mesh.position.z)) {
             npc.mesh.position.x = cx;
-        } else if (!this._collidesWithBuilding(npc.mesh.position.x, cz)) {
+        } else if (!this._isBlockedForNpc(npc.mesh.position.x, cz)) {
             npc.mesh.position.z = cz;
         }
     },

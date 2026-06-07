@@ -14,28 +14,34 @@ const AmbientCity = window.AmbientCity = {
     },
 
     // Spawn cars on main roads at random positions, moving along the road
+    // 실제 MAIN_ROADS 좌표만 사용 — 자동차가 도로 위만 다님 (task 3)
     spawnInitialCars() {
         const Q = window.GameQuality?.cfg || {};
-        const carCount = Q.carCount || 6;
+        const carCount = Q.carCount || 8;
+        // 실제 도로 좌표 (world.js MAIN_ROADS 와 일치)
+        // H 도로: 차선 폭이 큰 도로만 사용 (perimeter 제외 — 자동차가 너무 가장자리에 몰리지 않게)
         const roads = [
-            { type: 'H', z: 50, dirChoice: [-1, 1] },
-            { type: 'H', z: 5,  dirChoice: [-1, 1] },
-            { type: 'H', z: -45, dirChoice: [-1, 1] },
-            { type: 'V', x: -50, dirChoice: [-1, 1] },
-            { type: 'V', x: 50,  dirChoice: [-1, 1] },
-            { type: 'V', x: 100, dirChoice: [-1, 1] },
+            { type: 'H', z: 55,  xMin: -140, xMax: 140 },   // 경찰서 정면
+            { type: 'H', z: 5,   xMin: -140, xMax: 140 },   // R/C divider
+            { type: 'H', z: -45, xMin: -140, xMax: 0   },   // 주거 내부 (offsetX=-70, length=146)
+            { type: 'H', z: -90, xMin: -140, xMax: 140 },   // 상업/공업 경계
+            { type: 'H', z: -115, xMin: -140, xMax: 140 },  // 공업 내부 (신규)
+            { type: 'V', x: -50, zMin: -90, zMax: 5    },   // 주거 V 도로
+            { type: 'V', x: 100, zMin: 5,   zMax: 85   },   // 경찰지구 V
         ].slice(0, carCount);
-        const carColors = [0xcc1a1a, 0x1a44cc, 0xdddddd, 0x111111, 0xffcc00, 0x22aa44, 0x884488];
+        const carColors = [0xcc1a1a, 0x1a44cc, 0xdddddd, 0x111111, 0xffcc00, 0x22aa44, 0x884488, 0xee9933];
         roads.forEach((road, i) => {
-            const dir = road.dirChoice[Math.floor(Math.random() * 2)];
+            const dir = Math.random() < 0.5 ? -1 : 1;
             const color = carColors[i % carColors.length];
             const car = this.makeCar(color);
             if (road.type === 'H') {
-                car.mesh.position.set(-140 + Math.random() * 280, 0, road.z + (dir > 0 ? -1.8 : 1.8));
+                const startX = road.xMin + Math.random() * (road.xMax - road.xMin);
+                car.mesh.position.set(startX, 0, road.z + (dir > 0 ? -1.8 : 1.8));
                 car.mesh.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2;
                 car.road = road; car.dir = dir; car.speed = 4 + Math.random() * 3;
             } else {
-                car.mesh.position.set(road.x + (dir > 0 ? -1.8 : 1.8), 0, -140 + Math.random() * 280);
+                const startZ = road.zMin + Math.random() * (road.zMax - road.zMin);
+                car.mesh.position.set(road.x + (dir > 0 ? -1.8 : 1.8), 0, startZ);
                 car.mesh.rotation.y = dir > 0 ? 0 : Math.PI;
                 car.road = road; car.dir = dir; car.speed = 4 + Math.random() * 3;
             }
@@ -200,46 +206,63 @@ const AmbientCity = window.AmbientCity = {
         // 보행자는 낮에만 (밤엔 안전상 귀가)
         this.walkers.forEach(w => { w.mesh.visible = !isNight; });
 
-        // === 자동차 주행 (시간대 관계없이 항상 동작) ===
+        // === 자동차 주행 — 각 도로의 실제 좌표 범위 내에서 순환 (task 3) ===
         this.cars.forEach(car => {
             const dist = car.speed * delta;
             const r = car.road;
             if (r.type === 'H') {
                 car.mesh.position.x += car.dir * dist;
-                if (car.mesh.position.x > 140) car.mesh.position.x = -140;
-                if (car.mesh.position.x < -140) car.mesh.position.x = 140;
+                const xMin = r.xMin !== undefined ? r.xMin : -140;
+                const xMax = r.xMax !== undefined ? r.xMax : 140;
+                if (car.mesh.position.x > xMax) car.mesh.position.x = xMin;
+                if (car.mesh.position.x < xMin) car.mesh.position.x = xMax;
             } else {
                 car.mesh.position.z += car.dir * dist;
-                if (car.mesh.position.z > 140) car.mesh.position.z = -140;
-                if (car.mesh.position.z < -140) car.mesh.position.z = 140;
+                const zMin = r.zMin !== undefined ? r.zMin : -140;
+                const zMax = r.zMax !== undefined ? r.zMax : 140;
+                if (car.mesh.position.z > zMax) car.mesh.position.z = zMin;
+                if (car.mesh.position.z < zMin) car.mesh.position.z = zMax;
             }
         });
 
         // 밤이면 보행자 업데이트 건너뜀
         if (isNight) return;
 
-        // === 보행자 업데이트 (낮에만) ===
+        // === 보행자 업데이트 (낮에만) — 도로(asphalt) 회피 ===
+        const onRoad = (x, z) => typeof window.isOnRoadAsphalt === 'function'
+            && window.isOnRoadAsphalt(x, z, 0.3);
         this.walkers.forEach(w => {
             w.t += delta;
             const tdx = w.target.x - w.mesh.position.x;
             const tdz = w.target.z - w.mesh.position.z;
             const td = Math.sqrt(tdx * tdx + tdz * tdz);
             if (td < 0.5 || w.t > 8) {
-                w.target = {
-                    x: w.baseX + (Math.random() - 0.5) * 30,
-                    z: w.baseZ + (Math.random() - 0.5) * 2
-                };
+                // 새 target 선택 — 도로 위 target 은 피해서 재시도 (10회)
+                let tx, tz;
+                for (let i = 0; i < 10; i++) {
+                    tx = w.baseX + (Math.random() - 0.5) * 30;
+                    tz = w.baseZ + (Math.random() - 0.5) * 2;
+                    if (!onRoad(tx, tz)) break;
+                }
+                w.target = { x: tx, z: tz };
                 w.t = 0;
             } else {
                 const speed = 0.6 * delta;
-                w.mesh.position.x += (tdx / td) * speed;
-                w.mesh.position.z += (tdz / td) * speed;
-                w.mesh.rotation.y = Math.atan2(tdx, tdz);
-                const swing = Math.sin(time * 4.5) * 0.45;
-                if (w.leftHip) w.leftHip.rotation.x = swing;
-                if (w.rightHip) w.rightHip.rotation.x = -swing;
-                if (w.leftShoulder) w.leftShoulder.rotation.x = -swing * 0.6;
-                if (w.rightShoulder) w.rightShoulder.rotation.x = swing * 0.6;
+                const nx = w.mesh.position.x + (tdx / td) * speed;
+                const nz = w.mesh.position.z + (tdz / td) * speed;
+                // 도로 위로 들어가려 하면 target 폐기, 다음 프레임 새 target 선택
+                if (onRoad(nx, nz)) {
+                    w.t = 8;  // 즉시 target 재선정 트리거
+                } else {
+                    w.mesh.position.x = nx;
+                    w.mesh.position.z = nz;
+                    w.mesh.rotation.y = Math.atan2(tdx, tdz);
+                    const swing = Math.sin(time * 4.5) * 0.45;
+                    if (w.leftHip) w.leftHip.rotation.x = swing;
+                    if (w.rightHip) w.rightHip.rotation.x = -swing;
+                    if (w.leftShoulder) w.leftShoulder.rotation.x = -swing * 0.6;
+                    if (w.rightShoulder) w.rightShoulder.rotation.x = swing * 0.6;
+                }
             }
         });
     }
