@@ -252,10 +252,11 @@ const GameUI = window.GameUI = {
         ROADS.forEach(r => {
             ctx.lineWidth = Math.max(2, r.w * scale * 0.5);
             if (r.type === 'H') {
+                const ox = r.offsetX || 0;
                 const half = r.length / 2;
                 ctx.beginPath();
-                ctx.moveTo(wx(-half), wz(r.z));
-                ctx.lineTo(wx(half), wz(r.z));
+                ctx.moveTo(wx(ox - half), wz(r.z));
+                ctx.lineTo(wx(ox + half), wz(r.z));
                 ctx.stroke();
             } else {
                 const oz = r.offsetZ || 0;
@@ -425,10 +426,11 @@ const GameUI = window.GameUI = {
         ROADS.forEach(r => {
             ctx.lineWidth = Math.max(1.5, r.w * scale * 0.5);
             if (r.type === 'H') {
+                const ox = r.offsetX || 0;
                 const half = r.length / 2;
                 ctx.beginPath();
-                ctx.moveTo(mx(-half), mz(r.z));
-                ctx.lineTo(mx(half), mz(r.z));
+                ctx.moveTo(mx(ox - half), mz(r.z));
+                ctx.lineTo(mx(ox + half), mz(r.z));
                 ctx.stroke();
             } else {
                 const oz = r.offsetZ || 0;

@@ -80,7 +80,18 @@ const MAIN_ROADS = [
     { type: 'V', x: -50,  w: 8, length: 50, offsetZ: -115 },
     { type: 'V', x: 50,   w: 8, length: 50, offsetZ: -115 },
     { type: 'V', x: -100, w: 6, length: 50, offsetZ: -115 },
-    { type: 'V', x: 100,  w: 6, length: 50, offsetZ: -115 }
+    { type: 'V', x: 100,  w: 6, length: 50, offsetZ: -115 },
+
+    // ── V 도로 — 주거/상업 내부 격자 (z=-90~5, H z=-90 ↔ H z=5 연결) ──
+    // x=-100/-50/0 — 아파트 단지 사이 간격(블록 경계에서 ±1m 이상 여유)에 배치,
+    // 상업지구(x=5~135) 진입 전 x=0 에서 끝나 CORE/#11 위반 없음
+    { type: 'V', x: -100, w: 6, length: 95, offsetZ: -42.5 },
+    { type: 'V', x: -50,  w: 8, length: 95, offsetZ: -42.5 },
+    { type: 'V', x: 0,    w: 8, length: 95, offsetZ: -42.5 },
+
+    // ── H 연결도로 — 주거지구 내부 횡단 (서측 perimeter ↔ V x=0, z=-45) ──
+    // offsetX 로 서쪽 절반만 깔아 상업지구(로데오) 내부를 가로지르지 않음 (PRINCIPLES.md #11)
+    { type: 'H', z: -45,  w: 8, length: 146, offsetX: -70 }
 ];
 window.MAIN_ROADS = MAIN_ROADS;
 
@@ -144,8 +155,9 @@ function validateBlocksVsRoads() {
         MAIN_ROADS.forEach(r => {
             let roadMinX, roadMaxX, roadMinZ, roadMaxZ;
             if (r.type === 'H') {
+                const ox = r.offsetX || 0;
                 const half = r.length / 2;
-                roadMinX = -half; roadMaxX = half;
+                roadMinX = ox - half; roadMaxX = ox + half;
                 roadMinZ = r.z - r.w / 2; roadMaxZ = r.z + r.w / 2;
             } else {
                 const oz = r.offsetZ || 0;
@@ -294,12 +306,13 @@ function createRoadNetwork(group) {
         const w = r.w;
         const sw = w + 6; // sidewalk wider than road
         if (r.type === 'H') {
-            // Horizontal road
+            // Horizontal road — offsetX 로 부분 구간 도로 지원 (전체폭 290 이 아닌 경우)
+            const ox = r.offsetX || 0;
             const sidewalk = new THREE.Mesh(
                 new THREE.BoxGeometry(r.length, 0.06, sw),
                 sidewalkMat
             );
-            sidewalk.position.set(0, 0.05, r.z);
+            sidewalk.position.set(ox, 0.05, r.z);
             sidewalk.receiveShadow = true;
             group.add(sidewalk);
 
@@ -307,12 +320,12 @@ function createRoadNetwork(group) {
                 new THREE.BoxGeometry(r.length, 0.06, w),
                 roadMat
             );
-            road.position.set(0, 0.08, r.z);
+            road.position.set(ox, 0.08, r.z);
             road.receiveShadow = true;
             group.add(road);
 
             // Center line (dashed yellow)
-            for (let x = -r.length/2 + 4; x < r.length/2; x += 8) {
+            for (let x = ox - r.length/2 + 4; x < ox + r.length/2; x += 8) {
                 const stripe = new THREE.Mesh(
                     new THREE.BoxGeometry(3, 0.05, 0.3),
                     stripeMat
@@ -341,45 +354,55 @@ function createRoadNetwork(group) {
     const CW_OFFSET  = 1.0;    // 교차로 가장자리에서 횡단보도 시작 거리
 
     hRoads.forEach(h => {
+        const ohx = h.offsetX || 0;
+        const hXmin = ohx - h.length / 2;
+        const hXmax = ohx + h.length / 2;
         vRoads.forEach(v => {
             const oz = v.offsetZ || 0;
             const vZmin = oz - v.length / 2;
             const vZmax = oz + v.length / 2;
-            const inH = Math.abs(v.x) < h.length / 2;
+            const inH = v.x > hXmin && v.x < hXmax;
             const inV = h.z >= vZmin && h.z <= vZmax;
             if (!(inH && inV)) return;
 
             const cx = v.x, cz = h.z;
-            const bandD = N_STRIPES * STRIPE_W + (N_STRIPES - 1) * STRIPE_GAP;
 
-            // V 도로를 가로지르는 횡단보도 (N/S) — 줄들이 길이 X (v.w), 폭 STRIPE_W
+            // V 도로를 가로지르는 횡단보도(보행자 E-W 횡단) — 줄은 도로와 평행(Z축)으로 길게,
+            // 줄들은 보행 방향(X축)으로 나열 — 진행방향에 수직인 l1 폭 줄무늬 (한국 표준)
+            // 밴드 풋프린트: X = 줄 폭+간격 합, Z = 도로 폭(v.w) — 도로 실 구간 밖이면 그리지 않음
             const drawZebraAcrossV = (centerZ) => {
+                const halfDepth = (v.w * 0.92) / 2;
+                if (centerZ - halfDepth < vZmin || centerZ + halfDepth > vZmax) return;
                 for (let k = 0; k < N_STRIPES; k++) {
-                    const zPos = centerZ + (k - (N_STRIPES - 1) / 2) * (STRIPE_W + STRIPE_GAP);
+                    const xPos = cx + (k - (N_STRIPES - 1) / 2) * (STRIPE_W + STRIPE_GAP);
                     const stripe = new THREE.Mesh(
-                        new THREE.BoxGeometry(v.w * 0.92, 0.05, STRIPE_W), cwMat
+                        new THREE.BoxGeometry(STRIPE_W, 0.05, v.w * 0.92), cwMat
                     );
-                    stripe.position.set(cx, 0.13, zPos);
+                    stripe.position.set(xPos, 0.13, centerZ);
                     group.add(stripe);
                 }
             };
-            // H 도로를 가로지르는 횡단보도 (E/W) — 줄들이 길이 Z (h.w), 폭 STRIPE_W
+            // H 도로를 가로지르는 횡단보도(보행자 N-S 횡단) — 줄은 도로와 평행(X축)으로 길게,
+            // 줄들은 보행 방향(Z축)으로 나열 — 도로 실 구간(hXmin~hXmax) 밖이면 그리지 않음
             const drawZebraAcrossH = (centerX) => {
+                const halfDepth = (h.w * 0.92) / 2;
+                if (centerX - halfDepth < hXmin || centerX + halfDepth > hXmax) return;
                 for (let k = 0; k < N_STRIPES; k++) {
-                    const xPos = centerX + (k - (N_STRIPES - 1) / 2) * (STRIPE_W + STRIPE_GAP);
+                    const zPos = cz + (k - (N_STRIPES - 1) / 2) * (STRIPE_W + STRIPE_GAP);
                     const stripe = new THREE.Mesh(
-                        new THREE.BoxGeometry(STRIPE_W, 0.05, h.w * 0.92), cwMat
+                        new THREE.BoxGeometry(h.w * 0.92, 0.05, STRIPE_W), cwMat
                     );
-                    stripe.position.set(xPos, 0.13, cz);
+                    stripe.position.set(centerX, 0.13, zPos);
                     group.add(stripe);
                 }
             };
 
-            // 4면 횡단보도 (도로 끝에서 CW_OFFSET 후 밴드 중심)
-            drawZebraAcrossV(cz + h.w / 2 + CW_OFFSET + bandD / 2);
-            drawZebraAcrossV(cz - h.w / 2 - CW_OFFSET - bandD / 2);
-            drawZebraAcrossH(cx + v.w / 2 + CW_OFFSET + bandD / 2);
-            drawZebraAcrossH(cx - v.w / 2 - CW_OFFSET - bandD / 2);
+            // 4면 횡단보도 — 교차로 가장자리에서 CW_OFFSET 만큼 띄운 위치에 밴드 배치
+            // (밴드 깊이 = 횡단 대상 도로의 폭)
+            drawZebraAcrossV(cz + h.w / 2 + CW_OFFSET + (v.w * 0.92) / 2);
+            drawZebraAcrossV(cz - h.w / 2 - CW_OFFSET - (v.w * 0.92) / 2);
+            drawZebraAcrossH(cx + v.w / 2 + CW_OFFSET + (h.w * 0.92) / 2);
+            drawZebraAcrossH(cx - v.w / 2 - CW_OFFSET - (h.w * 0.92) / 2);
         });
     });
 }
@@ -1390,7 +1413,10 @@ function createStreetProps(group) {
 
     function lightOnRoad(x, z) {
         for (const rr of MAIN_ROADS) {
-            if (rr.type === 'H' && Math.abs(z - rr.z) < rr.w / 2 + 1) return true;
+            if (rr.type === 'H') {
+                const ox = rr.offsetX || 0;
+                if (Math.abs(z - rr.z) < rr.w / 2 + 1 && x >= ox - rr.length/2 - 1 && x <= ox + rr.length/2 + 1) return true;
+            }
             if (rr.type === 'V') {
                 const oz = rr.offsetZ || 0;
                 if (Math.abs(x - rr.x) < rr.w / 2 + 1 && z >= oz - rr.length/2 - 1 && z <= oz + rr.length/2 + 1) return true;
@@ -1402,7 +1428,8 @@ function createStreetProps(group) {
     // Place streetlights along main roads — skip if on another road
     MAIN_ROADS.forEach(r => {
         if (r.type === 'H') {
-            for (let x = -r.length/2 + 10; x < r.length/2; x += 18) {
+            const ox = r.offsetX || 0;
+            for (let x = ox - r.length/2 + 10; x < ox + r.length/2; x += 18) {
                 const z1 = r.z + r.w/2 + 2.5, z2 = r.z - r.w/2 - 2.5;
                 if (!lightOnRoad(x, z1)) streetLights.push(createStreetLight(group, x, z1));
                 if (!lightOnRoad(x, z2)) streetLights.push(createStreetLight(group, x, z2));
@@ -1442,7 +1469,10 @@ function createStreetProps(group) {
     // Check if position overlaps any road (including the road's full width + buffer)
     function onAnyRoad(x, z) {
         for (const rr of MAIN_ROADS) {
-            if (rr.type === 'H' && Math.abs(z - rr.z) < rr.w / 2 + 2.5) return true;
+            if (rr.type === 'H') {
+                const ox = rr.offsetX || 0;
+                if (Math.abs(z - rr.z) < rr.w / 2 + 2.5 && x >= ox - rr.length/2 - 2 && x <= ox + rr.length/2 + 2) return true;
+            }
             if (rr.type === 'V') {
                 const oz = rr.offsetZ || 0;
                 if (Math.abs(x - rr.x) < rr.w / 2 + 2.5 && z >= oz - rr.length/2 - 2 && z <= oz + rr.length/2 + 2) return true;
@@ -1454,7 +1484,8 @@ function createStreetProps(group) {
     // Place trees along horizontal road edges only (off any road, off buildings)
     MAIN_ROADS.forEach(r => {
         if (r.type !== 'H') return;
-        for (let x = -r.length / 2 + 14; x < r.length / 2 - 6; x += 14) {
+        const ox = r.offsetX || 0;
+        for (let x = ox - r.length / 2 + 14; x < ox + r.length / 2 - 6; x += 14) {
             [r.z + r.w / 2 + 4.5, r.z - r.w / 2 - 4.5].forEach(z => {
                 if (onAnyRoad(x, z)) return;
                 if (nearBuilding(x, z)) return;
