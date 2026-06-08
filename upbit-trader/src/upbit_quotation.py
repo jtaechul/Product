@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 import requests
@@ -60,16 +61,54 @@ class UpbitQuotation:
 
     # --- 캔들 -------------------------------------------------------------
     def get_candles_minutes(
-        self, market: str, unit: int = 1, count: int = 200
+        self, market: str, unit: int = 1, count: int = 200, to: str | None = None
     ) -> list[dict[str, Any]]:
-        """분봉 캔들. unit ∈ {1,3,5,10,15,30,60,240}, count ≤ 200."""
-        return self._get(
-            f"/candles/minutes/{unit}", {"market": market, "count": count}
-        )
+        """분봉 캔들. unit ∈ {1,3,5,10,15,30,60,240}, count ≤ 200.
 
-    def get_candles_days(self, market: str, count: int = 200) -> list[dict[str, Any]]:
-        """일봉 캔들. count ≤ 200."""
-        return self._get("/candles/days", {"market": market, "count": count})
+        to: 이 시각(UTC, 예 '2024-01-01T00:00:00Z') 이전 캔들을 반환. 페이지네이션용.
+        """
+        params: dict[str, Any] = {"market": market, "count": count}
+        if to:
+            params["to"] = to
+        return self._get(f"/candles/minutes/{unit}", params)
+
+    def get_candles_days(
+        self, market: str, count: int = 200, to: str | None = None
+    ) -> list[dict[str, Any]]:
+        """일봉 캔들. count ≤ 200. to: 해당 시각 이전 캔들(페이지네이션용)."""
+        params: dict[str, Any] = {"market": market, "count": count}
+        if to:
+            params["to"] = to
+        return self._get("/candles/days", params)
+
+    def collect_candles(
+        self,
+        market: str,
+        total: int,
+        interval: str = "day",
+        unit: int = 1,
+        pause: float = 0.12,
+    ) -> list[dict[str, Any]]:
+        """과거 캔들을 total 개수만큼 반복 호출로 모아서 반환.
+
+        업비트는 1회 최대 200개라, 가장 오래된 캔들 시각을 `to` 로 넘기며 뒤로 이동합니다.
+        pause: 호출 사이 대기(초). 호출 횟수 제한(rate limit) 배려용.
+        """
+        collected: list[dict[str, Any]] = []
+        to: str | None = None
+        while len(collected) < total:
+            count = min(200, total - len(collected))
+            if interval == "day":
+                batch = self.get_candles_days(market, count=count, to=to)
+            else:
+                batch = self.get_candles_minutes(market, unit=unit, count=count, to=to)
+            if not batch:
+                break
+            collected.extend(batch)
+            # batch 는 최신→과거 순. 가장 오래된 캔들 시각을 다음 `to` 로.
+            to = batch[-1]["candle_date_time_utc"]
+            time.sleep(pause)
+        return collected
 
 
 def candles_to_dataframe(candles: list[dict[str, Any]]):
