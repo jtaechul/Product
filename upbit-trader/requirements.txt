@@ -1,7 +1,7 @@
-# 1단계(시세 조회)에 필요한 최소 의존성
+# 시세 조회
 requests>=2.31.0
 pandas>=2.0.0
 
-# 거래(JWT 인증) 단계에서 추가 예정:
-# PyJWT>=2.8.0
-# python-dotenv>=1.0.0   # 이미 config.py에서 선택적으로 사용
+# 거래(JWT 인증) — 잔고조회/주문
+PyJWT>=2.8.0
+python-dotenv>=1.0.0
