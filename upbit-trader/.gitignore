@@ -17,7 +17,7 @@ data/
 *.log
 
 # 생성되는 대시보드 산출물
-dashboard.html
+dashboard*.html
 
 # OS / 에디터
 .DS_Store
