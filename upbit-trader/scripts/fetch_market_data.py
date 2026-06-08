@@ -16,6 +16,8 @@ from pathlib import Path
 # 프로젝트 루트를 import 경로에 추가 (별도 설치 없이 실행 가능하도록)
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import requests  # noqa: E402
+
 from src.upbit_quotation import UpbitQuotation, candles_to_dataframe  # noqa: E402
 
 
@@ -53,10 +55,26 @@ def show_market_detail(client: UpbitQuotation, market: str) -> None:
 
 def main() -> None:
     client = UpbitQuotation()
-    if len(sys.argv) >= 2:
-        show_market_detail(client, sys.argv[1].upper())
-    else:
-        show_market_list(client)
+    try:
+        if len(sys.argv) >= 2:
+            show_market_detail(client, sys.argv[1].upper())
+        else:
+            show_market_list(client)
+    except requests.exceptions.HTTPError as exc:
+        code = exc.response.status_code if exc.response is not None else "?"
+        print(f"[오류] Upbit API 가 {code} 를 반환했습니다.")
+        if code == 429:
+            print("  → 호출 횟수 제한(rate limit). 잠시 후 다시 시도하세요.")
+        elif code == 403:
+            print("  → 접근 차단. 클라우드/방화벽 환경이라면 api.upbit.com 아웃바운드가")
+            print("     허용되는지 확인하세요. (로컬 PC에서는 보통 정상 동작합니다.)")
+        else:
+            print("  → 마켓 코드가 올바른지 확인하세요. 예: KRW-BTC, KRW-ETH")
+        sys.exit(1)
+    except requests.exceptions.RequestException as exc:
+        print(f"[오류] 네트워크 연결 실패: {exc}")
+        print("  → 인터넷 연결 / 방화벽 / api.upbit.com 접근 가능 여부를 확인하세요.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
