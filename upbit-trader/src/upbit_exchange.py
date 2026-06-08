@@ -74,6 +74,18 @@ class UpbitExchange:
         resp.raise_for_status()
         return resp.json()
 
+    def _post(self, path: str, params: dict[str, Any]) -> Any:
+        headers = self._auth_header(params)
+        headers["Content-Type"] = "application/json"
+        resp = self.session.post(
+            f"{self.base_url}{path}",
+            json=params,
+            headers=headers,
+            timeout=self.timeout,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
     # --- 잔고조회 ---------------------------------------------------------
     def get_accounts(self) -> list[dict[str, Any]]:
         """보유 자산 목록.
@@ -89,3 +101,39 @@ class UpbitExchange:
             if acc["currency"] == "KRW":
                 return float(acc["balance"])
         return 0.0
+
+    def get_coin_balance(self, market: str) -> float:
+        """해당 마켓 코인의 보유 수량 (예: 'KRW-BTC' → BTC 수량)."""
+        coin = market.split("-")[1]
+        for acc in self.get_accounts():
+            if acc["currency"] == coin:
+                return float(acc["balance"])
+        return 0.0
+
+    # --- 주문 (⚠️ 실제 돈이 움직입니다) -----------------------------------
+    def buy_market(self, market: str, krw_amount: float) -> dict[str, Any]:
+        """시장가 매수: krw_amount(원)만큼 즉시 매수.
+
+        ⚠️ 실제 주문입니다. Upbit 최소 주문 금액(보통 5,000원) 이상이어야 합니다.
+        """
+        params = {
+            "market": market,
+            "side": "bid",
+            "ord_type": "price",
+            "price": str(krw_amount),
+        }
+        return self._post("/orders", params)
+
+    def sell_market(self, market: str, volume: float) -> dict[str, Any]:
+        """시장가 매도: 보유 코인 volume 수량을 즉시 매도.
+
+        ⚠️ 실제 주문입니다.
+        """
+        params = {
+            "market": market,
+            "side": "ask",
+            "ord_type": "market",
+            "volume": str(volume),
+        }
+        return self._post("/orders", params)
+
