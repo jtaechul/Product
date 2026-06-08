@@ -1,0 +1,22 @@
+# 절대 커밋하면 안 되는 비밀 정보
+.env
+*.key
+secrets.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# 데이터/로그
+data/
+*.csv
+*.log
+
+# OS / 에디터
+.DS_Store
+.idea/
+.vscode/
