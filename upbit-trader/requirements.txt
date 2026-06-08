@@ -5,3 +5,6 @@ pandas>=2.0.0
 # 거래(JWT 인증) — 잔고조회/주문
 PyJWT>=2.8.0
 python-dotenv>=1.0.0
+
+# 실시간 웹 대시보드 (app/dashboard_app.py)
+streamlit>=1.30.0
