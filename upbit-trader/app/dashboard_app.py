@@ -45,10 +45,13 @@ STRATEGIES = {
 
 
 def load_live(market: str, count: int = 200):
-    """실시간 시세를 받아오되, 막히면 합성 데이터로 폴백."""
+    """실시간 시세(일봉)를 받아오되, 막히면 합성 데이터로 폴백.
+
+    백테스트 검증과 동일하게 일봉을 사용합니다.
+    """
     try:
         q = UpbitQuotation()
-        candles = q.get_candles_minutes(market, unit=60, count=count)
+        candles = q.get_candles_days(market, count=count)
         df = candles_to_dataframe(candles)
         if len(df) > 0:
             return df, "live"
@@ -94,7 +97,7 @@ else:
     df, status = load_live(market)
 
 if status == "live":
-    st.success(f"🟢 실시간 데이터 연결됨 — {market} (1시간봉)")
+    st.success(f"🟢 실시간 데이터 연결됨 — {market} (일봉)")
 elif status == "csv":
     st.info(f"📄 CSV 데이터 — {csv_path} ({len(df)}행, "
             f"{df['datetime'].iloc[0].date()} ~ {df['datetime'].iloc[-1].date()})")

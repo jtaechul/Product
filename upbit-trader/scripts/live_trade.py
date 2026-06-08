@@ -57,6 +57,10 @@ def main() -> None:
     parser.add_argument("--interval", type=int, default=60, help="점검 주기(초)")
     parser.add_argument("--max-invest", type=float, default=10_000,
                         help="1회 매수 최대 금액(원)")
+    parser.add_argument("--candle", choices=["day", "minute"], default="day",
+                        help="신호 계산용 캔들 (기본 day=일봉, 백테스트 검증과 일치)")
+    parser.add_argument("--unit", type=int, default=60,
+                        help="--candle minute 일 때 분봉 단위(분)")
     parser.add_argument("--live", action="store_true",
                         help="실제 주문 실행 (없으면 모의 모드)")
     args = parser.parse_args()
@@ -77,12 +81,16 @@ def main() -> None:
             sys.exit(1)
         print("=" * 60)
         print("🔴 실거래(LIVE) 모드 — 실제 주문이 나갑니다!")
-        print(f"   전략: {name} | 마켓: {args.market} | 1회 최대: {args.max_invest:,.0f}원")
+        candle_label = "일봉" if args.candle == "day" else f"{args.unit}분봉"
+        print(f"   전략: {name}({candle_label}) | 마켓: {args.market} | "
+              f"1회 최대: {args.max_invest:,.0f}원")
         print("   중지하려면 Ctrl+C. 5초 후 시작합니다...")
         print("=" * 60)
         time.sleep(5)
     else:
-        log(f"🟡 모의(dry-run) 모드 — 실제 주문 없음. 전략: {name}, 마켓: {args.market}")
+        candle_label = "일봉" if args.candle == "day" else f"{args.unit}분봉"
+        log(f"🟡 모의(dry-run) 모드 — 실제 주문 없음. 전략: {name}({candle_label}), "
+            f"마켓: {args.market}")
 
     holding = False  # 현재 보유 중인지 (세션 내 추적)
     if exchange is not None:
@@ -92,7 +100,12 @@ def main() -> None:
     try:
         while True:
             try:
-                candles = quotation.get_candles_minutes(args.market, unit=60, count=200)
+                if args.candle == "day":
+                    candles = quotation.get_candles_days(args.market, count=200)
+                else:
+                    candles = quotation.get_candles_minutes(
+                        args.market, unit=args.unit, count=200
+                    )
                 df = candles_to_dataframe(candles)
                 signal = int(strategy_fn(df).iloc[-1])
                 price = float(df["close"].iloc[-1])
