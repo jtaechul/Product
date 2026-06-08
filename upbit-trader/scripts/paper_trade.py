@@ -20,7 +20,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.paper_trader import run_paper_trading  # noqa: E402
 from src.sample_data import generate_synthetic_ohlcv, load_csv  # noqa: E402
 from src.strategies import (  # noqa: E402
+    bollinger_bands,
     ma_crossover,
+    macd,
     rsi_strategy,
     volatility_breakout,
 )
@@ -29,6 +31,8 @@ STRATEGY_MAP = {
     "ma": ("이동평균 교차", ma_crossover),
     "rsi": ("RSI 과매도/과매수", rsi_strategy),
     "vb": ("변동성 돌파", volatility_breakout),
+    "bb": ("볼린저밴드", bollinger_bands),
+    "macd": ("MACD", macd),
 }
 
 

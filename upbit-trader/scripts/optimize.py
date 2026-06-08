@@ -18,7 +18,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.optimize import optimize_strategy  # noqa: E402
 from src.sample_data import generate_synthetic_ohlcv, load_csv  # noqa: E402
 from src.strategies import (  # noqa: E402
+    bollinger_bands,
     ma_crossover,
+    macd,
     rsi_strategy,
     volatility_breakout,
 )
@@ -42,6 +44,18 @@ CONFIGS = [
         volatility_breakout,
         {"k": [0.3, 0.4, 0.5, 0.6, 0.7, 0.8]},
         None,
+    ),
+    (
+        "볼린저밴드",
+        bollinger_bands,
+        {"period": [10, 20, 30], "num_std": [1.5, 2.0, 2.5]},
+        None,
+    ),
+    (
+        "MACD",
+        macd,
+        {"fast": [8, 12], "slow": [21, 26], "signal": [9]},
+        lambda p: p["fast"] < p["slow"],
     ),
 ]
 

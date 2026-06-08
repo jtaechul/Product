@@ -53,9 +53,48 @@ def volatility_breakout(df: pd.DataFrame, k: float = 0.5) -> pd.Series:
     return pos.fillna(0)
 
 
+def bollinger_bands(
+    df: pd.DataFrame, period: int = 20, num_std: float = 2.0
+) -> pd.Series:
+    """볼린저밴드 평균회귀: 하단밴드 아래로 떨어지면 매수, 중심선 위로 오르면 매도."""
+    mid = df["close"].rolling(period).mean()
+    std = df["close"].rolling(period).std()
+    lower = mid - num_std * std
+
+    positions = []
+    state = 0
+    for i in range(len(df)):
+        price = df["close"].iloc[i]
+        if pd.isna(mid.iloc[i]):
+            positions.append(0)
+            continue
+        if price < lower.iloc[i]:
+            state = 1  # 하단밴드 이탈 → 과매도 매수
+        elif price > mid.iloc[i]:
+            state = 0  # 중심선 회복 → 매도
+        positions.append(state)
+    return pd.Series(positions, index=df.index)
+
+
+def macd(
+    df: pd.DataFrame, fast: int = 12, slow: int = 26, signal: int = 9
+) -> pd.Series:
+    """MACD: MACD선이 시그널선 위에 있으면(상승 모멘텀) 보유."""
+    ema_fast = df["close"].ewm(span=fast, adjust=False).mean()
+    ema_slow = df["close"].ewm(span=slow, adjust=False).mean()
+    macd_line = ema_fast - ema_slow
+    signal_line = macd_line.ewm(span=signal, adjust=False).mean()
+    pos = (macd_line > signal_line).astype(int)
+    # 워밍업 구간(초기)은 비보유 처리
+    pos.iloc[:slow] = 0
+    return pos
+
+
 # 전략 이름 → 함수 매핑 (백테스트 비교에 사용)
 STRATEGIES = {
     "이동평균 교차(5/20)": ma_crossover,
     "RSI(14, 30/70)": rsi_strategy,
     "변동성 돌파(k=0.5)": volatility_breakout,
+    "볼린저밴드(20, 2σ)": bollinger_bands,
+    "MACD(12/26/9)": macd,
 }
