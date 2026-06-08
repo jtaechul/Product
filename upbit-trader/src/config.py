@@ -10,10 +10,16 @@ import os
 from pathlib import Path
 
 # .env 자동 로딩 (python-dotenv 가 있을 때만). 시세 조회 단계에서는 없어도 됩니다.
+# .env 와 upbitapi.env 둘 다 지원 (먼저 발견되는 것을 사용).
 try:
     from dotenv import load_dotenv
 
-    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+    _root = Path(__file__).resolve().parent.parent
+    for _name in (".env", "upbitapi.env"):
+        _path = _root / _name
+        if _path.exists():
+            load_dotenv(_path)
+            break
 except ImportError:
     pass
 
