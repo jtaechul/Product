@@ -9,12 +9,30 @@ Upbit Open API를 활용한 가상화폐 자동매매 프로젝트입니다.
 
 ## 개발 로드맵
 
-- [x] **1단계: 시세 조회** — 인증 없이 마켓/캔들/현재가/호가 가져오기  ← *현재 여기*
-- [ ] 2단계: 전략 정의 (이동평균 교차 / RSI / 변동성 돌파 등)
-- [ ] 3단계: 백테스트 (과거 데이터로 전략 검증)
-- [ ] 4단계: 모의매매 (실주문 없이 가상 체결 시뮬레이션)
-- [ ] 5단계: 소액 실거래 (JWT 인증 + 주문 API)
-- [ ] 6단계: 리스크 관리 + 모니터링/알림
+- [x] **1단계: 시세 조회** — 인증 없이 마켓/캔들/현재가/호가 가져오기
+- [x] **2단계: 전략** — 이동평균 교차 / RSI / 변동성 돌파 / 볼린저밴드 / MACD (5종)
+- [x] **3단계: 백테스트** — 과거 데이터로 전략 검증 (+파라미터 최적화, 학습/검증 분할)
+- [x] **4단계: 모의매매** — 실주문 없이 가상 계좌로 거래 일지 기록
+- [x] **리스크 관리** — 손절/익절(stop-loss/take-profit)
+- [x] **대시보드** — 결과를 차트 HTML 로 시각화
+- [ ] 5단계: 소액 실거래 (JWT 인증 + 주문 API) — *IP 고정 가능한 환경 필요*
+- [ ] 6단계: 실시간 모니터링/알림
+
+## 주요 스크립트
+
+```bash
+python scripts/fetch_market_data.py KRW-BTC   # 시세 조회 (네트워크 필요)
+python scripts/check_balance.py               # 내 잔고 (API 키 + IP 등록 필요)
+python scripts/run_backtest.py                # 전략 성적 비교
+python scripts/run_backtest.py --stop-loss 0.05 --take-profit 0.15  # 손절/익절 적용
+python scripts/optimize.py                    # 전략별 좋은 파라미터 탐색
+python scripts/validate.py                    # 학습/검증 분할로 과최적화 점검
+python scripts/paper_trade.py --strategy bb   # 모의매매 거래 일지
+python scripts/make_dashboard.py              # dashboard.html 생성 → 브라우저로 열기
+```
+
+위 백테스트/최적화/검증/모의매매/대시보드는 **API 키 없이** 합성 데이터로 동작하며,
+`--csv 파일.csv` 로 실제 OHLCV 데이터를 넣으면 그대로 실데이터 검증이 됩니다.
 
 ## 빠른 시작
 
