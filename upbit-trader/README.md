@@ -50,7 +50,11 @@ upbit-trader/
 
 - 시세 API: 인증 불필요. `https://api.upbit.com/v1/...`
 - 거래 API: JWT 인증 필요 (Access Key / Secret Key). 5단계에서 추가 예정.
-- API 키 발급: Upbit → 마이페이지 → Open API 관리 → 키 발급 + **허용 IP 등록**
+- API 키 발급: **PC 웹(upbit.com) 전용** (모바일 앱에는 메뉴 없음). 로그인 →
+  마이페이지 → Open API 관리(`https://upbit.com/mypage/open_api_management`) →
+  권한 선택 → **허용 IP 등록** → 본인 인증 → Access/Secret key 발급.
+  - 사전 조건: **고객확인(KYC) + 2채널 인증(2FA)** 완료해야 발급 가능.
+  - **Secret key 는 최초 발급 화면에서 단 한 번만** 표시되므로 즉시 안전하게 보관.
 - 자동매매에는 **자산조회 + 주문** 권한만. **출금 권한은 절대 켜지 마세요.**
 - 호출 횟수 제한(rate limit)이 있으니 과도한 요청은 피하세요.
 - 공식 문서: https://docs.upbit.com/
