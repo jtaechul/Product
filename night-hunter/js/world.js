@@ -66,8 +66,9 @@ const MAIN_ROADS = [
     // ── Perimeter (sealed rectangle) ──
     { type: 'H', z: 85,  w: 8,  length: 290 },   // 북측 perimeter
     { type: 'H', z: -140, w: 8, length: 290 },   // 남측 perimeter
-    { type: 'V', x: -140, w: 8, length: 240 },   // 서측 perimeter
-    { type: 'V', x: 140,  w: 8, length: 240 },   // 동측 perimeter
+    // V perimeter — H 남측(z=-140) ↔ H 북측(z=85) 사이 끊김 없이 연결 (length=225, offsetZ=-27.5)
+    { type: 'V', x: -140, w: 8, length: 225, offsetZ: -27.5 },   // 서측 perimeter
+    { type: 'V', x: 140,  w: 8, length: 225, offsetZ: -27.5 },   // 동측 perimeter
 
     // ── East-West arterials (상업지구 경계 + 위/아래 zone) ──
     { type: 'H', z: 55,  w: 8, length: 290 },    // 경찰서 정면 도로
@@ -2030,6 +2031,9 @@ function createStreetProps(group) {
                 if (Math.abs(x - b.x) < b.w / 2 + 1.5 && Math.abs(z - b.z) < b.d / 2 + 1.5) return true;
             }
         }
+        // 경찰서 회피 (createStreetProps 시점엔 _buildingPositions 에 미등록) — 폴리지 반경 버퍼 2.5m
+        const PS = (typeof window !== 'undefined') ? window._policeStation : null;
+        if (PS && Math.abs(x - PS.x) < PS.w / 2 + 2.5 && Math.abs(z - PS.z) < PS.d / 2 + 2.5) return true;
         return false;
     }
     function tooClose(x, z) {
@@ -2195,6 +2199,8 @@ function createCityParks(group) {
 
         // 가로수 (공원 둘레)
         const greens = [0x2d6a1e, 0x3a7a2e, 0x4a8a3e, 0x356622];
+        // 경찰서 외벽 클리핑 방지용 footprint (x=0±9, z=67±7) + 폴리지 반경(~1.5m) 버퍼
+        const PS = (typeof window._policeStation !== 'undefined') ? window._policeStation : null;
         for (let t = 0; t < p.treeCount; t++) {
             const angle = (t / p.treeCount) * Math.PI * 2;
             const rx = (p.w / 2 - 1.5) * Math.cos(angle);
@@ -2202,6 +2208,9 @@ function createCityParks(group) {
             const tx = p.cx + rx, tz = p.cz + rz;
             // 십자 산책로 영역 회피
             if (Math.abs(rx) < 1.2 && Math.abs(rz) < 1.2) continue;
+            // 경찰서 외벽 관통 회피 — 폴리지(반경 ~1.3) + 그림자 여유 포함 2.5m 버퍼
+            if (PS && Math.abs(tx - PS.x) < PS.w / 2 + 2.5 &&
+                     Math.abs(tz - PS.z) < PS.d / 2 + 2.5) continue;
 
             const tH = 2.0 + Math.random() * 0.8;
             const trunk = new THREE.Mesh(
