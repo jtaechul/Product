@@ -49,7 +49,10 @@ def log(msg: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="1분봉 정밀 추적 매매 봇")
     parser.add_argument("--market", required=True, help="추적할 마켓 (예: KRW-XYZ)")
-    parser.add_argument("--interval", type=int, default=20, help="점검 주기(초)")
+    parser.add_argument("--interval", type=int, default=10,
+                        help="보유 중 청산 감시 주기(초). 현재가 기준이라 빠르게(기본 10초)")
+    parser.add_argument("--entry-interval", type=int, default=30,
+                        help="관망 중 진입 탐색 주기(초). 1분봉 기준이라 느려도 됨(기본 30초)")
     parser.add_argument("--max-invest", type=float, default=10_000,
                         help="1회 매수 최대 금액(원)")
     parser.add_argument("--trail", type=float, default=3.0,
@@ -104,13 +107,15 @@ def main() -> None:
     try:
         while True:
             try:
-                candles = quotation.get_candles_minutes(args.market, unit=1, count=60)
-                df = candles_to_dataframe(candles)
-                price = float(df["close"].iloc[-1])
                 now = datetime.now()
 
                 if position is None:
-                    # --- 진입 판단 ---
+                    # --- 관망: 1분봉으로 진입 탐색 (거래량/모멘텀 맥락 필요) ---
+                    candles = quotation.get_candles_minutes(
+                        args.market, unit=1, count=60
+                    )
+                    df = candles_to_dataframe(candles)
+                    price = float(df["close"].iloc[-1])
                     if decide_entry(df):
                         if args.live and exchange is not None:
                             krw = min(args.max_invest, exchange.get_krw_balance())
@@ -126,8 +131,10 @@ def main() -> None:
                                 f"({args.max_invest:,.0f}원어치)")
                     else:
                         log(f"관망 — 진입 조건 미충족 (현재가 {price:,.0f})")
+                    time.sleep(args.entry_interval)
                 else:
-                    # --- 청산 판단 ---
+                    # --- 보유: 현재가만 가볍게 받아 빠르게 청산 감시 ---
+                    price = quotation.get_price(args.market)
                     position.update(price, cfg.arm_profit_pct)
                     should_exit, reason = decide_exit(position, price, cfg, now)
                     gain = position.gain_pct(price) * 100
@@ -146,11 +153,11 @@ def main() -> None:
                         log(f"보유 중 — {gain:+.1f}% / 고점대비 "
                             f"{(price / position.peak_price - 1) * 100:+.1f}% "
                             f"/ 트레일링:{armed} (현재가 {price:,.0f})")
+                        time.sleep(args.interval)
 
             except Exception as exc:  # 일시적 오류는 건너뛰고 계속
                 log(f"오류(계속 진행): {exc}")
-
-            time.sleep(args.interval)
+                time.sleep(args.interval)
 
     except KeyboardInterrupt:
         log("사용자 중지(Ctrl+C). 추적을 종료합니다.")
