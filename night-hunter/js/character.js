@@ -1,7 +1,7 @@
-// character.js v17 — soyun GLB 기반 (베이스 메시 + 분리 애니메이션 + 머리스타일)
-// 베이스: assets/models/soyun.glb (스킨드 메시, Mixamo 스켈레톤)
+// character.js v18 — soyun/hayun GLB 기반 (베이스 메시 + 분리 애니메이션)
+// 베이스: assets/models/soyun.glb / hayun.glb (스킨드 메시, Mixamo 스켈레톤)
 // 애니: assets/models/idle.glb / walk.glb / run.glb (동일 스켈레톤 retarget)
-// 머리: assets/models/hairstyles.glb (Sketchfab 모음, 9종)
+// v18: hairstyles.glb 제거 — 새 캐릭터 모델에 머리가 포함되어 헤어 부착/머리 크롭 불필요
 // API: ChibiCharacter.preload(), .create(cfg), instance.setState('idle'|'walk'|'run')
 //      instance.setHairstyle(index), instance.getHairstyleCount()
 //      instance.setHairTransform({x,y,z,rx,ry,rz,s})
@@ -112,9 +112,7 @@
                 loadGLB('assets/models/run.glb').then(g => {
                     if (g.animations.length) animCache['run'] = stripHorizontalRootMotion(g.animations[0]);
                 }),
-                // 머리스타일 (선택사항 — 실패해도 계속)
-                loadGLB('assets/models/hairstyles.glb').then(g => extractHairMeshes(g))
-                    .catch(() => console.warn('[ChibiCharacter] hairstyles.glb 로드 실패 (계속 진행)')),
+                // (hairstyles.glb 제거됨 — 새 캐릭터 모델에 머리가 포함됨)
             ]).then(() => {
                 this.loaded = true;
                 console.log('[ChibiCharacter] 로드 완료 — 메시:', Object.keys(meshCache),
@@ -185,15 +183,7 @@
             this._hair = null;
             this._hairIndex = -1;
             this.setState('idle');
-
-            // soyun 본체 머리뭉치 자르기 — 헤어 부착 전에 적용해 새 헤어가 잘 덮이도록
-            this.applyHeadCrop(HEAD_CROP_DEFAULT);
-
-            // 머리스타일 기본값 (cfg.hairstyleIndex 또는 0)
-            if (hairCache.length > 0) {
-                const defaultIdx = (cfg.hairstyleIndex !== undefined) ? cfg.hairstyleIndex : 0;
-                this.setHairstyle(defaultIdx);
-            }
+            // (hairstyles.glb 제거 — 머리 크롭/헤어 부착 없음. 새 모델에 머리 포함)
         }
 
         setState(name) {

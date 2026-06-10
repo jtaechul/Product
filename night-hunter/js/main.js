@@ -224,7 +224,6 @@ const CHARACTERS = {
         browColor: 0x3a2010,
         lipColor: 0xc97560,           // peach
         accessory: 'redClip',         // red hair clip
-        hairstyleIndex: 2             // hairstyles.glb 의 3번 (0-base index 2)
     },
     hayun: {
         name: '하윤',
@@ -238,7 +237,6 @@ const CHARACTERS = {
         browColor: 0x2a1808,
         lipColor: 0xd07060,           // peach-pink
         accessory: 'headset',         // headset with mic
-        hairstyleIndex: 7             // hairstyles.glb 의 8번 (0-base index 7)
     }
 };
 
