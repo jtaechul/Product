@@ -2,6 +2,8 @@
 // 베이스: assets/models/soyun.glb / hayun.glb (스킨드 메시, Mixamo 스켈레톤)
 // 애니: assets/models/idle.glb / walk.glb / run.glb (동일 스켈레톤 retarget)
 // v18: hairstyles.glb 제거 — 새 캐릭터 모델에 머리가 포함되어 헤어 부착/머리 크롭 불필요
+// v20: iPad OOM 대응(애니 GLB 텍스처 즉시 해제) + 검정 캐릭터 보정(metalness=0/emissive 제거)
+//      + 바운딩박스로 발바닥 지면 정렬
 // API: ChibiCharacter.preload(), .create(cfg), instance.setState('idle'|'walk'|'run')
 //      instance.setHairstyle(index), instance.getHairstyleCount()
 //      instance.setHairTransform({x,y,z,rx,ry,rz,s})
@@ -63,6 +65,21 @@
         });
     }
 
+    // 애니메이션만 필요한 GLB(idle/walk/run)는 클립 추출 후 메시·텍스처를 즉시 해제해
+    // 모바일(iPad) WebGL 메모리 폭주(2048² 텍스처 다수 → OOM 크래시)를 방지한다.
+    function disposeGLTFScene(gltf) {
+        if (!gltf || !gltf.scene) return;
+        gltf.scene.traverse(o => {
+            if (o.geometry) o.geometry.dispose();
+            const mats = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []);
+            mats.forEach(m => {
+                if (!m) return;
+                for (const k in m) { const v = m[k]; if (v && v.isTexture) v.dispose(); }
+                if (m.dispose) m.dispose();
+            });
+        });
+    }
+
     // ── Root Motion 제거 ──
     // Mixamo/FBX 걷기·달리기 클립은 Hips(루트) 본에 전진 이동(translation)이 들어있다.
     // 게임이 playerGroup.position 으로 이동을 직접 제어하므로, 클립의 수평 이동(X,Z)을
@@ -99,18 +116,21 @@
         preload() {
             if (this._promise) return this._promise;
             this._promise = Promise.all([
-                // 메시 (T-Pose 베이스)
+                // 메시 (T-Pose 베이스) — soyun/hayun GLB는 동일 모델이므로 1개만 로드해
+                // iPad 메모리(2048² 텍스처)를 절약한다. 모든 캐릭터가 이 메시로 폴백된다.
                 loadGLB('assets/models/soyun.glb').then(g => { meshCache['soyun'] = g; }),
-                loadGLB('assets/models/hayun.glb').then(g => { meshCache['hayun'] = g; }),
                 // 공통 애니메이션 (root motion 제거 → 제자리 재생)
                 loadGLB('assets/models/idle.glb').then(g => {
                     if (g.animations.length) animCache['idle'] = stripHorizontalRootMotion(g.animations[0]);
+                    disposeGLTFScene(g);   // 메시·텍스처 해제 (애니 클립만 사용)
                 }),
                 loadGLB('assets/models/walk.glb').then(g => {
                     if (g.animations.length) animCache['walk'] = stripHorizontalRootMotion(g.animations[0]);
+                    disposeGLTFScene(g);
                 }),
                 loadGLB('assets/models/run.glb').then(g => {
                     if (g.animations.length) animCache['run'] = stripHorizontalRootMotion(g.animations[0]);
+                    disposeGLTFScene(g);
                 }),
                 // (hairstyles.glb 제거됨 — 새 캐릭터 모델에 머리가 포함됨)
             ]).then(() => {
@@ -154,10 +174,27 @@
             this._model.position.y = 0;
             this.add(this._model);
 
-            // 그림자
+            // 재질 보정 + 그림자
+            // 새 GLB는 metalness=1(완전 금속)이라 환경맵이 없으면 검게 렌더된다.
+            // metalness를 낮추고 emissive 아티팩트를 제거해 텍스처가 정상적으로 보이게 한다.
             this._model.traverse(o => {
-                if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; }
+                if (!o.isMesh) return;
+                o.castShadow = true; o.receiveShadow = false;
+                const mats = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []);
+                mats.forEach(m => {
+                    if (!m) return;
+                    if ('metalness' in m) m.metalness = 0.0;
+                    if ('roughness' in m) m.roughness = 0.85;
+                    if (m.emissive) m.emissive.setRGB(0, 0, 0);   // export 아티팩트(emissive=1,1,1) 제거
+                    m.needsUpdate = true;
+                });
             });
+
+            // 발바닥을 정확히 지면(인스턴스 y=0 = playerGroup 원점)에 정렬 — 발 파묻힘/뜸 방지
+            this._model.position.y = 0;
+            this._model.updateMatrixWorld(true);
+            const _box = new THREE.Box3().setFromObject(this._model);
+            if (isFinite(_box.min.y)) this._model.position.y = -_box.min.y;
 
             // Head 본 찾기 (머리스타일 부착 지점)
             this._headBone = null;
