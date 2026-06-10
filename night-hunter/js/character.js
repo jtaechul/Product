@@ -131,24 +131,24 @@
             this._promise = Promise.all([
                 // 메시 (T-Pose 베이스) — soyun/hayun GLB는 동일 모델이므로 1개만 로드해
                 // iPad 메모리(2048² 텍스처)를 절약한다. 모든 캐릭터가 이 메시로 폴백된다.
-                safe(loadGLB('assets/models/soyun.glb').then(g => { meshCache['soyun'] = g; }), 'soyun'),
+                safe(loadGLB('assets/models/soyun.glb?v=3').then(g => { meshCache['soyun'] = g; }), 'soyun'),
                 // 남자 NPC 모델 (동일 스켈레톤 → idle/walk/run 클립 공유).
                 // 텍스처를 1024²로 줄여(약 4MB) iPad 메모리 초과를 방지함. 실패해도 NPC는 기존 캐릭터로 폴백.
-                safe(loadGLB('assets/models/npc-youngman.glb').then(g => { meshCache['npc-man'] = g; }), 'npc-man'),
+                safe(loadGLB('assets/models/npc-youngman.glb?v=3').then(g => { meshCache['npc-man'] = g; }), 'npc-man'),
                 // 납치범(suspect) NPC 모델 (동일 스켈레톤, 텍스처 1024²).
-                safe(loadGLB('assets/models/npc-kidnapper.glb').then(g => { meshCache['kidnapper'] = g; }), 'kidnapper'),
+                safe(loadGLB('assets/models/npc-kidnapper.glb?v=3').then(g => { meshCache['kidnapper'] = g; }), 'kidnapper'),
                 // 여자 시민 NPC 모델 (동일 스켈레톤, 텍스처 1024²).
-                safe(loadGLB('assets/models/npc-youngwoman.glb?v=2').then(g => { meshCache['woman'] = g; }), 'woman'),
+                safe(loadGLB('assets/models/npc-youngwoman.glb?v=3').then(g => { meshCache['woman'] = g; }), 'woman'),
                 // 공통 애니메이션 (root motion 제거 → 제자리 재생). 실패해도 정적 캐릭터로 표시.
-                safe(loadGLB('assets/models/idle.glb').then(g => {
+                safe(loadGLB('assets/models/idle.glb?v=3').then(g => {
                     if (g.animations.length) animCache['idle'] = stripHorizontalRootMotion(g.animations[0]);
                     disposeGLTFScene(g);   // 메시·텍스처 해제 (애니 클립만 사용)
                 }), 'idle'),
-                safe(loadGLB('assets/models/walk.glb').then(g => {
+                safe(loadGLB('assets/models/walk.glb?v=3').then(g => {
                     if (g.animations.length) animCache['walk'] = stripHorizontalRootMotion(g.animations[0]);
                     disposeGLTFScene(g);
                 }), 'walk'),
-                safe(loadGLB('assets/models/run.glb').then(g => {
+                safe(loadGLB('assets/models/run.glb?v=3').then(g => {
                     if (g.animations.length) animCache['run'] = stripHorizontalRootMotion(g.animations[0]);
                     disposeGLTFScene(g);
                 }), 'run'),
