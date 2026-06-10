@@ -132,6 +132,8 @@
                 // 메시 (T-Pose 베이스) — soyun/hayun GLB는 동일 모델이므로 1개만 로드해
                 // iPad 메모리(2048² 텍스처)를 절약한다. 모든 캐릭터가 이 메시로 폴백된다.
                 safe(loadGLB('assets/models/soyun.glb').then(g => { meshCache['soyun'] = g; }), 'soyun'),
+                // 남자 NPC용 모델 (동일 스켈레톤 → idle/walk 클립 공유). 실패해도 NPC는 기본 캐릭터로 폴백.
+                safe(loadGLB('assets/models/npc-man.glb').then(g => { meshCache['npc-man'] = g; }), 'npc-man'),
                 // 공통 애니메이션 (root motion 제거 → 제자리 재생). 실패해도 정적 캐릭터로 표시.
                 safe(loadGLB('assets/models/idle.glb').then(g => {
                     if (g.animations.length) animCache['idle'] = stripHorizontalRootMotion(g.animations[0]);
@@ -157,7 +159,8 @@
             try { return new ChibiInstance(cfg || {}); }
             catch (err) { console.error('[ChibiCharacter] create 실패', err); return null; }
         },
-        getHairstyleCount() { return hairCache.length; }
+        getHairstyleCount() { return hairCache.length; },
+        hasMesh(name) { return !!meshCache[name]; }
     };
 
     // ── 인스턴스 ──

@@ -10,11 +10,51 @@ const NPCSystem = window.NPCSystem = {
     // criminal flee speeds: 1호=0.06, 2호=0.09, 3호=0.13
     fleeSpeeds: [0.04, 0.065, 0.09],
 
+    // 여자로 판별할 NPC 이름 (그 외는 남자 → npc-man.glb 적용).
+    // 잘못 분류된 게 있으면 이 목록만 고치면 된다.
+    _femaleNPCNames: new Set([
+        '카페 점원 민지', '학생 이지수', '아주머니 박씨', '주민회 회장 정혜영',
+        '동네 슈퍼 이모', '학생 윤서연', '바리스타 다은', '꽃집 사장 미영', '경리 이수민'
+    ]),
+    _isMaleNPC(arch) { return !this._femaleNPCNames.has(arch.name); },
+
     init(scene) {
         this.scene = scene;
         this.createDialogUI();
         this.distributeHints();
         this.spawnNPCs();
+        this._applyManModels();
+    },
+
+    // 남자 NPC를 npc-man.glb 모델로 업그레이드 (ChibiCharacter 로드 완료 후)
+    _applyManModels() {
+        if (typeof ChibiCharacter === 'undefined' || !ChibiCharacter.preload) return;
+        ChibiCharacter.preload().then(() => {
+            this.npcs.forEach(npc => this._upgradeNpcToMan(npc));
+        }).catch(() => {});
+    },
+
+    // GLB NPC 애니메이션 구동 (이동→walk/run, 정지→idle)
+    _driveGlbAnim(npc, delta, state) {
+        const glb = npc._glb;
+        if (!glb) return;
+        if (state !== npc._glbState) { try { glb.setState(state); } catch (e) {} npc._glbState = state; }
+        if (npc.mesh.visible) { try { glb.update(delta); } catch (e) {} }
+    },
+
+    _upgradeNpcToMan(npc) {
+        if (!npc || npc._glb) return;
+        if (!this._isMaleNPC(npc)) return;
+        if (typeof ChibiCharacter === 'undefined' || !ChibiCharacter.loaded) return;
+        if (!ChibiCharacter.hasMesh || !ChibiCharacter.hasMesh('npc-man')) return;  // 폴백(소윤) 방지
+        let inst;
+        try { inst = ChibiCharacter.create({ name: 'npc-man' }); } catch (e) { return; }
+        if (!inst) return;
+        // 절차적 몸체 숨김 (GLB로 대체)
+        npc.mesh.children.slice().forEach(c => { if (c !== inst) c.visible = false; });
+        npc.mesh.add(inst);
+        npc._glb = inst;
+        npc._glbState = null;
     },
 
     distributeHints() {
@@ -158,6 +198,7 @@ const NPCSystem = window.NPCSystem = {
             npc.wanderTarget = { x: safe.x, z: safe.z };
             this.npcs.push(npc);
             this._nightExtras.push(npc);
+            this._upgradeNpcToMan(npc);   // 밤 수배범도 남자면 npc-man 적용
         });
     },
 
@@ -507,12 +548,15 @@ const NPCSystem = window.NPCSystem = {
                     if (npc.leftShoulder) npc.leftShoulder.rotation.x = -swing * 0.5;
                     if (npc.rightShoulder) npc.rightShoulder.rotation.x = swing * 0.5;
                 }
+                if (npc._glb) this._driveGlbAnim(npc, delta, td > 0.4 ? 'walk' : 'idle');
                 if (d < minDist) { minDist = d; nearest = npc; }
                 return;
             }
 
             // Suspect: detect & flee from player
+            let glbState = 'idle';
             if (d < this.detectDistance) {
+                glbState = 'run';
                 // Flee — speed based on assigned criminal difficulty
                 const crimId = npc.assignment ? npc.assignment.criminal : 0;
                 const speed = this.fleeSpeeds[crimId] || 0.05;
@@ -542,6 +586,7 @@ const NPCSystem = window.NPCSystem = {
                 const tdx = npc.wanderTarget.x - npc.mesh.position.x;
                 const tdz = npc.wanderTarget.z - npc.mesh.position.z;
                 const td = Math.sqrt(tdx * tdx + tdz * tdz);
+                glbState = td > 0.3 ? 'walk' : 'idle';
                 if (td > 0.3) {
                     const speed = 0.4;
                     this._tryMove(npc, (tdx / td) * speed * delta, (tdz / td) * speed * delta);
@@ -556,6 +601,8 @@ const NPCSystem = window.NPCSystem = {
                     if (npc.rightHip) npc.rightHip.rotation.x *= 0.85;
                 }
             }
+
+            if (npc._glb) this._driveGlbAnim(npc, delta, glbState);
 
             // Head indicators removed by design
 
