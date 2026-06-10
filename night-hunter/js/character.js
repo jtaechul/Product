@@ -135,6 +135,8 @@
                 // 남자 NPC 모델 (동일 스켈레톤 → idle/walk/run 클립 공유).
                 // 텍스처를 1024²로 줄여(약 4MB) iPad 메모리 초과를 방지함. 실패해도 NPC는 기존 캐릭터로 폴백.
                 safe(loadGLB('assets/models/npc-youngman.glb').then(g => { meshCache['npc-man'] = g; }), 'npc-man'),
+                // 납치범(suspect) NPC 모델 (동일 스켈레톤, 텍스처 1024²).
+                safe(loadGLB('assets/models/npc-kidnapper.glb').then(g => { meshCache['kidnapper'] = g; }), 'kidnapper'),
                 // 공통 애니메이션 (root motion 제거 → 제자리 재생). 실패해도 정적 캐릭터로 표시.
                 safe(loadGLB('assets/models/idle.glb').then(g => {
                     if (g.animations.length) animCache['idle'] = stripHorizontalRootMotion(g.animations[0]);
