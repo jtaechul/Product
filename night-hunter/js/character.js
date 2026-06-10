@@ -36,6 +36,9 @@
     // 스케일 피벗이 정수리에 고정되고 모든 헤어가 동일 기준으로 정렬된다.
     const HAIR_REF_Y     = 160;                 // 헤어팩 공통 정수리 높이(cm) — 스케일 피벗 기준
     const DEG = Math.PI / 180;
+    // 발 높이 보정(미터) — 게임 지면이 y=0보다 약간 위라 캐릭터를 살짝 올려 발 파묻힘 방지.
+    // 너무 뜨거나 여전히 파묻히면 이 값만 조정하면 된다.
+    const FOOT_LIFT = 0.08;
     // 사용자가 미리보기로 직접 조정해 확정한 값 (2025-06-03)
     const HAIR_DEFAULT = {
         x:    0,
@@ -67,17 +70,22 @@
 
     // 애니메이션만 필요한 GLB(idle/walk/run)는 클립 추출 후 메시·텍스처를 즉시 해제해
     // 모바일(iPad) WebGL 메모리 폭주(2048² 텍스처 다수 → OOM 크래시)를 방지한다.
+    const _TEX_KEYS = ['map','normalMap','roughnessMap','metalnessMap','emissiveMap',
+                       'aoMap','alphaMap','bumpMap','displacementMap','lightMap','envMap'];
     function disposeGLTFScene(gltf) {
-        if (!gltf || !gltf.scene) return;
-        gltf.scene.traverse(o => {
-            if (o.geometry) o.geometry.dispose();
-            const mats = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []);
-            mats.forEach(m => {
-                if (!m) return;
-                for (const k in m) { const v = m[k]; if (v && v.isTexture) v.dispose(); }
-                if (m.dispose) m.dispose();
+        // 절대 throw 하지 않는다 — 실패해도 클립은 이미 추출됐고 캐릭터 로드를 막으면 안 됨
+        try {
+            if (!gltf || !gltf.scene) return;
+            gltf.scene.traverse(o => {
+                if (o.geometry && o.geometry.dispose) o.geometry.dispose();
+                const mats = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []);
+                mats.forEach(m => {
+                    if (!m) return;
+                    _TEX_KEYS.forEach(k => { const t = m[k]; if (t && t.isTexture && t.dispose) t.dispose(); });
+                    if (m.dispose) m.dispose();
+                });
             });
-        });
+        } catch (e) { console.warn('[ChibiCharacter] dispose 건너뜀', e); }
     }
 
     // ── Root Motion 제거 ──
@@ -115,33 +123,33 @@
         loaded: false,
         preload() {
             if (this._promise) return this._promise;
+            // 항목별로 실패를 격리한다 — 애니메이션/디스포즈가 일부 실패해도
+            // soyun 메시만 로드되면 캐릭터는 무조건 표시한다 (전체 폴백 방지).
+            const safe = (p, label) => p.catch(e => {
+                console.warn('[ChibiCharacter] 로드 실패(무시):', label, e); return null;
+            });
             this._promise = Promise.all([
                 // 메시 (T-Pose 베이스) — soyun/hayun GLB는 동일 모델이므로 1개만 로드해
                 // iPad 메모리(2048² 텍스처)를 절약한다. 모든 캐릭터가 이 메시로 폴백된다.
-                loadGLB('assets/models/soyun.glb').then(g => { meshCache['soyun'] = g; }),
-                // 공통 애니메이션 (root motion 제거 → 제자리 재생)
-                loadGLB('assets/models/idle.glb').then(g => {
+                safe(loadGLB('assets/models/soyun.glb').then(g => { meshCache['soyun'] = g; }), 'soyun'),
+                // 공통 애니메이션 (root motion 제거 → 제자리 재생). 실패해도 정적 캐릭터로 표시.
+                safe(loadGLB('assets/models/idle.glb').then(g => {
                     if (g.animations.length) animCache['idle'] = stripHorizontalRootMotion(g.animations[0]);
                     disposeGLTFScene(g);   // 메시·텍스처 해제 (애니 클립만 사용)
-                }),
-                loadGLB('assets/models/walk.glb').then(g => {
+                }), 'idle'),
+                safe(loadGLB('assets/models/walk.glb').then(g => {
                     if (g.animations.length) animCache['walk'] = stripHorizontalRootMotion(g.animations[0]);
                     disposeGLTFScene(g);
-                }),
-                loadGLB('assets/models/run.glb').then(g => {
+                }), 'walk'),
+                safe(loadGLB('assets/models/run.glb').then(g => {
                     if (g.animations.length) animCache['run'] = stripHorizontalRootMotion(g.animations[0]);
                     disposeGLTFScene(g);
-                }),
-                // (hairstyles.glb 제거됨 — 새 캐릭터 모델에 머리가 포함됨)
+                }), 'run'),
             ]).then(() => {
-                this.loaded = true;
+                this.loaded = !!meshCache['soyun'];   // 메시만 있으면 성공
                 console.log('[ChibiCharacter] 로드 완료 — 메시:', Object.keys(meshCache),
-                            '애니:', Object.keys(animCache),
-                            '머리:', hairCache.length);
-                return true;
-            }).catch(err => {
-                console.error('[ChibiCharacter] preload 실패', err);
-                return false;
+                            '애니:', Object.keys(animCache), '| loaded:', this.loaded);
+                return this.loaded;
             });
             return this._promise;
         },
@@ -174,27 +182,32 @@
             this._model.position.y = 0;
             this.add(this._model);
 
-            // 재질 보정 + 그림자
-            // 새 GLB는 metalness=1(완전 금속)이라 환경맵이 없으면 검게 렌더된다.
-            // metalness를 낮추고 emissive 아티팩트를 제거해 텍스처가 정상적으로 보이게 한다.
+            // 그림자
             this._model.traverse(o => {
-                if (!o.isMesh) return;
-                o.castShadow = true; o.receiveShadow = false;
-                const mats = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []);
-                mats.forEach(m => {
-                    if (!m) return;
-                    if ('metalness' in m) m.metalness = 0.0;
-                    if ('roughness' in m) m.roughness = 0.85;
-                    if (m.emissive) m.emissive.setRGB(0, 0, 0);   // export 아티팩트(emissive=1,1,1) 제거
-                    m.needsUpdate = true;
-                });
+                if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; }
             });
 
-            // 발바닥을 정확히 지면(인스턴스 y=0 = playerGroup 원점)에 정렬 — 발 파묻힘/뜸 방지
-            this._model.position.y = 0;
-            this._model.updateMatrixWorld(true);
-            const _box = new THREE.Box3().setFromObject(this._model);
-            if (isFinite(_box.min.y)) this._model.position.y = -_box.min.y;
+            // 재질 보정 (실패해도 캐릭터 로드는 계속) — 새 GLB는 metalness=1(완전 금속)이라
+            // 환경맵 없이 검게 렌더된다. metalness를 낮추고 emissive 아티팩트를 제거한다.
+            try {
+                this._model.traverse(o => {
+                    if (!o.isMesh) return;
+                    const mats = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []);
+                    mats.forEach(m => {
+                        if (!m) return;
+                        if (typeof m.metalness === 'number') m.metalness = 0.0;
+                        if (typeof m.roughness === 'number') m.roughness = 0.85;
+                        if (m.emissive && m.emissive.setRGB) m.emissive.setRGB(0, 0, 0);
+                        m.needsUpdate = true;
+                    });
+                });
+            } catch (e) { console.warn('[ChibiCharacter] 재질 보정 건너뜀', e); }
+
+            // 발 높이 보정: 모델은 발바닥이 y=0에 제작돼 있으나, 게임 도로/지면 표면이
+            // y=0보다 약간 위라 그대로 두면 발이 살짝 파묻혀 보인다. 소폭 올려 보정한다.
+            // (값은 cfg.footLift 로 덮어쓰기 가능 — 미세조정용)
+            const footLift = (cfg.footLift !== undefined) ? cfg.footLift : FOOT_LIFT;
+            this._model.position.y = footLift;
 
             // Head 본 찾기 (머리스타일 부착 지점)
             this._headBone = null;
