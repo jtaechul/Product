@@ -42,11 +42,14 @@ const NPCSystem = window.NPCSystem = {
     },
 
     // GLB NPC 애니메이션 구동 (이동→walk/run, 정지→idle)
-    _driveGlbAnim(npc, delta, state) {
+    // dist: 플레이어와의 거리 — 멀면 본 계산(mixer) 스킵해 모바일 CPU 절약
+    _driveGlbAnim(npc, delta, state, dist) {
         const glb = npc._glb;
         if (!glb) return;
         if (state !== npc._glbState) { try { glb.setState(state); } catch (e) {} npc._glbState = state; }
-        if (npc.mesh.visible) { try { glb.update(delta); } catch (e) {} }
+        if (!npc.mesh.visible) return;
+        if (dist !== undefined && dist > 45) return;   // 원거리: 포즈 갱신 생략 (시각 차이 없음)
+        try { glb.update(delta); } catch (e) {}
     },
 
     _upgradeNpcToMan(npc) {
@@ -58,6 +61,8 @@ const NPCSystem = window.NPCSystem = {
         let inst;
         try { inst = ChibiCharacter.create({ name: meshName }); } catch (e) { return; }
         if (!inst) return;
+        // NPC는 그림자 생략 — 스킨드 메시 20여 개의 그림자 패스(본 계산 2회) 비용 제거
+        inst.traverse(o => { if (o.isMesh) o.castShadow = false; });
         // 절차적 몸체 숨김 (GLB로 대체)
         npc.mesh.children.slice().forEach(c => { if (c !== inst) c.visible = false; });
         npc.mesh.add(inst);
@@ -556,7 +561,7 @@ const NPCSystem = window.NPCSystem = {
                     if (npc.leftShoulder) npc.leftShoulder.rotation.x = -swing * 0.5;
                     if (npc.rightShoulder) npc.rightShoulder.rotation.x = swing * 0.5;
                 }
-                if (npc._glb) this._driveGlbAnim(npc, delta, td > 0.4 ? 'walk' : 'idle');
+                if (npc._glb) this._driveGlbAnim(npc, delta, td > 0.4 ? 'walk' : 'idle', d);
                 if (d < minDist) { minDist = d; nearest = npc; }
                 return;
             }
@@ -610,7 +615,7 @@ const NPCSystem = window.NPCSystem = {
                 }
             }
 
-            if (npc._glb) this._driveGlbAnim(npc, delta, glbState);
+            if (npc._glb) this._driveGlbAnim(npc, delta, glbState, d);
 
             // Head indicators removed by design
 
