@@ -26,12 +26,19 @@ const NPCSystem = window.NPCSystem = {
         this._applyManModels();
     },
 
-    // 남자 NPC를 npc-man.glb 모델로 업그레이드 (ChibiCharacter 로드 완료 후)
+    // NPC를 GLB 모델로 업그레이드 (ChibiCharacter 로드 완료 후)
     _applyManModels() {
         if (typeof ChibiCharacter === 'undefined' || !ChibiCharacter.preload) return;
         ChibiCharacter.preload().then(() => {
             this.npcs.forEach(npc => this._upgradeNpcToMan(npc));
         }).catch(() => {});
+    },
+
+    // NPC 역할/성별에 따른 GLB 메시 선택: 납치범(suspect)→kidnapper, 남자 시민→npc-man, 여자 시민→없음(기존 유지)
+    _npcMeshName(npc) {
+        if (npc.role === 'suspect') return 'kidnapper';
+        if (this._isMaleNPC(npc)) return 'npc-man';
+        return null;
     },
 
     // GLB NPC 애니메이션 구동 (이동→walk/run, 정지→idle)
@@ -44,11 +51,12 @@ const NPCSystem = window.NPCSystem = {
 
     _upgradeNpcToMan(npc) {
         if (!npc || npc._glb) return;
-        if (!this._isMaleNPC(npc)) return;
+        const meshName = this._npcMeshName(npc);
+        if (!meshName) return;  // 여자 시민 등: 기존 캐릭터 유지
         if (typeof ChibiCharacter === 'undefined' || !ChibiCharacter.loaded) return;
-        if (!ChibiCharacter.hasMesh || !ChibiCharacter.hasMesh('npc-man')) return;  // 폴백(소윤) 방지
+        if (!ChibiCharacter.hasMesh || !ChibiCharacter.hasMesh(meshName)) return;  // 폴백(소윤) 방지
         let inst;
-        try { inst = ChibiCharacter.create({ name: 'npc-man' }); } catch (e) { return; }
+        try { inst = ChibiCharacter.create({ name: meshName }); } catch (e) { return; }
         if (!inst) return;
         // 절차적 몸체 숨김 (GLB로 대체)
         npc.mesh.children.slice().forEach(c => { if (c !== inst) c.visible = false; });
