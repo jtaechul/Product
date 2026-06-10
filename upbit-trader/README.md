@@ -34,7 +34,15 @@ python -m scripts.track_coin --market KRW-XYZ
 # 3) 통합 봇: 스캐너(백그라운드) + 다종목 추적을 하나로 (모의 기본)
 python -m scripts.auto_trade --max-positions 3 --invest 6000
 python -m scripts.auto_trade --invest 6000 --live   # 소액 실거래
+
+# 4) 백테스트: 합성 멀티코인(진짜/가짜 펌프 혼합)에 전략 재생 → 성적
+python -m scripts.backtest_pumps --coins 36 --days 4
+python -m scripts.backtest_pumps --trail 2.5 --stop 4 --arm 1.5  # 파라미터 실험
 ```
+
+**조기손절(early-cut)**: 진입 후 5분 내 상승 모멘텀이 살아나지 못하면 작은
+손실로 빠르게 탈출 — 가짜 펌프(불 트랩)에 물렸을 때 손절폭까지 버티지 않습니다.
+(백테스트상 손익비 1.31→1.64 개선)
 
 **수익↑/손실↓ 장치**: 손절 하한 + 트레일링 스탑 + 본전 스탑(수익권 반납 차단)
 + 단계별 트레일링(수익 클수록 좁게) + 일일 손실 한도 + 재진입 쿨다운.

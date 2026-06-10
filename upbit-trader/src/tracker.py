@@ -46,6 +46,12 @@ class ExitConfig:
     # 큰 수익을 더 단단히 보존합니다. (고점수익 기준, 트레일링 %)
     trail_tiers: tuple[tuple[float, float], ...] = ((0.06, 0.025), (0.10, 0.02))
 
+    # 조기 손절(early-cut): 진입 후 early_cut_min 분 안에 상승 모멘텀이
+    # 살아나지 못하면(수익률 < early_cut_gain) 작은 손실로 빠르게 탈출.
+    # 가짜 펌프(불 트랩)에 물렸을 때 -손절폭까지 버티지 않고 일찍 빠져나옴.
+    early_cut_min: int | None = 5
+    early_cut_gain: float = -0.015
+
 
 def effective_trail_pct(cfg: ExitConfig, peak_gain: float) -> float:
     """고점 수익률에 따라 적용할 트레일링 폭(수익 클수록 좁게)."""
@@ -145,7 +151,13 @@ def decide_exit(
             if price <= be_line:
                 return True, "본전 스탑(수익권 반납 차단)"
 
-    # 4) 보유시간 초과 (설정된 경우)
+    # 4) 조기 손절 — 진입 후 일정 시간 안에 상승 못하면 작은 손실로 탈출
+    if cfg.early_cut_min is not None and now is not None and not pos.armed:
+        held_min = (now - pos.entry_time).total_seconds() / 60.0
+        if held_min >= cfg.early_cut_min and pos.gain_pct(price) <= cfg.early_cut_gain:
+            return True, f"조기손절({cfg.early_cut_min}분내 모멘텀 실패)"
+
+    # 5) 보유시간 초과 (설정된 경우)
     if cfg.max_hold_min is not None and now is not None:
         held_min = (now - pos.entry_time).total_seconds() / 60.0
         if held_min >= cfg.max_hold_min:
