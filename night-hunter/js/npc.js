@@ -36,9 +36,9 @@ const NPCSystem = window.NPCSystem = {
 
     // NPC 역할/성별에 따른 GLB 메시 선택: 납치범(suspect)→kidnapper, 남자 시민→npc-man, 여자 시민→없음(기존 유지)
     _npcMeshName(npc) {
-        if (npc.role === 'suspect') return 'kidnapper';
-        if (this._isMaleNPC(npc)) return 'npc-man';
-        return null;
+        if (npc.role === 'suspect') return 'kidnapper';   // 납치범
+        if (this._isMaleNPC(npc)) return 'npc-man';       // 남자 시민
+        return 'woman';                                    // 여자 시민
     },
 
     // GLB NPC 애니메이션 구동 (이동→walk/run, 정지→idle)
