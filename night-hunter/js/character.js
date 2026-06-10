@@ -203,7 +203,15 @@
                         if (!m) return;
                         if (typeof m.metalness === 'number') m.metalness = 0.0;
                         if (typeof m.roughness === 'number') m.roughness = 0.85;
-                        if (m.emissive && m.emissive.setRGB) m.emissive.setRGB(0, 0, 0);
+                        // 밤에도 캐릭터가 보이도록 자기 텍스처로 자체발광(emissiveMap).
+                        // 어두운 월드는 유지하고 캐릭터만 살린다.
+                        if (m.map) {
+                            m.emissiveMap = m.map;
+                            if (m.emissive && m.emissive.setRGB) m.emissive.setRGB(1, 1, 1);
+                            if ('emissiveIntensity' in m) m.emissiveIntensity = 0.6;
+                        } else if (m.emissive && m.emissive.setRGB) {
+                            m.emissive.setRGB(0, 0, 0);
+                        }
                         m.needsUpdate = true;
                     });
                 });
