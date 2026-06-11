@@ -64,6 +64,14 @@ def main() -> None:
                    help="잠수함 게이트: 직전 구간 dormancy 하한 (0~1)")
     p.add_argument("--max-chase", type=float, default=4.0,
                    help="추격 차단: 15분 상승률 상한 %% (0이면 비활성화)")
+    p.add_argument("--daily-loss", type=float, default=0.0,
+                   help="일일 손실 한도(원, 1거래 1만원 기준. 0=무제한)")
+    p.add_argument("--loss-mult", type=float, default=1.0,
+                   help="연속 손실 쿨다운 점증 배수 (1=점증 없음)")
+    p.add_argument("--brake", type=float, default=4.0,
+                   help="코인별 주간 브레이크: 최근 N일 누적 -X%% 손실 시 차단 (0=끔)")
+    p.add_argument("--brake-window", type=int, default=7, help="브레이크 집계 기간(일)")
+    p.add_argument("--brake-block", type=int, default=3, help="브레이크 차단 기간(일)")
     p.add_argument("--show-trades", action="store_true")
     p.add_argument("--dump-trades", default=None,
                    help="거래+진입특징을 CSV로 저장할 경로")
@@ -112,6 +120,11 @@ def main() -> None:
         min_score=args.min_score,
         min_dormancy=args.min_dormancy,
         max_momentum_15m=(args.max_chase / 100 if args.max_chase > 0 else None),
+        daily_loss_limit=(args.daily_loss if args.daily_loss > 0 else None),
+        loss_cooldown_mult=args.loss_mult,
+        brake_loss_pct=(args.brake / 100 if args.brake > 0 else None),
+        brake_window_days=args.brake_window,
+        brake_block_days=args.brake_block,
     )
     print("\n백테스트 실행 중...")
     t0 = time.time()

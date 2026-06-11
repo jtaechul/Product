@@ -113,6 +113,22 @@ class BTConfig:
     max_momentum_15m: float | None = 0.04  # 추격 차단: 15분 상승률 상한(+4%)
     warmup: int = SCAN_WINDOW_1M   # 초기 워밍업 1분봉 수
 
+    # --- 고변동 장세 방어 (ZEC 2025-09~10 같은 구간 대비) ---
+    # 일일 손실 한도: 하루 실현손익이 이 금액(원) 이하로 떨어지면
+    # 그날은 신규 진입 중단 (보유분 청산은 계속)
+    daily_loss_limit: float | None = None
+    # 연속 손실 쿨다운 점증: 같은 코인에서 연속으로 잃을 때마다
+    # 재진입 금지 시간을 배수로 늘림 (30분 → 90분 → 270분 → ...)
+    loss_cooldown_mult: float = 1.0   # 1.0 이면 점증 없음
+    max_cooldown_min: int = 480       # 쿨다운 상한(분)
+    # 코인별 주간 브레이크: 한 코인의 최근 window 일 누적 손익이
+    # -brake_loss_pct 이하면 block 일 동안 그 코인 진입 금지.
+    # 고변동 장세에서 '하루 -2%씩 천천히 새는' 출혈을 차단합니다.
+    # (실데이터: ZEC 2025-09~10 손실 -19.7% → -11.8%, 2024 수익 무영향)
+    brake_loss_pct: float | None = 0.04   # 누적 -4% (None=끔)
+    brake_window_days: int = 7
+    brake_block_days: int = 3
+
 
 @dataclass
 class Trade:
@@ -242,10 +258,19 @@ def run_pump_backtest(data: dict[str, pd.DataFrame], cfg: BTConfig) -> BTResult:
     positions: dict[str, Position] = {}
     entry_feats: dict[str, dict] = {}
     cooldowns: dict[str, datetime] = {}
+    loss_streak: dict[str, int] = {}   # 코인별 연속 손실 횟수
+    market_pnls: dict[str, list] = {}  # 코인별 최근 거래 손익 (주간 브레이크용)
     equity = 0.0  # 누적 실현 순손익(원 환산: invest_per_trade 기준)
+    day = None
+    realized_today = 0.0
+    halted = False  # 일일 손실 한도 도달 → 그날 신규 진입 중단
 
     for i in range(cfg.warmup, n):
         now = times[i]
+        if day != now.date():  # 날짜가 바뀌면 일일 손익/중단 초기화
+            day = now.date()
+            realized_today = 0.0
+            halted = False
 
         # --- 1) 보유 청산 (매 1분봉, intrabar) ---
         for market in list(positions.keys()):
@@ -260,13 +285,34 @@ def run_pump_backtest(data: dict[str, pd.DataFrame], cfg: BTConfig) -> BTResult:
                           price, gross, net, reason,
                           features=entry_feats.pop(market, {}))
                 )
-                equity += cfg.invest_per_trade * net
+                pnl = cfg.invest_per_trade * net
+                equity += pnl
+                realized_today += pnl
                 result.equity_curve.append(equity)
-                cooldowns[market] = now + timedelta(minutes=cfg.cooldown_min)
+                if (cfg.daily_loss_limit is not None
+                        and realized_today <= -abs(cfg.daily_loss_limit)):
+                    halted = True
+                # 연속 손실이면 쿨다운 점증 (실패 반복 코인 장시간 차단)
+                loss_streak[market] = loss_streak.get(market, 0) + 1 if net < 0 else 0
+                cd = cfg.cooldown_min * cfg.loss_cooldown_mult ** max(
+                    0, loss_streak[market] - 1)
+                cooldowns[market] = now + timedelta(
+                    minutes=min(cd, cfg.max_cooldown_min))
+                # 코인별 주간 브레이크: 최근 window 일 누적이 한도 이하면 장기 차단
+                if cfg.brake_loss_pct is not None:
+                    hist = market_pnls.setdefault(market, [])
+                    hist.append((now, net))
+                    cutoff = now - timedelta(days=cfg.brake_window_days)
+                    hist[:] = [(t, p) for t, p in hist if t >= cutoff]
+                    if sum(p for _, p in hist) <= -abs(cfg.brake_loss_pct):
+                        until = now + timedelta(days=cfg.brake_block_days)
+                        if cooldowns.get(market, now) < until:
+                            cooldowns[market] = until
+                        hist.clear()  # 차단 후 새로 집계
 
         # --- 2) 스캔 (5분봉 경계에서만) → 후보 ---
         candidates: list[tuple[str, dict]] = []
-        if i % 5 == 0:
+        if i % 5 == 0 and not halted:
             for market in markets:
                 if market in positions:
                     continue

@@ -13,11 +13,14 @@ venv/
 .pytest_cache/
 *.egg-info/
 
-# 데이터/로그
+# 데이터/로그 (대용량 시세는 커밋 금지 — git clone/다운로드로 재생성)
 data/*
 !data/.gitkeep
+!data/download_links.txt
+!data/*.zip
 *.csv
 *.log
+# Bitfinex 검증 데이터는 scripts/fetch_bitfinex.sh 로 재생성
 
 # 생성되는 대시보드 산출물
 dashboard*.html

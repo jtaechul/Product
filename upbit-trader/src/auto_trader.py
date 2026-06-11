@@ -65,9 +65,21 @@ class AutoTrader:
     invest_per_trade: float = 10_000  # 1종목 매수 금액(원)
     cooldown_min: int = 30            # 청산 후 재진입 금지 시간(분)
     daily_loss_limit: float | None = None  # 일일 누적 손실 한도(원, None=무제한)
+    # 연속 손실 쿨다운 점증: 같은 코인에서 연속으로 잃을수록 재진입 금지를
+    # 배수로 연장. 백테스트에서는 득실이 엇갈려 기본 끔(1.0).
+    loss_cooldown_mult: float = 1.0   # 1.0 이면 점증 없음
+    max_cooldown_min: int = 480       # 쿨다운 상한(분)
+    # 코인별 주간 브레이크: 최근 brake_window_days 일 누적 손익이
+    # -brake_loss_pct 이하인 코인은 brake_block_days 일 진입 금지.
+    # 고변동 장세의 느린 출혈 차단 (실데이터: ZEC -19.7% → -11.8%, 2024 무영향)
+    brake_loss_pct: float | None = 0.04
+    brake_window_days: int = 7
+    brake_block_days: int = 3
 
     positions: dict[str, Position] = field(default_factory=dict)
     cooldowns: dict[str, datetime] = field(default_factory=dict)
+    loss_streak: dict[str, int] = field(default_factory=dict)
+    market_pnls: dict[str, list] = field(default_factory=dict)
     trades: list[TradeRecord] = field(default_factory=list)
     realized_today: float = 0.0
     _day: date | None = None
@@ -115,7 +127,25 @@ class AutoTrader:
                 self.trades.append(rec)
                 done.append(rec)
                 del self.positions[market]
-                self.cooldowns[market] = now + timedelta(minutes=self.cooldown_min)
+                # 연속 손실이면 쿨다운 점증
+                self.loss_streak[market] = (
+                    self.loss_streak.get(market, 0) + 1 if pnl < 0 else 0
+                )
+                cd = self.cooldown_min * self.loss_cooldown_mult ** max(
+                    0, self.loss_streak[market] - 1)
+                self.cooldowns[market] = now + timedelta(
+                    minutes=min(cd, self.max_cooldown_min))
+                # 코인별 주간 브레이크: 최근 누적 손실 한도 초과 시 장기 차단
+                if self.brake_loss_pct is not None:
+                    hist = self.market_pnls.setdefault(market, [])
+                    hist.append((now, gain))
+                    cutoff = now - timedelta(days=self.brake_window_days)
+                    hist[:] = [(t, p) for t, p in hist if t >= cutoff]
+                    if sum(p for _, p in hist) <= -abs(self.brake_loss_pct):
+                        until = now + timedelta(days=self.brake_block_days)
+                        if self.cooldowns.get(market, now) < until:
+                            self.cooldowns[market] = until
+                        hist.clear()
                 # 일일 손실 한도 점검
                 if (
                     self.daily_loss_limit is not None
