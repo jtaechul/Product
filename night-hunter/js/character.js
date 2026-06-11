@@ -137,6 +137,8 @@
                 safe(loadGLB('assets/models/npc-youngman.glb?v=3').then(g => { meshCache['npc-man'] = g; }), 'npc-man'),
                 // 납치범(suspect) NPC 모델 (동일 스켈레톤, 텍스처 1024²).
                 safe(loadGLB('assets/models/npc-kidnapper.glb?v=3').then(g => { meshCache['kidnapper'] = g; }), 'kidnapper'),
+                // 일반 수배범(밤 수배범) 모델 (동일 스켈레톤, 텍스처 1024²).
+                safe(loadGLB('assets/models/npc-suspect.glb?v=3').then(g => { meshCache['suspect'] = g; }), 'suspect'),
                 // 여자 시민 NPC 모델 (동일 스켈레톤, 텍스처 1024²).
                 safe(loadGLB('assets/models/npc-youngwoman.glb?v=3').then(g => { meshCache['woman'] = g; }), 'woman'),
                 // 공통 애니메이션 (root motion 제거 → 제자리 재생). 실패해도 정적 캐릭터로 표시.
@@ -165,7 +167,24 @@
             catch (err) { console.error('[ChibiCharacter] create 실패', err); return null; }
         },
         getHairstyleCount() { return hairCache.length; },
-        hasMesh(name) { return !!meshCache[name]; }
+        hasMesh(name) { return !!meshCache[name]; },
+
+        // 절차적 host 그룹을 GLB 인스턴스로 교체한다.
+        // preferred 메시가 없으면 로드된 아무 캐릭터로라도 폴백 → 절대 절차적으로 남지 않게 함.
+        // 반환: 생성된 ChibiInstance (실패 시 null). host의 절차적 자식은 숨김(스프라이트 제외).
+        upgradeHost(host, preferred) {
+            if (!host || !this.loaded) return null;
+            let name = (preferred && meshCache[preferred]) ? preferred : null;
+            if (!name) name = ['npc-man', 'woman', 'suspect', 'kidnapper', 'soyun'].find(k => meshCache[k]);
+            if (!name) return null;
+            let inst;
+            try { inst = new ChibiInstance({ name }); } catch (e) { return null; }
+            if (!inst || !inst._model) return null;
+            inst.traverse(o => { if (o.isMesh) o.castShadow = false; });
+            host.children.slice().forEach(c => { if (c !== inst && !c.isSprite) c.visible = false; });
+            host.add(inst);
+            return inst;
+        }
     };
 
     // ── 인스턴스 ──
