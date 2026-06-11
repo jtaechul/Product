@@ -60,13 +60,19 @@ def fetch(asset: str) -> pd.DataFrame | None:
 def backtest_asset(
     df: pd.DataFrame, *, base=30, recent=3, vol_surge=3.0, mom_min=0.02,
     max_chase=0.15, trail=0.12, stop=0.10, arm=0.06, tp=None, max_hold=30,
-    fee=0.002,
+    fee=0.002, self_ma=0, btc_ok=None,
 ) -> list[dict]:
-    """일봉 펌프 전략. 1분봉 tracker 와 같은 구조(트레일링+손절+추격차단)를 일봉으로."""
+    """일봉 펌프 전략. 1분봉 tracker 와 같은 구조(트레일링+손절+추격차단)를 일봉으로.
+
+    self_ma: >0 이면 해당 코인 종가가 self_ma 일 이동평균 위일 때만 진입(추세 필터).
+    btc_ok: {date: bool} 시장 추세 게이트. 그 날 BTC가 강세(200일선 위)인지.
+    """
     p = df["price"].to_numpy(float)
     v = df["volume"].to_numpy(float)
     d = df["date"].to_numpy()
     n = len(p)
+    ma = (pd.Series(p).rolling(self_ma).mean().to_numpy()
+          if self_ma > 0 else None)
     trades = []
     i = base + recent
     while i < n - 1:
@@ -79,6 +85,11 @@ def backtest_asset(
 
         signal = (surge >= vol_surge and mom >= mom_min
                   and breakout >= 0.0 and mom <= max_chase)
+        # 추세 필터: 코인 자체 MA 위 + BTC 강세
+        if signal and ma is not None and not (p[i] > ma[i]):
+            signal = False
+        if signal and btc_ok is not None and not btc_ok.get(d[i], True):
+            signal = False
         if not signal:
             i += 1
             continue
@@ -146,6 +157,10 @@ def main() -> None:
     ap.add_argument("--stop", type=float, default=0.10)
     ap.add_argument("--no-chase-filter", action="store_true",
                     help="추격 차단 끄고 비교(필터 효과 확인)")
+    ap.add_argument("--self-ma", type=int, default=0,
+                    help="코인 자체 N일선 위에서만 진입(추세 필터, 0=끔)")
+    ap.add_argument("--btc-ma", type=int, default=0,
+                    help="BTC가 N일선 위(시장 강세)일 때만 진입(0=끔)")
     args = ap.parse_args()
 
     print(f"Coin Metrics 일봉 다운로드/캐시... (후보 {len(ASSETS)}종)")
@@ -158,17 +173,34 @@ def main() -> None:
     print(f"로드: {len(data)}개 코인, {coin_years:.0f} 코인-년")
 
     chase = 99.0 if args.no_chase_filter else args.max_chase
+
+    # BTC 시장 추세 게이트 준비
+    btc_ok = None
+    if args.btc_ma > 0 and "btc" in data:
+        b = data["btc"]
+        bma = b["price"].rolling(args.btc_ma).mean()
+        btc_ok = {d: bool(pr > m) for d, pr, m in
+                  zip(b["date"].to_numpy(), b["price"], bma)}
+
     all_trades = []
     by_asset = {}
     for a, df in data.items():
         tr = backtest_asset(df, vol_surge=args.vol_surge, max_chase=chase,
-                            trail=args.trail, stop=args.stop)
+                            trail=args.trail, stop=args.stop,
+                            self_ma=args.self_ma, btc_ok=btc_ok)
         for t in tr:
             t["asset"] = a
         by_asset[a] = tr
         all_trades.extend(tr)
 
-    summarize(all_trades, f"전체 통합 (추격차단 {'OFF' if args.no_chase_filter else f'{chase*100:.0f}%'})")
+    filt = []
+    if args.no_chase_filter:
+        filt.append("추격OFF")
+    if args.self_ma:
+        filt.append(f"자체{args.self_ma}MA")
+    if args.btc_ma:
+        filt.append(f"BTC{args.btc_ma}MA")
+    summarize(all_trades, f"전체 통합 ({' '.join(filt) or '기본'})")
 
     # 연도별 워크포워드 (과최적화면 특정 해만 좋고 나머지 무너짐)
     print("\n  --- 연도별 워크포워드 ---")
