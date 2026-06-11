@@ -14,7 +14,8 @@ venv/
 *.egg-info/
 
 # 데이터/로그
-data/
+data/*
+!data/.gitkeep
 *.csv
 *.log
 
