@@ -1,0 +1,27 @@
+# 절대 커밋하면 안 되는 비밀 정보
+.env
+*.env
+!.env.example
+*.key
+secrets.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# 데이터/로그
+data/
+*.csv
+*.log
+
+# 생성되는 대시보드 산출물
+dashboard*.html
+
+# OS / 에디터
+.DS_Store
+.idea/
+.vscode/
