@@ -88,14 +88,15 @@ class UpbitQuotation:
         interval: str = "day",
         unit: int = 1,
         pause: float = 0.12,
+        to: str | None = None,
     ) -> list[dict[str, Any]]:
         """과거 캔들을 total 개수만큼 반복 호출로 모아서 반환.
 
         업비트는 1회 최대 200개라, 가장 오래된 캔들 시각을 `to` 로 넘기며 뒤로 이동합니다.
         pause: 호출 사이 대기(초). 호출 횟수 제한(rate limit) 배려용.
+        to: 이 시각(UTC, 예 '2024-12-15T00:00:00Z') 이전 캔들부터 수집 (기본: 최신부터).
         """
         collected: list[dict[str, Any]] = []
-        to: str | None = None
         while len(collected) < total:
             count = min(200, total - len(collected))
             if interval == "day":

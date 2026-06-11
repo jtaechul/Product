@@ -36,6 +36,9 @@ def main() -> None:
     parser.add_argument("--unit", type=int, default=60,
                         help="분봉 단위(분). interval=minute 일 때 사용")
     parser.add_argument("--count", type=int, default=1000, help="받을 캔들 개수")
+    parser.add_argument("--to", default=None, dest="to_time",
+                        help="이 시각(UTC) 이전 캔들부터 과거로 수집. "
+                             "예: 2024-12-15T00:00:00Z (기본: 최신부터)")
     parser.add_argument("--out", default="data.csv", help="저장 파일명")
     args = parser.parse_args()
 
@@ -45,7 +48,8 @@ def main() -> None:
 
     try:
         candles = client.collect_candles(
-            args.market, total=args.count, interval=args.interval, unit=args.unit
+            args.market, total=args.count, interval=args.interval,
+            unit=args.unit, to=args.to_time,
         )
     except requests.exceptions.RequestException as exc:
         print(f"[오류] 다운로드 실패: {exc}")
