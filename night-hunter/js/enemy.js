@@ -70,6 +70,31 @@ const EnemySystem = window.EnemySystem = {
             const enemy = this.createEnemy(data);
             this.enemies.push(enemy);
         });
+
+        this._applyKidnapperModels();
+    },
+
+    // 납치범 3명(길동/철수/영수)을 kidnapper.glb 모델로 업그레이드 (ChibiCharacter 로드 후)
+    _applyKidnapperModels() {
+        if (typeof ChibiCharacter === 'undefined' || !ChibiCharacter.preload) return;
+        ChibiCharacter.preload().then(() => {
+            this.enemies.forEach(e => this._upgradeEnemyToKidnapper(e));
+        }).catch(() => {});
+    },
+
+    _upgradeEnemyToKidnapper(enemy) {
+        if (!enemy || enemy._glb) return;
+        if (typeof ChibiCharacter === 'undefined' || !ChibiCharacter.upgradeHost) return;
+        const inst = ChibiCharacter.upgradeHost(enemy.mesh, 'kidnapper');
+        if (inst) { enemy._glb = inst; enemy._glbState = null; }
+    },
+
+    // GLB 적 애니메이션 구동 (flee→run, patrol→walk, 그외→idle)
+    _driveGlbAnim(enemy, delta, state) {
+        const glb = enemy._glb;
+        if (!glb) return;
+        if (state !== enemy._glbState) { try { glb.setState(state); } catch (e) {} enemy._glbState = state; }
+        if (enemy.mesh.visible) { try { glb.update(delta); } catch (e) {} }
     },
 
     _findSafePosition(x, z) {
@@ -309,6 +334,9 @@ const EnemySystem = window.EnemySystem = {
     },
 
     update(playerPos, delta, time) {
+        // 매 프레임 GLB 미적용 적 보정 — 절차적 적이 남지 않게 함
+        for (let i = 0; i < this.enemies.length; i++) if (!this.enemies[i]._glb) this._upgradeEnemyToKidnapper(this.enemies[i]);
+
         if (gameState.isDay && !DayNight.isTransitioning) {
             this.enemies.forEach(e => {
                 if (!e.arrested) {
@@ -416,6 +444,12 @@ const EnemySystem = window.EnemySystem = {
                     if (child.userData.partName === 'leftArm') child.rotation.x = -swing;
                     if (child.userData.partName === 'rightArm') child.rotation.x = swing;
                 });
+            }
+
+            // GLB 모델 애니메이션 구동
+            if (enemy._glb) {
+                const gs = enemy.state === 'flee' ? 'run' : (enemy.state === 'patrol' ? 'walk' : 'idle');
+                this._driveGlbAnim(enemy, delta, gs);
             }
 
             enemy.mesh.position.set(enemy.currentX, 0, enemy.currentZ);
