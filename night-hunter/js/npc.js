@@ -36,7 +36,9 @@ const NPCSystem = window.NPCSystem = {
 
     // NPC 역할/성별에 따른 GLB 메시 선택: 납치범(suspect)→kidnapper, 남자 시민→npc-man, 여자 시민→없음(기존 유지)
     _npcMeshName(npc) {
-        if (npc.role === 'suspect') return 'kidnapper';   // 납치범
+        if (npc.role === 'suspect') {
+            return npc.isGeneralSuspect ? 'suspect' : 'kidnapper';  // 일반 수배범(밤) vs 납치범
+        }
         if (this._isMaleNPC(npc)) return 'npc-man';       // 남자 시민
         return 'woman';                                    // 여자 시민
     },
@@ -199,7 +201,7 @@ const NPCSystem = window.NPCSystem = {
         positions.forEach(([px, pz]) => {
             const safe = this._findSafePosition(px, pz);
             const arch = {
-                x: safe.x, z: safe.z, role: 'suspect',
+                x: safe.x, z: safe.z, role: 'suspect', isGeneralSuspect: true,
                 hair: [0x1a0a00, 0x4a2510, 0x222222][Math.floor(Math.random()*3)],
                 skin: 0xddbb99,
                 clothing: [0x4a3520, 0x2d3748, 0x553355][Math.floor(Math.random()*3)],

@@ -137,6 +137,8 @@
                 safe(loadGLB('assets/models/npc-youngman.glb?v=3').then(g => { meshCache['npc-man'] = g; }), 'npc-man'),
                 // 납치범(suspect) NPC 모델 (동일 스켈레톤, 텍스처 1024²).
                 safe(loadGLB('assets/models/npc-kidnapper.glb?v=3').then(g => { meshCache['kidnapper'] = g; }), 'kidnapper'),
+                // 일반 수배범(밤 수배범) 모델 (동일 스켈레톤, 텍스처 1024²).
+                safe(loadGLB('assets/models/npc-suspect.glb?v=3').then(g => { meshCache['suspect'] = g; }), 'suspect'),
                 // 여자 시민 NPC 모델 (동일 스켈레톤, 텍스처 1024²).
                 safe(loadGLB('assets/models/npc-youngwoman.glb?v=3').then(g => { meshCache['woman'] = g; }), 'woman'),
                 // 공통 애니메이션 (root motion 제거 → 제자리 재생). 실패해도 정적 캐릭터로 표시.
