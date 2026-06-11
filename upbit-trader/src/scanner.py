@@ -45,6 +45,9 @@ W_MOMENTUM = 0.25
 # '급등 조짐' 플래그 판정 기준
 SIGNAL_VOL_SURGE = 3.0
 SIGNAL_MOMENTUM = 0.02
+# 추격 차단: 15분에 이미 이만큼 오른 코인은 '늦은 진입'으로 제외.
+# (실데이터 백테스트 2024-10~12, 5개 알트: 누적 -10.6% → +5.7%, PF 0.81 → 1.14)
+SIGNAL_MAX_MOMENTUM = 0.04
 
 
 @dataclass
@@ -122,8 +125,24 @@ def compute_pump_features(df: pd.DataFrame) -> dict[str, float] | None:
     }
 
 
-def is_pump_signal(feat: dict[str, float]) -> bool:
-    """급등 '조짐' 플래그: 거래량 급증 + 양(+) 모멘텀 + 박스권 상단 돌파."""
+def is_pump_signal(
+    feat: dict[str, float],
+    *,
+    min_dormancy: float = 0.0,
+    max_momentum: float | None = SIGNAL_MAX_MOMENTUM,
+) -> bool:
+    """급등 '조짐' 플래그: 거래량 급증 + 양(+) 모멘텀 + 박스권 상단 돌파.
+
+    min_dormancy: 직전 구간이 이만큼 조용했던(잠수함) 코인만 통과(0=비활성).
+        ⚠️ 실데이터 백테스트에서는 이 게이트가 큰 펌프(이미 움직이기 시작한
+        코인)까지 걸러내 성적을 깎았습니다. 기본 0(끔)을 권장합니다.
+    max_momentum: 최근 15분 상승률이 이를 넘으면 '이미 늦은 추격'으로 제외.
+        스파이크 꼭대기 매수를 막는 핵심 필터입니다(기본 +4%).
+    """
+    if feat["dormancy"] < min_dormancy:
+        return False
+    if max_momentum is not None and feat["momentum_15m"] > max_momentum:
+        return False
     return (
         feat["vol_surge"] >= SIGNAL_VOL_SURGE
         and feat["momentum_15m"] >= SIGNAL_MOMENTUM

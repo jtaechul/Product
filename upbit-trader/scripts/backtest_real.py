@@ -58,7 +58,15 @@ def main() -> None:
     p.add_argument("--min-score", type=float, default=0.0)
     p.add_argument("--early-cut", type=int, default=5,
                    help="조기손절 시간(분). 0이면 비활성화")
+    p.add_argument("--initial-stop", type=float, default=2.5,
+                   help="활성화 전 초기 손절 %% (0이면 비활성화)")
+    p.add_argument("--min-dormancy", type=float, default=0.0,
+                   help="잠수함 게이트: 직전 구간 dormancy 하한 (0~1)")
+    p.add_argument("--max-chase", type=float, default=4.0,
+                   help="추격 차단: 15분 상승률 상한 %% (0이면 비활성화)")
     p.add_argument("--show-trades", action="store_true")
+    p.add_argument("--dump-trades", default=None,
+                   help="거래+진입특징을 CSV로 저장할 경로")
     args = p.parse_args()
 
     t0 = time.time()
@@ -97,9 +105,13 @@ def main() -> None:
             stop_loss_pct=args.stop / 100,
             arm_profit_pct=args.arm / 100,
             early_cut_min=args.early_cut if args.early_cut > 0 else None,
+            initial_stop_pct=(args.initial_stop / 100
+                              if args.initial_stop > 0 else None),
         ),
         max_positions=args.max_positions,
         min_score=args.min_score,
+        min_dormancy=args.min_dormancy,
+        max_momentum_15m=(args.max_chase / 100 if args.max_chase > 0 else None),
     )
     print("\n백테스트 실행 중...")
     t0 = time.time()
@@ -135,12 +147,37 @@ def main() -> None:
             nets = by_month[m]
             print(f"    {m}  {len(nets):>3}회  누적 {sum(nets) * 100:+7.2f}%")
 
+        # 진입 특징 비교 (승 vs 패) — 필터 튜닝 근거
+        wins_t = [t for t in result.trades if t.net_pct > 0 and t.features]
+        loss_t = [t for t in result.trades if t.net_pct <= 0 and t.features]
+
+        def favg(ts, key):
+            vals = [t.features[key] for t in ts if key in t.features]
+            return sum(vals) / len(vals) if vals else float("nan")
+
+        if wins_t or loss_t:
+            print(f"\n  진입 특징 평균 (승 {len(wins_t)}회 vs 패 {len(loss_t)}회):")
+            for key in ("score", "vol_surge", "breakout", "momentum_15m", "dormancy"):
+                print(f"    {key:<14} 승 {favg(wins_t, key):>8.4f} | "
+                      f"패 {favg(loss_t, key):>8.4f}")
+
         if args.show_trades:
             print("\n  개별 거래:")
             for t in result.trades:
                 held = (t.exit_time - t.entry_time).total_seconds() / 60
                 print(f"    {t.market:10} {t.entry_time} → {t.exit_time} "
                       f"({held:>4.0f}분) {t.net_pct * 100:+6.2f}%  {t.reason}")
+
+        if args.dump_trades:
+            rows = []
+            for t in result.trades:
+                row = {"market": t.market, "entry_time": t.entry_time,
+                       "exit_time": t.exit_time, "net_pct": t.net_pct,
+                       "reason": t.reason}
+                row.update(t.features)
+                rows.append(row)
+            pd.DataFrame(rows).to_csv(args.dump_trades, index=False)
+            print(f"\n  거래 내역 저장: {args.dump_trades}")
     print()
 
 

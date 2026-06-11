@@ -19,10 +19,24 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
+import numpy as np
 import pandas as pd
 
-from .scanner import compute_pump_features, is_pump_signal
+from .scanner import (
+    BREAKOUT_FULL,
+    DORMANT_VOL_REF,
+    MOMENTUM_FULL,
+    VOL_SURGE_FULL,
+    W_BREAKOUT,
+    W_MOMENTUM,
+    W_VOLUME,
+    compute_pump_features,
+    is_pump_signal,
+)
 from .tracker import ExitConfig, Position, decide_entry, effective_trail_pct
+
+# 고속 스캔 윈도(1분봉 수): 5분봉 50개(완성) + 진행 중 1개
+SCAN_WINDOW_1M = 250
 
 
 def resample_5m(df1m: pd.DataFrame) -> pd.DataFrame:
@@ -35,6 +49,57 @@ def resample_5m(df1m: pd.DataFrame) -> pd.DataFrame:
     return agg.reset_index()
 
 
+def fast_pump_features(
+    close: np.ndarray, high: np.ndarray, vol: np.ndarray, i: int
+) -> dict[str, float] | None:
+    """compute_pump_features 와 동치인 numpy 고속 경로.
+
+    1분봉 배열에서 인덱스 i(5분 경계, i%5==0) 시점의 5분봉을 직접 합성합니다.
+    pandas resample 대비 ~100배 빨라 멀티코인 장기 백테스트에 사용합니다.
+    마지막 5분봉은 라이브와 동일하게 '진행 중'(1분치만 포함) 캔들입니다.
+    """
+    if i < SCAN_WINDOW_1M:
+        return None
+    c = close[i - SCAN_WINDOW_1M:i].reshape(-1, 5)
+    h = high[i - SCAN_WINDOW_1M:i].reshape(-1, 5)
+    v = vol[i - SCAN_WINDOW_1M:i].reshape(-1, 5)
+    close5 = np.append(c[:, -1], close[i])
+    high5 = np.append(h.max(axis=1), high[i])
+    vol5 = np.append(v.sum(axis=1), vol[i])
+
+    recent_vol = vol5[-3:].mean()
+    base_vol = float(np.median(vol5[-33:-3]))
+    vol_surge = float(recent_vol / base_vol) if base_vol > 0 else 0.0
+
+    base_high = float(high5[-33:-3].max())
+    price = float(close5[-1])
+    breakout = float(price / base_high - 1.0) if base_high > 0 else 0.0
+
+    ref_price = float(close5[-4])
+    momentum_15m = float(price / ref_price - 1.0) if ref_price > 0 else 0.0
+
+    r = np.diff(close5) / close5[:-1]
+    base_volatility = float(r[-33:-3].std(ddof=1))
+    dormancy = max(0.0, min(1.0, 1.0 - base_volatility / DORMANT_VOL_REF))
+
+    s_volume = min(1.0, vol_surge / VOL_SURGE_FULL)
+    s_breakout = max(0.0, min(1.0, breakout / BREAKOUT_FULL))
+    s_momentum = max(0.0, min(1.0, momentum_15m / MOMENTUM_FULL))
+    base_score = (W_VOLUME * s_volume + W_BREAKOUT * s_breakout
+                  + W_MOMENTUM * s_momentum)
+    score = 100.0 * base_score * (1.0 + 0.2 * dormancy)
+
+    return {
+        "score": round(score, 1),
+        "vol_surge": round(vol_surge, 2),
+        "breakout": round(breakout, 4),
+        "momentum_15m": round(momentum_15m, 4),
+        "dormancy": round(dormancy, 2),
+        "base_volatility": round(base_volatility, 5),
+        "price": price,
+    }
+
+
 @dataclass
 class BTConfig:
     exit_cfg: ExitConfig = field(default_factory=ExitConfig)
@@ -44,7 +109,9 @@ class BTConfig:
     fee_rate: float = 0.0005       # 편도 수수료(업비트 0.05%)
     slippage: float = 0.001        # 시장가 슬리피지 가정(편도 0.1%)
     min_score: float = 0.0         # 이 점수 미만 후보는 진입 대상 제외
-    warmup: int = 180              # 초기 워밍업 1분봉 수
+    min_dormancy: float = 0.0      # 잠수함 게이트(기본 끔 — 실데이터에서 역효과)
+    max_momentum_15m: float | None = 0.04  # 추격 차단: 15분 상승률 상한(+4%)
+    warmup: int = SCAN_WINDOW_1M   # 초기 워밍업 1분봉 수
 
 
 @dataclass
@@ -57,6 +124,7 @@ class Trade:
     gross_pct: float   # 수수료/슬리피지 전 수익률
     net_pct: float     # 비용 반영 후 수익률
     reason: str
+    features: dict = field(default_factory=dict)  # 진입 시점 스캐너 특징
 
 
 @dataclass
@@ -98,13 +166,17 @@ def _resolve_bar_exit(
     high = float(bar["high"])
     low = float(bar["low"])
 
+    armed_before = pos.armed
     pos.update(high, cfg.arm_profit_pct)  # 고점/활성화 갱신은 봉 고가 기준
 
     downside: list[tuple[float, str]] = []
-    # 손절 하한
-    sl = entry * (1 - cfg.stop_loss_pct)
+    # 손절 하한 — 활성화 전에는 더 타이트한 초기 손절(꼬리 손실 차단)
+    stop = cfg.stop_loss_pct
+    if not armed_before and cfg.initial_stop_pct is not None:
+        stop = min(stop, cfg.initial_stop_pct)
+    sl = entry * (1 - stop)
     if low <= sl:
-        downside.append((sl, f"손절(-{cfg.stop_loss_pct * 100:.0f}%)"))
+        downside.append((sl, f"손절(-{stop * 100:.1f}%)"))
     if pos.armed:
         # 트레일링 (단계별 폭)
         peak_gain = pos.peak_price / entry - 1.0
@@ -158,8 +230,17 @@ def run_pump_backtest(data: dict[str, pd.DataFrame], cfg: BTConfig) -> BTResult:
     times = data[markets[0]]["datetime"].tolist()
     n = len(times)
 
+    # 고속 스캔용 numpy 배열 (close, high, volume)
+    arrs = {
+        m: (df["close"].to_numpy(dtype=float),
+            df["high"].to_numpy(dtype=float),
+            df["volume"].to_numpy(dtype=float))
+        for m, df in data.items()
+    }
+
     result = BTResult()
     positions: dict[str, Position] = {}
+    entry_feats: dict[str, dict] = {}
     cooldowns: dict[str, datetime] = {}
     equity = 0.0  # 누적 실현 순손익(원 환산: invest_per_trade 기준)
 
@@ -176,14 +257,15 @@ def run_pump_backtest(data: dict[str, pd.DataFrame], cfg: BTConfig) -> BTResult:
                 net = gross - 2 * (cfg.fee_rate + cfg.slippage)  # 매수+매도 비용
                 result.trades.append(
                     Trade(market, pos.entry_time, now, pos.entry_price,
-                          price, gross, net, reason)
+                          price, gross, net, reason,
+                          features=entry_feats.pop(market, {}))
                 )
                 equity += cfg.invest_per_trade * net
                 result.equity_curve.append(equity)
                 cooldowns[market] = now + timedelta(minutes=cfg.cooldown_min)
 
         # --- 2) 스캔 (5분봉 경계에서만) → 후보 ---
-        candidates: list[tuple[str, float]] = []
+        candidates: list[tuple[str, dict]] = []
         if i % 5 == 0:
             for market in markets:
                 if market in positions:
@@ -191,24 +273,28 @@ def run_pump_backtest(data: dict[str, pd.DataFrame], cfg: BTConfig) -> BTResult:
                 until = cooldowns.get(market)
                 if until is not None and now < until:
                     continue
-                window = data[market].iloc[max(0, i - 250):i + 1]
-                df5 = resample_5m(window)
-                feat = compute_pump_features(df5)
-                if feat is None or not is_pump_signal(feat):
+                close_a, high_a, vol_a = arrs[market]
+                feat = fast_pump_features(close_a, high_a, vol_a, i)
+                if feat is None or not is_pump_signal(
+                    feat,
+                    min_dormancy=cfg.min_dormancy,
+                    max_momentum=cfg.max_momentum_15m,
+                ):
                     continue
                 if feat["score"] < cfg.min_score:
                     continue
-                candidates.append((market, feat["score"]))
-            candidates.sort(key=lambda x: x[1], reverse=True)
+                candidates.append((market, feat))
+            candidates.sort(key=lambda x: x[1]["score"], reverse=True)
 
         # --- 3) 진입 (자리가 있을 때, 1분봉 트리거 확인) ---
-        for market, _score in candidates:
+        for market, feat in candidates:
             if len(positions) >= cfg.max_positions:
                 break
             window1m = data[market].iloc[max(0, i - 30):i + 1]
             if not decide_entry(window1m):
                 continue
-            entry_price = float(data[market].iloc[i]["close"])
+            entry_price = float(arrs[market][0][i])
             positions[market] = Position(market, entry_price, now)
+            entry_feats[market] = feat
 
     return result

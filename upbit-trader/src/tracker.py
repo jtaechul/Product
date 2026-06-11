@@ -34,6 +34,11 @@ class ExitConfig:
     trail_pct: float = 0.03         # 고점 대비 -3% 하락 시 트레일링 청산
     stop_loss_pct: float = 0.05     # 진입가 대비 -5% 하락 시 손절(최후 방어선)
     arm_profit_pct: float = 0.02    # +2% 도달 후에만 트레일링 활성화
+
+    # 초기 손절: 트레일링 활성화(arm) 전에는 더 타이트한 손절을 적용.
+    # 진입 직후 모멘텀이 꺾인 실패 거래의 꼬리 손실(-3~-5%)을 차단합니다.
+    # (기대수익에는 중립적이지만 1거래 최대 손실을 절반으로 제한)
+    initial_stop_pct: float | None = 0.025
     take_profit_pct: float | None = None  # 진입가 대비 +X% 익절(선택, None=미사용)
     max_hold_min: int | None = None       # 최대 보유 분(선택, None=무제한)
 
@@ -126,9 +131,12 @@ def decide_exit(
     pos.update() 로 고점·활성화 상태를 먼저 갱신한 뒤 호출하세요.
     반환: (청산할지, 사유 문자열)
     """
-    # 1) 손절 하한 — 최후 방어선
-    if price <= pos.entry_price * (1 - cfg.stop_loss_pct):
-        return True, f"손절(진입가 -{cfg.stop_loss_pct * 100:.0f}%)"
+    # 1) 손절 하한 — 활성화 전에는 더 타이트한 초기 손절(꼬리 손실 차단)
+    stop = cfg.stop_loss_pct
+    if not pos.armed and cfg.initial_stop_pct is not None:
+        stop = min(stop, cfg.initial_stop_pct)
+    if price <= pos.entry_price * (1 - stop):
+        return True, f"손절(진입가 -{stop * 100:.1f}%)"
 
     # 2) 익절 (설정된 경우)
     if cfg.take_profit_pct is not None and price >= pos.entry_price * (
