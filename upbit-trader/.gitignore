@@ -16,6 +16,8 @@ venv/
 # 데이터/로그
 data/*
 !data/.gitkeep
+!data/download_links.txt
+!data/*.zip
 *.csv
 *.log
 
