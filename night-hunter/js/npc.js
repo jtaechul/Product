@@ -34,13 +34,12 @@ const NPCSystem = window.NPCSystem = {
         }).catch(() => {});
     },
 
-    // NPC 역할/성별에 따른 GLB 메시 선택: 납치범(suspect)→kidnapper, 남자 시민→npc-man, 여자 시민→없음(기존 유지)
+    // NPC 역할/성별에 따른 GLB 메시 선택: 수배범(suspect)→suspect, 남자 시민→npc-man, 여자 시민→woman
+    // (진짜 납치범 3명은 enemy.js에서 kidnapper 적용)
     _npcMeshName(npc) {
-        if (npc.role === 'suspect') {
-            return npc.isGeneralSuspect ? 'suspect' : 'kidnapper';  // 일반 수배범(밤) vs 납치범
-        }
-        if (this._isMaleNPC(npc)) return 'npc-man';       // 남자 시민
-        return 'woman';                                    // 여자 시민
+        if (npc.role === 'suspect') return 'suspect';
+        if (this._isMaleNPC(npc)) return 'npc-man';
+        return 'woman';
     },
 
     // GLB NPC 애니메이션 구동 (이동→walk/run, 정지→idle)
@@ -56,20 +55,9 @@ const NPCSystem = window.NPCSystem = {
 
     _upgradeNpcToMan(npc) {
         if (!npc || npc._glb) return;
-        const meshName = this._npcMeshName(npc);
-        if (!meshName) return;  // 여자 시민 등: 기존 캐릭터 유지
-        if (typeof ChibiCharacter === 'undefined' || !ChibiCharacter.loaded) return;
-        if (!ChibiCharacter.hasMesh || !ChibiCharacter.hasMesh(meshName)) return;  // 폴백(소윤) 방지
-        let inst;
-        try { inst = ChibiCharacter.create({ name: meshName }); } catch (e) { return; }
-        if (!inst) return;
-        // NPC는 그림자 생략 — 스킨드 메시 20여 개의 그림자 패스(본 계산 2회) 비용 제거
-        inst.traverse(o => { if (o.isMesh) o.castShadow = false; });
-        // 절차적 몸체 숨김 (GLB로 대체)
-        npc.mesh.children.slice().forEach(c => { if (c !== inst) c.visible = false; });
-        npc.mesh.add(inst);
-        npc._glb = inst;
-        npc._glbState = null;
+        if (typeof ChibiCharacter === 'undefined' || !ChibiCharacter.upgradeHost) return;
+        const inst = ChibiCharacter.upgradeHost(npc.mesh, this._npcMeshName(npc));
+        if (inst) { npc._glb = inst; npc._glbState = null; }
     },
 
     distributeHints() {
@@ -504,6 +492,9 @@ const NPCSystem = window.NPCSystem = {
     },
 
     update(playerPos, delta, time) {
+        // 매 프레임 GLB 미적용 NPC 보정 — 로딩 타이밍/누락으로 절차적 NPC가 남지 않게 함
+        for (let i = 0; i < this.npcs.length; i++) if (!this.npcs[i]._glb) this._upgradeNpcToMan(this.npcs[i]);
+
         if (!gameState.isDay) {
             // Night: civilians hide. All suspects visible PLUS extra wanted appear.
             this.npcs.forEach((npc, i) => {

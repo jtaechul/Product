@@ -120,14 +120,23 @@ const AmbientCity = window.AmbientCity = {
             [-90, 11], [-30, 11], [30, 11], [90, 11],
             [-60, -39], [60, -39],
         ].slice(0, walkerCount);
-        sidewalkSpots.forEach(([x, z]) => {
+        sidewalkSpots.forEach(([x, z], i) => {
             const walker = this.makeWalker();
             walker.mesh.position.set(x, 0, z);
             walker.baseX = x; walker.baseZ = z;
             walker.t = Math.random() * 10;
             walker.target = { x: x + (Math.random() - 0.5) * 20, z };
+            walker.meshName = (i % 2 === 0) ? 'npc-man' : 'woman';  // 보행자 GLB 모델 (남/녀 교대)
             this.walkers.push(walker);
         });
+    },
+
+    // 보행자를 GLB 모델로 교체 (절차적 보행자 방지)
+    _upgradeWalker(w) {
+        if (!w || w._glb) return;
+        if (typeof ChibiCharacter === 'undefined' || !ChibiCharacter.upgradeHost) return;
+        const inst = ChibiCharacter.upgradeHost(w.mesh, w.meshName);
+        if (inst) { w._glb = inst; w._glbState = null; }
     },
 
     makeWalker() {
@@ -232,6 +241,8 @@ const AmbientCity = window.AmbientCity = {
         const onRoad = (x, z) => typeof window.isOnRoadAsphalt === 'function'
             && window.isOnRoadAsphalt(x, z, 0.3);
         this.walkers.forEach(w => {
+            if (!w._glb) this._upgradeWalker(w);   // GLB 미적용 보행자 보정
+            let walkerMoved = false;
             w.t += delta;
             const tdx = w.target.x - w.mesh.position.x;
             const tdz = w.target.z - w.mesh.position.z;
@@ -257,12 +268,19 @@ const AmbientCity = window.AmbientCity = {
                     w.mesh.position.x = nx;
                     w.mesh.position.z = nz;
                     w.mesh.rotation.y = Math.atan2(tdx, tdz);
+                    walkerMoved = true;
                     const swing = Math.sin(time * 4.5) * 0.45;
                     if (w.leftHip) w.leftHip.rotation.x = swing;
                     if (w.rightHip) w.rightHip.rotation.x = -swing;
                     if (w.leftShoulder) w.leftShoulder.rotation.x = -swing * 0.6;
                     if (w.rightShoulder) w.rightShoulder.rotation.x = swing * 0.6;
                 }
+            }
+            // GLB 보행자 애니메이션 구동
+            if (w._glb) {
+                const st = walkerMoved ? 'walk' : 'idle';
+                if (st !== w._glbState) { try { w._glb.setState(st); } catch (e) {} w._glbState = st; }
+                if (w.mesh.visible) { try { w._glb.update(delta); } catch (e) {} }
             }
         });
     }
