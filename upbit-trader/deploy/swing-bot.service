@@ -1,0 +1,23 @@
+[Unit]
+# 잠수함 스윙 매매 봇 — systemd 서비스 (크래시/재부팅 시 자동 재시작)
+# 설치: deploy/SETUP.md 참고
+Description=Upbit Submarine Swing Trading Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=botuser
+WorkingDirectory=/home/botuser/Product/upbit-trader
+# .env(업비트 키 + 텔레그램)를 환경으로 로드. 파일은 chmod 600 권장.
+EnvironmentFile=/home/botuser/Product/upbit-trader/.env
+# 모의로 먼저 검증하세요. 실거래는 끝에 --live 를 붙입니다.
+ExecStart=/home/botuser/Product/upbit-trader/.venv/bin/python -m scripts.swing_trade --max-positions 3 --invest 100000
+# 죽으면 무조건 되살림 (안정성의 핵심)
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/botuser/Product/upbit-trader/bot.log
+StandardError=append:/home/botuser/Product/upbit-trader/bot.log
+
+[Install]
+WantedBy=multi-user.target

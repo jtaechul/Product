@@ -25,15 +25,18 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.swing import SwingConfig, btc_trend_gate, resample  # noqa: E402
+from src import notifier  # noqa: E402
+from src.swing import SwingConfig  # noqa: E402
 from src.swing_trader import SwingTrader, scan_candidates  # noqa: E402
 from src.upbit_quotation import UpbitQuotation, candles_to_dataframe  # noqa: E402
 
 MIN_ORDER_KRW = 5000
 
 
-def log(msg: str) -> None:
+def log(msg: str, push: bool = False) -> None:
     print(f"[{datetime.now():%m-%d %H:%M:%S}] {msg}", flush=True)
+    if push:
+        notifier.send(msg)
 
 
 class PaperBroker:
@@ -166,20 +169,34 @@ def main() -> None:
     th = threading.Thread(target=scanner_loop,
                           args=(shared, broker, q, cfg, args, stop), daemon=True)
     th.start()
-    log("스캐너 시작. 첫 스캔 대기...")
+
+    mode = "🔴실거래" if args.live else "🟡모의"
+    log(f"스윙 봇 시작 ({mode}) — 동시 {args.max_positions}종목 / "
+        f"1종목 {args.invest:,.0f}원", push=True)
+    if notifier.enabled():
+        log("텔레그램 알림 연결됨 (하트비트 1시간 주기)")
+
+    def status() -> str:
+        held = ", ".join(m.replace("KRW-", "") for m in engine.held()) or "없음"
+        return (f"보유 {len(engine.positions)}/{args.max_positions}: {held}\n"
+                f"금일 실현 {engine.realized_today:+,.0f}원 | 누적매도 "
+                f"{sum(1 for t in engine.trades if t.action=='SELL')}회")
+
+    notifier.start_heartbeat(status, interval_sec=3600, stop=stop)
 
     try:
         while True:
             now = datetime.now()
             for rec in engine.check_exits(now):
                 log(f"✅ 매도 {rec.market} @ {rec.price:,.0f} "
-                    f"({rec.gain*100:+.1f}%) — {rec.reason}")
+                    f"({rec.gain*100:+.1f}%) — {rec.reason}", push=True)
             if engine.halted:
                 log("⛔ 일일 손실 한도 — 신규 진입 중단")
             if engine.has_room():
                 picks, btc_ok = shared.get()
                 for rec in engine.try_entries(picks, now):
-                    log(f"🟢 매수 {rec.market} @ {rec.price:,.0f} ({args.invest:,.0f}원)")
+                    log(f"🟢 매수 {rec.market} @ {rec.price:,.0f} "
+                        f"({args.invest:,.0f}원)", push=True)
             if engine.positions:
                 held = ", ".join(m.replace("KRW-", "") for m in engine.held())
                 log(f"보유 {len(engine.positions)}/{args.max_positions}: {held} "
@@ -189,10 +206,11 @@ def main() -> None:
         stop.set()
         sells = [t for t in engine.trades if t.action == "SELL"]
         wins = [t for t in sells if t.gain > 0]
-        log("중지(Ctrl+C).")
+        msg = "스윙 봇 중지."
         if sells:
-            log(f"요약: 매도 {len(sells)}회, 승률 {len(wins)/len(sells)*100:.0f}%, "
-                f"금일 {engine.realized_today:+,.0f}원")
+            msg += (f" 매도 {len(sells)}회, 승률 {len(wins)/len(sells)*100:.0f}%, "
+                    f"금일 {engine.realized_today:+,.0f}원")
+        log(msg, push=True)
 
 
 if __name__ == "__main__":
