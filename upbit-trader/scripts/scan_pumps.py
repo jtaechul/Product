@@ -21,6 +21,7 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from src.timeutil import now_kst  # 한국시간(KST) 표시  # noqa: E402
 
 from src.scanner import scan  # noqa: E402
 
@@ -55,7 +56,7 @@ def print_table(candidates) -> None:
 
 
 def run_once(args) -> None:
-    started = datetime.now()
+    started = now_kst()
     print(f"\n[{started:%H:%M:%S}] 스캔 시작 — {args.unit}분봉, "
           f"24h 거래대금 {args.min_value:g}억원 이상"
           + (f", 마켓 {args.limit}개 제한" if args.limit else ""))
@@ -75,7 +76,7 @@ def run_once(args) -> None:
         pause=args.pause,
         on_progress=on_progress,
     )
-    elapsed = (datetime.now() - started).total_seconds()
+    elapsed = (now_kst() - started).total_seconds()
     print(f"\r  {scanned['total']}개 마켓 스캔 완료 ({elapsed:.0f}초)"
           + " " * 20)
     print()

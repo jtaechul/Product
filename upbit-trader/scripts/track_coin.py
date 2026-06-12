@@ -30,6 +30,7 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from src.timeutil import now_kst  # 한국시간(KST) 표시  # noqa: E402
 
 from src.tracker import (  # noqa: E402
     ExitConfig,
@@ -43,7 +44,7 @@ MIN_ORDER_KRW = 5000  # Upbit 최소 주문 금액
 
 
 def log(msg: str) -> None:
-    print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] {msg}", flush=True)
+    print(f"[{now_kst():%Y-%m-%d %H:%M:%S}] {msg}", flush=True)
 
 
 def main() -> None:
@@ -107,7 +108,7 @@ def main() -> None:
     try:
         while True:
             try:
-                now = datetime.now()
+                now = now_kst()
 
                 if position is None:
                     # --- 관망: 1분봉으로 진입 탐색 (거래량/모멘텀 맥락 필요) ---

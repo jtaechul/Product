@@ -25,6 +25,7 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from src.timeutil import now_kst  # 한국시간(KST) 표시  # noqa: E402
 
 from src.strategies import (  # noqa: E402
     bollinger_bands,
@@ -47,7 +48,7 @@ MIN_ORDER_KRW = 5000  # Upbit 최소 주문 금액
 
 
 def log(msg: str) -> None:
-    print(f"[{datetime.now():%Y-%m-%d %H:%M:%S}] {msg}", flush=True)
+    print(f"[{now_kst():%Y-%m-%d %H:%M:%S}] {msg}", flush=True)
 
 
 def main() -> None:

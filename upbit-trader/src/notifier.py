@@ -19,7 +19,8 @@ import threading
 import time
 import urllib.parse
 import urllib.request
-from datetime import datetime
+
+from .timeutil import now_kst  # 모든 표시 시각을 한국시간(KST)으로 통일
 
 # config 를 먼저 임포트해 .env 를 os.environ 으로 로딩(키를 읽기 전에 보장).
 try:
@@ -67,7 +68,7 @@ def start_heartbeat(get_status, interval_sec: int = 3600,
     def loop():
         while not (stop and stop.is_set()):
             try:
-                send(f"💓 <b>하트비트</b> {datetime.now():%m-%d %H:%M}\n{get_status()}")
+                send(f"💓 <b>하트비트</b> {now_kst():%m-%d %H:%M}\n{get_status()}")
             except Exception:
                 pass
             if stop:
@@ -116,7 +117,7 @@ def start_command_listener(get_status, stop: threading.Event | None = None
                     frm = str(msg.get("chat", {}).get("id", ""))
                     if not text or frm != str(chat):
                         continue  # 내 채팅이 아니거나 빈 메시지는 무시
-                    send(f"📟 <b>요청 응답</b> {datetime.now():%m-%d %H:%M}\n"
+                    send(f"📟 <b>요청 응답</b> {now_kst():%m-%d %H:%M}\n"
                          f"{get_status()}")
             except Exception:
                 time.sleep(5)  # 오류 시 잠깐 쉬고 재시도

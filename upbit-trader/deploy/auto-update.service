@@ -1,0 +1,14 @@
+[Unit]
+# GitHub 최신 코드를 받아 봇에 자동 반영 (auto-update.timer 가 10분마다 실행)
+Description=Pull latest code and restart trading bots
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# REPO_DIR / SERVICES 를 본인 환경에 맞게 수정하세요(기본값은 SETUP.md 기준).
+Environment=REPO_DIR=/home/botuser/Product
+Environment=SERVICES=swing-bot majors-bot
+ExecStart=/usr/bin/env bash /home/botuser/Product/upbit-trader/deploy/auto-update.sh
+StandardOutput=append:/home/botuser/Product/upbit-trader/auto-update.log
+StandardError=append:/home/botuser/Product/upbit-trader/auto-update.log

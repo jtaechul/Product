@@ -32,6 +32,7 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from src.timeutil import now_kst  # 한국시간(KST) 표시  # noqa: E402
 
 from src.auto_trader import AutoTrader, PaperBroker  # noqa: E402
 from src.scanner import scan  # noqa: E402
@@ -42,7 +43,7 @@ MIN_ORDER_KRW = 5000
 
 
 def log(msg: str) -> None:
-    print(f"[{datetime.now():%H:%M:%S}] {msg}", flush=True)
+    print(f"[{now_kst():%H:%M:%S}] {msg}", flush=True)
 
 
 class LiveBroker:
@@ -86,7 +87,7 @@ class CandidateStore:
     def set(self, markets: list[str]) -> None:
         with self._lock:
             self._markets = markets
-            self.updated_at = datetime.now()
+            self.updated_at = now_kst()
 
     def get(self) -> list[str]:
         with self._lock:
@@ -183,7 +184,7 @@ def main() -> None:
     last_entry = 0.0
     try:
         while True:
-            now = datetime.now()
+            now = now_kst()
             # 1) 보유 청산 감시 (빠르게)
             for rec in engine.check_exits(now):
                 log(f"✅ 매도 {rec.market} @ {rec.price:,.0f} "

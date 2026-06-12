@@ -66,6 +66,32 @@ sudo nano /etc/systemd/system/swing-bot.service
 sudo systemctl daemon-reload && sudo systemctl restart swing-bot
 ```
 
+## 7. 코드 자동 반영 (10분마다 git pull → 봇 재시작)
+코드를 고쳐 GitHub(`main`)에 올리면, VM이 **10분 안에 자동으로 받아 반영**하도록
+systemd 타이머를 등록합니다. 더 이상 VM에 직접 접속해 손으로 pull 할 필요가 없습니다.
+
+```bash
+# (1) 자동 업데이트 스크립트가 가리킬 경로/서비스 확인·수정
+sudo nano upbit-trader/deploy/auto-update.service
+#   Environment=REPO_DIR=...  (본인 저장소 경로)
+#   Environment=SERVICES=swing-bot majors-bot  (재시작할 봇 이름들)
+
+# (2) 타이머·서비스 등록
+sudo cp upbit-trader/deploy/auto-update.service /etc/systemd/system/
+sudo cp upbit-trader/deploy/auto-update.timer   /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now auto-update.timer    # 부팅 시 자동 + 지금 시작
+
+# (3) 동작 확인
+systemctl list-timers auto-update.timer          # 다음 실행 예정 시각
+tail -f upbit-trader/auto-update.log             # 반영 로그(변경 있을 때만 기록)
+```
+- 새 커밋이 **없으면** 아무 일도 안 합니다(조용히 종료).
+- 새 커밋이 **있으면** `git reset --hard origin/<현재브랜치>` 로 최신화하고,
+  requirements 갱신 후 봇 서비스를 재시작합니다.
+- `.env`(API 키)는 git 추적 대상이 아니라 **지워지지 않습니다**.
+- ⚠️ VM 의 로컬 수정사항은 자동 update 시 덮어쓰여집니다 — 수정은 GitHub 를 통해서만 하세요.
+
 ---
 
 ## 안전 체크리스트
@@ -81,4 +107,8 @@ sudo systemctl stop swing-bot      # 중지
 sudo systemctl restart swing-bot   # 재시작
 sudo systemctl disable swing-bot   # 자동시작 해제
 journalctl -u swing-bot -f         # systemd 로그
+
+systemctl list-timers auto-update.timer   # 자동반영 다음 실행 시각
+sudo systemctl start auto-update.service   # 지금 즉시 한 번 반영
+sudo systemctl disable --now auto-update.timer  # 자동반영 끄기
 ```
