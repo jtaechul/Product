@@ -183,6 +183,10 @@ def main() -> None:
                 f"{sum(1 for t in engine.trades if t.action=='SELL')}회")
 
     notifier.start_heartbeat(status, interval_sec=3600, stop=stop)
+    # 텔레그램에서 아무 메시지(예: /상태)를 보내면 즉시 현재 상태로 회신
+    notifier.start_command_listener(status, stop=stop)
+    if notifier.enabled():
+        log("텔레그램에 아무 말이나 보내면 즉시 상태를 회신합니다 (강제 하트비트)")
 
     try:
         while True:

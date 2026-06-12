@@ -13,6 +13,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import threading
 import time
@@ -73,6 +74,52 @@ def start_heartbeat(get_status, interval_sec: int = 3600,
                 stop.wait(interval_sec)
             else:
                 time.sleep(interval_sec)
+
+    th = threading.Thread(target=loop, daemon=True)
+    th.start()
+    return th
+
+
+_offset: int | None = None  # 이미 처리한 텔레그램 메시지 위치
+
+
+def start_command_listener(get_status, stop: threading.Event | None = None
+                           ) -> threading.Thread | None:
+    """텔레그램에서 내가 보낸 명령(/상태,/status 등)에 즉시 답하는 데몬 스레드.
+
+    내 chat id 가 보낸 메시지만 처리합니다(다른 사람 무시). 어떤 명령이든
+    현재 상태(get_status())를 바로 회신 — 사실상 '강제 하트비트' 버튼.
+    미설정 시 None.
+    """
+    if not enabled():
+        return None
+
+    def _get_updates(token: str):
+        global _offset
+        params: dict = {"timeout": 25}  # long-poll 25초
+        if _offset is not None:
+            params["offset"] = _offset
+        url = (f"https://api.telegram.org/bot{token}/getUpdates?"
+               + urllib.parse.urlencode(params))
+        with urllib.request.urlopen(url, timeout=30) as r:
+            return json.loads(r.read()).get("result", [])
+
+    def loop():
+        global _offset
+        while not (stop and stop.is_set()):
+            token, chat = _creds()
+            try:
+                for upd in _get_updates(token):
+                    _offset = upd["update_id"] + 1
+                    msg = upd.get("message", {})
+                    text = (msg.get("text") or "").strip()
+                    frm = str(msg.get("chat", {}).get("id", ""))
+                    if not text or frm != str(chat):
+                        continue  # 내 채팅이 아니거나 빈 메시지는 무시
+                    send(f"📟 <b>요청 응답</b> {datetime.now():%m-%d %H:%M}\n"
+                         f"{get_status()}")
+            except Exception:
+                time.sleep(5)  # 오류 시 잠깐 쉬고 재시도
 
     th = threading.Thread(target=loop, daemon=True)
     th.start()
