@@ -77,17 +77,25 @@ class LiveBroker(PaperBroker):
 class Shared:
     def __init__(self):
         self.lock = threading.Lock()
-        self.markets: list[str] = []
-        self.btc_ok = True
+        self.cands: list = []        # [(market, feat)] — 현재 급등 후보 + 근거
+        self.btc_ok = True           # 시장(BTC) 강세 여부
+        self.scanned = 0             # 직전 스캔에서 점검한 코인 수
+        self.updated_at = None       # 마지막 스캔 시각
 
-    def set(self, markets, btc_ok):
+    def set(self, cands, btc_ok, scanned):
         with self.lock:
-            self.markets = markets
+            self.cands = cands
             self.btc_ok = btc_ok
+            self.scanned = scanned
+            self.updated_at = datetime.now()
 
-    def get(self):
+    def picks(self):
         with self.lock:
-            return list(self.markets), self.btc_ok
+            return [m for m, _ in self.cands]
+
+    def situation(self):
+        with self.lock:
+            return list(self.cands), self.btc_ok, self.scanned, self.updated_at
 
 
 def scanner_loop(shared, broker, q, cfg, args, stop):
@@ -104,11 +112,10 @@ def scanner_loop(shared, broker, q, cfg, args, stop):
             liquid = [t["market"] for t in tickers
                       if float(t.get("acc_trade_price_24h", 0)) >= args.min_value * 1e8]
             cands = scan_candidates(broker, liquid, cfg, btc_ok=btc_ok, top=args.top)
-            picks = [m for m, _ in cands]
-            shared.set(picks, btc_ok)
+            shared.set(cands, btc_ok, len(liquid))
             gate = "강세" if btc_ok else "약세(진입중단)"
-            log(f"🔍 스캔: BTC추세 {gate} | 후보 {len(picks)}개 "
-                + (", ".join(p.replace('KRW-', '') for p in picks[:6])))
+            log(f"🔍 스캔: BTC추세 {gate} | 후보 {len(cands)}개 "
+                + (", ".join(m.replace('KRW-', '') for m, _ in cands[:6])))
         except Exception as exc:
             log(f"스캔 오류(계속): {exc}")
         stop.wait(args.scan_interval)
@@ -196,27 +203,59 @@ def main() -> None:
         return r
 
     def status() -> str:
-        """현재 보유 코인별 손익까지 쉬운 말로 풀어 보여줌."""
+        """시장 분위기 + 봇의 판단 + 보유/손익을 쉬운 말로 한 번에."""
+        cands, btc_ok, scanned, upd = shared.situation()
         n = len(engine.positions)
         sells = sum(1 for t in engine.trades if t.action == "SELL")
+
+        # ① 시장 분위기
+        mkt = ("강세 ✅ (사도 되는 분위기)" if btc_ok
+               else "약세 ⛔ (지금은 새로 안 삼)")
+        out = ["🛰️ <b>지금 상황</b>",
+               "",
+               "<b>[시장 분위기]</b>",
+               f"• 비트코인 추세: {mkt}",
+               f"• 점검한 코인: {scanned}개"]
+        if upd:
+            out.append(f"• 마지막 시장 점검: {upd:%H:%M} (5분마다 갱신)")
+
+        # ② 봇의 판단 (왜 사는지 / 왜 기다리는지)
+        out += ["", "<b>[봇의 판단]</b>"]
+        if not btc_ok:
+            out.append("• 비트코인이 약세라, 위험을 피해 새 매수는 멈추고 기다려요.")
+        elif n >= args.max_positions:
+            out.append(f"• 자리가 다 찼어요({n}/{args.max_positions}). "
+                       "새로 안 사고 보유 코인만 관리해요.")
+        elif not cands:
+            out.append("• 조건(거래량 급증 + 박스 상단 돌파)에 맞는 코인이 "
+                       "아직 없어요. 좋은 기회를 기다리는 중 👀")
+        else:
+            out.append(f"• 급등 후보 {len(cands)}개 포착 — 신호 유지되면 매수 대기:")
+            for m, f in cands[:3]:
+                out.append(
+                    f"   · {m.replace('KRW-','')}: 거래량 평소 "
+                    f"{f.get('surge', 0):.1f}배, 박스돌파 "
+                    f"{f.get('breakout', 0)*100:+.1f}%")
+
+        # ③ 보유 / 손익
+        out += ["", "<b>[내 거래 현황]</b>"]
         if n == 0:
-            body = "보유 중인 코인: 없음 (살 만한 코인을 기다리는 중이에요 👀)"
+            out.append("• 보유 중인 코인: 없음")
         else:
             try:
                 prices = engine.broker.get_prices(engine.held())
             except Exception:
                 prices = {}
-            lines = [f"보유 코인: {n}/{args.max_positions}개"]
+            out.append(f"• 보유 코인: {n}/{args.max_positions}개")
             for m, pos in engine.positions.items():
                 cur = prices.get(m, pos.entry_price)
                 g = cur / pos.entry_price - 1.0
                 won = g * args.invest
-                lines.append(f"  • {m.replace('KRW-','')}: "
-                             f"지금 {g*100:+.1f}% ({won:+,.0f}원)")
-            body = "\n".join(lines)
-        return (f"{body}\n"
-                f"오늘 확정 손익: {engine.realized_today:+,.0f}원 "
-                f"(지금까지 매도 {sells}회)")
+                out.append(f"   · {m.replace('KRW-','')}: 지금 "
+                           f"{g*100:+.1f}% ({won:+,.0f}원)")
+        out.append(f"• 오늘 확정 손익: {engine.realized_today:+,.0f}원 "
+                   f"(지금까지 매도 {sells}회)")
+        return "\n".join(out)
 
     notifier.start_heartbeat(status, interval_sec=3600, stop=stop)
     # 텔레그램에서 아무 메시지(예: /상태)를 보내면 즉시 현재 상태로 회신
@@ -242,8 +281,7 @@ def main() -> None:
             if engine.halted:
                 log("⛔ 일일 손실 한도 — 신규 진입 중단")
             if engine.has_room():
-                picks, btc_ok = shared.get()
-                for rec in engine.try_entries(picks, now):
+                for rec in engine.try_entries(shared.picks(), now):
                     log(f"매수 {rec.market} @ {rec.price:,.0f}")
                     notifier.send(
                         f"🟢 <b>매수했어요!</b>\n"
