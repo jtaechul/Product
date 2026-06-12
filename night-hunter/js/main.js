@@ -56,10 +56,10 @@ const isIOSDevice = /iPad|iPhone|iPod/i.test(navigator.userAgent)
 // ── Quality Tier System (상/중/하/최저) ──
 // Auto-selected by device, can downgrade on low FPS
 const QUALITY = {
-    HIGH:   { shadow: 2048, shadowEnabled: true,  bloom: true,  fogFar: 220, far: 500, pixelRatio: 2,   segments: 32, antialias: true,  carCount: 6, walkerCount: 10 },
-    MEDIUM: { shadow: 1024, shadowEnabled: true,  bloom: true,  fogFar: 160, far: 300, pixelRatio: 1.3, segments: 24, antialias: true,  carCount: 6, walkerCount: 10 },
-    LOW:    { shadow: 0,    shadowEnabled: false, bloom: false, fogFar: 120, far: 200, pixelRatio: 1.0, segments: 16, antialias: false, carCount: 4, walkerCount: 6  },
-    POTATO: { shadow: 0,    shadowEnabled: false, bloom: false, fogFar: 80,  far: 150, pixelRatio: 0.75, segments: 10, antialias: false, carCount: 2, walkerCount: 3  }
+    HIGH:   { shadow: 2048, shadowEnabled: true,  bloom: true,  fogFar: 220, far: 500, pixelRatio: 2,   segments: 32, antialias: true,  carCount: 6, walkerCount: 10, maxFPS: 60 },
+    MEDIUM: { shadow: 1024, shadowEnabled: true,  bloom: true,  fogFar: 160, far: 300, pixelRatio: 1.3, segments: 24, antialias: true,  carCount: 6, walkerCount: 10, maxFPS: 45 },
+    LOW:    { shadow: 0,    shadowEnabled: false, bloom: false, fogFar: 120, far: 200, pixelRatio: 1.0, segments: 16, antialias: false, carCount: 4, walkerCount: 6,  maxFPS: 30 },
+    POTATO: { shadow: 0,    shadowEnabled: false, bloom: false, fogFar: 80,  far: 150, pixelRatio: 0.75, segments: 10, antialias: false, carCount: 2, walkerCount: 3,  maxFPS: 30 }
 };
 // Detect low-end mobile (older iPhones, low memory, low CPU count)
 const lowEnd = (isMobile && navigator.deviceMemory && navigator.deviceMemory <= 4)
@@ -1382,7 +1382,9 @@ function monitorFPS(delta) {
     if (fpsCheckTimer >= 2) {
         const fps = fpsFrames / fpsAccum;
         fpsAccum = 0; fpsFrames = 0; fpsCheckTimer = 0;
-        if (fps < 30) {
+        // 프레임 상한 대비 70% 미만일 때만 다운그레이드 (상한 자체를 못 낮춤으로 오인 방지)
+        const floor = (Q.maxFPS || 60) * 0.7;
+        if (fps < floor) {
             lowFpsStreak++;
             if (lowFpsStreak >= 2) { downgradeQuality(); lowFpsStreak = 0; }
         } else {
@@ -1416,8 +1418,16 @@ function animate() {
     if (gameState.gameOver) return;
     requestAnimationFrame(animate);
 
+    // 백그라운드(탭 숨김) 시 렌더/업데이트 정지 — 발열·배터리 절약
+    if (document.hidden) { lastTime = performance.now(); return; }
+
+    // 프레임 상한 — 모바일 GPU 풀가동(발열)을 막는다. 목표 간격 미달 시 이 프레임 스킵.
     const now = performance.now();
-    const delta = Math.min((now - lastTime) / 1000, 0.1);
+    const _interval = 1000 / ((Q.maxFPS || 60) + 0.5);   // 약간 여유를 둬 상한에 안정적으로 근접
+    const _since = now - lastTime;
+    if (_since < _interval) return;
+
+    const delta = Math.min(_since / 1000, 0.1);
     lastTime = now;
     monitorFPS(delta);
 
@@ -1438,7 +1448,7 @@ function animate() {
         try { EnemySystem.update(playerGroup.position, delta, clock.elapsedTime); } catch(e) { console.warn('EnemySystem', e); }
         try { Shop.update(playerGroup.position); } catch(e) { console.warn('Shop', e); }
         try { NPCSystem.update(playerGroup.position, delta, clock.elapsedTime); } catch(e) { console.warn('NPCSystem', e); }
-        try { if (typeof AmbientCity !== 'undefined') AmbientCity.update(delta, clock.elapsedTime); } catch(e) { console.warn('AmbientCity', e); }
+        try { if (typeof AmbientCity !== 'undefined') AmbientCity.update(delta, clock.elapsedTime, playerGroup.position); } catch(e) { console.warn('AmbientCity', e); }
         try { Minigame.checkCatchable(playerGroup.position); } catch(e) { console.warn('Minigame.check', e); }
         if (minimapTimer > 0.16) {
             try { GameUI.updateMinimap(playerGroup.position, playerFacingAngle, cameraAngleY); } catch(e) { console.warn('minimap', e); }

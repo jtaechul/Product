@@ -232,11 +232,7 @@ const Minigame = {
         if (typeof SoundManager !== 'undefined') SoundManager.playSFX('arrest_fail');
 
         if (this.targetEnemy.resistance > 0) {
-            const dmg = (typeof Shop !== 'undefined' && Shop.hasItem('vest')) ? 0.5 : 1;
-            gameState.health = Math.max(0, gameState.health - dmg);
-            if (gameState.health <= 0) {
-                setTimeout(() => this.triggerGameOver(), 1000);
-            }
+            // (생명 감소·경찰서 복귀 패널티는 close() 의 _applyFailPenalty 에서 일괄 처리)
         }
         this.targetEnemy.state = 'patrol';
         this.targetEnemy.patrolTarget = EnemySystem.getPatrolTarget(this.targetEnemy);
@@ -364,6 +360,7 @@ const Minigame = {
     close() {
         const cb = this.targetCallback;
         const wasSuccess = this.result === 'success';
+        const wasArrest = this.mode === 'suspect' || this.mode === 'kidnapper';
         this.active = false;
         this.targetEnemy = null;
         this.targetNpc = null;
@@ -373,6 +370,24 @@ const Minigame = {
         gameState.isPaused = false;
         document.getElementById('minigame-overlay').style.display = 'none';
         if (cb) try { cb(wasSuccess); } catch(e) { console.warn(e); }
+        // 검거 실패 패널티: 생명 -1 + 경찰서 앞 복귀 (수배범/납치범 공통)
+        if (wasArrest && !wasSuccess) this._applyFailPenalty();
+    },
+
+    _applyFailPenalty() {
+        const dmg = (typeof Shop !== 'undefined' && Shop.hasItem('vest')) ? 0.5 : 1;
+        gameState.health = Math.max(0, gameState.health - dmg);
+        // 경찰서 앞으로 강제 이동 (스폰 지점과 동일: 정면에서 4m 인도)
+        try {
+            const ps = window._policeStation;
+            if (ps && typeof playerGroup !== 'undefined') {
+                playerGroup.position.set(ps.x, 0, ps.frontZ - 4);
+            }
+        } catch (e) { console.warn('fail-penalty teleport', e); }
+        try { showMessage('💔 검거 실패! 경찰서로 복귀했습니다. (생명 -1)'); } catch (e) {}
+        if (gameState.health <= 0) {
+            setTimeout(() => this.triggerGameOver(), 800);
+        }
     },
 
     checkCatchable(playerPos) {
