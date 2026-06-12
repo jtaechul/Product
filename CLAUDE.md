@@ -1,5 +1,12 @@
 # Dino Survivors Deluxe
 
+> ## ⭐ 핵심 응답 원칙 (모든 작업에 항상 적용)
+> **매 작업이 끝나면, 마지막에 "방금 한 일"을 비전문가도 이해할 수 있게 아주 간단히
+> 정리한다.** 규칙:
+> - 3~5줄 이내, 쉬운 한국어. 전문용어는 풀어서 또는 괄호로 설명.
+> - "무엇을 / 왜 / 결과" 위주. 코드·수치 나열 최소화.
+> - 길고 자세한 내용이 필요하면 그건 정리 *뒤*에 따로 둔다(요약이 먼저).
+
 A browser-based survival game built with vanilla HTML5 Canvas, CSS, and JavaScript. The player controls a dinosaur, fights waves of enemies, collects XP, and picks upgrades on level-up. Deployed via Firebase Hosting.
 
 ## Project Structure
