@@ -519,6 +519,17 @@ const NPCSystem = window.NPCSystem = {
             // Hide night extras
             this._hideNightExtras();
         }
+
+        // 거리 컬링 — 멀리 있는 NPC는 렌더/애니 생략 (모바일 과부하·발열·크래시 방지)
+        const CULL = (window.GameQuality && window.GameQuality.cfg && window.GameQuality.cfg.fogFar) ? window.GameQuality.cfg.fogFar * 0.6 : 70;
+        const CULL_SQ = CULL * CULL;
+        for (let i = 0; i < this.npcs.length; i++) {
+            const npc = this.npcs[i];
+            if (!npc.mesh.visible) continue;
+            const ddx = playerPos.x - npc.mesh.position.x, ddz = playerPos.z - npc.mesh.position.z;
+            if (ddx * ddx + ddz * ddz > CULL_SQ) npc.mesh.visible = false;
+        }
+
         // Common: find nearest visible NPC for interaction
 
         this.nearbyNpc = null;

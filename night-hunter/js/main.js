@@ -1448,7 +1448,7 @@ function animate() {
         try { EnemySystem.update(playerGroup.position, delta, clock.elapsedTime); } catch(e) { console.warn('EnemySystem', e); }
         try { Shop.update(playerGroup.position); } catch(e) { console.warn('Shop', e); }
         try { NPCSystem.update(playerGroup.position, delta, clock.elapsedTime); } catch(e) { console.warn('NPCSystem', e); }
-        try { if (typeof AmbientCity !== 'undefined') AmbientCity.update(delta, clock.elapsedTime); } catch(e) { console.warn('AmbientCity', e); }
+        try { if (typeof AmbientCity !== 'undefined') AmbientCity.update(delta, clock.elapsedTime, playerGroup.position); } catch(e) { console.warn('AmbientCity', e); }
         try { Minigame.checkCatchable(playerGroup.position); } catch(e) { console.warn('Minigame.check', e); }
         if (minimapTimer > 0.16) {
             try { GameUI.updateMinimap(playerGroup.position, playerFacingAngle, cameraAngleY); } catch(e) { console.warn('minimap', e); }

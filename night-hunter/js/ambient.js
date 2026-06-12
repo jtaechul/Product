@@ -202,7 +202,7 @@ const AmbientCity = window.AmbientCity = {
         return { mesh: group, leftHip: lh, rightHip: rh, leftShoulder: ls, rightShoulder: rs };
     },
 
-    update(delta, time) {
+    update(delta, time, playerPos) {
         const isNight = typeof gameState !== 'undefined' && !gameState.isDay;
 
         // 자동차는 낮/밤 모두 표시 + 주행 (밤엔 헤드라이트가 더 강조됨)
@@ -212,8 +212,17 @@ const AmbientCity = window.AmbientCity = {
             if (c.tlMat) c.tlMat.emissiveIntensity = isNight ? 1.6 : 0.5;
         });
 
-        // 보행자는 낮에만 (밤엔 안전상 귀가)
-        this.walkers.forEach(w => { w.mesh.visible = !isNight; });
+        // 보행자는 낮에만 (밤엔 안전상 귀가) + 거리 컬링 (모바일 과부하 방지)
+        const CULL = (window.GameQuality && window.GameQuality.cfg && window.GameQuality.cfg.fogFar) ? window.GameQuality.cfg.fogFar * 0.6 : 70;
+        const CULL_SQ = CULL * CULL;
+        this.walkers.forEach(w => {
+            let vis = !isNight;
+            if (vis && playerPos) {
+                const dx = playerPos.x - w.mesh.position.x, dz = playerPos.z - w.mesh.position.z;
+                if (dx * dx + dz * dz > CULL_SQ) vis = false;
+            }
+            w.mesh.visible = vis;
+        });
 
         // === 자동차 주행 — 각 도로의 실제 좌표 범위 내에서 순환 (task 3) ===
         this.cars.forEach(car => {
