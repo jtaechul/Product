@@ -650,54 +650,7 @@ function createPoliceStation(group) {
     pole.position.set(x + 10, 5, z + 7);
     group.add(pole);
 
-    // Standalone POLICE signpost — 도로(남쪽) 쪽 인도에 배치
-    const spMat = new THREE.MeshStandardMaterial({ color: 0x222244, roughness: 0.6, metalness: 0.5 });
-    const signPost = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 4.5, 8), spMat);
-    const SP_Z = z - d / 2 - 3; // 경찰서 남쪽 3m (도로 z=95 와 경찰서 z=103 사이의 인도)
-    signPost.position.set(x, 2.25, SP_Z);
-    group.add(signPost);
-
-    const spCV = document.createElement('canvas');
-    spCV.width = 320; spCV.height = 160;
-    const spCtx = spCV.getContext('2d');
-    // Background gradient (dark blue → navy)
-    const grad = spCtx.createLinearGradient(0, 0, 0, 160);
-    grad.addColorStop(0, '#0033aa'); grad.addColorStop(1, '#001166');
-    spCtx.fillStyle = grad; spCtx.fillRect(0, 0, 320, 160);
-    // White border
-    spCtx.strokeStyle = '#ffffff'; spCtx.lineWidth = 5;
-    spCtx.strokeRect(5, 5, 310, 150);
-    // Star badge (simple circle emblem)
-    spCtx.fillStyle = '#ffdd00';
-    spCtx.beginPath(); spCtx.arc(36, 80, 22, 0, Math.PI * 2); spCtx.fill();
-    spCtx.fillStyle = '#003399';
-    spCtx.beginPath(); spCtx.arc(36, 80, 16, 0, Math.PI * 2); spCtx.fill();
-    spCtx.fillStyle = '#ffdd00';
-    spCtx.beginPath(); spCtx.arc(36, 80, 9, 0, Math.PI * 2); spCtx.fill();
-    // POLICE text
-    spCtx.fillStyle = '#ffffff';
-    spCtx.font = 'bold 62px Inter, sans-serif';
-    spCtx.textAlign = 'left'; spCtx.textBaseline = 'middle';
-    spCtx.fillText('POLICE', 68, 68);
-    spCtx.font = 'bold 30px Inter, sans-serif';
-    spCtx.fillStyle = '#99ccff';
-    spCtx.fillText('경    찰    서', 68, 118);
-    const spTex = new THREE.CanvasTexture(spCV);
-    // DoubleSide 로 한 장만 — 도로(남쪽 -Z) 향함, 양면에서 보임
-    const spBoard = new THREE.Mesh(
-        new THREE.PlaneGeometry(5, 2.5),
-        new THREE.MeshStandardMaterial({ map: spTex, emissive: 0x001133, emissiveIntensity: 0.5, side: THREE.DoubleSide })
-    );
-    spBoard.position.set(x, 5.5, SP_Z);
-    spBoard.rotation.y = Math.PI; // 도로(남쪽) 방향 향함
-    group.add(spBoard);
-    // Sign cap (top of board)
-    const spCap = new THREE.Mesh(
-        new THREE.BoxGeometry(5.3, 0.25, 0.35),
-        new THREE.MeshStandardMaterial({ color: 0x001166, roughness: 0.5 })
-    );
-    spCap.position.set(x, 6.75, SP_Z);
-    group.add(spCap);
+    // (경찰서 앞 입간판 제거 — 외벽 간판·청적 경광등·외관 디테일로 식별)
 
     // 단일 출처 — PRINCIPLES.md #9 (다른 모듈은 window._policeStation 참조)
     window._policeStation = { x, z, w, d, h, frontZ: z - d / 2, backZ: z + d / 2 };
@@ -707,7 +660,8 @@ function createPoliceStation(group) {
 
 // 경찰서 외피 — 4벽(남측 입구 갭) + 옥상 + 콘크리트 베이스. 단일 박스 아닌 분할 벽으로 내부 가시화.
 function createPoliceStationShell(group, x, z, w, d, h) {
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x1a3a5c, roughness: 0.78, metalness: 0.08 });
+    // 한국 경찰서 외관: 밝은 회백색 벽 + 시그니처 파란 띠 + 입구 캐노피/엠블럼
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xe8eaee, roughness: 0.82, metalness: 0.05 });
     const baseMat = new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.95 });
     const winMat = new THREE.MeshStandardMaterial({
         color: 0x88ccff, emissive: 0x334455, emissiveIntensity: 0.3,
@@ -809,6 +763,61 @@ function createPoliceStationShell(group, x, z, w, d, h) {
 
     // 남측 입구 유리 자동문 (도로 방향 -Z, rotY=Math.PI)
     createGlassScreenDoor(group, x, 0, southZ - 0.02, ENTRANCE_W - 0.3, 2.9, Math.PI);
+
+    // ── 경찰서 시그니처 파란 띠 (4면 외벽, 입구 상단 높이) ──
+    const bandMat = new THREE.MeshStandardMaterial({ color: 0x0047ab, roughness: 0.5, metalness: 0.15, emissive: 0x001a44, emissiveIntensity: 0.25 });
+    const BAND_Y = 4.1, BAND_H = 0.8;
+    const bandS = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, BAND_H, 0.18), bandMat);
+    bandS.position.set(x, BAND_Y, southZ - 0.22);
+    group.add(bandS);
+    const bandN = bandS.clone(); bandN.position.set(x, BAND_Y, northZ + 0.22); group.add(bandN);
+    const bandE = new THREE.Mesh(new THREE.BoxGeometry(0.18, BAND_H, d + 0.3), bandMat);
+    bandE.position.set(x + halfW + 0.22, BAND_Y, z);
+    group.add(bandE);
+    const bandW = bandE.clone(); bandW.position.set(x - halfW - 0.22, BAND_Y, z); group.add(bandW);
+
+    // ── 입구 캐노피 (진입로 위 차양) ──
+    const canopy = new THREE.Mesh(
+        new THREE.BoxGeometry(ENTRANCE_W + 1.2, 0.18, 1.8),
+        new THREE.MeshStandardMaterial({ color: 0x12326e, roughness: 0.55, metalness: 0.2 })
+    );
+    canopy.position.set(x, 3.15, southZ - 0.95);
+    canopy.castShadow = true;
+    group.add(canopy);
+    // 캐노피 지지 기둥 2개
+    const postMat = new THREE.MeshStandardMaterial({ color: 0xb9bdc4, roughness: 0.5, metalness: 0.5 });
+    for (const sx of [-1, 1]) {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.1, 8), postMat);
+        post.position.set(x + sx * (ENTRANCE_W / 2 + 0.45), 1.55, southZ - 1.7);
+        group.add(post);
+    }
+
+    // ── 입구 위 경찰 엠블럼 (참수리 단순화: 금색 링 + 청색 원 + 금색 별) ──
+    const emCV = document.createElement('canvas');
+    emCV.width = 128; emCV.height = 128;
+    const ectx = emCV.getContext('2d');
+    ectx.clearRect(0, 0, 128, 128);
+    ectx.fillStyle = '#f5c518';
+    ectx.beginPath(); ectx.arc(64, 64, 56, 0, Math.PI * 2); ectx.fill();
+    ectx.fillStyle = '#0047ab';
+    ectx.beginPath(); ectx.arc(64, 64, 46, 0, Math.PI * 2); ectx.fill();
+    ectx.fillStyle = '#f5c518';
+    ectx.beginPath();
+    for (let i = 0; i < 5; i++) {
+        const a = -Math.PI / 2 + i * (Math.PI * 2 / 5);
+        const a2 = a + Math.PI / 5;
+        ectx.lineTo(64 + Math.cos(a) * 30, 64 + Math.sin(a) * 30);
+        ectx.lineTo(64 + Math.cos(a2) * 13, 64 + Math.sin(a2) * 13);
+    }
+    ectx.closePath(); ectx.fill();
+    const emTex = new THREE.CanvasTexture(emCV);
+    const emblem = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.7, 1.7),
+        new THREE.MeshStandardMaterial({ map: emTex, transparent: true, emissive: 0x222200, emissiveIntensity: 0.25, side: THREE.DoubleSide })
+    );
+    emblem.position.set(x, BAND_Y + 1.7, southZ - 0.28);
+    emblem.rotation.y = Math.PI;
+    group.add(emblem);
 
     return roof; // 옥상 메쉬 반환 (mesh 참조용)
 }
