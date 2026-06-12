@@ -170,17 +170,53 @@ def main() -> None:
                           args=(shared, broker, q, cfg, args, stop), daemon=True)
     th.start()
 
-    mode = "🔴실거래" if args.live else "🟡모의"
-    log(f"스윙 봇 시작 ({mode}) — 동시 {args.max_positions}종목 / "
-        f"1종목 {args.invest:,.0f}원", push=True)
+    mode_txt = ("🔴 실거래(진짜 돈)" if args.live
+                else "🟡 모의(가짜 돈, 실제 주문 안 함)")
+    log(f"스윙 봇 시작 ({'🔴실거래' if args.live else '🟡모의'})")
+    notifier.send(
+        f"🤖 <b>잠수함 봇이 시작됐어요</b>  ({mode_txt})\n"
+        f"• 한 번에 최대 {args.max_positions}종목, 종목당 "
+        f"{args.invest:,.0f}원으로 매매해요\n"
+        f"• 거래량이 터지며 오르는 코인을 자동으로 사고, 규칙대로 팔아요\n"
+        f"• 사고팔 때마다 여기로 자세히 알려드릴게요\n"
+        f"• 궁금하면 아무 메시지나 보내세요 → 지금 상태를 바로 알려드려요")
     if notifier.enabled():
-        log("텔레그램 알림 연결됨 (하트비트 1시간 주기)")
+        log("텔레그램 알림 연결됨")
+
+    def reason_easy(r: str) -> str:
+        """청산 사유를 비전문가용 한 문장으로 풀어줌."""
+        if r.startswith("손절"):
+            return "손실이 한도(-10%)에 닿아, 더 큰 손실을 막으려고 팔았어요"
+        if r.startswith("트레일링"):
+            return "고점에서 일정폭 내려와, 벌어둔 이익을 지키려고 팔았어요"
+        if r.startswith("익절"):
+            return "목표 수익에 도달해 이익을 확정했어요"
+        if r.startswith("보유초과"):
+            return "정해둔 최대 보유기간(10일)이 지나 정리했어요"
+        return r
 
     def status() -> str:
-        held = ", ".join(m.replace("KRW-", "") for m in engine.held()) or "없음"
-        return (f"보유 {len(engine.positions)}/{args.max_positions}: {held}\n"
-                f"금일 실현 {engine.realized_today:+,.0f}원 | 누적매도 "
-                f"{sum(1 for t in engine.trades if t.action=='SELL')}회")
+        """현재 보유 코인별 손익까지 쉬운 말로 풀어 보여줌."""
+        n = len(engine.positions)
+        sells = sum(1 for t in engine.trades if t.action == "SELL")
+        if n == 0:
+            body = "보유 중인 코인: 없음 (살 만한 코인을 기다리는 중이에요 👀)"
+        else:
+            try:
+                prices = engine.broker.get_prices(engine.held())
+            except Exception:
+                prices = {}
+            lines = [f"보유 코인: {n}/{args.max_positions}개"]
+            for m, pos in engine.positions.items():
+                cur = prices.get(m, pos.entry_price)
+                g = cur / pos.entry_price - 1.0
+                won = g * args.invest
+                lines.append(f"  • {m.replace('KRW-','')}: "
+                             f"지금 {g*100:+.1f}% ({won:+,.0f}원)")
+            body = "\n".join(lines)
+        return (f"{body}\n"
+                f"오늘 확정 손익: {engine.realized_today:+,.0f}원 "
+                f"(지금까지 매도 {sells}회)")
 
     notifier.start_heartbeat(status, interval_sec=3600, stop=stop)
     # 텔레그램에서 아무 메시지(예: /상태)를 보내면 즉시 현재 상태로 회신
@@ -192,15 +228,31 @@ def main() -> None:
         while True:
             now = datetime.now()
             for rec in engine.check_exits(now):
-                log(f"✅ 매도 {rec.market} @ {rec.price:,.0f} "
-                    f"({rec.gain*100:+.1f}%) — {rec.reason}", push=True)
+                won = rec.gain * args.invest
+                head = ("✅ <b>매도 — 이익 실현 🎉</b>" if rec.gain > 0
+                        else "🔻 <b>매도 — 손실 정리</b>")
+                log(f"매도 {rec.market} ({rec.gain*100:+.1f}%) — {rec.reason}")
+                notifier.send(
+                    f"{head}\n"
+                    f"종목: <b>{rec.market.replace('KRW-','')}</b>\n"
+                    f"판 가격: {rec.price:,.0f}원\n"
+                    f"결과: <b>{rec.gain*100:+.1f}%  ({won:+,.0f}원)</b>\n"
+                    f"이유: {reason_easy(rec.reason)}\n"
+                    f"오늘 확정 손익: {engine.realized_today:+,.0f}원")
             if engine.halted:
                 log("⛔ 일일 손실 한도 — 신규 진입 중단")
             if engine.has_room():
                 picks, btc_ok = shared.get()
                 for rec in engine.try_entries(picks, now):
-                    log(f"🟢 매수 {rec.market} @ {rec.price:,.0f} "
-                        f"({args.invest:,.0f}원)", push=True)
+                    log(f"매수 {rec.market} @ {rec.price:,.0f}")
+                    notifier.send(
+                        f"🟢 <b>매수했어요!</b>\n"
+                        f"종목: <b>{rec.market.replace('KRW-','')}</b>\n"
+                        f"산 가격: {rec.price:,.0f}원\n"
+                        f"투입 금액: {args.invest:,.0f}원\n"
+                        f"이유: 거래량이 평소보다 크게 늘며 상승 신호가 떠서 샀어요\n"
+                        f"현재 보유: {len(engine.positions)}/{args.max_positions}개\n"
+                        f"앞으로: 오르면 끝까지 따라가고, -10%에 닿으면 손절해요")
             if engine.positions:
                 held = ", ".join(m.replace("KRW-", "") for m in engine.held())
                 log(f"보유 {len(engine.positions)}/{args.max_positions}: {held} "
@@ -210,11 +262,16 @@ def main() -> None:
         stop.set()
         sells = [t for t in engine.trades if t.action == "SELL"]
         wins = [t for t in sells if t.gain > 0]
-        msg = "스윙 봇 중지."
+        log("스윙 봇 중지")
+        msg = "🛑 <b>봇이 멈췄어요</b> (더 이상 자동 매매 안 함)"
         if sells:
-            msg += (f" 매도 {len(sells)}회, 승률 {len(wins)/len(sells)*100:.0f}%, "
-                    f"금일 {engine.realized_today:+,.0f}원")
-        log(msg, push=True)
+            msg += (f"\n오늘 매도 {len(sells)}회 중 이익 {len(wins)}회 "
+                    f"(승률 {len(wins)/len(sells)*100:.0f}%)\n"
+                    f"오늘 확정 손익: {engine.realized_today:+,.0f}원")
+        if engine.positions:
+            held = ", ".join(m.replace("KRW-", "") for m in engine.held())
+            msg += f"\n⚠️ 아직 들고 있는 코인: {held} — 봇이 멈춰서 자동 관리 안 돼요"
+        notifier.send(msg)
 
 
 if __name__ == "__main__":
