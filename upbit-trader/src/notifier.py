@@ -13,7 +13,6 @@
 
 from __future__ import annotations
 
-import json
 import os
 import threading
 import time
@@ -21,22 +20,33 @@ import urllib.parse
 import urllib.request
 from datetime import datetime
 
-_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-_CHAT = os.getenv("TELEGRAM_CHAT_ID", "")
+# config 를 먼저 임포트해 .env 를 os.environ 으로 로딩(키를 읽기 전에 보장).
+try:
+    from . import config  # noqa: F401  (.env 자동 로딩 부수효과)
+except Exception:
+    pass
+
+
+def _creds() -> tuple[str, str]:
+    """토큰/챗ID 를 '호출 시점'에 읽음 — .env 가 나중에 로딩돼도 안전."""
+    return (os.getenv("TELEGRAM_BOT_TOKEN", ""),
+            os.getenv("TELEGRAM_CHAT_ID", ""))
 
 
 def enabled() -> bool:
-    return bool(_TOKEN and _CHAT)
+    token, chat = _creds()
+    return bool(token and chat)
 
 
 def send(text: str) -> bool:
     """텔레그램 메시지 전송. 미설정/실패해도 예외를 던지지 않음(봇 보호)."""
-    if not enabled():
+    token, chat = _creds()
+    if not (token and chat):
         return False
     try:
-        url = f"https://api.telegram.org/bot{_TOKEN}/sendMessage"
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
         data = urllib.parse.urlencode(
-            {"chat_id": _CHAT, "text": text, "parse_mode": "HTML"}
+            {"chat_id": chat, "text": text, "parse_mode": "HTML"}
         ).encode()
         with urllib.request.urlopen(url, data=data, timeout=10) as r:
             return r.status == 200
