@@ -21,11 +21,13 @@ import pandas as pd
 
 @dataclass
 class MajorsConfig:
-    coins: tuple[str, ...] = ("KRW-BTC", "KRW-ETH", "KRW-XRP")
-    # optimize_majors 교차검증으로 선택한 기본값:
-    #   · MA150  : 200일선보다 짧아 폭락 후 회복에 빨리 재진입(수익↑) — 일봉/시간봉 모두 우수
-    #   · 완충2% : MA±2% 밴드(hysteresis)로 경계선 부근 헛매매(휩쏘) 차단 — 양쪽 데이터 개선
-    ma_bars: int = 150        # 추세 이동평균 기간(일봉=일)
+    # 대상: BTC·ETH (XRP는 추세필터 효과가 약해 제외 — optimize_majors 검증 참고)
+    coins: tuple[str, ...] = ("KRW-BTC", "KRW-ETH")
+    # optimize_majors 교차검증(BTC·ETH, 일봉+시간봉 OOS)으로 선택한 기본값:
+    #   · MA100  : 짧은 추세선으로 폭락 후 회복에 빨리 재진입 → 수익↑. XRP 제외 시 두 데이터
+    #              모두에서 견고(일봉 Calmar 0.90 / 시간봉 0.92, 둘 다 단순보유 압도)
+    #   · 완충2% : MA±2% 밴드(hysteresis)로 경계선 헛매매(휩쏘) 차단
+    ma_bars: int = 100        # 추세 이동평균 기간(일봉=일)
     buffer: float = 0.02      # MA 대비 ±완충 밴드. 위로 +buffer 넘어야 진입, 아래로 -buffer 깨야 청산
     slope_bars: int = 0       # >0 이면 MA가 slope_bars 전보다 높을(우상향) 때만 보유(옵션, 기본 끔)
 
