@@ -1,0 +1,13 @@
+[Unit]
+# 자산 리밸런싱(월 1회) — 전체 자산 평가 후 세 봇 예산비중 갱신
+Description=Upbit portfolio rebalance (50/30/20)
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=botuser
+WorkingDirectory=/home/botuser/Product/upbit-trader
+EnvironmentFile=/home/botuser/Product/upbit-trader/.env
+ExecStart=/home/botuser/Product/upbit-trader/.venv/bin/python -m scripts.rebalance
+StandardOutput=append:/home/botuser/Product/upbit-trader/rebalance.log
+StandardError=append:/home/botuser/Product/upbit-trader/rebalance.log

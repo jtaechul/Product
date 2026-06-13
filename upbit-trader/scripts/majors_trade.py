@@ -27,7 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src import notifier  # noqa: E402
+from src import allocation, notifier  # noqa: E402
 from src.majors import MajorsConfig, regime  # noqa: E402
 from src.timeutil import now_kst  # 한국시간(KST) 표시  # noqa: E402
 from src.upbit_quotation import UpbitQuotation, candles_to_dataframe  # noqa: E402
@@ -237,6 +237,10 @@ def main() -> None:
 
             # 실제 업비트 잔고와 동기화(현행화) — 재시작/수동매수분도 인식·관리
             reconcile_holdings(prices)
+
+            # 배정 예산(대형코인 몫)을 종목 수로 나눠 1종목 매수액 산출(배분 변화 즉시 반영)
+            per_coin = allocation.budget_for("majors", args.invest) / len(coins)
+            allocation.publish_owned("majors", list(positions.keys()))
 
             for c in coins:
                 try:

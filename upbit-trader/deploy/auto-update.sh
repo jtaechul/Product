@@ -10,7 +10,7 @@
 set -uo pipefail   # -e 제외: 일부 단계 실패해도 전체가 죽지 않게(아래서 개별 처리)
 
 REPO_DIR="${REPO_DIR:-/home/botuser/Product}"
-SERVICES="${SERVICES:-swing-bot majors-bot}"
+SERVICES="${SERVICES:-swing-bot majors-bot highrisk-bot}"
 
 cd "$REPO_DIR" || exit 1
 # root 가 사용자 소유 저장소에서 git 을 쓸 때 'dubious ownership' 오류 방지
@@ -55,8 +55,63 @@ ensure_majors_bot() {
     fi
 }
 
+# --- 고위험 봇을 swing-bot 설정 본떠 설치 (모의 모드, --live 없음) ---
+ensure_highrisk_bot() {
+    local SWING=/etc/systemd/system/swing-bot.service
+    local HR=/etc/systemd/system/highrisk-bot.service
+    [ -f "$SWING" ] || return 0
+    local PY
+    PY="$(grep -oE '/[^ ]*/\.venv/bin/python' "$SWING" | head -1)"
+    [ -z "$PY" ] && return 0
+    local DESIRED="ExecStart=$PY -m scripts.highrisk_trade"   # 모의(실거래 아님)
+    if [ -f "$HR" ] && grep -qF "$DESIRED" "$HR"; then return 0; fi
+    sed -e 's/^Description=.*/Description=Upbit High-Risk Momentum Bot/' \
+        -e "s#^ExecStart=.*#$DESIRED#" \
+        -e 's#bot\.log#highrisk.log#g' \
+        "$SWING" > "$HR"
+    systemctl daemon-reload
+    systemctl enable highrisk-bot >/dev/null 2>&1 || true
+    if systemctl restart highrisk-bot; then
+        echo "  ✅ highrisk-bot(모의) 설치/가동"
+    fi
+}
+
+# --- 월간 리밸런싱 타이머 설치 (swing-bot 의 User/경로/venv 를 물려받아 생성) ---
+ensure_rebalance() {
+    local SWING=/etc/systemd/system/swing-bot.service
+    local RS=/etc/systemd/system/rebalance.service
+    local RT=/etc/systemd/system/rebalance.timer
+    [ -f "$SWING" ] || return 0
+    [ -f "$RT" ] && return 0
+    local PY WD USERN ENVF
+    PY="$(grep -oE '/[^ ]*/\.venv/bin/python' "$SWING" | head -1)"
+    WD="$(grep '^WorkingDirectory=' "$SWING" | head -1 | cut -d= -f2-)"
+    USERN="$(grep '^User=' "$SWING" | head -1 | cut -d= -f2-)"
+    ENVF="$(grep '^EnvironmentFile=' "$SWING" | head -1 | cut -d= -f2-)"
+    [ -z "$PY" ] && return 0
+    {
+        echo "[Unit]"
+        echo "Description=Upbit portfolio rebalance (50/30/20)"
+        echo "After=network-online.target"
+        echo "[Service]"
+        echo "Type=oneshot"
+        [ -n "$USERN" ] && echo "User=$USERN"
+        [ -n "$WD" ] && echo "WorkingDirectory=$WD"
+        [ -n "$ENVF" ] && echo "EnvironmentFile=$ENVF"
+        echo "ExecStart=$PY -m scripts.rebalance"
+    } > "$RS"
+    cp "$REPO_DIR/upbit-trader/deploy/rebalance.timer" "$RT" 2>/dev/null || return 0
+    systemctl daemon-reload
+    if systemctl enable --now rebalance.timer >/dev/null 2>&1; then
+        echo "  ✅ rebalance.timer(월간) 설치"
+    fi
+    systemctl start rebalance.service >/dev/null 2>&1 || true   # 설치 즉시 1회 배분 채움
+}
+
 ensure_swing_live
 ensure_majors_bot
+ensure_highrisk_bot
+ensure_rebalance
 
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" || exit 0
 git fetch --quiet origin "$BRANCH" || exit 0

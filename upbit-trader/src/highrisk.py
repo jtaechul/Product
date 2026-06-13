@@ -103,3 +103,46 @@ def backtest_coin(df: pd.DataFrame, cfg: HighRiskConfig, coin: str = "") -> list
                               j - i, {"mom": mom, "surge": surge}))
         i = j + 1
     return trades
+
+
+def entry_signal(df: pd.DataFrame, cfg: HighRiskConfig) -> dict | None:
+    """최신 '닫힌 봉' 기준 진입 신호 여부 + 근거(없으면 None). 실시간 스캐너용."""
+    c = df["close"].to_numpy(float)
+    h = df["high"].to_numpy(float)
+    v = df["volume"].to_numpy(float)
+    n = len(c)
+    need = max(cfg.breakout_bars, cfg.trend_ma_bars, cfg.base_bars, cfg.mom_bars) + 2
+    if n < need:
+        return None
+    i = n - 1  # 최신(닫힌) 봉
+    ma = float(pd.Series(c).rolling(cfg.trend_ma_bars).mean().iloc[-1])
+    prior_high = float(h[i - cfg.breakout_bars:i].max())
+    mom = c[i] / c[i - cfg.mom_bars] - 1.0 if c[i - cfg.mom_bars] > 0 else 0.0
+    base_v = float(pd.Series(v[i - cfg.base_bars:i]).median())
+    surge = (v[i] / base_v) if base_v > 0 else 0.0
+    if (c[i] > prior_high and c[i] > ma and mom >= cfg.min_momentum
+            and surge >= cfg.vol_surge):
+        return {"breakout": c[i] / prior_high - 1.0, "momentum": mom, "surge": surge}
+    return None
+
+
+def scan_momentum(broker, markets, cfg: HighRiskConfig, top: int = 20
+                  ) -> list[tuple[str, dict]]:
+    """60분봉으로 모멘텀 돌파 신호가 뜬 마켓을 모멘텀 강도순으로 반환(실시간 스캐너).
+
+    broker.get_candles_60m(market, count) 를 사용(스윙 봇 브로커와 호환).
+    """
+    need = max(cfg.breakout_bars, cfg.trend_ma_bars, cfg.base_bars, cfg.mom_bars) + 3
+    out = []
+    for m in markets:
+        try:
+            df = broker.get_candles_60m(m, count=need)
+        except Exception:
+            continue
+        if df is None or len(df) < need - 1:
+            continue
+        feat = entry_signal(df, cfg)
+        if feat:
+            out.append((m, feat))
+    out.sort(key=lambda x: x[1]["momentum"], reverse=True)
+    return out[:top]
