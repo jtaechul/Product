@@ -250,7 +250,11 @@ const AmbientCity = window.AmbientCity = {
         const onRoad = (x, z) => typeof window.isOnRoadAsphalt === 'function'
             && window.isOnRoadAsphalt(x, z, 0.3);
         this.walkers.forEach(w => {
-            if (!w._glb) this._upgradeWalker(w);   // GLB 미적용 보행자 보정
+            // GLB는 가까이 올 때만 생성 (생성 스파이크 방지)
+            if (!w._glb && playerPos) {
+                const gdx = playerPos.x - w.mesh.position.x, gdz = playerPos.z - w.mesh.position.z;
+                if (gdx * gdx + gdz * gdz <= CULL_SQ) this._upgradeWalker(w);
+            }
             let walkerMoved = false;
             w.t += delta;
             const tdx = w.target.x - w.mesh.position.x;

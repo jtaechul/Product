@@ -615,7 +615,7 @@ function createPoliceStation(group) {
     holder.scale.setScalar(POLICE_SCALE);
     group.add(holder);
     try {
-        new THREE.GLTFLoader().load('assets/models/police-station.glb?v=1', (gltf) => {
+        new THREE.GLTFLoader().load('assets/models/police-station.glb?v=2', (gltf) => {
             gltf.scene.traverse(o => {
                 if (!o.isMesh) return;
                 o.castShadow = true; o.receiveShadow = true;
