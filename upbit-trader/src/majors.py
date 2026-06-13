@@ -22,21 +22,38 @@ import pandas as pd
 @dataclass
 class MajorsConfig:
     coins: tuple[str, ...] = ("KRW-BTC", "KRW-ETH", "KRW-XRP")
-    ma_bars: int = 200       # 추세 이동평균 기간(일봉 200일 = 고전적 강/약세 분기선)
-    buffer: float = 0.0      # MA 대비 ±완충(휩쏘 완화). 예 0.02 → MA보다 2% 위/아래에서 전환
+    # optimize_majors 교차검증으로 선택한 기본값:
+    #   · MA150  : 200일선보다 짧아 폭락 후 회복에 빨리 재진입(수익↑) — 일봉/시간봉 모두 우수
+    #   · 완충2% : MA±2% 밴드(hysteresis)로 경계선 부근 헛매매(휩쏘) 차단 — 양쪽 데이터 개선
+    ma_bars: int = 150        # 추세 이동평균 기간(일봉=일)
+    buffer: float = 0.02      # MA 대비 ±완충 밴드. 위로 +buffer 넘어야 진입, 아래로 -buffer 깨야 청산
+    slope_bars: int = 0       # >0 이면 MA가 slope_bars 전보다 높을(우상향) 때만 보유(옵션, 기본 끔)
 
 
-def regime(df: pd.DataFrame, cfg: MajorsConfig) -> dict:
-    """최신 일봉 기준 '보유 vs 현금' 판정과 근거를 반환.
+def regime(df: pd.DataFrame, cfg: MajorsConfig, held: bool = False) -> dict:
+    """최신 일봉 기준 '보유 vs 현금' 판정과 근거를 반환 (완충밴드 hysteresis 적용).
 
+    held: 지금 그 코인을 보유 중인지. 보유 중이면 -buffer 밴드 아래로 깨질 때까지 유지하고,
+          비보유면 +buffer 밴드 위로 올라설 때만 신규 진입 → 경계선 잔떨림에 안 휘둘림.
     df: OHLCV(datetime,open,high,low,close,volume), 오름차순. ma_bars+1 개 이상 필요.
-    반환: {in_market, price, ma, dist(=현재가/MA-1)}
+    반환: {in_market, price, ma, dist(=현재가/MA-1), rising}
     """
     close = df["close"]
     ma_series = close.rolling(cfg.ma_bars).mean()
     price = float(close.iloc[-1])
     ma = float(ma_series.iloc[-1])
     dist = price / ma - 1.0 if ma > 0 else 0.0
-    # 완충: MA보다 buffer 만큼 위로 올라서야 진입, buffer 만큼 아래로 내려가야 청산
-    in_market = dist > cfg.buffer
-    return {"in_market": in_market, "price": price, "ma": ma, "dist": dist}
+
+    rising = True
+    if cfg.slope_bars > 0 and len(ma_series) > cfg.slope_bars:
+        prev = float(ma_series.iloc[-1 - cfg.slope_bars])
+        rising = ma > prev
+
+    if held:
+        # 보유 유지: -buffer 밴드 위에 있고 (기울기 옵션 시) 우상향이면 계속 보유
+        in_market = dist >= -cfg.buffer and rising
+    else:
+        # 신규 진입: +buffer 밴드 위 + (기울기 옵션 시) 우상향
+        in_market = dist > cfg.buffer and rising
+    return {"in_market": in_market, "price": price, "ma": ma,
+            "dist": dist, "rising": rising}
