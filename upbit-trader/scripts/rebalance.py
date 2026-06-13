@@ -57,7 +57,9 @@ def main() -> None:
     if total is None:
         print("API 키 없음 — 리밸런싱 건너뜀(모의 단계에서는 정상)")
         return
-    w = allocation.DEFAULT_WEIGHTS
+    # 비중은 '현재 적용 중'인 값을 유지(국면 제안 승인으로 바뀐 비중을 덮어쓰지 않음).
+    # 총 평가자산만 갱신 → 각 봇 예산이 자산 변화에 맞춰 재계산됨.
+    w = allocation.current_weights()
     allocation.write_allocation(total, w)
     lines = [f"⚖️ <b>자산 리밸런싱 완료</b>",
              f"총 평가자산: <b>{total:,.0f}원</b>",

@@ -1,0 +1,189 @@
+#!/usr/bin/env python3
+"""포트폴리오 리뷰 — 상세 대시보드(HTML) 생성 + 국면별 비중조정 '제안'(텔레그램 승인 버튼).
+
+하는 일(주기 실행 또는 수동):
+  1) BTC 일봉으로 시장 국면(강세/중립/약세) 판별
+  2) 전체 평가자산·보유코인·3봇 현황을 모아 상세 HTML 대시보드(아티팩트) 생성 → 텔레그램 전송
+  3) 국면 권장비중이 현재 비중과 다르면 → 텔레그램에 '✅승인 / ❌거절' 버튼으로 제안
+     (승인 시 notifier 가 allocation 비중을 갱신 → 봇들이 다음 점검부터 반영)
+
+실행: python -m scripts.portfolio_review        (systemd portfolio-review.timer 가 매일 호출)
+"""
+
+from __future__ import annotations
+
+import sys
+import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from src import allocation, notifier, regime  # noqa: E402
+from src.timeutil import now_kst  # noqa: E402
+from src.upbit_quotation import UpbitQuotation, candles_to_dataframe  # noqa: E402
+
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "portfolio.html"
+BOT_LABEL = {"majors": "대형코인", "swing": "잠수함", "highrisk": "고위험"}
+
+
+def gather():
+    q = UpbitQuotation()
+    btc = candles_to_dataframe(q.get_candles_days("KRW-BTC", count=210))
+    reg = regime.detect_regime(btc)
+
+    # 실제 잔고(키 있으면)
+    holdings, total_krw = [], 0.0
+    try:
+        from src import config
+        if config.has_api_keys():
+            from src.upbit_exchange import UpbitExchange
+            ex = UpbitExchange()
+            accs = ex.get_accounts()
+            coins = [f"KRW-{a['currency']}" for a in accs
+                     if a.get("currency") != "KRW" and a.get("unit_currency", "KRW") == "KRW"
+                     and (float(a.get("balance", 0) or 0) + float(a.get("locked", 0) or 0)) > 0]
+            prices = {}
+            if coins:
+                prices = {t["market"]: float(t["trade_price"]) for t in q.get_ticker(coins)}
+            for a in accs:
+                cur = a.get("currency", "")
+                if a.get("unit_currency", "KRW") != "KRW":
+                    continue
+                vol = float(a.get("balance", 0) or 0) + float(a.get("locked", 0) or 0)
+                if cur == "KRW":
+                    total_krw += vol
+                    continue
+                if vol <= 0:
+                    continue
+                avg = float(a.get("avg_buy_price", 0) or 0)
+                px = prices.get(f"KRW-{cur}", avg)
+                val = vol * px
+                total_krw += val
+                holdings.append({"coin": cur, "vol": vol, "avg": avg, "price": px,
+                                 "value": val,
+                                 "pl_pct": (px / avg - 1) * 100 if avg > 0 else 0.0,
+                                 "pl_krw": (px - avg) * vol if avg > 0 else 0.0})
+    except Exception:
+        pass
+
+    bots = []
+    for f in sorted((ROOT / ".botstate").glob("status_*.txt")) if (ROOT / ".botstate").exists() else []:
+        try:
+            bots.append(f.read_text(encoding="utf-8").strip())
+        except Exception:
+            pass
+
+    return {"regime": reg, "total": total_krw, "holdings": holdings,
+            "weights_cur": allocation.current_weights(), "bots": bots}
+
+
+def build_html(ctx: dict) -> str:
+    reg = ctx["regime"]
+    total = ctx["total"]
+    cur = ctx["weights_cur"]
+    prop = reg["weights"]
+    cash_cur = max(0.0, 1 - sum(cur.values()))
+    cash_prop = reg["cash"]
+
+    def bar(pct, color):
+        return (f"<div style='background:#eee;border-radius:6px;height:18px;width:160px;"
+                f"display:inline-block;vertical-align:middle'>"
+                f"<div style='background:{color};height:18px;border-radius:6px;"
+                f"width:{min(100,pct*100):.0f}%'></div></div>")
+
+    rows = ""
+    for k in ("majors", "swing", "highrisk"):
+        rows += (f"<tr><td>{BOT_LABEL[k]}</td>"
+                 f"<td>{bar(cur.get(k,0),'#4a90d9')} {cur.get(k,0)*100:.0f}%</td>"
+                 f"<td>{bar(prop.get(k,0),'#e09b3d')} {prop.get(k,0)*100:.0f}%</td>"
+                 f"<td>{total*prop.get(k,0):,.0f}원</td></tr>")
+    rows += (f"<tr><td>현금</td><td>{bar(cash_cur,'#9aa')} {cash_cur*100:.0f}%</td>"
+             f"<td>{bar(cash_prop,'#9aa')} {cash_prop*100:.0f}%</td>"
+             f"<td>{total*cash_prop:,.0f}원</td></tr>")
+
+    hrows = ""
+    for h in ctx["holdings"]:
+        col = "#1a8" if h["pl_pct"] >= 0 else "#d33"
+        hrows += (f"<tr><td><b>{h['coin']}</b></td><td>{h['vol']:.6f}</td>"
+                  f"<td>{h['avg']:,.0f}</td><td>{h['price']:,.0f}</td>"
+                  f"<td>{h['value']:,.0f}원</td>"
+                  f"<td style='color:{col}'>{h['pl_pct']:+.1f}% ({h['pl_krw']:+,.0f}원)</td></tr>")
+    if not hrows:
+        hrows = "<tr><td colspan=6>보유 코인 없음(또는 키 미설정)</td></tr>"
+
+    botblocks = "".join(
+        f"<pre style='background:#f7f7f9;padding:10px;border-radius:8px;white-space:pre-wrap'>"
+        f"{b}</pre>" for b in ctx["bots"]) or "<p>봇 상태 파일 없음</p>"
+
+    ma50 = f"{reg['ma50']:,.0f}" if reg["ma50"] else "-"
+    ma200 = f"{reg['ma200']:,.0f}" if reg["ma200"] else "-"
+    return f"""<!doctype html><html lang=ko><meta charset=utf-8>
+<meta name=viewport content='width=device-width,initial-scale=1'>
+<title>코인 포트폴리오 대시보드</title>
+<body style='font-family:-apple-system,system-ui,sans-serif;max-width:680px;margin:0 auto;
+padding:16px;color:#222;background:#fafafb'>
+<h2>🪙 코인 포트폴리오 대시보드</h2>
+<p style='color:#888'>갱신: {now_kst():%Y-%m-%d %H:%M} (한국시간)</p>
+
+<div style='background:#fff;border:1px solid #eee;border-radius:12px;padding:14px;margin:10px 0'>
+<h3>📈 시장 국면: {reg['label']}</h3>
+<p>BTC 현재가 {reg['price']:,.0f} · 50일선 {ma50} · 200일선 {ma200} · 변동성(연) {reg['vol']*100:.0f}%</p>
+</div>
+
+<div style='background:#fff;border:1px solid #eee;border-radius:12px;padding:14px;margin:10px 0'>
+<h3>💰 총 평가자산: {total:,.0f}원</h3>
+<table style='width:100%;border-collapse:collapse' cellpadding=6>
+<tr style='text-align:left;color:#888'><th>구분</th><th>현재 비중</th><th>제안 비중</th><th>제안 금액</th></tr>
+{rows}
+</table>
+<p style='color:#888;font-size:13px'>※ 제안 비중은 시장 국면 규칙 기반. 적용은 텔레그램 ✅승인 버튼으로.</p>
+</div>
+
+<div style='background:#fff;border:1px solid #eee;border-radius:12px;padding:14px;margin:10px 0'>
+<h3>📦 보유 코인</h3>
+<table style='width:100%;border-collapse:collapse' cellpadding=6>
+<tr style='text-align:left;color:#888'><th>코인</th><th>수량</th><th>평단</th><th>현재가</th><th>평가액</th><th>손익</th></tr>
+{hrows}
+</table>
+</div>
+
+<div style='background:#fff;border:1px solid #eee;border-radius:12px;padding:14px;margin:10px 0'>
+<h3>🤖 봇별 현황</h3>
+{botblocks}
+</div>
+<p style='color:#aaa;font-size:12px'>참고용 정보이며 투자 조언이 아닙니다.</p>
+</body></html>"""
+
+
+def maybe_propose(ctx: dict) -> None:
+    cur = ctx["weights_cur"]
+    prop = ctx["regime"]["weights"]
+    keys = set(cur) | set(prop)
+    if not any(abs(prop.get(k, 0) - cur.get(k, 0)) > 0.02 for k in keys):
+        return  # 현재 비중과 사실상 같음 → 제안 안 함
+    allocation.write_pending({"weights": prop, "regime": ctx["regime"]["label"],
+                              "ts": time.time()})
+    cash = ctx["regime"]["cash"]
+    msg = (f"⚖️ <b>비중 조정 제안</b>\n"
+           f"시장 국면: <b>{ctx['regime']['label']}</b>\n"
+           f"현재 → 제안\n"
+           f"• 대형 {cur.get('majors',0)*100:.0f}% → {prop.get('majors',0)*100:.0f}%\n"
+           f"• 잠수 {cur.get('swing',0)*100:.0f}% → {prop.get('swing',0)*100:.0f}%\n"
+           f"• 고위험 {cur.get('highrisk',0)*100:.0f}% → {prop.get('highrisk',0)*100:.0f}%\n"
+           f"• 현금 → {cash*100:.0f}%\n"
+           f"승인하면 봇들이 이 비중으로 운용합니다.")
+    notifier.send_buttons(msg, [[("✅ 승인", "approve_weights"),
+                                 ("❌ 거절", "reject_weights")]])
+
+
+def main() -> None:
+    ctx = gather()
+    OUT.write_text(build_html(ctx), encoding="utf-8")
+    print(f"대시보드 생성: {OUT}")
+    notifier.send_document(str(OUT), caption=f"🪙 포트폴리오 대시보드 ({now_kst():%m-%d %H:%M})")
+    maybe_propose(ctx)
+
+
+if __name__ == "__main__":
+    main()
