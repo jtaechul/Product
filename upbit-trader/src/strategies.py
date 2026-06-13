@@ -90,6 +90,18 @@ def macd(
     return pos
 
 
+def trend_filter(df: pd.DataFrame, ma: int = 200) -> pd.Series:
+    """추세 레짐 필터: 종가가 N기간 이동평균 위면 보유(1), 아래면 현금(0).
+
+    대형코인의 고전적 '약세장 회피' 기법. 강세장에선 buy&hold 와 거의 같이 따라가고,
+    큰 하락장(MA 이탈)에선 현금으로 빠져 최대낙폭(MDD)을 크게 줄이는 것이 목적이다.
+    수익 극대화가 아니라 '위험 대비 수익(Calmar)' 개선을 노린다.
+    """
+    sma = df["close"].rolling(ma).mean()
+    pos = (df["close"] > sma).astype(int)
+    return pos.fillna(0)
+
+
 # 전략 이름 → 함수 매핑 (백테스트 비교에 사용)
 STRATEGIES = {
     "이동평균 교차(5/20)": ma_crossover,
@@ -97,4 +109,5 @@ STRATEGIES = {
     "변동성 돌파(k=0.5)": volatility_breakout,
     "볼린저밴드(20, 2σ)": bollinger_bands,
     "MACD(12/26/9)": macd,
+    "추세필터(200MA)": trend_filter,
 }
