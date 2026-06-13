@@ -257,11 +257,11 @@ def main() -> None:
                    f"(지금까지 매도 {sells}회)")
         return "\n".join(out)
 
-    notifier.start_heartbeat(status, interval_sec=3600, stop=stop)
-    # 텔레그램에서 아무 메시지(예: /상태)를 보내면 즉시 현재 상태로 회신
-    notifier.start_command_listener(status, stop=stop)
+    # 공유 상태 체제: 잠수함+대형코인 봇이 한 채팅을 공유 → '상태' 한 번에 두 봇 정보가
+    # 합쳐서 나오고, 하트비트도 합쳐서 한 번만 온다. (매매 알림은 각 봇이 따로 전송)
+    notifier.run_shared("1_잠수함", status, stop=stop)
     if notifier.enabled():
-        log("텔레그램에 아무 말이나 보내면 즉시 상태를 회신합니다 (강제 하트비트)")
+        log("텔레그램에 아무 말이나 보내면 두 봇 상태를 한 번에 회신합니다")
 
     try:
         while True:

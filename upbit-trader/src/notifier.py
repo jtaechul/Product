@@ -19,6 +19,7 @@ import threading
 import time
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 from .timeutil import now_kst  # 모든 표시 시각을 한국시간(KST)으로 통일
 
@@ -125,3 +126,127 @@ def start_command_listener(get_status, stop: threading.Event | None = None
     th = threading.Thread(target=loop, daemon=True)
     th.start()
     return th
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# 여러 봇(잠수함 + 대형코인)을 '한 텔레그램 채팅'에서 함께 다루기.
+#
+# 문제: 봇 프로세스마다 따로 getUpdates 를 폴링하면, '상태' 메시지를 서로 가로채
+#       번갈아 답한다. 또 하트비트도 봇마다 따로 온다.
+# 해결: ① 각 봇은 자기 상태를 공유 파일(.botstate/status_<name>.txt)에 주기적으로 기록.
+#       ② 오직 '한 프로세스'만(락으로 선출) 텔레그램을 폴링하고, 모든 상태파일을 합쳐서
+#          한 번에 답한다. 하트비트도 그 한 프로세스가 합쳐서 보낸다.
+# 이렇게 하면 '상태' 한 번에 두 봇 정보가 모두 나온다. (매매 알림은 각 봇이 따로 보냄)
+# ─────────────────────────────────────────────────────────────────────────
+
+_STATE_DIR = Path(__file__).resolve().parent.parent / ".botstate"
+
+
+def _state_dir() -> Path:
+    _STATE_DIR.mkdir(exist_ok=True)
+    return _STATE_DIR
+
+
+def publish_status(name: str, text: str) -> None:
+    """이 봇의 현재 상태를 공유 파일에 기록(다른 봇/리스너가 합쳐 읽음)."""
+    try:
+        (_state_dir() / f"status_{name}.txt").write_text(text, encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _read_all_statuses() -> str:
+    """모든 봇의 상태파일을 합쳐 하나의 메시지로. 오래된(>10분) 건 경고 표시."""
+    parts = []
+    try:
+        for f in sorted(_state_dir().glob("status_*.txt")):
+            try:
+                txt = f.read_text(encoding="utf-8").strip()
+                if not txt:
+                    continue
+                age = time.time() - f.stat().st_mtime
+                if age > 600:
+                    txt += (f"\n<i>(이 봇 상태가 {int(age // 60)}분째 갱신 안 됨 — "
+                            f"점검 필요)</i>")
+                parts.append(txt)
+            except Exception:
+                pass
+    except Exception:
+        pass
+    return "\n\n──────────\n\n".join(parts) if parts else "상태 정보 없음"
+
+
+def _own_listener(ttl: int = 90) -> bool:
+    """단일 폴러 선출 락. 내가 소유(또는 갱신)하면 True. 소유자 죽으면 ttl 후 인계."""
+    lock = _state_dir() / "listener.lock"
+    try:
+        if lock.exists() and (time.time() - lock.stat().st_mtime) < ttl:
+            owner = ""
+            try:
+                owner = lock.read_text().strip()
+            except Exception:
+                pass
+            if owner == str(os.getpid()):
+                lock.touch()      # 내 소유 → 갱신
+                return True
+            return False          # 다른 프로세스가 살아있는 소유자
+        lock.write_text(str(os.getpid()))   # 비었거나 만료 → 내가 차지
+        return True
+    except Exception:
+        return True
+
+
+def run_shared(name: str, get_status, stop: threading.Event | None = None,
+               heartbeat_sec: int = 3600, publish_sec: int = 30) -> None:
+    """이 봇을 '공유 상태' 체제로 운영(여러 봇이 한 채팅을 공유).
+
+    · publish_sec 마다 get_status() 를 공유파일에 기록
+    · 락을 가진 한 프로세스만 텔레그램을 폴링 → 어떤 메시지든 '모든 봇 상태'를 합쳐 회신
+      + heartbeat_sec 마다 합친 하트비트 전송
+    미설정(토큰 없음)이면 아무 것도 하지 않음.
+    """
+    if not enabled():
+        return
+
+    def publisher():
+        while not (stop and stop.is_set()):
+            try:
+                publish_status(name, get_status())
+            except Exception:
+                pass
+            stop.wait(publish_sec) if stop else time.sleep(publish_sec)
+
+    def listener():
+        global _offset
+        last_hb = time.time()   # 시작 직후 하트비트 폭주 방지(다음 주기부터)
+        while not (stop and stop.is_set()):
+            if not _own_listener():
+                time.sleep(10)
+                continue
+            token, chat = _creds()
+            try:
+                if time.time() - last_hb >= heartbeat_sec:
+                    send(f"💓 <b>하트비트</b> {now_kst():%m-%d %H:%M}\n"
+                         f"{_read_all_statuses()}")
+                    last_hb = time.time()
+                params: dict = {"timeout": 25}
+                if _offset is not None:
+                    params["offset"] = _offset
+                url = (f"https://api.telegram.org/bot{token}/getUpdates?"
+                       + urllib.parse.urlencode(params))
+                with urllib.request.urlopen(url, timeout=30) as r:
+                    updates = json.loads(r.read()).get("result", [])
+                for upd in updates:
+                    _offset = upd["update_id"] + 1
+                    msg = upd.get("message", {})
+                    text = (msg.get("text") or "").strip()
+                    frm = str(msg.get("chat", {}).get("id", ""))
+                    if not text or frm != str(chat):
+                        continue
+                    send(f"📟 <b>요청 응답</b> {now_kst():%m-%d %H:%M}\n"
+                         f"{_read_all_statuses()}")
+            except Exception:
+                time.sleep(5)
+
+    threading.Thread(target=publisher, daemon=True).start()
+    threading.Thread(target=listener, daemon=True).start()
