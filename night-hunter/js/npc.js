@@ -26,12 +26,10 @@ const NPCSystem = window.NPCSystem = {
         this._applyManModels();
     },
 
-    // NPC를 GLB 모델로 업그레이드 (ChibiCharacter 로드 완료 후)
+    // 캐릭터 GLB 로딩만 시작 — 실제 적용은 update()에서 가까운 NPC만 점진 생성한다.
+    // (preload 완료 시 28개를 한꺼번에 만들면 아이폰에서 메모리 스파이크로 크래시)
     _applyManModels() {
-        if (typeof ChibiCharacter === 'undefined' || !ChibiCharacter.preload) return;
-        ChibiCharacter.preload().then(() => {
-            this.npcs.forEach(npc => this._upgradeNpcToMan(npc));
-        }).catch(() => {});
+        if (typeof ChibiCharacter !== 'undefined' && ChibiCharacter.preload) ChibiCharacter.preload();
     },
 
     // NPC 역할/성별에 따른 GLB 메시 선택: 수배범(suspect)→suspect, 남자 시민→npc-man, 여자 시민→woman
@@ -201,7 +199,7 @@ const NPCSystem = window.NPCSystem = {
             npc.wanderTarget = { x: safe.x, z: safe.z };
             this.npcs.push(npc);
             this._nightExtras.push(npc);
-            this._upgradeNpcToMan(npc);   // 밤 수배범도 남자면 npc-man 적용
+            // GLB 적용은 update()에서 거리 기반으로 (스파이크 방지)
         });
     },
 
@@ -492,8 +490,16 @@ const NPCSystem = window.NPCSystem = {
     },
 
     update(playerPos, delta, time) {
-        // 매 프레임 GLB 미적용 NPC 보정 — 로딩 타이밍/누락으로 절차적 NPC가 남지 않게 함
-        for (let i = 0; i < this.npcs.length; i++) if (!this.npcs[i]._glb) this._upgradeNpcToMan(this.npcs[i]);
+        // GLB 인스턴스는 "가까이 올 때만" 생성 — 월드 로드 직후 ~30개를 한꺼번에 만드는
+        // 메모리 스파이크(아이폰 크래시)를 막는다. 먼 NPC는 어차피 컬링으로 숨겨짐.
+        const _UP = ((window.GameQuality && window.GameQuality.cfg && window.GameQuality.cfg.fogFar) || 120) * 0.6;
+        const _UP_SQ = _UP * _UP;
+        for (let i = 0; i < this.npcs.length; i++) {
+            const n = this.npcs[i];
+            if (n._glb) continue;
+            const dx = playerPos.x - n.mesh.position.x, dz = playerPos.z - n.mesh.position.z;
+            if (dx * dx + dz * dz <= _UP_SQ) this._upgradeNpcToMan(n);
+        }
 
         if (!gameState.isDay) {
             // Night: civilians hide. All suspects visible PLUS extra wanted appear.
