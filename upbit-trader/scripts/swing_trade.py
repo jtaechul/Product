@@ -20,12 +20,12 @@ import argparse
 import sys
 import threading
 import time
-from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src import notifier  # noqa: E402
+from src.timeutil import now_kst as datetime_now  # 한국시간(KST)으로 표시  # noqa: E402
 from src.swing import SwingConfig  # noqa: E402
 from src.swing_trader import SwingTrader, scan_candidates  # noqa: E402
 from src.upbit_quotation import UpbitQuotation, candles_to_dataframe  # noqa: E402
@@ -34,7 +34,7 @@ MIN_ORDER_KRW = 5000
 
 
 def log(msg: str, push: bool = False) -> None:
-    print(f"[{datetime.now():%m-%d %H:%M:%S}] {msg}", flush=True)
+    print(f"[{datetime_now():%m-%d %H:%M:%S}] {msg}", flush=True)
     if push:
         notifier.send(msg)
 
@@ -87,7 +87,7 @@ class Shared:
             self.cands = cands
             self.btc_ok = btc_ok
             self.scanned = scanned
-            self.updated_at = datetime.now()
+            self.updated_at = datetime_now()
 
     def picks(self):
         with self.lock:
@@ -265,7 +265,7 @@ def main() -> None:
 
     try:
         while True:
-            now = datetime.now()
+            now = datetime_now()
             for rec in engine.check_exits(now):
                 won = rec.gain * args.invest
                 head = ("✅ <b>매도 — 이익 실현 🎉</b>" if rec.gain > 0

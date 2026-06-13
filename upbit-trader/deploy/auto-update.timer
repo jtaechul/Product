@@ -1,0 +1,14 @@
+[Unit]
+# 10분마다 auto-update.service 를 실행 → 최신 코드 자동 반영
+Description=Run auto-update every 10 minutes
+
+[Timer]
+# 부팅 2분 후 첫 실행, 이후 10분 간격(이전 실행 완료 기준)
+OnBootSec=2min
+OnUnitActiveSec=10min
+# VM 이 꺼졌다 켜져서 놓친 주기가 있으면 부팅 후 만회 실행
+Persistent=true
+Unit=auto-update.service
+
+[Install]
+WantedBy=timers.target
