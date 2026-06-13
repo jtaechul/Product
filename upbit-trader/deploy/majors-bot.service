@@ -11,8 +11,8 @@ Type=simple
 User=botuser
 WorkingDirectory=/home/botuser/Product/upbit-trader
 EnvironmentFile=/home/botuser/Product/upbit-trader/.env
-# 모의(가짜 돈)로 먼저 검증. 실거래는 끝에 --live 를 붙입니다.
-ExecStart=/home/botuser/Product/upbit-trader/.venv/bin/python -m scripts.majors_trade --invest 200000
+# 실거래(--live): 총 10만원을 BTC·ETH 각 5만으로. 모의로 보려면 --live 를 빼세요.
+ExecStart=/home/botuser/Product/upbit-trader/.venv/bin/python -m scripts.majors_trade --invest 100000 --live
 Restart=always
 RestartSec=10
 # 잠수함 봇과 로그 분리
