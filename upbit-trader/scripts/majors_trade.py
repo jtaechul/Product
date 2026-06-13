@@ -87,9 +87,12 @@ def main() -> None:
     p = argparse.ArgumentParser(description="대형코인 추세필터 레짐 자동매매 봇")
     p.add_argument("--invest", type=float, default=300_000,
                    help="총 투자금(코인 수로 균등 분할)")
-    p.add_argument("--ma", type=int, default=200, help="추세 이동평균 기간(일)")
-    p.add_argument("--buffer", type=float, default=0.0,
-                   help="MA 대비 완충 비율(휩쏘 완화). 예 0.02=±2%")
+    p.add_argument("--ma", type=int, default=150,
+                   help="추세 이동평균 기간(일). 교차검증 기본값 150")
+    p.add_argument("--buffer", type=float, default=0.02,
+                   help="MA 대비 ±완충 밴드(휩쏘 완화). 기본 0.02=±2%")
+    p.add_argument("--slope", type=int, default=0,
+                   help="MA가 N일 전보다 높을 때만 보유(우상향 확인, 0=끔)")
     p.add_argument("--coins", default="KRW-BTC,KRW-ETH,KRW-XRP",
                    help="대상 마켓 콤마구분")
     p.add_argument("--interval", type=int, default=1800,
@@ -98,7 +101,8 @@ def main() -> None:
     args = p.parse_args()
 
     coins = tuple(c.strip() for c in args.coins.split(",") if c.strip())
-    cfg = MajorsConfig(coins=coins, ma_bars=args.ma, buffer=args.buffer)
+    cfg = MajorsConfig(coins=coins, ma_bars=args.ma, buffer=args.buffer,
+                       slope_bars=args.slope)
     per_coin = args.invest / len(coins)
     q = UpbitQuotation()
 
@@ -195,10 +199,10 @@ def main() -> None:
                     df = broker.get_daily(c, count=args.ma + 10)
                     if df is None or len(df) < args.ma + 1:
                         continue
-                    r = regime(df, cfg)
+                    held = c in positions
+                    r = regime(df, cfg, held=held)
                     info[c] = r
                     price = prices.get(c, r["price"])
-                    held = c in positions
 
                     # 200일선 위 + 미보유 → 매수
                     if r["in_market"] and not held:
