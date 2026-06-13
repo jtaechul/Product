@@ -6,6 +6,13 @@
 > - 3~5줄 이내, 쉬운 한국어. 전문용어는 풀어서 또는 괄호로 설명.
 > - "무엇을 / 왜 / 결과" 위주. 코드·수치 나열 최소화.
 > - 길고 자세한 내용이 필요하면 그건 정리 *뒤*에 따로 둔다(요약이 먼저).
+>
+> ## ⭐ 터미널/SSH 안내 원칙 (사용자는 터미널 초보)
+> 사용자는 SSH·터미널·명령어를 다룰 줄 모른다. 서버(클라우드) 작업을 안내할 때는:
+> - **키 하나, 한 단계까지** 빠짐없이. (예: "`q` 를 누르세요", "Ctrl 키를 누른 채 X")
+> - 화면에 뜬 낯선 것(`(END)`, 편집기, 에러 등)은 **무슨 화면인지 + 어떻게 빠져나오는지** 설명.
+> - **왜 하는지 원리**를 한두 줄로 쉽게 곁들인다(비유 환영).
+> - 막히면 "그 화면을 캡처해서 보내달라"고 안내하고, 추측 대신 확인 후 진행.
 
 A browser-based survival game built with vanilla HTML5 Canvas, CSS, and JavaScript. The player controls a dinosaur, fights waves of enemies, collects XP, and picks upgrades on level-up. Deployed via Firebase Hosting.
 
