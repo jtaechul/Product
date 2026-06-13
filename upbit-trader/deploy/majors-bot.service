@@ -1,0 +1,23 @@
+[Unit]
+# 대형코인(BTC·ETH) 추세 봇 — 잠수함 스윙 봇과 '병행' 가동용 systemd 서비스.
+# (auto-update.sh 가 swing-bot.service 를 본떠 자동 설치하므로, 보통 직접 만질 일 없음)
+Description=Upbit Majors (BTC·ETH) Trend Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# User/경로는 본인 환경에 맞게(swing-bot.service 와 동일하게) 수정하세요.
+User=botuser
+WorkingDirectory=/home/botuser/Product/upbit-trader
+EnvironmentFile=/home/botuser/Product/upbit-trader/.env
+# 모의(가짜 돈)로 먼저 검증. 실거래는 끝에 --live 를 붙입니다.
+ExecStart=/home/botuser/Product/upbit-trader/.venv/bin/python -m scripts.majors_trade --invest 200000
+Restart=always
+RestartSec=10
+# 잠수함 봇과 로그 분리
+StandardOutput=append:/home/botuser/Product/upbit-trader/majors.log
+StandardError=append:/home/botuser/Product/upbit-trader/majors.log
+
+[Install]
+WantedBy=multi-user.target

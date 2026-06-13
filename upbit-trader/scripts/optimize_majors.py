@@ -66,9 +66,26 @@ def metrics_for(df, positions, tf):
     return risk_metrics(res.equity, PERIODS[tf], positions=positions)
 
 
+def yearly_positive_frac(df, pos, tf):
+    """연(또는 분기)별 수익이 +인 비율 — '거의 항상 수익'인지 가늠(높을수록 꾸준)."""
+    res = run_backtest(df, pos)
+    eq = res.equity.reset_index(drop=True)
+    d = pd.to_datetime(df["datetime"]).reset_index(drop=True)
+    g = pd.DataFrame({"eq": eq.values, "d": d.values})
+    g["bucket"] = g["d"].dt.year if tf == "1D" else g["d"].dt.to_period("Q")
+    wins = tot = 0
+    for _, grp in g.groupby("bucket"):
+        if len(grp) < 2:
+            continue
+        tot += 1
+        if grp["eq"].iloc[-1] / grp["eq"].iloc[0] - 1 > 0:
+            wins += 1
+    return wins / tot if tot else 0.0
+
+
 def evaluate_config(name, make_pos, tf, datasets):
-    """각 코인 뒤40%(검증)에서 평가 → 코인 평균·최악 지표."""
-    rets, calmars, mdds = [], [], []
+    """각 코인 뒤40%(검증)에서 평가 → 코인 평균·최악 지표 + 매매빈도 + 연승률."""
+    rets, calmars, mdds, trades, yrwin = [], [], [], [], []
     for df in datasets:
         cut = int(len(df) * 0.6)
         test = df.iloc[cut:].reset_index(drop=True)
@@ -79,11 +96,14 @@ def evaluate_config(name, make_pos, tf, datasets):
         rets.append(m["total_return"])
         calmars.append(m["calmar"] if np.isfinite(m["calmar"]) else 0.0)
         mdds.append(m["mdd"])
+        trades.append(int((pos.diff() == 1).sum()))   # 0→1 진입 횟수(매매빈도)
+        yrwin.append(yearly_positive_frac(test, pos, tf))
     if not rets:
         return None
     return {"name": name, "ret_avg": np.mean(rets), "ret_min": np.min(rets),
             "calmar_avg": np.mean(calmars), "calmar_min": np.min(calmars),
-            "mdd_avg": np.mean(mdds), "mdd_worst": np.min(mdds), "n": len(rets)}
+            "mdd_avg": np.mean(mdds), "mdd_worst": np.min(mdds),
+            "trades": np.mean(trades), "yrwin": np.min(yrwin), "n": len(rets)}
 
 
 def main():
@@ -100,8 +120,8 @@ def main():
     if not datasets:
         print("데이터 없음"); return
 
-    # 일봉/시간봉 모두 '같은 경제적 horizon(일 단위)'으로 MA 비교 → 교차검증 일관성 확보
-    day_windows = (100, 150, 200)
+    # '매매를 더 자주' 위해 짧은 MA까지 포함해 스윕(20~150일). 같은 경제적 horizon(일)으로 비교.
+    day_windows = (20, 30, 50, 75, 100, 150)
     ma_list = [w * (1 if tf == "1D" else 24) for w in day_windows]
     buffers = [0.0, 0.02, 0.05]
     slopes = [0, (10 if tf == "1D" else 240)]
@@ -119,29 +139,33 @@ def main():
     rows = [r for r in (evaluate_config(n, f, tf, datasets) for n, f in configs) if r]
     base = next((r for r in rows if r["name"].startswith("단순보유")), None)
 
-    # 정렬: 검증 평균 총수익 내림차순
-    rows_by_ret = sorted(rows, key=lambda r: r["ret_avg"], reverse=True)
-    print(f"\n{'='*92}\n[{tf}] 검증구간(뒤40%) 성적 — 총수익 내림차순  "
-          f"(코인 {datasets and len(datasets)}종 평균)\n{'-'*92}")
-    print(f"{'설정':<30}{'평균수익':>10}{'최악코인수익':>12}"
-          f"{'평균Calmar':>11}{'최악Calmar':>11}{'평균MDD':>9}{'최악MDD':>9}")
-    for r in rows_by_ret:
+    # 정렬: 매매빈도 내림차순(자주 매매 우선) → '자주 하면서도 견고한' 설정 보기
+    rows_by_freq = sorted(rows, key=lambda r: r["trades"], reverse=True)
+    print(f"\n{'='*100}\n[{tf}] 검증구간(뒤40%) 성적 — 매매빈도 내림차순  "
+          f"(코인 {len(datasets)}종 평균)\n{'-'*100}")
+    print(f"{'설정':<28}{'매매수':>7}{'연승률':>7}{'평균수익':>9}{'최악코인':>9}"
+          f"{'평균Calmar':>11}{'최악Calmar':>11}{'최악MDD':>9}")
+    for r in rows_by_freq:
         mark = " ◀기준" if base and r is base else ""
-        print(f"{r['name']:<30}{r['ret_avg']*100:>9.0f}%{r['ret_min']*100:>11.0f}%"
+        print(f"{r['name']:<28}{r['trades']:>6.0f}{r['yrwin']*100:>6.0f}%"
+              f"{r['ret_avg']*100:>8.0f}%{r['ret_min']*100:>8.0f}%"
               f"{r['calmar_avg']:>11.2f}{r['calmar_min']:>11.2f}"
-              f"{r['mdd_avg']*100:>8.0f}%{r['mdd_worst']*100:>8.0f}%{mark}")
+              f"{r['mdd_worst']*100:>8.0f}%{mark}")
 
-    # 추천: 단순보유보다 평균수익 높고 + 최악코인도 흑자 + 최악MDD 가 단순보유보다 얕은 설정
+    # 추천: '무조건 수익에 가장 가깝게' = 모든코인 흑자 + 연승률 높음 + 낙폭 얕음. 그중 매매 잦은 순.
     if base:
-        cand = [r for r in rows if not r["name"].startswith(("단순보유",))
-                and r["ret_avg"] > base["ret_avg"] and r["ret_min"] > 0
+        cand = [r for r in rows if not r["name"].startswith("단순보유")
+                and r["ret_min"] > 0 and r["calmar_min"] > 0
                 and r["mdd_worst"] > base["mdd_worst"]]
-        cand = sorted(cand, key=lambda r: r["calmar_avg"], reverse=True)
-        print(f"\n[추천 후보] 단순보유보다 수익↑ & 모든코인 흑자 & 낙폭 더 얕음:")
+        # 견고성(연승률·최악Calmar) 우선, 동급이면 매매 잦은 순
+        cand = sorted(cand, key=lambda r: (round(r["yrwin"], 2), round(r["calmar_min"], 2),
+                                           r["trades"]), reverse=True)
+        print(f"\n[추천] 모든코인 흑자 & 모든코인 Calmar>0 & 낙폭 더 얕음 → 견고+자주 순:")
         if cand:
-            for r in cand[:5]:
-                print(f"  · {r['name']}: 수익 {r['ret_avg']*100:.0f}% "
-                      f"(최악 {r['ret_min']*100:.0f}%), Calmar {r['calmar_avg']:.2f}, "
+            for r in cand[:6]:
+                print(f"  · {r['name']}: 매매 {r['trades']:.0f}회, 연승률 "
+                      f"{r['yrwin']*100:.0f}%, 수익 {r['ret_avg']*100:.0f}% "
+                      f"(최악 {r['ret_min']*100:.0f}%), 최악Calmar {r['calmar_min']:.2f}, "
                       f"최악MDD {r['mdd_worst']*100:.0f}%")
         else:
             print("  (조건 동시충족 없음 — 수익과 낙폭은 맞교환)")
