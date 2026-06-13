@@ -241,13 +241,10 @@ function createWorld(scene) {
     createStreetProps(worldGroup);
     createCityParks(worldGroup);
 
-    // 경찰서 내부 충돌 등록 — 벽/구치소/책상 (입구 갭은 충돌 박스에 미포함 → 통과 가능)
-    if (typeof window._policeColliders !== 'undefined' && window._buildingPositions) {
-        window._policeColliders.forEach(c => window._buildingPositions.push(c));
-        // buildingData 에도 추가 (main.js checkBuildingCollision 이 buildingData 순회)
-        window._policeColliders.forEach(c => {
-            buildingData.push({ x: c.x, z: c.z, w: c.w, d: c.d, h: c.h || 3, type: 'policeWall', hideoutIndex: -1 });
-        });
+    // 경찰서 솔리드 충돌 — player 는 buildingData(위에서 push)로 처리, NPC 회피는 _buildingPositions 에 등록
+    if (window._buildingPositions && window._policeStation) {
+        const ps = window._policeStation;
+        window._buildingPositions.push({ x: ps.x, z: ps.z, w: ps.w, d: ps.d, h: ps.h });
     }
 
     scene.add(worldGroup);
@@ -598,34 +595,47 @@ function buildRodeoStrip(group, RZ_MIN, RZ_MAX, idx) {
 
 function createPoliceStation(group) {
     // z=67: H z=55 도로(asphalt 51~59) 와 H z=85 도로(asphalt 81~89) 사이 공터.
-    // 경찰서 풋프린트(±d/2=±7) 가 두 도로 asphalt 와 전혀 겹치지 않는 유일한 안전 구간(z 66~74).
-    // 도로(남쪽 z=55) 방향 -Z 에 입구 — 통과 가능 + 내부 진입
+    // 경찰서 건물을 업로드한 GLB(police-station.glb)로 대체. 내부 진입 없음 → 솔리드 충돌.
     const x = 0, z = 67;
-    const w = 18, d = 14, h = 14;
-    const building = createPoliceStationShell(group, x, z, w, d, h);
-    // 내부 가구·구치소·취조실 + 충돌 박스 등록
-    createPoliceInterior(group, x, z, w, d, h);
 
-    // Police signage (KOREAN POLICE) — 도로(남쪽) 방향 외벽 상단
-    const cv = document.createElement('canvas');
-    cv.width = 512; cv.height = 96;
-    const ctx = cv.getContext('2d');
-    ctx.fillStyle = '#003399';
-    ctx.fillRect(0, 0, 512, 96);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 56px Inter, sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('경찰서 POLICE', 256, 48);
-    const tex = new THREE.CanvasTexture(cv);
-    const signMesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(10, 1.8),
-        new THREE.MeshStandardMaterial({ map: tex, emissive: 0x001144, emissiveIntensity: 0.3, side: THREE.DoubleSide })
-    );
-    signMesh.position.set(x, h - 1.5, z - d / 2 - 0.30);  // 외벽 표면(z=60-0.2) 보다 살짝 앞
-    signMesh.rotation.y = Math.PI; // -Z (남쪽 도로) 방향
-    group.add(signMesh);
+    // ── 조정 가능 파라미터 (외형/방향 안 맞으면 이 두 개만 바꾸면 됨) ──
+    const POLICE_SCALE = 15;            // 모델 정규화(높이 0.96 단위) → 약 14.4m
+    const POLICE_ROT_Y = Math.PI / 2;   // 넓은 면이 도로(-Z)를 향하게. 뒤가 보이면 -Math.PI/2 로.
+    // 모델 로컬 bbox: X[-0.25,0.25] Y[-0.48,0.48] Z[-0.50,0.50]
+    const MIN_Y = -0.48;
+    const rotSwap = Math.abs(Math.sin(POLICE_ROT_Y)) > 0.5;   // ±90° 면 X/Z 폭 교환
+    const w = (rotSwap ? 1.00 : 0.49) * POLICE_SCALE;
+    const d = (rotSwap ? 0.49 : 1.00) * POLICE_SCALE;
+    const h = 0.96 * POLICE_SCALE;
 
-    // Police lights (blue+red flashing on roof)
+    // GLB 배치 홀더 (스케일·회전·바닥정렬)
+    const holder = new THREE.Group();
+    holder.position.set(x, -MIN_Y * POLICE_SCALE, z);   // 모델 바닥을 지면(y=0)에 맞춤
+    holder.rotation.y = POLICE_ROT_Y;
+    holder.scale.setScalar(POLICE_SCALE);
+    group.add(holder);
+    try {
+        new THREE.GLTFLoader().load('assets/models/police-station.glb?v=1', (gltf) => {
+            gltf.scene.traverse(o => {
+                if (!o.isMesh) return;
+                o.castShadow = true; o.receiveShadow = true;
+                const mats = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []);
+                mats.forEach(m => {
+                    if (!m) return;
+                    // 밤에도 식별되도록 약한 자체발광
+                    if (m.map) {
+                        m.emissiveMap = m.map;
+                        if (m.emissive && m.emissive.setRGB) m.emissive.setRGB(1, 1, 1);
+                        if ('emissiveIntensity' in m) m.emissiveIntensity = 0.16;
+                    }
+                    m.needsUpdate = true;
+                });
+            });
+            holder.add(gltf.scene);
+        }, undefined, (err) => console.warn('[police] GLB 로드 실패', err));
+    } catch (e) { console.warn('[police] GLTFLoader 예외', e); }
+
+    // 옥상 청·적 경광등 (식별용, 깜빡임은 애니메이션 시스템이 처리)
     const blueLight = new THREE.Mesh(
         new THREE.SphereGeometry(0.5, 16, 16),
         new THREE.MeshStandardMaterial({ color: 0x0066ff, emissive: 0x0066ff, emissiveIntensity: 1.0 })
@@ -633,7 +643,6 @@ function createPoliceStation(group) {
     blueLight.position.set(x - 2, h + 0.7, z);
     blueLight.userData.policeLight = 'blue';
     group.add(blueLight);
-
     const redLight = new THREE.Mesh(
         new THREE.SphereGeometry(0.5, 16, 16),
         new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 1.0 })
@@ -642,20 +651,18 @@ function createPoliceStation(group) {
     redLight.userData.policeLight = 'red';
     group.add(redLight);
 
-    // Flagpole + Korean flag area
+    // 깃대
     const pole = new THREE.Mesh(
         new THREE.CylinderGeometry(0.1, 0.1, 10, 8),
         new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.4, metalness: 0.6 })
     );
-    pole.position.set(x + 10, 5, z + 7);
+    pole.position.set(x + w / 2 + 1.5, 5, z - d / 2 + 1);
     group.add(pole);
-
-    // (경찰서 앞 입간판 제거 — 외벽 간판·청적 경광등·외관 디테일로 식별)
 
     // 단일 출처 — PRINCIPLES.md #9 (다른 모듈은 window._policeStation 참조)
     window._policeStation = { x, z, w, d, h, frontZ: z - d / 2, backZ: z + d / 2 };
-    // walkable: true → checkBuildingCollision 이 무시. 외피 4벽 collider 만 차단(입구 갭 통과 가능).
-    return { mesh: building, x, z, w, d, h, type: 'police', zone: 'POLICE', walkable: true };
+    // walkable 미지정 → checkBuildingCollision 이 솔리드 박스로 차단 (내부 진입 없음)
+    return { x, z, w, d, h, type: 'police', zone: 'POLICE' };
 }
 
 // 경찰서 외피 — 4벽(남측 입구 갭) + 옥상 + 콘크리트 베이스. 단일 박스 아닌 분할 벽으로 내부 가시화.
