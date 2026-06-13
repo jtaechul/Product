@@ -179,10 +179,11 @@ def main() -> None:
         out.append(f"• 누적 확정 손익(모의): {realized:+,.0f}원")
         return "\n".join(out)
 
-    notifier.start_heartbeat(status, interval_sec=3600, stop=stop)
-    notifier.start_command_listener(status, stop=stop)
+    # 공유 상태 체제: 잠수함+대형코인 봇이 한 채팅을 공유 → '상태' 한 번에 두 봇 정보가
+    # 합쳐서 나온다(이름 접두 2_ 로 잠수함 다음에 표시). 하트비트도 합쳐서 한 번만.
+    notifier.run_shared("2_대형코인", status, stop=stop)
     if notifier.enabled():
-        log("텔레그램에 아무 말이나 보내면 즉시 상태를 회신합니다")
+        log("텔레그램에 아무 말이나 보내면 두 봇 상태를 한 번에 회신합니다")
 
     try:
         while True:

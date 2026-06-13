@@ -29,3 +29,6 @@ dashboard*.html
 .DS_Store
 .idea/
 .vscode/
+
+# 봇 간 공유 상태(런타임)
+.botstate/
