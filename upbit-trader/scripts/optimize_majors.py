@@ -89,10 +89,14 @@ def evaluate_config(name, make_pos, tf, datasets):
 def main():
     ap = argparse.ArgumentParser(description="대형코인 전략 수익 개선 탐색+검증")
     ap.add_argument("--tf", choices=["1D", "1h"], default="1D")
+    ap.add_argument("--coins", default=",".join(COINS),
+                    help="대상 코인 콤마구분(예: BTC,ETH). 기본 BTC,ETH,XRP")
     args = ap.parse_args()
     tf = args.tf
+    coins = [c.strip().upper() for c in args.coins.split(",") if c.strip()]
     load = load_daily if tf == "1D" else load_hourly
-    datasets = [d for d in (load(c) for c in COINS) if d is not None and len(d) > 600]
+    datasets = [d for d in (load(c) for c in coins) if d is not None and len(d) > 600]
+    print(f"대상 코인: {', '.join(coins)}  ({len(datasets)}종 로드)")
     if not datasets:
         print("데이터 없음"); return
 
