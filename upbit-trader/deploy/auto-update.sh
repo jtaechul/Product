@@ -57,9 +57,10 @@ ensure_clone_bot() {  # $1=서비스명 $2=Description $3=실행모듈+인자 $4
     echo "  ✅ $1 설치/갱신·재시작"
 }
 
-ensure_rebalance() {
+# oneshot 서비스+타이머를 swing-bot 의 User/경로/venv 를 본떠 생성·설치
+ensure_oneshot_timer() {  # $1=이름 $2=Description $3=실행모듈 $4=타이머파일명 $5=즉시1회(1/0)
     local SWING=/etc/systemd/system/swing-bot.service
-    local RS=/etc/systemd/system/rebalance.service RT=/etc/systemd/system/rebalance.timer
+    local RS="/etc/systemd/system/$1.service" RT="/etc/systemd/system/$1.timer"
     [ -f "$SWING" ] || return 0
     [ -f "$RT" ] && return 0
     local PY WD USERN ENVF
@@ -69,18 +70,18 @@ ensure_rebalance() {
     ENVF="$(grep '^EnvironmentFile=' "$SWING" | head -1 | cut -d= -f2-)"
     [ -z "$PY" ] && return 0
     {
-        echo "[Unit]"; echo "Description=Upbit portfolio rebalance (50/30/20)"
-        echo "After=network-online.target"; echo "[Service]"; echo "Type=oneshot"
+        echo "[Unit]"; echo "Description=$2"; echo "After=network-online.target"
+        echo "[Service]"; echo "Type=oneshot"
         [ -n "$USERN" ] && echo "User=$USERN"
         [ -n "$WD" ] && echo "WorkingDirectory=$WD"
         [ -n "$ENVF" ] && echo "EnvironmentFile=$ENVF"
-        echo "ExecStart=$PY -m scripts.rebalance"
+        echo "ExecStart=$PY -m $3"
     } > "$RS"
-    cp "$UPBIT/deploy/rebalance.timer" "$RT" 2>/dev/null || return 0
+    cp "$UPBIT/deploy/$4" "$RT" 2>/dev/null || return 0
     systemctl daemon-reload
-    systemctl enable --now rebalance.timer >/dev/null 2>&1 || true
-    systemctl start rebalance.service >/dev/null 2>&1 || true
-    echo "  ✅ rebalance.timer(월간) 설치"
+    systemctl enable --now "$1.timer" >/dev/null 2>&1 || true
+    [ "$5" = "1" ] && systemctl start "$1.service" >/dev/null 2>&1 || true
+    echo "  ✅ $1.timer 설치"
 }
 
 ensure_swing_live
@@ -88,7 +89,10 @@ ensure_clone_bot "majors-bot"   "Upbit Majors (BTC-ETH) Trend Bot" \
     "scripts.majors_trade --invest 100000 --live" "majors.log"
 ensure_clone_bot "highrisk-bot" "Upbit High-Risk Momentum Bot" \
     "scripts.highrisk_trade" "highrisk.log"          # 모의(--live 없음)
-ensure_rebalance
+ensure_oneshot_timer "rebalance" "Upbit portfolio rebalance (50/30/20)" \
+    "scripts.rebalance" "rebalance.timer" 1          # 설치 즉시 1회 배분
+ensure_oneshot_timer "portfolio-review" "Upbit portfolio review (dashboard+proposal)" \
+    "scripts.portfolio_review" "portfolio-review.timer" 1   # 설치 즉시 1회 대시보드 전송
 
 # ── 3) 배포 커밋 != 실행 중 커밋 이면 모든 봇 재시작 (수동 pull 포함 확실 반영) ──
 HEAD="$(git rev-parse HEAD 2>/dev/null)"

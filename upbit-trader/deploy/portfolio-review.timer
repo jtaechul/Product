@@ -1,0 +1,12 @@
+[Unit]
+Description=Run portfolio review (dashboard + regime proposal) daily
+
+[Timer]
+# 매일 09:00(서버시간) + 부팅 5분 후. 대시보드 전송 + 국면 비중 제안.
+OnCalendar=*-*-* 09:00:00
+OnBootSec=5min
+Persistent=true
+Unit=portfolio-review.service
+
+[Install]
+WantedBy=timers.target

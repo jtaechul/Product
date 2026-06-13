@@ -57,6 +57,83 @@ def send(text: str) -> bool:
         return False
 
 
+def send_buttons(text: str, buttons: list[list[tuple[str, str]]]) -> bool:
+    """인라인 버튼이 달린 메시지 전송. buttons=[[(라벨, callback_data), ...], ...]."""
+    token, chat = _creds()
+    if not (token and chat):
+        return False
+    try:
+        markup = {"inline_keyboard": [[{"text": l, "callback_data": d}
+                                       for l, d in row] for row in buttons]}
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        data = urllib.parse.urlencode(
+            {"chat_id": chat, "text": text, "parse_mode": "HTML",
+             "reply_markup": json.dumps(markup)}
+        ).encode()
+        with urllib.request.urlopen(url, data=data, timeout=10) as r:
+            return r.status == 200
+    except Exception:
+        return False
+
+
+def send_document(path: str, caption: str = "") -> bool:
+    """파일(예: HTML 대시보드)을 텔레그램 문서로 전송 (multipart/form-data)."""
+    token, chat = _creds()
+    if not (token and chat):
+        return False
+    try:
+        with open(path, "rb") as f:
+            content = f.read()
+        fname = os.path.basename(path)
+        boundary = "----botform" + str(int(time.time()))
+        parts = []
+        for key, val in (("chat_id", chat), ("caption", caption)):
+            parts.append(f"--{boundary}\r\nContent-Disposition: form-data; "
+                         f'name="{key}"\r\n\r\n{val}\r\n')
+        head = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"document\"; "
+                f'filename="{fname}"\r\nContent-Type: text/html\r\n\r\n')
+        body = ("".join(parts) + head).encode() + content + f"\r\n--{boundary}--\r\n".encode()
+        url = f"https://api.telegram.org/bot{token}/sendDocument"
+        req = urllib.request.Request(
+            url, data=body,
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return r.status == 200
+    except Exception:
+        return False
+
+
+def _answer_callback(token: str, cq_id: str) -> None:
+    """텔레그램 콜백(버튼 탭) 응답 — 버튼 로딩 표시 해제."""
+    try:
+        url = f"https://api.telegram.org/bot{token}/answerCallbackQuery"
+        data = urllib.parse.urlencode({"callback_query_id": cq_id}).encode()
+        urllib.request.urlopen(url, data=data, timeout=10)
+    except Exception:
+        pass
+
+
+def _handle_weight_callback(data: str) -> None:
+    """비중조정 승인/거절 버튼 처리 → 승인 시 목표비중 적용."""
+    from . import allocation  # 지연 임포트(순환 방지)
+    if data.startswith("approve_weights"):
+        prop = allocation.read_pending()
+        if prop and prop.get("weights"):
+            allocation.set_weights(prop["weights"])
+            allocation.clear_pending()
+            w = prop["weights"]
+            cash = max(0.0, 1.0 - sum(w.values()))
+            send(f"✅ <b>비중 조정 승인됨</b>\n"
+                 f"대형 {w.get('majors',0)*100:.0f}% / 잠수 {w.get('swing',0)*100:.0f}% / "
+                 f"고위험 {w.get('highrisk',0)*100:.0f}% / 현금 {cash*100:.0f}%\n"
+                 f"봇들이 다음 점검부터 이 비중으로 운용합니다.")
+        else:
+            send("⚠️ 적용할 제안이 없어요(이미 처리됨).")
+    elif data.startswith("reject_weights"):
+        allocation.clear_pending()
+        send("❌ 비중 조정 제안을 거절했어요. 기존 비중을 유지합니다.")
+
+
 def start_heartbeat(get_status, interval_sec: int = 3600,
                     stop: threading.Event | None = None) -> threading.Thread | None:
     """interval_sec 마다 get_status() 문자열을 텔레그램으로 보내는 데몬 스레드.
@@ -238,6 +315,16 @@ def run_shared(name: str, get_status, stop: threading.Event | None = None,
                     updates = json.loads(r.read()).get("result", [])
                 for upd in updates:
                     _offset = upd["update_id"] + 1
+                    # 인라인 버튼 탭(비중조정 승인/거절) 처리
+                    cq = upd.get("callback_query")
+                    if cq:
+                        if str(cq.get("from", {}).get("id", "")) == str(chat):
+                            try:
+                                _handle_weight_callback(cq.get("data", ""))
+                            except Exception:
+                                pass
+                        _answer_callback(token, cq.get("id", ""))
+                        continue
                     msg = upd.get("message", {})
                     text = (msg.get("text") or "").strip()
                     frm = str(msg.get("chat", {}).get("id", ""))

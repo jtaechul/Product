@@ -60,6 +60,47 @@ def budget_for(name: str, fallback: float) -> float:
     return float(fallback)
 
 
+def current_weights() -> dict:
+    """현재 적용 중인 목표 비중(없으면 기본값)."""
+    a = load_allocation()
+    if a and isinstance(a.get("weights"), dict):
+        return dict(a["weights"])
+    return dict(DEFAULT_WEIGHTS)
+
+
+def set_weights(weights: dict) -> None:
+    """목표 비중 갱신(총자산은 유지). 승인된 국면 조정을 반영할 때 사용."""
+    a = load_allocation() or {"total": 0.0, "weights": dict(DEFAULT_WEIGHTS)}
+    a["weights"] = {k: float(v) for k, v in weights.items()}
+    a["updated"] = time.time()
+    _dir()
+    _ALLOC.write_text(json.dumps(a, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+# ----------------------------- 비중조정 제안(승인 대기) -----------------------------
+_PENDING = _STATE / "pending_weights.json"
+
+
+def write_pending(proposal: dict) -> None:
+    """국면 분석이 만든 '승인 대기' 비중 제안을 저장(텔레그램 버튼이 참조)."""
+    _dir()
+    _PENDING.write_text(json.dumps(proposal, ensure_ascii=False), encoding="utf-8")
+
+
+def read_pending() -> dict | None:
+    try:
+        return json.loads(_PENDING.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def clear_pending() -> None:
+    try:
+        _PENDING.unlink()
+    except Exception:
+        pass
+
+
 # ----------------------------- 코인 소유권 -----------------------------
 def publish_owned(name: str, markets) -> None:
     """이 봇이 현재 보유한 코인 목록을 게시(다른 봇이 피하도록)."""
