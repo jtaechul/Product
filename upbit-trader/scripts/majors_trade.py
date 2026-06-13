@@ -132,6 +132,23 @@ def main() -> None:
         broker = PaperBroker(q)
         log(f"🟡 모의(실시세, 무주문). 대상 {len(coins)}종목 / 종목당 {per_coin:,.0f}원")
 
+    # 모니터링용 '읽기 전용' 거래소 — 매매 모드(실거래/모의)와 무관하게 '실제 업비트 잔고'를
+    # 항상 보여주기 위함. 키만 있으면 모의 모드에서도 내 진짜 보유 코인을 현행화해 표시한다.
+    reader = None
+    try:
+        from src import config as _cfg
+        if args.live:
+            reader = broker.ex
+        elif _cfg.has_api_keys():
+            from src.upbit_exchange import UpbitExchange as _UE
+            reader = _UE()
+    except Exception:
+        reader = None
+    if reader is not None:
+        log("실제 업비트 잔고 조회 연결됨(모니터링)")
+    else:
+        log("⚠️ API키 미설정 — 실제 잔고 조회 불가(상태창에 보유자산 안 보임)")
+
     positions: dict[str, Position] = {}   # 보유 중인 코인 {market: Position}
     realized = 0.0                          # 누적 확정 손익
     pl_label = "확정 손익" if args.live else "확정 손익(모의)"
@@ -191,32 +208,49 @@ def main() -> None:
         with lock:
             info = dict(last["info"])
             at = last["at"]
-        out = ["🏔️ <b>대형코인 현황</b>", "", "<b>[코인별 추세]</b>"]
-        if not info:
-            out.append("• 아직 첫 점검 전이에요…")
+        out = ["🏔️ <b>대형코인 현황</b>"]
+        # ① 실제 업비트 보유 자산 (키 있으면 모드 무관하게 항상 조회 → 현행화)
+        real = {}
+        if reader is not None:
+            try:
+                real = reader.get_holdings() or {}
+            except Exception as exc:
+                out.append(f"⚠️ 잔고 조회 실패: {exc}")
         prices = {}
         try:
             prices = broker.get_prices(list(coins))
         except Exception:
             pass
+
+        out.append("\n<b>[코인별 현황]</b>")
+        total_val = 0.0
         for c in coins:
             r = info.get(c)
-            if not r:
-                continue
-            above = "위 ✅ 보유" if r["in_market"] else "아래 ⛔ 현금"
-            held = c in positions
-            tag = "보유중" if held else "현금"
-            line = (f"• {nm(c)}: {args.ma}일선 대비 {r['dist']*100:+.1f}% "
-                    f"({above}) — 지금 {tag}")
-            if held:
-                cur = prices.get(c, positions[c].entry_price)
-                g = cur / positions[c].entry_price - 1.0
-                line += f", 평가손익 {g*100:+.1f}%"
-            out.append(line)
+            cur = prices.get(c, 0.0)
+            held = real.get(c)
+            if r:
+                trend = ("추세 위 ✅" if r["in_market"] else "추세 아래 ⛔") \
+                        + f" ({r['dist']*100:+.1f}%)"
+            else:
+                trend = "추세 점검 대기"
+            if held and held[0] > 0:
+                vol, avg = held
+                val = vol * (cur or avg)
+                total_val += val
+                g = (cur / avg - 1.0) if (avg > 0 and cur > 0) else 0.0
+                pl = (cur - avg) * vol
+                out.append(f"• <b>{nm(c)}</b> 보유 {vol:.6f}개 | 평단 {avg:,.0f} "
+                           f"→ 현재 {cur:,.0f} | 평가 {val:,.0f}원 "
+                           f"({g*100:+.1f}%, {pl:+,.0f}원) | {trend}")
+            else:
+                out.append(f"• {nm(c)}: 보유 없음 | {trend}")
+
+        out.append(f"\n• 대형코인 평가액 합계: <b>{total_val:,.0f}원</b>")
         if at:
-            out.append(f"\n• 마지막 점검: {at:%m-%d %H:%M} (한국시간)")
-        out.append(f"• 보유 종목: {len(positions)}/{len(coins)}개")
+            out.append(f"• 마지막 추세 점검: {at:%m-%d %H:%M} (한국시간)")
         out.append(f"• 누적 {pl_label}: {realized:+,.0f}원")
+        if reader is None:
+            out.append("ℹ️ API키 미설정이라 실제 잔고를 못 읽어요(.env 확인 필요)")
         return "\n".join(out)
 
     # 공유 상태 체제: 잠수함+대형코인 봇이 한 채팅을 공유 → '상태' 한 번에 두 봇 정보가
