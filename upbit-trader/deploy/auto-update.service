@@ -8,7 +8,7 @@ Wants=network-online.target
 Type=oneshot
 # REPO_DIR / SERVICES 를 본인 환경에 맞게 수정하세요(기본값은 SETUP.md 기준).
 Environment=REPO_DIR=/home/botuser/Product
-Environment=SERVICES=swing-bot majors-bot
+Environment=SERVICES=swing-bot majors-bot highrisk-bot
 ExecStart=/usr/bin/env bash /home/botuser/Product/upbit-trader/deploy/auto-update.sh
 StandardOutput=append:/home/botuser/Product/upbit-trader/auto-update.log
 StandardError=append:/home/botuser/Product/upbit-trader/auto-update.log

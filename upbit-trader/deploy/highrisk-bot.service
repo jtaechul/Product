@@ -1,0 +1,21 @@
+[Unit]
+# 고위험 모멘텀 봇 — 잠수함/대형코인 봇과 병행. (auto-update.sh 가 자동 설치)
+Description=Upbit High-Risk Momentum Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# User/경로는 swing-bot.service 와 동일하게(보통 auto-update.sh 가 본떠 생성).
+User=botuser
+WorkingDirectory=/home/botuser/Product/upbit-trader
+EnvironmentFile=/home/botuser/Product/upbit-trader/.env
+# 기본 모의(--live 없음). 검증 후 실거래로 전환하려면 끝에 --live 추가.
+ExecStart=/home/botuser/Product/upbit-trader/.venv/bin/python -m scripts.highrisk_trade
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/botuser/Product/upbit-trader/highrisk.log
+StandardError=append:/home/botuser/Product/upbit-trader/highrisk.log
+
+[Install]
+WantedBy=multi-user.target

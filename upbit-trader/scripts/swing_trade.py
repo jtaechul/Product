@@ -24,7 +24,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src import notifier  # noqa: E402
+from src import allocation, notifier  # noqa: E402
 from src.timeutil import now_kst as datetime_now  # 한국시간(KST)으로 표시  # noqa: E402
 from src.swing import SwingConfig  # noqa: E402
 from src.swing_trader import SwingTrader, scan_candidates  # noqa: E402
@@ -109,8 +109,10 @@ def scanner_loop(shared, broker, q, cfg, args, stop):
 
             markets = [m["market"] for m in q.get_markets(only_krw=True)]
             tickers = q.get_ticker(markets)
+            others = allocation.owned_by_others("swing")   # 다른 봇이 가진 코인 제외(충돌방지)
             liquid = [t["market"] for t in tickers
-                      if float(t.get("acc_trade_price_24h", 0)) >= args.min_value * 1e8]
+                      if float(t.get("acc_trade_price_24h", 0)) >= args.min_value * 1e8
+                      and t["market"] not in others]
             cands = scan_candidates(broker, liquid, cfg, btc_ok=btc_ok, top=args.top)
             shared.set(cands, btc_ok, len(liquid))
             gate = "강세" if btc_ok else "약세(진입중단)"
@@ -266,6 +268,10 @@ def main() -> None:
     try:
         while True:
             now = datetime_now()
+            # 배정 예산(잠수함 몫)을 종목 수로 나눠 1종목 매수액 반영(배분 변화 즉시)
+            engine.invest_per_trade = allocation.budget_for(
+                "swing", args.invest * args.max_positions) / args.max_positions
+            allocation.publish_owned("swing", engine.held())
             for rec in engine.check_exits(now):
                 won = rec.gain * args.invest
                 head = ("✅ <b>매도 — 이익 실현 🎉</b>" if rec.gain > 0
