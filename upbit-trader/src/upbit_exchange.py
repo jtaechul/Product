@@ -110,6 +110,25 @@ class UpbitExchange:
                 return float(acc["balance"])
         return 0.0
 
+    def get_holdings(self) -> dict[str, tuple[float, float]]:
+        """보유 코인 → {'KRW-BTC': (수량, 평단가), ...}.
+
+        봇이 '실제 업비트 잔고'와 자기 상태를 맞추는(현행화) 용도. 재시작해도
+        실제 보유분을 다시 인식하고, 사용자가 직접 산 코인도 모니터링할 수 있다.
+        balance(주문가능)+locked(주문중)을 합산해 실제 보유 수량으로 본다.
+        """
+        out: dict[str, tuple[float, float]] = {}
+        for acc in self.get_accounts():
+            cur = acc.get("currency", "")
+            if cur == "KRW" or acc.get("unit_currency", "KRW") != "KRW":
+                continue
+            vol = float(acc.get("balance", 0) or 0) + float(acc.get("locked", 0) or 0)
+            if vol <= 0:
+                continue
+            avg = float(acc.get("avg_buy_price", 0) or 0)
+            out[f"KRW-{cur}"] = (vol, avg)
+        return out
+
     # --- 주문 (⚠️ 실제 돈이 움직입니다) -----------------------------------
     def buy_market(self, market: str, krw_amount: float) -> dict[str, Any]:
         """시장가 매수: krw_amount(원)만큼 즉시 매수.

@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""대형코인(BTC·ETH·XRP) 추세필터 레짐 자동매매 봇 — ⚠️ --live 시 실제 주문.
+"""대형코인(BTC·ETH) 추세필터 레짐 자동매매 봇 — ⚠️ --live 시 실제 주문.
 
-전략(src/majors.py): 각 코인의 일봉 종가가 200일 이동평균 '위'면 보유, '아래'면 현금.
-약세장 폭락을 피해 최대낙폭(MaxDD)을 줄이는 '위험 대비 수익' 중심 전략입니다.
-(analyze_majors 검증: 강세장 수익 대부분 따라가며 MaxDD를 절반 수준으로 축소)
+전략(src/majors.py): 각 코인의 일봉 종가가 50일 이동평균 '위' + MA 우상향이면 보유,
+아니면 현금. 약세장 폭락을 피해 최대낙폭을 줄이는 '위험 대비 수익' 중심 전략입니다.
+(optimize_majors 교차검증: 일봉/시간봉 OOS에서 BTC·ETH 둘 다 흑자, 연승률 71%)
 
-· 자금은 코인 수만큼 균등 배분(기본 3등분). 200일선 위면 그 몫으로 매수, 아래면 전량 매도.
+· 자금은 코인 수만큼 균등 배분(BTC·ETH 각 50%). 조건 충족 시 매수, 이탈 시 전량 매도.
+· 실거래 시 '실제 업비트 잔고'와 동기화(현행화)하여 재시작/수동매수분도 인식·관리.
 · 일봉 레짐이라 매매가 드뭅니다(전환 시에만). 가벼워 클라우드 24시간 가동에 적합.
 
 사용:
     python -m scripts.majors_trade                       # 모의(실시세, 무주문)
-    python -m scripts.majors_trade --invest 300000       # 총 30만 → 코인당 10만
-    python -m scripts.majors_trade --invest 300000 --live  # 소액 실거래
+    python -m scripts.majors_trade --invest 100000       # 총 10만 → 코인당 5만
+    python -m scripts.majors_trade --invest 100000 --live  # 소액 실거래
 
 종료: Ctrl+C
 """
@@ -56,6 +57,9 @@ class PaperBroker:
     def sell(self, market, price):
         return price
 
+    def get_holdings(self):
+        return None   # 모의: 실제 잔고 없음(메모리 상태만 사용)
+
 
 class LiveBroker(PaperBroker):
     def __init__(self, q, exchange):
@@ -73,6 +77,9 @@ class LiveBroker(PaperBroker):
         if vol > 0:
             self.ex.sell_market(market, vol)
         return price
+
+    def get_holdings(self):
+        return self.ex.get_holdings()   # 실제 업비트 보유 {market:(수량,평단가)}
 
 
 class Position:
@@ -126,13 +133,46 @@ def main() -> None:
         log(f"🟡 모의(실시세, 무주문). 대상 {len(coins)}종목 / 종목당 {per_coin:,.0f}원")
 
     positions: dict[str, Position] = {}   # 보유 중인 코인 {market: Position}
-    realized = 0.0                          # 누적 확정 손익(모의 기준)
+    realized = 0.0                          # 누적 확정 손익
+    pl_label = "확정 손익" if args.live else "확정 손익(모의)"
     last = {"info": {}, "at": None}         # 마지막 점검 결과(상태조회용)
     lock = threading.Lock()
     stop = threading.Event()
 
     def nm(market: str) -> str:
         return market.replace("KRW-", "")
+
+    def reconcile_holdings(prices):
+        """실거래: 실제 업비트 잔고와 봇의 positions 를 맞춘다(현행화).
+
+        · 거래소엔 있는데 봇이 모르는 보유분 → 인식(평단가로 편입) — 재시작·수동매수 대응
+        · 봇은 보유로 아는데 거래소엔 없음(외부 매도/소진) → 제거
+        대상은 cfg.coins(BTC·ETH)로 한정 — 다른 코인/봇 자산은 건드리지 않음.
+        """
+        try:
+            holdings = broker.get_holdings()
+        except Exception as exc:
+            log(f"잔고 동기화 오류(계속): {exc}")
+            return
+        if holdings is None:        # 모의 모드 → 메모리 상태 유지
+            return
+        for c in coins:
+            real = holdings.get(c)
+            cur = prices.get(c, 0.0)
+            real_val = real[0] * (cur or real[1]) if real else 0.0
+            if real and real_val >= MIN_ORDER_KRW:
+                if c not in positions:
+                    vol, avg = real
+                    entry = avg if avg > 0 else (cur or avg)
+                    positions[c] = Position(entry, vol * entry)
+                    log(f"🔄 기존 보유 인식: {nm(c)} 수량 {vol:.6f} 평단 {entry:,.0f}")
+                    notifier.send(
+                        f"🔄 <b>기존 보유 코인을 봇이 인식했어요</b>\n"
+                        f"종목: <b>{nm(c)}</b>\n평단가: {entry:,.0f}원\n"
+                        f"이제부터 이 코인도 전략(50일선)에 따라 감시·관리합니다")
+            elif c in positions:    # 거래소에 없음 → 봇 기록 정리
+                positions.pop(c, None)
+                log(f"🔄 보유 해제 인식: {nm(c)} (거래소 잔고 없음)")
 
     mode_txt = ("🔴 실거래(진짜 돈)" if args.live
                 else "🟡 모의(가짜 돈, 실제 주문 안 함)")
@@ -176,7 +216,7 @@ def main() -> None:
         if at:
             out.append(f"\n• 마지막 점검: {at:%m-%d %H:%M} (한국시간)")
         out.append(f"• 보유 종목: {len(positions)}/{len(coins)}개")
-        out.append(f"• 누적 확정 손익(모의): {realized:+,.0f}원")
+        out.append(f"• 누적 {pl_label}: {realized:+,.0f}원")
         return "\n".join(out)
 
     # 공유 상태 체제: 잠수함+대형코인 봇이 한 채팅을 공유 → '상태' 한 번에 두 봇 정보가
@@ -194,6 +234,9 @@ def main() -> None:
                 log(f"시세 조회 오류(계속): {exc}")
                 stop.wait(args.interval)
                 continue
+
+            # 실제 업비트 잔고와 동기화(현행화) — 재시작/수동매수분도 인식·관리
+            reconcile_holdings(prices)
 
             for c in coins:
                 try:
@@ -238,7 +281,7 @@ def main() -> None:
                             f"결과: <b>{g*100:+.1f}% ({won:+,.0f}원)</b>\n"
                             f"이유: {nm(c)}가 {args.ma}일 평균선 아래로 내려가 "
                             f"위험을 피해 팔고 현금으로 뒀어요\n"
-                            f"누적 확정 손익(모의): {realized:+,.0f}원")
+                            f"누적 {pl_label}: {realized:+,.0f}원")
                 except Exception as exc:
                     log(f"{nm(c)} 점검 오류(계속): {exc}")
 
@@ -258,7 +301,7 @@ def main() -> None:
         msg = "🛑 <b>대형코인 봇이 멈췄어요</b> (자동 매매 안 함)"
         if positions:
             msg += f"\n⚠️ 아직 보유: {', '.join(nm(c) for c in positions)} — 자동 관리 중단됨"
-        msg += f"\n누적 확정 손익(모의): {realized:+,.0f}원"
+        msg += f"\n누적 {pl_label}: {realized:+,.0f}원"
         notifier.send(msg)
 
 
