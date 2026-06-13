@@ -23,13 +23,15 @@ import pandas as pd
 class MajorsConfig:
     # 대상: BTC·ETH (XRP는 추세필터 효과가 약해 제외 — optimize_majors 검증 참고)
     coins: tuple[str, ...] = ("KRW-BTC", "KRW-ETH")
-    # optimize_majors 교차검증(BTC·ETH, 일봉+시간봉 OOS)으로 선택한 기본값:
-    #   · MA100  : 짧은 추세선으로 폭락 후 회복에 빨리 재진입 → 수익↑. XRP 제외 시 두 데이터
-    #              모두에서 견고(일봉 Calmar 0.90 / 시간봉 0.92, 둘 다 단순보유 압도)
-    #   · 완충2% : MA±2% 밴드(hysteresis)로 경계선 헛매매(휩쏘) 차단
-    ma_bars: int = 100        # 추세 이동평균 기간(일봉=일)
-    buffer: float = 0.02      # MA 대비 ±완충 밴드. 위로 +buffer 넘어야 진입, 아래로 -buffer 깨야 청산
-    slope_bars: int = 0       # >0 이면 MA가 slope_bars 전보다 높을(우상향) 때만 보유(옵션, 기본 끔)
+    # optimize_majors 교차검증(BTC·ETH, 일봉+시간봉 OOS, 매매빈도·연승률 포함)으로 선택:
+    #   · MA50   : 100일선보다 짧아 '조금 더 자주' 매매(연 6~9회). 폭락 후 회복에 더 빨리 재진입
+    #   · 기울기10: MA가 10일 전보다 우상향일 때만 보유 → 데드캣/하락중 진입 차단(견고성 핵심)
+    #   · 완충0%  : 기울기필터가 휩쏘를 막아줘 추가 밴드 불필요(스윕상 0%가 최적)
+    # 결과: 일봉 검증 연승률 71%·최악코인 +61%·최악MDD -44%, 시간봉(독립)도 BTC·ETH 둘 다 흑자.
+    #   ※ 그래도 '무조건 수익'은 아님 — 검증연도의 ~29%는 손실. 위험대비 가장 견고한 빈번매매 설정.
+    ma_bars: int = 50         # 추세 이동평균 기간(일봉=일)
+    buffer: float = 0.0       # MA 대비 ±완충 밴드(0=끔). 위로 +buffer 넘어야 진입, 아래로 -buffer 깨야 청산
+    slope_bars: int = 10      # MA가 slope_bars 전보다 높을(우상향) 때만 보유 (하락중 진입 차단)
 
 
 def regime(df: pd.DataFrame, cfg: MajorsConfig, held: bool = False) -> dict:

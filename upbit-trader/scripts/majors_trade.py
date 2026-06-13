@@ -47,7 +47,7 @@ class PaperBroker:
     def get_prices(self, markets):
         return {t["market"]: float(t["trade_price"]) for t in self.q.get_ticker(markets)}
 
-    def get_daily(self, market, count=210):
+    def get_daily(self, market, count=120):
         return candles_to_dataframe(self.q.get_candles_days(market, count=min(200, count)))
 
     def buy(self, market, krw, price):
@@ -87,12 +87,12 @@ def main() -> None:
     p = argparse.ArgumentParser(description="대형코인 추세필터 레짐 자동매매 봇")
     p.add_argument("--invest", type=float, default=300_000,
                    help="총 투자금(코인 수로 균등 분할)")
-    p.add_argument("--ma", type=int, default=100,
-                   help="추세 이동평균 기간(일). 교차검증 기본값 100")
-    p.add_argument("--buffer", type=float, default=0.02,
-                   help="MA 대비 ±완충 밴드(휩쏘 완화). 기본 0.02=±2%")
-    p.add_argument("--slope", type=int, default=0,
-                   help="MA가 N일 전보다 높을 때만 보유(우상향 확인, 0=끔)")
+    p.add_argument("--ma", type=int, default=50,
+                   help="추세 이동평균 기간(일). 교차검증 기본값 50")
+    p.add_argument("--buffer", type=float, default=0.0,
+                   help="MA 대비 ±완충 밴드(휩쏘 완화). 기본 0(기울기필터가 대체)")
+    p.add_argument("--slope", type=int, default=10,
+                   help="MA가 N일 전보다 높을 때만 보유(우상향 확인). 기본 10, 0=끔")
     p.add_argument("--coins", default="KRW-BTC,KRW-ETH",
                    help="대상 마켓 콤마구분 (기본 BTC,ETH — XRP 제외)")
     p.add_argument("--interval", type=int, default=1800,
@@ -196,15 +196,19 @@ def main() -> None:
 
             for c in coins:
                 try:
-                    df = broker.get_daily(c, count=args.ma + 10)
-                    if df is None or len(df) < args.ma + 1:
+                    df = broker.get_daily(c, count=args.ma + args.slope + 15)
+                    # 마지막 봉은 '오늘(아직 안 닫힌)' 캔들 → 제외하고 '어제 종가까지'로 판정
+                    # (장중 잔떨림 방지 + 백테스트와 동일한 '닫힌 봉' 기준)
+                    if df is not None and len(df) > 1:
+                        df = df.iloc[:-1].reset_index(drop=True)
+                    if df is None or len(df) < args.ma + args.slope + 1:
                         continue
                     held = c in positions
                     r = regime(df, cfg, held=held)
                     info[c] = r
                     price = prices.get(c, r["price"])
 
-                    # 200일선 위 + 미보유 → 매수
+                    # 추세선 위(+우상향) + 미보유 → 매수
                     if r["in_market"] and not held:
                         broker.buy(c, per_coin, price)
                         positions[c] = Position(price, per_coin)
