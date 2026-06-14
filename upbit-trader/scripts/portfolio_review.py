@@ -192,17 +192,41 @@ def maybe_propose(ctx: dict) -> None:
 PUBLIC_PATH = "upbit-trader/live/dashboard.html"   # GitHub Pages 게시 경로
 
 
+def publish_via_git(html_content: str, path: str = "upbit-trader/live/dashboard.html") -> tuple[bool, str]:
+    """git으로 HTML을 커밋/푸시. (GitHub API 토큰 문제 우회)"""
+    import subprocess
+    try:
+        filepath = ROOT.parent / path
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        filepath.write_text(html_content, encoding="utf-8")
+
+        result = subprocess.run(["git", "add", "-f", path], cwd=str(ROOT.parent),
+                              capture_output=True, text=True, timeout=10)
+        if result.returncode != 0:
+            return False, f"git add failed: {result.stderr}"
+
+        result = subprocess.run(["git", "commit", "-m", f"dashboard {now_kst():%Y-%m-%d %H:%M}"],
+                              cwd=str(ROOT.parent), capture_output=True, text=True, timeout=10)
+        if result.returncode not in (0, 1):
+            return False, f"git commit failed: {result.stderr}"
+
+        result = subprocess.run(["git", "push", "-q"], cwd=str(ROOT.parent),
+                              capture_output=True, text=True, timeout=30)
+        if result.returncode != 0:
+            return False, f"git push failed: {result.stderr}"
+
+        return True, f"https://raw.githubusercontent.com/jtaechul/Product/main/{path}"
+    except Exception as e:
+        return False, str(e)
+
+
 def main() -> None:
-    quiet = "--quiet" in sys.argv   # 잦은 게시용: 텔레그램/제안 생략, Pages 게시만
+    quiet = "--quiet" in sys.argv
     ctx = gather()
     OUT.write_text(build_html(ctx, public=False), encoding="utf-8")
     print(f"대시보드 생성: {OUT}")
 
-    # GitHub Pages 공개 게시(민감정보 제외) — 브라우저/클로드 어디서나 보는 라이브 URL
-    from src import publish
-    ok, info = publish.publish_file(
-        PUBLIC_PATH, build_html(ctx, public=True),
-        message=f"dashboard {now_kst():%Y-%m-%d %H:%M}")
+    ok, info = publish_via_git(build_html(ctx, public=True), PUBLIC_PATH)
     if ok:
         print(f"공개 대시보드 게시: {info}")
     else:
@@ -212,7 +236,7 @@ def main() -> None:
         notifier.send_document(str(OUT),
                                caption=f"🪙 포트폴리오 대시보드 ({now_kst():%m-%d %H:%M})")
         if ok:
-            notifier.send(f"🌐 라이브 대시보드(브라우저): {info}")
+            notifier.send(f"🌐 라이브 대시보드: {info}")
         maybe_propose(ctx)
 
 
