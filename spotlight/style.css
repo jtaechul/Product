@@ -1,0 +1,71 @@
+/* SPOTLIGHT — 디자인 시스템 / 세로 레이아웃 (기획서 4·16번)
+   여기에 디자인 토큰(색·폰트 스케일·여백·카드)을 먼저 고정하고 코딩을 확장한다. */
+
+:root {
+  /* 컬러 토큰 (디자인 시트 팔레트 기준으로 추후 확정) */
+  --navy: #1e2a4a;
+  --navy-2: #2c3c63;
+  --coral: #ff8a7a;
+  --mint: #7ee0c8;
+  --gold: #f5c451;
+  --paper: #fdfbf7;
+  --ink: #2a2a33;
+
+  --space: 16px;
+  --radius: 16px;
+  --font: "Noto Sans KR", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--navy);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 16px;
+}
+
+/* 모바일 프레임: 세로 고정, PC에서는 중앙 정렬 */
+#app {
+  max-width: 480px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  /* 안전영역(노치) 대응 */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space);
+  padding: calc(var(--space) * 1.5);
+  text-align: center;
+}
+
+.logo { font-size: 2.4rem; color: var(--navy); }
+.tagline { color: var(--navy-2); }
+
+/* 주요 액션 버튼은 큼직하게(엄지존), 최소 48px */
+.primary-btn {
+  min-height: 52px;
+  padding: 0 28px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--coral);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.primary-btn:active { transform: translateY(1px); }
+
+.wip { margin-top: var(--space); font-size: 0.85rem; color: #888; }
+.wip code { background: #eee; padding: 2px 6px; border-radius: 6px; }
