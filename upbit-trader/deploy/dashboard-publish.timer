@@ -1,0 +1,12 @@
+[Unit]
+Description=Publish live dashboard to GitHub Pages (hourly)
+
+[Timer]
+# 부팅 2분 후 + 매 1시간마다 공개 대시보드 게시(--quiet: 텔레그램/제안 없이 게시만)
+OnBootSec=2min
+OnUnitActiveSec=1h
+Persistent=true
+Unit=dashboard-publish.service
+
+[Install]
+WantedBy=timers.target

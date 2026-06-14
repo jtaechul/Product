@@ -93,6 +93,8 @@ ensure_oneshot_timer "rebalance" "Upbit portfolio rebalance (50/30/20)" \
     "scripts.rebalance" "rebalance.timer" 1          # 설치 즉시 1회 배분
 ensure_oneshot_timer "portfolio-review" "Upbit portfolio review (dashboard+proposal)" \
     "scripts.portfolio_review" "portfolio-review.timer" 1   # 설치 즉시 1회 대시보드 전송
+ensure_oneshot_timer "dashboard-publish" "Publish live dashboard to GitHub Pages" \
+    "scripts.portfolio_review --quiet" "dashboard-publish.timer" 1   # 라이브 URL 게시(시간당)
 
 # ── 3) 배포 커밋 != 실행 중 커밋 이면 모든 봇 재시작 (수동 pull 포함 확실 반영) ──
 HEAD="$(git rev-parse HEAD 2>/dev/null)"
