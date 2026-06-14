@@ -2,23 +2,19 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#1e2a4a" />
   <title>SPOTLIGHT</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* 게임 캔버스만 풀스크린으로. UI는 전부 PixiJS가 캔버스 위에 그린다. */
+    html, body { margin: 0; height: 100%; background: #1e2a4a; overflow: hidden; }
+    #game { position: fixed; inset: 0; }
+    /* 모바일 프레임: PC에선 세로 비율 중앙 정렬 */
+    #game canvas { display: block; margin: 0 auto; touch-action: none; }
+  </style>
 </head>
 <body>
-  <!-- 모바일 세로(9:16) 우선. 메인 게임 셸. -->
-  <div id="app">
-    <section id="title-screen" class="screen">
-      <h1 class="logo">🌟 SPOTLIGHT</h1>
-      <p class="tagline">연기만 잘한다고 국민배우가 되는 건 아니다.</p>
-      <button id="start-btn" class="primary-btn" type="button">시작하기</button>
-      <p class="wip">개발 준비 중 — 기획서는 저장소 루트 <code>CLAUDE.md</code> 참고</p>
-    </section>
-  </div>
-
-  <!-- 앞으로 모듈을 여기에 추가 (js/main.js 등, 기획서 19번 파일 구조 참고) -->
-  <script src="js/main.js" type="module"></script>
+  <div id="game"></div>
+  <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

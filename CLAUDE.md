@@ -602,36 +602,59 @@
 
 ## 19. 파일 구조
 
+> #4 결정에 맞춘 **PixiJS + TypeScript + Vite + Capacitor** 구조. 게임 로직은 `src/`,
+> 정적 에셋은 `public/assets/`(빌드 시 그대로 복사). 수치 데이터는 `src/data/`에 분리.
+
 ```
 spotlight/
-├── index.html
-├── style.css                ← 디자인 시스템 / 세로 레이아웃
-├── js/
-│   ├── main.js              ← 게임 루프 / 턴 / 난이도
-│   ├── stats.js             ← 스탯·인성·소프트캡·컨디션
-│   ├── balance.js           ← 성장 곡선·난이도 모드·마일스톤
-│   ├── schedule.js          ← 활동 선택 / 정산
-│   ├── production.js        ← 작품 출연 / 시청자 평가
-│   ├── bond.js              ← 인연 시스템
-│   ├── events.js            ← 랜덤 이벤트 / 인성 플래그
-│   ├── anim.js              ← 캐릭터·활동·연출 애니메이션 제어
-│   ├── ending.js            ← 모듈형 엔딩 생성·서술
-│   ├── filmography.js       ← 필모·수상 기록
-│   ├── shop.js              ← 상점 / 인벤토리
-│   ├── save.js              ← localStorage
-│   ├── ui.js                ← 세로 UI 렌더 / HUD / 레이더
-│   └── data/
-│       ├── activities.js
-│       ├── media.js          ← 출연 매체·배역·가중 스탯
-│       ├── events.js
-│       ├── animations.js     ← 활동→모션 매핑
-│       ├── bonds.js
-│       └── endings.js        ← 엔딩 조건 + 서술 템플릿
-└── assets/
-    ├── portraits/  manager/  rivals/  bg/  endings/  sfx/  lottie/
-    └── portraits/
-        ├── heroine_design_sheet_brown.png   ← 주인공 확정 디자인(브라운)
-        └── heroine_design_sheet_red.png     ← 주인공 확정 디자인(레드)
+├── index.html               ← Vite 엔트리 (canvas 마운트만, 셸 최소화)
+├── package.json             ← Vite · PixiJS · TypeScript · Capacitor 의존성
+├── tsconfig.json
+├── vite.config.ts           ← base: '/Product/spotlight/' (GitHub Pages)
+├── capacitor.config.ts      ← iOS/Android 앱 패키징 설정
+├── public/
+│   └── assets/
+│       ├── portraits/       ← 주인공 디자인/스프라이트
+│       │   ├── heroine_design_sheet_brown.png   ← 주인공 확정 디자인(브라운)
+│       │   └── heroine_design_sheet_red.png     ← 주인공 확정 디자인(레드)
+│       ├── live2d/          ← Live2D Cubism 모델(.model3.json 등)
+│       ├── rive/            ← Rive 애니(.riv) — 전환·이펙트
+│       ├── manager/  rivals/  bg/  endings/  sfx/
+└── src/
+    ├── main.ts              ← PixiJS Application 부트스트랩 / 진입점
+    ├── config.ts            ← 상수(36턴·슬롯) + 디자인 토큰(색·여백)
+    ├── core/
+    │   ├── SceneManager.ts  ← 씬 전환 관리
+    │   └── Scene.ts         ← 씬 베이스 클래스
+    ├── scenes/              ← 화면 단위 (Pixi 씬)
+    │   ├── TitleScene.ts
+    │   ├── CreateScene.ts   ← 캐릭터 생성(머리색 브라운/레드 선택)
+    │   ├── MainScene.ts     ← 메인 스케줄(턴 진행·활동 2슬롯)
+    │   ├── ProductionScene.ts ← 작품 출연·시청자 평가
+    │   └── EndingScene.ts   ← 40년 커리어 엔딩
+    ├── systems/             ← 게임 로직(렌더와 분리)
+    │   ├── stats.ts         ← 스탯·인성·소프트캡·컨디션
+    │   ├── balance.ts       ← 성장 곡선·난이도 모드·마일스톤
+    │   ├── schedule.ts      ← 활동 선택 / 정산
+    │   ├── production.ts    ← 출연 판정 / 평가 등급
+    │   ├── bond.ts          ← 인연 시스템
+    │   ├── events.ts        ← 랜덤 이벤트 / 인성 플래그
+    │   ├── ending.ts        ← 모듈형 엔딩 생성·서술
+    │   ├── filmography.ts   ← 필모·수상 기록
+    │   ├── shop.ts          ← 상점 / 인벤토리
+    │   └── save.ts          ← Capacitor Preferences / localStorage
+    ├── anim/
+    │   └── character.ts     ← Live2D/Rive 캐릭터 제어(idle·활동 모션)
+    ├── ui/
+    │   ├── hud.ts           ← 상단 상태바(체력·멘탈·돈·팬)
+    │   └── components.ts    ← 카드·버튼 등 공용 컴포넌트(터치 48px↑)
+    └── data/                ← 수치 분리 (플레이 테스트로 조정)
+        ├── activities.ts
+        ├── media.ts         ← 출연 매체·배역·가중 스탯
+        ├── events.ts
+        ├── animations.ts    ← 활동→모션 매핑
+        ├── bonds.ts
+        └── endings.ts       ← 엔딩 조건 + 서술 템플릿
 ```
 
 -----

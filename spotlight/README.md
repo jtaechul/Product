@@ -8,26 +8,43 @@
 - 전체 기획서·개발 규칙: 저장소 루트 **`CLAUDE.md`** 참고
 - 배포 URL(GitHub Pages): https://jtaechul.github.io/Product/spotlight/
 
+## 기술 스택 (기획서 #4)
+
+- **렌더링**: PixiJS (WebGL/WebGPU) — DOM이 아닌 GPU로 그려 끊김 없는 애니
+- **캐릭터 애니**: Live2D Cubism(메인) + Rive(전환·이펙트)
+- **언어/빌드**: TypeScript + Vite
+- **앱 패키징**: Capacitor (iOS/Android 네이티브 앱 + 웹 동시)
+- **사운드**: Howler.js
+
 ## 로컬 실행
 
-저장소 루트에서:
-
 ```bash
-python3 -m http.server 8000
+cd spotlight
+npm install      # 최초 1회 (의존성 설치)
+npm run dev      # 개발 서버 → 안내된 localhost 주소를 브라우저로 열기
 ```
 
-브라우저에서 `http://localhost:8000/spotlight/` 열기. (모바일 세로 화면 기준으로 확인)
+빌드/미리보기:
 
-## 폴더 구조 (기획서 19번)
+```bash
+npm run build    # dist/ 생성 (타입 체크 포함)
+npm run preview  # 빌드 결과 미리보기
+```
+
+## 폴더 구조 (기획서 #19)
 
 ```
 spotlight/
-├── index.html      # 게임 셸 (세로 레이아웃)
-├── style.css       # 디자인 시스템 / 세로 레이아웃
-├── js/
-│   ├── main.js     # 게임 루프 / 턴 / 난이도
-│   └── data/       # 활동·매체·이벤트·엔딩 등 데이터 (수치 분리)
-└── assets/
-    ├── portraits/  # 주인공 디자인 시트 (브라운/레드 2종)
-    ├── manager/  rivals/  bg/  endings/  sfx/  lottie/
+├── index.html            # Vite 엔트리 (canvas 마운트)
+├── package.json / tsconfig.json / vite.config.ts / capacitor.config.ts
+├── public/assets/        # 정적 에셋 (portraits, live2d, rive, bg, sfx ...)
+└── src/
+    ├── main.ts           # PixiJS 부트스트랩
+    ├── config.ts         # 상수 + 디자인 토큰
+    ├── core/             # SceneManager, Scene 베이스
+    ├── scenes/           # 화면 단위 (Title, Create, Main, Production, Ending)
+    ├── systems/          # 게임 로직 (stats, schedule, production ...)
+    ├── anim/             # Live2D/Rive 캐릭터 제어
+    ├── ui/               # HUD, 공용 컴포넌트
+    └── data/             # 수치 데이터 (활동·매체·이벤트·엔딩)
 ```
