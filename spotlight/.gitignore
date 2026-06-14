@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.local
+.DS_Store
+
+# Capacitor 네이티브 프로젝트 (생성 시)
+/ios
+/android

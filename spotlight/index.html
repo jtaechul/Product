@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1e2a4a" />
+  <title>SPOTLIGHT</title>
+  <style>
+    /* 게임 캔버스만 풀스크린으로. UI는 전부 PixiJS가 캔버스 위에 그린다. */
+    html, body { margin: 0; height: 100%; background: #1e2a4a; overflow: hidden; }
+    #game { position: fixed; inset: 0; }
+    /* 모바일 프레임: PC에선 세로 비율 중앙 정렬 */
+    #game canvas { display: block; margin: 0 auto; touch-action: none; }
+  </style>
+</head>
+<body>
+  <div id="game"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
