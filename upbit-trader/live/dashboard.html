@@ -1,25 +1,36 @@
 <!doctype html><html lang=ko><meta charset=utf-8>
-<meta http-equiv=refresh content=60>
-<meta name=viewport content='width=device-width,initial-scale=1'>
+<meta name=viewport content='width=device-width,initial-scale=1'><meta http-equiv=refresh content=60>
 <title>코인 포트폴리오 대시보드</title>
-<body style='font-family:-apple-system,system-ui,sans-serif;max-width:680px;margin:0 auto;padding:24px;color:#222;background:#fafafb'>
+<body style='font-family:-apple-system,system-ui,sans-serif;max-width:680px;margin:0 auto;
+padding:16px;color:#222;background:#fafafb'>
 <h2>🪙 코인 포트폴리오 대시보드</h2>
-<div style='background:#fff7e6;border:1px solid #f0d9a8;border-radius:12px;padding:18px;margin:14px 0'>
-<h3>⏳ 서버 연결 대기 중</h3>
-<p>대시보드 페이지는 정상 작동합니다 ✅<br>
-아직 <b>봇 서버가 실제 데이터를 게시하기 전</b>이라 예시가 보이지 않습니다.<br>
-서버 준비(타이머 설치 + GitHub 토큰)가 끝나면, 이 페이지가 <b>자동으로 실제 현황</b>(시장 국면·비중·코인별 손익 등)으로 바뀝니다.</p>
-<p style='color:#888'>이 페이지는 60초마다 자동 새로고침됩니다.</p>
+<p style='color:#888'>갱신: 2026-06-14 11:26 (한국시간)</p>
+
+<div style='background:#fff;border:1px solid #eee;border-radius:12px;padding:14px;margin:10px 0'>
+<h3>📈 시장 국면: 약세 (위험회피) 🔴</h3>
+<p>BTC 현재가 97,755,000 · 50일선 109,951,080 · 200일선 115,086,050 · 변동성(연) 36%</p>
 </div>
-<div style='background:#fff;border:1px solid #eee;border-radius:12px;padding:18px;margin:14px 0'>
-<h3>표시될 내용 (예정)</h3>
-<ul>
-<li>📈 시장 국면(강세/중립/약세) + BTC 추세</li>
-<li>⚖️ 3봇 자산배분 — 현재 vs 제안 비중</li>
-<li>📦 보유 코인별 손익률·현재가</li>
-<li>🤖 봇별 현황 요약</li>
-</ul>
-<p style='color:#888;font-size:13px'>※ 공개 페이지라 총자산 금액·보유수량 등 민감정보는 표시하지 않습니다(텔레그램 전용).</p>
+
+<div style='background:#fff;border:1px solid #eee;border-radius:12px;padding:14px;margin:10px 0'>
+<h3>💰 총 평가자산: 비공개 🔒</h3>
+<table style='width:100%;border-collapse:collapse' cellpadding=6>
+<tr style='text-align:left;color:#888'><th>구분</th><th>현재 비중</th><th>제안 비중</th><th>제안 금액</th></tr>
+<tr><td>대형코인</td><td><div style='background:#eee;border-radius:6px;height:18px;width:160px;display:inline-block;vertical-align:middle'><div style='background:#4a90d9;height:18px;border-radius:6px;width:50%'></div></div> 50%</td><td><div style='background:#eee;border-radius:6px;height:18px;width:160px;display:inline-block;vertical-align:middle'><div style='background:#e09b3d;height:18px;border-radius:6px;width:40%'></div></div> 40%</td><td>비공개</td></tr><tr><td>잠수함</td><td><div style='background:#eee;border-radius:6px;height:18px;width:160px;display:inline-block;vertical-align:middle'><div style='background:#4a90d9;height:18px;border-radius:6px;width:30%'></div></div> 30%</td><td><div style='background:#eee;border-radius:6px;height:18px;width:160px;display:inline-block;vertical-align:middle'><div style='background:#e09b3d;height:18px;border-radius:6px;width:15%'></div></div> 15%</td><td>비공개</td></tr><tr><td>고위험</td><td><div style='background:#eee;border-radius:6px;height:18px;width:160px;display:inline-block;vertical-align:middle'><div style='background:#4a90d9;height:18px;border-radius:6px;width:20%'></div></div> 20%</td><td><div style='background:#eee;border-radius:6px;height:18px;width:160px;display:inline-block;vertical-align:middle'><div style='background:#e09b3d;height:18px;border-radius:6px;width:5%'></div></div> 5%</td><td>비공개</td></tr><tr><td>현금</td><td><div style='background:#eee;border-radius:6px;height:18px;width:160px;display:inline-block;vertical-align:middle'><div style='background:#9aa;height:18px;border-radius:6px;width:0%'></div></div> 0%</td><td><div style='background:#eee;border-radius:6px;height:18px;width:160px;display:inline-block;vertical-align:middle'><div style='background:#9aa;height:18px;border-radius:6px;width:40%'></div></div> 40%</td><td>비공개</td></tr>
+</table>
+<p style='color:#888;font-size:13px'>※ 제안 비중은 시장 국면 규칙 기반. 적용은 텔레그램 ✅승인 버튼으로.</p>
+</div>
+
+<div style='background:#fff;border:1px solid #eee;border-radius:12px;padding:14px;margin:10px 0'>
+<h3>📦 보유 코인</h3>
+<table style='width:100%;border-collapse:collapse' cellpadding=6>
+<tr style='text-align:left;color:#888'><th>코인</th><th>수량</th><th>평단</th><th>현재가</th><th>평가액</th><th>손익</th></tr>
+<tr><td colspan=6>보유 코인 없음(또는 키 미설정)</td></tr>
+</table>
+</div>
+
+<div style='background:#fff;border:1px solid #eee;border-radius:12px;padding:14px;margin:10px 0'>
+<h3>🤖 봇별 현황</h3>
+<p style='color:#888'>봇별 상세(금액 포함)는 텔레그램에서만 확인할 수 있어요.</p>
 </div>
 <p style='color:#aaa;font-size:12px'>참고용 정보이며 투자 조언이 아닙니다.</p>
 </body></html>
