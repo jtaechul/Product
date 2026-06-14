@@ -6,6 +6,11 @@
 set -uo pipefail
 
 REPO_DIR="${REPO_DIR:-/home/botuser/Product}"
+# 경로 자동보정: 기본 경로가 없으면 스크립트 위치(<repo>/upbit-trader/deploy/)에서 추정
+if [ ! -d "$REPO_DIR" ]; then
+    _guess="$(cd "$(dirname "$0")/../.." 2>/dev/null && pwd)"
+    [ -n "$_guess" ] && REPO_DIR="$_guess"
+fi
 SERVICES="${SERVICES:-swing-bot majors-bot highrisk-bot}"
 UPBIT="$REPO_DIR/upbit-trader"
 MARKER="$UPBIT/.botstate/deployed_commit"
