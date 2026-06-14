@@ -135,6 +135,8 @@ def main() -> None:
     p.add_argument("--stop", type=float, default=0.10)
     p.add_argument("--arm", type=float, default=0.06)
     p.add_argument("--vol-surge", type=float, default=3.0)
+    p.add_argument("--btc-ma", type=int, default=0,
+                   help="BTC 추세 게이트(0=끔). 백테스트상 끄는 쪽이 수익↑·낙폭↓라 기본 끔")
     p.add_argument("--max-hold", type=int, default=240, help="최대 보유(시간)")
     p.add_argument("--cooldown", type=int, default=12, help="재진입 쿨다운(시간)")
     p.add_argument("--daily-loss", type=float, default=0.0)
@@ -143,7 +145,7 @@ def main() -> None:
 
     cfg = SwingConfig(
         vol_surge=args.vol_surge, trail=args.trail, stop_loss=args.stop,
-        arm_profit=args.arm, max_hold_bars=args.max_hold,
+        arm_profit=args.arm, max_hold_bars=args.max_hold, btc_ma_bars=args.btc_ma,
     )
     q = UpbitQuotation()
 
