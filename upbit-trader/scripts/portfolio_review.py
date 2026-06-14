@@ -200,7 +200,7 @@ def publish_via_git(html_content: str, path: str = "upbit-trader/live/dashboard.
         filepath.parent.mkdir(parents=True, exist_ok=True)
         filepath.write_text(html_content, encoding="utf-8")
 
-        result = subprocess.run(["git", "add", path], cwd=str(ROOT.parent),
+        result = subprocess.run(["git", "add", "-f", path], cwd=str(ROOT.parent),
                               capture_output=True, text=True, timeout=10)
         if result.returncode != 0:
             return False, f"git add failed: {result.stderr}"
