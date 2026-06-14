@@ -32,3 +32,6 @@ dashboard*.html
 
 # 봇 간 공유 상태(런타임)
 .botstate/
+portfolio.html
+portfolio_demo.html
+dashboard_public_demo.html

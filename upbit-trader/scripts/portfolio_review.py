@@ -78,13 +78,16 @@ def gather():
             "weights_cur": allocation.current_weights(), "bots": bots}
 
 
-def build_html(ctx: dict) -> str:
+def build_html(ctx: dict, public: bool = False) -> str:
+    """대시보드 HTML. public=True 면 민감정보(총자산 금액·보유수량·평단)를 가린다."""
     reg = ctx["regime"]
     total = ctx["total"]
     cur = ctx["weights_cur"]
     prop = reg["weights"]
     cash_cur = max(0.0, 1 - sum(cur.values()))
     cash_prop = reg["cash"]
+    total_str = "비공개 🔒" if public else f"{total:,.0f}원"
+    amt = (lambda v: "비공개") if public else (lambda v: f"{v:,.0f}원")
 
     def bar(pct, color):
         return (f"<div style='background:#eee;border-radius:6px;height:18px;width:160px;"
@@ -97,29 +100,38 @@ def build_html(ctx: dict) -> str:
         rows += (f"<tr><td>{BOT_LABEL[k]}</td>"
                  f"<td>{bar(cur.get(k,0),'#4a90d9')} {cur.get(k,0)*100:.0f}%</td>"
                  f"<td>{bar(prop.get(k,0),'#e09b3d')} {prop.get(k,0)*100:.0f}%</td>"
-                 f"<td>{total*prop.get(k,0):,.0f}원</td></tr>")
+                 f"<td>{amt(total*prop.get(k,0))}</td></tr>")
     rows += (f"<tr><td>현금</td><td>{bar(cash_cur,'#9aa')} {cash_cur*100:.0f}%</td>"
              f"<td>{bar(cash_prop,'#9aa')} {cash_prop*100:.0f}%</td>"
-             f"<td>{total*cash_prop:,.0f}원</td></tr>")
+             f"<td>{amt(total*cash_prop)}</td></tr>")
 
     hrows = ""
     for h in ctx["holdings"]:
         col = "#1a8" if h["pl_pct"] >= 0 else "#d33"
-        hrows += (f"<tr><td><b>{h['coin']}</b></td><td>{h['vol']:.6f}</td>"
-                  f"<td>{h['avg']:,.0f}</td><td>{h['price']:,.0f}</td>"
-                  f"<td>{h['value']:,.0f}원</td>"
-                  f"<td style='color:{col}'>{h['pl_pct']:+.1f}% ({h['pl_krw']:+,.0f}원)</td></tr>")
+        if public:  # 공개본: 수량·평단·평가액 숨김, 손익%만
+            hrows += (f"<tr><td><b>{h['coin']}</b></td><td>비공개</td><td>비공개</td>"
+                      f"<td>{h['price']:,.0f}</td><td>비공개</td>"
+                      f"<td style='color:{col}'>{h['pl_pct']:+.1f}%</td></tr>")
+        else:
+            hrows += (f"<tr><td><b>{h['coin']}</b></td><td>{h['vol']:.6f}</td>"
+                      f"<td>{h['avg']:,.0f}</td><td>{h['price']:,.0f}</td>"
+                      f"<td>{h['value']:,.0f}원</td>"
+                      f"<td style='color:{col}'>{h['pl_pct']:+.1f}% ({h['pl_krw']:+,.0f}원)</td></tr>")
     if not hrows:
         hrows = "<tr><td colspan=6>보유 코인 없음(또는 키 미설정)</td></tr>"
 
-    botblocks = "".join(
-        f"<pre style='background:#f7f7f9;padding:10px;border-radius:8px;white-space:pre-wrap'>"
-        f"{b}</pre>" for b in ctx["bots"]) or "<p>봇 상태 파일 없음</p>"
+    if public:   # 공개본: 봇 상태 텍스트엔 금액이 섞여 있어 제외
+        botblocks = "<p style='color:#888'>봇별 상세(금액 포함)는 텔레그램에서만 확인할 수 있어요.</p>"
+    else:
+        botblocks = "".join(
+            f"<pre style='background:#f7f7f9;padding:10px;border-radius:8px;white-space:pre-wrap'>"
+            f"{b}</pre>" for b in ctx["bots"]) or "<p>봇 상태 파일 없음</p>"
 
     ma50 = f"{reg['ma50']:,.0f}" if reg["ma50"] else "-"
     ma200 = f"{reg['ma200']:,.0f}" if reg["ma200"] else "-"
+    refresh = "<meta http-equiv=refresh content=60>" if public else ""
     return f"""<!doctype html><html lang=ko><meta charset=utf-8>
-<meta name=viewport content='width=device-width,initial-scale=1'>
+<meta name=viewport content='width=device-width,initial-scale=1'>{refresh}
 <title>코인 포트폴리오 대시보드</title>
 <body style='font-family:-apple-system,system-ui,sans-serif;max-width:680px;margin:0 auto;
 padding:16px;color:#222;background:#fafafb'>
@@ -132,7 +144,7 @@ padding:16px;color:#222;background:#fafafb'>
 </div>
 
 <div style='background:#fff;border:1px solid #eee;border-radius:12px;padding:14px;margin:10px 0'>
-<h3>💰 총 평가자산: {total:,.0f}원</h3>
+<h3>💰 총 평가자산: {total_str}</h3>
 <table style='width:100%;border-collapse:collapse' cellpadding=6>
 <tr style='text-align:left;color:#888'><th>구분</th><th>현재 비중</th><th>제안 비중</th><th>제안 금액</th></tr>
 {rows}
@@ -177,12 +189,31 @@ def maybe_propose(ctx: dict) -> None:
                                  ("❌ 거절", "reject_weights")]])
 
 
+PUBLIC_PATH = "upbit-trader/live/dashboard.html"   # GitHub Pages 게시 경로
+
+
 def main() -> None:
+    quiet = "--quiet" in sys.argv   # 잦은 게시용: 텔레그램/제안 생략, Pages 게시만
     ctx = gather()
-    OUT.write_text(build_html(ctx), encoding="utf-8")
+    OUT.write_text(build_html(ctx, public=False), encoding="utf-8")
     print(f"대시보드 생성: {OUT}")
-    notifier.send_document(str(OUT), caption=f"🪙 포트폴리오 대시보드 ({now_kst():%m-%d %H:%M})")
-    maybe_propose(ctx)
+
+    # GitHub Pages 공개 게시(민감정보 제외) — 브라우저/클로드 어디서나 보는 라이브 URL
+    from src import publish
+    ok, info = publish.publish_file(
+        PUBLIC_PATH, build_html(ctx, public=True),
+        message=f"dashboard {now_kst():%Y-%m-%d %H:%M}")
+    if ok:
+        print(f"공개 대시보드 게시: {info}")
+    else:
+        print(f"공개 게시 건너뜀: {info}")
+
+    if not quiet:
+        notifier.send_document(str(OUT),
+                               caption=f"🪙 포트폴리오 대시보드 ({now_kst():%m-%d %H:%M})")
+        if ok:
+            notifier.send(f"🌐 라이브 대시보드(브라우저): {info}")
+        maybe_propose(ctx)
 
 
 if __name__ == "__main__":
