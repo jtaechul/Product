@@ -24,16 +24,17 @@ import pandas as pd
 @dataclass
 class HighRiskConfig:
     # --- 진입(모멘텀 돌파) ---
-    breakout_bars: int = 20      # 직전 N봉 '신고가'를 종가가 돌파하면 진입(추세 시작 포착)
+    # 2013~2019 학습/검증 분할 튜닝 결과 반영(검증구간 위험대비수익 2.6, 낙폭 -15%로 개선).
+    breakout_bars: int = 30      # 직전 N봉 '신고가'를 종가가 돌파하면 진입(추세 시작 포착)
     trend_ma_bars: int = 50      # 종가가 이 MA 위(상승추세)일 때만 — 낙엽 잡기 방지
     mom_bars: int = 10           # 모멘텀 측정 구간
-    min_momentum: float = 0.05   # 최근 mom_bars 상승률 하한(이미 오르는 중일 것)
+    min_momentum: float = 0.10   # 최근 mom_bars 상승률 하한(이미 오르는 중일 것)
     vol_surge: float = 1.5       # 거래량이 평소보다 이 배수↑(관심 유입 확인)
     base_bars: int = 60          # 거래량 기준선 구간
-    # --- 청산(고위험이라 넓게: 큰 추세 끝까지, 대신 손절은 단호) ---
+    # --- 청산(손절·트레일링을 조여 큰 낙폭 차단: 기존 25/15%가 -69% 낙폭의 주범이었음) ---
     arm_profit: float = 0.10     # +10% 도달 후 트레일링 활성화
-    trail: float = 0.25          # 고점 대비 -25% 넓은 트레일링(변동성 흡수)
-    stop_loss: float = 0.15      # 진입가 -15% 하드 손절
+    trail: float = 0.20          # 고점 대비 -20% 트레일링
+    stop_loss: float = 0.12      # 진입가 -12% 하드 손절
     max_hold_bars: int = 360     # 최대 보유
     cost: float = 0.003          # 왕복 수수료+슬리피지 가정
 
