@@ -1,4 +1,4 @@
-import { Assets, Sprite, Graphics, Text, TextStyle } from "pixi.js";
+import { Assets, Sprite, Graphics, Container, Text, TextStyle } from "pixi.js";
 import { Scene } from "../core/Scene.js";
 import { COLORS, DESIGN_WIDTH, DESIGN_HEIGHT } from "../config.js";
 
@@ -6,6 +6,11 @@ import { COLORS, DESIGN_WIDTH, DESIGN_HEIGHT } from "../config.js";
 const HEROINE_SPRITES = {
   brown: "./assets/portraits/heroine_brown_idle.png",
   red: "./assets/portraits/heroine_red_idle.png",
+};
+// 스프라이트 시트에서 추출한 얼굴 포트레이트(대화·프로필용).
+const HEROINE_FACES = {
+  brown: "./assets/portraits/faces/heroine_brown_face.png",
+  red: "./assets/portraits/faces/heroine_red_face.png",
 };
 
 // 두 색을 t(0~1)로 선형 보간 → 배경 그라데이션용.
@@ -56,6 +61,9 @@ export class MainScene extends Scene {
     this.addChild(shadow);
     this.shadow = shadow;
 
+    // ── 3.5) 프로필 아바타 칩 (스프라이트 시트에서 추출한 포트레이트 사용)
+    await this.buildAvatarChip();
+
     // ── 4) 주인공 스프라이트 (디자인 시트 추출 일러스트)
     const tex = await Assets.load(HEROINE_SPRITES[this.variant]);
     const hero = new Sprite(tex);
@@ -95,6 +103,46 @@ export class MainScene extends Scene {
     this.addChild(sub);
 
     document.getElementById("loading")?.remove();
+  }
+
+  // 좌상단 프로필 아바타 칩: 둥근 카드 + 원형 마스크 포트레이트 + 이름표.
+  async buildAvatarChip() {
+    const chip = new Container();
+    const cardW = 250, cardH = 96, pad = 13, r = 18;
+
+    // 카드 배경(흰색, 살짝 그림자)
+    const shadow = new Graphics().roundRect(3, 5, cardW, cardH, r).fill({ color: 0x2a2a33, alpha: 0.12 });
+    const card = new Graphics().roundRect(0, 0, cardW, cardH, r).fill(0xffffff);
+    chip.addChild(shadow, card);
+
+    // 원형 포트레이트
+    const faceTex = await Assets.load(HEROINE_FACES[this.variant]);
+    const face = new Sprite(faceTex);
+    const d = cardH - pad * 2;             // 원 지름
+    const fs = (d / Math.min(face.texture.width, face.texture.height)) * 1.15; // 얼굴이 원을 채우게
+    face.scale.set(fs);
+    face.anchor.set(0.5, 0.42);            // 얼굴 위주로 맞춤
+    face.position.set(pad + d / 2, pad + d / 2);
+    const mask = new Graphics().circle(pad + d / 2, pad + d / 2, d / 2).fill(0xffffff);
+    face.mask = mask;
+    const ring = new Graphics().circle(pad + d / 2, pad + d / 2, d / 2).stroke({ width: 3, color: COLORS.coral });
+    chip.addChild(face, mask, ring);
+
+    // 이름 + 학년
+    const name = new Text({
+      text: "주인공",
+      style: new TextStyle({ fontFamily: "system-ui, 'Apple SD Gothic Neo', sans-serif", fontSize: 26, fontWeight: "700", fill: COLORS.ink }),
+    });
+    name.position.set(pad + d + 14, 24);
+    const grade = new Text({
+      text: "고1 · 배우 지망생",
+      style: new TextStyle({ fontFamily: "system-ui, 'Apple SD Gothic Neo', sans-serif", fontSize: 18, fill: 0x8a7b72 }),
+    });
+    grade.position.set(pad + d + 14, 56);
+    chip.addChild(name, grade);
+
+    chip.position.set(24, 24);
+    this.addChild(chip);
   }
 
   update(delta) {
