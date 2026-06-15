@@ -47,11 +47,15 @@ function makeSkyTexture(topColor, bottomColor) {
 scene.background = makeSkyTexture('#7ec0ee', '#cfeaff');
 scene.fog = new THREE.Fog(0xcfeaff, 60, 180);
 
-const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-// iPad/iPhone 정밀 감지 — iPadOS 13+ Safari 는 user agent 가 Mac 으로 위장됨
-// (Mac platform + touch points 로 판별)
-const isIOSDevice = /iPad|iPhone|iPod/i.test(navigator.userAgent)
-    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+// iPad/iPhone 정밀 감지 — iPadOS 13+ Safari 는 user agent 가 "Macintosh" 로 위장된다.
+// 실제 Mac 은 maxTouchPoints === 0 이므로 (Macintosh + 터치) 조합이면 iPad 로 확정.
+// navigator.platform 은 deprecated 라 단독 의존하면 일부 iPad 가 누락되어 HIGH 티어로
+// 잡혀 OOM(검정 화면 + 크래시)되므로, userAgent 의 Macintosh 검사도 함께 둔다.
+const _ua = navigator.userAgent || '';
+const isIOSDevice = /iPad|iPhone|iPod/i.test(_ua)
+    || ((/Macintosh/.test(_ua) || navigator.platform === 'MacIntel') && navigator.maxTouchPoints > 1);
+// UA 에 iPad 문자열이 없어도(위장) iOS 면 모바일로 취급 — 모든 모바일 최적화가 걸리게.
+const isMobile = /Mobi|Android|iPhone|iPad/i.test(_ua) || isIOSDevice;
 
 // ── Quality Tier System (상/중/하/최저) ──
 // Auto-selected by device, can downgrade on low FPS
@@ -84,8 +88,18 @@ const renderer = new THREE.WebGLRenderer({
     antialias: Q.antialias !== false,
     powerPreference: Q.pixelRatio <= 1 ? 'low-power' : 'high-performance'
 });
+// 백버퍼 총 픽셀 상한 — 티어 오감지(특히 iPad 레티나)로 pixelRatio 가 높게 잡혀도
+// GPU 드로잉버퍼가 iOS Safari 메모리 한계를 넘지 않게 강제로 끌어내린다.
+// (한계 초과 시 컨텍스트 손실 → 캐릭터 검정 → 크래시)
+function safePixelRatio() {
+    let r = Math.min(window.devicePixelRatio || 1, Q.pixelRatio);
+    const maxPixels = isIOSDevice ? 2300000 : 4200000;
+    const w = Math.max(1, window.innerWidth), h = Math.max(1, window.innerHeight);
+    if (w * h * r * r > maxPixels) r = Math.sqrt(maxPixels / (w * h));
+    return Math.max(0.5, r);
+}
 renderer.setSize(window.innerWidth, window.innerHeight, true);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pixelRatio));
+renderer.setPixelRatio(safePixelRatio());
 renderer.shadowMap.enabled = Q.shadowEnabled;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // r128 uses outputEncoding (newer r150+ uses outputColorSpace)
@@ -93,6 +107,29 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.physicallyCorrectLights = false;
+
+// ── WebGL 컨텍스트 손실 복구 ──
+// iOS Safari 는 메모리 압박 시 WebGL 컨텍스트를 강제로 회수한다. 핸들러가 없으면
+// 모든 텍스처가 검정으로 렌더되다가 페이지가 크래시 루프("문제가 반복적으로
+// 발생했습니다")에 빠진다. preventDefault() 로 브라우저의 자동 복구를 허용하고,
+// 손실 동안 렌더를 멈췄다가 복구되면 재개한다. (three.js r128 이 내부적으로
+// 프로그램/텍스처를 재업로드하므로 별도 재생성은 불필요)
+let _glLost = false;
+(function setupContextLossRecovery() {
+    const cv = renderer.domElement;
+    if (!cv || !cv.addEventListener) return;
+    cv.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault();          // 핵심: 기본 동작(크래시)을 막고 복구를 시도하게 함
+        _glLost = true;
+        console.warn('[WebGL] 컨텍스트 손실 — 렌더 일시정지, 복구 대기');
+        try { if (typeof showMessage === 'function') showMessage('⚠️ 그래픽 복구 중...'); } catch (_) {}
+    }, false);
+    cv.addEventListener('webglcontextrestored', () => {
+        _glLost = false;
+        console.warn('[WebGL] 컨텍스트 복구 — 렌더 재개');
+        try { renderer.setPixelRatio(safePixelRatio()); } catch (_) {}
+    }, false);
+})();
 
 // ── Post-processing (EffectComposer) ──
 let composer = null;
@@ -149,6 +186,7 @@ function resizeRendererToViewport() {
     const h = Math.max(window.innerHeight, document.documentElement.clientHeight);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    renderer.setPixelRatio(safePixelRatio());   // 회전/리사이즈 후에도 백버퍼 예산 유지
     renderer.setSize(w, h, true);  // updateStyle=true → CSS도 정확히 맞춤
     if (composer) composer.setSize(w, h);
     // Canvas CSS를 강제로 컨테이너에 맞춤 (Safari iOS 백업)
@@ -1400,7 +1438,7 @@ function downgradeQuality() {
     else return; // already lowest
     Q = QUALITY[qualityTier];
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pixelRatio));
+    renderer.setPixelRatio(safePixelRatio());
     sunLight.shadow.mapSize.width = Q.shadow;
     sunLight.shadow.mapSize.height = Q.shadow;
     if (sunLight.shadow.map) { sunLight.shadow.map.dispose(); sunLight.shadow.map = null; }
@@ -1420,6 +1458,9 @@ function animate() {
 
     // 백그라운드(탭 숨김) 시 렌더/업데이트 정지 — 발열·배터리 절약
     if (document.hidden) { lastTime = performance.now(); return; }
+
+    // WebGL 컨텍스트 손실 중에는 렌더 호출 금지 (복구를 방해하지 않게). RAF 는 유지.
+    if (_glLost) { lastTime = performance.now(); return; }
 
     // 프레임 상한 — 모바일 GPU 풀가동(발열)을 막는다. 목표 간격 미달 시 이 프레임 스킵.
     const now = performance.now();
