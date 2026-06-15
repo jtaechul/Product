@@ -7,10 +7,13 @@ const HEROINE_SPRITES = {
   brown: "./assets/portraits/heroine_brown_idle.png",
   red: "./assets/portraits/heroine_red_idle.png",
 };
-// 스프라이트 시트에서 추출한 얼굴 포트레이트(대화·프로필용).
-const HEROINE_FACES = {
-  brown: "./assets/portraits/faces/heroine_brown_face.png",
-  red: "./assets/portraits/faces/heroine_red_face.png",
+// 주인공 소윤의 표정 세트 (생성형 AI 제작 → 배경 제거). 프로필/대화용.
+const SOYOON_FACES = {
+  joy: "./assets/portraits/expressions/soyoon_joy.png",
+  sad: "./assets/portraits/expressions/soyoon_sad.png",
+  surprise: "./assets/portraits/expressions/soyoon_surprise.png",
+  proud: "./assets/portraits/expressions/soyoon_proud.png",
+  down: "./assets/portraits/expressions/soyoon_down.png",
 };
 
 // 두 색을 t(0~1)로 선형 보간 → 배경 그라데이션용.
@@ -115,13 +118,12 @@ export class MainScene extends Scene {
     const card = new Graphics().roundRect(0, 0, cardW, cardH, r).fill(0xffffff);
     chip.addChild(shadow, card);
 
-    // 원형 포트레이트
-    const faceTex = await Assets.load(HEROINE_FACES[this.variant]);
+    // 원형 포트레이트 (소윤의 기쁨 표정 — 밝은 기본 프로필)
+    const faceTex = await Assets.load(SOYOON_FACES.joy);
     const face = new Sprite(faceTex);
     const d = cardH - pad * 2;             // 원 지름
-    const fs = (d / Math.min(face.texture.width, face.texture.height)) * 1.15; // 얼굴이 원을 채우게
-    face.scale.set(fs);
-    face.anchor.set(0.5, 0.42);            // 얼굴 위주로 맞춤
+    face.scale.set(d / (0.62 * face.texture.height)); // 얼굴이 원을 채우도록
+    face.anchor.set(0.5, 0.34);            // 눈·미소가 원 중앙에 오게
     face.position.set(pad + d / 2, pad + d / 2);
     const mask = new Graphics().circle(pad + d / 2, pad + d / 2, d / 2).fill(0xffffff);
     face.mask = mask;
@@ -130,7 +132,7 @@ export class MainScene extends Scene {
 
     // 이름 + 학년
     const name = new Text({
-      text: "주인공",
+      text: "소윤",
       style: new TextStyle({ fontFamily: "system-ui, 'Apple SD Gothic Neo', sans-serif", fontSize: 26, fontWeight: "700", fill: COLORS.ink }),
     });
     name.position.set(pad + d + 14, 24);
