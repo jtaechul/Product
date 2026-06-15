@@ -145,12 +145,14 @@
 |---|---|---|
 | **게임 화면 렌더링** | **PixiJS (WebGL/WebGPU 2D 렌더러)** | DOM이 아닌 GPU 렌더링. 스프라이트·애니 수백 개도 60fps. UI·HUD도 Pixi 위에 구성 |
 | **캐릭터 애니메이션** | **Live2D Cubism** (메인) / **Rive** (전환·이펙트) | "늘 살아 움직이는 캐릭터 + 활동별 모션" = 우마무스메식. Live2D는 일러스트 1장을 관절처럼 구동, Rive는 "활동 선택→짧은 애니" 상태 전환에 가볍고 적합 |
-| **언어** | **TypeScript** (+ HTML 셸 최소화) | 규모 대비 안정성. 빌드: Vite |
-| **앱 패키징** | **Capacitor** | 같은 코드베이스를 iOS/Android 네이티브 앱 + 웹으로 동시 배포 |
-| **데이터** | 활동·작품·이벤트·엔딩·애니메이션을 **JSON/TS 데이터 파일**로 분리 | `js/data/*` (수치 분리, 플레이 테스트로 조정) |
-| **사운드** | **Howler.js** (또는 Web Audio API) | BGM·효과음 관리, 모바일 오디오 정책 대응 |
-| **저장** | Capacitor Preferences / `localStorage` | 세이브·로드·엔딩 도감 |
-| **배포** | 웹: **GitHub Pages** (`/Product/spotlight/`) · 앱: Capacitor로 스토어 빌드 | 개발 중엔 웹으로 빠르게 확인, 완성 후 앱 빌드 |
+| **언어/모듈** | **JavaScript (ES 모듈) · 빌드 없음** | 브라우저 native ES module. PixiJS는 `vendor/pixi.min.mjs` 로컬 파일을 importmap으로 로드 → **빌드/번들 단계 없이 GitHub Pages 날것 서빙으로 바로 동작** (Vite/TS 빌드는 Pages 미변환 → 폐기) |
+| **아트(중요)** | **고퀄 래스터 일러스트(PNG)** — 캐릭터·배경·UI 패널·활동 썸네일 | ⚠️ **SVG 손그림 금지**: 우마무스메급 퀄리티는 그려진 일러스트(PNG)로만 가능. AI(Canva·Adobe·Higgsfield)로 동일 화풍 생성 → `assets/`에 PNG로 저장 → PixiJS Sprite로 조립. (SVG는 단순 아이콘 정도만) |
+| **캐릭터 애니메이션** | **Live2D Cubism** / **Rive** (후반 적용) | 일러스트를 관절처럼 구동. 초기엔 정적 PNG → 점진 적용 |
+| **데이터** | 활동·작품·이벤트·엔딩 수치를 **JS 데이터 파일**로 분리 | `src/data/*` (수치 분리, 플레이 테스트로 조정) |
+| **사운드** | **Howler.js**(CDN/vendor) 또는 Web Audio API | BGM·효과음 관리 |
+| **저장** | `localStorage` (앱화 시 Capacitor Preferences) | 세이브·로드·엔딩 도감 |
+| **앱 패키징(후반)** | **Capacitor** | 완성된 정적 사이트(`spotlight/`)를 그대로 감싸 iOS/Android 앱화 |
+| **배포** | **GitHub Pages** (`/Product/spotlight/`) — main/root 날것 서빙 | 빌드 산출물 불필요, 소스가 곧 배포본 |
 
 > 💡 **왜 PixiJS인가**: ① 전부 코드라 AI(Claude)가 처음부터 끝까지 제작 가능(게임 엔진 에디터처럼 사람이
 > GUI를 직접 만질 필요 없음) ② GPU 렌더링이라 DOM 웹앱의 끊김·발열이 사라짐 ③ Capacitor로 진짜 앱이 됨.
@@ -602,59 +604,41 @@
 
 ## 19. 파일 구조
 
-> #4 결정에 맞춘 **PixiJS + TypeScript + Vite + Capacitor** 구조. 게임 로직은 `src/`,
-> 정적 에셋은 `public/assets/`(빌드 시 그대로 복사). 수치 데이터는 `src/data/`에 분리.
+> #4 결정에 맞춘 **PixiJS + 순수 ES모듈 (빌드 없음)** 구조. 게임 로직은 `src/`(`.js`),
+> 아트·정적 에셋은 `assets/`, PixiJS는 `vendor/`에 vendoring. 소스가 곧 배포본(Pages 날것 서빙).
 
 ```
 spotlight/
-├── index.html               ← Vite 엔트리 (canvas 마운트만, 셸 최소화)
-├── package.json             ← Vite · PixiJS · TypeScript · Capacitor 의존성
-├── tsconfig.json
-├── vite.config.ts           ← base: '/Product/spotlight/' (GitHub Pages)
-├── capacitor.config.ts      ← iOS/Android 앱 패키징 설정
-├── public/
-│   └── assets/
-│       ├── portraits/       ← 주인공 디자인/스프라이트
-│       │   ├── heroine_design_sheet_brown.png   ← 주인공 확정 디자인(브라운)
-│       │   └── heroine_design_sheet_red.png     ← 주인공 확정 디자인(레드)
-│       ├── live2d/          ← Live2D Cubism 모델(.model3.json 등)
-│       ├── rive/            ← Rive 애니(.riv) — 전환·이펙트
-│       ├── manager/  rivals/  bg/  endings/  sfx/
+├── index.html               ← 엔트리. importmap으로 vendor/pixi 로드 + src/main.js
+├── vendor/
+│   └── pixi.min.mjs         ← PixiJS 단일 파일(로컬). CDN·빌드 불필요
+├── assets/                  ← 고퀄 래스터 아트(PNG) + 사운드
+│   ├── mockups/             ← 디자인 목표 시안 이미지
+│   │   └── main_screen_target.png
+│   ├── portraits/           ← 주인공 디자인/스프라이트
+│   │   ├── heroine_design_sheet_brown.png   ← 주인공 확정 디자인(브라운)
+│   │   └── heroine_design_sheet_red.png     ← 주인공 확정 디자인(레드)
+│   ├── live2d/              ← Live2D Cubism 모델(후반)
+│   ├── rive/                ← Rive 애니(후반)
+│   ├── manager/  rivals/  bg/  endings/  sfx/
 └── src/
-    ├── main.ts              ← PixiJS Application 부트스트랩 / 진입점
-    ├── config.ts            ← 상수(36턴·슬롯) + 디자인 토큰(색·여백)
+    ├── main.js              ← PixiJS Application 부트스트랩 / 진입점
+    ├── config.js            ← 상수(36턴·슬롯) + 디자인 토큰(색·여백)
     ├── core/
-    │   ├── SceneManager.ts  ← 씬 전환 관리
-    │   └── Scene.ts         ← 씬 베이스 클래스
+    │   ├── SceneManager.js  ← 씬 전환 + 9:16 비율 스케일
+    │   └── Scene.js         ← 씬 베이스 클래스
     ├── scenes/              ← 화면 단위 (Pixi 씬)
-    │   ├── TitleScene.ts
-    │   ├── CreateScene.ts   ← 캐릭터 생성(머리색 브라운/레드 선택)
-    │   ├── MainScene.ts     ← 메인 스케줄(턴 진행·활동 2슬롯)
-    │   ├── ProductionScene.ts ← 작품 출연·시청자 평가
-    │   └── EndingScene.ts   ← 40년 커리어 엔딩
-    ├── systems/             ← 게임 로직(렌더와 분리)
-    │   ├── stats.ts         ← 스탯·인성·소프트캡·컨디션
-    │   ├── balance.ts       ← 성장 곡선·난이도 모드·마일스톤
-    │   ├── schedule.ts      ← 활동 선택 / 정산
-    │   ├── production.ts    ← 출연 판정 / 평가 등급
-    │   ├── bond.ts          ← 인연 시스템
-    │   ├── events.ts        ← 랜덤 이벤트 / 인성 플래그
-    │   ├── ending.ts        ← 모듈형 엔딩 생성·서술
-    │   ├── filmography.ts   ← 필모·수상 기록
-    │   ├── shop.ts          ← 상점 / 인벤토리
-    │   └── save.ts          ← Capacitor Preferences / localStorage
-    ├── anim/
-    │   └── character.ts     ← Live2D/Rive 캐릭터 제어(idle·활동 모션)
-    ├── ui/
-    │   ├── hud.ts           ← 상단 상태바(체력·멘탈·돈·팬)
-    │   └── components.ts    ← 카드·버튼 등 공용 컴포넌트(터치 48px↑)
-    └── data/                ← 수치 분리 (플레이 테스트로 조정)
-        ├── activities.ts
-        ├── media.ts         ← 출연 매체·배역·가중 스탯
-        ├── events.ts
-        ├── animations.ts    ← 활동→모션 매핑
-        ├── bonds.ts
-        └── endings.ts       ← 엔딩 조건 + 서술 템플릿
+    │   ├── MainScene.js     ← 메인 스케줄(현재: 목표 아트 렌더 → 점진 인터랙션화)
+    │   ├── (CreateScene.js) ← 캐릭터 생성(브라운/레드) — 예정
+    │   ├── (ProductionScene.js) ← 작품 출연·평가 — 예정
+    │   └── (EndingScene.js) ← 40년 커리어 엔딩 — 예정
+    ├── systems/             ← 게임 로직(렌더와 분리) — 예정
+    │   ├── stats.js  balance.js  schedule.js  production.js
+    │   ├── bond.js  events.js  ending.js  filmography.js
+    │   └── shop.js  save.js
+    ├── anim/  character.js  ← Live2D/Rive 캐릭터 제어 — 예정
+    ├── ui/    hud.js  components.js  ← 상태바·공용 컴포넌트 — 예정
+    └── data/  activities.js  media.js  events.js  bonds.js  endings.js  ← 수치 분리
 ```
 
 -----
