@@ -6,15 +6,21 @@
   <meta name="theme-color" content="#1e2a4a" />
   <title>SPOTLIGHT</title>
   <style>
-    /* 게임 캔버스만 풀스크린으로. UI는 전부 PixiJS가 캔버스 위에 그린다. */
     html, body { margin: 0; height: 100%; background: #1e2a4a; overflow: hidden; }
     #game { position: fixed; inset: 0; }
-    /* 모바일 프레임: PC에선 세로 비율 중앙 정렬 */
-    #game canvas { display: block; margin: 0 auto; touch-action: none; }
+    #game canvas { display: block; touch-action: none; }
+    /* 로딩 표시 */
+    #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+               color: #fdfbf7; font-family: sans-serif; font-size: 18px; }
   </style>
+  <!-- PixiJS를 빌드 없이 로컬 파일에서 직접 로드 (CDN 의존 X) -->
+  <script type="importmap">
+  { "imports": { "pixi.js": "./vendor/pixi.min.mjs" } }
+  </script>
 </head>
 <body>
+  <div id="loading">불러오는 중…</div>
   <div id="game"></div>
-  <script type="module" src="/src/main.ts"></script>
+  <script type="module" src="./src/main.js"></script>
 </body>
 </html>
