@@ -1,5 +1,6 @@
 // 게임 상태 + 진행 로직 (렌더와 분리). 기획서 6·7·8·9번.
 import { ACTIVITIES, AUTO_ACTIVITY, STATS_META } from "../data/activities.js";
+import { MEDIA } from "../data/media.js";
 import { TOTAL_TURNS } from "../config.js";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -21,6 +22,51 @@ export class GameState {
     this.mental = 70;              // 멘탈
     this.money = 100000;           // 보통 난이도 시작 돈
     this.fans = 0;                 // 인지도(팬 수)
+    this.filmography = [];         // 출연 기록 (기획서 4·11번)
+    this.flags = new Set();        // 특수 플래그(영화제·해외·국민 등)
+    this.offers = this.genOffers();// 이번 달 출연 제안
+  }
+
+  // 이번 달 출연 제안 1~3개 생성 (등장 가능 매체 중)
+  genOffers() {
+    const avail = MEDIA.filter((m) => m.from <= this.turn);
+    const pool = [...avail];
+    const n = Math.min(pool.length, this.turn > 12 ? 3 : 2);
+    const out = [];
+    while (out.length < n && pool.length) {
+      out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0].id);
+    }
+    return out;
+  }
+
+  // 출연 평가 (기획서 11번): 종합점수 vs 기대치 → 등급 → 보상 + 필모 기록
+  runProduction(id) {
+    const m = MEDIA.find((x) => x.id === id);
+    if (!m) return null;
+    let P = 0, E = 0;
+    for (const [k, v] of Object.entries(m.req)) {
+      E += v;
+      P += k === "fame" ? this.fans : (this.stats[k] || 0);
+    }
+    const ratio = E ? P / E : 1;
+    let grade = "bad";
+    if (ratio >= 1.25) grade = "best";
+    else if (ratio >= 1.0) grade = "good";
+    else if (ratio >= 0.8) grade = "fair";
+
+    const fameMult = { best: 1.6, good: 1.0, fair: 0.3, bad: 0 }[grade];
+    const payMult = { best: 1.0, good: 1.0, fair: 0.7, bad: 0.4 }[grade];
+    this.fans = Math.max(0, this.fans + Math.round(m.fame * fameMult));
+    this.money += Math.round(m.pay * 10000 * payMult);
+    if (grade === "best" || grade === "good") {
+      for (const [k, v] of Object.entries(m.gain || {})) this._gainStat(k, grade === "best" ? v * 1.5 : v);
+      this.mental = clamp(this.mental + (grade === "best" ? 15 : 8), 0, 100);
+      if (m.flag) this.flags.add(m.flag);
+    } else if (grade === "bad") {
+      this.mental = clamp(this.mental - 12, 0, 100);
+    }
+    this.filmography.push({ turn: this.turn, label: this.label, name: m.name, grade });
+    return { media: m, grade };
   }
 
   // 현재 턴 → "고1·5월" 형태
@@ -65,8 +111,9 @@ export class GameState {
     }
     // 3) 매달 용돈 +50,000
     this.money += 50000;
-    // 4) 턴 경과
+    // 4) 턴 경과 + 다음 달 출연 제안 갱신
     this.turn += 1;
+    this.offers = this.genOffers();
     return {
       d: {
         stamina: this.stamina - before.stamina,
