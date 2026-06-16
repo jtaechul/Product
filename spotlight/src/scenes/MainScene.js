@@ -93,9 +93,8 @@ export class MainScene extends Scene {
   buildTopbar() {
     const bar = new Container();
     bar.addChild(this._spr("topbar2", 10, 8, 700));
-    // ② 얼굴 대신 계절명 + 계절색 동그라미
-    this.seasonBg = new Graphics(); bar.addChild(this.seasonBg);
-    this.seasonText = this._t("", 23, 0xffffff, FD); this.seasonText.anchor.set(0.5); this.seasonText.position.set(87, 78); bar.addChild(this.seasonText);
+    // ② 얼굴 대신 계절명만 (프레임 안 중앙)
+    this.seasonText = this._t("", 26, 0xffffff, FD); this.seasonText.anchor.set(0.5); this.seasonText.position.set(87, 78); bar.addChild(this.seasonText);
     // ① 날짜·이름 크게 + 중앙정렬
     const date = this._t("고1·3월", 24, S.ink, FD); date.anchor.set(0.5); date.position.set(215, 66); bar.addChild(date); this.turnText = date;
     const name = this._t("소윤", 18, S.sub, FD); name.anchor.set(0.5); name.position.set(215, 98); bar.addChild(name);
@@ -120,7 +119,6 @@ export class MainScene extends Scene {
   refreshHUD() {
     this.turnText.text = this.game.label;
     const s = this._season();
-    this.seasonBg.clear().circle(87, 78, 32).fill(s.color);
     this.seasonText.text = s.name; this.seasonText.style.fill = s.fg;
     this.resText.stamina.text = String(this.game.stamina);
     this.resText.mental.text = String(this.game.mental);
@@ -132,12 +130,12 @@ export class MainScene extends Scene {
   buildManagerBubble() {
     const c = new Container();
     const spr = this._spr("manager_bubble", 120, 608, 480); c.addChild(spr);
-    const mh = spr.height, acx = 183, acy = 667;
-    this._faceCircle(c, this.tex.mgrface, acx, acy, 72, 0.42, 0.20);
-    const who = this._t("한지원", 16, 0x22384a, FD); who.position.set(240, 608 + mh * 0.30); c.addChild(who);
+    const mh = spr.height, acx = 171, acy = 668;
+    this._faceCircle(c, this.tex.mgrface, acx, acy, 54, 0.42, 0.18);
+    const who = this._t("한지원", 16, 0x22384a, FD); who.position.set(235, 608 + mh * 0.30); c.addChild(who);
     this.mgrText = this._t(MANAGER_LINES[0], 17, 0x22384a);
     this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 300;
-    this.mgrText.position.set(240, 608 + mh * 0.54); c.addChild(this.mgrText);
+    this.mgrText.position.set(235, 608 + mh * 0.54); c.addChild(this.mgrText);
     this.addChild(c);
   }
 
@@ -190,15 +188,13 @@ export class MainScene extends Scene {
 
   _renderStats() {
     this.menuLayer.addChild(this._spr("stats_frame", 18, 1000, 684));
-    const statHead = this._t("능력치", 17, S.white, FD); statHead.anchor.set(0.5); statHead.position.set(108, 1023); this.menuLayer.addChild(statHead);
-    const colx = [35, 165, 295, 425, 555], laby = [1052, 1111], trky = [1073, 1132], tw = 93;
+    const statHead = this._t("능력치", 18, S.white, FD); statHead.anchor.set(0.5); statHead.position.set(121, 1019); this.menuLayer.addChild(statHead);
+    const colx = [35, 165, 295, 425, 555], cy = [1077, 1136], tw = 93;
     STAT_VIEW.forEach(([key, label, cat], i) => {
-      const c = i % 5, r = Math.floor(i / 5), x = 18 + colx[c], ly = laby[r], ty = trky[r];
+      const c = i % 5, r = Math.floor(i / 5), x = 18 + colx[c], y = cy[r];
       const val = key === "fame" ? this.game.fans : this.game.stats[key];
-      this.menuLayer.addChild(Object.assign(this._t(label, 16, S.ink, FB), { x, y: ly }));
-      const v = this._t(String(val), 16, SCOL[cat], FD); v.anchor.set(1, 0); v.position.set(x + tw, ly); this.menuLayer.addChild(v);
-      const f = Math.max(0, Math.min(1, val / 100));
-      if (f > 0) this.menuLayer.addChild(new Graphics().roundRect(x, ty, Math.max(5, tw * f), 9, 4).fill(SCOL[cat]));
+      const nm = this._t(label, 16, S.ink, FB); nm.anchor.set(0, 0.5); nm.position.set(x, y); this.menuLayer.addChild(nm);
+      const v = this._t(String(val), 17, SCOL[cat], FD); v.anchor.set(1, 0.5); v.position.set(x + tw, y); this.menuLayer.addChild(v);
     });
   }
 
