@@ -45,6 +45,7 @@ export class MainScene extends Scene {
     this.t = 0;
     this.tex = {};
     this.overlay = null;
+    this.heroDispH = BUST_DISP_H;
   }
 
   async onEnter() {
@@ -57,21 +58,28 @@ export class MainScene extends Scene {
     await Promise.all(BONDS.map(async (b) => { this.tex[`bond_${b.id}`] = await Assets.load(b.img); }));
     this.idleTex = idleTex;
 
-    const bg = new Sprite(bgTex);
-    bg.anchor.set(0.5, 0);
-    bg.scale.set(Math.max(DESIGN_WIDTH / bg.texture.width, DESIGN_HEIGHT / bg.texture.height));
-    bg.position.set(DESIGN_WIDTH / 2, 0);
-    this.addChild(bg);
-    this.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: 0xfff6f3, alpha: 0.16 }));
+    this.bgSprite = new Sprite(bgTex);
+    this.bgSprite.anchor.set(0.5, 0);
+    this.bgSprite.scale.set(Math.max(DESIGN_WIDTH / bgTex.width, DESIGN_HEIGHT / bgTex.height));
+    this.bgSprite.position.set(DESIGN_WIDTH / 2, 0);
+    this.addChild(this.bgSprite);
+    this.veil = new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: 0xfff6f3, alpha: 0.16 });
+    this.addChild(this.veil);
 
     this.hero = new Sprite(idleTex);
     this.hero.anchor.set(0.5, 0.0);
     this.hero.position.set(DESIGN_WIDTH / 2, HERO_TOP_Y);
     this._fitHero();
     this.addChild(this.hero);
+    this.heroMask = new Graphics().rect(0, 0, DESIGN_WIDTH, PANEL_TOP).fill(0xffffff);
+    this.addChild(this.heroMask);
+    this.hero.mask = this.heroMask;
 
-    this.addChild(new Graphics().roundRect(0, PANEL_TOP, DESIGN_WIDTH, DESIGN_HEIGHT - PANEL_TOP + 30, 28)
-      .fill({ color: S.mint, alpha: 0.96 }).stroke({ width: 2, color: S.gold }));
+    this.bottomBlock = new Container();
+    this.addChild(this.bottomBlock);
+    this.panelBg = new Graphics().roundRect(0, PANEL_TOP, DESIGN_WIDTH, DESIGN_HEIGHT - PANEL_TOP + 30, 28)
+      .fill({ color: S.mint, alpha: 0.96 }).stroke({ width: 2, color: S.gold });
+    this.bottomBlock.addChild(this.panelBg);
 
     this.buildManagerBubble();
     this.buildTopbar();
@@ -79,7 +87,7 @@ export class MainScene extends Scene {
     this.buildNextButton();
     this.buildBondButton();
     this.menuLayer = new Container();
-    this.addChild(this.menuLayer);
+    this.bottomBlock.addChild(this.menuLayer);
 
     this.refreshHUD();
     this.renderMenu();
@@ -87,7 +95,16 @@ export class MainScene extends Scene {
     document.getElementById("loading")?.remove();
   }
 
-  _fitHero() { this.baseScale = BUST_DISP_H / this.hero.texture.height; this.hero.scale.set(this.baseScale); }
+  _fitHero() { this.baseScale = (this.heroDispH || BUST_DISP_H) / this.hero.texture.height; this.hero.scale.set(this.baseScale); }
+  resize(W, H) {
+    this.H = H;
+    if (this.bgSprite) { const t = this.bgSprite.texture; this.bgSprite.scale.set(Math.max(DESIGN_WIDTH / t.width, H / t.height)); }
+    if (this.veil) this.veil.clear().rect(0, 0, DESIGN_WIDTH, H).fill({ color: 0xfff6f3, alpha: 0.16 });
+    if (this.bottomBlock) this.bottomBlock.y = H - DESIGN_HEIGHT;
+    this.heroDispH = Math.max(1180, (H - 800) / 0.38);
+    if (this.hero) this._fitHero();
+    if (this.heroMask) this.heroMask.clear().rect(0, 0, DESIGN_WIDTH, H - 538).fill(0xffffff);
+  }
   async setPose(k) { try { this.hero.texture = await Assets.load(k ? POSE_PATH(k) : IDLE_SPRITE); this._fitHero(); } catch (e) { console.warn(e); } }
   _t(txt, size, fill, fam = FB) { return new Text({ text: txt, style: new TextStyle({ fontFamily: fam, fontSize: size, fill }) }); }
   _spr(name, x, y, w) { const s = new Sprite(this.tex[name]); s.scale.set(w / s.texture.width); s.position.set(x, y); return s; }
@@ -144,14 +161,14 @@ export class MainScene extends Scene {
     const c = new Container();
     const spr = this._spr("manager_bubble", 120, 608, 480); c.addChild(spr);
     const mh = spr.height, acx = 181, acy = 668;
-    this._faceCircle(c, this.tex.mgrface, acx, acy, 54, 0.455, 0.24);
+    this._faceCircle(c, this.tex.mgrface, acx, acy, 54, 0.58, 0.20);
     const who = this._t("한지원", 16, 0x22384a, FD); who.position.set(260, 608 + mh * 0.30); c.addChild(who);
     this.mgrText = this._t(MANAGER_LINES[0], 17, 0x22384a);
     this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 300;
     this.mgrText.position.set(260, 608 + mh * 0.54); c.addChild(this.mgrText);
     c.eventMode = "static"; c.cursor = "pointer";
     c.on("pointertap", () => this.openOffers());
-    this.addChild(c);
+    this.bottomBlock.addChild(c);
   }
 
   _mgrLine() {
@@ -333,7 +350,7 @@ export class MainScene extends Scene {
       chip._txt = txt;
       chip.eventMode = "static"; chip.cursor = "pointer";
       chip.on("pointertap", () => { if (this.selected[i] !== undefined) { this.selected.splice(i, 1); this._afterSelectChange(); } });
-      this.addChild(chip); this.slotChips.push(chip);
+      this.bottomBlock.addChild(chip); this.slotChips.push(chip);
     }
   }
   _afterSelectChange() {
@@ -431,7 +448,7 @@ export class MainScene extends Scene {
     const spr = this._spr("btn_next", 140, 1172, 440); c.addChild(spr);
     const lab = this._t("다음 달 일정 진행하기", 20, S.white, FD); lab.anchor.set(0.5); lab.position.set(DESIGN_WIDTH / 2, 1172 + spr.height / 2); c.addChild(lab);
     this._tap(c, () => this.onNextMonth());
-    this.addChild(c);
+    this.bottomBlock.addChild(c);
   }
   onNextMonth() {
     if (this.overlay) return;
