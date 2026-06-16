@@ -10,15 +10,13 @@ const BG_SCHOOL = "./assets/bg/school.png";
 const UI = (n) => `./assets/ui/${n}.png`;
 
 const HERO_TOP_Y = 100;
-const BUST_DISP_H = 1450;
+const BUST_DISP_H = 1320;
 const PANEL_TOP = 742;
 const FD = "GmarketSansBold, sans-serif";
 const FB = "KoPubWorldDotumMedium, sans-serif";
 const S = { ink: 0x3a3a44, sub: 0x8a7b72, gold: 0xd8c7a0, mint: 0xeaf3ee, white: 0xffffff, coral: 0xec6f65 };
 const LBL = { acting: 0xe2685e, charm: 0x2e9e8e, mind: 0xc07e1e, life: 0x6e7bd6 };
 const SCOL = { act: 0xec6f65, charm: 0x2e9e8e, mind: 0xc07e1e, soc: 0x6e7bd6 };
-// 상단바 자원칩 값 위치(아이콘 내장: 체력♥ 멘탈🧠 돈🪙 팬⭐)
-const RES_POS = { stamina: 366, mental: 460, money: 554, fans: 649 };
 const STAT_VIEW = [
   ["acting", "연기", "act"], ["emotion", "감정", "act"], ["vocal", "발성", "act"], ["looks", "외모", "charm"], ["singing", "가창", "charm"],
   ["dance", "댄스", "charm"], ["study", "학업", "mind"], ["character", "인성", "mind"], ["network", "인맥", "soc"], ["fame", "인지", "soc"],
@@ -44,6 +42,7 @@ export class MainScene extends Scene {
     const [bgTex, idleTex] = await Promise.all([Assets.load(BG_SCHOOL), Assets.load(IDLE_SPRITE)]);
     await Promise.all(uiNames.map(async (n) => { this.tex[n] = await Assets.load(UI(n)); }));
     await Promise.all(ACTIVITIES.map(async (a) => { this.tex[`actico_${a.id}`] = await Assets.load(UI(`actico_${a.id}`)); }));
+    await Promise.all(CATEGORIES.map(async (c) => { this.tex[`catico_${c.id}`] = await Assets.load(UI(`catico_${c.id}`)); }));
     this.tex.mgrface = await Assets.load("./assets/manager/hanjiwon.png");
     this.idleTex = idleTex;
 
@@ -94,21 +93,38 @@ export class MainScene extends Scene {
   buildTopbar() {
     const bar = new Container();
     bar.addChild(this._spr("topbar2", 10, 8, 700));
-    this._faceCircle(bar, this.idleTex, 85, 80, 80, 0.55, 0.12); // 소윤 아바타
-    const date = this._t("고1·3월", 21, S.ink, FD); date.anchor.set(0.5); date.position.set(215, 60); bar.addChild(date); this.turnText = date;
-    const name = this._t("소윤", 15, S.sub); name.anchor.set(0.5); name.position.set(215, 92); bar.addChild(name);
+    // ② 얼굴 대신 계절명 + 계절색 동그라미
+    this.seasonBg = new Graphics(); bar.addChild(this.seasonBg);
+    this.seasonText = this._t("", 24, 0xffffff, FD); this.seasonText.anchor.set(0.5); this.seasonText.position.set(85, 80); bar.addChild(this.seasonText);
+    // ① 날짜·이름 크게 + 중앙정렬
+    const date = this._t("고1·3월", 24, S.ink, FD); date.anchor.set(0.5); date.position.set(215, 66); bar.addChild(date); this.turnText = date;
+    const name = this._t("소윤", 18, S.sub, FD); name.anchor.set(0.5); name.position.set(215, 98); bar.addChild(name);
+    // ③ 자원칩: 라벨/값 2줄 중앙정렬
     this.resText = {};
-    Object.entries(RES_POS).forEach(([key, x]) => {
-      const val = this._t("", 15, S.ink, FD); val.anchor.set(0.5); val.position.set(x, 80); bar.addChild(val);
+    const RES = [["stamina", "체력", 366], ["mental", "멘탈", 460], ["money", "자금", 554], ["fans", "인지도", 649]];
+    RES.forEach(([key, label, x]) => {
+      const lab = this._t(label, 11, S.ink, FB); lab.anchor.set(0.5); lab.position.set(x, 64); bar.addChild(lab);
+      const val = this._t("", 15, S.ink, FD); val.anchor.set(0.5); val.position.set(x, 90); bar.addChild(val);
       this.resText[key] = val;
     });
     this.addChild(bar);
   }
+
+  _season() {
+    let m = ((this.game.turn - 1) % 12) + 3; if (m > 12) m -= 12;
+    if (m >= 3 && m <= 5) return { name: "봄", color: 0xf6c6d4, fg: 0xc23b5a };
+    if (m >= 6 && m <= 8) return { name: "여름", color: 0x9bd7f0, fg: 0x1c6e92 };
+    if (m >= 9 && m <= 11) return { name: "가을", color: 0xf0b878, fg: 0x8a4e16 };
+    return { name: "겨울", color: 0xd2e6f4, fg: 0x3a6e92 };
+  }
   refreshHUD() {
     this.turnText.text = this.game.label;
+    const s = this._season();
+    this.seasonBg.clear().circle(85, 80, 37).fill(s.color);
+    this.seasonText.text = s.name; this.seasonText.style.fill = s.fg;
     this.resText.stamina.text = String(this.game.stamina);
     this.resText.mental.text = String(this.game.mental);
-    this.resText.money.text = this.game.moneyShort();
+    this.resText.money.text = `${this.game.moneyShort()}원`;
     this.resText.fans.text = String(this.game.fans);
   }
 
@@ -134,7 +150,7 @@ export class MainScene extends Scene {
       const spr = this._spr("slot_chip", sx, 754, 326); chip.addChild(spr);
       const cyc = 754 + spr.height / 2;
       const num = this._t(String(i + 1), 18, S.white, FD); num.anchor.set(0.5); num.position.set(sx + 48, cyc); chip.addChild(num);
-      const txt = this._t("비어있음", 16, S.sub); txt.anchor.set(0, 0.5); txt.position.set(sx + 96, cyc); chip.addChild(txt);
+      const txt = this._t("비어있음", 18, S.sub, FD); txt.anchor.set(0, 0.5); txt.position.set(sx + 96, cyc); chip.addChild(txt);
       chip._txt = txt;
       chip.eventMode = "static"; chip.cursor = "pointer";
       chip.on("pointertap", () => { if (this.selected[i] !== undefined) { this.selected.splice(i, 1); this._afterSelectChange(); } });
@@ -165,7 +181,8 @@ export class MainScene extends Scene {
       const cx = startX + i * (cw + gap);
       const c = new Container();
       const spr = this._spr(`cat_${cat.id}`, cx, y, cw); c.addChild(spr);
-      const l = this._t(cat.label, 19, S.white, FD); l.anchor.set(0.5, 0.5); l.position.set(cx + cw / 2, y + spr.height * 0.42); c.addChild(l);
+      const l = this._t(cat.label, 20, S.white, FD); l.anchor.set(0.5, 0.5); l.position.set(cx + cw / 2, y + spr.height * 0.30); c.addChild(l);
+      const ico = new Sprite(this.tex[`catico_${cat.id}`]); ico.anchor.set(0.5); ico.scale.set(56 / Math.max(ico.texture.width, ico.texture.height)); ico.position.set(cx + cw / 2, y + spr.height * 0.60); c.addChild(ico);
       this._tap(c, () => { this.menuMode = "sub"; this.activeCat = cat.id; this.renderMenu(); });
       this.menuLayer.addChild(c);
     });
@@ -178,8 +195,8 @@ export class MainScene extends Scene {
     STAT_VIEW.forEach(([key, label, cat], i) => {
       const c = i % 5, r = Math.floor(i / 5), x = 18 + colx[c], ly = laby[r], ty = trky[r];
       const val = key === "fame" ? this.game.fans : this.game.stats[key];
-      this.menuLayer.addChild(Object.assign(this._t(label, 14, S.ink, FB), { x, y: ly }));
-      const v = this._t(String(val), 14, SCOL[cat], FD); v.anchor.set(1, 0); v.position.set(x + tw, ly); this.menuLayer.addChild(v);
+      this.menuLayer.addChild(Object.assign(this._t(label, 16, S.ink, FB), { x, y: ly }));
+      const v = this._t(String(val), 16, SCOL[cat], FD); v.anchor.set(1, 0); v.position.set(x + tw, ly); this.menuLayer.addChild(v);
       const f = Math.max(0, Math.min(1, val / 100));
       if (f > 0) this.menuLayer.addChild(new Graphics().roundRect(x, ty, Math.max(5, tw * f), 9, 4).fill(SCOL[cat]));
     });
