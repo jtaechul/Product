@@ -4,6 +4,7 @@ import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../config.js";
 import { GameState } from "../systems/game.js";
 import { ACTIVITIES, CATEGORIES } from "../data/activities.js";
 import { MEDIA, GRADE_COMMENTS } from "../data/media.js";
+import { BONDS, BOND_THRESHOLD } from "../data/bonds.js";
 
 const GRADE_INFO = {
   best: { label: "인생 연기", color: 0xf5c451 },
@@ -53,6 +54,7 @@ export class MainScene extends Scene {
     await Promise.all(ACTIVITIES.map(async (a) => { this.tex[`actico_${a.id}`] = await Assets.load(UI(`actico_${a.id}`)); }));
     await Promise.all(CATEGORIES.map(async (c) => { this.tex[`catico_${c.id}`] = await Assets.load(UI(`catico_${c.id}`)); }));
     this.tex.mgrface = await Assets.load("./assets/manager/hanjiwon.png");
+    await Promise.all(BONDS.map(async (b) => { this.tex[`bond_${b.id}`] = await Assets.load(b.img); }));
     this.idleTex = idleTex;
 
     const bg = new Sprite(bgTex);
@@ -75,6 +77,7 @@ export class MainScene extends Scene {
     this.buildTopbar();
     this.buildSlots();
     this.buildNextButton();
+    this.buildBondButton();
     this.menuLayer = new Container();
     this.addChild(this.menuLayer);
 
@@ -165,6 +168,47 @@ export class MainScene extends Scene {
     const bg = new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: 0x1a1420, alpha: 0.62 });
     bg.eventMode = "static"; ov.addChild(bg);
     return ov;
+  }
+
+  // 인연 보기 버튼 (캐릭터 우측 상단)
+  buildBondButton() {
+    const c = new Container(); c.position.set(0, 0);
+    c.addChild(new Graphics().roundRect(628, 150, 80, 46, 14).fill(0xfdf8f2).stroke({ width: 2, color: S.gold }));
+    const t = this._t("인연", 18, S.coral, FD); t.anchor.set(0.5); t.position.set(668, 173); c.addChild(t);
+    c.eventMode = "static"; c.cursor = "pointer";
+    c.on("pointertap", () => this.openBonds());
+    this.addChild(c);
+  }
+
+  // 인연(Bond) 팝업 (기획서 12번)
+  openBonds() {
+    if (this.overlay) return;
+    const ov = this._dim(); this.overlay = ov;
+    const cw = 620, x = (DESIGN_WIDTH - cw) / 2, rows = BONDS.length, ch = 132 + rows * 110, y = (DESIGN_HEIGHT - ch) / 2;
+    ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
+    ov.addChild(Object.assign(this._t("🤝 인연", 24, S.ink, FD), { x: x + 30, y: y + 24 }));
+    ov.addChild(Object.assign(this._t(`인연 ${BOND_THRESHOLD} 이상이면 보너스가 발동돼요`, 14, S.sub), { x: x + 30, y: y + 58 }));
+    BONDS.forEach((b, i) => {
+      const ry = y + 92 + i * 110, val = this.game.bonds[b.id], active = val >= BOND_THRESHOLD;
+      ov.addChild(new Graphics().roundRect(x + 22, ry, cw - 44, 96, 16).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
+      const acx = x + 76, acy = ry + 48, dia = 70;
+      ov.addChild(new Graphics().circle(acx, acy, dia / 2 + 3).fill(0xf0ece4).stroke({ width: 3, color: active ? S.coral : S.gold }));
+      this._faceCircle(ov, this.tex[`bond_${b.id}`], acx, acy, dia, b.wf, b.cf);
+      ov.addChild(Object.assign(this._t(b.name, 20, S.ink, FD), { x: x + 124, y: ry + 12 }));
+      ov.addChild(Object.assign(this._t(b.role, 13, S.sub), { x: x + 124 + b.name.length * 22 + 8, y: ry + 18 }));
+      // 게이지
+      const gx = x + 124, gw = 300, gy = ry + 44;
+      ov.addChild(new Graphics().roundRect(gx, gy, gw, 12, 6).fill(0xe9e2d6));
+      ov.addChild(new Graphics().roundRect(gx, gy, Math.max(6, gw * (val / 100)), 12, 6).fill(active ? S.coral : 0xd8b8b2));
+      ov.addChild(Object.assign((() => { const t = this._t(`${val}/100`, 14, S.ink, FD); t.anchor.set(1, 0.5); t.position.set(gx + gw + 70, gy + 6); return t; })(), {}));
+      ov.addChild(Object.assign(this._t(active ? `✓ ${b.bonus}` : `🔒 ${b.bonus}`, 13, active ? 0x2e9e8e : S.sub), { x: x + 124, y: ry + 66 }));
+    });
+    const close = new Container();
+    close.addChild(new Graphics().roundRect(x + cw / 2 - 70, y + ch - 50, 140, 38, 14).fill(0xece6dc));
+    close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 31); return t; })());
+    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => this._closeOverlay());
+    ov.addChild(close);
+    this.addChild(ov);
   }
 
   // 작품 출연 제안 팝업 (기획서 11번)
