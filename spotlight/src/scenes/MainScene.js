@@ -140,8 +140,8 @@ export class MainScene extends Scene {
   buildManagerBubble() {
     const c = new Container();
     const spr = this._spr("manager_bubble", 120, 608, 480); c.addChild(spr);
-    const mh = spr.height, acx = 171, acy = 668;
-    this._faceCircle(c, this.tex.mgrface, acx, acy, 54, 0.50, 0.24);
+    const mh = spr.height, acx = 181, acy = 668;
+    this._faceCircle(c, this.tex.mgrface, acx, acy, 54, 0.455, 0.24);
     const who = this._t("한지원", 16, 0x22384a, FD); who.position.set(260, 608 + mh * 0.30); c.addChild(who);
     this.mgrText = this._t(MANAGER_LINES[0], 17, 0x22384a);
     this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 300;
@@ -213,32 +213,67 @@ export class MainScene extends Scene {
     this._closeOverlay();
   }
 
-  // 출연 평가 연출 팝업
-  showEval(results) {
-    let idx = 0;
-    const render = () => {
-      this._closeOverlay();
-      if (idx >= results.length) { this.refreshHUD(); this.menuMode = "category"; this.renderMenu(); return; }
-      const { media, grade } = results[idx];
-      const gi = GRADE_INFO[grade], comments = GRADE_COMMENTS[grade];
-      const ov = this._dim(); this.overlay = ov;
-      const cw = 600, x = (DESIGN_WIDTH - cw) / 2, chh = 480, y = (DESIGN_HEIGHT - chh) / 2;
-      ov.addChild(new Graphics().roundRect(x, y, cw, chh, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
-      ov.addChild((() => { const t = this._t(`「${media.name}」 방영!`, 22, S.ink, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, y + 40); return t; })());
-      // 등급 배지
-      ov.addChild(new Graphics().roundRect(DESIGN_WIDTH / 2 - 110, y + 70, 220, 64, 18).fill(gi.color));
-      ov.addChild((() => { const t = this._t(gi.label, 30, 0xffffff, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, y + 102); return t; })());
-      // 댓글 연출
-      comments.forEach((cm, i) => {
-        const cyc = y + 158 + i * 56;
-        ov.addChild(new Graphics().roundRect(x + 34, cyc, cw - 68, 46, 12).fill(0xffffff).stroke({ width: 1, color: 0xeee6da }));
-        ov.addChild(Object.assign(this._t(`💬 ${cm}`, 15, S.ink), { x: x + 48, y: cyc + 13 }));
-      });
-      const tip = this._t("화면을 누르면 계속", 14, S.sub); tip.anchor.set(0.5); tip.position.set(DESIGN_WIDTH / 2, y + chh - 28); ov.addChild(tip);
-      ov.children[0].on("pointertap", () => { idx += 1; render(); });
+  // 출연 연출 씬 (기획서 11번): 화면 전환 → 촬영장 → 등급별 스토리·포즈
+  async playProduction(results) {
+    for (const res of results) await this._playScene(res);
+    this.refreshHUD();
+    this.menuMode = "category"; this.renderMenu();
+    this.mgrText.text = this._mgrLine();
+  }
+  _rewardText(m, grade) {
+    const fameMult = { best: 1.6, good: 1.0, fair: 0.3, bad: 0 }[grade];
+    const payMult = { best: 1.0, good: 1.0, fair: 0.7, bad: 0.4 }[grade];
+    return `팬 +${Math.round(m.fame * fameMult)} · 출연료 ${Math.round(m.pay * payMult)}만원`;
+  }
+  _beats(m, grade) {
+    const end = {
+      best: { text: `정적… 그리고 박수가 터졌다. "이게 신인이라고?" 현장이 술렁였다. 인생 연기였다.`, pose: "cheer", tint: 0xfff3c4, tintA: 0.16 },
+      good: { text: `안정적인 호흡과 표현. 모니터를 본 감독이 흡족하게 고개를 끄덕였다.`, pose: "cheer", tint: 0xd8f0e8, tintA: 0.12 },
+      fair: { text: `큰 실수도 큰 인상도 없이, 무난하게 촬영을 마쳤다.`, pose: "good", tint: 0x000000, tintA: 0 },
+      bad: { text: `대사가 자꾸 겉돌았다. "컷, 다시 갈게요…" 아쉬움이 남는 현장이었다.`, pose: "panned", tint: 0x0c0c14, tintA: 0.34 },
+    }[grade];
+    return [
+      { who: "감독", text: `「${m.name}」 촬영장. 카메라에 빨간 불이 들어온다. "자, 갈게요. 레디… 액션!"`, pose: "filming", tint: 0x000000, tintA: 0 },
+      { who: "", text: `${end.text}\n\n🎁 ${this._rewardText(m, grade)}`, pose: end.pose, tint: end.tint, tintA: end.tintA, badge: grade },
+    ];
+  }
+  _playScene(result) {
+    return new Promise((resolve) => {
+      const { media, grade } = result;
+      const beats = this._beats(media, grade);
+      const bgName = media.id === "musical" ? "stage" : "set";
+      const ov = new Container(); this.overlay = ov;
+      ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill(0x101018));
+      const bgSpr = new Sprite(); bgSpr.anchor.set(0.5, 0); bgSpr.position.set(DESIGN_WIDTH / 2, 0); ov.addChild(bgSpr);
+      const tint = new Graphics(); ov.addChild(tint);
+      const charC = new Container(); ov.addChild(charC);
+      const badgeC = new Container(); ov.addChild(badgeC);
+      ov.addChild(new Graphics().roundRect(28, 968, 664, 256, 26).fill({ color: 0x140f1a, alpha: 0.84 }).stroke({ width: 2, color: S.gold }));
+      const whoT = this._t("", 20, S.gold, FD); whoT.position.set(54, 988); ov.addChild(whoT);
+      const storyT = this._t("", 22, 0xffffff); storyT.style.wordWrap = true; storyT.style.wordWrapWidth = 600; storyT.position.set(54, 1024); ov.addChild(storyT);
+      const tip = this._t("화면을 누르면 계속 ▶", 15, 0xcfc7d0); tip.anchor.set(1, 1); tip.position.set(676, 1212); ov.addChild(tip);
+      ov.eventMode = "static";
+      let idx = 0;
+      const show = async () => {
+        const b = beats[idx];
+        charC.removeChildren(); badgeC.removeChildren();
+        const ptex = await Assets.load(b.pose ? POSE_PATH(b.pose) : IDLE_SPRITE);
+        const sp = new Sprite(ptex); sp.anchor.set(0.5, 1.0); sp.scale.set(880 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 985); charC.addChild(sp);
+        tint.clear(); if (b.tintA) tint.rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: b.tint, alpha: b.tintA });
+        whoT.text = b.who || ""; storyT.text = b.text;
+        if (b.badge) {
+          const gi = GRADE_INFO[b.badge];
+          badgeC.addChild(new Graphics().roundRect(DESIGN_WIDTH / 2 - 120, 150, 240, 72, 20).fill(gi.color).stroke({ width: 3, color: 0xffffff }));
+          const t = this._t(gi.label, 34, 0xffffff, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, 186); badgeC.addChild(t);
+        }
+      };
+      ov.on("pointertap", async () => { idx += 1; if (idx >= beats.length) { this._closeOverlay(); resolve(); } else await show(); });
       this.addChild(ov);
-    };
-    render();
+      Assets.load(`./assets/bg/${bgName}.png`).then((tex) => {
+        bgSpr.texture = tex; bgSpr.scale.set(Math.max(DESIGN_WIDTH / tex.width, DESIGN_HEIGHT / tex.height));
+        show();
+      });
+    });
   }
 
   // ───────── 슬롯 ─────────
@@ -364,10 +399,13 @@ export class MainScene extends Scene {
     this.game.advance(acts);
     this.selected = [];
     this._afterSelectChange();
-    this.refreshHUD();
-    this.menuMode = "category"; this.renderMenu();
-    this.mgrText.text = this._mgrLine();
-    if (results.length) this.showEval(results);
+    if (results.length) {
+      this.playProduction(results);
+    } else {
+      this.refreshHUD();
+      this.menuMode = "category"; this.renderMenu();
+      this.mgrText.text = this._mgrLine();
+    }
   }
 
   update(delta) {
