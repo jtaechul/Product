@@ -11,7 +11,10 @@ const BG_SCHOOL = "./assets/bg/school.png";
 const CHAR_TARGET_H = 1000;
 const GROUND_Y = 1090;
 const PANEL_TOP = 812;
-const KFONT = "system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif";
+// 게임 폰트 (index.html @font-face): 디스플레이=Gmarket Bold, 본문=Gmarket Medium, 강조=배민 도현
+const FD = "GmarketSansBold, sans-serif";
+const FB = "GmarketSansMedium, sans-serif";
+const FA = "BMDOHYEON, sans-serif";
 
 // 시안에서 추출한 디자인 토큰
 const S = {
@@ -76,8 +79,8 @@ export class MainScene extends Scene {
   _fitHero() { this.baseScale = CHAR_TARGET_H / this.hero.texture.height; this.hero.scale.set(this.baseScale); }
   async setPose(k) { try { this.hero.texture = await Assets.load(k ? POSE_PATH(k) : IDLE_SPRITE); this._fitHero(); } catch (e) { console.warn(e); } }
 
-  _text(t, size, fill, weight = "400") {
-    return new Text({ text: t, style: new TextStyle({ fontFamily: KFONT, fontSize: size, fontWeight: weight, fill }) });
+  _text(t, size, fill, weight = "400", fam = FB) {
+    return new Text({ text: t, style: new TextStyle({ fontFamily: fam, fontSize: size, fontWeight: weight, fill }) });
   }
 
   // ───────── 상단 상태바 ─────────
@@ -85,7 +88,7 @@ export class MainScene extends Scene {
     const bar = new Container();
     bar.addChild(creamPanel(12, 14, DESIGN_WIDTH - 24, 92, 18));
     const cal = this._text("📅", 30); cal.position.set(28, 26); bar.addChild(cal);
-    this.turnText = this._text("", 30, S.ink, "800"); this.turnText.position.set(70, 24); bar.addChild(this.turnText);
+    this.turnText = this._text("", 30, S.ink, "800", FD); this.turnText.position.set(70, 24); bar.addChild(this.turnText);
     const name = this._text("⭐ 소윤", 20, S.sub); name.position.set(70, 66); bar.addChild(name);
 
     this.resText = {};
@@ -93,8 +96,8 @@ export class MainScene extends Scene {
     PILL.forEach(([key, label, color], i) => {
       const x = startX + (i % 2) * (cw + 8), y = 22 + Math.floor(i / 2) * 42;
       bar.addChild(new Graphics().roundRect(x, y, cw, 36, 12).fill(S.white).stroke({ width: 2, color: 0xefe7da }));
-      const lab = this._text(label, 17, color, "800"); lab.position.set(x + 12, y + 8); bar.addChild(lab);
-      const val = this._text("", 19, S.ink, "800"); val.anchor.set(1, 0); val.position.set(x + cw - 12, y + 8); bar.addChild(val);
+      const lab = this._text(label, 17, color, "800", FD); lab.position.set(x + 12, y + 8); bar.addChild(lab);
+      const val = this._text("", 19, S.ink, "800", FD); val.anchor.set(1, 0); val.position.set(x + cw - 12, y + 8); bar.addChild(val);
       this.resText[key] = val;
     });
     this.addChild(bar);
@@ -115,7 +118,7 @@ export class MainScene extends Scene {
     g.roundRect(16, y, DESIGN_WIDTH - 32, h, 18).fill(S.navy);
     g.moveTo(60, y + h).lineTo(84, y + h).lineTo(60, y + h + 16).fill(S.navy); // tail
     c.addChild(g);
-    const who = this._text("🎧 한지원", 18, 0x9fe0d0, "800"); who.position.set(32, y + 10); c.addChild(who);
+    const who = this._text("🎧 한지원", 18, 0x9fe0d0, "800", FD); who.position.set(32, y + 10); c.addChild(who);
     this.mgrText = this._text(MANAGER_LINES[0], 21, S.white); this.mgrText.position.set(32, y + 34); c.addChild(this.mgrText);
     this.addChild(c);
   }
@@ -131,7 +134,7 @@ export class MainScene extends Scene {
       const chip = new Container(); chip.position.set(x, sy);
       chip.addChild(new Graphics().roundRect(0, 0, sw, sh, 14).fill(S.cream).stroke({ width: 2, color: S.gold }));
       chip.addChild(new Graphics().circle(28, sh / 2, 16).fill(S.coral));
-      const num = this._text(String(i + 1), 20, S.white, "800"); num.anchor.set(0.5); num.position.set(28, sh / 2); chip.addChild(num);
+      const num = this._text(String(i + 1), 20, S.white, "800", FD); num.anchor.set(0.5); num.position.set(28, sh / 2); chip.addChild(num);
       const txt = this._text("비어있음", 18, S.sub); txt.position.set(54, 14); chip.addChild(txt);
       chip._txt = txt;
       chip.eventMode = "static"; chip.cursor = "pointer";
@@ -171,7 +174,7 @@ export class MainScene extends Scene {
       c.addChild(new Graphics().roundRect(2, 4, w, h, 16).fill({ color: 0x2a2a33, alpha: 0.08 }));
       c.addChild(new Graphics().roundRect(0, 0, w, h, 16).fill(S.tile[cat.id]).stroke({ width: 2, color: S.lbl[cat.id], alpha: 0.4 }));
       const e = this._text(cat.emoji, 44); e.anchor.set(0.5); e.position.set(w / 2, 46); c.addChild(e);
-      const l = this._text(cat.label, 24, S.lbl[cat.id], "800"); l.anchor.set(0.5); l.position.set(w / 2, 96); c.addChild(l);
+      const l = this._text(cat.label, 24, S.lbl[cat.id], "800", FA); l.anchor.set(0.5); l.position.set(w / 2, 96); c.addChild(l);
       const d = this._text(cat.desc, 12, S.sub); d.anchor.set(0.5, 0); d.style.align = "center"; d.style.wordWrap = true; d.style.wordWrapWidth = w - 10;
       d.position.set(w / 2, 118); c.addChild(d);
       this._tap(c, () => { this.menuMode = "sub"; this.activeCat = cat.id; this.renderMenu(); });
@@ -183,10 +186,10 @@ export class MainScene extends Scene {
     const cat = CATEGORIES.find((c) => c.id === catId);
     const back = new Container(); back.position.set(20, PANEL_TOP + 82);
     back.addChild(new Graphics().roundRect(0, 0, 152, 44, 14).fill(S.cream).stroke({ width: 2, color: S.gold }));
-    back.addChild(this._text("← 카테고리", 18, S.ink, "700")).position.set(14, 11);
+    back.addChild(this._text("← 카테고리", 18, S.ink, "700", FD)).position.set(14, 11);
     this._tap(back, () => { this.menuMode = "category"; this.renderMenu(); });
     this.menuLayer.addChild(back);
-    const title = this._text(`${cat.emoji} ${cat.label}`, 22, S.lbl[catId], "800");
+    const title = this._text(`${cat.emoji} ${cat.label}`, 22, S.lbl[catId], "800", FD);
     title.position.set(188, PANEL_TOP + 90); this.menuLayer.addChild(title);
 
     const list = ACTIVITIES.filter((a) => a.cat === catId);
@@ -197,7 +200,7 @@ export class MainScene extends Scene {
       c.addChild(new Graphics().roundRect(2, 3, w, h, 14).fill({ color: 0x2a2a33, alpha: 0.07 }));
       c.addChild(new Graphics().roundRect(0, 0, w, h, 14).fill(S.white).stroke({ width: 2, color: 0xefe7da }));
       const e = this._text(act.emoji, 30); e.position.set(12, 10); c.addChild(e);
-      const n = this._text(act.name, 20, S.ink, "800"); n.position.set(54, 12); c.addChild(n);
+      const n = this._text(act.name, 20, S.ink, "800", FD); n.position.set(54, 12); c.addChild(n);
       const d = this._text(act.desc, 14, S.sub); d.position.set(14, 50); c.addChild(d);
       const cost = this._text(this._costText(act), 13, S.coral); cost.position.set(14, 72); c.addChild(cost);
       this._tap(c, () => this.pickActivity(act.id));
@@ -227,7 +230,7 @@ export class MainScene extends Scene {
     this.nextBtn.addChild(this.ctaG);
     const label = new Container();
     const play = this._text("▶", 24, S.white); play.position.set(DESIGN_WIDTH / 2 - 78, this._nextY + 18);
-    const txt = this._text("다음 달", 28, S.white, "800"); txt.position.set(DESIGN_WIDTH / 2 - 44, this._nextY + 16);
+    const txt = this._text("다음 달", 30, S.white, "800", FA); txt.position.set(DESIGN_WIDTH / 2 - 48, this._nextY + 14);
     label.addChild(play, txt);
     this.nextBtn.addChild(label);
     this._drawCTA(false);
@@ -258,8 +261,7 @@ export class MainScene extends Scene {
     if (!this.hero) return;
     this.t += delta;
     const b = Math.sin(this.t * 0.045);
-    this.hero.position.y = GROUND_Y + b * 3;
-    this.hero.scale.y = this.baseScale * (1 + b * 0.01);
-    this.shadow.scale.set(1 - b * 0.04, 1);
+    this.hero.position.y = GROUND_Y + b * 2;            // 위치만 미세 흔들림(형태 변형 없음)
+    this.shadow.scale.set(1 - b * 0.03, 1);
   }
 }

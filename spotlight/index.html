@@ -6,6 +6,11 @@
   <meta name="theme-color" content="#1e2a4a" />
   <title>SPOTLIGHT</title>
   <style>
+    /* 게임 폰트 (로컬 vendoring) — Gmarket Sans + 배달의민족(주아·도현) */
+    @font-face { font-family: "GmarketSansBold";   src: url("./vendor/fonts/GmarketSansBold.ttf") format("truetype");   font-display: block; }
+    @font-face { font-family: "GmarketSansMedium"; src: url("./vendor/fonts/GmarketSansMedium.ttf") format("truetype"); font-display: block; }
+    @font-face { font-family: "BMDOHYEON";         src: url("./vendor/fonts/BMDOHYEON.ttf") format("truetype");         font-display: block; }
+    @font-face { font-family: "BMJUA";             src: url("./vendor/fonts/BMJUA.ttf") format("truetype");             font-display: block; }
     html, body { margin: 0; height: 100%; background: #1e2a4a; overflow: hidden; }
     #game { position: fixed; inset: 0; }
     #game canvas { display: block; touch-action: none; }
