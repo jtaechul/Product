@@ -8,12 +8,14 @@ const IDLE_SPRITE = "./assets/portraits/heroine_brown_idle.png";
 const POSE_PATH = (key) => `./assets/portraits/poses/soyoon_${key}.png`;
 const BG_SCHOOL = "./assets/bg/school.png";
 
-const CHAR_TARGET_H = 1000;
-const GROUND_Y = 1090;
+// 캐릭터 상반신(얼굴~가슴) 프레이밍: 머리 위쪽을 화면 상단에 고정하고 크게 키워
+// 하반신은 패널 뒤로 — 모든 포즈가 동일한 노출 형식이 되도록 통일.
+const HERO_TOP_Y = 96;       // 머리 꼭대기 y
+const BUST_DISP_H = 1980;    // 전신 표시 높이(상단 일부만 노출)
 const PANEL_TOP = 812;
-// 게임 폰트 (index.html @font-face): 디스플레이=Gmarket Bold, 본문=Gmarket Medium, 강조=배민 도현
+// 게임 폰트 (index.html @font-face): 디스플레이=Gmarket Bold, 본문=KoPub 돋움, 강조=배민 도현
 const FD = "GmarketSansBold, sans-serif";
-const FB = "GmarketSansMedium, sans-serif";
+const FB = "KoPubWorldDotumMedium, sans-serif";
 const FA = "BMDOHYEON, sans-serif";
 
 // 시안에서 추출한 디자인 토큰
@@ -58,12 +60,10 @@ export class MainScene extends Scene {
     this.addChild(bg);
     this.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: 0xfff6f3, alpha: 0.18 }));
 
-    this.shadow = new Graphics().ellipse(DESIGN_WIDTH / 2, GROUND_Y + 6, 170, 26).fill({ color: 0x2a2a33, alpha: 0.15 });
-    this.addChild(this.shadow);
     const idleTex = await Assets.load(IDLE_SPRITE);
     this.hero = new Sprite(idleTex);
-    this.hero.anchor.set(0.5, 1.0);
-    this.hero.position.set(DESIGN_WIDTH / 2, GROUND_Y);
+    this.hero.anchor.set(0.5, 0.0);                 // 머리(상단) 기준
+    this.hero.position.set(DESIGN_WIDTH / 2, HERO_TOP_Y);
     this._fitHero();
     this.addChild(this.hero);
 
@@ -76,7 +76,7 @@ export class MainScene extends Scene {
     document.getElementById("loading")?.remove();
   }
 
-  _fitHero() { this.baseScale = CHAR_TARGET_H / this.hero.texture.height; this.hero.scale.set(this.baseScale); }
+  _fitHero() { this.baseScale = BUST_DISP_H / this.hero.texture.height; this.hero.scale.set(this.baseScale); }
   async setPose(k) { try { this.hero.texture = await Assets.load(k ? POSE_PATH(k) : IDLE_SPRITE); this._fitHero(); } catch (e) { console.warn(e); } }
 
   _text(t, size, fill, weight = "400", fam = FB) {
@@ -261,7 +261,6 @@ export class MainScene extends Scene {
     if (!this.hero) return;
     this.t += delta;
     const b = Math.sin(this.t * 0.045);
-    this.hero.position.y = GROUND_Y + b * 2;            // 위치만 미세 흔들림(형태 변형 없음)
-    this.shadow.scale.set(1 - b * 0.03, 1);
+    this.hero.position.y = HERO_TOP_Y + b * 2;          // 위치만 미세 흔들림(형태 변형 없음)
   }
 }

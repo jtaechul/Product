@@ -25,7 +25,7 @@ async function boot() {
 
 // @font-face 폰트를 실제 로드(브라우저가 글리프를 갖추도록).
 async function loadFonts() {
-  const fams = ["GmarketSansBold", "GmarketSansMedium", "BMDOHYEON", "BMJUA"];
+  const fams = ["GmarketSansBold", "GmarketSansMedium", "BMDOHYEON", "BMJUA", "KoPubWorldDotumMedium", "KoPubWorldDotumBold"];
   try {
     await Promise.all(fams.map((f) => document.fonts.load(`24px "${f}"`)));
     await document.fonts.ready;
