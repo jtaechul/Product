@@ -9,17 +9,19 @@ const POSE_PATH = (k) => `./assets/portraits/poses/soyoon_${k}.png`;
 const BG_SCHOOL = "./assets/bg/school.png";
 const UI = (n) => `./assets/ui/${n}.png`;
 
-const HERO_TOP_Y = 98;
-const BUST_DISP_H = 1320;
-const PANEL_TOP = 772;
+const HERO_TOP_Y = 100;
+const BUST_DISP_H = 1450;
+const PANEL_TOP = 742;
 const FD = "GmarketSansBold, sans-serif";
 const FB = "KoPubWorldDotumMedium, sans-serif";
 const S = { ink: 0x3a3a44, sub: 0x8a7b72, gold: 0xd8c7a0, mint: 0xeaf3ee, white: 0xffffff, coral: 0xec6f65 };
 const LBL = { acting: 0xe2685e, charm: 0x2e9e8e, mind: 0xc07e1e, life: 0x6e7bd6 };
-const PILL = [["stamina", "체력"], ["mental", "멘탈"], ["money", "돈"], ["fans", "팬"]];
+const SCOL = { act: 0xec6f65, charm: 0x2e9e8e, mind: 0xc07e1e, soc: 0x6e7bd6 };
+// 상단바 자원칩 값 위치(아이콘 내장: 체력♥ 멘탈🧠 돈🪙 팬⭐)
+const RES_POS = { stamina: 366, mental: 460, money: 554, fans: 649 };
 const STAT_VIEW = [
-  ["acting", "연기"], ["emotion", "감정"], ["vocal", "발성"], ["looks", "외모"], ["singing", "가창"],
-  ["dance", "댄스"], ["study", "학업"], ["character", "인성"], ["network", "인맥"], ["fame", "인지"],
+  ["acting", "연기", "act"], ["emotion", "감정", "act"], ["vocal", "발성", "act"], ["looks", "외모", "charm"], ["singing", "가창", "charm"],
+  ["dance", "댄스", "charm"], ["study", "학업", "mind"], ["character", "인성", "mind"], ["network", "인맥", "soc"], ["fame", "인지", "soc"],
 ];
 const MANAGER_LINES = [
   "이번 달은 뭘 해볼까?", "무리하지 말고 컨디션도 챙기자.",
@@ -38,13 +40,13 @@ export class MainScene extends Scene {
   }
 
   async onEnter() {
-    // 에셋 로드
-    const uiNames = ["topbar", "manager_bubble", "slot_chip", "btn_next", "cat_acting", "cat_charm", "cat_mind", "cat_life"];
+    const uiNames = ["topbar2", "stats_frame", "manager_bubble", "slot_chip", "btn_next", "cat_acting", "cat_charm", "cat_mind", "cat_life"];
     const [bgTex, idleTex] = await Promise.all([Assets.load(BG_SCHOOL), Assets.load(IDLE_SPRITE)]);
     await Promise.all(uiNames.map(async (n) => { this.tex[n] = await Assets.load(UI(n)); }));
+    await Promise.all(ACTIVITIES.map(async (a) => { this.tex[`actico_${a.id}`] = await Assets.load(UI(`actico_${a.id}`)); }));
     this.tex.mgrface = await Assets.load("./assets/manager/hanjiwon.png");
+    this.idleTex = idleTex;
 
-    // 배경 + 캐릭터
     const bg = new Sprite(bgTex);
     bg.anchor.set(0.5, 0);
     bg.scale.set(Math.max(DESIGN_WIDTH / bg.texture.width, DESIGN_HEIGHT / bg.texture.height));
@@ -58,7 +60,6 @@ export class MainScene extends Scene {
     this._fitHero();
     this.addChild(this.hero);
 
-    // 하단 패널 배경
     this.addChild(new Graphics().roundRect(0, PANEL_TOP, DESIGN_WIDTH, DESIGN_HEIGHT - PANEL_TOP + 30, 28)
       .fill({ color: S.mint, alpha: 0.96 }).stroke({ width: 2, color: S.gold }));
 
@@ -77,22 +78,28 @@ export class MainScene extends Scene {
   _fitHero() { this.baseScale = BUST_DISP_H / this.hero.texture.height; this.hero.scale.set(this.baseScale); }
   async setPose(k) { try { this.hero.texture = await Assets.load(k ? POSE_PATH(k) : IDLE_SPRITE); this._fitHero(); } catch (e) { console.warn(e); } }
   _t(txt, size, fill, fam = FB) { return new Text({ text: txt, style: new TextStyle({ fontFamily: fam, fontSize: size, fill }) }); }
-  _spr(name, x, y, w) {
-    const s = new Sprite(this.tex[name]); s.scale.set(w / s.texture.width); s.position.set(x, y);
-    return s;
+  _spr(name, x, y, w) { const s = new Sprite(this.tex[name]); s.scale.set(w / s.texture.width); s.position.set(x, y); return s; }
+
+  // 얼굴을 원형 프레임에 꽉 차게 (얼굴 크롭 + 마스크)
+  _faceCircle(parent, tex, cx, cy, dia, wfrac, cyfrac) {
+    const f = new Sprite(tex);
+    f.anchor.set(0.5, cyfrac);
+    f.scale.set(dia / (wfrac * tex.width));
+    f.position.set(cx, cy);
+    const mk = new Graphics().circle(cx, cy, dia / 2).fill(0xffffff);
+    f.mask = mk; parent.addChild(f, mk);
   }
 
-  // ───────── 상단 상태바 ─────────
+  // ───────── 상단 상태바 (topbar2) ─────────
   buildTopbar() {
     const bar = new Container();
-    bar.addChild(this._spr("topbar", 10, 8, 700));
-    const date = this._t("고1·3월", 26, S.ink, FD); date.position.set(40, 24); bar.addChild(date); this.turnText = date;
-    const name = this._t("소윤", 17, S.sub); name.position.set(42, 60); bar.addChild(name);
+    bar.addChild(this._spr("topbar2", 10, 8, 700));
+    this._faceCircle(bar, this.idleTex, 85, 80, 80, 0.55, 0.12); // 소윤 아바타
+    const date = this._t("고1·3월", 21, S.ink, FD); date.anchor.set(0.5); date.position.set(215, 60); bar.addChild(date); this.turnText = date;
+    const name = this._t("소윤", 15, S.sub); name.anchor.set(0.5); name.position.set(215, 92); bar.addChild(name);
     this.resText = {};
-    const RES = [["stamina", "체력", 455, 28], ["money", "돈", 578, 28], ["mental", "멘탈", 455, 58], ["fans", "팬", 578, 58]];
-    RES.forEach(([key, label, rx, ry]) => {
-      const lab = this._t(label, 13, S.ink, FD); lab.position.set(rx, ry); bar.addChild(lab);
-      const val = this._t("", 15, S.ink, FD); val.anchor.set(1, 0); val.position.set(rx + 112, ry); bar.addChild(val);
+    Object.entries(RES_POS).forEach(([key, x]) => {
+      const val = this._t("", 15, S.ink, FD); val.anchor.set(0.5); val.position.set(x, 80); bar.addChild(val);
       this.resText[key] = val;
     });
     this.addChild(bar);
@@ -108,18 +115,13 @@ export class MainScene extends Scene {
   // ───────── 매니저 말풍선 ─────────
   buildManagerBubble() {
     const c = new Container();
-    const spr = this._spr("manager_bubble", 100, 636, 520);
-    c.addChild(spr);
-    const mh = spr.height, dia = 72, acx = 147, acy = 636 + mh * 0.40;
-    const face = new Sprite(this.tex.mgrface);
-    face.anchor.set(0.5, 0.30); face.scale.set(dia / face.texture.width);
-    face.position.set(acx, acy);
-    const mask = new Graphics().circle(acx, acy, dia / 2).fill(0xffffff);
-    face.mask = mask; c.addChild(face, mask);
-    const who = this._t("한지원", 17, 0x22384a, FD); who.position.set(212, 636 + mh * 0.30); c.addChild(who);
-    this.mgrText = this._t(MANAGER_LINES[0], 18, 0x22384a);
-    this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 360;
-    this.mgrText.position.set(212, 636 + mh * 0.52); c.addChild(this.mgrText);
+    const spr = this._spr("manager_bubble", 120, 608, 480); c.addChild(spr);
+    const mh = spr.height, acx = 120 + 60 * 480 / 1265, acy = 608 + mh * 0.40;
+    this._faceCircle(c, this.tex.mgrface, acx, acy, 64, 0.42, 0.20);
+    const who = this._t("한지원", 16, 0x22384a, FD); who.position.set(210, 608 + mh * 0.30); c.addChild(who);
+    this.mgrText = this._t(MANAGER_LINES[0], 17, 0x22384a);
+    this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 330;
+    this.mgrText.position.set(210, 608 + mh * 0.54); c.addChild(this.mgrText);
     this.addChild(c);
   }
 
@@ -129,8 +131,8 @@ export class MainScene extends Scene {
     for (let i = 0; i < 2; i++) {
       const sx = 22 + i * (326 + 24);
       const chip = new Container();
-      const spr = this._spr("slot_chip", sx, 788, 326); chip.addChild(spr);
-      const cyc = 788 + spr.height / 2;
+      const spr = this._spr("slot_chip", sx, 754, 326); chip.addChild(spr);
+      const cyc = 754 + spr.height / 2;
       const num = this._t(String(i + 1), 18, S.white, FD); num.anchor.set(0.5); num.position.set(sx + 48, cyc); chip.addChild(num);
       const txt = this._t("비어있음", 16, S.sub); txt.anchor.set(0, 0.5); txt.position.set(sx + 96, cyc); chip.addChild(txt);
       chip._txt = txt;
@@ -149,7 +151,7 @@ export class MainScene extends Scene {
     this.setPose(last ? last.pose : null);
   }
 
-  // ───────── 메뉴 (카테고리 ↔ 세부) ─────────
+  // ───────── 메뉴 ─────────
   renderMenu() {
     this.menuLayer.removeChildren();
     if (this.menuMode === "category") { this._renderCategories(); this._renderStats(); }
@@ -158,51 +160,51 @@ export class MainScene extends Scene {
   _tap(c, fn) { c.eventMode = "static"; c.cursor = "pointer"; c.on("pointertap", fn); }
 
   _renderCategories() {
-    const cw = 140, gap = 10, startX = (DESIGN_WIDTH - (cw * 4 + gap * 3)) / 2, y = 874;
+    const cw = 122, gap = 10, startX = (DESIGN_WIDTH - (cw * 4 + gap * 3)) / 2, y = 842;
     CATEGORIES.forEach((cat, i) => {
       const cx = startX + i * (cw + gap);
       const c = new Container();
       const spr = this._spr(`cat_${cat.id}`, cx, y, cw); c.addChild(spr);
-      const l = this._t(cat.label, 21, S.white, FD); l.anchor.set(0.5, 0.5); l.position.set(cx + cw / 2, y + spr.height * 0.42); c.addChild(l);
+      const l = this._t(cat.label, 19, S.white, FD); l.anchor.set(0.5, 0.5); l.position.set(cx + cw / 2, y + spr.height * 0.42); c.addChild(l);
       this._tap(c, () => { this.menuMode = "sub"; this.activeCat = cat.id; this.renderMenu(); });
       this.menuLayer.addChild(c);
     });
   }
 
   _renderStats() {
-    const x = 18, y = 1058, w = DESIGN_WIDTH - 36, h = 88;
-    this.menuLayer.addChild(new Graphics().roundRect(x, y, w, h, 14).fill({ color: 0xfdfbf7, alpha: 0.96 }).stroke({ width: 2, color: S.gold }));
-    const cols = 5, cwid = (w - 24) / cols, x0 = x + 12, y0 = y + 8;
-    STAT_VIEW.forEach(([key, label], i) => {
-      const cx = x0 + (i % cols) * cwid, cy = y0 + Math.floor(i / cols) * 40;
+    this.menuLayer.addChild(this._spr("stats_frame", 18, 1000, 684));
+    const statHead = this._t("능력치", 17, S.white, FD); statHead.anchor.set(0.5); statHead.position.set(108, 1023); this.menuLayer.addChild(statHead);
+    const colx = [35, 165, 295, 425, 555], laby = [1058, 1115], trky = [1080, 1137], tw = 93;
+    STAT_VIEW.forEach(([key, label, cat], i) => {
+      const c = i % 5, r = Math.floor(i / 5), x = 18 + colx[c], ly = laby[r], ty = trky[r];
       const val = key === "fame" ? this.game.fans : this.game.stats[key];
-      this.menuLayer.addChild(Object.assign(this._t(label, 14, S.sub), { x: cx, y: cy }));
-      const v = this._t(String(val), 15, S.ink, FD); v.anchor.set(1, 0); v.position.set(cx + cwid - 22, cy - 1); this.menuLayer.addChild(v);
-      const bw = cwid - 22;
-      this.menuLayer.addChild(new Graphics().roundRect(cx, cy + 20, bw, 6, 3).fill(0xe9e2d6));
+      this.menuLayer.addChild(Object.assign(this._t(label, 14, S.ink, FB), { x, y: ly }));
+      const v = this._t(String(val), 14, SCOL[cat], FD); v.anchor.set(1, 0); v.position.set(x + tw, ly); this.menuLayer.addChild(v);
       const f = Math.max(0, Math.min(1, val / 100));
-      if (f > 0) this.menuLayer.addChild(new Graphics().roundRect(cx, cy + 20, Math.max(4, bw * f), 6, 3).fill(S.coral));
+      if (f > 0) this.menuLayer.addChild(new Graphics().roundRect(x, ty, Math.max(5, tw * f), 9, 4).fill(SCOL[cat]));
     });
   }
 
   _renderSub(catId) {
     const cat = CATEGORIES.find((c) => c.id === catId);
     const back = new Container();
-    back.addChild(new Graphics().roundRect(20, 864, 152, 44, 14).fill(0xfdfbf7).stroke({ width: 2, color: S.gold }));
-    back.addChild(Object.assign(this._t("← 카테고리", 18, S.ink, FD), { x: 34, y: 875 }));
+    back.addChild(new Graphics().roundRect(20, 842, 150, 44, 14).fill(0xfdfbf7).stroke({ width: 2, color: S.gold }));
+    back.addChild(Object.assign(this._t("← 카테고리", 18, S.ink, FD), { x: 34, y: 853 }));
     this._tap(back, () => { this.menuMode = "category"; this.renderMenu(); });
     this.menuLayer.addChild(back);
-    this.menuLayer.addChild(Object.assign(this._t(cat.label, 22, LBL[catId], FD), { x: 190, y: 874 }));
+    this.menuLayer.addChild(Object.assign(this._t(cat.label, 22, LBL[catId], FD), { x: 190, y: 850 }));
 
     const list = ACTIVITIES.filter((a) => a.cat === catId);
-    const mx = 20, gap = 12, top = 922, w = (DESIGN_WIDTH - mx * 2 - gap) / 2, h = 92;
+    const mx = 20, gap = 12, top = 896, w = (DESIGN_WIDTH - mx * 2 - gap) / 2, h = 92;
     list.forEach((act, i) => {
       const x = mx + (i % 2) * (w + gap), y = top + Math.floor(i / 2) * (h + gap);
       const c = new Container();
       c.addChild(new Graphics().roundRect(x, y, w, h, 14).fill(S.white).stroke({ width: 2, color: 0xefe7da }));
-      c.addChild(Object.assign(this._t(act.name, 19, S.ink, FD), { x: x + 16, y: y + 12 }));
-      c.addChild(Object.assign(this._t(act.desc, 13, S.sub), { x: x + 14, y: y + 48 }));
-      c.addChild(Object.assign(this._t(this._cost(act), 12, S.coral), { x: x + 14, y: y + 68 }));
+      const ico = new Sprite(this.tex[`actico_${act.id}`]); ico.anchor.set(0.5); ico.scale.set(60 / Math.max(ico.texture.width, ico.texture.height));
+      ico.position.set(x + 42, y + h / 2); c.addChild(ico);
+      c.addChild(Object.assign(this._t(act.name, 19, S.ink, FD), { x: x + 80, y: y + 14 }));
+      c.addChild(Object.assign(this._t(act.desc, 13, S.sub), { x: x + 80, y: y + 44 }));
+      c.addChild(Object.assign(this._t(this._cost(act), 12, S.coral), { x: x + 80, y: y + 66 }));
       this._tap(c, () => this.pickActivity(act.id));
       this.menuLayer.addChild(c);
     });
@@ -222,11 +224,10 @@ export class MainScene extends Scene {
     this.menuMode = "category"; this.renderMenu();
   }
 
-  // ───────── 다음 달 ─────────
   buildNextButton() {
     const c = new Container();
-    const spr = this._spr("btn_next", 110, 1150, 500); c.addChild(spr);
-    const lab = this._t("다음 달", 28, S.white, FD); lab.anchor.set(0.5); lab.position.set(DESIGN_WIDTH / 2, 1150 + spr.height / 2); c.addChild(lab);
+    const spr = this._spr("btn_next", 140, 1172, 440); c.addChild(spr);
+    const lab = this._t("다음 달", 26, S.white, FD); lab.anchor.set(0.5); lab.position.set(DESIGN_WIDTH / 2, 1172 + spr.height / 2); c.addChild(lab);
     this._tap(c, () => this.onNextMonth());
     this.addChild(c);
   }
