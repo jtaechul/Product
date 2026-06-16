@@ -42,6 +42,7 @@ export class MainScene extends Scene {
     const uiNames = ["topbar", "manager_bubble", "slot_chip", "btn_next", "cat_acting", "cat_charm", "cat_mind", "cat_life"];
     const [bgTex, idleTex] = await Promise.all([Assets.load(BG_SCHOOL), Assets.load(IDLE_SPRITE)]);
     await Promise.all(uiNames.map(async (n) => { this.tex[n] = await Assets.load(UI(n)); }));
+    this.tex.mgrface = await Assets.load("./assets/manager/hanjiwon.png");
 
     // 배경 + 캐릭터
     const bg = new Sprite(bgTex);
@@ -85,13 +86,13 @@ export class MainScene extends Scene {
   buildTopbar() {
     const bar = new Container();
     bar.addChild(this._spr("topbar", 10, 8, 700));
-    const date = this._t("고1·3월", 27, S.ink, FD); date.position.set(60, 26); bar.addChild(date); this.turnText = date;
-    const name = this._t("⭐ 소윤", 17, S.sub); name.position.set(62, 62); bar.addChild(name);
+    const date = this._t("고1·3월", 26, S.ink, FD); date.position.set(40, 24); bar.addChild(date); this.turnText = date;
+    const name = this._t("소윤", 17, S.sub); name.position.set(42, 60); bar.addChild(name);
     this.resText = {};
-    PILL.forEach(([key, label], i) => {
-      const rx = 452 + (i % 2) * 120, ry = 28 + Math.floor(i / 2) * 36;
-      const lab = this._t(label, 14, S.ink, FD); lab.position.set(rx, ry); bar.addChild(lab);
-      const val = this._t("", 15, S.ink, FD); val.anchor.set(1, 0); val.position.set(rx + 108, ry); bar.addChild(val);
+    const RES = [["stamina", "체력", 455, 28], ["money", "돈", 578, 28], ["mental", "멘탈", 455, 58], ["fans", "팬", 578, 58]];
+    RES.forEach(([key, label, rx, ry]) => {
+      const lab = this._t(label, 13, S.ink, FD); lab.position.set(rx, ry); bar.addChild(lab);
+      const val = this._t("", 15, S.ink, FD); val.anchor.set(1, 0); val.position.set(rx + 112, ry); bar.addChild(val);
       this.resText[key] = val;
     });
     this.addChild(bar);
@@ -109,9 +110,16 @@ export class MainScene extends Scene {
     const c = new Container();
     const spr = this._spr("manager_bubble", 100, 636, 520);
     c.addChild(spr);
-    const cy = 636 + spr.height * 0.42;
-    const who = this._t("🎧 한지원", 17, 0x223a4a, FD); who.position.set(206, cy - 22); c.addChild(who);
-    this.mgrText = this._t(MANAGER_LINES[0], 18, 0x223a4a); this.mgrText.position.set(176, cy + 4); c.addChild(this.mgrText);
+    const mh = spr.height, dia = 72, acx = 147, acy = 636 + mh * 0.40;
+    const face = new Sprite(this.tex.mgrface);
+    face.anchor.set(0.5, 0.30); face.scale.set(dia / face.texture.width);
+    face.position.set(acx, acy);
+    const mask = new Graphics().circle(acx, acy, dia / 2).fill(0xffffff);
+    face.mask = mask; c.addChild(face, mask);
+    const who = this._t("한지원", 17, 0x22384a, FD); who.position.set(212, 636 + mh * 0.30); c.addChild(who);
+    this.mgrText = this._t(MANAGER_LINES[0], 18, 0x22384a);
+    this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 360;
+    this.mgrText.position.set(212, 636 + mh * 0.52); c.addChild(this.mgrText);
     this.addChild(c);
   }
 
@@ -123,8 +131,8 @@ export class MainScene extends Scene {
       const chip = new Container();
       const spr = this._spr("slot_chip", sx, 788, 326); chip.addChild(spr);
       const cyc = 788 + spr.height / 2;
-      const num = this._t(String(i + 1), 18, S.white, FD); num.anchor.set(0.5); num.position.set(sx + 41, cyc); chip.addChild(num);
-      const txt = this._t("비어있음", 17, S.sub); txt.anchor.set(0, 0.5); txt.position.set(sx + 86, cyc); chip.addChild(txt);
+      const num = this._t(String(i + 1), 18, S.white, FD); num.anchor.set(0.5); num.position.set(sx + 48, cyc); chip.addChild(num);
+      const txt = this._t("비어있음", 16, S.sub); txt.anchor.set(0, 0.5); txt.position.set(sx + 96, cyc); chip.addChild(txt);
       chip._txt = txt;
       chip.eventMode = "static"; chip.cursor = "pointer";
       chip.on("pointertap", () => { if (this.selected[i] !== undefined) { this.selected.splice(i, 1); this._afterSelectChange(); } });
@@ -155,7 +163,7 @@ export class MainScene extends Scene {
       const cx = startX + i * (cw + gap);
       const c = new Container();
       const spr = this._spr(`cat_${cat.id}`, cx, y, cw); c.addChild(spr);
-      const l = this._t(cat.label, 20, S.white, FD); l.anchor.set(0.5, 0); l.position.set(cx + cw / 2, y + spr.height * 0.40); c.addChild(l);
+      const l = this._t(cat.label, 21, S.white, FD); l.anchor.set(0.5, 0.5); l.position.set(cx + cw / 2, y + spr.height * 0.42); c.addChild(l);
       this._tap(c, () => { this.menuMode = "sub"; this.activeCat = cat.id; this.renderMenu(); });
       this.menuLayer.addChild(c);
     });
@@ -184,7 +192,7 @@ export class MainScene extends Scene {
     back.addChild(Object.assign(this._t("← 카테고리", 18, S.ink, FD), { x: 34, y: 875 }));
     this._tap(back, () => { this.menuMode = "category"; this.renderMenu(); });
     this.menuLayer.addChild(back);
-    this.menuLayer.addChild(Object.assign(this._t(`${cat.emoji} ${cat.label}`, 22, LBL[catId], FD), { x: 190, y: 872 }));
+    this.menuLayer.addChild(Object.assign(this._t(cat.label, 22, LBL[catId], FD), { x: 190, y: 874 }));
 
     const list = ACTIVITIES.filter((a) => a.cat === catId);
     const mx = 20, gap = 12, top = 922, w = (DESIGN_WIDTH - mx * 2 - gap) / 2, h = 92;
@@ -192,8 +200,7 @@ export class MainScene extends Scene {
       const x = mx + (i % 2) * (w + gap), y = top + Math.floor(i / 2) * (h + gap);
       const c = new Container();
       c.addChild(new Graphics().roundRect(x, y, w, h, 14).fill(S.white).stroke({ width: 2, color: 0xefe7da }));
-      c.addChild(Object.assign(this._t(act.emoji, 28), { x: x + 12, y: y + 12 }));
-      c.addChild(Object.assign(this._t(act.name, 19, S.ink, FD), { x: x + 52, y: y + 12 }));
+      c.addChild(Object.assign(this._t(act.name, 19, S.ink, FD), { x: x + 16, y: y + 12 }));
       c.addChild(Object.assign(this._t(act.desc, 13, S.sub), { x: x + 14, y: y + 48 }));
       c.addChild(Object.assign(this._t(this._cost(act), 12, S.coral), { x: x + 14, y: y + 68 }));
       this._tap(c, () => this.pickActivity(act.id));
@@ -202,9 +209,9 @@ export class MainScene extends Scene {
   }
   _cost(a) {
     const p = [];
-    if (a.money) p.push(`💰${a.money > 0 ? "+" : ""}${Math.round(a.money / 10000)}만`);
-    if (a.stamina) p.push(`❤️${a.stamina > 0 ? "+" : ""}${a.stamina}`);
-    if (a.mental) p.push(`🧠${a.mental > 0 ? "+" : ""}${a.mental}`);
+    if (a.money) p.push(`돈 ${a.money > 0 ? "+" : ""}${Math.round(a.money / 10000)}만`);
+    if (a.stamina) p.push(`체력 ${a.stamina > 0 ? "+" : ""}${a.stamina}`);
+    if (a.mental) p.push(`멘탈 ${a.mental > 0 ? "+" : ""}${a.mental}`);
     return p.join("  ");
   }
 
