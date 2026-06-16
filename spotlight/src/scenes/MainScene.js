@@ -3,6 +3,14 @@ import { Scene } from "../core/Scene.js";
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../config.js";
 import { GameState } from "../systems/game.js";
 import { ACTIVITIES, CATEGORIES } from "../data/activities.js";
+import { MEDIA, GRADE_COMMENTS } from "../data/media.js";
+
+const GRADE_INFO = {
+  best: { label: "인생 연기", color: 0xf5c451 },
+  good: { label: "호평", color: 0x3fae9e },
+  fair: { label: "무난", color: 0x8a7b72 },
+  bad: { label: "혹평", color: 0xd6655e },
+};
 
 const IDLE_SPRITE = "./assets/portraits/heroine_brown_idle.png";
 const POSE_PATH = (k) => `./assets/portraits/poses/soyoon_${k}.png`;
@@ -35,6 +43,7 @@ export class MainScene extends Scene {
     this.activeCat = null;
     this.t = 0;
     this.tex = {};
+    this.overlay = null;
   }
 
   async onEnter() {
@@ -71,6 +80,7 @@ export class MainScene extends Scene {
 
     this.refreshHUD();
     this.renderMenu();
+    this.mgrText.text = this._mgrLine();
     document.getElementById("loading")?.remove();
   }
 
@@ -136,7 +146,99 @@ export class MainScene extends Scene {
     this.mgrText = this._t(MANAGER_LINES[0], 17, 0x22384a);
     this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 300;
     this.mgrText.position.set(260, 608 + mh * 0.54); c.addChild(this.mgrText);
+    c.eventMode = "static"; c.cursor = "pointer";
+    c.on("pointertap", () => this.openOffers());
     this.addChild(c);
+  }
+
+  _mgrLine() {
+    const n = this.game.offers.length;
+    if (n > 0) return `이번 달 출연 제안 ${n}개! (눌러서 보기)`;
+    return MANAGER_LINES[(this.game.turn - 1) % MANAGER_LINES.length];
+  }
+
+  _closeOverlay() {
+    if (this.overlay) { this.removeChild(this.overlay); this.overlay.destroy({ children: true }); this.overlay = null; }
+  }
+  _dim() {
+    const ov = new Container();
+    const bg = new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: 0x1a1420, alpha: 0.62 });
+    bg.eventMode = "static"; ov.addChild(bg);
+    return ov;
+  }
+
+  // 작품 출연 제안 팝업 (기획서 11번)
+  openOffers() {
+    if (this.overlay) return;
+    const ov = this._dim(); this.overlay = ov;
+    const cw = 600, x = (DESIGN_WIDTH - cw) / 2, n = this.game.offers.length;
+    const ch = 150 + n * 132, y = (DESIGN_HEIGHT - ch) / 2;
+    ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
+    ov.addChild(Object.assign(this._t("🎬 이번 달 출연 제안", 24, S.ink, FD), { x: x + 30, y: y + 24 }));
+    ov.addChild(Object.assign(this._t("선택하면 슬롯에 담겨 이번 달에 출연해요", 14, S.sub), { x: x + 30, y: y + 58 }));
+    this.game.offers.forEach((id, i) => {
+      const m = MEDIA.find((mm) => mm.id === id);
+      const cy = y + 92 + i * 132, card = new Container();
+      card.addChild(new Graphics().roundRect(x + 24, cy, cw - 48, 116, 16).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
+      card.addChild(Object.assign(this._t(m.name, 22, S.ink, FD), { x: x + 44, y: cy + 16 }));
+      const req = Object.entries(m.req).map(([k, v]) => `${this._statLabel(k)} ${v}`).join(" · ");
+      card.addChild(Object.assign(this._t(`기대치  ${req}`, 14, S.sub), { x: x + 44, y: cy + 50 }));
+      card.addChild(Object.assign(this._t(`출연료  ${m.pay}만원`, 14, 0xb04a3a), { x: x + 44, y: cy + 74 }));
+      const grade = this._predict(m);
+      const gi = GRADE_INFO[grade];
+      card.addChild(new Graphics().roundRect(x + cw - 150, cy + 40, 100, 36, 12).fill(gi.color));
+      card.addChild(Object.assign((() => { const t = this._t(`예상 ${gi.label}`, 14, 0xffffff, FD); t.anchor.set(0.5); t.position.set(x + cw - 100, cy + 58); return t; })(), {}));
+      card.eventMode = "static"; card.cursor = "pointer";
+      card.on("pointertap", () => this.selectProduction(id));
+      ov.addChild(card);
+    });
+    const close = new Container();
+    close.addChild(new Graphics().roundRect(x + cw / 2 - 70, y + ch - 52, 140, 40, 14).fill(0xece6dc));
+    close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 32); return t; })());
+    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => this._closeOverlay());
+    ov.addChild(close);
+    this.addChild(ov);
+  }
+  _statLabel(k) { return ({ acting: "연기력", emotion: "감정", vocal: "발성", looks: "외모", singing: "가창", dance: "댄스", study: "학업", character: "인성", network: "인맥", fame: "인지도" })[k] || k; }
+  _predict(m) {
+    let P = 0, E = 0;
+    for (const [k, v] of Object.entries(m.req)) { E += v; P += k === "fame" ? this.game.fans : (this.game.stats[k] || 0); }
+    const r = E ? P / E : 1;
+    return r >= 1.25 ? "best" : r >= 1.0 ? "good" : r >= 0.8 ? "fair" : "bad";
+  }
+  selectProduction(id) {
+    if (this.selected.length >= 2) this.selected.shift();
+    this.selected.push(`prod:${id}`);
+    this._afterSelectChange();
+    this._closeOverlay();
+  }
+
+  // 출연 평가 연출 팝업
+  showEval(results) {
+    let idx = 0;
+    const render = () => {
+      this._closeOverlay();
+      if (idx >= results.length) { this.refreshHUD(); this.menuMode = "category"; this.renderMenu(); return; }
+      const { media, grade } = results[idx];
+      const gi = GRADE_INFO[grade], comments = GRADE_COMMENTS[grade];
+      const ov = this._dim(); this.overlay = ov;
+      const cw = 600, x = (DESIGN_WIDTH - cw) / 2, chh = 480, y = (DESIGN_HEIGHT - chh) / 2;
+      ov.addChild(new Graphics().roundRect(x, y, cw, chh, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
+      ov.addChild((() => { const t = this._t(`「${media.name}」 방영!`, 22, S.ink, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, y + 40); return t; })());
+      // 등급 배지
+      ov.addChild(new Graphics().roundRect(DESIGN_WIDTH / 2 - 110, y + 70, 220, 64, 18).fill(gi.color));
+      ov.addChild((() => { const t = this._t(gi.label, 30, 0xffffff, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, y + 102); return t; })());
+      // 댓글 연출
+      comments.forEach((cm, i) => {
+        const cyc = y + 158 + i * 56;
+        ov.addChild(new Graphics().roundRect(x + 34, cyc, cw - 68, 46, 12).fill(0xffffff).stroke({ width: 1, color: 0xeee6da }));
+        ov.addChild(Object.assign(this._t(`💬 ${cm}`, 15, S.ink), { x: x + 48, y: cyc + 13 }));
+      });
+      const tip = this._t("화면을 누르면 계속", 14, S.sub); tip.anchor.set(0.5); tip.position.set(DESIGN_WIDTH / 2, y + chh - 28); ov.addChild(tip);
+      ov.children[0].on("pointertap", () => { idx += 1; render(); });
+      this.addChild(ov);
+    };
+    render();
   }
 
   // ───────── 슬롯 ─────────
@@ -157,12 +259,20 @@ export class MainScene extends Scene {
   }
   _afterSelectChange() {
     this.slotChips.forEach((chip, i) => {
-      const act = ACTIVITIES.find((a) => a.id === this.selected[i]);
-      chip._txt.text = act ? act.name : "비어있음";
-      chip._txt.style.fill = act ? S.ink : S.sub;
+      const sel = this.selected[i];
+      if (!sel) { chip._txt.text = "비어있음"; chip._txt.style.fill = S.sub; return; }
+      if (sel.startsWith("prod:")) {
+        const m = MEDIA.find((x) => x.id === sel.slice(5));
+        chip._txt.text = `🎬 ${m.name}`; chip._txt.style.fill = S.coral;
+      } else {
+        const act = ACTIVITIES.find((a) => a.id === sel);
+        chip._txt.text = act ? act.name : "비어있음"; chip._txt.style.fill = act ? S.ink : S.sub;
+      }
     });
-    const last = ACTIVITIES.find((a) => a.id === this.selected[this.selected.length - 1]);
-    this.setPose(last ? last.pose : null);
+    const last = this.selected[this.selected.length - 1];
+    let pose = null;
+    if (last) pose = last.startsWith("prod:") ? "filming" : (ACTIVITIES.find((a) => a.id === last) || {}).pose || null;
+    this.setPose(pose);
   }
 
   // ───────── 메뉴 ─────────
@@ -245,14 +355,19 @@ export class MainScene extends Scene {
     this.addChild(c);
   }
   onNextMonth() {
+    if (this.overlay) return;
     if (this.selected.length === 0) { this.mgrText.text = "활동을 먼저 골라줘!"; return; }
     if (this.game.isLastTurn) { this.mgrText.text = "3년의 시간이 끝났어. 정말 수고했어!"; return; }
-    this.game.advance([...this.selected]);
+    const prods = this.selected.filter((s) => s.startsWith("prod:")).map((s) => s.slice(5));
+    const acts = this.selected.filter((s) => !s.startsWith("prod:"));
+    const results = prods.map((id) => this.game.runProduction(id)).filter(Boolean);
+    this.game.advance(acts);
     this.selected = [];
     this._afterSelectChange();
     this.refreshHUD();
     this.menuMode = "category"; this.renderMenu();
-    this.mgrText.text = MANAGER_LINES[(this.game.turn - 1) % MANAGER_LINES.length];
+    this.mgrText.text = this._mgrLine();
+    if (results.length) this.showEval(results);
   }
 
   update(delta) {
