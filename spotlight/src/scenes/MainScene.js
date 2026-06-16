@@ -8,15 +8,19 @@ const IDLE_SPRITE = "./assets/portraits/heroine_brown_idle.png";
 const POSE_PATH = (key) => `./assets/portraits/poses/soyoon_${key}.png`;
 const BG_SCHOOL = "./assets/bg/school.png";
 
-// 캐릭터 상반신(얼굴~가슴) 프레이밍: 머리 위쪽을 화면 상단에 고정하고 크게 키워
-// 하반신은 패널 뒤로 — 모든 포즈가 동일한 노출 형식이 되도록 통일.
-const HERO_TOP_Y = 96;       // 머리 꼭대기 y
-const BUST_DISP_H = 1980;    // 전신 표시 높이(상단 일부만 노출)
+// 캐릭터 상반신 프레이밍: 머리(상단 메뉴에 안 가림) ~ 가슴(하단 메뉴에 안 가림)이 보이도록.
+const HERO_TOP_Y = 118;      // 머리 꼭대기 y (상단 상태바 아래)
+const BUST_DISP_H = 1560;    // 전신 표시 높이 — 줌아웃해서 머리~가슴 노출
 const PANEL_TOP = 812;
-// 게임 폰트 (index.html @font-face): 디스플레이=Gmarket Bold, 본문=KoPub 돋움, 강조=배민 도현
+// 게임 폰트 (index.html @font-face): 디스플레이/강조=Gmarket Bold, 본문=KoPub 돋움 (배민 도현 미사용)
 const FD = "GmarketSansBold, sans-serif";
 const FB = "KoPubWorldDotumMedium, sans-serif";
-const FA = "BMDOHYEON, sans-serif";
+const FA = "GmarketSansBold, sans-serif";
+// 능력치 표시용 짧은 라벨
+const STAT_VIEW = [
+  ["acting", "연기"], ["emotion", "감정"], ["vocal", "발성"], ["looks", "외모"], ["singing", "가창"],
+  ["dance", "댄스"], ["study", "학업"], ["character", "인성"], ["network", "인맥"], ["fame", "인지"],
+];
 
 // 시안에서 추출한 디자인 토큰
 const S = {
@@ -180,6 +184,29 @@ export class MainScene extends Scene {
       this._tap(c, () => { this.menuMode = "sub"; this.activeCat = cat.id; this.renderMenu(); });
       this.menuLayer.addChild(c);
     });
+    this._renderStatsPanel();
+  }
+
+  // 능력치(스탯) 패널 — 카테고리 화면 하단의 빈 영역
+  _renderStatsPanel() {
+    const x = 18, y = 1058, w = DESIGN_WIDTH - 36, h = 128;
+    const panel = new Container();
+    panel.addChild(creamPanel(x, y, w, h, 18, S.white));
+    const head = this._text("능력치", 16, S.sub, "800", FD); head.position.set(x + 16, y + 8); panel.addChild(head);
+    const cols = 5, cw = (w - 24) / cols, x0 = x + 12, y0 = y + 36, rowH = 44;
+    STAT_VIEW.forEach(([key, label], i) => {
+      const col = i % cols, row = Math.floor(i / cols);
+      const cx = x0 + col * cw, cy = y0 + row * rowH;
+      const val = key === "fame" ? this.game.fans : this.game.stats[key];
+      const lab = this._text(label, 15, S.sub, "600", FB); lab.position.set(cx, cy); panel.addChild(lab);
+      const v = this._text(String(val), 17, S.ink, "800", FD); v.anchor.set(1, 0); v.position.set(cx + cw - 14, cy - 1); panel.addChild(v);
+      // 미니 게이지
+      const bw = cw - 16;
+      panel.addChild(new Graphics().roundRect(cx, cy + 22, bw, 6, 3).fill(0xe9e2d6));
+      const f = Math.max(0, Math.min(1, val / 100));
+      if (f > 0) panel.addChild(new Graphics().roundRect(cx, cy + 22, Math.max(4, bw * f), 6, 3).fill(S.coral));
+    });
+    this.menuLayer.addChild(panel);
   }
 
   _renderSub(catId) {
