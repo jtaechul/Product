@@ -1,6 +1,7 @@
 // 게임 상태 + 진행 로직 (렌더와 분리). 기획서 6·7·8·9번.
 import { ACTIVITIES, AUTO_ACTIVITY, STATS_META } from "../data/activities.js";
 import { MEDIA } from "../data/media.js";
+import { ACT_BOND, BOND_THRESHOLD } from "../data/bonds.js";
 import { TOTAL_TURNS } from "../config.js";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -25,7 +26,10 @@ export class GameState {
     this.filmography = [];         // 출연 기록 (기획서 4·11번)
     this.flags = new Set();        // 특수 플래그(영화제·해외·국민 등)
     this.offers = this.genOffers();// 이번 달 출연 제안
+    this.bonds = { hanjiwon: 0, noh: 0, haneul: 0, yusea: 0 }; // 인연 게이지 (기획서 12번)
   }
+
+  raiseBond(id, n) { if (this.bonds[id] !== undefined) this.bonds[id] = clamp(this.bonds[id] + n, 0, 100); }
 
   // 이번 달 출연 제안 1~3개 생성 (등장 가능 매체 중)
   genOffers() {
@@ -49,6 +53,7 @@ export class GameState {
       E += v;
       P += k === "fame" ? this.fans : (this.stats[k] || 0);
     }
+    if (this.bonds.hanjiwon >= BOND_THRESHOLD) P *= 1.1; // 매니저 인연: 평가 +10%
     const ratio = E ? P / E : 1;
     let grade = "bad";
     if (ratio >= 1.25) grade = "best";
@@ -66,6 +71,8 @@ export class GameState {
     } else if (grade === "bad") {
       this.mental = clamp(this.mental - 12, 0, 100);
     }
+    if (this.bonds.yusea >= BOND_THRESHOLD && (grade === "best" || grade === "good")) this._gainStat("acting", 2); // 라이벌 자극
+    this.raiseBond("hanjiwon", 10); this.raiseBond("yusea", 6);
     this.filmography.push({ turn: this.turn, label: this.label, name: m.name, grade });
     return { media: m, grade };
   }
@@ -92,12 +99,18 @@ export class GameState {
 
   _applyOne(act) {
     if (!act) return;
+    // 인연 보너스: 노교수(연기 효율 +20%), 박하늘(멘탈 회복 +30%)
+    const actBoost = act.cat === "acting" && this.bonds.noh >= BOND_THRESHOLD ? 1.2 : 1.0;
     for (const [k, v] of Object.entries(act.effects || {})) {
       if (k === "fame") this.fans = Math.max(0, this.fans + v);
-      else if (this.stats[k] !== undefined) this._gainStat(k, v);
+      else if (this.stats[k] !== undefined) this._gainStat(k, v * actBoost);
     }
     if (act.stamina) this.stamina = clamp(this.stamina + act.stamina, 0, 100);
-    if (act.mental) this.mental = clamp(this.mental + act.mental, 0, 100);
+    if (act.mental) {
+      let mv = act.mental;
+      if (mv > 0 && this.bonds.haneul >= BOND_THRESHOLD) mv = Math.round(mv * 1.3);
+      this.mental = clamp(this.mental + mv, 0, 100);
+    }
     if (act.money) this.money = Math.max(0, this.money + act.money);
   }
 
@@ -109,6 +122,7 @@ export class GameState {
     // 2) 선택 활동
     for (const id of selectedIds) {
       this._applyOne(ACTIVITIES.find((a) => a.id === id));
+      if (ACT_BOND[id]) this.raiseBond(ACT_BOND[id], 8);
     }
     // 3) 매달 용돈 +50,000
     this.money += 50000;
