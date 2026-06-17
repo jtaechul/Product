@@ -18,7 +18,7 @@ const POSE_PATH = (k) => `./assets/portraits/poses/soyoon_${k}.png`;
 const BG_SCHOOL = "./assets/bg/school.png";
 const UI = (n) => `./assets/ui/${n}.png`;
 
-const HERO_TOP_Y = 100;
+const HERO_TOP_Y = 128;
 const BUST_DISP_H = 1320;
 const PANEL_TOP = 742;
 const FD = "GmarketSansBold, sans-serif";
@@ -101,7 +101,7 @@ export class MainScene extends Scene {
     if (this.bgSprite) { const t = this.bgSprite.texture; this.bgSprite.scale.set(Math.max(DESIGN_WIDTH / t.width, H / t.height)); }
     if (this.veil) this.veil.clear().rect(0, 0, DESIGN_WIDTH, H).fill({ color: 0xfff6f3, alpha: 0.16 });
     if (this.bottomBlock) this.bottomBlock.y = H - DESIGN_HEIGHT;
-    this.heroDispH = Math.max(1180, (H - 800) / 0.38);
+    this.heroDispH = Math.max(1180, (H - 828) / 0.38);
     if (this.hero) this._fitHero();
     if (this.heroMask) this.heroMask.clear().rect(0, 0, DESIGN_WIDTH, H - 538).fill(0xffffff);
   }
@@ -161,7 +161,7 @@ export class MainScene extends Scene {
     const c = new Container();
     const spr = this._spr("manager_bubble", 120, 608, 480); c.addChild(spr);
     const mh = spr.height, acx = 181, acy = 668;
-    this._faceCircle(c, this.tex.mgrface, acx, acy, 54, 0.58, 0.20);
+    this._faceCircle(c, this.tex.mgrface, acx, acy, 54, 0.70, 0.23);
     const who = this._t("한지원", 16, 0x22384a, FD); who.position.set(260, 608 + mh * 0.30); c.addChild(who);
     this.mgrText = this._t(MANAGER_LINES[0], 17, 0x22384a);
     this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 300;
@@ -445,8 +445,8 @@ export class MainScene extends Scene {
 
   buildNextButton() {
     const c = new Container();
-    const spr = this._spr("btn_next", 140, 1172, 440); c.addChild(spr);
-    const lab = this._t("다음 달 일정 진행하기", 20, S.white, FD); lab.anchor.set(0.5); lab.position.set(DESIGN_WIDTH / 2, 1172 + spr.height / 2); c.addChild(lab);
+    const spr = this._spr("btn_next", 116, 1172, 488); c.addChild(spr);
+    const lab = this._t("다음 달 일정 진행하기", 27, S.white, FD); lab.anchor.set(0.5); lab.position.set(DESIGN_WIDTH / 2, 1172 + spr.height / 2); c.addChild(lab);
     this._tap(c, () => this.onNextMonth());
     this.bottomBlock.addChild(c);
   }
