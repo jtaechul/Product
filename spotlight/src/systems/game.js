@@ -3,6 +3,7 @@ import { ACTIVITIES, AUTO_ACTIVITY, STATS_META } from "../data/activities.js";
 import { MEDIA } from "../data/media.js";
 import { ACT_BOND, BOND_THRESHOLD } from "../data/bonds.js";
 import { EVENTS } from "../data/events.js";
+import { ITEMS } from "../data/items.js";
 import { TOTAL_TURNS } from "../config.js";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -28,9 +29,25 @@ export class GameState {
     this.flags = new Set();        // 특수 플래그(영화제·해외·국민 등)
     this.offers = this.genOffers();// 이번 달 출연 제안
     this.bonds = { hanjiwon: 0, noh: 0, haneul: 0, yusea: 0 }; // 인연 게이지 (기획서 12번)
+    this.prodBonus = 1;            // 행운의 부적 등 다음 출연 평가 보정 (1회)
   }
 
   raiseBond(id, n) { if (this.bonds[id] !== undefined) this.bonds[id] = clamp(this.bonds[id] + n, 0, 100); }
+
+  // 상점 구매 (기획서 8단계): 돈 차감 → 즉시 효과 적용
+  buyItem(id) {
+    const it = ITEMS.find((x) => x.id === id);
+    if (!it || this.money < it.cost) return false;
+    this.money -= it.cost;
+    for (const [k, v] of Object.entries(it.effects || {})) {
+      if (k === "stamina") this.stamina = clamp(this.stamina + v, 0, 100);
+      else if (k === "mental") this.mental = clamp(this.mental + v, 0, 100);
+      else if (k === "fans") this.fans = Math.max(0, this.fans + v);
+      else if (this.stats[k] !== undefined) this._gainStat(k, v);
+    }
+    if (it.lucky) this.prodBonus = 1.15;
+    return true;
+  }
 
   // 랜덤 이벤트 추첨 (기획서 13번): 약 38% 확률
   rollEvent() {
@@ -74,6 +91,7 @@ export class GameState {
       P += k === "fame" ? this.fans : (this.stats[k] || 0);
     }
     if (this.bonds.hanjiwon >= BOND_THRESHOLD) P *= 1.1; // 매니저 인연: 평가 +10%
+    if (this.prodBonus !== 1) { P *= this.prodBonus; this.prodBonus = 1; } // 행운의 부적 (1회 소모)
     const ratio = E ? P / E : 1;
     let grade = "bad";
     if (ratio >= 1.25) grade = "best";
