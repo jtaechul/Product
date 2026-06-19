@@ -2,6 +2,7 @@
 import { ACTIVITIES, AUTO_ACTIVITY, STATS_META } from "../data/activities.js";
 import { MEDIA } from "../data/media.js";
 import { ACT_BOND, BOND_THRESHOLD } from "../data/bonds.js";
+import { EVENTS } from "../data/events.js";
 import { TOTAL_TURNS } from "../config.js";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -30,6 +31,25 @@ export class GameState {
   }
 
   raiseBond(id, n) { if (this.bonds[id] !== undefined) this.bonds[id] = clamp(this.bonds[id] + n, 0, 100); }
+
+  // 랜덤 이벤트 추첨 (기획서 13번): 약 38% 확률
+  rollEvent() {
+    if (Math.random() > 0.38) return null;
+    return EVENTS[Math.floor(Math.random() * EVENTS.length)];
+  }
+  applyEventEffects(effects = {}, flag) {
+    for (const [k, v] of Object.entries(effects)) {
+      if (k === "mental") this.mental = clamp(this.mental + v, 0, 100);
+      else if (k === "stamina") this.stamina = clamp(this.stamina + v, 0, 100);
+      else if (k === "money") this.money = Math.max(0, this.money + v);
+      else if (k === "fans") this.fans = Math.max(0, this.fans + v);
+      else if (this.stats[k] !== undefined) {
+        if (v >= 0) this._gainStat(k, v);
+        else this.stats[k] = clamp(this.stats[k] + v, 0, 100);
+      }
+    }
+    if (flag) this.flags.add(flag);
+  }
 
   // 이번 달 출연 제안 1~3개 생성 (등장 가능 매체 중)
   genOffers() {
