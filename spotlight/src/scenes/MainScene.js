@@ -161,7 +161,8 @@ export class MainScene extends Scene {
     const c = new Container();
     const spr = this._spr("manager_bubble", 120, 608, 480); c.addChild(spr);
     const mh = spr.height, acx = 174, acy = 663;
-    this._faceCircle(c, this.tex.mgrface, acx, acy, 72, 0.3566, 0.265, 0.378);
+    // 머리끝~목젖을 곡선으로 크롭(위·얼굴 좌우 보존) → 원형 프레임에 꽉 차게
+    this._faceCircle(c, this.tex.mgrface, acx, acy, 72, 0.4950, 0.2184, 0.3923);
     const who = this._t("한지원", 16, 0x22384a, FD); who.position.set(260, 608 + mh * 0.30); c.addChild(who);
     this.mgrText = this._t(MANAGER_LINES[0], 17, 0x22384a);
     this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 300;
