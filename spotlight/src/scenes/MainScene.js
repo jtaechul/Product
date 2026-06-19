@@ -160,8 +160,8 @@ export class MainScene extends Scene {
   buildManagerBubble() {
     const c = new Container();
     const spr = this._spr("manager_bubble", 120, 608, 480); c.addChild(spr);
-    const mh = spr.height, acx = 181, acy = 668;
-    this._faceCircle(c, this.tex.mgrface, acx, acy, 54, 0.70, 0.23);
+    const mh = spr.height, acx = 186, acy = 668;
+    this._faceCircle(c, this.tex.mgrface, acx, acy, 54, 0.583, 0.23);
     const who = this._t("한지원", 16, 0x22384a, FD); who.position.set(260, 608 + mh * 0.30); c.addChild(who);
     this.mgrText = this._t(MANAGER_LINES[0], 17, 0x22384a);
     this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 300;
@@ -461,12 +461,62 @@ export class MainScene extends Scene {
     this.selected = [];
     this._afterSelectChange();
     if (results.length) {
-      this.playProduction(results);
+      this.playProduction(results).then(() => this._afterTurn());
     } else {
       this.refreshHUD();
       this.menuMode = "category"; this.renderMenu();
       this.mgrText.text = this._mgrLine();
+      this._afterTurn();
     }
+  }
+
+  // 다음 달 진행 후 랜덤 이벤트 (기획서 13번)
+  _afterTurn() {
+    const ev = this.game.rollEvent();
+    if (ev) this.showEvent(ev);
+  }
+  _effSummary(c) {
+    const L = { acting: "연기력", emotion: "감정", vocal: "발성", looks: "외모", singing: "가창", dance: "댄스", study: "학업", character: "인성", network: "인맥", fame: "인지도", mental: "멘탈", stamina: "체력", money: "자금", fans: "인지도" };
+    const p = [];
+    for (const [k, v] of Object.entries(c.effects || {})) p.push(`${L[k] || k} ${v > 0 ? "+" : ""}${k === "money" ? Math.round(v / 10000) + "만" : v}`);
+    if (c.flag) p.push("✦숨은 평판");
+    return p.join("   ");
+  }
+  showEvent(ev) {
+    const ov = this._dim(); this.overlay = ov;
+    const cw = 604, x = (DESIGN_WIDTH - cw) / 2;
+    const build = (chosen) => {
+      while (ov.children.length > 1) { const c = ov.removeChildAt(ov.children.length - 1); c.destroy && c.destroy({ children: true }); }
+      if (chosen) {
+        const ch = 296, y = (DESIGN_HEIGHT - ch) / 2;
+        ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
+        ov.addChild(Object.assign(this._t(`${ev.emoji} ${ev.title}`, 22, S.ink, FD), { x: x + 30, y: y + 26 }));
+        const r = this._t(chosen.result, 20, 0x4a4a55); r.style.wordWrap = true; r.style.wordWrapWidth = cw - 60; r.position.set(x + 30, y + 78); ov.addChild(r);
+        ov.addChild(Object.assign(this._t(this._effSummary(chosen), 16, S.coral, FD), { x: x + 30, y: y + ch - 104 }));
+        const btn = new Container();
+        btn.addChild(new Graphics().roundRect(x + cw / 2 - 84, y + ch - 62, 168, 46, 16).fill(S.coral));
+        btn.addChild((() => { const t = this._t("확인", 20, 0xffffff, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 39); return t; })());
+        btn.eventMode = "static"; btn.cursor = "pointer"; btn.on("pointertap", () => this._closeOverlay());
+        ov.addChild(btn);
+      } else {
+        const ch = 168 + ev.choices.length * 72, y = (DESIGN_HEIGHT - ch) / 2;
+        ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
+        ov.addChild(Object.assign(this._t(`${ev.emoji} ${ev.title}`, 24, S.ink, FD), { x: x + 30, y: y + 24 }));
+        const txt = this._t(ev.text, 19, 0x4a4a55); txt.style.wordWrap = true; txt.style.wordWrapWidth = cw - 60; txt.position.set(x + 30, y + 66); ov.addChild(txt);
+        ev.choices.forEach((c, i) => {
+          const by = y + 144 + i * 72;
+          const btn = new Container();
+          btn.addChild(new Graphics().roundRect(x + 28, by, cw - 56, 60, 14).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
+          btn.addChild(Object.assign(this._t(c.label, 19, S.ink, FD), { x: x + 48, y: by + 10 }));
+          btn.addChild(Object.assign(this._t(this._effSummary(c), 13, S.sub), { x: x + 48, y: by + 35 }));
+          btn.eventMode = "static"; btn.cursor = "pointer";
+          btn.on("pointertap", () => { this.game.applyEventEffects(c.effects, c.flag); this.refreshHUD(); this.renderMenu(); build(c); });
+          ov.addChild(btn);
+        });
+      }
+    };
+    build(null);
+    this.addChild(ov);
   }
 
   update(delta) {
