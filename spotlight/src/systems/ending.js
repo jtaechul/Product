@@ -31,19 +31,20 @@ function buildContext(game) {
     firstWork: game.filmography[0] || null,
     bestWork,
     people: bondPeople(game.bonds),
+    name: game.heroName || "그",
   };
 }
 
 function composeStory(c, e) {
   const debut = c.firstWork
-    ? `열일곱, 작은 작품 「${c.firstWork.name}」으로 카메라 앞에 처음 섰다.`
-    : `열일곱, 길거리 캐스팅 명함 한 장에서 모든 것이 시작됐다.`;
+    ? `열일곱의 ${c.name}. 작은 작품 「${c.firstWork.name}」으로 카메라 앞에 처음 섰다.`
+    : `열일곱의 ${c.name}. 길거리 캐스팅 명함 한 장에서 모든 것이 시작됐다.`;
   const rep = c.bestWork ? `대표작 「${c.bestWork.name}」은 오래도록 회자됐다.` : "";
   const mid = e.core(c);
   const awards = Object.keys(AWARD_OF).filter((k) => c.flags.has(k)).map((k) => AWARD_OF[k]);
   const awardLine = awards.length ? `그 길에는 영광도 따랐다 — ${awards.join(", ")}.` : "";
   const peopleLine = c.people.length ? `무엇보다, 곁에는 늘 ${c.people.join("·")}이(가) 있었다.` : "";
-  const closing = `예순, 지난 40년을 돌아보며 그/그녀는 말했다.\n"${e.quote}"`;
+  const closing = `예순의 ${c.name}, 지난 40년을 돌아보며 말했다.\n"${e.quote}"`;
   return [debut, mid, rep, awardLine, peopleLine, closing].filter(Boolean).join("\n\n");
 }
 

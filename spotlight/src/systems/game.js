@@ -17,7 +17,8 @@ function softCapMultiplier(cur) {
 }
 
 export class GameState {
-  constructor() {
+  constructor(name) {
+    this.heroName = (name && String(name).trim()) || "소윤"; // 주인공 이름 (오프닝에서 입력)
     this.turn = 1;                 // 1 ~ 36
     this.stats = {};
     for (const s of STATS_META) this.stats[s.key] = 5; // 시작값 5
@@ -180,5 +181,26 @@ export class GameState {
   // 돈을 "18만" 형태로
   moneyShort() {
     return `${Math.floor(this.money / 10000)}만`;
+  }
+
+  // 세이브 직렬화 (기획서 9·19번: localStorage 저장)
+  toData() {
+    return {
+      v: 1, heroName: this.heroName, turn: this.turn, stats: { ...this.stats }, stamina: this.stamina, mental: this.mental,
+      money: this.money, fans: this.fans, filmography: this.filmography, flags: [...this.flags],
+      bonds: { ...this.bonds }, offers: this.offers, prodBonus: this.prodBonus,
+    };
+  }
+  static fromData(d) {
+    const g = new GameState();
+    if (!d) return g;
+    if (d.heroName) g.heroName = d.heroName;
+    g.turn = d.turn ?? 1; g.stamina = d.stamina ?? 70; g.mental = d.mental ?? 70;
+    g.money = d.money ?? 100000; g.fans = d.fans ?? 0;
+    if (d.stats) g.stats = { ...g.stats, ...d.stats };
+    g.filmography = d.filmography || []; g.flags = new Set(d.flags || []);
+    if (d.bonds) g.bonds = { ...g.bonds, ...d.bonds };
+    g.offers = d.offers || []; g.prodBonus = d.prodBonus ?? 1;
+    return g;
   }
 }
