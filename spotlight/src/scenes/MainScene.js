@@ -34,6 +34,9 @@ const MANAGER_LINES = [
   "이번 달은 뭘 해볼까?", "무리하지 말고 컨디션도 챙기자.",
   "조금씩 쌓이면 큰 차이가 돼.", "좋아, 네 선택을 믿어볼게.",
 ];
+// 매니저 말풍선 사각 사진칸 얼굴 배치 (이미지 비율) — 기획서 17
+const MGR_LM = { cx: 0.3923, top: 0.0393, throat: 0.3986 };
+const BOND_INNER = 0.671; // bond_frame.png 안쪽 개구부 / 프레임 크기
 
 export class MainScene extends Scene {
   constructor() {
@@ -49,7 +52,7 @@ export class MainScene extends Scene {
   }
 
   async onEnter() {
-    const uiNames = ["topbar2", "stats_frame", "manager_bubble", "slot_chip", "btn_next", "cat_acting", "cat_charm", "cat_mind", "cat_life"];
+    const uiNames = ["topbar2", "stats_frame", "manager_bubble", "bond_frame", "slot_chip", "btn_next", "cat_acting", "cat_charm", "cat_mind", "cat_life"];
     const [bgTex, idleTex] = await Promise.all([Assets.load(BG_SCHOOL), Assets.load(IDLE_SPRITE)]);
     await Promise.all(uiNames.map(async (n) => { this.tex[n] = await Assets.load(UI(n)); }));
     await Promise.all(ACTIVITIES.map(async (a) => { this.tex[`actico_${a.id}`] = await Assets.load(UI(`actico_${a.id}`)); }));
@@ -109,13 +112,15 @@ export class MainScene extends Scene {
   _t(txt, size, fill, fam = FB) { return new Text({ text: txt, style: new TextStyle({ fontFamily: fam, fontSize: size, fill }) }); }
   _spr(name, x, y, w) { const s = new Sprite(this.tex[name]); s.scale.set(w / s.texture.width); s.position.set(x, y); return s; }
 
-  // 얼굴을 원형 프레임에 꽉 차게 (얼굴 크롭 + 마스크). cxfrac/cyfrac = 원 중심에 맞출 이미지 내 위치(0~1)
-  _faceCircle(parent, tex, cx, cy, dia, wfrac, cyfrac, cxfrac = 0.5) {
+  // 사각 프레임 안에 얼굴 배치 (기획서 17): 가로 중앙 정렬(좌우 여백 동일) + 머리끝 보존 + 목젖 아래 직선 크롭.
+  // lm: { cx, top, throat } = 이미지 내 가로중심·머리끝·목젖 위치(비율). 머리끝~목젖을 rh 높이에 맞춰 채운다.
+  _faceInRect(parent, tex, rx, ry, rw, rh, lm) {
+    const span = (lm.throat - lm.top) * tex.height;     // 머리끝→목젖 (이미지 px)
     const f = new Sprite(tex);
-    f.anchor.set(cxfrac, cyfrac);
-    f.scale.set(dia / (wfrac * tex.width));
-    f.position.set(cx, cy);
-    const mk = new Graphics().circle(cx, cy, dia / 2).fill(0xffffff);
+    f.scale.set(rh / span);
+    f.anchor.set(lm.cx, lm.top);                         // (가로중심, 머리끝)을
+    f.position.set(rx + rw / 2, ry);                     // (칸 가로중앙, 칸 위)에 맞춤
+    const mk = new Graphics().rect(rx, ry, rw, rh).fill(0xffffff);
     f.mask = mk; parent.addChild(f, mk);
   }
 
@@ -160,13 +165,13 @@ export class MainScene extends Scene {
   buildManagerBubble() {
     const c = new Container();
     const spr = this._spr("manager_bubble", 120, 608, 480); c.addChild(spr);
-    const mh = spr.height, acx = 174, acy = 663;
-    // 머리끝~목젖을 곡선으로 크롭(위·얼굴 좌우 보존) → 원형 프레임에 꽉 차게
-    this._faceCircle(c, this.tex.mgrface, acx, acy, 72, 0.4950, 0.2184, 0.3923);
-    const who = this._t("한지원", 16, 0x22384a, FD); who.position.set(260, 608 + mh * 0.30); c.addChild(who);
+    const mh = spr.height;
+    // 사각 사진칸: 좌우 여백 동일 + 머리끝 보존 + 목젖 아래 직선 크롭 (기획서 17)
+    this._faceInRect(c, this.tex.mgrface, 148.8, 628.4, 76.8, 74.4, MGR_LM);
+    const who = this._t("한지원", 16, 0x22384a, FD); who.position.set(262, 634); c.addChild(who);
     this.mgrText = this._t(MANAGER_LINES[0], 17, 0x22384a);
     this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 300;
-    this.mgrText.position.set(260, 608 + mh * 0.54); c.addChild(this.mgrText);
+    this.mgrText.position.set(262, 662); c.addChild(this.mgrText);
     c.eventMode = "static"; c.cursor = "pointer";
     c.on("pointertap", () => this.openOffers());
     this.bottomBlock.addChild(c);
@@ -209,17 +214,19 @@ export class MainScene extends Scene {
     BONDS.forEach((b, i) => {
       const ry = y + 92 + i * 110, val = this.game.bonds[b.id], active = val >= BOND_THRESHOLD;
       ov.addChild(new Graphics().roundRect(x + 22, ry, cw - 44, 96, 16).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
-      const acx = x + 76, acy = ry + 48, dia = 70;
-      ov.addChild(new Graphics().circle(acx, acy, dia / 2 + 3).fill(0xf0ece4).stroke({ width: 3, color: active ? S.coral : S.gold }));
-      this._faceCircle(ov, this.tex[`bond_${b.id}`], acx, acy, dia, b.wf, b.cf);
-      ov.addChild(Object.assign(this._t(b.name, 20, S.ink, FD), { x: x + 124, y: ry + 12 }));
-      ov.addChild(Object.assign(this._t(b.role, 13, S.sub), { x: x + 124 + b.name.length * 22 + 8, y: ry + 18 }));
+      const acx = x + 78, acy = ry + 48, FS = 96, iw = FS * BOND_INNER;
+      if (active) ov.addChild(new Graphics().roundRect(acx - FS / 2 - 2, acy - FS / 2 - 2, FS + 4, FS + 4, 14).fill(0xfff1d6));
+      // 사각 프레임 사진칸: 얼굴(좌우 여백 동일·머리끝 보존·목젖 직선 크롭) → 금색 프레임 덮기
+      this._faceInRect(ov, this.tex[`bond_${b.id}`], acx - iw / 2, acy - iw / 2, iw, iw, b.lm);
+      const fr = new Sprite(this.tex.bond_frame); fr.anchor.set(0.5); fr.scale.set(FS / fr.texture.width); fr.position.set(acx, acy); ov.addChild(fr);
+      ov.addChild(Object.assign(this._t(b.name, 20, S.ink, FD), { x: x + 138, y: ry + 12 }));
+      ov.addChild(Object.assign(this._t(b.role, 13, S.sub), { x: x + 138 + b.name.length * 22 + 8, y: ry + 18 }));
       // 게이지
-      const gx = x + 124, gw = 300, gy = ry + 44;
+      const gx = x + 138, gw = 286, gy = ry + 44;
       ov.addChild(new Graphics().roundRect(gx, gy, gw, 12, 6).fill(0xe9e2d6));
       ov.addChild(new Graphics().roundRect(gx, gy, Math.max(6, gw * (val / 100)), 12, 6).fill(active ? S.coral : 0xd8b8b2));
-      ov.addChild(Object.assign((() => { const t = this._t(`${val}/100`, 14, S.ink, FD); t.anchor.set(1, 0.5); t.position.set(gx + gw + 70, gy + 6); return t; })(), {}));
-      ov.addChild(Object.assign(this._t(active ? `✓ ${b.bonus}` : `🔒 ${b.bonus}`, 13, active ? 0x2e9e8e : S.sub), { x: x + 124, y: ry + 66 }));
+      ov.addChild(Object.assign((() => { const t = this._t(`${val}/100`, 14, S.ink, FD); t.anchor.set(1, 0.5); t.position.set(gx + gw + 60, gy + 6); return t; })(), {}));
+      ov.addChild(Object.assign(this._t(active ? `✓ ${b.bonus}` : `🔒 ${b.bonus}`, 13, active ? 0x2e9e8e : S.sub), { x: x + 138, y: ry + 66 }));
     });
     const close = new Container();
     close.addChild(new Graphics().roundRect(x + cw / 2 - 70, y + ch - 50, 140, 38, 14).fill(0xece6dc));
