@@ -7,63 +7,55 @@ import { MainScene } from "./MainScene.js";
 
 const FD = "GmarketSansBold, sans-serif";
 const FB = "KoPubWorldDotumMedium, sans-serif";
-const GOLD = 0xf3c969, CREAM = 0xfdf6e6, INK = 0x2a2230;
+const GOLD = 0xf3c969, CREAM = 0xfdf6e6, INK = 0x241a10;
 
-// 프린세스 메이커 풍 오프닝 (기획서: 새로 시작 / 불러오기 / 종료)
+// 오프닝 (기획서: 새로 시작 / 불러오기 / 종료). 배경은 무대 일러스트(타이틀·인물 포함), 버튼/글자는 코드로.
 export class TitleScene extends Scene {
   constructor() { super(); this.t = 0; }
 
   async onEnter() {
-    const [bgTex, heroTex] = await Promise.all([
-      Assets.load("./assets/bg/award.png").catch(() => null),
-      Assets.load("./assets/portraits/heroine_brown_idle.png").catch(() => null),
-    ]);
+    const tex = {};
+    await Promise.all(
+      ["title_bg", "icon_new", "icon_load", "icon_quit"].map(async (n) => { tex[n] = await Assets.load(`./assets/ui/${n}.png`).catch(() => null); })
+    );
+    this.tex = tex;
 
-    this.bg = new Sprite(bgTex || Assets.cache.get("./assets/bg/school.png"));
-    this.bg.anchor.set(0.5, 0); this.addChild(this.bg);
-    this.veil = new Graphics(); this.addChild(this.veil);
-
-    if (heroTex) { this.hero = new Sprite(heroTex); this.hero.anchor.set(0.5, 1); this.addChild(this.hero); }
-
-    // 타이틀
-    this.titleWrap = new Container(); this.addChild(this.titleWrap);
-    const glow = new Text({ text: "SPOTLIGHT", style: new TextStyle({ fontFamily: FD, fontSize: 78, fill: 0xfff4cf }) });
-    glow.anchor.set(0.5); glow.alpha = 0.35; glow.scale.set(1.06);
-    const title = new Text({ text: "SPOTLIGHT", style: new TextStyle({ fontFamily: FD, fontSize: 76, fill: GOLD, stroke: { color: 0x5b3d1a, width: 6 } }) });
-    title.anchor.set(0.5);
-    const sub = new Text({ text: "어느 배우의 40년", style: new TextStyle({ fontFamily: FD, fontSize: 26, fill: CREAM }) });
-    sub.anchor.set(0.5); sub.position.set(0, 60);
-    this.titleWrap.addChild(glow, title, sub); this._glow = glow;
+    this.bg = new Sprite(tex.title_bg); this.bg.anchor.set(0.5, 0); this.addChild(this.bg);
 
     // 메뉴 버튼
     this.menu = new Container(); this.addChild(this.menu);
     const canLoad = hasSave();
-    this._btnNew = this._button("🎬  새로 시작하기", GOLD, INK, () => this._promptName((name) => this.manager.change(new MainScene(new GameState(name)))));
-    this._btnLoad = this._button(canLoad ? `📂  불러오기  (${saveLabel()})` : "📂  불러오기  (없음)", canLoad ? CREAM : 0xcfc6b8, canLoad ? INK : 0x8a8276, () => {
+    this._btnNew = this._button("새로 시작하기", GOLD, INK, tex.icon_new, () => this._promptName((name) => this.manager.change(new MainScene(new GameState(name)))));
+    this._btnLoad = this._button(canLoad ? `불러오기  (${saveLabel()})` : "불러오기  (없음)", canLoad ? CREAM : 0xb8ae94, canLoad ? INK : 0x6f6655, tex.icon_load, () => {
       const g = loadGame();
       if (g) this.manager.change(new MainScene(g)); else this._flash("저장된 게임이 없어요");
     });
-    this._btnQuit = this._button("🚪  종료하기", CREAM, INK, () => this._quit());
+    this._btnQuit = this._button("종료하기", CREAM, INK, tex.icon_quit, () => this._quit());
     this.menu.addChild(this._btnNew, this._btnLoad, this._btnQuit);
 
-    this.hint = new Text({ text: "한정된 3년, 당신의 선택이 어떤 배우를 만들까", style: new TextStyle({ fontFamily: FB, fontSize: 17, fill: 0xe7ddc7 }) });
-    this.hint.anchor.set(0.5); this.addChild(this.hint);
+    this.sub = new Text({ text: "어느 배우의 40년", style: new TextStyle({ fontFamily: FD, fontSize: 22, fill: GOLD, stroke: { color: 0x231a2c, width: 4 } }) });
+    this.sub.anchor.set(0.5); this.addChild(this.sub);
 
     document.getElementById("loading")?.remove();
     this._layout(this.H || DESIGN_HEIGHT);
   }
 
-  _button(label, fill, textColor, fn) {
+  _button(label, fill, textColor, iconTex, fn) {
     const c = new Container();
-    const w = 460, h = 84;
-    const g = new Graphics().roundRect(-w / 2, -h / 2, w, h, 22).fill(fill).stroke({ width: 3, color: 0x6b4a1e });
-    const t = new Text({ text: label, style: new TextStyle({ fontFamily: FD, fontSize: 27, fill: textColor }) });
-    t.anchor.set(0.5);
-    c.addChild(g, t);
+    const w = 470, h = 86;
+    c.addChild(new Graphics().roundRect(-w / 2, -h / 2, w, h, 22).fill({ color: 0x1a2138, alpha: 0.92 }).stroke({ width: 3, color: 0x6b4a1e }));
+    c.addChild(new Graphics().roundRect(-w / 2 + 5, -h / 2 + 5, w - 10, h - 10, 18).stroke({ width: 1.5, color: GOLD }));
+    if (iconTex) {
+      const ic = new Sprite(iconTex); ic.anchor.set(0.5);
+      ic.scale.set(52 / Math.max(iconTex.width, iconTex.height));
+      ic.position.set(-w / 2 + 48, 0); c.addChild(ic);
+    }
+    const t = new Text({ text: label, style: new TextStyle({ fontFamily: FD, fontSize: 27, fill }) });
+    t.anchor.set(0, 0.5); t.position.set(-w / 2 + 92, 0); c.addChild(t);
     c.eventMode = "static"; c.cursor = "pointer";
     c.on("pointertap", fn);
-    c.on("pointerover", () => { c.scale.set(1.04); });
-    c.on("pointerout", () => { c.scale.set(1.0); });
+    c.on("pointerover", () => c.scale.set(1.035));
+    c.on("pointerout", () => c.scale.set(1.0));
     return c;
   }
 
@@ -116,25 +108,17 @@ export class TitleScene extends Scene {
       this.bg.scale.set(Math.max(DESIGN_WIDTH / tx.width, H / tx.height));
       this.bg.position.set(DESIGN_WIDTH / 2, 0);
     }
-    if (this.veil) this.veil.clear().rect(0, 0, DESIGN_WIDTH, H).fill({ color: 0x140f1c, alpha: 0.5 });
-    if (this.hero) {
-      this.hero.scale.set(Math.min(1, (H * 0.52) / this.hero.texture.height));
-      this.hero.position.set(DESIGN_WIDTH / 2, H * 0.74);
-    }
-    if (this.titleWrap) this.titleWrap.position.set(DESIGN_WIDTH / 2, H * 0.16);
-    // 메뉴: 하단 엄지존
-    const baseY = H * 0.62, gap = 104;
+    const baseY = H * 0.64, gap = H * 0.086;
     if (this._btnNew) this._btnNew.position.set(DESIGN_WIDTH / 2, baseY);
     if (this._btnLoad) this._btnLoad.position.set(DESIGN_WIDTH / 2, baseY + gap);
     if (this._btnQuit) this._btnQuit.position.set(DESIGN_WIDTH / 2, baseY + gap * 2);
-    if (this.hint) this.hint.position.set(DESIGN_WIDTH / 2, baseY + gap * 2 + 70);
+    if (this.sub) this.sub.position.set(DESIGN_WIDTH / 2, baseY + gap * 2 + H * 0.05);
   }
 
   resize(_w, h) { this._layout(h); }
 
   update(delta) {
     this.t += delta;
-    if (this._glow) this._glow.alpha = 0.28 + Math.sin(this.t * 0.05) * 0.12;
     if (this._flashNode) { this._flashNode._life -= delta; this._flashNode.alpha = Math.min(1, this._flashNode._life / 30); if (this._flashNode._life <= 0) { this._flashNode.destroy({ children: true }); this._flashNode = null; } }
   }
 }
