@@ -2,7 +2,7 @@ import { Assets, Sprite, Graphics, Container, Text, TextStyle } from "pixi.js";
 import { Scene } from "../core/Scene.js";
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../config.js";
 import { GameState } from "../systems/game.js";
-import { ACTIVITIES, CATEGORIES } from "../data/activities.js";
+import { ACTIVITIES, CATEGORIES, ACT_LINES, SEASON_LINES } from "../data/activities.js";
 import { MEDIA, GRADE_COMMENTS } from "../data/media.js";
 import { BONDS, BOND_THRESHOLD } from "../data/bonds.js";
 
@@ -109,10 +109,10 @@ export class MainScene extends Scene {
   _t(txt, size, fill, fam = FB) { return new Text({ text: txt, style: new TextStyle({ fontFamily: fam, fontSize: size, fill }) }); }
   _spr(name, x, y, w) { const s = new Sprite(this.tex[name]); s.scale.set(w / s.texture.width); s.position.set(x, y); return s; }
 
-  // 얼굴을 원형 프레임에 꽉 차게 (얼굴 크롭 + 마스크)
-  _faceCircle(parent, tex, cx, cy, dia, wfrac, cyfrac) {
+  // 얼굴을 원형 프레임에 꽉 차게 (얼굴 크롭 + 마스크). cxfrac/cyfrac = 원 중심에 맞출 이미지 내 위치(0~1)
+  _faceCircle(parent, tex, cx, cy, dia, wfrac, cyfrac, cxfrac = 0.5) {
     const f = new Sprite(tex);
-    f.anchor.set(0.5, cyfrac);
+    f.anchor.set(cxfrac, cyfrac);
     f.scale.set(dia / (wfrac * tex.width));
     f.position.set(cx, cy);
     const mk = new Graphics().circle(cx, cy, dia / 2).fill(0xffffff);
@@ -160,8 +160,8 @@ export class MainScene extends Scene {
   buildManagerBubble() {
     const c = new Container();
     const spr = this._spr("manager_bubble", 120, 608, 480); c.addChild(spr);
-    const mh = spr.height, acx = 186, acy = 668;
-    this._faceCircle(c, this.tex.mgrface, acx, acy, 81, 0.70, 0.15);
+    const mh = spr.height, acx = 174, acy = 663;
+    this._faceCircle(c, this.tex.mgrface, acx, acy, 72, 0.3566, 0.265, 0.378);
     const who = this._t("한지원", 16, 0x22384a, FD); who.position.set(260, 608 + mh * 0.30); c.addChild(who);
     this.mgrText = this._t(MANAGER_LINES[0], 17, 0x22384a);
     this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 300;
@@ -365,10 +365,7 @@ export class MainScene extends Scene {
         chip._txt.text = act ? act.name : "비어있음"; chip._txt.style.fill = act ? S.ink : S.sub;
       }
     });
-    const last = this.selected[this.selected.length - 1];
-    let pose = null;
-    if (last) pose = last.startsWith("prod:") ? "filming" : (ACTIVITIES.find((a) => a.id === last) || {}).pose || null;
-    this.setPose(pose);
+    // 메인 화면 캐릭터는 항상 idle 유지 — 활동 이미지는 '다음 달 진행' 후 연출에서만 노출(기획서 14B)
   }
 
   // ───────── 메뉴 ─────────
@@ -456,18 +453,56 @@ export class MainScene extends Scene {
     if (this.game.isLastTurn) { this.mgrText.text = "3년의 시간이 끝났어. 정말 수고했어!"; return; }
     const prods = this.selected.filter((s) => s.startsWith("prod:")).map((s) => s.slice(5));
     const acts = this.selected.filter((s) => !s.startsWith("prod:"));
+    const season = this._season().name;
     const results = prods.map((id) => this.game.runProduction(id)).filter(Boolean);
     this.game.advance(acts);
     this.selected = [];
     this._afterSelectChange();
-    if (results.length) {
-      this.playProduction(results).then(() => this._afterTurn());
-    } else {
+    // 연출 순서: 활동 이미지+대사 → 작품 출연 평가 → 랜덤 이벤트
+    (async () => {
+      if (acts.length) await this._playActivities(acts, season);
+      if (results.length) await this.playProduction(results);
       this.refreshHUD();
       this.menuMode = "category"; this.renderMenu();
       this.mgrText.text = this._mgrLine();
       this._afterTurn();
-    }
+    })();
+  }
+
+  _actLine(id) { const p = ACT_LINES[id] || ["오늘도 한 걸음 나아갔다."]; return p[Math.floor(Math.random() * p.length)]; }
+
+  // 활동 연출 (기획서 14B): 다음 달 진행 후 선택한 활동의 포즈 + 관련 대사를 차례로 노출
+  _playActivities(actIds, season) {
+    return new Promise((resolve) => {
+      const beats = [];
+      if (Math.random() < 0.28 && SEASON_LINES[season]) beats.push({ who: "", pose: null, text: SEASON_LINES[season] });
+      for (const id of actIds) {
+        const a = ACTIVITIES.find((x) => x.id === id);
+        beats.push({ who: a ? a.name : "", pose: a ? a.pose : null, text: this._actLine(id) });
+      }
+      if (!beats.length) { resolve(); return; }
+      const ov = new Container(); this.overlay = ov;
+      ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill(0x101018));
+      const bgSpr = new Sprite(this.bgSprite.texture); bgSpr.anchor.set(0.5, 0); bgSpr.position.set(DESIGN_WIDTH / 2, 0);
+      bgSpr.scale.set(Math.max(DESIGN_WIDTH / bgSpr.texture.width, DESIGN_HEIGHT / bgSpr.texture.height)); ov.addChild(bgSpr);
+      ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: 0x2a2030, alpha: 0.34 }));
+      const charC = new Container(); ov.addChild(charC);
+      ov.addChild(new Graphics().roundRect(28, 968, 664, 256, 26).fill({ color: 0x140f1a, alpha: 0.84 }).stroke({ width: 2, color: S.gold }));
+      const whoT = this._t("", 20, S.gold, FD); whoT.position.set(54, 988); ov.addChild(whoT);
+      const storyT = this._t("", 22, 0xffffff); storyT.style.wordWrap = true; storyT.style.wordWrapWidth = 600; storyT.position.set(54, 1024); ov.addChild(storyT);
+      const tip = this._t("화면을 누르면 계속 ▶", 15, 0xcfc7d0); tip.anchor.set(1, 1); tip.position.set(676, 1212); ov.addChild(tip);
+      ov.eventMode = "static";
+      let idx = 0;
+      const show = async () => {
+        const b = beats[idx]; charC.removeChildren();
+        const ptex = await Assets.load(b.pose ? POSE_PATH(b.pose) : IDLE_SPRITE);
+        const sp = new Sprite(ptex); sp.anchor.set(0.5, 1.0); sp.scale.set(880 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 985); charC.addChild(sp);
+        whoT.text = b.who || ""; storyT.text = b.text;
+      };
+      ov.on("pointertap", async () => { idx += 1; if (idx >= beats.length) { this._closeOverlay(); resolve(); } else await show(); });
+      this.addChild(ov);
+      show();
+    });
   }
 
   // 다음 달 진행 후 랜덤 이벤트 (기획서 13번)
