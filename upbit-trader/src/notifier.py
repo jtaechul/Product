@@ -218,6 +218,10 @@ def start_command_listener(get_status, stop: threading.Event | None = None
 
 _STATE_DIR = Path(__file__).resolve().parent.parent / ".botstate"
 
+# 텔레그램 합산 상태에 포함할 봇 이름 집합. 비어 있으면 전부 표시.
+# 잠수함·고위험은 독립검증 미통과(모의 전용) → 합산 상태에서 제외.
+_STATUS_WHITELIST: set[str] = {"2_대형코인"}
+
 
 def _state_dir() -> Path:
     _STATE_DIR.mkdir(exist_ok=True)
@@ -238,6 +242,9 @@ def _read_all_statuses() -> str:
     try:
         for f in sorted(_state_dir().glob("status_*.txt")):
             try:
+                bot_name = f.stem[len("status_"):]
+                if _STATUS_WHITELIST and bot_name not in _STATUS_WHITELIST:
+                    continue
                 txt = f.read_text(encoding="utf-8").strip()
                 if not txt:
                     continue
