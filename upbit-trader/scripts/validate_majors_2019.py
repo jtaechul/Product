@@ -73,7 +73,7 @@ def _line(name, total, cagr, mdd, calmar, expo, sw):
           f"{cal:>8}{ex:>7}{s:>5}")
 
 
-def report(coin: str, df: pd.DataFrame, cfg: MajorsConfig, label: str) -> None:
+def report(coin: str, df: pd.DataFrame, cfg: MajorsConfig, label: str) -> dict:
     bh = pd.Series(df["close"].to_numpy(float))
     bh = bh / bh.iloc[0]
     mbh = risk_metrics(bh, 365)
@@ -94,12 +94,15 @@ def report(coin: str, df: pd.DataFrame, cfg: MajorsConfig, label: str) -> None:
                else "△ 부분(낙폭만↓)" if better_dd
                else "✗ 벤치 미달")
     print(f"  판정: {verdict}")
+    return {"bot": mr, "bh": mbh, "pass": better_dd and better_cal, "partial": better_dd}
 
 
 def main() -> None:
     p = argparse.ArgumentParser(description="대형코인봇 2019~2026 검증")
     p.add_argument("--data-dir", default=str(DEFAULT_DIR))
     p.add_argument("--split", type=float, default=0.6)
+    p.add_argument("--coins", default=None,
+                   help="쉼표구분(예: BTC,ETH,XRP) 또는 all(전체). 기본=설정의 BTC,ETH")
     args = p.parse_args()
 
     data_dir = Path(args.data_dir)
@@ -110,11 +113,17 @@ def main() -> None:
     daily = {sym.replace("USDT", ""): resample(df, "1D") for sym, df in raw.items()}
 
     cfg = MajorsConfig()
-    want = [c.replace("KRW-", "") for c in cfg.coins]  # BTC, ETH
+    if args.coins == "all":
+        want = sorted(daily.keys())
+    elif args.coins:
+        want = [c.strip().upper() for c in args.coins.split(",")]
+    else:
+        want = [c.replace("KRW-", "") for c in cfg.coins]  # BTC, ETH
     print("=== 대형코인봇 설정(실거래와 동일) ===")
     print(f"  대상={want}  ma_bars={cfg.ma_bars}  slope_bars={cfg.slope_bars}  "
           f"buffer={cfg.buffer}  전환비용={COST}")
 
+    scorecard = []  # (coin, 검증판정dict)
     for coin in want:
         if coin not in daily:
             print(f"\n[건너뜀] {coin} 데이터 없음")
@@ -124,13 +133,25 @@ def main() -> None:
         report(coin, df, cfg, "전체")
         report(coin, df.iloc[:cut].reset_index(drop=True), cfg,
                f"학습{int(args.split*100)}%")
-        report(coin, df.iloc[cut:].reset_index(drop=True), cfg,
-               f"검증{int((1-args.split)*100)}% ←판정")
+        val = report(coin, df.iloc[cut:].reset_index(drop=True), cfg,
+                     f"검증{int((1-args.split)*100)}% ←판정")
+        scorecard.append((coin, val))
 
+    # 검증40 한눈 요약 — 어느 코인을 대형봇에 추가할지 판단용
+    print(f"\n{'#'*72}\n# 검증40% 요약 (대형봇 추가 후보 판정)\n{'#'*72}")
+    print(f"{'코인':<8}{'봇Calmar':>9}{'벤치Calmar':>11}{'봇MaxDD%':>9}"
+          f"{'벤치MaxDD%':>11}{'판정':>16}")
+    print("-" * 72)
+    for coin, v in scorecard:
+        mark = "✅ 추가후보" if v["pass"] else ("△ 낙폭만↓" if v["partial"] else "✗ 부적합")
+        print(f"{coin:<8}{v['bot']['calmar']:>9.2f}{v['bh']['calmar']:>11.2f}"
+              f"{v['bot']['mdd']*100:>9.0f}{v['bh']['mdd']*100:>11.0f}{mark:>16}")
+    passed = [c for c, v in scorecard if v["pass"]]
+    print("-" * 72)
+    print(f"✅ 추가 후보(검증 통과): {', '.join(passed) if passed else '없음'}")
     print("\n--- 해석 ---")
-    print("  · '추세필터(봇)'이 매수보유보다 MaxDD 작고 Calmar 같거나 높으면 → 견고.")
-    print("  · 강세장 수익은 매수보유보다 낮을 수 있음(현금 구간 존재) — 대신 낙폭이 핵심.")
-    print("  · 검증40 구간에서 BTC·ETH 모두 ✅ 면 실거래 지속 근거.")
+    print("  · ✅ = 봇이 매수보유보다 낙폭 작고 Calmar 같거나 높음 → 대형봇 종목 추가 후보.")
+    print("  · 강세장 수익은 매수보유보다 낮을 수 있음(현금 구간) — 위험대비수익이 핵심.")
 
 
 if __name__ == "__main__":
