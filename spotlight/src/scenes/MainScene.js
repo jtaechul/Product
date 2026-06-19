@@ -1,7 +1,8 @@
 import { Assets, Sprite, Graphics, Container, Text, TextStyle } from "pixi.js";
 import { Scene } from "../core/Scene.js";
-import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../config.js";
+import { DESIGN_WIDTH, DESIGN_HEIGHT, TOTAL_TURNS } from "../config.js";
 import { GameState } from "../systems/game.js";
+import { computeEnding, saveToDex } from "../systems/ending.js";
 import { ACTIVITIES, CATEGORIES, ACT_LINES, SEASON_LINES } from "../data/activities.js";
 import { MEDIA, GRADE_COMMENTS } from "../data/media.js";
 import { BONDS, BOND_THRESHOLD } from "../data/bonds.js";
@@ -457,8 +458,8 @@ export class MainScene extends Scene {
   }
   onNextMonth() {
     if (this.overlay) return;
+    if (this.game.turn > TOTAL_TURNS) { this.showEnding(); return; } // 이미 졸업 → 엔딩 재표시
     if (this.selected.length === 0) { this.mgrText.text = "활동을 먼저 골라줘!"; return; }
-    if (this.game.isLastTurn) { this.mgrText.text = "3년의 시간이 끝났어. 정말 수고했어!"; return; }
     const prods = this.selected.filter((s) => s.startsWith("prod:")).map((s) => s.slice(5));
     const acts = this.selected.filter((s) => !s.startsWith("prod:"));
     const season = this._season().name;
@@ -466,11 +467,12 @@ export class MainScene extends Scene {
     this.game.advance(acts);
     this.selected = [];
     this._afterSelectChange();
-    // 연출 순서: 활동 이미지+대사 → 작품 출연 평가 → 랜덤 이벤트
+    // 연출 순서: 활동 이미지+대사 → 작품 출연 평가 → (졸업이면 엔딩) → 랜덤 이벤트
     (async () => {
       if (acts.length) await this._playActivities(acts, season);
       if (results.length) await this.playProduction(results);
       this.refreshHUD();
+      if (this.game.turn > TOTAL_TURNS) { this.showEnding(); return; } // 36턴 종료 → 40년 커리어 엔딩
       this.menuMode = "category"; this.renderMenu();
       this.mgrText.text = this._mgrLine();
       this._afterTurn();
@@ -559,6 +561,93 @@ export class MainScene extends Scene {
       }
     };
     build(null);
+    this.addChild(ov);
+  }
+
+  // ───────── 40년 커리어 엔딩 (기획서 15번) ─────────
+  async showEnding() {
+    this._closeOverlay();
+    const res = computeEnding(this.game);
+    const total = saveToDex(res.id);
+    const H = this.H || DESIGN_HEIGHT;
+    const ov = new Container(); ov._isEnding = true; this.overlay = ov;
+    ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, H).fill(0x0e0b14));
+    try {
+      const bgTex = await Assets.load("./assets/bg/award.png");
+      const bg = new Sprite(bgTex); bg.anchor.set(0.5, 0); bg.position.set(DESIGN_WIDTH / 2, 0);
+      bg.scale.set(Math.max(DESIGN_WIDTH / bgTex.width, H / bgTex.height)); bg.alpha = 0.45; ov.addChild(bg);
+    } catch (e) {}
+    ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, H).fill({ color: 0x0e0b14, alpha: 0.5 }));
+
+    // 스크롤 가능한 본문
+    const viewH = H - 132;
+    const view = new Container(); ov.addChild(view);
+    const vMask = new Graphics().rect(0, 0, DESIGN_WIDTH, viewH).fill(0xffffff); ov.addChild(vMask); view.mask = vMask;
+    const content = new Container(); view.addChild(content);
+    let y = 36;
+    const center = (node, dy) => { node.anchor?.set?.(0.5, 0); node.position.set(DESIGN_WIDTH / 2, y); content.addChild(node); y += dy ?? (node.height + 16); };
+
+    try {
+      const ilTex = await Assets.load(`./assets/endings/${res.illust}.png`);
+      const il = new Sprite(ilTex); il.anchor.set(0.5, 0); il.scale.set(440 / ilTex.width); il.position.set(DESIGN_WIDTH / 2, y);
+      content.addChild(il); y += il.height + 18;
+    } catch (e) {}
+
+    center(this._t("🎬 데뷔, 그리고 40년", 16, 0xcdbfa0, FB), 30);
+    center(this._t(`${res.emoji} ${res.title}`, 34, S.gold, FD), 48);
+    center(this._t(`― ${res.trait} ―`, 18, 0xe8dcc4, FD), 42);
+
+    const story = this._t(res.story, 19, 0xf2ecdf);
+    story.style.wordWrap = true; story.style.wordWrapWidth = DESIGN_WIDTH - 96; story.style.lineHeight = 30; story.style.align = "center";
+    story.anchor.set(0.5, 0); story.position.set(DESIGN_WIDTH / 2, y); content.addChild(story); y += story.height + 30;
+
+    if (res.filmography.length) {
+      center(this._t("대표 필모그래피", 19, S.gold, FD), 34);
+      for (const f of res.filmography.slice(0, 6)) {
+        const tag = f.grade === "best" ? "★ 인생연기" : "호평";
+        center(this._t(`${f.label} · 「${f.name}」 · ${tag}`, 16, 0xeae0cf, FB), 28);
+      }
+      y += 10;
+    }
+    if (res.awards.length) {
+      center(this._t("수상 이력", 19, S.gold, FD), 34);
+      for (const a of res.awards) center(this._t(`🏆 ${a}`, 16, 0xeae0cf, FB), 28);
+      y += 10;
+    }
+    if (res.people.length) {
+      center(this._t("함께한 사람들", 19, S.gold, FD), 34);
+      center(this._t(res.people.join("  ·  "), 17, 0xeae0cf, FB), 30);
+      y += 10;
+    }
+    center(this._t(`📖 엔딩 도감 ${total} / 15 수집`, 15, 0xb7ab93, FB), 40);
+    const contentH = y;
+
+    // 드래그 스크롤
+    const scrollMin = Math.min(0, viewH - contentH - 24);
+    const scale = () => (window.innerWidth || DESIGN_WIDTH) / DESIGN_WIDTH;
+    let dragging = false, lastY = 0, moved = 0;
+    vMask.eventMode = "static";
+    ov.eventMode = "static";
+    ov.on("pointerdown", (e) => { dragging = true; lastY = e.global.y; moved = 0; });
+    ov.on("pointermove", (e) => {
+      if (!dragging) return;
+      const dy = (e.global.y - lastY) / scale(); lastY = e.global.y; moved += Math.abs(dy);
+      content.y = Math.max(scrollMin, Math.min(0, content.y + dy));
+    });
+    const endDrag = () => { dragging = false; };
+    ov.on("pointerup", endDrag); ov.on("pointerupoutside", endDrag);
+
+    // 하단 고정 버튼
+    const mkBtn = (label, bx, color, fn) => {
+      const c = new Container();
+      c.addChild(new Graphics().roundRect(bx, H - 96, 300, 60, 18).fill(color).stroke({ width: 2, color: 0xffffff }));
+      const t = this._t(label, 22, 0xffffff, FD); t.anchor.set(0.5); t.position.set(bx + 150, H - 66); c.addChild(t);
+      c.eventMode = "static"; c.cursor = "pointer"; c.on("pointertap", fn);
+      ov.addChild(c);
+    };
+    mkBtn("🔄 다시 도전", 40, S.coral, () => this.manager.change(new MainScene()));
+    mkBtn("🏠 메인으로", DESIGN_WIDTH - 340, 0x4a5a8a, () => this.manager.change(new MainScene()));
+
     this.addChild(ov);
   }
 
