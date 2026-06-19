@@ -3,6 +3,7 @@ import { Scene } from "../core/Scene.js";
 import { DESIGN_WIDTH, DESIGN_HEIGHT, TOTAL_TURNS } from "../config.js";
 import { GameState } from "../systems/game.js";
 import { computeEnding, saveToDex } from "../systems/ending.js";
+import { saveGame } from "../systems/save.js";
 import { ACTIVITIES, CATEGORIES, ACT_LINES, SEASON_LINES } from "../data/activities.js";
 import { MEDIA, GRADE_COMMENTS } from "../data/media.js";
 import { BONDS, BOND_THRESHOLD } from "../data/bonds.js";
@@ -39,9 +40,9 @@ const MANAGER_LINES = [
 const BOND_INNER = 0.671; // bond_frame.png 안쪽 개구부 / 프레임 크기
 
 export class MainScene extends Scene {
-  constructor() {
+  constructor(game) {
     super();
-    this.game = new GameState();
+    this.game = game || new GameState();   // 불러오기 시 기존 GameState 주입
     this.selected = [];
     this.menuMode = "category";
     this.activeCat = null;
@@ -91,6 +92,7 @@ export class MainScene extends Scene {
     this.buildNextButton();
     this.buildBondButton();
     this.buildShopButton();
+    this.buildSaveButton();
     this.menuLayer = new Container();
     this.bottomBlock.addChild(this.menuLayer);
 
@@ -144,7 +146,7 @@ export class MainScene extends Scene {
     this.seasonText = this._t("", 26, 0xffffff, FD); this.seasonText.anchor.set(0.5); this.seasonText.position.set(87, 78); bar.addChild(this.seasonText);
     // ① 날짜·이름 크게 + 중앙정렬
     const date = this._t("고1·3월", 24, S.ink, FD); date.anchor.set(0.5); date.position.set(215, 66); bar.addChild(date); this.turnText = date;
-    const name = this._t("소윤", 18, S.sub, FD); name.anchor.set(0.5); name.position.set(215, 98); bar.addChild(name);
+    const name = this._t(this.game.heroName, 18, S.sub, FD); name.anchor.set(0.5); name.position.set(215, 98); bar.addChild(name);
     // ③ 자원칩: 라벨/값 2줄 중앙정렬
     this.resText = {};
     const RES = [["stamina", "체력", 366], ["mental", "멘탈", 460], ["money", "자금", 554], ["fans", "인지도", 649]];
@@ -223,6 +225,30 @@ export class MainScene extends Scene {
     c.eventMode = "static"; c.cursor = "pointer";
     c.on("pointertap", () => this.openShop());
     this.addChild(c);
+  }
+
+  // 저장 버튼 (상점 버튼 아래)
+  buildSaveButton() {
+    const c = new Container(); c.position.set(0, 0);
+    c.addChild(new Graphics().roundRect(628, 258, 80, 46, 14).fill(0xfdf8f2).stroke({ width: 2, color: S.gold }));
+    const t = this._t("저장", 18, 0x2e9e8e, FD); t.anchor.set(0.5); t.position.set(668, 281); c.addChild(t);
+    c.eventMode = "static"; c.cursor = "pointer";
+    c.on("pointertap", () => { const ok = saveGame(this.game); this._toast(ok ? "💾 저장 완료!" : "저장 실패…"); });
+    this.addChild(c);
+  }
+
+  // 잠깐 떴다 사라지는 안내 토스트
+  _toast(msg) {
+    if (this._toastNode) { this.removeChild(this._toastNode); this._toastNode.destroy({ children: true }); }
+    const c = new Container();
+    const t = this._t(msg, 22, 0xffffff, FD); t.anchor.set(0.5);
+    const w = t.width + 60, y = (this.H || DESIGN_HEIGHT) * 0.42;
+    c.addChild(new Graphics().roundRect(DESIGN_WIDTH / 2 - w / 2, y - 30, w, 60, 18).fill({ color: 0x1a1420, alpha: 0.9 }).stroke({ width: 2, color: S.gold }));
+    t.position.set(DESIGN_WIDTH / 2, y); c.addChild(t);
+    this.addChild(c); this._toastNode = c;
+    let life = 90;
+    const tick = () => { life -= 1; c.alpha = Math.min(1, life / 30); if (life <= 0) { this.removeChild(c); c.destroy({ children: true }); if (this._toastNode === c) this._toastNode = null; this._app?.ticker.remove(tick); } };
+    this._app = this.manager?.app; this._app?.ticker.add(tick);
   }
 
   // 상점 팝업 (기획서 8단계): 돈으로 아이템 구매 → 즉시 효과
@@ -704,8 +730,8 @@ export class MainScene extends Scene {
       c.eventMode = "static"; c.cursor = "pointer"; c.on("pointertap", fn);
       ov.addChild(c);
     };
-    mkBtn("🔄 다시 도전", 40, S.coral, () => this.manager.change(new MainScene()));
-    mkBtn("🏠 메인으로", DESIGN_WIDTH - 340, 0x4a5a8a, () => this.manager.change(new MainScene()));
+    mkBtn("🔄 다시 도전", 40, S.coral, () => this.manager.change(new MainScene(new GameState())));
+    mkBtn("🏠 메인으로", DESIGN_WIDTH - 340, 0x4a5a8a, () => { try { window.location.reload(); } catch (e) { this.manager.change(new MainScene(new GameState())); } });
 
     this.addChild(ov);
   }
