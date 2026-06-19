@@ -93,7 +93,7 @@ export class GameState {
     }
     if (this.bonds.yusea >= BOND_THRESHOLD && (grade === "best" || grade === "good")) this._gainStat("acting", 2); // 라이벌 자극
     this.raiseBond("hanjiwon", 10); this.raiseBond("yusea", 6);
-    this.filmography.push({ turn: this.turn, label: this.label, name: m.name, grade });
+    this.filmography.push({ turn: this.turn, label: this.label, id: m.id, name: m.name, grade });
     return { media: m, grade };
   }
 
