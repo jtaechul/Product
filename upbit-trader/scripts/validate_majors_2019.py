@@ -87,14 +87,18 @@ def report(coin: str, df: pd.DataFrame, cfg: MajorsConfig, label: str) -> dict:
     _line("매수보유(벤치)", bh.iloc[-1] - 1, mbh["cagr"], mbh["mdd"], mbh["calmar"], 1.0, None)
     _line("추세필터(봇)", r["equity"].iloc[-1] - 1, mr["cagr"], mr["mdd"],
           mr["calmar"], r["exposure"], r["switches"])
-    # 판정
+    # 판정: 낙폭 더 얕고 + Calmar 같거나 높고 + '봇이 실제 흑자'여야 진짜 통과
+    # (둘 다 손실인데 봇이 덜 잃은 경우를 ✅로 오인하지 않도록 흑자 조건 추가)
     better_dd = mr["mdd"] > mbh["mdd"]            # 낙폭이 더 얕은가(덜 음수)
     better_cal = mr["calmar"] >= mbh["calmar"]
-    verdict = ("✅ 견고(낙폭↓ & Calmar↑)" if (better_dd and better_cal)
-               else "△ 부분(낙폭만↓)" if better_dd
+    profitable = mr["total_return"] > 0
+    real_pass = better_dd and better_cal and profitable
+    verdict = ("✅ 견고(흑자 & 낙폭↓ & Calmar↑)" if real_pass
+               else "⚠️ 본전/덜잃음(흑자 아님)" if (better_dd and better_cal)
+               else "△ 낙폭만↓" if better_dd
                else "✗ 벤치 미달")
     print(f"  판정: {verdict}")
-    return {"bot": mr, "bh": mbh, "pass": better_dd and better_cal, "partial": better_dd}
+    return {"bot": mr, "bh": mbh, "pass": real_pass, "partial": better_dd}
 
 
 def main() -> None:
