@@ -6,6 +6,7 @@ import { computeEnding, saveToDex } from "../systems/ending.js";
 import { ACTIVITIES, CATEGORIES, ACT_LINES, SEASON_LINES } from "../data/activities.js";
 import { MEDIA, GRADE_COMMENTS } from "../data/media.js";
 import { BONDS, BOND_THRESHOLD } from "../data/bonds.js";
+import { ITEMS } from "../data/items.js";
 
 const GRADE_INFO = {
   best: { label: "인생 연기", color: 0xf5c451 },
@@ -35,8 +36,6 @@ const MANAGER_LINES = [
   "이번 달은 뭘 해볼까?", "무리하지 말고 컨디션도 챙기자.",
   "조금씩 쌓이면 큰 차이가 돼.", "좋아, 네 선택을 믿어볼게.",
 ];
-// 매니저 말풍선 사각 사진칸 얼굴 배치 (이미지 비율) — 기획서 17
-const MGR_LM = { cx: 0.3923, top: 0.0393, throat: 0.3986 };
 const BOND_INNER = 0.671; // bond_frame.png 안쪽 개구부 / 프레임 크기
 
 export class MainScene extends Scene {
@@ -58,6 +57,7 @@ export class MainScene extends Scene {
     await Promise.all(uiNames.map(async (n) => { this.tex[n] = await Assets.load(UI(n)); }));
     await Promise.all(ACTIVITIES.map(async (a) => { this.tex[`actico_${a.id}`] = await Assets.load(UI(`actico_${a.id}`)); }));
     await Promise.all(CATEGORIES.map(async (c) => { this.tex[`catico_${c.id}`] = await Assets.load(UI(`catico_${c.id}`)); }));
+    await Promise.all(["academy", "home", "set", "stage"].map((n) => Assets.load(`./assets/bg/${n}.png`))); // 활동별 배경 프리로드
     this.tex.mgrface = await Assets.load("./assets/manager/hanjiwon.png");
     await Promise.all(BONDS.map(async (b) => { this.tex[`bond_${b.id}`] = await Assets.load(b.img); }));
     this.idleTex = idleTex;
@@ -90,6 +90,7 @@ export class MainScene extends Scene {
     this.buildSlots();
     this.buildNextButton();
     this.buildBondButton();
+    this.buildShopButton();
     this.menuLayer = new Container();
     this.bottomBlock.addChild(this.menuLayer);
 
@@ -121,6 +122,16 @@ export class MainScene extends Scene {
     f.scale.set(rh / span);
     f.anchor.set(lm.cx, lm.top);                         // (가로중심, 머리끝)을
     f.position.set(rx + rw / 2, ry);                     // (칸 가로중앙, 칸 위)에 맞춤
+    const mk = new Graphics().rect(rx, ry, rw, rh).fill(0xffffff);
+    f.mask = mk; parent.addChild(f, mk);
+  }
+
+  // 가로 폭(x0f~x1f)을 칸 폭에 맞춰 채우고, 위(y0f)는 머리끝, 아래는 직선 크롭 — 명시적 크롭 박스용.
+  _faceFitW(parent, tex, rx, ry, rw, rh, x0f, x1f, y0f) {
+    const f = new Sprite(tex);
+    f.scale.set(rw / ((x1f - x0f) * tex.width));
+    f.anchor.set((x0f + x1f) / 2, y0f);
+    f.position.set(rx + rw / 2, ry);
     const mk = new Graphics().rect(rx, ry, rw, rh).fill(0xffffff);
     f.mask = mk; parent.addChild(f, mk);
   }
@@ -167,8 +178,8 @@ export class MainScene extends Scene {
     const c = new Container();
     const spr = this._spr("manager_bubble", 120, 608, 480); c.addChild(spr);
     const mh = spr.height;
-    // 사각 사진칸: 좌우 여백 동일 + 머리끝 보존 + 목젖 아래 직선 크롭 (기획서 17)
-    this._faceInRect(c, this.tex.mgrface, 148.8, 628.4, 76.8, 74.4, MGR_LM);
+    // 사각 사진칸: 크롭 박스 x150~490 · y0~410 (가로맞춤·머리끝 보존·아래 직선 크롭, 기획서 17)
+    this._faceFitW(c, this.tex.mgrface, 148.8, 628.4, 76.8, 74.4, 150 / 701, 490 / 701, 0);
     const who = this._t("한지원", 16, 0x22384a, FD); who.position.set(262, 634); c.addChild(who);
     this.mgrText = this._t(MANAGER_LINES[0], 17, 0x22384a);
     this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 300;
@@ -202,6 +213,50 @@ export class MainScene extends Scene {
     c.eventMode = "static"; c.cursor = "pointer";
     c.on("pointertap", () => this.openBonds());
     this.addChild(c);
+  }
+
+  // 상점 버튼 (인연 버튼 아래)
+  buildShopButton() {
+    const c = new Container(); c.position.set(0, 0);
+    c.addChild(new Graphics().roundRect(628, 204, 80, 46, 14).fill(0xfdf8f2).stroke({ width: 2, color: S.gold }));
+    const t = this._t("상점", 18, 0xc07e1e, FD); t.anchor.set(0.5); t.position.set(668, 227); c.addChild(t);
+    c.eventMode = "static"; c.cursor = "pointer";
+    c.on("pointertap", () => this.openShop());
+    this.addChild(c);
+  }
+
+  // 상점 팝업 (기획서 8단계): 돈으로 아이템 구매 → 즉시 효과
+  openShop() {
+    if (this.overlay) return;
+    const ov = this._dim(); this.overlay = ov;
+    const cw = 640, x = (DESIGN_WIDTH - cw) / 2, rows = ITEMS.length, ch = 150 + rows * 78, y = (DESIGN_HEIGHT - ch) / 2;
+    ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
+    ov.addChild(Object.assign(this._t("🛍️ 상점", 24, S.ink, FD), { x: x + 30, y: y + 24 }));
+    const money = this._t(`보유 ${this.game.moneyShort()}원`, 16, 0xb04a3a, FD); money.anchor.set(1, 0); money.position.set(x + cw - 30, y + 30); ov.addChild(money);
+    const rebuild = () => {
+      ITEMS.forEach((it, i) => {
+        const ry = y + 72 + i * 78, can = this.game.money >= it.cost;
+        const row = new Container(); row._row = true;
+        row.addChild(new Graphics().roundRect(x + 22, ry, cw - 44, 66, 14).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
+        row.addChild(Object.assign(this._t(`${it.emoji} ${it.name}`, 19, S.ink, FD), { x: x + 40, y: ry + 12 }));
+        row.addChild(Object.assign(this._t(it.desc, 13, S.sub), { x: x + 40, y: ry + 40 }));
+        const btn = new Container();
+        const bx = x + cw - 168, by = ry + 14;
+        btn.addChild(new Graphics().roundRect(bx, by, 146, 40, 12).fill(can ? 0xc07e1e : 0xd8d0c4));
+        const bt = this._t(`${Math.round(it.cost / 10000)}만원`, 16, 0xffffff, FD); bt.anchor.set(0.5); bt.position.set(bx + 73, by + 20); btn.addChild(bt);
+        if (can) { btn.eventMode = "static"; btn.cursor = "pointer"; btn.on("pointertap", () => { if (this.game.buyItem(it.id)) { this.refreshHUD(); this.renderMenu(); money.text = `보유 ${this.game.moneyShort()}원`; redraw(); } }); }
+        row.addChild(btn);
+        ov.addChild(row);
+      });
+    };
+    const redraw = () => { for (let i = ov.children.length - 1; i >= 0; i--) if (ov.children[i]._row) { const c = ov.removeChildAt(i); c.destroy({ children: true }); } rebuild(); };
+    rebuild();
+    const close = new Container();
+    close.addChild(new Graphics().roundRect(x + cw / 2 - 70, y + ch - 50, 140, 38, 14).fill(0xece6dc));
+    close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 31); return t; })());
+    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => this._closeOverlay());
+    ov.addChild(close);
+    this.addChild(ov);
   }
 
   // 인연(Bond) 팝업 (기획서 12번)
@@ -485,16 +540,18 @@ export class MainScene extends Scene {
   _playActivities(actIds, season) {
     return new Promise((resolve) => {
       const beats = [];
-      if (Math.random() < 0.28 && SEASON_LINES[season]) beats.push({ who: "", pose: null, text: SEASON_LINES[season] });
+      const firstBg = (ACTIVITIES.find((x) => x.id === actIds[0]) || {}).bg || "school";
+      if (Math.random() < 0.28 && SEASON_LINES[season]) beats.push({ who: "", pose: null, bg: firstBg, text: SEASON_LINES[season] });
       for (const id of actIds) {
         const a = ACTIVITIES.find((x) => x.id === id);
-        beats.push({ who: a ? a.name : "", pose: a ? a.pose : null, text: this._actLine(id) });
+        beats.push({ who: a ? a.name : "", pose: a ? a.pose : null, bg: (a && a.bg) || "school", text: this._actLine(id) });
       }
       if (!beats.length) { resolve(); return; }
       const ov = new Container(); this.overlay = ov;
       ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill(0x101018));
-      const bgSpr = new Sprite(this.bgSprite.texture); bgSpr.anchor.set(0.5, 0); bgSpr.position.set(DESIGN_WIDTH / 2, 0);
-      bgSpr.scale.set(Math.max(DESIGN_WIDTH / bgSpr.texture.width, DESIGN_HEIGHT / bgSpr.texture.height)); ov.addChild(bgSpr);
+      const bgSpr = new Sprite(this.bgSprite.texture); bgSpr.anchor.set(0.5, 0); bgSpr.position.set(DESIGN_WIDTH / 2, 0); ov.addChild(bgSpr);
+      const fitBg = () => bgSpr.scale.set(Math.max(DESIGN_WIDTH / bgSpr.texture.width, DESIGN_HEIGHT / bgSpr.texture.height));
+      fitBg();
       ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: 0x2a2030, alpha: 0.34 }));
       const charC = new Container(); ov.addChild(charC);
       ov.addChild(new Graphics().roundRect(28, 968, 664, 256, 26).fill({ color: 0x140f1a, alpha: 0.84 }).stroke({ width: 2, color: S.gold }));
@@ -505,6 +562,8 @@ export class MainScene extends Scene {
       let idx = 0;
       const show = async () => {
         const b = beats[idx]; charC.removeChildren();
+        // 행동마다 다른 배경 (기획서 14B)
+        try { bgSpr.texture = await Assets.load(`./assets/bg/${b.bg}.png`); fitBg(); } catch (e) {}
         const ptex = await Assets.load(b.pose ? POSE_PATH(b.pose) : IDLE_SPRITE);
         const sp = new Sprite(ptex); sp.anchor.set(0.5, 1.0); sp.scale.set(880 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 985); charC.addChild(sp);
         whoT.text = b.who || ""; storyT.text = b.text;
