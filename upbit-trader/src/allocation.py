@@ -24,8 +24,10 @@ from pathlib import Path
 _STATE = Path(__file__).resolve().parent.parent / ".botstate"
 _ALLOC = _STATE / "allocation.json"
 
-# 목표 비중 (합 1.0 = 풀투자 지향. 신호 없으면 현금으로 남아 자연히 방어적). 조정 가능.
-DEFAULT_WEIGHTS = {"majors": 0.5, "swing": 0.3, "highrisk": 0.2}
+# 목표 비중 (합 1.0 = 풀투자 지향. 신호 없으면 현금으로 남아 자연히 방어적).
+# 2019~2026 교차검증 결과: 검증 통과 전략은 '대형코인 추세필터(BTC·ETH)' 하나뿐.
+# 잠수함·고위험은 최근 시장에서 엣지 없음(모의 전환) → 실거래는 대형코인 100%.
+DEFAULT_WEIGHTS = {"majors": 1.0, "swing": 0.0, "highrisk": 0.0}
 
 
 def _dir() -> Path:
