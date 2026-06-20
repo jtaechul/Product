@@ -346,9 +346,9 @@ export class MainScene extends Scene {
     const ftex = this.tex.offer_frame, fw = 684, fh = fw * ftex.height / ftex.width;
     const fx = (DESIGN_WIDTH - fw) / 2, fy = Math.max(16, ((this.H || DESIGN_HEIGHT) - fh) / 2);
     const frame = new Sprite(ftex); frame.scale.set(fw / ftex.width); frame.position.set(fx, fy); ov.addChild(frame);
-    ov.addChild((() => { const t = this._t("이번 달 제안", 26, 0x9a6a2a, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, fy + fh * 0.10); return t; })());
+    ov.addChild((() => { const t = this._t("이번 달 제안", 54, 0x9a6a2a, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, fy + fh * 0.105); return t; })());
     const cl = fx + fw * 0.085, cw = fw * 0.83;
-    let cy = fy + fh * 0.25;
+    let cy = fy + fh * 0.30;
     if (!offers.length && !specials.length) {
       ov.addChild(Object.assign(this._t("이번 달은 들어온 제안이 없어요.", 18, 0x5a7a6a), { x: cl + 10, y: cy + 10 }));
     }
