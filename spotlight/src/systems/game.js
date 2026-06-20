@@ -3,7 +3,6 @@ import { ACTIVITIES, AUTO_ACTIVITY, STATS_META, findActivity } from "../data/act
 import { MEDIA } from "../data/media.js";
 import { ACT_BOND, BOND_THRESHOLD } from "../data/bonds.js";
 import { EVENTS } from "../data/events.js";
-import { ITEMS } from "../data/items.js";
 import { TOTAL_TURNS, MILESTONES, START_MONEY } from "../config.js";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -41,21 +40,6 @@ export class GameState {
   }
 
   raiseBond(id, n) { if (this.bonds[id] !== undefined) this.bonds[id] = clamp(this.bonds[id] + n, 0, 100); }
-
-  // 상점 구매 (기획서 8단계): 돈 차감 → 즉시 효과 적용
-  buyItem(id) {
-    const it = ITEMS.find((x) => x.id === id);
-    if (!it || this.money < it.cost) return false;
-    this.money -= it.cost;
-    for (const [k, v] of Object.entries(it.effects || {})) {
-      if (k === "stamina") this.stamina = clamp(this.stamina + v, 0, 100);
-      else if (k === "mental") this.mental = clamp(this.mental + v, 0, 100);
-      else if (k === "fans") this.fans = Math.max(0, this.fans + v);
-      else if (this.stats[k] !== undefined) this._gainStat(k, v);
-    }
-    if (it.lucky) this.prodBonus = 1.15;
-    return true;
-  }
 
   // 랜덤 이벤트 추첨 (기획서 13번): 약 38% 확률
   rollEvent() {

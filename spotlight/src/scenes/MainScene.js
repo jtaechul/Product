@@ -11,7 +11,6 @@ const SEASON_BGM = { 봄: "bgm_spring", 여름: "bgm_summer", 가을: "bgm_autum
 import { ACTIVITIES, CATEGORIES, ACT_LINES, SEASON_LINES, SPECIAL_ACTS, findActivity } from "../data/activities.js";
 import { MEDIA, GRADE_COMMENTS } from "../data/media.js";
 import { BONDS, BOND_THRESHOLD } from "../data/bonds.js";
-import { ITEMS } from "../data/items.js";
 
 const GRADE_INFO = {
   best: { label: "인생 연기", color: 0xf5c451 },
@@ -95,7 +94,6 @@ export class MainScene extends Scene {
     this.buildSlots();
     this.buildNextButton();
     this.buildBondButton();
-    this.buildShopButton();
     this.buildSaveButton();
     this.menuLayer = new Container();
     this.bottomBlock.addChild(this.menuLayer);
@@ -233,21 +231,11 @@ export class MainScene extends Scene {
     this.addChild(c);
   }
 
-  // 상점 버튼 (인연 버튼 아래)
-  buildShopButton() {
-    const c = new Container(); c.position.set(0, 0);
-    c.addChild(new Graphics().roundRect(628, 204, 80, 46, 14).fill(0xfdf8f2).stroke({ width: 2, color: S.gold }));
-    const t = this._t("상점", 18, 0xc07e1e, FD); t.anchor.set(0.5); t.position.set(668, 227); c.addChild(t);
-    c.eventMode = "static"; c.cursor = "pointer";
-    c.on("pointertap", () => this.openShop());
-    this.addChild(c);
-  }
-
-  // 메뉴 버튼 (상점 버튼 아래) — 설정·저장·종료 등
+  // 메뉴 버튼 (인연 버튼 아래) — 설정·저장·종료 등
   buildSaveButton() {
     const c = new Container(); c.position.set(0, 0);
-    c.addChild(new Graphics().roundRect(628, 258, 80, 46, 14).fill(0xfdf8f2).stroke({ width: 2, color: S.gold }));
-    const t = this._t("메뉴", 18, 0x4a5a8a, FD); t.anchor.set(0.5); t.position.set(668, 281); c.addChild(t);
+    c.addChild(new Graphics().roundRect(628, 204, 80, 46, 14).fill(0xfdf8f2).stroke({ width: 2, color: S.gold }));
+    const t = this._t("메뉴", 18, 0x4a5a8a, FD); t.anchor.set(0.5); t.position.set(668, 227); c.addChild(t);
     c.eventMode = "static"; c.cursor = "pointer";
     c.on("pointertap", () => this.openMenu());
     this.addChild(c);
@@ -305,40 +293,6 @@ export class MainScene extends Scene {
     let life = 90;
     const tick = () => { life -= 1; c.alpha = Math.min(1, life / 30); if (life <= 0) { this.removeChild(c); c.destroy({ children: true }); if (this._toastNode === c) this._toastNode = null; this._app?.ticker.remove(tick); } };
     this._app = this.manager?.app; this._app?.ticker.add(tick);
-  }
-
-  // 상점 팝업 (기획서 8단계): 돈으로 아이템 구매 → 즉시 효과
-  openShop() {
-    if (this.overlay) return;
-    const ov = this._dim(); this.overlay = ov;
-    const cw = 640, x = (DESIGN_WIDTH - cw) / 2, rows = ITEMS.length, ch = 150 + rows * 78, y = (DESIGN_HEIGHT - ch) / 2;
-    ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
-    ov.addChild(Object.assign(this._t("🛍️ 상점", 24, S.ink, FD), { x: x + 30, y: y + 24 }));
-    const money = this._t(`보유 ${this.game.moneyShort()}원`, 16, 0xb04a3a, FD); money.anchor.set(1, 0); money.position.set(x + cw - 30, y + 30); ov.addChild(money);
-    const rebuild = () => {
-      ITEMS.forEach((it, i) => {
-        const ry = y + 72 + i * 78, can = this.game.money >= it.cost;
-        const row = new Container(); row._row = true;
-        row.addChild(new Graphics().roundRect(x + 22, ry, cw - 44, 66, 14).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
-        row.addChild(Object.assign(this._t(`${it.emoji} ${it.name}`, 19, S.ink, FD), { x: x + 40, y: ry + 12 }));
-        row.addChild(Object.assign(this._t(it.desc, 13, S.sub), { x: x + 40, y: ry + 40 }));
-        const btn = new Container();
-        const bx = x + cw - 168, by = ry + 14;
-        btn.addChild(new Graphics().roundRect(bx, by, 146, 40, 12).fill(can ? 0xc07e1e : 0xd8d0c4));
-        const bt = this._t(`${Math.round(it.cost / 10000)}만원`, 16, 0xffffff, FD); bt.anchor.set(0.5); bt.position.set(bx + 73, by + 20); btn.addChild(bt);
-        if (can) { btn.eventMode = "static"; btn.cursor = "pointer"; btn.on("pointertap", () => { if (this.game.buyItem(it.id)) { this.refreshHUD(); this.renderMenu(); money.text = `보유 ${this.game.moneyShort()}원`; redraw(); } }); }
-        row.addChild(btn);
-        ov.addChild(row);
-      });
-    };
-    const redraw = () => { for (let i = ov.children.length - 1; i >= 0; i--) if (ov.children[i]._row) { const c = ov.removeChildAt(i); c.destroy({ children: true }); } rebuild(); };
-    rebuild();
-    const close = new Container();
-    close.addChild(new Graphics().roundRect(x + cw / 2 - 70, y + ch - 50, 140, 38, 14).fill(0xece6dc));
-    close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 31); return t; })());
-    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => this._closeOverlay());
-    ov.addChild(close);
-    this.addChild(ov);
   }
 
   // 인연(Bond) 팝업 (기획서 12번)
@@ -661,18 +615,23 @@ export class MainScene extends Scene {
     if (this.overlay) return;
     if (this.game.turn > TOTAL_TURNS) { this.showEnding(); return; } // 이미 졸업 → 엔딩 재표시
     if (this.selected.length === 0) { this.mgrText.text = "활동을 먼저 골라줘!"; return; }
-    const prods = this.selected.filter((s) => s.startsWith("prod:")).map((s) => s.slice(5));
-    const acts = this.selected.filter((s) => !s.startsWith("prod:"));
+    const order = [...this.selected];                    // 슬롯에 올린 순서 보존
+    const acts = order.filter((s) => !s.startsWith("prod:"));
     const season = this._season().name;
-    const results = prods.map((id) => this.game.runProduction(id)).filter(Boolean);
+    // 적용: 출연(평가) → 활동/월정산. 연출은 아래에서 슬롯 순서대로.
+    const resultMap = {};
+    for (const s of order) if (s.startsWith("prod:")) { const r = this.game.runProduction(s.slice(5)); if (r) resultMap[s] = r; }
     this.game.advance(acts);
     this.selected = [];
     this._afterSelectChange();
     if (this.nextBtn) this.nextBtn.visible = false; // 진행 연출 동안 버튼 숨김
-    // 연출 순서: 활동 이미지+대사 → 작품 출연 평가 → (졸업이면 엔딩) → 랜덤 이벤트
+    // 연출: 슬롯에 올린 순서 그대로 진행 → (졸업이면 엔딩) → 랜덤 이벤트
     (async () => {
-      if (acts.length) await this._playActivities(acts, season);
-      if (results.length) await this.playProduction(results);
+      let seasonShown = false;
+      for (const s of order) {
+        if (s.startsWith("prod:")) { if (resultMap[s]) await this._playScene(resultMap[s]); }
+        else { await this._playActivities([s], season, !seasonShown); seasonShown = true; }
+      }
       this.refreshHUD();
       // 학년 말 시상식 (기획서 3·15): 고1·고2·고3 말(턴 13·25·37)에 그 해 성과로 수상
       if (this.game.turn === 13 || this.game.turn === 25 || this.game.turn > TOTAL_TURNS) {
@@ -691,11 +650,11 @@ export class MainScene extends Scene {
   _actLine(id) { const p = ACT_LINES[id] || ["오늘도 한 걸음 나아갔다."]; return p[Math.floor(Math.random() * p.length)]; }
 
   // 활동 연출 (기획서 14B): 다음 달 진행 후 선택한 활동의 포즈 + 관련 대사를 차례로 노출
-  _playActivities(actIds, season) {
+  _playActivities(actIds, season, showSeason = true) {
     return new Promise((resolve) => {
       const beats = [];
       const firstBg = (findActivity(actIds[0]) || {}).bg || "school";
-      if (Math.random() < 0.28 && SEASON_LINES[season]) beats.push({ who: "", pose: null, bg: firstBg, text: SEASON_LINES[season] });
+      if (showSeason && Math.random() < 0.28 && SEASON_LINES[season]) beats.push({ who: "", pose: null, bg: firstBg, text: SEASON_LINES[season] });
       for (const id of actIds) {
         const a = findActivity(id);
         beats.push({ who: a ? a.name : "", pose: a ? a.pose : null, bg: (a && a.bg) || "school", text: this._actLine(id) });
@@ -782,6 +741,10 @@ export class MainScene extends Scene {
     this._closeOverlay();
     const res = computeEnding(this.game);
     const total = saveToDex(res.id);
+    // 엔딩 BGM: 배우=ending1 / 창작자(감독·작가·PD·제작자)=ending2 / 부정=ending3
+    const creatorIds = ["film_director", "drama_producer", "broadcast_pd", "writer", "director_actor"];
+    const bgm = res.id === "controversy" ? "ending_bad" : creatorIds.includes(res.id) ? "ending_creator" : "ending_actor";
+    playBgm(`./assets/sfx/${bgm}.mp3`, 0.5);
     const H = this.H || DESIGN_HEIGHT;
     const ov = new Container(); ov._isEnding = true; this.overlay = ov;
     ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, H).fill(0x0e0b14));
