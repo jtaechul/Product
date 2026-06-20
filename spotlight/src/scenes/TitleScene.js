@@ -3,7 +3,7 @@ import { Scene } from "../core/Scene.js";
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../config.js";
 import { hasSave, loadGame, saveLabel } from "../systems/save.js";
 import { GameState } from "../systems/game.js";
-import { armBgm, stopBgm } from "../systems/sound.js";
+import { armBgm, stopBgm, sfx } from "../systems/sound.js";
 import { MainScene } from "./MainScene.js";
 import { PrologueScene } from "./PrologueScene.js";
 
@@ -57,7 +57,7 @@ export class TitleScene extends Scene {
     const t = new Text({ text: label, style: new TextStyle({ fontFamily: FD, fontSize: 27, fill }) });
     t.anchor.set(0, 0.5); t.position.set(-w / 2 + 92, 0); c.addChild(t);
     c.eventMode = "static"; c.cursor = "pointer";
-    c.on("pointertap", fn);
+    c.on("pointertap", () => { sfx("tap"); fn(); });
     c.on("pointerover", () => c.scale.set(1.035));
     c.on("pointerout", () => c.scale.set(1.0));
     return c;
