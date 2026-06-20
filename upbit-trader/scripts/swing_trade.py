@@ -55,6 +55,9 @@ class PaperBroker:
     def sell(self, market, price):
         return price
 
+    def get_holdings(self):
+        return None   # 모의: 실제 잔고 없음(메모리 상태만 사용)
+
 
 class LiveBroker(PaperBroker):
     def __init__(self, q, exchange):
@@ -72,6 +75,9 @@ class LiveBroker(PaperBroker):
         if vol > 0:
             self.ex.sell_market(market, vol)
         return price
+
+    def get_holdings(self):
+        return self.ex.get_holdings()   # 실제 업비트 보유 {market:(수량,평단가)}
 
 
 class Shared:
@@ -273,6 +279,12 @@ def main() -> None:
             # 배정 예산(잠수함 몫)을 종목 수로 나눠 1종목 매수액 반영(배분 변화 즉시)
             engine.invest_per_trade = allocation.budget_for(
                 "swing", args.invest * args.max_positions) / args.max_positions
+            # 실제 업비트 잔고와 현행화 — 사용자가 직접 판 코인은 보유목록서 제거
+            for m in engine.reconcile_with_exchange():
+                log(f"🔄 {m} 외부 매도 감지 — 보유목록서 정리")
+                notifier.send(
+                    f"🔄 <b>보유 정리</b>\n종목: <b>{m.replace('KRW-','')}</b>\n"
+                    f"계좌에 없어 보유 목록에서 뺐어요(직접 파셨거나 잔량 소진).")
             allocation.publish_owned("swing", engine.held())
             for rec in engine.check_exits(now):
                 won = rec.gain * args.invest
