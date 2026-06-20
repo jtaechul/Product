@@ -219,8 +219,8 @@ def start_command_listener(get_status, stop: threading.Event | None = None
 _STATE_DIR = Path(__file__).resolve().parent.parent / ".botstate"
 
 # 텔레그램 합산 상태에 포함할 봇 이름 집합. 비어 있으면 전부 표시.
-# 잠수함·고위험은 독립검증 미통과(모의 전용) → 합산 상태에서 제외.
-_STATUS_WHITELIST: set[str] = {"2_대형코인"}
+# 세 봇 모두 실거래(소액) 전환 → 전부 표시.
+_STATUS_WHITELIST: set[str] = set()
 
 
 def _state_dir() -> Path:

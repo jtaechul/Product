@@ -25,9 +25,9 @@ _STATE = Path(__file__).resolve().parent.parent / ".botstate"
 _ALLOC = _STATE / "allocation.json"
 
 # 목표 비중 (합 1.0 = 풀투자 지향. 신호 없으면 현금으로 남아 자연히 방어적).
-# 2019~2026 교차검증 결과: 검증 통과 전략은 '대형코인 추세필터(BTC·ETH)' 하나뿐.
-# 잠수함·고위험은 최근 시장에서 엣지 없음(모의 전환) → 실거래는 대형코인 100%.
-DEFAULT_WEIGHTS = {"majors": 1.0, "swing": 0.0, "highrisk": 0.0}
+# 검증 통과 전략은 대형코인 추세필터(BTC·ETH) 하나뿐이라 대형에 70% 집중.
+# 잠수함·고위험은 검증 미통과지만 소액(각 15%)으로 실거래 실험(사용자 결정).
+DEFAULT_WEIGHTS = {"majors": 0.7, "swing": 0.15, "highrisk": 0.15}
 
 
 def _dir() -> Path:

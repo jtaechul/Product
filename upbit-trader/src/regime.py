@@ -21,13 +21,13 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-# 검증 결과: 대형코인 추세필터만 채택 → 모든 국면에서 대형 100%(나머지 0).
-# 라벨은 대시보드 정보용으로 유지(국면 자체는 계속 표시).
-_ALL_MAJORS = {"majors": 1.0, "swing": 0.0, "highrisk": 0.0}
+# 실거래 비중: 대형 70% 고정 + 잠수함·고위험 각 15%(소액 실거래 실험).
+# 모든 국면에서 동일 비중을 제안 → 텔레그램이 100% 복귀를 제안하지 않도록 고정.
+_LIVE_MIX = {"majors": 0.7, "swing": 0.15, "highrisk": 0.15}
 REGIMES = {
-    "risk_on":  {"label": "강세 (위험선호) 🟢", "weights": dict(_ALL_MAJORS)},
-    "neutral":  {"label": "중립 (약한 조정) 🟡", "weights": dict(_ALL_MAJORS)},
-    "risk_off": {"label": "약세 (위험회피) 🔴", "weights": dict(_ALL_MAJORS)},
+    "risk_on":  {"label": "강세 (위험선호) 🟢", "weights": dict(_LIVE_MIX)},
+    "neutral":  {"label": "중립 (약한 조정) 🟡", "weights": dict(_LIVE_MIX)},
+    "risk_off": {"label": "약세 (위험회피) 🔴", "weights": dict(_LIVE_MIX)},
 }
 
 
