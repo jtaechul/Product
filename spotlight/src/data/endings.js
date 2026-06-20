@@ -27,12 +27,6 @@ export function bondPeople(bonds) {
 // 우선순위 순 엔딩 목록. core/quote로 서사 중반·소감을 만든다.
 export const ENDINGS = [
   {
-    id: "expelled", emoji: "", title: "멈춰버린 꿈", trait: "방출", illust: "unknown_supporting",
-    when: (c) => c.expelled,
-    core: (c) => `학년 말 목표에 끝내 닿지 못했고, 작은 소속사는 더 기다려 주지 않았다. 카메라 앞에 다시 서기까지, 그 길은 너무 멀었다.`,
-    quote: "꿈은 재능만으로 지킬 수 없다는 걸, 그때 배웠습니다.",
-  },
-  {
     id: "controversy", emoji: "💔", title: "구설수 속에 사라진 배우", trait: "논란", illust: "unknown_supporting",
     when: (c) => c.flags.has("controversy") && c.char < 35,
     core: (c) => `재능은 분명 빛났지만, 거듭된 구설은 그 빛을 가렸다. 화제의 중심에 섰던 만큼 등을 돌리는 사람도 빨랐다.`,
@@ -46,7 +40,7 @@ export const ENDINGS = [
   },
   {
     id: "national", emoji: "🏆", title: "국민 대배우", trait: "균형의 완성", illust: "national",
-    when: (c) => c.actAvg >= 66 && c.char >= 56 && c.study >= 46 && (c.flags.has("national") || c.flags.has("filmaward")) && c.fame >= 68,
+    when: (c) => c.actAvg >= 66 && c.char >= 56 && c.study >= 46 && c.looks >= 48 && (c.flags.has("national") || c.flags.has("filmaward")) && c.fame >= 68,
     core: (c) => `연기와 인격, 교양을 두루 갖춘 그/그녀는 세대를 아울러 사랑받았다. 영화와 드라마 양쪽에서 정점에 섰다.`,
     quote: "오래 사랑받는 배우이고 싶었습니다. 그거면 충분합니다.",
   },
@@ -64,13 +58,13 @@ export const ENDINGS = [
   },
   {
     id: "global", emoji: "🍿", title: "글로벌 한류 스타", trait: "국제파", illust: "film_master",
-    when: (c) => c.flags.has("global") && c.fame >= 72,
+    when: (c) => c.flags.has("global") && c.fame >= 72 && c.looks >= 48,
     core: (c) => `OTT를 타고 그/그녀의 연기는 국경을 넘었다. 전 세계 팬이 그 이름을 부르며 한국어 대사를 따라 했다.`,
     quote: "언어는 달라도, 마음은 연기로 전해지더군요.",
   },
   {
     id: "tv_star", emoji: "📺", title: "안방극장의 별", trait: "스타성", illust: "film_master",
-    when: (c) => c.fieldTop === "drama" && c.fame >= 58 && c.actAvg >= 48,
+    when: (c) => c.fieldTop === "drama" && c.fame >= 58 && c.actAvg >= 48 && c.looks >= 50,
     core: (c) => `매주 저녁, 그/그녀의 얼굴은 온 가족의 화제였다. 안방극장을 수놓은 숱한 명장면을 남겼다.`,
     quote: "평범한 저녁을 특별하게 만드는 게 제 일이었어요.",
   },
