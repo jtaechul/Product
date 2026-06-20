@@ -198,7 +198,7 @@ export class MainScene extends Scene {
     c.addChild(new Graphics().roundRect(120, 626, 480, 104, 22).fill({ color: 0xc7e8da, alpha: 0.97 }).stroke({ width: 2, color: S.gold }));
     c.addChild(new Graphics().moveTo(168, 628).lineTo(150, 610).lineTo(196, 628).fill({ color: 0xc7e8da, alpha: 0.97 }));
     c.addChild(new Graphics().roundRect(132, 612, 124, 38, 12).fill(0xfdf4e0).stroke({ width: 2, color: S.gold }));
-    const who = this._t("한지원", 18, 0x9a6a2a, FD); who.anchor.set(0.5); who.position.set(194, 631); c.addChild(who);
+    const who = this._t("매니저", 18, 0x9a6a2a, FD); who.anchor.set(0.5); who.position.set(194, 631); c.addChild(who);
     this.mgrText = this._t(MANAGER_LINES[0], 18, 0x22483a);
     this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 446;
     this.mgrText.position.set(146, 660); c.addChild(this.mgrText);
