@@ -1,6 +1,8 @@
 // 엔딩 판정 + 40년 회고 서사 생성 (기획서 15번). 수치는 화면에 노출하지 않는다.
 import { ENDINGS, FIELD_OF, AWARD_OF, bondPeople } from "../data/endings.js";
 
+export const ENDING_COUNT = ENDINGS.length;
+
 // 매체 규모 순위(대표작 선정용): 클수록 큰 작품
 const MEDIA_RANK = {
   webdrama: 1, shortdrama: 2, shortfilm: 3, dramabit: 4, cf: 5, musical: 6, ott: 7, filmlead: 8, seasondrama: 9,
@@ -32,6 +34,7 @@ function buildContext(game) {
     bestWork,
     people: bondPeople(game.bonds),
     name: game.heroName || "그",
+    expelled: !!game.expelled,
   };
 }
 

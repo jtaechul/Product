@@ -2,7 +2,7 @@ import { Assets, Sprite, Graphics, Container, Text, TextStyle } from "pixi.js";
 import { Scene } from "../core/Scene.js";
 import { DESIGN_WIDTH, DESIGN_HEIGHT, TOTAL_TURNS } from "../config.js";
 import { GameState } from "../systems/game.js";
-import { computeEnding, saveToDex } from "../systems/ending.js";
+import { computeEnding, saveToDex, ENDING_COUNT } from "../systems/ending.js";
 import { saveGame } from "../systems/save.js";
 import { ACTIVITIES, CATEGORIES, ACT_LINES, SEASON_LINES } from "../data/activities.js";
 import { MEDIA, GRADE_COMMENTS } from "../data/media.js";
@@ -553,6 +553,12 @@ export class MainScene extends Scene {
       if (acts.length) await this._playActivities(acts, season);
       if (results.length) await this.playProduction(results);
       this.refreshHUD();
+      // 마일스톤 판정 (기획서 6번): 어려움 모드 미달 → 방출(배드엔딩), 그 외 경고/달성 토스트
+      const ms = this.game.milestoneCheck();
+      if (ms) {
+        if (!ms.ok && ms.fatal) { this.game.expelled = true; this.showEnding(); return; }
+        this._toast(ms.ok ? `${ms.grade} 목표 달성! (${ms.need})` : `${ms.grade} 목표 미달 — ${ms.need}`);
+      }
       if (this.game.turn > TOTAL_TURNS) { this.showEnding(); return; } // 36턴 종료 → 40년 커리어 엔딩
       this.menuMode = "category"; this.renderMenu();
       this.mgrText.text = this._mgrLine();
@@ -678,8 +684,8 @@ export class MainScene extends Scene {
       content.addChild(il); y += il.height + 18;
     } catch (e) {}
 
-    center(this._t("🎬 데뷔, 그리고 40년", 16, 0xcdbfa0, FB), 30);
-    center(this._t(`${res.emoji} ${res.title}`, 34, S.gold, FD), 48);
+    center(this._t("데뷔, 그리고 40년", 16, 0xcdbfa0, FB), 30);
+    center(this._t(res.title, 34, S.gold, FD), 48);
     center(this._t(`― ${res.trait} ―`, 18, 0xe8dcc4, FD), 42);
 
     const story = this._t(res.story, 19, 0xf2ecdf);
@@ -704,7 +710,7 @@ export class MainScene extends Scene {
       center(this._t(res.people.join("  ·  "), 17, 0xeae0cf, FB), 30);
       y += 10;
     }
-    center(this._t(`📖 엔딩 도감 ${total} / 15 수집`, 15, 0xb7ab93, FB), 40);
+    center(this._t(`엔딩 도감 ${total} / ${ENDING_COUNT} 수집`, 15, 0xb7ab93, FB), 40);
     const contentH = y;
 
     // 드래그 스크롤
