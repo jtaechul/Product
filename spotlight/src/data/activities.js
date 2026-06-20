@@ -68,8 +68,8 @@ export const SEASON_LINES = {
   겨울: "추운 겨울, 하얀 입김을 불며 오늘도 한 걸음.",
 };
 
-// 자동 활동(매달 기본 적용) — 학교 수업
-export const AUTO_ACTIVITY = { name: "학교 수업", effects: { study: 2, character: 1 }, stamina: -5 };
+// 자동 활동(매달 기본 적용) — 학교 수업. 밸런스: 학업·인성은 자동으로 오르지 않는다(직접 활동으로만 성장).
+export const AUTO_ACTIVITY = { name: "학교 수업", effects: {}, stamina: -5 };
 
 // 능력치 메타 (라벨·계열)
 export const STATS_META = [
