@@ -5,6 +5,7 @@ import { hasSave, loadGame, saveLabel } from "../systems/save.js";
 import { GameState } from "../systems/game.js";
 import { armBgm, stopBgm } from "../systems/sound.js";
 import { MainScene } from "./MainScene.js";
+import { PrologueScene } from "./PrologueScene.js";
 
 const FD = "GmarketSansBold, sans-serif";
 const FB = "KoPubWorldDotumMedium, sans-serif";
@@ -26,7 +27,7 @@ export class TitleScene extends Scene {
     // 메뉴 버튼
     this.menu = new Container(); this.addChild(this.menu);
     const canLoad = hasSave();
-    this._btnNew = this._button("새로 시작하기", GOLD, INK, tex.icon_new, () => this._promptName((name) => this.manager.change(new MainScene(new GameState(name)))));
+    this._btnNew = this._button("새로 시작하기", GOLD, INK, tex.icon_new, () => this._promptName((name) => this.manager.change(new PrologueScene(new GameState(name)))));
     this._btnLoad = this._button(canLoad ? `불러오기  (${saveLabel()})` : "불러오기  (없음)", canLoad ? CREAM : 0xb8ae94, canLoad ? INK : 0x6f6655, tex.icon_load, () => {
       const g = loadGame();
       if (g) this.manager.change(new MainScene(g)); else this._flash("저장된 게임이 없어요");
