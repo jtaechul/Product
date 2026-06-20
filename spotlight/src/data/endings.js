@@ -99,7 +99,7 @@ export const ENDINGS = [
     quote: "내가 연기하지 못한 인물들을, 글로 살려냈습니다.",
   },
   {
-    id: "drama_producer", emoji: "", title: "드라마 제작자", trait: "기획자", illust: "drama_producer",
+    id: "drama_producer", emoji: "", title: "드라마 제작자", trait: "기획자", illust: "film_master",
     when: (c) => c.net >= 50 && c.study >= 48 && c.fame >= 48,
     core: (c) => `현장을 누구보다 잘 아는 배우 출신 제작자. 그/그녀가 기획한 드라마마다 화제가 됐고, 수많은 후배에게 무대를 만들어 주었다.`,
     quote: "이제는 내가 빛날 차례가 아니라, 누군가를 빛나게 할 차례였습니다.",
@@ -129,7 +129,7 @@ export const ENDINGS = [
     quote: "웃게 만드는 것도, 만만치 않은 연기였습니다.",
   },
   {
-    id: "scene_stealer", emoji: "🎭", title: "명품 조연·신스틸러", trait: "신스틸러", illust: "scene_stealer",
+    id: "scene_stealer", emoji: "🎭", title: "명품 조연·신스틸러", trait: "신스틸러", illust: "unknown_supporting",
     when: (c) => c.actAvg >= 50 && c.praisedCount >= 3,
     core: (c) => `주연은 아니었지만, 그/그녀가 나오는 장면은 늘 회자됐다. "이 배우 어디서 봤더라"가 입버릇처럼 따라다녔다.`,
     quote: "작은 역이라도, 큰 마음으로 했습니다.",
