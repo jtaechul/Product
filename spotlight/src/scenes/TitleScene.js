@@ -3,6 +3,7 @@ import { Scene } from "../core/Scene.js";
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../config.js";
 import { hasSave, loadGame, saveLabel } from "../systems/save.js";
 import { GameState } from "../systems/game.js";
+import { armBgm, stopBgm } from "../systems/sound.js";
 import { MainScene } from "./MainScene.js";
 
 const FD = "GmarketSansBold, sans-serif";
@@ -25,7 +26,7 @@ export class TitleScene extends Scene {
     // 메뉴 버튼
     this.menu = new Container(); this.addChild(this.menu);
     const canLoad = hasSave();
-    this._btnNew = this._button("새로 시작하기", GOLD, INK, tex.icon_new, () => this._promptName((name) => this.manager.change(new MainScene(new GameState(name)))));
+    this._btnNew = this._button("새로 시작하기", GOLD, INK, tex.icon_new, () => this._promptName((name, diff) => this.manager.change(new MainScene(new GameState(name, diff)))));
     this._btnLoad = this._button(canLoad ? `불러오기  (${saveLabel()})` : "불러오기  (없음)", canLoad ? CREAM : 0xb8ae94, canLoad ? INK : 0x6f6655, tex.icon_load, () => {
       const g = loadGame();
       if (g) this.manager.change(new MainScene(g)); else this._flash("저장된 게임이 없어요");
@@ -36,9 +37,12 @@ export class TitleScene extends Scene {
     this.sub = new Text({ text: "어느 배우의 40년", style: new TextStyle({ fontFamily: FD, fontSize: 22, fill: GOLD, stroke: { color: 0x231a2c, width: 4 } }) });
     this.sub.anchor.set(0.5); this.addChild(this.sub);
 
+    armBgm("./assets/sfx/title_bgm.mp3", 0.55); // 시작 화면 배경음악
     document.getElementById("loading")?.remove();
     this._layout(this.H || DESIGN_HEIGHT);
   }
+
+  onExit() { stopBgm(); super.onExit(); }
 
   _button(label, fill, textColor, iconTex, fn) {
     const c = new Container();
@@ -59,24 +63,43 @@ export class TitleScene extends Scene {
     return c;
   }
 
-  // 주인공 이름 입력 (DOM 오버레이 — 모바일 키보드 호출)
+  // 주인공 이름 + 난이도 선택 (DOM 오버레이 — 모바일 키보드 호출)
   _promptName(cb) {
     if (document.getElementById("name-prompt")) return;
     const wrap = document.createElement("div");
     wrap.id = "name-prompt";
     wrap.style.cssText = "position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(10,8,16,.74);";
     const box = document.createElement("div");
-    box.style.cssText = "background:#1b1524;border:3px solid #f3c969;border-radius:20px;padding:26px 24px;width:82%;max-width:360px;text-align:center;font-family:GmarketSansBold,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.5);";
-    box.innerHTML = '<div style="color:#f3c969;font-size:22px;margin-bottom:6px;">주인공 이름</div><div style="color:#cdbfa0;font-size:13px;font-family:sans-serif;margin-bottom:16px;">배우를 꿈꾸는 우리 주인공의 이름은?</div>';
+    box.style.cssText = "background:#1b1524;border:3px solid #f3c969;border-radius:20px;padding:24px 22px;width:84%;max-width:380px;text-align:center;font-family:GmarketSansBold,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.5);";
+    box.innerHTML = '<div style="color:#f3c969;font-size:22px;margin-bottom:4px;">주인공 이름</div><div style="color:#cdbfa0;font-size:13px;font-family:sans-serif;margin-bottom:14px;">배우를 꿈꾸는 우리 주인공의 이름은?</div>';
     const input = document.createElement("input");
     input.type = "text"; input.maxLength = 8; input.placeholder = "소윤";
     input.style.cssText = "width:100%;box-sizing:border-box;font-size:20px;padding:12px 14px;border-radius:12px;border:2px solid #6b4a1e;text-align:center;font-family:inherit;outline:none;";
+    box.appendChild(input);
+    const diffTitle = document.createElement("div");
+    diffTitle.textContent = "난이도";
+    diffTitle.style.cssText = "color:#f3c969;font-size:18px;margin:18px 0 8px;";
+    box.appendChild(diffTitle);
+    const diffs = [["easy", "쉬움", "여유로운 자금·빠른 성장"], ["normal", "보통", "기준 밸런스"], ["hard", "어려움", "빠듯·목표 미달 시 방출"]];
+    let chosen = "normal";
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:8px;";
+    const btns = {};
+    const paint = () => { for (const k of Object.keys(btns)) { const on = k === chosen; btns[k].style.background = on ? "#f3c969" : "#2a2438"; btns[k].style.color = on ? "#2a2230" : "#cdbfa0"; btns[k].style.borderColor = on ? "#f3c969" : "#6b4a1e"; } };
+    diffs.forEach(([id, label, desc]) => {
+      const b = document.createElement("button");
+      b.innerHTML = `<div style="font-size:16px;font-weight:bold;">${label}</div><div style="font-size:10px;font-family:sans-serif;margin-top:3px;line-height:1.25;">${desc}</div>`;
+      b.style.cssText = "flex:1;padding:10px 6px;border-radius:12px;border:2px solid #6b4a1e;font-family:inherit;cursor:pointer;";
+      b.addEventListener("click", () => { chosen = id; paint(); });
+      btns[id] = b; row.appendChild(b);
+    });
+    box.appendChild(row); paint();
     const btn = document.createElement("button");
     btn.textContent = "시작하기";
     btn.style.cssText = "margin-top:18px;width:100%;font-size:20px;padding:12px;border:none;border-radius:14px;background:#f3c969;color:#2a2230;font-family:inherit;font-weight:bold;cursor:pointer;";
-    box.appendChild(input); box.appendChild(btn); wrap.appendChild(box); document.body.appendChild(wrap);
+    box.appendChild(btn); wrap.appendChild(box); document.body.appendChild(wrap);
     input.focus();
-    const done = () => { const name = (input.value || "").trim().slice(0, 8) || "소윤"; wrap.remove(); cb(name); };
+    const done = () => { const name = (input.value || "").trim().slice(0, 8) || "소윤"; wrap.remove(); cb(name, chosen); };
     btn.addEventListener("click", done);
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") done(); });
   }

@@ -4,7 +4,7 @@ import { MEDIA } from "../data/media.js";
 import { ACT_BOND, BOND_THRESHOLD } from "../data/bonds.js";
 import { EVENTS } from "../data/events.js";
 import { ITEMS } from "../data/items.js";
-import { TOTAL_TURNS } from "../config.js";
+import { TOTAL_TURNS, DIFFICULTY, DEFAULT_DIFFICULTY, MILESTONES } from "../config.js";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
@@ -17,20 +17,31 @@ function softCapMultiplier(cur) {
 }
 
 export class GameState {
-  constructor(name) {
+  constructor(name, difficulty) {
     this.heroName = (name && String(name).trim()) || "소윤"; // 주인공 이름 (오프닝에서 입력)
+    this.difficulty = DIFFICULTY[difficulty] ? difficulty : DEFAULT_DIFFICULTY; // 난이도 모드 (기획서 8번)
+    const dif = DIFFICULTY[this.difficulty];
     this.turn = 1;                 // 1 ~ 36
     this.stats = {};
     for (const s of STATS_META) this.stats[s.key] = 5; // 시작값 5
     this.stamina = 70;             // 체력
     this.mental = 70;              // 멘탈
-    this.money = 100000;           // 보통 난이도 시작 돈
+    this.money = dif.money;        // 난이도별 시작 돈
+    this.gainMult = dif.gain;      // 난이도별 스탯 상승 배율
     this.fans = 0;                 // 인지도(팬 수)
     this.filmography = [];         // 출연 기록 (기획서 4·11번)
     this.flags = new Set();        // 특수 플래그(영화제·해외·국민 등)
     this.offers = this.genOffers();// 이번 달 출연 제안
     this.bonds = { hanjiwon: 0, noh: 0, haneul: 0, yusea: 0 }; // 인연 게이지 (기획서 12번)
     this.prodBonus = 1;            // 행운의 부적 등 다음 출연 평가 보정 (1회)
+    this.expelled = false;         // 어려움 모드 마일스톤 미달 시 방출 (배드엔딩)
+  }
+
+  // 마일스톤 판정 (기획서 6번): 학년 말 턴(13·25)에 도달했을 때 목표 달성 여부
+  milestoneCheck() {
+    const m = MILESTONES[this.turn];
+    if (!m) return null;
+    return { grade: m.grade, need: m.need, ok: this.fans >= m.fans, fatal: DIFFICULTY[this.difficulty].milestone };
   }
 
   raiseBond(id, n) { if (this.bonds[id] !== undefined) this.bonds[id] = clamp(this.bonds[id] + n, 0, 100); }
@@ -130,7 +141,7 @@ export class GameState {
 
   // 능력치 1종 상승 (소프트캡 + 멘탈 보정 적용)
   _gainStat(key, base) {
-    let mult = softCapMultiplier(this.stats[key]);
+    let mult = softCapMultiplier(this.stats[key]) * (this.gainMult || 1); // 난이도 배율 (기획서 8번)
     if (this.mental < 30) mult *= 0.5;        // 멘탈 낮으면 -50% (기획서 7번)
     else if (this.mental >= 80) mult *= 1.2;  // 멘탈 높으면 +20%
     this.stats[key] = clamp(Math.round(this.stats[key] + base * mult), 0, 100);
@@ -186,16 +197,18 @@ export class GameState {
   // 세이브 직렬화 (기획서 9·19번: localStorage 저장)
   toData() {
     return {
-      v: 1, heroName: this.heroName, turn: this.turn, stats: { ...this.stats }, stamina: this.stamina, mental: this.mental,
-      money: this.money, fans: this.fans, filmography: this.filmography, flags: [...this.flags],
-      bonds: { ...this.bonds }, offers: this.offers, prodBonus: this.prodBonus,
+      v: 1, heroName: this.heroName, difficulty: this.difficulty, turn: this.turn, stats: { ...this.stats },
+      stamina: this.stamina, mental: this.mental, money: this.money, fans: this.fans,
+      filmography: this.filmography, flags: [...this.flags], bonds: { ...this.bonds },
+      offers: this.offers, prodBonus: this.prodBonus, expelled: this.expelled,
     };
   }
   static fromData(d) {
-    const g = new GameState();
+    const g = new GameState(undefined, d && d.difficulty);
     if (!d) return g;
     if (d.heroName) g.heroName = d.heroName;
     g.turn = d.turn ?? 1; g.stamina = d.stamina ?? 70; g.mental = d.mental ?? 70;
+    g.expelled = !!d.expelled;
     g.money = d.money ?? 100000; g.fans = d.fans ?? 0;
     if (d.stats) g.stats = { ...g.stats, ...d.stats };
     g.filmography = d.filmography || []; g.flags = new Set(d.flags || []);
