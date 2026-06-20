@@ -17,21 +17,21 @@ export const ACTIVITIES = [
   { id: "gym",       cat: "charm",  emoji: "🏋️", name: "헬스·PT",  effects: { looks: 3 },              money: -40000, stamina: 6,   pose: "gym",       bg: "academy", desc: "체력·외모" },
   { id: "styling",   cat: "charm",  emoji: "💄", name: "스타일링",  effects: { looks: 4, fame: 3 },     money: -20000, stamina: -4,  pose: "good",      bg: "home",    desc: "외모·팬" },
   { id: "study",     cat: "mind",   emoji: "📖", name: "독서실",    effects: { study: 6 },              mental: -4, money: -30000,  stamina: -7,  pose: "study",     bg: "school",  desc: "학업" },
-  { id: "reading",   cat: "mind",   emoji: "📚", name: "독서·교양", effects: { character: 5, study: 2 }, mental: 2, money: -10000,  stamina: -3,  pose: "study",     bg: "home",    desc: "인성·학업" },
-  { id: "volunteer", cat: "mind",   emoji: "🤲", name: "봉사활동",  effects: { character: 7, network: 2 }, mental: 3,             stamina: -7,  pose: "volunteer", bg: "school",  desc: "인성·인맥" },
-  { id: "family",    cat: "life",   emoji: "👨‍👩‍👧", name: "가족과 시간", effects: { character: 5 },       mental: 8,              stamina: 6,   pose: "family",    bg: "home",    desc: "인성·멘탈" },
-  { id: "friend",    cat: "life",   emoji: "🧑‍🤝‍🧑", name: "친구와 우정", effects: { character: 3, network: 3 }, mental: 9, money: -30000, stamina: 4, pose: "family", bg: "school",  desc: "인성·멘탈" },
-  { id: "rest",      cat: "life",   emoji: "☕", name: "휴식",      effects: {},                        mental: 14,             stamina: 45,  pose: "rest",      bg: "home",    desc: "체력·멘탈 회복" },
+  { id: "reading",   cat: "mind",   emoji: "📚", name: "독서·교양", effects: { character: 5, study: 2 },            money: -10000,  stamina: -3,  pose: "study",     bg: "home",    desc: "인성·학업" },
+  { id: "volunteer", cat: "mind",   emoji: "🤲", name: "봉사활동",  effects: { character: 7, network: 2 },                      stamina: -7,  pose: "volunteer", bg: "school",  desc: "인성·인맥" },
+  { id: "family",    cat: "life",   emoji: "👨‍👩‍👧", name: "가족과 시간", effects: { character: 5 },       mental: 5,              stamina: 6,   pose: "family",    bg: "home",    desc: "인성·멘탈" },
+  { id: "friend",    cat: "life",   emoji: "🧑‍🤝‍🧑", name: "친구와 우정", effects: { character: 3, network: 3 }, mental: 6, money: -30000, stamina: 4, pose: "family", bg: "school",  desc: "인성·멘탈" },
+  { id: "rest",      cat: "life",   emoji: "☕", name: "휴식",      effects: {},                        mental: 10,             stamina: 45,  pose: "rest",      bg: "home",    desc: "체력·멘탈 회복" },
   { id: "parttime",  cat: "life",   emoji: "💼", name: "단기 알바", effects: {},                        mental: -6, money: 90000,  stamina: -12, pose: "good",      bg: "set",     desc: "돈 +9만" },
 ];
 
 // 분기 특별활동 (기획서 3·5: 우마무스메식 분기 이벤트) — (turn-1)%3===0 인 달에만 등장.
-// 매력·팬 위주 강화 + 돈 소모(후반 돈 싱크). 아이돌/스타/뮤지컬/예능 루트를 떠받친다.
+// 매력·팬 위주 강화. 모두 '출연/행사'라 출연료를 받는다(돈 +). 아이돌/스타/뮤지컬/예능 루트를 떠받친다.
 export const SPECIAL_ACTS = [
-  { id: "idol_stage", cat: "special", name: "아이돌 쇼케이스", effects: { singing: 5, dance: 5, fame: 8 }, mental: 2, money: -100000, stamina: -14, pose: "dance",  bg: "stage", desc: "가창·댄스·팬 大" },
-  { id: "photoshoot", cat: "special", name: "화보 촬영",       effects: { looks: 6, fame: 6 },             money: -80000,  stamina: -8,  pose: "good",   bg: "home",  desc: "외모·팬" },
-  { id: "fanmeeting", cat: "special", name: "팬미팅",         effects: { fame: 10, network: 3 }, mental: 6, money: -50000,  stamina: -10, pose: "cheer",  bg: "stage", desc: "팬 大·인맥" },
-  { id: "varietyshow",cat: "special", name: "예능 출연",       effects: { network: 5, fame: 7, dance: 3 }, money: 40000,  stamina: -12, pose: "good",   bg: "set",   desc: "인맥·팬·출연료" },
+  { id: "idol_stage", cat: "special", name: "아이돌 쇼케이스", effects: { singing: 5, dance: 5, fame: 8 },            money: 60000,  stamina: -14, pose: "dance",  bg: "stage", desc: "가창·댄스·팬 大" },
+  { id: "photoshoot", cat: "special", name: "화보 촬영",       effects: { looks: 6, fame: 6 },             money: 90000,  stamina: -8,  pose: "good",   bg: "home",  desc: "외모·팬·모델료" },
+  { id: "fanmeeting", cat: "special", name: "팬미팅",         effects: { fame: 10, network: 3 }, mental: 3, money: 70000,  stamina: -10, pose: "cheer",  bg: "stage", desc: "팬 大·인맥·행사비" },
+  { id: "varietyshow",cat: "special", name: "예능 출연",       effects: { network: 5, fame: 7, dance: 3 }, money: 50000,  stamina: -12, pose: "good",   bg: "set",   desc: "인맥·팬·출연료" },
 ];
 
 // id로 일반/특별 활동을 통합 조회
