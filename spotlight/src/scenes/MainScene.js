@@ -56,7 +56,8 @@ export class MainScene extends Scene {
   }
 
   async onEnter() {
-    const uiNames = ["topbar2", "stats_frame", "manager_bubble", "bond_frame", "slot_chip", "btn_next", "cat_acting", "cat_charm", "cat_mind", "cat_life"];
+    const uiNames = ["topbar2", "stats_frame", "manager_bubble", "bond_frame", "slot_chip", "btn_next", "cat_acting", "cat_charm", "cat_mind", "cat_life",
+      "menu_panel", "menu_btn", "offer_frame", "icon_back", "icon_save", "icon_list", "icon_flag", "icon_music", "icon_speaker"];
     const [bgTex, idleTex] = await Promise.all([Assets.load(BG_SCHOOL), Assets.load(IDLE_SPRITE)]);
     await Promise.all(uiNames.map(async (n) => { this.tex[n] = await Assets.load(UI(n)); }));
     await Promise.all(ACTIVITIES.map(async (a) => { this.tex[`actico_${a.id}`] = await Assets.load(UI(`actico_${a.id}`)); }));
@@ -241,28 +242,33 @@ export class MainScene extends Scene {
     this.addChild(c);
   }
 
-  // 인게임 메뉴 (설정): 돌아가기·저장·메인메뉴·종료·BGM·효과음
+  // 인게임 메뉴 (설정): 핑크 패널 + 버튼 프레임 + 커스텀 아이콘
   openMenu() {
     if (this.overlay) return;
     const ov = this._dim(); this.overlay = ov;
-    const cw = 540, x = (DESIGN_WIDTH - cw) / 2, ch = 600, y = (DESIGN_HEIGHT - ch) / 2;
-    ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
-    ov.addChild(Object.assign(this._t("메뉴", 26, S.ink, FD), { x: x + 30, y: y + 24 }));
+    const ptex = this.tex.menu_panel, pw = 548, ph = pw * ptex.height / ptex.width;
+    const px = (DESIGN_WIDTH - pw) / 2, py = ((this.H || DESIGN_HEIGHT) - ph) / 2;
+    const panel = new Sprite(ptex); panel.scale.set(pw / ptex.width); panel.position.set(px, py); ov.addChild(panel);
+    ov.addChild((() => { const t = this._t("메 뉴", 30, 0xa84a64, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, py + ph * 0.072); return t; })());
     const rows = new Container(); ov.addChild(rows);
+    const btex = this.tex.menu_btn, bw = pw * 0.80, bh = bw * btex.height / btex.width, bx = px + (pw - bw) / 2;
+    const icons = ["icon_back", "icon_save", "icon_list", "icon_flag", "icon_music", "icon_speaker"];
+    const top = py + ph * 0.155, gap = (ph * 0.80) / 6;
     const build = () => {
       rows.removeChildren();
       const items = [
-        { label: "게임으로 돌아가기", color: 0x4a5a8a, fn: () => this._closeOverlay() },
-        { label: "저장하기", color: 0x2e9e8e, fn: () => { const ok = saveGame(this.game); this._closeOverlay(); this._toast(ok ? "저장 완료!" : "저장 실패…"); } },
-        { label: "메인 메뉴로", color: 0xc07e1e, fn: () => { try { window.location.reload(); } catch (e) {} } },
-        { label: "게임 종료하기", color: 0xd6655e, fn: () => this._quitGame() },
-        { label: `배경음악: ${isBgmOn() ? "켜짐" : "꺼짐"}`, color: isBgmOn() ? 0x2e9e8e : 0x8a8276, fn: () => { setBgmOn(!isBgmOn()); build(); } },
-        { label: `효과음: ${isSfxOn() ? "켜짐" : "꺼짐"}`, color: isSfxOn() ? 0x2e9e8e : 0x8a8276, fn: () => { setSfxOn(!isSfxOn()); build(); } },
+        { label: "게임으로 돌아가기", fn: () => this._closeOverlay() },
+        { label: "저장하기", fn: () => { const ok = saveGame(this.game); this._closeOverlay(); this._toast(ok ? "저장 완료!" : "저장 실패…"); } },
+        { label: "메인 메뉴로", fn: () => { try { window.location.reload(); } catch (e) {} } },
+        { label: "게임 종료하기", fn: () => this._quitGame() },
+        { label: `배경음악  ${isBgmOn() ? "켜짐" : "꺼짐"}`, fn: () => { setBgmOn(!isBgmOn()); build(); } },
+        { label: `효과음  ${isSfxOn() ? "켜짐" : "꺼짐"}`, fn: () => { setSfxOn(!isSfxOn()); build(); } },
       ];
       items.forEach((it, i) => {
-        const ry = y + 78 + i * 80, b = new Container();
-        b.addChild(new Graphics().roundRect(x + 30, ry, cw - 60, 62, 16).fill(it.color));
-        const t = this._t(it.label, 22, 0xffffff, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, ry + 31); b.addChild(t);
+        const by = top + i * gap, b = new Container();
+        const spr = new Sprite(btex); spr.scale.set(bw / btex.width); spr.position.set(bx, by); b.addChild(spr);
+        const ic = new Sprite(this.tex[icons[i]]); ic.anchor.set(0.5); ic.scale.set((bh * 0.5) / Math.max(ic.texture.width, ic.texture.height)); ic.position.set(bx + bw * 0.13, by + bh / 2); b.addChild(ic);
+        const t = this._t(it.label, 23, 0xffffff, FD); t.anchor.set(0.5); t.position.set(bx + bw * 0.60, by + bh / 2); b.addChild(t);
         b.eventMode = "static"; b.cursor = "pointer"; b.on("pointertap", it.fn);
         rows.addChild(b);
       });
