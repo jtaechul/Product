@@ -61,12 +61,25 @@ def main() -> None:
     # 총 평가자산만 갱신 → 각 봇 예산이 자산 변화에 맞춰 재계산됨.
     w = allocation.current_weights()
     allocation.write_allocation(total, w)
-    lines = [f"⚖️ <b>자산 리밸런싱 완료</b>",
-             f"총 평가자산: <b>{total:,.0f}원</b>",
-             f"• 대형코인 {w['majors']*100:.0f}% → {total*w['majors']:,.0f}원",
-             f"• 잠수함 {w['swing']*100:.0f}% → {total*w['swing']:,.0f}원",
-             f"• 고위험 {w['highrisk']*100:.0f}% → {total*w['highrisk']:,.0f}원",
-             "각 봇은 이 한도 안에서만 매수합니다(나쁜 장에선 현금 보유)."]
+    # 일별 자산 추이 기록 + 전일 대비 변화 계산
+    eq = allocation.record_equity(total)
+    delta_line = None
+    if eq["prev"] is not None and eq["prev"] > 0:
+        d = total - eq["prev"]
+        pct = d / eq["prev"] * 100
+        emoji = "📈" if d > 0 else ("📉" if d < 0 else "➡️")
+        delta_line = (f"{emoji} 전일대비({eq['prev_date']}): "
+                      f"<b>{d:+,.0f}원 ({pct:+.1f}%)</b>")
+    elif eq["first"]:
+        delta_line = "ℹ️ 첫 기록 — 내일부터 전일 대비 변화를 알려드려요"
+    lines = [f"⚖️ <b>자산 현황 · 현행화</b>",
+             f"총 평가자산: <b>{total:,.0f}원</b>"]
+    if delta_line:
+        lines.append(delta_line)
+    lines += [f"• 대형코인 {w['majors']*100:.0f}% → {total*w['majors']:,.0f}원",
+              f"• 잠수함 {w['swing']*100:.0f}% → {total*w['swing']:,.0f}원",
+              f"• 고위험 {w['highrisk']*100:.0f}% → {total*w['highrisk']:,.0f}원",
+              "각 봇은 이 한도 안에서만 매수합니다(나쁜 장에선 현금 보유)."]
     msg = "\n".join(lines)
     print(msg.replace("<b>", "").replace("</b>", ""))
     notifier.send(msg)
