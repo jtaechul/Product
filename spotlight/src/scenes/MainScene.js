@@ -208,8 +208,8 @@ export class MainScene extends Scene {
   }
 
   _mgrLine() {
-    const n = this.game.offers.length;
-    if (n > 0) return `이번 달 출연 제안 ${n}개! (눌러서 보기)`;
+    const n = this.game.offers.length + this._specialsAvailable().length;
+    if (n > 0) return `이번 달 제안 ${n}개! (눌러서 보기)`;
     return MANAGER_LINES[(this.game.turn - 1) % MANAGER_LINES.length];
   }
 
@@ -374,31 +374,54 @@ export class MainScene extends Scene {
     this.addChild(ov);
   }
 
-  // 작품 출연 제안 팝업 (기획서 11번)
+  // 이번 분기 특별활동(있으면) — 첫 턴 제외, 분기(turn 4·7·…)에만
+  _specialsAvailable() { return ((this.game.turn - 1) % 3 === 0 && this.game.turn > 1) ? SPECIAL_ACTS : []; }
+
+  // 이번 달 제안 팝업 (기획서 11·3): 출연 제안 + 분기 특별활동 병합
   openOffers() {
     if (this.overlay) return;
+    const offers = this.game.offers, specials = this._specialsAvailable();
     const ov = this._dim(); this.overlay = ov;
-    const cw = 600, x = (DESIGN_WIDTH - cw) / 2, n = this.game.offers.length;
-    const ch = 150 + n * 132, y = (DESIGN_HEIGHT - ch) / 2;
+    const cw = 624, x = (DESIGN_WIDTH - cw) / 2;
+    let bodyH = 0;
+    if (offers.length) bodyH += 34 + offers.length * 128;
+    if (specials.length) bodyH += 34 + specials.length * 82;
+    if (!offers.length && !specials.length) bodyH = 56;
+    const ch = 112 + bodyH + 60, y = Math.max(40, (DESIGN_HEIGHT - ch) / 2);
     ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
-    ov.addChild(Object.assign(this._t("🎬 이번 달 출연 제안", 24, S.ink, FD), { x: x + 30, y: y + 24 }));
-    ov.addChild(Object.assign(this._t("선택하면 슬롯에 담겨 이번 달에 출연해요", 14, S.sub), { x: x + 30, y: y + 58 }));
-    this.game.offers.forEach((id, i) => {
-      const m = MEDIA.find((mm) => mm.id === id);
-      const cy = y + 92 + i * 132, card = new Container();
-      card.addChild(new Graphics().roundRect(x + 24, cy, cw - 48, 116, 16).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
-      card.addChild(Object.assign(this._t(m.name, 22, S.ink, FD), { x: x + 44, y: cy + 16 }));
-      const req = Object.entries(m.req).map(([k, v]) => `${this._statLabel(k)} ${v}`).join(" · ");
-      card.addChild(Object.assign(this._t(`기대치  ${req}`, 14, S.sub), { x: x + 44, y: cy + 50 }));
-      card.addChild(Object.assign(this._t(`출연료  ${m.pay}만원`, 14, 0xb04a3a), { x: x + 44, y: cy + 74 }));
-      const grade = this._predict(m);
-      const gi = GRADE_INFO[grade];
-      card.addChild(new Graphics().roundRect(x + cw - 150, cy + 40, 100, 36, 12).fill(gi.color));
-      card.addChild(Object.assign((() => { const t = this._t(`예상 ${gi.label}`, 14, 0xffffff, FD); t.anchor.set(0.5); t.position.set(x + cw - 100, cy + 58); return t; })(), {}));
-      card.eventMode = "static"; card.cursor = "pointer";
-      card.on("pointertap", () => this.selectProduction(id));
-      ov.addChild(card);
-    });
+    ov.addChild(Object.assign(this._t("이번 달 제안", 24, S.ink, FD), { x: x + 30, y: y + 22 }));
+    ov.addChild(Object.assign(this._t("한지원: 좋은 기회야. 잘 골라보자!", 14, S.sub), { x: x + 30, y: y + 56 }));
+    let cy = y + 96;
+    if (!offers.length && !specials.length) {
+      ov.addChild(Object.assign(this._t("이번 달은 들어온 제안이 없어요.", 17, S.sub), { x: x + 36, y: cy + 6 }));
+    }
+    if (offers.length) {
+      ov.addChild(Object.assign(this._t("출연 제안", 17, 0xb04a3a, FD), { x: x + 30, y: cy })); cy += 34;
+      offers.forEach((id) => {
+        const m = MEDIA.find((mm) => mm.id === id), card = new Container();
+        card.addChild(new Graphics().roundRect(x + 24, cy, cw - 48, 116, 16).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
+        card.addChild(Object.assign(this._t(m.name, 22, S.ink, FD), { x: x + 44, y: cy + 14 }));
+        const req = Object.entries(m.req).map(([k, v]) => `${this._statLabel(k)} ${v}`).join(" · ");
+        card.addChild(Object.assign(this._t(`기대치  ${req}`, 14, S.sub), { x: x + 44, y: cy + 48 }));
+        card.addChild(Object.assign(this._t(`출연료  ${m.pay}만원`, 14, 0xb04a3a), { x: x + 44, y: cy + 72 }));
+        const gi = GRADE_INFO[this._predict(m)];
+        card.addChild(new Graphics().roundRect(x + cw - 150, cy + 40, 100, 36, 12).fill(gi.color));
+        card.addChild(Object.assign((() => { const t = this._t(`예상 ${gi.label}`, 14, 0xffffff, FD); t.anchor.set(0.5); t.position.set(x + cw - 100, cy + 58); return t; })(), {}));
+        card.eventMode = "static"; card.cursor = "pointer"; card.on("pointertap", () => this.selectProduction(id));
+        ov.addChild(card); cy += 128;
+      });
+    }
+    if (specials.length) {
+      ov.addChild(Object.assign(this._t("분기 특별활동", 17, 0x2e9e8e, FD), { x: x + 30, y: cy })); cy += 34;
+      specials.forEach((a) => {
+        const card = new Container();
+        card.addChild(new Graphics().roundRect(x + 24, cy, cw - 48, 70, 16).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
+        card.addChild(Object.assign(this._t(a.name, 20, S.ink, FD), { x: x + 44, y: cy + 10 }));
+        card.addChild(Object.assign(this._t(`${this._effText(a)}   ${this._cost(a)}`, 13, 0x2e9e8e), { x: x + 44, y: cy + 42 }));
+        card.eventMode = "static"; card.cursor = "pointer"; card.on("pointertap", () => this.selectSpecial(a.id));
+        ov.addChild(card); cy += 82;
+      });
+    }
     const close = new Container();
     close.addChild(new Graphics().roundRect(x + cw / 2 - 70, y + ch - 52, 140, 40, 14).fill(0xece6dc));
     close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 32); return t; })());
@@ -533,41 +556,8 @@ export class MainScene extends Scene {
       this._tap(c, () => { this.menuMode = "sub"; this.activeCat = cat.id; this.renderMenu(); });
       this.menuLayer.addChild(c);
     });
-    // 분기 특별활동 버튼 (3개월마다)
-    if ((this.game.turn - 1) % 3 === 0) {
-      const sc = new Container();
-      sc.addChild(new Graphics().roundRect(20, 944, DESIGN_WIDTH - 40, 46, 14).fill(0x2e9e8e).stroke({ width: 2, color: S.gold }));
-      const t = this._t("이번 분기 특별활동 — 아이돌·화보·팬미팅·예능", 18, 0xffffff, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, 967); sc.addChild(t);
-      this._tap(sc, () => this.openSpecial());
-      this.menuLayer.addChild(sc);
-    }
   }
 
-  // 분기 특별활동 팝업 (기획서 3·5): 매력·팬 강화 활동 선택
-  openSpecial() {
-    if (this.overlay) return;
-    const ov = this._dim(); this.overlay = ov;
-    const cw = 620, x = (DESIGN_WIDTH - cw) / 2, n = SPECIAL_ACTS.length, ch = 150 + n * 104, y = (DESIGN_HEIGHT - ch) / 2;
-    ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
-    ov.addChild(Object.assign(this._t("분기 특별활동", 24, S.ink, FD), { x: x + 30, y: y + 24 }));
-    ov.addChild(Object.assign(this._t("선택하면 슬롯에 담겨요 (3개월에 한 번)", 14, S.sub), { x: x + 30, y: y + 58 }));
-    SPECIAL_ACTS.forEach((a, i) => {
-      const ry = y + 92 + i * 104, card = new Container();
-      card.addChild(new Graphics().roundRect(x + 24, ry, cw - 48, 90, 16).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
-      card.addChild(Object.assign(this._t(a.name, 21, S.ink, FD), { x: x + 44, y: ry + 14 }));
-      card.addChild(Object.assign(this._t(this._effText(a), 14, 0x2e9e8e), { x: x + 44, y: ry + 46 }));
-      card.addChild(Object.assign(this._t(this._cost(a), 13, S.coral), { x: x + 44, y: ry + 68 }));
-      card.eventMode = "static"; card.cursor = "pointer";
-      card.on("pointertap", () => this.selectSpecial(a.id));
-      ov.addChild(card);
-    });
-    const close = new Container();
-    close.addChild(new Graphics().roundRect(x + cw / 2 - 70, y + ch - 50, 140, 38, 14).fill(0xece6dc));
-    close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 31); return t; })());
-    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => this._closeOverlay());
-    ov.addChild(close);
-    this.addChild(ov);
-  }
   selectSpecial(id) {
     if (this.selected.length >= 2) this.selected.shift();
     this.selected.push(id);

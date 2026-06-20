@@ -76,9 +76,9 @@ export class GameState {
     if (flag) this.flags.add(flag);
   }
 
-  // 이번 달 출연 제안 1~3개 생성 (등장 가능 매체 중)
+  // 이번 달 출연 제안 1~3개 생성 (등장 가능 매체 중). 첫 턴(고1 3월)은 제외 → 고1 6월부터.
   genOffers() {
-    if ((this.turn - 1) % 3 !== 0) return [];  // 분기(3개월)에 한 번만 제안
+    if (this.turn === 1 || (this.turn - 1) % 3 !== 0) return [];  // 분기(3개월)에 한 번, 단 첫 턴 제외
     const avail = MEDIA.filter((m) => m.from <= this.turn);
     const pool = [...avail];
     const n = Math.min(pool.length, this.turn > 12 ? 3 : 2);
