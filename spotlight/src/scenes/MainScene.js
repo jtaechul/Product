@@ -6,8 +6,8 @@ import { computeEnding, saveToDex, ENDING_COUNT } from "../systems/ending.js";
 import { saveGame } from "../systems/save.js";
 import { playBgm, stopBgm, setBgmOn, setSfxOn, isBgmOn, isSfxOn } from "../systems/sound.js";
 
-// 계절별 인게임 BGM (여름·가을·겨울 파일은 추후 추가 — 현재는 봄 곡 공유)
-const SEASON_BGM = { 봄: "bgm_spring", 여름: "bgm_spring", 가을: "bgm_spring", 겨울: "bgm_spring" };
+// 계절별 인게임 BGM
+const SEASON_BGM = { 봄: "bgm_spring", 여름: "bgm_summer", 가을: "bgm_autumn", 겨울: "bgm_winter" };
 import { ACTIVITIES, CATEGORIES, ACT_LINES, SEASON_LINES, SPECIAL_ACTS, findActivity } from "../data/activities.js";
 import { MEDIA, GRADE_COMMENTS } from "../data/media.js";
 import { BONDS, BOND_THRESHOLD } from "../data/bonds.js";
@@ -35,7 +35,7 @@ const LBL = { acting: 0xe2685e, charm: 0x2e9e8e, mind: 0xc07e1e, life: 0x6e7bd6 
 const SCOL = { act: 0xec6f65, charm: 0x2e9e8e, mind: 0xc07e1e, soc: 0x6e7bd6 };
 const STAT_VIEW = [
   ["acting", "연기", "act"], ["emotion", "감정", "act"], ["vocal", "발성", "act"], ["looks", "외모", "charm"], ["singing", "가창", "charm"],
-  ["dance", "댄스", "charm"], ["study", "학업", "mind"], ["character", "인성", "mind"], ["network", "인맥", "soc"], ["fame", "인지", "soc"],
+  ["dance", "댄스", "charm"], ["study", "학업", "mind"], ["character", "인성", "mind"], ["network", "인맥", "soc"], ["fame", "팬", "soc"],
 ];
 const MANAGER_LINES = [
   "이번 달은 뭘 해볼까?", "무리하지 말고 컨디션도 챙기자.",
@@ -164,7 +164,7 @@ export class MainScene extends Scene {
     const name = this._t(this.game.heroName, 18, S.sub, FD); name.anchor.set(0.5); name.position.set(215, 98); bar.addChild(name);
     // ③ 자원칩: 라벨/값 2줄 중앙정렬
     this.resText = {};
-    const RES = [["stamina", "체력", 366], ["mental", "멘탈", 460], ["money", "자금", 554], ["fans", "인지도", 649]];
+    const RES = [["stamina", "체력", 366], ["mental", "멘탈", 460], ["money", "자금", 554], ["fans", "팬", 649]];
     RES.forEach(([key, label, x]) => {
       const lab = this._t(label, 11, S.ink, FB); lab.anchor.set(0.5); lab.position.set(x, 64); bar.addChild(lab);
       const val = this._t("", 15, S.ink, FD); val.anchor.set(0.5); val.position.set(x, 90); bar.addChild(val);
@@ -406,7 +406,7 @@ export class MainScene extends Scene {
     ov.addChild(close);
     this.addChild(ov);
   }
-  _statLabel(k) { return ({ acting: "연기력", emotion: "감정", vocal: "발성", looks: "외모", singing: "가창", dance: "댄스", study: "학업", character: "인성", network: "인맥", fame: "인지도" })[k] || k; }
+  _statLabel(k) { return ({ acting: "연기력", emotion: "감정", vocal: "발성", looks: "외모", singing: "가창", dance: "댄스", study: "학업", character: "인성", network: "인맥", fame: "팬" })[k] || k; }
   _predict(m) {
     let P = 0, E = 0;
     for (const [k, v] of Object.entries(m.req)) { E += v; P += k === "fame" ? this.game.fans : (this.game.stats[k] || 0); }
@@ -543,7 +543,7 @@ export class MainScene extends Scene {
     }
   }
 
-  // 분기 특별활동 팝업 (기획서 3·5): 매력·인지도 강화 활동 선택
+  // 분기 특별활동 팝업 (기획서 3·5): 매력·팬 강화 활동 선택
   openSpecial() {
     if (this.overlay) return;
     const ov = this._dim(); this.overlay = ov;
@@ -555,7 +555,7 @@ export class MainScene extends Scene {
       const ry = y + 92 + i * 104, card = new Container();
       card.addChild(new Graphics().roundRect(x + 24, ry, cw - 48, 90, 16).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
       card.addChild(Object.assign(this._t(a.name, 21, S.ink, FD), { x: x + 44, y: ry + 14 }));
-      card.addChild(Object.assign(this._t(a.desc, 14, 0x2e9e8e), { x: x + 44, y: ry + 46 }));
+      card.addChild(Object.assign(this._t(this._effText(a), 14, 0x2e9e8e), { x: x + 44, y: ry + 46 }));
       card.addChild(Object.assign(this._t(this._cost(a), 13, S.coral), { x: x + 44, y: ry + 68 }));
       card.eventMode = "static"; card.cursor = "pointer";
       card.on("pointertap", () => this.selectSpecial(a.id));
@@ -597,7 +597,7 @@ export class MainScene extends Scene {
         if (bgTex) { bgSpr.texture = bgTex; bgSpr.scale.set(Math.max(DESIGN_WIDTH / bgTex.width, DESIGN_HEIGHT / bgTex.height)); }
         if (pTex) { const sp = new Sprite(pTex); sp.anchor.set(0.5, 1.0); sp.scale.set(820 / pTex.height); sp.position.set(DESIGN_WIDTH / 2, 992); charC.addChild(sp); }
         awardT.text = res.award;
-        subT.text = won ? `올해의 성과를 인정받았다!\n인지도 +${res.fansGain}${res.best ? ` · 인생연기 ${res.best}편` : ""}` : "다음 해를 기약하며…";
+        subT.text = won ? `올해의 성과를 인정받았다!\n팬 +${res.fansGain}${res.best ? ` · 인생연기 ${res.best}편` : ""}` : "다음 해를 기약하며…";
       });
     });
   }
@@ -632,11 +632,17 @@ export class MainScene extends Scene {
       const ico = new Sprite(this.tex[`actico_${act.id}`]); ico.anchor.set(0.5); ico.scale.set(60 / Math.max(ico.texture.width, ico.texture.height));
       ico.position.set(x + 42, y + h / 2); c.addChild(ico);
       c.addChild(Object.assign(this._t(act.name, 19, S.ink, FD), { x: x + 80, y: y + 14 }));
-      c.addChild(Object.assign(this._t(act.desc, 13, S.sub), { x: x + 80, y: y + 44 }));
+      c.addChild(Object.assign(this._t(this._effText(act), 13, 0x2e9e8e), { x: x + 80, y: y + 44 }));
       c.addChild(Object.assign(this._t(this._cost(act), 12, S.coral), { x: x + 80, y: y + 66 }));
       this._tap(c, () => this.pickActivity(act.id));
       this.menuLayer.addChild(c);
     });
+  }
+  // 활동의 실제 능력치 변동 텍스트 (카드 설명이 수치와 항상 일치하도록)
+  _effText(a) {
+    const p = [];
+    for (const [k, v] of Object.entries(a.effects || {})) p.push(`${this._statLabel(k)}+${v}`);
+    return p.join(" ");
   }
   _cost(a) {
     const p = [];
@@ -683,6 +689,8 @@ export class MainScene extends Scene {
       if (this.game.turn > TOTAL_TURNS) { this.showEnding(); return; } // 36턴 종료 → 40년 커리어 엔딩
       this.menuMode = "category"; this.renderMenu();
       this.mgrText.text = this._mgrLine();
+      if (this.game.stamina <= 0) this._toast("체력이 바닥났어요! 능력치가 거의 안 올라요 — 휴식이 필요해요");
+      else if (this.game.stamina < 20) this._toast("체력이 부족해요 — 능력치 상승이 줄어듭니다");
       this._afterTurn();
     })();
   }
@@ -733,7 +741,7 @@ export class MainScene extends Scene {
     if (ev) this.showEvent(ev);
   }
   _effSummary(c) {
-    const L = { acting: "연기력", emotion: "감정", vocal: "발성", looks: "외모", singing: "가창", dance: "댄스", study: "학업", character: "인성", network: "인맥", fame: "인지도", mental: "멘탈", stamina: "체력", money: "자금", fans: "인지도" };
+    const L = { acting: "연기력", emotion: "감정", vocal: "발성", looks: "외모", singing: "가창", dance: "댄스", study: "학업", character: "인성", network: "인맥", fame: "팬", mental: "멘탈", stamina: "체력", money: "자금", fans: "팬" };
     const p = [];
     for (const [k, v] of Object.entries(c.effects || {})) p.push(`${L[k] || k} ${v > 0 ? "+" : ""}${k === "money" ? Math.round(v / 10000) + "만" : v}`);
     if (c.flag) p.push("✦숨은 평판");
