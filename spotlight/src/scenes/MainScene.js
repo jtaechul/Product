@@ -11,7 +11,7 @@ const SEASON_BGM = { 봄: "bgm_spring", 여름: "bgm_summer", 가을: "bgm_autum
 import { ACTIVITIES, CATEGORIES, ACT_LINES, SEASON_LINES, SPECIAL_ACTS, findActivity } from "../data/activities.js";
 import { MEDIA, GRADE_COMMENTS } from "../data/media.js";
 import { BONDS, BOND_THRESHOLD } from "../data/bonds.js";
-import { ITEMS } from "../data/items.js";
+import { BOND_EVENTS } from "../data/bond_events.js";
 
 const GRADE_INFO = {
   best: { label: "인생 연기", color: 0xf5c451 },
@@ -57,7 +57,8 @@ export class MainScene extends Scene {
   }
 
   async onEnter() {
-    const uiNames = ["topbar2", "stats_frame", "manager_bubble", "bond_frame", "slot_chip", "btn_next", "cat_acting", "cat_charm", "cat_mind", "cat_life"];
+    const uiNames = ["topbar2", "stats_frame", "manager_bubble", "bond_frame", "slot_chip", "btn_next", "cat_acting", "cat_charm", "cat_mind", "cat_life",
+      "menu_panel", "menu_btn", "offer_frame", "icon_back", "icon_save", "icon_list", "icon_flag", "icon_music", "icon_speaker"];
     const [bgTex, idleTex] = await Promise.all([Assets.load(BG_SCHOOL), Assets.load(IDLE_SPRITE)]);
     await Promise.all(uiNames.map(async (n) => { this.tex[n] = await Assets.load(UI(n)); }));
     await Promise.all(ACTIVITIES.map(async (a) => { this.tex[`actico_${a.id}`] = await Assets.load(UI(`actico_${a.id}`)); }));
@@ -95,7 +96,6 @@ export class MainScene extends Scene {
     this.buildSlots();
     this.buildNextButton();
     this.buildBondButton();
-    this.buildShopButton();
     this.buildSaveButton();
     this.menuLayer = new Container();
     this.bottomBlock.addChild(this.menuLayer);
@@ -233,48 +233,43 @@ export class MainScene extends Scene {
     this.addChild(c);
   }
 
-  // 상점 버튼 (인연 버튼 아래)
-  buildShopButton() {
-    const c = new Container(); c.position.set(0, 0);
-    c.addChild(new Graphics().roundRect(628, 204, 80, 46, 14).fill(0xfdf8f2).stroke({ width: 2, color: S.gold }));
-    const t = this._t("상점", 18, 0xc07e1e, FD); t.anchor.set(0.5); t.position.set(668, 227); c.addChild(t);
-    c.eventMode = "static"; c.cursor = "pointer";
-    c.on("pointertap", () => this.openShop());
-    this.addChild(c);
-  }
-
-  // 메뉴 버튼 (상점 버튼 아래) — 설정·저장·종료 등
+  // 메뉴 버튼 (인연 버튼 아래) — 설정·저장·종료 등
   buildSaveButton() {
     const c = new Container(); c.position.set(0, 0);
-    c.addChild(new Graphics().roundRect(628, 258, 80, 46, 14).fill(0xfdf8f2).stroke({ width: 2, color: S.gold }));
-    const t = this._t("메뉴", 18, 0x4a5a8a, FD); t.anchor.set(0.5); t.position.set(668, 281); c.addChild(t);
+    c.addChild(new Graphics().roundRect(628, 204, 80, 46, 14).fill(0xfdf8f2).stroke({ width: 2, color: S.gold }));
+    const t = this._t("메뉴", 18, 0x4a5a8a, FD); t.anchor.set(0.5); t.position.set(668, 227); c.addChild(t);
     c.eventMode = "static"; c.cursor = "pointer";
     c.on("pointertap", () => this.openMenu());
     this.addChild(c);
   }
 
-  // 인게임 메뉴 (설정): 돌아가기·저장·메인메뉴·종료·BGM·효과음
+  // 인게임 메뉴 (설정): 핑크 패널 + 버튼 프레임 + 커스텀 아이콘
   openMenu() {
     if (this.overlay) return;
     const ov = this._dim(); this.overlay = ov;
-    const cw = 540, x = (DESIGN_WIDTH - cw) / 2, ch = 600, y = (DESIGN_HEIGHT - ch) / 2;
-    ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
-    ov.addChild(Object.assign(this._t("메뉴", 26, S.ink, FD), { x: x + 30, y: y + 24 }));
+    const ptex = this.tex.menu_panel, pw = 548, ph = pw * ptex.height / ptex.width;
+    const px = (DESIGN_WIDTH - pw) / 2, py = ((this.H || DESIGN_HEIGHT) - ph) / 2;
+    const panel = new Sprite(ptex); panel.scale.set(pw / ptex.width); panel.position.set(px, py); ov.addChild(panel);
+    ov.addChild((() => { const t = this._t("메 뉴", 30, 0xa84a64, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, py + ph * 0.072); return t; })());
     const rows = new Container(); ov.addChild(rows);
+    const btex = this.tex.menu_btn, bw = pw * 0.80, bh = bw * btex.height / btex.width, bx = px + (pw - bw) / 2;
+    const icons = ["icon_back", "icon_save", "icon_list", "icon_flag", "icon_music", "icon_speaker"];
+    const top = py + ph * 0.155, gap = (ph * 0.80) / 6;
     const build = () => {
       rows.removeChildren();
       const items = [
-        { label: "게임으로 돌아가기", color: 0x4a5a8a, fn: () => this._closeOverlay() },
-        { label: "저장하기", color: 0x2e9e8e, fn: () => { const ok = saveGame(this.game); this._closeOverlay(); this._toast(ok ? "저장 완료!" : "저장 실패…"); } },
-        { label: "메인 메뉴로", color: 0xc07e1e, fn: () => { try { window.location.reload(); } catch (e) {} } },
-        { label: "게임 종료하기", color: 0xd6655e, fn: () => this._quitGame() },
-        { label: `배경음악: ${isBgmOn() ? "켜짐" : "꺼짐"}`, color: isBgmOn() ? 0x2e9e8e : 0x8a8276, fn: () => { setBgmOn(!isBgmOn()); build(); } },
-        { label: `효과음: ${isSfxOn() ? "켜짐" : "꺼짐"}`, color: isSfxOn() ? 0x2e9e8e : 0x8a8276, fn: () => { setSfxOn(!isSfxOn()); build(); } },
+        { label: "게임으로 돌아가기", fn: () => this._closeOverlay() },
+        { label: "저장하기", fn: () => { const ok = saveGame(this.game); this._closeOverlay(); this._toast(ok ? "저장 완료!" : "저장 실패…"); } },
+        { label: "메인 메뉴로", fn: () => { try { window.location.reload(); } catch (e) {} } },
+        { label: "게임 종료하기", fn: () => this._quitGame() },
+        { label: `배경음악  ${isBgmOn() ? "켜짐" : "꺼짐"}`, fn: () => { setBgmOn(!isBgmOn()); build(); } },
+        { label: `효과음  ${isSfxOn() ? "켜짐" : "꺼짐"}`, fn: () => { setSfxOn(!isSfxOn()); build(); } },
       ];
       items.forEach((it, i) => {
-        const ry = y + 78 + i * 80, b = new Container();
-        b.addChild(new Graphics().roundRect(x + 30, ry, cw - 60, 62, 16).fill(it.color));
-        const t = this._t(it.label, 22, 0xffffff, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, ry + 31); b.addChild(t);
+        const by = top + i * gap, b = new Container();
+        const spr = new Sprite(btex); spr.scale.set(bw / btex.width); spr.position.set(bx, by); b.addChild(spr);
+        const ic = new Sprite(this.tex[icons[i]]); ic.anchor.set(0.5); ic.scale.set((bh * 0.5) / Math.max(ic.texture.width, ic.texture.height)); ic.position.set(bx + bw * 0.13, by + bh / 2); b.addChild(ic);
+        const t = this._t(it.label, 23, 0xffffff, FD); t.anchor.set(0.5); t.position.set(bx + bw * 0.60, by + bh / 2); b.addChild(t);
         b.eventMode = "static"; b.cursor = "pointer"; b.on("pointertap", it.fn);
         rows.addChild(b);
       });
@@ -305,40 +300,6 @@ export class MainScene extends Scene {
     let life = 90;
     const tick = () => { life -= 1; c.alpha = Math.min(1, life / 30); if (life <= 0) { this.removeChild(c); c.destroy({ children: true }); if (this._toastNode === c) this._toastNode = null; this._app?.ticker.remove(tick); } };
     this._app = this.manager?.app; this._app?.ticker.add(tick);
-  }
-
-  // 상점 팝업 (기획서 8단계): 돈으로 아이템 구매 → 즉시 효과
-  openShop() {
-    if (this.overlay) return;
-    const ov = this._dim(); this.overlay = ov;
-    const cw = 640, x = (DESIGN_WIDTH - cw) / 2, rows = ITEMS.length, ch = 150 + rows * 78, y = (DESIGN_HEIGHT - ch) / 2;
-    ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
-    ov.addChild(Object.assign(this._t("🛍️ 상점", 24, S.ink, FD), { x: x + 30, y: y + 24 }));
-    const money = this._t(`보유 ${this.game.moneyShort()}원`, 16, 0xb04a3a, FD); money.anchor.set(1, 0); money.position.set(x + cw - 30, y + 30); ov.addChild(money);
-    const rebuild = () => {
-      ITEMS.forEach((it, i) => {
-        const ry = y + 72 + i * 78, can = this.game.money >= it.cost;
-        const row = new Container(); row._row = true;
-        row.addChild(new Graphics().roundRect(x + 22, ry, cw - 44, 66, 14).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
-        row.addChild(Object.assign(this._t(`${it.emoji} ${it.name}`, 19, S.ink, FD), { x: x + 40, y: ry + 12 }));
-        row.addChild(Object.assign(this._t(it.desc, 13, S.sub), { x: x + 40, y: ry + 40 }));
-        const btn = new Container();
-        const bx = x + cw - 168, by = ry + 14;
-        btn.addChild(new Graphics().roundRect(bx, by, 146, 40, 12).fill(can ? 0xc07e1e : 0xd8d0c4));
-        const bt = this._t(`${Math.round(it.cost / 10000)}만원`, 16, 0xffffff, FD); bt.anchor.set(0.5); bt.position.set(bx + 73, by + 20); btn.addChild(bt);
-        if (can) { btn.eventMode = "static"; btn.cursor = "pointer"; btn.on("pointertap", () => { if (this.game.buyItem(it.id)) { this.refreshHUD(); this.renderMenu(); money.text = `보유 ${this.game.moneyShort()}원`; redraw(); } }); }
-        row.addChild(btn);
-        ov.addChild(row);
-      });
-    };
-    const redraw = () => { for (let i = ov.children.length - 1; i >= 0; i--) if (ov.children[i]._row) { const c = ov.removeChildAt(i); c.destroy({ children: true }); } rebuild(); };
-    rebuild();
-    const close = new Container();
-    close.addChild(new Graphics().roundRect(x + cw / 2 - 70, y + ch - 50, 140, 38, 14).fill(0xece6dc));
-    close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 31); return t; })());
-    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => this._closeOverlay());
-    ov.addChild(close);
-    this.addChild(ov);
   }
 
   // 인연(Bond) 팝업 (기획서 12번)
@@ -377,54 +338,50 @@ export class MainScene extends Scene {
   // 이번 분기 특별활동(있으면) — 첫 턴 제외, 분기(turn 4·7·…)에만
   _specialsAvailable() { return ((this.game.turn - 1) % 3 === 0 && this.game.turn > 1) ? SPECIAL_ACTS : []; }
 
-  // 이번 달 제안 팝업 (기획서 11·3): 출연 제안 + 분기 특별활동 병합
+  // 이번 달 제안 팝업 (기획서 11·3): 출연 제안 + 분기 특별활동 병합. offer_frame 프레임 사용
   openOffers() {
     if (this.overlay) return;
     const offers = this.game.offers, specials = this._specialsAvailable();
     const ov = this._dim(); this.overlay = ov;
-    const cw = 624, x = (DESIGN_WIDTH - cw) / 2;
-    let bodyH = 0;
-    if (offers.length) bodyH += 34 + offers.length * 128;
-    if (specials.length) bodyH += 34 + specials.length * 82;
-    if (!offers.length && !specials.length) bodyH = 56;
-    const ch = 112 + bodyH + 60, y = Math.max(40, (DESIGN_HEIGHT - ch) / 2);
-    ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
-    ov.addChild(Object.assign(this._t("이번 달 제안", 24, S.ink, FD), { x: x + 30, y: y + 22 }));
-    ov.addChild(Object.assign(this._t("한지원: 좋은 기회야. 잘 골라보자!", 14, S.sub), { x: x + 30, y: y + 56 }));
-    let cy = y + 96;
+    const ftex = this.tex.offer_frame, fw = 684, fh = fw * ftex.height / ftex.width;
+    const fx = (DESIGN_WIDTH - fw) / 2, fy = Math.max(16, ((this.H || DESIGN_HEIGHT) - fh) / 2);
+    const frame = new Sprite(ftex); frame.scale.set(fw / ftex.width); frame.position.set(fx, fy); ov.addChild(frame);
+    ov.addChild((() => { const t = this._t("이번 달 제안", 26, 0x9a6a2a, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, fy + fh * 0.10); return t; })());
+    const cl = fx + fw * 0.085, cw = fw * 0.83;
+    let cy = fy + fh * 0.25;
     if (!offers.length && !specials.length) {
-      ov.addChild(Object.assign(this._t("이번 달은 들어온 제안이 없어요.", 17, S.sub), { x: x + 36, y: cy + 6 }));
+      ov.addChild(Object.assign(this._t("이번 달은 들어온 제안이 없어요.", 18, 0x5a7a6a), { x: cl + 10, y: cy + 10 }));
     }
     if (offers.length) {
-      ov.addChild(Object.assign(this._t("출연 제안", 17, 0xb04a3a, FD), { x: x + 30, y: cy })); cy += 34;
+      ov.addChild(Object.assign(this._t("출연 제안", 17, 0xb04a3a, FD), { x: cl, y: cy })); cy += 32;
       offers.forEach((id) => {
         const m = MEDIA.find((mm) => mm.id === id), card = new Container();
-        card.addChild(new Graphics().roundRect(x + 24, cy, cw - 48, 116, 16).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
-        card.addChild(Object.assign(this._t(m.name, 22, S.ink, FD), { x: x + 44, y: cy + 14 }));
+        card.addChild(new Graphics().roundRect(cl, cy, cw, 96, 14).fill(0xffffff).stroke({ width: 2, color: 0xd6ead8 }));
+        card.addChild(Object.assign(this._t(m.name, 21, S.ink, FD), { x: cl + 18, y: cy + 12 }));
         const req = Object.entries(m.req).map(([k, v]) => `${this._statLabel(k)} ${v}`).join(" · ");
-        card.addChild(Object.assign(this._t(`기대치  ${req}`, 14, S.sub), { x: x + 44, y: cy + 48 }));
-        card.addChild(Object.assign(this._t(`출연료  ${m.pay}만원`, 14, 0xb04a3a), { x: x + 44, y: cy + 72 }));
+        card.addChild(Object.assign(this._t(`기대치 ${req}`, 13, S.sub), { x: cl + 18, y: cy + 44 }));
+        card.addChild(Object.assign(this._t(`출연료 ${m.pay}만원`, 13, 0xb04a3a), { x: cl + 18, y: cy + 66 }));
         const gi = GRADE_INFO[this._predict(m)];
-        card.addChild(new Graphics().roundRect(x + cw - 150, cy + 40, 100, 36, 12).fill(gi.color));
-        card.addChild(Object.assign((() => { const t = this._t(`예상 ${gi.label}`, 14, 0xffffff, FD); t.anchor.set(0.5); t.position.set(x + cw - 100, cy + 58); return t; })(), {}));
+        card.addChild(new Graphics().roundRect(cl + cw - 120, cy + 30, 96, 34, 12).fill(gi.color));
+        card.addChild(Object.assign((() => { const t = this._t(`예상 ${gi.label}`, 13, 0xffffff, FD); t.anchor.set(0.5); t.position.set(cl + cw - 72, cy + 47); return t; })(), {}));
         card.eventMode = "static"; card.cursor = "pointer"; card.on("pointertap", () => this.selectProduction(id));
-        ov.addChild(card); cy += 128;
+        ov.addChild(card); cy += 104;
       });
     }
     if (specials.length) {
-      ov.addChild(Object.assign(this._t("분기 특별활동", 17, 0x2e9e8e, FD), { x: x + 30, y: cy })); cy += 34;
+      ov.addChild(Object.assign(this._t("분기 특별활동", 17, 0x2e9e8e, FD), { x: cl, y: cy })); cy += 32;
       specials.forEach((a) => {
         const card = new Container();
-        card.addChild(new Graphics().roundRect(x + 24, cy, cw - 48, 70, 16).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
-        card.addChild(Object.assign(this._t(a.name, 20, S.ink, FD), { x: x + 44, y: cy + 10 }));
-        card.addChild(Object.assign(this._t(`${this._effText(a)}   ${this._cost(a)}`, 13, 0x2e9e8e), { x: x + 44, y: cy + 42 }));
+        card.addChild(new Graphics().roundRect(cl, cy, cw, 60, 14).fill(0xffffff).stroke({ width: 2, color: 0xd6ead8 }));
+        card.addChild(Object.assign(this._t(a.name, 19, S.ink, FD), { x: cl + 18, y: cy + 8 }));
+        card.addChild(Object.assign(this._t(`${this._effText(a)}   ${this._cost(a)}`, 12, 0x2e9e8e), { x: cl + 18, y: cy + 36 }));
         card.eventMode = "static"; card.cursor = "pointer"; card.on("pointertap", () => this.selectSpecial(a.id));
-        ov.addChild(card); cy += 82;
+        ov.addChild(card); cy += 66;
       });
     }
     const close = new Container();
-    close.addChild(new Graphics().roundRect(x + cw / 2 - 70, y + ch - 52, 140, 40, 14).fill(0xece6dc));
-    close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 32); return t; })());
+    close.addChild(new Graphics().roundRect(DESIGN_WIDTH / 2 - 68, fy + fh - 8, 136, 44, 16).fill(0xfdf8f2).stroke({ width: 2, color: S.gold }));
+    close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, fy + fh + 14); return t; })());
     close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => this._closeOverlay());
     ov.addChild(close);
     this.addChild(ov);
@@ -566,6 +523,29 @@ export class MainScene extends Scene {
   }
 
   // 학년 말 시상식 연출 (기획서 3·15): 시상식 배경 + 트로피 + 수상 결과
+  // 인연 이벤트 연출 (기획서 12번): 인물 등장 + 대사 3+ → 보너스 발동
+  _playBondEvent(id, tier) {
+    return new Promise((resolve) => {
+      const b = BONDS.find((x) => x.id === id), ev = BOND_EVENTS[id] && BOND_EVENTS[id][tier];
+      if (!b || !ev) { resolve(); return; }
+      const beats = ev.lines.map((t) => ({ text: t })).concat([{ text: `인연 보너스 발동!\n${ev.bonus}`, bonus: true }]);
+      const ov = new Container(); this.overlay = ov;
+      ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill(0x141019));
+      const veil = new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: 0xffe9c0, alpha: 0.06 }); ov.addChild(veil);
+      const sp = new Sprite(this.tex[`bond_${id}`]); sp.anchor.set(0.5, 1.0); sp.scale.set(900 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 980); ov.addChild(sp);
+      ov.addChild(new Graphics().roundRect(28, 988, 664, 236, 26).fill({ color: 0x140f1a, alpha: 0.86 }).stroke({ width: 2, color: S.gold }));
+      const who = this._t(`${b.name} · ${b.role}`, 20, S.gold, FD); who.position.set(54, 1006); ov.addChild(who);
+      const heart = this._t("인연 이벤트", 16, 0xec8aa0, FD); heart.anchor.set(1, 0); heart.position.set(672, 1008); ov.addChild(heart);
+      const storyT = this._t("", 23, 0xffffff); storyT.style.wordWrap = true; storyT.style.wordWrapWidth = 600; storyT.style.lineHeight = 34; storyT.position.set(54, 1046); ov.addChild(storyT);
+      const tip = this._t("화면을 누르면 계속 ▶", 15, 0xcfc7d0); tip.anchor.set(1, 1); tip.position.set(676, 1214); ov.addChild(tip);
+      ov.eventMode = "static";
+      let idx = 0;
+      const show = () => { const bt = beats[idx]; storyT.text = bt.text; storyT.style.fill = bt.bonus ? 0xffe08a : 0xffffff; };
+      ov.on("pointertap", () => { idx += 1; if (idx >= beats.length) { this._closeOverlay(); resolve(); } else show(); });
+      this.addChild(ov); show();
+    });
+  }
+
   _playCeremony(res) {
     return new Promise((resolve) => {
       const ov = new Container(); this.overlay = ov;
@@ -661,19 +641,26 @@ export class MainScene extends Scene {
     if (this.overlay) return;
     if (this.game.turn > TOTAL_TURNS) { this.showEnding(); return; } // 이미 졸업 → 엔딩 재표시
     if (this.selected.length === 0) { this.mgrText.text = "활동을 먼저 골라줘!"; return; }
-    const prods = this.selected.filter((s) => s.startsWith("prod:")).map((s) => s.slice(5));
-    const acts = this.selected.filter((s) => !s.startsWith("prod:"));
+    const order = [...this.selected];                    // 슬롯에 올린 순서 보존
+    const acts = order.filter((s) => !s.startsWith("prod:"));
     const season = this._season().name;
-    const results = prods.map((id) => this.game.runProduction(id)).filter(Boolean);
+    // 적용: 출연(평가) → 활동/월정산. 연출은 아래에서 슬롯 순서대로.
+    const resultMap = {};
+    for (const s of order) if (s.startsWith("prod:")) { const r = this.game.runProduction(s.slice(5)); if (r) resultMap[s] = r; }
     this.game.advance(acts);
     this.selected = [];
     this._afterSelectChange();
     if (this.nextBtn) this.nextBtn.visible = false; // 진행 연출 동안 버튼 숨김
-    // 연출 순서: 활동 이미지+대사 → 작품 출연 평가 → (졸업이면 엔딩) → 랜덤 이벤트
+    // 연출: 슬롯에 올린 순서 그대로 진행 → (졸업이면 엔딩) → 랜덤 이벤트
     (async () => {
-      if (acts.length) await this._playActivities(acts, season);
-      if (results.length) await this.playProduction(results);
+      let seasonShown = false;
+      for (const s of order) {
+        if (s.startsWith("prod:")) { if (resultMap[s]) await this._playScene(resultMap[s]); }
+        else { await this._playActivities([s], season, !seasonShown); seasonShown = true; }
+      }
       this.refreshHUD();
+      // 인연 이벤트 (기획서 12번): 인연 40·100 도달 시 스토리 + 보너스
+      for (const ev of this.game.pendingBondEvents()) await this._playBondEvent(ev.id, ev.tier);
       // 학년 말 시상식 (기획서 3·15): 고1·고2·고3 말(턴 13·25·37)에 그 해 성과로 수상
       if (this.game.turn === 13 || this.game.turn === 25 || this.game.turn > TOTAL_TURNS) {
         await this._playCeremony(this.game.yearAward());
@@ -691,11 +678,11 @@ export class MainScene extends Scene {
   _actLine(id) { const p = ACT_LINES[id] || ["오늘도 한 걸음 나아갔다."]; return p[Math.floor(Math.random() * p.length)]; }
 
   // 활동 연출 (기획서 14B): 다음 달 진행 후 선택한 활동의 포즈 + 관련 대사를 차례로 노출
-  _playActivities(actIds, season) {
+  _playActivities(actIds, season, showSeason = true) {
     return new Promise((resolve) => {
       const beats = [];
       const firstBg = (findActivity(actIds[0]) || {}).bg || "school";
-      if (Math.random() < 0.28 && SEASON_LINES[season]) beats.push({ who: "", pose: null, bg: firstBg, text: SEASON_LINES[season] });
+      if (showSeason && Math.random() < 0.28 && SEASON_LINES[season]) beats.push({ who: "", pose: null, bg: firstBg, text: SEASON_LINES[season] });
       for (const id of actIds) {
         const a = findActivity(id);
         beats.push({ who: a ? a.name : "", pose: a ? a.pose : null, bg: (a && a.bg) || "school", text: this._actLine(id) });
@@ -782,6 +769,10 @@ export class MainScene extends Scene {
     this._closeOverlay();
     const res = computeEnding(this.game);
     const total = saveToDex(res.id);
+    // 엔딩 BGM: 배우=ending1 / 창작자(감독·작가·PD·제작자)=ending2 / 부정=ending3
+    const creatorIds = ["film_director", "drama_producer", "broadcast_pd", "writer", "director_actor"];
+    const bgm = res.id === "controversy" ? "ending_bad" : creatorIds.includes(res.id) ? "ending_creator" : "ending_actor";
+    playBgm(`./assets/sfx/${bgm}.mp3`, 0.5);
     const H = this.H || DESIGN_HEIGHT;
     const ov = new Container(); ov._isEnding = true; this.overlay = ov;
     ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, H).fill(0x0e0b14));

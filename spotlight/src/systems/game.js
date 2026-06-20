@@ -3,7 +3,6 @@ import { ACTIVITIES, AUTO_ACTIVITY, STATS_META, findActivity } from "../data/act
 import { MEDIA } from "../data/media.js";
 import { ACT_BOND, BOND_THRESHOLD } from "../data/bonds.js";
 import { EVENTS } from "../data/events.js";
-import { ITEMS } from "../data/items.js";
 import { TOTAL_TURNS, MILESTONES, START_MONEY } from "../config.js";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -31,6 +30,19 @@ export class GameState {
     this.offers = this.genOffers();// 이번 달 출연 제안
     this.bonds = { hanjiwon: 0, noh: 0, haneul: 0, yusea: 0 }; // 인연 게이지 (기획서 12번)
     this.prodBonus = 1;            // 행운의 부적 등 다음 출연 평가 보정 (1회)
+    this.bondEventsSeen = new Set(); // 본 인연 이벤트 ("id:40"/"id:100")
+  }
+
+  // 새로 도달한 인연 이벤트(40·100) 반환 + 본 것으로 표시 (기획서 12번)
+  pendingBondEvents() {
+    const out = [];
+    for (const id of Object.keys(this.bonds)) {
+      for (const tier of [40, 100]) {
+        const key = `${id}:${tier}`;
+        if (this.bonds[id] >= tier && !this.bondEventsSeen.has(key)) { this.bondEventsSeen.add(key); out.push({ id, tier }); }
+      }
+    }
+    return out;
   }
 
   // 마일스톤 판정 (기획서 6번): 학년 말 턴(13·25) 목표 달성 여부 (경고 안내용)
@@ -41,21 +53,6 @@ export class GameState {
   }
 
   raiseBond(id, n) { if (this.bonds[id] !== undefined) this.bonds[id] = clamp(this.bonds[id] + n, 0, 100); }
-
-  // 상점 구매 (기획서 8단계): 돈 차감 → 즉시 효과 적용
-  buyItem(id) {
-    const it = ITEMS.find((x) => x.id === id);
-    if (!it || this.money < it.cost) return false;
-    this.money -= it.cost;
-    for (const [k, v] of Object.entries(it.effects || {})) {
-      if (k === "stamina") this.stamina = clamp(this.stamina + v, 0, 100);
-      else if (k === "mental") this.mental = clamp(this.mental + v, 0, 100);
-      else if (k === "fans") this.fans = Math.max(0, this.fans + v);
-      else if (this.stats[k] !== undefined) this._gainStat(k, v);
-    }
-    if (it.lucky) this.prodBonus = 1.15;
-    return true;
-  }
 
   // 랜덤 이벤트 추첨 (기획서 13번): 약 38% 확률
   rollEvent() {
@@ -98,7 +95,8 @@ export class GameState {
       E += v;
       P += k === "fame" ? this.fans : (this.stats[k] || 0);
     }
-    if (this.bonds.hanjiwon >= BOND_THRESHOLD) P *= 1.1; // 매니저 인연: 평가 +10%
+    if (this.bonds.hanjiwon >= 100) P *= 1.2;            // 매니저 인연 100: 평가 +20%
+    else if (this.bonds.hanjiwon >= BOND_THRESHOLD) P *= 1.1; // 매니저 인연 40: 평가 +10%
     if (this.prodBonus !== 1) { P *= this.prodBonus; this.prodBonus = 1; } // 행운의 부적 (1회 소모)
     const ratio = E ? P / E : 1;
     let grade = "bad";
@@ -117,7 +115,7 @@ export class GameState {
     } else if (grade === "bad") {
       this.mental = clamp(this.mental - 12, 0, 100);
     }
-    if (this.bonds.yusea >= BOND_THRESHOLD && (grade === "best" || grade === "good")) this._gainStat("acting", 2); // 라이벌 자극
+    if (this.bonds.yusea >= BOND_THRESHOLD && (grade === "best" || grade === "good")) this._gainStat("acting", this.bonds.yusea >= 100 ? 4 : 2); // 라이벌 자극(40/100)
     this.raiseBond("hanjiwon", 10); this.raiseBond("yusea", 6);
     this.filmography.push({ turn: this.turn, label: this.label, id: m.id, name: m.name, grade });
     return { media: m, grade };
@@ -166,8 +164,8 @@ export class GameState {
 
   _applyOne(act) {
     if (!act) return;
-    // 인연 보너스: 노교수(연기 효율 +20%), 박하늘(멘탈 회복 +30%)
-    const actBoost = act.cat === "acting" && this.bonds.noh >= BOND_THRESHOLD ? 1.2 : 1.0;
+    // 인연 보너스(40/100 차등): 노교수(연기 효율 +20%/+35%), 박하늘(멘탈 회복 +30%/+50%)
+    const actBoost = act.cat === "acting" ? (this.bonds.noh >= 100 ? 1.35 : this.bonds.noh >= BOND_THRESHOLD ? 1.2 : 1.0) : 1.0;
     for (const [k, v] of Object.entries(act.effects || {})) {
       if (k === "fame") this.fans = Math.max(0, this.fans + v);
       else if (this.stats[k] !== undefined) this._gainStat(k, v * actBoost);
@@ -175,7 +173,8 @@ export class GameState {
     if (act.stamina) this.stamina = clamp(this.stamina + act.stamina, 0, 100);
     if (act.mental) {
       let mv = act.mental;
-      if (mv > 0 && this.bonds.haneul >= BOND_THRESHOLD) mv = Math.round(mv * 1.3);
+      const hb = this.bonds.haneul >= 100 ? 1.5 : this.bonds.haneul >= BOND_THRESHOLD ? 1.3 : 1.0;
+      if (mv > 0) mv = Math.round(mv * hb);
       this.mental = clamp(this.mental + mv, 0, 100);
     }
     if (act.money) this.money = Math.max(0, this.money + act.money);
@@ -217,7 +216,7 @@ export class GameState {
       v: 1, heroName: this.heroName, turn: this.turn, stats: { ...this.stats },
       stamina: this.stamina, mental: this.mental, money: this.money, fans: this.fans,
       filmography: this.filmography, flags: [...this.flags], bonds: { ...this.bonds },
-      offers: this.offers, prodBonus: this.prodBonus,
+      offers: this.offers, prodBonus: this.prodBonus, bondEventsSeen: [...this.bondEventsSeen],
     };
   }
   static fromData(d) {
@@ -230,6 +229,7 @@ export class GameState {
     g.filmography = d.filmography || []; g.flags = new Set(d.flags || []);
     if (d.bonds) g.bonds = { ...g.bonds, ...d.bonds };
     g.offers = d.offers || []; g.prodBonus = d.prodBonus ?? 1;
+    g.bondEventsSeen = new Set(d.bondEventsSeen || []);
     return g;
   }
 }
