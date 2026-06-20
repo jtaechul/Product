@@ -11,6 +11,7 @@ const SEASON_BGM = { 봄: "bgm_spring", 여름: "bgm_summer", 가을: "bgm_autum
 import { ACTIVITIES, CATEGORIES, ACT_LINES, SEASON_LINES, SPECIAL_ACTS, findActivity } from "../data/activities.js";
 import { MEDIA, GRADE_COMMENTS } from "../data/media.js";
 import { BONDS, BOND_THRESHOLD } from "../data/bonds.js";
+import { BOND_EVENTS } from "../data/bond_events.js";
 
 const GRADE_INFO = {
   best: { label: "인생 연기", color: 0xf5c451 },
@@ -522,6 +523,29 @@ export class MainScene extends Scene {
   }
 
   // 학년 말 시상식 연출 (기획서 3·15): 시상식 배경 + 트로피 + 수상 결과
+  // 인연 이벤트 연출 (기획서 12번): 인물 등장 + 대사 3+ → 보너스 발동
+  _playBondEvent(id, tier) {
+    return new Promise((resolve) => {
+      const b = BONDS.find((x) => x.id === id), ev = BOND_EVENTS[id] && BOND_EVENTS[id][tier];
+      if (!b || !ev) { resolve(); return; }
+      const beats = ev.lines.map((t) => ({ text: t })).concat([{ text: `인연 보너스 발동!\n${ev.bonus}`, bonus: true }]);
+      const ov = new Container(); this.overlay = ov;
+      ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill(0x141019));
+      const veil = new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: 0xffe9c0, alpha: 0.06 }); ov.addChild(veil);
+      const sp = new Sprite(this.tex[`bond_${id}`]); sp.anchor.set(0.5, 1.0); sp.scale.set(900 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 980); ov.addChild(sp);
+      ov.addChild(new Graphics().roundRect(28, 988, 664, 236, 26).fill({ color: 0x140f1a, alpha: 0.86 }).stroke({ width: 2, color: S.gold }));
+      const who = this._t(`${b.name} · ${b.role}`, 20, S.gold, FD); who.position.set(54, 1006); ov.addChild(who);
+      const heart = this._t("인연 이벤트", 16, 0xec8aa0, FD); heart.anchor.set(1, 0); heart.position.set(672, 1008); ov.addChild(heart);
+      const storyT = this._t("", 23, 0xffffff); storyT.style.wordWrap = true; storyT.style.wordWrapWidth = 600; storyT.style.lineHeight = 34; storyT.position.set(54, 1046); ov.addChild(storyT);
+      const tip = this._t("화면을 누르면 계속 ▶", 15, 0xcfc7d0); tip.anchor.set(1, 1); tip.position.set(676, 1214); ov.addChild(tip);
+      ov.eventMode = "static";
+      let idx = 0;
+      const show = () => { const bt = beats[idx]; storyT.text = bt.text; storyT.style.fill = bt.bonus ? 0xffe08a : 0xffffff; };
+      ov.on("pointertap", () => { idx += 1; if (idx >= beats.length) { this._closeOverlay(); resolve(); } else show(); });
+      this.addChild(ov); show();
+    });
+  }
+
   _playCeremony(res) {
     return new Promise((resolve) => {
       const ov = new Container(); this.overlay = ov;
@@ -635,6 +659,8 @@ export class MainScene extends Scene {
         else { await this._playActivities([s], season, !seasonShown); seasonShown = true; }
       }
       this.refreshHUD();
+      // 인연 이벤트 (기획서 12번): 인연 40·100 도달 시 스토리 + 보너스
+      for (const ev of this.game.pendingBondEvents()) await this._playBondEvent(ev.id, ev.tier);
       // 학년 말 시상식 (기획서 3·15): 고1·고2·고3 말(턴 13·25·37)에 그 해 성과로 수상
       if (this.game.turn === 13 || this.game.turn === 25 || this.game.turn > TOTAL_TURNS) {
         await this._playCeremony(this.game.yearAward());
