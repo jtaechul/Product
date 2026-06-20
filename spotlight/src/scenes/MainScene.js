@@ -553,12 +553,9 @@ export class MainScene extends Scene {
       if (acts.length) await this._playActivities(acts, season);
       if (results.length) await this.playProduction(results);
       this.refreshHUD();
-      // 마일스톤 판정 (기획서 6번): 어려움 모드 미달 → 방출(배드엔딩), 그 외 경고/달성 토스트
+      // 마일스톤 판정 (기획서 6번): 학년 말 목표 달성/미달 안내 토스트
       const ms = this.game.milestoneCheck();
-      if (ms) {
-        if (!ms.ok && ms.fatal) { this.game.expelled = true; this.showEnding(); return; }
-        this._toast(ms.ok ? `${ms.grade} 목표 달성! (${ms.need})` : `${ms.grade} 목표 미달 — ${ms.need}`);
-      }
+      if (ms) this._toast(ms.ok ? `${ms.grade} 목표 달성! (${ms.need})` : `${ms.grade} 목표 미달 — ${ms.need}`);
       if (this.game.turn > TOTAL_TURNS) { this.showEnding(); return; } // 36턴 종료 → 40년 커리어 엔딩
       this.menuMode = "category"; this.renderMenu();
       this.mgrText.text = this._mgrLine();

@@ -34,7 +34,6 @@ function buildContext(game) {
     bestWork,
     people: bondPeople(game.bonds),
     name: game.heroName || "그",
-    expelled: !!game.expelled,
   };
 }
 
