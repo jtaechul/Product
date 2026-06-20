@@ -665,6 +665,7 @@ export class MainScene extends Scene {
     const lab = this._t("다음 달 일정 진행하기", 27, S.white, FD); lab.anchor.set(0.5); lab.position.set(DESIGN_WIDTH / 2, 1172 + spr.height / 2); c.addChild(lab);
     this._tap(c, () => this.onNextMonth());
     this.bottomBlock.addChild(c);
+    this.nextBtn = c;
   }
   onNextMonth() {
     if (this.overlay) return;
@@ -677,6 +678,7 @@ export class MainScene extends Scene {
     this.game.advance(acts);
     this.selected = [];
     this._afterSelectChange();
+    if (this.nextBtn) this.nextBtn.visible = false; // 진행 연출 동안 버튼 숨김
     // 연출 순서: 활동 이미지+대사 → 작품 출연 평가 → (졸업이면 엔딩) → 랜덤 이벤트
     (async () => {
       if (acts.length) await this._playActivities(acts, season);
@@ -689,6 +691,7 @@ export class MainScene extends Scene {
       if (this.game.turn > TOTAL_TURNS) { this.showEnding(); return; } // 36턴 종료 → 40년 커리어 엔딩
       this.menuMode = "category"; this.renderMenu();
       this.mgrText.text = this._mgrLine();
+      if (this.nextBtn) this.nextBtn.visible = true; // 행동 완료 → 버튼 다시 표시
       if (this.game.stamina <= 0) this._toast("체력이 바닥났어요! 능력치가 거의 안 올라요 — 휴식이 필요해요");
       else if (this.game.stamina < 20) this._toast("체력이 부족해요 — 능력치 상승이 줄어듭니다");
       this._afterTurn();
