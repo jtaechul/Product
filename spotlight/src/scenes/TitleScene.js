@@ -39,7 +39,6 @@ export class TitleScene extends Scene {
     this.sub.anchor.set(0.5); this.addChild(this.sub);
 
     armBgm("./assets/sfx/title_bgm.mp3", 0.55); // 시작 화면 배경음악
-    document.getElementById("loading")?.remove();
     this._layout(this.H || DESIGN_HEIGHT);
   }
 

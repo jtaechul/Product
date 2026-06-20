@@ -55,7 +55,6 @@ export class PrologueScene extends Scene {
     this.on("pointertap", () => this._next());
 
     armBgm("./assets/sfx/title_bgm.mp3", 0.55); // 프롤로그까지 타이틀 BGM 유지
-    document.getElementById("loading")?.remove();
     await this._show();
     this._layout(this.H || DESIGN_HEIGHT);
   }

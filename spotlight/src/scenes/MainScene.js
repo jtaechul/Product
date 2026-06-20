@@ -104,7 +104,6 @@ export class MainScene extends Scene {
     this.renderMenu();
     this.mgrText.text = this._mgrLine();
     this._updateSeasonBgm();
-    document.getElementById("loading")?.remove();
   }
 
   onExit() { stopBgm(); super.onExit(); }

@@ -12,6 +12,7 @@ export class SceneManager {
 
   /** @param {import('./Scene.js').Scene} scene */
   async change(scene) {
+    try { window.__setLoading && window.__setLoading(true); } catch (e) {} // 전환 중 로딩 표시
     if (this.current) {
       this.app.stage.removeChild(this.current);
       this.current.onExit();
@@ -19,8 +20,12 @@ export class SceneManager {
     this.current = scene;
     scene.bind(this);
     this.app.stage.addChild(scene);
-    await scene.onEnter();
-    this.resize();
+    try {
+      await scene.onEnter();
+    } finally {
+      this.resize();
+      try { window.__setLoading && window.__setLoading(false); } catch (e) {} // 준비 완료 → 숨김
+    }
   }
 
   // 설계 해상도를 화면에 맞춘다. 세로폰=폭채움, 태블릿(짧고 넓음)=전체 보이게 높이맞춤(가운데),
