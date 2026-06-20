@@ -4,7 +4,7 @@ import { DESIGN_WIDTH, DESIGN_HEIGHT, TOTAL_TURNS } from "../config.js";
 import { GameState } from "../systems/game.js";
 import { computeEnding, saveToDex, ENDING_COUNT } from "../systems/ending.js";
 import { saveGame } from "../systems/save.js";
-import { playBgm, stopBgm, setBgmOn, setSfxOn, isBgmOn, isSfxOn } from "../systems/sound.js";
+import { playBgm, stopBgm, setBgmOn, setSfxOn, isBgmOn, isSfxOn, sfx } from "../systems/sound.js";
 
 // 계절별 인게임 BGM
 const SEASON_BGM = { 봄: "bgm_spring", 여름: "bgm_summer", 가을: "bgm_autumn", 겨울: "bgm_winter" };
@@ -245,6 +245,7 @@ export class MainScene extends Scene {
   // 인게임 메뉴 (설정): 핑크 패널 + 버튼 프레임 + 커스텀 아이콘
   openMenu() {
     if (this.overlay) return;
+    sfx("tap");
     const ov = this._dim(); this.overlay = ov;
     const ptex = this.tex.menu_panel, pw = 548, ph = pw * ptex.height / ptex.width;
     const px = (DESIGN_WIDTH - pw) / 2, py = ((this.H || DESIGN_HEIGHT) - ph) / 2;
@@ -258,7 +259,7 @@ export class MainScene extends Scene {
       rows.removeChildren();
       const items = [
         { label: "게임으로 돌아가기", fn: () => this._closeOverlay() },
-        { label: "저장하기", fn: () => { const ok = saveGame(this.game); this._closeOverlay(); this._toast(ok ? "저장 완료!" : "저장 실패…"); } },
+        { label: "저장하기", fn: () => { const ok = saveGame(this.game); this._closeOverlay(); if (ok) sfx("save"); this._toast(ok ? "저장 완료!" : "저장 실패…"); } },
         { label: "메인 메뉴로", fn: () => { try { window.location.reload(); } catch (e) {} } },
         { label: "게임 종료하기", fn: () => this._quitGame() },
         { label: `배경음악  ${isBgmOn() ? "켜짐" : "꺼짐"}`, fn: () => { setBgmOn(!isBgmOn()); build(); } },
@@ -269,7 +270,7 @@ export class MainScene extends Scene {
         const spr = new Sprite(btex); spr.scale.set(bw / btex.width); spr.position.set(bx, by); b.addChild(spr);
         const ic = new Sprite(this.tex[icons[i]]); ic.anchor.set(0.5); ic.scale.set((bh * 0.5) / Math.max(ic.texture.width, ic.texture.height)); ic.position.set(bx + bw * 0.13, by + bh / 2); b.addChild(ic);
         const t = this._t(it.label, 23, 0xffffff, FD); t.anchor.set(0.5); t.position.set(bx + bw * 0.60, by + bh / 2); b.addChild(t);
-        b.eventMode = "static"; b.cursor = "pointer"; b.on("pointertap", it.fn);
+        b.eventMode = "static"; b.cursor = "pointer"; b.on("pointertap", () => { sfx("tap"); it.fn(); });
         rows.addChild(b);
       });
     };
@@ -304,6 +305,7 @@ export class MainScene extends Scene {
   // 인연(Bond) 팝업 (기획서 12번)
   openBonds() {
     if (this.overlay) return;
+    sfx("tap");
     const ov = this._dim(); this.overlay = ov;
     const cw = 620, x = (DESIGN_WIDTH - cw) / 2, rows = BONDS.length, ch = 132 + rows * 110, y = (DESIGN_HEIGHT - ch) / 2;
     ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
@@ -329,7 +331,7 @@ export class MainScene extends Scene {
     const close = new Container();
     close.addChild(new Graphics().roundRect(x + cw / 2 - 70, y + ch - 50, 140, 38, 14).fill(0xece6dc));
     close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 31); return t; })());
-    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => this._closeOverlay());
+    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => { sfx("cancel"); this._closeOverlay(); });
     ov.addChild(close);
     this.addChild(ov);
   }
@@ -340,6 +342,7 @@ export class MainScene extends Scene {
   // 이번 달 제안 팝업 (기획서 11·3): 출연 제안 + 분기 특별활동 병합. offer_frame 프레임 사용
   openOffers() {
     if (this.overlay) return;
+    sfx("tap");
     const offers = this.game.offers, specials = this._specialsAvailable();
     const ov = this._dim(); this.overlay = ov;
     const ftex = this.tex.offer_frame, fw = 684, fh = fw * ftex.height / ftex.width;
@@ -363,7 +366,7 @@ export class MainScene extends Scene {
         const gi = GRADE_INFO[this._predict(m)];
         card.addChild(new Graphics().roundRect(cl + cw - 120, cy + 30, 96, 34, 12).fill(gi.color));
         card.addChild(Object.assign((() => { const t = this._t(`예상 ${gi.label}`, 13, 0xffffff, FD); t.anchor.set(0.5); t.position.set(cl + cw - 72, cy + 47); return t; })(), {}));
-        card.eventMode = "static"; card.cursor = "pointer"; card.on("pointertap", () => this.selectProduction(id));
+        card.eventMode = "static"; card.cursor = "pointer"; card.on("pointertap", () => this.selectProduction(id));  // 사운드는 selectProduction 내부
         ov.addChild(card); cy += 104;
       });
     }
@@ -381,7 +384,7 @@ export class MainScene extends Scene {
     const close = new Container();
     close.addChild(new Graphics().roundRect(DESIGN_WIDTH / 2 - 68, fy + fh - 8, 136, 44, 16).fill(0xfdf8f2).stroke({ width: 2, color: S.gold }));
     close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, fy + fh + 14); return t; })());
-    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => this._closeOverlay());
+    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => { sfx("cancel"); this._closeOverlay(); });
     ov.addChild(close);
     this.addChild(ov);
   }
@@ -395,6 +398,7 @@ export class MainScene extends Scene {
   selectProduction(id) {
     if (this.selected.length >= 2) this.selected.shift();
     this.selected.push(`prod:${id}`);
+    sfx("select");
     this._afterSelectChange();
     this._closeOverlay();
   }
@@ -420,7 +424,7 @@ export class MainScene extends Scene {
     }[grade];
     return [
       { who: "감독", text: `「${m.name}」 촬영장. 카메라에 빨간 불이 들어온다. "자, 갈게요. 레디… 액션!"`, pose: "filming", tint: 0x000000, tintA: 0 },
-      { who: "", text: `${end.text}\n\n🎁 ${this._rewardText(m, grade)}`, pose: end.pose, tint: end.tint, tintA: end.tintA, badge: grade },
+      { who: "", text: `${end.text}\n\n보상  ${this._rewardText(m, grade)}`, pose: end.pose, tint: end.tint, tintA: end.tintA, badge: grade },
     ];
   }
   _playScene(result) {
@@ -448,6 +452,7 @@ export class MainScene extends Scene {
         tint.clear(); if (b.tintA) tint.rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: b.tint, alpha: b.tintA });
         whoT.text = b.who || ""; storyT.text = b.text;
         if (b.badge) {
+          sfx(b.badge === "best" ? "best" : b.badge === "good" ? "good" : b.badge === "bad" ? "bad" : "page"); // 등급별 효과음
           const gi = GRADE_INFO[b.badge];
           badgeC.addChild(new Graphics().roundRect(DESIGN_WIDTH / 2 - 120, 150, 240, 72, 20).fill(gi.color).stroke({ width: 3, color: 0xffffff }));
           const t = this._t(gi.label, 34, 0xffffff, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, 186); badgeC.addChild(t);
@@ -474,7 +479,7 @@ export class MainScene extends Scene {
       const txt = this._t("비어있음", 18, S.sub, FD); txt.anchor.set(0, 0.5); txt.position.set(sx + 96, cyc); chip.addChild(txt);
       chip._txt = txt;
       chip.eventMode = "static"; chip.cursor = "pointer";
-      chip.on("pointertap", () => { if (this.selected[i] !== undefined) { this.selected.splice(i, 1); this._afterSelectChange(); } });
+      chip.on("pointertap", () => { if (this.selected[i] !== undefined) { sfx("cancel"); this.selected.splice(i, 1); this._afterSelectChange(); } });
       this.bottomBlock.addChild(chip); this.slotChips.push(chip);
     }
   }
@@ -484,7 +489,7 @@ export class MainScene extends Scene {
       if (!sel) { chip._txt.text = "비어있음"; chip._txt.style.fill = S.sub; return; }
       if (sel.startsWith("prod:")) {
         const m = MEDIA.find((x) => x.id === sel.slice(5));
-        chip._txt.text = `🎬 ${m.name}`; chip._txt.style.fill = S.coral;
+        chip._txt.text = m.name; chip._txt.style.fill = S.coral;
       } else {
         const act = findActivity(sel);
         chip._txt.text = act ? act.name : "비어있음"; chip._txt.style.fill = act ? S.ink : S.sub;
@@ -509,7 +514,7 @@ export class MainScene extends Scene {
       const spr = this._spr(`cat_${cat.id}`, cx, y, cw); c.addChild(spr);
       const l = this._t(cat.label, 20, S.white, FD); l.anchor.set(0.5, 0.5); l.position.set(cx + cw / 2, y + spr.height * 0.30); c.addChild(l);
       const ico = new Sprite(this.tex[`catico_${cat.id}`]); ico.anchor.set(0.5); ico.scale.set(56 / Math.max(ico.texture.width, ico.texture.height)); ico.position.set(cx + cw / 2, y + spr.height * 0.60); c.addChild(ico);
-      this._tap(c, () => { this.menuMode = "sub"; this.activeCat = cat.id; this.renderMenu(); });
+      this._tap(c, () => { sfx("tap"); this.menuMode = "sub"; this.activeCat = cat.id; this.renderMenu(); });
       this.menuLayer.addChild(c);
     });
   }
@@ -517,6 +522,7 @@ export class MainScene extends Scene {
   selectSpecial(id) {
     if (this.selected.length >= 2) this.selected.shift();
     this.selected.push(id);
+    sfx("select");
     this._afterSelectChange();
     this._closeOverlay();
   }
@@ -539,7 +545,7 @@ export class MainScene extends Scene {
       const tip = this._t("화면을 누르면 계속 ▶", 15, 0xcfc7d0); tip.anchor.set(1, 1); tip.position.set(676, 1214); ov.addChild(tip);
       ov.eventMode = "static";
       let idx = 0;
-      const show = () => { const bt = beats[idx]; storyT.text = bt.text; storyT.style.fill = bt.bonus ? 0xffe08a : 0xffffff; };
+      const show = () => { const bt = beats[idx]; storyT.text = bt.text; storyT.style.fill = bt.bonus ? 0xffe08a : 0xffffff; if (bt.bonus) sfx("bonus"); };
       ov.on("pointertap", () => { idx += 1; if (idx >= beats.length) { this._closeOverlay(); resolve(); } else show(); });
       this.addChild(ov); show();
     });
@@ -566,6 +572,7 @@ export class MainScene extends Scene {
         if (bgTex) { bgSpr.texture = bgTex; bgSpr.scale.set(Math.max(DESIGN_WIDTH / bgTex.width, DESIGN_HEIGHT / bgTex.height)); }
         if (pTex) { const sp = new Sprite(pTex); sp.anchor.set(0.5, 1.0); sp.scale.set(820 / pTex.height); sp.position.set(DESIGN_WIDTH / 2, 992); charC.addChild(sp); }
         awardT.text = res.award;
+        sfx(won ? "award" : "page"); // 수상 시 박수·팡파레
         subT.text = won ? `올해의 성과를 인정받았다!\n팬 +${res.fansGain}${res.best ? ` · 인생연기 ${res.best}편` : ""}` : "다음 해를 기약하며…";
       });
     });
@@ -588,7 +595,7 @@ export class MainScene extends Scene {
     const back = new Container();
     back.addChild(new Graphics().roundRect(20, 842, 150, 44, 14).fill(0xfdfbf7).stroke({ width: 2, color: S.gold }));
     back.addChild(Object.assign(this._t("← 카테고리", 18, S.ink, FD), { x: 34, y: 853 }));
-    this._tap(back, () => { this.menuMode = "category"; this.renderMenu(); });
+    this._tap(back, () => { sfx("cancel"); this.menuMode = "category"; this.renderMenu(); });
     this.menuLayer.addChild(back);
     this.menuLayer.addChild(Object.assign(this._t(cat.label, 22, LBL[catId], FD), { x: 190, y: 850 }));
 
@@ -624,6 +631,7 @@ export class MainScene extends Scene {
   pickActivity(id) {
     if (this.selected.length >= 2) this.selected.shift();
     this.selected.push(id);
+    sfx("select");
     this._afterSelectChange();
     this.menuMode = "category"; this.renderMenu();
   }
@@ -639,7 +647,8 @@ export class MainScene extends Scene {
   onNextMonth() {
     if (this.overlay) return;
     if (this.game.turn > TOTAL_TURNS) { this.showEnding(); return; } // 이미 졸업 → 엔딩 재표시
-    if (this.selected.length === 0) { this.mgrText.text = "활동을 먼저 골라줘!"; return; }
+    if (this.selected.length === 0) { sfx("warn"); this.mgrText.text = "활동을 먼저 골라줘!"; return; }
+    sfx("next");
     const order = [...this.selected];                    // 슬롯에 올린 순서 보존
     const acts = order.filter((s) => !s.startsWith("prod:"));
     const season = this._season().name;
@@ -668,8 +677,8 @@ export class MainScene extends Scene {
       this.menuMode = "category"; this.renderMenu();
       this.mgrText.text = this._mgrLine();
       if (this.nextBtn) this.nextBtn.visible = true; // 행동 완료 → 버튼 다시 표시
-      if (this.game.stamina <= 0) this._toast("체력이 바닥났어요! 능력치가 거의 안 올라요 — 휴식이 필요해요");
-      else if (this.game.stamina < 20) this._toast("체력이 부족해요 — 능력치 상승이 줄어듭니다");
+      if (this.game.stamina <= 0) { sfx("warn"); this._toast("체력이 바닥났어요! 능력치가 거의 안 올라요 — 휴식이 필요해요"); }
+      else if (this.game.stamina < 20) { sfx("warn"); this._toast("체력이 부족해요 — 능력치 상승이 줄어듭니다"); }
       this._afterTurn();
     })();
   }
@@ -708,7 +717,7 @@ export class MainScene extends Scene {
         const sp = new Sprite(ptex); sp.anchor.set(0.5, 1.0); sp.scale.set(880 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 985); charC.addChild(sp);
         whoT.text = b.who || ""; storyT.text = b.text;
       };
-      ov.on("pointertap", async () => { idx += 1; if (idx >= beats.length) { this._closeOverlay(); resolve(); } else await show(); });
+      ov.on("pointertap", async () => { idx += 1; if (idx >= beats.length) { this._closeOverlay(); resolve(); } else { sfx("page"); await show(); } });
       this.addChild(ov);
       show();
     });
@@ -723,7 +732,7 @@ export class MainScene extends Scene {
     const L = { acting: "연기력", emotion: "감정", vocal: "발성", looks: "외모", singing: "가창", dance: "댄스", study: "학업", character: "인성", network: "인맥", fame: "팬", mental: "멘탈", stamina: "체력", money: "자금", fans: "팬" };
     const p = [];
     for (const [k, v] of Object.entries(c.effects || {})) p.push(`${L[k] || k} ${v > 0 ? "+" : ""}${k === "money" ? Math.round(v / 10000) + "만" : v}`);
-    if (c.flag) p.push("✦숨은 평판");
+    if (c.flag) p.push("+숨은 평판");
     return p.join("   ");
   }
   showEvent(ev) {
@@ -734,18 +743,18 @@ export class MainScene extends Scene {
       if (chosen) {
         const ch = 296, y = (DESIGN_HEIGHT - ch) / 2;
         ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
-        ov.addChild(Object.assign(this._t(`${ev.emoji} ${ev.title}`, 22, S.ink, FD), { x: x + 30, y: y + 26 }));
+        ov.addChild(Object.assign(this._t(`${ev.title}`, 22, S.ink, FD), { x: x + 30, y: y + 26 }));
         const r = this._t(chosen.result, 20, 0x4a4a55); r.style.wordWrap = true; r.style.wordWrapWidth = cw - 60; r.position.set(x + 30, y + 78); ov.addChild(r);
         ov.addChild(Object.assign(this._t(this._effSummary(chosen), 16, S.coral, FD), { x: x + 30, y: y + ch - 104 }));
         const btn = new Container();
         btn.addChild(new Graphics().roundRect(x + cw / 2 - 84, y + ch - 62, 168, 46, 16).fill(S.coral));
         btn.addChild((() => { const t = this._t("확인", 20, 0xffffff, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 39); return t; })());
-        btn.eventMode = "static"; btn.cursor = "pointer"; btn.on("pointertap", () => this._closeOverlay());
+        btn.eventMode = "static"; btn.cursor = "pointer"; btn.on("pointertap", () => { sfx("tap"); this._closeOverlay(); });
         ov.addChild(btn);
       } else {
         const ch = 168 + ev.choices.length * 72, y = (DESIGN_HEIGHT - ch) / 2;
         ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
-        ov.addChild(Object.assign(this._t(`${ev.emoji} ${ev.title}`, 24, S.ink, FD), { x: x + 30, y: y + 24 }));
+        ov.addChild(Object.assign(this._t(`${ev.title}`, 24, S.ink, FD), { x: x + 30, y: y + 24 }));
         const txt = this._t(ev.text, 19, 0x4a4a55); txt.style.wordWrap = true; txt.style.wordWrapWidth = cw - 60; txt.position.set(x + 30, y + 66); ov.addChild(txt);
         ev.choices.forEach((c, i) => {
           const by = y + 144 + i * 72;
@@ -754,7 +763,7 @@ export class MainScene extends Scene {
           btn.addChild(Object.assign(this._t(c.label, 19, S.ink, FD), { x: x + 48, y: by + 10 }));
           btn.addChild(Object.assign(this._t(this._effSummary(c), 13, S.sub), { x: x + 48, y: by + 35 }));
           btn.eventMode = "static"; btn.cursor = "pointer";
-          btn.on("pointertap", () => { this.game.applyEventEffects(c.effects, c.flag); this.refreshHUD(); this.renderMenu(); build(c); });
+          btn.on("pointertap", () => { sfx("tap"); this.game.applyEventEffects(c.effects, c.flag); this.refreshHUD(); this.renderMenu(); build(c); });
           ov.addChild(btn);
         });
       }
@@ -814,7 +823,7 @@ export class MainScene extends Scene {
     }
     if (res.awards.length) {
       center(this._t("수상 이력", 19, S.gold, FD), 34);
-      for (const a of res.awards) center(this._t(`🏆 ${a}`, 16, 0xeae0cf, FB), 28);
+      for (const a of res.awards) center(this._t(a, 16, 0xeae0cf, FB), 28);
       y += 10;
     }
     if (res.people.length) {
@@ -845,11 +854,11 @@ export class MainScene extends Scene {
       const c = new Container();
       c.addChild(new Graphics().roundRect(bx, H - 96, 300, 60, 18).fill(color).stroke({ width: 2, color: 0xffffff }));
       const t = this._t(label, 22, 0xffffff, FD); t.anchor.set(0.5); t.position.set(bx + 150, H - 66); c.addChild(t);
-      c.eventMode = "static"; c.cursor = "pointer"; c.on("pointertap", fn);
+      c.eventMode = "static"; c.cursor = "pointer"; c.on("pointertap", () => { sfx("tap"); fn(); });
       ov.addChild(c);
     };
-    mkBtn("🔄 다시 도전", 40, S.coral, () => this.manager.change(new MainScene(new GameState())));
-    mkBtn("🏠 메인으로", DESIGN_WIDTH - 340, 0x4a5a8a, () => { try { window.location.reload(); } catch (e) { this.manager.change(new MainScene(new GameState())); } });
+    mkBtn("다시 도전", 40, S.coral, () => this.manager.change(new MainScene(new GameState())));
+    mkBtn("메인으로", DESIGN_WIDTH - 340, 0x4a5a8a, () => { try { window.location.reload(); } catch (e) { this.manager.change(new MainScene(new GameState())); } });
 
     this.addChild(ov);
   }

@@ -1,7 +1,7 @@
 import { Assets, Sprite, Graphics, Text, TextStyle, Container } from "pixi.js";
 import { Scene } from "../core/Scene.js";
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../config.js";
-import { armBgm, stopBgm } from "../systems/sound.js";
+import { armBgm, stopBgm, sfx } from "../systems/sound.js";
 import { BONDS } from "../data/bonds.js";
 import { MainScene } from "./MainScene.js";
 
@@ -72,7 +72,7 @@ export class PrologueScene extends Scene {
     }
     this._layout(this.H || DESIGN_HEIGHT);
   }
-  _next() { this.idx += 1; if (this.idx >= this.pages.length) this._finish(); else this._show(); }
+  _next() { this.idx += 1; if (this.idx >= this.pages.length) this._finish(); else { sfx("page"); this._show(); } }
   _finish() { this.manager.change(new MainScene(this.game)); }
 
   _layout(H) {
