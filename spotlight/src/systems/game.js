@@ -110,10 +110,10 @@ export class GameState {
     this.money += Math.round(m.pay * 10000 * payMult);
     if (grade === "best" || grade === "good") {
       for (const [k, v] of Object.entries(m.gain || {})) this._gainStat(k, grade === "best" ? v * 1.5 : v);
-      this.mental = clamp(this.mental + (grade === "best" ? 15 : 8), 0, 100);
+      this.mental = clamp(this.mental + (grade === "best" ? 8 : 4), 0, 100);
       if (m.flag) this.flags.add(m.flag);
     } else if (grade === "bad") {
-      this.mental = clamp(this.mental - 12, 0, 100);
+      this.mental = clamp(this.mental - 14, 0, 100);
     }
     if (this.bonds.yusea >= BOND_THRESHOLD && (grade === "best" || grade === "good")) this._gainStat("acting", this.bonds.yusea >= 100 ? 4 : 2); // 라이벌 자극(40/100)
     this.raiseBond("hanjiwon", 10); this.raiseBond("yusea", 6);
@@ -157,7 +157,7 @@ export class GameState {
     else if (works.length >= 1) { award = "신인상"; fansGain = 5; }
     else { award = "수상 불발"; fansGain = 0; }
     this.fans = Math.max(0, this.fans + fansGain);
-    if (fansGain > 0) this.mental = clamp(this.mental + 8, 0, 100);
+    if (fansGain > 0) this.mental = clamp(this.mental + 5, 0, 100);
     if (award === "대상") this.flags.add("award_grand");
     return { grade, award, fansGain, best, good, works: works.length };
   }
@@ -190,8 +190,10 @@ export class GameState {
       this._applyOne(findActivity(id));
       if (ACT_BOND[id]) this.raiseBond(ACT_BOND[id], 8);
     }
-    // 3) 매달 용돈 +30,000 (후반 돈 과잉 완화)
-    this.money += 30000;
+    // 3) 매달 기본 스트레스 -3 (멘탈은 가만히 두면 줄어든다 → 회복 활동을 강제, 기획서 10)
+    this.mental = clamp(this.mental - 3, 0, 100);
+    // 4) 매달 용돈 +20,000 (후반 돈 과잉 완화)
+    this.money += 20000;
     // 4) 턴 경과 + 다음 달 출연 제안 갱신
     this.turn += 1;
     this.offers = this.genOffers();
