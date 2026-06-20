@@ -779,7 +779,8 @@ export class MainScene extends Scene {
     const total = saveToDex(res.id);
     // 엔딩 BGM: 배우=ending1 / 창작자(감독·작가·PD·제작자)=ending2 / 부정=ending3
     const creatorIds = ["film_director", "drama_producer", "broadcast_pd", "writer", "director_actor"];
-    const bgm = res.id === "controversy" ? "ending_bad" : creatorIds.includes(res.id) ? "ending_creator" : "ending_actor";
+    const badIds = ["controversy", "self_ruin", "ruined_pride", "hollow_fade"];
+    const bgm = badIds.includes(res.id) ? "ending_bad" : creatorIds.includes(res.id) ? "ending_creator" : "ending_actor";
     playBgm(`./assets/sfx/${bgm}.mp3`, 0.5);
     const H = this.H || DESIGN_HEIGHT;
     const ov = new Container(); ov._isEnding = true; this.overlay = ov;
