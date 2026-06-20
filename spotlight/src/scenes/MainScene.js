@@ -337,54 +337,50 @@ export class MainScene extends Scene {
   // 이번 분기 특별활동(있으면) — 첫 턴 제외, 분기(turn 4·7·…)에만
   _specialsAvailable() { return ((this.game.turn - 1) % 3 === 0 && this.game.turn > 1) ? SPECIAL_ACTS : []; }
 
-  // 이번 달 제안 팝업 (기획서 11·3): 출연 제안 + 분기 특별활동 병합
+  // 이번 달 제안 팝업 (기획서 11·3): 출연 제안 + 분기 특별활동 병합. offer_frame 프레임 사용
   openOffers() {
     if (this.overlay) return;
     const offers = this.game.offers, specials = this._specialsAvailable();
     const ov = this._dim(); this.overlay = ov;
-    const cw = 624, x = (DESIGN_WIDTH - cw) / 2;
-    let bodyH = 0;
-    if (offers.length) bodyH += 34 + offers.length * 128;
-    if (specials.length) bodyH += 34 + specials.length * 82;
-    if (!offers.length && !specials.length) bodyH = 56;
-    const ch = 112 + bodyH + 60, y = Math.max(40, (DESIGN_HEIGHT - ch) / 2);
-    ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
-    ov.addChild(Object.assign(this._t("이번 달 제안", 24, S.ink, FD), { x: x + 30, y: y + 22 }));
-    ov.addChild(Object.assign(this._t("한지원: 좋은 기회야. 잘 골라보자!", 14, S.sub), { x: x + 30, y: y + 56 }));
-    let cy = y + 96;
+    const ftex = this.tex.offer_frame, fw = 684, fh = fw * ftex.height / ftex.width;
+    const fx = (DESIGN_WIDTH - fw) / 2, fy = Math.max(16, ((this.H || DESIGN_HEIGHT) - fh) / 2);
+    const frame = new Sprite(ftex); frame.scale.set(fw / ftex.width); frame.position.set(fx, fy); ov.addChild(frame);
+    ov.addChild((() => { const t = this._t("이번 달 제안", 26, 0x9a6a2a, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, fy + fh * 0.10); return t; })());
+    const cl = fx + fw * 0.085, cw = fw * 0.83;
+    let cy = fy + fh * 0.25;
     if (!offers.length && !specials.length) {
-      ov.addChild(Object.assign(this._t("이번 달은 들어온 제안이 없어요.", 17, S.sub), { x: x + 36, y: cy + 6 }));
+      ov.addChild(Object.assign(this._t("이번 달은 들어온 제안이 없어요.", 18, 0x5a7a6a), { x: cl + 10, y: cy + 10 }));
     }
     if (offers.length) {
-      ov.addChild(Object.assign(this._t("출연 제안", 17, 0xb04a3a, FD), { x: x + 30, y: cy })); cy += 34;
+      ov.addChild(Object.assign(this._t("출연 제안", 17, 0xb04a3a, FD), { x: cl, y: cy })); cy += 32;
       offers.forEach((id) => {
         const m = MEDIA.find((mm) => mm.id === id), card = new Container();
-        card.addChild(new Graphics().roundRect(x + 24, cy, cw - 48, 116, 16).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
-        card.addChild(Object.assign(this._t(m.name, 22, S.ink, FD), { x: x + 44, y: cy + 14 }));
+        card.addChild(new Graphics().roundRect(cl, cy, cw, 96, 14).fill(0xffffff).stroke({ width: 2, color: 0xd6ead8 }));
+        card.addChild(Object.assign(this._t(m.name, 21, S.ink, FD), { x: cl + 18, y: cy + 12 }));
         const req = Object.entries(m.req).map(([k, v]) => `${this._statLabel(k)} ${v}`).join(" · ");
-        card.addChild(Object.assign(this._t(`기대치  ${req}`, 14, S.sub), { x: x + 44, y: cy + 48 }));
-        card.addChild(Object.assign(this._t(`출연료  ${m.pay}만원`, 14, 0xb04a3a), { x: x + 44, y: cy + 72 }));
+        card.addChild(Object.assign(this._t(`기대치 ${req}`, 13, S.sub), { x: cl + 18, y: cy + 44 }));
+        card.addChild(Object.assign(this._t(`출연료 ${m.pay}만원`, 13, 0xb04a3a), { x: cl + 18, y: cy + 66 }));
         const gi = GRADE_INFO[this._predict(m)];
-        card.addChild(new Graphics().roundRect(x + cw - 150, cy + 40, 100, 36, 12).fill(gi.color));
-        card.addChild(Object.assign((() => { const t = this._t(`예상 ${gi.label}`, 14, 0xffffff, FD); t.anchor.set(0.5); t.position.set(x + cw - 100, cy + 58); return t; })(), {}));
+        card.addChild(new Graphics().roundRect(cl + cw - 120, cy + 30, 96, 34, 12).fill(gi.color));
+        card.addChild(Object.assign((() => { const t = this._t(`예상 ${gi.label}`, 13, 0xffffff, FD); t.anchor.set(0.5); t.position.set(cl + cw - 72, cy + 47); return t; })(), {}));
         card.eventMode = "static"; card.cursor = "pointer"; card.on("pointertap", () => this.selectProduction(id));
-        ov.addChild(card); cy += 128;
+        ov.addChild(card); cy += 104;
       });
     }
     if (specials.length) {
-      ov.addChild(Object.assign(this._t("분기 특별활동", 17, 0x2e9e8e, FD), { x: x + 30, y: cy })); cy += 34;
+      ov.addChild(Object.assign(this._t("분기 특별활동", 17, 0x2e9e8e, FD), { x: cl, y: cy })); cy += 32;
       specials.forEach((a) => {
         const card = new Container();
-        card.addChild(new Graphics().roundRect(x + 24, cy, cw - 48, 70, 16).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
-        card.addChild(Object.assign(this._t(a.name, 20, S.ink, FD), { x: x + 44, y: cy + 10 }));
-        card.addChild(Object.assign(this._t(`${this._effText(a)}   ${this._cost(a)}`, 13, 0x2e9e8e), { x: x + 44, y: cy + 42 }));
+        card.addChild(new Graphics().roundRect(cl, cy, cw, 60, 14).fill(0xffffff).stroke({ width: 2, color: 0xd6ead8 }));
+        card.addChild(Object.assign(this._t(a.name, 19, S.ink, FD), { x: cl + 18, y: cy + 8 }));
+        card.addChild(Object.assign(this._t(`${this._effText(a)}   ${this._cost(a)}`, 12, 0x2e9e8e), { x: cl + 18, y: cy + 36 }));
         card.eventMode = "static"; card.cursor = "pointer"; card.on("pointertap", () => this.selectSpecial(a.id));
-        ov.addChild(card); cy += 82;
+        ov.addChild(card); cy += 66;
       });
     }
     const close = new Container();
-    close.addChild(new Graphics().roundRect(x + cw / 2 - 70, y + ch - 52, 140, 40, 14).fill(0xece6dc));
-    close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 32); return t; })());
+    close.addChild(new Graphics().roundRect(DESIGN_WIDTH / 2 - 68, fy + fh - 8, 136, 44, 16).fill(0xfdf8f2).stroke({ width: 2, color: S.gold }));
+    close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, fy + fh + 14); return t; })());
     close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => this._closeOverlay());
     ov.addChild(close);
     this.addChild(ov);
