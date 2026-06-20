@@ -1,5 +1,5 @@
 // 게임 상태 + 진행 로직 (렌더와 분리). 기획서 6·7·8·9번.
-import { ACTIVITIES, AUTO_ACTIVITY, STATS_META } from "../data/activities.js";
+import { ACTIVITIES, AUTO_ACTIVITY, STATS_META, findActivity } from "../data/activities.js";
 import { MEDIA } from "../data/media.js";
 import { ACT_BOND, BOND_THRESHOLD } from "../data/bonds.js";
 import { EVENTS } from "../data/events.js";
@@ -138,9 +138,28 @@ export class GameState {
   // 능력치 1종 상승 (소프트캡 + 멘탈 보정 적용)
   _gainStat(key, base) {
     let mult = softCapMultiplier(this.stats[key]);
-    if (this.mental < 30) mult *= 0.5;        // 멘탈 낮으면 -50% (기획서 7번)
-    else if (this.mental >= 80) mult *= 1.2;  // 멘탈 높으면 +20%
+    if (this.mental < 30) mult *= 0.5;         // 멘탈 낮으면 -50% (기획서 7번)
+    else if (this.mental >= 85) mult *= 1.15;  // 멘탈 매우 높을 때만 소폭 보너스
     this.stats[key] = clamp(Math.round(this.stats[key] + base * mult), 0, 100);
+  }
+
+  // 학년 말 시상식 (기획서 3·15): 그 해 호평작 + 인지도·연기로 상 판정 → 인지도·멘탈 보상
+  yearAward() {
+    const grade = ["고1", "고2", "고3"][Math.floor((this.turn - 2) / 12)] || "졸업";
+    const works = this.filmography.filter((f) => f.turn >= this.turn - 12 && f.turn < this.turn);
+    const best = works.filter((w) => w.grade === "best").length;
+    const good = works.filter((w) => w.grade === "good").length;
+    const score = best * 2.5 + good + this.fans / 30 + (this.stats.acting + this.stats.emotion) / 50;
+    let award, fansGain;
+    if (best >= 1 && score >= 8) { award = "대상"; fansGain = 25; }
+    else if (score >= 5.5) { award = "최우수 연기상"; fansGain = 14; }
+    else if (score >= 3) { award = "우수상"; fansGain = 8; }
+    else if (works.length >= 1) { award = "신인상"; fansGain = 5; }
+    else { award = "수상 불발"; fansGain = 0; }
+    this.fans = Math.max(0, this.fans + fansGain);
+    if (fansGain > 0) this.mental = clamp(this.mental + 8, 0, 100);
+    if (award === "대상") this.flags.add("award_grand");
+    return { grade, award, fansGain, best, good, works: works.length };
   }
 
   _applyOne(act) {
@@ -165,13 +184,13 @@ export class GameState {
     const before = { stamina: this.stamina, mental: this.mental, money: this.money, fans: this.fans };
     // 1) 자동: 학교 수업
     this._applyOne(AUTO_ACTIVITY);
-    // 2) 선택 활동
+    // 2) 선택 활동 (일반 + 분기 특별활동)
     for (const id of selectedIds) {
-      this._applyOne(ACTIVITIES.find((a) => a.id === id));
+      this._applyOne(findActivity(id));
       if (ACT_BOND[id]) this.raiseBond(ACT_BOND[id], 8);
     }
-    // 3) 매달 용돈 +50,000
-    this.money += 50000;
+    // 3) 매달 용돈 +30,000 (후반 돈 과잉 완화)
+    this.money += 30000;
     // 4) 턴 경과 + 다음 달 출연 제안 갱신
     this.turn += 1;
     this.offers = this.genOffers();

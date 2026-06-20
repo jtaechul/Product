@@ -10,20 +10,34 @@ export const CATEGORIES = [
 // effects: 능력치 증가(소프트캡 적용) / stamina·mental·money: 자원 변동 / pose: 선택 시 캐릭터 포즈 키
 // bg: 활동 연출 배경 (assets/bg/*.png) — 행동마다 다른 배경 (기획서 14B)
 export const ACTIVITIES = [
-  { id: "acting",    cat: "acting", emoji: "🎬", name: "연기 학원", effects: { acting: 5, emotion: 3 }, mental: -3, money: -80000,  stamina: -10, pose: "acting",    bg: "academy", desc: "연기력·감정표현" },
-  { id: "prep",      cat: "acting", emoji: "🎯", name: "차기작 준비", effects: { acting: 2 },           money: -10000, stamina: -8,  pose: "acting",    bg: "set",     desc: "다음 출연 평가↑" },
-  { id: "vocal",     cat: "charm",  emoji: "🎤", name: "보컬 레슨", effects: { singing: 6 },            money: -60000, stamina: -8,  pose: "vocal",     bg: "stage",   desc: "가창" },
-  { id: "dance",     cat: "charm",  emoji: "💃", name: "댄스 레슨", effects: { dance: 6 },              money: -60000, stamina: -10, pose: "dance",     bg: "stage",   desc: "댄스" },
-  { id: "gym",       cat: "charm",  emoji: "🏋️", name: "헬스·PT",  effects: { looks: 3 },              money: -40000, stamina: 3,   pose: "gym",       bg: "academy", desc: "체력·외모" },
-  { id: "styling",   cat: "charm",  emoji: "💄", name: "스타일링",  effects: { looks: 4, fame: 3 },     money: -20000, stamina: -5,  pose: "good",      bg: "home",    desc: "외모·인지도" },
-  { id: "study",     cat: "mind",   emoji: "📖", name: "독서실",    effects: { study: 6 },              mental: -4, money: -30000,  stamina: -8,  pose: "study",     bg: "school",  desc: "학업" },
-  { id: "reading",   cat: "mind",   emoji: "📚", name: "독서·교양", effects: { character: 5, study: 2 }, mental: 3, money: -10000,  stamina: -3,  pose: "study",     bg: "home",    desc: "인성·학업" },
-  { id: "volunteer", cat: "mind",   emoji: "🤲", name: "봉사활동",  effects: { character: 7, network: 2 }, mental: 5,             stamina: -8,  pose: "volunteer", bg: "school",  desc: "인성·인맥" },
-  { id: "family",    cat: "life",   emoji: "👨‍👩‍👧", name: "가족과 시간", effects: { character: 5 },       mental: 12,             stamina: 3,   pose: "family",    bg: "home",    desc: "인성·멘탈" },
-  { id: "friend",    cat: "life",   emoji: "🧑‍🤝‍🧑", name: "친구와 우정", effects: { character: 3, network: 3 }, mental: 15, money: -30000, stamina: 5, pose: "family", bg: "school",  desc: "인성·멘탈" },
-  { id: "rest",      cat: "life",   emoji: "☕", name: "휴식",      effects: {},                        mental: 15,             stamina: 20,  pose: "rest",      bg: "home",    desc: "체력·멘탈 회복" },
-  { id: "parttime",  cat: "life",   emoji: "💼", name: "단기 알바", effects: {},                        mental: -5, money: 120000, stamina: -15, pose: "good",      bg: "set",     desc: "돈 +12만" },
+  { id: "acting",    cat: "acting", emoji: "🎬", name: "연기 학원", effects: { acting: 5, emotion: 3 }, mental: -3, money: -80000,  stamina: -8,  pose: "acting",    bg: "academy", desc: "연기력·감정표현" },
+  { id: "prep",      cat: "acting", emoji: "🎯", name: "차기작 준비", effects: { acting: 2 },           money: -10000, stamina: -7,  pose: "acting",    bg: "set",     desc: "다음 출연 평가↑" },
+  { id: "vocal",     cat: "charm",  emoji: "🎤", name: "보컬 레슨", effects: { singing: 6 },            money: -60000, stamina: -7,  pose: "vocal",     bg: "stage",   desc: "가창" },
+  { id: "dance",     cat: "charm",  emoji: "💃", name: "댄스 레슨", effects: { dance: 6 },              money: -60000, stamina: -9,  pose: "dance",     bg: "stage",   desc: "댄스" },
+  { id: "gym",       cat: "charm",  emoji: "🏋️", name: "헬스·PT",  effects: { looks: 3 },              money: -40000, stamina: 6,   pose: "gym",       bg: "academy", desc: "체력·외모" },
+  { id: "styling",   cat: "charm",  emoji: "💄", name: "스타일링",  effects: { looks: 4, fame: 3 },     money: -20000, stamina: -4,  pose: "good",      bg: "home",    desc: "외모·인지도" },
+  { id: "study",     cat: "mind",   emoji: "📖", name: "독서실",    effects: { study: 6 },              mental: -4, money: -30000,  stamina: -7,  pose: "study",     bg: "school",  desc: "학업" },
+  { id: "reading",   cat: "mind",   emoji: "📚", name: "독서·교양", effects: { character: 5, study: 2 }, mental: 2, money: -10000,  stamina: -3,  pose: "study",     bg: "home",    desc: "인성·학업" },
+  { id: "volunteer", cat: "mind",   emoji: "🤲", name: "봉사활동",  effects: { character: 7, network: 2 }, mental: 3,             stamina: -7,  pose: "volunteer", bg: "school",  desc: "인성·인맥" },
+  { id: "family",    cat: "life",   emoji: "👨‍👩‍👧", name: "가족과 시간", effects: { character: 5 },       mental: 8,              stamina: 6,   pose: "family",    bg: "home",    desc: "인성·멘탈" },
+  { id: "friend",    cat: "life",   emoji: "🧑‍🤝‍🧑", name: "친구와 우정", effects: { character: 3, network: 3 }, mental: 9, money: -30000, stamina: 4, pose: "family", bg: "school",  desc: "인성·멘탈" },
+  { id: "rest",      cat: "life",   emoji: "☕", name: "휴식",      effects: {},                        mental: 11,             stamina: 28,  pose: "rest",      bg: "home",    desc: "체력·멘탈 회복" },
+  { id: "parttime",  cat: "life",   emoji: "💼", name: "단기 알바", effects: {},                        mental: -6, money: 90000,  stamina: -12, pose: "good",      bg: "set",     desc: "돈 +9만" },
 ];
+
+// 분기 특별활동 (기획서 3·5: 우마무스메식 분기 이벤트) — (turn-1)%3===0 인 달에만 등장.
+// 매력·인지도 위주 강화 + 돈 소모(후반 돈 싱크). 아이돌/스타/뮤지컬/예능 루트를 떠받친다.
+export const SPECIAL_ACTS = [
+  { id: "idol_stage", cat: "special", name: "아이돌 쇼케이스", effects: { singing: 5, dance: 5, fame: 8 }, mental: 2, money: -100000, stamina: -14, pose: "dance",  bg: "stage", desc: "가창·댄스·인지도 大" },
+  { id: "photoshoot", cat: "special", name: "화보 촬영",       effects: { looks: 6, fame: 6 },             money: -80000,  stamina: -8,  pose: "good",   bg: "home",  desc: "외모·인지도" },
+  { id: "fanmeeting", cat: "special", name: "팬미팅",         effects: { fame: 10, network: 3 }, mental: 6, money: -50000,  stamina: -10, pose: "cheer",  bg: "stage", desc: "인지도 大·인맥" },
+  { id: "varietyshow",cat: "special", name: "예능 출연",       effects: { network: 5, fame: 7, dance: 3 }, money: 40000,  stamina: -12, pose: "good",   bg: "set",   desc: "인맥·인지도·출연료" },
+];
+
+// id로 일반/특별 활동을 통합 조회
+export function findActivity(id) {
+  return ACTIVITIES.find((a) => a.id === id) || SPECIAL_ACTS.find((a) => a.id === id) || null;
+}
 
 // 활동별 연출 대사 (다음 달 진행 시 활동 이미지와 함께 노출) — 기획서 14번 B
 export const ACT_LINES = {
@@ -40,6 +54,10 @@ export const ACT_LINES = {
   friend:    ["친구의 응원에 다시 웃을 수 있었다.", "수다 한 판에 묵은 스트레스가 날아갔다."],
   rest:      ["오랜만에 아무것도 안 하는 사치. 충전 완료!", "푹 쉬고 나니 몸도 마음도 가뿐하다."],
   parttime:  ["고된 하루였지만 통장 잔고가 늘었다.", "땀 흘려 번 돈, 뿌듯함은 덤이다."],
+  idol_stage:["함성 속에서 무대를 휘어잡았다. 심장이 뛴다!", "노래와 춤이 하나로 터지는 순간, 객석이 들썩였다."],
+  photoshoot:["플래시 세례 속, 카메라가 나를 사랑하기 시작했다.", "한 컷 한 컷이 화보가 됐다."],
+  fanmeeting:["나를 보러 와 준 사람들. 이름을 불러주는 목소리에 울컥했다.", "팬들의 응원이 큰 힘이 됐다."],
+  varietyshow:["예능 감각이 빛난 하루! 웃음 속에 이름을 알렸다.", "순발력으로 분위기를 살렸다."],
 };
 
 // 계절별 특별 분위기 대사 (가끔 활동 연출 앞에 삽입) — 월별 이벤트성 톤

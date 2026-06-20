@@ -4,7 +4,11 @@ import { DESIGN_WIDTH, DESIGN_HEIGHT, TOTAL_TURNS } from "../config.js";
 import { GameState } from "../systems/game.js";
 import { computeEnding, saveToDex, ENDING_COUNT } from "../systems/ending.js";
 import { saveGame } from "../systems/save.js";
-import { ACTIVITIES, CATEGORIES, ACT_LINES, SEASON_LINES } from "../data/activities.js";
+import { playBgm, stopBgm, setBgmOn, setSfxOn, isBgmOn, isSfxOn } from "../systems/sound.js";
+
+// 계절별 인게임 BGM (여름·가을·겨울 파일은 추후 추가 — 현재는 봄 곡 공유)
+const SEASON_BGM = { 봄: "bgm_spring", 여름: "bgm_spring", 가을: "bgm_spring", 겨울: "bgm_spring" };
+import { ACTIVITIES, CATEGORIES, ACT_LINES, SEASON_LINES, SPECIAL_ACTS, findActivity } from "../data/activities.js";
 import { MEDIA, GRADE_COMMENTS } from "../data/media.js";
 import { BONDS, BOND_THRESHOLD } from "../data/bonds.js";
 import { ITEMS } from "../data/items.js";
@@ -99,7 +103,18 @@ export class MainScene extends Scene {
     this.refreshHUD();
     this.renderMenu();
     this.mgrText.text = this._mgrLine();
+    this._updateSeasonBgm();
     document.getElementById("loading")?.remove();
+  }
+
+  onExit() { stopBgm(); super.onExit(); }
+
+  // 계절이 바뀌면 인게임 BGM 전환 (스케줄 화면 진입 시 시작)
+  _updateSeasonBgm() {
+    const s = this._season().name;
+    if (s === this._bgmSeason) return;
+    this._bgmSeason = s;
+    playBgm(`./assets/sfx/${SEASON_BGM[s] || "bgm_spring"}.mp3`, 0.45);
   }
 
   _fitHero() { this.baseScale = (this.heroDispH || BUST_DISP_H) / this.hero.texture.height; this.hero.scale.set(this.baseScale); }
@@ -173,6 +188,7 @@ export class MainScene extends Scene {
     this.resText.mental.text = String(this.game.mental);
     this.resText.money.text = `${this.game.moneyShort()}원`;
     this.resText.fans.text = String(this.game.fans);
+    if (this._bgmSeason) this._updateSeasonBgm();
   }
 
   // ───────── 매니저 말풍선 ─────────
@@ -227,14 +243,54 @@ export class MainScene extends Scene {
     this.addChild(c);
   }
 
-  // 저장 버튼 (상점 버튼 아래)
+  // 메뉴 버튼 (상점 버튼 아래) — 설정·저장·종료 등
   buildSaveButton() {
     const c = new Container(); c.position.set(0, 0);
     c.addChild(new Graphics().roundRect(628, 258, 80, 46, 14).fill(0xfdf8f2).stroke({ width: 2, color: S.gold }));
-    const t = this._t("저장", 18, 0x2e9e8e, FD); t.anchor.set(0.5); t.position.set(668, 281); c.addChild(t);
+    const t = this._t("메뉴", 18, 0x4a5a8a, FD); t.anchor.set(0.5); t.position.set(668, 281); c.addChild(t);
     c.eventMode = "static"; c.cursor = "pointer";
-    c.on("pointertap", () => { const ok = saveGame(this.game); this._toast(ok ? "💾 저장 완료!" : "저장 실패…"); });
+    c.on("pointertap", () => this.openMenu());
     this.addChild(c);
+  }
+
+  // 인게임 메뉴 (설정): 돌아가기·저장·메인메뉴·종료·BGM·효과음
+  openMenu() {
+    if (this.overlay) return;
+    const ov = this._dim(); this.overlay = ov;
+    const cw = 540, x = (DESIGN_WIDTH - cw) / 2, ch = 600, y = (DESIGN_HEIGHT - ch) / 2;
+    ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
+    ov.addChild(Object.assign(this._t("메뉴", 26, S.ink, FD), { x: x + 30, y: y + 24 }));
+    const rows = new Container(); ov.addChild(rows);
+    const build = () => {
+      rows.removeChildren();
+      const items = [
+        { label: "게임으로 돌아가기", color: 0x4a5a8a, fn: () => this._closeOverlay() },
+        { label: "저장하기", color: 0x2e9e8e, fn: () => { const ok = saveGame(this.game); this._closeOverlay(); this._toast(ok ? "저장 완료!" : "저장 실패…"); } },
+        { label: "메인 메뉴로", color: 0xc07e1e, fn: () => { try { window.location.reload(); } catch (e) {} } },
+        { label: "게임 종료하기", color: 0xd6655e, fn: () => this._quitGame() },
+        { label: `배경음악: ${isBgmOn() ? "켜짐" : "꺼짐"}`, color: isBgmOn() ? 0x2e9e8e : 0x8a8276, fn: () => { setBgmOn(!isBgmOn()); build(); } },
+        { label: `효과음: ${isSfxOn() ? "켜짐" : "꺼짐"}`, color: isSfxOn() ? 0x2e9e8e : 0x8a8276, fn: () => { setSfxOn(!isSfxOn()); build(); } },
+      ];
+      items.forEach((it, i) => {
+        const ry = y + 78 + i * 80, b = new Container();
+        b.addChild(new Graphics().roundRect(x + 30, ry, cw - 60, 62, 16).fill(it.color));
+        const t = this._t(it.label, 22, 0xffffff, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, ry + 31); b.addChild(t);
+        b.eventMode = "static"; b.cursor = "pointer"; b.on("pointertap", it.fn);
+        rows.addChild(b);
+      });
+    };
+    build();
+    this.addChild(ov);
+  }
+  _quitGame() {
+    this._closeOverlay();
+    const H = this.H || DESIGN_HEIGHT;
+    const ov = new Container(); this.overlay = ov;
+    ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, H).fill(0x0c0a12));
+    const t = this._t("플레이해 주셔서 고맙습니다.\n창을 닫으셔도 됩니다.", 30, S.gold, FD); t.anchor.set(0.5); t.style.align = "center"; t.style.lineHeight = 46; t.position.set(DESIGN_WIDTH / 2, H / 2); ov.addChild(t);
+    this.addChild(ov);
+    stopBgm();
+    try { window.close(); } catch (e) {}
   }
 
   // 잠깐 떴다 사라지는 안내 토스트
@@ -451,7 +507,7 @@ export class MainScene extends Scene {
         const m = MEDIA.find((x) => x.id === sel.slice(5));
         chip._txt.text = `🎬 ${m.name}`; chip._txt.style.fill = S.coral;
       } else {
-        const act = ACTIVITIES.find((a) => a.id === sel);
+        const act = findActivity(sel);
         chip._txt.text = act ? act.name : "비어있음"; chip._txt.style.fill = act ? S.ink : S.sub;
       }
     });
@@ -476,6 +532,73 @@ export class MainScene extends Scene {
       const ico = new Sprite(this.tex[`catico_${cat.id}`]); ico.anchor.set(0.5); ico.scale.set(56 / Math.max(ico.texture.width, ico.texture.height)); ico.position.set(cx + cw / 2, y + spr.height * 0.60); c.addChild(ico);
       this._tap(c, () => { this.menuMode = "sub"; this.activeCat = cat.id; this.renderMenu(); });
       this.menuLayer.addChild(c);
+    });
+    // 분기 특별활동 버튼 (3개월마다)
+    if ((this.game.turn - 1) % 3 === 0) {
+      const sc = new Container();
+      sc.addChild(new Graphics().roundRect(20, 944, DESIGN_WIDTH - 40, 46, 14).fill(0x2e9e8e).stroke({ width: 2, color: S.gold }));
+      const t = this._t("이번 분기 특별활동 — 아이돌·화보·팬미팅·예능", 18, 0xffffff, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, 967); sc.addChild(t);
+      this._tap(sc, () => this.openSpecial());
+      this.menuLayer.addChild(sc);
+    }
+  }
+
+  // 분기 특별활동 팝업 (기획서 3·5): 매력·인지도 강화 활동 선택
+  openSpecial() {
+    if (this.overlay) return;
+    const ov = this._dim(); this.overlay = ov;
+    const cw = 620, x = (DESIGN_WIDTH - cw) / 2, n = SPECIAL_ACTS.length, ch = 150 + n * 104, y = (DESIGN_HEIGHT - ch) / 2;
+    ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
+    ov.addChild(Object.assign(this._t("분기 특별활동", 24, S.ink, FD), { x: x + 30, y: y + 24 }));
+    ov.addChild(Object.assign(this._t("선택하면 슬롯에 담겨요 (3개월에 한 번)", 14, S.sub), { x: x + 30, y: y + 58 }));
+    SPECIAL_ACTS.forEach((a, i) => {
+      const ry = y + 92 + i * 104, card = new Container();
+      card.addChild(new Graphics().roundRect(x + 24, ry, cw - 48, 90, 16).fill(0xffffff).stroke({ width: 2, color: 0xefe7da }));
+      card.addChild(Object.assign(this._t(a.name, 21, S.ink, FD), { x: x + 44, y: ry + 14 }));
+      card.addChild(Object.assign(this._t(a.desc, 14, 0x2e9e8e), { x: x + 44, y: ry + 46 }));
+      card.addChild(Object.assign(this._t(this._cost(a), 13, S.coral), { x: x + 44, y: ry + 68 }));
+      card.eventMode = "static"; card.cursor = "pointer";
+      card.on("pointertap", () => this.selectSpecial(a.id));
+      ov.addChild(card);
+    });
+    const close = new Container();
+    close.addChild(new Graphics().roundRect(x + cw / 2 - 70, y + ch - 50, 140, 38, 14).fill(0xece6dc));
+    close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 31); return t; })());
+    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => this._closeOverlay());
+    ov.addChild(close);
+    this.addChild(ov);
+  }
+  selectSpecial(id) {
+    if (this.selected.length >= 2) this.selected.shift();
+    this.selected.push(id);
+    this._afterSelectChange();
+    this._closeOverlay();
+  }
+
+  // 학년 말 시상식 연출 (기획서 3·15): 시상식 배경 + 트로피 + 수상 결과
+  _playCeremony(res) {
+    return new Promise((resolve) => {
+      const ov = new Container(); this.overlay = ov;
+      ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill(0x0e0b14));
+      const bgSpr = new Sprite(); bgSpr.anchor.set(0.5, 0); bgSpr.position.set(DESIGN_WIDTH / 2, 0); ov.addChild(bgSpr);
+      ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: 0x0e0b14, alpha: 0.45 }));
+      const title = this._t(`${res.grade} 말 · 시상식`, 30, S.gold, FD); title.anchor.set(0.5); title.position.set(DESIGN_WIDTH / 2, 250); ov.addChild(title);
+      const charC = new Container(); ov.addChild(charC);
+      const awardBox = new Container(); ov.addChild(awardBox);
+      ov.addChild(new Graphics().roundRect(60, 980, 600, 220, 24).fill({ color: 0x140f1a, alpha: 0.86 }).stroke({ width: 2, color: S.gold }));
+      const awardT = this._t("", 40, S.gold, FD); awardT.anchor.set(0.5); awardT.position.set(DESIGN_WIDTH / 2, 1040); ov.addChild(awardT);
+      const subT = this._t("", 20, 0xffffff); subT.anchor.set(0.5); subT.style.align = "center"; subT.position.set(DESIGN_WIDTH / 2, 1110); ov.addChild(subT);
+      const tip = this._t("화면을 누르면 계속 ▶", 15, 0xcfc7d0); tip.anchor.set(1, 1); tip.position.set(676, 1232); ov.addChild(tip);
+      ov.eventMode = "static";
+      ov.on("pointertap", () => { this._closeOverlay(); resolve(); });
+      this.addChild(ov);
+      const won = res.fansGain > 0;
+      Promise.all([Assets.load("./assets/bg/award.png").catch(() => null), Assets.load(POSE_PATH(won ? "cheer" : "good")).catch(() => null)]).then(([bgTex, pTex]) => {
+        if (bgTex) { bgSpr.texture = bgTex; bgSpr.scale.set(Math.max(DESIGN_WIDTH / bgTex.width, DESIGN_HEIGHT / bgTex.height)); }
+        if (pTex) { const sp = new Sprite(pTex); sp.anchor.set(0.5, 1.0); sp.scale.set(820 / pTex.height); sp.position.set(DESIGN_WIDTH / 2, 992); charC.addChild(sp); }
+        awardT.text = res.award;
+        subT.text = won ? `올해의 성과를 인정받았다!\n인지도 +${res.fansGain}${res.best ? ` · 인생연기 ${res.best}편` : ""}` : "다음 해를 기약하며…";
+      });
     });
   }
 
@@ -553,9 +676,10 @@ export class MainScene extends Scene {
       if (acts.length) await this._playActivities(acts, season);
       if (results.length) await this.playProduction(results);
       this.refreshHUD();
-      // 마일스톤 판정 (기획서 6번): 학년 말 목표 달성/미달 안내 토스트
-      const ms = this.game.milestoneCheck();
-      if (ms) this._toast(ms.ok ? `${ms.grade} 목표 달성! (${ms.need})` : `${ms.grade} 목표 미달 — ${ms.need}`);
+      // 학년 말 시상식 (기획서 3·15): 고1·고2·고3 말(턴 13·25·37)에 그 해 성과로 수상
+      if (this.game.turn === 13 || this.game.turn === 25 || this.game.turn > TOTAL_TURNS) {
+        await this._playCeremony(this.game.yearAward());
+      }
       if (this.game.turn > TOTAL_TURNS) { this.showEnding(); return; } // 36턴 종료 → 40년 커리어 엔딩
       this.menuMode = "category"; this.renderMenu();
       this.mgrText.text = this._mgrLine();
@@ -569,10 +693,10 @@ export class MainScene extends Scene {
   _playActivities(actIds, season) {
     return new Promise((resolve) => {
       const beats = [];
-      const firstBg = (ACTIVITIES.find((x) => x.id === actIds[0]) || {}).bg || "school";
+      const firstBg = (findActivity(actIds[0]) || {}).bg || "school";
       if (Math.random() < 0.28 && SEASON_LINES[season]) beats.push({ who: "", pose: null, bg: firstBg, text: SEASON_LINES[season] });
       for (const id of actIds) {
-        const a = ACTIVITIES.find((x) => x.id === id);
+        const a = findActivity(id);
         beats.push({ who: a ? a.name : "", pose: a ? a.pose : null, bg: (a && a.bg) || "school", text: this._actLine(id) });
       }
       if (!beats.length) { resolve(); return; }
