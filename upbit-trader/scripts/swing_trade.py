@@ -146,12 +146,15 @@ def main() -> None:
     p.add_argument("--max-hold", type=int, default=240, help="최대 보유(시간)")
     p.add_argument("--cooldown", type=int, default=12, help="재진입 쿨다운(시간)")
     p.add_argument("--daily-loss", type=float, default=0.0)
+    p.add_argument("--take-profit", type=float, default=0.30,
+                   help="고정 익절선(+비율). 도달 시 트레일링 안 기다리고 전량 익절. 0=끔")
     p.add_argument("--live", action="store_true")
     args = p.parse_args()
 
     cfg = SwingConfig(
         vol_surge=args.vol_surge, trail=args.trail, stop_loss=args.stop,
         arm_profit=args.arm, max_hold_bars=args.max_hold, btc_ma_bars=args.btc_ma,
+        take_profit=(args.take_profit if args.take_profit > 0 else None),
     )
     q = UpbitQuotation()
 
@@ -195,7 +198,9 @@ def main() -> None:
         f"• 한 번에 최대 {args.max_positions}종목, 종목당 "
         f"{args.invest:,.0f}원으로 매매해요\n"
         f"• 거래량이 터지며 오르는 코인을 자동으로 사고, 규칙대로 팔아요\n"
-        f"• 사고팔 때마다 여기로 자세히 알려드릴게요\n"
+        + (f"• +{args.take_profit*100:.0f}% 도달하면 바로 이익을 확정해요(고정 익절)\n"
+           if args.take_profit > 0 else "")
+        + f"• 사고팔 때마다 여기로 자세히 알려드릴게요\n"
         f"• 궁금하면 아무 메시지나 보내세요 → 지금 상태를 바로 알려드려요")
     if notifier.enabled():
         log("텔레그램 알림 연결됨")

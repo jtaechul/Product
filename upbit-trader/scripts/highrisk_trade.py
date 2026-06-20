@@ -130,6 +130,8 @@ def main() -> None:
     p.add_argument("--top", type=int, default=15)
     p.add_argument("--min-value", type=float, default=10.0, help="24h 거래대금 하한(억)")
     p.add_argument("--cooldown", type=int, default=12, help="재진입 쿨다운(시간)")
+    p.add_argument("--take-profit", type=float, default=0.40,
+                   help="고정 익절선(+비율). 도달 시 트레일링 안 기다리고 전량 익절. 0=끔")
     p.add_argument("--live", action="store_true")
     args = p.parse_args()
 
@@ -137,7 +139,8 @@ def main() -> None:
     # 청산/관리는 SwingTrader 재사용 — 고위험용으로 넓은 트레일링/단호한 손절
     cfg = SwingConfig(trail=hr_cfg.trail, stop_loss=hr_cfg.stop_loss,
                       arm_profit=hr_cfg.arm_profit, max_hold_bars=hr_cfg.max_hold_bars,
-                      trail_tiers=())
+                      trail_tiers=(),
+                      take_profit=(args.take_profit if args.take_profit > 0 else None))
     q = UpbitQuotation()
 
     if args.live:
@@ -174,14 +177,18 @@ def main() -> None:
         f"• 이미 강하게 오르는 알트의 '신고가 돌파'에 올라타 시세차익을 노려요\n"
         f"• 동시 최대 {args.max_positions}종목, 배정 예산의 {1/args.max_positions*100:.0f}%씩\n"
         f"• 변동이 커요(고위험). 그래서 전체의 일부만 맡깁니다\n"
-        f"• 사고팔 때 알려드리고, '상태' 보내면 세 봇을 한 번에 보여드려요")
+        + (f"• +{args.take_profit*100:.0f}% 도달하면 바로 이익을 확정해요(고정 익절)\n"
+           if args.take_profit > 0 else "")
+        + f"• 사고팔 때 알려드리고, '상태' 보내면 세 봇을 한 번에 보여드려요")
 
     def nm(m):
         return m.replace("KRW-", "")
 
     def reason_easy(r: str) -> str:
         if r.startswith("손절"):
-            return "손실 한도(-15%)에 닿아 더 큰 손실을 막으려고 팔았어요"
+            return "손실 한도(-12%)에 닿아 더 큰 손실을 막으려고 팔았어요"
+        if r.startswith("익절"):
+            return f"목표 수익(+{args.take_profit*100:.0f}%)에 도달해 이익을 확정했어요"
         if r.startswith("트레일링"):
             return "고점에서 많이 내려와 벌어둔 이익을 지키려고 팔았어요"
         if r.startswith("보유초과"):
