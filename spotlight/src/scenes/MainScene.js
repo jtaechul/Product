@@ -54,6 +54,7 @@ export class MainScene extends Scene {
     this.tex = {};
     this.overlay = null;
     this.heroDispH = BUST_DISP_H;
+    this._presses = []; // 눌림 애니메이션 중인 버튼·카드
   }
 
   async onEnter() {
@@ -203,6 +204,7 @@ export class MainScene extends Scene {
     this.mgrText.position.set(146, 660); c.addChild(this.mgrText);
     c.eventMode = "static"; c.cursor = "pointer";
     c.on("pointertap", () => this.openOffers());
+    this._pressable(c);
     this.bottomBlock.addChild(c);
   }
 
@@ -229,6 +231,7 @@ export class MainScene extends Scene {
     const t = this._t("인연", 18, S.coral, FD); t.anchor.set(0.5); t.position.set(668, 173); c.addChild(t);
     c.eventMode = "static"; c.cursor = "pointer";
     c.on("pointertap", () => this.openBonds());
+    this._pressable(c);
     this.addChild(c);
   }
 
@@ -239,6 +242,7 @@ export class MainScene extends Scene {
     const t = this._t("메뉴", 18, 0x4a5a8a, FD); t.anchor.set(0.5); t.position.set(668, 227); c.addChild(t);
     c.eventMode = "static"; c.cursor = "pointer";
     c.on("pointertap", () => this.openMenu());
+    this._pressable(c);
     this.addChild(c);
   }
 
@@ -271,6 +275,7 @@ export class MainScene extends Scene {
         const ic = new Sprite(this.tex[icons[i]]); ic.anchor.set(0.5); ic.scale.set((bh * 0.5) / Math.max(ic.texture.width, ic.texture.height)); ic.position.set(bx + bw * 0.13, by + bh / 2); b.addChild(ic);
         const t = this._t(it.label, 23, 0xffffff, FD); t.anchor.set(0.5); t.position.set(bx + bw * 0.60, by + bh / 2); b.addChild(t);
         b.eventMode = "static"; b.cursor = "pointer"; b.on("pointertap", () => { sfx("tap"); it.fn(); });
+        this._pressable(b);
         rows.addChild(b);
       });
     };
@@ -331,7 +336,7 @@ export class MainScene extends Scene {
     const close = new Container();
     close.addChild(new Graphics().roundRect(x + cw / 2 - 70, y + ch - 50, 140, 38, 14).fill(0xece6dc));
     close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 31); return t; })());
-    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => { sfx("cancel"); this._closeOverlay(); });
+    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => { sfx("cancel"); this._closeOverlay(); }); this._pressable(close);
     ov.addChild(close);
     this.addChild(ov);
   }
@@ -366,7 +371,7 @@ export class MainScene extends Scene {
         const gi = GRADE_INFO[this._predict(m)];
         card.addChild(new Graphics().roundRect(cl + cw - 120, cy + 30, 96, 34, 12).fill(gi.color));
         card.addChild(Object.assign((() => { const t = this._t(`예상 ${gi.label}`, 13, 0xffffff, FD); t.anchor.set(0.5); t.position.set(cl + cw - 72, cy + 47); return t; })(), {}));
-        card.eventMode = "static"; card.cursor = "pointer"; card.on("pointertap", () => this.selectProduction(id));  // 사운드는 selectProduction 내부
+        card.eventMode = "static"; card.cursor = "pointer"; card.on("pointertap", () => this.selectProduction(id)); this._pressable(card);  // 사운드는 selectProduction 내부
         ov.addChild(card); cy += 104;
       });
     }
@@ -377,14 +382,14 @@ export class MainScene extends Scene {
         card.addChild(new Graphics().roundRect(cl, cy, cw, 60, 14).fill(0xffffff).stroke({ width: 2, color: 0xd6ead8 }));
         card.addChild(Object.assign(this._t(a.name, 19, S.ink, FD), { x: cl + 18, y: cy + 8 }));
         card.addChild(Object.assign(this._t(`${this._effText(a)}   ${this._cost(a)}`, 12, 0x2e9e8e), { x: cl + 18, y: cy + 36 }));
-        card.eventMode = "static"; card.cursor = "pointer"; card.on("pointertap", () => this.selectSpecial(a.id));
+        card.eventMode = "static"; card.cursor = "pointer"; card.on("pointertap", () => this.selectSpecial(a.id)); this._pressable(card);
         ov.addChild(card); cy += 66;
       });
     }
     const close = new Container();
     close.addChild(new Graphics().roundRect(DESIGN_WIDTH / 2 - 68, fy + fh - 8, 136, 44, 16).fill(0xfdf8f2).stroke({ width: 2, color: S.gold }));
     close.addChild((() => { const t = this._t("닫기", 18, S.ink, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, fy + fh + 14); return t; })());
-    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => { sfx("cancel"); this._closeOverlay(); });
+    close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => { sfx("cancel"); this._closeOverlay(); }); this._pressable(close);
     ov.addChild(close);
     this.addChild(ov);
   }
@@ -480,6 +485,7 @@ export class MainScene extends Scene {
       chip._txt = txt;
       chip.eventMode = "static"; chip.cursor = "pointer";
       chip.on("pointertap", () => { if (this.selected[i] !== undefined) { sfx("cancel"); this.selected.splice(i, 1); this._afterSelectChange(); } });
+      this._pressable(chip);
       this.bottomBlock.addChild(chip); this.slotChips.push(chip);
     }
   }
@@ -504,7 +510,49 @@ export class MainScene extends Scene {
     if (this.menuMode === "category") { this._renderCategories(); this._renderStats(); }
     else this._renderSub(this.activeCat);
   }
-  _tap(c, fn) { c.eventMode = "static"; c.cursor = "pointer"; c.on("pointertap", fn); }
+  _tap(c, fn) { c.eventMode = "static"; c.cursor = "pointer"; c.on("pointertap", fn); this._pressable(c); }
+
+  // 클릭 반응(반응형 UI): 누르면 살짝 작아지고 어둑, 떼면 탄력 있게 톡 복귀.
+  // 요소의 실제 중심을 기준점(pivot)으로 잡아 '제자리에서' 눌리게 한다(좌상단 쏠림 방지).
+  _pressable(node) {
+    if (!node || node._pressInit) return;
+    node._pressInit = true;
+    try {
+      const b = node.getLocalBounds();
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      node.position.set(node.x + cx, node.y + cy);
+      node.pivot.set(cx, cy);
+    } catch (e) { return; }
+    node._baseAlpha = node.alpha;
+    node.eventMode = "static";
+    const down = () => this._press(node, true);
+    const up = () => this._press(node, false);
+    node.on("pointerdown", down);
+    node.on("pointerup", up);
+    node.on("pointerupoutside", up);
+    node.on("pointertap", up);
+  }
+  _press(node, isDown) {
+    node._pressDown = isDown;
+    node.alpha = isDown ? (node._baseAlpha ?? 1) * 0.82 : (node._baseAlpha ?? 1);
+    node._pressGoal = isDown ? 0.94 : 1.0;
+    if (node._pressVel === undefined) node._pressVel = 0;
+    if (!this._presses.includes(node)) this._presses.push(node);
+  }
+  // 감쇠 스프링으로 scale을 목표값으로 이동(복귀 시 살짝 오버슈트 → 탄력감)
+  _stepPresses() {
+    for (let i = this._presses.length - 1; i >= 0; i--) {
+      const n = this._presses[i];
+      if (n.destroyed || !n.parent) { this._presses.splice(i, 1); continue; } // 파괴/제거된 요소 정리
+      const cur = n.scale.x, goal = n._pressGoal;
+      n._pressVel = (n._pressVel + (goal - cur) * 0.4) * 0.62; // 강성·감쇠
+      let next = cur + n._pressVel;
+      n.scale.set(next);
+      if (!n._pressDown && Math.abs(goal - next) < 0.003 && Math.abs(n._pressVel) < 0.003) {
+        n.scale.set(goal); n._pressVel = 0; this._presses.splice(i, 1);
+      }
+    }
+  }
 
   _renderCategories() {
     const cw = 122, gap = 10, startX = (DESIGN_WIDTH - (cw * 4 + gap * 3)) / 2, y = 842;
@@ -749,7 +797,7 @@ export class MainScene extends Scene {
         const btn = new Container();
         btn.addChild(new Graphics().roundRect(x + cw / 2 - 84, y + ch - 62, 168, 46, 16).fill(S.coral));
         btn.addChild((() => { const t = this._t("확인", 20, 0xffffff, FD); t.anchor.set(0.5); t.position.set(x + cw / 2, y + ch - 39); return t; })());
-        btn.eventMode = "static"; btn.cursor = "pointer"; btn.on("pointertap", () => { sfx("tap"); this._closeOverlay(); });
+        btn.eventMode = "static"; btn.cursor = "pointer"; btn.on("pointertap", () => { sfx("tap"); this._closeOverlay(); }); this._pressable(btn);
         ov.addChild(btn);
       } else {
         const ch = 168 + ev.choices.length * 72, y = (DESIGN_HEIGHT - ch) / 2;
@@ -764,6 +812,7 @@ export class MainScene extends Scene {
           btn.addChild(Object.assign(this._t(this._effSummary(c), 13, S.sub), { x: x + 48, y: by + 35 }));
           btn.eventMode = "static"; btn.cursor = "pointer";
           btn.on("pointertap", () => { sfx("tap"); this.game.applyEventEffects(c.effects, c.flag); this.refreshHUD(); this.renderMenu(); build(c); });
+          this._pressable(btn);
           ov.addChild(btn);
         });
       }
@@ -855,7 +904,7 @@ export class MainScene extends Scene {
       const c = new Container();
       c.addChild(new Graphics().roundRect(bx, H - 96, 300, 60, 18).fill(color).stroke({ width: 2, color: 0xffffff }));
       const t = this._t(label, 22, 0xffffff, FD); t.anchor.set(0.5); t.position.set(bx + 150, H - 66); c.addChild(t);
-      c.eventMode = "static"; c.cursor = "pointer"; c.on("pointertap", () => { sfx("tap"); fn(); });
+      c.eventMode = "static"; c.cursor = "pointer"; c.on("pointertap", () => { sfx("tap"); fn(); }); this._pressable(c);
       ov.addChild(c);
     };
     mkBtn("다시 도전", 40, S.coral, () => this.manager.change(new MainScene(new GameState())));
@@ -865,6 +914,7 @@ export class MainScene extends Scene {
   }
 
   update(delta) {
+    this._stepPresses();
     if (!this.hero) return;
     this.t += delta;
     this.hero.position.y = HERO_TOP_Y + Math.sin(this.t * 0.045) * 2;
