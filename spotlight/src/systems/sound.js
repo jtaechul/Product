@@ -10,20 +10,25 @@ const st = load();
 export function isBgmOn() { return st.bgm; }
 export function isSfxOn() { return st.sfx; }
 
-// 자동재생이 차단되면 첫 사용자 제스처(터치·클릭·키)에서 현재 곡을 다시 재생.
+// 브라우저 자동재생 정책상 '최초 사용자 동작' 전에는 소리를 막는다.
+// → 화면 어디든 처음 닿는(또는 누르는·스크롤하는) 순간 즉시 현재 곡을 재생한다.
+// 가능한 모든 입력 이벤트를 window·document 양쪽 캡처 단계에서 듣는다(가장 이른 시점).
+const UNLOCK_EVENTS = ["pointerdown", "pointerup", "touchstart", "touchend", "mousedown", "click", "keydown"];
 function armGestureRetry() {
   if (pendingGesture) return;
   pendingGesture = true;
   const go = () => {
     pendingGesture = false;
-    window.removeEventListener("pointerdown", go, true);
-    window.removeEventListener("touchstart", go, true);
-    window.removeEventListener("keydown", go, true);
+    for (const ev of UNLOCK_EVENTS) {
+      window.removeEventListener(ev, go, true);
+      document.removeEventListener(ev, go, true);
+    }
     if (st.bgm && curSrc) playBgm(curSrc, curVol);
   };
-  window.addEventListener("pointerdown", go, true);
-  window.addEventListener("touchstart", go, true);
-  window.addEventListener("keydown", go, true);
+  for (const ev of UNLOCK_EVENTS) {
+    window.addEventListener(ev, go, true);
+    document.addEventListener(ev, go, true);
+  }
 }
 
 // BGM 재생(곡 전환 포함). 끈 상태면 곡만 기억하고 재생은 보류.
