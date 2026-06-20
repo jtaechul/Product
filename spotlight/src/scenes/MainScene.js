@@ -191,17 +191,17 @@ export class MainScene extends Scene {
     if (this._bgmSeason) this._updateSeasonBgm();
   }
 
-  // ───────── 매니저 말풍선 ─────────
+  // ───────── 매니저 말풍선 (얼굴 없는 버전) ─────────
   buildManagerBubble() {
     const c = new Container();
-    const spr = this._spr("manager_bubble", 120, 608, 480); c.addChild(spr);
-    const mh = spr.height;
-    // 사각 사진칸: 크롭 박스 x150~490 · y0~410 (가로맞춤·머리끝 보존·아래 직선 크롭, 기획서 17)
-    this._faceFitW(c, this.tex.mgrface, 148.8, 628.4, 76.8, 74.4, 150 / 701, 490 / 701, 0);
-    const who = this._t("한지원", 16, 0x22384a, FD); who.position.set(262, 634); c.addChild(who);
-    this.mgrText = this._t(MANAGER_LINES[0], 17, 0x22384a);
-    this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 300;
-    this.mgrText.position.set(262, 662); c.addChild(this.mgrText);
+    // 민트 말풍선 + 크림 이름칩 (매니저 얼굴 미노출)
+    c.addChild(new Graphics().roundRect(120, 626, 480, 104, 22).fill({ color: 0xc7e8da, alpha: 0.97 }).stroke({ width: 2, color: S.gold }));
+    c.addChild(new Graphics().moveTo(168, 628).lineTo(150, 610).lineTo(196, 628).fill({ color: 0xc7e8da, alpha: 0.97 }));
+    c.addChild(new Graphics().roundRect(132, 612, 124, 38, 12).fill(0xfdf4e0).stroke({ width: 2, color: S.gold }));
+    const who = this._t("한지원", 18, 0x9a6a2a, FD); who.anchor.set(0.5); who.position.set(194, 631); c.addChild(who);
+    this.mgrText = this._t(MANAGER_LINES[0], 18, 0x22483a);
+    this.mgrText.style.wordWrap = true; this.mgrText.style.wordWrapWidth = 446;
+    this.mgrText.position.set(146, 660); c.addChild(this.mgrText);
     c.eventMode = "static"; c.cursor = "pointer";
     c.on("pointertap", () => this.openOffers());
     this.bottomBlock.addChild(c);
