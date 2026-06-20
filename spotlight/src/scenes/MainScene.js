@@ -350,7 +350,7 @@ export class MainScene extends Scene {
     const cl = fx + fw * 0.085, cw = fw * 0.83;
     let cy = fy + fh * 0.30;
     if (!offers.length && !specials.length) {
-      ov.addChild(Object.assign(this._t("이번 달은 들어온 제안이 없어요.", 18, 0x5a7a6a), { x: cl + 10, y: cy + 10 }));
+      ov.addChild((() => { const t = this._t("이번 달은 들어온 제안이 없어요.", 22, 0x5a7a6a); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, fy + fh * 0.58); return t; })());
     }
     if (offers.length) {
       ov.addChild(Object.assign(this._t("출연 제안", 17, 0xb04a3a, FD), { x: cl, y: cy })); cy += 32;

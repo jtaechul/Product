@@ -38,6 +38,12 @@
       window.addEventListener("orientationchange", lockPortrait);
     })();
   </script>
+  <!-- 항상 최신 코드 로드 (캐시로 업데이트가 안 보이던 문제 방지) -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" }).catch(function () {});
+    }
+  </script>
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>
