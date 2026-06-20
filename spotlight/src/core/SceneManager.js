@@ -23,29 +23,35 @@ export class SceneManager {
     this.resize();
   }
 
-  // 설계 해상도를 화면에 맞춘다. 가로로 들어도 스테이지를 90° 회전해 '세로 화면'을 유지한다.
+  // 설계 해상도를 화면에 맞춘다. 세로폰=폭채움, 태블릿(짧고 넓음)=전체 보이게 높이맞춤(가운데),
+  // 가로=90° 회전 후 전체 보이게(contain). 어느 기기에서도 하단 메뉴가 잘리지 않게 한다.
   resize() {
     const w = window.innerWidth;
     const h = window.innerHeight;
     const ins = this._safeInsets();
     const stage = this.app.stage;
     if (h >= w) {
-      // 세로 모드
+      // 세로
       const availH = Math.max(1, h - ins.top - ins.bottom);
-      const scale = w / DESIGN_WIDTH;             // 가로를 화면 폭에 정확히 맞춤(가로 빈공간 0)
-      stage.rotation = 0;
-      stage.scale.set(scale);
-      stage.position.set(0, ins.top);             // 노치(안전영역) 아래에서 시작
-      const designH = Math.max(DESIGN_HEIGHT, Math.round(availH / scale));
+      const scaleW = w / DESIGN_WIDTH;
+      let scale, ox, designH;
+      if (availH / scaleW >= DESIGN_HEIGHT) {
+        // 충분히 긴 화면(폰): 폭을 꽉 채우고 남는 세로 공간 활용
+        scale = scaleW; ox = 0; designH = Math.round(availH / scale);
+      } else {
+        // 짧고 넓은 화면(태블릿): 전체가 보이도록 높이에 맞추고 가로 가운데 정렬
+        scale = availH / DESIGN_HEIGHT; designH = DESIGN_HEIGHT; ox = (w - DESIGN_WIDTH * scale) / 2;
+      }
+      stage.rotation = 0; stage.scale.set(scale); stage.position.set(ox, ins.top);
       this.current?.resize(DESIGN_WIDTH, designH);
     } else {
-      // 가로 모드: 세로 디자인을 90° 회전해 화면을 꽉 채워 세로 유지 (가로 안내문 없음)
-      const scale = h / DESIGN_WIDTH;             // 세로 폭(720)을 화면 높이에 맞춤
-      if (this._angle() === 90) { stage.rotation = -Math.PI / 2; stage.position.set(0, h); }
-      else { stage.rotation = Math.PI / 2; stage.position.set(w, 0); }
+      // 가로: 90° 회전 + 전체 보이게(contain), 가운데 정렬
+      const scale = Math.min(h / DESIGN_WIDTH, w / DESIGN_HEIGHT);
+      const cw = DESIGN_WIDTH * scale, chh = DESIGN_HEIGHT * scale;
       stage.scale.set(scale);
-      const designH = Math.max(DESIGN_HEIGHT, Math.round(w / scale));
-      this.current?.resize(DESIGN_WIDTH, designH);
+      if (this._angle() === 90) { stage.rotation = -Math.PI / 2; stage.position.set((w - chh) / 2, (h + cw) / 2); }
+      else { stage.rotation = Math.PI / 2; stage.position.set((w + chh) / 2, (h - cw) / 2); }
+      this.current?.resize(DESIGN_WIDTH, DESIGN_HEIGHT);
     }
   }
 

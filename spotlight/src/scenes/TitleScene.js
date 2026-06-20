@@ -73,7 +73,7 @@ export class TitleScene extends Scene {
     box.style.cssText = "background:#1b1524;border:3px solid #f3c969;border-radius:20px;padding:26px 24px;width:82%;max-width:360px;text-align:center;font-family:GmarketSansBold,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.5);";
     box.innerHTML = '<div style="color:#f3c969;font-size:22px;margin-bottom:6px;">주인공 이름</div><div style="color:#cdbfa0;font-size:13px;font-family:sans-serif;margin-bottom:16px;">배우를 꿈꾸는 우리 주인공의 이름은?</div>';
     const input = document.createElement("input");
-    input.type = "text"; input.maxLength = 8; input.placeholder = "소윤";
+    input.type = "text"; input.maxLength = 8; input.placeholder = "이름을 넣어주세요";
     input.style.cssText = "width:100%;box-sizing:border-box;font-size:20px;padding:12px 14px;border-radius:12px;border:2px solid #6b4a1e;text-align:center;font-family:inherit;outline:none;";
     const btn = document.createElement("button");
     btn.textContent = "시작하기";

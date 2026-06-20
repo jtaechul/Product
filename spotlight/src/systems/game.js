@@ -135,11 +135,13 @@ export class GameState {
     return this.turn >= TOTAL_TURNS;
   }
 
-  // 능력치 1종 상승 (소프트캡 + 멘탈 보정 적용)
+  // 능력치 1종 상승 (소프트캡 + 멘탈·체력 보정 적용)
   _gainStat(key, base) {
     let mult = softCapMultiplier(this.stats[key]);
     if (this.mental < 30) mult *= 0.5;         // 멘탈 낮으면 -50% (기획서 7번)
     else if (this.mental >= 85) mult *= 1.15;  // 멘탈 매우 높을 때만 소폭 보너스
+    if (this.stamina <= 0) mult *= 0.3;        // 체력 고갈: 상승 대폭 감소 (기획서 9·10)
+    else if (this.stamina < 20) mult *= 0.6;   // 체력 부족: 상승 감소
     this.stats[key] = clamp(Math.round(this.stats[key] + base * mult), 0, 100);
   }
 
