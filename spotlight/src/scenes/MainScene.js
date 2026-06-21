@@ -260,9 +260,9 @@ export class MainScene extends Scene {
     const panel = new Sprite(ptex); panel.scale.set(pw / ptex.width); panel.position.set(px, py); ov.addChild(panel);
     ov.addChild((() => { const t = this._t("메 뉴", 30, 0xa84a64, FD); t.anchor.set(0.5); t.position.set(DESIGN_WIDTH / 2, py + ph * 0.072); return t; })());
     const rows = new Container(); ov.addChild(rows);
-    const btex = this.tex.menu_btn, bw = pw * 0.80, bh = bw * btex.height / btex.width, bx = px + (pw - bw) / 2;
+    const btex = this.tex.menu_btn, bw = pw * 0.74, bh = bw * btex.height / btex.width, bx = px + (pw - bw) / 2;
     const icons = ["icon_back", "icon_save", "icon_list", "icon_flag", "icon_music", "icon_speaker"];
-    const top = py + ph * 0.155, gap = (ph * 0.80) / 6;
+    const top = py + ph * 0.118, gap = (ph * 0.83) / 6;
     const build = () => {
       rows.removeChildren();
       const items = [
