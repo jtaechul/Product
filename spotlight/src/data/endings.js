@@ -82,7 +82,7 @@ export const ENDINGS = [
     quote: "언어는 달라도, 마음은 연기로 전해지더군요.",
   },
   {
-    id: "tv_star", emoji: "📺", title: "안방극장의 별", trait: "스타성", illust: "film_master",
+    id: "tv_star", emoji: "📺", title: "안방극장의 별", trait: "스타성", illust: "tv_star",
     when: (c) => c.fieldTop === "drama" && c.fame >= 58 && c.actAvg >= 48 && c.looks >= 50,
     core: (c) => `매주 저녁, 그/그녀의 얼굴은 온 가족의 화제였다. 안방극장을 수놓은 숱한 명장면을 남겼다.`,
     quote: "평범한 저녁을 특별하게 만드는 게 제 일이었어요.",
