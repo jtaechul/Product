@@ -52,7 +52,7 @@ export const ENDINGS = [
     quote: "빛나는 법은 알았지만, 깊어지는 법은 끝내 배우지 못했습니다.",
   },
   {
-    id: "mentor_master", emoji: "🎓", title: "후학을 키운 대배우", trait: "후학양성", illust: "national",
+    id: "mentor_master", emoji: "🎓", title: "후학을 키운 대배우", trait: "후학양성", illust: "mentor_master",
     when: (c) => c.actAvg >= 68 && c.char >= 80 && c.study >= 45 && c.bondNoh >= 80,
     core: (c) => `정상에 오른 뒤에도 그/그녀는 강단과 현장을 떠나지 않았다. 수많은 후배가 그 손을 잡고 배우로 자라났다.`,
     quote: "재능보다 오래가는 건 사람됨이었습니다.",
