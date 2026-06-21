@@ -124,7 +124,7 @@ export const ENDINGS = [
     quote: "카메라 앞의 떨림을 알기에, 더 다정한 연출이 될 수 있었습니다.",
   },
   {
-    id: "character_actor", emoji: "🧩", title: "천의 얼굴 성격파", trait: "변신의 귀재", illust: "film_master",
+    id: "character_actor", emoji: "🧩", title: "천의 얼굴 성격파", trait: "변신의 귀재", illust: "character_actor",
     when: (c) => c.emo >= 60 && c.char >= 56 && c.praisedCount >= 4,
     core: (c) => `악역도, 광대도, 아버지도 — 작품마다 전혀 다른 사람이 되었다. "저 사람 누구야?"가 최고의 찬사였다.`,
     quote: "제 얼굴이 기억되지 않을 때, 배역이 살아남습니다.",
