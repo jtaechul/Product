@@ -64,7 +64,7 @@ export const ENDINGS = [
     quote: "오래 사랑받는 배우이고 싶었습니다. 그거면 충분합니다.",
   },
   {
-    id: "director_actor", emoji: "🎬", title: "감독 겸 배우", trait: "창작자", illust: "film_master",
+    id: "director_actor", emoji: "🎬", title: "감독 겸 배우", trait: "창작자", illust: "director_actor",
     when: (c) => c.study >= 66 && c.char >= 58 && c.actAvg >= 60,
     core: (c) => `카메라 앞과 뒤를 모두 아는 사람이 되었다. 직접 쓰고 연출한 작품으로 또 한 번 박수를 받았다.`,
     quote: "연기를 알았기에, 이야기를 더 사랑하게 됐습니다.",
