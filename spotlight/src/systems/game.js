@@ -178,6 +178,7 @@ export class GameState {
       this.mental = clamp(this.mental + mv, 0, 100);
     }
     if (act.money) this.money = Math.max(0, this.money + act.money);
+    if (act.prodBonus) this.prodBonus = act.prodBonus; // 차기작 준비: 다음 출연 평가 보정
   }
 
   // 선택한 활동 id 배열(최대 2)로 한 달 진행 → 정산 후 다음 턴.
@@ -192,8 +193,8 @@ export class GameState {
     }
     // 3) 매달 기본 스트레스 -3 (멘탈은 가만히 두면 줄어든다 → 회복 활동을 강제, 기획서 10)
     this.mental = clamp(this.mental - 3, 0, 100);
-    // 4) 매달 용돈 +20,000 (후반 돈 과잉 완화)
-    this.money += 20000;
+    // 4) 매달 용돈 +10,000 (돈 과잉 완화)
+    this.money += 10000;
     // 4) 턴 경과 + 다음 달 출연 제안 갱신
     this.turn += 1;
     this.offers = this.genOffers();
