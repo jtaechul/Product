@@ -59,7 +59,8 @@ export class MainScene extends Scene {
 
   async onEnter() {
     const uiNames = ["topbar2", "stats_frame", "manager_bubble", "bond_frame", "slot_chip", "btn_next", "cat_acting", "cat_charm", "cat_mind", "cat_life",
-      "menu_panel", "menu_btn", "offer_frame", "icon_back", "icon_save", "icon_list", "icon_flag", "icon_music", "icon_speaker"];
+      "menu_panel", "menu_btn", "offer_frame", "icon_back", "icon_save", "icon_list", "icon_flag", "icon_music", "icon_speaker",
+      "season_spring", "season_summer", "season_autumn", "season_winter"];
     const [bgTex, idleTex] = await Promise.all([Assets.load(BG_SCHOOL), Assets.load(IDLE_SPRITE)]);
     await Promise.all(uiNames.map(async (n) => { this.tex[n] = await Assets.load(UI(n)).catch(() => null); }));
     // 활동/카테고리 아이콘: 파일이 없어도 게임이 멈추지 않게 개별 try + 대체 아이콘
@@ -162,7 +163,8 @@ export class MainScene extends Scene {
     const bar = new Container();
     bar.addChild(this._spr("topbar2", 10, 8, 700));
     // ② 얼굴 대신 계절명만 (프레임 안 중앙)
-    this.seasonText = this._t("", 26, 0xffffff, FD); this.seasonText.anchor.set(0.5); this.seasonText.position.set(87, 78); bar.addChild(this.seasonText);
+    this.seasonText = this._t("", 24, 0xffffff, FD); this.seasonText.anchor.set(0.5); this.seasonText.position.set(87, 56); bar.addChild(this.seasonText);
+    this.seasonIcon = new Container(); this.seasonIcon.position.set(87, 100); bar.addChild(this.seasonIcon); // 계절 글자 아래 아이콘
     // ① 날짜·이름 크게 + 중앙정렬
     const date = this._t("고1·3월", 24, S.ink, FD); date.anchor.set(0.5); date.position.set(215, 66); bar.addChild(date); this.turnText = date;
     const name = this._t(this.game.heroName, 18, S.sub, FD); name.anchor.set(0.5); name.position.set(215, 98); bar.addChild(name);
@@ -188,6 +190,13 @@ export class MainScene extends Scene {
     this.turnText.text = this.game.label;
     const s = this._season();
     this.seasonText.text = s.name; this.seasonText.style.fill = s.fg;
+    // 계절 아이콘 교체 (프레임 안에 들어가게 작게)
+    const SKEY = { 봄: "season_spring", 여름: "season_summer", 가을: "season_autumn", 겨울: "season_winter" }[s.name];
+    const stex = this.tex[SKEY];
+    if (this.seasonIcon && stex) {
+      this.seasonIcon.removeChildren();
+      const ic = new Sprite(stex); ic.anchor.set(0.5); ic.scale.set(40 / ic.texture.height); this.seasonIcon.addChild(ic);
+    }
     this.resText.stamina.text = String(this.game.stamina);
     this.resText.mental.text = String(this.game.mental);
     this.resText.money.text = `${this.game.moneyShort()}원`;
