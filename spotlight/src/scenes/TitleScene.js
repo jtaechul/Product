@@ -35,7 +35,7 @@ export class TitleScene extends Scene {
     this._btnQuit = this._button("종료하기", CREAM, INK, tex.icon_quit, () => this._quit());
     this.menu.addChild(this._btnNew, this._btnLoad, this._btnQuit);
 
-    this.sub = new Text({ text: "어느 배우의 40년", style: new TextStyle({ fontFamily: FD, fontSize: 22, fill: GOLD, stroke: { color: 0x231a2c, width: 4 } }) });
+    this.sub = new Text({ text: "노력은 꿈을 배신하지 않는다", style: new TextStyle({ fontFamily: FD, fontSize: 23, fill: GOLD, stroke: { color: 0x231a2c, width: 5 } }) });
     this.sub.anchor.set(0.5); this.addChild(this.sub);
 
     armBgm("./assets/sfx/title_bgm.mp3", 0.55); // 시작 화면 배경음악
@@ -116,7 +116,7 @@ export class TitleScene extends Scene {
     if (this._btnNew) this._btnNew.position.set(DESIGN_WIDTH / 2, baseY);
     if (this._btnLoad) this._btnLoad.position.set(DESIGN_WIDTH / 2, baseY + gap);
     if (this._btnQuit) this._btnQuit.position.set(DESIGN_WIDTH / 2, baseY + gap * 2);
-    if (this.sub) this.sub.position.set(DESIGN_WIDTH / 2, baseY + gap * 2 + H * 0.05);
+    if (this.sub) this.sub.position.set(DESIGN_WIDTH / 2, H * 0.165); // SPOTLIGHT 로고 바로 아래
   }
 
   resize(_w, h) { this._layout(h); }
