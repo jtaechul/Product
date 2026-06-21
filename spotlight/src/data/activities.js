@@ -15,7 +15,7 @@ export const ACTIVITIES = [
   { id: "prep",      cat: "acting", emoji: "🎯", name: "차기작 준비", effects: { acting: 2 }, prodBonus: 1.2, money: -10000, stamina: -7,  pose: "acting",    bg: "set",     desc: "다음 출연 평가↑" },
   { id: "vocal",     cat: "charm",  emoji: "🎤", name: "보컬 레슨", effects: { singing: 6, vocal: 5 },   money: -60000, stamina: -7,  pose: "vocal",     bg: "stage",   desc: "가창·발성" },
   { id: "dance",     cat: "charm",  emoji: "💃", name: "댄스 레슨", effects: { dance: 6 },              money: -60000, stamina: -9,  pose: "dance",     bg: "stage",   desc: "댄스" },
-  { id: "gym",       cat: "charm",  emoji: "🏋️", name: "헬스·PT",  effects: { looks: 3 },              money: -40000, stamina: 6,   pose: "gym",       bg: "academy", desc: "체력·외모" },
+  { id: "gym",       cat: "charm",  emoji: "🏋️", name: "헬스·PT",  effects: { looks: 3 },              money: -40000, stamina: 6,   pose: "gym",       bg: "gym", desc: "체력·외모" },
   { id: "styling",   cat: "charm",  emoji: "💄", name: "스타일링",  effects: { looks: 4, fame: 3 },     money: -20000, stamina: -4,  pose: "good",      bg: "home",    desc: "외모·팬" },
   { id: "study",     cat: "mind",   emoji: "📖", name: "독서실",    effects: { study: 6 },              mental: -4, money: -30000,  stamina: -7,  pose: "study",     bg: "school",  desc: "학업" },
   { id: "reading",   cat: "mind",   emoji: "📚", name: "독서·교양", effects: { character: 3, study: 2 },            money: -10000,  stamina: -3,  pose: "study",     bg: "home",    desc: "인성·학업" },
