@@ -35,19 +35,19 @@ export const ENDINGS = [
   // ── 부정 엔딩: 인성·학업 방치 (둘 다 → 인성 → 학업 순, 가장 구체적인 것부터) ──
   {
     id: "self_ruin", emoji: "", title: "스스로 저문 별", trait: "자멸", illust: "self_ruin",
-    when: (c) => c.act < 70 && c.char < 30 && c.study < 34,
+    when: (c) => c.act < 70 && !((c.looks>=55 && c.fame>=55) || c.sing>=58 || c.dance>=58) && c.char < 30 && c.study < 34,
     core: (c) => `재능의 씨앗은 분명 있었다. 그러나 그/그녀는 그 씨앗을 가꿀 사람됨도, 채울 교양도 끝내 갖추지 못했다. 가벼운 처신과 얕은 이해가 거듭되자 현장엔 한숨이, 객석엔 빈자리가 늘었다. 좋은 제안은 먼저 끊겼고, 무대의 불이 꺼지던 날 곁에 남은 이는 많지 않았다.`,
     quote: "재능만 믿었습니다. 그게 가장 큰 착각이었어요.",
   },
   {
     id: "ruined_pride", emoji: "", title: "등을 돌린 사람들", trait: "독선", illust: "ruined_pride",
-    when: (c) => c.act < 70 && c.char < 26,
+    when: (c) => c.act < 70 && !((c.looks>=55 && c.fame>=55) || c.sing>=58 || c.dance>=58) && c.char < 26,
     core: (c) => `연기는 늘 화제였지만, 그/그녀의 이름 뒤엔 한숨이 따라다녔다. 스태프에게 함부로 했고, 동료의 공을 가로챘다. 재능을 인정하면서도 사람들은 하나둘 곁을 떠났고, 어느 순간 좋은 작품의 제안이 먼저 끊겼다. 화면 속에서만 빛나던 별은, 화면 밖에서 혼자가 되었다.`,
     quote: "연기는 늘 칭찬받았는데, 정작 같이 일하자는 사람이 없더군요.",
   },
   {
     id: "hollow_fade", emoji: "", title: "깊이를 갖추지 못한 배우", trait: "얕음", illust: "hollow_fade",
-    when: (c) => c.act < 70 && c.study < 30,
+    when: (c) => c.act < 70 && !((c.looks>=55 && c.fame>=55) || c.sing>=58 || c.dance>=58) && c.study < 30,
     core: (c) => `반짝이는 화제성으로 빠르게 떴지만, 인물을 깊이 이해하지 못했다. 대본 너머의 맥락을, 시대를, 사람을 읽어내지 못한 연기는 늘 한 겹이 비어 있었다. 비슷한 배역만 반복하다, 더 깊은 새 얼굴들에게 자리를 내주며 그/그녀는 서서히 잊혀졌다.`,
     quote: "빛나는 법은 알았지만, 깊어지는 법은 끝내 배우지 못했습니다.",
   },
@@ -59,7 +59,7 @@ export const ENDINGS = [
   },
   {
     id: "national", emoji: "🏆", title: "국민 대배우", trait: "균형의 완성", illust: "national",
-    when: (c) => c.actAvg >= 64 && c.emo >= 45 && c.char >= 55 && c.study >= 46 && c.looks >= 48 && c.fame >= 65,
+    when: (c) => c.actAvg >= 66 && c.emo >= 52 && c.char >= 58 && c.study >= 50 && c.looks >= 52 && c.fame >= 72 && (c.flags.has("national") || c.flags.has("filmaward")),
     core: (c) => `연기와 인격, 교양을 두루 갖춘 그/그녀는 세대를 아울러 사랑받았다. 영화와 드라마 양쪽에서 정점에 섰다.`,
     quote: "오래 사랑받는 배우이고 싶었습니다. 그거면 충분합니다.",
   },
@@ -95,7 +95,7 @@ export const ENDINGS = [
   },
   {
     id: "theater", emoji: "🎭", title: "연극 무대의 거목", trait: "장인", illust: "theater",
-    when: (c) => c.actAvg >= 60 && c.voc >= 56 && c.fame < 55,
+    when: (c) => c.actAvg >= 60 && c.voc >= 50 && c.fame < 68,
     core: (c) => `대중적 인기를 좇기보다, 그/그녀는 무대를 택했다. 작은 소극장에서도 관객은 그 깊이에 숨을 죽였다.`,
     quote: "박수 소리보다, 관객의 침묵이 더 큰 상이었습니다.",
   },
@@ -107,19 +107,19 @@ export const ENDINGS = [
   },
   {
     id: "writer", emoji: "", title: "작가", trait: "이야기꾼", illust: "writer",
-    when: (c) => c.study >= 64 && c.char >= 55,
+    when: (c) => c.study >= 64 && c.char >= 55 && c.net < 42,
     core: (c) => `대본을 누구보다 깊이 읽던 사람은, 끝내 직접 이야기를 쓰기 시작했다. 그/그녀의 펜 끝에서 수많은 명대사와 인물이 태어났다.`,
     quote: "내가 연기하지 못한 인물들을, 글로 살려냈습니다.",
   },
   {
     id: "drama_producer", emoji: "", title: "드라마 제작자", trait: "기획자", illust: "drama_producer",
-    when: (c) => c.net >= 50 && c.study >= 48 && c.fame >= 48,
+    when: (c) => c.net >= 42 && c.study >= 46 && c.fame >= 46,
     core: (c) => `현장을 누구보다 잘 아는 배우 출신 제작자. 그/그녀가 기획한 드라마마다 화제가 됐고, 수많은 후배에게 무대를 만들어 주었다.`,
     quote: "이제는 내가 빛날 차례가 아니라, 누군가를 빛나게 할 차례였습니다.",
   },
   {
     id: "broadcast_pd", emoji: "", title: "방송 PD", trait: "연출 PD", illust: "pd",
-    when: (c) => c.study >= 48 && c.net >= 46,
+    when: (c) => c.study >= 46 && c.net >= 40,
     core: (c) => `예능과 드라마 현장을 두루 거친 그/그녀는 방송국 PD가 되었다. 출연자의 마음을 아는 따뜻한 연출로, 오래 사랑받는 프로그램을 만들었다.`,
     quote: "카메라 앞의 떨림을 알기에, 더 다정한 연출이 될 수 있었습니다.",
   },
@@ -137,7 +137,7 @@ export const ENDINGS = [
   },
   {
     id: "variety", emoji: "🎪", title: "예능 대세", trait: "만능 엔터테이너", illust: "film_master",
-    when: (c) => (c.dance >= 42 || c.sing >= 42) && c.net >= 42 && c.fame >= 42,
+    when: (c) => (c.dance >= 42 || c.sing >= 42) && c.net >= 36 && c.fame >= 42,
     core: (c) => `연기뿐 아니라 예능과 무대에서도 종횡무진. 어디서든 분위기를 살리는 대세로 자리 잡았다.`,
     quote: "웃게 만드는 것도, 만만치 않은 연기였습니다.",
   },
