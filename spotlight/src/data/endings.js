@@ -148,7 +148,7 @@ export const ENDINGS = [
     quote: "작은 역이라도, 큰 마음으로 했습니다.",
   },
   {
-    id: "late_bloomer", emoji: "🌱", title: "대기만성 늦깎이", trait: "대기만성", illust: "late_bloomer",
+    id: "late_bloomer", emoji: "🌱", title: "대기만성 늦깎이", trait: "대기만성", illust: "unknown_supporting",
     when: (c) => c.actAvg >= 44 && c.praisedCount >= 2,
     core: (c) => `시작은 더뎠고 무명도 길었다. 그러나 포기하지 않은 시간이 뒤늦게 꽃을 피웠다.`,
     quote: "늦게 핀 꽃이 더 오래 향기롭더군요.",
