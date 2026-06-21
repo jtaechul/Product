@@ -68,7 +68,7 @@ export class MainScene extends Scene {
     const fallbackIco = this.tex.actico_acting || this.tex.cat_acting || idleTex;
     for (const a of ACTIVITIES) if (!this.tex[`actico_${a.id}`]) this.tex[`actico_${a.id}`] = fallbackIco;
     for (const c of CATEGORIES) if (!this.tex[`catico_${c.id}`]) this.tex[`catico_${c.id}`] = fallbackIco;
-    await Promise.all(["academy", "home", "set", "stage"].map((n) => Assets.load(`./assets/bg/${n}.png`))); // 활동별 배경 프리로드
+    await Promise.all(["academy", "home", "set", "stage", "gym"].map((n) => Assets.load(`./assets/bg/${n}.png`))); // 활동별 배경 프리로드
     this.tex.mgrface = await Assets.load("./assets/manager/hanjiwon.png");
     await Promise.all(BONDS.map(async (b) => { this.tex[`bond_${b.id}`] = await Assets.load(b.img); }));
     this.idleTex = idleTex;
