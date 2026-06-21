@@ -725,7 +725,13 @@ export class MainScene extends Scene {
       if (this.game.turn === 13 || this.game.turn === 25 || this.game.turn > TOTAL_TURNS) {
         await this._playCeremony(this.game.yearAward());
       }
-      if (this.game.turn > TOTAL_TURNS) { this.showEnding(); return; } // 36턴 종료 → 40년 커리어 엔딩
+      if (this.game.turn > TOTAL_TURNS) {
+        const res = computeEnding(this.game);
+        playBgm(`./assets/sfx/${this._endingBgm(res)}.mp3`, 0.6); // 졸업 직후 엔딩곡 시작 — 엔딩 이미지까지 끊김 없이
+        await this._playEndingPrologue(res);                       // 프메식: 그동안의 회고가 아래→위로 스크롤
+        this.showEnding(res, true);                                // 엔딩곡 이어서 재생(재시작 안 함)
+        return;
+      }
       this.menuMode = "category"; this.renderMenu();
       this.mgrText.text = this._mgrLine();
       if (this.nextBtn) this.nextBtn.visible = true; // 행동 완료 → 버튼 다시 표시
@@ -826,15 +832,73 @@ export class MainScene extends Scene {
   }
 
   // ───────── 40년 커리어 엔딩 (기획서 15번) ─────────
-  async showEnding() {
-    this._closeOverlay();
-    const res = computeEnding(this.game);
-    const total = saveToDex(res.id);
-    // 엔딩 BGM: 배우=ending1 / 창작자(감독·작가·PD·제작자)=ending2 / 부정=ending3
+  // 엔딩 BGM 선택: 배우=ending1 / 창작자(감독·작가·PD·제작자)=ending2 / 부정=ending3
+  _endingBgm(res) {
     const creatorIds = ["film_director", "drama_producer", "broadcast_pd", "writer", "director_actor"];
     const badIds = ["controversy", "self_ruin", "ruined_pride", "hollow_fade"];
-    const bgm = badIds.includes(res.id) ? "ending_bad" : creatorIds.includes(res.id) ? "ending_creator" : "ending_actor";
-    playBgm(`./assets/sfx/${bgm}.mp3`, 0.5);
+    return badIds.includes(res.id) ? "ending_bad" : creatorIds.includes(res.id) ? "ending_creator" : "ending_actor";
+  }
+
+  // 졸업 후 회고 텍스트 (수치 비노출, 키운 능력치로 분위기만 암시 → 엔딩 궁금증 극대화)
+  _endingScrollText(res) {
+    const g = this.game, s = g.stats, name = g.heroName || "나";
+    const top = Object.entries(s).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k);
+    const D = {
+      acting: "무대 위, 감정 하나에 모든 걸 쏟던 밤", emotion: "눈물과 분노 사이에서 인물의 마음을 더듬던 시간",
+      vocal: "목소리에 색을 입히려 부르고 또 부르던 날", looks: "거울 앞에서 자신을 다듬어 가던 순간",
+      singing: "노래로 객석을 흔들고 싶던 마음", dance: "스텝이 몸에 새겨질 때까지 반복하던 연습",
+      study: "대본 너머의 세계를 파고들던 새벽", character: "무엇보다 사람을 먼저 생각하던 마음",
+      network: "현장에서 맺어 온 인연과 신뢰", fame: "내 이름을 세상에 알리려 달려온 길",
+    };
+    const effort = top.map((k) => D[k]).filter(Boolean);
+    const L = [];
+    L.push(`${name}의 3년이,\n오늘 막을 내린다.`);
+    L.push("길거리에서 받아 든 명함 한 장.\n그 작은 떨림에서\n모든 것이 시작됐다.");
+    L.push("수업과 연습, 무대와 카메라 사이에서\n웃고 울며 보낸 천 일.");
+    if (effort.length) L.push(effort.join(",\n그리고 ") + ".");
+    if (res.people && res.people.length) L.push(`그 길 위에서\n${res.people.join(", ")}이(가)\n곁을 지켜 주었다.`);
+    L.push("졸업식이 끝나고,\n교문을 나선다.\n이제, 진짜 배우의 인생이 시작된다.");
+    L.push("스무 살의 나는,\n마흔 해 뒤\n어떤 배우가 되어 있을까.");
+    L.push("그 모든 시간이 만든\n결말은—");
+    return L.join("\n\n\n");
+  }
+
+  // 프린세스 메이커식 상향 스크롤 회고 (엔딩 이미지 직전, 긴장감 빌드업)
+  _playEndingPrologue(res) {
+    return new Promise((resolve) => {
+      const H = this.H || DESIGN_HEIGHT;
+      const ov = new Container(); ov._isEnding = true; this.overlay = ov;
+      ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, H).fill(0x0b0a12));
+      const txt = this._t(this._endingScrollText(res), 24, 0xece3d4);
+      txt.style.wordWrap = true; txt.style.wordWrapWidth = DESIGN_WIDTH - 120; txt.style.lineHeight = 44; txt.style.align = "center";
+      txt.anchor.set(0.5, 0); txt.position.set(DESIGN_WIDTH / 2, H);
+      ov.addChild(txt);
+      ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, 110).fill({ color: 0x0b0a12, alpha: 0.92 }));       // 상단 페이드
+      ov.addChild(new Graphics().rect(0, H - 110, DESIGN_WIDTH, 110).fill({ color: 0x0b0a12, alpha: 0.92 })); // 하단 페이드
+      const tip = this._t("화면을 누르고 있으면 빨라져요", 15, 0x8a8298, FB); tip.anchor.set(0.5, 1); tip.position.set(DESIGN_WIDTH / 2, H - 24); ov.addChild(tip);
+      ov.eventMode = "static";
+      let done = false;
+      const finish = () => { if (done) return; done = true; this._scroll = null; this._fastScroll = false; if (ov.parent) this.removeChild(ov); ov.destroy({ children: true }); this.overlay = null; resolve(); };
+      ov.on("pointerdown", () => { this._fastScroll = true; });
+      ov.on("pointerup", () => { this._fastScroll = false; });
+      ov.on("pointerupoutside", () => { this._fastScroll = false; });
+      const skip = new Container();
+      skip.addChild(new Graphics().roundRect(DESIGN_WIDTH - 160, 36, 130, 46, 14).fill({ color: 0x241f33, alpha: 0.9 }).stroke({ width: 1.5, color: 0x6b5a8a }));
+      const stt = this._t("건너뛰기", 17, 0xd8cfe0, FD); stt.anchor.set(0.5); stt.position.set(DESIGN_WIDTH - 95, 59); skip.addChild(stt);
+      skip.eventMode = "static"; skip.cursor = "pointer";
+      skip.on("pointerdown", (e) => { e.stopPropagation && e.stopPropagation(); });
+      skip.on("pointertap", (e) => { e.stopPropagation && e.stopPropagation(); finish(); });
+      this.addChild(ov);
+      this._scroll = { txt, H, finish };
+      setTimeout(() => { if (!done && ov.parent) ov.addChild(skip); }, 1600);
+    });
+  }
+
+  async showEnding(res, bgmPlaying) {
+    this._closeOverlay();
+    if (!res) res = computeEnding(this.game);
+    const total = saveToDex(res.id);
+    if (!bgmPlaying) playBgm(`./assets/sfx/${this._endingBgm(res)}.mp3`, 0.6); // 직접 재표시 때만 새로 시작
     const H = this.H || DESIGN_HEIGHT;
     const ov = new Container(); ov._isEnding = true; this.overlay = ov;
     ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, H).fill(0x0e0b14));
@@ -919,6 +983,11 @@ export class MainScene extends Scene {
 
   update(delta) {
     this._stepPresses();
+    if (this._scroll) {  // 엔딩 전 회고 스크롤(아래→위), 누르고 있으면 3배속
+      const s = this._scroll;
+      s.txt.y -= 2.0 * delta * (this._fastScroll ? 3 : 1);
+      if (s.txt.y + s.txt.height < s.H * 0.16) s.finish();
+    }
     if (!this.hero) return;
     this.t += delta;
     this.hero.position.y = HERO_TOP_Y + Math.sin(this.t * 0.045) * 2;

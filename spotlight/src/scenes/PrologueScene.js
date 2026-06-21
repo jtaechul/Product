@@ -59,7 +59,7 @@ export class PrologueScene extends Scene {
     this._layout(this.H || DESIGN_HEIGHT);
   }
 
-  onExit() { stopBgm(); super.onExit(); }
+  onExit() { super.onExit(); } // BGM 유지 — 메인 진입 시 계절곡으로 자연 전환
 
   async _show() {
     const p = this.pages[this.idx];
