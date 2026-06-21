@@ -457,7 +457,7 @@ export class MainScene extends Scene {
         const b = beats[idx];
         charC.removeChildren(); badgeC.removeChildren();
         const ptex = await Assets.load(b.pose ? POSE_PATH(b.pose) : IDLE_SPRITE);
-        const sp = new Sprite(ptex); sp.anchor.set(0.5, 1.0); sp.scale.set(880 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 985); charC.addChild(sp);
+        const sp = new Sprite(ptex); sp.anchor.set(0.5, 1.0); sp.scale.set(1120 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 1290); charC.addChild(sp); // 크게·아래로(얼굴 상단~중간, 다리는 대화창 뒤)
         tint.clear(); if (b.tintA) tint.rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: b.tint, alpha: b.tintA });
         whoT.text = b.who || ""; storyT.text = b.text;
         if (b.badge) {
@@ -772,7 +772,7 @@ export class MainScene extends Scene {
         // 행동마다 다른 배경 (기획서 14B)
         try { bgSpr.texture = await Assets.load(`./assets/bg/${b.bg}.png`); fitBg(); } catch (e) {}
         const ptex = await Assets.load(b.pose ? POSE_PATH(b.pose) : IDLE_SPRITE);
-        const sp = new Sprite(ptex); sp.anchor.set(0.5, 1.0); sp.scale.set(880 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 985); charC.addChild(sp);
+        const sp = new Sprite(ptex); sp.anchor.set(0.5, 1.0); sp.scale.set(1120 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 1290); charC.addChild(sp); // 크게·아래로(얼굴 상단~중간, 다리는 대화창 뒤)
         whoT.text = b.who || ""; storyT.text = b.text;
       };
       ov.on("pointertap", async () => { idx += 1; if (idx >= beats.length) { this._closeOverlay(); resolve(); } else { sfx("page"); await show(); } });
@@ -868,11 +868,12 @@ export class MainScene extends Scene {
     return new Promise((resolve) => {
       const H = this.H || DESIGN_HEIGHT;
       const ov = new Container(); ov._isEnding = true; this.overlay = ov;
-      ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, H).fill(0x0b0a12));
+      ov.addChild(new Graphics().rect(0, -80, DESIGN_WIDTH, H + 260).fill(0x0b0a12)); // 화면 위·아래까지 덮어 메인 UI 비침 방지
       const txt = this._t(this._endingScrollText(res), 24, 0xece3d4);
       txt.style.wordWrap = true; txt.style.wordWrapWidth = DESIGN_WIDTH - 120; txt.style.lineHeight = 44; txt.style.align = "center";
       txt.anchor.set(0.5, 0); txt.position.set(DESIGN_WIDTH / 2, H);
       ov.addChild(txt);
+      const clip = new Graphics().rect(0, 0, DESIGN_WIDTH, H).fill(0xffffff); ov.addChild(clip); txt.mask = clip; // 글자가 화면 밖으로 새지 않게 클립
       ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, 110).fill({ color: 0x0b0a12, alpha: 0.92 }));       // 상단 페이드
       ov.addChild(new Graphics().rect(0, H - 110, DESIGN_WIDTH, 110).fill({ color: 0x0b0a12, alpha: 0.92 })); // 하단 페이드
       const tip = this._t("화면을 누르고 있으면 빨라져요", 15, 0x8a8298, FB); tip.anchor.set(0.5, 1); tip.position.set(DESIGN_WIDTH / 2, H - 24); ov.addChild(tip);
