@@ -26,6 +26,9 @@
                border: 4px solid rgba(243, 201, 105, 0.25); border-top-color: #f3c969;
                animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-hint { max-width: 78%; text-align: center; color: #e9dcb8; font-family: "KoPubWorldDotumMedium", sans-serif;
+               font-size: 15px; line-height: 1.5; letter-spacing: 0; opacity: 0.92; margin-top: 4px; }
+    #loading-hint b { color: #f3c969; font-weight: normal; }
   </style>
   <!-- PixiJS를 빌드 없이 로컬 파일에서 직접 로드 (CDN 의존 X) -->
   <script type="importmap">
@@ -33,21 +36,43 @@
   </script>
 </head>
 <body>
-  <div id="loading"><div class="spinner"></div><div id="loading-text">불러오는 중…</div></div>
+  <div id="loading">
+    <div class="spinner"></div>
+    <div id="loading-text">불러오는 중…</div>
+    <div id="loading-hint"></div>
+  </div>
   <div id="game"></div>
-  <!-- 로딩 오버레이 토글 (씬 전환 중 표시) -->
+  <!-- 로딩 오버레이 토글 + 엔딩 공략 힌트 노출 -->
   <script>
     (function () {
       var el = document.getElementById("loading");
+      var HINTS = [
+        "<b>국민 대배우</b>는 연기·인성·학업·매력을 고루 키우고, 큰 작품에서 수상까지 해야 도달해요.",
+        "인성과 학업을 둘 다 소홀히 하면 <b>부정적인 엔딩</b>으로 끝나요.",
+        "외모와 팬(인지도)을 집중해서 키우면 <b>스타성 배우</b>가 될 수 있어요.",
+        "가창·댄스를 키우고 무대에 서면 <b>뮤지컬·예능</b> 엔딩이 열려요.",
+        "학업을 깊이 파면 <b>작가·영화감독</b> 같은 창작자 엔딩이 열려요.",
+        "인맥을 많이 쌓으면 <b>드라마 제작자·방송 PD</b>가 될 수 있어요.",
+        "연기력을 최고로 끌어올리면 방치 엔딩을 피하고 <b>명품 조연·신스틸러</b>가 돼요.",
+        "노교수와의 <b>인연</b>을 최대로 쌓으면 '후학을 키운 대배우' 엔딩이 열려요.",
+        "휴식·가족·친구로 <b>멘탈</b>을 관리하지 않으면 후반에 슬럼프가 와요.",
+        "<b>체력</b>이 바닥나면 능력치가 잘 오르지 않아요. 가끔 휴식하세요.",
+        "'감정 연기 특훈'으로 <b>감정표현</b>을 키우면 영화·성격파 배역에 강해져요.",
+        "OTT·영화 같은 큰 작품에서 호평받으면 특별한 <b>엔딩 플래그</b>가 열려요.",
+        "학교만 다녀선 학업·인성이 오르지 않아요. <b>직접 활동</b>으로 키워야 해요.",
+      ];
+      var hintEl = document.getElementById("loading-hint");
       window.__setLoading = function (on, msg) {
         if (!el) return;
         if (on) {
           if (msg) { var t = document.getElementById("loading-text"); if (t) t.textContent = msg; }
+          if (hintEl) hintEl.innerHTML = "TIP. " + HINTS[Math.floor(Math.random() * HINTS.length)];
           el.classList.remove("hidden");
         } else {
           el.classList.add("hidden");
         }
       };
+      if (hintEl) hintEl.innerHTML = "TIP. " + HINTS[Math.floor(Math.random() * HINTS.length)];
     })();
   </script>
   <!-- 지원 기기(Android/PWA)에서는 세로 방향 잠금 시도 (잠금 실패 시 캔버스 회전으로 세로 유지) -->

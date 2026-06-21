@@ -42,7 +42,7 @@ export class TitleScene extends Scene {
     this._layout(this.H || DESIGN_HEIGHT);
   }
 
-  onExit() { stopBgm(); super.onExit(); }
+  onExit() { super.onExit(); } // BGM은 멈추지 않음 — 캐릭터 생성·프롤로그까지 같은 곡 이어서 재생
 
   _button(label, fill, textColor, iconTex, fn) {
     const c = new Container();
