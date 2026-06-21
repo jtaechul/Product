@@ -25,8 +25,8 @@ const POSE_PATH = (k) => `./assets/portraits/poses/soyoon_${k}.png`;
 const BG_SCHOOL = "./assets/bg/school.png";
 const UI = (n) => `./assets/ui/${n}.png`;
 
-const HERO_TOP_Y = 128;
-const BUST_DISP_H = 1320;
+const HERO_TOP_Y = 175;
+const BUST_DISP_H = 1230;
 const PANEL_TOP = 742;
 const FD = "GmarketSansBold, sans-serif";
 const FB = "KoPubWorldDotumMedium, sans-serif";
@@ -127,7 +127,7 @@ export class MainScene extends Scene {
     if (this.bgSprite) { const t = this.bgSprite.texture; this.bgSprite.scale.set(Math.max(DESIGN_WIDTH / t.width, H / t.height)); }
     if (this.veil) this.veil.clear().rect(0, 0, DESIGN_WIDTH, H).fill({ color: 0xfff6f3, alpha: 0.16 });
     if (this.bottomBlock) this.bottomBlock.y = H - DESIGN_HEIGHT;
-    this.heroDispH = Math.max(1180, (H - 828) / 0.38);
+    this.heroDispH = Math.max(1100, (H - 860) / 0.40); // 살짝 축소 — 머리끝이 상단바에 안 닿게
     if (this.hero) this._fitHero();
     if (this.heroMask) this.heroMask.clear().rect(0, 0, DESIGN_WIDTH, H - 538).fill(0xffffff);
   }
