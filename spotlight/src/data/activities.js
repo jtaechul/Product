@@ -18,7 +18,7 @@ export const ACTIVITIES = [
   { id: "gym",       cat: "charm",  emoji: "🏋️", name: "헬스·PT",  effects: { looks: 3 },              money: -40000, stamina: 6,   pose: "gym",       bg: "gym", desc: "체력·외모" },
   { id: "styling",   cat: "charm",  emoji: "💄", name: "스타일링",  effects: { looks: 4, fame: 3 },     money: -20000, stamina: -4,  pose: "good",      bg: "salon",    desc: "외모·팬" },
   { id: "study",     cat: "mind",   emoji: "📖", name: "독서실",    effects: { study: 6 },              mental: -4, money: -30000,  stamina: -7,  pose: "study",     bg: "school",  desc: "학업" },
-  { id: "reading",   cat: "mind",   emoji: "📚", name: "독서·교양", effects: { character: 3, study: 2 },            money: -10000,  stamina: -3,  pose: "study",     bg: "home",    desc: "인성·학업" },
+  { id: "reading",   cat: "mind",   emoji: "📚", name: "독서·교양", effects: { character: 3, study: 2 },            money: -10000,  stamina: -3,  pose: "study",     bg: "library",    desc: "인성·학업" },
   { id: "volunteer", cat: "mind",   emoji: "🤲", name: "봉사활동",  effects: { character: 5, network: 3 },                      stamina: -7,  pose: "volunteer", bg: "school",  desc: "인성·인맥" },
   { id: "family",    cat: "life",   emoji: "👨‍👩‍👧", name: "가족과 시간", effects: { character: 3 },       mental: 5,              stamina: 6,   pose: "family",    bg: "home",    desc: "인성·멘탈" },
   { id: "friend",    cat: "life",   emoji: "🧑‍🤝‍🧑", name: "친구와 우정", effects: { character: 2, network: 4 }, mental: 6, money: -30000, stamina: 4, pose: "family", bg: "school",  desc: "인성·멘탈" },
