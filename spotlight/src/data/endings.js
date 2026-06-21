@@ -76,7 +76,7 @@ export const ENDINGS = [
     quote: "한 장면을 위해 일 년을 살아도 아깝지 않았습니다.",
   },
   {
-    id: "global", emoji: "🍿", title: "글로벌 한류 스타", trait: "국제파", illust: "film_master",
+    id: "global", emoji: "🍿", title: "글로벌 한류 스타", trait: "국제파", illust: "global",
     when: (c) => c.flags.has("global") && c.fame >= 72 && c.looks >= 48,
     core: (c) => `OTT를 타고 그/그녀의 연기는 국경을 넘었다. 전 세계 팬이 그 이름을 부르며 한국어 대사를 따라 했다.`,
     quote: "언어는 달라도, 마음은 연기로 전해지더군요.",
