@@ -457,7 +457,7 @@ export class MainScene extends Scene {
         const b = beats[idx];
         charC.removeChildren(); badgeC.removeChildren();
         const ptex = await Assets.load(b.pose ? POSE_PATH(b.pose) : IDLE_SPRITE);
-        const sp = new Sprite(ptex); sp.anchor.set(0.5, 1.0); sp.scale.set(1120 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 1290); charC.addChild(sp); // 크게·아래로(얼굴 상단~중간, 다리는 대화창 뒤)
+        const sp = new Sprite(ptex); sp.anchor.set(0.5, 1.0); sp.scale.set(1050 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 1150); charC.addChild(sp); // 크게·아래로(얼굴 상단~중간, 다리는 대화창 뒤)
         tint.clear(); if (b.tintA) tint.rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: b.tint, alpha: b.tintA });
         whoT.text = b.who || ""; storyT.text = b.text;
         if (b.badge) {
@@ -772,7 +772,7 @@ export class MainScene extends Scene {
         // 행동마다 다른 배경 (기획서 14B)
         try { bgSpr.texture = await Assets.load(`./assets/bg/${b.bg}.png`); fitBg(); } catch (e) {}
         const ptex = await Assets.load(b.pose ? POSE_PATH(b.pose) : IDLE_SPRITE);
-        const sp = new Sprite(ptex); sp.anchor.set(0.5, 1.0); sp.scale.set(1120 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 1290); charC.addChild(sp); // 크게·아래로(얼굴 상단~중간, 다리는 대화창 뒤)
+        const sp = new Sprite(ptex); sp.anchor.set(0.5, 1.0); sp.scale.set(1050 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 1150); charC.addChild(sp); // 크게·아래로(얼굴 상단~중간, 다리는 대화창 뒤)
         whoT.text = b.who || ""; storyT.text = b.text;
       };
       ov.on("pointertap", async () => { idx += 1; if (idx >= beats.length) { this._closeOverlay(); resolve(); } else { sfx("page"); await show(); } });
