@@ -434,22 +434,40 @@ export class MainScene extends Scene {
     return `팬 +${Math.round(m.fame * fameMult)} · 출연료 ${Math.round(m.pay * payMult)}만원`;
   }
   _beats(m, grade) {
+    // 매체별 현장 도착 대사 (다양화)
+    const INTRO = {
+      webdrama: "첫 웹드라마 현장. 작은 카메라 앞이지만 심장이 두근거린다.",
+      shortdrama: "단편 드라마 촬영장. 짧지만 강렬한 한 장면에 모든 걸 건다.",
+      shortfilm: "독립 단편 영화 세트. 감독의 섬세한 디렉션 속에 호흡을 가다듬는다.",
+      dramabit: "드라마 단역으로 선 현장. 짧은 등장이지만, 눈도장은 꼭 찍고 싶다.",
+      cf: "광고 촬영장. 환한 조명 아래, 제품을 들고 가장 환한 미소를 짓는다.",
+      musical: "뮤지컬 무대 리허설. 오케스트라 전주가 흐르고, 천천히 막이 오른다.",
+      ott: "OTT 시리즈 현장. 전 세계 공개를 앞두고 공기마저 팽팽하다.",
+      filmlead: "영화 주·조연. 스크린을 가득 채울 단 한 컷을 위해 숨을 멈춘다.",
+      seasondrama: "시즌제 드라마 주연. 안방극장을 책임질 무게가 어깨에 얹힌다.",
+    };
+    const fieldBg = m.id === "musical" ? "stage" : "set";
+    const dir = m.id === "musical" ? "지휘자" : m.id === "cf" ? "감독" : "감독";
+    const cue = m.id === "musical" ? '"자… 큐!"' : m.id === "cf" ? '"좋아요, 밝게! 큐!"' : '"자, 갈게요. 레디… 액션!"';
+    const reactWho = m.id === "musical" ? "객석 반응" : m.id === "cf" ? "광고 반응" : "시청자 반응";
     const end = {
       best: { text: `정적… 그리고 박수가 터졌다. "이게 신인이라고?" 현장이 술렁였다. 인생 연기였다.`, pose: "cheer", tint: 0xfff3c4, tintA: 0.16 },
-      good: { text: `안정적인 호흡과 표현. 모니터를 본 감독이 흡족하게 고개를 끄덕였다.`, pose: "cheer", tint: 0xd8f0e8, tintA: 0.12 },
+      good: { text: `안정적인 호흡과 표현. 모니터를 본 ${dir}이 흡족하게 고개를 끄덕였다.`, pose: "cheer", tint: 0xd8f0e8, tintA: 0.12 },
       fair: { text: `큰 실수도 큰 인상도 없이, 무난하게 촬영을 마쳤다.`, pose: "good", tint: 0x000000, tintA: 0 },
       bad: { text: `대사가 자꾸 겉돌았다. "컷, 다시 갈게요…" 아쉬움이 남는 현장이었다.`, pose: "panned", tint: 0x0c0c14, tintA: 0.34 },
     }[grade];
+    const cm = (GRADE_COMMENTS[grade] || []).slice(0, 3).map((c) => `“${c}”`).join("\n");
+    const intro = INTRO[m.id] || `「${m.name}」 촬영 현장. 카메라 앞에 선다.`;
     return [
-      { who: "감독", text: `「${m.name}」 촬영장. 카메라에 빨간 불이 들어온다. "자, 갈게요. 레디… 액션!"`, pose: "filming", tint: 0x000000, tintA: 0 },
-      { who: "", text: `${end.text}\n\n보상  ${this._rewardText(m, grade)}`, pose: end.pose, tint: end.tint, tintA: end.tintA, badge: grade },
+      { who: dir, text: `${intro}\n\n${cue}`, pose: "filming", bg: fieldBg, tint: 0x000000, tintA: 0 },
+      { who: "", text: end.text, pose: end.pose, bg: fieldBg, tint: end.tint, tintA: end.tintA, badge: grade },
+      { who: reactWho, text: `「${m.name}」 공개! 반응이 올라온다 —\n\n${cm}\n\n보상  ${this._rewardText(m, grade)}`, pose: end.pose, bg: fieldBg, tint: end.tint, tintA: Math.min(end.tintA, 0.12) },
     ];
   }
   _playScene(result) {
     return new Promise((resolve) => {
       const { media, grade } = result;
       const beats = this._beats(media, grade);
-      const bgName = media.id === "musical" ? "stage" : "set";
       const ov = new Container(); this.overlay = ov;
       ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill(0x101018));
       const bgSpr = new Sprite(); bgSpr.anchor.set(0.5, 0); bgSpr.position.set(DESIGN_WIDTH / 2, 0); ov.addChild(bgSpr);
@@ -465,6 +483,7 @@ export class MainScene extends Scene {
       const show = async () => {
         const b = beats[idx];
         charC.removeChildren(); badgeC.removeChildren();
+        if (b.bg) { try { const tex = await Assets.load(`./assets/bg/${b.bg}.png`); bgSpr.texture = tex; bgSpr.scale.set(Math.max(DESIGN_WIDTH / tex.width, DESIGN_HEIGHT / tex.height)); } catch (e) {} } // 비트별 배경
         const ptex = await Assets.load(b.pose ? POSE_PATH(b.pose) : IDLE_SPRITE);
         const sp = new Sprite(ptex); sp.anchor.set(0.5, 1.0); sp.scale.set(1050 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 1150); charC.addChild(sp); // 크게·아래로(얼굴 상단~중간, 다리는 대화창 뒤)
         tint.clear(); if (b.tintA) tint.rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: b.tint, alpha: b.tintA });
@@ -478,10 +497,7 @@ export class MainScene extends Scene {
       };
       ov.on("pointertap", async () => { idx += 1; if (idx >= beats.length) { this._closeOverlay(); resolve(); } else await show(); });
       this.addChild(ov);
-      Assets.load(`./assets/bg/${bgName}.png`).then((tex) => {
-        bgSpr.texture = tex; bgSpr.scale.set(Math.max(DESIGN_WIDTH / tex.width, DESIGN_HEIGHT / tex.height));
-        show();
-      });
+      show();
     });
   }
 
