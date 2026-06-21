@@ -61,9 +61,13 @@ export class MainScene extends Scene {
     const uiNames = ["topbar2", "stats_frame", "manager_bubble", "bond_frame", "slot_chip", "btn_next", "cat_acting", "cat_charm", "cat_mind", "cat_life",
       "menu_panel", "menu_btn", "offer_frame", "icon_back", "icon_save", "icon_list", "icon_flag", "icon_music", "icon_speaker"];
     const [bgTex, idleTex] = await Promise.all([Assets.load(BG_SCHOOL), Assets.load(IDLE_SPRITE)]);
-    await Promise.all(uiNames.map(async (n) => { this.tex[n] = await Assets.load(UI(n)); }));
-    await Promise.all(ACTIVITIES.map(async (a) => { this.tex[`actico_${a.id}`] = await Assets.load(UI(`actico_${a.id}`)); }));
-    await Promise.all(CATEGORIES.map(async (c) => { this.tex[`catico_${c.id}`] = await Assets.load(UI(`catico_${c.id}`)); }));
+    await Promise.all(uiNames.map(async (n) => { this.tex[n] = await Assets.load(UI(n)).catch(() => null); }));
+    // 활동/카테고리 아이콘: 파일이 없어도 게임이 멈추지 않게 개별 try + 대체 아이콘
+    await Promise.all(ACTIVITIES.map(async (a) => { this.tex[`actico_${a.id}`] = await Assets.load(UI(`actico_${a.id}`)).catch(() => null); }));
+    await Promise.all(CATEGORIES.map(async (c) => { this.tex[`catico_${c.id}`] = await Assets.load(UI(`catico_${c.id}`)).catch(() => null); }));
+    const fallbackIco = this.tex.actico_acting || this.tex.cat_acting || idleTex;
+    for (const a of ACTIVITIES) if (!this.tex[`actico_${a.id}`]) this.tex[`actico_${a.id}`] = fallbackIco;
+    for (const c of CATEGORIES) if (!this.tex[`catico_${c.id}`]) this.tex[`catico_${c.id}`] = fallbackIco;
     await Promise.all(["academy", "home", "set", "stage"].map((n) => Assets.load(`./assets/bg/${n}.png`))); // 활동별 배경 프리로드
     this.tex.mgrface = await Assets.load("./assets/manager/hanjiwon.png");
     await Promise.all(BONDS.map(async (b) => { this.tex[`bond_${b.id}`] = await Assets.load(b.img); }));
