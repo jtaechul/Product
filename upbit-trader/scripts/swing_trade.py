@@ -178,11 +178,14 @@ def main() -> None:
         log(f"🟡 모의(실시세, 무주문). 동시 {args.max_positions}종목 / "
             f"1종목 {args.invest:,.0f}원")
 
+    state_file = Path(__file__).resolve().parent.parent / ".botstate" / "positions_swing.json"
     engine = SwingTrader(
         broker=broker, cfg=cfg, max_positions=args.max_positions,
         invest_per_trade=args.invest, cooldown_hours=args.cooldown,
         daily_loss_limit=(args.daily_loss if args.daily_loss > 0 else None),
+        state_path=str(state_file),
     )
+    engine.load_state()   # 재시작해도 기존 보유·진입가를 복원
 
     shared = Shared()
     stop = threading.Event()

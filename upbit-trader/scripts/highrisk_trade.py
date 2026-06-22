@@ -162,8 +162,23 @@ def main() -> None:
         # 배정 예산(highrisk 몫)을 종목 수로 나눔. 배분 미설정 시 fallback(--invest).
         return allocation.budget_for("highrisk", args.invest * args.max_positions) / args.max_positions
 
+    state_file = Path(__file__).resolve().parent.parent / ".botstate" / "positions_highrisk.json"
     engine = SwingTrader(broker=broker, cfg=cfg, max_positions=args.max_positions,
-                         invest_per_trade=per_trade(), cooldown_hours=args.cooldown)
+                         invest_per_trade=per_trade(), cooldown_hours=args.cooldown,
+                         state_path=str(state_file))
+    engine.load_state()   # 재시작해도 기존 보유·진입가를 복원
+    # 봇이 과거 사놓고 잊은 코인(또는 다른 봇 미소유 알트)을 흡수해 모멘텀 청산으로 관리
+    if args.live:
+        adopted = engine.adopt_holdings(
+            exclude=set(EXCLUDE) | allocation.owned_by_others("highrisk"))
+        if adopted:
+            engine.save_state()
+            names = ", ".join(m.replace("KRW-", "") for m in adopted)
+            log(f"기존 보유 흡수: {names}")
+            notifier.send(
+                "🔄 <b>기존 보유 코인을 봇이 인식했어요</b> [고위험]\n"
+                f"종목: <b>{names}</b>\n"
+                f"이제부터 익절(+{args.take_profit*100:.0f}%)·손절·트레일링으로 관리합니다")
 
     shared = Shared()
     stop = threading.Event()
