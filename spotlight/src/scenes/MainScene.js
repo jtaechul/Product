@@ -69,7 +69,7 @@ export class MainScene extends Scene {
     const fallbackIco = this.tex.actico_acting || this.tex.cat_acting || idleTex;
     for (const a of ACTIVITIES) if (!this.tex[`actico_${a.id}`]) this.tex[`actico_${a.id}`] = fallbackIco;
     for (const c of CATEGORIES) if (!this.tex[`catico_${c.id}`]) this.tex[`catico_${c.id}`] = fallbackIco;
-    await Promise.all(["academy", "home", "set", "stage", "gym", "salon", "library", "cafe", "recording", "park"].map((n) => Assets.load(`./assets/bg/${n}.png`))); // 활동별 배경 프리로드
+    await Promise.all(["academy", "home", "set", "stage", "gym", "salon", "library", "cafe", "recording", "park", "film_set", "cf_studio", "ott_set", "photostudio", "fanmeet", "variety_set"].map((n) => Assets.load(`./assets/bg/${n}.png`))); // 활동별 배경 프리로드
     this.tex.mgrface = await Assets.load("./assets/manager/hanjiwon.png");
     await Promise.all(BONDS.map(async (b) => { this.tex[`bond_${b.id}`] = await Assets.load(b.img); }));
     this.idleTex = idleTex;
@@ -446,7 +446,8 @@ export class MainScene extends Scene {
       filmlead: "영화 주·조연. 스크린을 가득 채울 단 한 컷을 위해 숨을 멈춘다.",
       seasondrama: "시즌제 드라마 주연. 안방극장을 책임질 무게가 어깨에 얹힌다.",
     };
-    const fieldBg = m.id === "musical" ? "stage" : "set";
+    const BGMAP = { musical: "stage", shortfilm: "film_set", filmlead: "film_set", cf: "cf_studio", ott: "ott_set" };
+    const fieldBg = BGMAP[m.id] || "set"; // 매체별 전용 촬영 배경
     const dir = m.id === "musical" ? "지휘자" : m.id === "cf" ? "감독" : "감독";
     const cue = m.id === "musical" ? '"자… 큐!"' : m.id === "cf" ? '"좋아요, 밝게! 큐!"' : '"자, 갈게요. 레디… 액션!"';
     const reactWho = m.id === "musical" ? "객석 반응" : m.id === "cf" ? "광고 반응" : "시청자 반응";
