@@ -31,7 +31,7 @@ export const ACTIVITIES = [
 export const SPECIAL_ACTS = [
   { id: "idol_stage", cat: "special", name: "아이돌 쇼케이스", effects: { singing: 5, dance: 5, fame: 8 },            money: 60000,  stamina: -14, pose: "dance",  bg: "stage", desc: "가창·댄스·팬 大" },
   { id: "photoshoot", cat: "special", name: "화보 촬영",       effects: { looks: 6, fame: 6 },             money: 90000,  stamina: -8,  pose: "photo", bg: "photostudio",  desc: "외모·팬·모델료" },
-  { id: "fanmeeting", cat: "special", name: "팬미팅",         effects: { fame: 10, network: 3 }, mental: 3, money: 70000,  stamina: -10, pose: "cheer",  bg: "fanmeet", desc: "팬 大·인맥·행사비" },
+  { id: "fanmeeting", cat: "special", name: "팬미팅",         effects: { fame: 10, network: 3 }, mental: 3, money: 70000,  stamina: -10, pose: "wave", bg: "fanmeet", desc: "팬 大·인맥·행사비" },
   { id: "varietyshow",cat: "special", name: "예능 출연",       effects: { network: 5, fame: 7, dance: 3 }, money: 50000,  stamina: -12, pose: "interview", bg: "variety_set",   desc: "인맥·팬·출연료" },
 ];
 
