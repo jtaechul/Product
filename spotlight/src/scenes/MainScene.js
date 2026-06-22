@@ -455,11 +455,8 @@ export class MainScene extends Scene {
       best: { text: `정적… 그리고 박수가 터졌다. "이게 신인이라고?" 현장이 술렁였다. 인생 연기였다.`, pose: "cheer", tint: 0xfff3c4, tintA: 0.16 },
       good: { text: `안정적인 호흡과 표현. 모니터를 본 ${dir}이 흡족하게 고개를 끄덕였다.`, pose: "cheer", tint: 0xd8f0e8, tintA: 0.12 },
       fair: { text: `큰 실수도 큰 인상도 없이, 무난하게 촬영을 마쳤다.`, pose: "good", tint: 0x000000, tintA: 0 },
-      bad: { text: `대사가 자꾸 겉돌았다. "컷, 다시 갈게요…" 아쉬움이 남는 현장이었다.`, pose: "panned", tint: 0x0c0c14, tintA: 0.34 },
+      bad: { text: `대사가 자꾸 겉돌았다. "컷, 다시 갈게요…" 아쉬움이 남는 현장이었다.`, pose: "cry", tint: 0x0c0c14, tintA: 0.34 },
     }[grade];
-    // 드라마·영화 등 감정 비중 큰 매체의 '인생 연기(극찬)' 순간엔 눈물 연기 포즈
-    const emotional = ["shortfilm", "filmlead", "ott", "shortdrama", "dramabit", "seasondrama"].includes(m.id);
-    if (grade === "best" && emotional) end.pose = "cry";
     const cm = (GRADE_COMMENTS[grade] || []).slice(0, 3).map((c) => `“${c}”`).join("\n");
     const intro = INTRO[m.id] || `「${m.name}」 촬영 현장. 카메라 앞에 선다.`;
     return [
