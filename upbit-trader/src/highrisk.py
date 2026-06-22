@@ -106,6 +106,87 @@ def backtest_coin(df: pd.DataFrame, cfg: HighRiskConfig, coin: str = "") -> list
     return trades
 
 
+def _atr(h, lo, c, bars: int):
+    """Average True Range (변동성). chandelier 트레일링용."""
+    prev_c = pd.Series(c).shift(1)
+    tr = pd.concat([pd.Series(h) - pd.Series(lo),
+                    (pd.Series(h) - prev_c).abs(),
+                    (pd.Series(lo) - prev_c).abs()], axis=1).max(axis=1)
+    return tr.rolling(bars).mean().to_numpy()
+
+
+def backtest_coin_atr(df: pd.DataFrame, cfg: HighRiskConfig, coin: str = "",
+                      atr_bars: int = 14, atr_mult: float = 2.5,
+                      partial_tp: float = 0.15, partial_frac: float = 0.5,
+                      breakeven: bool = True) -> list[HRTrade]:
+    """ATR 트레일링 + 부분익절 + 본전보호 버전 (벤치마킹 개선안).
+
+    진입 조건은 backtest_coin 과 동일(모멘텀 돌파). 청산만 다르다:
+      · 트레일링: 고정 -X% 대신 '고점 - atr_mult×ATR'(변동성 비례, chandelier)
+      · 부분익절: +partial_tp 도달 시 partial_frac 만큼 즉시 실현(나머지는 추세)
+      · 본전보호: 부분익절 후 나머지 손절선을 진입가(본전) 위로 올림
+    net 은 '부분실현 + 잔량청산'의 가중 수익률(포지션 전체 대비).
+    """
+    c = df["close"].to_numpy(float)
+    h = df["high"].to_numpy(float)
+    lo = df["low"].to_numpy(float)
+    v = df["volume"].to_numpy(float)
+    t = df["datetime"].to_numpy()
+    n = len(c)
+    ma = pd.Series(c).rolling(cfg.trend_ma_bars).mean().to_numpy()
+    prior_high = pd.Series(h).shift(1).rolling(cfg.breakout_bars).max().to_numpy()
+    atr = _atr(h, lo, c, atr_bars)
+
+    trades: list[HRTrade] = []
+    need = max(cfg.breakout_bars, cfg.trend_ma_bars, cfg.base_bars,
+               cfg.mom_bars, atr_bars) + 1
+    i = need
+    while i < n - 1:
+        breakout = c[i] > prior_high[i] if not np.isnan(prior_high[i]) else False
+        uptrend = (not np.isnan(ma[i])) and c[i] > ma[i]
+        mom = c[i] / c[i - cfg.mom_bars] - 1.0 if c[i - cfg.mom_bars] > 0 else 0.0
+        base_v = float(np.median(v[i - cfg.base_bars:i])) if i >= cfg.base_bars else 0.0
+        surge = (v[i] / base_v) if base_v > 0 else 0.0
+        if not (breakout and uptrend and mom >= cfg.min_momentum
+                and surge >= cfg.vol_surge):
+            i += 1
+            continue
+
+        entry = c[i]
+        peak = entry
+        qty = 1.0           # 남은 비중(부분익절로 감소)
+        realized = 0.0      # 이미 실현한 가중 수익
+        partial_done = False
+        be = False
+        exit_p, reason, j = entry, "보유초과", min(n - 1, i + cfg.max_hold_bars)
+        for k in range(i + 1, min(n, i + 1 + cfg.max_hold_bars)):
+            peak = max(peak, h[k])
+            a = atr[k] if not np.isnan(atr[k]) else 0.0
+            # 부분 익절(고가가 목표 닿으면 일부 실현)
+            if partial_frac > 0 and not partial_done and h[k] >= entry * (1 + partial_tp):
+                realized += partial_frac * (partial_tp - cfg.cost)
+                qty -= partial_frac
+                partial_done = True
+                be = breakeven
+            # 손절/트레일 스톱 라인 (저가가 닿으면 잔량 청산)
+            hard = entry * (1 - cfg.stop_loss)
+            if be:
+                hard = max(hard, entry)        # 본전 보호
+            tline = (peak - atr_mult * a) if a > 0 else hard
+            stop = max(hard, tline)
+            if lo[k] <= stop:
+                exit_p, reason, j = stop, ("본전" if be and stop >= entry
+                                           else "트레일/손절"), k
+                break
+            exit_p, j = c[k], k
+        realized += qty * (exit_p / entry - 1.0 - cfg.cost)
+        trades.append(HRTrade(coin, t[i], t[j], entry, exit_p, realized, reason,
+                              j - i, {"mom": mom, "surge": surge,
+                                      "partial": partial_done}))
+        i = j + 1
+    return trades
+
+
 def entry_signal(df: pd.DataFrame, cfg: HighRiskConfig) -> dict | None:
     """최신 '닫힌 봉' 기준 진입 신호 여부 + 근거(없으면 None). 실시간 스캐너용."""
     c = df["close"].to_numpy(float)
