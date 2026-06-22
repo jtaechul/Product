@@ -16,7 +16,7 @@ export const ACTIVITIES = [
   { id: "vocal",     cat: "charm",  emoji: "🎤", name: "보컬 레슨", effects: { singing: 6, vocal: 5 },   money: -60000, stamina: -7,  pose: "vocal",     bg: "recording",   desc: "가창·발성" },
   { id: "dance",     cat: "charm",  emoji: "💃", name: "댄스 레슨", effects: { dance: 6 },              money: -60000, stamina: -9,  pose: "dance",     bg: "stage",   desc: "댄스" },
   { id: "gym",       cat: "charm",  emoji: "🏋️", name: "헬스·PT",  effects: { looks: 3 },              money: -40000, stamina: 6,   pose: "gym",       bg: "gym", desc: "체력·외모" },
-  { id: "styling",   cat: "charm",  emoji: "💄", name: "스타일링",  effects: { looks: 4, fame: 3 },     money: -20000, stamina: -4,  pose: "good",      bg: "salon",    desc: "외모·팬" },
+  { id: "styling",   cat: "charm",  emoji: "💄", name: "스타일링",  effects: { looks: 4, fame: 3 },     money: -20000, stamina: -4,  pose: "redcarpet", bg: "salon",    desc: "외모·팬" },
   { id: "study",     cat: "mind",   emoji: "📖", name: "독서실",    effects: { study: 6 },              mental: -4, money: -30000,  stamina: -7,  pose: "study",     bg: "school",  desc: "학업" },
   { id: "reading",   cat: "mind",   emoji: "📚", name: "독서·교양", effects: { character: 3, study: 2 },            money: -10000,  stamina: -3,  pose: "study",     bg: "library",    desc: "인성·학업" },
   { id: "volunteer", cat: "mind",   emoji: "🤲", name: "봉사활동",  effects: { character: 5, network: 3 },                      stamina: -7,  pose: "volunteer", bg: "park",  desc: "인성·인맥" },
@@ -30,7 +30,7 @@ export const ACTIVITIES = [
 // 매력·팬 위주 강화. 모두 '출연/행사'라 출연료를 받는다(돈 +). 아이돌/스타/뮤지컬/예능 루트를 떠받친다.
 export const SPECIAL_ACTS = [
   { id: "idol_stage", cat: "special", name: "아이돌 쇼케이스", effects: { singing: 5, dance: 5, fame: 8 },            money: 60000,  stamina: -14, pose: "dance",  bg: "stage", desc: "가창·댄스·팬 大" },
-  { id: "photoshoot", cat: "special", name: "화보 촬영",       effects: { looks: 6, fame: 6 },             money: 90000,  stamina: -8,  pose: "redcarpet", bg: "photostudio",  desc: "외모·팬·모델료" },
+  { id: "photoshoot", cat: "special", name: "화보 촬영",       effects: { looks: 6, fame: 6 },             money: 90000,  stamina: -8,  pose: "photo", bg: "photostudio",  desc: "외모·팬·모델료" },
   { id: "fanmeeting", cat: "special", name: "팬미팅",         effects: { fame: 10, network: 3 }, mental: 3, money: 70000,  stamina: -10, pose: "cheer",  bg: "fanmeet", desc: "팬 大·인맥·행사비" },
   { id: "varietyshow",cat: "special", name: "예능 출연",       effects: { network: 5, fame: 7, dance: 3 }, money: 50000,  stamina: -12, pose: "interview", bg: "variety_set",   desc: "인맥·팬·출연료" },
 ];
