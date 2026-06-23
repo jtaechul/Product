@@ -12,8 +12,41 @@ function json(data, status = 200) {
 }
 
 // ===== Claude API =====
-const MODEL_MAIN  = 'claude-3-5-sonnet-20241022'; // 캐럿셀 생성·추천 (고품질)
-const MODEL_LIGHT = 'claude-3-5-haiku-20241022';  // 분석·검증·캡션 (빠름)
+// 모델 ID를 하드코딩하지 않는다. 키마다 접근 가능한 모델이 달라(403/404 발생),
+// /v1/models 로 "이 키가 실제로 쓸 수 있는 모델"을 한 번 조회해 자동 선택한다.
+let _modelCache = null;
+
+async function resolveModels(apiKey) {
+  if (_modelCache) return _modelCache;
+
+  const res = await fetch('https://api.anthropic.com/v1/models?limit=100', {
+    headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+  });
+
+  if (!res.ok) {
+    // 목록 조회 실패 시 합리적 기본값 (alias는 은퇴 모델을 자동 회피)
+    return { main: 'claude-3-5-sonnet-latest', light: 'claude-3-5-haiku-latest', source: 'fallback' };
+  }
+
+  const data = await res.json();
+  const ids = (data.data || []).map(m => m.id); // 보통 최신순 정렬
+
+  // 우선순위대로 첫 매칭을 고른다 (목록에 있는 = 이 키로 사용 가능)
+  const pick = (patterns) => {
+    for (const p of patterns) {
+      const found = ids.find(id => id.includes(p));
+      if (found) return found;
+    }
+    return null;
+  };
+
+  // main: 품질/비용 균형상 sonnet을 우선, 없으면 opus, 그다음 구세대 순
+  const main = pick(['sonnet-4', '3-7-sonnet', 'sonnet-3-7', 'opus-4', 'sonnet', 'opus']) || ids[0];
+  const light = pick(['haiku-4', 'haiku-3-5', '3-5-haiku', 'haiku']) || main;
+
+  _modelCache = { main, light, source: 'discovered', available: ids };
+  return _modelCache;
+}
 
 async function callClaude(apiKey, { model, system, user, max_tokens = 2048 }) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -100,7 +133,7 @@ async function handleSuggest(env, body) {
     : '';
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: MODEL_MAIN,
+    model: (await resolveModels(env.ANTHROPIC_API_KEY)).main,
     system: '당신은 도서 큐레이터입니다. 최신 베스트셀러 트렌드와 사회적 이슈를 바탕으로 실제 존재하는 책을 추천합니다. 반드시 JSON만 응답합니다.',
     user: `오늘 날짜: ${today}
 주제: "${topic}"${excludeClause}
@@ -131,7 +164,7 @@ async function handleAnalyze(env, body) {
   if (!title) throw new Error('책 제목이 필요합니다.');
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: MODEL_LIGHT,
+    model: (await resolveModels(env.ANTHROPIC_API_KEY)).light,
     max_tokens: 512,
     system: '당신은 도서 분석 전문가입니다. 책 제목과 저자를 보고 핵심 메시지와 대상 독자층을 분석합니다. 반드시 JSON만 응답합니다.',
     user: `책: "${title}"${author ? ` / 저자: ${author}` : ''}
@@ -149,7 +182,7 @@ async function handleGenerate(env, body) {
   if (!title || !author || !coreMessage) throw new Error('제목, 저자, 핵심 메시지는 필수입니다.');
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: MODEL_MAIN,
+    model: (await resolveModels(env.ANTHROPIC_API_KEY)).main,
     system: `당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다.
 핵심 규칙(절대 위반 금지):
 1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.
@@ -189,7 +222,7 @@ JSON:
 async function handleValidate(env, body) {
   const { pages, bookInfo } = body;
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: MODEL_LIGHT,
+    model: (await resolveModels(env.ANTHROPIC_API_KEY)).light,
     max_tokens: 1024,
     system: '당신은 소셜미디어 콘텐츠 전문 편집장 겸 저작권 검토자입니다. 반드시 JSON만 응답합니다.',
     user: `책 "${bookInfo.title}" (저자: ${bookInfo.author}) 캐럿셀을 아래 5가지 기준으로 평가하세요.
@@ -215,7 +248,7 @@ async function handleGenerateImages(env, body) {
   if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: MODEL_LIGHT,
+    model: (await resolveModels(env.ANTHROPIC_API_KEY)).light,
     max_tokens: 600,
     system: '당신은 AI 이미지 프롬프트 전문가입니다. 인스타그램 카드뉴스용 드라마틱한 일러스트 프롬프트를 영어로 작성합니다. 반드시 JSON만 응답합니다.',
     user: `책 카테고리: ${bookInfo.category || '자기계발'}
@@ -259,7 +292,7 @@ async function handleGenerateCaption(env, body) {
   const kw = dmKeyword || bookInfo.category || '키워드';
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: MODEL_LIGHT,
+    model: (await resolveModels(env.ANTHROPIC_API_KEY)).light,
     max_tokens: 512,
     system: '당신은 인스타그램 마케터입니다. DM 유도 중심의 짧고 강렬한 캡션을 작성합니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 반드시 JSON만 응답합니다.',
     user: `책 카테고리: ${bookInfo.category || '자기계발'}
@@ -285,7 +318,7 @@ JSON: {"caption":"첫줄\\n둘째줄\\n셋째줄\\nDM유도줄","hashtags":["#ta
 async function handleRegenerate(env, body) {
   const { bookInfo, previousPages, feedback, improvements } = body;
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: MODEL_MAIN,
+    model: (await resolveModels(env.ANTHROPIC_API_KEY)).main,
     system: `당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다.
 핵심 규칙(절대 위반 금지):
 1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.
@@ -324,7 +357,12 @@ export default {
         const body = request.method === 'POST' ? await request.json() : {};
         let result;
 
-        if (url.pathname === '/api/suggest') result = await handleSuggest(env, body);
+        // 진단용: 이 키가 실제로 쓸 수 있는 모델 + 선택 결과 확인
+        if (url.pathname === '/api/models') {
+          _modelCache = null; // 진단 시 캐시 무시하고 새로 조회
+          result = await resolveModels(env.ANTHROPIC_API_KEY);
+        }
+        else if (url.pathname === '/api/suggest') result = await handleSuggest(env, body);
         else if (url.pathname === '/api/analyze') result = await handleAnalyze(env, body);
         else if (url.pathname === '/api/generate') result = await handleGenerate(env, body);
         else if (url.pathname === '/api/generate-images') result = await handleGenerateImages(env, body);
