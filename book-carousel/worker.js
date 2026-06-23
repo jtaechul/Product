@@ -150,22 +150,36 @@ async function handleGenerate(env, body) {
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: MODEL_MAIN,
-    system: '당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다. 공포감·호기심·위기감을 자극해 저장·공유율을 높이는 콘텐츠를 씁니다. 반드시 JSON만 응답합니다.',
-    user: `다음 책으로 5페이지 인스타그램 캐럿셀을 작성하세요.
+    system: `당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다.
+핵심 규칙(절대 위반 금지):
+1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.
+2. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.
+3. 공포감·호기심·위기감으로 저장·공유율을 높인다.
+반드시 JSON만 응답한다.`,
+    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.
 
-책: ${title} / 저자: ${author}${year ? ` (${year})` : ''}
+카테고리: ${category || '자기계발'}
 핵심 메시지: ${coreMessage}
 ${targetAudience ? `대상: ${targetAudience}` : ''}
-카테고리: ${category || '자기계발'}
 
-페이지 가이드:
-1페이지(훅): 공포·위기감·호기심 강한 후크. "당신이 ○○를 모른다면..." 형태. headline(1~2줄) + subtext(보조 1줄)
-2페이지(문제): 구체적 수치·사례로 문제 제시. headline + body(3~4줄)
-3페이지(심각성): 통계·충격 사실. "대부분은 모른다" 접근. headline + body(3~4줄)
-4페이지(실마리): 책의 해결 방향 암시(완전한 답 X). headline + body(3~4줄)
-5페이지(CTA): 자연스러운 행동 유도. cta(2~3줄) + linkText
+페이지 가이드 (텍스트 길이 엄수):
+1페이지(훅): 공포·위기감·호기심 후크.
+  - headline: 15자 이내 강렬한 한 줄 (책 제목 금지)
+  - subtext: 1줄 보조 문구 (20자 이내)
+2페이지(문제): 구체적 수치·현실 사례로 문제 제시.
+  - headline: 15자 이내
+  - body: 2줄 이내, 한 줄 40자 이내
+3페이지(심각성): 충격 사실·통계. "대부분은 모른다" 접근.
+  - headline: 15자 이내
+  - body: 2줄 이내, 한 줄 40자 이내
+4페이지(실마리): 해결의 단서만 살짝 암시 — 완전한 답 절대 금지.
+  - headline: 15자 이내
+  - body: 2줄 이내, 한 줄 40자 이내
+5페이지(반문·열린 결말): 구매 유도나 책 이름 없이, 독자 스스로 생각하게 만드는 반문.
+  - cta: "당신은 어떻게 할 것인가?" 형태의 열린 질문 2줄 이내
+  - linkText: "지금 당신의 선택이 미래를 바꾼다" 같은 여운 있는 한 줄
 
-JSON 형식:
+JSON:
 {"page1":{"headline":"...","subtext":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
 
@@ -177,19 +191,20 @@ async function handleValidate(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: MODEL_LIGHT,
     max_tokens: 1024,
-    system: '당신은 소셜미디어 콘텐츠 전문 편집장입니다. 반드시 JSON만 응답합니다.',
-    user: `책 "${bookInfo.title}" (${bookInfo.author}) 캐럿셀을 평가하세요.
+    system: '당신은 소셜미디어 콘텐츠 전문 편집장 겸 저작권 검토자입니다. 반드시 JSON만 응답합니다.',
+    user: `책 "${bookInfo.title}" (저자: ${bookInfo.author}) 캐럿셀을 아래 5가지 기준으로 평가하세요.
 
+캐럿셀 내용:
 ${JSON.stringify(pages, null, 2)}
 
-평가기준(100점 만점):
-- consistency(일관성): 0~20
-- curiosity(호기심 유발): 0~25
-- clarity(가독성): 0~20
-- cta(CTA 자연스러움): 0~20
-- overall(완성도): 0~15
+평가 기준 (100점 만점):
+1. accuracy(책 내용 부합도): 캐럿셀 내용이 해당 책의 실제 메시지와 일치하는가? 0~20
+2. factual(사실 정확성): 수치·통계·사례에 명백한 오류나 과장이 없는가? 0~20
+3. copyright(저작권 안전성): 책의 핵심 내용을 그대로 옮기지 않고 요약·재해석했는가? 저자명·책 제목이 본문에 노출되지 않는가? 0~20
+4. engagement(소비자 자극): 공포감·호기심·위기감이 충분해 저장·DM·구매 욕구를 자극하는가? 0~25
+5. quality(문장 품질): 오타·비문·어색한 표현이 없고 간결한가? 0~15
 
-JSON: {"totalScore":85,"scores":{"consistency":18,"curiosity":22,"clarity":17,"cta":16,"overall":12},"feedback":"평가 2~3문장","improvements":["개선1","개선2","개선3"],"approved":true}
+JSON: {"totalScore":85,"scores":{"accuracy":17,"factual":16,"copyright":18,"engagement":22,"quality":12},"feedback":"전체 평가 2~3문장","improvements":["구체적 개선점1","개선점2","개선점3"],"approved":true}
 approved는 totalScore>=70이면 true.`
   });
   return { success: true, ...extractJson(text) };
@@ -271,8 +286,15 @@ async function handleRegenerate(env, body) {
   const { bookInfo, previousPages, feedback, improvements } = body;
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: MODEL_MAIN,
-    system: '당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다. 피드백 반영해 개선합니다. 반드시 JSON만 응답합니다.',
-    user: `책 "${bookInfo.title}" (${bookInfo.author}) 캐럿셀을 개선하세요.
+    system: `당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다.
+핵심 규칙(절대 위반 금지):
+1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.
+2. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.
+3. 5페이지는 반문·열린 결말 구조 — 구매 유도나 직접 행동 지시 없이 독자에게 질문을 던진다.
+반드시 JSON만 응답한다.`,
+    user: `캐럿셀을 피드백에 맞게 개선하세요.
+카테고리: ${bookInfo.category || '자기계발'}
+핵심 메시지: ${bookInfo.coreMessage || ''}
 
 이전 버전:
 ${JSON.stringify(previousPages, null, 2)}
@@ -280,7 +302,9 @@ ${JSON.stringify(previousPages, null, 2)}
 피드백: ${feedback}
 개선 요청: ${improvements.join(' / ')}
 
-JSON 형식:
+텍스트 길이 기준: headline 15자 이내, body 2줄 이내(줄당 40자 이내), subtext 20자 이내.
+
+JSON:
 {"page1":{"headline":"...","subtext":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
   return { success: true, pages: extractJson(text) };

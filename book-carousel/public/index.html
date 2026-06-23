@@ -659,8 +659,9 @@
     </div>
     <div class="carousel-scroll" id="carouselScroll"></div>
     <div class="carousel-actions">
-      <button class="btn btn-outline" id="copyAllBtn">전체 텍스트 복사</button>
-      <button class="btn btn-outline" id="regenerateBtn">다시 생성</button>
+      <button class="btn btn-outline" id="rePickBookBtn" style="color:var(--gray-500);">책 다시 고르기</button>
+      <button class="btn btn-outline" id="regenerateBtn">캐럿셀 다시 생성</button>
+      <button class="btn btn-outline" id="copyAllBtn">전체 복사</button>
       <button class="btn btn-outline" id="generateImagesBtn" style="background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;border:none;">이미지 생성</button>
       <button class="btn btn-validate" id="validateBtn">품질 검증</button>
     </div>
@@ -763,13 +764,13 @@ function clearHistory() {
   showToast('중복 방지 기록이 초기화됐습니다.', 'info');
 }
 
-const PAGE_LABELS = ['훅', '문제', '심각성', '실마리', 'CTA'];
+const PAGE_LABELS = ['훅', '문제', '심각성', '실마리', '반문·결말'];
 const SCORE_KEYS = [
-  { key: 'consistency', label: '일관성', max: 20 },
-  { key: 'curiosity',   label: '호기심 유발', max: 25 },
-  { key: 'clarity',     label: '명확성·가독성', max: 20 },
-  { key: 'cta',         label: 'CTA 자연스러움', max: 20 },
-  { key: 'overall',     label: '전반적 완성도', max: 15 },
+  { key: 'accuracy',    label: '책 내용 부합도', max: 20 },
+  { key: 'factual',     label: '사실 정확성', max: 20 },
+  { key: 'copyright',   label: '저작권 안전성', max: 20 },
+  { key: 'engagement',  label: '소비자 자극', max: 25 },
+  { key: 'quality',     label: '문장 품질·오타', max: 15 },
 ];
 
 // ===== API =====
@@ -1070,6 +1071,34 @@ document.getElementById('validateBtn').addEventListener('click', async () => {
   } finally {
     hideLoading();
   }
+});
+
+// 책 다시 고르기: 캐럿셀·캡션·검증 초기화 후 책 선택 단계로 복귀
+document.getElementById('rePickBookBtn').addEventListener('click', () => {
+  state.pages = null;
+  state.validation = null;
+  state.bookInfo = null;
+  state.selectedBook = null;
+  state.caption = null;
+  state.captionHashtags = null;
+  state.dmKeyword = null;
+  state.images = null;
+
+  document.getElementById('carouselWrapper').classList.remove('visible');
+  document.getElementById('captionWrapper').classList.remove('visible');
+  document.getElementById('captionResult').style.display = 'none';
+  document.getElementById('validationPanel').classList.remove('visible');
+  document.getElementById('emptyState').style.display = '';
+
+  // 자동 추천 탭이 활성화된 경우 책 선택 목록으로 복귀
+  if (document.getElementById('panelAuto').classList.contains('active')) {
+    document.getElementById('autoStep1').style.display = 'none';
+    document.getElementById('autoStep2').style.display = 'block';
+    document.getElementById('autoStep3').style.display = 'none';
+  }
+
+  setStep(1);
+  showToast('책을 다시 선택해주세요.', 'info');
 });
 
 document.getElementById('regenerateBtn').addEventListener('click', async () => {
