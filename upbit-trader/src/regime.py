@@ -22,8 +22,8 @@ import numpy as np
 import pandas as pd
 
 # 실거래 비중: 검증 통과는 대형코인 추세필터(BTC·ETH)뿐 → 대형 100% 고정.
-# 잠수함·고위험은 모든 검증(2019~2026, ATR/부분익절)에서 실패 → 0(모의 전용).
-_LIVE_MIX = {"majors": 1.0, "swing": 0.0, "highrisk": 0.0}
+# 잠수함·고위험은 모든 검증(2019~2026, ATR/부분익절)에서 실패 → 비중 0(운영 중단).
+_LIVE_MIX = {"majors": 1.0, "swing": 0.0}
 REGIMES = {
     "risk_on":  {"label": "강세 (위험선호) 🟢", "weights": dict(_LIVE_MIX)},
     "neutral":  {"label": "중립 (약한 조정) 🟡", "weights": dict(_LIVE_MIX)},

@@ -24,7 +24,7 @@ from src.upbit_quotation import UpbitQuotation, candles_to_dataframe  # noqa: E4
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "portfolio.html"
-BOT_LABEL = {"majors": "대형코인", "swing": "잠수함", "highrisk": "고위험"}
+BOT_LABEL = {"majors": "대형코인", "swing": "잠수함"}
 
 
 def gather():
@@ -96,7 +96,7 @@ def build_html(ctx: dict, public: bool = False) -> str:
                 f"width:{min(100,pct*100):.0f}%'></div></div>")
 
     rows = ""
-    for k in ("majors", "swing", "highrisk"):
+    for k in ("majors", "swing"):
         rows += (f"<tr><td>{BOT_LABEL[k]}</td>"
                  f"<td>{bar(cur.get(k,0),'#4a90d9')} {cur.get(k,0)*100:.0f}%</td>"
                  f"<td>{bar(prop.get(k,0),'#e09b3d')} {prop.get(k,0)*100:.0f}%</td>"
@@ -182,7 +182,6 @@ def maybe_propose(ctx: dict) -> None:
            f"현재 → 제안\n"
            f"• 대형 {cur.get('majors',0)*100:.0f}% → {prop.get('majors',0)*100:.0f}%\n"
            f"• 잠수 {cur.get('swing',0)*100:.0f}% → {prop.get('swing',0)*100:.0f}%\n"
-           f"• 고위험 {cur.get('highrisk',0)*100:.0f}% → {prop.get('highrisk',0)*100:.0f}%\n"
            f"• 현금 → {cash*100:.0f}%\n"
            f"승인하면 봇들이 이 비중으로 운용합니다.")
     notifier.send_buttons(msg, [[("✅ 승인", "approve_weights"),

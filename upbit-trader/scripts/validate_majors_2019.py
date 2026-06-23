@@ -29,7 +29,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from scripts.validate_highrisk_2019 import load_1h_dir  # noqa: E402
+from src.backtest_utils import load_1h_dir  # noqa: E402
 from src.majors import MajorsConfig, regime  # noqa: E402
 from src.metrics import risk_metrics  # noqa: E402
 from src.swing import resample  # noqa: E402

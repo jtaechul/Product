@@ -22,7 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from scripts.validate_highrisk_2019 import equity_metrics, load_1h_dir  # noqa: E402
+from src.backtest_utils import equity_metrics, load_1h_dir  # noqa: E402
 from src.swing import SwingConfig, backtest_coin, resample  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent

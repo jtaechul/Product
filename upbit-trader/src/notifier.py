@@ -125,7 +125,7 @@ def _handle_weight_callback(data: str) -> None:
             cash = max(0.0, 1.0 - sum(w.values()))
             send(f"✅ <b>비중 조정 승인됨</b>\n"
                  f"대형 {w.get('majors',0)*100:.0f}% / 잠수 {w.get('swing',0)*100:.0f}% / "
-                 f"고위험 {w.get('highrisk',0)*100:.0f}% / 현금 {cash*100:.0f}%\n"
+                 f"현금 {cash*100:.0f}%\n"
                  f"봇들이 다음 점검부터 이 비중으로 운용합니다.")
         else:
             send("⚠️ 적용할 제안이 없어요(이미 처리됨).")

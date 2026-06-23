@@ -28,7 +28,7 @@ _EQUITY = _STATE / "equity_history.json"   # 일별 총평가자산 추이
 # 목표 비중 (합 1.0 = 풀투자 지향. 신호 없으면 현금으로 남아 자연히 방어적).
 # 2019~2026 + ATR/부분익절 비교검증까지 모두 실패 → 검증 통과는 대형코인뿐.
 # 잠수함·고위험은 실거래에서 손실만 누적(LAYER 등) → 비중 0(모의 전용).
-DEFAULT_WEIGHTS = {"majors": 1.0, "swing": 0.0, "highrisk": 0.0}
+DEFAULT_WEIGHTS = {"majors": 1.0, "swing": 0.0}
 
 
 def _dir() -> Path:

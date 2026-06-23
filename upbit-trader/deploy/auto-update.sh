@@ -11,7 +11,7 @@ if [ ! -d "$REPO_DIR" ]; then
     _guess="$(cd "$(dirname "$0")/../.." 2>/dev/null && pwd)"
     [ -n "$_guess" ] && REPO_DIR="$_guess"
 fi
-SERVICES="${SERVICES:-swing-bot majors-bot highrisk-bot}"
+SERVICES="${SERVICES:-swing-bot majors-bot}"
 UPBIT="$REPO_DIR/upbit-trader"
 MARKER="$UPBIT/.botstate/deployed_commit"
 
@@ -45,17 +45,6 @@ ensure_swing_paper() {
     echo "  ✅ swing-bot 모의(paper) 전환 (--live 제거)"
 }
 
-# 고위험봇도 검증 실패 → 모의 강제(--live 제거). ensure_clone_bot 은 부분문자열
-# 매칭이라 --live 를 못 떼므로 여기서 명시적으로 제거한다.
-ensure_highrisk_paper() {
-    local S=/etc/systemd/system/highrisk-bot.service
-    [ -f "$S" ] || return 0
-    grep -q '^ExecStart=.*--live' "$S" || return 0   # 이미 모의면 끝
-    sed -i '/scripts\.highrisk_trade/ s/ --live//g' "$S"
-    systemctl daemon-reload
-    systemctl restart highrisk-bot || true
-    echo "  ✅ highrisk-bot 모의(paper) 전환 (--live 제거)"
-}
 
 ensure_clone_bot() {  # $1=서비스명 $2=Description $3=실행모듈+인자 $4=로그파일명
     local SWING=/etc/systemd/system/swing-bot.service
@@ -110,9 +99,6 @@ ensure_oneshot_timer() {  # $1=이름 $2=Description $3=실행모듈 $4=타이�
 ensure_swing_paper
 ensure_clone_bot "majors-bot"   "Upbit Majors (BTC-ETH) Trend Bot" \
     "scripts.majors_trade --invest 100000 --live" "majors.log"
-ensure_clone_bot "highrisk-bot" "Upbit High-Risk Momentum Bot" \
-    "scripts.highrisk_trade" "highrisk.log"          # 모의(--live 없음)
-ensure_highrisk_paper                                # 기존 --live 잔재 제거(모의 강제)
 ensure_oneshot_timer "rebalance" "Upbit daily equity snapshot + rebalance" \
     "scripts.rebalance" "rebalance.timer" 1          # 매일 자산기록·현행화(설치 즉시 1회)
 ensure_oneshot_timer "portfolio-review" "Upbit portfolio review (dashboard+proposal)" \
