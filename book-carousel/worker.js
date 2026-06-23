@@ -135,33 +135,61 @@ async function sendTelegramMessage(botToken, chatId, text) {
   return res.json();
 }
 
+async function sendTelegramPhoto(botToken, chatId, photoUrl, caption) {
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, photo: photoUrl, caption: caption || '' }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    // 이미지 전송 실패시 텍스트로 폴백
+    console.error(`이미지 전송 실패(폴백): ${err.description || res.status}`);
+    return sendTelegramMessage(botToken, chatId, caption || photoUrl);
+  }
+  return res.json();
+}
+
 async function handleSendTelegram(env, body) {
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
     throw new Error('TELEGRAM_BOT_TOKEN 또는 TELEGRAM_CHAT_ID가 설정되지 않았습니다.');
   }
 
-  const { pages, bookInfo, caption, hashtags, dmKeyword } = body;
-  const PAGE_LABELS = ['훅', '문제', '심각성', '실마리', 'CTA'];
+  const { pages, bookInfo, caption, hashtags, commentKeyword, dmKeyword, images } = body;
+  const kw = commentKeyword || dmKeyword || '';
 
   const captionBlock = caption
-    ? `\n\n[캡션]\n${caption}\n${(hashtags || []).join(' ')}${dmKeyword ? `\n\nDM 키워드: '${dmKeyword}'` : ''}`
+    ? `\n\n[캡션]\n${caption}\n${(hashtags || []).join(' ')}${kw ? `\n\n댓글 키워드: '${kw}'` : ''}`
     : '';
 
-  const messages = [
-    `[북 캐럿셀 미리보기]\n책: ${bookInfo.title}\n저자: ${bookInfo.author}\n카테고리: ${bookInfo.category || ''}${captionBlock}`,
-    `[1/5 ${PAGE_LABELS[0]}]\n${pages.page1.headline}\n\n${pages.page1.subtext || ''}`,
-    `[2/5 ${PAGE_LABELS[1]}]\n${pages.page2.headline}\n\n${pages.page2.body || ''}`,
-    `[3/5 ${PAGE_LABELS[2]}]\n${pages.page3.headline}\n\n${pages.page3.body || ''}`,
-    `[4/5 ${PAGE_LABELS[3]}]\n${pages.page4.headline}\n\n${pages.page4.body || ''}`,
-    `[5/5 ${PAGE_LABELS[4]}]\n${pages.page5.cta}\n\n${pages.page5.linkText || ''}`,
+  // 1) 요약 텍스트 메시지
+  const summaryMsg = `[북 캐럿셀 미리보기]\n책: ${bookInfo.title}\n저자: ${bookInfo.author}\n카테고리: ${bookInfo.category || ''}${captionBlock}`;
+  await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, summaryMsg);
+  await new Promise(r => setTimeout(r, 300));
+
+  // 2) 페이지별 이미지+텍스트 전송 (이미지가 있으면 sendPhoto, 없으면 텍스트)
+  const pageDefs = [
+    { key: 'page1', label: '1/5 훅', text: pages.page1?.headline || '' },
+    { key: 'page2', label: '2/5 문제', text: `${pages.page2?.headline || ''}\n\n${pages.page2?.body || ''}` },
+    { key: 'page3', label: '3/5 심각성', text: `${pages.page3?.headline || ''}\n\n${pages.page3?.body || ''}` },
+    { key: 'page4', label: '4/5 실마리', text: `${pages.page4?.headline || ''}\n\n${pages.page4?.body || ''}` },
+    { key: 'page5', label: '5/5 반문·결말', text: `${pages.page5?.cta || ''}\n\n${pages.page5?.linkText || ''}` },
   ];
 
-  for (const msg of messages) {
-    await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, msg);
-    await new Promise(r => setTimeout(r, 200));
+  let sent = 1;
+  for (const { key, label, text } of pageDefs) {
+    const imgUrl = images?.[key];
+    const msgText = `[${label}]\n${text.trim()}`;
+    if (imgUrl) {
+      await sendTelegramPhoto(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, imgUrl, msgText);
+    } else {
+      await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, msgText);
+    }
+    sent++;
+    await new Promise(r => setTimeout(r, 300));
   }
 
-  return { success: true, message: `텔레그램으로 ${messages.length}개 메시지를 보냈습니다.` };
+  return { success: true, message: `텔레그램으로 ${sent}개 메시지를 보냈습니다.` };
 }
 
 // ===== Claude 핸들러 =====
@@ -337,30 +365,34 @@ async function handleGenerateCaption(env, body) {
   const { pages, bookInfo, dmKeyword } = body;
   if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
 
-  const kw = dmKeyword || bookInfo.category || '키워드';
+  // 댓글 키워드: 2자 이하, 특수기호 없는 순수 한글/영문
+  let kw = (dmKeyword || bookInfo.category || '독서').replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 2) || '책';
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
     max_tokens: 512,
-    system: '당신은 인스타그램 마케터입니다. DM 유도 중심의 짧고 강렬한 캡션을 작성합니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 반드시 JSON만 응답합니다.',
+    system: '당신은 인스타그램 마케터입니다. 댓글 유도 중심의 짧고 강렬한 캡션을 작성합니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 반드시 JSON만 응답합니다.',
     user: `책 카테고리: ${bookInfo.category || '자기계발'}
 핵심 메시지: ${bookInfo.coreMessage || ''}
 캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}
-DM 키워드: "${kw}"
+댓글 키워드: "${kw}" (방문자가 댓글에 이 키워드를 남기면 DM으로 책 정보와 구매링크를 자동 발송하는 시스템)
 
 인스타그램 캡션을 작성하세요.
 
 규칙:
 - 첫 줄: 호기심/위기감 자극 단문 또는 질문 (책 제목 절대 노출 금지)
 - 2~3줄: 캐럿셀 핵심만 초간결 요약 (반복 금지, 노골적 판매 금지)
-- 마지막 줄: "DM으로 '${kw}'를 보내주세요" 형태의 자연스러운 유도 문구
+- 마지막 줄: "댓글에 '${kw}'를 남겨주세요" 형태의 자연스러운 유도 문구
 - 해시태그: 정확히 3개 (카테고리 관련)
 - 전체 5줄 이내, 짧고 강렬하게
 
-JSON: {"caption":"첫줄\\n둘째줄\\n셋째줄\\nDM유도줄","hashtags":["#tag1","#tag2","#tag3"],"dmKeyword":"${kw}"}`,
+JSON: {"caption":"첫줄\\n둘째줄\\n셋째줄\\n댓글유도줄","hashtags":["#tag1","#tag2","#tag3"],"commentKeyword":"${kw}"}`,
   });
 
-  return { success: true, ...extractJson(text) };
+  const result = extractJson(text);
+  // 구형 dmKeyword 필드도 호환성 유지
+  result.dmKeyword = result.commentKeyword || kw;
+  return { success: true, ...result };
 }
 
 async function handleRegenerate(env, body) {
@@ -389,7 +421,7 @@ ${JSON.stringify(previousPages, null, 2)}
 - JSON 형식: {"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},...}
 
 JSON:
-{"page1":{"headline":"...","subtext":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
+{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
   return { success: true, pages: extractJson(text) };
 }

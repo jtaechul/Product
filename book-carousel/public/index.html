@@ -719,8 +719,8 @@
 
     <div class="caption-keyword-row">
       <div class="form-group">
-        <label>DM 키워드 (선택)</label>
-        <input type="text" id="captionKeyword" placeholder="예: 경제, 심리, 건강 (비워두면 AI가 자동 설정)">
+        <label>댓글 키워드 (선택, 2자 이하)</label>
+        <input type="text" id="captionKeyword" maxlength="2" placeholder="예: 경제, 심리, 책 (2자 이하, 특수기호 없이)">
       </div>
       <button class="btn btn-outline" id="generateCaptionBtn" style="flex-shrink:0;padding:9px 14px;font-size:12px;white-space:nowrap;">자동 생성</button>
     </div>
@@ -1036,7 +1036,7 @@ function renderCarousel(pages) {
     const card = document.createElement('div');
     card.className = `card ${cls}`;
 
-    let inner = `<div class="card-inner"><div class="card-num">${num} / 5 · ${PAGE_LABELS[num-1]}</div>`;
+    let inner = `<div class="card-inner"><div class="card-num">${num}</div>`;
 
     if (type === 'cta') {
       inner += `<div class="card-headline">${escHtml(content.cta || '')}</div><div class="card-divider"></div><div class="card-5 card-link-pill">${escHtml(content.linkText || '')}</div>`;
@@ -1226,11 +1226,11 @@ async function applyImagesToCards(images) {
 }
 
 // fetch+AbortController 기반 재시도 (img.onerror는 타임아웃 제어 불가)
-// 3회 재시도, 시도 사이 5s / 10s 대기
+// 4회 재시도, 시도 사이 8s / 15s / 22s 대기
 async function loadImageWithRetry(card, baseUrl, pageNum, attempt) {
-  const MAX_ATTEMPTS = 3;
-  const RETRY_DELAYS = [0, 5000, 10000];
-  const FETCH_TIMEOUT = 40000; // Pollinations 최대 생성 대기
+  const MAX_ATTEMPTS = 4;
+  const RETRY_DELAYS = [0, 8000, 15000, 22000];
+  const FETCH_TIMEOUT = 50000; // Pollinations 최대 생성 대기
 
   let spinner = card.querySelector('.card-img-loading');
   if (!spinner) {
@@ -1242,7 +1242,7 @@ async function loadImageWithRetry(card, baseUrl, pageNum, attempt) {
 
   if (attempt > 0) {
     const d = RETRY_DELAYS[attempt];
-    showToast(`페이지 ${pageNum} 재시도 중... (${attempt}/${MAX_ATTEMPTS - 1}, ${d/1000}초 대기)`, 'info');
+    showToast(`페이지 ${pageNum} 재시도 중... (${attempt}/${MAX_ATTEMPTS - 1}번째, ${d/1000}초 후)`, 'info');
     await new Promise(r => setTimeout(r, d));
   }
 
@@ -1306,23 +1306,20 @@ async function saveCardAsCanvas(card, pageNum) {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // 웹 폰트 로드 대기
   await document.fonts.ready;
 
-  // ① 배경: blob URL → canvas draw
+  // ① 배경
   const blobUrl = card.dataset.blobUrl;
   if (blobUrl) {
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
     ctx.drawImage(img, 0, 0, W, H);
-    // 텍스트 가독성을 위한 하단 어두운 그라디언트
-    const grad = ctx.createLinearGradient(0, H * 0.25, 0, H);
+    const grad = ctx.createLinearGradient(0, H * 0.3, 0, H);
     grad.addColorStop(0, 'rgba(0,0,0,0)');
-    grad.addColorStop(1, 'rgba(0,0,0,0.88)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.9)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
   } else {
-    // 이미지 없으면 카드 배경 그라디언트 폴백
     const BG = { 1:['#0a0a0a','#1e1b4b'], 2:['#0f172a','#1e3a8a'], 3:['#1c0a0a','#7f1d1d'], 4:['#0a1a12','#064e3b'], 5:['#1a0a2e','#6d28d9'] };
     const [c1,c2] = BG[pageNum] || ['#0a0a0a','#1e1b4b'];
     const grd = ctx.createLinearGradient(0,0,W*0.7,H);
@@ -1330,38 +1327,67 @@ async function saveCardAsCanvas(card, pageNum) {
     ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
   }
 
-  // ② 페이지 라벨 (상단 좌측)
+  // ② 페이지 번호만 (상단 좌측)
   ctx.font = '700 36px "Noto Sans KR", sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,0.45)';
   ctx.textAlign = 'left';
-  ctx.fillText(`${pageNum} / 5 · ${PAGE_LABELS[pageNum-1]}`, 70, 86);
+  ctx.fillText(`${pageNum}`, 70, 86);
 
-  // ③ 포인트 라인 (헤드라인 위)
-  const ACC = { 1:'#8B5CF6', 2:'#60A5FA', 3:'#F87171', 4:'#34D399', 5:'#C084FC' };
-  ctx.fillStyle = ACC[pageNum] || '#8B5CF6';
-  ctx.fillRect(70, H - 440, 90, 6);
-
-  // ④ 텍스트 콘텐츠 추출
+  // ③ 텍스트 콘텐츠 추출
   const pg = state.pages?.[`page${pageNum}`] || {};
   let headline = '', body = '';
   if (pageNum === 5) { headline = pg.cta || ''; body = pg.linkText || ''; }
   else if (pageNum === 1) { headline = pg.headline || ''; body = ''; }
   else { headline = pg.headline || ''; body = pg.body || ''; }
 
-  // ⑤ 헤드라인
+  // ④ 동적 bottom-anchored 레이아웃 — 먼저 총 높이를 측정해 아래에서 위로 배치
+  const PAD_X = 70, PAD_BOTTOM = 80, PAD_BETWEEN = 36;
+  const ACCENT_H = 6, ACCENT_W = 90, ACCENT_GAP = 28;
+
+  ctx.font = '900 68px "Noto Sans KR", sans-serif';
+  const hlLines = measureTextLines(ctx, headline, W - PAD_X * 2);
+  const HL_LINE_H = 90;
+
+  ctx.font = '400 44px "Noto Sans KR", sans-serif';
+  const bodyLines = body ? measureTextLines(ctx, body, W - PAD_X * 2) : [];
+  const BODY_LINE_H = 62;
+
+  // 총 텍스트 블록 높이 (본문 → 헤드라인 → 포인트라인 순으로 위로 쌓임)
+  let totalH = hlLines.length * HL_LINE_H;
+  if (bodyLines.length) totalH += PAD_BETWEEN + bodyLines.length * BODY_LINE_H;
+  totalH += ACCENT_H + ACCENT_GAP; // 포인트라인 포함
+
+  // 블록 시작 Y (아래에서 위로)
+  let curY = H - PAD_BOTTOM;
+
+  // 본문을 아래에 먼저
+  if (bodyLines.length) {
+    ctx.font = '400 44px "Noto Sans KR", sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.78)';
+    ctx.textAlign = 'left';
+    for (let i = bodyLines.length - 1; i >= 0; i--) {
+      ctx.fillText(bodyLines[i], PAD_X, curY);
+      curY -= BODY_LINE_H;
+    }
+    curY -= PAD_BETWEEN;
+  }
+
+  // 헤드라인
   ctx.font = '900 68px "Noto Sans KR", sans-serif';
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'left';
-  let nextY = canvasWrapText(ctx, headline, 70, H - 350, W - 140, 90);
-
-  // ⑥ 본문 (1페이지는 없음)
-  if (body) {
-    ctx.font = '400 44px "Noto Sans KR", sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.78)';
-    canvasWrapText(ctx, body, 70, nextY + 28, W - 140, 62);
+  for (let i = hlLines.length - 1; i >= 0; i--) {
+    ctx.fillText(hlLines[i], PAD_X, curY);
+    curY -= HL_LINE_H;
   }
+  curY -= ACCENT_GAP;
 
-  // ⑦ PNG 다운로드
+  // 포인트 라인 (헤드라인 바로 위)
+  const ACC = { 1:'#8B5CF6', 2:'#60A5FA', 3:'#F87171', 4:'#34D399', 5:'#C084FC' };
+  ctx.fillStyle = ACC[pageNum] || '#8B5CF6';
+  ctx.fillRect(PAD_X, curY, ACCENT_W, ACCENT_H);
+
+  // ⑤ PNG 다운로드
   canvas.toBlob(blob => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -1369,6 +1395,23 @@ async function saveCardAsCanvas(card, pageNum) {
     document.body.appendChild(a); a.click(); a.remove();
     showToast(`페이지 ${pageNum} 저장 완료 (이미지+텍스트)`, 'success');
   }, 'image/png');
+}
+
+// 텍스트를 줄 배열로만 측정 (실제 렌더 없음) — bottom-anchored 레이아웃용
+function measureTextLines(ctx, text, maxWidth) {
+  if (!text) return [];
+  const lines = [];
+  let line = '';
+  const chars = [...text];
+  for (const ch of chars) {
+    if (ch === '\n') { lines.push(line); line = ''; continue; }
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line); line = ch;
+    } else { line = test; }
+  }
+  if (line) lines.push(line);
+  return lines;
 }
 
 // 한국어 텍스트 캔버스 줄바꿈 (문자 단위)
@@ -1401,12 +1444,13 @@ document.getElementById('generateCaptionBtn').addEventListener('click', async ()
     });
     state.caption = data.caption;
     state.captionHashtags = data.hashtags;
-    state.dmKeyword = data.dmKeyword || keyword;
+    state.dmKeyword = data.commentKeyword || data.dmKeyword || keyword;
 
     document.getElementById('captionTextContent').textContent = data.caption || '';
     document.getElementById('captionHashtagsRow').textContent = (data.hashtags || []).join(' ');
-    document.getElementById('dmKeywordInfo').innerHTML = data.dmKeyword
-      ? `DM 키워드: <strong>'${escHtml(data.dmKeyword)}'</strong> — 팔로워가 이 단어를 DM으로 보내면 책 정보가 자동 회신됩니다`
+    const kw = state.dmKeyword;
+    document.getElementById('dmKeywordInfo').innerHTML = kw
+      ? `댓글 키워드: <strong>'${escHtml(kw)}'</strong> — 방문자가 댓글에 이 키워드를 남기면 DM으로 책 정보와 구매링크가 자동 발송됩니다`
       : '';
     document.getElementById('captionResult').style.display = 'block';
     showToast('캡션 생성 완료!', 'success');
@@ -1445,14 +1489,16 @@ updateHistoryCount();
 
 document.getElementById('telegramBtn').addEventListener('click', async () => {
   if (!state.pages || !state.bookInfo) return;
-  showLoading('텔레그램 발송 중...', '캐럿셀 내용을 텔레그램으로 보내고 있습니다');
+  showLoading('텔레그램 발송 중...', '캐럿셀 이미지와 내용을 텔레그램으로 보내고 있습니다');
   try {
     const data = await apiFetch('/api/send-telegram', {
       pages: state.pages,
       bookInfo: state.bookInfo,
       caption: state.caption,
       hashtags: state.captionHashtags,
+      commentKeyword: state.dmKeyword,
       dmKeyword: state.dmKeyword,
+      images: state.images || null,
     });
     showToast(data.message || '텔레그램으로 발송됐습니다!', 'success');
   } catch (err) {
