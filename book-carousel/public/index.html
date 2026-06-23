@@ -365,13 +365,37 @@
 
     .card-num { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; color: rgba(255,255,255,0.4); text-transform: uppercase; margin-bottom: 10px; }
     .card-headline { font-size: 14px; font-weight: 900; color: #fff; line-height: 1.4; flex-shrink: 0; }
-    .card-body { font-size: 10px; color: rgba(255,255,255,0.75); line-height: 1.7; margin-top: 8px; flex: 1; }
+    .card-body { font-size: 9px; color: rgba(255,255,255,0.75); line-height: 1.65; margin-top: 7px; flex: 1; white-space: pre-line; }
     .card-divider { width: 28px; height: 2px; border-radius: 1px; margin: 8px 0; }
     .card-1 .card-divider { background: #8B5CF6; }
     .card-2 .card-divider { background: #60A5FA; }
     .card-3 .card-divider { background: #F87171; }
     .card-4 .card-divider { background: #34D399; }
     .card-5 .card-divider { background: #C084FC; }
+
+    /* === 1페이지(훅) 전용 디자인 — 헤드라인만, 세로 중앙 정렬, 임팩트 강조 === */
+    .card-1 .card-inner {
+      justify-content: center;
+      padding: 20px 18px 16px;
+    }
+    .card-1 .card-num {
+      position: absolute;
+      top: 14px; left: 16px;
+      margin-bottom: 0;
+      font-size: 8px;
+    }
+    .card-1 .card-headline {
+      font-size: 19px;
+      line-height: 1.55;
+      letter-spacing: -0.01em;
+      text-shadow: 0 2px 16px rgba(0,0,0,0.6);
+    }
+    .card-1 .card-divider { display: none; }
+    .card-1 .card-footer { display: none; }
+    /* 이미지 위에 올려지는 어두운 그라디언트 — 1페이지는 중앙 텍스트용으로 강화 */
+    .card-1.card-with-image::before {
+      background: linear-gradient(160deg, rgba(0,0,0,0.55) 0%, rgba(10,5,30,0.78) 100%);
+    }
 
     .card-footer {
       display: flex; align-items: center; justify-content: space-between;
@@ -1016,13 +1040,16 @@ function renderCarousel(pages) {
 
     if (type === 'cta') {
       inner += `<div class="card-headline">${escHtml(content.cta || '')}</div><div class="card-divider"></div><div class="card-5 card-link-pill">${escHtml(content.linkText || '')}</div>`;
+      inner += `<div class="card-footer"><span class="card-book-info">${escHtml(bookFooter)}</span><button class="card-copy-btn" data-page="${num}">복사</button></div>`;
     } else if (type === 'hook') {
-      inner += `<div class="card-headline">${escHtml(content.headline || '')}</div><div class="card-divider"></div><div class="card-body">${escHtml(content.subtext || '')}</div>`;
+      // 1페이지: 헤드라인만, footer 없음 (CSS로도 숨김)
+      inner += `<div class="card-headline">${escHtml(content.headline || '')}</div>`;
     } else {
       inner += `<div class="card-headline">${escHtml(content.headline || '')}</div><div class="card-divider"></div><div class="card-body">${escHtml(content.body || '')}</div>`;
+      inner += `<div class="card-footer"><span class="card-book-info">${escHtml(bookFooter)}</span><button class="card-copy-btn" data-page="${num}">복사</button></div>`;
     }
 
-    inner += `<div class="card-footer"><span class="card-book-info">${escHtml(bookFooter)}</span><button class="card-copy-btn" data-page="${num}">복사</button></div></div>`;
+    inner += `</div>`;
     card.innerHTML = inner;
     scroll.appendChild(card);
   });
@@ -1177,32 +1204,34 @@ document.getElementById('generateImagesBtn').addEventListener('click', async () 
     });
     state.images = data.images;
     hideLoading();
+    // 순차 로딩 (동시 요청 → Pollinations rate-limit 원인) — await로 1장씩
+    showToast('페이지 1부터 순서대로 이미지를 생성합니다 (1~2분 소요)', 'info');
     applyImagesToCards(data.images);
-    showToast('이미지 생성 중 — AI 서버 응답에 최대 60초가 걸릴 수 있습니다', 'info');
   } catch (err) {
     hideLoading();
     showToast(err.message, 'error');
   }
 });
 
-function applyImagesToCards(images) {
+// ── 순차 이미지 로딩: 동시에 4개 요청하면 Pollinations가 rate-limit → 1개씩 await ──
+async function applyImagesToCards(images) {
   const cards = document.querySelectorAll('#carouselScroll .card');
-  ['page1', 'page2', 'page3', 'page4'].forEach((page, idx) => {
-    const url = images[page];
-    if (!url || !cards[idx]) return;
-    loadImageWithRetry(cards[idx], url, idx + 1, 0);
-  });
+  const pages = ['page1', 'page2', 'page3', 'page4'];
+  for (let i = 0; i < pages.length; i++) {
+    const url = images[pages[i]];
+    if (!url || !cards[i]) continue;
+    await loadImageWithRetry(cards[i], url, i + 1, 0);
+  }
+  showToast('이미지 생성 완료', 'success');
 }
 
-// Pollinations AI 이미지 생성은 최대 60초 걸릴 수 있음.
-// img.onerror는 타임아웃 제어 불가 → fetch+AbortController로 재작성.
-// 최대 5회, 시도별 대기: 0 / 5 / 10 / 15 / 20 초
+// fetch+AbortController 기반 재시도 (img.onerror는 타임아웃 제어 불가)
+// 3회 재시도, 시도 사이 5s / 10s 대기
 async function loadImageWithRetry(card, baseUrl, pageNum, attempt) {
-  const MAX_ATTEMPTS = 5;
-  const RETRY_DELAYS = [0, 5000, 10000, 15000, 20000];
-  const FETCH_TIMEOUT = 50000; // 1회 요청 최대 50초
+  const MAX_ATTEMPTS = 3;
+  const RETRY_DELAYS = [0, 5000, 10000];
+  const FETCH_TIMEOUT = 40000; // Pollinations 최대 생성 대기
 
-  // 스피너 (첫 시도에만 생성)
   let spinner = card.querySelector('.card-img-loading');
   if (!spinner) {
     spinner = document.createElement('div');
@@ -1211,31 +1240,33 @@ async function loadImageWithRetry(card, baseUrl, pageNum, attempt) {
     card.appendChild(spinner);
   }
 
-  // 재시도마다 캐시 무력화 파라미터 교체
+  if (attempt > 0) {
+    const d = RETRY_DELAYS[attempt];
+    showToast(`페이지 ${pageNum} 재시도 중... (${attempt}/${MAX_ATTEMPTS - 1}, ${d/1000}초 대기)`, 'info');
+    await new Promise(r => setTimeout(r, d));
+  }
+
+  // 재시도마다 새 seed 파라미터로 캐시 우회
   const tryUrl = attempt === 0
     ? baseUrl
     : baseUrl.replace(/&r=\d+/, '') + '&r=' + Date.now();
 
-  if (attempt > 0) {
-    await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt]));
-  }
-
   try {
-    const controller = new AbortController();
-    const tid = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-
-    const res = await fetch(tryUrl, { signal: controller.signal });
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
+    const res = await fetch(tryUrl, { signal: ctrl.signal });
     clearTimeout(tid);
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const blob = await res.blob();
-    if (!blob.type.startsWith('image/')) throw new Error('non-image response');
+    if (!blob.type.startsWith('image/')) throw new Error('non-image');
 
-    const objUrl = URL.createObjectURL(blob);
+    const blobUrl = URL.createObjectURL(blob);
     spinner.remove();
-    card.style.backgroundImage = `url('${objUrl}')`;
+    card.style.backgroundImage = `url('${blobUrl}')`;
     card.classList.add('card-with-image');
-    card.dataset.imageUrl = tryUrl; // 다운로드용 원본 URL 보존
+    card.dataset.blobUrl = blobUrl;   // canvas 합성용 로컬 blob
+    card.dataset.imageUrl = tryUrl;   // 원본 URL 보존
 
     if (!card.querySelector('.card-img-badge')) {
       const badge = document.createElement('div');
@@ -1243,54 +1274,117 @@ async function loadImageWithRetry(card, baseUrl, pageNum, attempt) {
       badge.textContent = 'AI 이미지';
       card.appendChild(badge);
     }
-    addDownloadButton(card, pageNum);
+    addSaveButton(card, pageNum);
 
   } catch (err) {
     if (attempt + 1 < MAX_ATTEMPTS) {
-      const nextDelay = RETRY_DELAYS[attempt + 1] / 1000;
-      showToast(`페이지 ${pageNum} 재시도 중... (${attempt + 1}/${MAX_ATTEMPTS - 1}, ${nextDelay}초 후)`, 'info');
-      loadImageWithRetry(card, baseUrl, pageNum, attempt + 1);
+      await loadImageWithRetry(card, baseUrl, pageNum, attempt + 1);
     } else {
       const s = card.querySelector('.card-img-loading');
       if (s) s.remove();
-      showToast(`페이지 ${pageNum} 이미지 생성 실패 — 이미지 생성 버튼을 다시 눌러보세요`, 'warning');
+      showToast(`페이지 ${pageNum} 이미지 실패 — 다시 생성 버튼을 눌러보세요`, 'warning');
     }
   }
 }
 
-// 카드에 이미지 저장(다운로드) 버튼 추가
-function addDownloadButton(card, pageNum) {
+// ── 이미지 저장 버튼 (Canvas 합성: 배경이미지 + 텍스트 오버레이) ──
+function addSaveButton(card, pageNum) {
   if (card.querySelector('.card-img-dl')) return;
   const btn = document.createElement('button');
   btn.className = 'card-img-dl';
   btn.textContent = '이미지 저장';
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
-    downloadCardImage(card.dataset.imageUrl, pageNum);
+    saveCardAsCanvas(card, pageNum);
   });
   card.appendChild(btn);
 }
 
-async function downloadCardImage(url, pageNum) {
-  if (!url) { showToast('저장할 이미지가 없습니다.', 'warning'); return; }
-  try {
-    // CORS 허용된 Pollinations 이미지를 blob으로 받아 다운로드
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const objUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = objUrl;
-    a.download = `carousel_page${pageNum}.jpg`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(objUrl);
-    showToast(`페이지 ${pageNum} 이미지를 저장했습니다.`, 'success');
-  } catch (err) {
-    // 실패 시 새 탭에서 열어 길게 눌러 저장하도록 안내
-    window.open(url, '_blank');
-    showToast('새 탭에서 이미지를 길게 눌러 저장하세요.', 'info');
+async function saveCardAsCanvas(card, pageNum) {
+  const W = 1080, H = 1080;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // 웹 폰트 로드 대기
+  await document.fonts.ready;
+
+  // ① 배경: blob URL → canvas draw
+  const blobUrl = card.dataset.blobUrl;
+  if (blobUrl) {
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
+    ctx.drawImage(img, 0, 0, W, H);
+    // 텍스트 가독성을 위한 하단 어두운 그라디언트
+    const grad = ctx.createLinearGradient(0, H * 0.25, 0, H);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.88)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  } else {
+    // 이미지 없으면 카드 배경 그라디언트 폴백
+    const BG = { 1:['#0a0a0a','#1e1b4b'], 2:['#0f172a','#1e3a8a'], 3:['#1c0a0a','#7f1d1d'], 4:['#0a1a12','#064e3b'], 5:['#1a0a2e','#6d28d9'] };
+    const [c1,c2] = BG[pageNum] || ['#0a0a0a','#1e1b4b'];
+    const grd = ctx.createLinearGradient(0,0,W*0.7,H);
+    grd.addColorStop(0, c1); grd.addColorStop(1, c2);
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
   }
+
+  // ② 페이지 라벨 (상단 좌측)
+  ctx.font = '700 36px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.textAlign = 'left';
+  ctx.fillText(`${pageNum} / 5 · ${PAGE_LABELS[pageNum-1]}`, 70, 86);
+
+  // ③ 포인트 라인 (헤드라인 위)
+  const ACC = { 1:'#8B5CF6', 2:'#60A5FA', 3:'#F87171', 4:'#34D399', 5:'#C084FC' };
+  ctx.fillStyle = ACC[pageNum] || '#8B5CF6';
+  ctx.fillRect(70, H - 440, 90, 6);
+
+  // ④ 텍스트 콘텐츠 추출
+  const pg = state.pages?.[`page${pageNum}`] || {};
+  let headline = '', body = '';
+  if (pageNum === 5) { headline = pg.cta || ''; body = pg.linkText || ''; }
+  else if (pageNum === 1) { headline = pg.headline || ''; body = ''; }
+  else { headline = pg.headline || ''; body = pg.body || ''; }
+
+  // ⑤ 헤드라인
+  ctx.font = '900 68px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'left';
+  let nextY = canvasWrapText(ctx, headline, 70, H - 350, W - 140, 90);
+
+  // ⑥ 본문 (1페이지는 없음)
+  if (body) {
+    ctx.font = '400 44px "Noto Sans KR", sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.78)';
+    canvasWrapText(ctx, body, 70, nextY + 28, W - 140, 62);
+  }
+
+  // ⑦ PNG 다운로드
+  canvas.toBlob(blob => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `carousel_p${pageNum}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    showToast(`페이지 ${pageNum} 저장 완료 (이미지+텍스트)`, 'success');
+  }, 'image/png');
+}
+
+// 한국어 텍스트 캔버스 줄바꿈 (문자 단위)
+function canvasWrapText(ctx, text, x, y, maxWidth, lineH) {
+  if (!text) return y;
+  let line = '', cy = y;
+  const chars = [...text]; // 유니코드 문자 단위 분리
+  for (const ch of chars) {
+    if (ch === '\n') { ctx.fillText(line, x, cy); line = ''; cy += lineH; continue; }
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, cy); line = ch; cy += lineH;
+    } else { line = test; }
+  }
+  if (line) { ctx.fillText(line, x, cy); cy += lineH; }
+  return cy;
 }
 
 document.getElementById('generateCaptionBtn').addEventListener('click', async () => {
