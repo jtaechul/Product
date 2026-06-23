@@ -659,13 +659,13 @@
 
 <aside class="sidebar">
   <div class="mode-tabs">
-    <button class="mode-tab active" id="tabAuto">AI 자동 추천</button>
+    <button class="mode-tab active" id="tabAutoDeploy">자동 배포</button>
+    <button class="mode-tab" id="tabAuto">AI 자동 추천</button>
     <button class="mode-tab" id="tabManual">직접 입력</button>
-    <button class="mode-tab" id="tabAutoDeploy">자동 배포</button>
   </div>
 
   <!-- AUTO MODE -->
-  <div class="mode-panel active" id="panelAuto">
+  <div class="mode-panel" id="panelAuto">
 
     <!-- Step A: 카테고리/이슈 선택 -->
     <div id="autoStep1">
@@ -743,7 +743,7 @@
   </div>
 
   <!-- AUTO-DEPLOY MODE -->
-  <div class="mode-panel" id="panelAutoDeploy">
+  <div class="mode-panel active" id="panelAutoDeploy">
 
     <!-- Phase 1: 카테고리 선택 + 책 추천 -->
     <div id="deployPhase1">
@@ -764,11 +764,14 @@
         <input type="text" id="deployIssue" placeholder="예: AI 대체, 번아웃, 금리...">
       </div>
       <div class="form-group">
-        <label>쿠팡파트너스 링크 (선택)</label>
-        <input type="url" id="deployAffiliateLink" placeholder="https://link.coupang.com/a/...">
-        <span class="hint">DM 자동 회신에 포함됩니다</span>
+        <label>쿠팡파트너스 링크 (선택, 여러 개 추가 가능)</label>
+        <div id="deployAffiliateLinkList">
+          <input type="url" class="affiliate-link-input" placeholder="https://link.coupang.com/a/..." style="margin-bottom:6px;">
+        </div>
+        <button type="button" id="addAffiliateLinkBtn" style="font-size:11px;color:var(--primary);background:none;border:1px solid var(--primary);border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit;margin-bottom:4px;">+ 링크 추가</button>
+        <span class="hint">DM 자동 회신에 모두 포함됩니다</span>
       </div>
-      <button class="btn btn-primary" id="deployFetchBooksBtn">AI 책 추천받기</button>
+      <button class="btn btn-primary" id="deployFetchBooksBtn">자동 진행하기</button>
     </div>
 
     <!-- Phase 2: 책 선택 -->
@@ -873,8 +876,8 @@
 
     <div class="caption-keyword-row">
       <div class="form-group">
-        <label>댓글 키워드 (선택, 2자 이하)</label>
-        <input type="text" id="captionKeyword" maxlength="2" placeholder="예: 경제, 심리, 책 (2자 이하, 특수기호 없이)">
+        <label>댓글 키워드 (선택, 3자 이하)</label>
+        <input type="text" id="captionKeyword" maxlength="3" placeholder="예: 경제, 심리, 독서 (3자 이하, 특수기호 없이)">
       </div>
       <button class="btn btn-outline" id="generateCaptionBtn" style="flex-shrink:0;padding:9px 14px;font-size:12px;white-space:nowrap;">자동 생성</button>
     </div>
@@ -1055,19 +1058,15 @@ function getCardText(page, num) {
 }
 
 // ===== Mode tabs =====
-document.getElementById('tabAuto').addEventListener('click', () => {
-  document.getElementById('tabAuto').classList.add('active');
-  document.getElementById('tabManual').classList.remove('active');
-  document.getElementById('panelAuto').classList.add('active');
-  document.getElementById('panelManual').classList.remove('active');
-});
-
-document.getElementById('tabManual').addEventListener('click', () => {
-  document.getElementById('tabManual').classList.add('active');
-  document.getElementById('tabAuto').classList.remove('active');
-  document.getElementById('panelManual').classList.add('active');
-  document.getElementById('panelAuto').classList.remove('active');
-});
+const ALL_TABS = ['tabAutoDeploy', 'tabAuto', 'tabManual'];
+const ALL_PANELS = ['panelAutoDeploy', 'panelAuto', 'panelManual'];
+function switchTab(activeTabId) {
+  ALL_TABS.forEach(id => document.getElementById(id).classList.toggle('active', id === activeTabId));
+  ALL_PANELS.forEach(id => document.getElementById(id).classList.toggle('active', id === activeTabId.replace('tab', 'panel')));
+}
+document.getElementById('tabAutoDeploy').addEventListener('click', () => switchTab('tabAutoDeploy'));
+document.getElementById('tabAuto').addEventListener('click', () => switchTab('tabAuto'));
+document.getElementById('tabManual').addEventListener('click', () => switchTab('tabManual'));
 
 // ===== AUTO MODE =====
 document.getElementById('suggestBtn').addEventListener('click', async () => {
@@ -1263,8 +1262,14 @@ async function autoValidateLoop() {
 
 // Phase 4: 합격된 캐럿셀을 텔레그램으로 자동 발송 (확인용)
 async function autoSendTelegram() {
-  showLoading('텔레그램으로 발송 중...', '검증 완료 캐럿셀을 전송합니다 (인스타그램 게시 전 최종 확인용)');
+  showLoading('텔레그램으로 발송 중...', '카드 이미지+텍스트 합성 후 발송 (인스타그램 게시 전 최종 확인용)');
   try {
+    let compositeImages = null;
+    try {
+      compositeImages = await generateCompositeImages();
+    } catch (e) {
+      console.warn('합성 이미지 생성 실패, 원본 URL로 대체:', e);
+    }
     const data = await apiFetch('/api/send-telegram', {
       pages: state.pages,
       bookInfo: state.bookInfo,
@@ -1273,6 +1278,7 @@ async function autoSendTelegram() {
       commentKeyword: state.dmKeyword,
       dmKeyword: state.dmKeyword,
       images: state.images || null,
+      compositeImages,
     });
     showToast(data.message || '텔레그램 발송 완료! 확인 후 인스타그램에 게시해주세요.', 'success');
   } catch {
@@ -1564,6 +1570,91 @@ function addSaveButton(card, pageNum) {
   card.appendChild(btn);
 }
 
+// 텍스트+배경 합성 이미지를 base64 data URL로 반환 (텔레그램 발송용)
+async function generateCompositeDataUrl(card, pageNum) {
+  const W = 1080, H = 1080;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  await document.fonts.ready;
+  const blobUrl = card.dataset.blobUrl;
+  if (blobUrl) {
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
+    ctx.drawImage(img, 0, 0, W, H);
+    const grad = ctx.createLinearGradient(0, H * 0.3, 0, H);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.9)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  } else {
+    const BG = { 1:['#0a0a0a','#1e1b4b'], 2:['#0f172a','#1e3a8a'], 3:['#1c0a0a','#7f1d1d'], 4:['#0a1a12','#064e3b'], 5:['#1a0a2e','#6d28d9'] };
+    const [c1,c2] = BG[pageNum] || ['#0a0a0a','#1e1b4b'];
+    const grd = ctx.createLinearGradient(0,0,W*0.7,H);
+    grd.addColorStop(0, c1); grd.addColorStop(1, c2);
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+  }
+  ctx.font = '700 36px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.textAlign = 'left';
+  ctx.fillText(`${pageNum}`, 70, 86);
+  const pg = state.pages?.[`page${pageNum}`] || {};
+  let headline = '', body = '';
+  if (pageNum === 5) { headline = pg.cta || ''; body = pg.linkText || ''; }
+  else if (pageNum === 1) { headline = pg.headline || ''; body = ''; }
+  else { headline = pg.headline || ''; body = pg.body || ''; }
+  const PAD_X = 70, PAD_BOTTOM = 80, PAD_BETWEEN = 36;
+  const ACCENT_H = 6, ACCENT_W = 90, ACCENT_GAP = 28;
+  ctx.font = '900 68px "Noto Sans KR", sans-serif';
+  const hlLines = measureTextLines(ctx, headline, W - PAD_X * 2);
+  const HL_LINE_H = 90;
+  ctx.font = '400 44px "Noto Sans KR", sans-serif';
+  const bodyLines = body ? measureTextLines(ctx, body, W - PAD_X * 2) : [];
+  const BODY_LINE_H = 62;
+  let curY = H - PAD_BOTTOM;
+  if (bodyLines.length) {
+    ctx.font = '400 44px "Noto Sans KR", sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.78)';
+    ctx.textAlign = 'left';
+    for (let i = bodyLines.length - 1; i >= 0; i--) {
+      ctx.fillText(bodyLines[i], PAD_X, curY);
+      curY -= BODY_LINE_H;
+    }
+    curY -= PAD_BETWEEN;
+  }
+  ctx.font = '900 68px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'left';
+  for (let i = hlLines.length - 1; i >= 0; i--) {
+    ctx.fillText(hlLines[i], PAD_X, curY);
+    curY -= HL_LINE_H;
+  }
+  curY -= ACCENT_GAP;
+  const ACC = { 1:'#8B5CF6', 2:'#60A5FA', 3:'#F87171', 4:'#34D399', 5:'#C084FC' };
+  ctx.fillStyle = ACC[pageNum] || '#8B5CF6';
+  ctx.fillRect(PAD_X, curY, ACCENT_W, ACCENT_H);
+  return new Promise(resolve => canvas.toBlob(blob => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  }, 'image/jpeg', 0.85));
+}
+
+async function generateCompositeImages() {
+  const cards = document.querySelectorAll('#carouselScroll .card');
+  const result = {};
+  for (let i = 0; i < 5; i++) {
+    const card = cards[i];
+    if (!card) continue;
+    try {
+      result[`page${i + 1}`] = await generateCompositeDataUrl(card, i + 1);
+    } catch (err) {
+      console.warn(`Page ${i + 1} composite failed:`, err);
+    }
+  }
+  return result;
+}
+
 async function saveCardAsCanvas(card, pageNum) {
   const W = 1080, H = 1080;
   const canvas = document.createElement('canvas');
@@ -1782,8 +1873,14 @@ updateHistoryCount();
 
 document.getElementById('telegramBtn').addEventListener('click', async () => {
   if (!state.pages || !state.bookInfo) return;
-  showLoading('텔레그램 발송 중...', '캐럿셀 이미지와 내용을 텔레그램으로 보내고 있습니다');
+  showLoading('텔레그램 발송 중...', '카드 이미지+텍스트 합성 후 텔레그램으로 보내고 있습니다');
   try {
+    let compositeImages = null;
+    try {
+      compositeImages = await generateCompositeImages();
+    } catch (e) {
+      console.warn('합성 이미지 생성 실패, 원본 URL로 대체:', e);
+    }
     const data = await apiFetch('/api/send-telegram', {
       pages: state.pages,
       bookInfo: state.bookInfo,
@@ -1792,6 +1889,7 @@ document.getElementById('telegramBtn').addEventListener('click', async () => {
       commentKeyword: state.dmKeyword,
       dmKeyword: state.dmKeyword,
       images: state.images || null,
+      compositeImages,
     });
     showToast(data.message || '텔레그램으로 발송됐습니다!', 'success');
   } catch (err) {
@@ -1827,23 +1925,6 @@ function updateInstagramBtn() {
   if (btn) btn.disabled = !(state.images && state.caption);
 }
 
-// ===== 3번째 탭: 자동 배포 =====
-document.getElementById('tabAutoDeploy').addEventListener('click', () => {
-  ['tabAuto', 'tabManual', 'tabAutoDeploy'].forEach(id => document.getElementById(id).classList.remove('active'));
-  ['panelAuto', 'panelManual', 'panelAutoDeploy'].forEach(id => document.getElementById(id).classList.remove('active'));
-  document.getElementById('tabAutoDeploy').classList.add('active');
-  document.getElementById('panelAutoDeploy').classList.add('active');
-});
-
-// 기존 탭 전환 시 3번째 탭도 비활성화
-document.getElementById('tabAuto').addEventListener('click', () => {
-  document.getElementById('tabAutoDeploy').classList.remove('active');
-  document.getElementById('panelAutoDeploy').classList.remove('active');
-});
-document.getElementById('tabManual').addEventListener('click', () => {
-  document.getElementById('tabAutoDeploy').classList.remove('active');
-  document.getElementById('panelAutoDeploy').classList.remove('active');
-});
 
 // ── Deploy 상태 ──
 const deployState = { books: [], selectedBook: null };
@@ -1889,13 +1970,37 @@ function renderDeployBooks(books) {
   document.getElementById('deployPhase3').style.display = 'none';
 }
 
+function getDeployAffiliateLinks() {
+  return Array.from(document.querySelectorAll('#deployAffiliateLinkList .affiliate-link-input'))
+    .map(input => input.value.trim())
+    .filter(v => v);
+}
+
+document.getElementById('addAffiliateLinkBtn').addEventListener('click', () => {
+  const list = document.getElementById('deployAffiliateLinkList');
+  const input = document.createElement('input');
+  input.type = 'url';
+  input.className = 'affiliate-link-input';
+  input.placeholder = 'https://link.coupang.com/a/...';
+  input.style.marginBottom = '6px';
+  list.appendChild(input);
+});
+
 document.getElementById('deployFetchBooksBtn').addEventListener('click', async () => {
   const category = document.getElementById('deployCategory').value;
   const issue = document.getElementById('deployIssue').value.trim();
-  showLoading('AI가 책을 추천하고 있습니다...', '베스트셀러와 최신 이슈를 분석 중');
+  const affiliateLinks = getDeployAffiliateLinks();
+  showLoading('AI가 최적의 책을 선정하고 있습니다...', '베스트셀러와 최신 이슈를 분석 중');
   try {
     const data = await apiFetch('/api/suggest', { category, issue, excludeTitles: getHistory() });
-    renderDeployBooks(data.books);
+    const book = data.books[0];
+    if (!book) { showToast('책 추천을 받지 못했습니다. 다시 시도해주세요.', 'error'); return; }
+    showToast(`"${book.title}" (${book.author}) 선정`, 'info');
+    const bookInfo = {
+      title: book.title, author: book.author, year: book.year,
+      coreMessage: book.coreMessage, targetAudience: book.targetAudience, category: book.category,
+    };
+    await runAutoDeployPipeline(bookInfo, affiliateLinks);
   } catch (err) {
     showToast(err.message, 'error');
   } finally {
@@ -1920,15 +2025,15 @@ document.getElementById('deployChangeBookBtn').addEventListener('click', () => {
 document.getElementById('deployStartBtn').addEventListener('click', async () => {
   if (!deployState.selectedBook) return;
   const book = deployState.selectedBook;
-  const affiliateLink = document.getElementById('deployAffiliateLink').value.trim() || null;
+  const affiliateLinks = getDeployAffiliateLinks();
   const bookInfo = {
     title: book.title, author: book.author, year: book.year,
     coreMessage: book.coreMessage, targetAudience: book.targetAudience, category: book.category,
   };
-  await runAutoDeployPipeline(bookInfo, affiliateLink);
+  await runAutoDeployPipeline(bookInfo, affiliateLinks);
 });
 
-async function runAutoDeployPipeline(bookInfo, affiliateLink) {
+async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
   const progressPanel = document.getElementById('progressPanel');
   progressPanel.classList.add('visible');
   document.getElementById('emptyState').style.display = 'none';
@@ -2028,7 +2133,9 @@ async function runAutoDeployPipeline(bookInfo, affiliateLink) {
   setDeployStep(5, 'active', 'DM 자동 회신 내용 작성 중...');
   try {
     const dmData = await apiFetch('/api/generate-dm-reply', {
-      pages, bookInfo, affiliateLink: affiliateLink || null, commentKeyword: dmKeyword,
+      pages, bookInfo,
+      affiliateLinks: Array.isArray(affiliateLinks) ? affiliateLinks : (affiliateLinks ? [affiliateLinks] : []),
+      commentKeyword: dmKeyword,
     });
     state.dmReply = dmData.dmText;
     document.getElementById('dmReplyText').textContent = dmData.dmText || '';
@@ -2040,11 +2147,15 @@ async function runAutoDeployPipeline(bookInfo, affiliateLink) {
   }
 
   // ── Step 6: 텔레그램 발송 ──
-  setDeployStep(6, 'active', '텔레그램으로 최종 확인 요청 발송 중...');
+  setDeployStep(6, 'active', '카드 이미지+텍스트 합성 후 텔레그램 발송 중...');
+  let compositeImages = null;
+  try { compositeImages = await generateCompositeImages(); } catch (e) { console.warn('합성 이미지 실패:', e); }
   try {
     const tgData = await apiFetch('/api/send-telegram', {
       pages, bookInfo, caption, hashtags,
-      commentKeyword: dmKeyword, dmKeyword, images: state.images || null,
+      commentKeyword: dmKeyword, dmKeyword,
+      images: state.images || null,
+      compositeImages,
     });
     setDeployStep(6, 'done', '텔레그램 발송 완료 — 승인 버튼을 눌러주세요');
     showToast(tgData.message || '텔레그램 발송 완료!', 'success');

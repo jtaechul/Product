@@ -161,9 +161,30 @@ async function sendTelegramPhoto(botToken, chatId, photoUrl, caption) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    // 이미지 전송 실패시 텍스트로 폴백
     console.error(`이미지 전송 실패(폴백): ${err.description || res.status}`);
     return sendTelegramMessage(botToken, chatId, caption || photoUrl);
+  }
+  return res.json();
+}
+
+// 브라우저에서 Canvas로 합성한 이미지(base64 data URL)를 파일로 전송
+async function sendTelegramPhotoFile(botToken, chatId, base64DataUrl, caption) {
+  const match = base64DataUrl.match(/^data:([^;]+);base64,(.+)$/s);
+  if (!match) return null;
+  const mimeType = match[1];
+  const binary = Uint8Array.from(atob(match[2]), c => c.charCodeAt(0));
+  const form = new FormData();
+  form.append('chat_id', String(chatId));
+  if (caption) form.append('caption', caption);
+  form.append('photo', new Blob([binary], { type: mimeType }), 'carousel.jpg');
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+    method: 'POST',
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    console.error(`파일 전송 실패: ${err.description || res.status}`);
+    return null;
   }
   return res.json();
 }
@@ -173,7 +194,7 @@ async function handleSendTelegram(env, body) {
     throw new Error('TELEGRAM_BOT_TOKEN 또는 TELEGRAM_CHAT_ID가 설정되지 않았습니다.');
   }
 
-  const { pages, bookInfo, caption, hashtags, commentKeyword, dmKeyword, images } = body;
+  const { pages, bookInfo, caption, hashtags, commentKeyword, dmKeyword, images, compositeImages } = body;
   const kw = commentKeyword || dmKeyword || '';
 
   const captionBlock = caption
@@ -185,7 +206,7 @@ async function handleSendTelegram(env, body) {
   await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, summaryMsg);
   await new Promise(r => setTimeout(r, 300));
 
-  // 2) 페이지별 이미지+텍스트 전송 (이미지가 있으면 sendPhoto, 없으면 텍스트)
+  // 2) 페이지별 전송: compositeImages(텍스트 합성 이미지) → images(배경 URL) → 텍스트 순 폴백
   const pageDefs = [
     { key: 'page1', label: '1/5 훅', text: pages.page1?.headline || '' },
     { key: 'page2', label: '2/5 문제', text: `${pages.page2?.headline || ''}\n\n${pages.page2?.body || ''}` },
@@ -196,9 +217,19 @@ async function handleSendTelegram(env, body) {
 
   let sent = 1;
   for (const { key, label, text } of pageDefs) {
-    const imgUrl = images?.[key];
+    const compositeDataUrl = compositeImages?.[key]; // base64 data URL (텍스트+배경 합성)
+    const imgUrl = images?.[key];                    // Pollinations URL (배경만)
     const msgText = `[${label}]\n${text.trim()}`;
-    if (imgUrl) {
+
+    if (compositeDataUrl) {
+      // 텍스트가 이미 합성된 이미지 파일로 전송
+      const ok = await sendTelegramPhotoFile(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, compositeDataUrl, msgText);
+      if (!ok) {
+        // 파일 전송 실패 시 URL 또는 텍스트로 폴백
+        if (imgUrl) await sendTelegramPhoto(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, imgUrl, msgText);
+        else await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, msgText);
+      }
+    } else if (imgUrl) {
       await sendTelegramPhoto(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, imgUrl, msgText);
     } else {
       await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, msgText);
@@ -430,8 +461,8 @@ async function handleGenerateCaption(env, body) {
   const { pages, bookInfo, dmKeyword } = body;
   if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
 
-  // 댓글 키워드: 2자 이하, 특수기호 없는 순수 한글/영문
-  let kw = (dmKeyword || bookInfo.category || '독서').replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 2) || '책';
+  // 댓글 키워드: 3자 이하, 특수기호 없는 순수 한글/영문
+  let kw = (dmKeyword || bookInfo.category || '독서').replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 3) || '책';
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
@@ -493,8 +524,16 @@ JSON:
 
 // ===== Phase 5 준비: DM 자동 회신 내용 생성 =====
 async function handleGenerateDmReply(env, body) {
-  const { pages, bookInfo, affiliateLink } = body;
+  const { pages, bookInfo, affiliateLink, affiliateLinks } = body;
   if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
+
+  // 여러 링크 지원: affiliateLinks 배열 우선, 없으면 단일 affiliateLink 폴백
+  const links = Array.isArray(affiliateLinks) && affiliateLinks.length
+    ? affiliateLinks.filter(l => l && l.trim())
+    : (affiliateLink ? [affiliateLink] : []);
+  const linksText = links.length
+    ? links.map((l, i) => `${i + 1}. ${l}`).join('\n')
+    : '(미입력)';
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
@@ -508,7 +547,8 @@ async function handleGenerateDmReply(env, body) {
 5페이지에서 독자에게 던진 반문: ${pages.page5?.cta || ''}
 5페이지 마무리 문구: ${pages.page5?.linkText || ''}
 
-어필리에이트 링크: ${affiliateLink || '(미입력)'}
+어필리에이트 링크:
+${linksText}
 
 댓글에 키워드를 남긴 팔로워에게 보낼 DM을 작성하세요.
 
@@ -517,7 +557,7 @@ async function handleGenerateDmReply(env, body) {
 2. 책 제목과 저자 자연스럽게 소개 (1줄)
 3. 이 책이 답하는 핵심 질문·고민 (독자 공감 유도, 2줄 이내)
 4. 5페이지 반문에 대한 제한적 힌트 (완전한 답은 절대 주지 말 것, 2줄 이내)
-5. 어필리에이트 링크 안내 (자연스럽게, 없으면 "곧 공유드릴게요" 처리)
+5. 어필리에이트 링크 안내 (링크가 여러 개면 모두 자연스럽게 포함, 없으면 "곧 공유드릴게요" 처리)
 6. 따뜻한 마무리 (1줄)
 
 JSON: {"dmText":"전체 DM 텍스트(줄바꿈은 \\n)"}`,
@@ -527,7 +567,7 @@ JSON: {"dmText":"전체 DM 텍스트(줄바꿈은 \\n)"}`,
 
   // KV에 DM 회신 저장 (키워드 기반, 7일 TTL) — Phase 5 댓글 자동 감지용
   if (env.PENDING_POSTS && body.commentKeyword) {
-    const kw2 = String(body.commentKeyword).replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 2);
+    const kw2 = String(body.commentKeyword).replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 3);
     if (kw2) await env.PENDING_POSTS.put(`dm_reply_${kw2}`, result.dmText || '', { expirationTtl: 604800 });
   }
 
