@@ -916,6 +916,14 @@ export default {
 
           result = { keyInfo, modelsEndpoint: { status: rawStatus, body: rawBody }, resolved };
         }
+        else if (url.pathname === '/api/debug-env') result = {
+          hasApiKey: !!env.ANTHROPIC_API_KEY,
+          hasTelegramToken: !!env.TELEGRAM_BOT_TOKEN,
+          hasTelegramChatId: !!env.TELEGRAM_CHAT_ID,
+          hasPendingPosts: !!env.PENDING_POSTS,
+          pendingPostsType: env.PENDING_POSTS ? typeof env.PENDING_POSTS : 'undefined',
+          hasInstagramToken: !!env.INSTAGRAM_ACCESS_TOKEN,
+        }
         else if (url.pathname === '/api/suggest') result = await handleSuggest(env, body);
         else if (url.pathname === '/api/analyze') result = await handleAnalyze(env, body);
         else if (url.pathname === '/api/generate') result = await handleGenerate(env, body);
