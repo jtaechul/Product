@@ -59,11 +59,15 @@ async function handleSendTelegram(env, body) {
     throw new Error('TELEGRAM_BOT_TOKEN 또는 TELEGRAM_CHAT_ID가 설정되지 않았습니다.');
   }
 
-  const { pages, bookInfo } = body;
+  const { pages, bookInfo, caption, hashtags, dmKeyword } = body;
   const PAGE_LABELS = ['훅', '문제', '심각성', '실마리', 'CTA'];
 
+  const captionBlock = caption
+    ? `\n\n[캡션]\n${caption}\n${(hashtags || []).join(' ')}${dmKeyword ? `\n\nDM 키워드: '${dmKeyword}'` : ''}`
+    : '';
+
   const messages = [
-    `[북 캐럿셀 미리보기]\n책: ${bookInfo.title}\n저자: ${bookInfo.author}\n카테고리: ${bookInfo.category || ''}\n\n5장 캐럿셀이 생성됐습니다.`,
+    `[북 캐럿셀 미리보기]\n책: ${bookInfo.title}\n저자: ${bookInfo.author}\n카테고리: ${bookInfo.category || ''}${captionBlock}`,
     `[1/5 ${PAGE_LABELS[0]}]\n${pages.page1.headline}\n\n${pages.page1.subtext || ''}`,
     `[2/5 ${PAGE_LABELS[1]}]\n${pages.page2.headline}\n\n${pages.page2.body || ''}`,
     `[3/5 ${PAGE_LABELS[2]}]\n${pages.page3.headline}\n\n${pages.page3.body || ''}`,
@@ -180,6 +184,36 @@ approved는 totalScore>=70이면 true.`
   return { success: true, ...extractJson(text) };
 }
 
+async function handleGenerateCaption(env, body) {
+  const { pages, bookInfo, dmKeyword } = body;
+  if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
+
+  const kw = dmKeyword || bookInfo.category || '키워드';
+
+  const text = await callClaude(env.ANTHROPIC_API_KEY, {
+    model: 'claude-sonnet-4-6',
+    max_tokens: 512,
+    system: '당신은 인스타그램 마케터입니다. DM 유도 중심의 짧고 강렬한 캡션을 작성합니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 반드시 JSON만 응답합니다.',
+    user: `책 카테고리: ${bookInfo.category || '자기계발'}
+핵심 메시지: ${bookInfo.coreMessage || ''}
+캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}
+DM 키워드: "${kw}"
+
+인스타그램 캡션을 작성하세요.
+
+규칙:
+- 첫 줄: 호기심/위기감 자극 단문 또는 질문 (책 제목 절대 노출 금지)
+- 2~3줄: 캐럿셀 핵심만 초간결 요약 (반복 금지, 노골적 판매 금지)
+- 마지막 줄: "DM으로 '${kw}'를 보내주세요" 형태의 자연스러운 유도 문구
+- 해시태그: 정확히 3개 (카테고리 관련)
+- 전체 5줄 이내, 짧고 강렬하게
+
+JSON: {"caption":"첫줄\\n둘째줄\\n셋째줄\\nDM유도줄","hashtags":["#tag1","#tag2","#tag3"],"dmKeyword":"${kw}"}`,
+  });
+
+  return { success: true, ...extractJson(text) };
+}
+
 async function handleRegenerate(env, body) {
   const { bookInfo, previousPages, feedback, improvements } = body;
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
@@ -216,6 +250,7 @@ export default {
         if (url.pathname === '/api/suggest') result = await handleSuggest(env, body);
         else if (url.pathname === '/api/analyze') result = await handleAnalyze(env, body);
         else if (url.pathname === '/api/generate') result = await handleGenerate(env, body);
+        else if (url.pathname === '/api/generate-caption') result = await handleGenerateCaption(env, body);
         else if (url.pathname === '/api/validate') result = await handleValidate(env, body);
         else if (url.pathname === '/api/regenerate') result = await handleRegenerate(env, body);
         else if (url.pathname === '/api/send-telegram') result = await handleSendTelegram(env, body);

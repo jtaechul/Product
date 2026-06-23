@@ -392,6 +392,20 @@
 
     .carousel-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 
+    /* Caption section */
+    .caption-wrapper { display: none; background: #fff; border: 1px solid var(--gray-200); border-radius: 14px; padding: 18px 22px; }
+    .caption-wrapper.visible { display: block; }
+
+    .caption-keyword-row { display: flex; gap: 8px; align-items: flex-end; margin: 12px 0; }
+    .caption-keyword-row .form-group { flex: 1; margin: 0; }
+
+    .caption-box { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 10px; padding: 14px 16px; margin: 14px 0; }
+    .caption-label-text { font-size: 10px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .caption-text-content { font-size: 13px; color: var(--gray-800); line-height: 1.9; white-space: pre-line; }
+    .caption-hashtags-row { margin-top: 10px; font-size: 13px; color: var(--primary); font-weight: 600; }
+    .dm-keyword-info { font-size: 12px; color: var(--gray-500); margin-bottom: 12px; padding: 8px 12px; background: rgba(124,58,237,0.05); border-radius: 8px; }
+    .dm-keyword-info strong { color: var(--primary); }
+
     /* Validation panel */
     .validation-panel { display: none; background: #fff; border: 1px solid var(--gray-200); border-radius: 14px; overflow: hidden; }
     .validation-panel.visible { display: block; }
@@ -594,6 +608,32 @@
     </div>
   </div>
 
+  <!-- Caption section -->
+  <div class="caption-wrapper" id="captionWrapper">
+    <div class="section-header">
+      <span class="section-title">캡션 + 해시태그</span>
+      <span class="section-badge">인스타그램용</span>
+    </div>
+
+    <div class="caption-keyword-row">
+      <div class="form-group">
+        <label>DM 키워드 (선택)</label>
+        <input type="text" id="captionKeyword" placeholder="예: 경제, 심리, 건강 (비워두면 AI가 자동 설정)">
+      </div>
+      <button class="btn btn-outline" id="generateCaptionBtn" style="flex-shrink:0;padding:9px 14px;font-size:12px;white-space:nowrap;">자동 생성</button>
+    </div>
+
+    <div id="captionResult" style="display:none;">
+      <div class="caption-box">
+        <div class="caption-label-text">캡션</div>
+        <div class="caption-text-content" id="captionTextContent"></div>
+        <div class="caption-hashtags-row" id="captionHashtagsRow"></div>
+      </div>
+      <div class="dm-keyword-info" id="dmKeywordInfo"></div>
+      <button class="btn btn-outline" id="copyCaptionBtn" style="font-size:12px;padding:8px 14px;">캡션 전체 복사</button>
+    </div>
+  </div>
+
   <!-- Validation panel -->
   <div class="validation-panel" id="validationPanel">
     <div class="validation-header">
@@ -637,6 +677,9 @@ const state = {
   validation: null,
   bookInfo: null,
   selectedBook: null,
+  caption: null,
+  captionHashtags: null,
+  dmKeyword: null,
 };
 
 const PAGE_LABELS = ['훅', '문제', '심각성', '실마리', 'CTA'];
@@ -888,6 +931,8 @@ function renderCarousel(pages) {
   });
 
   document.getElementById('carouselWrapper').classList.add('visible');
+  document.getElementById('captionWrapper').classList.add('visible');
+  document.getElementById('captionResult').style.display = 'none';
   document.getElementById('emptyState').style.display = 'none';
 }
 
@@ -975,6 +1020,42 @@ document.getElementById('regenFromFeedbackBtn').addEventListener('click', async 
   }
 });
 
+document.getElementById('generateCaptionBtn').addEventListener('click', async () => {
+  if (!state.pages || !state.bookInfo) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
+
+  const keyword = document.getElementById('captionKeyword').value.trim();
+  showLoading('캡션 생성 중...', 'AI가 인스타그램 캡션과 해시태그를 작성하고 있습니다');
+
+  try {
+    const data = await apiFetch('/api/generate-caption', {
+      pages: state.pages,
+      bookInfo: state.bookInfo,
+      dmKeyword: keyword,
+    });
+    state.caption = data.caption;
+    state.captionHashtags = data.hashtags;
+    state.dmKeyword = data.dmKeyword || keyword;
+
+    document.getElementById('captionTextContent').textContent = data.caption || '';
+    document.getElementById('captionHashtagsRow').textContent = (data.hashtags || []).join(' ');
+    document.getElementById('dmKeywordInfo').innerHTML = data.dmKeyword
+      ? `DM 키워드: <strong>'${escHtml(data.dmKeyword)}'</strong> — 팔로워가 이 단어를 DM으로 보내면 책 정보가 자동 회신됩니다`
+      : '';
+    document.getElementById('captionResult').style.display = 'block';
+    showToast('캡션 생성 완료!', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    hideLoading();
+  }
+});
+
+document.getElementById('copyCaptionBtn').addEventListener('click', () => {
+  if (!state.caption) return;
+  const full = state.caption + '\n\n' + (state.captionHashtags || []).join(' ');
+  copyText(full, '캡션');
+});
+
 document.getElementById('copyAllBtn').addEventListener('click', () => {
   if (!state.pages) return;
   const text = [1,2,3,4,5].map(n => getCardText(state.pages[`page${n}`], n)).join('\n\n---\n\n');
@@ -985,7 +1066,13 @@ document.getElementById('telegramBtn').addEventListener('click', async () => {
   if (!state.pages || !state.bookInfo) return;
   showLoading('텔레그램 발송 중...', '캐럿셀 내용을 텔레그램으로 보내고 있습니다');
   try {
-    const data = await apiFetch('/api/send-telegram', { pages: state.pages, bookInfo: state.bookInfo });
+    const data = await apiFetch('/api/send-telegram', {
+      pages: state.pages,
+      bookInfo: state.bookInfo,
+      caption: state.caption,
+      hashtags: state.captionHashtags,
+      dmKeyword: state.dmKeyword,
+    });
     showToast(data.message || '텔레그램으로 발송됐습니다!', 'success');
   } catch (err) {
     showToast(err.message, 'error');
