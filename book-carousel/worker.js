@@ -11,10 +11,6 @@ function json(data, status = 200) {
   });
 }
 
-function redirect(url) {
-  return Response.redirect(url, 302);
-}
-
 // ===== Claude API =====
 async function callClaude(apiKey, { model, system, user, max_tokens = 2048 }) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -44,117 +40,43 @@ function extractJson(text) {
   return JSON.parse(match[0]);
 }
 
-// ===== KakaoTalk OAuth =====
-async function getKakaoToken(env) {
-  const stored = await env.TOKENS.get('kakao_tokens', { type: 'json' });
-  if (!stored) return null;
-
-  // 액세스 토큰이 만료됐으면 리프레시
-  if (Date.now() > stored.expires_at) {
-    const refreshed = await refreshKakaoToken(env, stored.refresh_token);
-    return refreshed;
-  }
-  return stored;
-}
-
-async function refreshKakaoToken(env, refreshToken) {
-  const res = await fetch('https://kauth.kakao.com/oauth/token', {
+// ===== Telegram =====
+async function sendTelegramMessage(botToken, chatId, text) {
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      client_id: env.KAKAO_APP_KEY,
-      refresh_token: refreshToken,
-    }),
-  });
-  if (!res.ok) throw new Error('카카오 토큰 갱신 실패');
-  const data = await res.json();
-  const tokens = {
-    access_token: data.access_token,
-    refresh_token: data.refresh_token || refreshToken,
-    expires_at: Date.now() + (data.expires_in - 60) * 1000,
-  };
-  await env.TOKENS.put('kakao_tokens', JSON.stringify(tokens));
-  return tokens;
-}
-
-async function sendKakaoMessage(accessToken, text) {
-  const template = {
-    object_type: 'text',
-    text: text.substring(0, 200),
-    link: { web_url: 'https://kakao.com', mobile_web_url: 'https://kakao.com' },
-  };
-  const res = await fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: `template_object=${encodeURIComponent(JSON.stringify(template))}`,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(`카카오 발송 실패: ${err.msg || res.status}`);
+    throw new Error(`텔레그램 발송 실패: ${err.description || res.status}`);
   }
   return res.json();
 }
 
-// ===== 카카오 OAuth 핸들러 =====
-async function handleKakaoAuthStart(env, requestUrl) {
-  const workerUrl = `${requestUrl.protocol}//${requestUrl.host}`;
-  const redirectUri = `${workerUrl}/auth/kakao/callback`;
-  const authUrl = new URL('https://kauth.kakao.com/oauth/authorize');
-  authUrl.searchParams.set('client_id', env.KAKAO_APP_KEY);
-  authUrl.searchParams.set('redirect_uri', redirectUri);
-  authUrl.searchParams.set('response_type', 'code');
-  authUrl.searchParams.set('scope', 'talk_message');
-  return redirect(authUrl.toString());
-}
-
-async function handleKakaoAuthCallback(env, requestUrl) {
-  const code = requestUrl.searchParams.get('code');
-  if (!code) {
-    return new Response('인증 코드 없음', { status: 400 });
+async function handleSendTelegram(env, body) {
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
+    throw new Error('TELEGRAM_BOT_TOKEN 또는 TELEGRAM_CHAT_ID가 설정되지 않았습니다.');
   }
 
-  const workerUrl = `${requestUrl.protocol}//${requestUrl.host}`;
-  const redirectUri = `${workerUrl}/auth/kakao/callback`;
+  const { pages, bookInfo } = body;
+  const PAGE_LABELS = ['훅', '문제', '심각성', '실마리', 'CTA'];
 
-  const res = await fetch('https://kauth.kakao.com/oauth/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      client_id: env.KAKAO_APP_KEY,
-      redirect_uri: redirectUri,
-      code,
-    }),
-  });
+  const messages = [
+    `[북 캐럿셀 미리보기]\n책: ${bookInfo.title}\n저자: ${bookInfo.author}\n카테고리: ${bookInfo.category || ''}\n\n5장 캐럿셀이 생성됐습니다.`,
+    `[1/5 ${PAGE_LABELS[0]}]\n${pages.page1.headline}\n\n${pages.page1.subtext || ''}`,
+    `[2/5 ${PAGE_LABELS[1]}]\n${pages.page2.headline}\n\n${pages.page2.body || ''}`,
+    `[3/5 ${PAGE_LABELS[2]}]\n${pages.page3.headline}\n\n${pages.page3.body || ''}`,
+    `[4/5 ${PAGE_LABELS[3]}]\n${pages.page4.headline}\n\n${pages.page4.body || ''}`,
+    `[5/5 ${PAGE_LABELS[4]}]\n${pages.page5.cta}\n\n${pages.page5.linkText || ''}`,
+  ];
 
-  if (!res.ok) {
-    return new Response('토큰 발급 실패', { status: 500 });
+  for (const msg of messages) {
+    await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, msg);
+    await new Promise(r => setTimeout(r, 200));
   }
 
-  const data = await res.json();
-  const tokens = {
-    access_token: data.access_token,
-    refresh_token: data.refresh_token,
-    expires_at: Date.now() + (data.expires_in - 60) * 1000,
-  };
-  await env.TOKENS.put('kakao_tokens', JSON.stringify(tokens));
-
-  // 연동 완료 후 메인 페이지로 이동
-  return new Response(`
-    <html><head><meta charset="UTF-8">
-    <script>
-      window.opener && window.opener.postMessage('kakao_auth_done', '*');
-      setTimeout(() => window.close(), 1000);
-    </script></head>
-    <body style="font-family:sans-serif;text-align:center;padding:40px">
-      <h2>카카오톡 연동 완료!</h2>
-      <p>이 창은 자동으로 닫힙니다.</p>
-    </body></html>
-  `, { headers: { 'Content-Type': 'text/html;charset=UTF-8' } });
+  return { success: true, message: `텔레그램으로 ${messages.length}개 메시지를 보냈습니다.` };
 }
 
 // ===== Claude 핸들러 =====
@@ -228,41 +150,6 @@ JSON 형식:
   return { success: true, pages: extractJson(text) };
 }
 
-// ===== 카카오톡 발송 =====
-async function handleSendKakao(env, body, requestUrl) {
-  const tokenData = await getKakaoToken(env);
-  if (!tokenData) {
-    return { success: false, needAuth: true, message: '카카오톡 연동이 필요합니다.' };
-  }
-
-  const { pages, bookInfo } = body;
-  const workerUrl = `${requestUrl.protocol}//${requestUrl.host}`;
-  const PAGE_LABELS = ['훅', '문제', '심각성', '실마리', 'CTA'];
-
-  const messages = [
-    `[북 캐럿셀 미리보기]\n책: ${bookInfo.title}\n저자: ${bookInfo.author}\n카테고리: ${bookInfo.category || ''}\n\n5장 캐럿셀이 생성됐습니다.`,
-    `[1/5 ${PAGE_LABELS[0]}]\n${pages.page1.headline}\n\n${pages.page1.subtext || ''}`,
-    `[2/5 ${PAGE_LABELS[1]}]\n${pages.page2.headline}\n\n${pages.page2.body || ''}`,
-    `[3/5 ${PAGE_LABELS[2]}]\n${pages.page3.headline}\n\n${pages.page3.body || ''}`,
-    `[4/5 ${PAGE_LABELS[3]}]\n${pages.page4.headline}\n\n${pages.page4.body || ''}`,
-    `[5/5 ${PAGE_LABELS[4]}]\n${pages.page5.cta}\n\n${pages.page5.linkText || ''}`,
-    `승인/거절하려면 아래 링크로 이동:\n${workerUrl}`,
-  ];
-
-  for (const msg of messages) {
-    await sendKakaoMessage(tokenData.access_token, msg);
-    await new Promise(r => setTimeout(r, 300)); // 과도한 요청 방지
-  }
-
-  return { success: true, message: `카카오톡으로 ${messages.length}개 메시지를 보냈습니다.` };
-}
-
-// ===== 카카오 연동 상태 확인 =====
-async function handleKakaoStatus(env) {
-  const tokenData = await env.TOKENS.get('kakao_tokens', { type: 'json' });
-  return { connected: !!tokenData };
-}
-
 // ===== 메인 라우터 =====
 export default {
   async fetch(request, env) {
@@ -272,28 +159,15 @@ export default {
       return new Response(null, { headers: CORS });
     }
 
-    // 카카오 OAuth 라우트
-    if (url.pathname === '/auth/kakao') {
-      return handleKakaoAuthStart(env, url);
-    }
-    if (url.pathname === '/auth/kakao/callback') {
-      return handleKakaoAuthCallback(env, url);
-    }
-
-    // API 라우트
     if (url.pathname.startsWith('/api/')) {
       try {
-        if (url.pathname === '/api/kakao-status' && request.method === 'GET') {
-          return json(await handleKakaoStatus(env));
-        }
-
         const body = request.method === 'POST' ? await request.json() : {};
         let result;
 
         if (url.pathname === '/api/generate') result = await handleGenerate(env, body);
         else if (url.pathname === '/api/validate') result = await handleValidate(env, body);
         else if (url.pathname === '/api/regenerate') result = await handleRegenerate(env, body);
-        else if (url.pathname === '/api/send-kakao') result = await handleSendKakao(env, body, url);
+        else if (url.pathname === '/api/send-telegram') result = await handleSendTelegram(env, body);
         else return json({ error: '없는 경로입니다.' }, 404);
 
         return json(result);
