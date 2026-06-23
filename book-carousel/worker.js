@@ -12,6 +12,9 @@ function json(data, status = 200) {
 }
 
 // ===== Claude API =====
+const MODEL_MAIN  = 'claude-3-5-sonnet-20241022'; // 캐럿셀 생성·추천 (고품질)
+const MODEL_LIGHT = 'claude-3-5-haiku-20241022';  // 분석·검증·캡션 (빠름)
+
 async function callClaude(apiKey, { model, system, user, max_tokens = 2048 }) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -28,8 +31,9 @@ async function callClaude(apiKey, { model, system, user, max_tokens = 2048 }) {
     }),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `Claude API 오류 ${res.status}`);
+    const errBody = await res.json().catch(() => ({}));
+    const detail = errBody?.error?.message || JSON.stringify(errBody);
+    throw new Error(`[${res.status}] ${detail}`);
   }
   return (await res.json()).content[0].text;
 }
@@ -87,25 +91,32 @@ async function handleSendTelegram(env, body) {
 
 // 카테고리/이슈 기반 책 추천
 async function handleSuggest(env, body) {
-  const { category, issue } = body;
+  const { category, issue, excludeTitles = [] } = body;
   const topic = issue || category || '자기계발';
 
-  const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: 'claude-sonnet-4-6',
-    system: '당신은 도서 큐레이터입니다. 현재 베스트셀러 트렌드와 사회적 이슈를 바탕으로 실제 존재하는 책을 추천합니다. 반드시 JSON만 응답합니다.',
-    user: `주제: "${topic}"
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const excludeClause = excludeTitles.length
+    ? `\n제외 도서(이미 캐럿셀로 만든 책이므로 절대 추천 금지): ${excludeTitles.join(', ')}`
+    : '';
 
-이 주제와 관련해 현재 주목받는 실제 책 4권을 추천하세요.
-베스트셀러이거나 최신 사회 이슈(경제 위기, AI, 부동산, 건강, 인간관계 등)에 인사이트를 주는 책 위주로 선정하세요.
+  const text = await callClaude(env.ANTHROPIC_API_KEY, {
+    model: MODEL_MAIN,
+    system: '당신은 도서 큐레이터입니다. 최신 베스트셀러 트렌드와 사회적 이슈를 바탕으로 실제 존재하는 책을 추천합니다. 반드시 JSON만 응답합니다.',
+    user: `오늘 날짜: ${today}
+주제: "${topic}"${excludeClause}
+
+이 주제와 관련해 지금 이 시점에 주목받을 만한 실제 책 4권을 추천하세요.
+최근 1~2년 내 출간된 신간이거나, 최신 사회 이슈(AI·경제위기·부동산·건강·인간관계·기후·취업 등)와 직접 연결되는 인사이트 있는 책을 우선 선정하세요.
+동일 저자 책은 중복 추천하지 마세요.
 
 각 책에 대해:
 - title: 책 제목 (실제 출판된 책)
 - author: 저자명
-- year: 출판연도
+- year: 출판연도 (숫자)
 - category: 카테고리
 - coreMessage: 이 책의 핵심 메시지 (1~2문장)
 - targetAudience: 주요 대상 독자층 (1문장)
-- reason: 지금 이 책을 읽어야 하는 이유 (1문장, 사회 트렌드/이슈 연결)
+- reason: 지금 이 책을 읽어야 하는 이유 (1문장, 최신 트렌드/이슈 연결)
 
 JSON 형식:
 {"books":[{"title":"...","author":"...","year":2024,"category":"...","coreMessage":"...","targetAudience":"...","reason":"..."}]}`,
@@ -120,7 +131,7 @@ async function handleAnalyze(env, body) {
   if (!title) throw new Error('책 제목이 필요합니다.');
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: 'claude-sonnet-4-6',
+    model: MODEL_LIGHT,
     max_tokens: 512,
     system: '당신은 도서 분석 전문가입니다. 책 제목과 저자를 보고 핵심 메시지와 대상 독자층을 분석합니다. 반드시 JSON만 응답합니다.',
     user: `책: "${title}"${author ? ` / 저자: ${author}` : ''}
@@ -138,7 +149,7 @@ async function handleGenerate(env, body) {
   if (!title || !author || !coreMessage) throw new Error('제목, 저자, 핵심 메시지는 필수입니다.');
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: 'claude-sonnet-4-6',
+    model: MODEL_MAIN,
     system: '당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다. 공포감·호기심·위기감을 자극해 저장·공유율을 높이는 콘텐츠를 씁니다. 반드시 JSON만 응답합니다.',
     user: `다음 책으로 5페이지 인스타그램 캐럿셀을 작성하세요.
 
@@ -164,7 +175,7 @@ JSON 형식:
 async function handleValidate(env, body) {
   const { pages, bookInfo } = body;
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: 'claude-sonnet-4-6',
+    model: MODEL_LIGHT,
     max_tokens: 1024,
     system: '당신은 소셜미디어 콘텐츠 전문 편집장입니다. 반드시 JSON만 응답합니다.',
     user: `책 "${bookInfo.title}" (${bookInfo.author}) 캐럿셀을 평가하세요.
@@ -189,7 +200,7 @@ async function handleGenerateImages(env, body) {
   if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: 'claude-sonnet-4-6',
+    model: MODEL_LIGHT,
     max_tokens: 600,
     system: '당신은 AI 이미지 프롬프트 전문가입니다. 인스타그램 카드뉴스용 드라마틱한 일러스트 프롬프트를 영어로 작성합니다. 반드시 JSON만 응답합니다.',
     user: `책 카테고리: ${bookInfo.category || '자기계발'}
@@ -233,7 +244,7 @@ async function handleGenerateCaption(env, body) {
   const kw = dmKeyword || bookInfo.category || '키워드';
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: 'claude-sonnet-4-6',
+    model: MODEL_LIGHT,
     max_tokens: 512,
     system: '당신은 인스타그램 마케터입니다. DM 유도 중심의 짧고 강렬한 캡션을 작성합니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 반드시 JSON만 응답합니다.',
     user: `책 카테고리: ${bookInfo.category || '자기계발'}
@@ -259,7 +270,7 @@ JSON: {"caption":"첫줄\\n둘째줄\\n셋째줄\\nDM유도줄","hashtags":["#ta
 async function handleRegenerate(env, body) {
   const { bookInfo, previousPages, feedback, improvements } = body;
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: 'claude-sonnet-4-6',
+    model: MODEL_MAIN,
     system: '당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다. 피드백 반영해 개선합니다. 반드시 JSON만 응답합니다.',
     user: `책 "${bookInfo.title}" (${bookInfo.author}) 캐럿셀을 개선하세요.
 

@@ -634,6 +634,14 @@
 
     <button class="btn btn-primary" id="manualGenerateBtn">AI 분석 후 생성</button>
   </div>
+
+  <!-- 하단: 중복 방지 기록 초기화 -->
+  <div style="padding:12px 20px;border-top:1px solid var(--gray-100);margin-top:auto;">
+    <button id="clearHistoryBtn" style="font-size:11px;color:var(--gray-400);background:none;border:none;cursor:pointer;font-family:inherit;padding:0;">
+      중복 방지 기록 초기화
+    </button>
+    <div id="historyCount" style="font-size:10px;color:var(--gray-300);margin-top:3px;"></div>
+  </div>
 </aside>
 
 <main class="main">
@@ -733,6 +741,28 @@ const state = {
   images: null,
 };
 
+// ===== 중복 방지: 이미 캐럿셀을 만든 책 목록 =====
+const HISTORY_KEY = 'bc_generated_titles';
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+}
+
+function addToHistory(title) {
+  if (!title) return;
+  const list = getHistory();
+  if (!list.includes(title)) {
+    list.push(title);
+    if (list.length > 100) list.shift(); // 최대 100개 보관
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+  }
+}
+
+function clearHistory() {
+  localStorage.removeItem(HISTORY_KEY);
+  showToast('중복 방지 기록이 초기화됐습니다.', 'info');
+}
+
 const PAGE_LABELS = ['훅', '문제', '심각성', '실마리', 'CTA'];
 const SCORE_KEYS = [
   { key: 'consistency', label: '일관성', max: 20 },
@@ -825,7 +855,8 @@ document.getElementById('suggestBtn').addEventListener('click', async () => {
   showLoading('AI가 책을 추천하고 있습니다...', '베스트셀러와 최신 이슈를 분석 중');
 
   try {
-    const data = await apiFetch('/api/suggest', { category, issue });
+    const excludeTitles = getHistory();
+    const data = await apiFetch('/api/suggest', { category, issue, excludeTitles });
     renderSuggestions(data.books);
     document.getElementById('autoStep1').style.display = 'none';
     document.getElementById('autoStep2').style.display = 'block';
@@ -930,6 +961,7 @@ async function generateCarousel() {
   try {
     const data = await apiFetch('/api/generate', state.bookInfo);
     state.pages = data.pages;
+    addToHistory(state.bookInfo?.title);
     renderCarousel(data.pages);
     setStep(3);
     showToast('캐럿셀 생성 완료! 품질 검증을 눌러보세요.', 'success');
@@ -1169,6 +1201,20 @@ document.getElementById('copyAllBtn').addEventListener('click', () => {
   const text = [1,2,3,4,5].map(n => getCardText(state.pages[`page${n}`], n)).join('\n\n---\n\n');
   copyText(text, '전체');
 });
+
+// ===== 중복 방지 기록 UI =====
+function updateHistoryCount() {
+  const list = getHistory();
+  const el = document.getElementById('historyCount');
+  if (el) el.textContent = list.length ? `${list.length}권 기록됨` : '';
+}
+
+document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+  clearHistory();
+  updateHistoryCount();
+});
+
+updateHistoryCount();
 
 document.getElementById('telegramBtn').addEventListener('click', async () => {
   if (!state.pages || !state.bookInfo) return;
