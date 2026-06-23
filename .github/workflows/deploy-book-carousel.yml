@@ -2,7 +2,7 @@ name: Deploy Book Carousel
 
 on:
   push:
-    branches: [main, "claude/book-carousel-auto-upload-xpwihz"]
+    branches: ["claude/book-carousel-auto-upload-xpwihz"]
     paths:
       - "book-carousel/**"
       - ".github/workflows/deploy-book-carousel.yml"

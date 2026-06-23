@@ -22,9 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare Pages (게임 관련 파일만)
+        run: |
+          mkdir -p /tmp/pages
+          cp index.html main.js style.css /tmp/pages/
+          cp -r spotlight night-hunter /tmp/pages/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: /tmp/pages
       - id: deployment
         uses: actions/deploy-pages@v4
