@@ -539,10 +539,11 @@
     @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
     @media (max-width: 768px) {
-      body { grid-template-columns: 1fr; grid-template-rows: var(--header-h) auto 1fr; overflow: auto; }
+      body { grid-template-columns: 1fr; grid-template-rows: var(--header-h) auto auto; overflow: auto; }
       .steps .step-label { display: none; }
       .sidebar { border-right: none; border-bottom: 1px solid var(--gray-200); }
-      .main { padding: 16px; }
+      /* 모바일에서는 body 전체가 스크롤 — .main이 내부 스크롤하면 scrollIntoView가 엉킴 */
+      .main { padding: 16px; overflow-y: visible; height: auto; }
       .validation-body { grid-template-columns: 1fr; }
     }
   </style>
@@ -1073,8 +1074,18 @@ function renderValidation(result) {
   document.getElementById('telegramBtn').disabled = !approved;
   const panel = document.getElementById('validationPanel');
   panel.classList.add('visible');
-  // 검증 결과가 화면 아래에 가려 안 보이는 문제 → 자동으로 스크롤해 보여줌
-  requestAnimationFrame(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  // display:none→block 이후 레이아웃이 확정될 때까지 기다렸다 스크롤
+  setTimeout(() => {
+    const mainEl = document.querySelector('.main');
+    // 데스크탑: .main이 실제로 스크롤 가능할 때 (scrollHeight > clientHeight)
+    if (mainEl && mainEl.scrollHeight > mainEl.clientHeight) {
+      mainEl.scrollTo({ top: panel.offsetTop - 12, behavior: 'smooth' });
+    } else {
+      // 모바일: body 전체가 스크롤
+      const top = panel.getBoundingClientRect().top + window.pageYOffset - 10;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  }, 200);
 }
 
 // ===== Buttons =====
@@ -1167,7 +1178,7 @@ document.getElementById('generateImagesBtn').addEventListener('click', async () 
     state.images = data.images;
     hideLoading();
     applyImagesToCards(data.images);
-    showToast('이미지가 카드에 적용되고 있습니다 (로딩 약 10~20초)', 'info');
+    showToast('이미지 생성 중 — AI 서버 응답에 최대 60초가 걸릴 수 있습니다', 'info');
   } catch (err) {
     hideLoading();
     showToast(err.message, 'error');
@@ -1183,10 +1194,15 @@ function applyImagesToCards(images) {
   });
 }
 
-// Pollinations 서버가 가끔 응답을 늦게 주거나 실패 → 캐시버스터로 최대 3회 재시도
-function loadImageWithRetry(card, url, pageNum, attempt) {
-  const MAX_ATTEMPTS = 3;
+// Pollinations AI 이미지 생성은 최대 60초 걸릴 수 있음.
+// img.onerror는 타임아웃 제어 불가 → fetch+AbortController로 재작성.
+// 최대 5회, 시도별 대기: 0 / 5 / 10 / 15 / 20 초
+async function loadImageWithRetry(card, baseUrl, pageNum, attempt) {
+  const MAX_ATTEMPTS = 5;
+  const RETRY_DELAYS = [0, 5000, 10000, 15000, 20000];
+  const FETCH_TIMEOUT = 50000; // 1회 요청 최대 50초
 
+  // 스피너 (첫 시도에만 생성)
   let spinner = card.querySelector('.card-img-loading');
   if (!spinner) {
     spinner = document.createElement('div');
@@ -1195,15 +1211,31 @@ function loadImageWithRetry(card, url, pageNum, attempt) {
     card.appendChild(spinner);
   }
 
-  // 재시도 시 URL에 retry 파라미터를 붙여 캐시·중복요청 회피
-  const tryUrl = attempt === 0 ? url : url + '&retry=' + attempt + '_' + Date.now();
+  // 재시도마다 캐시 무력화 파라미터 교체
+  const tryUrl = attempt === 0
+    ? baseUrl
+    : baseUrl.replace(/&r=\d+/, '') + '&r=' + Date.now();
 
-  const img = new Image();
-  img.onload = () => {
-    card.style.backgroundImage = `url('${tryUrl}')`;
-    card.classList.add('card-with-image');
-    card.dataset.imageUrl = tryUrl; // 다운로드용 저장
+  if (attempt > 0) {
+    await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt]));
+  }
+
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
+    const res = await fetch(tryUrl, { signal: controller.signal });
+    clearTimeout(tid);
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    if (!blob.type.startsWith('image/')) throw new Error('non-image response');
+
+    const objUrl = URL.createObjectURL(blob);
     spinner.remove();
+    card.style.backgroundImage = `url('${objUrl}')`;
+    card.classList.add('card-with-image');
+    card.dataset.imageUrl = tryUrl; // 다운로드용 원본 URL 보존
 
     if (!card.querySelector('.card-img-badge')) {
       const badge = document.createElement('div');
@@ -1212,17 +1244,18 @@ function loadImageWithRetry(card, url, pageNum, attempt) {
       card.appendChild(badge);
     }
     addDownloadButton(card, pageNum);
-  };
-  img.onerror = () => {
+
+  } catch (err) {
     if (attempt + 1 < MAX_ATTEMPTS) {
-      // 잠시 후 재시도
-      setTimeout(() => loadImageWithRetry(card, url, pageNum, attempt + 1), 1500);
+      const nextDelay = RETRY_DELAYS[attempt + 1] / 1000;
+      showToast(`페이지 ${pageNum} 재시도 중... (${attempt + 1}/${MAX_ATTEMPTS - 1}, ${nextDelay}초 후)`, 'info');
+      loadImageWithRetry(card, baseUrl, pageNum, attempt + 1);
     } else {
-      spinner.remove();
-      showToast(`페이지 ${pageNum} 이미지 생성 실패 (재시도 초과)`, 'warning');
+      const s = card.querySelector('.card-img-loading');
+      if (s) s.remove();
+      showToast(`페이지 ${pageNum} 이미지 생성 실패 — 이미지 생성 버튼을 다시 눌러보세요`, 'warning');
     }
-  };
-  img.src = tryUrl;
+  }
 }
 
 // 카드에 이미지 저장(다운로드) 버튼 추가
