@@ -401,10 +401,35 @@ export default {
         const body = request.method === 'POST' ? await request.json() : {};
         let result;
 
-        // 진단용: 이 키가 실제로 쓸 수 있는 모델 + 선택 결과 확인
+        // 진단용: 키 상태 + /v1/models 원시 응답 + 모델 선택 결과 확인
         if (url.pathname === '/api/models') {
           _modelCache = null; // 진단 시 캐시 무시하고 새로 조회
-          result = await resolveModels(env.ANTHROPIC_API_KEY);
+          const key = env.ANTHROPIC_API_KEY;
+
+          // 1) 키 존재 여부 (값은 노출하지 않고 앞 6자만 마스킹)
+          const keyInfo = {
+            present: !!key,
+            length: key ? key.length : 0,
+            prefix: key ? key.slice(0, 6) + '...' : null,
+          };
+
+          // 2) /v1/models 원시 응답 그대로 확인
+          let rawStatus = null, rawBody = null;
+          try {
+            const r = await fetch('https://api.anthropic.com/v1/models?limit=100', {
+              headers: { 'x-api-key': key || '', 'anthropic-version': '2023-06-01' },
+            });
+            rawStatus = r.status;
+            rawBody = await r.text();
+            if (rawBody && rawBody.length > 800) rawBody = rawBody.slice(0, 800) + '…';
+          } catch (e) {
+            rawBody = 'fetch 실패: ' + e.message;
+          }
+
+          // 3) 모델 자동 선택 시도
+          const resolved = await resolveModels(key);
+
+          result = { keyInfo, modelsEndpoint: { status: rawStatus, body: rawBody }, resolved };
         }
         else if (url.pathname === '/api/suggest') result = await handleSuggest(env, body);
         else if (url.pathname === '/api/analyze') result = await handleAnalyze(env, body);
