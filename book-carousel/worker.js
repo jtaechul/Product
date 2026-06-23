@@ -207,7 +207,31 @@ async function handleSendTelegram(env, body) {
     await new Promise(r => setTimeout(r, 300));
   }
 
-  return { success: true, message: `텔레그램으로 ${sent}개 메시지를 보냈습니다.` };
+  // KV에 게시물 상태 저장 (텔레그램 승인 콜백용, 24시간 TTL)
+  if (env.PENDING_POSTS) {
+    await env.PENDING_POSTS.put('latest', JSON.stringify({
+      pages, bookInfo, caption, hashtags, commentKeyword: kw, images,
+      createdAt: new Date().toISOString(),
+    }), { expirationTtl: 86400 });
+  }
+
+  // 인스타그램 게시 승인 인라인 버튼 발송
+  await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: env.TELEGRAM_CHAT_ID,
+      text: `[인스타그램 게시 승인]\n\n책: ${bookInfo.title}\n저자: ${bookInfo.author}\n\n위 캐럿셀을 인스타그램에 게시할까요?`,
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '게시하기', callback_data: 'approve' }, { text: '취소', callback_data: 'cancel' }],
+          [{ text: '수정 필요 (웹에서)', callback_data: 'modify' }],
+        ],
+      },
+    }),
+  }).catch(() => {});
+
+  return { success: true, message: `텔레그램으로 ${sent}개 메시지를 보냈습니다. 텔레그램에서 [게시하기] 버튼을 눌러 인스타그램에 게시해주세요.` };
 }
 
 // ===== Claude 핸들러 =====
@@ -336,13 +360,24 @@ approved는 totalScore>=70이면 true.`
   return { success: true, ...extractJson(text) };
 }
 
+// page5가 누락되는 원인: max_tokens 부족 시 Claude가 JSON에서 page5를 생략해도
+// extractJson이 유효한 JSON을 파싱, applyImagesToCards가 조용히 건너뜀.
+// 대책: max_tokens 1200으로 상향 + 누락 페이지를 폴백 프롬프트로 보완.
+const FALLBACK_IMAGE_PROMPTS = {
+  page1: 'dramatic spotlight on dark empty stage, single beam of light, stage curtains, cinematic atmosphere, no text',
+  page2: 'crowded city streets at night, monochrome, overwhelming pressure, symbolic, cinematic, no text',
+  page3: 'broken hourglass on dark table, red warning light, unsettling discovery, cinematic atmosphere, no text',
+  page4: 'single candle flame in complete darkness, small hope emerging, warm glow, cinematic, no text',
+  page5: 'vast open landscape at twilight, single silhouette walking toward horizon, contemplative, mysterious, open-ended, no text',
+};
+
 async function handleGenerateImages(env, body) {
   const { pages, bookInfo } = body;
   if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
-    max_tokens: 750,
+    max_tokens: 1200,
     system: '당신은 AI 이미지 프롬프트 전문가입니다. 인스타그램 카드뉴스용 드라마틱한 일러스트 프롬프트를 영어로 작성합니다. 반드시 JSON만 응답합니다.',
     user: `책 카테고리: ${bookInfo.category || '자기계발'}
 
@@ -353,7 +388,8 @@ async function handleGenerateImages(env, body) {
 4페이지(실마리): ${pages.page4?.headline || ''}
 5페이지(반문·결말): ${pages.page5?.cta || ''}
 
-위 내용에 맞는 드라마틱한 일러스트 프롬프트 5개를 작성하세요.
+위 내용에 맞는 드라마틱한 일러스트 프롬프트를 정확히 5개 작성하세요.
+page1~page5 키를 반드시 모두 포함해야 합니다.
 
 규칙:
 - 책·책 표지 이미지 절대 금지
@@ -364,10 +400,19 @@ async function handleGenerateImages(env, body) {
 - Instagram 1:1 정사각형 최적화
 - 영어, 40단어 이내
 
-JSON: {"page1":"prompt","page2":"prompt","page3":"prompt","page4":"prompt","page5":"prompt"}`,
+JSON (page1~page5 모두 필수): {"page1":"prompt","page2":"prompt","page3":"prompt","page4":"prompt","page5":"prompt"}`,
   });
 
   const prompts = extractJson(text);
+
+  // 5페이지 모두 존재하는지 확인 — 누락 시 폴백 프롬프트로 보완
+  for (let i = 1; i <= 5; i++) {
+    const key = `page${i}`;
+    if (!prompts[key] || typeof prompts[key] !== 'string' || prompts[key].trim() === '') {
+      prompts[key] = FALLBACK_IMAGE_PROMPTS[key];
+    }
+  }
+
   const suffix = ', dark cinematic dramatic atmosphere, no text, no books, high quality, 8k';
   const base = 'https://image.pollinations.ai/prompt/';
 
@@ -478,7 +523,185 @@ async function handleGenerateDmReply(env, body) {
 JSON: {"dmText":"전체 DM 텍스트(줄바꿈은 \\n)"}`,
   });
 
-  return { success: true, ...extractJson(text) };
+  const result = extractJson(text);
+
+  // KV에 DM 회신 저장 (키워드 기반, 7일 TTL) — Phase 5 댓글 자동 감지용
+  if (env.PENDING_POSTS && body.commentKeyword) {
+    const kw2 = String(body.commentKeyword).replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 2);
+    if (kw2) await env.PENDING_POSTS.put(`dm_reply_${kw2}`, result.dmText || '', { expirationTtl: 604800 });
+  }
+
+  return { success: true, ...result };
+}
+
+// ===== Phase 4: 인스타그램 캐럿셀 게시 =====
+async function handlePostInstagram(env, body) {
+  if (!env.INSTAGRAM_ACCESS_TOKEN || !env.INSTAGRAM_USER_ID) {
+    throw new Error('INSTAGRAM_ACCESS_TOKEN 또는 INSTAGRAM_USER_ID 시크릿을 Cloudflare Workers에 설정해주세요.');
+  }
+
+  const { images, caption, hashtags } = body;
+  if (!images || !caption) throw new Error('이미지(images)와 캡션(caption)이 필요합니다.');
+
+  const TOKEN = env.INSTAGRAM_ACCESS_TOKEN;
+  const IG_ID = env.INSTAGRAM_USER_ID;
+  const BASE = `https://graph.instagram.com/v21.0/${IG_ID}`;
+  const captionFull = caption + (hashtags?.length ? '\n\n' + hashtags.join(' ') : '');
+
+  // Step 1: 페이지별 미디어 컨테이너 생성 (is_carousel_item=true)
+  const containerIds = [];
+  for (const page of ['page1', 'page2', 'page3', 'page4', 'page5']) {
+    const imgUrl = images[page];
+    if (!imgUrl) continue;
+    const res = await fetch(`${BASE}/media`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image_url: imgUrl, is_carousel_item: true, access_token: TOKEN }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(`이미지 컨테이너 생성 실패 (${page}): ${err.error?.message || res.status}`);
+    }
+    containerIds.push((await res.json()).id);
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  if (containerIds.length < 2) throw new Error('캐럿셀은 최소 2장의 이미지가 필요합니다.');
+
+  // Step 2: 캐럿셀 컨테이너 생성
+  const carRes = await fetch(`${BASE}/media`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ media_type: 'CAROUSEL', children: containerIds.join(','), caption: captionFull, access_token: TOKEN }),
+  });
+  if (!carRes.ok) {
+    const err = await carRes.json().catch(() => ({}));
+    throw new Error(`캐럿셀 컨테이너 생성 실패: ${err.error?.message || carRes.status}`);
+  }
+  const carouselId = (await carRes.json()).id;
+
+  // Step 3: 게시 (생성 후 잠시 대기)
+  await new Promise(r => setTimeout(r, 2000));
+  const pubRes = await fetch(`${BASE}/media_publish`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ creation_id: carouselId, access_token: TOKEN }),
+  });
+  if (!pubRes.ok) {
+    const err = await pubRes.json().catch(() => ({}));
+    throw new Error(`인스타그램 게시 실패: ${err.error?.message || pubRes.status}`);
+  }
+  const pubData = await pubRes.json();
+  return { success: true, mediaId: pubData.id, message: '인스타그램에 캐럿셀이 게시됐습니다!' };
+}
+
+// ===== Phase 4: 텔레그램 Webhook (인라인 버튼 콜백 처리) =====
+async function handleTelegramWebhook(env, body) {
+  const { callback_query } = body;
+  if (!callback_query) return { ok: true };
+
+  const callbackId = callback_query.id;
+  const cbData = callback_query.data;
+
+  // 텔레그램에 콜백 즉시 응답 (5초 내 필수)
+  await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ callback_query_id: callbackId, text: '처리 중...' }),
+  }).catch(() => {});
+
+  const chatId = env.TELEGRAM_CHAT_ID;
+
+  if (cbData === 'approve') {
+    if (!env.PENDING_POSTS) {
+      await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, 'KV 스토어가 설정되지 않았습니다. 관리자에게 문의해주세요.');
+      return { ok: true };
+    }
+    const stateJson = await env.PENDING_POSTS.get('latest');
+    if (!stateJson) {
+      await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, '게시할 콘텐츠가 없습니다 (만료됐거나 취소됨). 웹에서 다시 생성해주세요.');
+      return { ok: true };
+    }
+    const ps = JSON.parse(stateJson);
+    try {
+      const result = await handlePostInstagram(env, { images: ps.images, caption: ps.caption, hashtags: ps.hashtags });
+      await env.PENDING_POSTS.delete('latest');
+      await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId,
+        `인스타그램 게시 완료!\n미디어 ID: ${result.mediaId}\n\n책: ${ps.bookInfo?.title || ''}`);
+    } catch (err) {
+      await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId,
+        `인스타그램 게시 실패: ${err.message}\n\n웹에서 직접 게시해주세요: https://book-carousel.jtaechul.workers.dev/`);
+    }
+  } else if (cbData === 'cancel') {
+    if (env.PENDING_POSTS) await env.PENDING_POSTS.delete('latest');
+    await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, '게시가 취소됐습니다.');
+  } else if (cbData === 'modify') {
+    await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId,
+      '웹에서 수정 후 다시 발송해주세요:\nhttps://book-carousel.jtaechul.workers.dev/');
+  }
+
+  return { ok: true };
+}
+
+// ===== 텔레그램 Webhook URL 등록 (최초 1회 실행) =====
+async function handleSetupWebhook(env) {
+  if (!env.TELEGRAM_BOT_TOKEN) throw new Error('TELEGRAM_BOT_TOKEN이 설정되지 않았습니다.');
+  const webhookUrl = 'https://book-carousel.jtaechul.workers.dev/api/telegram-webhook';
+  const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/setWebhook`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: webhookUrl }),
+  });
+  const data = await res.json();
+  return { success: true, webhookUrl, ...data };
+}
+
+// ===== Phase 5: 인스타그램 댓글 DM 자동 회신 Webhook =====
+async function handleInstagramWebhook(env, request) {
+  const url = new URL(request.url);
+
+  // GET: Meta webhook 도메인 검증
+  if (request.method === 'GET') {
+    const mode = url.searchParams.get('hub.mode');
+    const token = url.searchParams.get('hub.verify_token');
+    const challenge = url.searchParams.get('hub.challenge');
+    const VERIFY = env.INSTAGRAM_VERIFY_TOKEN || 'book_carousel_verify';
+    if (mode === 'subscribe' && token === VERIFY) return new Response(challenge, { status: 200 });
+    return new Response('Forbidden', { status: 403 });
+  }
+
+  // POST: 댓글 이벤트 → 키워드 감지 → DM 자동 회신
+  const body = await request.json().catch(() => ({}));
+  for (const entry of body.entry || []) {
+    for (const change of entry.changes || []) {
+      if (change.field === 'comments') {
+        const text = (change.value?.text || '').trim();
+        const senderId = change.value?.from?.id;
+        if (!senderId || !env.PENDING_POSTS || !env.INSTAGRAM_ACCESS_TOKEN) continue;
+
+        const { keys } = await env.PENDING_POSTS.list({ prefix: 'dm_reply_' });
+        for (const { name } of keys) {
+          const kw = name.replace('dm_reply_', '');
+          if (text.includes(kw)) {
+            const dmText = await env.PENDING_POSTS.get(name);
+            if (dmText) {
+              await fetch('https://graph.instagram.com/v21.0/me/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  recipient: { id: senderId },
+                  message: { text: dmText },
+                  access_token: env.INSTAGRAM_ACCESS_TOKEN,
+                }),
+              }).catch(() => {});
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
+  return new Response('EVENT_RECEIVED', { status: 200 });
 }
 
 // ===== 메인 라우터 =====
@@ -491,6 +714,11 @@ export default {
     }
 
     if (url.pathname.startsWith('/api/')) {
+      // instagram-webhook은 GET/POST 모두 처리 + raw request 필요 → body 파싱 전에 분기
+      if (url.pathname === '/api/instagram-webhook') {
+        return await handleInstagramWebhook(env, request);
+      }
+
       try {
         const body = request.method === 'POST' ? await request.json() : {};
         let result;
@@ -534,6 +762,9 @@ export default {
         else if (url.pathname === '/api/regenerate') result = await handleRegenerate(env, body);
         else if (url.pathname === '/api/send-telegram') result = await handleSendTelegram(env, body);
         else if (url.pathname === '/api/generate-dm-reply') result = await handleGenerateDmReply(env, body);
+        else if (url.pathname === '/api/post-instagram') result = await handlePostInstagram(env, body);
+        else if (url.pathname === '/api/telegram-webhook') result = await handleTelegramWebhook(env, body);
+        else if (url.pathname === '/api/setup-webhook') result = await handleSetupWebhook(env);
         else return json({ error: '없는 경로입니다.' }, 404);
 
         return json(result);

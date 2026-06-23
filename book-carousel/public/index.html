@@ -570,6 +570,69 @@
       .main { padding: 16px; overflow-y: visible; height: auto; }
       .validation-body { grid-template-columns: 1fr; }
     }
+
+    /* ── 인스타그램 직접 게시 버튼 ── */
+    .btn-instagram {
+      background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+      color: #fff;
+    }
+    .btn-instagram:hover:not(:disabled) { opacity: 0.88; }
+
+    /* ── 자동 배포 진행 패널 ── */
+    .progress-panel {
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: 14px;
+      padding: 20px 24px;
+      display: none;
+    }
+    .progress-panel.visible { display: block; }
+    .progress-title { font-size: 15px; font-weight: 700; color: var(--gray-800); margin-bottom: 16px; }
+    .deploy-steps { display: flex; flex-direction: column; gap: 8px; }
+    .deploy-step {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 14px; border-radius: 10px;
+      background: var(--gray-50); border: 1.5px solid var(--gray-100); transition: all 0.3s;
+    }
+    .deploy-step.active { border-color: var(--primary-light); background: rgba(124,58,237,0.04); }
+    .deploy-step.done { border-color: var(--success); background: rgba(16,185,129,0.04); }
+    .deploy-step.error { border-color: var(--error); background: rgba(239,68,68,0.04); }
+    .deploy-step-icon {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+      background: var(--gray-200); color: var(--gray-500); transition: all 0.3s;
+    }
+    .deploy-step.active .deploy-step-icon { background: var(--primary); color: #fff; }
+    .deploy-step.done .deploy-step-icon { background: var(--success); color: #fff; }
+    .deploy-step.error .deploy-step-icon { background: var(--error); color: #fff; }
+    .deploy-step-label { font-size: 13px; font-weight: 600; color: var(--gray-600); }
+    .deploy-step.active .deploy-step-label { color: var(--primary); }
+    .deploy-step.done .deploy-step-label { color: var(--success); }
+    .deploy-step.error .deploy-step-label { color: var(--error); }
+    .deploy-step-sub { font-size: 11px; color: var(--gray-400); margin-top: 2px; line-height: 1.5; }
+    .deploy-step.error .deploy-step-sub { color: var(--error); }
+    .deploy-done-msg {
+      background: rgba(16,185,129,0.07); border: 1.5px solid var(--success);
+      border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--success);
+      font-weight: 600; text-align: center; margin-top: 12px; display: none;
+    }
+    .deploy-done-msg.visible { display: block; }
+
+    /* ── 배포탭 도서 선택 목록 ── */
+    .deploy-book-item {
+      padding: 10px 12px; border: 1.5px solid var(--gray-200);
+      border-radius: 9px; cursor: pointer; transition: all 0.2s; background: #fff;
+      margin-bottom: 8px;
+    }
+    .deploy-book-item:hover { border-color: var(--primary-light); background: #FAFAFF; }
+    .deploy-book-item.selected { border-color: var(--primary); background: rgba(124,58,237,0.04); }
+    .deploy-book-item-title { font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 2px; }
+    .deploy-book-item-meta { font-size: 11px; color: var(--gray-400); }
+    .deploy-book-item-reason { font-size: 11px; color: var(--primary); font-weight: 500; margin-top: 4px; line-height: 1.5; }
+
+    /* 3탭이므로 탭 라벨 살짝 압축 */
+    .mode-tabs .mode-tab { font-size: 12px; padding: 13px 6px; }
   </style>
 </head>
 <body>
@@ -598,6 +661,7 @@
   <div class="mode-tabs">
     <button class="mode-tab active" id="tabAuto">AI 자동 추천</button>
     <button class="mode-tab" id="tabManual">직접 입력</button>
+    <button class="mode-tab" id="tabAutoDeploy">자동 배포</button>
   </div>
 
   <!-- AUTO MODE -->
@@ -678,6 +742,53 @@
     <button class="btn btn-primary" id="manualGenerateBtn">AI 분석 후 생성</button>
   </div>
 
+  <!-- AUTO-DEPLOY MODE -->
+  <div class="mode-panel" id="panelAutoDeploy">
+
+    <!-- Phase 1: 카테고리 선택 + 책 추천 -->
+    <div id="deployPhase1">
+      <div class="form-group">
+        <label>카테고리 선택<span class="req">*</span></label>
+        <select id="deployCategory">
+          <option value="경제·투자">경제·투자 (주식, 부동산, 비트코인)</option>
+          <option value="자기계발">자기계발 (생산성, 습관, 성공)</option>
+          <option value="심리·인간관계">심리·인간관계 (감정, 소통, 관계)</option>
+          <option value="사회이슈">사회이슈 (AI, 기후, 정치, 청년)</option>
+          <option value="건강·라이프스타일">건강·라이프스타일 (식습관, 수면, 운동)</option>
+          <option value="비즈니스·창업">비즈니스·창업 (마케팅, 스타트업, 리더십)</option>
+          <option value="인문·철학">인문·철학 (역사, 삶의 의미, 고전)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>특정 이슈 키워드 (선택)</label>
+        <input type="text" id="deployIssue" placeholder="예: AI 대체, 번아웃, 금리...">
+      </div>
+      <div class="form-group">
+        <label>쿠팡파트너스 링크 (선택)</label>
+        <input type="url" id="deployAffiliateLink" placeholder="https://link.coupang.com/a/...">
+        <span class="hint">DM 자동 회신에 포함됩니다</span>
+      </div>
+      <button class="btn btn-primary" id="deployFetchBooksBtn">AI 책 추천받기</button>
+    </div>
+
+    <!-- Phase 2: 책 선택 -->
+    <div id="deployPhase2" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span style="font-size:12px;font-weight:700;color:var(--gray-600);">AI 추천 도서 선택</span>
+        <button class="btn btn-outline" id="deployResuggestBtn" style="padding:5px 10px;font-size:11px;">다시 추천</button>
+      </div>
+      <div id="deployBookList"></div>
+    </div>
+
+    <!-- Phase 3: 선택 확인 + 시작 -->
+    <div id="deployPhase3" style="display:none;">
+      <div class="selected-book visible" id="deploySelectedBook"></div>
+      <button class="btn btn-primary" id="deployStartBtn" style="margin-top:10px;">자동 생성 및 배포 시작</button>
+      <button class="btn btn-outline" id="deployChangeBookBtn" style="margin-top:8px;font-size:12px;">책 다시 선택</button>
+    </div>
+
+  </div>
+
   <!-- 하단: 중복 방지 기록 초기화 -->
   <div style="padding:12px 20px;border-top:1px solid var(--gray-100);margin-top:auto;">
     <button id="clearHistoryBtn" style="font-size:11px;color:var(--gray-400);background:none;border:none;cursor:pointer;font-family:inherit;padding:0;">
@@ -688,6 +799,49 @@
 </aside>
 
 <main class="main">
+
+  <!-- 자동 배포 진행 패널 -->
+  <div class="progress-panel" id="progressPanel">
+    <div class="progress-title">자동 생성 및 배포 진행 중</div>
+    <div class="deploy-steps">
+      <div class="deploy-step" id="dstep-1">
+        <div class="deploy-step-icon">1</div>
+        <div><div class="deploy-step-label">캐럿셀 생성</div><div class="deploy-step-sub" id="dsub-1">Claude AI가 5페이지 카드뉴스를 작성합니다</div></div>
+      </div>
+      <div class="deploy-step" id="dstep-2">
+        <div class="deploy-step-icon">2</div>
+        <div><div class="deploy-step-label">품질 검증 및 보완</div><div class="deploy-step-sub" id="dsub-2">최대 2회 자동 검증 후 재생성</div></div>
+      </div>
+      <div class="deploy-step" id="dstep-3">
+        <div class="deploy-step-icon">3</div>
+        <div><div class="deploy-step-label">이미지 생성</div><div class="deploy-step-sub" id="dsub-3">페이지별 AI 일러스트 생성 (2~3분)</div></div>
+      </div>
+      <div class="deploy-step" id="dstep-4">
+        <div class="deploy-step-icon">4</div>
+        <div><div class="deploy-step-label">캡션 + 해시태그 생성</div><div class="deploy-step-sub" id="dsub-4">인스타그램용 캡션을 작성합니다</div></div>
+      </div>
+      <div class="deploy-step" id="dstep-5">
+        <div class="deploy-step-icon">5</div>
+        <div><div class="deploy-step-label">DM 자동 회신 생성</div><div class="deploy-step-sub" id="dsub-5">댓글 키워드 감지 시 발송할 DM 내용</div></div>
+      </div>
+      <div class="deploy-step" id="dstep-6">
+        <div class="deploy-step-icon">6</div>
+        <div><div class="deploy-step-label">텔레그램 최종 확인 요청</div><div class="deploy-step-sub" id="dsub-6">텔레그램에서 게시 승인 버튼을 눌러주세요</div></div>
+      </div>
+      <div class="deploy-step" id="dstep-7">
+        <div class="deploy-step-icon">7</div>
+        <div><div class="deploy-step-label">인스타그램 게시</div><div class="deploy-step-sub" id="dsub-7">텔레그램 승인 대기 중</div></div>
+      </div>
+    </div>
+    <div class="deploy-done-msg" id="deployDoneMsg">
+      텔레그램에서 [게시하기]를 누르면 인스타그램에 자동 게시됩니다.
+    </div>
+    <div style="margin-top:12px;display:none;" id="deployInstagramBtnWrap">
+      <button class="btn btn-instagram" id="deployInstagramBtn" style="width:100%;" disabled>지금 바로 인스타그램에 게시하기</button>
+      <p style="font-size:11px;color:var(--gray-400);margin-top:6px;text-align:center;">텔레그램 대신 브라우저에서 직접 게시할 수 있습니다</p>
+    </div>
+  </div>
+
   <div class="empty-state" id="emptyState">
     <div class="empty-icon">📚</div>
     <h3>책을 선정하고 캐럿셀을 만들어보세요</h3>
@@ -781,6 +935,7 @@
     <div class="validation-actions">
       <button class="btn btn-primary" id="regenFromFeedbackBtn" style="width:auto;padding:10px 18px;">검증 결과 반영하기</button>
       <button class="btn btn-telegram" id="telegramBtn" disabled>텔레그램 발송</button>
+      <button class="btn btn-instagram" id="instagramBtn" disabled>인스타그램 직접 게시</button>
     </div>
   </div>
 </main>
@@ -1211,6 +1366,7 @@ function renderValidation(result) {
   ).join('');
 
   document.getElementById('telegramBtn').disabled = !approved;
+  updateInstagramBtn();
   const panel = document.getElementById('validationPanel');
   panel.classList.add('visible');
   // 버튼(validation-actions)이 화면에 보이도록 스크롤 — 패널 하단으로 이동
@@ -1640,6 +1796,289 @@ document.getElementById('telegramBtn').addEventListener('click', async () => {
     showToast(data.message || '텔레그램으로 발송됐습니다!', 'success');
   } catch (err) {
     showToast(err.message, 'error');
+  } finally {
+    hideLoading();
+  }
+});
+
+// ===== 인스타그램 직접 게시 (검증 패널) =====
+document.getElementById('instagramBtn').addEventListener('click', async () => {
+  if (!state.images || !state.caption) {
+    showToast('이미지 생성과 캡션 생성이 완료된 후 사용할 수 있습니다.', 'warning'); return;
+  }
+  showLoading('인스타그램에 게시 중...', '캐럿셀 업로드 중 (30초~2분 소요)');
+  try {
+    const result = await apiFetch('/api/post-instagram', {
+      images: state.images,
+      caption: state.caption,
+      hashtags: state.captionHashtags,
+    });
+    showToast(result.message || '인스타그램에 캐럿셀이 게시됐습니다!', 'success');
+    document.getElementById('instagramBtn').disabled = true;
+  } catch (err) {
+    showToast('게시 실패: ' + err.message, 'error');
+  } finally {
+    hideLoading();
+  }
+});
+
+function updateInstagramBtn() {
+  const btn = document.getElementById('instagramBtn');
+  if (btn) btn.disabled = !(state.images && state.caption);
+}
+
+// ===== 3번째 탭: 자동 배포 =====
+document.getElementById('tabAutoDeploy').addEventListener('click', () => {
+  ['tabAuto', 'tabManual', 'tabAutoDeploy'].forEach(id => document.getElementById(id).classList.remove('active'));
+  ['panelAuto', 'panelManual', 'panelAutoDeploy'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('tabAutoDeploy').classList.add('active');
+  document.getElementById('panelAutoDeploy').classList.add('active');
+});
+
+// 기존 탭 전환 시 3번째 탭도 비활성화
+document.getElementById('tabAuto').addEventListener('click', () => {
+  document.getElementById('tabAutoDeploy').classList.remove('active');
+  document.getElementById('panelAutoDeploy').classList.remove('active');
+});
+document.getElementById('tabManual').addEventListener('click', () => {
+  document.getElementById('tabAutoDeploy').classList.remove('active');
+  document.getElementById('panelAutoDeploy').classList.remove('active');
+});
+
+// ── Deploy 상태 ──
+const deployState = { books: [], selectedBook: null };
+
+function setDeployStep(num, status, subText) {
+  const step = document.getElementById(`dstep-${num}`);
+  if (!step) return;
+  step.className = 'deploy-step' + (status ? ' ' + status : '');
+  if (subText !== undefined) {
+    const sub = document.getElementById(`dsub-${num}`);
+    if (sub) sub.textContent = subText;
+  }
+}
+
+function renderDeployBooks(books) {
+  deployState.books = books;
+  const list = document.getElementById('deployBookList');
+  list.innerHTML = '';
+  books.forEach(book => {
+    const item = document.createElement('div');
+    item.className = 'deploy-book-item';
+    item.innerHTML = `
+      <div class="deploy-book-item-title">${escHtml(book.title)}</div>
+      <div class="deploy-book-item-meta">${escHtml(book.author)} · ${book.year} · ${escHtml(book.category)}</div>
+      <div class="deploy-book-item-reason">${escHtml(book.reason)}</div>
+    `;
+    item.addEventListener('click', () => {
+      list.querySelectorAll('.deploy-book-item').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      deployState.selectedBook = book;
+      document.getElementById('deploySelectedBook').innerHTML = `
+        <div class="selected-book-title">${escHtml(book.title)}</div>
+        <div class="selected-book-meta">${escHtml(book.author)} · ${book.year} · ${escHtml(book.category)}</div>
+        <div class="selected-book-msg">${escHtml(book.coreMessage)}</div>
+      `;
+      document.getElementById('deployPhase2').style.display = 'none';
+      document.getElementById('deployPhase3').style.display = 'block';
+    });
+    list.appendChild(item);
+  });
+  document.getElementById('deployPhase1').style.display = 'none';
+  document.getElementById('deployPhase2').style.display = 'block';
+  document.getElementById('deployPhase3').style.display = 'none';
+}
+
+document.getElementById('deployFetchBooksBtn').addEventListener('click', async () => {
+  const category = document.getElementById('deployCategory').value;
+  const issue = document.getElementById('deployIssue').value.trim();
+  showLoading('AI가 책을 추천하고 있습니다...', '베스트셀러와 최신 이슈를 분석 중');
+  try {
+    const data = await apiFetch('/api/suggest', { category, issue, excludeTitles: getHistory() });
+    renderDeployBooks(data.books);
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    hideLoading();
+  }
+});
+
+document.getElementById('deployResuggestBtn').addEventListener('click', () => {
+  deployState.selectedBook = null;
+  document.getElementById('deployPhase1').style.display = 'block';
+  document.getElementById('deployPhase2').style.display = 'none';
+  document.getElementById('deployPhase3').style.display = 'none';
+});
+
+document.getElementById('deployChangeBookBtn').addEventListener('click', () => {
+  deployState.selectedBook = null;
+  document.getElementById('deployPhase2').style.display = 'block';
+  document.getElementById('deployPhase3').style.display = 'none';
+  document.getElementById('deployBookList').querySelectorAll('.deploy-book-item').forEach(i => i.classList.remove('selected'));
+});
+
+document.getElementById('deployStartBtn').addEventListener('click', async () => {
+  if (!deployState.selectedBook) return;
+  const book = deployState.selectedBook;
+  const affiliateLink = document.getElementById('deployAffiliateLink').value.trim() || null;
+  const bookInfo = {
+    title: book.title, author: book.author, year: book.year,
+    coreMessage: book.coreMessage, targetAudience: book.targetAudience, category: book.category,
+  };
+  await runAutoDeployPipeline(bookInfo, affiliateLink);
+});
+
+async function runAutoDeployPipeline(bookInfo, affiliateLink) {
+  const progressPanel = document.getElementById('progressPanel');
+  progressPanel.classList.add('visible');
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('deployDoneMsg').classList.remove('visible');
+  document.getElementById('deployInstagramBtnWrap').style.display = 'none';
+  progressPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // 단계 초기화
+  for (let i = 1; i <= 7; i++) setDeployStep(i, '', null);
+
+  // ── Step 1: 캐럿셀 생성 ──
+  setDeployStep(1, 'active', 'Claude AI가 5페이지 카드뉴스를 작성 중...');
+  let pages;
+  try {
+    const data = await apiFetch('/api/generate', bookInfo);
+    pages = data.pages;
+    state.pages = pages;
+    state.bookInfo = bookInfo;
+    addToHistory(bookInfo.title);
+    renderCarousel(pages);
+    setStep(2);
+    setDeployStep(1, 'done', '5페이지 카드뉴스 생성 완료');
+  } catch (err) {
+    setDeployStep(1, 'error', err.message);
+    showToast('캐럿셀 생성 실패: ' + err.message, 'error');
+    return;
+  }
+
+  // ── Step 2: 품질 검증 및 보완 (최대 2회) ──
+  setDeployStep(2, 'active', 'AI 자동 품질 평가 중...');
+  let validation;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      validation = await apiFetch('/api/validate', { pages, bookInfo });
+      state.validation = validation;
+    } catch (err) {
+      setDeployStep(2, 'error', err.message);
+      showToast('검증 실패: ' + err.message, 'error');
+      return;
+    }
+    if (validation.approved) break;
+    if (attempt < 2) {
+      setDeployStep(2, 'active', `${attempt}회 평가 ${validation.totalScore}점 — 피드백 반영 재생성 중...`);
+      try {
+        const rd = await apiFetch('/api/regenerate', {
+          bookInfo, previousPages: pages,
+          feedback: validation.feedback, improvements: validation.improvements || [],
+        });
+        pages = rd.pages;
+        state.pages = pages;
+        renderCarousel(pages);
+      } catch (err) {
+        setDeployStep(2, 'error', err.message); return;
+      }
+    }
+  }
+  setDeployStep(2, 'done', `${validation.totalScore}/100점 ${validation.approved ? '합격' : '(계속 진행)'}`);
+  renderValidation(validation);
+  setStep(validation.approved ? 4 : 3);
+
+  // ── Step 3: 이미지 생성 ──
+  setDeployStep(3, 'active', 'Pollinations AI로 페이지별 이미지 생성 중 (2~3분)...');
+  try {
+    const imgData = await apiFetch('/api/generate-images', { pages, bookInfo });
+    state.images = imgData.images;
+    applyImagesToCards(imgData.images); // 비동기 백그라운드 로딩
+    setDeployStep(3, 'done', '이미지 생성 완료 (백그라운드 로딩 중)');
+  } catch (err) {
+    setDeployStep(3, 'error', '이미지 생성 실패 — 텍스트 전용으로 계속 진행');
+    state.images = null;
+  }
+
+  // ── Step 4: 캡션 + 해시태그 ──
+  setDeployStep(4, 'active', '인스타그램 캡션 작성 중...');
+  let caption = '', hashtags = [], dmKeyword = '';
+  try {
+    const capData = await apiFetch('/api/generate-caption', { pages, bookInfo });
+    caption = capData.caption || '';
+    hashtags = capData.hashtags || [];
+    dmKeyword = capData.commentKeyword || capData.dmKeyword || '';
+    state.caption = caption;
+    state.captionHashtags = hashtags;
+    state.dmKeyword = dmKeyword;
+    document.getElementById('captionTextContent').textContent = caption;
+    document.getElementById('captionHashtagsRow').textContent = hashtags.join(' ');
+    document.getElementById('dmKeywordInfo').innerHTML = dmKeyword
+      ? `댓글 키워드: <strong>'${escHtml(dmKeyword)}'</strong> — 방문자가 이 키워드를 댓글에 남기면 DM으로 책 정보가 자동 발송됩니다`
+      : '';
+    document.getElementById('captionResult').style.display = 'block';
+    setDeployStep(4, 'done', '캡션 + 해시태그 생성 완료');
+  } catch (err) {
+    setDeployStep(4, 'error', '캡션 생성 실패 — 계속 진행');
+  }
+  updateInstagramBtn();
+
+  // ── Step 5: DM 자동 회신 ──
+  setDeployStep(5, 'active', 'DM 자동 회신 내용 작성 중...');
+  try {
+    const dmData = await apiFetch('/api/generate-dm-reply', {
+      pages, bookInfo, affiliateLink: affiliateLink || null, commentKeyword: dmKeyword,
+    });
+    state.dmReply = dmData.dmText;
+    document.getElementById('dmReplyText').textContent = dmData.dmText || '';
+    document.getElementById('dmReplyResult').style.display = 'block';
+    document.getElementById('dmReplyWrapper').style.display = 'block';
+    setDeployStep(5, 'done', 'DM 자동 회신 생성 완료');
+  } catch (err) {
+    setDeployStep(5, 'error', 'DM 회신 생성 실패 — 계속 진행');
+  }
+
+  // ── Step 6: 텔레그램 발송 ──
+  setDeployStep(6, 'active', '텔레그램으로 최종 확인 요청 발송 중...');
+  try {
+    const tgData = await apiFetch('/api/send-telegram', {
+      pages, bookInfo, caption, hashtags,
+      commentKeyword: dmKeyword, dmKeyword, images: state.images || null,
+    });
+    setDeployStep(6, 'done', '텔레그램 발송 완료 — 승인 버튼을 눌러주세요');
+    showToast(tgData.message || '텔레그램 발송 완료!', 'success');
+  } catch (err) {
+    setDeployStep(6, 'error', `텔레그램 발송 실패: ${err.message}`);
+    showToast('텔레그램 미설정 — 아래 버튼으로 직접 게시할 수 있습니다', 'warning');
+  }
+
+  // ── Step 7: 게시 대기 / 직접 게시 버튼 표시 ──
+  setDeployStep(7, 'active', '텔레그램 [게시하기] 또는 아래 버튼으로 직접 게시');
+  setStep(4);
+  document.getElementById('deployDoneMsg').classList.add('visible');
+  document.getElementById('deployInstagramBtnWrap').style.display = 'block';
+  document.getElementById('deployInstagramBtn').disabled = !(state.images && state.caption);
+}
+
+// 자동 배포탭 인스타그램 직접 게시
+document.getElementById('deployInstagramBtn').addEventListener('click', async () => {
+  if (!state.images || !state.caption) {
+    showToast('이미지와 캡션이 모두 필요합니다.', 'warning'); return;
+  }
+  showLoading('인스타그램에 게시 중...', '캐럿셀 업로드 중 (30초~2분 소요)');
+  try {
+    const result = await apiFetch('/api/post-instagram', {
+      images: state.images,
+      caption: state.caption,
+      hashtags: state.captionHashtags,
+    });
+    setDeployStep(7, 'done', '인스타그램 게시 완료!');
+    showToast(result.message || '인스타그램에 캐럿셀이 게시됐습니다!', 'success');
+    document.getElementById('deployInstagramBtn').disabled = true;
+  } catch (err) {
+    setDeployStep(7, 'error', err.message);
+    showToast('게시 실패: ' + err.message, 'error');
   } finally {
     hideLoading();
   }
