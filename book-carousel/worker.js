@@ -184,6 +184,48 @@ approved는 totalScore>=70이면 true.`
   return { success: true, ...extractJson(text) };
 }
 
+async function handleGenerateImages(env, body) {
+  const { pages, bookInfo } = body;
+  if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
+
+  const text = await callClaude(env.ANTHROPIC_API_KEY, {
+    model: 'claude-sonnet-4-6',
+    max_tokens: 600,
+    system: '당신은 AI 이미지 프롬프트 전문가입니다. 인스타그램 카드뉴스용 드라마틱한 일러스트 프롬프트를 영어로 작성합니다. 반드시 JSON만 응답합니다.',
+    user: `책 카테고리: ${bookInfo.category || '자기계발'}
+
+각 페이지 핵심 메시지:
+1페이지(훅): ${pages.page1?.headline || ''}
+2페이지(문제): ${pages.page2?.headline || ''}
+3페이지(심각성): ${pages.page3?.headline || ''}
+4페이지(실마리): ${pages.page4?.headline || ''}
+
+위 내용에 맞는 드라마틱한 일러스트 프롬프트 4개를 작성하세요.
+
+규칙:
+- 책·책 표지 이미지 절대 금지
+- 어둡고 긴장감 있는 분위기 (dark, dramatic, cinematic)
+- 인물보다 상황·상징·분위기 중심 (symbolic, abstract)
+- 텍스트·글자 없음 (no text)
+- Instagram 1:1 정사각형 최적화
+- 영어, 40단어 이내
+
+JSON: {"page1":"prompt","page2":"prompt","page3":"prompt","page4":"prompt"}`,
+  });
+
+  const prompts = extractJson(text);
+  const suffix = ', dark cinematic dramatic atmosphere, no text, no books, high quality, 8k';
+  const base = 'https://image.pollinations.ai/prompt/';
+  const seed = Math.floor(Math.random() * 900000) + 100000;
+
+  const images = {};
+  for (const [page, prompt] of Object.entries(prompts)) {
+    images[page] = `${base}${encodeURIComponent(prompt + suffix)}?width=1080&height=1080&nologo=true&seed=${seed}`;
+  }
+
+  return { success: true, images, prompts };
+}
+
 async function handleGenerateCaption(env, body) {
   const { pages, bookInfo, dmKeyword } = body;
   if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
@@ -250,6 +292,7 @@ export default {
         if (url.pathname === '/api/suggest') result = await handleSuggest(env, body);
         else if (url.pathname === '/api/analyze') result = await handleAnalyze(env, body);
         else if (url.pathname === '/api/generate') result = await handleGenerate(env, body);
+        else if (url.pathname === '/api/generate-images') result = await handleGenerateImages(env, body);
         else if (url.pathname === '/api/generate-caption') result = await handleGenerateCaption(env, body);
         else if (url.pathname === '/api/validate') result = await handleValidate(env, body);
         else if (url.pathname === '/api/regenerate') result = await handleRegenerate(env, body);

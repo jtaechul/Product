@@ -392,6 +392,55 @@
 
     .carousel-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 
+    /* Card with image */
+    .card-inner { z-index: 1; }
+
+    .card.card-with-image {
+      background-size: cover !important;
+      background-position: center !important;
+    }
+
+    .card.card-with-image::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.52);
+      z-index: 0;
+    }
+
+    .card-img-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 9px;
+      color: rgba(255,255,255,0.7);
+      z-index: 2;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .card-img-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+      background: rgba(0,0,0,0.25);
+    }
+
+    .card-img-spinner {
+      width: 22px; height: 22px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
     /* Caption section */
     .caption-wrapper { display: none; background: #fff; border: 1px solid var(--gray-200); border-radius: 14px; padding: 18px 22px; }
     .caption-wrapper.visible { display: block; }
@@ -604,6 +653,7 @@
     <div class="carousel-actions">
       <button class="btn btn-outline" id="copyAllBtn">전체 텍스트 복사</button>
       <button class="btn btn-outline" id="regenerateBtn">다시 생성</button>
+      <button class="btn btn-outline" id="generateImagesBtn" style="background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;border:none;">이미지 생성</button>
       <button class="btn btn-validate" id="validateBtn">품질 검증</button>
     </div>
   </div>
@@ -680,6 +730,7 @@ const state = {
   caption: null,
   captionHashtags: null,
   dmKeyword: null,
+  images: null,
 };
 
 const PAGE_LABELS = ['훅', '문제', '심각성', '실마리', 'CTA'];
@@ -870,6 +921,7 @@ document.getElementById('manualGenerateBtn').addEventListener('click', async () 
 // ===== Generate Carousel =====
 async function generateCarousel() {
   state.validation = null;
+  state.images = null;
   document.getElementById('validationPanel').classList.remove('visible');
   setStep(2);
 
@@ -1019,6 +1071,62 @@ document.getElementById('regenFromFeedbackBtn').addEventListener('click', async 
     hideLoading();
   }
 });
+
+document.getElementById('generateImagesBtn').addEventListener('click', async () => {
+  if (!state.pages || !state.bookInfo) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
+
+  showLoading('이미지 프롬프트 생성 중...', 'AI가 각 페이지 내용에 맞는 이미지를 준비하고 있습니다');
+
+  try {
+    const data = await apiFetch('/api/generate-images', {
+      pages: state.pages,
+      bookInfo: state.bookInfo,
+    });
+    state.images = data.images;
+    hideLoading();
+    applyImagesToCards(data.images);
+    showToast('이미지가 카드에 적용되고 있습니다 (로딩 약 10~20초)', 'info');
+  } catch (err) {
+    hideLoading();
+    showToast(err.message, 'error');
+  }
+});
+
+function applyImagesToCards(images) {
+  const cards = document.querySelectorAll('#carouselScroll .card');
+  ['page1', 'page2', 'page3', 'page4'].forEach((page, idx) => {
+    const url = images[page];
+    if (!url || !cards[idx]) return;
+
+    const card = cards[idx];
+
+    // 로딩 스피너 추가
+    const spinner = document.createElement('div');
+    spinner.className = 'card-img-loading';
+    spinner.innerHTML = '<div class="card-img-spinner"></div>';
+    card.appendChild(spinner);
+
+    const img = new Image();
+    img.onload = () => {
+      card.style.backgroundImage = `url('${url}')`;
+      card.classList.add('card-with-image');
+      spinner.remove();
+
+      // 이미지 적용 배지 추가
+      if (!card.querySelector('.card-img-badge')) {
+        const badge = document.createElement('div');
+        badge.className = 'card-img-badge';
+        badge.textContent = 'AI 이미지';
+        card.appendChild(badge);
+      }
+    };
+    img.onerror = () => {
+      spinner.remove();
+      showToast(`페이지 ${idx + 1} 이미지 로딩 실패`, 'warning');
+    };
+    img.src = url;
+  });
+}
 
 document.getElementById('generateCaptionBtn').addEventListener('click', async () => {
   if (!state.pages || !state.bookInfo) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
