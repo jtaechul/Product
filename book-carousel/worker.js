@@ -395,11 +395,11 @@ approved는 totalScore>=70이면 true.`
 // extractJson이 유효한 JSON을 파싱, applyImagesToCards가 조용히 건너뜀.
 // 대책: max_tokens 1200으로 상향 + 누락 페이지를 폴백 프롬프트로 보완.
 const FALLBACK_IMAGE_PROMPTS = {
-  page1: 'dramatic spotlight on dark empty stage, single beam of light, stage curtains, cinematic atmosphere, no text',
-  page2: 'crowded city streets at night, monochrome, overwhelming pressure, symbolic, cinematic, no text',
-  page3: 'broken hourglass on dark table, red warning light, unsettling discovery, cinematic atmosphere, no text',
-  page4: 'single candle flame in complete darkness, small hope emerging, warm glow, cinematic, no text',
-  page5: 'vast open landscape at twilight, single silhouette walking toward horizon, contemplative, mysterious, open-ended, no text',
+  page1: 'open book on rustic wooden cafe table, warm morning sunlight, steam from coffee cup beside, editorial lifestyle photography, soft bokeh, cozy atmosphere, no text',
+  page2: 'person holding book thoughtfully at sunlit window, soft natural light, contemplative mood, warm tones, lifestyle editorial photography, no text',
+  page3: 'neatly stacked classic books on minimal desk with reading glasses, warm lamp light, calm focused atmosphere, editorial photography, no text',
+  page4: 'single open book with golden hour sunlight rays, hopeful warm light streaming through window, cozy and serene, lifestyle photography, no text',
+  page5: 'closed book on autumn leaves path, peaceful open-ended scene, soft natural daylight, warm earthy tones, editorial photography, no text',
 };
 
 async function handleGenerateImages(env, body) {
@@ -409,7 +409,7 @@ async function handleGenerateImages(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
     max_tokens: 1200,
-    system: '당신은 AI 이미지 프롬프트 전문가입니다. 인스타그램 카드뉴스용 드라마틱한 일러스트 프롬프트를 영어로 작성합니다. 반드시 JSON만 응답합니다.',
+    system: '당신은 AI 이미지 프롬프트 전문가입니다. 인스타그램 북큐레이션 계정용 따뜻하고 감성적인 라이프스타일 사진 프롬프트를 영어로 작성합니다. 반드시 JSON만 응답합니다.',
     user: `책 카테고리: ${bookInfo.category || '자기계발'}
 
 각 페이지 핵심 메시지:
@@ -419,17 +419,18 @@ async function handleGenerateImages(env, body) {
 4페이지(실마리): ${pages.page4?.headline || ''}
 5페이지(반문·결말): ${pages.page5?.cta || ''}
 
-위 내용에 맞는 드라마틱한 일러스트 프롬프트를 정확히 5개 작성하세요.
+위 내용에 맞는 따뜻하고 감성적인 라이프스타일 사진 프롬프트를 정확히 5개 작성하세요.
 page1~page5 키를 반드시 모두 포함해야 합니다.
 
 규칙:
-- 책·책 표지 이미지 절대 금지
-- 어둡고 긴장감 있는 분위기 (dark, dramatic, cinematic)
-- 인물보다 상황·상징·분위기 중심 (symbolic, abstract)
-- 5페이지는 여운·열린 결말 분위기 (contemplative, mysterious, open-ended)
+- 따뜻하고 차분한 자연광 분위기 (warm natural light, soft tones, cozy lifestyle)
+- 책·노트·커피 등 독서 관련 소품 자연스럽게 포함 가능 (books, notebooks, coffee allowed)
+- 공포·혐오·어둠·섬뜩한 이미지 절대 금지 (no horror, no darkness, no disturbing imagery)
+- 차분하지만 의미 있는 편집 사진 분위기 (editorial lifestyle photography, calm, contemplative)
+- 인스타그램 북큐레이션 계정 감성 (book aesthetic, cozy reading atmosphere)
 - 텍스트·글자 없음 (no text)
 - Instagram 1:1 정사각형 최적화
-- 영어, 40단어 이내
+- 영어, 50단어 이내
 
 JSON (page1~page5 모두 필수): {"page1":"prompt","page2":"prompt","page3":"prompt","page4":"prompt","page5":"prompt"}`,
   });
@@ -444,7 +445,7 @@ JSON (page1~page5 모두 필수): {"page1":"prompt","page2":"prompt","page3":"pr
     }
   }
 
-  const suffix = ', dark cinematic dramatic atmosphere, no text, no books, high quality, 8k';
+  const suffix = ', lifestyle editorial photography, warm soft natural light, cozy book aesthetic, no text, high quality';
   const base = 'https://image.pollinations.ai/prompt/';
 
   // 페이지마다 다른 seed → 동일 요청 충돌·캐시 문제로 인한 로딩 실패 감소
@@ -574,6 +575,115 @@ JSON: {"dmText":"전체 DM 텍스트(줄바꿈은 \\n)"}`,
   return { success: true, ...result };
 }
 
+// ===== 서버사이드 파이프라인 =====
+async function savePipelineStatus(env, pipelineId, patch) {
+  if (!env.PENDING_POSTS) return;
+  const key = `pipeline_${pipelineId}`;
+  let existing = {};
+  try { existing = await env.PENDING_POSTS.get(key, 'json') || {}; } catch {}
+  const updated = { ...existing, ...patch, updatedAt: Date.now() };
+  await env.PENDING_POSTS.put(key, JSON.stringify(updated), { expirationTtl: 3600 });
+}
+
+async function executePipeline(env, pipelineId, bookInfo, affiliateLinks, commentKeyword) {
+  try {
+    // Step 1: 캐럿셀 생성
+    await savePipelineStatus(env, pipelineId, { step: 1, stepStatus: 'active', label: 'Claude AI가 5페이지 카드뉴스를 작성 중...' });
+    let pages;
+    try {
+      const genData = await handleGenerate(env, bookInfo);
+      pages = genData.pages;
+    } catch (e) {
+      return await savePipelineStatus(env, pipelineId, { status: 'error', error: `캐럿셀 생성 실패: ${e.message}` });
+    }
+    await savePipelineStatus(env, pipelineId, { step: 1, stepStatus: 'done', label: '5페이지 카드뉴스 생성 완료', pages });
+
+    // Step 2: 품질 검증 (최대 2회)
+    await savePipelineStatus(env, pipelineId, { step: 2, stepStatus: 'active', label: 'AI 자동 품질 평가 중...' });
+    let validation = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        validation = await handleValidate(env, { pages, bookInfo });
+        if (validation.approved) break;
+        if (attempt < 2) {
+          const rd = await handleRegenerate(env, { bookInfo, previousPages: pages, feedback: validation.feedback, improvements: validation.improvements || [] });
+          pages = rd.pages;
+        }
+      } catch { break; }
+    }
+    await savePipelineStatus(env, pipelineId, { step: 2, stepStatus: 'done', label: `${validation?.totalScore || 0}/100점`, pages, validation });
+
+    // Step 3: 이미지 생성
+    await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'active', label: 'Pollinations AI로 이미지 생성 중...' });
+    let images = null;
+    try {
+      const imgData = await handleGenerateImages(env, { pages, bookInfo });
+      images = imgData.images;
+    } catch {}
+    await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'done', label: '이미지 URL 생성 완료', images });
+
+    // Pollinations 사전 렌더링 대기
+    await new Promise(r => setTimeout(r, 8000));
+
+    // Step 4: 캡션 생성
+    await savePipelineStatus(env, pipelineId, { step: 4, stepStatus: 'active', label: '인스타그램 캡션 작성 중...' });
+    let caption = '', hashtags = [], dmKeyword = '';
+    try {
+      const capData = await handleGenerateCaption(env, { pages, bookInfo, dmKeyword: commentKeyword });
+      caption = capData.caption || ''; hashtags = capData.hashtags || []; dmKeyword = capData.commentKeyword || capData.dmKeyword || '';
+    } catch {}
+    await savePipelineStatus(env, pipelineId, { step: 4, stepStatus: 'done', label: '캡션 + 해시태그 생성 완료', caption, hashtags, dmKeyword });
+
+    // Step 5: DM 회신 생성
+    await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'active', label: 'DM 자동 회신 내용 작성 중...' });
+    try {
+      await handleGenerateDmReply(env, { pages, bookInfo, affiliateLinks, commentKeyword: dmKeyword });
+    } catch {}
+    await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'done', label: 'DM 자동 회신 생성 완료' });
+
+    // Step 6: 텔레그램 발송
+    await savePipelineStatus(env, pipelineId, { step: 6, stepStatus: 'active', label: '텔레그램으로 최종 확인 요청 발송 중...' });
+    let telegramError = null;
+    try {
+      await handleSendTelegram(env, { pages, bookInfo, caption, hashtags, commentKeyword: dmKeyword, dmKeyword, images, compositeImages: null });
+    } catch (e) { telegramError = e.message; }
+    await savePipelineStatus(env, pipelineId, {
+      step: 6, stepStatus: telegramError ? 'error' : 'done',
+      label: telegramError ? `텔레그램 발송 실패: ${telegramError}` : '텔레그램 발송 완료 — 승인 버튼을 눌러주세요',
+    });
+
+    // 완료
+    await savePipelineStatus(env, pipelineId, {
+      step: 7, stepStatus: 'done', status: 'complete',
+      label: telegramError ? '완료 (텔레그램 실패 — 웹에서 직접 게시 가능)' : '완료! 텔레그램에서 [게시하기]를 눌러주세요.',
+      completedAt: Date.now(),
+    });
+  } catch (err) {
+    await savePipelineStatus(env, pipelineId, { status: 'error', error: err.message });
+  }
+}
+
+async function handleRunPipeline(env, body, ctx) {
+  const { bookInfo, affiliateLinks, commentKeyword } = body;
+  if (!bookInfo?.title) throw new Error('책 정보(bookInfo.title)가 필요합니다.');
+  if (!env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY가 설정되지 않았습니다.');
+  if (!env.PENDING_POSTS) throw new Error('KV 스토어(PENDING_POSTS)가 설정되지 않았습니다.');
+  const pipelineId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  await savePipelineStatus(env, pipelineId, { step: 0, stepStatus: 'active', status: 'started', bookInfo, startedAt: Date.now(), label: '파이프라인 시작 중...' });
+  const pipelinePromise = executePipeline(env, pipelineId, bookInfo, affiliateLinks || [], commentKeyword || '');
+  if (ctx?.waitUntil) ctx.waitUntil(pipelinePromise);
+  else pipelinePromise.catch(() => {});
+  return { success: true, pipelineId };
+}
+
+async function handlePipelineStatus(env, url) {
+  const pipelineId = url.searchParams.get('id');
+  if (!pipelineId) return { status: 'error', error: 'pipelineId가 필요합니다.' };
+  if (!env.PENDING_POSTS) return { status: 'error', error: 'KV 스토어 미설정' };
+  const data = await env.PENDING_POSTS.get(`pipeline_${pipelineId}`, 'json').catch(() => null);
+  return data || { status: 'not_found' };
+}
+
 // ===== Phase 4: 인스타그램 캐럿셀 게시 =====
 async function handlePostInstagram(env, body) {
   if (!env.INSTAGRAM_ACCESS_TOKEN || !env.INSTAGRAM_USER_ID) {
@@ -642,42 +752,47 @@ async function handleTelegramWebhook(env, body) {
 
   const callbackId = callback_query.id;
   const cbData = callback_query.data;
+  // chat id: 콜백 메시지에서 먼저, 없으면 env 폴백
+  const chatId = callback_query.message?.chat?.id || env.TELEGRAM_CHAT_ID;
 
-  // 텔레그램에 콜백 즉시 응답 (5초 내 필수)
-  await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ callback_query_id: callbackId, text: '처리 중...' }),
-  }).catch(() => {});
-
-  const chatId = env.TELEGRAM_CHAT_ID;
+  const answerCallback = (text, showAlert = false) =>
+    fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: callbackId, text, show_alert: showAlert }),
+    }).catch(() => {});
 
   if (cbData === 'approve') {
+    await answerCallback('처리 중...');
     if (!env.PENDING_POSTS) {
-      await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, 'KV 스토어가 설정되지 않았습니다. 관리자에게 문의해주세요.');
+      await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, 'KV 스토어가 설정되지 않았습니다.').catch(() => {});
       return { ok: true };
     }
-    const stateJson = await env.PENDING_POSTS.get('latest');
+    const stateJson = await env.PENDING_POSTS.get('latest').catch(() => null);
     if (!stateJson) {
-      await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, '게시할 콘텐츠가 없습니다 (만료됐거나 취소됨). 웹에서 다시 생성해주세요.');
+      await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, '게시할 콘텐츠가 없습니다 (만료됐거나 취소됨). 웹에서 다시 생성해주세요.').catch(() => {});
       return { ok: true };
     }
     const ps = JSON.parse(stateJson);
     try {
       const result = await handlePostInstagram(env, { images: ps.images, caption: ps.caption, hashtags: ps.hashtags });
-      await env.PENDING_POSTS.delete('latest');
+      await env.PENDING_POSTS.delete('latest').catch(() => {});
       await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId,
-        `인스타그램 게시 완료!\n미디어 ID: ${result.mediaId}\n\n책: ${ps.bookInfo?.title || ''}`);
+        `인스타그램 게시 완료!\n미디어 ID: ${result.mediaId}\n\n책: ${ps.bookInfo?.title || ''}`).catch(() => {});
     } catch (err) {
       await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId,
-        `인스타그램 게시 실패: ${err.message}\n\n웹에서 직접 게시해주세요: https://book-carousel.jtaechul.workers.dev/`);
+        `인스타그램 게시 실패: ${err.message}\n\n웹에서 직접 게시해주세요: https://book-carousel.jtaechul.workers.dev/`).catch(() => {});
     }
   } else if (cbData === 'cancel') {
-    if (env.PENDING_POSTS) await env.PENDING_POSTS.delete('latest');
-    await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, '게시가 취소됐습니다.');
+    await answerCallback('취소됐습니다.');
+    if (env.PENDING_POSTS) await env.PENDING_POSTS.delete('latest').catch(() => {});
+    await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, '게시가 취소됐습니다.').catch(() => {});
   } else if (cbData === 'modify') {
+    await answerCallback('웹에서 수정해주세요', true);
     await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId,
-      '웹에서 수정 후 다시 발송해주세요:\nhttps://book-carousel.jtaechul.workers.dev/');
+      '웹에서 수정 후 다시 발송해주세요:\nhttps://book-carousel.jtaechul.workers.dev/').catch(() => {});
+  } else {
+    await answerCallback('');
   }
 
   return { ok: true };
@@ -746,7 +861,7 @@ async function handleInstagramWebhook(env, request) {
 
 // ===== 메인 라우터 =====
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     if (request.method === 'OPTIONS') {
@@ -805,6 +920,8 @@ export default {
         else if (url.pathname === '/api/post-instagram') result = await handlePostInstagram(env, body);
         else if (url.pathname === '/api/telegram-webhook') result = await handleTelegramWebhook(env, body);
         else if (url.pathname === '/api/setup-webhook') result = await handleSetupWebhook(env);
+        else if (url.pathname === '/api/run-pipeline') result = await handleRunPipeline(env, body, ctx);
+        else if (url.pathname === '/api/pipeline-status') result = await handlePipelineStatus(env, url);
         else return json({ error: '없는 경로입니다.' }, 404);
 
         return json(result);
