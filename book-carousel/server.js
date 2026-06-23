@@ -131,12 +131,12 @@ ${JSON.stringify(previousPages, null, 2)}
   }
 });
 
-// 카카오톡 발송 (Phase 4 준비 중)
-app.post('/api/send-kakao', async (req, res) => {
+// 텔레그램 발송 (Cloudflare Worker 버전의 /api/send-telegram 참고)
+app.post('/api/send-telegram', async (req, res) => {
   res.json({
     success: false,
     stub: true,
-    message: '카카오톡 연동은 Phase 4에서 구현됩니다. 현재는 텍스트를 복사해 사용해주세요.'
+    message: '로컬 서버에서는 텔레그램 발송이 지원되지 않습니다. 배포된 Cloudflare Worker(book-carousel.jtaechul.workers.dev)를 이용해주세요.'
   });
 });
 
