@@ -240,9 +240,9 @@ async function handleGenerate(env, body) {
 ${targetAudience ? `대상: ${targetAudience}` : ''}
 
 페이지 가이드 (텍스트 길이 엄수):
-1페이지(훅): 공포·위기감·호기심 후크.
-  - headline: 15자 이내 강렬한 한 줄 (책 제목 금지)
-  - subtext: 1줄 보조 문구 (20자 이내)
+1페이지(훅): FOMO·공포·위기감 후크. 추상적 단어 조각이 아닌 '주어+상황+구체적 결과'를 담은 완전한 문장으로 쓴다.
+  - headline: 30자 이내 완전한 문장. 예시 스타일: "지금 이 순간에도 당신의 뇌는 몸보다 먼저 죽어가고 있다" / "한국인 3명 중 1명은 이미 부채 함정에 빠졌다는 사실을 아는가" — 막연한 단어 나열(예: '뇌가 먼저 죽어간다') 절대 금지.
+  - subtext: 불안·호기심을 증폭하는 보조 문장 1줄 (25자 이내)
 2페이지(문제): 구체적 수치·현실 사례로 문제 제시.
   - headline: 15자 이내
   - body: 2줄 이내, 한 줄 40자 이내
@@ -319,10 +319,11 @@ JSON: {"page1":"prompt","page2":"prompt","page3":"prompt","page4":"prompt"}`,
   const prompts = extractJson(text);
   const suffix = ', dark cinematic dramatic atmosphere, no text, no books, high quality, 8k';
   const base = 'https://image.pollinations.ai/prompt/';
-  const seed = Math.floor(Math.random() * 900000) + 100000;
 
+  // 페이지마다 다른 seed → 동일 요청 충돌·캐시 문제로 인한 로딩 실패 감소
   const images = {};
   for (const [page, prompt] of Object.entries(prompts)) {
+    const seed = Math.floor(Math.random() * 900000) + 100000;
     images[page] = `${base}${encodeURIComponent(prompt + suffix)}?width=1080&height=1080&nologo=true&seed=${seed}`;
   }
 
@@ -379,7 +380,10 @@ ${JSON.stringify(previousPages, null, 2)}
 피드백: ${feedback}
 개선 요청: ${improvements.join(' / ')}
 
-텍스트 길이 기준: headline 15자 이내, body 2줄 이내(줄당 40자 이내), subtext 20자 이내.
+텍스트 길이 기준:
+- 1페이지 headline: 30자 이내 완전한 문장 (주어+상황+구체적 결과). 추상적 단어 조각 금지. 예) "지금 이 순간에도 당신의 뇌는 몸보다 먼저 죽어가고 있다"
+- 2~4페이지 headline: 15자 이내, body: 2줄 이내(줄당 40자 이내)
+- subtext: 25자 이내
 
 JSON:
 {"page1":{"headline":"...","subtext":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`

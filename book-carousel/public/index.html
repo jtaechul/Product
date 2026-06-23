@@ -423,6 +423,24 @@
       letter-spacing: 0.05em;
     }
 
+    .card-img-dl {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(255,255,255,0.9);
+      border: none;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--gray-800);
+      z-index: 4;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .card-img-dl:hover { background: #fff; }
+
     .card-img-loading {
       position: absolute;
       inset: 0;
@@ -490,7 +508,7 @@
     .improvement-item:last-child { border-bottom: none; }
     .improvement-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--warning); margin-top: 5px; flex-shrink: 0; }
 
-    .validation-actions { padding: 14px 22px; background: var(--gray-50); border-top: 1px solid var(--gray-100); display: flex; gap: 8px; }
+    .validation-actions { padding: 14px 22px; background: var(--gray-50); border-top: 1px solid var(--gray-100); display: flex; gap: 8px; flex-wrap: wrap; }
 
     /* Loading */
     .loading-overlay {
@@ -715,7 +733,7 @@
     </div>
 
     <div class="validation-actions">
-      <button class="btn btn-outline" id="regenFromFeedbackBtn">피드백 반영 재생성</button>
+      <button class="btn btn-primary" id="regenFromFeedbackBtn" style="width:auto;padding:10px 18px;">검증 결과 반영하기</button>
       <button class="btn btn-telegram" id="telegramBtn" disabled>텔레그램 발송</button>
     </div>
   </div>
@@ -1053,7 +1071,10 @@ function renderValidation(result) {
   ).join('');
 
   document.getElementById('telegramBtn').disabled = !approved;
-  document.getElementById('validationPanel').classList.add('visible');
+  const panel = document.getElementById('validationPanel');
+  panel.classList.add('visible');
+  // 검증 결과가 화면 아래에 가려 안 보이는 문제 → 자동으로 스크롤해 보여줌
+  requestAnimationFrame(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }));
 }
 
 // ===== Buttons =====
@@ -1158,35 +1179,85 @@ function applyImagesToCards(images) {
   ['page1', 'page2', 'page3', 'page4'].forEach((page, idx) => {
     const url = images[page];
     if (!url || !cards[idx]) return;
+    loadImageWithRetry(cards[idx], url, idx + 1, 0);
+  });
+}
 
-    const card = cards[idx];
+// Pollinations 서버가 가끔 응답을 늦게 주거나 실패 → 캐시버스터로 최대 3회 재시도
+function loadImageWithRetry(card, url, pageNum, attempt) {
+  const MAX_ATTEMPTS = 3;
 
-    // 로딩 스피너 추가
-    const spinner = document.createElement('div');
+  let spinner = card.querySelector('.card-img-loading');
+  if (!spinner) {
+    spinner = document.createElement('div');
     spinner.className = 'card-img-loading';
     spinner.innerHTML = '<div class="card-img-spinner"></div>';
     card.appendChild(spinner);
+  }
 
-    const img = new Image();
-    img.onload = () => {
-      card.style.backgroundImage = `url('${url}')`;
-      card.classList.add('card-with-image');
-      spinner.remove();
+  // 재시도 시 URL에 retry 파라미터를 붙여 캐시·중복요청 회피
+  const tryUrl = attempt === 0 ? url : url + '&retry=' + attempt + '_' + Date.now();
 
-      // 이미지 적용 배지 추가
-      if (!card.querySelector('.card-img-badge')) {
-        const badge = document.createElement('div');
-        badge.className = 'card-img-badge';
-        badge.textContent = 'AI 이미지';
-        card.appendChild(badge);
-      }
-    };
-    img.onerror = () => {
+  const img = new Image();
+  img.onload = () => {
+    card.style.backgroundImage = `url('${tryUrl}')`;
+    card.classList.add('card-with-image');
+    card.dataset.imageUrl = tryUrl; // 다운로드용 저장
+    spinner.remove();
+
+    if (!card.querySelector('.card-img-badge')) {
+      const badge = document.createElement('div');
+      badge.className = 'card-img-badge';
+      badge.textContent = 'AI 이미지';
+      card.appendChild(badge);
+    }
+    addDownloadButton(card, pageNum);
+  };
+  img.onerror = () => {
+    if (attempt + 1 < MAX_ATTEMPTS) {
+      // 잠시 후 재시도
+      setTimeout(() => loadImageWithRetry(card, url, pageNum, attempt + 1), 1500);
+    } else {
       spinner.remove();
-      showToast(`페이지 ${idx + 1} 이미지 로딩 실패`, 'warning');
-    };
-    img.src = url;
+      showToast(`페이지 ${pageNum} 이미지 생성 실패 (재시도 초과)`, 'warning');
+    }
+  };
+  img.src = tryUrl;
+}
+
+// 카드에 이미지 저장(다운로드) 버튼 추가
+function addDownloadButton(card, pageNum) {
+  if (card.querySelector('.card-img-dl')) return;
+  const btn = document.createElement('button');
+  btn.className = 'card-img-dl';
+  btn.textContent = '이미지 저장';
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    downloadCardImage(card.dataset.imageUrl, pageNum);
   });
+  card.appendChild(btn);
+}
+
+async function downloadCardImage(url, pageNum) {
+  if (!url) { showToast('저장할 이미지가 없습니다.', 'warning'); return; }
+  try {
+    // CORS 허용된 Pollinations 이미지를 blob으로 받아 다운로드
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objUrl;
+    a.download = `carousel_page${pageNum}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(objUrl);
+    showToast(`페이지 ${pageNum} 이미지를 저장했습니다.`, 'success');
+  } catch (err) {
+    // 실패 시 새 탭에서 열어 길게 눌러 저장하도록 안내
+    window.open(url, '_blank');
+    showToast('새 탭에서 이미지를 길게 눌러 저장하세요.', 'info');
+  }
 }
 
 document.getElementById('generateCaptionBtn').addEventListener('click', async () => {
