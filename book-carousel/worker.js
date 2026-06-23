@@ -17,6 +17,13 @@ function json(data, status = 200) {
 // 후보 모델에 1토큰 테스트 호출을 실제로 던져 200이 나오는 것만 골라 쓴다.
 let _modelCache = null;
 
+// /v1/models 조회 실패 시(네트워크·레이트리밋) 폴백으로 쓸 알려진 모델 목록
+const FALLBACK_MODEL_IDS = [
+  'claude-sonnet-4-6', 'claude-opus-4-8', 'claude-haiku-4-5-20251001',
+  'claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5',
+  'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022',
+];
+
 async function listModelIds(apiKey) {
   const res = await fetch('https://api.anthropic.com/v1/models?limit=100', {
     headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
@@ -27,13 +34,23 @@ async function listModelIds(apiKey) {
 }
 
 // 모델을 실제로 호출해 사용 가능 여부 확인 (200이면 사용 가능)
+// 7초 타임아웃 — probe 과다로 Worker 30s 한도 초과 방지
 async function probeModel(apiKey, model) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model, max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
-  });
-  return res.status;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 7000);
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model, max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    return res.status;
+  } catch {
+    clearTimeout(timer);
+    return 0; // 타임아웃·네트워크 오류 → 사용 불가로 처리
+  }
 }
 
 // 후보를 우선순위대로 늘어놓되, 실제 목록에 있는 모델만 남긴다
@@ -50,16 +67,18 @@ function orderCandidates(ids, patterns) {
 async function resolveModels(apiKey) {
   if (_modelCache) return _modelCache;
 
-  const ids = await listModelIds(apiKey);
-  const probed = {}; // model -> status (디버깅용)
+  let ids = await listModelIds(apiKey);
+  // /v1/models 실패(네트워크·레이트리밋) → 알려진 후보로 폴백
+  if (ids.length === 0) ids = FALLBACK_MODEL_IDS;
 
-  // main: sonnet 우선(품질/비용 균형) → opus → 기타
+  const probed = {};
+
   const mainOrder = orderCandidates(ids, ['sonnet-4', 'sonnet', 'opus-4', 'opus', 'haiku']);
-  // light: haiku 우선 → sonnet
   const lightOrder = orderCandidates(ids, ['haiku-4', 'haiku', 'sonnet-4', 'sonnet']);
 
+  // 최대 3개만 순차 탐색 — probe 과다로 30s Worker 한도 초과 방지
   const firstUsable = async (order) => {
-    for (const m of order) {
+    for (const m of order.slice(0, 3)) {
       if (probed[m] === undefined) probed[m] = await probeModel(apiKey, m);
       if (probed[m] === 200) return m;
     }
@@ -69,7 +88,6 @@ async function resolveModels(apiKey) {
   const main = await firstUsable(mainOrder);
   const light = (await firstUsable(lightOrder)) || main;
 
-  // 호출 가능한 모델이 하나도 없으면 캐시하지 않고 진단 정보와 함께 실패 표시
   if (!main) {
     return { main: null, light: null, source: 'none-usable', available: ids, probed };
   }
@@ -324,7 +342,7 @@ async function handleGenerateImages(env, body) {
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
-    max_tokens: 600,
+    max_tokens: 750,
     system: '당신은 AI 이미지 프롬프트 전문가입니다. 인스타그램 카드뉴스용 드라마틱한 일러스트 프롬프트를 영어로 작성합니다. 반드시 JSON만 응답합니다.',
     user: `책 카테고리: ${bookInfo.category || '자기계발'}
 
@@ -333,18 +351,20 @@ async function handleGenerateImages(env, body) {
 2페이지(문제): ${pages.page2?.headline || ''}
 3페이지(심각성): ${pages.page3?.headline || ''}
 4페이지(실마리): ${pages.page4?.headline || ''}
+5페이지(반문·결말): ${pages.page5?.cta || ''}
 
-위 내용에 맞는 드라마틱한 일러스트 프롬프트 4개를 작성하세요.
+위 내용에 맞는 드라마틱한 일러스트 프롬프트 5개를 작성하세요.
 
 규칙:
 - 책·책 표지 이미지 절대 금지
 - 어둡고 긴장감 있는 분위기 (dark, dramatic, cinematic)
 - 인물보다 상황·상징·분위기 중심 (symbolic, abstract)
+- 5페이지는 여운·열린 결말 분위기 (contemplative, mysterious, open-ended)
 - 텍스트·글자 없음 (no text)
 - Instagram 1:1 정사각형 최적화
 - 영어, 40단어 이내
 
-JSON: {"page1":"prompt","page2":"prompt","page3":"prompt","page4":"prompt"}`,
+JSON: {"page1":"prompt","page2":"prompt","page3":"prompt","page4":"prompt","page5":"prompt"}`,
   });
 
   const prompts = extractJson(text);
@@ -426,6 +446,41 @@ JSON:
   return { success: true, pages: extractJson(text) };
 }
 
+// ===== Phase 5 준비: DM 자동 회신 내용 생성 =====
+async function handleGenerateDmReply(env, body) {
+  const { pages, bookInfo, affiliateLink } = body;
+  if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
+
+  const text = await callClaude(env.ANTHROPIC_API_KEY, {
+    model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
+    max_tokens: 512,
+    system: '당신은 인스타그램 DM 자동 회신 작성 전문가입니다. 댓글 키워드를 남긴 팔로워에게 보낼 DM을 씁니다. 따뜻하고 개인적인 톤, 노골적 판매 금지. 반드시 JSON만 응답합니다.',
+    user: `책 제목: ${bookInfo.title}
+저자: ${bookInfo.author}
+카테고리: ${bookInfo.category || '자기계발'}
+핵심 메시지: ${bookInfo.coreMessage || ''}
+
+5페이지에서 독자에게 던진 반문: ${pages.page5?.cta || ''}
+5페이지 마무리 문구: ${pages.page5?.linkText || ''}
+
+어필리에이트 링크: ${affiliateLink || '(미입력)'}
+
+댓글에 키워드를 남긴 팔로워에게 보낼 DM을 작성하세요.
+
+구성:
+1. 친근한 인사 (1줄)
+2. 책 제목과 저자 자연스럽게 소개 (1줄)
+3. 이 책이 답하는 핵심 질문·고민 (독자 공감 유도, 2줄 이내)
+4. 5페이지 반문에 대한 제한적 힌트 (완전한 답은 절대 주지 말 것, 2줄 이내)
+5. 어필리에이트 링크 안내 (자연스럽게, 없으면 "곧 공유드릴게요" 처리)
+6. 따뜻한 마무리 (1줄)
+
+JSON: {"dmText":"전체 DM 텍스트(줄바꿈은 \\n)"}`,
+  });
+
+  return { success: true, ...extractJson(text) };
+}
+
 // ===== 메인 라우터 =====
 export default {
   async fetch(request, env) {
@@ -478,6 +533,7 @@ export default {
         else if (url.pathname === '/api/validate') result = await handleValidate(env, body);
         else if (url.pathname === '/api/regenerate') result = await handleRegenerate(env, body);
         else if (url.pathname === '/api/send-telegram') result = await handleSendTelegram(env, body);
+        else if (url.pathname === '/api/generate-dm-reply') result = await handleGenerateDmReply(env, body);
         else return json({ error: '없는 경로입니다.' }, 404);
 
         return json(result);
