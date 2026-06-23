@@ -1,5 +1,47 @@
 # 🌟 SPOTLIGHT — 게임 기획서 (프로젝트 규칙)
 
+---
+
+## 북캐럿셀 자동화 시스템 (`book-carousel/`) — 핵심 규칙
+
+> **이 프로그램의 목적**: 매일 베스트셀러·최신 사회 이슈에서 인사이트를 주는 책을 선정하고,
+> 인스타그램용 5페이지 캐럿셀을 자동 생성해 텔레그램으로 발송하는 자동화 도구.
+
+### 운영 원칙
+
+1. **책 선정은 Claude가 먼저 한다**
+   - 베스트셀러 트렌드·사회적 이슈를 기반으로 Claude가 카테고리별 책 3~5권을 제안
+   - 각 제안에 제목·저자·발행년도·핵심메시지·대상독자층을 Claude가 분석해 함께 제공
+   - 사용자는 제안 목록 중 하나를 선택하기만 하면 됨
+
+2. **수동 입력 모드도 지원한다**
+   - 입력 항목: 카테고리 선택 + 책 제목 (저자는 선택 입력)
+   - 핵심메시지·대상독자층은 Claude가 책 정보만으로 자동 분석·생성 (사용자 입력 불필요)
+   - 연도·세부 정보도 Claude가 자동 보완
+
+3. **캐럿셀 생성 흐름**
+   ```
+   [자동 모드] 카테고리/이슈 선택 → Claude 책 제안 → 사용자 선택
+        → Claude 핵심메시지·독자층 분석 → 5페이지 캐럿셀 생성 → 검증 → 텔레그램 발송
+   [수동 모드] 카테고리 + 책 제목 (+ 선택: 저자) 입력
+        → Claude 핵심메시지·독자층 자동 분석 → 5페이지 캐럿셀 생성 → 검증 → 텔레그램 발송
+   ```
+
+4. **API 엔드포인트 규칙**
+   - `POST /api/suggest` : 카테고리/이슈 → 책 3~5권 제안 (Claude opus)
+   - `POST /api/analyze` : 책 제목+저자 → 핵심메시지·독자층 분석 (Claude sonnet)
+   - `POST /api/generate` : 전체 정보 → 5페이지 캐럿셀 생성 (Claude opus)
+   - `POST /api/validate` : 생성된 캐럿셀 품질 검증 (Claude sonnet)
+   - `POST /api/regenerate` : 피드백 반영 재생성 (Claude opus)
+   - `POST /api/send-telegram` : 텔레그램 발송
+
+5. **배포 규칙**
+   - Cloudflare Workers (`book-carousel.jtaechul.workers.dev`) 에 자동 배포
+   - 브랜치: `claude/book-carousel-auto-upload-xpwihz` 에 push 시 자동 배포
+   - 필요 시크릿: `ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
+
+---
+
 > ## ⭐ 핵심 응답 원칙 (모든 작업에 항상 적용)
 > **매 작업이 끝나면, 마지막에 "방금 한 일"을 비전문가도 이해할 수 있게 아주 간단히
 > 정리한다.** 규칙:

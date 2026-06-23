@@ -80,6 +80,55 @@ async function handleSendTelegram(env, body) {
 }
 
 // ===== Claude 핸들러 =====
+
+// 카테고리/이슈 기반 책 추천
+async function handleSuggest(env, body) {
+  const { category, issue } = body;
+  const topic = issue || category || '자기계발';
+
+  const text = await callClaude(env.ANTHROPIC_API_KEY, {
+    model: 'claude-opus-4-8',
+    system: '당신은 도서 큐레이터입니다. 현재 베스트셀러 트렌드와 사회적 이슈를 바탕으로 실제 존재하는 책을 추천합니다. 반드시 JSON만 응답합니다.',
+    user: `주제: "${topic}"
+
+이 주제와 관련해 현재 주목받는 실제 책 4권을 추천하세요.
+베스트셀러이거나 최신 사회 이슈(경제 위기, AI, 부동산, 건강, 인간관계 등)에 인사이트를 주는 책 위주로 선정하세요.
+
+각 책에 대해:
+- title: 책 제목 (실제 출판된 책)
+- author: 저자명
+- year: 출판연도
+- category: 카테고리
+- coreMessage: 이 책의 핵심 메시지 (1~2문장)
+- targetAudience: 주요 대상 독자층 (1문장)
+- reason: 지금 이 책을 읽어야 하는 이유 (1문장, 사회 트렌드/이슈 연결)
+
+JSON 형식:
+{"books":[{"title":"...","author":"...","year":2024,"category":"...","coreMessage":"...","targetAudience":"...","reason":"..."}]}`,
+  });
+
+  return { success: true, ...extractJson(text) };
+}
+
+// 책 제목만으로 핵심메시지·독자층 자동 분석
+async function handleAnalyze(env, body) {
+  const { title, author } = body;
+  if (!title) throw new Error('책 제목이 필요합니다.');
+
+  const text = await callClaude(env.ANTHROPIC_API_KEY, {
+    model: 'claude-sonnet-4-6',
+    max_tokens: 512,
+    system: '당신은 도서 분석 전문가입니다. 책 제목과 저자를 보고 핵심 메시지와 대상 독자층을 분석합니다. 반드시 JSON만 응답합니다.',
+    user: `책: "${title}"${author ? ` / 저자: ${author}` : ''}
+
+이 책의 정보를 분석하세요.
+
+JSON: {"author":"저자명","year":출판연도(숫자),"category":"카테고리","coreMessage":"이 책의 핵심 메시지 1~2문장","targetAudience":"주요 대상 독자층 1문장"}`,
+  });
+
+  return { success: true, ...extractJson(text) };
+}
+
 async function handleGenerate(env, body) {
   const { title, author, year, coreMessage, targetAudience, category } = body;
   if (!title || !author || !coreMessage) throw new Error('제목, 저자, 핵심 메시지는 필수입니다.');
@@ -164,7 +213,9 @@ export default {
         const body = request.method === 'POST' ? await request.json() : {};
         let result;
 
-        if (url.pathname === '/api/generate') result = await handleGenerate(env, body);
+        if (url.pathname === '/api/suggest') result = await handleSuggest(env, body);
+        else if (url.pathname === '/api/analyze') result = await handleAnalyze(env, body);
+        else if (url.pathname === '/api/generate') result = await handleGenerate(env, body);
         else if (url.pathname === '/api/validate') result = await handleValidate(env, body);
         else if (url.pathname === '/api/regenerate') result = await handleRegenerate(env, body);
         else if (url.pathname === '/api/send-telegram') result = await handleSendTelegram(env, body);
