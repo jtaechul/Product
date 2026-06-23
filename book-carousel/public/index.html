@@ -547,6 +547,20 @@
 
     .btn-kakao:hover:not(:disabled) { background: #EDD500; }
 
+    .btn-kakao-connect {
+      background: #FEE500;
+      color: #3C1E1E;
+      border: 2px solid #E6D000;
+    }
+
+    .btn-kakao-connect:hover:not(:disabled) { background: #EDD500; }
+
+    .btn-kakao-connect.connected {
+      background: #fff;
+      border-color: var(--success);
+      color: var(--success);
+    }
+
     .btn-copy-all {
       background: var(--gray-800);
       color: #fff;
@@ -951,7 +965,8 @@
 
     <div class="validation-actions">
       <button class="btn btn-outline" id="regenFromFeedbackBtn">피드백 반영 재생성</button>
-      <button class="btn btn-kakao" id="kakaoBtn" disabled>카카오톡 발송 (Phase 4)</button>
+      <button class="btn btn-kakao-connect" id="kakaoConnectBtn">카카오 연동</button>
+      <button class="btn btn-kakao" id="kakaoBtn" disabled>카카오톡 발송</button>
     </div>
   </div>
 
@@ -1167,9 +1182,8 @@ function renderValidation(result) {
     </div>
   `).join('');
 
-  // Kakao button
-  const kakaoBtn = document.getElementById('kakaoBtn');
-  kakaoBtn.disabled = !approved;
+  // Kakao button (상태는 updateKakaoUI에서 통합 관리)
+  updateKakaoUI();
 
   document.getElementById('validationPanel').classList.add('visible');
 }
@@ -1293,9 +1307,85 @@ document.getElementById('copyAllBtn').addEventListener('click', () => {
   copyText(text, '전체');
 });
 
-document.getElementById('kakaoBtn').addEventListener('click', async () => {
-  showToast('카카오톡 연동은 Phase 4에서 구현됩니다. 텍스트를 복사해 사용해주세요.', 'info');
+// ===== KakaoTalk =====
+let kakaoConnected = false;
+
+async function checkKakaoStatus() {
+  try {
+    const res = await fetch('/api/kakao-status');
+    const data = await res.json();
+    kakaoConnected = !!data.connected;
+    updateKakaoUI();
+  } catch (e) {
+    kakaoConnected = false;
+  }
+}
+
+function updateKakaoUI() {
+  const connectBtn = document.getElementById('kakaoConnectBtn');
+  const sendBtn = document.getElementById('kakaoBtn');
+  if (kakaoConnected) {
+    connectBtn.textContent = '카카오 연동됨';
+    connectBtn.classList.add('connected');
+  } else {
+    connectBtn.textContent = '카카오 연동';
+    connectBtn.classList.remove('connected');
+  }
+  // kakaoBtn enabled only when connected AND approved
+  const approved = state.validation && state.validation.approved;
+  sendBtn.disabled = !(kakaoConnected && approved);
+}
+
+document.getElementById('kakaoConnectBtn').addEventListener('click', () => {
+  if (kakaoConnected) {
+    showToast('이미 카카오톡과 연동되어 있습니다.', 'info');
+    return;
+  }
+  const popup = window.open(
+    '/auth/kakao',
+    'kakao_auth',
+    'width=500,height=700,scrollbars=yes'
+  );
+  if (!popup) showToast('팝업이 차단됐습니다. 팝업 허용 후 다시 시도해주세요.', 'warning');
 });
+
+window.addEventListener('message', async (e) => {
+  if (e.data === 'kakao_auth_done') {
+    await checkKakaoStatus();
+    showToast('카카오톡 연동 완료!', 'success');
+  }
+});
+
+document.getElementById('kakaoBtn').addEventListener('click', async () => {
+  if (!state.pages || !state.bookInfo) return;
+  if (!kakaoConnected) {
+    showToast('카카오 연동 버튼을 먼저 눌러 연동해주세요.', 'warning');
+    return;
+  }
+
+  showLoading('카카오톡 발송 중...', '캐럿셀 내용을 나에게 보내고 있습니다');
+
+  try {
+    const data = await apiFetch('/api/send-kakao', {
+      pages: state.pages,
+      bookInfo: state.bookInfo,
+    });
+    if (data.needAuth) {
+      kakaoConnected = false;
+      updateKakaoUI();
+      showToast('카카오 연동이 만료됐습니다. 다시 연동해주세요.', 'warning');
+    } else {
+      showToast(data.message || '카카오톡으로 발송됐습니다!', 'success');
+    }
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    hideLoading();
+  }
+});
+
+// 페이지 로드 시 카카오 연동 상태 확인
+checkKakaoStatus();
 
 // Example fill
 document.getElementById('exampleBtn').addEventListener('click', () => {
