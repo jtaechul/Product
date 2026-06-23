@@ -577,7 +577,7 @@ JSON: {"dmText":"전체 DM 텍스트(줄바꿈은 \\n)"}`,
 
 // ===== 서버사이드 파이프라인 =====
 async function savePipelineStatus(env, pipelineId, patch) {
-  if (!env.PENDING_POSTS) return;
+  if (!env.PENDING_POSTS || !pipelineId) return;
   const key = `pipeline_${pipelineId}`;
   let existing = {};
   try { existing = await env.PENDING_POSTS.get(key, 'json') || {}; } catch {}
@@ -667,13 +667,21 @@ async function handleRunPipeline(env, body, ctx) {
   const { bookInfo, affiliateLinks, commentKeyword } = body;
   if (!bookInfo?.title) throw new Error('책 정보(bookInfo.title)가 필요합니다.');
   if (!env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY가 설정되지 않았습니다.');
-  if (!env.PENDING_POSTS) throw new Error('KV 스토어(PENDING_POSTS)가 설정되지 않았습니다.');
+
+  // KV 없으면 폴백 모드: 서버 백그라운드 실행하되 폴링 없이 진행
+  if (!env.PENDING_POSTS) {
+    const pipelinePromise = executePipeline(env, null, bookInfo, affiliateLinks || [], commentKeyword || '');
+    if (ctx?.waitUntil) ctx.waitUntil(pipelinePromise);
+    else pipelinePromise.catch(() => {});
+    return { success: true, pipelineId: null, mode: 'direct' };
+  }
+
   const pipelineId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   await savePipelineStatus(env, pipelineId, { step: 0, stepStatus: 'active', status: 'started', bookInfo, startedAt: Date.now(), label: '파이프라인 시작 중...' });
   const pipelinePromise = executePipeline(env, pipelineId, bookInfo, affiliateLinks || [], commentKeyword || '');
   if (ctx?.waitUntil) ctx.waitUntil(pipelinePromise);
   else pipelinePromise.catch(() => {});
-  return { success: true, pipelineId };
+  return { success: true, pipelineId, mode: 'kv' };
 }
 
 async function handlePipelineStatus(env, url) {

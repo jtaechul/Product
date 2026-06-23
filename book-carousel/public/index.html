@@ -999,10 +999,11 @@ const SCORE_KEYS = [
 
 // ===== API =====
 async function apiFetch(endpoint, body) {
+  const hasBody = body !== undefined && body !== null;
   const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    method: hasBody ? 'POST' : 'GET',
+    headers: hasBody ? { 'Content-Type': 'application/json' } : {},
+    body: hasBody ? JSON.stringify(body) : undefined,
   });
   const data = await res.json();
   if (!res.ok || data.error) throw new Error(data.error || '서버 오류');
@@ -2047,7 +2048,17 @@ async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
       bookInfo,
       affiliateLinks: Array.isArray(affiliateLinks) ? affiliateLinks : [],
     });
-    const { pipelineId } = data;
+    const { pipelineId, mode } = data;
+
+    if (mode === 'direct' || !pipelineId) {
+      // KV 미설정 폴백: 서버가 백그라운드 실행 중, 브라우저는 진행 중 표시 후 텔레그램 대기
+      setDeployStep(1, 'active', '서버에서 파이프라인 실행 중 (텔레그램 알림 대기)...');
+      showToast(`"${bookInfo.title}" 처리 중입니다. 완료 시 텔레그램으로 알림이 옵니다.`, 'info');
+      for (let i = 2; i <= 6; i++) setDeployStep(i, 'active', null);
+      setDeployStep(7, '', null);
+      return;
+    }
+
     localStorage.setItem('activePipelineId', pipelineId);
     showToast(`"${bookInfo.title}" 파이프라인이 서버에서 시작됐습니다. 창을 닫아도 계속 진행됩니다.`, 'info');
     startPipelinePolling(pipelineId);
