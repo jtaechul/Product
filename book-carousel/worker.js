@@ -91,7 +91,7 @@ async function handleSuggest(env, body) {
   const topic = issue || category || '자기계발';
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: 'claude-opus-4-8',
+    model: 'claude-sonnet-4-6',
     system: '당신은 도서 큐레이터입니다. 현재 베스트셀러 트렌드와 사회적 이슈를 바탕으로 실제 존재하는 책을 추천합니다. 반드시 JSON만 응답합니다.',
     user: `주제: "${topic}"
 
@@ -138,7 +138,7 @@ async function handleGenerate(env, body) {
   if (!title || !author || !coreMessage) throw new Error('제목, 저자, 핵심 메시지는 필수입니다.');
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: 'claude-opus-4-8',
+    model: 'claude-sonnet-4-6',
     system: '당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다. 공포감·호기심·위기감을 자극해 저장·공유율을 높이는 콘텐츠를 씁니다. 반드시 JSON만 응답합니다.',
     user: `다음 책으로 5페이지 인스타그램 캐럿셀을 작성하세요.
 
@@ -259,7 +259,7 @@ JSON: {"caption":"첫줄\\n둘째줄\\n셋째줄\\nDM유도줄","hashtags":["#ta
 async function handleRegenerate(env, body) {
   const { bookInfo, previousPages, feedback, improvements } = body;
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: 'claude-opus-4-8',
+    model: 'claude-sonnet-4-6',
     system: '당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다. 피드백 반영해 개선합니다. 반드시 JSON만 응답합니다.',
     user: `책 "${bookInfo.title}" (${bookInfo.author}) 캐럿셀을 개선하세요.
 
