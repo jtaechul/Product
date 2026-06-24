@@ -335,6 +335,73 @@
       animation: spin .55s linear infinite;
     }
 
+    /* ── PDF upload ── */
+    .btn-pdf {
+      padding: 8px 11px;
+      background: #6d28d9;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: background .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-pdf:hover { background: #5b21b6; }
+    .pdf-result {
+      margin-top: 10px;
+      background: #f5f3ff;
+      border: 1.5px solid #c4b5fd;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 12px;
+    }
+    .pdf-ttl { font-weight: 700; color: #5b21b6; margin-bottom: 8px; }
+    .pdf-candidates { display: flex; flex-direction: column; gap: 6px; }
+    .pdf-cand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff;
+      border: 1px solid #ddd6fe;
+      border-radius: 6px;
+      padding: 7px 10px;
+      gap: 8px;
+    }
+    .pdf-cand-ctx { font-size: 11px; color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pdf-cand-amt { font-weight: 700; font-size: 14px; color: #5b21b6; white-space: nowrap; }
+    .btn-apply {
+      padding: 4px 10px;
+      background: #5b21b6;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-apply:hover { background: #4c1d95; }
+    .pdf-raw {
+      margin-top: 8px;
+      background: #1e1b4b;
+      color: #a5b4fc;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 10px;
+      line-height: 1.55;
+      max-height: 120px;
+      overflow-y: auto;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 580px) {
       .form-grid, .lookup-grid, .cfg-grid { grid-template-columns: 1fr; }
@@ -429,8 +496,20 @@
       </div>
 
       <div class="fg">
-        <label class="lbl">통행료 (원)</label>
-        <input type="number" id="fToll" placeholder="0" value="0" min="0">
+        <label class="lbl">
+          통행료 (원)
+          <span id="pdfBadge" class="badge badge-blue"
+                style="display:none;text-transform:none;letter-spacing:0;">PDF 파싱</span>
+        </label>
+        <div style="display:flex;gap:6px;">
+          <input type="number" id="fToll" placeholder="0" value="0" min="0" style="flex:1;">
+          <label for="pdfUpload" class="btn-pdf" title="한국도로공사 EX 이용내역 PDF 업로드">
+            하이패스 PDF
+          </label>
+          <input type="file" id="pdfUpload" accept=".pdf"
+                 style="display:none;" onchange="parseTollPdf(this)">
+        </div>
+        <div class="pdf-result" id="pdfResult" style="display:none;"></div>
       </div>
 
     </div>
@@ -1069,6 +1148,133 @@ function downloadExcel() {
 /* ========================================================
    HELPERS
    ======================================================== */
+/* ========================================================
+   PDF PARSING — 하이패스 영수증
+   ======================================================== */
+async function parseTollPdf(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const resultEl = document.getElementById('pdfResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div class="pdf-ttl"><span class="spin"></span> PDF 분석 중...</div>';
+
+  try {
+    // Lazy-load PDF.js
+    if (!window.pdfjsLib) {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    const buffer = await file.arrayBuffer();
+    const pdf    = await pdfjsLib.getDocument({ data: buffer }).promise;
+
+    // Extract text from all pages
+    let fullText = '';
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page    = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      fullText += content.items.map(i => i.str).join(' ') + '\n';
+    }
+
+    const candidates = extractTollCandidates(fullText);
+
+    if (candidates.length === 0) {
+      resultEl.innerHTML = `
+        <div class="pdf-ttl" style="color:#dc2626;">금액을 찾지 못했습니다</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">
+          한국도로공사 EX 이용내역 PDF인지 확인하고, 아래 추출 텍스트에서 금액을 직접 입력해주세요.
+        </div>
+        <details>
+          <summary style="font-size:11px;color:var(--muted);cursor:pointer;">추출된 텍스트 보기</summary>
+          <div class="pdf-raw">${escHtml(fullText.slice(0, 800))}</div>
+        </details>`;
+      return;
+    }
+
+    let html = `<div class="pdf-ttl">통행료 금액 후보 — [적용] 버튼으로 자동 입력</div>
+                <div class="pdf-candidates">`;
+    for (const c of candidates) {
+      html += `<div class="pdf-cand">
+        <span class="pdf-cand-ctx">${escHtml(c.context)}</span>
+        <span class="pdf-cand-amt">${c.amount.toLocaleString('ko-KR')}원</span>
+        <button class="btn-apply" onclick="applyToll(${c.amount})">적용</button>
+      </div>`;
+    }
+    html += `</div>`;
+    html += `<details style="margin-top:8px;">
+      <summary style="font-size:11px;color:var(--muted);cursor:pointer;">추출된 전체 텍스트 보기</summary>
+      <div class="pdf-raw">${escHtml(fullText.slice(0, 1200))}</div>
+    </details>`;
+    resultEl.innerHTML = html;
+
+  } catch (e) {
+    resultEl.innerHTML = `
+      <div class="pdf-ttl" style="color:#dc2626;">오류: ${escHtml(e.message || 'PDF 읽기 실패')}</div>
+      <div style="font-size:11px;color:var(--muted);">PDF 파일이 손상되지 않았는지 확인하거나 금액을 직접 입력해주세요.</div>`;
+  }
+
+  input.value = ''; // 같은 파일 재업로드 허용
+}
+
+function extractTollCandidates(text) {
+  const clean = text.replace(/\s+/g, ' ');
+  const seen  = new Set();
+  const results = [];
+
+  // 패턴: 키워드 + 금액 (우선순위 높음 → 낮음)
+  const patterns = [
+    { re: /합\s*계\s*[:：]?\s*([\d,]+)\s*원/g,                 priority: 0, ctx: '합계' },
+    { re: /총\s*(?:요금|금액|통행료)\s*[:：]?\s*([\d,]+)\s*원/g, priority: 0, ctx: '총액' },
+    { re: /납부\s*(?:금액|총액)\s*[:：]?\s*([\d,]+)\s*원/g,      priority: 0, ctx: '납부금액' },
+    { re: /통행\s*(?:요금|료)\s*[:：]?\s*([\d,]+)\s*원/g,        priority: 1, ctx: '통행료' },
+    { re: /(?<![.\d])([\d]{1,3}(?:,\d{3}){1,3})\s*원/g,         priority: 2, ctx: '금액' },
+  ];
+
+  for (const { re, priority, ctx } of patterns) {
+    let m;
+    re.lastIndex = 0;
+    while ((m = re.exec(clean)) !== null) {
+      const amtStr = (m[1] || m[0].match(/([\d,]+)/)?.[1] || '').replace(/,/g, '');
+      const amount = parseInt(amtStr, 10);
+      // 통행료 현실 범위: 500원 ~ 100,000원
+      if (amount >= 500 && amount <= 100000 && !seen.has(amount)) {
+        seen.add(amount);
+        const s = Math.max(0, m.index - 18);
+        const e = Math.min(clean.length, m.index + m[0].length + 18);
+        results.push({ amount, context: '…' + clean.slice(s, e).trim() + '…', priority });
+      }
+    }
+  }
+
+  results.sort((a, b) => a.priority - b.priority || b.amount - a.amount);
+  return results.slice(0, 5);
+}
+
+function applyToll(amount) {
+  document.getElementById('fToll').value = amount;
+  document.getElementById('pdfBadge').style.display = 'inline-block';
+  document.getElementById('pdfResult').style.display = 'none';
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve;
+    s.onerror = () => reject(new Error(`스크립트 로드 실패: ${src}`));
+    document.head.appendChild(s);
+  });
+}
+
 function setBtnLoading(id, loading, restoreText) {
   const btn = document.getElementById(id);
   if (loading) {
