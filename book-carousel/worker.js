@@ -409,19 +409,20 @@ async function handleGenerateCaption(env, body) {
   const { pages, bookInfo, dmKeyword } = body;
   if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
 
-  // 댓글 키워드: 3자 이하, 특수기호 없는 순수 한글/영문
-  let kw = (dmKeyword || bookInfo.category || '독서').replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 3) || '책';
+  // 댓글 키워드 힌트: 특수기호만 제거하고 원형 그대로 Claude에 전달.
+  // Claude가 자연스러운 완결 단어(2~3자)를 직접 선택한다 — 강제 절단 금지.
+  const kwHint = (dmKeyword || bookInfo.category || '독서').replace(/[^가-힣a-zA-Z0-9]/g, '') || '독서';
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
     max_tokens: 512,
     system: '당신은 인스타그램 마케터입니다. 댓글 유도 중심의 짧고 강렬한 캡션을 작성합니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 반드시 JSON만 응답합니다.',
-    user: `책 카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n댓글 키워드: "${kw}" (방문자가 댓글에 이 키워드를 남기면 DM으로 책 정보와 구매링크를 자동 발송하는 시스템)\n\n인스타그램 캡션을 작성하세요.\n\n규칙:\n- 첫 줄: 호기심/위기감 자극 단문 또는 질문 (책 제목 절대 노출 금지)\n- 2~3줄: 캐럿셀 핵심만 초간결 요약 (반복 금지, 노골적 판매 금지)\n- 마지막 줄: "댓글에 '${kw}'를 남겨주세요" 형태의 자연스러운 유도 문구\n- 해시태그: 정확히 3개 (카테고리 관련)\n- 전체 5줄 이내, 짧고 강렬하게\n\nJSON: {"caption":"첫줄\\n둘째줄\\n셋째줄\\n댓글유도줄","hashtags":["#tag1","#tag2","#tag3"],"commentKeyword":"${kw}"}`,
+    user: `책 카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n\n[댓글 키워드 선택 규칙]\n- 주제 힌트: "${kwHint}"\n- 이 주제에서 자연스럽고 완결된 단어를 댓글 키워드로 선택한다.\n- 키워드는 기본적으로 2자를 사용한다. 3자는 그 단어 자체가 원래부터 3자인 경우에만 허용한다.\n- 긴 단어를 억지로 잘라 만들지 않는다. (예: '경제투자'→'경제' 또는 '투자' 중 하나 선택. '경제투'처럼 어색하게 자르기 절대 금지)\n\n인스타그램 캡션을 작성하세요.\n\n규칙:\n- 첫 줄: 호기심/위기감 자극 단문 또는 질문 (책 제목 절대 노출 금지)\n- 2~3줄: 캐럿셀 핵심만 초간결 요약 (반복 금지, 노골적 판매 금지)\n- 마지막 줄: "댓글에 '[선택한 키워드]'를 남겨주세요" 형태의 자연스러운 유도 문구\n- 해시태그: 정확히 3개 (카테고리 관련)\n- 전체 5줄 이내, 짧고 강렬하게\n\nJSON: {"caption":"첫줄\\n둘째줄\\n셋째줄\\n댓글유도줄","hashtags":["#tag1","#tag2","#tag3"],"commentKeyword":"[2~3자 자연스러운 완결 키워드]"}`,
   });
 
   const result = extractJson(text);
   // 구형 dmKeyword 필드도 호환성 유지
-  result.dmKeyword = result.commentKeyword || kw;
+  result.dmKeyword = result.commentKeyword || kwHint.slice(0, 2) || '책';
   return { success: true, ...result };
 }
 
