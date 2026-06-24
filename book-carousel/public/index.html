@@ -2108,25 +2108,33 @@ async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
   progressPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
   for (let i = 1; i <= 7; i++) setDeployStep(i, '', null);
 
-  // 서버 파이프라인 시도: 1초 이내 응답, 탭을 닫아도 서버에서 계속 진행
-  try {
-    const result = await apiFetch('/api/pipeline-start', {
-      bookInfo,
-      affiliateLinks: affiliateLinks || [],
-    });
-    if (result && result.pipelineId) {
-      localStorage.setItem('activePipelineId', result.pipelineId);
-      showToast(`"${bookInfo.title}" 서버에서 처리 시작 — 탭을 닫아도 계속 진행됩니다`, 'success');
-      setDeployStep(1, 'active', 'Claude AI가 5페이지 카드뉴스를 작성 중...');
-      startPipelinePolling(result.pipelineId);
-      return;
+  // 서버 파이프라인 — 탭·앱을 꺼도 서버에서 계속 진행
+  // bookInfo를 localStorage에 함께 저장 → 페이지 재로드 후에도 복구 가능
+  let lastErr = '';
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 2000 * attempt));
+      const result = await apiFetch('/api/pipeline-start', {
+        bookInfo,
+        affiliateLinks: affiliateLinks || [],
+      });
+      if (result && result.pipelineId) {
+        localStorage.setItem('activePipelineId', result.pipelineId);
+        localStorage.setItem('activePipelineBookInfo', JSON.stringify(bookInfo));
+        showToast(`"${bookInfo.title}" 서버에서 처리 시작 — 앱을 꺼도 계속 진행됩니다`, 'success');
+        setDeployStep(1, 'active', 'Claude AI가 5페이지 카드뉴스를 작성 중...');
+        startPipelinePolling(result.pipelineId);
+        return;
+      }
+    } catch (e) {
+      lastErr = e.message;
+      console.warn(`서버 파이프라인 시도 ${attempt + 1} 실패:`, e.message);
     }
-  } catch (e) {
-    console.warn('서버 파이프라인 실패, 브라우저 모드로 전환:', e.message);
   }
 
-  // 폴백: 브라우저 파이프라인 (탭을 열어두세요)
-  showToast(`"${bookInfo.title}" 생성 시작... (탭을 열어두세요)`, 'info');
+  // 3회 모두 실패 — 사용자에게 명확히 알리고 브라우저 모드로 전환
+  showToast(`서버 연결 실패 (${lastErr}) — 탭을 열어둔 채로 진행합니다`, 'warning');
+  setDeployStep(1, 'active', 'Claude AI가 5페이지 카드뉴스를 작성 중... (탭을 유지해주세요)');
   await runBrowserPipeline(bookInfo, affiliateLinks);
 }
 
@@ -2279,41 +2287,85 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
 }
 
 let _pipelinePoller = null;
+let _currentPollId = null; // 폴링 중인 파이프라인 ID (visibilitychange 복귀 시 참조)
 
 function startPipelinePolling(pipelineId) {
   clearTimeout(_pipelinePoller);
+  _currentPollId = pipelineId;
+
   const poll = async () => {
+    // iOS: 페이지가 숨겨진 상태에서는 네트워크 요청 안 함 → 배터리·메모리 절약
+    // visibilitychange 핸들러가 복귀 시 poll()을 직접 호출하므로 여기서 리턴만 해도 됨
+    if (document.hidden) {
+      _pipelinePoller = setTimeout(poll, 10000); // 숨겨졌을 때는 10초마다 느슨하게
+      return;
+    }
+
     try {
       const status = await apiFetch('/api/pipeline-status?id=' + encodeURIComponent(pipelineId));
       applyPipelineStatus(status);
       if (status.status === 'complete') {
         localStorage.removeItem('activePipelineId');
+        localStorage.removeItem('activePipelineBookInfo');
+        _currentPollId = null;
         renderPipelineResults(status);
         return;
       }
       if (status.status === 'error') {
         localStorage.removeItem('activePipelineId');
+        localStorage.removeItem('activePipelineBookInfo');
+        _currentPollId = null;
         showToast('파이프라인 오류: ' + (status.error || '알 수 없는 오류'), 'error');
         return;
       }
       if (status.status === 'not_found') {
         localStorage.removeItem('activePipelineId');
+        localStorage.removeItem('activePipelineBookInfo');
+        _currentPollId = null;
         return;
       }
-      // 5분 이상 업데이트 없으면 타임아웃으로 처리
-      if (status.updatedAt && Date.now() - status.updatedAt > 5 * 60 * 1000) {
+      // 8분 이상 업데이트 없으면 타임아웃
+      if (status.updatedAt && Date.now() - status.updatedAt > 8 * 60 * 1000) {
         localStorage.removeItem('activePipelineId');
+        localStorage.removeItem('activePipelineBookInfo');
+        _currentPollId = null;
         showToast('서버 처리가 응답하지 않습니다. 다시 시도해주세요.', 'error');
         return;
       }
       _pipelinePoller = setTimeout(poll, 3000);
     } catch (err) {
       console.warn('폴링 실패:', err);
-      _pipelinePoller = setTimeout(poll, 5000);
+      _pipelinePoller = setTimeout(poll, 6000);
     }
   };
   poll();
 }
+
+// ── iOS 앱 전환·화면 꺼짐 복귀 처리 ──────────────────────────────────────────
+
+// (1) visibilitychange: 앱 전환 후 Safari 탭이 살아서 돌아온 경우
+//     setTimeout이 iOS에 의해 정지돼 있으므로, 화면에 다시 나타나는 순간 즉시 폴링 재개
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && _currentPollId) {
+    clearTimeout(_pipelinePoller);
+    // 탭이 살아있으면 즉시 상태 확인
+    startPipelinePolling(_currentPollId);
+  }
+});
+
+// (2) pageshow: iOS BFCache(빠른 복귀 캐시)에서 페이지가 통째로 복원된 경우
+//     이 경우엔 JS 변수가 멈춰있던 상태 그대로라 _currentPollId가 살아있을 수 있음.
+//     persisted=true 이면 BFCache 복귀, 그냥 reload 이면 false
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) {
+    // BFCache 복귀 → 폴링 재개
+    const savedId = localStorage.getItem('activePipelineId') || _currentPollId;
+    if (savedId) {
+      clearTimeout(_pipelinePoller);
+      startPipelinePolling(savedId);
+    }
+  }
+});
 
 function applyPipelineStatus(status) {
   const step = status.step || 0;
@@ -2355,35 +2407,56 @@ function renderPipelineResults(status) {
 }
 
 // 페이지 로드 시 이전 파이프라인 복구
+// iOS에서 탭이 죽었다 살아나도 localStorage에 ID가 남아있으면 결과를 복원한다
 (async () => {
   const savedId = localStorage.getItem('activePipelineId');
   if (!savedId) return;
-  try {
-    const status = await apiFetch('/api/pipeline-status?id=' + encodeURIComponent(savedId));
-    if (!status || status.status === 'not_found') {
-      localStorage.removeItem('activePipelineId');
-      return;
-    }
-    switchTab('tabAutoDeploy');
-    document.getElementById('progressPanel').classList.add('visible');
-    document.getElementById('emptyState').style.display = 'none';
-    applyPipelineStatus(status);
 
-    if (status.status === 'complete') {
-      localStorage.removeItem('activePipelineId');
-      renderPipelineResults(status);
-      showToast('이전에 생성된 캐럿셀이 완성됐습니다!', 'success');
-    } else if (status.status === 'error') {
-      localStorage.removeItem('activePipelineId');
-      showToast('이전 파이프라인에서 오류가 발생했습니다. 다시 시도해주세요.', 'error');
-    } else if (status.status === 'running') {
-      // 서버에서 아직 처리 중 — 폴링 재개
-      showToast('이전에 시작한 캐럿셀 생성이 서버에서 진행 중입니다...', 'info');
-      startPipelinePolling(savedId);
-    } else {
-      localStorage.removeItem('activePipelineId');
+  // 저장된 bookInfo로 deployState 복원 (재시도 등에 필요)
+  try {
+    const savedBook = JSON.parse(localStorage.getItem('activePipelineBookInfo') || 'null');
+    if (savedBook && !deployState.selectedBook) {
+      deployState.selectedBook = savedBook;
     }
-  } catch { localStorage.removeItem('activePipelineId'); }
+  } catch {}
+
+  let status;
+  try {
+    status = await apiFetch('/api/pipeline-status?id=' + encodeURIComponent(savedId));
+  } catch {
+    // 네트워크 오류 — 파이프라인이 아직 살아있을 수 있으므로 조용히 종료
+    return;
+  }
+
+  if (!status || status.status === 'not_found') {
+    localStorage.removeItem('activePipelineId');
+    localStorage.removeItem('activePipelineBookInfo');
+    return;
+  }
+
+  // 자동 배포 탭으로 전환 및 진행 패널 노출
+  switchTab('tabAutoDeploy');
+  const progressPanel = document.getElementById('progressPanel');
+  progressPanel.classList.add('visible');
+  document.getElementById('emptyState').style.display = 'none';
+  applyPipelineStatus(status);
+
+  if (status.status === 'complete') {
+    localStorage.removeItem('activePipelineId');
+    localStorage.removeItem('activePipelineBookInfo');
+    renderPipelineResults(status);
+    showToast('캐럿셀 생성이 완료됐습니다! 텔레그램을 확인해주세요.', 'success');
+  } else if (status.status === 'error') {
+    localStorage.removeItem('activePipelineId');
+    localStorage.removeItem('activePipelineBookInfo');
+    showToast('이전 작업에서 오류가 발생했습니다. 다시 시도해주세요.', 'error');
+  } else if (status.status === 'running') {
+    showToast('서버에서 계속 진행 중... 잠시 기다려주세요.', 'info');
+    startPipelinePolling(savedId);
+  } else {
+    localStorage.removeItem('activePipelineId');
+    localStorage.removeItem('activePipelineBookInfo');
+  }
 })();
 
 // 자동 배포탭 인스타그램 직접 게시
