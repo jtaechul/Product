@@ -549,7 +549,7 @@
         <a id="naverLink" href="https://map.kakao.com" target="_blank" class="btn-naver">
           🗺 카카오맵에서 경로 확인 (출발·도착 자동입력)
         </a>
-        <div class="lk-meta" style="margin-top:5px;font-size:10.5px;">PC 브라우저에서 자동 길찾기됩니다. 도착지가 안 잡히면 카카오맵에서 직접 검색하세요.</div>
+        <div id="mapHint" class="lk-meta" style="margin-top:5px;font-size:10.5px;">PC 브라우저에서 자동 길찾기됩니다. 도착지가 안 잡히면 카카오맵에서 직접 검색하세요.</div>
         <div class="manual-row">
           <input type="number" id="manDist" placeholder="왕복 거리 입력 (예: 92)"
                  step="0.1" min="0" oninput="onManDist()">
@@ -685,8 +685,16 @@ const BASE_NAME = '해양환경공단 본사';
 // 카카오맵 출발지: 도로명주소보다 매칭률이 높은 건물명 사용
 const KAKAO_SRC = '해양환경공단 본사';
 
-// 카카오맵 길찾기 URL — 출발지·도착지를 텍스트로 검색해 자동차 경로 표시 (PC 웹)
-function buildKakaoRouteUrl(dest) {
+// 기기별 지도 URL — iOS: Apple Maps (주소 직접 지원), PC/Android: 카카오맵 웹
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+function buildMapUrl(dest) {
+  if (isIOS()) {
+    return 'https://maps.apple.com/?saddr=' + encodeURIComponent(BASE_NAME)
+      + '&daddr=' + encodeURIComponent(dest)
+      + '&dirflg=d';
+  }
   return 'https://map.kakao.com/?target=car'
     + '&sName=' + encodeURIComponent(KAKAO_SRC)
     + '&eName=' + encodeURIComponent(dest);
@@ -798,14 +806,25 @@ function refreshUI() {
     btnP.textContent = '날짜를 먼저 선택하세요';
   }
 
-  // 카카오맵 길찾기 링크 (출발지·도착지 주소 텍스트로 자동 검색 → 자동차 경로)
+  // 기기별 지도 링크
   const mapLink = document.getElementById('naverLink');
+  const mapHint = document.getElementById('mapHint');
+  const ios = isIOS();
   if (dest) {
-    const url = buildKakaoRouteUrl(dest);
+    const url = buildMapUrl(dest);
     mapLink.href = url;
     document.getElementById('naverLinkResult').href = url;
+    mapLink.textContent = ios
+      ? '🗺 Apple Maps에서 경로 확인 (자동입력)'
+      : '🗺 카카오맵에서 경로 확인 (출발·도착 자동입력)';
+    mapHint.textContent = ios
+      ? 'iPhone에서 Apple 지도가 자동으로 열립니다.'
+      : 'PC 브라우저에서 자동 길찾기됩니다. 도착지가 안 잡히면 카카오맵에서 직접 검색하세요.';
   } else {
-    mapLink.href = 'https://map.kakao.com';
+    mapLink.href = ios ? 'https://maps.apple.com' : 'https://map.kakao.com';
+    mapLink.textContent = ios
+      ? '🗺 Apple Maps에서 경로 확인 (자동입력)'
+      : '🗺 카카오맵에서 경로 확인 (출발·도착 자동입력)';
   }
 }
 
@@ -1114,7 +1133,7 @@ function calculate() {
   document.getElementById('r-amount').textContent = amount.toLocaleString('ko-KR') + ' 원';
   document.getElementById('r-basis').textContent  = basis;
 
-  document.getElementById('naverLinkResult').href = buildKakaoRouteUrl(dest);
+  document.getElementById('naverLinkResult').href = buildMapUrl(dest);
 
   S.calcResult = { name, purpose, period, cop, fType, fuelName: fuel.name,
                    price, dist, eff, toll, amount, basis, dest };
