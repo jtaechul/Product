@@ -863,6 +863,7 @@
       <button class="btn btn-outline" id="regenerateBtn">캐럿셀 다시 생성</button>
       <button class="btn btn-outline" id="copyAllBtn">전체 복사</button>
       <button class="btn btn-outline" id="generateImagesBtn" style="background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;border:none;">이미지 생성</button>
+      <button class="btn btn-outline" id="saveAllImagesBtn" style="background:linear-gradient(135deg,#064e3b,#065f46);color:#fff;border:none;">이미지 전체 저장</button>
       <button class="btn btn-validate" id="validateBtn">품질 검증</button>
     </div>
   </div>
@@ -1580,6 +1581,30 @@ function addSaveButton(card, pageNum) {
   card.appendChild(btn);
 }
 
+// 이미지 전체 저장 (5장 순차 다운로드)
+async function saveAllCards() {
+  const cards = document.querySelectorAll('#carouselScroll .card');
+  const hasImages = [...cards].some(c => c.dataset.blobUrl);
+  if (!hasImages) {
+    showToast('먼저 이미지를 생성해 주세요', 'warning');
+    return;
+  }
+  const btn = document.getElementById('saveAllImagesBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '저장 중... (0/5)'; }
+  let saved = 0;
+  for (let i = 0; i < Math.min(cards.length, 5); i++) {
+    if (!cards[i]) continue;
+    if (btn) btn.textContent = `저장 중... (${i + 1}/5)`;
+    await saveCardAsCanvas(cards[i], i + 1);
+    saved++;
+    await new Promise(r => setTimeout(r, 300));
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '이미지 전체 저장'; }
+  showToast(`총 ${saved}장 저장 완료`, 'success');
+}
+
+document.getElementById('saveAllImagesBtn').addEventListener('click', saveAllCards);
+
 // 텍스트+배경 합성 이미지를 base64 data URL로 반환 (텔레그램 발송용)
 async function generateCompositeDataUrl(card, pageNum) {
   const W = 1080, H = 1080;
@@ -1778,13 +1803,16 @@ async function saveCardAsCanvas(card, pageNum) {
   ctx.fillRect(PAD_X, curY, ACCENT_W, ACCENT_H);
 
   // ⑤ PNG 다운로드
-  canvas.toBlob(blob => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `carousel_p${pageNum}.png`;
-    document.body.appendChild(a); a.click(); a.remove();
-    showToast(`페이지 ${pageNum} 저장 완료 (이미지+텍스트)`, 'success');
-  }, 'image/png');
+  return new Promise(resolve => {
+    canvas.toBlob(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `carousel_p${pageNum}.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+      showToast(`페이지 ${pageNum} 저장 완료`, 'success');
+      resolve();
+    }, 'image/png');
+  });
 }
 
 // 텍스트를 줄 배열로만 측정 (실제 렌더 없음) — bottom-anchored 레이아웃용
