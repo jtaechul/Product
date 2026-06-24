@@ -812,10 +812,11 @@ function showDist(v, meta) {
 }
 
 /* ========================================================
-   OPINET API — 전국 평균 유가 조회
-   avgDailyPrice.do  = 날짜별 일간 평균 (오피넷>국내유가통계>일간 기준값) ← 1순위
-   avgAllPrice.do    = 이번 주 전국 평균                                   ← 2순위
-   avgRecentMonthlyPrice.do = 이번 달 평균 (fallback)                      ← 3순위
+   OPINET API — 일간 평균 유가 조회 (제품별 평균판매가격)
+   dateAvgRecentPrice.do = 특정일 기준 직전 7일 일별 (오피넷 일간 통계값) ← 1순위
+   avgRecentPrice.do     = 최근 7일 일별 평균                            ← 2순위
+   avgAllPrice.do        = 현재 전국 평균 스냅샷 (최후 fallback)          ← 3순위
+   ⚠ avgDailyPrice.do / avgRecentMonthlyPrice.do 는 오피넷에 존재하지 않는 주소
    ======================================================== */
 async function fetchPrice() {
   const opKey = ls('opinetKey');
@@ -831,35 +832,48 @@ async function fetchPrice() {
 
   setBtnLoading('btnPrice', true);
 
-  const dateFmt = dateS.replace(/-/g, '');
-
-  // ── 일간 평균: 출장일 기준, 데이터 없으면 최대 7일 이전까지 소급 ──
-  // (오피넷은 당일/주말 데이터가 다음 영업일 이후 등록될 수 있음)
-  const slideDate = (base, daysBack) => {
-    const d = new Date(base);
-    d.setDate(d.getDate() - daysBack);
-    return d.toISOString().slice(0, 10).replace(/-/g, '');
-  };
+  const dateFmt = dateS.replace(/-/g, '');           // YYYYMMDD (출장일)
+  const fmtDate = d => (d && d.length === 8)
+    ? `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6)}` : d;
 
   let found = false;
 
-  // 1순위: 일간 평균 (출장일 포함 최근 7일 소급)
-  for (let back = 0; back <= 7 && !found; back++) {
-    const dt = slideDate(dateS, back);
-    const label = back === 0 ? `${dateS} 일간 평균` : `${dt.slice(0,4)}-${dt.slice(4,6)}-${dt.slice(6)} 일간 평균(소급)`;
+  // 1순위: 특정일(출장일) 기준 직전 7일 일별 평균 → 출장일 정확 매칭
+  //   dateAvgRecentPrice.do?date=YYYYMMDD : 그 날 포함 7일치 일간값(과거일도 조회 가능)
+  if (!found) {
     try {
-      const url = `https://www.opinet.co.kr/api/avgDailyPrice.do?code=${opKey}&out=json&startDt=${dt}&endDt=${dt}`;
-      const data = await fetchWithProxy(url);
-      const price = parseDailyPrice(data, fuel.opinetCode);
-      if (!price) continue;
-      S.price = price;
-      document.getElementById('manPrice').value = price.toFixed(2);
-      showPrice(price, `${label} (오피넷 자동 조회)`);
-      found = true;
-    } catch { /* try next day */ }
+      const data = await fetchWithProxy(
+        `https://www.opinet.co.kr/api/dateAvgRecentPrice.do?code=${opKey}&out=json&date=${dateFmt}`
+      );
+      const picked = pickDailyPrice(data, fuel.opinetCode, dateFmt);
+      if (picked) {
+        S.price = picked.price;
+        document.getElementById('manPrice').value = picked.price.toFixed(2);
+        const exact = picked.date === dateFmt;
+        showPrice(picked.price,
+          `${fmtDate(picked.date)} 일간 평균${exact ? '' : '(출장일 직전)'} (오피넷 자동 조회)`);
+        found = true;
+      }
+    } catch {}
   }
 
-  // 2순위: 이번 주 전국 평균
+  // 2순위: 최근 7일 일별 평균 (date 미지원 환경 대비) → 출장일 또는 가장 가까운 날
+  if (!found) {
+    try {
+      const data = await fetchWithProxy(
+        `https://www.opinet.co.kr/api/avgRecentPrice.do?code=${opKey}&out=json`
+      );
+      const picked = pickDailyPrice(data, fuel.opinetCode, dateFmt);
+      if (picked) {
+        S.price = picked.price;
+        document.getElementById('manPrice').value = picked.price.toFixed(2);
+        showPrice(picked.price, `${fmtDate(picked.date)} 일간 평균 (최근 7일·오피넷 자동 조회)`);
+        found = true;
+      }
+    } catch {}
+  }
+
+  // 3순위: 현재 전국 평균 스냅샷 (일간 데이터가 없을 때 최후)
   if (!found) {
     try {
       const data = await fetchWithProxy(
@@ -869,23 +883,7 @@ async function fetchPrice() {
       if (price) {
         S.price = price;
         document.getElementById('manPrice').value = price.toFixed(2);
-        showPrice(price, '이번 주 전국 평균 (오피넷 자동 조회)');
-        found = true;
-      }
-    } catch {}
-  }
-
-  // 3순위: 이번 달 평균
-  if (!found) {
-    try {
-      const data = await fetchWithProxy(
-        `https://www.opinet.co.kr/api/avgRecentMonthlyPrice.do?code=${opKey}&out=json&yearMonth=${dateFmt.slice(0,6)}`
-      );
-      const price = parseOilList(data, fuel.opinetCode);
-      if (price) {
-        S.price = price;
-        document.getElementById('manPrice').value = price.toFixed(2);
-        showPrice(price, `${dateFmt.slice(0,6)} 월 평균 (오피넷 자동 조회)`);
+        showPrice(price, '현재 전국 평균 (오피넷 자동 조회·일간값 없음)');
         found = true;
       }
     } catch {}
@@ -899,39 +897,23 @@ async function fetchPrice() {
   setBtnLoading('btnPrice', false, '유가 자동 조회');
 }
 
-// avgDailyPrice.do 응답 파싱 — OIL 배열 또는 OIL_PRICE 배열 둘 다 처리
-function parseDailyPrice(data, prodcd) {
-  // 형식 A: RESULT.OIL 배열 (avgAllPrice와 동일 구조)
-  const oilList = data?.RESULT?.OIL || data?.result?.OIL;
-  if (oilList) {
-    const item = oilList.find(o => o.PRODCD === prodcd);
-    if (item) {
-      const p = parseFloat(item.PRICE);
-      if (p > 0) return p;
-    }
-  }
-  // 형식 B: OIL_PRICE 배열 (일별 데이터가 날짜별로 묶인 경우)
-  const oilPrice = data?.RESULT?.OIL_PRICE || data?.result?.OIL_PRICE;
-  if (Array.isArray(oilPrice)) {
-    // 최신 날짜 항목 선택
-    const sorted = [...oilPrice].sort((a, b) => (b.DATE || '').localeCompare(a.DATE || ''));
-    for (const row of sorted) {
-      const item = (row.OIL || []).find(o => o.PRODCD === prodcd);
-      if (item) {
-        const p = parseFloat(item.PRICE);
-        if (p > 0) return p;
-      }
-      // OIL_PRICE 배열 항목 자체에 PRODCD/PRICE가 있는 경우
-      if (row.PRODCD === prodcd) {
-        const p = parseFloat(row.PRICE);
-        if (p > 0) return p;
-      }
-    }
-  }
-  return null;
+// dateAvgRecentPrice / avgRecentPrice 응답 파싱 — RESULT.OIL[] = {DATE, PRODCD, PRICE}
+// 출장일(target) 정확 매칭 우선 → 없으면 출장일 이하 최신 → 그것도 없으면 전체 최신
+function pickDailyPrice(data, prodcd, target) {
+  const oil = data?.RESULT?.OIL || data?.result?.OIL;
+  if (!Array.isArray(oil)) return null;
+  const rows = oil
+    .filter(o => o.PRODCD === prodcd)
+    .map(o => ({ date: String(o.DATE || '').replace(/-/g, ''), price: parseFloat(o.PRICE) }))
+    .filter(r => r.date.length === 8 && r.price > 0)
+    .sort((a, b) => b.date.localeCompare(a.date));   // 최신순
+  if (rows.length === 0) return null;
+  return rows.find(r => r.date === target)            // ① 출장일 정확 매칭
+      || rows.find(r => r.date <= target)             // ② 출장일 이하 중 최신
+      || rows[0];                                     // ③ 전체 최신
 }
 
-// avgAllPrice / avgRecentMonthlyPrice 응답 파싱
+// avgAllPrice 응답 파싱 (현재 스냅샷 1건)
 function parseOilList(data, prodcd) {
   const oilList = data?.RESULT?.OIL || data?.result?.OIL;
   if (!oilList) return null;
