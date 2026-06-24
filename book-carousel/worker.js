@@ -393,53 +393,78 @@ approved는 totalScore>=70이면 true.`
   return { success: true, ...extractJson(text) };
 }
 
-// page5가 누락되는 원인: max_tokens 부족 시 Claude가 JSON에서 page5를 생략해도
-// extractJson이 유효한 JSON을 파싱, applyImagesToCards가 조용히 건너뜀.
-// 대책: max_tokens 1200으로 상향 + 누락 페이지를 폴백 프롬프트로 보완.
+// 페이지별 폴백 프롬프트 — Claude가 생성 실패 시 사용
+// 각 페이지의 감정 흐름(긴장→문제→충격→희망→여운)에 맞춘 비주얼 방향
 const FALLBACK_IMAGE_PROMPTS = {
-  page1: 'open book on rustic wooden cafe table, warm morning sunlight, steam from coffee cup beside, editorial lifestyle photography, soft bokeh, cozy atmosphere, no text',
-  page2: 'person holding book thoughtfully at sunlit window, soft natural light, contemplative mood, warm tones, lifestyle editorial photography, no text',
-  page3: 'neatly stacked classic books on minimal desk with reading glasses, warm lamp light, calm focused atmosphere, editorial photography, no text',
-  page4: 'single open book with golden hour sunlight rays, hopeful warm light streaming through window, cozy and serene, lifestyle photography, no text',
-  page5: 'closed book on autumn leaves path, peaceful open-ended scene, soft natural daylight, warm earthy tones, editorial photography, no text',
+  page1: 'lone figure standing at edge of foggy cliff at dawn, dramatic cinematic atmosphere, tension and anticipation, dark moody tones with single ray of light, no text',
+  page2: 'empty chair at cluttered desk late at night, single lamp light, papers scattered, documentary style photography, melancholic urban atmosphere, no text',
+  page3: 'cracked dry earth under harsh sunlight, stark contrast, bold graphic composition, striking and impactful, warning visual, no text',
+  page4: 'hands opening a book as golden sunrise light spills through, warm breakthrough feeling, hopeful and uplifting, soft natural light, no text',
+  page5: 'solitary path through autumn forest, soft diffused light, contemplative open horizon, peaceful but unresolved, invitation to journey, no text',
+};
+
+// 페이지별 시각 방향 지침 — Claude 프롬프트 생성 가이드
+const PAGE_VISUAL_DIRECTIONS = {
+  page1: '강렬한 긴장감과 호기심. 극적이고 시네마틱한 분위기. 무언가를 발견하기 직전의 서스펜스. 어둡고 무거운 톤이지만 단 하나의 빛줄기나 희망 요소를 포함.',
+  page2: '현실적 문제 상황. 다큐멘터리 사진 스타일. 일상 속 고통·불안·결핍감. 도시적이거나 사무적인 공간. 사람의 뒷모습·그림자 등 감정이입 요소.',
+  page3: '충격적이고 대담한 시각 대비. 강렬한 구도와 선명한 색 대비. "이것이 현실이다"는 경각심을 주는 강렬한 이미지. 볼드하고 기억에 남는 시각 임팩트.',
+  page4: '전환점과 희망. 따뜻하고 밝아지는 빛. 책·지식·통찰을 상징하는 소품. 어둠에서 빛으로 향하는 느낌. 가능성과 변화의 기운.',
+  page5: '여운과 사색. 넓은 시야·열린 지평선. 조용하고 여백이 많은 구도. 독자가 스스로 결론을 내리도록 유도하는 열린 결말 분위기. 부드럽고 평화로운 자연광.',
 };
 
 async function handleGenerateImages(env, body) {
   const { pages, bookInfo } = body;
   if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
 
+  // 페이지 전체 내용 구성 (헤드라인 + 본문 요약) — 내용 부합도 극대화
+  const pageContents = {
+    page1: [pages.page1?.headline, pages.page1?.body?.slice(0, 80)].filter(Boolean).join(' / '),
+    page2: [pages.page2?.headline, pages.page2?.body?.slice(0, 80)].filter(Boolean).join(' / '),
+    page3: [pages.page3?.headline, pages.page3?.body?.slice(0, 80)].filter(Boolean).join(' / '),
+    page4: [pages.page4?.headline, pages.page4?.body?.slice(0, 80)].filter(Boolean).join(' / '),
+    page5: [pages.page5?.cta, pages.page5?.body?.slice(0, 80)].filter(Boolean).join(' / '),
+  };
+
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
-    max_tokens: 1200,
-    system: '당신은 AI 이미지 프롬프트 전문가입니다. 인스타그램 북큐레이션 계정용 따뜻하고 감성적인 라이프스타일 사진 프롬프트를 영어로 작성합니다. 반드시 JSON만 응답합니다.',
+    max_tokens: 1400,
+    system: '당신은 AI 이미지 프롬프트 전문가입니다. 인스타그램 카드뉴스의 각 페이지 내용과 감정 흐름에 정확히 부합하는 Stable Diffusion 영어 프롬프트를 작성합니다. 반드시 JSON만 응답합니다.',
     user: `책 카테고리: ${bookInfo.category || '자기계발'}
+책 핵심 주제: ${bookInfo.coreMessage || bookInfo.title || ''}
 
-각 페이지 핵심 메시지:
-1페이지(훅): ${pages.page1?.headline || ''}
-2페이지(문제): ${pages.page2?.headline || ''}
-3페이지(심각성): ${pages.page3?.headline || ''}
-4페이지(실마리): ${pages.page4?.headline || ''}
-5페이지(반문·결말): ${pages.page5?.cta || ''}
-
-위 내용에 맞는 따뜻하고 감성적인 라이프스타일 사진 프롬프트를 정확히 5개 작성하세요.
+아래 5페이지 카드뉴스 내용을 보고, 각 페이지의 내용과 감정에 정확히 부합하는 배경 이미지 프롬프트 5개를 작성하세요.
 page1~page5 키를 반드시 모두 포함해야 합니다.
 
-규칙:
-- 따뜻하고 차분한 자연광 분위기 (warm natural light, soft tones, cozy lifestyle)
-- 책·노트·커피 등 독서 관련 소품 자연스럽게 포함 가능 (books, notebooks, coffee allowed)
-- 공포·혐오·어둠·섬뜩한 이미지 절대 금지 (no horror, no darkness, no disturbing imagery)
-- 차분하지만 의미 있는 편집 사진 분위기 (editorial lifestyle photography, calm, contemplative)
-- 인스타그램 북큐레이션 계정 감성 (book aesthetic, cozy reading atmosphere)
-- 텍스트·글자 없음 (no text)
-- Instagram 1:1 정사각형 최적화
-- 영어, 50단어 이내
+=== 각 페이지 내용 ===
+1페이지(훅 — 충격·공포·호기심): ${pageContents.page1}
+  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page1}
+
+2페이지(문제 — 현실 직시): ${pageContents.page2}
+  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page2}
+
+3페이지(심각성 — 경각심): ${pageContents.page3}
+  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page3}
+
+4페이지(실마리 — 희망·전환): ${pageContents.page4}
+  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page4}
+
+5페이지(CTA — 여운·초대): ${pageContents.page5}
+  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page5}
+
+=== 공통 규칙 ===
+- 페이지별 내용과 감정을 구체적으로 반영할 것 (추상적 책 이미지 5개 금지)
+- 인물 얼굴 클로즈업 금지 (뒷모습·실루엣·손 등 허용)
+- 텍스트·글자·숫자 없음 (no text, no letters)
+- Instagram 1:1 정사각형 구도
+- 각 프롬프트는 영어, 60단어 이내
+- 하단 30%는 어둡거나 단순한 영역으로 구성 (텍스트 오버레이 공간 확보)
 
 JSON (page1~page5 모두 필수): {"page1":"prompt","page2":"prompt","page3":"prompt","page4":"prompt","page5":"prompt"}`,
   });
 
   const prompts = extractJson(text);
 
-  // 5페이지 모두 존재하는지 확인 — 누락 시 폴백 프롬프트로 보완
+  // 5페이지 모두 존재하는지 확인 — 누락 시 페이지별 폴백으로 보완
   for (let i = 1; i <= 5; i++) {
     const key = `page${i}`;
     if (!prompts[key] || typeof prompts[key] !== 'string' || prompts[key].trim() === '') {
@@ -447,7 +472,7 @@ JSON (page1~page5 모두 필수): {"page1":"prompt","page2":"prompt","page3":"pr
     }
   }
 
-  const suffix = ', lifestyle editorial photography, warm soft natural light, cozy book aesthetic, no text, high quality';
+  const suffix = ', no text, no letters, high quality, Instagram square format 1:1';
   const base = 'https://image.pollinations.ai/prompt/';
 
   // 페이지마다 다른 seed → 동일 요청 충돌·캐시 문제로 인한 로딩 실패 감소

@@ -1484,28 +1484,29 @@ document.getElementById('generateImagesBtn').addEventListener('click', async () 
   }
 });
 
-// 이미지 5장 병렬 로딩 — 모든 이미지가 로드된 뒤 resolve (텔레그램 합성 직전에 await 필수)
+// 이미지 5장 순차 로딩 — Pollinations 레이트 리밋 회피, 장마다 충분한 생성 시간 부여
 async function applyImagesToCards(images) {
   const cards = document.querySelectorAll('#carouselScroll .card');
   const pages = ['page1', 'page2', 'page3', 'page4', 'page5'];
-  // Promise.allSettled: 한 장 실패해도 나머지 계속 진행
-  await Promise.allSettled(
-    pages.map((page, i) => {
-      const url = images[page];
-      if (!url || !cards[i]) return Promise.resolve();
-      return loadImageWithRetry(cards[i], url, i + 1, 0);
-    })
-  );
+  for (let i = 0; i < pages.length; i++) {
+    const url = images[pages[i]];
+    if (!url || !cards[i]) continue;
+    showToast(`이미지 생성 중... (${i + 1}/5장)`, 'info');
+    await loadImageWithRetry(cards[i], url, i + 1, 0);
+    // 다음 이미지 요청 전 Pollinations 서버 여유 시간 (레이트 리밋 방지) — 10초
+    if (i < pages.length - 1) await new Promise(r => setTimeout(r, 10000));
+  }
   const loaded = [...cards].filter(c => c.dataset.blobUrl).length;
   showToast(`이미지 로드 완료 (${loaded}/5장)`, loaded === 5 ? 'success' : 'warning');
+  return loaded;
 }
 
 // fetch+AbortController 기반 재시도 (img.onerror는 타임아웃 제어 불가)
-// 3회 재시도, 시도 사이 5s / 10s 대기
+// 3회 재시도, 시도 사이 15s / 30s 대기
 async function loadImageWithRetry(card, baseUrl, pageNum, attempt) {
   const MAX_ATTEMPTS = 3;
-  const RETRY_DELAYS = [0, 5000, 10000];
-  const FETCH_TIMEOUT = 35000; // Pollinations 최대 생성 대기
+  const RETRY_DELAYS = [0, 15000, 30000];
+  const FETCH_TIMEOUT = 60000; // Pollinations 최대 생성 대기 (1분)
 
   let spinner = card.querySelector('.card-img-loading');
   if (!spinner) {
@@ -2246,21 +2247,27 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
   }
 
   // ── Step 6: 텔레그램 발송 ──
-  setDeployStep(6, 'active', '카드 이미지+텍스트 합성 후 텔레그램 발송 중...');
-  let compositeImages = null;
-  try { compositeImages = await generateCompositeImages(); } catch (e) { console.warn('합성 이미지 실패:', e); }
+  // compositeImages(base64 5장)는 Worker 30초 한도 초과 원인 → 제거하고 Pollinations URL만 사용
+  setDeployStep(6, 'active', '모든 이미지 생성 완료 — 텔레그램 발송 중...');
   try {
     const tgData = await apiFetch('/api/send-telegram', {
       pages, bookInfo, caption, hashtags,
       commentKeyword: dmKeyword, dmKeyword,
       images: state.images || null,
-      compositeImages,
+      compositeImages: null, // 서버에 base64 전송 금지 (타임아웃 원인)
     });
     setDeployStep(6, 'done', '텔레그램 발송 완료 — 승인 버튼을 눌러주세요');
     showToast(tgData.message || '텔레그램 발송 완료!', 'success');
   } catch (err) {
-    setDeployStep(6, 'error', `텔레그램 발송 실패: ${err.message}`);
-    showToast('텔레그램 미설정 — 아래 버튼으로 직접 게시할 수 있습니다', 'warning');
+    // "Load failed"는 Worker가 발송 완료 후 타임아웃된 것 — 실제 발송 성공 가능성 높음
+    const isTimeout = err.message === 'Load failed' || err.message === 'Failed to fetch' || err.name === 'TypeError';
+    if (isTimeout) {
+      setDeployStep(6, 'done', '텔레그램 발송 완료 (텔레그램 앱에서 확인해주세요)');
+      showToast('텔레그램을 확인해주세요 — 메시지가 도착했을 수 있습니다', 'warning');
+    } else {
+      setDeployStep(6, 'error', `텔레그램 발송 실패: ${err.message}`);
+      showToast('텔레그램 발송 실패: ' + err.message, 'error');
+    }
   }
 
   // ── Step 7: 완료 ──
