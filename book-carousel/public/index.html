@@ -1610,15 +1610,21 @@ async function generateCompositeDataUrl(card, pageNum) {
   else { headline = pg.headline || ''; body = pg.body || ''; }
   const PAD_X = 70, PAD_BOTTOM = 80, PAD_BETWEEN = 36;
   const ACCENT_H = 6, ACCENT_W = 90, ACCENT_GAP = 28;
-  ctx.font = '900 68px "Noto Sans KR", sans-serif';
-  const hlLines = measureTextLines(ctx, headline, W - PAD_X * 2);
-  const HL_LINE_H = 90;
-  ctx.font = '400 44px "Noto Sans KR", sans-serif';
-  const bodyLines = body ? measureTextLines(ctx, body, W - PAD_X * 2) : [];
-  const BODY_LINE_H = 62;
+  const TEXT_W = W - PAD_X * 2;
+
+  // 헤드라인: 68px에서 시작해 3줄 이내로 들어올 때까지 4px씩 축소 (최소 40px)
+  const { px: hlPx, lines: hlLines } = autoFitLines(ctx, headline, TEXT_W, 68, 40, 4, 3, '900');
+  const HL_LINE_H = Math.round(hlPx * 1.38);
+
+  // 본문: 42px에서 시작해 5줄 이내로 들어올 때까지 3px씩 축소 (최소 28px)
+  const { px: bodyPx, lines: bodyLines } = body
+    ? autoFitLines(ctx, body, TEXT_W, 42, 28, 3, 5, '400')
+    : { px: 42, lines: [] };
+  const BODY_LINE_H = Math.round(bodyPx * 1.42);
+
   let curY = H - PAD_BOTTOM;
   if (bodyLines.length) {
-    ctx.font = '400 44px "Noto Sans KR", sans-serif';
+    ctx.font = `400 ${bodyPx}px "Noto Sans KR", sans-serif`;
     ctx.fillStyle = 'rgba(255,255,255,0.78)';
     ctx.textAlign = 'left';
     for (let i = bodyLines.length - 1; i >= 0; i--) {
@@ -1627,7 +1633,7 @@ async function generateCompositeDataUrl(card, pageNum) {
     }
     curY -= PAD_BETWEEN;
   }
-  ctx.font = '900 68px "Noto Sans KR", sans-serif';
+  ctx.font = `900 ${hlPx}px "Noto Sans KR", sans-serif`;
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'left';
   for (let i = hlLines.length - 1; i >= 0; i--) {
@@ -1643,6 +1649,33 @@ async function generateCompositeDataUrl(card, pageNum) {
     reader.onload = () => resolve(reader.result);
     reader.readAsDataURL(blob);
   }, 'image/jpeg', 0.85));
+}
+
+// 오프스크린 캔버스로 각 페이지 텍스트가 몇 줄 나오는지 측정
+// autoFitLines 최소 폰트(헤드 40px/본문 28px)에서도 maxLines를 초과하면 issue로 반환
+function measureCanvasOverflow(pages) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080; canvas.height = 1080;
+  const ctx = canvas.getContext('2d');
+  const TEXT_W = 1080 - 70 * 2; // 940px
+  const issues = [];
+
+  const check = (pageKey, type, text, startPx, minPx, stepPx, maxLines, weight) => {
+    if (!text) return;
+    const { lines } = autoFitLines(ctx, text, TEXT_W, startPx, minPx, stepPx, maxLines, weight);
+    if (lines.length > maxLines) {
+      issues.push({ page: pageKey, type, text, currentLines: lines.length, maxLines });
+    }
+  };
+
+  for (let p = 1; p <= 5; p++) {
+    const pg = pages[`page${p}`] || {};
+    const headline = p === 5 ? (pg.cta || '') : (pg.headline || '');
+    const body = p === 1 || p === 5 ? (p === 5 ? pg.linkText || '' : '') : (pg.body || '');
+    check(`page${p}`, 'headline', headline, 68, 40, 4, 3, '900');
+    if (body) check(`page${p}`, 'body', body, 42, 28, 3, 5, '400');
+  }
+  return issues;
 }
 
 async function generateCompositeImages() {
@@ -1700,29 +1733,23 @@ async function saveCardAsCanvas(card, pageNum) {
   else if (pageNum === 1) { headline = pg.headline || ''; body = ''; }
   else { headline = pg.headline || ''; body = pg.body || ''; }
 
-  // ④ 동적 bottom-anchored 레이아웃 — 먼저 총 높이를 측정해 아래에서 위로 배치
+  // ④ 동적 bottom-anchored 레이아웃
   const PAD_X = 70, PAD_BOTTOM = 80, PAD_BETWEEN = 36;
   const ACCENT_H = 6, ACCENT_W = 90, ACCENT_GAP = 28;
+  const TEXT_W = W - PAD_X * 2;
 
-  ctx.font = '900 68px "Noto Sans KR", sans-serif';
-  const hlLines = measureTextLines(ctx, headline, W - PAD_X * 2);
-  const HL_LINE_H = 90;
+  const { px: hlPx, lines: hlLines } = autoFitLines(ctx, headline, TEXT_W, 68, 40, 4, 3, '900');
+  const HL_LINE_H = Math.round(hlPx * 1.38);
 
-  ctx.font = '400 44px "Noto Sans KR", sans-serif';
-  const bodyLines = body ? measureTextLines(ctx, body, W - PAD_X * 2) : [];
-  const BODY_LINE_H = 62;
+  const { px: bodyPx, lines: bodyLines } = body
+    ? autoFitLines(ctx, body, TEXT_W, 42, 28, 3, 5, '400')
+    : { px: 42, lines: [] };
+  const BODY_LINE_H = Math.round(bodyPx * 1.42);
 
-  // 총 텍스트 블록 높이 (본문 → 헤드라인 → 포인트라인 순으로 위로 쌓임)
-  let totalH = hlLines.length * HL_LINE_H;
-  if (bodyLines.length) totalH += PAD_BETWEEN + bodyLines.length * BODY_LINE_H;
-  totalH += ACCENT_H + ACCENT_GAP; // 포인트라인 포함
-
-  // 블록 시작 Y (아래에서 위로)
   let curY = H - PAD_BOTTOM;
 
-  // 본문을 아래에 먼저
   if (bodyLines.length) {
-    ctx.font = '400 44px "Noto Sans KR", sans-serif';
+    ctx.font = `400 ${bodyPx}px "Noto Sans KR", sans-serif`;
     ctx.fillStyle = 'rgba(255,255,255,0.78)';
     ctx.textAlign = 'left';
     for (let i = bodyLines.length - 1; i >= 0; i--) {
@@ -1732,8 +1759,7 @@ async function saveCardAsCanvas(card, pageNum) {
     curY -= PAD_BETWEEN;
   }
 
-  // 헤드라인
-  ctx.font = '900 68px "Noto Sans KR", sans-serif';
+  ctx.font = `900 ${hlPx}px "Noto Sans KR", sans-serif`;
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'left';
   for (let i = hlLines.length - 1; i >= 0; i--) {
@@ -1742,7 +1768,6 @@ async function saveCardAsCanvas(card, pageNum) {
   }
   curY -= ACCENT_GAP;
 
-  // 포인트 라인 (헤드라인 바로 위)
   const ACC = { 1:'#8B5CF6', 2:'#60A5FA', 3:'#F87171', 4:'#34D399', 5:'#C084FC' };
   ctx.fillStyle = ACC[pageNum] || '#8B5CF6';
   ctx.fillRect(PAD_X, curY, ACCENT_W, ACCENT_H);
@@ -1758,20 +1783,52 @@ async function saveCardAsCanvas(card, pageNum) {
 }
 
 // 텍스트를 줄 배열로만 측정 (실제 렌더 없음) — bottom-anchored 레이아웃용
+// 띄어쓰기(어절) 단위로 먼저 자르고, 단어 자체가 너무 길면 글자 단위 폴백
 function measureTextLines(ctx, text, maxWidth) {
   if (!text) return [];
-  const lines = [];
-  let line = '';
-  const chars = [...text];
-  for (const ch of chars) {
-    if (ch === '\n') { lines.push(line); line = ''; continue; }
-    const test = line + ch;
-    if (ctx.measureText(test).width > maxWidth && line) {
-      lines.push(line); line = ch;
-    } else { line = test; }
+  const result = [];
+  for (const para of text.split('\n')) {
+    if (!para.trim()) { result.push(''); continue; }
+    const words = para.split(' ');
+    let line = '';
+    for (const word of words) {
+      if (!word) continue;
+      const candidate = line ? line + ' ' + word : word;
+      if (ctx.measureText(candidate).width <= maxWidth) {
+        line = candidate;
+      } else {
+        if (line) result.push(line);
+        // 단어 자체가 maxWidth를 초과하면 글자 단위 폴백
+        if (ctx.measureText(word).width > maxWidth) {
+          let buf = '';
+          for (const ch of [...word]) {
+            const t = buf + ch;
+            if (ctx.measureText(t).width > maxWidth && buf) {
+              result.push(buf); buf = ch;
+            } else { buf = t; }
+          }
+          line = buf;
+        } else {
+          line = word;
+        }
+      }
+    }
+    if (line) result.push(line);
   }
-  if (line) lines.push(line);
-  return lines;
+  return result;
+}
+
+// 폰트 크기를 줄여가며 maxLines 이내가 되는 최대 크기를 반환
+function autoFitLines(ctx, text, maxWidth, startPx, minPx, stepPx, maxLines, weight) {
+  let px = startPx;
+  let lines = [];
+  while (px >= minPx) {
+    ctx.font = `${weight} ${px}px "Noto Sans KR", sans-serif`;
+    lines = measureTextLines(ctx, text, maxWidth);
+    if (lines.length <= maxLines) break;
+    px -= stepPx;
+  }
+  return { px, lines };
 }
 
 // 한국어 텍스트 캔버스 줄바꿈 (문자 단위)
@@ -2039,7 +2096,6 @@ document.getElementById('deployStartBtn').addEventListener('click', async () => 
 });
 
 async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
-  // 이전 파이프라인 상태 초기화 (새 실행 시작 전 항상 정리)
   localStorage.removeItem('activePipelineId');
   clearTimeout(_pipelinePoller);
 
@@ -2051,8 +2107,25 @@ async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
   progressPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
   for (let i = 1; i <= 7; i++) setDeployStep(i, '', null);
 
-  // 브라우저에서 단계별 직접 실행 (Cloudflare Workers 30초 제한으로 서버 파이프라인 불가)
-  showToast(`"${bookInfo.title}" 생성 시작...`, 'info');
+  // 서버 파이프라인 시도: 1초 이내 응답, 탭을 닫아도 서버에서 계속 진행
+  try {
+    const result = await apiFetch('/api/pipeline-start', {
+      bookInfo,
+      affiliateLinks: affiliateLinks || [],
+    });
+    if (result && result.pipelineId) {
+      localStorage.setItem('activePipelineId', result.pipelineId);
+      showToast(`"${bookInfo.title}" 서버에서 처리 시작 — 탭을 닫아도 계속 진행됩니다`, 'success');
+      setDeployStep(1, 'active', 'Claude AI가 5페이지 카드뉴스를 작성 중...');
+      startPipelinePolling(result.pipelineId);
+      return;
+    }
+  } catch (e) {
+    console.warn('서버 파이프라인 실패, 브라우저 모드로 전환:', e.message);
+  }
+
+  // 폴백: 브라우저 파이프라인 (탭을 열어두세요)
+  showToast(`"${bookInfo.title}" 생성 시작... (탭을 열어두세요)`, 'info');
   await runBrowserPipeline(bookInfo, affiliateLinks);
 }
 
@@ -2063,12 +2136,25 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
   try {
     const data = await apiFetch('/api/generate', bookInfo);
     pages = data.pages;
+
+    // 생성 직후: 캔버스 레이아웃 검수 → 초과 줄 있으면 Claude에게 단축 요청
+    setDeployStep(1, 'active', '텍스트 레이아웃 검수 및 조정 중...');
+    const issues = measureCanvasOverflow(pages);
+    if (issues.length > 0) {
+      try {
+        const adjusted = await apiFetch('/api/adjust-text', { pages, bookInfo, issues });
+        if (adjusted.pages) pages = adjusted.pages;
+      } catch (e) {
+        console.warn('텍스트 조정 실패(원본 유지):', e.message);
+      }
+    }
+
     state.pages = pages;
     state.bookInfo = bookInfo;
     addToHistory(bookInfo.title);
     renderCarousel(pages);
     setStep(2);
-    setDeployStep(1, 'done', '5페이지 카드뉴스 생성 완료');
+    setDeployStep(1, 'done', issues.length > 0 ? `5페이지 생성 완료 (텍스트 ${issues.length}곳 조정됨)` : '5페이지 카드뉴스 생성 완료');
   } catch (err) {
     setDeployStep(1, 'error', err.message);
     showToast('캐럿셀 생성 실패: ' + err.message, 'error');
@@ -2207,6 +2293,12 @@ function startPipelinePolling(pipelineId) {
         localStorage.removeItem('activePipelineId');
         return;
       }
+      // 5분 이상 업데이트 없으면 타임아웃으로 처리
+      if (status.updatedAt && Date.now() - status.updatedAt > 5 * 60 * 1000) {
+        localStorage.removeItem('activePipelineId');
+        showToast('서버 처리가 응답하지 않습니다. 다시 시도해주세요.', 'error');
+        return;
+      }
       _pipelinePoller = setTimeout(poll, 3000);
     } catch (err) {
       console.warn('폴링 실패:', err);
@@ -2255,23 +2347,33 @@ function renderPipelineResults(status) {
   showToast('캐럿셀 생성 완료! 텔레그램에서 확인해주세요.', 'success');
 }
 
-// 페이지 로드 시 이전 파이프라인 복구 (완료된 것만, 미완료는 버림)
+// 페이지 로드 시 이전 파이프라인 복구
 (async () => {
   const savedId = localStorage.getItem('activePipelineId');
   if (!savedId) return;
   try {
     const status = await apiFetch('/api/pipeline-status?id=' + encodeURIComponent(savedId));
-    // 완료된 파이프라인만 복구 — 나머지(진행중·오류·미발견)는 모두 정리
-    if (status && status.status === 'complete') {
+    if (!status || status.status === 'not_found') {
       localStorage.removeItem('activePipelineId');
-      switchTab('tabAutoDeploy');
-      document.getElementById('progressPanel').classList.add('visible');
-      document.getElementById('emptyState').style.display = 'none';
-      applyPipelineStatus(status);
+      return;
+    }
+    switchTab('tabAutoDeploy');
+    document.getElementById('progressPanel').classList.add('visible');
+    document.getElementById('emptyState').style.display = 'none';
+    applyPipelineStatus(status);
+
+    if (status.status === 'complete') {
+      localStorage.removeItem('activePipelineId');
       renderPipelineResults(status);
       showToast('이전에 생성된 캐럿셀이 완성됐습니다!', 'success');
+    } else if (status.status === 'error') {
+      localStorage.removeItem('activePipelineId');
+      showToast('이전 파이프라인에서 오류가 발생했습니다. 다시 시도해주세요.', 'error');
+    } else if (status.status === 'running') {
+      // 서버에서 아직 처리 중 — 폴링 재개
+      showToast('이전에 시작한 캐럿셀 생성이 서버에서 진행 중입니다...', 'info');
+      startPipelinePolling(savedId);
     } else {
-      // 미완료(타임아웃 등) → 조용히 삭제
       localStorage.removeItem('activePipelineId');
     }
   } catch { localStorage.removeItem('activePipelineId'); }

@@ -4,6 +4,8 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
+const SELF_URL = 'https://book-carousel.jtaechul.workers.dev';
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -523,6 +525,44 @@ JSON:
   return { success: true, pages: extractJson(text) };
 }
 
+// 캔버스 넘침 감지 후 텍스트 단축
+async function handleAdjustText(env, body) {
+  const { pages, bookInfo, issues } = body;
+  if (!pages || !issues?.length) return { success: true, pages };
+
+  const issueDesc = issues.map(i =>
+    `${i.page} ${i.type}: ${i.currentLines}줄(최대 ${i.maxLines}줄) — "${i.text}"`
+  ).join('\n');
+
+  const text = await callClaude(env.ANTHROPIC_API_KEY, {
+    model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
+    max_tokens: 1024,
+    system: '당신은 인스타그램 카드뉴스 카피라이터입니다. 주어진 텍스트를 지정된 줄 수 이내로 압축합니다. 반드시 JSON만 응답합니다.',
+    user: `다음 캐럿셀 텍스트가 이미지 레이아웃에서 넘칩니다. 각 항목을 지정된 최대 줄 수 이내로 압축하세요.
+의미·임팩트는 유지하되 더 간결하게 다듬어주세요.
+
+현재 캐럿셀:
+${JSON.stringify(pages, null, 2)}
+
+넘치는 항목:
+${issueDesc}
+
+압축 규칙:
+- headline: 최대 3줄 (40자 이내, 강렬하게)
+- body: 최대 5줄 (줄당 45자 이내)
+- 책 제목·저자명 절대 노출 금지
+
+전체 pages JSON을 반환하세요:
+{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`,
+  });
+
+  try {
+    return { success: true, pages: extractJson(text) };
+  } catch {
+    return { success: true, pages }; // 파싱 실패 시 원본 유지
+  }
+}
+
 // ===== Phase 5 준비: DM 자동 회신 내용 생성 =====
 async function handleGenerateDmReply(env, body) {
   const { pages, bookInfo, affiliateLink, affiliateLinks } = body;
@@ -575,7 +615,163 @@ JSON: {"dmText":"전체 DM 텍스트(줄바꿈은 \\n)"}`,
   return { success: true, ...result };
 }
 
-// ===== 서버사이드 파이프라인 =====
+// ===== 체인 파이프라인 (탭 닫아도 서버에서 계속 진행) =====
+// 각 단계마다 독립 Worker 인보케이션 → 단계별 새 30초 예산
+
+function triggerNextStep(ctx, pipelineId, step) {
+  // 현재 인보케이션의 waitUntil에 다음 단계 HTTP 요청을 등록
+  // → 다음 단계는 새 인보케이션으로 시작, 독립적인 30초 예산을 가짐
+  ctx.waitUntil(
+    fetch(`${SELF_URL}/api/pipeline-step`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pipelineId, step }),
+    }).catch(() => {})
+  );
+}
+
+async function runStep(env, ctx, pipelineId, step) {
+  // 항상 KV에서 최신 상태를 읽어 이전 단계 결과를 활용
+  const state = (await env.PENDING_POSTS?.get(`pipeline_${pipelineId}`, 'json').catch(() => null)) || {};
+  const { bookInfo, affiliateLinks = [], commentKeyword = '' } = state;
+
+  if (step === 1) {
+    await savePipelineStatus(env, pipelineId, { step: 1, stepStatus: 'active', label: 'Claude AI가 5페이지 카드뉴스를 작성 중...' });
+    try {
+      const genData = await handleGenerate(env, bookInfo);
+      const pages = genData.pages;
+      await savePipelineStatus(env, pipelineId, { step: 1, stepStatus: 'done', label: '5페이지 카드뉴스 생성 완료', pages });
+      triggerNextStep(ctx, pipelineId, 2);
+    } catch (e) {
+      await savePipelineStatus(env, pipelineId, { status: 'error', step: 1, stepStatus: 'error', label: `생성 실패: ${e.message}`, error: e.message });
+    }
+
+  } else if (step === 2) {
+    const { pages } = state;
+    await savePipelineStatus(env, pipelineId, { step: 2, stepStatus: 'active', label: 'AI 자동 품질 평가 중...' });
+    let updatedPages = pages;
+    let validation = null;
+    try {
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        validation = await handleValidate(env, { pages: updatedPages, bookInfo });
+        if (validation.approved) break;
+        if (attempt < 2) {
+          const rd = await handleRegenerate(env, { bookInfo, previousPages: updatedPages, feedback: validation.feedback, improvements: validation.improvements || [] });
+          updatedPages = rd.pages;
+        }
+      }
+    } catch {}
+    await savePipelineStatus(env, pipelineId, { step: 2, stepStatus: 'done', label: `${validation?.totalScore || 0}/100점`, pages: updatedPages, validation });
+    triggerNextStep(ctx, pipelineId, 3);
+
+  } else if (step === 3) {
+    const { pages } = state;
+    await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'active', label: 'AI 이미지 URL 생성 중...' });
+    let images = null;
+    try {
+      const imgData = await handleGenerateImages(env, { pages, bookInfo });
+      images = imgData.images;
+    } catch {}
+    await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'done', label: '이미지 URL 생성 완료', images });
+    triggerNextStep(ctx, pipelineId, 4);
+
+  } else if (step === 4) {
+    const { pages } = state;
+    await savePipelineStatus(env, pipelineId, { step: 4, stepStatus: 'active', label: '인스타그램 캡션 작성 중...' });
+    let caption = '', hashtags = [], dmKeyword = '';
+    try {
+      const capData = await handleGenerateCaption(env, { pages, bookInfo, dmKeyword: commentKeyword });
+      caption = capData.caption || '';
+      hashtags = capData.hashtags || [];
+      dmKeyword = capData.commentKeyword || capData.dmKeyword || '';
+    } catch {}
+    await savePipelineStatus(env, pipelineId, { step: 4, stepStatus: 'done', label: '캡션 + 해시태그 생성 완료', caption, hashtags, dmKeyword });
+    triggerNextStep(ctx, pipelineId, 5);
+
+  } else if (step === 5) {
+    const { pages, dmKeyword: savedKw } = state;
+    const dmKeyword = savedKw || commentKeyword;
+    await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'active', label: 'DM 자동 회신 내용 작성 중...' });
+    try {
+      await handleGenerateDmReply(env, { pages, bookInfo, affiliateLinks, commentKeyword: dmKeyword });
+    } catch {}
+    await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'done', label: 'DM 자동 회신 생성 완료' });
+    triggerNextStep(ctx, pipelineId, 6);
+
+  } else if (step === 6) {
+    const { pages, images, caption, hashtags, dmKeyword: savedKw } = state;
+    const dmKeyword = savedKw || commentKeyword;
+    await savePipelineStatus(env, pipelineId, { step: 6, stepStatus: 'active', label: '텔레그램으로 최종 확인 요청 발송 중...' });
+    let telegramError = null;
+    try {
+      await handleSendTelegram(env, { pages, bookInfo, caption, hashtags, commentKeyword: dmKeyword, dmKeyword, images, compositeImages: null });
+    } catch (e) {
+      telegramError = e.message;
+    }
+    await savePipelineStatus(env, pipelineId, {
+      step: 6,
+      stepStatus: telegramError ? 'error' : 'done',
+      label: telegramError ? `텔레그램 발송 실패: ${telegramError}` : '텔레그램 발송 완료 — 승인 버튼을 눌러주세요',
+    });
+    triggerNextStep(ctx, pipelineId, 7);
+
+  } else if (step === 7) {
+    const step6Error = state.step === 6 && state.stepStatus === 'error';
+    await savePipelineStatus(env, pipelineId, {
+      step: 7,
+      stepStatus: 'done',
+      status: 'complete',
+      label: step6Error ? '완료 (텔레그램 실패 — 웹에서 직접 게시 가능)' : '완료! 텔레그램에서 [게시하기]를 눌러주세요.',
+      completedAt: Date.now(),
+    });
+  }
+}
+
+async function handlePipelineStepEndpoint(env, ctx, body) {
+  const { pipelineId, step } = body;
+  if (!pipelineId || step == null) return { ok: true };
+  if (!env.PENDING_POSTS) return { ok: true };
+
+  // 즉시 {ok:true} 반환 → 호출자(이전 단계) 인보케이션 해제
+  // 실제 작업은 새 ctx.waitUntil에서 이 인보케이션의 30초 예산 안에 실행
+  ctx.waitUntil((async () => {
+    try {
+      await runStep(env, ctx, pipelineId, Number(step));
+    } catch (e) {
+      await savePipelineStatus(env, pipelineId, { status: 'error', error: e.message }).catch(() => {});
+    }
+  })());
+
+  return { ok: true };
+}
+
+async function handlePipelineStart(env, ctx, body) {
+  const { bookInfo, affiliateLinks, commentKeyword } = body;
+  if (!bookInfo?.title) throw new Error('책 정보(bookInfo.title)가 필요합니다.');
+  if (!env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY가 설정되지 않았습니다.');
+  if (!env.PENDING_POSTS) throw new Error('KV 스토어가 필요합니다.');
+
+  const pipelineId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+  // 초기 상태 저장
+  await savePipelineStatus(env, pipelineId, {
+    status: 'running',
+    step: 0,
+    stepStatus: 'active',
+    bookInfo,
+    affiliateLinks: affiliateLinks || [],
+    commentKeyword: commentKeyword || '',
+    startedAt: Date.now(),
+    label: '파이프라인 시작 중...',
+  });
+
+  // 단계 1 트리거 — 현재 요청은 즉시 리턴, 작업은 서버에서 체인으로 계속 진행
+  triggerNextStep(ctx, pipelineId, 1);
+
+  return { success: true, pipelineId };
+}
+
+// ===== 서버사이드 파이프라인 (구형 — 30초 한도로 대형 파이프라인 제한됨) =====
 async function savePipelineStatus(env, pipelineId, patch) {
   if (!env.PENDING_POSTS || !pipelineId) return;
   const key = `pipeline_${pipelineId}`;
@@ -936,6 +1132,9 @@ export default {
         else if (url.pathname === '/api/post-instagram') result = await handlePostInstagram(env, body);
         else if (url.pathname === '/api/telegram-webhook') result = await handleTelegramWebhook(env, body);
         else if (url.pathname === '/api/setup-webhook') result = await handleSetupWebhook(env);
+        else if (url.pathname === '/api/adjust-text') result = await handleAdjustText(env, body);
+        else if (url.pathname === '/api/pipeline-start') result = await handlePipelineStart(env, ctx, body);
+        else if (url.pathname === '/api/pipeline-step') result = await handlePipelineStepEndpoint(env, ctx, body);
         else if (url.pathname === '/api/run-pipeline') result = await handleRunPipeline(env, body, ctx);
         else if (url.pathname === '/api/pipeline-status') result = await handlePipelineStatus(env, url);
         else return json({ error: '없는 경로입니다.' }, 404);
