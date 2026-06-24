@@ -749,8 +749,8 @@ async function savePipelineStatus(env, pipelineId, patch) {
   try { existing = await env.PENDING_POSTS.get(key, 'json') || {}; } catch {}
   const updated = { ...existing, ...patch, updatedAt: Date.now() };
   // 완료된 파이프라인은 텔레그램 "확인하러 가기" 링크가 나중에 눌려도 결과를
-  // 불러올 수 있도록 7일간 보관. 진행중은 1시간(자가복구·타임아웃 판정용).
-  const ttl = (updated.status === 'complete') ? 7 * 24 * 3600 : 3600;
+  // 불러올 수 있도록 1일간 보관. 진행중은 1시간(자가복구·타임아웃 판정용).
+  const ttl = (updated.status === 'complete') ? 24 * 3600 : 3600;
   await env.PENDING_POSTS.put(key, JSON.stringify(updated), { expirationTtl: ttl });
 }
 
