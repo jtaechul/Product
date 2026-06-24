@@ -561,25 +561,51 @@ async function runStep(env, pipelineId, step) {
 
   } else if (step === 3) {
     const { pages } = state;
-    await setActive('AI 이미지 URL 생성 중...');
+    await setActive('AI 이미지 프롬프트 생성 중...');
     await logStep(env, pipelineId, { step, phase: 'start' });
     let images = null;
     try {
       const imgData = await handleGenerateImages(env, { pages, bookInfo });
-      images = imgData.images;
+      const urlMap = imgData.images; // { page1: 'https://image.pollinations.ai/...', ... }
+
+      // 5장을 동시에 다운로드해 KV에 바이너리로 저장 (90초/장 타임아웃)
+      await setActive('Pollinations.ai 이미지 다운로드 중 (1~2분 소요)...');
+      const pageKeys = ['page1', 'page2', 'page3', 'page4', 'page5'];
+      const downloadResults = await Promise.allSettled(
+        pageKeys.map(async page => {
+          const url = urlMap[page];
+          if (!url) throw new Error('URL 없음');
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 90000);
+          try {
+            const res = await fetch(url, { signal: ctrl.signal });
+            clearTimeout(timer);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const buf = await res.arrayBuffer();
+            await env.PENDING_POSTS.put(`img_${pipelineId}_${page}`, buf, { expirationTtl: 24 * 3600 });
+            return { page, size: buf.byteLength };
+          } catch (e) {
+            clearTimeout(timer);
+            throw e;
+          }
+        })
+      );
+
+      // 성공한 페이지는 /api/image 경로, 실패 시 원본 Pollinations URL 폴백
+      images = {};
+      for (let i = 0; i < pageKeys.length; i++) {
+        const page = pageKeys[i];
+        if (downloadResults[i].status === 'fulfilled') {
+          images[page] = `/api/image?id=${pipelineId}&page=${page}`;
+        } else {
+          images[page] = urlMap[page];
+          await logStep(env, pipelineId, { step, phase: 'warn', error: `${page} 다운로드 실패: ${downloadResults[i].reason?.message}` });
+        }
+      }
     } catch (e) {
       await logStep(env, pipelineId, { step, phase: 'warn', error: '이미지 생성 실패(계속 진행): ' + e.message });
     }
-    // Pollinations.ai 이미지 사전 렌더링: 서버에서 미리 HTTP 요청 → 사용자가 텔레그램 링크를 열면 이미 캐시된 이미지가 즉시 표시됨
-    if (images) {
-      await setActive('Pollinations.ai 이미지 렌더링 대기 중...');
-      await Promise.all(
-        Object.values(images).map(url =>
-          fetch(url, { signal: AbortSignal.timeout(28000) }).catch(() => null)
-        )
-      );
-    }
-    await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'done', label: '이미지 URL 생성 완료', images });
+    await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'done', label: '이미지 저장 완료', images });
     await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0 });
 
   } else if (step === 4) {
@@ -1107,6 +1133,18 @@ async function handleInstagramWebhook(env, request) {
   return new Response('EVENT_RECEIVED', { status: 200 });
 }
 
+// KV에 저장된 이미지 바이너리를 반환 (step 3에서 저장, 24h 유효)
+async function handleImageServe(env, url) {
+  const id = url.searchParams.get('id');
+  const page = url.searchParams.get('page');
+  if (!id || !page) return new Response('Bad Request', { status: 400, headers: CORS });
+  const buf = await env.PENDING_POSTS.get(`img_${id}_${page}`, 'arrayBuffer').catch(() => null);
+  if (!buf) return new Response('Image not found', { status: 404, headers: CORS });
+  return new Response(buf, {
+    headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400', ...CORS },
+  });
+}
+
 // ===== 메인 라우터 =====
 export default {
   async fetch(request, env, ctx) {
@@ -1117,6 +1155,11 @@ export default {
     }
 
     if (url.pathname.startsWith('/api/')) {
+      // GET 전용 바이너리 응답 경로 — body 파싱 전에 먼저 처리
+      if (url.pathname === '/api/image') {
+        return await handleImageServe(env, url);
+      }
+
       // instagram-webhook은 GET/POST 모두 처리 + raw request 필요 → body 파싱 전에 분기
       if (url.pathname === '/api/instagram-webhook') {
         return await handleInstagramWebhook(env, request);

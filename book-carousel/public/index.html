@@ -1472,18 +1472,34 @@ document.getElementById('generateImagesBtn').addEventListener('click', async () 
   }
 });
 
-// 이미지 5장 순차 로딩 — Pollinations 레이트 리밋 회피, 장마다 충분한 생성 시간 부여
+// 이미지 5장 로딩 — /api/image 경로(KV 저장)이면 병렬 즉시 로드, Pollinations URL이면 순차 로딩
 async function applyImagesToCards(images) {
   const cards = document.querySelectorAll('#carouselScroll .card');
   const pages = ['page1', 'page2', 'page3', 'page4', 'page5'];
-  for (let i = 0; i < pages.length; i++) {
-    const url = images[pages[i]];
-    if (!url || !cards[i]) continue;
-    showToast(`이미지 생성 중... (${i + 1}/5장)`, 'info');
-    await loadImageWithRetry(cards[i], url, i + 1, 0);
-    // 다음 이미지 요청 전 Pollinations 서버 여유 시간 (레이트 리밋 방지) — 10초
-    if (i < pages.length - 1) await new Promise(r => setTimeout(r, 10000));
+
+  // /api/image 경로는 서버에 이미 저장된 이미지 → 모두 동시에 즉시 로드
+  const allKv = pages.every(p => !images[p] || images[p].startsWith('/api/image'));
+  if (allKv) {
+    showToast('저장된 이미지를 불러오는 중...', 'info');
+    await Promise.all(
+      pages.map((p, i) => {
+        const url = images[p];
+        if (!url || !cards[i]) return Promise.resolve();
+        return loadImageWithRetry(cards[i], url, i + 1, 0);
+      })
+    );
+  } else {
+    // Pollinations 직접 URL — 순차 로딩으로 레이트 리밋 회피
+    showToast('페이지 1부터 순서대로 이미지를 생성합니다 (1~2분 소요)', 'info');
+    for (let i = 0; i < pages.length; i++) {
+      const url = images[pages[i]];
+      if (!url || !cards[i]) continue;
+      showToast(`이미지 생성 중... (${i + 1}/5장)`, 'info');
+      await loadImageWithRetry(cards[i], url, i + 1, 0);
+      if (i < pages.length - 1) await new Promise(r => setTimeout(r, 10000));
+    }
   }
+
   const loaded = [...cards].filter(c => c.dataset.blobUrl).length;
   showToast(`이미지 로드 완료 (${loaded}/5장)`, loaded === 5 ? 'success' : 'warning');
   return loaded;
