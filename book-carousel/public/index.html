@@ -1938,13 +1938,8 @@ document.getElementById('telegramBtn').addEventListener('click', async () => {
   if (!state.pages || !state.bookInfo) return;
   showLoading('텔레그램 발송 중...', '카드 이미지+텍스트 합성 후 텔레그램으로 보내고 있습니다');
   try {
-    let compositeImages = null;
-    try {
-      compositeImages = await generateCompositeImages();
-    } catch (e) {
-      console.warn('합성 이미지 생성 실패, 원본 URL로 대체:', e);
-    }
-    const data = await apiFetch('/api/send-telegram', {
+    // 텍스트 요약 + 승인 버튼 전송 (배경 이미지 URL 포함, compositeImages는 개별 전송)
+    await apiFetch('/api/send-telegram', {
       pages: state.pages,
       bookInfo: state.bookInfo,
       caption: state.caption,
@@ -1952,9 +1947,27 @@ document.getElementById('telegramBtn').addEventListener('click', async () => {
       commentKeyword: state.dmKeyword,
       dmKeyword: state.dmKeyword,
       images: state.images || null,
-      compositeImages,
+      compositeImages: null,
     });
-    showToast(data.message || '텔레그램으로 발송됐습니다!', 'success');
+
+    // 텍스트 합성 이미지는 1장씩 개별 전송 (한번에 보내면 Worker 타임아웃 위험)
+    try {
+      const composites = await generateCompositeImages();
+      const keys = ['page1', 'page2', 'page3', 'page4', 'page5'];
+      for (let i = 0; i < keys.length; i++) {
+        const dataUrl = composites[keys[i]];
+        if (!dataUrl) continue;
+        await apiFetch('/api/send-telegram-image', {
+          imageDataUrl: dataUrl,
+          caption: `[${i + 1}/5]`,
+        });
+        if (i < keys.length - 1) await new Promise(r => setTimeout(r, 400));
+      }
+    } catch (e) {
+      console.warn('합성 이미지 전송 실패:', e);
+    }
+
+    showToast('텔레그램으로 발송됐습니다!', 'success');
   } catch (err) {
     showToast(err.message, 'error');
   } finally {
@@ -2308,7 +2321,7 @@ function startPipelinePolling(pipelineId) {
         localStorage.removeItem('activePipelineId');
         localStorage.removeItem('activePipelineBookInfo');
         _currentPollId = null;
-        renderPipelineResults(status);
+        renderPipelineResults(status, true);
         return;
       }
       if (status.status === 'error') {
@@ -2378,7 +2391,7 @@ function applyPipelineStatus(status) {
   for (let i = step + 1; i <= 7; i++) setDeployStep(i, '', null);
 }
 
-function renderPipelineResults(status) {
+function renderPipelineResults(status, autoSendComposites) {
   if (!status.pages) return;
   state.pages = status.pages;
   state.bookInfo = status.bookInfo || state.bookInfo;
@@ -2403,7 +2416,32 @@ function renderPipelineResults(status) {
   document.getElementById('deployDoneMsg').classList.add('visible');
   document.getElementById('deployInstagramBtnWrap').style.display = 'block';
   document.getElementById('deployInstagramBtn').disabled = !(status.images && status.caption);
-  showToast('캐럿셀 생성 완료! 텔레그램에서 확인해주세요.', 'success');
+  showToast('캐럿셀 생성 완료! 텔레그램에 이미지 전송 중...', 'success');
+
+  // 파이프라인 완료 시 텍스트 합성 이미지를 텔레그램으로 자동 발송 (배경만 있는 이미지를 보완)
+  if (autoSendComposites) {
+    const pipelineId = status.pipelineId || localStorage.getItem('activePipelineId') || '';
+    const sentKey = pipelineId ? `compositesSentFor_${pipelineId}` : '';
+    if (!sentKey || !localStorage.getItem(sentKey)) {
+      if (sentKey) localStorage.setItem(sentKey, '1');
+      (async () => {
+        try {
+          const composites = await generateCompositeImages();
+          const keys = ['page1', 'page2', 'page3', 'page4', 'page5'];
+          for (let i = 0; i < keys.length; i++) {
+            const dataUrl = composites[keys[i]];
+            if (!dataUrl) continue;
+            await apiFetch('/api/send-telegram-image', {
+              imageDataUrl: dataUrl,
+              caption: `[${i + 1}/5]`,
+            });
+            if (i < keys.length - 1) await new Promise(r => setTimeout(r, 400));
+          }
+          showToast('텔레그램에 텍스트 합성 이미지 전송 완료!', 'success');
+        } catch {}
+      })();
+    }
+  }
 }
 
 // 페이지 로드 시 이전 파이프라인 복구
@@ -2444,7 +2482,7 @@ function renderPipelineResults(status) {
   if (status.status === 'complete') {
     localStorage.removeItem('activePipelineId');
     localStorage.removeItem('activePipelineBookInfo');
-    renderPipelineResults(status);
+    renderPipelineResults(status, true);
     showToast('캐럿셀 생성이 완료됐습니다! 텔레그램을 확인해주세요.', 'success');
   } else if (status.status === 'error') {
     localStorage.removeItem('activePipelineId');

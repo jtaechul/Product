@@ -235,6 +235,17 @@ async function sendTelegramPhotoFile(botToken, chatId, base64DataUrl, caption) {
   return res.json();
 }
 
+async function handleSendTelegramImage(env, body) {
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
+    throw new Error('TELEGRAM_BOT_TOKEN 또는 TELEGRAM_CHAT_ID가 설정되지 않았습니다.');
+  }
+  const { imageDataUrl, caption } = body;
+  if (!imageDataUrl) throw new Error('imageDataUrl이 필요합니다.');
+  const result = await sendTelegramPhotoFile(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, imageDataUrl, caption || '');
+  if (!result) throw new Error('텔레그램 이미지 전송 실패');
+  return { success: true };
+}
+
 async function handleSendTelegram(env, body) {
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
     throw new Error('TELEGRAM_BOT_TOKEN 또는 TELEGRAM_CHAT_ID가 설정되지 않았습니다.');
@@ -687,30 +698,42 @@ JSON: {"dmText":"전체 DM 텍스트(줄바꿈은 \\n)"}`,
 // ===== 체인 파이프라인 (탭 닫아도 서버에서 계속 진행) =====
 // 각 단계마다 독립 Worker 인보케이션 → 단계별 새 30초 예산
 
-function triggerNextStep(ctx, pipelineId, step) {
-  // 현재 인보케이션의 waitUntil에 다음 단계 HTTP 요청을 등록
-  // → 다음 단계는 새 인보케이션으로 시작, 독립적인 30초 예산을 가짐
-  ctx.waitUntil(
-    fetch(`${SELF_URL}/api/pipeline-step`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pipelineId, step }),
-    }).catch(() => {})
-  );
+// triggerNextAsync: ctx.waitUntil 중첩 없이 현재 waitUntil 내부에서 직접 await
+// → 다음 단계 Worker가 {ok:true}를 돌려줄 때까지 현재 Worker가 살아있음
+async function triggerNextAsync(pipelineId, step) {
+  for (let i = 0; i < 3; i++) {
+    try {
+      const r = await fetch(`${SELF_URL}/api/pipeline-step`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pipelineId, step }),
+      });
+      if (r.ok) return;
+    } catch {}
+    if (i < 2) await new Promise(r => setTimeout(r, 500 * (i + 1)));
+  }
 }
 
-async function runStep(env, ctx, pipelineId, step) {
+async function runStep(env, pipelineId, step) {
   // 항상 KV에서 최신 상태를 읽어 이전 단계 결과를 활용
   const state = (await env.PENDING_POSTS?.get(`pipeline_${pipelineId}`, 'json').catch(() => null)) || {};
-  const { bookInfo, affiliateLinks = [], commentKeyword = '' } = state;
+  const { bookInfo, affiliateLinks = [], commentKeyword = '', models: savedModels } = state;
+
+  // 단계별 Worker 인스턴스가 새로 뜨므로 _modelCache가 리셋됨 — KV에 저장된 값으로 복원
+  if (savedModels?.main && !_modelCache) {
+    _modelCache = { main: savedModels.main, light: savedModels.light };
+  }
 
   if (step === 1) {
     await savePipelineStatus(env, pipelineId, { step: 1, stepStatus: 'active', label: 'Claude AI가 5페이지 카드뉴스를 작성 중...' });
     try {
       const genData = await handleGenerate(env, bookInfo);
       const pages = genData.pages;
-      await savePipelineStatus(env, pipelineId, { step: 1, stepStatus: 'done', label: '5페이지 카드뉴스 생성 완료', pages });
-      triggerNextStep(ctx, pipelineId, 2);
+      const patch = { step: 1, stepStatus: 'done', label: '5페이지 카드뉴스 생성 완료', pages };
+      // 모델 ID를 KV에 저장 → 이후 단계에서 재프로빙 없이 재활용
+      if (_modelCache?.main) patch.models = { main: _modelCache.main, light: _modelCache.light };
+      await savePipelineStatus(env, pipelineId, patch);
+      await triggerNextAsync(pipelineId, 2);
     } catch (e) {
       await savePipelineStatus(env, pipelineId, { status: 'error', step: 1, stepStatus: 'error', label: `생성 실패: ${e.message}`, error: e.message });
     }
@@ -731,7 +754,7 @@ async function runStep(env, ctx, pipelineId, step) {
       }
     } catch {}
     await savePipelineStatus(env, pipelineId, { step: 2, stepStatus: 'done', label: `${validation?.totalScore || 0}/100점`, pages: updatedPages, validation });
-    triggerNextStep(ctx, pipelineId, 3);
+    await triggerNextAsync(pipelineId, 3);
 
   } else if (step === 3) {
     const { pages } = state;
@@ -742,7 +765,7 @@ async function runStep(env, ctx, pipelineId, step) {
       images = imgData.images;
     } catch {}
     await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'done', label: '이미지 URL 생성 완료', images });
-    triggerNextStep(ctx, pipelineId, 4);
+    await triggerNextAsync(pipelineId, 4);
 
   } else if (step === 4) {
     const { pages } = state;
@@ -755,7 +778,7 @@ async function runStep(env, ctx, pipelineId, step) {
       dmKeyword = capData.commentKeyword || capData.dmKeyword || '';
     } catch {}
     await savePipelineStatus(env, pipelineId, { step: 4, stepStatus: 'done', label: '캡션 + 해시태그 생성 완료', caption, hashtags, dmKeyword });
-    triggerNextStep(ctx, pipelineId, 5);
+    await triggerNextAsync(pipelineId, 5);
 
   } else if (step === 5) {
     const { pages, dmKeyword: savedKw } = state;
@@ -765,7 +788,7 @@ async function runStep(env, ctx, pipelineId, step) {
       await handleGenerateDmReply(env, { pages, bookInfo, affiliateLinks, commentKeyword: dmKeyword });
     } catch {}
     await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'done', label: 'DM 자동 회신 생성 완료' });
-    triggerNextStep(ctx, pipelineId, 6);
+    await triggerNextAsync(pipelineId, 6);
 
   } else if (step === 6) {
     const { pages, images, caption, hashtags, dmKeyword: savedKw } = state;
@@ -780,9 +803,9 @@ async function runStep(env, ctx, pipelineId, step) {
     await savePipelineStatus(env, pipelineId, {
       step: 6,
       stepStatus: telegramError ? 'error' : 'done',
-      label: telegramError ? `텔레그램 발송 실패: ${telegramError}` : '텔레그램 발송 완료 — 승인 버튼을 눌러주세요',
+      label: telegramError ? `텔레그램 발송 실패: ${telegramError}` : '텔레그램 발송 완료 — 브라우저에서 텍스트 합성 이미지를 추가 발송합니다',
     });
-    triggerNextStep(ctx, pipelineId, 7);
+    await triggerNextAsync(pipelineId, 7);
 
   } else if (step === 7) {
     const step6Error = state.step === 6 && state.stepStatus === 'error';
@@ -801,11 +824,12 @@ async function handlePipelineStepEndpoint(env, ctx, body) {
   if (!pipelineId || step == null) return { ok: true };
   if (!env.PENDING_POSTS) return { ok: true };
 
-  // 즉시 {ok:true} 반환 → 호출자(이전 단계) 인보케이션 해제
-  // 실제 작업은 새 ctx.waitUntil에서 이 인보케이션의 30초 예산 안에 실행
+  // 즉시 {ok:true} 반환 → 이전 단계의 triggerNextAsync 완료
+  // 실제 작업은 ctx.waitUntil로 이 인보케이션의 CPU 예산 내에서 실행
+  // runStep 내부에서는 await triggerNextAsync(...)로 다음 단계를 직접 호출 — 중첩 waitUntil 없음
   ctx.waitUntil((async () => {
     try {
-      await runStep(env, ctx, pipelineId, Number(step));
+      await runStep(env, pipelineId, Number(step));
     } catch (e) {
       await savePipelineStatus(env, pipelineId, { status: 'error', error: e.message }).catch(() => {});
     }
@@ -834,8 +858,8 @@ async function handlePipelineStart(env, ctx, body) {
     label: '파이프라인 시작 중...',
   });
 
-  // 단계 1 트리거 — 현재 요청은 즉시 리턴, 작업은 서버에서 체인으로 계속 진행
-  triggerNextStep(ctx, pipelineId, 1);
+  // 단계 1 트리거 — ctx.waitUntil로 fetch 완료를 보장한 뒤 응답 반환
+  ctx.waitUntil(triggerNextAsync(pipelineId, 1));
 
   return { success: true, pipelineId };
 }
@@ -1197,6 +1221,7 @@ export default {
         else if (url.pathname === '/api/validate') result = await handleValidate(env, body);
         else if (url.pathname === '/api/regenerate') result = await handleRegenerate(env, body);
         else if (url.pathname === '/api/send-telegram') result = await handleSendTelegram(env, body);
+        else if (url.pathname === '/api/send-telegram-image') result = await handleSendTelegramImage(env, body);
         else if (url.pathname === '/api/generate-dm-reply') result = await handleGenerateDmReply(env, body);
         else if (url.pathname === '/api/post-instagram') result = await handlePostInstagram(env, body);
         else if (url.pathname === '/api/telegram-webhook') result = await handleTelegramWebhook(env, body);
