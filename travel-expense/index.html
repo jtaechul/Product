@@ -159,14 +159,14 @@
     .btn-auto:hover:not(:disabled) { background: var(--accent); color: #fff; }
     .btn-auto:disabled { opacity: .45; cursor: not-allowed; border-color: var(--border); color: var(--muted); }
 
-    /* Maps button (Google) */
+    /* Maps button (Kakao) */
     .btn-naver {
       display: flex; align-items: center; justify-content: center; gap: 6px;
       width: 100%;
       padding: 9px 10px;
       border-radius: 6px;
-      background: #1a73e8;
-      color: #fff;
+      background: #FEE500;
+      color: #3A1D1D;
       border: none;
       cursor: pointer;
       font-size: 12px; font-weight: 700;
@@ -175,7 +175,7 @@
       text-decoration: none;
       transition: background .15s;
     }
-    .btn-naver:hover { background: #1558b0; }
+    .btn-naver:hover { background: #f2d900; }
 
     .btn-ext {
       width: 100%;
@@ -544,10 +544,11 @@
       <div class="lk-box">
         <div class="lk-hdr">왕복 여행거리</div>
         <div class="lk-val" id="distVal">-<span class="lk-unit">km</span></div>
-        <div class="lk-meta" id="distMeta">목적지 입력 → 아래 링크 클릭 → 거리 확인 후 직접 입력</div>
-        <a id="naverLink" href="https://www.google.com/maps" target="_blank" class="btn-naver">
-          🗺 Google 지도에서 경로 확인 (자동입력)
+        <div class="lk-meta" id="distMeta">목적지 입력 → 아래 버튼 클릭 → 카카오맵에서 거리(편도) 확인 후 입력</div>
+        <a id="naverLink" href="https://map.kakao.com" target="_blank" class="btn-naver">
+          🗺 카카오맵에서 경로 확인 (출발·도착 자동입력)
         </a>
+        <div class="lk-meta" style="margin-top:5px;font-size:10.5px;">PC 브라우저에서 자동 길찾기됩니다. 도착지가 안 잡히면 카카오맵에서 직접 검색하세요.</div>
         <div class="manual-row">
           <input type="number" id="manDist" placeholder="왕복 거리 입력 (예: 92)"
                  step="0.1" min="0" oninput="onManDist()">
@@ -641,7 +642,7 @@
           <div class="ss-result-empty" id="resMapEmpty">
             미첨부 — 위 "지도 경로 캡처 첨부"에서 업로드하세요<br>
             <a id="naverLinkResult" href="#" target="_blank"
-               style="color:var(--accent);font-size:11px;">Google 지도에서 경로 확인</a>
+               style="color:var(--accent);font-size:11px;">카카오맵에서 경로 확인</a>
           </div>
           <img id="resMapImg" style="display:none;max-width:100%;max-height:240px;" alt="지도 캡처">
         </div>
@@ -680,6 +681,15 @@
    ======================================================== */
 const BASE_ADDR = '서울특별시 송파구 송파대로28길 28';
 const BASE_NAME = '해양환경공단 본사';
+// 카카오맵 출발지: 도로명주소보다 매칭률이 높은 건물명 사용
+const KAKAO_SRC = '해양환경공단 본사';
+
+// 카카오맵 길찾기 URL — 출발지·도착지를 텍스트로 검색해 자동차 경로 표시 (PC 웹)
+function buildKakaoRouteUrl(dest) {
+  return 'https://map.kakao.com/?target=car'
+    + '&sName=' + encodeURIComponent(KAKAO_SRC)
+    + '&eName=' + encodeURIComponent(dest);
+}
 
 const FUELS = {
   diesel:   { name: '경유',     eff: 12.52, opinetCode: 'D047' },
@@ -748,16 +758,14 @@ function refreshUI() {
     btnP.textContent = '날짜를 먼저 선택하세요';
   }
 
-  // Google Maps directions link (출발지+목적지 텍스트 그대로 자동 입력됨)
+  // 카카오맵 길찾기 링크 (출발지·도착지 주소 텍스트로 자동 검색 → 자동차 경로)
   const mapLink = document.getElementById('naverLink');
   if (dest) {
-    const origin = encodeURIComponent(BASE_ADDR);
-    const destination = encodeURIComponent(dest);
-    const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+    const url = buildKakaoRouteUrl(dest);
     mapLink.href = url;
     document.getElementById('naverLinkResult').href = url;
   } else {
-    mapLink.href = 'https://www.google.com/maps';
+    mapLink.href = 'https://map.kakao.com';
   }
 }
 
@@ -1084,8 +1092,7 @@ function calculate() {
   document.getElementById('r-amount').textContent = amount.toLocaleString('ko-KR') + ' 원';
   document.getElementById('r-basis').textContent  = basis;
 
-  document.getElementById('naverLinkResult').href =
-    `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(BASE_ADDR)}&destination=${encodeURIComponent(dest)}&travelmode=driving`;
+  document.getElementById('naverLinkResult').href = buildKakaoRouteUrl(dest);
 
   S.calcResult = { name, purpose, period, cop, fType, fuelName: fuel.name,
                    price, dist, eff, toll, amount, basis, dest };
