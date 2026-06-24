@@ -9,3 +9,7 @@ binding = "ASSETS"
 kv_namespaces = [
   { binding = "PENDING_POSTS", id = "e1b681762f6c43b9be77ede8061aa2dc" }
 ]
+
+# Cron Trigger — 매 1분마다 진행중 파이프라인을 한 단계씩 전진(자가복구). 무료 플랜 지원.
+[triggers]
+crons = ["* * * * *"]

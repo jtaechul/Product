@@ -698,20 +698,24 @@ JSON: {"dmText":"전체 DM 텍스트(줄바꿈은 \\n)"}`,
 // ===== 체인 파이프라인 (탭 닫아도 서버에서 계속 진행) =====
 // 각 단계마다 독립 Worker 인보케이션 → 단계별 새 30초 예산
 
-// triggerNextAsync: ctx.waitUntil 중첩 없이 현재 waitUntil 내부에서 직접 await
-// → 다음 단계 Worker가 {ok:true}를 돌려줄 때까지 현재 Worker가 살아있음
-async function triggerNextAsync(pipelineId, step) {
-  for (let i = 0; i < 3; i++) {
-    try {
-      const r = await fetch(`${SELF_URL}/api/pipeline-step`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pipelineId, step }),
-      });
-      if (r.ok) return;
-    } catch {}
-    if (i < 2) await new Promise(r => setTimeout(r, 500 * (i + 1)));
-  }
+// ===== 크론 구동 파이프라인 상태머신 =====
+// self-fetch 사슬을 제거하고, 1분마다 도는 Cron Trigger가 "진행중" 파이프라인을
+// 한 단계씩 전진시킨다. 한 단계가 누락/중단돼도 다음 크론 틱이 자동 재개 → 자가복구.
+// (Cloudflare Workers는 긴 작업을 보장하지 않으므로, 복구 가능한 외부 스케줄러가 필요)
+
+const PIPELINE_TTL = 3600;        // 파이프라인 상태 보존(초)
+const PLOG_TTL = 604800;          // 작업 로그 보존(초, 7일) — 사후 오류 분석용
+const STEP_STALE_MS = 90 * 1000;  // active 상태가 이 시간 넘게 안 변하면 죽은 것으로 보고 재실행
+
+// 작업 로그 기록 — 별도 KV 키(plog_<id>). 파이프라인 상태가 만료돼도 7일간 남아 사후 분석 가능.
+async function logStep(env, pipelineId, entry) {
+  if (!env.PENDING_POSTS || !pipelineId) return;
+  const key = `plog_${pipelineId}`;
+  let log = [];
+  try { log = (await env.PENDING_POSTS.get(key, 'json')) || []; } catch {}
+  log.push({ ts: new Date().toISOString(), ...entry });
+  if (log.length > 200) log = log.slice(-200);
+  try { await env.PENDING_POSTS.put(key, JSON.stringify(log), { expirationTtl: PLOG_TTL }); } catch {}
 }
 
 async function runStep(env, pipelineId, step) {
@@ -724,23 +728,25 @@ async function runStep(env, pipelineId, step) {
     _modelCache = { main: savedModels.main, light: savedModels.light };
   }
 
+  const t0 = Date.now();
+  const setActive = (label) => savePipelineStatus(env, pipelineId, { step, stepStatus: 'active', runningStep: step, label });
+
   if (step === 1) {
-    await savePipelineStatus(env, pipelineId, { step: 1, stepStatus: 'active', label: 'Claude AI가 5페이지 카드뉴스를 작성 중...' });
-    try {
-      const genData = await handleGenerate(env, bookInfo);
-      const pages = genData.pages;
-      const patch = { step: 1, stepStatus: 'done', label: '5페이지 카드뉴스 생성 완료', pages };
-      // 모델 ID를 KV에 저장 → 이후 단계에서 재프로빙 없이 재활용
-      if (_modelCache?.main) patch.models = { main: _modelCache.main, light: _modelCache.light };
-      await savePipelineStatus(env, pipelineId, patch);
-      await triggerNextAsync(pipelineId, 2);
-    } catch (e) {
-      await savePipelineStatus(env, pipelineId, { status: 'error', step: 1, stepStatus: 'error', label: `생성 실패: ${e.message}`, error: e.message });
-    }
+    await setActive('Claude AI가 5페이지 카드뉴스를 작성 중...');
+    await logStep(env, pipelineId, { step, phase: 'start', model: _modelCache?.main });
+    // 1단계(생성) 실패는 치명적 → throw하여 advancePipeline이 error로 마감
+    const genData = await handleGenerate(env, bookInfo);
+    const pages = genData.pages;
+    const patch = { step: 1, stepStatus: 'done', label: '5페이지 카드뉴스 생성 완료', pages };
+    // 모델 ID를 KV에 저장 → 이후 단계에서 재프로빙 없이 재활용
+    if (_modelCache?.main) patch.models = { main: _modelCache.main, light: _modelCache.light };
+    await savePipelineStatus(env, pipelineId, patch);
+    await logStep(env, pipelineId, { step, phase: 'done', model: _modelCache?.main, durationMs: Date.now() - t0 });
 
   } else if (step === 2) {
     const { pages } = state;
-    await savePipelineStatus(env, pipelineId, { step: 2, stepStatus: 'active', label: 'AI 자동 품질 평가 중...' });
+    await setActive('AI 자동 품질 평가 중...');
+    await logStep(env, pipelineId, { step, phase: 'start' });
     let updatedPages = pages;
     let validation = null;
     try {
@@ -752,60 +758,79 @@ async function runStep(env, pipelineId, step) {
           updatedPages = rd.pages;
         }
       }
-    } catch {}
+    } catch (e) {
+      await logStep(env, pipelineId, { step, phase: 'warn', error: '검증 실패(계속 진행): ' + e.message });
+    }
     await savePipelineStatus(env, pipelineId, { step: 2, stepStatus: 'done', label: `${validation?.totalScore || 0}/100점`, pages: updatedPages, validation });
-    await triggerNextAsync(pipelineId, 3);
+    await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0, note: `score ${validation?.totalScore || 0}` });
 
   } else if (step === 3) {
     const { pages } = state;
-    await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'active', label: 'AI 이미지 URL 생성 중...' });
+    await setActive('AI 이미지 URL 생성 중...');
+    await logStep(env, pipelineId, { step, phase: 'start' });
     let images = null;
     try {
       const imgData = await handleGenerateImages(env, { pages, bookInfo });
       images = imgData.images;
-    } catch {}
+    } catch (e) {
+      await logStep(env, pipelineId, { step, phase: 'warn', error: '이미지 생성 실패(계속 진행): ' + e.message });
+    }
     await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'done', label: '이미지 URL 생성 완료', images });
-    await triggerNextAsync(pipelineId, 4);
+    await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0 });
 
   } else if (step === 4) {
     const { pages } = state;
-    await savePipelineStatus(env, pipelineId, { step: 4, stepStatus: 'active', label: '인스타그램 캡션 작성 중...' });
+    await setActive('인스타그램 캡션 작성 중...');
+    await logStep(env, pipelineId, { step, phase: 'start' });
     let caption = '', hashtags = [], dmKeyword = '';
     try {
       const capData = await handleGenerateCaption(env, { pages, bookInfo, dmKeyword: commentKeyword });
       caption = capData.caption || '';
       hashtags = capData.hashtags || [];
       dmKeyword = capData.commentKeyword || capData.dmKeyword || '';
-    } catch {}
+    } catch (e) {
+      await logStep(env, pipelineId, { step, phase: 'warn', error: '캡션 생성 실패(계속 진행): ' + e.message });
+    }
     await savePipelineStatus(env, pipelineId, { step: 4, stepStatus: 'done', label: '캡션 + 해시태그 생성 완료', caption, hashtags, dmKeyword });
-    await triggerNextAsync(pipelineId, 5);
+    await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0 });
 
   } else if (step === 5) {
     const { pages, dmKeyword: savedKw } = state;
     const dmKeyword = savedKw || commentKeyword;
-    await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'active', label: 'DM 자동 회신 내용 작성 중...' });
+    await setActive('DM 자동 회신 내용 작성 중...');
+    await logStep(env, pipelineId, { step, phase: 'start' });
     try {
       await handleGenerateDmReply(env, { pages, bookInfo, affiliateLinks, commentKeyword: dmKeyword });
-    } catch {}
+    } catch (e) {
+      await logStep(env, pipelineId, { step, phase: 'warn', error: 'DM 회신 생성 실패(계속 진행): ' + e.message });
+    }
     await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'done', label: 'DM 자동 회신 생성 완료' });
-    await triggerNextAsync(pipelineId, 6);
+    await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0 });
 
   } else if (step === 6) {
-    const { pages, images, caption, hashtags, dmKeyword: savedKw } = state;
+    const { pages, images, caption, hashtags, dmKeyword: savedKw, telegramSentAt } = state;
     const dmKeyword = savedKw || commentKeyword;
-    await savePipelineStatus(env, pipelineId, { step: 6, stepStatus: 'active', label: '텔레그램으로 최종 확인 요청 발송 중...' });
-    let telegramError = null;
-    try {
-      await handleSendTelegram(env, { pages, bookInfo, caption, hashtags, commentKeyword: dmKeyword, dmKeyword, images, compositeImages: null });
-    } catch (e) {
-      telegramError = e.message;
+    // 중복 발송 방지: 이미 발송했으면 건너뜀 (크론 재실행 시 텔레그램 중복 방지)
+    if (telegramSentAt) {
+      await savePipelineStatus(env, pipelineId, { step: 6, stepStatus: 'done', label: '텔레그램 발송 완료(중복 방지)' });
+      await logStep(env, pipelineId, { step, phase: 'skip', note: '이미 발송됨' });
+    } else {
+      await setActive('텔레그램으로 최종 확인 요청 발송 중...');
+      await logStep(env, pipelineId, { step, phase: 'start' });
+      let telegramError = null;
+      try {
+        await handleSendTelegram(env, { pages, bookInfo, caption, hashtags, commentKeyword: dmKeyword, dmKeyword, images, compositeImages: null });
+      } catch (e) {
+        telegramError = e.message;
+      }
+      await savePipelineStatus(env, pipelineId, {
+        step: 6,
+        stepStatus: telegramError ? 'error' : 'done',
+        telegramSentAt: telegramError ? null : Date.now(),
+        label: telegramError ? `텔레그램 발송 실패: ${telegramError}` : '텔레그램 발송 완료 — 브라우저에서 텍스트 합성 이미지를 추가 발송합니다',
+      });
+      await logStep(env, pipelineId, { step, phase: telegramError ? 'error' : 'done', error: telegramError, durationMs: Date.now() - t0 });
     }
-    await savePipelineStatus(env, pipelineId, {
-      step: 6,
-      stepStatus: telegramError ? 'error' : 'done',
-      label: telegramError ? `텔레그램 발송 실패: ${telegramError}` : '텔레그램 발송 완료 — 브라우저에서 텍스트 합성 이미지를 추가 발송합니다',
-    });
-    await triggerNextAsync(pipelineId, 7);
 
   } else if (step === 7) {
     const step6Error = state.step === 6 && state.stepStatus === 'error';
@@ -816,26 +841,80 @@ async function runStep(env, pipelineId, step) {
       label: step6Error ? '완료 (텔레그램 실패 — 웹에서 직접 게시 가능)' : '완료! 텔레그램에서 [게시하기]를 눌러주세요.',
       completedAt: Date.now(),
     });
+    await logStep(env, pipelineId, { step, phase: 'complete' });
+  }
+}
+
+// 파이프라인을 한 단계 전진시킨다 (시작 직후 킥 + 크론 양쪽에서 호출).
+// 진행중 단계가 살아있으면 손대지 않고, 멈춘(stale) 단계만 재실행 → 중복 없이 자가복구.
+async function advancePipeline(env, pipelineId) {
+  const state = await env.PENDING_POSTS?.get(`pipeline_${pipelineId}`, 'json').catch(() => null);
+  if (!state || state.status !== 'running') return;
+
+  const step = state.step || 0;
+  const stepStatus = state.stepStatus || 'done';
+  const age = Date.now() - (state.updatedAt || 0);
+
+  let nextStep;
+  if (stepStatus === 'active') {
+    if (age < STEP_STALE_MS) return;             // 아직 진행중 — 건드리지 않음
+    nextStep = state.runningStep || step || 1;   // 멈춘 단계를 재실행
+    await logStep(env, pipelineId, { step: nextStep, phase: 'recover', note: `${Math.round(age / 1000)}s 멈춤 → 재실행` });
+  } else if (stepStatus === 'error') {
+    return;                                        // 에러는 자동 재시도 안 함(무한루프 방지) — 로그로 분석
+  } else {
+    nextStep = step + 1;                           // 이전 단계 done → 다음 단계
+  }
+
+  if (nextStep > 7) {
+    await savePipelineStatus(env, pipelineId, { status: 'complete', stepStatus: 'done' });
+    return;
+  }
+
+  try {
+    await runStep(env, pipelineId, nextStep);
+  } catch (e) {
+    await savePipelineStatus(env, pipelineId, { status: 'error', step: nextStep, stepStatus: 'error', label: `단계 ${nextStep} 실패: ${e.message}`, error: e.message });
+    await logStep(env, pipelineId, { step: nextStep, phase: 'error', error: e.message });
+  }
+}
+
+// 크론(매 1분)에서 호출 — 진행중 파이프라인을 찾아 각각 한 단계씩 전진
+async function runScheduled(env) {
+  if (!env.PENDING_POSTS) return;
+  let cursor;
+  const ids = [];
+  do {
+    const list = await env.PENDING_POSTS.list({ prefix: 'pipeline_', cursor });
+    for (const { name } of list.keys) ids.push(name.slice('pipeline_'.length));
+    cursor = list.list_complete ? null : list.cursor;
+  } while (cursor && ids.length < 200);
+
+  let checked = 0, advanced = 0;
+  for (const id of ids) {
+    if (checked >= 30 || advanced >= 5) break;   // 한 틱당 작업량 상한
+    checked++;
+    const state = await env.PENDING_POSTS.get(`pipeline_${id}`, 'json').catch(() => null);
+    if (!state || state.status !== 'running') continue;
+    await advancePipeline(env, id);
+    advanced++;
   }
 }
 
 async function handlePipelineStepEndpoint(env, ctx, body) {
-  const { pipelineId, step } = body;
-  if (!pipelineId || step == null) return { ok: true };
-  if (!env.PENDING_POSTS) return { ok: true };
-
-  // 즉시 {ok:true} 반환 → 이전 단계의 triggerNextAsync 완료
-  // 실제 작업은 ctx.waitUntil로 이 인보케이션의 CPU 예산 내에서 실행
-  // runStep 내부에서는 await triggerNextAsync(...)로 다음 단계를 직접 호출 — 중첩 waitUntil 없음
-  ctx.waitUntil((async () => {
-    try {
-      await runStep(env, pipelineId, Number(step));
-    } catch (e) {
-      await savePipelineStatus(env, pipelineId, { status: 'error', error: e.message }).catch(() => {});
-    }
-  })());
-
+  // 수동 넛지 엔드포인트(옵션) — self-fetch 사슬은 더 이상 쓰지 않음. 크론이 주 구동자.
+  const { pipelineId } = body;
+  if (!pipelineId || !env.PENDING_POSTS) return { ok: true };
+  ctx.waitUntil(advancePipeline(env, pipelineId).catch(() => {}));
   return { ok: true };
+}
+
+async function handlePipelineLog(env, url) {
+  const pipelineId = url.searchParams.get('id');
+  if (!pipelineId) return { error: 'pipelineId가 필요합니다.' };
+  if (!env.PENDING_POSTS) return { error: 'KV 스토어 미설정' };
+  const log = await env.PENDING_POSTS.get(`plog_${pipelineId}`, 'json').catch(() => null);
+  return { pipelineId, log: log || [] };
 }
 
 async function handlePipelineStart(env, ctx, body) {
@@ -846,20 +925,22 @@ async function handlePipelineStart(env, ctx, body) {
 
   const pipelineId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
-  // 초기 상태 저장
+  // 초기 상태: step 0 / done → 다음 전진 시 1단계 실행
   await savePipelineStatus(env, pipelineId, {
     status: 'running',
     step: 0,
-    stepStatus: 'active',
+    stepStatus: 'done',
     bookInfo,
     affiliateLinks: affiliateLinks || [],
     commentKeyword: commentKeyword || '',
     startedAt: Date.now(),
-    label: '파이프라인 시작 중...',
+    label: '파이프라인 시작 — 곧 자동 진행됩니다',
   });
+  await logStep(env, pipelineId, { step: 0, phase: 'start', note: `책: ${bookInfo.title}` });
 
-  // 단계 1 트리거 — ctx.waitUntil로 fetch 완료를 보장한 뒤 응답 반환
-  ctx.waitUntil(triggerNextAsync(pipelineId, 1));
+  // 즉시 1단계 킥 (self-fetch 없이 같은 인보케이션 waitUntil에서 직접 실행).
+  // 이 킥이 실패하거나 중간에 죽어도 크론이 1분 내 자동으로 이어받는다 → 화면 상태 무관.
+  ctx.waitUntil(advancePipeline(env, pipelineId).catch(() => {}));
 
   return { success: true, pipelineId };
 }
@@ -1231,6 +1312,7 @@ export default {
         else if (url.pathname === '/api/pipeline-step') result = await handlePipelineStepEndpoint(env, ctx, body);
         else if (url.pathname === '/api/run-pipeline') result = await handleRunPipeline(env, body, ctx);
         else if (url.pathname === '/api/pipeline-status') result = await handlePipelineStatus(env, url);
+        else if (url.pathname === '/api/pipeline-log') result = await handlePipelineLog(env, url);
         else return json({ error: '없는 경로입니다.' }, 404);
 
         return json(result);
@@ -1240,5 +1322,11 @@ export default {
     }
 
     return env.ASSETS.fetch(request);
+  },
+
+  // Cron Trigger (매 1분) — 진행중 파이프라인을 한 단계씩 전진시키는 durable 구동자.
+  // 화면/탭 상태와 무관하게 서버에서 작업이 끝까지 진행되고, 중단돼도 자동 재개된다.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runScheduled(env));
   },
 };
