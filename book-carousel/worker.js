@@ -253,7 +253,7 @@ async function handleSendTelegram(env, body) {
     throw new Error('TELEGRAM_BOT_TOKEN 또는 TELEGRAM_CHAT_ID가 설정되지 않았습니다.');
   }
 
-  const { pages, bookInfo, caption, hashtags, commentKeyword, dmKeyword, images, compositeImages } = body;
+  const { pages, bookInfo, caption, hashtags, commentKeyword, dmKeyword, images, compositeImages, dmText, sendPageImages = true } = body;
   const kw = commentKeyword || dmKeyword || '';
 
   const captionBlock = caption
@@ -275,24 +275,33 @@ async function handleSendTelegram(env, body) {
   ];
 
   let sent = 1;
-  for (const { key, label, text } of pageDefs) {
-    const compositeDataUrl = compositeImages?.[key]; // base64 data URL (텍스트+배경 합성)
-    const imgUrl = images?.[key];                    // Pollinations URL (배경만)
-    const msgText = `[${label}]\n${text.trim()}`;
+  if (sendPageImages) {
+    for (const { key, label, text } of pageDefs) {
+      const compositeDataUrl = compositeImages?.[key]; // base64 data URL (텍스트+배경 합성)
+      const imgUrl = images?.[key];                    // Pollinations URL (배경만)
+      const msgText = `[${label}]\n${text.trim()}`;
 
-    if (compositeDataUrl) {
-      // 텍스트가 이미 합성된 이미지 파일로 전송
-      const ok = await sendTelegramPhotoFile(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, compositeDataUrl, msgText);
-      if (!ok) {
-        // 파일 전송 실패 시 URL 또는 텍스트로 폴백
-        if (imgUrl) await sendTelegramPhoto(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, imgUrl, msgText);
-        else await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, msgText);
+      if (compositeDataUrl) {
+        const ok = await sendTelegramPhotoFile(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, compositeDataUrl, msgText);
+        if (!ok) {
+          if (imgUrl) await sendTelegramPhoto(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, imgUrl, msgText);
+          else await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, msgText);
+        }
+      } else if (imgUrl) {
+        await sendTelegramPhoto(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, imgUrl, msgText);
+      } else {
+        await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, msgText);
       }
-    } else if (imgUrl) {
-      await sendTelegramPhoto(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, imgUrl, msgText);
-    } else {
-      await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, msgText);
+      sent++;
+      await new Promise(r => setTimeout(r, 300));
     }
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  // DM 자동 회신 미리보기 전송
+  if (dmText) {
+    const dmPreview = `[DM 자동 회신 미리보기]\n키워드 '${kw}'를 댓글에 남긴 팔로워에게 자동 발송되는 메시지:\n\n${dmText}`;
+    await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, dmPreview);
     sent++;
     await new Promise(r => setTimeout(r, 300));
   }
@@ -339,24 +348,7 @@ async function handleSuggest(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'main'),
     system: '당신은 도서 큐레이터입니다. 최신 베스트셀러 트렌드와 사회적 이슈를 바탕으로 실제 존재하는 책을 추천합니다. 반드시 JSON만 응답합니다.',
-    user: `오늘 날짜: ${today}
-주제: "${topic}"${excludeClause}
-
-이 주제와 관련해 지금 이 시점에 주목받을 만한 실제 책 4권을 추천하세요.
-최근 1~2년 내 출간된 신간이거나, 최신 사회 이슈(AI·경제위기·부동산·건강·인간관계·기후·취업 등)와 직접 연결되는 인사이트 있는 책을 우선 선정하세요.
-동일 저자 책은 중복 추천하지 마세요.
-
-각 책에 대해:
-- title: 책 제목 (실제 출판된 책)
-- author: 저자명
-- year: 출판연도 (숫자)
-- category: 카테고리
-- coreMessage: 이 책의 핵심 메시지 (1~2문장)
-- targetAudience: 주요 대상 독자층 (1문장)
-- reason: 지금 이 책을 읽어야 하는 이유 (1문장, 최신 트렌드/이슈 연결)
-
-JSON 형식:
-{"books":[{"title":"...","author":"...","year":2024,"category":"...","coreMessage":"...","targetAudience":"...","reason":"..."}]}`,
+    user: `오늘 날짜: ${today}\n주제: "${topic}"${excludeClause}\n\n이 주제와 관련해 지금 이 시점에 주목받을 만한 실제 책 4권을 추천하세요.\n최근 1~2년 내 출간된 신간이거나, 최신 사회 이슈(AI·경제위기·부동산·건강·인간관계·기후·취업 등)와 직접 연결되는 인사이트 있는 책을 우선 선정하세요.\n동일 저자 책은 중복 추천하지 마세요.\n\n각 책에 대해:\n- title: 책 제목 (실제 출판된 책)\n- author: 저자명\n- year: 출판연도 (숫자)\n- category: 카테고리\n- coreMessage: 이 책의 핵심 메시지 (1~2문장)\n- targetAudience: 주요 대상 독자층 (1문장)\n- reason: 지금 이 책을 읽어야 하는 이유 (1문장, 최신 트렌드/이슈 연결)\n\nJSON 형식:\n{"books":[{"title":"...","author":"...","year":2024,"category":"...","coreMessage":"...","targetAudience":"...","reason":"..."}]}`,
   });
 
   return { success: true, ...extractJson(text) };
@@ -371,11 +363,7 @@ async function handleAnalyze(env, body) {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
     max_tokens: 512,
     system: '당신은 도서 분석 전문가입니다. 책 제목과 저자를 보고 핵심 메시지와 대상 독자층을 분석합니다. 반드시 JSON만 응답합니다.',
-    user: `책: "${title}"${author ? ` / 저자: ${author}` : ''}
-
-이 책의 정보를 분석하세요.
-
-JSON: {"author":"저자명","year":출판연도(숫자),"category":"카테고리","coreMessage":"이 책의 핵심 메시지 1~2문장","targetAudience":"주요 대상 독자층 1문장"}`,
+    user: `책: "${title}"${author ? ` / 저자: ${author}` : ''}\n\n이 책의 정보를 분석하세요.\n\nJSON: {"author":"저자명","year":출판연도(숫자),"category":"카테고리","coreMessage":"이 책의 핵심 메시지 1~2문장","targetAudience":"주요 대상 독자층 1문장"}`,
   });
 
   return { success: true, ...extractJson(text) };
@@ -387,40 +375,8 @@ async function handleGenerate(env, body) {
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'main'),
-    system: `당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다.
-핵심 규칙(절대 위반 금지):
-1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.
-2. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.
-3. 공포감·호기심·위기감으로 저장·공유율을 높인다.
-반드시 JSON만 응답한다.`,
-    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.
-
-카테고리: ${category || '자기계발'}
-핵심 메시지: ${coreMessage}
-${targetAudience ? `대상: ${targetAudience}` : ''}
-
-페이지 가이드 (길이 규칙 엄수):
-1페이지(훅 — 헤드라인만): 카드 전체를 단 하나의 강렬한 문장으로 채운다.
-  - headline: 40자 이내 완전한 문장('주어+상황+구체적 결과' 구조 필수).
-    좋은 예: "지금 이 순간에도 당신의 뇌는 몸보다 먼저 죽어가고 있다"
-             "한국인 3명 중 1명은 이미 부채 함정에 빠졌다는 사실을 아는가"
-    나쁜 예(절대 금지): "뇌가 먼저 죽어간다" / "돈이 사라진다" (단어 조각)
-  - subtext 없음 — JSON에 포함하지 않는다.
-2페이지(문제): 구체적 수치·현실 사례로 독자가 공감할 문제 상황을 서술한다.
-  - headline: 18자 이내
-  - body: 3~4줄, 한 줄 45자 이내. 구체적 수치(%, 명, 연도)를 최소 1개 포함.
-3페이지(심각성): "대부분은 이 사실을 모른다" 접근으로 충격 사실·연구 결과를 제시한다.
-  - headline: 18자 이내
-  - body: 3~4줄, 한 줄 45자 이내. 출처 가능 수준의 실제 통계·연구 인용 1건 이상.
-4페이지(실마리): 완전한 해결책은 절대 주지 말고 '해결 방향의 단서'만 암시해 DM 욕구를 자극한다.
-  - headline: 18자 이내
-  - body: 3~4줄, 한 줄 45자 이내. 마지막 줄은 '그렇다면 어떻게?' 암시로 끝낸다.
-5페이지(반문·열린 결말): 구매 유도·책 이름 없이 독자 스스로 생각하게 만드는 반문.
-  - cta: 열린 질문 2줄 이내
-  - linkText: 여운 있는 한 줄
-
-JSON:
-{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
+    system: `당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.\n3. 공포감·호기심·위기감으로 저장·공유율을 높인다.\n반드시 JSON만 응답한다.`,
+    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '자기계발'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(훅 — 헤드라인만): 카드 전체를 단 하나의 강렬한 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장('주어+상황+구체적 결과' 구조 필수).\n    좋은 예: "지금 이 순간에도 당신의 뇌는 몸보다 먼저 죽어가고 있다"\n             "한국인 3명 중 1명은 이미 부채 함정에 빠졌다는 사실을 아는가"\n    나쁜 예(절대 금지): "뇌가 먼저 죽어간다" / "돈이 사라진다" (단어 조각)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(문제): 구체적 수치·현실 사례로 독자가 공감할 문제 상황을 서술한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 구체적 수치(%, 명, 연도)를 최소 1개 포함.\n3페이지(심각성): "대부분은 이 사실을 모른다" 접근으로 충격 사실·연구 결과를 제시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 출처 가능 수준의 실제 통계·연구 인용 1건 이상.\n4페이지(실마리): 완전한 해결책은 절대 주지 말고 '해결 방향의 단서'만 암시해 DM 욕구를 자극한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 마지막 줄은 '그렇다면 어떻게?' 암시로 끝낸다.\n5페이지(반문·열린 결말): 구매 유도·책 이름 없이 독자 스스로 생각하게 만드는 반문.\n  - cta: 열린 질문 2줄 이내\n  - linkText: 여운 있는 한 줄\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
 
   return { success: true, pages: extractJson(text) };
@@ -432,20 +388,7 @@ async function handleValidate(env, body) {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
     max_tokens: 1024,
     system: '당신은 소셜미디어 콘텐츠 전문 편집장 겸 저작권 검토자입니다. 반드시 JSON만 응답합니다.',
-    user: `책 "${bookInfo.title}" (저자: ${bookInfo.author}) 캐럿셀을 아래 5가지 기준으로 평가하세요.
-
-캐럿셀 내용:
-${JSON.stringify(pages, null, 2)}
-
-평가 기준 (100점 만점):
-1. accuracy(책 내용 부합도): 캐럿셀 내용이 해당 책의 실제 메시지와 일치하는가? 0~20
-2. factual(사실 정확성): 수치·통계·사례에 명백한 오류나 과장이 없는가? 0~20
-3. copyright(저작권 안전성): 책의 핵심 내용을 그대로 옮기지 않고 요약·재해석했는가? 저자명·책 제목이 본문에 노출되지 않는가? 0~20
-4. engagement(소비자 자극): 공포감·호기심·위기감이 충분해 저장·DM·구매 욕구를 자극하는가? 0~25
-5. quality(문장 품질): 오타·비문·어색한 표현이 없고 간결한가? 0~15
-
-JSON: {"totalScore":85,"scores":{"accuracy":17,"factual":16,"copyright":18,"engagement":22,"quality":12},"feedback":"전체 평가 2~3문장","improvements":["구체적 개선점1","개선점2","개선점3"],"approved":true}
-approved는 totalScore>=70이면 true.`
+    user: `책 "${bookInfo.title}" (저자: ${bookInfo.author}) 캐럿셀을 아래 5가지 기준으로 평가하세요.\n\n캐럿셀 내용:\n${JSON.stringify(pages, null, 2)}\n\n평가 기준 (100점 만점):\n1. accuracy(책 내용 부합도): 캐럿셀 내용이 해당 책의 실제 메시지와 일치하는가? 0~20\n2. factual(사실 정확성): 수치·통계·사례에 명백한 오류나 과장이 없는가? 0~20\n3. copyright(저작권 안전성): 책의 핵심 내용을 그대로 옮기지 않고 요약·재해석했는가? 저자명·책 제목이 본문에 노출되지 않는가? 0~20\n4. engagement(소비자 자극): 공포감·호기심·위기감이 충분해 저장·DM·구매 욕구를 자극하는가? 0~25\n5. quality(문장 품질): 오타·비문·어색한 표현이 없고 간결한가? 0~15\n\nJSON: {"totalScore":85,"scores":{"accuracy":17,"factual":16,"copyright":18,"engagement":22,"quality":12},"feedback":"전체 평가 2~3문장","improvements":["구체적 개선점1","개선점2","개선점3"],"approved":true}\napproved는 totalScore>=70이면 true.`
   });
   return { success: true, ...extractJson(text) };
 }
@@ -486,37 +429,7 @@ async function handleGenerateImages(env, body) {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
     max_tokens: 1400,
     system: '당신은 AI 이미지 프롬프트 전문가입니다. 인스타그램 카드뉴스의 각 페이지 내용과 감정 흐름에 정확히 부합하는 Stable Diffusion 영어 프롬프트를 작성합니다. 반드시 JSON만 응답합니다.',
-    user: `책 카테고리: ${bookInfo.category || '자기계발'}
-책 핵심 주제: ${bookInfo.coreMessage || bookInfo.title || ''}
-
-아래 5페이지 카드뉴스 내용을 보고, 각 페이지의 내용과 감정에 정확히 부합하는 배경 이미지 프롬프트 5개를 작성하세요.
-page1~page5 키를 반드시 모두 포함해야 합니다.
-
-=== 각 페이지 내용 ===
-1페이지(훅 — 충격·공포·호기심): ${pageContents.page1}
-  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page1}
-
-2페이지(문제 — 현실 직시): ${pageContents.page2}
-  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page2}
-
-3페이지(심각성 — 경각심): ${pageContents.page3}
-  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page3}
-
-4페이지(실마리 — 희망·전환): ${pageContents.page4}
-  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page4}
-
-5페이지(CTA — 여운·초대): ${pageContents.page5}
-  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page5}
-
-=== 공통 규칙 ===
-- 페이지별 내용과 감정을 구체적으로 반영할 것 (추상적 책 이미지 5개 금지)
-- 인물 얼굴 클로즈업 금지 (뒷모습·실루엣·손 등 허용)
-- 텍스트·글자·숫자 없음 (no text, no letters)
-- Instagram 1:1 정사각형 구도
-- 각 프롬프트는 영어, 60단어 이내
-- 하단 30%는 어둡거나 단순한 영역으로 구성 (텍스트 오버레이 공간 확보)
-
-JSON (page1~page5 모두 필수): {"page1":"prompt","page2":"prompt","page3":"prompt","page4":"prompt","page5":"prompt"}`,
+    user: `책 카테고리: ${bookInfo.category || '자기계발'}\n책 핵심 주제: ${bookInfo.coreMessage || bookInfo.title || ''}\n\n아래 5페이지 카드뉴스 내용을 보고, 각 페이지의 내용과 감정에 정확히 부합하는 배경 이미지 프롬프트 5개를 작성하세요.\npage1~page5 키를 반드시 모두 포함해야 합니다.\n\n=== 각 페이지 내용 ===\n1페이지(훅 — 충격·공포·호기심): ${pageContents.page1}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page1}\n\n2페이지(문제 — 현실 직시): ${pageContents.page2}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page2}\n\n3페이지(심각성 — 경각심): ${pageContents.page3}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page3}\n\n4페이지(실마리 — 희망·전환): ${pageContents.page4}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page4}\n\n5페이지(CTA — 여운·초대): ${pageContents.page5}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page5}\n\n=== 공통 규칙 ===\n- 페이지별 내용과 감정을 구체적으로 반영할 것 (추상적 책 이미지 5개 금지)\n- 인물 얼굴 클로즈업 금지 (뒷모습·실루엣·손 등 허용)\n- 텍스트·글자·숫자 없음 (no text, no letters)\n- Instagram 1:1 정사각형 구도\n- 각 프롬프트는 영어, 60단어 이내\n- 하단 30%는 어둡거나 단순한 영역으로 구성 (텍스트 오버레이 공간 확보)\n\nJSON (page1~page5 모두 필수): {"page1":"prompt","page2":"prompt","page3":"prompt","page4":"prompt","page5":"prompt"}`,
   });
 
   const prompts = extractJson(text);
@@ -553,21 +466,7 @@ async function handleGenerateCaption(env, body) {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
     max_tokens: 512,
     system: '당신은 인스타그램 마케터입니다. 댓글 유도 중심의 짧고 강렬한 캡션을 작성합니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 반드시 JSON만 응답합니다.',
-    user: `책 카테고리: ${bookInfo.category || '자기계발'}
-핵심 메시지: ${bookInfo.coreMessage || ''}
-캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}
-댓글 키워드: "${kw}" (방문자가 댓글에 이 키워드를 남기면 DM으로 책 정보와 구매링크를 자동 발송하는 시스템)
-
-인스타그램 캡션을 작성하세요.
-
-규칙:
-- 첫 줄: 호기심/위기감 자극 단문 또는 질문 (책 제목 절대 노출 금지)
-- 2~3줄: 캐럿셀 핵심만 초간결 요약 (반복 금지, 노골적 판매 금지)
-- 마지막 줄: "댓글에 '${kw}'를 남겨주세요" 형태의 자연스러운 유도 문구
-- 해시태그: 정확히 3개 (카테고리 관련)
-- 전체 5줄 이내, 짧고 강렬하게
-
-JSON: {"caption":"첫줄\\n둘째줄\\n셋째줄\\n댓글유도줄","hashtags":["#tag1","#tag2","#tag3"],"commentKeyword":"${kw}"}`,
+    user: `책 카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n댓글 키워드: "${kw}" (방문자가 댓글에 이 키워드를 남기면 DM으로 책 정보와 구매링크를 자동 발송하는 시스템)\n\n인스타그램 캡션을 작성하세요.\n\n규칙:\n- 첫 줄: 호기심/위기감 자극 단문 또는 질문 (책 제목 절대 노출 금지)\n- 2~3줄: 캐럿셀 핵심만 초간결 요약 (반복 금지, 노골적 판매 금지)\n- 마지막 줄: "댓글에 '${kw}'를 남겨주세요" 형태의 자연스러운 유도 문구\n- 해시태그: 정확히 3개 (카테고리 관련)\n- 전체 5줄 이내, 짧고 강렬하게\n\nJSON: {"caption":"첫줄\\n둘째줄\\n셋째줄\\n댓글유도줄","hashtags":["#tag1","#tag2","#tag3"],"commentKeyword":"${kw}"}`,
   });
 
   const result = extractJson(text);
@@ -580,29 +479,8 @@ async function handleRegenerate(env, body) {
   const { bookInfo, previousPages, feedback, improvements } = body;
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'main'),
-    system: `당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다.
-핵심 규칙(절대 위반 금지):
-1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.
-2. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.
-3. 5페이지는 반문·열린 결말 구조 — 구매 유도나 직접 행동 지시 없이 독자에게 질문을 던진다.
-반드시 JSON만 응답한다.`,
-    user: `캐럿셀을 피드백에 맞게 개선하세요.
-카테고리: ${bookInfo.category || '자기계발'}
-핵심 메시지: ${bookInfo.coreMessage || ''}
-
-이전 버전:
-${JSON.stringify(previousPages, null, 2)}
-
-피드백: ${feedback}
-개선 요청: ${improvements.join(' / ')}
-
-텍스트 길이 기준:
-- 1페이지 headline: 40자 이내 완전한 문장(주어+상황+결과). 단어 조각 절대 금지. subtext 없음.
-- 2~4페이지 headline: 18자 이내, body: 3~4줄(줄당 45자 이내). 구체적 수치·사례 포함.
-- JSON 형식: {"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},...}
-
-JSON:
-{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
+    system: `당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.\n3. 5페이지는 반문·열린 결말 구조 — 구매 유도나 직접 행동 지시 없이 독자에게 질문을 던진다.\n반드시 JSON만 응답한다.`,
+    user: `캐럿셀을 피드백에 맞게 개선하세요.\n카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n이전 버전:\n${JSON.stringify(previousPages, null, 2)}\n\n피드백: ${feedback}\n개선 요청: ${improvements.join(' / ')}\n\n텍스트 길이 기준:\n- 1페이지 headline: 40자 이내 완전한 문장(주어+상황+결과). 단어 조각 절대 금지. subtext 없음.\n- 2~4페이지 headline: 18자 이내, body: 3~4줄(줄당 45자 이내). 구체적 수치·사례 포함.\n- JSON 형식: {"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},...}\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
   return { success: true, pages: extractJson(text) };
 }
@@ -620,22 +498,7 @@ async function handleAdjustText(env, body) {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
     max_tokens: 1024,
     system: '당신은 인스타그램 카드뉴스 카피라이터입니다. 주어진 텍스트를 지정된 줄 수 이내로 압축합니다. 반드시 JSON만 응답합니다.',
-    user: `다음 캐럿셀 텍스트가 이미지 레이아웃에서 넘칩니다. 각 항목을 지정된 최대 줄 수 이내로 압축하세요.
-의미·임팩트는 유지하되 더 간결하게 다듬어주세요.
-
-현재 캐럿셀:
-${JSON.stringify(pages, null, 2)}
-
-넘치는 항목:
-${issueDesc}
-
-압축 규칙:
-- headline: 최대 3줄 (40자 이내, 강렬하게)
-- body: 최대 5줄 (줄당 45자 이내)
-- 책 제목·저자명 절대 노출 금지
-
-전체 pages JSON을 반환하세요:
-{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`,
+    user: `다음 캐럿셀 텍스트가 이미지 레이아웃에서 넘칩니다. 각 항목을 지정된 최대 줄 수 이내로 압축하세요.\n의미·임팩트는 유지하되 더 간결하게 다듬어주세요.\n\n현재 캐럿셀:\n${JSON.stringify(pages, null, 2)}\n\n넘치는 항목:\n${issueDesc}\n\n압축 규칙:\n- headline: 최대 3줄 (40자 이내, 강렬하게)\n- body: 최대 5줄 (줄당 45자 이내)\n- 책 제목·저자명 절대 노출 금지\n\n전체 pages JSON을 반환하세요:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`,
   });
 
   try {
@@ -662,28 +525,7 @@ async function handleGenerateDmReply(env, body) {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
     max_tokens: 512,
     system: '당신은 인스타그램 DM 자동 회신 작성 전문가입니다. 댓글 키워드를 남긴 팔로워에게 보낼 DM을 씁니다. 따뜻하고 개인적인 톤, 노골적 판매 금지. 반드시 JSON만 응답합니다.',
-    user: `책 제목: ${bookInfo.title}
-저자: ${bookInfo.author}
-카테고리: ${bookInfo.category || '자기계발'}
-핵심 메시지: ${bookInfo.coreMessage || ''}
-
-5페이지에서 독자에게 던진 반문: ${pages.page5?.cta || ''}
-5페이지 마무리 문구: ${pages.page5?.linkText || ''}
-
-어필리에이트 링크:
-${linksText}
-
-댓글에 키워드를 남긴 팔로워에게 보낼 DM을 작성하세요.
-
-구성:
-1. 친근한 인사 (1줄)
-2. 책 제목과 저자 자연스럽게 소개 (1줄)
-3. 이 책이 답하는 핵심 질문·고민 (독자 공감 유도, 2줄 이내)
-4. 5페이지 반문에 대한 제한적 힌트 (완전한 답은 절대 주지 말 것, 2줄 이내)
-5. 어필리에이트 링크 안내 (링크가 여러 개면 모두 자연스럽게 포함, 없으면 "곧 공유드릴게요" 처리)
-6. 따뜻한 마무리 (1줄)
-
-JSON: {"dmText":"전체 DM 텍스트(줄바꿈은 \\n)"}`,
+    user: `책 제목: ${bookInfo.title}\n저자: ${bookInfo.author}\n카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n5페이지에서 독자에게 던진 반문: ${pages.page5?.cta || ''}\n5페이지 마무리 문구: ${pages.page5?.linkText || ''}\n\n어필리에이트 링크:\n${linksText}\n\n댓글에 키워드를 남긴 팔로워에게 보낼 DM을 작성하세요.\n\n구성:\n1. 친근한 인사 (1줄)\n2. 책 제목과 저자 자연스럽게 소개 (1줄)\n3. 이 책이 답하는 핵심 질문·고민 (독자 공감 유도, 2줄 이내)\n4. 5페이지 반문에 대한 제한적 힌트 (완전한 답은 절대 주지 말 것, 2줄 이내)\n5. 어필리에이트 링크 안내 (링크가 여러 개면 모두 자연스럽게 포함, 없으면 "곧 공유드릴게요" 처리)\n6. 따뜻한 마무리 (1줄)\n\nJSON: {"dmText":"전체 DM 텍스트(줄바꿈은 \\n)"}`,
   });
 
   const result = extractJson(text);
@@ -801,16 +643,18 @@ async function runStep(env, pipelineId, step) {
     const dmKeyword = savedKw || commentKeyword;
     await setActive('DM 자동 회신 내용 작성 중...');
     await logStep(env, pipelineId, { step, phase: 'start' });
+    let dmText = '';
     try {
-      await handleGenerateDmReply(env, { pages, bookInfo, affiliateLinks, commentKeyword: dmKeyword });
+      const dmData = await handleGenerateDmReply(env, { pages, bookInfo, affiliateLinks, commentKeyword: dmKeyword });
+      dmText = dmData?.dmText || '';
     } catch (e) {
       await logStep(env, pipelineId, { step, phase: 'warn', error: 'DM 회신 생성 실패(계속 진행): ' + e.message });
     }
-    await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'done', label: 'DM 자동 회신 생성 완료' });
+    await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'done', label: 'DM 자동 회신 생성 완료', dmText });
     await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0 });
 
   } else if (step === 6) {
-    const { pages, images, caption, hashtags, dmKeyword: savedKw, telegramSentAt } = state;
+    const { pages, images, caption, hashtags, dmKeyword: savedKw, dmText, telegramSentAt } = state;
     const dmKeyword = savedKw || commentKeyword;
     // 중복 발송 방지: 이미 발송했으면 건너뜀 (크론 재실행 시 텔레그램 중복 방지)
     if (telegramSentAt) {
@@ -821,7 +665,8 @@ async function runStep(env, pipelineId, step) {
       await logStep(env, pipelineId, { step, phase: 'start' });
       let telegramError = null;
       try {
-        await handleSendTelegram(env, { pages, bookInfo, caption, hashtags, commentKeyword: dmKeyword, dmKeyword, images, compositeImages: null });
+        // sendPageImages: false — 브라우저가 Canvas로 텍스트 합성 이미지를 별도 발송함
+        await handleSendTelegram(env, { pages, bookInfo, caption, hashtags, commentKeyword: dmKeyword, dmKeyword, images, compositeImages: null, dmText, sendPageImages: false });
       } catch (e) {
         telegramError = e.message;
       }
@@ -1061,7 +906,8 @@ async function handlePipelineStatus(env, url) {
   if (!pipelineId) return { status: 'error', error: 'pipelineId가 필요합니다.' };
   if (!env.PENDING_POSTS) return { status: 'error', error: 'KV 스토어 미설정' };
   const data = await env.PENDING_POSTS.get(`pipeline_${pipelineId}`, 'json').catch(() => null);
-  return data || { status: 'not_found' };
+  if (!data) return { status: 'not_found' };
+  return { ...data, pipelineId };
 }
 
 // ===== Phase 4: 인스타그램 캐럿셀 게시 =====
