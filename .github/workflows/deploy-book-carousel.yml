@@ -1,0 +1,29 @@
+name: Deploy Book Carousel
+
+on:
+  push:
+    branches: ["claude/book-carousel-auto-upload-xpwihz"]
+    paths:
+      - "book-carousel/**"
+      - ".github/workflows/deploy-book-carousel.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Cloudflare Workers 배포
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          workingDirectory: book-carousel
+          secrets: |
+            ANTHROPIC_API_KEY
+            TELEGRAM_BOT_TOKEN
+            TELEGRAM_CHAT_ID
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

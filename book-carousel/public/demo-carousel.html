@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ilg.mag 스타일 카드뉴스 — 도둑맞은 집중력</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent-1: #a78bfa;
+      --accent-2: #f472b6;
+    }
+
+    html, body {
+      background: #0a0a0a;
+      font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 32px 16px 80px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ───── Page chrome ───── */
+    .page-wrap {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .ig-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 0 14px;
+    }
+
+    .ig-avatar-ring {
+      flex-shrink: 0;
+      padding: 2px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+    }
+
+    .ig-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #0a0a0a;
+      display: block;
+    }
+
+    .ig-handle {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #f5f5f5;
+      letter-spacing: -0.01em;
+    }
+
+    .ig-follow {
+      font-size: 13px;
+      font-weight: 600;
+      color: #3b82f6;
+      cursor: pointer;
+    }
+
+    .ig-dots {
+      margin-left: auto;
+      color: rgba(255,255,255,0.5);
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+
+    /* ───── Carousel shell ───── */
+    .carousel-shell {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 4px;
+      overflow: hidden;
+      background: #111;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .carousel-shell:active { cursor: grabbing; }
+
+    .carousel-track {
+      display: flex;
+      height: 100%;
+      will-change: transform;
+      transition: transform 0.42s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    /* ───── Individual slide ───── */
+    .slide {
+      flex: 0 0 100%;
+      position: relative;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Background photo */
+    .slide-photo {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      filter: brightness(0.82) saturate(0.88);
+      transform: scale(1.02); /* slight zoom buffer */
+      transition: transform 8s ease-out;
+    }
+
+    .slide.active .slide-photo {
+      transform: scale(1.0);
+    }
+
+    /* Film grain (SVG noise) */
+    .slide-grain {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      opacity: 0.055;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* Dark gradient — strongest at bottom, tapers to transparent */
+    .slide-gradient {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      background:
+        linear-gradient(
+          to top,
+          rgba(0,0,0,0.92) 0%,
+          rgba(0,0,0,0.75) 30%,
+          rgba(0,0,0,0.38) 55%,
+          rgba(0,0,0,0.10) 75%,
+          transparent 100%
+        );
+    }
+
+    /* Light vignette at edges */
+    .slide-vignette {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.4);
+      pointer-events: none;
+    }
+
+    /* Content layer */
+    .slide-content {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      padding: 9%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Top row */
+    .slide-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .slide-category {
+      font-size: clamp(9.5px, 2.2vw, 11.5px);
+      font-weight: 400;
+      color: rgba(255,255,255,0.50);
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+
+    .slide-page-num {
+      width: clamp(22px, 5vw, 28px);
+      height: clamp(22px, 5vw, 28px);
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(0,0,0,0.28);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(9px, 2vw, 11.5px);
+      font-weight: 700;
+      color: rgba(255,255,255,0.62);
+      flex-shrink: 0;
+    }
+
+    /* Bottom block */
+    .slide-bottom {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(5px, 1.4vw, 9px);
+    }
+
+    .slide-sub {
+      font-size: clamp(9.5px, 2.1vw, 12px);
+      font-weight: 500;
+      color: rgba(255,255,255,0.44);
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+    }
+
+    .slide-headline {
+      font-size: clamp(22px, 6.8vw, 36px);
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1.26;
+      letter-spacing: -0.025em;
+      word-break: keep-all;
+    }
+
+    .slide-body {
+      font-size: clamp(11.5px, 2.8vw, 14.5px);
+      font-weight: 400;
+      color: rgba(255,255,255,0.70);
+      line-height: 1.78;
+      word-break: keep-all;
+      white-space: pre-line;
+      margin-top: clamp(2px, 0.5vw, 4px);
+    }
+
+    /* ── Slide 1: oversized headline, no body ── */
+    .slide[data-n="1"] .slide-headline {
+      font-size: clamp(26px, 7.8vw, 42px);
+      line-height: 1.22;
+    }
+
+    /* ── Slide 5: italic body ── */
+    .slide[data-n="5"] .slide-body {
+      font-style: italic;
+      color: rgba(255,255,255,0.60);
+    }
+
+    /* ───── Nav arrows ───── */
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 8;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.38);
+      backdrop-filter: blur(8px);
+      color: rgba(255,255,255,0.88);
+      font-size: 19px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+      line-height: 1;
+      padding-bottom: 1px;
+    }
+
+    .nav-arrow:hover { background: rgba(0,0,0,0.55); }
+    .nav-arrow.prev { left: 12px; }
+    .nav-arrow.next { right: 12px; }
+    .nav-arrow[aria-disabled="true"] { opacity: 0; pointer-events: none; }
+
+    /* ───── Dots ───── */
+    .carousel-dots {
+      position: absolute;
+      bottom: 13px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 8;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .carousel-dot {
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.32);
+      transition: width 0.28s ease, background 0.28s ease;
+      width: 5px;
+    }
+
+    .carousel-dot.active {
+      width: 18px;
+      background: rgba(255,255,255,0.88);
+    }
+
+    /* ───── IG actions ───── */
+    .ig-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 2px 5px;
+    }
+
+    .ig-action {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 3px;
+      color: rgba(255,255,255,0.88);
+      display: flex;
+      align-items: center;
+      transition: transform 0.15s, color 0.15s;
+    }
+
+    .ig-action:hover { transform: scale(1.08); }
+    .ig-action svg { width: 25px; height: 25px; stroke-width: 1.6; }
+
+    .ig-action.liked svg { fill: #ed4a56; color: #ed4a56; }
+    .ig-save { margin-left: auto; }
+
+    .ig-slide-count {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      font-weight: 500;
+      margin-left: auto;
+      margin-right: 0;
+    }
+
+    .ig-meta {
+      padding: 0 2px;
+    }
+
+    .ig-likes {
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.90);
+      margin-bottom: 5px;
+    }
+
+    .ig-caption {
+      font-size: 13px;
+      color: rgba(255,255,255,0.72);
+      line-height: 1.55;
+    }
+
+    .ig-caption strong { color: #f5f5f5; }
+    .ig-caption .hashtag { color: #818cf8; }
+    .ig-caption .more { color: rgba(255,255,255,0.35); cursor: pointer; }
+
+    .ig-timestamp {
+      font-size: 11px;
+      color: rgba(255,255,255,0.28);
+      margin-top: 9px;
+    }
+
+    /* ───── Separator / design accent ───── */
+    .slide[data-n="1"] .slide-bottom::before {
+      content: '';
+      display: block;
+      width: 28px;
+      height: 2.5px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.45);
+      margin-bottom: 4px;
+    }
+
+    /* ───── Dark page context ───── */
+    .page-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.20);
+      text-align: center;
+      margin-bottom: 24px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <p class="page-label">ilg.mag 스타일 · 카드뉴스 컴포넌트</p>
+
+  <!-- IG header -->
+  <div class="ig-header">
+    <div class="ig-avatar-ring">
+      <img class="ig-avatar"
+        src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=72&h=72&q=80&fit=crop&crop=face"
+        alt="ilg.mag 아바타">
+    </div>
+    <span class="ig-handle">ilg.mag</span>
+    <span class="ig-follow">• 팔로우</span>
+    <span class="ig-dots">···</span>
+  </div>
+
+  <!-- ═══════════════════ CAROUSEL ═══════════════════ -->
+  <div class="carousel-shell" id="carousel"
+    role="region" aria-label="카드뉴스 캐럿셀">
+
+    <div class="carousel-track" id="track">
+
+      <!-- ─── Slide 1 · 훅 ─── -->
+      <div class="slide active" data-n="1">
+        <div class="slide-photo" style="
+          background-image: url('https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&q=80&fit=crop');
+        "></div>
+        <div class="slide-grain"></div>
+        <div class="slide-gradient"></div>
+        <div class="slide-vignette"></div>
+        <div class="slide-content">
+          <div class="slide-top">
+            <span class="slide-category">읽으면 소름 돋는 책</span>
+            <div class="slide-page-num">1</div>
+          </div>
+          <div class="slide-bottom">
+            <div class="slide-headline">지금 이 순간에도<br>당신의 집중력은<br>도둑맞고 있다</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Slide 2 · 문제 ─── -->
+      <div class="slide" data-n="2">
+        <div class="slide-photo" style="
+          background-image: url('https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80&fit=crop');
+        "></div>
+        <div class="slide-grain"></div>
+        <div class="slide-gradient"></div>
+        <div class="slide-vignette"></div>
+        <div class="slide-content">
+          <div class="slide-top">
+            <span class="slide-category">우리가 모르는 현실</span>
+            <div class="slide-page-num">2</div>
+          </div>
+          <div class="slide-bottom">
+            <span class="slide-sub">문제</span>
+            <div class="slide-headline">평균 집중 지속 시간<br>12년 만에 절반</div>
+            <div class="slide-body">2004년 150초 → 2012년 75초
+이건 의지의 문제가 아니다
+처음부터 그렇게 설계된 것이다</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Slide 3 · 심각성 ─── -->
+      <div class="slide" data-n="3">
+        <div class="slide-photo" style="
+          background-image: url('https://images.unsplash.com/photo-1555421689-d68471e189f2?w=800&q=80&fit=crop');
+        "></div>
+        <div class="slide-grain"></div>
+        <div class="slide-gradient"></div>
+        <div class="slide-vignette"></div>
+        <div class="slide-content">
+          <div class="slide-top">
+            <span class="slide-category">충격적인 사실</span>
+            <div class="slide-page-num">3</div>
+          </div>
+          <div class="slide-bottom">
+            <span class="slide-sub">심각성</span>
+            <div class="slide-headline">의도적으로<br>설계된 방해</div>
+            <div class="slide-body">소셜미디어 알고리즘은
+당신이 화면에서 떠나지 못하도록
+정교하게 프로그래밍되어 있다
+
+"대부분은 이 사실을 모른다"</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Slide 4 · 실마리 ─── -->
+      <div class="slide" data-n="4">
+        <div class="slide-photo" style="
+          background-image: url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&q=80&fit=crop');
+        "></div>
+        <div class="slide-grain"></div>
+        <div class="slide-gradient"></div>
+        <div class="slide-vignette"></div>
+        <div class="slide-content">
+          <div class="slide-top">
+            <span class="slide-category">저자의 실험</span>
+            <div class="slide-page-num">4</div>
+          </div>
+          <div class="slide-bottom">
+            <span class="slide-sub">실마리</span>
+            <div class="slide-headline">3개월 디지털 디톡스<br>이후 달라진 것</div>
+            <div class="slide-body">"잃어버린 줄도 몰랐던
+무언가가 돌아왔다"
+
+그 무언가는 바로...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Slide 5 · 반문·결말 ─── -->
+      <div class="slide" data-n="5">
+        <div class="slide-photo" style="
+          background-image: url('https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=800&q=80&fit=crop');
+        "></div>
+        <div class="slide-grain"></div>
+        <div class="slide-gradient"></div>
+        <div class="slide-vignette"></div>
+        <div class="slide-content">
+          <div class="slide-top">
+            <span class="slide-category">당신에게 묻는다</span>
+            <div class="slide-page-num">5</div>
+          </div>
+          <div class="slide-bottom">
+            <span class="slide-sub">반문</span>
+            <div class="slide-headline">집중 못 하는 게<br>정말 내 잘못일까</div>
+            <div class="slide-body">아니면 그렇게 만든
+세상의 문제일까
+
+댓글에 '집중' 을 남겨주세요</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /track -->
+
+    <!-- Nav arrows -->
+    <button class="nav-arrow prev" id="prevBtn" aria-label="이전" aria-disabled="true">&#8249;</button>
+    <button class="nav-arrow next" id="nextBtn" aria-label="다음">&#8250;</button>
+
+    <!-- Dots -->
+    <div class="carousel-dots" id="dots" aria-hidden="true">
+      <div class="carousel-dot active"></div>
+      <div class="carousel-dot"></div>
+      <div class="carousel-dot"></div>
+      <div class="carousel-dot"></div>
+      <div class="carousel-dot"></div>
+    </div>
+
+  </div><!-- /carousel-shell -->
+
+  <!-- IG actions row -->
+  <div class="ig-actions">
+    <button class="ig-action" id="likeBtn" aria-label="좋아요">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+    </button>
+    <button class="ig-action" aria-label="댓글">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    </button>
+    <button class="ig-action" aria-label="공유">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+    <span class="ig-slide-count" id="slideCount">1 / 5</span>
+    <button class="ig-action ig-save" aria-label="저장">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="ig-meta">
+    <div class="ig-likes">좋아요 3,241개</div>
+    <div class="ig-caption">
+      <strong>ilg.mag</strong>&ensp;집중하지 못하는 게 정말 내 탓일까요?
+      당신의 집중력을 훔쳐가는 것들의 정체.
+      <span class="hashtag">#도둑맞은집중력 #요한하리 #책추천</span>
+      <span class="more"> 더 보기</span>
+    </div>
+    <div class="ig-timestamp">6일 전</div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<script>
+(function () {
+  const total     = 5;
+  const track     = document.getElementById('track');
+  const prevBtn   = document.getElementById('prevBtn');
+  const nextBtn   = document.getElementById('nextBtn');
+  const dotsEl    = document.getElementById('dots');
+  const dots      = Array.from(dotsEl.children);
+  const slides    = Array.from(track.children);
+  const likeBtn   = document.getElementById('likeBtn');
+  const countEl   = document.getElementById('slideCount');
+
+  let current = 0;
+  let liked   = false;
+
+  // ── Navigation ──────────────────────────────────────
+  function goTo(idx) {
+    const prev = current;
+    current = Math.max(0, Math.min(total - 1, idx));
+
+    // Translate track
+    track.style.transform = `translateX(-${current * 100}%)`;
+
+    // Active slide class (triggers photo zoom)
+    slides[prev].classList.remove('active');
+    slides[current].classList.add('active');
+
+    // Dots
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+
+    // Arrows
+    prevBtn.setAttribute('aria-disabled', current === 0 ? 'true' : 'false');
+    nextBtn.setAttribute('aria-disabled', current === total - 1 ? 'true' : 'false');
+
+    // Counter
+    countEl.textContent = `${current + 1} / ${total}`;
+  }
+
+  prevBtn.addEventListener('click', () => goTo(current - 1));
+  nextBtn.addEventListener('click', () => goTo(current + 1));
+
+  // ── Touch / swipe ────────────────────────────────────
+  const shell = document.getElementById('carousel');
+  let touchStartX = 0, touchStartY = 0, dragging = false;
+
+  shell.addEventListener('pointerdown', e => {
+    touchStartX = e.clientX;
+    touchStartY = e.clientY;
+    dragging    = true;
+    track.style.transition = 'none';
+  });
+
+  shell.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - touchStartX;
+    const baseOffset = current * 100;
+    // Live drag: clamp at edges
+    const clampedDx = Math.max(-shell.offsetWidth * 0.5, Math.min(shell.offsetWidth * 0.5, dx));
+    const pct = (clampedDx / shell.offsetWidth) * 100;
+    track.style.transform = `translateX(calc(-${baseOffset}% + ${pct}%))`;
+  });
+
+  shell.addEventListener('pointerup', e => {
+    if (!dragging) return;
+    dragging = false;
+    track.style.transition = 'transform 0.42s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    const dx = e.clientX - touchStartX;
+    const dy = e.clientY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 36) {
+      goTo(current + (dx < 0 ? 1 : -1));
+    } else {
+      goTo(current); // snap back
+    }
+  });
+
+  shell.addEventListener('pointercancel', () => {
+    dragging = false;
+    track.style.transition = 'transform 0.42s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    goTo(current);
+  });
+
+  // Prevent image drag
+  shell.addEventListener('dragstart', e => e.preventDefault());
+
+  // ── Keyboard ─────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft')  goTo(current - 1);
+    if (e.key === 'ArrowRight') goTo(current + 1);
+  });
+
+  // ── Like ─────────────────────────────────────────────
+  likeBtn.addEventListener('click', () => {
+    liked = !liked;
+    likeBtn.classList.toggle('liked', liked);
+    likeBtn.style.transform = 'scale(1.25)';
+    setTimeout(() => (likeBtn.style.transform = ''), 200);
+  });
+
+  // Init
+  goTo(0);
+})();
+</script>
+</body>
+</html>
