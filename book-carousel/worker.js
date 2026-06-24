@@ -248,89 +248,39 @@ async function handleSendTelegramImage(env, body) {
   return { success: true };
 }
 
+// 텔레그램에는 "제작 완료 알림 + 확인하러 가기 링크"만 보낸다.
+// (이미지·세부 문구는 보내지 않음. 인스타그램 게시 결정은 캐럿셀 제작 페이지에서 함.)
 async function handleSendTelegram(env, body) {
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
     throw new Error('TELEGRAM_BOT_TOKEN 또는 TELEGRAM_CHAT_ID가 설정되지 않았습니다.');
   }
 
-  const { pages, bookInfo, caption, hashtags, commentKeyword, dmKeyword, images, compositeImages, dmText, sendPageImages = true } = body;
-  const kw = commentKeyword || dmKeyword || '';
+  const { bookInfo, pipelineId } = body;
+  // pipelineId가 있으면 해당 결과 페이지로 바로 연결되는 링크를 만든다.
+  const link = pipelineId
+    ? `${SELF_URL}/?pipeline=${encodeURIComponent(pipelineId)}`
+    : `${SELF_URL}/`;
 
-  const captionBlock = caption
-    ? `\n\n[캡션]\n${caption}\n${(hashtags || []).join(' ')}${kw ? `\n\n댓글 키워드: '${kw}'` : ''}`
-    : '';
+  const title = bookInfo?.title ? `"${bookInfo.title}"` : '';
+  const msg = `[북 캐럿셀 제작 완료]\n\n${title} 캐럿셀(카드뉴스 5장 + 캡션)이 완성됐습니다.\n아래 "확인하러 가기"를 눌러 결과를 보고, 인스타그램 게시 여부를 결정해주세요.\n\n${link}`;
 
-  // 1) 요약 텍스트 메시지
-  const summaryMsg = `[북 캐럿셀 미리보기]\n책: ${bookInfo.title}\n저자: ${bookInfo.author}\n카테고리: ${bookInfo.category || ''}${captionBlock}`;
-  await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, summaryMsg);
-  await new Promise(r => setTimeout(r, 300));
-
-  // 2) 페이지별 전송: compositeImages(텍스트 합성 이미지) → images(배경 URL) → 텍스트 순 폴백
-  const pageDefs = [
-    { key: 'page1', label: '1/5 훅', text: pages.page1?.headline || '' },
-    { key: 'page2', label: '2/5 문제', text: `${pages.page2?.headline || ''}\n\n${pages.page2?.body || ''}` },
-    { key: 'page3', label: '3/5 심각성', text: `${pages.page3?.headline || ''}\n\n${pages.page3?.body || ''}` },
-    { key: 'page4', label: '4/5 실마리', text: `${pages.page4?.headline || ''}\n\n${pages.page4?.body || ''}` },
-    { key: 'page5', label: '5/5 반문·결말', text: `${pages.page5?.cta || ''}\n\n${pages.page5?.linkText || ''}` },
-  ];
-
-  let sent = 1;
-  if (sendPageImages) {
-    for (const { key, label, text } of pageDefs) {
-      const compositeDataUrl = compositeImages?.[key]; // base64 data URL (텍스트+배경 합성)
-      const imgUrl = images?.[key];                    // Pollinations URL (배경만)
-      const msgText = `[${label}]\n${text.trim()}`;
-
-      if (compositeDataUrl) {
-        const ok = await sendTelegramPhotoFile(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, compositeDataUrl, msgText);
-        if (!ok) {
-          if (imgUrl) await sendTelegramPhoto(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, imgUrl, msgText);
-          else await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, msgText);
-        }
-      } else if (imgUrl) {
-        await sendTelegramPhoto(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, imgUrl, msgText);
-      } else {
-        await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, msgText);
-      }
-      sent++;
-      await new Promise(r => setTimeout(r, 300));
-    }
-    await new Promise(r => setTimeout(r, 300));
-  }
-
-  // DM 자동 회신 미리보기 전송
-  if (dmText) {
-    const dmPreview = `[DM 자동 회신 미리보기]\n키워드 '${kw}'를 댓글에 남긴 팔로워에게 자동 발송되는 메시지:\n\n${dmText}`;
-    await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, dmPreview);
-    sent++;
-    await new Promise(r => setTimeout(r, 300));
-  }
-
-  // KV에 게시물 상태 저장 (텔레그램 승인 콜백용, 24시간 TTL)
-  if (env.PENDING_POSTS) {
-    await env.PENDING_POSTS.put('latest', JSON.stringify({
-      pages, bookInfo, caption, hashtags, commentKeyword: kw, images,
-      createdAt: new Date().toISOString(),
-    }), { expirationTtl: 86400 });
-  }
-
-  // 인스타그램 게시 승인 인라인 버튼 발송
-  await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+  const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chat_id: env.TELEGRAM_CHAT_ID,
-      text: `[인스타그램 게시 승인]\n\n책: ${bookInfo.title}\n저자: ${bookInfo.author}\n\n위 캐럿셀을 인스타그램에 게시할까요?`,
+      text: msg,
       reply_markup: {
-        inline_keyboard: [
-          [{ text: '게시하기', callback_data: 'approve' }, { text: '취소', callback_data: 'cancel' }],
-          [{ text: '수정 필요 (웹에서)', callback_data: 'modify' }],
-        ],
+        inline_keyboard: [[{ text: '확인하러 가기', url: link }]],
       },
     }),
-  }).catch(() => {});
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`텔레그램 발송 실패: ${err.description || res.status}`);
+  }
 
-  return { success: true, message: `텔레그램으로 ${sent}개 메시지를 보냈습니다. 텔레그램에서 [게시하기] 버튼을 눌러 인스타그램에 게시해주세요.` };
+  return { success: true, message: '텔레그램으로 제작 완료 알림과 확인 링크를 보냈습니다.' };
 }
 
 // ===== Claude 핸들러 =====
@@ -654,19 +604,18 @@ async function runStep(env, pipelineId, step) {
     await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0 });
 
   } else if (step === 6) {
-    const { pages, images, caption, hashtags, dmKeyword: savedKw, dmText, telegramSentAt } = state;
-    const dmKeyword = savedKw || commentKeyword;
+    const { telegramSentAt } = state;
     // 중복 발송 방지: 이미 발송했으면 건너뜀 (크론 재실행 시 텔레그램 중복 방지)
     if (telegramSentAt) {
       await savePipelineStatus(env, pipelineId, { step: 6, stepStatus: 'done', label: '텔레그램 발송 완료(중복 방지)' });
       await logStep(env, pipelineId, { step, phase: 'skip', note: '이미 발송됨' });
     } else {
-      await setActive('텔레그램으로 최종 확인 요청 발송 중...');
+      await setActive('텔레그램으로 제작 완료 알림 발송 중...');
       await logStep(env, pipelineId, { step, phase: 'start' });
       let telegramError = null;
       try {
-        // sendPageImages: false — 브라우저가 Canvas로 텍스트 합성 이미지를 별도 발송함
-        await handleSendTelegram(env, { pages, bookInfo, caption, hashtags, commentKeyword: dmKeyword, dmKeyword, images, compositeImages: null, dmText, sendPageImages: false });
+        // 텔레그램에는 완료 알림 + 확인 링크만 발송 (이미지·문구는 보내지 않음)
+        await handleSendTelegram(env, { bookInfo, pipelineId });
       } catch (e) {
         telegramError = e.message;
       }
@@ -674,7 +623,7 @@ async function runStep(env, pipelineId, step) {
         step: 6,
         stepStatus: telegramError ? 'error' : 'done',
         telegramSentAt: telegramError ? null : Date.now(),
-        label: telegramError ? `텔레그램 발송 실패: ${telegramError}` : '텔레그램 발송 완료 — 브라우저에서 텍스트 합성 이미지를 추가 발송합니다',
+        label: telegramError ? `텔레그램 발송 실패: ${telegramError}` : '텔레그램으로 완료 알림 + 확인 링크 발송 완료',
       });
       await logStep(env, pipelineId, { step, phase: telegramError ? 'error' : 'done', error: telegramError, durationMs: Date.now() - t0 });
     }
@@ -685,7 +634,7 @@ async function runStep(env, pipelineId, step) {
       step: 7,
       stepStatus: 'done',
       status: 'complete',
-      label: step6Error ? '완료 (텔레그램 실패 — 웹에서 직접 게시 가능)' : '완료! 텔레그램에서 [게시하기]를 눌러주세요.',
+      label: step6Error ? '완료 (텔레그램 알림 실패 — 이 페이지에서 바로 게시 가능)' : '완료! 텔레그램 알림을 보냈습니다. 이 페이지에서 게시 여부를 결정하세요.',
       completedAt: Date.now(),
     });
     await logStep(env, pipelineId, { step, phase: 'complete' });
@@ -799,7 +748,10 @@ async function savePipelineStatus(env, pipelineId, patch) {
   let existing = {};
   try { existing = await env.PENDING_POSTS.get(key, 'json') || {}; } catch {}
   const updated = { ...existing, ...patch, updatedAt: Date.now() };
-  await env.PENDING_POSTS.put(key, JSON.stringify(updated), { expirationTtl: 3600 });
+  // 완료된 파이프라인은 텔레그램 "확인하러 가기" 링크가 나중에 눌려도 결과를
+  // 불러올 수 있도록 7일간 보관. 진행중은 1시간(자가복구·타임아웃 판정용).
+  const ttl = (updated.status === 'complete') ? 7 * 24 * 3600 : 3600;
+  await env.PENDING_POSTS.put(key, JSON.stringify(updated), { expirationTtl: ttl });
 }
 
 async function executePipeline(env, pipelineId, bookInfo, affiliateLinks, commentKeyword) {
@@ -858,21 +810,21 @@ async function executePipeline(env, pipelineId, bookInfo, affiliateLinks, commen
     } catch {}
     await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'done', label: 'DM 자동 회신 생성 완료' });
 
-    // Step 6: 텔레그램 발송
-    await savePipelineStatus(env, pipelineId, { step: 6, stepStatus: 'active', label: '텔레그램으로 최종 확인 요청 발송 중...' });
+    // Step 6: 텔레그램 발송 (완료 알림 + 확인 링크만)
+    await savePipelineStatus(env, pipelineId, { step: 6, stepStatus: 'active', label: '텔레그램으로 제작 완료 알림 발송 중...' });
     let telegramError = null;
     try {
-      await handleSendTelegram(env, { pages, bookInfo, caption, hashtags, commentKeyword: dmKeyword, dmKeyword, images, compositeImages: null });
+      await handleSendTelegram(env, { bookInfo, pipelineId });
     } catch (e) { telegramError = e.message; }
     await savePipelineStatus(env, pipelineId, {
       step: 6, stepStatus: telegramError ? 'error' : 'done',
-      label: telegramError ? `텔레그램 발송 실패: ${telegramError}` : '텔레그램 발송 완료 — 승인 버튼을 눌러주세요',
+      label: telegramError ? `텔레그램 발송 실패: ${telegramError}` : '텔레그램으로 완료 알림 + 확인 링크 발송 완료',
     });
 
     // 완료
     await savePipelineStatus(env, pipelineId, {
       step: 7, stepStatus: 'done', status: 'complete',
-      label: telegramError ? '완료 (텔레그램 실패 — 웹에서 직접 게시 가능)' : '완료! 텔레그램에서 [게시하기]를 눌러주세요.',
+      label: telegramError ? '완료 (텔레그램 알림 실패 — 이 페이지에서 바로 게시 가능)' : '완료! 텔레그램 알림을 보냈습니다. 이 페이지에서 게시 여부를 결정하세요.',
       completedAt: Date.now(),
     });
   } catch (err) {
