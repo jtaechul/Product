@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>출장비 자동 정산 | 해양환경공단</title>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       --navy:   #00285c;
@@ -30,7 +29,6 @@
       line-height: 1.65;
     }
 
-    /* ── Header ── */
     .hdr {
       background: var(--navy);
       color: #fff;
@@ -58,10 +56,8 @@
     }
     .btn-cfg:hover { background: rgba(255,255,255,.26); }
 
-    /* ── Container ── */
     .wrap { max-width: 860px; margin: 0 auto; padding: 20px 16px 60px; }
 
-    /* ── Card ── */
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -83,14 +79,12 @@
     }
     .card-ttl::before {
       content: '';
-      width: 4px;
-      height: 16px;
+      width: 4px; height: 16px;
       background: var(--navy);
       border-radius: 2px;
       flex-shrink: 0;
     }
 
-    /* ── Settings panel ── */
     .cfg-panel {
       background: #f8fafc;
       border: 1px solid var(--border);
@@ -100,17 +94,14 @@
       display: none;
     }
     .cfg-panel.open { display: block; }
-    .cfg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .cfg-note { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
     .cfg-note a { color: var(--accent); }
 
-    /* ── Form ── */
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .fg { display: flex; flex-direction: column; gap: 4px; }
     .fg.full { grid-column: 1/-1; }
     label.lbl {
-      font-size: 11px;
-      font-weight: 700;
+      font-size: 11px; font-weight: 700;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: .06em;
@@ -134,7 +125,6 @@
     }
     textarea { resize: vertical; min-height: 68px; }
 
-    /* ── Lookup section ── */
     .lookup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .lk-box {
       background: #f8fafc;
@@ -143,20 +133,12 @@
       padding: 14px;
     }
     .lk-hdr {
-      font-size: 12px;
-      font-weight: 700;
+      font-size: 12px; font-weight: 700;
       color: var(--navy);
       margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      display: flex; align-items: center; gap: 6px;
     }
-    .lk-val {
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--text);
-      line-height: 1.2;
-    }
+    .lk-val { font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.2; }
     .lk-unit { font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 2px; }
     .lk-meta { font-size: 11px; color: var(--muted); margin-top: 3px; min-height: 16px; }
 
@@ -168,18 +150,32 @@
       color: var(--accent);
       background: #fff;
       cursor: pointer;
-      font-size: 12px;
-      font-weight: 700;
+      font-size: 12px; font-weight: 700;
       font-family: inherit;
       margin-top: 10px;
       transition: all .15s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
     }
     .btn-auto:hover:not(:disabled) { background: var(--accent); color: #fff; }
     .btn-auto:disabled { opacity: .45; cursor: not-allowed; border-color: var(--border); color: var(--muted); }
+
+    /* Prominent Naver Maps button */
+    .btn-naver {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 6px;
+      background: #03C75A;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 12px; font-weight: 700;
+      font-family: inherit;
+      margin-top: 10px;
+      text-decoration: none;
+      transition: background .15s;
+    }
+    .btn-naver:hover { background: #02a84e; }
 
     .btn-ext {
       width: 100%;
@@ -204,16 +200,68 @@
     .manual-row .unit { font-size: 12px; color: var(--muted); white-space: nowrap; }
 
     .chk-row {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-top: 7px;
-      font-size: 11px;
-      color: var(--muted);
+      display: flex; align-items: center; gap: 5px;
+      margin-top: 7px; font-size: 11px; color: var(--muted);
     }
     .chk-row input[type=checkbox] { width: 13px; height: 13px; cursor: pointer; }
 
-    /* ── Calc button ── */
+    /* Screenshot upload section */
+    .ss-section {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+    }
+    .ss-lbl {
+      font-size: 11px; font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 6px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-ss {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 11px; font-weight: 600;
+      font-family: inherit;
+      transition: all .15s;
+    }
+    .btn-ss:hover { border-color: var(--navy); color: var(--navy); }
+    .ss-preview {
+      margin-top: 8px;
+      border: 1.5px solid #c4b5fd;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #f5f3ff;
+    }
+    .ss-preview img {
+      width: 100%; max-height: 180px;
+      object-fit: contain;
+      display: block;
+      background: #fff;
+    }
+    .ss-preview-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 5px 8px;
+      font-size: 10px; color: #5b21b6;
+    }
+    .btn-ss-remove {
+      padding: 2px 8px;
+      border: none; border-radius: 4px;
+      background: #ede9fe; color: #5b21b6;
+      cursor: pointer; font-size: 10px; font-family: inherit;
+    }
+    .btn-ss-remove:hover { background: #ddd6fe; }
+    .ss-attached {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #d1fae5; color: #065f46;
+      border-radius: 4px; padding: 2px 7px;
+      font-size: 10px; font-weight: 700;
+    }
+
     .btn-calc {
       width: 100%;
       padding: 14px;
@@ -221,8 +269,7 @@
       color: #fff;
       border: none;
       border-radius: 8px;
-      font-size: 15px;
-      font-weight: 700;
+      font-size: 15px; font-weight: 700;
       font-family: inherit;
       cursor: pointer;
       transition: background .15s;
@@ -230,63 +277,53 @@
     }
     .btn-calc:hover { background: var(--blue); }
 
-    /* ── Results ── */
     .results { display: none; }
     .results.show { display: block; }
 
-    .preview-wrap {
-      overflow-x: auto;
-      margin-bottom: 16px;
-    }
+    .preview-wrap { overflow-x: auto; margin-bottom: 16px; }
     .preview-tbl {
-      width: 100%;
-      min-width: 560px;
-      border-collapse: collapse;
-      font-size: 13px;
+      width: 100%; min-width: 560px;
+      border-collapse: collapse; font-size: 13px;
     }
     .preview-tbl caption {
-      background: var(--navy);
-      color: #fff;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 9px 14px;
-      text-align: center;
+      background: var(--navy); color: #fff;
+      font-size: 13px; font-weight: 700;
+      padding: 9px 14px; text-align: center;
       border-radius: 6px 6px 0 0;
     }
-    .preview-tbl th, .preview-tbl td {
-      border: 1px solid var(--border);
-      padding: 8px 12px;
-    }
-    .preview-tbl th {
-      background: #f0f4f8;
-      font-weight: 700;
-      color: var(--navy);
-      white-space: nowrap;
-    }
-    .preview-tbl .amount {
-      font-size: 17px;
-      font-weight: 800;
-      color: var(--green);
-    }
+    .preview-tbl th, .preview-tbl td { border: 1px solid var(--border); padding: 8px 12px; }
+    .preview-tbl th { background: #f0f4f8; font-weight: 700; color: var(--navy); white-space: nowrap; }
+    .preview-tbl .amount { font-size: 17px; font-weight: 800; color: var(--green); }
     .preview-tbl .tr-unit td { font-size: 11px; color: var(--muted); text-align: right; }
 
-    /* ── Map box ── */
-    .map-box {
+    /* Screenshot area in results */
+    .ss-result-box {
       border: 1.5px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-      height: 280px;
-      background: #eef0f3;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
+      border-radius: 8px; overflow: hidden;
+      margin-bottom: 10px;
     }
-    #naverMap { width: 100%; height: 100%; display: none; }
-    .map-placeholder { text-align: center; color: var(--muted); font-size: 13px; line-height: 1.8; }
-    .map-placeholder small { font-size: 11px; opacity: .7; }
+    .ss-result-hdr {
+      background: #f0f4f8;
+      padding: 8px 12px;
+      font-size: 11px; font-weight: 700; color: var(--navy);
+      border-bottom: 1px solid var(--border);
+    }
+    .ss-result-body { padding: 10px; text-align: center; }
+    .ss-result-body img { max-width: 100%; max-height: 240px; border-radius: 4px; }
+    .ss-result-empty { font-size: 11px; color: var(--muted); text-align: center; padding: 16px; }
 
-    /* ── Download button ── */
+    /* Attachment status bar */
+    .attach-status {
+      background: #f0f4f8;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      font-size: 11px;
+      display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+    }
+    .attach-status .lbl2 { color: var(--muted); font-weight: 600; }
+
     .btn-dl {
       width: 100%;
       padding: 14px;
@@ -294,124 +331,75 @@
       color: #fff;
       border: none;
       border-radius: 8px;
-      font-size: 15px;
-      font-weight: 700;
+      font-size: 15px; font-weight: 700;
       font-family: inherit;
       cursor: pointer;
       transition: background .15s;
     }
-    .btn-dl:hover { background: #0a5c33; }
+    .btn-dl:hover:not(:disabled) { background: #0a5c33; }
+    .btn-dl:disabled { opacity: .5; cursor: not-allowed; }
 
-    /* ── Alert ── */
-    .alert {
-      padding: 11px 14px;
-      border-radius: 7px;
-      font-size: 12px;
-      line-height: 1.6;
-    }
+    .alert { padding: 11px 14px; border-radius: 7px; font-size: 12px; line-height: 1.6; }
     .alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
     .alert-warn { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
 
-    /* ── Badge ── */
-    .badge {
-      display: inline-block;
-      padding: 1px 7px;
-      border-radius: 10px;
-      font-size: 10px;
-      font-weight: 700;
-    }
-    .badge-blue   { background: #dbeafe; color: #1e40af; }
-    .badge-green  { background: #d1fae5; color: #065f46; }
-    .badge-gray   { background: #f1f5f9; color: #475569; border: 1px solid var(--border); }
+    .badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+    .badge-blue  { background: #dbeafe; color: #1e40af; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-gray  { background: #f1f5f9; color: #475569; border: 1px solid var(--border); }
 
-    /* ── Spinner ── */
     @keyframes spin { to { transform: rotate(360deg); } }
     .spin {
-      display: inline-block;
-      width: 12px; height: 12px;
+      display: inline-block; width: 12px; height: 12px;
       border: 2px solid rgba(0,0,0,.15);
       border-top-color: currentColor;
       border-radius: 50%;
       animation: spin .55s linear infinite;
     }
 
-    /* ── PDF upload ── */
+    /* PDF upload */
     .btn-pdf {
-      padding: 8px 11px;
-      background: #6d28d9;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 700;
-      font-family: inherit;
-      white-space: nowrap;
-      transition: background .15s;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+      padding: 8px 11px; background: #6d28d9; color: #fff;
+      border: none; border-radius: 6px; cursor: pointer;
+      font-size: 12px; font-weight: 700; font-family: inherit;
+      white-space: nowrap; transition: background .15s;
+      display: inline-flex; align-items: center; gap: 4px;
     }
     .btn-pdf:hover { background: #5b21b6; }
     .pdf-result {
-      margin-top: 10px;
-      background: #f5f3ff;
-      border: 1.5px solid #c4b5fd;
-      border-radius: 8px;
-      padding: 12px;
-      font-size: 12px;
+      margin-top: 10px; background: #f5f3ff;
+      border: 1.5px solid #c4b5fd; border-radius: 8px; padding: 12px; font-size: 12px;
     }
     .pdf-ttl { font-weight: 700; color: #5b21b6; margin-bottom: 8px; }
     .pdf-candidates { display: flex; flex-direction: column; gap: 6px; }
     .pdf-cand {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #fff;
-      border: 1px solid #ddd6fe;
-      border-radius: 6px;
-      padding: 7px 10px;
-      gap: 8px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: #fff; border: 1px solid #ddd6fe; border-radius: 6px;
+      padding: 7px 10px; gap: 8px;
     }
     .pdf-cand-ctx { font-size: 11px; color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .pdf-cand-amt { font-weight: 700; font-size: 14px; color: #5b21b6; white-space: nowrap; }
     .btn-apply {
-      padding: 4px 10px;
-      background: #5b21b6;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 11px;
-      font-family: inherit;
-      white-space: nowrap;
+      padding: 4px 10px; background: #5b21b6; color: #fff;
+      border: none; border-radius: 4px; cursor: pointer;
+      font-size: 11px; font-family: inherit; white-space: nowrap;
     }
     .btn-apply:hover { background: #4c1d95; }
     .pdf-raw {
-      margin-top: 8px;
-      background: #1e1b4b;
-      color: #a5b4fc;
-      border-radius: 6px;
-      padding: 8px;
-      font-size: 10px;
-      line-height: 1.55;
-      max-height: 120px;
-      overflow-y: auto;
-      font-family: monospace;
-      white-space: pre-wrap;
-      word-break: break-all;
+      margin-top: 8px; background: #1e1b4b; color: #a5b4fc;
+      border-radius: 6px; padding: 8px; font-size: 10px;
+      line-height: 1.55; max-height: 120px; overflow-y: auto;
+      font-family: monospace; white-space: pre-wrap; word-break: break-all;
     }
 
-    /* ── Responsive ── */
     @media (max-width: 580px) {
-      .form-grid, .lookup-grid, .cfg-grid { grid-template-columns: 1fr; }
+      .form-grid, .lookup-grid { grid-template-columns: 1fr; }
       .lk-val { font-size: 18px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ====== HEADER ====== -->
 <header class="hdr">
   <div class="hdr-title">
     <h1>출장비 자동 정산 프로그램</h1>
@@ -424,23 +412,16 @@
 
   <!-- ====== SETTINGS ====== -->
   <div class="cfg-panel" id="cfgPanel">
-    <div class="card-ttl" style="margin-bottom:12px;">API 연동 설정 <span class="badge badge-gray">선택 사항 — 미설정 시 수동 입력으로 모든 기능 동작</span></div>
-    <div class="cfg-grid">
-      <div class="fg">
-        <label class="lbl">오피넷 Open API 인증키</label>
-        <input type="text" id="opinetKey" placeholder="오피넷에서 발급받은 인증키" oninput="saveSettings()">
-        <div class="cfg-note">
-          <a href="https://www.opinet.co.kr/user/main/mainView.do" target="_blank">www.opinet.co.kr</a> 회원가입 →
-          오픈API → 인증키 신청 (무료)<br>설정 시 출장일 기준 전국 평균 유가를 자동 조회합니다.
-        </div>
-      </div>
-      <div class="fg">
-        <label class="lbl">네이버 클라우드 Client ID</label>
-        <input type="text" id="naverClientId" placeholder="네이버 클라우드 플랫폼 Client ID" oninput="saveSettings()">
-        <div class="cfg-note">
-          <a href="https://www.ncloud.com" target="_blank">console.ncloud.com</a> → Application →
-          Maps / Directions 서비스 등록<br>설정 시 지도 표시 및 경로 거리 자동 계산이 활성화됩니다.
-        </div>
+    <div class="card-ttl" style="margin-bottom:12px;">API 연동 설정
+      <span class="badge badge-gray">선택 사항 — 미설정 시 수동 입력으로 모든 기능 동작</span>
+    </div>
+    <div class="fg" style="max-width:460px;">
+      <label class="lbl">오피넷 Open API 인증키</label>
+      <input type="text" id="opinetKey" placeholder="오피넷에서 발급받은 인증키" oninput="saveSettings()">
+      <div class="cfg-note">
+        <a href="https://www.opinet.co.kr/user/main/mainView.do" target="_blank">www.opinet.co.kr</a>
+        회원가입 → 오픈API → 인증키 신청 (무료)<br>
+        설정 시 출장일 기준 전국 평균 유가를 자동 조회합니다.
       </div>
     </div>
     <div class="alert alert-info" style="margin-top:12px;">
@@ -498,8 +479,7 @@
       <div class="fg">
         <label class="lbl">
           통행료 (원)
-          <span id="pdfBadge" class="badge badge-blue"
-                style="display:none;text-transform:none;letter-spacing:0;">PDF 파싱</span>
+          <span id="pdfBadge" class="badge badge-blue" style="display:none;text-transform:none;letter-spacing:0;">PDF 파싱</span>
         </label>
         <div style="display:flex;gap:6px;">
           <input type="number" id="fToll" placeholder="0" value="0" min="0" style="flex:1;">
@@ -517,7 +497,7 @@
 
   <!-- ====== LOOKUP ====== -->
   <div class="card">
-    <div class="card-ttl">유가 · 거리 자동 조회</div>
+    <div class="card-ttl">유가 · 거리 조회</div>
     <div class="lookup-grid">
 
       <!-- 유가 -->
@@ -531,12 +511,32 @@
         <button class="btn-auto" id="btnPrice" onclick="fetchPrice()" disabled>
           유가 자동 조회
         </button>
-        <a id="opinetLink" href="https://www.opinet.co.kr/user/main/mainView.do"
+        <a href="https://www.opinet.co.kr/user/main/mainView.do"
            target="_blank" class="btn-ext">오피넷에서 직접 확인</a>
         <div class="manual-row">
           <input type="number" id="manPrice" placeholder="직접 입력 (예: 1850.50)"
                  step="0.01" min="0" oninput="onManPrice()">
           <span class="unit">원/L</span>
+        </div>
+
+        <!-- Opinet screenshot -->
+        <div class="ss-section">
+          <div class="ss-lbl">
+            오피넷 화면 캡처 첨부
+            <span class="badge badge-gray" style="text-transform:none;letter-spacing:0;">엑셀에 포함</span>
+          </div>
+          <label class="btn-ss" for="opinetScreenshot">
+            캡처 이미지 업로드
+          </label>
+          <input type="file" id="opinetScreenshot" accept="image/*"
+                 style="display:none;" onchange="handleOpinetScreenshot(this)">
+          <div class="ss-preview" id="opinetPreview" style="display:none;">
+            <img id="opinetImg" alt="오피넷 캡처">
+            <div class="ss-preview-bar">
+              <span id="opinetImgInfo"></span>
+              <button class="btn-ss-remove" onclick="removeOpinetScreenshot()">제거</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -544,23 +544,41 @@
       <div class="lk-box">
         <div class="lk-hdr">왕복 여행거리</div>
         <div class="lk-val" id="distVal">-<span class="lk-unit">km</span></div>
-        <div class="lk-meta" id="distMeta">목적지 입력 후 조회하세요</div>
-        <button class="btn-auto" id="btnDist" onclick="fetchDist()" disabled>
-          거리 자동 계산
-        </button>
-        <a id="naverLink" href="https://map.naver.com" target="_blank" class="btn-ext">
-          네이버 지도에서 직접 확인
+        <div class="lk-meta" id="distMeta">목적지 입력 → 아래 링크 클릭 → 거리 확인 후 직접 입력</div>
+        <a id="naverLink" href="https://map.naver.com" target="_blank" class="btn-naver">
+          네이버 지도에서 경로 확인
         </a>
         <div class="manual-row">
-          <input type="number" id="manDist" placeholder="직접 입력 (예: 92)"
+          <input type="number" id="manDist" placeholder="왕복 거리 입력 (예: 92)"
                  step="0.1" min="0" oninput="onManDist()">
           <span class="unit">km</span>
         </div>
         <div class="chk-row">
           <input type="checkbox" id="chkRound" checked onchange="onManDist()">
-          <label for="chkRound">이미 왕복 거리로 입력됨 (자동 계산 결과도 왕복 적용)</label>
+          <label for="chkRound">이미 왕복 거리로 입력됨</label>
+        </div>
+
+        <!-- Map screenshot -->
+        <div class="ss-section">
+          <div class="ss-lbl">
+            지도 경로 캡처 첨부
+            <span class="badge badge-gray" style="text-transform:none;letter-spacing:0;">엑셀에 포함</span>
+          </div>
+          <label class="btn-ss" for="mapScreenshot">
+            캡처 이미지 업로드
+          </label>
+          <input type="file" id="mapScreenshot" accept="image/*"
+                 style="display:none;" onchange="handleMapScreenshot(this)">
+          <div class="ss-preview" id="mapPreview" style="display:none;">
+            <img id="mapImg" alt="지도 캡처">
+            <div class="ss-preview-bar">
+              <span id="mapImgInfo"></span>
+              <button class="btn-ss-remove" onclick="removeMapScreenshot()">제거</button>
+            </div>
+          </div>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -614,22 +632,44 @@
         </table>
       </div>
 
-      <!-- Map -->
-      <div class="card-ttl" style="margin-top:16px;">경로 지도</div>
-      <div class="map-box">
-        <div class="map-placeholder" id="mapPlaceholder">
-          <div>지도를 표시하려면 설정에서 네이버 클라우드 Client ID를 입력하세요</div>
-          <small>또는 아래 링크에서 네이버 지도로 경로를 확인하고 캡처하세요</small>
+      <!-- Screenshots preview in results -->
+      <div class="card-ttl" style="margin-top:16px;">첨부 이미지</div>
+
+      <div class="ss-result-box" id="resMapBox">
+        <div class="ss-result-hdr">네이버 지도 경로 캡처</div>
+        <div class="ss-result-body" id="resMapBody">
+          <div class="ss-result-empty" id="resMapEmpty">
+            미첨부 — 위 "지도 경로 캡처 첨부"에서 업로드하세요<br>
+            <a id="naverLinkResult" href="#" target="_blank"
+               style="color:var(--accent);font-size:11px;">네이버 지도에서 경로 확인</a>
+          </div>
+          <img id="resMapImg" style="display:none;max-width:100%;max-height:240px;" alt="지도 캡처">
         </div>
-        <div id="naverMap"></div>
       </div>
-      <a id="naverLinkResult" href="#" target="_blank" class="btn-ext"
-         style="margin-top:8px; font-size:12px;">
-        네이버 지도에서 경로 확인 (화면 캡처 후 지출결의서 첨부)
-      </a>
+
+      <div class="ss-result-box" id="resOpinetBox">
+        <div class="ss-result-hdr">오피넷 전국 평균 유가 캡처</div>
+        <div class="ss-result-body" id="resOpinetBody">
+          <div class="ss-result-empty" id="resOpinetEmpty">
+            미첨부 — 위 "오피넷 화면 캡처 첨부"에서 업로드하세요<br>
+            <a href="https://www.opinet.co.kr/user/main/mainView.do" target="_blank"
+               style="color:var(--accent);font-size:11px;">오피넷 바로가기</a>
+          </div>
+          <img id="resOpinetImg" style="display:none;max-width:100%;max-height:240px;" alt="오피넷 캡처">
+        </div>
+      </div>
     </div>
 
-    <button class="btn-dl" onclick="downloadExcel()">엑셀 서식 다운로드 (.xlsx)</button>
+    <!-- Attachment status + download -->
+    <div class="attach-status" id="attachStatus">
+      <span class="lbl2">엑셀 포함 내용:</span>
+      <span id="statusMap">지도 캡처: 미첨부</span>
+      <span id="statusOpinet">유가 캡처: 미첨부</span>
+    </div>
+
+    <button class="btn-dl" id="btnDl" onclick="downloadExcel()">
+      엑셀 서식 다운로드 (.xlsx)
+    </button>
   </div>
 
 </div><!-- /wrap -->
@@ -642,11 +682,11 @@ const BASE_ADDR = '서울특별시 송파구 송파대로28길 28';
 const BASE_NAME = '해양환경공단 본사';
 
 const FUELS = {
-  diesel:   { name: '경유',           eff: 12.52, opinetCode: 'D047' },
-  gasoline: { name: '가솔린',          eff: 12.50, opinetCode: 'B027' },
-  lpg:      { name: 'LPG',            eff: 10.60, opinetCode: 'K015' },
-  hybrid:   { name: '하이브리드',       eff: 17.00, opinetCode: 'B027' },
-  electric: { name: '전기',            eff: null,  opinetCode: null   },
+  diesel:   { name: '경유',     eff: 12.52, opinetCode: 'D047' },
+  gasoline: { name: '가솔린',   eff: 12.50, opinetCode: 'B027' },
+  lpg:      { name: 'LPG',     eff: 10.60, opinetCode: 'K015' },
+  hybrid:   { name: '하이브리드', eff: 17.00, opinetCode: 'B027' },
+  electric: { name: '전기',     eff: null,  opinetCode: null   },
 };
 
 /* ========================================================
@@ -655,8 +695,9 @@ const FUELS = {
 let S = {
   price: null,
   dist: null,
-  naverMap: null,
   calcResult: null,
+  mapScreenshot: null,      // { base64, ext, dataUrl }
+  opinetScreenshot: null,   // { base64, ext, dataUrl }
 };
 
 /* ========================================================
@@ -677,12 +718,10 @@ function toggleCfg() {
   document.getElementById('cfgPanel').classList.toggle('open');
 }
 function loadSettings() {
-  document.getElementById('opinetKey').value    = ls('opinetKey') || '';
-  document.getElementById('naverClientId').value = ls('naverClientId') || '';
+  document.getElementById('opinetKey').value = ls('opinetKey') || '';
 }
 function saveSettings() {
-  lsSet('opinetKey',     document.getElementById('opinetKey').value.trim());
-  lsSet('naverClientId', document.getElementById('naverClientId').value.trim());
+  lsSet('opinetKey', document.getElementById('opinetKey').value.trim());
   refreshUI();
 }
 function ls(k)      { try { return localStorage.getItem(k); } catch { return ''; } }
@@ -692,10 +731,9 @@ function lsSet(k,v) { try { localStorage.setItem(k, v); } catch {} }
    UI REFRESH
    ======================================================== */
 function refreshUI() {
-  const dateS  = document.getElementById('fDateS').value;
-  const dest   = document.getElementById('fDest').value.trim();
-  const opKey  = ls('opinetKey');
-  const nvKey  = ls('naverClientId');
+  const dateS = document.getElementById('fDateS').value;
+  const dest  = document.getElementById('fDest').value.trim();
+  const opKey = ls('opinetKey');
 
   // Price button
   const btnP = document.getElementById('btnPrice');
@@ -710,27 +748,15 @@ function refreshUI() {
     btnP.textContent = '날짜를 먼저 선택하세요';
   }
 
-  // Dist button
-  const btnD = document.getElementById('btnDist');
-  if (nvKey && dest) {
-    btnD.disabled = false;
-    btnD.textContent = '거리 자동 계산';
-  } else if (!nvKey) {
-    btnD.disabled = true;
-    btnD.textContent = '거리 자동 계산 (API 키 필요)';
-  } else {
-    btnD.disabled = true;
-    btnD.textContent = '목적지를 먼저 입력하세요';
-  }
-
-  // Naver Maps link
+  // Naver Maps link (pre-filled route)
+  const naverLink = document.getElementById('naverLink');
   if (dest) {
     const s = encodeURIComponent(BASE_ADDR);
     const g = encodeURIComponent(dest);
-    const url = `https://map.naver.com/v5/directions/${s}/${g}//car`;
-    document.getElementById('naverLink').href = url;
-    document.getElementById('naverLink').textContent = '네이버 지도에서 경로 확인 (클릭)';
-    document.getElementById('naverLinkResult').href = url;
+    naverLink.href = `https://map.naver.com/v5/directions/${s}/${g}//car`;
+    document.getElementById('naverLinkResult').href = naverLink.href;
+  } else {
+    naverLink.href = 'https://map.naver.com';
   }
 }
 
@@ -767,8 +793,8 @@ function onManDist() {
 }
 
 function showPrice(v, meta) {
-  const formatted = v.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  document.getElementById('priceVal').innerHTML = `${formatted}<span class="lk-unit">원/L</span>`;
+  const fmt = v.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('priceVal').innerHTML = `${fmt}<span class="lk-unit">원/L</span>`;
   document.getElementById('priceMeta').textContent = meta;
 }
 function showDist(v, meta) {
@@ -778,12 +804,14 @@ function showDist(v, meta) {
 
 /* ========================================================
    OPINET API — 전국 평균 유가 조회
+   avgAllPrice.do = 이번 주 전국 평균 (오피넷 사이트 표시값과 동일)
+   avgRecentMonthlyPrice.do = 이번 달 평균 (fallback)
    ======================================================== */
 async function fetchPrice() {
-  const opKey  = ls('opinetKey');
-  const dateS  = document.getElementById('fDateS').value;
-  const fType  = document.getElementById('fFuel').value;
-  const fuel   = FUELS[fType];
+  const opKey = ls('opinetKey');
+  const dateS = document.getElementById('fDateS').value;
+  const fType = document.getElementById('fFuel').value;
+  const fuel  = FUELS[fType];
 
   if (!opKey || !dateS) return;
   if (!fuel.opinetCode) {
@@ -794,50 +822,55 @@ async function fetchPrice() {
   setBtnLoading('btnPrice', true);
 
   const dateFmt = dateS.replace(/-/g, '');
-  // Try: daily → monthly fallback
+
+  // 순서: ① 이번 주 전국 평균 → ② 이번 달 평균 fallback
   const endpoints = [
-    `https://www.opinet.co.kr/api/avgDailyPrice.do?code=${opKey}&out=json&date=${dateFmt}`,
-    `https://www.opinet.co.kr/api/avgRecentMonthlyPrice.do?code=${opKey}&out=json&yearMonth=${dateFmt.slice(0,6)}`,
-    `https://www.opinet.co.kr/api/avgAllPrice.do?code=${opKey}&out=json`,
+    {
+      url: `https://www.opinet.co.kr/api/avgAllPrice.do?code=${opKey}&out=json`,
+      label: '이번 주 전국 평균',
+    },
+    {
+      url: `https://www.opinet.co.kr/api/avgRecentMonthlyPrice.do?code=${opKey}&out=json&yearMonth=${dateFmt.slice(0, 6)}`,
+      label: `${dateFmt.slice(0, 6)} 월 평균`,
+    },
   ];
 
   let found = false;
-  for (const apiUrl of endpoints) {
+  for (const ep of endpoints) {
     try {
-      const data = await fetchWithProxy(apiUrl);
+      const data = await fetchWithProxy(ep.url);
       const oilList = data?.RESULT?.OIL || data?.result?.OIL;
       if (!oilList) continue;
       const item = oilList.find(o => o.PRODCD === fuel.opinetCode);
       if (!item) continue;
       const price = parseFloat(item.PRICE);
+      if (isNaN(price) || price <= 0) continue;
       S.price = price;
       document.getElementById('manPrice').value = price.toFixed(2);
-      showPrice(price, `${dateS} 기준 전국 평균 (오피넷)`);
+      showPrice(price, `${ep.label} (오피넷 자동 조회)`);
       found = true;
       break;
     } catch { /* try next */ }
   }
 
   if (!found) {
-    document.getElementById('priceMeta').textContent = '자동 조회 실패 — 아래에서 직접 입력하거나 오피넷에서 확인하세요';
+    document.getElementById('priceMeta').textContent =
+      '자동 조회 실패 — 아래에서 직접 입력하거나 오피넷에서 확인하세요';
   }
 
   setBtnLoading('btnPrice', false, '유가 자동 조회');
 }
 
 async function fetchWithProxy(url) {
-  // Try CORS proxies in order
   const proxies = [
     u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
     u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
   ];
-
   for (const makeProxy of proxies) {
     try {
       const res = await fetch(makeProxy(url), { signal: AbortSignal.timeout(8000) });
       if (!res.ok) continue;
       const text = await res.text();
-      // allorigins wraps in {contents: "..."}
       try {
         const json = JSON.parse(text);
         if (json.contents) return JSON.parse(json.contents);
@@ -849,142 +882,88 @@ async function fetchWithProxy(url) {
 }
 
 /* ========================================================
-   NAVER MAPS — 거리 자동 계산 + 지도 표시
+   SCREENSHOT HANDLERS
    ======================================================== */
-async function fetchDist() {
-  const nvKey = ls('naverClientId');
-  const dest  = document.getElementById('fDest').value.trim();
-  if (!nvKey || !dest) return;
-
-  setBtnLoading('btnDist', true);
-
-  try {
-    await loadNaverSdk(nvKey);
-
-    // Geocode both addresses
-    const [startCoord, goalCoord] = await Promise.all([
-      geocode(BASE_ADDR),
-      geocode(dest),
-    ]);
-
-    // Try naver.maps.Service.driving for route
-    let distKm, routePath;
-    try {
-      const route = await naverDriving(startCoord, goalCoord);
-      distKm = route.distance / 1000;
-      routePath = route.path;
-    } catch {
-      // fallback: straight line distance
-      distKm = haversine(startCoord, goalCoord);
-      document.getElementById('distMeta').textContent = '직선 거리로 계산 (실 도로 거리와 차이 있을 수 있음)';
-    }
-
-    const isRound = document.getElementById('chkRound').checked;
-    const finalKm = Math.round(isRound ? distKm * 2 : distKm);
-
-    S.dist = finalKm;
-    document.getElementById('manDist').value = finalKm;
-    showDist(finalKm, `${isRound ? '왕복' : '편도'} 거리 (출발: ${BASE_NAME})`);
-
-    // Draw map
-    drawMap(nvKey, startCoord, goalCoord, routePath);
-  } catch (e) {
-    document.getElementById('distMeta').textContent = `오류: ${e.message || '거리 계산 실패'} — 직접 입력해주세요`;
-  }
-
-  setBtnLoading('btnDist', false, '거리 자동 계산');
-}
-
-function loadNaverSdk(clientId) {
+function readFileAsScreenshot(file) {
   return new Promise((resolve, reject) => {
-    if (window.naver?.maps?.Service) { resolve(); return; }
-    const el = document.createElement('script');
-    el.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${clientId}&submodules=geocoder,drawing`;
-    el.onload = () => setTimeout(resolve, 600);
-    el.onerror = () => reject(new Error('네이버 지도 SDK 로드 실패'));
-    document.head.appendChild(el);
+    const reader = new FileReader();
+    reader.onload = e => {
+      const dataUrl = e.target.result;
+      const base64 = dataUrl.split(',')[1];
+      const rawExt = file.name.split('.').pop().toLowerCase();
+      const ext = rawExt === 'jpg' ? 'jpeg' : rawExt;
+      resolve({ base64, ext, dataUrl });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
 }
 
-function geocode(addr) {
-  return new Promise((resolve, reject) => {
-    naver.maps.Service.geocode({ query: addr }, (status, resp) => {
-      if (status !== naver.maps.Service.Status.OK) {
-        reject(new Error(`주소 변환 실패: ${addr}`)); return;
-      }
-      const item = resp.v2.addresses[0];
-      if (!item) { reject(new Error(`주소 없음: ${addr}`)); return; }
-      resolve({ lat: parseFloat(item.y), lng: parseFloat(item.x) });
-    });
-  });
+async function handleOpinetScreenshot(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const ss = await readFileAsScreenshot(file);
+  S.opinetScreenshot = ss;
+
+  document.getElementById('opinetImg').src = ss.dataUrl;
+  document.getElementById('opinetImgInfo').textContent = file.name;
+  document.getElementById('opinetPreview').style.display = 'block';
+
+  // Update results section
+  document.getElementById('resOpinetImg').src = ss.dataUrl;
+  document.getElementById('resOpinetImg').style.display = 'block';
+  document.getElementById('resOpinetEmpty').style.display = 'none';
+
+  updateAttachStatus();
+  input.value = '';
 }
 
-function naverDriving(start, goal) {
-  return new Promise((resolve, reject) => {
-    if (typeof naver.maps.Service.driving !== 'function') {
-      reject(new Error('driving API 없음')); return;
-    }
-    naver.maps.Service.driving({
-      query: `${start.lng},${start.lat}|${goal.lng},${goal.lat}`,
-    }, (status, resp) => {
-      if (status !== naver.maps.Service.Status.OK) {
-        reject(new Error('경로 조회 실패')); return;
-      }
-      const r = resp.result;
-      resolve({ distance: r.summary.distance, path: r.path });
-    });
-  });
+function removeOpinetScreenshot() {
+  S.opinetScreenshot = null;
+  document.getElementById('opinetPreview').style.display = 'none';
+  document.getElementById('opinetImg').src = '';
+  document.getElementById('resOpinetImg').style.display = 'none';
+  document.getElementById('resOpinetEmpty').style.display = 'block';
+  updateAttachStatus();
 }
 
-function haversine(a, b) {
-  const R = 6371, d2r = Math.PI / 180;
-  const dLat = (b.lat - a.lat) * d2r;
-  const dLng = (b.lng - a.lng) * d2r;
-  const x = Math.sin(dLat / 2) ** 2 +
-    Math.cos(a.lat * d2r) * Math.cos(b.lat * d2r) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+async function handleMapScreenshot(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const ss = await readFileAsScreenshot(file);
+  S.mapScreenshot = ss;
+
+  document.getElementById('mapImg').src = ss.dataUrl;
+  document.getElementById('mapImgInfo').textContent = file.name;
+  document.getElementById('mapPreview').style.display = 'block';
+
+  // Update results section
+  document.getElementById('resMapImg').src = ss.dataUrl;
+  document.getElementById('resMapImg').style.display = 'block';
+  document.getElementById('resMapEmpty').style.display = 'none';
+
+  updateAttachStatus();
+  input.value = '';
 }
 
-function drawMap(clientId, start, goal, path) {
-  const mapEl = document.getElementById('naverMap');
-  const placeholder = document.getElementById('mapPlaceholder');
-  mapEl.style.display = 'block';
-  placeholder.style.display = 'none';
+function removeMapScreenshot() {
+  S.mapScreenshot = null;
+  document.getElementById('mapPreview').style.display = 'none';
+  document.getElementById('mapImg').src = '';
+  document.getElementById('resMapImg').style.display = 'none';
+  document.getElementById('resMapEmpty').style.display = 'block';
+  updateAttachStatus();
+}
 
-  const center = new naver.maps.LatLng(
-    (start.lat + goal.lat) / 2,
-    (start.lng + goal.lng) / 2
-  );
-
-  if (S.naverMap) {
-    S.naverMap.setCenter(center);
-  } else {
-    S.naverMap = new naver.maps.Map('naverMap', { center, zoom: 9 });
-  }
-
-  new naver.maps.Marker({
-    map: S.naverMap,
-    position: new naver.maps.LatLng(start.lat, start.lng),
-    title: BASE_NAME,
-  });
-  new naver.maps.Marker({
-    map: S.naverMap,
-    position: new naver.maps.LatLng(goal.lat, goal.lng),
-    title: '출장지',
-  });
-
-  if (path) {
-    const pts = path.map(p => new naver.maps.LatLng(p[1], p[0]));
-    const poly = new naver.maps.Polyline({
-      map: S.naverMap,
-      path: pts,
-      strokeColor: '#0051a2',
-      strokeWeight: 4,
-      strokeOpacity: 0.85,
-    });
-    const bounds = poly.getBounds();
-    S.naverMap.fitBounds(bounds, { padding: 40 });
-  }
+function updateAttachStatus() {
+  const sm = document.getElementById('statusMap');
+  const so = document.getElementById('statusOpinet');
+  if (sm) sm.innerHTML = S.mapScreenshot
+    ? '<span class="ss-attached">지도 캡처: 첨부됨</span>'
+    : '지도 캡처: 미첨부';
+  if (so) so.innerHTML = S.opinetScreenshot
+    ? '<span class="ss-attached">유가 캡처: 첨부됨</span>'
+    : '유가 캡처: 미첨부';
 }
 
 /* ========================================================
@@ -1005,7 +984,7 @@ function calculate() {
   if (!dateS)   { alert('출장 시작일을 선택해주세요.'); return; }
   if (!dest)    { alert('출장지(목적지)를 입력해주세요.'); return; }
   if (!S.price) { alert('유가를 입력해주세요.\n(직접 입력란에 숫자를 입력하거나 자동 조회를 이용하세요)'); return; }
-  if (!S.dist)  { alert('여행거리를 입력해주세요.\n(직접 입력란에 숫자를 입력하거나 자동 계산을 이용하세요)'); return; }
+  if (!S.dist)  { alert('여행거리를 입력해주세요.\n(직접 입력란에 숫자를 입력해주세요)'); return; }
 
   const fuel   = FUELS[fType];
   const price  = parseFloat(S.price);
@@ -1013,13 +992,13 @@ function calculate() {
   const eff    = fuel.eff;
   const period = dateS === dateE ? dateS : `${dateS}~${dateE}`;
 
-  // 지급금액 = ROUNDDOWN(유가×거리÷연비+통행료, -2) → 백원 단위 절사
   const raw    = (price * dist / eff) + toll;
   const amount = Math.floor(raw / 100) * 100;
 
-  const basis = `${BASE_NAME}(${BASE_ADDR}) → ${dest}: ${dist}km, 유가 ${price.toFixed(2)}원/L, 연비 ${eff}km/L, 통행료 ${toll.toLocaleString('ko-KR')}원`;
+  const basis = `${BASE_NAME}(${BASE_ADDR}) → ${dest}: 왕복 ${dist}km, ` +
+    `유가 ${price.toFixed(2)}원/L, 연비 ${eff}km/L, 통행료 ${toll.toLocaleString('ko-KR')}원 ` +
+    `[산식: ROUNDDOWN(${price.toFixed(2)}×${dist}÷${eff}+${toll}, -2) = ${amount.toLocaleString('ko-KR')}원]`;
 
-  // Preview
   document.getElementById('r-name').textContent    = name;
   document.getElementById('r-cop').textContent     = cop;
   document.getElementById('r-purpose').textContent = purpose;
@@ -1033,7 +1012,6 @@ function calculate() {
   document.getElementById('r-amount').textContent = amount.toLocaleString('ko-KR') + ' 원';
   document.getElementById('r-basis').textContent  = basis;
 
-  // Naver Maps result link
   const s = encodeURIComponent(BASE_ADDR);
   const g = encodeURIComponent(dest);
   document.getElementById('naverLinkResult').href = `https://map.naver.com/v5/directions/${s}/${g}//car`;
@@ -1041,113 +1019,314 @@ function calculate() {
   S.calcResult = { name, purpose, period, cop, fType, fuelName: fuel.name,
                    price, dist, eff, toll, amount, basis, dest };
 
+  updateAttachStatus();
+
   const res = document.getElementById('results');
   res.classList.add('show');
   res.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 /* ========================================================
-   EXCEL GENERATION (SheetJS)
+   EXCEL GENERATION — ExcelJS (styled + images)
    ======================================================== */
-function downloadExcel() {
+async function downloadExcel() {
   if (!S.calcResult) { alert('먼저 "계산하기"를 눌러주세요.'); return; }
-  const r = S.calcResult;
-  const ws = {};
 
-  /* ---------- helpers ---------- */
-  const cell = (v, t = 's') => ({ v, t });
-  const nCell = v => cell(v, 'n');
+  const btn = document.getElementById('btnDl');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> 엑셀 생성 중...';
 
-  /* ---------- rows ---------- */
-  // Row 1: Title (A1:F1 merged)
-  ws['A1'] = cell('출장비 실비 정산 내역(자가 차량 이용)');
+  try {
+    if (!window.ExcelJS) {
+      await loadScript('https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js');
+    }
 
-  // Row 2: empty
+    const r = S.calcResult;
+    const wb = new ExcelJS.Workbook();
+    wb.creator = '해양환경공단 출장비 정산 프로그램';
 
-  // Row 3: headers
-  ws['A3'] = cell('출장자');
-  ws['B3'] = cell('사유');
-  ws['E3'] = cell('동승인');
-  ws['F3'] = cell('출장기간');
+    const ws = wb.addWorksheet('출장비정산');
 
-  // Row 4: data (B4:D4 merged)
-  ws['A4'] = cell(r.name);
-  ws['B4'] = cell(r.purpose);
-  ws['E4'] = cell(r.cop);
-  ws['F4'] = cell(r.period);
+    ws.columns = [
+      { width: 13 },  // A
+      { width: 36 },  // B
+      { width: 14 },  // C
+      { width: 14 },  // D
+      { width: 13 },  // E
+      { width: 24 },  // F
+    ];
 
-  // Row 5: empty
-  // Row 6: unit label
-  ws['F6'] = cell('(단위: 원)');
+    // ── Color tokens ────────────────────────────────────────
+    const C = {
+      NAVY:       'FF00285C',
+      NAVY_MED:   'FF004E8C',
+      TEAL:       'FF007C89',
+      DARK:       'FF374151',
+      WHITE:      'FFFFFFFF',
+      LT_BLUE:    'FFE8EDF5',
+      LT_GRAY:    'FFF8FAFC',
+      GREEN:      'FF0D6E3E',
+      GREEN_LT:   'FFECFDF5',
+      MUTED:      'FF64748B',
+      BORDER:     'FFB0BDCC',
+    };
 
-  // Row 7: column headers
-  ws['A7'] = cell('항목');
-  ws['B7'] = cell('여행거리');
-  ws['C7'] = cell(`유가(${r.fuelName})`);
-  ws['D7'] = cell(`연비(${r.fuelName})`);
-  ws['E7'] = cell('통행료');
-  ws['F7'] = cell('지급금액(십원단위 절사)');
+    const thin = s => ({ style: 'thin', color: { argb: s || C.BORDER } });
+    const med  = s => ({ style: 'medium', color: { argb: s || C.NAVY } });
 
-  // Row 8: data + formula
-  ws['A8'] = cell('교통비');
-  ws['B8'] = nCell(r.dist);
-  ws['C8'] = nCell(r.price);
-  ws['D8'] = nCell(r.eff);
-  ws['E8'] = nCell(r.toll);
-  ws['F8'] = { v: r.amount, f: 'ROUNDDOWN(C8*B8/D8+E8,-2)', t: 'n' };
+    const borderThin = { top: thin(), left: thin(), bottom: thin(), right: thin() };
+    const borderMed  = { top: med(), left: med(), bottom: med(), right: med() };
+    const borderGreen = { top: med(C.GREEN), left: med(C.GREEN), bottom: med(C.GREEN), right: med(C.GREEN) };
 
-  // Row 9: empty
+    function sc(addr, props) {
+      const c = ws.getCell(addr);
+      if (props.value !== undefined) c.value = props.value;
+      if (props.font)      c.font      = props.font;
+      if (props.fill)      c.fill      = props.fill;
+      if (props.alignment) c.alignment = props.alignment;
+      if (props.border)    c.border    = props.border;
+      if (props.numFmt)    c.numFmt    = props.numFmt;
+      return c;
+    }
+    function fill(argb) { return { type: 'pattern', pattern: 'solid', fgColor: { argb } }; }
+    function font(bold, size, color, name) {
+      return { bold: !!bold, size: size || 10, color: { argb: color || C.NAVY }, name: name || '맑은 고딕' };
+    }
 
-  // Row 10: 산출근거 label (A10:F10 merged)
-  ws['A10'] = cell('산출근거');
+    // ── ROW 1: Title ────────────────────────────────────────
+    ws.mergeCells('A1:F1');
+    ws.getRow(1).height = 36;
+    sc('A1', {
+      value: '출장비 실비 정산 내역 (자가 차량 이용)',
+      font: font(true, 14, C.WHITE),
+      fill: fill(C.NAVY),
+      alignment: { horizontal: 'center', vertical: 'middle' },
+      border: borderMed,
+    });
 
-  // Row 11: 산출근거 내용 (A11:F11 merged)
-  ws['A11'] = cell(r.basis);
+    // ── ROW 2: Spacer ────────────────────────────────────────
+    ws.getRow(2).height = 6;
 
-  // Row 12: 증빙자료 label (A12:F12 merged)
-  ws['A12'] = cell('증빙자료');
+    // ── ROW 3: Field headers ─────────────────────────────────
+    ws.getRow(3).height = 22;
+    ws.mergeCells('B3:D3');
+    const hdr3Style = {
+      font: font(true, 10, C.WHITE),
+      fill: fill(C.NAVY_MED),
+      alignment: { horizontal: 'center', vertical: 'middle' },
+      border: borderThin,
+    };
+    sc('A3', { ...hdr3Style, value: '출장자' });
+    sc('B3', { ...hdr3Style, value: '사유 (출장 목적)' });
+    sc('E3', { ...hdr3Style, value: '동승인' });
+    sc('F3', { ...hdr3Style, value: '출장기간' });
 
-  // Row 13: 증빙자료 내용 (A13:F13 merged)
-  ws['A13'] = cell(`네이버 지도 최단거리 경로 캡처본 (${BASE_NAME} → ${r.dest})`);
+    // ── ROW 4: Field data ────────────────────────────────────
+    ws.getRow(4).height = 46;
+    ws.mergeCells('B4:D4');
+    const data4Style = {
+      font: font(false, 10, '1A2236'),
+      fill: fill(C.LT_GRAY),
+      border: borderThin,
+    };
+    sc('A4', { ...data4Style, value: r.name,    alignment: { horizontal: 'center', vertical: 'middle' } });
+    sc('B4', { ...data4Style, value: r.purpose,  alignment: { horizontal: 'left', vertical: 'middle', wrapText: true } });
+    sc('E4', { ...data4Style, value: r.cop,      alignment: { horizontal: 'center', vertical: 'middle' } });
+    sc('F4', { ...data4Style, value: r.period,   alignment: { horizontal: 'center', vertical: 'middle' } });
 
-  /* ---------- range / merges / col widths ---------- */
-  ws['!ref'] = 'A1:F13';
+    // ── ROW 5: Spacer ────────────────────────────────────────
+    ws.getRow(5).height = 6;
 
-  ws['!merges'] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },   // A1:F1
-    { s: { r: 2, c: 1 }, e: { r: 2, c: 3 } },   // B3:D3
-    { s: { r: 3, c: 1 }, e: { r: 3, c: 3 } },   // B4:D4
-    { s: { r: 9, c: 0 }, e: { r: 9, c: 5 } },   // A10:F10
-    { s: { r: 10, c: 0 }, e: { r: 10, c: 5 } }, // A11:F11
-    { s: { r: 11, c: 0 }, e: { r: 11, c: 5 } }, // A12:F12
-    { s: { r: 12, c: 0 }, e: { r: 12, c: 5 } }, // A13:F13
-  ];
+    // ── ROW 6: Unit label ────────────────────────────────────
+    ws.getRow(6).height = 16;
+    ws.mergeCells('A6:F6');
+    sc('A6', {
+      value: '(단위: 원)',
+      font: { italic: true, size: 9, color: { argb: C.MUTED }, name: '맑은 고딕' },
+      alignment: { horizontal: 'right', vertical: 'middle' },
+    });
 
-  ws['!cols'] = [
-    { wch: 12 },  // A
-    { wch: 38 },  // B
-    { wch: 13 },  // C
-    { wch: 13 },  // D
-    { wch: 12 },  // E
-    { wch: 22 },  // F
-  ];
+    // ── ROW 7: Column headers ────────────────────────────────
+    ws.getRow(7).height = 32;
+    const hdrs7 = [
+      { addr: 'A7', val: '항목' },
+      { addr: 'B7', val: `여행거리\n(왕복, km)` },
+      { addr: 'C7', val: `유가\n(${r.fuelName}, 원/L)` },
+      { addr: 'D7', val: `연비\n(${r.fuelName}, km/L)` },
+      { addr: 'E7', val: '통행료\n(원)' },
+      { addr: 'F7', val: '지급금액(원)\n(백원 단위 절사)' },
+    ];
+    hdrs7.forEach(({ addr, val }) => sc(addr, {
+      value: val,
+      font: font(true, 9, C.WHITE),
+      fill: fill(C.TEAL),
+      alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
+      border: borderThin,
+    }));
 
-  ws['!rows'] = [
-    {}, {}, {}, { hpt: 36 }, {}, {},
-    {}, {}, {}, {}, { hpt: 48 }, {}, { hpt: 36 },
-  ];
+    // ── ROW 8: Data ──────────────────────────────────────────
+    ws.getRow(8).height = 30;
+    sc('A8', {
+      value: '교통비',
+      font: font(false, 10, '1A2236'),
+      fill: fill(C.LT_GRAY),
+      alignment: { horizontal: 'center', vertical: 'middle' },
+      border: borderThin,
+    });
+    [
+      { addr: 'B8', val: r.dist,  fmt: '#,##0.0' },
+      { addr: 'C8', val: r.price, fmt: '#,##0.00' },
+      { addr: 'D8', val: r.eff,   fmt: '#,##0.00' },
+      { addr: 'E8', val: r.toll,  fmt: '#,##0' },
+    ].forEach(({ addr, val, fmt }) => sc(addr, {
+      value: val, numFmt: fmt,
+      font: font(false, 10, '1A2236'),
+      fill: fill(C.LT_GRAY),
+      alignment: { horizontal: 'right', vertical: 'middle' },
+      border: borderThin,
+    }));
+    sc('F8', {
+      value: { formula: 'ROUNDDOWN(C8*B8/D8+E8,-2)', result: r.amount },
+      numFmt: '#,##0',
+      font: { bold: true, size: 13, color: { argb: C.GREEN }, name: '맑은 고딕' },
+      fill: fill(C.GREEN_LT),
+      alignment: { horizontal: 'right', vertical: 'middle' },
+      border: borderGreen,
+    });
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '내역');
+    // ── ROW 9: Spacer ────────────────────────────────────────
+    ws.getRow(9).height = 8;
 
-  const safeDate = r.period.replace(/~/g, '_').replace(/-/g, '');
-  const fileName = `출장비정산_${r.name}_${safeDate}.xlsx`;
-  XLSX.writeFile(wb, fileName);
+    // ── ROW 10: 산출근거 header ──────────────────────────────
+    ws.getRow(10).height = 22;
+    ws.mergeCells('A10:F10');
+    sc('A10', {
+      value: '산출근거',
+      font: font(true, 10, C.WHITE),
+      fill: fill(C.DARK),
+      alignment: { horizontal: 'left', vertical: 'middle', indent: 1 },
+      border: borderThin,
+    });
+
+    // ── ROW 11: 산출근거 content ─────────────────────────────
+    ws.getRow(11).height = 52;
+    ws.mergeCells('A11:F11');
+    sc('A11', {
+      value: r.basis,
+      font: font(false, 9, '1A2236'),
+      fill: fill(C.LT_GRAY),
+      alignment: { horizontal: 'left', vertical: 'middle', wrapText: true, indent: 1 },
+      border: borderThin,
+    });
+
+    // ── ROW 12: 증빙자료 header ──────────────────────────────
+    ws.getRow(12).height = 22;
+    ws.mergeCells('A12:F12');
+    sc('A12', {
+      value: '증빙자료',
+      font: font(true, 10, C.WHITE),
+      fill: fill(C.DARK),
+      alignment: { horizontal: 'left', vertical: 'middle', indent: 1 },
+      border: borderThin,
+    });
+
+    // ── ROW 13: 증빙자료 content ─────────────────────────────
+    ws.getRow(13).height = 22;
+    ws.mergeCells('A13:F13');
+    const evText = [
+      S.mapScreenshot    ? `[첨부] 네이버 지도 경로 캡처 (${BASE_NAME} → ${r.dest})`
+                         : `[미첨부] 네이버 지도 경로 캡처 (별도 첨부)`,
+      S.opinetScreenshot ? `[첨부] 오피넷 ${r.fuelName} 전국 평균 유가 ${r.price.toFixed(2)}원/L`
+                         : `[미첨부] 오피넷 전국 평균 유가 캡처 (별도 첨부)`,
+    ].join(' / ');
+    sc('A13', {
+      value: evText,
+      font: font(false, 9, '1A2236'),
+      fill: fill(C.LT_GRAY),
+      alignment: { horizontal: 'left', vertical: 'middle', wrapText: true, indent: 1 },
+      border: borderThin,
+    });
+
+    // ── Images section ───────────────────────────────────────
+    let nextRow = 14;  // 1-indexed
+
+    async function embedImage(ss, label) {
+      if (!ss) return;
+
+      // spacer
+      ws.getRow(nextRow).height = 8;
+      nextRow++;
+
+      // label row
+      ws.mergeCells(`A${nextRow}:F${nextRow}`);
+      ws.getRow(nextRow).height = 22;
+      sc(`A${nextRow}`, {
+        value: label,
+        font: font(true, 10, C.NAVY),
+        fill: fill(C.LT_BLUE),
+        alignment: { horizontal: 'left', vertical: 'middle', indent: 1 },
+        border: borderThin,
+      });
+      nextRow++;
+
+      // image rows (24 rows × 15pt ≈ 360pt)
+      const IMG_ROWS = 24;
+      for (let i = 0; i < IMG_ROWS; i++) ws.getRow(nextRow + i).height = 15;
+
+      const ext = ss.ext === 'jpg' ? 'jpeg' : ss.ext;
+      const imgId = wb.addImage({ base64: ss.base64, extension: ext });
+      ws.addImage(imgId, {
+        tl: { col: 0, row: nextRow - 1 },          // 0-indexed
+        br: { col: 6, row: nextRow - 1 + IMG_ROWS }, // 0-indexed
+        editAs: 'oneCell',
+      });
+
+      nextRow += IMG_ROWS;
+    }
+
+    if (S.mapScreenshot || S.opinetScreenshot) {
+      // Images header
+      ws.getRow(nextRow).height = 6;
+      nextRow++;
+      ws.mergeCells(`A${nextRow}:F${nextRow}`);
+      ws.getRow(nextRow).height = 26;
+      sc(`A${nextRow}`, {
+        value: '첨부 이미지',
+        font: font(true, 11, C.WHITE),
+        fill: fill(C.NAVY),
+        alignment: { horizontal: 'center', vertical: 'middle' },
+        border: borderMed,
+      });
+      nextRow++;
+    }
+
+    await embedImage(S.mapScreenshot,    `네이버 지도 경로 캡처 (${BASE_NAME} → ${r.dest})`);
+    await embedImage(S.opinetScreenshot, `오피넷 전국 평균 유가 캡처 (${r.fuelName} ${r.price.toFixed(2)}원/L)`);
+
+    // ── Generate & download ──────────────────────────────────
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `출장비정산_${r.name}_${r.period.replace(/~/g, '_').replace(/-/g, '')}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+  } catch (e) {
+    alert('엑셀 생성 오류: ' + (e.message || String(e)));
+    console.error(e);
+  } finally {
+    const btn = document.getElementById('btnDl');
+    btn.disabled = false;
+    btn.textContent = '엑셀 서식 다운로드 (.xlsx)';
+  }
 }
 
-/* ========================================================
-   HELPERS
-   ======================================================== */
 /* ========================================================
    PDF PARSING — 하이패스 영수증
    ======================================================== */
@@ -1160,7 +1339,6 @@ async function parseTollPdf(input) {
   resultEl.innerHTML = '<div class="pdf-ttl"><span class="spin"></span> PDF 분석 중...</div>';
 
   try {
-    // Lazy-load PDF.js
     if (!window.pdfjsLib) {
       await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
       pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -1170,7 +1348,6 @@ async function parseTollPdf(input) {
     const buffer = await file.arrayBuffer();
     const pdf    = await pdfjsLib.getDocument({ data: buffer }).promise;
 
-    // Extract text from all pages
     let fullText = '';
     for (let p = 1; p <= pdf.numPages; p++) {
       const page    = await pdf.getPage(p);
@@ -1215,7 +1392,7 @@ async function parseTollPdf(input) {
       <div style="font-size:11px;color:var(--muted);">PDF 파일이 손상되지 않았는지 확인하거나 금액을 직접 입력해주세요.</div>`;
   }
 
-  input.value = ''; // 같은 파일 재업로드 허용
+  input.value = '';
 }
 
 function extractTollCandidates(text) {
@@ -1223,22 +1400,20 @@ function extractTollCandidates(text) {
   const seen  = new Set();
   const results = [];
 
-  // 패턴: 키워드 + 금액 (우선순위 높음 → 낮음)
   const patterns = [
-    { re: /합\s*계\s*[:：]?\s*([\d,]+)\s*원/g,                 priority: 0, ctx: '합계' },
-    { re: /총\s*(?:요금|금액|통행료)\s*[:：]?\s*([\d,]+)\s*원/g, priority: 0, ctx: '총액' },
-    { re: /납부\s*(?:금액|총액)\s*[:：]?\s*([\d,]+)\s*원/g,      priority: 0, ctx: '납부금액' },
-    { re: /통행\s*(?:요금|료)\s*[:：]?\s*([\d,]+)\s*원/g,        priority: 1, ctx: '통행료' },
-    { re: /(?<![.\d])([\d]{1,3}(?:,\d{3}){1,3})\s*원/g,         priority: 2, ctx: '금액' },
+    { re: /합\s*계\s*[:：]?\s*([\d,]+)\s*원/g,                  priority: 0, ctx: '합계' },
+    { re: /총\s*(?:요금|금액|통행료)\s*[:：]?\s*([\d,]+)\s*원/g,  priority: 0, ctx: '총액' },
+    { re: /납부\s*(?:금액|총액)\s*[:：]?\s*([\d,]+)\s*원/g,       priority: 0, ctx: '납부금액' },
+    { re: /통행\s*(?:요금|료)\s*[:：]?\s*([\d,]+)\s*원/g,         priority: 1, ctx: '통행료' },
+    { re: /(?<![.\d])([\d]{1,3}(?:,\d{3}){1,3})\s*원/g,          priority: 2, ctx: '금액' },
   ];
 
-  for (const { re, priority, ctx } of patterns) {
+  for (const { re, priority } of patterns) {
     let m;
     re.lastIndex = 0;
     while ((m = re.exec(clean)) !== null) {
       const amtStr = (m[1] || m[0].match(/([\d,]+)/)?.[1] || '').replace(/,/g, '');
       const amount = parseInt(amtStr, 10);
-      // 통행료 현실 범위: 500원 ~ 100,000원
       if (amount >= 500 && amount <= 100000 && !seen.has(amount)) {
         seen.add(amount);
         const s = Math.max(0, m.index - 18);
@@ -1258,18 +1433,19 @@ function applyToll(amount) {
   document.getElementById('pdfResult').style.display = 'none';
 }
 
+/* ========================================================
+   HELPERS
+   ======================================================== */
 function escHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
     const s = document.createElement('script');
-    s.src = src; s.onload = resolve;
+    s.src = src;
+    s.onload  = resolve;
     s.onerror = () => reject(new Error(`스크립트 로드 실패: ${src}`));
     document.head.appendChild(s);
   });
