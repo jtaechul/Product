@@ -130,7 +130,9 @@ async function getModel(apiKey, tier) {
 // 일시적 오류(429 요청과다 · 529 과부하 · 5xx · 네트워크)는 재시도로 흡수한다.
 // 파이프라인이 Claude를 연속 6회 호출하므로, 단발 실패 한 번에 단계 전체가
 // 무너지지 않도록 지수 백오프 재시도를 둔다 (이게 3·4단계 간헐 실패의 근본 원인이었음).
-const RETRYABLE_STATUS = new Set([408, 409, 429, 500, 502, 503, 504, 529]);
+// 403은 보통 영구 오류지만, Anthropic이 간헐적으로 "Request not allowed" 403을
+// 일시적으로 반환하는 사례가 관측됨(엣지 라우팅/리전). 제한된 재시도로 흡수한다.
+const RETRYABLE_STATUS = new Set([403, 408, 409, 429, 500, 502, 503, 504, 529]);
 
 async function callClaude(apiKey, { model, system, user, max_tokens = 2048 }, attempt = 0) {
   const MAX_RETRIES = 3;
