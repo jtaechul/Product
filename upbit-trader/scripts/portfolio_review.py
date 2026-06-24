@@ -24,7 +24,7 @@ from src.upbit_quotation import UpbitQuotation, candles_to_dataframe  # noqa: E4
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "portfolio.html"
-BOT_LABEL = {"majors": "대형코인", "swing": "잠수함", "highrisk": "고위험"}
+BOT_LABEL = {"majors": "대형코인", "swing": "잠수함"}
 
 
 def gather():
@@ -67,12 +67,22 @@ def gather():
     except Exception:
         pass
 
+    # 봇별 상태파일을 모은다. 단, notifier 와 '같은 화이트리스트'를 적용해
+    # 운용 중단/폐기된 봇(예: 3_고위험, 1_잠수함)의 현황이 대시보드(→텔레그램)로
+    # 새지 않게 한다. (이 글롭은 notifier._read_all_statuses 와 별개 경로라 반드시 필터)
     bots = []
-    for f in sorted((ROOT / ".botstate").glob("status_*.txt")) if (ROOT / ".botstate").exists() else []:
-        try:
-            bots.append(f.read_text(encoding="utf-8").strip())
-        except Exception:
-            pass
+    state_dir = ROOT / ".botstate"
+    if state_dir.exists():
+        for f in sorted(state_dir.glob("status_*.txt")):
+            bot_name = f.stem[len("status_"):]
+            if not notifier.status_allowed(bot_name):
+                continue
+            try:
+                txt = f.read_text(encoding="utf-8").strip()
+                if txt:
+                    bots.append(txt)
+            except Exception:
+                pass
 
     return {"regime": reg, "total": total_krw, "holdings": holdings,
             "weights_cur": allocation.current_weights(), "bots": bots}
@@ -96,7 +106,7 @@ def build_html(ctx: dict, public: bool = False) -> str:
                 f"width:{min(100,pct*100):.0f}%'></div></div>")
 
     rows = ""
-    for k in ("majors", "swing", "highrisk"):
+    for k in ("majors", "swing"):
         rows += (f"<tr><td>{BOT_LABEL[k]}</td>"
                  f"<td>{bar(cur.get(k,0),'#4a90d9')} {cur.get(k,0)*100:.0f}%</td>"
                  f"<td>{bar(prop.get(k,0),'#e09b3d')} {prop.get(k,0)*100:.0f}%</td>"
@@ -182,7 +192,6 @@ def maybe_propose(ctx: dict) -> None:
            f"현재 → 제안\n"
            f"• 대형 {cur.get('majors',0)*100:.0f}% → {prop.get('majors',0)*100:.0f}%\n"
            f"• 잠수 {cur.get('swing',0)*100:.0f}% → {prop.get('swing',0)*100:.0f}%\n"
-           f"• 고위험 {cur.get('highrisk',0)*100:.0f}% → {prop.get('highrisk',0)*100:.0f}%\n"
            f"• 현금 → {cash*100:.0f}%\n"
            f"승인하면 봇들이 이 비중으로 운용합니다.")
     notifier.send_buttons(msg, [[("✅ 승인", "approve_weights"),

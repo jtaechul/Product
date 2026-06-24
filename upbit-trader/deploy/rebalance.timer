@@ -1,9 +1,10 @@
 [Unit]
-Description=Run portfolio rebalance monthly
+Description=Run daily equity snapshot + rebalance
 
 [Timer]
-# 매월 1일 00:10(서버시간) 실행 + 부팅 직후 한 번(놓친 주기 만회)
-OnCalendar=*-*-01 00:10:00
+# 매일 00:10(서버시간) 실행 + 부팅 직후 한 번(놓친 주기 만회)
+# 매일 총평가자산을 기록·현행화하고 전일 대비 변화를 텔레그램으로 알림
+OnCalendar=*-*-* 00:10:00
 OnBootSec=3min
 Persistent=true
 Unit=rebalance.service

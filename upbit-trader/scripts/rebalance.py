@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""자산 리밸런싱 — 전체 자산을 평가해 세 봇의 '예산 비중'을 갱신(월/분기 실행).
+"""자산 리밸런싱 — 전체 자산을 평가해 대형코인·잠수함 봇의 '예산 비중'을 갱신(매일 실행).
 
 통상적 방법론(전략적 자산배분 + 정기 리밸런싱)을 적용: 매 실행 시 전체 평가자산
-(원화 + 보유코인 평가액)을 계산해, 목표비중(대형50/잠수30/고위험20)으로 각 봇의
+(원화 + 보유코인 평가액)을 계산해, 목표비중(대형100/잠수0)으로 각 봇의
 '예산 상한'을 .botstate/allocation.json 에 기록한다. 봇들은 이 예산 안에서만 매수하므로
 시간이 지나며 자연스럽게 목표비중으로 수렴한다(강제 청산 없이 안전하게).
 
 신호가 없으면 봇이 예산을 안 쓰고 현금으로 두므로, 나쁜 장에선 자동으로 방어적이 된다.
 
-systemd timer(rebalance.timer)로 매월 1일 실행. 수동: python -m scripts.rebalance
+systemd timer(rebalance.timer)로 매일 실행. 수동: python -m scripts.rebalance
 """
 
 from __future__ import annotations
@@ -61,12 +61,24 @@ def main() -> None:
     # 총 평가자산만 갱신 → 각 봇 예산이 자산 변화에 맞춰 재계산됨.
     w = allocation.current_weights()
     allocation.write_allocation(total, w)
-    lines = [f"⚖️ <b>자산 리밸런싱 완료</b>",
-             f"총 평가자산: <b>{total:,.0f}원</b>",
-             f"• 대형코인 {w['majors']*100:.0f}% → {total*w['majors']:,.0f}원",
-             f"• 잠수함 {w['swing']*100:.0f}% → {total*w['swing']:,.0f}원",
-             f"• 고위험 {w['highrisk']*100:.0f}% → {total*w['highrisk']:,.0f}원",
-             "각 봇은 이 한도 안에서만 매수합니다(나쁜 장에선 현금 보유)."]
+    # 일별 자산 추이 기록 + 전일 대비 변화 계산
+    eq = allocation.record_equity(total)
+    delta_line = None
+    if eq["prev"] is not None and eq["prev"] > 0:
+        d = total - eq["prev"]
+        pct = d / eq["prev"] * 100
+        emoji = "📈" if d > 0 else ("📉" if d < 0 else "➡️")
+        delta_line = (f"{emoji} 전일대비({eq['prev_date']}): "
+                      f"<b>{d:+,.0f}원 ({pct:+.1f}%)</b>")
+    elif eq["first"]:
+        delta_line = "ℹ️ 첫 기록 — 내일부터 전일 대비 변화를 알려드려요"
+    lines = [f"⚖️ <b>자산 현황 · 현행화</b>",
+             f"총 평가자산: <b>{total:,.0f}원</b>"]
+    if delta_line:
+        lines.append(delta_line)
+    lines += [f"• 대형코인 {w['majors']*100:.0f}% → {total*w['majors']:,.0f}원",
+              f"• 잠수함 {w['swing']*100:.0f}% → {total*w['swing']:,.0f}원",
+              "각 봇은 이 한도 안에서만 매수합니다(나쁜 장에선 현금 보유)."]
     msg = "\n".join(lines)
     print(msg.replace("<b>", "").replace("</b>", ""))
     notifier.send(msg)

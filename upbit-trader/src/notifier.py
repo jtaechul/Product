@@ -125,7 +125,7 @@ def _handle_weight_callback(data: str) -> None:
             cash = max(0.0, 1.0 - sum(w.values()))
             send(f"✅ <b>비중 조정 승인됨</b>\n"
                  f"대형 {w.get('majors',0)*100:.0f}% / 잠수 {w.get('swing',0)*100:.0f}% / "
-                 f"고위험 {w.get('highrisk',0)*100:.0f}% / 현금 {cash*100:.0f}%\n"
+                 f"현금 {cash*100:.0f}%\n"
                  f"봇들이 다음 점검부터 이 비중으로 운용합니다.")
         else:
             send("⚠️ 적용할 제안이 없어요(이미 처리됨).")
@@ -218,6 +218,10 @@ def start_command_listener(get_status, stop: threading.Event | None = None
 
 _STATE_DIR = Path(__file__).resolve().parent.parent / ".botstate"
 
+# 텔레그램 합산 상태/하트비트에 포함할 봇 이름 집합. 비어 있으면 전부 표시.
+# 잠수함봇은 검증 실패로 운용 중단 → 현황 알림에서 영구 제외(대형코인만 표시).
+_STATUS_WHITELIST: set[str] = {"2_대형코인"}
+
 
 def _state_dir() -> Path:
     _STATE_DIR.mkdir(exist_ok=True)
@@ -232,12 +236,24 @@ def publish_status(name: str, text: str) -> None:
         pass
 
 
+def status_allowed(bot_name: str) -> bool:
+    """이 봇이 텔레그램 합산 현황에 표시돼도 되는지(화이트리스트 통과 여부).
+
+    화이트리스트가 비어 있으면 전부 허용. 비어 있지 않으면 그 안에 든 봇만 허용.
+    notifier 의 합산 현황과 portfolio_review 대시보드가 '같은 규칙'을 쓰도록 공용화.
+    """
+    return not (_STATUS_WHITELIST and bot_name not in _STATUS_WHITELIST)
+
+
 def _read_all_statuses() -> str:
     """모든 봇의 상태파일을 합쳐 하나의 메시지로. 오래된(>10분) 건 경고 표시."""
     parts = []
     try:
         for f in sorted(_state_dir().glob("status_*.txt")):
             try:
+                bot_name = f.stem[len("status_"):]
+                if not status_allowed(bot_name):
+                    continue
                 txt = f.read_text(encoding="utf-8").strip()
                 if not txt:
                     continue
