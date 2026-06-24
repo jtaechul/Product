@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>출장비 자동 정산 | 해양환경공단</title>
+  <style>
+    :root {
+      --navy:   #00285c;
+      --blue:   #0051a2;
+      --accent: #0077cc;
+      --teal:   #007c89;
+      --bg:     #f0f4f8;
+      --card:   #ffffff;
+      --border: #cdd5de;
+      --text:   #1a2236;
+      --muted:  #64748b;
+      --green:  #0d6e3e;
+      --green-bg: #ecfdf5;
+      --r: 10px;
+      --shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Apple SD Gothic Neo','Noto Sans KR','맑은 고딕',sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .hdr {
+      background: var(--navy);
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    .hdr-title h1 { font-size: 17px; font-weight: 700; letter-spacing: -.3px; }
+    .hdr-title p  { font-size: 11px; opacity: .65; margin-top: 1px; }
+    .btn-cfg {
+      background: rgba(255,255,255,.14);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 6px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      transition: background .15s;
+    }
+    .btn-cfg:hover { background: rgba(255,255,255,.26); }
+
+    .wrap { max-width: 860px; margin: 0 auto; padding: 20px 16px 60px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+    .card-ttl {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 14px;
+      padding-bottom: 9px;
+      border-bottom: 2px solid var(--navy);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-ttl::before {
+      content: '';
+      width: 4px; height: 16px;
+      background: var(--navy);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .cfg-panel {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 18px 20px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .cfg-panel.open { display: block; }
+    .cfg-note { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+    .cfg-note a { color: var(--accent); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .fg { display: flex; flex-direction: column; gap: 4px; }
+    .fg.full { grid-column: 1/-1; }
+    label.lbl {
+      font-size: 11px; font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .req::after { content: ' *'; color: #dc2626; }
+    input[type=text], input[type=number], input[type=date], select, textarea {
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 11px;
+      font-size: 14px;
+      color: var(--text);
+      background: #fff;
+      font-family: inherit;
+      transition: border-color .15s, box-shadow .15s;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,119,204,.12);
+    }
+    textarea { resize: vertical; min-height: 68px; }
+
+    .lookup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .lk-box {
+      background: #f8fafc;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .lk-hdr {
+      font-size: 12px; font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .lk-val { font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.2; }
+    .lk-unit { font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 2px; }
+    .lk-meta { font-size: 11px; color: var(--muted); margin-top: 3px; min-height: 16px; }
+
+    .btn-auto {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1.5px solid var(--accent);
+      color: var(--accent);
+      background: #fff;
+      cursor: pointer;
+      font-size: 12px; font-weight: 700;
+      font-family: inherit;
+      margin-top: 10px;
+      transition: all .15s;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .btn-auto:hover:not(:disabled) { background: var(--accent); color: #fff; }
+    .btn-auto:disabled { opacity: .45; cursor: not-allowed; border-color: var(--border); color: var(--muted); }
+
+    /* Prominent Naver Maps button */
+    .btn-naver {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 6px;
+      background: #03C75A;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 12px; font-weight: 700;
+      font-family: inherit;
+      margin-top: 10px;
+      text-decoration: none;
+      transition: background .15s;
+    }
+    .btn-naver:hover { background: #02a84e; }
+
+    .btn-ext {
+      width: 100%;
+      padding: 7px 10px;
+      border-radius: 6px;
+      border: 1.5px dashed var(--border);
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font-size: 11px;
+      font-family: inherit;
+      margin-top: 6px;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+      transition: all .15s;
+    }
+    .btn-ext:hover { border-color: var(--accent); color: var(--accent); }
+
+    .manual-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+    .manual-row input { flex: 1; font-size: 13px; padding: 7px 9px; }
+    .manual-row .unit { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+    .chk-row {
+      display: flex; align-items: center; gap: 5px;
+      margin-top: 7px; font-size: 11px; color: var(--muted);
+    }
+    .chk-row input[type=checkbox] { width: 13px; height: 13px; cursor: pointer; }
+
+    /* Screenshot upload section */
+    .ss-section {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+    }
+    .ss-lbl {
+      font-size: 11px; font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 6px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-ss {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 11px; font-weight: 600;
+      font-family: inherit;
+      transition: all .15s;
+    }
+    .btn-ss:hover { border-color: var(--navy); color: var(--navy); }
+    .ss-preview {
+      margin-top: 8px;
+      border: 1.5px solid #c4b5fd;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #f5f3ff;
+    }
+    .ss-preview img {
+      width: 100%; max-height: 180px;
+      object-fit: contain;
+      display: block;
+      background: #fff;
+    }
+    .ss-preview-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 5px 8px;
+      font-size: 10px; color: #5b21b6;
+    }
+    .btn-ss-remove {
+      padding: 2px 8px;
+      border: none; border-radius: 4px;
+      background: #ede9fe; color: #5b21b6;
+      cursor: pointer; font-size: 10px; font-family: inherit;
+    }
+    .btn-ss-remove:hover { background: #ddd6fe; }
+    .ss-attached {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #d1fae5; color: #065f46;
+      border-radius: 4px; padding: 2px 7px;
+      font-size: 10px; font-weight: 700;
+    }
+
+    .btn-calc {
+      width: 100%;
+      padding: 14px;
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px; font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background .15s;
+      margin-bottom: 16px;
+    }
+    .btn-calc:hover { background: var(--blue); }
+
+    .results { display: none; }
+    .results.show { display: block; }
+
+    .preview-wrap { overflow-x: auto; margin-bottom: 16px; }
+    .preview-tbl {
+      width: 100%; min-width: 560px;
+      border-collapse: collapse; font-size: 13px;
+    }
+    .preview-tbl caption {
+      background: var(--navy); color: #fff;
+      font-size: 13px; font-weight: 700;
+      padding: 9px 14px; text-align: center;
+      border-radius: 6px 6px 0 0;
+    }
+    .preview-tbl th, .preview-tbl td { border: 1px solid var(--border); padding: 8px 12px; }
+    .preview-tbl th { background: #f0f4f8; font-weight: 700; color: var(--navy); white-space: nowrap; }
+    .preview-tbl .amount { font-size: 17px; font-weight: 800; color: var(--green); }
+    .preview-tbl .tr-unit td { font-size: 11px; color: var(--muted); text-align: right; }
+
+    /* Screenshot area in results */
+    .ss-result-box {
+      border: 1.5px solid var(--border);
+      border-radius: 8px; overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .ss-result-hdr {
+      background: #f0f4f8;
+      padding: 8px 12px;
+      font-size: 11px; font-weight: 700; color: var(--navy);
+      border-bottom: 1px solid var(--border);
+    }
+    .ss-result-body { padding: 10px; text-align: center; }
+    .ss-result-body img { max-width: 100%; max-height: 240px; border-radius: 4px; }
+    .ss-result-empty { font-size: 11px; color: var(--muted); text-align: center; padding: 16px; }
+
+    /* Attachment status bar */
+    .attach-status {
+      background: #f0f4f8;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      font-size: 11px;
+      display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+    }
+    .attach-status .lbl2 { color: var(--muted); font-weight: 600; }
+
+    .btn-dl {
+      width: 100%;
+      padding: 14px;
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px; font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-dl:hover:not(:disabled) { background: #0a5c33; }
+    .btn-dl:disabled { opacity: .5; cursor: not-allowed; }
+
+    .alert { padding: 11px 14px; border-radius: 7px; font-size: 12px; line-height: 1.6; }
+    .alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .alert-warn { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+
+    .badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+    .badge-blue  { background: #dbeafe; color: #1e40af; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-gray  { background: #f1f5f9; color: #475569; border: 1px solid var(--border); }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin {
+      display: inline-block; width: 12px; height: 12px;
+      border: 2px solid rgba(0,0,0,.15);
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin .55s linear infinite;
+    }
+
+    /* PDF upload */
+    .btn-pdf {
+      padding: 8px 11px; background: #6d28d9; color: #fff;
+      border: none; border-radius: 6px; cursor: pointer;
+      font-size: 12px; font-weight: 700; font-family: inherit;
+      white-space: nowrap; transition: background .15s;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .btn-pdf:hover { background: #5b21b6; }
+    .pdf-result {
+      margin-top: 10px; background: #f5f3ff;
+      border: 1.5px solid #c4b5fd; border-radius: 8px; padding: 12px; font-size: 12px;
+    }
+    .pdf-ttl { font-weight: 700; color: #5b21b6; margin-bottom: 8px; }
+    .pdf-candidates { display: flex; flex-direction: column; gap: 6px; }
+    .pdf-cand {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #fff; border: 1px solid #ddd6fe; border-radius: 6px;
+      padding: 7px 10px; gap: 8px;
+    }
+    .pdf-cand-ctx { font-size: 11px; color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pdf-cand-amt { font-weight: 700; font-size: 14px; color: #5b21b6; white-space: nowrap; }
+    .btn-apply {
+      padding: 4px 10px; background: #5b21b6; color: #fff;
+      border: none; border-radius: 4px; cursor: pointer;
+      font-size: 11px; font-family: inherit; white-space: nowrap;
+    }
+    .btn-apply:hover { background: #4c1d95; }
+    .pdf-raw {
+      margin-top: 8px; background: #1e1b4b; color: #a5b4fc;
+      border-radius: 6px; padding: 8px; font-size: 10px;
+      line-height: 1.55; max-height: 120px; overflow-y: auto;
+      font-family: monospace; white-space: pre-wrap; word-break: break-all;
+    }
+
+    @media (max-width: 580px) {
+      .form-grid, .lookup-grid { grid-template-columns: 1fr; }
+      .lk-val { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-title">
+    <h1>출장비 자동 정산 프로그램</h1>
+    <p>해양환경공단 | 자가 차량 이용 실비 정산</p>
+  </div>
+  <button class="btn-cfg" onclick="toggleCfg()">API 설정</button>
+</header>
+
+<div class="wrap">
+
+  <!-- ====== SETTINGS ====== -->
+  <div class="cfg-panel" id="cfgPanel">
+    <div class="card-ttl" style="margin-bottom:12px;">API 연동 설정
+      <span class="badge badge-gray">선택 사항 — 미설정 시 수동 입력으로 모든 기능 동작</span>
+    </div>
+    <div class="fg" style="max-width:460px;">
+      <label class="lbl">오피넷 Open API 인증키</label>
+      <input type="text" id="opinetKey" placeholder="오피넷에서 발급받은 인증키" oninput="saveSettings()">
+      <div class="cfg-note">
+        <a href="https://www.opinet.co.kr/user/main/mainView.do" target="_blank">www.opinet.co.kr</a>
+        회원가입 → 오픈API → 인증키 신청 (무료)<br>
+        설정 시 출장일 기준 전국 평균 유가를 자동 조회합니다.
+      </div>
+    </div>
+    <div class="alert alert-info" style="margin-top:12px;">
+      API 키는 이 브라우저에만 저장됩니다 (외부 서버 전송 없음).
+      키를 입력하지 않아도 수동 입력으로 엑셀 생성이 가능합니다.
+    </div>
+  </div>
+
+  <!-- ====== FORM ====== -->
+  <div class="card">
+    <div class="card-ttl">출장 정보 입력</div>
+    <div class="form-grid">
+
+      <div class="fg">
+        <label class="lbl req">출장자 이름</label>
+        <input type="text" id="fName" placeholder="홍길동">
+      </div>
+
+      <div class="fg">
+        <label class="lbl">동승인</label>
+        <input type="text" id="fCop" placeholder="없으면 '-' 입력" value="-">
+      </div>
+
+      <div class="fg full">
+        <label class="lbl req">출장 목적(사유)</label>
+        <textarea id="fPurpose" placeholder="예: 2026년 제1회 중소기업기술마켓 구매상담회 참석"></textarea>
+      </div>
+
+      <div class="fg">
+        <label class="lbl req">출장 시작일</label>
+        <input type="date" id="fDateS" oninput="onDateChange()">
+      </div>
+
+      <div class="fg">
+        <label class="lbl req">출장 종료일</label>
+        <input type="date" id="fDateE" oninput="onDateChange()">
+      </div>
+
+      <div class="fg full">
+        <label class="lbl req">출장지 (목적지 주소)</label>
+        <input type="text" id="fDest" placeholder="예: 부산시 해운대구 센텀중앙로 79" oninput="onDestChange()">
+      </div>
+
+      <div class="fg">
+        <label class="lbl req">차량 유종</label>
+        <select id="fFuel" onchange="onFuelChange()">
+          <option value="diesel">경유 (디젤)</option>
+          <option value="gasoline">가솔린 (휘발유)</option>
+          <option value="lpg">LPG</option>
+          <option value="hybrid">하이브리드 (가솔린 기준)</option>
+          <option value="electric">전기차</option>
+        </select>
+      </div>
+
+      <div class="fg">
+        <label class="lbl">
+          통행료 (원)
+          <span id="pdfBadge" class="badge badge-blue" style="display:none;text-transform:none;letter-spacing:0;">PDF 파싱</span>
+        </label>
+        <div style="display:flex;gap:6px;">
+          <input type="number" id="fToll" placeholder="0" value="0" min="0" style="flex:1;">
+          <label for="pdfUpload" class="btn-pdf" title="한국도로공사 EX 이용내역 PDF 업로드">
+            하이패스 PDF
+          </label>
+          <input type="file" id="pdfUpload" accept=".pdf"
+                 style="display:none;" onchange="parseTollPdf(this)">
+        </div>
+        <div class="pdf-result" id="pdfResult" style="display:none;"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ====== LOOKUP ====== -->
+  <div class="card">
+    <div class="card-ttl">유가 · 거리 조회</div>
+    <div class="lookup-grid">
+
+      <!-- 유가 -->
+      <div class="lk-box">
+        <div class="lk-hdr">
+          전국 평균 유가
+          <span class="badge badge-blue" id="fuelBadge">경유</span>
+        </div>
+        <div class="lk-val" id="priceVal">-<span class="lk-unit">원/L</span></div>
+        <div class="lk-meta" id="priceMeta">날짜 선택 후 조회하세요</div>
+        <button class="btn-auto" id="btnPrice" onclick="fetchPrice()" disabled>
+          유가 자동 조회
+        </button>
+        <a href="https://www.opinet.co.kr/user/main/mainView.do"
+           target="_blank" class="btn-ext">오피넷에서 직접 확인</a>
+        <div class="manual-row">
+          <input type="number" id="manPrice" placeholder="직접 입력 (예: 1850.50)"
+                 step="0.01" min="0" oninput="onManPrice()">
+          <span class="unit">원/L</span>
+        </div>
+
+        <!-- Opinet screenshot -->
+        <div class="ss-section">
+          <div class="ss-lbl">
+            오피넷 화면 캡처 첨부
+            <span class="badge badge-gray" style="text-transform:none;letter-spacing:0;">엑셀에 포함</span>
+          </div>
+          <label class="btn-ss" for="opinetScreenshot">
+            캡처 이미지 업로드
+          </label>
+          <input type="file" id="opinetScreenshot" accept="image/*"
+                 style="display:none;" onchange="handleOpinetScreenshot(this)">
+          <div class="ss-preview" id="opinetPreview" style="display:none;">
+            <img id="opinetImg" alt="오피넷 캡처">
+            <div class="ss-preview-bar">
+              <span id="opinetImgInfo"></span>
+              <button class="btn-ss-remove" onclick="removeOpinetScreenshot()">제거</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 거리 -->
+      <div class="lk-box">
+        <div class="lk-hdr">왕복 여행거리</div>
+        <div class="lk-val" id="distVal">-<span class="lk-unit">km</span></div>
+        <div class="lk-meta" id="distMeta">목적지 입력 → 아래 링크 클릭 → 거리 확인 후 직접 입력</div>
+        <a id="naverLink" href="https://map.naver.com" target="_blank" class="btn-naver">
+          네이버 지도에서 경로 확인
+        </a>
+        <div class="manual-row">
+          <input type="number" id="manDist" placeholder="왕복 거리 입력 (예: 92)"
+                 step="0.1" min="0" oninput="onManDist()">
+          <span class="unit">km</span>
+        </div>
+        <div class="chk-row">
+          <input type="checkbox" id="chkRound" checked onchange="onManDist()">
+          <label for="chkRound">이미 왕복 거리로 입력됨</label>
+        </div>
+
+        <!-- Map screenshot -->
+        <div class="ss-section">
+          <div class="ss-lbl">
+            지도 경로 캡처 첨부
+            <span class="badge badge-gray" style="text-transform:none;letter-spacing:0;">엑셀에 포함</span>
+          </div>
+          <label class="btn-ss" for="mapScreenshot">
+            캡처 이미지 업로드
+          </label>
+          <input type="file" id="mapScreenshot" accept="image/*"
+                 style="display:none;" onchange="handleMapScreenshot(this)">
+          <div class="ss-preview" id="mapPreview" style="display:none;">
+            <img id="mapImg" alt="지도 캡처">
+            <div class="ss-preview-bar">
+              <span id="mapImgInfo"></span>
+              <button class="btn-ss-remove" onclick="removeMapScreenshot()">제거</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ====== CALC BUTTON ====== -->
+  <button class="btn-calc" onclick="calculate()">계산하기</button>
+
+  <!-- ====== RESULTS ====== -->
+  <div class="results" id="results">
+    <div class="card">
+      <div class="card-ttl">계산 결과 미리보기</div>
+      <div class="preview-wrap">
+        <table class="preview-tbl">
+          <caption>출장비 실비 정산 내역(자가 차량 이용)</caption>
+          <tbody>
+            <tr class="tr-unit"><td colspan="4">(단위: 원)</td></tr>
+            <tr>
+              <th>출장자</th><td id="r-name"></td>
+              <th>동승인</th><td id="r-cop"></td>
+            </tr>
+            <tr>
+              <th>사유</th><td colspan="3" id="r-purpose" style="white-space:pre-wrap;"></td>
+            </tr>
+            <tr>
+              <th>출장기간</th><td colspan="3" id="r-period"></td>
+            </tr>
+            <tr>
+              <th>항목</th>
+              <th id="r-lbl-price" style="text-align:center;">유가(경유)</th>
+              <th id="r-lbl-eff" style="text-align:center;">연비(경유)</th>
+              <th style="text-align:center;">여행거리</th>
+            </tr>
+            <tr>
+              <td>교통비</td>
+              <td style="text-align:right;" id="r-price"></td>
+              <td style="text-align:right;" id="r-eff"></td>
+              <td style="text-align:right;" id="r-dist"></td>
+            </tr>
+            <tr>
+              <th>통행료</th>
+              <td colspan="3" style="text-align:right;" id="r-toll"></td>
+            </tr>
+            <tr>
+              <th>지급금액<br><small style="font-weight:400;font-size:10px;">(백원 단위 절사)</small></th>
+              <td colspan="3" class="amount" id="r-amount"></td>
+            </tr>
+            <tr>
+              <th>산출근거</th>
+              <td colspan="3" id="r-basis" style="font-size:12px;"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Screenshots preview in results -->
+      <div class="card-ttl" style="margin-top:16px;">첨부 이미지</div>
+
+      <div class="ss-result-box" id="resMapBox">
+        <div class="ss-result-hdr">네이버 지도 경로 캡처</div>
+        <div class="ss-result-body" id="resMapBody">
+          <div class="ss-result-empty" id="resMapEmpty">
+            미첨부 — 위 "지도 경로 캡처 첨부"에서 업로드하세요<br>
+            <a id="naverLinkResult" href="#" target="_blank"
+               style="color:var(--accent);font-size:11px;">네이버 지도에서 경로 확인</a>
+          </div>
+          <img id="resMapImg" style="display:none;max-width:100%;max-height:240px;" alt="지도 캡처">
+        </div>
+      </div>
+
+      <div class="ss-result-box" id="resOpinetBox">
+        <div class="ss-result-hdr">오피넷 전국 평균 유가 캡처</div>
+        <div class="ss-result-body" id="resOpinetBody">
+          <div class="ss-result-empty" id="resOpinetEmpty">
+            미첨부 — 위 "오피넷 화면 캡처 첨부"에서 업로드하세요<br>
+            <a href="https://www.opinet.co.kr/user/main/mainView.do" target="_blank"
+               style="color:var(--accent);font-size:11px;">오피넷 바로가기</a>
+          </div>
+          <img id="resOpinetImg" style="display:none;max-width:100%;max-height:240px;" alt="오피넷 캡처">
+        </div>
+      </div>
+    </div>
+
+    <!-- Attachment status + download -->
+    <div class="attach-status" id="attachStatus">
+      <span class="lbl2">엑셀 포함 내용:</span>
+      <span id="statusMap">지도 캡처: 미첨부</span>
+      <span id="statusOpinet">유가 캡처: 미첨부</span>
+    </div>
+
+    <button class="btn-dl" id="btnDl" onclick="downloadExcel()">
+      엑셀 서식 다운로드 (.xlsx)
+    </button>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+/* ========================================================
+   CONFIG & CONSTANTS
+   ======================================================== */
+const BASE_ADDR = '서울특별시 송파구 송파대로28길 28';
+const BASE_NAME = '해양환경공단 본사';
+
+const FUELS = {
+  diesel:   { name: '경유',     eff: 12.52, opinetCode: 'D047' },
+  gasoline: { name: '가솔린',   eff: 12.50, opinetCode: 'B027' },
+  lpg:      { name: 'LPG',     eff: 10.60, opinetCode: 'K015' },
+  hybrid:   { name: '하이브리드', eff: 17.00, opinetCode: 'B027' },
+  electric: { name: '전기',     eff: null,  opinetCode: null   },
+};
+
+/* ========================================================
+   STATE
+   ======================================================== */
+let S = {
+  price: null,
+  dist: null,
+  calcResult: null,
+  mapScreenshot: null,      // { base64, ext, dataUrl }
+  opinetScreenshot: null,   // { base64, ext, dataUrl }
+};
+
+/* ========================================================
+   INIT
+   ======================================================== */
+window.addEventListener('load', () => {
+  loadSettings();
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('fDateS').value = today;
+  document.getElementById('fDateE').value = today;
+  refreshUI();
+});
+
+/* ========================================================
+   SETTINGS
+   ======================================================== */
+function toggleCfg() {
+  document.getElementById('cfgPanel').classList.toggle('open');
+}
+function loadSettings() {
+  document.getElementById('opinetKey').value = ls('opinetKey') || '';
+}
+function saveSettings() {
+  lsSet('opinetKey', document.getElementById('opinetKey').value.trim());
+  refreshUI();
+}
+function ls(k)      { try { return localStorage.getItem(k); } catch { return ''; } }
+function lsSet(k,v) { try { localStorage.setItem(k, v); } catch {} }
+
+/* ========================================================
+   UI REFRESH
+   ======================================================== */
+function refreshUI() {
+  const dateS = document.getElementById('fDateS').value;
+  const dest  = document.getElementById('fDest').value.trim();
+  const opKey = ls('opinetKey');
+
+  // Price button
+  const btnP = document.getElementById('btnPrice');
+  if (opKey && dateS) {
+    btnP.disabled = false;
+    btnP.textContent = '유가 자동 조회';
+  } else if (!opKey) {
+    btnP.disabled = true;
+    btnP.textContent = '유가 자동 조회 (API 키 필요)';
+  } else {
+    btnP.disabled = true;
+    btnP.textContent = '날짜를 먼저 선택하세요';
+  }
+
+  // Naver Maps link (pre-filled route)
+  const naverLink = document.getElementById('naverLink');
+  if (dest) {
+    const s = encodeURIComponent(BASE_ADDR);
+    const g = encodeURIComponent(dest);
+    naverLink.href = `https://map.naver.com/v5/directions/${s}/${g}//car`;
+    document.getElementById('naverLinkResult').href = naverLink.href;
+  } else {
+    naverLink.href = 'https://map.naver.com';
+  }
+}
+
+function onDateChange() { refreshUI(); }
+function onDestChange() { refreshUI(); }
+
+function onFuelChange() {
+  const fuel = FUELS[document.getElementById('fFuel').value];
+  document.getElementById('fuelBadge').textContent = fuel.name;
+}
+
+function onManPrice() {
+  const v = parseFloat(document.getElementById('manPrice').value);
+  if (!isNaN(v) && v > 0) {
+    S.price = v;
+    showPrice(v, '직접 입력한 유가');
+  } else {
+    S.price = null;
+    document.getElementById('priceVal').innerHTML = '-<span class="lk-unit">원/L</span>';
+    document.getElementById('priceMeta').textContent = '';
+  }
+}
+
+function onManDist() {
+  const v = parseFloat(document.getElementById('manDist').value);
+  if (!isNaN(v) && v > 0) {
+    S.dist = v;
+    showDist(v, '직접 입력한 거리');
+  } else {
+    S.dist = null;
+    document.getElementById('distVal').innerHTML = '-<span class="lk-unit">km</span>';
+    document.getElementById('distMeta').textContent = '';
+  }
+}
+
+function showPrice(v, meta) {
+  const fmt = v.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('priceVal').innerHTML = `${fmt}<span class="lk-unit">원/L</span>`;
+  document.getElementById('priceMeta').textContent = meta;
+}
+function showDist(v, meta) {
+  document.getElementById('distVal').innerHTML = `${v}<span class="lk-unit">km</span>`;
+  document.getElementById('distMeta').textContent = meta;
+}
+
+/* ========================================================
+   OPINET API — 전국 평균 유가 조회
+   avgAllPrice.do = 이번 주 전국 평균 (오피넷 사이트 표시값과 동일)
+   avgRecentMonthlyPrice.do = 이번 달 평균 (fallback)
+   ======================================================== */
+async function fetchPrice() {
+  const opKey = ls('opinetKey');
+  const dateS = document.getElementById('fDateS').value;
+  const fType = document.getElementById('fFuel').value;
+  const fuel  = FUELS[fType];
+
+  if (!opKey || !dateS) return;
+  if (!fuel.opinetCode) {
+    document.getElementById('priceMeta').textContent = '전기차는 전기 단가를 별도 입력해주세요';
+    return;
+  }
+
+  setBtnLoading('btnPrice', true);
+
+  const dateFmt = dateS.replace(/-/g, '');
+
+  // 순서: ① 이번 주 전국 평균 → ② 이번 달 평균 fallback
+  const endpoints = [
+    {
+      url: `https://www.opinet.co.kr/api/avgAllPrice.do?code=${opKey}&out=json`,
+      label: '이번 주 전국 평균',
+    },
+    {
+      url: `https://www.opinet.co.kr/api/avgRecentMonthlyPrice.do?code=${opKey}&out=json&yearMonth=${dateFmt.slice(0, 6)}`,
+      label: `${dateFmt.slice(0, 6)} 월 평균`,
+    },
+  ];
+
+  let found = false;
+  for (const ep of endpoints) {
+    try {
+      const data = await fetchWithProxy(ep.url);
+      const oilList = data?.RESULT?.OIL || data?.result?.OIL;
+      if (!oilList) continue;
+      const item = oilList.find(o => o.PRODCD === fuel.opinetCode);
+      if (!item) continue;
+      const price = parseFloat(item.PRICE);
+      if (isNaN(price) || price <= 0) continue;
+      S.price = price;
+      document.getElementById('manPrice').value = price.toFixed(2);
+      showPrice(price, `${ep.label} (오피넷 자동 조회)`);
+      found = true;
+      break;
+    } catch { /* try next */ }
+  }
+
+  if (!found) {
+    document.getElementById('priceMeta').textContent =
+      '자동 조회 실패 — 아래에서 직접 입력하거나 오피넷에서 확인하세요';
+  }
+
+  setBtnLoading('btnPrice', false, '유가 자동 조회');
+}
+
+async function fetchWithProxy(url) {
+  const proxies = [
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+  ];
+  for (const makeProxy of proxies) {
+    try {
+      const res = await fetch(makeProxy(url), { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const text = await res.text();
+      try {
+        const json = JSON.parse(text);
+        if (json.contents) return JSON.parse(json.contents);
+        return json;
+      } catch { continue; }
+    } catch { continue; }
+  }
+  throw new Error('모든 프록시 실패');
+}
+
+/* ========================================================
+   SCREENSHOT HANDLERS
+   ======================================================== */
+function readFileAsScreenshot(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const dataUrl = e.target.result;
+      const base64 = dataUrl.split(',')[1];
+      const rawExt = file.name.split('.').pop().toLowerCase();
+      const ext = rawExt === 'jpg' ? 'jpeg' : rawExt;
+      resolve({ base64, ext, dataUrl });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleOpinetScreenshot(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const ss = await readFileAsScreenshot(file);
+  S.opinetScreenshot = ss;
+
+  document.getElementById('opinetImg').src = ss.dataUrl;
+  document.getElementById('opinetImgInfo').textContent = file.name;
+  document.getElementById('opinetPreview').style.display = 'block';
+
+  // Update results section
+  document.getElementById('resOpinetImg').src = ss.dataUrl;
+  document.getElementById('resOpinetImg').style.display = 'block';
+  document.getElementById('resOpinetEmpty').style.display = 'none';
+
+  updateAttachStatus();
+  input.value = '';
+}
+
+function removeOpinetScreenshot() {
+  S.opinetScreenshot = null;
+  document.getElementById('opinetPreview').style.display = 'none';
+  document.getElementById('opinetImg').src = '';
+  document.getElementById('resOpinetImg').style.display = 'none';
+  document.getElementById('resOpinetEmpty').style.display = 'block';
+  updateAttachStatus();
+}
+
+async function handleMapScreenshot(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const ss = await readFileAsScreenshot(file);
+  S.mapScreenshot = ss;
+
+  document.getElementById('mapImg').src = ss.dataUrl;
+  document.getElementById('mapImgInfo').textContent = file.name;
+  document.getElementById('mapPreview').style.display = 'block';
+
+  // Update results section
+  document.getElementById('resMapImg').src = ss.dataUrl;
+  document.getElementById('resMapImg').style.display = 'block';
+  document.getElementById('resMapEmpty').style.display = 'none';
+
+  updateAttachStatus();
+  input.value = '';
+}
+
+function removeMapScreenshot() {
+  S.mapScreenshot = null;
+  document.getElementById('mapPreview').style.display = 'none';
+  document.getElementById('mapImg').src = '';
+  document.getElementById('resMapImg').style.display = 'none';
+  document.getElementById('resMapEmpty').style.display = 'block';
+  updateAttachStatus();
+}
+
+function updateAttachStatus() {
+  const sm = document.getElementById('statusMap');
+  const so = document.getElementById('statusOpinet');
+  if (sm) sm.innerHTML = S.mapScreenshot
+    ? '<span class="ss-attached">지도 캡처: 첨부됨</span>'
+    : '지도 캡처: 미첨부';
+  if (so) so.innerHTML = S.opinetScreenshot
+    ? '<span class="ss-attached">유가 캡처: 첨부됨</span>'
+    : '유가 캡처: 미첨부';
+}
+
+/* ========================================================
+   CALCULATE
+   ======================================================== */
+function calculate() {
+  const name    = document.getElementById('fName').value.trim();
+  const purpose = document.getElementById('fPurpose').value.trim();
+  const dateS   = document.getElementById('fDateS').value;
+  const dateE   = document.getElementById('fDateE').value;
+  const dest    = document.getElementById('fDest').value.trim();
+  const cop     = document.getElementById('fCop').value.trim() || '-';
+  const fType   = document.getElementById('fFuel').value;
+  const toll    = parseInt(document.getElementById('fToll').value) || 0;
+
+  if (!name)    { alert('출장자 이름을 입력해주세요.'); return; }
+  if (!purpose) { alert('출장 목적(사유)을 입력해주세요.'); return; }
+  if (!dateS)   { alert('출장 시작일을 선택해주세요.'); return; }
+  if (!dest)    { alert('출장지(목적지)를 입력해주세요.'); return; }
+  if (!S.price) { alert('유가를 입력해주세요.\n(직접 입력란에 숫자를 입력하거나 자동 조회를 이용하세요)'); return; }
+  if (!S.dist)  { alert('여행거리를 입력해주세요.\n(직접 입력란에 숫자를 입력해주세요)'); return; }
+
+  const fuel   = FUELS[fType];
+  const price  = parseFloat(S.price);
+  const dist   = parseFloat(S.dist);
+  const eff    = fuel.eff;
+  const period = dateS === dateE ? dateS : `${dateS}~${dateE}`;
+
+  const raw    = (price * dist / eff) + toll;
+  const amount = Math.floor(raw / 100) * 100;
+
+  const basis = `${BASE_NAME}(${BASE_ADDR}) → ${dest}: 왕복 ${dist}km, ` +
+    `유가 ${price.toFixed(2)}원/L, 연비 ${eff}km/L, 통행료 ${toll.toLocaleString('ko-KR')}원 ` +
+    `[산식: ROUNDDOWN(${price.toFixed(2)}×${dist}÷${eff}+${toll}, -2) = ${amount.toLocaleString('ko-KR')}원]`;
+
+  document.getElementById('r-name').textContent    = name;
+  document.getElementById('r-cop').textContent     = cop;
+  document.getElementById('r-purpose').textContent = purpose;
+  document.getElementById('r-period').textContent  = period;
+  document.getElementById('r-lbl-price').textContent = `유가(${fuel.name})`;
+  document.getElementById('r-lbl-eff').textContent   = `연비(${fuel.name})`;
+  document.getElementById('r-price').textContent  = price.toLocaleString('ko-KR', {minimumFractionDigits:2}) + ' 원/L';
+  document.getElementById('r-eff').textContent    = eff + ' km/L';
+  document.getElementById('r-dist').textContent   = dist + ' km';
+  document.getElementById('r-toll').textContent   = toll.toLocaleString('ko-KR') + ' 원';
+  document.getElementById('r-amount').textContent = amount.toLocaleString('ko-KR') + ' 원';
+  document.getElementById('r-basis').textContent  = basis;
+
+  const s = encodeURIComponent(BASE_ADDR);
+  const g = encodeURIComponent(dest);
+  document.getElementById('naverLinkResult').href = `https://map.naver.com/v5/directions/${s}/${g}//car`;
+
+  S.calcResult = { name, purpose, period, cop, fType, fuelName: fuel.name,
+                   price, dist, eff, toll, amount, basis, dest };
+
+  updateAttachStatus();
+
+  const res = document.getElementById('results');
+  res.classList.add('show');
+  res.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ========================================================
+   EXCEL GENERATION — ExcelJS (styled + images)
+   ======================================================== */
+async function downloadExcel() {
+  if (!S.calcResult) { alert('먼저 "계산하기"를 눌러주세요.'); return; }
+
+  const btn = document.getElementById('btnDl');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> 엑셀 생성 중...';
+
+  try {
+    if (!window.ExcelJS) {
+      await loadScript('https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js');
+    }
+
+    const r = S.calcResult;
+    const wb = new ExcelJS.Workbook();
+    wb.creator = '해양환경공단 출장비 정산 프로그램';
+
+    const ws = wb.addWorksheet('출장비정산');
+
+    ws.columns = [
+      { width: 13 },  // A
+      { width: 36 },  // B
+      { width: 14 },  // C
+      { width: 14 },  // D
+      { width: 13 },  // E
+      { width: 24 },  // F
+    ];
+
+    // ── Color tokens ────────────────────────────────────────
+    const C = {
+      NAVY:       'FF00285C',
+      NAVY_MED:   'FF004E8C',
+      TEAL:       'FF007C89',
+      DARK:       'FF374151',
+      WHITE:      'FFFFFFFF',
+      LT_BLUE:    'FFE8EDF5',
+      LT_GRAY:    'FFF8FAFC',
+      GREEN:      'FF0D6E3E',
+      GREEN_LT:   'FFECFDF5',
+      MUTED:      'FF64748B',
+      BORDER:     'FFB0BDCC',
+    };
+
+    const thin = s => ({ style: 'thin', color: { argb: s || C.BORDER } });
+    const med  = s => ({ style: 'medium', color: { argb: s || C.NAVY } });
+
+    const borderThin = { top: thin(), left: thin(), bottom: thin(), right: thin() };
+    const borderMed  = { top: med(), left: med(), bottom: med(), right: med() };
+    const borderGreen = { top: med(C.GREEN), left: med(C.GREEN), bottom: med(C.GREEN), right: med(C.GREEN) };
+
+    function sc(addr, props) {
+      const c = ws.getCell(addr);
+      if (props.value !== undefined) c.value = props.value;
+      if (props.font)      c.font      = props.font;
+      if (props.fill)      c.fill      = props.fill;
+      if (props.alignment) c.alignment = props.alignment;
+      if (props.border)    c.border    = props.border;
+      if (props.numFmt)    c.numFmt    = props.numFmt;
+      return c;
+    }
+    function fill(argb) { return { type: 'pattern', pattern: 'solid', fgColor: { argb } }; }
+    function font(bold, size, color, name) {
+      return { bold: !!bold, size: size || 10, color: { argb: color || C.NAVY }, name: name || '맑은 고딕' };
+    }
+
+    // ── ROW 1: Title ────────────────────────────────────────
+    ws.mergeCells('A1:F1');
+    ws.getRow(1).height = 36;
+    sc('A1', {
+      value: '출장비 실비 정산 내역 (자가 차량 이용)',
+      font: font(true, 14, C.WHITE),
+      fill: fill(C.NAVY),
+      alignment: { horizontal: 'center', vertical: 'middle' },
+      border: borderMed,
+    });
+
+    // ── ROW 2: Spacer ────────────────────────────────────────
+    ws.getRow(2).height = 6;
+
+    // ── ROW 3: Field headers ─────────────────────────────────
+    ws.getRow(3).height = 22;
+    ws.mergeCells('B3:D3');
+    const hdr3Style = {
+      font: font(true, 10, C.WHITE),
+      fill: fill(C.NAVY_MED),
+      alignment: { horizontal: 'center', vertical: 'middle' },
+      border: borderThin,
+    };
+    sc('A3', { ...hdr3Style, value: '출장자' });
+    sc('B3', { ...hdr3Style, value: '사유 (출장 목적)' });
+    sc('E3', { ...hdr3Style, value: '동승인' });
+    sc('F3', { ...hdr3Style, value: '출장기간' });
+
+    // ── ROW 4: Field data ────────────────────────────────────
+    ws.getRow(4).height = 46;
+    ws.mergeCells('B4:D4');
+    const data4Style = {
+      font: font(false, 10, '1A2236'),
+      fill: fill(C.LT_GRAY),
+      border: borderThin,
+    };
+    sc('A4', { ...data4Style, value: r.name,    alignment: { horizontal: 'center', vertical: 'middle' } });
+    sc('B4', { ...data4Style, value: r.purpose,  alignment: { horizontal: 'left', vertical: 'middle', wrapText: true } });
+    sc('E4', { ...data4Style, value: r.cop,      alignment: { horizontal: 'center', vertical: 'middle' } });
+    sc('F4', { ...data4Style, value: r.period,   alignment: { horizontal: 'center', vertical: 'middle' } });
+
+    // ── ROW 5: Spacer ────────────────────────────────────────
+    ws.getRow(5).height = 6;
+
+    // ── ROW 6: Unit label ────────────────────────────────────
+    ws.getRow(6).height = 16;
+    ws.mergeCells('A6:F6');
+    sc('A6', {
+      value: '(단위: 원)',
+      font: { italic: true, size: 9, color: { argb: C.MUTED }, name: '맑은 고딕' },
+      alignment: { horizontal: 'right', vertical: 'middle' },
+    });
+
+    // ── ROW 7: Column headers ────────────────────────────────
+    ws.getRow(7).height = 32;
+    const hdrs7 = [
+      { addr: 'A7', val: '항목' },
+      { addr: 'B7', val: `여행거리\n(왕복, km)` },
+      { addr: 'C7', val: `유가\n(${r.fuelName}, 원/L)` },
+      { addr: 'D7', val: `연비\n(${r.fuelName}, km/L)` },
+      { addr: 'E7', val: '통행료\n(원)' },
+      { addr: 'F7', val: '지급금액(원)\n(백원 단위 절사)' },
+    ];
+    hdrs7.forEach(({ addr, val }) => sc(addr, {
+      value: val,
+      font: font(true, 9, C.WHITE),
+      fill: fill(C.TEAL),
+      alignment: { horizontal: 'center', vertical: 'middle', wrapText: true },
+      border: borderThin,
+    }));
+
+    // ── ROW 8: Data ──────────────────────────────────────────
+    ws.getRow(8).height = 30;
+    sc('A8', {
+      value: '교통비',
+      font: font(false, 10, '1A2236'),
+      fill: fill(C.LT_GRAY),
+      alignment: { horizontal: 'center', vertical: 'middle' },
+      border: borderThin,
+    });
+    [
+      { addr: 'B8', val: r.dist,  fmt: '#,##0.0' },
+      { addr: 'C8', val: r.price, fmt: '#,##0.00' },
+      { addr: 'D8', val: r.eff,   fmt: '#,##0.00' },
+      { addr: 'E8', val: r.toll,  fmt: '#,##0' },
+    ].forEach(({ addr, val, fmt }) => sc(addr, {
+      value: val, numFmt: fmt,
+      font: font(false, 10, '1A2236'),
+      fill: fill(C.LT_GRAY),
+      alignment: { horizontal: 'right', vertical: 'middle' },
+      border: borderThin,
+    }));
+    sc('F8', {
+      value: { formula: 'ROUNDDOWN(C8*B8/D8+E8,-2)', result: r.amount },
+      numFmt: '#,##0',
+      font: { bold: true, size: 13, color: { argb: C.GREEN }, name: '맑은 고딕' },
+      fill: fill(C.GREEN_LT),
+      alignment: { horizontal: 'right', vertical: 'middle' },
+      border: borderGreen,
+    });
+
+    // ── ROW 9: Spacer ────────────────────────────────────────
+    ws.getRow(9).height = 8;
+
+    // ── ROW 10: 산출근거 header ──────────────────────────────
+    ws.getRow(10).height = 22;
+    ws.mergeCells('A10:F10');
+    sc('A10', {
+      value: '산출근거',
+      font: font(true, 10, C.WHITE),
+      fill: fill(C.DARK),
+      alignment: { horizontal: 'left', vertical: 'middle', indent: 1 },
+      border: borderThin,
+    });
+
+    // ── ROW 11: 산출근거 content ─────────────────────────────
+    ws.getRow(11).height = 52;
+    ws.mergeCells('A11:F11');
+    sc('A11', {
+      value: r.basis,
+      font: font(false, 9, '1A2236'),
+      fill: fill(C.LT_GRAY),
+      alignment: { horizontal: 'left', vertical: 'middle', wrapText: true, indent: 1 },
+      border: borderThin,
+    });
+
+    // ── ROW 12: 증빙자료 header ──────────────────────────────
+    ws.getRow(12).height = 22;
+    ws.mergeCells('A12:F12');
+    sc('A12', {
+      value: '증빙자료',
+      font: font(true, 10, C.WHITE),
+      fill: fill(C.DARK),
+      alignment: { horizontal: 'left', vertical: 'middle', indent: 1 },
+      border: borderThin,
+    });
+
+    // ── ROW 13: 증빙자료 content ─────────────────────────────
+    ws.getRow(13).height = 22;
+    ws.mergeCells('A13:F13');
+    const evText = [
+      S.mapScreenshot    ? `[첨부] 네이버 지도 경로 캡처 (${BASE_NAME} → ${r.dest})`
+                         : `[미첨부] 네이버 지도 경로 캡처 (별도 첨부)`,
+      S.opinetScreenshot ? `[첨부] 오피넷 ${r.fuelName} 전국 평균 유가 ${r.price.toFixed(2)}원/L`
+                         : `[미첨부] 오피넷 전국 평균 유가 캡처 (별도 첨부)`,
+    ].join(' / ');
+    sc('A13', {
+      value: evText,
+      font: font(false, 9, '1A2236'),
+      fill: fill(C.LT_GRAY),
+      alignment: { horizontal: 'left', vertical: 'middle', wrapText: true, indent: 1 },
+      border: borderThin,
+    });
+
+    // ── Images section ───────────────────────────────────────
+    let nextRow = 14;  // 1-indexed
+
+    async function embedImage(ss, label) {
+      if (!ss) return;
+
+      // spacer
+      ws.getRow(nextRow).height = 8;
+      nextRow++;
+
+      // label row
+      ws.mergeCells(`A${nextRow}:F${nextRow}`);
+      ws.getRow(nextRow).height = 22;
+      sc(`A${nextRow}`, {
+        value: label,
+        font: font(true, 10, C.NAVY),
+        fill: fill(C.LT_BLUE),
+        alignment: { horizontal: 'left', vertical: 'middle', indent: 1 },
+        border: borderThin,
+      });
+      nextRow++;
+
+      // image rows (24 rows × 15pt ≈ 360pt)
+      const IMG_ROWS = 24;
+      for (let i = 0; i < IMG_ROWS; i++) ws.getRow(nextRow + i).height = 15;
+
+      const ext = ss.ext === 'jpg' ? 'jpeg' : ss.ext;
+      const imgId = wb.addImage({ base64: ss.base64, extension: ext });
+      ws.addImage(imgId, {
+        tl: { col: 0, row: nextRow - 1 },          // 0-indexed
+        br: { col: 6, row: nextRow - 1 + IMG_ROWS }, // 0-indexed
+        editAs: 'oneCell',
+      });
+
+      nextRow += IMG_ROWS;
+    }
+
+    if (S.mapScreenshot || S.opinetScreenshot) {
+      // Images header
+      ws.getRow(nextRow).height = 6;
+      nextRow++;
+      ws.mergeCells(`A${nextRow}:F${nextRow}`);
+      ws.getRow(nextRow).height = 26;
+      sc(`A${nextRow}`, {
+        value: '첨부 이미지',
+        font: font(true, 11, C.WHITE),
+        fill: fill(C.NAVY),
+        alignment: { horizontal: 'center', vertical: 'middle' },
+        border: borderMed,
+      });
+      nextRow++;
+    }
+
+    await embedImage(S.mapScreenshot,    `네이버 지도 경로 캡처 (${BASE_NAME} → ${r.dest})`);
+    await embedImage(S.opinetScreenshot, `오피넷 전국 평균 유가 캡처 (${r.fuelName} ${r.price.toFixed(2)}원/L)`);
+
+    // ── Generate & download ──────────────────────────────────
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `출장비정산_${r.name}_${r.period.replace(/~/g, '_').replace(/-/g, '')}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+  } catch (e) {
+    alert('엑셀 생성 오류: ' + (e.message || String(e)));
+    console.error(e);
+  } finally {
+    const btn = document.getElementById('btnDl');
+    btn.disabled = false;
+    btn.textContent = '엑셀 서식 다운로드 (.xlsx)';
+  }
+}
+
+/* ========================================================
+   PDF PARSING — 하이패스 영수증
+   ======================================================== */
+async function parseTollPdf(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const resultEl = document.getElementById('pdfResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div class="pdf-ttl"><span class="spin"></span> PDF 분석 중...</div>';
+
+  try {
+    if (!window.pdfjsLib) {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    const buffer = await file.arrayBuffer();
+    const pdf    = await pdfjsLib.getDocument({ data: buffer }).promise;
+
+    let fullText = '';
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page    = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      fullText += content.items.map(i => i.str).join(' ') + '\n';
+    }
+
+    const candidates = extractTollCandidates(fullText);
+
+    if (candidates.length === 0) {
+      resultEl.innerHTML = `
+        <div class="pdf-ttl" style="color:#dc2626;">금액을 찾지 못했습니다</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">
+          한국도로공사 EX 이용내역 PDF인지 확인하고, 아래 추출 텍스트에서 금액을 직접 입력해주세요.
+        </div>
+        <details>
+          <summary style="font-size:11px;color:var(--muted);cursor:pointer;">추출된 텍스트 보기</summary>
+          <div class="pdf-raw">${escHtml(fullText.slice(0, 800))}</div>
+        </details>`;
+      return;
+    }
+
+    let html = `<div class="pdf-ttl">통행료 금액 후보 — [적용] 버튼으로 자동 입력</div>
+                <div class="pdf-candidates">`;
+    for (const c of candidates) {
+      html += `<div class="pdf-cand">
+        <span class="pdf-cand-ctx">${escHtml(c.context)}</span>
+        <span class="pdf-cand-amt">${c.amount.toLocaleString('ko-KR')}원</span>
+        <button class="btn-apply" onclick="applyToll(${c.amount})">적용</button>
+      </div>`;
+    }
+    html += `</div>`;
+    html += `<details style="margin-top:8px;">
+      <summary style="font-size:11px;color:var(--muted);cursor:pointer;">추출된 전체 텍스트 보기</summary>
+      <div class="pdf-raw">${escHtml(fullText.slice(0, 1200))}</div>
+    </details>`;
+    resultEl.innerHTML = html;
+
+  } catch (e) {
+    resultEl.innerHTML = `
+      <div class="pdf-ttl" style="color:#dc2626;">오류: ${escHtml(e.message || 'PDF 읽기 실패')}</div>
+      <div style="font-size:11px;color:var(--muted);">PDF 파일이 손상되지 않았는지 확인하거나 금액을 직접 입력해주세요.</div>`;
+  }
+
+  input.value = '';
+}
+
+function extractTollCandidates(text) {
+  const clean = text.replace(/\s+/g, ' ');
+  const seen  = new Set();
+  const results = [];
+
+  const patterns = [
+    { re: /합\s*계\s*[:：]?\s*([\d,]+)\s*원/g,                  priority: 0, ctx: '합계' },
+    { re: /총\s*(?:요금|금액|통행료)\s*[:：]?\s*([\d,]+)\s*원/g,  priority: 0, ctx: '총액' },
+    { re: /납부\s*(?:금액|총액)\s*[:：]?\s*([\d,]+)\s*원/g,       priority: 0, ctx: '납부금액' },
+    { re: /통행\s*(?:요금|료)\s*[:：]?\s*([\d,]+)\s*원/g,         priority: 1, ctx: '통행료' },
+    { re: /(?<![.\d])([\d]{1,3}(?:,\d{3}){1,3})\s*원/g,          priority: 2, ctx: '금액' },
+  ];
+
+  for (const { re, priority } of patterns) {
+    let m;
+    re.lastIndex = 0;
+    while ((m = re.exec(clean)) !== null) {
+      const amtStr = (m[1] || m[0].match(/([\d,]+)/)?.[1] || '').replace(/,/g, '');
+      const amount = parseInt(amtStr, 10);
+      if (amount >= 500 && amount <= 100000 && !seen.has(amount)) {
+        seen.add(amount);
+        const s = Math.max(0, m.index - 18);
+        const e = Math.min(clean.length, m.index + m[0].length + 18);
+        results.push({ amount, context: '…' + clean.slice(s, e).trim() + '…', priority });
+      }
+    }
+  }
+
+  results.sort((a, b) => a.priority - b.priority || b.amount - a.amount);
+  return results.slice(0, 5);
+}
+
+function applyToll(amount) {
+  document.getElementById('fToll').value = amount;
+  document.getElementById('pdfBadge').style.display = 'inline-block';
+  document.getElementById('pdfResult').style.display = 'none';
+}
+
+/* ========================================================
+   HELPERS
+   ======================================================== */
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload  = resolve;
+    s.onerror = () => reject(new Error(`스크립트 로드 실패: ${src}`));
+    document.head.appendChild(s);
+  });
+}
+
+function setBtnLoading(id, loading, restoreText) {
+  const btn = document.getElementById(id);
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span> 조회 중...';
+  } else {
+    btn.disabled = false;
+    btn.textContent = restoreText || '조회';
+  }
+}
+</script>
+
+</body>
+</html>

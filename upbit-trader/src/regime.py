@@ -8,10 +8,10 @@
   · 50일선 위/아래 = 중기 모멘텀
   · 둘 다 위 → 강세(위험선호), 하나만 위 → 중립(조정), 둘 다 아래 → 약세(위험회피)
 
-국면별 비중(합이 1 미만이면 나머지는 현금):
-  · 강세: 대형50 / 잠수30 / 고위험20  (풀투자)
-  · 중립: 대형50 / 잠수25 / 고위험10  (현금 15)
-  · 약세: 대형40 / 잠수15 / 고위험 5  (현금 40, 방어)
+국면별 비중(2019~2026 교차검증 반영):
+  검증 통과 전략은 '대형코인 추세필터(BTC·ETH)' 하나뿐 → 실거래는 대형 100% 고정.
+  (방어는 대형봇 자체의 추세필터가 BTC·ETH를 약세 때 현금화하므로 충분. 별도 현금배분 불필요)
+  잠수함·고위험은 엣지 미검증 → 비중 0(모의에서만 운용).
 
 ※ 휴리스틱 규칙입니다. 시장을 '예측'이 아니라 '추세에 반응'하는 보수적 설계.
 """
@@ -21,13 +21,13 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+# 실거래 비중: 검증 통과는 대형코인 추세필터(BTC·ETH)뿐 → 대형 100% 고정.
+# 잠수함·고위험은 모든 검증(2019~2026, ATR/부분익절)에서 실패 → 비중 0(운영 중단).
+_LIVE_MIX = {"majors": 1.0, "swing": 0.0}
 REGIMES = {
-    "risk_on":  {"label": "강세 (위험선호) 🟢",
-                 "weights": {"majors": 0.50, "swing": 0.30, "highrisk": 0.20}},
-    "neutral":  {"label": "중립 (약한 조정) 🟡",
-                 "weights": {"majors": 0.50, "swing": 0.25, "highrisk": 0.10}},
-    "risk_off": {"label": "약세 (위험회피) 🔴",
-                 "weights": {"majors": 0.40, "swing": 0.15, "highrisk": 0.05}},
+    "risk_on":  {"label": "강세 (위험선호) 🟢", "weights": dict(_LIVE_MIX)},
+    "neutral":  {"label": "중립 (약한 조정) 🟡", "weights": dict(_LIVE_MIX)},
+    "risk_off": {"label": "약세 (위험회피) 🔴", "weights": dict(_LIVE_MIX)},
 }
 
 

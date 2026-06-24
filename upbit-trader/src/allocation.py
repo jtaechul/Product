@@ -23,9 +23,12 @@ from pathlib import Path
 
 _STATE = Path(__file__).resolve().parent.parent / ".botstate"
 _ALLOC = _STATE / "allocation.json"
+_EQUITY = _STATE / "equity_history.json"   # 일별 총평가자산 추이
 
-# 목표 비중 (합 1.0 = 풀투자 지향. 신호 없으면 현금으로 남아 자연히 방어적). 조정 가능.
-DEFAULT_WEIGHTS = {"majors": 0.5, "swing": 0.3, "highrisk": 0.2}
+# 목표 비중 (합 1.0 = 풀투자 지향. 신호 없으면 현금으로 남아 자연히 방어적).
+# 2019~2026 + ATR/부분익절 비교검증까지 모두 실패 → 검증 통과는 대형코인뿐.
+# 잠수함·고위험은 실거래에서 손실만 누적(LAYER 등) → 비중 0(모의 전용).
+DEFAULT_WEIGHTS = {"majors": 1.0, "swing": 0.0}
 
 
 def _dir() -> Path:
@@ -75,6 +78,46 @@ def set_weights(weights: dict) -> None:
     a["updated"] = time.time()
     _dir()
     _ALLOC.write_text(json.dumps(a, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+# ----------------------------- 일별 자산 추이 -----------------------------
+def record_equity(total: float) -> dict:
+    """오늘(KST) 총평가자산을 기록하고 전일 대비 변화를 돌려준다.
+
+    같은 날 다시 부르면 오늘 값을 갱신(덮어쓰기)한다. 히스토리는 최근 730일만 유지.
+    반환: {"today", "prev"(직전 다른 날 값 or None), "prev_date"(or None), "first"(첫 기록 여부)}
+    """
+    from .timeutil import now_kst
+    today = now_kst().strftime("%Y-%m-%d")
+    try:
+        hist = json.loads(_EQUITY.read_text(encoding="utf-8"))
+        if not isinstance(hist, list):
+            hist = []
+    except Exception:
+        hist = []
+    prev = prev_date = None
+    for rec in reversed(hist):
+        if rec.get("date") != today:
+            prev, prev_date = rec.get("total"), rec.get("date")
+            break
+    first = not hist
+    if hist and hist[-1].get("date") == today:
+        hist[-1]["total"] = float(total)          # 오늘 값 갱신
+    else:
+        hist.append({"date": today, "total": float(total)})
+    hist = hist[-730:]
+    _dir()
+    _EQUITY.write_text(json.dumps(hist, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {"today": float(total), "prev": prev, "prev_date": prev_date, "first": first}
+
+
+def equity_history(days: int = 30) -> list[dict]:
+    """최근 days일치 [{date,total}] 목록(오래된→최신)."""
+    try:
+        hist = json.loads(_EQUITY.read_text(encoding="utf-8"))
+        return hist[-days:] if isinstance(hist, list) else []
+    except Exception:
+        return []
 
 
 # ----------------------------- 비중조정 제안(승인 대기) -----------------------------

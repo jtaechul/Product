@@ -55,6 +55,9 @@ class PaperBroker:
     def sell(self, market, price):
         return price
 
+    def get_holdings(self):
+        return None   # 모의: 실제 잔고 없음(메모리 상태만 사용)
+
 
 class LiveBroker(PaperBroker):
     def __init__(self, q, exchange):
@@ -72,6 +75,9 @@ class LiveBroker(PaperBroker):
         if vol > 0:
             self.ex.sell_market(market, vol)
         return price
+
+    def get_holdings(self):
+        return self.ex.get_holdings()   # 실제 업비트 보유 {market:(수량,평단가)}
 
 
 class Shared:
@@ -140,12 +146,15 @@ def main() -> None:
     p.add_argument("--max-hold", type=int, default=240, help="최대 보유(시간)")
     p.add_argument("--cooldown", type=int, default=12, help="재진입 쿨다운(시간)")
     p.add_argument("--daily-loss", type=float, default=0.0)
+    p.add_argument("--take-profit", type=float, default=0.30,
+                   help="고정 익절선(+비율). 도달 시 트레일링 안 기다리고 전량 익절. 0=끔")
     p.add_argument("--live", action="store_true")
     args = p.parse_args()
 
     cfg = SwingConfig(
         vol_surge=args.vol_surge, trail=args.trail, stop_loss=args.stop,
         arm_profit=args.arm, max_hold_bars=args.max_hold, btc_ma_bars=args.btc_ma,
+        take_profit=(args.take_profit if args.take_profit > 0 else None),
     )
     q = UpbitQuotation()
 
@@ -169,11 +178,14 @@ def main() -> None:
         log(f"🟡 모의(실시세, 무주문). 동시 {args.max_positions}종목 / "
             f"1종목 {args.invest:,.0f}원")
 
+    state_file = Path(__file__).resolve().parent.parent / ".botstate" / "positions_swing.json"
     engine = SwingTrader(
         broker=broker, cfg=cfg, max_positions=args.max_positions,
         invest_per_trade=args.invest, cooldown_hours=args.cooldown,
         daily_loss_limit=(args.daily_loss if args.daily_loss > 0 else None),
+        state_path=str(state_file),
     )
+    engine.load_state()   # 재시작해도 기존 보유·진입가를 복원
 
     shared = Shared()
     stop = threading.Event()
@@ -189,7 +201,9 @@ def main() -> None:
         f"• 한 번에 최대 {args.max_positions}종목, 종목당 "
         f"{args.invest:,.0f}원으로 매매해요\n"
         f"• 거래량이 터지며 오르는 코인을 자동으로 사고, 규칙대로 팔아요\n"
-        f"• 사고팔 때마다 여기로 자세히 알려드릴게요\n"
+        + (f"• +{args.take_profit*100:.0f}% 도달하면 바로 이익을 확정해요(고정 익절)\n"
+           if args.take_profit > 0 else "")
+        + f"• 사고팔 때마다 여기로 자세히 알려드릴게요\n"
         f"• 궁금하면 아무 메시지나 보내세요 → 지금 상태를 바로 알려드려요")
     if notifier.enabled():
         log("텔레그램 알림 연결됨")
@@ -273,6 +287,12 @@ def main() -> None:
             # 배정 예산(잠수함 몫)을 종목 수로 나눠 1종목 매수액 반영(배분 변화 즉시)
             engine.invest_per_trade = allocation.budget_for(
                 "swing", args.invest * args.max_positions) / args.max_positions
+            # 실제 업비트 잔고와 현행화 — 사용자가 직접 판 코인은 보유목록서 제거
+            for m in engine.reconcile_with_exchange():
+                log(f"🔄 {m} 외부 매도 감지 — 보유목록서 정리")
+                notifier.send(
+                    f"🔄 <b>보유 정리</b>\n종목: <b>{m.replace('KRW-','')}</b>\n"
+                    f"계좌에 없어 보유 목록에서 뺐어요(직접 파셨거나 잔량 소진).")
             allocation.publish_owned("swing", engine.held())
             for rec in engine.check_exits(now):
                 won = rec.gain * args.invest
