@@ -8,9 +8,11 @@ kv_namespaces = [
   { binding = "PENDING_POSTS", id = "e1b681762f6c43b9be77ede8061aa2dc" }
 ]
 
-# Cron Trigger — 매 1분마다 진행중 파이프라인을 한 단계씩 전진(자가복구). 무료 플랜 지원.
+# Cron Trigger
+#   "* * * * *"  : 매 1분 — 진행중 파이프라인을 한 단계씩 전진 (자가복구)
+#   "0 23 * * *" : 매일 23:00 UTC = 오전 8:00 KST — 일일 자동 캐럿셀 생성
 [triggers]
-crons = ["* * * * *"]
+crons = ["* * * * *", "0 23 * * *"]
 
 [assets]
 directory = "public"

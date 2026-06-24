@@ -676,6 +676,66 @@ async function advancePipeline(env, pipelineId) {
   }
 }
 
+// 매일 오전 8시(KST) 크론에서 호출 — 요일별 카테고리로 책을 자동 선정해 파이프라인을 시작
+async function runDailyAuto(env) {
+  if (!env.ANTHROPIC_API_KEY || !env.PENDING_POSTS) return;
+
+  // KST 기준 오늘 날짜 계산 (UTC+9)
+  const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  const todayStr = kstNow.toISOString().slice(0, 10); // YYYY-MM-DD
+
+  // 오늘 이미 자동 실행됐으면 스킵 (크론 중복 방지)
+  const todayKey = `daily_auto_${todayStr}`;
+  const alreadyRan = await env.PENDING_POSTS.get(todayKey).catch(() => null);
+  if (alreadyRan) return;
+
+  // 요일별 카테고리 순환 (일=0 ~ 토=6)
+  const DAILY_CATEGORIES = ['경제', '심리', '건강', '자기계발', '인문', '사회', '과학'];
+  const category = DAILY_CATEGORIES[kstNow.getDay()];
+
+  // 최근 30일 내 사용한 책 목록 (중복 추천 방지)
+  const usedStr = await env.PENDING_POSTS.get('daily_used_books').catch(() => null);
+  const usedBooks = usedStr ? JSON.parse(usedStr) : [];
+
+  // 1. AI 책 추천 — 이미 사용한 책은 제외
+  const suggestData = await handleSuggest(env, { category, excludeTitles: usedBooks.slice(-20) });
+  const books = suggestData.books || [];
+  if (!books.length) return;
+
+  // 추천 목록 중 첫 번째 책 선택
+  const chosen = books[0];
+  const bookInfo = {
+    title: chosen.title,
+    author: chosen.author || '',
+    year: chosen.year || '',
+    category: chosen.category || category,
+    coreMessage: chosen.coreMessage || chosen.reason || '',
+    targetAudience: chosen.targetAudience || '',
+  };
+
+  // 2. 파이프라인 시작 (수동 시작과 동일한 방식)
+  const pipelineId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  await savePipelineStatus(env, pipelineId, {
+    status: 'running',
+    step: 0,
+    stepStatus: 'done',
+    bookInfo,
+    affiliateLinks: [],
+    commentKeyword: category,
+    startedAt: Date.now(),
+    label: '[자동] 파이프라인 시작 — 곧 자동 진행됩니다',
+    isAutoDaily: true,
+  });
+  await logStep(env, pipelineId, { step: 0, phase: 'start', note: `[자동] 책: ${bookInfo.title} / 카테고리: ${category}` });
+
+  // 오늘 실행 기록 저장 (25시간 TTL — 다음 날 자동 실행 전까지 중복 방지)
+  await env.PENDING_POSTS.put(todayKey, pipelineId, { expirationTtl: 25 * 3600 });
+
+  // 사용 책 목록 업데이트 (최근 30권 보관, 31일 TTL)
+  const newUsed = [...usedBooks, chosen.title].slice(-30);
+  await env.PENDING_POSTS.put('daily_used_books', JSON.stringify(newUsed), { expirationTtl: 31 * 24 * 3600 });
+}
+
 // 크론(매 1분)에서 호출 — 진행중 파이프라인을 찾아 각각 한 단계씩 전진
 async function runScheduled(env) {
   if (!env.PENDING_POSTS) return;
@@ -1125,9 +1185,14 @@ export default {
     return env.ASSETS.fetch(request);
   },
 
-  // Cron Trigger (매 1분) — 진행중 파이프라인을 한 단계씩 전진시키는 durable 구동자.
-  // 화면/탭 상태와 무관하게 서버에서 작업이 끝까지 진행되고, 중단돼도 자동 재개된다.
+  // Cron Trigger — 두 가지 스케줄로 분기한다.
+  //   "0 23 * * *" : 매일 오전 8시(KST=UTC+9) — 일일 자동 캐럿셀 생성
+  //   "* * * * *"  : 매 1분 — 진행중 파이프라인을 한 단계씩 전진
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(runScheduled(env));
+    if (event.cron === '0 23 * * *') {
+      ctx.waitUntil(runDailyAuto(env));
+    } else {
+      ctx.waitUntil(runScheduled(env));
+    }
   },
 };
