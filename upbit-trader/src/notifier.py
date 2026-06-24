@@ -236,6 +236,15 @@ def publish_status(name: str, text: str) -> None:
         pass
 
 
+def status_allowed(bot_name: str) -> bool:
+    """이 봇이 텔레그램 합산 현황에 표시돼도 되는지(화이트리스트 통과 여부).
+
+    화이트리스트가 비어 있으면 전부 허용. 비어 있지 않으면 그 안에 든 봇만 허용.
+    notifier 의 합산 현황과 portfolio_review 대시보드가 '같은 규칙'을 쓰도록 공용화.
+    """
+    return not (_STATUS_WHITELIST and bot_name not in _STATUS_WHITELIST)
+
+
 def _read_all_statuses() -> str:
     """모든 봇의 상태파일을 합쳐 하나의 메시지로. 오래된(>10분) 건 경고 표시."""
     parts = []
@@ -243,7 +252,7 @@ def _read_all_statuses() -> str:
         for f in sorted(_state_dir().glob("status_*.txt")):
             try:
                 bot_name = f.stem[len("status_"):]
-                if _STATUS_WHITELIST and bot_name not in _STATUS_WHITELIST:
+                if not status_allowed(bot_name):
                     continue
                 txt = f.read_text(encoding="utf-8").strip()
                 if not txt:

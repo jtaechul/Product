@@ -12,6 +12,10 @@ if [ ! -d "$REPO_DIR" ]; then
     [ -n "$_guess" ] && REPO_DIR="$_guess"
 fi
 SERVICES="${SERVICES:-swing-bot majors-bot}"
+# 고위험봇 영구 폐기: 서버에 '설치된' auto-update.service 가 옛 3봇 시절
+# SERVICES(=...highrisk-bot)를 환경변수로 갖고 있어도, 재시작 대상에서 무조건 제외.
+# (아래 ③ 재시작 루프가 highrisk-bot 을 절대 되살리지 못하게 하는 안전장치)
+SERVICES="$(printf '%s\n' $SERVICES | grep -vx 'highrisk-bot' | tr '\n' ' ')"
 UPBIT="$REPO_DIR/upbit-trader"
 MARKER="$UPBIT/.botstate/deployed_commit"
 

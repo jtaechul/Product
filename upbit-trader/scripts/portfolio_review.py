@@ -67,12 +67,22 @@ def gather():
     except Exception:
         pass
 
+    # 봇별 상태파일을 모은다. 단, notifier 와 '같은 화이트리스트'를 적용해
+    # 운용 중단/폐기된 봇(예: 3_고위험, 1_잠수함)의 현황이 대시보드(→텔레그램)로
+    # 새지 않게 한다. (이 글롭은 notifier._read_all_statuses 와 별개 경로라 반드시 필터)
     bots = []
-    for f in sorted((ROOT / ".botstate").glob("status_*.txt")) if (ROOT / ".botstate").exists() else []:
-        try:
-            bots.append(f.read_text(encoding="utf-8").strip())
-        except Exception:
-            pass
+    state_dir = ROOT / ".botstate"
+    if state_dir.exists():
+        for f in sorted(state_dir.glob("status_*.txt")):
+            bot_name = f.stem[len("status_"):]
+            if not notifier.status_allowed(bot_name):
+                continue
+            try:
+                txt = f.read_text(encoding="utf-8").strip()
+                if txt:
+                    bots.append(txt)
+            except Exception:
+                pass
 
     return {"regime": reg, "total": total_krw, "holdings": holdings,
             "weights_cur": allocation.current_weights(), "bots": bots}
