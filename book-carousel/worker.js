@@ -500,7 +500,7 @@ async function handleGenerateDmReply(env, body) {
 
 const PIPELINE_TTL = 3600;        // 파이프라인 상태 보존(초)
 const PLOG_TTL = 604800;          // 작업 로그 보존(초, 7일) — 사후 오류 분석용
-const STEP_STALE_MS = 90 * 1000;  // active 상태가 이 시간 넘게 안 변하면 죽은 것으로 보고 재실행
+const STEP_STALE_MS = 5 * 60 * 1000;  // 5분 후 멈춘 단계 재실행 (Claude API 느릴 때 오조기 재시도 방지)
 
 // 작업 로그 기록 — 별도 KV 키(plog_<id>). 파이프라인 상태가 만료돼도 7일간 남아 사후 분석 가능.
 async function logStep(env, pipelineId, entry) {
@@ -569,6 +569,15 @@ async function runStep(env, pipelineId, step) {
       images = imgData.images;
     } catch (e) {
       await logStep(env, pipelineId, { step, phase: 'warn', error: '이미지 생성 실패(계속 진행): ' + e.message });
+    }
+    // Pollinations.ai 이미지 사전 렌더링: 서버에서 미리 HTTP 요청 → 사용자가 텔레그램 링크를 열면 이미 캐시된 이미지가 즉시 표시됨
+    if (images) {
+      await setActive('Pollinations.ai 이미지 렌더링 대기 중...');
+      await Promise.all(
+        Object.values(images).map(url =>
+          fetch(url, { signal: AbortSignal.timeout(28000) }).catch(() => null)
+        )
+      );
     }
     await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'done', label: '이미지 URL 생성 완료', images });
     await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0 });

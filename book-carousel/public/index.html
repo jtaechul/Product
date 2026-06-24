@@ -2370,6 +2370,11 @@ function renderPipelineResults(status, autoSendComposites) {
     }
     document.getElementById('captionResult').style.display = 'block';
   }
+  if (status.dmText) {
+    document.getElementById('dmReplyText').textContent = status.dmText;
+    document.getElementById('dmReplyResult').style.display = 'block';
+    document.getElementById('dmReplyWrapper').style.display = 'block';
+  }
   if (status.validation) renderValidation(status.validation);
   setStep(status.validation?.approved ? 4 : 3);
   updateInstagramBtn();
