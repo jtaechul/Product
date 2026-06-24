@@ -749,11 +749,12 @@ function refreshUI() {
   }
 
   // Naver Maps link (pre-filled route)
+  // 출발지: 해양환경공단 본사 고정 PlaceID (네이버 지도에서 추출한 정확한 형식)
+  const SRC_NAVER = '3znF73,2AJ1Xi,%ED%95%B4%EC%96%91%ED%99%98%EA%B2%BD%EA%B3%B5%EB%8B%A8%20%EB%B3%B8%EC%82%AC,12776036,PLACE_POI';
   const naverLink = document.getElementById('naverLink');
   if (dest) {
-    const s = encodeURIComponent(BASE_ADDR);
     const g = encodeURIComponent(dest);
-    naverLink.href = `https://map.naver.com/v5/directions/${s}/${g}//car`;
+    naverLink.href = `https://map.naver.com/p/directions/${SRC_NAVER}/${g}/-/car`;
     document.getElementById('naverLinkResult').href = naverLink.href;
   } else {
     naverLink.href = 'https://map.naver.com';
@@ -804,8 +805,9 @@ function showDist(v, meta) {
 
 /* ========================================================
    OPINET API — 전국 평균 유가 조회
-   avgAllPrice.do = 이번 주 전국 평균 (오피넷 사이트 표시값과 동일)
-   avgRecentMonthlyPrice.do = 이번 달 평균 (fallback)
+   avgDailyPrice.do  = 날짜별 일간 평균 (오피넷>국내유가통계>일간 기준값) ← 1순위
+   avgAllPrice.do    = 이번 주 전국 평균                                   ← 2순위
+   avgRecentMonthlyPrice.do = 이번 달 평균 (fallback)                      ← 3순위
    ======================================================== */
 async function fetchPrice() {
   const opKey = ls('opinetKey');
@@ -823,15 +825,22 @@ async function fetchPrice() {
 
   const dateFmt = dateS.replace(/-/g, '');
 
-  // 순서: ① 이번 주 전국 평균 → ② 이번 달 평균 fallback
+  // 순서: ① 일간 평균(출장일 기준) → ② 이번 주 전국 평균 → ③ 이번 달 평균 fallback
   const endpoints = [
+    {
+      url: `https://www.opinet.co.kr/api/avgDailyPrice.do?code=${opKey}&out=json&startDt=${dateFmt}&endDt=${dateFmt}`,
+      label: `${dateS} 일간 평균`,
+      parser: parseDailyPrice,
+    },
     {
       url: `https://www.opinet.co.kr/api/avgAllPrice.do?code=${opKey}&out=json`,
       label: '이번 주 전국 평균',
+      parser: parseOilList,
     },
     {
       url: `https://www.opinet.co.kr/api/avgRecentMonthlyPrice.do?code=${opKey}&out=json&yearMonth=${dateFmt.slice(0, 6)}`,
       label: `${dateFmt.slice(0, 6)} 월 평균`,
+      parser: parseOilList,
     },
   ];
 
@@ -839,12 +848,8 @@ async function fetchPrice() {
   for (const ep of endpoints) {
     try {
       const data = await fetchWithProxy(ep.url);
-      const oilList = data?.RESULT?.OIL || data?.result?.OIL;
-      if (!oilList) continue;
-      const item = oilList.find(o => o.PRODCD === fuel.opinetCode);
-      if (!item) continue;
-      const price = parseFloat(item.PRICE);
-      if (isNaN(price) || price <= 0) continue;
+      const price = ep.parser(data, fuel.opinetCode);
+      if (!price) continue;
       S.price = price;
       document.getElementById('manPrice').value = price.toFixed(2);
       showPrice(price, `${ep.label} (오피넷 자동 조회)`);
@@ -859,6 +864,48 @@ async function fetchPrice() {
   }
 
   setBtnLoading('btnPrice', false, '유가 자동 조회');
+}
+
+// avgDailyPrice.do 응답 파싱 — OIL 배열 또는 OIL_PRICE 배열 둘 다 처리
+function parseDailyPrice(data, prodcd) {
+  // 형식 A: RESULT.OIL 배열 (avgAllPrice와 동일 구조)
+  const oilList = data?.RESULT?.OIL || data?.result?.OIL;
+  if (oilList) {
+    const item = oilList.find(o => o.PRODCD === prodcd);
+    if (item) {
+      const p = parseFloat(item.PRICE);
+      if (p > 0) return p;
+    }
+  }
+  // 형식 B: OIL_PRICE 배열 (일별 데이터가 날짜별로 묶인 경우)
+  const oilPrice = data?.RESULT?.OIL_PRICE || data?.result?.OIL_PRICE;
+  if (Array.isArray(oilPrice)) {
+    // 최신 날짜 항목 선택
+    const sorted = [...oilPrice].sort((a, b) => (b.DATE || '').localeCompare(a.DATE || ''));
+    for (const row of sorted) {
+      const item = (row.OIL || []).find(o => o.PRODCD === prodcd);
+      if (item) {
+        const p = parseFloat(item.PRICE);
+        if (p > 0) return p;
+      }
+      // OIL_PRICE 배열 항목 자체에 PRODCD/PRICE가 있는 경우
+      if (row.PRODCD === prodcd) {
+        const p = parseFloat(row.PRICE);
+        if (p > 0) return p;
+      }
+    }
+  }
+  return null;
+}
+
+// avgAllPrice / avgRecentMonthlyPrice 응답 파싱
+function parseOilList(data, prodcd) {
+  const oilList = data?.RESULT?.OIL || data?.result?.OIL;
+  if (!oilList) return null;
+  const item = oilList.find(o => o.PRODCD === prodcd);
+  if (!item) return null;
+  const p = parseFloat(item.PRICE);
+  return p > 0 ? p : null;
 }
 
 async function fetchWithProxy(url) {
@@ -1012,9 +1059,8 @@ function calculate() {
   document.getElementById('r-amount').textContent = amount.toLocaleString('ko-KR') + ' 원';
   document.getElementById('r-basis').textContent  = basis;
 
-  const s = encodeURIComponent(BASE_ADDR);
-  const g = encodeURIComponent(dest);
-  document.getElementById('naverLinkResult').href = `https://map.naver.com/v5/directions/${s}/${g}//car`;
+  const SRC_NAVER2 = '3znF73,2AJ1Xi,%ED%95%B4%EC%96%91%ED%99%98%EA%B2%BD%EA%B3%B5%EB%8B%A8%20%EB%B3%B8%EC%82%AC,12776036,PLACE_POI';
+  document.getElementById('naverLinkResult').href = `https://map.naver.com/p/directions/${SRC_NAVER2}/${encodeURIComponent(dest)}/-/car`;
 
   S.calcResult = { name, purpose, period, cop, fType, fuelName: fuel.name,
                    price, dist, eff, toll, amount, basis, dest };
@@ -1355,7 +1401,19 @@ async function parseTollPdf(input) {
       fullText += content.items.map(i => i.str).join(' ') + '\n';
     }
 
-    const candidates = extractTollCandidates(fullText);
+    const { total, candidates } = extractTollCandidates(fullText);
+
+    // 합계가 확실하면 자동 적용
+    if (total !== null) {
+      applyToll(total);
+      resultEl.innerHTML = `
+        <div class="pdf-ttl" style="color:var(--green);">✓ 합계 ${total.toLocaleString('ko-KR')}원 자동 적용됨</div>
+        <details style="margin-top:6px;">
+          <summary style="font-size:11px;color:var(--muted);cursor:pointer;">추출된 전체 텍스트 보기</summary>
+          <div class="pdf-raw">${escHtml(fullText.slice(0, 1200))}</div>
+        </details>`;
+      return;
+    }
 
     if (candidates.length === 0) {
       resultEl.innerHTML = `
@@ -1395,36 +1453,91 @@ async function parseTollPdf(input) {
   input.value = '';
 }
 
+// Returns { total: number|null, candidates: Array }
+// total: 합계가 확실히 발견된 경우 해당 금액 (자동 적용용)
+// candidates: 합계 불확실 시 사용자 선택용 후보 목록
 function extractTollCandidates(text) {
   const clean = text.replace(/\s+/g, ' ');
-  const seen  = new Set();
-  const results = [];
 
-  const patterns = [
-    { re: /합\s*계\s*[:：]?\s*([\d,]+)\s*원/g,                  priority: 0, ctx: '합계' },
-    { re: /총\s*(?:요금|금액|통행료)\s*[:：]?\s*([\d,]+)\s*원/g,  priority: 0, ctx: '총액' },
-    { re: /납부\s*(?:금액|총액)\s*[:：]?\s*([\d,]+)\s*원/g,       priority: 0, ctx: '납부금액' },
-    { re: /통행\s*(?:요금|료)\s*[:：]?\s*([\d,]+)\s*원/g,         priority: 1, ctx: '통행료' },
-    { re: /(?<![.\d])([\d]{1,3}(?:,\d{3}){1,3})\s*원/g,          priority: 2, ctx: '금액' },
+  function extractAmt(m) {
+    const s = (m[1] || m[0].match(/([\d,]+)/)?.[1] || '').replace(/,/g, '');
+    return parseInt(s, 10);
+  }
+
+  function ctx(m) {
+    const s = Math.max(0, m.index - 22);
+    const e = Math.min(clean.length, m.index + m[0].length + 22);
+    return '…' + clean.slice(s, e).trim() + '…';
+  }
+
+  // ── 1단계: 합계 패턴 (가장 신뢰도 높음) ──────────────────────────
+  const totalREs = [
+    /이용\s*요금\s*합\s*계\s*[:：]?\s*([\d,]+)\s*원/g,
+    /총\s*합\s*계\s*[:：]?\s*([\d,]+)\s*원/g,
+    /합\s*계\s*[:：]?\s*([\d,]+)\s*원/g,
+    /총\s*(?:요금|금액|통행료)\s*[:：]?\s*([\d,]+)\s*원/g,
+    /납부\s*(?:금액|총액)\s*[:：]?\s*([\d,]+)\s*원/g,
+    /결제\s*(?:금액|총액)\s*[:：]?\s*([\d,]+)\s*원/g,
   ];
 
-  for (const { re, priority } of patterns) {
+  const totals = [];
+  for (const re of totalREs) {
     let m;
     re.lastIndex = 0;
     while ((m = re.exec(clean)) !== null) {
-      const amtStr = (m[1] || m[0].match(/([\d,]+)/)?.[1] || '').replace(/,/g, '');
-      const amount = parseInt(amtStr, 10);
-      if (amount >= 500 && amount <= 100000 && !seen.has(amount)) {
-        seen.add(amount);
-        const s = Math.max(0, m.index - 18);
-        const e = Math.min(clean.length, m.index + m[0].length + 18);
-        results.push({ amount, context: '…' + clean.slice(s, e).trim() + '…', priority });
-      }
+      const amt = extractAmt(m);
+      if (amt >= 500 && amt <= 1000000) totals.push(amt);
     }
   }
 
-  results.sort((a, b) => a.priority - b.priority || b.amount - a.amount);
-  return results.slice(0, 5);
+  if (totals.length > 0) {
+    // 합계가 여러 개면 최댓값 반환 (합계는 개별 통행료의 합이므로 가장 크다)
+    return { total: Math.max(...totals), candidates: [] };
+  }
+
+  // ── 2단계: 통행료 단독 언급 (합계 없을 때) ──────────────────────
+  const seen = new Set();
+  const results = [];
+
+  // "N종 X,XXX원(카드)" 형태의 개별 통행료 항목은 후보에서 제외
+  const individualRE = /\d+종\s+([\d,]+)\s*원\s*[\(（]/g;
+  const individualAmts = new Set();
+  let im;
+  individualRE.lastIndex = 0;
+  while ((im = individualRE.exec(clean)) !== null) {
+    individualAmts.add(parseInt(im[1].replace(/,/g, ''), 10));
+  }
+
+  const tollRE = /통행\s*(?:요금|료)\s*[:：]?\s*([\d,]+)\s*원/g;
+  let tm;
+  tollRE.lastIndex = 0;
+  while ((tm = tollRE.exec(clean)) !== null) {
+    const amt = extractAmt(tm);
+    if (amt >= 500 && amt <= 1000000 && !seen.has(amt) && !individualAmts.has(amt)) {
+      seen.add(amt);
+      results.push({ amount: amt, context: ctx(tm) });
+    }
+  }
+
+  if (results.length > 0) {
+    results.sort((a, b) => b.amount - a.amount);
+    return { total: null, candidates: results.slice(0, 5) };
+  }
+
+  // ── 3단계: 금액 패턴 fallback (개별 통행료 제외) ─────────────────
+  const genericRE = /(?<![.\d])([\d]{1,3}(?:,\d{3})+)\s*원/g;
+  let gm;
+  genericRE.lastIndex = 0;
+  while ((gm = genericRE.exec(clean)) !== null) {
+    const amt = parseInt(gm[1].replace(/,/g, ''), 10);
+    if (amt >= 500 && amt <= 1000000 && !seen.has(amt) && !individualAmts.has(amt)) {
+      seen.add(amt);
+      results.push({ amount: amt, context: ctx(gm) });
+    }
+  }
+
+  results.sort((a, b) => b.amount - a.amount);
+  return { total: null, candidates: results.slice(0, 5) };
 }
 
 function applyToll(amount) {
