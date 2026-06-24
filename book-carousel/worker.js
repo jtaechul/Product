@@ -36,10 +36,10 @@ async function listModelIds(apiKey) {
 }
 
 // 모델을 실제로 호출해 사용 가능 여부 확인 (200이면 사용 가능)
-// 7초 타임아웃 — probe 과다로 Worker 30s 한도 초과 방지
-async function probeModel(apiKey, model) {
+// 10초 타임아웃 + 일시적 과부하(429/529/5xx) 1회 재시도
+async function probeModel(apiKey, model, attempt = 0) {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 7000);
+  const timer = setTimeout(() => ctrl.abort(), 10000);
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -48,10 +48,15 @@ async function probeModel(apiKey, model) {
       signal: ctrl.signal,
     });
     clearTimeout(timer);
+    // 일시적 과부하/레이트리밋이면 1회 재시도 (probe 한 번 실패로 앱 전체가 멈추지 않게)
+    if ((res.status === 429 || res.status === 529 || res.status >= 500) && attempt < 1) {
+      await new Promise(r => setTimeout(r, 1500));
+      return probeModel(apiKey, model, attempt + 1);
+    }
     return res.status;
   } catch {
     clearTimeout(timer);
-    return 0; // 타임아웃·네트워크 오류 → 사용 불가로 처리
+    return 0; // 타임아웃·네트워크 오류
   }
 }
 
@@ -87,10 +92,20 @@ async function resolveModels(apiKey) {
     return null;
   };
 
-  const main = await firstUsable(mainOrder);
-  const light = (await firstUsable(lightOrder)) || main;
+  let main = await firstUsable(mainOrder);
+  let light = (await firstUsable(lightOrder)) || main;
 
+  // probe가 200을 한 번도 못 받았더라도, 후보 모델 목록이 있으면 하드 실패하지 않고
+  // 최상위 후보로 폴백한다. probe 실패는 대개 일시적 429/타임아웃이며, 진짜 권한·결제
+  // 문제라면 실제 호출(callClaude, 재시도 포함)에서 정확한 상태코드로 surface된다.
+  // → "사용 가능한 모델 없음"으로 앱 전체가 멈추는 일을 방지.
   if (!main) {
+    main = mainOrder[0] || ids[0] || null;
+    light = lightOrder[0] || main;
+    if (main) {
+      // 폴백 결과는 캐시하지 않음 → 다음 요청에서 정상 probe를 재시도
+      return { main, light, source: 'fallback-unprobed', available: ids, probed };
+    }
     return { main: null, light: null, source: 'none-usable', available: ids, probed };
   }
 
