@@ -112,22 +112,47 @@ async function getModel(apiKey, tier) {
   return tier === 'light' ? m.light : m.main;
 }
 
-async function callClaude(apiKey, { model, system, user, max_tokens = 2048 }) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens,
-      system,
-      messages: [{ role: 'user', content: user }],
-    }),
-  });
+// 일시적 오류(429 요청과다 · 529 과부하 · 5xx · 네트워크)는 재시도로 흡수한다.
+// 파이프라인이 Claude를 연속 6회 호출하므로, 단발 실패 한 번에 단계 전체가
+// 무너지지 않도록 지수 백오프 재시도를 둔다 (이게 3·4단계 간헐 실패의 근본 원인이었음).
+const RETRYABLE_STATUS = new Set([408, 409, 429, 500, 502, 503, 504, 529]);
+
+async function callClaude(apiKey, { model, system, user, max_tokens = 2048 }, attempt = 0) {
+  const MAX_RETRIES = 3;
+  const BACKOFF_MS = [1000, 3000, 7000];
+  let res;
+  try {
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens,
+        system,
+        messages: [{ role: 'user', content: user }],
+      }),
+    });
+  } catch (netErr) {
+    // 네트워크 오류 → 재시도
+    if (attempt < MAX_RETRIES) {
+      await new Promise(r => setTimeout(r, BACKOFF_MS[attempt]));
+      return callClaude(apiKey, { model, system, user, max_tokens }, attempt + 1);
+    }
+    throw new Error(`Claude 호출 네트워크 오류: ${netErr.message}`);
+  }
+
   if (!res.ok) {
+    if (RETRYABLE_STATUS.has(res.status) && attempt < MAX_RETRIES) {
+      // 서버가 Retry-After를 주면 우선 존중, 없으면 지수 백오프
+      const ra = parseInt(res.headers.get('retry-after') || '', 10);
+      const wait = Number.isFinite(ra) ? Math.min(ra * 1000, 10000) : BACKOFF_MS[attempt];
+      await new Promise(r => setTimeout(r, wait));
+      return callClaude(apiKey, { model, system, user, max_tokens }, attempt + 1);
+    }
     const errBody = await res.json().catch(() => ({}));
     const detail = errBody?.error?.message || JSON.stringify(errBody);
     throw new Error(`[${res.status}] ${detail}`);
@@ -136,9 +161,13 @@ async function callClaude(apiKey, { model, system, user, max_tokens = 2048 }) {
 }
 
 function extractJson(text) {
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error('JSON 파싱 실패');
-  return JSON.parse(match[0]);
+  if (!text) throw new Error('JSON 파싱 실패: 빈 응답');
+  // ```json ... ``` 코드펜스 제거 후 첫 { ~ 마지막 } 구간 파싱
+  const cleaned = text.replace(/```(?:json)?/gi, '').trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) throw new Error('JSON 파싱 실패');
+  return JSON.parse(cleaned.slice(start, end + 1));
 }
 
 // ===== Telegram =====
