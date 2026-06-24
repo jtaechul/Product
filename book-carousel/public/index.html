@@ -1484,24 +1484,28 @@ document.getElementById('generateImagesBtn').addEventListener('click', async () 
   }
 });
 
-// ── 순차 이미지 로딩: 동시에 요청하면 Pollinations rate-limit → 1개씩 await ──
+// 이미지 5장 병렬 로딩 — 모든 이미지가 로드된 뒤 resolve (텔레그램 합성 직전에 await 필수)
 async function applyImagesToCards(images) {
   const cards = document.querySelectorAll('#carouselScroll .card');
   const pages = ['page1', 'page2', 'page3', 'page4', 'page5'];
-  for (let i = 0; i < pages.length; i++) {
-    const url = images[pages[i]];
-    if (!url || !cards[i]) continue;
-    await loadImageWithRetry(cards[i], url, i + 1, 0);
-  }
-  showToast('이미지 생성 완료 (5장)', 'success');
+  // Promise.allSettled: 한 장 실패해도 나머지 계속 진행
+  await Promise.allSettled(
+    pages.map((page, i) => {
+      const url = images[page];
+      if (!url || !cards[i]) return Promise.resolve();
+      return loadImageWithRetry(cards[i], url, i + 1, 0);
+    })
+  );
+  const loaded = [...cards].filter(c => c.dataset.blobUrl).length;
+  showToast(`이미지 로드 완료 (${loaded}/5장)`, loaded === 5 ? 'success' : 'warning');
 }
 
 // fetch+AbortController 기반 재시도 (img.onerror는 타임아웃 제어 불가)
-// 4회 재시도, 시도 사이 8s / 15s / 22s 대기
+// 3회 재시도, 시도 사이 5s / 10s 대기
 async function loadImageWithRetry(card, baseUrl, pageNum, attempt) {
-  const MAX_ATTEMPTS = 4;
-  const RETRY_DELAYS = [0, 8000, 15000, 22000];
-  const FETCH_TIMEOUT = 50000; // Pollinations 최대 생성 대기
+  const MAX_ATTEMPTS = 3;
+  const RETRY_DELAYS = [0, 5000, 10000];
+  const FETCH_TIMEOUT = 35000; // Pollinations 최대 생성 대기
 
   let spinner = card.querySelector('.card-img-loading');
   if (!spinner) {
@@ -2103,13 +2107,13 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
   renderValidation(validation);
   setStep(validation.approved ? 4 : 3);
 
-  // ── Step 3: 이미지 생성 ──
-  setDeployStep(3, 'active', 'Pollinations AI로 페이지별 이미지 생성 중...');
+  // ── Step 3: 이미지 생성 (5장 모두 로드 완료 후 다음 단계로) ──
+  setDeployStep(3, 'active', 'AI 이미지 5장 생성 중... (장당 최대 35초, 잠시 기다려주세요)');
   try {
     const imgData = await apiFetch('/api/generate-images', { pages, bookInfo });
     state.images = imgData.images;
-    applyImagesToCards(imgData.images);
-    setDeployStep(3, 'done', '이미지 생성 완료');
+    await applyImagesToCards(imgData.images);
+    setDeployStep(3, 'done', '이미지 로드 완료 — 텔레그램 발송 준비');
   } catch (err) {
     setDeployStep(3, 'error', '이미지 생성 실패 — 텍스트 전용으로 계속 진행');
     state.images = null;
