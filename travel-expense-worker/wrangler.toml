@@ -1,0 +1,7 @@
+name = "travel-expense-config"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+kv_namespaces = [
+  { binding = "CONFIG", id = "f90e16d6a67c4bf788c6fc77222c90be" }
+]
