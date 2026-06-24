@@ -423,9 +423,10 @@
         회원가입 → 오픈API → 인증키 신청 (무료)<br>
         설정 시 출장일 기준 전국 평균 유가를 자동 조회합니다.
       </div>
+      <button id="btnSaveServer" class="btn btn-primary" style="margin-top:10px;" onclick="saveToServer()">서버에 저장</button>
     </div>
     <div class="alert alert-info" style="margin-top:12px;">
-      API 키는 이 브라우저에만 저장됩니다 (외부 서버 전송 없음).
+      <strong>서버에 저장</strong>하면 다른 기기·브라우저에서 열어도 키가 자동으로 불러와집니다.
       키를 입력하지 않아도 수동 입력으로 엑셀 생성이 가능합니다.
     </div>
   </div>
@@ -700,6 +701,11 @@ const FUELS = {
 };
 
 /* ========================================================
+   CONFIG SERVER
+   ======================================================== */
+const OPINET_CONFIG_URL = 'https://travel-expense-config.jtaechul.workers.dev';
+
+/* ========================================================
    STATE
    ======================================================== */
 let S = {
@@ -727,11 +733,45 @@ window.addEventListener('load', () => {
 function toggleCfg() {
   document.getElementById('cfgPanel').classList.toggle('open');
 }
-function loadSettings() {
+async function loadSettings() {
+  // 1순위: 서버에서 조회
+  try {
+    const r = await fetch(OPINET_CONFIG_URL, { signal: AbortSignal.timeout(4000) });
+    if (r.ok) {
+      const d = await r.json();
+      if (d.opinetKey) {
+        lsSet('opinetKey', d.opinetKey);
+        document.getElementById('opinetKey').value = d.opinetKey;
+        refreshUI();
+        return;
+      }
+    }
+  } catch {}
+  // 2순위: localStorage
   document.getElementById('opinetKey').value = ls('opinetKey') || '';
 }
 function saveSettings() {
   lsSet('opinetKey', document.getElementById('opinetKey').value.trim());
+  refreshUI();
+}
+async function saveToServer() {
+  const key = document.getElementById('opinetKey').value.trim();
+  if (!key) return;
+  lsSet('opinetKey', key);
+  const btn = document.getElementById('btnSaveServer');
+  btn.textContent = '저장 중…';
+  btn.disabled = true;
+  try {
+    const r = await fetch(OPINET_CONFIG_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ opinetKey: key }),
+    });
+    btn.textContent = r.ok ? '✓ 서버 저장 완료' : '저장 실패';
+  } catch {
+    btn.textContent = '저장 실패';
+  }
+  setTimeout(() => { btn.textContent = '서버에 저장'; btn.disabled = false; }, 2500);
   refreshUI();
 }
 function ls(k)      { try { return localStorage.getItem(k); } catch { return ''; } }
