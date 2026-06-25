@@ -423,8 +423,6 @@ async function handleGenerateCaption(env, body) {
   const result = extractJson(text);
   // 구형 dmKeyword 필드도 호환성 유지
   result.dmKeyword = result.commentKeyword || kwHint.slice(0, 2) || '책';
-  // 쿠팡 파트너스 의무 공시 문구 (공정거래위원회 심사지침 준수)
-  result.caption = (result.caption || '') + '\n\n이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.';
   return { success: true, ...result };
 }
 
