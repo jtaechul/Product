@@ -53,8 +53,8 @@ function showScreen(name) {
 function hideAllScreens() { for (const s of SCREENS) $('screen-' + s).classList.add('hidden'); }
 function setHud(on) { $('hud').classList.toggle('hidden', !on); }
 
-// ---- 캘리브레이션 데이터(흐름 게이트 + 신체 표시) ----
-const calib = { phase: 0, samples: [], tStart: 0, shoulder: 0, height: 0 };
+// ---- 캘리브레이션 상태 ----
+const calib = { progress: 0, done: false, tStart: 0, status: '' };
 
 // ====== 버튼 이벤트 ======
 $('btnStart').onclick = () => { sfx.resume(); gotoRegister(); };
@@ -65,7 +65,8 @@ $('btnRegister').onclick = () => {
   current = { name, score: 0, perfects: 0, walls: 0 };
   startCalibration();
 };
-$('btnCalibStart').onclick = () => beginCalibMeasure();
+$('btnCalibStart').onclick = () => beginCalibScan();
+$('btnCalibSkip').onclick = () => finishCalibration();
 $('btnNextPlayer').onclick = () => { players.push(current); gotoRegister(); };
 $('btnRetry').onclick = () => { startCalibration(); };
 $('btnRestartAll').onclick = () => { players = []; showScreen('title'); state = 'TITLE'; setHud(false); };
@@ -128,75 +129,64 @@ async function boot() {
   }
 }
 
-// ====== 캘리브레이션 ======
+// ====== 캘리브레이션 (전신 감지되면 자동 통과 · 절대 멈추지 않음) ======
 function startCalibration() {
-  calib.phase = 0; calib.samples = []; calib.shoulder = 0; calib.height = 0;
-  $('ck-stand').textContent = '⬜ 차렷 자세 (키·어깨너비)';
-  $('ck-stand').classList.remove('done');
-  $('ck-tpose').textContent = '⬜ 양팔 벌리기 (윙스팬)';
-  $('ck-tpose').classList.remove('done');
-  $('calibTitle').textContent = `${current.name} · 신체 등록`;
-  $('calibInstruction').textContent = '화면 가이드 안에 전신이 들어오게 서고, [측정 시작]을 누르세요';
-  $('btnCalibStart').classList.remove('hidden');
+  $('calibTitle').textContent = `${current.name} · 자세 준비`;
+  $('btnCalibSkip').classList.add('hidden');
   showScreen('calib');
   state = 'CALIB';
   setHud(false);
 }
 
-function beginCalibMeasure() {
-  $('btnCalibStart').classList.add('hidden');
-  calib.phase = 1; calib.samples = []; calib.tStart = performance.now() / 1000;
-  $('calibInstruction').textContent = '차렷! 가만히 서주세요 (측정 중…)';
-  hideAllScreens();           // 캔버스 가이드만 보이게
+function beginCalibScan() {
+  calib.progress = 0; calib.done = false; calib.tStart = performance.now() / 1000;
+  calib.status = '화면 안에 전신이 보이게 서주세요';
+  hideAllScreens();
   $('overlay').style.pointerEvents = 'none';
+  $('btnCalibSkip').classList.add('hidden');
   state = 'CALIB_RUN';
 }
 
-function updateCalib(t) {
-  // 가이드 + 스캔라인은 loop의 draw에서 처리
-  if (!landmarks) return;
-  const ls = landmarks[LM.L_SHOULDER], rs = landmarks[LM.R_SHOULDER];
-  const lw = landmarks[LM.L_WRIST], rw = landmarks[LM.R_WRIST];
-  const nose = landmarks[LM.NOSE], la = landmarks[LM.L_ANKLE], ra = landmarks[LM.R_ANKLE];
-  const elapsed = t - calib.tStart;
+function vget(i) { return (landmarks && landmarks[i]) ? (landmarks[i].visibility ?? 1) : 0; }
 
-  if (calib.phase === 1) { // 차렷: 어깨너비/키
-    if (ls && rs && visible(landmarks, LM.L_SHOULDER) && visible(landmarks, LM.R_SHOULDER)) {
-      const sw = dist(ls, rs);
-      let h = 0;
-      if (nose && (la || ra)) {
-        const ankleY = Math.max(la ? la.y : 0, ra ? ra.y : 0);
-        h = Math.abs(ankleY - nose.y);
-      }
-      calib.samples.push({ sw, h });
-    }
-    if (elapsed > 2.4 && calib.samples.length > 8) {
-      const swAvg = avg(calib.samples.map((s) => s.sw));
-      const hAvg = avg(calib.samples.map((s) => s.h));
-      calib.shoulder = swAvg; calib.height = hAvg;
-      $('ck-stand').textContent = '✅ 차렷 자세 측정 완료';
-      $('ck-stand').classList.add('done');
-      // 2단계
-      calib.phase = 2; calib.samples = []; calib.tStart = t;
-    }
-  } else if (calib.phase === 2) { // T자: 윙스팬
-    if (lw && rw && visible(landmarks, LM.L_WRIST) && visible(landmarks, LM.R_WRIST)) {
-      const span = dist(lw, rw);
-      // 팔을 충분히 벌렸을 때만 유효 샘플
-      if (span > calib.shoulder * 1.8) calib.samples.push(span);
-    }
-    if (elapsed > 2.4 && calib.samples.length > 6) {
-      calib.wingspan = avg(calib.samples);
-      $('ck-tpose').textContent = '✅ 양팔 벌리기 측정 완료';
-      $('ck-tpose').classList.add('done');
-      calib.phase = 3; calib.tStart = t;
-    }
-  } else if (calib.phase === 3) {
-    if (elapsed > 1.0) startPractice();
+function isFullBodyVisible() {
+  if (!landmarks) return false;
+  const head = vget(LM.NOSE) >= 0.3;
+  const sh = vget(LM.L_SHOULDER) >= 0.3 && vget(LM.R_SHOULDER) >= 0.3;
+  const hip = vget(LM.L_HIP) >= 0.3 && vget(LM.R_HIP) >= 0.3;
+  const ankle = vget(LM.L_ANKLE) >= 0.25 || vget(LM.R_ANKLE) >= 0.25;
+  return head && sh && hip && ankle;
+}
+
+function calibReason() {
+  if (!landmarks) return '사람이 안 보여요 — 카메라 앞에 서주세요';
+  if (vget(LM.NOSE) < 0.3 || vget(LM.L_SHOULDER) < 0.3 || vget(LM.R_SHOULDER) < 0.3) return '머리와 어깨가 화면에 보이게';
+  if (vget(LM.L_HIP) < 0.3 || vget(LM.R_HIP) < 0.3) return '허리까지 화면에 들어오게';
+  return '뒤로 한 걸음! 발끝까지 보이게';
+}
+
+function updateCalibScan(t, dt) {
+  const ok = isFullBodyVisible();
+  if (ok) {
+    calib.progress = Math.min(1, calib.progress + dt / 1.5); // ~1.5초 유지하면 완료
+    calib.status = '좋아요! 그대로 잠깐…';
+  } else {
+    calib.progress = Math.max(0, calib.progress - dt / 0.8);
+    calib.status = calibReason();
+  }
+  // 3초 지나도 안 잡히면 수동 시작 버튼 노출(절대 막히지 않게)
+  if (t - calib.tStart > 3) $('btnCalibSkip').classList.remove('hidden');
+  if (calib.progress >= 1 && !calib.done) {
+    calib.done = true;
+    sfx.go();
+    finishCalibration();
   }
 }
 
-function avg(arr) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0; }
+function finishCalibration() {
+  $('btnCalibSkip').classList.add('hidden');
+  startPractice();
+}
 
 // ====== 연습 + 본게임 ======
 function startPractice() {
@@ -416,10 +406,9 @@ function loop() {
   renderer.drawCamera();
 
   if (state === 'CALIB_RUN') {
-    const scanY = ((t * 0.6) % 1);
-    renderer.drawCalibGuide(scanY);
     renderer.drawSkeleton(landmarks);
-    updateCalib(t);
+    renderer.drawCalibUI(calib.progress, calib.status, t);
+    updateCalibScan(t, dt);
   } else if (state === 'PLAY') {
     renderer.drawSkeleton(landmarks);
     updatePlay(t);

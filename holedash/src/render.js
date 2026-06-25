@@ -70,14 +70,18 @@ export class Renderer {
     const ctx = this.ctx;
     const cov = this._cover();
     const sw = this._shoulderPx(landmarks, cov);
-    const thick = Math.max(8, sw * 0.5);
+    // 얇고 깔끔한 오버레이 — 화면 대비 일정 비율 이상으로 두꺼워지지 않게 캡
+    const thick = Math.max(5, Math.min(sw * 0.28, Math.min(this.W, this.H) * 0.04));
     // 기본은 흰색(파란색 미사용). 통과/충돌 시에만 초록/빨강 등으로 틴트.
-    const color = this.skelTint ? this.skelTint.color : '#f4f4f6';
-    const glow = this.skelTint ? this.skelTint.color : 'rgba(0,0,0,0.7)';
+    const tinted = !!this.skelTint;
+    const color = tinted ? this.skelTint.color : '#ffffff';
+    ctx.save();
+    ctx.globalAlpha = tinted ? 0.95 : 0.85;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     ctx.strokeStyle = color;
     ctx.lineWidth = thick;
-    ctx.shadowColor = glow; ctx.shadowBlur = 12;
+    ctx.shadowColor = tinted ? this.skelTint.color : 'rgba(0,0,0,0.55)';
+    ctx.shadowBlur = 8;
     for (const [a, b] of POSE_CONNECTIONS) {
       const la = landmarks[a], lb = landmarks[b];
       if (!la || !lb) continue;
@@ -86,22 +90,23 @@ export class Renderer {
       const pb = this.toScreen(lb.x, lb.y, cov);
       ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
     }
-    // 머리
+    // 머리(테두리 원)
     const head = landmarks[0];
     if (head && (head.visibility ?? 1) >= 0.4) {
       const p = this.toScreen(head.x, head.y, cov);
-      ctx.beginPath(); ctx.arc(p.x, p.y, thick * 0.85, 0, Math.PI * 2);
-      ctx.fillStyle = color; ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, thick * 1.5, 0, Math.PI * 2);
+      ctx.stroke();
     }
-    // 관절 점
+    // 관절 점(작게)
     ctx.shadowBlur = 0;
-    ctx.fillStyle = '#fff';
-    for (const idx of [LM.L_SHOULDER, LM.R_SHOULDER, LM.L_WRIST, LM.R_WRIST, LM.L_ANKLE, LM.R_ANKLE, LM.L_HIP, LM.R_HIP]) {
+    ctx.fillStyle = color;
+    for (const idx of [LM.L_SHOULDER, LM.R_SHOULDER, LM.L_ELBOW, LM.R_ELBOW, LM.L_WRIST, LM.R_WRIST, LM.L_ANKLE, LM.R_ANKLE, LM.L_KNEE, LM.R_KNEE, LM.L_HIP, LM.R_HIP]) {
       const l = landmarks[idx];
       if (!l || (l.visibility ?? 1) < 0.4) continue;
       const p = this.toScreen(l.x, l.y, cov);
-      ctx.beginPath(); ctx.arc(p.x, p.y, thick * 0.22, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, thick * 0.5, 0, Math.PI * 2); ctx.fill();
     }
+    ctx.restore();
   }
 
   _shoulderPx(landmarks, cov) {
@@ -172,25 +177,79 @@ export class Renderer {
     ctx.restore();
   }
 
-  // 캘리브레이션 전신 가이드
-  drawCalibGuide(scanY) {
+  // 캘리브레이션 UI: 사람 모양 가이드 + 코너 프레임 + 진행 링 + 상태문구
+  drawCalibUI(progress, status, t) {
     const ctx = this.ctx;
-    const gw = this.W * 0.34, gh = this.H * 0.82;
-    const gx = (this.W - gw) / 2, gy = (this.H - gh) / 2;
+    const accent = progress >= 1 ? '#57e389' : (progress > 0 ? '#57e389' : '#ffffff');
+    // 살짝 어둡게(집중)
     ctx.save();
-    ctx.setLineDash([14, 12]);
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = 'rgba(235,235,235,0.85)';
-    ctx.strokeRect(gx, gy, gw, gh);
-    ctx.setLineDash([]);
-    if (scanY != null) {
-      const y = gy + scanY * gh;
-      ctx.strokeStyle = 'rgba(87,227,137,0.95)';
-      ctx.lineWidth = 3;
-      ctx.shadowColor = '#57e389'; ctx.shadowBlur = 16;
-      ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx + gw, y); ctx.stroke();
-    }
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.fillRect(0, 0, this.W, this.H);
+
+    // 가운데 사람 모양 가이드(여기에 맞춰 서기)
+    const frameH = this.H * 0.84;
+    const frameW = Math.min(this.W * 0.9, frameH * 0.62);
+    const cx = this.W / 2, cy = this.H * 0.48;
+    const S = frameW * 0.17;
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.shadowColor = 'rgba(255,255,255,0.5)';
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = `rgba(255,255,255,${0.12 + 0.06 * Math.sin(t * 3)})`;
+    fillHole(ctx, { pose: 'stand', rot: 0, margin: 0.4 }, { cx, cy, S, thickBoost: 0 });
     ctx.restore();
+
+    // 코너 브래킷 프레임(스캐너 느낌)
+    const fx = cx - frameW / 2, fy = cy - frameH / 2;
+    const L = Math.min(frameW, frameH) * 0.12;
+    ctx.lineWidth = 6; ctx.lineCap = 'round';
+    ctx.strokeStyle = accent;
+    ctx.shadowColor = accent; ctx.shadowBlur = 10;
+    const corner = (x, y, sx, sy) => {
+      ctx.beginPath();
+      ctx.moveTo(x + sx * L, y); ctx.lineTo(x, y); ctx.lineTo(x, y + sy * L);
+      ctx.stroke();
+    };
+    corner(fx, fy, 1, 1);
+    corner(fx + frameW, fy, -1, 1);
+    corner(fx, fy + frameH, 1, -1);
+    corner(fx + frameW, fy + frameH, -1, -1);
+    ctx.shadowBlur = 0;
+
+    // 진행 링(하단)
+    const rx = this.W / 2, ry = this.H * 0.88, R = Math.min(this.W, this.H) * 0.07;
+    ctx.lineWidth = Math.max(8, R * 0.22);
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+    ctx.beginPath(); ctx.arc(rx, ry, R, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = accent;
+    ctx.shadowColor = accent; ctx.shadowBlur = 14;
+    ctx.beginPath(); ctx.arc(rx, ry, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress); ctx.stroke();
+    ctx.shadowBlur = 0;
+    // 링 가운데 %
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `800 ${R * 0.7}px Trebuchet MS, sans-serif`;
+    ctx.fillText(progress >= 1 ? '✓' : `${Math.round(progress * 100)}%`, rx, ry);
+
+    // 상태 문구(링 위)
+    ctx.font = `800 ${Math.min(this.W, this.H) * 0.045}px Trebuchet MS, sans-serif`;
+    const ty = ry - R - this.H * 0.05;
+    const tw = ctx.measureText(status).width + 44;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    this._roundFill(ctx, this.W / 2 - tw / 2, ty - 6, tw, Math.min(this.W, this.H) * 0.045 + 20, 12);
+    ctx.fillStyle = '#fff';
+    ctx.textBaseline = 'top';
+    ctx.fillText(status, this.W / 2, ty);
+    ctx.restore();
+  }
+
+  _roundFill(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.fill();
   }
 
   // 카운트다운 큰 숫자
