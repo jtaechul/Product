@@ -4,7 +4,8 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-const SELF_URL = 'https://book-carousel.jtaechul.workers.dev';
+const SELF_URL = 'https://jtaechul.github.io/Product/book-carousel/public';
+const WORKER_URL = 'https://book-carousel.jtaechul.workers.dev';
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -275,8 +276,8 @@ async function handleSendTelegram(env, body) {
   const { bookInfo, pipelineId } = body;
   // pipelineId가 있으면 해당 결과 페이지로 바로 연결되는 링크를 만든다.
   const link = pipelineId
-    ? `${SELF_URL}/?pipeline=${encodeURIComponent(pipelineId)}`
-    : `${SELF_URL}/`;
+    ? `${WORKER_URL}/?pipeline=${encodeURIComponent(pipelineId)}`
+    : `${WORKER_URL}/`;
 
   const title = bookInfo?.title ? `"${bookInfo.title}"` : '';
   const msg = `[북 캐럿셀 제작 완료]\n\n${title} 캐럿셀(카드뉴스 5장 + 캡션)이 완성됐습니다.\n아래 "확인하러 가기"를 눌러 결과를 보고, 인스타그램 게시 여부를 결정해주세요.\n\n${link}`;
@@ -1480,6 +1481,10 @@ export default {
         else if (url.pathname === '/api/pipeline-status') result = await handlePipelineStatus(env, url);
         else if (url.pathname === '/api/pipeline-log') result = await handlePipelineLog(env, url);
         else if (url.pathname === '/api/add-book-to-catalog') result = await handleAddBookToCatalog(env, body);
+        else if (url.pathname === '/api/book-catalog') {
+          const catalog = (await env.PENDING_POSTS?.get('book_catalog', 'json').catch(() => null)) || [];
+          return new Response(JSON.stringify(catalog), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
+        }
         else return json({ error: '없는 경로입니다.' }, 404);
 
         return json(result);

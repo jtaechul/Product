@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>추천 도서 | insight_wealth_vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F6F2EC;--card:#fff;--dark:#161616;
+  --gold:#C8A96E;--text:#1A1A1A;--sub:#6B7280;
+  --border:#EAE4DA;--radius:16px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;padding-bottom:80px}
+
+/* header */
+.hd{background:var(--dark);color:#fff;padding:44px 20px 0;text-align:center}
+.hd-eyebrow{font-size:10px;letter-spacing:4px;color:var(--gold);font-weight:600;text-transform:uppercase;margin-bottom:12px}
+.hd-title{font-family:'Noto Serif KR',serif;font-size:28px;font-weight:700;line-height:1.25;margin-bottom:10px}
+.hd-sub{font-size:12.5px;color:#9CA3AF;line-height:1.7;margin-bottom:28px}
+
+/* tabs */
+.tabs-wrap{background:var(--dark);padding:0 16px 18px;position:sticky;top:0;z-index:20}
+.tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:#2A2A2A;color:#9CA3AF;border:none;padding:8px 18px;border-radius:20px;font-size:13px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;white-space:nowrap;transition:all .2s;font-weight:500}
+.tab.active,.tab:hover{background:var(--gold);color:var(--dark);font-weight:600}
+
+/* catalog */
+.catalog{max-width:520px;margin:0 auto;padding:24px 16px 0;display:flex;flex-direction:column;gap:16px}
+
+/* card */
+.card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:0 2px 16px rgba(0,0,0,.06);position:relative;overflow:hidden;transition:box-shadow .25s,transform .25s}
+.card:hover{box-shadow:0 8px 32px rgba(0,0,0,.11);transform:translateY(-2px)}
+.card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),transparent)}
+.card.hidden{display:none}
+
+.card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.badge-new{background:#EF4444;color:#fff;font-size:9px;font-weight:700;padding:3px 9px;border-radius:4px;letter-spacing:1.5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.book-num{font-family:'Noto Serif KR',serif;font-size:32px;font-weight:700;color:#F0EBE2;line-height:1;user-select:none}
+
+.cat-pill{display:inline-block;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;margin-bottom:14px}
+.book-title{font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;line-height:1.4;margin-bottom:6px}
+.book-author{font-size:13px;color:var(--sub);margin-bottom:14px}
+.book-msg{font-size:13.5px;line-height:1.75;color:#374151;background:#F9F5EF;border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:18px}
+.card-foot{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.book-date{font-size:11.5px;color:#9CA3AF}
+.cta{background:var(--dark);color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;transition:all .2s;white-space:nowrap}
+.cta:hover{background:var(--gold);color:var(--dark)}
+.cta-soon{font-size:12px;color:#9CA3AF;font-style:italic}
+
+/* empty / loading */
+.empty{text-align:center;padding:60px 20px;color:var(--sub);font-size:15px}
+.loading{text-align:center;padding:60px 20px;color:var(--sub)}
+.spinner{display:inline-block;width:32px;height:32px;border:3px solid #E5E7EB;border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* footer */
+.foot{max-width:520px;margin:40px auto 0;padding:0 16px;text-align:center;border-top:1px solid var(--border);padding-top:24px}
+.foot p{font-size:11px;color:#9CA3AF;line-height:1.8}
+.foot a{color:var(--gold);text-decoration:none}
+.foot .insta{font-size:13px;font-weight:600;color:var(--dark);margin-bottom:8px}
+</style>
+</head>
+<body>
+<header class="hd">
+  <p class="hd-eyebrow">Book Curation</p>
+  <h1 class="hd-title">지식 큐레이션<br>도서관</h1>
+  <p class="hd-sub">캐럿셀에서 만난 그 책을 여기서 찾으세요.<br>게시물의 도서 번호(#000)로 바로 찾을 수 있습니다.</p>
+</header>
+<div class="tabs-wrap"><div class="tabs" id="tabs" role="tablist"></div></div>
+<main class="catalog" id="catalog">
+  <div class="loading"><div class="spinner"></div><br>불러오는 중...</div>
+</main>
+<footer class="foot">
+  <p class="insta"><a href="https://www.instagram.com/insight_wealth_vault" target="_blank">@insight_wealth_vault</a></p>
+  <p>이 페이지의 도서 구매 링크는 쿠팡 파트너스 활동의 일환으로,<br>이에 따른 일정액의 수수료를 제공받습니다.</p>
+</footer>
+<script>
+const WORKER = 'https://book-carousel.jtaechul.workers.dev';
+const CAT_COLORS = {
+  '경제': '#1D6FEB', '재테크': '#1D6FEB', '투자': '#1D6FEB', '부동산': '#1D6FEB',
+  '자기계발': '#7C3AED', '심리': '#7C3AED', '인간관계': '#7C3AED',
+  '건강': '#059669', '과학': '#059669', '의학': '#059669',
+  '역사': '#D97706', '철학': '#D97706', '인문': '#D97706',
+  '사회': '#DC2626', '정치': '#DC2626',
+};
+function catColor(c) {
+  for (const [k, v] of Object.entries(CAT_COLORS)) if (c?.includes(k)) return v;
+  return '#6B7280';
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderBooks(catalog) {
+  const tabsEl = document.getElementById('tabs');
+  const catalogEl = document.getElementById('catalog');
+
+  if (!catalog.length) {
+    tabsEl.innerHTML = '<button class="tab active" data-filter="전체">전체</button>';
+    catalogEl.innerHTML = '<div class="empty"><p>곧 첫 번째 책이 등록됩니다.</p></div>';
+    return;
+  }
+
+  const cats = ['전체', ...new Set(catalog.map(b => b.category).filter(Boolean))];
+  tabsEl.innerHTML = cats.map((c, i) =>
+    `<button class="tab${i === 0 ? ' active' : ''}" data-filter="${esc(c)}">${esc(c)}</button>`
+  ).join('');
+
+  catalogEl.innerHTML = catalog.map((b, i) => {
+    const color = catColor(b.category);
+    const btn = b.coupangLink
+      ? `<a href="${esc(b.coupangLink)}" target="_blank" rel="noopener" class="cta">쿠팡에서 보기 →</a>`
+      : `<span class="cta-soon">링크 준비 중</span>`;
+    return `
+<article class="card" data-category="${esc(b.category || '기타')}">
+  <div class="card-top">
+    ${i === 0 ? '<span class="badge-new">NEW</span>' : '<span></span>'}
+    <span class="book-num">#${esc(b.number)}</span>
+  </div>
+  <span class="cat-pill" style="background:${color}18;color:${color}">${esc(b.category || '기타')}</span>
+  <h2 class="book-title">${esc(b.title)}</h2>
+  <p class="book-author">${esc(b.author)}</p>
+  ${b.coreMessage ? `<blockquote class="book-msg">${esc(b.coreMessage)}</blockquote>` : ''}
+  <div class="card-foot">
+    <span class="book-date">${esc(b.date)}</span>
+    ${btn}
+  </div>
+</article>`;
+  }).join('');
+
+  const tabs = tabsEl.querySelectorAll('.tab');
+  const cards = catalogEl.querySelectorAll('.card');
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const f = t.dataset.filter;
+    cards.forEach(c => c.classList.toggle('hidden', f !== '전체' && c.dataset.category !== f));
+  }));
+
+  // URL의 #숫자로 해당 카드로 자동 스크롤
+  const hash = location.hash.replace('#', '');
+  if (hash) {
+    const target = catalogEl.querySelector(`.card .book-num`);
+    const all = catalogEl.querySelectorAll('.card');
+    for (const card of all) {
+      if (card.querySelector('.book-num')?.textContent?.trim() === `#${hash}`) {
+        setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+        card.style.outline = '2px solid var(--gold)';
+        break;
+      }
+    }
+  }
+}
+
+async function load() {
+  try {
+    const res = await fetch(`${WORKER}/api/book-catalog`);
+    if (!res.ok) throw new Error('API 오류');
+    const catalog = await res.json();
+    renderBooks(catalog);
+  } catch (e) {
+    document.getElementById('catalog').innerHTML =
+      `<div class="empty"><p>도서 목록을 불러오지 못했습니다.<br>잠시 후 다시 시도해주세요.</p></div>`;
+  }
+}
+
+load();
+</script>
+</body>
+</html>
