@@ -326,7 +326,7 @@ async function handleGenerate(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'main'),
     system: `당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.\n3. 공포감·호기심·위기감으로 저장·공유율을 높인다.\n4. 모든 콘텐츠에 반말을 절대 사용하지 않는다 — 문어체·존댓말(~습니다/~합니다/~세요)만 허용.\n반드시 JSON만 응답한다.`,
-    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '자기계발'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(훅 — 헤드라인만): 카드 전체를 단 하나의 강렬한 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 이미 겪었을 구체적 상황을 묘사한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자의 일상 경험을 정확히 포착한 문장. 통계보다 경험 공유형.\n    좋은 예: "매달 저축하는데 잔고는 왜 줄어드는 걸까요"\n             "열심히 일하는데 10년째 제자리라면 이유가 있습니다"\n             "아무리 다이어트해도 살이 빠지지 않는 데는 이유가 있습니다"\n    나쁜 예(절대 금지): "뇌가 먼저 죽어간다" / "당신의 뇌는 몸보다 먼저 죽어가고 있다" (공포 자극형)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(문제): 구체적 수치·현실 사례로 독자가 공감할 문제 상황을 서술한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 구체적 수치(%, 명, 연도)를 최소 1개 포함.\n3페이지(심각성): "대부분은 이 사실을 모른다" 접근으로 충격 사실·연구 결과를 제시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 출처 가능 수준의 실제 통계·연구 인용 1건 이상.\n4페이지(실마리): 완전한 해결책은 절대 주지 말고 '해결 방향의 단서'만 암시해 DM 욕구를 자극한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 마지막 줄은 '그렇다면 어떻게?' 암시로 끝낸다.\n5페이지(참여형 질문): 독자가 자기 상황에 대해 답하고 싶어지는 A/B 선택 질문으로 참여를 유도한다.\n  - cta: 독자 자신의 경험/상태를 묻는 A/B 선택 형식 2~3줄.\n    예시 형식: "지금 당신은 어느 쪽인가요?\\nA. 알고는 있지만 아직 시작 못했다\\nB. 시작했지만 방향을 모르겠다"\n    핵심: 책이나 정보가 아니라 독자 자신의 상황을 묻는 질문이어야 한다.\n  - linkText: "더 알고 싶다면 댓글로 알려주세요" 형태의 자연스러운 참여 유도 한 줄 (키워드 강요 없이)\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
+    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '자기계발'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(훅 — 헤드라인만): 카드 전체를 단 하나의 강렬한 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 이미 겪었을 구체적 상황을 묘사한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자의 일상 경험을 정확히 포착한 문장. 통계보다 경험 공유형.\n    좋은 예: "매달 저축하는데 잔고는 왜 줄어드는 걸까요"\n             "열심히 일하는데 10년째 제자리라면 이유가 있습니다"\n             "아무리 다이어트해도 살이 빠지지 않는 데는 이유가 있습니다"\n    나쁜 예(절대 금지): "뇌가 먼저 죽어간다" / "당신의 뇌는 몸보다 먼저 죽어가고 있다" (공포 자극형)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(문제): 구체적 수치·현실 사례로 독자가 공감할 문제 상황을 서술한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 구체적 수치(%, 명, 연도)를 최소 1개 포함.\n3페이지(심각성): "대부분은 이 사실을 모른다" 접근으로 충격 사실·연구 결과를 제시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 출처 가능 수준의 실제 통계·연구 인용 1건 이상.\n4페이지(실마리): 완전한 해결책은 절대 주지 말고 '해결 방향의 단서'만 암시해 DM 욕구를 자극한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 마지막 줄은 '그렇다면 어떻게?' 암시로 끝낸다.\n5페이지(참여형 질문): 독자가 자기 상황에 대해 답하고 싶어지는 A/B 선택 질문으로 참여를 유도한다.\n  - cta: 독자 자신의 경험/상태를 묻는 A/B 선택 형식 2~3줄.\n    예시 형식: "지금 당신은 어느 쪽인가요?\\nA. 알고는 있지만 아직 시작 못했다\\nB. 시작했지만 방향을 모르겠다"\n    핵심: 책이나 정보가 아니라 독자 자신의 상황을 묻는 질문이어야 한다.\n  - linkText: A/B 중 무엇을 댓글로 남기면 되는지 명시하고 그 대가로 DM을 약속하는 한 줄. 책 제목은 절대 노출 금지(DM에서만 공개). 예: "댓글에 A 또는 B를 남겨주시면, 당신에게 맞는 책과 짧은 정리를 DM으로 보내드립니다"\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
 
   return { success: true, pages: extractJson(text) };
@@ -417,7 +417,7 @@ async function handleGenerateCaption(env, body) {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
     max_tokens: 512,
     system: '당신은 인스타그램 콘텐츠 크리에이터입니다. 독자가 자연스럽게 참여하고 싶어지는 캡션을 씁니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 반말 절대 금지 — 문어체·존댓말(~습니다/~합니다/~세요)만 허용. 반드시 JSON만 응답합니다.',
-    user: `책 카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n5페이지 CTA: ${pages.page5?.cta || ''}\n\n[댓글 키워드 선택 규칙]\n- 주제 힌트: "${kwHint}"\n- 이 주제에서 자연스럽고 완결된 단어를 댓글 키워드로 선택한다.\n- 키워드는 기본적으로 2자를 사용한다. 3자는 그 단어 자체가 원래부터 3자인 경우에만 허용한다.\n- 긴 단어를 억지로 잘라 만들지 않는다. (예: '경제투자'→'경제' 또는 '투자' 중 하나 선택. '경제투'처럼 어색하게 자르기 절대 금지)\n\n인스타그램 캡션을 작성하세요.\n\n[캡션 구조 — 순서 엄수]\n1줄: 독자의 일상 경험을 포착한 공감형 질문 (책 제목 절대 노출 금지. "당신이 모른다면" 패턴 금지. "대부분의 사람들이" 금지)\n2~3줄: 캐럿셀 핵심 인사이트 초간결 요약 (반복 금지, 노골적 판매 금지)\n끝에서 둘째 줄: 저장 유도 문구 ("나중에 꺼내보고 싶다면 저장해두세요" 또는 "도움이 됐다면 저장해두세요" 형태)\n마지막 줄: "더 자세한 내용이 궁금하다면 댓글에 '[선택한 키워드]'를 남겨주세요" 형태 — 강요 대신 선택 제공\n\n[추가 규칙]\n- 해시태그: 정확히 3개 (카테고리 관련)\n- 전체 6줄 이내, 짧고 강렬하게\n\nJSON: {"caption":"1줄\\n2줄\\n3줄\\n저장유도줄\\n댓글유도줄","hashtags":["#tag1","#tag2","#tag3"],"commentKeyword":"[2~3자 자연스러운 완결 키워드]"}`,
+    user: `책 카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n5페이지 A/B 투표 질문: ${pages.page5?.cta || ''}\n\n[중요] 이 게시물의 참여 방식은 마지막 장의 A/B 투표입니다. 캡션의 댓글 유도는 5페이지 A/B와 반드시 일치해야 하며, 별도의 키워드를 추가로 요구하면 안 됩니다(모순 금지).\n\n인스타그램 캡션을 작성하세요.\n\n[캡션 구조 — 순서 엄수]\n1줄: 독자의 일상 경험을 포착한 공감형 질문 (책 제목 절대 노출 금지. "당신이 모른다면" 패턴 금지. "대부분의 사람들이" 금지)\n2~3줄: 캐럿셀 핵심 인사이트 초간결 요약 (반복 금지, 노골적 판매 금지)\n끝에서 둘째 줄: 저장 유도 문구 ("나중에 꺼내보고 싶다면 저장해두세요" 또는 "도움이 됐다면 저장해두세요" 형태)\n마지막 줄: A/B 투표 유도 — "당신은 어느 쪽인가요? 댓글에 A 또는 B를 남겨주시면, 당신에게 맞는 책과 짧은 정리를 DM으로 보내드립니다" 형태. 5페이지 A/B 선택지와 의미가 일치해야 함.\n\n[추가 규칙]\n- 해시태그: 정확히 3개 (카테고리 관련)\n- 전체 6줄 이내, 짧고 강렬하게\n- commentKeyword에는 사용자가 입력할 단어가 아니라, 이 게시물의 DM 라우팅용 카테고리 태그(예: "${kwHint}")를 넣는다(화면 표시는 운영자용). 절대 캡션 본문에 키워드를 쓰지 말 것.\n\nJSON: {"caption":"1줄\\n2줄\\n3줄\\n저장유도줄\\nA/B유도줄","hashtags":["#tag1","#tag2","#tag3"],"commentKeyword":"${kwHint}"}`,
   });
 
   const result = extractJson(text);
@@ -474,17 +474,23 @@ async function handleGenerateDmReply(env, body) {
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
-    max_tokens: 512,
-    system: '당신은 인스타그램 DM 자동 회신 작성 전문가입니다. 댓글 키워드를 남긴 팔로워에게 보낼 DM을 씁니다. 따뜻하고 개인적인 톤, 노골적 판매 금지. 반말 절대 금지 — 존댓말(~습니다/~합니다/~세요)만 허용. 반드시 JSON만 응답합니다.',
-    user: `책 제목: ${bookInfo.title}\n저자: ${bookInfo.author}\n카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n5페이지에서 독자에게 던진 반문: ${pages.page5?.cta || ''}\n5페이지 마무리 문구: ${pages.page5?.linkText || ''}\n\n어필리에이트 링크:\n${linksText}\n\n댓글에 키워드를 남긴 팔로워에게 보낼 DM을 작성하세요.\n\n구성:\n1. 친근한 인사 (1줄)\n2. 책 제목과 저자 자연스럽게 소개 (1줄)\n3. 이 책이 답하는 핵심 질문·고민 (독자 공감 유도, 2줄 이내)\n4. 5페이지 반문에 대한 제한적 힌트 (완전한 답은 절대 주지 말 것, 2줄 이내)\n5. 어필리에이트 링크 안내 (링크가 여러 개면 모두 자연스럽게 포함, 없으면 "곧 공유드릴게요" 처리)\n6. 따뜻한 마무리 (1줄)\n\nJSON: {"dmText":"전체 DM 텍스트(줄바꿈은 \\n)"}`,
+    max_tokens: 1024,
+    system: '당신은 인스타그램 DM 자동 회신 작성 전문가입니다. 게시물 마지막 장의 A/B 투표에서 A 또는 B를 댓글로 남긴 팔로워에게 보낼 DM을 작성합니다. A를 고른 사람과 B를 고른 사람은 처한 상황이 다르므로, 각자의 상황에 맞춘 서로 다른 솔루션을 제시해야 합니다. 따뜻하고 개인적인 톤, 노골적 판매 금지. 반말 절대 금지 — 존댓말(~습니다/~합니다/~세요)만 허용. 반드시 JSON만 응답합니다.',
+    user: `책 제목: ${bookInfo.title}\n저자: ${bookInfo.author}\n카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n게시물 마지막 장의 A/B 투표 질문(여기서 A·B가 각각 무엇을 뜻하는지 파악):\n${pages.page5?.cta || ''}\n\n어필리에이트 링크:\n${linksText}\n\n[작업] A를 고른 사람용 DM과 B를 고른 사람용 DM을 각각 따로 작성하세요.\n- A용 DM은 A 선택자가 처한 상황·고민에 정확히 공감하고, 그 상황에 맞는 해결 방향(솔루션)을 제시합니다.\n- B용 DM은 B 선택자가 처한 상황·고민에 정확히 공감하고, 그 상황에 맞는 (A와는 다른) 해결 방향(솔루션)을 제시합니다.\n- 두 DM 모두 같은 책을 추천하되, "그 책이 당신의 상황에 왜 맞는가"의 각도가 A와 B에서 달라야 합니다.\n\n각 DM 공통 구성:\n1. 친근한 인사 (1줄)\n2. 선택한 상황(A 또는 B)에 대한 구체적 공감 (1~2줄)\n3. 책 제목과 저자 자연스럽게 소개 (1줄)\n4. 그 상황에 맞춰 이 책이 주는 해결 방향 — 완전한 답은 책에 있다는 뉘앙스로 핵심만 (2줄 이내)\n5. 어필리에이트 링크 안내 (링크 여러 개면 모두 자연스럽게 포함, 없으면 "곧 공유드릴게요" 처리)\n6. 따뜻한 마무리 (1줄)\n\nJSON: {"dmTextA":"A 선택자용 DM 전체(줄바꿈은 \\n)","dmTextB":"B 선택자용 DM 전체(줄바꿈은 \\n)"}`,
   });
 
   const result = extractJson(text);
+  // 구버전 dmText 필드 호환(둘 중 A를 대표값으로)
+  result.dmText = result.dmText || result.dmTextA || '';
 
-  // KV에 DM 회신 저장 (키워드 기반, 7일 TTL) — Phase 5 댓글 자동 감지용
-  if (env.PENDING_POSTS && body.commentKeyword) {
-    const kw2 = String(body.commentKeyword).replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 3);
-    if (kw2) await env.PENDING_POSTS.put(`dm_reply_${kw2}`, result.dmText || '', { expirationTtl: 604800 });
+  // KV에 DM 회신 저장 (키워드 기반, 7일 TTL) — Phase 5 댓글 자동 감지용.
+  // A/B를 트리거로 쓰므로 게시물별로 dm_reply_<pipelineId>_A / _B 에 저장.
+  if (env.PENDING_POSTS && body.pipelineId) {
+    const pid = String(body.pipelineId).replace(/[^a-zA-Z0-9]/g, '');
+    if (pid) {
+      await env.PENDING_POSTS.put(`dm_reply_${pid}_A`, result.dmTextA || '', { expirationTtl: 604800 });
+      await env.PENDING_POSTS.put(`dm_reply_${pid}_B`, result.dmTextB || '', { expirationTtl: 604800 });
+    }
   }
 
   return { success: true, ...result };
@@ -642,14 +648,16 @@ async function runStep(env, pipelineId, step) {
     const dmKeyword = savedKw || commentKeyword;
     await setActive('DM 자동 회신 내용 작성 중...');
     await logStep(env, pipelineId, { step, phase: 'start' });
-    let dmText = '';
+    let dmText = '', dmTextA = '', dmTextB = '';
     try {
-      const dmData = await handleGenerateDmReply(env, { pages, bookInfo, affiliateLinks, commentKeyword: dmKeyword });
-      dmText = dmData?.dmText || '';
+      const dmData = await handleGenerateDmReply(env, { pages, bookInfo, affiliateLinks, commentKeyword: dmKeyword, pipelineId });
+      dmTextA = dmData?.dmTextA || '';
+      dmTextB = dmData?.dmTextB || '';
+      dmText = dmData?.dmText || dmTextA;
     } catch (e) {
       await logStep(env, pipelineId, { step, phase: 'warn', error: 'DM 회신 생성 실패(계속 진행): ' + e.message });
     }
-    await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'done', label: 'DM 자동 회신 생성 완료', dmText });
+    await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'done', label: 'A/B별 DM 자동 회신 생성 완료', dmText, dmTextA, dmTextB });
     await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0 });
 
   } else if (step === 6) {
