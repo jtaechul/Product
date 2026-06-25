@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>HoleDash · 통과! 구멍 벽</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- 게임 캔버스: 웹캠 + 스켈레톤 + 벽 + 연출 -->
+    <canvas id="game"></canvas>
+
+    <!-- 숨겨진 비디오(웹캠 소스) -->
+    <video id="cam" playsinline autoplay muted></video>
+
+    <!-- HUD (점수/콤보/라이프/라운드) -->
+    <div id="hud" class="hidden">
+      <div class="hud-left">
+        <div class="hud-score" id="hudScore">0</div>
+        <div class="hud-combo" id="hudCombo"></div>
+      </div>
+      <div class="hud-center" id="hudRound">ROUND 1</div>
+      <div class="hud-right">
+        <div class="hud-life" id="hudLife"></div>
+        <div class="hud-wall" id="hudWall"></div>
+      </div>
+    </div>
+
+    <!-- 큰 등급 연출 텍스트 -->
+    <div id="grade" class="grade hidden"></div>
+
+    <!-- 화면 오버레이(타이틀/등록/캘리브레이션/결과 등) -->
+    <div id="overlay">
+      <!-- 타이틀 -->
+      <section id="screen-title" class="screen">
+        <h1 class="logo">HOLE<span>DASH</span></h1>
+        <p class="tagline">다가오는 구멍 벽에 몸을 맞춰 통과하라!</p>
+        <button class="btn btn-primary" id="btnStart">시작하기</button>
+        <button class="btn btn-ghost" id="btnHow">게임 방법</button>
+        <p class="hint">웹캠 권한이 필요해요 · 밝은 곳에서 전신이 보이게 서주세요</p>
+      </section>
+
+      <!-- 게임 방법 -->
+      <section id="screen-how" class="screen hidden">
+        <h2>게임 방법</h2>
+        <ol class="how-list">
+          <li>🧍 전신이 화면에 들어오게 서기</li>
+          <li>🧱 안쪽에서 <b>구멍 뚫린 벽</b>이 점점 커지며 다가와요</li>
+          <li>🤸 구멍 모양에 맞게 몸을 만들어요 (T자·X자·웅크리기 등)</li>
+          <li>⏱️ 벽이 화면을 꽉 채우는 순간 <b>판정!</b></li>
+          <li>✨ 깔끔하게 통과할수록 높은 등급·점수</li>
+        </ol>
+        <button class="btn btn-primary" id="btnHowBack">돌아가기</button>
+      </section>
+
+      <!-- 플레이어 등록 -->
+      <section id="screen-register" class="screen hidden">
+        <h2>도전자 등록</h2>
+        <input type="text" id="playerName" class="name-input" maxlength="8" placeholder="이름 (예: 지호)" />
+        <button class="btn btn-primary" id="btnRegister">다음</button>
+      </section>
+
+      <!-- 캘리브레이션 -->
+      <section id="screen-calib" class="screen calib hidden">
+        <h2 id="calibTitle">신체 등록</h2>
+        <p id="calibInstruction" class="calib-inst">화면 가이드 안에 전신이 들어오게 서주세요</p>
+        <ul class="calib-check">
+          <li id="ck-stand">⬜ 차렷 자세 (키·어깨너비)</li>
+          <li id="ck-tpose">⬜ 양팔 벌리기 (윙스팬)</li>
+        </ul>
+        <button class="btn btn-primary" id="btnCalibStart">측정 시작</button>
+      </section>
+
+      <!-- 카운트다운/연습 안내는 캔버스 위에 직접 -->
+
+      <!-- 개인 결과 -->
+      <section id="screen-result" class="screen hidden">
+        <h2 id="resultName">결과</h2>
+        <div class="result-score" id="resultScore">0</div>
+        <div class="result-stats" id="resultStats"></div>
+        <button class="btn btn-primary" id="btnNextPlayer">다음 도전자</button>
+        <button class="btn btn-ghost" id="btnRetry">다시 도전</button>
+      </section>
+
+      <!-- 최종 순위/시상식 -->
+      <section id="screen-final" class="screen hidden">
+        <h2>🏆 최종 순위</h2>
+        <ol class="ranking" id="rankingList"></ol>
+        <button class="btn btn-primary" id="btnRestartAll">처음부터 다시</button>
+      </section>
+
+      <!-- 권한/오류 -->
+      <section id="screen-error" class="screen hidden">
+        <h2>⚠️ 문제가 생겼어요</h2>
+        <p id="errorMsg" class="err-msg"></p>
+        <button class="btn btn-primary" id="btnErrorRetry">다시 시도</button>
+      </section>
+
+      <!-- 로딩 -->
+      <section id="screen-loading" class="screen hidden">
+        <div class="spinner"></div>
+        <p id="loadingMsg">자세 인식 모델을 불러오는 중…</p>
+      </section>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
