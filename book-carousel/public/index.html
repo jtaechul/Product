@@ -1204,6 +1204,7 @@ document.getElementById('manualGenerateBtn').addEventListener('click', async () 
 async function generateCarousel() {
   state.validation = null;
   state.images = null;
+  state._catalogAdded = false;
   document.getElementById('validationPanel').classList.remove('visible');
   setStep(2);
 
@@ -1304,6 +1305,33 @@ async function autoSendTelegram() {
     showToast('텔레그램 발송 건너뜀 (Bot Token 미설정 시 정상)', 'warning');
   } finally {
     hideLoading();
+  }
+  // 수동 생성 플로우: 도서관에 자동 등록
+  await addBookToCatalogIfNeeded();
+}
+
+// 도서관(/books)에 현재 책을 자동 등록 — 중복 등록 방지는 서버에서 처리
+async function addBookToCatalogIfNeeded() {
+  if (!state.bookInfo?.title) return;
+  // 서버 파이프라인이 이미 처리한 경우(bookNumber 있음)는 재등록 생략
+  if (state.bookNumber && state._catalogAdded) return;
+  try {
+    const link = document.getElementById('affiliateLinkInput')?.value?.trim()
+      || (Array.isArray(state.affiliateLinks) && state.affiliateLinks[0])
+      || state.affiliateLink
+      || null;
+    const result = await apiFetch('/api/add-book-to-catalog', {
+      bookInfo: state.bookInfo,
+      affiliateLinks: link ? [link] : (state.affiliateLinks || []),
+      affiliateLink: link,
+    });
+    if (result.bookNumber) {
+      state.bookNumber = result.bookNumber;
+      state._catalogAdded = true;
+      showToast(`도서관에 #${result.bookNumber}로 등록됐습니다 — 프로필 링크에서 확인 가능`, 'success');
+    }
+  } catch (e) {
+    console.warn('도서관 등록 실패(무시):', e.message);
   }
 }
 
@@ -2231,6 +2259,7 @@ async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
   localStorage.removeItem('activePipelineId');
   clearTimeout(_pipelinePoller);
   _resultsRendered = false;
+  state._catalogAdded = false;
 
   const progressPanel = document.getElementById('progressPanel');
   progressPanel.classList.add('visible');
@@ -2404,7 +2433,9 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
     }
   }
 
-  // ── Step 7: 완료 ──
+  // ── Step 7: 도서관 등록 + 완료 ──
+  setDeployStep(7, 'active', '지식 큐레이션 도서관에 등록 중...');
+  await addBookToCatalogIfNeeded();
   setDeployStep(7, 'done', '이 페이지에서 결과 확인 후 인스타그램 게시 여부 결정');
   setStep(4);
   document.getElementById('deployDoneMsg').classList.add('visible');
@@ -2542,7 +2573,7 @@ function renderPipelineResults(status, autoSendComposites) {
   state.caption = status.caption || '';
   state.captionHashtags = status.hashtags || [];
   state.dmKeyword = status.dmKeyword || '';
-  if (status.bookNumber) state.bookNumber = status.bookNumber;
+  if (status.bookNumber) { state.bookNumber = status.bookNumber; state._catalogAdded = true; }
   if (status.affiliateLinks) state.affiliateLinks = status.affiliateLinks;
   if (status.bookInfo) addToHistory(status.bookInfo.title);
   renderCarousel(status.pages);

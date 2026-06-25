@@ -1248,6 +1248,20 @@ async function addBookToCatalog(env, { bookInfo, bookNumber, pipelineId, coupang
   await env.PENDING_POSTS.put('book_catalog', JSON.stringify(catalog));
 }
 
+async function handleAddBookToCatalog(env, body) {
+  const { bookInfo, coupangLink, affiliateLinks, affiliateLink } = body;
+  if (!bookInfo?.title) throw new Error('bookInfo.title이 필요합니다.');
+
+  const link = coupangLink
+    || (Array.isArray(affiliateLinks) && affiliateLinks.find(l => l && l.trim()))
+    || affiliateLink
+    || null;
+
+  const bookNumber = await reserveBookNumber(env);
+  await addBookToCatalog(env, { bookInfo, bookNumber, pipelineId: null, coupangLink: link });
+  return { success: true, bookNumber };
+}
+
 function generateBooksHTML(catalog) {
   const CAT_COLORS = {
     '경제': '#1D6FEB', '재테크': '#1D6FEB', '투자': '#1D6FEB', '부동산': '#1D6FEB',
@@ -1465,6 +1479,7 @@ export default {
         else if (url.pathname === '/api/run-pipeline') result = await handleRunPipeline(env, body, ctx);
         else if (url.pathname === '/api/pipeline-status') result = await handlePipelineStatus(env, url);
         else if (url.pathname === '/api/pipeline-log') result = await handlePipelineLog(env, url);
+        else if (url.pathname === '/api/add-book-to-catalog') result = await handleAddBookToCatalog(env, body);
         else return json({ error: '없는 경로입니다.' }, 404);
 
         return json(result);
