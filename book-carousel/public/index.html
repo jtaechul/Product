@@ -739,6 +739,12 @@
       <span class="hint">비워두면 AI가 핵심 메시지와 독자층을 자동으로 분석합니다</span>
     </div>
 
+    <div class="form-group">
+      <label>쿠팡파트너스 링크 (선택)</label>
+      <input type="url" id="manualAffiliateLink" placeholder="https://link.coupang.com/a/...">
+      <span class="hint">입력하면 DM 자동 회신 및 도서 카탈로그에 자동으로 포함됩니다</span>
+    </div>
+
     <button class="btn btn-primary" id="manualGenerateBtn">AI 분석 후 생성</button>
   </div>
 
@@ -1155,8 +1161,15 @@ document.getElementById('manualGenerateBtn').addEventListener('click', async () 
   const author = document.getElementById('manualAuthor').value.trim();
   const category = document.getElementById('manualCategory').value;
   const coreMessageInput = document.getElementById('manualCoreMessage').value.trim();
+  const affiliateLink = document.getElementById('manualAffiliateLink').value.trim();
 
   if (!title) { showToast('책 제목을 입력해주세요.', 'warning'); return; }
+
+  // 쿠팡 링크 state 저장 + DM 섹션 입력란에도 반영
+  state.affiliateLink = affiliateLink || null;
+  if (affiliateLink) {
+    document.getElementById('affiliateLinkInput').value = affiliateLink;
+  }
 
   showLoading('책 정보 분석 중...', coreMessageInput ? 'AI가 추가 정보를 파악하고 있습니다' : 'AI가 핵심 메시지와 독자층을 파악하고 있습니다');
 
