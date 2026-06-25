@@ -501,6 +501,19 @@ async function handleGenerateDmReply(env, body) {
 const PIPELINE_TTL = 3600;        // 파이프라인 상태 보존(초)
 const PLOG_TTL = 604800;          // 작업 로그 보존(초, 7일) — 사후 오류 분석용
 const STEP_STALE_MS = 5 * 60 * 1000;  // 5분 후 멈춘 단계 재실행 (Claude API 느릴 때 오조기 재시도 방지)
+const ERROR_RETRY_MS = 15 * 1000;     // 일시적 오류 후 재시도 최소 간격 (크론 다음 틱에 재시도)
+const MAX_ERROR_RETRIES = 5;          // 일시적 오류 자동 재시도 한도 (초과 시 영구 실패로 마감)
+
+// 오류 메시지에서 상태코드를 추출해 "일시적(재시도 가치 있음)" 오류인지 판정한다.
+// callClaude는 실패를 "[403] ..." 형태로 코드를 앞에 붙여 던진다.
+// - 코드가 RETRYABLE_STATUS(403·429·5xx·529 등)면 일시적 → 크론이 자동 재시도
+// - 코드가 없으면(네트워크·타임아웃·모델 해석 실패 등) 일시적으로 간주
+// - 401·400 같은 영구 오류만 즉시 영구 실패 처리
+function isTransientPipelineError(msg) {
+  const m = /^\[(\d+)\]/.exec(msg || '');
+  if (!m) return true;
+  return RETRYABLE_STATUS.has(parseInt(m[1], 10));
+}
 
 // 작업 로그 기록 — 별도 KV 키(plog_<id>). 파이프라인 상태가 만료돼도 7일간 남아 사후 분석 가능.
 async function logStep(env, pipelineId, entry) {
@@ -693,7 +706,18 @@ async function advancePipeline(env, pipelineId) {
     nextStep = state.runningStep || step || 1;   // 멈춘 단계를 재실행
     await logStep(env, pipelineId, { step: nextStep, phase: 'recover', note: `${Math.round(age / 1000)}s 멈춤 → 재실행` });
   } else if (stepStatus === 'error') {
-    return;                                        // 에러는 자동 재시도 안 함(무한루프 방지) — 로그로 분석
+    // 일시적 오류(403·429·5xx·네트워크)는 크론이 같은 단계를 자동 재시도 → 자가복구.
+    // 영구 오류이거나 재시도 한도 초과면 status를 error로 마감(이후 크론이 더는 집지 않음).
+    const retries = state.errorRetries || 0;
+    if (retries >= MAX_ERROR_RETRIES || !isTransientPipelineError(state.error)) {
+      if (state.status !== 'error') {
+        await savePipelineStatus(env, pipelineId, { status: 'error', label: `단계 ${step} 실패(자동 복구 불가): ${state.error || ''}` });
+      }
+      return;
+    }
+    if (age < ERROR_RETRY_MS) return;              // 재시도 최소 간격 확보
+    nextStep = step;                                // 실패한 단계를 다시 실행
+    await logStep(env, pipelineId, { step: nextStep, phase: 'recover', note: `일시 오류 재시도 ${retries + 1}/${MAX_ERROR_RETRIES}` });
   } else {
     nextStep = step + 1;                           // 이전 단계 done → 다음 단계
   }
@@ -706,8 +730,20 @@ async function advancePipeline(env, pipelineId) {
   try {
     await runStep(env, pipelineId, nextStep);
   } catch (e) {
-    await savePipelineStatus(env, pipelineId, { status: 'error', step: nextStep, stepStatus: 'error', label: `단계 ${nextStep} 실패: ${e.message}`, error: e.message });
-    await logStep(env, pipelineId, { step: nextStep, phase: 'error', error: e.message });
+    const retries = (state.errorRetries || 0) + 1;
+    if (isTransientPipelineError(e.message) && retries <= MAX_ERROR_RETRIES) {
+      // 일시적 오류 → running 유지 + 카운터 증가. 크론 다음 틱이 같은 단계를 재시도한다.
+      await savePipelineStatus(env, pipelineId, {
+        status: 'running', step: nextStep, stepStatus: 'error', errorRetries: retries,
+        label: `단계 ${nextStep} 일시 오류 — 자동 재시도 중 (${retries}/${MAX_ERROR_RETRIES})`,
+        error: e.message,
+      });
+      await logStep(env, pipelineId, { step: nextStep, phase: 'retry', error: e.message, note: `${retries}/${MAX_ERROR_RETRIES}` });
+    } else {
+      // 영구 오류이거나 한도 초과 → 파이프라인 마감
+      await savePipelineStatus(env, pipelineId, { status: 'error', step: nextStep, stepStatus: 'error', label: `단계 ${nextStep} 실패: ${e.message}`, error: e.message });
+      await logStep(env, pipelineId, { step: nextStep, phase: 'error', error: e.message });
+    }
   }
 }
 
