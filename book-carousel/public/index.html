@@ -766,7 +766,16 @@
         </select>
       </div>
       <div class="form-group">
-        <label>특정 이슈 키워드 (선택)</label>
+        <label>책 제목 (선택)</label>
+        <input type="text" id="deployTitle" placeholder="입력하면 AI 추천 없이 바로 해당 책으로 제작">
+        <span class="hint">비워두면 AI가 카테고리에 맞는 책을 자동 선정합니다</span>
+      </div>
+      <div class="form-group">
+        <label>저자 (선택)</label>
+        <input type="text" id="deployAuthor" placeholder="책 제목만 입력해도 됩니다">
+      </div>
+      <div class="form-group" id="deployIssueGroup">
+        <label>특정 이슈 키워드 (선택, AI 자동 선정 시에만 사용)</label>
         <input type="text" id="deployIssue" placeholder="예: AI 대체, 번아웃, 금리...">
       </div>
       <div class="form-group">
@@ -2122,6 +2131,15 @@ function getDeployAffiliateLinks() {
     .filter(v => v);
 }
 
+// 책 제목 입력 여부에 따라 이슈 키워드 필드 흐리게 처리
+document.getElementById('deployTitle').addEventListener('input', () => {
+  const hasTitle = document.getElementById('deployTitle').value.trim() !== '';
+  const issueGroup = document.getElementById('deployIssueGroup');
+  issueGroup.style.opacity = hasTitle ? '0.4' : '1';
+  issueGroup.style.pointerEvents = hasTitle ? 'none' : '';
+  document.getElementById('deployFetchBooksBtn').textContent = hasTitle ? '입력한 책으로 바로 생성' : '자동 진행하기';
+});
+
 document.getElementById('addAffiliateLinkBtn').addEventListener('click', () => {
   const list = document.getElementById('deployAffiliateLinkList');
   const input = document.createElement('input');
@@ -2136,6 +2154,33 @@ document.getElementById('deployFetchBooksBtn').addEventListener('click', async (
   const category = document.getElementById('deployCategory').value;
   const issue = document.getElementById('deployIssue').value.trim();
   const affiliateLinks = getDeployAffiliateLinks();
+  const manualTitle = document.getElementById('deployTitle').value.trim();
+  const manualAuthor = document.getElementById('deployAuthor').value.trim();
+
+  // 책 제목 직접 입력된 경우 — AI 추천 생략, 분석 후 바로 파이프라인 시작
+  if (manualTitle) {
+    showLoading('책 정보 분석 중...', 'AI가 핵심 메시지와 독자층을 파악하고 있습니다');
+    try {
+      const analyzed = await apiFetch('/api/analyze', { title: manualTitle, author: manualAuthor });
+      const bookInfo = {
+        title: manualTitle,
+        author: manualAuthor || analyzed.author || '',
+        year: analyzed.year || '',
+        coreMessage: analyzed.coreMessage,
+        targetAudience: analyzed.targetAudience,
+        category: category || analyzed.category,
+      };
+      showToast(`"${bookInfo.title}" 분석 완료 — 캐럿셀 제작 시작`, 'info');
+      await runAutoDeployPipeline(bookInfo, affiliateLinks);
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      hideLoading();
+    }
+    return;
+  }
+
+  // 제목 미입력 — 기존 AI 자동 추천 흐름
   showLoading('AI가 최적의 책을 선정하고 있습니다...', '베스트셀러와 최신 이슈를 분석 중');
   try {
     const data = await apiFetch('/api/suggest', { category, issue, excludeTitles: getHistory() });
