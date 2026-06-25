@@ -2165,6 +2165,7 @@ document.getElementById('deployStartBtn').addEventListener('click', async () => 
 async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
   localStorage.removeItem('activePipelineId');
   clearTimeout(_pipelinePoller);
+  _resultsRendered = false;
 
   const progressPanel = document.getElementById('progressPanel');
   progressPanel.classList.add('visible');
@@ -2350,6 +2351,7 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
 
 let _pipelinePoller = null;
 let _currentPollId = null; // 폴링 중인 파이프라인 ID (visibilitychange 복귀 시 참조)
+let _resultsRendered = false; // 결과(캐럿셀) 중복 렌더 방지 — 콘텐츠 준비 즉시 1회만 그림
 
 function startPipelinePolling(pipelineId) {
   clearTimeout(_pipelinePoller);
@@ -2366,6 +2368,9 @@ function startPipelinePolling(pipelineId) {
     try {
       const status = await apiFetch('/api/pipeline-status?id=' + encodeURIComponent(pipelineId));
       applyPipelineStatus(status);
+      // 콘텐츠(페이지)가 준비되면 complete를 기다리지 않고 즉시 캐럿셀을 보여준다.
+      // (남은 단계 5~7은 DM 회신·텔레그램·게시 마커라 미리보기를 막을 이유가 없음)
+      if (status.pages) renderPipelineResults(status);
       if (status.status === 'complete') {
         localStorage.removeItem('activePipelineId');
         localStorage.removeItem('activePipelineBookInfo');
@@ -2442,6 +2447,17 @@ function applyPipelineStatus(status) {
 
 function renderPipelineResults(status, autoSendComposites) {
   if (!status.pages) return;
+  // 이미 그려졌으면 전체 재렌더(이미지 재로딩·토스트 반복) 대신, 뒤늦게 도착한
+  // DM 회신 같은 보조 데이터만 채워 넣고 끝낸다.
+  if (_resultsRendered) {
+    if (status.dmText) {
+      document.getElementById('dmReplyText').textContent = status.dmText;
+      document.getElementById('dmReplyResult').style.display = 'block';
+      document.getElementById('dmReplyWrapper').style.display = 'block';
+    }
+    return;
+  }
+  _resultsRendered = true;
   state.pages = status.pages;
   state.bookInfo = status.bookInfo || state.bookInfo;
   state.images = status.images || null;
@@ -2522,7 +2538,12 @@ function renderPipelineResults(status, autoSendComposites) {
     localStorage.removeItem('activePipelineBookInfo');
     showToast('이전 작업에서 오류가 발생했습니다. 다시 시도해주세요.', 'error');
   } else if (status.status === 'running') {
-    showToast('서버에서 계속 진행 중... 잠시 기다려주세요.', 'info');
+    // 이미 콘텐츠가 만들어졌으면(텔레그램 알림 후 들어온 경우 대부분 해당) 바로 보여준다.
+    if (status.pages) {
+      renderPipelineResults(status, false);
+    } else {
+      showToast('서버에서 계속 진행 중... 잠시 기다려주세요.', 'info');
+    }
     startPipelinePolling(savedId);
   } else {
     localStorage.removeItem('activePipelineId');
