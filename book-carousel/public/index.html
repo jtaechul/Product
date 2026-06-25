@@ -1581,7 +1581,7 @@ function addSaveButton(card, pageNum) {
   card.appendChild(btn);
 }
 
-// 이미지 전체 저장 (5장 순차 다운로드)
+// 이미지 전체 저장 — 5장 blob 변환 후 Web Share API로 한 번에 공유 (모바일 사진첩 저장)
 async function saveAllCards() {
   const cards = document.querySelectorAll('#carouselScroll .card');
   const hasImages = [...cards].some(c => c.dataset.blobUrl);
@@ -1590,17 +1590,49 @@ async function saveAllCards() {
     return;
   }
   const btn = document.getElementById('saveAllImagesBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '저장 중... (0/5)'; }
-  let saved = 0;
+  if (btn) { btn.disabled = true; btn.textContent = '변환 중... (0/5)'; }
+
+  // ① 먼저 5장 모두 blob으로 변환 (setTimeout 없이 연속 처리 → user gesture 컨텍스트 유지)
+  const blobs = [];
   for (let i = 0; i < Math.min(cards.length, 5); i++) {
     if (!cards[i]) continue;
-    if (btn) btn.textContent = `저장 중... (${i + 1}/5)`;
-    await saveCardAsCanvas(cards[i], i + 1);
-    saved++;
-    await new Promise(r => setTimeout(r, 300));
+    if (btn) btn.textContent = `변환 중... (${i + 1}/5)`;
+    const blob = await buildCardBlob(cards[i], i + 1);
+    if (blob) blobs.push({ blob, pageNum: i + 1 });
   }
+
+  if (!blobs.length) {
+    if (btn) { btn.disabled = false; btn.textContent = '이미지 전체 저장'; }
+    showToast('변환된 이미지가 없습니다', 'error');
+    return;
+  }
+  if (btn) btn.textContent = '저장 중...';
+
+  const files = blobs.map(({ blob, pageNum }) =>
+    new File([blob], `carousel_p${pageNum}.png`, { type: 'image/png' })
+  );
+
+  // ② 모바일: Web Share API로 5장 한 번에 공유 → 사진첩 저장
+  if (navigator.canShare && navigator.canShare({ files })) {
+    try {
+      await navigator.share({ files, title: '캐럿셀 이미지 5장' });
+      showToast(`${blobs.length}장 저장 완료`, 'success');
+    } catch (e) {
+      if (e.name !== 'AbortError') showToast('저장 실패: ' + e.message, 'error');
+    }
+  } else {
+    // ③ 데스크톱 폴백: 순차 다운로드
+    for (const { blob, pageNum } of blobs) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `carousel_p${pageNum}.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+      await new Promise(r => setTimeout(r, 300));
+    }
+    showToast(`${blobs.length}장 저장 완료`, 'success');
+  }
+
   if (btn) { btn.disabled = false; btn.textContent = '이미지 전체 저장'; }
-  showToast(`총 ${saved}장 저장 완료`, 'success');
 }
 
 document.getElementById('saveAllImagesBtn').addEventListener('click', saveAllCards);
@@ -1724,6 +1756,29 @@ async function generateCompositeImages() {
 }
 
 async function saveCardAsCanvas(card, pageNum) {
+  const blob = await buildCardBlob(card, pageNum);
+  if (!blob) { showToast(`페이지 ${pageNum} 변환 실패`, 'error'); return; }
+  const filename = `carousel_p${pageNum}.png`;
+  const file = new File([blob], filename, { type: 'image/png' });
+  // 모바일: Web Share API → 사진첩 저장 지원 (iOS 15+ / Android Chrome)
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: `캐럿셀 ${pageNum}페이지` });
+      showToast(`페이지 ${pageNum} 저장 완료`, 'success');
+    } catch (e) {
+      if (e.name !== 'AbortError') showToast(`페이지 ${pageNum} 저장 실패`, 'warning');
+    }
+  } else {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    showToast(`페이지 ${pageNum} 저장 완료`, 'success');
+  }
+}
+
+// 캔버스 합성 → Blob 반환 (저장/공유 공통 유틸)
+async function buildCardBlob(card, pageNum) {
   const W = 1080, H = 1080;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -1802,17 +1857,7 @@ async function saveCardAsCanvas(card, pageNum) {
   ctx.fillStyle = ACC[pageNum] || '#8B5CF6';
   ctx.fillRect(PAD_X, curY, ACCENT_W, ACCENT_H);
 
-  // ⑤ PNG 다운로드
-  return new Promise(resolve => {
-    canvas.toBlob(blob => {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `carousel_p${pageNum}.png`;
-      document.body.appendChild(a); a.click(); a.remove();
-      showToast(`페이지 ${pageNum} 저장 완료`, 'success');
-      resolve();
-    }, 'image/png');
-  });
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
 }
 
 // 텍스트를 줄 배열로만 측정 (실제 렌더 없음) — bottom-anchored 레이아웃용
