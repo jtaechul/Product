@@ -326,7 +326,7 @@ async function handleGenerate(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'main'),
     system: `당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.\n3. 공포감·호기심·위기감으로 저장·공유율을 높인다.\n4. 모든 콘텐츠에 반말을 절대 사용하지 않는다 — 문어체·존댓말(~습니다/~합니다/~세요)만 허용.\n반드시 JSON만 응답한다.`,
-    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '자기계발'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(훅 — 헤드라인만): 카드 전체를 단 하나의 강렬한 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장('주어+상황+구체적 결과' 구조 필수).\n    좋은 예: "지금 이 순간에도 당신의 뇌는 몸보다 먼저 죽어가고 있다"\n             "한국인 3명 중 1명은 이미 부채 함정에 빠졌다는 사실을 아는가"\n    나쁜 예(절대 금지): "뇌가 먼저 죽어간다" / "돈이 사라진다" (단어 조각)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(문제): 구체적 수치·현실 사례로 독자가 공감할 문제 상황을 서술한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 구체적 수치(%, 명, 연도)를 최소 1개 포함.\n3페이지(심각성): "대부분은 이 사실을 모른다" 접근으로 충격 사실·연구 결과를 제시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 출처 가능 수준의 실제 통계·연구 인용 1건 이상.\n4페이지(실마리): 완전한 해결책은 절대 주지 말고 '해결 방향의 단서'만 암시해 DM 욕구를 자극한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 마지막 줄은 '그렇다면 어떻게?' 암시로 끝낸다.\n5페이지(반문·열린 결말): 구매 유도·책 이름 없이 독자 스스로 생각하게 만드는 반문.\n  - cta: 열린 질문 2줄 이내\n  - linkText: 여운 있는 한 줄\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
+    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '자기계발'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(훅 — 헤드라인만): 카드 전체를 단 하나의 강렬한 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 이미 겪었을 구체적 상황을 묘사한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자의 일상 경험을 정확히 포착한 문장. 통계보다 경험 공유형.\n    좋은 예: "매달 저축하는데 잔고는 왜 줄어드는 걸까요"\n             "열심히 일하는데 10년째 제자리라면 이유가 있습니다"\n             "아무리 다이어트해도 살이 빠지지 않는 데는 이유가 있습니다"\n    나쁜 예(절대 금지): "뇌가 먼저 죽어간다" / "당신의 뇌는 몸보다 먼저 죽어가고 있다" (공포 자극형)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(문제): 구체적 수치·현실 사례로 독자가 공감할 문제 상황을 서술한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 구체적 수치(%, 명, 연도)를 최소 1개 포함.\n3페이지(심각성): "대부분은 이 사실을 모른다" 접근으로 충격 사실·연구 결과를 제시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 출처 가능 수준의 실제 통계·연구 인용 1건 이상.\n4페이지(실마리): 완전한 해결책은 절대 주지 말고 '해결 방향의 단서'만 암시해 DM 욕구를 자극한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 마지막 줄은 '그렇다면 어떻게?' 암시로 끝낸다.\n5페이지(참여형 질문): 독자가 자기 상황에 대해 답하고 싶어지는 A/B 선택 질문으로 참여를 유도한다.\n  - cta: 독자 자신의 경험/상태를 묻는 A/B 선택 형식 2~3줄.\n    예시 형식: "지금 당신은 어느 쪽인가요?\\nA. 알고는 있지만 아직 시작 못했다\\nB. 시작했지만 방향을 모르겠다"\n    핵심: 책이나 정보가 아니라 독자 자신의 상황을 묻는 질문이어야 한다.\n  - linkText: "더 알고 싶다면 댓글로 알려주세요" 형태의 자연스러운 참여 유도 한 줄 (키워드 강요 없이)\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
 
   return { success: true, pages: extractJson(text) };
@@ -353,13 +353,13 @@ const FALLBACK_IMAGE_PROMPTS = {
   page5: 'solitary path through autumn forest, soft diffused light, contemplative open horizon, peaceful but unresolved, invitation to journey, no text',
 };
 
-// 페이지별 시각 방향 지침 — Claude 프롬프트 생성 가이드
+// 페이지별 시각 방향 지침 — 사진 촬영 용어로 구체적으로 명시 (Flux 모델 최적화)
 const PAGE_VISUAL_DIRECTIONS = {
-  page1: '강렬한 긴장감과 호기심. 극적이고 시네마틱한 분위기. 무언가를 발견하기 직전의 서스펜스. 어둡고 무거운 톤이지만 단 하나의 빛줄기나 희망 요소를 포함.',
-  page2: '현실적 문제 상황. 다큐멘터리 사진 스타일. 일상 속 고통·불안·결핍감. 도시적이거나 사무적인 공간. 사람의 뒷모습·그림자 등 감정이입 요소.',
-  page3: '충격적이고 대담한 시각 대비. 강렬한 구도와 선명한 색 대비. "이것이 현실이다"는 경각심을 주는 강렬한 이미지. 볼드하고 기억에 남는 시각 임팩트.',
-  page4: '전환점과 희망. 따뜻하고 밝아지는 빛. 책·지식·통찰을 상징하는 소품. 어둠에서 빛으로 향하는 느낌. 가능성과 변화의 기운.',
-  page5: '여운과 사색. 넓은 시야·열린 지평선. 조용하고 여백이 많은 구도. 독자가 스스로 결론을 내리도록 유도하는 열린 결말 분위기. 부드럽고 평화로운 자연광.',
+  page1: 'editorial photography, lone silhouette on empty road at golden hour, long dramatic shadows, muted desaturated palette with single warm horizon glow, ultra-wide angle composition, strong negative space, bottom third dark and uncluttered for text overlay',
+  page2: 'documentary photography, solitary person at rain-streaked cafe window at night, warm amber interior vs cold blue exterior, f/2.8 shallow depth of field, candid emotional weight, bottom half simple dark gradient for text',
+  page3: 'bold conceptual photography, single stark object under harsh overhead spotlight against pure black background, strong geometric shadow on floor, graphic editorial style, extreme contrast, minimal composition, no clutter',
+  page4: 'lifestyle photography, hands carefully opening a worn leather book near sunlit window, golden morning light, floating dust particles in light beam, warm hopeful intimate scale, dark lower third for text overlay',
+  page5: 'fine art landscape photography, single bare tree on expansive open hillside at dusk, ultra-wide field of view, vast negative space dominates, contemplative and open-ended mood, soft gradient sky from orange to deep blue, serene and unresolved',
 };
 
 async function handleGenerateImages(env, body) {
@@ -378,7 +378,7 @@ async function handleGenerateImages(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
     max_tokens: 1400,
-    system: '당신은 AI 이미지 프롬프트 전문가입니다. 인스타그램 카드뉴스의 각 페이지 내용과 감정 흐름에 정확히 부합하는 Stable Diffusion 영어 프롬프트를 작성합니다. 반드시 JSON만 응답합니다.',
+    system: '당신은 광고 사진 아트 디렉터입니다. 각 페이지 감정에 맞는 Flux 이미지 생성 영어 프롬프트를 작성합니다.\n규칙:\n1. 카메라 렌즈·조명·구도를 구체적으로 명시한다 (예: f/2.8 shallow depth, golden hour backlight, rule of thirds)\n2. 사람 얼굴 클로즈업 금지 — 뒷모습·실루엣·손만 허용\n3. 텍스트·글자·숫자 없음 (no text, no letters)\n4. 이미지 하단 30%는 어둡거나 단순하게 — 텍스트 오버레이 공간\n5. 각 페이지마다 완전히 다른 시각 언어를 써야 한다 (중복 금지)\n6. 60단어 이내, Instagram 1:1 정사각형 기준\n반드시 JSON만 응답한다.',
     user: `책 카테고리: ${bookInfo.category || '자기계발'}\n책 핵심 주제: ${bookInfo.coreMessage || bookInfo.title || ''}\n\n아래 5페이지 카드뉴스 내용을 보고, 각 페이지의 내용과 감정에 정확히 부합하는 배경 이미지 프롬프트 5개를 작성하세요.\npage1~page5 키를 반드시 모두 포함해야 합니다.\n\n=== 각 페이지 내용 ===\n1페이지(훅 — 충격·공포·호기심): ${pageContents.page1}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page1}\n\n2페이지(문제 — 현실 직시): ${pageContents.page2}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page2}\n\n3페이지(심각성 — 경각심): ${pageContents.page3}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page3}\n\n4페이지(실마리 — 희망·전환): ${pageContents.page4}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page4}\n\n5페이지(CTA — 여운·초대): ${pageContents.page5}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page5}\n\n=== 공통 규칙 ===\n- 페이지별 내용과 감정을 구체적으로 반영할 것 (추상적 책 이미지 5개 금지)\n- 인물 얼굴 클로즈업 금지 (뒷모습·실루엣·손 등 허용)\n- 텍스트·글자·숫자 없음 (no text, no letters)\n- Instagram 1:1 정사각형 구도\n- 각 프롬프트는 영어, 60단어 이내\n- 하단 30%는 어둡거나 단순한 영역으로 구성 (텍스트 오버레이 공간 확보)\n\nJSON (page1~page5 모두 필수): {"page1":"prompt","page2":"prompt","page3":"prompt","page4":"prompt","page5":"prompt"}`,
   });
 
@@ -399,7 +399,7 @@ async function handleGenerateImages(env, body) {
   const images = {};
   for (const [page, prompt] of Object.entries(prompts)) {
     const seed = Math.floor(Math.random() * 900000) + 100000;
-    images[page] = `${base}${encodeURIComponent(prompt + suffix)}?width=1080&height=1080&nologo=true&seed=${seed}`;
+    images[page] = `${base}${encodeURIComponent(prompt + suffix)}?width=1080&height=1080&nologo=true&seed=${seed}&model=flux&enhance=true`;
   }
 
   return { success: true, images, prompts };
@@ -416,8 +416,8 @@ async function handleGenerateCaption(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light'),
     max_tokens: 512,
-    system: '당신은 인스타그램 마케터입니다. 댓글 유도 중심의 짧고 강렬한 캡션을 작성합니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 반말 절대 금지 — 문어체·존댓말(~습니다/~합니다/~세요)만 허용. 반드시 JSON만 응답합니다.',
-    user: `책 카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n\n[댓글 키워드 선택 규칙]\n- 주제 힌트: "${kwHint}"\n- 이 주제에서 자연스럽고 완결된 단어를 댓글 키워드로 선택한다.\n- 키워드는 기본적으로 2자를 사용한다. 3자는 그 단어 자체가 원래부터 3자인 경우에만 허용한다.\n- 긴 단어를 억지로 잘라 만들지 않는다. (예: '경제투자'→'경제' 또는 '투자' 중 하나 선택. '경제투'처럼 어색하게 자르기 절대 금지)\n\n인스타그램 캡션을 작성하세요.\n\n[캡션 구조 — 순서 엄수]\n1줄: 호기심/위기감 자극 단문 또는 질문 (책 제목 절대 노출 금지)\n2~3줄: 캐럿셀 핵심만 초간결 요약 (반복 금지, 노골적 판매 금지)\n끝에서 둘째 줄: 댓글을 달고 싶게 만드는 유인 문구. 책의 핵심·해법·비밀을 이미 알고 있는 듯한 뉘앙스로 호기심을 자극해 행동을 유발한다. (예시: "이 책이 알려주는 한 가지가 궁금하다면?", "지금 당장 확인하고 싶다면?", "이 내용의 진짜 해답, 알고 싶다면?")\n마지막 줄: "댓글에 '[선택한 키워드]'를 남겨주세요" 형태의 댓글 유도 문구\n\n[추가 규칙]\n- 해시태그: 정확히 3개 (카테고리 관련)\n- 전체 6줄 이내, 짧고 강렬하게\n\nJSON: {"caption":"1줄\\n2줄\\n3줄\\n유인문구줄\\n댓글유도줄","hashtags":["#tag1","#tag2","#tag3"],"commentKeyword":"[2~3자 자연스러운 완결 키워드]"}`,
+    system: '당신은 인스타그램 콘텐츠 크리에이터입니다. 독자가 자연스럽게 참여하고 싶어지는 캡션을 씁니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 반말 절대 금지 — 문어체·존댓말(~습니다/~합니다/~세요)만 허용. 반드시 JSON만 응답합니다.',
+    user: `책 카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n5페이지 CTA: ${pages.page5?.cta || ''}\n\n[댓글 키워드 선택 규칙]\n- 주제 힌트: "${kwHint}"\n- 이 주제에서 자연스럽고 완결된 단어를 댓글 키워드로 선택한다.\n- 키워드는 기본적으로 2자를 사용한다. 3자는 그 단어 자체가 원래부터 3자인 경우에만 허용한다.\n- 긴 단어를 억지로 잘라 만들지 않는다. (예: '경제투자'→'경제' 또는 '투자' 중 하나 선택. '경제투'처럼 어색하게 자르기 절대 금지)\n\n인스타그램 캡션을 작성하세요.\n\n[캡션 구조 — 순서 엄수]\n1줄: 독자의 일상 경험을 포착한 공감형 질문 (책 제목 절대 노출 금지. "당신이 모른다면" 패턴 금지. "대부분의 사람들이" 금지)\n2~3줄: 캐럿셀 핵심 인사이트 초간결 요약 (반복 금지, 노골적 판매 금지)\n끝에서 둘째 줄: 저장 유도 문구 ("나중에 꺼내보고 싶다면 저장해두세요" 또는 "도움이 됐다면 저장해두세요" 형태)\n마지막 줄: "더 자세한 내용이 궁금하다면 댓글에 '[선택한 키워드]'를 남겨주세요" 형태 — 강요 대신 선택 제공\n\n[추가 규칙]\n- 해시태그: 정확히 3개 (카테고리 관련)\n- 전체 6줄 이내, 짧고 강렬하게\n\nJSON: {"caption":"1줄\\n2줄\\n3줄\\n저장유도줄\\n댓글유도줄","hashtags":["#tag1","#tag2","#tag3"],"commentKeyword":"[2~3자 자연스러운 완결 키워드]"}`,
   });
 
   const result = extractJson(text);
