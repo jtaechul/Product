@@ -60,8 +60,8 @@ export class Renderer {
     ctx.drawImage(this.video, cov.ox, cov.oy, cov.dw, cov.dh);
     ctx.restore();
     ctx.globalAlpha = 1;
-    // 살짝 어둡게 → 스켈레톤·벽 가독성
-    ctx.fillStyle = 'rgba(5,8,20,0.28)';
+    // 살짝 어둡게 → 스켈레톤·벽 가독성(중립 회색)
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
     ctx.fillRect(0, 0, this.W, this.H);
   }
 
@@ -71,11 +71,13 @@ export class Renderer {
     const cov = this._cover();
     const sw = this._shoulderPx(landmarks, cov);
     const thick = Math.max(8, sw * 0.5);
-    const color = this.skelTint ? this.skelTint.color : '#4dd0ff';
+    // 기본은 흰색(파란색 미사용). 통과/충돌 시에만 초록/빨강 등으로 틴트.
+    const color = this.skelTint ? this.skelTint.color : '#f4f4f6';
+    const glow = this.skelTint ? this.skelTint.color : 'rgba(0,0,0,0.7)';
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     ctx.strokeStyle = color;
     ctx.lineWidth = thick;
-    ctx.shadowColor = color; ctx.shadowBlur = 14;
+    ctx.shadowColor = glow; ctx.shadowBlur = 12;
     for (const [a, b] of POSE_CONNECTIONS) {
       const la = landmarks[a], lb = landmarks[b];
       if (!la || !lb) continue;
@@ -126,29 +128,37 @@ export class Renderer {
   }
 
   // 다가오는 벽: progress 0→1 (1=판정). geom=화면 좌표. variant 효과 포함.
+  // 벽은 반투명 → 뒤의 카메라(나)가 항상 비치고, 사람 모양 구멍만 완전히 뚫림.
   drawWall(wall, geom, progress, timeSec) {
     const eased = progress * progress; // easeIn
     const appScale = 0.16 + 0.84 * eased;
-    const alpha = 0.30 + 0.62 * eased;
+    const alpha = 0.34 + 0.54 * eased; // 최대 ~0.88 → 진한 회색 벽, 구멍으로 카메라가 또렷이
     let extraRot = 0, extraDX = 0;
     if (wall.variant === 'rotate') extraRot = (1 - progress) * 1.4;
     if (wall.variant === 'moving') extraDX = Math.sin(timeSec * 2.2) * geom.S * 1.2 * (1 - progress * 0.3);
+    const hgeom = { ...geom, extraRot, extraDX };
 
     const wc = this.wallCtx;
     wc.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     wc.clearRect(0, 0, this.W, this.H);
-    // 벽 패널
+    // 벽 패널 — 진한 회색(파란색 미사용)
     const grad = wc.createLinearGradient(0, 0, 0, this.H);
-    grad.addColorStop(0, 'rgba(40,48,86,1)');
-    grad.addColorStop(1, 'rgba(22,26,52,1)');
+    grad.addColorStop(0, 'rgba(58,58,62,0.96)');
+    grad.addColorStop(1, 'rgba(38,38,42,0.96)');
     wc.globalCompositeOperation = 'source-over';
     wc.fillStyle = grad;
     wc.fillRect(0, 0, this.W, this.H);
-    // 구멍 펀칭
+    // 사람 모양 둘레의 옅은 흰색 외곽선(포즈를 알아보게) — 살짝 크게 그린 뒤 가운데를 뚫어 테두리만
+    wc.save();
+    wc.shadowColor = 'rgba(255,255,255,0.55)';
+    wc.shadowBlur = 18;
+    wc.fillStyle = 'rgba(235,235,235,0.85)';
+    fillHole(wc, wall, { ...hgeom, thickBoost: 0.16 });
+    wc.restore();
+    // 실제 사람 모양 구멍 펀칭(완전 투명 → 지금 촬영 중인 카메라 그대로 보임)
     wc.globalCompositeOperation = 'destination-out';
     wc.fillStyle = '#000';
-    fillHole(wc, wall, { ...geom, extraRot, extraDX });
-    // 구멍 테두리(빛나는 링)
+    fillHole(wc, wall, { ...hgeom, thickBoost: 0 });
     wc.globalCompositeOperation = 'source-over';
 
     // 메인 캔버스에 접근 스케일 적용
@@ -170,7 +180,7 @@ export class Renderer {
     ctx.save();
     ctx.setLineDash([14, 12]);
     ctx.lineWidth = 4;
-    ctx.strokeStyle = 'rgba(77,208,255,0.85)';
+    ctx.strokeStyle = 'rgba(235,235,235,0.85)';
     ctx.strokeRect(gx, gy, gw, gh);
     ctx.setLineDash([]);
     if (scanY != null) {
@@ -194,7 +204,7 @@ export class Renderer {
     ctx.fillText(text, this.W / 2, this.H * 0.42);
     if (sub) {
       ctx.font = `800 ${Math.min(this.W, this.H) * 0.045}px Trebuchet MS, sans-serif`;
-      ctx.fillStyle = '#4dd0ff';
+      ctx.fillStyle = '#ffd23f';
       ctx.fillText(sub, this.W / 2, this.H * 0.62);
     }
     ctx.restore();

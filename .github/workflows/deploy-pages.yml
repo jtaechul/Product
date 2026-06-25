@@ -26,7 +26,7 @@ jobs:
         run: |
           mkdir -p /tmp/pages
           cp index.html main.js style.css /tmp/pages/
-          cp -r spotlight night-hunter travel-expense /tmp/pages/
+          cp -r spotlight night-hunter travel-expense holedash /tmp/pages/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

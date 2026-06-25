@@ -85,7 +85,7 @@ html, body {
 }
 #hudRound {
   font-size: clamp(16px, 3.5vmin, 30px);
-  color: var(--accent);
+  color: #fff;
   letter-spacing: 1px;
 }
 .hud-life {

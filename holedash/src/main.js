@@ -5,7 +5,7 @@ import { Sfx } from './audio.js';
 import { buildWallMask } from './walls.js';
 import { drawBodyMask, computeCollisionRate, bodyThicknessFromShoulder } from './collision.js';
 import {
-  LM, MASK_W, MASK_H, STAGE_WALLS, PRACTICE_WALL, POSE_HINTS,
+  LM, MASK_W, MASK_H, STAGE_WALLS, PRACTICE_WALL, poseHint,
   gradeFromRate, comboMultiplier, START_LIFE, BASE_APPROACH_SEC, INTER_WALL_SEC,
   RANK_TITLES, CONSOLATION_TITLE,
 } from './config.js';
@@ -446,7 +446,7 @@ function updatePlay(t) {
     const progress = Math.min(1, el / g.approachSec);
     const geom = landmarks ? renderer.screenGeom(landmarks) : { cx: renderer.W / 2, cy: renderer.H / 2, S: 80, VH: 136 };
     renderer.drawWall(wall, geom, progress, t);
-    renderer.drawPoseHint(POSE_HINTS[wall.holeShape] || '구멍에 몸을 맞춰요!');
+    renderer.drawPoseHint(poseHint(wall));
     if (progress >= 1 && !g.judged) {
       g.judged = true;
       judge();

@@ -66,41 +66,68 @@ export const INTER_WALL_SEC = 1.4;
 // 몸 막대 두께(어깨너비 대비 비율). 충돌 판정 마스크에 사용.
 export const BODY_THICKNESS_RATIO = 0.55;
 
-// ===== 벽(스테이지) 정의 =====
-// holeShape: 구멍 모양. holeParams: 모양별 파라미터(어깨너비/키 기준 상대값).
-// margin: 구멍 여유(클수록 쉬움). approachSpeed: 접근 속도 배수. variant: 변형.
-export const STAGE_WALLS = [
-  { id: 'w01', level: 1, holeShape: 'rect_vertical', holeParams: { w: 1.7, h: 2.3 }, margin: 0.35, approachSpeed: 0.9,  variant: 'normal' },
-  { id: 'w02', level: 1, holeShape: 'rect_vertical', holeParams: { w: 1.5, h: 2.2 }, margin: 0.28, approachSpeed: 1.0,  variant: 'normal' },
-  { id: 'w03', level: 2, holeShape: 'tpose',         holeParams: { span: 2.4, h: 1.7 }, margin: 0.30, approachSpeed: 1.0,  variant: 'normal' },
-  { id: 'w04', level: 2, holeShape: 'tpose',         holeParams: { span: 2.2, h: 1.6 }, margin: 0.24, approachSpeed: 1.1,  variant: 'normal' },
-  { id: 'w05', level: 3, holeShape: 'side_left',     holeParams: { w: 1.9, h: 1.9 }, margin: 0.28, approachSpeed: 1.1,  variant: 'normal' },
-  { id: 'w06', level: 3, holeShape: 'side_right',    holeParams: { w: 1.9, h: 1.9 }, margin: 0.24, approachSpeed: 1.2,  variant: 'normal' },
-  { id: 'w07', level: 4, holeShape: 'cross',         holeParams: { span: 2.5, h: 2.3 }, margin: 0.26, approachSpeed: 1.2,  variant: 'normal' },
-  { id: 'w08', level: 4, holeShape: 'cross',         holeParams: { span: 2.3, h: 2.2 }, margin: 0.20, approachSpeed: 1.3,  variant: 'normal' },
-  { id: 'w09', level: 5, holeShape: 'tilt_left',     holeParams: { w: 1.8, h: 2.0 }, margin: 0.24, approachSpeed: 1.3,  variant: 'normal' },
-  { id: 'w10', level: 5, holeShape: 'tilt_right',    holeParams: { w: 1.8, h: 2.0 }, margin: 0.20, approachSpeed: 1.4,  variant: 'normal' },
-  { id: 'w11', level: 6, holeShape: 'crouch',        holeParams: { w: 1.9, h: 1.25 }, margin: 0.26, approachSpeed: 1.3,  variant: 'normal' },
-  { id: 'w12', level: 4, holeShape: 'cross',         holeParams: { span: 2.4, h: 2.2 }, margin: 0.22, approachSpeed: 1.4,  variant: 'rotate' },
-  { id: 'w13', level: 5, holeShape: 'side_left',     holeParams: { w: 1.8, h: 1.9 }, margin: 0.20, approachSpeed: 1.5,  variant: 'moving' },
-  { id: 'w14', level: 6, holeShape: 'crouch',        holeParams: { w: 1.8, h: 1.2 },  margin: 0.20, approachSpeed: 1.5,  variant: 'normal' },
-  { id: 'w15', level: 6, holeShape: 'tpose',         holeParams: { span: 2.5, h: 1.7 }, margin: 0.16, approachSpeed: 1.6,  variant: 'rotate' },
-];
+// ===== 사람 모양(포즈) 실루엣 정의 =====
+// 구멍 = "따라 해야 할 포즈의 사람 실루엣". 관절 좌표는 어깨너비(S) 단위,
+// 몸 중심 기준 상대좌표(오른쪽 +x, 아래 +y). 플레이어가 이 포즈를 만들어야 통과.
+// 관절: head, sL/sR(어깨), eL/eR(팔꿈치), wL/wR(손목), hL/hR(골반), kL/kR(무릎), aL/aR(발목)
+const TORSO = { head: [0, -1.5], sL: [-0.5, -1.12], sR: [0.5, -1.12], hL: [-0.26, 0.18], hR: [0.26, 0.18] };
+const LEGS_STRAIGHT = { kL: [-0.28, 0.95], kR: [0.28, 0.95], aL: [-0.3, 1.7], aR: [0.3, 1.7] };
+const LEGS_SPREAD = { kL: [-0.62, 0.85], kR: [0.62, 0.85], aL: [-1.05, 1.5], aR: [1.05, 1.5] };
 
-// 각 구멍 모양 안내 문구(플레이어에게 무슨 포즈인지)
-export const POSE_HINTS = {
-  rect_vertical: '🧍 차렷! 가만히 서기',
-  tpose: '🤸 양팔 쫙! T자',
-  side_left: '👈 왼쪽으로 몸 기울이기',
-  side_right: '👉 오른쪽으로 몸 기울이기',
-  cross: '⭐ 팔다리 모두 벌려 X자!',
-  tilt_left: '↖️ 몸을 왼쪽으로 비스듬히',
-  tilt_right: '↗️ 몸을 오른쪽으로 비스듬히',
-  crouch: '🦔 웅크려 작아지기!',
+export const POSES = {
+  // 차렷: 팔 내림
+  stand: { ...TORSO, ...LEGS_STRAIGHT, eL: [-0.6, -0.5], eR: [0.6, -0.5], wL: [-0.62, 0.1], wR: [0.62, 0.1] },
+  // T자: 양팔 수평
+  tpose: { ...TORSO, ...LEGS_STRAIGHT, eL: [-1.05, -1.12], eR: [1.05, -1.12], wL: [-1.7, -1.12], wR: [1.7, -1.12] },
+  // 별(X)자: 양팔 위로 벌리고 다리 벌림
+  star: { ...TORSO, ...LEGS_SPREAD, eL: [-0.95, -1.7], eR: [0.95, -1.7], wL: [-1.45, -2.15], wR: [1.45, -2.15] },
+  // 한 손 들기(오른팔 위)
+  oneup: { ...TORSO, ...LEGS_STRAIGHT, eL: [-0.6, -0.5], wL: [-0.62, 0.1], eR: [0.7, -1.7], wR: [0.95, -2.2] },
+  // 웅크리기: 전체적으로 낮고 무릎 굽힘
+  crouch: {
+    head: [0, -0.95], sL: [-0.5, -0.55], sR: [0.5, -0.55], hL: [-0.28, 0.1], hR: [0.28, 0.1],
+    eL: [-0.6, -0.2], eR: [0.6, -0.2], wL: [-0.42, 0.25], wR: [0.42, 0.25],
+    kL: [-0.5, 0.5], kR: [0.5, 0.5], aL: [-0.28, 0.9], aR: [0.28, 0.9],
+  },
 };
 
-// 연습 벽(점수 미반영)
-export const PRACTICE_WALL = { id: 'practice', level: 1, holeShape: 'rect_vertical', holeParams: { w: 1.9, h: 2.4 }, margin: 0.45, approachSpeed: 0.75, variant: 'normal' };
+// ===== 벽(스테이지) 정의 =====
+// pose: 위 POSES 키. rot: 실루엣 전체 기울임(라디안). margin: 여유(클수록 두껍게=쉬움).
+// approachSpeed: 접근 속도. variant: normal/rotate(회전 접근)/moving(좌우 이동).
+export const STAGE_WALLS = [
+  { id: 'w01', level: 1, pose: 'stand',  rot: 0,     margin: 0.55, approachSpeed: 0.9, variant: 'normal' },
+  { id: 'w02', level: 1, pose: 'stand',  rot: 0,     margin: 0.45, approachSpeed: 1.0, variant: 'normal' },
+  { id: 'w03', level: 2, pose: 'tpose',  rot: 0,     margin: 0.50, approachSpeed: 1.0, variant: 'normal' },
+  { id: 'w04', level: 2, pose: 'tpose',  rot: 0,     margin: 0.40, approachSpeed: 1.1, variant: 'normal' },
+  { id: 'w05', level: 3, pose: 'oneup',  rot: 0,     margin: 0.48, approachSpeed: 1.1, variant: 'normal' },
+  { id: 'w06', level: 3, pose: 'stand',  rot: -0.32, margin: 0.48, approachSpeed: 1.2, variant: 'normal' },
+  { id: 'w07', level: 3, pose: 'stand',  rot: 0.32,  margin: 0.44, approachSpeed: 1.2, variant: 'normal' },
+  { id: 'w08', level: 4, pose: 'star',   rot: 0,     margin: 0.46, approachSpeed: 1.3, variant: 'normal' },
+  { id: 'w09', level: 4, pose: 'star',   rot: 0,     margin: 0.38, approachSpeed: 1.3, variant: 'normal' },
+  { id: 'w10', level: 5, pose: 'stand',  rot: -0.55, margin: 0.42, approachSpeed: 1.4, variant: 'normal' },
+  { id: 'w11', level: 5, pose: 'crouch', rot: 0,     margin: 0.50, approachSpeed: 1.3, variant: 'normal' },
+  { id: 'w12', level: 5, pose: 'star',   rot: 0,     margin: 0.40, approachSpeed: 1.4, variant: 'rotate' },
+  { id: 'w13', level: 6, pose: 'oneup',  rot: 0,     margin: 0.40, approachSpeed: 1.5, variant: 'moving' },
+  { id: 'w14', level: 6, pose: 'crouch', rot: 0,     margin: 0.42, approachSpeed: 1.5, variant: 'normal' },
+  { id: 'w15', level: 6, pose: 'tpose',  rot: 0,     margin: 0.34, approachSpeed: 1.6, variant: 'rotate' },
+];
+
+// 포즈별 안내 문구(기울임은 rot로 좌/우 구분)
+export const POSE_HINTS = {
+  stand: '🧍 차렷! 가만히 서기',
+  tpose: '🤸 양팔 쫙! T자',
+  star: '⭐ 팔다리 모두 벌려 별 모양!',
+  oneup: '🙋 오른손 번쩍 들기',
+  crouch: '🦔 웅크려 작아지기!',
+};
+export function poseHint(wall) {
+  if (wall.pose === 'stand' && wall.rot < -0.1) return '↖️ 몸을 왼쪽으로 기울이기';
+  if (wall.pose === 'stand' && wall.rot > 0.1) return '↗️ 몸을 오른쪽으로 기울이기';
+  return POSE_HINTS[wall.pose] || '구멍에 몸을 맞춰요!';
+}
+
+// 연습 벽(점수 미반영) — 가장 쉬운 차렷, 여유 크게
+export const PRACTICE_WALL = { id: 'practice', level: 1, pose: 'stand', rot: 0, margin: 0.7, approachSpeed: 0.7, variant: 'normal' };
 
 // 순위 칭호
 export const RANK_TITLES = ['구멍의 제왕 👑', '날쌘 통과러 ⚡', '구멍 마스터 🎯'];
