@@ -915,22 +915,21 @@
       <span class="section-title">DM 자동 회신 미리보기</span>
       <span class="section-badge" style="background:rgba(124,58,237,0.08);color:var(--primary);">Phase 5 준비</span>
     </div>
-    <p style="font-size:12px;color:var(--gray-500);line-height:1.7;margin-bottom:12px;">마지막 장 A/B 투표에서 <strong>A</strong>를 남긴 방문자와 <strong>B</strong>를 남긴 방문자에게 각각 다른 DM이 자동 발송됩니다. 쿠팡파트너스 링크를 입력하면 두 DM 모두에 포함됩니다.</p>
+    <p style="font-size:12px;color:var(--gray-500);line-height:1.7;margin-bottom:12px;">마지막 장 A/B 투표에 댓글을 남긴 방문자에게 발송할 DM입니다. A·B 두 상황을 하나의 메시지로 작성하며, 프로필 링크와 도서 번호가 자동 포함됩니다.</p>
     <div class="form-group" style="margin-bottom:10px;">
       <label>쿠팡파트너스 어필리에이트 링크 (선택)</label>
       <input type="url" id="affiliateLinkInput" placeholder="https://link.coupang.com/a/...">
     </div>
-    <button class="btn btn-outline" id="generateDmBtn" style="font-size:12px;padding:9px 14px;margin-bottom:12px;">A/B DM 자동 회신 생성</button>
+    <button class="btn btn-outline" id="generateDmBtn" style="font-size:12px;padding:9px 14px;margin-bottom:12px;">DM 자동 회신 생성</button>
     <div id="dmReplyResult" style="display:none;">
       <div class="caption-box">
-        <div class="caption-label-text">A 선택자에게 발송될 DM</div>
+        <div class="caption-label-text">A/B 댓글 응답자에게 발송될 DM</div>
         <div class="caption-text-content" id="dmReplyTextA" style="font-size:12px;white-space:pre-line;"></div>
-        <button class="btn btn-outline" id="copyDmABtn" style="font-size:12px;padding:8px 14px;margin-top:8px;">A용 DM 복사</button>
+        <button class="btn btn-outline" id="copyDmABtn" style="font-size:12px;padding:8px 14px;margin-top:8px;">DM 복사</button>
       </div>
-      <div class="caption-box" style="margin-top:12px;">
-        <div class="caption-label-text">B 선택자에게 발송될 DM</div>
-        <div class="caption-text-content" id="dmReplyTextB" style="font-size:12px;white-space:pre-line;"></div>
-        <button class="btn btn-outline" id="copyDmBBtn" style="font-size:12px;padding:8px 14px;margin-top:8px;">B용 DM 복사</button>
+      <div id="dmReplyTextBWrap" style="display:none;">
+        <div class="caption-text-content" id="dmReplyTextB" style="display:none;"></div>
+        <button class="btn btn-outline" id="copyDmBBtn" style="display:none;"></button>
       </div>
     </div>
   </div>
@@ -984,7 +983,9 @@ const state = {
   dmKeyword: null,
   images: null,
   affiliateLink: null,
+  affiliateLinks: [],
   dmReply: null,
+  bookNumber: '',
 };
 
 // ===== 중복 방지: 이미 캐럿셀을 만든 책 목록 =====
@@ -2009,16 +2010,18 @@ document.getElementById('generateDmBtn').addEventListener('click', async () => {
   if (!state.pages || !state.bookInfo) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
   const link = document.getElementById('affiliateLinkInput').value.trim();
   state.affiliateLink = link || null;
+  const affiliateLinks = link ? [link] : (state.affiliateLinks || []);
 
-  showLoading('DM 자동 회신 생성 중...', 'AI가 댓글 키워드 감지 시 발송할 DM 내용을 작성합니다');
+  showLoading('DM 자동 회신 생성 중...', 'AI가 A/B 댓글 응답자에게 발송할 DM 내용을 작성합니다');
   try {
     const data = await apiFetch('/api/generate-dm-reply', {
       pages: state.pages,
       bookInfo: state.bookInfo,
-      affiliateLink: state.affiliateLink,
+      affiliateLinks,
+      bookNumber: state.bookNumber || '',
     });
     renderDmReplies(data);
-    showToast('A/B DM 자동 회신 생성 완료!', 'success');
+    showToast('DM 자동 회신 생성 완료!', 'success');
   } catch (err) {
     showToast(err.message, 'error');
   } finally {
@@ -2250,6 +2253,8 @@ async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
       if (result && result.pipelineId) {
         localStorage.setItem('activePipelineId', result.pipelineId);
         localStorage.setItem('activePipelineBookInfo', JSON.stringify(bookInfo));
+        if (result.bookNumber) state.bookNumber = result.bookNumber;
+        if (affiliateLinks) state.affiliateLinks = affiliateLinks;
         showToast(`"${bookInfo.title}" 서버에서 처리 시작 — 앱을 꺼도 계속 진행됩니다`, 'success');
         setDeployStep(1, 'active', 'Claude AI가 5페이지 카드뉴스를 작성 중...');
         startPipelinePolling(result.pipelineId);
@@ -2371,9 +2376,10 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
       pages, bookInfo,
       affiliateLinks: Array.isArray(affiliateLinks) ? affiliateLinks : [],
       commentKeyword: dmKeyword,
+      bookNumber: state.bookNumber || '',
     });
     renderDmReplies(dmData);
-    setDeployStep(5, 'done', 'A/B DM 자동 회신 생성 완료');
+    setDeployStep(5, 'done', 'DM 자동 회신 생성 완료');
   } catch (err) {
     setDeployStep(5, 'error', 'DM 회신 생성 실패 — 계속 진행');
   }
@@ -2510,14 +2516,12 @@ function renderDmKeywordInfo(category) {
     + (category ? ` <span style="opacity:.65">(라우팅 카테고리: ${escHtml(category)})</span>` : '');
 }
 
-// A/B DM 두 개를 화면에 표시. 신규(dmTextA/dmTextB) 우선, 구버전(dmText)도 호환.
+// DM 회신을 화면에 표시. dmText(단일) 우선, 구버전 dmTextA/dmText도 호환.
 function renderDmReplies(src) {
-  const a = (src && (src.dmTextA || src.dmText)) || '';
-  const b = (src && src.dmTextB) || '';
-  if (!a && !b) return false;
-  state.dmReplyA = a; state.dmReplyB = b;
-  document.getElementById('dmReplyTextA').textContent = a || '(A용 DM이 생성되지 않았습니다)';
-  document.getElementById('dmReplyTextB').textContent = b || '(B용 DM이 생성되지 않았습니다)';
+  const dm = (src && (src.dmText || src.dmTextA)) || '';
+  if (!dm) return false;
+  state.dmReplyA = dm; state.dmReplyB = dm;
+  document.getElementById('dmReplyTextA').textContent = dm;
   document.getElementById('dmReplyResult').style.display = 'block';
   document.getElementById('dmReplyWrapper').style.display = 'block';
   return true;
@@ -2538,6 +2542,8 @@ function renderPipelineResults(status, autoSendComposites) {
   state.caption = status.caption || '';
   state.captionHashtags = status.hashtags || [];
   state.dmKeyword = status.dmKeyword || '';
+  if (status.bookNumber) state.bookNumber = status.bookNumber;
+  if (status.affiliateLinks) state.affiliateLinks = status.affiliateLinks;
   if (status.bookInfo) addToHistory(status.bookInfo.title);
   renderCarousel(status.pages);
   if (status.images) applyImagesToCards(status.images);
