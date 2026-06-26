@@ -153,12 +153,12 @@ export class Renderer {
     wc.globalCompositeOperation = 'source-over';
     wc.fillStyle = grad;
     wc.fillRect(0, 0, this.W, this.H);
-    // 사람 모양 구멍의 흰색 외곽선(선) — 살짝 크게 흰색으로 그린 뒤 가운데를 뚫어 '선'만 남김
+    // 사람 모양 구멍의 흰색 외곽선(굵은 흰 선) — 살짝 크게 흰색으로 그린 뒤 가운데를 뚫어 '선'만 남김
     wc.save();
-    wc.shadowColor = 'rgba(255,255,255,0.4)';
-    wc.shadowBlur = 6;
+    wc.shadowColor = 'rgba(255,255,255,0.45)';
+    wc.shadowBlur = 8;
     wc.fillStyle = '#ffffff';
-    fillHole(wc, wall, { ...hgeom, thickBoost: 0.11 });
+    fillHole(wc, wall, { ...hgeom, thickBoost: 0.17 });
     wc.restore();
     // 실제 사람 모양 구멍 펀칭(완전 투명 → 지금 촬영 중인 카메라 그대로 보임)
     wc.globalCompositeOperation = 'destination-out';
