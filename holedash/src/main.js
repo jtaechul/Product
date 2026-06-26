@@ -8,7 +8,7 @@ import {
   LM, MASK_W, MASK_H, STAGE_WALLS, PRACTICE_WALL, poseHint,
   gradeFromRate, comboMultiplier, START_LIFE, BASE_APPROACH_SEC, INTER_WALL_SEC,
   RANK_TITLES, CONSOLATION_TITLE,
-  DODGE_TRAVEL_SEC, DODGE_HIT_UNITS, DODGE_SCORE, DODGE_FROM_WALL, DODGE_CHANCE, DODGE_DOUBLE_FROM_WALL,
+  DODGE_TRAVEL_SEC, DODGE_HIT_UNITS, DODGE_SCORE, DODGE_FROM_WALL, DODGE_CHANCE, DODGE_GAP_SEC,
 } from './config.js';
 
 const $ = (id) => document.getElementById(id);
@@ -161,7 +161,7 @@ function startCalibration() {
 
 function beginCalibScan() {
   calib.progress = 0; calib.done = false; calib.tStart = performance.now() / 1000;
-  calib.status = '화면 안에 전신이 보이게 서주세요';
+  calib.status = '별 모양에 맞춰 팔·다리를 벌려 서주세요';
   hideAllScreens();
   $('overlay').style.pointerEvents = 'none';
   $('btnCalibSkip').classList.add('hidden');
@@ -227,6 +227,7 @@ function startMainGame() {
   g.practice = false;
   g.wallIndex = 0;
   current.score = 0; current.combo = 0; current.walls = 0; current.perfects = 0;
+  current.dodgeCombo = 0;
   current.life = START_LIFE;
   updateHud();
   beginCountdown('시작!');
@@ -290,30 +291,17 @@ function shoulderNorm() {
   return Math.max(0.06, dist(a, b));
 }
 
-// 마스크 좌표계 geom(미러)
+// 마스크 좌표계의 고정 구멍(화면 wallGeom과 동일 비율). 몸을 따라다니지 않음.
 function maskGeom() {
-  const ls = landmarks[LM.L_SHOULDER], rs = landmarks[LM.R_SHOULDER];
-  const lh = landmarks[LM.L_HIP], rh = landmarks[LM.R_HIP];
-  if (!ls || !rs) return null;
-  const sx = (nx) => (1 - nx) * MASK_W;
-  const sy = (ny) => ny * MASK_H;
-  let cx, cy;
-  if (lh && rh) {
-    cx = (sx(ls.x) + sx(rs.x) + sx(lh.x) + sx(rh.x)) / 4;
-    cy = (sy(ls.y) + sy(rs.y) + sy(lh.y) + sy(rh.y)) / 4;
-  } else {
-    cx = (sx(ls.x) + sx(rs.x)) / 2;
-    cy = (sy(ls.y) + sy(rs.y)) / 2 + MASK_H * 0.15;
-  }
-  const S = shoulderNorm() * MASK_W;
-  return { cx, cy, S, VH: S * 1.7 };
+  const S = MASK_H * 0.16;
+  return { cx: MASK_W / 2, cy: MASK_H * 0.53, S, VH: S * 1.7 };
 }
 
 function applyGrade(grade, wall) {
   const scoring = !g.practice;
   if (scoring) current.walls++;
-  // 연출
-  const screenGeom = landmarks ? renderer.screenGeom(landmarks) : { cx: renderer.W / 2, cy: renderer.H / 2 };
+  // 연출 — 고정 구멍 위치에서 이펙트
+  const screenGeom = renderer.wallGeom();
   renderer.tintSkeleton(grade.color, 0.7);
   if (grade.grade === 'CRASH') {
     renderer.setFlash('#ff3030');
@@ -468,7 +456,7 @@ function updatePlay(t) {
   } else if (g.phase === 'approach') {
     const el = t - g.wallStart;
     const progress = Math.min(1, el / g.approachSec);
-    const geom = landmarks ? renderer.screenGeom(landmarks) : { cx: renderer.W / 2, cy: renderer.H / 2, S: 80, VH: 136 };
+    const geom = renderer.wallGeom();
     renderer.drawWall(wall, geom, progress, t);
     renderer.drawPoseHint(poseHint(wall));
     if (progress >= 1 && !g.judged) {
@@ -494,9 +482,15 @@ function shouldDodge() {
 }
 
 function startDodge(t) {
-  const count = g.wallIndex >= DODGE_DOUBLE_FROM_WALL && Math.random() < 0.5 ? 2 : 1;
+  // 후반일수록 더 많은 공이 연달아 날아오는 '웨이브'
+  let count = 1;
+  if (g.wallIndex >= 4 && Math.random() < 0.6) count = 2;
+  if (g.wallIndex >= 8 && Math.random() < 0.5) count = 3;
+  const dirs = [-1, 0, 1];
   const list = [];
-  for (let i = 0; i < count; i++) list.push({ start: undefined, resolved: false });
+  for (let i = 0; i < count; i++) {
+    list.push({ start: undefined, resolved: false, dir: dirs[Math.floor(Math.random() * 3)] });
+  }
   g.dodge = { list, index: 0, doneAt: 0 };
   g.phase = 'dodge';
 }
@@ -504,16 +498,22 @@ function startDodge(t) {
 function updateDodge(t) {
   const d = g.dodge;
   if (d.index >= d.list.length) {
-    if (t - d.doneAt >= 0.5) advanceWall();
+    if (t - d.doneAt >= 0.45) advanceWall();
     return;
   }
   const ob = d.list[d.index];
   if (ob.start === undefined) {
-    const geom = landmarks ? renderer.screenGeom(landmarks) : { cx: renderer.W / 2, cy: renderer.H * 0.45, S: 80 };
-    ob.tx = geom.cx; ob.ty = geom.cy; ob.S = Math.max(40, geom.S); ob.start = t;
+    // 장애물 등장 순간의 내 위치를 표적으로 잠금 → 옆으로 비켜야 함
+    const geom = landmarks ? renderer.playerCenter(landmarks) : { cx: renderer.W / 2, cy: renderer.H * 0.45, S: 80 };
+    ob.tx = geom.cx; ob.ty = geom.cy; ob.S = Math.max(46, geom.S);
+    // 진입 방향(좌/위/우)
+    const off = renderer.W * 0.45 * ob.dir;
+    ob.sx = Math.max(renderer.W * 0.05, Math.min(renderer.W * 0.95, ob.tx + off));
+    ob.start = t;
+    sfx.whoosh();
   }
   if (ob.resolved) {
-    if (t - ob.resolvedAt >= 0.8) {
+    if (t - ob.resolvedAt >= DODGE_GAP_SEC) {
       d.index++;
       if (d.index >= d.list.length) d.doneAt = t;
     }
@@ -521,31 +521,34 @@ function updateDodge(t) {
   }
   const p = Math.min(1, (t - ob.start) / DODGE_TRAVEL_SEC);
   renderer.drawObstacle(ob, p, t);
-  renderer.drawPoseHint('⚠️ 옆으로 피해!');
+  const hint = ob.dir < 0 ? '⬅️ 오른쪽으로 피해!' : ob.dir > 0 ? '오른쪽에서 와요 — 왼쪽으로! ➡️' : '⚠️ 옆으로 피해!';
+  renderer.drawPoseHint(hint);
   if (p >= 1) { ob.resolved = true; ob.resolvedAt = t; judgeDodge(ob); }
 }
 
 function judgeDodge(ob) {
   let hit = false;
   if (landmarks) {
-    const geom = renderer.screenGeom(landmarks);
+    const geom = renderer.playerCenter(landmarks);
     const dxUnits = Math.abs(geom.cx - ob.tx) / ob.S;
     hit = dxUnits < DODGE_HIT_UNITS;
   }
   if (hit) {
     current.life = Math.max(0, current.life - 1);
     current.combo = 0;
+    current.dodgeCombo = 0;
     renderer.setFlash('#ff3030');
-    renderer.tintSkeleton('#ff5c5c', 0.7);
     sfx.grade('CRASH');
     shakeScreen();
     bannerText('맞았다! 💥', '#ff5c5c');
   } else {
-    current.score += DODGE_SCORE;
-    renderer.burst(ob.tx, ob.ty, '#57e389', 22);
-    renderer.tintSkeleton('#57e389', 0.6);
-    sfx.grade('GREAT');
-    bannerText(`피했다! +${DODGE_SCORE}`, '#57e389');
+    current.dodgeCombo = (current.dodgeCombo || 0) + 1;
+    const pts = DODGE_SCORE + (current.dodgeCombo - 1) * 15; // 연속 회피 보너스
+    current.score += pts;
+    renderer.burst(ob.tx, ob.ty, '#ffd23f', 26);
+    sfx.ding(current.dodgeCombo - 1);
+    const cstr = current.dodgeCombo >= 2 ? ` x${current.dodgeCombo}` : '';
+    bannerText(`피했다!${cstr} +${pts}`, '#57e389');
   }
   updateHud();
 }

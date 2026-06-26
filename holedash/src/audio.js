@@ -62,6 +62,14 @@ export class Sfx {
 
   beep() { if (!this.enabled) return; this._tone(880, 0.12, 'square', 0.12); }
   go() { if (!this.enabled) return; this._tone(1320, 0.25, 'square', 0.16); }
+  // 장애물 날아옴(슉~) / 회피 성공(딩↑, 콤보 높을수록 음↑)
+  whoosh() { if (!this.enabled) return; this._sweep(720, 150, 0.32, 'sawtooth', 0.10); this._noise(0.22, 0.08); }
+  ding(level = 0) {
+    if (!this.enabled) return;
+    const base = 760 + Math.min(level, 6) * 110;
+    this._tone(base, 0.11, 'triangle', 0.16);
+    this._tone(base * 1.5, 0.14, 'triangle', 0.12, 0.05);
+  }
 
   grade(name, comboStreak = 0) {
     if (!this.enabled) return;
@@ -102,14 +110,19 @@ export class Music {
     this.timer = null;
     this.step = 0; this.bar = 0; this.nextTime = 0;
     this.master = null;
-    this.volume = 0.16;
+    this.volume = 0.18;
     this.noiseBuf = null;
-    // 마디별 화음(루트 베이스 / 아르페지오 4음)
+    // 마디별 화음(루트 베이스 / 아르페지오 4음 = 루트·3도·5도·옥타브)
     this.prog = [
       { bass: 110.00, arp: [220.00, 261.63, 329.63, 440.00] }, // Am
       { bass: 87.31,  arp: [174.61, 220.00, 261.63, 349.23] }, // F
       { bass: 130.81, arp: [261.63, 329.63, 392.00, 523.25] }, // C
       { bass: 98.00,  arp: [196.00, 246.94, 293.66, 392.00] }, // G
+    ];
+    // 리드 훅(마디마다 반복, 화음에 맞춰 음 바뀜). s=마디 내 16분 위치, i=아르페지오 인덱스
+    this.leadRhythm = [
+      { s: 0, i: 2 }, { s: 2, i: 3 }, { s: 4, i: 1 }, { s: 7, i: 2 },
+      { s: 8, i: 3 }, { s: 10, i: 1 }, { s: 12, i: 0 }, { s: 14, i: 2 },
     ];
   }
   _ctx() { return this.sfx._ensure(); }
@@ -162,25 +175,62 @@ export class Music {
   _playStep(step, t) {
     if (!this.master) return;
     const ch = this.prog[this.bar];
-    // 킥(four on the floor)
+    // 드럼: 킥(four on the floor) + 스네어(2·4박 백비트)
     if (step % 4 === 0) this._kick(t);
-    // 하이햇(8분 오프비트 강조)
-    if (step % 2 === 0) this._hat(t, (step % 4 === 2) ? 0.22 : 0.12);
-    // 베이스(8분, 약간 통통 튀게)
-    if (step % 2 === 0) {
-      const oct = (step % 4 === 0) ? 1 : 1; // 루트
-      this._bass(ch.bass * oct, t);
-    }
-    // 아르페지오(8분, 밝은 리드)
-    if (step % 2 === 0) {
-      const n = ch.arp[(step / 2) % 4];
-      this._note(n, t, 0.17, 'triangle', 0.10);
-      if (step % 8 === 0) this._note(n * 2, t, 0.22, 'triangle', 0.045); // 옥타브 반짝
-    }
-    // 마디 시작에 패드(은은한 화음)
-    if (step === 0) {
-      ch.arp.slice(0, 3).forEach((f) => this._note(f / 2, t, 1.85, 'sawtooth', 0.025));
-    }
+    if (step === 4 || step === 12) this._snare(t);
+    // 하이햇: 8분 기본 + 16분 고스트로 촘촘하게, 14에서 오픈햇
+    if (step % 2 === 0) this._hat(t, (step % 4 === 2) ? 0.22 : 0.13, false);
+    else this._hat(t, 0.05, false); // 16분 고스트
+    if (step === 14) this._hat(t, 0.16, true);
+    // 베이스(8분, 8스텝에서 5도로 움직임)
+    if (step % 2 === 0) this._bass((step === 8) ? ch.bass * 1.5 : ch.bass, t);
+    // 아르페지오 받침(8분)
+    if (step % 2 === 0) this._note(ch.arp[(step / 2) % 4], t, 0.16, 'triangle', 0.07);
+    // 패드(마디 시작 은은한 화음)
+    if (step === 0) ch.arp.slice(0, 3).forEach((f) => this._note(f / 2, t, 1.85, 'sawtooth', 0.022));
+    // 리드 훅(밝은 멜로디, 옥타브 위)
+    const le = this.leadRhythm.find((e) => e.s === step);
+    if (le) this._lead(ch.arp[le.i] * 2, t);
+  }
+
+  _lead(freq, t) {
+    const ctx = this._ctx();
+    const o = ctx.createOscillator(); const g = ctx.createGain();
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3200;
+    o.type = 'square'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.12, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+    o.connect(lp).connect(g).connect(this.master);
+    o.start(t); o.stop(t + 0.3);
+  }
+  _snare(t) {
+    const ctx = this._ctx();
+    const src = ctx.createBufferSource(); src.buffer = this._noise();
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 0.8;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.3, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+    src.connect(bp).connect(g).connect(this.master);
+    src.start(t); src.stop(t + 0.17);
+    const o = ctx.createOscillator(); const g2 = ctx.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(210, t); o.frequency.exponentialRampToValueAtTime(140, t + 0.1);
+    g2.gain.setValueAtTime(0.0001, t);
+    g2.gain.exponentialRampToValueAtTime(0.16, t + 0.005);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+    o.connect(g2).connect(this.master);
+    o.start(t); o.stop(t + 0.14);
+  }
+  _noise() {
+    if (this.noiseBuf) return this.noiseBuf;
+    const ctx = this._ctx();
+    const n = Math.floor(ctx.sampleRate * 0.2);
+    this.noiseBuf = ctx.createBuffer(1, n, ctx.sampleRate);
+    const d = this.noiseBuf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    return this.noiseBuf;
   }
 
   _note(freq, t, dur, type, gain) {
@@ -216,21 +266,16 @@ export class Music {
     o.connect(g).connect(this.master);
     o.start(t); o.stop(t + 0.22);
   }
-  _hat(t, gain) {
+  _hat(t, gain, open) {
     const ctx = this._ctx();
-    if (!this.noiseBuf) {
-      const n = Math.floor(ctx.sampleRate * 0.12);
-      this.noiseBuf = ctx.createBuffer(1, n, ctx.sampleRate);
-      const d = this.noiseBuf.getChannelData(0);
-      for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
-    }
-    const src = ctx.createBufferSource(); src.buffer = this.noiseBuf;
+    const src = ctx.createBufferSource(); src.buffer = this._noise();
     const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7500;
     const g = ctx.createGain();
+    const dur = open ? 0.14 : 0.045;
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(gain, t + 0.004);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     src.connect(hp).connect(g).connect(this.master);
-    src.start(t); src.stop(t + 0.06);
+    src.start(t); src.stop(t + dur + 0.02);
   }
 }
