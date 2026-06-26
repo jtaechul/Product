@@ -132,84 +132,112 @@ export class Renderer {
     return { cx, cy, S: sw, VH: sw * 1.7 };
   }
 
-  // 다가오는 벽: progress 0→1 (1=판정). geom=화면 좌표. variant 효과 포함.
-  // 벽은 반투명 → 뒤의 카메라(나)가 항상 비치고, 사람 모양 구멍만 완전히 뚫림.
+  // 다가오는 벽: progress 0→1 (1=판정).
+  // 화면 전체가 항상 반투명 회색으로 덮이고, 사람 모양 '구멍'만 작게 시작해 커지며 다가온다.
   drawWall(wall, geom, progress, timeSec) {
     const eased = progress * progress; // easeIn
-    const appScale = 0.16 + 0.84 * eased;
-    const alpha = 0.30 + 0.42 * eased; // 최대 ~0.72 → 반투명 회색 벽(뒤 카메라가 비침)
+    const holeScale = 0.20 + 0.80 * eased; // 구멍이 점점 커지며 다가옴
+    const alpha = 0.66 + 0.06 * eased;     // 반투명 회색(거의 일정)
     let extraRot = 0, extraDX = 0;
     if (wall.variant === 'rotate') extraRot = (1 - progress) * 1.4;
     if (wall.variant === 'moving') extraDX = Math.sin(timeSec * 2.2) * geom.S * 1.2 * (1 - progress * 0.3);
-    const hgeom = { ...geom, extraRot, extraDX };
+    // 구멍 좌표(어깨너비 단위) 자체를 접근 스케일만큼 키운다 → 회색은 전체 유지, 구멍만 성장
+    const hgeom = { cx: geom.cx, cy: geom.cy, S: geom.S * holeScale, extraRot, extraDX: extraDX * holeScale };
+    const outline = Math.max(0.10, 0.17 / holeScale); // 작을 땐 선이 너무 가늘어지지 않게 보정
 
     const wc = this.wallCtx;
     wc.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     wc.clearRect(0, 0, this.W, this.H);
-    // 벽 패널 — 반투명 회색
+    // 벽 = 화면 전체 반투명 회색
     const grad = wc.createLinearGradient(0, 0, 0, this.H);
-    grad.addColorStop(0, 'rgba(70,70,74,0.82)');
-    grad.addColorStop(1, 'rgba(52,52,56,0.82)');
+    grad.addColorStop(0, 'rgba(72,72,76,1)');
+    grad.addColorStop(1, 'rgba(54,54,58,1)');
     wc.globalCompositeOperation = 'source-over';
     wc.fillStyle = grad;
     wc.fillRect(0, 0, this.W, this.H);
-    // 사람 모양 구멍의 흰색 외곽선(굵은 흰 선) — 살짝 크게 흰색으로 그린 뒤 가운데를 뚫어 '선'만 남김
+    // 사람 모양 구멍의 굵은 흰색 외곽선
     wc.save();
     wc.shadowColor = 'rgba(255,255,255,0.45)';
     wc.shadowBlur = 8;
     wc.fillStyle = '#ffffff';
-    fillHole(wc, wall, { ...hgeom, thickBoost: 0.17 });
+    fillHole(wc, wall, { ...hgeom, thickBoost: outline });
     wc.restore();
-    // 실제 사람 모양 구멍 펀칭(완전 투명 → 지금 촬영 중인 카메라 그대로 보임)
+    // 실제 사람 모양 구멍 펀칭(완전 투명 → 카메라 그대로)
     wc.globalCompositeOperation = 'destination-out';
     wc.fillStyle = '#000';
     fillHole(wc, wall, { ...hgeom, thickBoost: 0 });
     wc.globalCompositeOperation = 'source-over';
 
-    // 메인 캔버스에 접근 스케일 적용
-    const ctx = this.ctx;
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.translate(geom.cx + extraDX, geom.cy);
-    ctx.scale(appScale, appScale);
-    ctx.translate(-(geom.cx + extraDX), -geom.cy);
-    ctx.drawImage(this.wallLayer, 0, 0, this.W, this.H);
-    ctx.restore();
+    // 회색 벽 전체를 1:1로 올림(스케일 없음) — 구멍만 hgeom으로 성장
+    this.ctx.save();
+    this.ctx.globalAlpha = alpha;
+    this.ctx.drawImage(this.wallLayer, 0, 0, this.W, this.H);
+    this.ctx.restore();
   }
 
-  // 날아오는 장애물(공) — 위에서 잠긴 표적으로 떨어진다. progress 0→1 (1=충돌 판정)
+  // 날아오는 장애물 — 미니멀한 타깃 레티클 + 매끈한 에너지 오브(꼬리 포함)
   drawObstacle(ob, progress, t) {
     const ctx = this.ctx;
-    const R = ob.S * (0.45 + 0.95 * progress);
-    const startY = -this.H * 0.12;
+    const R = ob.S * (0.34 + 0.5 * progress);
+    const startY = -this.H * 0.14;
     const x = ob.tx;
     const y = startY + (ob.ty - startY) * (progress * progress);
+    const RED = '#ff4d57';
 
-    // 표적 경고 링(맞으면 안 되는 자리)
+    // --- 타깃 레티클(맞으면 안 되는 자리): 얇은 회전 링 + 십자선 ---
     ctx.save();
-    ctx.globalAlpha = 0.45 + 0.3 * Math.sin(t * 12);
-    ctx.strokeStyle = '#ff5c5c';
-    ctx.lineWidth = 5;
-    ctx.shadowColor = '#ff3030'; ctx.shadowBlur = 16;
-    ctx.beginPath(); ctx.arc(ob.tx, ob.ty, ob.S * (1.1 + 0.15 * Math.sin(t * 8)), 0, Math.PI * 2); ctx.stroke();
+    ctx.translate(ob.tx, ob.ty);
+    const rr = ob.S * 1.15;
+    // 바깥 점선 링(회전)
+    ctx.rotate(t * 0.9);
+    ctx.strokeStyle = `rgba(255,77,87,${0.5 + 0.25 * Math.sin(t * 6)})`;
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([rr * 0.5, rr * 0.32]);
+    ctx.beginPath(); ctx.arc(0, 0, rr, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.rotate(-t * 0.9);
+    // 안쪽 얇은 링
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(0, 0, rr * 0.62, 0, Math.PI * 2); ctx.stroke();
+    // 십자선 틱
+    ctx.strokeStyle = RED; ctx.lineWidth = 2;
+    for (let i = 0; i < 4; i++) {
+      ctx.rotate(Math.PI / 2);
+      ctx.beginPath(); ctx.moveTo(rr * 0.78, 0); ctx.lineTo(rr * 1.02, 0); ctx.stroke();
+    }
     ctx.restore();
 
-    // 잔상
+    // --- 꼬리(테이퍼 모션 트레일) ---
     ctx.save();
-    ctx.globalAlpha = 0.28;
-    ctx.fillStyle = '#ff9a3d';
-    ctx.beginPath(); ctx.arc(x, y - R * 1.3, R * 0.7, 0, Math.PI * 2); ctx.fill();
+    for (let i = 1; i <= 4; i++) {
+      const tp = i / 5;
+      const ty2 = y - tp * R * 3.2;
+      ctx.globalAlpha = 0.18 * (1 - tp);
+      ctx.fillStyle = '#ffb15a';
+      ctx.beginPath(); ctx.arc(x, ty2, R * (1 - tp * 0.6), 0, Math.PI * 2); ctx.fill();
+    }
     ctx.restore();
 
-    // 공
+    // --- 오브 본체: 어두운 코어 + 밝은 림 라이트(이클립스 느낌) ---
     ctx.save();
-    const grad = ctx.createRadialGradient(x - R * 0.3, y - R * 0.3, R * 0.1, x, y, R);
-    grad.addColorStop(0, '#ffe27a');
-    grad.addColorStop(0.6, '#ff8a3d');
-    grad.addColorStop(1, '#ff4d2e');
-    ctx.fillStyle = grad;
-    ctx.shadowColor = '#ff7a2e'; ctx.shadowBlur = 26;
+    ctx.shadowColor = 'rgba(255,90,60,0.7)'; ctx.shadowBlur = R * 0.9;
+    const g = ctx.createRadialGradient(x, y, R * 0.2, x, y, R);
+    g.addColorStop(0, '#2a1410');
+    g.addColorStop(0.62, '#5e241c');
+    g.addColorStop(0.86, '#ff6a3d');
+    g.addColorStop(1, '#ffd27a');
+    ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    // 상단 스펙큘러 하이라이트(매끈함)
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    const hg = ctx.createRadialGradient(x - R * 0.32, y - R * 0.42, 0, x - R * 0.32, y - R * 0.42, R * 0.5);
+    hg.addColorStop(0, 'rgba(255,255,255,0.9)');
+    hg.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = hg;
+    ctx.beginPath(); ctx.arc(x - R * 0.32, y - R * 0.42, R * 0.5, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
