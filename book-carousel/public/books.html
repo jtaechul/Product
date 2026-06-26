@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>추천 도서 | insight_wealth_vault</title>
+<title>오늘의 연애 책방 | 행간</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#F6F2EC;--card:#fff;--dark:#161616;
-  --gold:#C8A96E;--text:#1A1A1A;--sub:#6B7280;
-  --border:#EAE4DA;--radius:16px;
+  --bg:#FBF5F0;--card:#fff;--dark:#4A2F38;
+  --gold:#C2708F;--text:#3A2A2E;--sub:#8A7479;
+  --border:#EFE3DC;--radius:16px;
 }
 body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;padding-bottom:80px}
 
@@ -67,30 +67,30 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 </head>
 <body>
 <header class="hd">
-  <p class="hd-eyebrow">Book Curation</p>
-  <h1 class="hd-title">지식 큐레이션<br>도서관</h1>
-  <p class="hd-sub">캐럿셀에서 만난 그 책을 여기서 찾으세요.<br>게시물의 도서 번호(#000)로 바로 찾을 수 있습니다.</p>
+  <p class="hd-eyebrow">Love Between the Lines</p>
+  <h1 class="hd-title">행간<br>연애 책방</h1>
+  <p class="hd-sub">오늘 마음에 닿은 그 책을 여기서 만나요.<br>게시물의 도서 번호(#000)로 바로 찾을 수 있습니다.</p>
 </header>
 <div class="tabs-wrap"><div class="tabs" id="tabs" role="tablist"></div></div>
 <main class="catalog" id="catalog">
   <div class="loading"><div class="spinner"></div><br>불러오는 중...</div>
 </main>
 <footer class="foot">
-  <p class="insta"><a href="https://www.instagram.com/insight_wealth_vault" target="_blank">@insight_wealth_vault</a></p>
+  <p class="insta"><a href="https://www.instagram.com/love.between.lines" target="_blank">@love.between.lines</a></p>
   <p>이 페이지의 도서 구매 링크는 쿠팡 파트너스 활동의 일환으로,<br>이에 따른 일정액의 수수료를 제공받습니다.</p>
 </footer>
 <script>
 const WORKER = 'https://book-carousel.jtaechul.workers.dev';
 const CAT_COLORS = {
-  '경제': '#1D6FEB', '재테크': '#1D6FEB', '투자': '#1D6FEB', '부동산': '#1D6FEB',
-  '자기계발': '#7C3AED', '심리': '#7C3AED', '인간관계': '#7C3AED',
-  '건강': '#059669', '과학': '#059669', '의학': '#059669',
-  '역사': '#D97706', '철학': '#D97706', '인문': '#D97706',
-  '사회': '#DC2626', '정치': '#DC2626',
+  '애착': '#C2708F', '연애': '#D08A6E', '에세이': '#D08A6E',
+  '이별': '#9B6A8F', '회복': '#9B6A8F',
+  '자존감': '#C18A4B', '사랑': '#C2708F',
+  '관계': '#A2708F', '심리': '#8E6AA8',
+  '짝사랑': '#D98AA0', '설렘': '#D98AA0',
 };
 function catColor(c) {
   for (const [k, v] of Object.entries(CAT_COLORS)) if (c?.includes(k)) return v;
-  return '#6B7280';
+  return '#A98C7A';
 }
 
 function esc(s) {
