@@ -32,6 +32,7 @@ const SYNTH = new URLSearchParams(location.search).has('synth');
 
 let state = 'TITLE';
 let players = [];        // {name, score, perfects, walls}
+let groundY = 0.90;      // 바닥선(정규화 y) — 캘리브레이션에서 발 높이로 보정
 let current = null;      // 현재 플레이어
 let landmarks = null;
 let lastTime = performance.now() / 1000;
@@ -161,6 +162,7 @@ function startCalibration() {
 
 function beginCalibScan() {
   calib.progress = 0; calib.done = false; calib.tStart = performance.now() / 1000;
+  calib.feet = [];
   calib.status = '별 모양에 맞춰 팔·다리를 벌려 서주세요';
   hideAllScreens();
   $('overlay').style.pointerEvents = 'none';
@@ -170,20 +172,34 @@ function beginCalibScan() {
 
 function vget(i) { return (landmarks && landmarks[i]) ? (landmarks[i].visibility ?? 1) : 0; }
 
+// 양 발목 평균 y(정규화). 둘 다 안 보이면 null
+function ankleY() {
+  const la = vget(LM.L_ANKLE) >= 0.3, ra = vget(LM.R_ANKLE) >= 0.3;
+  if (la && ra) return (landmarks[LM.L_ANKLE].y + landmarks[LM.R_ANKLE].y) / 2;
+  if (la) return landmarks[LM.L_ANKLE].y;
+  if (ra) return landmarks[LM.R_ANKLE].y;
+  return null;
+}
+
 function isFullBodyVisible() {
   if (!landmarks) return false;
   const head = vget(LM.NOSE) >= 0.3;
   const sh = vget(LM.L_SHOULDER) >= 0.3 && vget(LM.R_SHOULDER) >= 0.3;
   const hip = vget(LM.L_HIP) >= 0.3 && vget(LM.R_HIP) >= 0.3;
-  const ankle = vget(LM.L_ANKLE) >= 0.25 || vget(LM.R_ANKLE) >= 0.25;
-  return head && sh && hip && ankle;
+  // 발끝(양 발목)이 화면 안에 보여야 함 + 화면 맨 아래로 잘리지 않게(y<0.985)
+  const ay = ankleY();
+  const feet = ay !== null && ay < 0.985;
+  return head && sh && hip && feet;
 }
 
 function calibReason() {
   if (!landmarks) return '사람이 안 보여요 — 카메라 앞에 서주세요';
   if (vget(LM.NOSE) < 0.3 || vget(LM.L_SHOULDER) < 0.3 || vget(LM.R_SHOULDER) < 0.3) return '머리와 어깨가 화면에 보이게';
   if (vget(LM.L_HIP) < 0.3 || vget(LM.R_HIP) < 0.3) return '허리까지 화면에 들어오게';
-  return '뒤로 한 걸음! 발끝까지 보이게';
+  const ay = ankleY();
+  if (ay === null) return '👣 발끝까지 보이게 — 뒤로 한 걸음!';
+  if (ay >= 0.985) return '👣 발이 화면 아래에 잘려요 — 살짝 뒤로!';
+  return '발끝까지 보이게 서주세요';
 }
 
 function updateCalibScan(t, dt) {
@@ -191,6 +207,11 @@ function updateCalibScan(t, dt) {
   if (ok) {
     calib.progress = Math.min(1, calib.progress + dt / 1.5); // ~1.5초 유지하면 완료
     calib.status = '좋아요! 그대로 잠깐…';
+    const ay = ankleY();
+    if (ay !== null) {
+      calib.feet.push(ay);
+      groundY = groundY * 0.85 + Math.min(0.97, Math.max(0.6, ay)) * 0.15; // 바닥선 라이브 보정
+    }
   } else {
     calib.progress = Math.max(0, calib.progress - dt / 0.8);
     calib.status = calibReason();
@@ -199,6 +220,11 @@ function updateCalibScan(t, dt) {
   if (t - calib.tStart > 3) $('btnCalibSkip').classList.remove('hidden');
   if (calib.progress >= 1 && !calib.done) {
     calib.done = true;
+    // 측정한 발 높이로 바닥선 확정
+    if (calib.feet && calib.feet.length) {
+      const avg = calib.feet.reduce((a, b) => a + b, 0) / calib.feet.length;
+      groundY = Math.min(0.97, Math.max(0.6, avg));
+    }
     sfx.go();
     finishCalibration();
   }
@@ -291,17 +317,19 @@ function shoulderNorm() {
   return Math.max(0.06, dist(a, b));
 }
 
-// 마스크 좌표계의 고정 구멍(화면 wallGeom과 동일 비율). 몸을 따라다니지 않음.
+// 마스크 좌표계의 고정 구멍(화면 wallGeom과 동일 비율, 발끝을 바닥선 groundY에).
 function maskGeom() {
-  const S = MASK_H * 0.16;
-  return { cx: MASK_W / 2, cy: MASK_H * 0.53, S, VH: S * 1.7 };
+  const TOP = 0.12, FIG = 4.8, FOOT = 2.2;
+  const S = Math.max(8, (groundY - TOP) * MASK_H / FIG);
+  const cy = groundY * MASK_H - FOOT * S;
+  return { cx: MASK_W / 2, cy, S, VH: S * 1.7 };
 }
 
 function applyGrade(grade, wall) {
   const scoring = !g.practice;
   if (scoring) current.walls++;
   // 연출 — 고정 구멍 위치에서 이펙트
-  const screenGeom = renderer.wallGeom();
+  const screenGeom = renderer.wallGeom(groundY);
   renderer.tintSkeleton(grade.color, 0.7);
   if (grade.grade === 'CRASH') {
     renderer.setFlash('#ff3030');
@@ -430,7 +458,7 @@ function loop() {
 
   if (state === 'CALIB_RUN') {
     renderer.drawSkeleton(landmarks);
-    renderer.drawCalibUI(calib.progress, calib.status, t);
+    renderer.drawCalibUI(calib.progress, calib.status, t, groundY);
     updateCalibScan(t, dt);
   } else if (state === 'PLAY') {
     // 인식 후 게임 중에는 뼈대를 그리지 않음(깔끔) — 카메라 영상으로 직접 맞춤
@@ -456,7 +484,7 @@ function updatePlay(t) {
   } else if (g.phase === 'approach') {
     const el = t - g.wallStart;
     const progress = Math.min(1, el / g.approachSec);
-    const geom = renderer.wallGeom();
+    const geom = renderer.wallGeom(groundY);
     renderer.drawWall(wall, geom, progress, t);
     renderer.drawPoseHint(poseHint(wall));
     if (progress >= 1 && !g.judged) {
