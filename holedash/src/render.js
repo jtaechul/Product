@@ -116,11 +116,13 @@ export class Renderer {
     return Math.max(30, Math.hypot(pa.x - pb.x, pa.y - pb.y));
   }
 
-  // 고정된 구멍 위치/크기(화면 중앙·화면에 꽉 맞게). 구멍은 몸을 따라다니지 않음 →
-  // 플레이어가 직접 이 자리로 이동·자세를 맞춘다. 머리~발이 화면 안에 다 들어오게 사이즈.
-  wallGeom() {
-    const S = this.H * 0.16;            // 어깨너비 단위 — 전신이 세로로 들어오게
-    return { cx: this.W / 2, cy: this.H * 0.53, S, VH: S * 1.7 };
+  // 고정된 구멍 — 가로 중앙 + '발끝을 바닥선(groundY)에' 맞춰 세움(플레이어는 늘 바닥에 발이 닿음).
+  // 위쪽으로 올린 손까지 화면 안에 들어오게 크기를 맞춘다.
+  wallGeom(groundY = 0.90) {
+    const TOP = 0.12, FIG = 4.8, FOOT = 2.2; // S 단위: 위(손)~중심 2.6, 중심~발 2.2
+    const S = Math.max(40, (groundY - TOP) * this.H / FIG);
+    const cy = groundY * this.H - FOOT * S;  // 발끝을 바닥선에
+    return { cx: this.W / 2, cy, S, VH: S * 1.7 };
   }
 
   // 플레이어 실제 몸 중심(화면 px) — 장애물 조준·이펙트 위치에 사용
@@ -250,7 +252,7 @@ export class Renderer {
   }
 
   // 캘리브레이션 UI: 사람 모양 가이드 + 코너 프레임 + 진행 링 + 상태문구
-  drawCalibUI(progress, status, t) {
+  drawCalibUI(progress, status, t, groundY = 0.90) {
     const ctx = this.ctx;
     const accent = progress >= 1 ? '#57e389' : (progress > 0 ? '#57e389' : '#ffffff');
     // 살짝 어둡게(집중)
@@ -260,7 +262,7 @@ export class Renderer {
 
     // 가운데 사람 모양 가이드 — 게임의 고정 구멍과 똑같은 위치/크기 + '별 모양'(양팔·양다리 벌림)
     // 여기에 맞춰 팔다리를 벌리고 서면, 게임 중 팔을 뻗어도 경계를 벗어나지 않는다.
-    const wg = this.wallGeom();
+    const wg = this.wallGeom(groundY);
     const frameH = this.H * 0.84;
     const frameW = Math.min(this.W * 0.92, frameH);
     const cx = wg.cx, cy = wg.cy;
