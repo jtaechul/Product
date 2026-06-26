@@ -177,6 +177,42 @@ export class Renderer {
     ctx.restore();
   }
 
+  // 날아오는 장애물(공) — 위에서 잠긴 표적으로 떨어진다. progress 0→1 (1=충돌 판정)
+  drawObstacle(ob, progress, t) {
+    const ctx = this.ctx;
+    const R = ob.S * (0.45 + 0.95 * progress);
+    const startY = -this.H * 0.12;
+    const x = ob.tx;
+    const y = startY + (ob.ty - startY) * (progress * progress);
+
+    // 표적 경고 링(맞으면 안 되는 자리)
+    ctx.save();
+    ctx.globalAlpha = 0.45 + 0.3 * Math.sin(t * 12);
+    ctx.strokeStyle = '#ff5c5c';
+    ctx.lineWidth = 5;
+    ctx.shadowColor = '#ff3030'; ctx.shadowBlur = 16;
+    ctx.beginPath(); ctx.arc(ob.tx, ob.ty, ob.S * (1.1 + 0.15 * Math.sin(t * 8)), 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+
+    // 잔상
+    ctx.save();
+    ctx.globalAlpha = 0.28;
+    ctx.fillStyle = '#ff9a3d';
+    ctx.beginPath(); ctx.arc(x, y - R * 1.3, R * 0.7, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    // 공
+    ctx.save();
+    const grad = ctx.createRadialGradient(x - R * 0.3, y - R * 0.3, R * 0.1, x, y, R);
+    grad.addColorStop(0, '#ffe27a');
+    grad.addColorStop(0.6, '#ff8a3d');
+    grad.addColorStop(1, '#ff4d2e');
+    ctx.fillStyle = grad;
+    ctx.shadowColor = '#ff7a2e'; ctx.shadowBlur = 26;
+    ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
   // 캘리브레이션 UI: 사람 모양 가이드 + 코너 프레임 + 진행 링 + 상태문구
   drawCalibUI(progress, status, t) {
     const ctx = this.ctx;
