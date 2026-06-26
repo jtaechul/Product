@@ -257,6 +257,39 @@ h2 { font-size: clamp(22px, 5vmin, 36px); margin-bottom: 18px; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ---------- 가로 전용 회전 게이트 ---------- */
+#rotateGate {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;            /* 가로에서는 숨김 */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8vw;
+  background: radial-gradient(circle at 50% 40%, #16203a, #05060c 75%);
+  color: var(--text);
+}
+#rotateGate h2 { font-size: clamp(22px, 7vw, 36px); margin-bottom: 14px; }
+#rotateGate p { color: var(--muted); font-size: clamp(15px, 4.4vw, 20px); line-height: 1.6; }
+#rotateGate p b { color: var(--accent); }
+.rotate-icon {
+  font-size: clamp(64px, 22vw, 130px);
+  margin-bottom: 18px;
+  animation: rotateHint 1.8s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+@keyframes rotateHint {
+  0%, 25% { transform: rotate(0deg); }
+  55%, 75% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
+}
+/* 세로(높이 > 너비)일 때만 회전 안내 표시 → 가로 강제 */
+@media (orientation: portrait) {
+  #rotateGate { display: flex; }
+}
+
 /* 화면 흔들림 (충돌) */
 .shake { animation: shake 0.4s; }
 @keyframes shake {
