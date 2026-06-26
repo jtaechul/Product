@@ -8,6 +8,7 @@ import {
   LM, MASK_W, MASK_H, STAGE_WALLS, PRACTICE_WALL, poseHint,
   gradeFromRate, comboMultiplier, START_LIFE, BASE_APPROACH_SEC, INTER_WALL_SEC,
   RANK_TITLES, CONSOLATION_TITLE,
+  DODGE_TRAVEL_SEC, DODGE_HIT_UNITS, DODGE_SCORE, DODGE_FROM_WALL, DODGE_CHANCE, DODGE_DOUBLE_FROM_WALL,
 } from './config.js';
 
 const $ = (id) => document.getElementById(id);
@@ -331,6 +332,17 @@ function showGradeText(grade) {
   showGradeText._t = setTimeout(() => el.classList.add('hidden'), 900);
 }
 
+// 일반 배너(등급 외 — 장애물 결과 등)
+function bannerText(text, color) {
+  const el = $('grade');
+  el.textContent = text;
+  el.style.color = color;
+  el.classList.remove('hidden');
+  el.style.animation = 'none'; el.offsetHeight; el.style.animation = '';
+  clearTimeout(showGradeText._t);
+  showGradeText._t = setTimeout(() => el.classList.add('hidden'), 900);
+}
+
 function shakeScreen() {
   const app = $('app');
   app.classList.remove('shake'); app.offsetHeight; app.classList.add('shake');
@@ -402,6 +414,7 @@ function loop() {
   lastTime = t;
 
   landmarks = SYNTH ? synthPose(t) : pose.detect(nowMs);
+  if (SYNTH) window.__hd = { state, phase: g.phase, life: current && current.life, score: current && current.score };
 
   renderer.drawCamera();
 
@@ -443,9 +456,76 @@ function updatePlay(t) {
       g.phaseStart = t;
     }
   } else if (g.phase === 'gap') {
-    // 통과/충돌 후 잠깐 — 벽이 빠져나간 연출은 생략(이펙트만)
-    if (t - g.phaseStart >= INTER_WALL_SEC) advanceWall();
+    // 통과/충돌 후 잠깐 — 벽 사이에 가끔 장애물 피하기 이벤트
+    if (t - g.phaseStart >= INTER_WALL_SEC) {
+      if (shouldDodge()) startDodge(t);
+      else advanceWall();
+    }
+  } else if (g.phase === 'dodge') {
+    updateDodge(t);
   }
+}
+
+// ====== 장애물 피하기 ======
+function shouldDodge() {
+  return !g.practice && current.life > 0 && g.wallIndex >= DODGE_FROM_WALL && Math.random() < DODGE_CHANCE;
+}
+
+function startDodge(t) {
+  const count = g.wallIndex >= DODGE_DOUBLE_FROM_WALL && Math.random() < 0.5 ? 2 : 1;
+  const list = [];
+  for (let i = 0; i < count; i++) list.push({ start: undefined, resolved: false });
+  g.dodge = { list, index: 0, doneAt: 0 };
+  g.phase = 'dodge';
+}
+
+function updateDodge(t) {
+  const d = g.dodge;
+  if (d.index >= d.list.length) {
+    if (t - d.doneAt >= 0.5) advanceWall();
+    return;
+  }
+  const ob = d.list[d.index];
+  if (ob.start === undefined) {
+    const geom = landmarks ? renderer.screenGeom(landmarks) : { cx: renderer.W / 2, cy: renderer.H * 0.45, S: 80 };
+    ob.tx = geom.cx; ob.ty = geom.cy; ob.S = Math.max(40, geom.S); ob.start = t;
+  }
+  if (ob.resolved) {
+    if (t - ob.resolvedAt >= 0.8) {
+      d.index++;
+      if (d.index >= d.list.length) d.doneAt = t;
+    }
+    return;
+  }
+  const p = Math.min(1, (t - ob.start) / DODGE_TRAVEL_SEC);
+  renderer.drawObstacle(ob, p, t);
+  renderer.drawPoseHint('⚠️ 옆으로 피해!');
+  if (p >= 1) { ob.resolved = true; ob.resolvedAt = t; judgeDodge(ob); }
+}
+
+function judgeDodge(ob) {
+  let hit = false;
+  if (landmarks) {
+    const geom = renderer.screenGeom(landmarks);
+    const dxUnits = Math.abs(geom.cx - ob.tx) / ob.S;
+    hit = dxUnits < DODGE_HIT_UNITS;
+  }
+  if (hit) {
+    current.life = Math.max(0, current.life - 1);
+    current.combo = 0;
+    renderer.setFlash('#ff3030');
+    renderer.tintSkeleton('#ff5c5c', 0.7);
+    sfx.grade('CRASH');
+    shakeScreen();
+    bannerText('맞았다! 💥', '#ff5c5c');
+  } else {
+    current.score += DODGE_SCORE;
+    renderer.burst(ob.tx, ob.ty, '#57e389', 22);
+    renderer.tintSkeleton('#57e389', 0.6);
+    sfx.grade('GREAT');
+    bannerText(`피했다! +${DODGE_SCORE}`, '#57e389');
+  }
+  updateHud();
 }
 
 // 시작

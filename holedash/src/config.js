@@ -63,6 +63,14 @@ export const BASE_APPROACH_SEC = 4.2;
 // 판정 후 다음 벽까지 텀(초)
 export const INTER_WALL_SEC = 1.4;
 
+// ===== 장애물 피하기(벽 사이 미니 이벤트) =====
+export const DODGE_TRAVEL_SEC = 1.7;     // 공이 날아오는 시간
+export const DODGE_HIT_UNITS = 1.1;      // 충돌 반경(어깨너비 배수) — 이만큼 안 비키면 맞음
+export const DODGE_SCORE = 30;           // 성공 시 점수
+export const DODGE_FROM_WALL = 2;        // 이 벽 이후부터 등장
+export const DODGE_CHANCE = 0.5;         // 벽 통과 후 등장 확률
+export const DODGE_DOUBLE_FROM_WALL = 8; // 이 벽 이후 2연속 가능
+
 // 몸 막대 두께(어깨너비 대비 비율). 충돌 판정 마스크에 사용.
 export const BODY_THICKNESS_RATIO = 0.55;
 
