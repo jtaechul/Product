@@ -137,7 +137,7 @@ export class Renderer {
   drawWall(wall, geom, progress, timeSec) {
     const eased = progress * progress; // easeIn
     const appScale = 0.16 + 0.84 * eased;
-    const alpha = 0.34 + 0.54 * eased; // 최대 ~0.88 → 진한 회색 벽, 구멍으로 카메라가 또렷이
+    const alpha = 0.30 + 0.42 * eased; // 최대 ~0.72 → 반투명 회색 벽(뒤 카메라가 비침)
     let extraRot = 0, extraDX = 0;
     if (wall.variant === 'rotate') extraRot = (1 - progress) * 1.4;
     if (wall.variant === 'moving') extraDX = Math.sin(timeSec * 2.2) * geom.S * 1.2 * (1 - progress * 0.3);
@@ -146,19 +146,19 @@ export class Renderer {
     const wc = this.wallCtx;
     wc.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     wc.clearRect(0, 0, this.W, this.H);
-    // 벽 패널 — 진한 회색(파란색 미사용)
+    // 벽 패널 — 반투명 회색
     const grad = wc.createLinearGradient(0, 0, 0, this.H);
-    grad.addColorStop(0, 'rgba(58,58,62,0.96)');
-    grad.addColorStop(1, 'rgba(38,38,42,0.96)');
+    grad.addColorStop(0, 'rgba(70,70,74,0.82)');
+    grad.addColorStop(1, 'rgba(52,52,56,0.82)');
     wc.globalCompositeOperation = 'source-over';
     wc.fillStyle = grad;
     wc.fillRect(0, 0, this.W, this.H);
-    // 사람 모양 둘레의 옅은 흰색 외곽선(포즈를 알아보게) — 살짝 크게 그린 뒤 가운데를 뚫어 테두리만
+    // 사람 모양 구멍의 흰색 외곽선(굵은 흰 선) — 살짝 크게 흰색으로 그린 뒤 가운데를 뚫어 '선'만 남김
     wc.save();
-    wc.shadowColor = 'rgba(255,255,255,0.55)';
-    wc.shadowBlur = 18;
-    wc.fillStyle = 'rgba(235,235,235,0.85)';
-    fillHole(wc, wall, { ...hgeom, thickBoost: 0.16 });
+    wc.shadowColor = 'rgba(255,255,255,0.45)';
+    wc.shadowBlur = 8;
+    wc.fillStyle = '#ffffff';
+    fillHole(wc, wall, { ...hgeom, thickBoost: 0.17 });
     wc.restore();
     // 실제 사람 모양 구멍 펀칭(완전 투명 → 지금 촬영 중인 카메라 그대로 보임)
     wc.globalCompositeOperation = 'destination-out';

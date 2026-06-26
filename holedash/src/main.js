@@ -433,7 +433,7 @@ function loop() {
     renderer.drawCalibUI(calib.progress, calib.status, t);
     updateCalibScan(t, dt);
   } else if (state === 'PLAY') {
-    renderer.drawSkeleton(landmarks);
+    // 인식 후 게임 중에는 뼈대를 그리지 않음(깔끔) — 카메라 영상으로 직접 맞춤
     updatePlay(t);
   } else if (state === 'TITLE' || state === 'REGISTER' || state === 'CALIB') {
     renderer.drawSkeleton(landmarks);
