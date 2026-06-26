@@ -739,6 +739,12 @@
       <span class="hint">비워두면 AI가 핵심 메시지와 독자층을 자동으로 분석합니다</span>
     </div>
 
+    <div class="form-group">
+      <label>쿠팡파트너스 링크 (선택)</label>
+      <input type="url" id="manualAffiliateLink" placeholder="https://link.coupang.com/a/...">
+      <span class="hint">입력하면 DM 자동 회신 및 도서 카탈로그에 자동으로 포함됩니다</span>
+    </div>
+
     <button class="btn btn-primary" id="manualGenerateBtn">AI 분석 후 생성</button>
   </div>
 
@@ -760,7 +766,16 @@
         </select>
       </div>
       <div class="form-group">
-        <label>특정 이슈 키워드 (선택)</label>
+        <label>책 제목 (선택)</label>
+        <input type="text" id="deployTitle" placeholder="입력하면 AI 추천 없이 바로 해당 책으로 제작">
+        <span class="hint">비워두면 AI가 카테고리에 맞는 책을 자동 선정합니다</span>
+      </div>
+      <div class="form-group">
+        <label>저자 (선택)</label>
+        <input type="text" id="deployAuthor" placeholder="책 제목만 입력해도 됩니다">
+      </div>
+      <div class="form-group" id="deployIssueGroup">
+        <label>특정 이슈 키워드 (선택, AI 자동 선정 시에만 사용)</label>
         <input type="text" id="deployIssue" placeholder="예: AI 대체, 번아웃, 금리...">
       </div>
       <div class="form-group">
@@ -863,6 +878,7 @@
       <button class="btn btn-outline" id="regenerateBtn">캐럿셀 다시 생성</button>
       <button class="btn btn-outline" id="copyAllBtn">전체 복사</button>
       <button class="btn btn-outline" id="generateImagesBtn" style="background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;border:none;">이미지 생성</button>
+      <button class="btn btn-outline" id="saveAllImagesBtn" style="background:linear-gradient(135deg,#064e3b,#065f46);color:#fff;border:none;">이미지 전체 저장</button>
       <button class="btn btn-validate" id="validateBtn">품질 검증</button>
     </div>
   </div>
@@ -899,7 +915,7 @@
       <span class="section-title">DM 자동 회신 미리보기</span>
       <span class="section-badge" style="background:rgba(124,58,237,0.08);color:var(--primary);">Phase 5 준비</span>
     </div>
-    <p style="font-size:12px;color:var(--gray-500);line-height:1.7;margin-bottom:12px;">댓글에 키워드를 남긴 방문자에게 자동 발송될 DM 내용입니다. 쿠팡파트너스 링크를 입력하면 DM에 포함됩니다.</p>
+    <p style="font-size:12px;color:var(--gray-500);line-height:1.7;margin-bottom:12px;">마지막 장 A/B 투표에 댓글을 남긴 방문자에게 발송할 DM입니다. A·B 두 상황을 하나의 메시지로 작성하며, 프로필 링크와 도서 번호가 자동 포함됩니다.</p>
     <div class="form-group" style="margin-bottom:10px;">
       <label>쿠팡파트너스 어필리에이트 링크 (선택)</label>
       <input type="url" id="affiliateLinkInput" placeholder="https://link.coupang.com/a/...">
@@ -907,10 +923,14 @@
     <button class="btn btn-outline" id="generateDmBtn" style="font-size:12px;padding:9px 14px;margin-bottom:12px;">DM 자동 회신 생성</button>
     <div id="dmReplyResult" style="display:none;">
       <div class="caption-box">
-        <div class="caption-label-text">DM 자동 회신 내용 (댓글 키워드 감지 시 자동 발송)</div>
-        <div class="caption-text-content" id="dmReplyText" style="font-size:12px;white-space:pre-line;"></div>
+        <div class="caption-label-text">A/B 댓글 응답자에게 발송될 DM</div>
+        <div class="caption-text-content" id="dmReplyTextA" style="font-size:12px;white-space:pre-line;"></div>
+        <button class="btn btn-outline" id="copyDmABtn" style="font-size:12px;padding:8px 14px;margin-top:8px;">DM 복사</button>
       </div>
-      <button class="btn btn-outline" id="copyDmBtn" style="font-size:12px;padding:8px 14px;margin-top:8px;">DM 내용 복사</button>
+      <div id="dmReplyTextBWrap" style="display:none;">
+        <div class="caption-text-content" id="dmReplyTextB" style="display:none;"></div>
+        <button class="btn btn-outline" id="copyDmBBtn" style="display:none;"></button>
+      </div>
     </div>
   </div>
 
@@ -963,7 +983,9 @@ const state = {
   dmKeyword: null,
   images: null,
   affiliateLink: null,
+  affiliateLinks: [],
   dmReply: null,
+  bookNumber: '',
 };
 
 // ===== 중복 방지: 이미 캐럿셀을 만든 책 목록 =====
@@ -1149,8 +1171,15 @@ document.getElementById('manualGenerateBtn').addEventListener('click', async () 
   const author = document.getElementById('manualAuthor').value.trim();
   const category = document.getElementById('manualCategory').value;
   const coreMessageInput = document.getElementById('manualCoreMessage').value.trim();
+  const affiliateLink = document.getElementById('manualAffiliateLink').value.trim();
 
   if (!title) { showToast('책 제목을 입력해주세요.', 'warning'); return; }
+
+  // 쿠팡 링크 state 저장 + DM 섹션 입력란에도 반영
+  state.affiliateLink = affiliateLink || null;
+  if (affiliateLink) {
+    document.getElementById('affiliateLinkInput').value = affiliateLink;
+  }
 
   showLoading('책 정보 분석 중...', coreMessageInput ? 'AI가 추가 정보를 파악하고 있습니다' : 'AI가 핵심 메시지와 독자층을 파악하고 있습니다');
 
@@ -1175,6 +1204,7 @@ document.getElementById('manualGenerateBtn').addEventListener('click', async () 
 async function generateCarousel() {
   state.validation = null;
   state.images = null;
+  state._catalogAdded = false;
   document.getElementById('validationPanel').classList.remove('visible');
   setStep(2);
 
@@ -1261,32 +1291,47 @@ async function autoValidateLoop() {
   }
 }
 
-// Phase 4: 합격된 캐럿셀을 텔레그램으로 자동 발송 (확인용)
+// Phase 4: 제작 완료 시 텔레그램으로 완료 알림 + 확인 링크만 발송 (이미지·문구 미발송)
 async function autoSendTelegram() {
-  showLoading('텔레그램으로 발송 중...', '카드 이미지+텍스트 합성 후 발송 (인스타그램 게시 전 최종 확인용)');
+  showLoading('텔레그램으로 발송 중...', '제작 완료 알림과 확인 링크를 보내고 있습니다');
   try {
-    let compositeImages = null;
-    try {
-      compositeImages = await generateCompositeImages();
-    } catch (e) {
-      console.warn('합성 이미지 생성 실패, 원본 URL로 대체:', e);
-    }
     const data = await apiFetch('/api/send-telegram', {
-      pages: state.pages,
       bookInfo: state.bookInfo,
-      caption: state.caption,
-      hashtags: state.captionHashtags,
-      commentKeyword: state.dmKeyword,
-      dmKeyword: state.dmKeyword,
-      images: state.images || null,
-      compositeImages,
+      pipelineId: localStorage.getItem('activePipelineId') || '',
     });
-    showToast(data.message || '텔레그램 발송 완료! 확인 후 인스타그램에 게시해주세요.', 'success');
+    showToast(data.message || '텔레그램으로 완료 알림을 보냈습니다!', 'success');
   } catch {
     // 텔레그램 미설정이면 조용히 건너뜀
     showToast('텔레그램 발송 건너뜀 (Bot Token 미설정 시 정상)', 'warning');
   } finally {
     hideLoading();
+  }
+  // 수동 생성 플로우: 도서관에 자동 등록
+  await addBookToCatalogIfNeeded();
+}
+
+// 도서관(/books)에 현재 책을 자동 등록 — 중복 등록 방지는 서버에서 처리
+async function addBookToCatalogIfNeeded() {
+  if (!state.bookInfo?.title) return;
+  // 서버 파이프라인이 이미 처리한 경우(bookNumber 있음)는 재등록 생략
+  if (state.bookNumber && state._catalogAdded) return;
+  try {
+    const link = document.getElementById('affiliateLinkInput')?.value?.trim()
+      || (Array.isArray(state.affiliateLinks) && state.affiliateLinks[0])
+      || state.affiliateLink
+      || null;
+    const result = await apiFetch('/api/add-book-to-catalog', {
+      bookInfo: state.bookInfo,
+      affiliateLinks: link ? [link] : (state.affiliateLinks || []),
+      affiliateLink: link,
+    });
+    if (result.bookNumber) {
+      state.bookNumber = result.bookNumber;
+      state._catalogAdded = true;
+      showToast(`도서관에 #${result.bookNumber}로 등록됐습니다 — 프로필 링크에서 확인 가능`, 'success');
+    }
+  } catch (e) {
+    console.warn('도서관 등록 실패(무시):', e.message);
   }
 }
 
@@ -1484,18 +1529,34 @@ document.getElementById('generateImagesBtn').addEventListener('click', async () 
   }
 });
 
-// 이미지 5장 순차 로딩 — Pollinations 레이트 리밋 회피, 장마다 충분한 생성 시간 부여
+// 이미지 5장 로딩 — /api/image 경로(KV 저장)이면 병렬 즉시 로드, Pollinations URL이면 순차 로딩
 async function applyImagesToCards(images) {
   const cards = document.querySelectorAll('#carouselScroll .card');
   const pages = ['page1', 'page2', 'page3', 'page4', 'page5'];
-  for (let i = 0; i < pages.length; i++) {
-    const url = images[pages[i]];
-    if (!url || !cards[i]) continue;
-    showToast(`이미지 생성 중... (${i + 1}/5장)`, 'info');
-    await loadImageWithRetry(cards[i], url, i + 1, 0);
-    // 다음 이미지 요청 전 Pollinations 서버 여유 시간 (레이트 리밋 방지) — 10초
-    if (i < pages.length - 1) await new Promise(r => setTimeout(r, 10000));
+
+  // /api/image 경로는 서버에 이미 저장된 이미지 → 모두 동시에 즉시 로드
+  const allKv = pages.every(p => !images[p] || images[p].startsWith('/api/image'));
+  if (allKv) {
+    showToast('저장된 이미지를 불러오는 중...', 'info');
+    await Promise.all(
+      pages.map((p, i) => {
+        const url = images[p];
+        if (!url || !cards[i]) return Promise.resolve();
+        return loadImageWithRetry(cards[i], url, i + 1, 0);
+      })
+    );
+  } else {
+    // Pollinations 직접 URL — 순차 로딩으로 레이트 리밋 회피
+    showToast('페이지 1부터 순서대로 이미지를 생성합니다 (1~2분 소요)', 'info');
+    for (let i = 0; i < pages.length; i++) {
+      const url = images[pages[i]];
+      if (!url || !cards[i]) continue;
+      showToast(`이미지 생성 중... (${i + 1}/5장)`, 'info');
+      await loadImageWithRetry(cards[i], url, i + 1, 0);
+      if (i < pages.length - 1) await new Promise(r => setTimeout(r, 10000));
+    }
   }
+
   const loaded = [...cards].filter(c => c.dataset.blobUrl).length;
   showToast(`이미지 로드 완료 (${loaded}/5장)`, loaded === 5 ? 'success' : 'warning');
   return loaded;
@@ -1575,6 +1636,62 @@ function addSaveButton(card, pageNum) {
   });
   card.appendChild(btn);
 }
+
+// 이미지 전체 저장 — 5장 blob 변환 후 Web Share API로 한 번에 공유 (모바일 사진첩 저장)
+async function saveAllCards() {
+  const cards = document.querySelectorAll('#carouselScroll .card');
+  const hasImages = [...cards].some(c => c.dataset.blobUrl);
+  if (!hasImages) {
+    showToast('먼저 이미지를 생성해 주세요', 'warning');
+    return;
+  }
+  const btn = document.getElementById('saveAllImagesBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '변환 중... (0/5)'; }
+
+  // ① 먼저 5장 모두 blob으로 변환 (setTimeout 없이 연속 처리 → user gesture 컨텍스트 유지)
+  const blobs = [];
+  for (let i = 0; i < Math.min(cards.length, 5); i++) {
+    if (!cards[i]) continue;
+    if (btn) btn.textContent = `변환 중... (${i + 1}/5)`;
+    const blob = await buildCardBlob(cards[i], i + 1);
+    if (blob) blobs.push({ blob, pageNum: i + 1 });
+  }
+
+  if (!blobs.length) {
+    if (btn) { btn.disabled = false; btn.textContent = '이미지 전체 저장'; }
+    showToast('변환된 이미지가 없습니다', 'error');
+    return;
+  }
+  if (btn) btn.textContent = '저장 중...';
+
+  const files = blobs.map(({ blob, pageNum }) =>
+    new File([blob], `carousel_p${pageNum}.png`, { type: 'image/png' })
+  );
+
+  // ② 모바일: Web Share API로 5장 한 번에 공유 → 사진첩 저장
+  if (navigator.canShare && navigator.canShare({ files })) {
+    try {
+      await navigator.share({ files, title: '캐럿셀 이미지 5장' });
+      showToast(`${blobs.length}장 저장 완료`, 'success');
+    } catch (e) {
+      if (e.name !== 'AbortError') showToast('저장 실패: ' + e.message, 'error');
+    }
+  } else {
+    // ③ 데스크톱 폴백: 순차 다운로드
+    for (const { blob, pageNum } of blobs) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `carousel_p${pageNum}.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+      await new Promise(r => setTimeout(r, 300));
+    }
+    showToast(`${blobs.length}장 저장 완료`, 'success');
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '이미지 전체 저장'; }
+}
+
+document.getElementById('saveAllImagesBtn').addEventListener('click', saveAllCards);
 
 // 텍스트+배경 합성 이미지를 base64 data URL로 반환 (텔레그램 발송용)
 async function generateCompositeDataUrl(card, pageNum) {
@@ -1695,6 +1812,29 @@ async function generateCompositeImages() {
 }
 
 async function saveCardAsCanvas(card, pageNum) {
+  const blob = await buildCardBlob(card, pageNum);
+  if (!blob) { showToast(`페이지 ${pageNum} 변환 실패`, 'error'); return; }
+  const filename = `carousel_p${pageNum}.png`;
+  const file = new File([blob], filename, { type: 'image/png' });
+  // 모바일: Web Share API → 사진첩 저장 지원 (iOS 15+ / Android Chrome)
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: `캐럿셀 ${pageNum}페이지` });
+      showToast(`페이지 ${pageNum} 저장 완료`, 'success');
+    } catch (e) {
+      if (e.name !== 'AbortError') showToast(`페이지 ${pageNum} 저장 실패`, 'warning');
+    }
+  } else {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    showToast(`페이지 ${pageNum} 저장 완료`, 'success');
+  }
+}
+
+// 캔버스 합성 → Blob 반환 (저장/공유 공통 유틸)
+async function buildCardBlob(card, pageNum) {
   const W = 1080, H = 1080;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -1773,14 +1913,7 @@ async function saveCardAsCanvas(card, pageNum) {
   ctx.fillStyle = ACC[pageNum] || '#8B5CF6';
   ctx.fillRect(PAD_X, curY, ACCENT_W, ACCENT_H);
 
-  // ⑤ PNG 다운로드
-  canvas.toBlob(blob => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `carousel_p${pageNum}.png`;
-    document.body.appendChild(a); a.click(); a.remove();
-    showToast(`페이지 ${pageNum} 저장 완료 (이미지+텍스트)`, 'success');
-  }, 'image/png');
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
 }
 
 // 텍스트를 줄 배열로만 측정 (실제 렌더 없음) — bottom-anchored 레이아웃용
@@ -1866,10 +1999,7 @@ document.getElementById('generateCaptionBtn').addEventListener('click', async ()
 
     document.getElementById('captionTextContent').textContent = data.caption || '';
     document.getElementById('captionHashtagsRow').textContent = (data.hashtags || []).join(' ');
-    const kw = state.dmKeyword;
-    document.getElementById('dmKeywordInfo').innerHTML = kw
-      ? `댓글 키워드: <strong>'${escHtml(kw)}'</strong> — 방문자가 댓글에 이 키워드를 남기면 DM으로 책 정보와 구매링크가 자동 발송됩니다`
-      : '';
+    renderDmKeywordInfo(state.dmKeyword);
     document.getElementById('captionResult').style.display = 'block';
     showToast('캡션 생성 완료!', 'success');
   } catch (err) {
@@ -1908,18 +2038,18 @@ document.getElementById('generateDmBtn').addEventListener('click', async () => {
   if (!state.pages || !state.bookInfo) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
   const link = document.getElementById('affiliateLinkInput').value.trim();
   state.affiliateLink = link || null;
+  const affiliateLinks = link ? [link] : (state.affiliateLinks || []);
 
-  showLoading('DM 자동 회신 생성 중...', 'AI가 댓글 키워드 감지 시 발송할 DM 내용을 작성합니다');
+  showLoading('DM 자동 회신 생성 중...', 'AI가 A/B 댓글 응답자에게 발송할 DM 내용을 작성합니다');
   try {
     const data = await apiFetch('/api/generate-dm-reply', {
       pages: state.pages,
       bookInfo: state.bookInfo,
-      affiliateLink: state.affiliateLink,
+      affiliateLinks,
+      bookNumber: state.bookNumber || '',
     });
-    state.dmReply = data.dmText;
-    document.getElementById('dmReplyText').textContent = data.dmText || '';
-    document.getElementById('dmReplyResult').style.display = 'block';
-    showToast('DM 자동 회신 내용 생성 완료!', 'success');
+    renderDmReplies(data);
+    showToast('DM 자동 회신 생성 완료!', 'success');
   } catch (err) {
     showToast(err.message, 'error');
   } finally {
@@ -1927,34 +2057,27 @@ document.getElementById('generateDmBtn').addEventListener('click', async () => {
   }
 });
 
-document.getElementById('copyDmBtn').addEventListener('click', () => {
-  if (!state.dmReply) return;
-  copyText(state.dmReply, 'DM 자동 회신');
+document.getElementById('copyDmABtn').addEventListener('click', () => {
+  if (!state.dmReplyA) return;
+  copyText(state.dmReplyA, 'A용 DM');
+});
+document.getElementById('copyDmBBtn').addEventListener('click', () => {
+  if (!state.dmReplyB) return;
+  copyText(state.dmReplyB, 'B용 DM');
 });
 
 updateHistoryCount();
 
 document.getElementById('telegramBtn').addEventListener('click', async () => {
   if (!state.pages || !state.bookInfo) return;
-  showLoading('텔레그램 발송 중...', '카드 이미지+텍스트 합성 후 텔레그램으로 보내고 있습니다');
+  showLoading('텔레그램 발송 중...', '제작 완료 알림과 확인 링크를 보내고 있습니다');
   try {
-    let compositeImages = null;
-    try {
-      compositeImages = await generateCompositeImages();
-    } catch (e) {
-      console.warn('합성 이미지 생성 실패, 원본 URL로 대체:', e);
-    }
-    const data = await apiFetch('/api/send-telegram', {
-      pages: state.pages,
+    // 텔레그램에는 완료 알림 + 확인 링크만 전송 (이미지·문구는 보내지 않음)
+    await apiFetch('/api/send-telegram', {
       bookInfo: state.bookInfo,
-      caption: state.caption,
-      hashtags: state.captionHashtags,
-      commentKeyword: state.dmKeyword,
-      dmKeyword: state.dmKeyword,
-      images: state.images || null,
-      compositeImages,
+      pipelineId: localStorage.getItem('activePipelineId') || '',
     });
-    showToast(data.message || '텔레그램으로 발송됐습니다!', 'success');
+    showToast('텔레그램으로 완료 알림을 보냈습니다!', 'success');
   } catch (err) {
     showToast(err.message, 'error');
   } finally {
@@ -2039,6 +2162,15 @@ function getDeployAffiliateLinks() {
     .filter(v => v);
 }
 
+// 책 제목 입력 여부에 따라 이슈 키워드 필드 흐리게 처리
+document.getElementById('deployTitle').addEventListener('input', () => {
+  const hasTitle = document.getElementById('deployTitle').value.trim() !== '';
+  const issueGroup = document.getElementById('deployIssueGroup');
+  issueGroup.style.opacity = hasTitle ? '0.4' : '1';
+  issueGroup.style.pointerEvents = hasTitle ? 'none' : '';
+  document.getElementById('deployFetchBooksBtn').textContent = hasTitle ? '입력한 책으로 바로 생성' : '자동 진행하기';
+});
+
 document.getElementById('addAffiliateLinkBtn').addEventListener('click', () => {
   const list = document.getElementById('deployAffiliateLinkList');
   const input = document.createElement('input');
@@ -2053,6 +2185,33 @@ document.getElementById('deployFetchBooksBtn').addEventListener('click', async (
   const category = document.getElementById('deployCategory').value;
   const issue = document.getElementById('deployIssue').value.trim();
   const affiliateLinks = getDeployAffiliateLinks();
+  const manualTitle = document.getElementById('deployTitle').value.trim();
+  const manualAuthor = document.getElementById('deployAuthor').value.trim();
+
+  // 책 제목 직접 입력된 경우 — AI 추천 생략, 분석 후 바로 파이프라인 시작
+  if (manualTitle) {
+    showLoading('책 정보 분석 중...', 'AI가 핵심 메시지와 독자층을 파악하고 있습니다');
+    try {
+      const analyzed = await apiFetch('/api/analyze', { title: manualTitle, author: manualAuthor });
+      const bookInfo = {
+        title: manualTitle,
+        author: manualAuthor || analyzed.author || '',
+        year: analyzed.year || '',
+        coreMessage: analyzed.coreMessage,
+        targetAudience: analyzed.targetAudience,
+        category: category || analyzed.category,
+      };
+      showToast(`"${bookInfo.title}" 분석 완료 — 캐럿셀 제작 시작`, 'info');
+      await runAutoDeployPipeline(bookInfo, affiliateLinks);
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      hideLoading();
+    }
+    return;
+  }
+
+  // 제목 미입력 — 기존 AI 자동 추천 흐름
   showLoading('AI가 최적의 책을 선정하고 있습니다...', '베스트셀러와 최신 이슈를 분석 중');
   try {
     const data = await apiFetch('/api/suggest', { category, issue, excludeTitles: getHistory() });
@@ -2099,6 +2258,8 @@ document.getElementById('deployStartBtn').addEventListener('click', async () => 
 async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
   localStorage.removeItem('activePipelineId');
   clearTimeout(_pipelinePoller);
+  _resultsRendered = false;
+  state._catalogAdded = false;
 
   const progressPanel = document.getElementById('progressPanel');
   progressPanel.classList.add('visible');
@@ -2121,6 +2282,8 @@ async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
       if (result && result.pipelineId) {
         localStorage.setItem('activePipelineId', result.pipelineId);
         localStorage.setItem('activePipelineBookInfo', JSON.stringify(bookInfo));
+        if (result.bookNumber) state.bookNumber = result.bookNumber;
+        if (affiliateLinks) state.affiliateLinks = affiliateLinks;
         showToast(`"${bookInfo.title}" 서버에서 처리 시작 — 앱을 꺼도 계속 진행됩니다`, 'success');
         setDeployStep(1, 'active', 'Claude AI가 5페이지 카드뉴스를 작성 중...');
         startPipelinePolling(result.pipelineId);
@@ -2227,9 +2390,7 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
     state.dmKeyword = dmKeyword;
     document.getElementById('captionTextContent').textContent = caption;
     document.getElementById('captionHashtagsRow').textContent = hashtags.join(' ');
-    document.getElementById('dmKeywordInfo').innerHTML = dmKeyword
-      ? `댓글 키워드: <strong>'${escHtml(dmKeyword)}'</strong> — 방문자가 이 키워드를 댓글에 남기면 DM으로 책 정보가 자동 발송됩니다`
-      : '';
+    renderDmKeywordInfo(dmKeyword);
     document.getElementById('captionResult').style.display = 'block';
     setDeployStep(4, 'done', '캡션 + 해시태그 생성 완료');
   } catch (err) {
@@ -2244,30 +2405,24 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
       pages, bookInfo,
       affiliateLinks: Array.isArray(affiliateLinks) ? affiliateLinks : [],
       commentKeyword: dmKeyword,
+      bookNumber: state.bookNumber || '',
     });
-    state.dmReply = dmData.dmText;
-    document.getElementById('dmReplyText').textContent = dmData.dmText || '';
-    document.getElementById('dmReplyResult').style.display = 'block';
-    document.getElementById('dmReplyWrapper').style.display = 'block';
+    renderDmReplies(dmData);
     setDeployStep(5, 'done', 'DM 자동 회신 생성 완료');
   } catch (err) {
     setDeployStep(5, 'error', 'DM 회신 생성 실패 — 계속 진행');
   }
 
-  // ── Step 6: 텔레그램 발송 ──
-  // compositeImages(base64 5장)는 Worker 30초 한도 초과 원인 → 제거하고 Pollinations URL만 사용
-  setDeployStep(6, 'active', '모든 이미지 생성 완료 — 텔레그램 발송 중...');
+  // ── Step 6: 텔레그램 발송 (완료 알림 + 확인 링크만) ──
+  setDeployStep(6, 'active', '제작 완료 — 텔레그램 알림 발송 중...');
   try {
     const tgData = await apiFetch('/api/send-telegram', {
-      pages, bookInfo, caption, hashtags,
-      commentKeyword: dmKeyword, dmKeyword,
-      images: state.images || null,
-      compositeImages: null, // 서버에 base64 전송 금지 (타임아웃 원인)
+      bookInfo,
+      pipelineId: localStorage.getItem('activePipelineId') || '',
     });
-    setDeployStep(6, 'done', '텔레그램 발송 완료 — 승인 버튼을 눌러주세요');
+    setDeployStep(6, 'done', '텔레그램으로 완료 알림 + 확인 링크 발송 완료');
     showToast(tgData.message || '텔레그램 발송 완료!', 'success');
   } catch (err) {
-    // "Load failed"는 Worker가 발송 완료 후 타임아웃된 것 — 실제 발송 성공 가능성 높음
     const isTimeout = err.message === 'Load failed' || err.message === 'Failed to fetch' || err.name === 'TypeError';
     if (isTimeout) {
       setDeployStep(6, 'done', '텔레그램 발송 완료 (텔레그램 앱에서 확인해주세요)');
@@ -2278,8 +2433,10 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
     }
   }
 
-  // ── Step 7: 완료 ──
-  setDeployStep(7, 'done', '텔레그램 [게시하기] 또는 아래 버튼으로 직접 게시');
+  // ── Step 7: 도서관 등록 + 완료 ──
+  setDeployStep(7, 'active', '지식 큐레이션 도서관에 등록 중...');
+  await addBookToCatalogIfNeeded();
+  setDeployStep(7, 'done', '이 페이지에서 결과 확인 후 인스타그램 게시 여부 결정');
   setStep(4);
   document.getElementById('deployDoneMsg').classList.add('visible');
   document.getElementById('deployInstagramBtnWrap').style.display = 'block';
@@ -2288,6 +2445,7 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
 
 let _pipelinePoller = null;
 let _currentPollId = null; // 폴링 중인 파이프라인 ID (visibilitychange 복귀 시 참조)
+let _resultsRendered = false; // 결과(캐럿셀) 중복 렌더 방지 — 콘텐츠 준비 즉시 1회만 그림
 
 function startPipelinePolling(pipelineId) {
   clearTimeout(_pipelinePoller);
@@ -2304,11 +2462,14 @@ function startPipelinePolling(pipelineId) {
     try {
       const status = await apiFetch('/api/pipeline-status?id=' + encodeURIComponent(pipelineId));
       applyPipelineStatus(status);
+      // 콘텐츠(페이지)가 준비되면 complete를 기다리지 않고 즉시 캐럿셀을 보여준다.
+      // (남은 단계 5~7은 DM 회신·텔레그램·게시 마커라 미리보기를 막을 이유가 없음)
+      if (status.pages) renderPipelineResults(status);
       if (status.status === 'complete') {
         localStorage.removeItem('activePipelineId');
         localStorage.removeItem('activePipelineBookInfo');
         _currentPollId = null;
-        renderPipelineResults(status);
+        renderPipelineResults(status, true);
         return;
       }
       if (status.status === 'error') {
@@ -2378,38 +2539,68 @@ function applyPipelineStatus(status) {
   for (let i = step + 1; i <= 7; i++) setDeployStep(i, '', null);
 }
 
-function renderPipelineResults(status) {
+// 운영자용 라벨: 이제 댓글 트리거는 A/B 투표 (키워드 입력 아님). category는 DM 라우팅 태그.
+function renderDmKeywordInfo(category) {
+  const el = document.getElementById('dmKeywordInfo');
+  if (!el) return;
+  el.innerHTML = `DM 트리거: 댓글에 <strong>A</strong> 또는 <strong>B</strong>를 남기면 선택에 맞는 DM이 자동 발송됩니다`
+    + (category ? ` <span style="opacity:.65">(라우팅 카테고리: ${escHtml(category)})</span>` : '');
+}
+
+// DM 회신을 화면에 표시. dmText(단일) 우선, 구버전 dmTextA/dmText도 호환.
+function renderDmReplies(src) {
+  const dm = (src && (src.dmText || src.dmTextA)) || '';
+  if (!dm) return false;
+  state.dmReplyA = dm; state.dmReplyB = dm;
+  document.getElementById('dmReplyTextA').textContent = dm;
+  document.getElementById('dmReplyResult').style.display = 'block';
+  document.getElementById('dmReplyWrapper').style.display = 'block';
+  return true;
+}
+
+function renderPipelineResults(status, autoSendComposites) {
   if (!status.pages) return;
+  // 이미 그려졌으면 전체 재렌더(이미지 재로딩·토스트 반복) 대신, 뒤늦게 도착한
+  // DM 회신 같은 보조 데이터만 채워 넣고 끝낸다.
+  if (_resultsRendered) {
+    renderDmReplies(status);
+    return;
+  }
+  _resultsRendered = true;
   state.pages = status.pages;
   state.bookInfo = status.bookInfo || state.bookInfo;
   state.images = status.images || null;
   state.caption = status.caption || '';
   state.captionHashtags = status.hashtags || [];
   state.dmKeyword = status.dmKeyword || '';
+  if (status.bookNumber) { state.bookNumber = status.bookNumber; state._catalogAdded = true; }
+  if (status.affiliateLinks) state.affiliateLinks = status.affiliateLinks;
   if (status.bookInfo) addToHistory(status.bookInfo.title);
   renderCarousel(status.pages);
   if (status.images) applyImagesToCards(status.images);
   if (status.caption) {
     document.getElementById('captionTextContent').textContent = status.caption;
     document.getElementById('captionHashtagsRow').textContent = (status.hashtags || []).join(' ');
-    if (status.dmKeyword) {
-      document.getElementById('dmKeywordInfo').innerHTML = `댓글 키워드: <strong>'${escHtml(status.dmKeyword)}'</strong> — 방문자가 이 키워드를 댓글에 남기면 DM으로 책 정보가 자동 발송됩니다`;
-    }
+    renderDmKeywordInfo(status.dmKeyword);
     document.getElementById('captionResult').style.display = 'block';
   }
+  renderDmReplies(status);
   if (status.validation) renderValidation(status.validation);
   setStep(status.validation?.approved ? 4 : 3);
   updateInstagramBtn();
   document.getElementById('deployDoneMsg').classList.add('visible');
   document.getElementById('deployInstagramBtnWrap').style.display = 'block';
   document.getElementById('deployInstagramBtn').disabled = !(status.images && status.caption);
-  showToast('캐럿셀 생성 완료! 텔레그램에서 확인해주세요.', 'success');
+  showToast('캐럿셀 생성 완료! 결과를 확인하고 게시 여부를 결정하세요.', 'success');
 }
 
 // 페이지 로드 시 이전 파이프라인 복구
 // iOS에서 탭이 죽었다 살아나도 localStorage에 ID가 남아있으면 결과를 복원한다
 (async () => {
-  const savedId = localStorage.getItem('activePipelineId');
+  // 텔레그램 "확인하러 가기" 링크(?pipeline=<id>)로 들어온 경우 우선 처리.
+  // 다른 기기/브라우저라 localStorage가 없어도 결과를 불러올 수 있어야 함.
+  const urlPipelineId = new URLSearchParams(location.search).get('pipeline');
+  const savedId = urlPipelineId || localStorage.getItem('activePipelineId');
   if (!savedId) return;
 
   // 저장된 bookInfo로 deployState 복원 (재시도 등에 필요)
@@ -2431,6 +2622,7 @@ function renderPipelineResults(status) {
   if (!status || status.status === 'not_found') {
     localStorage.removeItem('activePipelineId');
     localStorage.removeItem('activePipelineBookInfo');
+    if (urlPipelineId) showToast('해당 캐럿셀 결과를 찾을 수 없습니다 (만료됐을 수 있어요).', 'warning');
     return;
   }
 
@@ -2444,14 +2636,19 @@ function renderPipelineResults(status) {
   if (status.status === 'complete') {
     localStorage.removeItem('activePipelineId');
     localStorage.removeItem('activePipelineBookInfo');
-    renderPipelineResults(status);
-    showToast('캐럿셀 생성이 완료됐습니다! 텔레그램을 확인해주세요.', 'success');
+    renderPipelineResults(status, true);
+    showToast('캐럿셀 결과입니다. 확인 후 인스타그램 게시 여부를 결정하세요.', 'success');
   } else if (status.status === 'error') {
     localStorage.removeItem('activePipelineId');
     localStorage.removeItem('activePipelineBookInfo');
     showToast('이전 작업에서 오류가 발생했습니다. 다시 시도해주세요.', 'error');
   } else if (status.status === 'running') {
-    showToast('서버에서 계속 진행 중... 잠시 기다려주세요.', 'info');
+    // 이미 콘텐츠가 만들어졌으면(텔레그램 알림 후 들어온 경우 대부분 해당) 바로 보여준다.
+    if (status.pages) {
+      renderPipelineResults(status, false);
+    } else {
+      showToast('서버에서 계속 진행 중... 잠시 기다려주세요.', 'info');
+    }
     startPipelinePolling(savedId);
   } else {
     localStorage.removeItem('activePipelineId');
