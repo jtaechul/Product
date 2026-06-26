@@ -58,7 +58,17 @@ function setHud(on) { $('hud').classList.toggle('hidden', !on); }
 const calib = { progress: 0, done: false, tStart: 0, status: '' };
 
 // ====== 버튼 이벤트 ======
-$('btnStart').onclick = () => { sfx.resume(); gotoRegister(); };
+$('btnStart').onclick = () => { sfx.resume(); tryLockLandscape(); gotoRegister(); };
+
+// 가로 고정 시도(지원 기기에서만). 실패하면 회전 안내(#rotateGate)가 대신 처리.
+async function tryLockLandscape() {
+  try {
+    const el = document.documentElement;
+    if (el.requestFullscreen) await el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+  } catch (e) { /* 미지원(예: iOS) → 회전 안내로 유도 */ }
+}
 $('btnHow').onclick = () => { showScreen('how'); state = 'HOW'; };
 $('btnHowBack').onclick = () => { showScreen('title'); state = 'TITLE'; };
 $('btnRegister').onclick = () => {

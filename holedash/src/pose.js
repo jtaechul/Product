@@ -33,13 +33,10 @@ export class PoseTracker {
     this.ready = true;
   }
 
-  // 웹캠 시작 — 세로 화면이면 세로 비율 카메라를 요청해 좌우가 넓게 보이도록
+  // 웹캠 시작 — 가로 전용 게임이므로 항상 가로(16:9) 카메라를 요청
   async startCamera() {
-    const portrait = window.innerHeight > window.innerWidth;
-    const ideal = portrait ? { width: { ideal: 720 }, height: { ideal: 1280 } }
-                           : { width: { ideal: 1280 }, height: { ideal: 720 } };
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', ...ideal },
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
       audio: false,
     });
     this.video.srcObject = stream;
