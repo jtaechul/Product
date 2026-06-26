@@ -1,7 +1,7 @@
 // ===== HoleDash · 메인 (상태 머신 + 게임 로직 + 화면 연결) =====
 import { Renderer } from './render.js';
 import { PoseTracker, dist, visible } from './pose.js';
-import { Sfx } from './audio.js';
+import { Sfx, Music } from './audio.js';
 import { buildWallMask } from './walls.js';
 import { drawBodyMask, computeCollisionRate, bodyThicknessFromShoulder } from './collision.js';
 import {
@@ -19,6 +19,8 @@ const video = $('cam');
 const renderer = new Renderer(canvas, video);
 const pose = new PoseTracker(video);
 const sfx = new Sfx();
+const music = new Music(sfx);
+let muted = false;
 
 // 충돌 마스크용 오프스크린
 const bodyMaskCanvas = Object.assign(document.createElement('canvas'), { width: MASK_W, height: MASK_H });
@@ -82,6 +84,14 @@ $('btnNextPlayer').onclick = () => { players.push(current); gotoRegister(); };
 $('btnRetry').onclick = () => { startCalibration(); };
 $('btnRestartAll').onclick = () => { players = []; showScreen('title'); state = 'TITLE'; setHud(false); };
 $('btnErrorRetry').onclick = () => location.reload();
+$('btnMute').onclick = () => {
+  muted = !muted;
+  sfx.enabled = !muted;
+  sfx.resume();
+  music.setVolume(muted ? 0 : 0.16);
+  if (!muted && state === 'PLAY') music.start();
+  $('btnMute').textContent = muted ? '🔇' : '🔊';
+};
 
 function gotoRegister() {
   $('playerName').value = '';
@@ -201,6 +211,7 @@ function finishCalibration() {
 
 // ====== 연습 + 본게임 ======
 function startPractice() {
+  if (!muted) music.start();
   g.practice = true;
   g.wallIndex = 0;
   current.life = START_LIFE;
@@ -380,6 +391,7 @@ function advanceWall() {
 }
 
 function finishPlayer(cleared = false) {
+  music.stop();
   state = 'RESULT';
   setHud(false);
   $('resultName').textContent = cleared ? `🎉 ${current.name} 완주!` : `${current.name} 종료`;
