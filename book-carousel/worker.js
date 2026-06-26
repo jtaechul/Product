@@ -4,7 +4,7 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-const SELF_URL = 'https://jtaechul.github.io/Product/book-carousel/public';
+const SELF_URL = 'https://insight-vault.pages.dev';
 const WORKER_URL = 'https://book-carousel.jtaechul.workers.dev';
 
 function json(data, status = 200) {
