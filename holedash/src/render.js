@@ -116,8 +116,15 @@ export class Renderer {
     return Math.max(30, Math.hypot(pa.x - pb.x, pa.y - pb.y));
   }
 
-  // 화면 좌표계 hole geom 계산(플레이어 중심·어깨너비 기반)
-  screenGeom(landmarks) {
+  // 고정된 구멍 위치/크기(화면 중앙·화면에 꽉 맞게). 구멍은 몸을 따라다니지 않음 →
+  // 플레이어가 직접 이 자리로 이동·자세를 맞춘다. 머리~발이 화면 안에 다 들어오게 사이즈.
+  wallGeom() {
+    const S = this.H * 0.16;            // 어깨너비 단위 — 전신이 세로로 들어오게
+    return { cx: this.W / 2, cy: this.H * 0.53, S, VH: S * 1.7 };
+  }
+
+  // 플레이어 실제 몸 중심(화면 px) — 장애물 조준·이펙트 위치에 사용
+  playerCenter(landmarks) {
     const cov = this._cover();
     const ls = landmarks[LM.L_SHOULDER], rs = landmarks[LM.R_SHOULDER];
     const lh = landmarks[LM.L_HIP], rh = landmarks[LM.R_HIP];
@@ -180,7 +187,8 @@ export class Renderer {
     const ctx = this.ctx;
     const R = ob.S * (0.34 + 0.5 * progress);
     const startY = -this.H * 0.14;
-    const x = ob.tx;
+    const startX = (ob.sx !== undefined) ? ob.sx : ob.tx;
+    const x = startX + (ob.tx - startX) * progress;
     const y = startY + (ob.ty - startY) * (progress * progress);
     const RED = '#ff4d57';
 
@@ -250,17 +258,18 @@ export class Renderer {
     ctx.fillStyle = 'rgba(0,0,0,0.28)';
     ctx.fillRect(0, 0, this.W, this.H);
 
-    // 가운데 사람 모양 가이드(여기에 맞춰 서기)
+    // 가운데 사람 모양 가이드 — 게임의 고정 구멍과 똑같은 위치/크기 + '별 모양'(양팔·양다리 벌림)
+    // 여기에 맞춰 팔다리를 벌리고 서면, 게임 중 팔을 뻗어도 경계를 벗어나지 않는다.
+    const wg = this.wallGeom();
     const frameH = this.H * 0.84;
-    const frameW = Math.min(this.W * 0.9, frameH * 0.62);
-    const cx = this.W / 2, cy = this.H * 0.48;
-    const S = frameW * 0.17;
+    const frameW = Math.min(this.W * 0.92, frameH);
+    const cx = wg.cx, cy = wg.cy;
     ctx.save();
     ctx.globalAlpha = 0.9;
     ctx.shadowColor = 'rgba(255,255,255,0.5)';
     ctx.shadowBlur = 16;
-    ctx.fillStyle = `rgba(255,255,255,${0.12 + 0.06 * Math.sin(t * 3)})`;
-    fillHole(ctx, { pose: 'stand', rot: 0, margin: 0.4 }, { cx, cy, S, thickBoost: 0 });
+    ctx.fillStyle = `rgba(255,255,255,${0.14 + 0.06 * Math.sin(t * 3)})`;
+    fillHole(ctx, { pose: 'star', rot: 0, margin: 0.45 }, { cx, cy, S: wg.S, thickBoost: 0 });
     ctx.restore();
 
     // 코너 브래킷 프레임(스캐너 느낌)
