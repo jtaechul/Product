@@ -306,7 +306,7 @@ async function handleSendTelegram(env, body) {
 // 카테고리/이슈 기반 책 추천
 async function handleSuggest(env, body) {
   const { category, issue, excludeTitles = [] } = body;
-  const topic = issue || category || '자기계발';
+  const topic = issue || category || '연애·관계 심리';
 
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const excludeClause = excludeTitles.length
@@ -315,8 +315,8 @@ async function handleSuggest(env, body) {
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'main', env),
-    system: '당신은 도서 큐레이터입니다. 최신 베스트셀러 트렌드와 사회적 이슈를 바탕으로 실제 존재하는 책을 추천합니다. 반드시 JSON만 응답합니다.',
-    user: `오늘 날짜: ${today}\n주제: "${topic}"${excludeClause}\n\n이 주제와 관련해 지금 이 시점에 주목받을 만한 실제 책 4권을 추천하세요.\n최근 1~2년 내 출간된 신간이거나, 최신 사회 이슈(AI·경제위기·부동산·건강·인간관계·기후·취업 등)와 직접 연결되는 인사이트 있는 책을 우선 선정하세요.\n동일 저자 책은 중복 추천하지 마세요.\n\n각 책에 대해:\n- title: 책 제목 (실제 출판된 책)\n- author: 저자명\n- year: 출판연도 (숫자)\n- category: 카테고리\n- coreMessage: 이 책의 핵심 메시지 (1~2문장)\n- targetAudience: 주요 대상 독자층 (1문장)\n- reason: 지금 이 책을 읽어야 하는 이유 (1문장, 최신 트렌드/이슈 연결)\n\nJSON 형식:\n{"books":[{"title":"...","author":"...","year":2024,"category":"...","coreMessage":"...","targetAudience":"...","reason":"..."}]}`,
+    system: '당신은 연애·관계 심리 전문 도서 큐레이터입니다. 30대 독자가 자신의 연애 패턴·이별·짝사랑·애착 유형을 이해하도록 돕는 실제 출판된 책을 추천합니다. 사랑·관계·심리·자기이해를 다루는 에세이, 심리학, 관계 안내서를 중심으로 큐레이션합니다. 반드시 JSON만 응답합니다.',
+    user: `오늘 날짜: ${today}\n주제: "${topic}"${excludeClause}\n\n이 주제와 관련해 30대 독자에게 깊이 공감받을 실제 책 4권을 추천하세요.\n\n[선정 기준]\n- 연애·관계·사랑·애착·이별·자기이해를 다루는 책 (심리학/에세이/관계 안내서)\n- 독자가 "이건 내 얘기다"라고 느낄 수 있는 책 (예: 애착유형, 회피형·불안형 연애, 반복되는 연애 패턴, 자존감과 사랑, 건강한 경계, 이별 회복)\n- 실제 구매로 이어지기 쉬운 책 (관계 심리학·자기이해 분야가 전환율 높음)\n- 한국 독자가 쉽게 구할 수 있는 국내 출간서 우선\n- 동일 저자 책은 중복 추천 금지\n\n각 책에 대해:\n- title: 책 제목 (실제 출판된 책)\n- author: 저자명\n- year: 출판연도 (숫자)\n- category: 세부 카테고리 (예: 애착심리 / 연애에세이 / 이별과회복 / 자존감과사랑 / 관계심리)\n- coreMessage: 이 책의 핵심 메시지 (1~2문장)\n- targetAudience: 주요 대상 독자층 (1문장)\n- reason: 30대가 지금 이 책을 읽어야 하는 이유 (1문장)\n\nJSON 형식:\n{"books":[{"title":"...","author":"...","year":2024,"category":"...","coreMessage":"...","targetAudience":"...","reason":"..."}]}`,
   });
 
   return { success: true, ...extractJson(text) };
@@ -343,8 +343,8 @@ async function handleGenerate(env, body) {
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'main', env),
-    system: `당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.\n3. 공포감·호기심·위기감으로 저장·공유율을 높인다.\n4. 모든 콘텐츠에 반말을 절대 사용하지 않는다 — 문어체·존댓말(~습니다/~합니다/~세요)만 허용.\n반드시 JSON만 응답한다.`,
-    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '자기계발'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(훅 — 헤드라인만): 카드 전체를 단 하나의 강렬한 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 이미 겪었을 구체적 상황을 묘사한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자의 일상 경험을 정확히 포착한 문장. 통계보다 경험 공유형.\n    좋은 예: "매달 저축하는데 잔고는 왜 줄어드는 걸까요"\n             "열심히 일하는데 10년째 제자리라면 이유가 있습니다"\n             "아무리 다이어트해도 살이 빠지지 않는 데는 이유가 있습니다"\n    나쁜 예(절대 금지): "뇌가 먼저 죽어간다" / "당신의 뇌는 몸보다 먼저 죽어가고 있다" (공포 자극형)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(문제): 구체적 수치·현실 사례로 독자가 공감할 문제 상황을 서술한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 구체적 수치(%, 명, 연도)를 최소 1개 포함.\n3페이지(심각성): "대부분은 이 사실을 모른다" 접근으로 충격 사실·연구 결과를 제시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 출처 가능 수준의 실제 통계·연구 인용 1건 이상.\n4페이지(실마리): 완전한 해결책은 절대 주지 말고 '해결 방향의 단서'만 암시해 DM 욕구를 자극한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 45자 이내. 마지막 줄은 '그렇다면 어떻게?' 암시로 끝낸다.\n5페이지(참여형 질문): 독자가 자기 상황에 대해 답하고 싶어지는 A/B 선택 질문으로 참여를 유도한다.\n  - cta: 독자 자신의 경험/상태를 묻는 A/B 선택 형식 2~3줄.\n    예시 형식: "지금 당신은 어느 쪽인가요?\\nA. 알고는 있지만 아직 시작 못했다\\nB. 시작했지만 방향을 모르겠다"\n    핵심: 책이나 정보가 아니라 독자 자신의 상황을 묻는 질문이어야 한다.\n  - linkText: 반드시 두 역할을 분리해 한 줄로 씁니다.\n    역할1 — A/B 참여 유도: "A 또는 B로 솔직한 의견을 남겨주세요" (어떤 보상도 약속하지 않음)\n    역할2 — 책 정보 안내: "소개된 책은 프로필 링크에서 바로 찾으실 수 있습니다"\n    [절대 금지] "A 또는 B를 남기시면 당신에게 맞는 책을 안내해드립니다" 같이 A/B 선택에 따라 다른 결과가 온다는 표현 — A든 B든 같은 책 정보가 프로필 링크에 있으므로 거짓이 됩니다.\n    좋은 예: "댓글에 A 또는 B로 솔직한 의견을 남겨주세요 | 소개된 책은 프로필 링크에서 바로 확인하실 수 있습니다"\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
+    system: `당신은 연애·관계 심리 책을 소개하는 인스타그램 카드뉴스 전문 카피라이터입니다.\n타겟 독자: 연애·이별·짝사랑·관계에 지친 30대.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 마음을 건드린다 — 장황한 설명 금지.\n3. 공포·위기·충격이 아니라 '깊은 공감과 위로'로 저장·공유를 유도한다. 독자가 "이건 내 얘기다"라고 느껴 저장하게 만든다.\n4. 통계·수치·연구 인용보다 감정과 경험의 언어를 쓴다. 따뜻하고 문학적인 톤.\n5. 모든 콘텐츠에 반말을 절대 사용하지 않는다 — 문어체·존댓말(~습니다/~합니다/~네요/~까요)만 허용.\n반드시 JSON만 응답한다.`,
+    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '연애·관계 심리'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n\n[전체 톤] 연애·관계에 지친 30대를 위로하고 자기 마음을 이해하게 돕는 따뜻한 흐름. 공감 → 패턴 발견 → 마음의 이유 → 위로의 실마리 → 참여.\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(공감 훅 — 헤드라인만): 카드 전체를 단 하나의 마음을 건드리는 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 연애에서 겪었을 구체적 순간·감정을 정확히 포착한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 공포·경고 톤 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자가 혼자 느꼈던 감정을 들킨 듯한 문장.\n    좋은 예: "좋아할수록 더 차갑게 굴게 되는 사람이 있습니다"\n             "먼저 연락하면 지는 것 같아 오늘도 휴대폰만 들여다봤습니다"\n             "헤어지자는 말보다, 잡지 않을까 봐 더 무서웠습니다"\n    나쁜 예(절대 금지): "당신의 연애는 실패하고 있다" / "이대로면 평생 혼자입니다" (공포·단정 톤)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(패턴 발견): 독자가 반복해온 연애 패턴을 부드럽게 이름 붙여 보여준다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 독자가 "맞아, 나 그래"라고 느낄 구체적 행동·상황 묘사. 수치 금지, 감정과 장면 위주.\n3페이지(마음의 이유): 그 패턴의 심리적 뿌리를 따뜻하게 설명한다(애착, 상처, 두려움 등). 비난하지 않는다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. "당신이 이상한 게 아니라, 이런 마음이 있었던 것입니다" 같은 위로의 통찰. 심리학 개념을 쉽게 풀어 쓰되 학술 인용 금지.\n4페이지(위로의 실마리): 완전한 해답 대신 '이렇게 바라보면 달라진다'는 방향을 부드럽게 암시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 마지막 줄은 희망적 여운으로 끝낸다. 단정적 해결책 금지.\n5페이지(참여형 질문): 독자가 자기 연애 성향에 대해 답하고 싶어지는 A/B 질문으로 참여를 유도한다.\n  - cta: 독자 자신의 연애 성향/감정을 묻는 A/B 선택 형식 2~3줄.\n    예시 형식: "당신은 어느 쪽에 가까운가요?\\nA. 좋아할수록 다가가는 사람\\nB. 좋아할수록 멀어지는 사람"\n    핵심: 책이나 정보가 아니라 독자 자신의 마음을 묻는 질문이어야 한다.\n  - linkText: 반드시 두 역할을 분리해 한 줄로 씁니다.\n    역할1 — A/B 참여 유도: "댓글에 A 또는 B로 솔직한 마음을 남겨주세요" (어떤 보상도 약속하지 않음)\n    역할2 — 책 정보 안내: "오늘의 책은 프로필 링크에서 바로 만나보실 수 있습니다"\n    [절대 금지] "A 또는 B를 남기시면 당신에게 맞는 책을 안내해드립니다" 같이 A/B 선택에 따라 다른 결과가 온다는 표현 — A든 B든 같은 책 정보가 프로필 링크에 있으므로 거짓이 됩니다.\n    좋은 예: "댓글에 A 또는 B로 솔직한 마음을 남겨주세요 | 오늘의 책은 프로필 링크에서 바로 만나보실 수 있습니다"\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
 
   return { success: true, pages: extractJson(text) };
@@ -356,7 +356,7 @@ async function handleValidate(env, body) {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light', env),
     max_tokens: 1024,
     system: '당신은 소셜미디어 콘텐츠 전문 편집장 겸 저작권 검토자입니다. 반드시 JSON만 응답합니다.',
-    user: `책 "${bookInfo.title}" (저자: ${bookInfo.author}) 캐럿셀을 아래 5가지 기준으로 평가하세요.\n\n캐럿셀 내용:\n${JSON.stringify(pages, null, 2)}\n\n평가 기준 (100점 만점):\n1. accuracy(책 내용 부합도): 캐럿셀 내용이 해당 책의 실제 메시지와 일치하는가? 0~20\n2. factual(사실 정확성): 수치·통계·사례에 명백한 오류나 과장이 없는가? 0~20\n3. copyright(저작권 안전성): 책의 핵심 내용을 그대로 옮기지 않고 요약·재해석했는가? 저자명·책 제목이 본문에 노출되지 않는가? 0~20\n4. engagement(소비자 자극): 공포감·호기심·위기감이 충분해 저장·DM·구매 욕구를 자극하는가? 0~25\n5. quality(문장 품질): 오타·비문·어색한 표현이 없고 간결한가? 0~15\n\nJSON: {"totalScore":85,"scores":{"accuracy":17,"factual":16,"copyright":18,"engagement":22,"quality":12},"feedback":"전체 평가 2~3문장","improvements":["구체적 개선점1","개선점2","개선점3"],"approved":true}\napproved는 totalScore>=70이면 true.`
+    user: `책 "${bookInfo.title}" (저자: ${bookInfo.author}) 캐럿셀을 아래 5가지 기준으로 평가하세요.\n\n캐럿셀 내용:\n${JSON.stringify(pages, null, 2)}\n\n평가 기준 (100점 만점):\n1. accuracy(책 내용 부합도): 캐럿셀 내용이 해당 책의 실제 메시지와 일치하는가? 0~20\n2. factual(사실 정확성): 수치·통계·사례에 명백한 오류나 과장이 없는가? 0~20\n3. copyright(저작권 안전성): 책의 핵심 내용을 그대로 옮기지 않고 요약·재해석했는가? 저자명·책 제목이 본문에 노출되지 않는가? 0~20\n4. engagement(공감·참여 유도): 30대 독자가 "이건 내 얘기다"라고 느껴 저장·공유하고 싶어지는 깊은 공감과 위로가 있는가? 따뜻한 톤이 유지되는가(공포·단정·비난 톤이면 감점)? 0~25\n5. quality(문장 품질): 오타·비문·어색한 표현이 없고 간결한가? 0~15\n\nJSON: {"totalScore":85,"scores":{"accuracy":17,"factual":16,"copyright":18,"engagement":22,"quality":12},"feedback":"전체 평가 2~3문장","improvements":["구체적 개선점1","개선점2","개선점3"],"approved":true}\napproved는 totalScore>=70이면 true.`
   });
   return { success: true, ...extractJson(text) };
 }
@@ -364,20 +364,20 @@ async function handleValidate(env, body) {
 // 페이지별 폴백 프롬프트 — Claude가 생성 실패 시 사용
 // 각 페이지의 감정 흐름(긴장→문제→충격→희망→여운)에 맞춘 비주얼 방향
 const FALLBACK_IMAGE_PROMPTS = {
-  page1: 'lone figure standing at edge of foggy cliff at dawn, dramatic cinematic atmosphere, tension and anticipation, dark moody tones with single ray of light, no text',
-  page2: 'empty chair at cluttered desk late at night, single lamp light, papers scattered, documentary style photography, melancholic urban atmosphere, no text',
-  page3: 'cracked dry earth under harsh sunlight, stark contrast, bold graphic composition, striking and impactful, warning visual, no text',
-  page4: 'hands opening a book as golden sunrise light spills through, warm breakthrough feeling, hopeful and uplifting, soft natural light, no text',
-  page5: 'solitary path through autumn forest, soft diffused light, contemplative open horizon, peaceful but unresolved, invitation to journey, no text',
+  page1: 'warm analog film photography, a cup of coffee and an open book on a wooden table by a soft sunlit window, gentle morning light, cream and beige tones, cozy intimate mood, shallow depth of field, no text',
+  page2: 'soft 35mm film photo, two empty chairs facing each other in a quiet sunlit cafe, warm muted tones, nostalgic and tender atmosphere, gentle bokeh, no people faces, no text',
+  page3: 'intimate still life, dried flowers and an old letter on linen fabric, soft diffused window light, dusty rose and warm beige palette, emotional and quiet, analog film grain, no text',
+  page4: 'hands gently holding a warm mug near a sunlit window, soft golden afternoon light, blurred cozy background, tender hopeful feeling, warm color grade, no text',
+  page5: 'serene minimal photo, a single open book on a bed with soft morning light through sheer curtains, warm cream tones, peaceful and contemplative, soft focus, no text',
 };
 
-// 페이지별 시각 방향 지침 — 사진 촬영 용어로 구체적으로 명시 (Flux 모델 최적화)
+// 페이지별 시각 방향 지침 — 책스타그램·연애 감성 (따뜻한 자연광, 필름 톤, Flux 최적화)
 const PAGE_VISUAL_DIRECTIONS = {
-  page1: 'editorial photography, lone silhouette on empty road at golden hour, long dramatic shadows, muted desaturated palette with single warm horizon glow, ultra-wide angle composition, strong negative space, bottom third dark and uncluttered for text overlay',
-  page2: 'documentary photography, solitary person at rain-streaked cafe window at night, warm amber interior vs cold blue exterior, f/2.8 shallow depth of field, candid emotional weight, bottom half simple dark gradient for text',
-  page3: 'bold conceptual photography, single stark object under harsh overhead spotlight against pure black background, strong geometric shadow on floor, graphic editorial style, extreme contrast, minimal composition, no clutter',
-  page4: 'lifestyle photography, hands carefully opening a worn leather book near sunlit window, golden morning light, floating dust particles in light beam, warm hopeful intimate scale, dark lower third for text overlay',
-  page5: 'fine art landscape photography, single bare tree on expansive open hillside at dusk, ultra-wide field of view, vast negative space dominates, contemplative and open-ended mood, soft gradient sky from orange to deep blue, serene and unresolved',
+  page1: 'warm analog film photography, an open book and a coffee cup on a wooden cafe table by a window, soft natural morning light, cream beige and warm amber palette, shallow depth of field, cozy intimate book-lover aesthetic, bottom third soft and uncluttered for text overlay',
+  page2: 'tender 35mm film photo, quiet scene of two coffee cups or two empty chairs in soft window light, warm muted nostalgic tones, gentle bokeh background, emotional stillness, no faces, lower half simple warm gradient for text',
+  page3: 'intimate emotional still life, a handwritten letter or dried flower on soft linen, diffused window light, dusty rose and warm cream palette, analog film grain, quiet melancholy turning gentle, minimal composition, bottom area soft for text',
+  page4: 'soft lifestyle photography, hands holding a warm cup or gently turning a book page near a sunlit window, golden afternoon backlight, floating dust in light, warm hopeful intimate mood, blurred cozy background, dark-enough lower third for text overlay',
+  page5: 'serene fine-art photo, a single open book on soft bedding with morning light through sheer curtains, vast soft negative space, warm cream and pale tones, peaceful contemplative open-ended mood, gentle film softness',
 };
 
 async function handleGenerateImages(env, body) {
@@ -396,8 +396,8 @@ async function handleGenerateImages(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light', env),
     max_tokens: 1400,
-    system: '당신은 광고 사진 아트 디렉터입니다. 각 페이지 감정에 맞는 Flux 이미지 생성 영어 프롬프트를 작성합니다.\n규칙:\n1. 카메라 렌즈·조명·구도를 구체적으로 명시한다 (예: f/2.8 shallow depth, golden hour backlight, rule of thirds)\n2. 사람 얼굴 클로즈업 금지 — 뒷모습·실루엣·손만 허용\n3. 텍스트·글자·숫자 없음 (no text, no letters)\n4. 이미지 하단 30%는 어둡거나 단순하게 — 텍스트 오버레이 공간\n5. 각 페이지마다 완전히 다른 시각 언어를 써야 한다 (중복 금지)\n6. 60단어 이내, Instagram 1:1 정사각형 기준\n반드시 JSON만 응답한다.',
-    user: `책 카테고리: ${bookInfo.category || '자기계발'}\n책 핵심 주제: ${bookInfo.coreMessage || bookInfo.title || ''}\n\n아래 5페이지 카드뉴스 내용을 보고, 각 페이지의 내용과 감정에 정확히 부합하는 배경 이미지 프롬프트 5개를 작성하세요.\npage1~page5 키를 반드시 모두 포함해야 합니다.\n\n=== 각 페이지 내용 ===\n1페이지(훅 — 충격·공포·호기심): ${pageContents.page1}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page1}\n\n2페이지(문제 — 현실 직시): ${pageContents.page2}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page2}\n\n3페이지(심각성 — 경각심): ${pageContents.page3}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page3}\n\n4페이지(실마리 — 희망·전환): ${pageContents.page4}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page4}\n\n5페이지(CTA — 여운·초대): ${pageContents.page5}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page5}\n\n=== 공통 규칙 ===\n- 페이지별 내용과 감정을 구체적으로 반영할 것 (추상적 책 이미지 5개 금지)\n- 인물 얼굴 클로즈업 금지 (뒷모습·실루엣·손 등 허용)\n- 텍스트·글자·숫자 없음 (no text, no letters)\n- Instagram 1:1 정사각형 구도\n- 각 프롬프트는 영어, 60단어 이내\n- 하단 30%는 어둡거나 단순한 영역으로 구성 (텍스트 오버레이 공간 확보)\n\nJSON (page1~page5 모두 필수): {"page1":"prompt","page2":"prompt","page3":"prompt","page4":"prompt","page5":"prompt"}`,
+    system: '당신은 감성 사진 아트 디렉터입니다. 연애·관계 심리 책 카드뉴스의 배경으로 쓸, 따뜻하고 감성적인 Flux 이미지 생성 영어 프롬프트를 작성합니다.\n전체 무드: 책스타그램 감성 — 따뜻한 자연광, 필름(아날로그) 톤, 크림·베이지·더스티로즈 등 포근한 색감, 친밀하고 잔잔한 분위기. 어둡고 극적이거나 공포스러운 톤 금지.\n규칙:\n1. 카메라·조명을 구체적으로 명시한다 (예: 35mm film, soft window light, golden hour backlight, shallow depth of field)\n2. 사람 얼굴 클로즈업 금지 — 손·뒷모습·정물(책·커피·편지·꽃)만 허용\n3. 텍스트·글자·숫자 없음 (no text, no letters)\n4. 이미지 하단 30%는 부드럽고 단순하게 — 텍스트 오버레이 공간\n5. 각 페이지마다 다른 장면을 쓰되 전체가 하나의 따뜻한 시리즈로 보이게 한다\n6. 60단어 이내, Instagram 1:1 정사각형 기준\n반드시 JSON만 응답한다.',
+    user: `책 카테고리: ${bookInfo.category || '연애·관계 심리'}\n책 핵심 주제: ${bookInfo.coreMessage || bookInfo.title || ''}\n\n아래 5페이지 카드뉴스 내용을 보고, 각 페이지의 감정 흐름(공감→패턴→마음의 이유→위로→여운)에 부합하는 따뜻한 감성 배경 이미지 프롬프트 5개를 작성하세요.\npage1~page5 키를 반드시 모두 포함해야 합니다.\n\n=== 각 페이지 내용 ===\n1페이지(공감 훅 — 잔잔한 시작): ${pageContents.page1}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page1}\n\n2페이지(패턴 발견 — 조용한 공감): ${pageContents.page2}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page2}\n\n3페이지(마음의 이유 — 따뜻한 통찰): ${pageContents.page3}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page3}\n\n4페이지(위로의 실마리 — 희망): ${pageContents.page4}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page4}\n\n5페이지(참여 — 잔잔한 여운): ${pageContents.page5}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page5}\n\n=== 공통 규칙 ===\n- 전체 무드: 따뜻한 자연광 + 아날로그 필름 톤 + 포근한 색감 (책스타그램·연애 감성). 어둡고 극적인 톤 절대 금지\n- 인물 얼굴 클로즈업 금지 (손·뒷모습·정물 허용)\n- 텍스트·글자·숫자 없음 (no text, no letters)\n- Instagram 1:1 정사각형 구도\n- 각 프롬프트는 영어, 60단어 이내\n- 하단 30%는 부드럽고 단순한 영역으로 구성 (텍스트 오버레이 공간 확보)\n\nJSON (page1~page5 모두 필수): {"page1":"prompt","page2":"prompt","page3":"prompt","page4":"prompt","page5":"prompt"}`,
   });
 
   const prompts = extractJson(text);
@@ -434,8 +434,8 @@ async function handleGenerateCaption(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light', env),
     max_tokens: 512,
-    system: '당신은 인스타그램 콘텐츠 크리에이터입니다. 독자가 자연스럽게 참여하고 싶어지는 캡션을 씁니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 반말 절대 금지 — 문어체·존댓말(~습니다/~합니다/~세요)만 허용. 반드시 JSON만 응답합니다.',
-    user: `책 카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n5페이지 A/B 투표 질문: ${pages.page5?.cta || ''}\n\n[중요] 이 게시물의 참여 방식은 마지막 장의 A/B 투표입니다. 캡션의 댓글 유도는 5페이지 A/B와 반드시 일치해야 하며, 별도의 키워드를 추가로 요구하면 안 됩니다(모순 금지).\n\n인스타그램 캡션을 작성하세요.\n\n[캡션 구조 — 순서 엄수]\n1줄: 독자의 일상 경험을 포착한 공감형 질문 (책 제목 절대 노출 금지. "당신이 모른다면" 패턴 금지. "대부분의 사람들이" 금지)\n2~3줄: 캐럿셀 핵심 인사이트 초간결 요약 (반복 금지, 노골적 판매 금지)\n끝에서 둘째 줄: 저장 유도 문구 ("나중에 꺼내보고 싶다면 저장해두세요" 또는 "도움이 됐다면 저장해두세요" 형태)\n마지막 줄: A/B 투표 유도 — "당신은 어느 쪽인가요? 댓글에 A 또는 B를 남겨주시면, 프로필 링크에서 당신에게 맞는 책을 확인하실 수 있습니다" 형태. 5페이지 A/B 선택지와 의미가 일치해야 함. DM 언급 절대 금지 — 반드시 프로필 링크 안내로.\n\n[추가 규칙]\n- 해시태그: 정확히 3개 (카테고리 관련)\n- 전체 6줄 이내, 짧고 강렬하게\n- commentKeyword에는 사용자가 입력할 단어가 아니라, 이 게시물의 DM 라우팅용 카테고리 태그(예: "${kwHint}")를 넣는다(화면 표시는 운영자용). 절대 캡션 본문에 키워드를 쓰지 말 것.\n\nJSON: {"caption":"1줄\\n2줄\\n3줄\\n저장유도줄\\nA/B유도줄","hashtags":["#tag1","#tag2","#tag3"],"commentKeyword":"${kwHint}"}`,
+    system: '당신은 연애·관계 심리 책을 소개하는 인스타그램 콘텐츠 크리에이터입니다. 30대 독자가 자기 마음을 들킨 듯 공감하며 저장·참여하고 싶어지는 따뜻한 캡션을 씁니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 공포·단정·비난 톤 금지, 위로와 공감의 언어만. 반말 절대 금지 — 문어체·존댓말(~습니다/~네요/~까요)만 허용. 반드시 JSON만 응답합니다.',
+    user: `책 카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n5페이지 A/B 투표 질문: ${pages.page5?.cta || ''}\n\n[중요] 이 게시물의 참여 방식은 마지막 장의 A/B 투표입니다. 캡션의 댓글 유도는 5페이지 A/B와 반드시 일치해야 하며, 별도의 키워드를 추가로 요구하면 안 됩니다(모순 금지).\n\n인스타그램 캡션을 작성하세요.\n\n[캡션 구조 — 순서 엄수]\n1줄: 독자가 연애에서 혼자 느꼈을 감정을 포착한 공감형 문장/질문 (책 제목 절대 노출 금지. "당신이 모른다면" 패턴 금지. "대부분의 사람들이" 금지. 공포·단정 금지)\n2~3줄: 캐럿셀 핵심 위로/통찰 초간결 요약 (반복 금지, 노골적 판매 금지)\n끝에서 둘째 줄: 저장 유도 문구 ("마음이 복잡한 날 다시 꺼내보고 싶다면 저장해두세요" 또는 "오늘의 나에게 필요했다면 저장해두세요" 형태)\n마지막 줄: A/B 투표 유도 — "당신은 어느 쪽에 가까운가요? 댓글에 A 또는 B로 솔직한 마음을 남겨주세요. 오늘의 책은 프로필 링크에서 만나보실 수 있습니다" 형태. 5페이지 A/B 선택지와 의미가 일치해야 함. DM 언급 절대 금지 — 반드시 프로필 링크 안내로.\n\n[추가 규칙]\n- 해시태그: 정확히 3개 (연애·관계·심리·책 관련. 예: #연애심리 #책추천 #애착유형)\n- 전체 6줄 이내, 짧고 따뜻하게\n- commentKeyword에는 사용자가 입력할 단어가 아니라, 이 게시물의 DM 라우팅용 카테고리 태그(예: "${kwHint}")를 넣는다(화면 표시는 운영자용). 절대 캡션 본문에 키워드를 쓰지 말 것.\n\nJSON: {"caption":"1줄\\n2줄\\n3줄\\n저장유도줄\\nA/B유도줄","hashtags":["#연애심리","#책추천","#애착유형"],"commentKeyword":"${kwHint}"}`,
   });
 
   const result = extractJson(text);
@@ -501,7 +501,7 @@ async function handleGenerateDmReply(env, body) {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light', env),
     max_tokens: 1024,
     system: '당신은 인스타그램 DM 자동 회신 작성 전문가입니다. 게시물 마지막 장의 A/B 투표에 댓글을 남긴 팔로워에게 보낼 단일 DM 하나를 작성합니다. A와 B 두 상황 모두 하나의 메시지 안에서 다룹니다. 따뜻하고 개인적인 톤, 노골적 판매 금지. 반말 절대 금지 — 존댓말만 허용. 반드시 JSON만 응답합니다.',
-    user: `책 제목: ${bookInfo.title}\n저자: ${bookInfo.author || ''}\n카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n게시물 마지막 장의 A/B 투표 질문:\n${pages.page5?.cta || ''}\n\n[작업] A와 B 댓글 응답자 모두에게 발송할 단일 DM을 작성하세요. A·B를 각각 다른 메시지로 나누지 말고, 하나의 DM 안에 두 상황을 모두 포함하세요.\n\nDM 구성 순서:\n1. 친근한 인사 (1줄)\n2. "A를 남겨주셨다면 [A 상황 공감 1줄] / B를 남겨주셨다면 [B 상황 공감 1줄]" 형태로 두 상황을 함께 담기\n3. 책 제목 "${bookInfo.title}" (저자: ${bookInfo.author || ''}) 소개 — 두 상황 모두에 도움이 되는 이유 한 줄\n4. 이 책의 핵심 방향 (2줄 이내, 완전한 답은 책에 있다는 뉘앙스)\n5. 프로필 링크 안내: "${profileUrl}에서 도서${bookNumLabel}를 찾아보세요" (필수 포함)\n${linksText ? `6. 구매 링크 안내 — 아래 링크를 DM 본문에 그대로 포함 (누락 금지):\n${linksText}\n` : ''}${linksText ? '7' : '6'}. 따뜻한 마무리 (1줄)\n\nJSON: {"dmText":"DM 전체 내용(줄바꿈은 \\n)"}`,
+    user: `책 제목: ${bookInfo.title}\n저자: ${bookInfo.author || ''}\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n게시물 마지막 장의 A/B 투표 질문:\n${pages.page5?.cta || ''}\n\n[작업] A와 B 댓글 응답자 모두에게 발송할 단일 DM을 작성하세요. A·B를 각각 다른 메시지로 나누지 말고, 하나의 DM 안에 두 상황을 모두 포함하세요.\n\nDM 구성 순서:\n1. 친근한 인사 (1줄)\n2. "A를 남겨주셨다면 [A 상황 공감 1줄] / B를 남겨주셨다면 [B 상황 공감 1줄]" 형태로 두 상황을 함께 담기\n3. 책 제목 "${bookInfo.title}" (저자: ${bookInfo.author || ''}) 소개 — 두 상황 모두에 도움이 되는 이유 한 줄\n4. 이 책의 핵심 방향 (2줄 이내, 완전한 답은 책에 있다는 뉘앙스)\n5. 프로필 링크 안내: "${profileUrl}에서 도서${bookNumLabel}를 찾아보세요" (필수 포함)\n${linksText ? `6. 구매 링크 안내 — 아래 링크를 DM 본문에 그대로 포함 (누락 금지):\n${linksText}\n` : ''}${linksText ? '7' : '6'}. 따뜻한 마무리 (1줄)\n\nJSON: {"dmText":"DM 전체 내용(줄바꿈은 \\n)"}`,
   });
 
   const result = extractJson(text);
@@ -798,8 +798,8 @@ async function runDailyAuto(env) {
   const alreadyRan = await env.PENDING_POSTS.get(todayKey).catch(() => null);
   if (alreadyRan) return;
 
-  // 요일별 카테고리 순환 (일=0 ~ 토=6)
-  const DAILY_CATEGORIES = ['경제', '심리', '건강', '자기계발', '인문', '사회', '과학'];
+  // 요일별 연애·관계 심리 세부 주제 순환 (일=0 ~ 토=6)
+  const DAILY_CATEGORIES = ['애착심리', '연애에세이', '이별과회복', '자존감과사랑', '관계심리', '짝사랑과설렘', '연애에세이'];
   const category = DAILY_CATEGORIES[kstNow.getDay()];
 
   // 최근 30일 내 사용한 책 목록 (중복 추천 방지)
@@ -1265,13 +1265,13 @@ async function handleAddBookToCatalog(env, body) {
 
 function generateBooksHTML(catalog) {
   const CAT_COLORS = {
-    '경제': '#1D6FEB', '재테크': '#1D6FEB', '투자': '#1D6FEB', '부동산': '#1D6FEB',
-    '심리': '#7C3AED', '자기계발': '#7C3AED', '관계': '#7C3AED', '감정': '#7C3AED',
-    '건강': '#059669', '과학': '#059669', '의학': '#059669',
-    '역사': '#D97706', '철학': '#D97706', '인문': '#D97706',
-    '사회': '#DC2626', '정치': '#DC2626',
+    '애착': '#C2708F', '연애': '#D08A6E', '에세이': '#D08A6E',
+    '이별': '#9B6A8F', '회복': '#9B6A8F',
+    '자존감': '#C18A4B', '사랑': '#C2708F',
+    '관계': '#A2708F', '심리': '#8E6AA8',
+    '짝사랑': '#D98AA0', '설렘': '#D98AA0',
   };
-  const catColor = c => { for (const [k, v] of Object.entries(CAT_COLORS)) if (c?.includes(k)) return v; return '#6B7280'; };
+  const catColor = c => { for (const [k, v] of Object.entries(CAT_COLORS)) if (c?.includes(k)) return v; return '#A98C7A'; };
 
   const allCats = ['전체', ...new Set(catalog.map(b => b.category).filter(Boolean))];
   const tabsHTML = allCats.map((c, i) =>
@@ -1307,15 +1307,15 @@ function generateBooksHTML(catalog) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>추천 도서 | insight_wealth_vault</title>
+<title>오늘의 연애 책방 | 행간</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#F6F2EC;--card:#fff;--dark:#161616;
-  --gold:#C8A96E;--text:#1A1A1A;--sub:#6B7280;
-  --border:#EAE4DA;--radius:16px;
+  --bg:#FBF5F0;--card:#fff;--dark:#4A2F38;
+  --gold:#C2708F;--text:#3A2A2E;--sub:#8A7479;
+  --border:#EFE3DC;--radius:16px;
 }
 body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;padding-bottom:80px}
 
@@ -1368,14 +1368,14 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 </head>
 <body>
 <header class="hd">
-  <p class="hd-eyebrow">Book Curation</p>
-  <h1 class="hd-title">지식 큐레이션<br>도서관</h1>
-  <p class="hd-sub">캐럿셀에서 만난 그 책을 여기서 찾으세요.<br>게시물의 도서 번호(#000)로 바로 찾을 수 있습니다.</p>
+  <p class="hd-eyebrow">Love Between the Lines</p>
+  <h1 class="hd-title">행간<br>연애 책방</h1>
+  <p class="hd-sub">오늘 마음에 닿은 그 책을 여기서 만나요.<br>게시물의 도서 번호(#000)로 바로 찾을 수 있습니다.</p>
 </header>
 <div class="tabs-wrap"><div class="tabs" role="tablist">${tabsHTML}</div></div>
 <main class="catalog" id="catalog">${cardsHTML}</main>
 <footer class="foot">
-  <p class="insta"><a href="https://www.instagram.com/insight_wealth_vault" target="_blank">@insight_wealth_vault</a></p>
+  <p class="insta"><a href="https://www.instagram.com/love.between.lines" target="_blank">@love.between.lines</a></p>
   <p>이 페이지의 도서 구매 링크는 쿠팡 파트너스 활동의 일환으로,<br>이에 따른 일정액의 수수료를 제공받습니다.</p>
 </footer>
 <script>

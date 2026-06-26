@@ -672,13 +672,12 @@
       <div class="form-group">
         <label>카테고리 선택<span class="req">*</span></label>
         <select id="autoCategory">
-          <option value="경제·투자">경제·투자 (주식, 부동산, 비트코인)</option>
-          <option value="자기계발">자기계발 (생산성, 습관, 성공)</option>
-          <option value="심리·인간관계">심리·인간관계 (감정, 소통, 관계)</option>
-          <option value="사회이슈">사회이슈 (AI, 기후, 정치, 청년)</option>
-          <option value="건강·라이프스타일">건강·라이프스타일 (식습관, 수면, 운동)</option>
-          <option value="비즈니스·창업">비즈니스·창업 (마케팅, 스타트업, 리더십)</option>
-          <option value="인문·철학">인문·철학 (역사, 삶의 의미, 고전)</option>
+          <option value="애착심리">애착심리 (회피형·불안형·안정형)</option>
+          <option value="연애에세이">연애에세이 (설렘, 권태, 일상)</option>
+          <option value="이별과회복">이별과회복 (헤어짐, 그 후의 마음)</option>
+          <option value="자존감과사랑">자존감과사랑 (나를 먼저 사랑하기)</option>
+          <option value="관계심리">관계심리 (소통, 경계, 거리두기)</option>
+          <option value="짝사랑과설렘">짝사랑과설렘 (시작, 고백, 썸)</option>
         </select>
       </div>
 
@@ -713,13 +712,12 @@
     <div class="form-group">
       <label>카테고리<span class="req">*</span></label>
       <select id="manualCategory">
-        <option value="경제·투자">경제·투자</option>
-        <option value="자기계발">자기계발</option>
-        <option value="심리·인간관계">심리·인간관계</option>
-        <option value="사회이슈">사회이슈</option>
-        <option value="건강·라이프스타일">건강·라이프스타일</option>
-        <option value="비즈니스·창업">비즈니스·창업</option>
-        <option value="인문·철학">인문·철학</option>
+        <option value="애착심리">애착심리</option>
+        <option value="연애에세이">연애에세이</option>
+        <option value="이별과회복">이별과회복</option>
+        <option value="자존감과사랑">자존감과사랑</option>
+        <option value="관계심리">관계심리</option>
+        <option value="짝사랑과설렘">짝사랑과설렘</option>
       </select>
     </div>
 
@@ -756,13 +754,12 @@
       <div class="form-group">
         <label>카테고리 선택<span class="req">*</span></label>
         <select id="deployCategory">
-          <option value="경제·투자">경제·투자 (주식, 부동산, 비트코인)</option>
-          <option value="자기계발">자기계발 (생산성, 습관, 성공)</option>
-          <option value="심리·인간관계">심리·인간관계 (감정, 소통, 관계)</option>
-          <option value="사회이슈">사회이슈 (AI, 기후, 정치, 청년)</option>
-          <option value="건강·라이프스타일">건강·라이프스타일 (식습관, 수면, 운동)</option>
-          <option value="비즈니스·창업">비즈니스·창업 (마케팅, 스타트업, 리더십)</option>
-          <option value="인문·철학">인문·철학 (역사, 삶의 의미, 고전)</option>
+          <option value="애착심리">애착심리 (회피형·불안형·안정형)</option>
+          <option value="연애에세이">연애에세이 (설렘, 권태, 일상)</option>
+          <option value="이별과회복">이별과회복 (헤어짐, 그 후의 마음)</option>
+          <option value="자존감과사랑">자존감과사랑 (나를 먼저 사랑하기)</option>
+          <option value="관계심리">관계심리 (소통, 경계, 거리두기)</option>
+          <option value="짝사랑과설렘">짝사랑과설렘 (시작, 고백, 썸)</option>
         </select>
       </div>
       <div class="form-group">
@@ -2434,7 +2431,7 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
   }
 
   // ── Step 7: 도서관 등록 + 완료 ──
-  setDeployStep(7, 'active', '지식 큐레이션 도서관에 등록 중...');
+  setDeployStep(7, 'active', '행간 연애 책방에 등록 중...');
   await addBookToCatalogIfNeeded();
   setDeployStep(7, 'done', '이 페이지에서 결과 확인 후 인스타그램 게시 여부 결정');
   setStep(4);
