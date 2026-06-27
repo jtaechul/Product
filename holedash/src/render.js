@@ -4,6 +4,15 @@
 import { POSE_CONNECTIONS, LM } from './config.js';
 import { fillHole, poseBounds } from './walls.js';
 
+// 날아오는 피사체 종류별 꼬리/글로우 색
+const OB_PALETTE = {
+  orb: { trail: '#ffb15a', glow: 'rgba(255,90,60,0.7)' },
+  spike: { trail: '#ff7a7a', glow: 'rgba(255,60,60,0.7)' },
+  bomb: { trail: '#9aa0a6', glow: 'rgba(60,60,70,0.7)' },
+  star: { trail: '#ffe27a', glow: 'rgba(255,210,80,0.7)' },
+  saw: { trail: '#cfd6dd', glow: 'rgba(150,160,170,0.7)' },
+};
+
 export class Renderer {
   constructor(canvas, video) {
     this.canvas = canvas;
@@ -241,12 +250,17 @@ export class Renderer {
       ctx.font = `800 ${m * 0.03}px Trebuchet MS, sans-serif`;
       ctx.fillText('다음 ▶', rx, this.H * 0.28);
       // 미니 실루엣 박스
-      const gy = this.H * 0.46, gs = m * 0.05;
+      const gy = this.H * 0.46, gs = m * 0.043;
+      const boxX = rx - this.W * 0.085, boxY = gy - m * 0.16, boxW = this.W * 0.17, boxH = m * 0.32;
       ctx.fillStyle = 'rgba(255,255,255,0.10)';
-      this._roundFill(ctx, rx - this.W * 0.085, gy - m * 0.16, this.W * 0.17, m * 0.32, 14);
+      this._roundFill(ctx, boxX, boxY, boxW, boxH, 14);
+      // 박스 안으로 클리핑 → 넓은 포즈(팔 벌림)도 밖으로 삐져나오지 않음
+      ctx.save();
+      ctx.beginPath(); this._roundPath(ctx, boxX, boxY, boxW, boxH, 14); ctx.clip();
       ctx.fillStyle = 'rgba(255,255,255,0.92)';
       ctx.shadowColor = 'rgba(255,255,255,0.4)'; ctx.shadowBlur = 8;
       fillHole(ctx, info.next.wall, { cx: rx, cy: gy + gs * 0.4, S: gs, thickBoost: 0 });
+      ctx.restore();
       ctx.restore();
       // 다음 동작 이름
       ctx.save();
@@ -333,37 +347,70 @@ export class Renderer {
     }
     ctx.restore();
 
+    const kind = ob.kind || 'orb';
+    const pal = OB_PALETTE[kind] || OB_PALETTE.orb;
+
     // --- 꼬리(테이퍼 모션 트레일) ---
     ctx.save();
     for (let i = 1; i <= 4; i++) {
       const tp = i / 5;
       const ty2 = y - tp * R * 3.2;
       ctx.globalAlpha = 0.18 * (1 - tp);
-      ctx.fillStyle = '#ffb15a';
+      ctx.fillStyle = pal.trail;
       ctx.beginPath(); ctx.arc(x, ty2, R * (1 - tp * 0.6), 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
 
-    // --- 오브 본체: 어두운 코어 + 밝은 림 라이트(이클립스 느낌) ---
+    // --- 본체(피사체 종류별) ---
     ctx.save();
-    ctx.shadowColor = 'rgba(255,90,60,0.7)'; ctx.shadowBlur = R * 0.9;
+    ctx.shadowColor = pal.glow; ctx.shadowBlur = R * 0.9;
+    this._drawObBody(ctx, kind, x, y, R, t);
+    ctx.restore();
+  }
+
+  _ball(ctx, x, y, R, c0, c1, c2, c3) {
     const g = ctx.createRadialGradient(x, y, R * 0.2, x, y, R);
-    g.addColorStop(0, '#2a1410');
-    g.addColorStop(0.62, '#5e241c');
-    g.addColorStop(0.86, '#ff6a3d');
-    g.addColorStop(1, '#ffd27a');
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-    // 상단 스펙큘러 하이라이트(매끈함)
-    ctx.save();
-    ctx.globalAlpha = 0.5;
+    g.addColorStop(0, c0); g.addColorStop(0.62, c1); g.addColorStop(0.86, c2); g.addColorStop(1, c3);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
+  }
+  _spec(ctx, x, y, R) {
+    ctx.save(); ctx.globalAlpha = 0.5;
     const hg = ctx.createRadialGradient(x - R * 0.32, y - R * 0.42, 0, x - R * 0.32, y - R * 0.42, R * 0.5);
-    hg.addColorStop(0, 'rgba(255,255,255,0.9)');
-    hg.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = hg;
-    ctx.beginPath(); ctx.arc(x - R * 0.32, y - R * 0.42, R * 0.5, 0, Math.PI * 2); ctx.fill();
+    hg.addColorStop(0, 'rgba(255,255,255,0.9)'); hg.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(x - R * 0.32, y - R * 0.42, R * 0.5, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
+  }
+  _drawObBody(ctx, kind, x, y, R, t) {
+    if (kind === 'spike') {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(t * 2.2); ctx.fillStyle = '#d23b3b';
+      const n = 10; for (let i = 0; i < n; i++) { ctx.rotate(Math.PI * 2 / n); ctx.beginPath(); ctx.moveTo(R * 0.8, -R * 0.22); ctx.lineTo(R * 1.45, 0); ctx.lineTo(R * 0.8, R * 0.22); ctx.closePath(); ctx.fill(); }
+      ctx.restore();
+      this._ball(ctx, x, y, R, '#3a0e0e', '#7a1c1c', '#ff5c5c', '#ffd0d0'); this._spec(ctx, x, y, R);
+    } else if (kind === 'bomb') {
+      ctx.save(); ctx.strokeStyle = '#b9b0a0'; ctx.lineWidth = Math.max(2, R * 0.13); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x, y - R * 0.9); ctx.quadraticCurveTo(x + R * 0.6, y - R * 1.4, x + R * 0.25, y - R * 1.65); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.fillStyle = (Math.floor(t * 18) % 2) ? '#ffd23f' : '#ff7a3d'; ctx.shadowColor = '#ffb15a'; ctx.shadowBlur = R * 0.6;
+      ctx.beginPath(); ctx.arc(x + R * 0.25, y - R * 1.65, R * 0.2, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      this._ball(ctx, x, y, R, '#0c0e12', '#222831', '#3a4250', '#7a8696'); this._spec(ctx, x, y, R);
+    } else if (kind === 'star') {
+      ctx.save(); ctx.shadowColor = '#ffd23f'; ctx.shadowBlur = R * 0.8; ctx.restore();
+      this._star(ctx, x, y, R * 1.25, t * 1.6, '#ffcf33');
+      this._star(ctx, x, y, R * 0.66, t * 1.6, '#fff3b0');
+    } else if (kind === 'saw') {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(t * 5);
+      ctx.fillStyle = '#b8c0c8'; const n = 12; ctx.beginPath();
+      for (let i = 0; i < n; i++) {
+        const a0 = (i / n) * Math.PI * 2, a1 = ((i + 0.5) / n) * Math.PI * 2;
+        ctx.lineTo(Math.cos(a0) * R * 1.32, Math.sin(a0) * R * 1.32);
+        ctx.lineTo(Math.cos(a1) * R * 0.95, Math.sin(a1) * R * 0.95);
+      }
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#8a939c'; ctx.beginPath(); ctx.arc(0, 0, R * 0.82, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#3a4048'; ctx.beginPath(); ctx.arc(0, 0, R * 0.24, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    } else { // orb
+      this._ball(ctx, x, y, R, '#2a1410', '#5e241c', '#ff6a3d', '#ffd27a'); this._spec(ctx, x, y, R);
+    }
   }
 
   // 캘리브레이션 UI: 사람 모양 가이드 + 코너 프레임 + 진행 링 + 상태문구
@@ -432,13 +479,16 @@ export class Renderer {
     ctx.restore();
   }
 
-  _roundFill(ctx, x, y, w, h, r) {
+  _roundPath(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
     ctx.arcTo(x + w, y, x + w, y + h, r);
     ctx.arcTo(x + w, y + h, x, y + h, r);
     ctx.arcTo(x, y + h, x, y, r);
     ctx.arcTo(x, y, x + w, y, r);
+  }
+  _roundFill(ctx, x, y, w, h, r) {
+    this._roundPath(ctx, x, y, w, h, r);
     ctx.fill();
   }
 
@@ -462,15 +512,27 @@ export class Renderer {
   // 포즈 안내(상단)
   drawPoseHint(text) {
     const ctx = this.ctx;
+    const m = Math.min(this.W, this.H);
     ctx.save();
-    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    ctx.font = `800 ${Math.min(this.W, this.H) * 0.05}px Trebuchet MS, sans-serif`;
-    const y = this.H * 0.09;
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    const tw = ctx.measureText(text).width + 40;
-    ctx.fillRect(this.W / 2 - tw / 2, y - 8, tw, Math.min(this.W, this.H) * 0.05 + 22);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    let fs = m * 0.046;
+    ctx.font = `800 ${fs}px Trebuchet MS, sans-serif`;
+    // 이모지 폭 오차까지 고려해 넉넉한 좌우 여백 + 화면 폭 안에 들어오게 폰트 자동 축소
+    const padX = fs * 1.0, padY = fs * 0.5;
+    let tw = ctx.measureText(text).width;
+    const maxW = this.W * 0.92;
+    if (tw + padX * 2 > maxW) {
+      fs *= (maxW - padX * 2) / tw;
+      ctx.font = `800 ${fs}px Trebuchet MS, sans-serif`;
+      tw = ctx.measureText(text).width;
+    }
+    const boxW = Math.min(tw + padX * 2, maxW);
+    const boxH = fs + padY * 2;
+    const cy = m * 0.075 + boxH / 2;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    this._roundFill(ctx, this.W / 2 - boxW / 2, cy - boxH / 2, boxW, boxH, boxH * 0.35);
     ctx.fillStyle = '#fff';
-    ctx.fillText(text, this.W / 2, y);
+    ctx.fillText(text, this.W / 2, cy);
     ctx.restore();
   }
 

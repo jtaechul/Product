@@ -589,62 +589,66 @@ function shouldDodge() {
   return !g.practice && current.life > 0 && g.wallIndex >= DODGE_FROM_WALL && Math.random() < DODGE_CHANCE;
 }
 
+const DODGE_KINDS = ['orb', 'spike', 'bomb', 'star', 'saw'];
+
 function startDodge(t) {
-  // 후반일수록 더 많은 공이 연달아 날아오는 '웨이브'
+  // 후반일수록 더 많은 피사체가 '동시에' 날아옴(살짝 시차로 겹쳐서 날아옴)
+  const wi = g.wallIndex;
   let count = 1;
-  if (g.wallIndex >= 4 && Math.random() < 0.6) count = 2;
-  if (g.wallIndex >= 8 && Math.random() < 0.5) count = 3;
+  if (wi >= 4) count = 2;
+  if (wi >= 11 && Math.random() < 0.6) count = 3;
+  if (wi >= 20 && Math.random() < 0.5) count = 4;
   const dirs = [-1, 0, 1];
-  const list = [];
+  const obs = [];
   for (let i = 0; i < count; i++) {
-    list.push({ start: undefined, resolved: false, dir: dirs[Math.floor(Math.random() * 3)] });
+    obs.push({
+      startDelay: i * 0.3,                 // 0.3초 간격(travel 1.45초라 동시에 여러 개가 떠 있음)
+      dir: dirs[(Math.random() * 3) | 0],
+      kind: DODGE_KINDS[(Math.random() * DODGE_KINDS.length) | 0],
+      started: false, resolved: false,
+    });
   }
-  g.dodge = { list, index: 0, doneAt: 0 };
+  g.dodge = { obs, t0: t, doneAt: 0, lifeLost: false };
   g.phase = 'dodge';
 }
 
 function updateDodge(t) {
   const d = g.dodge;
-  if (d.index >= d.list.length) {
-    if (t - d.doneAt >= 0.45) advanceWall();
-    return;
-  }
-  const ob = d.list[d.index];
-  if (ob.start === undefined) {
-    // 장애물 등장 순간의 내 위치를 표적으로 잠금 → 옆으로 비켜야 함
-    const geom = landmarks ? renderer.playerCenter(landmarks) : { cx: renderer.W / 2, cy: renderer.H * 0.45, S: 80 };
-    ob.tx = geom.cx; ob.ty = geom.cy; ob.S = Math.max(46, geom.S);
-    // 진입 방향(좌/위/우)
-    const off = renderer.W * 0.45 * ob.dir;
-    ob.sx = Math.max(renderer.W * 0.05, Math.min(renderer.W * 0.95, ob.tx + off));
-    ob.start = t;
-    sfx.whoosh();
-  }
-  if (ob.resolved) {
-    if (t - ob.resolvedAt >= DODGE_GAP_SEC) {
-      d.index++;
-      if (d.index >= d.list.length) d.doneAt = t;
+  let allDone = true;
+  for (const ob of d.obs) {
+    const localT = t - d.t0 - ob.startDelay;
+    if (localT < 0) { allDone = false; continue; } // 아직 등장 전
+    if (!ob.started) {
+      ob.started = true;
+      const geom = landmarks ? renderer.playerCenter(landmarks) : { cx: renderer.W / 2, cy: renderer.H * 0.45, S: 80 };
+      ob.tx = geom.cx; ob.ty = geom.cy; ob.S = Math.max(46, geom.S);
+      const off = renderer.W * 0.42 * ob.dir;
+      ob.sx = Math.max(renderer.W * 0.05, Math.min(renderer.W * 0.95, ob.tx + off));
+      sfx.whoosh();
     }
-    return;
+    if (ob.resolved) continue;
+    allDone = false;
+    const p = Math.min(1, localT / DODGE_TRAVEL_SEC);
+    renderer.drawObstacle(ob, p, t);
+    if (p >= 1) { ob.resolved = true; judgeDodge(ob); }
   }
-  const p = Math.min(1, (t - ob.start) / DODGE_TRAVEL_SEC);
-  renderer.drawObstacle(ob, p, t);
-  const hint = ob.dir < 0 ? '⬅️ 오른쪽으로 피해!' : ob.dir > 0 ? '오른쪽에서 와요 — 왼쪽으로! ➡️' : '⚠️ 옆으로 피해!';
-  renderer.drawPoseHint(hint);
-  if (p >= 1) { ob.resolved = true; ob.resolvedAt = t; judgeDodge(ob); }
+  renderer.drawPoseHint(d.obs.length > 1 ? '⚠️ 날아오는 것들을 모두 피해!' : '⚠️ 옆으로 피해!');
+  if (allDone) {
+    if (!d.doneAt) d.doneAt = t;
+    if (t - d.doneAt >= 0.45) advanceWall();
+  }
 }
 
 function judgeDodge(ob) {
   let hit = false;
   if (landmarks) {
     const geom = renderer.playerCenter(landmarks);
-    const dxUnits = Math.abs(geom.cx - ob.tx) / ob.S;
-    hit = dxUnits < DODGE_HIT_UNITS;
+    hit = Math.abs(geom.cx - ob.tx) / ob.S < DODGE_HIT_UNITS;
   }
   if (hit) {
-    current.life = Math.max(0, current.life - 1);
-    current.combo = 0;
-    current.dodgeCombo = 0;
+    current.combo = 0; current.dodgeCombo = 0;
+    // 한 웨이브에서 라이프는 최대 1만 감소(여러 개 맞아도 한 번만)
+    if (!g.dodge.lifeLost) { current.life = Math.max(0, current.life - 1); g.dodge.lifeLost = true; }
     renderer.setFlash('#ff3030');
     renderer.explode(ob.tx, ob.ty, { emojis: ['💥', '😵', '🌟', '😖', '🪐'], ring: '#ff8a3d' });
     sfx.bonk();
@@ -654,7 +658,7 @@ function judgeDodge(ob) {
     current.dodgeCombo = (current.dodgeCombo || 0) + 1;
     const pts = DODGE_SCORE + (current.dodgeCombo - 1) * 15; // 연속 회피 보너스
     current.score += pts;
-    renderer.burst(ob.tx, ob.ty, '#ffd23f', 26);
+    renderer.burst(ob.tx, ob.ty, '#ffd23f', 24);
     sfx.ding(current.dodgeCombo - 1);
     const cstr = current.dodgeCombo >= 2 ? ` x${current.dodgeCombo}` : '';
     bannerText(`피했다!${cstr} +${pts}`, '#57e389');
