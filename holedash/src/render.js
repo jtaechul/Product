@@ -13,6 +13,7 @@ export class Renderer {
     this.wallLayer = document.createElement('canvas');
     this.wallCtx = this.wallLayer.getContext('2d');
     this.particles = [];
+    this.shockwaves = [];
     this.flash = null; // { color, t }
     this.skelTint = null; // {color, t}
     this.resize();
@@ -391,7 +392,39 @@ export class Renderer {
       const sp = 2 + Math.random() * 7;
       this.particles.push({
         x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 2,
-        life: 1, color, size: 3 + Math.random() * 5,
+        life: 1, color, size: 3 + Math.random() * 5, shape: 'dot',
+      });
+    }
+  }
+  // 충돌/피격용 화려한 폭발: 충격파 링 + 파편(별·점) + 우스꽝스러운 이모지
+  explode(x, y, opts = {}) {
+    const colors = opts.colors || ['#ff5c5c', '#ffd23f', '#ff8a3d', '#ffffff'];
+    const big = opts.big !== false;
+    // 충격파 링 2~3겹
+    this.shockwaves.push({ x, y, r: 10, max: big ? 360 : 240, life: 1, color: '#ffffff', w: 8 });
+    this.shockwaves.push({ x, y, r: 4, max: big ? 260 : 170, life: 1, color: opts.ring || '#ff5c5c', w: 12 });
+    // 파편(점·별)
+    const n = big ? 46 : 28;
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 4 + Math.random() * 13;
+      this.particles.push({
+        x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 4,
+        life: 1, color: colors[(Math.random() * colors.length) | 0],
+        size: 3 + Math.random() * 7, shape: Math.random() < 0.5 ? 'star' : 'dot',
+        spin: Math.random() * 6.28, vspin: (Math.random() - 0.5) * 0.6,
+      });
+    }
+    // 우스꽝스러운 이모지 몇 개 펑!
+    const emojis = opts.emojis || ['💥', '⭐', '💫', '😵', '🌀'];
+    const en = big ? 6 : 4;
+    for (let i = 0; i < en; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 5 + Math.random() * 9;
+      this.particles.push({
+        x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 7,
+        life: 1.3, color: '#fff', size: 30 + Math.random() * 22, shape: 'emoji',
+        char: emojis[(Math.random() * emojis.length) | 0], spin: 0, vspin: (Math.random() - 0.5) * 0.3,
       });
     }
   }
@@ -400,25 +433,61 @@ export class Renderer {
 
   updateEffects(dt) {
     for (const p of this.particles) {
-      p.x += p.vx; p.y += p.vy; p.vy += 0.4; p.vx *= 0.98; p.life -= dt * 1.6;
+      p.x += p.vx; p.y += p.vy; p.vy += 0.4; p.vx *= 0.98;
+      if (p.vspin) p.spin += p.vspin;
+      p.life -= dt * (p.shape === 'emoji' ? 1.0 : 1.6);
     }
     this.particles = this.particles.filter((p) => p.life > 0);
+    for (const s of this.shockwaves) { s.r += (s.max - s.r) * dt * 6; s.life -= dt * 1.8; }
+    this.shockwaves = this.shockwaves.filter((s) => s.life > 0);
     if (this.flash) { this.flash.t -= dt * 3; if (this.flash.t <= 0) this.flash = null; }
     if (this.skelTint) { this.skelTint.t -= dt; if (this.skelTint.t <= 0) this.skelTint = null; }
   }
   drawEffects() {
     const ctx = this.ctx;
+    // 충격파 링
+    for (const s of this.shockwaves) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, s.life) * 0.7;
+      ctx.strokeStyle = s.color; ctx.lineWidth = s.w * Math.max(0.2, s.life);
+      ctx.shadowColor = s.color; ctx.shadowBlur = 20;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
+    // 파편
     for (const p of this.particles) {
-      ctx.globalAlpha = Math.max(0, p.life);
-      ctx.fillStyle = p.color;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+      if (p.shape === 'emoji') {
+        ctx.save();
+        ctx.translate(p.x, p.y); ctx.rotate(p.spin || 0);
+        ctx.font = `${p.size}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(p.char, 0, 0);
+        ctx.restore();
+      } else if (p.shape === 'star') {
+        this._star(ctx, p.x, p.y, p.size, p.spin || 0, p.color);
+      } else {
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      }
     }
     ctx.globalAlpha = 1;
     if (this.flash) {
-      ctx.globalAlpha = Math.max(0, this.flash.t) * 0.55;
+      ctx.globalAlpha = Math.max(0, this.flash.t) * 0.6;
       ctx.fillStyle = this.flash.color;
       ctx.fillRect(0, 0, this.W, this.H);
       ctx.globalAlpha = 1;
     }
+  }
+  _star(ctx, cx, cy, r, rot, color) {
+    ctx.save();
+    ctx.translate(cx, cy); ctx.rotate(rot);
+    ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 8;
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const o = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+      ctx[i ? 'lineTo' : 'moveTo'](Math.cos(o) * r, Math.sin(o) * r);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
   }
 }
