@@ -132,11 +132,11 @@ ensure_swing_paper
 ensure_highrisk_removed                              # 고위험봇 서버 잔재 완전 제거(매 실행)
 ensure_clone_bot "majors-bot"   "Upbit Majors (BTC-ETH) Trend Bot" \
     "scripts.majors_trade --invest 100000 --live" "majors.log"
-# 리플(XRP) 전용 봇 — 검증된 일봉 스윙펌프. '모의(paper)'로 설치(--live 없음 = 무주문).
-# 실거래 전환은 사용자 확인 후 별도로(이 줄에 --live 추가). 뉴스 브레이크는 EnvironmentFile에
-# ANTHROPIC_API_KEY 를 넣으면 자동 작동(없으면 순수 기술적 매매로 안전 작동).
-ensure_clone_bot "xrp-bot"      "Upbit XRP (Ripple) Swing Bot (paper)" \
-    "scripts.xrp_trade --invest 100000" "xrp.log"
+# 리플(XRP) 전용 봇 — 검증된 일봉 스윙펌프. 사용자 요청으로 '실거래(--live)' 전환.
+# 1회 매수 100,000원(소액). 뉴스 브레이크는 .env 의 ANTHROPIC_API_KEY 로 자동 작동.
+# 모의로 되돌리려면 아래 줄에서 ' --live' 만 빼고 auto-update.sh 재실행.
+ensure_clone_bot "xrp-bot"      "Upbit XRP (Ripple) Swing Bot (LIVE)" \
+    "scripts.xrp_trade --invest 100000 --live" "xrp.log"
 ensure_oneshot_timer "rebalance" "Upbit daily equity snapshot + rebalance" \
     "scripts.rebalance" "rebalance.timer" 1          # 매일 자산기록·현행화(설치 즉시 1회)
 ensure_oneshot_timer "portfolio-review" "Upbit portfolio review (dashboard+proposal)" \
