@@ -717,13 +717,17 @@ async function runStep(env, pipelineId, step) {
 
   } else if (step === 7) {
     const step6Error = state.step === 6 && state.stepStatus === 'error';
-    // 도서 카탈로그에 등록 (링크 페이지 자동 업데이트)
-    await addBookToCatalog(env, {
-      bookInfo,
-      bookNumber,
-      pipelineId,
-      coupangLink: state.affiliateLinks?.[0] || null,
-    });
+    // 도서관 등록은 "완전 자동(매일 크론)"일 때만 자동으로 한다.
+    // 사람이 직접 만드는 경우엔 제작 페이지의 "도서관 등록" 메뉴에서 직접 올린다
+    // (실제로 게시할 책만 등록 → 초안이 도서관을 어지럽히지 않게).
+    if (state.isAutoDaily) {
+      await addBookToCatalog(env, {
+        bookInfo,
+        bookNumber,
+        pipelineId,
+        coupangLink: state.affiliateLinks?.[0] || null,
+      });
+    }
     await savePipelineStatus(env, pipelineId, {
       step: 7,
       stepStatus: 'done',
@@ -1241,9 +1245,7 @@ async function reserveBookNumber(env) {
 async function addBookToCatalog(env, { bookInfo, bookNumber, pipelineId, coupangLink = null }) {
   if (!env.PENDING_POSTS || !bookNumber) return;
   const catalog = (await env.PENDING_POSTS.get('book_catalog', 'json').catch(() => null)) || [];
-  // 중복 방지
-  if (catalog.some(b => b.number === bookNumber)) return;
-  catalog.unshift({
+  const entry = {
     number: bookNumber,
     title: bookInfo?.title || '',
     author: bookInfo?.author || '',
@@ -1252,7 +1254,15 @@ async function addBookToCatalog(env, { bookInfo, bookNumber, pipelineId, coupang
     date: new Date().toISOString().slice(0, 10),
     pipelineId,
     coupangLink,
-  });
+  };
+  // 같은 번호가 이미 있으면 내용·링크를 갱신(업서트), 없으면 새로 추가.
+  // → "도서관 등록" 메뉴에서 소개·링크를 고쳐 다시 등록하면 덮어쓰기 된다.
+  const idx = catalog.findIndex(b => b.number === bookNumber);
+  if (idx >= 0) {
+    catalog[idx] = { ...catalog[idx], ...entry, date: catalog[idx].date };
+  } else {
+    catalog.unshift(entry);
+  }
   await env.PENDING_POSTS.put('book_catalog', JSON.stringify(catalog));
 }
 

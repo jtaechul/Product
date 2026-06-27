@@ -932,6 +932,29 @@
     </div>
   </div>
 
+  <!-- 도서관 등록 -->
+  <div class="caption-wrapper" id="libraryRegWrapper" style="display:none;">
+    <div class="section-header">
+      <span class="section-title">도서관 등록</span>
+      <span class="section-badge" id="libRegNo" style="background:rgba(194,112,143,0.12);color:#C2708F;font-weight:700;">No.000</span>
+    </div>
+    <p style="font-size:12px;color:var(--gray-500);line-height:1.7;margin-bottom:12px;">이 책을 도서관 페이지에 올립니다. 게시물 캡션의 번호와 <b>같은 번호</b>로 등록되며, 인스타에 실제로 게시할 책만 등록하세요. 소개·링크를 고쳐 다시 누르면 덮어쓰기됩니다.</p>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>책 제목</label>
+      <input type="text" id="libRegTitle" readonly style="background:var(--gray-50);">
+    </div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>짧은 소개 (도서관 카드에 표시됨)</label>
+      <textarea id="libRegDesc" rows="3" style="resize:vertical;" placeholder="이 책을 한두 문장으로 소개하세요"></textarea>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>쿠팡파트너스 어필리에이트 링크</label>
+      <input type="url" id="libRegLink" placeholder="https://link.coupang.com/a/...">
+    </div>
+    <button class="btn btn-primary" id="libRegBtn" style="font-size:13px;">도서관에 등록 / 업데이트</button>
+    <div id="libRegStatus" style="display:none;margin-top:12px;font-size:12.5px;line-height:1.7;padding:12px 14px;border-radius:10px;background:rgba(16,185,129,0.07);border:1px solid var(--success);color:var(--success);"></div>
+  </div>
+
   <!-- Validation panel -->
   <div class="validation-panel" id="validationPanel">
     <div class="validation-header">
@@ -1310,8 +1333,8 @@ async function autoSendTelegram() {
   } finally {
     hideLoading();
   }
-  // 수동 생성 플로우: 도서관에 자동 등록
-  await addBookToCatalogIfNeeded();
+  // 도서관 등록은 자동이 아니라 "도서관 등록" 메뉴에서 직접 한다 (실제 게시할 책만 등록).
+  populateLibraryReg();
 }
 
 // 도서관(/books)에 현재 책을 자동 등록 — 중복 등록 방지는 서버에서 처리
@@ -2072,6 +2095,56 @@ document.getElementById('copyDmBBtn').addEventListener('click', () => {
   copyText(state.dmReplyB, 'B용 DM');
 });
 
+// ===== 도서관 등록 메뉴 =====
+// 캐럿셀이 준비되면 도서 번호·소개·링크를 보여주고, 사용자가 직접 도서관에 올린다.
+function populateLibraryReg() {
+  if (!state.bookInfo?.title) return;
+  document.getElementById('libRegNo').textContent = state.bookNumber ? `No.${state.bookNumber}` : 'No.(자동)';
+  document.getElementById('libRegTitle').value =
+    state.bookInfo.title + (state.bookInfo.author ? ` / ${state.bookInfo.author}` : '');
+  const descEl = document.getElementById('libRegDesc');
+  if (!descEl.value.trim()) descEl.value = state.bookInfo.coreMessage || '';
+  const linkEl = document.getElementById('libRegLink');
+  if (!linkEl.value.trim()) {
+    linkEl.value = document.getElementById('affiliateLinkInput')?.value?.trim()
+      || (Array.isArray(state.affiliateLinks) && state.affiliateLinks[0])
+      || state.affiliateLink || '';
+  }
+  document.getElementById('libraryRegWrapper').style.display = 'block';
+}
+
+document.getElementById('libRegBtn').addEventListener('click', async () => {
+  if (!state.bookInfo?.title) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
+  const desc = document.getElementById('libRegDesc').value.trim();
+  const link = document.getElementById('libRegLink').value.trim();
+  const btn = document.getElementById('libRegBtn');
+  btn.disabled = true;
+  try {
+    const result = await apiFetch('/api/add-book-to-catalog', {
+      bookInfo: { ...state.bookInfo, coreMessage: desc || state.bookInfo.coreMessage },
+      coupangLink: link || null,
+      affiliateLinks: link ? [link] : (state.affiliateLinks || []),
+      bookNumber: state.bookNumber || '',
+    });
+    if (result.bookNumber) {
+      state.bookNumber = result.bookNumber;
+      state._catalogAdded = true;
+      document.getElementById('libRegNo').textContent = `No.${result.bookNumber}`;
+      const statusEl = document.getElementById('libRegStatus');
+      const deepLink = `https://insight-vault.pages.dev/books.html#${result.bookNumber}`;
+      statusEl.innerHTML =
+        `도서관에 No.${result.bookNumber}로 등록됐습니다. <a href="${deepLink}" target="_blank" style="color:var(--success);text-decoration:underline;font-weight:700;">도서관에서 보기 →</a><br>` +
+        `인스타 프로필 링크를 <b>insight-vault.pages.dev/books.html#${result.bookNumber}</b> 로 설정하면 이 책으로 바로 연결됩니다.`;
+      statusEl.style.display = 'block';
+      showToast(`도서관에 No.${result.bookNumber} 등록 완료`, 'success');
+    }
+  } catch (e) {
+    showToast('등록 실패: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 updateHistoryCount();
 
 document.getElementById('telegramBtn').addEventListener('click', async () => {
@@ -2446,10 +2519,9 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
     }
   }
 
-  // ── Step 7: 도서관 등록 + 완료 ──
-  setDeployStep(7, 'active', '행간 연애 책방에 등록 중...');
-  await addBookToCatalogIfNeeded();
-  setDeployStep(7, 'done', '이 페이지에서 결과 확인 후 인스타그램 게시 여부 결정');
+  // ── Step 7: 완료 (도서관 등록은 아래 "도서관 등록" 메뉴에서 직접) ──
+  setDeployStep(7, 'done', '결과 확인 후 "도서관 등록" 메뉴에서 등록하고 인스타그램에 게시하세요');
+  populateLibraryReg();
   setStep(4);
   document.getElementById('deployDoneMsg').classList.add('visible');
   document.getElementById('deployInstagramBtnWrap').style.display = 'block';
@@ -2588,7 +2660,7 @@ function renderPipelineResults(status, autoSendComposites) {
   state.caption = status.caption || '';
   state.captionHashtags = status.hashtags || [];
   state.dmKeyword = status.dmKeyword || '';
-  if (status.bookNumber) { state.bookNumber = status.bookNumber; state._catalogAdded = true; }
+  if (status.bookNumber) { state.bookNumber = status.bookNumber; }
   if (status.affiliateLinks) state.affiliateLinks = status.affiliateLinks;
   if (status.bookInfo) addToHistory(status.bookInfo.title);
   renderCarousel(status.pages);
@@ -2600,6 +2672,7 @@ function renderPipelineResults(status, autoSendComposites) {
     document.getElementById('captionResult').style.display = 'block';
   }
   renderDmReplies(status);
+  populateLibraryReg();
   if (status.validation) renderValidation(status.validation);
   setStep(status.validation?.approved ? 4 : 3);
   updateInstagramBtn();
