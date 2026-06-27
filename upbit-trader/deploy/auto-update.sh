@@ -11,7 +11,7 @@ if [ ! -d "$REPO_DIR" ]; then
     _guess="$(cd "$(dirname "$0")/../.." 2>/dev/null && pwd)"
     [ -n "$_guess" ] && REPO_DIR="$_guess"
 fi
-SERVICES="${SERVICES:-swing-bot majors-bot}"
+SERVICES="${SERVICES:-swing-bot majors-bot xrp-bot}"
 # 고위험봇 영구 폐기: 서버에 '설치된' auto-update.service 가 옛 3봇 시절
 # SERVICES(=...highrisk-bot)를 환경변수로 갖고 있어도, 재시작 대상에서 무조건 제외.
 # (아래 ③ 재시작 루프가 highrisk-bot 을 절대 되살리지 못하게 하는 안전장치)
@@ -132,6 +132,11 @@ ensure_swing_paper
 ensure_highrisk_removed                              # 고위험봇 서버 잔재 완전 제거(매 실행)
 ensure_clone_bot "majors-bot"   "Upbit Majors (BTC-ETH) Trend Bot" \
     "scripts.majors_trade --invest 100000 --live" "majors.log"
+# 리플(XRP) 전용 봇 — 검증된 일봉 스윙펌프. '모의(paper)'로 설치(--live 없음 = 무주문).
+# 실거래 전환은 사용자 확인 후 별도로(이 줄에 --live 추가). 뉴스 브레이크는 EnvironmentFile에
+# ANTHROPIC_API_KEY 를 넣으면 자동 작동(없으면 순수 기술적 매매로 안전 작동).
+ensure_clone_bot "xrp-bot"      "Upbit XRP (Ripple) Swing Bot (paper)" \
+    "scripts.xrp_trade --invest 100000" "xrp.log"
 ensure_oneshot_timer "rebalance" "Upbit daily equity snapshot + rebalance" \
     "scripts.rebalance" "rebalance.timer" 1          # 매일 자산기록·현행화(설치 즉시 1회)
 ensure_oneshot_timer "portfolio-review" "Upbit portfolio review (dashboard+proposal)" \

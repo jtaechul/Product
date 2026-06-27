@@ -219,8 +219,9 @@ def start_command_listener(get_status, stop: threading.Event | None = None
 _STATE_DIR = Path(__file__).resolve().parent.parent / ".botstate"
 
 # 텔레그램 합산 상태/하트비트에 포함할 봇 이름 집합. 비어 있으면 전부 표시.
-# 잠수함봇은 검증 실패로 운용 중단 → 현황 알림에서 영구 제외(대형코인만 표시).
-_STATUS_WHITELIST: set[str] = {"2_대형코인"}
+# 잠수함봇은 검증 실패로 운용 중단 → 현황 알림에서 영구 제외.
+# 4_리플: analyze_xrp 워크포워드 검증 통과(스윙펌프) → 사용자 요청으로 정식 추가.
+_STATUS_WHITELIST: set[str] = {"2_대형코인", "4_리플"}
 
 
 def _state_dir() -> Path:
