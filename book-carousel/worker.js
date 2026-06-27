@@ -435,15 +435,18 @@ async function handleGenerateCaption(env, body) {
     model: await getModel(env.ANTHROPIC_API_KEY, 'light', env),
     max_tokens: 512,
     system: '당신은 연애·관계 심리 책을 소개하는 인스타그램 콘텐츠 크리에이터입니다. 30대 독자가 자기 마음을 들킨 듯 공감하며 저장·참여하고 싶어지는 따뜻한 캡션을 씁니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 공포·단정·비난 톤 금지, 위로와 공감의 언어만. 반말 절대 금지 — 문어체·존댓말(~습니다/~네요/~까요)만 허용. 반드시 JSON만 응답합니다.',
-    user: `책 카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n5페이지 A/B 투표 질문: ${pages.page5?.cta || ''}\n\n[중요] 이 게시물의 참여 방식은 마지막 장의 A/B 투표입니다. 캡션의 댓글 유도는 5페이지 A/B와 반드시 일치해야 하며, 별도의 키워드를 추가로 요구하면 안 됩니다(모순 금지).\n\n인스타그램 캡션을 작성하세요.\n\n[캡션 구조 — 순서 엄수]\n1줄: 독자가 연애에서 혼자 느꼈을 감정을 포착한 공감형 문장/질문 (책 제목 절대 노출 금지. "당신이 모른다면" 패턴 금지. "대부분의 사람들이" 금지. 공포·단정 금지)\n2~3줄: 캐럿셀 핵심 위로/통찰 초간결 요약 (반복 금지, 노골적 판매 금지)\n끝에서 둘째 줄: 저장 유도 문구 ("마음이 복잡한 날 다시 꺼내보고 싶다면 저장해두세요" 또는 "오늘의 나에게 필요했다면 저장해두세요" 형태)\n마지막 줄: A/B 투표 유도 — "당신은 어느 쪽에 가까운가요? 댓글에 A 또는 B로 솔직한 마음을 남겨주세요. 오늘의 책은 프로필 링크에서 만나보실 수 있습니다" 형태. 5페이지 A/B 선택지와 의미가 일치해야 함. DM 언급 절대 금지 — 반드시 프로필 링크 안내로.\n\n[추가 규칙]\n- 해시태그: 정확히 3개 (연애·관계·심리·책 관련. 예: #연애심리 #책추천 #애착유형)\n- 전체 6줄 이내, 짧고 따뜻하게\n- commentKeyword에는 사용자가 입력할 단어가 아니라, 이 게시물의 DM 라우팅용 카테고리 태그(예: "${kwHint}")를 넣는다(화면 표시는 운영자용). 절대 캡션 본문에 키워드를 쓰지 말 것.\n\nJSON: {"caption":"1줄\\n2줄\\n3줄\\n저장유도줄\\nA/B유도줄","hashtags":["#연애심리","#책추천","#애착유형"],"commentKeyword":"${kwHint}"}`,
+    user: `책 카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n5페이지 A/B 투표 질문: ${pages.page5?.cta || ''}\n\n[중요] 이 게시물의 참여 방식은 마지막 장의 A/B 투표입니다. 캡션의 댓글 유도는 5페이지 A/B와 반드시 일치해야 하며, 별도의 키워드를 추가로 요구하면 안 됩니다(모순 금지).\n\n인스타그램 캡션을 작성하세요.\n\n[캡션 구조 — 순서 엄수]\n1줄: 독자가 연애에서 혼자 느꼈을 감정을 포착한 공감형 문장/질문 (책 제목 절대 노출 금지. "당신이 모른다면" 패턴 금지. "대부분의 사람들이" 금지. 공포·단정 금지)\n2~3줄: 캐럿셀 핵심 위로/통찰 초간결 요약 (반복 금지, 노골적 판매 금지)\n끝에서 둘째 줄: 저장 유도 문구 ("마음이 복잡한 날 다시 꺼내보고 싶다면 저장해두세요" 또는 "오늘의 나에게 필요했다면 저장해두세요" 형태)\n마지막 줄: A/B 투표 유도 — "당신은 어느 쪽에 가까운가요? 댓글에 A 또는 B로 솔직한 마음을 남겨주세요" 형태. 5페이지 A/B 선택지와 의미가 일치해야 함. DM 언급 절대 금지. [중요] 프로필 링크·도서 번호 안내 문구는 시스템이 캡션 뒤에 자동으로 덧붙이므로, 캡션 본문에는 절대 쓰지 말 것.\n\n[추가 규칙]\n- 해시태그: 정확히 3개 (연애·관계·심리·책 관련. 예: #연애심리 #책추천 #애착유형)\n- 전체 6줄 이내, 짧고 따뜻하게\n- commentKeyword에는 사용자가 입력할 단어가 아니라, 이 게시물의 DM 라우팅용 카테고리 태그(예: "${kwHint}")를 넣는다(화면 표시는 운영자용). 절대 캡션 본문에 키워드를 쓰지 말 것.\n\nJSON: {"caption":"1줄\\n2줄\\n3줄\\n저장유도줄\\nA/B유도줄","hashtags":["#연애심리","#책추천","#애착유형"],"commentKeyword":"${kwHint}"}`,
   });
 
   const result = extractJson(text);
   // 구형 dmKeyword 필드도 호환성 유지
   result.dmKeyword = result.commentKeyword || kwHint.slice(0, 2) || '책';
-  // 도서 번호를 캡션 맨 아래에 자동 추가 — 독자가 링크 페이지에서 번호로 바로 찾을 수 있게
+  // 도서 번호 안내를 캡션 맨 아래에 자동 추가.
+  // 인스타그램에서 '#'은 해시태그(3개 제한)로 잡히므로 'No.' 표기를 쓴다(@도 멘션이라 불가).
   if (bookNumber) {
-    result.caption = (result.caption || '') + `\n\n📌 도서 #${bookNumber} | 프로필 링크에서 이 번호를 찾으세요`;
+    result.caption = (result.caption || '') + `\n\n오늘의 책은 프로필 링크에서 No.${bookNumber} 로 만나보실 수 있습니다`;
+  } else {
+    result.caption = (result.caption || '') + `\n\n오늘의 책은 프로필 링크에서 만나보실 수 있습니다`;
   }
   return { success: true, ...result };
 }
@@ -494,29 +497,33 @@ async function handleGenerateDmReply(env, body) {
     ? links.map((l, i) => `${i + 1}. ${l}`).join('\n')
     : '';
 
-  const profileUrl = `${SELF_URL}/books`;
-  const bookNumLabel = bookNumber ? ` (도서 #${bookNumber})` : '';
+  // 책 페이지 딥링크: 도서 번호가 있으면 해당 책 카드로 바로 스크롤되는 앵커(#번호)를 건다.
+  const bookLink = bookNumber ? `${SELF_URL}/books.html#${bookNumber}` : `${SELF_URL}/books.html`;
+  const linkGuide = bookNumber
+    ? `${bookLink} (이 링크를 누르면 오늘의 책(No.${bookNumber}) 페이지가 바로 열립니다)`
+    : `${bookLink}`;
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: await getModel(env.ANTHROPIC_API_KEY, 'light', env),
-    max_tokens: 1024,
-    system: '당신은 인스타그램 DM 자동 회신 작성 전문가입니다. 게시물 마지막 장의 A/B 투표에 댓글을 남긴 팔로워에게 보낼 단일 DM 하나를 작성합니다. A와 B 두 상황 모두 하나의 메시지 안에서 다룹니다. 따뜻하고 개인적인 톤, 노골적 판매 금지. 반말 절대 금지 — 존댓말만 허용. 반드시 JSON만 응답합니다.',
-    user: `책 제목: ${bookInfo.title}\n저자: ${bookInfo.author || ''}\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n게시물 마지막 장의 A/B 투표 질문:\n${pages.page5?.cta || ''}\n\n[작업] A와 B 댓글 응답자 모두에게 발송할 단일 DM을 작성하세요. A·B를 각각 다른 메시지로 나누지 말고, 하나의 DM 안에 두 상황을 모두 포함하세요.\n\nDM 구성 순서:\n1. 친근한 인사 (1줄)\n2. "A를 남겨주셨다면 [A 상황 공감 1줄] / B를 남겨주셨다면 [B 상황 공감 1줄]" 형태로 두 상황을 함께 담기\n3. 책 제목 "${bookInfo.title}" (저자: ${bookInfo.author || ''}) 소개 — 두 상황 모두에 도움이 되는 이유 한 줄\n4. 이 책의 핵심 방향 (2줄 이내, 완전한 답은 책에 있다는 뉘앙스)\n5. 프로필 링크 안내: "${profileUrl}에서 도서${bookNumLabel}를 찾아보세요" (필수 포함)\n${linksText ? `6. 구매 링크 안내 — 아래 링크를 DM 본문에 그대로 포함 (누락 금지):\n${linksText}\n` : ''}${linksText ? '7' : '6'}. 따뜻한 마무리 (1줄)\n\nJSON: {"dmText":"DM 전체 내용(줄바꿈은 \\n)"}`,
+    model: await getModel(env.ANTHROPIC_API_KEY, 'main', env),
+    max_tokens: 1600,
+    system: '당신은 연애·관계 심리 전문 상담가이자 인스타그램 DM 회신 작성자입니다. 게시물 마지막 장 A/B 투표에 "A" 또는 "B" 댓글을 남긴 팔로워에게 보낼 DM을, A용과 B용 두 개로 각각 작성합니다. 각 DM은 그 사람의 연애 성향을 따뜻하게 진단하고, 책 내용에 근거한 구체적 솔루션을 함께 제시합니다. 단정·비난·공포 금지, 위로와 통찰의 톤. 노골적 판매 금지. 반말 절대 금지 — 존댓말만. 반드시 JSON만 응답합니다.',
+    user: `책 제목: ${bookInfo.title}\n저자: ${bookInfo.author || ''}\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n게시물 마지막 장의 A/B 투표 질문(이 선택지의 A·B 의미를 정확히 반영하세요):\n${pages.page5?.cta || ''}\n\n[작업] A를 선택한 사람과 B를 선택한 사람에게 각각 보낼 DM을 따로 작성하세요. 두 DM은 서로 다른 성향을 다루므로 내용이 분명히 달라야 합니다.\n\n각 DM 구성(아래를 모두 포함, 진단+솔루션 합쳐 최소 3문장 이상, 6~9문장 권장):\n1. 따뜻한 인사 한 문장\n2. [심리 진단] 그 사람(A 또는 B)의 연애 성향을 책의 관점에서 따뜻하게 짚어줍니다. "왜 그런 마음이 드는지" 심리적 뿌리(애착·두려움·습관 등)를 2~3문장으로 설명. 비난 금지, 공감과 이해의 언어.\n3. [솔루션] 그 성향을 가진 사람이 오늘부터 시도해볼 수 있는 구체적이고 실천 가능한 방향을 책 내용에 근거해 2~3문장으로 제시. 단정적 명령이 아니라 부드러운 제안.\n4. 책 안내: 더 깊은 이야기는 오늘의 책 "${bookInfo.title}"에 담겨 있다는 뉘앙스 한 문장(제목은 자연스럽게 언급 가능).\n5. 도서 링크 안내: 아래 링크를 DM 본문에 그대로 포함(필수, 누락 금지):\n${linkGuide}\n${linksText ? `6. 구매 링크 안내 — 아래 링크도 그대로 포함(누락 금지):\n${linksText}\n` : ''}${linksText ? '7' : '6'}. 따뜻한 마무리 한 문장\n\n[톤 주의] A/B 어느 쪽이든 "당신이 틀렸다"는 뉘앙스 금지. 두 성향 모두 이해받아 마땅하다는 전제로 씁니다.\n\nJSON: {"dmTextA":"A 선택자에게 보낼 DM 전체(줄바꿈은 \\n)","dmTextB":"B 선택자에게 보낼 DM 전체(줄바꿈은 \\n)"}`,
   });
 
-  const result = extractJson(text);
-  const dmText = result.dmText || '';
+  const parsed = extractJson(text);
+  const dmTextA = parsed.dmTextA || parsed.dmText || '';
+  const dmTextB = parsed.dmTextB || parsed.dmText || '';
 
   // KV에 DM 회신 저장 (7일 TTL) — Phase 5 댓글 자동 감지용
   if (env.PENDING_POSTS && body.pipelineId) {
     const pid = String(body.pipelineId).replace(/[^a-zA-Z0-9]/g, '');
     if (pid) {
-      await env.PENDING_POSTS.put(`dm_reply_${pid}_A`, dmText, { expirationTtl: 604800 });
-      await env.PENDING_POSTS.put(`dm_reply_${pid}_B`, dmText, { expirationTtl: 604800 });
+      await env.PENDING_POSTS.put(`dm_reply_${pid}_A`, dmTextA, { expirationTtl: 604800 });
+      await env.PENDING_POSTS.put(`dm_reply_${pid}_B`, dmTextB, { expirationTtl: 604800 });
     }
   }
 
-  return { success: true, dmText, dmTextA: dmText, dmTextB: dmText };
+  return { success: true, dmText: dmTextA, dmTextA, dmTextB };
 }
 
 // ===== 체인 파이프라인 (탭 닫아도 서버에서 계속 진행) =====
@@ -1258,7 +1265,9 @@ async function handleAddBookToCatalog(env, body) {
     || affiliateLink
     || null;
 
-  const bookNumber = await reserveBookNumber(env);
+  // 이미 예약된 번호(body.bookNumber)가 있으면 그대로 사용 → 캡션·도서관 번호 일치.
+  // 없을 때만 새 번호를 매긴다.
+  const bookNumber = body.bookNumber || await reserveBookNumber(env);
   await addBookToCatalog(env, { bookInfo, bookNumber, pipelineId: null, coupangLink: link });
   return { success: true, bookNumber };
 }
@@ -1289,7 +1298,7 @@ function generateBooksHTML(catalog) {
   <article class="card" data-category="${b.category || '기타'}">
     <div class="card-top">
       ${i === 0 ? '<span class="badge-new">NEW</span>' : '<span></span>'}
-      <span class="book-num">#${b.number}</span>
+      <span class="book-num">No.${b.number}</span>
     </div>
     <span class="cat-pill" style="background:${color}18;color:${color}">${b.category || '기타'}</span>
     <h2 class="book-title">${b.title}</h2>
@@ -1370,7 +1379,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 <header class="hd">
   <p class="hd-eyebrow">Love Between the Lines</p>
   <h1 class="hd-title">행간<br>연애 책방</h1>
-  <p class="hd-sub">오늘 마음에 닿은 그 책을 여기서 만나요.<br>게시물의 도서 번호(#000)로 바로 찾을 수 있습니다.</p>
+  <p class="hd-sub">오늘 마음에 닿은 그 책을 여기서 만나요.<br>게시물의 도서 번호(No.000)로 바로 찾을 수 있습니다.</p>
 </header>
 <div class="tabs-wrap"><div class="tabs" role="tablist">${tabsHTML}</div></div>
 <main class="catalog" id="catalog">${cardsHTML}</main>
@@ -1387,6 +1396,15 @@ tabs.forEach(t=>t.addEventListener('click',()=>{
   const f=t.dataset.filter;
   cards.forEach(c=>c.classList.toggle('hidden',f!=='전체'&&c.dataset.category!==f));
 }));
+// URL #번호로 해당 책 카드 자동 스크롤 (숫자만 비교)
+(function(){
+  var t=(location.hash.replace('#','')||'').replace(/\\D/g,'');
+  if(!t)return;
+  cards.forEach(function(c){
+    var n=(c.querySelector('.book-num')?.textContent||'').replace(/\\D/g,'');
+    if(n===t){setTimeout(function(){c.scrollIntoView({behavior:'smooth',block:'center'});},300);c.style.outline='2px solid var(--gold)';c.style.outlineOffset='3px';}
+  });
+})();
 </script>
 </body>
 </html>`;
@@ -1481,6 +1499,15 @@ export default {
         else if (url.pathname === '/api/pipeline-status') result = await handlePipelineStatus(env, url);
         else if (url.pathname === '/api/pipeline-log') result = await handlePipelineLog(env, url);
         else if (url.pathname === '/api/add-book-to-catalog') result = await handleAddBookToCatalog(env, body);
+        else if (url.pathname === '/api/reserve-book-number') {
+          const bookNumber = await reserveBookNumber(env);
+          result = { success: true, bookNumber };
+        }
+        else if (url.pathname === '/api/reset-catalog') {
+          await env.PENDING_POSTS.put('book_catalog', JSON.stringify([]));
+          await env.PENDING_POSTS.put('book_counter', '0');
+          result = { success: true, message: '도서관이 초기화되었습니다.' };
+        }
         else if (url.pathname === '/api/book-catalog') {
           const catalog = (await env.PENDING_POSTS?.get('book_catalog', 'json').catch(() => null)) || [];
           return new Response(JSON.stringify(catalog), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });

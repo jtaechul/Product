@@ -121,7 +121,7 @@ function renderBooks(catalog) {
 <article class="card" data-category="${esc(b.category || '기타')}">
   <div class="card-top">
     ${i === 0 ? '<span class="badge-new">NEW</span>' : '<span></span>'}
-    <span class="book-num">#${esc(b.number)}</span>
+    <span class="book-num" id="book-${esc(b.number)}">No.${esc(b.number)}</span>
   </div>
   <span class="cat-pill" style="background:${color}18;color:${color}">${esc(b.category || '기타')}</span>
   <h2 class="book-title">${esc(b.title)}</h2>
@@ -143,15 +143,16 @@ function renderBooks(catalog) {
     cards.forEach(c => c.classList.toggle('hidden', f !== '전체' && c.dataset.category !== f));
   }));
 
-  // URL의 #숫자로 해당 카드로 자동 스크롤
-  const hash = location.hash.replace('#', '');
-  if (hash) {
-    const target = catalogEl.querySelector(`.card .book-num`);
+  // URL의 #번호(예: #001)로 해당 책 카드로 자동 스크롤 — 숫자만 비교(No.·# 표기 무관)
+  const targetNum = (location.hash.replace('#', '') || '').replace(/\D/g, '');
+  if (targetNum) {
     const all = catalogEl.querySelectorAll('.card');
     for (const card of all) {
-      if (card.querySelector('.book-num')?.textContent?.trim() === `#${hash}`) {
+      const cardNum = (card.querySelector('.book-num')?.textContent || '').replace(/\D/g, '');
+      if (cardNum === targetNum) {
         setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
         card.style.outline = '2px solid var(--gold)';
+        card.style.outlineOffset = '3px';
         break;
       }
     }
