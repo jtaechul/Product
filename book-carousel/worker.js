@@ -40,7 +40,7 @@ async function listModelIds(apiKey) {
 // 10초 타임아웃 + 일시적 과부하(429/529/5xx) 1회 재시도
 async function probeModel(apiKey, model, attempt = 0) {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 10000);
+  const timer = setTimeout(() => ctrl.abort(), 6000);
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -72,8 +72,8 @@ function orderCandidates(ids, patterns) {
   return out;
 }
 
-const HARDCODED_FALLBACK_MAIN = 'claude-3-5-sonnet-20241022';
-const HARDCODED_FALLBACK_LIGHT = 'claude-3-5-haiku-20241022';
+const HARDCODED_FALLBACK_MAIN = 'claude-sonnet-4-6';
+const HARDCODED_FALLBACK_LIGHT = 'claude-haiku-4-5-20251001';
 const MODEL_CACHE_KV_KEY = 'model_cache_v2';
 const MODEL_CACHE_TTL = 86400; // 24h
 
@@ -112,15 +112,14 @@ async function resolveModels(apiKey, env) {
   let main = await firstUsable(mainOrder);
   let light = (await firstUsable(lightOrder)) || main;
 
-  // 모든 probe가 실패하면 하드코딩 폴백으로 확정하고 캐시에 저장
-  // (폴백 결과도 캐시해서 다음 요청에서 재프로빙하지 않음)
+  // 모든 probe가 실패하면 폴백을 쓰되, 실제 /v1/models 목록의 첫 후보를 우선한다
+  // (레거시 하드코딩 ID는 키에 따라 404가 나므로 마지막 수단).
+  // ⚠️ 검증되지 않은 폴백은 KV에 캐시하지 않는다 → 일시적 탐색 실패가 24시간
+  // 동안 잘못된 모델로 고정되는 "캐시 포이즈닝"을 막는다(잦은 404의 근본 원인).
   if (!main) {
-    main = HARDCODED_FALLBACK_MAIN;
-    light = HARDCODED_FALLBACK_LIGHT;
-    _modelCache = { main, light, source: 'hardcoded-fallback', available: ids, probed };
-    if (env?.PENDING_POSTS) {
-      try { await env.PENDING_POSTS.put(MODEL_CACHE_KV_KEY, JSON.stringify({ main, light }), { expirationTtl: MODEL_CACHE_TTL }); } catch {}
-    }
+    main = mainOrder[0] || HARDCODED_FALLBACK_MAIN;
+    light = lightOrder[0] || main;
+    _modelCache = { main, light, source: 'unverified-fallback', available: ids, probed };
     return _modelCache;
   }
 
@@ -130,6 +129,14 @@ async function resolveModels(apiKey, env) {
     try { await env.PENDING_POSTS.put(MODEL_CACHE_KV_KEY, JSON.stringify({ main, light }), { expirationTtl: MODEL_CACHE_TTL }); } catch {}
   }
   return _modelCache;
+}
+
+// 모델 캐시 무효화 — 잘못된 모델이 캐시됐을 때 비워서 다음 해석에서 재탐색하게 한다.
+async function clearModelCache(env) {
+  _modelCache = null;
+  if (env?.PENDING_POSTS) {
+    try { await env.PENDING_POSTS.delete(MODEL_CACHE_KV_KEY); } catch {}
+  }
 }
 
 // 핸들러에서 쓸 모델 ID 반환 (없으면 원인을 알려주는 에러)
@@ -152,9 +159,13 @@ async function getModel(apiKey, tier, env) {
 // 403은 영구 오류("Request not allowed") — 재시도해도 같은 결과. 즉시 실패 처리.
 const RETRYABLE_STATUS = new Set([408, 409, 429, 500, 502, 503, 504, 529]);
 
-async function callClaude(apiKey, { model, system, user, max_tokens = 2048 }, attempt = 0) {
+async function callClaude(apiKey, opts, attempt = 0) {
   const MAX_RETRIES = 3;
   const BACKOFF_MS = [1000, 3000, 7000];
+  const { system, user, max_tokens = 2048, env, tier = 'main' } = opts;
+  // 모델은 직접 주어지면 그걸, 아니면 tier로 해석한다(자가복구를 위해 env·tier 보관).
+  const model = opts.model || await getModel(apiKey, tier, env);
+
   let res;
   try {
     res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -175,18 +186,24 @@ async function callClaude(apiKey, { model, system, user, max_tokens = 2048 }, at
     // 네트워크 오류 → 재시도
     if (attempt < MAX_RETRIES) {
       await new Promise(r => setTimeout(r, BACKOFF_MS[attempt]));
-      return callClaude(apiKey, { model, system, user, max_tokens }, attempt + 1);
+      return callClaude(apiKey, opts, attempt + 1);
     }
     throw new Error(`Claude 호출 네트워크 오류: ${netErr.message}`);
   }
 
   if (!res.ok) {
+    // 404(모델 없음/접근 불가) → 캐시된 모델이 잘못된 것. 캐시를 비우고 새 모델로 1회 자가복구.
+    if (res.status === 404 && env && !opts._healed) {
+      await clearModelCache(env);
+      const fresh = await getModel(apiKey, tier, env);
+      return callClaude(apiKey, { ...opts, model: fresh, _healed: true }, 0);
+    }
     if (RETRYABLE_STATUS.has(res.status) && attempt < MAX_RETRIES) {
       // 서버가 Retry-After를 주면 우선 존중, 없으면 지수 백오프
       const ra = parseInt(res.headers.get('retry-after') || '', 10);
       const wait = Number.isFinite(ra) ? Math.min(ra * 1000, 10000) : BACKOFF_MS[attempt];
       await new Promise(r => setTimeout(r, wait));
-      return callClaude(apiKey, { model, system, user, max_tokens }, attempt + 1);
+      return callClaude(apiKey, opts, attempt + 1);
     }
     const errBody = await res.json().catch(() => ({}));
     const detail = errBody?.error?.message || JSON.stringify(errBody);
@@ -314,7 +331,7 @@ async function handleSuggest(env, body) {
     : '';
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: await getModel(env.ANTHROPIC_API_KEY, 'main', env),
+    env, tier: 'main',
     system: '당신은 연애·관계 심리 전문 도서 큐레이터입니다. 30대 독자가 자신의 연애 패턴·이별·짝사랑·애착 유형을 이해하도록 돕는 실제 출판된 책을 추천합니다. 사랑·관계·심리·자기이해를 다루는 에세이, 심리학, 관계 안내서를 중심으로 큐레이션합니다. 반드시 JSON만 응답합니다.',
     user: `오늘 날짜: ${today}\n주제: "${topic}"${excludeClause}\n\n이 주제와 관련해 30대 독자에게 깊이 공감받을 실제 책 4권을 추천하세요.\n\n[선정 기준]\n- 연애·관계·사랑·애착·이별·자기이해를 다루는 책 (심리학/에세이/관계 안내서)\n- 독자가 "이건 내 얘기다"라고 느낄 수 있는 책 (예: 애착유형, 회피형·불안형 연애, 반복되는 연애 패턴, 자존감과 사랑, 건강한 경계, 이별 회복)\n- 실제 구매로 이어지기 쉬운 책 (관계 심리학·자기이해 분야가 전환율 높음)\n- 한국 독자가 쉽게 구할 수 있는 국내 출간서 우선\n- 동일 저자 책은 중복 추천 금지\n\n각 책에 대해:\n- title: 책 제목 (실제 출판된 책)\n- author: 저자명\n- year: 출판연도 (숫자)\n- category: 세부 카테고리 (예: 애착심리 / 연애에세이 / 이별과회복 / 자존감과사랑 / 관계심리)\n- coreMessage: 이 책의 핵심 메시지 (1~2문장)\n- targetAudience: 주요 대상 독자층 (1문장)\n- reason: 30대가 지금 이 책을 읽어야 하는 이유 (1문장)\n\nJSON 형식:\n{"books":[{"title":"...","author":"...","year":2024,"category":"...","coreMessage":"...","targetAudience":"...","reason":"..."}]}`,
   });
@@ -328,7 +345,7 @@ async function handleAnalyze(env, body) {
   if (!title) throw new Error('책 제목이 필요합니다.');
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: await getModel(env.ANTHROPIC_API_KEY, 'light', env),
+    env, tier: 'light',
     max_tokens: 512,
     system: '당신은 도서 분석 전문가입니다. 책 제목과 저자를 보고 핵심 메시지와 대상 독자층을 분석합니다. 반드시 JSON만 응답합니다.',
     user: `책: "${title}"${author ? ` / 저자: ${author}` : ''}\n\n이 책의 정보를 분석하세요.\n\nJSON: {"author":"저자명","year":출판연도(숫자),"category":"카테고리","coreMessage":"이 책의 핵심 메시지 1~2문장","targetAudience":"주요 대상 독자층 1문장"}`,
@@ -342,7 +359,7 @@ async function handleGenerate(env, body) {
   if (!title || !author || !coreMessage) throw new Error('제목, 저자, 핵심 메시지는 필수입니다.');
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: await getModel(env.ANTHROPIC_API_KEY, 'main', env),
+    env, tier: 'main',
     system: `당신은 연애·관계 심리 책을 소개하는 인스타그램 카드뉴스 전문 카피라이터입니다.\n타겟 독자: 연애·이별·짝사랑·관계에 지친 30대.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 마음을 건드린다 — 장황한 설명 금지.\n3. 공포·위기·충격이 아니라 '깊은 공감과 위로'로 저장·공유를 유도한다. 독자가 "이건 내 얘기다"라고 느껴 저장하게 만든다.\n4. 통계·수치·연구 인용보다 감정과 경험의 언어를 쓴다. 따뜻하고 문학적인 톤.\n5. 모든 콘텐츠에 반말을 절대 사용하지 않는다 — 문어체·존댓말(~습니다/~합니다/~네요/~까요)만 허용.\n반드시 JSON만 응답한다.`,
     user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '연애·관계 심리'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n\n[전체 톤] 연애·관계에 지친 30대를 위로하고 자기 마음을 이해하게 돕는 따뜻한 흐름. 공감 → 패턴 발견 → 마음의 이유 → 위로의 실마리 → 참여.\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(공감 훅 — 헤드라인만): 카드 전체를 단 하나의 마음을 건드리는 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 연애에서 겪었을 구체적 순간·감정을 정확히 포착한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 공포·경고 톤 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자가 혼자 느꼈던 감정을 들킨 듯한 문장.\n    좋은 예: "좋아할수록 더 차갑게 굴게 되는 사람이 있습니다"\n             "먼저 연락하면 지는 것 같아 오늘도 휴대폰만 들여다봤습니다"\n             "헤어지자는 말보다, 잡지 않을까 봐 더 무서웠습니다"\n    나쁜 예(절대 금지): "당신의 연애는 실패하고 있다" / "이대로면 평생 혼자입니다" (공포·단정 톤)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(패턴 발견): 독자가 반복해온 연애 패턴을 부드럽게 이름 붙여 보여준다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 독자가 "맞아, 나 그래"라고 느낄 구체적 행동·상황 묘사. 수치 금지, 감정과 장면 위주.\n3페이지(마음의 이유): 그 패턴의 심리적 뿌리를 따뜻하게 설명한다(애착, 상처, 두려움 등). 비난하지 않는다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. "당신이 이상한 게 아니라, 이런 마음이 있었던 것입니다" 같은 위로의 통찰. 심리학 개념을 쉽게 풀어 쓰되 학술 인용 금지.\n4페이지(위로의 실마리): 완전한 해답 대신 '이렇게 바라보면 달라진다'는 방향을 부드럽게 암시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 마지막 줄은 희망적 여운으로 끝낸다. 단정적 해결책 금지.\n5페이지(참여형 질문): 독자가 자기 연애 성향에 대해 답하고 싶어지는 A/B 질문으로 참여를 유도한다.\n  - cta: 독자 자신의 연애 성향/감정을 묻는 A/B 선택 형식 2~3줄.\n    예시 형식: "당신은 어느 쪽에 가까운가요?\\nA. 좋아할수록 다가가는 사람\\nB. 좋아할수록 멀어지는 사람"\n    핵심: 책이나 정보가 아니라 독자 자신의 마음을 묻는 질문이어야 한다.\n  - linkText: 반드시 두 역할을 분리해 한 줄로 씁니다.\n    역할1 — A/B 참여 유도: "댓글에 A 또는 B로 솔직한 마음을 남겨주세요" (어떤 보상도 약속하지 않음)\n    역할2 — 책 정보 안내: "오늘의 책은 프로필 링크에서 바로 만나보실 수 있습니다"\n    [절대 금지] "A 또는 B를 남기시면 당신에게 맞는 책을 안내해드립니다" 같이 A/B 선택에 따라 다른 결과가 온다는 표현 — A든 B든 같은 책 정보가 프로필 링크에 있으므로 거짓이 됩니다.\n    좋은 예: "댓글에 A 또는 B로 솔직한 마음을 남겨주세요 | 오늘의 책은 프로필 링크에서 바로 만나보실 수 있습니다"\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
@@ -353,7 +370,7 @@ async function handleGenerate(env, body) {
 async function handleValidate(env, body) {
   const { pages, bookInfo } = body;
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: await getModel(env.ANTHROPIC_API_KEY, 'light', env),
+    env, tier: 'light',
     max_tokens: 1024,
     system: '당신은 소셜미디어 콘텐츠 전문 편집장 겸 저작권 검토자입니다. 반드시 JSON만 응답합니다.',
     user: `책 "${bookInfo.title}" (저자: ${bookInfo.author}) 캐럿셀을 아래 5가지 기준으로 평가하세요.\n\n캐럿셀 내용:\n${JSON.stringify(pages, null, 2)}\n\n평가 기준 (100점 만점):\n1. accuracy(책 내용 부합도): 캐럿셀 내용이 해당 책의 실제 메시지와 일치하는가? 0~20\n2. factual(사실 정확성): 수치·통계·사례에 명백한 오류나 과장이 없는가? 0~20\n3. copyright(저작권 안전성): 책의 핵심 내용을 그대로 옮기지 않고 요약·재해석했는가? 저자명·책 제목이 본문에 노출되지 않는가? 0~20\n4. engagement(공감·참여 유도): 30대 독자가 "이건 내 얘기다"라고 느껴 저장·공유하고 싶어지는 깊은 공감과 위로가 있는가? 따뜻한 톤이 유지되는가(공포·단정·비난 톤이면 감점)? 0~25\n5. quality(문장 품질): 오타·비문·어색한 표현이 없고 간결한가? 0~15\n\nJSON: {"totalScore":85,"scores":{"accuracy":17,"factual":16,"copyright":18,"engagement":22,"quality":12},"feedback":"전체 평가 2~3문장","improvements":["구체적 개선점1","개선점2","개선점3"],"approved":true}\napproved는 totalScore>=70이면 true.`
@@ -395,7 +412,7 @@ async function handleGenerateImages(env, body) {
   };
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: await getModel(env.ANTHROPIC_API_KEY, 'main', env),
+    env, tier: 'main',
     max_tokens: 1500,
     system: '당신은 감성 사진 아트 디렉터입니다. 연애·관계 심리 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[가장 중요] 매번 똑같이 "커피+책+창가" 같은 뻔한 장면을 반복하지 마세요. 각 페이지의 "구체적 문장·감정"을 해석해, 그 감정을 상징하는 신선하고 차별화된 장면을 새로 발상하세요. 같은 소재(커피잔·창문·책)를 모든 페이지에 반복 사용 금지.\n\n[스타일 고정] 톤만 일관되게: 따뜻한 자연광, 아날로그 35mm 필름 질감, 포근하고 감성적인 색감(크림·베이지·더스티로즈·세이지·은은한 파스텔 중 장면에 맞게 선택), 시네마틱하고 서정적. 어둡고 공포스러운 톤 금지.\n\n[장면 발상 팔레트 — 감정에 맞는 것을 폭넓게 선택]\n· 자연/날씨: 안개 낀 들판, 비 내리는 유리창, 첫눈, 노을 진 바다, 흔들리는 들꽃, 가로등 켜진 골목, 새벽 하늘\n· 빛/그림자: 커튼 사이로 스며드는 빛, 바닥에 드리운 긴 그림자, 물에 비친 반영\n· 상징 정물: 손편지, 마른 꽃, 실타래, 깨진/흐린 거울, 오래된 사진, 빈 의자 하나, 꺼진 전화기, 두 개의 찻잔, 반지, 단추\n· 손동작: 무언가를 쥔/놓는/내미는 손, 페이지를 넘기는 손\n· 텍스처: 구겨진 종이, 린넨 천, 물결, 빛바랜 벽\n→ 위에서 그대로 베끼지 말고, 페이지 감정에 가장 들어맞는 것을 골라 구체적으로 연출.\n\n[규칙]\n1. 카메라·렌즈·조명·구도를 구체적으로 (예: 35mm film, 85mm f/1.8, soft window light, golden hour rim light, rule of thirds, macro)\n2. 사람 얼굴 클로즈업 금지 — 손·뒷모습·실루엣·정물·풍경만\n3. 텍스트·글자·숫자 없음 (no text, no letters)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 5장은 소재·장소·구도가 서로 뚜렷이 다르되, 색감·필름톤으로 한 시리즈처럼 묶이게\n6. 각 프롬프트 영어 35~70단어, Instagram 1:1\n반드시 JSON만 응답한다.',
     user: `책 제목: ${bookInfo.title || ''}\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n책 핵심 주제: ${bookInfo.coreMessage || ''}\n\n[1단계] 먼저 이 책의 핵심 감정/은유를 한 가지 마음속으로 정하세요(예: 다가갈수록 멀어지는 거리감, 닫힌 마음의 문, 기다림). 그 모티프가 5장에 은은히 흐르게 하되, 페이지마다 다른 장면으로 변주하세요.\n\n[2단계] 아래 각 페이지의 "실제 문장"을 해석해, 그 감정을 상징하는 서로 다른 장면 프롬프트 5개를 작성하세요.\n\n1페이지 [${PAGE_VISUAL_DIRECTIONS.page1}]\n  문장: ${pageContents.page1}\n2페이지 [${PAGE_VISUAL_DIRECTIONS.page2}]\n  문장: ${pageContents.page2}\n3페이지 [${PAGE_VISUAL_DIRECTIONS.page3}]\n  문장: ${pageContents.page3}\n4페이지 [${PAGE_VISUAL_DIRECTIONS.page4}]\n  문장: ${pageContents.page4}\n5페이지 [${PAGE_VISUAL_DIRECTIONS.page5}]\n  문장: ${pageContents.page5}\n\n[필수] 5장의 주요 소재·장소가 서로 겹치지 않게 하고(예: 커피잔을 두 번 쓰지 말 것), 각 페이지 문장의 핵심 감정이 장면에 분명히 드러나게 하세요. 텍스트·글자·숫자 없음.\n\nJSON (page1~page5 모두 필수): {"page1":"english prompt","page2":"...","page3":"...","page4":"...","page5":"..."}`,
@@ -433,7 +450,7 @@ async function handleGenerateCaption(env, body) {
   const kwHint = (dmKeyword || bookInfo.category || '독서').replace(/[^가-힣a-zA-Z0-9]/g, '') || '독서';
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: await getModel(env.ANTHROPIC_API_KEY, 'light', env),
+    env, tier: 'light',
     max_tokens: 512,
     system: '당신은 연애·관계 심리 책을 소개하는 인스타그램 콘텐츠 크리에이터입니다. 30대 독자가 자기 마음을 들킨 듯 공감하며 저장·참여하고 싶어지는 따뜻한 캡션을 씁니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 공포·단정·비난 톤 금지, 위로와 공감의 언어만. 반말 절대 금지 — 문어체·존댓말(~습니다/~네요/~까요)만 허용. 반드시 JSON만 응답합니다.',
     user: `책 카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n5페이지 A/B 투표 질문: ${pages.page5?.cta || ''}\n\n[중요] 이 게시물의 참여 방식은 마지막 장의 A/B 투표입니다. 캡션의 댓글 유도는 5페이지 A/B와 반드시 일치해야 하며, 별도의 키워드를 추가로 요구하면 안 됩니다(모순 금지).\n\n인스타그램 캡션을 작성하세요.\n\n[캡션 구조 — 순서 엄수]\n1줄: 독자가 연애에서 혼자 느꼈을 감정을 포착한 공감형 문장/질문 (책 제목 절대 노출 금지. "당신이 모른다면" 패턴 금지. "대부분의 사람들이" 금지. 공포·단정 금지)\n2~3줄: 캐럿셀 핵심 위로/통찰 초간결 요약 (반복 금지, 노골적 판매 금지)\n끝에서 둘째 줄: 저장 유도 문구 ("마음이 복잡한 날 다시 꺼내보고 싶다면 저장해두세요" 또는 "오늘의 나에게 필요했다면 저장해두세요" 형태)\n마지막 줄: A/B 투표 유도 — "당신은 어느 쪽에 가까운가요? 댓글에 A 또는 B로 솔직한 마음을 남겨주세요" 형태. 5페이지 A/B 선택지와 의미가 일치해야 함. DM 언급 절대 금지. [중요] 프로필 링크·도서 번호 안내 문구는 시스템이 캡션 뒤에 자동으로 덧붙이므로, 캡션 본문에는 절대 쓰지 말 것.\n\n[추가 규칙]\n- 해시태그: 정확히 3개 (연애·관계·심리·책 관련. 예: #연애심리 #책추천 #애착유형)\n- 전체 6줄 이내, 짧고 따뜻하게\n- commentKeyword에는 사용자가 입력할 단어가 아니라, 이 게시물의 DM 라우팅용 카테고리 태그(예: "${kwHint}")를 넣는다(화면 표시는 운영자용). 절대 캡션 본문에 키워드를 쓰지 말 것.\n\nJSON: {"caption":"1줄\\n2줄\\n3줄\\n저장유도줄\\nA/B유도줄","hashtags":["#연애심리","#책추천","#애착유형"],"commentKeyword":"${kwHint}"}`,
@@ -455,7 +472,7 @@ async function handleGenerateCaption(env, body) {
 async function handleRegenerate(env, body) {
   const { bookInfo, previousPages, feedback, improvements } = body;
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: await getModel(env.ANTHROPIC_API_KEY, 'main', env),
+    env, tier: 'main',
     system: `당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.\n3. 5페이지는 반문·열린 결말 구조 — 구매 유도나 직접 행동 지시 없이 독자에게 질문을 던진다.\n4. 모든 콘텐츠에 반말을 절대 사용하지 않는다 — 문어체·존댓말(~습니다/~합니다/~세요)만 허용.\n반드시 JSON만 응답한다.`,
     user: `캐럿셀을 피드백에 맞게 개선하세요.\n카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n이전 버전:\n${JSON.stringify(previousPages, null, 2)}\n\n피드백: ${feedback}\n개선 요청: ${improvements.join(' / ')}\n\n텍스트 길이 기준:\n- 1페이지 headline: 40자 이내 완전한 문장(주어+상황+결과). 단어 조각 절대 금지. subtext 없음.\n- 2~4페이지 headline: 18자 이내, body: 3~4줄(줄당 45자 이내). 구체적 수치·사례 포함.\n- JSON 형식: {"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},...}\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
@@ -472,7 +489,7 @@ async function handleAdjustText(env, body) {
   ).join('\n');
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: await getModel(env.ANTHROPIC_API_KEY, 'light', env),
+    env, tier: 'light',
     max_tokens: 1024,
     system: '당신은 인스타그램 카드뉴스 카피라이터입니다. 주어진 텍스트를 지정된 줄 수 이내로 압축합니다. 반말 절대 금지 — 문어체·존댓말만 허용. 반드시 JSON만 응답합니다.',
     user: `다음 캐럿셀 텍스트가 이미지 레이아웃에서 넘칩니다. 각 항목을 지정된 최대 줄 수 이내로 압축하세요.\n의미·임팩트는 유지하되 더 간결하게 다듬어주세요.\n\n현재 캐럿셀:\n${JSON.stringify(pages, null, 2)}\n\n넘치는 항목:\n${issueDesc}\n\n압축 규칙:\n- headline: 최대 3줄 (40자 이내, 강렬하게)\n- body: 최대 5줄 (줄당 45자 이내)\n- 책 제목·저자명 절대 노출 금지\n\n전체 pages JSON을 반환하세요:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`,
@@ -505,7 +522,7 @@ async function handleGenerateDmReply(env, body) {
     : `${bookLink}`;
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: await getModel(env.ANTHROPIC_API_KEY, 'main', env),
+    env, tier: 'main',
     max_tokens: 1600,
     system: '당신은 연애·관계 심리 전문 상담가이자 인스타그램 DM 회신 작성자입니다. 게시물 마지막 장 A/B 투표에 댓글을 남긴 팔로워에게 보낼 DM을 "하나의 메시지"로 작성합니다. 이 한 통의 DM 안에 A를 선택한 경우와 B를 선택한 경우의 내용을 모두 담아, 받은 사람이 자기 쪽을 읽으면 되게 합니다. 각 경우마다 그 성향을 따뜻하게 진단하고 책 내용에 근거한 구체적 솔루션을 함께 제시합니다. 단정·비난·공포 금지, 위로와 통찰의 톤. 노골적 판매 금지. 반말 절대 금지 — 존댓말만. 반드시 JSON만 응답합니다.',
     user: `책 제목: ${bookInfo.title}\n저자: ${bookInfo.author || ''}\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n게시물 마지막 장의 A/B 투표 질문(이 선택지의 A·B 의미를 정확히 반영하세요):\n${pages.page5?.cta || ''}\n\n[작업] A·B 댓글 응답자 모두에게 보낼 "하나의 DM"을 작성하세요. A용/B용을 따로 만들지 말고, 한 통의 메시지 안에 두 경우를 모두 담으세요.\n\nDM 구성 순서:\n1. 따뜻한 인사 한 문장\n2. "A를 선택하셨다면" 섹션 — A 성향의 심리 진단(왜 그런 마음이 드는지, 애착·두려움·습관 등 뿌리)과 오늘부터 해볼 수 있는 책 기반 솔루션. 진단+솔루션 합쳐 최소 3문장 이상.\n3. "B를 선택하셨다면" 섹션 — B 성향의 심리 진단과 책 기반 솔루션. 진단+솔루션 합쳐 최소 3문장 이상. (A와 분명히 다른 내용)\n4. 책 안내: 더 깊은 이야기는 오늘의 책 "${bookInfo.title}"에 담겨 있다는 뉘앙스 한 문장.\n5. 도서 링크 안내: 아래 링크를 DM 본문에 그대로 포함(필수, 누락 금지):\n${linkGuide}\n${linksText ? `6. 구매 링크 안내 — 아래 링크도 그대로 포함(누락 금지):\n${linksText}\n` : ''}${linksText ? '7' : '6'}. 따뜻한 마무리 한 문장\n\n[톤 주의] A/B 어느 쪽이든 "당신이 틀렸다"는 뉘앙스 금지. 두 성향 모두 이해받아 마땅하다는 전제로 씁니다. A/B 섹션은 줄바꿈으로 또렷이 구분하세요.\n\nJSON: {"dmText":"A·B 두 경우를 모두 담은 하나의 DM 전체(줄바꿈은 \\n)"}`,
@@ -1626,6 +1643,11 @@ export default {
         else if (url.pathname === '/api/reserve-book-number') {
           const bookNumber = await reserveBookNumber(env);
           result = { success: true, bookNumber };
+        }
+        else if (url.pathname === '/api/reset-model-cache') {
+          await clearModelCache(env);
+          const m = await resolveModels(env.ANTHROPIC_API_KEY, env);
+          result = { success: true, model: m.main, light: m.light, source: m.source };
         }
         else if (url.pathname === '/api/get-dm') {
           const num = String(parseInt(String(body.number || '').replace(/[^0-9]/g, ''), 10) || 0).padStart(3, '0');
