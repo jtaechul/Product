@@ -514,12 +514,26 @@ async function handleGenerateDmReply(env, body) {
   const dmTextA = parsed.dmTextA || parsed.dmText || '';
   const dmTextB = parsed.dmTextB || parsed.dmText || '';
 
-  // KV에 DM 회신 저장 (7일 TTL) — Phase 5 댓글 자동 감지용
+  // (구) 파이프라인ID 기반 임시 저장 — Phase 5 자동 감지용 (7일)
   if (env.PENDING_POSTS && body.pipelineId) {
     const pid = String(body.pipelineId).replace(/[^a-zA-Z0-9]/g, '');
     if (pid) {
       await env.PENDING_POSTS.put(`dm_reply_${pid}_A`, dmTextA, { expirationTtl: 604800 });
       await env.PENDING_POSTS.put(`dm_reply_${pid}_B`, dmTextB, { expirationTtl: 604800 });
+    }
+  }
+
+  // 도서 번호 기반 영구 저장 — 몇 달 뒤 댓글이 달려도 번호로 DM을 꺼낼 수 있게(유효기간 없음)
+  if (env.PENDING_POSTS && bookNumber) {
+    const num = String(parseInt(String(bookNumber).replace(/[^0-9]/g, ''), 10) || 0).padStart(3, '0');
+    if (num !== '000') {
+      await env.PENDING_POSTS.put(`dm_book_${num}`, JSON.stringify({
+        number: num,
+        title: bookInfo.title || '',
+        dmTextA,
+        dmTextB,
+        date: new Date().toISOString().slice(0, 10),
+      }));
     }
   }
 
@@ -1512,6 +1526,15 @@ export default {
         else if (url.pathname === '/api/reserve-book-number') {
           const bookNumber = await reserveBookNumber(env);
           result = { success: true, bookNumber };
+        }
+        else if (url.pathname === '/api/get-dm') {
+          const num = String(parseInt(String(body.number || '').replace(/[^0-9]/g, ''), 10) || 0).padStart(3, '0');
+          const data = (num !== '000' && env.PENDING_POSTS)
+            ? await env.PENDING_POSTS.get(`dm_book_${num}`, 'json').catch(() => null)
+            : null;
+          result = data
+            ? { success: true, ...data }
+            : { success: false, error: `No.${num} 게시물의 DM을 찾을 수 없습니다. (해당 책의 DM이 생성된 적 있는지 확인하세요)` };
         }
         else if (url.pathname === '/api/reset-catalog') {
           await env.PENDING_POSTS.put('book_catalog', JSON.stringify([]));

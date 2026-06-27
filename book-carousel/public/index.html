@@ -912,7 +912,15 @@
       <span class="section-title">DM 자동 회신 미리보기</span>
       <span class="section-badge" style="background:rgba(124,58,237,0.08);color:var(--primary);">Phase 5 준비</span>
     </div>
-    <p style="font-size:12px;color:var(--gray-500);line-height:1.7;margin-bottom:12px;">마지막 장 A/B 투표에 댓글을 남긴 방문자에게 보낼 DM입니다. A를 선택한 사람·B를 선택한 사람에게 보낼 DM을 각각 따로 작성하며(성향별 심리 진단 + 솔루션), 해당 책 페이지로 바로 열리는 도서관 링크가 자동 포함됩니다.</p>
+    <p style="font-size:12px;color:var(--gray-500);line-height:1.7;margin-bottom:12px;">마지막 장 A/B 투표에 댓글을 남긴 방문자에게 보낼 DM입니다. A를 선택한 사람·B를 선택한 사람에게 보낼 DM을 각각 따로 작성하며(성향별 심리 진단 + 솔루션), 해당 책 페이지로 바로 열리는 도서관 링크가 자동 포함됩니다. <b>생성된 DM은 도서 번호로 영구 저장</b>되어, 몇 달 뒤 댓글이 달려도 아래에서 번호로 다시 꺼낼 수 있습니다.</p>
+    <div style="border:1px dashed var(--gray-300);border-radius:10px;padding:12px 14px;margin-bottom:14px;background:var(--gray-50);">
+      <div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:6px;">지난 게시물 DM 찾기</div>
+      <p style="font-size:11px;color:var(--gray-500);line-height:1.6;margin-bottom:8px;">예전 게시물에 댓글이 달렸나요? 캡션의 번호(No.000)를 입력하면 그 게시물의 A/B DM을 다시 꺼내 바로 복사·발송할 수 있습니다.</p>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="dmLookupNum" placeholder="번호 (예: 1 또는 001)" style="flex:1;">
+        <button class="btn btn-outline" id="dmLookupBtn" style="flex-shrink:0;font-size:12px;padding:9px 14px;white-space:nowrap;">불러오기</button>
+      </div>
+    </div>
     <div class="form-group" style="margin-bottom:10px;">
       <label>쿠팡파트너스 어필리에이트 링크 (선택)</label>
       <input type="url" id="affiliateLinkInput" placeholder="https://link.coupang.com/a/...">
@@ -2093,6 +2101,26 @@ document.getElementById('copyDmABtn').addEventListener('click', () => {
 document.getElementById('copyDmBBtn').addEventListener('click', () => {
   if (!state.dmReplyB) return;
   copyText(state.dmReplyB, 'B용 DM');
+});
+
+// 지난 게시물 DM 찾기 — 번호로 영구 저장된 A/B DM을 다시 불러온다
+document.getElementById('dmLookupBtn').addEventListener('click', async () => {
+  const raw = document.getElementById('dmLookupNum').value.trim();
+  if (!raw) { showToast('게시물 번호를 입력하세요.', 'warning'); return; }
+  showLoading('지난 DM 불러오는 중...', `No.${raw} 게시물의 DM을 찾고 있습니다`);
+  try {
+    const data = await apiFetch('/api/get-dm', { number: raw });
+    if (data.success === false) { showToast(data.error || 'DM을 찾을 수 없습니다.', 'error'); return; }
+    state.bookNumber = data.number || raw;
+    document.getElementById('dmReplyWrapper').style.display = 'block';
+    renderDmReplies(data);
+    showToast(`No.${data.number} (${data.title || ''}) DM을 불러왔습니다`, 'success');
+    document.getElementById('dmReplyResult').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (e) {
+    showToast('불러오기 실패: ' + e.message, 'error');
+  } finally {
+    hideLoading();
+  }
 });
 
 // ===== 도서관 등록 메뉴 =====
