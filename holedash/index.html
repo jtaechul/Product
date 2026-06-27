@@ -14,8 +14,10 @@
     <!-- 숨겨진 비디오(웹캠 소스) -->
     <video id="cam" playsinline autoplay muted></video>
 
-    <!-- 배경음악 -->
+    <!-- 배경음악(스테이지별) -->
     <audio id="bgm" src="./assets/bgm.mp3" loop preload="auto"></audio>
+    <audio id="bgm2" src="./assets/stage2.mp3" loop preload="auto"></audio>
+    <audio id="bgm3" src="./assets/stage3.mp3" loop preload="auto"></audio>
 
     <!-- HUD (점수/콤보/라이프/라운드) -->
     <div id="hud" class="hidden">
@@ -80,10 +82,10 @@
 
       <!-- 캘리브레이션 안내 -->
       <section id="screen-calib" class="screen calib hidden">
-        <div class="calib-emoji">🤸</div>
+        <div class="calib-emoji">🧍</div>
         <h2 id="calibTitle">자세 준비</h2>
-        <p class="calib-inst">화면의 <b>별 모양 안</b>에 맞춰<br><b>양팔·양다리를 쫙 벌리고</b> 서주세요.</p>
-        <p class="hint">이렇게 맞춰두면 게임 중 팔을 뻗어도 화면을 벗어나지 않아요.<br>한두 걸음 뒤로 물러나면 전신이 잘 잡혀요.</p>
+        <p class="calib-inst">화면의 <b>T자 모양 안</b>에 맞춰<br><b>양팔을 옆으로 벌리고(T자) 가만히</b> 서주세요.</p>
+        <p class="hint">측정 중에는 <b>움직이지 말고 멈춰</b> 있어야 정확해요(약 2초).<br>한두 걸음 뒤로 물러나면 머리~발이 잘 잡혀요.</p>
         <button class="btn btn-primary" id="btnCalibStart">준비 완료 ▶</button>
       </section>
 

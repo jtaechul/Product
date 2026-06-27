@@ -19,12 +19,23 @@ const video = $('cam');
 const renderer = new Renderer(canvas, video);
 const pose = new PoseTracker(video);
 const sfx = new Sfx();
-const bgm = $('bgm');
-bgm.volume = 0.5;
+// 스테이지별 배경음악(0=스테이지1, 1=스테이지2, 2=스테이지3)
+const bgmTracks = [$('bgm'), $('bgm2'), $('bgm3')];
+bgmTracks.forEach((a) => { a.volume = 0.5; });
+let curStage = -1;
 let muted = false;
 
-function bgmPlay() { if (muted) return; try { bgm.play().catch(() => {}); } catch (e) {} }
-function bgmRestart() { if (muted) return; try { bgm.currentTime = 0; bgm.play().catch(() => {}); } catch (e) {} }
+// wallIndex → 스테이지(21벽을 3등분: 0~6 / 7~13 / 14~20)
+function stageOf(wallIndex) { return Math.min(2, Math.floor(wallIndex / 7)); }
+
+function bgmStopAll() { bgmTracks.forEach((a) => a.pause()); }
+function bgmPlayStage(s) {
+  if (muted) return;
+  bgmTracks.forEach((a, i) => { if (i !== s) a.pause(); });
+  if (s !== curStage) { try { bgmTracks[s].currentTime = 0; } catch (e) {} }
+  curStage = s;
+  try { bgmTracks[s].play().catch(() => {}); } catch (e) {}
+}
 
 // 충돌 마스크용 오프스크린
 const bodyMaskCanvas = Object.assign(document.createElement('canvas'), { width: MASK_W, height: MASK_H });
@@ -37,6 +48,7 @@ const SYNTH = new URLSearchParams(location.search).has('synth');
 let state = 'TITLE';
 let players = [];        // {name, score, perfects, walls}
 let groundY = 0.90;      // 바닥선(정규화 y) — 캘리브레이션에서 발 높이로 보정
+let headY = 0.18;        // 머리선(정규화 y) — 캘리브레이션에서 코 높이로 보정
 let current = null;      // 현재 플레이어
 let landmarks = null;
 let lastTime = performance.now() / 1000;
@@ -93,8 +105,8 @@ $('btnMute').onclick = () => {
   muted = !muted;
   sfx.enabled = !muted;
   sfx.resume();
-  if (muted) bgm.pause();
-  else if (state === 'PLAY') bgmPlay();
+  if (muted) bgmStopAll();
+  else if (state === 'PLAY') bgmPlayStage(Math.max(0, curStage));
   $('btnMute').textContent = muted ? '🔇' : '🔊';
 };
 
@@ -166,8 +178,8 @@ function startCalibration() {
 
 function beginCalibScan() {
   calib.progress = 0; calib.done = false; calib.tStart = performance.now() / 1000;
-  calib.feet = [];
-  calib.status = '별 모양에 맞춰 팔·다리를 벌려 서주세요';
+  calib.feet = []; calib.heads = []; calib.prev = null;
+  calib.status = 'T자로 팔 벌리고 가만히 서주세요';
   hideAllScreens();
   $('overlay').style.pointerEvents = 'none';
   $('btnCalibSkip').classList.add('hidden');
@@ -190,10 +202,21 @@ function isFullBodyVisible() {
   const head = vget(LM.NOSE) >= 0.3;
   const sh = vget(LM.L_SHOULDER) >= 0.3 && vget(LM.R_SHOULDER) >= 0.3;
   const hip = vget(LM.L_HIP) >= 0.3 && vget(LM.R_HIP) >= 0.3;
-  // 발끝(양 발목)이 화면 안에 보여야 함 + 화면 맨 아래로 잘리지 않게(y<0.985)
   const ay = ankleY();
   const feet = ay !== null && ay < 0.985;
   return head && sh && hip && feet;
+}
+
+// 직전 프레임 대비 주요 관절 평균 이동량(정규화) → 움직임 측정. 작을수록 정지.
+function bodyMotion() {
+  if (!landmarks || !calib.prev) return 1;
+  const idx = [LM.NOSE, LM.L_SHOULDER, LM.R_SHOULDER, LM.L_HIP, LM.R_HIP, LM.L_WRIST, LM.R_WRIST, LM.L_ANKLE, LM.R_ANKLE];
+  let s = 0, n = 0;
+  for (const i of idx) {
+    const a = landmarks[i], b = calib.prev[i];
+    if (a && b) { s += Math.hypot(a.x - b.x, a.y - b.y); n++; }
+  }
+  return n ? s / n : 1;
 }
 
 function calibReason() {
@@ -207,28 +230,32 @@ function calibReason() {
 }
 
 function updateCalibScan(t, dt) {
-  const ok = isFullBodyVisible();
-  if (ok) {
-    calib.progress = Math.min(1, calib.progress + dt / 1.5); // ~1.5초 유지하면 완료
-    calib.status = '좋아요! 그대로 잠깐…';
+  const vis = isFullBodyVisible();
+  const motion = bodyMotion();
+  const stable = vis && (SYNTH || motion < 0.016); // 충분히 멈춰 있어야 측정(합성모드는 면제)
+  if (stable) {
+    calib.progress = Math.min(1, calib.progress + dt / 2.0); // ~2초 가만히 → 완료
+    calib.status = '좋아요! 그대로 멈춰요…';
     const ay = ankleY();
-    if (ay !== null) {
-      calib.feet.push(ay);
-      groundY = groundY * 0.85 + Math.min(0.97, Math.max(0.6, ay)) * 0.15; // 바닥선 라이브 보정
-    }
+    if (ay !== null) calib.feet.push(ay);
+    if (vget(LM.NOSE) >= 0.3) calib.heads.push(landmarks[LM.NOSE].y);
+  } else if (vis) {
+    calib.progress = Math.max(0, calib.progress - dt / 0.6); // 움직이면 빠르게 감소
+    calib.status = '✋ 움직이지 말고 가만히! (정확히 측정 중)';
   } else {
-    calib.progress = Math.max(0, calib.progress - dt / 0.8);
+    calib.progress = Math.max(0, calib.progress - dt / 0.7);
     calib.status = calibReason();
   }
-  // 3초 지나도 안 잡히면 수동 시작 버튼 노출(절대 막히지 않게)
-  if (t - calib.tStart > 3) $('btnCalibSkip').classList.remove('hidden');
+  // 움직임 측정용 스냅샷
+  if (landmarks) calib.prev = landmarks.map((p) => ({ x: p.x, y: p.y }));
+  // 5초 지나도 안 끝나면 수동 시작 버튼 노출(절대 막히지 않게)
+  if (t - calib.tStart > 5) $('btnCalibSkip').classList.remove('hidden');
   if (calib.progress >= 1 && !calib.done) {
     calib.done = true;
-    // 측정한 발 높이로 바닥선 확정
-    if (calib.feet && calib.feet.length) {
-      const avg = calib.feet.reduce((a, b) => a + b, 0) / calib.feet.length;
-      groundY = Math.min(0.97, Math.max(0.6, avg));
-    }
+    // 측정한 발/머리 높이의 중앙값으로 확정(움직임 적은 마지막 구간 위주)
+    const med = (arr, fb) => { if (!arr || !arr.length) return fb; const s = [...arr].sort((a, b) => a - b); return s[s.length >> 1]; };
+    groundY = Math.min(0.985, Math.max(0.6, med(calib.feet, groundY)));
+    headY = Math.min(groundY - 0.25, Math.max(0.02, med(calib.heads, headY)));
     sfx.go();
     finishCalibration();
   }
@@ -241,7 +268,7 @@ function finishCalibration() {
 
 // ====== 연습 + 본게임 ======
 function startPractice() {
-  bgmRestart();
+  curStage = -1; bgmPlayStage(0);
   g.practice = true;
   g.wallIndex = 0;
   current.life = START_LIFE;
@@ -275,6 +302,8 @@ function beginWall() {
   g.wallStart = performance.now() / 1000;
   g.approachSec = BASE_APPROACH_SEC / wall.approachSpeed;
   g.judged = false;
+  // 스테이지별 배경음악 전환(연습은 스테이지1 유지)
+  if (!g.practice) bgmPlayStage(stageOf(g.wallIndex));
   // 댄스 벽이면 가운데 라운드 표시를 비우고(날아오는 제목이 대신), 아니면 ROUND 표시
   $('hudRound').textContent = g.practice ? '연습' : (wall.title ? '🎵 댄스' : `ROUND ${wall.level}`);
   $('hudWall').textContent = g.practice ? '' : `벽 ${g.wallIndex + 1} / ${STAGE_WALLS.length}`;
@@ -322,11 +351,15 @@ function shoulderNorm() {
   return Math.max(0.06, dist(a, b));
 }
 
-// 마스크 좌표계의 고정 구멍(화면 wallGeom과 동일 비율, 발끝을 바닥선 groundY에).
+// 마스크 좌표계의 구멍(화면 wallGeom과 동일 비율 — 측정된 몸 길이 + 여유에 맞춤).
 function maskGeom() {
-  const TOP = 0.12, FIG = 4.8, FOOT = 2.2;
-  const S = Math.max(8, (groundY - TOP) * MASK_H / FIG);
-  const cy = groundY * MASK_H - FOOT * S;
+  const H = MASK_H, pad = 0.06;
+  const footY = Math.min(0.99, groundY + pad);
+  const topMin = 0.03;
+  const bodyFitS = Math.max(8, ((groundY - headY) + 2 * pad) * H / 4.3);
+  const maxS = (footY - topMin) * H / 4.8;
+  const S = Math.min(bodyFitS, maxS);
+  const cy = footY * H - 2.2 * S;
   return { cx: MASK_W / 2, cy, S, VH: S * 1.7 };
 }
 
@@ -334,7 +367,7 @@ function applyGrade(grade, wall) {
   const scoring = !g.practice;
   if (scoring) current.walls++;
   // 연출 — 고정 구멍 위치에서 이펙트
-  const screenGeom = renderer.wallGeom(groundY);
+  const screenGeom = renderer.wallGeom(groundY, headY);
   renderer.tintSkeleton(grade.color, 0.7);
   if (grade.grade === 'CRASH') {
     renderer.setFlash('#ff3030');
@@ -414,7 +447,7 @@ function advanceWall() {
 }
 
 function finishPlayer(cleared = false) {
-  bgm.pause();
+  bgmStopAll(); curStage = -1;
   state = 'RESULT';
   setHud(false);
   $('resultName').textContent = cleared ? `🎉 ${current.name} 완주!` : `${current.name} 종료`;
@@ -465,7 +498,7 @@ function loop() {
 
   if (state === 'CALIB_RUN') {
     renderer.drawSkeleton(landmarks);
-    renderer.drawCalibUI(calib.progress, calib.status, t, groundY);
+    renderer.drawCalibUI(calib.progress, calib.status, t, groundY, headY);
     updateCalibScan(t, dt);
   } else if (state === 'PLAY') {
     // 인식 후 게임 중에는 뼈대를 그리지 않음(깔끔) — 카메라 영상으로 직접 맞춤
@@ -491,10 +524,17 @@ function updatePlay(t) {
   } else if (g.phase === 'approach') {
     const el = t - g.wallStart;
     const progress = Math.min(1, el / g.approachSec);
-    const geom = renderer.wallGeom(groundY);
+    const geom = renderer.wallGeom(groundY, headY);
     renderer.drawWall(wall, geom, progress, t);
     if (wall.title) renderer.drawSongTitle(wall.title, wall.artist, el);
     renderer.drawPoseHint(poseHint(wall));
+    // 양옆 빈 공간: 이번 동작/콤보 + 다음 포즈 미리보기
+    const nextWall = (!g.practice && g.wallIndex + 1 < STAGE_WALLS.length) ? STAGE_WALLS[g.wallIndex + 1] : null;
+    renderer.drawSidePanels({
+      moveText: poseHint(wall),
+      combo: current.combo || 0,
+      next: nextWall ? { wall: nextWall, label: poseHint(nextWall) } : null,
+    });
     if (progress >= 1 && !g.judged) {
       g.judged = true;
       judge();
