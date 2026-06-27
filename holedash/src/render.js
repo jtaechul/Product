@@ -2,7 +2,7 @@
 // 웹캠(거울) + 스켈레톤 + 다가오는 벽 + 파티클/플래시.
 
 import { POSE_CONNECTIONS, LM } from './config.js';
-import { fillHole } from './walls.js';
+import { fillHole, poseBounds } from './walls.js';
 
 export class Renderer {
   constructor(canvas, video) {
@@ -117,18 +117,24 @@ export class Renderer {
     return Math.max(30, Math.hypot(pa.x - pb.x, pa.y - pb.y));
   }
 
-  // 고정된 구멍 — 측정된 '몸 길이(머리~발)'에 여유(pad)를 더해, 그 사람보다 살짝 큰 구멍을 만든다.
-  // → 올바른 자세면 머리끝·발끝이 경계에 닿지 않음. 발끝은 바닥선보다 살짝 아래까지 덮음.
-  wallGeom(groundY = 0.90, headY = 0.18) {
+  // 측정된 사람 몸(머리 정수리~발끝)에 넉넉한 여유를 더해 구멍 크기를 맞춘다.
+  // → 키·체형이 달라도 머리끝·발끝이 경계를 벗어나지 않음. 손 올린 포즈는 화면 안에 남게 보정.
+  wallGeom(groundY = 0.90, headY = 0.18, wall = null) {
     const H = this.H;
-    const pad = 0.06;                              // 머리/발 여유(정규화)
-    const footY = Math.min(0.99, groundY + pad);   // 구멍 발끝(실제 발보다 약간 아래)
-    const topMin = 0.03;                           // 올린 손이 화면 안에 남을 최소 상단
-    // 몸 길이(머리~발)에 위아래 여유를 더해 세로 4.3S에 매핑
-    const bodyFitS = Math.max(40, ((groundY - headY) + 2 * pad) * H / 4.3);
-    const maxS = (footY - topMin) * H / 4.8;       // 올린 손(2.6S)까지 화면에 들어오는 상한
-    const S = Math.min(bodyFitS, maxS);
-    const cy = footY * H - 2.2 * S;                // 발끝을 footY에
+    const headPad = 0.12;  // 정수리(코보다 위) + 머리카락 여유
+    const footPad = 0.10;  // 발목보다 아래 발끝 여유
+    const footY = Math.min(0.99, groundY + footPad);
+    const crownY = Math.max(0.015, headY - headPad);
+    const b = wall ? poseBounds(wall) : { headExt: 2.1, topExt: 2.1, botExt: 2.2 };
+    // 머리원 위쪽(headExt)과 발 아래(botExt) 사이를 [crownY..footY]에 매핑
+    let S = Math.max(36, (footY - crownY) * H / (b.headExt + b.botExt));
+    // 손 올린 부분(topExt)이 화면 위로 살짝(4%)까지만 벗어나게 허용 → 머리 여유 확보
+    const topLimit = -0.04 * H;
+    let cy = footY * H - b.botExt * S;
+    if (cy - b.topExt * S < topLimit) {
+      S = (footY * H - topLimit) / (b.topExt + b.botExt);
+      cy = footY * H - b.botExt * S;
+    }
     return { cx: this.W / 2, cy, S, VH: S * 1.7 };
   }
 
@@ -371,7 +377,7 @@ export class Renderer {
 
     // 가운데 사람 모양 가이드 — 게임의 고정 구멍과 똑같은 위치/크기 + '별 모양'(양팔·양다리 벌림)
     // 여기에 맞춰 팔다리를 벌리고 서면, 게임 중 팔을 뻗어도 경계를 벗어나지 않는다.
-    const wg = this.wallGeom(groundY, headY);
+    const wg = this.wallGeom(groundY, headY, { pose: 'tpose', margin: 0.45 });
     const frameH = this.H * 0.84;
     const frameW = Math.min(this.W * 0.92, frameH);
     const cx = wg.cx, cy = wg.cy;
@@ -511,14 +517,30 @@ export class Renderer {
       });
     }
   }
+  // 화면 위에서 쏟아지는 색종이(신나는 연출) — 통과/완주 시
+  confetti(n = 90) {
+    const colors = ['#ff5d8f', '#4dd0ff', '#57e389', '#ffd23f', '#ff8a3d', '#b18cff', '#ffffff'];
+    for (let i = 0; i < n; i++) {
+      this.particles.push({
+        x: Math.random() * this.W, y: -20 - Math.random() * this.H * 0.4,
+        vx: (Math.random() - 0.5) * 3, vy: 2 + Math.random() * 4,
+        life: 1, color: colors[(Math.random() * colors.length) | 0],
+        size: 6 + Math.random() * 8, shape: 'confetti',
+        spin: Math.random() * 6.28, vspin: (Math.random() - 0.5) * 0.5, grav: 0.08,
+      });
+    }
+  }
   setFlash(color) { this.flash = { color, t: 1 }; }
   tintSkeleton(color, dur = 0.8) { this.skelTint = { color, t: dur }; }
 
   updateEffects(dt) {
     for (const p of this.particles) {
-      p.x += p.vx; p.y += p.vy; p.vy += 0.4; p.vx *= 0.98;
+      p.x += p.vx; p.y += p.vy; p.vy += (p.grav ?? 0.4); p.vx *= 0.99;
+      if (p.shape === 'confetti') p.x += Math.sin((p.spin || 0) * 2) * 0.8; // 팔랑팔랑
       if (p.vspin) p.spin += p.vspin;
-      p.life -= dt * (p.shape === 'emoji' ? 1.0 : 1.6);
+      const rate = p.shape === 'emoji' ? 1.0 : (p.shape === 'confetti' ? 0.45 : 1.6);
+      p.life -= dt * rate;
+      if (p.shape === 'confetti' && p.y > this.H + 30) p.life = 0;
     }
     this.particles = this.particles.filter((p) => p.life > 0);
     for (const s of this.shockwaves) { s.r += (s.max - s.r) * dt * 6; s.life -= dt * 1.8; }
@@ -548,6 +570,12 @@ export class Renderer {
         ctx.restore();
       } else if (p.shape === 'star') {
         this._star(ctx, p.x, p.y, p.size, p.spin || 0, p.color);
+      } else if (p.shape === 'confetti') {
+        ctx.save();
+        ctx.translate(p.x, p.y); ctx.rotate(p.spin || 0);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size * 0.5, -p.size * 0.35, p.size, p.size * 0.7);
+        ctx.restore();
       } else {
         ctx.fillStyle = p.color;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();

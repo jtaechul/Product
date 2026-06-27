@@ -12,6 +12,26 @@ const LINKS = [
   ['hL', 'hR'], ['hL', 'kL'], ['kL', 'aL'], ['hR', 'kR'], ['kR', 'aR'],
 ];
 
+// 포즈의 세로 범위(어깨너비 S 단위, 중심 기준). 구멍 크기를 사람 몸에 맞출 때 사용.
+// headExt: 머리 원 위쪽 끝 / botExt: 발 아래쪽 끝 / topExt: 손 올린 부분 포함 최상단.
+export function poseBounds(wall) {
+  const pose = POSES[wall.pose] || POSES.stand;
+  const margin = wall.margin || 0.4;
+  const halfT = (0.6 + margin * 0.7) / 2;       // 사지 두께 절반
+  const headR = 0.42 + margin * 0.35;           // 머리 반지름
+  let minY = Infinity, maxY = -Infinity;
+  for (const k in pose) {
+    const p = pose[k];
+    if (!Array.isArray(p)) continue;
+    if (p[1] < minY) minY = p[1];
+    if (p[1] > maxY) maxY = p[1];
+  }
+  const headExt = -(pose.head ? pose.head[1] : -1.5) + headR; // 머리 원 위쪽 끝
+  const topExt = -minY + Math.max(headR, halfT);              // 손 올린 부분 포함
+  const botExt = maxY + halfT;                                // 발 아래쪽 끝
+  return { headExt, topExt, botExt };
+}
+
 // 포즈의 사람 실루엣을 ctx에 채워 그린다.
 // geom = { cx, cy, S, extraRot, extraDX, thickBoost }
 export function fillHole(ctx, wall, geom) {
