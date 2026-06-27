@@ -99,6 +99,23 @@ export const POSES = {
     eL: [-0.6, 0.38], eR: [0.6, 0.38], wL: [-0.62, 0.74], wR: [0.62, 0.74],
     kL: [-0.28, 1.25], kR: [0.28, 1.25], aL: [-0.3, 1.7], aR: [0.3, 1.7],
   },
+
+  // ===== K-POP 댄스 시그니처 포즈(몸 실루엣 재현) =====
+  // 블랙홀(아이브): 양팔 위로 둥글게 모아 동그라미
+  blackhole: { ...TORSO, ...LEGS_STRAIGHT, eL: [-0.72, -1.65], eR: [0.72, -1.65], wL: [-0.3, -2.1], wR: [0.3, -2.1] },
+  // 뱅뱅(아이브): 양팔 위로 쫙 벌려 V
+  bangbang: { ...TORSO, ...LEGS_STRAIGHT, eL: [-0.95, -1.55], eR: [0.95, -1.55], wL: [-1.45, -2.0], wR: [1.45, -2.0] },
+  // 에프터라이크(아이브): 한 팔 위로 가리키고 한 손 허리
+  afterlike: { ...TORSO, ...LEGS_STRAIGHT, eL: [-0.72, -0.5], wL: [-0.33, 0.05], eR: [0.78, -1.55], wR: [1.05, -2.05] },
+  // it's me(아일릿): 양 팔꿈치 넓게, 양손 가슴 앞으로
+  itsme: { ...TORSO, ...LEGS_STRAIGHT, eL: [-0.95, -0.7], eR: [0.95, -0.7], wL: [-0.18, -0.62], wR: [0.18, -0.62] },
+  // 빌려온 고양이(아일릿): 양손 머리 옆 고양이 손
+  cat: { ...TORSO, ...LEGS_STRAIGHT, eL: [-0.78, -0.85], eR: [0.78, -0.85], wL: [-0.78, -1.5], wR: [0.78, -1.5] },
+  // 마그넷(아일릿): 한 팔 위·한 팔 아래 대각선 + 다리 살짝 벌림
+  magnet: {
+    ...TORSO, eR: [0.8, -1.5], wR: [1.1, -1.95], eL: [-0.72, -0.3], wL: [-1.0, 0.25],
+    kL: [-0.4, 0.98], kR: [0.4, 0.98], aL: [-0.55, 1.68], aR: [0.55, 1.68],
+  },
 };
 
 // ===== 벽(스테이지) 정의 =====
@@ -120,6 +137,13 @@ export const STAGE_WALLS = [
   { id: 'w13', level: 6, pose: 'oneup',  rot: 0,     margin: 0.40, approachSpeed: 1.5, variant: 'moving' },
   { id: 'w14', level: 6, pose: 'crouch', rot: 0,     margin: 0.42, approachSpeed: 1.5, variant: 'normal' },
   { id: 'w15', level: 6, pose: 'tpose',  rot: 0,     margin: 0.34, approachSpeed: 1.6, variant: 'rotate' },
+  // ===== 🎵 K-POP 댄스 라운드(노래 제목이 날아옴) =====
+  { id: 'd01', level: 7, pose: 'blackhole', rot: 0, margin: 0.52, approachSpeed: 1.1, variant: 'normal', title: '블랙홀', artist: '아이브' },
+  { id: 'd02', level: 7, pose: 'bangbang',  rot: 0, margin: 0.50, approachSpeed: 1.2, variant: 'normal', title: '뱅뱅', artist: '아이브' },
+  { id: 'd03', level: 7, pose: 'afterlike', rot: 0, margin: 0.50, approachSpeed: 1.2, variant: 'normal', title: '에프터라이크', artist: '아이브' },
+  { id: 'd04', level: 7, pose: 'itsme',     rot: 0, margin: 0.52, approachSpeed: 1.2, variant: 'normal', title: "it's me", artist: '아일릿' },
+  { id: 'd05', level: 7, pose: 'cat',       rot: 0, margin: 0.52, approachSpeed: 1.3, variant: 'normal', title: '빌려온 고양이', artist: '아일릿' },
+  { id: 'd06', level: 7, pose: 'magnet',    rot: 0, margin: 0.48, approachSpeed: 1.3, variant: 'normal', title: '마그넷', artist: '아일릿' },
 ];
 
 // 포즈별 안내 문구(기울임은 rot로 좌/우 구분)
@@ -129,6 +153,13 @@ export const POSE_HINTS = {
   star: '⭐ 팔다리 모두 벌려 별 모양!',
   oneup: '🙋 오른손 번쩍 들기',
   crouch: '🦔 웅크려 작아지기!',
+  // K-POP 댄스 포즈
+  blackhole: '🕳️ 양팔 위로 모아 동그라미!',
+  bangbang: '✌️ 양팔 위로 쫙 V!',
+  afterlike: '👉 한 팔 위로 가리키기!',
+  itsme: '😎 양손 가슴 앞으로!',
+  cat: '🐱 양손 머리 옆 고양이!',
+  magnet: '🧲 한 팔 위·한 팔 아래 대각선!',
 };
 export function poseHint(wall) {
   if (wall.pose === 'stand' && wall.rot < -0.1) return '↖️ 몸을 왼쪽으로 기울이기';

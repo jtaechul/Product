@@ -275,7 +275,8 @@ function beginWall() {
   g.wallStart = performance.now() / 1000;
   g.approachSec = BASE_APPROACH_SEC / wall.approachSpeed;
   g.judged = false;
-  $('hudRound').textContent = g.practice ? '연습' : `ROUND ${wall.level}`;
+  // 댄스 벽이면 가운데 라운드 표시를 비우고(날아오는 제목이 대신), 아니면 ROUND 표시
+  $('hudRound').textContent = g.practice ? '연습' : (wall.title ? '🎵 댄스' : `ROUND ${wall.level}`);
   $('hudWall').textContent = g.practice ? '' : `벽 ${g.wallIndex + 1} / ${STAGE_WALLS.length}`;
 }
 
@@ -490,6 +491,7 @@ function updatePlay(t) {
     const progress = Math.min(1, el / g.approachSec);
     const geom = renderer.wallGeom(groundY);
     renderer.drawWall(wall, geom, progress, t);
+    if (wall.title) renderer.drawSongTitle(wall.title, wall.artist, el);
     renderer.drawPoseHint(poseHint(wall));
     if (progress >= 1 && !g.judged) {
       g.judged = true;
