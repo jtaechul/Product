@@ -28,7 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src import notifier  # noqa: E402
+from src import news_filter, notifier  # noqa: E402
 from src.swing import SwingConfig, compute_features, is_entry  # noqa: E402
 from src.swing_trader import SwingTrader  # noqa: E402
 from src.timeutil import now_kst as datetime_now  # noqa: E402
@@ -157,6 +157,10 @@ def main() -> None:
     p.add_argument("--cooldown", type=int, default=48, help="매도 후 재진입 쿨다운(시간)")
     p.add_argument("--take-profit", type=float, default=0.0,
                    help="고정 익절선(+비율, 0=끔). 도달 시 트레일링 안 기다리고 익절")
+    p.add_argument("--news", choices=["auto", "off"], default="auto",
+                   help="뉴스 브레이크(auto=API키 있으면 작동). 강한 악재면 매수 보류")
+    p.add_argument("--news-threshold", type=int, default=50,
+                   help="이 값 이상의 악재 점수(-N 이하)면 매수 보류")
     p.add_argument("--live", action="store_true")
     args = p.parse_args()
 
@@ -256,6 +260,23 @@ def main() -> None:
 
     notifier.run_shared("4_리플", status, stop=stop)
 
+    # 뉴스 브레이크: 매수 직전에만 평가(비용↓). 1시간 캐시로 중복 호출 방지.
+    _news_cache: dict = {"verdict": None, "at": 0.0}
+
+    def news_gate() -> news_filter.NewsVerdict | None:
+        if args.news == "off":
+            return None
+        if (_news_cache["verdict"] is not None
+                and time.time() - _news_cache["at"] < 3600):
+            return _news_cache["verdict"]
+        v = news_filter.assess(neg_threshold=args.news_threshold)
+        _news_cache.update(verdict=v, at=time.time())
+        if v.enabled:
+            log(f"📰 뉴스 평가: {v.label} ({v.score:+d}) — {v.reason}")
+        else:
+            log(f"📰 뉴스 브레이크 미작동: {v.reason}")
+        return v
+
     try:
         while True:
             now = datetime_now()
@@ -273,6 +294,15 @@ def main() -> None:
                     f"오늘 확정 손익: {engine.realized_today:+,.0f}원")
             sig, feat, _ = shared.get()
             if sig and engine.has_room():
+                v = news_gate()
+                if v is not None and not v.allow:
+                    log(f"⛔ 매수 보류 — 뉴스 악재({v.score:+d}): {v.reason}")
+                    notifier.send(
+                        f"⛔ <b>리플 매수 보류</b>\n"
+                        f"기술적 신호는 떴지만, 최근 뉴스가 강한 악재({v.score:+d})라 "
+                        f"위험을 피해 이번 매수는 건너뛰었어요.\n사유: {v.reason}")
+                    time.sleep(args.interval)
+                    continue
                 for rec in engine.try_entries([MARKET], now):
                     log(f"매수 XRP @ {rec.price:,.0f}")
                     notifier.send(
