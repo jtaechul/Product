@@ -506,20 +506,18 @@ async function handleGenerateDmReply(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     model: await getModel(env.ANTHROPIC_API_KEY, 'main', env),
     max_tokens: 1600,
-    system: '당신은 연애·관계 심리 전문 상담가이자 인스타그램 DM 회신 작성자입니다. 게시물 마지막 장 A/B 투표에 "A" 또는 "B" 댓글을 남긴 팔로워에게 보낼 DM을, A용과 B용 두 개로 각각 작성합니다. 각 DM은 그 사람의 연애 성향을 따뜻하게 진단하고, 책 내용에 근거한 구체적 솔루션을 함께 제시합니다. 단정·비난·공포 금지, 위로와 통찰의 톤. 노골적 판매 금지. 반말 절대 금지 — 존댓말만. 반드시 JSON만 응답합니다.',
-    user: `책 제목: ${bookInfo.title}\n저자: ${bookInfo.author || ''}\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n게시물 마지막 장의 A/B 투표 질문(이 선택지의 A·B 의미를 정확히 반영하세요):\n${pages.page5?.cta || ''}\n\n[작업] A를 선택한 사람과 B를 선택한 사람에게 각각 보낼 DM을 따로 작성하세요. 두 DM은 서로 다른 성향을 다루므로 내용이 분명히 달라야 합니다.\n\n각 DM 구성(아래를 모두 포함, 진단+솔루션 합쳐 최소 3문장 이상, 6~9문장 권장):\n1. 따뜻한 인사 한 문장\n2. [심리 진단] 그 사람(A 또는 B)의 연애 성향을 책의 관점에서 따뜻하게 짚어줍니다. "왜 그런 마음이 드는지" 심리적 뿌리(애착·두려움·습관 등)를 2~3문장으로 설명. 비난 금지, 공감과 이해의 언어.\n3. [솔루션] 그 성향을 가진 사람이 오늘부터 시도해볼 수 있는 구체적이고 실천 가능한 방향을 책 내용에 근거해 2~3문장으로 제시. 단정적 명령이 아니라 부드러운 제안.\n4. 책 안내: 더 깊은 이야기는 오늘의 책 "${bookInfo.title}"에 담겨 있다는 뉘앙스 한 문장(제목은 자연스럽게 언급 가능).\n5. 도서 링크 안내: 아래 링크를 DM 본문에 그대로 포함(필수, 누락 금지):\n${linkGuide}\n${linksText ? `6. 구매 링크 안내 — 아래 링크도 그대로 포함(누락 금지):\n${linksText}\n` : ''}${linksText ? '7' : '6'}. 따뜻한 마무리 한 문장\n\n[톤 주의] A/B 어느 쪽이든 "당신이 틀렸다"는 뉘앙스 금지. 두 성향 모두 이해받아 마땅하다는 전제로 씁니다.\n\nJSON: {"dmTextA":"A 선택자에게 보낼 DM 전체(줄바꿈은 \\n)","dmTextB":"B 선택자에게 보낼 DM 전체(줄바꿈은 \\n)"}`,
+    system: '당신은 연애·관계 심리 전문 상담가이자 인스타그램 DM 회신 작성자입니다. 게시물 마지막 장 A/B 투표에 댓글을 남긴 팔로워에게 보낼 DM을 "하나의 메시지"로 작성합니다. 이 한 통의 DM 안에 A를 선택한 경우와 B를 선택한 경우의 내용을 모두 담아, 받은 사람이 자기 쪽을 읽으면 되게 합니다. 각 경우마다 그 성향을 따뜻하게 진단하고 책 내용에 근거한 구체적 솔루션을 함께 제시합니다. 단정·비난·공포 금지, 위로와 통찰의 톤. 노골적 판매 금지. 반말 절대 금지 — 존댓말만. 반드시 JSON만 응답합니다.',
+    user: `책 제목: ${bookInfo.title}\n저자: ${bookInfo.author || ''}\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n게시물 마지막 장의 A/B 투표 질문(이 선택지의 A·B 의미를 정확히 반영하세요):\n${pages.page5?.cta || ''}\n\n[작업] A·B 댓글 응답자 모두에게 보낼 "하나의 DM"을 작성하세요. A용/B용을 따로 만들지 말고, 한 통의 메시지 안에 두 경우를 모두 담으세요.\n\nDM 구성 순서:\n1. 따뜻한 인사 한 문장\n2. "A를 선택하셨다면" 섹션 — A 성향의 심리 진단(왜 그런 마음이 드는지, 애착·두려움·습관 등 뿌리)과 오늘부터 해볼 수 있는 책 기반 솔루션. 진단+솔루션 합쳐 최소 3문장 이상.\n3. "B를 선택하셨다면" 섹션 — B 성향의 심리 진단과 책 기반 솔루션. 진단+솔루션 합쳐 최소 3문장 이상. (A와 분명히 다른 내용)\n4. 책 안내: 더 깊은 이야기는 오늘의 책 "${bookInfo.title}"에 담겨 있다는 뉘앙스 한 문장.\n5. 도서 링크 안내: 아래 링크를 DM 본문에 그대로 포함(필수, 누락 금지):\n${linkGuide}\n${linksText ? `6. 구매 링크 안내 — 아래 링크도 그대로 포함(누락 금지):\n${linksText}\n` : ''}${linksText ? '7' : '6'}. 따뜻한 마무리 한 문장\n\n[톤 주의] A/B 어느 쪽이든 "당신이 틀렸다"는 뉘앙스 금지. 두 성향 모두 이해받아 마땅하다는 전제로 씁니다. A/B 섹션은 줄바꿈으로 또렷이 구분하세요.\n\nJSON: {"dmText":"A·B 두 경우를 모두 담은 하나의 DM 전체(줄바꿈은 \\n)"}`,
   });
 
   const parsed = extractJson(text);
-  const dmTextA = parsed.dmTextA || parsed.dmText || '';
-  const dmTextB = parsed.dmTextB || parsed.dmText || '';
+  const dmText = parsed.dmText || parsed.dmTextA || '';
 
   // (구) 파이프라인ID 기반 임시 저장 — Phase 5 자동 감지용 (7일)
   if (env.PENDING_POSTS && body.pipelineId) {
     const pid = String(body.pipelineId).replace(/[^a-zA-Z0-9]/g, '');
     if (pid) {
-      await env.PENDING_POSTS.put(`dm_reply_${pid}_A`, dmTextA, { expirationTtl: 604800 });
-      await env.PENDING_POSTS.put(`dm_reply_${pid}_B`, dmTextB, { expirationTtl: 604800 });
+      await env.PENDING_POSTS.put(`dm_reply_${pid}`, dmText, { expirationTtl: 604800 });
     }
   }
 
@@ -530,14 +528,13 @@ async function handleGenerateDmReply(env, body) {
       await env.PENDING_POSTS.put(`dm_book_${num}`, JSON.stringify({
         number: num,
         title: bookInfo.title || '',
-        dmTextA,
-        dmTextB,
+        dmText,
         date: new Date().toISOString().slice(0, 10),
       }));
     }
   }
 
-  return { success: true, dmText: dmTextA, dmTextA, dmTextB };
+  return { success: true, dmText, dmTextA: dmText, dmTextB: dmText };
 }
 
 // ===== 체인 파이프라인 (탭 닫아도 서버에서 계속 진행) =====
