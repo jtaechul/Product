@@ -1481,6 +1481,11 @@ export default {
         else if (url.pathname === '/api/pipeline-status') result = await handlePipelineStatus(env, url);
         else if (url.pathname === '/api/pipeline-log') result = await handlePipelineLog(env, url);
         else if (url.pathname === '/api/add-book-to-catalog') result = await handleAddBookToCatalog(env, body);
+        else if (url.pathname === '/api/reset-catalog') {
+          await env.PENDING_POSTS.put('book_catalog', JSON.stringify([]));
+          await env.PENDING_POSTS.put('book_counter', '0');
+          result = { success: true, message: '도서관이 초기화되었습니다.' };
+        }
         else if (url.pathname === '/api/book-catalog') {
           const catalog = (await env.PENDING_POSTS?.get('book_catalog', 'json').catch(() => null)) || [];
           return new Response(JSON.stringify(catalog), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
