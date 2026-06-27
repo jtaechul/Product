@@ -2,7 +2,7 @@
 import { Renderer } from './render.js';
 import { PoseTracker, dist, visible } from './pose.js';
 import { Sfx } from './audio.js';
-import { buildWallMask } from './walls.js';
+import { buildWallMask, poseBounds } from './walls.js';
 import { drawBodyMask, computeCollisionRate, bodyThicknessFromShoulder } from './collision.js';
 import {
   LM, MASK_W, MASK_H, STAGE_WALLS, PRACTICE_WALL, poseHint,
@@ -19,23 +19,42 @@ const video = $('cam');
 const renderer = new Renderer(canvas, video);
 const pose = new PoseTracker(video);
 const sfx = new Sfx();
-// 스테이지별 배경음악(0=스테이지1, 1=스테이지2, 2=스테이지3)
+// 배경음악 — 곡이 끝나면 '랜덤으로 다음 곡'을 계속 재생(무한 랜덤 플레이리스트)
 const bgmTracks = [$('bgm'), $('bgm2'), $('bgm3')];
-bgmTracks.forEach((a) => { a.volume = 0.5; });
-let curStage = -1;
+let bgmCur = -1;
+let bgmActive = false;
 let muted = false;
 
-// wallIndex → 스테이지(21벽을 3등분: 0~6 / 7~13 / 14~20)
-function stageOf(wallIndex) { return Math.min(2, Math.floor(wallIndex / 7)); }
-
-function bgmStopAll() { bgmTracks.forEach((a) => a.pause()); }
-function bgmPlayStage(s) {
-  if (muted) return;
-  bgmTracks.forEach((a, i) => { if (i !== s) a.pause(); });
-  if (s !== curStage) { try { bgmTracks[s].currentTime = 0; } catch (e) {} }
-  curStage = s;
-  try { bgmTracks[s].play().catch(() => {}); } catch (e) {}
+function bgmPickNext() {
+  if (bgmTracks.length <= 1) return 0;
+  let i; do { i = (Math.random() * bgmTracks.length) | 0; } while (i === bgmCur);
+  return i;
 }
+function bgmPlayIdx(i) {
+  if (muted) return;
+  bgmCur = i;
+  bgmTracks.forEach((a, k) => { if (k !== i) a.pause(); });
+  try { bgmTracks[i].play().catch(() => {}); } catch (e) {}
+}
+function bgmStart() {
+  bgmActive = true; bgmCur = -1;
+  if (muted) return;
+  const i = bgmPickNext();
+  try { bgmTracks[i].currentTime = 0; } catch (e) {}
+  bgmPlayIdx(i);
+}
+function bgmStopAll() { bgmActive = false; bgmCur = -1; bgmTracks.forEach((a) => a.pause()); }
+function bgmResume() {
+  if (muted || !bgmActive) return;
+  if (bgmCur >= 0) { try { bgmTracks[bgmCur].play().catch(() => {}); } catch (e) {} }
+  else bgmStart();
+}
+bgmTracks.forEach((a) => {
+  a.volume = 0.5; a.loop = false;
+  a.addEventListener('ended', () => {
+    if (bgmActive && !muted) { const i = bgmPickNext(); try { bgmTracks[i].currentTime = 0; } catch (e) {} bgmPlayIdx(i); }
+  });
+});
 
 // 충돌 마스크용 오프스크린
 const bodyMaskCanvas = Object.assign(document.createElement('canvas'), { width: MASK_W, height: MASK_H });
@@ -106,7 +125,7 @@ $('btnMute').onclick = () => {
   sfx.enabled = !muted;
   sfx.resume();
   if (muted) bgmStopAll();
-  else if (state === 'PLAY') bgmPlayStage(Math.max(0, curStage));
+  else if (state === 'PLAY') bgmResume();
   $('btnMute').textContent = muted ? '🔇' : '🔊';
 };
 
@@ -267,8 +286,11 @@ function finishCalibration() {
 }
 
 // ====== 연습 + 본게임 ======
+function setPlayGlow(on) { $('app').classList.toggle('app-glow', on); }
+
 function startPractice() {
-  curStage = -1; bgmPlayStage(0);
+  bgmStart();
+  setPlayGlow(true);
   g.practice = true;
   g.wallIndex = 0;
   current.life = START_LIFE;
@@ -303,7 +325,7 @@ function beginWall() {
   g.approachSec = BASE_APPROACH_SEC / wall.approachSpeed;
   g.judged = false;
   // 스테이지별 배경음악 전환(연습은 스테이지1 유지)
-  if (!g.practice) bgmPlayStage(stageOf(g.wallIndex));
+  // (배경음악은 곡이 끝날 때 랜덤으로 자동 전환됨)
   // 댄스 벽이면 가운데 라운드 표시를 비우고(날아오는 제목이 대신), 아니면 ROUND 표시
   $('hudRound').textContent = g.practice ? '연습' : (wall.title ? '🎵 댄스' : `ROUND ${wall.level}`);
   $('hudWall').textContent = g.practice ? '' : `벽 ${g.wallIndex + 1} / ${STAGE_WALLS.length}`;
@@ -318,7 +340,7 @@ function judge() {
   const wall = currentWall();
   let rate = 1.0;
   if (landmarks) {
-    const geom = maskGeom();
+    const geom = maskGeom(wall);
     if (geom) {
       const t = (performance.now() / 1000) - g.wallStart;
       let extraRot = 0, extraDX = 0;
@@ -351,15 +373,19 @@ function shoulderNorm() {
   return Math.max(0.06, dist(a, b));
 }
 
-// 마스크 좌표계의 구멍(화면 wallGeom과 동일 비율 — 측정된 몸 길이 + 여유에 맞춤).
-function maskGeom() {
-  const H = MASK_H, pad = 0.06;
-  const footY = Math.min(0.99, groundY + pad);
-  const topMin = 0.03;
-  const bodyFitS = Math.max(8, ((groundY - headY) + 2 * pad) * H / 4.3);
-  const maxS = (footY - topMin) * H / 4.8;
-  const S = Math.min(bodyFitS, maxS);
-  const cy = footY * H - 2.2 * S;
+// 마스크 좌표계의 구멍(화면 wallGeom과 동일 공식 — 측정된 몸 + 여유, 포즈별 범위 반영).
+function maskGeom(wall) {
+  const H = MASK_H, headPad = 0.12, footPad = 0.10;
+  const footY = Math.min(0.99, groundY + footPad);
+  const crownY = Math.max(0.015, headY - headPad);
+  const b = wall ? poseBounds(wall) : { headExt: 2.1, topExt: 2.1, botExt: 2.2 };
+  let S = Math.max(6, (footY - crownY) * H / (b.headExt + b.botExt));
+  const topLimit = -0.04 * H;
+  let cy = footY * H - b.botExt * S;
+  if (cy - b.topExt * S < topLimit) {
+    S = (footY * H - topLimit) / (b.topExt + b.botExt);
+    cy = footY * H - b.botExt * S;
+  }
   return { cx: MASK_W / 2, cy, S, VH: S * 1.7 };
 }
 
@@ -367,7 +393,7 @@ function applyGrade(grade, wall) {
   const scoring = !g.practice;
   if (scoring) current.walls++;
   // 연출 — 고정 구멍 위치에서 이펙트
-  const screenGeom = renderer.wallGeom(groundY, headY);
+  const screenGeom = renderer.wallGeom(groundY, headY, wall);
   renderer.tintSkeleton(grade.color, 0.7);
   if (grade.grade === 'CRASH') {
     renderer.setFlash('#ff3030');
@@ -377,7 +403,8 @@ function applyGrade(grade, wall) {
     if (scoring) { current.life = Math.max(0, current.life - 1); current.combo = 0; }
   } else {
     renderer.burst(screenGeom.cx, screenGeom.cy, grade.color, grade.grade === 'PERFECT' ? 40 : 22);
-    if (grade.grade === 'PERFECT') renderer.setFlash(grade.color);
+    if (grade.grade === 'PERFECT') { renderer.setFlash(grade.color); renderer.confetti(46); }
+    else if (grade.grade === 'GREAT') renderer.confetti(22);
     if (scoring) {
       if (grade.grade === 'PERFECT') current.perfects++;
       // 콤보(GREAT 이상)
@@ -447,7 +474,9 @@ function advanceWall() {
 }
 
 function finishPlayer(cleared = false) {
-  bgmStopAll(); curStage = -1;
+  bgmStopAll();
+  setPlayGlow(false);
+  if (cleared) renderer.confetti(140);
   state = 'RESULT';
   setHud(false);
   $('resultName').textContent = cleared ? `🎉 ${current.name} 완주!` : `${current.name} 종료`;
@@ -462,6 +491,9 @@ function finishPlayer(cleared = false) {
 // 최종 순위 화면
 function showFinal() {
   state = 'FINAL';
+  setPlayGlow(false);
+  renderer.confetti(160);
+  sfx.fanfare();
   const sorted = [...players].sort((a, b) => b.score - a.score);
   const list = $('rankingList');
   list.innerHTML = '';
@@ -524,7 +556,7 @@ function updatePlay(t) {
   } else if (g.phase === 'approach') {
     const el = t - g.wallStart;
     const progress = Math.min(1, el / g.approachSec);
-    const geom = renderer.wallGeom(groundY, headY);
+    const geom = renderer.wallGeom(groundY, headY, wall);
     renderer.drawWall(wall, geom, progress, t);
     if (wall.title) renderer.drawSongTitle(wall.title, wall.artist, el);
     renderer.drawPoseHint(poseHint(wall));
