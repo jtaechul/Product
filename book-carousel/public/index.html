@@ -912,7 +912,7 @@
       <span class="section-title">DM 자동 회신 미리보기</span>
       <span class="section-badge" style="background:rgba(124,58,237,0.08);color:var(--primary);">Phase 5 준비</span>
     </div>
-    <p style="font-size:12px;color:var(--gray-500);line-height:1.7;margin-bottom:12px;">마지막 장 A/B 투표에 댓글을 남긴 방문자에게 발송할 DM입니다. A·B 두 상황을 하나의 메시지로 작성하며, 프로필 링크와 도서 번호가 자동 포함됩니다.</p>
+    <p style="font-size:12px;color:var(--gray-500);line-height:1.7;margin-bottom:12px;">마지막 장 A/B 투표에 댓글을 남긴 방문자에게 보낼 DM입니다. A를 선택한 사람·B를 선택한 사람에게 보낼 DM을 각각 따로 작성하며(성향별 심리 진단 + 솔루션), 해당 책 페이지로 바로 열리는 도서관 링크가 자동 포함됩니다.</p>
     <div class="form-group" style="margin-bottom:10px;">
       <label>쿠팡파트너스 어필리에이트 링크 (선택)</label>
       <input type="url" id="affiliateLinkInput" placeholder="https://link.coupang.com/a/...">
@@ -920,13 +920,14 @@
     <button class="btn btn-outline" id="generateDmBtn" style="font-size:12px;padding:9px 14px;margin-bottom:12px;">DM 자동 회신 생성</button>
     <div id="dmReplyResult" style="display:none;">
       <div class="caption-box">
-        <div class="caption-label-text">A/B 댓글 응답자에게 발송될 DM</div>
+        <div class="caption-label-text">A 선택자에게 보낼 DM</div>
         <div class="caption-text-content" id="dmReplyTextA" style="font-size:12px;white-space:pre-line;"></div>
-        <button class="btn btn-outline" id="copyDmABtn" style="font-size:12px;padding:8px 14px;margin-top:8px;">DM 복사</button>
+        <button class="btn btn-outline" id="copyDmABtn" style="font-size:12px;padding:8px 14px;margin-top:8px;">A용 DM 복사</button>
       </div>
-      <div id="dmReplyTextBWrap" style="display:none;">
-        <div class="caption-text-content" id="dmReplyTextB" style="display:none;"></div>
-        <button class="btn btn-outline" id="copyDmBBtn" style="display:none;"></button>
+      <div class="caption-box" id="dmReplyTextBWrap">
+        <div class="caption-label-text">B 선택자에게 보낼 DM</div>
+        <div class="caption-text-content" id="dmReplyTextB" style="font-size:12px;white-space:pre-line;"></div>
+        <button class="btn btn-outline" id="copyDmBBtn" style="font-size:12px;padding:8px 14px;margin-top:8px;">B용 DM 복사</button>
       </div>
     </div>
   </div>
@@ -1202,6 +1203,7 @@ async function generateCarousel() {
   state.validation = null;
   state.images = null;
   state._catalogAdded = false;
+  state.bookNumber = '';  // 새 책 → 새 번호 (아래에서 미리 예약)
   document.getElementById('validationPanel').classList.remove('visible');
   setStep(2);
 
@@ -1211,6 +1213,11 @@ async function generateCarousel() {
     const data = await apiFetch('/api/generate', state.bookInfo);
     state.pages = data.pages;
     addToHistory(state.bookInfo?.title);
+    // 도서 번호를 미리 예약 → 캡션에 들어가는 번호와 도서관 등록 번호가 같아진다.
+    try {
+      const r = await apiFetch('/api/reserve-book-number', {});
+      if (r.bookNumber) state.bookNumber = r.bookNumber;
+    } catch (e) { console.warn('도서 번호 예약 실패(무시):', e.message); }
     renderCarousel(data.pages);
     setStep(3);
   } catch (err) {
@@ -1321,11 +1328,12 @@ async function addBookToCatalogIfNeeded() {
       bookInfo: state.bookInfo,
       affiliateLinks: link ? [link] : (state.affiliateLinks || []),
       affiliateLink: link,
+      bookNumber: state.bookNumber || '',  // 미리 예약한 번호로 등록 → 캡션 번호와 일치
     });
     if (result.bookNumber) {
       state.bookNumber = result.bookNumber;
       state._catalogAdded = true;
-      showToast(`도서관에 #${result.bookNumber}로 등록됐습니다 — 프로필 링크에서 확인 가능`, 'success');
+      showToast(`도서관에 No.${result.bookNumber}로 등록됐습니다 — 프로필 링크에서 확인 가능`, 'success');
     }
   } catch (e) {
     console.warn('도서관 등록 실패(무시):', e.message);
@@ -1989,6 +1997,7 @@ document.getElementById('generateCaptionBtn').addEventListener('click', async ()
       pages: state.pages,
       bookInfo: state.bookInfo,
       dmKeyword: keyword,
+      bookNumber: state.bookNumber || '',
     });
     state.caption = data.caption;
     state.captionHashtags = data.hashtags;
@@ -2321,6 +2330,13 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
     state.pages = pages;
     state.bookInfo = bookInfo;
     addToHistory(bookInfo.title);
+    // 도서 번호 미리 예약 → 캡션·DM·도서관 번호 일치
+    if (!state.bookNumber) {
+      try {
+        const r = await apiFetch('/api/reserve-book-number', {});
+        if (r.bookNumber) state.bookNumber = r.bookNumber;
+      } catch (e) { console.warn('도서 번호 예약 실패(무시):', e.message); }
+    }
     renderCarousel(pages);
     setStep(2);
     setDeployStep(1, 'done', issues.length > 0 ? `5페이지 생성 완료 (텍스트 ${issues.length}곳 조정됨)` : '5페이지 카드뉴스 생성 완료');
@@ -2378,7 +2394,7 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
   setDeployStep(4, 'active', '인스타그램 캡션 작성 중...');
   let caption = '', hashtags = [], dmKeyword = '';
   try {
-    const capData = await apiFetch('/api/generate-caption', { pages, bookInfo });
+    const capData = await apiFetch('/api/generate-caption', { pages, bookInfo, bookNumber: state.bookNumber || '' });
     caption = capData.caption || '';
     hashtags = capData.hashtags || [];
     dmKeyword = capData.commentKeyword || capData.dmKeyword || '';
@@ -2544,12 +2560,14 @@ function renderDmKeywordInfo(category) {
     + (category ? ` <span style="opacity:.65">(라우팅 카테고리: ${escHtml(category)})</span>` : '');
 }
 
-// DM 회신을 화면에 표시. dmText(단일) 우선, 구버전 dmTextA/dmText도 호환.
+// DM 회신을 화면에 표시. A·B 각각 표시(구버전 dmText 단일도 호환).
 function renderDmReplies(src) {
-  const dm = (src && (src.dmText || src.dmTextA)) || '';
-  if (!dm) return false;
-  state.dmReplyA = dm; state.dmReplyB = dm;
-  document.getElementById('dmReplyTextA').textContent = dm;
+  const a = (src && (src.dmTextA || src.dmText)) || '';
+  const b = (src && (src.dmTextB || src.dmText)) || '';
+  if (!a && !b) return false;
+  state.dmReplyA = a; state.dmReplyB = b;
+  document.getElementById('dmReplyTextA').textContent = a;
+  document.getElementById('dmReplyTextB').textContent = b;
   document.getElementById('dmReplyResult').style.display = 'block';
   document.getElementById('dmReplyWrapper').style.display = 'block';
   return true;
