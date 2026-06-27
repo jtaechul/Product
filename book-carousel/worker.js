@@ -1313,6 +1313,7 @@ async function handleSavePost(env, body) {
   if (num === '000') throw new Error('번호가 올바르지 않습니다.');
 
   const existing = await env.PENDING_POSTS.get(`post_${num}`, 'json').catch(() => null);
+  const pipelineId = body.pipelineId || existing?.pipelineId || null;
   const record = {
     number: num,
     bookInfo,
@@ -1321,6 +1322,7 @@ async function handleSavePost(env, body) {
     hashtags: hashtags || existing?.hashtags || [],
     dmText: dmText != null ? dmText : (existing?.dmText || ''),
     coupangLink: link != null ? link : (existing?.coupangLink || null),
+    pipelineId,
     date: existing?.date || new Date().toISOString().slice(0, 10),
     updatedAt: new Date().toISOString().slice(0, 10),
   };
@@ -1332,7 +1334,7 @@ async function handleSavePost(env, body) {
   }
 
   // 도서관 카드 + DM 영구본 동기화
-  await addBookToCatalog(env, { bookInfo, bookNumber: num, pipelineId: null, coupangLink: record.coupangLink });
+  await addBookToCatalog(env, { bookInfo, bookNumber: num, pipelineId, coupangLink: record.coupangLink });
   if (record.dmText) {
     await env.PENDING_POSTS.put(`dm_book_${num}`, JSON.stringify({
       number: num, title: bookInfo.title || '', dmText: record.dmText, date: record.date,
@@ -1355,18 +1357,38 @@ async function handleGetPost(env, body) {
   if (!post && !cat && !dmRec) return { success: false, error: `No.${num} 기록을 찾을 수 없습니다.` };
 
   const bi = post?.bookInfo || (cat ? { title: cat.title, author: cat.author, category: cat.category, coreMessage: cat.coreMessage } : {});
+
+  // 번들에 빠진 부분(캡션·5장·이미지·DM)은 파이프라인 기록에서 보완 → 도서관에 있는 책은
+  // 가능한 모든 내용이 관리자 페이지에 보이게 한다.
+  let pages = post?.pages || null;
+  let caption = post?.caption || '';
+  let hashtags = post?.hashtags || [];
+  let dmText = post?.dmText || dmRec?.dmText || '';
+  let imgs = images || null;
+  const pid = post?.pipelineId || cat?.pipelineId;
+  if (pid && (!pages || !caption || !imgs)) {
+    const ps = await env.PENDING_POSTS.get(`pipeline_${pid}`, 'json').catch(() => null);
+    if (ps) {
+      if (!pages) pages = ps.pages || null;
+      if (!caption) caption = ps.caption || '';
+      if (!hashtags.length) hashtags = ps.hashtags || [];
+      if (!imgs) imgs = ps.images || null;
+      if (!dmText) dmText = ps.dmText || '';
+    }
+  }
+
   return {
     success: true,
     number: num,
     title: bi.title || cat?.title || dmRec?.title || '',
     bookInfo: bi,
-    pages: post?.pages || null,
-    caption: post?.caption || '',
-    hashtags: post?.hashtags || [],
-    dmText: post?.dmText || dmRec?.dmText || '',
+    pages,
+    caption,
+    hashtags,
+    dmText,
     coupangLink: post?.coupangLink || cat?.coupangLink || null,
     coreMessage: bi.coreMessage || cat?.coreMessage || '',
-    images: images || null,
+    images: imgs || null,
     date: post?.date || cat?.date || '',
   };
 }
