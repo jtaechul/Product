@@ -117,12 +117,18 @@ export class Renderer {
     return Math.max(30, Math.hypot(pa.x - pb.x, pa.y - pb.y));
   }
 
-  // 고정된 구멍 — 가로 중앙 + '발끝을 바닥선(groundY)에' 맞춰 세움(플레이어는 늘 바닥에 발이 닿음).
-  // 위쪽으로 올린 손까지 화면 안에 들어오게 크기를 맞춘다.
-  wallGeom(groundY = 0.90) {
-    const TOP = 0.12, FIG = 4.8, FOOT = 2.2; // S 단위: 위(손)~중심 2.6, 중심~발 2.2
-    const S = Math.max(40, (groundY - TOP) * this.H / FIG);
-    const cy = groundY * this.H - FOOT * S;  // 발끝을 바닥선에
+  // 고정된 구멍 — 측정된 '몸 길이(머리~발)'에 여유(pad)를 더해, 그 사람보다 살짝 큰 구멍을 만든다.
+  // → 올바른 자세면 머리끝·발끝이 경계에 닿지 않음. 발끝은 바닥선보다 살짝 아래까지 덮음.
+  wallGeom(groundY = 0.90, headY = 0.18) {
+    const H = this.H;
+    const pad = 0.06;                              // 머리/발 여유(정규화)
+    const footY = Math.min(0.99, groundY + pad);   // 구멍 발끝(실제 발보다 약간 아래)
+    const topMin = 0.03;                           // 올린 손이 화면 안에 남을 최소 상단
+    // 몸 길이(머리~발)에 위아래 여유를 더해 세로 4.3S에 매핑
+    const bodyFitS = Math.max(40, ((groundY - headY) + 2 * pad) * H / 4.3);
+    const maxS = (footY - topMin) * H / 4.8;       // 올린 손(2.6S)까지 화면에 들어오는 상한
+    const S = Math.min(bodyFitS, maxS);
+    const cy = footY * H - 2.2 * S;                // 발끝을 footY에
     return { cx: this.W / 2, cy, S, VH: S * 1.7 };
   }
 
@@ -145,9 +151,11 @@ export class Renderer {
   // 다가오는 벽: progress 0→1 (1=판정).
   // 화면 전체가 항상 반투명 회색으로 덮이고, 사람 모양 '구멍'만 작게 시작해 커지며 다가온다.
   drawWall(wall, geom, progress, timeSec) {
-    const eased = progress * progress; // easeIn
-    const holeScale = 0.20 + 0.80 * eased; // 구멍이 점점 커지며 다가옴
-    const alpha = 0.66 + 0.06 * eased;     // 반투명 회색(거의 일정)
+    // 85%에 도달하면 풀사이즈가 되어 마지막까지 '꽉 찬 상태로 유지' → 머리·발 닿는 오류 방지 + 다가오는 느낌
+    const p2 = Math.min(1, progress / 0.85);
+    const eased = p2 * p2;
+    const holeScale = 0.14 + 0.86 * eased;
+    const alpha = 0.64 + 0.06 * progress;
     let extraRot = 0, extraDX = 0;
     if (wall.variant === 'rotate') extraRot = (1 - progress) * 1.4;
     if (wall.variant === 'moving') extraDX = Math.sin(timeSec * 2.2) * geom.S * 1.2 * (1 - progress * 0.3);
@@ -165,10 +173,16 @@ export class Renderer {
     wc.globalCompositeOperation = 'source-over';
     wc.fillStyle = grad;
     wc.fillRect(0, 0, this.W, this.H);
+    // 깊이 그림자(어두운 헤일로) → 구멍이 다가오는 입체감
+    wc.save();
+    wc.shadowColor = 'rgba(0,0,0,0.55)'; wc.shadowBlur = 26;
+    wc.fillStyle = 'rgba(0,0,0,0.5)';
+    fillHole(wc, wall, { ...hgeom, thickBoost: outline + 0.28 });
+    wc.restore();
     // 사람 모양 구멍의 굵은 흰색 외곽선
     wc.save();
-    wc.shadowColor = 'rgba(255,255,255,0.45)';
-    wc.shadowBlur = 8;
+    wc.shadowColor = 'rgba(255,255,255,0.5)';
+    wc.shadowBlur = 8 + 14 * eased;
     wc.fillStyle = '#ffffff';
     fillHole(wc, wall, { ...hgeom, thickBoost: outline });
     wc.restore();
@@ -183,6 +197,75 @@ export class Renderer {
     this.ctx.globalAlpha = alpha;
     this.ctx.drawImage(this.wallLayer, 0, 0, this.W, this.H);
     this.ctx.restore();
+  }
+
+  // 양옆 빈 공간 활용: 왼쪽=이번 동작/콤보, 오른쪽=다음 포즈 미리보기
+  drawSidePanels(info) {
+    const ctx = this.ctx;
+    const m = Math.min(this.W, this.H);
+    // ---- 왼쪽: 이번 동작 ----
+    const lx = this.W * 0.12;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.font = `800 ${m * 0.03}px Trebuchet MS, sans-serif`;
+    ctx.fillText('이번 동작', lx, this.H * 0.30);
+    // 동작 문구(두 줄 줄바꿈)
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 10;
+    const lines = this._wrap(ctx, info.moveText || '', this.W * 0.22, m * 0.045);
+    lines.forEach((ln, i) => {
+      ctx.font = `900 ${m * 0.045}px Trebuchet MS, sans-serif`;
+      ctx.fillText(ln, lx, this.H * 0.38 + i * m * 0.058);
+    });
+    // 콤보
+    if (info.combo >= 2) {
+      ctx.fillStyle = '#ff5d8f';
+      ctx.font = `900 ${m * 0.05}px Trebuchet MS, sans-serif`;
+      ctx.fillText(`🔥 ${info.combo} 콤보`, lx, this.H * 0.6);
+    }
+    ctx.restore();
+
+    // ---- 오른쪽: 다음 포즈 미리보기 ----
+    if (info.next && info.next.wall) {
+      const rx = this.W * 0.88;
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = `800 ${m * 0.03}px Trebuchet MS, sans-serif`;
+      ctx.fillText('다음 ▶', rx, this.H * 0.28);
+      // 미니 실루엣 박스
+      const gy = this.H * 0.46, gs = m * 0.05;
+      ctx.fillStyle = 'rgba(255,255,255,0.10)';
+      this._roundFill(ctx, rx - this.W * 0.085, gy - m * 0.16, this.W * 0.17, m * 0.32, 14);
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      ctx.shadowColor = 'rgba(255,255,255,0.4)'; ctx.shadowBlur = 8;
+      fillHole(ctx, info.next.wall, { cx: rx, cy: gy + gs * 0.4, S: gs, thickBoost: 0 });
+      ctx.restore();
+      // 다음 동작 이름
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffd23f';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 8;
+      const nlines = this._wrap(ctx, info.next.label || '', this.W * 0.2, m * 0.032);
+      nlines.forEach((ln, i) => {
+        ctx.font = `800 ${m * 0.032}px Trebuchet MS, sans-serif`;
+        ctx.fillText(ln, rx, this.H * 0.7 + i * m * 0.042);
+      });
+      ctx.restore();
+    }
+  }
+  _wrap(ctx, text, maxW, fontPx) {
+    ctx.font = `900 ${fontPx}px Trebuchet MS, sans-serif`;
+    const words = text.split(' ');
+    const lines = []; let cur = '';
+    for (const w of words) {
+      const test = cur ? cur + ' ' + w : w;
+      if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; }
+      else cur = test;
+    }
+    if (cur) lines.push(cur);
+    return lines.slice(0, 3);
   }
 
   // 노래 제목이 옆에서 날아 들어와 가운데에 잠깐 떴다가 사라짐(댄스 벽)
@@ -278,7 +361,7 @@ export class Renderer {
   }
 
   // 캘리브레이션 UI: 사람 모양 가이드 + 코너 프레임 + 진행 링 + 상태문구
-  drawCalibUI(progress, status, t, groundY = 0.90) {
+  drawCalibUI(progress, status, t, groundY = 0.90, headY = 0.18) {
     const ctx = this.ctx;
     const accent = progress >= 1 ? '#57e389' : (progress > 0 ? '#57e389' : '#ffffff');
     // 살짝 어둡게(집중)
@@ -288,7 +371,7 @@ export class Renderer {
 
     // 가운데 사람 모양 가이드 — 게임의 고정 구멍과 똑같은 위치/크기 + '별 모양'(양팔·양다리 벌림)
     // 여기에 맞춰 팔다리를 벌리고 서면, 게임 중 팔을 뻗어도 경계를 벗어나지 않는다.
-    const wg = this.wallGeom(groundY);
+    const wg = this.wallGeom(groundY, headY);
     const frameH = this.H * 0.84;
     const frameW = Math.min(this.W * 0.92, frameH);
     const cx = wg.cx, cy = wg.cy;
@@ -297,7 +380,7 @@ export class Renderer {
     ctx.shadowColor = 'rgba(255,255,255,0.5)';
     ctx.shadowBlur = 16;
     ctx.fillStyle = `rgba(255,255,255,${0.14 + 0.06 * Math.sin(t * 3)})`;
-    fillHole(ctx, { pose: 'star', rot: 0, margin: 0.45 }, { cx, cy, S: wg.S, thickBoost: 0 });
+    fillHole(ctx, { pose: 'tpose', rot: 0, margin: 0.45 }, { cx, cy, S: wg.S, thickBoost: 0 });
     ctx.restore();
 
     // 코너 브래킷 프레임(스캐너 느낌)
