@@ -1293,6 +1293,84 @@ async function handleAddBookToCatalog(env, body) {
   return { success: true, bookNumber };
 }
 
+// 번호를 3자리(001)로 정규화 ("1", "001", "No.1" 모두 인식)
+function normNum(v) {
+  return String(parseInt(String(v || '').replace(/[^0-9]/g, ''), 10) || 0).padStart(3, '0');
+}
+
+// 한 게시물의 모든 내용을 번호로 묶어 저장 — 관리자 보관함의 원본.
+// 텍스트(캡션·5장·DM·링크·소개)는 영구, 이미지는 며칠 뒤 자동 삭제(게시물엔 이미 올라가 있으므로).
+async function handleSavePost(env, body) {
+  const { bookInfo, pages, caption, hashtags, dmText, coupangLink, affiliateLinks, images } = body;
+  if (!bookInfo?.title) throw new Error('bookInfo.title이 필요합니다.');
+  if (!env.PENDING_POSTS) throw new Error('저장소가 없습니다.');
+
+  const link = coupangLink
+    || (Array.isArray(affiliateLinks) && affiliateLinks.find(l => l && l.trim()))
+    || null;
+  const bookNumber = body.bookNumber || await reserveBookNumber(env);
+  const num = normNum(bookNumber);
+  if (num === '000') throw new Error('번호가 올바르지 않습니다.');
+
+  const existing = await env.PENDING_POSTS.get(`post_${num}`, 'json').catch(() => null);
+  const record = {
+    number: num,
+    bookInfo,
+    pages: pages || existing?.pages || null,
+    caption: caption != null ? caption : (existing?.caption || ''),
+    hashtags: hashtags || existing?.hashtags || [],
+    dmText: dmText != null ? dmText : (existing?.dmText || ''),
+    coupangLink: link != null ? link : (existing?.coupangLink || null),
+    date: existing?.date || new Date().toISOString().slice(0, 10),
+    updatedAt: new Date().toISOString().slice(0, 10),
+  };
+  await env.PENDING_POSTS.put(`post_${num}`, JSON.stringify(record));
+
+  // 이미지: 3일 TTL (임시 보관)
+  if (images && typeof images === 'object' && Object.keys(images).length) {
+    await env.PENDING_POSTS.put(`post_img_${num}`, JSON.stringify(images), { expirationTtl: 259200 });
+  }
+
+  // 도서관 카드 + DM 영구본 동기화
+  await addBookToCatalog(env, { bookInfo, bookNumber: num, pipelineId: null, coupangLink: record.coupangLink });
+  if (record.dmText) {
+    await env.PENDING_POSTS.put(`dm_book_${num}`, JSON.stringify({
+      number: num, title: bookInfo.title || '', dmText: record.dmText, date: record.date,
+    }));
+  }
+  return { success: true, bookNumber: num };
+}
+
+// 번호로 한 게시물의 모든 내용을 불러온다 (보관함 상세).
+async function handleGetPost(env, body) {
+  const num = normNum(body.number);
+  if (num === '000') return { success: false, error: '번호가 올바르지 않습니다.' };
+
+  const post = await env.PENDING_POSTS.get(`post_${num}`, 'json').catch(() => null);
+  const dmRec = await env.PENDING_POSTS.get(`dm_book_${num}`, 'json').catch(() => null);
+  const images = await env.PENDING_POSTS.get(`post_img_${num}`, 'json').catch(() => null);
+  const catalog = (await env.PENDING_POSTS.get('book_catalog', 'json').catch(() => null)) || [];
+  const cat = catalog.find(b => b.number === num);
+
+  if (!post && !cat && !dmRec) return { success: false, error: `No.${num} 기록을 찾을 수 없습니다.` };
+
+  const bi = post?.bookInfo || (cat ? { title: cat.title, author: cat.author, category: cat.category, coreMessage: cat.coreMessage } : {});
+  return {
+    success: true,
+    number: num,
+    title: bi.title || cat?.title || dmRec?.title || '',
+    bookInfo: bi,
+    pages: post?.pages || null,
+    caption: post?.caption || '',
+    hashtags: post?.hashtags || [],
+    dmText: post?.dmText || dmRec?.dmText || '',
+    coupangLink: post?.coupangLink || cat?.coupangLink || null,
+    coreMessage: bi.coreMessage || cat?.coreMessage || '',
+    images: images || null,
+    date: post?.date || cat?.date || '',
+  };
+}
+
 function generateBooksHTML(catalog) {
   const CAT_COLORS = {
     '애착': '#C2708F', '연애': '#D08A6E', '에세이': '#D08A6E',
@@ -1520,6 +1598,8 @@ export default {
         else if (url.pathname === '/api/pipeline-status') result = await handlePipelineStatus(env, url);
         else if (url.pathname === '/api/pipeline-log') result = await handlePipelineLog(env, url);
         else if (url.pathname === '/api/add-book-to-catalog') result = await handleAddBookToCatalog(env, body);
+        else if (url.pathname === '/api/save-post') result = await handleSavePost(env, body);
+        else if (url.pathname === '/api/get-post') result = await handleGetPost(env, body);
         else if (url.pathname === '/api/reserve-book-number') {
           const bookNumber = await reserveBookNumber(env);
           result = { success: true, bookNumber };
