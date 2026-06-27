@@ -912,10 +912,10 @@
       <span class="section-title">DM 자동 회신 미리보기</span>
       <span class="section-badge" style="background:rgba(124,58,237,0.08);color:var(--primary);">Phase 5 준비</span>
     </div>
-    <p style="font-size:12px;color:var(--gray-500);line-height:1.7;margin-bottom:12px;">마지막 장 A/B 투표에 댓글을 남긴 방문자에게 보낼 DM입니다. A를 선택한 사람·B를 선택한 사람에게 보낼 DM을 각각 따로 작성하며(성향별 심리 진단 + 솔루션), 해당 책 페이지로 바로 열리는 도서관 링크가 자동 포함됩니다. <b>생성된 DM은 도서 번호로 영구 저장</b>되어, 몇 달 뒤 댓글이 달려도 아래에서 번호로 다시 꺼낼 수 있습니다.</p>
+    <p style="font-size:12px;color:var(--gray-500);line-height:1.7;margin-bottom:12px;">마지막 장 A/B 투표에 댓글을 남긴 방문자에게 보낼 DM입니다. <b>하나의 DM 안에 A·B 두 경우의 내용</b>(성향별 심리 진단 + 솔루션)을 함께 담으며, 해당 책 페이지로 바로 열리는 도서관 링크가 자동 포함됩니다. <b>생성된 DM은 도서 번호로 영구 저장</b>되어, 몇 달 뒤 댓글이 달려도 아래에서 번호로 다시 꺼낼 수 있습니다.</p>
     <div style="border:1px dashed var(--gray-300);border-radius:10px;padding:12px 14px;margin-bottom:14px;background:var(--gray-50);">
       <div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:6px;">지난 게시물 DM 찾기</div>
-      <p style="font-size:11px;color:var(--gray-500);line-height:1.6;margin-bottom:8px;">예전 게시물에 댓글이 달렸나요? 캡션의 번호(No.000)를 입력하면 그 게시물의 A/B DM을 다시 꺼내 바로 복사·발송할 수 있습니다.</p>
+      <p style="font-size:11px;color:var(--gray-500);line-height:1.6;margin-bottom:8px;">예전 게시물에 댓글이 달렸나요? 캡션의 번호(No.000)를 입력하면 그 게시물의 DM을 다시 꺼내 바로 복사·발송할 수 있습니다.</p>
       <div style="display:flex;gap:8px;">
         <input type="text" id="dmLookupNum" placeholder="번호 (예: 1 또는 001)" style="flex:1;">
         <button class="btn btn-outline" id="dmLookupBtn" style="flex-shrink:0;font-size:12px;padding:9px 14px;white-space:nowrap;">불러오기</button>
@@ -928,14 +928,9 @@
     <button class="btn btn-outline" id="generateDmBtn" style="font-size:12px;padding:9px 14px;margin-bottom:12px;">DM 자동 회신 생성</button>
     <div id="dmReplyResult" style="display:none;">
       <div class="caption-box">
-        <div class="caption-label-text">A 선택자에게 보낼 DM</div>
+        <div class="caption-label-text">댓글 응답자에게 보낼 DM (A·B 내용 모두 포함)</div>
         <div class="caption-text-content" id="dmReplyTextA" style="font-size:12px;white-space:pre-line;"></div>
-        <button class="btn btn-outline" id="copyDmABtn" style="font-size:12px;padding:8px 14px;margin-top:8px;">A용 DM 복사</button>
-      </div>
-      <div class="caption-box" id="dmReplyTextBWrap">
-        <div class="caption-label-text">B 선택자에게 보낼 DM</div>
-        <div class="caption-text-content" id="dmReplyTextB" style="font-size:12px;white-space:pre-line;"></div>
-        <button class="btn btn-outline" id="copyDmBBtn" style="font-size:12px;padding:8px 14px;margin-top:8px;">B용 DM 복사</button>
+        <button class="btn btn-outline" id="copyDmABtn" style="font-size:12px;padding:8px 14px;margin-top:8px;">DM 복사</button>
       </div>
     </div>
   </div>
@@ -2096,11 +2091,7 @@ document.getElementById('generateDmBtn').addEventListener('click', async () => {
 
 document.getElementById('copyDmABtn').addEventListener('click', () => {
   if (!state.dmReplyA) return;
-  copyText(state.dmReplyA, 'A용 DM');
-});
-document.getElementById('copyDmBBtn').addEventListener('click', () => {
-  if (!state.dmReplyB) return;
-  copyText(state.dmReplyB, 'B용 DM');
+  copyText(state.dmReplyA, 'DM');
 });
 
 // 지난 게시물 DM 찾기 — 번호로 영구 저장된 A/B DM을 다시 불러온다
@@ -2660,14 +2651,12 @@ function renderDmKeywordInfo(category) {
     + (category ? ` <span style="opacity:.65">(라우팅 카테고리: ${escHtml(category)})</span>` : '');
 }
 
-// DM 회신을 화면에 표시. A·B 각각 표시(구버전 dmText 단일도 호환).
+// DM 회신을 화면에 표시. 하나의 DM(A·B 내용 모두 포함).
 function renderDmReplies(src) {
-  const a = (src && (src.dmTextA || src.dmText)) || '';
-  const b = (src && (src.dmTextB || src.dmText)) || '';
-  if (!a && !b) return false;
-  state.dmReplyA = a; state.dmReplyB = b;
-  document.getElementById('dmReplyTextA').textContent = a;
-  document.getElementById('dmReplyTextB').textContent = b;
+  const dm = (src && (src.dmText || src.dmTextA)) || '';
+  if (!dm) return false;
+  state.dmReplyA = dm;
+  document.getElementById('dmReplyTextA').textContent = dm;
   document.getElementById('dmReplyResult').style.display = 'block';
   document.getElementById('dmReplyWrapper').style.display = 'block';
   return true;
