@@ -371,33 +371,34 @@ const FALLBACK_IMAGE_PROMPTS = {
   page5: 'serene minimal photo, a single open book on a bed with soft morning light through sheer curtains, warm cream tones, peaceful and contemplative, soft focus, no text',
 };
 
-// 페이지별 시각 방향 지침 — 책스타그램·연애 감성 (따뜻한 자연광, 필름 톤, Flux 최적화)
+// 페이지별 감정 역할 — 고정 장면이 아니라 "그 페이지가 자아내야 할 감정"만 안내한다.
+// 실제 장면·소재는 Claude가 그 페이지 텍스트를 해석해 매번 다르게 정한다.
 const PAGE_VISUAL_DIRECTIONS = {
-  page1: 'warm analog film photography, an open book and a coffee cup on a wooden cafe table by a window, soft natural morning light, cream beige and warm amber palette, shallow depth of field, cozy intimate book-lover aesthetic, bottom third soft and uncluttered for text overlay',
-  page2: 'tender 35mm film photo, quiet scene of two coffee cups or two empty chairs in soft window light, warm muted nostalgic tones, gentle bokeh background, emotional stillness, no faces, lower half simple warm gradient for text',
-  page3: 'intimate emotional still life, a handwritten letter or dried flower on soft linen, diffused window light, dusty rose and warm cream palette, analog film grain, quiet melancholy turning gentle, minimal composition, bottom area soft for text',
-  page4: 'soft lifestyle photography, hands holding a warm cup or gently turning a book page near a sunlit window, golden afternoon backlight, floating dust in light, warm hopeful intimate mood, blurred cozy background, dark-enough lower third for text overlay',
-  page5: 'serene fine-art photo, a single open book on soft bedding with morning light through sheer curtains, vast soft negative space, warm cream and pale tones, peaceful contemplative open-ended mood, gentle film softness',
+  page1: '첫 공감의 울림 — 독자가 혼자 느낀 감정을 들킨 듯한 인상적 도입. 여백이 넉넉한 한 장면.',
+  page2: '반복돼온 연애 패턴의 익숙함·쓸쓸함 — 일상 속 한 순간을 조용히 포착.',
+  page3: '마음의 뿌리에 닿는 따뜻한 통찰 — 내면·기억·애착을 은유하는 상징적 정물/풍경.',
+  page4: '위로와 전환의 실마리 — 빛이 스며들고 무언가 풀리는, 희망적인 결.',
+  page5: '잔잔한 여운과 열린 질문 — 고요하고 여백이 큰 마무리.',
 };
 
 async function handleGenerateImages(env, body) {
   const { pages, bookInfo } = body;
   if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
 
-  // 페이지 전체 내용 구성 (헤드라인 + 본문 요약) — 내용 부합도 극대화
+  // 페이지 전체 내용 구성 (헤드라인 + 본문) — 텍스트 해석을 위해 더 길게 전달
   const pageContents = {
-    page1: [pages.page1?.headline, pages.page1?.body?.slice(0, 80)].filter(Boolean).join(' / '),
-    page2: [pages.page2?.headline, pages.page2?.body?.slice(0, 80)].filter(Boolean).join(' / '),
-    page3: [pages.page3?.headline, pages.page3?.body?.slice(0, 80)].filter(Boolean).join(' / '),
-    page4: [pages.page4?.headline, pages.page4?.body?.slice(0, 80)].filter(Boolean).join(' / '),
-    page5: [pages.page5?.cta, pages.page5?.body?.slice(0, 80)].filter(Boolean).join(' / '),
+    page1: [pages.page1?.headline, pages.page1?.body].filter(Boolean).join(' / '),
+    page2: [pages.page2?.headline, pages.page2?.body].filter(Boolean).join(' / '),
+    page3: [pages.page3?.headline, pages.page3?.body].filter(Boolean).join(' / '),
+    page4: [pages.page4?.headline, pages.page4?.body].filter(Boolean).join(' / '),
+    page5: [pages.page5?.cta, pages.page5?.body].filter(Boolean).join(' / '),
   };
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    model: await getModel(env.ANTHROPIC_API_KEY, 'light', env),
-    max_tokens: 1400,
-    system: '당신은 감성 사진 아트 디렉터입니다. 연애·관계 심리 책 카드뉴스의 배경으로 쓸, 따뜻하고 감성적인 Flux 이미지 생성 영어 프롬프트를 작성합니다.\n전체 무드: 책스타그램 감성 — 따뜻한 자연광, 필름(아날로그) 톤, 크림·베이지·더스티로즈 등 포근한 색감, 친밀하고 잔잔한 분위기. 어둡고 극적이거나 공포스러운 톤 금지.\n규칙:\n1. 카메라·조명을 구체적으로 명시한다 (예: 35mm film, soft window light, golden hour backlight, shallow depth of field)\n2. 사람 얼굴 클로즈업 금지 — 손·뒷모습·정물(책·커피·편지·꽃)만 허용\n3. 텍스트·글자·숫자 없음 (no text, no letters)\n4. 이미지 하단 30%는 부드럽고 단순하게 — 텍스트 오버레이 공간\n5. 각 페이지마다 다른 장면을 쓰되 전체가 하나의 따뜻한 시리즈로 보이게 한다\n6. 60단어 이내, Instagram 1:1 정사각형 기준\n반드시 JSON만 응답한다.',
-    user: `책 카테고리: ${bookInfo.category || '연애·관계 심리'}\n책 핵심 주제: ${bookInfo.coreMessage || bookInfo.title || ''}\n\n아래 5페이지 카드뉴스 내용을 보고, 각 페이지의 감정 흐름(공감→패턴→마음의 이유→위로→여운)에 부합하는 따뜻한 감성 배경 이미지 프롬프트 5개를 작성하세요.\npage1~page5 키를 반드시 모두 포함해야 합니다.\n\n=== 각 페이지 내용 ===\n1페이지(공감 훅 — 잔잔한 시작): ${pageContents.page1}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page1}\n\n2페이지(패턴 발견 — 조용한 공감): ${pageContents.page2}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page2}\n\n3페이지(마음의 이유 — 따뜻한 통찰): ${pageContents.page3}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page3}\n\n4페이지(위로의 실마리 — 희망): ${pageContents.page4}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page4}\n\n5페이지(참여 — 잔잔한 여운): ${pageContents.page5}\n  시각 방향: ${PAGE_VISUAL_DIRECTIONS.page5}\n\n=== 공통 규칙 ===\n- 전체 무드: 따뜻한 자연광 + 아날로그 필름 톤 + 포근한 색감 (책스타그램·연애 감성). 어둡고 극적인 톤 절대 금지\n- 인물 얼굴 클로즈업 금지 (손·뒷모습·정물 허용)\n- 텍스트·글자·숫자 없음 (no text, no letters)\n- Instagram 1:1 정사각형 구도\n- 각 프롬프트는 영어, 60단어 이내\n- 하단 30%는 부드럽고 단순한 영역으로 구성 (텍스트 오버레이 공간 확보)\n\nJSON (page1~page5 모두 필수): {"page1":"prompt","page2":"prompt","page3":"prompt","page4":"prompt","page5":"prompt"}`,
+    model: await getModel(env.ANTHROPIC_API_KEY, 'main', env),
+    max_tokens: 1500,
+    system: '당신은 감성 사진 아트 디렉터입니다. 연애·관계 심리 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[가장 중요] 매번 똑같이 "커피+책+창가" 같은 뻔한 장면을 반복하지 마세요. 각 페이지의 "구체적 문장·감정"을 해석해, 그 감정을 상징하는 신선하고 차별화된 장면을 새로 발상하세요. 같은 소재(커피잔·창문·책)를 모든 페이지에 반복 사용 금지.\n\n[스타일 고정] 톤만 일관되게: 따뜻한 자연광, 아날로그 35mm 필름 질감, 포근하고 감성적인 색감(크림·베이지·더스티로즈·세이지·은은한 파스텔 중 장면에 맞게 선택), 시네마틱하고 서정적. 어둡고 공포스러운 톤 금지.\n\n[장면 발상 팔레트 — 감정에 맞는 것을 폭넓게 선택]\n· 자연/날씨: 안개 낀 들판, 비 내리는 유리창, 첫눈, 노을 진 바다, 흔들리는 들꽃, 가로등 켜진 골목, 새벽 하늘\n· 빛/그림자: 커튼 사이로 스며드는 빛, 바닥에 드리운 긴 그림자, 물에 비친 반영\n· 상징 정물: 손편지, 마른 꽃, 실타래, 깨진/흐린 거울, 오래된 사진, 빈 의자 하나, 꺼진 전화기, 두 개의 찻잔, 반지, 단추\n· 손동작: 무언가를 쥔/놓는/내미는 손, 페이지를 넘기는 손\n· 텍스처: 구겨진 종이, 린넨 천, 물결, 빛바랜 벽\n→ 위에서 그대로 베끼지 말고, 페이지 감정에 가장 들어맞는 것을 골라 구체적으로 연출.\n\n[규칙]\n1. 카메라·렌즈·조명·구도를 구체적으로 (예: 35mm film, 85mm f/1.8, soft window light, golden hour rim light, rule of thirds, macro)\n2. 사람 얼굴 클로즈업 금지 — 손·뒷모습·실루엣·정물·풍경만\n3. 텍스트·글자·숫자 없음 (no text, no letters)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 5장은 소재·장소·구도가 서로 뚜렷이 다르되, 색감·필름톤으로 한 시리즈처럼 묶이게\n6. 각 프롬프트 영어 35~70단어, Instagram 1:1\n반드시 JSON만 응답한다.',
+    user: `책 제목: ${bookInfo.title || ''}\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n책 핵심 주제: ${bookInfo.coreMessage || ''}\n\n[1단계] 먼저 이 책의 핵심 감정/은유를 한 가지 마음속으로 정하세요(예: 다가갈수록 멀어지는 거리감, 닫힌 마음의 문, 기다림). 그 모티프가 5장에 은은히 흐르게 하되, 페이지마다 다른 장면으로 변주하세요.\n\n[2단계] 아래 각 페이지의 "실제 문장"을 해석해, 그 감정을 상징하는 서로 다른 장면 프롬프트 5개를 작성하세요.\n\n1페이지 [${PAGE_VISUAL_DIRECTIONS.page1}]\n  문장: ${pageContents.page1}\n2페이지 [${PAGE_VISUAL_DIRECTIONS.page2}]\n  문장: ${pageContents.page2}\n3페이지 [${PAGE_VISUAL_DIRECTIONS.page3}]\n  문장: ${pageContents.page3}\n4페이지 [${PAGE_VISUAL_DIRECTIONS.page4}]\n  문장: ${pageContents.page4}\n5페이지 [${PAGE_VISUAL_DIRECTIONS.page5}]\n  문장: ${pageContents.page5}\n\n[필수] 5장의 주요 소재·장소가 서로 겹치지 않게 하고(예: 커피잔을 두 번 쓰지 말 것), 각 페이지 문장의 핵심 감정이 장면에 분명히 드러나게 하세요. 텍스트·글자·숫자 없음.\n\nJSON (page1~page5 모두 필수): {"page1":"english prompt","page2":"...","page3":"...","page4":"...","page5":"..."}`,
   });
 
   const prompts = extractJson(text);
