@@ -99,6 +99,78 @@ export class Sfx {
     if (!this.enabled) return;
     [523, 659, 784, 1047].forEach((f, i) => this._tone(f, 0.3, 'triangle', 0.16, i * 0.12));
   }
+
+  // ===== 우스꽝스럽고 놀라운 효과음 =====
+  _brass(freq, dur, startAt = 0, bendTo = null) {
+    const ctx = this._ensure();
+    const t = ctx.currentTime + startAt;
+    const o = ctx.createOscillator(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(freq, t);
+    if (bendTo) o.frequency.exponentialRampToValueAtTime(bendTo, t + dur);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(600, t);
+    lp.frequency.linearRampToValueAtTime(1700, t + dur * 0.4);
+    lp.frequency.linearRampToValueAtTime(500, t + dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22, t + 0.03);
+    g.gain.setValueAtTime(0.2, t + dur * 0.7);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(lp).connect(g).connect(ctx.destination);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  // 뽕~뽕~뽕~뿌웅 (실망 트롬본)
+  sadTrombone() {
+    this._brass(311, 0.22, 0); this._brass(277, 0.22, 0.22);
+    this._brass(233, 0.24, 0.44); this._brass(220, 0.55, 0.68, 160);
+  }
+  // 보잉~ (용수철)
+  boing() {
+    const ctx = this._ensure(); const t = ctx.currentTime;
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(520, t); o.frequency.exponentialRampToValueAtTime(130, t + 0.26);
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 19;
+    const lg = ctx.createGain(); lg.gain.setValueAtTime(130, t); lg.gain.exponentialRampToValueAtTime(2, t + 0.26);
+    lfo.connect(lg).connect(o.frequency);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.26, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
+    o.connect(g).connect(ctx.destination);
+    o.start(t); lfo.start(t); o.stop(t + 0.36); lfo.stop(t + 0.36);
+  }
+  // 빵빵 (경적)
+  honk() {
+    const ctx = this._ensure(); const t = ctx.currentTime;
+    [0, 0.14].forEach((d) => {
+      const o = ctx.createOscillator(); o.type = 'square';
+      o.frequency.setValueAtTime(300, t + d); o.frequency.exponentialRampToValueAtTime(175, t + d + 0.1);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.18, t + d); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.12);
+      o.connect(g).connect(ctx.destination); o.start(t + d); o.stop(t + d + 0.14);
+    });
+  }
+  // 철퍼덕 (충격)
+  splat() {
+    this._noise(0.18, 0.3);
+    const ctx = this._ensure(); const t = ctx.currentTime;
+    const o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.16);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.3, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + 0.2);
+  }
+  slideWhistleDown() { this._sweep(1500, 280, 0.42, 'triangle', 0.14); }
+
+  // 벽에 부딪힘(실패) — 매번 다른 우스운 소리로 놀라게
+  crash() {
+    if (!this.enabled) return;
+    const p = (Math.random() * 3) | 0;
+    if (p === 0) { this.sadTrombone(); this.splat(); }
+    else if (p === 1) { this.slideWhistleDown(); this.splat(); }
+    else { this.boing(); this.honk(); }
+  }
+  // 장애물에 맞음 — 깜짝 보잉+철퍼덕
+  bonk() {
+    if (!this.enabled) return;
+    this.boing(); this.splat();
+    if (Math.random() < 0.5) this.honk();
+  }
 }
 
 // ===== 배경음악 (절차적 · 긴장감+밝고 신나는 드라이브) =====

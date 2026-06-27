@@ -338,8 +338,9 @@ function applyGrade(grade, wall) {
   renderer.tintSkeleton(grade.color, 0.7);
   if (grade.grade === 'CRASH') {
     renderer.setFlash('#ff3030');
-    sfx.grade('CRASH');
-    shakeScreen();
+    renderer.explode(screenGeom.cx, screenGeom.cy, { emojis: ['💥', '😵', '💫', '🌀', '🤡'] });
+    sfx.crash();
+    shakeScreen(true);
     if (scoring) { current.life = Math.max(0, current.life - 1); current.combo = 0; }
   } else {
     renderer.burst(screenGeom.cx, screenGeom.cy, grade.color, grade.grade === 'PERFECT' ? 40 : 22);
@@ -385,10 +386,11 @@ function bannerText(text, color) {
   showGradeText._t = setTimeout(() => el.classList.add('hidden'), 900);
 }
 
-function shakeScreen() {
+function shakeScreen(big = false) {
   const app = $('app');
-  app.classList.remove('shake'); app.offsetHeight; app.classList.add('shake');
-  setTimeout(() => app.classList.remove('shake'), 420);
+  const cls = big ? 'shake-big' : 'shake';
+  app.classList.remove('shake', 'shake-big'); app.offsetHeight; app.classList.add(cls);
+  setTimeout(() => app.classList.remove(cls), big ? 520 : 420);
 }
 
 function updateHud() {
@@ -572,8 +574,9 @@ function judgeDodge(ob) {
     current.combo = 0;
     current.dodgeCombo = 0;
     renderer.setFlash('#ff3030');
-    sfx.grade('CRASH');
-    shakeScreen();
+    renderer.explode(ob.tx, ob.ty, { emojis: ['💥', '😵', '🌟', '😖', '🪐'], ring: '#ff8a3d' });
+    sfx.bonk();
+    shakeScreen(true);
     bannerText('맞았다! 💥', '#ff5c5c');
   } else {
     current.dodgeCombo = (current.dodgeCombo || 0) + 1;
