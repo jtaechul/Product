@@ -1,7 +1,7 @@
 // ===== HoleDash · 메인 (상태 머신 + 게임 로직 + 화면 연결) =====
 import { Renderer } from './render.js';
 import { PoseTracker, dist, visible } from './pose.js';
-import { Sfx, Music } from './audio.js';
+import { Sfx } from './audio.js';
 import { buildWallMask } from './walls.js';
 import { drawBodyMask, computeCollisionRate, bodyThicknessFromShoulder } from './collision.js';
 import {
@@ -19,8 +19,12 @@ const video = $('cam');
 const renderer = new Renderer(canvas, video);
 const pose = new PoseTracker(video);
 const sfx = new Sfx();
-const music = new Music(sfx);
+const bgm = $('bgm');
+bgm.volume = 0.5;
 let muted = false;
+
+function bgmPlay() { if (muted) return; try { bgm.play().catch(() => {}); } catch (e) {} }
+function bgmRestart() { if (muted) return; try { bgm.currentTime = 0; bgm.play().catch(() => {}); } catch (e) {} }
 
 // 충돌 마스크용 오프스크린
 const bodyMaskCanvas = Object.assign(document.createElement('canvas'), { width: MASK_W, height: MASK_H });
@@ -89,8 +93,8 @@ $('btnMute').onclick = () => {
   muted = !muted;
   sfx.enabled = !muted;
   sfx.resume();
-  music.setVolume(muted ? 0 : 0.16);
-  if (!muted && state === 'PLAY') music.start();
+  if (muted) bgm.pause();
+  else if (state === 'PLAY') bgmPlay();
   $('btnMute').textContent = muted ? '🔇' : '🔊';
 };
 
@@ -237,7 +241,7 @@ function finishCalibration() {
 
 // ====== 연습 + 본게임 ======
 function startPractice() {
-  if (!muted) music.start();
+  bgmRestart();
   g.practice = true;
   g.wallIndex = 0;
   current.life = START_LIFE;
@@ -271,7 +275,8 @@ function beginWall() {
   g.wallStart = performance.now() / 1000;
   g.approachSec = BASE_APPROACH_SEC / wall.approachSpeed;
   g.judged = false;
-  $('hudRound').textContent = g.practice ? '연습' : `ROUND ${wall.level}`;
+  // 댄스 벽이면 가운데 라운드 표시를 비우고(날아오는 제목이 대신), 아니면 ROUND 표시
+  $('hudRound').textContent = g.practice ? '연습' : (wall.title ? '🎵 댄스' : `ROUND ${wall.level}`);
   $('hudWall').textContent = g.practice ? '' : `벽 ${g.wallIndex + 1} / ${STAGE_WALLS.length}`;
 }
 
@@ -407,7 +412,7 @@ function advanceWall() {
 }
 
 function finishPlayer(cleared = false) {
-  music.stop();
+  bgm.pause();
   state = 'RESULT';
   setHud(false);
   $('resultName').textContent = cleared ? `🎉 ${current.name} 완주!` : `${current.name} 종료`;
@@ -486,6 +491,7 @@ function updatePlay(t) {
     const progress = Math.min(1, el / g.approachSec);
     const geom = renderer.wallGeom(groundY);
     renderer.drawWall(wall, geom, progress, t);
+    if (wall.title) renderer.drawSongTitle(wall.title, wall.artist, el);
     renderer.drawPoseHint(poseHint(wall));
     if (progress >= 1 && !g.judged) {
       g.judged = true;

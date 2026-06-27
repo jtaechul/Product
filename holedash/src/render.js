@@ -184,6 +184,31 @@ export class Renderer {
     this.ctx.restore();
   }
 
+  // 노래 제목이 옆에서 날아 들어와 가운데에 잠깐 떴다가 사라짐(댄스 벽)
+  drawSongTitle(title, artist, elapsed) {
+    let alpha = 1, slide = 0;
+    if (elapsed < 0.45) { const k = elapsed / 0.45; slide = (1 - k) * (1 - k); alpha = Math.min(1, elapsed / 0.18); }
+    else if (elapsed > 1.7) { alpha = Math.max(0, 1 - (elapsed - 1.7) / 0.6); }
+    if (alpha <= 0) return;
+    const ctx = this.ctx;
+    const m = Math.min(this.W, this.H);
+    const cx = this.W / 2 + slide * this.W * 0.6;
+    const cy = this.H * 0.4;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.85)'; ctx.shadowBlur = 18;
+    // 제목
+    ctx.font = `900 ${m * 0.085}px Trebuchet MS, sans-serif`;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('♪ ' + title, cx, cy);
+    // 아티스트
+    ctx.font = `800 ${m * 0.042}px Trebuchet MS, sans-serif`;
+    ctx.fillStyle = '#ffd23f';
+    ctx.fillText(artist, cx, cy + m * 0.07);
+    ctx.restore();
+  }
+
   // 날아오는 장애물 — 미니멀한 타깃 레티클 + 매끈한 에너지 오브(꼬리 포함)
   drawObstacle(ob, progress, t) {
     const ctx = this.ctx;
