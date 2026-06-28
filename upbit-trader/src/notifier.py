@@ -270,6 +270,70 @@ def _read_all_statuses() -> str:
     return "\n\n──────────\n\n".join(parts) if parts else "상태 정보 없음"
 
 
+_acct_cache: dict = {"text": None, "at": 0.0}
+
+
+def account_summary(ttl: int = 60) -> str:
+    """실제 업비트 계좌의 보유 코인·평가액·손익을 요약(텔레그램용).
+
+    봇이 '산 것'(추적 포지션)과 별개로, 계좌에 실제로 들어있는 전체 코인을 보여준다.
+    API 키가 없거나 조회 실패면 빈 문자열(현황에서 생략). ttl초 캐시로 과도한 호출 방지.
+    """
+    now = time.time()
+    if _acct_cache["text"] is not None and now - _acct_cache["at"] < ttl:
+        return _acct_cache["text"]
+    text = ""
+    try:
+        from . import config
+        if config.has_api_keys():
+            from .upbit_exchange import UpbitExchange
+            from .upbit_quotation import UpbitQuotation
+            accs = UpbitExchange().get_accounts()
+            q = UpbitQuotation()
+            coins = [f"KRW-{a['currency']}" for a in accs
+                     if a.get("currency") != "KRW"
+                     and a.get("unit_currency", "KRW") == "KRW"
+                     and (float(a.get("balance", 0) or 0)
+                          + float(a.get("locked", 0) or 0)) > 0]
+            prices = {}
+            if coins:
+                prices = {t["market"]: float(t["trade_price"])
+                          for t in q.get_ticker(coins)}
+            krw, total, lines = 0.0, 0.0, []
+            for a in accs:
+                if a.get("unit_currency", "KRW") != "KRW":
+                    continue
+                cur = a.get("currency", "")
+                vol = float(a.get("balance", 0) or 0) + float(a.get("locked", 0) or 0)
+                if cur == "KRW":
+                    krw += vol
+                    continue
+                if vol <= 0:
+                    continue
+                avg = float(a.get("avg_buy_price", 0) or 0)
+                px = prices.get(f"KRW-{cur}", avg)
+                val = vol * px
+                total += val
+                pl = (px / avg - 1) * 100 if avg > 0 else 0.0
+                lines.append(f"• {cur}: {vol:,.4f}개 · 평가 {val:,.0f}원 · {pl:+.1f}%")
+            total += krw
+            head = ["💼 <b>전체 보유 자산</b>",
+                    f"• 총 평가액: <b>{total:,.0f}원</b>",
+                    f"• 원화(현금): {krw:,.0f}원"]
+            head += lines if lines else ["• 보유 코인 없음 (전액 현금)"]
+            text = "\n".join(head)
+    except Exception:
+        text = ""
+    _acct_cache.update(text=text, at=now)
+    return text
+
+
+def _full_status() -> str:
+    """전체 보유 자산 + 봇별 현황을 합친 텔레그램용 메시지 본문."""
+    parts = [p for p in (account_summary(), _read_all_statuses()) if p]
+    return "\n\n──────────\n\n".join(parts) if parts else "상태 정보 없음"
+
+
 def _own_listener(ttl: int = 90) -> bool:
     """단일 폴러 선출 락. 내가 소유(또는 갱신)하면 True. 소유자 죽으면 ttl 후 인계."""
     lock = _state_dir() / "listener.lock"
@@ -321,7 +385,7 @@ def run_shared(name: str, get_status, stop: threading.Event | None = None,
             try:
                 if time.time() - last_hb >= heartbeat_sec:
                     send(f"💓 <b>하트비트</b> {now_kst():%m-%d %H:%M}\n"
-                         f"{_read_all_statuses()}")
+                         f"{_full_status()}")
                     last_hb = time.time()
                 params: dict = {"timeout": 25}
                 if _offset is not None:
@@ -348,7 +412,7 @@ def run_shared(name: str, get_status, stop: threading.Event | None = None,
                     if not text or frm != str(chat):
                         continue
                     send(f"📟 <b>요청 응답</b> {now_kst():%m-%d %H:%M}\n"
-                         f"{_read_all_statuses()}")
+                         f"{_full_status()}")
             except Exception:
                 time.sleep(5)
 
