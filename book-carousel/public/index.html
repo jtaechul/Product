@@ -1278,7 +1278,22 @@ async function generateCarousel() {
   showLoading('캐럿셀 생성 중...', 'Claude AI가 5페이지 카드뉴스를 작성하고 있습니다');
 
   try {
-    const data = await apiFetch('/api/generate', state.bookInfo);
+    let data;
+    try {
+      data = await apiFetch('/api/generate', state.bookInfo);
+    } catch (err) {
+      // 실존 미확인 책 → 사용자에게 확인 후 진행 여부를 묻는다
+      if (/BOOK_NOT_FOUND/.test(err.message)) {
+        hideLoading();
+        const proceed = confirm(`"${state.bookInfo.title}"은(는) 실제 출간된 책으로 확인되지 않았습니다.\n(쿠팡/알라딘에서 검색되지 않으면 어필리에이트 링크도 만들 수 없습니다)\n\n· 취소: 제목·저자를 다시 확인\n· 확인: 실제 책이 맞으니 그대로 제작`);
+        if (!proceed) { setStep(1); return; }
+        showLoading('캐럿셀 생성 중...', '실존 확인을 건너뛰고 제작합니다');
+        state.bookInfo.skipVerify = true;
+        data = await apiFetch('/api/generate', state.bookInfo);
+      } else {
+        throw err;
+      }
+    }
     state.pages = data.pages;
     addToHistory(state.bookInfo?.title);
     // 도서 번호를 미리 예약 → 캡션에 들어가는 번호와 도서관 등록 번호가 같아진다.
