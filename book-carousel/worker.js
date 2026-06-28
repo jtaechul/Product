@@ -413,16 +413,23 @@ async function handleSuggest(env, body) {
   const parsed = extractJson(text);
   const books = Array.isArray(parsed.books) ? parsed.books : [];
 
-  // [핵심 규칙] 추천 책을 실존 검증 → 가짜(확인 안 됨)는 제외, 실존 확인된 책 우선.
-  // 검증 불가(null)는 일단 통과시키되 verified:false로 표시(시스템이 멈추지 않게).
+  // [핵심 규칙] 추천 책 실존 검증 → 가짜 제외, 실존 확인 책 우선.
+  // 추천 단계는 비용·속도를 위해 "저렴한 소스(네이버 API·알라딘)"만 사용(AI 호출 없음).
+  // 네이버가 가짜로 단정한 책만 제외하고, 나머지는 통과(거짓 음성 방지). 최종 차단은 제작 단계 게이트.
   const checked = await Promise.all(books.map(async (b) => {
-    const v = await verifyBookReal(env, b.title, b.author).catch(() => ({ confirmed: null }));
-    return { ...b, verified: v.confirmed === true, _confirmed: v.confirmed, coupangSearchUrl: coupangSearchUrl(b.title) };
+    const query = b.author ? `${b.title} ${b.author}` : b.title;
+    let confirmed = null;
+    const naver = await naverBookCheck(env, query).catch(() => null);
+    if (naver === true) confirmed = true;
+    else if (naver === false) confirmed = false;
+    else {
+      const al = await aladinPositiveCheck(query).catch(() => ({ ok: false, count: 0 }));
+      if (al.ok && al.count >= 8) confirmed = true;
+    }
+    return { ...b, verified: confirmed === true, _confirmed: confirmed, coupangSearchUrl: coupangSearchUrl(b.title) };
   }));
-  // 확실히 가짜인 책(confirmed===false) 제외
-  let usable = checked.filter(b => b._confirmed !== false);
-  // 실존 확인된 책을 앞으로 정렬
-  usable.sort((a, b) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0));
+  let usable = checked.filter(b => b._confirmed !== false);   // 확실한 가짜만 제외
+  usable.sort((a, b) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0));  // 실존 확인 책 우선
   usable = usable.slice(0, 4).map(({ _confirmed, ...rest }) => rest);
 
   return { success: true, books: usable };
