@@ -1851,8 +1851,15 @@ export default {
         }
         else if (url.pathname === '/api/verify-book') {
           const cv = await crossVerifyBook(env, body.title, body.author);
-          const v = await verifyBookReal(env, body.title, body.author);
-          result = { success: true, cross: cv, verify: v };
+          result = {
+            success: true,
+            exists: cv.status === 'found' ? true : (cv.status === 'notfound' ? false : null),
+            realTitle: cv.title || null,
+            realAuthor: cv.author || null,        // 네이버로 확인된 진짜 저자
+            publisher: cv.publisher || null,
+            status: cv.status,
+            coupangSearchUrl: coupangSearchUrl(body.title),
+          };
         }
         else if (url.pathname === '/api/get-dm') {
           const num = String(parseInt(String(body.number || '').replace(/[^0-9]/g, ''), 10) || 0).padStart(3, '0');
