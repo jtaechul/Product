@@ -290,37 +290,47 @@ def account_summary(ttl: int = 60) -> str:
             from .upbit_quotation import UpbitQuotation
             accs = UpbitExchange().get_accounts()
             q = UpbitQuotation()
-            coins = [f"KRW-{a['currency']}" for a in accs
-                     if a.get("currency") != "KRW"
-                     and a.get("unit_currency", "KRW") == "KRW"
-                     and (float(a.get("balance", 0) or 0)
-                          + float(a.get("locked", 0) or 0)) > 0]
+            # 업비트에 '원화 시장'이 있는 코인만 시세 조회한다. ETHW/ETHF 같은 에어드랍
+            # 포크 토큰은 KRW 마켓이 없어, 통째로 get_ticker 하면 에러가 나 전체가 실패한다.
+            try:
+                valid = {m["market"] for m in q.get_markets(only_krw=True)}
+            except Exception:
+                valid = set()
+            held = [a for a in accs
+                    if a.get("currency") != "KRW"
+                    and a.get("unit_currency", "KRW") == "KRW"
+                    and (float(a.get("balance", 0) or 0)
+                         + float(a.get("locked", 0) or 0)) > 0]
+            priced_markets = [f"KRW-{a['currency']}" for a in held
+                              if f"KRW-{a['currency']}" in valid]
             prices = {}
-            if coins:
-                prices = {t["market"]: float(t["trade_price"])
-                          for t in q.get_ticker(coins)}
-            krw, total, lines = 0.0, 0.0, []
-            for a in accs:
-                if a.get("unit_currency", "KRW") != "KRW":
-                    continue
-                cur = a.get("currency", "")
+            if priced_markets:
+                try:
+                    prices = {t["market"]: float(t["trade_price"])
+                              for t in q.get_ticker(priced_markets)}
+                except Exception:
+                    prices = {}
+            krw = sum(float(a.get("balance", 0) or 0) + float(a.get("locked", 0) or 0)
+                      for a in accs if a.get("currency") == "KRW")
+            total, lines, untradable = krw, [], []
+            for a in held:
+                cur = a["currency"]
                 vol = float(a.get("balance", 0) or 0) + float(a.get("locked", 0) or 0)
-                if cur == "KRW":
-                    krw += vol
-                    continue
-                if vol <= 0:
-                    continue
-                avg = float(a.get("avg_buy_price", 0) or 0)
-                px = prices.get(f"KRW-{cur}", avg)
-                val = vol * px
-                total += val
-                pl = (px / avg - 1) * 100 if avg > 0 else 0.0
-                lines.append(f"• {cur}: {vol:,.4f}개 · 평가 {val:,.0f}원 · {pl:+.1f}%")
-            total += krw
+                mkt = f"KRW-{cur}"
+                if mkt in prices:
+                    avg = float(a.get("avg_buy_price", 0) or 0)
+                    px = prices[mkt]
+                    val = vol * px
+                    total += val
+                    pl = (px / avg - 1) * 100 if avg > 0 else 0.0
+                    lines.append(f"• {cur}: {vol:,.4f}개 · 평가 {val:,.0f}원 · {pl:+.1f}%")
+                else:
+                    untradable.append(f"• {cur}: {vol:,.4f}개 (원화시장 없음·평가 제외)")
             head = ["💼 <b>전체 보유 자산</b>",
                     f"• 총 평가액: <b>{total:,.0f}원</b>",
                     f"• 원화(현금): {krw:,.0f}원"]
             head += lines if lines else ["• 보유 코인 없음 (전액 현금)"]
+            head += untradable
             text = "\n".join(head)
     except Exception:
         text = ""
