@@ -214,36 +214,76 @@ async function callClaude(apiKey, opts, attempt = 0) {
 
 // ===== 책 실존 검증 =====
 // AI가 지어낸 가짜 책으로 캐럿셀을 만드는 것을 막는다.
-// 알라딘 검색(무료·키 불필요·한국 책 정확)으로 실제 출간 여부를 확인한다.
-// 실제 책: 상품 링크(wproduct.aspx) 수십 개 / 가짜 책: 거의 없음.
+// 여러 소스로 확인: 네이버 책 API(키 있을 때·정확) → 알라딘(포지티브 신호) → AI 검증(명백한 가짜만).
+// ⚠️ "확실한 가짜"만 차단하고, 판단이 애매하면 막지 않는다(진짜 책을 막는 거짓 음성 방지).
 function coupangSearchUrl(title) {
   return `https://www.coupang.com/np/search?q=${encodeURIComponent(title || '')}`;
 }
 
-async function verifyBookReal(title, author) {
-  const t = (title || '').trim();
-  if (!t) return { confirmed: false, productCount: 0, source: 'none', coupangSearchUrl: coupangSearchUrl(t) };
-  const query = author ? `${t} ${author}` : t;
-  const url = `https://www.aladin.co.kr/search/wsearchresult.aspx?SearchWord=${encodeURIComponent(query)}`;
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000);
+// 네이버 책 검색 API (정확·Worker에서도 동작) — 키가 있을 때만. total>0 이면 실존.
+async function naverBookCheck(env, query) {
+  if (!env?.NAVER_CLIENT_ID || !env?.NAVER_CLIENT_SECRET) return null;
   try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36' },
+    const res = await fetch(`https://openapi.naver.com/v1/search/book.json?query=${encodeURIComponent(query)}&display=3`, {
+      headers: { 'X-Naver-Client-Id': env.NAVER_CLIENT_ID, 'X-Naver-Client-Secret': env.NAVER_CLIENT_SECRET },
+    });
+    if (!res.ok) return null;
+    const d = await res.json();
+    return (d.total || 0) > 0;
+  } catch { return null; }
+}
+
+// 알라딘 검색 — 결과가 충분하면 실존 확정(포지티브 신호만). Worker IP가 차단돼 셸을
+// 반환하면 카운트가 낮을 수 있으므로 "부족=가짜"로 단정하지 않는다(거짓 음성 방지).
+async function aladinPositiveCheck(query) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 7000);
+  try {
+    const res = await fetch(`https://www.aladin.co.kr/search/wsearchresult.aspx?SearchWord=${encodeURIComponent(query)}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
+        'Accept-Language': 'ko-KR,ko;q=0.9',
+      },
       signal: ctrl.signal,
     });
     clearTimeout(timer);
-    if (!res.ok) return { confirmed: null, productCount: 0, source: 'aladin-error', coupangSearchUrl: coupangSearchUrl(t) };
+    if (!res.ok) return { count: 0, ok: false };
     const html = await res.text();
-    const productCount = (html.match(/wproduct\.aspx/g) || []).length;
-    // 실제 책이면 상품/중고/전자책 링크가 충분히 잡힌다. 임계값 5.
-    const confirmed = productCount >= 5;
-    return { confirmed, productCount, source: 'aladin', coupangSearchUrl: coupangSearchUrl(t) };
-  } catch {
-    clearTimeout(timer);
-    // 검색 자체가 실패(네트워크·타임아웃) → 판단 불가(null) → 차단하지 않음(시스템이 멈추지 않게)
-    return { confirmed: null, productCount: 0, source: 'unreachable', coupangSearchUrl: coupangSearchUrl(t) };
-  }
+    return { count: (html.match(/wproduct\.aspx/g) || []).length, ok: true };
+  } catch { clearTimeout(timer); return { count: 0, ok: false }; }
+}
+
+// AI 스켑틱 검증 (키 불필요·Worker OK) — 명백한 가짜만 걸러낸다.
+async function aiBookCheck(env, title, author) {
+  try {
+    const txt = await callClaude(env.ANTHROPIC_API_KEY, {
+      env, tier: 'main', max_tokens: 150,
+      system: '당신은 도서 사실 검증가입니다. 책이 실제로 출간된 실존 도서인지 엄격하고 정직하게 판정합니다. 반드시 JSON만 응답합니다.',
+      user: `다음이 실제로 출간된 실존 도서입니까?\n제목: ${title}\n저자: ${author || '(미상)'}\n\n판정 규칙:\n- 실제 존재하는 책으로 확실히 아는 경우: real=true, confidence="high"\n- 제목·저자가 지어낸 듯하거나 명백히 존재하지 않는 경우: real=false, confidence="high"\n- 들어본 적 없어 잘 모르겠는 경우: real=false, confidence="low"\nJSON: {"real": true/false, "confidence": "high"/"low"}`,
+    });
+    const j = extractJson(txt);
+    if (j.real === true) return true;
+    if (j.real === false && j.confidence === 'high') return false;
+    return null; // 모르겠음 → 보류(차단 안 함)
+  } catch { return null; }
+}
+
+// 책 실존 종합 검증.
+// confirmed: true(실존) / false(확실한 가짜 → 차단) / null(판단 불가 → 차단 안 함)
+async function verifyBookReal(env, title, author) {
+  const t = (title || '').trim();
+  if (!t) return { confirmed: false, source: 'none', coupangSearchUrl: coupangSearchUrl(t) };
+  const query = author ? `${t} ${author}` : t;
+
+  const naver = await naverBookCheck(env, query);
+  if (naver === true) return { confirmed: true, source: 'naver', coupangSearchUrl: coupangSearchUrl(t) };
+  if (naver === false) return { confirmed: false, source: 'naver', coupangSearchUrl: coupangSearchUrl(t) };
+
+  const al = await aladinPositiveCheck(query);
+  if (al.ok && al.count >= 8) return { confirmed: true, source: 'aladin', productCount: al.count, coupangSearchUrl: coupangSearchUrl(t) };
+
+  const ai = await aiBookCheck(env, t, author);
+  return { confirmed: ai, source: 'ai', coupangSearchUrl: coupangSearchUrl(t) };
 }
 
 function extractJson(text) {
@@ -376,7 +416,7 @@ async function handleSuggest(env, body) {
   // [핵심 규칙] 추천 책을 실존 검증 → 가짜(확인 안 됨)는 제외, 실존 확인된 책 우선.
   // 검증 불가(null)는 일단 통과시키되 verified:false로 표시(시스템이 멈추지 않게).
   const checked = await Promise.all(books.map(async (b) => {
-    const v = await verifyBookReal(b.title, b.author).catch(() => ({ confirmed: null }));
+    const v = await verifyBookReal(env, b.title, b.author).catch(() => ({ confirmed: null }));
     return { ...b, verified: v.confirmed === true, _confirmed: v.confirmed, coupangSearchUrl: coupangSearchUrl(b.title) };
   }));
   // 확실히 가짜인 책(confirmed===false) 제외
@@ -410,7 +450,7 @@ async function handleGenerate(env, body) {
   // [핵심 규칙] 실존 도서 검증 게이트 — 가짜(지어낸) 책으로 캐럿셀 제작 차단.
   // skipVerify=true(사용자가 직접 확인함)면 건너뛴다. 검증 불가(null)면 막지 않는다(시스템 보호).
   if (!body.skipVerify) {
-    const v = await verifyBookReal(title, author);
+    const v = await verifyBookReal(env, title, author);
     if (v.confirmed === false) {
       throw new Error(`BOOK_NOT_FOUND: "${title}"은(는) 실제 출간된 책으로 확인되지 않습니다(알라딘 검색 결과 없음). 책 제목·저자를 확인하거나, 실제 책이 맞다면 직접 확인 후 진행하세요.`);
     }
@@ -1710,7 +1750,7 @@ export default {
           result = { success: true, model: m.main, light: m.light, source: m.source };
         }
         else if (url.pathname === '/api/verify-book') {
-          const v = await verifyBookReal(body.title, body.author);
+          const v = await verifyBookReal(env, body.title, body.author);
           result = { success: true, ...v };
         }
         else if (url.pathname === '/api/get-dm') {
