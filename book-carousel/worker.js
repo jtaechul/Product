@@ -258,8 +258,8 @@ async function aiBookCheck(env, title, author) {
   try {
     const txt = await callClaude(env.ANTHROPIC_API_KEY, {
       env, tier: 'main', max_tokens: 150,
-      system: '당신은 도서 사실 검증가입니다. 책이 실제로 출간된 실존 도서인지 엄격하고 정직하게 판정합니다. 반드시 JSON만 응답합니다.',
-      user: `다음이 실제로 출간된 실존 도서입니까?\n제목: ${title}\n저자: ${author || '(미상)'}\n\n판정 규칙:\n- 실제 존재하는 책으로 확실히 아는 경우: real=true, confidence="high"\n- 제목·저자가 지어낸 듯하거나 명백히 존재하지 않는 경우: real=false, confidence="high"\n- 들어본 적 없어 잘 모르겠는 경우: real=false, confidence="low"\nJSON: {"real": true/false, "confidence": "high"/"low"}`,
+      system: '당신은 도서 사실 검증가입니다. 명백히 가짜인 책만 걸러냅니다. 진짜 책을 가짜로 판정하지 않도록 보수적으로 판단합니다. 반드시 JSON만 응답합니다.',
+      user: `다음 책 제목이 "명백히 지어낸 가짜"인지 판정하세요.\n제목: ${title}\n저자: ${author || '(미상)'}\n\n판정 규칙(진짜 책을 막지 않는 것이 최우선):\n- 제목이 무의미한 문자열이거나(임의 숫자·자모 뒤섞임 등) 정상적인 책 제목으로 보이지 않으면: real=false, confidence="high"\n- 실제로 존재할 법한 정상적인 제목이면, 당신이 그 책을 몰라도: real=true (확신 없으면 confidence="low")\nJSON: {"real": true/false, "confidence": "high"/"low"}`,
     });
     const j = extractJson(txt);
     if (j.real === true) return true;
