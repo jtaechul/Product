@@ -233,6 +233,60 @@ async function naverBookCheck(env, query) {
   } catch { return null; }
 }
 
+// 네이버 책 검색 — 상세 정보(제목·저자·출판사·소개)를 돌려준다. 교차검증·교정용.
+function _clean(s) {
+  return String(s || '').replace(/<\/?b>/gi, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').trim();
+}
+function _normTitle(s) { return String(s || '').toLowerCase().replace(/[\s\W_]/g, ''); }
+
+async function naverBookLookup(env, query) {
+  if (!env?.NAVER_CLIENT_ID || !env?.NAVER_CLIENT_SECRET) return null; // 키 없으면 판단 불가
+  try {
+    const res = await fetch(`https://openapi.naver.com/v1/search/book.json?query=${encodeURIComponent(query)}&display=10`, {
+      headers: { 'X-Naver-Client-Id': env.NAVER_CLIENT_ID, 'X-Naver-Client-Secret': env.NAVER_CLIENT_SECRET },
+    });
+    if (!res.ok) return null;
+    const d = await res.json();
+    const items = (d.items || []).map(it => ({
+      title: _clean(it.title),
+      author: _clean(it.author).replace(/\^/g, ', ').replace(/\|/g, ', '),
+      publisher: _clean(it.publisher),
+      pubdate: it.pubdate || '',
+      description: _clean(it.description),
+    }));
+    return { found: items.length > 0, items, total: d.total || 0 };
+  } catch { return null; }
+}
+
+// ⭐ 교차검증: 제목으로 네이버에서 실제 책을 찾아 "진짜 제목·저자"로 교정한다.
+// status: 'found'(교정정보 포함) / 'notfound'(실존 안 함 → 차단) / 'unknown'(키없음·조회실패 → 보류)
+async function crossVerifyBook(env, title, author) {
+  const t = (title || '').trim();
+  if (!t) return { status: 'notfound' };
+
+  // 제목+저자로 먼저, 없으면 제목만으로 재조회(저자가 틀렸을 수 있으므로)
+  let look = await naverBookLookup(env, author ? `${t} ${author}` : t);
+  if (look && !look.found && author) look = await naverBookLookup(env, t);
+  if (look === null) return { status: 'unknown' };       // 네이버 키 없음/실패
+  if (!look.found || !look.items.length) return { status: 'notfound' };
+
+  // 제목이 실제로 일치하는 항목을 고른다(엉뚱한 책 매칭 방지)
+  const nt = _normTitle(t);
+  const match = look.items.find(it => {
+    const ni = _normTitle(it.title);
+    return ni && nt && (ni.includes(nt) || nt.includes(ni));
+  });
+  if (!match) return { status: 'notfound' };             // 제목이 실존하지 않음
+
+  return {
+    status: 'found',
+    title: match.title,
+    author: match.author,        // ← 네이버의 진짜 저자로 교정
+    publisher: match.publisher,
+    description: match.description,
+  };
+}
+
 // 알라딘 검색 — 결과가 충분하면 실존 확정(포지티브 신호만). Worker IP가 차단돼 셸을
 // 반환하면 카운트가 낮을 수 있으므로 "부족=가짜"로 단정하지 않는다(거짓 음성 방지).
 async function aladinPositiveCheck(query) {
@@ -407,30 +461,30 @@ async function handleSuggest(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'main',
     system: '당신은 연애·관계 심리 전문 도서 큐레이터입니다. 30대 독자가 자신의 연애 패턴·이별·짝사랑·애착 유형을 이해하도록 돕는 실제 출판된 책을 추천합니다. 사랑·관계·심리·자기이해를 다루는 에세이, 심리학, 관계 안내서를 중심으로 큐레이션합니다. 반드시 JSON만 응답합니다.',
-    user: `오늘 날짜: ${today}\n주제: "${topic}"${excludeClause}\n\n이 주제와 관련해 30대 독자에게 깊이 공감받을 실제 책 6권을 추천하세요.\n\n[필수 — 실존 도서만] 당신이 실제로 한국에 출간된 것을 확신하는 책만 추천하세요. 제목·저자를 지어내지 마세요. 확신이 없으면 그 책은 빼고 확실한 책으로 채우세요. 너무 유명하지 않아도 되지만 반드시 실재해야 합니다(가짜 책 추천 시 시스템에서 자동 탈락됨).\n\n[선정 기준]\n- 연애·관계·사랑·애착·이별·자기이해를 다루는 책 (심리학/에세이/관계 안내서)\n- 독자가 "이건 내 얘기다"라고 느낄 수 있는 책 (예: 애착유형, 회피형·불안형 연애, 반복되는 연애 패턴, 자존감과 사랑, 건강한 경계, 이별 회복)\n- 한국 독자가 쉽게 구할 수 있는 국내 출간서 우선\n- 동일 저자 책은 중복 추천 금지\n\n각 책에 대해:\n- title: 책 제목 (실제 출판된 책, 정확한 제목)\n- author: 저자명 (정확히)\n- year: 출판연도 (숫자)\n- category: 세부 카테고리 (예: 애착심리 / 연애에세이 / 이별과회복 / 자존감과사랑 / 관계심리)\n- coreMessage: 이 책의 핵심 메시지 (1~2문장)\n- targetAudience: 주요 대상 독자층 (1문장)\n- reason: 30대가 지금 이 책을 읽어야 하는 이유 (1문장)\n\nJSON 형식:\n{"books":[{"title":"...","author":"...","year":2024,"category":"...","coreMessage":"...","targetAudience":"...","reason":"..."}]}`,
+    user: `오늘 날짜: ${today}\n주제: "${topic}"${excludeClause}\n\n이 주제와 관련해 30대 독자에게 깊이 공감받을 실제 책 6권을 추천하세요.\n\n[필수 — 실존 도서만] 당신이 실제로 한국에 출간된 것을 확신하는 책만 추천하세요. 제목·저자를 지어내지 마세요. 확신이 없으면 그 책은 빼고 확실한 책으로 채우세요. 너무 유명하지 않아도 되지만 반드시 실재해야 합니다(가짜 책 추천 시 시스템에서 자동 탈락됨).\n\n[선정 기준]\n- 연애·관계·사랑·애착·이별·자기이해를 다루는 책 (심리학/에세이/관계 안내서)\n- 독자가 "이건 내 얘기다"라고 느낄 수 있는 책 (예: 애착유형, 회피형·불안형 연애, 반복되는 연애 패턴, 자존감과 사랑, 건강한 경계, 이별 회복)\n- 한국 독자가 쉽게 구할 수 있는 국내 출간서 우선\n- 동일 저자 책은 중복 추천 금지\n\n각 책에 대해:\n- title: 책 제목 (실제 출판된 책, 정확한 제목)\n- author: 저자명 (정확히)\n- year: 출판연도 (숫자)\n- category: 세부 카테고리 (예: 애착심리 / 연애에세이 / 이별과회복 / 자존감과사랑 / 관계심리)\n- coreMessage: 이 책의 핵심 메시지 (1~2문장)\n- targetAudience: 주요 대상 독자층 (1문장)\n- reason: 30대가 지금 이 책을 읽어야 하는 이유 (1문장)\n- lesson: 이 책이 주는 핵심 교훈 한 문장 (주제 "${topic}"와 연결된, 마음에 남는 짧은 통찰)\n\nJSON 형식:\n{"books":[{"title":"...","author":"...","year":2024,"category":"...","coreMessage":"...","targetAudience":"...","reason":"...","lesson":"..."}]}`,
   });
 
   const parsed = extractJson(text);
   const books = Array.isArray(parsed.books) ? parsed.books : [];
 
-  // [핵심 규칙] 추천 책 실존 검증 → 가짜 제외, 실존 확인 책 우선.
-  // 추천 단계는 비용·속도를 위해 "저렴한 소스(네이버 API·알라딘)"만 사용(AI 호출 없음).
-  // 네이버가 가짜로 단정한 책만 제외하고, 나머지는 통과(거짓 음성 방지). 최종 차단은 제작 단계 게이트.
+  // [핵심 규칙] 교차검증 — 네이버에서 진짜 책을 찾아 실존 확인 + 저자 자동 교정.
+  // 실존 안 함(notfound)은 제외, 저자가 틀리면 진짜 저자로 교정. 키 없음/조회실패(unknown)는
+  // 알라딘 포지티브 신호로 보완하고 그래도 모르면 통과(거짓 음성 방지). 최종 차단은 제작 게이트.
   const checked = await Promise.all(books.map(async (b) => {
-    const query = b.author ? `${b.title} ${b.author}` : b.title;
-    let confirmed = null;
-    const naver = await naverBookCheck(env, query).catch(() => null);
-    if (naver === true) confirmed = true;
-    else if (naver === false) confirmed = false;
-    else {
-      const al = await aladinPositiveCheck(query).catch(() => ({ ok: false, count: 0 }));
-      if (al.ok && al.count >= 8) confirmed = true;
+    const cv = await crossVerifyBook(env, b.title, b.author).catch(() => ({ status: 'unknown' }));
+    if (cv.status === 'found') {
+      return { ...b, author: cv.author || b.author, title: cv.title || b.title, verified: true, _drop: false, coupangSearchUrl: coupangSearchUrl(cv.title || b.title) };
     }
-    return { ...b, verified: confirmed === true, _confirmed: confirmed, coupangSearchUrl: coupangSearchUrl(b.title) };
+    if (cv.status === 'notfound') {
+      return { ...b, verified: false, _drop: true, coupangSearchUrl: coupangSearchUrl(b.title) };
+    }
+    // unknown → 알라딘 포지티브만 확인
+    const al = await aladinPositiveCheck(b.author ? `${b.title} ${b.author}` : b.title).catch(() => ({ ok: false, count: 0 }));
+    return { ...b, verified: al.ok && al.count >= 8, _drop: false, coupangSearchUrl: coupangSearchUrl(b.title) };
   }));
-  let usable = checked.filter(b => b._confirmed !== false);   // 확실한 가짜만 제외
+  let usable = checked.filter(b => !b._drop);                 // 실존 안 하는 책 제외
   usable.sort((a, b) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0));  // 실존 확인 책 우선
-  usable = usable.slice(0, 4).map(({ _confirmed, ...rest }) => rest);
+  usable = usable.slice(0, 4).map(({ _drop, ...rest }) => rest);
 
   return { success: true, books: usable };
 }
@@ -440,26 +494,51 @@ async function handleAnalyze(env, body) {
   const { title, author } = body;
   if (!title) throw new Error('책 제목이 필요합니다.');
 
+  // 교차검증: 네이버에서 진짜 저자·정보를 먼저 확보(있으면 분석 프롬프트에도 사실로 제공)
+  const cv = await crossVerifyBook(env, title, author);
+  const realAuthor = cv.status === 'found' ? cv.author : author;
+
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'light',
     max_tokens: 512,
     system: '당신은 도서 분석 전문가입니다. 책 제목과 저자를 보고 핵심 메시지와 대상 독자층을 분석합니다. 반드시 JSON만 응답합니다.',
-    user: `책: "${title}"${author ? ` / 저자: ${author}` : ''}\n\n이 책의 정보를 분석하세요.\n\nJSON: {"author":"저자명","year":출판연도(숫자),"category":"카테고리","coreMessage":"이 책의 핵심 메시지 1~2문장","targetAudience":"주요 대상 독자층 1문장"}`,
+    user: `책: "${cv.status === 'found' ? cv.title : title}"${realAuthor ? ` / 저자: ${realAuthor}` : ''}${cv.status === 'found' && cv.description ? `\n참고(실제 책 소개): ${cv.description}` : ''}\n\n이 책의 정보를 분석하세요.\n\nJSON: {"author":"저자명","year":출판연도(숫자),"category":"카테고리","coreMessage":"이 책의 핵심 메시지 1~2문장","targetAudience":"주요 대상 독자층 1문장"}`,
   });
 
-  return { success: true, ...extractJson(text) };
+  const result = extractJson(text);
+  // 네이버로 확인된 진짜 저자/제목이 있으면 그것으로 최종 확정(AI 추정보다 우선)
+  if (cv.status === 'found') {
+    if (cv.author) result.author = cv.author;
+    result.verifiedTitle = cv.title;
+    result.verified = true;
+  } else if (cv.status === 'notfound') {
+    result.notFound = true;
+  }
+  return { success: true, ...result };
 }
 
 async function handleGenerate(env, body) {
   const { title, author, year, coreMessage, targetAudience, category } = body;
   if (!title || !author || !coreMessage) throw new Error('제목, 저자, 핵심 메시지는 필수입니다.');
 
-  // [핵심 규칙] 실존 도서 검증 게이트 — 가짜(지어낸) 책으로 캐럿셀 제작 차단.
-  // skipVerify=true(사용자가 직접 확인함)면 건너뛴다. 검증 불가(null)면 막지 않는다(시스템 보호).
+  // [핵심 규칙] 교차검증 게이트 — ① 실존 확인 ② 제목+저자 일치 확인·교정.
+  // 네이버에서 진짜 저자를 가져와 틀린 저자를 자동 교정한다. 가짜는 차단.
+  // skipVerify=true(사용자가 직접 확인)면 건너뛴다.
+  let correctedBook = null;
   if (!body.skipVerify) {
-    const v = await verifyBookReal(env, title, author);
-    if (v.confirmed === false) {
-      throw new Error(`BOOK_NOT_FOUND: "${title}"은(는) 실제 출간된 책으로 확인되지 않습니다(알라딘 검색 결과 없음). 책 제목·저자를 확인하거나, 실제 책이 맞다면 직접 확인 후 진행하세요.`);
+    const cv = await crossVerifyBook(env, title, author);
+    if (cv.status === 'notfound') {
+      throw new Error(`BOOK_NOT_FOUND: "${title}"은(는) 실제 출간된 책으로 확인되지 않습니다. 제목·저자를 확인하거나, 실제 책이 맞다면 직접 확인 후 진행하세요.`);
+    }
+    if (cv.status === 'found' && cv.author && cv.author !== author) {
+      // 저자가 틀렸으면 네이버의 진짜 저자로 교정해서 알려준다(프론트가 반영)
+      correctedBook = { title: cv.title || title, author: cv.author, publisher: cv.publisher || '' };
+    } else if (cv.status === 'unknown') {
+      // 네이버 키 없음/실패 → 기존 게이트로 명백한 가짜만 차단(거짓 음성 방지)
+      const v = await verifyBookReal(env, title, author);
+      if (v.confirmed === false) {
+        throw new Error(`BOOK_NOT_FOUND: "${title}"은(는) 실제 출간된 책으로 확인되지 않습니다. 제목·저자를 확인하거나, 실제 책이 맞다면 직접 확인 후 진행하세요.`);
+      }
     }
   }
 
@@ -469,7 +548,7 @@ async function handleGenerate(env, body) {
     user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '연애·관계 심리'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n\n[전체 톤] 연애·관계에 지친 30대를 위로하고 자기 마음을 이해하게 돕는 따뜻한 흐름. 공감 → 패턴 발견 → 마음의 이유 → 위로의 실마리 → 참여.\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(공감 훅 — 헤드라인만): 카드 전체를 단 하나의 마음을 건드리는 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 연애에서 겪었을 구체적 순간·감정을 정확히 포착한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 공포·경고 톤 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자가 혼자 느꼈던 감정을 들킨 듯한 문장.\n    좋은 예: "좋아할수록 더 차갑게 굴게 되는 사람이 있습니다"\n             "먼저 연락하면 지는 것 같아 오늘도 휴대폰만 들여다봤습니다"\n             "헤어지자는 말보다, 잡지 않을까 봐 더 무서웠습니다"\n    나쁜 예(절대 금지): "당신의 연애는 실패하고 있다" / "이대로면 평생 혼자입니다" (공포·단정 톤)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(패턴 발견): 독자가 반복해온 연애 패턴을 부드럽게 이름 붙여 보여준다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 독자가 "맞아, 나 그래"라고 느낄 구체적 행동·상황 묘사. 수치 금지, 감정과 장면 위주.\n3페이지(마음의 이유): 그 패턴의 심리적 뿌리를 따뜻하게 설명한다(애착, 상처, 두려움 등). 비난하지 않는다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. "당신이 이상한 게 아니라, 이런 마음이 있었던 것입니다" 같은 위로의 통찰. 심리학 개념을 쉽게 풀어 쓰되 학술 인용 금지.\n4페이지(위로의 실마리): 완전한 해답 대신 '이렇게 바라보면 달라진다'는 방향을 부드럽게 암시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 마지막 줄은 희망적 여운으로 끝낸다. 단정적 해결책 금지.\n5페이지(참여형 질문): 독자가 자기 연애 성향에 대해 답하고 싶어지는 A/B 질문으로 참여를 유도한다.\n  - cta: 독자 자신의 연애 성향/감정을 묻는 A/B 선택 형식 2~3줄.\n    예시 형식: "당신은 어느 쪽에 가까운가요?\\nA. 좋아할수록 다가가는 사람\\nB. 좋아할수록 멀어지는 사람"\n    핵심: 책이나 정보가 아니라 독자 자신의 마음을 묻는 질문이어야 한다.\n  - linkText: 반드시 두 역할을 분리해 한 줄로 씁니다.\n    역할1 — A/B 참여 유도: "댓글에 A 또는 B로 솔직한 마음을 남겨주세요" (어떤 보상도 약속하지 않음)\n    역할2 — 책 정보 안내: "오늘의 책은 프로필 링크에서 바로 만나보실 수 있습니다"\n    [절대 금지] "A 또는 B를 남기시면 당신에게 맞는 책을 안내해드립니다" 같이 A/B 선택에 따라 다른 결과가 온다는 표현 — A든 B든 같은 책 정보가 프로필 링크에 있으므로 거짓이 됩니다.\n    좋은 예: "댓글에 A 또는 B로 솔직한 마음을 남겨주세요 | 오늘의 책은 프로필 링크에서 바로 만나보실 수 있습니다"\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
 
-  return { success: true, pages: extractJson(text) };
+  return { success: true, pages: extractJson(text), correctedBook };
 }
 
 async function handleValidate(env, body) {
@@ -718,6 +797,11 @@ async function runStep(env, pipelineId, step) {
     const genData = await handleGenerate(env, bookInfo);
     const pages = genData.pages;
     const patch = { step: 1, stepStatus: 'done', label: '5페이지 카드뉴스 생성 완료', pages };
+    // 교차검증으로 저자가 교정됐으면 bookInfo에 반영(이후 단계·도서관·DM에 진짜 저자 사용)
+    if (genData.correctedBook) {
+      const fixed = { ...bookInfo, title: genData.correctedBook.title || bookInfo.title, author: genData.correctedBook.author || bookInfo.author };
+      patch.bookInfo = fixed;
+    }
     // 모델 ID를 KV에 저장 → 이후 단계에서 재프로빙 없이 재활용
     if (_modelCache?.main) patch.models = { main: _modelCache.main, light: _modelCache.light };
     await savePipelineStatus(env, pipelineId, patch);
