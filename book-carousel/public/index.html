@@ -1191,11 +1191,13 @@ function renderSuggestions(books) {
   books.forEach((book, i) => {
     const card = document.createElement('div');
     card.className = 'suggest-card';
+    const vBadge = book.verified ? '<span style="font-size:10px;font-weight:700;color:#059669;background:rgba(5,150,105,.1);padding:2px 7px;border-radius:5px;margin-left:6px;">실존 확인</span>' : '';
     card.innerHTML = `
-      <div class="suggest-card-title">${escHtml(book.title)}</div>
+      <div class="suggest-card-title">${escHtml(book.title)}${vBadge}</div>
       <div class="suggest-card-meta">${escHtml(book.author)} · ${book.year} · ${escHtml(book.category)}</div>
       <div class="suggest-card-reason">${escHtml(book.reason)}</div>
       <div class="suggest-card-msg">${escHtml(book.coreMessage)}</div>
+      ${book.lesson ? `<div style="font-size:12px;color:var(--gray-700);background:#FFF7ED;border-left:3px solid #C2708F;border-radius:0 6px 6px 0;padding:8px 10px;margin-top:8px;line-height:1.6;">교훈 · ${escHtml(book.lesson)}</div>` : ''}
     `;
     card.addEventListener('click', () => selectBook(book, card));
     list.appendChild(card);
@@ -1295,6 +1297,12 @@ async function generateCarousel() {
       }
     }
     state.pages = data.pages;
+    // 교차검증으로 저자가 교정됐으면 반영(엉뚱한 저자 → 진짜 저자)
+    if (data.correctedBook) {
+      if (data.correctedBook.title) state.bookInfo.title = data.correctedBook.title;
+      if (data.correctedBook.author) state.bookInfo.author = data.correctedBook.author;
+      showToast(`저자 정보를 실제 정보로 교정했습니다 → ${state.bookInfo.author}`, 'info');
+    }
     addToHistory(state.bookInfo?.title);
     // 도서 번호를 미리 예약 → 캡션에 들어가는 번호와 도서관 등록 번호가 같아진다.
     try {
@@ -2433,10 +2441,12 @@ function renderDeployBooks(books) {
   books.forEach(book => {
     const item = document.createElement('div');
     item.className = 'deploy-book-item';
+    const vb = book.verified ? '<span style="font-size:9px;font-weight:700;color:#059669;background:rgba(5,150,105,.1);padding:2px 6px;border-radius:5px;margin-left:6px;">실존 확인</span>' : '';
     item.innerHTML = `
-      <div class="deploy-book-item-title">${escHtml(book.title)}</div>
+      <div class="deploy-book-item-title">${escHtml(book.title)}${vb}</div>
       <div class="deploy-book-item-meta">${escHtml(book.author)} · ${book.year} · ${escHtml(book.category)}</div>
       <div class="deploy-book-item-reason">${escHtml(book.reason)}</div>
+      ${book.lesson ? `<div style="font-size:11px;color:var(--gray-700);background:#FFF7ED;border-left:3px solid #C2708F;border-radius:0 5px 5px 0;padding:6px 9px;margin-top:6px;line-height:1.55;">교훈 · ${escHtml(book.lesson)}</div>` : ''}
     `;
     item.addEventListener('click', () => {
       list.querySelectorAll('.deploy-book-item').forEach(i => i.classList.remove('selected'));
