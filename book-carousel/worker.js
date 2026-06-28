@@ -237,7 +237,9 @@ async function naverBookCheck(env, query) {
 function _clean(s) {
   return String(s || '').replace(/<\/?b>/gi, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').trim();
 }
-function _normTitle(s) { return String(s || '').toLowerCase().replace(/[\s\W_]/g, ''); }
+// 공백·문장부호만 제거하고 글자(한글 포함)·숫자는 보존한다.
+// (주의: \W 는 한글을 비단어로 보고 지워버리므로 쓰면 안 됨 → 유니코드 letter/number만 남김)
+function _normTitle(s) { return String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ''); }
 
 async function naverBookLookup(env, query) {
   if (!env?.NAVER_CLIENT_ID || !env?.NAVER_CLIENT_SECRET) return null; // 키 없으면 판단 불가
