@@ -15,11 +15,11 @@
 }
 body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;padding-bottom:80px}
 
-/* header */
-.hd{background:var(--dark);color:#fff;padding:44px 20px 0;text-align:center}
+/* header (하단 여백을 padding으로 줘서 마진 겹침에 의한 흰 띠를 방지) */
+.hd{background:var(--dark);color:#fff;padding:44px 20px 22px;text-align:center}
 .hd-eyebrow{font-size:10px;letter-spacing:4px;color:var(--gold);font-weight:600;text-transform:uppercase;margin-bottom:12px}
 .hd-title{font-family:'Noto Serif KR',serif;font-size:28px;font-weight:700;line-height:1.25;margin-bottom:10px}
-.hd-sub{font-size:12.5px;color:#9CA3AF;line-height:1.7;margin-bottom:28px}
+.hd-sub{font-size:12.5px;color:#9CA3AF;line-height:1.7;margin-bottom:0}
 
 /* search + tabs (한 덩어리로 상단 고정 — 헤더 아래 빈칸 없이 바로 이어짐) */
 .tabs-wrap{background:var(--dark);padding:14px 16px 16px;position:sticky;top:0;z-index:20}
