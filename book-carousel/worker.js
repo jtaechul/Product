@@ -1848,8 +1848,9 @@ export default {
           result = { success: true, model: m.main, light: m.light, source: m.source };
         }
         else if (url.pathname === '/api/verify-book') {
+          const cv = await crossVerifyBook(env, body.title, body.author);
           const v = await verifyBookReal(env, body.title, body.author);
-          result = { success: true, ...v };
+          result = { success: true, cross: cv, verify: v };
         }
         else if (url.pathname === '/api/get-dm') {
           const num = String(parseInt(String(body.number || '').replace(/[^0-9]/g, ''), 10) || 0).padStart(3, '0');
