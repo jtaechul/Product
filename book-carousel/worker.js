@@ -264,26 +264,33 @@ async function crossVerifyBook(env, title, author) {
   const t = (title || '').trim();
   if (!t) return { status: 'notfound' };
 
-  // 제목+저자로 먼저, 없으면 제목만으로 재조회(저자가 틀렸을 수 있으므로)
-  let look = await naverBookLookup(env, author ? `${t} ${author}` : t);
-  if (look && !look.found && author) look = await naverBookLookup(env, t);
-  if (look === null) return { status: 'unknown' };       // 네이버 키 없음/실패
+  // ⚠️ 제목만으로 조회한다. (제목+저자를 합쳐 조회하면 저자가 틀릴 때 0건이 나와
+  //    진짜 책도 못 찾으므로.) 제목으로 찾은 뒤 네이버의 진짜 저자로 교정한다.
+  const look = await naverBookLookup(env, t);
+  if (look === null) return { status: 'unknown' };       // 네이버 키 없음/조회 실패
   if (!look.found || !look.items.length) return { status: 'notfound' };
 
-  // 제목이 실제로 일치하는 항목을 고른다(엉뚱한 책 매칭 방지)
   const nt = _normTitle(t);
-  const match = look.items.find(it => {
+  // 제목이 일치하는 항목들 (엉뚱한 책 매칭 방지)
+  const titleMatches = look.items.filter(it => {
     const ni = _normTitle(it.title);
     return ni && nt && (ni.includes(nt) || nt.includes(ni));
   });
-  if (!match) return { status: 'notfound' };             // 제목이 실존하지 않음
+  if (!titleMatches.length) return { status: 'notfound' };  // 그 제목의 책이 실존하지 않음
+
+  // 같은 제목이 여러 권이면 저자가 비슷한 것을 우선, 없으면 첫 항목
+  const na = _normTitle(author);
+  const best = (na && titleMatches.find(it => {
+    const ia = _normTitle(it.author);
+    return ia && (ia.includes(na) || na.includes(ia));
+  })) || titleMatches[0];
 
   return {
     status: 'found',
-    title: match.title,
-    author: match.author,        // ← 네이버의 진짜 저자로 교정
-    publisher: match.publisher,
-    description: match.description,
+    title: best.title,
+    author: best.author,         // ← 네이버의 진짜 저자로 교정
+    publisher: best.publisher,
+    description: best.description,
   };
 }
 
