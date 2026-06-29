@@ -657,10 +657,13 @@ async function handleGenerateCaption(env, body) {
 
   const result = extractJson(text);
   result.dmKeyword = (bookInfo.category || '책').replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 4) || '책';
-  // 캡션 끝에 오늘의 책을 공개(제목·저자). 마지막 장에서도 표지로 공개되지만 캡션에도 명시해 신뢰·검색성↑.
+  // 캡션 끝에 오늘의 책 공개(제목·저자) + 프로필 링크 유도.
+  // (프로필 바이오의 도서관 링크에 구매 링크가 있으므로 책을 만나고 싶은 사람을 그쪽으로 유도)
   if (bookInfo.title) {
     const by = bookInfo.author ? ` · ${bookInfo.author}` : '';
-    result.caption = (result.caption || '') + `\n\n오늘의 책 · 「${bookInfo.title}」${by}`;
+    result.caption = (result.caption || '') + `\n\n오늘의 책 · 「${bookInfo.title}」${by}\n책을 만나고 싶다면 프로필 링크에서 확인하세요`;
+  } else {
+    result.caption = (result.caption || '') + `\n\n책을 만나고 싶다면 프로필 링크에서 확인하세요`;
   }
   return { success: true, ...result };
 }
