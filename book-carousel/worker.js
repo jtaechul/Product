@@ -255,6 +255,7 @@ async function naverBookLookup(env, query) {
       publisher: _clean(it.publisher),
       pubdate: it.pubdate || '',
       description: _clean(it.description),
+      image: it.image || '',          // 책 표지 이미지 URL
     }));
     return { found: items.length > 0, items, total: d.total || 0 };
   } catch { return null; }
@@ -293,6 +294,7 @@ async function crossVerifyBook(env, title, author) {
     author: best.author,         // ← 네이버의 진짜 저자로 교정
     publisher: best.publisher,
     description: best.description,
+    cover: best.image || '',     // ← 책 표지 이미지
   };
 }
 
@@ -534,14 +536,18 @@ async function handleGenerate(env, body) {
   // 네이버에서 진짜 저자를 가져와 틀린 저자를 자동 교정한다. 가짜는 차단.
   // skipVerify=true(사용자가 직접 확인)면 건너뛴다.
   let correctedBook = null;
+  let bookCover = '';
   if (!body.skipVerify) {
     const cv = await crossVerifyBook(env, title, author);
     if (cv.status === 'notfound') {
       throw new Error(`BOOK_NOT_FOUND: "${title}"은(는) 실제 출간된 책으로 확인되지 않습니다. 제목·저자를 확인하거나, 실제 책이 맞다면 직접 확인 후 진행하세요.`);
     }
-    if (cv.status === 'found' && cv.author && cv.author !== author) {
+    if (cv.status === 'found') {
+      bookCover = cv.cover || '';
       // 저자가 틀렸으면 네이버의 진짜 저자로 교정해서 알려준다(프론트가 반영)
-      correctedBook = { title: cv.title || title, author: cv.author, publisher: cv.publisher || '' };
+      if (cv.author && cv.author !== author) {
+        correctedBook = { title: cv.title || title, author: cv.author, publisher: cv.publisher || '' };
+      }
     } else if (cv.status === 'unknown') {
       // 네이버 키 없음/실패 → 기존 게이트로 명백한 가짜만 차단(거짓 음성 방지)
       const v = await verifyBookReal(env, title, author);
@@ -554,10 +560,10 @@ async function handleGenerate(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'main',
     system: `당신은 연애·관계 심리 책을 소개하는 인스타그램 카드뉴스 전문 카피라이터입니다.\n타겟 독자: 연애·이별·짝사랑·관계에 지친 30대.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 마음을 건드린다 — 장황한 설명 금지.\n3. 공포·위기·충격이 아니라 '깊은 공감과 위로'로 저장·공유를 유도한다. 독자가 "이건 내 얘기다"라고 느껴 저장하게 만든다.\n4. 통계·수치·연구 인용보다 감정과 경험의 언어를 쓴다. 따뜻하고 문학적인 톤.\n5. 모든 콘텐츠에 반말을 절대 사용하지 않는다 — 문어체·존댓말(~습니다/~합니다/~네요/~까요)만 허용.\n반드시 JSON만 응답한다.`,
-    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '연애·관계 심리'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n\n[전체 톤] 연애·관계에 지친 30대를 위로하고 자기 마음을 이해하게 돕는 따뜻한 흐름. 공감 → 패턴 발견 → 마음의 이유 → 위로의 실마리 → 참여.\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(공감 훅 — 헤드라인만): 카드 전체를 단 하나의 마음을 건드리는 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 연애에서 겪었을 구체적 순간·감정을 정확히 포착한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 공포·경고 톤 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자가 혼자 느꼈던 감정을 들킨 듯한 문장.\n    좋은 예: "좋아할수록 더 차갑게 굴게 되는 사람이 있습니다"\n             "먼저 연락하면 지는 것 같아 오늘도 휴대폰만 들여다봤습니다"\n             "헤어지자는 말보다, 잡지 않을까 봐 더 무서웠습니다"\n    나쁜 예(절대 금지): "당신의 연애는 실패하고 있다" / "이대로면 평생 혼자입니다" (공포·단정 톤)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(패턴 발견): 독자가 반복해온 연애 패턴을 부드럽게 이름 붙여 보여준다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 독자가 "맞아, 나 그래"라고 느낄 구체적 행동·상황 묘사. 수치 금지, 감정과 장면 위주.\n3페이지(마음의 이유): 그 패턴의 심리적 뿌리를 따뜻하게 설명한다(애착, 상처, 두려움 등). 비난하지 않는다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. "당신이 이상한 게 아니라, 이런 마음이 있었던 것입니다" 같은 위로의 통찰. 심리학 개념을 쉽게 풀어 쓰되 학술 인용 금지.\n4페이지(위로의 실마리): 완전한 해답 대신 '이렇게 바라보면 달라진다'는 방향을 부드럽게 암시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 마지막 줄은 희망적 여운으로 끝낸다. 단정적 해결책 금지.\n5페이지(참여형 질문): 독자가 자기 연애 성향에 대해 답하고 싶어지는 A/B 질문으로 참여를 유도한다.\n  - cta: 독자 자신의 연애 성향/감정을 묻는 A/B 선택 형식 2~3줄.\n    예시 형식: "당신은 어느 쪽에 가까운가요?\\nA. 좋아할수록 다가가는 사람\\nB. 좋아할수록 멀어지는 사람"\n    핵심: 책이나 정보가 아니라 독자 자신의 마음을 묻는 질문이어야 한다.\n  - linkText: 반드시 두 역할을 분리해 한 줄로 씁니다.\n    역할1 — A/B 참여 유도: "댓글에 A 또는 B로 솔직한 마음을 남겨주세요" (어떤 보상도 약속하지 않음)\n    역할2 — 책 정보 안내: "오늘의 책은 프로필 링크에서 바로 만나보실 수 있습니다"\n    [절대 금지] "A 또는 B를 남기시면 당신에게 맞는 책을 안내해드립니다" 같이 A/B 선택에 따라 다른 결과가 온다는 표현 — A든 B든 같은 책 정보가 프로필 링크에 있으므로 거짓이 됩니다.\n    좋은 예: "댓글에 A 또는 B로 솔직한 마음을 남겨주세요 | 오늘의 책은 프로필 링크에서 바로 만나보실 수 있습니다"\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
+    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '연애·관계 심리'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n\n[전체 톤] 이별·재회·회복에 지친 30대를 위로하고 자기 마음을 이해하게 돕는 따뜻한 흐름. 공감 → 패턴 발견 → 마음의 이유 → 위로의 실마리 → 오늘의 책 소개.\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(공감 훅 — 헤드라인만): 카드 전체를 단 하나의 마음을 건드리는 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 연애에서 겪었을 구체적 순간·감정을 정확히 포착한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 공포·경고 톤 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자가 혼자 느꼈던 감정을 들킨 듯한 문장.\n    좋은 예: "좋아할수록 더 차갑게 굴게 되는 사람이 있습니다"\n             "먼저 연락하면 지는 것 같아 오늘도 휴대폰만 들여다봤습니다"\n             "헤어지자는 말보다, 잡지 않을까 봐 더 무서웠습니다"\n    나쁜 예(절대 금지): "당신의 연애는 실패하고 있다" / "이대로면 평생 혼자입니다" (공포·단정 톤)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(패턴 발견): 독자가 반복해온 연애 패턴을 부드럽게 이름 붙여 보여준다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 독자가 "맞아, 나 그래"라고 느낄 구체적 행동·상황 묘사. 수치 금지, 감정과 장면 위주.\n3페이지(마음의 이유): 그 패턴의 심리적 뿌리를 따뜻하게 설명한다(애착, 상처, 두려움 등). 비난하지 않는다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. "당신이 이상한 게 아니라, 이런 마음이 있었던 것입니다" 같은 위로의 통찰. 심리학 개념을 쉽게 풀어 쓰되 학술 인용 금지.\n4페이지(위로의 실마리): 완전한 해답 대신 '이렇게 바라보면 달라진다'는 방향을 부드럽게 암시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 마지막 줄은 희망적 여운으로 끝낸다. 단정적 해결책 금지.\n5페이지(책 공개 — 마무리): 독자에게 오늘의 책을 건넨다. (제목·저자·표지는 시스템이 자동으로 함께 보여주므로 본문 텍스트에 제목·저자를 직접 쓰지 말 것.)\n  - cta: 4페이지의 위로를 잇는 따뜻한 마무리 + 핵심 솔루션 한 문장(이별·회복에서 오늘 가져갈 마음의 방향). A/B·질문·"댓글" 언급 금지. 독자 가슴에 남는 한 문장.\n  - linkText: 그 마음에 책을 자연스럽게 건네는 한 줄 (예: "이 마음에 오래 곁이 되어줄 책을 소개합니다"). 제목은 쓰지 말 것(시스템이 표지·제목·저자를 함께 노출). "프로필 링크" 언급은 불필요.\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
 
-  return { success: true, pages: extractJson(text), correctedBook };
+  return { success: true, pages: extractJson(text), correctedBook, bookCover };
 }
 
 async function handleValidate(env, body) {
@@ -645,19 +651,16 @@ async function handleGenerateCaption(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'light',
     max_tokens: 512,
-    system: '당신은 연애·관계 심리 책을 소개하는 인스타그램 콘텐츠 크리에이터입니다. 30대 독자가 자기 마음을 들킨 듯 공감하며 저장·참여하고 싶어지는 따뜻한 캡션을 씁니다. 책 제목을 절대 노출하지 않고, 노골적 판매 표현을 피합니다. 공포·단정·비난 톤 금지, 위로와 공감의 언어만. 반말 절대 금지 — 문어체·존댓말(~습니다/~네요/~까요)만 허용. 반드시 JSON만 응답합니다.',
-    user: `책 카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n5페이지 A/B 투표 질문: ${pages.page5?.cta || ''}\n\n[중요] 이 게시물의 참여 방식은 마지막 장의 A/B 투표입니다. 캡션의 댓글 유도는 5페이지 A/B와 반드시 일치해야 하며, 별도의 키워드를 추가로 요구하면 안 됩니다(모순 금지).\n\n인스타그램 캡션을 작성하세요.\n\n[캡션 구조 — 순서 엄수]\n1줄: 독자가 연애에서 혼자 느꼈을 감정을 포착한 공감형 문장/질문 (책 제목 절대 노출 금지. "당신이 모른다면" 패턴 금지. "대부분의 사람들이" 금지. 공포·단정 금지)\n2~3줄: 캐럿셀 핵심 위로/통찰 초간결 요약 (반복 금지, 노골적 판매 금지)\n끝에서 둘째 줄: 저장 유도 문구 ("마음이 복잡한 날 다시 꺼내보고 싶다면 저장해두세요" 또는 "오늘의 나에게 필요했다면 저장해두세요" 형태)\n마지막 줄: A/B 투표 유도 — "당신은 어느 쪽에 가까운가요? 댓글에 A 또는 B로 솔직한 마음을 남겨주세요" 형태. 5페이지 A/B 선택지와 의미가 일치해야 함. DM 언급 절대 금지. [중요] 프로필 링크·도서 번호 안내 문구는 시스템이 캡션 뒤에 자동으로 덧붙이므로, 캡션 본문에는 절대 쓰지 말 것.\n\n[추가 규칙]\n- 해시태그: 정확히 3개 (연애·관계·심리·책 관련. 예: #연애심리 #책추천 #애착유형)\n- 전체 6줄 이내, 짧고 따뜻하게\n- commentKeyword에는 사용자가 입력할 단어가 아니라, 이 게시물의 DM 라우팅용 카테고리 태그(예: "${kwHint}")를 넣는다(화면 표시는 운영자용). 절대 캡션 본문에 키워드를 쓰지 말 것.\n\nJSON: {"caption":"1줄\\n2줄\\n3줄\\n저장유도줄\\nA/B유도줄","hashtags":["#연애심리","#책추천","#애착유형"],"commentKeyword":"${kwHint}"}`,
+    system: '당신은 이별·재회·회복을 다루는 연애 책을 소개하는 인스타그램 콘텐츠 크리에이터입니다. 30대 독자가 자기 마음을 들킨 듯 공감해 "저장"하고 "친구에게 공유"하고 싶어지는 따뜻한 캡션을 씁니다. 팔로워 성장이 목적이므로 저장·공유를 유도합니다. 노골적 판매·공포·단정·비난 금지, 위로와 공감의 언어만. 반말 절대 금지 — 문어체·존댓말(~습니다/~네요/~까요)만. 반드시 JSON만 응답합니다.',
+    user: `책 카테고리: ${bookInfo.category || '이별과회복'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n\n인스타그램 캡션을 작성하세요. (이 게시물의 목적: 저장·공유로 팔로워 늘리기. 댓글·DM·A/B 유도 없음.)\n\n[캡션 구조 — 순서 엄수]\n1줄: 독자가 이별·회복에서 혼자 느꼈을 감정을 포착한 공감형 한 문장 (책 제목은 시스템이 따로 붙이므로 본문엔 쓰지 말 것. "당신이 모른다면"·"대부분의 사람들이" 금지. 공포·단정 금지)\n2~3줄: 캐럿셀 핵심 위로/통찰 초간결 요약 (반복 금지)\n끝에서 둘째 줄: 저장 유도 ("마음이 복잡한 날 다시 꺼내보고 싶다면 저장해두세요" 형태)\n마지막 줄: 공유 유도 ("같은 마음을 지나는 사람에게 조용히 건네주세요" 형태)\n\n[추가 규칙]\n- 해시태그: 정확히 3개 (이별·연애·회복·책 관련. 예: #이별 #연애심리 #책추천)\n- 전체 6줄 이내, 짧고 따뜻하게\n- 댓글·DM·A/B·"프로필 링크" 언급 금지 (저장·공유만)\n\nJSON: {"caption":"1줄\\n2줄\\n3줄\\n저장유도줄\\n공유유도줄","hashtags":["#이별","#연애심리","#책추천"]}`,
   });
 
   const result = extractJson(text);
-  // 구형 dmKeyword 필드도 호환성 유지
-  result.dmKeyword = result.commentKeyword || kwHint.slice(0, 2) || '책';
-  // 도서 번호 안내를 캡션 맨 아래에 자동 추가.
-  // 인스타그램에서 '#'은 해시태그(3개 제한)로 잡히므로 'No.' 표기를 쓴다(@도 멘션이라 불가).
-  if (bookNumber) {
-    result.caption = (result.caption || '') + `\n\n오늘의 책은 프로필 링크에서 No.${bookNumber} 로 만나보실 수 있습니다`;
-  } else {
-    result.caption = (result.caption || '') + `\n\n오늘의 책은 프로필 링크에서 만나보실 수 있습니다`;
+  result.dmKeyword = (bookInfo.category || '책').replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 4) || '책';
+  // 캡션 끝에 오늘의 책을 공개(제목·저자). 마지막 장에서도 표지로 공개되지만 캡션에도 명시해 신뢰·검색성↑.
+  if (bookInfo.title) {
+    const by = bookInfo.author ? ` · ${bookInfo.author}` : '';
+    result.caption = (result.caption || '') + `\n\n오늘의 책 · 「${bookInfo.title}」${by}`;
   }
   return { success: true, ...result };
 }
@@ -806,6 +809,7 @@ async function runStep(env, pipelineId, step) {
     const genData = await handleGenerate(env, bookInfo);
     const pages = genData.pages;
     const patch = { step: 1, stepStatus: 'done', label: '5페이지 카드뉴스 생성 완료', pages };
+    if (genData.bookCover) patch.bookCover = genData.bookCover;   // 마지막 장 표지
     // 교차검증으로 저자가 교정됐으면 bookInfo에 반영(이후 단계·도서관·DM에 진짜 저자 사용)
     if (genData.correctedBook) {
       const fixed = { ...bookInfo, title: genData.correctedBook.title || bookInfo.title, author: genData.correctedBook.author || bookInfo.author };
