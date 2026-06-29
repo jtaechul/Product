@@ -2335,11 +2335,6 @@ async function openArchiveDetail(num) {
         : '<div style="font-size:12px;color:var(--gray-400);">이미지는 보관 기간(며칠)이 지나 삭제되었습니다. 게시물에는 그대로 남아 있습니다.</div>'}
     </div>
     <div class="arch-block">
-      <div class="arch-block-label">DM (수정 가능 — 댓글 오면 여기서 복사해 발송)</div>
-      <textarea id="archDm" rows="10">${archEsc(d.dmText)}</textarea>
-      <div class="arch-actions"><button class="btn btn-outline" id="archCopyDm" style="font-size:12px;padding:8px 14px;">DM 복사</button></div>
-    </div>
-    <div class="arch-block">
       <div class="arch-block-label">도서관 소개 (수정 가능)</div>
       <textarea id="archDesc" rows="3">${archEsc(d.coreMessage)}</textarea>
     </div>
@@ -2349,7 +2344,7 @@ async function openArchiveDetail(num) {
     </div>
     <div class="arch-block" style="border:none;background:none;padding:0;">
       <div class="arch-actions">
-        <button class="btn btn-primary" id="archSave" style="font-size:13px;">수정 저장 (DM·소개·링크 반영)</button>
+        <button class="btn btn-primary" id="archSave" style="font-size:13px;">수정 저장 (소개·링크 반영)</button>
         <a class="btn btn-outline" href="https://insight-vault.pages.dev/books.html#${archEsc(d.number)}" target="_blank" style="font-size:13px;text-decoration:none;">도서관에서 보기 →</a>
       </div>
       <div id="archSaveStatus" style="display:none;margin-top:10px;font-size:12.5px;color:var(--success);"></div>
@@ -2357,7 +2352,6 @@ async function openArchiveDetail(num) {
 
   document.getElementById('archBack').onclick = showArchiveList;
   document.getElementById('archCopyCaption').onclick = () => copyText(document.getElementById('archCaption').value, '캡션');
-  document.getElementById('archCopyDm').onclick = () => copyText(document.getElementById('archDm').value, 'DM');
   document.getElementById('archSave').onclick = async () => {
     const sbtn = document.getElementById('archSave');
     sbtn.disabled = true;
@@ -2365,12 +2359,11 @@ async function openArchiveDetail(num) {
       await apiFetch('/api/save-post', {
         bookNumber: d.number,
         bookInfo: { ...(d.bookInfo||{}), title: d.title, coreMessage: document.getElementById('archDesc').value.trim() },
-        dmText: document.getElementById('archDm').value,
         coupangLink: document.getElementById('archLink').value.trim() || null,
         caption: d.caption, hashtags: d.hashtags, pages: d.pages,
       });
       const st = document.getElementById('archSaveStatus');
-      st.textContent = '저장됐습니다. DM·소개·링크가 반영되었습니다.';
+      st.textContent = '저장됐습니다. 소개·링크가 반영되었습니다.';
       st.style.display = 'block';
       showToast(`No.${d.number} 수정 저장 완료`, 'success');
     } catch (e) {
@@ -2727,20 +2720,8 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
   }
   updateInstagramBtn();
 
-  // ── Step 5: DM 자동 회신 ──
-  setDeployStep(5, 'active', 'DM 자동 회신 내용 작성 중...');
-  try {
-    const dmData = await apiFetch('/api/generate-dm-reply', {
-      pages, bookInfo,
-      affiliateLinks: Array.isArray(affiliateLinks) ? affiliateLinks : [],
-      commentKeyword: dmKeyword,
-      bookNumber: state.bookNumber || '',
-    });
-    renderDmReplies(dmData);
-    setDeployStep(5, 'done', 'DM 자동 회신 생성 완료');
-  } catch (err) {
-    setDeployStep(5, 'error', 'DM 회신 생성 실패 — 계속 진행');
-  }
+  // ── Step 5: (새 전략) DM 미사용 — 건너뜀 ──
+  setDeployStep(5, 'done', 'DM 단계 생략 (저장·공유 중심 전략)');
 
   // ── Step 6: 텔레그램 발송 (완료 알림 + 확인 링크만) ──
   setDeployStep(6, 'active', '제작 완료 — 텔레그램 알림 발송 중...');
@@ -2875,16 +2856,8 @@ function renderDmKeywordInfo(category) {
     + (category ? ` <span style="opacity:.65">(라우팅 카테고리: ${escHtml(category)})</span>` : '');
 }
 
-// DM 회신을 화면에 표시. 하나의 DM(A·B 내용 모두 포함).
-function renderDmReplies(src) {
-  const dm = (src && (src.dmText || src.dmTextA)) || '';
-  if (!dm) return false;
-  state.dmReplyA = dm;
-  document.getElementById('dmReplyTextA').textContent = dm;
-  document.getElementById('dmReplyResult').style.display = 'block';
-  document.getElementById('dmReplyWrapper').style.display = 'block';
-  return true;
-}
+// 새 전략(저장·공유 중심)에서는 DM을 사용하지 않는다 → 표시하지 않음(비활성).
+function renderDmReplies() { return false; }
 
 function renderPipelineResults(status, autoSendComposites) {
   if (!status.pages) return;
