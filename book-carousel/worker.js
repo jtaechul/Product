@@ -907,21 +907,9 @@ async function runStep(env, pipelineId, step) {
     await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0 });
 
   } else if (step === 5) {
-    const { pages, dmKeyword: savedKw } = state;
-    const dmKeyword = savedKw || commentKeyword;
-    await setActive('DM 자동 회신 내용 작성 중...');
-    await logStep(env, pipelineId, { step, phase: 'start' });
-    let dmText = '', dmTextA = '', dmTextB = '';
-    try {
-      const dmData = await handleGenerateDmReply(env, { pages, bookInfo, affiliateLinks, commentKeyword: dmKeyword, pipelineId, bookNumber });
-      dmText = dmData?.dmText || '';
-      dmTextA = dmData?.dmTextA || dmText;
-      dmTextB = dmData?.dmTextB || dmText;
-    } catch (e) {
-      await logStep(env, pipelineId, { step, phase: 'warn', error: 'DM 회신 생성 실패(계속 진행): ' + e.message });
-    }
-    await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'done', label: 'DM 자동 회신 생성 완료', dmText, dmTextA, dmTextB });
-    await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0 });
+    // 새 전략(저장·공유 중심)에서는 DM 자동 회신을 만들지 않는다. 단계는 건너뛰며 통과.
+    await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'done', label: 'DM 단계 생략(새 전략: 저장·공유 중심)' });
+    await logStep(env, pipelineId, { step, phase: 'skip', note: 'DM 미사용' });
 
   } else if (step === 6) {
     const { telegramSentAt } = state;
