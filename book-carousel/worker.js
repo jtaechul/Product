@@ -1763,6 +1763,28 @@ export default {
         return await handleImageServe(env, url);
       }
 
+      // 책 표지 프록시 — 네이버 이미지를 우리 도메인으로 받아 캔버스 CORS 오염 없이 그릴 수 있게
+      if (url.pathname === '/api/cover') {
+        const src = url.searchParams.get('url') || '';
+        if (!/^https:\/\/[\w.-]*pstatic\.net\//.test(src) && !/^https:\/\/[\w.-]*(naver|nstatic)\.[\w.]+\//.test(src)) {
+          return new Response('bad url', { status: 400, headers: CORS });
+        }
+        try {
+          const r = await fetch(src);
+          if (!r.ok) return new Response('not found', { status: 404, headers: CORS });
+          const buf = await r.arrayBuffer();
+          return new Response(buf, {
+            headers: {
+              'Content-Type': r.headers.get('content-type') || 'image/jpeg',
+              'Access-Control-Allow-Origin': '*',
+              'Cache-Control': 'public, max-age=604800',
+            },
+          });
+        } catch {
+          return new Response('error', { status: 502, headers: CORS });
+        }
+      }
+
       // instagram-webhook은 GET/POST 모두 처리 + raw request 필요 → body 파싱 전에 분기
       if (url.pathname === '/api/instagram-webhook') {
         return await handleInstagramWebhook(env, request);
