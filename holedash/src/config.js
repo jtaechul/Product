@@ -116,6 +116,24 @@ export const POSES = {
     ...TORSO, eR: [0.8, -1.5], wR: [1.1, -1.95], eL: [-0.72, -0.3], wL: [-1.0, 0.25],
     kL: [-0.4, 0.98], kR: [0.4, 0.98], aL: [-0.55, 1.68], aR: [0.55, 1.68],
   },
+
+  // ===== 상급자 아크로바틱 포즈 =====
+  // 플라밍고: 한 다리(오른발) 딛고, 왼다리 옆으로 들기 + 양팔 균형
+  flamingo: {
+    ...TORSO, eL: [-1.0, -1.12], eR: [1.0, -1.12], wL: [-1.6, -1.12], wR: [1.6, -1.12],
+    kR: [0.12, 0.95], aR: [0.12, 1.7], kL: [-0.7, 0.5], aL: [-1.05, 0.78],
+  },
+  // 런지: 다리를 크게 벌려 낮춘 자세 + 양팔 벌림(아크로바틱)
+  lunge: {
+    head: [0, -1.2], sL: [-0.5, -0.85], sR: [0.5, -0.85], hL: [-0.3, 0.48], hR: [0.3, 0.48],
+    eL: [-0.95, -0.85], eR: [0.95, -0.85], wL: [-1.6, -0.85], wR: [1.6, -0.85],
+    kL: [-0.95, 1.0], kR: [0.95, 1.0], aL: [-1.25, 1.7], aR: [1.25, 1.7],
+  },
+  // 트위스트: 상체 비틀기(한 팔 위 대각선, 다리 모음) — rot과 함께 쓰면 역동적
+  twist: {
+    ...TORSO, eR: [0.5, -1.6], wR: [0.75, -2.1], eL: [-0.85, -0.2], wL: [-1.15, 0.35],
+    kL: [-0.2, 0.95], kR: [0.2, 0.95], aL: [-0.22, 1.7], aR: [0.22, 1.7],
+  },
 };
 
 // ===== 벽(스테이지) 정의 =====
@@ -160,6 +178,77 @@ export const STAGE_WALLS = [
   { id: 'w26', level: 8, pose: 'tpose',  rot: 0,     margin: 0.34, approachSpeed: 1.7,  variant: 'rotate' },
 ];
 
+// ── 초보자: 느리고 넉넉, 변형·장애물 적음, 기본 포즈 위주 ──
+export const BEGINNER_WALLS = [
+  { id: 'b01', level: 1, pose: 'stand',  rot: 0, margin: 0.66, approachSpeed: 0.8, variant: 'normal' },
+  { id: 'b02', level: 1, pose: 'tpose',  rot: 0, margin: 0.64, approachSpeed: 0.85, variant: 'normal' },
+  { id: 'b03', level: 1, pose: 'oneup',  rot: 0, margin: 0.62, approachSpeed: 0.85, variant: 'normal' },
+  { id: 'b04', level: 1, pose: 'stand',  rot: 0, margin: 0.64, approachSpeed: 0.9, variant: 'normal' },
+  { id: 'b05', level: 2, pose: 'star',   rot: 0, margin: 0.62, approachSpeed: 0.9, variant: 'normal' },
+  { id: 'b06', level: 2, pose: 'crouch', rot: 0, margin: 0.62, approachSpeed: 0.95, variant: 'normal' },
+  { id: 'bd1', level: 2, pose: 'blackhole', rot: 0, margin: 0.62, approachSpeed: 0.9, variant: 'normal', title: '블랙홀', artist: '아이브' },
+  { id: 'b07', level: 3, pose: 'tpose',  rot: 0, margin: 0.60, approachSpeed: 0.95, variant: 'normal' },
+  { id: 'b08', level: 3, pose: 'oneup',  rot: 0, margin: 0.60, approachSpeed: 1.0, variant: 'normal' },
+  { id: 'b09', level: 3, pose: 'stand',  rot: 0, margin: 0.62, approachSpeed: 1.0, variant: 'normal' },
+  { id: 'bd2', level: 3, pose: 'cat',    rot: 0, margin: 0.60, approachSpeed: 0.95, variant: 'normal', title: '빌려온 고양이', artist: '아일릿' },
+  { id: 'b10', level: 4, pose: 'star',   rot: 0, margin: 0.58, approachSpeed: 1.0, variant: 'normal' },
+  { id: 'b11', level: 4, pose: 'crouch', rot: 0, margin: 0.60, approachSpeed: 1.05, variant: 'normal' },
+  { id: 'b12', level: 4, pose: 'tpose',  rot: 0, margin: 0.58, approachSpeed: 1.05, variant: 'normal' },
+  { id: 'b13', level: 5, pose: 'oneup',  rot: 0, margin: 0.58, approachSpeed: 1.1, variant: 'normal' },
+  { id: 'b14', level: 5, pose: 'stand',  rot: 0, margin: 0.60, approachSpeed: 1.1, variant: 'normal' },
+];
+
+// ── 상급자: 기본자세 없음, 아크로바틱/역동(이동·회전), 타이트, 빠름 ──
+export const ADVANCED_WALLS = [
+  { id: 'a01', level: 1, pose: 'star',     rot: 0,    margin: 0.44, approachSpeed: 1.2, variant: 'rotate' },
+  { id: 'a02', level: 1, pose: 'flamingo', rot: 0,    margin: 0.44, approachSpeed: 1.2, variant: 'normal' },
+  { id: 'a03', level: 2, pose: 'tpose',    rot: 0,    margin: 0.40, approachSpeed: 1.25, variant: 'moving' },
+  { id: 'a04', level: 2, pose: 'lunge',    rot: 0,    margin: 0.44, approachSpeed: 1.25, variant: 'normal' },
+  { id: 'a05', level: 2, pose: 'oneup',    rot: 0,    margin: 0.40, approachSpeed: 1.3, variant: 'moving' },
+  { id: 'a06', level: 3, pose: 'twist',    rot: 0,    margin: 0.42, approachSpeed: 1.3, variant: 'normal' },
+  { id: 'ad1', level: 3, pose: 'blackhole', rot: 0,   margin: 0.46, approachSpeed: 1.25, variant: 'normal', title: '블랙홀', artist: '아이브' },
+  { id: 'a07', level: 3, pose: 'crouch',   rot: 0,    margin: 0.40, approachSpeed: 1.35, variant: 'normal' },
+  { id: 'a08', level: 4, pose: 'star',     rot: 0,    margin: 0.38, approachSpeed: 1.35, variant: 'rotate' },
+  { id: 'a09', level: 4, pose: 'flamingo', rot: 0.2,  margin: 0.42, approachSpeed: 1.4, variant: 'normal' },
+  { id: 'ad2', level: 4, pose: 'bangbang', rot: 0,    margin: 0.46, approachSpeed: 1.3, variant: 'normal', title: '뱅뱅', artist: '아이브' },
+  { id: 'a10', level: 5, pose: 'lunge',    rot: 0,    margin: 0.38, approachSpeed: 1.4, variant: 'normal' },
+  { id: 'a11', level: 5, pose: 'tpose',    rot: 0,    margin: 0.36, approachSpeed: 1.45, variant: 'moving' },
+  { id: 'ad3', level: 5, pose: 'cat',      rot: 0,    margin: 0.46, approachSpeed: 1.35, variant: 'normal', title: '빌려온 고양이', artist: '아일릿' },
+  { id: 'a12', level: 6, pose: 'twist',    rot: -0.2, margin: 0.38, approachSpeed: 1.45, variant: 'rotate' },
+  { id: 'a13', level: 6, pose: 'oneup',    rot: 0,    margin: 0.36, approachSpeed: 1.5, variant: 'moving' },
+  { id: 'a14', level: 6, pose: 'crouch',   rot: 0,    margin: 0.38, approachSpeed: 1.5, variant: 'normal' },
+  { id: 'ad4', level: 6, pose: 'magnet',   rot: 0,    margin: 0.44, approachSpeed: 1.4, variant: 'normal', title: '마그넷', artist: '아일릿' },
+  { id: 'a15', level: 7, pose: 'star',     rot: 0,    margin: 0.36, approachSpeed: 1.55, variant: 'rotate' },
+  { id: 'a16', level: 7, pose: 'flamingo', rot: -0.2, margin: 0.38, approachSpeed: 1.55, variant: 'normal' },
+  { id: 'a17', level: 7, pose: 'lunge',    rot: 0,    margin: 0.36, approachSpeed: 1.6, variant: 'normal' },
+  { id: 'ad5', level: 7, pose: 'itsme',    rot: 0,    margin: 0.44, approachSpeed: 1.45, variant: 'normal', title: "it's me", artist: '아일릿' },
+  { id: 'a18', level: 8, pose: 'twist',    rot: 0.2,  margin: 0.36, approachSpeed: 1.6, variant: 'rotate' },
+  { id: 'a19', level: 8, pose: 'tpose',    rot: 0,    margin: 0.34, approachSpeed: 1.65, variant: 'moving' },
+  { id: 'ad6', level: 8, pose: 'afterlike', rot: 0,   margin: 0.44, approachSpeed: 1.5, variant: 'normal', title: '에프터라이크', artist: '아이브' },
+  { id: 'a20', level: 8, pose: 'star',     rot: 0,    margin: 0.32, approachSpeed: 1.8, variant: 'rotate' },
+];
+
+// ===== 난이도 모드 =====
+// walls: 사용할 벽 목록 / lives: 라이프 / approachSecMul: 접근 시간 배수(클수록 느림=쉬움)
+// marginAdd: 모든 벽 여유 가감 / music: 배경음악 인덱스(0/1/2) / dodge: 장애물 설정
+export const MODES = {
+  beginner: {
+    key: 'beginner', name: '초보자', emoji: '🌱', walls: 'BEGINNER',
+    lives: 5, approachSecMul: 1.3, marginAdd: 0.10, music: 0, hitUnits: 0.95,
+    dodge: { from: 4, chance: 0.25, maxCount: 1, spread: false },
+  },
+  intermediate: {
+    key: 'intermediate', name: '중급자', emoji: '🔥', walls: 'STAGE',
+    lives: 3, approachSecMul: 1.0, marginAdd: 0.0, music: 1, hitUnits: 1.1,
+    dodge: { from: 1, chance: 0.6, maxCount: 3, spread: false },
+  },
+  advanced: {
+    key: 'advanced', name: '상급자', emoji: '💀', walls: 'ADVANCED',
+    lives: 3, approachSecMul: 0.82, marginAdd: -0.04, music: 2, hitUnits: 1.15,
+    dodge: { from: 0, chance: 0.85, maxCount: 4, spread: true },
+  },
+};
+
 // 포즈별 안내 문구(기울임은 rot로 좌/우 구분)
 export const POSE_HINTS = {
   stand: '🧍 차렷! 가만히 서기',
@@ -174,6 +263,10 @@ export const POSE_HINTS = {
   itsme: '😎 양손 가슴 앞으로!',
   cat: '🐱 양손 머리 옆 고양이!',
   magnet: '🧲 한 팔 위·한 팔 아래 대각선!',
+  // 상급 아크로바틱
+  flamingo: '🦩 한 발 들고 양팔 균형!',
+  lunge: '🤸 다리 크게 벌려 낮추기!',
+  twist: '🌀 상체 비틀어 한 팔 위로!',
 };
 export function poseHint(wall) {
   if (wall.pose === 'stand' && wall.rot < -0.1) return '↖️ 몸을 왼쪽으로 기울이기';

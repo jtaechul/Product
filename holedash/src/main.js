@@ -5,10 +5,10 @@ import { Sfx } from './audio.js';
 import { buildWallMask, poseBounds } from './walls.js';
 import { drawBodyMask, computeCollisionRate, bodyThicknessFromShoulder } from './collision.js';
 import {
-  LM, MASK_W, MASK_H, STAGE_WALLS, PRACTICE_WALL, poseHint,
-  gradeFromRate, comboMultiplier, START_LIFE, BASE_APPROACH_SEC, INTER_WALL_SEC,
+  LM, MASK_W, MASK_H, STAGE_WALLS, BEGINNER_WALLS, ADVANCED_WALLS, MODES, PRACTICE_WALL, poseHint,
+  gradeFromRate, comboMultiplier, BASE_APPROACH_SEC, INTER_WALL_SEC,
   RANK_TITLES, CONSOLATION_TITLE,
-  DODGE_TRAVEL_SEC, DODGE_HIT_UNITS, DODGE_SCORE, DODGE_FROM_WALL, DODGE_CHANCE, DODGE_GAP_SEC,
+  DODGE_TRAVEL_SEC, DODGE_SCORE,
 } from './config.js';
 
 const $ = (id) => document.getElementById(id);
@@ -19,42 +19,25 @@ const video = $('cam');
 const renderer = new Renderer(canvas, video);
 const pose = new PoseTracker(video);
 const sfx = new Sfx();
-// 배경음악 — 곡이 끝나면 '랜덤으로 다음 곡'을 계속 재생(무한 랜덤 플레이리스트)
+// 배경음악 — 모드별 전용 곡을 '연속으로'(loop) 재생. 초보=곡1·중급=곡2·상급=곡3
 const bgmTracks = [$('bgm'), $('bgm2'), $('bgm3')];
-let bgmCur = -1;
+bgmTracks.forEach((a) => { a.volume = 0.5; });
 let bgmActive = false;
 let muted = false;
 
-function bgmPickNext() {
-  if (bgmTracks.length <= 1) return 0;
-  let i; do { i = (Math.random() * bgmTracks.length) | 0; } while (i === bgmCur);
-  return i;
-}
-function bgmPlayIdx(i) {
-  if (muted) return;
-  bgmCur = i;
-  bgmTracks.forEach((a, k) => { if (k !== i) a.pause(); });
-  try { bgmTracks[i].play().catch(() => {}); } catch (e) {}
-}
 function bgmStart() {
-  bgmActive = true; bgmCur = -1;
+  bgmActive = true;
   if (muted) return;
-  const i = bgmPickNext();
-  try { bgmTracks[i].currentTime = 0; } catch (e) {}
-  bgmPlayIdx(i);
+  const i = modeCfg.music;
+  bgmTracks.forEach((a, k) => { a.loop = (k === i); if (k !== i) a.pause(); });
+  try { bgmTracks[i].currentTime = 0; bgmTracks[i].play().catch(() => {}); } catch (e) {}
 }
-function bgmStopAll() { bgmActive = false; bgmCur = -1; bgmTracks.forEach((a) => a.pause()); }
+function bgmStopAll() { bgmActive = false; bgmTracks.forEach((a) => a.pause()); }
 function bgmResume() {
   if (muted || !bgmActive) return;
-  if (bgmCur >= 0) { try { bgmTracks[bgmCur].play().catch(() => {}); } catch (e) {} }
-  else bgmStart();
+  const i = modeCfg.music;
+  try { bgmTracks[i].play().catch(() => {}); } catch (e) {}
 }
-bgmTracks.forEach((a) => {
-  a.volume = 0.5; a.loop = false;
-  a.addEventListener('ended', () => {
-    if (bgmActive && !muted) { const i = bgmPickNext(); try { bgmTracks[i].currentTime = 0; } catch (e) {} bgmPlayIdx(i); }
-  });
-});
 
 // 충돌 마스크용 오프스크린
 const bodyMaskCanvas = Object.assign(document.createElement('canvas'), { width: MASK_W, height: MASK_H });
@@ -66,6 +49,9 @@ const SYNTH = new URLSearchParams(location.search).has('synth');
 
 let state = 'TITLE';
 let players = [];        // {name, score, perfects, walls}
+let modeCfg = MODES.intermediate;  // 현재 난이도 모드
+let walls = STAGE_WALLS;           // 모드별 활성 벽 목록(여유 보정 적용)
+let activePractice = PRACTICE_WALL; // 모드 여유 보정된 연습 벽
 let groundY = 0.90;      // 바닥선(정규화 y) — 캘리브레이션에서 발 높이로 보정
 let headY = 0.18;        // 머리선(정규화 y) — 캘리브레이션에서 코 높이로 보정
 let current = null;      // 현재 플레이어
@@ -96,7 +82,21 @@ function setHud(on) { $('hud').classList.toggle('hidden', !on); }
 const calib = { progress: 0, done: false, tStart: 0, status: '' };
 
 // ====== 버튼 이벤트 ======
-$('btnStart').onclick = () => { sfx.resume(); tryLockLandscape(); gotoRegister(); };
+// 모드별 활성 벽 목록 만들기(여유 보정 적용)
+function buildWalls(cfg) {
+  const src = cfg.walls === 'BEGINNER' ? BEGINNER_WALLS : cfg.walls === 'ADVANCED' ? ADVANCED_WALLS : STAGE_WALLS;
+  return src.map((w) => ({ ...w, margin: Math.max(0.2, Math.min(0.85, w.margin + cfg.marginAdd)) }));
+}
+function selectMode(cfg) {
+  modeCfg = cfg;
+  walls = buildWalls(cfg);
+  activePractice = { ...PRACTICE_WALL, margin: Math.min(0.85, PRACTICE_WALL.margin + cfg.marginAdd) };
+  sfx.resume(); tryLockLandscape();
+  gotoRegister();
+}
+$('btnModeEasy').onclick = () => selectMode(MODES.beginner);
+$('btnModeMid').onclick = () => selectMode(MODES.intermediate);
+$('btnModeHard').onclick = () => selectMode(MODES.advanced);
 
 // 가로 고정 시도(지원 기기에서만). 실패하면 회전 안내(#rotateGate)가 대신 처리.
 async function tryLockLandscape() {
@@ -293,7 +293,7 @@ function startPractice() {
   setPlayGlow(true);
   g.practice = true;
   g.wallIndex = 0;
-  current.life = START_LIFE;
+  current.life = modeCfg.lives; current.maxLife = modeCfg.lives;
   current.score = 0; current.perfects = 0; current.walls = 0;
   current.combo = 0;
   setHud(true);
@@ -307,7 +307,7 @@ function startMainGame() {
   g.wallIndex = 0;
   current.score = 0; current.combo = 0; current.walls = 0; current.perfects = 0;
   current.dodgeCombo = 0;
-  current.life = START_LIFE;
+  current.life = modeCfg.lives; current.maxLife = modeCfg.lives;
   updateHud();
   beginCountdown('시작!');
 }
@@ -322,17 +322,17 @@ function beginWall() {
   const wall = currentWall();
   g.phase = 'approach';
   g.wallStart = performance.now() / 1000;
-  g.approachSec = BASE_APPROACH_SEC / wall.approachSpeed;
+  g.approachSec = (BASE_APPROACH_SEC / wall.approachSpeed) * modeCfg.approachSecMul;
   g.judged = false;
   // 스테이지별 배경음악 전환(연습은 스테이지1 유지)
   // (배경음악은 곡이 끝날 때 랜덤으로 자동 전환됨)
   // 댄스 벽이면 가운데 라운드 표시를 비우고(날아오는 제목이 대신), 아니면 ROUND 표시
   $('hudRound').textContent = g.practice ? '연습' : (wall.title ? '🎵 댄스' : `ROUND ${wall.level}`);
-  $('hudWall').textContent = g.practice ? '' : `벽 ${g.wallIndex + 1} / ${STAGE_WALLS.length}`;
+  $('hudWall').textContent = g.practice ? '' : `벽 ${g.wallIndex + 1} / ${walls.length}`;
 }
 
 function currentWall() {
-  return g.practice ? PRACTICE_WALL : STAGE_WALLS[g.wallIndex];
+  return g.practice ? activePractice : walls[g.wallIndex];
 }
 
 // 판정: 마스크 좌표계로 충돌률 계산
@@ -456,7 +456,7 @@ function shakeScreen(big = false) {
 function updateHud() {
   $('hudScore').textContent = current.score;
   $('hudCombo').textContent = current.combo >= 2 ? `🔥 ${current.combo} COMBO` : '';
-  $('hudLife').textContent = g.practice ? '연습' : '❤️'.repeat(current.life) + '🖤'.repeat(Math.max(0, START_LIFE - current.life));
+  $('hudLife').textContent = g.practice ? '연습' : '❤️'.repeat(current.life) + '🖤'.repeat(Math.max(0, (current.maxLife || modeCfg.lives) - current.life));
 }
 
 // 벽 완료 후 다음으로
@@ -469,7 +469,7 @@ function advanceWall() {
   }
   if (current.life <= 0) { finishPlayer(); return; }
   g.wallIndex++;
-  if (g.wallIndex >= STAGE_WALLS.length) { finishPlayer(true); return; }
+  if (g.wallIndex >= walls.length) { finishPlayer(true); return; }
   beginWall();
 }
 
@@ -482,7 +482,7 @@ function finishPlayer(cleared = false) {
   $('resultName').textContent = cleared ? `🎉 ${current.name} 완주!` : `${current.name} 종료`;
   $('resultScore').textContent = current.score;
   $('resultStats').innerHTML =
-    `통과한 벽 <b>${current.walls}</b>개 · PERFECT <b>${current.perfects}</b>회<br>` +
+    `${modeCfg.emoji} ${modeCfg.name} 모드 · 통과한 벽 <b>${current.walls}</b>개 · PERFECT <b>${current.perfects}</b>회<br>` +
     (cleared ? '모든 벽을 완주했어요! 🏁' : `라이프 소진 (벽 ${current.walls})`);
   if (cleared) sfx.fanfare();
   showScreen('result');
@@ -524,7 +524,7 @@ function loop() {
   lastTime = t;
 
   landmarks = SYNTH ? synthPose(t) : pose.detect(nowMs);
-  if (SYNTH) window.__hd = { state, phase: g.phase, life: current && current.life, score: current && current.score };
+  if (SYNTH) window.__hd = { state, phase: g.phase, life: current && current.life, score: current && current.score, mode: modeCfg.key, wallCount: walls.length };
 
   renderer.drawCamera();
 
@@ -561,7 +561,7 @@ function updatePlay(t) {
     if (wall.title) renderer.drawSongTitle(wall.title, wall.artist, el);
     renderer.drawPoseHint(poseHint(wall));
     // 양옆 빈 공간: 이번 동작/콤보 + 다음 포즈 미리보기
-    const nextWall = (!g.practice && g.wallIndex + 1 < STAGE_WALLS.length) ? STAGE_WALLS[g.wallIndex + 1] : null;
+    const nextWall = (!g.practice && g.wallIndex + 1 < walls.length) ? walls[g.wallIndex + 1] : null;
     renderer.drawSidePanels({
       moveText: poseHint(wall),
       combo: current.combo || 0,
@@ -586,23 +586,26 @@ function updatePlay(t) {
 
 // ====== 장애물 피하기 ======
 function shouldDodge() {
-  return !g.practice && current.life > 0 && g.wallIndex >= DODGE_FROM_WALL && Math.random() < DODGE_CHANCE;
+  const dc = modeCfg.dodge;
+  return !g.practice && current.life > 0 && g.wallIndex >= dc.from && Math.random() < dc.chance;
 }
 
 const DODGE_KINDS = ['orb', 'spike', 'bomb', 'star', 'saw'];
 
 function startDodge(t) {
-  // 후반일수록 더 많은 피사체가 '동시에' 날아옴(살짝 시차로 겹쳐서 날아옴)
+  // 모드 한도 내에서 후반일수록 더 많은 피사체가 '동시에' 날아옴
+  const dc = modeCfg.dodge;
   const wi = g.wallIndex;
   let count = 1;
   if (wi >= 4) count = 2;
-  if (wi >= 11 && Math.random() < 0.6) count = 3;
-  if (wi >= 20 && Math.random() < 0.5) count = 4;
+  if (wi >= 10 && Math.random() < 0.6) count = 3;
+  if (wi >= 16 && Math.random() < 0.5) count = 4;
+  count = Math.min(count, dc.maxCount);
   const dirs = [-1, 0, 1];
   const obs = [];
   for (let i = 0; i < count; i++) {
     obs.push({
-      startDelay: i * 0.3,                 // 0.3초 간격(travel 1.45초라 동시에 여러 개가 떠 있음)
+      startDelay: i * 0.3,
       dir: dirs[(Math.random() * 3) | 0],
       kind: DODGE_KINDS[(Math.random() * DODGE_KINDS.length) | 0],
       started: false, resolved: false,
@@ -614,14 +617,22 @@ function startDodge(t) {
 
 function updateDodge(t) {
   const d = g.dodge;
+  const spread = modeCfg.dodge.spread; // 상급: 미사일이 화면 곳곳을 노림
   let allDone = true;
   for (const ob of d.obs) {
     const localT = t - d.t0 - ob.startDelay;
     if (localT < 0) { allDone = false; continue; } // 아직 등장 전
     if (!ob.started) {
       ob.started = true;
-      const geom = landmarks ? renderer.playerCenter(landmarks) : { cx: renderer.W / 2, cy: renderer.H * 0.45, S: 80 };
-      ob.tx = geom.cx; ob.ty = geom.cy; ob.S = Math.max(46, geom.S);
+      const pc = landmarks ? renderer.playerCenter(landmarks) : { cx: renderer.W / 2, cy: renderer.H * 0.45, S: 80 };
+      if (spread) {
+        // 내 위치가 아닌 '화면 곳곳' 무작위 지점을 노림 → 안전지대를 찾아 이동
+        ob.tx = renderer.W * (0.16 + Math.random() * 0.68);
+        ob.ty = renderer.H * (0.34 + Math.random() * 0.34);
+        ob.S = Math.max(46, pc.S);
+      } else {
+        ob.tx = pc.cx; ob.ty = pc.cy; ob.S = Math.max(46, pc.S);
+      }
       const off = renderer.W * 0.42 * ob.dir;
       ob.sx = Math.max(renderer.W * 0.05, Math.min(renderer.W * 0.95, ob.tx + off));
       sfx.whoosh();
@@ -643,7 +654,7 @@ function judgeDodge(ob) {
   let hit = false;
   if (landmarks) {
     const geom = renderer.playerCenter(landmarks);
-    hit = Math.abs(geom.cx - ob.tx) / ob.S < DODGE_HIT_UNITS;
+    hit = Math.abs(geom.cx - ob.tx) / ob.S < modeCfg.hitUnits;
   }
   if (hit) {
     current.combo = 0; current.dodgeCombo = 0;
