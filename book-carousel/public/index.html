@@ -2304,15 +2304,27 @@ async function buildCardBlob(card, pageNum) {
 function measureTextLines(ctx, text, maxWidth) {
   if (!text) return [];
   const result = [];
+  // 콤마 규칙: 앞 단어가 콤마(,)로 끝나면, 그 뒤 단어가 줄 끝에 외톨이로 남지 않도록
+  // (다음 단어를 더 붙일 수 없으면) 콤마 뒤에서 줄을 끊어 그 구절을 다음 줄로 내린다.
+  const endsWithComma = (s) => /[,，、]$/.test((s || '').trim());
   for (const para of text.split('\n')) {
     if (!para.trim()) { result.push(''); continue; }
-    const words = para.split(' ');
+    const words = para.split(' ').filter(w => w);
     let line = '';
-    for (const word of words) {
-      if (!word) continue;
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
       const candidate = line ? line + ' ' + word : word;
       if (ctx.measureText(candidate).width <= maxWidth) {
-        line = candidate;
+        // 콤마 뒤 외톨이 방지: 직전 단어가 콤마로 끝나고, 이 단어 뒤에 또 한 단어를
+        // 같은 줄에 못 붙이면(=이 단어가 그 줄 마지막이 됨) → 콤마 뒤에서 줄을 끊는다.
+        const next = words[i + 1];
+        if (line && endsWithComma(line) && next &&
+            ctx.measureText(candidate + ' ' + next).width > maxWidth) {
+          result.push(line);
+          line = word;
+        } else {
+          line = candidate;
+        }
       } else {
         if (line) result.push(line);
         // 단어 자체가 maxWidth를 초과하면 글자 단위 폴백
