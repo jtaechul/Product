@@ -673,6 +673,8 @@
     .arch-block textarea, .arch-block input { width: 100%; font-family: inherit; font-size: 13px; border: 1px solid var(--gray-200); border-radius: 8px; padding: 10px; resize: vertical; line-height: 1.7; color: var(--gray-800); }
     .arch-block .arch-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
     .arch-empty { text-align: center; color: var(--gray-400); padding: 40px 20px; font-size: 14px; }
+    .arch-section-label { font-size: 12px; font-weight: 700; color: var(--gray-500); margin: 6px 2px 10px; letter-spacing: .3px; }
+    .arch-item.arch-draft { border-left: 3px solid #7c3aed; }
     .arch-imgs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
     .arch-imgs img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: var(--gray-100); }
     @media (max-width: 600px) { .arch-imgs { grid-template-columns: repeat(3, 1fr); } }
@@ -1072,7 +1074,35 @@ const state = {
   affiliateLinks: [],
   dmReply: null,
   bookNumber: '',
+  draftId: '',
 };
+
+// 만든 캐럿셀을 번호 없이 임시 초안으로 자동 저장(7일). 이미 도서관에 등록된 건 제외.
+async function autosaveDraft() {
+  try {
+    if (!state.pages || !state.bookInfo?.title) return;
+    if (state._catalogAdded) return;  // 이미 도서관에 정식 등록됨
+    let imgs = state.images || null;
+    try { imgs = await getArchiveImages(); } catch {}
+    const r = await apiFetch('/api/save-draft', {
+      draftId: state.draftId || '',
+      bookInfo: state.bookInfo,
+      pages: state.pages,
+      caption: state.caption || '',
+      hashtags: state.captionHashtags || [],
+      images: imgs,
+      cover: state.bookCover || '',
+    });
+    if (r.draftId) state.draftId = r.draftId;
+  } catch (e) { console.warn('초안 자동 저장 실패(무시):', e.message); }
+}
+
+// 도서관에 정식 등록되면 임시 초안은 지운다(중복 방지).
+async function dropDraftIfAny() {
+  if (!state.draftId) return;
+  try { await apiFetch('/api/delete-draft', { draftId: state.draftId }); } catch {}
+  state.draftId = '';
+}
 
 // ===== 중복 방지: 이미 캐럿셀을 만든 책 목록 =====
 const HISTORY_KEY = 'bc_generated_titles';
@@ -1293,7 +1323,8 @@ async function generateCarousel() {
   state.validation = null;
   state.images = null;
   state._catalogAdded = false;
-  state.bookNumber = '';  // 새 책 → 새 번호 (아래에서 미리 예약)
+  state.bookNumber = '';  // 새 책 → 번호는 도서관 등록/게시할 때 부여
+  state.draftId = '';     // 새 책 → 새 초안
   document.getElementById('validationPanel').classList.remove('visible');
   setStep(2);
 
@@ -1325,13 +1356,13 @@ async function generateCarousel() {
       showToast(`저자 정보를 실제 정보로 교정했습니다 → ${state.bookInfo.author}`, 'info');
     }
     addToHistory(state.bookInfo?.title);
-    // 도서 번호를 미리 예약 → 캡션에 들어가는 번호와 도서관 등록 번호가 같아진다.
-    try {
-      const r = await apiFetch('/api/reserve-book-number', {});
-      if (r.bookNumber) state.bookNumber = r.bookNumber;
-    } catch (e) { console.warn('도서 번호 예약 실패(무시):', e.message); }
+    // 번호는 "도서관 등록/게시할 때"만 매긴다(만들기만 하고 버리면 번호를 먹지 않도록).
+    // 캡션이 번호를 직접 쓰지 않으므로 미리 예약할 필요가 없다.
+    state.bookNumber = '';
     renderCarousel(data.pages);
     setStep(3);
+    // 만든 캐럿셀을 번호 없이 임시 초안으로 자동 저장 → 등록/게시 안 해도 사라지지 않음.
+    autosaveDraft();
   } catch (err) {
     hideLoading();
     setStep(1);
@@ -1446,6 +1477,7 @@ async function addBookToCatalogIfNeeded() {
     if (result.bookNumber) {
       state.bookNumber = result.bookNumber;
       state._catalogAdded = true;
+      dropDraftIfAny();
       showToast(`도서관에 No.${result.bookNumber}로 등록됐습니다 — 프로필 링크에서 확인 가능`, 'success');
     }
   } catch (e) {
@@ -1660,6 +1692,9 @@ document.getElementById('generateImagesBtn').addEventListener('click', async () 
         });
         showToast('새 이미지를 보관함에도 반영했습니다', 'success');
       } catch (e) { console.warn('보관함 이미지 반영 실패(무시):', e.message); }
+    } else {
+      // 아직 도서관에 등록 전이면, 합성 이미지까지 포함해 초안을 갱신(사라지지 않게)
+      autosaveDraft();
     }
   } catch (err) {
     hideLoading();
@@ -2453,6 +2488,7 @@ document.getElementById('generateCaptionBtn').addEventListener('click', async ()
     renderDmKeywordInfo(state.dmKeyword);
     document.getElementById('captionResult').style.display = 'block';
     showToast('캡션 생성 완료!', 'success');
+    if (!state._catalogAdded) autosaveDraft();  // 초안에 캡션도 반영
   } catch (err) {
     showToast(err.message, 'error');
   } finally {
@@ -2577,6 +2613,7 @@ document.getElementById('libRegBtn').addEventListener('click', async () => {
     if (result.bookNumber) {
       state.bookNumber = result.bookNumber;
       state._catalogAdded = true;
+      dropDraftIfAny();
       document.getElementById('libRegNo').textContent = `No.${result.bookNumber}`;
       const statusEl = document.getElementById('libRegStatus');
       const deepLink = `https://insight-vault.pages.dev/books.html#${result.bookNumber}`;
@@ -2608,25 +2645,113 @@ async function showArchiveList() {
   const listEl = document.getElementById('archiveList');
   listEl.innerHTML = '<div class="arch-empty">불러오는 중...</div>';
   try {
-    const catalog = await apiFetch('/api/book-catalog');
-    if (!Array.isArray(catalog) || !catalog.length) {
-      listEl.innerHTML = '<div class="arch-empty">아직 등록된 책이 없습니다.<br>캐럿셀을 만들고 "도서관 등록"을 하면 여기에 쌓입니다.</div>';
+    const [catalog, draftRes] = await Promise.all([
+      apiFetch('/api/book-catalog').catch(() => []),
+      apiFetch('/api/list-drafts').catch(() => ({ drafts: [] })),
+    ]);
+    const drafts = (draftRes && draftRes.drafts) || [];
+    const hasCatalog = Array.isArray(catalog) && catalog.length;
+
+    if (!hasCatalog && !drafts.length) {
+      listEl.innerHTML = '<div class="arch-empty">아직 만든 캐럿셀이 없습니다.<br>캐럿셀을 만들면 임시 초안으로 여기에 저장되고,<br>"도서관 등록"을 하면 정식 등록됩니다.</div>';
       return;
     }
-    listEl.innerHTML = catalog.map(b => `
-      <div class="arch-item" data-num="${archEsc(b.number)}">
-        <div class="arch-num">No.${archEsc(b.number)}</div>
-        <div class="arch-info">
-          <div class="arch-info-title">${archEsc(b.title)}</div>
-          <div class="arch-info-meta">${archEsc(b.category||'')}${b.date?' · '+archEsc(b.date):''}${b.coupangLink?' · 링크 있음':' · 링크 없음'}</div>
-        </div>
-        <div style="color:var(--gray-300);font-size:20px;">›</div>
-      </div>`).join('');
-    listEl.querySelectorAll('.arch-item').forEach(it =>
+
+    let html = '';
+    // 초안(미등록) — 번호 없이 임시 보관(7일). 등록하면 번호가 매겨진다.
+    if (drafts.length) {
+      html += `<div class="arch-section-label">초안 (미등록 · 7일 후 자동 삭제)</div>`;
+      html += drafts.map(d => `
+        <div class="arch-item arch-draft" data-draft="${archEsc(d.id)}">
+          <div class="arch-num" style="font-size:11px;color:#7c3aed;font-weight:800;">초안</div>
+          <div class="arch-info">
+            <div class="arch-info-title">${archEsc(d.title || '(제목 미정)')}</div>
+            <div class="arch-info-meta">${archEsc(d.author||'')}${d.category?' · '+archEsc(d.category):''}${d.hasImages?' · 이미지 있음':' · 텍스트만'}${d.date?' · '+archEsc(d.date):''}</div>
+          </div>
+          <div style="color:var(--gray-300);font-size:20px;">›</div>
+        </div>`).join('');
+    }
+    // 정식 등록된 책
+    if (hasCatalog) {
+      html += `<div class="arch-section-label">도서관 등록된 책</div>`;
+      html += catalog.map(b => `
+        <div class="arch-item" data-num="${archEsc(b.number)}">
+          <div class="arch-num">No.${archEsc(b.number)}</div>
+          <div class="arch-info">
+            <div class="arch-info-title">${archEsc(b.title)}</div>
+            <div class="arch-info-meta">${archEsc(b.category||'')}${b.date?' · '+archEsc(b.date):''}${b.coupangLink?' · 링크 있음':' · 링크 없음'}</div>
+          </div>
+          <div style="color:var(--gray-300);font-size:20px;">›</div>
+        </div>`).join('');
+    }
+    listEl.innerHTML = html;
+    listEl.querySelectorAll('.arch-item[data-num]').forEach(it =>
       it.addEventListener('click', () => openArchiveDetail(it.dataset.num)));
+    listEl.querySelectorAll('.arch-item[data-draft]').forEach(it =>
+      it.addEventListener('click', () => openDraftDetail(it.dataset.draft)));
   } catch (e) {
     listEl.innerHTML = '<div class="arch-empty">목록을 불러오지 못했습니다.</div>';
   }
+}
+
+// 초안 상세 — 내용 미리보기 + [도서관에 등록(번호 부여)] / [삭제]
+async function openDraftDetail(id) {
+  const detail = document.getElementById('archiveDetailView');
+  document.getElementById('archiveListView').style.display = 'none';
+  detail.style.display = 'block';
+  detail.innerHTML = '<div class="arch-empty">불러오는 중...</div>';
+  let r;
+  try { r = await apiFetch('/api/get-draft', { draftId: id }); } catch { r = { success: false }; }
+  if (!r || r.success === false) {
+    detail.innerHTML = `<button class="arch-back" id="archBack">← 목록</button><div class="arch-empty">${archEsc(r?.error||'초안을 불러올 수 없습니다.')}</div>`;
+    document.getElementById('archBack').onclick = showArchiveList; return;
+  }
+  const d = r.draft;
+  document.getElementById('archiveTitle').textContent = `초안 · ${d.bookInfo?.title || ''}`;
+  const p = d.pages || {};
+  const parts = [];
+  if (p.page1?.headline) parts.push('1. ' + p.page1.headline);
+  [2,3,4].forEach(n => { const pg = p['page'+n]; if (pg) parts.push(`${n}. ${pg.headline||''}\n${pg.body||''}`.trim()); });
+  if (p.page5) parts.push('5. ' + [p.page5.cta, p.page5.linkText].filter(Boolean).join('\n'));
+  const imgs = d.images && typeof d.images === 'object' ? Object.values(d.images) : [];
+  detail.innerHTML = `
+    <button class="arch-back" id="archBack">← 목록</button>
+    <div class="arch-block">
+      <div class="arch-block-label">책</div>
+      <div style="font-weight:700;">${archEsc(d.bookInfo?.title||'(제목 미정)')}</div>
+      <div style="font-size:13px;color:var(--gray-500);">${archEsc(d.bookInfo?.author||'')}${d.bookInfo?.category?' · '+archEsc(d.bookInfo.category):''}</div>
+    </div>
+    ${d.caption ? `<div class="arch-block"><div class="arch-block-label">캡션</div><textarea rows="5" readonly>${archEsc(d.caption)}</textarea></div>` : ''}
+    <div class="arch-block"><div class="arch-block-label">5장 카드 텍스트</div><textarea rows="7" readonly>${archEsc(parts.join('\n\n')) || '텍스트 없음'}</textarea></div>
+    <div class="arch-block">
+      <div class="arch-block-label">이미지 ${imgs.length?'':'(아직 생성 안 함)'}</div>
+      ${imgs.length ? `<div class="arch-imgs">${imgs.map(u=>`<img src="${archEsc(u)}" loading="lazy">`).join('')}</div>` : '<div style="font-size:12px;color:var(--gray-400);">이미지가 없습니다.</div>'}
+    </div>
+    <div class="arch-block" style="border:none;background:none;padding:0;">
+      <div class="arch-actions">
+        <button class="btn btn-primary" id="draftPromote" style="font-size:13px;">도서관에 등록 (번호 부여)</button>
+        <button class="btn btn-outline" id="draftDelete" style="font-size:13px;color:#dc2626;border-color:#dc2626;">초안 삭제</button>
+      </div>
+      <div id="draftStatus" style="display:none;margin-top:10px;font-size:12.5px;color:var(--success);"></div>
+    </div>`;
+  document.getElementById('archBack').onclick = showArchiveList;
+  document.getElementById('draftPromote').onclick = async () => {
+    const btn = document.getElementById('draftPromote'); btn.disabled = true; btn.textContent = '등록 중...';
+    try {
+      const res = await apiFetch('/api/save-post', {
+        bookInfo: d.bookInfo, pages: d.pages, caption: d.caption || '',
+        hashtags: d.hashtags || [], images: d.images || null, cover: d.cover || '',
+      });
+      await apiFetch('/api/delete-draft', { draftId: id }).catch(() => {});
+      showToast(`도서관에 No.${res.bookNumber} 등록 완료`, 'success');
+      showArchiveList();
+    } catch (e) { showToast('등록 실패: ' + e.message, 'error'); btn.disabled = false; btn.textContent = '도서관에 등록 (번호 부여)'; }
+  };
+  document.getElementById('draftDelete').onclick = async () => {
+    if (!confirm('이 초안을 삭제할까요?')) return;
+    try { await apiFetch('/api/delete-draft', { draftId: id }); showToast('초안을 삭제했습니다', 'success'); showArchiveList(); }
+    catch (e) { showToast('삭제 실패: ' + e.message, 'error'); }
+  };
 }
 
 async function openArchiveDetail(num) {

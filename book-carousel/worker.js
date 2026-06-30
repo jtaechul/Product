@@ -1614,6 +1614,62 @@ async function handleGetPost(env, body) {
   };
 }
 
+// ── 초안(draft) 저장/조회/삭제 ──
+// 만들었지만 아직 등록/게시 안 한 캐럿셀을 번호 없이 임시 보관(7일). 이미지가 사라지지 않게,
+// 그리고 마음에 드는 것만 골라 도서관에 정식 등록(번호 부여)하도록.
+const DRAFT_TTL = 604800; // 7일
+function pruneDraftIndex(index) {
+  const cutoff = Date.now() - DRAFT_TTL * 1000;
+  return (index || []).filter(d => d && d.createdAt && d.createdAt > cutoff);
+}
+async function handleSaveDraft(env, body) {
+  if (!env.PENDING_POSTS) throw new Error('저장소가 없습니다.');
+  const { bookInfo, pages, caption, hashtags, images, cover } = body;
+  if (!bookInfo?.title && !pages) throw new Error('저장할 초안 내용이 없습니다.');
+  const id = body.draftId || ('d' + Date.now() + Math.random().toString(36).slice(2, 6));
+  const createdAt = Date.now();
+  const draft = {
+    id, bookInfo: bookInfo || {}, pages: pages || null,
+    caption: caption || '', hashtags: hashtags || [],
+    images: images || null, cover: cover || bookInfo?.cover || '',
+    createdAt, date: new Date().toISOString().slice(0, 10),
+  };
+  await env.PENDING_POSTS.put(`draft_${id}`, JSON.stringify(draft), { expirationTtl: DRAFT_TTL });
+  // 인덱스 갱신(요약만)
+  let index = (await env.PENDING_POSTS.get('draft_index', 'json').catch(() => null)) || [];
+  index = pruneDraftIndex(index).filter(d => d.id !== id);
+  index.unshift({
+    id, title: bookInfo?.title || '(제목 미정)', author: bookInfo?.author || '',
+    category: bookInfo?.category || '', cover: draft.cover,
+    hasImages: !!(images && Object.keys(images).length), createdAt, date: draft.date,
+  });
+  await env.PENDING_POSTS.put('draft_index', JSON.stringify(index));
+  return { success: true, draftId: id };
+}
+async function handleListDrafts(env) {
+  if (!env.PENDING_POSTS) return { success: true, drafts: [] };
+  let index = (await env.PENDING_POSTS.get('draft_index', 'json').catch(() => null)) || [];
+  const pruned = pruneDraftIndex(index);
+  if (pruned.length !== index.length) await env.PENDING_POSTS.put('draft_index', JSON.stringify(pruned));
+  return { success: true, drafts: pruned };
+}
+async function handleGetDraft(env, body) {
+  const id = body.draftId;
+  if (!id) return { success: false, error: '초안 id가 필요합니다.' };
+  const draft = await env.PENDING_POSTS.get(`draft_${id}`, 'json').catch(() => null);
+  if (!draft) return { success: false, error: '초안을 찾을 수 없습니다(보관 기간 만료일 수 있음).' };
+  return { success: true, draft };
+}
+async function handleDeleteDraft(env, body) {
+  const id = body.draftId;
+  if (!id) return { success: false, error: '초안 id가 필요합니다.' };
+  await env.PENDING_POSTS.delete(`draft_${id}`);
+  let index = (await env.PENDING_POSTS.get('draft_index', 'json').catch(() => null)) || [];
+  index = pruneDraftIndex(index).filter(d => d.id !== id);
+  await env.PENDING_POSTS.put('draft_index', JSON.stringify(index));
+  return { success: true };
+}
+
 function generateBooksHTML(catalog) {
   const CAT_COLORS = {
     '애착': '#C2708F', '연애': '#D08A6E', '에세이': '#D08A6E',
@@ -1865,6 +1921,10 @@ export default {
         else if (url.pathname === '/api/add-book-to-catalog') result = await handleAddBookToCatalog(env, body);
         else if (url.pathname === '/api/save-post') result = await handleSavePost(env, body);
         else if (url.pathname === '/api/get-post') result = await handleGetPost(env, body);
+        else if (url.pathname === '/api/save-draft') result = await handleSaveDraft(env, body);
+        else if (url.pathname === '/api/list-drafts') result = await handleListDrafts(env);
+        else if (url.pathname === '/api/get-draft') result = await handleGetDraft(env, body);
+        else if (url.pathname === '/api/delete-draft') result = await handleDeleteDraft(env, body);
         else if (url.pathname === '/api/reserve-book-number') {
           const bookNumber = await reserveBookNumber(env);
           result = { success: true, bookNumber };
