@@ -128,13 +128,13 @@ export class Renderer {
 
   // 측정된 사람 몸(머리 정수리~발끝)에 넉넉한 여유를 더해 구멍 크기를 맞춘다.
   // → 키·체형이 달라도 머리끝·발끝이 경계를 벗어나지 않음. 손 올린 포즈는 화면 안에 남게 보정.
-  wallGeom(groundY = 0.90, headY = 0.18, wall = null) {
+  wallGeom(groundY = 0.90, headY = 0.18, wall = null, cxFrac = 0.5) {
     const H = this.H;
     const headPad = 0.12;  // 정수리(코보다 위) + 머리카락 여유
     const footPad = 0.10;  // 발목보다 아래 발끝 여유
     const footY = Math.min(0.99, groundY + footPad);
     const crownY = Math.max(0.015, headY - headPad);
-    const b = wall ? poseBounds(wall) : { headExt: 2.1, topExt: 2.1, botExt: 2.2 };
+    const b = wall ? poseBounds(wall) : { headExt: 2.1, topExt: 2.1, botExt: 2.2, sideExt: 1.0 };
     // 머리원 위쪽(headExt)과 발 아래(botExt) 사이를 [crownY..footY]에 매핑
     let S = Math.max(36, (footY - crownY) * H / (b.headExt + b.botExt));
     // 손 올린 부분(topExt)이 화면 위로 살짝(4%)까지만 벗어나게 허용 → 머리 여유 확보
@@ -144,7 +144,12 @@ export class Renderer {
       S = (footY * H - topLimit) / (b.topExt + b.botExt);
       cy = footY * H - b.botExt * S;
     }
-    return { cx: this.W / 2, cy, S, VH: S * 1.7 };
+    // 구멍을 좌우로 이동(cxFrac): 화면 밖으로 안 나가게 실루엣 폭(sideExt) 기준 클램프
+    const sideExt = b.sideExt != null ? b.sideExt : 1.0;
+    const halfW = sideExt * S;
+    const padX = this.W * 0.03;
+    const cx = Math.max(halfW + padX, Math.min(this.W - halfW - padX, cxFrac * this.W));
+    return { cx, cy, S, VH: S * 1.7 };
   }
 
   // 플레이어 실제 몸 중심(화면 px) — 장애물 조준·이펙트 위치에 사용
@@ -212,6 +217,40 @@ export class Renderer {
     this.ctx.globalAlpha = alpha;
     this.ctx.drawImage(this.wallLayer, 0, 0, this.W, this.H);
     this.ctx.restore();
+  }
+
+  // 구멍이 좌/우로 치우쳤을 때, 그 쪽으로 몸을 옮기라고 알려주는 화살표 큐.
+  // geom.cx 가 화면 중앙에서 얼마나 벗어났는지로 방향을 정한다.
+  drawMoveCue(geom, timeSec) {
+    const off = geom.cx - this.W / 2;
+    if (Math.abs(off) < this.W * 0.04) return; // 거의 중앙이면 표시 안 함
+    const dir = off > 0 ? 1 : -1;              // +1=오른쪽, -1=왼쪽
+    const ctx = this.ctx;
+    const bounce = Math.sin(timeSec * 6) * this.W * 0.012;
+    const ax = geom.cx + bounce;               // 구멍 쪽에서 까딱이는 화살표
+    const ay = this.H * 0.12;                  // 화면 위쪽(구멍 머리 위 영역)
+    const sz = Math.min(this.W, this.H) * 0.05;
+    ctx.save();
+    ctx.translate(ax, ay);
+    ctx.globalAlpha = 0.92;
+    // 둥근 배지 + 방향 화살표(▶/◀)
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.beginPath(); ctx.arc(0, 0, sz * 0.95, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = sz * 0.16; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-dir * sz * 0.35, -sz * 0.45);
+    ctx.lineTo(dir * sz * 0.45, 0);
+    ctx.lineTo(-dir * sz * 0.35, sz * 0.45);
+    ctx.stroke();
+    // "이동!" 라벨
+    ctx.font = `700 ${sz * 0.62}px system-ui, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 6;
+    ctx.fillText(dir > 0 ? '오른쪽 →' : '← 왼쪽', 0, sz * 1.7);
+    ctx.restore();
   }
 
   // 양옆 빈 공간 활용: 왼쪽=이번 동작/콤보, 오른쪽=다음 포즈 미리보기
