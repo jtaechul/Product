@@ -1138,25 +1138,29 @@ async function runDailyAuto(env) {
   await env.PENDING_POSTS.put('daily_used_books', JSON.stringify(newUsed), { expirationTtl: 31 * 24 * 3600 });
 }
 
-// 크론(매 1분)에서 호출 — 진행중 파이프라인을 찾아 각각 한 단계씩 전진
+// 크론(매 1분)에서 호출 — 진행중 파이프라인을 찾아 각각 한 단계씩 전진.
+// KV list()를 쓰지 않고 active_pipelines 인덱스(get 1회)만 읽는다 → 무료 list 한도 절약.
 async function runScheduled(env) {
   if (!env.PENDING_POSTS) return;
-  let cursor;
-  const ids = [];
-  do {
-    const list = await env.PENDING_POSTS.list({ prefix: 'pipeline_', cursor });
-    for (const { name } of list.keys) ids.push(name.slice('pipeline_'.length));
-    cursor = list.list_complete ? null : list.cursor;
-  } while (cursor && ids.length < 200);
+  let ids = [];
+  try { ids = (await env.PENDING_POSTS.get('active_pipelines', 'json')) || []; } catch {}
+  if (!ids.length) return;
 
   let checked = 0, advanced = 0;
+  const stale = [];
   for (const id of ids) {
     if (checked >= 30 || advanced >= 5) break;   // 한 틱당 작업량 상한
     checked++;
     const state = await env.PENDING_POSTS.get(`pipeline_${id}`, 'json').catch(() => null);
-    if (!state || state.status !== 'running') continue;
+    if (!state) { stale.push(id); continue; }                 // 만료·삭제 → 인덱스 정리
+    if (state.status !== 'running') { stale.push(id); continue; } // 완료·오류 → 인덱스 정리
     await advancePipeline(env, id);
     advanced++;
+  }
+  // 끝난(또는 사라진) 파이프라인을 인덱스에서 한 번에 제거
+  if (stale.length) {
+    const next = ids.filter(x => !stale.includes(x));
+    await env.PENDING_POSTS.put('active_pipelines', JSON.stringify(next));
   }
 }
 
@@ -1207,6 +1211,21 @@ async function handlePipelineStart(env, ctx, body) {
 }
 
 // ===== 서버사이드 파이프라인 (구형 — 30초 한도로 대형 파이프라인 제한됨) =====
+// 진행중 파이프라인 id 목록을 단일 키에 보관 → 크론이 KV list() 대신 get() 한 번으로 찾는다.
+// (KV list 무료 한도 1000회/일 초과 방지: 매분 크론의 list 1440회/일이 원인이었음)
+async function indexActivePipeline(env, id, active) {
+  if (!env.PENDING_POSTS) return;
+  let arr = [];
+  try { arr = (await env.PENDING_POSTS.get('active_pipelines', 'json')) || []; } catch {}
+  const has = arr.includes(id);
+  if (active && !has) {
+    arr.push(id);
+    await env.PENDING_POSTS.put('active_pipelines', JSON.stringify(arr.slice(-100)));
+  } else if (!active && has) {
+    await env.PENDING_POSTS.put('active_pipelines', JSON.stringify(arr.filter(x => x !== id)));
+  }
+}
+
 async function savePipelineStatus(env, pipelineId, patch) {
   if (!env.PENDING_POSTS || !pipelineId) return;
   const key = `pipeline_${pipelineId}`;
@@ -1217,6 +1236,9 @@ async function savePipelineStatus(env, pipelineId, patch) {
   // 불러올 수 있도록 1일간 보관. 진행중은 1시간(자가복구·타임아웃 판정용).
   const ttl = (updated.status === 'complete') ? 24 * 3600 : 3600;
   await env.PENDING_POSTS.put(key, JSON.stringify(updated), { expirationTtl: ttl });
+  // 진행중이면 인덱스에 등록, 완료/오류면 제거 (크론이 list 없이 찾도록)
+  if (updated.status === 'running') await indexActivePipeline(env, pipelineId, true);
+  else if (updated.status === 'complete' || updated.status === 'error') await indexActivePipeline(env, pipelineId, false);
 }
 
 async function executePipeline(env, pipelineId, bookInfo, affiliateLinks, commentKeyword) {
