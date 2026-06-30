@@ -3046,6 +3046,7 @@ async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
   clearTimeout(_pipelinePoller);
   _resultsRendered = false;
   state._catalogAdded = false;
+  state.draftId = '';
 
   const progressPanel = document.getElementById('progressPanel');
   progressPanel.classList.add('visible');
@@ -3221,6 +3222,7 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
 
   // ── Step 7: 완료 (도서관 등록은 아래 "도서관 등록" 메뉴에서 직접) ──
   setDeployStep(7, 'done', '결과 확인 후 "도서관 등록" 메뉴에서 등록하고 인스타그램에 게시하세요');
+  if (!state._catalogAdded) autosaveDraft();  // 등록·게시 전이면 초안으로 자동 저장
   populateLibraryReg();
   setStep(4);
   document.getElementById('deployDoneMsg').classList.add('visible');
@@ -3255,6 +3257,9 @@ function startPipelinePolling(pipelineId) {
         localStorage.removeItem('activePipelineBookInfo');
         _currentPollId = null;
         renderPipelineResults(status, true);
+        // 자동 배포로 만든 것도 등록·게시 전이면 초안으로 자동 저장(사라지지 않게).
+        // 파이프라인 id로 고정 → 재접속해도 같은 초안을 갱신(중복 방지).
+        if (!state._catalogAdded) { state.draftId = state.draftId || ('pl_' + pipelineId); autosaveDraft(); }
         return;
       }
       if (status.status === 'error') {
@@ -3416,6 +3421,7 @@ function renderPipelineResults(status, autoSendComposites) {
     localStorage.removeItem('activePipelineId');
     localStorage.removeItem('activePipelineBookInfo');
     renderPipelineResults(status, true);
+    if (!state._catalogAdded) { state.draftId = state.draftId || ('pl_' + savedId); autosaveDraft(); }
     showToast('캐럿셀 결과입니다. 확인 후 인스타그램 게시 여부를 결정하세요.', 'success');
   } else if (status.status === 'error') {
     localStorage.removeItem('activePipelineId');
