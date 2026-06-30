@@ -491,6 +491,13 @@
                  style="display:none;" onchange="parseTollPdf(this)">
         </div>
         <div class="pdf-result" id="pdfResult" style="display:none;"></div>
+        <div class="ss-preview" id="pdfPreview" style="display:none;margin-top:8px;">
+          <img id="pdfImg" alt="하이패스 PDF 캡처">
+          <div class="ss-preview-bar">
+            <span id="pdfImgInfo"></span>
+            <button class="btn-ss-remove" onclick="removePdfScreenshot()">제거</button>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -523,11 +530,15 @@
         <!-- Opinet screenshot -->
         <div class="ss-section">
           <div class="ss-lbl">
-            오피넷 화면 캡처 첨부
-            <span class="badge badge-gray" style="text-transform:none;letter-spacing:0;">엑셀에 포함</span>
+            오피넷 유가 증빙
+            <span class="badge badge-blue" style="text-transform:none;letter-spacing:0;">자동 조회 시 자동 생성</span>
+          </div>
+          <div class="cfg-note" style="margin:2px 0 6px;">
+            '유가 자동 조회' 성공 시 오피넷 API 데이터로 증빙 이미지가 자동 생성·첨부됩니다.
+            직접 캡처한 화면으로 교체하려면 아래 버튼을 사용하세요.
           </div>
           <label class="btn-ss" for="opinetScreenshot">
-            캡처 이미지 업로드
+            직접 캡처로 교체 (선택)
           </label>
           <input type="file" id="opinetScreenshot" accept="image/*"
                  style="display:none;" onchange="handleOpinetScreenshot(this)">
@@ -660,6 +671,16 @@
           <img id="resOpinetImg" style="display:none;max-width:100%;max-height:240px;" alt="오피넷 캡처">
         </div>
       </div>
+
+      <div class="ss-result-box" id="resPdfBox">
+        <div class="ss-result-hdr">하이패스 통행료 영수증 (PDF)</div>
+        <div class="ss-result-body" id="resPdfBody">
+          <div class="ss-result-empty" id="resPdfEmpty">
+            미첨부 — 위 "하이패스 PDF" 버튼으로 PDF를 업로드하면 자동 캡처됩니다
+          </div>
+          <img id="resPdfImg" style="display:none;max-width:100%;max-height:300px;" alt="PDF 캡처">
+        </div>
+      </div>
     </div>
 
     <!-- Attachment status + download -->
@@ -667,6 +688,7 @@
       <span class="lbl2">엑셀 포함 내용:</span>
       <span id="statusMap">지도 캡처: 미첨부</span>
       <span id="statusOpinet">유가 캡처: 미첨부</span>
+      <span id="statusPdf">통행료 PDF: 미첨부</span>
     </div>
 
     <button class="btn-dl" id="btnDl" onclick="downloadExcel()">
@@ -713,7 +735,8 @@ let S = {
   dist: null,
   calcResult: null,
   mapScreenshot: null,      // { base64, ext, dataUrl }
-  opinetScreenshot: null,   // { base64, ext, dataUrl }
+  opinetScreenshot: null,   // { base64, ext, dataUrl } — API 데이터로 자동 생성 or 수동 업로드
+  pdfScreenshot: null,      // { base64, ext, dataUrl } — 하이패스 PDF 페이지 렌더 이미지
 };
 
 /* ========================================================
@@ -892,6 +915,8 @@ async function fetchPrice() {
         const exact = picked.date === dateFmt;
         showPrice(picked.price,
           `${fmtDate(picked.date)} 일간 평균${exact ? '' : '(출장일 직전)'} (오피넷 자동 조회)`);
+        setOpinetEvidence(picked.price, fuel.name, fmtDate(picked.date),
+          exact ? '출장일 일간 평균(전국)' : '출장일 직전 일간 평균(전국)');
         found = true;
       }
     } catch {}
@@ -908,6 +933,7 @@ async function fetchPrice() {
         S.price = picked.price;
         document.getElementById('manPrice').value = picked.price.toFixed(2);
         showPrice(picked.price, `${fmtDate(picked.date)} 일간 평균 (최근 7일·오피넷 자동 조회)`);
+        setOpinetEvidence(picked.price, fuel.name, fmtDate(picked.date), '최근 7일 일간 평균(전국)');
         found = true;
       }
     } catch {}
@@ -924,6 +950,7 @@ async function fetchPrice() {
         S.price = price;
         document.getElementById('manPrice').value = price.toFixed(2);
         showPrice(price, '현재 전국 평균 (오피넷 자동 조회·일간값 없음)');
+        setOpinetEvidence(price, fuel.name, fmtDate(dateFmt), '현재 전국 평균 스냅샷');
         found = true;
       }
     } catch {}
@@ -981,6 +1008,137 @@ async function fetchWithProxy(url) {
     } catch { continue; }
   }
   throw new Error('모든 프록시 실패');
+}
+
+/* ========================================================
+   캔버스 → 첨부 이미지 변환
+   ======================================================== */
+function canvasToScreenshot(canvas) {
+  const dataUrl = canvas.toDataURL('image/png');
+  return { base64: dataUrl.split(',')[1], ext: 'png', dataUrl };
+}
+
+/* 오피넷 OpenAPI 응답 데이터로 '유가 조회 증빙' 이미지를 자동 생성
+   (외부 사이트 직접 캡처는 브라우저 보안상 불가 → 공식 API 데이터를 증빙 카드로 렌더) */
+function generateOpinetEvidence(price, fuelName, dateLabel, note) {
+  const W = 780, H = 392, P = 28;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+  x.textBaseline = 'middle';
+
+  // 배경 + 외곽선
+  x.fillStyle = '#ffffff'; x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#b0bdcc'; x.lineWidth = 2; x.strokeRect(1, 1, W - 2, H - 2);
+
+  // 헤더
+  x.fillStyle = '#00285c'; x.fillRect(0, 0, W, 66);
+  x.fillStyle = '#ffffff';
+  x.font = 'bold 23px "맑은 고딕","Malgun Gothic",sans-serif';
+  x.fillText('전국 평균 판매가격 (제품별)', P, 34);
+  x.font = '13px "맑은 고딕","Malgun Gothic",sans-serif';
+  x.fillStyle = '#bcd0ea';
+  x.fillText('오피넷 OpenAPI', W - 150, 34);
+
+  // 출처
+  x.fillStyle = '#475569';
+  x.font = '13px "맑은 고딕","Malgun Gothic",sans-serif';
+  x.fillText('출처 : 한국석유공사 오피넷(Opinet) · www.opinet.co.kr', P, 92);
+
+  // 데이터 행
+  const rows = [
+    ['조회 기준일', dateLabel],
+    ['유종', fuelName],
+    ['전국 평균 판매가격', price.toFixed(2) + ' 원/L'],
+    ['구분', note || '일간 평균(전국)'],
+  ];
+  let ry = 116;
+  rows.forEach(([k, v], i) => {
+    x.fillStyle = '#e8edf5'; x.fillRect(P, ry, 190, 50);
+    x.fillStyle = (i % 2) ? '#f8fafc' : '#ffffff'; x.fillRect(P + 190, ry, W - 2 * P - 190, 50);
+    x.strokeStyle = '#cdd5de'; x.lineWidth = 1; x.strokeRect(P, ry, W - 2 * P, 50);
+    x.strokeRect(P, ry, 190, 50);
+    x.fillStyle = '#00285c'; x.font = 'bold 15px "맑은 고딕","Malgun Gothic",sans-serif';
+    x.fillText(k, P + 16, ry + 25);
+    const big = (k === '전국 평균 판매가격');
+    x.fillStyle = big ? '#0d6e3e' : '#1a2236';
+    x.font = (big ? 'bold 19px' : '15px') + ' "맑은 고딕","Malgun Gothic",sans-serif';
+    x.fillText(String(v), P + 206, ry + 25);
+    ry += 50;
+  });
+
+  // 푸터(조회 일시)
+  const now = new Date();
+  const ts = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-` +
+             `${String(now.getDate()).padStart(2, '0')} ` +
+             `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  x.fillStyle = '#94a3b8'; x.font = '12px "맑은 고딕","Malgun Gothic",sans-serif';
+  x.fillText(`조회 일시 : ${ts} · 해양환경공단 출장비 정산 프로그램 자동 생성`, P, H - 24);
+
+  return canvasToScreenshot(cv);
+}
+
+/* 오피넷 자동 조회 성공 시 증빙 이미지 자동 첨부 */
+function setOpinetEvidence(price, fuelName, dateLabel, note) {
+  const ss = generateOpinetEvidence(price, fuelName, dateLabel, note);
+  S.opinetScreenshot = ss;
+  document.getElementById('opinetImg').src = ss.dataUrl;
+  document.getElementById('opinetImgInfo').textContent = '자동 생성 증빙 (오피넷 API 데이터)';
+  document.getElementById('opinetPreview').style.display = 'block';
+  document.getElementById('resOpinetImg').src = ss.dataUrl;
+  document.getElementById('resOpinetImg').style.display = 'block';
+  document.getElementById('resOpinetEmpty').style.display = 'none';
+  updateAttachStatus();
+}
+
+/* 하이패스 PDF의 모든 페이지를 한 장의 세로 이미지로 렌더 (#2) */
+async function renderPdfToImage(pdf) {
+  const scale = 1.6;
+  const maxPages = Math.min(pdf.numPages, 6);
+  const pageCanvases = [];
+  let totalH = 0, maxW = 0;
+  for (let p = 1; p <= maxPages; p++) {
+    const page = await pdf.getPage(p);
+    const vp = page.getViewport({ scale });
+    const c = document.createElement('canvas');
+    c.width = Math.ceil(vp.width);
+    c.height = Math.ceil(vp.height);
+    await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+    pageCanvases.push(c);
+    totalH += c.height + 12;
+    maxW = Math.max(maxW, c.width);
+  }
+  if (!pageCanvases.length) return;
+
+  const big = document.createElement('canvas');
+  big.width = maxW;
+  big.height = totalH + 12;
+  const bx = big.getContext('2d');
+  bx.fillStyle = '#ffffff'; bx.fillRect(0, 0, big.width, big.height);
+  let yy = 12;
+  for (const c of pageCanvases) {
+    bx.drawImage(c, Math.floor((maxW - c.width) / 2), yy);
+    yy += c.height + 12;
+  }
+
+  S.pdfScreenshot = canvasToScreenshot(big);
+  document.getElementById('pdfImg').src = S.pdfScreenshot.dataUrl;
+  document.getElementById('pdfImgInfo').textContent =
+    `하이패스 영수증 ${pdf.numPages}쪽 (자동 캡처)`;
+  document.getElementById('pdfPreview').style.display = 'block';
+  document.getElementById('resPdfImg').src = S.pdfScreenshot.dataUrl;
+  document.getElementById('resPdfImg').style.display = 'block';
+  document.getElementById('resPdfEmpty').style.display = 'none';
+  updateAttachStatus();
+}
+
+function removePdfScreenshot() {
+  S.pdfScreenshot = null;
+  document.getElementById('pdfPreview').style.display = 'none';
+  document.getElementById('pdfImg').src = '';
+  document.getElementById('resPdfImg').style.display = 'none';
+  document.getElementById('resPdfEmpty').style.display = 'block';
+  updateAttachStatus();
 }
 
 /* ========================================================
@@ -1060,12 +1218,16 @@ function removeMapScreenshot() {
 function updateAttachStatus() {
   const sm = document.getElementById('statusMap');
   const so = document.getElementById('statusOpinet');
+  const sp = document.getElementById('statusPdf');
   if (sm) sm.innerHTML = S.mapScreenshot
     ? '<span class="ss-attached">지도 캡처: 첨부됨</span>'
     : '지도 캡처: 미첨부';
   if (so) so.innerHTML = S.opinetScreenshot
     ? '<span class="ss-attached">유가 캡처: 첨부됨</span>'
     : '유가 캡처: 미첨부';
+  if (sp) sp.innerHTML = S.pdfScreenshot
+    ? '<span class="ss-attached">통행료 PDF: 첨부됨</span>'
+    : '통행료 PDF: 미첨부';
 }
 
 /* ========================================================
@@ -1338,6 +1500,8 @@ async function downloadExcel() {
                          : `[미첨부] 지도 경로 캡처 (별도 첨부)`,
       S.opinetScreenshot ? `[첨부] 오피넷 ${r.fuelName} 전국 평균 유가 ${r.price.toFixed(2)}원/L`
                          : `[미첨부] 오피넷 전국 평균 유가 캡처 (별도 첨부)`,
+      S.pdfScreenshot    ? `[첨부] 하이패스 통행료 영수증 (PDF)`
+                         : `[미첨부] 하이패스 통행료 영수증 (별도 첨부)`,
     ].join(' / ');
     sc('A13', {
       value: evText,
@@ -1350,7 +1514,7 @@ async function downloadExcel() {
     // ── Images section ───────────────────────────────────────
     let nextRow = 14;  // 1-indexed
 
-    async function embedImage(ss, label) {
+    async function embedImage(ss, label, rows) {
       if (!ss) return;
 
       // spacer
@@ -1369,8 +1533,8 @@ async function downloadExcel() {
       });
       nextRow++;
 
-      // image rows (24 rows × 15pt ≈ 360pt)
-      const IMG_ROWS = 24;
+      // image rows (기본 24행 × 15pt ≈ 360pt, PDF 등 세로 긴 이미지는 rows로 조정)
+      const IMG_ROWS = rows || 24;
       for (let i = 0; i < IMG_ROWS; i++) ws.getRow(nextRow + i).height = 15;
 
       const ext = ss.ext === 'jpg' ? 'jpeg' : ss.ext;
@@ -1384,7 +1548,7 @@ async function downloadExcel() {
       nextRow += IMG_ROWS;
     }
 
-    if (S.mapScreenshot || S.opinetScreenshot) {
+    if (S.mapScreenshot || S.opinetScreenshot || S.pdfScreenshot) {
       // Images header
       ws.getRow(nextRow).height = 6;
       nextRow++;
@@ -1402,6 +1566,7 @@ async function downloadExcel() {
 
     await embedImage(S.mapScreenshot,    `지도 경로 캡처 (${BASE_NAME} → ${r.dest})`);
     await embedImage(S.opinetScreenshot, `오피넷 전국 평균 유가 캡처 (${r.fuelName} ${r.price.toFixed(2)}원/L)`);
+    await embedImage(S.pdfScreenshot,    `하이패스 통행료 영수증 (PDF 캡처)`, 30);
 
     // ── Generate & download ──────────────────────────────────
     const buffer = await wb.xlsx.writeBuffer();
@@ -1454,6 +1619,11 @@ async function parseTollPdf(input) {
       const content = await page.getTextContent();
       fullText += content.items.map(i => i.str).join(' ') + '\n';
     }
+
+    // PDF 페이지를 이미지로 렌더 → 엑셀 증빙 첨부 (#2)
+    try {
+      await renderPdfToImage(pdf);
+    } catch (re) { console.warn('PDF 이미지 렌더 실패', re); }
 
     const { total, candidates } = extractTollCandidates(fullText);
 
