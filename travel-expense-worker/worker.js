@@ -39,7 +39,7 @@ export default {
         const dir = await fetch(
           'https://apis-navi.kakaomobility.com/v1/directions'
           + `?origin=${oc.x},${oc.y}&destination=${dc.x},${dc.y}`
-          + '&priority=RECOMMEND&car_fuel=DIESEL&summary=false',
+          + '&priority=DISTANCE&car_fuel=DIESEL&summary=false',
           { headers: { Authorization: `KakaoAK ${kakaoKey}` } }
         );
         if (!dir.ok) {

@@ -1252,7 +1252,7 @@ async function autoComputeDistance() {
     S.dist = roundKm;
     const mins = d.durationSec ? Math.round(d.durationSec / 60) : null;
     showDist(roundKm,
-      `카카오 길찾기 자동 계산 (편도 ${oneWayKm.toFixed(1)}km × 2${mins ? `, 편도 약 ${mins}분` : ''})`);
+      `카카오 길찾기 최단거리 자동 계산 (편도 ${oneWayKm.toFixed(1)}km × 2${mins ? `, 편도 약 ${mins}분` : ''})`);
 
     // 경로지도 증빙 이미지 자동 생성 → 지도 첨부
     const ss = await generateRouteEvidence(d, oneWayKm, roundKm, mins);
@@ -1285,7 +1285,7 @@ function latToWorldY(lat, z) {
 }
 
 async function generateRouteEvidence(d, oneWayKm, roundKm, mins) {
-  const W = 820, H = 600, P = 28;
+  const W = 820, H = 632, P = 28;
   const mapTop = 150, mapH = 300, mapW = W - 2 * P;
   const mapBottom = mapTop + mapH;
   const cv = document.createElement('canvas');
@@ -1301,7 +1301,7 @@ async function generateRouteEvidence(d, oneWayKm, roundKm, mins) {
   x.fillStyle = '#00285c'; x.fillRect(0, 0, W, 66);
   x.fillStyle = '#ffffff';
   x.font = 'bold 23px "맑은 고딕","Malgun Gothic",sans-serif';
-  x.fillText('자동차 경로 (왕복) — 카카오 길찾기', P, 34);
+  x.fillText('자동차 최단거리 경로 (왕복) — 카카오 길찾기', P, 34);
   x.fillStyle = '#bcd0ea'; x.font = '13px "맑은 고딕","Malgun Gothic",sans-serif';
   x.fillText('Kakao Mobility', W - 140, 34);
 
@@ -1401,6 +1401,7 @@ async function generateRouteEvidence(d, oneWayKm, roundKm, mins) {
   // ── 요약 박스 ──
   const sy = mapBottom + 20, rowH = 30;
   const items = [
+    ['경로 기준', '최단거리 (카카오 길찾기)'],
     ['편도 거리', oneWayKm.toFixed(1) + ' km'],
     ['왕복 거리', roundKm.toFixed(1) + ' km'],
     ['소요시간(편도)', mins ? `약 ${mins}분` : '-'],
@@ -1423,7 +1424,7 @@ async function generateRouteEvidence(d, oneWayKm, roundKm, mins) {
   const ts = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} `
            + `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   x.fillStyle = '#94a3b8'; x.font = '12px "맑은 고딕","Malgun Gothic",sans-serif';
-  x.fillText(`출처 : 카카오모빌리티 길찾기 API · 조회 ${ts} · 왕복=편도×2`, P, H - 20);
+  x.fillText(`출처 : 카카오모빌리티 길찾기 API(최단거리) · 조회 ${ts} · 왕복=편도×2`, P, H - 20);
 
   return canvasToScreenshot(cv);
 }
