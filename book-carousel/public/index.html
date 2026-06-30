@@ -59,8 +59,10 @@
       color: #fff; font-size: 16px; font-weight: 900; flex-shrink: 0;
     }
 
-    .logo-text { font-size: 15px; font-weight: 700; color: var(--gray-900); }
-    .logo-sub { font-size: 11px; color: var(--gray-400); }
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .brand-text { min-width: 0; }
+    .logo-text { font-size: 15px; font-weight: 700; color: var(--gray-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .logo-sub { font-size: 11px; color: var(--gray-400); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* Steps */
     .steps { display: flex; align-items: center; margin-left: auto; }
@@ -579,6 +581,15 @@
       .validation-body { grid-template-columns: 1fr; }
     }
 
+    /* 폰 화면(아이폰 등): 헤더 한 줄에 단계표시까지 넣으면 좌우로 넘쳐 잘림.
+       → 단계표시(1·2·3·4)는 숨기고, 브랜드(말줄임) + 보관함 버튼만 깔끔히 한 줄에. */
+    @media (max-width: 640px) {
+      header { padding: 0 14px; gap: 12px; }
+      .brand { flex: 1; }
+      .steps { display: none; }
+      #openArchiveBtn { padding: 8px 13px !important; font-size: 12.5px !important; }
+    }
+
     /* ── 인스타그램 직접 게시 버튼 ── */
     .btn-instagram {
       background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
@@ -686,9 +697,9 @@
 </div>
 
 <header>
-  <div style="display:flex;align-items:center;gap:10px;">
+  <div class="brand">
     <div class="logo-icon">행</div>
-    <div>
+    <div class="brand-text">
       <div class="logo-text">행간 — 연애 책방</div>
       <div class="logo-sub">연애·관계 심리 인스타그램 자동 생성</div>
     </div>
