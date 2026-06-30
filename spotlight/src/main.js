@@ -1,7 +1,7 @@
 import { Application } from "pixi.js";
 import { COLORS } from "./config.js";
 import { SceneManager } from "./core/SceneManager.js";
-import { MainScene } from "./scenes/MainScene.js";
+import { TitleScene } from "./scenes/TitleScene.js";
 
 // PixiJS 부트스트랩 (기획서 4번: GPU 렌더링, 빌드 없이 동작).
 async function boot() {
@@ -20,7 +20,7 @@ async function boot() {
   await loadFonts();
 
   const manager = new SceneManager(app);
-  await manager.change(new MainScene());
+  await manager.change(new TitleScene());
 }
 
 // @font-face 폰트를 실제 로드(브라우저가 글리프를 갖추도록).

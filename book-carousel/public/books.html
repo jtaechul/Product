@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>오늘의 연애 책방 | 행간</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FBF5F0;--card:#fff;--dark:#4A2F38;
+  --gold:#C2708F;--text:#3A2A2E;--sub:#8A7479;
+  --border:#EFE3DC;--radius:16px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;padding-bottom:80px}
+
+/* header (하단 여백을 padding으로 줘서 마진 겹침에 의한 흰 띠를 방지) */
+.hd{background:var(--dark);color:#fff;padding:44px 20px 22px;text-align:center}
+.hd-eyebrow{font-size:10px;letter-spacing:4px;color:var(--gold);font-weight:600;text-transform:uppercase;margin-bottom:12px}
+.hd-title{font-family:'Noto Serif KR',serif;font-size:28px;font-weight:700;line-height:1.25;margin-bottom:10px}
+.hd-sub{font-size:12.5px;color:#9CA3AF;line-height:1.7;margin-bottom:0}
+
+/* search + tabs (한 덩어리로 상단 고정 — 헤더 아래 빈칸 없이 바로 이어짐) */
+.tabs-wrap{background:var(--dark);padding:14px 16px 16px;position:sticky;top:0;z-index:20}
+.search-input{width:100%;box-sizing:border-box;background:#3A2730;color:#fff;border:1px solid #5A3F48;border-radius:12px;padding:11px 14px 11px 40px;font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;margin-bottom:12px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23B59AA4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:14px center}
+.search-input::placeholder{color:#B59AA4}
+.search-input:focus{border-color:var(--gold)}
+.tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:#3A2730;color:#D8C3CB;border:none;padding:8px 18px;border-radius:20px;font-size:13px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;white-space:nowrap;transition:all .2s;font-weight:500}
+.tab.active,.tab:hover{background:var(--gold);color:#fff;font-weight:600}
+
+/* catalog (상단 여백 최소화 — 탭 바로 아래에서 시작) */
+.catalog{max-width:520px;margin:0 auto;padding:16px 16px 0;display:flex;flex-direction:column;gap:16px}
+.no-results{text-align:center;padding:48px 20px;color:var(--sub);font-size:14px;display:none}
+
+/* card */
+.card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:0 2px 16px rgba(0,0,0,.06);position:relative;overflow:hidden;transition:box-shadow .25s,transform .25s}
+.card:hover{box-shadow:0 8px 32px rgba(0,0,0,.11);transform:translateY(-2px)}
+.card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),transparent)}
+.card.hidden{display:none}
+
+.card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.badge-new{background:#EF4444;color:#fff;font-size:9px;font-weight:700;padding:3px 9px;border-radius:4px;letter-spacing:1.5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.book-num{font-family:'Noto Serif KR',serif;font-size:32px;font-weight:700;color:#F0EBE2;line-height:1;user-select:none}
+
+.cat-pill{display:inline-block;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;margin-bottom:14px}
+.book-title{font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;line-height:1.4;margin-bottom:6px}
+.book-author{font-size:13px;color:var(--sub);margin-bottom:14px}
+.book-msg{font-size:13.5px;line-height:1.75;color:#374151;background:#F9F5EF;border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:18px}
+.card-foot{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.book-date{font-size:11.5px;color:#9CA3AF}
+.cta{background:var(--dark);color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;transition:all .2s;white-space:nowrap}
+.cta:hover{background:var(--gold);color:var(--dark)}
+.cta-soon{font-size:12px;color:#9CA3AF;font-style:italic}
+
+/* empty / loading */
+.empty{text-align:center;padding:60px 20px;color:var(--sub);font-size:15px}
+.loading{text-align:center;padding:60px 20px;color:var(--sub)}
+.spinner{display:inline-block;width:32px;height:32px;border:3px solid #E5E7EB;border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* footer */
+.foot{max-width:520px;margin:40px auto 0;padding:0 16px;text-align:center;border-top:1px solid var(--border);padding-top:24px}
+.foot p{font-size:11px;color:#9CA3AF;line-height:1.8}
+.foot a{color:var(--gold);text-decoration:none}
+.foot .insta{font-size:13px;font-weight:600;color:var(--dark);margin-bottom:8px}
+</style>
+</head>
+<body>
+<header class="hd">
+  <p class="hd-eyebrow">Love Between the Lines</p>
+  <h1 class="hd-title">행간<br>연애 책방</h1>
+  <p class="hd-sub">오늘 마음에 닿은 그 책을 여기서 만나요.<br>게시물의 도서 번호(#000)로 바로 찾을 수 있습니다.</p>
+</header>
+<div class="tabs-wrap">
+  <input type="text" id="searchInput" class="search-input" placeholder="제목 · 저자 · 번호로 검색" autocomplete="off">
+  <div class="tabs" id="tabs" role="tablist"></div>
+</div>
+<main class="catalog" id="catalog">
+  <div class="loading"><div class="spinner"></div><br>불러오는 중...</div>
+</main>
+<div class="no-results" id="noResults">검색 결과가 없습니다.</div>
+<footer class="foot">
+  <p class="insta"><a href="https://www.instagram.com/love.between.lines" target="_blank">@love.between.lines</a></p>
+  <p>이 페이지의 도서 구매 링크는 쿠팡 파트너스 활동의 일환으로,<br>이에 따른 일정액의 수수료를 제공받습니다.</p>
+</footer>
+<script>
+const WORKER = 'https://book-carousel.jtaechul.workers.dev';
+const CAT_COLORS = {
+  '애착': '#C2708F', '연애': '#D08A6E', '에세이': '#D08A6E',
+  '이별': '#9B6A8F', '회복': '#9B6A8F',
+  '자존감': '#C18A4B', '사랑': '#C2708F',
+  '관계': '#A2708F', '심리': '#8E6AA8',
+  '짝사랑': '#D98AA0', '설렘': '#D98AA0',
+};
+function catColor(c) {
+  for (const [k, v] of Object.entries(CAT_COLORS)) if (c?.includes(k)) return v;
+  return '#A98C7A';
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderBooks(catalog) {
+  const tabsEl = document.getElementById('tabs');
+  const catalogEl = document.getElementById('catalog');
+
+  if (!catalog.length) {
+    tabsEl.innerHTML = '<button class="tab active" data-filter="전체">전체</button>';
+    catalogEl.innerHTML = '<div class="empty"><p>곧 첫 번째 책이 등록됩니다.</p></div>';
+    return;
+  }
+
+  const cats = ['전체', ...new Set(catalog.map(b => b.category).filter(Boolean))];
+  tabsEl.innerHTML = cats.map((c, i) =>
+    `<button class="tab${i === 0 ? ' active' : ''}" data-filter="${esc(c)}">${esc(c)}</button>`
+  ).join('');
+
+  catalogEl.innerHTML = catalog.map((b, i) => {
+    const color = catColor(b.category);
+    const btn = b.coupangLink
+      ? `<a href="${esc(b.coupangLink)}" target="_blank" rel="noopener" class="cta">쿠팡에서 보기 →</a>`
+      : `<span class="cta-soon">링크 준비 중</span>`;
+    // 검색용 텍스트(제목·저자·번호·카테고리·소개)를 소문자로 합쳐 둔다
+    const searchText = `no.${b.number} ${b.number} ${b.title || ''} ${b.author || ''} ${b.category || ''} ${b.coreMessage || ''}`.toLowerCase();
+    return `
+<article class="card" data-category="${esc(b.category || '기타')}" data-search="${esc(searchText)}">
+  <div class="card-top">
+    ${i === 0 ? '<span class="badge-new">NEW</span>' : '<span></span>'}
+    <span class="book-num" id="book-${esc(b.number)}">No.${esc(b.number)}</span>
+  </div>
+  <span class="cat-pill" style="background:${color}18;color:${color}">${esc(b.category || '기타')}</span>
+  <h2 class="book-title">${esc(b.title)}</h2>
+  <p class="book-author">${esc(b.author)}</p>
+  ${b.coreMessage ? `<blockquote class="book-msg">${esc(b.coreMessage)}</blockquote>` : ''}
+  <div class="card-foot">
+    <span class="book-date">${esc(b.date)}</span>
+    ${btn}
+  </div>
+</article>`;
+  }).join('');
+
+  const tabs = tabsEl.querySelectorAll('.tab');
+  const cards = catalogEl.querySelectorAll('.card');
+  const searchInput = document.getElementById('searchInput');
+  const noResults = document.getElementById('noResults');
+
+  // 카테고리 탭 + 검색어를 함께 적용해 카드 표시/숨김 결정
+  function applyFilter() {
+    const q = (searchInput.value || '').trim().toLowerCase();
+    const active = tabsEl.querySelector('.tab.active');
+    const f = active ? active.dataset.filter : '전체';
+    let shown = 0;
+    cards.forEach(c => {
+      const okCat = (f === '전체') || (c.dataset.category === f);
+      const okSearch = !q || (c.dataset.search || '').includes(q);
+      const vis = okCat && okSearch;
+      c.classList.toggle('hidden', !vis);
+      if (vis) shown++;
+    });
+    if (noResults) noResults.style.display = shown === 0 ? 'block' : 'none';
+  }
+
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    applyFilter();
+  }));
+  searchInput.addEventListener('input', applyFilter);
+
+  // URL의 #번호(예: #001)로 해당 책 카드로 자동 스크롤 — 숫자만 비교(No.·# 표기 무관)
+  const targetNum = (location.hash.replace('#', '') || '').replace(/\D/g, '');
+  if (targetNum) {
+    const all = catalogEl.querySelectorAll('.card');
+    for (const card of all) {
+      const cardNum = (card.querySelector('.book-num')?.textContent || '').replace(/\D/g, '');
+      if (cardNum === targetNum) {
+        setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+        card.style.outline = '2px solid var(--gold)';
+        card.style.outlineOffset = '3px';
+        break;
+      }
+    }
+  }
+}
+
+async function load() {
+  try {
+    const res = await fetch(`${WORKER}/api/book-catalog`);
+    if (!res.ok) throw new Error('API 오류');
+    const catalog = await res.json();
+    renderBooks(catalog);
+  } catch (e) {
+    document.getElementById('catalog').innerHTML =
+      `<div class="empty"><p>도서 목록을 불러오지 못했습니다.<br>잠시 후 다시 시도해주세요.</p></div>`;
+  }
+}
+
+load();
+</script>
+</body>
+</html>

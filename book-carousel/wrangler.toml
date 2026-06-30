@@ -2,10 +2,18 @@ name = "book-carousel"
 main = "worker.js"
 compatibility_date = "2024-09-23"
 
-[assets]
-directory = "public"
-binding = "ASSETS"
-
+# 최상위 키(kv_namespaces)는 어떤 [table] 헤더보다 반드시 먼저 와야 한다.
+# (TOML 규칙: [assets] 뒤에 두면 assets.kv_namespaces로 파싱돼 무시됨 → KV 바인딩 누락)
 kv_namespaces = [
   { binding = "PENDING_POSTS", id = "e1b681762f6c43b9be77ede8061aa2dc" }
 ]
+
+# Cron Trigger
+#   "* * * * *"  : 매 1분 — 진행중 파이프라인을 한 단계씩 전진 (자가복구)
+#   "0 23 * * *" : 매일 23:00 UTC = 오전 8:00 KST — 일일 자동 캐럿셀 생성
+[triggers]
+crons = ["* * * * *", "0 23 * * *"]
+
+[assets]
+directory = "public"
+binding = "ASSETS"

@@ -219,8 +219,9 @@ def start_command_listener(get_status, stop: threading.Event | None = None
 _STATE_DIR = Path(__file__).resolve().parent.parent / ".botstate"
 
 # 텔레그램 합산 상태/하트비트에 포함할 봇 이름 집합. 비어 있으면 전부 표시.
-# 잠수함봇은 검증 실패로 운용 중단 → 현황 알림에서 영구 제외(대형코인만 표시).
-_STATUS_WHITELIST: set[str] = {"2_대형코인"}
+# 잠수함봇은 검증 실패로 운용 중단 → 현황 알림에서 영구 제외.
+# 4_리플: analyze_xrp 워크포워드 검증 통과(스윙펌프) → 사용자 요청으로 정식 추가.
+_STATUS_WHITELIST: set[str] = {"2_대형코인", "4_리플"}
 
 
 def _state_dir() -> Path:
@@ -266,6 +267,80 @@ def _read_all_statuses() -> str:
                 pass
     except Exception:
         pass
+    return "\n\n──────────\n\n".join(parts) if parts else "상태 정보 없음"
+
+
+_acct_cache: dict = {"text": None, "at": 0.0}
+
+
+def account_summary(ttl: int = 60) -> str:
+    """실제 업비트 계좌의 보유 코인·평가액·손익을 요약(텔레그램용).
+
+    봇이 '산 것'(추적 포지션)과 별개로, 계좌에 실제로 들어있는 전체 코인을 보여준다.
+    API 키가 없거나 조회 실패면 빈 문자열(현황에서 생략). ttl초 캐시로 과도한 호출 방지.
+    """
+    now = time.time()
+    if _acct_cache["text"] is not None and now - _acct_cache["at"] < ttl:
+        return _acct_cache["text"]
+    text = ""
+    try:
+        from . import config
+        if config.has_api_keys():
+            from .upbit_exchange import UpbitExchange
+            from .upbit_quotation import UpbitQuotation
+            accs = UpbitExchange().get_accounts()
+            q = UpbitQuotation()
+            # 업비트에 '원화 시장'이 있는 코인만 시세 조회한다. ETHW/ETHF 같은 에어드랍
+            # 포크 토큰은 KRW 마켓이 없어, 통째로 get_ticker 하면 에러가 나 전체가 실패한다.
+            try:
+                valid = {m["market"] for m in q.get_markets(only_krw=True)}
+            except Exception:
+                valid = set()
+            held = [a for a in accs
+                    if a.get("currency") != "KRW"
+                    and a.get("unit_currency", "KRW") == "KRW"
+                    and (float(a.get("balance", 0) or 0)
+                         + float(a.get("locked", 0) or 0)) > 0]
+            priced_markets = [f"KRW-{a['currency']}" for a in held
+                              if f"KRW-{a['currency']}" in valid]
+            prices = {}
+            if priced_markets:
+                try:
+                    prices = {t["market"]: float(t["trade_price"])
+                              for t in q.get_ticker(priced_markets)}
+                except Exception:
+                    prices = {}
+            krw = sum(float(a.get("balance", 0) or 0) + float(a.get("locked", 0) or 0)
+                      for a in accs if a.get("currency") == "KRW")
+            total, lines, untradable = krw, [], []
+            for a in held:
+                cur = a["currency"]
+                vol = float(a.get("balance", 0) or 0) + float(a.get("locked", 0) or 0)
+                mkt = f"KRW-{cur}"
+                if mkt in prices:
+                    avg = float(a.get("avg_buy_price", 0) or 0)
+                    px = prices[mkt]
+                    val = vol * px
+                    total += val
+                    pl = (px / avg - 1) * 100 if avg > 0 else 0.0
+                    lines.append(f"• {cur}: {vol:,.4f}개 · 평가 {val:,.0f}원 · {pl:+.1f}%")
+                else:
+                    untradable.append(f"• {cur}: {vol:,.4f}개 (원화시장 없음·평가 제외)")
+            head = ["💼 <b>전체 보유 자산</b>",
+                    f"• 총 평가액: <b>{total:,.0f}원</b>",
+                    f"• 원화(현금): {krw:,.0f}원"]
+            head += lines if lines else ["• 보유 코인 없음 (전액 현금)"]
+            head += untradable
+            text = "\n".join(head)
+    except Exception:
+        text = ""
+    _acct_cache.update(text=text, at=now)
+    return text
+
+
+def _full_status() -> str:
+    """전체 보유 자산 + 봇별 현황을 합친 텔레그램용 메시지 본문."""
+    parts = [p for p in (account_summary(), _read_all_statuses()) if p]
     return "\n\n──────────\n\n".join(parts) if parts else "상태 정보 없음"
 
 
@@ -320,7 +395,7 @@ def run_shared(name: str, get_status, stop: threading.Event | None = None,
             try:
                 if time.time() - last_hb >= heartbeat_sec:
                     send(f"💓 <b>하트비트</b> {now_kst():%m-%d %H:%M}\n"
-                         f"{_read_all_statuses()}")
+                         f"{_full_status()}")
                     last_hb = time.time()
                 params: dict = {"timeout": 25}
                 if _offset is not None:
@@ -347,7 +422,7 @@ def run_shared(name: str, get_status, stop: threading.Event | None = None,
                     if not text or frm != str(chat):
                         continue
                     send(f"📟 <b>요청 응답</b> {now_kst():%m-%d %H:%M}\n"
-                         f"{_read_all_statuses()}")
+                         f"{_full_status()}")
             except Exception:
                 time.sleep(5)
 

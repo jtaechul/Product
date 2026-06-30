@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>HoleDash · 통과! 구멍 벽</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- 게임 캔버스: 웹캠 + 스켈레톤 + 벽 + 연출 -->
+    <canvas id="game"></canvas>
+
+    <!-- 숨겨진 비디오(웹캠 소스) -->
+    <video id="cam" playsinline autoplay muted></video>
+
+    <!-- 배경음악(스테이지별) -->
+    <audio id="bgm" src="./assets/bgm.mp3" loop preload="auto"></audio>
+    <audio id="bgm2" src="./assets/stage2.mp3" loop preload="auto"></audio>
+    <audio id="bgm3" src="./assets/stage3.mp3" loop preload="auto"></audio>
+
+    <!-- HUD (점수/콤보/라이프/라운드) -->
+    <div id="hud" class="hidden">
+      <div class="hud-left">
+        <div class="hud-score" id="hudScore">0</div>
+        <div class="hud-combo" id="hudCombo"></div>
+      </div>
+      <div class="hud-center" id="hudRound">ROUND 1</div>
+      <div class="hud-right">
+        <div class="hud-life" id="hudLife"></div>
+        <div class="hud-wall" id="hudWall"></div>
+      </div>
+    </div>
+
+    <!-- 큰 등급 연출 텍스트 -->
+    <div id="grade" class="grade hidden"></div>
+
+    <!-- 음소거 토글 -->
+    <button id="btnMute" class="mute-btn" aria-label="소리 켜기/끄기">🔊</button>
+
+    <!-- 캘리브레이션 중 수동 시작(폴백) 버튼 -->
+    <button id="btnCalibSkip" class="calib-skip hidden">바로 시작하기 ▶</button>
+
+    <!-- 가로 전용: 세로로 들면 회전 안내가 떠서 게임을 막음 -->
+    <div id="rotateGate">
+      <div class="rotate-icon">📱</div>
+      <h2>화면을 가로로 돌려주세요</h2>
+      <p>이 게임은 <b>가로 모드 전용</b>이에요.<br>휴대폰을 옆으로(가로) 돌리면 시작됩니다.</p>
+    </div>
+
+    <!-- 화면 오버레이(타이틀/등록/캘리브레이션/결과 등) -->
+    <div id="overlay">
+      <!-- 타이틀 -->
+      <section id="screen-title" class="screen">
+        <h1 class="logo">HOLE<span>DASH</span></h1>
+        <p class="tagline">다가오는 구멍 벽에 몸을 맞춰 통과하라!</p>
+        <button class="btn btn-primary" id="btnStart">시작하기</button>
+        <button class="btn btn-ghost" id="btnHow">게임 방법</button>
+        <p class="hint">웹캠 권한이 필요해요 · 밝은 곳에서 전신이 보이게 서주세요</p>
+      </section>
+
+      <!-- 게임 방법 -->
+      <section id="screen-how" class="screen hidden">
+        <h2>게임 방법</h2>
+        <ol class="how-list">
+          <li>🧍 전신이 화면에 들어오게 서기</li>
+          <li>🧱 안쪽에서 <b>구멍 뚫린 벽</b>이 점점 커지며 다가와요</li>
+          <li>🤸 구멍 모양에 맞게 몸을 만들어요 (T자·X자·웅크리기 등)</li>
+          <li>⏱️ 벽이 화면을 꽉 채우는 순간 <b>판정!</b></li>
+          <li>✨ 깔끔하게 통과할수록 높은 등급·점수</li>
+          <li>☄️ 벽 사이엔 <b>날아오는 공</b>이 떨어져요 — 몸을 옆으로 피하기!</li>
+        </ol>
+        <button class="btn btn-primary" id="btnHowBack">돌아가기</button>
+      </section>
+
+      <!-- 플레이어 등록 -->
+      <section id="screen-register" class="screen hidden">
+        <h2>도전자 등록</h2>
+        <input type="text" id="playerName" class="name-input" maxlength="8" placeholder="이름 (예: 지호)" />
+        <button class="btn btn-primary" id="btnRegister">다음</button>
+      </section>
+
+      <!-- 캘리브레이션 안내 -->
+      <section id="screen-calib" class="screen calib hidden">
+        <div class="calib-emoji">🧍</div>
+        <h2 id="calibTitle">자세 준비</h2>
+        <p class="calib-inst">화면의 <b>T자 모양 안</b>에 맞춰<br><b>양팔을 옆으로 벌리고(T자) 가만히</b> 서주세요.</p>
+        <p class="hint">측정 중에는 <b>움직이지 말고 멈춰</b> 있어야 정확해요(약 2초).<br>한두 걸음 뒤로 물러나면 머리~발이 잘 잡혀요.</p>
+        <button class="btn btn-primary" id="btnCalibStart">준비 완료 ▶</button>
+      </section>
+
+      <!-- 카운트다운/연습 안내는 캔버스 위에 직접 -->
+
+      <!-- 개인 결과 -->
+      <section id="screen-result" class="screen hidden">
+        <h2 id="resultName">결과</h2>
+        <div class="result-score" id="resultScore">0</div>
+        <div class="result-stats" id="resultStats"></div>
+        <button class="btn btn-primary" id="btnNextPlayer">다음 도전자</button>
+        <button class="btn btn-ghost" id="btnRetry">다시 도전</button>
+      </section>
+
+      <!-- 최종 순위/시상식 -->
+      <section id="screen-final" class="screen hidden">
+        <h2>🏆 최종 순위</h2>
+        <ol class="ranking" id="rankingList"></ol>
+        <button class="btn btn-primary" id="btnRestartAll">처음부터 다시</button>
+      </section>
+
+      <!-- 권한/오류 -->
+      <section id="screen-error" class="screen hidden">
+        <h2>⚠️ 문제가 생겼어요</h2>
+        <p id="errorMsg" class="err-msg"></p>
+        <button class="btn btn-primary" id="btnErrorRetry">다시 시도</button>
+      </section>
+
+      <!-- 로딩 -->
+      <section id="screen-loading" class="screen hidden">
+        <div class="spinner"></div>
+        <p id="loadingMsg">자세 인식 모델을 불러오는 중…</p>
+      </section>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
