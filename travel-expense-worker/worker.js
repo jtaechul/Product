@@ -96,30 +96,31 @@ export default {
   },
 };
 
-// 주소 → 좌표 (도로명/지번 주소검색 우선, 실패 시 키워드검색)
+// 주소 → 좌표. 여러 변형으로 재시도해 인식 성공률을 높임
+//   ① 주소검색(원문) ② 키워드검색(원문) ③ 읍/면/리 제거 후 주소검색 ④ 키워드검색(제거본)
 async function geocode(query, key) {
   const auth = { headers: { Authorization: `KakaoAK ${key}` } };
 
-  const addr = await fetch(
-    'https://dapi.kakao.com/v2/local/search/address.json?query=' + encodeURIComponent(query),
-    auth
-  );
-  if (addr.ok) {
-    const d = await addr.json();
-    const doc = d?.documents?.[0];
-    if (doc) return { x: doc.x, y: doc.y, label: doc.address_name || query };
-  }
+  const tryAddress = async (q) => {
+    const r = await fetch('https://dapi.kakao.com/v2/local/search/address.json?query=' + encodeURIComponent(q), auth);
+    if (!r.ok) return null;
+    const doc = (await r.json())?.documents?.[0];
+    return doc ? { x: doc.x, y: doc.y, label: doc.address_name || q } : null;
+  };
+  const tryKeyword = async (q) => {
+    const r = await fetch('https://dapi.kakao.com/v2/local/search/keyword.json?query=' + encodeURIComponent(q), auth);
+    if (!r.ok) return null;
+    const doc = (await r.json())?.documents?.[0];
+    return doc ? { x: doc.x, y: doc.y, label: doc.place_name || doc.address_name || q } : null;
+  };
 
-  const kw = await fetch(
-    'https://dapi.kakao.com/v2/local/search/keyword.json?query=' + encodeURIComponent(query),
-    auth
-  );
-  if (kw.ok) {
-    const d = await kw.json();
-    const doc = d?.documents?.[0];
-    if (doc) return { x: doc.x, y: doc.y, label: doc.place_name || doc.address_name || query };
-  }
-  return null;
+  // 읍/면/리 행정구역 토큰 제거 변형 (예: "청주시 흥덕구 오송읍 봉산2길 70" → "청주시 흥덕구 봉산2길 70")
+  const stripped = query.replace(/\s*\S+?(?:읍|면|리)(?=\s)/g, '').replace(/\s+/g, ' ').trim();
+
+  return (await tryAddress(query))
+      || (await tryKeyword(query))
+      || (stripped !== query ? await tryAddress(stripped) : null)
+      || (stripped !== query ? await tryKeyword(stripped) : null);
 }
 
 // 경로 좌표 다운샘플 (최대 max개로 균등 추출, 시작·끝 보존)
