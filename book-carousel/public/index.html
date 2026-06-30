@@ -900,11 +900,11 @@
       </div>
     </div>
     <div class="deploy-done-msg" id="deployDoneMsg">
-      텔레그램에서 [게시하기]를 누르면 인스타그램에 자동 게시됩니다.
+      아래 버튼으로 이미지 5장 저장 + 캡션 복사 후, 인스타 앱(또는 Meta 비즈니스 스위트)에서 올리세요.
     </div>
     <div style="margin-top:12px;display:none;" id="deployInstagramBtnWrap">
-      <button class="btn btn-instagram" id="deployInstagramBtn" style="width:100%;" disabled>지금 바로 인스타그램에 게시하기</button>
-      <p style="font-size:11px;color:var(--gray-400);margin-top:6px;text-align:center;">텔레그램 대신 브라우저에서 직접 게시할 수 있습니다</p>
+      <button class="btn btn-instagram" id="deployInstagramBtn" style="width:100%;" disabled>게시 준비 (이미지 5장 저장 + 캡션 복사)</button>
+      <p style="font-size:11px;color:var(--gray-400);margin-top:6px;text-align:center;">저장된 5장을 인스타 새 게시물에 올리고, 복사된 캡션을 붙여넣으세요</p>
     </div>
   </div>
 
@@ -1034,7 +1034,7 @@
     <div class="validation-actions">
       <button class="btn btn-primary" id="regenFromFeedbackBtn" style="width:auto;padding:10px 18px;">검증 결과 반영하기</button>
       <button class="btn btn-telegram" id="telegramBtn" disabled>텔레그램 발송</button>
-      <button class="btn btn-instagram" id="instagramBtn" disabled>인스타그램 직접 게시</button>
+      <button class="btn btn-instagram" id="instagramBtn" disabled>게시 준비 (이미지+캡션)</button>
     </div>
   </div>
 </main>
@@ -2869,26 +2869,22 @@ document.getElementById('telegramBtn').addEventListener('click', async () => {
   }
 });
 
-// ===== 인스타그램 직접 게시 (검증 패널) =====
-document.getElementById('instagramBtn').addEventListener('click', async () => {
+// ===== 반자동 게시 준비: 최종 이미지 5장 저장 + 캡션 복사 =====
+// (인스타 API 자동 게시는 토큰·만료·공개 이미지 호스팅 문제로 보류 — 반자동이 가장 안정적)
+async function prepareForPosting() {
   if (!state.images || !state.caption) {
-    showToast('이미지 생성과 캡션 생성이 완료된 후 사용할 수 있습니다.', 'warning'); return;
+    showToast('이미지 생성과 캡션 생성을 먼저 완료해주세요.', 'warning'); return;
   }
-  showLoading('인스타그램에 게시 중...', '캐럿셀 업로드 중 (30초~2분 소요)');
-  try {
-    const result = await apiFetch('/api/post-instagram', {
-      images: state.images,
-      caption: state.caption,
-      hashtags: state.captionHashtags,
-    });
-    showToast(result.message || '인스타그램에 캐럿셀이 게시됐습니다!', 'success');
-    document.getElementById('instagramBtn').disabled = true;
-  } catch (err) {
-    showToast('게시 실패: ' + err.message, 'error');
-  } finally {
-    hideLoading();
-  }
-});
+  // 1) 캡션(+해시태그) 클립보드 복사 — 공유 시트가 뜨기 전에 먼저 복사
+  const full = (state.caption || '') + (state.captionHashtags?.length ? '\n\n' + state.captionHashtags.join(' ') : '');
+  try { await navigator.clipboard.writeText(full); showToast('캡션을 복사했습니다', 'success'); }
+  catch { showToast('캡션 복사 실패 — "캡션 복사" 버튼을 눌러주세요', 'warning'); }
+  // 2) 글자 합성된 최종 이미지 5장 저장(공유/다운로드)
+  await saveAllCards();
+  // 3) 안내
+  showToast('이미지 5장 저장 + 캡션 복사 완료 — 인스타 새 게시물에 5장 올리고 캡션 붙여넣기', 'info');
+}
+document.getElementById('instagramBtn').addEventListener('click', prepareForPosting);
 
 function updateInstagramBtn() {
   const btn = document.getElementById('instagramBtn');
@@ -3442,27 +3438,7 @@ function renderPipelineResults(status, autoSendComposites) {
 })();
 
 // 자동 배포탭 인스타그램 직접 게시
-document.getElementById('deployInstagramBtn').addEventListener('click', async () => {
-  if (!state.images || !state.caption) {
-    showToast('이미지와 캡션이 모두 필요합니다.', 'warning'); return;
-  }
-  showLoading('인스타그램에 게시 중...', '캐럿셀 업로드 중 (30초~2분 소요)');
-  try {
-    const result = await apiFetch('/api/post-instagram', {
-      images: state.images,
-      caption: state.caption,
-      hashtags: state.captionHashtags,
-    });
-    setDeployStep(7, 'done', '인스타그램 게시 완료!');
-    showToast(result.message || '인스타그램에 캐럿셀이 게시됐습니다!', 'success');
-    document.getElementById('deployInstagramBtn').disabled = true;
-  } catch (err) {
-    setDeployStep(7, 'error', err.message);
-    showToast('게시 실패: ' + err.message, 'error');
-  } finally {
-    hideLoading();
-  }
-});
+document.getElementById('deployInstagramBtn').addEventListener('click', prepareForPosting);
 </script>
 </body>
 </html>
