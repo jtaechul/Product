@@ -1889,15 +1889,25 @@ async function buildReelTextSlide(blobUrl, slide) {
   await _reelBg(ctx, W, H, blobUrl);
   const accent = slide.accent || '#C084FC';
 
-  // 짧은 한 줄(최대 2줄) — 글자가 적으니 폰트를 크게(시작 110px). 화면 중앙에 배치.
-  const { px, lines } = autoFitLines(ctx, slide.text || '', TW, 110, 64, 6, 2, '900');
+  // 핵심 문구(최대 3줄) — 내용 파악·호기심이 되도록 너무 짧게 자르지 않되, 큰 폰트 유지(시작 92px).
+  const { px, lines } = autoFitLines(ctx, slide.text || '', TW, 92, 52, 6, 3, '900');
   const LH = Math.round(px * 1.36);
-  const blockH = lines.length * LH;
-  // 액센트 바 + 텍스트 블록 세로 중앙(약 0.42)
+  // 호기심 유도 라벨(아이브로) — 매 회차 같은 자리에 나와 "예측 가능한 리듬" + 다음 장 궁금증.
+  const eyebrow = slide.eyebrow || '';
+  const EB_H = eyebrow ? 50 : 0;       // 아이브로 + 아래 여백
+  const BAR_BLOCK = 46;                // 액센트 바 + 여백
+  const blockH = EB_H + BAR_BLOCK + lines.length * LH;
+  // 전체 블록을 화면 중앙(약 0.42)에 정렬
   let y = Math.round(H * 0.42 - blockH / 2);
-  ctx.fillStyle = accent; ctx.fillRect(PAD, y - 46, 90, 7);
-  y += px;
   ctx.textAlign = 'left';
+  if (eyebrow) {
+    ctx.font = '800 38px "Noto Sans KR", sans-serif'; ctx.fillStyle = accent;
+    ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 12;
+    ctx.fillText(eyebrow, PAD, y + 38); ctx.shadowBlur = 0;
+    y += EB_H;
+  }
+  ctx.fillStyle = accent; ctx.fillRect(PAD, y, 90, 7);
+  y += BAR_BLOCK + px;
   ctx.font = `900 ${px}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
   ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 22;
   for (const ln of lines) { ctx.fillText(ln, PAD, y); y += LH; }
@@ -1914,7 +1924,7 @@ async function buildReelRevealSlide(blobUrl, accent) {
   await document.fonts.ready;
   await _reelBg(ctx, W, H, blobUrl);
   const pg5 = state.pages?.page5 || {};
-  const cta = shortReelLine(pg5.cta || '', 30);  // 해결 한 줄도 짧게
+  const cta = shortReelLine(pg5.cta || '', 42);  // 해결 한 줄 — 내용 파악되게 약간 여유
   let cover = null;
   if (state.bookCover) {
     try {
@@ -1934,7 +1944,7 @@ async function buildReelRevealSlide(blobUrl, accent) {
   } else { y = 520; }
   ctx.textAlign = 'center';
   ctx.font = '700 34px "Noto Sans KR", sans-serif'; ctx.fillStyle = accent;
-  ctx.fillText('오늘의 책', W / 2, y); y += 64;
+  ctx.fillText('그 마음을 설명해준 책', W / 2, y); y += 64;
   const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
   const { px: tPx, lines: tLines } = autoFitLines(ctx, `「${cleanT}」`, TW, 70, 44, 4, 3, '900');
   ctx.font = `900 ${tPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
@@ -1947,7 +1957,7 @@ async function buildReelRevealSlide(blobUrl, accent) {
   }
   if (cta) {
     ctx.fillStyle = accent; ctx.fillRect((W - 90) / 2, y, 90, 6); y += 50;
-    const { px: cPx, lines: cLines } = autoFitLines(ctx, cta, TW, 46, 34, 3, 2, '600');
+    const { px: cPx, lines: cLines } = autoFitLines(ctx, cta, TW, 46, 32, 3, 3, '600');
     ctx.font = `600 ${cPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = 'rgba(255,255,255,0.92)';
     const cLH = Math.round(cPx * 1.42);
     for (const ln of cLines) { ctx.fillText(ln, W / 2, y); y += cLH; }
@@ -1967,9 +1977,9 @@ async function saveReelSet() {
   // 4장: ① 공감 훅(1p) → ② 전환·패턴(2p) → ③ 희망·해결방향(4p) → ④ 책 공개(5p)
   // 본문 제거, 각 장 짧은 한 줄(글자 상한)만. 배경은 각 장에 맞는 페이지 이미지 사용.
   const textSlides = [
-    { bg: bg(0), text: shortReelLine(p.page1?.headline, 28), accent: REEL_ACCENT[1] },
-    { bg: bg(1), text: shortReelLine(p.page2?.headline || p.page3?.headline, 22), accent: REEL_ACCENT[2] },
-    { bg: bg(3), text: shortReelLine(p.page4?.headline, 22), accent: REEL_ACCENT[3] },
+    { bg: bg(0), eyebrow: '',                 text: shortReelLine(p.page1?.headline, 44), accent: REEL_ACCENT[1] },
+    { bg: bg(1), eyebrow: '혹시, 당신도',       text: shortReelLine(p.page2?.headline || p.page3?.headline, 38), accent: REEL_ACCENT[2] },
+    { bg: bg(3), eyebrow: '그 마음엔 이유가',    text: shortReelLine(p.page4?.headline, 38), accent: REEL_ACCENT[3] },
   ];
 
   const btn = document.getElementById('saveReelSetBtn');
