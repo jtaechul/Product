@@ -2652,15 +2652,12 @@ async function showArchiveList() {
     const drafts = (draftRes && draftRes.drafts) || [];
     const hasCatalog = Array.isArray(catalog) && catalog.length;
 
-    if (!hasCatalog && !drafts.length) {
-      listEl.innerHTML = '<div class="arch-empty">아직 만든 캐럿셀이 없습니다.<br>캐럿셀을 만들면 임시 초안으로 여기에 저장되고,<br>"도서관 등록"을 하면 정식 등록됩니다.</div>';
-      return;
-    }
-
     let html = '';
-    // 초안(미등록) — 번호 없이 임시 보관(7일). 등록하면 번호가 매겨진다.
-    if (drafts.length) {
-      html += `<div class="arch-section-label">초안 (미등록 · 7일 후 자동 삭제)</div>`;
+    // 초안(미등록) — 번호 없이 임시 보관(7일). 등록하면 번호가 매겨진다. (항상 표시 → 찾기 쉽게)
+    html += `<div class="arch-section-label">초안 (미등록 · 7일 후 자동 삭제)</div>`;
+    if (!drafts.length) {
+      html += `<div class="arch-empty" style="padding:18px 12px;font-size:13px;">아직 초안이 없습니다.<br>"AI 자동 추천" 또는 "직접 입력"으로 캐럿셀을 만들면 여기에 자동 저장됩니다.</div>`;
+    } else {
       html += drafts.map(d => `
         <div class="arch-item arch-draft" data-draft="${archEsc(d.id)}">
           <div class="arch-num" style="font-size:11px;color:#7c3aed;font-weight:800;">초안</div>

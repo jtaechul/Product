@@ -581,23 +581,28 @@ async function handleValidate(env, body) {
 // (정면 클로즈업을 피해 뒷모습·옆모습 위주 → 무료 AI의 얼굴 불일치를 가린다)
 const CHARACTER_ANCHOR = 'the same recurring Korean woman in her early 30s, long straight dark-brown hair, soft natural look, cozy warm-toned casual outfit (cream knit sweater), slender gentle figure, shown from behind or in soft side profile or face gently turned away (never a full-face closeup)';
 const STYLE_ANCHOR = 'modern Korean webtoon illustration style, clean delicate line art, soft cel shading, warm pastel palette (cream, dusty rose, sage, soft peach), tender emotional cinematic lighting, lyrical and cozy, Instagram square 1:1';
+// 인물 없는 배경 장면용 앵커 — 같은 화풍·색감은 유지하되 사람은 넣지 않는다.
+const SCENE_ANCHOR = 'no people in frame, an atmospheric symbolic scene only (cozy interior, window, quiet place or meaningful objects)';
 
-// 페이지별 폴백 프롬프트 — Claude가 생성 실패 시 사용. 동일 여성 캐릭터가 이어지는 장면.
+// 인물이 들어가는 페이지(스크롤 멈추는 1장 + 감정 전환 4장) — 나머지는 인물 없는 분위기 배경.
+const PERSON_PAGES = new Set(['page1', 'page4']);
+
+// 페이지별 폴백 프롬프트 — Claude 생성 실패 시 사용. page1·4=인물, page2·3·5=인물 없는 장면.
 const FALLBACK_IMAGE_PROMPTS = {
   page1: 'a woman seen from behind sitting alone by a large window at dusk, soft city lights bokeh outside, quiet wistful mood, empty space around her',
-  page2: 'the same woman in soft side profile sitting at a cafe table, looking down at her phone, warm afternoon light, tender lonely atmosphere',
-  page3: 'the same woman from behind hugging her knees on a bed under a warm lamp, introspective and tender, soft shadows',
-  page4: 'the same woman by a window as gentle morning light streams in, looking up softly from the side, hopeful warm glow',
-  page5: 'the same woman sitting peacefully reading an open book by soft window light, calm three-quarter back view, serene hopeful mood',
+  page2: 'an empty cafe table by a window with a single cup and a phone left face-down, soft afternoon light, tender lonely atmosphere, no people',
+  page3: 'a cozy dim bedroom corner with a crumpled blanket and a warm glowing bedside lamp, introspective quiet mood, soft shadows, no people',
+  page4: 'a woman by a window as gentle morning light streams in, looking up softly from the side, hopeful warm glow',
+  page5: 'an open book resting on a sunlit windowsill with sheer curtains gently glowing, calm hopeful morning light, no people',
 };
 
-// 페이지별 감정 역할 — 동일 여성 주인공이 그 감정을 연기하는 "이어지는 한 장면"으로 안내.
+// 페이지별 감정 역할 — [인물]/[배경]을 명시. 인물은 1·4장만, 나머지는 분위기 배경.
 const PAGE_VISUAL_DIRECTIONS = {
-  page1: '혼자 있는 그녀 — 들킨 듯한 첫 감정. 창가·방 한켠, 뒷모습/옆모습으로 쓸쓸함을 담되 여백 넉넉히.',
-  page2: '반복된 패턴 속 그녀 — 익숙한 쓸쓸함의 한 순간(카페·길·휴대폰을 보는). 옆모습.',
-  page3: '마음을 들여다보는 그녀 — 내면·기억에 잠긴 조용한 순간(방·불빛). 뒷모습/웅크림.',
-  page4: '빛이 스며드는 전환 — 희망이 비치는, 살짝 고개를 든 그녀. 따뜻한 아침빛.',
-  page5: '책을 펴는 그녀 — 잔잔하고 평온한 마무리. 책을 읽는 뒷모습/3/4 시점.',
+  page1: '[인물] 혼자 있는 그녀 — 들킨 듯한 첫 감정. 뒷모습/옆모습, 여백 넉넉히(스크롤을 멈추는 표지 컷).',
+  page2: '[배경·인물 없음] 반복된 패턴의 쓸쓸함을 상징하는 장소/사물(빈 카페 자리, 엎어둔 휴대폰 등).',
+  page3: '[배경·인물 없음] 마음의 뿌리를 은유하는 조용한 장면(어둑한 방 한켠, 불빛, 정물).',
+  page4: '[인물] 빛이 드는 전환 — 살짝 고개를 든 그녀, 따뜻한 아침빛(희망의 한 컷).',
+  page5: '[배경·인물 없음] 평온한 마무리 — 책/창가 등 고요한 장면(하단은 책 공개 패널이 덮음).',
 };
 
 async function handleGenerateImages(env, body) {
@@ -616,8 +621,8 @@ async function handleGenerateImages(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'main',
     max_tokens: 1500,
-    system: '당신은 한국 웹툰풍 감성 일러스트 아트 디렉터입니다. 연애·관계 심리 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[핵심 원칙] 5장 모두 "같은 30대 한국 여성 한 명"이 주인공입니다. 이 여성이 5장에 걸쳐 한 편의 이야기를 이어가듯, 페이지마다 다른 장면·다른 감정을 연기합니다. 매 장 같은 인물(같은 헤어·옷·분위기)로 보이게 묘사하세요.\n\n[얼굴 규칙 — 매우 중요] 정면 얼굴 클로즈업은 금지합니다. 반드시 뒷모습 / 옆모습 / 고개를 돌린 모습 / 멀리서 본 전신 위주로 그리세요(무료 AI가 장마다 얼굴이 달라지는 문제를 가리기 위함). 표정 대신 자세·몸짓·빛으로 감정을 전하세요.\n\n[스타일 고정] 한국 웹툰 일러스트: 깨끗하고 섬세한 라인아트, 부드러운 셀 셰이딩, 따뜻한 파스텔(크림·더스티로즈·세이지·소프트피치), 서정적이고 포근한 시네마틱 조명. 실사 사진 금지, 어둡고 공포스러운 톤 금지.\n\n[장면 발상] 장소·소품을 페이지 감정에 맞게 폭넓게 변주: 창가·카페·침대·골목·버스 안·책상·욕조 가장자리·현관, 휴대폰·편지·머그·담요·우산·책 등. 5장의 장소·구도가 서로 뚜렷이 달라야 하되, 같은 인물·같은 화풍·같은 색감으로 한 시리즈처럼 묶이게.\n\n[규칙]\n1. 구도·조명을 구체적으로 (back view, side profile, over-the-shoulder, wide shot, soft window light, golden morning light, rule of thirds)\n2. 정면 얼굴 클로즈업 금지 — 뒷모습·옆모습·고개 돌림·전신 위주\n3. 텍스트·글자·숫자 없음 (no text, no letters, no words)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 각 프롬프트 영어 30~60단어. 인물 외형·화풍은 시스템이 자동으로 덧붙이므로, 너는 "그 장의 장면·자세·감정·장소"에 집중해 묘사.\n반드시 JSON만 응답한다.',
-    user: `책 제목: ${bookInfo.title || ''}\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n책 핵심 주제: ${bookInfo.coreMessage || ''}\n\n같은 30대 여성 주인공이 5장에 걸쳐 감정을 이어갑니다(혼자 → 패턴 자각 → 마음 들여다보기 → 빛이 드는 전환 → 평온한 마무리). 아래 각 페이지의 "실제 문장"을 해석해, 그 여성이 그 감정을 연기하는 장면을 묘사하세요. 정면 얼굴 클로즈업 금지(뒷모습·옆모습·고개 돌림 위주).\n\n1페이지 [${PAGE_VISUAL_DIRECTIONS.page1}]\n  문장: ${pageContents.page1}\n2페이지 [${PAGE_VISUAL_DIRECTIONS.page2}]\n  문장: ${pageContents.page2}\n3페이지 [${PAGE_VISUAL_DIRECTIONS.page3}]\n  문장: ${pageContents.page3}\n4페이지 [${PAGE_VISUAL_DIRECTIONS.page4}]\n  문장: ${pageContents.page4}\n5페이지 [${PAGE_VISUAL_DIRECTIONS.page5}]\n  문장: ${pageContents.page5}\n\n[필수] 5장의 장소·구도가 서로 겹치지 않게 하고, 각 페이지 문장의 핵심 감정이 그녀의 자세·빛으로 분명히 드러나게 하세요. 텍스트·글자 없음.\n\nJSON (page1~page5 모두 필수): {"page1":"english scene prompt","page2":"...","page3":"...","page4":"...","page5":"..."}`,
+    system: '당신은 한국 웹툰풍 감성 일러스트 아트 디렉터입니다. 연애·관계 심리 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[핵심 구성] 5장 중 1페이지와 4페이지에만 "같은 30대 한국 여성 한 명"이 등장합니다(1=스크롤을 멈추는 표지 컷, 4=빛이 드는 감정 전환). 2·3·5페이지에는 사람을 넣지 말고, 그 페이지 감정을 상징하는 분위기 있는 장소/사물 장면만 그리세요. 인물이 모든 장에 반복되지 않게 하는 것이 목적입니다.\n\n[얼굴 규칙] 인물 페이지(1·4)는 정면 얼굴 클로즈업 금지 — 뒷모습/옆모습/고개 돌림/멀리서 본 전신 위주(무료 AI 얼굴 불일치를 가림). 표정 대신 자세·빛으로 감정 전달.\n\n[스타일 고정 — 5장 공통] 한국 웹툰 일러스트: 깨끗하고 섬세한 라인아트, 부드러운 셀 셰이딩, 따뜻한 파스텔(크림·더스티로즈·세이지·소프트피치), 서정적이고 포근한 시네마틱 조명. 실사 사진 금지, 공포스러운 톤 금지. 인물 컷과 배경 컷이 같은 화풍·색감으로 한 시리즈처럼 묶이게.\n\n[배경 장면 발상] 창가·카페·침대·책상·골목·버스 안, 휴대폰·편지·머그·담요·우산·책 등으로 감정을 상징. 5장의 장소·구도가 서로 뚜렷이 다르게.\n\n[규칙]\n1. 구도·조명 구체적으로 (back view, side profile, wide shot, soft window light, golden morning light)\n2. 인물 페이지는 정면 얼굴 클로즈업 금지 / 배경 페이지는 사람 없음(no people)\n3. 텍스트·글자·숫자 없음 (no text, no letters, no words)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 각 프롬프트 영어 25~55단어. 인물 외형·화풍·사람유무는 시스템이 자동으로 덧붙이므로, 너는 "그 장의 장면·자세/사물·감정·장소"에 집중해 묘사.\n반드시 JSON만 응답한다.',
+    user: `책 제목: ${bookInfo.title || ''}\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n책 핵심 주제: ${bookInfo.coreMessage || ''}\n\n1·4페이지는 같은 30대 여성(뒷모습·옆모습), 2·3·5페이지는 사람 없는 분위기 배경입니다. 아래 각 페이지의 "실제 문장"을 해석해 장면을 묘사하세요.\n\n1페이지 ${PAGE_VISUAL_DIRECTIONS.page1}\n  문장: ${pageContents.page1}\n2페이지 ${PAGE_VISUAL_DIRECTIONS.page2}\n  문장: ${pageContents.page2}\n3페이지 ${PAGE_VISUAL_DIRECTIONS.page3}\n  문장: ${pageContents.page3}\n4페이지 ${PAGE_VISUAL_DIRECTIONS.page4}\n  문장: ${pageContents.page4}\n5페이지 ${PAGE_VISUAL_DIRECTIONS.page5}\n  문장: ${pageContents.page5}\n\n[필수] 5장의 장소·구도가 서로 겹치지 않게 하고, 2·3·5페이지에는 사람을 넣지 마세요. 각 페이지 감정이 장면에 분명히 드러나게. 텍스트·글자 없음.\n\nJSON (page1~page5 모두 필수): {"page1":"english scene prompt","page2":"...","page3":"...","page4":"...","page5":"..."}`,
   });
 
   const prompts = extractJson(text);
@@ -630,15 +635,16 @@ async function handleGenerateImages(env, body) {
     }
   }
 
-  // 모든 프롬프트에 "동일 인물 + 웹툰 화풍" 앵커를 강제로 덧붙여 5장의 일관성을 만든다.
-  const suffix = `, ${CHARACTER_ANCHOR}, ${STYLE_ANCHOR}, no text, no letters, no words, high quality`;
+  // 페이지별로 앵커를 다르게 붙인다: 인물 페이지(1·4)=캐릭터 앵커, 나머지=인물 없는 장면 앵커.
+  // 화풍·색감 앵커(STYLE_ANCHOR)는 5장 공통 → 인물/배경이 한 시리즈로 묶인다.
   const base = 'https://image.pollinations.ai/prompt/';
-
-  // 페이지마다 다른 seed → 동일 요청 충돌·캐시 문제로 인한 로딩 실패 감소
+  const tail = ', no text, no letters, no words, high quality';
   const images = {};
   for (const [page, prompt] of Object.entries(prompts)) {
     const seed = Math.floor(Math.random() * 900000) + 100000;
-    images[page] = `${base}${encodeURIComponent(prompt + suffix)}?width=1080&height=1080&nologo=true&seed=${seed}&model=flux&enhance=true`;
+    const anchor = PERSON_PAGES.has(page) ? CHARACTER_ANCHOR : SCENE_ANCHOR;
+    const full = `${prompt}, ${anchor}, ${STYLE_ANCHOR}${tail}`;
+    images[page] = `${base}${encodeURIComponent(full)}?width=1080&height=1080&nologo=true&seed=${seed}&model=flux&enhance=true`;
   }
 
   return { success: true, images, prompts };
