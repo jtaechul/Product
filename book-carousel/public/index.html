@@ -927,7 +927,7 @@
       <button class="btn btn-outline" id="copyAllBtn">전체 복사</button>
       <button class="btn btn-outline" id="generateImagesBtn" style="background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;border:none;">이미지 생성</button>
       <button class="btn btn-outline" id="saveAllImagesBtn" style="background:linear-gradient(135deg,#064e3b,#065f46);color:#fff;border:none;">이미지 전체 저장</button>
-      <button class="btn btn-outline" id="saveReelSetBtn" style="background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border:none;">릴스 세트(세로 4장)</button>
+      <button class="btn btn-outline" id="saveReelSetBtn" style="background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border:none;">릴스 세트(세로 5장)</button>
       <button class="btn btn-validate" id="validateBtn">품질 검증</button>
     </div>
   </div>
@@ -1854,12 +1854,31 @@ async function saveAllCards() {
 
 document.getElementById('saveAllImagesBtn').addEventListener('click', saveAllCards);
 
-// ── 릴스 세트(세로 9:16) — 시간 예산 설계 ──
-// 사진 릴스는 한 장이 2.5~3초 만에 자동으로 넘어가고, 보는 사람의 실제 글 읽는 시간은 2초 안팎.
-// 한국어는 2초에 12~16자(한두 줄)가 한계 → 본문(body)은 넣지 않는다. 각 장은 "짧은 한 줄"만.
-// 4장 구성: ① 공감 훅 → ② 전환(패턴) → ③ 희망(해결방향) → ④ 책 공개. 전체 ~12초.
+// ── 릴스 세트(세로 9:16) ──
+// 한 장당 4~5초 시청 기준 → 한 화면에서 읽히는 분량(2~4줄, 약 50~60자)으로 충분히 담는다.
+// 5장 구성: ① 공감 훅 → ②③④ 본문 핵심(각 페이지 헤드라인+요지) → ⑤ 책 공개. 책에 대한 호기심을 쌓는다.
 const REEL_HANDLE = '@love.between_lines';
-const REEL_ACCENT = { 1: '#C084FC', 2: '#60A5FA', 3: '#34D399', 4: '#FBBF24' };
+const REEL_ACCENT = { 1: '#C084FC', 2: '#60A5FA', 3: '#34D399', 4: '#F472B6', 5: '#FBBF24' };
+
+// 릴스 한 장에 담을 문구 — 문장 단위로 글자 상한까지 채워 "내용이 읽히게" 만든다.
+// (한 문장만 달랑 자르지 않고, 들어갈 수 있는 만큼 문장을 이어 담는다)
+function reelClamp(text, maxChars) {
+  let s = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!s) return '';
+  if ([...s].length <= maxChars) return s.replace(/[.。]\s*$/, '').trim();
+  const sentences = s.match(/[^.!?。…]+[.!?。…]?/g) || [s];
+  let out = '';
+  for (const sent of sentences) {
+    const cand = (out + ' ' + sent).trim();
+    if ([...cand].length <= maxChars) out = cand; else break;
+  }
+  if (out.trim()) return out.replace(/[.。]\s*$/, '').trim();
+  // 첫 문장도 너무 길면 단어 경계로 자르고 … 표시(궁금증 유발)
+  let cut = [...s].slice(0, maxChars).join('');
+  const sp = cut.lastIndexOf(' ');
+  if (sp > maxChars * 0.5) cut = cut.slice(0, sp);
+  return cut.trim() + '…';
+}
 
 // 긴 문장을 릴스용 짧은 한 줄로: 첫 문장/구절만 취하고 글자 수 상한을 넘으면 띄어쓰기에서 깔끔히 자른다.
 function shortReelLine(text, maxChars) {
@@ -1896,12 +1915,13 @@ async function _reelBg(ctx, W, H, blobUrl) {
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 }
 
-// 상단 중앙 계정 핸들 — 인스타 릴스 UI(하단 계정명·노래, 우측 아이콘)에 가리지 않는 안전 영역.
+// 계정 핸들 — 우측 상단, 너무 위는 아이폰 카메라(다이내믹 아일랜드)에 가리므로 살짝 내려 배치.
 function _reelTopHandle(ctx, W) {
-  ctx.textAlign = 'center';
-  ctx.font = '800 38px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.96)';
+  const PAD = 90;
+  ctx.textAlign = 'right';
+  ctx.font = '800 36px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.95)';
   ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 14;
-  ctx.fillText(REEL_HANDLE, W / 2, 128);
+  ctx.fillText(REEL_HANDLE, W - PAD, 232);
   ctx.shadowBlur = 0; ctx.textAlign = 'left';
 }
 
@@ -1915,12 +1935,12 @@ async function buildReelTextSlide(blobUrl, slide) {
   const accent = slide.accent || '#C084FC';
   _reelTopHandle(ctx, W);
 
-  // 핵심 문구(최대 3줄) — 큰 폰트로 단독 배치(시작 92px). 화면 중앙(약 0.44)에 정렬.
-  const { px, lines } = autoFitLines(ctx, slide.text || '', TW, 92, 52, 6, 3, '900');
-  const LH = Math.round(px * 1.36);
+  // 핵심 문구(최대 4줄) — 4~5초에 읽히는 분량을 큰 폰트로 배치(시작 84px). 화면 중앙(약 0.46)에 정렬.
+  const { px, lines } = autoFitLines(ctx, slide.text || '', TW, 84, 46, 5, 4, '900');
+  const LH = Math.round(px * 1.34);
   const BAR_BLOCK = 46;                // 액센트 바 + 여백
   const blockH = BAR_BLOCK + lines.length * LH;
-  let y = Math.round(H * 0.44 - blockH / 2);
+  let y = Math.round(H * 0.46 - blockH / 2);
   ctx.textAlign = 'left';
   ctx.fillStyle = accent; ctx.fillRect(PAD, y, 90, 7);
   y += BAR_BLOCK + px;
@@ -2019,12 +2039,18 @@ async function saveReelSet() {
   if (![0,1,2,3,4].some(i => bg(i))) { showToast('먼저 "이미지 생성"을 해주세요 (배경이 필요합니다).', 'warning'); return; }
 
   const p = state.pages || {};
-  // 4장: ① 공감 훅(1p) → ② 전환·패턴(2p) → ③ 희망·해결방향(4p) → ④ 책 공개(5p)
-  // 본문 제거, 각 장 짧은 한 줄(글자 상한)만. 배경은 각 장에 맞는 페이지 이미지 사용.
+  // 5장: ① 공감 훅(1p) → ②③④ 본문 핵심(2·3·4p 헤드라인+요지) → ⑤ 책 공개(5p)
+  // 각 장 4~5초에 읽히는 분량(헤드라인+핵심 한 문장)으로 담아 책 호기심을 쌓는다.
+  const joinHB = pg => {
+    const h = (pg?.headline || '').trim(), b = (pg?.body || '').trim();
+    if (!h) return b; if (!b) return h;
+    return /[.!?。…]$/.test(h) ? `${h} ${b}` : `${h}. ${b}`;
+  };
   const textSlides = [
-    { bg: bg(0), text: shortReelLine(p.page1?.headline, 44), accent: REEL_ACCENT[1] },
-    { bg: bg(1), text: shortReelLine(p.page2?.headline || p.page3?.headline, 38), accent: REEL_ACCENT[2] },
-    { bg: bg(3), text: shortReelLine(p.page4?.headline, 38), accent: REEL_ACCENT[3] },
+    { bg: bg(0), text: reelClamp(p.page1?.headline || '', 52), accent: REEL_ACCENT[1] },
+    { bg: bg(1), text: reelClamp(joinHB(p.page2), 58), accent: REEL_ACCENT[2] },
+    { bg: bg(2), text: reelClamp(joinHB(p.page3), 58), accent: REEL_ACCENT[3] },
+    { bg: bg(3), text: reelClamp(joinHB(p.page4), 58), accent: REEL_ACCENT[4] },
   ];
 
   const btn = document.getElementById('saveReelSetBtn');
@@ -2035,20 +2061,20 @@ async function saveReelSet() {
       const blob = await buildReelTextSlide(textSlides[i].bg, textSlides[i]);
       if (blob) files.push(new File([blob], `reel_${i + 1}.png`, { type: 'image/png' }));
     }
-    const revealBlob = await buildReelRevealSlide(bg(4) || bg(0), REEL_ACCENT[4]);
-    if (revealBlob) files.push(new File([revealBlob], `reel_4.png`, { type: 'image/png' }));
+    const revealBlob = await buildReelRevealSlide(bg(4) || bg(0), REEL_ACCENT[5]);
+    if (revealBlob) files.push(new File([revealBlob], `reel_5.png`, { type: 'image/png' }));
     if (!files.length) { showToast('릴스 이미지 생성 실패', 'error'); return; }
     if (navigator.canShare && navigator.canShare({ files })) {
-      try { await navigator.share({ files, title: '릴스 세트' }); showToast('릴스 4장 저장 완료 — 인스타 릴스에서 순서대로 선택 + 음악', 'success'); }
-      catch (e) { if (e.name !== 'AbortError') { files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }); showToast('릴스 4장 저장 완료', 'success'); } }
+      try { await navigator.share({ files, title: '릴스 세트' }); showToast('릴스 5장 저장 완료 — 인스타 릴스에서 순서대로 선택 + 음악', 'success'); }
+      catch (e) { if (e.name !== 'AbortError') { files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }); showToast('릴스 5장 저장 완료', 'success'); } }
     } else {
       files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); });
-      showToast('릴스 4장 저장 완료', 'success');
+      showToast('릴스 5장 저장 완료', 'success');
     }
   } catch (e) {
     showToast('릴스 생성 실패: ' + e.message, 'error');
   } finally {
-    btn.disabled = false; btn.textContent = '릴스 세트(세로 4장)';
+    btn.disabled = false; btn.textContent = '릴스 세트(세로 5장)';
   }
 }
 document.getElementById('saveReelSetBtn').addEventListener('click', saveReelSet);
