@@ -19,17 +19,19 @@ export function poseBounds(wall) {
   const margin = wall.margin || 0.4;
   const halfT = (0.6 + margin * 0.7) / 2;       // 사지 두께 절반
   const headR = 0.42 + margin * 0.35;           // 머리 반지름
-  let minY = Infinity, maxY = -Infinity;
+  let minY = Infinity, maxY = -Infinity, maxAbsX = 0;
   for (const k in pose) {
     const p = pose[k];
     if (!Array.isArray(p)) continue;
     if (p[1] < minY) minY = p[1];
     if (p[1] > maxY) maxY = p[1];
+    if (Math.abs(p[0]) > maxAbsX) maxAbsX = Math.abs(p[0]);
   }
   const headExt = -(pose.head ? pose.head[1] : -1.5) + headR; // 머리 원 위쪽 끝
   const topExt = -minY + Math.max(headR, halfT);              // 손 올린 부분 포함
   const botExt = maxY + halfT;                                // 발 아래쪽 끝
-  return { headExt, topExt, botExt };
+  const sideExt = maxAbsX + halfT;                            // 좌우 끝(가장 벌린 손/발)
+  return { headExt, topExt, botExt, sideExt };
 }
 
 // 포즈의 사람 실루엣을 ctx에 채워 그린다.

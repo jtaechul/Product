@@ -67,6 +67,7 @@ const g = {
   phaseStart: 0,
   practice: false,
   lastGrade: null,
+  holeFrac: 0.5,        // 구멍의 좌우 위치(0=왼쪽,0.5=중앙,1=오른쪽)
 };
 
 // ---- 화면 전환 ----
@@ -324,6 +325,13 @@ function beginWall() {
   g.wallStart = performance.now() / 1000;
   g.approachSec = (BASE_APPROACH_SEC / wall.approachSpeed) * modeCfg.approachSecMul;
   g.judged = false;
+  // 구멍 좌우 위치 결정: 연습은 가운데, 본게임은 좌·중·우 중 직전과 다르게(옆으로 이동 유도)
+  if (g.practice) {
+    g.holeFrac = 0.5;
+  } else {
+    const opts = [0.28, 0.5, 0.72].filter((v) => Math.abs(v - g.holeFrac) > 0.01);
+    g.holeFrac = opts[Math.floor(Math.random() * opts.length)];
+  }
   // 스테이지별 배경음악 전환(연습은 스테이지1 유지)
   // (배경음악은 곡이 끝날 때 랜덤으로 자동 전환됨)
   // 댄스 벽이면 가운데 라운드 표시를 비우고(날아오는 제목이 대신), 아니면 ROUND 표시
@@ -340,7 +348,7 @@ function judge() {
   const wall = currentWall();
   let rate = 1.0;
   if (landmarks) {
-    const geom = maskGeom(wall);
+    const geom = maskGeom(wall, g.holeFrac);
     if (geom) {
       const t = (performance.now() / 1000) - g.wallStart;
       let extraRot = 0, extraDX = 0;
@@ -374,11 +382,11 @@ function shoulderNorm() {
 }
 
 // 마스크 좌표계의 구멍(화면 wallGeom과 동일 공식 — 측정된 몸 + 여유, 포즈별 범위 반영).
-function maskGeom(wall) {
+function maskGeom(wall, cxFrac = 0.5) {
   const H = MASK_H, headPad = 0.12, footPad = 0.10;
   const footY = Math.min(0.99, groundY + footPad);
   const crownY = Math.max(0.015, headY - headPad);
-  const b = wall ? poseBounds(wall) : { headExt: 2.1, topExt: 2.1, botExt: 2.2 };
+  const b = wall ? poseBounds(wall) : { headExt: 2.1, topExt: 2.1, botExt: 2.2, sideExt: 1.0 };
   let S = Math.max(6, (footY - crownY) * H / (b.headExt + b.botExt));
   const topLimit = -0.04 * H;
   let cy = footY * H - b.botExt * S;
@@ -386,14 +394,19 @@ function maskGeom(wall) {
     S = (footY * H - topLimit) / (b.topExt + b.botExt);
     cy = footY * H - b.botExt * S;
   }
-  return { cx: MASK_W / 2, cy, S, VH: S * 1.7 };
+  // 좌우 이동(cxFrac) — 화면 wallGeom과 동일 공식으로 클램프(판정 일치)
+  const sideExt = b.sideExt != null ? b.sideExt : 1.0;
+  const halfW = sideExt * S;
+  const padX = MASK_W * 0.03;
+  const cx = Math.max(halfW + padX, Math.min(MASK_W - halfW - padX, cxFrac * MASK_W));
+  return { cx, cy, S, VH: S * 1.7 };
 }
 
 function applyGrade(grade, wall) {
   const scoring = !g.practice;
   if (scoring) current.walls++;
   // 연출 — 고정 구멍 위치에서 이펙트
-  const screenGeom = renderer.wallGeom(groundY, headY, wall);
+  const screenGeom = renderer.wallGeom(groundY, headY, wall, g.holeFrac);
   renderer.tintSkeleton(grade.color, 0.7);
   if (grade.grade === 'CRASH') {
     renderer.setFlash('#ff3030');
@@ -524,7 +537,7 @@ function loop() {
   lastTime = t;
 
   landmarks = SYNTH ? synthPose(t) : pose.detect(nowMs);
-  if (SYNTH) window.__hd = { state, phase: g.phase, life: current && current.life, score: current && current.score, mode: modeCfg.key, wallCount: walls.length };
+  if (SYNTH) window.__hd = { state, phase: g.phase, life: current && current.life, score: current && current.score, mode: modeCfg.key, wallCount: walls.length, holeFrac: g.holeFrac };
 
   renderer.drawCamera();
 
@@ -556,8 +569,9 @@ function updatePlay(t) {
   } else if (g.phase === 'approach') {
     const el = t - g.wallStart;
     const progress = Math.min(1, el / g.approachSec);
-    const geom = renderer.wallGeom(groundY, headY, wall);
+    const geom = renderer.wallGeom(groundY, headY, wall, g.holeFrac);
     renderer.drawWall(wall, geom, progress, t);
+    renderer.drawMoveCue(geom, t);
     if (wall.title) renderer.drawSongTitle(wall.title, wall.artist, el);
     renderer.drawPoseHint(poseHint(wall));
     // 양옆 빈 공간: 이번 동작/콤보 + 다음 포즈 미리보기
