@@ -1871,16 +1871,16 @@ async function _reelBg(ctx, W, H, blobUrl) {
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 }
 
-// 하단 공통 푸터: 계정 핸들 + 안내
-function _reelFooter(ctx, W, H, PAD) {
-  ctx.textAlign = 'left';
-  ctx.font = '800 36px "Noto Sans KR", sans-serif'; ctx.fillStyle = '#fff';
-  ctx.fillText(REEL_HANDLE, PAD, H - 116);
-  ctx.font = '400 30px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.74)';
-  ctx.fillText('저장해두고 · 프로필 링크에서 책을 만나보세요', PAD, H - 70);
+// 상단 중앙 계정 핸들 — 인스타 릴스 UI(하단 계정명·노래, 우측 아이콘)에 가리지 않는 안전 영역.
+function _reelTopHandle(ctx, W) {
+  ctx.textAlign = 'center';
+  ctx.font = '800 38px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.96)';
+  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 14;
+  ctx.fillText(REEL_HANDLE, W / 2, 128);
+  ctx.shadowBlur = 0; ctx.textAlign = 'left';
 }
 
-// 릴스 텍스트 한 장(세로 1080x1920) — 짧은 한 줄만 크게. 본문 없음.
+// 릴스 텍스트 한 장(세로 1080x1920) — 하나의 큰 문구만. 작은 라벨/하단 푸터 없음.
 async function buildReelTextSlide(blobUrl, slide) {
   const W = 1080, H = 1920, PAD = 90, TW = W - PAD * 2;
   const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
@@ -1888,31 +1888,21 @@ async function buildReelTextSlide(blobUrl, slide) {
   await document.fonts.ready;
   await _reelBg(ctx, W, H, blobUrl);
   const accent = slide.accent || '#C084FC';
+  _reelTopHandle(ctx, W);
 
-  // 핵심 문구(최대 3줄) — 내용 파악·호기심이 되도록 너무 짧게 자르지 않되, 큰 폰트 유지(시작 92px).
+  // 핵심 문구(최대 3줄) — 큰 폰트로 단독 배치(시작 92px). 화면 중앙(약 0.44)에 정렬.
   const { px, lines } = autoFitLines(ctx, slide.text || '', TW, 92, 52, 6, 3, '900');
   const LH = Math.round(px * 1.36);
-  // 호기심 유도 라벨(아이브로) — 매 회차 같은 자리에 나와 "예측 가능한 리듬" + 다음 장 궁금증.
-  const eyebrow = slide.eyebrow || '';
-  const EB_H = eyebrow ? 50 : 0;       // 아이브로 + 아래 여백
   const BAR_BLOCK = 46;                // 액센트 바 + 여백
-  const blockH = EB_H + BAR_BLOCK + lines.length * LH;
-  // 전체 블록을 화면 중앙(약 0.42)에 정렬
-  let y = Math.round(H * 0.42 - blockH / 2);
+  const blockH = BAR_BLOCK + lines.length * LH;
+  let y = Math.round(H * 0.44 - blockH / 2);
   ctx.textAlign = 'left';
-  if (eyebrow) {
-    ctx.font = '800 38px "Noto Sans KR", sans-serif'; ctx.fillStyle = accent;
-    ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 12;
-    ctx.fillText(eyebrow, PAD, y + 38); ctx.shadowBlur = 0;
-    y += EB_H;
-  }
   ctx.fillStyle = accent; ctx.fillRect(PAD, y, 90, 7);
   y += BAR_BLOCK + px;
   ctx.font = `900 ${px}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
   ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 22;
   for (const ln of lines) { ctx.fillText(ln, PAD, y); y += LH; }
   ctx.shadowBlur = 0;
-  _reelFooter(ctx, W, H, PAD);
   return new Promise(r => canvas.toBlob(r, 'image/png'));
 }
 
@@ -1923,8 +1913,9 @@ async function buildReelRevealSlide(blobUrl, accent) {
   const ctx = canvas.getContext('2d');
   await document.fonts.ready;
   await _reelBg(ctx, W, H, blobUrl);
+  _reelTopHandle(ctx, W);
   const pg5 = state.pages?.page5 || {};
-  const cta = shortReelLine(pg5.cta || '', 42);  // 해결 한 줄 — 내용 파악되게 약간 여유
+  const cta = shortReelLine(pg5.cta || '', 40);  // 해결 한 줄
   let cover = null;
   if (state.bookCover) {
     try {
@@ -1934,36 +1925,65 @@ async function buildReelRevealSlide(blobUrl, accent) {
     } catch { cover = null; }
   }
   const rr = (x,y,w,h,r)=>{ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();};
-  let y = 360;
-  if (cover) {
-    const cw = 380, ch = 542, cx = (W - cw) / 2, cy = y;
-    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 12;
-    rr(cx, cy, cw, ch, 14); ctx.fillStyle = '#000'; ctx.fill(); ctx.restore();
-    ctx.save(); rr(cx, cy, cw, ch, 14); ctx.clip(); ctx.drawImage(cover, cx, cy, cw, ch); ctx.restore();
-    y = cy + ch + 64;
-  } else { y = 520; }
   ctx.textAlign = 'center';
-  ctx.font = '700 34px "Noto Sans KR", sans-serif'; ctx.fillStyle = accent;
-  ctx.fillText('그 마음을 설명해준 책', W / 2, y); y += 64;
+
+  // ── 요소 크기 먼저 측정 → 전체 블록을 안전 영역(상단 핸들 아래 ~ 하단 IG UI 위)에 세로 중앙 정렬 ──
   const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
-  const { px: tPx, lines: tLines } = autoFitLines(ctx, `「${cleanT}」`, TW, 70, 44, 4, 3, '900');
-  ctx.font = `900 ${tPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
+  const COVER_W = 360, COVER_H = 514;
+  const GAP_COVER = 78;          // 표지 ↔ 제목
+  ctx.font = '900 64px "Noto Sans KR", sans-serif';
+  const { px: tPx, lines: tLines } = autoFitLines(ctx, `「${cleanT}」`, TW, 64, 42, 4, 2, '900');
   const tLH = Math.round(tPx * 1.3);
-  for (const ln of tLines) { ctx.fillText(ln, W / 2, y); y += tLH; }
-  y += 6;
-  if (state.bookInfo?.author) {
+  const GAP_AUTHOR = 22, AUTHOR_H = state.bookInfo?.author ? 44 : 0;
+  const GAP_CTA = 64, BAR_H = 6, GAP_BAR = 40;
+  let cLines = [], cPx = 44, cLH = 0;
+  if (cta) { const r = autoFitLines(ctx, cta, TW, 44, 32, 3, 2, '600'); cPx = r.px; cLines = r.lines; cLH = Math.round(cPx * 1.42); }
+  const GAP_PROFILE = 54, PROFILE_H = 38;
+
+  const coverPart = cover ? COVER_H + GAP_COVER : 0;
+  const titlePart = tLines.length * tLH;
+  const authorPart = AUTHOR_H ? GAP_AUTHOR + AUTHOR_H : 0;
+  const ctaPart = cLines.length ? GAP_CTA + BAR_H + GAP_BAR + cLines.length * cLH : 0;
+  const profilePart = GAP_PROFILE + PROFILE_H;
+  const blockH = coverPart + titlePart + authorPart + ctaPart + profilePart;
+
+  // 안전 영역: 상단 핸들(~170) ~ 하단 IG 오버레이 위(~1430). 그 안에서 세로 중앙.
+  const bandTop = 200, bandBottom = 1430;
+  let y = Math.round((bandTop + bandBottom) / 2 - blockH / 2);
+  if (y < bandTop) y = bandTop;
+
+  if (cover) {
+    const cx = (W - COVER_W) / 2, cy = y;
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 12;
+    rr(cx, cy, COVER_W, COVER_H, 14); ctx.fillStyle = '#000'; ctx.fill(); ctx.restore();
+    ctx.save(); rr(cx, cy, COVER_W, COVER_H, 14); ctx.clip(); ctx.drawImage(cover, cx, cy, COVER_W, COVER_H); ctx.restore();
+    y += coverPart;
+  }
+  // 제목 (가장 큼)
+  ctx.font = `900 ${tPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
+  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 16;
+  y += tPx * 0.0;
+  for (const ln of tLines) { y += tLH; ctx.fillText(ln, W / 2, y - Math.round(tLH * 0.22)); }
+  ctx.shadowBlur = 0;
+  // 저자
+  if (AUTHOR_H) {
+    y += GAP_AUTHOR;
     ctx.font = '500 34px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.82)';
-    ctx.fillText(state.bookInfo.author, W / 2, y); y += 70;
+    ctx.fillText(state.bookInfo.author, W / 2, y + 30); y += AUTHOR_H;
   }
-  if (cta) {
-    ctx.fillStyle = accent; ctx.fillRect((W - 90) / 2, y, 90, 6); y += 50;
-    const { px: cPx, lines: cLines } = autoFitLines(ctx, cta, TW, 46, 32, 3, 3, '600');
+  // 해결 한 줄
+  if (cLines.length) {
+    y += GAP_CTA;
+    ctx.fillStyle = accent; ctx.fillRect((W - 90) / 2, y, 90, BAR_H); y += BAR_H + GAP_BAR;
     ctx.font = `600 ${cPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    const cLH = Math.round(cPx * 1.42);
-    for (const ln of cLines) { ctx.fillText(ln, W / 2, y); y += cLH; }
+    for (const ln of cLines) { y += cLH; ctx.fillText(ln, W / 2, y - Math.round(cLH * 0.28)); }
   }
+  // 프로필 안내 (안전 영역 내, 하단 IG UI보다 위)
+  y += GAP_PROFILE;
+  ctx.font = '700 34px "Noto Sans KR", sans-serif'; ctx.fillStyle = accent;
+  ctx.fillText('프로필 링크에서 만나보세요', W / 2, y + 30);
+
   ctx.textAlign = 'left';
-  _reelFooter(ctx, W, H, PAD);
   return new Promise(r => canvas.toBlob(r, 'image/png'));
 }
 
@@ -1977,9 +1997,9 @@ async function saveReelSet() {
   // 4장: ① 공감 훅(1p) → ② 전환·패턴(2p) → ③ 희망·해결방향(4p) → ④ 책 공개(5p)
   // 본문 제거, 각 장 짧은 한 줄(글자 상한)만. 배경은 각 장에 맞는 페이지 이미지 사용.
   const textSlides = [
-    { bg: bg(0), eyebrow: '',                 text: shortReelLine(p.page1?.headline, 44), accent: REEL_ACCENT[1] },
-    { bg: bg(1), eyebrow: '혹시, 당신도',       text: shortReelLine(p.page2?.headline || p.page3?.headline, 38), accent: REEL_ACCENT[2] },
-    { bg: bg(3), eyebrow: '그 마음엔 이유가',    text: shortReelLine(p.page4?.headline, 38), accent: REEL_ACCENT[3] },
+    { bg: bg(0), text: shortReelLine(p.page1?.headline, 44), accent: REEL_ACCENT[1] },
+    { bg: bg(1), text: shortReelLine(p.page2?.headline || p.page3?.headline, 38), accent: REEL_ACCENT[2] },
+    { bg: bg(3), text: shortReelLine(p.page4?.headline, 38), accent: REEL_ACCENT[3] },
   ];
 
   const btn = document.getElementById('saveReelSetBtn');
