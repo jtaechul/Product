@@ -8,6 +8,16 @@ export const DESIGN_HEIGHT = 1280;
 export const TOTAL_TURNS = 36; // 36개월 = 3년
 export const SLOTS_PER_TURN = 2;
 
+// 마일스톤 (기획서 6번): 학년 말 목표(인지도). 미달 시 경고 안내만(난이도 모드 없음).
+export const MILESTONES = {
+  13: { grade: "고1", fans: 15, need: "팬 15 이상" },   // 고1 말
+  25: { grade: "고2", fans: 40, need: "팬 40 이상" },   // 고2 말
+};
+
+// 시작 자금
+export const START_MONEY = 100000;
+
+
 // 디자인 토큰 (디자인 시트/목업 팔레트 기준 — 추후 확정)
 export const COLORS = {
   navy: 0x1e2a4a,
