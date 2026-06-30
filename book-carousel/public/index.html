@@ -926,7 +926,7 @@
       <button class="btn btn-outline" id="copyAllBtn">전체 복사</button>
       <button class="btn btn-outline" id="generateImagesBtn" style="background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;border:none;">이미지 생성</button>
       <button class="btn btn-outline" id="saveAllImagesBtn" style="background:linear-gradient(135deg,#064e3b,#065f46);color:#fff;border:none;">이미지 전체 저장</button>
-      <button class="btn btn-outline" id="saveReelSetBtn" style="background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border:none;">릴스 세트(세로 5장)</button>
+      <button class="btn btn-outline" id="saveReelSetBtn" style="background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border:none;">릴스 세트(세로 4장)</button>
       <button class="btn btn-validate" id="validateBtn">품질 검증</button>
     </div>
   </div>
@@ -1818,13 +1818,32 @@ async function saveAllCards() {
 
 document.getElementById('saveAllImagesBtn').addEventListener('click', saveAllCards);
 
-// ── 릴스 세트(세로 9:16) ──
-// 캐럿셀 5장의 흐름(공감 문제 → 패턴 → 마음의 이유 → 해결방향 → 책 공개)을 그대로
-// 세로 슬라이드 5장으로 옮긴다. 배경은 바뀌고, 각 장은 그 페이지의 핵심 문구를 담아
-// "무슨 내용인지" 한눈에 읽히게 한다. 마지막 장은 책 표지·제목·저자 + 해결 한 줄을 공개.
+// ── 릴스 세트(세로 9:16) — 시간 예산 설계 ──
+// 사진 릴스는 한 장이 2.5~3초 만에 자동으로 넘어가고, 보는 사람의 실제 글 읽는 시간은 2초 안팎.
+// 한국어는 2초에 12~16자(한두 줄)가 한계 → 본문(body)은 넣지 않는다. 각 장은 "짧은 한 줄"만.
+// 4장 구성: ① 공감 훅 → ② 전환(패턴) → ③ 희망(해결방향) → ④ 책 공개. 전체 ~12초.
 const REEL_HANDLE = '@love.between_lines';
-const REEL_LABELS = { 1: '이런 마음, 혹시', 2: '반복되는 패턴', 3: '마음의 이유', 4: '이렇게 보면 달라져요' };
-const REEL_ACCENT = { 1: '#C084FC', 2: '#60A5FA', 3: '#F472B6', 4: '#34D399', 5: '#FBBF24' };
+const REEL_ACCENT = { 1: '#C084FC', 2: '#60A5FA', 3: '#34D399', 4: '#FBBF24' };
+
+// 긴 문장을 릴스용 짧은 한 줄로: 첫 문장/구절만 취하고 글자 수 상한을 넘으면 띄어쓰기에서 깔끔히 자른다.
+function shortReelLine(text, maxChars) {
+  let s = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!s) return '';
+  // 1) 첫 문장 경계(. ! ? 。 …)에서 끊기
+  const sent = s.match(/^[^.!?。…]*[.!?。…]?/);
+  if (sent && sent[0].trim()) s = sent[0].trim();
+  s = s.replace(/[.。]$/, '').trim();
+  if ([...s].length <= maxChars) return s;
+  // 2) 그래도 길면 콤마 앞 구절로 줄이기
+  const comma = s.split(/[,，]/)[0].trim();
+  if (comma && [...comma].length <= maxChars) return comma;
+  // 3) 마지막 수단: 글자 상한에서 띄어쓰기 기준으로 자르기
+  const arr = [...s].slice(0, maxChars);
+  let cut = arr.join('');
+  const sp = cut.lastIndexOf(' ');
+  if (sp > maxChars * 0.5) cut = cut.slice(0, sp);
+  return cut.trim();
+}
 
 // 배경 cover-fit + 가독성 그라데이션. 공통.
 async function _reelBg(ctx, W, H, blobUrl) {
@@ -1850,96 +1869,79 @@ function _reelFooter(ctx, W, H, PAD) {
   ctx.fillText('저장해두고 · 프로필 링크에서 책을 만나보세요', PAD, H - 70);
 }
 
-// 릴스 한 장(세로 1080x1920) — pageNum 1~4: 그 페이지 텍스트 / 5: 책 공개
-async function buildReelSlide(blobUrl, pageNum) {
+// 릴스 텍스트 한 장(세로 1080x1920) — 짧은 한 줄만 크게. 본문 없음.
+async function buildReelTextSlide(blobUrl, slide) {
   const W = 1080, H = 1920, PAD = 90, TW = W - PAD * 2;
   const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
   await document.fonts.ready;
   await _reelBg(ctx, W, H, blobUrl);
-  const accent = REEL_ACCENT[pageNum] || '#C084FC';
+  const accent = slide.accent || '#C084FC';
 
-  if (pageNum === 5) {
-    // 책 공개 — 표지 + 제목 + 저자 + 해결 한 줄 (가운데 정렬)
-    const pg5 = state.pages?.page5 || {};
-    const cta = pg5.cta || '';
-    // 표지 로드 (프록시 → 캔버스 CORS 안전)
-    let cover = null;
-    if (state.bookCover) {
-      try {
-        const im = new Image(); im.crossOrigin = 'anonymous';
-        await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = `/api/cover?url=${encodeURIComponent(state.bookCover)}`; });
-        cover = im;
-      } catch { cover = null; }
-    }
-    const rr = (x,y,w,h,r)=>{ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();};
-    let y = 360;
-    if (cover) {
-      const cw = 380, ch = 542, cx = (W - cw) / 2, cy = y;
-      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 12;
-      rr(cx, cy, cw, ch, 14); ctx.fillStyle = '#000'; ctx.fill(); ctx.restore();
-      ctx.save(); rr(cx, cy, cw, ch, 14); ctx.clip(); ctx.drawImage(cover, cx, cy, cw, ch); ctx.restore();
-      y = cy + ch + 64;
-    } else { y = 520; }
-    ctx.textAlign = 'center';
-    // eyebrow
-    ctx.font = '700 34px "Noto Sans KR", sans-serif'; ctx.fillStyle = accent;
-    ctx.fillText('오늘의 책', W / 2, y); y += 64;
-    // 제목
-    const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
-    const { px: tPx, lines: tLines } = autoFitLines(ctx, `「${cleanT}」`, TW, 70, 44, 4, 3, '900');
-    ctx.font = `900 ${tPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
-    const tLH = Math.round(tPx * 1.3);
-    for (const ln of tLines) { ctx.fillText(ln, W / 2, y); y += tLH; }
-    y += 6;
-    // 저자
-    if (state.bookInfo?.author) {
-      ctx.font = '500 34px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.82)';
-      ctx.fillText(state.bookInfo.author, W / 2, y); y += 70;
-    }
-    // 해결 한 줄(cta)
-    if (cta) {
-      ctx.fillStyle = accent; ctx.fillRect((W - 90) / 2, y, 90, 6); y += 46;
-      const { px: cPx, lines: cLines } = autoFitLines(ctx, cta, TW, 46, 32, 3, 4, '600');
-      ctx.font = `600 ${cPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = 'rgba(255,255,255,0.92)';
-      const cLH = Math.round(cPx * 1.42);
-      for (const ln of cLines) { ctx.fillText(ln, W / 2, y); y += cLH; }
-    }
-    ctx.textAlign = 'left';
-    _reelFooter(ctx, W, H, PAD);
-    return new Promise(r => canvas.toBlob(r, 'image/png'));
-  }
-
-  // 슬라이드 1~4 — 단계 표시 + 라벨 + 핵심 문구(+본문)
-  const pg = state.pages?.[`page${pageNum}`] || {};
-  const headline = pg.headline || '';
-  const body = pageNum === 1 ? '' : (pg.body || '');
-  // 상단 단계 표시
+  // 짧은 한 줄(최대 2줄) — 글자가 적으니 폰트를 크게(시작 110px). 화면 중앙에 배치.
+  const { px, lines } = autoFitLines(ctx, slide.text || '', TW, 110, 64, 6, 2, '900');
+  const LH = Math.round(px * 1.36);
+  const blockH = lines.length * LH;
+  // 액센트 바 + 텍스트 블록 세로 중앙(약 0.42)
+  let y = Math.round(H * 0.42 - blockH / 2);
+  ctx.fillStyle = accent; ctx.fillRect(PAD, y - 46, 90, 7);
+  y += px;
   ctx.textAlign = 'left';
-  ctx.font = '800 32px "Noto Sans KR", sans-serif'; ctx.fillStyle = accent;
-  ctx.fillText(`${pageNum} / 5  ·  ${REEL_LABELS[pageNum] || ''}`, PAD, 150);
-
-  // 본문 줄 수 먼저 측정 → 헤드라인+본문 블록을 화면 중앙(약 0.42)에 배치
-  const { px: hPx, lines: hLines } = autoFitLines(ctx, headline, TW, 84, 50, 5, 5, '900');
-  const hLH = Math.round(hPx * 1.4);
-  let bPx = 40, bLines = [];
-  if (body) { const r = autoFitLines(ctx, body, TW, 42, 30, 3, 5, '400'); bPx = r.px; bLines = r.lines; }
-  const bLH = Math.round(bPx * 1.5);
-  const blockH = hLines.length * hLH + (bLines.length ? 40 + bLines.length * bLH : 0);
-  let y = Math.round(H * 0.40 - blockH / 2) + hPx;
-
-  // 헤드라인
-  ctx.font = `900 ${hPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
-  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 18;
-  for (const ln of hLines) { ctx.fillText(ln, PAD, y); y += hLH; }
+  ctx.font = `900 ${px}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
+  ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 22;
+  for (const ln of lines) { ctx.fillText(ln, PAD, y); y += LH; }
   ctx.shadowBlur = 0;
-  // 본문
-  if (bLines.length) {
-    y += 18;
-    ctx.fillStyle = accent; ctx.fillRect(PAD, y, 80, 5); y += 36;
-    ctx.font = `400 ${bPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    for (const ln of bLines) { ctx.fillText(ln, PAD, y); y += bLH; }
+  _reelFooter(ctx, W, H, PAD);
+  return new Promise(r => canvas.toBlob(r, 'image/png'));
+}
+
+// 릴스 마지막 장 — 책 공개(표지 + 제목 + 저자 + 해결 한 줄, 가운데 정렬)
+async function buildReelRevealSlide(blobUrl, accent) {
+  const W = 1080, H = 1920, PAD = 90, TW = W - PAD * 2;
+  const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  await document.fonts.ready;
+  await _reelBg(ctx, W, H, blobUrl);
+  const pg5 = state.pages?.page5 || {};
+  const cta = shortReelLine(pg5.cta || '', 30);  // 해결 한 줄도 짧게
+  let cover = null;
+  if (state.bookCover) {
+    try {
+      const im = new Image(); im.crossOrigin = 'anonymous';
+      await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = `/api/cover?url=${encodeURIComponent(state.bookCover)}`; });
+      cover = im;
+    } catch { cover = null; }
   }
+  const rr = (x,y,w,h,r)=>{ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();};
+  let y = 360;
+  if (cover) {
+    const cw = 380, ch = 542, cx = (W - cw) / 2, cy = y;
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 12;
+    rr(cx, cy, cw, ch, 14); ctx.fillStyle = '#000'; ctx.fill(); ctx.restore();
+    ctx.save(); rr(cx, cy, cw, ch, 14); ctx.clip(); ctx.drawImage(cover, cx, cy, cw, ch); ctx.restore();
+    y = cy + ch + 64;
+  } else { y = 520; }
+  ctx.textAlign = 'center';
+  ctx.font = '700 34px "Noto Sans KR", sans-serif'; ctx.fillStyle = accent;
+  ctx.fillText('오늘의 책', W / 2, y); y += 64;
+  const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
+  const { px: tPx, lines: tLines } = autoFitLines(ctx, `「${cleanT}」`, TW, 70, 44, 4, 3, '900');
+  ctx.font = `900 ${tPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
+  const tLH = Math.round(tPx * 1.3);
+  for (const ln of tLines) { ctx.fillText(ln, W / 2, y); y += tLH; }
+  y += 6;
+  if (state.bookInfo?.author) {
+    ctx.font = '500 34px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.fillText(state.bookInfo.author, W / 2, y); y += 70;
+  }
+  if (cta) {
+    ctx.fillStyle = accent; ctx.fillRect((W - 90) / 2, y, 90, 6); y += 50;
+    const { px: cPx, lines: cLines } = autoFitLines(ctx, cta, TW, 46, 34, 3, 2, '600');
+    ctx.font = `600 ${cPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    const cLH = Math.round(cPx * 1.42);
+    for (const ln of cLines) { ctx.fillText(ln, W / 2, y); y += cLH; }
+  }
+  ctx.textAlign = 'left';
   _reelFooter(ctx, W, H, PAD);
   return new Promise(r => canvas.toBlob(r, 'image/png'));
 }
@@ -1947,30 +1949,40 @@ async function buildReelSlide(blobUrl, pageNum) {
 async function saveReelSet() {
   if (!state.pages?.page1?.headline) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
   const cards = document.querySelectorAll('#carouselScroll .card');
-  const bgs = [];
-  for (let i = 0; i < 5 && i < cards.length; i++) bgs.push(cards[i].dataset.blobUrl || null);
-  if (!bgs.some(Boolean)) { showToast('먼저 "이미지 생성"을 해주세요 (배경이 필요합니다).', 'warning'); return; }
+  const bg = (i) => (cards[i] && cards[i].dataset.blobUrl) || null;
+  if (![0,1,2,3,4].some(i => bg(i))) { showToast('먼저 "이미지 생성"을 해주세요 (배경이 필요합니다).', 'warning'); return; }
+
+  const p = state.pages || {};
+  // 4장: ① 공감 훅(1p) → ② 전환·패턴(2p) → ③ 희망·해결방향(4p) → ④ 책 공개(5p)
+  // 본문 제거, 각 장 짧은 한 줄(글자 상한)만. 배경은 각 장에 맞는 페이지 이미지 사용.
+  const textSlides = [
+    { bg: bg(0), text: shortReelLine(p.page1?.headline, 28), accent: REEL_ACCENT[1] },
+    { bg: bg(1), text: shortReelLine(p.page2?.headline || p.page3?.headline, 22), accent: REEL_ACCENT[2] },
+    { bg: bg(3), text: shortReelLine(p.page4?.headline, 22), accent: REEL_ACCENT[3] },
+  ];
 
   const btn = document.getElementById('saveReelSetBtn');
   btn.disabled = true; btn.textContent = '만드는 중...';
   try {
     const files = [];
-    for (let i = 0; i < 5; i++) {
-      const blob = await buildReelSlide(bgs[i] || null, i + 1);
+    for (let i = 0; i < textSlides.length; i++) {
+      const blob = await buildReelTextSlide(textSlides[i].bg, textSlides[i]);
       if (blob) files.push(new File([blob], `reel_${i + 1}.png`, { type: 'image/png' }));
     }
+    const revealBlob = await buildReelRevealSlide(bg(4) || bg(0), REEL_ACCENT[4]);
+    if (revealBlob) files.push(new File([revealBlob], `reel_4.png`, { type: 'image/png' }));
     if (!files.length) { showToast('릴스 이미지 생성 실패', 'error'); return; }
     if (navigator.canShare && navigator.canShare({ files })) {
-      try { await navigator.share({ files, title: '릴스 세트' }); showToast('릴스 5장 저장 완료 — 인스타 릴스에서 순서대로 선택 + 음악', 'success'); }
-      catch (e) { if (e.name !== 'AbortError') { files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }); showToast('릴스 5장 저장 완료', 'success'); } }
+      try { await navigator.share({ files, title: '릴스 세트' }); showToast('릴스 4장 저장 완료 — 인스타 릴스에서 순서대로 선택 + 음악', 'success'); }
+      catch (e) { if (e.name !== 'AbortError') { files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }); showToast('릴스 4장 저장 완료', 'success'); } }
     } else {
       files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); });
-      showToast('릴스 5장 저장 완료', 'success');
+      showToast('릴스 4장 저장 완료', 'success');
     }
   } catch (e) {
     showToast('릴스 생성 실패: ' + e.message, 'error');
   } finally {
-    btn.disabled = false; btn.textContent = '릴스 세트(세로 5장)';
+    btn.disabled = false; btn.textContent = '릴스 세트(세로 4장)';
   }
 }
 document.getElementById('saveReelSetBtn').addEventListener('click', saveReelSet);
