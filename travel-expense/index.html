@@ -96,6 +96,18 @@
     .cfg-panel.open { display: block; }
     .cfg-note { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
     .cfg-note a { color: var(--accent); }
+    .key-done {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; background: var(--green-bg);
+      border: 1px solid #b6e3cc; border-radius: 8px;
+    }
+    .key-done-txt { color: var(--green); font-weight: 700; font-size: 13px; }
+    .btn-chg {
+      background: #fff; border: 1px solid var(--border); border-radius: 6px;
+      padding: 5px 14px; font-size: 12px; cursor: pointer;
+      font-family: inherit; color: var(--navy); margin-left: auto;
+    }
+    .btn-chg:hover { background: var(--bg); }
 
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .fg { display: flex; flex-direction: column; gap: 4px; }
@@ -415,28 +427,44 @@
     <div class="card-ttl" style="margin-bottom:12px;">API 연동 설정
       <span class="badge badge-gray">선택 사항 — 미설정 시 수동 입력으로 모든 기능 동작</span>
     </div>
+    <!-- 오피넷 -->
     <div class="fg" style="max-width:460px;">
-      <label class="lbl">오피넷 Open API 인증키</label>
-      <input type="text" id="opinetKey" placeholder="오피넷에서 발급받은 인증키" oninput="saveSettings()">
-      <div class="cfg-note">
-        <a href="https://www.opinet.co.kr/user/main/mainView.do" target="_blank">www.opinet.co.kr</a>
-        회원가입 → 오픈API → 인증키 신청 (무료)<br>
-        설정 시 출장일 기준 전국 평균 유가를 자동 조회합니다.
+      <label class="lbl">오피넷 Open API 인증키
+        <span id="opinetStatus" class="badge badge-gray" style="text-transform:none;letter-spacing:0;">미설정</span>
+      </label>
+      <div id="opinetDone" class="key-done" style="display:none;">
+        <span class="key-done-txt">✓ 입력완료</span>
+        <button class="btn-chg" onclick="editKey('opinet')">변경하기</button>
+      </div>
+      <div id="opinetEdit">
+        <input type="password" id="opinetKey" placeholder="오피넷에서 발급받은 인증키" autocomplete="off">
+        <div class="cfg-note">
+          <a href="https://www.opinet.co.kr/user/main/mainView.do" target="_blank">www.opinet.co.kr</a>
+          회원가입 → 오픈API → 인증키 신청 (무료) · 출장일 기준 전국 평균 유가 자동 조회
+        </div>
       </div>
     </div>
+    <!-- 카카오 -->
     <div class="fg" style="max-width:460px;margin-top:14px;">
-      <label class="lbl">카카오 REST API 키 <span id="kakaoStatus" class="badge badge-gray" style="text-transform:none;letter-spacing:0;">미설정</span></label>
-      <input type="text" id="kakaoKey" placeholder="카카오 개발자 REST API 키">
-      <div class="cfg-note">
-        <a href="https://developers.kakao.com" target="_blank">developers.kakao.com</a>
-        → 내 애플리케이션 → 앱 키의 <b>REST API 키</b> 복사<br>
-        설정 시 '경로 자동 계산' 버튼으로 왕복거리·경로지도를 자동 생성합니다.
+      <label class="lbl">카카오 REST API 키
+        <span id="kakaoStatus" class="badge badge-gray" style="text-transform:none;letter-spacing:0;">미설정</span>
+      </label>
+      <div id="kakaoDone" class="key-done" style="display:none;">
+        <span class="key-done-txt">✓ 입력완료</span>
+        <button class="btn-chg" onclick="editKey('kakao')">변경하기</button>
       </div>
-      <button id="btnSaveServer" class="btn-auto" style="margin-top:12px;" onclick="saveToServer()">서버에 저장</button>
+      <div id="kakaoEdit">
+        <input type="password" id="kakaoKey" placeholder="카카오 개발자 REST API 키" autocomplete="off">
+        <div class="cfg-note">
+          <a href="https://developers.kakao.com" target="_blank">developers.kakao.com</a>
+          → 내 애플리케이션 → 앱 키의 <b>REST API 키</b> · '경로 자동 계산'에 사용
+        </div>
+      </div>
     </div>
+    <button id="btnSaveServer" class="btn-auto" style="margin-top:14px;max-width:460px;" onclick="saveToServer()">서버에 저장</button>
     <div class="alert alert-info" style="margin-top:12px;">
-      <strong>서버에 저장</strong>하면 다른 기기·브라우저에서 열어도 키가 자동으로 불러와집니다.
-      키를 입력하지 않아도 수동 입력으로 엑셀 생성이 가능합니다.
+      <strong>서버에 저장</strong>하면 다른 기기·브라우저에서 열어도 키가 자동으로 적용됩니다.
+      보안을 위해 저장된 키는 화면에 표시되지 않습니다(변경 시 '변경하기').
     </div>
   </div>
 
@@ -750,6 +778,8 @@ let S = {
   opinetScreenshot: null,   // { base64, ext, dataUrl } — API 데이터로 자동 생성 or 수동 업로드
   pdfScreenshot: null,      // { base64, ext, dataUrl } — 하이패스 PDF 페이지 렌더 이미지
   hasKakao: false,          // 카카오 REST 키 서버 보유 여부
+  editOpinet: false,        // 오피넷 키 변경(입력) 모드
+  editKakao: false,         // 카카오 키 변경(입력) 모드
 };
 
 /* ========================================================
@@ -770,55 +800,76 @@ function toggleCfg() {
   document.getElementById('cfgPanel').classList.toggle('open');
 }
 async function loadSettings() {
-  // 1순위: 서버에서 조회
+  // 서버에서 조회 (오피넷 키 값 + 카카오 보유여부) — 키 값은 화면에 표시하지 않고 저장만
   try {
     const r = await fetch(OPINET_CONFIG_URL, { signal: AbortSignal.timeout(4000) });
     if (r.ok) {
       const d = await r.json();
-      if (d.opinetKey) {
-        lsSet('opinetKey', d.opinetKey);
-        document.getElementById('opinetKey').value = d.opinetKey;
-      }
+      if (d.opinetKey) lsSet('opinetKey', d.opinetKey);
       S.hasKakao = !!d.hasKakao;
-      updateKakaoStatus();
-      refreshUI();
-      if (d.opinetKey) return;
     }
   } catch {}
-  // 2순위: localStorage
-  document.getElementById('opinetKey').value = ls('opinetKey') || '';
-}
-function updateKakaoStatus() {
-  const el = document.getElementById('kakaoStatus');
-  if (!el) return;
-  el.textContent = S.hasKakao ? '설정됨' : '미설정';
-  el.className = 'badge ' + (S.hasKakao ? 'badge-blue' : 'badge-gray');
-}
-function saveSettings() {
-  lsSet('opinetKey', document.getElementById('opinetKey').value.trim());
+  renderKeyUI();
   refreshUI();
 }
+function setKeyBadge(id, on) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = on ? '설정됨' : '미설정';
+  el.className = 'badge ' + (on ? 'badge-blue' : 'badge-gray');
+  el.style.textTransform = 'none';
+  el.style.letterSpacing = '0';
+}
+// 키 설정 상태에 따라 '입력완료' 박스 / 입력칸 표시 전환
+function renderKeyUI() {
+  const opHas = !!ls('opinetKey');
+  const opDone = opHas && !S.editOpinet;
+  document.getElementById('opinetDone').style.display = opDone ? 'flex' : 'none';
+  document.getElementById('opinetEdit').style.display = opDone ? 'none' : 'block';
+  setKeyBadge('opinetStatus', opHas);
+
+  const kaDone = S.hasKakao && !S.editKakao;
+  document.getElementById('kakaoDone').style.display = kaDone ? 'flex' : 'none';
+  document.getElementById('kakaoEdit').style.display = kaDone ? 'none' : 'block';
+  setKeyBadge('kakaoStatus', S.hasKakao);
+}
+// '변경하기' → 입력칸 표시 + 비움
+function editKey(which) {
+  if (which === 'opinet') { S.editOpinet = true; document.getElementById('opinetKey').value = ''; }
+  else { S.editKakao = true; document.getElementById('kakaoKey').value = ''; }
+  renderKeyUI();
+  const inp = document.getElementById(which === 'opinet' ? 'opinetKey' : 'kakaoKey');
+  if (inp) inp.focus();
+}
 async function saveToServer() {
-  const opKey = document.getElementById('opinetKey').value.trim();
-  const kaKey = document.getElementById('kakaoKey').value.trim();
-  if (opKey) lsSet('opinetKey', opKey);
+  const opEl = document.getElementById('opinetKey');
+  const kaEl = document.getElementById('kakaoKey');
+  const opKey = opEl.value.trim();
+  const kaKey = kaEl.value.trim();
+  if (!opKey && !kaKey) { alert('변경할 API 키를 입력해주세요.'); return; }
+
   const btn = document.getElementById('btnSaveServer');
   btn.textContent = '저장 중…';
   btn.disabled = true;
   try {
     const payload = {};
-    if (opKey) payload.opinetKey = opKey;
+    if (opKey) { lsSet('opinetKey', opKey); payload.opinetKey = opKey; }
     if (kaKey) payload.kakaoKey = kaKey;
     const r = await fetch(OPINET_CONFIG_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    btn.textContent = r.ok ? '✓ 서버 저장 완료' : '저장 실패';
-    if (r.ok && kaKey) {
-      S.hasKakao = true;
-      document.getElementById('kakaoKey').value = '';   // 키 화면 비노출
-      updateKakaoStatus();
+    if (r.ok) {
+      btn.textContent = '✓ 서버 저장 완료';
+      if (kaKey) S.hasKakao = true;
+      S.editOpinet = false;
+      S.editKakao = false;
+      opEl.value = '';
+      kaEl.value = '';
+      renderKeyUI();
+    } else {
+      btn.textContent = '저장 실패';
     }
   } catch {
     btn.textContent = '저장 실패';
@@ -1180,7 +1231,7 @@ async function autoComputeDistance() {
       `카카오 길찾기 자동 계산 (편도 ${oneWayKm.toFixed(1)}km × 2${mins ? `, 편도 약 ${mins}분` : ''})`);
 
     // 경로지도 증빙 이미지 자동 생성 → 지도 첨부
-    const ss = generateRouteEvidence(d, oneWayKm, roundKm, mins);
+    const ss = await generateRouteEvidence(d, oneWayKm, roundKm, mins);
     setMapEvidence(ss, `경로지도 자동 생성 (편도 ${oneWayKm.toFixed(1)}km)`);
 
   } catch (e) {
@@ -1191,9 +1242,28 @@ async function autoComputeDistance() {
 }
 
 /* 카카오 길찾기 응답 → 경로지도 증빙 이미지 (canvas) */
-function generateRouteEvidence(d, oneWayKm, roundKm, mins) {
+// 이미지 로드 (CORS 허용 타일 → 캔버스 오염 없음). 실패 시 null
+function loadImage(src) {
+  return new Promise(resolve => {
+    const im = new Image();
+    im.crossOrigin = 'anonymous';
+    im.onload = () => resolve(im);
+    im.onerror = () => resolve(null);
+    im.src = src;
+  });
+}
+// Web Mercator: 경위도 → 월드 픽셀 (zoom z, 타일 256px)
+const TILE = 256;
+function lngToWorldX(lng, z) { return (lng + 180) / 360 * TILE * Math.pow(2, z); }
+function latToWorldY(lat, z) {
+  const r = lat * Math.PI / 180;
+  return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * TILE * Math.pow(2, z);
+}
+
+async function generateRouteEvidence(d, oneWayKm, roundKm, mins) {
   const W = 820, H = 600, P = 28;
-  const mapTop = 150, mapH = 300;
+  const mapTop = 150, mapH = 300, mapW = W - 2 * P;
+  const mapBottom = mapTop + mapH;
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
   const x = cv.getContext('2d');
@@ -1216,46 +1286,93 @@ function generateRouteEvidence(d, oneWayKm, roundKm, mins) {
   x.fillText('출발 : ' + (d.origin?.label || '본사'), P, 92);
   x.fillText('도착 : ' + (d.dest?.label || ''), P, 116);
 
-  // ── 경로 지도 영역 ──
-  const mapY = mapTop, mapBottom = mapTop + mapH;
-  x.fillStyle = '#eef3f8'; x.fillRect(P, mapY, W - 2 * P, mapH);
-  x.strokeStyle = '#cdd5de'; x.lineWidth = 1; x.strokeRect(P, mapY, W - 2 * P, mapH);
-  // 옅은 격자
-  x.strokeStyle = '#dde5ee';
-  for (let gx = P; gx <= W - P; gx += 40) { x.beginPath(); x.moveTo(gx, mapY); x.lineTo(gx, mapBottom); x.stroke(); }
-  for (let gy = mapY; gy <= mapBottom; gy += 40) { x.beginPath(); x.moveTo(P, gy); x.lineTo(W - P, gy); x.stroke(); }
-
   const path = (d.path || []).map(p => [parseFloat(p[0]), parseFloat(p[1])]).filter(p => isFinite(p[0]) && isFinite(p[1]));
-  if (path.length >= 2) {
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for (const [lng, lat] of path) {
-      if (lng < minX) minX = lng; if (lng > maxX) maxX = lng;
-      if (lat < minY) minY = lat; if (lat > maxY) maxY = lat;
-    }
-    const pad = 22;
-    const spanX = (maxX - minX) || 1e-6, spanY = (maxY - minY) || 1e-6;
-    const sc = Math.min((W - 2 * P - 2 * pad) / spanX, (mapH - 2 * pad) / spanY);
-    const offX = P + (W - 2 * P - spanX * sc) / 2;
-    const offY = mapY + (mapH - spanY * sc) / 2;
-    const tx = lng => offX + (lng - minX) * sc;
-    const ty = lat => mapBottom - (offY - mapY) - (lat - minY) * sc;  // 위도↑ = 화면↑
 
-    // 경로 선
-    x.strokeStyle = '#0051a2'; x.lineWidth = 4; x.lineJoin = 'round'; x.lineCap = 'round';
+  // 지도 영역 클립
+  x.save();
+  x.beginPath(); x.rect(P, mapTop, mapW, mapH); x.clip();
+  x.fillStyle = '#e8edf2'; x.fillRect(P, mapTop, mapW, mapH);
+
+  let drewTiles = false;
+  if (path.length >= 2) {
+    // bbox
+    let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+    for (const [lng, lat] of path) {
+      if (lng < minLng) minLng = lng; if (lng > maxLng) maxLng = lng;
+      if (lat < minLat) minLat = lat; if (lat > maxLat) maxLat = lat;
+    }
+    // bbox가 화면에 들어가는 최대 zoom 선택
+    const pad = 16;
+    let z = 11;
+    for (let zz = 18; zz >= 2; zz--) {
+      const wpx = lngToWorldX(maxLng, zz) - lngToWorldX(minLng, zz);
+      const hpx = latToWorldY(minLat, zz) - latToWorldY(maxLat, zz);
+      if (wpx <= mapW - 2 * pad && hpx <= mapH - 2 * pad) { z = zz; break; }
+    }
+    const cLng = (minLng + maxLng) / 2, cLat = (minLat + maxLat) / 2;
+    const winLeft = lngToWorldX(cLng, z) - mapW / 2;
+    const winTop  = latToWorldY(cLat, z) - mapH / 2;
+    const sX = wx => P + (wx - winLeft);
+    const sY = wy => mapTop + (wy - winTop);
+
+    // OSM 타일 다운로드·합성 (CORS 허용 → 내보내기 가능)
+    const n = Math.pow(2, z);
+    const txMin = Math.floor(winLeft / TILE), txMax = Math.floor((winLeft + mapW) / TILE);
+    const tyMin = Math.floor(winTop / TILE),  tyMax = Math.floor((winTop + mapH) / TILE);
+    const jobs = [];
+    for (let tx = txMin; tx <= txMax; tx++) {
+      for (let ty = tyMin; ty <= tyMax; ty++) {
+        if (tx < 0 || ty < 0 || tx >= n || ty >= n) continue;
+        jobs.push(loadImage(`https://tile.openstreetmap.org/${z}/${tx}/${ty}.png`)
+          .then(im => ({ im, tx, ty })));
+      }
+    }
+    const tiles = await Promise.all(jobs);
+    for (const t of tiles) {
+      if (!t.im) continue;
+      x.drawImage(t.im, P + (t.tx * TILE - winLeft), mapTop + (t.ty * TILE - winTop), TILE, TILE);
+      drewTiles = true;
+    }
+
+    // 경로 선 (외곽 흰색 + 파란 본선)
+    x.lineJoin = 'round'; x.lineCap = 'round';
+    x.strokeStyle = 'rgba(255,255,255,.85)'; x.lineWidth = 7;
     x.beginPath();
-    path.forEach(([lng, lat], i) => { const px = tx(lng), py = ty(lat); i ? x.lineTo(px, py) : x.moveTo(px, py); });
+    path.forEach(([lng, lat], i) => { const px = sX(lngToWorldX(lng, z)), py = sY(latToWorldY(lat, z)); i ? x.lineTo(px, py) : x.moveTo(px, py); });
+    x.stroke();
+    x.strokeStyle = '#1a56db'; x.lineWidth = 4;
+    x.beginPath();
+    path.forEach(([lng, lat], i) => { const px = sX(lngToWorldX(lng, z)), py = sY(latToWorldY(lat, z)); i ? x.lineTo(px, py) : x.moveTo(px, py); });
     x.stroke();
 
-    // 출발/도착 마커
-    const sPt = path[0], ePt = path[path.length - 1];
-    drawMarker(x, tx(sPt[0]), ty(sPt[1]), '#0d6e3e', '출발');
-    drawMarker(x, tx(ePt[0]), ty(ePt[1]), '#dc2626', '도착');
+    // 마커
+    const s0 = path[0], e0 = path[path.length - 1];
+    drawMarker(x, sX(lngToWorldX(s0[0], z)), sY(latToWorldY(s0[1], z)), '#0d6e3e', '출발');
+    drawMarker(x, sX(lngToWorldX(e0[0], z)), sY(latToWorldY(e0[1], z)), '#dc2626', '도착');
   } else {
     x.fillStyle = '#64748b'; x.font = '14px "맑은 고딕","Malgun Gothic",sans-serif';
     x.textAlign = 'center';
-    x.fillText('(경로 좌표 없음 — 거리 요약만 표시)', W / 2, mapY + mapH / 2);
+    x.fillText('(경로 좌표 없음 — 거리 요약만 표시)', P + mapW / 2, mapTop + mapH / 2);
     x.textAlign = 'left';
   }
+
+  // 타일 실패 시 옅은 격자
+  if (!drewTiles && path.length >= 2) {
+    x.strokeStyle = '#dde5ee'; x.lineWidth = 1;
+    for (let gx = P; gx <= W - P; gx += 40) { x.beginPath(); x.moveTo(gx, mapTop); x.lineTo(gx, mapBottom); x.stroke(); }
+    for (let gy = mapTop; gy <= mapBottom; gy += 40) { x.beginPath(); x.moveTo(P, gy); x.lineTo(W - P, gy); x.stroke(); }
+  }
+  // OSM 저작자 표시(타일 이용약관)
+  if (drewTiles) {
+    x.font = '10px sans-serif';
+    const att = '© OpenStreetMap';
+    const tw = x.measureText(att).width;
+    x.fillStyle = 'rgba(255,255,255,.75)'; x.fillRect(P + mapW - tw - 8, mapBottom - 15, tw + 8, 14);
+    x.fillStyle = '#475569'; x.textAlign = 'left'; x.fillText(att, P + mapW - tw - 4, mapBottom - 8);
+  }
+  x.restore();
+  // 지도 테두리
+  x.strokeStyle = '#b0bdcc'; x.lineWidth = 1; x.strokeRect(P, mapTop, mapW, mapH);
 
   // ── 요약 박스 ──
   const sy = mapBottom + 20, rowH = 30;
