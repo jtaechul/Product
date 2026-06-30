@@ -378,6 +378,14 @@
       display: inline-flex; align-items: center; gap: 4px;
     }
     .btn-pdf:hover { background: #5b21b6; }
+    .btn-hipass {
+      padding: 8px 11px; background: var(--teal); color: #fff;
+      border: none; border-radius: 6px; cursor: pointer; text-decoration: none;
+      font-size: 12px; font-weight: 700; font-family: inherit;
+      white-space: nowrap; transition: background .15s;
+      display: inline-flex; align-items: center;
+    }
+    .btn-hipass:hover { background: #066470; }
     .pdf-result {
       margin-top: 10px; background: #f5f3ff;
       border: 1.5px solid #c4b5fd; border-radius: 8px; padding: 12px; font-size: 12px;
@@ -506,11 +514,13 @@
       <div class="fg">
         <label class="lbl req">차량 유종</label>
         <select id="fFuel" onchange="onFuelChange()">
-          <option value="diesel">경유 (디젤)</option>
-          <option value="gasoline">가솔린 (휘발유)</option>
+          <option value="gasoline">휘발유</option>
+          <option value="diesel">경유</option>
           <option value="lpg">LPG</option>
-          <option value="hybrid">하이브리드 (가솔린 기준)</option>
-          <option value="electric">전기차</option>
+          <option value="hybrid">하이브리드</option>
+          <option value="phev">플러그인 하이브리드</option>
+          <option value="electric">전기</option>
+          <option value="hydrogen">수소</option>
         </select>
       </div>
 
@@ -526,6 +536,8 @@
           </label>
           <input type="file" id="pdfUpload" accept=".pdf"
                  style="display:none;" onchange="parseTollPdf(this)">
+          <a href="https://www.hipass.co.kr/main.do" target="_blank" rel="noopener"
+             class="btn-hipass" title="하이패스 통행료 홈페이지 (이용내역 조회·PDF 발급)">통행료 조회</a>
         </div>
         <div class="pdf-result" id="pdfResult" style="display:none;"></div>
         <div class="ss-preview" id="pdfPreview" style="display:none;margin-top:8px;">
@@ -549,9 +561,9 @@
       <div class="lk-box">
         <div class="lk-hdr">
           전국 평균 유가
-          <span class="badge badge-blue" id="fuelBadge">경유</span>
+          <span class="badge badge-blue" id="fuelBadge">휘발유</span>
         </div>
-        <div class="lk-val" id="priceVal">-<span class="lk-unit">원/L</span></div>
+        <div class="lk-val" id="priceVal">-<span class="lk-unit" id="priceUnit">원/L</span></div>
         <div class="lk-meta" id="priceMeta">날짜 선택 후 조회하세요</div>
         <button class="btn-auto" id="btnPrice" onclick="fetchPrice()" disabled>
           유가 자동 조회
@@ -561,7 +573,7 @@
         <div class="manual-row">
           <input type="number" id="manPrice" placeholder="직접 입력 (예: 1850.50)"
                  step="0.01" min="0" oninput="onManPrice()">
-          <span class="unit">원/L</span>
+          <span class="unit" id="manPriceUnit">원/L</span>
         </div>
 
         <!-- Opinet screenshot -->
@@ -755,11 +767,15 @@ function buildMapUrl(dest) {
 }
 
 const FUELS = {
-  diesel:   { name: '경유',     eff: 12.52, opinetCode: 'D047' },
-  gasoline: { name: '가솔린',   eff: 12.50, opinetCode: 'B027' },
-  lpg:      { name: 'LPG',     eff: 10.60, opinetCode: 'K015' },
-  hybrid:   { name: '하이브리드', eff: 17.00, opinetCode: 'B027' },
-  electric: { name: '전기',     eff: null,  opinetCode: null   },
+  // 연비/전비: 2025 공무원보수 등의 업무지침(인사혁신처) 기준
+  // pUnit=단가 단위, eUnit=연비 단위. opinetCode 없으면 단가 직접 입력
+  gasoline: { name: '휘발유',          eff: 11.97, opinetCode: 'B027', pUnit: 'L',   eUnit: 'km/L'   },
+  diesel:   { name: '경유',            eff: 12.52, opinetCode: 'D047', pUnit: 'L',   eUnit: 'km/L'   },
+  lpg:      { name: 'LPG',            eff: 8.83,  opinetCode: 'K015', pUnit: 'L',   eUnit: 'km/L'   },
+  hybrid:   { name: '하이브리드',        eff: 15.37, opinetCode: 'B027', pUnit: 'L',   eUnit: 'km/L'   },
+  phev:     { name: '플러그인 하이브리드', eff: 10.61, opinetCode: 'B027', pUnit: 'L',   eUnit: 'km/L'   },
+  electric: { name: '전기',            eff: 5.22,  opinetCode: null,   pUnit: 'kWh', eUnit: 'km/kWh' },
+  hydrogen: { name: '수소',            eff: 94.9,  opinetCode: null,   pUnit: 'kg',  eUnit: 'km/kg'  },
 };
 
 /* ========================================================
@@ -790,6 +806,7 @@ window.addEventListener('load', () => {
   const today = new Date().toISOString().slice(0, 10);
   document.getElementById('fDateS').value = today;
   document.getElementById('fDateE').value = today;
+  onFuelChange();
   refreshUI();
 });
 
@@ -930,19 +947,26 @@ function refreshUI() {
 function onDateChange() { refreshUI(); }
 function onDestChange() { refreshUI(); }
 
+function curFuel() { return FUELS[document.getElementById('fFuel').value]; }
+
 function onFuelChange() {
-  const fuel = FUELS[document.getElementById('fFuel').value];
+  const fuel = curFuel();
   document.getElementById('fuelBadge').textContent = fuel.name;
+  document.getElementById('priceUnit').textContent = '원/' + fuel.pUnit;
+  document.getElementById('manPriceUnit').textContent = '원/' + fuel.pUnit;
+  // 자동 조회 불가(전기·수소) 안내
+  const hint = document.getElementById('priceMeta');
+  if (!fuel.opinetCode && !S.price) hint.textContent = `${fuel.name}는 단가(원/${fuel.pUnit})를 직접 입력해주세요`;
 }
 
 function onManPrice() {
   const v = parseFloat(document.getElementById('manPrice').value);
   if (!isNaN(v) && v > 0) {
     S.price = v;
-    showPrice(v, '직접 입력한 유가');
+    showPrice(v, '직접 입력한 단가');
   } else {
     S.price = null;
-    document.getElementById('priceVal').innerHTML = '-<span class="lk-unit">원/L</span>';
+    document.getElementById('priceVal').innerHTML = `-<span class="lk-unit">원/${curFuel().pUnit}</span>`;
     document.getElementById('priceMeta').textContent = '';
   }
 }
@@ -961,7 +985,7 @@ function onManDist() {
 
 function showPrice(v, meta) {
   const fmt = v.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  document.getElementById('priceVal').innerHTML = `${fmt}<span class="lk-unit">원/L</span>`;
+  document.getElementById('priceVal').innerHTML = `${fmt}<span class="lk-unit">원/${curFuel().pUnit}</span>`;
   document.getElementById('priceMeta').textContent = meta;
 }
 function showDist(v, meta) {
@@ -984,7 +1008,7 @@ async function fetchPrice() {
 
   if (!opKey || !dateS) return;
   if (!fuel.opinetCode) {
-    document.getElementById('priceMeta').textContent = '전기차는 전기 단가를 별도 입력해주세요';
+    document.getElementById('priceMeta').textContent = `${fuel.name}는 단가(원/${fuel.pUnit})를 직접 입력해주세요`;
     return;
   }
 
@@ -1596,18 +1620,19 @@ function calculate() {
   const raw    = (price * dist / eff) + toll;
   const amount = Math.floor(raw / 100) * 100;
 
+  const pU = fuel.pUnit, eU = fuel.eUnit;
   const basis = `${BASE_NAME}(${BASE_ADDR}) → ${dest}: 왕복 ${dist}km, ` +
-    `유가 ${price.toFixed(2)}원/L, 연비 ${eff}km/L, 통행료 ${toll.toLocaleString('ko-KR')}원 ` +
+    `단가 ${price.toFixed(2)}원/${pU}, 연비 ${eff}${eU}, 통행료 ${toll.toLocaleString('ko-KR')}원 ` +
     `[산식: ROUNDDOWN(${price.toFixed(2)}×${dist}÷${eff}+${toll}, -2) = ${amount.toLocaleString('ko-KR')}원]`;
 
   document.getElementById('r-name').textContent    = name;
   document.getElementById('r-cop').textContent     = cop;
   document.getElementById('r-purpose').textContent = purpose;
   document.getElementById('r-period').textContent  = period;
-  document.getElementById('r-lbl-price').textContent = `유가(${fuel.name})`;
+  document.getElementById('r-lbl-price').textContent = `단가(${fuel.name})`;
   document.getElementById('r-lbl-eff').textContent   = `연비(${fuel.name})`;
-  document.getElementById('r-price').textContent  = price.toLocaleString('ko-KR', {minimumFractionDigits:2}) + ' 원/L';
-  document.getElementById('r-eff').textContent    = eff + ' km/L';
+  document.getElementById('r-price').textContent  = price.toLocaleString('ko-KR', {minimumFractionDigits:2}) + ` 원/${pU}`;
+  document.getElementById('r-eff').textContent    = eff + ' ' + eU;
   document.getElementById('r-dist').textContent   = dist + ' km';
   document.getElementById('r-toll').textContent   = toll.toLocaleString('ko-KR') + ' 원';
   document.getElementById('r-amount').textContent = amount.toLocaleString('ko-KR') + ' 원';
@@ -1616,7 +1641,7 @@ function calculate() {
   document.getElementById('naverLinkResult').href = buildMapUrl(dest);
 
   S.calcResult = { name, purpose, period, cop, fType, fuelName: fuel.name,
-                   price, dist, eff, toll, amount, basis, dest };
+                   price, dist, eff, toll, amount, basis, dest, pUnit: pU, eUnit: eU };
 
   updateAttachStatus();
 
@@ -1750,8 +1775,8 @@ async function downloadExcel() {
     const hdrs7 = [
       { addr: 'A7', val: '항목' },
       { addr: 'B7', val: `여행거리\n(왕복, km)` },
-      { addr: 'C7', val: `유가\n(${r.fuelName}, 원/L)` },
-      { addr: 'D7', val: `연비\n(${r.fuelName}, km/L)` },
+      { addr: 'C7', val: `단가\n(${r.fuelName}, 원/${r.pUnit})` },
+      { addr: 'D7', val: `연비\n(${r.fuelName}, ${r.eUnit})` },
       { addr: 'E7', val: '통행료\n(원)' },
       { addr: 'F7', val: '지급금액(원)\n(백원 단위 절사)' },
     ];
