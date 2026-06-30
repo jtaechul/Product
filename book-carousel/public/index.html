@@ -926,6 +926,7 @@
       <button class="btn btn-outline" id="copyAllBtn">전체 복사</button>
       <button class="btn btn-outline" id="generateImagesBtn" style="background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;border:none;">이미지 생성</button>
       <button class="btn btn-outline" id="saveAllImagesBtn" style="background:linear-gradient(135deg,#064e3b,#065f46);color:#fff;border:none;">이미지 전체 저장</button>
+      <button class="btn btn-outline" id="saveReelSetBtn" style="background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border:none;">릴스 세트(세로 4장)</button>
       <button class="btn btn-validate" id="validateBtn">품질 검증</button>
     </div>
   </div>
@@ -1814,6 +1815,77 @@ async function saveAllCards() {
 }
 
 document.getElementById('saveAllImagesBtn').addEventListener('click', saveAllCards);
+
+// ── 릴스 세트(세로 9:16) ──
+// 같은 핵심 문구(훅)를 고정하고 배경만 4장 바뀌는 세로 이미지 → 인스타 릴스(사진 슬라이드쇼)+음악용.
+// 글자가 고정이라 슬라이드가 빨라도 읽을 수 있고, 배경이 바뀌어 영상처럼 보인다.
+async function buildReelBlob(blobUrl, hook, bookLine) {
+  const W = 1080, H = 1920;
+  const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  await document.fonts.ready;
+  if (blobUrl) {
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
+    const scale = Math.max(W / img.width, H / img.height);
+    const dw = img.width * scale, dh = img.height * scale;
+    ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  } else { ctx.fillStyle = '#1a1024'; ctx.fillRect(0, 0, W, H); }
+  // 가독성 그라데이션(위·아래 어둡게)
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, 'rgba(0,0,0,0.55)'); g.addColorStop(0.4, 'rgba(0,0,0,0.22)');
+  g.addColorStop(0.72, 'rgba(0,0,0,0.45)'); g.addColorStop(1, 'rgba(0,0,0,0.88)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // 훅(핵심 문구) — 화면 중앙
+  const PAD = 90, TW = W - PAD * 2;
+  const { px, lines } = autoFitLines(ctx, hook, TW, 86, 50, 6, 5, '900');
+  const LH = Math.round(px * 1.4);
+  let y = Math.round(H * 0.42 - (lines.length * LH) / 2) + px;
+  ctx.textAlign = 'left'; ctx.font = `900 ${px}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
+  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 20;
+  for (const ln of lines) { ctx.fillText(ln, PAD, y); y += LH; }
+  ctx.shadowBlur = 0;
+  // 하단 책 정보 + 안내
+  ctx.font = '700 40px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.fillText(bookLine, PAD, H - 168);
+  ctx.font = '400 31px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.72)';
+  ctx.fillText('저장해두고 · 프로필 링크에서 만나보세요', PAD, H - 116);
+  return new Promise(r => canvas.toBlob(r, 'image/png'));
+}
+
+async function saveReelSet() {
+  if (!state.pages?.page1?.headline) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
+  const cards = document.querySelectorAll('#carouselScroll .card');
+  const bgs = [];
+  for (let i = 0; i < 4 && i < cards.length; i++) bgs.push(cards[i].dataset.blobUrl || null);
+  if (!bgs.some(Boolean)) { showToast('먼저 "이미지 생성"을 해주세요 (배경이 필요합니다).', 'warning'); return; }
+
+  const btn = document.getElementById('saveReelSetBtn');
+  btn.disabled = true; btn.textContent = '만드는 중...';
+  try {
+    const hook = state.pages.page1.headline;
+    const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
+    const bookLine = `「${cleanT}」${state.bookInfo?.author ? ' · ' + state.bookInfo.author : ''}`;
+    const files = [];
+    for (let i = 0; i < bgs.length; i++) {
+      const blob = await buildReelBlob(bgs[i], hook, bookLine);
+      if (blob) files.push(new File([blob], `reel_${i + 1}.png`, { type: 'image/png' }));
+    }
+    if (!files.length) { showToast('릴스 이미지 생성 실패', 'error'); return; }
+    if (navigator.canShare && navigator.canShare({ files })) {
+      try { await navigator.share({ files, title: '릴스 세트' }); showToast('릴스 4장 저장 완료 — 인스타 릴스에서 4장 선택 + 음악', 'success'); }
+      catch (e) { if (e.name !== 'AbortError') { files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }); showToast('릴스 4장 저장 완료', 'success'); } }
+    } else {
+      files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); });
+      showToast('릴스 4장 저장 완료', 'success');
+    }
+  } catch (e) {
+    showToast('릴스 생성 실패: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '릴스 세트(세로 4장)';
+  }
+}
+document.getElementById('saveReelSetBtn').addEventListener('click', saveReelSet);
 
 // 텍스트+배경 합성 이미지를 base64 data URL로 반환 (텔레그램 발송용)
 async function generateCompositeDataUrl(card, pageNum) {
