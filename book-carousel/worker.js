@@ -577,19 +577,22 @@ async function handleValidate(env, body) {
   return { success: true, ...extractJson(text) };
 }
 
-// 인물 정체성만 고정(같은 화풍·같은 여성), 자세·표정·시선·옷·장소는 매번 바뀌게 한다.
-// → 화풍은 일관되지만 그림이 매번 똑같아 보이는 "복붙 느낌"을 없앤다.
-const CHARACTER_ANCHOR = 'a Korean woman in her early 30s with long dark-brown hair and soft natural beauty; keep her identity recognizable but vary her pose, expression, gaze direction, clothing and setting to fit each scene; candid natural framing, avoid stiff front-facing passport-style closeups';
+// 인물 정체성만 고정(같은 화풍·같은 여성). 다양성은 자세·옷·장소에서 주되,
+// 얼굴(특히 눈)은 무료 AI가 잘 망가뜨리므로 정면 클로즈업을 금지하고 눈을 내리감/감거나
+// 얼굴을 돌린·가린 구도로만 그린다 → "눈 깨진 섬뜩한 그림"을 원천 차단.
+const CHARACTER_ANCHOR = 'a Korean woman in her early 30s with long dark-brown hair and soft natural beauty; keep her identity recognizable while varying her pose, clothing and setting; her face is turned away, in gentle profile, or looking down with eyes softly lowered or closed, often partly veiled by hair; never a front-facing detailed eye close-up';
 // 니치=이별·재회·회복. 멜랑콜리→치유의 톤. 색감을 더스티로즈+소프트 그레이블루+크림으로 좁혀 일관성↑.
 const STYLE_ANCHOR = 'modern Korean webtoon illustration style, clean delicate line art, soft cel shading, gently desaturated warm palette of dusty rose, soft grey-blue and cream, melancholic yet healing mood, tender cinematic lighting, lyrical and cozy, Instagram square 1:1';
-// 인물 컷에 무작위로 끼워넣는 자세·시선·구도 변주 — 매 생성마다 그림이 달라지게.
+// 인물 컷에 무작위로 끼워넣는 자세·구도 변주(모두 얼굴은 돌리거나 눈을 내린 안전한 구도).
 const POSE_VARIATIONS = [
-  'seen from behind gazing out a window', 'soft side profile looking down thoughtfully',
-  'three-quarter back view glancing over her shoulder', 'lying on a bed looking away',
-  'walking away into soft distance', 'resting her chin on her hand by a cafe window',
-  'curled up under a blanket', 'looking up softly toward warm light', 'sitting on the floor hugging her knees',
-  'standing on a balcony at dusk', 'holding a warm mug with both hands', 'reading by a windowsill',
+  'seen from behind gazing out a window', 'soft side profile with eyes lowered',
+  'three-quarter back view', 'lying down facing away', 'walking away into the soft distance',
+  'seen from behind resting her head against a window', 'curled up under a blanket facing away',
+  'head tilted down reading, hair gently veiling her face', 'sitting on the floor hugging her knees, face hidden',
+  'standing on a balcony seen from behind', 'looking down into a warm mug she holds', 'a distant silhouette against a bright window',
 ];
+// 인물 컷 전용 꼬리말 — 눈·얼굴이 망가지지 않도록 정상적·차분한 묘사를 강하게 유도.
+const PERSON_FACE_TAIL = ', delicate softly drawn face with eyes gently closed or looking down, calm serene expression, clean well-formed features, face mostly turned away or hidden, no eye contact';
 const SETTING_VARIATIONS = [
   'by a rain-streaked window', 'in a quiet cafe corner', 'in a cozy dim bedroom', 'on a city street at dusk',
   'on a bus by the window', 'in a sunlit kitchen', 'on a park bench in autumn', 'in a softly lit living room',
@@ -631,7 +634,7 @@ async function handleGenerateImages(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'main',
     max_tokens: 1500,
-    system: '당신은 한국 웹툰풍 감성 일러스트 아트 디렉터입니다. 이별·재회·회복 주제의 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[인물 배치 — 매우 중요] 사람(같은 30대 한국 여성)은 정확히 2장에만 등장합니다.\n· 1페이지: 무조건 그녀(스크롤을 멈추는 표지 컷).\n· 2~4페이지 중 단 한 곳: 각 페이지의 "문장"을 읽고, 인물이 있을 때 감정이 가장 살아나는 페이지 한 곳을 골라 그녀를 넣으세요(예: 구체적 행동·장면이 그려지는 문장). 나머지 페이지(2~4 중 둘)와 5페이지는 사람 없는 분위기 장면.\n· 어느 페이지를 골랐는지 personPage로 반드시 알려주세요(page2/page3/page4 중 하나).\n\n[얼굴·다양성 규칙 — 매우 중요] 인물 컷은 매번 자세·표정·시선 방향·장소를 다르게 하세요(복붙처럼 똑같은 구도 절대 금지). 빡빡한 정면 증명사진식 클로즈업만 피하고, 뒷모습·옆모습·3/4 시점·전신·고개 돌림 등 자연스러운 앵글을 폭넓게. 같은 사람으로 보이게 머리·분위기만 유지하고 표정은 은은하게 허용.\n\n[스타일 고정 — 5장 공통] 한국 웹툰 일러스트: 섬세한 라인아트, 부드러운 셀 셰이딩, 약간 탈채도된 더스티로즈·소프트 그레이블루·크림 색감, 멜랑콜리하지만 치유되는 톤, 서정적이고 포근한 조명. 실사·공포 톤 금지. 인물 컷과 배경 컷이 한 시리즈로 묶이게. 감정 흐름상 앞장(1~3)은 차분/약간 탈채도, 뒷장(4~5)은 따뜻한 빛이 스미게.\n\n[배경 장면 발상] 창가·카페·침대·책상·골목·버스 안, 휴대폰·편지·머그·담요·우산·책, 빈 의자, 비 오는 유리창, 저물녘→새벽빛 등으로 감정을 상징. 5장의 장소·구도가 서로 뚜렷이 다르게.\n\n[규칙]\n1. 구도·조명 구체적으로 (back view, side profile, wide shot, soft window light, golden morning light)\n2. 인물 컷은 정면 얼굴 클로즈업 금지 / 배경 컷은 사람 없음(no people)\n3. 텍스트·글자·숫자 없음 (no text, no letters, no words)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 각 프롬프트 영어 25~55단어. 인물 외형·화풍·사람유무는 시스템이 자동으로 덧붙이므로, 너는 "그 장의 장면·자세/사물·감정·장소"에 집중해 묘사.\n반드시 JSON만 응답한다.',
+    system: '당신은 한국 웹툰풍 감성 일러스트 아트 디렉터입니다. 이별·재회·회복 주제의 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[인물 배치 — 매우 중요] 사람(같은 30대 한국 여성)은 정확히 2장에만 등장합니다.\n· 1페이지: 무조건 그녀(스크롤을 멈추는 표지 컷).\n· 2~4페이지 중 단 한 곳: 각 페이지의 "문장"을 읽고, 인물이 있을 때 감정이 가장 살아나는 페이지 한 곳을 골라 그녀를 넣으세요(예: 구체적 행동·장면이 그려지는 문장). 나머지 페이지(2~4 중 둘)와 5페이지는 사람 없는 분위기 장면.\n· 어느 페이지를 골랐는지 personPage로 반드시 알려주세요(page2/page3/page4 중 하나).\n\n[얼굴·다양성 규칙 — 매우 중요] 무료 AI는 얼굴(특히 눈)을 가까이·정면으로 그리면 자주 망가뜨립니다(눈이 깨진 섬뜩한 그림). 그러니 인물은 반드시 뒷모습·옆모습·3/4 후면·멀리서 본 전신·고개 숙임 위주로 그리고, 눈은 내리감거나 감은 상태, 또는 머리카락에 살짝 가려지게 하세요. 정면 얼굴·또렷한 눈 클로즈업 절대 금지. 다양성은 표정이 아니라 "자세·장소·옷·구도"에서 만드세요(복붙 구도 금지).\n\n[스타일 고정 — 5장 공통] 한국 웹툰 일러스트: 섬세한 라인아트, 부드러운 셀 셰이딩, 약간 탈채도된 더스티로즈·소프트 그레이블루·크림 색감, 멜랑콜리하지만 치유되는 톤, 서정적이고 포근한 조명. 실사·공포 톤 금지. 인물 컷과 배경 컷이 한 시리즈로 묶이게. 감정 흐름상 앞장(1~3)은 차분/약간 탈채도, 뒷장(4~5)은 따뜻한 빛이 스미게.\n\n[배경 장면 발상] 창가·카페·침대·책상·골목·버스 안, 휴대폰·편지·머그·담요·우산·책, 빈 의자, 비 오는 유리창, 저물녘→새벽빛 등으로 감정을 상징. 5장의 장소·구도가 서로 뚜렷이 다르게.\n\n[규칙]\n1. 구도·조명 구체적으로 (back view, side profile, wide shot, soft window light, golden morning light)\n2. 인물 컷은 정면 얼굴 클로즈업 금지 / 배경 컷은 사람 없음(no people)\n3. 텍스트·글자·숫자 없음 (no text, no letters, no words)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 각 프롬프트 영어 25~55단어. 인물 외형·화풍·사람유무는 시스템이 자동으로 덧붙이므로, 너는 "그 장의 장면·자세/사물·감정·장소"에 집중해 묘사.\n반드시 JSON만 응답한다.',
     user: `책 제목: ${bookInfo.title || ''}\n카테고리: ${bookInfo.category || '이별·재회·회복'}\n책 핵심 주제: ${bookInfo.coreMessage || ''}\n\n1페이지는 무조건 그녀(인물). 2~4페이지 문장을 읽고 인물이 가장 어울리는 한 곳을 골라 그녀를 넣고(personPage로 표기), 나머지와 5페이지는 사람 없는 분위기 배경으로 묘사하세요.\n\n1페이지 ${PAGE_VISUAL_DIRECTIONS.page1}\n  문장: ${pageContents.page1}\n2페이지 ${PAGE_VISUAL_DIRECTIONS.page2}\n  문장: ${pageContents.page2}\n3페이지 ${PAGE_VISUAL_DIRECTIONS.page3}\n  문장: ${pageContents.page3}\n4페이지 ${PAGE_VISUAL_DIRECTIONS.page4}\n  문장: ${pageContents.page4}\n5페이지 ${PAGE_VISUAL_DIRECTIONS.page5}\n  문장: ${pageContents.page5}\n\n[필수] 5장의 장소·구도가 서로 겹치지 않게. 인물은 1페이지 + (2~4 중 personPage) 두 곳만, 나머지는 사람 없음. 텍스트·글자 없음.\n\nJSON: {"page1":"...","page2":"...","page3":"...","page4":"...","page5":"...","personPage":"page3"}`,
   });
 
@@ -658,14 +661,15 @@ async function handleGenerateImages(env, body) {
   const images = {};
   for (const [page, prompt] of Object.entries(prompts)) {
     const seed = Math.floor(Math.random() * 900000) + 100000;
-    let anchor;
+    let anchor, faceTail = '';
     if (PERSON_PAGES.has(page)) {
-      // 인물 컷마다 무작위 자세·장소 변주를 더해 "복붙 느낌" 제거(페이지마다 다르게).
+      // 인물 컷마다 무작위 자세·장소 변주(복붙 느낌 제거) + 얼굴·눈 안전 꼬리말(눈 깨짐 방지).
       anchor = `${CHARACTER_ANCHOR}, ${pick(POSE_VARIATIONS)}, ${pick(SETTING_VARIATIONS)}`;
+      faceTail = PERSON_FACE_TAIL;
     } else {
       anchor = SCENE_ANCHOR;
     }
-    const full = `${prompt}, ${anchor}, ${STYLE_ANCHOR}${tail}`;
+    const full = `${prompt}, ${anchor}, ${STYLE_ANCHOR}${faceTail}${tail}`;
     images[page] = `${base}${encodeURIComponent(full)}?width=1080&height=1080&nologo=true&seed=${seed}&model=flux&enhance=true`;
   }
 
