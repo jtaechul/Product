@@ -1796,60 +1796,10 @@ async function downloadExcel() {
     // ── ROW 9: Spacer ────────────────────────────────────────
     ws.getRow(9).height = 8;
 
-    // ── ROW 10: 산출근거 header ──────────────────────────────
-    ws.getRow(10).height = 22;
-    ws.mergeCells('A10:F10');
-    sc('A10', {
-      value: '산출근거',
-      font: font(true, 10, C.WHITE),
-      fill: fill(C.DARK),
-      alignment: { horizontal: 'left', vertical: 'middle', indent: 1 },
-      border: borderThin,
-    });
-
-    // ── ROW 11: 산출근거 content ─────────────────────────────
-    ws.getRow(11).height = 52;
-    ws.mergeCells('A11:F11');
-    sc('A11', {
-      value: r.basis,
-      font: font(false, 9, '1A2236'),
-      fill: fill(C.LT_GRAY),
-      alignment: { horizontal: 'left', vertical: 'middle', wrapText: true, indent: 1 },
-      border: borderThin,
-    });
-
-    // ── ROW 12: 증빙자료 header ──────────────────────────────
-    ws.getRow(12).height = 22;
-    ws.mergeCells('A12:F12');
-    sc('A12', {
-      value: '증빙자료',
-      font: font(true, 10, C.WHITE),
-      fill: fill(C.DARK),
-      alignment: { horizontal: 'left', vertical: 'middle', indent: 1 },
-      border: borderThin,
-    });
-
-    // ── ROW 13: 증빙자료 content ─────────────────────────────
-    ws.getRow(13).height = 22;
-    ws.mergeCells('A13:F13');
-    const evText = [
-      S.mapScreenshot    ? `[첨부] 지도 경로 캡처 (${BASE_NAME} → ${r.dest})`
-                         : `[미첨부] 지도 경로 캡처 (별도 첨부)`,
-      S.opinetScreenshot ? `[첨부] 오피넷 ${r.fuelName} 전국 평균 유가 ${r.price.toFixed(2)}원/L`
-                         : `[미첨부] 오피넷 전국 평균 유가 캡처 (별도 첨부)`,
-      S.pdfScreenshot    ? `[첨부] 하이패스 통행료 영수증 (PDF)`
-                         : `[미첨부] 하이패스 통행료 영수증 (별도 첨부)`,
-    ].join(' / ');
-    sc('A13', {
-      value: evText,
-      font: font(false, 9, '1A2236'),
-      fill: fill(C.LT_GRAY),
-      alignment: { horizontal: 'left', vertical: 'middle', wrapText: true, indent: 1 },
-      border: borderThin,
-    });
+    // (산출근거·증빙자료 행은 제외 — 표 아래 바로 첨부 이미지)
 
     // ── Images section ───────────────────────────────────────
-    let nextRow = 14;  // 1-indexed
+    let nextRow = 10;  // 1-indexed
 
     async function embedImage(ss, label, rows) {
       if (!ss) return;
