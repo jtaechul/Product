@@ -1313,6 +1313,7 @@ async function generateCarousel() {
   state._catalogAdded = false;
   state.bookNumber = '';  // 새 책 → 번호는 도서관 등록/게시할 때 부여
   state.draftId = '';     // 새 책 → 새 초안
+  state.reelHook = '';    // 새 책 → 릴스 훅 새로 생성
   document.getElementById('validationPanel').classList.remove('visible');
   setStep(2);
 
@@ -1933,19 +1934,31 @@ async function buildReelTextSlide(blobUrl, slide) {
   await document.fonts.ready;
   await _reelBg(ctx, W, H, blobUrl);
   const accent = slide.accent || '#C084FC';
+  const isHook = !!slide.isHook;
   _reelTopHandle(ctx, W);
 
-  // 핵심 문구(최대 4줄) — 4~5초에 읽히는 분량을 큰 폰트로 배치(시작 84px). 화면 중앙(약 0.46)에 정렬.
-  const { px, lines } = autoFitLines(ctx, slide.text || '', TW, 84, 46, 5, 4, '900');
+  // 훅(1페이지)은 더 크고 굵게 — 탐색 탭 썸네일에서도 읽히도록. 본문 장은 4~5초에 읽히는 분량.
+  const { px, lines } = isHook
+    ? autoFitLines(ctx, slide.text || '', TW, 108, 62, 6, 3, '900')
+    : autoFitLines(ctx, slide.text || '', TW, 84, 46, 5, 4, '900');
   const LH = Math.round(px * 1.34);
-  const BAR_BLOCK = 46;                // 액센트 바 + 여백
+  const BAR_BLOCK = isHook ? 54 : 46;     // 액센트 바 + 여백
   const blockH = BAR_BLOCK + lines.length * LH;
-  let y = Math.round(H * 0.46 - blockH / 2);
+  let y = Math.round(H * (isHook ? 0.42 : 0.46) - blockH / 2);
+
+  // 훅은 가독성·썸네일 대비를 위해 텍스트 블록 뒤에 부드러운 어둠 띠를 깐다.
+  if (isHook) {
+    const padV = 44, top = y - padV, bh = blockH + padV * 1.6;
+    const sg = ctx.createLinearGradient(0, top, 0, top + bh);
+    sg.addColorStop(0, 'rgba(0,0,0,0)'); sg.addColorStop(0.5, 'rgba(0,0,0,0.42)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = sg; ctx.fillRect(0, top, W, bh);
+  }
+
   ctx.textAlign = 'left';
-  ctx.fillStyle = accent; ctx.fillRect(PAD, y, 90, 7);
+  ctx.fillStyle = accent; ctx.fillRect(PAD, y, isHook ? 110 : 90, isHook ? 9 : 7);
   y += BAR_BLOCK + px;
   ctx.font = `900 ${px}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
-  ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 22;
+  ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = isHook ? 30 : 22;
   for (const ln of lines) { ctx.fillText(ln, PAD, y); y += LH; }
   ctx.shadowBlur = 0;
   return new Promise(r => canvas.toBlob(r, 'image/png'));
@@ -2039,23 +2052,32 @@ async function saveReelSet() {
   if (![0,1,2,3,4].some(i => bg(i))) { showToast('먼저 "이미지 생성"을 해주세요 (배경이 필요합니다).', 'warning'); return; }
 
   const p = state.pages || {};
-  // 5장: ① 공감 훅(1p) → ②③④ 본문 핵심(2·3·4p 헤드라인+요지) → ⑤ 책 공개(5p)
-  // 각 장 4~5초에 읽히는 분량(헤드라인+핵심 한 문장)으로 담아 책 호기심을 쌓는다.
+  // 5장: ① 강한 훅(릴스 전용) → ②③④ 본문 핵심(2·3·4p 헤드라인+요지) → ⑤ 책 공개(5p)
   const joinHB = pg => {
     const h = (pg?.headline || '').trim(), b = (pg?.body || '').trim();
     if (!h) return b; if (!b) return h;
     return /[.!?。…]$/.test(h) ? `${h} ${b}` : `${h}. ${b}`;
   };
-  const textSlides = [
-    { bg: bg(0), text: reelClamp(p.page1?.headline || '', 52), accent: REEL_ACCENT[1] },
-    { bg: bg(1), text: reelClamp(joinHB(p.page2), 58), accent: REEL_ACCENT[2] },
-    { bg: bg(2), text: reelClamp(joinHB(p.page3), 58), accent: REEL_ACCENT[3] },
-    { bg: bg(3), text: reelClamp(joinHB(p.page4), 58), accent: REEL_ACCENT[4] },
-  ];
 
   const btn = document.getElementById('saveReelSetBtn');
   btn.disabled = true; btn.textContent = '만드는 중...';
   try {
+    // 1페이지: 스크롤을 멈추는 강한 훅을 릴스 전용으로 생성(캐럿셀 1p의 잔잔한 문장 대신).
+    if (!state.reelHook) {
+      btn.textContent = '훅 만드는 중...';
+      try {
+        const hr = await apiFetch('/api/reel-hook', { pages: state.pages, bookInfo: state.bookInfo });
+        if (hr.hook) state.reelHook = hr.hook;
+      } catch (e) { console.warn('릴스 훅 생성 실패(원문 사용):', e.message); }
+    }
+    btn.textContent = '만드는 중...';
+    const hookText = state.reelHook || p.page1?.headline || '';
+    const textSlides = [
+      { bg: bg(0), text: reelClamp(hookText, 46), accent: REEL_ACCENT[1], isHook: true },
+      { bg: bg(1), text: reelClamp(joinHB(p.page2), 58), accent: REEL_ACCENT[2] },
+      { bg: bg(2), text: reelClamp(joinHB(p.page3), 58), accent: REEL_ACCENT[3] },
+      { bg: bg(3), text: reelClamp(joinHB(p.page4), 58), accent: REEL_ACCENT[4] },
+    ];
     const files = [];
     for (let i = 0; i < textSlides.length; i++) {
       const blob = await buildReelTextSlide(textSlides[i].bg, textSlides[i]);
@@ -3043,6 +3065,7 @@ async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
   _resultsRendered = false;
   state._catalogAdded = false;
   state.draftId = '';
+  state.reelHook = '';
 
   const progressPanel = document.getElementById('progressPanel');
   progressPanel.classList.add('visible');
