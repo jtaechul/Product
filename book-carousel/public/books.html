@@ -46,7 +46,11 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
 .book-num{font-family:'Noto Serif KR',serif;font-size:32px;font-weight:700;color:#F0EBE2;line-height:1;user-select:none}
 
-.cat-pill{display:inline-block;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;margin-bottom:14px}
+/* 표지 + 정보 가로 배치 */
+.book-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:14px}
+.book-cover{width:88px;height:126px;flex-shrink:0;border-radius:8px;object-fit:cover;box-shadow:0 3px 12px rgba(0,0,0,.2);background:#EDE6DD}
+.book-head-info{min-width:0;flex:1}
+.cat-pill{display:inline-block;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;margin-bottom:10px}
 .book-title{font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;line-height:1.4;margin-bottom:6px}
 .book-author{font-size:13px;color:var(--sub);margin-bottom:14px}
 .book-msg{font-size:13.5px;line-height:1.75;color:#374151;background:#F9F5EF;border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:18px}
@@ -133,9 +137,14 @@ function renderBooks(catalog) {
     ${i === 0 ? '<span class="badge-new">NEW</span>' : '<span></span>'}
     <span class="book-num" id="book-${esc(b.number)}">No.${esc(b.number)}</span>
   </div>
-  <span class="cat-pill" style="background:${color}18;color:${color}">${esc(b.category || '기타')}</span>
-  <h2 class="book-title">${esc(b.title)}</h2>
-  <p class="book-author">${esc(b.author)}</p>
+  <div class="book-head">
+    ${b.cover ? `<img class="book-cover" src="${esc(b.cover)}" alt="${esc(b.title)} 표지" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : ''}
+    <div class="book-head-info">
+      <span class="cat-pill" style="background:${color}18;color:${color}">${esc(b.category || '기타')}</span>
+      <h2 class="book-title">${esc(b.title)}</h2>
+      <p class="book-author" style="margin-bottom:0">${esc(b.author)}</p>
+    </div>
+  </div>
   ${b.coreMessage ? `<blockquote class="book-msg">${esc(b.coreMessage)}</blockquote>` : ''}
   <div class="card-foot">
     <span class="book-date">${esc(b.date)}</span>

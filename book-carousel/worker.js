@@ -952,6 +952,7 @@ async function runStep(env, pipelineId, step) {
         bookNumber,
         pipelineId,
         coupangLink: state.affiliateLinks?.[0] || null,
+        cover: state.bookCover || bookInfo?.cover || '',
       });
     }
     await savePipelineStatus(env, pipelineId, {
@@ -1468,15 +1469,17 @@ async function reserveBookNumber(env) {
   return String(next).padStart(3, '0');
 }
 
-async function addBookToCatalog(env, { bookInfo, bookNumber, pipelineId, coupangLink = null }) {
+async function addBookToCatalog(env, { bookInfo, bookNumber, pipelineId, coupangLink = null, cover = '' }) {
   if (!env.PENDING_POSTS || !bookNumber) return;
   const catalog = (await env.PENDING_POSTS.get('book_catalog', 'json').catch(() => null)) || [];
+  const coverUrl = cover || bookInfo?.cover || '';
   const entry = {
     number: bookNumber,
     title: bookInfo?.title || '',
     author: bookInfo?.author || '',
     category: bookInfo?.category || '기타',
     coreMessage: bookInfo?.coreMessage || '',
+    cover: coverUrl,             // ← 책 표지(네이버) — 도서관에서 표지로 노출
     date: new Date().toISOString().slice(0, 10),
     pipelineId,
     coupangLink,
@@ -1485,7 +1488,10 @@ async function addBookToCatalog(env, { bookInfo, bookNumber, pipelineId, coupang
   // → "도서관 등록" 메뉴에서 소개·링크를 고쳐 다시 등록하면 덮어쓰기 된다.
   const idx = catalog.findIndex(b => b.number === bookNumber);
   if (idx >= 0) {
-    catalog[idx] = { ...catalog[idx], ...entry, date: catalog[idx].date };
+    // 새 표지가 없으면 기존 표지 보존(소개·링크만 수정하는 경우 표지 유지)
+    const merged = { ...catalog[idx], ...entry, date: catalog[idx].date };
+    if (!coverUrl && catalog[idx].cover) merged.cover = catalog[idx].cover;
+    catalog[idx] = merged;
   } else {
     catalog.unshift(entry);
   }
@@ -1504,7 +1510,7 @@ async function handleAddBookToCatalog(env, body) {
   // 이미 예약된 번호(body.bookNumber)가 있으면 그대로 사용 → 캡션·도서관 번호 일치.
   // 없을 때만 새 번호를 매긴다.
   const bookNumber = body.bookNumber || await reserveBookNumber(env);
-  await addBookToCatalog(env, { bookInfo, bookNumber, pipelineId: null, coupangLink: link });
+  await addBookToCatalog(env, { bookInfo, bookNumber, pipelineId: null, coupangLink: link, cover: body.cover || bookInfo?.cover || '' });
   return { success: true, bookNumber };
 }
 
@@ -1516,7 +1522,7 @@ function normNum(v) {
 // 한 게시물의 모든 내용을 번호로 묶어 저장 — 관리자 보관함의 원본.
 // 텍스트(캡션·5장·DM·링크·소개)는 영구, 이미지는 며칠 뒤 자동 삭제(게시물엔 이미 올라가 있으므로).
 async function handleSavePost(env, body) {
-  const { bookInfo, pages, caption, hashtags, dmText, coupangLink, affiliateLinks, images } = body;
+  const { bookInfo, pages, caption, hashtags, dmText, coupangLink, affiliateLinks, images, cover } = body;
   if (!bookInfo?.title) throw new Error('bookInfo.title이 필요합니다.');
   if (!env.PENDING_POSTS) throw new Error('저장소가 없습니다.');
 
@@ -1549,7 +1555,7 @@ async function handleSavePost(env, body) {
   }
 
   // 도서관 카드 + DM 영구본 동기화
-  await addBookToCatalog(env, { bookInfo, bookNumber: num, pipelineId, coupangLink: record.coupangLink });
+  await addBookToCatalog(env, { bookInfo, bookNumber: num, pipelineId, coupangLink: record.coupangLink, cover: cover || bookInfo?.cover || '' });
   if (record.dmText) {
     await env.PENDING_POSTS.put(`dm_book_${num}`, JSON.stringify({
       number: num, title: bookInfo.title || '', dmText: record.dmText, date: record.date,

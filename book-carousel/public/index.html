@@ -1441,6 +1441,7 @@ async function addBookToCatalogIfNeeded() {
       affiliateLinks: link ? [link] : (state.affiliateLinks || []),
       affiliateLink: link,
       bookNumber: state.bookNumber || '',  // 미리 예약한 번호로 등록 → 캡션 번호와 일치
+      cover: state.bookCover || '',        // 책 표지(네이버) → 도서관에 노출
     });
     if (result.bookNumber) {
       state.bookNumber = result.bookNumber;
@@ -1655,6 +1656,7 @@ document.getElementById('generateImagesBtn').addEventListener('click', async () 
           bookInfo: state.bookInfo,
           bookNumber: state.bookNumber,
           images: archImages,
+          cover: state.bookCover || '',
         });
         showToast('새 이미지를 보관함에도 반영했습니다', 'success');
       } catch (e) { console.warn('보관함 이미지 반영 실패(무시):', e.message); }
@@ -2569,6 +2571,7 @@ document.getElementById('libRegBtn').addEventListener('click', async () => {
       hashtags: state.captionHashtags || [],
       dmText: state.dmReplyA || '',
       images: archImages,
+      cover: state.bookCover || '',
       pipelineId: localStorage.getItem('activePipelineId') || '',
     });
     if (result.bookNumber) {
