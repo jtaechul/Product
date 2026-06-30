@@ -1,0 +1,74 @@
+name: Spotlight Integrity Guard
+
+# main에 푸시할 때마다 spotlight 핵심 파일이 구버전으로 되돌아가지 않았는지 검사.
+# 다른 프로젝트(book-carousel, holedash 등) 병합으로 spotlight JS가 덮어써지는 사고 재발 방지.
+on:
+  push:
+    branches: [main]
+
+jobs:
+  guard:
+    name: Spotlight 파일 무결성 검사
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 핵심 export 존재 확인 (config.js)
+        run: |
+          if ! grep -q 'MILESTONES' spotlight/src/config.js; then
+            echo "::error file=spotlight/src/config.js::MILESTONES export 없음 — 구버전으로 되돌아감"
+            exit 1
+          fi
+          if ! grep -q 'START_MONEY' spotlight/src/config.js; then
+            echo "::error file=spotlight/src/config.js::START_MONEY export 없음 — 구버전으로 되돌아감"
+            exit 1
+          fi
+          echo "config.js OK"
+
+      - name: 핵심 클래스 확인 (game.js)
+        run: |
+          if ! grep -q 'heroName' spotlight/src/systems/game.js; then
+            echo "::error file=spotlight/src/systems/game.js::heroName 없음 — 구버전으로 되돌아감"
+            exit 1
+          fi
+          if ! grep -q 'bondEventsSeen' spotlight/src/systems/game.js; then
+            echo "::error file=spotlight/src/systems/game.js::bondEventsSeen 없음 — 구버전으로 되돌아감"
+            exit 1
+          fi
+          if ! grep -q 'prodBonus' spotlight/src/systems/game.js; then
+            echo "::error file=spotlight/src/systems/game.js::prodBonus 없음 — 구버전으로 되돌아감"
+            exit 1
+          fi
+          echo "game.js OK"
+
+      - name: MainScene 크기·기능 확인
+        run: |
+          LINES=$(wc -l < spotlight/src/scenes/MainScene.js)
+          if [ "$LINES" -lt 800 ]; then
+            echo "::error file=spotlight/src/scenes/MainScene.js::파일이 ${LINES}줄 — 정상은 1000줄 이상 (구버전으로 되돌아감)"
+            exit 1
+          fi
+          if ! grep -q '_beats' spotlight/src/scenes/MainScene.js; then
+            echo "::error file=spotlight/src/scenes/MainScene.js::_beats 함수 없음 — 구버전으로 되돌아감"
+            exit 1
+          fi
+          if ! grep -q 'showEnding' spotlight/src/scenes/MainScene.js; then
+            echo "::error file=spotlight/src/scenes/MainScene.js::showEnding 함수 없음 — 구버전으로 되돌아감"
+            exit 1
+          fi
+          if ! grep -q '_playEndingPrologue' spotlight/src/scenes/MainScene.js; then
+            echo "::error file=spotlight/src/scenes/MainScene.js::_playEndingPrologue 없음 — 구버전으로 되돌아감"
+            exit 1
+          fi
+          echo "MainScene.js OK (${LINES}줄)"
+
+      - name: 로딩 힌트 확인 (index.html)
+        run: |
+          if ! grep -q '__setLoading' spotlight/index.html; then
+            echo "::error file=spotlight/index.html::__setLoading 없음 — 구버전으로 되돌아감"
+            exit 1
+          fi
+          echo "index.html OK"
+
+      - name: 검사 완료
+        run: echo "Spotlight 무결성 검사 통과 — 모든 핵심 파일 정상"
