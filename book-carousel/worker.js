@@ -771,6 +771,38 @@ async function handleReelHook(env, body) {
   }
 }
 
+// 릴스 대본(4장) — 한 편의 흐름으로 "연결되게" 생성하고, 자체 검증(연결성·가독성)까지 한 번에.
+// 캐럿셀의 조각을 잘라 붙이던 방식(어색함)을 대체한다. 5번째 장(책 공개)은 시스템이 표지로 처리.
+async function handleGenerateReel(env, body) {
+  const { pages, bookInfo } = body;
+  const arc = [pages?.page1?.headline, pages?.page2?.headline, pages?.page3?.headline, pages?.page4?.headline, pages?.page5?.cta]
+    .filter(Boolean).join(' / ');
+  // 폴백: 캐럿셀 헤드라인 그대로
+  const fb = {
+    s1: pages?.page1?.headline || '', s2: pages?.page2?.headline || '',
+    s3: pages?.page3?.headline || '', s4: pages?.page4?.headline || '',
+  };
+  try {
+    const text = await callClaude(env.ANTHROPIC_API_KEY, {
+      env, tier: 'light', max_tokens: 700,
+      system: '당신은 인스타 릴스 대본 카피라이터입니다. 타깃은 이별·재회·회복을 지나는 30대 여성.\n[목표] 4개의 슬라이드 문구가 "한 편의 이야기처럼 자연스럽게 이어지게" 씁니다(뚝뚝 끊긴 조각 금지).\n[구성·흐름]\n· s1(훅): 스크롤을 멈추는 강한 첫 문장(콕 집는 감정/궁금증). 18~28자.\n· s2: s1에서 자연스럽게 이어받아 그 감정·패턴을 구체적 장면으로. \n· s3: 그 마음의 이유를 따뜻하게 짚음(비난 금지).\n· s4: 희망으로 전환하는 마무리(단정적 해결책 금지, 여운).\n[문체·규칙] 존댓말·문어체, 따뜻하되 강렬. 각 슬라이드 한 화면에서 4~5초에 읽히게 45자 이내(한두 문장). 책 제목·저자 노출 금지, 이모지 금지, 공포·단정 금지. 앞 문장과 접속·지시어로 연결되게(예: "그런데", "사실은", "그래서").\n[검증] 초안을 쓴 뒤, 4장이 매끄럽게 이어지는지·각 장이 4~5초에 읽히는지 스스로 점검하고 어색하면 고쳐서 최종본만 냅니다.\n반드시 JSON만 응답.',
+      user: `책 핵심 주제: ${bookInfo?.coreMessage || ''}\n카테고리: ${bookInfo?.category || '이별·재회·회복'}\n캐럿셀 흐름(참고): ${arc}\n\n위 흐름을 살리되, 4개 슬라이드가 자연스럽게 이어지는 릴스 대본을 쓰고 스스로 검증·보완해 최종본을 내세요.\nJSON: {"reel":{"s1":"...","s2":"...","s3":"...","s4":"..."},"validation":{"connected":true,"readable":true,"score":0~100,"note":"연결성·가독성 한줄평"}}`,
+    });
+    const r = extractJson(text);
+    const reel = r.reel || {};
+    const out = {
+      s1: (reel.s1 || fb.s1).toString().trim(),
+      s2: (reel.s2 || fb.s2).toString().trim(),
+      s3: (reel.s3 || fb.s3).toString().trim(),
+      s4: (reel.s4 || fb.s4).toString().trim(),
+    };
+    const validation = r.validation || { connected: true, readable: true, score: null, note: '' };
+    return { success: true, reel: out, validation };
+  } catch (e) {
+    return { success: true, reel: fb, validation: { connected: true, readable: true, score: null, note: '자동 생성 실패 — 캐럿셀 문구로 대체' } };
+  }
+}
+
 async function handleGenerateCaption(env, body) {
   const { pages, bookInfo, dmKeyword, bookNumber } = body;
   if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
@@ -2108,6 +2140,7 @@ export default {
         else if (url.pathname === '/api/generate') result = await handleGenerate(env, body);
         else if (url.pathname === '/api/generate-images') result = await handleGenerateImages(env, body);
         else if (url.pathname === '/api/reel-hook') result = await handleReelHook(env, body);
+        else if (url.pathname === '/api/generate-reel') result = await handleGenerateReel(env, body);
         else if (url.pathname === '/api/generate-caption') result = await handleGenerateCaption(env, body);
         else if (url.pathname === '/api/validate') result = await handleValidate(env, body);
         else if (url.pathname === '/api/regenerate') result = await handleRegenerate(env, body);
