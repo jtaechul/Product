@@ -2844,6 +2844,7 @@ async function openArchiveDetail(num) {
       <div class="arch-actions">
         <button class="btn btn-primary" id="archSave" style="font-size:13px;">수정 저장 (소개·링크 반영)</button>
         <a class="btn btn-outline" href="https://insight-vault.pages.dev/books.html#${archEsc(d.number)}" target="_blank" style="font-size:13px;text-decoration:none;">도서관에서 보기 →</a>
+        <button class="btn btn-outline" id="archDelete" style="font-size:13px;color:#dc2626;border-color:#dc2626;">이 책 삭제 (번호 취소)</button>
       </div>
       <div id="archSaveStatus" style="display:none;margin-top:10px;font-size:12.5px;color:var(--success);"></div>
     </div>`;
@@ -2868,6 +2869,19 @@ async function openArchiveDetail(num) {
       showToast('저장 실패: ' + e.message, 'error');
     } finally {
       sbtn.disabled = false;
+    }
+  };
+  document.getElementById('archDelete').onclick = async () => {
+    if (!confirm(`No.${d.number} "${d.title || ''}" 을(를) 도서관에서 삭제할까요?\n\n삭제하면 도서관·보관함에서 사라지고, 이 책 제목은 다시 추천에 나올 수 있습니다.\n(마지막 번호이면 번호도 회수돼 다음 책이 재사용합니다)`)) return;
+    const dbtn = document.getElementById('archDelete');
+    dbtn.disabled = true; dbtn.textContent = '삭제 중...';
+    try {
+      const r = await apiFetch('/api/delete-book', { number: d.number });
+      showToast(`No.${d.number} 삭제 완료${r.counterReclaimed ? ' — 번호 회수됨' : ''}`, 'success');
+      showArchiveList();
+    } catch (e) {
+      showToast('삭제 실패: ' + e.message, 'error');
+      dbtn.disabled = false; dbtn.textContent = '이 책 삭제 (번호 취소)';
     }
   };
 }

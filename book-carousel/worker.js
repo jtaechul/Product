@@ -1691,6 +1691,52 @@ async function handleSavePost(env, body) {
   return { success: true, bookNumber: num };
 }
 
+// 도서관에서 책 삭제 + 번호 취소. 카탈로그·게시물·이미지·DM·중복이력에서 모두 제거하고,
+// 삭제한 게 "가장 큰 번호"면 book_counter를 회수해 다음 책이 그 번호를 재사용하게 한다.
+async function handleDeleteBook(env, body) {
+  if (!env.PENDING_POSTS) throw new Error('저장소가 없습니다.');
+  const num = normNum(body.number);
+  if (num === '000') throw new Error('번호가 올바르지 않습니다.');
+
+  // 삭제 대상 제목 확보(중복이력에서 빼기 위해)
+  const catalog = (await env.PENDING_POSTS.get('book_catalog', 'json').catch(() => null)) || [];
+  const target = catalog.find(b => b.number === num);
+  const title = target?.title || '';
+
+  // 1) 카탈로그에서 제거
+  const nextCatalog = catalog.filter(b => b.number !== num);
+  await env.PENDING_POSTS.put('book_catalog', JSON.stringify(nextCatalog));
+
+  // 2) 게시물·이미지·DM 기록 삭제
+  await env.PENDING_POSTS.delete(`post_${num}`).catch(() => {});
+  await env.PENDING_POSTS.delete(`post_img_${num}`).catch(() => {});
+  await env.PENDING_POSTS.delete(`dm_book_${num}`).catch(() => {});
+
+  // 3) 중복 제작 이력(used_books)에서 제목 제거 → 다시 추천 가능
+  if (title) {
+    try {
+      const used = (await env.PENDING_POSTS.get('used_books', 'json')) || [];
+      const nt = _normTitle(title);
+      const nextUsed = used.filter(t => _normTitle(t) !== nt);
+      if (nextUsed.length !== used.length) await env.PENDING_POSTS.put('used_books', JSON.stringify(nextUsed));
+    } catch {}
+  }
+
+  // 4) 번호 회수: 남은 책들의 최대 번호로 counter 재설정(빈 카탈로그면 0).
+  //    → 마지막 번호를 지우면 그 번호가 다음 책에 재사용됨. 중간 번호 삭제는 빈칸만 남김(딥링크 보호).
+  let counterReclaimed = false;
+  try {
+    const maxRemain = nextCatalog.reduce((m, b) => Math.max(m, parseInt(b.number, 10) || 0), 0);
+    const curCounter = parseInt((await env.PENDING_POSTS.get('book_counter').catch(() => '0')) || '0', 10);
+    if (maxRemain < curCounter) {
+      await env.PENDING_POSTS.put('book_counter', String(maxRemain));
+      counterReclaimed = true;
+    }
+  } catch {}
+
+  return { success: true, deleted: num, counterReclaimed };
+}
+
 // 번호로 한 게시물의 모든 내용을 불러온다 (보관함 상세).
 async function handleGetPost(env, body) {
   const num = normNum(body.number);
@@ -2054,6 +2100,7 @@ export default {
         else if (url.pathname === '/api/add-book-to-catalog') result = await handleAddBookToCatalog(env, body);
         else if (url.pathname === '/api/save-post') result = await handleSavePost(env, body);
         else if (url.pathname === '/api/get-post') result = await handleGetPost(env, body);
+        else if (url.pathname === '/api/delete-book') result = await handleDeleteBook(env, body);
         else if (url.pathname === '/api/save-draft') result = await handleSaveDraft(env, body);
         else if (url.pathname === '/api/list-drafts') result = await handleListDrafts(env);
         else if (url.pathname === '/api/get-draft') result = await handleGetDraft(env, body);
