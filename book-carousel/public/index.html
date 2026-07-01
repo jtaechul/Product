@@ -930,6 +930,18 @@
       <button class="btn btn-outline" id="saveReelSetBtn" style="background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border:none;">릴스 세트(세로 5장)</button>
       <button class="btn btn-validate" id="validateBtn">품질 검증</button>
     </div>
+    <!-- 릴스 문구 미리보기 + 자동 검증 -->
+    <div id="reelPreview" style="display:none;margin-top:14px;padding:14px 16px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-weight:700;font-size:13px;color:#7c3aed;">릴스 문구 (자동 생성·검증)</span>
+        <span id="reelValidBadge" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;"></span>
+      </div>
+      <div id="reelLines" style="font-size:13.5px;line-height:1.85;color:#3a2a2e;"></div>
+      <div id="reelValidNote" style="font-size:11.5px;color:#8a7479;margin-top:8px;"></div>
+      <div style="margin-top:10px;">
+        <button class="btn btn-outline" id="regenReelBtn" style="font-size:12px;padding:7px 12px;">릴스 문구 다시 만들기</button>
+      </div>
+    </div>
   </div>
 
   <!-- Caption section -->
@@ -1063,6 +1075,8 @@ const state = {
   dmReply: null,
   bookNumber: '',
   draftId: '',
+  reelScript: null,       // 연결성 있는 릴스 대본 {s1,s2,s3,s4}
+  reelValidation: null,   // 릴스 문구 자동 검증 결과
 };
 
 // 만든 캐럿셀을 번호 없이 임시 초안으로 자동 저장(7일). 이미 도서관에 등록된 건 제외.
@@ -1314,6 +1328,8 @@ async function generateCarousel() {
   state.bookNumber = '';  // 새 책 → 번호는 도서관 등록/게시할 때 부여
   state.draftId = '';     // 새 책 → 새 초안
   state.reelHook = '';    // 새 책 → 릴스 훅 새로 생성
+  state.reelScript = null; state.reelValidation = null;  // 새 책 → 릴스 대본 새로 생성
+  const rp = document.getElementById('reelPreview'); if (rp) rp.style.display = 'none';
   document.getElementById('validationPanel').classList.remove('visible');
   setStep(2);
 
@@ -1324,6 +1340,12 @@ async function generateCarousel() {
     try {
       data = await apiFetch('/api/generate', state.bookInfo);
     } catch (err) {
+      // 성인·에로 도서 → 우회 없이 즉시 차단
+      if (/ADULT_BLOCKED/.test(err.message)) {
+        hideLoading(); setStep(1);
+        showToast('성인·에로(19금·성인만화/소설) 도서는 리뷰를 만들 수 없습니다.', 'error');
+        return;
+      }
       // 실존 미확인 책 → 사용자에게 확인 후 진행 여부를 묻는다
       if (/BOOK_NOT_FOUND/.test(err.message)) {
         hideLoading();
@@ -1350,6 +1372,8 @@ async function generateCarousel() {
     state.bookNumber = '';
     renderCarousel(data.pages);
     setStep(3);
+    // 캐럿셀과 함께 릴스 대본(연결성 있는 문구)도 생성해 미리보기로 보여준다.
+    generateReelScript();
     // 만든 캐럿셀을 번호 없이 임시 초안으로 자동 저장 → 등록/게시 안 해도 사라지지 않음.
     autosaveDraft();
   } catch (err) {
@@ -1365,7 +1389,7 @@ async function generateCarousel() {
 
 // Phase 3: 검증 → 기준 미달 시 재생성 → 재검증 (최대 3회)
 async function autoValidateLoop() {
-  const MAX = 3;
+  const MAX = 2;   // 크레딧 절약: 검증 후 재생성은 최대 1회(비싼 main 호출 축소)
   let best = { score: -1, pages: state.pages, validation: null };
 
   for (let attempt = 1; attempt <= MAX; attempt++) {
@@ -2045,6 +2069,59 @@ async function buildReelRevealSlide(blobUrl, accent) {
   return new Promise(r => canvas.toBlob(r, 'image/png'));
 }
 
+// 캐럿셀 문구를 조각내던 폴백(연결성 있는 대본 생성 실패 시에만 사용)
+function _reelFallbackScript(p) {
+  const joinHB = pg => {
+    const h = (pg?.headline || '').trim(), b = (pg?.body || '').trim();
+    if (!h) return b; if (!b) return h;
+    return /[.!?。…]$/.test(h) ? `${h} ${b}` : `${h}. ${b}`;
+  };
+  return { s1: p.page1?.headline || '', s2: joinHB(p.page2), s3: joinHB(p.page3), s4: joinHB(p.page4) };
+}
+
+// 릴스 대본 생성(연결성 있게) + 자동 검증 → state 저장 후 미리보기 렌더.
+async function generateReelScript(force) {
+  if (!state.pages?.page1?.headline) return;
+  if (state.reelScript && !force) { renderReelPreview(); return; }
+  const rbtn = document.getElementById('regenReelBtn');
+  if (rbtn) { rbtn.disabled = true; rbtn.textContent = '만드는 중...'; }
+  try {
+    const r = await apiFetch('/api/generate-reel', { pages: state.pages, bookInfo: state.bookInfo });
+    state.reelScript = r.reel || _reelFallbackScript(state.pages);
+    state.reelValidation = r.validation || null;
+  } catch (e) {
+    state.reelScript = _reelFallbackScript(state.pages);
+    state.reelValidation = { note: '자동 생성 실패 — 캐럿셀 문구로 대체' };
+  } finally {
+    if (rbtn) { rbtn.disabled = false; rbtn.textContent = '릴스 문구 다시 만들기'; }
+  }
+  renderReelPreview();
+}
+
+// 릴스 문구 미리보기 + 검증 배지 렌더
+function renderReelPreview() {
+  const panel = document.getElementById('reelPreview');
+  if (!panel || !state.reelScript) return;
+  const s = state.reelScript;
+  const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
+  const rev = `「${cleanT}」${state.bookInfo?.author ? ' · ' + state.bookInfo.author : ''}`;
+  const rows = [
+    ['1 · 훅', s.s1], ['2', s.s2], ['3', s.s3], ['4', s.s4], ['5 · 책 공개', rev],
+  ];
+  document.getElementById('reelLines').innerHTML = rows.map(([n, t]) =>
+    `<div style="display:flex;gap:8px;"><span style="color:#a78bda;font-weight:700;min-width:52px;">${n}</span><span>${escHtml(t || '—')}</span></div>`
+  ).join('');
+  const v = state.reelValidation || {};
+  const badge = document.getElementById('reelValidBadge');
+  const ok = v.connected !== false && v.readable !== false;
+  badge.textContent = v.score != null ? `검증 ${v.score}점` : (ok ? '검증 통과' : '점검 필요');
+  badge.style.background = ok ? '#dcfce7' : '#fef3c7';
+  badge.style.color = ok ? '#166534' : '#92400e';
+  document.getElementById('reelValidNote').textContent = v.note || '';
+  panel.style.display = 'block';
+}
+document.getElementById('regenReelBtn').addEventListener('click', () => generateReelScript(true));
+
 async function saveReelSet() {
   if (!state.pages?.page1?.headline) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
   const cards = document.querySelectorAll('#carouselScroll .card');
@@ -2052,31 +2129,18 @@ async function saveReelSet() {
   if (![0,1,2,3,4].some(i => bg(i))) { showToast('먼저 "이미지 생성"을 해주세요 (배경이 필요합니다).', 'warning'); return; }
 
   const p = state.pages || {};
-  // 5장: ① 강한 훅(릴스 전용) → ②③④ 본문 핵심(2·3·4p 헤드라인+요지) → ⑤ 책 공개(5p)
-  const joinHB = pg => {
-    const h = (pg?.headline || '').trim(), b = (pg?.body || '').trim();
-    if (!h) return b; if (!b) return h;
-    return /[.!?。…]$/.test(h) ? `${h} ${b}` : `${h}. ${b}`;
-  };
-
   const btn = document.getElementById('saveReelSetBtn');
   btn.disabled = true; btn.textContent = '만드는 중...';
   try {
-    // 1페이지: 스크롤을 멈추는 강한 훅을 릴스 전용으로 생성(캐럿셀 1p의 잔잔한 문장 대신).
-    if (!state.reelHook) {
-      btn.textContent = '훅 만드는 중...';
-      try {
-        const hr = await apiFetch('/api/reel-hook', { pages: state.pages, bookInfo: state.bookInfo });
-        if (hr.hook) state.reelHook = hr.hook;
-      } catch (e) { console.warn('릴스 훅 생성 실패(원문 사용):', e.message); }
-    }
+    // 연결성 있는 릴스 대본이 아직 없으면 지금 생성(미리보기와 동일한 문구를 저장).
+    if (!state.reelScript) { btn.textContent = '릴스 문구 만드는 중...'; await generateReelScript(true); }
     btn.textContent = '만드는 중...';
-    const hookText = state.reelHook || p.page1?.headline || '';
+    const sc = state.reelScript || _reelFallbackScript(p);
     const textSlides = [
-      { bg: bg(0), text: reelClamp(hookText, 46), accent: REEL_ACCENT[1], isHook: true },
-      { bg: bg(1), text: reelClamp(joinHB(p.page2), 58), accent: REEL_ACCENT[2] },
-      { bg: bg(2), text: reelClamp(joinHB(p.page3), 58), accent: REEL_ACCENT[3] },
-      { bg: bg(3), text: reelClamp(joinHB(p.page4), 58), accent: REEL_ACCENT[4] },
+      { bg: bg(0), text: reelClamp(sc.s1, 46), accent: REEL_ACCENT[1], isHook: true },
+      { bg: bg(1), text: reelClamp(sc.s2, 58), accent: REEL_ACCENT[2] },
+      { bg: bg(2), text: reelClamp(sc.s3, 58), accent: REEL_ACCENT[3] },
+      { bg: bg(3), text: reelClamp(sc.s4, 58), accent: REEL_ACCENT[4] },
     ];
     const files = [];
     for (let i = 0; i < textSlides.length; i++) {
@@ -2844,6 +2908,7 @@ async function openArchiveDetail(num) {
       <div class="arch-actions">
         <button class="btn btn-primary" id="archSave" style="font-size:13px;">수정 저장 (소개·링크 반영)</button>
         <a class="btn btn-outline" href="https://insight-vault.pages.dev/books.html#${archEsc(d.number)}" target="_blank" style="font-size:13px;text-decoration:none;">도서관에서 보기 →</a>
+        <button class="btn btn-outline" id="archDelete" style="font-size:13px;color:#dc2626;border-color:#dc2626;">이 책 삭제 (번호 취소)</button>
       </div>
       <div id="archSaveStatus" style="display:none;margin-top:10px;font-size:12.5px;color:var(--success);"></div>
     </div>`;
@@ -2868,6 +2933,19 @@ async function openArchiveDetail(num) {
       showToast('저장 실패: ' + e.message, 'error');
     } finally {
       sbtn.disabled = false;
+    }
+  };
+  document.getElementById('archDelete').onclick = async () => {
+    if (!confirm(`No.${d.number} "${d.title || ''}" 을(를) 도서관에서 삭제할까요?\n\n삭제하면 도서관·보관함에서 사라지고, 이 책 제목은 다시 추천에 나올 수 있습니다.\n(마지막 번호이면 번호도 회수돼 다음 책이 재사용합니다)`)) return;
+    const dbtn = document.getElementById('archDelete');
+    dbtn.disabled = true; dbtn.textContent = '삭제 중...';
+    try {
+      const r = await apiFetch('/api/delete-book', { number: d.number });
+      showToast(`No.${d.number} 삭제 완료${r.counterReclaimed ? ' — 번호 회수됨' : ''}`, 'success');
+      showArchiveList();
+    } catch (e) {
+      showToast('삭제 실패: ' + e.message, 'error');
+      dbtn.disabled = false; dbtn.textContent = '이 책 삭제 (번호 취소)';
     }
   };
 }
@@ -3066,6 +3144,8 @@ async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
   state._catalogAdded = false;
   state.draftId = '';
   state.reelHook = '';
+  state.reelScript = null; state.reelValidation = null;
+  const _rp = document.getElementById('reelPreview'); if (_rp) _rp.style.display = 'none';
 
   const progressPanel = document.getElementById('progressPanel');
   progressPanel.classList.add('visible');
@@ -3379,6 +3459,7 @@ function renderPipelineResults(status, autoSendComposites) {
   if (status.affiliateLinks) state.affiliateLinks = status.affiliateLinks;
   if (status.bookInfo) addToHistory(status.bookInfo.title);
   renderCarousel(status.pages);
+  state.reelScript = null; generateReelScript();  // 자동 배포 결과에도 릴스 대본 생성·미리보기
   if (status.images) applyImagesToCards(status.images);
   if (status.caption) {
     document.getElementById('captionTextContent').textContent = status.caption;

@@ -127,7 +127,7 @@ function renderBooks(catalog) {
   catalogEl.innerHTML = catalog.map((b, i) => {
     const color = catColor(b.category);
     const btn = b.coupangLink
-      ? `<a href="${esc(b.coupangLink)}" target="_blank" rel="noopener" class="cta">쿠팡에서 보기 →</a>`
+      ? `<a href="${esc(b.coupangLink)}" target="_blank" rel="noopener" class="cta">책 만나보기 →</a>`
       : `<span class="cta-soon">링크 준비 중</span>`;
     // 검색용 텍스트(제목·저자·번호·카테고리·소개)를 소문자로 합쳐 둔다
     const searchText = `no.${b.number} ${b.number} ${b.title || ''} ${b.author || ''} ${b.category || ''} ${b.coreMessage || ''}`.toLowerCase();
