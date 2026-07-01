@@ -1921,7 +1921,7 @@ function generateBooksHTML(catalog) {
     : catalog.map((b, i) => {
         const color = catColor(b.category);
         const btn = b.coupangLink
-          ? `<a href="${b.coupangLink}" target="_blank" rel="noopener" class="cta">쿠팡에서 보기 →</a>`
+          ? `<a href="${b.coupangLink}" target="_blank" rel="noopener" class="cta">책 만나보기 →</a>`
           : `<span class="cta-soon">링크 준비 중</span>`;
         return `
   <article class="card" data-category="${b.category || '기타'}">
