@@ -195,6 +195,10 @@ FACTIONS.forEach(f=>{duelReady[f.sig]=false;const im=new Image();im.onload=()=>{
 const CASTLE_W=523,CASTLE_H=592;
 const castleImg=new Image();let castleReady=false;castleImg.onload=()=>castleReady=castleImg.naturalWidth>0;castleImg.src="assets/siege/castle.png";
 const soldierImg=new Image();let soldierReady=false;soldierImg.onload=()=>soldierReady=soldierImg.naturalWidth>0;soldierImg.src="assets/siege/soldiers.png";
+const VS_IMG=new Image();let vsReady=false;VS_IMG.onload=()=>vsReady=VS_IMG.naturalWidth>0;VS_IMG.src="assets/fx/vs.png";
+const IMPACT_IMG=new Image();let impactReady=false;IMPACT_IMG.onload=()=>impactReady=IMPACT_IMG.naturalWidth>0;IMPACT_IMG.src="assets/fx/impact.png";
+const DEATH_W=491,DEATH_H=465,DEATH_N=4;
+const DEATH_IMG=new Image();let deathReady=false;DEATH_IMG.onload=()=>deathReady=DEATH_IMG.naturalWidth>0;DEATH_IMG.src="assets/fx/death.png";
 const tintCache=new Map();
 function tintCanvas(img,sx,sw,sh,color,key){const ck=key+"|"+color;if(tintCache.has(ck))return tintCache.get(ck);
   const c=document.createElement("canvas");c.width=sw;c.height=sh;const g=c.getContext("2d");g.imageSmoothingEnabled=false;
@@ -425,7 +429,8 @@ function drawDuel(){const d=duel,el=performance.now()-d.start,introMs=1050,round
     drawCard(lx,cyTop,cw,ch,d.fA,false,false);drawCard(rx,cyTop,cw,ch,d.fB,false,false);
     namePlate(lx,cyTop+ch,cw,d.fA,d.gA,100,A,false);namePlate(rx,cyTop+ch,cw,d.fB,d.gB,100,B,true);
     ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="900 "+(MAIN*0.032)+"px system-ui";ctx.fillStyle="rgba(255,210,58,.96)";ctx.fillText("⚔ "+d.reason,MAIN*0.5,MAIN*0.125);
-    ctx.font="900 "+(MAIN*0.06)+"px system-ui";ctx.globalAlpha=0.9*t;ctx.lineWidth=5;ctx.strokeStyle="#000a";ctx.strokeText("VS",MAIN*0.5,cyTop+ch*0.5);ctx.fillStyle="#fff";ctx.fillText("VS",MAIN*0.5,cyTop+ch*0.5);ctx.globalAlpha=1;
+    if(vsReady){const vw=MAIN*0.34,vh=vw*VS_IMG.naturalHeight/VS_IMG.naturalWidth;ctx.globalAlpha=t;ctx.imageSmoothingEnabled=false;ctx.drawImage(VS_IMG,MAIN*0.5-vw/2,cyTop+ch*0.5-vh/2,vw,vh);ctx.globalAlpha=1;}
+    else{ctx.font="900 "+(MAIN*0.06)+"px system-ui";ctx.globalAlpha=0.9*t;ctx.lineWidth=5;ctx.strokeStyle="#000a";ctx.strokeText("VS",MAIN*0.5,cyTop+ch*0.5);ctx.fillStyle="#fff";ctx.fillText("VS",MAIN*0.5,cyTop+ch*0.5);ctx.globalAlpha=1;}
   } else {                                               // ── 픽셀 전투 ──
     let hpA=100,hpB=100;
     if(phase==="round"){const rrd=d.rounds[ri],prev=ri>0?d.rounds[ri-1]:{hpA:100,hpB:100},kk=clamp((k-0.45)/0.22,0,1);hpA=lerp(prev.hpA,rrd.hpA,kk);hpB=lerp(prev.hpB,rrd.hpB,kk);}
@@ -496,8 +501,10 @@ function drawSiege(){const s=siege,el=performance.now()-s.start,introMs=650,wave
   if(soldierReady){const si=tintCanvas(soldierImg,0,soldierImg.naturalWidth,soldierImg.naturalHeight,A,"sold");
     const ss=MAIN*0.28/si.height,sw=si.width*ss,sh=si.height*ss,sx=lerp(-sw*0.6,MAIN*0.42,waveAdv);
     ctx.imageSmoothingEnabled=false;ctx.drawImage(si,sx,baseY-sh+MAIN*0.01,sw,sh);}
-  // 3) 성문 격돌 임팩트 + 붉은 플래시
-  if(phase==="wave"&&k>=0.42&&k<0.62)siegeImpact(MAIN*0.52,baseY-MAIN*0.05,clamp((k-0.42)/0.2,0,1));
+  // 3) 성문 격돌 임팩트(폭발 이미지) + 붉은 플래시
+  if(phase==="wave"&&k>=0.42&&k<0.62){const it=clamp((k-0.42)/0.2,0,1);
+    if(impactReady){const iw=MAIN*0.46*(0.7+0.45*it),ih=iw*IMPACT_IMG.naturalHeight/IMPACT_IMG.naturalWidth;ctx.globalAlpha=1-it*0.55;ctx.imageSmoothingEnabled=false;ctx.drawImage(IMPACT_IMG,MAIN*0.52-iw/2,baseY-MAIN*0.06-ih/2,iw,ih);ctx.globalAlpha=1;}
+    else siegeImpact(MAIN*0.52,baseY-MAIN*0.05,it);}
   if(phase==="wave"&&k>=0.42&&k<0.6){ctx.fillStyle="rgba(255,80,40,.16)";ctx.fillRect(0,0,MAIN,MAIN);}
   // 제목 + 합/성벽 라벨
   ctx.textAlign="center";ctx.textBaseline="middle";
@@ -525,9 +532,12 @@ function drawKingFace(cx,cy,u,f){const col=FACTIONS[f].color,skin="#e9c9a3",skin
   R(-3,-1.7,2,0.6,hair);R(1,-1.7,2,0.6,hair);R(-2.9,-0.6,1.7,1.2,"#3a2f2a");R(1.2,-0.6,1.7,1.2,"#3a2f2a");R(-2.4,0.9,0.8,1.8,"#8fd0ff");R(1.6,0.9,0.8,1.6,"#8fd0ff");
   R(-1.6,2.7,3.2,0.7,"#7a4a44");R(-2,2.1,0.6,0.7,"#7a4a44");R(1.4,2.1,0.6,0.7,"#7a4a44");R(-5.5,5.2,12,2.2,col);}
 function drawDeath(){const el=performance.now()-deathAnim.start,k=el/deathAnim.dur,f=deathAnim.f;const a=k<0.2?k/0.2:k>0.8?(1-k)/0.2:1;
-  ctx.fillStyle="rgba(4,6,11,"+(0.85*a)+")";ctx.fillRect(0,0,MAIN,MAIN);ctx.globalAlpha=a;drawKingFace(MAIN/2,MAIN*0.44,MAIN/36,f);
-  ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="900 "+(MAIN*0.045)+"px system-ui";ctx.fillStyle=FACTIONS[f].color;ctx.fillText(FACTIONS[f].name+" 멸망",MAIN/2,MAIN*0.75);
-  ctx.font="800 "+(MAIN*0.022)+"px system-ui";ctx.fillStyle="#8b97ad";ctx.fillText("— 왕이 눈물을 흘리며 스러지다 —",MAIN/2,MAIN*0.80);ctx.globalAlpha=1;}
+  ctx.fillStyle="rgba(4,6,11,"+(0.85*a)+")";ctx.fillRect(0,0,MAIN,MAIN);ctx.globalAlpha=a;
+  if(deathReady){const fr=Math.min(DEATH_N-1,Math.max(0,Math.floor(k*DEATH_N)));const di=tintCanvas(DEATH_IMG,fr*DEATH_W,DEATH_W,DEATH_H,FACTIONS[f].color,"death"+fr);
+    const ds=MAIN*0.5/DEATH_H,dw=DEATH_W*ds,dh=DEATH_H*ds;ctx.imageSmoothingEnabled=false;ctx.drawImage(di,MAIN/2-dw/2,MAIN*0.5-dh,dw,dh);}
+  else drawKingFace(MAIN/2,MAIN*0.44,MAIN/36,f);
+  ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="900 "+(MAIN*0.05)+"px system-ui";ctx.lineWidth=5;ctx.strokeStyle="#000a";ctx.strokeText(FACTIONS[f].name+" 멸망",MAIN/2,MAIN*0.66);ctx.fillStyle=FACTIONS[f].color;ctx.fillText(FACTIONS[f].name+" 멸망",MAIN/2,MAIN*0.66);
+  ctx.font="800 "+(MAIN*0.022)+"px system-ui";ctx.fillStyle="#b4bdcc";ctx.fillText("— 왕이 무릎 꿇고 스러지다 —",MAIN/2,MAIN*0.71);ctx.globalAlpha=1;}
 
 function buildMap(){const d=mapImg.data;
   for(let i=0;i<provOf.length;i++){let r=terrainRGB[i*3],g=terrainRGB[i*3+1],b=terrainRGB[i*3+2];const p=pv[provOf[i]];
