@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>군웅할거 — MVP v9 (관전 명료성)</title>
+<style>
+  :root{--bg:#0a0d13;--panel:#121824;--panel2:#0b0f18;--line:#232c3d;--text:#e8edf6;--dim:#8b97ad;--accent:#ffd23a}
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:radial-gradient(1200px 700px at 50% -10%, #16203180, transparent), var(--bg);color:var(--text);
+    font-family:"Pretendard","Apple SD Gothic Neo","Segoe UI",system-ui,-apple-system,sans-serif;min-height:100vh;padding:16px 12px 40px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header{margin:2px 2px 10px}
+  .kicker{font-size:11px;letter-spacing:.26em;color:var(--dim);font-weight:800;text-transform:uppercase}
+  h1{margin:3px 0 2px;font-size:clamp(24px,5vw,38px);font-weight:900;letter-spacing:-.02em}
+  h1 .amp{color:var(--accent)}
+  .sub{color:var(--dim);font-size:13px;margin:0}
+  .power{margin:10px 2px 0}
+  .power .lab{font-size:11px;letter-spacing:.14em;color:var(--dim);font-weight:800;text-transform:uppercase;margin-bottom:5px}
+  .power .lab b{color:var(--text)}
+  .powerbar{position:relative;display:flex;height:20px;border-radius:99px;overflow:hidden;background:#0d131f;border:1px solid var(--line)}
+  .powerbar .seg{position:relative;height:100%;transition:width .3s ease;min-width:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .powerbar .seg .lab{font-size:10px;font-weight:800;color:#fff;white-space:nowrap;text-shadow:0 1px 2px #000b,0 0 2px #0008;padding:0 4px;pointer-events:none}
+  .stage{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-top:12px}
+  .left{flex:1 1 560px;min-width:320px;display:flex;flex-direction:column;gap:12px}
+  .arena-box{position:relative;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:8px}
+  .canvas-stack{position:relative;width:100%;aspect-ratio:1/1}
+  #main{position:absolute;inset:0;width:100%;height:100%;border-radius:8px;display:block;background:#070a10}
+  .overlay{position:absolute;inset:8px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:rgba(5,7,11,.78);backdrop-filter:blur(2px);gap:12px;padding:22px;z-index:6}
+  .overlay.hidden{display:none}
+  .overlay .big{font-size:clamp(20px,4vw,32px);font-weight:900}
+  .overlay .who{font-size:12px;color:var(--dim);letter-spacing:.2em;font-weight:800;text-transform:uppercase}
+  .overlay .summary{font-size:13px;color:var(--dim);line-height:1.7;max-width:82%}
+  .overlay .summary b{color:var(--text)}
+  .banner{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:999px;font-weight:900;font-size:14px;background:#0d1220ee;border:1px solid var(--line);opacity:0;pointer-events:none;box-shadow:0 8px 30px #0008;white-space:nowrap;z-index:7}
+  .banner .dot{width:10px;height:10px;border-radius:3px;flex:none}
+  .banner.show{animation:pop 2s ease forwards}
+  @keyframes pop{0%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.9)}10%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}82%{opacity:1}100%{opacity:0}}
+  .infobar{display:grid;grid-template-columns:0.8fr 1.2fr;gap:14px}
+  .infobar h3{margin:0 0 3px;font-size:11px;letter-spacing:.16em;color:var(--dim);font-weight:800;text-transform:uppercase}
+  .infobar .subnote{font-size:11px;color:var(--dim);margin:0 0 7px}
+  .legend{font-size:12px;color:var(--dim);line-height:1.9}
+  .legend .li{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .legend b{color:var(--text);font-weight:800}
+  .swatch-t{width:13px;height:13px;border-radius:3px;display:inline-block;vertical-align:middle;flex:none}
+  .resmini{display:flex;flex-direction:column;gap:5px}
+  .rm-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;padding:4px 6px;border-radius:7px;background:#0d131f}
+  .rm-row.dead{opacity:.35}
+  .rm-nm{font-weight:800;min-width:52px}
+  .rm-grp{display:inline-flex;align-items:center;gap:3px;color:var(--text);font-weight:800;font-variant-numeric:tabular-nums}
+  .rm-grp.z{opacity:.32;color:var(--dim)}
+  .rm-eff{margin-left:auto;font-size:10px;color:var(--accent);font-weight:800;font-variant-numeric:tabular-nums}
+  .board{flex:0 0 300px;min-width:262px;display:flex;flex-direction:column;gap:12px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px}
+  .panel h2{margin:0 0 8px;font-size:12px;letter-spacing:.16em;color:var(--dim);font-weight:800;text-transform:uppercase;display:flex;justify-content:space-between}
+  .panel h2 .stat{color:var(--text);letter-spacing:0}
+  .rows{display:flex;flex-direction:column;gap:6px}
+  .row{display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:9px;padding:8px 8px;border-radius:9px;background:#0d131f;transition:opacity .2s}
+  .row.leader{background:#17203180;box-shadow:inset 0 0 0 1px #ffffff14}
+  .row.dead{opacity:.34}
+  .rank{font-weight:800;color:var(--dim);font-size:13px;text-align:center}
+  .id{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0}
+  .idtop{display:flex;align-items:center;gap:6px;min-width:0}
+  .gen{font-size:10px;font-weight:800;color:var(--dim);white-space:nowrap;letter-spacing:.01em}
+  .gen b{color:var(--accent)}
+  .nm{font-weight:800;font-size:14px;white-space:nowrap}
+  .mor{font-size:10px;font-weight:800;color:#1a1400;background:var(--accent);border-radius:5px;padding:1px 5px;opacity:0}
+  .mor.on{opacity:1}
+  .troop{font-variant-numeric:tabular-nums;font-weight:800;font-size:13px;color:var(--text);min-width:70px;text-align:right}
+  .controls{display:flex;flex-direction:column;gap:10px}
+  .btns{display:flex;gap:8px;flex-wrap:wrap}
+  button{font-family:inherit;font-weight:800;font-size:14px;cursor:pointer;border:1px solid var(--line);background:#182234;color:var(--text);padding:9px 13px;border-radius:9px;transition:background .12s}
+  button:hover{background:#1e2a40}
+  button.primary{background:var(--accent);color:#1a1400;border-color:transparent}
+  button.primary:hover{background:#ffdd5c}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .speed{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--dim);font-weight:700}
+  .speed input{flex:1}
+  .seedrow{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--dim);font-weight:700}
+  .seedrow input[type=text]{flex:1;min-width:0;font-family:inherit;font-weight:800;background:#0d131f;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  .hint{color:var(--dim);font-size:12px;line-height:1.5;margin:2px 2px 0}
+  img.ic{vertical-align:middle}
+  @media (max-width:760px){.board{flex:1 1 100%}.infobar{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Color Battle · MVP v9 · 관전 명료성</div>
+    <h1>천하 <span class="amp">쟁패</span></h1>
+    <p class="sub">한눈에 우열이 보이고, 왜 이기는지가 화면에 드러난다 — 자원을 모아 정복하고 수도를 함락해 흡수하라</p>
+  </header>
+
+  <div class="power">
+    <div class="lab" id="powerLab">국력 (지역 + 병력 + 자원)</div>
+    <div class="powerbar" id="powerbar"></div>
+  </div>
+
+  <div class="stage">
+    <div class="left">
+      <div class="arena-box">
+        <div class="canvas-stack">
+          <canvas id="main" aria-label="지역 전투 지도"></canvas>
+          <div id="banner" class="banner"></div>
+          <div id="overlay" class="overlay">
+            <div class="who">누가 천하를 얻을까?</div>
+            <div class="big" id="ovBig">▶ 시작을 눌러 관전</div>
+            <div class="btns"><button class="primary" id="ovStart">▶ 시작</button><button id="ovSeed">🎲 새 지도</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel infobar">
+        <div><h3>지형</h3><div class="legend" id="legend"></div></div>
+        <div><h3>세력별 자원 → 효과</h3><p class="subnote">자원을 먹을수록 강해진다 (공격·생산·행군 배수)</p><div class="resmini" id="resmini"></div></div>
+      </div>
+    </div>
+    <div class="board">
+      <div class="panel">
+        <h2>세력 <span class="stat" id="statLine">1년차</span></h2>
+        <div class="rows" id="rows"></div>
+      </div>
+      <div class="panel controls">
+        <div class="btns"><button class="primary" id="btnPlay">▶ 시작</button><button id="btnReset">↻ 다시</button><button id="btnNew">🎲 새 지도</button></div>
+        <div class="speed"><span>속도</span><input type="range" id="speed" min="0.5" max="8" step="0.5" value="3"><span id="spVal" style="min-width:34px;text-align:right;color:var(--text)">3×</span></div>
+        <div class="seedrow"><span>시드</span><input type="text" id="seedIn" inputmode="numeric" value="0"><button id="btnPlaySeed">재생</button></div>
+        <p class="hint">같은 시드 = 같은 지도·같은 전개 명경기는 시드를 적어두면 그대로 재생된다</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+"use strict";
+const FACTIONS=[
+  {name:"화염단",color:"#ff5555",sig:"flame"},{name:"심해군",color:"#3aa0ff",sig:"wave"},
+  {name:"뇌전대",color:"#ffcb33",sig:"bolt"},{name:"정글파",color:"#37d982",sig:"leaf"},
+  {name:"보라단",color:"#b874ff",sig:"star"},{name:"벚꽃단",color:"#ff77bd",sig:"blossom"},
+];
+const K=FACTIONS.length, NEU=-1;
+const RGB=FACTIONS.map(f=>[parseInt(f.color.slice(1,3),16),parseInt(f.color.slice(3,5),16),parseInt(f.color.slice(5,7),16)]);
+const IRON=0,FOOD=1,GOLD=2, RES_KEY=["iron","food","gold"], NODE_NAME=["철광","식량","금"];
+const T_SEA=0,T_PLAIN=1,T_MTN=2,T_RIVER=3;
+const MARCH_MUL=[0.42,1,0.8,0.6], ARRIVE_MUL=[0.62,1,0.95,0.85], PROD_MUL_T=[0.2,1,0.9,0.5];
+const SUR=["강","진","사","율","백","단","호","연","적","한","서","목","위","도"];
+const GIV=["무","천","랑","흔","결","진","호","월","강","렬","성","운","극","한","비","랑"];
+// 명장 시스템 (P9 캐릭터 연속성) — 세력별 고정 로스터 3인 + 계급(전공에 따라 승급)
+const RANKS=["교위","비장","아장","편장군","대장군"];
+const RANK_WIN=[2,5,9,14]; // 누적 승수 문턱 → 다음 계급
+const ROSTER_NAMES=[
+  ["홍염","적룡","화린"],   // 화염단
+  ["청해","심운","파랑"],   // 심해군
+  ["뇌진","섬광","벽력"],   // 뇌전대
+  ["녹우","만청","청람"],   // 정글파
+  ["자운","성하","묘광"],   // 보라단
+  ["화란","홍매","설빈"],   // 벚꽃단
+];
+
+const MAPRES=300, MAIN=760, PROV=52;
+const P={
+  seaDeep:0.16, seaLevel:0.30, mtnLevel:0.70, resCount:9, warpAmp:8,
+  prodBase:0.34, underdog:0.9, minToMove:12, sendFrac:0.6,
+  marchSpeed:0.020, moveCdMin:16, moveCdMax:30,
+  capGarrison:40, capDef:3.5, mtnDef:1.6,
+  ironBonus:0.18, foodBonus:0.16, goldBonus:0.12,
+  duelChanceCap:0.6, duelCdMs:14000, duelRounds:4,
+  moraleWin:1.4, moraleDur:180, tintLand:0.55, tintWater:0.5,
+  maxTicks:9000, baseTPS:10,
+};
+
+let provOf=new Int16Array(MAPRES*MAPRES), isBorder=new Uint8Array(MAPRES*MAPRES);
+let terrainRGB=new Uint8Array(MAPRES*MAPRES*3);
+let H_FIELD=null, pv=[];
+let seed=0,rand=null,tick=0,running=false,winner=-1,speed=3,acc=0,lastT=0,dirty=true;
+let marches=[], impacts=[], floats=[], duel={active:false}, duelCdUntil=0, deathQueue=[], deathAnim=null;
+let attackMul=new Float64Array(K),prodMul=new Float64Array(K),speedMul=new Float64Array(K);
+let moraleMul=new Float64Array(K).fill(1), moraleLeft=new Int32Array(K);
+let alive=new Array(K).fill(true), stats={duels:0,capFalls:[]}, leaderF=0;
+// 명장 로스터 상태 + 통산 전적(localStorage로 경기 넘어 이어짐 → 캐릭터 연속성)
+let roster=[];
+const CAREER_KEY="cb_career_v1";
+function loadCareer(){try{return JSON.parse(localStorage.getItem(CAREER_KEY))||{};}catch(e){return {};}}
+function saveCareer(){try{localStorage.setItem(CAREER_KEY,JSON.stringify(careerWins));}catch(e){}}
+let careerWins=loadCareer();
+function initRoster(){roster=ROSTER_NAMES.map((names,f)=>names.map(nm=>({name:nm,f,wins:0,losses:0,rank:0})));}
+function rankOf(g){let r=0;for(let i=0;i<RANK_WIN.length;i++)if(g.wins>=RANK_WIN[i])r=i+1;return r;}
+function championOf(f){const r=roster[f];let best=r[0];for(const g of r)if(g.rank>best.rank||(g.rank===best.rank&&g.wins>best.wins))best=g;return best;}
+function careerKey(g){return FACTIONS[g.f].name+"·"+g.name;}
+function careerOf(g){return careerWins[careerKey(g)]||0;}
+// 장수 초상 로더 — assets/generals/<sig>.png 가 있으면 VS카드에 사용, 없으면 세력 엠블럼으로 대체
+const portraitImg={},portraitReady={};
+FACTIONS.forEach(f=>{portraitReady[f.sig]=false;const im=new Image();im.onload=()=>{if(im.naturalWidth>0)portraitReady[f.sig]=true;};im.src="assets/generals/"+f.sig+".png";portraitImg[f.sig]=im;});
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,t)=>a+(b-a)*t;
+function lerp3(A,B,t){return[lerp(A[0],B[0],t),lerp(A[1],B[1],t),lerp(A[2],B[2],t)];}
+function genName(){return SUR[(rand()*SUR.length)|0]+GIV[(rand()*GIV.length)|0]+(rand()<0.5?GIV[(rand()*GIV.length)|0]:"");}
+const isWater=t=>t===T_SEA||t===T_RIVER;
+function float(x,y,text,color,big){floats.push({x,y,text,color:color||"#fff",big:!!big,t0:performance.now(),dur:1150});}
+
+const ICON={
+  iron(g,x,y,s,c){const u=s/2;g.save();g.translate(x,y);g.beginPath();g.moveTo(0,-u);g.lineTo(u*0.82,-u*0.18);g.lineTo(u*0.5,u);g.lineTo(-u*0.5,u);g.lineTo(-u*0.82,-u*0.18);g.closePath();g.fillStyle=c;g.fill();g.strokeStyle="rgba(0,0,0,.4)";g.lineWidth=Math.max(1,s*0.06);g.beginPath();g.moveTo(0,-u);g.lineTo(0,u);g.moveTo(-u*0.82,-u*0.18);g.lineTo(u*0.82,-u*0.18);g.stroke();g.restore();},
+  food(g,x,y,s,c){const u=s/2;g.save();g.translate(x,y);g.strokeStyle=c;g.lineWidth=Math.max(1.2,s*0.1);g.lineCap="round";g.beginPath();g.moveTo(0,u);g.lineTo(0,-u*0.65);g.stroke();for(let i=0;i<3;i++){const yy=-u*0.65+i*u*0.5;g.beginPath();g.moveTo(0,yy);g.quadraticCurveTo(u*0.55,yy-u*0.12,u*0.5,yy-u*0.5);g.stroke();g.beginPath();g.moveTo(0,yy);g.quadraticCurveTo(-u*0.55,yy-u*0.12,-u*0.5,yy-u*0.5);g.stroke();}g.restore();},
+  gold(g,x,y,s,c){const r=s*0.48;g.save();g.translate(x,y);g.beginPath();g.arc(0,0,r,0,7);g.fillStyle=c;g.fill();g.lineWidth=Math.max(1,s*0.06);g.strokeStyle="rgba(0,0,0,.4)";g.stroke();const h=s*0.17;g.fillStyle="rgba(0,0,0,.5)";g.fillRect(-h,-h,h*2,h*2);g.restore();},
+  castle(g,x,y,s,c){const u=s/2;g.save();g.translate(x,y);g.fillStyle=c;g.fillRect(-u*0.82,-u*0.12,u*1.64,u*0.92);for(let i=-2;i<=2;i++)g.fillRect(i*u*0.33-u*0.13,-u*0.42,u*0.26,u*0.34);g.fillStyle="rgba(0,0,0,.45)";g.fillRect(-u*0.17,u*0.22,u*0.34,u*0.58);g.restore();},
+  crown(g,x,y,s,c){const u=s/2;g.save();g.translate(x,y);g.fillStyle=c;g.beginPath();g.moveTo(-u*0.85,u*0.3);g.lineTo(-u*0.85,-u*0.55);g.lineTo(-u*0.35,u*0.02);g.lineTo(0,-u*0.8);g.lineTo(u*0.35,u*0.02);g.lineTo(u*0.85,-u*0.55);g.lineTo(u*0.85,u*0.3);g.closePath();g.fill();g.fillStyle="#fff";g.beginPath();g.arc(0,-u*0.72,u*0.12,0,7);g.fill();g.restore();},
+  flame(g,x,y,s,c){const u=s/2;g.save();g.translate(x,y);g.fillStyle=c;g.beginPath();g.moveTo(0,-u);g.quadraticCurveTo(u*0.72,-u*0.1,u*0.36,u*0.5);g.quadraticCurveTo(u*0.5,u*0.92,0,u);g.quadraticCurveTo(-u*0.5,u*0.92,-u*0.36,u*0.5);g.quadraticCurveTo(-u*0.72,-u*0.1,0,-u);g.closePath();g.fill();g.restore();},
+  wave(g,x,y,s,c){const u=s/2;g.save();g.translate(x,y);g.strokeStyle=c;g.lineWidth=s*0.14;g.lineCap="round";for(let k=-1;k<=1;k++){const yy=k*u*0.55;g.beginPath();g.moveTo(-u*0.82,yy);g.quadraticCurveTo(-u*0.4,yy-u*0.42,0,yy);g.quadraticCurveTo(u*0.4,yy+u*0.42,u*0.82,yy);g.stroke();}g.restore();},
+  bolt(g,x,y,s,c){const u=s/2;g.save();g.translate(x,y);g.fillStyle=c;g.beginPath();g.moveTo(u*0.15,-u);g.lineTo(-u*0.5,u*0.12);g.lineTo(-u*0.05,u*0.12);g.lineTo(-u*0.15,u);g.lineTo(u*0.52,-u*0.18);g.lineTo(u*0.02,-u*0.18);g.closePath();g.fill();g.restore();},
+  leaf(g,x,y,s,c){const u=s/2;g.save();g.translate(x,y);g.fillStyle=c;g.beginPath();g.moveTo(0,-u);g.quadraticCurveTo(u*0.8,-u*0.15,0,u);g.quadraticCurveTo(-u*0.8,-u*0.15,0,-u);g.closePath();g.fill();g.strokeStyle="rgba(0,0,0,.3)";g.lineWidth=s*0.05;g.beginPath();g.moveTo(0,-u*0.75);g.lineTo(0,u*0.75);g.stroke();g.restore();},
+  star(g,x,y,s,c){const u=s/2;g.save();g.translate(x,y);g.fillStyle=c;const sp=(a,b)=>{g.beginPath();g.moveTo(0,-a);g.lineTo(b,0);g.lineTo(0,a);g.lineTo(-b,0);g.closePath();g.fill();};sp(u,u*0.32);g.rotate(Math.PI/2);sp(u*0.7,u*0.22);g.restore();},
+  blossom(g,x,y,s,c){const u=s/2;g.save();g.translate(x,y);g.fillStyle=c;for(let i=0;i<5;i++){const a=i/5*6.283-1.571,px=Math.cos(a)*u*0.5,py=Math.sin(a)*u*0.5;g.beginPath();g.arc(px,py,u*0.42,0,7);g.fill();}g.fillStyle="rgba(0,0,0,.28)";g.beginPath();g.arc(0,0,u*0.26,0,7);g.fill();g.restore();},
+};
+const iconCache=new Map();
+function iconURL(key,color,px){const k=key+"|"+color+"|"+px;if(iconCache.has(k))return iconCache.get(k);
+  const dpr=Math.min(2,window.devicePixelRatio||1),c=document.createElement("canvas");c.width=px*dpr;c.height=px*dpr;
+  const g=c.getContext("2d");g.scale(dpr,dpr);ICON[key](g,px/2,px/2,px*0.84,color);const u=c.toDataURL();iconCache.set(k,u);return u;}
+function ic(key,color,px){return '<img class="ic" src="'+iconURL(key,color,px)+'" width="'+px+'" height="'+px+'" alt="">';}
+
+const cv=document.getElementById("main"); cv.width=MAIN; cv.height=MAIN;
+const ctx=cv.getContext("2d");
+const mapCv=document.createElement("canvas"); mapCv.width=MAPRES; mapCv.height=MAPRES;
+const mapCtx=mapCv.getContext("2d"); const mapImg=mapCtx.createImageData(MAPRES,MAPRES);
+const S=MAIN/MAPRES;
+
+function noiseField(octs){const h=new Float32Array(MAPRES*MAPRES);let amp=0;
+  for(const[s,a]of octs){amp+=a;const g=new Float32Array((s+1)*(s+1));for(let i=0;i<g.length;i++)g[i]=rand();
+    for(let y=0;y<MAPRES;y++)for(let x=0;x<MAPRES;x++){const fx=x/MAPRES*s,fy=y/MAPRES*s,x0=fx|0,y0=fy|0,tx=fx-x0,ty=fy-y0;
+      const a00=g[y0*(s+1)+x0],a10=g[y0*(s+1)+x0+1],a01=g[(y0+1)*(s+1)+x0],a11=g[(y0+1)*(s+1)+x0+1];
+      h[y*MAPRES+x]+=a*lerp(lerp(a00,a10,tx),lerp(a01,a11,tx),ty);}}
+  let mn=1e9,mx=-1e9;for(let i=0;i<h.length;i++){h[i]/=amp;if(h[i]<mn)mn=h[i];if(h[i]>mx)mx=h[i];}
+  for(let i=0;i<h.length;i++)h[i]=(h[i]-mn)/(mx-mn+1e-9);return h;}
+function topoColor(h){
+  if(h<P.seaDeep)return lerp3([20,38,72],[34,64,108],h/P.seaDeep);
+  if(h<P.seaLevel)return lerp3([40,80,120],[70,132,150],(h-P.seaDeep)/(P.seaLevel-P.seaDeep));
+  if(h>P.mtnLevel)return lerp3([112,104,94],[206,206,210],(h-P.mtnLevel)/(1-P.mtnLevel));
+  return lerp3([74,100,66],[132,126,88],(h-P.seaLevel)/(P.mtnLevel-P.seaLevel));}
+function buildTerrainBase(){for(let y=0;y<MAPRES;y++)for(let x=0;x<MAPRES;x++){const i=y*MAPRES+x,h=H_FIELD[i];let c=topoColor(h);
+  const band=(h*11)|0,bl=x>0?((H_FIELD[i-1]*11)|0):band,bu=y>0?((H_FIELD[i-MAPRES]*11)|0):band;
+  if(band!==bl||band!==bu)c=[c[0]*0.84,c[1]*0.84,c[2]*0.84];terrainRGB[i*3]=c[0];terrainRGB[i*3+1]=c[1];terrainRGB[i*3+2]=c[2];}}
+
+function genProvinces(){
+  let sx=new Float64Array(PROV),sy=new Float64Array(PROV);for(let p=0;p<PROV;p++){sx[p]=rand()*MAPRES;sy[p]=rand()*MAPRES;}
+  const assign=(warp,wx,wy)=>{for(let y=0;y<MAPRES;y++)for(let x=0;x<MAPRES;x++){let px=x,py=y;if(warp){const i=y*MAPRES+x;px=x+(wx[i]-0.5)*2*P.warpAmp;py=y+(wy[i]-0.5)*2*P.warpAmp;}
+    let bp=0,bd=1e18;for(let p=0;p<PROV;p++){const dx=px-sx[p],dy=py-sy[p],d=dx*dx+dy*dy;if(d<bd){bd=d;bp=p;}}provOf[y*MAPRES+x]=bp;}};
+  for(let relax=0;relax<2;relax++){assign(false);const cxx=new Float64Array(PROV),cyy=new Float64Array(PROV),cc=new Int32Array(PROV);
+    for(let y=0;y<MAPRES;y++)for(let x=0;x<MAPRES;x++){const p=provOf[y*MAPRES+x];cxx[p]+=x;cyy[p]+=y;cc[p]++;}
+    for(let p=0;p<PROV;p++)if(cc[p]>0){sx[p]=cxx[p]/cc[p];sy[p]=cyy[p]/cc[p];}}
+  const wx=noiseField([[3,1],[6,0.45]]),wy=noiseField([[3,1],[6,0.45]]);assign(true,wx,wy);
+  const bnd=new Uint8Array(MAPRES*MAPRES);
+  for(let y=0;y<MAPRES;y++)for(let x=0;x<MAPRES;x++){const i=y*MAPRES+x,p=provOf[i];let b=0;if(x>0&&provOf[i-1]!==p)b=1;else if(x<MAPRES-1&&provOf[i+1]!==p)b=1;else if(y>0&&provOf[i-MAPRES]!==p)b=1;else if(y<MAPRES-1&&provOf[i+MAPRES]!==p)b=1;bnd[i]=b;}
+  for(let y=0;y<MAPRES;y++)for(let x=0;x<MAPRES;x++){const i=y*MAPRES+x;isBorder[i]=(bnd[i]||(x>0&&bnd[i-1])||(x<MAPRES-1&&bnd[i+1])||(y>0&&bnd[i-MAPRES])||(y<MAPRES-1&&bnd[i+MAPRES]))?1:0;}
+  const cxx=new Float64Array(PROV),cyy=new Float64Array(PROV),cc=new Int32Array(PROV);
+  for(let y=0;y<MAPRES;y++)for(let x=0;x<MAPRES;x++){const p=provOf[y*MAPRES+x];cxx[p]+=x;cyy[p]+=y;cc[p]++;}
+  pv=[];for(let p=0;p<PROV;p++){const cx=cc[p]?cxx[p]/cc[p]:0,cy=cc[p]?cyy[p]/cc[p]:0;const hz=H_FIELD[(Math.round(cy)*MAPRES+Math.round(cx))]||0;
+    const terr=hz<P.seaDeep?T_SEA:hz<P.seaLevel?T_RIVER:hz>P.mtnLevel?T_MTN:T_PLAIN;
+    pv.push({id:p,cx,cy,count:cc[p],terrain:terr,owner:NEU,garrison:0,res:-1,cap:false,flash:0,adj:new Set()});}
+  for(let y=0;y<MAPRES;y++)for(let x=0;x<MAPRES;x++){const i=y*MAPRES+x,p=provOf[i];
+    if(x<MAPRES-1){const q=provOf[i+1];if(q!==p){pv[p].adj.add(q);pv[q].adj.add(p);}}
+    if(y<MAPRES-1){const q=provOf[i+MAPRES];if(q!==p){pv[p].adj.add(q);pv[q].adj.add(p);}}}
+}
+function dist(a,b){const dx=a.cx-b.cx,dy=a.cy-b.cy;return Math.sqrt(dx*dx+dy*dy);}
+function drylandList(){return pv.filter(p=>p.terrain===T_PLAIN||p.terrain===T_MTN);}
+
+function init(sv){
+  seed=sv>>>0;rand=mulberry32(seed);H_FIELD=noiseField([[5,1],[10,0.5],[20,0.25],[40,0.13]]);buildTerrainBase();genProvinces();
+  const dry=drylandList();const caps=[];let pool=dry.slice();caps.push(pool[(rand()*pool.length)|0]);
+  while(caps.length<K){let best=null,bd=-1;for(const c of pool){if(caps.includes(c))continue;let md=1e18;for(const k of caps)md=Math.min(md,dist(c,k));if(md>bd){bd=md;best=c;}}if(!best)break;caps.push(best);}
+  let respool=dry.filter(p=>!caps.includes(p));const resSel=[];
+  while(resSel.length<P.resCount&&respool.length){let best=null,bd=-1;for(const c of respool){let md=1e18;for(const k of resSel)md=Math.min(md,dist(c,k));if(resSel.length===0)md=rand()*1000;if(md>bd){bd=md;best=c;}}resSel.push(best);respool=respool.filter(p=>p!==best);}
+  resSel.forEach((p,k)=>p.res=k%3);
+  for(const p of pv){if(p.terrain===T_SEA){p.owner=NEU;p.garrison=0;continue;}p.owner=NEU;p.garrison=isWater(p.terrain)?3:8+((rand()*11)|0);p.cap=false;}
+  caps.forEach((c,f)=>{c.owner=f;c.cap=true;c.garrison=P.capGarrison;});
+  marches=[];impacts=[];floats=[];duel={active:false};duelCdUntil=0;deathQueue=[];deathAnim=null;
+  moraleMul.fill(1);moraleLeft.fill(0);alive.fill(true);stats={duels:0,capFalls:[]};leaderF=0;initRoster();
+  for(const p of pv){p.moveCd=(P.moveCdMin+((rand()*(P.moveCdMax-P.moveCdMin))|0));p.flash=0;}
+  tick=0;winner=-1;running=false;dirty=true;computeBonus();
+  document.getElementById("seedIn").value=seed;
+  ov.querySelector(".who").textContent="누가 천하를 얻을까?";document.getElementById("ovSummary").style.display="none";
+  ovBig.textContent="▶ 시작을 눌러 관전";document.getElementById("ovStart").textContent="▶ 시작";ov.querySelector(".btns").style.display="flex";ov.classList.remove("hidden");
+  buildMap();refresh();draw();
+}
+function provinces(f){return pv.filter(p=>p.owner===f);}
+function computeBonus(){const cnt=Array.from({length:K},()=>[0,0,0]);for(const p of pv)if(p.owner>=0&&p.res>=0)cnt[p.owner][p.res]++;
+  for(let f=0;f<K;f++){attackMul[f]=1+P.ironBonus*cnt[f][IRON];prodMul[f]=1+P.foodBonus*cnt[f][FOOD];speedMul[f]=1+P.goldBonus*cnt[f][GOLD];}return cnt;}
+function terrDef(p){let d=p.terrain===T_MTN?P.mtnDef:1;if(p.cap)d*=P.capDef;return d;}
+function absorb(loser,winner){for(const p of pv)if(p.owner===loser){p.owner=winner;p.garrison=Math.max(1,p.garrison*0.5);p.cap=false;}dirty=true;}
+
+const bannerEl=document.getElementById("banner");
+function banner(t,c){bannerEl.innerHTML='<span class="dot" style="background:'+(c||"#fff")+'"></span>'+t;bannerEl.style.color=c||"#fff";bannerEl.classList.remove("show");void bannerEl.offsetWidth;bannerEl.classList.add("show");}
+
+function step(){
+  let leaderProv=1;const provCnt=new Int32Array(K);for(const p of pv)if(p.owner>=0)provCnt[p.owner]++;
+  for(let f=0;f<K;f++)if(alive[f]&&provCnt[f]>leaderProv)leaderProv=provCnt[f];
+  for(let f=0;f<K;f++)if(moraleLeft[f]>0&&--moraleLeft[f]<=0)moraleMul[f]=1;
+  for(const p of pv){if(p.owner<0)continue;const f=p.owner;const rb=1+P.underdog*(1-provCnt[f]/leaderProv);
+    p.garrison+=P.prodBase*prodMul[f]*rb*PROD_MUL_T[p.terrain]*(p.res===FOOD?1.6:1)*(p.cap?1.5:1);}
+  for(const p of pv){
+    if(p.owner<0)continue;if(p.moveCd>0){p.moveCd--;continue;}if(p.garrison<P.minToMove)continue;
+    const f=p.owner;let best=null,bs=-1e9;
+    for(const qid of p.adj){const q=pv[qid];let s;
+      if(q.owner!==f){const defE=q.garrison*terrDef(q),send=p.garrison*P.sendFrac*ARRIVE_MUL[q.terrain];
+        s=1+(q.res>=0?3:0)+clamp((send-defE)/8,-2.5,3)+(q.owner===NEU?0.6:0)+(q.cap?1.5:0);
+        if(q.terrain===T_SEA)s-=1.6;else if(q.terrain===T_RIVER)s-=0.7;}
+      else{let fr=false;for(const rid of q.adj){if(pv[rid].owner!==f){fr=true;break;}}s=fr?(0.4+clamp((20-q.garrison)/20,0,0.8)):-5;}
+      if(s>bs){bs=s;best=q;}}
+    if(!best||bs<=0)continue;const troops=Math.floor(p.garrison*P.sendFrac);if(troops<3)continue;
+    p.garrison-=troops;p.moveCd=P.moveCdMin+((rand()*(P.moveCdMax-P.moveCdMin))|0);marches.push({from:p.id,to:best.id,f,troops,prog:0});}
+  for(let m=marches.length-1;m>=0;m--){const mv=marches[m];mv.prog+=P.marchSpeed*speedMul[mv.f]*MARCH_MUL[pv[mv.to].terrain];if(mv.prog>=1){marches.splice(m,1);arrive(mv);}}
+  for(const p of pv)if(p.flash>0)p.flash--;
+  tick++;
+  for(let f=0;f<K;f++)if(alive[f]&&provinces(f).length===0){alive[f]=false;deathQueue.push(f);dirty=true;}
+  let living=0,last=-1;for(let f=0;f<K;f++)if(alive[f]){living++;last=f;}
+  if(living<=1||tick>=P.maxTicks){let w=last,wc=-1;for(let f=0;f<K;f++){const n=provinces(f).length;if(n>wc){wc=n;w=f;}}winner=w;running=false;win();}
+}
+function arrive(mv){const q=pv[mv.to],f=mv.f;const raw=mv.troops;let troops=raw*ARRIVE_MUL[q.terrain];
+  if(isWater(q.terrain)&&raw-troops>=1)float(q.cx,q.cy-2,"-"+Math.round(raw-troops)+" 도하",FACTIONS[f].color);
+  if(q.owner===f){q.garrison+=troops;return;}
+  // 일기토는 '수도 결전'에서만 발동 (대군격돌 삭제) + 쿨다운 → 빈도 축소, 희소성=카타르시스(P8)
+  const now=performance.now(),defE=q.garrison*terrDef(q);let reason=null,chance=0;
+  if(q.cap&&q.owner>=0&&troops>=defE*0.6){reason="수도 결전";chance=P.duelChanceCap;}
+  if(reason&&now>=duelCdUntil&&rand()<chance){startDuel(f,q.owner,q,troops,reason);return;}
+  battle(f,q,troops);}
+function capFall(prev,f){banner(FACTIONS[prev].name+" 수도 함락 — "+FACTIONS[f].name+"에 편입!",FACTIONS[f].color);stats.capFalls.push({loser:prev,by:f});absorb(prev,f);}
+function battle(f,q,troops){const defE=q.garrison*terrDef(q);impacts.push({x:q.cx,y:q.cy,t0:performance.now(),col:FACTIONS[f].color});
+  const tag=q.terrain===T_MTN?" 산":"";
+  if(troops>defE){const prev=q.owner;q.owner=f;q.garrison=Math.max(1,troops-defE);q.flash=8;dirty=true;
+    float(q.cx,q.cy,Math.round(troops)+" › "+Math.round(defE)+tag,FACTIONS[f].color,true);
+    if(q.cap&&prev>=0){q.cap=false;capFall(prev,f);}
+    else if(q.res>=0)banner(NODE_NAME[q.res]+" → "+FACTIONS[f].name+" 점령",FACTIONS[f].color);
+    computeBonus();}
+  else{q.garrison=Math.max(1,(defE-troops)/terrDef(q));float(q.cx,q.cy,"격퇴 "+Math.round(troops)+" ‹ "+Math.round(defE)+tag,q.owner>=0?FACTIONS[q.owner].color:"#c3ccdb");}}
+
+/* ===== 일기토 ===== */
+function startDuel(fA,fB,q,troops,reason){stats.duels++;
+  const chA=championOf(fA),chB=championOf(fB); // 각 세력 최고 계급 명장이 출전
+  const powerA=troops*attackMul[fA]*moraleMul[fA], powerB=q.garrison*terrDef(q)*attackMul[fB]*moraleMul[fB], avg=(powerA+powerB)/2||1;
+  let hpA=100,hpB=100;const rounds=[];for(let r=0;r<P.duelRounds;r++){const dA=17*(0.7+rand()*0.7)*(powerA/avg),dB=17*(0.7+rand()*0.7)*(powerB/avg);hpB=Math.max(0,hpB-dA);hpA=Math.max(0,hpA-dB);rounds.push({dA:Math.round(dA),dB:Math.round(dB),hpA,hpB});if(hpA<=0||hpB<=0)break;}
+  duel={active:true,start:performance.now(),fA,fB,q,troops,gA:chA,gB:chB,rounds,winA:hpA>=hpB,applied:false,reason};
+  banner(reason+"  "+FACTIONS[fA].name+" "+RANKS[chA.rank]+" "+chA.name+" vs "+FACTIONS[fB].name+" "+RANKS[chB.rank]+" "+chB.name,"#ffd23a");}
+function resolveDuel(){const d=duel,wf=d.winA?d.fA:d.fB;
+  if(d.winA){const prev=d.q.owner;d.q.owner=d.fA;d.q.garrison=Math.max(1,d.troops*0.7);d.q.flash=8;dirty=true;if(d.q.cap&&prev>=0){d.q.cap=false;capFall(prev,d.fA);}computeBonus();}
+  else d.q.garrison+=d.troops*0.2;
+  const gW=d.winA?d.gA:d.gB, gL=d.winA?d.gB:d.gA, before=gW.rank; // 전공 반영 + 승급
+  gW.wins++;gW.rank=rankOf(gW);gL.losses++;careerWins[careerKey(gW)]=careerOf(gW)+1;saveCareer();
+  moraleMul[wf]=P.moraleWin;moraleLeft[wf]=P.moraleDur;
+  if(gW.rank>before)banner(gW.name+" 승전 → "+RANKS[gW.rank]+" 승급!",FACTIONS[wf].color);
+  else banner(RANKS[gW.rank]+" "+gW.name+" 승리 · "+FACTIONS[wf].name+" 사기 급등",FACTIONS[wf].color);
+  duel={active:false};duelCdUntil=performance.now()+P.duelCdMs;}
+/* ===== VS 카드 렌더러 (기존 도형 격투 대체) ===== */
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function shade(hex,amt){let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);const f=amt<0?0:255,t=Math.abs(amt);r=Math.round(lerp(r,f,t));g=Math.round(lerp(g,f,t));b=Math.round(lerp(b,f,t));return "rgb("+r+","+g+","+b+")";}
+function drawCard(x,y,w,h,f,hit,dim){const col=FACTIONS[f].color,sig=FACTIONS[f].sig,r=Math.min(w,h)*0.08;
+  ctx.save();rr(x,y,w,h,r);const bg=ctx.createLinearGradient(x,y,x,y+h);bg.addColorStop(0,shade(col,-0.55));bg.addColorStop(1,shade(col,-0.82));ctx.fillStyle=bg;ctx.fill();
+  ctx.save();rr(x,y,w,h,r);ctx.clip();
+  if(portraitReady[sig]){const im=portraitImg[sig],sc=Math.max(w/im.naturalWidth,h/im.naturalHeight),iw=im.naturalWidth*sc,ih=im.naturalHeight*sc;ctx.drawImage(im,x+(w-iw)/2,y+(h-ih)/2,iw,ih);}
+  else{ctx.globalAlpha=0.92;ICON[sig](ctx,x+w/2,y+h*0.46,Math.min(w,h)*0.66,col);ctx.globalAlpha=1;}
+  if(dim){ctx.fillStyle="rgba(4,6,11,.58)";ctx.fillRect(x,y,w,h);}
+  if(hit){ctx.fillStyle="rgba(255,255,255,.34)";ctx.fillRect(x,y,w,h);}
+  ctx.restore();
+  rr(x,y,w,h,r);ctx.lineWidth=Math.max(3,w*0.022);ctx.strokeStyle=hit?"#fff":col;ctx.shadowColor=hit?"#fff":col;ctx.shadowBlur=hit?26:14;ctx.stroke();ctx.shadowBlur=0;ctx.restore();}
+function namePlate(x,yTop,w,f,g,hp,col,alignR){const cx=x+w/2;ctx.textAlign="center";ctx.textBaseline="alphabetic";
+  ctx.font="900 "+(MAIN*0.028)+"px system-ui";ctx.lineWidth=4;ctx.strokeStyle="rgba(0,0,0,.6)";ctx.strokeText(g.name,cx,yTop+MAIN*0.04);ctx.fillStyle="#fff";ctx.fillText(g.name,cx,yTop+MAIN*0.04);
+  ctx.font="800 "+(MAIN*0.017)+"px system-ui";ctx.fillStyle=col;ctx.fillText(RANKS[g.rank]+" · "+FACTIONS[f].name,cx,yTop+MAIN*0.064);
+  const cw=careerOf(g);if(cw>0){ctx.fillStyle="#8b97ad";ctx.font="800 "+(MAIN*0.014)+"px system-ui";ctx.fillText("통산 "+cw+"승",cx,yTop+MAIN*0.084);}
+  const bw=w*0.9,bh=MAIN*0.02,bx=cx-bw/2,by=yTop+MAIN*0.096;
+  ctx.fillStyle="#0d131f";rr(bx,by,bw,bh,bh/2);ctx.fill();
+  const fw=bw*clamp(hp,0,100)/100;ctx.fillStyle=col;rr(alignR?bx+bw-fw:bx,by,fw,bh,bh/2);ctx.fill();
+  ctx.lineWidth=2;ctx.strokeStyle="#0009";rr(bx,by,bw,bh,bh/2);ctx.stroke();}
+function stamp(cx,cy,r,ch,col,prog){ctx.save();ctx.translate(cx,cy);ctx.rotate(-0.16);const s=lerp(1.7,1,clamp(prog,0,1));ctx.scale(s,s);ctx.globalAlpha=clamp(prog*1.4,0,1);
+  ctx.lineWidth=r*0.13;ctx.strokeStyle=col;ctx.beginPath();ctx.arc(0,0,r,0,7);ctx.stroke();
+  ctx.fillStyle=col;ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="900 "+(r*1.25)+"px serif";ctx.fillText(ch,0,r*0.06);ctx.restore();}
+function drawDuel(){const d=duel,el=performance.now()-d.start,introMs=800,roundMs=640,outroMs=1300;
+  const A=FACTIONS[d.fA].color,B=FACTIONS[d.fB].color;
+  ctx.fillStyle="rgba(3,5,10,.93)";ctx.fillRect(0,0,MAIN,MAIN);
+  const gl=ctx.createLinearGradient(0,0,MAIN,0);gl.addColorStop(0,A+"26");gl.addColorStop(.5,"#00000000");gl.addColorStop(1,B+"26");ctx.fillStyle=gl;ctx.fillRect(0,0,MAIN,MAIN);
+  let phase,ri=-1,k=0;
+  if(el<introMs)phase="intro";else{const t2=el-introMs,idx=Math.floor(t2/roundMs);if(idx<d.rounds.length){phase="round";ri=idx;k=(t2%roundMs)/roundMs;}else{phase="outro";k=clamp((t2-d.rounds.length*roundMs)/outroMs,0,1);}}
+  let hpA=100,hpB=100;if(phase==="round"){const rrd=d.rounds[ri],prev=ri>0?d.rounds[ri-1]:{hpA:100,hpB:100};hpA=lerp(prev.hpA,rrd.hpA,clamp(k*1.6,0,1));hpB=lerp(prev.hpB,rrd.hpB,clamp(k*1.6,0,1));}else if(phase==="outro"){const last=d.rounds[d.rounds.length-1];hpA=last.hpA;hpB=last.hpB;}
+  const cw=MAIN*0.34,ch=MAIN*0.44,cyTop=MAIN*0.19;
+  const restL=MAIN*0.08,restR=MAIN*0.58,clashL=MAIN*0.14,clashR=MAIN*0.52;
+  let lx=restL,rx=restR,hitA=false,hitB=false;
+  if(phase==="intro"){const t=clamp(el/introMs,0,1),e=1-Math.pow(1-t,3);lx=lerp(-cw,restL,e);rx=lerp(MAIN,restR,e);}
+  else if(phase==="round"){if(k<0.45){const kk=k/0.45;lx=lerp(restL,clashL,kk);rx=lerp(restR,clashR,kk);}else if(k<0.62){lx=clashL;rx=clashR;hitA=hitB=true;}else{const kk=(k-0.62)/0.38;lx=lerp(clashL,restL,kk);rx=lerp(clashR,restR,kk);}}
+  const dimA=phase==="outro"&&!d.winA,dimB=phase==="outro"&&d.winA;
+  drawCard(lx,cyTop,cw,ch,d.fA,hitA&&Math.floor(el/55)%2===0,dimA);
+  drawCard(rx,cyTop,cw,ch,d.fB,hitB&&Math.floor(el/55)%2===1,dimB);
+  namePlate(lx,cyTop+ch,cw,d.fA,d.gA,hpA,A,false);
+  namePlate(rx,cyTop+ch,cw,d.fB,d.gB,hpB,B,true);
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.font="900 "+(MAIN*0.032)+"px system-ui";ctx.fillStyle="rgba(255,210,58,.96)";
+  ctx.fillText(phase==="round"?("합 "+(ri+1)+" / "+d.rounds.length):(phase==="intro"?("⚔ "+d.reason):""),MAIN*0.5,MAIN*0.125);
+  if(phase!=="outro"){ctx.font="900 "+(MAIN*0.058)+"px system-ui";ctx.globalAlpha=0.9;ctx.lineWidth=5;ctx.strokeStyle="#000a";ctx.strokeText("VS",MAIN*0.5,cyTop+ch*0.5);ctx.fillStyle="#fff";ctx.fillText("VS",MAIN*0.5,cyTop+ch*0.5);ctx.globalAlpha=1;}
+  if(phase==="round"&&k>=0.45&&k<0.62){const rrd=d.rounds[ri];ctx.font="900 "+(MAIN*0.046)+"px system-ui";ctx.fillStyle=B;ctx.fillText("-"+rrd.dA,rx+cw*0.5,cyTop-MAIN*0.005);ctx.fillStyle=A;ctx.fillText("-"+rrd.dB,lx+cw*0.5,cyTop-MAIN*0.005);}
+  if(phase==="outro"){const wl=d.winA?lx:rx,ll=d.winA?rx:lx,ws=clamp(k*2,0,1);
+    stamp(ll+cw*0.5,cyTop+ch*0.5,MAIN*0.09,"敗","#6b7688",ws);
+    stamp(wl+cw*0.5,cyTop+ch*0.5,MAIN*0.11,"勝","#ffd23a",ws);
+    const gW=d.winA?d.gA:d.gB;ctx.font="900 "+(MAIN*0.038)+"px system-ui";ctx.fillStyle=d.winA?A:B;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(RANKS[gW.rank]+" "+gW.name+" 승리!",MAIN*0.5,cyTop+ch+MAIN*0.132);}
+  if(phase==="outro"&&k>=1&&!d.applied){d.applied=true;resolveDuel();}}
+
+function drawKingFace(cx,cy,u,f){const col=FACTIONS[f].color,skin="#e9c9a3",skinSh="#d3ab82",hair="#2a2320";const R=(px,py,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(cx+px*u,cy+py*u,w*u,h*u);};
+  R(-4,-4,9,9,skin);R(-4,4.4,9,1,skinSh);R(-5,-1,1,3,skin);R(4,-1,1,3,skin);R(-4,-4,9,1.3,hair);R(-4,-4,1,4,hair);R(3,-4,1,4,hair);
+  const pts=3+(f%3);R(-4,-6,9,2,col);const st=9/pts;for(let i=0;i<pts;i++)R(-4+i*st+st*0.16,-7.3,st*0.68,1.5,col);R(-0.6,-6.7,1.2,1.2,"#ffe27a");
+  R(-3,-1.7,2,0.6,hair);R(1,-1.7,2,0.6,hair);R(-2.9,-0.6,1.7,1.2,"#3a2f2a");R(1.2,-0.6,1.7,1.2,"#3a2f2a");R(-2.4,0.9,0.8,1.8,"#8fd0ff");R(1.6,0.9,0.8,1.6,"#8fd0ff");
+  R(-1.6,2.7,3.2,0.7,"#7a4a44");R(-2,2.1,0.6,0.7,"#7a4a44");R(1.4,2.1,0.6,0.7,"#7a4a44");R(-5.5,5.2,12,2.2,col);}
+function drawDeath(){const el=performance.now()-deathAnim.start,k=el/deathAnim.dur,f=deathAnim.f;const a=k<0.2?k/0.2:k>0.8?(1-k)/0.2:1;
+  ctx.fillStyle="rgba(4,6,11,"+(0.85*a)+")";ctx.fillRect(0,0,MAIN,MAIN);ctx.globalAlpha=a;drawKingFace(MAIN/2,MAIN*0.44,MAIN/36,f);
+  ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="900 "+(MAIN*0.045)+"px system-ui";ctx.fillStyle=FACTIONS[f].color;ctx.fillText(FACTIONS[f].name+" 멸망",MAIN/2,MAIN*0.75);
+  ctx.font="800 "+(MAIN*0.022)+"px system-ui";ctx.fillStyle="#8b97ad";ctx.fillText("— 왕이 눈물을 흘리며 스러지다 —",MAIN/2,MAIN*0.80);ctx.globalAlpha=1;}
+
+function buildMap(){const d=mapImg.data;
+  for(let i=0;i<provOf.length;i++){let r=terrainRGB[i*3],g=terrainRGB[i*3+1],b=terrainRGB[i*3+2];const p=pv[provOf[i]];
+    if(p.owner>=0){const col=RGB[p.owner],a=isWater(p.terrain)?P.tintWater:P.tintLand;r=r*(1-a)+col[0]*a;g=g*(1-a)+col[1]*a;b=b*(1-a)+col[2]*a;}
+    else{r=r*0.86+110*0.14;g=g*0.86+110*0.14;b=b*0.86+110*0.14;}
+    if(isBorder[i]){r=r*0.28+14*0.72;g=g*0.28+16*0.72;b=b*0.28+22*0.72;}
+    const o=i*4;d[o]=r;d[o+1]=g;d[o+2]=b;d[o+3]=255;}
+  mapCtx.putImageData(mapImg,0,0);dirty=false;}
+function drawCapital(x,y,color,isLeader){ctx.save();ctx.shadowColor=color;ctx.shadowBlur=MAIN*0.02;ctx.beginPath();ctx.arc(x,y,MAIN*0.026,0,7);ctx.fillStyle="rgba(8,11,18,.9)";ctx.fill();ctx.lineWidth=MAIN*0.007;ctx.strokeStyle=color;ctx.stroke();ctx.shadowBlur=0;
+  ICON.castle(ctx,x,y+MAIN*0.003,MAIN*0.032,color);const fy=y-MAIN*0.028;ctx.strokeStyle="#e8edf6";ctx.lineWidth=MAIN*0.004;ctx.beginPath();ctx.moveTo(x,fy+MAIN*0.022);ctx.lineTo(x,fy-MAIN*0.022);ctx.stroke();
+  ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(x,fy-MAIN*0.022);ctx.lineTo(x+MAIN*0.03,fy-MAIN*0.014);ctx.lineTo(x,fy-MAIN*0.006);ctx.closePath();ctx.fill();
+  if(isLeader){ctx.shadowColor="#ffd23a";ctx.shadowBlur=MAIN*0.018;ICON.crown(ctx,x,y-MAIN*0.052,MAIN*0.03,"#ffd23a");ctx.shadowBlur=0;}
+  ctx.restore();}
+function draw(){
+  if(dirty)buildMap();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,MAIN,MAIN);ctx.drawImage(mapCv,0,0,MAPRES,MAPRES,0,0,MAIN,MAIN);
+  const now=performance.now();
+  for(const p of pv)if(p.flash>0){ctx.fillStyle="rgba(255,255,255,"+(p.flash/8*0.3)+")";ctx.beginPath();ctx.arc(p.cx*S,p.cy*S,Math.sqrt(p.count)*S*0.5,0,7);ctx.fill();}
+  for(const p of pv)if(p.res>=0){const x=p.cx*S,y=p.cy*S-MAIN*0.018,R=MAIN*0.02;ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fillStyle="rgba(6,9,15,.8)";ctx.fill();ctx.lineWidth=MAIN*0.005;ctx.strokeStyle=p.owner>=0?FACTIONS[p.owner].color:"#c9d2e0";ctx.stroke();ICON[RES_KEY[p.res]](ctx,x,y,MAIN*0.026,p.owner>=0?FACTIONS[p.owner].color:"#dbe3ef");}
+  for(const p of pv)if(p.cap&&p.owner>=0)drawCapital(p.cx*S,p.cy*S,FACTIONS[p.owner].color,p.owner===leaderF);
+  // 병력 숫자 — 소유는 굵고 밝게, 중립은 작고 흐리게 (P3 가독성)
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  for(const p of pv){if(p.terrain===T_SEA&&p.owner<0)continue;const g=Math.round(p.garrison);if(g<=0&&p.owner<0)continue;
+    if(p.owner>=0){ctx.font="800 "+(MAIN*0.019)+"px system-ui";const x=p.cx*S,y=p.cy*S+(p.cap?MAIN*0.036:p.res>=0?MAIN*0.016:0);
+      ctx.lineWidth=3;ctx.strokeStyle="rgba(0,0,0,.75)";ctx.strokeText(g,x,y);ctx.fillStyle="#fff";ctx.fillText(g,x,y);}
+    else{ctx.font="700 "+(MAIN*0.0135)+"px system-ui";ctx.globalAlpha=0.5;const x=p.cx*S,y=p.cy*S;ctx.lineWidth=2;ctx.strokeStyle="rgba(0,0,0,.5)";ctx.strokeText(g,x,y);ctx.fillStyle="#b4bdcc";ctx.fillText(g,x,y);ctx.globalAlpha=1;}}
+  // 행군
+  ctx.setLineDash([MAIN*0.012,MAIN*0.012]);for(const mv of marches){const a=pv[mv.from],b=pv[mv.to];ctx.strokeStyle=FACTIONS[mv.f].color+"33";ctx.lineWidth=MAIN*0.003;ctx.beginPath();ctx.moveTo(a.cx*S,a.cy*S);ctx.lineTo(b.cx*S,b.cy*S);ctx.stroke();}ctx.setLineDash([]);
+  for(const mv of marches){const a=pv[mv.from],b=pv[mv.to];const x=lerp(a.cx,b.cx,mv.prog)*S,y=lerp(a.cy,b.cy,mv.prog)*S,R=MAIN*0.017;
+    if(moraleMul[mv.f]>1){ctx.beginPath();ctx.arc(x,y,R+MAIN*0.006,0,7);ctx.strokeStyle="#ffd23a";ctx.lineWidth=MAIN*0.004;ctx.stroke();}
+    ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fillStyle=FACTIONS[mv.f].color;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#0009";ctx.stroke();ctx.fillStyle="#fff";ctx.font="800 "+(MAIN*0.015)+"px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(Math.round(mv.troops),x,y);}
+  for(let i=impacts.length-1;i>=0;i--){const im=impacts[i],t=(now-im.t0)/450;if(t>=1){impacts.splice(i,1);continue;}ctx.beginPath();ctx.arc(im.x*S,im.y*S,MAIN*0.01+t*MAIN*0.05,0,7);ctx.strokeStyle=im.col+Math.floor((1-t)*200).toString(16).padStart(2,"0");ctx.lineWidth=MAIN*0.006*(1-t);ctx.stroke();}
+  // 플로팅 텍스트 (전투 원인 노출 P2)
+  for(let i=floats.length-1;i>=0;i--){const ft=floats[i],t=(now-ft.t0)/ft.dur;if(t>=1){floats.splice(i,1);continue;}
+    ctx.globalAlpha=t<0.15?t/0.15:1-((t-0.15)/0.85);ctx.font="800 "+(MAIN*(ft.big?0.024:0.02))+"px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
+    const x=ft.x*S,y=ft.y*S-t*MAIN*0.05;ctx.lineWidth=3;ctx.strokeStyle="rgba(0,0,0,.75)";ctx.strokeText(ft.text,x,y);ctx.fillStyle=ft.color;ctx.fillText(ft.text,x,y);ctx.globalAlpha=1;}
+  if(duel.active)drawDuel();if(deathAnim)drawDeath();
+}
+
+/* ===== 패널 ===== */
+const rowsEl=document.getElementById("rows"),rowRef=[];
+for(let f=0;f<K;f++){const r=document.createElement("div");r.className="row";
+  r.innerHTML='<div class="rank"></div><div class="id"><div class="idtop">'+ic(FACTIONS[f].sig,FACTIONS[f].color,16)+'<span class="nm">'+FACTIONS[f].name+'</span><span class="mor">사기↑</span></div><span class="gen"></span></div><div class="troop"></div>';
+  rowsEl.appendChild(r);rowRef.push({root:r,rank:r.querySelector(".rank"),troop:r.querySelector(".troop"),mor:r.querySelector(".mor"),gen:r.querySelector(".gen")});}
+const pbar=document.getElementById("powerbar"),segs=[];for(let f=0;f<K;f++){const s=document.createElement("div");s.className="seg";s.style.background=FACTIONS[f].color;s.innerHTML='<span class="lab"></span>';pbar.appendChild(s);segs.push({seg:s,lab:s.querySelector(".lab")});}
+const resminiEl=document.getElementById("resmini"),resRef=[];
+for(let f=0;f<K;f++){const r=document.createElement("div");r.className="rm-row";
+  r.innerHTML=ic(FACTIONS[f].sig,FACTIONS[f].color,14)+'<span class="rm-nm">'+FACTIONS[f].name+'</span>'
+    +'<span class="rm-grp gi">'+ic("iron",FACTIONS[f].color,13)+'철 <span class="ri">0</span></span>'
+    +'<span class="rm-grp gf">'+ic("food",FACTIONS[f].color,13)+'식량 <span class="rf">0</span></span>'
+    +'<span class="rm-grp gg">'+ic("gold",FACTIONS[f].color,13)+'금 <span class="rg">0</span></span>'
+    +'<span class="rm-eff"></span>';
+  resminiEl.appendChild(r);resRef.push({root:r,ri:r.querySelector(".ri"),rf:r.querySelector(".rf"),rg:r.querySelector(".rg"),gi:r.querySelector(".gi"),gf:r.querySelector(".gf"),gg:r.querySelector(".gg"),eff:r.querySelector(".rm-eff")});}
+document.getElementById("legend").innerHTML=
+  '<div class="li"><span class="swatch-t" style="background:#5a7048"></span> <b>평야</b> &nbsp; <span class="swatch-t" style="background:#8a8580"></span> <b>산</b> 방어↑</div>'
+  +'<div class="li"><span class="swatch-t" style="background:#468090"></span> <b>강</b> 느림 &nbsp; <span class="swatch-t" style="background:#22406a"></span> <b>바다</b> 매우 느림</div>'
+  +'<div class="li">'+ic("crown","#ffd23a",14)+' <b>선두</b> · '+ic("castle","#dbe3ef",14)+' <b>수도</b> · 숫자=병력 · 원=행군</div>';
+
+function fmt(n){n=Math.round(n);return n>=1000?(n/1000).toFixed(1)+"k":""+n;}
+function troopSum(f){let s=0;for(const p of pv)if(p.owner===f)s+=p.garrison;return s;}
+function refresh(){const cnt=computeBonus();let tot=0;const pw=new Float64Array(K),pc=new Int32Array(K);
+  for(const p of pv)if(p.owner>=0)pc[p.owner]++;
+  for(let f=0;f<K;f++){pw[f]=alive[f]?pc[f]*4+troopSum(f)*0.03+(cnt[f][0]+cnt[f][1]+cnt[f][2])*3:0;if(pw[f]>0)tot+=pw[f];}
+  tot=Math.max(1,tot);
+  // 선두
+  let lead=-1,lc=-1;for(let f=0;f<K;f++)if(alive[f]&&pc[f]>lc){lc=pc[f];lead=f;}leaderF=lead<0?0:lead;
+  const ord=[...Array(K).keys()].sort((a,b)=>pc[b]-pc[a]);
+  ord.forEach(f=>{const sw=segs[f],pctW=pw[f]/tot*100;sw.seg.style.width=pctW+"%";sw.seg.style.order=alive[f]?0:1;sw.lab.textContent=(alive[f]&&pctW>=11)?(FACTIONS[f].name+" "+pc[f]):"";});
+  document.getElementById("powerLab").innerHTML="국력 (지역 + 병력 + 자원) · 선두 <b>"+(lead>=0?FACTIONS[lead].name:"-")+"</b>";
+  ord.forEach((f,rank)=>{const R=rowRef[f];R.root.style.order=alive[f]?rank:100+rank;R.root.classList.toggle("dead",!alive[f]);R.root.classList.toggle("leader",alive[f]&&f===lead);R.rank.textContent=alive[f]?rank+1:"–";R.troop.textContent=alive[f]?(pc[f]+"지역·"+fmt(troopSum(f))):"멸망";R.mor.classList.toggle("on",alive[f]&&moraleLeft[f]>0);
+    if(roster.length){const ch=championOf(f);R.gen.innerHTML="명장 <b>"+RANKS[ch.rank]+" "+ch.name+"</b>"+(ch.wins?" · "+ch.wins+"승":"");}});
+  ord.forEach((f,rank)=>{const R=resRef[f];R.root.style.order=alive[f]?rank:100+rank;R.root.classList.toggle("dead",!alive[f]);
+    R.ri.textContent=cnt[f][0];R.rf.textContent=cnt[f][1];R.rg.textContent=cnt[f][2];R.gi.classList.toggle("z",cnt[f][0]===0);R.gf.classList.toggle("z",cnt[f][1]===0);R.gg.classList.toggle("z",cnt[f][2]===0);
+    const e=[];if(attackMul[f]>1.001)e.push("공격×"+attackMul[f].toFixed(1));if(prodMul[f]>1.001)e.push("생산×"+prodMul[f].toFixed(1));if(speedMul[f]>1.001)e.push("행군×"+speedMul[f].toFixed(1));R.eff.textContent=e.join("  ");});
+  let a=0;for(let f=0;f<K;f++)if(alive[f])a++;document.getElementById("statLine").textContent=(1+((tick/50)|0))+"년차 · 생존 "+a;}
+
+const ov=document.getElementById("overlay"),ovBig=document.getElementById("ovBig");
+const ovSum=document.createElement("div");ovSum.className="summary";ovSum.id="ovSummary";ovSum.style.display="none";ovBig.after(ovSum);
+function win(){const f=winner;ov.querySelector(".who").textContent="🏆 천하통일";ovBig.innerHTML='<span style="color:'+FACTIONS[f].color+'">'+FACTIONS[f].name+"</span> 천하 통일";
+  const cnt=computeBonus()[f],lastFall=stats.capFalls.length?stats.capFalls[stats.capFalls.length-1]:null;
+  let html="<b>"+(1+((tick/50)|0))+"년</b> 만에 천하 통일 · 일기토 <b>"+stats.duels+"회</b> · 정복한 수도 <b>"+stats.capFalls.length+"</b>곳<br>"+FACTIONS[f].name+" 보유 자원 — 철 "+cnt[0]+" · 식량 "+cnt[1]+" · 금 "+cnt[2];
+  if(lastFall)html+="<br>최후의 함락 — "+FACTIONS[lastFall.loser].name+" 수도";
+  let mvp=null;for(const r of roster)for(const g of r)if(g.wins>0&&(!mvp||g.wins>mvp.wins||(g.wins===mvp.wins&&careerOf(g)>careerOf(mvp))))mvp=g;
+  if(mvp)html+="<br>이번 경기 명장 — "+RANKS[mvp.rank]+" <b>"+mvp.name+"</b> ("+FACTIONS[mvp.f].name+") "+mvp.wins+"승"+(careerOf(mvp)?" · 통산 "+careerOf(mvp)+"승":"");
+  ovSum.innerHTML=html;ovSum.style.display="block";document.getElementById("ovStart").textContent="↻ 다시 보기";ov.querySelector(".btns").style.display="flex";document.getElementById("btnPlay").textContent="▶ 시작";ov.classList.remove("hidden");refresh();draw();}
+
+function loop(t){
+  if(!duel.active&&!deathAnim&&deathQueue.length)deathAnim={f:deathQueue.shift(),start:performance.now(),dur:1300};
+  if(deathAnim){if(performance.now()-deathAnim.start>=deathAnim.dur)deathAnim=null;else{draw();requestAnimationFrame(loop);lastT=0;return;}}
+  if(duel.active){draw();requestAnimationFrame(loop);lastT=0;return;}
+  if(running){if(!lastT)lastT=t;acc+=(t-lastT)/1000*P.baseTPS*speed;lastT=t;let n=0;while(acc>=1&&n<30){step();acc--;n++;if(!running||duel.active||deathQueue.length)break;}refresh();}
+  else lastT=0;
+  draw();requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+function play(){if(winner>=0)return;running=true;ov.classList.add("hidden");lastT=0;document.getElementById("btnPlay").textContent="⏸ 정지";}
+function pause(){running=false;document.getElementById("btnPlay").textContent="▶ 계속";}
+document.getElementById("btnPlay").onclick=()=>{running?pause():play();};
+document.getElementById("ovStart").onclick=()=>{if(winner>=0)init((Math.random()*1e9)>>>0);play();};
+document.getElementById("ovSeed").onclick=()=>init((Math.random()*1e9)>>>0);
+document.getElementById("btnReset").onclick=()=>{init(seed);document.getElementById("btnPlay").textContent="▶ 시작";};
+document.getElementById("btnNew").onclick=()=>{init((Math.random()*1e9)>>>0);document.getElementById("btnPlay").textContent="▶ 시작";};
+document.getElementById("btnPlaySeed").onclick=()=>{const v=parseInt(document.getElementById("seedIn").value,10);init(isNaN(v)?0:v);document.getElementById("btnPlay").textContent="▶ 시작";};
+const sp=document.getElementById("speed");sp.oninput=()=>{speed=parseFloat(sp.value);document.getElementById("spVal").textContent=speed+"×";};
+
+init((Math.random()*1e9)>>>0);
+</script>
+</body>
+</html>
