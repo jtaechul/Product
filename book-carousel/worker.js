@@ -460,13 +460,35 @@ async function handleSendTelegram(env, body) {
 // ===== Claude 핸들러 =====
 
 // 카테고리/이슈 기반 책 추천
+// 이미 캐럿셀로 만든 책 제목을 기록(반복 제작 방지). 제작 함수(handleGenerate)에서 매번 호출.
+async function recordUsedBook(env, title) {
+  if (!env.PENDING_POSTS || !title) return;
+  let arr = [];
+  try { arr = (await env.PENDING_POSTS.get('used_books', 'json')) || []; } catch {}
+  const norm = _normTitle(title);
+  if (arr.some(t => _normTitle(t) === norm)) return;   // 이미 기록됨
+  arr.push(title);
+  await env.PENDING_POSTS.put('used_books', JSON.stringify(arr.slice(-80)), { expirationTtl: 120 * 24 * 3600 });
+}
+// 제외할 책 제목 = 전달된 목록 + used_books(제작 이력) + book_catalog(도서관 등록). 정규화 중복 제거.
+async function getUsedExcludes(env, extra = []) {
+  const set = [...extra];
+  try { const u = (await env.PENDING_POSTS.get('used_books', 'json')) || []; set.push(...u); } catch {}
+  try { const c = (await env.PENDING_POSTS.get('book_catalog', 'json')) || []; set.push(...c.map(b => b && b.title).filter(Boolean)); } catch {}
+  const seen = new Set(); const out = [];
+  for (const t of set) { const n = _normTitle(t); if (n && !seen.has(n)) { seen.add(n); out.push(t); } }
+  return out;
+}
+
 async function handleSuggest(env, body) {
   const { category, issue, excludeTitles = [] } = body;
   const topic = issue || category || '연애·관계 심리';
 
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-  const excludeClause = excludeTitles.length
-    ? `\n제외 도서(이미 캐럿셀로 만든 책이므로 절대 추천 금지): ${excludeTitles.join(', ')}`
+  // 프론트가 보낸 제외 목록 + 서버의 제작 이력(used_books)·도서관 등록본을 모두 합쳐 제외.
+  const exclude = await getUsedExcludes(env, excludeTitles);
+  const excludeClause = exclude.length
+    ? `\n제외 도서(이미 만든 책 — 절대 추천 금지, 반드시 새로운 책으로): ${exclude.slice(-40).join(', ')}`
     : '';
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
@@ -494,6 +516,10 @@ async function handleSuggest(env, body) {
     return { ...b, verified: al.ok && al.count >= 8, _drop: false, coupangSearchUrl: coupangSearchUrl(b.title) };
   }));
   let usable = checked.filter(b => !b._drop);                 // 실존 안 하는 책 제외
+  // [강제 제외] AI가 제외 지시를 무시하고 이미 만든 책을 또 넣어도 서버에서 걸러낸다.
+  const exNorm = new Set(exclude.map(_normTitle));
+  const fresh = usable.filter(b => !exNorm.has(_normTitle(b.title)));
+  if (fresh.length) usable = fresh;   // 전부 제외되면(신간 부족) 최소 원본 유지
   usable.sort((a, b) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0));  // 실존 확인 책 우선
   usable = usable.slice(0, 4).map(({ _drop, ...rest }) => rest);
 
@@ -563,7 +589,10 @@ async function handleGenerate(env, body) {
     user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '연애·관계 심리'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n\n[전체 톤] 이별·재회·회복에 지친 30대를 위로하고 자기 마음을 이해하게 돕는 따뜻한 흐름. 공감 → 패턴 발견 → 마음의 이유 → 위로의 실마리 → 오늘의 책 소개.\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(공감 훅 — 헤드라인만): 카드 전체를 단 하나의 마음을 건드리는 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 연애에서 겪었을 구체적 순간·감정을 정확히 포착한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 공포·경고 톤 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자가 혼자 느꼈던 감정을 들킨 듯한 문장.\n    좋은 예: "좋아할수록 더 차갑게 굴게 되는 사람이 있습니다"\n             "먼저 연락하면 지는 것 같아 오늘도 휴대폰만 들여다봤습니다"\n             "헤어지자는 말보다, 잡지 않을까 봐 더 무서웠습니다"\n    나쁜 예(절대 금지): "당신의 연애는 실패하고 있다" / "이대로면 평생 혼자입니다" (공포·단정 톤)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(패턴 발견): 독자가 반복해온 연애 패턴을 부드럽게 이름 붙여 보여준다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 독자가 "맞아, 나 그래"라고 느낄 구체적 행동·상황 묘사. 수치 금지, 감정과 장면 위주.\n3페이지(마음의 이유): 그 패턴의 심리적 뿌리를 따뜻하게 설명한다(애착, 상처, 두려움 등). 비난하지 않는다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. "당신이 이상한 게 아니라, 이런 마음이 있었던 것입니다" 같은 위로의 통찰. 심리학 개념을 쉽게 풀어 쓰되 학술 인용 금지.\n4페이지(위로의 실마리): 완전한 해답 대신 '이렇게 바라보면 달라진다'는 방향을 부드럽게 암시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 마지막 줄은 희망적 여운으로 끝낸다. 단정적 해결책 금지.\n5페이지(책 공개 — 마무리): 독자에게 오늘의 책을 건넨다. (제목·저자·표지는 시스템이 자동으로 함께 보여주므로 본문 텍스트에 제목·저자를 직접 쓰지 말 것.)\n  - cta: 4페이지의 위로를 잇는 따뜻한 마무리 + 핵심 솔루션 한 문장(이별·회복에서 오늘 가져갈 마음의 방향). A/B·질문·"댓글" 언급 금지. 독자 가슴에 남는 한 문장.\n  - linkText: 그 마음에 책을 자연스럽게 건네는 한 줄 (예: "이 마음에 오래 곁이 되어줄 책을 소개합니다"). 제목은 쓰지 말 것(시스템이 표지·제목·저자를 함께 노출). "프로필 링크" 언급은 불필요.\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
 
-  return { success: true, pages: extractJson(text), correctedBook, bookCover };
+  const pages = extractJson(text);
+  // 실제로 제작된 책 제목을 기록 → 다음 추천에서 자동 제외(반복 제작 방지). 모든 제작 경로가 여기를 지남.
+  await recordUsedBook(env, correctedBook?.title || title).catch(() => {});
+  return { success: true, pages, correctedBook, bookCover };
 }
 
 async function handleValidate(env, body) {
@@ -1091,8 +1120,8 @@ async function runDailyAuto(env) {
   const alreadyRan = await env.PENDING_POSTS.get(todayKey).catch(() => null);
   if (alreadyRan) return;
 
-  // 요일별 연애·관계 심리 세부 주제 순환 (일=0 ~ 토=6)
-  const DAILY_CATEGORIES = ['애착심리', '연애에세이', '이별과회복', '자존감과사랑', '관계심리', '짝사랑과설렘', '연애에세이'];
+  // 단일 니치(이별·재회·회복) 집중 — 자존감과사랑을 교대로 섞어 소폭 변주.
+  const DAILY_CATEGORIES = ['이별과회복', '자존감과사랑', '이별과회복', '자존감과사랑', '이별과회복', '자존감과사랑', '이별과회복'];
   const category = DAILY_CATEGORIES[kstNow.getDay()];
 
   // 최근 30일 내 사용한 책 목록 (중복 추천 방지)
