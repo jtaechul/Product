@@ -170,7 +170,7 @@ let provOf=new Int16Array(MAPRES*MAPRES), isBorder=new Uint8Array(MAPRES*MAPRES)
 let terrainRGB=new Uint8Array(MAPRES*MAPRES*3);
 let H_FIELD=null, pv=[];
 let seed=0,rand=null,tick=0,running=false,winner=-1,speed=3,acc=0,lastT=0,dirty=true;
-let marches=[], impacts=[], floats=[], duel={active:false}, duelCdUntil=0, deathQueue=[], deathAnim=null;
+let marches=[], impacts=[], floats=[], duel={active:false}, siege={active:false}, duelCdUntil=0, deathQueue=[], deathAnim=null;
 let attackMul=new Float64Array(K),prodMul=new Float64Array(K),speedMul=new Float64Array(K);
 let moraleMul=new Float64Array(K).fill(1), moraleLeft=new Int32Array(K);
 let alive=new Array(K).fill(true), stats={duels:0,capFalls:[]}, leaderF=0;
@@ -269,8 +269,8 @@ function init(sv){
   resSel.forEach((p,k)=>p.res=k%3);
   for(const p of pv){if(p.terrain===T_SEA){p.owner=NEU;p.garrison=0;continue;}p.owner=NEU;p.garrison=isWater(p.terrain)?3:8+((rand()*11)|0);p.cap=false;}
   caps.forEach((c,f)=>{c.owner=f;c.cap=true;c.garrison=P.capGarrison;});
-  marches=[];impacts=[];floats=[];duel={active:false};duelCdUntil=0;deathQueue=[];deathAnim=null;
-  moraleMul.fill(1);moraleLeft.fill(0);alive.fill(true);stats={duels:0,capFalls:[]};leaderF=0;initRoster();
+  marches=[];impacts=[];floats=[];duel={active:false};siege={active:false};duelCdUntil=0;deathQueue=[];deathAnim=null;
+  moraleMul.fill(1);moraleLeft.fill(0);alive.fill(true);stats={duels:0,sieges:0,capFalls:[]};leaderF=0;initRoster();
   for(const p of pv){p.moveCd=(P.moveCdMin+((rand()*(P.moveCdMax-P.moveCdMin))|0));p.flash=0;}
   tick=0;winner=-1;running=false;dirty=true;computeBonus();
   document.getElementById("seedIn").value=seed;
@@ -314,10 +314,9 @@ function step(){
 function arrive(mv){const q=pv[mv.to],f=mv.f;const raw=mv.troops;let troops=raw*ARRIVE_MUL[q.terrain];
   if(isWater(q.terrain)&&raw-troops>=1)float(q.cx,q.cy-2,"-"+Math.round(raw-troops)+" 도하",FACTIONS[f].color);
   if(q.owner===f){q.garrison+=troops;return;}
-  // 일기토는 '수도 결전'에서만 발동 (대군격돌 삭제) + 쿨다운 → 빈도 축소, 희소성=카타르시스(P8)
-  const now=performance.now(),defE=q.garrison*terrDef(q);let reason=null,chance=0;
-  if(q.cap&&q.owner>=0&&troops>=defE*0.6){reason="수도 결전";chance=P.duelChanceCap;}
-  if(reason&&now>=duelCdUntil&&rand()<chance){startDuel(f,q.owner,q,troops,reason);return;}
+  // 수도로의 유의미한 공격 → 공성전 연출(성벽 게이지) → 돌파 시 일기토 피날레. 쿨다운으로 희소성 유지(P5·P8)
+  const now=performance.now(),defE=q.garrison*terrDef(q);
+  if(q.cap&&q.owner>=0&&troops>=defE*0.5&&now>=duelCdUntil){startSiege(f,q.owner,q,troops);return;}
   battle(f,q,troops);}
 function capFall(prev,f){banner(FACTIONS[prev].name+" 수도 함락 — "+FACTIONS[f].name+"에 편입!",FACTIONS[f].color);stats.capFalls.push({loser:prev,by:f});absorb(prev,f);}
 function battle(f,q,troops){const defE=q.garrison*terrDef(q);impacts.push({x:q.cx,y:q.cy,t0:performance.now(),col:FACTIONS[f].color});
@@ -396,6 +395,64 @@ function drawDuel(){const d=duel,el=performance.now()-d.start,introMs=800,roundM
     const gW=d.winA?d.gA:d.gB;ctx.font="900 "+(MAIN*0.038)+"px system-ui";ctx.fillStyle=d.winA?A:B;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(RANKS[gW.rank]+" "+gW.name+" 승리!",MAIN*0.5,cyTop+ch+MAIN*0.132);}
   if(phase==="outro"&&k>=1&&!d.applied){d.applied=true;resolveDuel();}}
 
+/* ===== 공성전 (수도 함락 직전 연출) ===== */
+function startSiege(fA,fB,q,troops){stats.sieges++;
+  const wallMax=q.garrison*terrDef(q);                 // 성벽 = 수비 유효 방어(기존 수치의 시각화)
+  const breached=troops>wallMax;                        // 돌파 여부는 기존 전투 규칙과 동일
+  const wallEnd=breached?0:Math.max(0,wallMax-troops), nWaves=3, waves=[];
+  for(let i=1;i<=nWaves;i++)waves.push(lerp(wallMax,wallEnd,i/nWaves));
+  siege={active:true,start:performance.now(),fA,fB,q,troops,wallMax,wallEnd,breached,nWaves,waves,applied:false};
+  banner("수도 공방전 — "+FACTIONS[fA].name+" ▶ "+FACTIONS[fB].name+" 수도",FACTIONS[fA].color);}
+function resolveSiege(){const s=siege;
+  if(s.breached){siege={active:false};startDuel(s.fA,s.fB,s.q,s.troops,"성벽 돌파 — 최후의 결전");}  // 일기토 피날레(역전 가능 P6)
+  else{siege={active:false};battle(s.fA,s.q,s.troops);duelCdUntil=performance.now()+P.duelCdMs;}     // 성벽 사수 → 격퇴
+}
+function drawCastleBig(cx,cy,u,col,dmg){ctx.save();const R=(px,py,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(cx+px*u,cy+py*u,w*u,h*u);};
+  R(-6,-1,12,7,col);R(-6.4,5.4,12.8,1.6,"rgba(0,0,0,.4)");                                  // 성체 + 바닥 그림자
+  for(let i=-6;i<6;i+=2)R(i,-2.4,1.2,1.6,col);                                                // 흉벽(총안)
+  R(-1.4,1.2,2.8,4.8,"rgba(0,0,0,.5)");R(-0.9,1.7,1.8,2.2,"rgba(0,0,0,.65)");                 // 성문
+  const fy=-2.4;ctx.strokeStyle="#e8edf6";ctx.lineWidth=u*0.35;ctx.beginPath();ctx.moveTo(cx,cy+(fy-2.6)*u);ctx.lineTo(cx,cy+(fy+0.2)*u);ctx.stroke();
+  ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(cx,cy+(fy-2.6)*u);ctx.lineTo(cx+3*u,cy+(fy-1.9)*u);ctx.lineTo(cx,cy+(fy-1.2)*u);ctx.closePath();ctx.fill();
+  if(dmg>0){ctx.strokeStyle="rgba(20,10,6,"+(0.5*dmg)+")";ctx.lineWidth=u*0.4;             // 피해 균열
+    ctx.beginPath();ctx.moveTo(cx-3*u,cy-1*u);ctx.lineTo(cx-1.5*u,cy+2*u);ctx.lineTo(cx-2.2*u,cy+4*u);ctx.moveTo(cx+2*u,cy-1*u);ctx.lineTo(cx+3*u,cy+3*u);ctx.stroke();}
+  ctx.restore();}
+function drawSiege(){const s=siege,el=performance.now()-s.start,introMs=650,waveMs=640,outMs=1000;
+  const A=FACTIONS[s.fA].color,B=FACTIONS[s.fB].color;
+  ctx.fillStyle="rgba(3,5,10,.93)";ctx.fillRect(0,0,MAIN,MAIN);
+  const gl=ctx.createLinearGradient(0,0,MAIN,0);gl.addColorStop(0,A+"26");gl.addColorStop(.55,"#00000000");gl.addColorStop(1,B+"20");ctx.fillStyle=gl;ctx.fillRect(0,0,MAIN,MAIN);
+  let phase,wi=-1,k=0;
+  if(el<introMs)phase="intro";else{const t2=el-introMs,idx=Math.floor(t2/waveMs);if(idx<s.nWaves){phase="wave";wi=idx;k=(t2%waveMs)/waveMs;}else{phase="out";k=clamp((t2-s.nWaves*waveMs)/outMs,0,1);}}
+  let wall=s.wallMax;
+  if(phase==="wave"){const prev=wi>0?s.waves[wi-1]:s.wallMax;wall=lerp(prev,s.waves[wi],clamp(k*1.5,0,1));}
+  else if(phase==="out")wall=s.wallEnd;
+  const cyC=MAIN*0.46,u=MAIN/26, hitShake=(phase==="wave"&&k>=0.42&&k<0.6)?Math.sin(el*0.9)*MAIN*0.012:0;
+  // 성(수비) — 피격 시 흔들림 + 붉은 플래시
+  const dmg=1-wall/Math.max(1,s.wallMax);
+  drawCastleBig(MAIN*0.62+hitShake,cyC,u,B,dmg);
+  if(phase==="wave"&&k>=0.42&&k<0.6){ctx.fillStyle="rgba(255,80,40,.18)";ctx.fillRect(0,0,MAIN,MAIN);}
+  // 공격군 파도 — 왼쪽에서 성으로 진격하는 토큰들
+  const waveAdv=phase==="wave"?clamp(k/0.55,0,1):(phase==="intro"?0:1);
+  const startX=MAIN*0.12,endX=MAIN*0.44;
+  for(let i=0;i<7;i++){const off=(i%2)*MAIN*0.03,ax=lerp(startX,endX,waveAdv)+ (i-3)*MAIN*0.028, ay=cyC+off-MAIN*0.02+ (i%3-1)*MAIN*0.03;
+    ctx.beginPath();ctx.arc(ax,ay,MAIN*0.015,0,7);ctx.fillStyle=A;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#0009";ctx.stroke();}
+  // 제목 + 합/성벽 라벨
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.font="900 "+(MAIN*0.034)+"px system-ui";ctx.fillStyle="rgba(255,210,58,.96)";
+  ctx.fillText(phase==="wave"?("성벽 공략 "+(wi+1)+" / "+s.nWaves):(phase==="intro"?"⚔ 수도 공방전":(s.breached?"성벽 돌파!":"성벽 사수!")),MAIN*0.5,MAIN*0.13);
+  // 성벽 게이지
+  const bw=MAIN*0.6,bh=MAIN*0.03,bx=MAIN*0.2,by=MAIN*0.19;
+  ctx.fillStyle="#0d131f";ctx.fillRect(bx,by,bw,bh);ctx.fillStyle=B;ctx.fillRect(bx,by,bw*clamp(wall/s.wallMax,0,1),bh);
+  ctx.lineWidth=2;ctx.strokeStyle="#0008";ctx.strokeRect(bx,by,bw,bh);
+  ctx.font="800 "+(MAIN*0.02)+"px system-ui";ctx.fillStyle="#e8edf6";ctx.textAlign="left";ctx.fillText("성벽 "+Math.round(wall),bx,by-MAIN*0.02);
+  ctx.textAlign="right";ctx.fillStyle=A;ctx.fillText("공격군 "+Math.round(s.troops),bx+bw,by-MAIN*0.02);
+  ctx.textAlign="center";
+  // 세력명
+  ctx.font="900 "+(MAIN*0.026)+"px system-ui";ctx.fillStyle=A;ctx.fillText(FACTIONS[s.fA].name,MAIN*0.2,cyC+MAIN*0.28);ctx.fillStyle=B;ctx.fillText(FACTIONS[s.fB].name+" 수도",MAIN*0.72,cyC+MAIN*0.28);
+  // 피격 데미지 플로팅
+  if(phase==="wave"&&k>=0.42&&k<0.62){const prev=wi>0?s.waves[wi-1]:s.wallMax;ctx.font="900 "+(MAIN*0.04)+"px system-ui";ctx.fillStyle="#ff6a4a";ctx.fillText("-"+Math.round(prev-s.waves[wi])+" 성벽",MAIN*0.62,cyC-MAIN*0.16);}
+  if(phase==="out"){ctx.font="900 "+(MAIN*0.03)+"px system-ui";ctx.fillStyle=s.breached?A:B;ctx.fillText(s.breached?"최후의 결전으로!":FACTIONS[s.fB].name+" 수도 방어 성공",MAIN*0.5,cyC+MAIN*0.36);}
+  if(phase==="out"&&k>=1&&!s.applied){s.applied=true;resolveSiege();}}
+
 function drawKingFace(cx,cy,u,f){const col=FACTIONS[f].color,skin="#e9c9a3",skinSh="#d3ab82",hair="#2a2320";const R=(px,py,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(cx+px*u,cy+py*u,w*u,h*u);};
   R(-4,-4,9,9,skin);R(-4,4.4,9,1,skinSh);R(-5,-1,1,3,skin);R(4,-1,1,3,skin);R(-4,-4,9,1.3,hair);R(-4,-4,1,4,hair);R(3,-4,1,4,hair);
   const pts=3+(f%3);R(-4,-6,9,2,col);const st=9/pts;for(let i=0;i<pts;i++)R(-4+i*st+st*0.16,-7.3,st*0.68,1.5,col);R(-0.6,-6.7,1.2,1.2,"#ffe27a");
@@ -440,7 +497,7 @@ function draw(){
   for(let i=floats.length-1;i>=0;i--){const ft=floats[i],t=(now-ft.t0)/ft.dur;if(t>=1){floats.splice(i,1);continue;}
     ctx.globalAlpha=t<0.15?t/0.15:1-((t-0.15)/0.85);ctx.font="800 "+(MAIN*(ft.big?0.024:0.02))+"px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
     const x=ft.x*S,y=ft.y*S-t*MAIN*0.05;ctx.lineWidth=3;ctx.strokeStyle="rgba(0,0,0,.75)";ctx.strokeText(ft.text,x,y);ctx.fillStyle=ft.color;ctx.fillText(ft.text,x,y);ctx.globalAlpha=1;}
-  if(duel.active)drawDuel();if(deathAnim)drawDeath();
+  if(siege.active)drawSiege();if(duel.active)drawDuel();if(deathAnim)drawDeath();
 }
 
 /* ===== 패널 ===== */
@@ -491,10 +548,10 @@ function win(){const f=winner;ov.querySelector(".who").textContent="🏆 천하�
   ovSum.innerHTML=html;ovSum.style.display="block";document.getElementById("ovStart").textContent="↻ 다시 보기";ov.querySelector(".btns").style.display="flex";document.getElementById("btnPlay").textContent="▶ 시작";ov.classList.remove("hidden");refresh();draw();}
 
 function loop(t){
-  if(!duel.active&&!deathAnim&&deathQueue.length)deathAnim={f:deathQueue.shift(),start:performance.now(),dur:1300};
+  if(!duel.active&&!siege.active&&!deathAnim&&deathQueue.length)deathAnim={f:deathQueue.shift(),start:performance.now(),dur:1300};
   if(deathAnim){if(performance.now()-deathAnim.start>=deathAnim.dur)deathAnim=null;else{draw();requestAnimationFrame(loop);lastT=0;return;}}
-  if(duel.active){draw();requestAnimationFrame(loop);lastT=0;return;}
-  if(running){if(!lastT)lastT=t;acc+=(t-lastT)/1000*P.baseTPS*speed;lastT=t;let n=0;while(acc>=1&&n<30){step();acc--;n++;if(!running||duel.active||deathQueue.length)break;}refresh();}
+  if(siege.active||duel.active){draw();requestAnimationFrame(loop);lastT=0;return;}
+  if(running){if(!lastT)lastT=t;acc+=(t-lastT)/1000*P.baseTPS*speed;lastT=t;let n=0;while(acc>=1&&n<30){step();acc--;n++;if(!running||duel.active||siege.active||deathQueue.length)break;}refresh();}
   else lastT=0;
   draw();requestAnimationFrame(loop);
 }
