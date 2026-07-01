@@ -37,10 +37,13 @@ from src.upbit_quotation import UpbitQuotation, candles_to_dataframe  # noqa: E4
 MARKET = "KRW-XRP"
 MIN_ORDER_KRW = 5000
 
-# analyze_xrp 검증 승자 설정(일봉). 진입 신호는 '일봉', 청산은 가격기반 실시간.
+# analyze_xrp/tune_xrp 검증 승자 설정(일봉). 진입 신호는 '일봉', 청산은 가격기반 실시간.
 #   base_bars=30(30일 박스) / recent_bars=3(최근3일) / self_ma=50(50일선 위) / BTC게이트 끔
+#   vol_surge=2.0: tune_xrp 검증 결과 3.0→2.0 완화가 거래 24→34회(+42%)로 늘면서도
+#     위험대비수익(Calmar) 0.94→1.26 개선·워크포워드 4/5 유지 → '더 활발+검증통과' 채택.
 #   max_hold_bars 는 실시간 엔진에서 '시간(h)' 단위 → 30일 = 720h
-XRP_CFG = dict(base_bars=30, recent_bars=3, self_ma_bars=50, btc_ma_bars=0)
+XRP_CFG = dict(base_bars=30, recent_bars=3, self_ma_bars=50, btc_ma_bars=0,
+               vol_surge=2.0)
 
 
 def log(msg: str, push: bool = False) -> None:
