@@ -460,13 +460,35 @@ async function handleSendTelegram(env, body) {
 // ===== Claude 핸들러 =====
 
 // 카테고리/이슈 기반 책 추천
+// 이미 캐럿셀로 만든 책 제목을 기록(반복 제작 방지). 제작 함수(handleGenerate)에서 매번 호출.
+async function recordUsedBook(env, title) {
+  if (!env.PENDING_POSTS || !title) return;
+  let arr = [];
+  try { arr = (await env.PENDING_POSTS.get('used_books', 'json')) || []; } catch {}
+  const norm = _normTitle(title);
+  if (arr.some(t => _normTitle(t) === norm)) return;   // 이미 기록됨
+  arr.push(title);
+  await env.PENDING_POSTS.put('used_books', JSON.stringify(arr.slice(-80)), { expirationTtl: 120 * 24 * 3600 });
+}
+// 제외할 책 제목 = 전달된 목록 + used_books(제작 이력) + book_catalog(도서관 등록). 정규화 중복 제거.
+async function getUsedExcludes(env, extra = []) {
+  const set = [...extra];
+  try { const u = (await env.PENDING_POSTS.get('used_books', 'json')) || []; set.push(...u); } catch {}
+  try { const c = (await env.PENDING_POSTS.get('book_catalog', 'json')) || []; set.push(...c.map(b => b && b.title).filter(Boolean)); } catch {}
+  const seen = new Set(); const out = [];
+  for (const t of set) { const n = _normTitle(t); if (n && !seen.has(n)) { seen.add(n); out.push(t); } }
+  return out;
+}
+
 async function handleSuggest(env, body) {
   const { category, issue, excludeTitles = [] } = body;
   const topic = issue || category || '연애·관계 심리';
 
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-  const excludeClause = excludeTitles.length
-    ? `\n제외 도서(이미 캐럿셀로 만든 책이므로 절대 추천 금지): ${excludeTitles.join(', ')}`
+  // 프론트가 보낸 제외 목록 + 서버의 제작 이력(used_books)·도서관 등록본을 모두 합쳐 제외.
+  const exclude = await getUsedExcludes(env, excludeTitles);
+  const excludeClause = exclude.length
+    ? `\n제외 도서(이미 만든 책 — 절대 추천 금지, 반드시 새로운 책으로): ${exclude.slice(-40).join(', ')}`
     : '';
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
@@ -494,6 +516,10 @@ async function handleSuggest(env, body) {
     return { ...b, verified: al.ok && al.count >= 8, _drop: false, coupangSearchUrl: coupangSearchUrl(b.title) };
   }));
   let usable = checked.filter(b => !b._drop);                 // 실존 안 하는 책 제외
+  // [강제 제외] AI가 제외 지시를 무시하고 이미 만든 책을 또 넣어도 서버에서 걸러낸다.
+  const exNorm = new Set(exclude.map(_normTitle));
+  const fresh = usable.filter(b => !exNorm.has(_normTitle(b.title)));
+  if (fresh.length) usable = fresh;   // 전부 제외되면(신간 부족) 최소 원본 유지
   usable.sort((a, b) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0));  // 실존 확인 책 우선
   usable = usable.slice(0, 4).map(({ _drop, ...rest }) => rest);
 
@@ -563,7 +589,10 @@ async function handleGenerate(env, body) {
     user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '연애·관계 심리'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n\n[전체 톤] 이별·재회·회복에 지친 30대를 위로하고 자기 마음을 이해하게 돕는 따뜻한 흐름. 공감 → 패턴 발견 → 마음의 이유 → 위로의 실마리 → 오늘의 책 소개.\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(공감 훅 — 헤드라인만): 카드 전체를 단 하나의 마음을 건드리는 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 연애에서 겪었을 구체적 순간·감정을 정확히 포착한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 공포·경고 톤 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자가 혼자 느꼈던 감정을 들킨 듯한 문장.\n    좋은 예: "좋아할수록 더 차갑게 굴게 되는 사람이 있습니다"\n             "먼저 연락하면 지는 것 같아 오늘도 휴대폰만 들여다봤습니다"\n             "헤어지자는 말보다, 잡지 않을까 봐 더 무서웠습니다"\n    나쁜 예(절대 금지): "당신의 연애는 실패하고 있다" / "이대로면 평생 혼자입니다" (공포·단정 톤)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(패턴 발견): 독자가 반복해온 연애 패턴을 부드럽게 이름 붙여 보여준다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 독자가 "맞아, 나 그래"라고 느낄 구체적 행동·상황 묘사. 수치 금지, 감정과 장면 위주.\n3페이지(마음의 이유): 그 패턴의 심리적 뿌리를 따뜻하게 설명한다(애착, 상처, 두려움 등). 비난하지 않는다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. "당신이 이상한 게 아니라, 이런 마음이 있었던 것입니다" 같은 위로의 통찰. 심리학 개념을 쉽게 풀어 쓰되 학술 인용 금지.\n4페이지(위로의 실마리): 완전한 해답 대신 '이렇게 바라보면 달라진다'는 방향을 부드럽게 암시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 마지막 줄은 희망적 여운으로 끝낸다. 단정적 해결책 금지.\n5페이지(책 공개 — 마무리): 독자에게 오늘의 책을 건넨다. (제목·저자·표지는 시스템이 자동으로 함께 보여주므로 본문 텍스트에 제목·저자를 직접 쓰지 말 것.)\n  - cta: 4페이지의 위로를 잇는 따뜻한 마무리 + 핵심 솔루션 한 문장(이별·회복에서 오늘 가져갈 마음의 방향). A/B·질문·"댓글" 언급 금지. 독자 가슴에 남는 한 문장.\n  - linkText: 그 마음에 책을 자연스럽게 건네는 한 줄 (예: "이 마음에 오래 곁이 되어줄 책을 소개합니다"). 제목은 쓰지 말 것(시스템이 표지·제목·저자를 함께 노출). "프로필 링크" 언급은 불필요.\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
 
-  return { success: true, pages: extractJson(text), correctedBook, bookCover };
+  const pages = extractJson(text);
+  // 실제로 제작된 책 제목을 기록 → 다음 추천에서 자동 제외(반복 제작 방지). 모든 제작 경로가 여기를 지남.
+  await recordUsedBook(env, correctedBook?.title || title).catch(() => {});
+  return { success: true, pages, correctedBook, bookCover };
 }
 
 async function handleValidate(env, body) {
@@ -577,24 +606,64 @@ async function handleValidate(env, body) {
   return { success: true, ...extractJson(text) };
 }
 
-// 페이지별 폴백 프롬프트 — Claude가 생성 실패 시 사용
-// 각 페이지의 감정 흐름(긴장→문제→충격→희망→여운)에 맞춘 비주얼 방향
+// 인물 정체성만 고정(같은 화풍·같은 여성). 다양성은 자세·옷·장소에서 주되,
+// 얼굴(특히 눈)은 무료 AI가 잘 망가뜨리므로 정면 클로즈업을 금지하고 눈을 내리감/감거나
+// 얼굴을 돌린·가린 구도로만 그린다 → "눈 깨진 섬뜩한 그림"을 원천 차단.
+const CHARACTER_ANCHOR = 'a cute young Korean woman with long dark-brown hair and a soft lovely look; keep her identity recognizable while widely varying her pose, expression and viewpoint (back view, side, or front); her eyes are gently closed, softly lowered, or she looks away — avoid only wide-open front-facing detailed eyes; a calm or gently smiling expression is welcome';
+// 스타일은 "귀엽고 퀄리티 높은 애니풍"으로 고정(실사·3D 금지 → 섬찟함·눈 깨짐 감소). 색감·분위기는 주제별로.
+const STYLE_ANCHOR = 'high-quality cute Korean webtoon and soft anime illustration, clean rounded linework, simple lovely delicate features, smooth flat cel shading, gentle soft glow, polished adorable storybook charm, absolutely not photorealistic, not semi-realistic, not 3d render, Instagram square 1:1';
+// 주제(카테고리)별 분위기·색감 — 이별/자존감/설렘이 서로 다른 느낌이 나도록.
+function categoryMood(cat) {
+  const c = String(cat || '');
+  if (/설렘|짝사랑|썸|시작|고백|두근/.test(c)) return 'sweet fluttering hopeful mood, bright blush pink, peach and soft coral palette, airy spring daylight, light-hearted and dreamy, gentle sparkle';
+  if (/자존|자기|나를/.test(c)) return 'warm uplifting mood, soft gold, cream and peach palette, bright gentle morning light, calm quiet confidence, cozy and hopeful';
+  if (/이별|재회|회복|헤어|그리움/.test(c)) return 'melancholic tender yet gently healing mood, muted cool palette of dusty blue, soft grey and pale lavender with a touch of warm cream, quiet dusk or soft rainy atmosphere';
+  if (/애착|관계|소통|경계|거리/.test(c)) return 'calm reassuring mood, soft sage, cream and dusty rose palette, gentle warm light, quiet and tender';
+  return 'warm tender mood, soft pastel palette of cream, dusty rose and sage, cozy lyrical atmosphere';
+}
+// 인물 컷 자세·구도 변주 — 뒷모습·옆모습·앞모습(눈 감음)·시선 돌림·미소까지 폭넓게.
+// (핵심 안전장치: "눈을 크게 뜬 정면"만 피하면 됨. 눈 감은 앞모습·미소는 OK)
+const POSE_VARIATIONS = [
+  'seen from behind gazing out a window',
+  'three-quarter back view over her shoulder',
+  'front view with eyes gently closed and a soft peaceful smile',
+  'looking away to the side with a faint smile',
+  'lying down facing away, relaxed',
+  'walking away into the soft distance',
+  'head tilted back with eyes closed, feeling the breeze',
+  'front-facing with a gentle closed-eye smile, holding a warm mug',
+  'looking up with eyes closed toward soft light',
+  'a distant small figure against a bright window',
+  'side profile with eyes lowered, a calm half-smile',
+  'back view stretching her arms up happily',
+  'resting her chin on her hand, eyes softly closed',
+  'sitting curled up, hugging her knees, cheek resting on them with eyes closed',
+];
+// 인물 컷 전용 꼬리말 — 눈만 안전하게(감거나 시선 돌림) 하고 표정은 다양하게 허용.
+const PERSON_FACE_TAIL = ', delicate softly drawn face, eyes gently closed or softly lowered or looking away (never wide-open front-facing eyes), a calm or softly smiling expression, clean well-formed features, no distorted eyes, no malformed face';
+const SETTING_VARIATIONS = [
+  'by a rain-streaked window', 'in a quiet cafe corner', 'in a cozy dim bedroom', 'on a city street at dusk',
+  'on a bus by the window', 'in a sunlit kitchen', 'on a park bench in autumn', 'in a softly lit living room',
+];
+// 인물 없는 배경 장면용 앵커 — 같은 화풍·색감은 유지하되 사람은 넣지 않는다.
+const SCENE_ANCHOR = 'no people in frame, an atmospheric symbolic scene only (cozy interior, window, quiet place or meaningful objects)';
+
+// 페이지별 폴백 프롬프트 — Claude 생성 실패 시 사용. (인물 배치는 personPage로 동적 결정)
 const FALLBACK_IMAGE_PROMPTS = {
-  page1: 'warm analog film photography, a cup of coffee and an open book on a wooden table by a soft sunlit window, gentle morning light, cream and beige tones, cozy intimate mood, shallow depth of field, no text',
-  page2: 'soft 35mm film photo, two empty chairs facing each other in a quiet sunlit cafe, warm muted tones, nostalgic and tender atmosphere, gentle bokeh, no people faces, no text',
-  page3: 'intimate still life, dried flowers and an old letter on linen fabric, soft diffused window light, dusty rose and warm beige palette, emotional and quiet, analog film grain, no text',
-  page4: 'hands gently holding a warm mug near a sunlit window, soft golden afternoon light, blurred cozy background, tender hopeful feeling, warm color grade, no text',
-  page5: 'serene minimal photo, a single open book on a bed with soft morning light through sheer curtains, warm cream tones, peaceful and contemplative, soft focus, no text',
+  page1: 'a woman seen from behind sitting alone by a large window at dusk, soft city lights bokeh outside, quiet wistful mood, empty space around her',
+  page2: 'an empty cafe table by a window with a single cup and a phone left face-down, soft afternoon light, tender lonely atmosphere',
+  page3: 'a cozy dim bedroom corner with a crumpled blanket and a warm glowing bedside lamp, introspective quiet mood, soft shadows',
+  page4: 'a window as gentle morning light streams in over a sheer curtain, hopeful warm glow, a quiet turning moment',
+  page5: 'an open book resting on a sunlit windowsill with sheer curtains gently glowing, calm hopeful morning light',
 };
 
-// 페이지별 감정 역할 — 고정 장면이 아니라 "그 페이지가 자아내야 할 감정"만 안내한다.
-// 실제 장면·소재는 Claude가 그 페이지 텍스트를 해석해 매번 다르게 정한다.
+// 페이지별 감정 역할(니치=이별·재회·회복). 인물 배치는 1장 고정 + 2~4 중 1장(personPage)으로 동적 결정.
 const PAGE_VISUAL_DIRECTIONS = {
-  page1: '첫 공감의 울림 — 독자가 혼자 느낀 감정을 들킨 듯한 인상적 도입. 여백이 넉넉한 한 장면.',
-  page2: '반복돼온 연애 패턴의 익숙함·쓸쓸함 — 일상 속 한 순간을 조용히 포착.',
-  page3: '마음의 뿌리에 닿는 따뜻한 통찰 — 내면·기억·애착을 은유하는 상징적 정물/풍경.',
-  page4: '위로와 전환의 실마리 — 빛이 스며들고 무언가 풀리는, 희망적인 결.',
-  page5: '잔잔한 여운과 열린 질문 — 고요하고 여백이 큰 마무리.',
+  page1: '혼자 있는 그녀 — 들킨 듯한 첫 감정(이별 후의 쓸쓸함). 뒷모습/옆모습, 여백 넉넉히(스크롤을 멈추는 표지 컷·인물 고정).',
+  page2: '반복된 패턴/그리움의 한 순간 — 장소·사물 또는 그녀.',
+  page3: '마음의 뿌리를 들여다보는 조용한 순간 — 장소·사물 또는 그녀.',
+  page4: '빛이 드는 전환·회복의 실마리 — 장소·사물 또는 그녀(따뜻한 아침빛).',
+  page5: '평온한 마무리 — 책/창가 등 고요한 장면(하단은 책 공개 패널이 덮음, 인물 없음 권장).',
 };
 
 async function handleGenerateImages(env, body) {
@@ -613,31 +682,66 @@ async function handleGenerateImages(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'main',
     max_tokens: 1500,
-    system: '당신은 감성 사진 아트 디렉터입니다. 연애·관계 심리 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[가장 중요] 매번 똑같이 "커피+책+창가" 같은 뻔한 장면을 반복하지 마세요. 각 페이지의 "구체적 문장·감정"을 해석해, 그 감정을 상징하는 신선하고 차별화된 장면을 새로 발상하세요. 같은 소재(커피잔·창문·책)를 모든 페이지에 반복 사용 금지.\n\n[스타일 고정] 톤만 일관되게: 따뜻한 자연광, 아날로그 35mm 필름 질감, 포근하고 감성적인 색감(크림·베이지·더스티로즈·세이지·은은한 파스텔 중 장면에 맞게 선택), 시네마틱하고 서정적. 어둡고 공포스러운 톤 금지.\n\n[장면 발상 팔레트 — 감정에 맞는 것을 폭넓게 선택]\n· 자연/날씨: 안개 낀 들판, 비 내리는 유리창, 첫눈, 노을 진 바다, 흔들리는 들꽃, 가로등 켜진 골목, 새벽 하늘\n· 빛/그림자: 커튼 사이로 스며드는 빛, 바닥에 드리운 긴 그림자, 물에 비친 반영\n· 상징 정물: 손편지, 마른 꽃, 실타래, 깨진/흐린 거울, 오래된 사진, 빈 의자 하나, 꺼진 전화기, 두 개의 찻잔, 반지, 단추\n· 손동작: 무언가를 쥔/놓는/내미는 손, 페이지를 넘기는 손\n· 텍스처: 구겨진 종이, 린넨 천, 물결, 빛바랜 벽\n→ 위에서 그대로 베끼지 말고, 페이지 감정에 가장 들어맞는 것을 골라 구체적으로 연출.\n\n[규칙]\n1. 카메라·렌즈·조명·구도를 구체적으로 (예: 35mm film, 85mm f/1.8, soft window light, golden hour rim light, rule of thirds, macro)\n2. 사람 얼굴 클로즈업 금지 — 손·뒷모습·실루엣·정물·풍경만\n3. 텍스트·글자·숫자 없음 (no text, no letters)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 5장은 소재·장소·구도가 서로 뚜렷이 다르되, 색감·필름톤으로 한 시리즈처럼 묶이게\n6. 각 프롬프트 영어 35~70단어, Instagram 1:1\n반드시 JSON만 응답한다.',
-    user: `책 제목: ${bookInfo.title || ''}\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n책 핵심 주제: ${bookInfo.coreMessage || ''}\n\n[1단계] 먼저 이 책의 핵심 감정/은유를 한 가지 마음속으로 정하세요(예: 다가갈수록 멀어지는 거리감, 닫힌 마음의 문, 기다림). 그 모티프가 5장에 은은히 흐르게 하되, 페이지마다 다른 장면으로 변주하세요.\n\n[2단계] 아래 각 페이지의 "실제 문장"을 해석해, 그 감정을 상징하는 서로 다른 장면 프롬프트 5개를 작성하세요.\n\n1페이지 [${PAGE_VISUAL_DIRECTIONS.page1}]\n  문장: ${pageContents.page1}\n2페이지 [${PAGE_VISUAL_DIRECTIONS.page2}]\n  문장: ${pageContents.page2}\n3페이지 [${PAGE_VISUAL_DIRECTIONS.page3}]\n  문장: ${pageContents.page3}\n4페이지 [${PAGE_VISUAL_DIRECTIONS.page4}]\n  문장: ${pageContents.page4}\n5페이지 [${PAGE_VISUAL_DIRECTIONS.page5}]\n  문장: ${pageContents.page5}\n\n[필수] 5장의 주요 소재·장소가 서로 겹치지 않게 하고(예: 커피잔을 두 번 쓰지 말 것), 각 페이지 문장의 핵심 감정이 장면에 분명히 드러나게 하세요. 텍스트·글자·숫자 없음.\n\nJSON (page1~page5 모두 필수): {"page1":"english prompt","page2":"...","page3":"...","page4":"...","page5":"..."}`,
+    system: '당신은 한국 웹툰풍 감성 일러스트 아트 디렉터입니다. 이별·재회·회복 주제의 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[인물 배치 — 매우 중요] 사람(같은 30대 한국 여성)은 정확히 2장에만 등장합니다.\n· 1페이지: 무조건 그녀(스크롤을 멈추는 표지 컷).\n· 2~4페이지 중 단 한 곳: 각 페이지의 "문장"을 읽고, 인물이 있을 때 감정이 가장 살아나는 페이지 한 곳을 골라 그녀를 넣으세요(예: 구체적 행동·장면이 그려지는 문장). 나머지 페이지(2~4 중 둘)와 5페이지는 사람 없는 분위기 장면.\n· 어느 페이지를 골랐는지 personPage로 반드시 알려주세요(page2/page3/page4 중 하나).\n\n[얼굴·다양성 규칙 — 매우 중요] 매번 자세·시점·표정·장소를 확 다르게 하세요(복붙 구도 금지). 뒷모습·옆모습·앞모습·고개 돌림·미소 등 폭넓게 좋습니다. 단 하나의 안전장치: 무료 AI가 "눈을 크게 뜬 정면"을 자주 망가뜨리니(눈 깨짐), 눈은 감거나 내리감거나 시선을 돌린 상태로 그리세요. 눈 감은 앞모습·미소는 환영합니다.\n\n[스타일 고정 — 5장 공통] "귀엽고 퀄리티 높은 애니풍" 일러스트: 둥글고 사랑스러운 이목구비, 깔끔한 라인, 부드러운 플랫 셀 셰이딩, 포근한 빛. 실사·반실사·3D 렌더 절대 금지(섬찟함 방지). 색감·분위기는 시스템이 주제에 맞게 자동으로 덧붙이므로 너는 색 지정 대신 장면·감정에 집중. 인물 컷과 배경 컷이 한 시리즈로 묶이게.\n\n[배경 장면 발상] 창가·카페·침대·책상·골목·버스 안, 휴대폰·편지·머그·담요·우산·책, 빈 의자, 비 오는 유리창, 저물녘→새벽빛 등으로 감정을 상징. 5장의 장소·구도가 서로 뚜렷이 다르게.\n\n[규칙]\n1. 구도·조명 구체적으로 (back view, side profile, wide shot, soft window light, golden morning light)\n2. 인물 컷은 정면 얼굴 클로즈업 금지 / 배경 컷은 사람 없음(no people)\n3. 텍스트·글자·숫자 없음 (no text, no letters, no words)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 각 프롬프트 영어 25~55단어. 인물 외형·화풍·사람유무는 시스템이 자동으로 덧붙이므로, 너는 "그 장의 장면·자세/사물·감정·장소"에 집중해 묘사.\n반드시 JSON만 응답한다.',
+    user: `책 제목: ${bookInfo.title || ''}\n카테고리: ${bookInfo.category || '이별·재회·회복'}\n책 핵심 주제: ${bookInfo.coreMessage || ''}\n\n1페이지는 무조건 그녀(인물). 2~4페이지 문장을 읽고 인물이 가장 어울리는 한 곳을 골라 그녀를 넣고(personPage로 표기), 나머지와 5페이지는 사람 없는 분위기 배경으로 묘사하세요.\n\n1페이지 ${PAGE_VISUAL_DIRECTIONS.page1}\n  문장: ${pageContents.page1}\n2페이지 ${PAGE_VISUAL_DIRECTIONS.page2}\n  문장: ${pageContents.page2}\n3페이지 ${PAGE_VISUAL_DIRECTIONS.page3}\n  문장: ${pageContents.page3}\n4페이지 ${PAGE_VISUAL_DIRECTIONS.page4}\n  문장: ${pageContents.page4}\n5페이지 ${PAGE_VISUAL_DIRECTIONS.page5}\n  문장: ${pageContents.page5}\n\n[필수] 5장의 장소·구도가 서로 겹치지 않게. 인물은 1페이지 + (2~4 중 personPage) 두 곳만, 나머지는 사람 없음. 텍스트·글자 없음.\n\nJSON: {"page1":"...","page2":"...","page3":"...","page4":"...","page5":"...","personPage":"page3"}`,
   });
 
-  const prompts = extractJson(text);
+  const parsed = extractJson(text);
 
-  // 5페이지 모두 존재하는지 확인 — 누락 시 페이지별 폴백으로 보완
+  // 인물 2번째 페이지: Claude가 고른 personPage(2~4) 사용, 유효하지 않으면 page4로 폴백.
+  let personPage = parsed.personPage;
+  if (!['page2', 'page3', 'page4'].includes(personPage)) personPage = 'page4';
+  const PERSON_PAGES = new Set(['page1', personPage]);
+
+  // 5페이지 프롬프트만 추려 검증 — 누락 시 페이지별 폴백으로 보완
+  const prompts = {};
   for (let i = 1; i <= 5; i++) {
     const key = `page${i}`;
-    if (!prompts[key] || typeof prompts[key] !== 'string' || prompts[key].trim() === '') {
-      prompts[key] = FALLBACK_IMAGE_PROMPTS[key];
-    }
+    const v = parsed[key];
+    prompts[key] = (v && typeof v === 'string' && v.trim()) ? v.trim() : FALLBACK_IMAGE_PROMPTS[key];
   }
 
-  const suffix = ', no text, no letters, high quality, Instagram square format 1:1';
+  // 페이지별로 앵커를 다르게 붙인다: 인물 페이지(1 + personPage)=캐릭터 앵커, 나머지=장면 앵커.
+  // 화풍·색감 앵커(STYLE_ANCHOR)는 5장 공통 → 인물/배경이 한 시리즈로 묶인다.
   const base = 'https://image.pollinations.ai/prompt/';
-
-  // 페이지마다 다른 seed → 동일 요청 충돌·캐시 문제로 인한 로딩 실패 감소
+  const tail = ', no text, no letters, no words, high quality';
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const mood = categoryMood(bookInfo.category);   // 주제별 분위기·색감(이별·자존감·설렘 등)
   const images = {};
   for (const [page, prompt] of Object.entries(prompts)) {
     const seed = Math.floor(Math.random() * 900000) + 100000;
-    images[page] = `${base}${encodeURIComponent(prompt + suffix)}?width=1080&height=1080&nologo=true&seed=${seed}&model=flux&enhance=true`;
+    let anchor, faceTail = '';
+    if (PERSON_PAGES.has(page)) {
+      // 인물 컷마다 무작위 자세·장소 변주(복붙 느낌 제거) + 얼굴·눈 안전 꼬리말(눈 깨짐 방지).
+      anchor = `${CHARACTER_ANCHOR}, ${pick(POSE_VARIATIONS)}, ${pick(SETTING_VARIATIONS)}`;
+      faceTail = PERSON_FACE_TAIL;
+    } else {
+      anchor = SCENE_ANCHOR;
+    }
+    const full = `${prompt}, ${anchor}, ${STYLE_ANCHOR}, ${mood}${faceTail}${tail}`;
+    images[page] = `${base}${encodeURIComponent(full)}?width=1080&height=1080&nologo=true&seed=${seed}&model=flux&enhance=true`;
   }
 
   return { success: true, images, prompts };
+}
+
+// 릴스 1페이지 전용 "스크롤을 멈추는 강한 훅" 생성 (캐럿셀 1페이지의 잔잔한 공감문과 별개).
+async function handleReelHook(env, body) {
+  const { pages, bookInfo } = body;
+  const summary = [pages?.page1?.headline, pages?.page2?.headline, pages?.page4?.headline].filter(Boolean).join(' / ');
+  const fallback = pages?.page1?.headline || '';
+  try {
+    const text = await callClaude(env.ANTHROPIC_API_KEY, {
+      env, tier: 'light', max_tokens: 400,
+      system: '당신은 인스타그램 릴스 훅 카피라이터입니다. 타깃은 이별·재회·회복을 겪는 30대 여성. 스크롤을 1초 만에 멈추게 하는 강한 첫 문장(훅)을 만듭니다.\n규칙:\n① 유형은 "콕 집어내는 감정"(예: 헤어졌는데 왜 내가 더 매달릴까) 또는 "궁금증 격차"(예: 재회가 안 되는 사람들의 공통점) 또는 "금기/질문".\n② 한 줄, 18~28자. 너무 길지 않게.\n③ 따뜻하되 강렬하게. 공포·단정·비난·자극적 과장 금지.\n④ 책 제목·저자 노출 금지. 이모지 금지.\n반드시 JSON만 응답.',
+      user: `책 핵심: ${bookInfo?.coreMessage || ''}\n캐럿셀 요지: ${summary}\n\n스크롤을 멈추게 하는 릴스 훅 후보 3개를 만들고, 그중 가장 강한 하나를 고르세요.\nJSON: {"candidates":["...","...","..."],"best":"가장 강한 한 줄"}`,
+    });
+    const r = extractJson(text);
+    const best = (r.best || (Array.isArray(r.candidates) && r.candidates[0]) || fallback || '').toString().trim();
+    return { success: true, hook: best || fallback, candidates: Array.isArray(r.candidates) ? r.candidates : [] };
+  } catch (e) {
+    return { success: true, hook: fallback, candidates: [] };
+  }
 }
 
 async function handleGenerateCaption(env, body) {
@@ -657,13 +761,15 @@ async function handleGenerateCaption(env, body) {
 
   const result = extractJson(text);
   result.dmKeyword = (bookInfo.category || '책').replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 4) || '책';
-  // 캡션 끝에 오늘의 책 공개(제목·저자) + 프로필 링크 유도.
+  // 캡션 끝에 오늘의 책 공개(제목·저자) + 계정 핸들 + 프로필 링크 유도.
   // (프로필 바이오의 도서관 링크에 구매 링크가 있으므로 책을 만나고 싶은 사람을 그쪽으로 유도)
+  const HANDLE = '@love.between_lines';
+  const profileLine = `${HANDLE} 프로필 링크에서 오늘의 책을 만나보세요`;
   if (bookInfo.title) {
     const by = bookInfo.author ? ` · ${bookInfo.author}` : '';
-    result.caption = (result.caption || '') + `\n\n오늘의 책 · 「${bookInfo.title}」${by}\n책을 만나고 싶다면 프로필 링크에서 확인하세요`;
+    result.caption = (result.caption || '') + `\n\n오늘의 책 · 「${bookInfo.title}」${by}\n${profileLine}`;
   } else {
-    result.caption = (result.caption || '') + `\n\n책을 만나고 싶다면 프로필 링크에서 확인하세요`;
+    result.caption = (result.caption || '') + `\n\n${profileLine}`;
   }
   return { success: true, ...result };
 }
@@ -950,6 +1056,7 @@ async function runStep(env, pipelineId, step) {
         bookNumber,
         pipelineId,
         coupangLink: state.affiliateLinks?.[0] || null,
+        cover: state.bookCover || bookInfo?.cover || '',
       });
     }
     await savePipelineStatus(env, pipelineId, {
@@ -1033,8 +1140,8 @@ async function runDailyAuto(env) {
   const alreadyRan = await env.PENDING_POSTS.get(todayKey).catch(() => null);
   if (alreadyRan) return;
 
-  // 요일별 연애·관계 심리 세부 주제 순환 (일=0 ~ 토=6)
-  const DAILY_CATEGORIES = ['애착심리', '연애에세이', '이별과회복', '자존감과사랑', '관계심리', '짝사랑과설렘', '연애에세이'];
+  // 단일 니치(이별·재회·회복) 집중 — 자존감과사랑을 교대로 섞어 소폭 변주.
+  const DAILY_CATEGORIES = ['이별과회복', '자존감과사랑', '이별과회복', '자존감과사랑', '이별과회복', '자존감과사랑', '이별과회복'];
   const category = DAILY_CATEGORIES[kstNow.getDay()];
 
   // 최근 30일 내 사용한 책 목록 (중복 추천 방지)
@@ -1080,25 +1187,29 @@ async function runDailyAuto(env) {
   await env.PENDING_POSTS.put('daily_used_books', JSON.stringify(newUsed), { expirationTtl: 31 * 24 * 3600 });
 }
 
-// 크론(매 1분)에서 호출 — 진행중 파이프라인을 찾아 각각 한 단계씩 전진
+// 크론(매 1분)에서 호출 — 진행중 파이프라인을 찾아 각각 한 단계씩 전진.
+// KV list()를 쓰지 않고 active_pipelines 인덱스(get 1회)만 읽는다 → 무료 list 한도 절약.
 async function runScheduled(env) {
   if (!env.PENDING_POSTS) return;
-  let cursor;
-  const ids = [];
-  do {
-    const list = await env.PENDING_POSTS.list({ prefix: 'pipeline_', cursor });
-    for (const { name } of list.keys) ids.push(name.slice('pipeline_'.length));
-    cursor = list.list_complete ? null : list.cursor;
-  } while (cursor && ids.length < 200);
+  let ids = [];
+  try { ids = (await env.PENDING_POSTS.get('active_pipelines', 'json')) || []; } catch {}
+  if (!ids.length) return;
 
   let checked = 0, advanced = 0;
+  const stale = [];
   for (const id of ids) {
     if (checked >= 30 || advanced >= 5) break;   // 한 틱당 작업량 상한
     checked++;
     const state = await env.PENDING_POSTS.get(`pipeline_${id}`, 'json').catch(() => null);
-    if (!state || state.status !== 'running') continue;
+    if (!state) { stale.push(id); continue; }                 // 만료·삭제 → 인덱스 정리
+    if (state.status !== 'running') { stale.push(id); continue; } // 완료·오류 → 인덱스 정리
     await advancePipeline(env, id);
     advanced++;
+  }
+  // 끝난(또는 사라진) 파이프라인을 인덱스에서 한 번에 제거
+  if (stale.length) {
+    const next = ids.filter(x => !stale.includes(x));
+    await env.PENDING_POSTS.put('active_pipelines', JSON.stringify(next));
   }
 }
 
@@ -1149,6 +1260,21 @@ async function handlePipelineStart(env, ctx, body) {
 }
 
 // ===== 서버사이드 파이프라인 (구형 — 30초 한도로 대형 파이프라인 제한됨) =====
+// 진행중 파이프라인 id 목록을 단일 키에 보관 → 크론이 KV list() 대신 get() 한 번으로 찾는다.
+// (KV list 무료 한도 1000회/일 초과 방지: 매분 크론의 list 1440회/일이 원인이었음)
+async function indexActivePipeline(env, id, active) {
+  if (!env.PENDING_POSTS) return;
+  let arr = [];
+  try { arr = (await env.PENDING_POSTS.get('active_pipelines', 'json')) || []; } catch {}
+  const has = arr.includes(id);
+  if (active && !has) {
+    arr.push(id);
+    await env.PENDING_POSTS.put('active_pipelines', JSON.stringify(arr.slice(-100)));
+  } else if (!active && has) {
+    await env.PENDING_POSTS.put('active_pipelines', JSON.stringify(arr.filter(x => x !== id)));
+  }
+}
+
 async function savePipelineStatus(env, pipelineId, patch) {
   if (!env.PENDING_POSTS || !pipelineId) return;
   const key = `pipeline_${pipelineId}`;
@@ -1159,6 +1285,9 @@ async function savePipelineStatus(env, pipelineId, patch) {
   // 불러올 수 있도록 1일간 보관. 진행중은 1시간(자가복구·타임아웃 판정용).
   const ttl = (updated.status === 'complete') ? 24 * 3600 : 3600;
   await env.PENDING_POSTS.put(key, JSON.stringify(updated), { expirationTtl: ttl });
+  // 진행중이면 인덱스에 등록, 완료/오류면 제거 (크론이 list 없이 찾도록)
+  if (updated.status === 'running') await indexActivePipeline(env, pipelineId, true);
+  else if (updated.status === 'complete' || updated.status === 'error') await indexActivePipeline(env, pipelineId, false);
 }
 
 async function executePipeline(env, pipelineId, bookInfo, affiliateLinks, commentKeyword) {
@@ -1466,15 +1595,17 @@ async function reserveBookNumber(env) {
   return String(next).padStart(3, '0');
 }
 
-async function addBookToCatalog(env, { bookInfo, bookNumber, pipelineId, coupangLink = null }) {
+async function addBookToCatalog(env, { bookInfo, bookNumber, pipelineId, coupangLink = null, cover = '' }) {
   if (!env.PENDING_POSTS || !bookNumber) return;
   const catalog = (await env.PENDING_POSTS.get('book_catalog', 'json').catch(() => null)) || [];
+  const coverUrl = cover || bookInfo?.cover || '';
   const entry = {
     number: bookNumber,
     title: bookInfo?.title || '',
     author: bookInfo?.author || '',
     category: bookInfo?.category || '기타',
     coreMessage: bookInfo?.coreMessage || '',
+    cover: coverUrl,             // ← 책 표지(네이버) — 도서관에서 표지로 노출
     date: new Date().toISOString().slice(0, 10),
     pipelineId,
     coupangLink,
@@ -1483,7 +1614,10 @@ async function addBookToCatalog(env, { bookInfo, bookNumber, pipelineId, coupang
   // → "도서관 등록" 메뉴에서 소개·링크를 고쳐 다시 등록하면 덮어쓰기 된다.
   const idx = catalog.findIndex(b => b.number === bookNumber);
   if (idx >= 0) {
-    catalog[idx] = { ...catalog[idx], ...entry, date: catalog[idx].date };
+    // 새 표지가 없으면 기존 표지 보존(소개·링크만 수정하는 경우 표지 유지)
+    const merged = { ...catalog[idx], ...entry, date: catalog[idx].date };
+    if (!coverUrl && catalog[idx].cover) merged.cover = catalog[idx].cover;
+    catalog[idx] = merged;
   } else {
     catalog.unshift(entry);
   }
@@ -1502,7 +1636,7 @@ async function handleAddBookToCatalog(env, body) {
   // 이미 예약된 번호(body.bookNumber)가 있으면 그대로 사용 → 캡션·도서관 번호 일치.
   // 없을 때만 새 번호를 매긴다.
   const bookNumber = body.bookNumber || await reserveBookNumber(env);
-  await addBookToCatalog(env, { bookInfo, bookNumber, pipelineId: null, coupangLink: link });
+  await addBookToCatalog(env, { bookInfo, bookNumber, pipelineId: null, coupangLink: link, cover: body.cover || bookInfo?.cover || '' });
   return { success: true, bookNumber };
 }
 
@@ -1514,7 +1648,7 @@ function normNum(v) {
 // 한 게시물의 모든 내용을 번호로 묶어 저장 — 관리자 보관함의 원본.
 // 텍스트(캡션·5장·DM·링크·소개)는 영구, 이미지는 며칠 뒤 자동 삭제(게시물엔 이미 올라가 있으므로).
 async function handleSavePost(env, body) {
-  const { bookInfo, pages, caption, hashtags, dmText, coupangLink, affiliateLinks, images } = body;
+  const { bookInfo, pages, caption, hashtags, dmText, coupangLink, affiliateLinks, images, cover } = body;
   if (!bookInfo?.title) throw new Error('bookInfo.title이 필요합니다.');
   if (!env.PENDING_POSTS) throw new Error('저장소가 없습니다.');
 
@@ -1547,7 +1681,7 @@ async function handleSavePost(env, body) {
   }
 
   // 도서관 카드 + DM 영구본 동기화
-  await addBookToCatalog(env, { bookInfo, bookNumber: num, pipelineId, coupangLink: record.coupangLink });
+  await addBookToCatalog(env, { bookInfo, bookNumber: num, pipelineId, coupangLink: record.coupangLink, cover: cover || bookInfo?.cover || '' });
   if (record.dmText) {
     await env.PENDING_POSTS.put(`dm_book_${num}`, JSON.stringify({
       number: num, title: bookInfo.title || '', dmText: record.dmText, date: record.date,
@@ -1606,6 +1740,62 @@ async function handleGetPost(env, body) {
   };
 }
 
+// ── 초안(draft) 저장/조회/삭제 ──
+// 만들었지만 아직 등록/게시 안 한 캐럿셀을 번호 없이 임시 보관(7일). 이미지가 사라지지 않게,
+// 그리고 마음에 드는 것만 골라 도서관에 정식 등록(번호 부여)하도록.
+const DRAFT_TTL = 604800; // 7일
+function pruneDraftIndex(index) {
+  const cutoff = Date.now() - DRAFT_TTL * 1000;
+  return (index || []).filter(d => d && d.createdAt && d.createdAt > cutoff);
+}
+async function handleSaveDraft(env, body) {
+  if (!env.PENDING_POSTS) throw new Error('저장소가 없습니다.');
+  const { bookInfo, pages, caption, hashtags, images, cover } = body;
+  if (!bookInfo?.title && !pages) throw new Error('저장할 초안 내용이 없습니다.');
+  const id = body.draftId || ('d' + Date.now() + Math.random().toString(36).slice(2, 6));
+  const createdAt = Date.now();
+  const draft = {
+    id, bookInfo: bookInfo || {}, pages: pages || null,
+    caption: caption || '', hashtags: hashtags || [],
+    images: images || null, cover: cover || bookInfo?.cover || '',
+    createdAt, date: new Date().toISOString().slice(0, 10),
+  };
+  await env.PENDING_POSTS.put(`draft_${id}`, JSON.stringify(draft), { expirationTtl: DRAFT_TTL });
+  // 인덱스 갱신(요약만)
+  let index = (await env.PENDING_POSTS.get('draft_index', 'json').catch(() => null)) || [];
+  index = pruneDraftIndex(index).filter(d => d.id !== id);
+  index.unshift({
+    id, title: bookInfo?.title || '(제목 미정)', author: bookInfo?.author || '',
+    category: bookInfo?.category || '', cover: draft.cover,
+    hasImages: !!(images && Object.keys(images).length), createdAt, date: draft.date,
+  });
+  await env.PENDING_POSTS.put('draft_index', JSON.stringify(index));
+  return { success: true, draftId: id };
+}
+async function handleListDrafts(env) {
+  if (!env.PENDING_POSTS) return { success: true, drafts: [] };
+  let index = (await env.PENDING_POSTS.get('draft_index', 'json').catch(() => null)) || [];
+  const pruned = pruneDraftIndex(index);
+  if (pruned.length !== index.length) await env.PENDING_POSTS.put('draft_index', JSON.stringify(pruned));
+  return { success: true, drafts: pruned };
+}
+async function handleGetDraft(env, body) {
+  const id = body.draftId;
+  if (!id) return { success: false, error: '초안 id가 필요합니다.' };
+  const draft = await env.PENDING_POSTS.get(`draft_${id}`, 'json').catch(() => null);
+  if (!draft) return { success: false, error: '초안을 찾을 수 없습니다(보관 기간 만료일 수 있음).' };
+  return { success: true, draft };
+}
+async function handleDeleteDraft(env, body) {
+  const id = body.draftId;
+  if (!id) return { success: false, error: '초안 id가 필요합니다.' };
+  await env.PENDING_POSTS.delete(`draft_${id}`);
+  let index = (await env.PENDING_POSTS.get('draft_index', 'json').catch(() => null)) || [];
+  index = pruneDraftIndex(index).filter(d => d.id !== id);
+  await env.PENDING_POSTS.put('draft_index', JSON.stringify(index));
+  return { success: true };
+}
+
 function generateBooksHTML(catalog) {
   const CAT_COLORS = {
     '애착': '#C2708F', '연애': '#D08A6E', '에세이': '#D08A6E',
@@ -1634,9 +1824,14 @@ function generateBooksHTML(catalog) {
       ${i === 0 ? '<span class="badge-new">NEW</span>' : '<span></span>'}
       <span class="book-num">No.${b.number}</span>
     </div>
-    <span class="cat-pill" style="background:${color}18;color:${color}">${b.category || '기타'}</span>
-    <h2 class="book-title">${b.title}</h2>
-    <p class="book-author">${b.author}</p>
+    <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:14px;">
+      ${b.cover ? `<img src="/api/cover?url=${encodeURIComponent(b.cover)}" alt="표지" loading="lazy" onerror="this.style.display='none'" style="width:88px;height:126px;flex-shrink:0;border-radius:8px;object-fit:cover;box-shadow:0 3px 12px rgba(0,0,0,.2);background:#EDE6DD;">` : ''}
+      <div style="min-width:0;flex:1;">
+        <span class="cat-pill" style="background:${color}18;color:${color}">${b.category || '기타'}</span>
+        <h2 class="book-title">${b.title}</h2>
+        <p class="book-author" style="margin-bottom:0;">${b.author}</p>
+      </div>
+    </div>
     ${b.coreMessage ? `<blockquote class="book-msg">${b.coreMessage}</blockquote>` : ''}
     <div class="card-foot">
       <span class="book-date">${b.date}</span>
@@ -1839,6 +2034,7 @@ export default {
         else if (url.pathname === '/api/analyze') result = await handleAnalyze(env, body);
         else if (url.pathname === '/api/generate') result = await handleGenerate(env, body);
         else if (url.pathname === '/api/generate-images') result = await handleGenerateImages(env, body);
+        else if (url.pathname === '/api/reel-hook') result = await handleReelHook(env, body);
         else if (url.pathname === '/api/generate-caption') result = await handleGenerateCaption(env, body);
         else if (url.pathname === '/api/validate') result = await handleValidate(env, body);
         else if (url.pathname === '/api/regenerate') result = await handleRegenerate(env, body);
@@ -1857,6 +2053,10 @@ export default {
         else if (url.pathname === '/api/add-book-to-catalog') result = await handleAddBookToCatalog(env, body);
         else if (url.pathname === '/api/save-post') result = await handleSavePost(env, body);
         else if (url.pathname === '/api/get-post') result = await handleGetPost(env, body);
+        else if (url.pathname === '/api/save-draft') result = await handleSaveDraft(env, body);
+        else if (url.pathname === '/api/list-drafts') result = await handleListDrafts(env);
+        else if (url.pathname === '/api/get-draft') result = await handleGetDraft(env, body);
+        else if (url.pathname === '/api/delete-draft') result = await handleDeleteDraft(env, body);
         else if (url.pathname === '/api/reserve-book-number') {
           const bookNumber = await reserveBookNumber(env);
           result = { success: true, bookNumber };
