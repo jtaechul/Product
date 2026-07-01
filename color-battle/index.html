@@ -199,6 +199,8 @@ const VS_IMG=new Image();let vsReady=false;VS_IMG.onload=()=>vsReady=VS_IMG.natu
 const IMPACT_IMG=new Image();let impactReady=false;IMPACT_IMG.onload=()=>impactReady=IMPACT_IMG.naturalWidth>0;IMPACT_IMG.src="assets/fx/impact.png";
 const DEATH_W=491,DEATH_H=465,DEATH_N=4;
 const DEATH_IMG=new Image();let deathReady=false;DEATH_IMG.onload=()=>deathReady=DEATH_IMG.naturalWidth>0;DEATH_IMG.src="assets/fx/death.png";
+const mapTokImg={},mapTokReady={};   // 지도 행군 토큰(솔리드 실루엣 병사, 세력별 사전 틴트)
+FACTIONS.forEach(f=>{mapTokReady[f.sig]=false;const im=new Image();im.onload=()=>{if(im.naturalWidth>0)mapTokReady[f.sig]=true;};im.src="assets/map/"+f.sig+".png";mapTokImg[f.sig]=im;});
 const tintCache=new Map();
 function tintCanvas(img,sx,sw,sh,color,key){const ck=key+"|"+color;if(tintCache.has(ck))return tintCache.get(ck);
   const c=document.createElement("canvas");c.width=sw;c.height=sh;const g=c.getContext("2d");g.imageSmoothingEnabled=false;
@@ -565,9 +567,17 @@ function draw(){
     else{ctx.font="700 "+(MAIN*0.0135)+"px system-ui";ctx.globalAlpha=0.5;const x=p.cx*S,y=p.cy*S;ctx.lineWidth=2;ctx.strokeStyle="rgba(0,0,0,.5)";ctx.strokeText(g,x,y);ctx.fillStyle="#b4bdcc";ctx.fillText(g,x,y);ctx.globalAlpha=1;}}
   // 행군
   ctx.setLineDash([MAIN*0.012,MAIN*0.012]);for(const mv of marches){const a=pv[mv.from],b=pv[mv.to];ctx.strokeStyle=FACTIONS[mv.f].color+"33";ctx.lineWidth=MAIN*0.003;ctx.beginPath();ctx.moveTo(a.cx*S,a.cy*S);ctx.lineTo(b.cx*S,b.cy*S);ctx.stroke();}ctx.setLineDash([]);
-  for(const mv of marches){const a=pv[mv.from],b=pv[mv.to];const x=lerp(a.cx,b.cx,mv.prog)*S,y=lerp(a.cy,b.cy,mv.prog)*S,R=MAIN*0.017;
-    if(moraleMul[mv.f]>1){ctx.beginPath();ctx.arc(x,y,R+MAIN*0.006,0,7);ctx.strokeStyle="#ffd23a";ctx.lineWidth=MAIN*0.004;ctx.stroke();}
-    ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fillStyle=FACTIONS[mv.f].color;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#0009";ctx.stroke();ctx.fillStyle="#fff";ctx.font="800 "+(MAIN*0.015)+"px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(Math.round(mv.troops),x,y);}
+  for(const mv of marches){const a=pv[mv.from],b=pv[mv.to];const x=lerp(a.cx,b.cx,mv.prog)*S,y=lerp(a.cy,b.cy,mv.prog)*S;const sig=FACTIONS[mv.f].sig;
+    const t=""+Math.round(mv.troops);ctx.textAlign="center";ctx.textBaseline="middle";
+    if(mapTokReady[sig]){const th=MAIN*0.05,tw=th*373/502;                    // 솔리드 실루엣 병사 토큰
+      if(moraleMul[mv.f]>1){ctx.beginPath();ctx.arc(x,y-th*0.08,th*0.55,0,7);ctx.strokeStyle="#ffd23a";ctx.lineWidth=MAIN*0.004;ctx.stroke();}
+      ctx.imageSmoothingEnabled=false;ctx.drawImage(mapTokImg[sig],x-tw/2,y-th*0.6,tw,th);
+      const fs=MAIN*0.0155;ctx.font="800 "+fs+"px system-ui";const pw=ctx.measureText(t).width+fs*0.9,ty=y+th*0.5;
+      rr(x-pw/2,ty-fs*0.75,pw,fs*1.45,fs*0.7);ctx.fillStyle="rgba(8,11,18,.9)";ctx.fill();ctx.lineWidth=1.5;ctx.strokeStyle=FACTIONS[mv.f].color;ctx.stroke();
+      ctx.fillStyle="#fff";ctx.fillText(t,x,ty);
+    } else {const R=MAIN*0.017;
+      if(moraleMul[mv.f]>1){ctx.beginPath();ctx.arc(x,y,R+MAIN*0.006,0,7);ctx.strokeStyle="#ffd23a";ctx.lineWidth=MAIN*0.004;ctx.stroke();}
+      ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fillStyle=FACTIONS[mv.f].color;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#0009";ctx.stroke();ctx.fillStyle="#fff";ctx.font="800 "+(MAIN*0.015)+"px system-ui";ctx.fillText(t,x,y);}}
   for(let i=impacts.length-1;i>=0;i--){const im=impacts[i],t=(now-im.t0)/450;if(t>=1){impacts.splice(i,1);continue;}ctx.beginPath();ctx.arc(im.x*S,im.y*S,MAIN*0.01+t*MAIN*0.05,0,7);ctx.strokeStyle=im.col+Math.floor((1-t)*200).toString(16).padStart(2,"0");ctx.lineWidth=MAIN*0.006*(1-t);ctx.stroke();}
   // 플로팅 텍스트 (전투 원인 노출 P2)
   for(let i=floats.length-1;i>=0;i--){const ft=floats[i],t=(now-ft.t0)/ft.dur;if(t>=1){floats.splice(i,1);continue;}
