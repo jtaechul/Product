@@ -1324,6 +1324,12 @@ async function generateCarousel() {
     try {
       data = await apiFetch('/api/generate', state.bookInfo);
     } catch (err) {
+      // 성인·에로 도서 → 우회 없이 즉시 차단
+      if (/ADULT_BLOCKED/.test(err.message)) {
+        hideLoading(); setStep(1);
+        showToast('성인·에로(19금·성인만화/소설) 도서는 리뷰를 만들 수 없습니다.', 'error');
+        return;
+      }
       // 실존 미확인 책 → 사용자에게 확인 후 진행 여부를 묻는다
       if (/BOOK_NOT_FOUND/.test(err.message)) {
         hideLoading();
