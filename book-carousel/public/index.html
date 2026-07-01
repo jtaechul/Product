@@ -1365,7 +1365,7 @@ async function generateCarousel() {
 
 // Phase 3: 검증 → 기준 미달 시 재생성 → 재검증 (최대 3회)
 async function autoValidateLoop() {
-  const MAX = 3;
+  const MAX = 2;   // 크레딧 절약: 검증 후 재생성은 최대 1회(비싼 main 호출 축소)
   let best = { score: -1, pages: state.pages, validation: null };
 
   for (let attempt = 1; attempt <= MAX; attempt++) {
