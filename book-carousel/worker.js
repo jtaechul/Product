@@ -609,9 +609,18 @@ async function handleValidate(env, body) {
 // 인물 정체성만 고정(같은 화풍·같은 여성). 다양성은 자세·옷·장소에서 주되,
 // 얼굴(특히 눈)은 무료 AI가 잘 망가뜨리므로 정면 클로즈업을 금지하고 눈을 내리감/감거나
 // 얼굴을 돌린·가린 구도로만 그린다 → "눈 깨진 섬뜩한 그림"을 원천 차단.
-const CHARACTER_ANCHOR = 'a Korean woman in her early 30s with long dark-brown hair and soft natural beauty; keep her identity recognizable while varying her pose, clothing and setting; her face is turned away, in gentle profile, or looking down with eyes softly lowered or closed, often partly veiled by hair; never a front-facing detailed eye close-up';
-// 니치=이별·재회·회복. 멜랑콜리→치유의 톤. 색감을 더스티로즈+소프트 그레이블루+크림으로 좁혀 일관성↑.
-const STYLE_ANCHOR = 'modern Korean webtoon illustration style, clean delicate line art, soft cel shading, gently desaturated warm palette of dusty rose, soft grey-blue and cream, melancholic yet healing mood, tender cinematic lighting, lyrical and cozy, Instagram square 1:1';
+const CHARACTER_ANCHOR = 'a cute young Korean woman with long dark-brown hair and a soft lovely look; keep her identity recognizable while varying her pose, clothing and setting; her face is turned away, in gentle profile, or looking down with eyes softly lowered or closed, often partly veiled by hair; never a front-facing detailed eye close-up';
+// 스타일은 "귀엽고 퀄리티 높은 애니풍"으로 고정(실사·3D 금지 → 섬찟함·눈 깨짐 감소). 색감·분위기는 주제별로.
+const STYLE_ANCHOR = 'high-quality cute Korean webtoon and soft anime illustration, clean rounded linework, simple lovely delicate features, smooth flat cel shading, gentle soft glow, polished adorable storybook charm, absolutely not photorealistic, not semi-realistic, not 3d render, Instagram square 1:1';
+// 주제(카테고리)별 분위기·색감 — 이별/자존감/설렘이 서로 다른 느낌이 나도록.
+function categoryMood(cat) {
+  const c = String(cat || '');
+  if (/설렘|짝사랑|썸|시작|고백|두근/.test(c)) return 'sweet fluttering hopeful mood, bright blush pink, peach and soft coral palette, airy spring daylight, light-hearted and dreamy, gentle sparkle';
+  if (/자존|자기|나를/.test(c)) return 'warm uplifting mood, soft gold, cream and peach palette, bright gentle morning light, calm quiet confidence, cozy and hopeful';
+  if (/이별|재회|회복|헤어|그리움/.test(c)) return 'melancholic tender yet gently healing mood, muted cool palette of dusty blue, soft grey and pale lavender with a touch of warm cream, quiet dusk or soft rainy atmosphere';
+  if (/애착|관계|소통|경계|거리/.test(c)) return 'calm reassuring mood, soft sage, cream and dusty rose palette, gentle warm light, quiet and tender';
+  return 'warm tender mood, soft pastel palette of cream, dusty rose and sage, cozy lyrical atmosphere';
+}
 // 인물 컷에 무작위로 끼워넣는 자세·구도 변주(모두 얼굴은 돌리거나 눈을 내린 안전한 구도).
 const POSE_VARIATIONS = [
   'seen from behind gazing out a window', 'soft side profile with eyes lowered',
@@ -663,7 +672,7 @@ async function handleGenerateImages(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'main',
     max_tokens: 1500,
-    system: '당신은 한국 웹툰풍 감성 일러스트 아트 디렉터입니다. 이별·재회·회복 주제의 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[인물 배치 — 매우 중요] 사람(같은 30대 한국 여성)은 정확히 2장에만 등장합니다.\n· 1페이지: 무조건 그녀(스크롤을 멈추는 표지 컷).\n· 2~4페이지 중 단 한 곳: 각 페이지의 "문장"을 읽고, 인물이 있을 때 감정이 가장 살아나는 페이지 한 곳을 골라 그녀를 넣으세요(예: 구체적 행동·장면이 그려지는 문장). 나머지 페이지(2~4 중 둘)와 5페이지는 사람 없는 분위기 장면.\n· 어느 페이지를 골랐는지 personPage로 반드시 알려주세요(page2/page3/page4 중 하나).\n\n[얼굴·다양성 규칙 — 매우 중요] 무료 AI는 얼굴(특히 눈)을 가까이·정면으로 그리면 자주 망가뜨립니다(눈이 깨진 섬뜩한 그림). 그러니 인물은 반드시 뒷모습·옆모습·3/4 후면·멀리서 본 전신·고개 숙임 위주로 그리고, 눈은 내리감거나 감은 상태, 또는 머리카락에 살짝 가려지게 하세요. 정면 얼굴·또렷한 눈 클로즈업 절대 금지. 다양성은 표정이 아니라 "자세·장소·옷·구도"에서 만드세요(복붙 구도 금지).\n\n[스타일 고정 — 5장 공통] 한국 웹툰 일러스트: 섬세한 라인아트, 부드러운 셀 셰이딩, 약간 탈채도된 더스티로즈·소프트 그레이블루·크림 색감, 멜랑콜리하지만 치유되는 톤, 서정적이고 포근한 조명. 실사·공포 톤 금지. 인물 컷과 배경 컷이 한 시리즈로 묶이게. 감정 흐름상 앞장(1~3)은 차분/약간 탈채도, 뒷장(4~5)은 따뜻한 빛이 스미게.\n\n[배경 장면 발상] 창가·카페·침대·책상·골목·버스 안, 휴대폰·편지·머그·담요·우산·책, 빈 의자, 비 오는 유리창, 저물녘→새벽빛 등으로 감정을 상징. 5장의 장소·구도가 서로 뚜렷이 다르게.\n\n[규칙]\n1. 구도·조명 구체적으로 (back view, side profile, wide shot, soft window light, golden morning light)\n2. 인물 컷은 정면 얼굴 클로즈업 금지 / 배경 컷은 사람 없음(no people)\n3. 텍스트·글자·숫자 없음 (no text, no letters, no words)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 각 프롬프트 영어 25~55단어. 인물 외형·화풍·사람유무는 시스템이 자동으로 덧붙이므로, 너는 "그 장의 장면·자세/사물·감정·장소"에 집중해 묘사.\n반드시 JSON만 응답한다.',
+    system: '당신은 한국 웹툰풍 감성 일러스트 아트 디렉터입니다. 이별·재회·회복 주제의 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[인물 배치 — 매우 중요] 사람(같은 30대 한국 여성)은 정확히 2장에만 등장합니다.\n· 1페이지: 무조건 그녀(스크롤을 멈추는 표지 컷).\n· 2~4페이지 중 단 한 곳: 각 페이지의 "문장"을 읽고, 인물이 있을 때 감정이 가장 살아나는 페이지 한 곳을 골라 그녀를 넣으세요(예: 구체적 행동·장면이 그려지는 문장). 나머지 페이지(2~4 중 둘)와 5페이지는 사람 없는 분위기 장면.\n· 어느 페이지를 골랐는지 personPage로 반드시 알려주세요(page2/page3/page4 중 하나).\n\n[얼굴·다양성 규칙 — 매우 중요] 무료 AI는 얼굴(특히 눈)을 가까이·정면으로 그리면 자주 망가뜨립니다(눈이 깨진 섬뜩한 그림). 그러니 인물은 반드시 뒷모습·옆모습·3/4 후면·멀리서 본 전신·고개 숙임 위주로 그리고, 눈은 내리감거나 감은 상태, 또는 머리카락에 살짝 가려지게 하세요. 정면 얼굴·또렷한 눈 클로즈업 절대 금지. 다양성은 표정이 아니라 "자세·장소·옷·구도"에서 만드세요(복붙 구도 금지).\n\n[스타일 고정 — 5장 공통] "귀엽고 퀄리티 높은 애니풍" 일러스트: 둥글고 사랑스러운 이목구비, 깔끔한 라인, 부드러운 플랫 셀 셰이딩, 포근한 빛. 실사·반실사·3D 렌더 절대 금지(섬찟함 방지). 색감·분위기는 시스템이 주제에 맞게 자동으로 덧붙이므로 너는 색 지정 대신 장면·감정에 집중. 인물 컷과 배경 컷이 한 시리즈로 묶이게.\n\n[배경 장면 발상] 창가·카페·침대·책상·골목·버스 안, 휴대폰·편지·머그·담요·우산·책, 빈 의자, 비 오는 유리창, 저물녘→새벽빛 등으로 감정을 상징. 5장의 장소·구도가 서로 뚜렷이 다르게.\n\n[규칙]\n1. 구도·조명 구체적으로 (back view, side profile, wide shot, soft window light, golden morning light)\n2. 인물 컷은 정면 얼굴 클로즈업 금지 / 배경 컷은 사람 없음(no people)\n3. 텍스트·글자·숫자 없음 (no text, no letters, no words)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 각 프롬프트 영어 25~55단어. 인물 외형·화풍·사람유무는 시스템이 자동으로 덧붙이므로, 너는 "그 장의 장면·자세/사물·감정·장소"에 집중해 묘사.\n반드시 JSON만 응답한다.',
     user: `책 제목: ${bookInfo.title || ''}\n카테고리: ${bookInfo.category || '이별·재회·회복'}\n책 핵심 주제: ${bookInfo.coreMessage || ''}\n\n1페이지는 무조건 그녀(인물). 2~4페이지 문장을 읽고 인물이 가장 어울리는 한 곳을 골라 그녀를 넣고(personPage로 표기), 나머지와 5페이지는 사람 없는 분위기 배경으로 묘사하세요.\n\n1페이지 ${PAGE_VISUAL_DIRECTIONS.page1}\n  문장: ${pageContents.page1}\n2페이지 ${PAGE_VISUAL_DIRECTIONS.page2}\n  문장: ${pageContents.page2}\n3페이지 ${PAGE_VISUAL_DIRECTIONS.page3}\n  문장: ${pageContents.page3}\n4페이지 ${PAGE_VISUAL_DIRECTIONS.page4}\n  문장: ${pageContents.page4}\n5페이지 ${PAGE_VISUAL_DIRECTIONS.page5}\n  문장: ${pageContents.page5}\n\n[필수] 5장의 장소·구도가 서로 겹치지 않게. 인물은 1페이지 + (2~4 중 personPage) 두 곳만, 나머지는 사람 없음. 텍스트·글자 없음.\n\nJSON: {"page1":"...","page2":"...","page3":"...","page4":"...","page5":"...","personPage":"page3"}`,
   });
 
@@ -687,6 +696,7 @@ async function handleGenerateImages(env, body) {
   const base = 'https://image.pollinations.ai/prompt/';
   const tail = ', no text, no letters, no words, high quality';
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const mood = categoryMood(bookInfo.category);   // 주제별 분위기·색감(이별·자존감·설렘 등)
   const images = {};
   for (const [page, prompt] of Object.entries(prompts)) {
     const seed = Math.floor(Math.random() * 900000) + 100000;
@@ -698,7 +708,7 @@ async function handleGenerateImages(env, body) {
     } else {
       anchor = SCENE_ANCHOR;
     }
-    const full = `${prompt}, ${anchor}, ${STYLE_ANCHOR}${faceTail}${tail}`;
+    const full = `${prompt}, ${anchor}, ${STYLE_ANCHOR}, ${mood}${faceTail}${tail}`;
     images[page] = `${base}${encodeURIComponent(full)}?width=1080&height=1080&nologo=true&seed=${seed}&model=flux&enhance=true`;
   }
 
