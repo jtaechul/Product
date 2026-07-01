@@ -609,7 +609,7 @@ async function handleValidate(env, body) {
 // 인물 정체성만 고정(같은 화풍·같은 여성). 다양성은 자세·옷·장소에서 주되,
 // 얼굴(특히 눈)은 무료 AI가 잘 망가뜨리므로 정면 클로즈업을 금지하고 눈을 내리감/감거나
 // 얼굴을 돌린·가린 구도로만 그린다 → "눈 깨진 섬뜩한 그림"을 원천 차단.
-const CHARACTER_ANCHOR = 'a cute young Korean woman with long dark-brown hair and a soft lovely look; keep her identity recognizable while widely varying her pose, expression and viewpoint (back view, side, or front); her eyes are gently closed, softly lowered, or she looks away — avoid only wide-open front-facing detailed eyes; a calm or gently smiling expression is welcome';
+const CHARACTER_ANCHOR = 'a cute young Korean woman with long dark-brown hair and a soft lovely look; keep her identity recognizable while widely varying her pose, expression and viewpoint (back view, side, or front); her eyes are gently closed, softly lowered, or she looks away — avoid only wide-open front-facing detailed eyes; a calm or gently smiling expression is welcome; keep her hands simple and relaxed, tucked in sleeves or pockets or out of frame — no detailed fingers and no fingers touching paper or pages';
 // 스타일은 "귀엽고 퀄리티 높은 애니풍"으로 고정(실사·3D 금지 → 섬찟함·눈 깨짐 감소). 색감·분위기는 주제별로.
 const STYLE_ANCHOR = 'high-quality cute Korean webtoon and soft anime illustration, clean rounded linework, simple lovely delicate features, smooth flat cel shading, gentle soft glow, polished adorable storybook charm, absolutely not photorealistic, not semi-realistic, not 3d render, Instagram square 1:1';
 // 주제(카테고리)별 분위기·색감 — 이별/자존감/설렘이 서로 다른 느낌이 나도록.
@@ -624,23 +624,23 @@ function categoryMood(cat) {
 // 인물 컷 자세·구도 변주 — 뒷모습·옆모습·앞모습(눈 감음)·시선 돌림·미소까지 폭넓게.
 // (핵심 안전장치: "눈을 크게 뜬 정면"만 피하면 됨. 눈 감은 앞모습·미소는 OK)
 const POSE_VARIATIONS = [
-  'seen from behind gazing out a window',
+  'seen from behind gazing out a window, hands at her sides',
   'three-quarter back view over her shoulder',
-  'front view with eyes gently closed and a soft peaceful smile',
+  'front view with eyes gently closed and a soft peaceful smile, hands relaxed at her sides',
   'looking away to the side with a faint smile',
   'lying down facing away, relaxed',
   'walking away into the soft distance',
-  'head tilted back with eyes closed, feeling the breeze',
-  'front-facing with a gentle closed-eye smile, holding a warm mug',
+  'head tilted back with eyes closed, feeling the breeze, hands in her pockets',
+  'front-facing with a gentle closed-eye smile, hands tucked into her sweater sleeves',
   'looking up with eyes closed toward soft light',
   'a distant small figure against a bright window',
   'side profile with eyes lowered, a calm half-smile',
-  'back view stretching her arms up happily',
-  'resting her chin on her hand, eyes softly closed',
-  'sitting curled up, hugging her knees, cheek resting on them with eyes closed',
+  'back view with arms loosely at her sides',
+  'seen from behind, head resting gently against a window',
+  'sitting curled up seen from the side, chin near her knees, eyes closed, hands hidden',
 ];
 // 인물 컷 전용 꼬리말 — 눈만 안전하게(감거나 시선 돌림) 하고 표정은 다양하게 허용.
-const PERSON_FACE_TAIL = ', delicate softly drawn face, eyes gently closed or softly lowered or looking away (never wide-open front-facing eyes), a calm or softly smiling expression, clean well-formed features, no distorted eyes, no malformed face';
+const PERSON_FACE_TAIL = ', delicate softly drawn face, eyes gently closed or softly lowered or looking away (never wide-open front-facing eyes), a calm or softly smiling expression, clean well-formed features, no distorted eyes, no malformed face; hands kept simple and relaxed, hidden in sleeves or pockets or out of frame, no close-up fingers, no fingers touching paper or book pages, no tangled hands';
 const SETTING_VARIATIONS = [
   'by a rain-streaked window', 'in a quiet cafe corner', 'in a cozy dim bedroom', 'on a city street at dusk',
   'on a bus by the window', 'in a sunlit kitchen', 'on a park bench in autumn', 'in a softly lit living room',
@@ -682,7 +682,7 @@ async function handleGenerateImages(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'main',
     max_tokens: 1500,
-    system: '당신은 한국 웹툰풍 감성 일러스트 아트 디렉터입니다. 이별·재회·회복 주제의 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[인물 배치 — 매우 중요] 사람(같은 30대 한국 여성)은 정확히 2장에만 등장합니다.\n· 1페이지: 무조건 그녀(스크롤을 멈추는 표지 컷).\n· 2~4페이지 중 단 한 곳: 각 페이지의 "문장"을 읽고, 인물이 있을 때 감정이 가장 살아나는 페이지 한 곳을 골라 그녀를 넣으세요(예: 구체적 행동·장면이 그려지는 문장). 나머지 페이지(2~4 중 둘)와 5페이지는 사람 없는 분위기 장면.\n· 어느 페이지를 골랐는지 personPage로 반드시 알려주세요(page2/page3/page4 중 하나).\n\n[얼굴·다양성 규칙 — 매우 중요] 매번 자세·시점·표정·장소를 확 다르게 하세요(복붙 구도 금지). 뒷모습·옆모습·앞모습·고개 돌림·미소 등 폭넓게 좋습니다. 단 하나의 안전장치: 무료 AI가 "눈을 크게 뜬 정면"을 자주 망가뜨리니(눈 깨짐), 눈은 감거나 내리감거나 시선을 돌린 상태로 그리세요. 눈 감은 앞모습·미소는 환영합니다.\n\n[스타일 고정 — 5장 공통] "귀엽고 퀄리티 높은 애니풍" 일러스트: 둥글고 사랑스러운 이목구비, 깔끔한 라인, 부드러운 플랫 셀 셰이딩, 포근한 빛. 실사·반실사·3D 렌더 절대 금지(섬찟함 방지). 색감·분위기는 시스템이 주제에 맞게 자동으로 덧붙이므로 너는 색 지정 대신 장면·감정에 집중. 인물 컷과 배경 컷이 한 시리즈로 묶이게.\n\n[배경 장면 발상] 창가·카페·침대·책상·골목·버스 안, 휴대폰·편지·머그·담요·우산·책, 빈 의자, 비 오는 유리창, 저물녘→새벽빛 등으로 감정을 상징. 5장의 장소·구도가 서로 뚜렷이 다르게.\n\n[규칙]\n1. 구도·조명 구체적으로 (back view, side profile, wide shot, soft window light, golden morning light)\n2. 인물 컷은 정면 얼굴 클로즈업 금지 / 배경 컷은 사람 없음(no people)\n3. 텍스트·글자·숫자 없음 (no text, no letters, no words)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 각 프롬프트 영어 25~55단어. 인물 외형·화풍·사람유무는 시스템이 자동으로 덧붙이므로, 너는 "그 장의 장면·자세/사물·감정·장소"에 집중해 묘사.\n반드시 JSON만 응답한다.',
+    system: '당신은 한국 웹툰풍 감성 일러스트 아트 디렉터입니다. 이별·재회·회복 주제의 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[인물 배치 — 매우 중요] 사람(같은 30대 한국 여성)은 정확히 2장에만 등장합니다.\n· 1페이지: 무조건 그녀(스크롤을 멈추는 표지 컷).\n· 2~4페이지 중 단 한 곳: 각 페이지의 "문장"을 읽고, 인물이 있을 때 감정이 가장 살아나는 페이지 한 곳을 골라 그녀를 넣으세요(예: 구체적 행동·장면이 그려지는 문장). 나머지 페이지(2~4 중 둘)와 5페이지는 사람 없는 분위기 장면.\n· 어느 페이지를 골랐는지 personPage로 반드시 알려주세요(page2/page3/page4 중 하나).\n\n[얼굴·다양성 규칙 — 매우 중요] 매번 자세·시점·표정·장소를 확 다르게 하세요(복붙 구도 금지). 뒷모습·옆모습·앞모습·고개 돌림·미소 등 폭넓게 좋습니다. 단 하나의 안전장치: 무료 AI가 "눈을 크게 뜬 정면"을 자주 망가뜨리니(눈 깨짐), 눈은 감거나 내리감거나 시선을 돌린 상태로 그리세요. 눈 감은 앞모습·미소는 환영합니다.\n\n[손·손가락 규칙] 무료 AI는 손·손가락(특히 종이·책장을 만지는 손)을 자주 뭉갭니다. 그러니 손은 소매·주머니에 넣거나 프레임 밖으로 두고, 손가락을 클로즈업하거나 종이·책장을 세밀하게 만지는 구도는 피하세요. 인물이 책을 든다면 덮인 책을 느슨히 안거나 무릎·탁자 위에 두고 손가락은 드러내지 마세요.\n\n[스타일 고정 — 5장 공통] "귀엽고 퀄리티 높은 애니풍" 일러스트: 둥글고 사랑스러운 이목구비, 깔끔한 라인, 부드러운 플랫 셀 셰이딩, 포근한 빛. 실사·반실사·3D 렌더 절대 금지(섬찟함 방지). 색감·분위기는 시스템이 주제에 맞게 자동으로 덧붙이므로 너는 색 지정 대신 장면·감정에 집중. 인물 컷과 배경 컷이 한 시리즈로 묶이게.\n\n[배경 장면 발상] 창가·카페·침대·책상·골목·버스 안, 휴대폰·편지·머그·담요·우산·책, 빈 의자, 비 오는 유리창, 저물녘→새벽빛 등으로 감정을 상징. 5장의 장소·구도가 서로 뚜렷이 다르게.\n\n[규칙]\n1. 구도·조명 구체적으로 (back view, side profile, wide shot, soft window light, golden morning light)\n2. 인물 컷은 정면 얼굴 클로즈업 금지 / 배경 컷은 사람 없음(no people)\n3. 텍스트·글자·숫자 없음 (no text, no letters, no words)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 각 프롬프트 영어 25~55단어. 인물 외형·화풍·사람유무는 시스템이 자동으로 덧붙이므로, 너는 "그 장의 장면·자세/사물·감정·장소"에 집중해 묘사.\n반드시 JSON만 응답한다.',
     user: `책 제목: ${bookInfo.title || ''}\n카테고리: ${bookInfo.category || '이별·재회·회복'}\n책 핵심 주제: ${bookInfo.coreMessage || ''}\n\n1페이지는 무조건 그녀(인물). 2~4페이지 문장을 읽고 인물이 가장 어울리는 한 곳을 골라 그녀를 넣고(personPage로 표기), 나머지와 5페이지는 사람 없는 분위기 배경으로 묘사하세요.\n\n1페이지 ${PAGE_VISUAL_DIRECTIONS.page1}\n  문장: ${pageContents.page1}\n2페이지 ${PAGE_VISUAL_DIRECTIONS.page2}\n  문장: ${pageContents.page2}\n3페이지 ${PAGE_VISUAL_DIRECTIONS.page3}\n  문장: ${pageContents.page3}\n4페이지 ${PAGE_VISUAL_DIRECTIONS.page4}\n  문장: ${pageContents.page4}\n5페이지 ${PAGE_VISUAL_DIRECTIONS.page5}\n  문장: ${pageContents.page5}\n\n[필수] 5장의 장소·구도가 서로 겹치지 않게. 인물은 1페이지 + (2~4 중 personPage) 두 곳만, 나머지는 사람 없음. 텍스트·글자 없음.\n\nJSON: {"page1":"...","page2":"...","page3":"...","page4":"...","page5":"...","personPage":"page3"}`,
   });
 
