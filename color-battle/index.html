@@ -223,6 +223,10 @@ function clashFX(cx,cy,t,cA,cB){const inv=1-t;ctx.save();
   ctx.strokeStyle=cA+hx(inv);ctx.lineWidth=MAIN*0.008;ctx.beginPath();ctx.arc(cx,cy-MAIN*0.012,MAIN*0.12,Math.PI*1.1,Math.PI*1.9);ctx.stroke();
   ctx.strokeStyle=cB+hx(inv);ctx.beginPath();ctx.arc(cx,cy+MAIN*0.012,MAIN*0.12,Math.PI*0.1,Math.PI*0.9);ctx.stroke();
   ctx.restore();}
+function hudPortrait(cx,cy,r,f){const sig=FACTIONS[f].sig,col=FACTIONS[f].color;ctx.save();
+  ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.fillStyle="#0d131f";ctx.fill();
+  if(portraitReady[sig]){ctx.save();ctx.beginPath();ctx.arc(cx,cy,r-1,0,7);ctx.clip();const im=portraitImg[sig],iw=2*r,ih=iw*im.naturalHeight/im.naturalWidth;ctx.drawImage(im,cx-r,cy-r*0.85,iw,ih);ctx.restore();}
+  ctx.shadowColor=col;ctx.shadowBlur=r*0.3;ctx.lineWidth=Math.max(2,r*0.13);ctx.strokeStyle=col;ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.stroke();ctx.restore();}
 function fightHUD(d,hpA,hpB,ri,phase){const A=FACTIONS[d.fA].color,B=FACTIONS[d.fB].color;
   ctx.textAlign="left";ctx.textBaseline="alphabetic";ctx.font="900 "+(MAIN*0.026)+"px system-ui";ctx.fillStyle=A;
   ctx.lineWidth=3;ctx.strokeStyle="#000a";ctx.strokeText(RANKS[d.gA.rank]+" "+d.gA.name,MAIN*0.06,MAIN*0.09);ctx.fillText(RANKS[d.gA.rank]+" "+d.gA.name,MAIN*0.06,MAIN*0.09);
@@ -231,6 +235,7 @@ function fightHUD(d,hpA,hpB,ri,phase){const A=FACTIONS[d.fA].color,B=FACTIONS[d.
   const bw=MAIN*0.4,bh=MAIN*0.022,by=MAIN*0.13;
   const bar=(x,hp,col,al)=>{ctx.fillStyle="#0d131f";rr(x,by,bw,bh,bh/2);ctx.fill();const fw=bw*clamp(hp,0,100)/100;ctx.fillStyle=col;rr(al?x+bw-fw:x,by,fw,bh,bh/2);ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#0009";rr(x,by,bw,bh,bh/2);ctx.stroke();};
   bar(MAIN*0.05,hpA,A,false);bar(MAIN*0.55,hpB,B,true);
+  const pr=MAIN*0.052;hudPortrait(MAIN*0.1,MAIN*0.215,pr,d.fA);hudPortrait(MAIN*0.9,MAIN*0.215,pr,d.fB);  // 에너지바 아래 장수 프로필
   ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="900 "+(MAIN*0.03)+"px system-ui";ctx.fillStyle="rgba(255,210,58,.96)";
   ctx.fillText(phase==="round"?("합 "+(ri+1)+" / "+d.rounds.length):("⚔ "+d.reason),MAIN*0.5,MAIN*0.18);}
 
