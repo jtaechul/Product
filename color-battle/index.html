@@ -298,10 +298,17 @@ function genProvinces(){
 }
 function dist(a,b){const dx=a.cx-b.cx,dy=a.cy-b.cy;return Math.sqrt(dx*dx+dy*dy);}
 function drylandList(){return pv.filter(p=>p.terrain===T_PLAIN||p.terrain===T_MTN);}
+function landNeighborCount(p){let n=0;for(const qid of p.adj)if(!isWater(pv[qid].terrain))n++;return n;}
 
 function init(sv){
   seed=sv>>>0;rand=mulberry32(seed);H_FIELD=noiseField([[5,1],[10,0.5],[20,0.25],[40,0.13]]);buildTerrainBase();genProvinces();
-  const dry=drylandList();const caps=[];let pool=dry.slice();caps.push(pool[(rand()*pool.length)|0]);
+  const dry=drylandList();
+  // 수도 배치 사전검증·보정: 바다·강 위/작은 섬/해안 벼랑 금지 → 충분히 넓고 육지 이웃(≥2)이 있는 내륙만
+  const avgA=(MAPRES*MAPRES)/PROV;
+  let capPool=dry.filter(p=>p.count>=avgA*0.55&&landNeighborCount(p)>=2);
+  if(capPool.length<K)capPool=dry.filter(p=>p.count>=avgA*0.4&&landNeighborCount(p)>=1);  // 후보 부족 시 완화
+  if(capPool.length<K)capPool=dry.length>=K?dry:pv.filter(p=>!isWater(p.terrain));         // 최후 폴백
+  const caps=[];let pool=capPool.slice();caps.push(pool[(rand()*pool.length)|0]);
   while(caps.length<K){let best=null,bd=-1;for(const c of pool){if(caps.includes(c))continue;let md=1e18;for(const k of caps)md=Math.min(md,dist(c,k));if(md>bd){bd=md;best=c;}}if(!best)break;caps.push(best);}
   let respool=dry.filter(p=>!caps.includes(p));const resSel=[];
   while(resSel.length<P.resCount&&respool.length){let best=null,bd=-1;for(const c of respool){let md=1e18;for(const k of resSel)md=Math.min(md,dist(c,k));if(resSel.length===0)md=rand()*1000;if(md>bd){bd=md;best=c;}}resSel.push(best);respool=respool.filter(p=>p!==best);}
