@@ -161,7 +161,7 @@ const P={
   marchSpeed:0.020, moveCdMin:16, moveCdMax:30,
   capGarrison:40, capDef:3.5, mtnDef:1.6,
   ironBonus:0.18, foodBonus:0.16, goldBonus:0.12,
-  duelChanceCap:0.6, duelCdMs:14000, duelRounds:4,
+  duelChanceCap:0.6, duelChanceRes:0.55, duelCdMs:9000, duelRounds:4,
   moraleWin:1.4, moraleDur:180, tintLand:0.55, tintWater:0.5,
   maxTicks:9000, baseTPS:10,
 };
@@ -369,6 +369,8 @@ function arrive(mv){const q=pv[mv.to],f=mv.f;const raw=mv.troops;let troops=raw*
   // 수도로의 유의미한 공격 → 공성전 연출(성벽 게이지) → 돌파 시 일기토 피날레. 쿨다운으로 희소성 유지(P5·P8)
   const now=performance.now(),defE=q.garrison*terrDef(q);
   if(q.cap&&q.owner>=0&&troops>=defE*0.5&&now>=duelCdUntil){startSiege(f,q.owner,q,troops);return;}
+  // 적국이 점유한 자원지 쟁탈 → 일기토(승자가 자원지 점령). 리듬(P5)·명장 승급(P9) 강화, 쿨다운으로 빈도 조절
+  if(!q.cap&&q.res>=0&&q.owner>=0&&troops>=defE*0.55&&now>=duelCdUntil&&rand()<P.duelChanceRes){startDuel(f,q.owner,q,troops,NODE_NAME[q.res]+" 쟁탈전");return;}
   battle(f,q,troops);}
 function capFall(prev,f){banner(FACTIONS[prev].name+" 수도 함락 — "+FACTIONS[f].name+"에 편입!",FACTIONS[f].color);stats.capFalls.push({loser:prev,by:f});absorb(prev,f);}
 function battle(f,q,troops){const defE=q.garrison*terrDef(q);impacts.push({x:q.cx,y:q.cy,t0:performance.now(),col:FACTIONS[f].color});
@@ -536,10 +538,10 @@ function drawKingFace(cx,cy,u,f){const col=FACTIONS[f].color,skin="#e9c9a3",skin
 function drawDeath(){const el=performance.now()-deathAnim.start,k=el/deathAnim.dur,f=deathAnim.f;const a=k<0.2?k/0.2:k>0.8?(1-k)/0.2:1;
   ctx.fillStyle="rgba(4,6,11,"+(0.85*a)+")";ctx.fillRect(0,0,MAIN,MAIN);ctx.globalAlpha=a;
   if(deathReady){const fr=Math.min(DEATH_N-1,Math.max(0,Math.floor(k*DEATH_N)));const di=tintCanvas(DEATH_IMG,fr*DEATH_W,DEATH_W,DEATH_H,FACTIONS[f].color,"death"+fr);
-    const ds=MAIN*0.5/DEATH_H,dw=DEATH_W*ds,dh=DEATH_H*ds;ctx.imageSmoothingEnabled=false;ctx.drawImage(di,MAIN/2-dw/2,MAIN*0.5-dh,dw,dh);}
+    const ds=MAIN*0.46/DEATH_H,dw=DEATH_W*ds,dh=DEATH_H*ds;ctx.imageSmoothingEnabled=false;ctx.drawImage(di,MAIN/2-dw/2,MAIN*0.66-dh,dw,dh);}  // 하단 정렬 → 상단 글씨와 겹침 방지
   else drawKingFace(MAIN/2,MAIN*0.44,MAIN/36,f);
-  ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="900 "+(MAIN*0.05)+"px system-ui";ctx.lineWidth=5;ctx.strokeStyle="#000a";ctx.strokeText(FACTIONS[f].name+" 멸망",MAIN/2,MAIN*0.66);ctx.fillStyle=FACTIONS[f].color;ctx.fillText(FACTIONS[f].name+" 멸망",MAIN/2,MAIN*0.66);
-  ctx.font="800 "+(MAIN*0.022)+"px system-ui";ctx.fillStyle="#b4bdcc";ctx.fillText("— 왕이 무릎 꿇고 스러지다 —",MAIN/2,MAIN*0.71);ctx.globalAlpha=1;}
+  ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="900 "+(MAIN*0.05)+"px system-ui";ctx.lineWidth=5;ctx.strokeStyle="#000a";ctx.strokeText(FACTIONS[f].name+" 멸망",MAIN/2,MAIN*0.76);ctx.fillStyle=FACTIONS[f].color;ctx.fillText(FACTIONS[f].name+" 멸망",MAIN/2,MAIN*0.76);
+  ctx.font="800 "+(MAIN*0.022)+"px system-ui";ctx.fillStyle="#b4bdcc";ctx.fillText("— 왕이 무릎 꿇고 스러지다 —",MAIN/2,MAIN*0.81);ctx.globalAlpha=1;}
 
 function buildMap(){const d=mapImg.data;
   for(let i=0;i<provOf.length;i++){let r=terrainRGB[i*3],g=terrainRGB[i*3+1],b=terrainRGB[i*3+2];const p=pv[provOf[i]];
@@ -569,9 +571,9 @@ function draw(){
   ctx.setLineDash([MAIN*0.012,MAIN*0.012]);for(const mv of marches){const a=pv[mv.from],b=pv[mv.to];ctx.strokeStyle=FACTIONS[mv.f].color+"33";ctx.lineWidth=MAIN*0.003;ctx.beginPath();ctx.moveTo(a.cx*S,a.cy*S);ctx.lineTo(b.cx*S,b.cy*S);ctx.stroke();}ctx.setLineDash([]);
   for(const mv of marches){const a=pv[mv.from],b=pv[mv.to];const x=lerp(a.cx,b.cx,mv.prog)*S,y=lerp(a.cy,b.cy,mv.prog)*S;const sig=FACTIONS[mv.f].sig;
     const t=""+Math.round(mv.troops);ctx.textAlign="center";ctx.textBaseline="middle";
-    if(mapTokReady[sig]){const th=MAIN*0.05,tw=th*373/502;                    // 솔리드 실루엣 병사 토큰
+    if(mapTokReady[sig]){const th=MAIN*0.043,tw=th*373/502,face=(b.cx>=a.cx)?1:-1;   // 솔리드 실루엣 병사 토큰(진행방향 바라봄)
       if(moraleMul[mv.f]>1){ctx.beginPath();ctx.arc(x,y-th*0.08,th*0.55,0,7);ctx.strokeStyle="#ffd23a";ctx.lineWidth=MAIN*0.004;ctx.stroke();}
-      ctx.imageSmoothingEnabled=false;ctx.drawImage(mapTokImg[sig],x-tw/2,y-th*0.6,tw,th);
+      ctx.save();ctx.imageSmoothingEnabled=false;ctx.translate(x,0);ctx.scale(face,1);ctx.drawImage(mapTokImg[sig],-tw/2,y-th*0.6,tw,th);ctx.restore();
       const fs=MAIN*0.0155;ctx.font="800 "+fs+"px system-ui";const pw=ctx.measureText(t).width+fs*0.9,ty=y+th*0.5;
       rr(x-pw/2,ty-fs*0.75,pw,fs*1.45,fs*0.7);ctx.fillStyle="rgba(8,11,18,.9)";ctx.fill();ctx.lineWidth=1.5;ctx.strokeStyle=FACTIONS[mv.f].color;ctx.stroke();
       ctx.fillStyle="#fff";ctx.fillText(t,x,ty);
