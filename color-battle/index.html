@@ -32,6 +32,15 @@
   .overlay .who{font-size:12px;color:var(--dim);letter-spacing:.2em;font-weight:800;text-transform:uppercase}
   .overlay .summary{font-size:13px;color:var(--dim);line-height:1.7;max-width:82%}
   .overlay .summary b{color:var(--text)}
+  .pickwrap{display:flex;flex-direction:column;gap:8px;align-items:center}
+  .picklab{font-size:12px;color:var(--dim);font-weight:800;letter-spacing:.06em}
+  .picklab b{color:var(--accent)}
+  .pickrow{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;max-width:92%}
+  .pchip{font-family:inherit;font-weight:800;font-size:13px;padding:8px 13px;border-radius:999px;border:2px solid var(--line);background:#0d131f;color:var(--text);cursor:pointer;transition:transform .1s}
+  .pchip:hover{transform:translateY(-1px)}
+  .pchip.sel{color:#0a0d13;border-color:transparent}
+  .predline{font-size:13px;font-weight:800;margin-top:2px}
+  .mypick{font-size:10px;font-weight:800;color:#0a0d13;border-radius:5px;padding:1px 5px;display:none}
   .banner{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:999px;font-weight:900;font-size:14px;background:#0d1220ee;border:1px solid var(--line);opacity:0;pointer-events:none;box-shadow:0 8px 30px #0008;white-space:nowrap;z-index:7}
   .banner .dot{width:10px;height:10px;border-radius:3px;flex:none}
   .banner.show{animation:pop 2s ease forwards}
@@ -332,6 +341,7 @@ function init(sv){
   tick=0;winner=-1;running=false;dirty=true;computeBonus();
   document.getElementById("seedIn").value=seed;
   ov.querySelector(".who").textContent="누가 천하를 얻을까?";document.getElementById("ovSummary").style.display="none";
+  if(typeof pickWrap!=="undefined"){myPick=-1;predApplied=false;pickWrap.style.display="flex";renderPick();}
   ovBig.textContent="▶ 시작을 눌러 관전";document.getElementById("ovStart").textContent="▶ 시작";ov.querySelector(".btns").style.display="flex";ov.classList.remove("hidden");
   buildMap();refresh();draw();
 }
@@ -376,7 +386,7 @@ function arrive(mv){const q=pv[mv.to],f=mv.f;const raw=mv.troops;let troops=raw*
   if(q.cap&&q.owner>=0){startSiege(f,q.owner,q,troops);return;}
   battle(f,q,troops);}
 function capFall(prev,f){banner(FACTIONS[prev].name+" 수도 함락 — "+FACTIONS[f].name+"에 편입!",FACTIONS[f].color);stats.capFalls.push({loser:prev,by:f});absorb(prev,f);}
-function battle(f,q,troops){const defE=q.garrison*terrDef(q);impacts.push({x:q.cx,y:q.cy,t0:performance.now(),col:FACTIONS[f].color});
+function battle(f,q,troops){const defE=q.garrison*terrDef(q);impacts.push({x:q.cx,y:q.cy,t0:performance.now(),col:FACTIONS[f].color,big:troops>defE});
   const tag=q.terrain===T_MTN?" 산":"";
   if(troops>defE){const prev=q.owner;q.owner=f;q.garrison=Math.max(1,troops-defE);q.flash=8;dirty=true;
     float(q.cx,q.cy,Math.round(troops)+" › "+Math.round(defE)+tag,FACTIONS[f].color,true);
@@ -583,7 +593,15 @@ function draw(){
     } else {const R=MAIN*0.017;
       if(moraleMul[mv.f]>1){ctx.beginPath();ctx.arc(x,y,R+MAIN*0.006,0,7);ctx.strokeStyle="#ffd23a";ctx.lineWidth=MAIN*0.004;ctx.stroke();}
       ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fillStyle=FACTIONS[mv.f].color;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#0009";ctx.stroke();ctx.fillStyle="#fff";ctx.font="800 "+(MAIN*0.015)+"px system-ui";ctx.fillText(t,x,y);}}
-  for(let i=impacts.length-1;i>=0;i--){const im=impacts[i],t=(now-im.t0)/450;if(t>=1){impacts.splice(i,1);continue;}ctx.beginPath();ctx.arc(im.x*S,im.y*S,MAIN*0.01+t*MAIN*0.05,0,7);ctx.strokeStyle=im.col+Math.floor((1-t)*200).toString(16).padStart(2,"0");ctx.lineWidth=MAIN*0.006*(1-t);ctx.stroke();}
+  // 전투 이펙트 — 먼지구름 + 불티 (점령 성공 big: 섬광·확대, 격퇴: 작은 먼지) P2 보이는 인과
+  for(let i=impacts.length-1;i>=0;i--){const im=impacts[i],t=(now-im.t0)/700;if(t>=1){impacts.splice(i,1);continue;}
+    const x=im.x*S,y=im.y*S,inv=1-t,sc=im.big?1.35:1,seed=im.t0%100;
+    for(let k=0;k<6;k++){const a=k/6*6.283+seed,d=MAIN*(0.006+0.026*t)*sc,pr=MAIN*(0.007+0.011*t)*sc*(k%2?0.8:1.15);
+      ctx.fillStyle="rgba(196,190,178,"+(0.55*inv)+")";ctx.beginPath();ctx.arc(x+Math.cos(a)*d,y+Math.sin(a)*d*0.65-MAIN*0.006*t,pr,0,7);ctx.fill();}
+    if(im.big){ctx.fillStyle="rgba(255,244,210,"+(0.85*inv)+")";ctx.beginPath();ctx.arc(x,y,MAIN*0.014*inv*sc+1,0,7);ctx.fill();}
+    ctx.globalAlpha=0.9*inv;ctx.fillStyle=im.col;
+    for(let k=0;k<5;k++){const a=k*1.256+seed*0.7,d=MAIN*(0.008+0.034*t)*sc;ctx.beginPath();ctx.arc(x+Math.cos(a)*d,y+Math.sin(a)*d*0.8,Math.max(1,MAIN*0.0045*inv),0,7);ctx.fill();}
+    ctx.globalAlpha=1;}
   // 플로팅 텍스트 (전투 원인 노출 P2)
   for(let i=floats.length-1;i>=0;i--){const ft=floats[i],t=(now-ft.t0)/ft.dur;if(t>=1){floats.splice(i,1);continue;}
     ctx.globalAlpha=t<0.15?t/0.15:1-((t-0.15)/0.85);ctx.font="800 "+(MAIN*(ft.big?0.024:0.02))+"px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
@@ -594,8 +612,8 @@ function draw(){
 /* ===== 패널 ===== */
 const rowsEl=document.getElementById("rows"),rowRef=[];
 for(let f=0;f<K;f++){const r=document.createElement("div");r.className="row";
-  r.innerHTML='<div class="rank"></div><div class="id"><div class="idtop">'+ic(FACTIONS[f].sig,FACTIONS[f].color,16)+'<span class="nm">'+FACTIONS[f].name+'</span><span class="mor">사기↑</span></div><span class="gen"></span></div><div class="troop"></div>';
-  rowsEl.appendChild(r);rowRef.push({root:r,rank:r.querySelector(".rank"),troop:r.querySelector(".troop"),mor:r.querySelector(".mor"),gen:r.querySelector(".gen")});}
+  r.innerHTML='<div class="rank"></div><div class="id"><div class="idtop">'+ic(FACTIONS[f].sig,FACTIONS[f].color,16)+'<span class="nm">'+FACTIONS[f].name+'</span><span class="mypick">내 픽</span><span class="mor">사기↑</span></div><span class="gen"></span></div><div class="troop"></div>';
+  rowsEl.appendChild(r);rowRef.push({root:r,rank:r.querySelector(".rank"),troop:r.querySelector(".troop"),mor:r.querySelector(".mor"),gen:r.querySelector(".gen"),pick:r.querySelector(".mypick")});}
 const pbar=document.getElementById("powerbar"),segs=[];for(let f=0;f<K;f++){const s=document.createElement("div");s.className="seg";s.style.background=FACTIONS[f].color;s.innerHTML='<span class="lab"></span>';pbar.appendChild(s);segs.push({seg:s,lab:s.querySelector(".lab")});}
 const resminiEl=document.getElementById("resmini"),resRef=[];
 for(let f=0;f<K;f++){const r=document.createElement("div");r.className="rm-row";
@@ -622,6 +640,7 @@ function refresh(){const cnt=computeBonus();let tot=0;const pw=new Float64Array(
   ord.forEach(f=>{const sw=segs[f],pctW=pw[f]/tot*100;sw.seg.style.width=pctW+"%";sw.seg.style.order=alive[f]?0:1;sw.lab.textContent=(alive[f]&&pctW>=11)?(FACTIONS[f].name+" "+pc[f]):"";});
   document.getElementById("powerLab").innerHTML="국력 (지역 + 병력 + 자원) · 선두 <b>"+(lead>=0?FACTIONS[lead].name:"-")+"</b>";
   ord.forEach((f,rank)=>{const R=rowRef[f];R.root.style.order=alive[f]?rank:100+rank;R.root.classList.toggle("dead",!alive[f]);R.root.classList.toggle("leader",alive[f]&&f===lead);R.rank.textContent=alive[f]?rank+1:"–";R.troop.textContent=alive[f]?(pc[f]+"지역·"+fmt(troopSum(f))):"멸망";R.mor.classList.toggle("on",alive[f]&&moraleLeft[f]>0);
+    R.pick.style.display=f===myPick?"inline-block":"none";if(f===myPick)R.pick.style.background=FACTIONS[f].color;
     if(roster.length){const ch=championOf(f);R.gen.innerHTML="명장 <b>"+RANKS[ch.rank]+" "+ch.name+"</b>"+(ch.wins?" · "+ch.wins+"승":"");}});
   ord.forEach((f,rank)=>{const R=resRef[f];R.root.style.order=alive[f]?rank:100+rank;R.root.classList.toggle("dead",!alive[f]);
     R.ri.textContent=cnt[f][0];R.rf.textContent=cnt[f][1];R.rg.textContent=cnt[f][2];R.gi.classList.toggle("z",cnt[f][0]===0);R.gf.classList.toggle("z",cnt[f][1]===0);R.gg.classList.toggle("z",cnt[f][2]===0);
@@ -630,12 +649,35 @@ function refresh(){const cnt=computeBonus();let tot=0;const pw=new Float64Array(
 
 const ov=document.getElementById("overlay"),ovBig=document.getElementById("ovBig");
 const ovSum=document.createElement("div");ovSum.className="summary";ovSum.id="ovSummary";ovSum.style.display="none";ovBig.after(ovSum);
+/* ===== 예측·응원 레이어 (A안) — 경기 전 우승 세력 예측 → 적중/연승 기록 (P1 응원·P7 완결) ===== */
+let myPick=-1,predApplied=false;
+const PRED_KEY="cb_predict_v1";
+function loadPred(){try{return JSON.parse(localStorage.getItem(PRED_KEY))||{g:0,w:0,st:0,best:0};}catch(e){return {g:0,w:0,st:0,best:0};}}
+let predStats=loadPred();
+function savePred(){try{localStorage.setItem(PRED_KEY,JSON.stringify(predStats));}catch(e){}}
+const pickWrap=document.createElement("div");pickWrap.className="pickwrap";
+pickWrap.innerHTML='<div class="picklab" id="pickLab"></div><div class="pickrow" id="pickRow"></div>';
+ovSum.after(pickWrap);
+const pickChips=[];
+{const row=pickWrap.querySelector("#pickRow");
+ FACTIONS.forEach((fa,f)=>{const b=document.createElement("button");b.className="pchip";b.textContent=fa.name;b.style.borderColor=fa.color+"66";
+   b.onclick=()=>{myPick=(myPick===f)?-1:f;renderPick();refresh();};row.appendChild(b);pickChips.push(b);});}
+function renderPick(){
+  pickChips.forEach((b,f)=>{const sel=f===myPick;b.classList.toggle("sel",sel);b.style.background=sel?FACTIONS[f].color:"#0d131f";b.style.borderColor=sel?"transparent":FACTIONS[f].color+"66";});
+  const lab=document.getElementById("pickLab");
+  const rec=predStats.g>0?" · 통산 적중 <b>"+predStats.w+"/"+predStats.g+"</b>"+(predStats.st>1?" · <b>"+predStats.st+"연승</b> 중":""):"";
+  lab.innerHTML=(myPick>=0?("내 픽 — <b>"+FACTIONS[myPick].name+"</b> 통일에 겁니다"):"누가 통일할까? <b>세력을 골라 예측</b>하고 관전하세요 (선택)")+rec;}
+renderPick();
 function win(){const f=winner;ov.querySelector(".who").textContent="🏆 천하통일";ovBig.innerHTML='<span style="color:'+FACTIONS[f].color+'">'+FACTIONS[f].name+"</span> 천하 통일";
   const cnt=computeBonus()[f],lastFall=stats.capFalls.length?stats.capFalls[stats.capFalls.length-1]:null;
   let html="<b>"+(1+((tick/50)|0))+"년</b> 만에 천하 통일 · 일기토 <b>"+stats.duels+"회</b> · 정복한 수도 <b>"+stats.capFalls.length+"</b>곳<br>"+FACTIONS[f].name+" 보유 자원 — 철 "+cnt[0]+" · 식량 "+cnt[1]+" · 금 "+cnt[2];
   if(lastFall)html+="<br>최후의 함락 — "+FACTIONS[lastFall.loser].name+" 수도";
   let mvp=null;for(const r of roster)for(const g of r)if(g.wins>0&&(!mvp||g.wins>mvp.wins||(g.wins===mvp.wins&&careerOf(g)>careerOf(mvp))))mvp=g;
   if(mvp)html+="<br>이번 경기 명장 — "+RANKS[mvp.rank]+" <b>"+mvp.name+"</b> ("+FACTIONS[mvp.f].name+") "+mvp.wins+"승"+(careerOf(mvp)?" · 통산 "+careerOf(mvp)+"승":"");
+  if(myPick>=0&&!predApplied){predApplied=true;predStats.g++;const hit=myPick===f;
+    if(hit){predStats.w++;predStats.st++;if(predStats.st>predStats.best)predStats.best=predStats.st;}else predStats.st=0;savePred();
+    html+='<br><span class="predline" style="color:'+(hit?"#ffd23a":"#8b97ad")+'">'+(hit?("예측 적중! "+(predStats.st>1?predStats.st+"연승 · ":"")):("예측 실패 — 내 픽 "+FACTIONS[myPick].name+" · "))+"통산 "+predStats.w+"/"+predStats.g+(predStats.best>1?" · 최고 "+predStats.best+"연승":"")+"</span>";}
+  pickWrap.style.display="none";
   ovSum.innerHTML=html;ovSum.style.display="block";document.getElementById("ovStart").textContent="↻ 다시 보기";ov.querySelector(".btns").style.display="flex";document.getElementById("btnPlay").textContent="▶ 시작";ov.classList.remove("hidden");refresh();draw();}
 
 function loop(t){
