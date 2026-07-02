@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>군웅할거 — MVP v9 (관전 명료성)</title>
 <style>
   :root{--bg:#0a0d13;--panel:#121824;--panel2:#0b0f18;--line:#232c3d;--text:#e8edf6;--dim:#8b97ad;--accent:#ffd23a}
@@ -90,6 +90,34 @@
   .hint{color:var(--dim);font-size:12px;line-height:1.5;margin:2px 2px 0}
   img.ic{vertical-align:middle}
   @media (max-width:760px){.board{flex:1 1 100%}.infobar{grid-template-columns:1fr}}
+
+  /* ===== 녹화(쇼츠 시네마) 모드 — 세로 한 화면(스크롤 없음) 고정 배열 ===== */
+  body.cinema{height:100dvh;overflow:hidden;padding:calc(env(safe-area-inset-top,0px) + 8px) 10px calc(env(safe-area-inset-bottom,0px) + 8px)}
+  body.cinema .wrap{max-width:480px;height:100%;display:flex;flex-direction:column;gap:8px}
+  body.cinema header{margin:0;text-align:center}
+  body.cinema .kicker,body.cinema .sub{display:none}
+  body.cinema h1{font-size:26px;margin:0}
+  .cinesub{display:none;color:var(--dim);font-size:12.5px;font-weight:700;margin:3px 0 0;text-align:center}
+  .cinesub b{color:var(--accent)}
+  body.cinema .cinesub{display:block}
+  body.cinema .power{margin:0}
+  body.cinema .power .lab{display:none}
+  body.cinema .stage{margin:0;gap:8px;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch}
+  body.cinema .left{flex:0 0 auto;min-width:0;gap:8px}
+  body.cinema .arena-box{padding:6px}
+  body.cinema .canvas-stack{width:min(100%,56dvh);margin:0 auto}
+  body.cinema .infobar{display:none}
+  body.cinema .board{flex:1 1 auto;min-width:0;min-height:0;overflow:hidden}
+  body.cinema .board .panel{padding:9px 11px;height:100%;overflow:hidden}
+  body.cinema .controls{display:none}
+  body.cinema .rows{gap:4px;overflow:hidden}
+  body.cinema .row{padding:5px 7px}
+  body.cinema .nm{font-size:13px}
+  body.cinema .troop{font-size:12px;min-width:56px}
+  body.cinema .gen{font-size:9.5px}
+  .cine-exit{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:8px;z-index:50;width:34px;height:34px;border-radius:99px;background:#0d1220cc;border:1px solid var(--line);color:var(--dim);font-size:15px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0;transition:opacity .5s}
+  body.cinema .cine-exit{display:flex}
+  .cine-exit.faded{opacity:0;pointer-events:none}
 </style>
 </head>
 <body>
@@ -98,6 +126,7 @@
     <div class="kicker">Color Battle · MVP v9 · 관전 명료성</div>
     <h1>천하 <span class="amp">쟁패</span></h1>
     <p class="sub">한눈에 우열이 보이고, 왜 이기는지가 화면에 드러난다 — 자원을 모아 정복하고 수도를 함락해 흡수하라</p>
+    <p class="cinesub">6개 세력, 하나의 천하 — <b>당신의 색</b>을 응원하세요</p>
   </header>
 
   <div class="power">
@@ -129,7 +158,7 @@
         <div class="rows" id="rows"></div>
       </div>
       <div class="panel controls">
-        <div class="btns"><button class="primary" id="btnPlay">▶ 시작</button><button id="btnReset">↻ 다시</button><button id="btnNew">🎲 새 지도</button><button id="btnMute">소리 켜짐</button></div>
+        <div class="btns"><button class="primary" id="btnPlay">▶ 시작</button><button id="btnReset">↻ 다시</button><button id="btnNew">🎲 새 지도</button><button id="btnMute">소리 켜짐</button><button id="btnCinema">녹화 모드</button></div>
         <div class="speed"><span>속도</span><input type="range" id="speed" min="0.5" max="8" step="0.5" value="3"><span id="spVal" style="min-width:34px;text-align:right;color:var(--text)">3×</span></div>
         <div class="seedrow"><span>시드</span><input type="text" id="seedIn" inputmode="numeric" value="0"><button id="btnPlaySeed">재생</button></div>
         <p class="hint">같은 시드 = 같은 지도·같은 전개 명경기는 시드를 적어두면 그대로 재생된다</p>
@@ -137,6 +166,7 @@
     </div>
   </div>
 </div>
+<button class="cine-exit faded" id="cineExit" aria-label="녹화 모드 종료">✕</button>
 <script>
 "use strict";
 const FACTIONS=[
@@ -754,6 +784,19 @@ document.getElementById("btnReset").onclick=()=>{init(seed);document.getElementB
 document.getElementById("btnNew").onclick=()=>{init((Math.random()*1e9)>>>0);document.getElementById("btnPlay").textContent="▶ 시작";};
 document.getElementById("btnPlaySeed").onclick=()=>{const v=parseInt(document.getElementById("seedIn").value,10);init(isNaN(v)?0:v);document.getElementById("btnPlay").textContent="▶ 시작";};
 const sp=document.getElementById("speed");sp.oninput=()=>{speed=parseFloat(sp.value);document.getElementById("spVal").textContent=speed+"×";};
+
+// ===== 녹화(쇼츠 시네마) 모드 — 세로 한 화면 배열 + 개발 UI 숨김 =====
+// 진입 시 속도 5×(쇼츠 페이싱; 공성전·일기토·멸망·엔딩 연출은 원래 실시간이라 그대로 극적),
+// 종료 시 이전 속도 복원. 종료(✕) 버튼은 3.5초 후 투명해져 녹화 화면에 안 남음 — 제목을 탭하면 다시 나타남.
+const btnCinema=document.getElementById("btnCinema"),cineExit=document.getElementById("cineExit");
+let cinePrevSpeed=null,cineTimer=null;
+function cineShowExit(){cineExit.classList.remove("faded");clearTimeout(cineTimer);cineTimer=setTimeout(()=>cineExit.classList.add("faded"),3500);}
+function setCinema(on){document.body.classList.toggle("cinema",on);
+  if(on){cinePrevSpeed=speed;sp.value=5;sp.dispatchEvent(new Event("input"));window.scrollTo(0,0);cineShowExit();}
+  else{clearTimeout(cineTimer);cineExit.classList.add("faded");if(cinePrevSpeed!=null){sp.value=cinePrevSpeed;sp.dispatchEvent(new Event("input"));cinePrevSpeed=null;}}}
+btnCinema.onclick=()=>setCinema(true);
+cineExit.onclick=()=>setCinema(false);
+document.querySelector("header").addEventListener("click",()=>{if(document.body.classList.contains("cinema"))cineShowExit();});
 const btnMute=document.getElementById("btnMute");btnMute.textContent=SND.muted?"소리 꺼짐":"소리 켜짐";
 btnMute.onclick=()=>{sndResume();sndMute(!SND.muted);btnMute.textContent=SND.muted?"소리 꺼짐":"소리 켜짐";if(!SND.muted&&running)padStart();else padStop();};
 
