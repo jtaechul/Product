@@ -28,7 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src import news_filter, notifier  # noqa: E402
+from src import allocation, news_filter, notifier  # noqa: E402
 from src.swing import SwingConfig, compute_features, is_entry  # noqa: E402
 from src.swing_trader import SwingTrader  # noqa: E402
 from src.timeutil import now_kst as datetime_now  # noqa: E402
@@ -37,13 +37,13 @@ from src.upbit_quotation import UpbitQuotation, candles_to_dataframe  # noqa: E4
 MARKET = "KRW-XRP"
 MIN_ORDER_KRW = 5000
 
-# analyze_xrp/tune_xrp 검증 승자 설정(일봉). 진입 신호는 '일봉', 청산은 가격기반 실시간.
-#   base_bars=30(30일 박스) / recent_bars=3(최근3일) / self_ma=50(50일선 위) / BTC게이트 끔
-#   vol_surge=2.0: tune_xrp 검증 결과 3.0→2.0 완화가 거래 24→34회(+42%)로 늘면서도
-#     위험대비수익(Calmar) 0.94→1.26 개선·워크포워드 4/5 유지 → '더 활발+검증통과' 채택.
+# tune_xrp 검증 승자 '공격형' 설정(일봉). 진입 신호는 '일봉', 청산은 가격기반 실시간.
+#   공격조합 = 거래량 1.5배 + 박스 20일 + 추격상한 35% (self_ma=50·BTC게이트 끔 유지):
+#     거래 24→53회(2.2배), Calmar 0.94→1.39, 워크포워드 5구간 4/5 · 8구간 6/8(기준 5/8).
+#   ⚠️ 대가: 최대낙폭 -33%→-56%로 깊어짐(공격형의 비용) — 승률 49%, 손절 연발 구간 존재.
 #   max_hold_bars 는 실시간 엔진에서 '시간(h)' 단위 → 30일 = 720h
-XRP_CFG = dict(base_bars=30, recent_bars=3, self_ma_bars=50, btc_ma_bars=0,
-               vol_surge=2.0)
+XRP_CFG = dict(base_bars=20, recent_bars=3, self_ma_bars=50, btc_ma_bars=0,
+               vol_surge=1.5, max_chase=0.35)
 
 
 def log(msg: str, push: bool = False) -> None:
@@ -201,7 +201,13 @@ def main() -> None:
         cooldown_hours=args.cooldown, state_path=str(state_file),
     )
     engine.load_state()
-    engine.adopt_holdings()   # 이미 보유 중인 XRP가 있으면 흡수해 관리
+    engine.adopt_holdings()   # 이미 보유 중인 XRP가 있으면 흡수해 관리(평단=진입가)
+    # 이 봇은 XRP 전용 — 계좌의 '다른' 코인(직접 산 코인·에어드랍 등)은 절대 관리/매도
+    # 하지 않는다. adopt_holdings 는 계좌 전체를 흡수하므로 XRP 외에는 즉시 제외한다.
+    # (KRW 마켓 없는 에어드랍 토큰이 섞이면 시세조회가 깨져 봇이 죽는 문제도 함께 차단)
+    for _m in [k for k in engine.positions if k != MARKET]:
+        del engine.positions[_m]
+    engine.save_state()
 
     shared = Shared()
     stop = threading.Event()
@@ -255,7 +261,17 @@ def main() -> None:
             pos = engine.positions.get(MARKET)
             if pos and price:
                 g = price / pos.entry_price - 1.0
-                out.append(f"• 보유 중: 지금 {g*100:+.1f}% ({g*args.invest:+,.0f}원)")
+                # 손익 '원' 표시는 실제 보유 수량 기준(실거래). 조회 실패 시 매수액 근사.
+                won = None
+                try:
+                    h = broker.get_holdings()
+                    if h and MARKET in h:
+                        won = (price - pos.entry_price) * h[MARKET][0]
+                except Exception:
+                    pass
+                if won is None:
+                    won = g * args.invest
+                out.append(f"• 보유 중: 지금 {g*100:+.1f}% ({won:+,.0f}원)")
             else:
                 out.append("• 보유 중")
         out.append(f"• 오늘 확정 손익: {engine.realized_today:+,.0f}원 (매도 {sells}회)")
@@ -280,39 +296,65 @@ def main() -> None:
             log(f"📰 뉴스 브레이크 미작동: {v.reason}")
         return v
 
+    # 반복 알림 방지용 타임스탬프(원화부족·뉴스보류는 상황이 지속돼도 1시간에 1번만 알림)
+    _nocash = {"at": 0.0}
+    _newsblock = {"at": 0.0}
+
+    def tick(now) -> None:
+        """한 번의 점검(청산 → 진입). 예외는 바깥 루프가 잡아 봇이 죽지 않고 계속 돈다."""
+        for m in engine.reconcile_with_exchange():
+            log(f"🔄 {m} 외부 매도 감지 — 보유목록서 정리")
+        for rec in engine.check_exits(now):
+            won = rec.gain * args.invest
+            head = ("✅ <b>리플 매도 — 이익 실현 🎉</b>" if rec.gain > 0
+                    else "🔻 <b>리플 매도 — 손실 정리</b>")
+            log(f"매도 XRP ({rec.gain*100:+.1f}%) — {rec.reason}")
+            notifier.send(
+                f"{head}\n판 가격: {rec.price:,.0f}원\n"
+                f"결과: <b>{rec.gain*100:+.1f}%  ({won:+,.0f}원)</b>\n"
+                f"이유: {reason_easy(rec.reason)}\n"
+                f"오늘 확정 손익: {engine.realized_today:+,.0f}원")
+        # 다른 봇(잠수함 스캐너)이 XRP를 중복 매수하지 않도록 소유권 공표
+        allocation.publish_owned("xrp", engine.held())
+        sig, feat, _ = shared.get()
+        if not (sig and engine.has_room()):
+            return
+        if args.live:
+            # 원화가 최소주문액 미만이면 주문이 안 나가는데도 '샀다'고 기록되는
+            # 유령 매수를 차단(실제 주문 없이 포지션만 생기는 버그 방지).
+            avail = broker.ex.get_krw_balance()
+            if avail < MIN_ORDER_KRW:
+                if time.time() - _nocash["at"] > 3600:
+                    log(f"⏸ 진입 신호 있지만 원화 {avail:,.0f}원(최소주문 미만) — 매수 보류")
+                    _nocash["at"] = time.time()
+                return
+        v = news_gate()
+        if v is not None and not v.allow:
+            if time.time() - _newsblock["at"] > 3600:   # 신호 지속 시 반복 알림 방지
+                log(f"⛔ 매수 보류 — 뉴스 악재({v.score:+d}): {v.reason}")
+                notifier.send(
+                    f"⛔ <b>리플 매수 보류</b>\n"
+                    f"기술적 신호는 떴지만, 최근 뉴스가 강한 악재({v.score:+d})라 "
+                    f"위험을 피해 이번 매수는 건너뛰었어요.\n사유: {v.reason}")
+                _newsblock["at"] = time.time()
+            return
+        for rec in engine.try_entries([MARKET], now):
+            log(f"매수 XRP @ {rec.price:,.0f}")
+            notifier.send(
+                f"🟢 <b>리플(XRP) 매수했어요!</b>\n"
+                f"산 가격: {rec.price:,.0f}원\n투입: {args.invest:,.0f}원\n"
+                f"이유: 거래량이 평소보다 크게 늘며 상승 신호(검증된 급등 패턴)가 떠서 샀어요\n"
+                f"앞으로: 오르면 끝까지 따라가고, -{args.stop*100:.0f}%에 닿으면 손절해요")
+
     try:
         while True:
-            now = datetime_now()
-            for m in engine.reconcile_with_exchange():
-                log(f"🔄 {m} 외부 매도 감지 — 보유목록서 정리")
-            for rec in engine.check_exits(now):
-                won = rec.gain * args.invest
-                head = ("✅ <b>리플 매도 — 이익 실현 🎉</b>" if rec.gain > 0
-                        else "🔻 <b>리플 매도 — 손실 정리</b>")
-                log(f"매도 XRP ({rec.gain*100:+.1f}%) — {rec.reason}")
-                notifier.send(
-                    f"{head}\n판 가격: {rec.price:,.0f}원\n"
-                    f"결과: <b>{rec.gain*100:+.1f}%  ({won:+,.0f}원)</b>\n"
-                    f"이유: {reason_easy(rec.reason)}\n"
-                    f"오늘 확정 손익: {engine.realized_today:+,.0f}원")
-            sig, feat, _ = shared.get()
-            if sig and engine.has_room():
-                v = news_gate()
-                if v is not None and not v.allow:
-                    log(f"⛔ 매수 보류 — 뉴스 악재({v.score:+d}): {v.reason}")
-                    notifier.send(
-                        f"⛔ <b>리플 매수 보류</b>\n"
-                        f"기술적 신호는 떴지만, 최근 뉴스가 강한 악재({v.score:+d})라 "
-                        f"위험을 피해 이번 매수는 건너뛰었어요.\n사유: {v.reason}")
-                    time.sleep(args.interval)
-                    continue
-                for rec in engine.try_entries([MARKET], now):
-                    log(f"매수 XRP @ {rec.price:,.0f}")
-                    notifier.send(
-                        f"🟢 <b>리플(XRP) 매수했어요!</b>\n"
-                        f"산 가격: {rec.price:,.0f}원\n투입: {args.invest:,.0f}원\n"
-                        f"이유: 거래량이 평소보다 크게 늘며 상승 신호(검증된 급등 패턴)가 떠서 샀어요\n"
-                        f"앞으로: 오르면 끝까지 따라가고, -{args.stop*100:.0f}%에 닿으면 손절해요")
+            try:
+                tick(datetime_now())
+            except KeyboardInterrupt:
+                raise
+            except Exception as exc:
+                # 일시적 네트워크/API 오류로 봇 전체가 죽어 재시작 알림이 반복되는 것 방지
+                log(f"점검 루프 오류(계속 재시도): {exc}")
             time.sleep(args.interval)
     except KeyboardInterrupt:
         stop.set()
