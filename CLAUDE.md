@@ -23,25 +23,30 @@
 
 > ## ⭐ Spotlight 파일 보호 원칙 (필수 — 절대 어기지 않는다)
 > 이 저장소에는 SPOTLIGHT 외에도 book-carousel·holedash·upbit-trader 등 다른 프로젝트가 함께 있다.
-> **다른 프로젝트 작업이 main에 병합될 때 `spotlight/src/`·`spotlight/index.html`·`spotlight/sw.js`
-> 파일이 구버전으로 되돌아가는 사고가 실제 발생했다.** 재발 방지 규칙:
+> **다른 프로젝트 작업이 main에 병합될 때 `spotlight/` 파일이 구버전으로 되돌아가는 사고가 실제
+> 두 번 발생했다** (1차: src/ 게임 코드, 2차: assets/ 캐릭터 이미지 30장 — 코드만 복원하고
+> 에셋을 빠뜨려 몸통 투명 구멍·옛 포즈 이미지가 배포됨). 재발 방지 규칙:
 >
-> 1. **main pull/merge 직후 반드시 확인**: `git diff HEAD~1 -- spotlight/src/` 출력이 있으면
->    spotlight 코드가 바뀐 것 → 즉시 3번 절차 실행.
+> 1. **main pull/merge 직후 반드시 확인**: `git diff HEAD~1 -- spotlight/` 출력이 있으면
+>    spotlight가 바뀐 것 → 즉시 3번 절차 실행. (src/ 만이 아니라 **assets/ 포함 전체**를 본다)
 > 2. **다른 프로젝트 작업 시 spotlight 파일은 절대 건드리지 않는다.** spotlight 외 프로젝트의
->    커밋·머지에 `spotlight/src/` 변경이 포함돼선 안 된다.
+>    커밋·머지에 `spotlight/` 변경이 포함돼선 안 된다.
 > 3. **spotlight 파일이 되돌아간 것을 발견하면 즉시 작업 브랜치에서 복원**:
 >    ```
->    git checkout claude/spotlight-* -- spotlight/src/ spotlight/index.html spotlight/sw.js
+>    git checkout claude/spotlight-* -- spotlight/
 >    git commit -m "spotlight: 구버전 덮어쓰기 복원"
 >    git push origin main
 >    ```
+>    ⚠️ 반드시 **`spotlight/` 폴더 전체**를 복원한다. src/ 만 복원하면 assets/(캐릭터 이미지·
+>    사운드)가 구버전으로 남아 몸통 투명 구멍·옛 포즈·지워진 경계선이 그대로 배포된다.
 > 4. **GitHub Actions `spotlight-guard.yml`** 이 main 푸시마다 핵심 파일 무결성을 자동 검사한다.
 >    워크플로우가 실패하면 즉시 3번 절차로 복원한다.
 > 5. **자동 배포(main 머지) 전 체크리스트**:
 >    - `grep -c 'heroName' spotlight/src/systems/game.js` → 0이면 구버전(복원 필요)
 >    - `grep -c 'MILESTONES' spotlight/src/config.js` → 0이면 구버전(복원 필요)
 >    - `wc -l spotlight/src/scenes/MainScene.js` → 800 미만이면 구버전(복원 필요)
+>    - **에셋 확인**: `git diff claude/spotlight-* -- spotlight/assets/` 출력이 있으면
+>      main의 이미지가 작업 브랜치와 다른 것 → spotlight/ 전체 복원 필요
 
 > 웹 2D 배우 육성 시뮬레이션 | Claude Code 개발용 종합 기획서
 > 버전 3.0 *(제목 SPOTLIGHT은 가제 — 변경 가능)*
