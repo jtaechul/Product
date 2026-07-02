@@ -262,7 +262,14 @@ try{SND.muted=localStorage.getItem("cb_mute")==="1";}catch(e){}
 function sndResume(){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!SND.ctx){SND.ctx=new AC();SND.master=SND.ctx.createGain();SND.master.gain.value=SND.muted?0:0.5;SND.master.connect(SND.ctx.destination);loadSfx();}if(SND.ctx.state==="suspended")SND.ctx.resume();}
 function loadSfx(){if(SND.loaded||!SND.ctx)return;SND.loaded=true;SFX_NAMES.forEach(n=>{fetch("assets/sfx/"+n+".wav").then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(a=>SND.ctx.decodeAudioData(a)).then(b=>{SND.buf[n]=b;}).catch(()=>{});});}
 function playBuf(name,vol){if(!SND.ctx||SND.muted)return false;const b=SND.buf[name];if(!b)return false;const s=SND.ctx.createBufferSource();s.buffer=b;const g=SND.ctx.createGain();g.gain.value=vol||0.9;s.connect(g);g.connect(SND.master);s.start();return true;}
-function sndMute(m){SND.muted=m;try{localStorage.setItem("cb_mute",m?"1":"0");}catch(e){}if(SND.master)SND.master.gain.setTargetAtTime(m?0:0.5,SND.ctx.currentTime,0.05);}
+// 배경음악(BGM) — 실제 파일 있으면 재생, 없으면 padStart의 합성 앰비언트로 대체
+let BGM=null,BGM_ENDING=null;const BGM_VOL=0.32;
+function bgmEl(src){const a=new Audio(src);a.loop=true;a.preload="auto";a.addEventListener("error",()=>{a._err=true;});return a;}
+function bgmVol(){return SND.muted?0:BGM_VOL;}
+function bgmPlay(){if(BGM_ENDING&&!BGM_ENDING._err){try{BGM_ENDING.pause();}catch(e){}}if(!BGM)BGM=bgmEl("assets/bgm/main.mp3");if(BGM._err)return false;BGM.volume=bgmVol();const p=BGM.play();if(p&&p.catch)p.catch(()=>{});return true;}
+function bgmEndingPlay(){if(BGM&&!BGM._err){try{BGM.pause();}catch(e){}}if(!BGM_ENDING)BGM_ENDING=bgmEl("assets/bgm/ending.mp3");if(BGM_ENDING._err)return false;BGM_ENDING.currentTime=0;BGM_ENDING.volume=bgmVol();const p=BGM_ENDING.play();if(p&&p.catch)p.catch(()=>{});return true;}
+function bgmStop(){[BGM,BGM_ENDING].forEach(b=>{if(b&&!b._err){try{b.pause();}catch(e){}}});}
+function sndMute(m){SND.muted=m;try{localStorage.setItem("cb_mute",m?"1":"0");}catch(e){}if(SND.master)SND.master.gain.setTargetAtTime(m?0:0.5,SND.ctx.currentTime,0.05);const v=bgmVol();if(BGM&&!BGM._err)BGM.volume=v;if(BGM_ENDING&&!BGM_ENDING._err)BGM_ENDING.volume=v;}
 function env(node,t0,a,d,peak){const g=SND.ctx.createGain();g.gain.setValueAtTime(0.0001,t0);g.gain.linearRampToValueAtTime(peak,t0+a);g.gain.exponentialRampToValueAtTime(0.0001,t0+a+d);node.connect(g);g.connect(SND.master);return g;}
 function tone(freq,a,d,type,peak,slide){if(!SND.ctx||SND.muted)return;const t0=SND.ctx.currentTime,o=SND.ctx.createOscillator();o.type=type||"triangle";o.frequency.setValueAtTime(freq,t0);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t0+a+d);env(o,t0,a,d,peak||0.3);o.start(t0);o.stop(t0+a+d+0.03);}
 function noise(dur,peak,f0,f1){if(!SND.ctx||SND.muted)return;const t0=SND.ctx.currentTime,sr=SND.ctx.sampleRate,buf=SND.ctx.createBuffer(1,Math.max(1,(sr*dur)|0),sr),dd=buf.getChannelData(0);for(let i=0;i<dd.length;i++)dd[i]=Math.random()*2-1;const s=SND.ctx.createBufferSource();s.buffer=buf;const flt=SND.ctx.createBiquadFilter();flt.type="lowpass";flt.frequency.setValueAtTime(f0||1200,t0);if(f1)flt.frequency.exponentialRampToValueAtTime(f1,t0+dur);s.connect(flt);env(flt,t0,0.005,dur,peak||0.3);s.start(t0);s.stop(t0+dur+0.03);}
@@ -280,7 +287,7 @@ const Sfx={
   death(){if(!playBuf("death")){tone(300,0.02,0.9,"sine",0.15,110);tone(150,0.02,1.1,"sine",0.13,75);}},
   victory(){if(!playBuf("victory")){[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>tone(f,0.008,0.32,"triangle",0.22),i*110));setTimeout(()=>noise(0.5,0.08,4000,1200),120);}},
 };
-function padStart(){if(!SND.ctx||SND.muted||SND.pad)return;const t0=SND.ctx.currentTime;
+function padStart(){if(!SND.ctx||SND.muted)return;if(bgmPlay())return;if(SND.pad)return;const t0=SND.ctx.currentTime;
   const flt=SND.ctx.createBiquadFilter();flt.type="lowpass";flt.frequency.value=460;flt.connect(SND.master);
   const g=SND.ctx.createGain();g.gain.setValueAtTime(0.0001,t0);g.gain.setTargetAtTime(0.05,t0,2);g.connect(flt);
   const oscs=[[110,"triangle",1],[164.81,"sine",0.5],[220,"sine",0.35]].map(([f,ty,v])=>{const o=SND.ctx.createOscillator();o.type=ty;o.frequency.value=f;const og=SND.ctx.createGain();og.gain.value=v;o.connect(og);og.connect(g);o.start();return o;});
@@ -374,6 +381,7 @@ function init(sv){
   tick=0;winner=-1;running=false;dirty=true;computeBonus();
   document.getElementById("seedIn").value=seed;
   ov.querySelector(".who").textContent="누가 천하를 얻을까?";document.getElementById("ovSummary").style.display="none";
+  ov.style.backgroundImage="";bgmStop();
   if(typeof pickWrap!=="undefined"){myPick=-1;predApplied=false;pickWrap.style.display="flex";renderPick();}
   ovBig.textContent="▶ 시작을 눌러 관전";document.getElementById("ovStart").textContent="▶ 시작";ov.querySelector(".btns").style.display="flex";ov.classList.remove("hidden");
   buildMap();refresh();draw();
@@ -705,7 +713,9 @@ function renderPick(){
   const rec=predStats.g>0?" · 통산 적중 <b>"+predStats.w+"/"+predStats.g+"</b>"+(predStats.st>1?" · <b>"+predStats.st+"연승</b> 중":""):"";
   lab.innerHTML=(myPick>=0?("내 픽 — <b>"+FACTIONS[myPick].name+"</b> 통일에 겁니다"):"누가 통일할까? <b>세력을 골라 예측</b>하고 관전하세요 (선택)")+rec;}
 renderPick();
-function win(){const f=winner;padStop();Sfx.victory();ov.querySelector(".who").textContent="🏆 천하통일";ovBig.innerHTML='<span style="color:'+FACTIONS[f].color+'">'+FACTIONS[f].name+"</span> 천하 통일";
+function win(){const f=winner;padStop();bgmEndingPlay();Sfx.victory();
+  ov.style.backgroundImage="linear-gradient(rgba(6,8,13,.42),rgba(6,8,13,.86)), url('assets/ending/"+FACTIONS[f].sig+".jpg')";ov.style.backgroundSize="cover";ov.style.backgroundPosition="center";
+  ov.querySelector(".who").textContent="🏆 천하통일";ovBig.innerHTML='<span style="color:'+FACTIONS[f].color+'">'+FACTIONS[f].name+"</span> 천하 통일";
   const cnt=computeBonus()[f],lastFall=stats.capFalls.length?stats.capFalls[stats.capFalls.length-1]:null;
   let html="<b>"+(1+((tick/50)|0))+"년</b> 만에 천하 통일 · 일기토 <b>"+stats.duels+"회</b> · 정복한 수도 <b>"+stats.capFalls.length+"</b>곳<br>"+FACTIONS[f].name+" 보유 자원 — 철 "+cnt[0]+" · 식량 "+cnt[1]+" · 금 "+cnt[2];
   if(lastFall)html+="<br>최후의 함락 — "+FACTIONS[lastFall.loser].name+" 수도";
@@ -729,7 +739,7 @@ function loop(t){
 requestAnimationFrame(loop);
 
 function play(){if(winner>=0)return;running=true;ov.classList.add("hidden");lastT=0;document.getElementById("btnPlay").textContent="⏸ 정지";sndResume();padStart();}
-function pause(){running=false;document.getElementById("btnPlay").textContent="▶ 계속";padStop();}
+function pause(){running=false;document.getElementById("btnPlay").textContent="▶ 계속";padStop();bgmStop();}
 document.getElementById("btnPlay").onclick=()=>{running?pause():play();};
 document.getElementById("ovStart").onclick=()=>{if(winner>=0)init((Math.random()*1e9)>>>0);play();};
 document.getElementById("ovSeed").onclick=()=>init((Math.random()*1e9)>>>0);
