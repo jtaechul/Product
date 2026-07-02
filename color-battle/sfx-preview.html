@@ -1,0 +1,30 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>천하쟁패 — 효과음 미리듣기</title>
+<style>
+body{margin:0;background:#141824;color:#e7ecf5;font-family:system-ui,sans-serif;padding:18px;}
+h1{font-size:18px;margin:0 0 4px}p{color:#9aa6bb;font-size:13px;margin:0 0 16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{appearance:none;border:1px solid #313a52;background:#1e2536;color:#e7ecf5;
+ border-radius:12px;padding:16px 10px;font-size:15px;font-weight:600;cursor:pointer}
+button:active{background:#2a3550}
+small{display:block;color:#8b97ad;font-weight:400;font-size:11px;margin-top:4px}
+.all{grid-column:1/3;background:#2d5cff;border-color:#2d5cff}
+</style></head><body>
+<h1>천하쟁패 효과음 미리듣기</h1>
+<p>버튼을 누르면 그 효과음이 재생됩니다. 마음에 안 드는 게 있으면 이름을 알려주세요.</p>
+<div class="grid" id="g"></div>
+<script>
+const SR_LIST=[
+ ["capture","지역 점령"],["resource","자원지 획득"],["repel","공격 격퇴"],["clash","병력 충돌"],
+ ["siegeStart","공성전 시작"],["siegeHit","성벽 타격"],["breach","성벽 돌파"],
+ ["duelStart","일기토 시작"],["duelWin","일기토 승리"],["death","세력 멸망"],["victory","천하통일"]];
+let ctx,buf={};
+function ac(){if(!ctx)ctx=new (window.AudioContext||window.webkitAudioContext)();if(ctx.state==="suspended")ctx.resume();return ctx;}
+function load(n){return fetch("assets/sfx/"+n+".wav").then(r=>r.arrayBuffer()).then(a=>ac().decodeAudioData(a)).then(b=>buf[n]=b);}
+function play(n){ac();(buf[n]?Promise.resolve():load(n)).then(()=>{const s=ctx.createBufferSource();s.buffer=buf[n];s.connect(ctx.destination);s.start();});}
+const g=document.getElementById("g");
+SR_LIST.forEach(([n,ko])=>{const b=document.createElement("button");b.innerHTML=ko+"<small>"+n+"</small>";b.onclick=()=>play(n);g.appendChild(b);});
+const all=document.createElement("button");all.className="all";all.textContent="▶ 전부 순서대로 듣기";
+all.onclick=()=>{ac();SR_LIST.forEach(([n],i)=>setTimeout(()=>play(n),i*900));};g.appendChild(all);
+</script></body></html>
