@@ -179,7 +179,7 @@ let provOf=new Int16Array(MAPRES*MAPRES), isBorder=new Uint8Array(MAPRES*MAPRES)
 let terrainRGB=new Uint8Array(MAPRES*MAPRES*3);
 let H_FIELD=null, pv=[];
 let seed=0,rand=null,tick=0,running=false,winner=-1,speed=3,acc=0,lastT=0,dirty=true;
-let marches=[], impacts=[], floats=[], duel={active:false}, siege={active:false}, deathQueue=[], deathAnim=null;
+let marches=[], impacts=[], floats=[], duel={active:false}, siege={active:false}, deathQueue=[], deathAnim=null, pendingWin=false;
 let attackMul=new Float64Array(K),prodMul=new Float64Array(K),speedMul=new Float64Array(K);
 let moraleMul=new Float64Array(K).fill(1), moraleLeft=new Int32Array(K);
 let alive=new Array(K).fill(true), stats={duels:0,capFalls:[]}, leaderF=0;
@@ -365,7 +365,7 @@ function init(sv){
   resSel.forEach((p,k)=>p.res=k%3);
   for(const p of pv){if(p.terrain===T_SEA){p.owner=NEU;p.garrison=0;continue;}p.owner=NEU;p.garrison=isWater(p.terrain)?3:8+((rand()*11)|0);p.cap=false;}
   caps.forEach((c,f)=>{c.owner=f;c.cap=true;c.garrison=P.capGarrison;});
-  marches=[];impacts=[];floats=[];duel={active:false};siege={active:false};deathQueue=[];deathAnim=null;
+  marches=[];impacts=[];floats=[];duel={active:false};siege={active:false};deathQueue=[];deathAnim=null;pendingWin=false;
   moraleMul.fill(1);moraleLeft.fill(0);alive.fill(true);stats={duels:0,sieges:0,capFalls:[]};leaderF=0;initRoster();
   for(const p of pv){p.moveCd=(P.moveCdMin+((rand()*(P.moveCdMax-P.moveCdMin))|0));p.flash=0;}
   tick=0;winner=-1;running=false;dirty=true;computeBonus();
@@ -406,7 +406,7 @@ function step(){
   tick++;
   for(let f=0;f<K;f++)if(alive[f]&&provinces(f).length===0){alive[f]=false;deathQueue.push(f);dirty=true;}
   let living=0,last=-1;for(let f=0;f<K;f++)if(alive[f]){living++;last=f;}
-  if(living<=1||tick>=P.maxTicks){let w=last,wc=-1;for(let f=0;f<K;f++){const n=provinces(f).length;if(n>wc){wc=n;w=f;}}winner=w;running=false;win();}
+  if(living<=1||tick>=P.maxTicks){let w=last,wc=-1;for(let f=0;f<K;f++){const n=provinces(f).length;if(n>wc){wc=n;w=f;}}winner=w;running=false;pendingWin=true;}
 }
 function arrive(mv){const q=pv[mv.to],f=mv.f;const raw=mv.troops;let troops=raw*ARRIVE_MUL[q.terrain];
   if(isWater(q.terrain)&&raw-troops>=1)float(q.cx,q.cy-2,"-"+Math.round(raw-troops)+" 도하",FACTIONS[f].color);
@@ -717,6 +717,7 @@ function win(){const f=winner;padStop();Sfx.victory();ov.querySelector(".who").t
 function loop(t){
   if(!duel.active&&!siege.active&&!deathAnim&&deathQueue.length){deathAnim={f:deathQueue.shift(),start:performance.now(),dur:1300};Sfx.death();}
   if(deathAnim){if(performance.now()-deathAnim.start>=deathAnim.dur)deathAnim=null;else{draw();requestAnimationFrame(loop);lastT=0;return;}}
+  if(pendingWin&&!deathAnim&&!deathQueue.length&&!siege.active&&!duel.active){pendingWin=false;win();draw();requestAnimationFrame(loop);lastT=0;return;}
   if(siege.active||duel.active){draw();requestAnimationFrame(loop);lastT=0;return;}
   if(running){if(!lastT)lastT=t;acc+=(t-lastT)/1000*P.baseTPS*speed;lastT=t;let n=0;while(acc>=1&&n<30){step();acc--;n++;if(!running||duel.active||siege.active||deathQueue.length)break;}refresh();}
   else lastT=0;
