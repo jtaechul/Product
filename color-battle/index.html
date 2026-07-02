@@ -171,6 +171,7 @@ const P={
   capGarrison:40, capDef:3.5, mtnDef:1.6,
   ironBonus:0.18, foodBonus:0.16, goldBonus:0.12,
   duelRounds:4,
+  siegeMinThreat:0.75, siegeCdTicks:90,   // 공성전은 성벽에 실질 위협(수비의 75%↑)일 때 + 쿨다운 90틱 뒤에만 (희소성 P5·P8)
   moraleWin:1.4, moraleDur:180, tintLand:0.55, tintWater:0.5,
   maxTicks:9000, baseTPS:10,
 };
@@ -179,7 +180,7 @@ let provOf=new Int16Array(MAPRES*MAPRES), isBorder=new Uint8Array(MAPRES*MAPRES)
 let terrainRGB=new Uint8Array(MAPRES*MAPRES*3);
 let H_FIELD=null, pv=[];
 let seed=0,rand=null,tick=0,running=false,winner=-1,speed=3,acc=0,lastT=0,dirty=true;
-let marches=[], impacts=[], floats=[], duel={active:false}, siege={active:false}, deathQueue=[], deathAnim=null, pendingWin=false;
+let marches=[], impacts=[], floats=[], duel={active:false}, siege={active:false}, deathQueue=[], deathAnim=null, pendingWin=false, lastSiegeTick=-999;
 let attackMul=new Float64Array(K),prodMul=new Float64Array(K),speedMul=new Float64Array(K);
 let moraleMul=new Float64Array(K).fill(1), moraleLeft=new Int32Array(K);
 let alive=new Array(K).fill(true), stats={duels:0,capFalls:[]}, leaderF=0;
@@ -267,7 +268,9 @@ let BGM=null,BGM_ENDING=null;const BGM_VOL=0.32;
 function bgmEl(src){const a=new Audio(src);a.loop=true;a.preload="auto";a.addEventListener("error",()=>{a._err=true;});return a;}
 function bgmVol(){return SND.muted?0:BGM_VOL;}
 function bgmPlay(){if(BGM_ENDING&&!BGM_ENDING._err){try{BGM_ENDING.pause();}catch(e){}}if(!BGM)BGM=bgmEl("assets/bgm/main.mp3");if(BGM._err)return false;BGM.volume=bgmVol();const p=BGM.play();if(p&&p.catch)p.catch(()=>{});return true;}
-function bgmEndingPlay(){if(BGM&&!BGM._err){try{BGM.pause();}catch(e){}}if(!BGM_ENDING)BGM_ENDING=bgmEl("assets/bgm/ending.mp3");if(BGM_ENDING._err)return false;BGM_ENDING.currentTime=0;BGM_ENDING.volume=bgmVol();const p=BGM_ENDING.play();if(p&&p.catch)p.catch(()=>{});return true;}
+function bgmEndingPlay(){if(BGM&&!BGM._err){try{BGM.pause();}catch(e){}}if(!BGM_ENDING)BGM_ENDING=bgmEl("assets/bgm/ending.mp3");if(BGM_ENDING._err)return false;try{BGM_ENDING.muted=false;BGM_ENDING.currentTime=0;}catch(e){}BGM_ENDING.volume=bgmVol();const p=BGM_ENDING.play();if(p&&p.catch)p.catch(()=>{});return true;}
+// 엔딩 음악은 승리 시점(클릭 없음)에 재생돼 모바일 자동재생 정책에 막힘 → 시작 클릭(제스처) 때 미리 '해제(prime)'
+function bgmPrime(){if(!BGM_ENDING)BGM_ENDING=bgmEl("assets/bgm/ending.mp3");if(BGM_ENDING._err||BGM_ENDING._primed)return;BGM_ENDING._primed=true;try{BGM_ENDING.muted=true;const p=BGM_ENDING.play();if(p&&p.then)p.then(()=>{try{BGM_ENDING.pause();BGM_ENDING.currentTime=0;BGM_ENDING.muted=false;}catch(e){}}).catch(()=>{try{BGM_ENDING.muted=false;}catch(e){}});}catch(e){}}
 function bgmStop(){[BGM,BGM_ENDING].forEach(b=>{if(b&&!b._err){try{b.pause();}catch(e){}}});}
 function sndMute(m){SND.muted=m;try{localStorage.setItem("cb_mute",m?"1":"0");}catch(e){}if(SND.master)SND.master.gain.setTargetAtTime(m?0:0.5,SND.ctx.currentTime,0.05);const v=bgmVol();if(BGM&&!BGM._err)BGM.volume=v;if(BGM_ENDING&&!BGM_ENDING._err)BGM_ENDING.volume=v;}
 function env(node,t0,a,d,peak){const g=SND.ctx.createGain();g.gain.setValueAtTime(0.0001,t0);g.gain.linearRampToValueAtTime(peak,t0+a);g.gain.exponentialRampToValueAtTime(0.0001,t0+a+d);node.connect(g);g.connect(SND.master);return g;}
@@ -375,7 +378,7 @@ function init(sv){
   resSel.forEach((p,k)=>p.res=k%3);
   for(const p of pv){if(p.terrain===T_SEA){p.owner=NEU;p.garrison=0;continue;}p.owner=NEU;p.garrison=isWater(p.terrain)?3:8+((rand()*11)|0);p.cap=false;}
   caps.forEach((c,f)=>{c.owner=f;c.cap=true;c.garrison=P.capGarrison;});
-  marches=[];impacts=[];floats=[];duel={active:false};siege={active:false};deathQueue=[];deathAnim=null;pendingWin=false;
+  marches=[];impacts=[];floats=[];duel={active:false};siege={active:false};deathQueue=[];deathAnim=null;pendingWin=false;lastSiegeTick=-999;
   moraleMul.fill(1);moraleLeft.fill(0);alive.fill(true);stats={duels:0,sieges:0,capFalls:[]};leaderF=0;initRoster();
   for(const p of pv){p.moveCd=(P.moveCdMin+((rand()*(P.moveCdMax-P.moveCdMin))|0));p.flash=0;}
   tick=0;winner=-1;running=false;dirty=true;computeBonus();
@@ -422,9 +425,13 @@ function step(){
 function arrive(mv){const q=pv[mv.to],f=mv.f;const raw=mv.troops;let troops=raw*ARRIVE_MUL[q.terrain];
   if(isWater(q.terrain)&&raw-troops>=1)float(q.cx,q.cy-2,"-"+Math.round(raw-troops)+" 도하",FACTIONS[f].color);
   if(q.owner===f){q.garrison+=troops;return;}
-  // 수도로의 유의미한 공격 → 공성전 연출(성벽 게이지) → 돌파 시 일기토 피날레. 쿨다운으로 희소성 유지(P5·P8)
-  // 수도가 공격받으면 무조건 공성전 연출. 일기토는 공성전 돌파(수비 패배) 시에만 — 희소한 클라이맥스(P8)
-  if(q.cap&&q.owner>=0){startSiege(f,q.owner,q,troops);return;}
+  // 수도 공격이라도 (1) 성벽에 실질 위협이고 (2) 최근 공성전 쿨다운이 지났을 때만 공성전 연출.
+  // 약한 견제나 쿨다운 중이면 조용히 일반 전투로 처리 → 공성전 남발 방지(P5 리듬·P8 희소성)
+  if(q.cap&&q.owner>=0){
+    const wallMax=q.garrison*terrDef(q);
+    if(troops>=wallMax*P.siegeMinThreat&&tick-lastSiegeTick>=P.siegeCdTicks){lastSiegeTick=tick;startSiege(f,q.owner,q,troops);return;}
+    battle(f,q,troops);return;
+  }
   battle(f,q,troops);}
 function capFall(prev,f){Sfx.death();banner(FACTIONS[prev].name+" 수도 함락 — "+FACTIONS[f].name+"에 편입!",FACTIONS[f].color);stats.capFalls.push({loser:prev,by:f});absorb(prev,f);}
 function battle(f,q,troops){const defE=q.garrison*terrDef(q);impacts.push({x:q.cx,y:q.cy,t0:performance.now(),col:FACTIONS[f].color,big:troops>defE});
@@ -738,7 +745,7 @@ function loop(t){
 }
 requestAnimationFrame(loop);
 
-function play(){if(winner>=0)return;running=true;ov.classList.add("hidden");lastT=0;document.getElementById("btnPlay").textContent="⏸ 정지";sndResume();padStart();}
+function play(){if(winner>=0)return;running=true;ov.classList.add("hidden");lastT=0;document.getElementById("btnPlay").textContent="⏸ 정지";sndResume();bgmPrime();padStart();}
 function pause(){running=false;document.getElementById("btnPlay").textContent="▶ 계속";padStop();bgmStop();}
 document.getElementById("btnPlay").onclick=()=>{running?pause():play();};
 document.getElementById("ovStart").onclick=()=>{if(winner>=0)init((Math.random()*1e9)>>>0);play();};
