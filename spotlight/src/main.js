@@ -26,6 +26,8 @@ async function boot() {
   const manager = new SceneManager(app);
   logScreen("title");
   await manager.change(new TitleScene());
+  // 타이틀 준비 완료 → 회사 로고 스플래시를 걷어내고 바로 초기화면 노출
+  try { window.__hideSplash && window.__hideSplash(); } catch (e) {}
 }
 
 // @font-face 폰트를 실제 로드(브라우저가 글리프를 갖추도록).
@@ -41,6 +43,7 @@ async function loadFonts() {
 
 boot().catch((err) => {
   console.error("[SPOTLIGHT] boot failed:", err);
+  try { window.__hideSplash && window.__hideSplash(); } catch (e) {} // 스플래시를 걷어 에러 메시지가 보이도록
   const el = document.getElementById("loading");
   if (el) el.textContent = "로드 실패: " + err.message;
 });
