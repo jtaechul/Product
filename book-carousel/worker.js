@@ -1005,6 +1005,13 @@ const GEMINI_SAFE_ANATOMY =
   'Flat 2D Japanese anime illustration, clean cel shading, soft anime eyes — not photorealistic, not 3D. ' +
   'Anatomy must be natural and correct: head and neck aligned with the body, no twisted neck, no extra or missing limbs, no malformed hands, no distorted eyes.';
 
+// Gemini 키 해석: Cloudflare 시크릿(env.GEMINI_API_KEY) 우선, 없으면 앱에서 저장한
+// KV 값(gemini_api_key)을 쓴다 → 사용자가 터미널·대시보드 없이 앱 화면에서 키를 넣게.
+async function getGeminiKey(env) {
+  if (env?.GEMINI_API_KEY) return env.GEMINI_API_KEY;
+  try { return (await env?.PENDING_POSTS?.get('gemini_api_key')) || null; } catch { return null; }
+}
+
 async function generateGeminiImageBytes(apiKey, prompt) {
   if (!apiKey) return null;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_IMAGE_MODEL}:generateContent?key=${apiKey}`;
@@ -1393,9 +1400,10 @@ async function runStep(env, pipelineId, step) {
       // ⭐ 표지(1페이지)는 Gemini로 우선 생성 — 손·눈 인체 하자 최소화(비용: 표지 1장만).
       // 키 없음·예산초과·실패 시 자동으로 무료 Pollinations 폴백(아래 다운로드 루프가 처리).
       let coverDone = false;
-      if (env.GEMINI_API_KEY && imgData.fullPrompts?.page1 && (await getImageUsage(env)) < DAILY_IMAGE_CAP) {
+      const geminiKey = await getGeminiKey(env);
+      if (geminiKey && imgData.fullPrompts?.page1 && (await getImageUsage(env)) < DAILY_IMAGE_CAP) {
         await setActive('표지 이미지 생성 중 (Gemini)...');
-        const g = await generateGeminiImageBytes(env.GEMINI_API_KEY, imgData.fullPrompts.page1);
+        const g = await generateGeminiImageBytes(geminiKey, imgData.fullPrompts.page1);
         if (g?.bytes?.length) {
           await env.PENDING_POSTS.put(`img_${pipelineId}_page1`, g.bytes, { expirationTtl: 24 * 3600 });
           await bumpImageUsage(env);
@@ -2585,7 +2593,25 @@ export default {
           const used = await getApiUsage(env);
           const imgUsed = await getImageUsage(env);
           result = { success: true, day: _kstDay(), used, softCap: DAILY_SOFT_CAP, hardCap: DAILY_HARD_CAP, savingMode: used > DAILY_SOFT_CAP, blocked: used > DAILY_HARD_CAP,
-            geminiCover: !!env.GEMINI_API_KEY, imageUsed: imgUsed, imageCap: DAILY_IMAGE_CAP };
+            geminiCover: !!(await getGeminiKey(env)), imageUsed: imgUsed, imageCap: DAILY_IMAGE_CAP };
+        }
+        else if (url.pathname === '/api/gemini-key') {
+          // 앱에서 Gemini 키 저장/상태확인 (터미널·대시보드 없이). 값은 절대 반환하지 않는다.
+          if (request.method === 'POST') {
+            const key = String(body.key || '').trim();
+            if (!key) { result = { success: false, error: '키가 비어 있습니다.' }; }
+            else if (!/^AIza[0-9A-Za-z_\-]{20,}$/.test(key)) { result = { success: false, error: '키 형식이 올바르지 않습니다. AIza로 시작하는 Google AI Studio 키를 넣어주세요.' }; }
+            else if (env.GEMINI_API_KEY) { result = { success: false, error: '이미 Cloudflare 시크릿으로 설정돼 있어 앱 저장이 필요 없습니다.' }; }
+            else {
+              // 저장 전에 실제로 이미지 1장 생성해 키 유효성 검증(1x1 테스트는 불가하므로 짧은 프롬프트)
+              const test = await generateGeminiImageBytes(key, 'a small simple flat pastel illustration of a closed book on a table, no text');
+              if (!test?.bytes?.length) { result = { success: false, error: '이 키로 이미지 생성에 실패했습니다. 키가 맞는지, Google AI Studio에서 이미지(Gemini) 사용이 켜져 있는지 확인해주세요.' }; }
+              else { await env.PENDING_POSTS.put('gemini_api_key', key); result = { success: true, message: '표지 AI 키가 저장되었습니다. 다음 제작부터 표지가 Gemini로 생성됩니다.' }; }
+            }
+          } else {
+            const has = !!(await getGeminiKey(env));
+            result = { success: true, configured: has, source: env.GEMINI_API_KEY ? 'secret' : (has ? 'app' : 'none') };
+          }
         }
         else if (url.pathname === '/api/reset-model-cache') {
           await clearModelCache(env);

@@ -694,6 +694,20 @@
     </div>
     <div class="archive-body">
       <div id="archiveListView">
+        <!-- 표지 AI(Gemini) 키 설정 — 터미널/대시보드 없이 앱에서 붙여넣기만 -->
+        <div id="geminiKeyBox" style="background:var(--gray-50,#f7f7fb);border:1px solid var(--gray-200,#e6e6ee);border-radius:12px;padding:14px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px;">표지 이미지 AI (Gemini) 설정</div>
+          <div id="geminiKeyStatus" style="font-size:12px;color:var(--gray-600,#777);margin-bottom:8px;">상태 확인 중…</div>
+          <div style="font-size:11.5px;color:var(--gray-600,#777);line-height:1.5;margin-bottom:8px;">
+            표지(1페이지)를 손·눈이 깨끗한 Gemini로 생성합니다. 키 발급:
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--primary);font-weight:600;">Google AI Studio에서 키 만들기</a>
+            → 생성된 <b>AIza…</b> 키를 아래에 붙여넣고 저장하세요. (한 번만 하면 됩니다)
+          </div>
+          <div style="display:flex;gap:6px;">
+            <input type="password" id="geminiKeyInput" placeholder="AIza... 키 붙여넣기" style="flex:1;min-width:0;padding:9px 10px;border:1px solid var(--gray-300,#ccd);border-radius:8px;font-size:13px;font-family:inherit;">
+            <button id="geminiKeySaveBtn" style="flex-shrink:0;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">저장</button>
+          </div>
+        </div>
         <div id="archiveList"></div>
       </div>
       <div id="archiveDetailView" style="display:none;"></div>
@@ -2817,8 +2831,42 @@ document.getElementById('libRegBtn').addEventListener('click', async () => {
 const _archOverlay = document.getElementById('archiveOverlay');
 function archEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-document.getElementById('openArchiveBtn').addEventListener('click', () => { _archOverlay.classList.add('open'); showArchiveList(); });
+document.getElementById('openArchiveBtn').addEventListener('click', () => { _archOverlay.classList.add('open'); showArchiveList(); refreshGeminiKeyStatus(); });
 document.getElementById('closeArchiveBtn').addEventListener('click', () => _archOverlay.classList.remove('open'));
+
+// ── 표지 AI(Gemini) 키 상태/저장 ──
+async function refreshGeminiKeyStatus() {
+  const el = document.getElementById('geminiKeyStatus');
+  if (!el) return;
+  try {
+    const s = await apiFetch('/api/gemini-key'); // GET
+    if (s.configured) {
+      el.textContent = s.source === 'secret'
+        ? '✓ 설정됨 (Cloudflare 시크릿) — 표지가 Gemini로 생성됩니다.'
+        : '✓ 설정됨 (앱 저장) — 표지가 Gemini로 생성됩니다.';
+      el.style.color = '#1a8a4a';
+      const box = document.getElementById('geminiKeyInput'); if (box) box.placeholder = '키가 이미 저장됨 — 바꾸려면 새 키 붙여넣기';
+    } else {
+      el.textContent = '아직 설정 안 됨 — 지금은 표지가 무료 이미지로 생성됩니다(하자 가능).';
+      el.style.color = 'var(--gray-600,#777)';
+    }
+  } catch (e) { el.textContent = '상태 확인 실패: ' + e.message; }
+}
+document.getElementById('geminiKeySaveBtn')?.addEventListener('click', async () => {
+  const inp = document.getElementById('geminiKeyInput');
+  const btn = document.getElementById('geminiKeySaveBtn');
+  const key = (inp.value || '').trim();
+  if (!key) { showToast('키를 붙여넣어 주세요', 'warning'); return; }
+  btn.disabled = true; btn.textContent = '확인 중…';
+  try {
+    const r = await apiFetch('/api/gemini-key', { key }); // POST — 서버가 실제 생성 테스트 후 저장
+    showToast(r.message || '저장되었습니다', 'success');
+    inp.value = '';
+    await refreshGeminiKeyStatus();
+  } catch (e) {
+    showToast('저장 실패: ' + e.message, 'error');
+  } finally { btn.disabled = false; btn.textContent = '저장'; }
+});
 _archOverlay.addEventListener('click', (e) => { if (e.target === _archOverlay) _archOverlay.classList.remove('open'); });
 
 async function showArchiveList() {
