@@ -45,6 +45,33 @@
   .overlay .btns button.primary{background:linear-gradient(180deg,#ffe08a,#ffd23a 58%,#e9b71e);color:#221a02;border:none;
     box-shadow:0 6px 24px rgba(255,210,58,.30),inset 0 1px 0 #fff9,inset 0 -2px 0 #b8860b55}
   .overlay .btns button.primary:hover{background:linear-gradient(180deg,#ffe9a5,#ffd94f 58%,#f0be24)}
+  /* ===== 오프닝(타이틀) 전용 시네마틱 스타일 ===== */
+  .wordmark,.ornament{display:none}
+  .overlay.titlescreen{overflow:hidden;background:
+    radial-gradient(120% 82% at 50% -10%,#2a4a7e5e,transparent 60%),
+    radial-gradient(150% 100% at 50% 114%,#4a350c5e,transparent 60%),
+    linear-gradient(180deg,#0a1122 0%,#070a12 100%)}
+  .overlay.titlescreen::before{content:"";position:absolute;inset:-45%;z-index:0;pointer-events:none;
+    background:conic-gradient(from 0deg,transparent 0 76%,#ffd23a10 86%,#ffe9a51c 90%,transparent 96%);animation:sweep 16s linear infinite}
+  .overlay.titlescreen::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;box-shadow:inset 0 0 130px 34px #000a}
+  @keyframes sweep{to{transform:rotate(1turn)}}
+  .overlay.titlescreen>*{position:relative;z-index:1}
+  .overlay.titlescreen .who{color:#c9a94e}
+  .overlay.titlescreen .gametitle{background:linear-gradient(110deg,#b9820f 0%,#ffd23a 32%,#fff6cf 48%,#ffd23a 64%,#b9820f 100%);
+    background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:foil 6.5s ease-in-out infinite}
+  @keyframes foil{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  .overlay.titlescreen .wordmark{display:block;font-size:11px;letter-spacing:.5em;font-weight:800;color:#8390a8;text-transform:uppercase;margin:-2px 0 2px 6px}
+  .overlay.titlescreen .ornament{display:block;position:relative;height:1px;width:158px;margin:12px 0 6px;
+    background:linear-gradient(90deg,transparent,#c9a94e00 6%,#c9a94e99 50%,#c9a94e00 94%,transparent)}
+  .overlay.titlescreen .ornament::before{content:"";position:absolute;left:50%;top:50%;width:7px;height:7px;background:#ffd23a;
+    transform:translate(-50%,-50%) rotate(45deg);box-shadow:0 0 9px 1px #ffd23aaa}
+  .fdots{display:flex;gap:12px;margin:2px 0}
+  .fdots i{width:15px;height:21px;background:currentColor;border-radius:2px;
+    clip-path:polygon(0 0,100% 0,100% 72%,50% 100%,0 72%);
+    box-shadow:0 0 13px 1px currentColor,inset 0 1px 0 #fff7,inset 0 -4px 5px #0005;animation:sway 3.2s ease-in-out infinite}
+  .fdots i:nth-child(even){animation-delay:.5s}
+  .fdots i:nth-child(3n){animation-delay:.9s}
+  @keyframes sway{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-2px) rotate(3deg)}}
   .overlay .summary{font-size:13px;color:var(--dim);line-height:1.7;max-width:82%}
   .overlay .summary b{color:var(--text)}
   .banner{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:999px;font-weight:900;font-size:14px;background:#0d1220ee;border:1px solid var(--line);opacity:0;pointer-events:none;box-shadow:0 8px 30px #0008;white-space:nowrap;z-index:7}
@@ -135,8 +162,10 @@
           <div id="overlay" class="overlay">
             <div class="who">여섯 세력 · 하나의 천하</div>
             <div class="big" id="ovBig"><span class="gametitle">천하쟁패</span></div>
+            <div class="wordmark" id="ovWord">Color&nbsp;·&nbsp;Battle</div>
             <div class="tagline" id="ovTag">마지막까지 남는 색은 어느 세력일까요</div>
             <div class="fdots" id="fdots"></div>
+            <div class="ornament"></div>
             <div class="btns"><button class="primary" id="ovStart">관전 시작</button><button id="ovSeed">새 지도</button></div>
           </div>
         </div>
@@ -192,6 +221,7 @@ const P={
   ironBonus:0.18, foodBonus:0.16, goldBonus:0.12,
   duelRounds:4,
   siegeMinThreat:0.75, siegeCdTicks:90,   // 공성전은 성벽에 실질 위협(수비의 75%↑)일 때 + 쿨다운 90틱 뒤에만 (희소성 P5·P8)
+  dynPace:true, dynFast:1.7, dynSlow:0.5,  // 동적 페이싱: 평시 가속(×1.7) · 함락/자원점령 직후 감속(×0.5→회복) (P5 리듬)
   moraleWin:1.4, moraleDur:180, tintLand:0.55, tintWater:0.5,
   maxTicks:9000, baseTPS:10,
 };
@@ -200,7 +230,10 @@ let provOf=new Int16Array(MAPRES*MAPRES), isBorder=new Uint8Array(MAPRES*MAPRES)
 let terrainRGB=new Uint8Array(MAPRES*MAPRES*3);
 let H_FIELD=null, pv=[];
 let seed=0,rand=null,tick=0,running=false,winner=-1,speed=3,acc=0,lastT=0,dirty=true;
-let marches=[], impacts=[], floats=[], duel={active:false}, siege={active:false}, deathQueue=[], deathAnim=null, pendingWin=false, lastSiegeTick=-999;
+let marches=[], impacts=[], floats=[], duel={active:false}, siege={active:false}, deathQueue=[], deathAnim=null, pendingWin=false, lastSiegeTick=-999, dynSlowUntil=0;
+function pulseSlow(ms){dynSlowUntil=Math.max(dynSlowUntil,performance.now()+ms);} // 하이라이트 직후 잠깐 감속
+function dynMul(){if(!P.dynPace)return 1;const rem=dynSlowUntil-performance.now();
+  if(rem>0){const k=Math.min(1,rem/700);return P.dynSlow+(1-k)*(P.dynFast-P.dynSlow);}return P.dynFast;}
 let attackMul=new Float64Array(K),prodMul=new Float64Array(K),speedMul=new Float64Array(K);
 let moraleMul=new Float64Array(K).fill(1), moraleLeft=new Int32Array(K);
 let alive=new Array(K).fill(true), stats={duels:0,capFalls:[]}, leaderF=0;
@@ -405,7 +438,7 @@ function init(sv){
   document.getElementById("seedIn").value=seed;
   ov.querySelector(".who").textContent="여섯 세력 · 하나의 천하";document.getElementById("ovSummary").style.display="none";
   applyTitleBg();bgmStop();
-  ovBig.innerHTML='<span class="gametitle">천하쟁패</span>';ovTag.style.display="";fdots.style.display="flex";
+  ovBig.innerHTML='<span class="gametitle">천하쟁패</span>';ovTag.style.display="";fdots.style.display="flex";ov.classList.add("titlescreen");
   document.getElementById("ovStart").textContent="관전 시작";ov.querySelector(".btns").style.display="flex";ov.classList.remove("hidden");
   buildMap();refresh();draw();
 }
@@ -455,13 +488,13 @@ function arrive(mv){const q=pv[mv.to],f=mv.f;if(!alive[f])return; // 멸망 세�
     battle(f,q,troops);return;
   }
   battle(f,q,troops);}
-function capFall(prev,f){Sfx.death();banner(FACTIONS[prev].name+" 수도 함락 — "+FACTIONS[f].name+"에 편입!",FACTIONS[f].color);stats.capFalls.push({loser:prev,by:f});absorb(prev,f);}
+function capFall(prev,f){Sfx.death();pulseSlow(1100);banner(FACTIONS[prev].name+" 수도 함락 — "+FACTIONS[f].name+"에 편입!",FACTIONS[f].color);stats.capFalls.push({loser:prev,by:f});absorb(prev,f);}
 function battle(f,q,troops){const defE=q.garrison*terrDef(q);impacts.push({x:q.cx,y:q.cy,t0:performance.now(),col:FACTIONS[f].color,big:troops>defE});
   const tag=q.terrain===T_MTN?" 산":"";
   if(troops>defE){const prev=q.owner;q.owner=f;q.garrison=Math.max(1,troops-defE);q.flash=8;dirty=true;
     float(q.cx,q.cy,Math.round(troops)+" › "+Math.round(defE)+tag,FACTIONS[f].color,true);
     if(q.cap&&prev>=0){q.cap=false;capFall(prev,f);}
-    else if(q.res>=0){banner(NODE_NAME[q.res]+" → "+FACTIONS[f].name+" 점령",FACTIONS[f].color);Sfx.resource();}
+    else if(q.res>=0){pulseSlow(500);banner(NODE_NAME[q.res]+" → "+FACTIONS[f].name+" 점령",FACTIONS[f].color);Sfx.resource();}
     else Sfx.capture();
     computeBonus();}
   else{Sfx.repel();q.garrison=Math.max(1,(defE-troops)/terrDef(q));float(q.cx,q.cy,"격퇴 "+Math.round(troops)+" ‹ "+Math.round(defE)+tag,q.owner>=0?FACTIONS[q.owner].color:"#c3ccdb");}}
@@ -713,7 +746,7 @@ function applyTitleBg(){ov.style.backgroundImage=titleReady?"linear-gradient(rgb
 const ovSum=document.createElement("div");ovSum.className="summary";ovSum.id="ovSummary";ovSum.style.display="none";ovBig.after(ovSum);
 function win(){const f=winner;padStop();bgmEndingPlay();Sfx.victory();
   ov.style.backgroundImage="linear-gradient(rgba(6,8,13,.42),rgba(6,8,13,.86)), url('assets/ending/"+FACTIONS[f].sig+".jpg')";ov.style.backgroundSize="cover";ov.style.backgroundPosition="center";
-  ovTag.style.display="none";fdots.style.display="none";
+  ovTag.style.display="none";fdots.style.display="none";ov.classList.remove("titlescreen");
   ov.querySelector(".who").textContent="천하통일";ovBig.innerHTML='<span style="color:'+FACTIONS[f].color+'">'+FACTIONS[f].name+"</span> 천하 통일";
   const cnt=computeBonus()[f],lastFall=stats.capFalls.length?stats.capFalls[stats.capFalls.length-1]:null;
   let html="<b>"+(1+((tick/50)|0))+"년</b> 만에 천하 통일 · 일기토 <b>"+stats.duels+"회</b> · 정복한 수도 <b>"+stats.capFalls.length+"</b>곳<br>"+FACTIONS[f].name+" 보유 자원 — 철 "+cnt[0]+" · 식량 "+cnt[1]+" · 금 "+cnt[2];
@@ -727,7 +760,7 @@ function loop(t){
   if(deathAnim){if(performance.now()-deathAnim.start>=deathAnim.dur)deathAnim=null;else{draw();requestAnimationFrame(loop);lastT=0;return;}}
   if(pendingWin&&!deathAnim&&!deathQueue.length&&!siege.active&&!duel.active){pendingWin=false;win();draw();requestAnimationFrame(loop);lastT=0;return;}
   if(siege.active||duel.active){draw();requestAnimationFrame(loop);lastT=0;return;}
-  if(running){if(!lastT)lastT=t;acc+=(t-lastT)/1000*P.baseTPS*speed;lastT=t;let n=0;while(acc>=1&&n<30){step();acc--;n++;if(!running||duel.active||siege.active||deathQueue.length)break;}refresh();}
+  if(running){if(!lastT)lastT=t;acc+=(t-lastT)/1000*P.baseTPS*speed*dynMul();lastT=t;let n=0;while(acc>=1&&n<30){step();acc--;n++;if(!running||duel.active||siege.active||deathQueue.length)break;}refresh();}
   else lastT=0;
   draw();requestAnimationFrame(loop);
 }
