@@ -1,5 +1,6 @@
-// 세이브/로드 (기획서 9·19번). GameState ↔ localStorage.
+// 세이브/로드 (기획서 9·19번). GameState ↔ 플랫폼 저장소(토스=네이티브 Storage, 웹=localStorage).
 import { GameState } from "./game.js";
+import { storageGet, storageSet, storageRemove } from "./platform.js";
 
 const KEY = "spotlight_save";
 
@@ -7,13 +8,13 @@ export function saveGame(game) {
   try {
     const data = game.toData();
     data.savedAt = Date.now();
-    localStorage.setItem(KEY, JSON.stringify(data));
+    storageSet(KEY, JSON.stringify(data));
     return true;
   } catch (e) { return false; }
 }
 
 export function loadSaveData() {
-  try { const s = localStorage.getItem(KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; }
+  try { const s = storageGet(KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; }
 }
 
 export function loadGame() {
@@ -22,7 +23,7 @@ export function loadGame() {
 }
 
 export function hasSave() { return !!loadSaveData(); }
-export function clearSave() { try { localStorage.removeItem(KEY); } catch (e) {} }
+export function clearSave() { storageRemove(KEY); }
 
 // 저장 시각을 "고2·5월 · 3분 전" 같은 짧은 라벨로
 export function saveLabel() {

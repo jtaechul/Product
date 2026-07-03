@@ -1,4 +1,5 @@
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../config.js";
+import { getNativeInsets } from "../systems/platform.js";
 
 // 씬 전환 + 세로(9:16) 비율 유지 스케일링.
 export class SceneManager {
@@ -64,7 +65,9 @@ export class SceneManager {
     try { return (window.screen && window.screen.orientation && window.screen.orientation.angle) || 0; } catch (e) { return 0; }
   }
 
-  // iOS 안전영역(노치/홈바) 크기 측정
+  // 안전영역(노치/다이나믹 아일랜드/홈바) 크기 측정.
+  // env(safe-area-inset)와 토스 SDK(getSafeAreaInsets) 값 중 큰 쪽을 쓴다 —
+  // 토스 WebView에서는 env()가 0으로 나올 수 있어 SDK 값이 필요하다(풀스크린 심사 필수 항목).
   _safeInsets() {
     const p = document.createElement("div");
     p.style.cssText = "position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);";
@@ -73,6 +76,7 @@ export class SceneManager {
     const top = parseFloat(cs.paddingTop) || 0;
     const bottom = parseFloat(cs.paddingBottom) || 0;
     p.remove();
-    return { top, bottom };
+    const nat = getNativeInsets();
+    return { top: Math.max(top, nat.top), bottom: Math.max(bottom, nat.bottom) };
   }
 }

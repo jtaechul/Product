@@ -1,5 +1,6 @@
 // 엔딩 판정 + 40년 회고 서사 생성 (기획서 15번). 수치는 화면에 노출하지 않는다.
 import { ENDINGS, FIELD_OF, AWARD_OF, bondPeople } from "../data/endings.js";
+import { storageGet, storageSet } from "./platform.js";
 
 export const ENDING_COUNT = ENDINGS.length;
 
@@ -63,16 +64,27 @@ export function computeEnding(game) {
   };
 }
 
-// 엔딩 도감 (localStorage)
+// 엔딩 도감 (플랫폼 저장소: 토스=네이티브 Storage, 웹=localStorage)
 const DEX_KEY = "spotlight_ending_dex";
 export function saveToDex(id) {
   try {
-    const set = new Set(JSON.parse(localStorage.getItem(DEX_KEY) || "[]"));
+    const set = new Set(JSON.parse(storageGet(DEX_KEY) || "[]"));
     set.add(id);
-    localStorage.setItem(DEX_KEY, JSON.stringify([...set]));
+    storageSet(DEX_KEY, JSON.stringify([...set]));
     return set.size;
   } catch (e) { return 0; }
 }
 export function dexCount() {
-  try { return new Set(JSON.parse(localStorage.getItem(DEX_KEY) || "[]")).size; } catch (e) { return 0; }
+  try { return new Set(JSON.parse(storageGet(DEX_KEY) || "[]")).size; } catch (e) { return 0; }
+}
+
+// ── 리더보드용 커리어 점수 (토스게임센터 제출용) ──────────────────────
+// 화면에는 노출하지 않는 내부 점수: 능력치 총합(최대 1000) + 팬(500 상한)
+// + 호평작×15 + 수상×40. 균형 성장·호평·수상이 높을수록 상위.
+export function computeCareerScore(game) {
+  const s = game.stats;
+  const statTotal = Object.values(s).reduce((a, b) => a + (b || 0), 0);
+  const praised = game.filmography.filter((f) => f.grade === "best" || f.grade === "good").length;
+  const awards = Object.keys(AWARD_OF).filter((k) => game.flags.has(k)).length;
+  return Math.round(statTotal + Math.min(game.fans, 500) + praised * 15 + awards * 40);
 }
