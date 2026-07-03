@@ -8,6 +8,12 @@ kv_namespaces = [
   { binding = "PENDING_POSTS", id = "e1b681762f6c43b9be77ede8061aa2dc" }
 ]
 
+# ⭐ Smart Placement — Worker를 사용자(한국) 근처가 아니라 백엔드(api.anthropic.com, 미국)
+# 근처에서 실행한다. 한국에서 접속하면 요청이 홍콩 등 Anthropic이 차단하는 경유지로 나가
+# 모든 모델이 403("Request not allowed")으로 거부되던 문제의 근본 대책.
+[placement]
+mode = "smart"
+
 # Cron Trigger
 #   "* * * * *"  : 매 1분 — 진행중 파이프라인을 한 단계씩 전진 (자가복구)
 #   "0 23 * * *" : 매일 23:00 UTC = 오전 8:00 KST — 일일 자동 캐럿셀 생성
