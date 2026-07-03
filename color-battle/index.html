@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>군웅할거 — MVP v9 (관전 명료성)</title>
+<title>천하쟁패 — 6색 관전 시뮬레이션</title>
 <style>
   :root{--bg:#0a0d13;--panel:#121824;--panel2:#0b0f18;--line:#232c3d;--text:#e8edf6;--dim:#8b97ad;--accent:#ffd23a}
   *{box-sizing:border-box} html,body{margin:0}
@@ -36,20 +36,6 @@
   .banner .dot{width:10px;height:10px;border-radius:3px;flex:none}
   .banner.show{animation:pop 2s ease forwards}
   @keyframes pop{0%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.9)}10%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}82%{opacity:1}100%{opacity:0}}
-  .infobar{display:grid;grid-template-columns:0.8fr 1.2fr;gap:14px}
-  .infobar h3{margin:0 0 3px;font-size:11px;letter-spacing:.16em;color:var(--dim);font-weight:800;text-transform:uppercase}
-  .infobar .subnote{font-size:11px;color:var(--dim);margin:0 0 7px}
-  .legend{font-size:12px;color:var(--dim);line-height:1.9}
-  .legend .li{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-  .legend b{color:var(--text);font-weight:800}
-  .swatch-t{width:13px;height:13px;border-radius:3px;display:inline-block;vertical-align:middle;flex:none}
-  .resmini{display:flex;flex-direction:column;gap:5px}
-  .rm-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;padding:4px 6px;border-radius:7px;background:#0d131f}
-  .rm-row.dead{opacity:.35}
-  .rm-nm{font-weight:800;min-width:52px}
-  .rm-grp{display:inline-flex;align-items:center;gap:3px;color:var(--text);font-weight:800;font-variant-numeric:tabular-nums}
-  .rm-grp.z{opacity:.32;color:var(--dim)}
-  .rm-eff{margin-left:auto;font-size:10px;color:var(--accent);font-weight:800;font-variant-numeric:tabular-nums}
   .board{flex:0 0 300px;min-width:262px;display:flex;flex-direction:column;gap:12px}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px}
   .panel h2{margin:0 0 8px;font-size:12px;letter-spacing:.16em;color:var(--dim);font-weight:800;text-transform:uppercase;display:flex;justify-content:space-between}
@@ -80,7 +66,7 @@
   .seedrow input[type=text]{flex:1;min-width:0;font-family:inherit;font-weight:800;background:#0d131f;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
   .hint{color:var(--dim);font-size:12px;line-height:1.5;margin:2px 2px 0}
   img.ic{vertical-align:middle}
-  @media (max-width:760px){.board{flex:1 1 100%}.infobar{grid-template-columns:1fr}}
+  @media (max-width:760px){.board{flex:1 1 100%}}
 
   /* ===== 녹화(쇼츠 시네마) 모드 — 세로 한 화면(스크롤 없음) 고정 배열 ===== */
   body.cinema{height:100dvh;overflow:hidden;padding:calc(env(safe-area-inset-top,0px) + 8px) 10px calc(env(safe-area-inset-bottom,0px) + 8px)}
@@ -97,7 +83,6 @@
   body.cinema .left{flex:0 0 auto;min-width:0;gap:8px}
   body.cinema .arena-box{padding:6px}
   body.cinema .canvas-stack{width:min(100%,56dvh);margin:0 auto}
-  body.cinema .infobar{display:none}
   body.cinema .board{flex:1 1 auto;min-width:0;min-height:0;overflow:hidden}
   body.cinema .board .panel{padding:9px 11px;height:100%;overflow:hidden}
   body.cinema .controls{display:none}
@@ -137,10 +122,6 @@
             <div class="btns"><button class="primary" id="ovStart">▶ 시작</button><button id="ovSeed">🎲 새 지도</button></div>
           </div>
         </div>
-      </div>
-      <div class="panel infobar">
-        <div><h3>지형</h3><div class="legend" id="legend"></div></div>
-        <div><h3>세력별 자원 → 효과</h3><p class="subnote">자원을 먹을수록 강해진다 (공격·생산·행군 배수)</p><div class="resmini" id="resmini"></div></div>
       </div>
     </div>
     <div class="board">
@@ -687,19 +668,6 @@ for(let f=0;f<K;f++){const r=document.createElement("div");r.className="row";
   r.innerHTML='<div class="rank"></div><div class="id"><div class="idtop">'+ic(FACTIONS[f].sig,FACTIONS[f].color,16)+'<span class="nm">'+FACTIONS[f].name+'</span><span class="mor">사기↑</span></div><span class="gen"></span></div><div class="troop"></div>';
   rowsEl.appendChild(r);rowRef.push({root:r,rank:r.querySelector(".rank"),troop:r.querySelector(".troop"),mor:r.querySelector(".mor"),gen:r.querySelector(".gen")});}
 const pbar=document.getElementById("powerbar"),segs=[];for(let f=0;f<K;f++){const s=document.createElement("div");s.className="seg";s.style.background=FACTIONS[f].color;s.innerHTML='<span class="lab"></span>';pbar.appendChild(s);segs.push({seg:s,lab:s.querySelector(".lab")});}
-const resminiEl=document.getElementById("resmini"),resRef=[];
-for(let f=0;f<K;f++){const r=document.createElement("div");r.className="rm-row";
-  r.innerHTML=ic(FACTIONS[f].sig,FACTIONS[f].color,14)+'<span class="rm-nm">'+FACTIONS[f].name+'</span>'
-    +'<span class="rm-grp gi">'+ic("iron",FACTIONS[f].color,13)+'철 <span class="ri">0</span></span>'
-    +'<span class="rm-grp gf">'+ic("food",FACTIONS[f].color,13)+'식량 <span class="rf">0</span></span>'
-    +'<span class="rm-grp gg">'+ic("gold",FACTIONS[f].color,13)+'금 <span class="rg">0</span></span>'
-    +'<span class="rm-eff"></span>';
-  resminiEl.appendChild(r);resRef.push({root:r,ri:r.querySelector(".ri"),rf:r.querySelector(".rf"),rg:r.querySelector(".rg"),gi:r.querySelector(".gi"),gf:r.querySelector(".gf"),gg:r.querySelector(".gg"),eff:r.querySelector(".rm-eff")});}
-document.getElementById("legend").innerHTML=
-  '<div class="li"><span class="swatch-t" style="background:#5a7048"></span> <b>평야</b> &nbsp; <span class="swatch-t" style="background:#8a8580"></span> <b>산</b> 방어↑</div>'
-  +'<div class="li"><span class="swatch-t" style="background:#468090"></span> <b>강</b> 느림 &nbsp; <span class="swatch-t" style="background:#22406a"></span> <b>바다</b> 매우 느림</div>'
-  +'<div class="li">'+ic("crown","#ffd23a",14)+' <b>선두</b> · '+ic("castle","#dbe3ef",14)+' <b>수도</b> · 숫자=병력 · 원=행군</div>';
-
 function fmt(n){n=Math.round(n);return n>=1000?(n/1000).toFixed(1)+"k":""+n;}
 function troopSum(f){let s=0;for(const p of pv)if(p.owner===f)s+=p.garrison;return s;}
 function refresh(){const cnt=computeBonus();let tot=0;const pw=new Float64Array(K),pc=new Int32Array(K);
@@ -713,9 +681,6 @@ function refresh(){const cnt=computeBonus();let tot=0;const pw=new Float64Array(
   document.getElementById("powerLab").innerHTML="국력 (지역 + 병력 + 자원) · 선두 <b>"+(lead>=0?FACTIONS[lead].name:"-")+"</b>";
   ord.forEach((f,rank)=>{const R=rowRef[f];R.root.style.order=alive[f]?rank:100+rank;R.root.classList.toggle("dead",!alive[f]);R.root.classList.toggle("leader",alive[f]&&f===lead);R.rank.textContent=alive[f]?rank+1:"–";R.troop.textContent=alive[f]?(pc[f]+"지역·"+fmt(troopSum(f))):"멸망";R.mor.classList.toggle("on",alive[f]&&moraleLeft[f]>0);
     if(roster.length){const ch=championOf(f);R.gen.innerHTML="명장 <b>"+RANKS[ch.rank]+" "+ch.name+"</b>"+(ch.wins?" · "+ch.wins+"승":"");}});
-  ord.forEach((f,rank)=>{const R=resRef[f];R.root.style.order=alive[f]?rank:100+rank;R.root.classList.toggle("dead",!alive[f]);
-    R.ri.textContent=cnt[f][0];R.rf.textContent=cnt[f][1];R.rg.textContent=cnt[f][2];R.gi.classList.toggle("z",cnt[f][0]===0);R.gf.classList.toggle("z",cnt[f][1]===0);R.gg.classList.toggle("z",cnt[f][2]===0);
-    const e=[];if(attackMul[f]>1.001)e.push("공격×"+attackMul[f].toFixed(1));if(prodMul[f]>1.001)e.push("생산×"+prodMul[f].toFixed(1));if(speedMul[f]>1.001)e.push("행군×"+speedMul[f].toFixed(1));R.eff.textContent=e.join("  ");});
   let a=0;for(let f=0;f<K;f++)if(alive[f])a++;document.getElementById("statLine").textContent=(1+((tick/50)|0))+"년차 · 생존 "+a;}
 
 const ov=document.getElementById("overlay"),ovBig=document.getElementById("ovBig");
@@ -763,6 +728,8 @@ function setCinema(on){document.body.classList.toggle("cinema",on);
 btnCinema.onclick=()=>setCinema(true);
 cineExit.onclick=()=>setCinema(false);
 document.querySelector("header").addEventListener("click",()=>{if(document.body.classList.contains("cinema"))cineShowExit();});
+// 모바일 세로 화면은 처음부터 녹화 배열로 시작 — 한 화면에 전부 수납 (✕로 전체 UI 전환 가능)
+if(matchMedia("(max-width:740px) and (orientation:portrait)").matches)setCinema(true);
 const btnMute=document.getElementById("btnMute");btnMute.textContent=SND.muted?"소리 꺼짐":"소리 켜짐";
 btnMute.onclick=()=>{sndResume();sndMute(!SND.muted);btnMute.textContent=SND.muted?"소리 꺼짐":"소리 켜짐";if(!SND.muted&&running)padStart();else padStop();};
 
