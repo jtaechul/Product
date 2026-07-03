@@ -29,7 +29,7 @@
     #loading-hint { max-width: 78%; text-align: center; color: #e9dcb8; font-family: "KoPubWorldDotumMedium", sans-serif;
                font-size: 15px; line-height: 1.5; letter-spacing: 0; opacity: 0.92; margin-top: 4px; }
     #loading-hint b { color: #f3c969; font-weight: normal; }
-    /* 회사 로고 스플래시 (TWOYO SOFTWARES) — 최초 부팅 로딩 동안만 노출 */
+    /* 회사 로고 스플래시 (TWOYO Entertainment) — 최초 부팅 로딩 동안만 노출 */
     #splash { position: fixed; inset: 0; z-index: 10001; display: flex; flex-direction: column;
               align-items: center; justify-content: center;
               background: radial-gradient(circle at 50% 42%, #27385f 0%, #1e2a4a 56%, #16203a 100%);
@@ -40,13 +40,14 @@
     @keyframes splashGlow { 0%, 100% { opacity: 0.45; transform: scale(0.9); } 50% { opacity: 0.9; transform: scale(1.08); } }
     #splash .sweep { transform-origin: 50% 50%; animation: splashSpin 11s linear infinite; }
     @keyframes splashSpin { to { transform: rotate(360deg); } }
-    #splash .word { margin-top: 30px; font-family: "GmarketSansBold", "Arial Black", system-ui, sans-serif;
-              font-size: 40px; letter-spacing: 0.22em; text-indent: 0.22em; color: #f3c969;
-              opacity: 0; transition: opacity 0.55s ease; }
-    #splash .word.ready { opacity: 1; }
-    #splash .tag { margin-top: 12px; font-family: system-ui, -apple-system, sans-serif; font-weight: 600;
-              font-size: 12.5px; letter-spacing: 0.52em; text-indent: 0.52em; color: #93a4c7;
-              opacity: 0; transition: opacity 0.55s ease 0.1s; }
+    /* 워드마크 = 커스텀 벡터 레터링(글꼴 아님) → 항상 선명·일관, 폰트 로딩과 무관 */
+    #splash .wordmark { width: 236px; height: auto; margin-top: 30px;
+              opacity: 0; transition: opacity 0.6s ease;
+              filter: drop-shadow(0 2px 11px rgba(243, 201, 105, 0.22)); }
+    #splash .wordmark.ready { opacity: 1; }
+    #splash .tag { margin-top: 17px; font-family: system-ui, -apple-system, sans-serif; font-weight: 600;
+              font-size: 12px; letter-spacing: 0.46em; text-indent: 0.46em; color: #9aabce;
+              opacity: 0; transition: opacity 0.6s ease 0.12s; }
     #splash .tag.ready { opacity: 0.95; }
     #splash .bar { margin-top: 32px; width: 128px; height: 2px; border-radius: 2px;
               background: rgba(243, 201, 105, 0.14); overflow: hidden; }
@@ -86,8 +87,23 @@
       <circle cx="77" cy="31" r="1.6" fill="#f7d98a" />
       <circle cx="26" cy="69" r="1.2" fill="#f7d98a" />
     </svg>
-    <div class="word" id="splash-word">TWOYO</div>
-    <div class="tag" id="splash-tag">SOFTWARES</div>
+    <svg class="wordmark" id="splash-word" viewBox="0 0 390 114" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="TWOYO">
+      <defs>
+        <linearGradient id="wmGold" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#fce9ad" />
+          <stop offset="52%" stop-color="#f3c969" />
+          <stop offset="100%" stop-color="#dd9f39" />
+        </linearGradient>
+      </defs>
+      <g transform="translate(7,7)" fill="none" stroke="url(#wmGold)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M0 0 H56 M28 0 V100" />
+        <path d="M82 0 L97 100 L112 35 L127 100 L142 0" />
+        <circle cx="196" cy="50" r="28" />
+        <path d="M250 0 L272 52 L294 0 M272 52 V100" />
+        <circle cx="348" cy="50" r="28" />
+      </g>
+    </svg>
+    <div class="tag" id="splash-tag">ENTERTAINMENT</div>
     <div class="bar"></div>
   </div>
   <div id="loading">
@@ -136,12 +152,8 @@
       var word = document.getElementById("splash-word");
       var tag = document.getElementById("splash-tag");
       function reveal() { if (word) word.classList.add("ready"); if (tag) tag.classList.add("ready"); }
-      function useFallbackFont() { if (word) word.style.fontFamily = '"Arial Black", "Segoe UI", system-ui, sans-serif'; }
-      try {
-        document.fonts.load('700 40px "GmarketSansBold"').then(reveal).catch(function () { useFallbackFont(); reveal(); });
-      } catch (e) { useFallbackFont(); reveal(); }
-      // 폰트가 늦어도 로고는 보이게 (block 폰트 대비 시스템 폰트로 전환)
-      setTimeout(function () { if (word && !word.classList.contains("ready")) { useFallbackFont(); reveal(); } }, 700);
+      // 워드마크가 SVG 벡터라 폰트 로딩과 무관 — 다음 프레임에 부드럽게 페이드 인
+      requestAnimationFrame(function () { setTimeout(reveal, 80); });
       var done = false;
       window.__hideSplash = function () {
         if (done || !sp) return; done = true;
