@@ -489,7 +489,47 @@ function extractJson(text) {
   const start = cleaned.indexOf('{');
   const end = cleaned.lastIndexOf('}');
   if (start === -1 || end === -1 || end <= start) throw new Error('JSON 파싱 실패');
-  return JSON.parse(cleaned.slice(start, end + 1));
+  const body = cleaned.slice(start, end + 1);
+  try {
+    return JSON.parse(body);
+  } catch (e) {
+    // 응답이 잘렸거나(max_tokens 초과) 사소한 문법 오류 → 복구 시도.
+    // ① 흔한 결함 정리: 트레일링 콤마 제거 ② 그래도 실패하면 "마지막 완결 요소까지"만 파싱.
+    const repaired = repairTruncatedJson(body);
+    if (repaired) { try { return JSON.parse(repaired); } catch {} }
+    throw e; // 복구 실패 → 원래 오류(상위에서 재시도/폴백 처리)
+  }
+}
+// 잘린/사소하게 깨진 JSON을 최대한 살린다. 특히 books:[...] 같은 배열이 중간에 끊겼을 때,
+// 마지막으로 완결된 요소까지만 남기고 열린 괄호를 닫아 유효 JSON으로 만든다.
+function repairTruncatedJson(s) {
+  let t = s.replace(/,\s*([}\]])/g, '$1'); // 트레일링 콤마 제거
+  try { JSON.parse(t); return t; } catch {}
+  // 문자열/이스케이프를 인지하며 스캔. 값(객체·배열)이 닫힐 때마다 그 지점과
+  // "그때의 열린 괄호 스택"을 스냅샷으로 기록 → 가장 마지막 스냅샷이 최대 복구 지점.
+  let inStr = false, esc = false;
+  const stack = [];            // 아직 안 닫힌 여는 괄호에 대응하는 닫는 문자들
+  let cutAt = -1, cutStack = null;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') { inStr = true; continue; }
+    if (c === '{' || c === '[') stack.push(c === '{' ? '}' : ']');
+    else if (c === '}' || c === ']') {
+      stack.pop();
+      if (stack.length) { cutAt = i; cutStack = stack.slice(); } // 아직 바깥이 남음 = 요소 하나 완결
+      else return t.slice(0, i + 1); // 전체가 완결된 지점 → 그대로 반환
+    }
+  }
+  if (cutAt === -1 || !cutStack) return null; // 살릴 완결 요소가 없음
+  let cut = t.slice(0, cutAt + 1).replace(/,\s*$/, '');
+  for (let i = cutStack.length - 1; i >= 0; i--) cut += cutStack[i]; // 열린 괄호 역순으로 닫기
+  return cut;
 }
 
 // ===== Telegram =====
@@ -623,7 +663,7 @@ async function handleSuggest(env, body) {
     : '';
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    env, tier: 'main', max_tokens: 1400, // 6권 JSON에 충분 — 기본값 2048 대비 절약
+    env, tier: 'main', max_tokens: 2600, // 6권×8필드 한글 JSON — 잘림(파싱 오류) 방지 위해 넉넉히
     system: '당신은 연애·관계 심리 전문 도서 큐레이터입니다. 30대 독자가 자신의 연애 패턴·이별·짝사랑·애착 유형을 이해하도록 돕는 실제 출판된 책을 추천합니다. 사랑·관계·심리·자기이해를 다루는 에세이, 심리학, 관계 안내서를 중심으로 큐레이션합니다. [금지] 성인용 만화·성인 소설·에로/19금·관능 소설 등 성인용(19세 이상) 콘텐츠는 절대 추천하지 마세요. 건전한 일반 도서만 추천합니다. 반드시 JSON만 응답합니다.',
     user: `오늘 날짜: ${today}\n주제: "${topic}"${excludeClause}\n\n이 주제와 관련해 30대 독자에게 깊이 공감받을 실제 책 6권을 추천하세요.\n\n[필수 — 실존 도서만] 당신이 실제로 한국에 출간된 것을 확신하는 책만 추천하세요. 제목·저자를 지어내지 마세요. 확신이 없으면 그 책은 빼고 확실한 책으로 채우세요. 너무 유명하지 않아도 되지만 반드시 실재해야 합니다(가짜 책 추천 시 시스템에서 자동 탈락됨).\n\n[선정 기준]\n- [적합성 — 매우 중요] 책의 "실제 핵심 주제"가 "${topic}"을 직접 다뤄야 한다. 사랑·인생 일반론(철학서·고전)을 큰 범주가 겹친다는 이유로 끼워 맞추지 말 것.\n- 연애·관계·사랑·애착·이별·자기이해를 다루는 책 (심리학/에세이/관계 안내서)\n- 독자가 "이건 내 얘기다"라고 느낄 수 있는 책 (예: 애착유형, 회피형·불안형 연애, 반복되는 연애 패턴, 자존감과 사랑, 건강한 경계, 이별 회복, 짝사랑·썸·설렘의 심리)\n- 한국 독자가 쉽게 구할 수 있는 국내 출간서 우선\n- 동일 저자 책은 중복 추천 금지\n\n각 책에 대해:\n- title: 책 제목 (실제 출판된 책, 정확한 제목)\n- author: 저자명 (정확히)\n- year: 출판연도 (숫자)\n- category: 세부 카테고리 (예: 애착심리 / 연애에세이 / 이별과회복 / 자존감과사랑 / 짝사랑과설렘 / 관계심리)\n- coreMessage: 이 책의 핵심 메시지 (1~2문장)\n- targetAudience: 주요 대상 독자층 (1문장)\n- reason: 30대가 지금 이 책을 읽어야 하는 이유 (1문장)\n- lesson: 이 책이 주는 핵심 교훈 한 문장 (주제 "${topic}"와 연결된, 마음에 남는 짧은 통찰)\n\nJSON 형식:\n{"books":[{"title":"...","author":"...","year":2024,"category":"...","coreMessage":"...","targetAudience":"...","reason":"...","lesson":"..."}]}`,
   });
@@ -1221,12 +1261,13 @@ async function runStep(env, pipelineId, step) {
       }
       await savePipelineStatus(env, pipelineId, { bookInfo, label: `책 선정: ${bookInfo.title}` });
       await logStep(env, pipelineId, { step, phase: 'book-selected', note: `${bookInfo.title} / ${bookInfo.author}` });
-      if (state.isAutoDaily) {
+      if (state.isAutoDaily && bookInfo.title) {
         // 일일 자동: 사용 책 기록(최근 30권) — 다음 날 중복 추천 방지
+        // (bookInfo.title 사용 — chosen은 else 블록 지역변수라 여기선 접근 불가)
         try {
           const usedStr = await env.PENDING_POSTS.get('daily_used_books');
           const used = usedStr ? JSON.parse(usedStr) : [];
-          await env.PENDING_POSTS.put('daily_used_books', JSON.stringify([...used, chosen.title].slice(-30)), { expirationTtl: 31 * 24 * 3600 });
+          await env.PENDING_POSTS.put('daily_used_books', JSON.stringify([...used, bookInfo.title].slice(-30)), { expirationTtl: 31 * 24 * 3600 });
         } catch {}
       }
     }
@@ -1581,10 +1622,9 @@ async function handlePipelineStart(env, ctx, body) {
 
   // 즉시 1단계 킥 (self-fetch 없이 같은 인보케이션 waitUntil에서 직접 실행).
   // 이 킥이 실패하거나 중간에 죽어도 크론이 자동으로 이어받는다 → 화면 상태 무관.
-  // 단, autoSelect(책 선정+생성)는 브라우저 요청 수명(약 30초)을 확실히 넘겨 킥이
-  // 도중에 죽고 5분 스테일 대기까지 유발 → 킥을 생략하고 다음 크론 틱(≤60초)이
-  // 크론의 넉넉한 실행 예산으로 바로 처리하게 한다(실측: 킥 사망 시 5~6분 지연).
-  if (bookInfo?.title) ctx.waitUntil(advancePipeline(env, pipelineId).catch(() => {}));
+  // autoSelect도 반드시 킥한다: 킥을 생략하면 크론 첫 픽업까지 실측 3분(187초)이 걸려
+  // 사용자가 전 단계 회색인 "멈춤" 화면을 오래 보게 됨. 킥이 도중에 죽어도 크론이 복구.
+  ctx.waitUntil(advancePipeline(env, pipelineId).catch(() => {}));
 
   return { success: true, pipelineId, bookNumber };
 }
