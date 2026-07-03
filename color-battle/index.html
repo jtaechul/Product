@@ -93,26 +93,24 @@
   .row.leader{background:#17203180;box-shadow:inset 0 0 0 1px #ffffff14}
   .row.dead{opacity:.34}
   .rank{font-weight:800;color:var(--dim);font-size:13px;text-align:center}
-  .id{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0}
-  .idtop{display:flex;align-items:center;gap:6px;min-width:0}
+  .id{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
+  .idtop{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap}       /* 1줄: 국가명 · 명장명 */
+  .line2{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}       /* 2줄: 자원현황 · 버프현황 */
   .gen{font-size:10px;font-weight:800;color:var(--dim);white-space:nowrap;letter-spacing:.01em}
   .gen b{color:var(--accent)}
-  .res{display:flex;align-items:center;gap:2px;font-size:10.5px;font-weight:800;color:#c3ccdb;font-variant-numeric:tabular-nums;margin-top:1px;white-space:nowrap}
+  .res{display:inline-flex;align-items:center;gap:2px;font-size:10.5px;font-weight:800;color:#c3ccdb;font-variant-numeric:tabular-nums;white-space:nowrap}
   .res .ic{vertical-align:-1px;margin-left:3px}
   .res b{margin:0 2px 0 1px}
   .res b.z{opacity:.35;color:#7a8598}
   .res .ic:first-child{margin-left:0}
-  body.cinema .gen{font-size:9px}
-  body.cinema .res{font-size:9.5px;margin-top:0}
   .nm{font-weight:800;font-size:14px;white-space:nowrap}
   .buffs{display:inline-flex;flex-wrap:wrap;gap:3px;align-items:center}
   .bf{font-size:9.5px;font-weight:800;border-radius:5px;padding:1px 5px;white-space:nowrap;line-height:1.4}
   .bf.mor{color:#1a1400;background:var(--accent)}
   .bf.inv{color:#241a02;background:#ffe27a;box-shadow:0 0 7px #ffd23a}
-  .ef{font-size:9px;font-weight:800;border-radius:4px;padding:0 4px;margin-left:4px;white-space:nowrap}
-  .ef.atk{color:#ffd7d0;background:#5a1e1e}
-  .ef.prd{color:#d6f5c9;background:#1f4a24}
-  .ef.spd{color:#ffe9b0;background:#5a4410}
+  .bf.atk{color:#ffd7d0;background:#5a1e1e}
+  .bf.prd{color:#d6f5c9;background:#1f4a24}
+  .bf.spd{color:#ffe9b0;background:#5a4410}
   .troop{font-variant-numeric:tabular-nums;font-weight:800;font-size:13px;color:var(--text);min-width:70px;text-align:right}
   .controls{display:flex;flex-direction:column;gap:10px}
   .btns{display:flex;gap:8px;flex-wrap:wrap}
@@ -142,24 +140,21 @@
   body.cinema .power>.lab{display:none}
   body.cinema .powerbar{height:19px}
   body.cinema .stage{margin:0;gap:5px;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch}
-  /* 보드(6행)를 먼저 확보 → 지도가 '남는 공간'을 채움 = 화면 높이와 무관하게 6행 항상 노출 */
-  body.cinema .left{flex:1 1 auto;min-width:0;min-height:0;gap:5px;display:flex;flex-direction:column;justify-content:center}
-  body.cinema .arena-box{flex:1 1 auto;min-height:0;padding:3px;display:flex;align-items:center;justify-content:center}
-  body.cinema .canvas-stack{width:auto;height:100%;max-width:100%;max-height:100%;margin:0 auto}
-  body.cinema .board{flex:0 0 auto;min-width:0;overflow:hidden}
-  body.cinema .board .panel{padding:8px 10px;overflow:hidden;display:flex;flex-direction:column}
-  body.cinema .board .panel h2{font-size:10.5px;margin-bottom:5px}
-  body.cinema .board .rows{flex:0 0 auto}
+  body.cinema .left{flex:0 0 auto;min-width:0;gap:5px}
+  body.cinema .arena-box{padding:3px}
+  body.cinema .canvas-stack{width:min(100%,56dvh);margin:0 auto}   /* 지도 고정 크기 — 절대 변경 금지 */
+  body.cinema .board{flex:1 1 auto;min-width:0;min-height:0;overflow:hidden}
+  body.cinema .board .panel{padding:7px 10px;height:100%;overflow:hidden;display:flex;flex-direction:column}
+  body.cinema .board .panel h2{font-size:10.5px;margin-bottom:4px}
+  body.cinema .board .rows{flex:1 1 auto;justify-content:space-between}
   body.cinema .board .controls{display:none}  /* .board .panel 규칙보다 특이도·순서 우위로 확실히 숨김 */
   body.cinema .rows{gap:2px;overflow:hidden}
   body.cinema .row{padding:2px 8px}
-  body.cinema .nm{font-size:12.5px}
-  body.cinema .troop{font-size:11.5px;min-width:52px}
-  body.cinema .gen{display:none}                 /* 명장 줄은 시네마에서 숨김(가로 한 줄 배치) */
-  body.cinema .id{flex-direction:row;flex-wrap:wrap;align-items:center;gap:1px 8px}  /* 세로 쌓기 → 가로 한 줄로 */
-  body.cinema .res{margin-top:0}
-  body.cinema .bf{font-size:9px;padding:0 5px}
-  body.cinema .ef{font-size:8.5px}
+  body.cinema .nm{font-size:12px}
+  body.cinema .gen{font-size:9.5px}
+  body.cinema .troop{font-size:11px;min-width:50px}
+  body.cinema .res,body.cinema .line2{font-size:9px}
+  body.cinema .bf{font-size:8.5px;padding:0 4px}
   .cine-exit{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:8px;z-index:50;width:34px;height:34px;border-radius:99px;background:#0d1220cc;border:1px solid var(--line);color:var(--dim);font-size:15px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0;transition:opacity .5s}
   body.cinema .cine-exit{display:flex}
   .cine-exit.faded{opacity:0;pointer-events:none}
@@ -825,14 +820,14 @@ function draw(){
 /* ===== 패널 ===== */
 const rowsEl=document.getElementById("rows"),rowRef=[];
 for(let f=0;f<K;f++){const r=document.createElement("div");r.className="row";
-  r.innerHTML='<div class="rank"></div><div class="id"><div class="idtop">'+ic(FACTIONS[f].sig,FACTIONS[f].color,16)+'<span class="nm">'+FACTIONS[f].name+'</span><span class="buffs"></span></div><span class="gen"></span><span class="res"></span></div><div class="troop"></div>';
+  // 2줄 구조 — 1줄: 국가명·명장명 / 2줄: 자원현황·버프현황
+  r.innerHTML='<div class="rank"></div><div class="id"><div class="idtop">'+ic(FACTIONS[f].sig,FACTIONS[f].color,15)+'<span class="nm">'+FACTIONS[f].name+'</span><span class="gen"></span></div><div class="line2"><span class="res"></span><span class="buffs"></span></div></div><div class="troop"></div>';
   rowsEl.appendChild(r);rowRef.push({root:r,rank:r.querySelector(".rank"),troop:r.querySelector(".troop"),buffs:r.querySelector(".buffs"),gen:r.querySelector(".gen"),res:r.querySelector(".res")});}
-// 상태 버프(사기·불사) — 이름 옆 배지
-function buffChips(f){let s="";if(moraleLeft[f]>0)s+='<b class="bf mor">사기</b>';if(reviveTurns[f]>0)s+='<b class="bf inv">불사</b>';return s;}
-// 자원 보유 + 그에 따른 버프(공격·생산·행군 배수) — 한 줄에 함께 노출
-function resStrip(f,c){const cell=(k,col,n)=>ic(k,col,11)+'<b'+(n?'':' class="z"')+'>'+n+'</b>';
-  let eff="";if(attackMul[f]>1.001)eff+='<b class="ef atk">공×'+attackMul[f].toFixed(1)+'</b>';if(prodMul[f]>1.001)eff+='<b class="ef prd">생×'+prodMul[f].toFixed(1)+'</b>';if(speedMul[f]>1.001)eff+='<b class="ef spd">행×'+speedMul[f].toFixed(1)+'</b>';
-  return cell("iron","#cdd6e3",c[0])+cell("food","#8fd6a0",c[1])+cell("gold","#ffd23a",c[2])+eff;}
+// 자원현황(철·농지·금 보유 개수)
+function resStrip(c){const cell=(k,col,n)=>ic(k,col,11)+'<b'+(n?'':' class="z"')+'>'+n+'</b>';return cell("iron","#cdd6e3",c[0])+cell("food","#8fd6a0",c[1])+cell("gold","#ffd23a",c[2]);}
+// 버프현황 — 사기·불사 + 자원 보너스(공격·생산·행군 배수) 전부
+function buffChips(f){let s="";if(moraleLeft[f]>0)s+='<b class="bf mor">사기</b>';if(reviveTurns[f]>0)s+='<b class="bf inv">불사</b>';
+  if(attackMul[f]>1.001)s+='<b class="bf atk">공×'+attackMul[f].toFixed(1)+'</b>';if(prodMul[f]>1.001)s+='<b class="bf prd">생×'+prodMul[f].toFixed(1)+'</b>';if(speedMul[f]>1.001)s+='<b class="bf spd">행×'+speedMul[f].toFixed(1)+'</b>';return s;}
 const pbar=document.getElementById("powerbar"),segs=[];for(let f=0;f<K;f++){const s=document.createElement("div");s.className="seg";s.style.background=FACTIONS[f].color;s.innerHTML='<span class="lab"></span>';pbar.appendChild(s);segs.push({seg:s,lab:s.querySelector(".lab")});}
 function fmt(n){n=Math.round(n);return n>=1000?(n/1000).toFixed(1)+"k":""+n;}
 function troopSum(f){let s=0;for(const p of pv)if(p.owner===f)s+=p.garrison;return s;}
@@ -847,7 +842,7 @@ function refresh(){const cnt=computeBonus();let tot=0;const pw=new Float64Array(
   document.getElementById("powerLab").innerHTML="국력 (지역 + 병력 + 자원) · 선두 <b>"+(lead>=0?FACTIONS[lead].name:"-")+"</b>";
   ord.forEach((f,rank)=>{const R=rowRef[f];R.root.style.order=alive[f]?rank:100+rank;R.root.classList.toggle("dead",!alive[f]);R.root.classList.toggle("leader",alive[f]&&f===lead);R.rank.textContent=alive[f]?rank+1:"–";R.troop.textContent=alive[f]?(pc[f]+"지역·"+fmt(troopSum(f))):"멸망";R.buffs.innerHTML=alive[f]?buffChips(f):"";
     if(roster.length){const ch=championOf(f);R.gen.innerHTML="명장 <b>"+RANKS[ch.rank]+" "+ch.name+"</b>"+(ch.wins?" · "+ch.wins+"승":"");}
-    R.res.innerHTML=alive[f]?resStrip(f,cnt[f]):"";});
+    R.res.innerHTML=alive[f]?resStrip(cnt[f]):"";});
   let a=0;for(let f=0;f<K;f++)if(alive[f])a++;document.getElementById("statLine").textContent=(1+((tick/50)|0))+"년차 · 생존 "+a;}
 
 const ov=document.getElementById("overlay"),ovBig=document.getElementById("ovBig");
