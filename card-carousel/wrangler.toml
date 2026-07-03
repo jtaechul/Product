@@ -20,6 +20,11 @@ mode = "smart"
 # Cron Trigger 제거 — 일일 자동 캐럿셀 생성 + 파이프라인 자가복구(도서 자동화)를 Phase 1에서 제거함.
 # 자동화가 필요하면 신규 흐름에 맞춰 Phase 5에서 다시 연결한다.
 
+# 필요 시크릿 (wrangler secret put <이름>):
+#   ANTHROPIC_API_KEY  — 문구 생성·검증·캡션 (Claude)
+#   GEMINI_API_KEY     — STEP 0 원본 추적 (이미지 인식 + 구글 검색 그라운딩)
+#   TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID — 제작 완료 알림 (선택, Phase 5)
+
 [assets]
 directory = "public"
 binding = "ASSETS"
