@@ -1179,7 +1179,11 @@ async function handleGenerateDmReply(env, body) {
 
 const PIPELINE_TTL = 3600;        // 파이프라인 상태 보존(초)
 const PLOG_TTL = 604800;          // 작업 로그 보존(초, 7일) — 사후 오류 분석용
-const STEP_STALE_MS = 5 * 60 * 1000;  // 5분 후 멈춘 단계 재실행 (Claude API 느릴 때 오조기 재시도 방지)
+// 멈춘(active인데 死亡한) 단계를 재실행하기까지의 대기. 킥(fetch waitUntil)이 예산
+// 초과로 죽으면 이만큼 뒤 크론이 복구한다. 5분은 너무 길어 '멈춘 화면'이 오래 감 →
+// 2분으로 단축. 정상 단계는 이보다 빨리 done 되므로 오조기 재실행 위험 없음
+// (가장 긴 이미지 다운로드도 ~90초, 재실행돼도 무료라 무해).
+const STEP_STALE_MS = 2 * 60 * 1000;  // 2분
 const ERROR_RETRY_MS = 15 * 1000;     // 일시적 오류 후 재시도 최소 간격 (크론 다음 틱에 재시도)
 const MAX_ERROR_RETRIES = 5;          // 일시적 오류 자동 재시도 한도 (초과 시 영구 실패로 마감)
 
@@ -1558,16 +1562,29 @@ async function runScheduled(env) {
   try { ids = (await env.PENDING_POSTS.get('active_pipelines', 'json')) || []; } catch {}
   if (!ids.length) return;
 
-  let checked = 0, advanced = 0;
+  // 크론(예산 넉넉)은 한 틱에서 파이프라인을 "여러 단계 연속" 전진시킨다.
+  // advancePipeline은 runStep을 await로 끝까지 실행하므로, 루프를 돌면 생성→검증→
+  // 이미지→캡션→… 이 한 인보케이션 안에서 이어진다 → 단계마다 1분씩 기다리는
+  // 지연 누적(최대 7분)을 없앤다. 각 파이프라인 시작 전 예산(시간)만 확인.
+  const DEADLINE = Date.now() + 55 * 1000; // 한 틱 최대 ~55초 작업(크론 벽시계 여유 내)
   const stale = [];
+  let touched = 0;
   for (const id of ids) {
-    if (checked >= 30 || advanced >= 5) break;   // 한 틱당 작업량 상한
-    checked++;
+    if (Date.now() > DEADLINE || touched >= 8) break;
     const state = await env.PENDING_POSTS.get(`pipeline_${id}`, 'json').catch(() => null);
     if (!state) { stale.push(id); continue; }                 // 만료·삭제 → 인덱스 정리
     if (state.status !== 'running') { stale.push(id); continue; } // 완료·오류 → 인덱스 정리
-    await advancePipeline(env, id);
-    advanced++;
+    touched++;
+    // 이 파이프라인을 예산이 허용하는 한 연속 전진(진전이 없으면 다음으로)
+    let prevStep = -1, prevStatus = '';
+    for (let k = 0; k < 9; k++) {
+      if (Date.now() > DEADLINE) break;
+      await advancePipeline(env, id);
+      const st = await env.PENDING_POSTS.get(`pipeline_${id}`, 'json').catch(() => null);
+      if (!st || st.status !== 'running') break;              // 완료·오류·소멸 → 종료
+      if (st.step === prevStep && st.stepStatus === prevStatus) break; // 진전 없음(대기·백오프)
+      prevStep = st.step; prevStatus = st.stepStatus;
+    }
   }
   // 끝난(또는 사라진) 파이프라인을 인덱스에서 한 번에 제거
   if (stale.length) {
@@ -1621,10 +1638,12 @@ async function handlePipelineStart(env, ctx, body) {
   await logStep(env, pipelineId, { step: 0, phase: 'start', note: bookInfo?.title ? `책: ${bookInfo.title}` : `autoSelect: ${autoSelect.category}` });
 
   // 즉시 1단계 킥 (self-fetch 없이 같은 인보케이션 waitUntil에서 직접 실행).
-  // 이 킥이 실패하거나 중간에 죽어도 크론이 자동으로 이어받는다 → 화면 상태 무관.
-  // autoSelect도 반드시 킥한다: 킥을 생략하면 크론 첫 픽업까지 실측 3분(187초)이 걸려
-  // 사용자가 전 단계 회색인 "멈춤" 화면을 오래 보게 됨. 킥이 도중에 죽어도 크론이 복구.
-  ctx.waitUntil(advancePipeline(env, pipelineId).catch(() => {}));
+  // ⚠️ bookInfo가 있을 때(제작 단계=생성만, ~15초)만 킥한다. autoSelect(책 선정+생성,
+  // ~40초 이상)를 킥하면 fetch waitUntil 예산(~30초)을 넘겨 도중에 죽는데, 그러면
+  // ① 이미 호출한 suggest 크레딧이 낭비되고 ② 크론이 suggest를 재호출해 이중과금되며
+  // ③ 죽은 'active' 상태가 STEP_STALE_MS만큼 방치된다. 그래서 autoSelect는 예산이 넉넉한
+  // 크론이 한 번에 완주하게 맡긴다(크론은 첫 픽업까지 최대 ~1분).
+  if (bookInfo?.title) ctx.waitUntil(advancePipeline(env, pipelineId).catch(() => {}));
 
   return { success: true, pipelineId, bookNumber };
 }
