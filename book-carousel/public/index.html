@@ -1300,6 +1300,7 @@ document.getElementById('autoGenerateBtn').addEventListener('click', async () =>
     coreMessage: book.coreMessage,
     targetAudience: book.targetAudience,
     category: book.category,
+    description: book.description || '', // 실제 책 소개 — 생성·검증 근거
   };
   await generateCarousel();
 });
@@ -1379,6 +1380,8 @@ async function generateCarousel() {
     }
     state.pages = data.pages;
     state.bookCover = data.bookCover || '';   // 마지막 장에 띄울 책 표지
+    // 실제 책 소개(출판사) — 검증 단계가 부합도를 사실 기준으로 채점하는 근거
+    if (data.bookDescription) state.bookInfo.description = data.bookDescription;
     // 교차검증으로 저자가 교정됐으면 반영(엉뚱한 저자 → 진짜 저자)
     if (data.correctedBook) {
       if (data.correctedBook.title) state.bookInfo.title = data.correctedBook.title;
@@ -3183,6 +3186,7 @@ document.getElementById('deployFetchBooksBtn').addEventListener('click', async (
     const bookInfo = {
       title: book.title, author: book.author, year: book.year,
       coreMessage: book.coreMessage, targetAudience: book.targetAudience, category: book.category,
+      description: book.description || '', // 실제 책 소개 — 생성·검증 근거
     };
     await runAutoDeployPipeline(bookInfo, affiliateLinks);
   } catch (err) {
@@ -3220,6 +3224,7 @@ document.getElementById('deployStartBtn').addEventListener('click', async () => 
   const bookInfo = {
     title: book.title, author: book.author, year: book.year,
     coreMessage: book.coreMessage, targetAudience: book.targetAudience, category: book.category,
+    description: book.description || '', // 실제 책 소개 — 생성·검증 근거
   };
   await runAutoDeployPipeline(bookInfo, affiliateLinks);
 });
@@ -3290,6 +3295,8 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
   try {
     const data = await apiFetch('/api/generate', bookInfo);
     pages = data.pages;
+    // 실제 책 소개 — 이후 /api/validate가 부합도를 사실 기준으로 채점하는 근거
+    if (data.bookDescription) bookInfo.description = data.bookDescription;
 
     // 생성 직후: 캔버스 레이아웃 검수 → 초과 줄 있으면 Claude에게 단축 요청
     setDeployStep(1, 'active', '텍스트 레이아웃 검수 및 조정 중...');

@@ -587,7 +587,7 @@ async function handleSuggest(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'main',
     system: '당신은 연애·관계 심리 전문 도서 큐레이터입니다. 30대 독자가 자신의 연애 패턴·이별·짝사랑·애착 유형을 이해하도록 돕는 실제 출판된 책을 추천합니다. 사랑·관계·심리·자기이해를 다루는 에세이, 심리학, 관계 안내서를 중심으로 큐레이션합니다. [금지] 성인용 만화·성인 소설·에로/19금·관능 소설 등 성인용(19세 이상) 콘텐츠는 절대 추천하지 마세요. 건전한 일반 도서만 추천합니다. 반드시 JSON만 응답합니다.',
-    user: `오늘 날짜: ${today}\n주제: "${topic}"${excludeClause}\n\n이 주제와 관련해 30대 독자에게 깊이 공감받을 실제 책 6권을 추천하세요.\n\n[필수 — 실존 도서만] 당신이 실제로 한국에 출간된 것을 확신하는 책만 추천하세요. 제목·저자를 지어내지 마세요. 확신이 없으면 그 책은 빼고 확실한 책으로 채우세요. 너무 유명하지 않아도 되지만 반드시 실재해야 합니다(가짜 책 추천 시 시스템에서 자동 탈락됨).\n\n[선정 기준]\n- 연애·관계·사랑·애착·이별·자기이해를 다루는 책 (심리학/에세이/관계 안내서)\n- 독자가 "이건 내 얘기다"라고 느낄 수 있는 책 (예: 애착유형, 회피형·불안형 연애, 반복되는 연애 패턴, 자존감과 사랑, 건강한 경계, 이별 회복, 짝사랑·썸·설렘의 심리)\n- 한국 독자가 쉽게 구할 수 있는 국내 출간서 우선\n- 동일 저자 책은 중복 추천 금지\n\n각 책에 대해:\n- title: 책 제목 (실제 출판된 책, 정확한 제목)\n- author: 저자명 (정확히)\n- year: 출판연도 (숫자)\n- category: 세부 카테고리 (예: 애착심리 / 연애에세이 / 이별과회복 / 자존감과사랑 / 짝사랑과설렘 / 관계심리)\n- coreMessage: 이 책의 핵심 메시지 (1~2문장)\n- targetAudience: 주요 대상 독자층 (1문장)\n- reason: 30대가 지금 이 책을 읽어야 하는 이유 (1문장)\n- lesson: 이 책이 주는 핵심 교훈 한 문장 (주제 "${topic}"와 연결된, 마음에 남는 짧은 통찰)\n\nJSON 형식:\n{"books":[{"title":"...","author":"...","year":2024,"category":"...","coreMessage":"...","targetAudience":"...","reason":"...","lesson":"..."}]}`,
+    user: `오늘 날짜: ${today}\n주제: "${topic}"${excludeClause}\n\n이 주제와 관련해 30대 독자에게 깊이 공감받을 실제 책 6권을 추천하세요.\n\n[필수 — 실존 도서만] 당신이 실제로 한국에 출간된 것을 확신하는 책만 추천하세요. 제목·저자를 지어내지 마세요. 확신이 없으면 그 책은 빼고 확실한 책으로 채우세요. 너무 유명하지 않아도 되지만 반드시 실재해야 합니다(가짜 책 추천 시 시스템에서 자동 탈락됨).\n\n[선정 기준]\n- [적합성 — 매우 중요] 책의 "실제 핵심 주제"가 "${topic}"을 직접 다뤄야 한다. 사랑·인생 일반론(철학서·고전)을 큰 범주가 겹친다는 이유로 끼워 맞추지 말 것.\n- 연애·관계·사랑·애착·이별·자기이해를 다루는 책 (심리학/에세이/관계 안내서)\n- 독자가 "이건 내 얘기다"라고 느낄 수 있는 책 (예: 애착유형, 회피형·불안형 연애, 반복되는 연애 패턴, 자존감과 사랑, 건강한 경계, 이별 회복, 짝사랑·썸·설렘의 심리)\n- 한국 독자가 쉽게 구할 수 있는 국내 출간서 우선\n- 동일 저자 책은 중복 추천 금지\n\n각 책에 대해:\n- title: 책 제목 (실제 출판된 책, 정확한 제목)\n- author: 저자명 (정확히)\n- year: 출판연도 (숫자)\n- category: 세부 카테고리 (예: 애착심리 / 연애에세이 / 이별과회복 / 자존감과사랑 / 짝사랑과설렘 / 관계심리)\n- coreMessage: 이 책의 핵심 메시지 (1~2문장)\n- targetAudience: 주요 대상 독자층 (1문장)\n- reason: 30대가 지금 이 책을 읽어야 하는 이유 (1문장)\n- lesson: 이 책이 주는 핵심 교훈 한 문장 (주제 "${topic}"와 연결된, 마음에 남는 짧은 통찰)\n\nJSON 형식:\n{"books":[{"title":"...","author":"...","year":2024,"category":"...","coreMessage":"...","targetAudience":"...","reason":"...","lesson":"..."}]}`,
   });
 
   const parsed = extractJson(text);
@@ -599,7 +599,7 @@ async function handleSuggest(env, body) {
   const checked = await Promise.all(books.map(async (b) => {
     const cv = await crossVerifyBook(env, b.title, b.author).catch(() => ({ status: 'unknown' }));
     if (cv.status === 'found') {
-      return { ...b, author: cv.author || b.author, title: cv.title || b.title, verified: true, _drop: false, coupangSearchUrl: coupangSearchUrl(cv.title || b.title) };
+      return { ...b, author: cv.author || b.author, title: cv.title || b.title, description: cv.description || '', verified: true, _drop: false, coupangSearchUrl: coupangSearchUrl(cv.title || b.title) };
     }
     if (cv.status === 'notfound') {
       return { ...b, verified: false, _drop: true, coupangSearchUrl: coupangSearchUrl(b.title) };
@@ -616,6 +616,26 @@ async function handleSuggest(env, body) {
   const fresh = usable.filter(b => !exNorm.has(_normTitle(b.title)));
   if (fresh.length) usable = fresh;   // 전부 제외되면(신간 부족) 최소 원본 유지
   usable.sort((a, b) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0));  // 실존 확인 책 우선
+
+  // ⭐ 레인 적합성 게이트 — 네이버 "실제 책 소개"를 기준으로 주제를 직접 다루는 책만 남긴다.
+  // (실제 발생 사례: 일반 사랑 철학서 『사랑의 기술』이 '짝사랑과설렘' 레인에 끼워 맞춰져
+  //  책 내용과 무관한 카드뉴스가 제작됨 → 이 게이트가 차단)
+  if (usable.length > 1) {
+    try {
+      const items = usable.map((b, i) => `${i + 1}. ${b.title} (${b.author}) — ${(b.description || b.coreMessage || '').slice(0, 220)}`).join('\n');
+      const ftText = await callClaude(env.ANTHROPIC_API_KEY, {
+        env, tier: 'light', max_tokens: 200,
+        system: '당신은 도서 큐레이션 검수자입니다. 반드시 JSON만 응답합니다.',
+        user: `주제: "${topic}"\n\n아래 책들이 이 주제를 "실제로 직접" 다루는지, 각 책의 소개문을 기준으로 판정하세요. 사랑·인생 일반론이라 큰 범주만 겹치고 이 주제를 직접 다루지 않으면 false.\n\n${items}\n\nJSON: {"fits":[true,false,...]} (순서대로 정확히 ${usable.length}개)`,
+      });
+      const f = extractJson(ftText);
+      if (Array.isArray(f.fits) && f.fits.length === usable.length) {
+        const fitted = usable.filter((_, i) => f.fits[i] === true);
+        if (fitted.length) usable = fitted;   // 전부 탈락이면 원본 유지(빈 결과 방지)
+      }
+    } catch {} // 게이트 실패는 치명적이지 않음 — 원본 유지
+  }
+
   usable = usable.slice(0, 4).map(({ _drop, ...rest }) => rest);
 
   return { success: true, books: usable };
@@ -664,6 +684,7 @@ async function handleGenerate(env, body) {
   // skipVerify=true(사용자가 직접 확인)면 건너뛴다.
   let correctedBook = null;
   let bookCover = '';
+  let bookDesc = String(body.description || ''); // 프론트/파이프라인이 이미 확보한 소개문
   if (!body.skipVerify) {
     const cv = await crossVerifyBook(env, title, author);
     if (cv.status === 'notfound') {
@@ -675,6 +696,7 @@ async function handleGenerate(env, body) {
     }
     if (cv.status === 'found') {
       bookCover = cv.cover || '';
+      if (cv.description) bookDesc = cv.description; // ⭐ 실제 책 소개(출판사) — 생성 근거로 사용
       // 저자가 틀렸으면 네이버의 진짜 저자로 교정해서 알려준다(프론트가 반영)
       if (cv.author && cv.author !== author) {
         correctedBook = { title: cv.title || title, author: cv.author, publisher: cv.publisher || '' };
@@ -693,22 +715,26 @@ async function handleGenerate(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'main', max_tokens: 1200,
     system: `당신은 연애·관계 심리 책을 소개하는 인스타그램 카드뉴스 전문 카피라이터입니다.\n타겟 독자: ${lt.audience}.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 마음을 건드린다 — 장황한 설명 금지.\n3. 공포·위기·충격이 아니라 '깊은 공감과 위로'로 저장·공유를 유도한다. 독자가 "이건 내 얘기다"라고 느껴 저장하게 만든다.\n4. 통계·수치·연구 인용보다 감정과 경험의 언어를 쓴다. 따뜻하고 문학적인 톤.\n5. 모든 콘텐츠에 반말을 절대 사용하지 않는다 — 문어체·존댓말(~습니다/~합니다/~네요/~까요)만 허용.\n반드시 JSON만 응답한다.`,
-    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '연애·관계 심리'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n\n[전체 톤 — 카테고리에 맞춰 조절] 대상: ${lt.audience}.\n톤: ${lt.tone}.\n흐름: ${lt.flow}.\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(공감 훅 — 헤드라인만): 카드 전체를 단 하나의 마음을 건드리는 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 연애에서 겪었을 구체적 순간·감정을 정확히 포착한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 공포·경고 톤 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자가 혼자 느꼈던 감정을 들킨 듯한 문장.\n    좋은 예(이번 카테고리 톤): ${lt.hookExample}\n             "좋아할수록 더 차갑게 굴게 되는 사람이 있습니다"\n    나쁜 예(절대 금지): "당신의 연애는 실패하고 있다" / "이대로면 평생 혼자입니다" (공포·단정 톤)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(패턴 발견): 독자가 반복해온 연애 패턴을 부드럽게 이름 붙여 보여준다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 독자가 "맞아, 나 그래"라고 느낄 구체적 행동·상황 묘사. 수치 금지, 감정과 장면 위주.\n3페이지(마음의 이유): 그 패턴의 심리적 뿌리를 따뜻하게 설명한다(애착, 상처, 두려움 등). 비난하지 않는다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. "당신이 이상한 게 아니라, 이런 마음이 있었던 것입니다" 같은 위로의 통찰. 심리학 개념을 쉽게 풀어 쓰되 학술 인용 금지.\n4페이지(위로의 실마리): 완전한 해답 대신 '이렇게 바라보면 달라진다'는 방향을 부드럽게 암시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 마지막 줄은 희망적 여운으로 끝낸다. 단정적 해결책 금지.\n5페이지(책 공개 — 마무리): 독자에게 오늘의 책을 건넨다. (제목·저자·표지는 시스템이 자동으로 함께 보여주므로 본문 텍스트에 제목·저자를 직접 쓰지 말 것.)\n  - cta: 4페이지의 위로를 잇는 따뜻한 마무리 + 핵심 솔루션 한 문장(${lt.theme}에서 오늘 가져갈 마음의 방향). A/B·질문·"댓글" 언급 금지. 독자 가슴에 남는 한 문장.\n  - linkText: 그 마음에 책을 자연스럽게 건네는 한 줄 (예: "이 마음에 오래 곁이 되어줄 책을 소개합니다"). 제목은 쓰지 말 것(시스템이 표지·제목·저자를 함께 노출). "프로필 링크" 언급은 불필요.\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
+    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '연애·관계 심리'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n${bookDesc ? `실제 책 소개(출판사 제공 — 이 책의 진짜 내용): ${bookDesc.slice(0, 600)}\n` : ''}\n[근거 규칙 — 절대 위반 금지] ${bookDesc ? '위 "실제 책 소개"가 이 책의 진짜 내용입니다. 3~5페이지의 통찰·위로·솔루션은 반드시 이 소개의 주제·관점과 일치해야 하며, 소개에 없는 개념·주장을 책의 것처럼 지어내지 마세요. 소개의 주제가 카테고리 톤과 거리가 있으면, 톤을 책의 실제 주제 쪽으로 맞추세요(책이 우선).' : '이 책의 실제 내용을 확신할 수 없으므로, 특정 개념·주장을 책의 것처럼 단정하지 말고 핵심 메시지 범위 안의 보편적 위로에 머무르세요.'}\n\n[전체 톤 — 카테고리에 맞춰 조절] 대상: ${lt.audience}.\n톤: ${lt.tone}.\n흐름: ${lt.flow}.\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(공감 훅 — 헤드라인만): 카드 전체를 단 하나의 마음을 건드리는 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 연애에서 겪었을 구체적 순간·감정을 정확히 포착한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 공포·경고 톤 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자가 혼자 느꼈던 감정을 들킨 듯한 문장.\n    좋은 예(이번 카테고리 톤): ${lt.hookExample}\n             "좋아할수록 더 차갑게 굴게 되는 사람이 있습니다"\n    나쁜 예(절대 금지): "당신의 연애는 실패하고 있다" / "이대로면 평생 혼자입니다" (공포·단정 톤)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(패턴 발견): 독자가 반복해온 연애 패턴을 부드럽게 이름 붙여 보여준다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 독자가 "맞아, 나 그래"라고 느낄 구체적 행동·상황 묘사. 수치 금지, 감정과 장면 위주.\n3페이지(마음의 이유): 그 패턴의 심리적 뿌리를 따뜻하게 설명한다(애착, 상처, 두려움 등). 비난하지 않는다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. "당신이 이상한 게 아니라, 이런 마음이 있었던 것입니다" 같은 위로의 통찰. 심리학 개념을 쉽게 풀어 쓰되 학술 인용 금지.\n4페이지(위로의 실마리): 완전한 해답 대신 '이렇게 바라보면 달라진다'는 방향을 부드럽게 암시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 마지막 줄은 희망적 여운으로 끝낸다. 단정적 해결책 금지.\n5페이지(책 공개 — 마무리): 독자에게 오늘의 책을 건넨다. (제목·저자·표지는 시스템이 자동으로 함께 보여주므로 본문 텍스트에 제목·저자를 직접 쓰지 말 것.)\n  - cta: 4페이지의 위로를 잇는 따뜻한 마무리 + 핵심 솔루션 한 문장(${lt.theme}에서 오늘 가져갈 마음의 방향). A/B·질문·"댓글" 언급 금지. 독자 가슴에 남는 한 문장.\n  - linkText: 그 마음에 책을 자연스럽게 건네는 한 줄 (예: "이 마음에 오래 곁이 되어줄 책을 소개합니다"). 제목은 쓰지 말 것(시스템이 표지·제목·저자를 함께 노출). "프로필 링크" 언급은 불필요.\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
 
   const pages = extractJson(text);
   // 실제로 제작된 책 제목을 기록 → 다음 추천에서 자동 제외(반복 제작 방지). 모든 제작 경로가 여기를 지남.
   await recordUsedBook(env, correctedBook?.title || title).catch(() => {});
-  return { success: true, pages, correctedBook, bookCover };
+  // bookDescription: 검증 단계가 실제 책 소개 기준으로 부합도를 채점할 수 있게 반환
+  return { success: true, pages, correctedBook, bookCover, bookDescription: bookDesc };
 }
 
 async function handleValidate(env, body) {
   const { pages, bookInfo } = body;
+  // ⭐ 실제 책 소개(출판사)가 있으면 그것을 부합도 채점의 근거로 사용 — AI 기억에만
+  // 의존한 추측 채점(할루시네이션 미탐지)을 막는다.
+  const bookDesc = String(bookInfo.description || '').slice(0, 600);
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'light',
     max_tokens: 1024,
     system: '당신은 소셜미디어 콘텐츠 전문 편집장 겸 저작권 검토자입니다. 반드시 JSON만 응답합니다.',
-    user: `책 "${bookInfo.title}" (저자: ${bookInfo.author}) 캐럿셀을 아래 5가지 기준으로 평가하세요.\n\n캐럿셀 내용:\n${JSON.stringify(pages, null, 2)}\n\n평가 기준 (100점 만점):\n1. accuracy(책 내용 부합도): 캐럿셀 내용이 해당 책의 실제 메시지와 일치하는가? 0~20\n2. factual(사실 정확성): 수치·통계·사례에 명백한 오류나 과장이 없는가? 0~20\n3. copyright(저작권 안전성): 책의 핵심 내용을 그대로 옮기지 않고 요약·재해석했는가? 저자명·책 제목이 본문에 노출되지 않는가? 0~20\n4. engagement(공감·참여 유도): 30대 독자가 "이건 내 얘기다"라고 느껴 저장·공유하고 싶어지는 깊은 공감과 위로가 있는가? 따뜻한 톤이 유지되는가(공포·단정·비난 톤이면 감점)? 0~25\n5. quality(문장 품질): 오타·비문·어색한 표현이 없고 간결한가? 0~15\n\nJSON: {"totalScore":85,"scores":{"accuracy":17,"factual":16,"copyright":18,"engagement":22,"quality":12},"feedback":"전체 평가 2~3문장","improvements":["구체적 개선점1","개선점2","개선점3"],"approved":true}\napproved는 totalScore>=70이면 true.`
+    user: `책 "${bookInfo.title}" (저자: ${bookInfo.author}) 캐럿셀을 아래 5가지 기준으로 평가하세요.\n${bookDesc ? `\n실제 책 소개(출판사 제공 — 부합도 채점의 근거):\n${bookDesc}\n` : ''}\n캐럿셀 내용:\n${JSON.stringify(pages, null, 2)}\n\n평가 기준 (100점 만점):\n1. accuracy(책 내용 부합도): ${bookDesc ? '캐럿셀의 통찰·솔루션이 위 "실제 책 소개"의 주제·메시지와 일치하는가? 소개와 무관한 주제를 책의 것처럼 말하면 크게 감점.' : '캐럿셀 내용이 해당 책의 실제 메시지와 일치하는가? (소개 미제공 — 확신 없으면 보수적으로 감점)'} 0~20\n2. factual(사실 정확성): 수치·통계·사례에 명백한 오류나 과장이 없는가? 0~20\n3. copyright(저작권 안전성): 책의 핵심 내용을 그대로 옮기지 않고 요약·재해석했는가? 저자명·책 제목이 본문에 노출되지 않는가? 0~20\n4. engagement(공감·참여 유도): 30대 독자가 "이건 내 얘기다"라고 느껴 저장·공유하고 싶어지는 깊은 공감과 위로가 있는가? 따뜻한 톤이 유지되는가(공포·단정·비난 톤이면 감점)? 0~25\n5. quality(문장 품질): 오타·비문·어색한 표현이 없고 간결한가? 0~15\n\nJSON: {"totalScore":85,"scores":{"accuracy":17,"factual":16,"copyright":18,"engagement":22,"quality":12},"feedback":"전체 평가 2~3문장","improvements":["구체적 개선점1","개선점2","개선점3"],"approved":true}\napproved는 totalScore>=70이면 true.`
   });
   return { success: true, ...extractJson(text) };
 }
@@ -978,7 +1004,7 @@ async function handleRegenerate(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'main',
     system: `당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.\n3. 5페이지는 반문·열린 결말 구조 — 구매 유도나 직접 행동 지시 없이 독자에게 질문을 던진다.\n4. 모든 콘텐츠에 반말을 절대 사용하지 않는다 — 문어체·존댓말(~습니다/~합니다/~세요)만 허용.\n반드시 JSON만 응답한다.`,
-    user: `캐럿셀을 피드백에 맞게 개선하세요.\n카테고리: ${bookInfo.category || '자기계발'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n이전 버전:\n${JSON.stringify(previousPages, null, 2)}\n\n피드백: ${feedback}\n개선 요청: ${improvements.join(' / ')}\n\n텍스트 길이 기준:\n- 1페이지 headline: 40자 이내 완전한 문장(주어+상황+결과). 단어 조각 절대 금지. subtext 없음.\n- 2~4페이지 headline: 18자 이내, body: 3~4줄(줄당 45자 이내). 구체적 수치·사례 포함.\n- JSON 형식: {"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},...}\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
+    user: `캐럿셀을 피드백에 맞게 개선하세요.\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n${bookInfo.description ? `실제 책 소개(출판사 — 통찰·솔루션은 이 소개의 주제와 일치해야 하며, 소개에 없는 개념을 책의 것처럼 지어내지 말 것): ${String(bookInfo.description).slice(0, 600)}\n` : ''}\n이전 버전:\n${JSON.stringify(previousPages, null, 2)}\n\n피드백: ${feedback}\n개선 요청: ${improvements.join(' / ')}\n\n텍스트 길이 기준:\n- 1페이지 headline: 40자 이내 완전한 문장(주어+상황+결과). 단어 조각 절대 금지. subtext 없음.\n- 2~4페이지 headline: 18자 이내, body: 3~4줄(줄당 45자 이내). 구체적 수치·사례 포함.\n- JSON 형식: {"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},...}\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
   return { success: true, pages: extractJson(text) };
 }
@@ -1130,6 +1156,7 @@ async function runStep(env, pipelineId, step) {
         category: as.category || chosen.category || '', // 레인 고정 — 톤 일관성
         coreMessage: chosen.coreMessage || chosen.reason || '',
         targetAudience: chosen.targetAudience || '',
+        description: chosen.description || '', // 실제 책 소개 — 생성·검증 근거
       };
       await savePipelineStatus(env, pipelineId, { bookInfo, label: `책 선정: ${bookInfo.title}` });
       await logStep(env, pipelineId, { step, phase: 'book-selected', note: `${bookInfo.title} / ${bookInfo.author}` });
@@ -1150,6 +1177,7 @@ async function runStep(env, pipelineId, step) {
     const pages = genData.pages;
     const patch = { step: 1, stepStatus: 'done', label: '5페이지 카드뉴스 생성 완료', pages };
     if (genData.bookCover) patch.bookCover = genData.bookCover;   // 마지막 장 표지
+    if (genData.bookDescription) patch.bookDescription = genData.bookDescription; // 검증 근거(실제 책 소개)
     // 교차검증으로 저자가 교정됐으면 bookInfo에 반영(이후 단계·도서관·DM에 진짜 저자 사용)
     if (genData.correctedBook) {
       const fixed = { ...bookInfo, title: genData.correctedBook.title || bookInfo.title, author: genData.correctedBook.author || bookInfo.author };
@@ -1164,14 +1192,16 @@ async function runStep(env, pipelineId, step) {
     const { pages } = state;
     await setActive('AI 자동 품질 평가 중...');
     await logStep(env, pipelineId, { step, phase: 'start' });
+    // 실제 책 소개를 검증·재생성에 근거로 전달 — 부합도를 추측이 아닌 사실로 채점
+    const gBook = { ...bookInfo, description: state.bookDescription || '' };
     let updatedPages = pages;
     let validation = null;
     try {
       for (let attempt = 1; attempt <= 2; attempt++) {
-        validation = await handleValidate(env, { pages: updatedPages, bookInfo });
+        validation = await handleValidate(env, { pages: updatedPages, bookInfo: gBook });
         if (validation.approved) break;
         if (attempt < 2) {
-          const rd = await handleRegenerate(env, { bookInfo, previousPages: updatedPages, feedback: validation.feedback, improvements: validation.improvements || [] });
+          const rd = await handleRegenerate(env, { bookInfo: gBook, previousPages: updatedPages, feedback: validation.feedback, improvements: validation.improvements || [] });
           updatedPages = rd.pages;
         }
       }
