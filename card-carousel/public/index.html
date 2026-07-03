@@ -377,10 +377,18 @@
     }
     .card-1 .card-divider { display: none; }
     .card-1 .card-footer { display: none; }
-    /* 이미지 위에 올려지는 어두운 그라디언트 — 1페이지는 중앙 텍스트용으로 강화 */
-    .card-1.card-with-image::before {
-      background: linear-gradient(160deg, rgba(0,0,0,0.55) 0%, rgba(10,5,30,0.78) 100%);
-    }
+
+    /* === Phase 2: 텍스트 오버레이 엔진 — 이미지 분석 결과에 따른 자동 스킴 === */
+    /* 밝은 배경 → 어두운 글씨 + 흰 번짐(halo) */
+    .card.overlay-light .card-num { color: rgba(17,24,39,0.5); }
+    .card.overlay-light .card-headline { color: #111827; text-shadow: 0 1px 12px rgba(255,255,255,0.9), 0 0 4px rgba(255,255,255,0.8); }
+    .card.overlay-light .card-body { color: rgba(17,24,39,0.85); text-shadow: 0 1px 8px rgba(255,255,255,0.85); }
+    .card.overlay-light .card-footer { border-top-color: rgba(17,24,39,0.15); }
+    .card.overlay-light .card-book-info { color: rgba(17,24,39,0.4); }
+    .card.overlay-light .card-copy-btn { background: rgba(17,24,39,0.08); color: rgba(17,24,39,0.72); border: 1px solid rgba(17,24,39,0.22); }
+    /* 1페이지(훅) — 이미지가 있으면 피사체를 피해 위/아래 여백 밴드에 배치 (기본: 아래) */
+    .card-1.card-has-image .card-inner { justify-content: flex-end; padding-bottom: 34px; }
+    .card-1.card-has-image.overlay-top .card-inner { justify-content: flex-start; padding-top: 40px; }
 
     .card-footer {
       display: flex; align-items: center; justify-content: space-between;
@@ -783,18 +791,17 @@ imageInput.addEventListener('change', () => { addImageFiles(imageInput.files); i
 function addImageFiles(fileList) {
   const files = [...(fileList || [])].filter(f => f.type.startsWith('image/'));
   if (!files.length) { showToast('이미지 파일만 업로드할 수 있습니다.', 'warning'); return; }
-  let remaining = files.length;
-  files.forEach(f => {
+  // FileReader 완료 순서는 파일 순서와 다를 수 있음 → Promise.all로 선택한 순서 그대로 보존
+  Promise.all(files.map(f => new Promise((res, rej) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      state.uploadedImages.push(reader.result);
-      if (--remaining === 0) {
-        renderUploadPreviews();
-        applyUploadedImages(); // 이미 캐럿셀이 떠 있으면 배경 즉시 갱신
-      }
-    };
+    reader.onload = () => res(reader.result);
+    reader.onerror = () => rej(new Error(f.name));
     reader.readAsDataURL(f);
-  });
+  }))).then(urls => {
+    state.uploadedImages.push(...urls);
+    renderUploadPreviews();
+    applyUploadedImages(); // 이미 캐럿셀이 떠 있으면 배경 즉시 갱신
+  }).catch(() => showToast('이미지 읽기에 실패했습니다.', 'error'));
 }
 
 function renderUploadPreviews() {
@@ -889,22 +896,98 @@ document.getElementById('traceOriginBtn').addEventListener('click', async () => 
   }
 });
 
-// 업로드 이미지를 카드 배경으로 적용 — 1장이면 전체 반복, 여러 장이면 순서대로(부족분은 마지막 장 반복)
-function applyUploadedImages() {
+// ===== Phase 2: 텍스트 오버레이 엔진 =====
+// 이미지를 작은 캔버스에 내려 그려 3x3 그리드로 분석한다.
+//  · 위치: 상단 밴드 vs 하단 밴드의 "복잡도"(경계선 밀도 + 명암 편차)를 비교해
+//    덜 복잡한(=피사체가 없을 가능성이 높은) 쪽에 텍스트를 배치. 동률이면 하단(인스타 관례).
+//  · 색상: 선택된 밴드의 평균 밝기 → 밝으면 어두운 글씨+흰 스크림, 어두우면 흰 글씨+검은 스크림.
+const _overlayCache = new Map(); // 같은 이미지를 카드 5장에 재분석하지 않도록 캐시
+
+async function analyzeImageForOverlay(src) {
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = src; });
+  const S = 96;
+  const c = document.createElement('canvas'); c.width = S; c.height = S;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, S, S);
+  const d = ctx.getImageData(0, 0, S, S).data;
+  const lum = (i) => 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
+
+  const G = 3, cell = S / G, cells = [];
+  for (let gy = 0; gy < G; gy++) for (let gx = 0; gx < G; gx++) {
+    let sum = 0, sum2 = 0, n = 0, edges = 0;
+    for (let y = Math.floor(gy * cell); y < Math.floor((gy + 1) * cell); y++) {
+      for (let x = Math.floor(gx * cell); x < Math.floor((gx + 1) * cell); x++) {
+        const i = (y * S + x) * 4, L = lum(i);
+        sum += L; sum2 += L * L; n++;
+        if (x + 1 < S && Math.abs(L - lum(i + 4)) > 26) edges++;           // 가로 경계선
+        if (y + 1 < S && Math.abs(L - lum(((y + 1) * S + x) * 4)) > 26) edges++; // 세로 경계선
+      }
+    }
+    const mean = sum / n;
+    cells.push({ mean, std: Math.sqrt(Math.max(0, sum2 / n - mean * mean)), edge: edges / n });
+  }
+
+  const busy = (band) => band.reduce((a, c) => a + c.edge * 0.7 + (c.std / 255) * 0.3, 0) / band.length;
+  const top = [cells[0], cells[1], cells[2]], bottom = [cells[6], cells[7], cells[8]];
+  // 하단을 기본으로 선호(인스타 카드 관례) — 하단이 상단보다 뚜렷이 복잡할 때만 상단 배치
+  const position = busy(bottom) > busy(top) * 1.25 ? 'top' : 'bottom';
+  const band = position === 'top' ? top : bottom;
+  const bandLum = band.reduce((a, c) => a + c.mean, 0) / band.length; // 0~255
+  const scheme = bandLum > 150 ? 'dark-on-light' : 'light-on-dark';
+  const topLum = top.reduce((a, c) => a + c.mean, 0) / top.length; // 페이지 번호(좌상단) 색 결정용
+  return { position, bandLum: Math.round(bandLum), scheme, topLum: Math.round(topLum) };
+}
+
+// 업로드 이미지를 카드 배경으로 적용 — 1장이면 전체 반복, 여러 장이면 순서대로(부족분은 마지막 장 반복).
+// 카드마다 분석 결과(위치·색상 스킴)를 dataset에 기록 → 미리보기 CSS와 캔버스 저장이 함께 읽는다.
+async function applyUploadedImages() {
   const cards = document.querySelectorAll('#carouselScroll .card');
   const imgs = state.uploadedImages;
-  cards.forEach((card, i) => {
+  for (let i = 0; i < cards.length; i++) {
+    const card = cards[i];
     if (!imgs.length) {
       card.style.backgroundImage = '';
       delete card.dataset.blobUrl;
-      return;
+      delete card.dataset.overlayPos;
+      delete card.dataset.overlayScheme;
+      delete card.dataset.overlayTopLum;
+      card.classList.remove('overlay-light', 'overlay-top', 'card-has-image');
+      const numEl0 = card.querySelector('.card-num');
+      if (numEl0) numEl0.style.color = '';
+      continue;
     }
     const src = imgs[Math.min(i, imgs.length - 1)];
-    card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.20), rgba(0,0,0,0.72)), url("${src}")`;
+    let a;
+    try {
+      if (!_overlayCache.has(src)) _overlayCache.set(src, await analyzeImageForOverlay(src));
+      a = _overlayCache.get(src);
+    } catch {
+      a = { position: 'bottom', bandLum: 0, scheme: 'light-on-dark' }; // 분석 실패 → 안전한 기본값
+    }
+    const light = a.scheme === 'dark-on-light';
+    // 텍스트가 놓이는 쪽에만 스크림을 깐다 — 밝은 배경이면 흰 스크림, 어두우면 검은 스크림
+    const scrim = light
+      ? (a.position === 'top'
+          ? 'linear-gradient(rgba(255,255,255,0.80), rgba(255,255,255,0.22))'
+          : 'linear-gradient(rgba(255,255,255,0.22), rgba(255,255,255,0.80))')
+      : (a.position === 'top'
+          ? 'linear-gradient(rgba(0,0,0,0.72), rgba(0,0,0,0.16))'
+          : 'linear-gradient(rgba(0,0,0,0.16), rgba(0,0,0,0.72))');
+    card.style.backgroundImage = `${scrim}, url("${src}")`;
     card.style.backgroundSize = 'cover';
     card.style.backgroundPosition = 'center';
     card.dataset.blobUrl = src; // 캔버스 저장(buildCardBlob)·릴스 배경이 이 값을 읽는다
-  });
+    card.dataset.overlayPos = a.position;
+    card.dataset.overlayScheme = a.scheme;
+    card.dataset.overlayTopLum = String(a.topLum ?? 0);
+    card.classList.add('card-has-image');
+    card.classList.toggle('overlay-light', light);
+    card.classList.toggle('overlay-top', a.position === 'top');
+    // 페이지 번호(좌상단)는 텍스트 밴드가 아니라 "상단" 밝기 기준으로 색을 정한다
+    const numEl = card.querySelector('.card-num');
+    if (numEl) numEl.style.color = (a.topLum ?? 0) > 150 ? 'rgba(17,24,39,0.5)' : 'rgba(255,255,255,0.4)';
+  }
 }
 
 document.getElementById('generateBtn').addEventListener('click', async () => {
@@ -931,7 +1014,7 @@ async function generateCarousel() {
     const data = await apiFetch('/api/generate', state.bookInfo);
     state.pages = data.pages;
     renderCarousel(data.pages);
-    applyUploadedImages(); // 업로드한 이미지를 카드 배경으로 적용
+    await applyUploadedImages(); // 업로드 이미지 적용 + 오버레이 분석(위치·색상)
     setStep(3);
     // 캐럿셀과 함께 릴스 대본(연결성 있는 문구)도 생성해 미리보기로 보여준다.
     generateReelScript();
@@ -1528,15 +1611,28 @@ async function buildCardBlob(card, pageNum) {
 
   await document.fonts.ready;
 
+  // Phase 2 오버레이 엔진 결과 — applyUploadedImages가 dataset에 기록한 위치·색상 스킴
+  const pos = card.dataset.overlayPos || 'bottom';                    // 'top' | 'bottom'
+  const light = card.dataset.overlayScheme === 'dark-on-light';       // 밝은 배경 → 어두운 글씨
+
   // ① 배경
   const blobUrl = card.dataset.blobUrl;
   if (blobUrl) {
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
     ctx.drawImage(img, 0, 0, W, H);
-    const grad = ctx.createLinearGradient(0, H * 0.3, 0, H);
-    grad.addColorStop(0, 'rgba(0,0,0,0)');
-    grad.addColorStop(1, 'rgba(0,0,0,0.9)');
+    // 텍스트가 놓이는 쪽에만 스크림 — 밝은 배경이면 흰 스크림, 어두우면 검은 스크림
+    const scrimRGB = light ? '255,255,255' : '0,0,0';
+    const grad = pos === 'top'
+      ? ctx.createLinearGradient(0, 0, 0, H * 0.7)
+      : ctx.createLinearGradient(0, H * 0.3, 0, H);
+    if (pos === 'top') {
+      grad.addColorStop(0, `rgba(${scrimRGB},${light ? 0.88 : 0.9})`);
+      grad.addColorStop(1, `rgba(${scrimRGB},0)`);
+    } else {
+      grad.addColorStop(0, `rgba(${scrimRGB},0)`);
+      grad.addColorStop(1, `rgba(${scrimRGB},${light ? 0.88 : 0.9})`);
+    }
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
   } else {
@@ -1547,9 +1643,16 @@ async function buildCardBlob(card, pageNum) {
     ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
   }
 
+  // 스킴별 텍스트 색 — 배경과 반대 계열 + 반대색 번짐(halo)으로 가독성 확보
+  const HEAD_COLOR = light ? '#111827' : '#ffffff';
+  const BODY_COLOR = light ? 'rgba(17,24,39,0.85)' : 'rgba(255,255,255,0.78)';
+  // 페이지 번호(좌상단)는 상단 밴드 밝기 기준 — 밝은 상단에 흰 번호가 묻히지 않게
+  const NUM_COLOR  = parseFloat(card.dataset.overlayTopLum || '0') > 150 ? 'rgba(17,24,39,0.45)' : 'rgba(255,255,255,0.45)';
+  const HALO       = light ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.55)';
+
   // ② 페이지 번호만 (상단 좌측)
   ctx.font = '700 36px "Noto Sans KR", sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.fillStyle = NUM_COLOR;
   ctx.textAlign = 'left';
   ctx.fillText(`${pageNum}`, 70, 86);
 
@@ -1560,8 +1663,8 @@ async function buildCardBlob(card, pageNum) {
   else if (pageNum === 1) { headline = pg.headline || ''; body = ''; }
   else { headline = pg.headline || ''; body = pg.body || ''; }
 
-  // ④ 동적 bottom-anchored 레이아웃
-  const PAD_X = 70, PAD_BOTTOM = 80, PAD_BETWEEN = 36;
+  // ④ 동적 레이아웃 — 분석된 여백 밴드(상/하)에 앵커
+  const PAD_X = 70, PAD_BOTTOM = 80, PAD_TOP = 150, PAD_BETWEEN = 36;
   const ACCENT_H = 6, ACCENT_W = 90, ACCENT_GAP = 28;
   const TEXT_W = W - PAD_X * 2;
 
@@ -1573,31 +1676,59 @@ async function buildCardBlob(card, pageNum) {
     : { px: 42, lines: [] };
   const BODY_LINE_H = Math.round(bodyPx * 1.42);
 
-  let curY = H - PAD_BOTTOM;
-
-  if (bodyLines.length) {
-    ctx.font = `400 ${bodyPx}px "Noto Sans KR", sans-serif`;
-    ctx.fillStyle = 'rgba(255,255,255,0.78)';
-    ctx.textAlign = 'left';
-    for (let i = bodyLines.length - 1; i >= 0; i--) {
-      ctx.fillText(bodyLines[i], PAD_X, curY);
-      curY -= BODY_LINE_H;
-    }
-    curY -= PAD_BETWEEN;
-  }
-
-  ctx.font = `900 ${hlPx}px "Noto Sans KR", sans-serif`;
-  ctx.fillStyle = '#ffffff';
-  ctx.textAlign = 'left';
-  for (let i = hlLines.length - 1; i >= 0; i--) {
-    ctx.fillText(hlLines[i], PAD_X, curY);
-    curY -= HL_LINE_H;
-  }
-  curY -= ACCENT_GAP;
-
   const ACC = { 1:'#8B5CF6', 2:'#60A5FA', 3:'#F87171', 4:'#34D399', 5:'#C084FC' };
-  ctx.fillStyle = ACC[pageNum] || '#8B5CF6';
-  ctx.fillRect(PAD_X, curY, ACCENT_W, ACCENT_H);
+  ctx.textAlign = 'left';
+  ctx.shadowColor = HALO;
+
+  if (pos === 'top') {
+    // 상단 앵커: 액센트 바 → 헤드라인 → 본문 순서로 위에서 아래로
+    let curY = PAD_TOP;
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = ACC[pageNum] || '#8B5CF6';
+    ctx.fillRect(PAD_X, curY, ACCENT_W, ACCENT_H);
+    curY += ACCENT_H + ACCENT_GAP;
+
+    ctx.font = `900 ${hlPx}px "Noto Sans KR", sans-serif`;
+    ctx.fillStyle = HEAD_COLOR;
+    ctx.shadowBlur = 14;
+    for (const ln of hlLines) { curY += HL_LINE_H; ctx.fillText(ln, PAD_X, curY - Math.round(HL_LINE_H * 0.24)); }
+
+    if (bodyLines.length) {
+      curY += PAD_BETWEEN;
+      ctx.font = `400 ${bodyPx}px "Noto Sans KR", sans-serif`;
+      ctx.fillStyle = BODY_COLOR;
+      ctx.shadowBlur = 10;
+      for (const ln of bodyLines) { curY += BODY_LINE_H; ctx.fillText(ln, PAD_X, curY - Math.round(BODY_LINE_H * 0.26)); }
+    }
+  } else {
+    // 하단 앵커(기본): 아래에서 위로 본문 → 헤드라인 → 액센트 바
+    let curY = H - PAD_BOTTOM;
+
+    if (bodyLines.length) {
+      ctx.font = `400 ${bodyPx}px "Noto Sans KR", sans-serif`;
+      ctx.fillStyle = BODY_COLOR;
+      ctx.shadowBlur = 10;
+      for (let i = bodyLines.length - 1; i >= 0; i--) {
+        ctx.fillText(bodyLines[i], PAD_X, curY);
+        curY -= BODY_LINE_H;
+      }
+      curY -= PAD_BETWEEN;
+    }
+
+    ctx.font = `900 ${hlPx}px "Noto Sans KR", sans-serif`;
+    ctx.fillStyle = HEAD_COLOR;
+    ctx.shadowBlur = 14;
+    for (let i = hlLines.length - 1; i >= 0; i--) {
+      ctx.fillText(hlLines[i], PAD_X, curY);
+      curY -= HL_LINE_H;
+    }
+    curY -= ACCENT_GAP;
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = ACC[pageNum] || '#8B5CF6';
+    ctx.fillRect(PAD_X, curY, ACCENT_W, ACCENT_H);
+  }
+  ctx.shadowBlur = 0;
 
   return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
 }
