@@ -1,4 +1,4 @@
-# 천하쟁패 (Color Battle) — 군웅할거 관전 시뮬레이션
+# 천하쟁패 (Color Battle) — 6색 관전 시뮬레이션
 
 > 색으로 나뉜 6세력이 지도를 정복하는 **관전용(faceless-YouTube) 시뮬레이션** 게임
 > 단일 HTML + Canvas + Vanilla JS · 의존성 없음 · 시드 재현 가능
