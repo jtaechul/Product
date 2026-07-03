@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
-"""리플(XRP) 전용 자동매매 봇 — ⚠️ --live 시 실제 주문.
+"""리플(XRP) '시기 반응형' 자동매매 봇 — ⚠️ --live 시 실제 주문.
 
-왜 XRP 전용인가 (scripts/analyze_xrp 검증 결론):
-  · XRP는 추세필터(200MA)가 약했고(Calmar 0.21), MACD는 과최적화(전체 1.70→검증 0.13)였다.
-  · 워크포워드 5개 시기 중 4개에서 '스윙펌프(거래량 급증 돌파 추격)'가 단순보유 대비
-    위험대비수익(Calmar) 우위 — XRP의 '오래 잠잠하다 급등' 성격과 부합.
-  · 따라서 이 봇은 검증된 '일봉 스윙펌프' 신호만으로 XRP 한 종목을 매매한다.
+구조(3층):
+  [6시간마다] 국면 판단(regime6h) → 스탠스(적극/소극/관망) → 실행층(매매)
+    · 적극: 진입조건 '대폭 완화'(자주·크게)   · 소극: 검증조건으로 조심
+    · 관망: 신규 매수 정지(현금으로 지키기)
+  입력 = 현재 데이터: XRP·BTC 추세 + 공포탐욕지수 + 펀딩비 + Claude 뉴스 감성.
 
-잠수함 봇과 차이:
-  · 잠수함=전체 마켓 스캔(여러 코인). XRP봇=KRW-XRP 한 종목만, '일봉' 스케일로 판단.
-  · 진입/청산 규칙(트레일링·손절)은 가격 기반이라 검증된 swing_trader 엔진을 그대로 재사용.
+안전장치(검증 없이 실투자하므로 필수):
+  · 손실 차단선(kill-switch): 누적 실현손실이 한도를 넘으면 자동 '관망'+신규매수 정지.
+    (기존 보유의 청산은 계속 작동 — 지킬 건 지킨다). 재시작해도 유지(파일 영속).
+  · 외부 지표 실패해도 봇은 안 죽음(심리 None → 가격·추세만으로 판단).
+  · 청산 규칙(손절 -10%/트레일링 -15%)은 스탠스와 무관하게 '고정' — 보유 중 규칙이 안 바뀜.
 
 사용:
-    python -m scripts.xrp_trade                 # 모의(실시세, 무주문) — 기본
-    python -m scripts.xrp_trade --invest 50000 --live   # 소액 실거래
+    python -m scripts.xrp_trade                 # 모의(무주문)
+    python -m scripts.xrp_trade --invest 100000 --live   # 실거래
 
 종료: Ctrl+C
 """
@@ -21,6 +23,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 import threading
 import time
@@ -28,7 +31,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src import allocation, news_filter, notifier  # noqa: E402
+from src import allocation, news_filter, notifier, regime6h, sentiment  # noqa: E402
 from src.swing import SwingConfig, compute_features, is_entry  # noqa: E402
 from src.swing_trader import SwingTrader  # noqa: E402
 from src.timeutil import now_kst as datetime_now  # noqa: E402
@@ -36,14 +39,15 @@ from src.upbit_quotation import UpbitQuotation, candles_to_dataframe  # noqa: E4
 
 MARKET = "KRW-XRP"
 MIN_ORDER_KRW = 5000
+STATE_DIR = Path(__file__).resolve().parent.parent / ".botstate"
 
-# tune_xrp 검증 승자 '공격형' 설정(일봉). 진입 신호는 '일봉', 청산은 가격기반 실시간.
-#   공격조합 = 거래량 1.5배 + 박스 20일 + 추격상한 35% (self_ma=50·BTC게이트 끔 유지):
-#     거래 24→53회(2.2배), Calmar 0.94→1.39, 워크포워드 5구간 4/5 · 8구간 6/8(기준 5/8).
-#   ⚠️ 대가: 최대낙폭 -33%→-56%로 깊어짐(공격형의 비용) — 승률 49%, 손절 연발 구간 존재.
-#   max_hold_bars 는 실시간 엔진에서 '시간(h)' 단위 → 30일 = 720h
-XRP_CFG = dict(base_bars=20, recent_bars=3, self_ma_bars=50, btc_ma_bars=0,
-               vol_surge=1.5, max_chase=0.35)
+# 스탠스별 '진입' 설정(청산 규칙과 분리). 적극 = 사용자 요청대로 대폭 완화.
+STANCE_ENTRY = {
+    "적극": dict(base_bars=15, recent_bars=3, self_ma_bars=0, btc_ma_bars=0,
+               vol_surge=1.3, min_momentum=0.0, max_chase=0.40),   # 자주·크게
+    "소극": dict(base_bars=30, recent_bars=3, self_ma_bars=50, btc_ma_bars=0,
+               vol_surge=2.5, min_momentum=0.02, max_chase=0.20),  # 검증 조건
+}
 
 
 def log(msg: str, push: bool = False) -> None:
@@ -52,8 +56,9 @@ def log(msg: str, push: bool = False) -> None:
         notifier.send(msg)
 
 
+# ───────────────────────── 브로커 ─────────────────────────
 class PaperBroker:
-    def __init__(self, q: UpbitQuotation):
+    def __init__(self, q):
         self.q = q
 
     def get_prices(self, markets):
@@ -70,7 +75,7 @@ class PaperBroker:
         return price
 
     def get_holdings(self):
-        return None   # 모의: 실제 잔고 없음(메모리 상태만)
+        return None
 
 
 class LiveBroker(PaperBroker):
@@ -94,30 +99,51 @@ class LiveBroker(PaperBroker):
         return self.ex.get_holdings()
 
 
+# ───────────────────────── 공유 상태 ─────────────────────────
 class Shared:
-    """스캐너 스레드가 계산한 '오늘 일봉 신호'를 메인 루프와 공유."""
-    def __init__(self):
+    def __init__(self, exit_params: dict):
         self.lock = threading.Lock()
-        self.signal = False        # 지금 진입 신호가 떠 있는가
-        self.feat: dict | None = None
+        self.signal = False
+        self.feat = None
         self.updated_at = None
+        # 국면(스탠스) — 시작은 안전하게 '소극'
+        self.stance = "소극"
+        self.stance_reason = "시작 — 국면 판단 대기"
+        self.stance_inputs = {}
+        self.entry_cfg = SwingConfig(**exit_params, **STANCE_ENTRY["소극"])
+        self._exit_params = exit_params
 
-    def set(self, signal, feat):
+    def set_signal(self, signal, feat):
         with self.lock:
             self.signal = signal
             self.feat = feat
             self.updated_at = datetime_now()
 
-    def get(self):
+    def set_stance(self, st: "regime6h.Stance"):
+        with self.lock:
+            self.stance = st.stance
+            self.stance_reason = st.reason
+            self.stance_inputs = st.inputs
+            if st.entry_key:                       # 적극/소극 → 해당 진입설정
+                self.entry_cfg = SwingConfig(**self._exit_params,
+                                             **STANCE_ENTRY[st.entry_key])
+            # 관망이면 entry_cfg 는 그대로 두되(참고용), 매수는 상위에서 막음
+
+    def get_signal(self):
         with self.lock:
             return self.signal, self.feat, self.updated_at
 
+    def get_stance(self):
+        with self.lock:
+            return self.stance, self.stance_reason, self.entry_cfg, dict(self.stance_inputs)
 
-def daily_signal(q: UpbitQuotation, cfg: SwingConfig) -> tuple[bool, dict | None]:
-    """XRP 일봉으로 '오늘 진입 신호'를 계산 (백테스트 is_entry 와 동일 규칙)."""
+
+# ───────────────────────── 신호/국면 계산 ─────────────────────────
+def daily_signal(q, cfg: SwingConfig) -> tuple[bool, dict | None]:
+    """현재 스탠스의 진입설정으로 XRP 일봉 '진입 신호' 계산."""
     need = cfg.base_bars + cfg.recent_bars + cfg.self_ma_bars + 2
     df = candles_to_dataframe(q.get_candles_days(MARKET, count=min(200, need)))
-    if len(df) < need - 1:
+    if len(df) < cfg.base_bars + cfg.recent_bars + 2:
         return False, None
     c = df["close"].to_numpy(float)
     h = df["high"].to_numpy(float)
@@ -126,142 +152,205 @@ def daily_signal(q: UpbitQuotation, cfg: SwingConfig) -> tuple[bool, dict | None
     feat = compute_features(c, h, v, i, cfg)
     if not is_entry(feat, cfg):
         return False, feat
-    if cfg.self_ma_bars > 0:           # 코인 자체 추세 게이트(50일선 위)
-        if not c[i] > c[-cfg.self_ma_bars:].mean():
-            return False, feat
+    if cfg.self_ma_bars > 0 and not c[i] > c[-cfg.self_ma_bars:].mean():
+        return False, feat
     return True, feat
 
 
-def scanner_loop(shared, q, cfg, interval, stop):
+def regime_loop(shared, q, interval, use_news, stop):
+    """6시간마다 국면(스탠스)을 판단해 공유상태 갱신 + 변경 시 알림."""
+    last_stance = None
     while not stop.is_set():
         try:
-            sig, feat = daily_signal(q, cfg)
-            shared.set(sig, feat)
-            if sig:
-                log(f"🔍 XRP 진입 신호 ON — 거래량 {feat['surge']:.1f}배, "
-                    f"박스돌파 {feat['breakout']*100:+.1f}%, 최근상승 {feat['momentum']*100:+.1f}%")
+            xrp = candles_to_dataframe(q.get_candles_days(MARKET, count=210))
+            btc = candles_to_dataframe(q.get_candles_days("KRW-BTC", count=210))
+            snap = sentiment.snapshot()
+            news_score = None
+            if use_news:
+                v = news_filter.assess()
+                news_score = v.score if v.enabled else None
+            st = regime6h.decide(xrp, btc, snap["fear_greed"], snap["funding"], news_score)
+            shared.set_stance(st)
+            log(f"🧭 국면 판단: [{st.stance}] {st.reason}")
+            if last_stance is not None and st.stance != last_stance:
+                notifier.send(
+                    f"🧭 <b>리플 국면 전환: {last_stance} → {st.stance}</b>\n"
+                    f"{st.reason}\n"
+                    + ("→ 이제 진입조건을 대폭 완화해 적극적으로 노려요"
+                       if st.stance == "적극" else
+                       "→ 조심스럽게 검증 조건으로만 봐요" if st.stance == "소극" else
+                       "→ 신규 매수를 멈추고 현금으로 지켜요"))
+            last_stance = st.stance
+        except Exception as exc:
+            log(f"국면 판단 오류(계속): {exc}")
+        stop.wait(interval)
+
+
+def scanner_loop(shared, q, interval, stop):
+    """현재 스탠스의 진입설정으로 신호를 주기 갱신. 관망이면 신호 없음."""
+    while not stop.is_set():
+        try:
+            stance, _, entry_cfg, _ = shared.get_stance()
+            if stance == "관망":
+                shared.set_signal(False, None)
+                log("🔍 관망 국면 — 신규 매수 안 함")
             else:
-                log("🔍 XRP 신호 없음 — 급등 조건 대기 중")
+                sig, feat = daily_signal(q, entry_cfg)
+                shared.set_signal(sig, feat)
+                if sig:
+                    log(f"🔍 [{stance}] 진입 신호 ON — 거래량 {feat['surge']:.1f}배, "
+                        f"박스돌파 {feat['breakout']*100:+.1f}%")
+                else:
+                    log(f"🔍 [{stance}] 신호 없음 — 대기")
         except Exception as exc:
             log(f"신호 계산 오류(계속): {exc}")
         stop.wait(interval)
 
 
+# ───────────────────────── 손실 차단선 ─────────────────────────
+class KillSwitch:
+    """누적 실현손익을 영속 추적. 한도 초과 시 killed=True(신규매수 정지)."""
+    def __init__(self, limit: float, path: Path):
+        self.limit = abs(limit)
+        self.path = path
+        self.cum = 0.0
+        try:
+            self.cum = float(json.loads(path.read_text()).get("cum", 0.0))
+        except Exception:
+            pass
+        self.killed = self.cum <= -self.limit
+
+    def add(self, pnl: float) -> bool:
+        """실현손익 반영. 이번에 '새로' 발동됐으면 True."""
+        self.cum += pnl
+        try:
+            self.path.write_text(json.dumps({"cum": self.cum}), encoding="utf-8")
+        except Exception:
+            pass
+        if not self.killed and self.cum <= -self.limit:
+            self.killed = True
+            return True
+        return False
+
+
+# ───────────────────────── 메인 ─────────────────────────
 def main() -> None:
-    p = argparse.ArgumentParser(description="리플(XRP) 전용 자동매매 봇")
-    p.add_argument("--invest", type=float, default=100_000, help="1회 매수 금액")
-    p.add_argument("--interval", type=float, default=10.0, help="보유 감시 주기(초)")
-    p.add_argument("--scan-interval", type=int, default=1800,
-                   help="일봉 신호 점검 주기(초). 일봉 전략이라 길게 둠(기본 30분)")
-    p.add_argument("--trail", type=float, default=0.15, help="고점 대비 트레일링 폭")
-    p.add_argument("--stop", type=float, default=0.10, help="하드 손절 폭")
-    p.add_argument("--arm", type=float, default=0.06, help="트레일링 활성 수익선")
-    p.add_argument("--max-hold-days", type=int, default=30, help="최대 보유(일)")
-    p.add_argument("--cooldown", type=int, default=48, help="매도 후 재진입 쿨다운(시간)")
-    p.add_argument("--take-profit", type=float, default=0.0,
-                   help="고정 익절선(+비율, 0=끔). 도달 시 트레일링 안 기다리고 익절")
-    p.add_argument("--news", choices=["auto", "off"], default="auto",
-                   help="뉴스 브레이크(auto=API키 있으면 작동). 강한 악재면 매수 보류")
-    p.add_argument("--news-threshold", type=int, default=50,
-                   help="이 값 이상의 악재 점수(-N 이하)면 매수 보류")
+    p = argparse.ArgumentParser(description="리플(XRP) 시기 반응형 자동매매 봇")
+    p.add_argument("--invest", type=float, default=100_000)
+    p.add_argument("--interval", type=float, default=10.0, help="보유 감시(초)")
+    p.add_argument("--scan-interval", type=int, default=1800, help="신호 점검(초)")
+    p.add_argument("--regime-interval", type=int, default=21600, help="국면 판단(초, 기본 6h)")
+    p.add_argument("--trail", type=float, default=0.15)
+    p.add_argument("--stop", type=float, default=0.10)
+    p.add_argument("--arm", type=float, default=0.06)
+    p.add_argument("--max-hold-days", type=int, default=30)
+    p.add_argument("--cooldown", type=int, default=24, help="매도 후 재진입 쿨다운(시간)")
+    p.add_argument("--take-profit", type=float, default=0.0)
+    p.add_argument("--loss-limit", type=float, default=30000,
+                   help="누적 실현손실 이 값 도달 시 자동 관망·신규매수 정지(0=끔)")
+    p.add_argument("--news", choices=["auto", "off"], default="auto")
     p.add_argument("--live", action="store_true")
     args = p.parse_args()
 
-    cfg = SwingConfig(
-        trail=args.trail, stop_loss=args.stop, arm_profit=args.arm,
-        max_hold_bars=args.max_hold_days * 24,   # 실시간 엔진에서 '시간' 단위
-        take_profit=(args.take_profit if args.take_profit > 0 else None),
-        **XRP_CFG,
-    )
+    exit_params = dict(trail=args.trail, stop_loss=args.stop, arm_profit=args.arm,
+                       max_hold_bars=args.max_hold_days * 24,
+                       take_profit=(args.take_profit if args.take_profit > 0 else None))
+    exit_cfg = SwingConfig(btc_ma_bars=0, **exit_params)   # 엔진 청산용(고정)
     q = UpbitQuotation()
 
     if args.live:
         if args.invest < MIN_ORDER_KRW:
-            log(f"중단: 매수액이 최소주문({MIN_ORDER_KRW})보다 작음")
-            sys.exit(1)
+            log(f"중단: 매수액이 최소주문({MIN_ORDER_KRW})보다 작음"); sys.exit(1)
         from src.upbit_exchange import MissingApiKeyError, UpbitExchange
         try:
             broker = LiveBroker(q, UpbitExchange())
         except MissingApiKeyError as exc:
-            log(f"중단: {exc}")
-            sys.exit(1)
+            log(f"중단: {exc}"); sys.exit(1)
         print("=" * 60)
-        print("🔴 실거래(LIVE) — 실제 주문이 나갑니다! 5초 후 시작 (Ctrl+C 취소)")
-        print(f"   리플(XRP) 한 종목 / 매수 {args.invest:,.0f}원")
+        print("🔴 실거래(LIVE) — 실제 주문! 5초 후 시작 (Ctrl+C 취소)")
+        print(f"   리플(XRP) / 매수 {args.invest:,.0f}원 / 손실차단 -{args.loss_limit:,.0f}원")
         print("=" * 60)
         time.sleep(5)
     else:
         broker = PaperBroker(q)
-        log(f"🟡 모의(실시세, 무주문). 리플(XRP) 한 종목 / 매수 {args.invest:,.0f}원")
+        log(f"🟡 모의(무주문). 리플(XRP) / 매수 {args.invest:,.0f}원")
 
-    state_file = (Path(__file__).resolve().parent.parent
-                  / ".botstate" / "positions_xrp.json")
     engine = SwingTrader(
-        broker=broker, cfg=cfg, max_positions=1, invest_per_trade=args.invest,
-        cooldown_hours=args.cooldown, state_path=str(state_file),
-    )
+        broker=broker, cfg=exit_cfg, max_positions=1, invest_per_trade=args.invest,
+        cooldown_hours=args.cooldown, state_path=str(STATE_DIR / "positions_xrp.json"))
     engine.load_state()
-    engine.adopt_holdings()   # 이미 보유 중인 XRP가 있으면 흡수해 관리(평단=진입가)
-    # 이 봇은 XRP 전용 — 계좌의 '다른' 코인(직접 산 코인·에어드랍 등)은 절대 관리/매도
-    # 하지 않는다. adopt_holdings 는 계좌 전체를 흡수하므로 XRP 외에는 즉시 제외한다.
-    # (KRW 마켓 없는 에어드랍 토큰이 섞이면 시세조회가 깨져 봇이 죽는 문제도 함께 차단)
+    engine.adopt_holdings()
+    # XRP 전용 — 계좌의 다른 코인은 절대 관리/매도하지 않음(흡수된 것 즉시 제외)
     for _m in [k for k in engine.positions if k != MARKET]:
         del engine.positions[_m]
     engine.save_state()
 
-    shared = Shared()
-    stop = threading.Event()
-    th = threading.Thread(target=scanner_loop,
-                          args=(shared, q, cfg, args.scan_interval, stop), daemon=True)
-    th.start()
+    kill = KillSwitch(args.loss_limit, STATE_DIR / "xrp_pnl.json") if args.loss_limit > 0 \
+        else None
 
-    mode_txt = ("🔴 실거래(진짜 돈)" if args.live
-                else "🟡 모의(가짜 돈, 실제 주문 안 함)")
+    shared = Shared(exit_params)
+    stop = threading.Event()
+    threading.Thread(target=regime_loop,
+                     args=(shared, q, args.regime_interval, args.news != "off", stop),
+                     daemon=True).start()
+    threading.Thread(target=scanner_loop,
+                     args=(shared, q, args.scan_interval, stop), daemon=True).start()
+
+    mode_txt = "🔴 실거래(진짜 돈)" if args.live else "🟡 모의(가짜 돈)"
     log(f"리플 봇 시작 ({'🔴실거래' if args.live else '🟡모의'})")
+    kill_txt = (f"• 누적 손실이 -{args.loss_limit:,.0f}원에 닿으면 자동으로 멈춰요(안전장치)\n"
+                if kill else "")
     notifier.send(
-        f"🤖 <b>리플(XRP) 봇이 시작됐어요</b>  ({mode_txt})\n"
-        f"• 리플 한 종목만, 한 번에 {args.invest:,.0f}원으로 매매해요\n"
-        f"• 거래량이 평소보다 크게 터지며 오를 때(검증된 신호) 사고, 규칙대로 팔아요\n"
-        f"• 고점에서 {args.trail*100:.0f}% 내려오면 이익 보존 매도, -{args.stop*100:.0f}%면 손절\n"
-        + (f"• +{args.take_profit*100:.0f}% 도달 시 바로 익절\n"
-           if args.take_profit > 0 else "")
-        + "• 사고팔 때마다 여기로 알려드릴게요")
+        f"🤖 <b>리플(XRP) 봇 시작</b> ({mode_txt})\n"
+        f"• 6시간마다 시국을 보고 <b>적극/소극/관망</b>을 스스로 정해요\n"
+        f"• 적극이면 자주·크게, 관망이면 현금으로 지켜요\n"
+        f"• 판단 근거: XRP·비트코인 추세 + 공포탐욕지수 + 펀딩비 + 뉴스\n"
+        + kill_txt
+        + f"• 고점 -{args.trail*100:.0f}% 이익보존 매도 / -{args.stop*100:.0f}% 손절")
 
     def reason_easy(r: str) -> str:
         if r.startswith("손절"):
-            return f"손실이 한도(-{args.stop*100:.0f}%)에 닿아, 더 큰 손실을 막으려고 팔았어요"
+            return f"손실이 한도(-{args.stop*100:.0f}%)에 닿아 더 큰 손실을 막으려고 팔았어요"
         if r.startswith("트레일링"):
-            return "고점에서 일정폭 내려와, 벌어둔 이익을 지키려고 팔았어요"
+            return "고점에서 내려와 벌어둔 이익을 지키려고 팔았어요"
         if r.startswith("익절"):
             return "목표 수익에 도달해 이익을 확정했어요"
         if r.startswith("보유초과"):
-            return f"정해둔 최대 보유기간({args.max_hold_days}일)이 지나 정리했어요"
+            return f"최대 보유기간({args.max_hold_days}일)이 지나 정리했어요"
         return r
 
     def status() -> str:
-        sig, feat, upd = shared.get()
+        sig, feat, upd = shared.get_signal()
+        stance, sreason, _, inp = shared.get_stance()
         n = len(engine.positions)
         sells = sum(1 for t in engine.trades if t.action == "SELL")
-        out = ["🪙 <b>리플(XRP) 봇 현황</b>", "", "<b>[신호]</b>"]
-        if sig and feat:
-            out.append(f"• 진입 신호 ON — 거래량 평소 {feat.get('surge',0):.1f}배, "
-                       f"박스돌파 {feat.get('breakout',0)*100:+.1f}%")
+        icon = {"적극": "🔥", "소극": "🐢", "관망": "🛡️"}.get(stance, "")
+        out = ["🪙 <b>리플(XRP) 봇 현황</b>", "",
+               f"<b>[국면] {icon} {stance}</b>", f"• {sreason}"]
+        fg = inp.get("fear_greed"); fd = inp.get("funding")
+        out.append(f"• 공포탐욕 {fg if fg is not None else 'N/A'} · "
+                   f"펀딩 {f'{fd*100:+.3f}%' if fd is not None else 'N/A'}")
+        if kill:
+            out.append(f"• 누적 확정손익 {kill.cum:+,.0f}원 "
+                       f"(차단선 -{kill.limit:,.0f}원){' ⛔정지' if kill.killed else ''}")
+        out += ["", "<b>[신호]</b>"]
+        if stance == "관망":
+            out.append("• 관망 국면 — 신규 매수 안 함")
+        elif sig and feat:
+            out.append(f"• 진입 신호 ON — 거래량 {feat.get('surge',0):.1f}배")
         else:
-            out.append("• 진입 신호 없음 — 거래량 급등(돌파) 기다리는 중 👀")
-        if upd:
-            out.append(f"• 마지막 신호 점검: {upd:%H:%M}")
+            out.append("• 신호 없음 — 대기 중")
         out += ["", "<b>[내 거래]</b>"]
         if n == 0:
             out.append("• 보유: 없음 (현금)")
         else:
             try:
-                price = engine.broker.get_prices([MARKET]).get(MARKET)
+                price = broker.get_prices([MARKET]).get(MARKET)
             except Exception:
                 price = None
             pos = engine.positions.get(MARKET)
             if pos and price:
                 g = price / pos.entry_price - 1.0
-                # 손익 '원' 표시는 실제 보유 수량 기준(실거래). 조회 실패 시 매수액 근사.
                 won = None
                 try:
                     h = broker.get_holdings()
@@ -269,9 +358,7 @@ def main() -> None:
                         won = (price - pos.entry_price) * h[MARKET][0]
                 except Exception:
                     pass
-                if won is None:
-                    won = g * args.invest
-                out.append(f"• 보유 중: 지금 {g*100:+.1f}% ({won:+,.0f}원)")
+                out.append(f"• 보유 중: 지금 {g*100:+.1f}% ({(won if won is not None else g*args.invest):+,.0f}원)")
             else:
                 out.append("• 보유 중")
         out.append(f"• 오늘 확정 손익: {engine.realized_today:+,.0f}원 (매도 {sells}회)")
@@ -279,29 +366,9 @@ def main() -> None:
 
     notifier.run_shared("4_리플", status, stop=stop)
 
-    # 뉴스 브레이크: 매수 직전에만 평가(비용↓). 1시간 캐시로 중복 호출 방지.
-    _news_cache: dict = {"verdict": None, "at": 0.0}
-
-    def news_gate() -> news_filter.NewsVerdict | None:
-        if args.news == "off":
-            return None
-        if (_news_cache["verdict"] is not None
-                and time.time() - _news_cache["at"] < 3600):
-            return _news_cache["verdict"]
-        v = news_filter.assess(neg_threshold=args.news_threshold)
-        _news_cache.update(verdict=v, at=time.time())
-        if v.enabled:
-            log(f"📰 뉴스 평가: {v.label} ({v.score:+d}) — {v.reason}")
-        else:
-            log(f"📰 뉴스 브레이크 미작동: {v.reason}")
-        return v
-
-    # 반복 알림 방지용 타임스탬프(원화부족·뉴스보류는 상황이 지속돼도 1시간에 1번만 알림)
     _nocash = {"at": 0.0}
-    _newsblock = {"at": 0.0}
 
     def tick(now) -> None:
-        """한 번의 점검(청산 → 진입). 예외는 바깥 루프가 잡아 봇이 죽지 않고 계속 돈다."""
         for m in engine.reconcile_with_exchange():
             log(f"🔄 {m} 외부 매도 감지 — 보유목록서 정리")
         for rec in engine.check_exits(now):
@@ -314,37 +381,37 @@ def main() -> None:
                 f"결과: <b>{rec.gain*100:+.1f}%  ({won:+,.0f}원)</b>\n"
                 f"이유: {reason_easy(rec.reason)}\n"
                 f"오늘 확정 손익: {engine.realized_today:+,.0f}원")
-        # 다른 봇(잠수함 스캐너)이 XRP를 중복 매수하지 않도록 소유권 공표
+            if kill and kill.add(won):     # 손실 차단선 발동
+                log("⛔ 손실 차단선 도달 — 신규 매수 정지(관망)")
+                notifier.send(
+                    f"⛔ <b>리플 봇 안전정지</b>\n"
+                    f"누적 확정손실이 한도(-{kill.limit:,.0f}원)에 닿아 "
+                    f"<b>신규 매수를 멈췄어요</b>. 지금 보유분 관리는 계속합니다.\n"
+                    f"다시 켜려면 알려주세요(손실차단 해제).")
         allocation.publish_owned("xrp", engine.held())
-        sig, feat, _ = shared.get()
+
+        stance, _, _, _ = shared.get_stance()
+        if kill and kill.killed:      # 안전정지: 신규 매수 금지
+            return
+        if stance == "관망":
+            return
+        sig, feat, _ = shared.get_signal()
         if not (sig and engine.has_room()):
             return
         if args.live:
-            # 원화가 최소주문액 미만이면 주문이 안 나가는데도 '샀다'고 기록되는
-            # 유령 매수를 차단(실제 주문 없이 포지션만 생기는 버그 방지).
             avail = broker.ex.get_krw_balance()
             if avail < MIN_ORDER_KRW:
                 if time.time() - _nocash["at"] > 3600:
-                    log(f"⏸ 진입 신호 있지만 원화 {avail:,.0f}원(최소주문 미만) — 매수 보류")
+                    log(f"⏸ 신호 있으나 원화 {avail:,.0f}원(최소주문 미만) — 매수 보류")
                     _nocash["at"] = time.time()
                 return
-        v = news_gate()
-        if v is not None and not v.allow:
-            if time.time() - _newsblock["at"] > 3600:   # 신호 지속 시 반복 알림 방지
-                log(f"⛔ 매수 보류 — 뉴스 악재({v.score:+d}): {v.reason}")
-                notifier.send(
-                    f"⛔ <b>리플 매수 보류</b>\n"
-                    f"기술적 신호는 떴지만, 최근 뉴스가 강한 악재({v.score:+d})라 "
-                    f"위험을 피해 이번 매수는 건너뛰었어요.\n사유: {v.reason}")
-                _newsblock["at"] = time.time()
-            return
         for rec in engine.try_entries([MARKET], now):
-            log(f"매수 XRP @ {rec.price:,.0f}")
+            log(f"매수 XRP @ {rec.price:,.0f} [{stance}]")
             notifier.send(
-                f"🟢 <b>리플(XRP) 매수했어요!</b>\n"
+                f"🟢 <b>리플(XRP) 매수!</b> (국면: {stance})\n"
                 f"산 가격: {rec.price:,.0f}원\n투입: {args.invest:,.0f}원\n"
-                f"이유: 거래량이 평소보다 크게 늘며 상승 신호(검증된 급등 패턴)가 떠서 샀어요\n"
-                f"앞으로: 오르면 끝까지 따라가고, -{args.stop*100:.0f}%에 닿으면 손절해요")
+                f"이유: {stance} 국면 + 거래량 급등 신호가 떠서 샀어요\n"
+                f"앞으로: 오르면 따라가고, -{args.stop*100:.0f}%에 손절해요")
 
     try:
         while True:
@@ -353,7 +420,6 @@ def main() -> None:
             except KeyboardInterrupt:
                 raise
             except Exception as exc:
-                # 일시적 네트워크/API 오류로 봇 전체가 죽어 재시작 알림이 반복되는 것 방지
                 log(f"점검 루프 오류(계속 재시도): {exc}")
             time.sleep(args.interval)
     except KeyboardInterrupt:
