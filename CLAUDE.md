@@ -119,7 +119,7 @@
 ### 구현 단계
 
 - **Phase 1** (완료): 책 선정(AI추천/수동) + 5페이지 텍스트 생성 + 캡션/해시태그 생성 + 검증 + 텔레그램 발송
-- **Phase 2** (완료): 이미지 생성 API 연동 (Pollinations.ai, 무료) + Claude 이미지 프롬프트 생성 + 카드별 일러스트 자동 적용 (`/api/generate-images`)
+- **Phase 2** (완료): 이미지 생성. **표지(1페이지)는 Gemini(`gemini-2.5-flash-image`, `GEMINI_API_KEY`)로 생성**해 손·눈 인체 하자 최소화. **2~5페이지는 사람을 절대 넣지 않는 무인(no people) 장면**을 무료 Pollinations로 생성(인체 할루시네이션 원천 차단). 표지 유료 호출은 일일 40장 상한(KV `img_usage_*`) + 키 없음/실패 시 자동 무료 폴백. 사용량: `/api/usage`.
 - **Phase 3** (예정): 검증 루프 자동화 + 재생성 자동 트리거
 - **Phase 4** (예정): 인스타그램 자동 포스팅 (Upload-Post MCP)
 - **Phase 5** (예정): Instagram DM 자동 회신 + 쿠팡파트너스 링크 추출 + 구글 클라우드 스케줄러

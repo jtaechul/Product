@@ -901,9 +901,9 @@ const SETTING_VARIATIONS = [
   'on a bus by the window', 'in a sunlit kitchen', 'on a park bench in autumn', 'in a softly lit living room',
 ];
 // 인물 없는 배경 장면용 앵커 — 같은 화풍·색감은 유지하되 사람은 넣지 않는다.
-const SCENE_ANCHOR = 'no people in frame, an atmospheric symbolic scene only (cozy interior, window, quiet place or meaningful objects)';
+const SCENE_ANCHOR = 'absolutely no people, no person, no human, no figure, no silhouette, no hands, no body parts anywhere in the image — an empty atmospheric symbolic scene only (cozy interior, window, quiet place or meaningful objects)';
 
-// 페이지별 폴백 프롬프트 — Claude 생성 실패 시 사용. (인물 배치는 personPage로 동적 결정)
+// 페이지별 폴백 프롬프트 — Claude 생성 실패 시 사용. (인물은 1페이지에만, 2~5는 무인)
 const FALLBACK_IMAGE_PROMPTS = {
   page1: 'a woman seen from behind sitting alone by a large window at dusk, soft city lights bokeh outside, quiet wistful mood, empty space around her',
   page2: 'an empty cafe table by a window with a single cup and a phone left face-down, soft afternoon light, tender lonely atmosphere',
@@ -913,7 +913,7 @@ const FALLBACK_IMAGE_PROMPTS = {
 };
 
 // 페이지별 감정 역할 — 1페이지의 감정만 레인(설렘/이별/자존감)에 따라 달라진다.
-// 인물 배치는 1장 고정 + 2~4 중 1장(personPage)으로 동적 결정.
+// 인물은 1페이지(표지)에만 등장. 2~5페이지는 무인 장면.
 const LANE_PAGE1_EMOTION = {
   light: '좋아하는 마음을 들킨 듯한 설렘·두근거림',
   core: '이별 후의 쓸쓸함·그리움',
@@ -947,16 +947,14 @@ async function handleGenerateImages(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'light',
     max_tokens: 1000,
-    system: '당신은 한국 웹툰풍 감성 일러스트 아트 디렉터입니다. 연애·관계(설렘·이별·자존감) 주제의 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[인물 배치 — 매우 중요] 사람(같은 30대 한국 여성)은 정확히 2장에만 등장합니다.\n· 1페이지: 무조건 그녀(스크롤을 멈추는 표지 컷).\n· 2~4페이지 중 단 한 곳: 각 페이지의 "문장"을 읽고, 인물이 있을 때 감정이 가장 살아나는 페이지 한 곳을 골라 그녀를 넣으세요(예: 구체적 행동·장면이 그려지는 문장). 나머지 페이지(2~4 중 둘)와 5페이지는 사람 없는 분위기 장면.\n· 어느 페이지를 골랐는지 personPage로 반드시 알려주세요(page2/page3/page4 중 하나).\n\n[얼굴·해부학 규칙 — 매우 중요] 매번 자세·시점·표정·장소를 확 다르게 하세요(복붙 구도 금지). 단, 한 컷 안에서 몸의 방향과 얼굴 방향이 반드시 일치해야 합니다: 뒷모습이면 얼굴을 아예 묘사하지 말고(뒤통수만), "어깨 너머로 뒤돌아보기" 같은 목이 꺾이는 구도는 절대 금지. 얼굴이 보이는 컷은 앞모습 또는 3/4 정면으로 하고(극단적 옆모습은 눈이 어색해지므로 피함), 크고 또렷한 애니 눈 또는 감은 눈으로 그리세요. 완전한 애니 스타일이므로 눈 뜬 앞모습·미소도 환영합니다.\n\n[손·손가락 규칙] 무료 AI는 손·손가락(특히 종이·책장을 만지는 손)을 자주 뭉갭니다. 그러니 손은 소매·주머니에 넣거나 프레임 밖으로 두고, 손가락을 클로즈업하거나 종이·책장을 세밀하게 만지는 구도는 피하세요. 인물이 책을 든다면 덮인 책을 느슨히 안거나 무릎·탁자 위에 두고 손가락은 드러내지 마세요.\n\n[스타일 고정 — 5장 공통] "귀엽고 퀄리티 높은 애니풍" 일러스트: 둥글고 사랑스러운 이목구비, 깔끔한 라인, 부드러운 플랫 셀 셰이딩, 포근한 빛. 실사·반실사·3D 렌더 절대 금지(섬찟함 방지). 색감·분위기는 시스템이 주제에 맞게 자동으로 덧붙이므로 너는 색 지정 대신 장면·감정에 집중. 인물 컷과 배경 컷이 한 시리즈로 묶이게.\n\n[배경 장면 발상] 창가·카페·침대·책상·골목·버스 안, 휴대폰·편지·머그·담요·우산·책, 빈 의자, 비 오는 유리창, 저물녘→새벽빛 등으로 감정을 상징. 5장의 장소·구도가 서로 뚜렷이 다르게.\n\n[규칙]\n1. 구도·조명 구체적으로 (back view, side profile, wide shot, soft window light, golden morning light)\n2. 인물 컷은 정면 얼굴 클로즈업 금지 / 배경 컷은 사람 없음(no people)\n3. 텍스트·글자·숫자 없음 (no text, no letters, no words)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 각 프롬프트 영어 25~55단어. 인물 외형·화풍·사람유무는 시스템이 자동으로 덧붙이므로, 너는 "그 장의 장면·자세/사물·감정·장소"에 집중해 묘사.\n반드시 JSON만 응답한다.',
-    user: `책 제목: ${bookInfo.title || ''}\n카테고리: ${bookInfo.category || '이별·재회·회복'}\n책 핵심 주제: ${bookInfo.coreMessage || ''}\n\n1페이지는 무조건 그녀(인물). 2~4페이지 문장을 읽고 인물이 가장 어울리는 한 곳을 골라 그녀를 넣고(personPage로 표기), 나머지와 5페이지는 사람 없는 분위기 배경으로 묘사하세요.\n\n1페이지 ${PV.page1}\n  문장: ${pageContents.page1}\n2페이지 ${PV.page2}\n  문장: ${pageContents.page2}\n3페이지 ${PV.page3}\n  문장: ${pageContents.page3}\n4페이지 ${PV.page4}\n  문장: ${pageContents.page4}\n5페이지 ${PV.page5}\n  문장: ${pageContents.page5}\n\n[필수] 5장의 장소·구도가 서로 겹치지 않게. 인물은 1페이지 + (2~4 중 personPage) 두 곳만, 나머지는 사람 없음. 텍스트·글자 없음.\n\nJSON: {"page1":"...","page2":"...","page3":"...","page4":"...","page5":"...","personPage":"page3"}`,
+    system: '당신은 한국 웹툰풍 감성 일러스트 아트 디렉터입니다. 연애·관계(설렘·이별·자존감) 주제의 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[인물 배치 — 매우 중요·절대 규칙] 사람(30대 한국 여성)은 오직 1페이지(표지)에만 등장합니다.\n· 1페이지: 그녀(스크롤을 멈추는 표지 컷).\n· 2·3·4·5페이지: 사람을 절대 넣지 마세요. 사람 얼굴·인물·실루엣·손 모두 금지. 오직 사물·공간·풍경으로 감정을 상징하는 "무인(no people)" 장면만 묘사합니다.\n\n[손·손가락 규칙] 무료 AI는 손·손가락을 자주 뭉갭니다. 1페이지 인물도 손은 소매·주머니에 넣거나 프레임 밖으로 두고, 손가락 클로즈업은 피하세요.\n\n[스타일 고정 — 5장 공통] "귀엽고 퀄리티 높은 애니풍" 일러스트: 깔끔한 라인, 부드러운 플랫 셀 셰이딩, 포근한 빛. 실사·반실사·3D 렌더 절대 금지. 색감·분위기는 시스템이 주제에 맞게 자동으로 덧붙이므로 너는 장면·감정에 집중. 5장이 한 시리즈로 묶이게.\n\n[2~5페이지 무인 장면 발상] 창가·카페 한켠·침대맡·책상·골목·버스 안, 휴대폰·편지·머그·담요·우산·책, 빈 의자, 비 오는 유리창, 저물녘→새벽빛 등 사물·공간으로 감정을 상징. 4장의 장소·구도가 서로 뚜렷이 다르게.\n\n[규칙]\n1. 구도·조명 구체적으로 (wide shot, soft window light, golden morning light)\n2. 2~5페이지는 반드시 사람 없음(no people, no person, no figure)\n3. 텍스트·글자·숫자 없음 (no text, no letters, no words)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 각 프롬프트 영어 25~55단어. 인물 외형·화풍은 시스템이 자동으로 덧붙이므로, 너는 "그 장의 장면·사물·감정·장소"에 집중.\n반드시 JSON만 응답한다.',
+    user: `책 제목: ${bookInfo.title || ''}\n카테고리: ${bookInfo.category || '이별·재회·회복'}\n책 핵심 주제: ${bookInfo.coreMessage || ''}\n\n1페이지만 인물(그녀). 2~5페이지는 사람 없는 무인 분위기 배경으로만 묘사하세요.\n\n1페이지 ${PV.page1}\n  문장: ${pageContents.page1}\n2페이지 ${PV.page2}\n  문장: ${pageContents.page2}\n3페이지 ${PV.page3}\n  문장: ${pageContents.page3}\n4페이지 ${PV.page4}\n  문장: ${pageContents.page4}\n5페이지 ${PV.page5}\n  문장: ${pageContents.page5}\n\n[필수] 5장의 장소·구도가 서로 겹치지 않게. 인물은 1페이지에만, 2~5페이지는 사람 없음. 텍스트·글자 없음.\n\nJSON: {"page1":"...","page2":"...","page3":"...","page4":"...","page5":"..."}`,
   });
 
   const parsed = extractJson(text);
 
-  // 인물 2번째 페이지: Claude가 고른 personPage(2~4) 사용, 유효하지 않으면 page4로 폴백.
-  let personPage = parsed.personPage;
-  if (!['page2', 'page3', 'page4'].includes(personPage)) personPage = 'page4';
-  const PERSON_PAGES = new Set(['page1', personPage]);
+  // ⭐ 인물은 오직 1페이지(표지)에만. 2~5페이지는 무인 장면(인체 할루시네이션 원천 차단).
+  const PERSON_PAGES = new Set(['page1']);
 
   // 5페이지 프롬프트만 추려 검증 — 누락 시 페이지별 폴백으로 보완
   const prompts = {};
@@ -966,13 +964,14 @@ async function handleGenerateImages(env, body) {
     prompts[key] = (v && typeof v === 'string' && v.trim()) ? v.trim() : FALLBACK_IMAGE_PROMPTS[key];
   }
 
-  // 페이지별로 앵커를 다르게 붙인다: 인물 페이지(1 + personPage)=캐릭터 앵커, 나머지=장면 앵커.
+  // 페이지별로 앵커를 다르게 붙인다: 1페이지=캐릭터 앵커, 2~5페이지=무인 장면 앵커.
   // 화풍·색감 앵커(STYLE_ANCHOR)는 5장 공통 → 인물/배경이 한 시리즈로 묶인다.
   const base = 'https://image.pollinations.ai/prompt/';
   const tail = ', no text, no letters, no words, high quality';
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
   const mood = categoryMood(bookInfo.category);   // 주제별 분위기·색감(이별·자존감·설렘 등)
   const images = {};
+  const fullPrompts = {};   // 앵커까지 합친 최종 프롬프트 — page1을 Gemini로 보낼 때 사용
   for (const [page, prompt] of Object.entries(prompts)) {
     const seed = Math.floor(Math.random() * 900000) + 100000;
     let anchor, faceTail = '';
@@ -987,10 +986,72 @@ async function handleGenerateImages(env, body) {
       anchor = SCENE_ANCHOR;
     }
     const full = `${prompt}, ${anchor}, ${STYLE_ANCHOR}, ${mood}${faceTail}${tail}`;
+    fullPrompts[page] = full;
     images[page] = `${base}${encodeURIComponent(full)}?width=1080&height=1080&nologo=true&seed=${seed}&model=flux&enhance=true`;
   }
 
-  return { success: true, images, prompts };
+  return { success: true, images, prompts, fullPrompts };
+}
+
+// ===== Gemini 이미지(표지 전용) =====
+// 손·눈 등 인체 하자가 가장 적은 모델로 "1페이지 표지"만 생성한다(비용 절감: 나머지는 무료).
+// 키(GEMINI_API_KEY) 없거나 실패하면 null → 호출부가 무료 Pollinations로 폴백한다.
+const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image'; // 일명 Nano Banana(텍스트→이미지, inlineData 반환)
+// 표지는 특히 인체 하자가 도드라지므로, 실패하기 쉬운 요소(손가락·정면 눈 클로즈업)를
+// 강하게 배제하는 지시를 덧붙인다(모델을 바꿔도 이 구도 회피가 하자율을 크게 낮춘다).
+const GEMINI_SAFE_ANATOMY =
+  ' Composition rules (critical): do NOT show hands or fingers at all — keep hands hidden in sleeves or pockets or fully out of frame. ' +
+  'Avoid any close-up of the face; show her from behind, or in three-quarter view, or with eyes gently closed, or as a small distant figure. ' +
+  'Flat 2D Japanese anime illustration, clean cel shading, soft anime eyes — not photorealistic, not 3D. ' +
+  'Anatomy must be natural and correct: head and neck aligned with the body, no twisted neck, no extra or missing limbs, no malformed hands, no distorted eyes.';
+
+async function generateGeminiImageBytes(apiKey, prompt) {
+  if (!apiKey) return null;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_IMAGE_MODEL}:generateContent?key=${apiKey}`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 45000);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `${prompt}${GEMINI_SAFE_ANATOMY} Square 1:1 image, no text or letters anywhere.` }] }],
+        generationConfig: { responseModalities: ['IMAGE'] },
+      }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const parts = data?.candidates?.[0]?.content?.parts || [];
+    const img = parts.find(p => p.inlineData?.data);
+    if (!img) return null;
+    // base64 → 바이너리(Uint8Array)
+    const b64 = img.inlineData.data;
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return { bytes, mime: img.inlineData.mimeType || 'image/png' };
+  } catch {
+    clearTimeout(timer);
+    return null;
+  }
+}
+
+// 유료 이미지(표지) 일일 사용량 — 구글 청구 폭주 방지. Claude 예산과 별개 카운터.
+const DAILY_IMAGE_CAP = 40; // 하루 유료 표지 40장(자동 1편+수동 몇 편이면 충분)
+async function bumpImageUsage(env) {
+  if (!env?.PENDING_POSTS) return 0;
+  const key = `img_usage_${_kstDay()}`;
+  let n = 0;
+  try { n = parseInt(await env.PENDING_POSTS.get(key) || '0', 10) || 0; } catch {}
+  n += 1;
+  try { await env.PENDING_POSTS.put(key, String(n), { expirationTtl: 2 * 24 * 3600 }); } catch {}
+  return n;
+}
+async function getImageUsage(env) {
+  if (!env?.PENDING_POSTS) return 0;
+  try { return parseInt(await env.PENDING_POSTS.get(`img_usage_${_kstDay()}`) || '0', 10) || 0; } catch { return 0; }
 }
 
 // 릴스 1페이지 전용 "스크롤을 멈추는 강한 훅" 생성 (캐럿셀 1페이지의 잔잔한 공감문과 별개).
@@ -1329,11 +1390,28 @@ async function runStep(env, pipelineId, step) {
       const imgData = await handleGenerateImages(env, { pages, bookInfo });
       const urlMap = imgData.images; // { page1: 'https://image.pollinations.ai/...', ... }
 
-      // 5장을 동시에 다운로드해 KV에 바이너리로 저장 (90초/장 타임아웃)
-      await setActive('Pollinations.ai 이미지 다운로드 중 (1~2분 소요)...');
+      // ⭐ 표지(1페이지)는 Gemini로 우선 생성 — 손·눈 인체 하자 최소화(비용: 표지 1장만).
+      // 키 없음·예산초과·실패 시 자동으로 무료 Pollinations 폴백(아래 다운로드 루프가 처리).
+      let coverDone = false;
+      if (env.GEMINI_API_KEY && imgData.fullPrompts?.page1 && (await getImageUsage(env)) < DAILY_IMAGE_CAP) {
+        await setActive('표지 이미지 생성 중 (Gemini)...');
+        const g = await generateGeminiImageBytes(env.GEMINI_API_KEY, imgData.fullPrompts.page1);
+        if (g?.bytes?.length) {
+          await env.PENDING_POSTS.put(`img_${pipelineId}_page1`, g.bytes, { expirationTtl: 24 * 3600 });
+          await bumpImageUsage(env);
+          coverDone = true;
+          await logStep(env, pipelineId, { step, phase: 'cover', note: `Gemini 표지 생성 (${g.bytes.length} bytes)` });
+        } else {
+          await logStep(env, pipelineId, { step, phase: 'warn', error: 'Gemini 표지 실패 → 무료 폴백' });
+        }
+      }
+
+      // 나머지 장(무료 Pollinations) 동시 다운로드. 표지가 Gemini로 됐으면 page1은 건너뜀.
+      await setActive('본문 이미지 다운로드 중 (1~2분 소요)...');
       const pageKeys = ['page1', 'page2', 'page3', 'page4', 'page5'];
       const downloadResults = await Promise.allSettled(
         pageKeys.map(async page => {
+          if (page === 'page1' && coverDone) return { page, size: 0, cover: 'gemini' }; // 이미 저장됨
           const url = urlMap[page];
           if (!url) throw new Error('URL 없음');
           const ctrl = new AbortController();
@@ -1969,8 +2047,12 @@ async function handleImageServe(env, url) {
   if (!id || !page) return new Response('Bad Request', { status: 400, headers: CORS });
   const buf = await env.PENDING_POSTS.get(`img_${id}_${page}`, 'arrayBuffer').catch(() => null);
   if (!buf) return new Response('Image not found', { status: 404, headers: CORS });
+  // 포맷 자동 감지: Gemini 표지는 PNG, Pollinations 본문은 JPEG일 수 있음(매직바이트로 판별)
+  const b = new Uint8Array(buf.slice(0, 4));
+  const isPng = b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47;
+  const mime = isPng ? 'image/png' : 'image/jpeg';
   return new Response(buf, {
-    headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400', ...CORS },
+    headers: { 'Content-Type': mime, 'Cache-Control': 'public, max-age=86400', ...CORS },
   });
 }
 
@@ -2501,7 +2583,9 @@ export default {
         else if (url.pathname === '/api/usage') {
           // 오늘(KST) Claude API 사용량 — 크레딧 소진 감시용
           const used = await getApiUsage(env);
-          result = { success: true, day: _kstDay(), used, softCap: DAILY_SOFT_CAP, hardCap: DAILY_HARD_CAP, savingMode: used > DAILY_SOFT_CAP, blocked: used > DAILY_HARD_CAP };
+          const imgUsed = await getImageUsage(env);
+          result = { success: true, day: _kstDay(), used, softCap: DAILY_SOFT_CAP, hardCap: DAILY_HARD_CAP, savingMode: used > DAILY_SOFT_CAP, blocked: used > DAILY_HARD_CAP,
+            geminiCover: !!env.GEMINI_API_KEY, imageUsed: imgUsed, imageCap: DAILY_IMAGE_CAP };
         }
         else if (url.pathname === '/api/reset-model-cache') {
           await clearModelCache(env);
