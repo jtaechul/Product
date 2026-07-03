@@ -71,17 +71,18 @@ export class MainScene extends Scene {
     for (const a of ACTIVITIES) if (!this.tex[`actico_${a.id}`]) this.tex[`actico_${a.id}`] = fallbackIco;
     for (const c of CATEGORIES) if (!this.tex[`catico_${c.id}`]) this.tex[`catico_${c.id}`] = fallbackIco;
     this.tex.mgrface = await Assets.load("./assets/manager/hanjiwon.png");
-    // 무거운 연출용 에셋(활동 배경 16장 + 인연 일러스트 4장)은 첫 화면을 막지 않도록
-    // 백그라운드로 이어서 로드한다(앱인토스 '최초 화면 10초 이내' 규정 대응).
-    // 이 에셋을 쓰는 곳(인연 팝업·인연 이벤트)은 this._extraReady를 먼저 기다린다.
-    // 활동 배경·포즈는 사용 시점에 Assets.load를 다시 호출하므로(캐시 워밍) 따로 대기가 필요 없다.
-    this._extraReady = Promise.all([
-      ...["academy", "home", "set", "stage", "gym", "salon", "library", "cafe", "recording", "park", "film_set", "cf_studio", "ott_set", "photostudio", "fanmeet", "variety_set"]
-        .map((n) => Assets.load(`./assets/bg/${n}.png`).catch(() => null)),
-      ...BONDS.map(async (b) => { this.tex[`bond_${b.id}`] = await Assets.load(b.img).catch(() => null); }),
-    ]).then(() => {});
+    // 무거운 연출용 에셋은 첫 화면을 막지 않도록 백그라운드로 로드(앱인토스 '최초 화면 10초 이내').
+    // ⚠️ 인연 초상화(4장)는 배경(16장)과 분리한다 — 인연 팝업은 초상화만 필요하므로
+    //    배경 로딩을 기다리다 팝업이 안 뜨는 일이 없게 별도 promise(_bondsReady)로 관리.
+    this._bondsReady = Promise.all(
+      BONDS.map(async (b) => { this.tex[`bond_${b.id}`] = await Assets.load(b.img).catch(() => null); })
+    ).then(() => {});
+    this._extraReady = Promise.all(
+      ["academy", "home", "set", "stage", "gym", "salon", "library", "cafe", "recording", "park", "film_set", "cf_studio", "ott_set", "photostudio", "fanmeet", "variety_set"]
+        .map((n) => Assets.load(`./assets/bg/${n}.png`).catch(() => null))
+    ).then(() => {});
     // 포즈 이미지 워밍업(대기 불필요·실패 무시) — 첫 '다음 달 진행' 연출이 끊기지 않게
-    this._extraReady.then(() => {
+    Promise.all([this._bondsReady, this._extraReady]).then(() => {
       for (const k of ["acting", "vocal", "dance", "gym", "study", "volunteer", "family", "rest", "filming", "cheer", "good", "tired", "fail", "panned"]) {
         Assets.load(POSE_PATH(k)).catch(() => {});
       }
@@ -153,6 +154,7 @@ export class MainScene extends Scene {
   // 사각 프레임 안에 얼굴 배치 (기획서 17): 가로 중앙 정렬(좌우 여백 동일) + 머리끝 보존 + 목젖 아래 직선 크롭.
   // lm: { cx, top, throat } = 이미지 내 가로중심·머리끝·목젖 위치(비율). 머리끝~목젖을 rh 높이에 맞춰 채운다.
   _faceInRect(parent, tex, rx, ry, rw, rh, lm) {
+    if (!tex) { parent.addChild(new Graphics().roundRect(rx, ry, rw, rh, 12).fill(0xece6dc)); return; } // 초상화 미로드 시 자리표시(크래시 방지)
     const span = (lm.throat - lm.top) * tex.height;     // 머리끝→목젖 (이미지 px)
     const f = new Sprite(tex);
     f.scale.set(rh / span);
@@ -335,11 +337,13 @@ export class MainScene extends Scene {
   }
 
   // 인연(Bond) 팝업 (기획서 12번)
-  async openBonds() {
+  openBonds(silent) {
     if (this.overlay) return;
-    sfx("tap");
-    await this._extraReady;   // 인연 일러스트가 아직 로드 전이면 잠깐 대기
-    if (this.overlay) return; // 대기 중 다른 팝업이 열렸으면 중단
+    if (!silent) sfx("tap");
+    // 즉시 연다 — 초상화가 아직 로드 전이면 _faceInRect가 자리표시로 처리하고,
+    // 로드가 끝나면(_bondsReady) 팝업을 한 번만 다시 그려 초상화를 채운다.
+    // 무거운 배경 로딩(_extraReady)을 기다리지 않는다.
+    const needFaces = BONDS.some((b) => !this.tex[`bond_${b.id}`]);
     const ov = this._dim(); this.overlay = ov;
     const cw = 620, x = (DESIGN_WIDTH - cw) / 2, rows = BONDS.length, ch = 132 + rows * 110, y = (DESIGN_HEIGHT - ch) / 2;
     ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
@@ -368,6 +372,8 @@ export class MainScene extends Scene {
     close.eventMode = "static"; close.cursor = "pointer"; close.on("pointertap", () => { sfx("cancel"); this._closeOverlay(); }); this._pressable(close);
     ov.addChild(close);
     this.addChild(ov);
+    // 초상화가 아직 없던 채로 열렸다면, 로드 완료 후 한 번만 다시 그려 초상화를 채운다(소리 없이).
+    if (needFaces && this._bondsReady) this._bondsReady.then(() => { if (this.overlay === ov) { this._closeOverlay(); this.openBonds(true); } });
   }
 
   // 이번 분기 특별활동(있으면) — 첫 턴 제외, 분기(turn 4·7·…)에만
@@ -625,7 +631,7 @@ export class MainScene extends Scene {
   // 학년 말 시상식 연출 (기획서 3·15): 시상식 배경 + 트로피 + 수상 결과
   // 인연 이벤트 연출 (기획서 12번): 인물 등장 + 대사 3+ → 보너스 발동
   async _playBondEvent(id, tier) {
-    await this._extraReady; // 인연 일러스트 로드 보장
+    await this._bondsReady; // 인연 초상화 로드 보장(배경과 분리 — 빠름)
     return new Promise((resolve) => {
       const b = BONDS.find((x) => x.id === id), ev = BOND_EVENTS[id] && BOND_EVENTS[id][tier];
       if (!b || !ev) { resolve(); return; }
@@ -633,7 +639,8 @@ export class MainScene extends Scene {
       const ov = new Container(); this.overlay = ov;
       ov.addChild(new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill(0x141019));
       const veil = new Graphics().rect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT).fill({ color: 0xffe9c0, alpha: 0.06 }); ov.addChild(veil);
-      const sp = new Sprite(this.tex[`bond_${id}`]); sp.anchor.set(0.5, 1.0); sp.scale.set(900 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 980); ov.addChild(sp);
+      const bondTex = this.tex[`bond_${id}`];
+      if (bondTex) { const sp = new Sprite(bondTex); sp.anchor.set(0.5, 1.0); sp.scale.set(900 / sp.texture.height); sp.position.set(DESIGN_WIDTH / 2, 980); ov.addChild(sp); }
       ov.addChild(new Graphics().roundRect(28, 988, 664, 236, 26).fill({ color: 0x140f1a, alpha: 0.86 }).stroke({ width: 2, color: S.gold }));
       const who = this._t(`${b.name} · ${b.role}`, 20, S.gold, FD); who.position.set(54, 1006); ov.addChild(who);
       const heart = this._t("인연 이벤트", 16, 0xec8aa0, FD); heart.anchor.set(1, 0); heart.position.set(672, 1008); ov.addChild(heart);
