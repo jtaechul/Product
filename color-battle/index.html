@@ -96,6 +96,13 @@
   .idtop{display:flex;align-items:center;gap:6px;min-width:0}
   .gen{font-size:10px;font-weight:800;color:var(--dim);white-space:nowrap;letter-spacing:.01em}
   .gen b{color:var(--accent)}
+  .res{display:flex;align-items:center;gap:2px;font-size:10.5px;font-weight:800;color:#c3ccdb;font-variant-numeric:tabular-nums;margin-top:1px;white-space:nowrap}
+  .res .ic{vertical-align:-1px;margin-left:3px}
+  .res b{margin:0 2px 0 1px}
+  .res b.z{opacity:.35;color:#7a8598}
+  .res .ic:first-child{margin-left:0}
+  body.cinema .gen{font-size:9px}
+  body.cinema .res{font-size:9.5px;margin-top:0}
   .nm{font-weight:800;font-size:14px;white-space:nowrap}
   .mor{font-size:10px;font-weight:800;color:#1a1400;background:var(--accent);border-radius:5px;padding:1px 5px;opacity:0}
   .mor.on{opacity:1}
@@ -237,7 +244,8 @@ let provOf=new Int16Array(MAPRES*MAPRES), isBorder=new Uint8Array(MAPRES*MAPRES)
 let terrainRGB=new Uint8Array(MAPRES*MAPRES*3);
 let H_FIELD=null, pv=[];
 let seed=0,rand=null,tick=0,running=false,winner=-1,speed=3,acc=0,lastT=0,dirty=true;
-let marches=[], impacts=[], floats=[], duel={active:false}, siege={active:false}, deathQueue=[], deathAnim=null, pendingWin=false, lastSiegeTick=-999, dynSlowUntil=0, reviveAnim=null;
+let marches=[], impacts=[], floats=[], duel={active:false}, siege={active:false}, deathQueue=[], deathAnim=null, pendingWin=false, lastSiegeTick=-999, dynSlowUntil=0, reviveAnim=null, intro=null;
+function easeOutBounce(x){const n=7.5625,d=2.75;if(x<1/d)return n*x*x;if(x<2/d){x-=1.5/d;return n*x*x+0.75;}if(x<2.5/d){x-=2.25/d;return n*x*x+0.9375;}x-=2.625/d;return n*x*x+0.984375;}
 function pulseSlow(ms){dynSlowUntil=Math.max(dynSlowUntil,performance.now()+ms);} // 하이라이트 직후 잠깐 감속
 function dynMul(){if(!P.dynPace)return 1;const rem=dynSlowUntil-performance.now();
   if(rem>0){const k=Math.min(1,rem/700);return P.dynSlow+(1-k)*(P.dynFast-P.dynSlow);}return P.dynFast;}
@@ -446,7 +454,7 @@ function init(sv){
   for(const p of pv){if(p.terrain===T_SEA){p.owner=NEU;p.garrison=0;continue;}p.owner=NEU;p.garrison=isWater(p.terrain)?3:8+((rand()*11)|0);p.cap=false;}
   caps.forEach((c,f)=>{c.owner=f;c.cap=true;c.garrison=P.capGarrison;});
   marches=[];impacts=[];floats=[];duel={active:false};siege={active:false};deathQueue=[];deathAnim=null;pendingWin=false;lastSiegeTick=-999;
-  moraleMul.fill(1);moraleLeft.fill(0);reviveTurns.fill(0);revivalUsed=false;reviveAnim=null;alive.fill(true);stats={duels:0,sieges:0,capFalls:[]};leaderF=0;initRoster();
+  moraleMul.fill(1);moraleLeft.fill(0);reviveTurns.fill(0);revivalUsed=false;reviveAnim=null;intro=null;alive.fill(true);stats={duels:0,sieges:0,capFalls:[]};leaderF=0;initRoster();
   for(const p of pv){p.moveCd=(P.moveCdMin+((rand()*(P.moveCdMax-P.moveCdMin))|0));p.flash=0;}
   tick=0;winner=-1;running=false;dirty=true;computeBonus();
   document.getElementById("seedIn").value=seed;
@@ -724,7 +732,35 @@ function drawCapital(x,y,color,isLeader){ctx.save();ctx.shadowColor=color;ctx.sh
   ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(x,fy-MAIN*0.022);ctx.lineTo(x+MAIN*0.03,fy-MAIN*0.014);ctx.lineTo(x,fy-MAIN*0.006);ctx.closePath();ctx.fill();
   if(isLeader){ctx.shadowColor="#ffd23a";ctx.shadowBlur=MAIN*0.018;ICON.crown(ctx,x,y-MAIN*0.052,MAIN*0.03,"#ffd23a");ctx.shadowBlur=0;}
   ctx.restore();}
+function drawIntro(){
+  if(dirty)buildMap();
+  const e=performance.now()-intro.start,caps=intro.caps;
+  ctx.imageSmoothingEnabled=false;ctx.fillStyle="#05070b";ctx.fillRect(0,0,MAIN,MAIN);
+  let sx=0,sy=0;                                                          // 성 낙하 시 화면 흔들림
+  for(const c of caps){const dt=e-c.land;if(dt>=0&&dt<240){const m=(1-dt/240)*MAIN*0.013;sx+=Math.sin(dt*0.09)*m;sy+=Math.cos(dt*0.11)*m;}}
+  ctx.save();ctx.translate(sx,sy);
+  const zk=clamp(e/1100,0,1),ez=1-Math.pow(1-zk,3),zoom=lerp(1.16,1.0,ez),mapA=clamp(e/650,0,1);   // 줌아웃+페이드
+  ctx.save();ctx.globalAlpha=mapA;ctx.translate(MAIN/2,MAIN/2);ctx.scale(zoom,zoom);ctx.translate(-MAIN/2,-MAIN/2);
+  ctx.drawImage(mapCv,0,0,MAPRES,MAPRES,0,0,MAIN,MAIN);ctx.restore();
+  const rA=clamp((e-500)/700,0,1);                                        // 자원 노드 팝인
+  if(rA>0)for(const p of pv)if(p.res>=0){const x=p.cx*S,y=p.cy*S-MAIN*0.018,pop=0.6+0.4*rA,R=MAIN*0.02*pop;ctx.save();ctx.globalAlpha=rA;
+    ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fillStyle="rgba(6,9,15,.8)";ctx.fill();ctx.lineWidth=MAIN*0.005;ctx.strokeStyle="#c9d2e0";ctx.stroke();
+    ICON[RES_KEY[p.res]](ctx,x,y,MAIN*0.026*pop,"#dbe3ef");ctx.restore();}
+  if(e>=1200&&e<2300){const sk=(e-1200)/1100,bx=sk*MAIN;ctx.save();            // 국경 스윕
+    const g=ctx.createLinearGradient(bx-MAIN*0.14,0,bx+MAIN*0.05,0);g.addColorStop(0,"rgba(255,226,122,0)");g.addColorStop(0.72,"rgba(255,240,205,.5)");g.addColorStop(1,"rgba(255,226,122,0)");ctx.fillStyle=g;ctx.fillRect(0,0,MAIN,MAIN);ctx.restore();}
+  for(const c of caps){                                                    // 성 '쿵' 낙하
+    if(e<c.start)continue;
+    const prog=clamp((e-c.start)/c.dur,0,1),y=c.y-(1-easeOutBounce(prog))*MAIN*0.5,dt=e-c.land;
+    if(dt>=0&&dt<300){const dk=dt/300,inv=1-dk;ctx.save();ctx.globalAlpha=inv*0.6;
+      for(let i=0;i<10;i++){const a=i/10*6.283,d=MAIN*(0.02+0.06*dk);ctx.fillStyle="rgba(150,140,120,1)";ctx.beginPath();ctx.arc(c.x+Math.cos(a)*d,c.y-Math.abs(Math.sin(a))*d*0.5,MAIN*0.01*inv+1,0,7);ctx.fill();}ctx.restore();}
+    if(!intro.snd.has(c.f)&&e>=c.land){intro.snd.add(c.f);Sfx.siegeHit();}
+    drawCapital(c.x,y,FACTIONS[c.f].color,false);}
+  ctx.textAlign="center";ctx.textBaseline="middle";                        // 자막
+  if(e<2100){const ca=e<300?e/300:e>1900?(2100-e)/200:1;ctx.globalAlpha=clamp(ca,0,1);ctx.font="800 "+(MAIN*0.03)+"px system-ui";ctx.lineWidth=4;ctx.strokeStyle="#000a";
+    const txt=e<1200?"전장이 열린다 — 지형과 자원":"국경이 그려진다";ctx.strokeText(txt,MAIN/2,MAIN*0.1);ctx.fillStyle="#cfd8e6";ctx.fillText(txt,MAIN/2,MAIN*0.1);ctx.globalAlpha=1;}
+  ctx.restore();}
 function draw(){
+  if(intro){drawIntro();return;}
   if(dirty)buildMap();ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,MAIN,MAIN);ctx.drawImage(mapCv,0,0,MAPRES,MAPRES,0,0,MAIN,MAIN);
   const now=performance.now();
   for(const p of pv)if(p.flash>0){ctx.fillStyle="rgba(255,255,255,"+(p.flash/8*0.3)+")";ctx.beginPath();ctx.arc(p.cx*S,p.cy*S,Math.sqrt(p.count)*S*0.5,0,7);ctx.fill();}
@@ -775,8 +811,9 @@ function draw(){
 /* ===== 패널 ===== */
 const rowsEl=document.getElementById("rows"),rowRef=[];
 for(let f=0;f<K;f++){const r=document.createElement("div");r.className="row";
-  r.innerHTML='<div class="rank"></div><div class="id"><div class="idtop">'+ic(FACTIONS[f].sig,FACTIONS[f].color,16)+'<span class="nm">'+FACTIONS[f].name+'</span><span class="mor">사기↑</span></div><span class="gen"></span></div><div class="troop"></div>';
-  rowsEl.appendChild(r);rowRef.push({root:r,rank:r.querySelector(".rank"),troop:r.querySelector(".troop"),mor:r.querySelector(".mor"),gen:r.querySelector(".gen")});}
+  r.innerHTML='<div class="rank"></div><div class="id"><div class="idtop">'+ic(FACTIONS[f].sig,FACTIONS[f].color,16)+'<span class="nm">'+FACTIONS[f].name+'</span><span class="mor">사기↑</span></div><span class="gen"></span><span class="res"></span></div><div class="troop"></div>';
+  rowsEl.appendChild(r);rowRef.push({root:r,rank:r.querySelector(".rank"),troop:r.querySelector(".troop"),mor:r.querySelector(".mor"),gen:r.querySelector(".gen"),res:r.querySelector(".res")});}
+function resStrip(c){const cell=(k,col,n)=>ic(k,col,11)+'<b'+(n?'':' class="z"')+'>'+n+'</b>';return cell("iron","#cdd6e3",c[0])+cell("food","#8fd6a0",c[1])+cell("gold","#ffd23a",c[2]);}
 const pbar=document.getElementById("powerbar"),segs=[];for(let f=0;f<K;f++){const s=document.createElement("div");s.className="seg";s.style.background=FACTIONS[f].color;s.innerHTML='<span class="lab"></span>';pbar.appendChild(s);segs.push({seg:s,lab:s.querySelector(".lab")});}
 function fmt(n){n=Math.round(n);return n>=1000?(n/1000).toFixed(1)+"k":""+n;}
 function troopSum(f){let s=0;for(const p of pv)if(p.owner===f)s+=p.garrison;return s;}
@@ -790,7 +827,8 @@ function refresh(){const cnt=computeBonus();let tot=0;const pw=new Float64Array(
   ord.forEach(f=>{const sw=segs[f],pctW=pw[f]/tot*100;sw.seg.style.width=pctW+"%";sw.seg.style.order=alive[f]?0:1;sw.lab.textContent=(alive[f]&&pctW>=9)?(FACTIONS[f].name+" "+pc[f]):"";});
   document.getElementById("powerLab").innerHTML="국력 (지역 + 병력 + 자원) · 선두 <b>"+(lead>=0?FACTIONS[lead].name:"-")+"</b>";
   ord.forEach((f,rank)=>{const R=rowRef[f];R.root.style.order=alive[f]?rank:100+rank;R.root.classList.toggle("dead",!alive[f]);R.root.classList.toggle("leader",alive[f]&&f===lead);R.rank.textContent=alive[f]?rank+1:"–";R.troop.textContent=alive[f]?(pc[f]+"지역·"+fmt(troopSum(f))):"멸망";R.mor.classList.toggle("on",alive[f]&&moraleLeft[f]>0);
-    if(roster.length){const ch=championOf(f);R.gen.innerHTML="명장 <b>"+RANKS[ch.rank]+" "+ch.name+"</b>"+(ch.wins?" · "+ch.wins+"승":"");}});
+    if(roster.length){const ch=championOf(f);R.gen.innerHTML="명장 <b>"+RANKS[ch.rank]+" "+ch.name+"</b>"+(ch.wins?" · "+ch.wins+"승":"");}
+    R.res.innerHTML=alive[f]?resStrip(cnt[f]):"";});
   let a=0;for(let f=0;f<K;f++)if(alive[f])a++;document.getElementById("statLine").textContent=(1+((tick/50)|0))+"년차 · 생존 "+a;}
 
 const ov=document.getElementById("overlay"),ovBig=document.getElementById("ovBig");
@@ -830,6 +868,7 @@ function win(){const f=winner;padStop();bgmEndingPlay();Sfx.victory();
   ovSum.innerHTML=html;ovSum.style.display="block";document.getElementById("ovStart").textContent="↻ 다시 보기";ov.querySelector(".btns").style.display="flex";document.getElementById("btnPlay").textContent="▶ 시작";ov.classList.remove("hidden");refresh();draw();}
 
 function loop(t){
+  if(intro){if(performance.now()-intro.start>=intro.dur){intro=null;running=true;lastT=0;}else{draw();requestAnimationFrame(loop);lastT=0;return;}}
   if(reviveAnim){if(performance.now()-reviveAnim.start>=reviveAnim.dur)reviveAnim=null;else{draw();requestAnimationFrame(loop);lastT=0;return;}}
   if(!duel.active&&!siege.active&&!deathAnim&&!reviveAnim&&deathQueue.length){deathAnim={f:deathQueue.shift(),start:performance.now(),dur:1300};Sfx.death();}
   if(deathAnim){if(performance.now()-deathAnim.start>=deathAnim.dur)deathAnim=null;else{draw();requestAnimationFrame(loop);lastT=0;return;}}
@@ -841,7 +880,12 @@ function loop(t){
 }
 requestAnimationFrame(loop);
 
-function play(){if(winner>=0)return;running=true;ov.classList.add("hidden");lastT=0;document.getElementById("btnPlay").textContent="⏸ 정지";sndResume();bgmPrime();padStart();}
+function play(){if(winner>=0)return;ov.classList.add("hidden");lastT=0;document.getElementById("btnPlay").textContent="⏸ 정지";sndResume();bgmPrime();padStart();
+  if(tick===0&&!intro){ // 시작 시네마틱: 줌아웃→지형·자원→국경→성·자원 '쿵' 낙하 (P8·P5)
+    const caps=pv.filter(p=>p.cap).map(p=>({f:p.owner,x:p.cx*S,y:p.cy*S})).sort((a,b)=>a.x-b.x);
+    caps.forEach((c,i)=>{c.start=2100+i*150;c.dur=680;c.land=c.start+c.dur;});
+    intro={start:performance.now(),dur:(caps.length?caps[caps.length-1].land+340:3200),caps,snd:new Set()};running=false;Sfx.siegeStart();}
+  else running=true;}
 function pause(){running=false;document.getElementById("btnPlay").textContent="▶ 계속";padStop();bgmStop();}
 document.getElementById("btnPlay").onclick=()=>{running?pause():play();};
 document.getElementById("ovStart").onclick=()=>{if(winner>=0)init((Math.random()*1e9)>>>0);play();};
