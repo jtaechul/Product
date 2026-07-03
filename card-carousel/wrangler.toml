@@ -1,0 +1,25 @@
+name = "card-carousel"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+# 최상위 키(kv_namespaces)는 어떤 [table] 헤더보다 반드시 먼저 와야 한다.
+# (TOML 규칙: [assets] 뒤에 두면 assets.kv_namespaces로 파싱돼 무시됨 → KV 바인딩 누락)
+# ⚠️ 배포 전 반드시 card-carousel 전용 KV 네임스페이스를 새로 만들어 이 id를 교체할 것.
+#    (아래 id는 실서비스 book-carousel의 것 — 그대로 두면 데이터가 섞인다.)
+#    wrangler kv:namespace create PENDING_POSTS  → 출력된 id로 교체.
+kv_namespaces = [
+  { binding = "PENDING_POSTS", id = "e1b681762f6c43b9be77ede8061aa2dc" }
+]
+
+# ⭐ Smart Placement — Worker를 사용자(한국) 근처가 아니라 백엔드(api.anthropic.com, 미국)
+# 근처에서 실행한다. 한국에서 접속하면 요청이 홍콩 등 Anthropic이 차단하는 경유지로 나가
+# 모든 모델이 403("Request not allowed")으로 거부되던 문제의 근본 대책.
+[placement]
+mode = "smart"
+
+# Cron Trigger 제거 — 일일 자동 캐럿셀 생성 + 파이프라인 자가복구(도서 자동화)를 Phase 1에서 제거함.
+# 자동화가 필요하면 신규 흐름에 맞춰 Phase 5에서 다시 연결한다.
+
+[assets]
+directory = "public"
+binding = "ASSETS"

@@ -1,0 +1,829 @@
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+// ===== Claude API =====
+// 모델 ID를 하드코딩하지 않는다. 키마다 접근 가능한 모델이 달라(403/404 발생).
+// /v1/models 는 "목록에 보이는 것"만 알려줄 뿐 실제 호출 권한과 다르므로,
+// 후보 모델에 1토큰 테스트 호출을 실제로 던져 200이 나오는 것만 골라 쓴다.
+let _modelCache = null;
+
+// /v1/models 조회 실패 시(네트워크·레이트리밋) 폴백으로 쓸 알려진 모델 목록
+const FALLBACK_MODEL_IDS = [
+  'claude-sonnet-4-6', 'claude-opus-4-8', 'claude-haiku-4-5-20251001',
+  'claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5',
+  'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022',
+];
+
+async function listModelIds(apiKey) {
+  const res = await fetch('https://api.anthropic.com/v1/models?limit=100', {
+    headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data.data || []).map(m => m.id);
+}
+
+// 모델을 실제로 호출해 사용 가능 여부 확인 (200이면 사용 가능)
+// 10초 타임아웃 + 일시적 과부하(429/529/5xx) 1회 재시도
+async function probeModel(apiKey, model, attempt = 0) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 6000);
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model, max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    // 일시적 과부하/레이트리밋이면 1회 재시도 (probe 한 번 실패로 앱 전체가 멈추지 않게)
+    if ((res.status === 429 || res.status === 529 || res.status >= 500) && attempt < 1) {
+      await new Promise(r => setTimeout(r, 1500));
+      return probeModel(apiKey, model, attempt + 1);
+    }
+    return res.status;
+  } catch {
+    clearTimeout(timer);
+    return 0; // 타임아웃·네트워크 오류
+  }
+}
+
+// 후보를 우선순위대로 늘어놓되, 실제 목록에 있는 모델만 남긴다
+function orderCandidates(ids, patterns) {
+  const out = [];
+  for (const p of patterns) {
+    for (const id of ids) {
+      if (id.includes(p) && !out.includes(id)) out.push(id);
+    }
+  }
+  return out;
+}
+
+const HARDCODED_FALLBACK_MAIN = 'claude-sonnet-4-6';
+const HARDCODED_FALLBACK_LIGHT = 'claude-haiku-4-5-20251001';
+const MODEL_CACHE_KV_KEY = 'model_cache_v2';
+const MODEL_CACHE_TTL = 86400; // 24h
+
+async function resolveModels(apiKey, env) {
+  if (_modelCache) return _modelCache;
+
+  // KV 캐시 우선 확인 — 콜드스타트마다 프로빙 반복을 방지
+  if (env?.PENDING_POSTS) {
+    try {
+      const cached = await env.PENDING_POSTS.get(MODEL_CACHE_KV_KEY, 'json');
+      if (cached?.main) {
+        _modelCache = { main: cached.main, light: cached.light || cached.main, source: 'kv-cache' };
+        return _modelCache;
+      }
+    } catch {}
+  }
+
+  let ids = await listModelIds(apiKey);
+  // /v1/models 실패(네트워크·레이트리밋) → 알려진 후보로 폴백
+  if (ids.length === 0) ids = FALLBACK_MODEL_IDS;
+
+  const probed = {};
+
+  const mainOrder = orderCandidates(ids, ['sonnet-4', 'sonnet', 'opus-4', 'opus', 'haiku']);
+  const lightOrder = orderCandidates(ids, ['haiku-4', 'haiku', 'sonnet-4', 'sonnet']);
+
+  // 최대 3개만 순차 탐색 — probe 과다로 30s Worker 한도 초과 방지
+  const firstUsable = async (order) => {
+    for (const m of order.slice(0, 3)) {
+      if (probed[m] === undefined) probed[m] = await probeModel(apiKey, m);
+      if (probed[m] === 200) return m;
+    }
+    return null;
+  };
+
+  let main = await firstUsable(mainOrder);
+  let light = (await firstUsable(lightOrder)) || main;
+
+  // 모든 probe가 실패하면 폴백을 쓰되, 실제 /v1/models 목록의 첫 후보를 우선한다
+  // (레거시 하드코딩 ID는 키에 따라 404가 나므로 마지막 수단).
+  // ⚠️ 검증되지 않은 폴백은 KV에 캐시하지 않는다 → 일시적 탐색 실패가 24시간
+  // 동안 잘못된 모델로 고정되는 "캐시 포이즈닝"을 막는다(잦은 404의 근본 원인).
+  if (!main) {
+    main = mainOrder[0] || HARDCODED_FALLBACK_MAIN;
+    light = lightOrder[0] || main;
+    _modelCache = { main, light, source: 'unverified-fallback', available: ids, probed };
+    return _modelCache;
+  }
+
+  _modelCache = { main, light, source: 'probed', available: ids, probed };
+  // 성공한 모델 ID를 KV에 저장 — 다음 콜드스타트에서 재프로빙 없이 즉시 사용
+  if (env?.PENDING_POSTS) {
+    try { await env.PENDING_POSTS.put(MODEL_CACHE_KV_KEY, JSON.stringify({ main, light }), { expirationTtl: MODEL_CACHE_TTL }); } catch {}
+  }
+  return _modelCache;
+}
+
+// 모델 캐시 무효화 — 잘못된 모델이 캐시됐을 때 비워서 다음 해석에서 재탐색하게 한다.
+async function clearModelCache(env) {
+  _modelCache = null;
+  if (env?.PENDING_POSTS) {
+    try { await env.PENDING_POSTS.delete(MODEL_CACHE_KV_KEY); } catch {}
+  }
+}
+
+// tier에 맞는 후보 모델을 우선순위대로 반환(중복 제거). /v1/models 실패 시 하드코딩 폴백.
+// 자가복구(healModelByRealCall)가 이 목록에 "실제 요청"을 순서대로 던져 200을 찾는다.
+async function orderedCandidateModels(apiKey, tier) {
+  let ids = await listModelIds(apiKey);
+  if (!ids.length) ids = FALLBACK_MODEL_IDS.slice();
+  const order = tier === 'light'
+    ? orderCandidates(ids, ['haiku-4', 'haiku', 'sonnet-4', 'sonnet', 'opus'])
+    : orderCandidates(ids, ['sonnet-4', 'sonnet', 'opus-4', 'opus', 'haiku']);
+  // 알려진 폴백 ID도 뒤에 덧붙여 최후의 수단 확보(목록 조회가 비었을 때 대비)
+  for (const f of FALLBACK_MODEL_IDS) if (!order.includes(f)) order.push(f);
+  return order;
+}
+
+// 동작이 확인된 모델을 메모리·KV에 캐시. 다른 tier 슬롯이 비었거나 방금 실패한
+// 모델과 같으면 함께 갱신한다(양쪽 tier가 같은 나쁜 모델로 물려 있던 문제 방지).
+async function cacheWorkingModel(env, tier, model, badModel) {
+  const prev = _modelCache || {};
+  let main = tier === 'main' ? model : prev.main;
+  let light = tier === 'light' ? model : prev.light;
+  if (!main || main === badModel) main = tier === 'main' ? model : (main || model);
+  if (!light || light === badModel) light = tier === 'light' ? model : (light || model);
+  _modelCache = { main, light, source: 'healed' };
+  if (env?.PENDING_POSTS) {
+    try { await env.PENDING_POSTS.put(MODEL_CACHE_KV_KEY, JSON.stringify({ main, light }), { expirationTtl: MODEL_CACHE_TTL }); } catch {}
+  }
+}
+
+// 403/404 자가복구(결정적) — 후보 모델에 "실제 요청"을 순서대로 보내 200이 나오는
+// 첫 모델의 응답을 반환하고 그 모델을 캐시한다. probe(1토큰 'hi')와 실제 호출의 권한
+// 괴리를 없애고, 후보를 전부 소진할 때까지 시도해 "한 번 재시도 후 포기" 문제를 제거한다.
+async function healModelByRealCall(apiKey, opts, badModel) {
+  const { system, user, max_tokens = 2048, env, tier = 'main' } = opts;
+  await clearModelCache(env);
+  const candidates = (await orderedCandidateModels(apiKey, tier)).filter(m => m !== badModel);
+  let forbidden403 = 0; // 서로 다른 모델이 연속 403이면 모델 문제가 아니라 "지역 라우팅 차단"
+  for (const model of candidates) {
+    let res;
+    try {
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model, max_tokens, system, messages: [{ role: 'user', content: user }] }),
+      });
+    } catch { continue; } // 네트워크 오류 → 다음 후보
+    if (res.ok) {
+      await cacheWorkingModel(env, tier, model, badModel);
+      try { return (await res.json()).content[0].text; } catch { return null; }
+    }
+    if (res.status === 403) {
+      forbidden403++;
+      // 서로 다른 모델 3개가 전부 403("Request not allowed") = 키/모델 문제가 아니라
+      // Cloudflare가 요청을 Anthropic 차단 지역(홍콩 등)으로 내보낸 것 → 조기 중단.
+      // 이 오류는 "일시적"이므로 상위에서 재시도하게 REGION_BLOCKED로 태깅해 던진다.
+      if (forbidden403 >= 3) throw new Error('REGION_BLOCKED');
+    }
+    // 과부하(429/5xx)면 잠깐 쉬고 다음 후보로.
+    if (res.status === 429 || res.status === 529 || res.status >= 500) {
+      await new Promise(r => setTimeout(r, 800));
+    }
+  }
+  if (forbidden403 >= 2) throw new Error('REGION_BLOCKED'); // 후보 대부분 403 → 같은 결론
+  return null; // 모든 후보가 404 등 → 진짜 키/권한 문제
+}
+
+// 핸들러에서 쓸 모델 ID 반환 (없으면 원인을 알려주는 에러)
+async function getModel(apiKey, tier, env) {
+  const m = await resolveModels(apiKey, env);
+  if (!m.main) {
+    throw new Error(
+      'API 키로 호출 가능한 Claude 모델이 없습니다. ' +
+      '목록엔 보이지만 실제 호출이 거부됩니다(권한·크레딧·워크스페이스 모델 제한 가능). ' +
+      'Anthropic 콘솔에서 이 키의 모델 접근 권한과 결제 상태를 확인하세요. ' +
+      `(확인된 모델: ${(m.available || []).join(', ') || '없음'})`
+    );
+  }
+  return tier === 'light' ? m.light : m.main;
+}
+
+// ===== 일일 API 예산 가드 (크레딧 보호) =====
+// Claude 호출 횟수를 KST 날짜별로 KV에 기록해, 폭주(무한 재시도·과다 테스트·봇 남용)로
+// 크레딧이 하루에 소진되는 것을 막는다. 카운트는 "논리적 호출" 기준(재시도·자가복구는
+// 같은 호출로 간주해 중복 카운트하지 않음).
+//   SOFT_CAP 초과: optional(부가) 호출만 생략 — 릴스 훅·적합성 게이트·텍스트 압축 등
+//                  폴백이 있는 호출이라 결과물은 계속 나온다.
+//   HARD_CAP 초과: 모든 호출 차단(BUDGET_EXCEEDED). 다음 날 자동 해제.
+// 하루 정상 사용량: 일일 자동 1편 ≈ 7~9회 + 수동 제작 2~3편 ≈ 20~30회 → 여유 있게 설정.
+const DAILY_SOFT_CAP = 60;
+const DAILY_HARD_CAP = 120;
+function _kstDay() { return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10); }
+async function bumpApiUsage(env) {
+  if (!env?.PENDING_POSTS) return 0;
+  const key = `api_usage_${_kstDay()}`;
+  let n = 0;
+  try { n = parseInt(await env.PENDING_POSTS.get(key) || '0', 10) || 0; } catch {}
+  n += 1;
+  try { await env.PENDING_POSTS.put(key, String(n), { expirationTtl: 2 * 24 * 3600 }); } catch {}
+  return n;
+}
+async function getApiUsage(env) {
+  if (!env?.PENDING_POSTS) return 0;
+  try { return parseInt(await env.PENDING_POSTS.get(`api_usage_${_kstDay()}`) || '0', 10) || 0; } catch { return 0; }
+}
+
+// 일시적 오류(429 요청과다 · 529 과부하 · 5xx · 네트워크)는 재시도로 흡수한다.
+// 파이프라인이 Claude를 연속 6회 호출하므로, 단발 실패 한 번에 단계 전체가
+// 무너지지 않도록 지수 백오프 재시도를 둔다 (이게 3·4단계 간헐 실패의 근본 원인이었음).
+// 403은 영구 오류("Request not allowed") — 재시도해도 같은 결과. 즉시 실패 처리.
+const RETRYABLE_STATUS = new Set([408, 409, 429, 500, 502, 503, 504, 529]);
+
+async function callClaude(apiKey, opts, attempt = 0) {
+  const MAX_RETRIES = 3;
+  const BACKOFF_MS = [1000, 3000, 7000];
+  const { system, user, max_tokens = 2048, env, tier = 'main' } = opts;
+
+  // ⭐ 일일 예산 가드 — 논리적 호출당 1회만 카운트(재시도 attempt>0 · 자가복구 _healed 제외)
+  if (attempt === 0 && !opts._healed && env) {
+    const used = await bumpApiUsage(env);
+    if (used > DAILY_HARD_CAP) {
+      throw new Error(`BUDGET_EXCEEDED: 오늘 Claude API 일일 예산(${DAILY_HARD_CAP}회)을 초과했습니다 — 크레딧 보호를 위해 차단하며, 내일(KST) 자동 해제됩니다.`);
+    }
+    if (opts.optional && used > DAILY_SOFT_CAP) {
+      // 부가 호출(폴백 있음)은 소프트캡부터 생략 — 호출한 쪽 try/catch가 폴백 처리
+      throw new Error('BUDGET_SKIP: 일일 예산 절약 모드 — 부가 호출 생략');
+    }
+  }
+
+  // 모델은 직접 주어지면 그걸, 아니면 tier로 해석한다(자가복구를 위해 env·tier 보관).
+  const model = opts.model || await getModel(apiKey, tier, env);
+
+  let res;
+  try {
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens,
+        system,
+        messages: [{ role: 'user', content: user }],
+      }),
+    });
+  } catch (netErr) {
+    // 네트워크 오류 → 재시도
+    if (attempt < MAX_RETRIES) {
+      await new Promise(r => setTimeout(r, BACKOFF_MS[attempt]));
+      return callClaude(apiKey, opts, attempt + 1);
+    }
+    throw new Error(`Claude 호출 네트워크 오류: ${netErr.message}`);
+  }
+
+  if (!res.ok) {
+    // 404(모델 없음)·403(접근 불가/"Request not allowed") → 선택/캐시된 모델이 이 키로
+    // 거부됨. 후보 모델에 "실제 요청"을 순서대로 던져 200 나오는 첫 모델로 결정적 자가복구.
+    // (probe와 실제 호출의 권한 괴리를 없애고, 후보를 전부 소진할 때까지 시도)
+    if ((res.status === 404 || res.status === 403) && env && !opts._healed) {
+      let healed;
+      try {
+        healed = await healModelByRealCall(apiKey, { ...opts, _healed: true }, model);
+      } catch (he) {
+        if (/REGION_BLOCKED/.test(he.message)) {
+          // 모델·키 문제가 아니라, Cloudflare가 이 요청을 Anthropic이 차단하는 지역
+          // (홍콩 등)으로 내보낸 것. 일시적 — 크론/프론트가 자동 재시도한다.
+          throw new Error('[403] REGION_BLOCKED: 일시적인 해외 경유지 차단으로 Claude 호출이 거부되었습니다. 잠시 후 자동으로 다시 시도됩니다 — API 키·크레딧 문제가 아닙니다.');
+        }
+        throw he;
+      }
+      if (healed !== null && healed !== undefined) return healed;
+      // 모든 후보가 404 등으로 실패 → 키/권한/결제 문제. 명확히 안내.
+      const eb = await res.json().catch(() => ({}));
+      const dt = eb?.error?.message || 'Request not allowed';
+      throw new Error(`[${res.status}] ${dt} — 이 API 키로 호출 가능한 Claude 모델을 찾지 못했습니다. Anthropic 콘솔에서 키의 모델 접근 권한·결제(크레딧) 상태를 확인하세요.`);
+    }
+    if (RETRYABLE_STATUS.has(res.status) && attempt < MAX_RETRIES) {
+      // 서버가 Retry-After를 주면 우선 존중, 없으면 지수 백오프
+      const ra = parseInt(res.headers.get('retry-after') || '', 10);
+      const wait = Number.isFinite(ra) ? Math.min(ra * 1000, 10000) : BACKOFF_MS[attempt];
+      await new Promise(r => setTimeout(r, wait));
+      return callClaude(apiKey, opts, attempt + 1);
+    }
+    const errBody = await res.json().catch(() => ({}));
+    const detail = errBody?.error?.message || JSON.stringify(errBody);
+    throw new Error(`[${res.status}] ${detail}`);
+  }
+  return (await res.json()).content[0].text;
+}
+
+// ===== 책 실존 검증 =====
+
+function extractJson(text) {
+  if (!text) throw new Error('JSON 파싱 실패: 빈 응답');
+  // ```json ... ``` 코드펜스 제거 후 첫 { ~ 마지막 } 구간 파싱
+  const cleaned = text.replace(/```(?:json)?/gi, '').trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) throw new Error('JSON 파싱 실패');
+  return JSON.parse(cleaned.slice(start, end + 1));
+}
+
+// ===== Telegram =====
+async function sendTelegramMessage(botToken, chatId, text) {
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`텔레그램 발송 실패: ${err.description || res.status}`);
+  }
+  return res.json();
+}
+
+async function sendTelegramPhoto(botToken, chatId, photoUrl, caption) {
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, photo: photoUrl, caption: caption || '' }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    console.error(`이미지 전송 실패(폴백): ${err.description || res.status}`);
+    return sendTelegramMessage(botToken, chatId, caption || photoUrl);
+  }
+  return res.json();
+}
+
+// 브라우저에서 Canvas로 합성한 이미지(base64 data URL)를 파일로 전송
+async function sendTelegramPhotoFile(botToken, chatId, base64DataUrl, caption) {
+  const match = base64DataUrl.match(/^data:([^;]+);base64,(.+)$/s);
+  if (!match) return null;
+  const mimeType = match[1];
+  const binary = Uint8Array.from(atob(match[2]), c => c.charCodeAt(0));
+  const form = new FormData();
+  form.append('chat_id', String(chatId));
+  if (caption) form.append('caption', caption);
+  form.append('photo', new Blob([binary], { type: mimeType }), 'carousel.jpg');
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+    method: 'POST',
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    console.error(`파일 전송 실패: ${err.description || res.status}`);
+    return null;
+  }
+  return res.json();
+}
+
+async function handleSendTelegramImage(env, body) {
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
+    throw new Error('TELEGRAM_BOT_TOKEN 또는 TELEGRAM_CHAT_ID가 설정되지 않았습니다.');
+  }
+  const { imageDataUrl, caption } = body;
+  if (!imageDataUrl) throw new Error('imageDataUrl이 필요합니다.');
+  const result = await sendTelegramPhotoFile(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, imageDataUrl, caption || '');
+  if (!result) throw new Error('텔레그램 이미지 전송 실패');
+  return { success: true };
+}
+
+// 텔레그램에는 "제작 완료 알림 + 확인하러 가기 링크"만 보낸다.
+// (이미지·세부 문구는 보내지 않음. 인스타그램 게시 결정은 캐럿셀 제작 페이지에서 함.)
+async function handleSendTelegram(env, body) {
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
+    throw new Error('TELEGRAM_BOT_TOKEN 또는 TELEGRAM_CHAT_ID가 설정되지 않았습니다.');
+  }
+
+  const { bookInfo, pipelineId } = body;
+  // pipelineId가 있으면 해당 결과 페이지로 바로 연결되는 링크를 만든다.
+  const link = pipelineId
+    ? `${WORKER_URL}/?pipeline=${encodeURIComponent(pipelineId)}`
+    : `${WORKER_URL}/`;
+
+  const title = bookInfo?.title ? `"${bookInfo.title}"` : '';
+  const msg = `[북 캐럿셀 제작 완료]\n\n${title} 캐럿셀(카드뉴스 5장 + 캡션)이 완성됐습니다.\n아래 "확인하러 가기"를 눌러 결과를 보고, 인스타그램 게시 여부를 결정해주세요.\n\n${link}`;
+
+  const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: env.TELEGRAM_CHAT_ID,
+      text: msg,
+      reply_markup: {
+        inline_keyboard: [[{ text: '확인하러 가기', url: link }]],
+      },
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`텔레그램 발송 실패: ${err.description || res.status}`);
+  }
+
+  return { success: true, message: '텔레그램으로 제작 완료 알림과 확인 링크를 보냈습니다.' };
+}
+
+// ===== Claude 핸들러 =====
+
+async function handleGenerate(env, body) {
+  // Phase 1 정리: 책 실존 교차검증·성인필터·저자 교정 게이트 제거(도서 기능 제거).
+  // 생성 엔진은 주제(coreMessage) 기반으로 5페이지 카드뉴스를 만든다. 프롬프트 문안(연애 톤)은
+  // 신규 입력부(이미지 업로드·다국어) 도입 시 Phase 2~3에서 교체 예정.
+  const { title, author, year, coreMessage, targetAudience, category } = body;
+  if (!coreMessage) throw new Error('핵심 메시지(coreMessage)는 필수입니다.');
+
+  const bookDesc = String(body.description || ''); // 프론트가 전달한 참고 소개문(선택)
+  const lt = laneTone(category); // 톤 프리셋 — 카테고리(설렘/이별/자존감)에 맞는 감정 결
+
+  const text = await callClaude(env.ANTHROPIC_API_KEY, {
+    env, tier: 'main', max_tokens: 1200,
+    system: `당신은 연애·관계 심리 책을 소개하는 인스타그램 카드뉴스 전문 카피라이터입니다.\n타겟 독자: ${lt.audience}.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 마음을 건드린다 — 장황한 설명 금지.\n3. 공포·위기·충격이 아니라 '깊은 공감과 위로'로 저장·공유를 유도한다. 독자가 "이건 내 얘기다"라고 느껴 저장하게 만든다.\n4. 통계·수치·연구 인용보다 감정과 경험의 언어를 쓴다. 따뜻하고 문학적인 톤.\n5. 모든 콘텐츠에 반말을 절대 사용하지 않는다 — 문어체·존댓말(~습니다/~합니다/~네요/~까요)만 허용.\n반드시 JSON만 응답한다.`,
+    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '연애·관계 심리'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n${bookDesc ? `실제 책 소개(출판사 제공 — 이 책의 진짜 내용): ${bookDesc.slice(0, 600)}\n` : ''}\n[근거 규칙 — 절대 위반 금지] ${bookDesc ? '위 "실제 책 소개"가 이 책의 진짜 내용입니다. 3~5페이지의 통찰·위로·솔루션은 반드시 이 소개의 주제·관점과 일치해야 하며, 소개에 없는 개념·주장을 책의 것처럼 지어내지 마세요. 소개의 주제가 카테고리 톤과 거리가 있으면, 톤을 책의 실제 주제 쪽으로 맞추세요(책이 우선).' : '이 책의 실제 내용을 확신할 수 없으므로, 특정 개념·주장을 책의 것처럼 단정하지 말고 핵심 메시지 범위 안의 보편적 위로에 머무르세요.'}\n\n[전체 톤 — 카테고리에 맞춰 조절] 대상: ${lt.audience}.\n톤: ${lt.tone}.\n흐름: ${lt.flow}.\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(공감 훅 — 헤드라인만): 카드 전체를 단 하나의 마음을 건드리는 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 연애에서 겪었을 구체적 순간·감정을 정확히 포착한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 공포·경고 톤 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자가 혼자 느꼈던 감정을 들킨 듯한 문장.\n    좋은 예(이번 카테고리 톤): ${lt.hookExample}\n             "좋아할수록 더 차갑게 굴게 되는 사람이 있습니다"\n    나쁜 예(절대 금지): "당신의 연애는 실패하고 있다" / "이대로면 평생 혼자입니다" (공포·단정 톤)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(패턴 발견): 독자가 반복해온 연애 패턴을 부드럽게 이름 붙여 보여준다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 독자가 "맞아, 나 그래"라고 느낄 구체적 행동·상황 묘사. 수치 금지, 감정과 장면 위주.\n3페이지(마음의 이유): 그 패턴의 심리적 뿌리를 따뜻하게 설명한다(애착, 상처, 두려움 등). 비난하지 않는다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. "당신이 이상한 게 아니라, 이런 마음이 있었던 것입니다" 같은 위로의 통찰. 심리학 개념을 쉽게 풀어 쓰되 학술 인용 금지.\n4페이지(위로의 실마리): 완전한 해답 대신 '이렇게 바라보면 달라진다'는 방향을 부드럽게 암시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 마지막 줄은 희망적 여운으로 끝낸다. 단정적 해결책 금지.\n5페이지(책 공개 — 마무리): 독자에게 오늘의 책을 건넨다. (제목·저자·표지는 시스템이 자동으로 함께 보여주므로 본문 텍스트에 제목·저자를 직접 쓰지 말 것.)\n  - cta: 4페이지의 위로를 잇는 따뜻한 마무리 + 핵심 솔루션 한 문장(${lt.theme}에서 오늘 가져갈 마음의 방향). A/B·질문·"댓글" 언급 금지. 독자 가슴에 남는 한 문장.\n  - linkText: 그 마음에 책을 자연스럽게 건네는 한 줄 (예: "이 마음에 오래 곁이 되어줄 책을 소개합니다"). 제목은 쓰지 말 것(시스템이 표지·제목·저자를 함께 노출). "프로필 링크" 언급은 불필요.\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
+  });
+
+  const pages = extractJson(text);
+  // bookDescription: 검증 단계가 참고 소개 기준으로 부합도를 채점할 수 있게 반환(선택)
+  return { success: true, pages, bookDescription: bookDesc };
+}
+
+async function handleValidate(env, body) {
+  const { pages } = body;
+  const bookInfo = body.bookInfo || {};
+  // 참고 소개문이 있으면 부합도 채점 근거로 사용(선택). 없으면 일반 품질 기준으로 채점.
+  const bookDesc = String(bookInfo.description || '').slice(0, 600);
+  const text = await callClaude(env.ANTHROPIC_API_KEY, {
+    env, tier: 'light',
+    max_tokens: 1024,
+    system: '당신은 소셜미디어 콘텐츠 전문 편집장 겸 저작권 검토자입니다. 반드시 JSON만 응답합니다.',
+    user: `주제 "${bookInfo.title || bookInfo.coreMessage || '카드뉴스'}" 캐럿셀을 아래 5가지 기준으로 평가하세요.\n${bookDesc ? `\n실제 책 소개(출판사 제공 — 부합도 채점의 근거):\n${bookDesc}\n` : ''}\n캐럿셀 내용:\n${JSON.stringify(pages, null, 2)}\n\n평가 기준 (100점 만점):\n1. accuracy(책 내용 부합도): ${bookDesc ? '캐럿셀의 통찰·솔루션이 위 "실제 책 소개"의 주제·메시지와 일치하는가? 소개와 무관한 주제를 책의 것처럼 말하면 크게 감점.' : '캐럿셀 내용이 해당 책의 실제 메시지와 일치하는가? (소개 미제공 — 확신 없으면 보수적으로 감점)'} 0~20\n2. factual(사실 정확성): 수치·통계·사례에 명백한 오류나 과장이 없는가? 0~20\n3. copyright(저작권 안전성): 책의 핵심 내용을 그대로 옮기지 않고 요약·재해석했는가? 저자명·책 제목이 본문에 노출되지 않는가? 0~20\n4. engagement(공감·참여 유도): 30대 독자가 "이건 내 얘기다"라고 느껴 저장·공유하고 싶어지는 깊은 공감과 위로가 있는가? 따뜻한 톤이 유지되는가(공포·단정·비난 톤이면 감점)? 0~25\n5. quality(문장 품질): 오타·비문·어색한 표현이 없고 간결한가? 0~15\n\nJSON: {"totalScore":85,"scores":{"accuracy":17,"factual":16,"copyright":18,"engagement":22,"quality":12},"feedback":"전체 평가 2~3문장","improvements":["구체적 개선점1","개선점2","개선점3"],"approved":true}\napproved는 totalScore>=70이면 true.`
+  });
+  return { success: true, ...extractJson(text) };
+}
+
+// ⭐ 3레인 톤 시스템 — 계정 정체성("행간 — 연애 책방")은 하나로 고정하고,
+// 감정 구간(레인)에 따라 톤만 바꾼다. 카테고리를 늘리는 대신 연애의 감정 단계를 넓혀
+// 팔로워 이탈(니치 졸업·무거운 톤 피로)을 막는다.
+// light=설렘·썸·짝사랑(가벼움) / core=이별·재회·회복(수익 핵심) / self=자존감·나를 사랑하기(깊은 위로)
+function laneOf(cat) {
+  const c = String(cat || '');
+  if (/설렘|짝사랑|썸|시작|고백|두근/.test(c)) return 'light';
+  if (/자존|자기|나를/.test(c)) return 'self';
+  return 'core';
+}
+const LANE_TONES = {
+  light: {
+    audience: '짝사랑·썸·연애 초반의 설렘을 지나는 30대',
+    theme: '짝사랑과 설렘',
+    tone: '풋풋하고 설레는 공감 — 무겁지 않게, 읽으며 슬며시 미소 짓게 하는 가벼운 톤. 위로보다 "맞아, 딱 이 기분!" 하는 반가움을 준다',
+    flow: '설렘의 순간 공감 → 짝사랑·썸에서 반복되는 패턴 → 그 마음의 심리적 이유 → 용기와 설렘의 실마리 → 오늘의 책 소개',
+    hookExample: '"답장이 오기 전까지는 아무 일도 손에 잡히지 않았습니다"',
+    hashtagExample: '#짝사랑 #설렘 #책추천',
+  },
+  core: {
+    audience: '이별·재회·회복을 지나는 30대',
+    theme: '이별과 회복',
+    tone: '깊은 공감과 위로 — 독자가 "이건 내 얘기다"라고 느껴 저장하게 만드는 따뜻한 톤',
+    flow: '공감 → 패턴 발견 → 마음의 이유 → 위로의 실마리 → 오늘의 책 소개',
+    hookExample: '"헤어지자는 말보다, 잡지 않을까 봐 더 무서웠습니다"',
+    hashtagExample: '#이별 #연애심리 #책추천',
+  },
+  self: {
+    audience: '연애 속에서 자신을 잃어버린 적 있는, 나를 먼저 사랑하고 싶은 30대',
+    theme: '자존감과 나를 사랑하기',
+    tone: '따뜻하고 단단한 위로 — 자책이 아니라 자기 존중과 회복으로 이끄는 톤',
+    flow: '자신을 잃었던 순간 공감 → 반복 패턴 → 마음의 이유 → 나를 아끼는 방향 → 오늘의 책 소개',
+    hookExample: '"그 사람에게 맞추느라, 내가 뭘 좋아했는지 잊어버렸습니다"',
+    hashtagExample: '#자존감 #연애심리 #책추천',
+  },
+};
+function laneTone(cat) { return LANE_TONES[laneOf(cat)]; }
+
+// 릴스 1페이지 전용 "스크롤을 멈추는 강한 훅" 생성 (캐럿셀 1페이지의 잔잔한 공감문과 별개).
+async function handleReelHook(env, body) {
+  const { pages, bookInfo } = body;
+  const summary = [pages?.page1?.headline, pages?.page2?.headline, pages?.page4?.headline].filter(Boolean).join(' / ');
+  const fallback = pages?.page1?.headline || '';
+  const lt = laneTone(bookInfo?.category); // 3레인 톤(설렘/이별/자존감)
+  try {
+    const text = await callClaude(env.ANTHROPIC_API_KEY, {
+      env, tier: 'light', max_tokens: 400, optional: true, // 예산 절약 모드에서 생략(폴백: 캐럿셀 1페이지 문구)
+      system: `당신은 인스타그램 릴스 훅 카피라이터입니다. 타깃은 ${lt.audience} 여성. 스크롤을 1초 만에 멈추게 하는 강한 첫 문장(훅)을 만듭니다.\n규칙:\n① 유형은 "콕 집어내는 감정"(예: ${lt.hookExample}) 또는 "궁금증 격차" 또는 "금기/질문". 감정의 결은 카테고리에 맞게: ${lt.tone}.\n② 한 줄, 18~28자. 너무 길지 않게.\n③ 따뜻하되 강렬하게. 공포·단정·비난·자극적 과장 금지.\n④ 책 제목·저자 노출 금지. 이모지 금지.\n반드시 JSON만 응답.`,
+      user: `책 핵심: ${bookInfo?.coreMessage || ''}\n캐럿셀 요지: ${summary}\n\n스크롤을 멈추게 하는 릴스 훅 후보 3개를 만들고, 그중 가장 강한 하나를 고르세요.\nJSON: {"candidates":["...","...","..."],"best":"가장 강한 한 줄"}`,
+    });
+    const r = extractJson(text);
+    const best = (r.best || (Array.isArray(r.candidates) && r.candidates[0]) || fallback || '').toString().trim();
+    return { success: true, hook: best || fallback, candidates: Array.isArray(r.candidates) ? r.candidates : [] };
+  } catch (e) {
+    return { success: true, hook: fallback, candidates: [] };
+  }
+}
+
+// 릴스 대본(4장) — 한 편의 흐름으로 "연결되게" 생성하고, 자체 검증(연결성·가독성)까지 한 번에.
+// 캐럿셀의 조각을 잘라 붙이던 방식(어색함)을 대체한다. 5번째 장(책 공개)은 시스템이 표지로 처리.
+async function handleGenerateReel(env, body) {
+  const { pages, bookInfo } = body;
+  const arc = [pages?.page1?.headline, pages?.page2?.headline, pages?.page3?.headline, pages?.page4?.headline, pages?.page5?.cta]
+    .filter(Boolean).join(' / ');
+  // 폴백: 캐럿셀 헤드라인 그대로
+  const fb = {
+    s1: pages?.page1?.headline || '', s2: pages?.page2?.headline || '',
+    s3: pages?.page3?.headline || '', s4: pages?.page4?.headline || '',
+  };
+  const lt = laneTone(bookInfo?.category); // 3레인 톤(설렘/이별/자존감)
+  try {
+    const text = await callClaude(env.ANTHROPIC_API_KEY, {
+      env, tier: 'light', max_tokens: 700, optional: true, // 예산 절약 모드에서 생략(폴백: 캐럿셀 헤드라인)
+      system: `당신은 인스타 릴스 대본 카피라이터입니다. 타깃은 ${lt.audience} 여성. 감정의 결: ${lt.tone}.\n[목표] 4개의 슬라이드 문구가 "한 편의 이야기처럼 자연스럽게 이어지게" 씁니다(뚝뚝 끊긴 조각 금지).\n[구성·흐름]\n· s1(훅): 스크롤을 멈추는 강한 첫 문장(콕 집는 감정/궁금증). 18~28자.\n· s2: s1에서 자연스럽게 이어받아 그 감정·패턴을 구체적 장면으로. \n· s3: 그 마음의 이유를 따뜻하게 짚음(비난 금지).\n· s4: 희망으로 전환하는 마무리(단정적 해결책 금지, 여운).\n[문체·규칙] 존댓말·문어체, 따뜻하되 강렬. 각 슬라이드 한 화면에서 4~5초에 읽히게 45자 이내(한두 문장). 책 제목·저자 노출 금지, 이모지 금지, 공포·단정 금지. 앞 문장과 접속·지시어로 연결되게(예: "그런데", "사실은", "그래서").\n[검증] 초안을 쓴 뒤, 4장이 매끄럽게 이어지는지·각 장이 4~5초에 읽히는지 스스로 점검하고 어색하면 고쳐서 최종본만 냅니다.\n반드시 JSON만 응답.`,
+      user: `책 핵심 주제: ${bookInfo?.coreMessage || ''}\n카테고리: ${bookInfo?.category || '이별·재회·회복'}\n캐럿셀 흐름(참고): ${arc}\n\n위 흐름을 살리되, 4개 슬라이드가 자연스럽게 이어지는 릴스 대본을 쓰고 스스로 검증·보완해 최종본을 내세요.\nJSON: {"reel":{"s1":"...","s2":"...","s3":"...","s4":"..."},"validation":{"connected":true,"readable":true,"score":0~100,"note":"연결성·가독성 한줄평"}}`,
+    });
+    const r = extractJson(text);
+    const reel = r.reel || {};
+    const out = {
+      s1: (reel.s1 || fb.s1).toString().trim(),
+      s2: (reel.s2 || fb.s2).toString().trim(),
+      s3: (reel.s3 || fb.s3).toString().trim(),
+      s4: (reel.s4 || fb.s4).toString().trim(),
+    };
+    const validation = r.validation || { connected: true, readable: true, score: null, note: '' };
+    return { success: true, reel: out, validation };
+  } catch (e) {
+    return { success: true, reel: fb, validation: { connected: true, readable: true, score: null, note: '자동 생성 실패 — 캐럿셀 문구로 대체' } };
+  }
+}
+
+async function handleGenerateCaption(env, body) {
+  const { pages } = body;
+  const bookInfo = body.bookInfo || {};
+  if (!pages) throw new Error('캐럿셀 데이터가 필요합니다.');
+
+  const lt = laneTone(bookInfo.category); // 톤 프리셋(설렘/이별/자존감)
+
+  const text = await callClaude(env.ANTHROPIC_API_KEY, {
+    env, tier: 'light',
+    max_tokens: 512,
+    system: `당신은 ${lt.theme}를 다루는 연애 책을 소개하는 인스타그램 콘텐츠 크리에이터입니다. ${lt.audience} 독자가 자기 마음을 들킨 듯 공감해 "저장"하고 "친구에게 공유"하고 싶어지는 캡션을 씁니다. 톤: ${lt.tone}. 팔로워 성장이 목적이므로 저장·공유를 유도합니다. 노골적 판매·공포·단정·비난 금지. 반말 절대 금지 — 문어체·존댓말(~습니다/~네요/~까요)만. 반드시 JSON만 응답합니다.`,
+    user: `책 카테고리: ${bookInfo.category || '이별과회복'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n\n인스타그램 캡션을 작성하세요. (이 게시물의 목적: 저장·공유로 팔로워 늘리기. 댓글·DM·A/B 유도 없음.)\n\n[캡션 구조 — 순서 엄수]\n1줄: 독자가 ${lt.theme}에서 혼자 느꼈을 감정을 포착한 공감형 한 문장 (책 제목은 시스템이 따로 붙이므로 본문엔 쓰지 말 것. "당신이 모른다면"·"대부분의 사람들이" 금지. 공포·단정 금지)\n2~3줄: 캐럿셀 핵심 위로/통찰 초간결 요약 (반복 금지)\n끝에서 둘째 줄: 저장 유도 ("마음이 복잡한 날 다시 꺼내보고 싶다면 저장해두세요" 형태)\n마지막 줄: 공유 유도 ("같은 마음을 지나는 사람에게 조용히 건네주세요" 형태)\n\n[추가 규칙]\n- 해시태그: 정확히 3개 (카테고리에 맞게. 예: ${lt.hashtagExample})\n- 전체 6줄 이내, 짧고 따뜻하게\n- 댓글·DM·A/B·"프로필 링크" 언급 금지 (저장·공유만)\n\nJSON: {"caption":"1줄\\n2줄\\n3줄\\n저장유도줄\\n공유유도줄","hashtags":["#이별","#연애심리","#책추천"]}`,
+  });
+
+  const result = extractJson(text);
+  // Phase 1 정리: 책 공개(제목·저자)·계정 핸들·프로필 링크 자동 접미사 제거(도서 기능 제거).
+  return { success: true, ...result };
+}
+
+async function handleRegenerate(env, body) {
+  const { previousPages, feedback, improvements = [] } = body;
+  const bookInfo = body.bookInfo || {};
+  const text = await callClaude(env.ANTHROPIC_API_KEY, {
+    env, tier: 'main',
+    system: `당신은 인스타그램 책 리뷰 카드뉴스 전문 카피라이터입니다.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.\n3. 5페이지는 반문·열린 결말 구조 — 구매 유도나 직접 행동 지시 없이 독자에게 질문을 던진다.\n4. 모든 콘텐츠에 반말을 절대 사용하지 않는다 — 문어체·존댓말(~습니다/~합니다/~세요)만 허용.\n반드시 JSON만 응답한다.`,
+    user: `캐럿셀을 피드백에 맞게 개선하세요.\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n${bookInfo.description ? `실제 책 소개(출판사 — 통찰·솔루션은 이 소개의 주제와 일치해야 하며, 소개에 없는 개념을 책의 것처럼 지어내지 말 것): ${String(bookInfo.description).slice(0, 600)}\n` : ''}\n이전 버전:\n${JSON.stringify(previousPages, null, 2)}\n\n피드백: ${feedback}\n개선 요청: ${improvements.join(' / ')}\n\n텍스트 길이 기준:\n- 1페이지 headline: 40자 이내 완전한 문장(주어+상황+결과). 단어 조각 절대 금지. subtext 없음.\n- 2~4페이지 headline: 18자 이내, body: 3~4줄(줄당 45자 이내). 구체적 수치·사례 포함.\n- JSON 형식: {"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},...}\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
+  });
+  return { success: true, pages: extractJson(text) };
+}
+
+// 캔버스 넘침 감지 후 텍스트 단축
+async function handleAdjustText(env, body) {
+  const { pages, issues } = body;
+  if (!pages || !issues?.length) return { success: true, pages };
+
+  const issueDesc = issues.map(i =>
+    `${i.page} ${i.type}: ${i.currentLines}줄(최대 ${i.maxLines}줄) — "${i.text}"`
+  ).join('\n');
+
+  let text;
+  try {
+    text = await callClaude(env.ANTHROPIC_API_KEY, {
+      env, tier: 'light',
+      max_tokens: 1024,
+      optional: true, // 예산 절약 모드에서 생략(폴백: 원본 텍스트 유지)
+      system: '당신은 인스타그램 카드뉴스 카피라이터입니다. 주어진 텍스트를 지정된 줄 수 이내로 압축합니다. 반말 절대 금지 — 문어체·존댓말만 허용. 반드시 JSON만 응답합니다.',
+    user: `다음 캐럿셀 텍스트가 이미지 레이아웃에서 넘칩니다. 각 항목을 지정된 최대 줄 수 이내로 압축하세요.\n의미·임팩트는 유지하되 더 간결하게 다듬어주세요.\n\n현재 캐럿셀:\n${JSON.stringify(pages, null, 2)}\n\n넘치는 항목:\n${issueDesc}\n\n압축 규칙:\n- headline: 최대 3줄 (40자 이내, 강렬하게)\n- body: 최대 5줄 (줄당 45자 이내)\n- 책 제목·저자명 절대 노출 금지\n\n전체 pages JSON을 반환하세요:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`,
+    });
+  } catch {
+    return { success: true, pages }; // 예산 절약 생략·호출 실패 시 원본 유지
+  }
+
+  try {
+    return { success: true, pages: extractJson(text) };
+  } catch {
+    return { success: true, pages }; // 파싱 실패 시 원본 유지
+  }
+}
+
+// ===== 인스타그램 캐럿셀 게시 (텔레그램 승인 후 게시 액션) =====
+async function handlePostInstagram(env, body) {
+  if (!env.INSTAGRAM_ACCESS_TOKEN || !env.INSTAGRAM_USER_ID) {
+    throw new Error('INSTAGRAM_ACCESS_TOKEN 또는 INSTAGRAM_USER_ID 시크릿을 Cloudflare Workers에 설정해주세요.');
+  }
+
+  const { images, caption, hashtags } = body;
+  if (!images || !caption) throw new Error('이미지(images)와 캡션(caption)이 필요합니다.');
+
+  const TOKEN = env.INSTAGRAM_ACCESS_TOKEN;
+  const IG_ID = env.INSTAGRAM_USER_ID;
+  const BASE = `https://graph.instagram.com/v21.0/${IG_ID}`;
+  const captionFull = caption + (hashtags?.length ? '\n\n' + hashtags.join(' ') : '');
+
+  // Step 1: 페이지별 미디어 컨테이너 생성 (is_carousel_item=true)
+  const containerIds = [];
+  for (const page of ['page1', 'page2', 'page3', 'page4', 'page5']) {
+    const imgUrl = images[page];
+    if (!imgUrl) continue;
+    const res = await fetch(`${BASE}/media`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image_url: imgUrl, is_carousel_item: true, access_token: TOKEN }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(`이미지 컨테이너 생성 실패 (${page}): ${err.error?.message || res.status}`);
+    }
+    containerIds.push((await res.json()).id);
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  if (containerIds.length < 2) throw new Error('캐럿셀은 최소 2장의 이미지가 필요합니다.');
+
+  // Step 2: 캐럿셀 컨테이너 생성
+  const carRes = await fetch(`${BASE}/media`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ media_type: 'CAROUSEL', children: containerIds.join(','), caption: captionFull, access_token: TOKEN }),
+  });
+  if (!carRes.ok) {
+    const err = await carRes.json().catch(() => ({}));
+    throw new Error(`캐럿셀 컨테이너 생성 실패: ${err.error?.message || carRes.status}`);
+  }
+  const carouselId = (await carRes.json()).id;
+
+  // Step 3: 게시 (생성 후 잠시 대기)
+  await new Promise(r => setTimeout(r, 2000));
+  const pubRes = await fetch(`${BASE}/media_publish`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ creation_id: carouselId, access_token: TOKEN }),
+  });
+  if (!pubRes.ok) {
+    const err = await pubRes.json().catch(() => ({}));
+    throw new Error(`인스타그램 게시 실패: ${err.error?.message || pubRes.status}`);
+  }
+  const pubData = await pubRes.json();
+  return { success: true, mediaId: pubData.id, message: '인스타그램에 캐럿셀이 게시됐습니다!' };
+}
+
+// ===== Phase 4: 텔레그램 Webhook (인라인 버튼 콜백 처리) =====
+async function handleTelegramWebhook(env, body) {
+  const { callback_query } = body;
+  if (!callback_query) return { ok: true };
+
+  const callbackId = callback_query.id;
+  const cbData = callback_query.data;
+  // chat id: 콜백 메시지에서 먼저, 없으면 env 폴백
+  const chatId = callback_query.message?.chat?.id || env.TELEGRAM_CHAT_ID;
+
+  const answerCallback = (text, showAlert = false) =>
+    fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: callbackId, text, show_alert: showAlert }),
+    }).catch(() => {});
+
+  if (cbData === 'approve') {
+    await answerCallback('처리 중...');
+    if (!env.PENDING_POSTS) {
+      await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, 'KV 스토어가 설정되지 않았습니다.').catch(() => {});
+      return { ok: true };
+    }
+    const stateJson = await env.PENDING_POSTS.get('latest').catch(() => null);
+    if (!stateJson) {
+      await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, '게시할 콘텐츠가 없습니다 (만료됐거나 취소됨). 웹에서 다시 생성해주세요.').catch(() => {});
+      return { ok: true };
+    }
+    const ps = JSON.parse(stateJson);
+    try {
+      const result = await handlePostInstagram(env, { images: ps.images, caption: ps.caption, hashtags: ps.hashtags });
+      await env.PENDING_POSTS.delete('latest').catch(() => {});
+      await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId,
+        `인스타그램 게시 완료!\n미디어 ID: ${result.mediaId}\n\n책: ${ps.bookInfo?.title || ''}`).catch(() => {});
+    } catch (err) {
+      await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId,
+        `인스타그램 게시 실패: ${err.message}\n\n웹에서 직접 게시해주세요: https://book-carousel.jtaechul.workers.dev/`).catch(() => {});
+    }
+  } else if (cbData === 'cancel') {
+    await answerCallback('취소됐습니다.');
+    if (env.PENDING_POSTS) await env.PENDING_POSTS.delete('latest').catch(() => {});
+    await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, '게시가 취소됐습니다.').catch(() => {});
+  } else if (cbData === 'modify') {
+    await answerCallback('웹에서 수정해주세요', true);
+    await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId,
+      '웹에서 수정 후 다시 발송해주세요:\nhttps://book-carousel.jtaechul.workers.dev/').catch(() => {});
+  } else {
+    await answerCallback('');
+  }
+
+  return { ok: true };
+}
+
+// ===== 텔레그램 Webhook URL 등록 (최초 1회 실행) =====
+async function handleSetupWebhook(env) {
+  if (!env.TELEGRAM_BOT_TOKEN) throw new Error('TELEGRAM_BOT_TOKEN이 설정되지 않았습니다.');
+  const webhookUrl = 'https://book-carousel.jtaechul.workers.dev/api/telegram-webhook';
+  const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/setWebhook`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: webhookUrl }),
+  });
+  const data = await res.json();
+  return { success: true, webhookUrl, ...data };
+}
+
+
+// ===== 메인 라우터 =====
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: CORS });
+    }
+
+    if (url.pathname.startsWith('/api/')) {
+      try {
+        const body = request.method === 'POST' ? await request.json() : {};
+        let result;
+
+        // 진단용: 키 상태 + /v1/models 원시 응답 + 모델 선택 결과 확인
+        if (url.pathname === '/api/models') {
+          _modelCache = null; // 진단 시 캐시 무시하고 새로 조회
+          const key = env.ANTHROPIC_API_KEY;
+
+          // 1) 키 존재 여부 (값은 노출하지 않고 앞 6자만 마스킹)
+          const keyInfo = {
+            present: !!key,
+            length: key ? key.length : 0,
+            prefix: key ? key.slice(0, 6) + '...' : null,
+          };
+
+          // 2) /v1/models 원시 응답 그대로 확인
+          let rawStatus = null, rawBody = null;
+          try {
+            const r = await fetch('https://api.anthropic.com/v1/models?limit=100', {
+              headers: { 'x-api-key': key || '', 'anthropic-version': '2023-06-01' },
+            });
+            rawStatus = r.status;
+            rawBody = await r.text();
+            if (rawBody && rawBody.length > 800) rawBody = rawBody.slice(0, 800) + '…';
+          } catch (e) {
+            rawBody = 'fetch 실패: ' + e.message;
+          }
+
+          // 3) 모델 자동 선택 시도
+          const resolved = await resolveModels(key, env);
+
+          result = { keyInfo, modelsEndpoint: { status: rawStatus, body: rawBody }, resolved };
+        }
+        else if (url.pathname === '/api/debug-env') result = {
+          hasApiKey: !!env.ANTHROPIC_API_KEY,
+          hasTelegramToken: !!env.TELEGRAM_BOT_TOKEN,
+          hasTelegramChatId: !!env.TELEGRAM_CHAT_ID,
+          hasPendingPosts: !!env.PENDING_POSTS,
+          pendingPostsType: env.PENDING_POSTS ? typeof env.PENDING_POSTS : 'undefined',
+          hasInstagramToken: !!env.INSTAGRAM_ACCESS_TOKEN,
+        }
+        else if (url.pathname === '/api/generate') result = await handleGenerate(env, body);
+        else if (url.pathname === '/api/reel-hook') result = await handleReelHook(env, body);
+        else if (url.pathname === '/api/generate-reel') result = await handleGenerateReel(env, body);
+        else if (url.pathname === '/api/generate-caption') result = await handleGenerateCaption(env, body);
+        else if (url.pathname === '/api/validate') result = await handleValidate(env, body);
+        else if (url.pathname === '/api/regenerate') result = await handleRegenerate(env, body);
+        else if (url.pathname === '/api/send-telegram') result = await handleSendTelegram(env, body);
+        else if (url.pathname === '/api/send-telegram-image') result = await handleSendTelegramImage(env, body);
+        else if (url.pathname === '/api/post-instagram') result = await handlePostInstagram(env, body);
+        else if (url.pathname === '/api/telegram-webhook') result = await handleTelegramWebhook(env, body);
+        else if (url.pathname === '/api/setup-webhook') result = await handleSetupWebhook(env);
+        else if (url.pathname === '/api/adjust-text') result = await handleAdjustText(env, body);
+        else if (url.pathname === '/api/usage') {
+          // 오늘(KST) Claude API 사용량 — 크레딧 소진 감시용
+          const used = await getApiUsage(env);
+          result = { success: true, day: _kstDay(), used, softCap: DAILY_SOFT_CAP, hardCap: DAILY_HARD_CAP, savingMode: used > DAILY_SOFT_CAP, blocked: used > DAILY_HARD_CAP };
+        }
+        else if (url.pathname === '/api/reset-model-cache') {
+          await clearModelCache(env);
+          const m = await resolveModels(env.ANTHROPIC_API_KEY, env);
+          result = { success: true, model: m.main, light: m.light, source: m.source };
+        }
+        else return json({ error: '없는 경로입니다.' }, 404);
+
+        return json(result);
+      } catch (err) {
+        return json({ error: err.message }, 500);
+      }
+    }
+
+    return env.ASSETS.fetch(request);
+  },
+};
