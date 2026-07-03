@@ -53,7 +53,7 @@
     linear-gradient(180deg,#0a1122 0%,#070a12 100%)}
   .overlay.titlescreen::before{content:"";position:absolute;inset:-45%;z-index:0;pointer-events:none;
     background:conic-gradient(from 0deg,transparent 0 76%,#ffd23a10 86%,#ffe9a51c 90%,transparent 96%);animation:sweep 16s linear infinite}
-  .overlay.titlescreen::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;box-shadow:inset 0 0 130px 34px #000a}
+  .overlay.titlescreen::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;box-shadow:inset 0 0 90px 12px #0006}
   @keyframes sweep{to{transform:rotate(1turn)}}
   .overlay.titlescreen>*{position:relative;z-index:1}
   .overlay.titlescreen .who{color:#c9a94e}
@@ -742,7 +742,7 @@ const ovTag=document.getElementById("ovTag"),fdots=document.getElementById("fdot
 FACTIONS.forEach(fa=>{const i=document.createElement("i");i.style.background=fa.color;i.style.color=fa.color;fdots.appendChild(i);});
 // 오프닝 배경 아트 — assets/ui/title.jpg 가 있으면 시작 화면 배경으로 사용(없으면 CSS 그라디언트)
 const titleImg=new Image();let titleReady=false;titleImg.onload=()=>{titleReady=titleImg.naturalWidth>0;if(titleReady&&winner<0)applyTitleBg();};titleImg.src="assets/ui/title.jpg";
-function applyTitleBg(){ov.style.backgroundImage=titleReady?"linear-gradient(rgba(5,7,11,.38),rgba(5,7,11,.78)),url('assets/ui/title.jpg')":"";}
+function applyTitleBg(){ov.style.backgroundImage=titleReady?"linear-gradient(rgba(6,9,15,.14),rgba(6,9,15,.20) 45%,rgba(6,9,15,.52)),url('assets/ui/title.jpg')":"";}
 const ovSum=document.createElement("div");ovSum.className="summary";ovSum.id="ovSummary";ovSum.style.display="none";ovBig.after(ovSum);
 function win(){const f=winner;padStop();bgmEndingPlay();Sfx.victory();
   ov.style.backgroundImage="linear-gradient(rgba(6,8,13,.42),rgba(6,8,13,.86)), url('assets/ending/"+FACTIONS[f].sig+".jpg')";ov.style.backgroundSize="cover";ov.style.backgroundPosition="center";
