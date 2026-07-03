@@ -853,6 +853,8 @@ function updateBattleInfo(){const C=MAPRES/2,t=MAPRES*0.13;let mt=[],se=[],rv=0,
 FACTIONS.forEach(fa=>{const i=document.createElement("i");i.style.background=fa.color;i.style.color=fa.color;fdots.appendChild(i);});
 // 오프닝 배경 아트 — assets/ui/title.jpg 가 있으면 시작 화면 배경으로 사용(없으면 CSS 그라디언트)
 const titleImg=new Image();let titleReady=false;titleImg.onload=()=>{titleReady=titleImg.naturalWidth>0;if(titleReady&&winner<0)applyTitleBg();};titleImg.src="assets/ui/title.jpg";
+// 엔딩 일러스트 6장 사전 로드 + 디코드 — 승리 순간 배경이 늦게 뜨는 지연 제거
+const endingPre=FACTIONS.map(fa=>{const i=new Image();i.src="assets/ending/"+fa.sig+".jpg";if(i.decode)i.decode().catch(()=>{});return i;});
 function applyTitleBg(){if(titleReady){ov.style.backgroundImage="linear-gradient(rgba(6,9,15,.14),rgba(6,9,15,.20) 45%,rgba(6,9,15,.52)),url('assets/ui/title.jpg')";ov.style.backgroundSize="cover";ov.style.backgroundPosition="center";}
   else{ov.style.backgroundImage="";ov.style.backgroundSize="";ov.style.backgroundPosition="";}}
 const ovSum=document.createElement("div");ovSum.className="summary";ovSum.id="ovSummary";ovSum.style.display="none";ovBig.after(ovSum);
