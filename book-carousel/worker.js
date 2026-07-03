@@ -139,6 +139,61 @@ async function clearModelCache(env) {
   }
 }
 
+// tier에 맞는 후보 모델을 우선순위대로 반환(중복 제거). /v1/models 실패 시 하드코딩 폴백.
+// 자가복구(healModelByRealCall)가 이 목록에 "실제 요청"을 순서대로 던져 200을 찾는다.
+async function orderedCandidateModels(apiKey, tier) {
+  let ids = await listModelIds(apiKey);
+  if (!ids.length) ids = FALLBACK_MODEL_IDS.slice();
+  const order = tier === 'light'
+    ? orderCandidates(ids, ['haiku-4', 'haiku', 'sonnet-4', 'sonnet', 'opus'])
+    : orderCandidates(ids, ['sonnet-4', 'sonnet', 'opus-4', 'opus', 'haiku']);
+  // 알려진 폴백 ID도 뒤에 덧붙여 최후의 수단 확보(목록 조회가 비었을 때 대비)
+  for (const f of FALLBACK_MODEL_IDS) if (!order.includes(f)) order.push(f);
+  return order;
+}
+
+// 동작이 확인된 모델을 메모리·KV에 캐시. 다른 tier 슬롯이 비었거나 방금 실패한
+// 모델과 같으면 함께 갱신한다(양쪽 tier가 같은 나쁜 모델로 물려 있던 문제 방지).
+async function cacheWorkingModel(env, tier, model, badModel) {
+  const prev = _modelCache || {};
+  let main = tier === 'main' ? model : prev.main;
+  let light = tier === 'light' ? model : prev.light;
+  if (!main || main === badModel) main = tier === 'main' ? model : (main || model);
+  if (!light || light === badModel) light = tier === 'light' ? model : (light || model);
+  _modelCache = { main, light, source: 'healed' };
+  if (env?.PENDING_POSTS) {
+    try { await env.PENDING_POSTS.put(MODEL_CACHE_KV_KEY, JSON.stringify({ main, light }), { expirationTtl: MODEL_CACHE_TTL }); } catch {}
+  }
+}
+
+// 403/404 자가복구(결정적) — 후보 모델에 "실제 요청"을 순서대로 보내 200이 나오는
+// 첫 모델의 응답을 반환하고 그 모델을 캐시한다. probe(1토큰 'hi')와 실제 호출의 권한
+// 괴리를 없애고, 후보를 전부 소진할 때까지 시도해 "한 번 재시도 후 포기" 문제를 제거한다.
+async function healModelByRealCall(apiKey, opts, badModel) {
+  const { system, user, max_tokens = 2048, env, tier = 'main' } = opts;
+  await clearModelCache(env);
+  const candidates = (await orderedCandidateModels(apiKey, tier)).filter(m => m !== badModel);
+  for (const model of candidates) {
+    let res;
+    try {
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model, max_tokens, system, messages: [{ role: 'user', content: user }] }),
+      });
+    } catch { continue; } // 네트워크 오류 → 다음 후보
+    if (res.ok) {
+      await cacheWorkingModel(env, tier, model, badModel);
+      try { return (await res.json()).content[0].text; } catch { return null; }
+    }
+    // 403/404 → 이 키로 이 모델은 불가, 다음 후보로. 과부하(429/5xx)면 잠깐 쉬고 다음.
+    if (res.status === 429 || res.status === 529 || res.status >= 500) {
+      await new Promise(r => setTimeout(r, 800));
+    }
+  }
+  return null; // 모든 후보 실패 → 진짜 키/권한 문제
+}
+
 // 핸들러에서 쓸 모델 ID 반환 (없으면 원인을 알려주는 에러)
 async function getModel(apiKey, tier, env) {
   const m = await resolveModels(apiKey, env);
@@ -192,12 +247,16 @@ async function callClaude(apiKey, opts, attempt = 0) {
   }
 
   if (!res.ok) {
-    // 404(모델 없음)·403(접근 불가/Request not allowed) → 캐시된 모델이 잘못됐을 수 있음.
-    // 캐시를 비우고 새 모델로 1회 자가복구(403이 캐시에 굳어 계속 실패하던 문제 방지).
+    // 404(모델 없음)·403(접근 불가/"Request not allowed") → 선택/캐시된 모델이 이 키로
+    // 거부됨. 후보 모델에 "실제 요청"을 순서대로 던져 200 나오는 첫 모델로 결정적 자가복구.
+    // (probe와 실제 호출의 권한 괴리를 없애고, 후보를 전부 소진할 때까지 시도)
     if ((res.status === 404 || res.status === 403) && env && !opts._healed) {
-      await clearModelCache(env);
-      const fresh = await getModel(apiKey, tier, env);
-      return callClaude(apiKey, { ...opts, model: fresh, _healed: true }, 0);
+      const healed = await healModelByRealCall(apiKey, { ...opts, _healed: true }, model);
+      if (healed !== null && healed !== undefined) return healed;
+      // 모든 후보 실패 → 코드가 아니라 키/권한/결제 문제. 명확히 안내.
+      const eb = await res.json().catch(() => ({}));
+      const dt = eb?.error?.message || 'Request not allowed';
+      throw new Error(`[${res.status}] ${dt} — 이 API 키로 호출 가능한 Claude 모델을 찾지 못했습니다. Anthropic 콘솔에서 키의 모델 접근 권한·결제(크레딧) 상태를 확인하세요.`);
     }
     if (RETRYABLE_STATUS.has(res.status) && attempt < MAX_RETRIES) {
       // 서버가 Retry-After를 주면 우선 존중, 없으면 지수 백오프
@@ -2199,7 +2258,7 @@ export default {
           }
 
           // 3) 모델 자동 선택 시도
-          const resolved = await resolveModels(key);
+          const resolved = await resolveModels(key, env);
 
           result = { keyInfo, modelsEndpoint: { status: rawStatus, body: rawBody }, resolved };
         }
