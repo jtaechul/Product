@@ -1144,7 +1144,7 @@ const SCORE_KEYS = [
 ];
 
 // ===== API =====
-async function apiFetch(endpoint, body) {
+async function apiFetch(endpoint, body, _retry = 0) {
   const hasBody = body !== undefined && body !== null;
   const res = await fetch(endpoint, {
     method: hasBody ? 'POST' : 'GET',
@@ -1152,7 +1152,20 @@ async function apiFetch(endpoint, body) {
     body: hasBody ? JSON.stringify(body) : undefined,
   });
   const data = await res.json();
-  if (!res.ok || data.error) throw new Error(data.error || '서버 오류');
+  if (!res.ok || data.error) {
+    const msg = data.error || '서버 오류';
+    // 지역 라우팅 차단(REGION_BLOCKED) — 키·크레딧 문제가 아닌 일시적 경유지 차단.
+    // 잠시 기다렸다 자동 재시도(새 요청은 다른 경유지를 탈 수 있음). 최대 2회.
+    if (/REGION_BLOCKED/.test(msg) && _retry < 2) {
+      showToast(`일시적인 해외 경유지 차단 — ${4 * (_retry + 1)}초 후 자동 재시도합니다 (${_retry + 1}/2)`, 'info');
+      await new Promise(r => setTimeout(r, 4000 * (_retry + 1)));
+      return apiFetch(endpoint, body, _retry + 1);
+    }
+    if (/REGION_BLOCKED/.test(msg)) {
+      throw new Error('일시적인 해외 경유지 차단으로 거부되었습니다 (API 키·크레딧 문제 아님). 1~2분 후 다시 시도해주세요.');
+    }
+    throw new Error(msg);
+  }
   return data;
 }
 
@@ -3173,7 +3186,14 @@ document.getElementById('deployFetchBooksBtn').addEventListener('click', async (
     };
     await runAutoDeployPipeline(bookInfo, affiliateLinks);
   } catch (err) {
-    showToast(err.message, 'error');
+    // 지역 라우팅 차단 — 브라우저 경로 대신 서버(크론)가 책 선정부터 대신 진행.
+    // 크론은 다른 경유지에서 실행되므로 차단을 우회해 결정적으로 완수한다.
+    if (/경유지 차단|REGION_BLOCKED/.test(err.message)) {
+      showToast('브라우저 경로가 일시 차단되어, 서버가 책 선정부터 대신 진행합니다 (자동)', 'info');
+      await runAutoDeployPipeline(null, affiliateLinks, { category, issue });
+    } else {
+      showToast(err.message, 'error');
+    }
   } finally {
     hideLoading();
   }
@@ -3204,7 +3224,7 @@ document.getElementById('deployStartBtn').addEventListener('click', async () => 
   await runAutoDeployPipeline(bookInfo, affiliateLinks);
 });
 
-async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
+async function runAutoDeployPipeline(bookInfo, affiliateLinks, autoSelect) {
   localStorage.removeItem('activePipelineId');
   clearTimeout(_pipelinePoller);
   _resultsRendered = false;
@@ -3229,16 +3249,19 @@ async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
     try {
       if (attempt > 0) await new Promise(r => setTimeout(r, 2000 * attempt));
       const result = await apiFetch('/api/pipeline-start', {
-        bookInfo,
+        bookInfo: bookInfo || undefined,
+        autoSelect: bookInfo ? undefined : autoSelect, // 책 미정 — 서버(크론)가 선정
         affiliateLinks: affiliateLinks || [],
       });
       if (result && result.pipelineId) {
         localStorage.setItem('activePipelineId', result.pipelineId);
-        localStorage.setItem('activePipelineBookInfo', JSON.stringify(bookInfo));
+        localStorage.setItem('activePipelineBookInfo', JSON.stringify(bookInfo || { title: '(AI 자동 선정 중)', category: autoSelect?.category || '' }));
         if (result.bookNumber) state.bookNumber = result.bookNumber;
         if (affiliateLinks) state.affiliateLinks = affiliateLinks;
-        showToast(`"${bookInfo.title}" 서버에서 처리 시작 — 앱을 꺼도 계속 진행됩니다`, 'success');
-        setDeployStep(1, 'active', 'Claude AI가 5페이지 카드뉴스를 작성 중...');
+        showToast(bookInfo
+          ? `"${bookInfo.title}" 서버에서 처리 시작 — 앱을 꺼도 계속 진행됩니다`
+          : '서버에서 책 선정부터 자동 진행 — 앱을 꺼도 계속 진행됩니다', 'success');
+        setDeployStep(1, 'active', bookInfo ? 'Claude AI가 5페이지 카드뉴스를 작성 중...' : 'AI가 책을 자동 선정 중...');
         startPipelinePolling(result.pipelineId);
         return;
       }
@@ -3248,7 +3271,13 @@ async function runAutoDeployPipeline(bookInfo, affiliateLinks) {
     }
   }
 
-  // 3회 모두 실패 — 사용자에게 명확히 알리고 브라우저 모드로 전환
+  // 3회 모두 실패
+  if (!bookInfo) {
+    // 책 미정(autoSelect) 모드는 브라우저 폴백이 불가능 — 명확히 알리고 종료
+    showToast(`서버 연결 실패 (${lastErr}) — 잠시 후 "자동 진행하기"를 다시 눌러주세요`, 'error');
+    return;
+  }
+  // 사용자에게 명확히 알리고 브라우저 모드로 전환
   showToast(`서버 연결 실패 (${lastErr}) — 탭을 열어둔 채로 진행합니다`, 'warning');
   setDeployStep(1, 'active', 'Claude AI가 5페이지 카드뉴스를 작성 중... (탭을 유지해주세요)');
   await runBrowserPipeline(bookInfo, affiliateLinks);
