@@ -29,6 +29,32 @@
     #loading-hint { max-width: 78%; text-align: center; color: #e9dcb8; font-family: "KoPubWorldDotumMedium", sans-serif;
                font-size: 15px; line-height: 1.5; letter-spacing: 0; opacity: 0.92; margin-top: 4px; }
     #loading-hint b { color: #f3c969; font-weight: normal; }
+    /* 회사 로고 스플래시 (TWOYO SOFTWARES) — 최초 부팅 로딩 동안만 노출 */
+    #splash { position: fixed; inset: 0; z-index: 10001; display: flex; flex-direction: column;
+              align-items: center; justify-content: center;
+              background: radial-gradient(circle at 50% 42%, #27385f 0%, #1e2a4a 56%, #16203a 100%);
+              transition: opacity 0.42s ease; }
+    #splash.hide { opacity: 0; pointer-events: none; }
+    #splash .emblem { width: 138px; height: 138px; filter: drop-shadow(0 0 20px rgba(243, 201, 105, 0.35)); }
+    #splash .glow { transform-origin: 50% 50%; animation: splashGlow 2.6s ease-in-out infinite; }
+    @keyframes splashGlow { 0%, 100% { opacity: 0.45; transform: scale(0.9); } 50% { opacity: 0.9; transform: scale(1.08); } }
+    #splash .sweep { transform-origin: 50% 50%; animation: splashSpin 11s linear infinite; }
+    @keyframes splashSpin { to { transform: rotate(360deg); } }
+    #splash .word { margin-top: 30px; font-family: "GmarketSansBold", "Arial Black", system-ui, sans-serif;
+              font-size: 40px; letter-spacing: 0.22em; text-indent: 0.22em; color: #f3c969;
+              opacity: 0; transition: opacity 0.55s ease; }
+    #splash .word.ready { opacity: 1; }
+    #splash .tag { margin-top: 12px; font-family: system-ui, -apple-system, sans-serif; font-weight: 600;
+              font-size: 12.5px; letter-spacing: 0.52em; text-indent: 0.52em; color: #93a4c7;
+              opacity: 0; transition: opacity 0.55s ease 0.1s; }
+    #splash .tag.ready { opacity: 0.95; }
+    #splash .bar { margin-top: 32px; width: 128px; height: 2px; border-radius: 2px;
+              background: rgba(243, 201, 105, 0.14); overflow: hidden; }
+    #splash .bar::after { content: ""; display: block; width: 42%; height: 100%; border-radius: 2px;
+              background: linear-gradient(90deg, transparent, #f3c969, transparent);
+              animation: splashBar 1.2s ease-in-out infinite; }
+    @keyframes splashBar { 0% { transform: translateX(-130%); } 100% { transform: translateX(330%); } }
+    @media (prefers-reduced-motion: reduce) { #splash .glow, #splash .sweep, #splash .bar::after { animation: none; } }
   </style>
   <!-- PixiJS를 빌드 없이 로컬 파일에서 직접 로드 (CDN 의존 X) -->
   <script type="importmap">
@@ -36,6 +62,34 @@
   </script>
 </head>
 <body>
+  <!-- 회사 로고 스플래시: 최초 부팅 로딩 동안만 보이고, 준비되면 타이틀로 페이드된다 -->
+  <div id="splash">
+    <svg class="emblem" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="TWOYO SOFTWARES">
+      <defs>
+        <radialGradient id="spStar" cx="50%" cy="42%" r="60%">
+          <stop offset="0%" stop-color="#fbe7ab" />
+          <stop offset="55%" stop-color="#efc25e" />
+          <stop offset="100%" stop-color="#d69630" />
+        </radialGradient>
+        <radialGradient id="spGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#f3c969" stop-opacity="0.55" />
+          <stop offset="70%" stop-color="#f3c969" stop-opacity="0.10" />
+          <stop offset="100%" stop-color="#f3c969" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <circle class="glow" cx="50" cy="50" r="48" fill="url(#spGlow)" />
+      <g class="sweep">
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#f3c969" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="2.5 11" stroke-linecap="round" />
+      </g>
+      <circle cx="50" cy="50" r="38" fill="none" stroke="#f3c969" stroke-opacity="0.3" stroke-width="1.3" />
+      <path d="M50 20 L57.05 40.29 L78.53 40.73 L61.41 53.71 L67.63 74.27 L50 62 L32.37 74.27 L38.59 53.71 L21.47 40.73 L42.95 40.29 Z" fill="url(#spStar)" />
+      <circle cx="77" cy="31" r="1.6" fill="#f7d98a" />
+      <circle cx="26" cy="69" r="1.2" fill="#f7d98a" />
+    </svg>
+    <div class="word" id="splash-word">TWOYO</div>
+    <div class="tag" id="splash-tag">SOFTWARES</div>
+    <div class="bar"></div>
+  </div>
   <div id="loading">
     <div class="spinner"></div>
     <div id="loading-text">불러오는 중…</div>
@@ -73,6 +127,27 @@
         }
       };
       if (hintEl) hintEl.innerHTML = "TIP. " + HINTS[Math.floor(Math.random() * HINTS.length)];
+    })();
+  </script>
+  <!-- 스플래시 로고: 폰트 준비되면 텍스트 페이드 인, 부팅 완료 시 __hideSplash로 숨김 -->
+  <script>
+    (function () {
+      var sp = document.getElementById("splash");
+      var word = document.getElementById("splash-word");
+      var tag = document.getElementById("splash-tag");
+      function reveal() { if (word) word.classList.add("ready"); if (tag) tag.classList.add("ready"); }
+      function useFallbackFont() { if (word) word.style.fontFamily = '"Arial Black", "Segoe UI", system-ui, sans-serif'; }
+      try {
+        document.fonts.load('700 40px "GmarketSansBold"').then(reveal).catch(function () { useFallbackFont(); reveal(); });
+      } catch (e) { useFallbackFont(); reveal(); }
+      // 폰트가 늦어도 로고는 보이게 (block 폰트 대비 시스템 폰트로 전환)
+      setTimeout(function () { if (word && !word.classList.contains("ready")) { useFallbackFont(); reveal(); } }, 700);
+      var done = false;
+      window.__hideSplash = function () {
+        if (done || !sp) return; done = true;
+        sp.classList.add("hide");
+        setTimeout(function () { if (sp && sp.parentNode) sp.parentNode.removeChild(sp); }, 480);
+      };
     })();
   </script>
   <!-- 지원 기기(Android/PWA)에서는 세로 방향 잠금 시도 (잠금 실패 시 캔버스 회전으로 세로 유지) -->
