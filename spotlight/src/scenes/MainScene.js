@@ -614,6 +614,7 @@ export class MainScene extends Scene {
   }
 
   selectSpecial(id) {
+    if (!this._affordable(id)) { sfx("warn"); this._toast("자금이 부족해 이 활동을 할 수 없어요"); return; }
     if (this.selected.length >= 2) this.selected.shift();
     this.selected.push(id);
     sfx("select");
@@ -723,7 +724,20 @@ export class MainScene extends Scene {
     return p.join("  ");
   }
 
+  // 유료 활동 비용(원). 수입 활동·출연(prod:)·무료 활동은 0.
+  _costOf(id) { const a = findActivity(id); return a && a.money < 0 ? -a.money : 0; }
+  // 이 활동을 담을 여력이 있는지 — 함께 남을 다른 슬롯의 비용까지 합산해 현재 돈과 비교
+  _affordable(id) {
+    const cost = this._costOf(id);
+    if (cost <= 0) return true;
+    let others = this.selected.slice();
+    if (others.length >= 2) others = others.slice(1); // 3번째를 담으면 가장 오래된 슬롯이 밀려남
+    const committed = others.reduce((s, sid) => s + this._costOf(sid), 0);
+    return cost + committed <= this.game.money;
+  }
+
   pickActivity(id) {
+    if (!this._affordable(id)) { sfx("warn"); this._toast("자금이 부족해 이 활동을 할 수 없어요"); return; }
     if (this.selected.length >= 2) this.selected.shift();
     this.selected.push(id);
     sfx("select");
