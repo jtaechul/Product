@@ -1486,8 +1486,11 @@ async function handlePipelineStart(env, ctx, body) {
   await logStep(env, pipelineId, { step: 0, phase: 'start', note: bookInfo?.title ? `책: ${bookInfo.title}` : `autoSelect: ${autoSelect.category}` });
 
   // 즉시 1단계 킥 (self-fetch 없이 같은 인보케이션 waitUntil에서 직접 실행).
-  // 이 킥이 실패하거나 중간에 죽어도 크론이 1분 내 자동으로 이어받는다 → 화면 상태 무관.
-  ctx.waitUntil(advancePipeline(env, pipelineId).catch(() => {}));
+  // 이 킥이 실패하거나 중간에 죽어도 크론이 자동으로 이어받는다 → 화면 상태 무관.
+  // 단, autoSelect(책 선정+생성)는 브라우저 요청 수명(약 30초)을 확실히 넘겨 킥이
+  // 도중에 죽고 5분 스테일 대기까지 유발 → 킥을 생략하고 다음 크론 틱(≤60초)이
+  // 크론의 넉넉한 실행 예산으로 바로 처리하게 한다(실측: 킥 사망 시 5~6분 지연).
+  if (bookInfo?.title) ctx.waitUntil(advancePipeline(env, pipelineId).catch(() => {}));
 
   return { success: true, pipelineId, bookNumber };
 }
