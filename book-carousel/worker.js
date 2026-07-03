@@ -1192,18 +1192,33 @@ async function runStep(env, pipelineId, step) {
     // 경유지에서 다시 시도하므로 결정적으로 완수된다. 선정 즉시 KV에 저장되어
     // 이후 재시도에서는 이 블록을 건너뛴다(중복 선정 방지).
     if (!bookInfo?.title && state.autoSelect) {
-      await setActive('AI가 책을 자동 선정 중...');
       const as = state.autoSelect;
-      const sd = await handleSuggest(env, { category: as.category, issue: as.issue || '', excludeTitles: as.excludeTitles || [] });
-      const chosen = (sd.books || [])[0];
-      if (!chosen) throw new Error('책 추천을 받지 못했습니다 — 잠시 후 다시 시도해주세요.');
-      bookInfo = {
-        title: chosen.title, author: chosen.author || '', year: chosen.year || '',
-        category: as.category || chosen.category || '', // 레인 고정 — 톤 일관성
-        coreMessage: chosen.coreMessage || chosen.reason || '',
-        targetAudience: chosen.targetAudience || '',
-        description: chosen.description || '', // 실제 책 소개 — 생성·검증 근거
-      };
+      if (as.title) {
+        // 제목 직접 입력 모드 — 서버(크론)가 분석까지 수행(브라우저 Claude 호출 제거)
+        await setActive(`책 정보 분석 중... (${as.title})`);
+        const an = await handleAnalyze(env, { title: as.title, author: as.author || '' });
+        if (an.notFound) throw new Error(`BOOK_NOT_FOUND: "${as.title}"은(는) 실제 출간된 책으로 확인되지 않습니다. 제목·저자를 확인해주세요.`);
+        bookInfo = {
+          title: an.verifiedTitle || as.title,
+          author: an.author || as.author || '',
+          year: an.year || '',
+          category: as.category || an.category || '',
+          coreMessage: an.coreMessage || '',
+          targetAudience: an.targetAudience || '',
+        };
+      } else {
+        await setActive('AI가 책을 자동 선정 중...');
+        const sd = await handleSuggest(env, { category: as.category, issue: as.issue || '', excludeTitles: as.excludeTitles || [] });
+        const chosen = (sd.books || [])[0];
+        if (!chosen) throw new Error('책 추천을 받지 못했습니다 — 잠시 후 다시 시도해주세요.');
+        bookInfo = {
+          title: chosen.title, author: chosen.author || '', year: chosen.year || '',
+          category: as.category || chosen.category || '', // 레인 고정 — 톤 일관성
+          coreMessage: chosen.coreMessage || chosen.reason || '',
+          targetAudience: chosen.targetAudience || '',
+          description: chosen.description || '', // 실제 책 소개 — 생성·검증 근거
+        };
+      }
       await savePipelineStatus(env, pipelineId, { bookInfo, label: `책 선정: ${bookInfo.title}` });
       await logStep(env, pipelineId, { step, phase: 'book-selected', note: `${bookInfo.title} / ${bookInfo.author}` });
       if (state.isAutoDaily) {
@@ -1540,7 +1555,7 @@ async function handlePipelineStart(env, ctx, body) {
   const { bookInfo, affiliateLinks, commentKeyword, autoSelect } = body;
   // bookInfo가 없으면 autoSelect(카테고리)로 서버(크론)가 책을 자동 선정한다 —
   // 브라우저 쪽 Claude 호출이 지역 차단(403)될 때의 결정적 우회 경로.
-  if (!bookInfo?.title && !autoSelect?.category) throw new Error('책 정보(bookInfo.title) 또는 자동 선정 카테고리(autoSelect.category)가 필요합니다.');
+  if (!bookInfo?.title && !autoSelect?.category && !autoSelect?.title) throw new Error('책 정보(bookInfo.title) 또는 자동 선정 정보(autoSelect.category/title)가 필요합니다.');
   if (!env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY가 설정되지 않았습니다.');
   if (!env.PENDING_POSTS) throw new Error('KV 스토어가 필요합니다.');
 

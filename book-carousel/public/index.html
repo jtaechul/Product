@@ -3153,54 +3153,14 @@ document.getElementById('deployFetchBooksBtn').addEventListener('click', async (
   const manualTitle = document.getElementById('deployTitle').value.trim();
   const manualAuthor = document.getElementById('deployAuthor').value.trim();
 
-  // 책 제목 직접 입력된 경우 — AI 추천 생략, 분석 후 바로 파이프라인 시작
-  if (manualTitle) {
-    showLoading('책 정보 분석 중...', 'AI가 핵심 메시지와 독자층을 파악하고 있습니다');
-    try {
-      const analyzed = await apiFetch('/api/analyze', { title: manualTitle, author: manualAuthor });
-      const bookInfo = {
-        title: manualTitle,
-        author: manualAuthor || analyzed.author || '',
-        year: analyzed.year || '',
-        coreMessage: analyzed.coreMessage,
-        targetAudience: analyzed.targetAudience,
-        category: category || analyzed.category,
-      };
-      showToast(`"${bookInfo.title}" 분석 완료 — 캐럿셀 제작 시작`, 'info');
-      await runAutoDeployPipeline(bookInfo, affiliateLinks);
-    } catch (err) {
-      showToast(err.message, 'error');
-    } finally {
-      hideLoading();
-    }
-    return;
-  }
-
-  // 제목 미입력 — 기존 AI 자동 추천 흐름
-  showLoading('AI가 최적의 책을 선정하고 있습니다...', '베스트셀러와 최신 이슈를 분석 중');
-  try {
-    const data = await apiFetch('/api/suggest', { category, issue, excludeTitles: getHistory() });
-    const book = data.books[0];
-    if (!book) { showToast('책 추천을 받지 못했습니다. 다시 시도해주세요.', 'error'); return; }
-    showToast(`"${book.title}" (${book.author}) 선정`, 'info');
-    const bookInfo = {
-      title: book.title, author: book.author, year: book.year,
-      coreMessage: book.coreMessage, targetAudience: book.targetAudience, category: book.category,
-      description: book.description || '', // 실제 책 소개 — 생성·검증 근거
-    };
-    await runAutoDeployPipeline(bookInfo, affiliateLinks);
-  } catch (err) {
-    // 지역 라우팅 차단 — 브라우저 경로 대신 서버(크론)가 책 선정부터 대신 진행.
-    // 크론은 다른 경유지에서 실행되므로 차단을 우회해 결정적으로 완수한다.
-    if (/경유지 차단|REGION_BLOCKED/.test(err.message)) {
-      showToast('브라우저 경로가 일시 차단되어, 서버가 책 선정부터 대신 진행합니다 (자동)', 'info');
-      await runAutoDeployPipeline(null, affiliateLinks, { category, issue });
-    } else {
-      showToast(err.message, 'error');
-    }
-  } finally {
-    hideLoading();
-  }
+  // ⭐ 자동 배포는 브라우저에서 Claude를 직접 부르지 않는다 — 책 선정(추천)도
+  // 제목 분석(직접 입력)도 전부 서버 파이프라인(크론)이 수행한다.
+  // 이유: 한국에서의 브라우저 요청은 해외 경유지 차단(REGION_BLOCKED)에 걸릴 수 있지만,
+  // 크론은 다른 경유지에서 실행돼 차단이 아예 발생하지 않는다 → 오류 토스트 원천 제거.
+  const autoSelect = manualTitle
+    ? { category, title: manualTitle, author: manualAuthor }   // 제목 입력 → 서버가 분석
+    : { category, issue };                                     // 미입력 → 서버가 선정
+  await runAutoDeployPipeline(null, affiliateLinks, autoSelect);
 });
 
 document.getElementById('deployResuggestBtn').addEventListener('click', () => {
@@ -3260,13 +3220,17 @@ async function runAutoDeployPipeline(bookInfo, affiliateLinks, autoSelect) {
       });
       if (result && result.pipelineId) {
         localStorage.setItem('activePipelineId', result.pipelineId);
-        localStorage.setItem('activePipelineBookInfo', JSON.stringify(bookInfo || { title: '(AI 자동 선정 중)', category: autoSelect?.category || '' }));
+        localStorage.setItem('activePipelineBookInfo', JSON.stringify(bookInfo || { title: autoSelect?.title || '(AI 자동 선정 중)', category: autoSelect?.category || '' }));
         if (result.bookNumber) state.bookNumber = result.bookNumber;
         if (affiliateLinks) state.affiliateLinks = affiliateLinks;
         showToast(bookInfo
           ? `"${bookInfo.title}" 서버에서 처리 시작 — 앱을 꺼도 계속 진행됩니다`
-          : '서버에서 책 선정부터 자동 진행 — 앱을 꺼도 계속 진행됩니다', 'success');
-        setDeployStep(1, 'active', bookInfo ? 'Claude AI가 5페이지 카드뉴스를 작성 중...' : 'AI가 책을 자동 선정 중...');
+          : (autoSelect?.title
+            ? `"${autoSelect.title}" 서버에서 분석부터 자동 진행 — 앱을 꺼도 계속 진행됩니다`
+            : '서버에서 책 선정부터 자동 진행 — 앱을 꺼도 계속 진행됩니다'), 'success');
+        setDeployStep(1, 'active', bookInfo
+          ? 'Claude AI가 5페이지 카드뉴스를 작성 중...'
+          : (autoSelect?.title ? '서버에서 책 정보 분석 중... (1분 내 시작)' : 'AI가 책을 자동 선정 중... (1분 내 시작)'));
         startPipelinePolling(result.pipelineId);
         return;
       }
