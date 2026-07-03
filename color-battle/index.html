@@ -146,7 +146,8 @@
   body.cinema .board{flex:1 1 auto;min-width:0;min-height:0;overflow:hidden}
   body.cinema .board .panel{padding:7px 10px;height:100%;overflow:hidden;display:flex;flex-direction:column}
   body.cinema .board .panel h2{font-size:10.5px;margin-bottom:4px}
-  body.cinema .board .rows{flex:0 0 auto}   /* 행들을 위로 붙임 — 사이 공백 제거 */
+  body.cinema .board .rows{flex:1 1 auto;gap:4px}   /* 보드 높이를 꽉 채움 */
+  body.cinema .row{flex:1 1 0;min-height:0}          /* 6행이 남는 공간을 균등 분배 → 바닥까지 딱 맞춤 */
   body.cinema .board .controls{display:none}  /* .board .panel 규칙보다 특이도·순서 우위로 확실히 숨김 */
   body.cinema .rows{gap:2px;overflow:hidden}
   body.cinema .row{padding:2px 8px}
