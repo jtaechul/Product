@@ -94,15 +94,16 @@
   .row.dead{opacity:.34}
   .rank{font-weight:800;color:var(--dim);font-size:13px;text-align:center}
   .id{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
-  .idtop{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap}       /* 1줄: 국가명 · 명장명 */
-  .line2{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:nowrap;overflow:hidden}  /* 2줄: 자원현황 · 버프현황 — 절대 줄바꿈 없음 */
+  .idtop{display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:nowrap;overflow:hidden}   /* 1줄: 국가 · 자원현황 — 줄바꿈 없음 */
+  .line2{display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:nowrap;overflow:hidden}   /* 2줄: 명장 · 버프현황 — 줄바꿈 없음 */
   .gen{font-size:10px;font-weight:800;color:var(--dim);white-space:nowrap;letter-spacing:.01em}
   .gen b{color:var(--accent)}
-  .res{display:inline-flex;align-items:center;gap:2px;font-size:10.5px;font-weight:800;color:#c3ccdb;font-variant-numeric:tabular-nums;white-space:nowrap}
-  .res .ic{vertical-align:-1px;margin-left:3px}
-  .res b{margin:0 2px 0 1px}
-  .res b.z{opacity:.35;color:#7a8598}
-  .res .ic:first-child{margin-left:0}
+  .nmwrap{display:inline-flex;align-items:center;gap:6px;flex:none}
+  .res{display:inline-flex;align-items:center;gap:8px;font-size:10px;font-weight:700;color:#9aa6bd;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .res .rc{display:inline-flex;align-items:center;gap:2px}
+  .res .ic{vertical-align:-1px}
+  .res b{color:#e2e8f4;margin-left:1px}
+  .res b.z{opacity:.4;color:#7a8598}
   .nm{font-weight:800;font-size:14px;white-space:nowrap}
   .buffs{display:inline-flex;flex-wrap:nowrap;gap:3px;align-items:center}
   .bf{font-size:9.5px;font-weight:800;border-radius:5px;padding:1px 5px;white-space:nowrap;line-height:1.4}
@@ -111,7 +112,11 @@
   .bf.atk{color:#ffd7d0;background:#5a1e1e}
   .bf.prd{color:#d6f5c9;background:#1f4a24}
   .bf.spd{color:#ffe9b0;background:#5a4410}
-  .troop{font-variant-numeric:tabular-nums;font-weight:800;font-size:13px;color:var(--text);min-width:70px;text-align:right}
+  .troop{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:1px;font-variant-numeric:tabular-nums;font-weight:800;min-width:96px;text-align:right}
+  .tr-reg{font-size:12px;color:var(--text);white-space:nowrap}
+  .tr-mil{font-size:10.5px;color:var(--dim);font-weight:700;white-space:nowrap}
+  body.cinema .tr-reg{font-size:11px}
+  body.cinema .tr-mil{font-size:9.5px}
   .controls{display:flex;flex-direction:column;gap:10px}
   .btns{display:flex;gap:8px;flex-wrap:wrap}
   button{font-family:inherit;font-weight:800;font-size:14px;cursor:pointer;border:1px solid var(--line);background:#182234;color:var(--text);padding:9px 13px;border-radius:9px;transition:background .12s}
@@ -185,7 +190,7 @@
             <div class="who">여섯 세력 · 하나의 천하</div>
             <div class="big" id="ovBig"><span class="gametitle">천하쟁패</span></div>
             <div class="wordmark" id="ovWord">Color&nbsp;·&nbsp;Battle</div>
-            <div class="tagline" id="ovTag">수도가 무너지면 나라째 흡수 — 마지막 한 색이 천하를 통일합니다</div>
+            <div class="tagline" id="ovTag">여섯 세력이 땅과 자원을 두고 흥망을 겨루고, 오직 한 빛깔만이 천하를 통일한다</div>
             <div class="battleinfo" id="ovBattle"></div>
             <div class="fdots" id="fdots"></div>
             <div class="ornament"></div>
@@ -215,6 +220,15 @@ const FACTIONS=[
   {name:"화염단",color:"#ff5555",sig:"flame"},{name:"심해군",color:"#3aa0ff",sig:"wave"},
   {name:"뇌전대",color:"#ffcb33",sig:"bolt"},{name:"정글파",color:"#37d982",sig:"leaf"},
   {name:"보라단",color:"#b874ff",sig:"star"},{name:"벚꽃단",color:"#ff77bd",sig:"blossom"},
+];
+// 세력별 멸망 문구 (FACTIONS 순서와 동일: 화염·심해·뇌전·정글·보라·벚꽃)
+const DEATH_LINES=[
+  "타오르던 불꽃, 끝내 재가 되어 흩어지다",
+  "깊은 물결이 잦아들고 마지막 파도가 부서지다",
+  "천둥이 멎고 번개가 영원히 잠들다",
+  "무성하던 덩굴이 시들어 흙으로 돌아가다",
+  "빛나던 별자리가 스러져 어둠에 잠기다",
+  "만개했던 벚꽃, 마지막 한 잎마저 지다",
 ];
 const K=FACTIONS.length, NEU=-1;
 const RGB=FACTIONS.map(f=>[parseInt(f.color.slice(1,3),16),parseInt(f.color.slice(3,5),16),parseInt(f.color.slice(5,7),16)]);
@@ -261,7 +275,7 @@ function dynMul(){if(!P.dynPace)return 1;const rem=dynSlowUntil-performance.now(
   if(rem>0){const k=Math.min(1,rem/700);return P.dynSlow+(1-k)*(P.dynFast-P.dynSlow);}return P.dynFast;}
 let attackMul=new Float64Array(K),prodMul=new Float64Array(K),speedMul=new Float64Array(K);
 let moraleMul=new Float64Array(K).fill(1), moraleLeft=new Int32Array(K);
-let reviveTurns=new Int32Array(K), revivalUsed=false; // 천운(불사) 부활 — 경기당 1회, 방어 무적 잔여 턴
+let reviveTurns=new Int32Array(K), revivalUsed=false, reviveAt=1, capFallN=0; // 천운(불사) 부활 — 경기당 1회, 발동 함락순번은 랜덤
 let alive=new Array(K).fill(true), stats={duels:0,capFalls:[]}, leaderF=0;
 // 명장 로스터 상태 + 통산 전적(localStorage로 경기 넘어 이어짐 → 캐릭터 연속성)
 let roster=[];
@@ -339,7 +353,7 @@ function float(x,y,text,color,big){floats.push({x,y,text,color:color||"#fff",big
 
 /* ===== 사운드 (Web Audio 합성, 1단계) ===== */
 const SND={ctx:null,master:null,pad:null,muted:false,last:0,buf:{},loaded:false};
-const SFX_NAMES=["capture","resource","repel","clash","siegeStart","siegeHit","breach","duelStart","duelWin","death","victory"];
+const SFX_NAMES=["capture","resource","repel","clash","siegeStart","siegeHit","breach","duelStart","duelWin","death","victory","shout"];
 try{SND.muted=localStorage.getItem("cb_mute")==="1";}catch(e){}
 function sndResume(){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!SND.ctx){SND.ctx=new AC();SND.master=SND.ctx.createGain();SND.master.gain.value=SND.muted?0:0.5;SND.master.connect(SND.ctx.destination);loadSfx();}if(SND.ctx.state==="suspended")SND.ctx.resume();}
 function loadSfx(){if(SND.loaded||!SND.ctx)return;SND.loaded=true;SFX_NAMES.forEach(n=>{fetch("assets/sfx/"+n+".wav").then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(a=>SND.ctx.decodeAudioData(a)).then(b=>{SND.buf[n]=b;}).catch(()=>{});});}
@@ -370,6 +384,7 @@ const Sfx={
   duelWin(){if(!playBuf("duelWin"))[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,0.008,0.16,"triangle",0.18),i*85));},
   death(){if(!playBuf("death")){tone(300,0.02,0.9,"sine",0.15,110);tone(150,0.02,1.1,"sine",0.13,75);}},
   victory(){if(!playBuf("victory")){[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>tone(f,0.008,0.32,"triangle",0.22),i*110));setTimeout(()=>noise(0.5,0.08,4000,1200),120);}},
+  shout(){if(!playBuf("shout"))noise(0.5,0.12,1200,500);},   // 군중 함성
 };
 function padStart(){if(!SND.ctx||SND.muted)return;if(bgmPlay())return;if(SND.pad)return;const t0=SND.ctx.currentTime;
   const flt=SND.ctx.createBiquadFilter();flt.type="lowpass";flt.frequency.value=460;flt.connect(SND.master);
@@ -465,6 +480,7 @@ function init(sv){
   caps.forEach((c,f)=>{c.owner=f;c.cap=true;c.garrison=P.capGarrison;});
   marches=[];impacts=[];floats=[];duel={active:false};siege={active:false};deathQueue=[];deathAnim=null;pendingWin=false;lastSiegeTick=-999;
   moraleMul.fill(1);moraleLeft.fill(0);reviveTurns.fill(0);revivalUsed=false;reviveAnim=null;intro=null;alive.fill(true);stats={duels:0,sieges:0,capFalls:[]};leaderF=0;initRoster();
+  capFallN=0;reviveAt=1+(((seed*2654435761)>>>0)%5);   // 이번 판 부활 발동 함락순번(1~5) — 시드 기반 랜덤, 지도 생성엔 영향 없음
   for(const p of pv){p.moveCd=(P.moveCdMin+((rand()*(P.moveCdMax-P.moveCdMin))|0));p.flash=0;}
   tick=0;winner=-1;running=false;dirty=true;computeBonus();
   document.getElementById("seedIn").value=seed;
@@ -530,7 +546,8 @@ function triggerRevival(prev,f,q){revivalUsed=true;reviveTurns[prev]=P.reviveDur
   reviveAnim={f:prev,by:f,start:performance.now(),dur:2000};pulseSlow(1700);Sfx.duelWin();
   banner("천운 — "+FACTIONS[prev].name+" 군주가 불사의 힘으로 일어선다!",FACTIONS[prev].color);}
 function capFall(prev,f,q){
-  if(!revivalUsed&&q){triggerRevival(prev,f,q);return;} // 경기당 1회 보장 — 첫 수도 함락에서 천운 부활(방어전용), 이후엔 정상 멸망
+  capFallN++;
+  if(!revivalUsed&&q&&capFallN>=reviveAt){triggerRevival(prev,f,q);return;} // 경기당 1회 — 랜덤 함락순번(reviveAt)에서 천운 부활(방어전용)
   Sfx.death();pulseSlow(1100);banner(FACTIONS[prev].name+" 수도 함락 — "+FACTIONS[f].name+"에 편입!",FACTIONS[f].color);stats.capFalls.push({loser:prev,by:f});absorb(prev,f);}
 function battle(f,q,troops){
   if(q.owner>=0&&reviveTurns[q.owner]>0){                                // 불사(천운) 방어 — 무조건 격퇴
@@ -708,7 +725,7 @@ function drawDeath(){const el=performance.now()-deathAnim.start,k=el/deathAnim.d
     const ds=MAIN*0.46/DEATH_H,dw=DEATH_W*ds,dh=DEATH_H*ds;ctx.imageSmoothingEnabled=false;ctx.drawImage(di,MAIN/2-dw/2,MAIN*0.66-dh,dw,dh);}  // 하단 정렬 → 상단 글씨와 겹침 방지
   else drawKingFace(MAIN/2,MAIN*0.44,MAIN/36,f);
   ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="900 "+(MAIN*0.05)+"px system-ui";ctx.lineWidth=5;ctx.strokeStyle="#000a";ctx.strokeText(FACTIONS[f].name+" 멸망",MAIN/2,MAIN*0.76);ctx.fillStyle=FACTIONS[f].color;ctx.fillText(FACTIONS[f].name+" 멸망",MAIN/2,MAIN*0.76);
-  ctx.font="800 "+(MAIN*0.022)+"px system-ui";ctx.fillStyle="#b4bdcc";ctx.fillText("— 왕이 무릎 꿇고 스러지다 —",MAIN/2,MAIN*0.81);ctx.globalAlpha=1;}
+  ctx.font="800 "+(MAIN*0.022)+"px system-ui";ctx.fillStyle="#b4bdcc";ctx.fillText("— "+DEATH_LINES[f]+" —",MAIN/2,MAIN*0.81);ctx.globalAlpha=1;}
 
 function drawRevive(){const el=performance.now()-reviveAnim.start,k=Math.min(1,el/reviveAnim.dur),f=reviveAnim.f,col=FACTIONS[f].color;
   const a=k<0.15?k/0.15:k>0.85?(1-k)/0.15:1,cx=MAIN/2,cy=MAIN*0.5,flash=Math.max(0,1-Math.abs(k-0.42)/0.4);
@@ -821,14 +838,19 @@ function draw(){
 /* ===== 패널 ===== */
 const rowsEl=document.getElementById("rows"),rowRef=[];
 for(let f=0;f<K;f++){const r=document.createElement("div");r.className="row";
-  // 2줄 구조 — 1줄: 국가명·명장명 / 2줄: 자원현황·버프현황
-  r.innerHTML='<div class="rank"></div><div class="id"><div class="idtop">'+ic(FACTIONS[f].sig,FACTIONS[f].color,15)+'<span class="nm">'+FACTIONS[f].name+'</span><span class="gen"></span></div><div class="line2"><span class="res"></span><span class="buffs"></span></div></div><div class="troop"></div>';
+  // 2줄 구조 — 1줄: 국가(아이콘+이름)·자원현황 / 2줄: 명장이름·버프현황
+  r.innerHTML='<div class="rank"></div><div class="id"><div class="idtop"><span class="nmwrap">'+ic(FACTIONS[f].sig,FACTIONS[f].color,15)+'<span class="nm">'+FACTIONS[f].name+'</span></span><span class="res"></span></div><div class="line2"><span class="gen"></span><span class="buffs"></span></div></div><div class="troop"></div>';
   rowsEl.appendChild(r);rowRef.push({root:r,rank:r.querySelector(".rank"),troop:r.querySelector(".troop"),buffs:r.querySelector(".buffs"),gen:r.querySelector(".gen"),res:r.querySelector(".res")});}
-// 자원현황(철·농지·금 보유 개수)
-function resStrip(c){const cell=(k,col,n)=>ic(k,col,11)+'<b'+(n?'':' class="z"')+'>'+n+'</b>';return cell("iron","#cdd6e3",c[0])+cell("food","#8fd6a0",c[1])+cell("gold","#ffd23a",c[2]);}
-// 버프현황 — 사기·불사 + 자원 보너스(공격·생산·행군 배수) 전부
-function buffChips(f){let s="";if(moraleLeft[f]>0)s+='<b class="bf mor">사기</b>';if(reviveTurns[f]>0)s+='<b class="bf inv">불사</b>';
-  if(attackMul[f]>1.001)s+='<b class="bf atk">공×'+attackMul[f].toFixed(1)+'</b>';if(prodMul[f]>1.001)s+='<b class="bf prd">생×'+prodMul[f].toFixed(1)+'</b>';if(speedMul[f]>1.001)s+='<b class="bf spd">행×'+speedMul[f].toFixed(1)+'</b>';return s;}
+// 자원현황 — 아이콘 뒤에 자원명 + 보유 개수 (순서: 금광·철광·농지)
+function resStrip(c){const cell=(k,col,name,n)=>'<span class="rc">'+ic(k,col,11)+name+' <b'+(n?'':' class="z"')+'>'+n+'</b></span>';
+  return cell("gold","#ffd23a","금광",c[2])+cell("iron","#cdd6e3","철광",c[0])+cell("food","#8fd6a0","농지",c[1]);}
+// 버프현황 — 버프명 전체 표기 (공격력·생산력·행군 배수 + 사기·불사)
+function buffChips(f){let s="";
+  if(attackMul[f]>1.001)s+='<b class="bf atk">공격력×'+attackMul[f].toFixed(1)+'</b>';
+  if(prodMul[f]>1.001)s+='<b class="bf prd">생산력×'+prodMul[f].toFixed(1)+'</b>';
+  if(speedMul[f]>1.001)s+='<b class="bf spd">행군×'+speedMul[f].toFixed(1)+'</b>';
+  if(moraleLeft[f]>0)s+='<b class="bf mor">사기</b>';
+  if(reviveTurns[f]>0)s+='<b class="bf inv">불사</b>';return s;}
 const pbar=document.getElementById("powerbar"),segs=[];for(let f=0;f<K;f++){const s=document.createElement("div");s.className="seg";s.style.background=FACTIONS[f].color;s.innerHTML='<span class="lab"></span>';pbar.appendChild(s);segs.push({seg:s,lab:s.querySelector(".lab")});}
 function fmt(n){n=Math.round(n);return n>=1000?(n/1000).toFixed(1)+"k":""+n;}
 function troopSum(f){let s=0;for(const p of pv)if(p.owner===f)s+=p.garrison;return s;}
@@ -841,8 +863,8 @@ function refresh(){const cnt=computeBonus();let tot=0;const pw=new Float64Array(
   const ord=[...Array(K).keys()].sort((a,b)=>pc[b]-pc[a]);
   ord.forEach(f=>{const sw=segs[f],pctW=pw[f]/tot*100;sw.seg.style.width=pctW+"%";sw.seg.style.order=alive[f]?0:1;sw.lab.textContent=(alive[f]&&pctW>=9)?(FACTIONS[f].name+" "+pc[f]):"";});
   document.getElementById("powerLab").innerHTML="국력 (지역 + 병력 + 자원) · 선두 <b>"+(lead>=0?FACTIONS[lead].name:"-")+"</b>";
-  ord.forEach((f,rank)=>{const R=rowRef[f];R.root.style.order=alive[f]?rank:100+rank;R.root.classList.toggle("dead",!alive[f]);R.root.classList.toggle("leader",alive[f]&&f===lead);R.rank.textContent=alive[f]?rank+1:"–";R.troop.textContent=alive[f]?(pc[f]+"지역·"+fmt(troopSum(f))):"멸망";R.buffs.innerHTML=alive[f]?buffChips(f):"";
-    if(roster.length){const ch=championOf(f);R.gen.innerHTML="명장 <b>"+RANKS[ch.rank]+" "+ch.name+"</b>"+(ch.wins?" · "+ch.wins+"승":"");}
+  ord.forEach((f,rank)=>{const R=rowRef[f];R.root.style.order=alive[f]?rank:100+rank;R.root.classList.toggle("dead",!alive[f]);R.root.classList.toggle("leader",alive[f]&&f===lead);R.rank.textContent=alive[f]?rank+1:"–";R.troop.innerHTML=alive[f]?('<span class="tr-reg">'+pc[f]+'개 지역 점령</span><span class="tr-mil">병력 '+Math.round(troopSum(f)).toLocaleString()+'만명</span>'):'<span class="tr-reg">멸망</span>';R.buffs.innerHTML=alive[f]?buffChips(f):"";
+    if(roster.length){const ch=championOf(f);R.gen.innerHTML="명장 <b>"+ch.name+"</b>";}  // 계급 제거, 이름만
     R.res.innerHTML=alive[f]?resStrip(cnt[f]):"";});
   let a=0;for(let f=0;f<K;f++)if(alive[f])a++;document.getElementById("statLine").textContent=(1+((tick/50)|0))+"년차 · 생존 "+a;}
 
