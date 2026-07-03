@@ -1,0 +1,3651 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>북 캐럿셀 자동화</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #7C3AED;
+      --primary-light: #8B5CF6;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --error: #EF4444;
+      --telegram: #229ED9;
+      --gray-50: #F9FAFB;
+      --gray-100: #F3F4F6;
+      --gray-200: #E5E7EB;
+      --gray-300: #D1D5DB;
+      --gray-400: #9CA3AF;
+      --gray-500: #6B7280;
+      --gray-600: #4B5563;
+      --gray-700: #374151;
+      --gray-800: #1F2937;
+      --gray-900: #111827;
+      --sidebar-w: 380px;
+      --header-h: 60px;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-800);
+      height: 100vh;
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      grid-template-rows: var(--header-h) 1fr;
+      overflow: hidden;
+    }
+
+    /* Header */
+    header {
+      grid-column: 1 / -1;
+      background: #fff;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 20px;
+    }
+
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--primary), #EC4899);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 16px; font-weight: 900; flex-shrink: 0;
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .brand-text { min-width: 0; }
+    .logo-text { font-size: 15px; font-weight: 700; color: var(--gray-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .logo-sub { font-size: 11px; color: var(--gray-400); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Steps */
+    .steps { display: flex; align-items: center; margin-left: auto; }
+    .step { display: flex; align-items: center; gap: 6px; }
+    .step-circle {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      background: var(--gray-200); color: var(--gray-500);
+      transition: all 0.3s; flex-shrink: 0;
+    }
+    .step-label { font-size: 11px; font-weight: 500; color: var(--gray-400); white-space: nowrap; }
+    .step-line { width: 28px; height: 2px; background: var(--gray-200); margin: 0 4px; }
+    .step.active .step-circle { background: var(--primary); color: #fff; }
+    .step.active .step-label { color: var(--primary); font-weight: 700; }
+    .step.done .step-circle { background: var(--success); color: #fff; }
+    .step.done .step-label { color: var(--success); }
+
+    /* Sidebar */
+    .sidebar {
+      background: #fff;
+      border-right: 1px solid var(--gray-200);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Mode tabs */
+    .mode-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--gray-100);
+    }
+
+    .mode-tab {
+      flex: 1;
+      padding: 14px 8px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-400);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      font-family: inherit;
+    }
+
+    .mode-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .mode-panel { display: none; padding: 20px; flex: 1; }
+    .mode-panel.active { display: flex; flex-direction: column; gap: 16px; }
+
+    /* Form elements */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 12px; font-weight: 600; color: var(--gray-600); }
+    label .req { color: var(--error); margin-left: 2px; }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--gray-800);
+      background: #fff;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
+
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+      cursor: pointer;
+    }
+
+    .hint { font-size: 11px; color: var(--gray-400); }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--primary), #EC4899);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+    }
+
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+    .btn-primary:active:not(:disabled) { transform: scale(0.98); }
+
+    .btn-outline {
+      background: #fff;
+      border: 1.5px solid var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .btn-outline:hover:not(:disabled) { border-color: var(--gray-400); background: var(--gray-50); }
+
+    .btn-validate { background: var(--warning); color: #fff; }
+    .btn-validate:hover:not(:disabled) { background: #D97706; }
+
+    .btn-telegram { background: var(--telegram); color: #fff; }
+    .btn-telegram:hover:not(:disabled) { background: #1A8BBF; }
+
+    /* Book suggestion cards */
+    .suggest-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .suggest-card {
+      border: 1.5px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fff;
+    }
+
+    .suggest-card:hover { border-color: var(--primary-light); background: #FAFAFF; }
+    .suggest-card.selected { border-color: var(--primary); background: rgba(124,58,237,0.04); }
+
+    .suggest-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 3px;
+    }
+
+    .suggest-card-meta {
+      font-size: 11px;
+      color: var(--gray-400);
+      margin-bottom: 6px;
+    }
+
+    .suggest-card-reason {
+      font-size: 11px;
+      color: var(--primary);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .suggest-card-msg {
+      font-size: 11px;
+      color: var(--gray-600);
+      line-height: 1.6;
+      margin-top: 4px;
+    }
+
+    /* Selected book summary */
+    .selected-book {
+      background: rgba(124,58,237,0.05);
+      border: 1.5px solid var(--primary-light);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: none;
+    }
+
+    .selected-book.visible { display: block; }
+
+    .selected-book-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .selected-book-meta {
+      font-size: 11px;
+      color: var(--gray-500);
+      margin-bottom: 8px;
+    }
+
+    .selected-book-msg {
+      font-size: 12px;
+      color: var(--gray-700);
+      line-height: 1.6;
+    }
+
+    .change-book-btn {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--primary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      padding: 0;
+    }
+
+    /* Main panel */
+    .main {
+      overflow-y: auto;
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      color: var(--gray-400);
+      text-align: center;
+      padding: 60px 0;
+    }
+
+    .empty-icon { font-size: 48px; opacity: 0.35; }
+    .empty-state h3 { font-size: 17px; font-weight: 600; color: var(--gray-500); }
+    .empty-state p { font-size: 13px; color: var(--gray-400); max-width: 300px; line-height: 1.7; }
+
+    /* Section */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .section-title { font-size: 15px; font-weight: 700; color: var(--gray-800); }
+    .section-badge {
+      font-size: 11px; font-weight: 600;
+      padding: 3px 10px; border-radius: 20px;
+      background: var(--gray-100); color: var(--gray-500);
+    }
+
+    /* Carousel */
+    .carousel-wrapper { display: none; }
+    .carousel-wrapper.visible { display: block; }
+
+    .carousel-scroll {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      scroll-snap-type: x mandatory;
+    }
+
+    .carousel-scroll::-webkit-scrollbar { height: 5px; }
+    .carousel-scroll::-webkit-scrollbar-track { background: var(--gray-100); border-radius: 3px; }
+    .carousel-scroll::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+
+    .card {
+      flex: 0 0 210px; height: 262px;
+      border-radius: 14px;
+      position: relative; overflow: hidden;
+      scroll-snap-align: start;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover { transform: translateY(-3px); box-shadow: 0 14px 32px rgba(0,0,0,0.2); }
+
+    .card-1 { background: linear-gradient(160deg, #0a0a0a 0%, #1e1b4b 100%); }
+    .card-2 { background: linear-gradient(160deg, #0f172a 0%, #1e3a8a 100%); }
+    .card-3 { background: linear-gradient(160deg, #1c0a0a 0%, #7f1d1d 100%); }
+    .card-4 { background: linear-gradient(160deg, #0a1a12 0%, #064e3b 100%); }
+    .card-5 { background: linear-gradient(160deg, #1a0a2e 0%, #6d28d9 100%); }
+
+    .card-inner {
+      position: absolute; inset: 0;
+      padding: 18px 16px 14px;
+      display: flex; flex-direction: column;
+    }
+
+    .card-num { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; color: rgba(255,255,255,0.4); text-transform: uppercase; margin-bottom: 10px; }
+    .card-headline { font-size: 14px; font-weight: 900; color: #fff; line-height: 1.4; flex-shrink: 0; }
+    .card-body { font-size: 9px; color: rgba(255,255,255,0.75); line-height: 1.65; margin-top: 7px; flex: 1; white-space: pre-line; }
+    .card-divider { width: 28px; height: 2px; border-radius: 1px; margin: 8px 0; }
+    .card-1 .card-divider { background: #8B5CF6; }
+    .card-2 .card-divider { background: #60A5FA; }
+    .card-3 .card-divider { background: #F87171; }
+    .card-4 .card-divider { background: #34D399; }
+    .card-5 .card-divider { background: #C084FC; }
+
+    /* === 1페이지(훅) 전용 디자인 — 헤드라인만, 세로 중앙 정렬, 임팩트 강조 === */
+    .card-1 .card-inner {
+      justify-content: center;
+      padding: 20px 18px 16px;
+    }
+    .card-1 .card-num {
+      position: absolute;
+      top: 14px; left: 16px;
+      margin-bottom: 0;
+      font-size: 8px;
+    }
+    .card-1 .card-headline {
+      font-size: 19px;
+      line-height: 1.55;
+      letter-spacing: -0.01em;
+      text-shadow: 0 2px 16px rgba(0,0,0,0.6);
+    }
+    .card-1 .card-divider { display: none; }
+    .card-1 .card-footer { display: none; }
+    /* 이미지 위에 올려지는 어두운 그라디언트 — 1페이지는 중앙 텍스트용으로 강화 */
+    .card-1.card-with-image::before {
+      background: linear-gradient(160deg, rgba(0,0,0,0.55) 0%, rgba(10,5,30,0.78) 100%);
+    }
+
+    .card-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: auto; padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .card-book-info { font-size: 9px; color: rgba(255,255,255,0.35); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+
+    .card-copy-btn {
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 4px; padding: 3px 7px; font-size: 9px; color: rgba(255,255,255,0.6);
+      cursor: pointer; font-family: inherit; white-space: nowrap; flex-shrink: 0;
+    }
+
+    .card-copy-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+    .card-5 .card-link-pill { display: inline-block; margin-top: 8px; padding: 5px 12px; border: 1.5px solid rgba(255,255,255,0.5); border-radius: 20px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.9); }
+
+    /* 마지막 장 책 공개 패널 */
+    .card-book-reveal { display: flex; align-items: center; gap: 14px; margin-top: auto; padding: 14px 16px; border-radius: 14px; background: linear-gradient(135deg, rgba(255,255,255,0.20), rgba(255,255,255,0.07)); border: 1px solid rgba(255,255,255,0.22); }
+    .card-book-reveal .cbr-cover { width: 72px; height: 104px; object-fit: cover; border-radius: 7px; flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+    .card-book-reveal .cbr-info { text-align: left; min-width: 0; flex: 1; }
+    .card-book-reveal .cbr-eyebrow { font-size: 9.5px; font-weight: 700; letter-spacing: 2.5px; color: #E9D5FF; opacity: 0.95; margin-bottom: 6px; }
+    .card-book-reveal .cbr-title { font-size: 17px; font-weight: 800; line-height: 1.28; color: #fff; word-break: keep-all; }
+    .card-book-reveal .cbr-author { font-size: 12.5px; color: rgba(255,255,255,0.75); margin-top: 5px; }
+
+    .carousel-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+    /* Card with image */
+    .card-inner { z-index: 1; }
+
+    .card.card-with-image {
+      background-size: cover !important;
+      background-position: center !important;
+    }
+
+    .card.card-with-image::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.52);
+      z-index: 0;
+    }
+
+    .card-img-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 9px;
+      color: rgba(255,255,255,0.7);
+      z-index: 2;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .card-img-dl {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(255,255,255,0.9);
+      border: none;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--gray-800);
+      z-index: 4;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .card-img-dl:hover { background: #fff; }
+    .card-img-regen { right: auto; left: 8px; background: rgba(124,58,237,0.92); color: #fff; }
+    .card-img-regen:hover { background: #7c3aed; }
+    .card-img-regen:disabled { opacity: .6; cursor: default; }
+
+    .card-img-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+      background: rgba(0,0,0,0.25);
+    }
+
+    .card-img-spinner {
+      width: 22px; height: 22px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    /* Caption section */
+    .caption-wrapper { display: none; background: #fff; border: 1px solid var(--gray-200); border-radius: 14px; padding: 18px 22px; }
+    .caption-wrapper.visible { display: block; }
+
+    .caption-keyword-row { display: flex; gap: 8px; align-items: flex-end; margin: 12px 0; }
+    .caption-keyword-row .form-group { flex: 1; margin: 0; }
+
+    .caption-box { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 10px; padding: 14px 16px; margin: 14px 0; }
+    .caption-label-text { font-size: 10px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .caption-text-content { font-size: 13px; color: var(--gray-800); line-height: 1.9; white-space: pre-line; }
+    .caption-hashtags-row { margin-top: 10px; font-size: 13px; color: var(--primary); font-weight: 600; }
+    .dm-keyword-info { font-size: 12px; color: var(--gray-500); margin-bottom: 12px; padding: 8px 12px; background: rgba(124,58,237,0.05); border-radius: 8px; }
+    .dm-keyword-info strong { color: var(--primary); }
+
+    /* Validation panel */
+    .validation-panel { display: none; background: #fff; border: 1px solid var(--gray-200); border-radius: 14px; overflow: hidden; }
+    .validation-panel.visible { display: block; }
+
+    .validation-header { padding: 18px 22px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid var(--gray-100); }
+
+    .score-circle {
+      width: 68px; height: 68px; border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      flex-shrink: 0; border: 3px solid var(--gray-200);
+    }
+
+    .score-circle.pass { border-color: var(--success); background: rgba(16,185,129,0.05); }
+    .score-circle.fail { border-color: var(--error); background: rgba(239,68,68,0.05); }
+    .score-number { font-size: 20px; font-weight: 900; line-height: 1; }
+    .score-circle.pass .score-number { color: var(--success); }
+    .score-circle.fail .score-number { color: var(--error); }
+    .score-label { font-size: 9px; color: var(--gray-400); font-weight: 500; margin-top: 2px; }
+    .validation-meta { flex: 1; }
+    .validation-status { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .validation-feedback { font-size: 12px; color: var(--gray-600); line-height: 1.6; }
+
+    .validation-body { padding: 18px 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .score-bars { display: flex; flex-direction: column; gap: 10px; }
+    .score-bar-item { display: flex; flex-direction: column; gap: 4px; }
+    .score-bar-header { display: flex; justify-content: space-between; font-size: 11px; color: var(--gray-600); font-weight: 500; }
+    .score-bar-track { height: 5px; background: var(--gray-100); border-radius: 3px; overflow: hidden; }
+    .score-bar-fill { height: 100%; border-radius: 3px; background: var(--primary); transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1); }
+
+    .improvements-title { font-size: 11px; font-weight: 700; color: var(--gray-700); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .improvement-item { display: flex; align-items: flex-start; gap: 7px; font-size: 11px; color: var(--gray-600); line-height: 1.6; padding: 5px 0; border-bottom: 1px solid var(--gray-50); }
+    .improvement-item:last-child { border-bottom: none; }
+    .improvement-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--warning); margin-top: 5px; flex-shrink: 0; }
+
+    .validation-actions { padding: 14px 22px; background: var(--gray-50); border-top: 1px solid var(--gray-100); display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Loading */
+    .loading-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(255,255,255,0.85); backdrop-filter: blur(4px);
+      z-index: 100; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+    }
+
+    .loading-overlay.visible { display: flex; }
+
+    .spinner {
+      width: 48px; height: 48px;
+      border: 3px solid var(--gray-200); border-top-color: var(--primary);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 14px; font-weight: 600; color: var(--gray-700); }
+    .loading-sub { font-size: 12px; color: var(--gray-400); margin-top: -10px; }
+
+    /* Toast */
+    .toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 200; }
+    .toast { padding: 11px 16px; border-radius: 10px; font-size: 12px; font-weight: 600; color: #fff; max-width: 300px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); animation: slideIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--error); }
+    .toast.info { background: var(--primary); }
+    .toast.warning { background: var(--warning); }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+    @media (max-width: 768px) {
+      body { grid-template-columns: 1fr; grid-template-rows: var(--header-h) auto auto; overflow: auto; }
+      .steps .step-label { display: none; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--gray-200); }
+      /* 모바일에서는 body 전체가 스크롤 — .main이 내부 스크롤하면 scrollIntoView가 엉킴 */
+      .main { padding: 16px; overflow-y: visible; height: auto; }
+      .validation-body { grid-template-columns: 1fr; }
+    }
+
+    /* 폰 화면(아이폰 등): 헤더 한 줄에 단계표시까지 넣으면 좌우로 넘쳐 잘림.
+       → 단계표시(1·2·3·4)는 숨기고, 브랜드(말줄임) + 보관함 버튼만 깔끔히 한 줄에. */
+    @media (max-width: 640px) {
+      header { padding: 0 14px; gap: 12px; }
+      .brand { flex: 1; }
+      .steps { display: none; }
+      #openArchiveBtn { padding: 8px 13px !important; font-size: 12.5px !important; }
+    }
+
+    /* ── 인스타그램 직접 게시 버튼 ── */
+    .btn-instagram {
+      background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+      color: #fff;
+    }
+    .btn-instagram:hover:not(:disabled) { opacity: 0.88; }
+
+    /* ── 자동 배포 진행 패널 ── */
+    .progress-panel {
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: 14px;
+      padding: 20px 24px;
+      display: none;
+    }
+    .progress-panel.visible { display: block; }
+    .progress-title { font-size: 15px; font-weight: 700; color: var(--gray-800); margin-bottom: 16px; }
+    .deploy-steps { display: flex; flex-direction: column; gap: 8px; }
+    .deploy-step {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 14px; border-radius: 10px;
+      background: var(--gray-50); border: 1.5px solid var(--gray-100); transition: all 0.3s;
+    }
+    .deploy-step.active { border-color: var(--primary-light); background: rgba(124,58,237,0.04); }
+    .deploy-step.done { border-color: var(--success); background: rgba(16,185,129,0.04); }
+    .deploy-step.error { border-color: var(--error); background: rgba(239,68,68,0.04); }
+    .deploy-step-icon {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+      background: var(--gray-200); color: var(--gray-500); transition: all 0.3s;
+    }
+    .deploy-step.active .deploy-step-icon { background: var(--primary); color: #fff; }
+    .deploy-step.done .deploy-step-icon { background: var(--success); color: #fff; }
+    .deploy-step.error .deploy-step-icon { background: var(--error); color: #fff; }
+    .deploy-step-label { font-size: 13px; font-weight: 600; color: var(--gray-600); }
+    .deploy-step.active .deploy-step-label { color: var(--primary); }
+    .deploy-step.done .deploy-step-label { color: var(--success); }
+    .deploy-step.error .deploy-step-label { color: var(--error); }
+    .deploy-step-sub { font-size: 11px; color: var(--gray-400); margin-top: 2px; line-height: 1.5; }
+    .deploy-step.error .deploy-step-sub { color: var(--error); }
+    .deploy-done-msg {
+      background: rgba(16,185,129,0.07); border: 1.5px solid var(--success);
+      border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--success);
+      font-weight: 600; text-align: center; margin-top: 12px; display: none;
+    }
+    .deploy-done-msg.visible { display: block; }
+
+    /* ── 배포탭 도서 선택 목록 ── */
+    .deploy-book-item {
+      padding: 10px 12px; border: 1.5px solid var(--gray-200);
+      border-radius: 9px; cursor: pointer; transition: all 0.2s; background: #fff;
+      margin-bottom: 8px;
+    }
+    .deploy-book-item:hover { border-color: var(--primary-light); background: #FAFAFF; }
+    .deploy-book-item.selected { border-color: var(--primary); background: rgba(124,58,237,0.04); }
+    .deploy-book-item-title { font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 2px; }
+    .deploy-book-item-meta { font-size: 11px; color: var(--gray-400); }
+    .deploy-book-item-reason { font-size: 11px; color: var(--primary); font-weight: 500; margin-top: 4px; line-height: 1.5; }
+
+    /* 3탭이므로 탭 라벨 살짝 압축 */
+    .mode-tabs .mode-tab { font-size: 12px; padding: 13px 6px; }
+
+    /* ── 보관함 / 관리 오버레이 ── */
+    .archive-overlay { position: fixed; inset: 0; background: rgba(20,20,30,0.55); z-index: 300; display: none; padding: 24px; }
+    .archive-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
+    .archive-panel { background: var(--gray-50, #f7f7fb); width: 100%; max-width: 760px; max-height: 90vh; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .archive-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: #fff; border-bottom: 1px solid var(--gray-200); }
+    .archive-title { font-size: 16px; font-weight: 700; color: var(--gray-900); }
+    .archive-close { background: var(--gray-100); border: none; border-radius: 8px; width: 32px; height: 32px; font-size: 18px; cursor: pointer; color: var(--gray-600); font-family: inherit; }
+    .archive-body { overflow-y: auto; padding: 18px 20px; }
+    .arch-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fff; border: 1px solid var(--gray-200); border-radius: 12px; margin-bottom: 10px; cursor: pointer; transition: all .15s; }
+    .arch-item:hover { border-color: var(--primary); background: #FAFAFF; }
+    .arch-num { font-size: 18px; font-weight: 800; color: var(--primary); min-width: 56px; }
+    .arch-info { flex: 1; min-width: 0; }
+    .arch-info-title { font-size: 14px; font-weight: 700; color: var(--gray-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .arch-info-meta { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+    .arch-back { background: none; border: none; color: var(--primary); font-size: 13px; font-weight: 600; cursor: pointer; padding: 0; margin-bottom: 14px; font-family: inherit; }
+    .arch-block { background: #fff; border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .arch-block-label { font-size: 10px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+    .arch-block textarea, .arch-block input { width: 100%; font-family: inherit; font-size: 13px; border: 1px solid var(--gray-200); border-radius: 8px; padding: 10px; resize: vertical; line-height: 1.7; color: var(--gray-800); }
+    .arch-block .arch-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .arch-empty { text-align: center; color: var(--gray-400); padding: 40px 20px; font-size: 14px; }
+    .arch-section-label { font-size: 12px; font-weight: 700; color: var(--gray-500); margin: 6px 2px 10px; letter-spacing: .3px; }
+    .arch-item.arch-draft { border-left: 3px solid #7c3aed; }
+    .arch-imgs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .arch-imgs img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: var(--gray-100); }
+    @media (max-width: 600px) { .arch-imgs { grid-template-columns: repeat(3, 1fr); } }
+  </style>
+</head>
+<body>
+
+<!-- 보관함 / 제작·DM 관리 오버레이 -->
+<div id="archiveOverlay" class="archive-overlay">
+  <div class="archive-panel">
+    <div class="archive-head">
+      <div class="archive-title" id="archiveTitle">보관함 / 제작·DM 관리</div>
+      <button class="archive-close" id="closeArchiveBtn">&times;</button>
+    </div>
+    <div class="archive-body">
+      <div id="archiveListView">
+        <div id="archiveList"></div>
+      </div>
+      <div id="archiveDetailView" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="brand">
+    <div class="logo-icon">행</div>
+    <div class="brand-text">
+      <div class="logo-text">행간 — 연애 책방</div>
+      <div class="logo-sub">연애·관계 심리 인스타그램 자동 생성</div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step active" id="step-1"><div class="step-circle">1</div><div class="step-label">책 선정</div></div>
+    <div class="step-line" id="line-1"></div>
+    <div class="step" id="step-2"><div class="step-circle">2</div><div class="step-label">생성</div></div>
+    <div class="step-line" id="line-2"></div>
+    <div class="step" id="step-3"><div class="step-circle">3</div><div class="step-label">검증</div></div>
+    <div class="step-line" id="line-3"></div>
+    <div class="step" id="step-4"><div class="step-circle">4</div><div class="step-label">발송</div></div>
+  </div>
+
+  <button id="openArchiveBtn" style="margin-left:auto;flex-shrink:0;background:var(--primary);color:#fff;border:none;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">보관함 / 관리</button>
+</header>
+
+<aside class="sidebar">
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tabAutoDeploy">자동 배포</button>
+    <button class="mode-tab" id="tabAuto">AI 자동 추천</button>
+    <button class="mode-tab" id="tabManual">직접 입력</button>
+  </div>
+
+  <!-- AUTO MODE -->
+  <div class="mode-panel" id="panelAuto">
+
+    <!-- Step A: 카테고리/이슈 선택 -->
+    <div id="autoStep1">
+      <div class="form-group">
+        <label>카테고리 선택<span class="req">*</span></label>
+        <select id="autoCategory">
+          <option value="이별과회복">이별·재회·회복 (헤어짐·재회·그 후의 마음)</option>
+          <option value="자존감과사랑">자존감과사랑 (나를 먼저 사랑하기)</option>
+          <option value="짝사랑과설렘">짝사랑과 설렘 (썸·시작·고백 — 가벼운 톤)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>특정 이슈 키워드 (선택)</label>
+        <input type="text" id="autoIssue" placeholder="예: AI 대체, 금리 인상, 번아웃...">
+        <span class="hint">입력하면 해당 이슈와 관련된 책을 우선 추천합니다</span>
+      </div>
+
+      <button class="btn btn-primary" id="suggestBtn">AI 책 추천받기</button>
+    </div>
+
+    <!-- Step B: 추천 결과 -->
+    <div id="autoStep2" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span style="font-size:12px;font-weight:700;color:var(--gray-600);">AI 추천 도서</span>
+        <button class="btn btn-outline" id="resuggestBtn" style="padding:5px 10px;font-size:11px;">다시 추천</button>
+      </div>
+      <div class="suggest-list" id="suggestList"></div>
+    </div>
+
+    <!-- Step C: 선택된 책 + 생성 -->
+    <div id="autoStep3" style="display:none;">
+      <div class="selected-book visible" id="selectedBookCard"></div>
+      <button class="btn btn-primary" id="autoGenerateBtn">캐럿셀 생성하기</button>
+    </div>
+
+  </div>
+
+  <!-- MANUAL MODE -->
+  <div class="mode-panel" id="panelManual">
+    <div class="form-group">
+      <label>카테고리<span class="req">*</span></label>
+      <select id="manualCategory">
+        <option value="이별과회복">이별·재회·회복</option>
+        <option value="자존감과사랑">자존감과사랑</option>
+        <option value="짝사랑과설렘">짝사랑과 설렘</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>책 제목<span class="req">*</span></label>
+      <input type="text" id="manualTitle" placeholder="예: 원씽 / 아주 작은 습관의 힘">
+    </div>
+
+    <div class="form-group">
+      <label>저자 (선택)</label>
+      <input type="text" id="manualAuthor" placeholder="입력하지 않아도 됩니다">
+    </div>
+
+    <div class="form-group">
+      <label>핵심 메시지 (선택)</label>
+      <textarea id="manualCoreMessage" rows="3" placeholder="책의 핵심 메시지를 직접 입력하거나 비워두면 AI가 자동 분석합니다" style="resize:vertical;"></textarea>
+      <span class="hint">비워두면 AI가 핵심 메시지와 독자층을 자동으로 분석합니다</span>
+    </div>
+
+    <div class="form-group">
+      <label>쿠팡파트너스 링크 (선택)</label>
+      <input type="url" id="manualAffiliateLink" placeholder="https://link.coupang.com/a/...">
+      <span class="hint">입력하면 DM 자동 회신 및 도서 카탈로그에 자동으로 포함됩니다</span>
+    </div>
+
+    <button class="btn btn-primary" id="manualGenerateBtn">AI 분석 후 생성</button>
+  </div>
+
+  <!-- AUTO-DEPLOY MODE -->
+  <div class="mode-panel active" id="panelAutoDeploy">
+
+    <!-- Phase 1: 카테고리 선택 + 책 추천 -->
+    <div id="deployPhase1">
+      <div class="form-group">
+        <label>카테고리 선택<span class="req">*</span></label>
+        <select id="deployCategory">
+          <option value="이별과회복">이별·재회·회복 (헤어짐·재회·그 후의 마음)</option>
+          <option value="자존감과사랑">자존감과사랑 (나를 먼저 사랑하기)</option>
+          <option value="짝사랑과설렘">짝사랑과 설렘 (썸·시작·고백 — 가벼운 톤)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>책 제목 (선택)</label>
+        <input type="text" id="deployTitle" placeholder="입력하면 AI 추천 없이 바로 해당 책으로 제작">
+        <span class="hint">비워두면 AI가 카테고리에 맞는 책을 자동 선정합니다</span>
+      </div>
+      <div class="form-group">
+        <label>저자 (선택)</label>
+        <input type="text" id="deployAuthor" placeholder="책 제목만 입력해도 됩니다">
+      </div>
+      <div class="form-group" id="deployIssueGroup">
+        <label>특정 이슈 키워드 (선택, AI 자동 선정 시에만 사용)</label>
+        <input type="text" id="deployIssue" placeholder="예: AI 대체, 번아웃, 금리...">
+      </div>
+      <div class="form-group">
+        <label>쿠팡파트너스 링크 (선택, 여러 개 추가 가능)</label>
+        <div id="deployAffiliateLinkList">
+          <input type="url" class="affiliate-link-input" placeholder="https://link.coupang.com/a/..." style="margin-bottom:6px;">
+        </div>
+        <button type="button" id="addAffiliateLinkBtn" style="font-size:11px;color:var(--primary);background:none;border:1px solid var(--primary);border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit;margin-bottom:4px;">+ 링크 추가</button>
+        <span class="hint">DM 자동 회신에 모두 포함됩니다</span>
+      </div>
+      <button class="btn btn-primary" id="deployFetchBooksBtn">자동 진행하기</button>
+    </div>
+
+    <!-- Phase 2: 책 선택 -->
+    <div id="deployPhase2" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span style="font-size:12px;font-weight:700;color:var(--gray-600);">AI 추천 도서 선택</span>
+        <button class="btn btn-outline" id="deployResuggestBtn" style="padding:5px 10px;font-size:11px;">다시 추천</button>
+      </div>
+      <div id="deployBookList"></div>
+    </div>
+
+    <!-- Phase 3: 선택 확인 + 시작 -->
+    <div id="deployPhase3" style="display:none;">
+      <div class="selected-book visible" id="deploySelectedBook"></div>
+      <button class="btn btn-primary" id="deployStartBtn" style="margin-top:10px;">자동 생성 및 배포 시작</button>
+      <button class="btn btn-outline" id="deployChangeBookBtn" style="margin-top:8px;font-size:12px;">책 다시 선택</button>
+    </div>
+
+  </div>
+
+  <!-- 하단: 중복 방지 기록 초기화 -->
+  <div style="padding:12px 20px;border-top:1px solid var(--gray-100);margin-top:auto;">
+    <button id="clearHistoryBtn" style="font-size:11px;color:var(--gray-400);background:none;border:none;cursor:pointer;font-family:inherit;padding:0;">
+      중복 방지 기록 초기화
+    </button>
+    <div id="historyCount" style="font-size:10px;color:var(--gray-300);margin-top:3px;"></div>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- 자동 배포 진행 패널 -->
+  <div class="progress-panel" id="progressPanel">
+    <div class="progress-title">자동 생성 및 배포 진행 중</div>
+    <div class="deploy-steps">
+      <div class="deploy-step" id="dstep-1">
+        <div class="deploy-step-icon">1</div>
+        <div><div class="deploy-step-label">캐럿셀 생성</div><div class="deploy-step-sub" id="dsub-1">Claude AI가 5페이지 카드뉴스를 작성합니다</div></div>
+      </div>
+      <div class="deploy-step" id="dstep-2">
+        <div class="deploy-step-icon">2</div>
+        <div><div class="deploy-step-label">품질 검증 및 보완</div><div class="deploy-step-sub" id="dsub-2">최대 2회 자동 검증 후 재생성</div></div>
+      </div>
+      <div class="deploy-step" id="dstep-3">
+        <div class="deploy-step-icon">3</div>
+        <div><div class="deploy-step-label">이미지 생성</div><div class="deploy-step-sub" id="dsub-3">페이지별 AI 일러스트 생성 (2~3분)</div></div>
+      </div>
+      <div class="deploy-step" id="dstep-4">
+        <div class="deploy-step-icon">4</div>
+        <div><div class="deploy-step-label">캡션 + 해시태그 생성</div><div class="deploy-step-sub" id="dsub-4">인스타그램용 캡션을 작성합니다</div></div>
+      </div>
+      <div class="deploy-step" id="dstep-5">
+        <div class="deploy-step-icon">5</div>
+        <div><div class="deploy-step-label">DM 자동 회신 생성</div><div class="deploy-step-sub" id="dsub-5">댓글 키워드 감지 시 발송할 DM 내용</div></div>
+      </div>
+      <div class="deploy-step" id="dstep-6">
+        <div class="deploy-step-icon">6</div>
+        <div><div class="deploy-step-label">텔레그램 최종 확인 요청</div><div class="deploy-step-sub" id="dsub-6">텔레그램에서 게시 승인 버튼을 눌러주세요</div></div>
+      </div>
+      <div class="deploy-step" id="dstep-7">
+        <div class="deploy-step-icon">7</div>
+        <div><div class="deploy-step-label">인스타그램 게시</div><div class="deploy-step-sub" id="dsub-7">텔레그램 승인 대기 중</div></div>
+      </div>
+    </div>
+    <div class="deploy-done-msg" id="deployDoneMsg">
+      아래 버튼으로 이미지 5장 저장 + 캡션 복사 후, 인스타 앱(또는 Meta 비즈니스 스위트)에서 올리세요.
+    </div>
+    <div style="margin-top:12px;display:none;" id="deployInstagramBtnWrap">
+      <button class="btn btn-instagram" id="deployInstagramBtn" style="width:100%;" disabled>게시 준비 (이미지 5장 저장 + 캡션 복사)</button>
+      <p style="font-size:11px;color:var(--gray-400);margin-top:6px;text-align:center;">저장된 5장을 인스타 새 게시물에 올리고, 복사된 캡션을 붙여넣으세요</p>
+    </div>
+  </div>
+
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">📚</div>
+    <h3>책을 선정하고 캐럿셀을 만들어보세요</h3>
+    <p>AI 자동 추천으로 베스트셀러를 제안받거나,<br>책 제목만 입력하면 AI가 핵심 메시지를 분석해<br>5페이지 카드뉴스를 자동으로 만들어줍니다.</p>
+  </div>
+
+  <!-- Carousel preview -->
+  <div class="carousel-wrapper" id="carouselWrapper">
+    <div class="section-header">
+      <span class="section-title">캐럿셀 미리보기</span>
+      <span class="section-badge" id="carouselBadge">5 페이지</span>
+    </div>
+    <div class="carousel-scroll" id="carouselScroll"></div>
+    <div class="carousel-actions">
+      <button class="btn btn-outline" id="rePickBookBtn" style="color:var(--gray-500);">책 다시 고르기</button>
+      <button class="btn btn-outline" id="regenerateBtn">캐럿셀 다시 생성</button>
+      <button class="btn btn-outline" id="copyAllBtn">전체 복사</button>
+      <button class="btn btn-outline" id="generateImagesBtn" style="background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;border:none;">이미지 생성</button>
+      <button class="btn btn-outline" id="saveAllImagesBtn" style="background:linear-gradient(135deg,#064e3b,#065f46);color:#fff;border:none;">이미지 전체 저장</button>
+      <button class="btn btn-outline" id="saveReelSetBtn" style="background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border:none;">릴스 세트(세로 5장)</button>
+      <button class="btn btn-validate" id="validateBtn">품질 검증</button>
+    </div>
+    <!-- 릴스 문구 미리보기 + 자동 검증 -->
+    <div id="reelPreview" style="display:none;margin-top:14px;padding:14px 16px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-weight:700;font-size:13px;color:#7c3aed;">릴스 문구 (자동 생성·검증)</span>
+        <span id="reelValidBadge" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;"></span>
+      </div>
+      <div id="reelLines" style="font-size:13.5px;line-height:1.85;color:#3a2a2e;"></div>
+      <div id="reelValidNote" style="font-size:11.5px;color:#8a7479;margin-top:8px;"></div>
+      <div style="margin-top:10px;">
+        <button class="btn btn-outline" id="regenReelBtn" style="font-size:12px;padding:7px 12px;">릴스 문구 다시 만들기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Caption section -->
+  <div class="caption-wrapper" id="captionWrapper">
+    <div class="section-header">
+      <span class="section-title">캡션 + 해시태그</span>
+      <span class="section-badge">인스타그램용</span>
+    </div>
+
+    <div class="caption-keyword-row">
+      <div class="form-group">
+        <label>댓글 키워드 (선택, 3자 이하)</label>
+        <input type="text" id="captionKeyword" maxlength="3" placeholder="예: 경제, 심리, 독서 (3자 이하, 특수기호 없이)">
+      </div>
+      <button class="btn btn-outline" id="generateCaptionBtn" style="flex-shrink:0;padding:9px 14px;font-size:12px;white-space:nowrap;">자동 생성</button>
+    </div>
+
+    <div id="captionResult" style="display:none;">
+      <div class="caption-box">
+        <div class="caption-label-text">캡션</div>
+        <div class="caption-text-content" id="captionTextContent"></div>
+        <div class="caption-hashtags-row" id="captionHashtagsRow"></div>
+      </div>
+      <div class="dm-keyword-info" id="dmKeywordInfo"></div>
+      <button class="btn btn-outline" id="copyCaptionBtn" style="font-size:12px;padding:8px 14px;">캡션 전체 복사</button>
+    </div>
+  </div>
+
+  <!-- DM 자동 회신 미리보기 (Phase 5 준비) -->
+  <div class="caption-wrapper" id="dmReplyWrapper" style="display:none;">
+    <div class="section-header">
+      <span class="section-title">DM 자동 회신 미리보기</span>
+      <span class="section-badge" style="background:rgba(124,58,237,0.08);color:var(--primary);">Phase 5 준비</span>
+    </div>
+    <p style="font-size:12px;color:var(--gray-500);line-height:1.7;margin-bottom:12px;">마지막 장 A/B 투표에 댓글을 남긴 방문자에게 보낼 DM입니다. <b>하나의 DM 안에 A·B 두 경우의 내용</b>(성향별 심리 진단 + 솔루션)을 함께 담으며, 해당 책 페이지로 바로 열리는 도서관 링크가 자동 포함됩니다. <b>생성된 DM은 도서 번호로 영구 저장</b>되어, 몇 달 뒤 댓글이 달려도 아래에서 번호로 다시 꺼낼 수 있습니다.</p>
+    <div style="border:1px dashed var(--gray-300);border-radius:10px;padding:12px 14px;margin-bottom:14px;background:var(--gray-50);">
+      <div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:6px;">지난 게시물 DM 찾기</div>
+      <p style="font-size:11px;color:var(--gray-500);line-height:1.6;margin-bottom:8px;">예전 게시물에 댓글이 달렸나요? 캡션의 번호(No.000)를 입력하면 그 게시물의 DM을 다시 꺼내 바로 복사·발송할 수 있습니다.</p>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="dmLookupNum" placeholder="번호 (예: 1 또는 001)" style="flex:1;">
+        <button class="btn btn-outline" id="dmLookupBtn" style="flex-shrink:0;font-size:12px;padding:9px 14px;white-space:nowrap;">불러오기</button>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>쿠팡파트너스 어필리에이트 링크 (선택)</label>
+      <input type="url" id="affiliateLinkInput" placeholder="https://link.coupang.com/a/...">
+    </div>
+    <button class="btn btn-outline" id="generateDmBtn" style="font-size:12px;padding:9px 14px;margin-bottom:12px;">DM 자동 회신 생성</button>
+    <div id="dmReplyResult" style="display:none;">
+      <div class="caption-box">
+        <div class="caption-label-text">댓글 응답자에게 보낼 DM (A·B 내용 모두 포함)</div>
+        <div class="caption-text-content" id="dmReplyTextA" style="font-size:12px;white-space:pre-line;"></div>
+        <button class="btn btn-outline" id="copyDmABtn" style="font-size:12px;padding:8px 14px;margin-top:8px;">DM 복사</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 도서관 등록 -->
+  <div class="caption-wrapper" id="libraryRegWrapper" style="display:none;">
+    <div class="section-header">
+      <span class="section-title">도서관 등록</span>
+      <span class="section-badge" id="libRegNo" style="background:rgba(194,112,143,0.12);color:#C2708F;font-weight:700;">No.000</span>
+    </div>
+    <p style="font-size:12px;color:var(--gray-500);line-height:1.7;margin-bottom:12px;">이 책을 도서관 페이지에 올립니다. 게시물 캡션의 번호와 <b>같은 번호</b>로 등록되며, 인스타에 실제로 게시할 책만 등록하세요. 소개·링크를 고쳐 다시 누르면 덮어쓰기됩니다.</p>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>책 제목</label>
+      <input type="text" id="libRegTitle" readonly style="background:var(--gray-50);">
+    </div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>짧은 소개 (도서관 카드에 표시됨)</label>
+      <textarea id="libRegDesc" rows="3" style="resize:vertical;" placeholder="이 책을 한두 문장으로 소개하세요"></textarea>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>쿠팡파트너스 어필리에이트 링크</label>
+      <input type="url" id="libRegLink" placeholder="https://link.coupang.com/a/...">
+    </div>
+    <button class="btn btn-primary" id="libRegBtn" style="font-size:13px;">도서관에 등록 / 업데이트</button>
+    <div id="libRegStatus" style="display:none;margin-top:12px;font-size:12.5px;line-height:1.7;padding:12px 14px;border-radius:10px;background:rgba(16,185,129,0.07);border:1px solid var(--success);color:var(--success);"></div>
+  </div>
+
+  <!-- Validation panel -->
+  <div class="validation-panel" id="validationPanel">
+    <div class="validation-header">
+      <div class="score-circle" id="scoreCircle">
+        <span class="score-number" id="scoreNumber">--</span>
+        <span class="score-label">/ 100</span>
+      </div>
+      <div class="validation-meta">
+        <div class="validation-status" id="validationStatus">검증 대기</div>
+        <div class="validation-feedback" id="validationFeedback"></div>
+      </div>
+    </div>
+
+    <div class="validation-body">
+      <div class="score-bars" id="scoreBars"></div>
+      <div class="improvements">
+        <div class="improvements-title">개선 제안</div>
+        <div id="improvementsList"></div>
+      </div>
+    </div>
+
+    <div class="validation-actions">
+      <button class="btn btn-primary" id="regenFromFeedbackBtn" style="width:auto;padding:10px 18px;">검증 결과 반영하기</button>
+      <button class="btn btn-telegram" id="telegramBtn" disabled>텔레그램 발송</button>
+      <button class="btn btn-instagram" id="instagramBtn" disabled>게시 준비 (이미지+캡션)</button>
+    </div>
+  </div>
+</main>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">처리 중...</div>
+  <div class="loading-sub" id="loadingSub"></div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const state = {
+  step: 1,
+  pages: null,
+  validation: null,
+  bookInfo: null,
+  selectedBook: null,
+  caption: null,
+  captionHashtags: null,
+  dmKeyword: null,
+  images: null,
+  affiliateLink: null,
+  affiliateLinks: [],
+  dmReply: null,
+  bookNumber: '',
+  draftId: '',
+  reelScript: null,       // 연결성 있는 릴스 대본 {s1,s2,s3,s4}
+  reelValidation: null,   // 릴스 문구 자동 검증 결과
+};
+
+// 만든 캐럿셀을 번호 없이 임시 초안으로 자동 저장(7일). 이미 도서관에 등록된 건 제외.
+async function autosaveDraft() {
+  try {
+    if (!state.pages || !state.bookInfo?.title) return;
+    if (state._catalogAdded) return;  // 이미 도서관에 정식 등록됨
+    let imgs = state.images || null;
+    try { imgs = await getArchiveImages(); } catch {}
+    const r = await apiFetch('/api/save-draft', {
+      draftId: state.draftId || '',
+      bookInfo: state.bookInfo,
+      pages: state.pages,
+      caption: state.caption || '',
+      hashtags: state.captionHashtags || [],
+      images: imgs,
+      cover: state.bookCover || '',
+    });
+    if (r.draftId) state.draftId = r.draftId;
+  } catch (e) { console.warn('초안 자동 저장 실패(무시):', e.message); }
+}
+
+// 도서관에 정식 등록되면 임시 초안은 지운다(중복 방지).
+async function dropDraftIfAny() {
+  if (!state.draftId) return;
+  try { await apiFetch('/api/delete-draft', { draftId: state.draftId }); } catch {}
+  state.draftId = '';
+}
+
+// ===== 중복 방지: 이미 캐럿셀을 만든 책 목록 =====
+const HISTORY_KEY = 'bc_generated_titles';
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+}
+
+function addToHistory(title) {
+  if (!title) return;
+  const list = getHistory();
+  if (!list.includes(title)) {
+    list.push(title);
+    if (list.length > 100) list.shift(); // 최대 100개 보관
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+  }
+}
+
+function clearHistory() {
+  localStorage.removeItem(HISTORY_KEY);
+  showToast('중복 방지 기록이 초기화됐습니다.', 'info');
+}
+
+const PAGE_LABELS = ['훅', '문제', '심각성', '실마리', '반문·결말'];
+const SCORE_KEYS = [
+  { key: 'accuracy',    label: '책 내용 부합도', max: 20 },
+  { key: 'factual',     label: '사실 정확성', max: 20 },
+  { key: 'copyright',   label: '저작권 안전성', max: 20 },
+  { key: 'engagement',  label: '소비자 자극', max: 25 },
+  { key: 'quality',     label: '문장 품질·오타', max: 15 },
+];
+
+// ===== API =====
+async function apiFetch(endpoint, body, _retry = 0) {
+  const hasBody = body !== undefined && body !== null;
+  const res = await fetch(endpoint, {
+    method: hasBody ? 'POST' : 'GET',
+    headers: hasBody ? { 'Content-Type': 'application/json' } : {},
+    body: hasBody ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok || data.error) {
+    const msg = data.error || '서버 오류';
+    // 지역 라우팅 차단(REGION_BLOCKED) — 키·크레딧 문제가 아닌 일시적 경유지 차단.
+    // 잠시 기다렸다 자동 재시도(새 요청은 다른 경유지를 탈 수 있음). 최대 2회.
+    if (/REGION_BLOCKED/.test(msg) && _retry < 2) {
+      showToast(`일시적인 해외 경유지 차단 — ${4 * (_retry + 1)}초 후 자동 재시도합니다 (${_retry + 1}/2)`, 'info');
+      await new Promise(r => setTimeout(r, 4000 * (_retry + 1)));
+      return apiFetch(endpoint, body, _retry + 1);
+    }
+    if (/REGION_BLOCKED/.test(msg)) {
+      throw new Error('일시적인 해외 경유지 차단으로 거부되었습니다 (API 키·크레딧 문제 아님). 1~2분 후 다시 시도해주세요.');
+    }
+    throw new Error(msg);
+  }
+  return data;
+}
+
+// ===== UI Helpers =====
+function setStep(n) {
+  state.step = n;
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById(`step-${i}`);
+    el.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById(`line-${i}`).style.background = i < n ? 'var(--primary)' : 'var(--gray-200)';
+  }
+}
+
+function showLoading(text = '처리 중...', sub = '') {
+  document.getElementById('loadingText').textContent = text;
+  document.getElementById('loadingSub').textContent = sub;
+  document.getElementById('loadingOverlay').classList.add('visible');
+}
+
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('visible');
+}
+
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3500);
+}
+
+function copyText(text, label = '') {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast((label ? `[${label}] ` : '') + '클립보드에 복사됐습니다.', 'success');
+  }).catch(() => showToast('복사 실패.', 'error'));
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+}
+
+function getCardText(page, num) {
+  if (num === 5) return `[페이지 5 - CTA]\n${page.cta}\n\n${page.linkText}`;
+  const body = page.body || page.subtext || '';
+  return `[페이지 ${num} - ${PAGE_LABELS[num-1]}]\n${page.headline}\n\n${body}`;
+}
+
+// ===== Mode tabs =====
+const ALL_TABS = ['tabAutoDeploy', 'tabAuto', 'tabManual'];
+const ALL_PANELS = ['panelAutoDeploy', 'panelAuto', 'panelManual'];
+function switchTab(activeTabId) {
+  ALL_TABS.forEach(id => document.getElementById(id).classList.toggle('active', id === activeTabId));
+  ALL_PANELS.forEach(id => document.getElementById(id).classList.toggle('active', id === activeTabId.replace('tab', 'panel')));
+}
+document.getElementById('tabAutoDeploy').addEventListener('click', () => switchTab('tabAutoDeploy'));
+document.getElementById('tabAuto').addEventListener('click', () => switchTab('tabAuto'));
+document.getElementById('tabManual').addEventListener('click', () => switchTab('tabManual'));
+
+// ===== AUTO MODE =====
+document.getElementById('suggestBtn').addEventListener('click', async () => {
+  const category = document.getElementById('autoCategory').value;
+  const issue = document.getElementById('autoIssue').value.trim();
+
+  showLoading('AI가 책을 추천하고 있습니다...', '베스트셀러와 최신 이슈를 분석 중');
+
+  try {
+    const excludeTitles = getHistory();
+    const data = await apiFetch('/api/suggest', { category, issue, excludeTitles });
+    renderSuggestions(data.books);
+    document.getElementById('autoStep1').style.display = 'none';
+    document.getElementById('autoStep2').style.display = 'block';
+    document.getElementById('autoStep3').style.display = 'none';
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    hideLoading();
+  }
+});
+
+document.getElementById('resuggestBtn').addEventListener('click', () => {
+  document.getElementById('autoStep1').style.display = 'block';
+  document.getElementById('autoStep2').style.display = 'none';
+  document.getElementById('autoStep3').style.display = 'none';
+  state.selectedBook = null;
+});
+
+function renderSuggestions(books) {
+  const list = document.getElementById('suggestList');
+  list.innerHTML = '';
+  books.forEach((book, i) => {
+    const card = document.createElement('div');
+    card.className = 'suggest-card';
+    const vBadge = book.verified ? '<span style="font-size:10px;font-weight:700;color:#059669;background:rgba(5,150,105,.1);padding:2px 7px;border-radius:5px;margin-left:6px;">실존 확인</span>' : '';
+    card.innerHTML = `
+      <div class="suggest-card-title">${escHtml(book.title)}${vBadge}</div>
+      <div class="suggest-card-meta">${escHtml(book.author)} · ${book.year} · ${escHtml(book.category)}</div>
+      <div class="suggest-card-reason">${escHtml(book.reason)}</div>
+      <div class="suggest-card-msg">${escHtml(book.coreMessage)}</div>
+      ${book.lesson ? `<div style="font-size:12px;color:var(--gray-700);background:#FFF7ED;border-left:3px solid #C2708F;border-radius:0 6px 6px 0;padding:8px 10px;margin-top:8px;line-height:1.6;">교훈 · ${escHtml(book.lesson)}</div>` : ''}
+    `;
+    card.addEventListener('click', () => selectBook(book, card));
+    list.appendChild(card);
+  });
+}
+
+function selectBook(book, cardEl) {
+  document.querySelectorAll('.suggest-card').forEach(c => c.classList.remove('selected'));
+  cardEl.classList.add('selected');
+  state.selectedBook = book;
+
+  document.getElementById('selectedBookCard').innerHTML = `
+    <div class="selected-book-title">${escHtml(book.title)}</div>
+    <div class="selected-book-meta">${escHtml(book.author)} · ${book.year} · ${escHtml(book.category)}</div>
+    <div class="selected-book-msg">${escHtml(book.coreMessage)}</div>
+  `;
+
+  document.getElementById('autoStep2').style.display = 'none';
+  document.getElementById('autoStep3').style.display = 'block';
+}
+
+document.getElementById('autoGenerateBtn').addEventListener('click', async () => {
+  if (!state.selectedBook) return;
+  const book = state.selectedBook;
+  state.bookInfo = {
+    title: book.title,
+    author: book.author,
+    year: book.year,
+    coreMessage: book.coreMessage,
+    targetAudience: book.targetAudience,
+    category: book.category,
+    description: book.description || '', // 실제 책 소개 — 생성·검증 근거
+  };
+  await generateCarousel();
+});
+
+// ===== MANUAL MODE =====
+document.getElementById('manualGenerateBtn').addEventListener('click', async () => {
+  const title = document.getElementById('manualTitle').value.trim();
+  const author = document.getElementById('manualAuthor').value.trim();
+  const category = document.getElementById('manualCategory').value;
+  const coreMessageInput = document.getElementById('manualCoreMessage').value.trim();
+  const affiliateLink = document.getElementById('manualAffiliateLink').value.trim();
+
+  if (!title) { showToast('책 제목을 입력해주세요.', 'warning'); return; }
+
+  // 쿠팡 링크 state 저장 + DM 섹션 입력란에도 반영
+  state.affiliateLink = affiliateLink || null;
+  if (affiliateLink) {
+    document.getElementById('affiliateLinkInput').value = affiliateLink;
+  }
+
+  showLoading('책 정보 분석 중...', coreMessageInput ? 'AI가 추가 정보를 파악하고 있습니다' : 'AI가 핵심 메시지와 독자층을 파악하고 있습니다');
+
+  try {
+    const analyzed = await apiFetch('/api/analyze', { title, author });
+    state.bookInfo = {
+      title,
+      author: author || analyzed.author || '',
+      year: analyzed.year || '',
+      coreMessage: coreMessageInput || analyzed.coreMessage,
+      targetAudience: analyzed.targetAudience,
+      category: category || analyzed.category,
+    };
+    await generateCarousel();
+  } catch (err) {
+    showToast(err.message, 'error');
+    hideLoading();
+  }
+});
+
+// ===== Generate Carousel (Phase 3: 자동 검증 루프 포함) =====
+async function generateCarousel() {
+  state.validation = null;
+  state.images = null;
+  state._catalogAdded = false;
+  state.bookNumber = '';  // 새 책 → 번호는 도서관 등록/게시할 때 부여
+  state.draftId = '';     // 새 책 → 새 초안
+  state.reelHook = '';    // 새 책 → 릴스 훅 새로 생성
+  state.reelScript = null; state.reelValidation = null;  // 새 책 → 릴스 대본 새로 생성
+  const rp = document.getElementById('reelPreview'); if (rp) rp.style.display = 'none';
+  document.getElementById('validationPanel').classList.remove('visible');
+  setStep(2);
+
+  showLoading('캐럿셀 생성 중...', 'Claude AI가 5페이지 카드뉴스를 작성하고 있습니다');
+
+  try {
+    let data;
+    try {
+      data = await apiFetch('/api/generate', state.bookInfo);
+    } catch (err) {
+      // 성인·에로 도서 → 우회 없이 즉시 차단
+      if (/ADULT_BLOCKED/.test(err.message)) {
+        hideLoading(); setStep(1);
+        showToast('성인·에로(19금·성인만화/소설) 도서는 리뷰를 만들 수 없습니다.', 'error');
+        return;
+      }
+      // 실존 미확인 책 → 사용자에게 확인 후 진행 여부를 묻는다
+      if (/BOOK_NOT_FOUND/.test(err.message)) {
+        hideLoading();
+        const proceed = confirm(`"${state.bookInfo.title}"은(는) 실제 출간된 책으로 확인되지 않았습니다.\n(쿠팡/알라딘에서 검색되지 않으면 어필리에이트 링크도 만들 수 없습니다)\n\n· 취소: 제목·저자를 다시 확인\n· 확인: 실제 책이 맞으니 그대로 제작`);
+        if (!proceed) { setStep(1); return; }
+        showLoading('캐럿셀 생성 중...', '실존 확인을 건너뛰고 제작합니다');
+        state.bookInfo.skipVerify = true;
+        data = await apiFetch('/api/generate', state.bookInfo);
+      } else {
+        throw err;
+      }
+    }
+    state.pages = data.pages;
+    state.bookCover = data.bookCover || '';   // 마지막 장에 띄울 책 표지
+    // 실제 책 소개(출판사) — 검증 단계가 부합도를 사실 기준으로 채점하는 근거
+    if (data.bookDescription) state.bookInfo.description = data.bookDescription;
+    // 교차검증으로 저자가 교정됐으면 반영(엉뚱한 저자 → 진짜 저자)
+    if (data.correctedBook) {
+      if (data.correctedBook.title) state.bookInfo.title = data.correctedBook.title;
+      if (data.correctedBook.author) state.bookInfo.author = data.correctedBook.author;
+      showToast(`저자 정보를 실제 정보로 교정했습니다 → ${state.bookInfo.author}`, 'info');
+    }
+    addToHistory(state.bookInfo?.title);
+    // 번호는 "도서관 등록/게시할 때"만 매긴다(만들기만 하고 버리면 번호를 먹지 않도록).
+    // 캡션이 번호를 직접 쓰지 않으므로 미리 예약할 필요가 없다.
+    state.bookNumber = '';
+    renderCarousel(data.pages);
+    setStep(3);
+    // 캐럿셀과 함께 릴스 대본(연결성 있는 문구)도 생성해 미리보기로 보여준다.
+    generateReelScript();
+    // 만든 캐럿셀을 번호 없이 임시 초안으로 자동 저장 → 등록/게시 안 해도 사라지지 않음.
+    autosaveDraft();
+  } catch (err) {
+    hideLoading();
+    setStep(1);
+    showToast(err.message, 'error');
+    return;
+  }
+
+  // Phase 3: 자동 품질 검증 루프 (최대 3회 시도)
+  await autoValidateLoop();
+}
+
+// Phase 3: 검증 → 기준 미달 시 재생성 → 재검증 (최대 3회)
+async function autoValidateLoop() {
+  const MAX = 2;   // 크레딧 절약: 검증 후 재생성은 최대 1회(비싼 main 호출 축소)
+  let best = { score: -1, pages: state.pages, validation: null };
+
+  for (let attempt = 1; attempt <= MAX; attempt++) {
+    showLoading(`품질 검증 중 (${attempt}/${MAX})...`, 'AI가 콘텐츠를 자동 평가합니다');
+
+    let result;
+    try {
+      result = await apiFetch('/api/validate', { pages: state.pages, bookInfo: state.bookInfo });
+    } catch (err) {
+      hideLoading();
+      showToast(`검증 오류: ${err.message}`, 'error');
+      return;
+    }
+    state.validation = result;
+
+    if (result.totalScore > best.score) {
+      best = { score: result.totalScore, pages: state.pages, validation: result };
+    }
+
+    if (result.approved) {
+      hideLoading();
+      renderValidation(result);
+      setStep(4);
+      showToast(`품질 합격! ${result.totalScore}/100점`, 'success');
+      // Phase 4: 합격 시 텔레그램 자동 발송
+      await autoSendTelegram();
+      return;
+    }
+
+    if (attempt < MAX) {
+      showLoading(`재생성 중 (${attempt}/${MAX - 1}회)...`, '피드백을 반영해 다시 작성합니다');
+      try {
+        const regenData = await apiFetch('/api/regenerate', {
+          bookInfo: state.bookInfo,
+          previousPages: state.pages,
+          feedback: result.feedback,
+          improvements: result.improvements || [],
+        });
+        state.pages = regenData.pages;
+        renderCarousel(regenData.pages);
+      } catch (err) {
+        hideLoading();
+        showToast(`재생성 오류: ${err.message}`, 'error');
+        break;
+      }
+    }
+  }
+
+  // 최대 시도 후 최고 점수 결과 표시
+  hideLoading();
+  if (best.validation) {
+    state.pages = best.pages;
+    state.validation = best.validation;
+    renderCarousel(best.pages);
+    renderValidation(best.validation);
+    setStep(best.validation.approved ? 4 : 3);
+    showToast(`${MAX}회 완료. 최고점: ${best.score}/100`, best.validation.approved ? 'success' : 'warning');
+    if (best.validation.approved) await autoSendTelegram();
+  }
+}
+
+// Phase 4: 제작 완료 시 텔레그램으로 완료 알림 + 확인 링크만 발송 (이미지·문구 미발송)
+async function autoSendTelegram() {
+  showLoading('텔레그램으로 발송 중...', '제작 완료 알림과 확인 링크를 보내고 있습니다');
+  try {
+    const data = await apiFetch('/api/send-telegram', {
+      bookInfo: state.bookInfo,
+      pipelineId: localStorage.getItem('activePipelineId') || '',
+    });
+    showToast(data.message || '텔레그램으로 완료 알림을 보냈습니다!', 'success');
+  } catch {
+    // 텔레그램 미설정이면 조용히 건너뜀
+    showToast('텔레그램 발송 건너뜀 (Bot Token 미설정 시 정상)', 'warning');
+  } finally {
+    hideLoading();
+  }
+  // 도서관 등록은 자동이 아니라 "도서관 등록" 메뉴에서 직접 한다 (실제 게시할 책만 등록).
+  populateLibraryReg();
+}
+
+// 도서관(/books)에 현재 책을 자동 등록 — 중복 등록 방지는 서버에서 처리
+async function addBookToCatalogIfNeeded() {
+  if (!state.bookInfo?.title) return;
+  // 서버 파이프라인이 이미 처리한 경우(bookNumber 있음)는 재등록 생략
+  if (state.bookNumber && state._catalogAdded) return;
+  try {
+    const link = document.getElementById('affiliateLinkInput')?.value?.trim()
+      || (Array.isArray(state.affiliateLinks) && state.affiliateLinks[0])
+      || state.affiliateLink
+      || null;
+    const result = await apiFetch('/api/add-book-to-catalog', {
+      bookInfo: state.bookInfo,
+      affiliateLinks: link ? [link] : (state.affiliateLinks || []),
+      affiliateLink: link,
+      bookNumber: state.bookNumber || '',  // 미리 예약한 번호로 등록 → 캡션 번호와 일치
+      cover: state.bookCover || '',        // 책 표지(네이버) → 도서관에 노출
+    });
+    if (result.bookNumber) {
+      state.bookNumber = result.bookNumber;
+      state._catalogAdded = true;
+      dropDraftIfAny();
+      showToast(`도서관에 No.${result.bookNumber}로 등록됐습니다 — 프로필 링크에서 확인 가능`, 'success');
+    }
+  } catch (e) {
+    console.warn('도서관 등록 실패(무시):', e.message);
+  }
+}
+
+// ===== Render Carousel =====
+function renderCarousel(pages) {
+  const scroll = document.getElementById('carouselScroll');
+  scroll.innerHTML = '';
+
+  const cardData = [
+    { num: 1, cls: 'card-1', content: pages.page1, type: 'hook' },
+    { num: 2, cls: 'card-2', content: pages.page2, type: 'body' },
+    { num: 3, cls: 'card-3', content: pages.page3, type: 'body' },
+    { num: 4, cls: 'card-4', content: pages.page4, type: 'body' },
+    { num: 5, cls: 'card-5', content: pages.page5, type: 'cta' },
+  ];
+
+  const bookFooter = state.bookInfo ? `${state.bookInfo.title} · ${state.bookInfo.author}` : '';
+
+  cardData.forEach(({ num, cls, content, type }) => {
+    const card = document.createElement('div');
+    card.className = `card ${cls}`;
+
+    let inner = `<div class="card-inner"><div class="card-num">${num}</div>`;
+
+    if (type === 'cta') {
+      // 마지막 장 = 책 공개 (솔루션 + 다리문장 + 표지·제목·저자)
+      const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
+      inner += `<div class="card-headline">${escHtml(content.cta || '')}</div>`;
+      if (content.linkText) inner += `<div class="card-body" style="opacity:.9;margin-bottom:16px;">${escHtml(content.linkText)}</div>`;
+      inner += `<div class="card-book-reveal">`;
+      if (state.bookCover) inner += `<img class="cbr-cover" src="${escHtml(state.bookCover)}" referrerpolicy="no-referrer">`;
+      inner += `<div class="cbr-info"><div class="cbr-eyebrow">오늘의 책</div><div class="cbr-title">${escHtml(cleanT)}</div><div class="cbr-author">${escHtml(state.bookInfo?.author || '')}</div></div></div>`;
+      inner += `<div class="card-footer"><span class="card-book-info"></span><button class="card-copy-btn" data-page="${num}">복사</button></div>`;
+    } else if (type === 'hook') {
+      // 1페이지: 헤드라인만, footer 없음 (CSS로도 숨김)
+      inner += `<div class="card-headline">${escHtml(content.headline || '')}</div>`;
+    } else {
+      inner += `<div class="card-headline">${escHtml(content.headline || '')}</div><div class="card-divider"></div><div class="card-body">${escHtml(content.body || '')}</div>`;
+      inner += `<div class="card-footer"><span class="card-book-info">${escHtml(bookFooter)}</span><button class="card-copy-btn" data-page="${num}">복사</button></div>`;
+    }
+
+    inner += `</div>`;
+    card.innerHTML = inner;
+    scroll.appendChild(card);
+  });
+
+  scroll.querySelectorAll('.card-copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const n = parseInt(btn.dataset.page);
+      copyText(getCardText(pages[`page${n}`], n), `P${n}`);
+    });
+  });
+
+  document.getElementById('carouselWrapper').classList.add('visible');
+  document.getElementById('captionWrapper').classList.add('visible');
+  document.getElementById('dmReplyWrapper').style.display = 'block';
+  document.getElementById('captionResult').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'none';
+}
+
+// ===== Validation =====
+function renderValidation(result) {
+  const { totalScore, scores, feedback, improvements, approved } = result;
+
+  const circle = document.getElementById('scoreCircle');
+  circle.className = `score-circle ${approved ? 'pass' : 'fail'}`;
+  document.getElementById('scoreNumber').textContent = totalScore;
+  document.getElementById('validationStatus').textContent = approved
+    ? `합격 (${totalScore}점) — 발송 가능`
+    : `미달 (${totalScore}점) — 재생성 권장`;
+  document.getElementById('validationStatus').style.color = approved ? 'var(--success)' : 'var(--error)';
+  document.getElementById('validationFeedback').textContent = feedback || '';
+
+  const barsEl = document.getElementById('scoreBars');
+  barsEl.innerHTML = SCORE_KEYS.map(({ key, label, max }) => {
+    const val = scores?.[key] ?? 0;
+    const pct = Math.round((val / max) * 100);
+    return `<div class="score-bar-item">
+      <div class="score-bar-header"><span>${label}</span><span style="font-weight:700;color:var(--gray-800)">${val}<span style="font-weight:400;color:var(--gray-400)">/${max}</span></span></div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:0%" data-pct="${pct}"></div></div>
+    </div>`;
+  }).join('');
+
+  requestAnimationFrame(() => {
+    barsEl.querySelectorAll('.score-bar-fill').forEach(bar => { bar.style.width = bar.dataset.pct + '%'; });
+  });
+
+  document.getElementById('improvementsList').innerHTML = (improvements || []).map(imp =>
+    `<div class="improvement-item"><div class="improvement-dot"></div><span>${escHtml(imp)}</span></div>`
+  ).join('');
+
+  document.getElementById('telegramBtn').disabled = !approved;
+  updateInstagramBtn();
+  const panel = document.getElementById('validationPanel');
+  panel.classList.add('visible');
+  // 버튼(validation-actions)이 화면에 보이도록 스크롤 — 패널 하단으로 이동
+  setTimeout(() => {
+    const actionsEl = panel.querySelector('.validation-actions');
+    const target = actionsEl || panel;
+    target.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, 200);
+}
+
+// ===== Buttons =====
+document.getElementById('validateBtn').addEventListener('click', async () => {
+  if (!state.pages || !state.bookInfo) return;
+  showLoading('품질 검증 중...', 'Claude AI가 콘텐츠를 평가하고 있습니다');
+  try {
+    const result = await apiFetch('/api/validate', { pages: state.pages, bookInfo: state.bookInfo });
+    state.validation = result;
+    renderValidation(result);
+    setStep(result.approved ? 4 : 3);
+    showToast(result.approved ? `합격! ${result.totalScore}/100점` : `${result.totalScore}점 — 재생성 권장`, result.approved ? 'success' : 'warning');
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    hideLoading();
+  }
+});
+
+// 책 다시 고르기: 캐럿셀·캡션·검증 초기화 후 책 선택 단계로 복귀
+document.getElementById('rePickBookBtn').addEventListener('click', () => {
+  state.pages = null;
+  state.validation = null;
+  state.bookInfo = null;
+  state.selectedBook = null;
+  state.caption = null;
+  state.captionHashtags = null;
+  state.dmKeyword = null;
+  state.images = null;
+
+  document.getElementById('carouselWrapper').classList.remove('visible');
+  document.getElementById('captionWrapper').classList.remove('visible');
+  document.getElementById('dmReplyWrapper').style.display = 'none';
+  document.getElementById('dmReplyResult').style.display = 'none';
+  document.getElementById('captionResult').style.display = 'none';
+  document.getElementById('validationPanel').classList.remove('visible');
+  document.getElementById('emptyState').style.display = '';
+
+  // 자동 추천 탭이 활성화된 경우 책 선택 목록으로 복귀
+  if (document.getElementById('panelAuto').classList.contains('active')) {
+    document.getElementById('autoStep1').style.display = 'none';
+    document.getElementById('autoStep2').style.display = 'block';
+    document.getElementById('autoStep3').style.display = 'none';
+  }
+
+  setStep(1);
+  showToast('책을 다시 선택해주세요.', 'info');
+});
+
+document.getElementById('regenerateBtn').addEventListener('click', async () => {
+  if (!state.bookInfo) return;
+  state.validation = null;
+  document.getElementById('validationPanel').classList.remove('visible');
+  await generateCarousel();
+});
+
+document.getElementById('regenFromFeedbackBtn').addEventListener('click', async () => {
+  if (!state.pages || !state.validation || !state.bookInfo) return;
+  showLoading('피드백 반영 재생성 중...', '개선 사항을 반영해 다시 작성하고 있습니다');
+  document.getElementById('validationPanel').classList.remove('visible');
+  setStep(2);
+  try {
+    const data = await apiFetch('/api/regenerate', {
+      bookInfo: state.bookInfo,
+      previousPages: state.pages,
+      feedback: state.validation.feedback,
+      improvements: state.validation.improvements || [],
+    });
+    state.pages = data.pages;
+    state.validation = null;
+    renderCarousel(data.pages);
+    setStep(3);
+    showToast('재생성 완료. 다시 검증해보세요.', 'success');
+  } catch (err) {
+    setStep(3);
+    showToast(err.message, 'error');
+  } finally {
+    hideLoading();
+  }
+});
+
+document.getElementById('generateImagesBtn').addEventListener('click', async () => {
+  if (!state.pages || !state.bookInfo) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
+
+  showLoading('이미지 프롬프트 생성 중...', 'AI가 각 페이지 내용에 맞는 이미지를 준비하고 있습니다');
+
+  try {
+    const data = await apiFetch('/api/generate-images', {
+      pages: state.pages,
+      bookInfo: state.bookInfo,
+    });
+    state.images = data.images;
+    hideLoading();
+    // 순차 로딩 (동시 요청 → Pollinations rate-limit 원인) — await로 1장씩
+    showToast('페이지 1부터 순서대로 이미지를 생성합니다 (1~2분 소요)', 'info');
+    await applyImagesToCards(data.images);
+    // 이미 도서관에 등록된 책이면, 새로 만든 이미지를 보관함에도 자동 반영
+    // (원본 배경이 아니라 텍스트까지 합성된 최종 이미지를 저장)
+    if (state.bookNumber && state._catalogAdded) {
+      try {
+        const archImages = await getArchiveImages();
+        await apiFetch('/api/save-post', {
+          bookInfo: state.bookInfo,
+          bookNumber: state.bookNumber,
+          images: archImages,
+          cover: state.bookCover || '',
+        });
+        showToast('새 이미지를 보관함에도 반영했습니다', 'success');
+      } catch (e) { console.warn('보관함 이미지 반영 실패(무시):', e.message); }
+    } else {
+      // 아직 도서관에 등록 전이면, 합성 이미지까지 포함해 초안을 갱신(사라지지 않게)
+      autosaveDraft();
+    }
+  } catch (err) {
+    hideLoading();
+    showToast(err.message, 'error');
+  }
+});
+
+// 이미지 5장 로딩 — /api/image 경로(KV 저장)이면 병렬 즉시 로드, Pollinations URL이면 순차 로딩
+async function applyImagesToCards(images) {
+  const cards = document.querySelectorAll('#carouselScroll .card');
+  const pages = ['page1', 'page2', 'page3', 'page4', 'page5'];
+
+  // /api/image 경로는 서버에 이미 저장된 이미지 → 모두 동시에 즉시 로드
+  const allKv = pages.every(p => !images[p] || images[p].startsWith('/api/image'));
+  if (allKv) {
+    showToast('저장된 이미지를 불러오는 중...', 'info');
+    await Promise.all(
+      pages.map((p, i) => {
+        const url = images[p];
+        if (!url || !cards[i]) return Promise.resolve();
+        return loadImageWithRetry(cards[i], url, i + 1, 0);
+      })
+    );
+  } else {
+    // Pollinations 직접 URL — 순차 로딩으로 레이트 리밋 회피
+    showToast('페이지 1부터 순서대로 이미지를 생성합니다 (1~2분 소요)', 'info');
+    for (let i = 0; i < pages.length; i++) {
+      const url = images[pages[i]];
+      if (!url || !cards[i]) continue;
+      showToast(`이미지 생성 중... (${i + 1}/5장)`, 'info');
+      await loadImageWithRetry(cards[i], url, i + 1, 0);
+      if (i < pages.length - 1) await new Promise(r => setTimeout(r, 10000));
+    }
+  }
+
+  const loaded = [...cards].filter(c => c.dataset.blobUrl).length;
+  showToast(`이미지 로드 완료 (${loaded}/5장)`, loaded === 5 ? 'success' : 'warning');
+  return loaded;
+}
+
+// fetch+AbortController 기반 재시도 (img.onerror는 타임아웃 제어 불가)
+// 3회 재시도, 시도 사이 15s / 30s 대기
+async function loadImageWithRetry(card, baseUrl, pageNum, attempt) {
+  const MAX_ATTEMPTS = 3;
+  const RETRY_DELAYS = [0, 15000, 30000];
+  const FETCH_TIMEOUT = 60000; // Pollinations 최대 생성 대기 (1분)
+
+  let spinner = card.querySelector('.card-img-loading');
+  if (!spinner) {
+    spinner = document.createElement('div');
+    spinner.className = 'card-img-loading';
+    spinner.innerHTML = '<div class="card-img-spinner"></div>';
+    card.appendChild(spinner);
+  }
+
+  if (attempt > 0) {
+    const d = RETRY_DELAYS[attempt];
+    showToast(`페이지 ${pageNum} 재시도 중... (${attempt}/${MAX_ATTEMPTS - 1}번째, ${d/1000}초 후)`, 'info');
+    await new Promise(r => setTimeout(r, d));
+  }
+
+  // 재시도마다 새 seed 파라미터로 캐시 우회
+  const tryUrl = attempt === 0
+    ? baseUrl
+    : baseUrl.replace(/&r=\d+/, '') + '&r=' + Date.now();
+
+  try {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
+    const res = await fetch(tryUrl, { signal: ctrl.signal });
+    clearTimeout(tid);
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    if (!blob.type.startsWith('image/')) throw new Error('non-image');
+
+    const blobUrl = URL.createObjectURL(blob);
+    spinner.remove();
+    card.style.backgroundImage = `url('${blobUrl}')`;
+    card.classList.add('card-with-image');
+    card.dataset.blobUrl = blobUrl;   // canvas 합성용 로컬 blob
+    card.dataset.imageUrl = tryUrl;   // 원본 URL 보존
+
+    if (!card.querySelector('.card-img-badge')) {
+      const badge = document.createElement('div');
+      badge.className = 'card-img-badge';
+      badge.textContent = 'AI 이미지';
+      card.appendChild(badge);
+    }
+    addSaveButton(card, pageNum);
+
+  } catch (err) {
+    if (attempt + 1 < MAX_ATTEMPTS) {
+      await loadImageWithRetry(card, baseUrl, pageNum, attempt + 1);
+    } else {
+      const s = card.querySelector('.card-img-loading');
+      if (s) s.remove();
+      showToast(`페이지 ${pageNum} 이미지 실패 — 다시 생성 버튼을 눌러보세요`, 'warning');
+    }
+  }
+}
+
+// ── 카드 버튼: 이미지 저장(우하단) + 이 페이지만 재생성(좌하단) ──
+function addSaveButton(card, pageNum) {
+  if (!card.querySelector('.card-img-dl:not(.card-img-regen)')) {
+    const btn = document.createElement('button');
+    btn.className = 'card-img-dl';
+    btn.textContent = '이미지 저장';
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      saveCardAsCanvas(card, pageNum);
+    });
+    card.appendChild(btn);
+  }
+  if (!card.querySelector('.card-img-regen')) {
+    const rbtn = document.createElement('button');
+    rbtn.className = 'card-img-dl card-img-regen';
+    rbtn.textContent = '재생성';
+    rbtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      regeneratePageImage(card, pageNum);
+    });
+    card.appendChild(rbtn);
+  }
+}
+
+// 재생성 시 구도가 확실히 달라지게 프롬프트에 섞는 변주 문구 (시드만 바꾸면 비슷하게 나옴)
+const REGEN_VARIATIONS = [
+  'a completely different composition and camera angle',
+  'a different moment of the same scene, new framing',
+  'zoomed out wider framing, different perspective',
+  'shot from a different angle, fresh composition',
+  'different lighting direction and framing',
+];
+
+// 이상한 이미지가 나온 페이지만 골라서 다시 생성 (장면 프롬프트에 변주 + 새 시드 + 캐시 우회).
+async function regeneratePageImage(card, pageNum) {
+  const key = 'page' + pageNum;
+  let baseUrl = (state.images && state.images[key]) || card.dataset.imageUrl || '';
+  const rbtn = card.querySelector('.card-img-regen');
+  if (rbtn) { rbtn.disabled = true; rbtn.textContent = '생성 중...'; }
+  try {
+    let newUrl;
+    if (baseUrl && baseUrl.includes('image.pollinations.ai')) {
+      // URL 속 프롬프트를 꺼내 "다른 구도" 변주 문구를 덧붙이고, 새 시드 + 타임스탬프로 재조립.
+      // (시드만 바꾸면 거의 똑같은 그림이 나와 "재생성 안 됨"처럼 보이는 문제 해결)
+      try {
+        const m = baseUrl.match(/\/prompt\/([^?]+)(\?.*)?$/);
+        let promptTxt = decodeURIComponent(m[1]).replace(/,\s*a (completely different|different)[^,]*(composition|framing|angle|perspective)[^,]*/gi, '');
+        const vary = REGEN_VARIATIONS[Math.floor(Math.random() * REGEN_VARIATIONS.length)];
+        const params = new URLSearchParams((m[2] || '').replace(/^\?/, ''));
+        params.set('seed', String(Math.floor(Math.random() * 900000) + 100000));
+        params.set('r', String(Date.now()));   // 캐시 완전 우회
+        newUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(promptTxt + ', ' + vary) + '?' + params.toString();
+      } catch (e) {
+        // 파싱 실패 시 최소한 시드만 교체
+        const seed = Math.floor(Math.random() * 900000) + 100000;
+        newUrl = baseUrl.replace(/([?&])seed=\d+/, `$1seed=${seed}`).replace(/&r=\d+/g, '') + '&r=' + Date.now();
+      }
+    } else if (state.pages && state.bookInfo) {
+      // 서버 저장본(/api/image 등) → 프롬프트를 새로 받아 이 페이지 것만 사용
+      const data = await apiFetch('/api/generate-images', { pages: state.pages, bookInfo: state.bookInfo });
+      newUrl = data.images && data.images[key];
+    }
+    if (!newUrl) { showToast('재생성할 이미지 정보가 없습니다 — 먼저 "이미지 생성"을 해주세요', 'warning'); return; }
+    showToast(`페이지 ${pageNum} 이미지를 새 구도로 다시 생성합니다 (최대 1분, 잠시 기다려주세요)`, 'info');
+    await loadImageWithRetry(card, newUrl, pageNum, 0);
+    if (state.images) state.images[key] = newUrl;
+    if (!state._catalogAdded) autosaveDraft();   // 초안에도 새 이미지 반영
+  } catch (e) {
+    showToast(`페이지 ${pageNum} 재생성 실패: ${e.message}`, 'error');
+  } finally {
+    if (rbtn) { rbtn.disabled = false; rbtn.textContent = '재생성'; }
+  }
+}
+
+// 이미지 전체 저장 — 5장 blob 변환 후 Web Share API로 한 번에 공유 (모바일 사진첩 저장)
+async function saveAllCards() {
+  const cards = document.querySelectorAll('#carouselScroll .card');
+  const hasImages = [...cards].some(c => c.dataset.blobUrl);
+  if (!hasImages) {
+    showToast('먼저 이미지를 생성해 주세요', 'warning');
+    return;
+  }
+  const btn = document.getElementById('saveAllImagesBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '변환 중... (0/5)'; }
+
+  // ① 먼저 5장 모두 blob으로 변환 (setTimeout 없이 연속 처리 → user gesture 컨텍스트 유지)
+  const blobs = [];
+  for (let i = 0; i < Math.min(cards.length, 5); i++) {
+    if (!cards[i]) continue;
+    if (btn) btn.textContent = `변환 중... (${i + 1}/5)`;
+    const blob = await buildCardBlob(cards[i], i + 1);
+    if (blob) blobs.push({ blob, pageNum: i + 1 });
+  }
+
+  if (!blobs.length) {
+    if (btn) { btn.disabled = false; btn.textContent = '이미지 전체 저장'; }
+    showToast('변환된 이미지가 없습니다', 'error');
+    return;
+  }
+  if (btn) btn.textContent = '저장 중...';
+
+  const files = blobs.map(({ blob, pageNum }) =>
+    new File([blob], `carousel_p${pageNum}.png`, { type: 'image/png' })
+  );
+
+  // ② 모바일: Web Share API로 5장 한 번에 공유 → 사진첩 저장
+  if (navigator.canShare && navigator.canShare({ files })) {
+    try {
+      await navigator.share({ files, title: '캐럿셀 이미지 5장' });
+      showToast(`${blobs.length}장 저장 완료`, 'success');
+    } catch (e) {
+      if (e.name !== 'AbortError') showToast('저장 실패: ' + e.message, 'error');
+    }
+  } else {
+    // ③ 데스크톱 폴백: 순차 다운로드
+    for (const { blob, pageNum } of blobs) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `carousel_p${pageNum}.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+      await new Promise(r => setTimeout(r, 300));
+    }
+    showToast(`${blobs.length}장 저장 완료`, 'success');
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '이미지 전체 저장'; }
+}
+
+document.getElementById('saveAllImagesBtn').addEventListener('click', saveAllCards);
+
+// ── 릴스 세트(세로 9:16) ──
+// 한 장당 4~5초 시청 기준 → 한 화면에서 읽히는 분량(2~4줄, 약 50~60자)으로 충분히 담는다.
+// 5장 구성: ① 공감 훅 → ②③④ 본문 핵심(각 페이지 헤드라인+요지) → ⑤ 책 공개. 책에 대한 호기심을 쌓는다.
+const REEL_HANDLE = '@love.between_lines';
+const REEL_ACCENT = { 1: '#C084FC', 2: '#60A5FA', 3: '#34D399', 4: '#F472B6', 5: '#FBBF24' };
+
+// 릴스 한 장에 담을 문구 — 문장 단위로 글자 상한까지 채워 "내용이 읽히게" 만든다.
+// (한 문장만 달랑 자르지 않고, 들어갈 수 있는 만큼 문장을 이어 담는다)
+function reelClamp(text, maxChars) {
+  let s = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!s) return '';
+  if ([...s].length <= maxChars) return s.replace(/[.。]\s*$/, '').trim();
+  const sentences = s.match(/[^.!?。…]+[.!?。…]?/g) || [s];
+  let out = '';
+  for (const sent of sentences) {
+    const cand = (out + ' ' + sent).trim();
+    if ([...cand].length <= maxChars) out = cand; else break;
+  }
+  if (out.trim()) return out.replace(/[.。]\s*$/, '').trim();
+  // 첫 문장도 너무 길면 단어 경계로 자르고 … 표시(궁금증 유발)
+  let cut = [...s].slice(0, maxChars).join('');
+  const sp = cut.lastIndexOf(' ');
+  if (sp > maxChars * 0.5) cut = cut.slice(0, sp);
+  return cut.trim() + '…';
+}
+
+// 긴 문장을 릴스용 짧은 한 줄로: 첫 문장/구절만 취하고 글자 수 상한을 넘으면 띄어쓰기에서 깔끔히 자른다.
+function shortReelLine(text, maxChars) {
+  let s = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!s) return '';
+  // 1) 첫 문장 경계(. ! ? 。 …)에서 끊기
+  const sent = s.match(/^[^.!?。…]*[.!?。…]?/);
+  if (sent && sent[0].trim()) s = sent[0].trim();
+  s = s.replace(/[.。]$/, '').trim();
+  if ([...s].length <= maxChars) return s;
+  // 2) 그래도 길면 콤마 앞 구절로 줄이기
+  const comma = s.split(/[,，]/)[0].trim();
+  if (comma && [...comma].length <= maxChars) return comma;
+  // 3) 마지막 수단: 글자 상한에서 띄어쓰기 기준으로 자르기
+  const arr = [...s].slice(0, maxChars);
+  let cut = arr.join('');
+  const sp = cut.lastIndexOf(' ');
+  if (sp > maxChars * 0.5) cut = cut.slice(0, sp);
+  return cut.trim();
+}
+
+// 배경 cover-fit + 가독성 그라데이션. 공통.
+async function _reelBg(ctx, W, H, blobUrl) {
+  if (blobUrl) {
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
+    const scale = Math.max(W / img.width, H / img.height);
+    const dw = img.width * scale, dh = img.height * scale;
+    ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  } else { ctx.fillStyle = '#1a1024'; ctx.fillRect(0, 0, W, H); }
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, 'rgba(0,0,0,0.58)'); g.addColorStop(0.4, 'rgba(0,0,0,0.28)');
+  g.addColorStop(0.7, 'rgba(0,0,0,0.5)'); g.addColorStop(1, 'rgba(0,0,0,0.9)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+
+// 계정 핸들 — 우측 상단, 너무 위는 아이폰 카메라(다이내믹 아일랜드)에 가리므로 살짝 내려 배치.
+function _reelTopHandle(ctx, W) {
+  const PAD = 90;
+  ctx.textAlign = 'right';
+  ctx.font = '800 36px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 14;
+  ctx.fillText(REEL_HANDLE, W - PAD, 232);
+  ctx.shadowBlur = 0; ctx.textAlign = 'left';
+}
+
+// 릴스 텍스트 한 장(세로 1080x1920) — 하나의 큰 문구만. 작은 라벨/하단 푸터 없음.
+async function buildReelTextSlide(blobUrl, slide) {
+  const W = 1080, H = 1920, PAD = 90, TW = W - PAD * 2;
+  const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  await document.fonts.ready;
+  await _reelBg(ctx, W, H, blobUrl);
+  const accent = slide.accent || '#C084FC';
+  const isHook = !!slide.isHook;
+  _reelTopHandle(ctx, W);
+
+  // 훅(1페이지)은 더 크고 굵게 — 탐색 탭 썸네일에서도 읽히도록. 본문 장은 4~5초에 읽히는 분량.
+  const { px, lines } = isHook
+    ? autoFitLines(ctx, slide.text || '', TW, 108, 62, 6, 3, '900')
+    : autoFitLines(ctx, slide.text || '', TW, 84, 46, 5, 4, '900');
+  const LH = Math.round(px * 1.34);
+  const BAR_BLOCK = isHook ? 54 : 46;     // 액센트 바 + 여백
+  const blockH = BAR_BLOCK + lines.length * LH;
+  let y = Math.round(H * (isHook ? 0.42 : 0.46) - blockH / 2);
+
+  // 훅은 가독성·썸네일 대비를 위해 텍스트 블록 뒤에 부드러운 어둠 띠를 깐다.
+  if (isHook) {
+    const padV = 44, top = y - padV, bh = blockH + padV * 1.6;
+    const sg = ctx.createLinearGradient(0, top, 0, top + bh);
+    sg.addColorStop(0, 'rgba(0,0,0,0)'); sg.addColorStop(0.5, 'rgba(0,0,0,0.42)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = sg; ctx.fillRect(0, top, W, bh);
+  }
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = accent; ctx.fillRect(PAD, y, isHook ? 110 : 90, isHook ? 9 : 7);
+  y += BAR_BLOCK + px;
+  ctx.font = `900 ${px}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
+  ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = isHook ? 30 : 22;
+  for (const ln of lines) { ctx.fillText(ln, PAD, y); y += LH; }
+  ctx.shadowBlur = 0;
+  return new Promise(r => canvas.toBlob(r, 'image/png'));
+}
+
+// 릴스 마지막 장 — 책 공개(표지 + 제목 + 저자 + 해결 한 줄, 가운데 정렬)
+async function buildReelRevealSlide(blobUrl, accent) {
+  const W = 1080, H = 1920, PAD = 90, TW = W - PAD * 2;
+  const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  await document.fonts.ready;
+  await _reelBg(ctx, W, H, blobUrl);
+  _reelTopHandle(ctx, W);
+  const pg5 = state.pages?.page5 || {};
+  const cta = shortReelLine(pg5.cta || '', 40);  // 해결 한 줄
+  let cover = null;
+  if (state.bookCover) {
+    try {
+      const im = new Image(); im.crossOrigin = 'anonymous';
+      await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = `/api/cover?url=${encodeURIComponent(state.bookCover)}`; });
+      cover = im;
+    } catch { cover = null; }
+  }
+  const rr = (x,y,w,h,r)=>{ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();};
+  ctx.textAlign = 'center';
+
+  // ── 요소 크기 먼저 측정 → 전체 블록을 안전 영역(상단 핸들 아래 ~ 하단 IG UI 위)에 세로 중앙 정렬 ──
+  const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
+  const COVER_W = 360, COVER_H = 514;
+  const GAP_COVER = 78;          // 표지 ↔ 제목
+  ctx.font = '900 64px "Noto Sans KR", sans-serif';
+  const { px: tPx, lines: tLines } = autoFitLines(ctx, `「${cleanT}」`, TW, 64, 42, 4, 2, '900');
+  const tLH = Math.round(tPx * 1.3);
+  const GAP_AUTHOR = 22, AUTHOR_H = state.bookInfo?.author ? 44 : 0;
+  const GAP_CTA = 64, BAR_H = 6, GAP_BAR = 40;
+  let cLines = [], cPx = 44, cLH = 0;
+  if (cta) { const r = autoFitLines(ctx, cta, TW, 44, 32, 3, 2, '600'); cPx = r.px; cLines = r.lines; cLH = Math.round(cPx * 1.42); }
+  const GAP_PROFILE = 54, PROFILE_H = 38;
+
+  const coverPart = cover ? COVER_H + GAP_COVER : 0;
+  const titlePart = tLines.length * tLH;
+  const authorPart = AUTHOR_H ? GAP_AUTHOR + AUTHOR_H : 0;
+  const ctaPart = cLines.length ? GAP_CTA + BAR_H + GAP_BAR + cLines.length * cLH : 0;
+  const profilePart = GAP_PROFILE + PROFILE_H;
+  const blockH = coverPart + titlePart + authorPart + ctaPart + profilePart;
+
+  // 안전 영역: 상단 핸들(~170) ~ 하단 IG 오버레이 위(~1430). 그 안에서 세로 중앙.
+  const bandTop = 200, bandBottom = 1430;
+  let y = Math.round((bandTop + bandBottom) / 2 - blockH / 2);
+  if (y < bandTop) y = bandTop;
+
+  if (cover) {
+    const cx = (W - COVER_W) / 2, cy = y;
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 12;
+    rr(cx, cy, COVER_W, COVER_H, 14); ctx.fillStyle = '#000'; ctx.fill(); ctx.restore();
+    ctx.save(); rr(cx, cy, COVER_W, COVER_H, 14); ctx.clip(); ctx.drawImage(cover, cx, cy, COVER_W, COVER_H); ctx.restore();
+    y += coverPart;
+  }
+  // 제목 (가장 큼)
+  ctx.font = `900 ${tPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
+  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 16;
+  y += tPx * 0.0;
+  for (const ln of tLines) { y += tLH; ctx.fillText(ln, W / 2, y - Math.round(tLH * 0.22)); }
+  ctx.shadowBlur = 0;
+  // 저자
+  if (AUTHOR_H) {
+    y += GAP_AUTHOR;
+    ctx.font = '500 34px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.fillText(state.bookInfo.author, W / 2, y + 30); y += AUTHOR_H;
+  }
+  // 해결 한 줄
+  if (cLines.length) {
+    y += GAP_CTA;
+    ctx.fillStyle = accent; ctx.fillRect((W - 90) / 2, y, 90, BAR_H); y += BAR_H + GAP_BAR;
+    ctx.font = `600 ${cPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    for (const ln of cLines) { y += cLH; ctx.fillText(ln, W / 2, y - Math.round(cLH * 0.28)); }
+  }
+  // 프로필 안내 (안전 영역 내, 하단 IG UI보다 위)
+  y += GAP_PROFILE;
+  ctx.font = '700 34px "Noto Sans KR", sans-serif'; ctx.fillStyle = accent;
+  ctx.fillText('프로필 링크에서 만나보세요', W / 2, y + 30);
+
+  ctx.textAlign = 'left';
+  return new Promise(r => canvas.toBlob(r, 'image/png'));
+}
+
+// 캐럿셀 문구를 조각내던 폴백(연결성 있는 대본 생성 실패 시에만 사용)
+function _reelFallbackScript(p) {
+  const joinHB = pg => {
+    const h = (pg?.headline || '').trim(), b = (pg?.body || '').trim();
+    if (!h) return b; if (!b) return h;
+    return /[.!?。…]$/.test(h) ? `${h} ${b}` : `${h}. ${b}`;
+  };
+  return { s1: p.page1?.headline || '', s2: joinHB(p.page2), s3: joinHB(p.page3), s4: joinHB(p.page4) };
+}
+
+// 릴스 대본 생성(연결성 있게) + 자동 검증 → state 저장 후 미리보기 렌더.
+async function generateReelScript(force) {
+  if (!state.pages?.page1?.headline) return;
+  if (state.reelScript && !force) { renderReelPreview(); return; }
+  const rbtn = document.getElementById('regenReelBtn');
+  if (rbtn) { rbtn.disabled = true; rbtn.textContent = '만드는 중...'; }
+  try {
+    const r = await apiFetch('/api/generate-reel', { pages: state.pages, bookInfo: state.bookInfo });
+    state.reelScript = r.reel || _reelFallbackScript(state.pages);
+    state.reelValidation = r.validation || null;
+  } catch (e) {
+    state.reelScript = _reelFallbackScript(state.pages);
+    state.reelValidation = { note: '자동 생성 실패 — 캐럿셀 문구로 대체' };
+  } finally {
+    if (rbtn) { rbtn.disabled = false; rbtn.textContent = '릴스 문구 다시 만들기'; }
+  }
+  renderReelPreview();
+}
+
+// 릴스 문구 미리보기 + 검증 배지 렌더
+function renderReelPreview() {
+  const panel = document.getElementById('reelPreview');
+  if (!panel || !state.reelScript) return;
+  const s = state.reelScript;
+  const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
+  const rev = `「${cleanT}」${state.bookInfo?.author ? ' · ' + state.bookInfo.author : ''}`;
+  const rows = [
+    ['1 · 훅', s.s1], ['2', s.s2], ['3', s.s3], ['4', s.s4], ['5 · 책 공개', rev],
+  ];
+  document.getElementById('reelLines').innerHTML = rows.map(([n, t]) =>
+    `<div style="display:flex;gap:8px;"><span style="color:#a78bda;font-weight:700;min-width:52px;">${n}</span><span>${escHtml(t || '—')}</span></div>`
+  ).join('');
+  const v = state.reelValidation || {};
+  const badge = document.getElementById('reelValidBadge');
+  const ok = v.connected !== false && v.readable !== false;
+  badge.textContent = v.score != null ? `검증 ${v.score}점` : (ok ? '검증 통과' : '점검 필요');
+  badge.style.background = ok ? '#dcfce7' : '#fef3c7';
+  badge.style.color = ok ? '#166534' : '#92400e';
+  document.getElementById('reelValidNote').textContent = v.note || '';
+  panel.style.display = 'block';
+}
+document.getElementById('regenReelBtn').addEventListener('click', () => generateReelScript(true));
+
+async function saveReelSet() {
+  if (!state.pages?.page1?.headline) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
+  const cards = document.querySelectorAll('#carouselScroll .card');
+  const bg = (i) => (cards[i] && cards[i].dataset.blobUrl) || null;
+  if (![0,1,2,3,4].some(i => bg(i))) { showToast('먼저 "이미지 생성"을 해주세요 (배경이 필요합니다).', 'warning'); return; }
+
+  const p = state.pages || {};
+  const btn = document.getElementById('saveReelSetBtn');
+  btn.disabled = true; btn.textContent = '만드는 중...';
+  try {
+    // 연결성 있는 릴스 대본이 아직 없으면 지금 생성(미리보기와 동일한 문구를 저장).
+    if (!state.reelScript) { btn.textContent = '릴스 문구 만드는 중...'; await generateReelScript(true); }
+    btn.textContent = '만드는 중...';
+    const sc = state.reelScript || _reelFallbackScript(p);
+    const textSlides = [
+      { bg: bg(0), text: reelClamp(sc.s1, 46), accent: REEL_ACCENT[1], isHook: true },
+      { bg: bg(1), text: reelClamp(sc.s2, 58), accent: REEL_ACCENT[2] },
+      { bg: bg(2), text: reelClamp(sc.s3, 58), accent: REEL_ACCENT[3] },
+      { bg: bg(3), text: reelClamp(sc.s4, 58), accent: REEL_ACCENT[4] },
+    ];
+    const files = [];
+    for (let i = 0; i < textSlides.length; i++) {
+      const blob = await buildReelTextSlide(textSlides[i].bg, textSlides[i]);
+      if (blob) files.push(new File([blob], `reel_${i + 1}.png`, { type: 'image/png' }));
+    }
+    const revealBlob = await buildReelRevealSlide(bg(4) || bg(0), REEL_ACCENT[5]);
+    if (revealBlob) files.push(new File([revealBlob], `reel_5.png`, { type: 'image/png' }));
+    if (!files.length) { showToast('릴스 이미지 생성 실패', 'error'); return; }
+    if (navigator.canShare && navigator.canShare({ files })) {
+      try { await navigator.share({ files, title: '릴스 세트' }); showToast('릴스 5장 저장 완료 — 인스타 릴스에서 순서대로 선택 + 음악', 'success'); }
+      catch (e) { if (e.name !== 'AbortError') { files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }); showToast('릴스 5장 저장 완료', 'success'); } }
+    } else {
+      files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); });
+      showToast('릴스 5장 저장 완료', 'success');
+    }
+  } catch (e) {
+    showToast('릴스 생성 실패: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '릴스 세트(세로 5장)';
+  }
+}
+document.getElementById('saveReelSetBtn').addEventListener('click', saveReelSet);
+
+// 텍스트+배경 합성 이미지를 base64 data URL로 반환 (텔레그램 발송용)
+async function generateCompositeDataUrl(card, pageNum) {
+  const W = 1080, H = 1080;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  await document.fonts.ready;
+  const blobUrl = card.dataset.blobUrl;
+  if (blobUrl) {
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
+    ctx.drawImage(img, 0, 0, W, H);
+    const grad = ctx.createLinearGradient(0, H * 0.3, 0, H);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.9)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  } else {
+    const BG = { 1:['#0a0a0a','#1e1b4b'], 2:['#0f172a','#1e3a8a'], 3:['#1c0a0a','#7f1d1d'], 4:['#0a1a12','#064e3b'], 5:['#1a0a2e','#6d28d9'] };
+    const [c1,c2] = BG[pageNum] || ['#0a0a0a','#1e1b4b'];
+    const grd = ctx.createLinearGradient(0,0,W*0.7,H);
+    grd.addColorStop(0, c1); grd.addColorStop(1, c2);
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+  }
+  ctx.font = '700 36px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.textAlign = 'left';
+  ctx.fillText(`${pageNum}`, 70, 86);
+  // 마지막 장 = 책 공개 (표지·제목·저자 + 솔루션)
+  if (pageNum === 5) {
+    await drawPage5Reveal(ctx, W, H);
+    return new Promise(resolve => canvas.toBlob(blob => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    }, 'image/jpeg', 0.85));
+  }
+  const pg = state.pages?.[`page${pageNum}`] || {};
+  let headline = '', body = '';
+  if (pageNum === 1) { headline = pg.headline || ''; body = ''; }
+  else { headline = pg.headline || ''; body = pg.body || ''; }
+  const PAD_X = 70, PAD_BOTTOM = 80, PAD_BETWEEN = 36;
+  const ACCENT_H = 6, ACCENT_W = 90, ACCENT_GAP = 28;
+  const TEXT_W = W - PAD_X * 2;
+
+  // 헤드라인: 68px에서 시작해 3줄 이내로 들어올 때까지 4px씩 축소 (최소 40px)
+  const { px: hlPx, lines: hlLines } = autoFitLines(ctx, headline, TEXT_W, 68, 40, 4, 3, '900');
+  const HL_LINE_H = Math.round(hlPx * 1.38);
+
+  // 본문: 42px에서 시작해 5줄 이내로 들어올 때까지 3px씩 축소 (최소 28px)
+  const { px: bodyPx, lines: bodyLines } = body
+    ? autoFitLines(ctx, body, TEXT_W, 42, 28, 3, 5, '400')
+    : { px: 42, lines: [] };
+  const BODY_LINE_H = Math.round(bodyPx * 1.42);
+
+  let curY = H - PAD_BOTTOM;
+  if (bodyLines.length) {
+    ctx.font = `400 ${bodyPx}px "Noto Sans KR", sans-serif`;
+    ctx.fillStyle = 'rgba(255,255,255,0.78)';
+    ctx.textAlign = 'left';
+    for (let i = bodyLines.length - 1; i >= 0; i--) {
+      ctx.fillText(bodyLines[i], PAD_X, curY);
+      curY -= BODY_LINE_H;
+    }
+    curY -= PAD_BETWEEN;
+  }
+  ctx.font = `900 ${hlPx}px "Noto Sans KR", sans-serif`;
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'left';
+  for (let i = hlLines.length - 1; i >= 0; i--) {
+    ctx.fillText(hlLines[i], PAD_X, curY);
+    curY -= HL_LINE_H;
+  }
+  curY -= ACCENT_GAP;
+  const ACC = { 1:'#8B5CF6', 2:'#60A5FA', 3:'#F87171', 4:'#34D399', 5:'#C084FC' };
+  ctx.fillStyle = ACC[pageNum] || '#8B5CF6';
+  ctx.fillRect(PAD_X, curY, ACCENT_W, ACCENT_H);
+  return new Promise(resolve => canvas.toBlob(blob => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  }, 'image/jpeg', 0.85));
+}
+
+// 오프스크린 캔버스로 각 페이지 텍스트가 몇 줄 나오는지 측정
+// autoFitLines 최소 폰트(헤드 40px/본문 28px)에서도 maxLines를 초과하면 issue로 반환
+function measureCanvasOverflow(pages) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080; canvas.height = 1080;
+  const ctx = canvas.getContext('2d');
+  const TEXT_W = 1080 - 70 * 2; // 940px
+  const issues = [];
+
+  const check = (pageKey, type, text, startPx, minPx, stepPx, maxLines, weight) => {
+    if (!text) return;
+    const { lines } = autoFitLines(ctx, text, TEXT_W, startPx, minPx, stepPx, maxLines, weight);
+    if (lines.length > maxLines) {
+      issues.push({ page: pageKey, type, text, currentLines: lines.length, maxLines });
+    }
+  };
+
+  for (let p = 1; p <= 5; p++) {
+    const pg = pages[`page${p}`] || {};
+    const headline = p === 5 ? (pg.cta || '') : (pg.headline || '');
+    const body = p === 1 || p === 5 ? (p === 5 ? pg.linkText || '' : '') : (pg.body || '');
+    check(`page${p}`, 'headline', headline, 68, 40, 4, 3, '900');
+    if (body) check(`page${p}`, 'body', body, 42, 28, 3, 5, '400');
+  }
+  return issues;
+}
+
+async function generateCompositeImages() {
+  const cards = document.querySelectorAll('#carouselScroll .card');
+  const result = {};
+  for (let i = 0; i < 5; i++) {
+    const card = cards[i];
+    if (!card) continue;
+    try {
+      result[`page${i + 1}`] = await generateCompositeDataUrl(card, i + 1);
+    } catch (err) {
+      console.warn(`Page ${i + 1} composite failed:`, err);
+    }
+  }
+  return result;
+}
+
+// 보관함에 저장할 이미지 — 배경+텍스트가 합성된 최종본을 만든다.
+// 카드에 AI 배경이 하나라도 로드돼 있으면 합성본(텍스트 포함)을, 없으면 원본 URL을 반환.
+async function getArchiveImages() {
+  const cards = document.querySelectorAll('#carouselScroll .card');
+  const anyLoaded = [...cards].some(c => c.dataset.blobUrl);
+  if (anyLoaded) {
+    try {
+      const composite = await generateCompositeImages();
+      if (composite && Object.keys(composite).length) return composite;
+    } catch (e) { console.warn('합성 이미지 생성 실패, 원본 URL로 대체:', e); }
+  }
+  return state.images || null;
+}
+
+async function saveCardAsCanvas(card, pageNum) {
+  const blob = await buildCardBlob(card, pageNum);
+  if (!blob) { showToast(`페이지 ${pageNum} 변환 실패`, 'error'); return; }
+  const filename = `carousel_p${pageNum}.png`;
+  const file = new File([blob], filename, { type: 'image/png' });
+  // 모바일: Web Share API → 사진첩 저장 지원 (iOS 15+ / Android Chrome)
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: `캐럿셀 ${pageNum}페이지` });
+      showToast(`페이지 ${pageNum} 저장 완료`, 'success');
+    } catch (e) {
+      if (e.name !== 'AbortError') showToast(`페이지 ${pageNum} 저장 실패`, 'warning');
+    }
+  } else {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    showToast(`페이지 ${pageNum} 저장 완료`, 'success');
+  }
+}
+
+// 마지막 장(5페이지) 책 공개 그리기 — 표지·제목·저자 + 솔루션. 저장/텔레그램 공용.
+async function drawPage5Reveal(ctx, W, H) {
+  const PAD_X = 70;
+  const pg5 = state.pages?.page5 || {};
+  const cta = pg5.cta || '', link = pg5.linkText || '';
+  const TEXT_W = W - PAD_X * 2;
+  const rr = (x,y,w,h,r)=>{ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();};
+
+  // 표지 로드 (프록시 경유 → 캔버스 CORS 안전)
+  let cover = null;
+  if (state.bookCover) {
+    try {
+      const im = new Image(); im.crossOrigin = 'anonymous';
+      await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = `/api/cover?url=${encodeURIComponent(state.bookCover)}`; });
+      cover = im;
+    } catch { cover = null; }
+  }
+
+  // 하단 책 패널 (편집 디자인: 큰 표지 + 정돈된 텍스트)
+  const panelMargin = 56, panelH = 252, panelY = H - panelMargin - panelH;
+  ctx.fillStyle = 'rgba(255,255,255,0.13)';
+  rr(PAD_X, panelY, W - PAD_X * 2, panelH, 26); ctx.fill();
+  ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+  rr(PAD_X, panelY, W - PAD_X * 2, panelH, 26); ctx.stroke();
+
+  const padIn = 36;
+  let textLeft = PAD_X + padIn;
+  if (cover) {
+    const coverW = 152, coverH = 216, coverX = PAD_X + padIn, coverY = panelY + (panelH - coverH) / 2;
+    // 표지 그림자
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 22; ctx.shadowOffsetY = 8;
+    rr(coverX, coverY, coverW, coverH, 10); ctx.fillStyle = '#000'; ctx.fill(); ctx.restore();
+    ctx.save(); rr(coverX, coverY, coverW, coverH, 10); ctx.clip();
+    ctx.drawImage(cover, coverX, coverY, coverW, coverH); ctx.restore();
+    textLeft = coverX + coverW + 34;
+  }
+  const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
+  const twAvail = (W - PAD_X - padIn) - textLeft;
+  ctx.textAlign = 'left';
+  // 제목 줄수 먼저 측정해 블록 세로 중앙 정렬
+  const { px: tPx, lines: tLines } = autoFitLines(ctx, cleanT, twAvail, 46, 30, 4, 2, '800');
+  const titleLH = Math.round(tPx * 1.28);
+  const blockH = 30 + 14 + tLines.length * titleLH + 16 + 30;  // eyebrow + gap + title + gap + author
+  let ey = panelY + (panelH - blockH) / 2 + 24;
+  // eyebrow
+  ctx.font = '700 24px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = '#E9D5FF';
+  ctx.fillText('오늘의 책', textLeft, ey);
+  ey += 14 + titleLH * 0.0;
+  // title
+  ctx.font = `800 ${tPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
+  let ty = ey + titleLH;
+  for (const ln of tLines) { ctx.fillText(ln, textLeft, ty); ty += titleLH; }
+  // author
+  ctx.font = '500 26px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.78)';
+  ctx.fillText(state.bookInfo?.author || '', textLeft, ty + 12);
+
+  // 솔루션(cta) + 다리문장(linkText) — 패널 위 bottom-anchored
+  let curY = panelY - 44;
+  if (link) {
+    ctx.font = '400 30px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.78)'; ctx.textAlign = 'left';
+    const lk = measureTextLines(ctx, link, TEXT_W);
+    for (let i = lk.length - 1; i >= 0; i--) { ctx.fillText(lk[i], PAD_X, curY); curY -= 42; }
+    curY -= 16;
+  }
+  const { px: cPx, lines: cLines } = autoFitLines(ctx, cta, TEXT_W, 60, 38, 5, 3, '800');
+  ctx.font = `800 ${cPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff'; ctx.textAlign = 'left';
+  const C_LH = Math.round(cPx * 1.4);
+  for (let i = cLines.length - 1; i >= 0; i--) { ctx.fillText(cLines[i], PAD_X, curY); curY -= C_LH; }
+  curY -= 28;
+  ctx.fillStyle = '#C084FC'; ctx.fillRect(PAD_X, curY, 90, 6);
+}
+
+// 캔버스 합성 → Blob 반환 (저장/공유 공통 유틸)
+async function buildCardBlob(card, pageNum) {
+  const W = 1080, H = 1080;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  await document.fonts.ready;
+
+  // ① 배경
+  const blobUrl = card.dataset.blobUrl;
+  if (blobUrl) {
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
+    ctx.drawImage(img, 0, 0, W, H);
+    const grad = ctx.createLinearGradient(0, H * 0.3, 0, H);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.9)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  } else {
+    const BG = { 1:['#0a0a0a','#1e1b4b'], 2:['#0f172a','#1e3a8a'], 3:['#1c0a0a','#7f1d1d'], 4:['#0a1a12','#064e3b'], 5:['#1a0a2e','#6d28d9'] };
+    const [c1,c2] = BG[pageNum] || ['#0a0a0a','#1e1b4b'];
+    const grd = ctx.createLinearGradient(0,0,W*0.7,H);
+    grd.addColorStop(0, c1); grd.addColorStop(1, c2);
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+  }
+
+  // ② 페이지 번호만 (상단 좌측)
+  ctx.font = '700 36px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.textAlign = 'left';
+  ctx.fillText(`${pageNum}`, 70, 86);
+
+  // ②-5 마지막 장 = 책 공개 (표지·제목·저자 + 솔루션)
+  if (pageNum === 5) {
+    await drawPage5Reveal(ctx, W, H);
+    return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+  }
+
+  // ③ 텍스트 콘텐츠 추출
+  const pg = state.pages?.[`page${pageNum}`] || {};
+  let headline = '', body = '';
+  if (pageNum === 5) { headline = pg.cta || ''; body = pg.linkText || ''; }
+  else if (pageNum === 1) { headline = pg.headline || ''; body = ''; }
+  else { headline = pg.headline || ''; body = pg.body || ''; }
+
+  // ④ 동적 bottom-anchored 레이아웃
+  const PAD_X = 70, PAD_BOTTOM = 80, PAD_BETWEEN = 36;
+  const ACCENT_H = 6, ACCENT_W = 90, ACCENT_GAP = 28;
+  const TEXT_W = W - PAD_X * 2;
+
+  const { px: hlPx, lines: hlLines } = autoFitLines(ctx, headline, TEXT_W, 68, 40, 4, 3, '900');
+  const HL_LINE_H = Math.round(hlPx * 1.38);
+
+  const { px: bodyPx, lines: bodyLines } = body
+    ? autoFitLines(ctx, body, TEXT_W, 42, 28, 3, 5, '400')
+    : { px: 42, lines: [] };
+  const BODY_LINE_H = Math.round(bodyPx * 1.42);
+
+  let curY = H - PAD_BOTTOM;
+
+  if (bodyLines.length) {
+    ctx.font = `400 ${bodyPx}px "Noto Sans KR", sans-serif`;
+    ctx.fillStyle = 'rgba(255,255,255,0.78)';
+    ctx.textAlign = 'left';
+    for (let i = bodyLines.length - 1; i >= 0; i--) {
+      ctx.fillText(bodyLines[i], PAD_X, curY);
+      curY -= BODY_LINE_H;
+    }
+    curY -= PAD_BETWEEN;
+  }
+
+  ctx.font = `900 ${hlPx}px "Noto Sans KR", sans-serif`;
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'left';
+  for (let i = hlLines.length - 1; i >= 0; i--) {
+    ctx.fillText(hlLines[i], PAD_X, curY);
+    curY -= HL_LINE_H;
+  }
+  curY -= ACCENT_GAP;
+
+  const ACC = { 1:'#8B5CF6', 2:'#60A5FA', 3:'#F87171', 4:'#34D399', 5:'#C084FC' };
+  ctx.fillStyle = ACC[pageNum] || '#8B5CF6';
+  ctx.fillRect(PAD_X, curY, ACCENT_W, ACCENT_H);
+
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+}
+
+// 텍스트를 줄 배열로만 측정 (실제 렌더 없음) — bottom-anchored 레이아웃용
+// 띄어쓰기(어절) 단위로 먼저 자르고, 단어 자체가 너무 길면 글자 단위 폴백
+function measureTextLines(ctx, text, maxWidth) {
+  if (!text) return [];
+  const result = [];
+  // 콤마 규칙: 앞 단어가 콤마(,)로 끝나면, 그 뒤 단어가 줄 끝에 외톨이로 남지 않도록
+  // (다음 단어를 더 붙일 수 없으면) 콤마 뒤에서 줄을 끊어 그 구절을 다음 줄로 내린다.
+  const endsWithComma = (s) => /[,，、]$/.test((s || '').trim());
+  for (const para of text.split('\n')) {
+    if (!para.trim()) { result.push(''); continue; }
+    const words = para.split(' ').filter(w => w);
+    let line = '';
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
+      const candidate = line ? line + ' ' + word : word;
+      if (ctx.measureText(candidate).width <= maxWidth) {
+        // 콤마 뒤 외톨이 방지: 직전 단어가 콤마로 끝나고, 이 단어 뒤에 또 한 단어를
+        // 같은 줄에 못 붙이면(=이 단어가 그 줄 마지막이 됨) → 콤마 뒤에서 줄을 끊는다.
+        const next = words[i + 1];
+        if (line && endsWithComma(line) && next &&
+            ctx.measureText(candidate + ' ' + next).width > maxWidth) {
+          result.push(line);
+          line = word;
+        } else {
+          line = candidate;
+        }
+      } else {
+        if (line) result.push(line);
+        // 단어 자체가 maxWidth를 초과하면 글자 단위 폴백
+        if (ctx.measureText(word).width > maxWidth) {
+          let buf = '';
+          for (const ch of [...word]) {
+            const t = buf + ch;
+            if (ctx.measureText(t).width > maxWidth && buf) {
+              result.push(buf); buf = ch;
+            } else { buf = t; }
+          }
+          line = buf;
+        } else {
+          line = word;
+        }
+      }
+    }
+    if (line) result.push(line);
+  }
+  return result;
+}
+
+// 폰트 크기를 줄여가며 maxLines 이내가 되는 최대 크기를 반환
+function autoFitLines(ctx, text, maxWidth, startPx, minPx, stepPx, maxLines, weight) {
+  let px = startPx;
+  let lines = [];
+  while (px >= minPx) {
+    ctx.font = `${weight} ${px}px "Noto Sans KR", sans-serif`;
+    lines = measureTextLines(ctx, text, maxWidth);
+    if (lines.length <= maxLines) break;
+    px -= stepPx;
+  }
+  return { px, lines };
+}
+
+// 한국어 텍스트 캔버스 줄바꿈 (문자 단위)
+function canvasWrapText(ctx, text, x, y, maxWidth, lineH) {
+  if (!text) return y;
+  let line = '', cy = y;
+  const chars = [...text]; // 유니코드 문자 단위 분리
+  for (const ch of chars) {
+    if (ch === '\n') { ctx.fillText(line, x, cy); line = ''; cy += lineH; continue; }
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, cy); line = ch; cy += lineH;
+    } else { line = test; }
+  }
+  if (line) { ctx.fillText(line, x, cy); cy += lineH; }
+  return cy;
+}
+
+document.getElementById('generateCaptionBtn').addEventListener('click', async () => {
+  if (!state.pages || !state.bookInfo) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
+
+  const keyword = document.getElementById('captionKeyword').value.trim();
+  showLoading('캡션 생성 중...', 'AI가 인스타그램 캡션과 해시태그를 작성하고 있습니다');
+
+  try {
+    const data = await apiFetch('/api/generate-caption', {
+      pages: state.pages,
+      bookInfo: state.bookInfo,
+      dmKeyword: keyword,
+      bookNumber: state.bookNumber || '',
+    });
+    state.caption = data.caption;
+    state.captionHashtags = data.hashtags;
+    state.dmKeyword = data.commentKeyword || data.dmKeyword || keyword;
+
+    document.getElementById('captionTextContent').textContent = data.caption || '';
+    document.getElementById('captionHashtagsRow').textContent = (data.hashtags || []).join(' ');
+    renderDmKeywordInfo(state.dmKeyword);
+    document.getElementById('captionResult').style.display = 'block';
+    showToast('캡션 생성 완료!', 'success');
+    if (!state._catalogAdded) autosaveDraft();  // 초안에 캡션도 반영
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    hideLoading();
+  }
+});
+
+document.getElementById('copyCaptionBtn').addEventListener('click', () => {
+  if (!state.caption) return;
+  const full = state.caption + '\n\n' + (state.captionHashtags || []).join(' ');
+  copyText(full, '캡션');
+});
+
+document.getElementById('copyAllBtn').addEventListener('click', () => {
+  if (!state.pages) return;
+  const text = [1,2,3,4,5].map(n => getCardText(state.pages[`page${n}`], n)).join('\n\n---\n\n');
+  copyText(text, '전체');
+});
+
+// ===== 중복 방지 기록 UI =====
+function updateHistoryCount() {
+  const list = getHistory();
+  const el = document.getElementById('historyCount');
+  if (el) el.textContent = list.length ? `${list.length}권 기록됨` : '';
+}
+
+document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+  clearHistory();
+  updateHistoryCount();
+});
+
+// ===== Phase 5 준비: DM 자동 회신 미리보기 =====
+document.getElementById('generateDmBtn').addEventListener('click', async () => {
+  if (!state.pages || !state.bookInfo) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
+  const link = document.getElementById('affiliateLinkInput').value.trim();
+  state.affiliateLink = link || null;
+  const affiliateLinks = link ? [link] : (state.affiliateLinks || []);
+
+  showLoading('DM 자동 회신 생성 중...', 'AI가 A/B 댓글 응답자에게 발송할 DM 내용을 작성합니다');
+  try {
+    const data = await apiFetch('/api/generate-dm-reply', {
+      pages: state.pages,
+      bookInfo: state.bookInfo,
+      affiliateLinks,
+      bookNumber: state.bookNumber || '',
+    });
+    renderDmReplies(data);
+    showToast('DM 자동 회신 생성 완료!', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    hideLoading();
+  }
+});
+
+document.getElementById('copyDmABtn').addEventListener('click', () => {
+  if (!state.dmReplyA) return;
+  copyText(state.dmReplyA, 'DM');
+});
+
+// 지난 게시물 DM 찾기 — 번호로 영구 저장된 A/B DM을 다시 불러온다
+document.getElementById('dmLookupBtn').addEventListener('click', async () => {
+  const raw = document.getElementById('dmLookupNum').value.trim();
+  if (!raw) { showToast('게시물 번호를 입력하세요.', 'warning'); return; }
+  showLoading('지난 DM 불러오는 중...', `No.${raw} 게시물의 DM을 찾고 있습니다`);
+  try {
+    const data = await apiFetch('/api/get-dm', { number: raw });
+    if (data.success === false) { showToast(data.error || 'DM을 찾을 수 없습니다.', 'error'); return; }
+    state.bookNumber = data.number || raw;
+    document.getElementById('dmReplyWrapper').style.display = 'block';
+    renderDmReplies(data);
+    showToast(`No.${data.number} (${data.title || ''}) DM을 불러왔습니다`, 'success');
+    document.getElementById('dmReplyResult').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (e) {
+    showToast('불러오기 실패: ' + e.message, 'error');
+  } finally {
+    hideLoading();
+  }
+});
+
+// ===== 도서관 등록 메뉴 =====
+// 캐럿셀이 준비되면 도서 번호·소개·링크를 보여주고, 사용자가 직접 도서관에 올린다.
+function populateLibraryReg() {
+  if (!state.bookInfo?.title) return;
+  document.getElementById('libRegNo').textContent = state.bookNumber ? `No.${state.bookNumber}` : 'No.(자동)';
+  document.getElementById('libRegTitle').value =
+    state.bookInfo.title + (state.bookInfo.author ? ` / ${state.bookInfo.author}` : '');
+  const descEl = document.getElementById('libRegDesc');
+  if (!descEl.value.trim()) descEl.value = state.bookInfo.coreMessage || '';
+  const linkEl = document.getElementById('libRegLink');
+  if (!linkEl.value.trim()) {
+    linkEl.value = document.getElementById('affiliateLinkInput')?.value?.trim()
+      || (Array.isArray(state.affiliateLinks) && state.affiliateLinks[0])
+      || state.affiliateLink || '';
+  }
+  document.getElementById('libraryRegWrapper').style.display = 'block';
+}
+
+document.getElementById('libRegBtn').addEventListener('click', async () => {
+  if (!state.bookInfo?.title) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
+  const desc = document.getElementById('libRegDesc').value.trim();
+  const link = document.getElementById('libRegLink').value.trim();
+  const btn = document.getElementById('libRegBtn');
+  btn.disabled = true;
+  try {
+    // 도서관 카드뿐 아니라 캡션·5장 텍스트·DM·이미지까지 한 번에 보관함에 저장
+    // 이미지는 배경+텍스트가 합성된 최종본을 저장한다(원본 배경만 저장되던 문제 수정)
+    const archImages = await getArchiveImages();
+    const result = await apiFetch('/api/save-post', {
+      bookInfo: { ...state.bookInfo, coreMessage: desc || state.bookInfo.coreMessage },
+      coupangLink: link || null,
+      affiliateLinks: link ? [link] : (state.affiliateLinks || []),
+      bookNumber: state.bookNumber || '',
+      pages: state.pages || null,
+      caption: state.caption || '',
+      hashtags: state.captionHashtags || [],
+      dmText: state.dmReplyA || '',
+      images: archImages,
+      cover: state.bookCover || '',
+      pipelineId: localStorage.getItem('activePipelineId') || '',
+    });
+    if (result.bookNumber) {
+      state.bookNumber = result.bookNumber;
+      state._catalogAdded = true;
+      dropDraftIfAny();
+      document.getElementById('libRegNo').textContent = `No.${result.bookNumber}`;
+      const statusEl = document.getElementById('libRegStatus');
+      const deepLink = `https://insight-vault.pages.dev/books.html#${result.bookNumber}`;
+      statusEl.innerHTML =
+        `도서관에 No.${result.bookNumber}로 등록됐습니다. <a href="${deepLink}" target="_blank" style="color:var(--success);text-decoration:underline;font-weight:700;">도서관에서 보기 →</a><br>` +
+        `인스타 프로필 링크를 <b>insight-vault.pages.dev/books.html#${result.bookNumber}</b> 로 설정하면 이 책으로 바로 연결됩니다.`;
+      statusEl.style.display = 'block';
+      showToast(`도서관에 No.${result.bookNumber} 등록 완료`, 'success');
+    }
+  } catch (e) {
+    showToast('등록 실패: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ===== 보관함 / 제작·DM 관리 =====
+const _archOverlay = document.getElementById('archiveOverlay');
+function archEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+document.getElementById('openArchiveBtn').addEventListener('click', () => { _archOverlay.classList.add('open'); showArchiveList(); });
+document.getElementById('closeArchiveBtn').addEventListener('click', () => _archOverlay.classList.remove('open'));
+_archOverlay.addEventListener('click', (e) => { if (e.target === _archOverlay) _archOverlay.classList.remove('open'); });
+
+async function showArchiveList() {
+  document.getElementById('archiveTitle').textContent = '보관함 / 제작·DM 관리';
+  document.getElementById('archiveDetailView').style.display = 'none';
+  document.getElementById('archiveListView').style.display = 'block';
+  const listEl = document.getElementById('archiveList');
+  listEl.innerHTML = '<div class="arch-empty">불러오는 중...</div>';
+  try {
+    const [catalog, draftRes] = await Promise.all([
+      apiFetch('/api/book-catalog').catch(() => []),
+      apiFetch('/api/list-drafts').catch(() => ({ drafts: [] })),
+    ]);
+    const drafts = (draftRes && draftRes.drafts) || [];
+    const hasCatalog = Array.isArray(catalog) && catalog.length;
+
+    let html = '';
+    // 초안(미등록) — 번호 없이 임시 보관(7일). 등록하면 번호가 매겨진다. (항상 표시 → 찾기 쉽게)
+    html += `<div class="arch-section-label">초안 (미등록 · 7일 후 자동 삭제)</div>`;
+    if (!drafts.length) {
+      html += `<div class="arch-empty" style="padding:18px 12px;font-size:13px;">아직 초안이 없습니다.<br>"AI 자동 추천" 또는 "직접 입력"으로 캐럿셀을 만들면 여기에 자동 저장됩니다.</div>`;
+    } else {
+      html += drafts.map(d => `
+        <div class="arch-item arch-draft" data-draft="${archEsc(d.id)}">
+          <div class="arch-num" style="font-size:11px;color:#7c3aed;font-weight:800;">초안</div>
+          <div class="arch-info">
+            <div class="arch-info-title">${archEsc(d.title || '(제목 미정)')}</div>
+            <div class="arch-info-meta">${archEsc(d.author||'')}${d.category?' · '+archEsc(d.category):''}${d.hasImages?' · 이미지 있음':' · 텍스트만'}${d.date?' · '+archEsc(d.date):''}</div>
+          </div>
+          <div style="color:var(--gray-300);font-size:20px;">›</div>
+        </div>`).join('');
+    }
+    // 정식 등록된 책
+    if (hasCatalog) {
+      html += `<div class="arch-section-label">도서관 등록된 책</div>`;
+      html += catalog.map(b => `
+        <div class="arch-item" data-num="${archEsc(b.number)}">
+          <div class="arch-num">No.${archEsc(b.number)}</div>
+          <div class="arch-info">
+            <div class="arch-info-title">${archEsc(b.title)}</div>
+            <div class="arch-info-meta">${archEsc(b.category||'')}${b.date?' · '+archEsc(b.date):''}${b.coupangLink?' · 링크 있음':' · 링크 없음'}</div>
+          </div>
+          <div style="color:var(--gray-300);font-size:20px;">›</div>
+        </div>`).join('');
+    }
+    listEl.innerHTML = html;
+    listEl.querySelectorAll('.arch-item[data-num]').forEach(it =>
+      it.addEventListener('click', () => openArchiveDetail(it.dataset.num)));
+    listEl.querySelectorAll('.arch-item[data-draft]').forEach(it =>
+      it.addEventListener('click', () => openDraftDetail(it.dataset.draft)));
+  } catch (e) {
+    listEl.innerHTML = '<div class="arch-empty">목록을 불러오지 못했습니다.</div>';
+  }
+}
+
+// 초안 상세 — 내용 미리보기 + [도서관에 등록(번호 부여)] / [삭제]
+async function openDraftDetail(id) {
+  const detail = document.getElementById('archiveDetailView');
+  document.getElementById('archiveListView').style.display = 'none';
+  detail.style.display = 'block';
+  detail.innerHTML = '<div class="arch-empty">불러오는 중...</div>';
+  let r;
+  try { r = await apiFetch('/api/get-draft', { draftId: id }); } catch { r = { success: false }; }
+  if (!r || r.success === false) {
+    detail.innerHTML = `<button class="arch-back" id="archBack">← 목록</button><div class="arch-empty">${archEsc(r?.error||'초안을 불러올 수 없습니다.')}</div>`;
+    document.getElementById('archBack').onclick = showArchiveList; return;
+  }
+  const d = r.draft;
+  document.getElementById('archiveTitle').textContent = `초안 · ${d.bookInfo?.title || ''}`;
+  const p = d.pages || {};
+  const parts = [];
+  if (p.page1?.headline) parts.push('1. ' + p.page1.headline);
+  [2,3,4].forEach(n => { const pg = p['page'+n]; if (pg) parts.push(`${n}. ${pg.headline||''}\n${pg.body||''}`.trim()); });
+  if (p.page5) parts.push('5. ' + [p.page5.cta, p.page5.linkText].filter(Boolean).join('\n'));
+  const imgs = d.images && typeof d.images === 'object' ? Object.values(d.images) : [];
+  detail.innerHTML = `
+    <button class="arch-back" id="archBack">← 목록</button>
+    <div class="arch-block">
+      <div class="arch-block-label">책</div>
+      <div style="font-weight:700;">${archEsc(d.bookInfo?.title||'(제목 미정)')}</div>
+      <div style="font-size:13px;color:var(--gray-500);">${archEsc(d.bookInfo?.author||'')}${d.bookInfo?.category?' · '+archEsc(d.bookInfo.category):''}</div>
+    </div>
+    ${d.caption ? `<div class="arch-block"><div class="arch-block-label">캡션</div><textarea rows="5" readonly>${archEsc(d.caption)}</textarea></div>` : ''}
+    <div class="arch-block"><div class="arch-block-label">5장 카드 텍스트</div><textarea rows="7" readonly>${archEsc(parts.join('\n\n')) || '텍스트 없음'}</textarea></div>
+    <div class="arch-block">
+      <div class="arch-block-label">이미지 ${imgs.length?'':'(아직 생성 안 함)'}</div>
+      ${imgs.length ? `<div class="arch-imgs">${imgs.map(u=>`<img src="${archEsc(u)}" loading="lazy">`).join('')}</div>` : '<div style="font-size:12px;color:var(--gray-400);">이미지가 없습니다.</div>'}
+    </div>
+    <div class="arch-block" style="border:none;background:none;padding:0;">
+      <div class="arch-actions">
+        <button class="btn btn-primary" id="draftPromote" style="font-size:13px;">도서관에 등록 (번호 부여)</button>
+        <button class="btn btn-outline" id="draftDelete" style="font-size:13px;color:#dc2626;border-color:#dc2626;">초안 삭제</button>
+      </div>
+      <div id="draftStatus" style="display:none;margin-top:10px;font-size:12.5px;color:var(--success);"></div>
+    </div>`;
+  document.getElementById('archBack').onclick = showArchiveList;
+  document.getElementById('draftPromote').onclick = async () => {
+    const btn = document.getElementById('draftPromote'); btn.disabled = true; btn.textContent = '등록 중...';
+    try {
+      const res = await apiFetch('/api/save-post', {
+        bookInfo: d.bookInfo, pages: d.pages, caption: d.caption || '',
+        hashtags: d.hashtags || [], images: d.images || null, cover: d.cover || '',
+      });
+      await apiFetch('/api/delete-draft', { draftId: id }).catch(() => {});
+      showToast(`도서관에 No.${res.bookNumber} 등록 완료`, 'success');
+      showArchiveList();
+    } catch (e) { showToast('등록 실패: ' + e.message, 'error'); btn.disabled = false; btn.textContent = '도서관에 등록 (번호 부여)'; }
+  };
+  document.getElementById('draftDelete').onclick = async () => {
+    if (!confirm('이 초안을 삭제할까요?')) return;
+    try { await apiFetch('/api/delete-draft', { draftId: id }); showToast('초안을 삭제했습니다', 'success'); showArchiveList(); }
+    catch (e) { showToast('삭제 실패: ' + e.message, 'error'); }
+  };
+}
+
+async function openArchiveDetail(num) {
+  const detail = document.getElementById('archiveDetailView');
+  document.getElementById('archiveListView').style.display = 'none';
+  detail.style.display = 'block';
+  detail.innerHTML = '<div class="arch-empty">불러오는 중...</div>';
+  let d;
+  try {
+    d = await apiFetch('/api/get-post', { number: num });
+    if (d.success === false) { detail.innerHTML = `<button class="arch-back" id="archBack">← 목록</button><div class="arch-empty">${archEsc(d.error||'기록을 찾을 수 없습니다.')}</div>`; document.getElementById('archBack').onclick = showArchiveList; return; }
+  } catch (e) {
+    detail.innerHTML = `<button class="arch-back" id="archBack">← 목록</button><div class="arch-empty">불러오기 실패</div>`;
+    document.getElementById('archBack').onclick = showArchiveList; return;
+  }
+  document.getElementById('archiveTitle').textContent = `No.${d.number} · ${d.title || ''}`;
+
+  // 5장 카드 텍스트 조립 (읽기용)
+  let pagesText = '';
+  if (d.pages) {
+    const p = d.pages;
+    const parts = [];
+    if (p.page1?.headline) parts.push('1. ' + p.page1.headline);
+    [2,3,4].forEach(n => { const pg = p['page'+n]; if (pg) parts.push(`${n}. ${pg.headline||''}\n${pg.body||''}`.trim()); });
+    if (p.page5) parts.push('5. ' + [p.page5.cta, p.page5.linkText].filter(Boolean).join('\n'));
+    pagesText = parts.join('\n\n');
+  }
+  const hashtags = (d.hashtags||[]).join(' ');
+  const imgs = d.images && typeof d.images === 'object' ? Object.values(d.images) : [];
+
+  detail.innerHTML = `
+    <button class="arch-back" id="archBack">← 목록</button>
+    <div class="arch-block">
+      <div class="arch-block-label">캡션 (읽기용)</div>
+      <textarea id="archCaption" rows="6" readonly>${archEsc(d.caption)}${hashtags?'\n\n'+archEsc(hashtags):''}</textarea>
+      <div class="arch-actions"><button class="btn btn-outline" id="archCopyCaption" style="font-size:12px;padding:8px 14px;">캡션 복사</button></div>
+    </div>
+    <div class="arch-block">
+      <div class="arch-block-label">5장 카드 텍스트 (읽기용)</div>
+      <textarea id="archPages" rows="8" readonly>${archEsc(pagesText) || '저장된 카드 텍스트가 없습니다.'}</textarea>
+    </div>
+    <div class="arch-block">
+      <div class="arch-block-label">이미지 ${imgs.length?'(며칠 후 자동 삭제)':''}</div>
+      ${imgs.length
+        ? `<div class="arch-imgs">${imgs.map(u=>`<img src="${archEsc(u)}" loading="lazy">`).join('')}</div>`
+        : '<div style="font-size:12px;color:var(--gray-400);">이미지는 보관 기간(며칠)이 지나 삭제되었습니다. 게시물에는 그대로 남아 있습니다.</div>'}
+    </div>
+    <div class="arch-block">
+      <div class="arch-block-label">도서관 소개 (수정 가능)</div>
+      <textarea id="archDesc" rows="3">${archEsc(d.coreMessage)}</textarea>
+    </div>
+    <div class="arch-block">
+      <div class="arch-block-label">쿠팡 링크 (수정 가능)</div>
+      <input type="url" id="archLink" value="${archEsc(d.coupangLink||'')}" placeholder="https://link.coupang.com/a/...">
+    </div>
+    <div class="arch-block" style="border:none;background:none;padding:0;">
+      <div class="arch-actions">
+        <button class="btn btn-primary" id="archSave" style="font-size:13px;">수정 저장 (소개·링크 반영)</button>
+        <a class="btn btn-outline" href="https://insight-vault.pages.dev/books.html#${archEsc(d.number)}" target="_blank" style="font-size:13px;text-decoration:none;">도서관에서 보기 →</a>
+        <button class="btn btn-outline" id="archDelete" style="font-size:13px;color:#dc2626;border-color:#dc2626;">이 책 삭제 (번호 취소)</button>
+      </div>
+      <div id="archSaveStatus" style="display:none;margin-top:10px;font-size:12.5px;color:var(--success);"></div>
+    </div>`;
+
+  document.getElementById('archBack').onclick = showArchiveList;
+  document.getElementById('archCopyCaption').onclick = () => copyText(document.getElementById('archCaption').value, '캡션');
+  document.getElementById('archSave').onclick = async () => {
+    const sbtn = document.getElementById('archSave');
+    sbtn.disabled = true;
+    try {
+      await apiFetch('/api/save-post', {
+        bookNumber: d.number,
+        bookInfo: { ...(d.bookInfo||{}), title: d.title, coreMessage: document.getElementById('archDesc').value.trim() },
+        coupangLink: document.getElementById('archLink').value.trim() || null,
+        caption: d.caption, hashtags: d.hashtags, pages: d.pages,
+      });
+      const st = document.getElementById('archSaveStatus');
+      st.textContent = '저장됐습니다. 소개·링크가 반영되었습니다.';
+      st.style.display = 'block';
+      showToast(`No.${d.number} 수정 저장 완료`, 'success');
+    } catch (e) {
+      showToast('저장 실패: ' + e.message, 'error');
+    } finally {
+      sbtn.disabled = false;
+    }
+  };
+  document.getElementById('archDelete').onclick = async () => {
+    if (!confirm(`No.${d.number} "${d.title || ''}" 을(를) 도서관에서 삭제할까요?\n\n삭제하면 도서관·보관함에서 사라지고, 이 책 제목은 다시 추천에 나올 수 있습니다.\n(마지막 번호이면 번호도 회수돼 다음 책이 재사용합니다)`)) return;
+    const dbtn = document.getElementById('archDelete');
+    dbtn.disabled = true; dbtn.textContent = '삭제 중...';
+    try {
+      const r = await apiFetch('/api/delete-book', { number: d.number });
+      showToast(`No.${d.number} 삭제 완료${r.counterReclaimed ? ' — 번호 회수됨' : ''}`, 'success');
+      showArchiveList();
+    } catch (e) {
+      showToast('삭제 실패: ' + e.message, 'error');
+      dbtn.disabled = false; dbtn.textContent = '이 책 삭제 (번호 취소)';
+    }
+  };
+}
+
+updateHistoryCount();
+
+document.getElementById('telegramBtn').addEventListener('click', async () => {
+  if (!state.pages || !state.bookInfo) return;
+  showLoading('텔레그램 발송 중...', '제작 완료 알림과 확인 링크를 보내고 있습니다');
+  try {
+    // 텔레그램에는 완료 알림 + 확인 링크만 전송 (이미지·문구는 보내지 않음)
+    await apiFetch('/api/send-telegram', {
+      bookInfo: state.bookInfo,
+      pipelineId: localStorage.getItem('activePipelineId') || '',
+    });
+    showToast('텔레그램으로 완료 알림을 보냈습니다!', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    hideLoading();
+  }
+});
+
+// ===== 반자동 게시 준비: 최종 이미지 5장 저장 + 캡션 복사 =====
+// (인스타 API 자동 게시는 토큰·만료·공개 이미지 호스팅 문제로 보류 — 반자동이 가장 안정적)
+async function prepareForPosting() {
+  if (!state.images || !state.caption) {
+    showToast('이미지 생성과 캡션 생성을 먼저 완료해주세요.', 'warning'); return;
+  }
+  // 1) 캡션(+해시태그) 클립보드 복사 — 공유 시트가 뜨기 전에 먼저 복사
+  const full = (state.caption || '') + (state.captionHashtags?.length ? '\n\n' + state.captionHashtags.join(' ') : '');
+  try { await navigator.clipboard.writeText(full); showToast('캡션을 복사했습니다', 'success'); }
+  catch { showToast('캡션 복사 실패 — "캡션 복사" 버튼을 눌러주세요', 'warning'); }
+  // 2) 글자 합성된 최종 이미지 5장 저장(공유/다운로드)
+  await saveAllCards();
+  // 3) 안내
+  showToast('이미지 5장 저장 + 캡션 복사 완료 — 인스타 새 게시물에 5장 올리고 캡션 붙여넣기', 'info');
+}
+document.getElementById('instagramBtn').addEventListener('click', prepareForPosting);
+
+function updateInstagramBtn() {
+  const btn = document.getElementById('instagramBtn');
+  if (btn) btn.disabled = !(state.images && state.caption);
+}
+
+
+// ── Deploy 상태 ──
+const deployState = { books: [], selectedBook: null };
+
+function setDeployStep(num, status, subText) {
+  const step = document.getElementById(`dstep-${num}`);
+  if (!step) return;
+  step.className = 'deploy-step' + (status ? ' ' + status : '');
+  if (subText !== undefined) {
+    const sub = document.getElementById(`dsub-${num}`);
+    if (sub) sub.textContent = subText;
+  }
+}
+
+function renderDeployBooks(books) {
+  deployState.books = books;
+  const list = document.getElementById('deployBookList');
+  list.innerHTML = '';
+  books.forEach(book => {
+    const item = document.createElement('div');
+    item.className = 'deploy-book-item';
+    const vb = book.verified ? '<span style="font-size:9px;font-weight:700;color:#059669;background:rgba(5,150,105,.1);padding:2px 6px;border-radius:5px;margin-left:6px;">실존 확인</span>' : '';
+    item.innerHTML = `
+      <div class="deploy-book-item-title">${escHtml(book.title)}${vb}</div>
+      <div class="deploy-book-item-meta">${escHtml(book.author)} · ${book.year} · ${escHtml(book.category)}</div>
+      <div class="deploy-book-item-reason">${escHtml(book.reason)}</div>
+      ${book.lesson ? `<div style="font-size:11px;color:var(--gray-700);background:#FFF7ED;border-left:3px solid #C2708F;border-radius:0 5px 5px 0;padding:6px 9px;margin-top:6px;line-height:1.55;">교훈 · ${escHtml(book.lesson)}</div>` : ''}
+    `;
+    item.addEventListener('click', () => {
+      list.querySelectorAll('.deploy-book-item').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      deployState.selectedBook = book;
+      document.getElementById('deploySelectedBook').innerHTML = `
+        <div class="selected-book-title">${escHtml(book.title)}</div>
+        <div class="selected-book-meta">${escHtml(book.author)} · ${book.year} · ${escHtml(book.category)}</div>
+        <div class="selected-book-msg">${escHtml(book.coreMessage)}</div>
+      `;
+      document.getElementById('deployPhase2').style.display = 'none';
+      document.getElementById('deployPhase3').style.display = 'block';
+    });
+    list.appendChild(item);
+  });
+  document.getElementById('deployPhase1').style.display = 'none';
+  document.getElementById('deployPhase2').style.display = 'block';
+  document.getElementById('deployPhase3').style.display = 'none';
+}
+
+function getDeployAffiliateLinks() {
+  return Array.from(document.querySelectorAll('#deployAffiliateLinkList .affiliate-link-input'))
+    .map(input => input.value.trim())
+    .filter(v => v);
+}
+
+// 책 제목 입력 여부에 따라 이슈 키워드 필드 흐리게 처리
+document.getElementById('deployTitle').addEventListener('input', () => {
+  const hasTitle = document.getElementById('deployTitle').value.trim() !== '';
+  const issueGroup = document.getElementById('deployIssueGroup');
+  issueGroup.style.opacity = hasTitle ? '0.4' : '1';
+  issueGroup.style.pointerEvents = hasTitle ? 'none' : '';
+  document.getElementById('deployFetchBooksBtn').textContent = hasTitle ? '입력한 책으로 바로 생성' : '자동 진행하기';
+});
+
+document.getElementById('addAffiliateLinkBtn').addEventListener('click', () => {
+  const list = document.getElementById('deployAffiliateLinkList');
+  const input = document.createElement('input');
+  input.type = 'url';
+  input.className = 'affiliate-link-input';
+  input.placeholder = 'https://link.coupang.com/a/...';
+  input.style.marginBottom = '6px';
+  list.appendChild(input);
+});
+
+document.getElementById('deployFetchBooksBtn').addEventListener('click', async () => {
+  const category = document.getElementById('deployCategory').value;
+  const issue = document.getElementById('deployIssue').value.trim();
+  const affiliateLinks = getDeployAffiliateLinks();
+  const manualTitle = document.getElementById('deployTitle').value.trim();
+  const manualAuthor = document.getElementById('deployAuthor').value.trim();
+
+  // 책 제목 직접 입력된 경우 — AI 추천 생략, 분석 후 바로 파이프라인 시작
+  if (manualTitle) {
+    showLoading('책 정보 분석 중...', 'AI가 핵심 메시지와 독자층을 파악하고 있습니다');
+    try {
+      const analyzed = await apiFetch('/api/analyze', { title: manualTitle, author: manualAuthor });
+      const bookInfo = {
+        title: manualTitle,
+        author: manualAuthor || analyzed.author || '',
+        year: analyzed.year || '',
+        coreMessage: analyzed.coreMessage,
+        targetAudience: analyzed.targetAudience,
+        category: category || analyzed.category,
+      };
+      showToast(`"${bookInfo.title}" 분석 완료 — 캐럿셀 제작 시작`, 'info');
+      await runAutoDeployPipeline(bookInfo, affiliateLinks);
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      hideLoading();
+    }
+    return;
+  }
+
+  // 제목 미입력 — 기존 AI 자동 추천 흐름
+  showLoading('AI가 최적의 책을 선정하고 있습니다...', '베스트셀러와 최신 이슈를 분석 중');
+  try {
+    const data = await apiFetch('/api/suggest', { category, issue, excludeTitles: getHistory() });
+    const book = data.books[0];
+    if (!book) { showToast('책 추천을 받지 못했습니다. 다시 시도해주세요.', 'error'); return; }
+    showToast(`"${book.title}" (${book.author}) 선정`, 'info');
+    const bookInfo = {
+      title: book.title, author: book.author, year: book.year,
+      coreMessage: book.coreMessage, targetAudience: book.targetAudience, category: book.category,
+      description: book.description || '', // 실제 책 소개 — 생성·검증 근거
+    };
+    await runAutoDeployPipeline(bookInfo, affiliateLinks);
+  } catch (err) {
+    // 지역 라우팅 차단 — 브라우저 경로 대신 서버(크론)가 책 선정부터 대신 진행.
+    // 크론은 다른 경유지에서 실행되므로 차단을 우회해 결정적으로 완수한다.
+    if (/경유지 차단|REGION_BLOCKED/.test(err.message)) {
+      showToast('브라우저 경로가 일시 차단되어, 서버가 책 선정부터 대신 진행합니다 (자동)', 'info');
+      await runAutoDeployPipeline(null, affiliateLinks, { category, issue });
+    } else {
+      showToast(err.message, 'error');
+    }
+  } finally {
+    hideLoading();
+  }
+});
+
+document.getElementById('deployResuggestBtn').addEventListener('click', () => {
+  deployState.selectedBook = null;
+  document.getElementById('deployPhase1').style.display = 'block';
+  document.getElementById('deployPhase2').style.display = 'none';
+  document.getElementById('deployPhase3').style.display = 'none';
+});
+
+document.getElementById('deployChangeBookBtn').addEventListener('click', () => {
+  deployState.selectedBook = null;
+  document.getElementById('deployPhase2').style.display = 'block';
+  document.getElementById('deployPhase3').style.display = 'none';
+  document.getElementById('deployBookList').querySelectorAll('.deploy-book-item').forEach(i => i.classList.remove('selected'));
+});
+
+document.getElementById('deployStartBtn').addEventListener('click', async () => {
+  if (!deployState.selectedBook) return;
+  const book = deployState.selectedBook;
+  const affiliateLinks = getDeployAffiliateLinks();
+  const bookInfo = {
+    title: book.title, author: book.author, year: book.year,
+    coreMessage: book.coreMessage, targetAudience: book.targetAudience, category: book.category,
+    description: book.description || '', // 실제 책 소개 — 생성·검증 근거
+  };
+  await runAutoDeployPipeline(bookInfo, affiliateLinks);
+});
+
+async function runAutoDeployPipeline(bookInfo, affiliateLinks, autoSelect) {
+  localStorage.removeItem('activePipelineId');
+  clearTimeout(_pipelinePoller);
+  _resultsRendered = false;
+  state._catalogAdded = false;
+  state.draftId = '';
+  state.reelHook = '';
+  state.reelScript = null; state.reelValidation = null;
+  const _rp = document.getElementById('reelPreview'); if (_rp) _rp.style.display = 'none';
+
+  const progressPanel = document.getElementById('progressPanel');
+  progressPanel.classList.add('visible');
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('deployDoneMsg').classList.remove('visible');
+  document.getElementById('deployInstagramBtnWrap').style.display = 'none';
+  progressPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  for (let i = 1; i <= 7; i++) setDeployStep(i, '', null);
+
+  // 서버 파이프라인 — 탭·앱을 꺼도 서버에서 계속 진행
+  // bookInfo를 localStorage에 함께 저장 → 페이지 재로드 후에도 복구 가능
+  let lastErr = '';
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 2000 * attempt));
+      const result = await apiFetch('/api/pipeline-start', {
+        bookInfo: bookInfo || undefined,
+        autoSelect: bookInfo ? undefined : autoSelect, // 책 미정 — 서버(크론)가 선정
+        affiliateLinks: affiliateLinks || [],
+      });
+      if (result && result.pipelineId) {
+        localStorage.setItem('activePipelineId', result.pipelineId);
+        localStorage.setItem('activePipelineBookInfo', JSON.stringify(bookInfo || { title: '(AI 자동 선정 중)', category: autoSelect?.category || '' }));
+        if (result.bookNumber) state.bookNumber = result.bookNumber;
+        if (affiliateLinks) state.affiliateLinks = affiliateLinks;
+        showToast(bookInfo
+          ? `"${bookInfo.title}" 서버에서 처리 시작 — 앱을 꺼도 계속 진행됩니다`
+          : '서버에서 책 선정부터 자동 진행 — 앱을 꺼도 계속 진행됩니다', 'success');
+        setDeployStep(1, 'active', bookInfo ? 'Claude AI가 5페이지 카드뉴스를 작성 중...' : 'AI가 책을 자동 선정 중...');
+        startPipelinePolling(result.pipelineId);
+        return;
+      }
+    } catch (e) {
+      lastErr = e.message;
+      console.warn(`서버 파이프라인 시도 ${attempt + 1} 실패:`, e.message);
+    }
+  }
+
+  // 3회 모두 실패
+  if (!bookInfo) {
+    // 책 미정(autoSelect) 모드는 브라우저 폴백이 불가능 — 명확히 알리고 종료
+    showToast(`서버 연결 실패 (${lastErr}) — 잠시 후 "자동 진행하기"를 다시 눌러주세요`, 'error');
+    return;
+  }
+  // 사용자에게 명확히 알리고 브라우저 모드로 전환
+  showToast(`서버 연결 실패 (${lastErr}) — 탭을 열어둔 채로 진행합니다`, 'warning');
+  setDeployStep(1, 'active', 'Claude AI가 5페이지 카드뉴스를 작성 중... (탭을 유지해주세요)');
+  await runBrowserPipeline(bookInfo, affiliateLinks);
+}
+
+async function runBrowserPipeline(bookInfo, affiliateLinks) {
+  // ── Step 1: 캐럿셀 생성 ──
+  setDeployStep(1, 'active', 'Claude AI가 5페이지 카드뉴스를 작성 중...');
+  let pages;
+  try {
+    const data = await apiFetch('/api/generate', bookInfo);
+    pages = data.pages;
+    // 실제 책 소개 — 이후 /api/validate가 부합도를 사실 기준으로 채점하는 근거
+    if (data.bookDescription) bookInfo.description = data.bookDescription;
+
+    // 생성 직후: 캔버스 레이아웃 검수 → 초과 줄 있으면 Claude에게 단축 요청
+    setDeployStep(1, 'active', '텍스트 레이아웃 검수 및 조정 중...');
+    const issues = measureCanvasOverflow(pages);
+    if (issues.length > 0) {
+      try {
+        const adjusted = await apiFetch('/api/adjust-text', { pages, bookInfo, issues });
+        if (adjusted.pages) pages = adjusted.pages;
+      } catch (e) {
+        console.warn('텍스트 조정 실패(원본 유지):', e.message);
+      }
+    }
+
+    state.pages = pages;
+    state.bookCover = data.bookCover || '';
+    if (data.correctedBook) {
+      if (data.correctedBook.title) bookInfo.title = data.correctedBook.title;
+      if (data.correctedBook.author) bookInfo.author = data.correctedBook.author;
+    }
+    state.bookInfo = bookInfo;
+    addToHistory(bookInfo.title);
+    // 도서 번호 미리 예약 → 캡션·DM·도서관 번호 일치
+    if (!state.bookNumber) {
+      try {
+        const r = await apiFetch('/api/reserve-book-number', {});
+        if (r.bookNumber) state.bookNumber = r.bookNumber;
+      } catch (e) { console.warn('도서 번호 예약 실패(무시):', e.message); }
+    }
+    renderCarousel(pages);
+    setStep(2);
+    setDeployStep(1, 'done', issues.length > 0 ? `5페이지 생성 완료 (텍스트 ${issues.length}곳 조정됨)` : '5페이지 카드뉴스 생성 완료');
+  } catch (err) {
+    setDeployStep(1, 'error', err.message);
+    showToast('캐럿셀 생성 실패: ' + err.message, 'error');
+    return;
+  }
+
+  // ── Step 2: 품질 검증 (최대 2회) ──
+  setDeployStep(2, 'active', 'AI 자동 품질 평가 중...');
+  let validation;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      validation = await apiFetch('/api/validate', { pages, bookInfo });
+      state.validation = validation;
+    } catch (err) {
+      setDeployStep(2, 'error', err.message);
+      showToast('검증 실패: ' + err.message, 'error');
+      return;
+    }
+    if (validation.approved) break;
+    if (attempt < 2) {
+      setDeployStep(2, 'active', `${attempt}회 평가 ${validation.totalScore}점 — 피드백 반영 재생성 중...`);
+      try {
+        const rd = await apiFetch('/api/regenerate', {
+          bookInfo, previousPages: pages,
+          feedback: validation.feedback, improvements: validation.improvements || [],
+        });
+        pages = rd.pages;
+        state.pages = pages;
+        renderCarousel(pages);
+      } catch (err) {
+        setDeployStep(2, 'error', err.message); return;
+      }
+    }
+  }
+  setDeployStep(2, 'done', `${validation.totalScore}/100점 ${validation.approved ? '합격' : '(계속 진행)'}`);
+  renderValidation(validation);
+  setStep(validation.approved ? 4 : 3);
+
+  // ── Step 3: 이미지 생성 (5장 모두 로드 완료 후 다음 단계로) ──
+  setDeployStep(3, 'active', 'AI 이미지 5장 생성 중... (장당 최대 35초, 잠시 기다려주세요)');
+  try {
+    const imgData = await apiFetch('/api/generate-images', { pages, bookInfo });
+    state.images = imgData.images;
+    await applyImagesToCards(imgData.images);
+    setDeployStep(3, 'done', '이미지 로드 완료 — 텔레그램 발송 준비');
+  } catch (err) {
+    setDeployStep(3, 'error', '이미지 생성 실패 — 텍스트 전용으로 계속 진행');
+    state.images = null;
+  }
+
+  // ── Step 4: 캡션 + 해시태그 ──
+  setDeployStep(4, 'active', '인스타그램 캡션 작성 중...');
+  let caption = '', hashtags = [], dmKeyword = '';
+  try {
+    const capData = await apiFetch('/api/generate-caption', { pages, bookInfo, bookNumber: state.bookNumber || '' });
+    caption = capData.caption || '';
+    hashtags = capData.hashtags || [];
+    dmKeyword = capData.commentKeyword || capData.dmKeyword || '';
+    state.caption = caption;
+    state.captionHashtags = hashtags;
+    state.dmKeyword = dmKeyword;
+    document.getElementById('captionTextContent').textContent = caption;
+    document.getElementById('captionHashtagsRow').textContent = hashtags.join(' ');
+    renderDmKeywordInfo(dmKeyword);
+    document.getElementById('captionResult').style.display = 'block';
+    setDeployStep(4, 'done', '캡션 + 해시태그 생성 완료');
+  } catch (err) {
+    setDeployStep(4, 'error', '캡션 생성 실패 — 계속 진행');
+  }
+  updateInstagramBtn();
+
+  // ── Step 5: (새 전략) DM 미사용 — 건너뜀 ──
+  setDeployStep(5, 'done', 'DM 단계 생략 (저장·공유 중심 전략)');
+
+  // ── Step 6: 텔레그램 발송 (완료 알림 + 확인 링크만) ──
+  setDeployStep(6, 'active', '제작 완료 — 텔레그램 알림 발송 중...');
+  try {
+    const tgData = await apiFetch('/api/send-telegram', {
+      bookInfo,
+      pipelineId: localStorage.getItem('activePipelineId') || '',
+    });
+    setDeployStep(6, 'done', '텔레그램으로 완료 알림 + 확인 링크 발송 완료');
+    showToast(tgData.message || '텔레그램 발송 완료!', 'success');
+  } catch (err) {
+    const isTimeout = err.message === 'Load failed' || err.message === 'Failed to fetch' || err.name === 'TypeError';
+    if (isTimeout) {
+      setDeployStep(6, 'done', '텔레그램 발송 완료 (텔레그램 앱에서 확인해주세요)');
+      showToast('텔레그램을 확인해주세요 — 메시지가 도착했을 수 있습니다', 'warning');
+    } else {
+      setDeployStep(6, 'error', `텔레그램 발송 실패: ${err.message}`);
+      showToast('텔레그램 발송 실패: ' + err.message, 'error');
+    }
+  }
+
+  // ── Step 7: 완료 (도서관 등록은 아래 "도서관 등록" 메뉴에서 직접) ──
+  setDeployStep(7, 'done', '결과 확인 후 "도서관 등록" 메뉴에서 등록하고 인스타그램에 게시하세요');
+  if (!state._catalogAdded) autosaveDraft();  // 등록·게시 전이면 초안으로 자동 저장
+  populateLibraryReg();
+  setStep(4);
+  document.getElementById('deployDoneMsg').classList.add('visible');
+  document.getElementById('deployInstagramBtnWrap').style.display = 'block';
+  document.getElementById('deployInstagramBtn').disabled = !(state.images && state.caption);
+}
+
+let _pipelinePoller = null;
+let _currentPollId = null; // 폴링 중인 파이프라인 ID (visibilitychange 복귀 시 참조)
+let _resultsRendered = false; // 결과(캐럿셀) 중복 렌더 방지 — 콘텐츠 준비 즉시 1회만 그림
+
+function startPipelinePolling(pipelineId) {
+  clearTimeout(_pipelinePoller);
+  _currentPollId = pipelineId;
+
+  const poll = async () => {
+    // iOS: 페이지가 숨겨진 상태에서는 네트워크 요청 안 함 → 배터리·메모리 절약
+    // visibilitychange 핸들러가 복귀 시 poll()을 직접 호출하므로 여기서 리턴만 해도 됨
+    if (document.hidden) {
+      _pipelinePoller = setTimeout(poll, 10000); // 숨겨졌을 때는 10초마다 느슨하게
+      return;
+    }
+
+    try {
+      const status = await apiFetch('/api/pipeline-status?id=' + encodeURIComponent(pipelineId));
+      applyPipelineStatus(status);
+      // 콘텐츠(페이지)가 준비되면 complete를 기다리지 않고 즉시 캐럿셀을 보여준다.
+      // (남은 단계 5~7은 DM 회신·텔레그램·게시 마커라 미리보기를 막을 이유가 없음)
+      if (status.pages) renderPipelineResults(status);
+      if (status.status === 'complete') {
+        localStorage.removeItem('activePipelineId');
+        localStorage.removeItem('activePipelineBookInfo');
+        _currentPollId = null;
+        renderPipelineResults(status, true);
+        // 자동 배포로 만든 것도 등록·게시 전이면 초안으로 자동 저장(사라지지 않게).
+        // 파이프라인 id로 고정 → 재접속해도 같은 초안을 갱신(중복 방지).
+        if (!state._catalogAdded) { state.draftId = state.draftId || ('pl_' + pipelineId); autosaveDraft(); }
+        return;
+      }
+      if (status.status === 'error') {
+        localStorage.removeItem('activePipelineId');
+        localStorage.removeItem('activePipelineBookInfo');
+        _currentPollId = null;
+        showToast('파이프라인 오류: ' + (status.error || '알 수 없는 오류'), 'error');
+        return;
+      }
+      if (status.status === 'not_found') {
+        localStorage.removeItem('activePipelineId');
+        localStorage.removeItem('activePipelineBookInfo');
+        _currentPollId = null;
+        return;
+      }
+      // 8분 이상 업데이트 없으면 타임아웃
+      if (status.updatedAt && Date.now() - status.updatedAt > 8 * 60 * 1000) {
+        localStorage.removeItem('activePipelineId');
+        localStorage.removeItem('activePipelineBookInfo');
+        _currentPollId = null;
+        showToast('서버 처리가 응답하지 않습니다. 다시 시도해주세요.', 'error');
+        return;
+      }
+      _pipelinePoller = setTimeout(poll, 3000);
+    } catch (err) {
+      console.warn('폴링 실패:', err);
+      _pipelinePoller = setTimeout(poll, 6000);
+    }
+  };
+  poll();
+}
+
+// ── iOS 앱 전환·화면 꺼짐 복귀 처리 ──────────────────────────────────────────
+
+// (1) visibilitychange: 앱 전환 후 Safari 탭이 살아서 돌아온 경우
+//     setTimeout이 iOS에 의해 정지돼 있으므로, 화면에 다시 나타나는 순간 즉시 폴링 재개
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && _currentPollId) {
+    clearTimeout(_pipelinePoller);
+    // 탭이 살아있으면 즉시 상태 확인
+    startPipelinePolling(_currentPollId);
+  }
+});
+
+// (2) pageshow: iOS BFCache(빠른 복귀 캐시)에서 페이지가 통째로 복원된 경우
+//     이 경우엔 JS 변수가 멈춰있던 상태 그대로라 _currentPollId가 살아있을 수 있음.
+//     persisted=true 이면 BFCache 복귀, 그냥 reload 이면 false
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) {
+    // BFCache 복귀 → 폴링 재개
+    const savedId = localStorage.getItem('activePipelineId') || _currentPollId;
+    if (savedId) {
+      clearTimeout(_pipelinePoller);
+      startPipelinePolling(savedId);
+    }
+  }
+});
+
+function applyPipelineStatus(status) {
+  const step = status.step || 0;
+  const stepStatus = status.stepStatus || '';
+  for (let i = 1; i < step; i++) setDeployStep(i, 'done', null);
+  if (step >= 1 && step <= 7) {
+    const s = status.status === 'error' ? 'error' : (stepStatus === 'done' ? 'done' : 'active');
+    setDeployStep(step, s, status.label || null);
+  }
+  for (let i = step + 1; i <= 7; i++) setDeployStep(i, '', null);
+}
+
+// 운영자용 라벨: 이제 댓글 트리거는 A/B 투표 (키워드 입력 아님). category는 DM 라우팅 태그.
+function renderDmKeywordInfo(category) {
+  const el = document.getElementById('dmKeywordInfo');
+  if (!el) return;
+  el.innerHTML = `DM 트리거: 댓글에 <strong>A</strong> 또는 <strong>B</strong>를 남기면 선택에 맞는 DM이 자동 발송됩니다`
+    + (category ? ` <span style="opacity:.65">(라우팅 카테고리: ${escHtml(category)})</span>` : '');
+}
+
+// 새 전략(저장·공유 중심)에서는 DM을 사용하지 않는다 → 표시하지 않음(비활성).
+function renderDmReplies() { return false; }
+
+function renderPipelineResults(status, autoSendComposites) {
+  if (!status.pages) return;
+  // 이미 그려졌으면 전체 재렌더(이미지 재로딩·토스트 반복) 대신, 뒤늦게 도착한
+  // DM 회신 같은 보조 데이터만 채워 넣고 끝낸다.
+  if (_resultsRendered) {
+    renderDmReplies(status);
+    return;
+  }
+  _resultsRendered = true;
+  state.pages = status.pages;
+  state.bookInfo = status.bookInfo || state.bookInfo;
+  state.images = status.images || null;
+  state.caption = status.caption || '';
+  state.captionHashtags = status.hashtags || [];
+  state.dmKeyword = status.dmKeyword || '';
+  if (status.bookNumber) { state.bookNumber = status.bookNumber; }
+  if (status.bookCover) state.bookCover = status.bookCover;
+  if (status.affiliateLinks) state.affiliateLinks = status.affiliateLinks;
+  if (status.bookInfo) addToHistory(status.bookInfo.title);
+  renderCarousel(status.pages);
+  state.reelScript = null; generateReelScript();  // 자동 배포 결과에도 릴스 대본 생성·미리보기
+  if (status.images) applyImagesToCards(status.images);
+  if (status.caption) {
+    document.getElementById('captionTextContent').textContent = status.caption;
+    document.getElementById('captionHashtagsRow').textContent = (status.hashtags || []).join(' ');
+    renderDmKeywordInfo(status.dmKeyword);
+    document.getElementById('captionResult').style.display = 'block';
+  }
+  renderDmReplies(status);
+  populateLibraryReg();
+  if (status.validation) renderValidation(status.validation);
+  setStep(status.validation?.approved ? 4 : 3);
+  updateInstagramBtn();
+  document.getElementById('deployDoneMsg').classList.add('visible');
+  document.getElementById('deployInstagramBtnWrap').style.display = 'block';
+  document.getElementById('deployInstagramBtn').disabled = !(status.images && status.caption);
+  showToast('캐럿셀 생성 완료! 결과를 확인하고 게시 여부를 결정하세요.', 'success');
+}
+
+// 페이지 로드 시 이전 파이프라인 복구
+// iOS에서 탭이 죽었다 살아나도 localStorage에 ID가 남아있으면 결과를 복원한다
+(async () => {
+  // 텔레그램 "확인하러 가기" 링크(?pipeline=<id>)로 들어온 경우 우선 처리.
+  // 다른 기기/브라우저라 localStorage가 없어도 결과를 불러올 수 있어야 함.
+  const urlPipelineId = new URLSearchParams(location.search).get('pipeline');
+  const savedId = urlPipelineId || localStorage.getItem('activePipelineId');
+  if (!savedId) return;
+
+  // 저장된 bookInfo로 deployState 복원 (재시도 등에 필요)
+  try {
+    const savedBook = JSON.parse(localStorage.getItem('activePipelineBookInfo') || 'null');
+    if (savedBook && !deployState.selectedBook) {
+      deployState.selectedBook = savedBook;
+    }
+  } catch {}
+
+  let status;
+  try {
+    status = await apiFetch('/api/pipeline-status?id=' + encodeURIComponent(savedId));
+  } catch {
+    // 네트워크 오류 — 파이프라인이 아직 살아있을 수 있으므로 조용히 종료
+    return;
+  }
+
+  if (!status || status.status === 'not_found') {
+    localStorage.removeItem('activePipelineId');
+    localStorage.removeItem('activePipelineBookInfo');
+    if (urlPipelineId) showToast('해당 캐럿셀 결과를 찾을 수 없습니다 (만료됐을 수 있어요).', 'warning');
+    return;
+  }
+
+  // 자동 배포 탭으로 전환 및 진행 패널 노출
+  switchTab('tabAutoDeploy');
+  const progressPanel = document.getElementById('progressPanel');
+  progressPanel.classList.add('visible');
+  document.getElementById('emptyState').style.display = 'none';
+  applyPipelineStatus(status);
+
+  if (status.status === 'complete') {
+    localStorage.removeItem('activePipelineId');
+    localStorage.removeItem('activePipelineBookInfo');
+    renderPipelineResults(status, true);
+    if (!state._catalogAdded) { state.draftId = state.draftId || ('pl_' + savedId); autosaveDraft(); }
+    showToast('캐럿셀 결과입니다. 확인 후 인스타그램 게시 여부를 결정하세요.', 'success');
+  } else if (status.status === 'error') {
+    localStorage.removeItem('activePipelineId');
+    localStorage.removeItem('activePipelineBookInfo');
+    showToast('이전 작업에서 오류가 발생했습니다. 다시 시도해주세요.', 'error');
+  } else if (status.status === 'running') {
+    // 이미 콘텐츠가 만들어졌으면(텔레그램 알림 후 들어온 경우 대부분 해당) 바로 보여준다.
+    if (status.pages) {
+      renderPipelineResults(status, false);
+    } else {
+      showToast('서버에서 계속 진행 중... 잠시 기다려주세요.', 'info');
+    }
+    startPipelinePolling(savedId);
+  } else {
+    localStorage.removeItem('activePipelineId');
+    localStorage.removeItem('activePipelineBookInfo');
+  }
+})();
+
+// 자동 배포탭 인스타그램 직접 게시
+document.getElementById('deployInstagramBtn').addEventListener('click', prepareForPosting);
+</script>
+</body>
+</html>
