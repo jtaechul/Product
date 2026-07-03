@@ -1,0 +1,13 @@
+{
+  "name": "spotlight-toss",
+  "private": true,
+  "version": "1.0.0",
+  "description": "SPOTLIGHT 게임을 토스 앱인토스 미니앱으로 포장하는 래퍼 (게임 소스는 ../spotlight)",
+  "scripts": {
+    "dev": "node scripts/copy.mjs && npx http-server dist -p 5173 -c-1",
+    "build": "node scripts/copy.mjs"
+  },
+  "dependencies": {
+    "@apps-in-toss/web-framework": "latest"
+  }
+}

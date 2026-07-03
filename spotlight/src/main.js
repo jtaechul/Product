@@ -2,9 +2,13 @@ import { Application } from "pixi.js";
 import { COLORS } from "./config.js";
 import { SceneManager } from "./core/SceneManager.js";
 import { TitleScene } from "./scenes/TitleScene.js";
+import { initPlatform, logScreen } from "./systems/platform.js";
 
 // PixiJS 부트스트랩 (기획서 4번: GPU 렌더링, 빌드 없이 동작).
 async function boot() {
+  // 플랫폼(토스 앱인토스/웹) 준비: 저장소 hydrate + 안전영역. 세이브 여부 판단 전에 끝나야 한다.
+  await initPlatform();
+
   const app = new Application();
   await app.init({
     resizeTo: window,
@@ -20,6 +24,7 @@ async function boot() {
   await loadFonts();
 
   const manager = new SceneManager(app);
+  logScreen("title");
   await manager.change(new TitleScene());
 }
 

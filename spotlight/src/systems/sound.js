@@ -1,14 +1,18 @@
-// 사운드 (기획서 18번). HTML5 Audio 기반. BGM/효과음 on·off는 localStorage에 저장.
+// 사운드 (기획서 18번). HTML5 Audio 기반. BGM/효과음 on·off는 플랫폼 저장소에 저장.
+import { storageGet, storageSet } from "./platform.js";
+
 const LS = "spotlight_audio";
 let bgm = null, curSrc = null, curVol = 0.5;
 let pendingGesture = false; // 자동재생 차단으로 재생 보류 중 → 다음 사용자 제스처에 재생
 
-function load() { try { return Object.assign({ bgm: true, sfx: true }, JSON.parse(localStorage.getItem(LS) || "{}")); } catch (e) { return { bgm: true, sfx: true }; } }
-function persist() { try { localStorage.setItem(LS, JSON.stringify(st)); } catch (e) {} }
-const st = load();
+function load() { try { return Object.assign({ bgm: true, sfx: true }, JSON.parse(storageGet(LS) || "{}")); } catch (e) { return { bgm: true, sfx: true }; } }
+function persist() { try { storageSet(LS, JSON.stringify(st())); } catch (e) {} }
+// 설정은 첫 접근 때 읽는다 — 모듈 로드 시점엔 플랫폼 저장소(hydrate)가 아직 준비 전이기 때문.
+let _st = null;
+function st() { if (!_st) _st = load(); return _st; }
 
-export function isBgmOn() { return st.bgm; }
-export function isSfxOn() { return st.sfx; }
+export function isBgmOn() { return st().bgm; }
+export function isSfxOn() { return st().sfx; }
 
 // 브라우저 자동재생 정책상 '최초 사용자 동작' 전에는 소리를 막는다.
 // → 화면 어디든 처음 닿는(또는 누르는·스크롤하는) 순간 즉시 현재 곡을 재생한다.
@@ -23,7 +27,7 @@ function armGestureRetry() {
       window.removeEventListener(ev, go, true);
       document.removeEventListener(ev, go, true);
     }
-    if (st.bgm && curSrc) playBgm(curSrc, curVol);
+    if (st().bgm && curSrc) playBgm(curSrc, curVol);
   };
   for (const ev of UNLOCK_EVENTS) {
     window.addEventListener(ev, go, true);
@@ -35,7 +39,7 @@ function armGestureRetry() {
 // 자동재생이 막히면(브라우저 정책) 다음 사용자 제스처에서 자동으로 재시도한다.
 export function playBgm(src, vol = 0.5) {
   curSrc = src; curVol = vol;
-  if (!st.bgm) return;
+  if (!st().bgm) return;
   try {
     if (!bgm || bgm.__src !== src) {
       if (bgm) bgm.pause();
@@ -50,18 +54,18 @@ export function playBgm(src, vol = 0.5) {
 export function stopBgm() { try { if (bgm) { bgm.pause(); bgm.currentTime = 0; } } catch (e) {} curSrc = null; }
 
 export function setBgmOn(on) {
-  st.bgm = on; persist();
+  st().bgm = on; persist();
   if (on) { if (curSrc) playBgm(curSrc, curVol); }
   else { try { if (bgm) bgm.pause(); } catch (e) {} }
 }
-export function setSfxOn(on) { st.sfx = on; persist(); }
+export function setSfxOn(on) { st().sfx = on; persist(); }
 
 // 자동재생 차단 환경: 즉시 재생을 시도하고, 막히면 첫 제스처에서 재생(playBgm 내부 처리).
 export function armBgm(src, vol = 0.5) { playBgm(src, vol); }
 
 // 효과음 (끈 상태면 무시) — 파일(mp3) 기반. 합성 효과음은 아래 sfx() 사용.
 export function playSfx(src, vol = 0.6) {
-  if (!st.sfx) return;
+  if (!st().sfx) return;
   try { const a = new Audio(src); a.volume = vol; const p = a.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
 }
 
@@ -129,7 +133,7 @@ const RECIPES = {
 
 // 합성 효과음 재생 (이름). 효과음이 꺼져 있으면 무시.
 export function sfx(name) {
-  if (!st.sfx) return;
+  if (!st().sfx) return;
   const ctx = ac(); if (!ctx) return;
   const r = RECIPES[name]; if (!r) return;
   try { r(ctx, ctx.currentTime + 0.001); } catch (e) {}

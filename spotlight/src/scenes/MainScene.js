@@ -2,9 +2,10 @@ import { Assets, Sprite, Graphics, Container, Text, TextStyle } from "pixi.js";
 import { Scene } from "../core/Scene.js";
 import { DESIGN_WIDTH, DESIGN_HEIGHT, TOTAL_TURNS } from "../config.js";
 import { GameState } from "../systems/game.js";
-import { computeEnding, saveToDex, ENDING_COUNT } from "../systems/ending.js";
+import { computeEnding, saveToDex, computeCareerScore, ENDING_COUNT } from "../systems/ending.js";
 import { saveGame } from "../systems/save.js";
 import { playBgm, stopBgm, setBgmOn, setSfxOn, isBgmOn, isSfxOn, sfx } from "../systems/sound.js";
+import { logEvent, logScreen, submitScore } from "../systems/platform.js";
 
 // 계절별 인게임 BGM
 const SEASON_BGM = { 봄: "bgm_spring", 여름: "bgm_summer", 가을: "bgm_autumn", 겨울: "bgm_winter" };
@@ -69,9 +70,22 @@ export class MainScene extends Scene {
     const fallbackIco = this.tex.actico_acting || this.tex.cat_acting || idleTex;
     for (const a of ACTIVITIES) if (!this.tex[`actico_${a.id}`]) this.tex[`actico_${a.id}`] = fallbackIco;
     for (const c of CATEGORIES) if (!this.tex[`catico_${c.id}`]) this.tex[`catico_${c.id}`] = fallbackIco;
-    await Promise.all(["academy", "home", "set", "stage", "gym", "salon", "library", "cafe", "recording", "park", "film_set", "cf_studio", "ott_set", "photostudio", "fanmeet", "variety_set"].map((n) => Assets.load(`./assets/bg/${n}.png`))); // 활동별 배경 프리로드
     this.tex.mgrface = await Assets.load("./assets/manager/hanjiwon.png");
-    await Promise.all(BONDS.map(async (b) => { this.tex[`bond_${b.id}`] = await Assets.load(b.img); }));
+    // 무거운 연출용 에셋(활동 배경 16장 + 인연 일러스트 4장)은 첫 화면을 막지 않도록
+    // 백그라운드로 이어서 로드한다(앱인토스 '최초 화면 10초 이내' 규정 대응).
+    // 이 에셋을 쓰는 곳(인연 팝업·인연 이벤트)은 this._extraReady를 먼저 기다린다.
+    // 활동 배경·포즈는 사용 시점에 Assets.load를 다시 호출하므로(캐시 워밍) 따로 대기가 필요 없다.
+    this._extraReady = Promise.all([
+      ...["academy", "home", "set", "stage", "gym", "salon", "library", "cafe", "recording", "park", "film_set", "cf_studio", "ott_set", "photostudio", "fanmeet", "variety_set"]
+        .map((n) => Assets.load(`./assets/bg/${n}.png`).catch(() => null)),
+      ...BONDS.map(async (b) => { this.tex[`bond_${b.id}`] = await Assets.load(b.img).catch(() => null); }),
+    ]).then(() => {});
+    // 포즈 이미지 워밍업(대기 불필요·실패 무시) — 첫 '다음 달 진행' 연출이 끊기지 않게
+    this._extraReady.then(() => {
+      for (const k of ["acting", "vocal", "dance", "gym", "study", "volunteer", "family", "rest", "filming", "cheer", "good", "tired", "fail", "panned"]) {
+        Assets.load(POSE_PATH(k)).catch(() => {});
+      }
+    });
     this.idleTex = idleTex;
 
     this.bgSprite = new Sprite(bgTex);
@@ -321,13 +335,15 @@ export class MainScene extends Scene {
   }
 
   // 인연(Bond) 팝업 (기획서 12번)
-  openBonds() {
+  async openBonds() {
     if (this.overlay) return;
     sfx("tap");
+    await this._extraReady;   // 인연 일러스트가 아직 로드 전이면 잠깐 대기
+    if (this.overlay) return; // 대기 중 다른 팝업이 열렸으면 중단
     const ov = this._dim(); this.overlay = ov;
     const cw = 620, x = (DESIGN_WIDTH - cw) / 2, rows = BONDS.length, ch = 132 + rows * 110, y = (DESIGN_HEIGHT - ch) / 2;
     ov.addChild(new Graphics().roundRect(x, y, cw, ch, 24).fill(0xfdf8f2).stroke({ width: 3, color: S.gold }));
-    ov.addChild(Object.assign(this._t("🤝 인연", 24, S.ink, FD), { x: x + 30, y: y + 24 }));
+    ov.addChild(Object.assign(this._t("인연", 24, S.ink, FD), { x: x + 30, y: y + 24 }));
     ov.addChild(Object.assign(this._t(`인연 ${BOND_THRESHOLD} 이상이면 보너스가 발동돼요`, 14, S.sub), { x: x + 30, y: y + 58 }));
     BONDS.forEach((b, i) => {
       const ry = y + 92 + i * 110, val = this.game.bonds[b.id], active = val >= BOND_THRESHOLD;
@@ -607,7 +623,8 @@ export class MainScene extends Scene {
 
   // 학년 말 시상식 연출 (기획서 3·15): 시상식 배경 + 트로피 + 수상 결과
   // 인연 이벤트 연출 (기획서 12번): 인물 등장 + 대사 3+ → 보너스 발동
-  _playBondEvent(id, tier) {
+  async _playBondEvent(id, tier) {
+    await this._extraReady; // 인연 일러스트 로드 보장
     return new Promise((resolve) => {
       const b = BONDS.find((x) => x.id === id), ev = BOND_EVENTS[id] && BOND_EVENTS[id][tier];
       if (!b || !ev) { resolve(); return; }
@@ -732,8 +749,12 @@ export class MainScene extends Scene {
     const season = this._season().name;
     // 적용: 출연(평가) → 활동/월정산. 연출은 아래에서 슬롯 순서대로.
     const resultMap = {};
-    for (const s of order) if (s.startsWith("prod:")) { const r = this.game.runProduction(s.slice(5)); if (r) resultMap[s] = r; }
+    for (const s of order) if (s.startsWith("prod:")) {
+      const r = this.game.runProduction(s.slice(5));
+      if (r) { resultMap[s] = r; logEvent("production", { media: s.slice(5), grade: r.grade || "" }); } // 행동 로그(앱인토스)
+    }
     this.game.advance(acts);
+    logEvent("month", { turn: this.game.turn }); // 턴 진행 로그
     this.selected = [];
     this._afterSelectChange();
     if (this.nextBtn) this.nextBtn.visible = false; // 진행 연출 동안 버튼 숨김
@@ -925,6 +946,14 @@ export class MainScene extends Scene {
     this._closeOverlay();
     if (!res) res = computeEnding(this.game);
     const total = saveToDex(res.id);
+    // 토스게임센터 리더보드 제출 + 엔딩 로그 (한 회차당 1회, 재표시 시 중복 방지)
+    if (!this._endingLogged) {
+      this._endingLogged = true;
+      const score = computeCareerScore(this.game);
+      submitScore(score);
+      logEvent("ending", { ending_id: res.id, score });
+      logScreen("ending");
+    }
     if (!bgmPlaying) playBgm(`./assets/sfx/${this._endingBgm(res)}.mp3`, 0.6); // 직접 재표시 때만 새로 시작
     const H = this.H || DESIGN_HEIGHT;
     const ov = new Container(); ov._isEnding = true; this.overlay = ov;
