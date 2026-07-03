@@ -20,16 +20,31 @@
   .power .lab b{color:var(--text)}
   .powerbar{position:relative;display:flex;height:20px;border-radius:99px;overflow:hidden;background:#0d131f;border:1px solid var(--line)}
   .powerbar .seg{position:relative;height:100%;transition:width .3s ease;min-width:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
-  .powerbar .seg .lab{font-size:10px;font-weight:800;color:#fff;white-space:nowrap;text-shadow:0 1px 2px #000b,0 0 2px #0008;padding:0 4px;pointer-events:none}
+  .powerbar .seg .lab{font-size:11px;font-weight:700;color:#fff;white-space:nowrap;letter-spacing:-0.01em;font-variant-numeric:tabular-nums;text-shadow:0 1px 3px #000c;padding:0 5px;pointer-events:none}
   .stage{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-top:12px}
   .left{flex:1 1 560px;min-width:320px;display:flex;flex-direction:column;gap:12px}
   .arena-box{position:relative;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:8px}
   .canvas-stack{position:relative;width:100%;aspect-ratio:1/1}
   #main{position:absolute;inset:0;width:100%;height:100%;border-radius:8px;display:block;background:#070a10}
-  .overlay{position:absolute;inset:8px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:rgba(5,7,11,.78);backdrop-filter:blur(2px);gap:12px;padding:22px;z-index:6}
+  .overlay{position:absolute;inset:8px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    background:radial-gradient(90% 70% at 50% 10%,#233a6452,transparent 62%),radial-gradient(130% 95% at 50% 108%,#3a2b0a3e,transparent 58%),rgba(5,7,11,.85);
+    background-size:cover;background-position:center;backdrop-filter:blur(2px);gap:12px;padding:22px;z-index:6}
   .overlay.hidden{display:none}
   .overlay .big{font-size:clamp(20px,4vw,32px);font-weight:900}
-  .overlay .who{font-size:12px;color:var(--dim);letter-spacing:.2em;font-weight:800;text-transform:uppercase}
+  .overlay .who{font-size:12px;color:#d8b95c;letter-spacing:.34em;font-weight:800;text-transform:uppercase;text-shadow:0 1px 6px #000}
+  .gametitle{display:inline-block;font-size:clamp(40px,10vw,60px);font-weight:900;letter-spacing:.045em;line-height:1.12;
+    background:linear-gradient(180deg,#fff3c4 4%,#ffd23a 52%,#c98f12 96%);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 3px 14px rgba(255,210,58,.28)) drop-shadow(0 1px 2px rgba(0,0,0,.8))}
+  .overlay .tagline{font-size:13.5px;color:#aab6cc;font-weight:600;letter-spacing:.02em;text-shadow:0 1px 4px #000}
+  .fdots{display:flex;gap:9px;margin:2px 0 4px}
+  .fdots i{width:13px;height:13px;border-radius:4px;box-shadow:0 0 11px 1.5px currentColor,inset 0 1px 0 #fff5}
+  .overlay .btns{gap:10px}
+  .overlay .btns button{font-size:16px;font-weight:800;padding:13px 26px;border-radius:13px;min-width:132px;letter-spacing:.02em;
+    background:#141b2cd9;border:1px solid #34415e;box-shadow:0 4px 16px #0007}
+  .overlay .btns button:hover{background:#1b2438}
+  .overlay .btns button.primary{background:linear-gradient(180deg,#ffe08a,#ffd23a 58%,#e9b71e);color:#221a02;border:none;
+    box-shadow:0 6px 24px rgba(255,210,58,.30),inset 0 1px 0 #fff9,inset 0 -2px 0 #b8860b55}
+  .overlay .btns button.primary:hover{background:linear-gradient(180deg,#ffe9a5,#ffd94f 58%,#f0be24)}
   .overlay .summary{font-size:13px;color:var(--dim);line-height:1.7;max-width:82%}
   .overlay .summary b{color:var(--text)}
   .banner{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:999px;font-weight:900;font-size:14px;background:#0d1220ee;border:1px solid var(--line);opacity:0;pointer-events:none;box-shadow:0 8px 30px #0008;white-space:nowrap;z-index:7}
@@ -78,7 +93,8 @@
   .cinesub b{color:var(--accent)}
   body.cinema .cinesub{display:block}
   body.cinema .power{margin:0}
-  body.cinema .power .lab{display:none}
+  body.cinema .power>.lab{display:none}
+  body.cinema .powerbar{height:23px}
   body.cinema .stage{margin:0;gap:8px;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch}
   body.cinema .left{flex:0 0 auto;min-width:0;gap:8px}
   body.cinema .arena-box{padding:6px}
@@ -117,9 +133,11 @@
           <canvas id="main" aria-label="지역 전투 지도"></canvas>
           <div id="banner" class="banner"></div>
           <div id="overlay" class="overlay">
-            <div class="who">누가 천하를 얻을까?</div>
-            <div class="big" id="ovBig">▶ 시작을 눌러 관전</div>
-            <div class="btns"><button class="primary" id="ovStart">▶ 시작</button><button id="ovSeed">🎲 새 지도</button></div>
+            <div class="who">여섯 세력 · 하나의 천하</div>
+            <div class="big" id="ovBig"><span class="gametitle">천하쟁패</span></div>
+            <div class="tagline" id="ovTag">마지막까지 남는 색은 어느 세력일까요</div>
+            <div class="fdots" id="fdots"></div>
+            <div class="btns"><button class="primary" id="ovStart">관전 시작</button><button id="ovSeed">새 지도</button></div>
           </div>
         </div>
       </div>
@@ -130,7 +148,7 @@
         <div class="rows" id="rows"></div>
       </div>
       <div class="panel controls">
-        <div class="btns"><button class="primary" id="btnPlay">▶ 시작</button><button id="btnReset">↻ 다시</button><button id="btnNew">🎲 새 지도</button><button id="btnMute">소리 켜짐</button><button id="btnCinema">녹화 모드</button></div>
+        <div class="btns"><button class="primary" id="btnPlay">▶ 시작</button><button id="btnReset">↻ 다시</button><button id="btnNew">새 지도</button><button id="btnMute">소리 켜짐</button><button id="btnCinema">녹화 모드</button></div>
         <div class="speed"><span>속도</span><input type="range" id="speed" min="0.5" max="8" step="0.5" value="3"><span id="spVal" style="min-width:34px;text-align:right;color:var(--text)">3×</span></div>
         <div class="seedrow"><span>시드</span><input type="text" id="seedIn" inputmode="numeric" value="0"><button id="btnPlaySeed">재생</button></div>
         <p class="hint">같은 시드 = 같은 지도·같은 전개 명경기는 시드를 적어두면 그대로 재생된다</p>
@@ -385,16 +403,18 @@ function init(sv){
   for(const p of pv){p.moveCd=(P.moveCdMin+((rand()*(P.moveCdMax-P.moveCdMin))|0));p.flash=0;}
   tick=0;winner=-1;running=false;dirty=true;computeBonus();
   document.getElementById("seedIn").value=seed;
-  ov.querySelector(".who").textContent="누가 천하를 얻을까?";document.getElementById("ovSummary").style.display="none";
-  ov.style.backgroundImage="";bgmStop();
-  ovBig.textContent="▶ 시작을 눌러 관전";document.getElementById("ovStart").textContent="▶ 시작";ov.querySelector(".btns").style.display="flex";ov.classList.remove("hidden");
+  ov.querySelector(".who").textContent="여섯 세력 · 하나의 천하";document.getElementById("ovSummary").style.display="none";
+  applyTitleBg();bgmStop();
+  ovBig.innerHTML='<span class="gametitle">천하쟁패</span>';ovTag.style.display="";fdots.style.display="flex";
+  document.getElementById("ovStart").textContent="관전 시작";ov.querySelector(".btns").style.display="flex";ov.classList.remove("hidden");
   buildMap();refresh();draw();
 }
 function provinces(f){return pv.filter(p=>p.owner===f);}
 function computeBonus(){const cnt=Array.from({length:K},()=>[0,0,0]);for(const p of pv)if(p.owner>=0&&p.res>=0)cnt[p.owner][p.res]++;
   for(let f=0;f<K;f++){attackMul[f]=1+P.ironBonus*cnt[f][IRON];prodMul[f]=1+P.foodBonus*cnt[f][FOOD];speedMul[f]=1+P.goldBonus*cnt[f][GOLD];}return cnt;}
 function terrDef(p){let d=p.terrain===T_MTN?P.mtnDef:1;if(p.cap)d*=P.capDef;return d;}
-function absorb(loser,winner){for(const p of pv)if(p.owner===loser){p.owner=winner;p.garrison=Math.max(1,p.garrison*0.5);p.cap=false;}dirty=true;}
+function absorb(loser,winner){for(const p of pv)if(p.owner===loser){p.owner=winner;p.garrison=Math.max(1,p.garrison*0.5);p.cap=false;}
+  marches=marches.filter(m=>m.f!==loser);dirty=true;} // 멸망 세력의 행군 부대도 즉시 와해 — 유령 부활 방지
 
 const bannerEl=document.getElementById("banner");
 function banner(t,c){bannerEl.innerHTML='<span class="dot" style="background:'+(c||"#fff")+'"></span>'+t;bannerEl.style.color=c||"#fff";bannerEl.classList.remove("show");void bannerEl.offsetWidth;bannerEl.classList.add("show");}
@@ -403,10 +423,10 @@ function step(){
   let leaderProv=1;const provCnt=new Int32Array(K);for(const p of pv)if(p.owner>=0)provCnt[p.owner]++;
   for(let f=0;f<K;f++)if(alive[f]&&provCnt[f]>leaderProv)leaderProv=provCnt[f];
   for(let f=0;f<K;f++)if(moraleLeft[f]>0&&--moraleLeft[f]<=0)moraleMul[f]=1;
-  for(const p of pv){if(p.owner<0)continue;const f=p.owner;const rb=1+P.underdog*(1-provCnt[f]/leaderProv);
+  for(const p of pv){if(p.owner<0||!alive[p.owner])continue;const f=p.owner;const rb=1+P.underdog*(1-provCnt[f]/leaderProv);
     p.garrison+=P.prodBase*prodMul[f]*rb*PROD_MUL_T[p.terrain]*(p.res===FOOD?1.6:1)*(p.cap?1.5:1);}
   for(const p of pv){
-    if(p.owner<0)continue;if(p.moveCd>0){p.moveCd--;continue;}if(p.garrison<P.minToMove)continue;
+    if(p.owner<0||!alive[p.owner])continue;if(p.moveCd>0){p.moveCd--;continue;}if(p.garrison<P.minToMove)continue;
     const f=p.owner;let best=null,bs=-1e9;
     for(const qid of p.adj){const q=pv[qid];let s;
       if(q.owner!==f){const defE=q.garrison*terrDef(q),send=p.garrison*P.sendFrac*ARRIVE_MUL[q.terrain];
@@ -419,11 +439,12 @@ function step(){
   for(let m=marches.length-1;m>=0;m--){const mv=marches[m];mv.prog+=P.marchSpeed*speedMul[mv.f]*MARCH_MUL[pv[mv.to].terrain];if(mv.prog>=1){marches.splice(m,1);arrive(mv);}}
   for(const p of pv)if(p.flash>0)p.flash--;
   tick++;
-  for(let f=0;f<K;f++)if(alive[f]&&provinces(f).length===0){alive[f]=false;deathQueue.push(f);dirty=true;}
+  for(let f=0;f<K;f++)if(alive[f]&&provinces(f).length===0){alive[f]=false;deathQueue.push(f);marches=marches.filter(m=>m.f!==f);dirty=true;}
   let living=0,last=-1;for(let f=0;f<K;f++)if(alive[f]){living++;last=f;}
   if(living<=1||tick>=P.maxTicks){let w=last,wc=-1;for(let f=0;f<K;f++){const n=provinces(f).length;if(n>wc){wc=n;w=f;}}winner=w;running=false;pendingWin=true;}
 }
-function arrive(mv){const q=pv[mv.to],f=mv.f;const raw=mv.troops;let troops=raw*ARRIVE_MUL[q.terrain];
+function arrive(mv){const q=pv[mv.to],f=mv.f;if(!alive[f])return; // 멸망 세력 부대는 도착해도 무효(와해)
+  const raw=mv.troops;let troops=raw*ARRIVE_MUL[q.terrain];
   if(isWater(q.terrain)&&raw-troops>=1)float(q.cx,q.cy-2,"-"+Math.round(raw-troops)+" 도하",FACTIONS[f].color);
   if(q.owner===f){q.garrison+=troops;return;}
   // 수도 공격이라도 (1) 성벽에 실질 위협이고 (2) 최근 공성전 쿨다운이 지났을 때만 공성전 연출.
@@ -677,17 +698,23 @@ function refresh(){const cnt=computeBonus();let tot=0;const pw=new Float64Array(
   // 선두
   let lead=-1,lc=-1;for(let f=0;f<K;f++)if(alive[f]&&pc[f]>lc){lc=pc[f];lead=f;}leaderF=lead<0?0:lead;
   const ord=[...Array(K).keys()].sort((a,b)=>pc[b]-pc[a]);
-  ord.forEach(f=>{const sw=segs[f],pctW=pw[f]/tot*100;sw.seg.style.width=pctW+"%";sw.seg.style.order=alive[f]?0:1;sw.lab.textContent=(alive[f]&&pctW>=11)?(FACTIONS[f].name+" "+pc[f]):"";});
+  ord.forEach(f=>{const sw=segs[f],pctW=pw[f]/tot*100;sw.seg.style.width=pctW+"%";sw.seg.style.order=alive[f]?0:1;sw.lab.textContent=(alive[f]&&pctW>=9)?(FACTIONS[f].name+" "+pc[f]):"";});
   document.getElementById("powerLab").innerHTML="국력 (지역 + 병력 + 자원) · 선두 <b>"+(lead>=0?FACTIONS[lead].name:"-")+"</b>";
   ord.forEach((f,rank)=>{const R=rowRef[f];R.root.style.order=alive[f]?rank:100+rank;R.root.classList.toggle("dead",!alive[f]);R.root.classList.toggle("leader",alive[f]&&f===lead);R.rank.textContent=alive[f]?rank+1:"–";R.troop.textContent=alive[f]?(pc[f]+"지역·"+fmt(troopSum(f))):"멸망";R.mor.classList.toggle("on",alive[f]&&moraleLeft[f]>0);
     if(roster.length){const ch=championOf(f);R.gen.innerHTML="명장 <b>"+RANKS[ch.rank]+" "+ch.name+"</b>"+(ch.wins?" · "+ch.wins+"승":"");}});
   let a=0;for(let f=0;f<K;f++)if(alive[f])a++;document.getElementById("statLine").textContent=(1+((tick/50)|0))+"년차 · 생존 "+a;}
 
 const ov=document.getElementById("overlay"),ovBig=document.getElementById("ovBig");
+const ovTag=document.getElementById("ovTag"),fdots=document.getElementById("fdots");
+FACTIONS.forEach(fa=>{const i=document.createElement("i");i.style.background=fa.color;i.style.color=fa.color;fdots.appendChild(i);});
+// 오프닝 배경 아트 — assets/ui/title.jpg 가 있으면 시작 화면 배경으로 사용(없으면 CSS 그라디언트)
+const titleImg=new Image();let titleReady=false;titleImg.onload=()=>{titleReady=titleImg.naturalWidth>0;if(titleReady&&winner<0)applyTitleBg();};titleImg.src="assets/ui/title.jpg";
+function applyTitleBg(){ov.style.backgroundImage=titleReady?"linear-gradient(rgba(5,7,11,.38),rgba(5,7,11,.78)),url('assets/ui/title.jpg')":"";}
 const ovSum=document.createElement("div");ovSum.className="summary";ovSum.id="ovSummary";ovSum.style.display="none";ovBig.after(ovSum);
 function win(){const f=winner;padStop();bgmEndingPlay();Sfx.victory();
   ov.style.backgroundImage="linear-gradient(rgba(6,8,13,.42),rgba(6,8,13,.86)), url('assets/ending/"+FACTIONS[f].sig+".jpg')";ov.style.backgroundSize="cover";ov.style.backgroundPosition="center";
-  ov.querySelector(".who").textContent="🏆 천하통일";ovBig.innerHTML='<span style="color:'+FACTIONS[f].color+'">'+FACTIONS[f].name+"</span> 천하 통일";
+  ovTag.style.display="none";fdots.style.display="none";
+  ov.querySelector(".who").textContent="천하통일";ovBig.innerHTML='<span style="color:'+FACTIONS[f].color+'">'+FACTIONS[f].name+"</span> 천하 통일";
   const cnt=computeBonus()[f],lastFall=stats.capFalls.length?stats.capFalls[stats.capFalls.length-1]:null;
   let html="<b>"+(1+((tick/50)|0))+"년</b> 만에 천하 통일 · 일기토 <b>"+stats.duels+"회</b> · 정복한 수도 <b>"+stats.capFalls.length+"</b>곳<br>"+FACTIONS[f].name+" 보유 자원 — 철 "+cnt[0]+" · 식량 "+cnt[1]+" · 금 "+cnt[2];
   if(lastFall)html+="<br>최후의 함락 — "+FACTIONS[lastFall.loser].name+" 수도";
