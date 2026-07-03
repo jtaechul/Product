@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>북 캐럿셀 자동화</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+  <title>카드뉴스 제조기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Noto+Sans+JP:wght@400;500;700;900&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -267,6 +267,41 @@
     .trace-links a { color: var(--primary); font-size: 11.5px; word-break: break-all; text-decoration: none; }
     .trace-links a:hover { text-decoration: underline; }
     .trace-note { margin-top: 6px; font-size: 11px; color: var(--gray-500); }
+
+    /* Phase 3: 언어 탭 (한/영/일) */
+    .lang-tabs { display: flex; gap: 4px; margin-left: auto; margin-right: 10px; }
+    .lang-tab {
+      border: 1.5px solid var(--gray-200);
+      background: #fff;
+      color: var(--gray-500);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 16px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .lang-tab:hover { border-color: var(--primary-light); }
+    .lang-tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+    /* Phase 3: AI 주제 제안 칩 */
+    #topicSuggestions { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .topic-chip {
+      text-align: left;
+      border: 1.5px solid var(--gray-200);
+      background: #FAFAFF;
+      border-radius: 9px;
+      padding: 8px 11px;
+      font-size: 12px;
+      line-height: 1.55;
+      color: var(--gray-700);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .topic-chip:hover { border-color: var(--primary); background: rgba(124,58,237,0.05); }
+    .topic-chip.selected { border-color: var(--primary); background: rgba(124,58,237,0.08); }
 
     /* Main panel */
     .main {
@@ -569,7 +604,11 @@
 
     <div class="form-group">
       <label>주제<span class="req">*</span></label>
-      <input type="text" id="inputTopic" placeholder="예: 아침 루틴으로 하루를 바꾸는 법">
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="inputTopic" placeholder="예: 아침 루틴으로 하루를 바꾸는 법" style="flex:1;">
+        <button class="btn btn-outline" id="suggestTopicBtn" style="white-space:nowrap;padding:9px 12px;font-size:12px;" title="업로드한 이미지를 AI가 보고 주제를 제안합니다">AI 제안</button>
+      </div>
+      <div id="topicSuggestions" style="display:none;"></div>
     </div>
 
     <div class="form-group">
@@ -594,6 +633,7 @@
   <div class="carousel-wrapper" id="carouselWrapper">
     <div class="section-header">
       <span class="section-title">캐럿셀 미리보기</span>
+      <div class="lang-tabs" id="langTabs"></div>
       <span class="section-badge" id="carouselBadge">5 페이지</span>
     </div>
     <div class="carousel-scroll" id="carouselScroll"></div>
@@ -680,15 +720,36 @@
 <script>
 const state = {
   step: 1,
-  pages: null,
+  pages: null,            // 현재 활성 언어의 5페이지 (렌더·캔버스·릴스가 읽음)
+  pagesByLang: null,      // Phase 3: { ko, en, ja } 3개 언어 세트
+  activeLang: 'ko',       // 현재 선택된 언어 탭
   validation: null,
   bookInfo: null,         // 주제 정보 컨테이너 { title(주제), topic, coreMessage } — API 호환용 이름 유지
   uploadedImages: [],     // 업로드한 이미지 dataURL 목록 (카드 배경으로 적용)
   caption: null,
   captionHashtags: null,
-  reelScript: null,       // 연결성 있는 릴스 대본 {s1,s2,s3,s4}
+  captionsByLang: null,   // Phase 3: { ko: {caption, hashtags}, en, ja }
+  reelScript: null,       // 연결성 있는 릴스 대본 {s1,s2,s3,s4} (한국어 기준 — 릴스 다국어는 Phase 4)
   reelValidation: null,   // 릴스 문구 자동 검증 결과
 };
+
+// Phase 3: 언어별 폰트 분리 (한글 Noto Sans KR / 일문 Noto Sans JP / 영문 Inter)
+const LANGS = [
+  { code: 'ko', label: '한국어' },
+  { code: 'en', label: 'English' },
+  { code: 'ja', label: '日本語' },
+];
+const FONT_STACKS = {
+  ko: "'Noto Sans KR', sans-serif",
+  en: "'Inter', 'Noto Sans KR', sans-serif",
+  ja: "'Noto Sans JP', 'Noto Sans KR', sans-serif",
+};
+const CANVAS_FONT_STACKS = {
+  ko: '"Noto Sans KR", sans-serif',
+  en: '"Inter", "Noto Sans KR", sans-serif',
+  ja: '"Noto Sans JP", "Noto Sans KR", sans-serif',
+};
+function activeFontStack() { return CANVAS_FONT_STACKS[state.activeLang] || CANVAS_FONT_STACKS.ko; }
 
 
 const PAGE_LABELS = ['훅', '공감·문제', '이유·원리', '방법·실마리', '마무리'];
@@ -896,6 +957,41 @@ document.getElementById('traceOriginBtn').addEventListener('click', async () => 
   }
 });
 
+// ===== Phase 3: AI 주제 자동 제안 (Gemini vision — 이미지 → 주제 1 + 핵심 메시지 후보 3) =====
+document.getElementById('suggestTopicBtn').addEventListener('click', async () => {
+  if (!state.uploadedImages.length) { showToast('먼저 이미지를 업로드해주세요.', 'warning'); return; }
+  const btn = document.getElementById('suggestTopicBtn');
+  const box = document.getElementById('topicSuggestions');
+  btn.disabled = true; btn.textContent = '분석 중...';
+  try {
+    // 최대 3장을 축소해 전송 (비용·전송량 절약)
+    const smalls = [];
+    for (const src of state.uploadedImages.slice(0, 3)) smalls.push(await downscaleForTrace(src));
+    const data = await apiFetch('/api/suggest-topic', { imageDataUrls: smalls });
+    if (data.topic) document.getElementById('inputTopic').value = data.topic;
+    // 핵심 메시지 후보 3개를 칩으로 — 클릭하면 핵심 메시지 입력칸에 채움 (선택·수정은 사용자 몫)
+    box.innerHTML = '';
+    (data.coreMessages || []).forEach(msg => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'topic-chip';
+      chip.textContent = msg;
+      chip.addEventListener('click', () => {
+        document.getElementById('inputCoreMessage').value = msg;
+        box.querySelectorAll('.topic-chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+      });
+      box.appendChild(chip);
+    });
+    box.style.display = (data.coreMessages || []).length ? 'flex' : 'none';
+    showToast('AI가 주제를 제안했습니다 — 수정하거나 후보를 눌러 선택하세요.', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'AI 제안';
+  }
+});
+
 // ===== Phase 2: 텍스트 오버레이 엔진 =====
 // 이미지를 작은 캔버스에 내려 그려 3x3 그리드로 분석한다.
 //  · 위치: 상단 밴드 vs 하단 밴드의 "복잡도"(경계선 밀도 + 명암 편차)를 비교해
@@ -1012,8 +1108,13 @@ async function generateCarousel() {
 
   try {
     const data = await apiFetch('/api/generate', state.bookInfo);
-    state.pages = data.pages;
-    renderCarousel(data.pages);
+    // Phase 3: 한/영/일 3개 언어 세트 (구형 단일 응답도 허용)
+    state.pagesByLang = data.pagesByLang || { ko: data.pages, en: data.pages, ja: data.pages };
+    state.activeLang = 'ko';
+    state.pages = state.pagesByLang.ko;
+    state.captionsByLang = null;
+    renderLangTabs();
+    renderCarousel(state.pages);
     await applyUploadedImages(); // 업로드 이미지 적용 + 오버레이 분석(위치·색상)
     setStep(3);
     // 캐럿셀과 함께 릴스 대본(연결성 있는 문구)도 생성해 미리보기로 보여준다.
@@ -1029,17 +1130,17 @@ async function generateCarousel() {
   await autoValidateLoop();
 }
 
-// Phase 3: 검증 → 기준 미달 시 재생성 → 재검증 (최대 3회)
+// 검증 → 기준 미달 시 재생성 → 재검증 (3개 언어 세트 단위로 검증·재생성)
 async function autoValidateLoop() {
   const MAX = 2;   // 크레딧 절약: 검증 후 재생성은 최대 1회(비싼 main 호출 축소)
-  let best = { score: -1, pages: state.pages, validation: null };
+  let best = { score: -1, pagesByLang: state.pagesByLang, validation: null };
 
   for (let attempt = 1; attempt <= MAX; attempt++) {
-    showLoading(`품질 검증 중 (${attempt}/${MAX})...`, 'AI가 콘텐츠를 자동 평가합니다');
+    showLoading(`품질 검증 중 (${attempt}/${MAX})...`, 'AI가 3개 언어 콘텐츠를 자동 평가합니다');
 
     let result;
     try {
-      result = await apiFetch('/api/validate', { pages: state.pages, bookInfo: state.bookInfo });
+      result = await apiFetch('/api/validate', { pages: state.pages, pagesByLang: state.pagesByLang, bookInfo: state.bookInfo });
     } catch (err) {
       hideLoading();
       showToast(`검증 오류: ${err.message}`, 'error');
@@ -1048,7 +1149,7 @@ async function autoValidateLoop() {
     state.validation = result;
 
     if (result.totalScore > best.score) {
-      best = { score: result.totalScore, pages: state.pages, validation: result };
+      best = { score: result.totalScore, pagesByLang: state.pagesByLang, validation: result };
     }
 
     if (result.approved) {
@@ -1056,22 +1157,25 @@ async function autoValidateLoop() {
       renderValidation(result);
       setStep(4);
       showToast(`품질 합격! ${result.totalScore}/100점`, 'success');
-      // Phase 4: 합격 시 텔레그램 자동 발송
+      // 합격 시 텔레그램 자동 발송
       await autoSendTelegram();
       return;
     }
 
     if (attempt < MAX) {
-      showLoading(`재생성 중 (${attempt}/${MAX - 1}회)...`, '피드백을 반영해 다시 작성합니다');
+      showLoading(`재생성 중 (${attempt}/${MAX - 1}회)...`, '피드백을 반영해 3개 언어를 다시 작성합니다');
       try {
         const regenData = await apiFetch('/api/regenerate', {
           bookInfo: state.bookInfo,
           previousPages: state.pages,
+          previousPagesByLang: state.pagesByLang,
           feedback: result.feedback,
           improvements: result.improvements || [],
         });
-        state.pages = regenData.pages;
-        renderCarousel(regenData.pages);
+        state.pagesByLang = regenData.pagesByLang || { ko: regenData.pages, en: regenData.pages, ja: regenData.pages };
+        state.pages = state.pagesByLang[state.activeLang] || state.pagesByLang.ko;
+        renderCarousel(state.pages);
+        await applyUploadedImages();
       } catch (err) {
         hideLoading();
         showToast(`재생성 오류: ${err.message}`, 'error');
@@ -1083,14 +1187,52 @@ async function autoValidateLoop() {
   // 최대 시도 후 최고 점수 결과 표시
   hideLoading();
   if (best.validation) {
-    state.pages = best.pages;
+    state.pagesByLang = best.pagesByLang;
+    state.pages = best.pagesByLang?.[state.activeLang] || best.pagesByLang?.ko || state.pages;
     state.validation = best.validation;
-    renderCarousel(best.pages);
+    renderCarousel(state.pages);
+    await applyUploadedImages();
     renderValidation(best.validation);
     setStep(best.validation.approved ? 4 : 3);
     showToast(`${MAX}회 완료. 최고점: ${best.score}/100`, best.validation.approved ? 'success' : 'warning');
     if (best.validation.approved) await autoSendTelegram();
   }
+}
+
+// ===== Phase 3: 언어 탭 (한/영/일) =====
+function renderLangTabs() {
+  const wrap = document.getElementById('langTabs');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  if (!state.pagesByLang) return;
+  LANGS.forEach(({ code, label }) => {
+    const btn = document.createElement('button');
+    btn.className = 'lang-tab' + (state.activeLang === code ? ' active' : '');
+    btn.textContent = label;
+    btn.addEventListener('click', () => setActiveLang(code));
+    wrap.appendChild(btn);
+  });
+}
+
+async function setActiveLang(lang) {
+  if (!state.pagesByLang || state.activeLang === lang) return;
+  state.activeLang = lang;
+  state.pages = state.pagesByLang[lang] || state.pagesByLang.ko;
+  renderLangTabs();
+  renderCarousel(state.pages);
+  await applyUploadedImages();
+  renderActiveCaption();
+}
+
+// 현재 언어의 캡션+해시태그를 표시 (해당 언어 캡션이 아직 없으면 안내)
+function renderActiveCaption() {
+  const box = document.getElementById('captionResult');
+  if (!box || !state.captionsByLang) return;
+  const c = state.captionsByLang[state.activeLang] || state.captionsByLang.ko;
+  if (!c) return;
+  document.getElementById('captionTextContent').textContent = c.caption || '';
+  document.getElementById('captionHashtagsRow').textContent = (c.hashtags || []).join(' ');
+  box.style.display = 'block';
 }
 
 // Phase 4: 제작 완료 시 텔레그램으로 완료 알림 + 확인 링크만 발송 (이미지·문구 미발송)
@@ -1115,6 +1257,7 @@ async function autoSendTelegram() {
 function renderCarousel(pages) {
   const scroll = document.getElementById('carouselScroll');
   scroll.innerHTML = '';
+  scroll.style.fontFamily = FONT_STACKS[state.activeLang] || FONT_STACKS.ko; // 언어별 폰트
 
   const cardData = [
     { num: 1, cls: 'card-1', content: pages.page1, type: 'hook' },
@@ -1237,14 +1380,17 @@ document.getElementById('regenFromFeedbackBtn').addEventListener('click', async 
     const data = await apiFetch('/api/regenerate', {
       bookInfo: state.bookInfo,
       previousPages: state.pages,
+      previousPagesByLang: state.pagesByLang,
       feedback: state.validation.feedback,
       improvements: state.validation.improvements || [],
     });
-    state.pages = data.pages;
+    state.pagesByLang = data.pagesByLang || { ko: data.pages, en: data.pages, ja: data.pages };
+    state.pages = state.pagesByLang[state.activeLang] || state.pagesByLang.ko;
     state.validation = null;
-    renderCarousel(data.pages);
+    renderCarousel(state.pages);
+    await applyUploadedImages();
     setStep(3);
-    showToast('재생성 완료. 다시 검증해보세요.', 'success');
+    showToast('재생성 완료 (한/영/일). 다시 검증해보세요.', 'success');
   } catch (err) {
     setStep(3);
     showToast(err.message, 'error');
@@ -1381,7 +1527,7 @@ function _reelTopHandle(ctx, W) {
   if (!REEL_HANDLE) return; // 핸들 미설정 시 표시 생략
   const PAD = 90;
   ctx.textAlign = 'right';
-  ctx.font = '800 36px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.font = `800 36px ${activeFontStack()}`; ctx.fillStyle = 'rgba(255,255,255,0.95)';
   ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 14;
   ctx.fillText(REEL_HANDLE, W - PAD, 232);
   ctx.shadowBlur = 0; ctx.textAlign = 'left';
@@ -1418,7 +1564,7 @@ async function buildReelTextSlide(blobUrl, slide) {
   ctx.textAlign = 'left';
   ctx.fillStyle = accent; ctx.fillRect(PAD, y, isHook ? 110 : 90, isHook ? 9 : 7);
   y += BAR_BLOCK + px;
-  ctx.font = `900 ${px}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
+  ctx.font = `900 ${px}px ${activeFontStack()}`; ctx.fillStyle = '#fff';
   ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = isHook ? 30 : 22;
   for (const ln of lines) { ctx.fillText(ln, PAD, y); y += LH; }
   ctx.shadowBlur = 0;
@@ -1458,14 +1604,14 @@ async function buildReelRevealSlide(blobUrl, accent) {
   // 액센트 바
   ctx.fillStyle = accent; ctx.fillRect((W - 110) / 2, y, 110, BAR_H); y += BAR_H + GAP_BAR;
   // 마무리 문장 (가장 큼)
-  ctx.font = `900 ${cPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
+  ctx.font = `900 ${cPx}px ${activeFontStack()}`; ctx.fillStyle = '#fff';
   ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 16;
   for (const ln of cLines) { y += cLH; ctx.fillText(ln, W / 2, y - Math.round(cLH * 0.22)); }
   ctx.shadowBlur = 0;
   // 저장·팔로우 유도
   if (lLines.length) {
     y += GAP_LINK;
-    ctx.font = `600 ${lPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = accent;
+    ctx.font = `600 ${lPx}px ${activeFontStack()}`; ctx.fillStyle = accent;
     for (const ln of lLines) { y += lLH; ctx.fillText(ln, W / 2, y - Math.round(lLH * 0.28)); }
   }
 
@@ -1651,7 +1797,7 @@ async function buildCardBlob(card, pageNum) {
   const HALO       = light ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.55)';
 
   // ② 페이지 번호만 (상단 좌측)
-  ctx.font = '700 36px "Noto Sans KR", sans-serif';
+  ctx.font = `700 36px ${activeFontStack()}`;
   ctx.fillStyle = NUM_COLOR;
   ctx.textAlign = 'left';
   ctx.fillText(`${pageNum}`, 70, 86);
@@ -1688,14 +1834,14 @@ async function buildCardBlob(card, pageNum) {
     ctx.fillRect(PAD_X, curY, ACCENT_W, ACCENT_H);
     curY += ACCENT_H + ACCENT_GAP;
 
-    ctx.font = `900 ${hlPx}px "Noto Sans KR", sans-serif`;
+    ctx.font = `900 ${hlPx}px ${activeFontStack()}`;
     ctx.fillStyle = HEAD_COLOR;
     ctx.shadowBlur = 14;
     for (const ln of hlLines) { curY += HL_LINE_H; ctx.fillText(ln, PAD_X, curY - Math.round(HL_LINE_H * 0.24)); }
 
     if (bodyLines.length) {
       curY += PAD_BETWEEN;
-      ctx.font = `400 ${bodyPx}px "Noto Sans KR", sans-serif`;
+      ctx.font = `400 ${bodyPx}px ${activeFontStack()}`;
       ctx.fillStyle = BODY_COLOR;
       ctx.shadowBlur = 10;
       for (const ln of bodyLines) { curY += BODY_LINE_H; ctx.fillText(ln, PAD_X, curY - Math.round(BODY_LINE_H * 0.26)); }
@@ -1705,7 +1851,7 @@ async function buildCardBlob(card, pageNum) {
     let curY = H - PAD_BOTTOM;
 
     if (bodyLines.length) {
-      ctx.font = `400 ${bodyPx}px "Noto Sans KR", sans-serif`;
+      ctx.font = `400 ${bodyPx}px ${activeFontStack()}`;
       ctx.fillStyle = BODY_COLOR;
       ctx.shadowBlur = 10;
       for (let i = bodyLines.length - 1; i >= 0; i--) {
@@ -1715,7 +1861,7 @@ async function buildCardBlob(card, pageNum) {
       curY -= PAD_BETWEEN;
     }
 
-    ctx.font = `900 ${hlPx}px "Noto Sans KR", sans-serif`;
+    ctx.font = `900 ${hlPx}px ${activeFontStack()}`;
     ctx.fillStyle = HEAD_COLOR;
     ctx.shadowBlur = 14;
     for (let i = hlLines.length - 1; i >= 0; i--) {
@@ -1786,7 +1932,7 @@ function autoFitLines(ctx, text, maxWidth, startPx, minPx, stepPx, maxLines, wei
   let px = startPx;
   let lines = [];
   while (px >= minPx) {
-    ctx.font = `${weight} ${px}px "Noto Sans KR", sans-serif`;
+    ctx.font = `${weight} ${px}px ${activeFontStack()}`;
     lines = measureTextLines(ctx, text, maxWidth);
     if (lines.length <= maxLines) break;
     px -= stepPx;
@@ -1817,16 +1963,15 @@ document.getElementById('generateCaptionBtn').addEventListener('click', async ()
 
   try {
     const data = await apiFetch('/api/generate-caption', {
-      pages: state.pages,
+      pages: state.pagesByLang?.ko || state.pages,
       bookInfo: state.bookInfo,
     });
+    // Phase 3: 3개 언어 캡션 (구형 단일 응답도 허용)
+    state.captionsByLang = data.captions || { ko: { caption: data.caption || '', hashtags: data.hashtags || [] } };
     state.caption = data.caption;
     state.captionHashtags = data.hashtags;
-
-    document.getElementById('captionTextContent').textContent = data.caption || '';
-    document.getElementById('captionHashtagsRow').textContent = (data.hashtags || []).join(' ');
-    document.getElementById('captionResult').style.display = 'block';
-    showToast('캡션 생성 완료!', 'success');
+    renderActiveCaption();
+    showToast('캡션 생성 완료! (한/영/일)', 'success');
   } catch (err) {
     showToast(err.message, 'error');
   } finally {
@@ -1835,9 +1980,12 @@ document.getElementById('generateCaptionBtn').addEventListener('click', async ()
 });
 
 document.getElementById('copyCaptionBtn').addEventListener('click', () => {
-  if (!state.caption) return;
-  const full = state.caption + '\n\n' + (state.captionHashtags || []).join(' ');
-  copyText(full, '캡션');
+  // 현재 언어 탭의 캡션을 복사
+  const c = state.captionsByLang?.[state.activeLang] || state.captionsByLang?.ko
+    || (state.caption ? { caption: state.caption, hashtags: state.captionHashtags } : null);
+  if (!c) return;
+  const full = (c.caption || '') + '\n\n' + (c.hashtags || []).join(' ');
+  copyText(full, `캡션(${state.activeLang})`);
 });
 
 document.getElementById('copyAllBtn').addEventListener('click', () => {
