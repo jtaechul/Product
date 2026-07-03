@@ -26,9 +26,9 @@
   .arena-box{position:relative;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:8px}
   .canvas-stack{position:relative;width:100%;aspect-ratio:1/1}
   #main{position:absolute;inset:0;width:100%;height:100%;border-radius:8px;display:block;background:#070a10}
-  .overlay{position:absolute;inset:8px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  .overlay{position:absolute;inset:0;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
     background:radial-gradient(90% 70% at 50% 10%,#233a6452,transparent 62%),radial-gradient(130% 95% at 50% 108%,#3a2b0a3e,transparent 58%),rgba(5,7,11,.85);
-    background-size:cover;background-position:center;backdrop-filter:blur(2px);gap:12px;padding:22px;z-index:6}
+    background-size:cover;background-position:center;background-repeat:no-repeat;backdrop-filter:blur(2px);gap:12px;padding:22px;z-index:6}
   .overlay.hidden{display:none}
   .overlay .big{font-size:clamp(20px,4vw,32px);font-weight:900}
   .overlay .who{font-size:12px;color:#d8b95c;letter-spacing:.34em;font-weight:800;text-transform:uppercase;text-shadow:0 1px 6px #000}
@@ -805,7 +805,8 @@ function updateBattleInfo(){const C=MAPRES/2,t=MAPRES*0.13;let mt=[],se=[],rv=0,
 FACTIONS.forEach(fa=>{const i=document.createElement("i");i.style.background=fa.color;i.style.color=fa.color;fdots.appendChild(i);});
 // 오프닝 배경 아트 — assets/ui/title.jpg 가 있으면 시작 화면 배경으로 사용(없으면 CSS 그라디언트)
 const titleImg=new Image();let titleReady=false;titleImg.onload=()=>{titleReady=titleImg.naturalWidth>0;if(titleReady&&winner<0)applyTitleBg();};titleImg.src="assets/ui/title.jpg";
-function applyTitleBg(){ov.style.backgroundImage=titleReady?"linear-gradient(rgba(6,9,15,.14),rgba(6,9,15,.20) 45%,rgba(6,9,15,.52)),url('assets/ui/title.jpg')":"";}
+function applyTitleBg(){if(titleReady){ov.style.backgroundImage="linear-gradient(rgba(6,9,15,.14),rgba(6,9,15,.20) 45%,rgba(6,9,15,.52)),url('assets/ui/title.jpg')";ov.style.backgroundSize="cover";ov.style.backgroundPosition="center";}
+  else{ov.style.backgroundImage="";ov.style.backgroundSize="";ov.style.backgroundPosition="";}}
 const ovSum=document.createElement("div");ovSum.className="summary";ovSum.id="ovSummary";ovSum.style.display="none";ovBig.after(ovSum);
 function win(){const f=winner;padStop();bgmEndingPlay();Sfx.victory();
   ov.style.backgroundImage="linear-gradient(rgba(6,8,13,.42),rgba(6,8,13,.86)), url('assets/ending/"+FACTIONS[f].sig+".jpg')";ov.style.backgroundSize="cover";ov.style.backgroundPosition="center";
