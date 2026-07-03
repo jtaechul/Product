@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <title>천하쟁패 — 6색 관전 시뮬레이션</title>
 <style>
   :root{--bg:#0a0d13;--panel:#121824;--panel2:#0b0f18;--line:#232c3d;--text:#e8edf6;--dim:#8b97ad;--accent:#ffd23a}
@@ -141,13 +142,14 @@
   body.cinema .power>.lab{display:none}
   body.cinema .powerbar{height:19px}
   body.cinema .stage{margin:0;gap:5px;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch}
-  body.cinema .left{flex:0 0 auto;min-width:0;gap:5px}
-  body.cinema .arena-box{padding:3px}
-  body.cinema .canvas-stack{width:min(100%,56dvh);margin:0 auto}
-  body.cinema .board{flex:1 1 auto;min-width:0;min-height:0;overflow:hidden}
-  body.cinema .board .panel{padding:8px 10px;height:100%;overflow:hidden;display:flex;flex-direction:column}
+  /* 보드(6행)를 먼저 확보 → 지도가 '남는 공간'을 채움 = 화면 높이와 무관하게 6행 항상 노출 */
+  body.cinema .left{flex:1 1 auto;min-width:0;min-height:0;gap:5px;display:flex;flex-direction:column;justify-content:center}
+  body.cinema .arena-box{flex:1 1 auto;min-height:0;padding:3px;display:flex;align-items:center;justify-content:center}
+  body.cinema .canvas-stack{width:auto;height:100%;max-width:100%;max-height:100%;margin:0 auto}
+  body.cinema .board{flex:0 0 auto;min-width:0;overflow:hidden}
+  body.cinema .board .panel{padding:8px 10px;overflow:hidden;display:flex;flex-direction:column}
   body.cinema .board .panel h2{font-size:10.5px;margin-bottom:5px}
-  body.cinema .board .rows{flex:1 1 auto;justify-content:space-between}
+  body.cinema .board .rows{flex:0 0 auto}
   body.cinema .board .controls{display:none}  /* .board .panel 규칙보다 특이도·순서 우위로 확실히 숨김 */
   body.cinema .rows{gap:2px;overflow:hidden}
   body.cinema .row{padding:2px 8px}
