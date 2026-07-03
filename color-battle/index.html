@@ -46,7 +46,8 @@
     box-shadow:0 6px 24px rgba(255,210,58,.30),inset 0 1px 0 #fff9,inset 0 -2px 0 #b8860b55}
   .overlay .btns button.primary:hover{background:linear-gradient(180deg,#ffe9a5,#ffd94f 58%,#f0be24)}
   /* ===== 오프닝(타이틀) 전용 시네마틱 스타일 ===== */
-  .wordmark,.ornament{display:none}
+  .wordmark,.ornament,.battleinfo{display:none}
+  .overlay.titlescreen .battleinfo{display:block;font-size:11.5px;color:#8a97af;font-weight:700;letter-spacing:.02em;font-variant-numeric:tabular-nums;margin-top:1px;text-shadow:0 1px 4px #000}
   .overlay.titlescreen{overflow:hidden;background:
     radial-gradient(120% 82% at 50% -10%,#2a4a7e5e,transparent 60%),
     radial-gradient(150% 100% at 50% 114%,#4a350c5e,transparent 60%),
@@ -163,7 +164,8 @@
             <div class="who">여섯 세력 · 하나의 천하</div>
             <div class="big" id="ovBig"><span class="gametitle">천하쟁패</span></div>
             <div class="wordmark" id="ovWord">Color&nbsp;·&nbsp;Battle</div>
-            <div class="tagline" id="ovTag">마지막까지 남는 색은 어느 세력일까요</div>
+            <div class="tagline" id="ovTag">수도가 무너지면 나라째 흡수 — 마지막 한 색이 천하를 통일합니다</div>
+            <div class="battleinfo" id="ovBattle"></div>
             <div class="fdots" id="fdots"></div>
             <div class="ornament"></div>
             <div class="btns"><button class="primary" id="ovStart">관전 시작</button><button id="ovSeed">새 지도</button></div>
@@ -440,7 +442,7 @@ function init(sv){
   applyTitleBg();bgmStop();
   ovBig.innerHTML='<span class="gametitle">천하쟁패</span>';ovTag.style.display="";fdots.style.display="flex";ov.classList.add("titlescreen");
   document.getElementById("ovStart").textContent="관전 시작";ov.querySelector(".btns").style.display="flex";ov.classList.remove("hidden");
-  buildMap();refresh();draw();
+  buildMap();updateBattleInfo();refresh();draw();
 }
 function provinces(f){return pv.filter(p=>p.owner===f);}
 function computeBonus(){const cnt=Array.from({length:K},()=>[0,0,0]);for(const p of pv)if(p.owner>=0&&p.res>=0)cnt[p.owner][p.res]++;
@@ -738,7 +740,10 @@ function refresh(){const cnt=computeBonus();let tot=0;const pw=new Float64Array(
   let a=0;for(let f=0;f<K;f++)if(alive[f])a++;document.getElementById("statLine").textContent=(1+((tick/50)|0))+"년차 · 생존 "+a;}
 
 const ov=document.getElementById("overlay"),ovBig=document.getElementById("ovBig");
-const ovTag=document.getElementById("ovTag"),fdots=document.getElementById("fdots");
+const ovTag=document.getElementById("ovTag"),fdots=document.getElementById("fdots"),ovBattle=document.getElementById("ovBattle");
+// '오늘의 전장' — 매판 실제로 바뀌는 지형 수(산·강) + 시드. 시뮬레이터 용어(산·강·시드)로 통일
+function updateBattleInfo(){let mtn=0,riv=0;for(const p of pv){if(p.terrain===T_MTN)mtn++;else if(p.terrain===T_RIVER)riv++;}
+  ovBattle.textContent="오늘의 전장 · 산 "+mtn+" · 강 "+riv+" · 시드 "+seed;}
 FACTIONS.forEach(fa=>{const i=document.createElement("i");i.style.background=fa.color;i.style.color=fa.color;fdots.appendChild(i);});
 // 오프닝 배경 아트 — assets/ui/title.jpg 가 있으면 시작 화면 배경으로 사용(없으면 CSS 그라디언트)
 const titleImg=new Image();let titleReady=false;titleImg.onload=()=>{titleReady=titleImg.naturalWidth>0;if(titleReady&&winner<0)applyTitleBg();};titleImg.src="assets/ui/title.jpg";
