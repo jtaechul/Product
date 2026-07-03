@@ -90,35 +90,6 @@
       flex-direction: column;
     }
 
-    /* Mode tabs */
-    .mode-tabs {
-      display: flex;
-      border-bottom: 2px solid var(--gray-100);
-    }
-
-    .mode-tab {
-      flex: 1;
-      padding: 14px 8px;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--gray-400);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
-      transition: all 0.2s;
-      background: none;
-      border-top: none;
-      border-left: none;
-      border-right: none;
-      font-family: inherit;
-    }
-
-    .mode-tab.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
-    }
-
     .mode-panel { display: none; padding: 20px; flex: 1; }
     .mode-panel.active { display: flex; flex-direction: column; gap: 16px; }
 
@@ -201,88 +172,67 @@
     .btn-telegram { background: var(--telegram); color: #fff; }
     .btn-telegram:hover:not(:disabled) { background: #1A8BBF; }
 
-    /* Book suggestion cards */
-    .suggest-list { display: flex; flex-direction: column; gap: 10px; }
-
-    .suggest-card {
-      border: 1.5px solid var(--gray-200);
-      border-radius: 10px;
-      padding: 12px 14px;
+    /* 이미지 업로드 입력부 */
+    .upload-zone {
+      border: 2px dashed var(--gray-200);
+      border-radius: 12px;
+      padding: 26px 14px;
+      text-align: center;
       cursor: pointer;
       transition: all 0.2s;
-      background: #fff;
+      background: #FAFAFA;
     }
 
-    .suggest-card:hover { border-color: var(--primary-light); background: #FAFAFF; }
-    .suggest-card.selected { border-color: var(--primary); background: rgba(124,58,237,0.04); }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--primary);
+      background: rgba(124,58,237,0.04);
+    }
 
-    .suggest-card-title {
+    .upload-zone-text {
       font-size: 13px;
-      font-weight: 700;
-      color: var(--gray-900);
-      margin-bottom: 3px;
-    }
-
-    .suggest-card-meta {
-      font-size: 11px;
-      color: var(--gray-400);
-      margin-bottom: 6px;
-    }
-
-    .suggest-card-reason {
-      font-size: 11px;
-      color: var(--primary);
-      font-weight: 500;
-      line-height: 1.5;
-    }
-
-    .suggest-card-msg {
-      font-size: 11px;
+      font-weight: 600;
       color: var(--gray-600);
       line-height: 1.6;
-      margin-top: 4px;
     }
 
-    /* Selected book summary */
-    .selected-book {
-      background: rgba(124,58,237,0.05);
-      border: 1.5px solid var(--primary-light);
-      border-radius: 10px;
-      padding: 12px 14px;
-      display: none;
-    }
-
-    .selected-book.visible { display: block; }
-
-    .selected-book-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--gray-900);
-      margin-bottom: 4px;
-    }
-
-    .selected-book-meta {
+    .upload-zone-sub {
       font-size: 11px;
-      color: var(--gray-500);
-      margin-bottom: 8px;
+      color: var(--gray-400);
+      margin-top: 6px;
     }
 
-    .selected-book-msg {
-      font-size: 12px;
-      color: var(--gray-700);
-      line-height: 1.6;
-    }
-
-    .change-book-btn {
+    .upload-previews {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
       margin-top: 8px;
-      font-size: 11px;
-      color: var(--primary);
-      background: none;
+    }
+
+    .upload-thumb {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1.5px solid var(--gray-200);
+    }
+
+    .upload-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .upload-thumb-del {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
       border: none;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1;
       cursor: pointer;
       font-family: inherit;
-      font-weight: 600;
-      padding: 0;
     }
 
     /* Main panel */
@@ -414,16 +364,6 @@
     }
 
     .card-copy-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
-    .card-5 .card-link-pill { display: inline-block; margin-top: 8px; padding: 5px 12px; border: 1.5px solid rgba(255,255,255,0.5); border-radius: 20px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.9); }
-
-    /* 마지막 장 책 공개 패널 */
-    .card-book-reveal { display: flex; align-items: center; gap: 14px; margin-top: auto; padding: 14px 16px; border-radius: 14px; background: linear-gradient(135deg, rgba(255,255,255,0.20), rgba(255,255,255,0.07)); border: 1px solid rgba(255,255,255,0.22); }
-    .card-book-reveal .cbr-cover { width: 72px; height: 104px; object-fit: cover; border-radius: 7px; flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
-    .card-book-reveal .cbr-info { text-align: left; min-width: 0; flex: 1; }
-    .card-book-reveal .cbr-eyebrow { font-size: 9.5px; font-weight: 700; letter-spacing: 2.5px; color: #E9D5FF; opacity: 0.95; margin-bottom: 6px; }
-    .card-book-reveal .cbr-title { font-size: 17px; font-weight: 800; line-height: 1.28; color: #fff; word-break: keep-all; }
-    .card-book-reveal .cbr-author { font-size: 12.5px; color: rgba(255,255,255,0.75); margin-top: 5px; }
-
     .carousel-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 
     /* Card with image */
@@ -538,9 +478,6 @@
 
 
 
-    /* 3탭이므로 탭 라벨 살짝 압축 */
-    .mode-tabs .mode-tab { font-size: 12px; padding: 13px 6px; }
-
   </style>
 </head>
 <body>
@@ -548,15 +485,15 @@
 
 <header>
   <div class="brand">
-    <div class="logo-icon">행</div>
+    <div class="logo-icon">카</div>
     <div class="brand-text">
-      <div class="logo-text">행간 — 연애 책방</div>
-      <div class="logo-sub">연애·관계 심리 인스타그램 자동 생성</div>
+      <div class="logo-text">카드뉴스 제조기</div>
+      <div class="logo-sub">이미지 기반 카드뉴스(캐러셀) 자동 생성</div>
     </div>
   </div>
 
   <div class="steps">
-    <div class="step active" id="step-1"><div class="step-circle">1</div><div class="step-label">책 선정</div></div>
+    <div class="step active" id="step-1"><div class="step-circle">1</div><div class="step-label">입력</div></div>
     <div class="step-line" id="line-1"></div>
     <div class="step" id="step-2"><div class="step-circle">2</div><div class="step-label">생성</div></div>
     <div class="step-line" id="line-2"></div>
@@ -568,83 +505,33 @@
 </header>
 
 <aside class="sidebar">
-  <div class="mode-tabs">
-    <button class="mode-tab active" id="tabAuto">AI 자동 추천</button>
-    <button class="mode-tab" id="tabManual">직접 입력</button>
-  </div>
+  <!-- 입력부: 이미지 업로드 + 주제 (Phase 1 — 책 입력부 대체) -->
+  <div class="mode-panel active" id="panelInput">
 
-  <!-- AUTO MODE -->
-  <div class="mode-panel active" id="panelAuto">
-
-    <!-- Step A: 카테고리/이슈 선택 -->
-    <div id="autoStep1">
-      <div class="form-group">
-        <label>카테고리 선택<span class="req">*</span></label>
-        <select id="autoCategory">
-          <option value="이별과회복">이별·재회·회복 (헤어짐·재회·그 후의 마음)</option>
-          <option value="자존감과사랑">자존감과사랑 (나를 먼저 사랑하기)</option>
-          <option value="짝사랑과설렘">짝사랑과 설렘 (썸·시작·고백 — 가벼운 톤)</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>특정 이슈 키워드 (선택)</label>
-        <input type="text" id="autoIssue" placeholder="예: AI 대체, 금리 인상, 번아웃...">
-        <span class="hint">입력하면 해당 이슈와 관련된 책을 우선 추천합니다</span>
-      </div>
-
-      <button class="btn btn-primary" id="suggestBtn">AI 책 추천받기</button>
-    </div>
-
-    <!-- Step B: 추천 결과 -->
-    <div id="autoStep2" style="display:none;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <span style="font-size:12px;font-weight:700;color:var(--gray-600);">AI 추천 도서</span>
-        <button class="btn btn-outline" id="resuggestBtn" style="padding:5px 10px;font-size:11px;">다시 추천</button>
-      </div>
-      <div class="suggest-list" id="suggestList"></div>
-    </div>
-
-    <!-- Step C: 선택된 책 + 생성 -->
-    <div id="autoStep3" style="display:none;">
-      <div class="selected-book visible" id="selectedBookCard"></div>
-      <button class="btn btn-primary" id="autoGenerateBtn">캐럿셀 생성하기</button>
-    </div>
-
-  </div>
-
-  <!-- MANUAL MODE -->
-  <div class="mode-panel" id="panelManual">
     <div class="form-group">
-      <label>카테고리<span class="req">*</span></label>
-      <select id="manualCategory">
-        <option value="이별과회복">이별·재회·회복</option>
-        <option value="자존감과사랑">자존감과사랑</option>
-        <option value="짝사랑과설렘">짝사랑과 설렘</option>
-      </select>
+      <label>이미지 업로드<span class="req">*</span></label>
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-zone-text">이미지를 끌어다 놓거나<br>눌러서 선택하세요</div>
+        <div class="upload-zone-sub">1장 이상 · 여러 장 가능 (JPG/PNG/WebP)</div>
+      </div>
+      <input type="file" id="imageInput" accept="image/*" multiple style="display:none;">
+      <div class="upload-previews" id="uploadPreviews"></div>
+      <span class="hint">1장이면 모든 카드에, 여러 장이면 순서대로 카드 배경에 적용됩니다</span>
     </div>
 
     <div class="form-group">
-      <label>책 제목<span class="req">*</span></label>
-      <input type="text" id="manualTitle" placeholder="예: 원씽 / 아주 작은 습관의 힘">
-    </div>
-
-    <div class="form-group">
-      <label>저자 (선택)</label>
-      <input type="text" id="manualAuthor" placeholder="입력하지 않아도 됩니다">
+      <label>주제<span class="req">*</span></label>
+      <input type="text" id="inputTopic" placeholder="예: 아침 루틴으로 하루를 바꾸는 법">
     </div>
 
     <div class="form-group">
       <label>핵심 메시지 (선택)</label>
-      <textarea id="manualCoreMessage" rows="3" placeholder="책의 핵심 메시지를 직접 입력하거나 비워두면 AI가 자동 분석합니다" style="resize:vertical;"></textarea>
-      <span class="hint">비워두면 AI가 핵심 메시지와 독자층을 자동으로 분석합니다</span>
+      <textarea id="inputCoreMessage" rows="3" placeholder="꼭 전하고 싶은 한두 문장을 적으면 그 방향으로 문구를 만듭니다" style="resize:vertical;"></textarea>
+      <span class="hint">비워두면 주제만으로 AI가 5페이지 문구를 구성합니다</span>
     </div>
 
-
-    <button class="btn btn-primary" id="manualGenerateBtn">AI 분석 후 생성</button>
+    <button class="btn btn-primary" id="generateBtn">카드뉴스 생성하기</button>
   </div>
-
-
 </aside>
 
 <main class="main">
@@ -652,7 +539,7 @@
 
   <div class="empty-state" id="emptyState">
     <h3>카드뉴스(캐러셀)를 만들어보세요</h3>
-    <p>주제와 핵심 메시지를 입력하면<br>AI가 5페이지 카드뉴스 문구를 자동으로 만들어줍니다.<br>(이미지 업로드 입력부는 다음 단계에서 추가됩니다.)</p>
+    <p>왼쪽에서 이미지를 올리고 주제를 입력하면<br>AI가 5페이지 카드뉴스 문구를 만들어<br>업로드한 이미지 위에 얹어줍니다.</p>
   </div>
 
   <!-- Carousel preview -->
@@ -747,28 +634,21 @@ const state = {
   step: 1,
   pages: null,
   validation: null,
-  bookInfo: null,
-  selectedBook: null,
+  bookInfo: null,         // 주제 정보 컨테이너 { title(주제), topic, coreMessage } — API 호환용 이름 유지
+  uploadedImages: [],     // 업로드한 이미지 dataURL 목록 (카드 배경으로 적용)
   caption: null,
   captionHashtags: null,
-  dmKeyword: null,
-  images: null,
-  affiliateLink: null,
-  affiliateLinks: [],
-  dmReply: null,
-  bookNumber: '',
-  draftId: '',
   reelScript: null,       // 연결성 있는 릴스 대본 {s1,s2,s3,s4}
   reelValidation: null,   // 릴스 문구 자동 검증 결과
 };
 
 
-const PAGE_LABELS = ['훅', '문제', '심각성', '실마리', '반문·결말'];
+const PAGE_LABELS = ['훅', '공감·문제', '이유·원리', '방법·실마리', '마무리'];
 const SCORE_KEYS = [
-  { key: 'accuracy',    label: '책 내용 부합도', max: 20 },
+  { key: 'accuracy',    label: '주제 부합도', max: 20 },
   { key: 'factual',     label: '사실 정확성', max: 20 },
-  { key: 'copyright',   label: '저작권 안전성', max: 20 },
-  { key: 'engagement',  label: '소비자 자극', max: 25 },
+  { key: 'copyright',   label: '안전성', max: 20 },
+  { key: 'engagement',  label: '공감·참여 유도', max: 25 },
   { key: 'quality',     label: '문장 품질·오타', max: 15 },
 ];
 
@@ -846,128 +726,99 @@ function getCardText(page, num) {
   return `[페이지 ${num} - ${PAGE_LABELS[num-1]}]\n${page.headline}\n\n${body}`;
 }
 
-// ===== Mode tabs =====
-const ALL_TABS = ['tabAuto', 'tabManual'];
-const ALL_PANELS = ['panelAuto', 'panelManual'];
-function switchTab(activeTabId) {
-  ALL_TABS.forEach(id => document.getElementById(id).classList.toggle('active', id === activeTabId));
-  ALL_PANELS.forEach(id => document.getElementById(id).classList.toggle('active', id === activeTabId.replace('tab', 'panel')));
-}
-document.getElementById('tabAuto').addEventListener('click', () => switchTab('tabAuto'));
-document.getElementById('tabManual').addEventListener('click', () => switchTab('tabManual'));
+// ===== 입력부: 이미지 업로드 + 주제 =====
+const uploadZone = document.getElementById('uploadZone');
+const imageInput = document.getElementById('imageInput');
 
-// ===== AUTO MODE =====
-
-document.getElementById('resuggestBtn').addEventListener('click', () => {
-  document.getElementById('autoStep1').style.display = 'block';
-  document.getElementById('autoStep2').style.display = 'none';
-  document.getElementById('autoStep3').style.display = 'none';
-  state.selectedBook = null;
+uploadZone.addEventListener('click', () => imageInput.click());
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  addImageFiles(e.dataTransfer.files);
 });
+imageInput.addEventListener('change', () => { addImageFiles(imageInput.files); imageInput.value = ''; });
 
-function renderSuggestions(books) {
-  const list = document.getElementById('suggestList');
-  list.innerHTML = '';
-  books.forEach((book, i) => {
-    const card = document.createElement('div');
-    card.className = 'suggest-card';
-    const vBadge = book.verified ? '<span style="font-size:10px;font-weight:700;color:#059669;background:rgba(5,150,105,.1);padding:2px 7px;border-radius:5px;margin-left:6px;">실존 확인</span>' : '';
-    card.innerHTML = `
-      <div class="suggest-card-title">${escHtml(book.title)}${vBadge}</div>
-      <div class="suggest-card-meta">${escHtml(book.author)} · ${book.year} · ${escHtml(book.category)}</div>
-      <div class="suggest-card-reason">${escHtml(book.reason)}</div>
-      <div class="suggest-card-msg">${escHtml(book.coreMessage)}</div>
-      ${book.lesson ? `<div style="font-size:12px;color:var(--gray-700);background:#FFF7ED;border-left:3px solid #C2708F;border-radius:0 6px 6px 0;padding:8px 10px;margin-top:8px;line-height:1.6;">교훈 · ${escHtml(book.lesson)}</div>` : ''}
-    `;
-    card.addEventListener('click', () => selectBook(book, card));
-    list.appendChild(card);
+function addImageFiles(fileList) {
+  const files = [...(fileList || [])].filter(f => f.type.startsWith('image/'));
+  if (!files.length) { showToast('이미지 파일만 업로드할 수 있습니다.', 'warning'); return; }
+  let remaining = files.length;
+  files.forEach(f => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      state.uploadedImages.push(reader.result);
+      if (--remaining === 0) {
+        renderUploadPreviews();
+        applyUploadedImages(); // 이미 캐럿셀이 떠 있으면 배경 즉시 갱신
+      }
+    };
+    reader.readAsDataURL(f);
   });
 }
 
-function selectBook(book, cardEl) {
-  document.querySelectorAll('.suggest-card').forEach(c => c.classList.remove('selected'));
-  cardEl.classList.add('selected');
-  state.selectedBook = book;
-
-  document.getElementById('selectedBookCard').innerHTML = `
-    <div class="selected-book-title">${escHtml(book.title)}</div>
-    <div class="selected-book-meta">${escHtml(book.author)} · ${book.year} · ${escHtml(book.category)}</div>
-    <div class="selected-book-msg">${escHtml(book.coreMessage)}</div>
-  `;
-
-  document.getElementById('autoStep2').style.display = 'none';
-  document.getElementById('autoStep3').style.display = 'block';
+function renderUploadPreviews() {
+  const wrap = document.getElementById('uploadPreviews');
+  wrap.innerHTML = '';
+  state.uploadedImages.forEach((src, i) => {
+    const div = document.createElement('div');
+    div.className = 'upload-thumb';
+    div.innerHTML = `<img src="${src}" alt="업로드 ${i + 1}"><button class="upload-thumb-del" data-i="${i}" title="삭제">X</button>`;
+    wrap.appendChild(div);
+  });
+  wrap.querySelectorAll('.upload-thumb-del').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      state.uploadedImages.splice(parseInt(btn.dataset.i), 1);
+      renderUploadPreviews();
+      applyUploadedImages();
+    });
+  });
 }
 
-document.getElementById('autoGenerateBtn').addEventListener('click', async () => {
-  if (!state.selectedBook) return;
-  const book = state.selectedBook;
-  state.bookInfo = {
-    title: book.title,
-    author: book.author,
-    year: book.year,
-    coreMessage: book.coreMessage,
-    targetAudience: book.targetAudience,
-    category: book.category,
-    description: book.description || '', // 실제 책 소개 — 생성·검증 근거
-  };
+// 업로드 이미지를 카드 배경으로 적용 — 1장이면 전체 반복, 여러 장이면 순서대로(부족분은 마지막 장 반복)
+function applyUploadedImages() {
+  const cards = document.querySelectorAll('#carouselScroll .card');
+  const imgs = state.uploadedImages;
+  cards.forEach((card, i) => {
+    if (!imgs.length) {
+      card.style.backgroundImage = '';
+      delete card.dataset.blobUrl;
+      return;
+    }
+    const src = imgs[Math.min(i, imgs.length - 1)];
+    card.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.20), rgba(0,0,0,0.72)), url("${src}")`;
+    card.style.backgroundSize = 'cover';
+    card.style.backgroundPosition = 'center';
+    card.dataset.blobUrl = src; // 캔버스 저장(buildCardBlob)·릴스 배경이 이 값을 읽는다
+  });
+}
+
+document.getElementById('generateBtn').addEventListener('click', async () => {
+  const topic = document.getElementById('inputTopic').value.trim();
+  const core = document.getElementById('inputCoreMessage').value.trim();
+  if (!state.uploadedImages.length) { showToast('이미지를 1장 이상 업로드해주세요.', 'warning'); return; }
+  if (!topic) { showToast('주제를 입력해주세요.', 'warning'); return; }
+  // bookInfo라는 이름은 API 호환용 컨테이너로 유지 (title=주제)
+  state.bookInfo = { title: topic, topic, coreMessage: core || topic };
   await generateCarousel();
 });
 
-// ===== MANUAL MODE =====
-
-// ===== Generate Carousel (Phase 3: 자동 검증 루프 포함) =====
+// ===== Generate Carousel (자동 검증 루프 포함) =====
 async function generateCarousel() {
   state.validation = null;
-  state.images = null;
-  state._catalogAdded = false;
-  state.bookNumber = '';  // 새 책 → 번호는 도서관 등록/게시할 때 부여
-  state.draftId = '';     // 새 책 → 새 초안
-  state.reelHook = '';    // 새 책 → 릴스 훅 새로 생성
-  state.reelScript = null; state.reelValidation = null;  // 새 책 → 릴스 대본 새로 생성
+  state.reelScript = null; state.reelValidation = null;  // 새 주제 → 릴스 대본 새로 생성
   const rp = document.getElementById('reelPreview'); if (rp) rp.style.display = 'none';
   document.getElementById('validationPanel').classList.remove('visible');
   setStep(2);
 
-  showLoading('캐럿셀 생성 중...', 'Claude AI가 5페이지 카드뉴스를 작성하고 있습니다');
+  showLoading('카드뉴스 생성 중...', 'Claude AI가 5페이지 문구를 작성하고 있습니다');
 
   try {
-    let data;
-    try {
-      data = await apiFetch('/api/generate', state.bookInfo);
-    } catch (err) {
-      // 성인·에로 도서 → 우회 없이 즉시 차단
-      if (/ADULT_BLOCKED/.test(err.message)) {
-        hideLoading(); setStep(1);
-        showToast('성인·에로(19금·성인만화/소설) 도서는 리뷰를 만들 수 없습니다.', 'error');
-        return;
-      }
-      // 실존 미확인 책 → 사용자에게 확인 후 진행 여부를 묻는다
-      if (/BOOK_NOT_FOUND/.test(err.message)) {
-        hideLoading();
-        const proceed = confirm(`"${state.bookInfo.title}"은(는) 실제 출간된 책으로 확인되지 않았습니다.\n(쿠팡/알라딘에서 검색되지 않으면 어필리에이트 링크도 만들 수 없습니다)\n\n· 취소: 제목·저자를 다시 확인\n· 확인: 실제 책이 맞으니 그대로 제작`);
-        if (!proceed) { setStep(1); return; }
-        showLoading('캐럿셀 생성 중...', '실존 확인을 건너뛰고 제작합니다');
-        state.bookInfo.skipVerify = true;
-        data = await apiFetch('/api/generate', state.bookInfo);
-      } else {
-        throw err;
-      }
-    }
+    const data = await apiFetch('/api/generate', state.bookInfo);
     state.pages = data.pages;
-    state.bookCover = data.bookCover || '';   // 마지막 장에 띄울 책 표지
-    // 실제 책 소개(출판사) — 검증 단계가 부합도를 사실 기준으로 채점하는 근거
-    if (data.bookDescription) state.bookInfo.description = data.bookDescription;
-    // 교차검증으로 저자가 교정됐으면 반영(엉뚱한 저자 → 진짜 저자)
-    if (data.correctedBook) {
-      if (data.correctedBook.title) state.bookInfo.title = data.correctedBook.title;
-      if (data.correctedBook.author) state.bookInfo.author = data.correctedBook.author;
-      showToast(`저자 정보를 실제 정보로 교정했습니다 → ${state.bookInfo.author}`, 'info');
-    }
-    // 번호는 "도서관 등록/게시할 때"만 매긴다(만들기만 하고 버리면 번호를 먹지 않도록).
-    // 캡션이 번호를 직접 쓰지 않으므로 미리 예약할 필요가 없다.
-    state.bookNumber = '';
     renderCarousel(data.pages);
+    applyUploadedImages(); // 업로드한 이미지를 카드 배경으로 적용
     setStep(3);
     // 캐럿셀과 함께 릴스 대본(연결성 있는 문구)도 생성해 미리보기로 보여준다.
     generateReelScript();
@@ -978,7 +829,7 @@ async function generateCarousel() {
     return;
   }
 
-  // Phase 3: 자동 품질 검증 루프 (최대 3회 시도)
+  // 자동 품질 검증 루프
   await autoValidateLoop();
 }
 
@@ -1077,8 +928,6 @@ function renderCarousel(pages) {
     { num: 5, cls: 'card-5', content: pages.page5, type: 'cta' },
   ];
 
-  const bookFooter = state.bookInfo ? `${state.bookInfo.title} · ${state.bookInfo.author}` : '';
-
   cardData.forEach(({ num, cls, content, type }) => {
     const card = document.createElement('div');
     card.className = `card ${cls}`;
@@ -1086,20 +935,16 @@ function renderCarousel(pages) {
     let inner = `<div class="card-inner"><div class="card-num">${num}</div>`;
 
     if (type === 'cta') {
-      // 마지막 장 = 책 공개 (솔루션 + 다리문장 + 표지·제목·저자)
-      const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
+      // 마지막 장 = 마무리 CTA (한 문장 정리 + 저장·팔로우 유도)
       inner += `<div class="card-headline">${escHtml(content.cta || '')}</div>`;
       if (content.linkText) inner += `<div class="card-body" style="opacity:.9;margin-bottom:16px;">${escHtml(content.linkText)}</div>`;
-      inner += `<div class="card-book-reveal">`;
-      if (state.bookCover) inner += `<img class="cbr-cover" src="${escHtml(state.bookCover)}" referrerpolicy="no-referrer">`;
-      inner += `<div class="cbr-info"><div class="cbr-eyebrow">오늘의 책</div><div class="cbr-title">${escHtml(cleanT)}</div><div class="cbr-author">${escHtml(state.bookInfo?.author || '')}</div></div></div>`;
       inner += `<div class="card-footer"><span class="card-book-info"></span><button class="card-copy-btn" data-page="${num}">복사</button></div>`;
     } else if (type === 'hook') {
       // 1페이지: 헤드라인만, footer 없음 (CSS로도 숨김)
       inner += `<div class="card-headline">${escHtml(content.headline || '')}</div>`;
     } else {
       inner += `<div class="card-headline">${escHtml(content.headline || '')}</div><div class="card-divider"></div><div class="card-body">${escHtml(content.body || '')}</div>`;
-      inner += `<div class="card-footer"><span class="card-book-info">${escHtml(bookFooter)}</span><button class="card-copy-btn" data-page="${num}">복사</button></div>`;
+      inner += `<div class="card-footer"><span class="card-book-info"></span><button class="card-copy-btn" data-page="${num}">복사</button></div>`;
     }
 
     inner += `</div>`;
@@ -1223,7 +1068,7 @@ async function saveAllCards() {
   const cards = document.querySelectorAll('#carouselScroll .card');
   const hasImages = [...cards].some(c => c.dataset.blobUrl);
   if (!hasImages) {
-    showToast('먼저 이미지를 생성해 주세요', 'warning');
+    showToast('먼저 이미지를 업로드해 주세요', 'warning');
     return;
   }
   const btn = document.getElementById('saveAllImagesBtn');
@@ -1276,8 +1121,8 @@ document.getElementById('saveAllImagesBtn').addEventListener('click', saveAllCar
 
 // ── 릴스 세트(세로 9:16) ──
 // 한 장당 4~5초 시청 기준 → 한 화면에서 읽히는 분량(2~4줄, 약 50~60자)으로 충분히 담는다.
-// 5장 구성: ① 공감 훅 → ②③④ 본문 핵심(각 페이지 헤드라인+요지) → ⑤ 책 공개. 책에 대한 호기심을 쌓는다.
-const REEL_HANDLE = '@love.between_lines';
+// 5장 구성: ① 공감 훅 → ②③④ 본문 핵심(각 페이지 헤드라인+요지) → ⑤ 마무리 CTA(저장·팔로우 유도).
+const REEL_HANDLE = ''; // 계정 핸들 — 계정 확정 시 '@계정명' 형태로 입력하면 릴스 우상단에 표시
 const REEL_ACCENT = { 1: '#C084FC', 2: '#60A5FA', 3: '#34D399', 4: '#F472B6', 5: '#FBBF24' };
 
 // 릴스 한 장에 담을 문구 — 문장 단위로 글자 상한까지 채워 "내용이 읽히게" 만든다.
@@ -1337,6 +1182,7 @@ async function _reelBg(ctx, W, H, blobUrl) {
 
 // 계정 핸들 — 우측 상단, 너무 위는 아이폰 카메라(다이내믹 아일랜드)에 가리므로 살짝 내려 배치.
 function _reelTopHandle(ctx, W) {
+  if (!REEL_HANDLE) return; // 핸들 미설정 시 표시 생략
   const PAD = 90;
   ctx.textAlign = 'right';
   ctx.font = '800 36px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.95)';
@@ -1383,7 +1229,7 @@ async function buildReelTextSlide(blobUrl, slide) {
   return new Promise(r => canvas.toBlob(r, 'image/png'));
 }
 
-// 릴스 마지막 장 — 책 공개(표지 + 제목 + 저자 + 해결 한 줄, 가운데 정렬)
+// 릴스 마지막 장 — 마무리 CTA(정리 한 문장 + 저장·팔로우 유도, 가운데 정렬)
 async function buildReelRevealSlide(blobUrl, accent) {
   const W = 1080, H = 1920, PAD = 90, TW = W - PAD * 2;
   const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
@@ -1392,73 +1238,40 @@ async function buildReelRevealSlide(blobUrl, accent) {
   await _reelBg(ctx, W, H, blobUrl);
   _reelTopHandle(ctx, W);
   const pg5 = state.pages?.page5 || {};
-  const cta = shortReelLine(pg5.cta || '', 40);  // 해결 한 줄
-  let cover = null;
-  if (state.bookCover) {
-    try {
-      const im = new Image(); im.crossOrigin = 'anonymous';
-      await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = state.bookCover; });
-      cover = im;
-    } catch { cover = null; }
-  }
-  const rr = (x,y,w,h,r)=>{ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();};
+  const cta = (pg5.cta || '').trim();
+  const link = shortReelLine(pg5.linkText || '', 40); // 저장·팔로우 유도 한 줄
   ctx.textAlign = 'center';
 
   // ── 요소 크기 먼저 측정 → 전체 블록을 안전 영역(상단 핸들 아래 ~ 하단 IG UI 위)에 세로 중앙 정렬 ──
-  const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
-  const COVER_W = 360, COVER_H = 514;
-  const GAP_COVER = 78;          // 표지 ↔ 제목
-  ctx.font = '900 64px "Noto Sans KR", sans-serif';
-  const { px: tPx, lines: tLines } = autoFitLines(ctx, `「${cleanT}」`, TW, 64, 42, 4, 2, '900');
-  const tLH = Math.round(tPx * 1.3);
-  const GAP_AUTHOR = 22, AUTHOR_H = state.bookInfo?.author ? 44 : 0;
-  const GAP_CTA = 64, BAR_H = 6, GAP_BAR = 40;
-  let cLines = [], cPx = 44, cLH = 0;
-  if (cta) { const r = autoFitLines(ctx, cta, TW, 44, 32, 3, 2, '600'); cPx = r.px; cLines = r.lines; cLH = Math.round(cPx * 1.42); }
-  const GAP_PROFILE = 54, PROFILE_H = 38;
+  const BAR_H = 8, GAP_BAR = 48;
+  const { px: cPx, lines: cLines } = autoFitLines(ctx, cta, TW, 76, 46, 5, 4, '900');
+  const cLH = Math.round(cPx * 1.36);
+  const GAP_LINK = 56;
+  let lLines = [], lPx = 36, lLH = 0;
+  if (link) { const r = autoFitLines(ctx, link, TW, 36, 30, 3, 2, '600'); lPx = r.px; lLines = r.lines; lLH = Math.round(lPx * 1.42); }
 
-  const coverPart = cover ? COVER_H + GAP_COVER : 0;
-  const titlePart = tLines.length * tLH;
-  const authorPart = AUTHOR_H ? GAP_AUTHOR + AUTHOR_H : 0;
-  const ctaPart = cLines.length ? GAP_CTA + BAR_H + GAP_BAR + cLines.length * cLH : 0;
-  const profilePart = GAP_PROFILE + PROFILE_H;
-  const blockH = coverPart + titlePart + authorPart + ctaPart + profilePart;
+  const ctaPart = BAR_H + GAP_BAR + cLines.length * cLH;
+  const linkPart = lLines.length ? GAP_LINK + lLines.length * lLH : 0;
+  const blockH = ctaPart + linkPart;
 
   // 안전 영역: 상단 핸들(~170) ~ 하단 IG 오버레이 위(~1430). 그 안에서 세로 중앙.
   const bandTop = 200, bandBottom = 1430;
   let y = Math.round((bandTop + bandBottom) / 2 - blockH / 2);
   if (y < bandTop) y = bandTop;
 
-  if (cover) {
-    const cx = (W - COVER_W) / 2, cy = y;
-    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 12;
-    rr(cx, cy, COVER_W, COVER_H, 14); ctx.fillStyle = '#000'; ctx.fill(); ctx.restore();
-    ctx.save(); rr(cx, cy, COVER_W, COVER_H, 14); ctx.clip(); ctx.drawImage(cover, cx, cy, COVER_W, COVER_H); ctx.restore();
-    y += coverPart;
-  }
-  // 제목 (가장 큼)
-  ctx.font = `900 ${tPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
+  // 액센트 바
+  ctx.fillStyle = accent; ctx.fillRect((W - 110) / 2, y, 110, BAR_H); y += BAR_H + GAP_BAR;
+  // 마무리 문장 (가장 큼)
+  ctx.font = `900 ${cPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
   ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 16;
-  y += tPx * 0.0;
-  for (const ln of tLines) { y += tLH; ctx.fillText(ln, W / 2, y - Math.round(tLH * 0.22)); }
+  for (const ln of cLines) { y += cLH; ctx.fillText(ln, W / 2, y - Math.round(cLH * 0.22)); }
   ctx.shadowBlur = 0;
-  // 저자
-  if (AUTHOR_H) {
-    y += GAP_AUTHOR;
-    ctx.font = '500 34px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.82)';
-    ctx.fillText(state.bookInfo.author, W / 2, y + 30); y += AUTHOR_H;
+  // 저장·팔로우 유도
+  if (lLines.length) {
+    y += GAP_LINK;
+    ctx.font = `600 ${lPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = accent;
+    for (const ln of lLines) { y += lLH; ctx.fillText(ln, W / 2, y - Math.round(lLH * 0.28)); }
   }
-  // 해결 한 줄
-  if (cLines.length) {
-    y += GAP_CTA;
-    ctx.fillStyle = accent; ctx.fillRect((W - 90) / 2, y, 90, BAR_H); y += BAR_H + GAP_BAR;
-    ctx.font = `600 ${cPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    for (const ln of cLines) { y += cLH; ctx.fillText(ln, W / 2, y - Math.round(cLH * 0.28)); }
-  }
-  // 프로필 안내 (안전 영역 내, 하단 IG UI보다 위)
-  y += GAP_PROFILE;
-  ctx.font = '700 34px "Noto Sans KR", sans-serif'; ctx.fillStyle = accent;
-  ctx.fillText('프로필 링크에서 만나보세요', W / 2, y + 30);
 
   ctx.textAlign = 'left';
   return new Promise(r => canvas.toBlob(r, 'image/png'));
@@ -1498,10 +1311,10 @@ function renderReelPreview() {
   const panel = document.getElementById('reelPreview');
   if (!panel || !state.reelScript) return;
   const s = state.reelScript;
-  const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
-  const rev = `「${cleanT}」${state.bookInfo?.author ? ' · ' + state.bookInfo.author : ''}`;
+  const pg5 = state.pages?.page5 || {};
+  const rev = [pg5.cta, pg5.linkText].filter(Boolean).join(' / ');
   const rows = [
-    ['1 · 훅', s.s1], ['2', s.s2], ['3', s.s3], ['4', s.s4], ['5 · 책 공개', rev],
+    ['1 · 훅', s.s1], ['2', s.s2], ['3', s.s3], ['4', s.s4], ['5 · 마무리', rev],
   ];
   document.getElementById('reelLines').innerHTML = rows.map(([n, t]) =>
     `<div style="display:flex;gap:8px;"><span style="color:#a78bda;font-weight:700;min-width:52px;">${n}</span><span>${escHtml(t || '—')}</span></div>`
@@ -1521,7 +1334,7 @@ async function saveReelSet() {
   if (!state.pages?.page1?.headline) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
   const cards = document.querySelectorAll('#carouselScroll .card');
   const bg = (i) => (cards[i] && cards[i].dataset.blobUrl) || null;
-  if (![0,1,2,3,4].some(i => bg(i))) { showToast('먼저 "이미지 생성"을 해주세요 (배경이 필요합니다).', 'warning'); return; }
+  if (![0,1,2,3,4].some(i => bg(i))) { showToast('먼저 이미지를 업로드해주세요 (배경이 필요합니다).', 'warning'); return; }
 
   const p = state.pages || {};
   const btn = document.getElementById('saveReelSetBtn');
@@ -1591,78 +1404,7 @@ function measureCanvasOverflow(pages) {
 
 
 
-// 마지막 장(5페이지) 책 공개 그리기 — 표지·제목·저자 + 솔루션. 저장/텔레그램 공용.
-async function drawPage5Reveal(ctx, W, H) {
-  const PAD_X = 70;
-  const pg5 = state.pages?.page5 || {};
-  const cta = pg5.cta || '', link = pg5.linkText || '';
-  const TEXT_W = W - PAD_X * 2;
-  const rr = (x,y,w,h,r)=>{ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();};
 
-  // 표지 로드 (프록시 경유 → 캔버스 CORS 안전)
-  let cover = null;
-  if (state.bookCover) {
-    try {
-      const im = new Image(); im.crossOrigin = 'anonymous';
-      await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = state.bookCover; });
-      cover = im;
-    } catch { cover = null; }
-  }
-
-  // 하단 책 패널 (편집 디자인: 큰 표지 + 정돈된 텍스트)
-  const panelMargin = 56, panelH = 252, panelY = H - panelMargin - panelH;
-  ctx.fillStyle = 'rgba(255,255,255,0.13)';
-  rr(PAD_X, panelY, W - PAD_X * 2, panelH, 26); ctx.fill();
-  ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-  rr(PAD_X, panelY, W - PAD_X * 2, panelH, 26); ctx.stroke();
-
-  const padIn = 36;
-  let textLeft = PAD_X + padIn;
-  if (cover) {
-    const coverW = 152, coverH = 216, coverX = PAD_X + padIn, coverY = panelY + (panelH - coverH) / 2;
-    // 표지 그림자
-    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 22; ctx.shadowOffsetY = 8;
-    rr(coverX, coverY, coverW, coverH, 10); ctx.fillStyle = '#000'; ctx.fill(); ctx.restore();
-    ctx.save(); rr(coverX, coverY, coverW, coverH, 10); ctx.clip();
-    ctx.drawImage(cover, coverX, coverY, coverW, coverH); ctx.restore();
-    textLeft = coverX + coverW + 34;
-  }
-  const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
-  const twAvail = (W - PAD_X - padIn) - textLeft;
-  ctx.textAlign = 'left';
-  // 제목 줄수 먼저 측정해 블록 세로 중앙 정렬
-  const { px: tPx, lines: tLines } = autoFitLines(ctx, cleanT, twAvail, 46, 30, 4, 2, '800');
-  const titleLH = Math.round(tPx * 1.28);
-  const blockH = 30 + 14 + tLines.length * titleLH + 16 + 30;  // eyebrow + gap + title + gap + author
-  let ey = panelY + (panelH - blockH) / 2 + 24;
-  // eyebrow
-  ctx.font = '700 24px "Noto Sans KR", sans-serif';
-  ctx.fillStyle = '#E9D5FF';
-  ctx.fillText('오늘의 책', textLeft, ey);
-  ey += 14 + titleLH * 0.0;
-  // title
-  ctx.font = `800 ${tPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff';
-  let ty = ey + titleLH;
-  for (const ln of tLines) { ctx.fillText(ln, textLeft, ty); ty += titleLH; }
-  // author
-  ctx.font = '500 26px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.78)';
-  ctx.fillText(state.bookInfo?.author || '', textLeft, ty + 12);
-
-  // 솔루션(cta) + 다리문장(linkText) — 패널 위 bottom-anchored
-  let curY = panelY - 44;
-  if (link) {
-    ctx.font = '400 30px "Noto Sans KR", sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.78)'; ctx.textAlign = 'left';
-    const lk = measureTextLines(ctx, link, TEXT_W);
-    for (let i = lk.length - 1; i >= 0; i--) { ctx.fillText(lk[i], PAD_X, curY); curY -= 42; }
-    curY -= 16;
-  }
-  const { px: cPx, lines: cLines } = autoFitLines(ctx, cta, TEXT_W, 60, 38, 5, 3, '800');
-  ctx.font = `800 ${cPx}px "Noto Sans KR", sans-serif`; ctx.fillStyle = '#fff'; ctx.textAlign = 'left';
-  const C_LH = Math.round(cPx * 1.4);
-  for (let i = cLines.length - 1; i >= 0; i--) { ctx.fillText(cLines[i], PAD_X, curY); curY -= C_LH; }
-  curY -= 28;
-  ctx.fillStyle = '#C084FC'; ctx.fillRect(PAD_X, curY, 90, 6);
-}
 
 // 캔버스 합성 → Blob 반환 (저장/공유 공통 유틸)
 async function buildCardBlob(card, pageNum) {
@@ -1698,13 +1440,7 @@ async function buildCardBlob(card, pageNum) {
   ctx.textAlign = 'left';
   ctx.fillText(`${pageNum}`, 70, 86);
 
-  // ②-5 마지막 장 = 책 공개 (표지·제목·저자 + 솔루션)
-  if (pageNum === 5) {
-    await drawPage5Reveal(ctx, W, H);
-    return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-  }
-
-  // ③ 텍스트 콘텐츠 추출
+  // ③ 텍스트 콘텐츠 추출 (5페이지는 cta+linkText를 일반 텍스트로 그린다)
   const pg = state.pages?.[`page${pageNum}`] || {};
   let headline = '', body = '';
   if (pageNum === 5) { headline = pg.cta || ''; body = pg.linkText || ''; }
@@ -1839,11 +1575,9 @@ document.getElementById('generateCaptionBtn').addEventListener('click', async ()
     const data = await apiFetch('/api/generate-caption', {
       pages: state.pages,
       bookInfo: state.bookInfo,
-      bookNumber: state.bookNumber || '',
     });
     state.caption = data.caption;
     state.captionHashtags = data.hashtags;
-    state.dmKeyword = data.commentKeyword || data.dmKeyword || '';
 
     document.getElementById('captionTextContent').textContent = data.caption || '';
     document.getElementById('captionHashtagsRow').textContent = (data.hashtags || []).join(' ');
