@@ -623,6 +623,36 @@ async function handleAdjustText(env, body) {
   }
 }
 
+// ===== Gemini 공통 호출 (지역 차단 방어 포함) =====
+// "User location is not supported" [400] = 키·결제 문제가 아니라 Cloudflare 경유지(출구 IP)가
+// Gemini 미지원 지역(홍콩 등)으로 판정된 것 — book-carousel의 Anthropic 403과 같은 부류의 문제.
+// 3중 방어: ① 워커 내부 재시도(연결마다 출구 IP가 바뀌면 통과) ② REGION_BLOCKED 태깅 →
+// 프론트 apiFetch가 자동 재시도(새 요청은 다른 경유지 가능) ③ Smart Placement(wrangler.toml)가
+// 트래픽이 쌓이면 워커를 백엔드(미국) 근처로 옮겨 근본적으로 회피.
+async function callGemini(env, payload, attempt = 0) {
+  const model = env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const eb = await res.text().catch(() => '');
+    const regionBlocked = res.status === 400 && /location is not supported/i.test(eb);
+    if (regionBlocked && attempt < 2) {
+      await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
+      return callGemini(env, payload, attempt + 1); // 재연결 시 출구 IP가 바뀌면 통과될 수 있음
+    }
+    if (regionBlocked) {
+      throw new Error('REGION_BLOCKED: 일시적인 해외 경유지 차단 — 요청이 Gemini 미지원 지역(홍콩 등)을 경유했습니다. API 키·결제 문제가 아니며, 자동 재시도나 1~2분 후 재시도로 해결되는 경우가 많습니다.');
+    }
+    throw new Error(`Gemini 호출 실패 [${res.status}] ${eb.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  const text = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('\n');
+  return { data, text, model };
+}
+
 // ===== STEP 0: 원본 추적 (Gemini API — 이미지 인식 + 구글 검색 그라운딩) =====
 // 업로드한 이미지가 어디서 온 것인지(작품·작가·플랫폼)와 저작권 위험도를 자동 조사한다.
 // ⚠️ 방식의 한계: 구글 렌즈의 "픽셀 단위 완전 일치" 역검색이 아니라, Gemini가 이미지 내용을
@@ -637,27 +667,15 @@ async function handleTraceOrigin(env, body) {
   if (!m) throw new Error('imageDataUrl(base64 데이터 URL 형식의 이미지)이 필요합니다.');
   const mime = m[1], b64 = m[2];
 
-  const model = env.GEMINI_MODEL || 'gemini-2.5-flash';
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-    body: JSON.stringify({
-      contents: [{
-        parts: [
-          { inline_data: { mime_type: mime, data: b64 } },
-          { text: '이 이미지의 원본 출처를 추적하려 합니다. 구글 검색을 적극 활용해 아래를 조사하고, 마지막에 반드시 JSON 하나로 정리해 답하세요.\n\n조사 항목:\n1. 이미지에 무엇이 있는가 — 작품명(드라마·영화·애니·게임 등)·인물·장소·워터마크·로고·서명·화면 속 텍스트 같은 출처 단서 포함\n2. 이 이미지의 원본 출처로 추정되는 곳 (원작품/작가/공식 플랫폼)\n3. 저작권·라이선스 위험도 판정:\n   - high: 상업 콘텐츠(방송·영화·웹툰·유료 스톡 등)로 보여 무단 재가공 위험이 큼\n   - medium: 출처가 불명확하거나 이용 조건 확인 필요\n   - low: 퍼블릭 도메인·CC0·자유 이용 가능성이 높음\n   - unknown: 판단 불가\n\nJSON 형식(이 형식만, 다른 텍스트로 끝내지 말 것):\n{"summary":"이미지 설명 한두 문장","clues":["출처 단서1","단서2"],"originGuess":"추정 원본 출처 설명 한두 문장","originCandidates":[{"name":"출처명","url":"https://..."}],"licenseRisk":"high|medium|low|unknown","licenseNote":"위험도 판단 이유 한두 문장"}' },
-        ],
-      }],
-      tools: [{ google_search: {} }],
-    }),
+  const { data, text, model } = await callGemini(env, {
+    contents: [{
+      parts: [
+        { inline_data: { mime_type: mime, data: b64 } },
+        { text: '이 이미지의 원본 출처를 추적하려 합니다. 구글 검색을 적극 활용해 아래를 조사하고, 마지막에 반드시 JSON 하나로 정리해 답하세요.\n\n조사 항목:\n1. 이미지에 무엇이 있는가 — 작품명(드라마·영화·애니·게임 등)·인물·장소·워터마크·로고·서명·화면 속 텍스트 같은 출처 단서 포함\n2. 이 이미지의 원본 출처로 추정되는 곳 (원작품/작가/공식 플랫폼)\n3. 저작권·라이선스 위험도 판정:\n   - high: 상업 콘텐츠(방송·영화·웹툰·유료 스톡 등)로 보여 무단 재가공 위험이 큼\n   - medium: 출처가 불명확하거나 이용 조건 확인 필요\n   - low: 퍼블릭 도메인·CC0·자유 이용 가능성이 높음\n   - unknown: 판단 불가\n\nJSON 형식(이 형식만, 다른 텍스트로 끝내지 말 것):\n{"summary":"이미지 설명 한두 문장","clues":["출처 단서1","단서2"],"originGuess":"추정 원본 출처 설명 한두 문장","originCandidates":[{"name":"출처명","url":"https://..."}],"licenseRisk":"high|medium|low|unknown","licenseNote":"위험도 판단 이유 한두 문장"}' },
+      ],
+    }],
+    tools: [{ google_search: {} }],
   });
-  if (!res.ok) {
-    const eb = await res.text().catch(() => '');
-    throw new Error(`Gemini 호출 실패 [${res.status}] ${eb.slice(0, 300)}`);
-  }
-  const data = await res.json();
-  const parts = data.candidates?.[0]?.content?.parts || [];
-  const text = parts.map(p => p.text || '').join('\n');
   let analysis = null;
   try { analysis = extractJson(text); } catch { analysis = { summary: text.trim().slice(0, 1000) || '분석 결과를 읽지 못했습니다.' }; }
 
@@ -691,18 +709,7 @@ async function handleSuggestTopic(env, body) {
   }
   parts.push({ text: '이 이미지(들)로 인스타그램 카드뉴스(캐러셀)를 만들려 합니다. 이미지의 분위기·소재에 어울리는 카드뉴스 주제를 제안하세요.\n\n- topic: 카드뉴스 주제 1개 (한국어, 25자 이내 — 구체적이고 클릭하고 싶은 주제)\n- coreMessages: 그 주제로 전할 수 있는 핵심 메시지 후보 3개 (한국어, 각 1문장, 서로 다른 각도)\n\n규칙: 이미지와 동떨어진 주제 금지. 공포·자극 조장 금지. 이모지 금지.\nJSON만 응답: {"topic":"...","coreMessages":["...","...","..."]}' });
 
-  const model = env.GEMINI_MODEL || 'gemini-2.5-flash';
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-    body: JSON.stringify({ contents: [{ parts }] }),
-  });
-  if (!res.ok) {
-    const eb = await res.text().catch(() => '');
-    throw new Error(`Gemini 호출 실패 [${res.status}] ${eb.slice(0, 300)}`);
-  }
-  const data = await res.json();
-  const text = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('\n');
+  const { text, model } = await callGemini(env, { contents: [{ parts }] });
   const parsed = extractJson(text);
   return {
     success: true,
