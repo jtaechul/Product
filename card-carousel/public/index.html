@@ -607,6 +607,24 @@
     .swatch.active { border-color: #fff; box-shadow: 0 0 0 2px var(--primary, #7c3aed); }
     .accent-picker { width: 24px; height: 24px; padding: 0; border: 1px solid var(--gray-700, #374151); border-radius: 6px; background: none; cursor: pointer; }
 
+    /* === 제목 편집 · 강조 단어 선택 === */
+    .edit-panel { background: var(--gray-850, #14171d); border: 1px solid var(--gray-800, #1f232b); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+    .headline-input { width: 100%; background: var(--gray-900, #0f1115); border: 1px solid var(--gray-700, #374151); color: var(--text, #e8eaed); border-radius: 8px; padding: 8px 10px; font-size: 14px; }
+    .headline-input:focus { outline: none; border-color: var(--primary, #7c3aed); }
+    .word-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .word-chip { border: 1px solid var(--gray-700, #374151); background: transparent; color: var(--gray-300, #cbd2dc); font-size: 12px; padding: 4px 9px; border-radius: 14px; cursor: pointer; }
+    .word-chip.on { border-color: transparent; color: #fff; font-weight: 700; }
+    .edit-hint { font-size: 11px; color: var(--gray-500, #6b7280); margin-top: 7px; }
+
+    /* === Reddit 인기 이미지 그리드 === */
+    .reddit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+    .reddit-card { position: relative; border-radius: 10px; overflow: hidden; cursor: pointer; border: 2px solid transparent; background: var(--gray-800, #1f232b); aspect-ratio: 1 / 1; }
+    .reddit-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .reddit-card:hover { border-color: var(--primary-light, #a78bfa); }
+    .reddit-card.picked { border-color: var(--primary, #7c3aed); box-shadow: 0 0 0 2px rgba(124,58,237,0.35); }
+    .reddit-card .rc-meta { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.82)); color: #fff; font-size: 9px; line-height: 1.3; padding: 14px 5px 4px; pointer-events: none; }
+    .reddit-card .rc-sub { color: #ffd6a8; font-weight: 700; }
+
     /* v2.0: 업로드 썸네일 동영상 배지 */
     .upload-thumb .video-badge {
       position: absolute; left: 2px; bottom: 2px;
@@ -688,6 +706,15 @@
   <div class="mode-panel active" id="panelInput">
 
     <div class="form-group">
+      <label>시작 방법<span class="req">*</span></label>
+      <div class="lang-tabs" style="margin:0;" id="sourceTabs">
+        <button type="button" class="lang-tab active" data-source="upload">내 이미지로 시작</button>
+        <button type="button" class="lang-tab" data-source="reddit">Reddit 인기글 추천</button>
+      </div>
+      <span class="hint">'내 이미지'는 캡처 이미지를 올려 역검색으로 원본을 찾고, 'Reddit 추천'은 인기글에서 소재를 자동으로 받아옵니다.</span>
+    </div>
+
+    <div class="form-group">
       <label>콘텐츠 형식<span class="req">*</span></label>
       <div class="lang-tabs" style="margin:0;" id="modeTabs">
         <button type="button" class="lang-tab active" data-mode="post">사진 카드뉴스</button>
@@ -696,15 +723,37 @@
       <span class="hint">1장째(훅 카드)에만 문구를 얹고, 나머지 미디어는 원본 그대로 올립니다. 정보는 캡션에 담습니다.</span>
     </div>
 
-    <div class="form-group">
+    <!-- [내 이미지로 시작] 업로드 -->
+    <div class="form-group" id="uploadGroup">
       <label id="uploadLabel">참고 이미지 업로드 (검색용)<span class="req">*</span></label>
       <div class="upload-zone" id="uploadZone">
         <div class="upload-zone-text" id="uploadZoneText">참고 이미지를 끌어다 놓거나<br>눌러서 선택하세요</div>
         <div class="upload-zone-sub" id="uploadZoneSub">인스타·유튜브에서 캡처한 이미지로 원본을 찾습니다 (JPG/PNG/WebP)</div>
       </div>
       <input type="file" id="imageInput" accept="image/*" multiple style="display:none;">
-      <div class="upload-previews" id="uploadPreviews"></div>
       <span class="hint seed-hint" id="uploadHint">이 이미지는 <b>원본을 찾기 위한 검색용</b>입니다 — 카드뉴스에는 사용되지 않습니다. 아래 "원본 추적"으로 찾은 원본만 카드에 실립니다.</span>
+    </div>
+
+    <!-- [Reddit 인기글 추천] 브라우즈 -->
+    <div class="form-group" id="redditGroup" style="display:none;">
+      <label>Reddit 인기 이미지</label>
+      <div class="lang-tabs" style="margin:0;flex-wrap:wrap;" id="redditCats">
+        <button type="button" class="lang-tab active" data-cat="popular">인기</button>
+        <button type="button" class="lang-tab" data-cat="facts">흥미로운 사실</button>
+        <button type="button" class="lang-tab" data-cat="space">우주·과학</button>
+        <button type="button" class="lang-tab" data-cat="nature">자연·동물</button>
+        <button type="button" class="lang-tab" data-cat="history">역사</button>
+      </div>
+      <button class="btn btn-outline" id="redditLoadBtn" style="margin-top:8px;">인기글 불러오기</button>
+      <span class="hint">마음에 드는 게시물을 누르면 <b>검색용 시드</b>가 됩니다. 이어서 "원본 추적"으로 글자 없는 원본을 찾아 카드에 사용하세요.</span>
+      <div class="reddit-grid" id="redditGrid"></div>
+    </div>
+
+    <!-- 검색용 시드 (업로드 또는 Reddit에서 고른 참고 이미지) -->
+    <div class="form-group" id="seedGroup" style="display:none;">
+      <label>검색용 참고 이미지</label>
+      <div class="upload-previews" id="uploadPreviews"></div>
+      <span class="hint seed-hint">이 이미지는 원본을 찾기 위한 검색용입니다 — 카드뉴스에는 사용되지 않습니다.</span>
     </div>
 
     <!-- STEP 0: 원본 추적 (Gemini) -->
@@ -780,6 +829,18 @@
       <span class="section-badge" id="carouselBadge"></span>
     </div>
     <div class="carousel-scroll" id="carouselScroll"></div>
+    <!-- 제목 편집 + 강조 단어 선택 -->
+    <div class="edit-panel" id="editPanel">
+      <div class="style-row" style="width:100%;">
+        <span class="style-label">제목 문구</span>
+        <input type="text" id="headlineInput" class="headline-input" placeholder="제목을 입력하세요">
+      </div>
+      <div style="width:100%;">
+        <span class="style-label">강조할 단어 (눌러서 선택)</span>
+        <div class="word-chips" id="wordChips"></div>
+        <div class="edit-hint">선택한 단어가 강조색으로 표시됩니다. 제목을 바꾸면 즉시 미리보기와 저장 이미지에 반영됩니다.</div>
+      </div>
+    </div>
     <!-- 텍스트 스타일 조절: 훅 카드 글자 크기 · 강조색 · 글자색 (미리보기·저장 이미지에 함께 적용) -->
     <div class="style-controls" id="styleControls">
       <div class="style-row">
@@ -882,6 +943,8 @@
 <script>
 const state = {
   step: 1,
+  source: 'upload',       // v2.4: 'upload'(내 이미지 업로드) | 'reddit'(Reddit 인기글 추천)
+  redditCat: 'popular',
   mode: 'post',           // v2.0: 'post'(사진 카드뉴스) | 'reel'(동영상 릴스)
   bookInfo: null,         // 주제 정보 컨테이너 { title(주제), topic, coreMessage } — API 호환용 이름 유지
   seedImages: [],         // 업로드한 '검색용' 참고 이미지 dataURL 목록 (원본 추적·주제 제안에만 사용, 카드에는 절대 안 씀)
@@ -1056,6 +1119,73 @@ document.querySelectorAll('#modeTabs .lang-tab').forEach(btn => {
   });
 });
 
+// ===== v2.4: 시작 방법 (내 이미지 업로드 / Reddit 인기글 추천) =====
+document.querySelectorAll('#sourceTabs .lang-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (state.source === btn.dataset.source) return;
+    state.source = btn.dataset.source;
+    document.querySelectorAll('#sourceTabs .lang-tab').forEach(b => b.classList.toggle('active', b === btn));
+    const reddit = state.source === 'reddit';
+    document.getElementById('uploadGroup').style.display = reddit ? 'none' : 'block';
+    document.getElementById('redditGroup').style.display = reddit ? 'block' : 'none';
+    // 릴스 모드에서 Reddit는 이미지 소스라 안내 (영상은 '내 이미지 업로드'에서)
+    if (reddit && state.mode === 'reel') showToast('Reddit 추천은 이미지 소스입니다. 릴스 영상은 "내 이미지로 시작"에서 올려주세요.', 'info');
+  });
+});
+
+// Reddit 카테고리 선택
+document.querySelectorAll('#redditCats .lang-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.redditCat = btn.dataset.cat;
+    document.querySelectorAll('#redditCats .lang-tab').forEach(b => b.classList.toggle('active', b === btn));
+  });
+});
+
+// Reddit 인기글 불러오기 → 그리드 렌더
+document.getElementById('redditLoadBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('redditLoadBtn');
+  const grid = document.getElementById('redditGrid');
+  btn.disabled = true; btn.textContent = '불러오는 중...';
+  grid.innerHTML = '';
+  try {
+    const data = await apiFetch('/api/reddit-trending', { category: state.redditCat });
+    const posts = data.posts || [];
+    if (!posts.length) { grid.innerHTML = '<div class="hint">가져온 인기글이 없습니다. 잠시 후 다시 시도해주세요.</div>'; return; }
+    posts.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'reddit-card';
+      card.innerHTML = `<img src="/api/img-proxy?url=${encodeURIComponent(p.imageUrl)}" loading="lazy" alt="">
+        <div class="rc-meta"><span class="rc-sub">r/${escHtml(p.subreddit)}</span> · ${escHtml(String(p.ups))}👍<br>${escHtml((p.title || '').slice(0, 50))}</div>`;
+      card.querySelector('img').addEventListener('error', () => card.remove()); // 못 불러온 건 숨김
+      card.addEventListener('click', () => pickRedditPost(p, card));
+      grid.appendChild(card);
+    });
+    showToast(`Reddit 인기 이미지 ${posts.length}개를 불러왔습니다.`, 'success');
+  } catch (e) {
+    grid.innerHTML = `<div class="hint">불러오기 실패: ${escHtml(e.message)}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = '인기글 불러오기';
+  }
+});
+
+// Reddit 게시물 선택 → 검색용 시드로 담고, 원본 추적으로 이어지도록 안내
+async function pickRedditPost(post, cardEl) {
+  showLoading('선택한 이미지 가져오는 중...', '검색용 시드로 담습니다');
+  try {
+    const dataUrl = await loadOriginImage(post.imageUrl); // 프록시 → dataURL
+    state.seedImages = [dataUrl];
+    document.querySelectorAll('.reddit-card').forEach(c => c.classList.remove('picked'));
+    if (cardEl) cardEl.classList.add('picked');
+    renderSeedPreviews();
+    showToast('검색용 시드로 담았습니다. "원본 추적"으로 글자 없는 원본을 찾으세요.', 'success');
+    document.getElementById('traceGroup').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (e) {
+    showToast('이미지 가져오기 실패: ' + e.message, 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
 // ===== 입력부: 미디어 업로드 =====
 const uploadZone = document.getElementById('uploadZone');
 const imageInput = document.getElementById('imageInput');
@@ -1147,7 +1277,8 @@ function renderSeedPreviews() {
       renderSeedPreviews();
     });
   });
-  // 원본 추적 버튼은 시드가 있을 때만 노출. 시드가 바뀌면 이전 추적 결과 초기화.
+  // 시드가 있을 때만 시드 영역·추적 버튼 노출. 시드가 바뀌면 이전 추적 결과 초기화.
+  document.getElementById('seedGroup').style.display = state.seedImages.length ? 'block' : 'none';
   document.getElementById('traceGroup').style.display = state.seedImages.length ? 'flex' : 'none';
   document.getElementById('traceResults').innerHTML = '';
 }
@@ -1192,7 +1323,7 @@ async function loadOriginCandidates(i, data, cardEl) {
   if (!uniq.length) return;
   try {
     const r = await apiFetch('/api/fetch-origin-images', { urls: uniq });
-    const media = (r.media || []).slice(0, 12);
+    const media = (r.media || []).slice(0, 24);
     if (!media.length) return;
     const row = document.createElement('div');
     row.innerHTML = `<div class="trace-note" style="margin-top:8px;"><b>원본 후보 미디어</b> — <b>글자 없는 원본</b>만 골라 보여드립니다. 눌러서 선택(여러 개 가능)한 뒤 추가하세요. 첫 장에만 문구가 들어가고 나머지는 사진 그대로 실립니다.</div>
@@ -1771,54 +1902,68 @@ function accentHtml(headline, accents) {
   return html;
 }
 
-function previewCardHeight() {
-  if (state.mode === 'reel') return '262px';
-  return state.postRatio === '1:1' ? '210px' : '262px';
+// 미리보기 카드 픽셀 크기 (저장 비율과 같은 종횡비 — 높이 고정 262)
+function previewCardDims(r) {
+  const H = 262;
+  const w = r === '9:16' ? Math.round(H * 9 / 16) : r === '4:5' ? Math.round(H * 4 / 5) : H;
+  return { w, h: H };
 }
+
+let _previewUrls = []; // 미리보기용 objectURL 수명 관리 (재렌더 시 revoke)
+let _renderSeq = 0;    // 최신 렌더만 반영 (빠른 연속 편집 대비)
 
 // 미디어가 바뀌었을 때, 미리보기가 이미 떠 있으면 다시 그린다
 function refreshPreview() {
   if (state.byLang?.[state.activeLang]) renderPreview();
 }
 
+// ★ 미리보기 = 저장 이미지: 모든 카드를 buildCardBlob로 그려 <img>로 표시 → 픽셀 단위로 동일
 async function renderPreview() {
   const L = state.byLang?.[state.activeLang];
   if (!L) return;
+  const seq = ++_renderSeq;
   const scroll = document.getElementById('carouselScroll');
-  scroll.innerHTML = '';
-  scroll.style.fontFamily = FONT_STACKS[state.activeLang] || FONT_STACKS.ko; // 언어별 폰트
-  scroll.style.setProperty('--hook-scale', state.style.scale);  // 글자 크기
-  scroll.style.setProperty('--hook-accent', state.style.accent); // 강조색
+  const r = state.mode === 'reel' ? '9:16' : state.postRatio;
+  const dims = previewCardDims(r);
 
-  // ① 훅 카드 — 첫 미디어 + 하단 큰 헤드라인(강조 단어 컬러)
-  const hookCard = document.createElement('div');
-  hookCard.className = 'card card-1';
-  hookCard.style.height = previewCardHeight();
-  const rawHeadline = L.hook?.headline || '';
-  const headline = state.activeLang === 'en' ? rawHeadline.toUpperCase() : rawHeadline;
-  hookCard.innerHTML = `<div class="card-inner"><div class="card-num">1</div><div class="card-headline">${accentHtml(headline, L.hook?.accents)}</div></div>`;
-  scroll.appendChild(hookCard);
-  await applyHookCardStyle(hookCard);
-
-  // ② 나머지 장 — 원본 미디어 그대로 (텍스트 없음)
+  // 새 카드 이미지를 먼저 만든 뒤 한 번에 교체 (깜빡임·경쟁 방지)
+  const nodes = [];
+  const newUrls = [];
   if (state.mode === 'post') {
-    for (let i = 1; i < state.uploadedImages.length; i++) {
+    for (let i = 0; i < state.uploadedImages.length; i++) {
+      const blob = await buildCardBlob(i, r);
+      if (seq !== _renderSeq) { newUrls.forEach(u => URL.revokeObjectURL(u)); return; } // 더 최신 렌더가 시작됨
+      const url = URL.createObjectURL(blob); newUrls.push(url);
       const c = document.createElement('div');
-      c.className = 'card';
-      c.style.height = previewCardHeight();
-      c.style.backgroundImage = `url("${state.uploadedImages[i]}")`;
-      c.style.backgroundSize = 'cover';
-      c.style.backgroundPosition = 'center';
-      c.innerHTML = `<div class="card-inner"><div class="card-num">${i + 1}</div></div>`;
-      scroll.appendChild(c);
+      c.className = 'card' + (i === 0 ? ' card-1' : '');
+      c.style.cssText = `flex:0 0 auto;width:${dims.w}px;height:${dims.h}px;`;
+      c.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="카드 ${i + 1}">`;
+      nodes.push(c);
     }
-  } else if (state.videoUrl) {
-    const c = document.createElement('div');
-    c.className = 'card card-video';
-    c.style.height = previewCardHeight();
-    c.innerHTML = `<video controls muted preload="metadata" src="${escHtml(state.videoUrl)}"></video>`;
-    scroll.appendChild(c);
+  } else {
+    // 릴스: 커버(훅) 이미지 + 원본 영상
+    const blob = await buildCardBlob(0, '9:16');
+    if (seq !== _renderSeq) { newUrls.forEach(u => URL.revokeObjectURL(u)); return; }
+    const url = URL.createObjectURL(blob); newUrls.push(url);
+    const cover = document.createElement('div');
+    cover.className = 'card card-1';
+    cover.style.cssText = `flex:0 0 auto;width:${dims.w}px;height:${dims.h}px;`;
+    cover.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="커버">`;
+    nodes.push(cover);
+    if (state.videoUrl) {
+      const c = document.createElement('div');
+      c.className = 'card card-video';
+      c.style.cssText = `flex:0 0 auto;width:${dims.w}px;height:${dims.h}px;`;
+      c.innerHTML = `<video controls muted preload="metadata" src="${escHtml(state.videoUrl)}" style="width:100%;height:100%;object-fit:cover;"></video>`;
+      nodes.push(c);
+    }
   }
+
+  // 이전 미리보기 URL 정리 후 교체
+  _previewUrls.forEach(u => URL.revokeObjectURL(u));
+  _previewUrls = newUrls;
+  scroll.innerHTML = '';
+  nodes.forEach(n => scroll.appendChild(n));
 
   document.getElementById('carouselBadge').textContent = state.mode === 'post'
     ? `${Math.max(1, state.uploadedImages.length)} 페이지`
@@ -1826,6 +1971,7 @@ async function renderPreview() {
   document.getElementById('ratioToggle').style.display = state.mode === 'post' ? '' : 'none';
   document.getElementById('saveAllImagesBtn').textContent = state.mode === 'post' ? '이미지 전체 저장' : '커버 + 원본 영상 저장';
 
+  syncEditPanel(); // 제목 편집·강조 단어 UI 동기화
   document.getElementById('carouselWrapper').classList.add('visible');
   document.getElementById('emptyState').style.display = 'none';
   renderCaptionPanel();
@@ -1847,10 +1993,7 @@ document.querySelectorAll('#ratioToggle .lang-tab').forEach(btn => {
   btn.addEventListener('click', () => {
     state.postRatio = btn.dataset.ratio;
     document.querySelectorAll('#ratioToggle .lang-tab').forEach(b => b.classList.toggle('active', b === btn));
-    // 미리보기 카드 비율도 맞춰 갱신 (1:1=210x210, 4:5=210x262)
-    document.querySelectorAll('#carouselScroll .card').forEach(c => {
-      c.style.height = previewCardHeight();
-    });
+    if (state.byLang?.[state.activeLang]) renderPreview(); // 비율이 바뀌면 크롭도 바뀌므로 다시 그린다
     showToast(`저장 비율: ${state.postRatio} (${state.postRatio === '1:1' ? '1080x1080' : '1080x1350'})`, 'info');
   });
 });
@@ -1887,23 +2030,70 @@ document.getElementById('accentPicker').addEventListener('input', (e) => {
 });
 syncStyleControls();
 
+// ===== 제목 편집 + 강조 단어 선택 (편집은 현재 보고 있는 언어에 적용) =====
+function accentActive(word, accents) {
+  const w = String(word).toLowerCase();
+  return (accents || []).some(a => { a = String(a).toLowerCase(); return a && (w.includes(a) || a.includes(w)); });
+}
+function syncEditPanel() {
+  const L = state.byLang?.[state.activeLang];
+  const input = document.getElementById('headlineInput');
+  const chips = document.getElementById('wordChips');
+  if (!L || !L.hook) { chips.innerHTML = ''; return; }
+  const headline = L.hook.headline || '';
+  if (document.activeElement !== input) input.value = headline; // 타이핑 중엔 커서 유지
+  const accents = L.hook.accents || [];
+  chips.innerHTML = '';
+  headline.split(/\s+/).filter(Boolean).forEach(word => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    const on = accentActive(word, accents);
+    btn.className = 'word-chip' + (on ? ' on' : '');
+    btn.textContent = word;
+    if (on) btn.style.background = state.style.accent; // 현재 강조색으로 표시
+    btn.addEventListener('click', () => toggleAccentWord(word));
+    chips.appendChild(btn);
+  });
+}
+function toggleAccentWord(word) {
+  const L = state.byLang?.[state.activeLang];
+  if (!L?.hook) return;
+  let accents = (L.hook.accents || []).slice();
+  const w = String(word).toLowerCase();
+  if (accentActive(word, accents)) {
+    accents = accents.filter(a => { const s = String(a).toLowerCase(); return !(w.includes(s) || s.includes(w)); });
+  } else {
+    accents.push(word);
+  }
+  L.hook.accents = accents;
+  renderPreview();
+}
+let _headlineTimer = null;
+document.getElementById('headlineInput').addEventListener('input', (e) => {
+  const L = state.byLang?.[state.activeLang];
+  if (!L?.hook) return;
+  L.hook.headline = e.target.value; // 편집 내용은 저장·발송에도 그대로 반영됨
+  clearTimeout(_headlineTimer);
+  _headlineTimer = setTimeout(() => renderPreview(), 250);
+});
+
 // 완성된 카드뉴스를 결과 페이지(/view)에 담을 스냅샷으로 합성 — 훅 카드 이미지 + 원본들 + 캡션
 async function buildResultSnapshot() {
   const L = state.byLang[state.activeLang] || {};
   const images = [];
   try {
+    // 결과 페이지도 미리보기·저장과 같은 buildCardBlob 사용 → 완전히 동일한 결과
     if (state.mode === 'post') {
-      const hookBlob = await buildHookBlob(state.postRatio);
-      if (hookBlob) {
-        const u = URL.createObjectURL(hookBlob);
-        images.push(await downscaleForTrace(u, 1080));
-        URL.revokeObjectURL(u);
-      }
-      for (let i = 1; i < state.uploadedImages.length; i++) {
-        images.push(await downscaleForTrace(state.uploadedImages[i], 1080));
+      for (let i = 0; i < state.uploadedImages.length; i++) {
+        const blob = await buildCardBlob(i, state.postRatio);
+        if (blob) {
+          const u = URL.createObjectURL(blob);
+          images.push(await downscaleForTrace(u, 1080));
+          URL.revokeObjectURL(u);
+        }
       }
     } else {
-      const coverBlob = await buildHookBlob('9:16');
+      const coverBlob = await buildCardBlob(0, '9:16');
       if (coverBlob) {
         const u = URL.createObjectURL(coverBlob);
         images.push(await downscaleForTrace(u, 1080));
@@ -2077,20 +2267,17 @@ async function saveAllMedia() {
   try {
     if (state.mode === 'post') {
       const files = [];
-      const hookBlob = await buildHookBlob(state.postRatio);
-      if (hookBlob) files.push(new File([hookBlob], 'card_1_hook.png', { type: 'image/png' }));
-      // 나머지 장은 원본 그대로 (dataURL → blob)
-      for (let i = 1; i < state.uploadedImages.length; i++) {
-        const blob = await (await fetch(state.uploadedImages[i])).blob();
-        const ext = (blob.type || '').includes('png') ? 'png' : 'jpg';
-        files.push(new File([blob], `card_${i + 1}.${ext}`, { type: blob.type || 'image/jpeg' }));
+      // 모든 장을 미리보기와 '같은 함수·같은 비율'로 만든다 → 저장물 = 미리보기 (인스타 캐러셀 규격 통일)
+      for (let i = 0; i < state.uploadedImages.length; i++) {
+        const blob = await buildCardBlob(i, state.postRatio);
+        if (blob) files.push(new File([blob], i === 0 ? 'card_1_hook.png' : `card_${i + 1}.png`, { type: 'image/png' }));
       }
       if (!files.length) { showToast('변환된 이미지가 없습니다', 'error'); return; }
       btn.textContent = '저장 중...';
       await shareOrDownload(files, `카드 ${files.length}장`);
     } else {
       // 릴스: 커버(9:16) 캔버스 + 원본 영상 다운로드
-      const coverBlob = await buildHookBlob('9:16');
+      const coverBlob = await buildCardBlob(0, '9:16');
       if (coverBlob) {
         btn.textContent = '저장 중...';
         await shareOrDownload([new File([coverBlob], 'reel_cover.png', { type: 'image/png' })], '릴스 커버');
@@ -2111,24 +2298,18 @@ async function saveAllMedia() {
 }
 document.getElementById('saveAllImagesBtn').addEventListener('click', saveAllMedia);
 
-// ===== v2.0: 훅 카드 캔버스 합성 → Blob (1:1 / 4:5 / 9:16 커버) =====
-async function buildHookBlob(ratio) {
+// ===== v2.4: 카드 캔버스 합성 → Blob — 미리보기와 저장 이미지가 '같은 함수'로 그려져 픽셀 단위로 동일 =====
+// index 0 = 훅 카드(배경 + 스크림 + 헤드라인) / index >=1 = 원본 이미지만 (같은 비율로 cover-fit)
+async function buildCardBlob(index, ratio) {
   const r = ratio || (state.mode === 'reel' ? '9:16' : state.postRatio);
   const W = 1080, H = r === '9:16' ? 1920 : r === '4:5' ? 1350 : 1080;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
-
   await document.fonts.ready;
 
-  // 오버레이 엔진 결과 + 사용자 글자색 선택 → 최종 명암 결정 (훅은 항상 하단 앵커)
-  const hookCard = document.querySelector('#carouselScroll .card');
-  const forced = state.style.headColor;
-  const light = forced === 'dark' ? true : forced === 'white' ? false
-    : (hookCard?.dataset.overlayScheme === 'dark-on-light'); // light = 어두운 글씨(밝은 배경)
-
-  // ① 배경 (첫 미디어 cover-fit)
-  const src = state.uploadedImages[0];
+  // ① 배경 (해당 카드 미디어를 같은 비율로 cover-fit) — 모든 카드가 동일 비율로 잘려 인스타 캐러셀에 맞는다
+  const src = state.uploadedImages[index];
   if (src) {
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = src; });
@@ -2141,52 +2322,60 @@ async function buildHookBlob(ratio) {
     ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
   }
 
-  // ② 하단 스크림 — 밝은 배경이면 흰 스크림, 어두우면 검은 스크림
-  const scrimRGB = light ? '255,255,255' : '0,0,0';
-  const grad = ctx.createLinearGradient(0, H * (r === '9:16' ? 0.42 : 0.3), 0, H);
-  grad.addColorStop(0, `rgba(${scrimRGB},0)`);
-  grad.addColorStop(1, `rgba(${scrimRGB},${light ? 0.9 : 0.92})`);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
+  // 훅 카드(0장)에만 스크림 + 헤드라인. 나머지는 원본 그대로.
+  if (index === 0) {
+    // 명암: 배경 밝기 분석 + 사용자 글자색 선택 (self-contained — DOM 의존 없음)
+    let scheme = 'light-on-dark';
+    if (src) { try { if (!_overlayCache.has(src)) _overlayCache.set(src, await analyzeImageForOverlay(src)); scheme = _overlayCache.get(src).scheme; } catch {} }
+    const forced = state.style.headColor;
+    const light = forced === 'dark' ? true : forced === 'white' ? false : (scheme === 'dark-on-light'); // light = 어두운 글씨
 
-  // ③ 헤드라인 (하단 앵커 · 영문은 대문자 · 강조 단어 컬러)
-  const L = state.byLang?.[state.activeLang] || {};
-  let headline = L.hook?.headline || '';
-  if (state.activeLang === 'en') headline = headline.toUpperCase();
-  const accents = (L.hook?.accents || []).map(a => String(a || '').toLowerCase()).filter(Boolean);
+    // ② 하단 스크림
+    const scrimRGB = light ? '255,255,255' : '0,0,0';
+    const grad = ctx.createLinearGradient(0, H * (r === '9:16' ? 0.42 : 0.3), 0, H);
+    grad.addColorStop(0, `rgba(${scrimRGB},0)`);
+    grad.addColorStop(1, `rgba(${scrimRGB},${light ? 0.9 : 0.92})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
 
-  const PAD_X = 70, TEXT_W = W - PAD_X * 2;
-  const styleScale = state.style.scale || 1; // 글자 크기 배율(작게/보통/크게)
-  const maxPx = Math.round((r === '9:16' ? 84 : 72) * styleScale);
-  const minPx = Math.round(44 * styleScale);
-  const { px, lines } = autoFitLines(ctx, headline, TEXT_W, maxPx, minPx, 4, 4, '900');
-  const LH = Math.round(px * 1.38);
-  // 텍스트 블록의 아래 끝 — 9:16은 안전영역(y≈1400) 안에, 그 외는 하단 여백 80px
-  const bottomY = r === '9:16' ? 1400 : H - 80;
-  const HEAD_COLOR = light ? '#111827' : '#ffffff';
-  const HALO = light ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.55)';
+    // ③ 헤드라인 (하단 앵커 · 영문 대문자 · 강조 단어 컬러 · 크기 배율)
+    const L = state.byLang?.[state.activeLang] || {};
+    let headline = L.hook?.headline || '';
+    if (state.activeLang === 'en') headline = headline.toUpperCase();
+    const accents = (L.hook?.accents || []).map(a => String(a || '').toLowerCase()).filter(Boolean);
 
-  ctx.textAlign = 'left';
-  ctx.font = `900 ${px}px ${activeFontStack()}`;
-  ctx.shadowColor = HALO;
-  ctx.shadowBlur = 14;
+    const PAD_X = 70, TEXT_W = W - PAD_X * 2;
+    const styleScale = state.style.scale || 1;
+    const maxPx = Math.round((r === '9:16' ? 84 : 72) * styleScale);
+    const minPx = Math.round(44 * styleScale);
+    const { px, lines } = autoFitLines(ctx, headline, TEXT_W, maxPx, minPx, 4, 4, '900');
+    const LH = Math.round(px * 1.38);
+    const bottomY = r === '9:16' ? 1400 : H - 80;
+    const HEAD_COLOR = light ? '#111827' : '#ffffff';
+    const HALO = light ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.55)';
 
-  let y = bottomY - (lines.length - 1) * LH;
-  for (const ln of lines) {
-    // 단어 단위로 폭을 재며 그린다 — 강조 단어(부분 일치 포함)만 액센트 컬러
-    let x = PAD_X;
-    for (const word of ln.split(' ')) {
-      const isAcc = accents.some(a => word.toLowerCase().includes(a));
-      ctx.fillStyle = isAcc ? (state.style.accent || HOOK_ACCENT_COLOR) : HEAD_COLOR;
-      ctx.fillText(word, x, y);
-      x += ctx.measureText(word + ' ').width;
+    ctx.textAlign = 'left';
+    ctx.font = `900 ${px}px ${activeFontStack()}`;
+    ctx.shadowColor = HALO;
+    ctx.shadowBlur = 14;
+    let y = bottomY - (lines.length - 1) * LH;
+    for (const ln of lines) {
+      let x = PAD_X;
+      for (const word of ln.split(' ')) {
+        const isAcc = accents.some(a => word.toLowerCase().includes(a));
+        ctx.fillStyle = isAcc ? (state.style.accent || HOOK_ACCENT_COLOR) : HEAD_COLOR;
+        ctx.fillText(word, x, y);
+        x += ctx.measureText(word + ' ').width;
+      }
+      y += LH;
     }
-    y += LH;
+    ctx.shadowBlur = 0;
   }
-  ctx.shadowBlur = 0;
 
   return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
 }
+// 기존 호출 호환용 별칭 (훅 카드 = 0번)
+function buildHookBlob(ratio) { return buildCardBlob(0, ratio); }
 
 // 텍스트를 줄 배열로만 측정 (실제 렌더 없음) — bottom-anchored 레이아웃용
 // 띄어쓰기(어절) 단위로 먼저 자르고, 단어 자체가 너무 길면 글자 단위 폴백

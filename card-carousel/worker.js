@@ -779,10 +779,21 @@ async function handleTraceOrigin(env, body) {
 // ===== STEP 0 확장: 출처 페이지에서 원본 후보 이미지 추출 (기능 1-A) =====
 // 원본 추적이 찾은 출처 페이지들을 열어 대표 이미지(og:image 등 — 보통 고화질 원본)를 뽑는다.
 // 사용자가 후보를 클릭하면 업로드 이미지가 원본으로 교체된다(교체 여부는 사용자 선택).
+// 명백한 잡동사니 이미지(아이콘·로고·아바타·스프라이트·추적픽셀·초소형)를 걸러낸다
+const JUNK_IMG_RE = /(sprite|icon|logo|avatar|favicon|emoji|badge|button|pixel|spacer|blank|placeholder|1x1|loading|advert|banner_ad|doubleclick|analytics)/i;
+function looksLikeRealImage(u) {
+  if (!/^https?:\/\//i.test(u)) return false;
+  if (/\.svg(\?|$)/i.test(u)) return false;                 // 벡터 아이콘 제외
+  if (JUNK_IMG_RE.test(u)) return false;                    // 잡동사니 경로 제외
+  if (/(^|[^0-9])(16|24|32|48|50|64|80)x\1?/i.test(u)) { /* noop */ } // (완화)
+  if (/[_\-\/](16|24|32|48|50|64|75|100)x(16|24|32|48|50|64|75|100)([._\-]|$)/i.test(u)) return false; // 초소형 썸네일
+  return /\.(jpe?g|png|webp)(\?|$)/i.test(u) || /\/(i|preview)\.redd\.it\//i.test(u) || /(fbcdn|cdninstagram|pbs\.twimg|images?\.|img\.|media\.|static\.)/i.test(u);
+}
+
 async function handleFetchOriginImages(env, body) {
-  // 더 많은 출처 페이지를 훑어 '가공되지 않은 원본'을 만날 확률을 높인다(5페이지·페이지당 이미지 4장)
+  // '가공되지 않은 원본'을 더 다양하게 확보: 출처 8페이지 훑기 + og/twitter 메타 + 본문 <img> 태그까지 추출
   const urls = (Array.isArray(body.urls) ? body.urls : [])
-    .filter(u => /^https?:\/\//i.test(String(u))).slice(0, 5);
+    .filter(u => /^https?:\/\//i.test(String(u))).slice(0, 8);
   if (!urls.length) throw new Error('출처 페이지 URL(urls)이 필요합니다.');
 
   const found = [];
@@ -799,17 +810,32 @@ async function handleFetchOriginImages(env, body) {
       const ct = res.headers.get('content-type') || '';
       if (ct.startsWith('image/')) { found.push({ type: 'image', pageUrl, mediaUrl: pageUrl }); return; } // 링크가 이미지 자체
       if (!ct.includes('html')) return;
-      const html = (await res.text()).slice(0, 500000);
+      const html = (await res.text()).slice(0, 800000);
       const imgs = new Set(), vids = new Set();
+      // 1) 대표 이미지 메타 (보통 고화질 원본) — 앞쪽에 오게
       for (const re of [
         /<meta[^>]+property=["']og:image(?::secure_url)?["'][^>]*content=["']([^"']+)["']/gi,
         /<meta[^>]+content=["']([^"']+)["'][^>]*property=["']og:image(?::secure_url)?["']/gi,
         /<meta[^>]+name=["']twitter:image(?::src)?["'][^>]*content=["']([^"']+)["']/gi,
+        /<link[^>]+rel=["']image_src["'][^>]*href=["']([^"']+)["']/gi,
       ]) {
         let m;
-        while ((m = re.exec(html)) && imgs.size < 4) imgs.add(m[1]);
+        while ((m = re.exec(html)) && imgs.size < 6) imgs.add(m[1]);
       }
-      // v2.0: 영상 후보(og:video 등)도 추출 — 릴스 모드 소재
+      // 2) 본문 <img> 태그 — 관련 이미지를 더 다양하게 (src / data-src / srcset의 마지막=최대 후보)
+      let im;
+      const imgTagRe = /<img\b[^>]*>/gi;
+      while ((im = imgTagRe.exec(html)) && imgs.size < 24) {
+        const tag = im[0];
+        const src = (tag.match(/\ssrc=["']([^"']+)["']/i) || [])[1]
+          || (tag.match(/\sdata-src=["']([^"']+)["']/i) || [])[1];
+        const srcset = (tag.match(/\ssrcset=["']([^"']+)["']/i) || [])[1];
+        const fromSet = srcset ? srcset.split(',').pop().trim().split(/\s+/)[0] : '';
+        for (const cand of [fromSet, src]) {
+          if (cand && looksLikeRealImage(cand)) { imgs.add(cand); break; }
+        }
+      }
+      // 3) 영상 후보(og:video 등) — 릴스 모드 소재
       for (const re of [
         /<meta[^>]+property=["']og:video(?::secure_url|:url)?["'][^>]*content=["']([^"']+)["']/gi,
         /<meta[^>]+content=["']([^"']+)["'][^>]*property=["']og:video(?::secure_url|:url)?["']/gi,
@@ -818,17 +844,72 @@ async function handleFetchOriginImages(env, body) {
         let m;
         while ((m = re.exec(html)) && vids.size < 2) vids.add(m[1]);
       }
-      for (const u of imgs) { try { found.push({ type: 'image', pageUrl, mediaUrl: new URL(u, pageUrl).href }); } catch {} }
-      for (const u of vids) { try { found.push({ type: 'video', pageUrl, mediaUrl: new URL(u, pageUrl).href }); } catch {} }
+      for (const u of imgs) {
+        try { const abs = new URL(u.replace(/&amp;/g, '&'), pageUrl).href; if (looksLikeRealImage(abs) || /^https?:\/\/[^ ]+og:image/.test(u)) found.push({ type: 'image', pageUrl, mediaUrl: abs }); } catch {}
+      }
+      for (const u of vids) { try { found.push({ type: 'video', pageUrl, mediaUrl: new URL(u.replace(/&amp;/g, '&'), pageUrl).href }); } catch {} }
     } catch {} // 페이지 하나 실패해도 나머지 계속
   }));
 
-  // 중복 제거 + 최대 12개
+  // 중복 제거 + 최대 24개 (프론트에서 글자 없는 원본만 노출)
   const seen = new Set(); const media = [];
   for (const r of found) {
-    if (!seen.has(r.mediaUrl)) { seen.add(r.mediaUrl); media.push(r); if (media.length >= 12) break; }
+    if (!seen.has(r.mediaUrl)) { seen.add(r.mediaUrl); media.push(r); if (media.length >= 24) break; }
   }
   return { success: true, media };
+}
+
+// ===== A단계: Reddit 인기글 자동 추천 (공식 공개 JSON) =====
+// 인기 서브레딧의 이미지 게시물을 가져와 카드뉴스 소재 후보로 제안한다.
+// 선택하면 '검색용 시드'가 되어 기존 원본추적→글자없는 원본 선별 흐름을 그대로 탄다.
+const REDDIT_CATS = {
+  popular:   ['pics', 'interestingasfuck', 'Damnthatsinteresting'],
+  facts:     ['todayilearned', 'Damnthatsinteresting', 'interestingasfuck'],
+  space:     ['space', 'spaceporn', 'astrophotography'],
+  nature:    ['NatureIsFuckingLit', 'EarthPorn', 'aww'],
+  history:   ['HistoryPorn', 'history', 'OldSchoolCool'],
+};
+async function handleRedditTrending(env, body) {
+  const cat = String(body.category || 'popular');
+  const subs = REDDIT_CATS[cat] || REDDIT_CATS.popular;
+  const multi = subs.join('+');
+  const url = `https://www.reddit.com/r/${multi}/hot.json?limit=40&raw_json=1`;
+  let res;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 9000);
+    res = await fetch(url, {
+      signal: ctrl.signal, redirect: 'follow',
+      headers: { 'User-Agent': 'web:card-carousel:v2.4 (by /u/card-carousel)', 'Accept': 'application/json' },
+    });
+    clearTimeout(timer);
+  } catch (e) {
+    throw new Error('Reddit 연결 실패: ' + e.message);
+  }
+  if (!res.ok) throw new Error(`Reddit 응답 오류 [${res.status}] — 잠시 후 다시 시도해주세요.`);
+  const data = await res.json().catch(() => null);
+  const children = data?.data?.children || [];
+  const posts = [];
+  for (const c of children) {
+    const p = c?.data; if (!p) continue;
+    if (p.over_18 || p.stickied) continue;                 // 성인·고정글 제외
+    // 직접 이미지 URL 확보 (preview.source 우선 → url)
+    let img = p.preview?.images?.[0]?.source?.url || '';
+    if (img) img = img.replace(/&amp;/g, '&');
+    const direct = p.url_overridden_by_dest || p.url || '';
+    if (!img && /\.(jpe?g|png|webp)(\?|$)/i.test(direct)) img = direct;
+    const isImage = p.post_hint === 'image' || /\.(jpe?g|png|webp)(\?|$)/i.test(direct) || !!img;
+    if (!isImage || !img) continue;
+    posts.push({
+      title: String(p.title || '').slice(0, 200),
+      subreddit: p.subreddit || '',
+      ups: p.ups || 0,
+      permalink: p.permalink ? 'https://www.reddit.com' + p.permalink : '',
+      imageUrl: img,
+    });
+    if (posts.length >= 24) break;
+  }
+  return { success: true, category: cat, subs, posts };
 }
 
 // ===== STEP 0 확장: 후보 이미지의 '글자 삽입 여부' 판별 (기능 1-B, 핵심) =====
@@ -839,7 +920,7 @@ async function handleFilterCleanImages(env, body) {
   if (!env.GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY 시크릿이 설정되지 않았습니다. Cloudflare Workers에 등록해주세요.');
   }
-  const images = Array.isArray(body.images) ? body.images.slice(0, 12) : [];
+  const images = Array.isArray(body.images) ? body.images.slice(0, 24) : [];
   if (!images.length) throw new Error('분류할 이미지(images)가 필요합니다.');
 
   const parts = [];
@@ -1106,6 +1187,7 @@ export default {
         else if (url.pathname === '/api/collect-facts') result = await handleCollectFacts(env, body);
         else if (url.pathname === '/api/fetch-origin-images') result = await handleFetchOriginImages(env, body);
         else if (url.pathname === '/api/filter-clean') result = await handleFilterCleanImages(env, body);
+        else if (url.pathname === '/api/reddit-trending') result = await handleRedditTrending(env, body);
         else if (url.pathname === '/api/gemini-ping') {
           // 진단용: Gemini·Claude 연결 상태 + 미국 중계기 경유 여부 확인 (브라우저에서 열면 JSON 표시)
           if (!env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY 시크릿이 설정되지 않았습니다.');
