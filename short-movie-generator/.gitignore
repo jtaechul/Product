@@ -11,5 +11,6 @@ work/
 output/
 *.mp4
 
-# 원본 에셋 (라이선스 원본은 별도 관리)
+# 에셋 (소싱/게이트 산출물 — 실행 시 재생성)
 assets/raw/
+assets/approved/
