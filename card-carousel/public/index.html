@@ -1200,30 +1200,18 @@ document.getElementById('redditLoadBtn').addEventListener('click', async () => {
   try {
     let posts = [];
     const subs = REDDIT_SUBS[state.redditCat] || REDDIT_SUBS.popular;
-    const redUrl = `https://www.reddit.com/r/${subs.join('+')}/hot.json?limit=40&raw_json=1`;
-    // ① 브라우저에서 직접 (사용자 IP) — JSONP → 공개 CORS 프록시 순으로 시도
+    // ① 브라우저에서 직접(사용자 IP·JSONP) 빠르게 시도 → 실패하면 ② 서버(여러 공개 중계 경유)로
     try {
       const data = await fetchRedditJsonp(subs);
       posts = parseRedditPosts(data);
     } catch (e1) {
-      for (const mk of [
-        (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-        (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
-      ]) {
-        try {
-          const res = await fetch(mk(redUrl), { headers: { 'Accept': 'application/json' } });
-          if (!res.ok) continue;
-          posts = parseRedditPosts(await res.json());
-          if (posts.length) break;
-        } catch {}
-      }
-    }
-    // ② 서버(OAuth) 폴백
-    if (!posts.length) {
       try { const data = await apiFetch('/api/reddit-trending', { category: state.redditCat }); posts = data.posts || []; } catch (e2) {}
     }
     if (!posts.length) {
-      grid.innerHTML = '<div class="hint">인기글을 불러오지 못했습니다. Reddit이 접근을 막고 있어요. 잠시 후 다시 시도하거나, 안정적으로 쓰려면 Reddit 앱 키(REDDIT_CLIENT_ID/SECRET) 등록이 필요합니다 — 등록 방법을 안내해 드릴게요.</div>';
+      try { const data = await apiFetch('/api/reddit-trending', { category: state.redditCat }); posts = data.posts || []; } catch (e3) {}
+    }
+    if (!posts.length) {
+      grid.innerHTML = '<div class="hint">인기글을 불러오지 못했습니다 — 여러 경로로 시도했지만 실패했어요. 잠시 후 다시 눌러보세요. 계속되면 다른 카테고리로 시도하거나 알려주세요.</div>';
       return;
     }
     posts.forEach(p => {

@@ -967,34 +967,54 @@ function parseRedditChildren(children) {
 
 // 서버측 Reddit 인기글 — 브라우저 JSONP가 막혔을 때의 폴백.
 // 데이터센터 IP는 www.reddit.com/.json 이 403나므로, 앱 키가 있으면 공식 OAuth(oauth.reddit.com)로 우회한다.
+// 한 URL을 여러 경로로 시도해 Reddit JSON을 확보한다:
+// ① (키 있으면) OAuth 직접 ② 공개 JSON 직접 ③ 공개 CORS/프록시 서버 경유(데이터센터 IP 차단 우회)
+async function fetchRedditData(env, multi) {
+  const jsonUrl = `https://www.reddit.com/r/${multi}/hot.json?limit=40&raw_json=1`;
+
+  // ① OAuth (앱 키가 있을 때만)
+  const token = await redditToken(env);
+  if (token) {
+    try {
+      const res = await fetch(`https://oauth.reddit.com/r/${multi}/hot?limit=40&raw_json=1`, {
+        headers: { 'User-Agent': REDDIT_UA, 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+      });
+      if (res.ok) { const j = await res.json().catch(() => null); if (j?.data?.children) return { data: j, via: 'oauth' }; }
+    } catch {}
+  }
+
+  // ②③ 직접 + 공개 프록시들 (프록시의 IP가 Reddit에 접근 → 차단 우회)
+  const attempts = [
+    { url: jsonUrl, via: 'direct' },
+    { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(jsonUrl)}`, via: 'codetabs' },
+    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(jsonUrl)}`, via: 'allorigins' },
+    { url: `https://corsproxy.io/?url=${encodeURIComponent(jsonUrl)}`, via: 'corsproxy' },
+    { url: `https://thingproxy.freeboard.io/fetch/${jsonUrl}`, via: 'thingproxy' },
+  ];
+  for (const a of attempts) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 9000);
+      const res = await fetch(a.url, { signal: ctrl.signal, redirect: 'follow', headers: { 'User-Agent': REDDIT_UA, 'Accept': 'application/json' } });
+      clearTimeout(timer);
+      if (!res.ok) continue;
+      const j = await res.json().catch(() => null);
+      if (j?.data?.children) return { data: j, via: a.via };
+    } catch {}
+  }
+  return null;
+}
+
 async function handleRedditTrending(env, body) {
   const cat = String(body.category || 'popular');
   const subs = REDDIT_CATS[cat] || REDDIT_CATS.popular;
   const multi = subs.join('+');
 
-  const token = await redditToken(env);
-  const base = token ? 'https://oauth.reddit.com' : 'https://www.reddit.com';
-  const url = `${base}/r/${multi}/hot${token ? '' : '.json'}?limit=40&raw_json=1`;
-  const headers = { 'User-Agent': REDDIT_UA, 'Accept': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  let res;
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 9000);
-    res = await fetch(url, { signal: ctrl.signal, redirect: 'follow', headers });
-    clearTimeout(timer);
-  } catch (e) {
-    throw new Error('Reddit 연결 실패: ' + e.message);
+  const got = await fetchRedditData(env, multi);
+  if (!got) {
+    throw new Error('REDDIT_BLOCKED: 여러 경로로 시도했지만 Reddit을 불러오지 못했습니다. 잠시 후 다시 시도해주세요. (계속되면 Reddit 앱 키 등록으로 안정화할 수 있습니다.)');
   }
-  if (res.status === 403 || res.status === 429) {
-    throw new Error(token
-      ? `Reddit 응답 오류 [${res.status}] — 잠시 후 다시 시도해주세요.`
-      : `REDDIT_BLOCKED: 서버에서 Reddit 접근이 차단됐습니다(${res.status}). 브라우저에서 직접 불러오기가 안 되면, Reddit 앱 키(REDDIT_CLIENT_ID/SECRET) 등록이 필요합니다.`);
-  }
-  if (!res.ok) throw new Error(`Reddit 응답 오류 [${res.status}] — 잠시 후 다시 시도해주세요.`);
-  const data = await res.json().catch(() => null);
-  return { success: true, category: cat, subs, posts: parseRedditChildren(data?.data?.children || []), via: token ? 'oauth' : 'public' };
+  return { success: true, category: cat, subs, posts: parseRedditChildren(got.data?.data?.children || []), via: got.via };
 }
 
 // ===== A단계-2: 캡션 문단 ↔ 원본 이미지 자동 매칭 (Gemini 비전) =====
