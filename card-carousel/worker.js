@@ -983,26 +983,33 @@ async function fetchRedditData(env, multi) {
     } catch {}
   }
 
-  // ②③ 직접 + 공개 프록시들 (프록시의 IP가 Reddit에 접근 → 차단 우회)
+  // ②③ 직접 + 공개 프록시들을 '동시에' 쏘고, 가장 먼저 유효 JSON을 주는 경로를 채택
+  // (프록시의 IP가 Reddit에 접근 → 데이터센터 IP 차단 우회. 병렬이라 빠르고 Worker 시간제한 안전)
   const attempts = [
     { url: jsonUrl, via: 'direct' },
     { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(jsonUrl)}`, via: 'codetabs' },
     { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(jsonUrl)}`, via: 'allorigins' },
     { url: `https://corsproxy.io/?url=${encodeURIComponent(jsonUrl)}`, via: 'corsproxy' },
     { url: `https://thingproxy.freeboard.io/fetch/${jsonUrl}`, via: 'thingproxy' },
+    { url: `https://r.jina.ai/${jsonUrl}`, via: 'jina' },
   ];
-  for (const a of attempts) {
+  const race = attempts.map(a => (async () => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
     try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 9000);
       const res = await fetch(a.url, { signal: ctrl.signal, redirect: 'follow', headers: { 'User-Agent': REDDIT_UA, 'Accept': 'application/json' } });
-      clearTimeout(timer);
-      if (!res.ok) continue;
-      const j = await res.json().catch(() => null);
-      if (j?.data?.children) return { data: j, via: a.via };
-    } catch {}
+      if (!res.ok) throw new Error(String(res.status));
+      const txt = await res.text();
+      const j = JSON.parse(txt);
+      if (!j?.data?.children?.length) throw new Error('no children');
+      return { data: j, via: a.via };
+    } finally { clearTimeout(timer); }
+  })());
+  try {
+    return await Promise.any(race); // 첫 성공 채택
+  } catch {
+    return null;
   }
-  return null;
 }
 
 async function handleRedditTrending(env, body) {

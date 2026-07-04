@@ -45,3 +45,26 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+
+      # 배포된 실제 엔드포인트로 Reddit 인기글 불러오기를 검증 (러너는 인터넷 접근 가능)
+      - name: Reddit 인기글 불러오기 검증
+        run: |
+          sleep 6
+          for CAT in popular facts nature; do
+            echo "=== category: $CAT ==="
+            CODE=$(curl -sS --max-time 70 -o /tmp/reddit.json -w "%{http_code}" \
+              -X POST "https://card-carousel.jtaechul.workers.dev/api/reddit-trending" \
+              -H "Content-Type: application/json" -d "{\"category\":\"$CAT\"}" || echo "000")
+            echo "HTTP=$CODE"
+            head -c 400 /tmp/reddit.json; echo
+            N=$(python3 -c "import json;d=json.load(open('/tmp/reddit.json'));print(len(d.get('posts',[])))" 2>/dev/null || echo 0)
+            VIA=$(python3 -c "import json;print(json.load(open('/tmp/reddit.json')).get('via',''))" 2>/dev/null || echo "")
+            echo "posts=$N via=$VIA"
+            if [ "$N" -ge 1 ]; then
+              echo "::notice::Reddit 불러오기 성공 — $CAT: $N개 (경로 $VIA)"
+              echo "REDDIT_OK=1" >> "$GITHUB_ENV"
+              exit 0
+            fi
+          done
+          echo "::error::Reddit 인기글을 어떤 카테고리·경로로도 불러오지 못했습니다."
+          exit 1
