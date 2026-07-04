@@ -869,37 +869,41 @@ const REDDIT_CATS = {
   nature:    ['NatureIsFuckingLit', 'EarthPorn', 'aww'],
   history:   ['HistoryPorn', 'history', 'OldSchoolCool'],
 };
-async function handleRedditTrending(env, body) {
-  const cat = String(body.category || 'popular');
-  const subs = REDDIT_CATS[cat] || REDDIT_CATS.popular;
-  const multi = subs.join('+');
-  const url = `https://www.reddit.com/r/${multi}/hot.json?limit=40&raw_json=1`;
-  let res;
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 9000);
-    res = await fetch(url, {
-      signal: ctrl.signal, redirect: 'follow',
-      headers: { 'User-Agent': 'web:card-carousel:v2.4 (by /u/card-carousel)', 'Accept': 'application/json' },
-    });
-    clearTimeout(timer);
-  } catch (e) {
-    throw new Error('Reddit 연결 실패: ' + e.message);
+const REDDIT_UA = 'web:card-carousel:v2.5 (card carousel maker)';
+
+// Reddit 앱 전용 OAuth 토큰 (client_credentials) — 키가 있을 때만. KV에 캐시.
+async function redditToken(env) {
+  if (!env.REDDIT_CLIENT_ID || !env.REDDIT_CLIENT_SECRET) return null;
+  if (env.PENDING_POSTS) {
+    const cached = await env.PENDING_POSTS.get('reddit_token').catch(() => null);
+    if (cached) return cached;
   }
-  if (!res.ok) throw new Error(`Reddit 응답 오류 [${res.status}] — 잠시 후 다시 시도해주세요.`);
-  const data = await res.json().catch(() => null);
-  const children = data?.data?.children || [];
+  const auth = btoa(`${env.REDDIT_CLIENT_ID}:${env.REDDIT_CLIENT_SECRET}`);
+  const res = await fetch('https://www.reddit.com/api/v1/access_token', {
+    method: 'POST',
+    headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': REDDIT_UA },
+    body: 'grant_type=client_credentials',
+  }).catch(() => null);
+  if (!res || !res.ok) return null;
+  const j = await res.json().catch(() => null);
+  const tok = j?.access_token;
+  if (tok && env.PENDING_POSTS) {
+    await env.PENDING_POSTS.put('reddit_token', tok, { expirationTtl: Math.max(300, (j.expires_in || 3600) - 120) }).catch(() => {});
+  }
+  return tok || null;
+}
+
+// Reddit children → 이미지 게시물 목록 (i.redd.it 직링 우선, preview 보조)
+function parseRedditChildren(children) {
   const posts = [];
-  for (const c of children) {
+  for (const c of (children || [])) {
     const p = c?.data; if (!p) continue;
-    if (p.over_18 || p.stickied) continue;                 // 성인·고정글 제외
-    // 직접 이미지 URL 확보 (preview.source 우선 → url)
-    let img = p.preview?.images?.[0]?.source?.url || '';
-    if (img) img = img.replace(/&amp;/g, '&');
+    if (p.over_18 || p.stickied) continue;
     const direct = p.url_overridden_by_dest || p.url || '';
-    if (!img && /\.(jpe?g|png|webp)(\?|$)/i.test(direct)) img = direct;
-    const isImage = p.post_hint === 'image' || /\.(jpe?g|png|webp)(\?|$)/i.test(direct) || !!img;
-    if (!isImage || !img) continue;
+    let img = '';
+    if (/i\.redd\.it/i.test(direct) || /\.(jpe?g|png|webp)(\?|$)/i.test(direct)) img = direct; // 직링(핫링크 잘 됨) 우선
+    if (!img && p.preview?.images?.[0]?.source?.url) img = String(p.preview.images[0].source.url).replace(/&amp;/g, '&');
+    if (!img) continue;
     posts.push({
       title: String(p.title || '').slice(0, 200),
       subreddit: p.subreddit || '',
@@ -909,7 +913,67 @@ async function handleRedditTrending(env, body) {
     });
     if (posts.length >= 24) break;
   }
-  return { success: true, category: cat, subs, posts };
+  return posts;
+}
+
+// 서버측 Reddit 인기글 — 브라우저 JSONP가 막혔을 때의 폴백.
+// 데이터센터 IP는 www.reddit.com/.json 이 403나므로, 앱 키가 있으면 공식 OAuth(oauth.reddit.com)로 우회한다.
+async function handleRedditTrending(env, body) {
+  const cat = String(body.category || 'popular');
+  const subs = REDDIT_CATS[cat] || REDDIT_CATS.popular;
+  const multi = subs.join('+');
+
+  const token = await redditToken(env);
+  const base = token ? 'https://oauth.reddit.com' : 'https://www.reddit.com';
+  const url = `${base}/r/${multi}/hot${token ? '' : '.json'}?limit=40&raw_json=1`;
+  const headers = { 'User-Agent': REDDIT_UA, 'Accept': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  let res;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 9000);
+    res = await fetch(url, { signal: ctrl.signal, redirect: 'follow', headers });
+    clearTimeout(timer);
+  } catch (e) {
+    throw new Error('Reddit 연결 실패: ' + e.message);
+  }
+  if (res.status === 403 || res.status === 429) {
+    throw new Error(token
+      ? `Reddit 응답 오류 [${res.status}] — 잠시 후 다시 시도해주세요.`
+      : `REDDIT_BLOCKED: 서버에서 Reddit 접근이 차단됐습니다(${res.status}). 브라우저에서 직접 불러오기가 안 되면, Reddit 앱 키(REDDIT_CLIENT_ID/SECRET) 등록이 필요합니다.`);
+  }
+  if (!res.ok) throw new Error(`Reddit 응답 오류 [${res.status}] — 잠시 후 다시 시도해주세요.`);
+  const data = await res.json().catch(() => null);
+  return { success: true, category: cat, subs, posts: parseRedditChildren(data?.data?.children || []), via: token ? 'oauth' : 'public' };
+}
+
+// ===== A단계-2: 캡션 문단 ↔ 원본 이미지 자동 매칭 (Gemini 비전) =====
+// 2장 이상일 때, 캡션 문단 흐름에 가장 잘 맞도록 2페이지 이후 원본들의 순서를 재배치한다.
+async function handleMatchImages(env, body) {
+  if (!env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY 시크릿이 설정되지 않았습니다.');
+  const paragraphs = (Array.isArray(body.paragraphs) ? body.paragraphs : []).map(s => String(s || '').trim()).filter(Boolean).slice(0, 12);
+  const images = (Array.isArray(body.images) ? body.images : []).slice(0, 12);
+  if (images.length < 2 || !paragraphs.length) return { success: true, order: images.map((_, i) => i) };
+
+  const parts = [];
+  images.forEach((u) => {
+    const m = String(u).match(/^data:(image\/[a-z0-9+.-]+);base64,([A-Za-z0-9+/=]+)$/i);
+    if (m) parts.push({ inline_data: { mime_type: m[1], data: m[2] } });
+  });
+  parts.push({ text: `카드뉴스 2페이지부터 각 문단에 어울리는 사진을 배치하려 합니다.\n\n[사진들] 위에 보낸 순서대로 0번, 1번, 2번 ... 입니다 (총 ${images.length}장).\n[문단들]\n${paragraphs.map((p, i) => `${i}) ${p}`).join('\n')}\n\n각 문단에 가장 잘 어울리는 사진의 번호를 정하되, 한 사진은 한 번만 쓰세요(가능하면). 사진 수와 같은 길이의 배열로, i번째 값이 '표시할 사진 번호'가 되도록 JSON 배열만 답하세요. 예: [2,0,1]` });
+
+  const { text } = await callGemini(env, { contents: [{ parts }] });
+  let order = [];
+  try {
+    const parsed = extractJson(text);
+    if (Array.isArray(parsed)) order = parsed.map(n => parseInt(n, 10)).filter(n => Number.isInteger(n) && n >= 0 && n < images.length);
+  } catch {}
+  // 유효성: 중복/누락 보정 → 없으면 원래 순서
+  const seen = new Set(); const clean = [];
+  for (const i of order) { if (!seen.has(i)) { seen.add(i); clean.push(i); } }
+  for (let i = 0; i < images.length; i++) if (!seen.has(i)) clean.push(i);
+  return { success: true, order: clean.length === images.length ? clean : images.map((_, i) => i) };
 }
 
 // ===== STEP 0 확장: 후보 이미지의 '글자 삽입 여부' 판별 (기능 1-B, 핵심) =====
@@ -1117,7 +1181,10 @@ export default {
         const src = url.searchParams.get('url') || '';
         if (!/^https?:\/\//i.test(src)) return new Response('bad url', { status: 400, headers: CORS });
         try {
-          const r = await fetch(src, { redirect: 'follow', headers: { 'User-Agent': 'Mozilla/5.0 (compatible; card-carousel/1.0)' } });
+          // Reddit 계열 이미지(preview.redd.it 등)는 Referer가 없으면 403 → reddit referer 부여
+          const ph = { 'User-Agent': 'Mozilla/5.0 (compatible; card-carousel/1.0)' };
+          if (/redd\.it|redditmedia\.com|reddit\.com/i.test(src)) ph['Referer'] = 'https://www.reddit.com/';
+          const r = await fetch(src, { redirect: 'follow', headers: ph });
           const ct = r.headers.get('content-type') || '';
           // v2.0: 영상도 허용, 버퍼링 대신 스트리밍 전달(대용량 대응)
           if (!r.ok || !(ct.startsWith('image/') || ct.startsWith('video/'))) {
@@ -1188,6 +1255,7 @@ export default {
         else if (url.pathname === '/api/fetch-origin-images') result = await handleFetchOriginImages(env, body);
         else if (url.pathname === '/api/filter-clean') result = await handleFilterCleanImages(env, body);
         else if (url.pathname === '/api/reddit-trending') result = await handleRedditTrending(env, body);
+        else if (url.pathname === '/api/match-images') result = await handleMatchImages(env, body);
         else if (url.pathname === '/api/gemini-ping') {
           // 진단용: Gemini·Claude 연결 상태 + 미국 중계기 경유 여부 확인 (브라우저에서 열면 JSON 표시)
           if (!env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY 시크릿이 설정되지 않았습니다.');

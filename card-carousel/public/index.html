@@ -877,6 +877,7 @@
         <button class="lang-tab" data-ratio="4:5">4:5</button>
       </span>
       <button class="btn btn-outline" id="regenerateBtn">다시 생성</button>
+      <button class="btn btn-outline" id="autoMatchBtn" style="display:none;">사진 자동 배치</button>
       <button class="btn btn-outline" id="copyAllBtn">전체 복사</button>
       <button class="btn btn-outline" id="saveAllImagesBtn" style="background:linear-gradient(135deg,#064e3b,#065f46);color:#fff;border:none;">이미지 전체 저장</button>
       <button class="btn btn-validate" id="validateBtn">품질 검증</button>
@@ -1141,21 +1142,65 @@ document.querySelectorAll('#redditCats .lang-tab').forEach(btn => {
   });
 });
 
-// Reddit 인기글 불러오기 → 그리드 렌더
+// 클라이언트에서 Reddit을 직접 부르는 우회로 (사용자 IP·JSONP) — 데이터센터 IP 403을 피한다
+const REDDIT_SUBS = {
+  popular: ['pics', 'interestingasfuck', 'Damnthatsinteresting'],
+  facts: ['todayilearned', 'Damnthatsinteresting', 'interestingasfuck'],
+  space: ['space', 'spaceporn', 'astrophotography'],
+  nature: ['NatureIsFuckingLit', 'EarthPorn', 'aww'],
+  history: ['HistoryPorn', 'history', 'OldSchoolCool'],
+};
+let _redditCbN = 0;
+function fetchRedditJsonp(subs) {
+  return new Promise((resolve, reject) => {
+    const cb = '__redditCb' + (++_redditCbN);
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, 7000);
+    function cleanup() { clearTimeout(timer); try { delete window[cb]; } catch {} script.remove(); }
+    window[cb] = (data) => { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); reject(new Error('jsonp error')); };
+    script.src = `https://www.reddit.com/r/${subs.join('+')}/hot.json?limit=40&raw_json=1&jsonp=${cb}`;
+    document.head.appendChild(script);
+  });
+}
+// Reddit children → 이미지 게시물 (i.redd.it 직링 우선)
+function parseRedditPosts(data) {
+  const posts = [];
+  for (const c of (data?.data?.children || [])) {
+    const p = c?.data; if (!p || p.over_18 || p.stickied) continue;
+    const direct = p.url_overridden_by_dest || p.url || '';
+    let img = '';
+    if (/i\.redd\.it/i.test(direct) || /\.(jpe?g|png|webp)(\?|$)/i.test(direct)) img = direct;
+    if (!img && p.preview?.images?.[0]?.source?.url) img = String(p.preview.images[0].source.url).replace(/&amp;/g, '&');
+    if (!img) continue;
+    posts.push({ title: (p.title || '').slice(0, 200), subreddit: p.subreddit || '', ups: p.ups || 0, imageUrl: img });
+    if (posts.length >= 24) break;
+  }
+  return posts;
+}
+
+// Reddit 인기글 불러오기 → 그리드 렌더 (① 브라우저 JSONP → ② 서버 폴백)
 document.getElementById('redditLoadBtn').addEventListener('click', async () => {
   const btn = document.getElementById('redditLoadBtn');
   const grid = document.getElementById('redditGrid');
   btn.disabled = true; btn.textContent = '불러오는 중...';
   grid.innerHTML = '';
   try {
-    const data = await apiFetch('/api/reddit-trending', { category: state.redditCat });
-    const posts = data.posts || [];
+    let posts = [];
+    const subs = REDDIT_SUBS[state.redditCat] || REDDIT_SUBS.popular;
+    try {
+      const data = await fetchRedditJsonp(subs);      // ① 사용자 브라우저에서 직접 (IP 차단 회피)
+      posts = parseRedditPosts(data);
+    } catch (e1) {
+      const data = await apiFetch('/api/reddit-trending', { category: state.redditCat }); // ② 서버(OAuth) 폴백
+      posts = data.posts || [];
+    }
     if (!posts.length) { grid.innerHTML = '<div class="hint">가져온 인기글이 없습니다. 잠시 후 다시 시도해주세요.</div>'; return; }
     posts.forEach(p => {
       const card = document.createElement('div');
       card.className = 'reddit-card';
       card.innerHTML = `<img src="/api/img-proxy?url=${encodeURIComponent(p.imageUrl)}" loading="lazy" alt="">
-        <div class="rc-meta"><span class="rc-sub">r/${escHtml(p.subreddit)}</span> · ${escHtml(String(p.ups))}👍<br>${escHtml((p.title || '').slice(0, 50))}</div>`;
+        <div class="rc-meta"><span class="rc-sub">r/${escHtml(p.subreddit)}</span> · 추천 ${escHtml(String(p.ups))}<br>${escHtml((p.title || '').slice(0, 50))}</div>`;
       card.querySelector('img').addEventListener('error', () => card.remove()); // 못 불러온 건 숨김
       card.addEventListener('click', () => pickRedditPost(p, card));
       grid.appendChild(card);
@@ -1725,6 +1770,12 @@ async function runGeneratePipeline(reuseFacts = false) {
     renderLangTabs();
     await renderPreview();
     setStep(3);
+    // 2장 이상이면 2페이지부터 캡션 문단에 맞춰 원본 순서를 자동 배치 (실패해도 무시)
+    if (state.mode === 'post' && state.uploadedImages.length >= 3) {
+      showLoading('사진 자동 배치 중...', '캡션 문단에 어울리는 순서로 정리합니다');
+      try { await autoMatchPagesToCaption(); } catch {}
+      hideLoading();
+    }
   } catch (err) {
     hideLoading();
     setStep(1);
@@ -1970,6 +2021,7 @@ async function renderPreview() {
     : '커버 + 원본 영상';
   document.getElementById('ratioToggle').style.display = state.mode === 'post' ? '' : 'none';
   document.getElementById('saveAllImagesBtn').textContent = state.mode === 'post' ? '이미지 전체 저장' : '커버 + 원본 영상 저장';
+  document.getElementById('autoMatchBtn').style.display = (state.mode === 'post' && state.uploadedImages.length >= 3) ? '' : 'none';
 
   syncEditPanel(); // 제목 편집·강조 단어 UI 동기화
   document.getElementById('carouselWrapper').classList.add('visible');
@@ -2076,6 +2128,26 @@ document.getElementById('headlineInput').addEventListener('input', (e) => {
   clearTimeout(_headlineTimer);
   _headlineTimer = setTimeout(() => renderPreview(), 250);
 });
+
+// 2페이지 이후 원본을 캡션 문단 흐름에 맞춰 자동 재배치 (Gemini 매칭)
+async function autoMatchPagesToCaption() {
+  const L = state.byLang?.[state.activeLang];
+  if (!L || state.mode !== 'post' || state.uploadedImages.length < 3) return;
+  const caption = L.caption || '';
+  // 캡션을 문단·문장으로 분해
+  const paras = caption.split(/\n+/).flatMap(s => s.split(/(?<=[.。!?])\s+/)).map(s => s.trim()).filter(Boolean);
+  if (!paras.length) return;
+  const nonHook = state.uploadedImages.slice(1);
+  const smalls = [];
+  for (const src of nonHook) smalls.push(await downscaleForTrace(src, 640));
+  const res = await apiFetch('/api/match-images', { paragraphs: paras.slice(0, nonHook.length) || paras, images: smalls });
+  const order = res.order || [];
+  if (order.length === nonHook.length && order.some((v, i) => v !== i)) {
+    state.uploadedImages = [state.uploadedImages[0], ...order.map(i => nonHook[i])];
+    await renderPreview();
+    showToast('캡션 문단에 맞춰 사진 순서를 자동 정리했습니다.', 'success');
+  }
+}
 
 // 완성된 카드뉴스를 결과 페이지(/view)에 담을 스냅샷으로 합성 — 훅 카드 이미지 + 원본들 + 캡션
 async function buildResultSnapshot() {
@@ -2297,6 +2369,10 @@ async function saveAllMedia() {
   }
 }
 document.getElementById('saveAllImagesBtn').addEventListener('click', saveAllMedia);
+document.getElementById('autoMatchBtn').addEventListener('click', async () => {
+  showLoading('사진 자동 배치 중...', '캡션 문단에 어울리는 순서로 정리합니다');
+  try { await autoMatchPagesToCaption(); } catch (e) { showToast('자동 배치 실패: ' + e.message, 'error'); } finally { hideLoading(); }
+});
 
 // ===== v2.4: 카드 캔버스 합성 → Blob — 미리보기와 저장 이미지가 '같은 함수'로 그려져 픽셀 단위로 동일 =====
 // index 0 = 훅 카드(배경 + 스크림 + 헤드라인) / index >=1 = 원본 이미지만 (같은 비율로 cover-fit)
