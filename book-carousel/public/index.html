@@ -2351,29 +2351,64 @@ document.getElementById('saveReelSetBtn').addEventListener('click', saveReelSet)
 // (iOS 사파리는 ctx.filter의 blur를 drawImage에 적용하지 않는 버그가 있어, 캔버스 합성
 //  결과물의 마지막 페이지가 선명하게 나오던 원인. 축소→확대(bilinear 스무딩)로 대체 —
 //  이 방식은 모든 브라우저에서 동일하게 동작한다.)
-// cover-fit으로 (W×H 비율의) 아주 작은 캔버스에 그린 뒤 전체로 확대 = 부드러운 블러.
-function drawBlurredCover(ctx, img, W, H, smallW) {
-  // 2단계 축소(원본→중간→아주 작게)로 고주파를 확실히 제거한 뒤 확대 → 강하고 부드러운 블러.
-  const sw = Math.max(6, smallW || Math.round(W / 42));      // 매우 작게(1080→~26px) = 강한 블러
-  const sh = Math.max(6, Math.round(sw * H / W));
-  const midW = sw * 4, midH = sh * 4;
-  const m = document.createElement('canvas'); m.width = midW; m.height = midH;
-  const mc = m.getContext('2d'); mc.imageSmoothingEnabled = true; mc.imageSmoothingQuality = 'high';
-  const s = Math.max(midW / img.width, midH / img.height);   // cover-fit
+// ⭐ 진짜 가우시안 블러(박스블러 3패스) — ctx.filter 없이 순수 픽셀 연산이라 아이폰 포함
+// 모든 브라우저에서 동일하게 동작하고, 모자이크·계단 없이 매끄러운 '젖빛 유리'가 된다.
+// 세 번의 박스블러 ≈ 가우시안(중심극한정리). 작업 해상도(긴 변 ~480)에서 계산 후 확대(빠름·깨끗).
+function _boxBlurH(px, W, H, r) {
+  const div = r * 2 + 1, line = new Uint8ClampedArray(W * 4);
+  for (let y = 0; y < H; y++) {
+    const off = y * W * 4;
+    line.set(px.subarray(off, off + W * 4));
+    let rs = 0, gs = 0, bs = 0, as = 0;
+    for (let k = -r; k <= r; k++) { const xi = Math.min(W - 1, Math.max(0, k)) * 4; rs += line[xi]; gs += line[xi + 1]; bs += line[xi + 2]; as += line[xi + 3]; }
+    for (let x = 0; x < W; x++) {
+      const o = off + x * 4;
+      px[o] = rs / div; px[o + 1] = gs / div; px[o + 2] = bs / div; px[o + 3] = as / div;
+      const a = Math.min(W - 1, x + r + 1) * 4, s = Math.max(0, x - r) * 4;
+      rs += line[a] - line[s]; gs += line[a + 1] - line[s + 1]; bs += line[a + 2] - line[s + 2]; as += line[a + 3] - line[s + 3];
+    }
+  }
+}
+function _boxBlurV(px, W, H, r) {
+  const div = r * 2 + 1, col = new Uint8ClampedArray(H * 4);
+  for (let x = 0; x < W; x++) {
+    for (let y = 0; y < H; y++) { const o = (y * W + x) * 4, c = y * 4; col[c] = px[o]; col[c + 1] = px[o + 1]; col[c + 2] = px[o + 2]; col[c + 3] = px[o + 3]; }
+    let rs = 0, gs = 0, bs = 0, as = 0;
+    for (let k = -r; k <= r; k++) { const yi = Math.min(H - 1, Math.max(0, k)) * 4; rs += col[yi]; gs += col[yi + 1]; bs += col[yi + 2]; as += col[yi + 3]; }
+    for (let y = 0; y < H; y++) {
+      const o = (y * W + x) * 4;
+      px[o] = rs / div; px[o + 1] = gs / div; px[o + 2] = bs / div; px[o + 3] = as / div;
+      const a = Math.min(H - 1, y + r + 1) * 4, s = Math.max(0, y - r) * 4;
+      rs += col[a] - col[s]; gs += col[a + 1] - col[s + 1]; bs += col[a + 2] - col[s + 2]; as += col[a + 3] - col[s + 3];
+    }
+  }
+}
+function drawBlurredCover(ctx, img, W, H) {
+  const scale = Math.min(1, 480 / Math.max(W, H));     // 작업 해상도(긴 변 ~480px) — 품질 충분 + 빠름
+  const bw = Math.max(16, Math.round(W * scale)), bh = Math.max(16, Math.round(H * scale));
+  const work = document.createElement('canvas'); work.width = bw; work.height = bh;
+  const wc = work.getContext('2d'); wc.imageSmoothingEnabled = true; wc.imageSmoothingQuality = 'high';
+  const s = Math.max(bw / img.width, bh / img.height);  // cover-fit
   const dw = img.width * s, dh = img.height * s;
-  mc.drawImage(img, (midW - dw) / 2, (midH - dh) / 2, dw, dh);   // 1) 중간 축소
-  const t = document.createElement('canvas'); t.width = sw; t.height = sh;
-  const tc = t.getContext('2d'); tc.imageSmoothingEnabled = true; tc.imageSmoothingQuality = 'high';
-  tc.drawImage(m, 0, 0, sw, sh);                                 // 2) 아주 작게
-  ctx.save();
-  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(t, 0, 0, sw, sh, 0, 0, W, H);                    // 3) 확대 → 블러
+  wc.drawImage(img, (bw - dw) / 2, (bh - dh) / 2, dw, dh);
+  const id = wc.getImageData(0, 0, bw, bh);
+  const r = Math.max(3, Math.round(Math.max(bw, bh) / 12));  // 반경(작업 해상도 기준) — 강한 소프트
+  _boxBlurH(id.data, bw, bh, r); _boxBlurV(id.data, bw, bh, r);
+  _boxBlurH(id.data, bw, bh, r); _boxBlurV(id.data, bw, bh, r);
+  _boxBlurH(id.data, bw, bh, r); _boxBlurV(id.data, bw, bh, r);  // 3패스 = 가우시안
+  wc.putImageData(id, 0, 0);
+  ctx.save(); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(work, 0, 0, bw, bh, 0, 0, W, H);         // 전체로 확대(이미 블러라 깨끗)
   ctx.restore();
 }
-// 게시물 마지막 페이지 배경용: 블러 + 살짝 어둡게(가독성)
+// 게시물 마지막 페이지 배경용: 가우시안 블러 + 어두운 스크림(젖빛 유리 + 가독성)
 function drawBlurredBg(ctx, img, W, H) {
   drawBlurredCover(ctx, img, W, H);
-  ctx.fillStyle = 'rgba(0,0,0,0.30)'; ctx.fillRect(0, 0, W, H);
+  // 은은한 전체 스크림 + 하단으로 갈수록 짙어지는 그라디언트(책 패널 위 대비 확보)
+  ctx.fillStyle = 'rgba(15,10,20,0.34)'; ctx.fillRect(0, 0, W, H);
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, 'rgba(0,0,0,0.10)'); g.addColorStop(0.55, 'rgba(0,0,0,0.16)'); g.addColorStop(1, 'rgba(0,0,0,0.52)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 }
 
 // 텍스트+배경 합성 이미지를 base64 data URL로 반환 (텔레그램 발송용)
