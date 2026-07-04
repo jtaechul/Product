@@ -1509,7 +1509,7 @@ async function runStep(env, pipelineId, step) {
       } catch (e) { /* 타임아웃·네트워크 → 다음 틱 재시도 */ }
       // 진행 저장(updatedAt 갱신 → 스테일 오판 방지) + 무료 티어 간격
       const doneCount = pageKeys.filter(p => prog.done[p]).length;
-      await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'partial', runningStep: 3, imgProg: prog, label: `본문 이미지 내려받는 중 (${doneCount}/5)...` });
+      await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'partial', runningStep: 3, imgProg: prog, label: `본문 이미지 내려받는 중 (${doneCount}/${pageKeys.length})...` });
       await new Promise(r => setTimeout(r, 2000));
     }
 
