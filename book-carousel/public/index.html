@@ -898,7 +898,7 @@
     <div class="deploy-steps">
       <div class="deploy-step" id="dstep-1">
         <div class="deploy-step-icon">1</div>
-        <div><div class="deploy-step-label">캐럿셀 생성</div><div class="deploy-step-sub" id="dsub-1">Claude AI가 5페이지 카드뉴스를 작성합니다</div></div>
+        <div><div class="deploy-step-label">캐럿셀 생성</div><div class="deploy-step-sub" id="dsub-1">Claude AI가 4페이지 카드뉴스를 작성합니다</div></div>
       </div>
       <div class="deploy-step" id="dstep-2">
         <div class="deploy-step-icon">2</div>
@@ -926,25 +926,25 @@
       </div>
     </div>
     <div class="deploy-done-msg" id="deployDoneMsg">
-      아래 버튼으로 이미지 5장 저장 + 캡션 복사 후, 인스타 앱(또는 Meta 비즈니스 스위트)에서 올리세요.
+      아래 버튼으로 이미지 4장 저장 + 캡션 복사 후, 인스타 앱(또는 Meta 비즈니스 스위트)에서 올리세요.
     </div>
     <div style="margin-top:12px;display:none;" id="deployInstagramBtnWrap">
-      <button class="btn btn-instagram" id="deployInstagramBtn" style="width:100%;" disabled>게시 준비 (이미지 5장 저장 + 캡션 복사)</button>
-      <p style="font-size:11px;color:var(--gray-400);margin-top:6px;text-align:center;">저장된 5장을 인스타 새 게시물에 올리고, 복사된 캡션을 붙여넣으세요</p>
+      <button class="btn btn-instagram" id="deployInstagramBtn" style="width:100%;" disabled>게시 준비 (이미지 4장 저장 + 캡션 복사)</button>
+      <p style="font-size:11px;color:var(--gray-400);margin-top:6px;text-align:center;">저장된 4장을 인스타 새 게시물에 올리고, 복사된 캡션을 붙여넣으세요</p>
     </div>
   </div>
 
   <div class="empty-state" id="emptyState">
     <div class="empty-icon">📚</div>
     <h3>책을 선정하고 캐럿셀을 만들어보세요</h3>
-    <p>AI 자동 추천으로 베스트셀러를 제안받거나,<br>책 제목만 입력하면 AI가 핵심 메시지를 분석해<br>5페이지 카드뉴스를 자동으로 만들어줍니다.</p>
+    <p>AI 자동 추천으로 베스트셀러를 제안받거나,<br>책 제목만 입력하면 AI가 핵심 메시지를 분석해<br>4페이지 카드뉴스를 자동으로 만들어줍니다.</p>
   </div>
 
   <!-- Carousel preview -->
   <div class="carousel-wrapper" id="carouselWrapper">
     <div class="section-header">
       <span class="section-title">캐럿셀 미리보기</span>
-      <span class="section-badge" id="carouselBadge">5 페이지</span>
+      <span class="section-badge" id="carouselBadge">4 페이지</span>
     </div>
     <div class="carousel-scroll" id="carouselScroll"></div>
     <div class="carousel-actions">
@@ -959,7 +959,7 @@
     <!-- 릴스 문구 미리보기 + 자동 검증 -->
     <div id="reelPreview" style="display:none;margin-top:14px;padding:14px 16px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
-        <span style="font-weight:700;font-size:13px;color:#7c3aed;">릴스 문구 (자동 생성·검증)</span>
+        <span style="font-weight:700;font-size:13px;color:#7c3aed;">릴스 문구 — 게시물 문구와 동일 (핵심만 발췌·추가 생성 없음)</span>
         <span id="reelValidBadge" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;"></span>
       </div>
       <div id="reelLines" style="font-size:13.5px;line-height:1.85;color:#3a2a2e;"></div>
@@ -1372,7 +1372,7 @@ async function generateCarousel() {
   document.getElementById('validationPanel').classList.remove('visible');
   setStep(2);
 
-  showLoading('캐럿셀 생성 중...', 'Claude AI가 5페이지 카드뉴스를 작성하고 있습니다');
+  showLoading('캐럿셀 생성 중...', 'Claude AI가 4페이지 카드뉴스를 작성하고 있습니다');
 
   try {
     let data;
@@ -1976,7 +1976,7 @@ async function saveAllCards() {
   // ② 모바일: Web Share API로 5장 한 번에 공유 → 사진첩 저장
   if (navigator.canShare && navigator.canShare({ files })) {
     try {
-      await navigator.share({ files, title: '캐럿셀 이미지 5장' });
+      await navigator.share({ files, title: '캐럿셀 이미지 4장' });
       showToast(`${blobs.length}장 저장 완료`, 'success');
     } catch (e) {
       if (e.name !== 'AbortError') showToast('저장 실패: ' + e.message, 'error');
@@ -2188,21 +2188,29 @@ async function buildReelRevealSlide(blobUrl, accent) {
   return new Promise(r => canvas.toBlob(r, 'image/png'));
 }
 
-// 릴스 문구 = 캐럿셀 4페이지 문구 그대로(문구 통일 정책 — 생성 API 호출 0회, 비용 0)
+// 릴스 문구 = 게시물 문구에서 "핵심(헤드라인 + 본문 첫 1~2문장)"만 발췌 — 생성 API 0회.
+// 게시물은 전체(부연 포함), 릴스는 핵심만 → 같은 내용이되 밀도가 달라 차별화된다.
+// (생성 프롬프트가 "첫 1~2문장에 핵심, 이후는 부연" 규칙으로 쓰므로 발췌만으로 연결됨)
+function firstSentences(text, n) {
+  const s = String(text || '').replace(/\s+/g, ' ').trim();
+  const m = s.match(/[^.!?。…]+[.!?。…]?/g) || [];
+  return m.slice(0, n).join(' ').trim();
+}
 function _reelFromPages(p) {
-  const joinHB = pg => {
-    const h = (pg?.headline || '').trim(), b = (pg?.body || '').trim();
+  const pick = pg => {
+    const h = (pg?.headline || '').trim();
+    const b = firstSentences(pg?.body, 2);
     if (!h) return b; if (!b) return h;
     return /[.!?。…]$/.test(h) ? `${h} ${b}` : `${h}. ${b}`;
   };
-  return { s1: p?.page1?.headline || '', s2: joinHB(p?.page2), s3: joinHB(p?.page3) };
+  return { s1: p?.page1?.headline || '', s2: pick(p?.page2), s3: pick(p?.page3) };
 }
 
 // 릴스 문구 준비(로컬 파생) → 미리보기 렌더. API 호출 없음.
 async function generateReelScript() {
   if (!state.pages?.page1?.headline) return;
   state.reelScript = _reelFromPages(state.pages);
-  state.reelValidation = { connected: true, readable: true, note: '게시물 문구와 동일 (통일 정책 — 배치만 다름)' };
+  state.reelValidation = { connected: true, readable: true, note: '게시물 문구의 핵심(첫 1~2문장)만 발췌 — 추가 생성 없음' };
   renderReelPreview();
 }
 
@@ -2269,6 +2277,27 @@ async function saveReelSet() {
 }
 document.getElementById('saveReelSetBtn').addEventListener('click', saveReelSet);
 
+// 흐림 배경 그리기 — ctx.filter 지원 시 사용, 미지원(iOS 구형 사파리)이면
+// "강한 축소 → 확대(스무딩)" 방식으로 블러를 근사한다(마지막 페이지 흐림이 안 되던 원인).
+function drawBlurredBg(ctx, img, W, H) {
+  let supported = false;
+  try { ctx.filter = 'blur(2px)'; supported = !!ctx.filter && ctx.filter !== 'none'; ctx.filter = 'none'; } catch {}
+  if (supported) {
+    ctx.filter = 'blur(26px) brightness(0.72)';
+    ctx.drawImage(img, -40, -40, W + 80, H + 80);
+    ctx.filter = 'none';
+  } else {
+    const t = document.createElement('canvas');
+    t.width = Math.max(2, Math.round(W / 28)); t.height = Math.max(2, Math.round(H / 28));
+    t.getContext('2d').drawImage(img, 0, 0, t.width, t.height);
+    const t2 = document.createElement('canvas'); t2.width = t.width * 4; t2.height = t.height * 4;
+    const c2 = t2.getContext('2d'); c2.imageSmoothingEnabled = true; c2.drawImage(t, 0, 0, t2.width, t2.height);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(t2, -40, -40, W + 80, H + 80);
+    ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fillRect(0, 0, W, H); // 밝기 보정(brightness 대체)
+  }
+}
+
 // 텍스트+배경 합성 이미지를 base64 data URL로 반환 (텔레그램 발송용)
 async function generateCompositeDataUrl(card, pageNum) {
   const W = 1080, H = 1080;
@@ -2280,7 +2309,7 @@ async function generateCompositeDataUrl(card, pageNum) {
   if (blobUrl) {
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
-    if (pageNum === 4) { ctx.filter = 'blur(26px) brightness(0.72)'; ctx.drawImage(img, -40, -40, W + 80, H + 80); ctx.filter = 'none'; }
+    if (pageNum === 4) drawBlurredBg(ctx, img, W, H);
     else ctx.drawImage(img, 0, 0, W, H);
     const grad = ctx.createLinearGradient(0, H * 0.3, 0, H);
     grad.addColorStop(0, 'rgba(0,0,0,0)');
@@ -2519,7 +2548,7 @@ async function buildCardBlob(card, pageNum) {
   if (blobUrl) {
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
-    if (pageNum === 4) { ctx.filter = 'blur(26px) brightness(0.72)'; ctx.drawImage(img, -40, -40, W + 80, H + 80); ctx.filter = 'none'; }
+    if (pageNum === 4) drawBlurredBg(ctx, img, W, H);
     else ctx.drawImage(img, 0, 0, W, H);
     const grad = ctx.createLinearGradient(0, H * 0.3, 0, H);
     grad.addColorStop(0, 'rgba(0,0,0,0)');
