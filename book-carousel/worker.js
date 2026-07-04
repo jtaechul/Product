@@ -452,8 +452,8 @@ async function aladinPositiveCheck(query) {
 // AI 스켑틱 검증 (키 불필요·Worker OK) — 명백한 가짜만 걸러낸다.
 async function aiBookCheck(env, title, author) {
   try {
-    const txt = await callClaude(env.ANTHROPIC_API_KEY, {
-      env, tier: 'light', max_tokens: 150,
+    const txt = await callLightModel(env, {
+       max_tokens: 150,
       system: '당신은 도서 사실 검증가입니다. 명백히 가짜인 책만 걸러냅니다. 진짜 책을 가짜로 판정하지 않도록 보수적으로 판단합니다. 반드시 JSON만 응답합니다.',
       user: `다음 책 제목이 "명백히 지어낸 가짜"인지 판정하세요.\n제목: ${title}\n저자: ${author || '(미상)'}\n\n판정 규칙(진짜 책을 막지 않는 것이 최우선):\n- 제목이 무의미한 문자열이거나(임의 숫자·자모 뒤섞임 등) 정상적인 책 제목으로 보이지 않으면: real=false, confidence="high"\n- 실제로 존재할 법한 정상적인 제목이면, 당신이 그 책을 몰라도: real=true (확신 없으면 confidence="low")\nJSON: {"real": true/false, "confidence": "high"/"low"}`,
     });
@@ -701,8 +701,8 @@ async function handleSuggest(env, body) {
   if (usable.length > 1) {
     try {
       const items = usable.map((b, i) => `${i + 1}. ${b.title} (${b.author}) — ${(b.description || b.coreMessage || '').slice(0, 220)}`).join('\n');
-      const ftText = await callClaude(env.ANTHROPIC_API_KEY, {
-        env, tier: 'light', max_tokens: 200, optional: true, // 예산 절약 모드에서 생략 가능(폴백: 전체 유지)
+      const ftText = await callLightModel(env, {
+         max_tokens: 200, optional: true, // 예산 절약 모드에서 생략 가능(폴백: 전체 유지)
         system: '당신은 도서 큐레이션 검수자입니다. 반드시 JSON만 응답합니다.',
         user: `주제: "${topic}"\n\n아래 책들이 이 주제를 "실제로 직접" 다루는지, 각 책의 소개문을 기준으로 판정하세요. 사랑·인생 일반론이라 큰 범주만 겹치고 이 주제를 직접 다루지 않으면 false.\n\n${items}\n\nJSON: {"fits":[true,false,...]} (순서대로 정확히 ${usable.length}개)`,
       });
@@ -728,8 +728,8 @@ async function handleAnalyze(env, body) {
   const cv = await crossVerifyBook(env, title, author);
   const realAuthor = cv.status === 'found' ? cv.author : author;
 
-  const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    env, tier: 'light',
+  const text = await callLightModel(env, {
+    
     max_tokens: 512,
     system: '당신은 도서 분석 전문가입니다. 책 제목과 저자를 보고 핵심 메시지와 대상 독자층을 분석합니다. 반드시 JSON만 응답합니다.',
     user: `책: "${cv.status === 'found' ? cv.title : title}"${realAuthor ? ` / 저자: ${realAuthor}` : ''}${cv.status === 'found' && cv.description ? `\n참고(실제 책 소개): ${cv.description}` : ''}\n\n이 책의 정보를 분석하세요.\n\nJSON: {"author":"저자명","year":출판연도(숫자),"category":"카테고리","coreMessage":"이 책의 핵심 메시지 1~2문장","targetAudience":"주요 대상 독자층 1문장"}`,
@@ -795,13 +795,13 @@ function mergeProofread(orig, fixed) {
 async function proofreadPages(env, pages, logCtx) {
   let out = applyRuleFixesToPages(pages);
   try {
-    const text = await callClaude(env.ANTHROPIC_API_KEY, {
-      env, tier: 'light', max_tokens: 900, optional: true, // 예산 소프트캡 초과 시 규칙 교정만
+    const text = await callLightModel(env, {
+       max_tokens: 900, optional: true, // 예산 소프트캡 초과 시 규칙 교정만
       system: '당신은 한국어 교정 전문 에디터입니다. 의미·톤·길이는 그대로 두고, 어색하거나 틀린 표현만 자연스럽게 고칩니다. 반드시 JSON만 응답합니다.',
-      user: `아래 인스타그램 카드뉴스 문구에서 "어색하거나 틀린 한국어"만 골라 고치세요. 의미·따뜻한 톤·길이는 유지합니다.\n\n[특히 이런 오류를 반드시 잡으세요]\n- 단위/수량 표현 오용: "마음의 짐이 한 겹 가벼워진다"(X)→"한결 가벼워진다"(O). '겹'은 층을 세는 말이라 '가벼워지다'와 안 맞음.\n- 발음이 비슷해 잘못 쓰는 말: 한 겹/한결, 되/돼, -로서/-로써, -든지/-던지, 왠지/웬, 며칠/몇 일, 안/않.\n- 어색한 연어(서로 안 어울리는 단어 조합), 조사·어미 오류, 비문, 오타.\n- 존댓말·문어체 일관성(반말이 섞이면 존댓말로).\n[하지 말 것] 멀쩡한 문장을 취향으로 바꾸지 말 것. 틀리거나 확연히 어색한 것만 최소 수정.\n\n원문(JSON):\n${JSON.stringify(pages)}\n\n같은 구조의 JSON으로 고친 최종본만 반환하세요(고칠 게 없으면 원문 그대로). changes에는 고친 것을 "원래 → 수정" 형태로 넣으세요.\nJSON: {"pages":{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}},"changes":["..."]}`,
+      user: `아래 인스타그램 카드뉴스 문구에서 "어색하거나 틀린 한국어"만 골라 고치세요. 의미·따뜻한 톤·길이는 유지합니다.\n\n[특히 이런 오류를 반드시 잡으세요]\n- 단위/수량 표현 오용: "마음의 짐이 한 겹 가벼워진다"(X)→"한결 가벼워진다"(O). '겹'은 층을 세는 말이라 '가벼워지다'와 안 맞음.\n- 발음이 비슷해 잘못 쓰는 말: 한 겹/한결, 되/돼, -로서/-로써, -든지/-던지, 왠지/웬, 며칠/몇 일, 안/않.\n- 어색한 연어(서로 안 어울리는 단어 조합), 조사·어미 오류, 비문, 오타.\n- 존댓말·문어체 일관성(반말이 섞이면 존댓말로).\n[하지 말 것] 멀쩡한 문장을 취향으로 바꾸지 말 것. 틀리거나 확연히 어색한 것만 최소 수정.\n\n원문(JSON):\n${JSON.stringify(pages)}\n\n같은 구조의 JSON으로 고친 최종본만 반환하세요(고칠 게 없으면 원문 그대로). changes에는 고친 것을 "원래 → 수정" 형태로 넣으세요.\nJSON: {"pages":{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"cta":"...","linkText":"..."}},"changes":["..."]}`,
     });
     const r = extractJson(text);
-    if (r && r.pages && r.pages.page1 && r.pages.page5) {
+    if (r && r.pages && r.pages.page1 && r.pages.page4) {
       out = mergeProofread(out, r.pages);
       if (logCtx?.env && logCtx?.pipelineId && Array.isArray(r.changes) && r.changes.length) {
         await logStep(logCtx.env, logCtx.pipelineId, { step: logCtx.step || 1, phase: 'proofread', note: r.changes.slice(0, 5).join(' · ').slice(0, 120) });
@@ -857,7 +857,7 @@ async function handleGenerate(env, body) {
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'main', max_tokens: 1200,
     system: `당신은 연애·관계 심리 책을 소개하는 인스타그램 카드뉴스 전문 카피라이터입니다.\n타겟 독자: ${lt.audience}.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 마음을 건드린다 — 장황한 설명 금지.\n3. 공포·위기·충격이 아니라 '깊은 공감과 위로'로 저장·공유를 유도한다. 독자가 "이건 내 얘기다"라고 느껴 저장하게 만든다.\n4. 통계·수치·연구 인용보다 감정과 경험의 언어를 쓴다. 따뜻하고 문학적인 톤.\n5. 모든 콘텐츠에 반말을 절대 사용하지 않는다 — 문어체·존댓말(~습니다/~합니다/~네요/~까요)만 허용.\n반드시 JSON만 응답한다.`,
-    user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '연애·관계 심리'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n${bookDesc ? `실제 책 소개(출판사 제공 — 이 책의 진짜 내용): ${bookDesc.slice(0, 600)}\n` : ''}\n[근거 규칙 — 절대 위반 금지] ${bookDesc ? '위 "실제 책 소개"가 이 책의 진짜 내용입니다. 3~5페이지의 통찰·위로·솔루션은 반드시 이 소개의 주제·관점과 일치해야 하며, 소개에 없는 개념·주장을 책의 것처럼 지어내지 마세요. 소개의 주제가 카테고리 톤과 거리가 있으면, 톤을 책의 실제 주제 쪽으로 맞추세요(책이 우선).' : '이 책의 실제 내용을 확신할 수 없으므로, 특정 개념·주장을 책의 것처럼 단정하지 말고 핵심 메시지 범위 안의 보편적 위로에 머무르세요.'}\n\n[전체 톤 — 카테고리에 맞춰 조절] 대상: ${lt.audience}.\n톤: ${lt.tone}.\n흐름: ${lt.flow}.\n\n[연결성 — 매우 중요·최우선] 5페이지는 뚝뚝 끊긴 독립 카드가 아니라, 한 사람이 이어서 들려주는 "한 편의 편지"처럼 매끄럽게 이어져야 합니다.\n- 먼저 1→5페이지를 관통하는 하나의 감정 실(한 장면·한 마음)을 정하고, 각 페이지가 그 실을 이어받아 조금씩 나아가게 쓰세요(장면 → 반복 패턴 → 그 마음의 이유 → 바라보는 법 → 오늘의 책).\n- 각 페이지는 바로 앞 페이지가 남긴 감정·표현을 자연스럽게 받아서 풀어야 합니다. 예: 2페이지에서 "먼저 연락하지 못했다"고 했다면, 3페이지는 그 "먼저 다가가지 못하는 마음"의 이유로 이어지고, 4페이지는 그 마음을 다르게 바라보는 법으로 이어짐.\n- 스와이프하며 읽을 때 문장이 이어지는 느낌이 들되, 억지 접속사("그래서/하지만"으로 시작)로 잇지는 말 것. 같은 단어·표현을 페이지마다 반복하지 말고, 감정의 결만 하나로 이으세요.\n- 1페이지 훅에서 꺼낸 구체적 장면·감정이 2·3·4페이지에서 계속 같은 사람의 이야기로 살아 있어야 하고, 5페이지는 그 여정을 감싸 안으며 책으로 건네야 합니다(갑자기 딴 이야기로 튀지 말 것).\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(공감 훅 — 헤드라인만): 카드 전체를 단 하나의 마음을 건드리는 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 연애에서 겪었을 구체적 순간·감정을 정확히 포착한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 공포·경고 톤 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자가 혼자 느꼈던 감정을 들킨 듯한 문장.\n    좋은 예(이번 카테고리 톤): ${lt.hookExample}\n             "좋아할수록 더 차갑게 굴게 되는 사람이 있습니다"\n    나쁜 예(절대 금지): "당신의 연애는 실패하고 있다" / "이대로면 평생 혼자입니다" (공포·단정 톤)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(패턴 발견): 독자가 반복해온 연애 패턴을 부드럽게 이름 붙여 보여준다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 독자가 "맞아, 나 그래"라고 느낄 구체적 행동·상황 묘사. 수치 금지, 감정과 장면 위주.\n3페이지(마음의 이유): 그 패턴의 심리적 뿌리를 따뜻하게 설명한다(애착, 상처, 두려움 등). 비난하지 않는다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. "당신이 이상한 게 아니라, 이런 마음이 있었던 것입니다" 같은 위로의 통찰. 심리학 개념을 쉽게 풀어 쓰되 학술 인용 금지.\n4페이지(위로의 실마리): 완전한 해답 대신 '이렇게 바라보면 달라진다'는 방향을 부드럽게 암시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 마지막 줄은 희망적 여운으로 끝낸다. 단정적 해결책 금지.\n5페이지(책 공개 — 마무리): 독자에게 오늘의 책을 건넨다. (제목·저자·표지는 시스템이 자동으로 함께 보여주므로 본문 텍스트에 제목·저자를 직접 쓰지 말 것.)\n  - cta: 4페이지의 위로를 잇는 따뜻한 마무리 + 핵심 솔루션 한 문장(${lt.theme}에서 오늘 가져갈 마음의 방향). A/B·질문·"댓글" 언급 금지. 독자 가슴에 남는 한 문장.\n  - linkText: 그 마음에 책을 자연스럽게 건네는 한 줄 (예: "이 마음에 오래 곁이 되어줄 책을 소개합니다"). 제목은 쓰지 말 것(시스템이 표지·제목·저자를 함께 노출). "프로필 링크" 언급은 불필요.\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
+    user: `다음 책 정보로 4페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '연애·관계 심리'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n${bookDesc ? `실제 책 소개(출판사 제공 — 이 책의 진짜 내용): ${bookDesc.slice(0, 600)}\n` : ''}\n[근거 규칙 — 절대 위반 금지] ${bookDesc ? '위 "실제 책 소개"가 이 책의 진짜 내용입니다. 2~4페이지의 통찰·위로·솔루션은 반드시 이 소개의 주제·관점과 일치해야 하며, 소개에 없는 개념·주장을 책의 것처럼 지어내지 마세요. 소개의 주제가 카테고리 톤과 거리가 있으면, 톤을 책의 실제 주제 쪽으로 맞추세요(책이 우선).' : '이 책의 실제 내용을 확신할 수 없으므로, 특정 개념·주장을 책의 것처럼 단정하지 말고 핵심 메시지 범위 안의 보편적 위로에 머무르세요.'}\n\n[전체 톤 — 카테고리에 맞춰 조절] 대상: ${lt.audience}.\n톤: ${lt.tone}.\n흐름: ${lt.flow}.\n\n[연결성 — 매우 중요·최우선] 4페이지는 뚝뚝 끊긴 독립 카드가 아니라, 한 사람이 이어서 들려주는 "한 편의 편지"처럼 매끄럽게 이어져야 합니다.\n- 먼저 1→4페이지를 관통하는 하나의 감정 실(한 장면·한 마음)을 정하고, 각 페이지가 그 실을 이어받아 나아가게 쓰세요(장면 → 패턴과 마음의 이유 → 바라보는 법 → 오늘의 책).\n- 각 페이지는 바로 앞 페이지가 남긴 감정·표현을 자연스럽게 받아서 풀되, 억지 접속사("그래서/하지만"으로 시작)로 잇지 말고 같은 표현 반복도 금지. 감정의 결만 하나로 이으세요.\n- 1페이지 훅의 장면·감정이 2·3페이지에서 같은 사람의 이야기로 살아 있어야 하고, 4페이지는 그 여정을 감싸 안으며 책으로 건네야 합니다(갑자기 딴 이야기로 튀지 말 것).\n\n[겸용 — 중요] 이 문구는 1:1 카드뉴스와 9:16 릴스(세로 영상)에 동일하게 쓰입니다. 각 body는 한 화면에서 4~5초에 읽히게 간결해야 합니다.\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(공감 훅 — 헤드라인만): 카드 전체를 단 하나의 마음을 건드리는 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 연애에서 겪었을 구체적 순간·감정을 정확히 포착한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 공포·경고 톤 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자가 혼자 느꼈던 감정을 들킨 듯한 문장.\n    좋은 예(이번 카테고리 톤): ${lt.hookExample}\n             "좋아할수록 더 차갑게 굴게 되는 사람이 있습니다"\n    나쁜 예(절대 금지): "당신의 연애는 실패하고 있다" / "이대로면 평생 혼자입니다" (공포·단정 톤)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(패턴과 마음의 이유): 반복해온 연애 패턴을 부드럽게 짚고, 그 심리적 뿌리(애착·상처·두려움)까지 한 페이지에서 따뜻하게 풀어낸다. 비난 금지.\n  - headline: 18자 이내\n  - body: 4~5줄, 한 줄 40자 이내. 앞 2~3줄은 "맞아, 나 그래" 하는 구체적 장면, 뒤 1~2줄은 "당신이 이상한 게 아니라 이런 마음이 있었던 것" 같은 이유의 통찰. 수치·학술 인용 금지.\n3페이지(위로의 실마리): 완전한 해답 대신 '이렇게 바라보면 달라진다'는 방향을 부드럽게 암시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 마지막 줄은 희망적 여운으로 끝낸다. 단정적 해결책 금지.\n4페이지(책 공개 — 마무리): 독자에게 오늘의 책을 건넨다. (제목·저자·표지는 시스템이 자동으로 함께 보여주므로 본문 텍스트에 제목·저자를 직접 쓰지 말 것.)\n  - cta: 3페이지의 위로를 잇는 따뜻한 마무리 + 핵심 솔루션 한 문장(${lt.theme}에서 오늘 가져갈 마음의 방향). A/B·질문·"댓글" 언급 금지. 독자 가슴에 남는 한 문장.\n  - linkText: 그 마음에 책을 자연스럽게 건네는 한 줄 (예: "이 마음에 오래 곁이 되어줄 책을 소개합니다"). 제목은 쓰지 말 것(시스템이 표지·제목·저자를 함께 노출). "프로필 링크" 언급은 불필요.\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"cta":"...","linkText":"..."}}`
   });
 
   let pages = extractJson(text);
@@ -874,8 +874,8 @@ async function handleValidate(env, body) {
   // ⭐ 실제 책 소개(출판사)가 있으면 그것을 부합도 채점의 근거로 사용 — AI 기억에만
   // 의존한 추측 채점(할루시네이션 미탐지)을 막는다.
   const bookDesc = String(bookInfo.description || '').slice(0, 600);
-  const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    env, tier: 'light',
+  const text = await callLightModel(env, {
+    
     max_tokens: 1024,
     system: '당신은 소셜미디어 콘텐츠 전문 편집장 겸 저작권 검토자입니다. 반드시 JSON만 응답합니다.',
     user: `책 "${bookInfo.title}" (저자: ${bookInfo.author}) 캐럿셀을 아래 5가지 기준으로 평가하세요.\n${bookDesc ? `\n실제 책 소개(출판사 제공 — 부합도 채점의 근거):\n${bookDesc}\n` : ''}\n캐럿셀 내용:\n${JSON.stringify(pages, null, 2)}\n\n평가 기준 (100점 만점):\n1. accuracy(책 내용 부합도): ${bookDesc ? '캐럿셀의 통찰·솔루션이 위 "실제 책 소개"의 주제·메시지와 일치하는가? 소개와 무관한 주제를 책의 것처럼 말하면 크게 감점.' : '캐럿셀 내용이 해당 책의 실제 메시지와 일치하는가? (소개 미제공 — 확신 없으면 보수적으로 감점)'} 0~20\n2. factual(사실 정확성): 수치·통계·사례에 명백한 오류나 과장이 없는가? 0~20\n3. copyright(저작권 안전성): 책의 핵심 내용을 그대로 옮기지 않고 요약·재해석했는가? 저자명·책 제목이 본문에 노출되지 않는가? 0~20\n4. engagement(공감·참여 유도): 30대 독자가 "이건 내 얘기다"라고 느껴 저장·공유하고 싶어지는 깊은 공감과 위로가 있는가? 따뜻한 톤이 유지되는가(공포·단정·비난 톤이면 감점)? 0~25\n5. quality(문장 품질): 오타·비문·어색한 표현이 없고 간결한가? 0~15\n\nJSON: {"totalScore":85,"scores":{"accuracy":17,"factual":16,"copyright":18,"engagement":22,"quality":12},"feedback":"전체 평가 2~3문장","improvements":["구체적 개선점1","개선점2","개선점3"],"approved":true}\napproved는 totalScore>=70이면 true.`
@@ -973,9 +973,7 @@ const SCENE_ANCHOR = 'absolutely no people, no person, no human, no figure, no s
 const FALLBACK_IMAGE_PROMPTS = {
   page1: 'a woman seen from behind sitting alone by a large window at dusk, soft city lights bokeh outside, quiet wistful mood, empty space around her',
   page2: 'an empty cafe table by a window with a single cup and a phone left face-down, soft afternoon light, tender lonely atmosphere',
-  page3: 'a cozy dim bedroom corner with a crumpled blanket and a warm glowing bedside lamp, introspective quiet mood, soft shadows',
-  page4: 'a window as gentle morning light streams in over a sheer curtain, hopeful warm glow, a quiet turning moment',
-  page5: 'an open book resting on a sunlit windowsill with sheer curtains gently glowing, calm hopeful morning light',
+  page3: 'a window as gentle morning light streams in over a sheer curtain, hopeful warm glow, a quiet turning moment',
 };
 
 // 페이지별 감정 역할 — 1페이지의 감정만 레인(설렘/이별/자존감)에 따라 달라진다.
@@ -988,10 +986,8 @@ const LANE_PAGE1_EMOTION = {
 function pageVisualDirections(lane) {
   return {
     page1: `혼자 있는 그녀 — 들킨 듯한 첫 감정(${LANE_PAGE1_EMOTION[lane] || LANE_PAGE1_EMOTION.core}). 뒷모습/옆모습, 여백 넉넉히(스크롤을 멈추는 표지 컷·인물 고정).`,
-    page2: '반복된 패턴/마음이 머무는 한 순간 — 장소·사물 또는 그녀.',
-    page3: '마음의 뿌리를 들여다보는 조용한 순간 — 장소·사물 또는 그녀.',
-    page4: '빛이 드는 전환·희망의 실마리 — 장소·사물 또는 그녀(따뜻한 아침빛).',
-    page5: '평온한 마무리 — 책/창가 등 고요한 장면(하단은 책 공개 패널이 덮음, 인물 없음 권장).',
+    page2: '반복된 패턴과 마음의 뿌리를 들여다보는 순간 — 무인(사물·공간)으로 감정 상징.',
+    page3: '빛이 드는 전환·희망의 실마리 — 무인, 따뜻한 아침빛.',
   };
 }
 
@@ -1004,17 +1000,15 @@ async function handleGenerateImages(env, body) {
     page1: [pages.page1?.headline, pages.page1?.body].filter(Boolean).join(' / '),
     page2: [pages.page2?.headline, pages.page2?.body].filter(Boolean).join(' / '),
     page3: [pages.page3?.headline, pages.page3?.body].filter(Boolean).join(' / '),
-    page4: [pages.page4?.headline, pages.page4?.body].filter(Boolean).join(' / '),
-    page5: [pages.page5?.cta, pages.page5?.body].filter(Boolean).join(' / '),
   };
 
   const PV = pageVisualDirections(laneOf(bookInfo.category)); // 레인별 1페이지 감정 반영
 
-  const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    env, tier: 'light',
+  const text = await callLightModel(env, {
+    
     max_tokens: 1000,
-    system: '당신은 한국 웹툰풍 감성 일러스트 아트 디렉터입니다. 연애·관계(설렘·이별·자존감) 주제의 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[인물 배치 — 매우 중요·절대 규칙] 사람(30대 한국 여성)은 오직 1페이지(표지)에만 등장합니다.\n· 1페이지: 그녀(스크롤을 멈추는 표지 컷).\n· 2·3·4·5페이지: 사람을 절대 넣지 마세요. 사람 얼굴·인물·실루엣·손 모두 금지. 오직 사물·공간·풍경으로 감정을 상징하는 "무인(no people)" 장면만 묘사합니다.\n\n[손·손가락 규칙] 무료 AI는 손·손가락을 자주 뭉갭니다. 1페이지 인물도 손은 소매·주머니에 넣거나 프레임 밖으로 두고, 손가락 클로즈업은 피하세요.\n\n[스타일 고정 — 5장 공통] "귀엽고 퀄리티 높은 애니풍" 일러스트: 깔끔한 라인, 부드러운 플랫 셀 셰이딩, 포근한 빛. 실사·반실사·3D 렌더 절대 금지. 색감·분위기는 시스템이 주제에 맞게 자동으로 덧붙이므로 너는 장면·감정에 집중. 5장이 한 시리즈로 묶이게.\n\n[2~5페이지 무인 장면 발상] 창가·카페 한켠·침대맡·책상·골목·버스 안, 휴대폰·편지·머그·담요·우산·책, 빈 의자, 비 오는 유리창, 저물녘→새벽빛 등 사물·공간으로 감정을 상징. 4장의 장소·구도가 서로 뚜렷이 다르게.\n\n[규칙]\n1. 구도·조명 구체적으로 (wide shot, soft window light, golden morning light)\n2. 2~5페이지는 반드시 사람 없음(no people, no person, no figure)\n3. 텍스트·글자·숫자 없음 (no text, no letters, no words)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 각 프롬프트 영어 25~55단어. 인물 외형·화풍은 시스템이 자동으로 덧붙이므로, 너는 "그 장의 장면·사물·감정·장소"에 집중.\n반드시 JSON만 응답한다.',
-    user: `책 제목: ${bookInfo.title || ''}\n카테고리: ${bookInfo.category || '이별·재회·회복'}\n책 핵심 주제: ${bookInfo.coreMessage || ''}\n\n1페이지만 인물(그녀). 2~5페이지는 사람 없는 무인 분위기 배경으로만 묘사하세요.\n\n1페이지 ${PV.page1}\n  문장: ${pageContents.page1}\n2페이지 ${PV.page2}\n  문장: ${pageContents.page2}\n3페이지 ${PV.page3}\n  문장: ${pageContents.page3}\n4페이지 ${PV.page4}\n  문장: ${pageContents.page4}\n5페이지 ${PV.page5}\n  문장: ${pageContents.page5}\n\n[필수] 5장의 장소·구도가 서로 겹치지 않게. 인물은 1페이지에만, 2~5페이지는 사람 없음. 텍스트·글자 없음.\n\nJSON: {"page1":"...","page2":"...","page3":"...","page4":"...","page5":"..."}`,
+    system: '당신은 한국 웹툰풍 감성 일러스트 아트 디렉터입니다. 연애·관계(설렘·이별·자존감) 주제의 책 카드뉴스 배경으로 쓸 Flux 이미지 영어 프롬프트를 작성합니다.\n\n[인물 배치 — 매우 중요·절대 규칙] 사람(30대 한국 여성)은 오직 1페이지(표지)에만 등장합니다.\n· 1페이지: 그녀(스크롤을 멈추는 표지 컷).\n· 2·3페이지: 사람을 절대 넣지 마세요. 사람 얼굴·인물·실루엣·손 모두 금지. 오직 사물·공간·풍경으로 감정을 상징하는 "무인(no people)" 장면만 묘사합니다.\n\n[손·손가락 규칙] 무료 AI는 손·손가락을 자주 뭉갭니다. 1페이지 인물도 손은 소매·주머니에 넣거나 프레임 밖으로 두고, 손가락 클로즈업은 피하세요.\n\n[스타일 고정 — 3장 공통] "귀엽고 퀄리티 높은 애니풍" 일러스트: 깔끔한 라인, 부드러운 플랫 셀 셰이딩, 포근한 빛. 실사·반실사·3D 렌더 절대 금지. 색감·분위기는 시스템이 주제에 맞게 자동으로 덧붙이므로 너는 장면·감정에 집중. 3장이 한 시리즈로 묶이게. (4페이지는 시스템이 1페이지 이미지를 흐려 책 표지와 합성하므로 생성하지 않음)\n\n[2~3페이지 무인 장면 발상] 창가·카페 한켠·침대맡·책상·골목·버스 안, 휴대폰·편지·머그·담요·우산·책, 빈 의자, 비 오는 유리창, 저물녘→새벽빛 등 사물·공간으로 감정을 상징. 2장의 장소·구도가 서로 뚜렷이 다르게.\n\n[규칙]\n1. 구도·조명 구체적으로 (wide shot, soft window light, golden morning light)\n2. 2~3페이지는 반드시 사람 없음(no people, no person, no figure)\n3. 텍스트·글자·숫자 없음 (no text, no letters, no words)\n4. 하단 30%는 부드럽고 단순하게 (텍스트 오버레이 공간)\n5. 각 프롬프트 영어 25~55단어. 인물 외형·화풍은 시스템이 자동으로 덧붙이므로, 너는 "그 장의 장면·사물·감정·장소"에 집중.\n반드시 JSON만 응답한다.',
+    user: `책 제목: ${bookInfo.title || ''}\n카테고리: ${bookInfo.category || '이별·재회·회복'}\n책 핵심 주제: ${bookInfo.coreMessage || ''}\n\n1페이지만 인물(그녀). 2·3페이지는 사람 없는 무인 분위기 배경으로만 묘사하세요. (4페이지는 시스템이 합성 — 생성 불필요)\n\n1페이지 ${PV.page1}\n  문장: ${pageContents.page1}\n2페이지 ${PV.page2}\n  문장: ${pageContents.page2}\n3페이지 ${PV.page3}\n  문장: ${pageContents.page3}\n\n[필수] 3장의 장소·구도가 서로 겹치지 않게. 인물은 1페이지에만, 2·3페이지는 사람 없음. 텍스트·글자 없음.\n\nJSON: {"page1":"...","page2":"...","page3":"..."}`,
   });
 
   const parsed = extractJson(text);
@@ -1022,9 +1016,9 @@ async function handleGenerateImages(env, body) {
   // ⭐ 인물은 오직 1페이지(표지)에만. 2~5페이지는 무인 장면(인체 할루시네이션 원천 차단).
   const PERSON_PAGES = new Set(['page1']);
 
-  // 5페이지 프롬프트만 추려 검증 — 누락 시 페이지별 폴백으로 보완
+  // 3페이지 프롬프트만 추려 검증 — 누락 시 페이지별 폴백으로 보완 (4페이지는 합성)
   const prompts = {};
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 3; i++) {
     const key = `page${i}`;
     const v = parsed[key];
     prompts[key] = (v && typeof v === 'string' && v.trim()) ? v.trim() : FALLBACK_IMAGE_PROMPTS[key];
@@ -1078,6 +1072,43 @@ async function getGeminiKey(env) {
   try { return (await env?.PENDING_POSTS?.get('gemini_api_key')) || null; } catch { return null; }
 }
 
+// ===== Gemini 텍스트(보조 호출용) =====
+// 정책: 핵심 생성(책 추천·캐럿셀 생성·재생성)은 감성 한국어 품질을 위해 Claude 유지,
+// 보조 호출(검증·캡션·교정·적합성 게이트·텍스트 압축·분석·이미지 프롬프트)은
+// 훨씬 저렴한 Gemini Flash-Lite로 처리한다. 실패·키 없음 시 Claude light로 자동 폴백.
+const GEMINI_TEXT_MODEL = 'gemini-flash-lite-latest';
+async function callGeminiText(apiKey, opts) {
+  const { system, user, max_tokens = 1024 } = opts;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TEXT_MODEL}:generateContent?key=${apiKey}`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 30000);
+  try {
+    const res = await fetch(url, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: system ? { parts: [{ text: system }] } : undefined,
+        contents: [{ role: 'user', parts: [{ text: user }] }],
+        generationConfig: { maxOutputTokens: max_tokens, temperature: 0.7 },
+      }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error(`[gemini ${res.status}]`);
+    const d = await res.json();
+    const t = (d?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+    if (!t.trim()) throw new Error('gemini 빈 응답');
+    return t;
+  } catch (e) { clearTimeout(timer); throw e; }
+}
+// 보조 텍스트 호출 라우터 — Gemini(저렴) 우선, 실패 시 Claude light 폴백(안정성 유지).
+async function callLightModel(env, opts) {
+  const gk = await getGeminiKey(env);
+  if (gk) {
+    try { return await callGeminiText(gk, opts); } catch { /* Claude 폴백 */ }
+  }
+  return callClaude(env.ANTHROPIC_API_KEY, { ...opts, env, tier: 'light' });
+}
+
 async function generateGeminiImageBytes(apiKey, prompt) {
   if (!apiKey) return null;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_IMAGE_MODEL}:generateContent?key=${apiKey}`;
@@ -1127,60 +1158,7 @@ async function getImageUsage(env) {
   try { return parseInt(await env.PENDING_POSTS.get(`img_usage_${_kstDay()}`) || '0', 10) || 0; } catch { return 0; }
 }
 
-// 릴스 1페이지 전용 "스크롤을 멈추는 강한 훅" 생성 (캐럿셀 1페이지의 잔잔한 공감문과 별개).
-async function handleReelHook(env, body) {
-  const { pages, bookInfo } = body;
-  const summary = [pages?.page1?.headline, pages?.page2?.headline, pages?.page4?.headline].filter(Boolean).join(' / ');
-  const fallback = pages?.page1?.headline || '';
-  const lt = laneTone(bookInfo?.category); // 3레인 톤(설렘/이별/자존감)
-  try {
-    const text = await callClaude(env.ANTHROPIC_API_KEY, {
-      env, tier: 'light', max_tokens: 400, optional: true, // 예산 절약 모드에서 생략(폴백: 캐럿셀 1페이지 문구)
-      system: `당신은 인스타그램 릴스 훅 카피라이터입니다. 타깃은 ${lt.audience} 여성. 스크롤을 1초 만에 멈추게 하는 강한 첫 문장(훅)을 만듭니다.\n규칙:\n① 유형은 "콕 집어내는 감정"(예: ${lt.hookExample}) 또는 "궁금증 격차" 또는 "금기/질문". 감정의 결은 카테고리에 맞게: ${lt.tone}.\n② 한 줄, 18~28자. 너무 길지 않게.\n③ 따뜻하되 강렬하게. 공포·단정·비난·자극적 과장 금지.\n④ 책 제목·저자 노출 금지. 이모지 금지.\n반드시 JSON만 응답.`,
-      user: `책 핵심: ${bookInfo?.coreMessage || ''}\n캐럿셀 요지: ${summary}\n\n스크롤을 멈추게 하는 릴스 훅 후보 3개를 만들고, 그중 가장 강한 하나를 고르세요.\nJSON: {"candidates":["...","...","..."],"best":"가장 강한 한 줄"}`,
-    });
-    const r = extractJson(text);
-    const best = (r.best || (Array.isArray(r.candidates) && r.candidates[0]) || fallback || '').toString().trim();
-    return { success: true, hook: best || fallback, candidates: Array.isArray(r.candidates) ? r.candidates : [] };
-  } catch (e) {
-    return { success: true, hook: fallback, candidates: [] };
-  }
-}
-
-// 릴스 대본(4장) — 한 편의 흐름으로 "연결되게" 생성하고, 자체 검증(연결성·가독성)까지 한 번에.
-// 캐럿셀의 조각을 잘라 붙이던 방식(어색함)을 대체한다. 5번째 장(책 공개)은 시스템이 표지로 처리.
-async function handleGenerateReel(env, body) {
-  const { pages, bookInfo } = body;
-  const arc = [pages?.page1?.headline, pages?.page2?.headline, pages?.page3?.headline, pages?.page4?.headline, pages?.page5?.cta]
-    .filter(Boolean).join(' / ');
-  // 폴백: 캐럿셀 헤드라인 그대로
-  const fb = {
-    s1: pages?.page1?.headline || '', s2: pages?.page2?.headline || '',
-    s3: pages?.page3?.headline || '', s4: pages?.page4?.headline || '',
-  };
-  const lt = laneTone(bookInfo?.category); // 3레인 톤(설렘/이별/자존감)
-  try {
-    const text = await callClaude(env.ANTHROPIC_API_KEY, {
-      // ⚠️ optional 아님 — 릴스 대본은 매일 올리는 핵심 결과물. 예산 절약 모드에서도 생성한다.
-      // (optional이던 시절, 소프트캡 초과 시 생략돼 "릴스 문구 자동 생성 실패"가 반복된 원인)
-      env, tier: 'light', max_tokens: 700,
-      system: `당신은 인스타 릴스 대본 카피라이터입니다. 타깃은 ${lt.audience} 여성. 감정의 결: ${lt.tone}.\n[목표] 4개의 슬라이드 문구가 "한 편의 이야기처럼 자연스럽게 이어지게" 씁니다(뚝뚝 끊긴 조각 금지).\n[구성·흐름]\n· s1(훅): 스크롤을 멈추는 강한 첫 문장(콕 집는 감정/궁금증). 18~28자.\n· s2: s1에서 자연스럽게 이어받아 그 감정·패턴을 구체적 장면으로. \n· s3: 그 마음의 이유를 따뜻하게 짚음(비난 금지).\n· s4: 희망으로 전환하는 마무리(단정적 해결책 금지, 여운).\n[문체·규칙] 존댓말·문어체, 따뜻하되 강렬. 각 슬라이드 한 화면에서 4~5초에 읽히게 45자 이내(한두 문장). 책 제목·저자 노출 금지, 이모지 금지, 공포·단정 금지. 앞 문장과 접속·지시어로 연결되게(예: "그런데", "사실은", "그래서").\n[검증] 초안을 쓴 뒤, 4장이 매끄럽게 이어지는지·각 장이 4~5초에 읽히는지 스스로 점검하고 어색하면 고쳐서 최종본만 냅니다.\n반드시 JSON만 응답.`,
-      user: `책 핵심 주제: ${bookInfo?.coreMessage || ''}\n카테고리: ${bookInfo?.category || '이별·재회·회복'}\n캐럿셀 흐름(참고): ${arc}\n\n위 흐름을 살리되, 4개 슬라이드가 자연스럽게 이어지는 릴스 대본을 쓰고 스스로 검증·보완해 최종본을 내세요.\nJSON: {"reel":{"s1":"...","s2":"...","s3":"...","s4":"..."},"validation":{"connected":true,"readable":true,"score":0~100,"note":"연결성·가독성 한줄평"}}`,
-    });
-    const r = extractJson(text);
-    const reel = r.reel || {};
-    const out = {
-      s1: (reel.s1 || fb.s1).toString().trim(),
-      s2: (reel.s2 || fb.s2).toString().trim(),
-      s3: (reel.s3 || fb.s3).toString().trim(),
-      s4: (reel.s4 || fb.s4).toString().trim(),
-    };
-    const validation = r.validation || { connected: true, readable: true, score: null, note: '' };
-    return { success: true, reel: out, validation };
-  } catch (e) {
-    return { success: true, reel: fb, validation: { connected: true, readable: true, score: null, note: '자동 생성 실패 — 캐럿셀 문구로 대체' } };
-  }
-}
+// (제거됨) 릴스 별도 문구 생성 — 문구 통일 정책: 릴스는 캐럿셀 4페이지 문구를 그대로 사용(프론트에서 배치만 다르게 렌더).
 
 async function handleGenerateCaption(env, body) {
   const { pages, bookInfo, dmKeyword, bookNumber } = body;
@@ -1191,8 +1169,8 @@ async function handleGenerateCaption(env, body) {
   const kwHint = (dmKeyword || bookInfo.category || '독서').replace(/[^가-힣a-zA-Z0-9]/g, '') || '독서';
   const lt = laneTone(bookInfo.category); // 3레인 톤(설렘/이별/자존감)
 
-  const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    env, tier: 'light',
+  const text = await callLightModel(env, {
+    
     max_tokens: 512,
     system: `당신은 ${lt.theme}를 다루는 연애 책을 소개하는 인스타그램 콘텐츠 크리에이터입니다. ${lt.audience} 독자가 자기 마음을 들킨 듯 공감해 "저장"하고 "친구에게 공유"하고 싶어지는 캡션을 씁니다. 톤: ${lt.tone}. 팔로워 성장이 목적이므로 저장·공유를 유도합니다. 노골적 판매·공포·단정·비난 금지. 반말 절대 금지 — 문어체·존댓말(~습니다/~네요/~까요)만. 반드시 JSON만 응답합니다.`,
     user: `책 카테고리: ${bookInfo.category || '이별과회복'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n\n인스타그램 캡션을 작성하세요. (이 게시물의 목적: 저장·공유로 팔로워 늘리기. 댓글·DM·A/B 유도 없음.)\n\n[캡션 구조 — 순서 엄수]\n1줄: 독자가 ${lt.theme}에서 혼자 느꼈을 감정을 포착한 공감형 한 문장 (책 제목은 시스템이 따로 붙이므로 본문엔 쓰지 말 것. "당신이 모른다면"·"대부분의 사람들이" 금지. 공포·단정 금지)\n2~3줄: 캐럿셀 핵심 위로/통찰 초간결 요약 (반복 금지)\n끝에서 둘째 줄: 저장 유도 ("마음이 복잡한 날 다시 꺼내보고 싶다면 저장해두세요" 형태)\n마지막 줄: 공유 유도 ("같은 마음을 지나는 사람에게 조용히 건네주세요" 형태)\n\n[추가 규칙]\n- 해시태그: 정확히 3개 (카테고리에 맞게. 예: ${lt.hashtagExample})\n- 전체 6줄 이내, 짧고 따뜻하게\n- 댓글·DM·A/B·"프로필 링크" 언급 금지 (저장·공유만)\n\nJSON: {"caption":"1줄\\n2줄\\n3줄\\n저장유도줄\\n공유유도줄","hashtags":["#이별","#연애심리","#책추천"]}`,
@@ -1218,8 +1196,8 @@ async function handleRegenerate(env, body) {
   const { bookInfo, previousPages, feedback, improvements } = body;
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'main',
-    system: `당신은 연애·관계 심리 책을 소개하는 인스타그램 카드뉴스 전문 카피라이터입니다.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 마음을 건드린다 — 장황한 설명 금지.\n3. 공포·단정·비난이 아니라 깊은 공감과 위로. 통계·수치·연구 인용 금지, 감정과 경험의 언어만.\n4. 5페이지는 질문·A/B·"댓글" 언급 없이 따뜻한 마무리 한 문장으로 감싼다.\n5. 반말 절대 금지 — 문어체·존댓말(~습니다/~네요/~까요)만.\n반드시 JSON만 응답한다.`,
-    user: `캐럿셀을 피드백에 맞게 개선하세요.\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n${bookInfo.description ? `실제 책 소개(출판사 — 통찰·솔루션은 이 소개의 주제와 일치해야 하며, 소개에 없는 개념을 책의 것처럼 지어내지 말 것): ${String(bookInfo.description).slice(0, 600)}\n` : ''}\n이전 버전:\n${JSON.stringify(previousPages, null, 2)}\n\n피드백: ${feedback}\n개선 요청: ${improvements.join(' / ')}\n\n[연결성 — 최우선] 개선본도 5페이지가 "한 편의 편지"처럼 매끄럽게 이어져야 합니다. 1페이지 훅에서 꺼낸 하나의 장면·감정이 2·3·4페이지에서 같은 사람의 이야기로 계속 살아 있고(장면 → 반복 패턴 → 그 마음의 이유 → 바라보는 법), 5페이지가 그 여정을 감싸 안으며 책으로 건네야 합니다. 각 페이지는 앞 페이지가 남긴 감정을 이어받으세요(단, 억지 접속사로 잇지 말고 같은 표현 반복 금지). 갑자기 딴 이야기로 튀지 말 것.\n\n텍스트 길이 기준:\n- 1페이지 headline: 40자 이내 완전한 문장. 단어 조각 절대 금지. subtext 없음.\n- 2~4페이지 headline: 18자 이내, body: 3~4줄(줄당 40자 이내). 감정·장면 위주(수치·사례 금지).\n- 5페이지 cta: 4페이지를 잇는 따뜻한 마무리 한 문장 / linkText: 책을 건네는 다리 한 줄.\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
+    system: `당신은 연애·관계 심리 책을 소개하는 인스타그램 카드뉴스 전문 카피라이터입니다.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 마음을 건드린다 — 장황한 설명 금지.\n3. 공포·단정·비난이 아니라 깊은 공감과 위로. 통계·수치·연구 인용 금지, 감정과 경험의 언어만.\n4. 마지막(4)페이지는 질문·A/B·"댓글" 언급 없이 따뜻한 마무리 한 문장으로 감싼다.\n5. 반말 절대 금지 — 문어체·존댓말(~습니다/~네요/~까요)만.\n반드시 JSON만 응답한다.`,
+    user: `캐럿셀을 피드백에 맞게 개선하세요.\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n${bookInfo.description ? `실제 책 소개(출판사 — 통찰·솔루션은 이 소개의 주제와 일치해야 하며, 소개에 없는 개념을 책의 것처럼 지어내지 말 것): ${String(bookInfo.description).slice(0, 600)}\n` : ''}\n이전 버전:\n${JSON.stringify(previousPages, null, 2)}\n\n피드백: ${feedback}\n개선 요청: ${improvements.join(' / ')}\n\n[연결성 — 최우선] 개선본도 4페이지가 "한 편의 편지"처럼 매끄럽게 이어져야 합니다. 1페이지 훅에서 꺼낸 하나의 장면·감정이 2·3페이지에서 같은 사람의 이야기로 계속 살아 있고(장면 → 패턴과 마음의 이유 → 바라보는 법), 4페이지가 그 여정을 감싸 안으며 책으로 건네야 합니다. 각 페이지는 앞 페이지가 남긴 감정을 이어받으세요(단, 억지 접속사로 잇지 말고 같은 표현 반복 금지). 갑자기 딴 이야기로 튀지 말 것.\n\n텍스트 길이 기준:\n- 1페이지 headline: 40자 이내 완전한 문장. 단어 조각 절대 금지. subtext 없음.\n- 2~3페이지 headline: 18자 이내, body: 3~5줄(줄당 40자 이내). 감정·장면 위주(수치·사례 금지).\n- 4페이지 cta: 3페이지를 잇는 따뜻한 마무리 한 문장 / linkText: 책을 건네는 다리 한 줄.\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"cta":"...","linkText":"..."}}`
   });
   const pages = await proofreadPages(env, extractJson(text)); // 재생성본도 교정
   return { success: true, pages };
@@ -1236,12 +1214,12 @@ async function handleAdjustText(env, body) {
 
   let text;
   try {
-    text = await callClaude(env.ANTHROPIC_API_KEY, {
-      env, tier: 'light',
+    text = await callLightModel(env, {
+      
       max_tokens: 1024,
       optional: true, // 예산 절약 모드에서 생략(폴백: 원본 텍스트 유지)
       system: '당신은 인스타그램 카드뉴스 카피라이터입니다. 주어진 텍스트를 지정된 줄 수 이내로 압축합니다. 반말 절대 금지 — 문어체·존댓말만 허용. 반드시 JSON만 응답합니다.',
-    user: `다음 캐럿셀 텍스트가 이미지 레이아웃에서 넘칩니다. 각 항목을 지정된 최대 줄 수 이내로 압축하세요.\n의미·임팩트는 유지하되 더 간결하게 다듬어주세요.\n\n현재 캐럿셀:\n${JSON.stringify(pages, null, 2)}\n\n넘치는 항목:\n${issueDesc}\n\n압축 규칙:\n- headline: 최대 3줄 (40자 이내, 강렬하게)\n- body: 최대 5줄 (줄당 45자 이내)\n- 책 제목·저자명 절대 노출 금지\n\n전체 pages JSON을 반환하세요:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`,
+    user: `다음 캐럿셀 텍스트가 이미지 레이아웃에서 넘칩니다. 각 항목을 지정된 최대 줄 수 이내로 압축하세요.\n의미·임팩트는 유지하되 더 간결하게 다듬어주세요.\n\n현재 캐럿셀:\n${JSON.stringify(pages, null, 2)}\n\n넘치는 항목:\n${issueDesc}\n\n압축 규칙:\n- headline: 최대 3줄 (40자 이내, 강렬하게)\n- body: 최대 5줄 (줄당 45자 이내)\n- 책 제목·저자명 절대 노출 금지\n\n전체 pages JSON을 반환하세요:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"cta":"...","linkText":"..."}}`,
     });
   } catch {
     return { success: true, pages }; // 예산 절약 생략·호출 실패 시 원본 유지
@@ -1277,7 +1255,7 @@ async function handleGenerateDmReply(env, body) {
     env, tier: 'main',
     max_tokens: 1600,
     system: '당신은 연애·관계 심리 전문 상담가이자 인스타그램 DM 회신 작성자입니다. 게시물 마지막 장 A/B 투표에 댓글을 남긴 팔로워에게 보낼 DM을 "하나의 메시지"로 작성합니다. 이 한 통의 DM 안에 A를 선택한 경우와 B를 선택한 경우의 내용을 모두 담아, 받은 사람이 자기 쪽을 읽으면 되게 합니다. 각 경우마다 그 성향을 따뜻하게 진단하고 책 내용에 근거한 구체적 솔루션을 함께 제시합니다. 단정·비난·공포 금지, 위로와 통찰의 톤. 노골적 판매 금지. 반말 절대 금지 — 존댓말만. 반드시 JSON만 응답합니다.',
-    user: `책 제목: ${bookInfo.title}\n저자: ${bookInfo.author || ''}\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n게시물 마지막 장의 A/B 투표 질문(이 선택지의 A·B 의미를 정확히 반영하세요):\n${pages.page5?.cta || ''}\n\n[작업] A·B 댓글 응답자 모두에게 보낼 "하나의 DM"을 작성하세요. A용/B용을 따로 만들지 말고, 한 통의 메시지 안에 두 경우를 모두 담으세요.\n\nDM 구성 순서:\n1. 따뜻한 인사 한 문장\n2. "A를 선택하셨다면" 섹션 — A 성향의 심리 진단(왜 그런 마음이 드는지, 애착·두려움·습관 등 뿌리)과 오늘부터 해볼 수 있는 책 기반 솔루션. 진단+솔루션 합쳐 최소 3문장 이상.\n3. "B를 선택하셨다면" 섹션 — B 성향의 심리 진단과 책 기반 솔루션. 진단+솔루션 합쳐 최소 3문장 이상. (A와 분명히 다른 내용)\n4. 책 안내: 더 깊은 이야기는 오늘의 책 "${bookInfo.title}"에 담겨 있다는 뉘앙스 한 문장.\n5. 도서 링크 안내: 아래 링크를 DM 본문에 그대로 포함(필수, 누락 금지):\n${linkGuide}\n${linksText ? `6. 구매 링크 안내 — 아래 링크도 그대로 포함(누락 금지):\n${linksText}\n` : ''}${linksText ? '7' : '6'}. 따뜻한 마무리 한 문장\n\n[톤 주의] A/B 어느 쪽이든 "당신이 틀렸다"는 뉘앙스 금지. 두 성향 모두 이해받아 마땅하다는 전제로 씁니다. A/B 섹션은 줄바꿈으로 또렷이 구분하세요.\n\nJSON: {"dmText":"A·B 두 경우를 모두 담은 하나의 DM 전체(줄바꿈은 \\n)"}`,
+    user: `책 제목: ${bookInfo.title}\n저자: ${bookInfo.author || ''}\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n게시물 마지막 장의 A/B 투표 질문(이 선택지의 A·B 의미를 정확히 반영하세요):\n${pages.page4?.cta || ''}\n\n[작업] A·B 댓글 응답자 모두에게 보낼 "하나의 DM"을 작성하세요. A용/B용을 따로 만들지 말고, 한 통의 메시지 안에 두 경우를 모두 담으세요.\n\nDM 구성 순서:\n1. 따뜻한 인사 한 문장\n2. "A를 선택하셨다면" 섹션 — A 성향의 심리 진단(왜 그런 마음이 드는지, 애착·두려움·습관 등 뿌리)과 오늘부터 해볼 수 있는 책 기반 솔루션. 진단+솔루션 합쳐 최소 3문장 이상.\n3. "B를 선택하셨다면" 섹션 — B 성향의 심리 진단과 책 기반 솔루션. 진단+솔루션 합쳐 최소 3문장 이상. (A와 분명히 다른 내용)\n4. 책 안내: 더 깊은 이야기는 오늘의 책 "${bookInfo.title}"에 담겨 있다는 뉘앙스 한 문장.\n5. 도서 링크 안내: 아래 링크를 DM 본문에 그대로 포함(필수, 누락 금지):\n${linkGuide}\n${linksText ? `6. 구매 링크 안내 — 아래 링크도 그대로 포함(누락 금지):\n${linksText}\n` : ''}${linksText ? '7' : '6'}. 따뜻한 마무리 한 문장\n\n[톤 주의] A/B 어느 쪽이든 "당신이 틀렸다"는 뉘앙스 금지. 두 성향 모두 이해받아 마땅하다는 전제로 씁니다. A/B 섹션은 줄바꿈으로 또렷이 구분하세요.\n\nJSON: {"dmText":"A·B 두 경우를 모두 담은 하나의 DM 전체(줄바꿈은 \\n)"}`,
   });
 
   const parsed = extractJson(text);
@@ -1414,12 +1392,12 @@ async function runStep(env, pipelineId, step) {
       }
     }
     if (!bookInfo?.title) throw new Error('책 정보가 없습니다.');
-    await setActive('Claude AI가 5페이지 카드뉴스를 작성 중...');
+    await setActive('Claude AI가 4페이지 카드뉴스를 작성 중...');
     await logStep(env, pipelineId, { step, phase: 'start', model: _modelCache?.main });
     // 1단계(생성) 실패는 치명적 → throw하여 advancePipeline이 error로 마감
     const genData = await handleGenerate(env, bookInfo);
     const pages = genData.pages;
-    const patch = { step: 1, stepStatus: 'done', label: '5페이지 카드뉴스 생성 완료', pages };
+    const patch = { step: 1, stepStatus: 'done', label: '4페이지 카드뉴스 생성 완료', pages };
     if (genData.bookCover) patch.bookCover = genData.bookCover;   // 마지막 장 표지
     if (genData.bookDescription) patch.bookDescription = genData.bookDescription; // 검증 근거(실제 책 소개)
     // 교차검증으로 저자가 교정됐으면 bookInfo에 반영(이후 단계·도서관·DM에 진짜 저자 사용)
@@ -1464,7 +1442,7 @@ async function runStep(env, pipelineId, step) {
     // 진행 상황(imgProg)을 저장하고 stepStatus='partial'로 두면, 다음 advancePipeline이
     // 스테일 대기 없이 같은 단계를 이어서 실행한다. 표지·프롬프트 생성은 정확히 1회.
     const { pages } = state;
-    const pageKeys = ['page1', 'page2', 'page3', 'page4', 'page5'];
+    const pageKeys = ['page1', 'page2', 'page3'];  // 4페이지는 프론트가 1페이지 흐림배경+책표지로 합성
     const MAX_TRIES = 3;   // 페이지당 총 시도(틱에 걸쳐) — 초과 시 원본 URL 폴백
 
     // (1회만) 이미지 프롬프트·URL 생성 → 상태에 고정 (재진입 시 Claude 재호출 방지)
@@ -1544,6 +1522,7 @@ async function runStep(env, pipelineId, step) {
       images[p] = prog.done[p] ? `/api/image?id=${pipelineId}&page=${p}` : (urlMap[p] || null);
       if (!prog.done[p] && urlMap[p]) await logStep(env, pipelineId, { step, phase: 'warn', error: `${p} 내려받기 실패 → 원본 URL 폴백(브라우저가 직접 로드)` });
     }
+    images.page4 = images.page1; // 4페이지(책 공개) 배경 = 1페이지 이미지(프론트가 흐림 처리)
     await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'done', label: '이미지 저장 완료', images });
     await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0 });
 
@@ -1560,18 +1539,8 @@ async function runStep(env, pipelineId, step) {
     } catch (e) {
       await logStep(env, pipelineId, { step, phase: 'warn', error: '캡션 생성 실패(계속 진행): ' + e.message });
     }
-    // ⭐ 릴스 대본도 서버(크론)에서 함께 생성해 저장 — 브라우저 생성은 지역 차단·이탈로
-    // 상습 실패했음("자동 생성 실패 — 캐럿셀 문구로 대체"). 프론트는 저장본을 그대로 쓴다.
-    let reel = null, reelValidation = null;
-    try {
-      const rd = await handleGenerateReel(env, { pages, bookInfo });
-      reel = rd.reel || null;
-      reelValidation = rd.validation || null;
-      await logStep(env, pipelineId, { step, phase: 'reel', note: `릴스 대본 생성 (score ${reelValidation?.score ?? '-'})` });
-    } catch (e) {
-      await logStep(env, pipelineId, { step, phase: 'warn', error: '릴스 대본 실패(캐럿셀 문구로 대체): ' + e.message });
-    }
-    await savePipelineStatus(env, pipelineId, { step: 4, stepStatus: 'done', label: '캡션 + 릴스 대본 생성 완료', caption, hashtags, dmKeyword, reel, reelValidation });
+    // 릴스 문구는 별도 생성하지 않는다(문구 통일 정책) — 캐럿셀 4페이지 문구를 프론트가 그대로 배치.
+    await savePipelineStatus(env, pipelineId, { step: 4, stepStatus: 'done', label: '캡션 + 해시태그 생성 완료', caption, hashtags, dmKeyword });
     await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0 });
 
   } else if (step === 5) {
@@ -1886,7 +1855,7 @@ async function executePipeline(env, pipelineId, bookInfo, affiliateLinks, commen
     } catch (e) {
       return await savePipelineStatus(env, pipelineId, { status: 'error', error: `캐럿셀 생성 실패: ${e.message}` });
     }
-    await savePipelineStatus(env, pipelineId, { step: 1, stepStatus: 'done', label: '5페이지 카드뉴스 생성 완료', pages });
+    await savePipelineStatus(env, pipelineId, { step: 1, stepStatus: 'done', label: '4페이지 카드뉴스 생성 완료', pages });
 
     // Step 2: 품질 검증 (최대 2회)
     await savePipelineStatus(env, pipelineId, { step: 2, stepStatus: 'active', label: 'AI 자동 품질 평가 중...' });
@@ -1999,7 +1968,7 @@ async function handlePostInstagram(env, body) {
 
   // Step 1: 페이지별 미디어 컨테이너 생성 (is_carousel_item=true)
   const containerIds = [];
-  for (const page of ['page1', 'page2', 'page3', 'page4', 'page5']) {
+  for (const page of ['page1', 'page2', 'page3', 'page4']) {
     const imgUrl = images[page];
     if (!imgUrl) continue;
     const res = await fetch(`${BASE}/media`, {
@@ -2669,8 +2638,6 @@ export default {
         else if (url.pathname === '/api/analyze') result = await handleAnalyze(env, body);
         else if (url.pathname === '/api/generate') result = await handleGenerate(env, body);
         else if (url.pathname === '/api/generate-images') result = await handleGenerateImages(env, body);
-        else if (url.pathname === '/api/reel-hook') result = await handleReelHook(env, body);
-        else if (url.pathname === '/api/generate-reel') result = await handleGenerateReel(env, body);
         else if (url.pathname === '/api/generate-caption') result = await handleGenerateCaption(env, body);
         else if (url.pathname === '/api/validate') result = await handleValidate(env, body);
         else if (url.pathname === '/api/regenerate') result = await handleRegenerate(env, body);

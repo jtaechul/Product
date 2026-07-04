@@ -656,6 +656,12 @@
     /* 3탭이므로 탭 라벨 살짝 압축 */
     .mode-tabs .mode-tab { font-size: 12px; padding: 13px 6px; }
 
+    /* 책 공개 카드(4페이지) — 1페이지 이미지를 흐림 배경으로 재사용 */
+    .card { position: relative; overflow: hidden; }
+    .card-bg-blur { position: absolute; inset: -26px; background-size: cover; background-position: center;
+      filter: blur(22px) brightness(0.72); z-index: 0; }
+    .card .card-inner { position: relative; z-index: 1; }
+
     /* ── 보관함 / 관리 오버레이 ── */
     .archive-overlay { position: fixed; inset: 0; background: rgba(20,20,30,0.55); z-index: 300; display: none; padding: 24px; }
     .archive-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
@@ -947,7 +953,7 @@
       <button class="btn btn-outline" id="copyAllBtn">전체 복사</button>
       <button class="btn btn-outline" id="generateImagesBtn" style="background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;border:none;">이미지 생성</button>
       <button class="btn btn-outline" id="saveAllImagesBtn" style="background:linear-gradient(135deg,#064e3b,#065f46);color:#fff;border:none;">이미지 전체 저장</button>
-      <button class="btn btn-outline" id="saveReelSetBtn" style="background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border:none;">릴스 세트(세로 5장)</button>
+      <button class="btn btn-outline" id="saveReelSetBtn" style="background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border:none;">릴스 세트(세로 4장)</button>
       <button class="btn btn-validate" id="validateBtn">품질 검증</button>
     </div>
     <!-- 릴스 문구 미리보기 + 자동 검증 -->
@@ -1148,7 +1154,7 @@ function clearHistory() {
   showToast('중복 방지 기록이 초기화됐습니다.', 'info');
 }
 
-const PAGE_LABELS = ['훅', '문제', '심각성', '실마리', '반문·결말'];
+const PAGE_LABELS = ['훅', '패턴과 이유', '위로', '책 공개'];
 const SCORE_KEYS = [
   { key: 'accuracy',    label: '책 내용 부합도', max: 20 },
   { key: 'factual',     label: '사실 정확성', max: 20 },
@@ -1226,7 +1232,7 @@ function escHtml(str) {
 }
 
 function getCardText(page, num) {
-  if (num === 5) return `[페이지 5 - CTA]\n${page.cta}\n\n${page.linkText}`;
+  if (num === 4) return `[페이지 4 - 책 공개]\n${page.cta || ''}\n\n${page.linkText || ''}`;
   const body = page.body || page.subtext || '';
   return `[페이지 ${num} - ${PAGE_LABELS[num-1]}]\n${page.headline}\n\n${body}`;
 }
@@ -1361,7 +1367,6 @@ async function generateCarousel() {
   state._catalogAdded = false;
   state.bookNumber = '';  // 새 책 → 번호는 도서관 등록/게시할 때 부여
   state.draftId = '';     // 새 책 → 새 초안
-  state.reelHook = '';    // 새 책 → 릴스 훅 새로 생성
   state.reelScript = null; state.reelValidation = null;  // 새 책 → 릴스 대본 새로 생성
   const rp = document.getElementById('reelPreview'); if (rp) rp.style.display = 'none';
   document.getElementById('validationPanel').classList.remove('visible');
@@ -1535,16 +1540,25 @@ async function addBookToCatalogIfNeeded() {
 }
 
 // ===== Render Carousel =====
+// 구버전(5페이지) 데이터 어댑터 — 옛 초안·보관함을 열어도 4페이지 구조로 표시.
+function normalizePages(p) {
+  if (p && p.page5) {
+    return { page1: p.page1, page2: p.page2, page3: p.page4 || p.page3, page4: p.page5 };
+  }
+  return p;
+}
+
 function renderCarousel(pages) {
+  pages = normalizePages(pages);
+  if (state.pages) state.pages = pages;
   const scroll = document.getElementById('carouselScroll');
   scroll.innerHTML = '';
 
   const cardData = [
-    { num: 1, cls: 'card-1', content: pages.page1, type: 'hook' },
-    { num: 2, cls: 'card-2', content: pages.page2, type: 'body' },
-    { num: 3, cls: 'card-3', content: pages.page3, type: 'body' },
-    { num: 4, cls: 'card-4', content: pages.page4, type: 'body' },
-    { num: 5, cls: 'card-5', content: pages.page5, type: 'cta' },
+    { num: 1, cls: 'card-1', content: pages.page1 || {}, type: 'hook' },
+    { num: 2, cls: 'card-2', content: pages.page2 || {}, type: 'body' },
+    { num: 3, cls: 'card-3', content: pages.page3 || {}, type: 'body' },
+    { num: 4, cls: 'card-5', content: pages.page4 || {}, type: 'cta' }, // 책 공개(기존 5장 스타일 재사용)
   ];
 
   const bookFooter = state.bookInfo ? `${state.bookInfo.title} · ${state.bookInfo.author}` : '';
@@ -1723,6 +1737,7 @@ document.getElementById('generateImagesBtn').addEventListener('click', async () 
       pages: state.pages,
       bookInfo: state.bookInfo,
     });
+    if (data.images && data.images.page1) data.images.page4 = data.images.page1; // 책공개 배경 = 1페이지(흐림)
     state.images = data.images;
     hideLoading();
     // 순차 로딩 (동시 요청 → Pollinations rate-limit 원인) — await로 1장씩
@@ -1751,10 +1766,10 @@ document.getElementById('generateImagesBtn').addEventListener('click', async () 
   }
 });
 
-// 이미지 5장 로딩 — /api/image 경로(KV 저장)이면 병렬 즉시 로드, Pollinations URL이면 순차 로딩
+// 이미지 4장 로딩 — /api/image 경로(KV 저장)이면 병렬 즉시 로드, Pollinations URL이면 순차 로딩
 async function applyImagesToCards(images) {
   const cards = document.querySelectorAll('#carouselScroll .card');
-  const pages = ['page1', 'page2', 'page3', 'page4', 'page5'];
+  const pages = ['page1', 'page2', 'page3', 'page4']; // page4 배경 = page1 이미지(흐림은 카드가 처리)
 
   // /api/image 경로는 서버에 이미 저장된 이미지 → 모두 동시에 즉시 로드
   const allKv = pages.every(p => !images[p] || images[p].startsWith('/api/image'));
@@ -1773,14 +1788,14 @@ async function applyImagesToCards(images) {
     for (let i = 0; i < pages.length; i++) {
       const url = images[pages[i]];
       if (!url || !cards[i]) continue;
-      showToast(`이미지 생성 중... (${i + 1}/5장)`, 'info');
+      showToast(`이미지 생성 중... (${i + 1}/4장)`, 'info');
       await loadImageWithRetry(cards[i], url, i + 1, 0);
       if (i < pages.length - 1) await new Promise(r => setTimeout(r, 10000));
     }
   }
 
   const loaded = [...cards].filter(c => c.dataset.blobUrl).length;
-  showToast(`이미지 로드 완료 (${loaded}/5장)`, loaded === 5 ? 'success' : 'warning');
+  showToast(`이미지 로드 완료 (${loaded}/4장)`, loaded === 4 ? 'success' : 'warning');
   return loaded;
 }
 
@@ -1822,7 +1837,14 @@ async function loadImageWithRetry(card, baseUrl, pageNum, attempt) {
 
     const blobUrl = URL.createObjectURL(blob);
     spinner.remove();
-    card.style.backgroundImage = `url('${blobUrl}')`;
+    if (card.classList.contains('card-5')) {
+      // 책 공개 카드: 배경을 흐림 레이어로(1페이지 이미지 재사용 — 비용 0, 처음-끝 연결감)
+      let bl = card.querySelector('.card-bg-blur');
+      if (!bl) { bl = document.createElement('div'); bl.className = 'card-bg-blur'; card.insertBefore(bl, card.firstChild); }
+      bl.style.backgroundImage = `url('${blobUrl}')`;
+    } else {
+      card.style.backgroundImage = `url('${blobUrl}')`;
+    }
     card.classList.add('card-with-image');
     card.dataset.blobUrl = blobUrl;   // canvas 합성용 로컬 blob
     card.dataset.imageUrl = tryUrl;   // 원본 URL 보존
@@ -1858,7 +1880,7 @@ function addSaveButton(card, pageNum) {
     });
     card.appendChild(btn);
   }
-  if (!card.querySelector('.card-img-regen')) {
+  if (!card.querySelector('.card-img-regen') && !card.classList.contains('card-5')) {
     const rbtn = document.createElement('button');
     rbtn.className = 'card-img-dl card-img-regen';
     rbtn.textContent = '재생성';
@@ -2093,7 +2115,7 @@ async function buildReelRevealSlide(blobUrl, accent) {
   await document.fonts.ready;
   await _reelBg(ctx, W, H, blobUrl);
   _reelTopHandle(ctx, W);
-  const pg5 = state.pages?.page5 || {};
+  const pg5 = state.pages?.page4 || {};
   const cta = shortReelLine(pg5.cta || '', 40);  // 해결 한 줄
   let cover = null;
   if (state.bookCover) {
@@ -2166,32 +2188,21 @@ async function buildReelRevealSlide(blobUrl, accent) {
   return new Promise(r => canvas.toBlob(r, 'image/png'));
 }
 
-// 캐럿셀 문구를 조각내던 폴백(연결성 있는 대본 생성 실패 시에만 사용)
-function _reelFallbackScript(p) {
+// 릴스 문구 = 캐럿셀 4페이지 문구 그대로(문구 통일 정책 — 생성 API 호출 0회, 비용 0)
+function _reelFromPages(p) {
   const joinHB = pg => {
     const h = (pg?.headline || '').trim(), b = (pg?.body || '').trim();
     if (!h) return b; if (!b) return h;
     return /[.!?。…]$/.test(h) ? `${h} ${b}` : `${h}. ${b}`;
   };
-  return { s1: p.page1?.headline || '', s2: joinHB(p.page2), s3: joinHB(p.page3), s4: joinHB(p.page4) };
+  return { s1: p?.page1?.headline || '', s2: joinHB(p?.page2), s3: joinHB(p?.page3) };
 }
 
-// 릴스 대본 생성(연결성 있게) + 자동 검증 → state 저장 후 미리보기 렌더.
-async function generateReelScript(force) {
+// 릴스 문구 준비(로컬 파생) → 미리보기 렌더. API 호출 없음.
+async function generateReelScript() {
   if (!state.pages?.page1?.headline) return;
-  if (state.reelScript && !force) { renderReelPreview(); return; }
-  const rbtn = document.getElementById('regenReelBtn');
-  if (rbtn) { rbtn.disabled = true; rbtn.textContent = '만드는 중...'; }
-  try {
-    const r = await apiFetch('/api/generate-reel', { pages: state.pages, bookInfo: state.bookInfo });
-    state.reelScript = r.reel || _reelFallbackScript(state.pages);
-    state.reelValidation = r.validation || null;
-  } catch (e) {
-    state.reelScript = _reelFallbackScript(state.pages);
-    state.reelValidation = { note: '자동 생성 실패 — 캐럿셀 문구로 대체' };
-  } finally {
-    if (rbtn) { rbtn.disabled = false; rbtn.textContent = '릴스 문구 다시 만들기'; }
-  }
+  state.reelScript = _reelFromPages(state.pages);
+  state.reelValidation = { connected: true, readable: true, note: '게시물 문구와 동일 (통일 정책 — 배치만 다름)' };
   renderReelPreview();
 }
 
@@ -2203,7 +2214,7 @@ function renderReelPreview() {
   const cleanT = (state.bookInfo?.title || '').split(/\s*[\(（]/)[0].trim() || (state.bookInfo?.title || '');
   const rev = `「${cleanT}」${state.bookInfo?.author ? ' · ' + state.bookInfo.author : ''}`;
   const rows = [
-    ['1 · 훅', s.s1], ['2', s.s2], ['3', s.s3], ['4', s.s4], ['5 · 책 공개', rev],
+    ['1 · 훅', s.s1], ['2', s.s2], ['3', s.s3], ['4 · 책 공개', rev],
   ];
   document.getElementById('reelLines').innerHTML = rows.map(([n, t]) =>
     `<div style="display:flex;gap:8px;"><span style="color:#a78bda;font-weight:700;min-width:52px;">${n}</span><span>${escHtml(t || '—')}</span></div>`
@@ -2217,47 +2228,43 @@ function renderReelPreview() {
   document.getElementById('reelValidNote').textContent = v.note || '';
   panel.style.display = 'block';
 }
-document.getElementById('regenReelBtn').addEventListener('click', () => generateReelScript(true));
+document.getElementById('regenReelBtn').style.display = 'none'; // 문구 통일 — 별도 재생성 없음
 
 async function saveReelSet() {
   if (!state.pages?.page1?.headline) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
   const cards = document.querySelectorAll('#carouselScroll .card');
   const bg = (i) => (cards[i] && cards[i].dataset.blobUrl) || null;
-  if (![0,1,2,3,4].some(i => bg(i))) { showToast('먼저 "이미지 생성"을 해주세요 (배경이 필요합니다).', 'warning'); return; }
+  if (![0,1,2,3].some(i => bg(i))) { showToast('먼저 "이미지 생성"을 해주세요 (배경이 필요합니다).', 'warning'); return; }
 
   const p = state.pages || {};
   const btn = document.getElementById('saveReelSetBtn');
   btn.disabled = true; btn.textContent = '만드는 중...';
   try {
-    // 연결성 있는 릴스 대본이 아직 없으면 지금 생성(미리보기와 동일한 문구를 저장).
-    if (!state.reelScript) { btn.textContent = '릴스 문구 만드는 중...'; await generateReelScript(true); }
-    btn.textContent = '만드는 중...';
-    const sc = state.reelScript || _reelFallbackScript(p);
+    const sc = state.reelScript || _reelFromPages(p);
     const textSlides = [
       { bg: bg(0), text: reelClamp(sc.s1, 46), accent: REEL_ACCENT[1], isHook: true },
-      { bg: bg(1), text: reelClamp(sc.s2, 58), accent: REEL_ACCENT[2] },
-      { bg: bg(2), text: reelClamp(sc.s3, 58), accent: REEL_ACCENT[3] },
-      { bg: bg(3), text: reelClamp(sc.s4, 58), accent: REEL_ACCENT[4] },
+      { bg: bg(1), text: reelClamp(sc.s2, 76), accent: REEL_ACCENT[2] },
+      { bg: bg(2), text: reelClamp(sc.s3, 76), accent: REEL_ACCENT[3] },
     ];
     const files = [];
     for (let i = 0; i < textSlides.length; i++) {
       const blob = await buildReelTextSlide(textSlides[i].bg, textSlides[i]);
       if (blob) files.push(new File([blob], `reel_${i + 1}.png`, { type: 'image/png' }));
     }
-    const revealBlob = await buildReelRevealSlide(bg(4) || bg(0), REEL_ACCENT[5]);
-    if (revealBlob) files.push(new File([revealBlob], `reel_5.png`, { type: 'image/png' }));
+    const revealBlob = await buildReelRevealSlide(bg(3) || bg(0), REEL_ACCENT[4]);
+    if (revealBlob) files.push(new File([revealBlob], `reel_4.png`, { type: 'image/png' }));
     if (!files.length) { showToast('릴스 이미지 생성 실패', 'error'); return; }
     if (navigator.canShare && navigator.canShare({ files })) {
-      try { await navigator.share({ files, title: '릴스 세트' }); showToast('릴스 5장 저장 완료 — 인스타 릴스에서 순서대로 선택 + 음악', 'success'); }
-      catch (e) { if (e.name !== 'AbortError') { files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }); showToast('릴스 5장 저장 완료', 'success'); } }
+      try { await navigator.share({ files, title: '릴스 세트' }); showToast('릴스 4장 저장 완료 — 인스타 릴스에서 순서대로 선택 + 음악', 'success'); }
+      catch (e) { if (e.name !== 'AbortError') { files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }); showToast('릴스 4장 저장 완료', 'success'); } }
     } else {
       files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); });
-      showToast('릴스 5장 저장 완료', 'success');
+      showToast('릴스 4장 저장 완료', 'success');
     }
   } catch (e) {
     showToast('릴스 생성 실패: ' + e.message, 'error');
   } finally {
-    btn.disabled = false; btn.textContent = '릴스 세트(세로 5장)';
+    btn.disabled = false; btn.textContent = '릴스 세트(세로 4장)';
   }
 }
 document.getElementById('saveReelSetBtn').addEventListener('click', saveReelSet);
@@ -2273,7 +2280,8 @@ async function generateCompositeDataUrl(card, pageNum) {
   if (blobUrl) {
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
-    ctx.drawImage(img, 0, 0, W, H);
+    if (pageNum === 4) { ctx.filter = 'blur(26px) brightness(0.72)'; ctx.drawImage(img, -40, -40, W + 80, H + 80); ctx.filter = 'none'; }
+    else ctx.drawImage(img, 0, 0, W, H);
     const grad = ctx.createLinearGradient(0, H * 0.3, 0, H);
     grad.addColorStop(0, 'rgba(0,0,0,0)');
     grad.addColorStop(1, 'rgba(0,0,0,0.9)');
@@ -2291,7 +2299,7 @@ async function generateCompositeDataUrl(card, pageNum) {
   ctx.textAlign = 'left';
   ctx.fillText(`${pageNum}`, 70, 86);
   // 마지막 장 = 책 공개 (표지·제목·저자 + 솔루션)
-  if (pageNum === 5) {
+  if (pageNum === 4) {
     await drawPage5Reveal(ctx, W, H);
     return new Promise(resolve => canvas.toBlob(blob => {
       const reader = new FileReader();
@@ -2363,10 +2371,10 @@ function measureCanvasOverflow(pages) {
     }
   };
 
-  for (let p = 1; p <= 5; p++) {
+  for (let p = 1; p <= 4; p++) {
     const pg = pages[`page${p}`] || {};
-    const headline = p === 5 ? (pg.cta || '') : (pg.headline || '');
-    const body = p === 1 || p === 5 ? (p === 5 ? pg.linkText || '' : '') : (pg.body || '');
+    const headline = p === 4 ? (pg.cta || '') : (pg.headline || '');
+    const body = p === 1 || p === 4 ? (p === 4 ? pg.linkText || '' : '') : (pg.body || '');
     check(`page${p}`, 'headline', headline, 68, 40, 4, 3, '900');
     if (body) check(`page${p}`, 'body', body, 42, 28, 3, 5, '400');
   }
@@ -2376,7 +2384,7 @@ function measureCanvasOverflow(pages) {
 async function generateCompositeImages() {
   const cards = document.querySelectorAll('#carouselScroll .card');
   const result = {};
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 4; i++) {
     const card = cards[i];
     if (!card) continue;
     try {
@@ -2427,7 +2435,7 @@ async function saveCardAsCanvas(card, pageNum) {
 // 마지막 장(5페이지) 책 공개 그리기 — 표지·제목·저자 + 솔루션. 저장/텔레그램 공용.
 async function drawPage5Reveal(ctx, W, H) {
   const PAD_X = 70;
-  const pg5 = state.pages?.page5 || {};
+  const pg5 = state.pages?.page4 || {};
   const cta = pg5.cta || '', link = pg5.linkText || '';
   const TEXT_W = W - PAD_X * 2;
   const rr = (x,y,w,h,r)=>{ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();};
@@ -2511,7 +2519,8 @@ async function buildCardBlob(card, pageNum) {
   if (blobUrl) {
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
-    ctx.drawImage(img, 0, 0, W, H);
+    if (pageNum === 4) { ctx.filter = 'blur(26px) brightness(0.72)'; ctx.drawImage(img, -40, -40, W + 80, H + 80); ctx.filter = 'none'; }
+    else ctx.drawImage(img, 0, 0, W, H);
     const grad = ctx.createLinearGradient(0, H * 0.3, 0, H);
     grad.addColorStop(0, 'rgba(0,0,0,0)');
     grad.addColorStop(1, 'rgba(0,0,0,0.9)');
@@ -2531,8 +2540,8 @@ async function buildCardBlob(card, pageNum) {
   ctx.textAlign = 'left';
   ctx.fillText(`${pageNum}`, 70, 86);
 
-  // ②-5 마지막 장 = 책 공개 (표지·제목·저자 + 솔루션)
-  if (pageNum === 5) {
+  // ②-4 마지막 장 = 책 공개 (표지·제목·저자 + 솔루션)
+  if (pageNum === 4) {
     await drawPage5Reveal(ctx, W, H);
     return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   }
@@ -2540,8 +2549,7 @@ async function buildCardBlob(card, pageNum) {
   // ③ 텍스트 콘텐츠 추출
   const pg = state.pages?.[`page${pageNum}`] || {};
   let headline = '', body = '';
-  if (pageNum === 5) { headline = pg.cta || ''; body = pg.linkText || ''; }
-  else if (pageNum === 1) { headline = pg.headline || ''; body = ''; }
+  if (pageNum === 1) { headline = pg.headline || ''; body = ''; }
   else { headline = pg.headline || ''; body = pg.body || ''; }
 
   // ④ 동적 bottom-anchored 레이아웃
@@ -2939,8 +2947,10 @@ async function openDraftDetail(id) {
   const p = d.pages || {};
   const parts = [];
   if (p.page1?.headline) parts.push('1. ' + p.page1.headline);
-  [2,3,4].forEach(n => { const pg = p['page'+n]; if (pg) parts.push(`${n}. ${pg.headline||''}\n${pg.body||''}`.trim()); });
-  if (p.page5) parts.push('5. ' + [p.page5.cta, p.page5.linkText].filter(Boolean).join('\n'));
+  [2,3].forEach(n => { const pg = p['page'+n]; if (pg && pg.headline) parts.push(`${n}. ${pg.headline||''}\n${pg.body||''}`.trim()); });
+  const last = p.page5 || p.page4; // 신규(4p)·구버전(5p) 겸용
+  if (last && (last.cta || last.linkText)) parts.push('책 공개. ' + [last.cta, last.linkText].filter(Boolean).join('\n'));
+  else if (p.page4 && p.page4.headline) parts.push('4. ' + `${p.page4.headline||''}\n${p.page4.body||''}`.trim());
   const imgs = d.images && typeof d.images === 'object' ? Object.values(d.images) : [];
   detail.innerHTML = `
     <button class="arch-back" id="archBack">← 목록</button>
@@ -2997,14 +3007,16 @@ async function openArchiveDetail(num) {
   }
   document.getElementById('archiveTitle').textContent = `No.${d.number} · ${d.title || ''}`;
 
-  // 5장 카드 텍스트 조립 (읽기용)
+  // 카드 텍스트 조립 (읽기용 — 신규 4페이지·구버전 5페이지 겸용)
   let pagesText = '';
   if (d.pages) {
     const p = d.pages;
     const parts = [];
     if (p.page1?.headline) parts.push('1. ' + p.page1.headline);
-    [2,3,4].forEach(n => { const pg = p['page'+n]; if (pg) parts.push(`${n}. ${pg.headline||''}\n${pg.body||''}`.trim()); });
-    if (p.page5) parts.push('5. ' + [p.page5.cta, p.page5.linkText].filter(Boolean).join('\n'));
+    [2,3].forEach(n => { const pg = p['page'+n]; if (pg && pg.headline) parts.push(`${n}. ${pg.headline||''}\n${pg.body||''}`.trim()); });
+    const last = p.page5 || p.page4;
+    if (last && (last.cta || last.linkText)) parts.push('책 공개. ' + [last.cta, last.linkText].filter(Boolean).join('\n'));
+    else if (p.page4 && p.page4.headline) parts.push('4. ' + `${p.page4.headline||''}\n${p.page4.body||''}`.trim());
     pagesText = parts.join('\n\n');
   }
   const hashtags = (d.hashtags||[]).join(' ');
@@ -3243,7 +3255,6 @@ async function runAutoDeployPipeline(bookInfo, affiliateLinks, autoSelect) {
   _resultsRendered = false;
   state._catalogAdded = false;
   state.draftId = '';
-  state.reelHook = '';
   state.reelScript = null; state.reelValidation = null;
   const _rp = document.getElementById('reelPreview'); if (_rp) _rp.style.display = 'none';
 
@@ -3379,9 +3390,10 @@ async function runBrowserPipeline(bookInfo, affiliateLinks) {
   setStep(validation.approved ? 4 : 3);
 
   // ── Step 3: 이미지 생성 (5장 모두 로드 완료 후 다음 단계로) ──
-  setDeployStep(3, 'active', 'AI 이미지 5장 생성 중... (장당 최대 35초, 잠시 기다려주세요)');
+  setDeployStep(3, 'active', 'AI 이미지 생성 중... (잠시 기다려주세요)');
   try {
     const imgData = await apiFetch('/api/generate-images', { pages, bookInfo });
+    if (imgData.images && imgData.images.page1) imgData.images.page4 = imgData.images.page1; // 책공개 배경 = 1페이지
     state.images = imgData.images;
     await applyImagesToCards(imgData.images);
     setDeployStep(3, 'done', '이미지 로드 완료 — 텔레그램 발송 준비');
@@ -3581,15 +3593,8 @@ function renderPipelineResults(status, autoSendComposites) {
   if (status.affiliateLinks) state.affiliateLinks = status.affiliateLinks;
   if (status.bookInfo) addToHistory(status.bookInfo.title);
   renderCarousel(status.pages);
-  // 릴스 대본: 서버(파이프라인 4단계)가 만들어 저장한 것을 우선 사용 — 브라우저 생성은
-  // 지역 차단 등으로 상습 실패했음. 저장본이 없을 때만 브라우저에서 생성 시도.
-  if (status.reel && status.reel.s1) {
-    state.reelScript = status.reel;
-    state.reelValidation = status.reelValidation || null;
-    renderReelPreview();
-  } else {
-    state.reelScript = null; generateReelScript();
-  }
+  // 릴스 문구 = 캐럿셀 문구 그대로(로컬 파생, API 0회)
+  state.reelScript = null; generateReelScript();
   if (status.images) applyImagesToCards(status.images);
   if (status.caption) {
     document.getElementById('captionTextContent').textContent = status.caption;
