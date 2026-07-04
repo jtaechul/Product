@@ -1003,34 +1003,35 @@ function parsePullpush(arr) {
 // ① OAuth(키) ② reddit .json 직접/프록시 ③ pullpush.io 아카이브 API (데이터센터 IP 허용 → 차단 우회)
 async function fetchRedditData(env, multi, subs) {
   const jsonUrl = `https://www.reddit.com/r/${multi}/hot.json?limit=40&raw_json=1`;
-  const attempts = [];
+  const labels = [], jobs = [];
+  const add = (label, fn) => { labels.push(label); jobs.push(fn); };
 
   const token = await redditToken(env);
-  if (token) attempts.push((async () => {
+  if (token) add('oauth', async () => {
     const j = await fetchJsonWithTimeout(`https://oauth.reddit.com/r/${multi}/hot?limit=40&raw_json=1`);
     const posts = parseRedditChildren(j?.data?.children || []);
     if (!posts.length) throw new Error('empty'); return { posts, via: 'oauth' };
-  })());
+  });
 
-  for (const [via, url] of [
-    ['direct', jsonUrl],
-    ['codetabs', `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(jsonUrl)}`],
-    ['allorigins', `https://api.allorigins.win/raw?url=${encodeURIComponent(jsonUrl)}`],
-    ['corsproxy', `https://corsproxy.io/?url=${encodeURIComponent(jsonUrl)}`],
-  ]) attempts.push((async () => {
-    const j = await fetchJsonWithTimeout(url);
-    const posts = parseRedditChildren(j?.data?.children || []);
-    if (!posts.length) throw new Error('empty'); return { posts, via };
-  })());
-
-  // pullpush.io — 카테고리의 각 서브레딧에서 점수순 인기 제출물 (auth 불필요, 데이터센터 허용)
-  for (const sub of (subs || []).slice(0, 3)) attempts.push((async () => {
-    const j = await fetchJsonWithTimeout(`https://api.pullpush.io/reddit/search/submission/?subreddit=${encodeURIComponent(sub)}&sort=desc&sort_type=score&size=50&over_18=false`);
+  // pullpush.io — 진단상 유일하게 동작하는 소스(auth 불필요). 카테고리 서브레딧별 점수순 인기.
+  for (const sub of (subs || []).slice(0, 3)) add('pullpush:' + sub, async () => {
+    const j = await fetchJsonWithTimeout(`https://api.pullpush.io/reddit/search/submission/?subreddit=${encodeURIComponent(sub)}&sort=desc&sort_type=score&size=50`);
     const posts = parsePullpush(j?.data || []);
-    if (!posts.length) throw new Error('empty'); return { posts, via: 'pullpush:' + sub };
-  })());
+    if (!posts.length) throw new Error('empty(' + (Array.isArray(j?.data) ? j.data.length : 'nodata') + ')'); return { posts, via: 'pullpush:' + sub };
+  });
 
-  try { return await Promise.any(attempts); } catch { return null; }
+  // reddit .json 직접(대부분 403이지만 혹시 대비)
+  add('direct', async () => {
+    const j = await fetchJsonWithTimeout(jsonUrl);
+    const posts = parseRedditChildren(j?.data?.children || []);
+    if (!posts.length) throw new Error('empty'); return { posts, via: 'direct' };
+  });
+
+  const settled = await Promise.allSettled(jobs);
+  const ok = settled.find(s => s.status === 'fulfilled' && s.value?.posts?.length);
+  if (ok) return ok.value;
+  const errs = settled.map((s, i) => `${labels[i]}=${s.status === 'rejected' ? String(s.reason && s.reason.message || s.reason).slice(0, 40) : 'ok?'}`);
+  return { error: errs.join(' | ') };
 }
 
 async function handleRedditTrending(env, body) {
@@ -1039,8 +1040,8 @@ async function handleRedditTrending(env, body) {
   const multi = subs.join('+');
 
   const got = await fetchRedditData(env, multi, subs);
-  if (!got) {
-    throw new Error('REDDIT_BLOCKED: 여러 경로로 시도했지만 Reddit을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+  if (!got || !got.posts) {
+    throw new Error('REDDIT_BLOCKED: ' + (got?.error || '모든 경로 실패'));
   }
   return { success: true, category: cat, subs, posts: got.posts, via: got.via };
 }
