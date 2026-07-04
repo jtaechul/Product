@@ -2392,7 +2392,7 @@ function drawBlurredCover(ctx, img, W, H) {
   const dw = img.width * s, dh = img.height * s;
   wc.drawImage(img, (bw - dw) / 2, (bh - dh) / 2, dw, dh);
   const id = wc.getImageData(0, 0, bw, bh);
-  const r = Math.max(3, Math.round(Math.max(bw, bh) / 12));  // 반경(작업 해상도 기준) — 강한 소프트
+  const r = Math.max(3, Math.round(Math.max(bw, bh) / 19));  // 반경(작업 해상도 기준) — 은은한 소프트(약하게)
   _boxBlurH(id.data, bw, bh, r); _boxBlurV(id.data, bw, bh, r);
   _boxBlurH(id.data, bw, bh, r); _boxBlurV(id.data, bw, bh, r);
   _boxBlurH(id.data, bw, bh, r); _boxBlurV(id.data, bw, bh, r);  // 3패스 = 가우시안
