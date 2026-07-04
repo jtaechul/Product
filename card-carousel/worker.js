@@ -1027,7 +1027,7 @@ async function fetchRedditData(env, multi, subs) {
     if (!posts.length) throw new Error('empty'); return { posts, via: 'direct' };
   });
 
-  const settled = await Promise.allSettled(jobs);
+  const settled = await Promise.allSettled(jobs.map(f => f())); // ★ 함수를 호출해 실제 실행
   const ok = settled.find(s => s.status === 'fulfilled' && s.value?.posts?.length);
   if (ok) return ok.value;
   const errs = settled.map((s, i) => `${labels[i]}=${s.status === 'rejected' ? String(s.reason && s.reason.message || s.reason).slice(0, 40) : 'ok?'}`);
