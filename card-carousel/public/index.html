@@ -263,14 +263,28 @@
     .trace-badge.low { background: #DCFCE7; color: #166534; }
     .trace-badge.unknown { background: var(--gray-100); color: var(--gray-500); }
 
-    /* 원본 후보 이미지 (클릭 시 업로드 이미지 교체) */
+    /* 원본 후보 미디어 (다중 선택 → 추가) */
     .origin-cands { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
     .origin-cand {
-      width: 64px; height: 64px; object-fit: cover;
+      position: relative;
+      width: 64px; height: 64px;
       border-radius: 8px; border: 1.5px solid var(--gray-200);
-      cursor: pointer; transition: border-color 0.15s, transform 0.15s;
+      cursor: pointer; overflow: hidden; background: var(--gray-800);
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    .origin-cand:hover { border-color: var(--primary); transform: scale(1.05); }
+    .origin-cand img, .origin-cand video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .origin-cand:hover { border-color: var(--primary-light); }
+    .origin-cand.selected { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(124,58,237,0.3); }
+    .origin-cand.selected::after {
+      content: ''; position: absolute; top: 4px; right: 4px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--primary); box-shadow: 0 0 0 2px #fff;
+    }
+    .origin-cand-video-label {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 11px; font-weight: 700; background: rgba(0,0,0,0.45); pointer-events: none;
+    }
+    .add-origin-btn { margin-top: 8px; font-size: 11.5px; padding: 7px 12px; }
 
     .trace-links { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
     .trace-links a { color: var(--primary); font-size: 11.5px; word-break: break-all; text-decoration: none; }
@@ -547,6 +561,40 @@
     .toast.warning { background: var(--warning); }
     @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
+    /* v2.0: 훅 카드 강조 단어 (단일 액센트 컬러 — 밝은/어두운 배경 공통) */
+    .hook-accent { color: #FF6B57; }
+
+    /* v2.0: 업로드 썸네일 동영상 배지 */
+    .upload-thumb .video-badge {
+      position: absolute; left: 2px; bottom: 2px;
+      background: rgba(0,0,0,0.65); color: #fff;
+      font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px;
+    }
+
+    /* v2.0: 릴스 모드 영상 미리보기 카드 */
+    .card-video { background: #000; }
+    .card-video video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* v2.0: 수집된 팩트 패널 (접이식) */
+    .facts-panel { display: none; background: #fff; border: 1px solid var(--gray-200); border-radius: 14px; overflow: hidden; }
+    .facts-panel.visible { display: block; }
+    .facts-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; cursor: pointer; user-select: none;
+      font-weight: 700; font-size: 14px; color: var(--gray-800);
+    }
+    .facts-arrow { color: var(--gray-400); font-size: 11px; transition: transform 0.2s; }
+    .facts-panel.collapsed .facts-arrow { transform: rotate(-90deg); }
+    .facts-body { padding: 0 20px 16px; }
+    .facts-panel.collapsed .facts-body { display: none; }
+    .facts-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .facts-list li { font-size: 12.5px; line-height: 1.65; color: var(--gray-700); padding-left: 14px; position: relative; }
+    .facts-list li::before { content: ''; position: absolute; left: 0; top: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+    .facts-summary { margin-top: 10px; font-size: 12px; color: var(--gray-500); line-height: 1.6; background: var(--gray-50); border-radius: 8px; padding: 10px 12px; }
+    .facts-sources { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+    .facts-sources a { font-size: 11.5px; color: var(--primary); text-decoration: none; word-break: break-all; }
+    .facts-sources a:hover { text-decoration: underline; }
+
     @media (max-width: 768px) {
       body { grid-template-columns: 1fr; grid-template-rows: var(--header-h) auto auto; overflow: auto; }
       .steps .step-label { display: none; }
@@ -583,7 +631,7 @@
   <div class="steps">
     <div class="step active" id="step-1"><div class="step-circle">1</div><div class="step-label">입력</div></div>
     <div class="step-line" id="line-1"></div>
-    <div class="step" id="step-2"><div class="step-circle">2</div><div class="step-label">생성</div></div>
+    <div class="step" id="step-2"><div class="step-circle">2</div><div class="step-label">팩트·생성</div></div>
     <div class="step-line" id="line-2"></div>
     <div class="step" id="step-3"><div class="step-circle">3</div><div class="step-label">검증</div></div>
     <div class="step-line" id="line-3"></div>
@@ -597,14 +645,23 @@
   <div class="mode-panel active" id="panelInput">
 
     <div class="form-group">
-      <label>이미지 업로드<span class="req">*</span></label>
+      <label>콘텐츠 형식<span class="req">*</span></label>
+      <div class="lang-tabs" style="margin:0;" id="modeTabs">
+        <button type="button" class="lang-tab active" data-mode="post">사진 카드뉴스</button>
+        <button type="button" class="lang-tab" data-mode="reel">동영상 릴스</button>
+      </div>
+      <span class="hint">1장째(훅 카드)에만 문구를 얹고, 나머지 미디어는 원본 그대로 올립니다. 정보는 캡션에 담습니다.</span>
+    </div>
+
+    <div class="form-group">
+      <label id="uploadLabel">이미지 업로드<span class="req">*</span></label>
       <div class="upload-zone" id="uploadZone">
-        <div class="upload-zone-text">이미지를 끌어다 놓거나<br>눌러서 선택하세요</div>
-        <div class="upload-zone-sub">1장 이상 · 여러 장 가능 (JPG/PNG/WebP)</div>
+        <div class="upload-zone-text" id="uploadZoneText">이미지를 끌어다 놓거나<br>눌러서 선택하세요</div>
+        <div class="upload-zone-sub" id="uploadZoneSub">1장 이상 · 여러 장 가능 (JPG/PNG/WebP)</div>
       </div>
       <input type="file" id="imageInput" accept="image/*" multiple style="display:none;">
       <div class="upload-previews" id="uploadPreviews"></div>
-      <span class="hint">1장이면 모든 카드에, 여러 장이면 순서대로 카드 배경에 적용됩니다</span>
+      <span class="hint" id="uploadHint">1장째가 훅 카드 배경이 되고, 나머지는 원본 그대로 이어집니다</span>
     </div>
 
     <!-- STEP 0: 원본 추적 (Gemini) -->
@@ -626,7 +683,7 @@
     <div class="form-group">
       <label>핵심 메시지 (선택)</label>
       <textarea id="inputCoreMessage" rows="3" placeholder="꼭 전하고 싶은 한두 문장을 적으면 그 방향으로 문구를 만듭니다" style="resize:vertical;"></textarea>
-      <span class="hint">비워두면 주제만으로 AI가 5페이지 문구를 구성합니다</span>
+      <span class="hint">비워두면 주제만으로 AI가 훅 문구와 캡션을 구성합니다</span>
     </div>
 
     <div class="form-group">
@@ -639,7 +696,7 @@
       <span class="hint">선택한 언어로만 생성합니다. 생성 후 다른 언어 탭을 누르면 그때 번역됩니다 (비용 절약)</span>
     </div>
 
-    <button class="btn btn-primary" id="generateBtn">카드뉴스 생성하기</button>
+    <button class="btn btn-primary" id="generateBtn">팩트 수집 + 생성하기</button>
   </div>
 </aside>
 
@@ -647,68 +704,59 @@
 
 
   <div class="empty-state" id="emptyState">
-    <h3>카드뉴스(캐러셀)를 만들어보세요</h3>
-    <p>왼쪽에서 이미지를 올리고 주제를 입력하면<br>AI가 5페이지 카드뉴스 문구를 만들어<br>업로드한 이미지 위에 얹어줍니다.</p>
+    <h3>정보성 콘텐츠를 만들어보세요</h3>
+    <p>왼쪽에서 형식(사진/릴스)을 고르고 미디어와 주제를 입력하면<br>AI가 구글 검색으로 팩트를 수집한 뒤<br>훅 카드 문구와 정보 캡션을 만들어줍니다.</p>
   </div>
 
-  <!-- Carousel preview -->
+  <!-- v2.0: 수집된 팩트 패널 -->
+  <div class="facts-panel" id="factsPanel">
+    <div class="facts-head" id="factsToggle">
+      <span>수집된 팩트 <span class="section-badge" style="margin-left:6px;">구글 검색 근거</span></span>
+      <span class="facts-arrow">&#9660;</span>
+    </div>
+    <div class="facts-body">
+      <ul class="facts-list" id="factsList"></ul>
+      <div class="facts-summary" id="factsSummary"></div>
+      <div class="facts-sources" id="factsSources"></div>
+      <div class="hint" style="margin-top:10px;">이 팩트만 근거로 작성됩니다 — 팩트에 없는 내용은 문구·캡션에 넣지 않습니다.</div>
+    </div>
+  </div>
+
+  <!-- Preview -->
   <div class="carousel-wrapper" id="carouselWrapper">
     <div class="section-header">
-      <span class="section-title">캐럿셀 미리보기</span>
+      <span class="section-title">미리보기</span>
       <div class="lang-tabs" id="langTabs"></div>
-      <span class="section-badge" id="carouselBadge">5 페이지</span>
+      <span class="section-badge" id="carouselBadge"></span>
     </div>
     <div class="carousel-scroll" id="carouselScroll"></div>
     <div class="carousel-actions">
-      <span class="ratio-toggle" id="ratioToggle" title="게시물 저장 비율 (릴스는 항상 9:16)">
+      <span class="ratio-toggle" id="ratioToggle" title="게시물 저장 비율 (릴스 커버는 항상 9:16)">
         <button class="lang-tab active" data-ratio="1:1">1:1</button>
         <button class="lang-tab" data-ratio="4:5">4:5</button>
       </span>
-      <button class="btn btn-outline" id="regenerateBtn">캐럿셀 다시 생성</button>
+      <button class="btn btn-outline" id="regenerateBtn">다시 생성</button>
       <button class="btn btn-outline" id="copyAllBtn">전체 복사</button>
       <button class="btn btn-outline" id="saveAllImagesBtn" style="background:linear-gradient(135deg,#064e3b,#065f46);color:#fff;border:none;">이미지 전체 저장</button>
-      <button class="btn btn-outline" id="saveReelSetBtn" style="background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border:none;">릴스 세트(세로 5장)</button>
       <button class="btn btn-validate" id="validateBtn">품질 검증</button>
-    </div>
-    <!-- 릴스 문구 미리보기 + 자동 검증 -->
-    <div id="reelPreview" style="display:none;margin-top:14px;padding:14px 16px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
-        <span style="font-weight:700;font-size:13px;color:#7c3aed;">릴스 문구 (자동 생성·검증)</span>
-        <span id="reelValidBadge" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;"></span>
-      </div>
-      <div id="reelLines" style="font-size:13.5px;line-height:1.85;color:#3a2a2e;"></div>
-      <div id="reelValidNote" style="font-size:11.5px;color:#8a7479;margin-top:8px;"></div>
-      <div style="margin-top:10px;">
-        <button class="btn btn-outline" id="regenReelBtn" style="font-size:12px;padding:7px 12px;">릴스 문구 다시 만들기</button>
-      </div>
     </div>
   </div>
 
   <!-- Caption section -->
   <div class="caption-wrapper" id="captionWrapper">
     <div class="section-header">
-      <span class="section-title">캡션 + 해시태그</span>
+      <span class="section-title">캡션</span>
       <span class="section-badge">인스타그램용</span>
-    </div>
-
-    <div class="caption-keyword-row">
-      <button class="btn btn-outline" id="generateCaptionBtn" style="flex-shrink:0;padding:9px 14px;font-size:12px;white-space:nowrap;">자동 생성</button>
     </div>
 
     <div id="captionResult" style="display:none;">
       <div class="caption-box">
-        <div class="caption-label-text">게시물 캡션</div>
+        <div class="caption-label-text">캡션</div>
         <div class="caption-text-content" id="captionTextContent"></div>
         <div class="caption-hashtags-row" id="captionHashtagsRow"></div>
       </div>
-      <div class="caption-box" id="captionReelBox" style="display:none;margin-top:10px;">
-        <div class="caption-label-text">릴스 캡션 (짧은 후킹형)</div>
-        <div class="caption-text-content" id="captionReelContent"></div>
-        <div class="caption-hashtags-row" id="captionReelHashtags"></div>
-      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-outline" id="copyCaptionBtn" style="font-size:12px;padding:8px 14px;">게시물 캡션 복사</button>
-        <button class="btn btn-outline" id="copyReelCaptionBtn" style="font-size:12px;padding:8px 14px;display:none;">릴스 캡션 복사</button>
+        <button class="btn btn-outline" id="copyCaptionBtn" style="font-size:12px;padding:8px 14px;">캡션 복사</button>
       </div>
     </div>
   </div>
@@ -754,23 +802,22 @@
 <script>
 const state = {
   step: 1,
-  pages: null,            // 현재 활성 언어의 5페이지 (렌더·캔버스·릴스가 읽음)
-  pagesByLang: null,      // Phase 3: { ko, en, ja } 3개 언어 세트
-  activeLang: 'ko',       // 현재 선택된 언어 탭
-  validation: null,
+  mode: 'post',           // v2.0: 'post'(사진 카드뉴스) | 'reel'(동영상 릴스)
   bookInfo: null,         // 주제 정보 컨테이너 { title(주제), topic, coreMessage } — API 호환용 이름 유지
-  uploadedImages: [],     // 업로드한 이미지 dataURL 목록 (카드 배경으로 적용)
-  caption: null,
-  captionHashtags: null,
-  captionsByLang: null,   // Phase 3: { ko: {caption, hashtags}, en, ja }
-  reelScript: null,       // 현재 활성 언어의 릴스 대본 {s1,s2,s3,s4}
-  reelByLang: null,       // 릴스 대본 언어별 캐시 (번역된 언어만 채워짐)
-  reelValidation: null,   // 릴스 문구 자동 검증 결과
-  postRatio: '1:1',       // Phase 4: 게시물 저장 비율 프리셋 '1:1'(1080x1080) | '4:5'(1080x1350)
-  genLang: 'ko',          // v1.2: 생성 언어 — 이 언어로만 생성, 나머지는 탭 전환 시 지연 번역
+  uploadedImages: [],     // 업로드 이미지 dataURL 목록 (릴스 모드: [영상 첫 프레임])
+  videoUrl: null,         // 릴스 모드 원본 영상 URL (objectURL 또는 프록시 URL)
+  videoName: '',
+  facts: null,            // v2.0: 수집된 팩트 목록
+  factsSummary: '',
+  factsSources: [],
+  byLang: {},             // v2.0: { [lang]: { hook:{headline,accents}, caption, hashtags } }
+  activeLang: 'ko',
+  genLang: 'ko',          // 생성 언어 — 이 언어로만 생성, 나머지는 탭 전환 시 지연 번역
+  validation: null,
+  postRatio: '1:1',       // 게시물 저장 비율 '1:1'(1080x1080) | '4:5'(1080x1350)
 };
 
-// Phase 3: 언어별 폰트 분리 (한글 Noto Sans KR / 일문 Noto Sans JP / 영문 Inter)
+// 언어별 폰트 분리 (한글 Noto Sans KR / 일문 Noto Sans JP / 영문 Inter)
 const LANGS = [
   { code: 'ko', label: '한국어' },
   { code: 'en', label: 'English' },
@@ -788,14 +835,15 @@ const CANVAS_FONT_STACKS = {
 };
 function activeFontStack() { return CANVAS_FONT_STACKS[state.activeLang] || CANVAS_FONT_STACKS.ko; }
 
+// v2.0: 훅 카드 강조 컬러 (레퍼런스: animezonein 코랄 계열 — 밝은/어두운 배경 공통)
+const HOOK_ACCENT_COLOR = '#FF6B57';
 
-const PAGE_LABELS = ['훅', '공감·문제', '이유·원리', '방법·실마리', '마무리'];
 const SCORE_KEYS = [
-  { key: 'accuracy',    label: '주제 부합도', max: 20 },
-  { key: 'factual',     label: '사실 정확성', max: 20 },
-  { key: 'copyright',   label: '안전성', max: 20 },
-  { key: 'engagement',  label: '공감·참여 유도', max: 25 },
-  { key: 'quality',     label: '문장 품질·오타', max: 15 },
+  { key: 'accuracy',    label: '팩트 부합', max: 25 },
+  { key: 'factual',     label: '과장 없음', max: 20 },
+  { key: 'copyright',   label: '안전성', max: 15 },
+  { key: 'engagement',  label: '호기심·저장 유도', max: 25 },
+  { key: 'quality',     label: '문장 품질', max: 15 },
 ];
 
 // ===== API =====
@@ -866,13 +914,52 @@ function escHtml(str) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
 }
 
-function getCardText(page, num) {
-  if (num === 5) return `[페이지 5 - CTA]\n${page.cta}\n\n${page.linkText}`;
-  const body = page.body || page.subtext || '';
-  return `[페이지 ${num} - ${PAGE_LABELS[num-1]}]\n${page.headline}\n\n${body}`;
+// ===== v2.0: 모드 탭 (사진 카드뉴스 / 동영상 릴스) =====
+function setUploadZoneMode() {
+  const reel = state.mode === 'reel';
+  const imageInputEl = document.getElementById('imageInput');
+  imageInputEl.accept = reel ? 'video/*' : 'image/*';
+  imageInputEl.multiple = !reel;
+  document.getElementById('uploadLabel').innerHTML = (reel ? '동영상 업로드' : '이미지 업로드') + '<span class="req">*</span>';
+  document.getElementById('uploadZoneText').innerHTML = reel
+    ? '동영상을 끌어다 놓거나<br>눌러서 선택하세요'
+    : '이미지를 끌어다 놓거나<br>눌러서 선택하세요';
+  document.getElementById('uploadZoneSub').textContent = reel
+    ? '동영상 1개 (MP4/MOV/WebM)'
+    : '1장 이상 · 여러 장 가능 (JPG/PNG/WebP)';
+  document.getElementById('uploadHint').textContent = reel
+    ? '영상의 첫 프레임이 훅 커버가 되고, 원본 영상은 그대로 올립니다'
+    : '1장째가 훅 카드 배경이 되고, 나머지는 원본 그대로 이어집니다';
 }
 
-// ===== 입력부: 이미지 업로드 + 주제 =====
+function hideResults() {
+  state.byLang = {};
+  state.validation = null;
+  state.facts = null; state.factsSummary = ''; state.factsSources = [];
+  document.getElementById('carouselWrapper').classList.remove('visible');
+  document.getElementById('captionWrapper').classList.remove('visible');
+  document.getElementById('validationPanel').classList.remove('visible');
+  document.getElementById('factsPanel').classList.remove('visible');
+  document.getElementById('emptyState').style.display = '';
+  setStep(1);
+}
+
+document.querySelectorAll('#modeTabs .lang-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (state.mode === btn.dataset.mode) return;
+    state.mode = btn.dataset.mode;
+    document.querySelectorAll('#modeTabs .lang-tab').forEach(b => b.classList.toggle('active', b === btn));
+    // 모드 전환 → 미디어·결과 초기화
+    state.uploadedImages = [];
+    state.videoUrl = null;
+    state.videoName = '';
+    setUploadZoneMode();
+    renderUploadPreviews();
+    hideResults();
+  });
+});
+
+// ===== 입력부: 미디어 업로드 =====
 const uploadZone = document.getElementById('uploadZone');
 const imageInput = document.getElementById('imageInput');
 
@@ -882,15 +969,22 @@ uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag
 uploadZone.addEventListener('drop', (e) => {
   e.preventDefault();
   uploadZone.classList.remove('dragover');
-  addImageFiles(e.dataTransfer.files);
+  addMediaFiles(e.dataTransfer.files);
 });
-imageInput.addEventListener('change', () => { addImageFiles(imageInput.files); imageInput.value = ''; });
+imageInput.addEventListener('change', () => { addMediaFiles(imageInput.files); imageInput.value = ''; });
 
-function addImageFiles(fileList) {
-  const files = [...(fileList || [])].filter(f => f.type.startsWith('image/'));
-  if (!files.length) { showToast('이미지 파일만 업로드할 수 있습니다.', 'warning'); return; }
+function addMediaFiles(fileList) {
+  const files = [...(fileList || [])];
+  if (state.mode === 'reel') {
+    const video = files.find(f => f.type.startsWith('video/'));
+    if (!video) { showToast('동영상 파일을 선택해주세요.', 'warning'); return; }
+    handleVideoFile(video);
+    return;
+  }
+  const imgs = files.filter(f => f.type.startsWith('image/'));
+  if (!imgs.length) { showToast('이미지 파일만 업로드할 수 있습니다.', 'warning'); return; }
   // FileReader 완료 순서는 파일 순서와 다를 수 있음 → Promise.all로 선택한 순서 그대로 보존
-  Promise.all(files.map(f => new Promise((res, rej) => {
+  Promise.all(imgs.map(f => new Promise((res, rej) => {
     const reader = new FileReader();
     reader.onload = () => res(reader.result);
     reader.onerror = () => rej(new Error(f.name));
@@ -898,8 +992,48 @@ function addImageFiles(fileList) {
   }))).then(urls => {
     state.uploadedImages.push(...urls);
     renderUploadPreviews();
-    applyUploadedImages(); // 이미 캐럿셀이 떠 있으면 배경 즉시 갱신
+    refreshPreview(); // 이미 미리보기가 떠 있으면 즉시 갱신
   }).catch(() => showToast('이미지 읽기에 실패했습니다.', 'error'));
+}
+
+// v2.0 릴스: 영상 첫 프레임 추출 (훅 커버 + 오버레이 분석용)
+async function extractVideoFrame(url) {
+  const v = document.createElement('video');
+  v.muted = true; v.playsInline = true; v.preload = 'auto'; v.crossOrigin = 'anonymous';
+  v.src = url;
+  await new Promise((res, rej) => {
+    v.onloadeddata = res;
+    v.onerror = () => rej(new Error('영상을 불러올 수 없습니다'));
+    setTimeout(() => rej(new Error('영상 로드 시간 초과')), 15000);
+  });
+  try {
+    v.currentTime = Math.min(0.1, (v.duration || 1) / 10);
+    await new Promise(res => { v.onseeked = res; setTimeout(res, 1500); });
+  } catch {}
+  const c = document.createElement('canvas');
+  c.width = v.videoWidth || 720;
+  c.height = v.videoHeight || 1280;
+  c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.9);
+}
+
+async function handleVideoFile(file) {
+  const url = URL.createObjectURL(file);
+  showLoading('영상 첫 프레임 추출 중...', '첫 프레임을 훅 커버 배경으로 사용합니다');
+  try {
+    const frame = await extractVideoFrame(url);
+    state.videoUrl = url;
+    state.videoName = file.name || 'video.mp4';
+    state.uploadedImages = [frame]; // 프레임이 훅 카드 + 오버레이 분석을 이끈다
+    renderUploadPreviews();
+    refreshPreview();
+    showToast('동영상 업로드 완료 — 첫 프레임을 커버로 사용합니다.', 'success');
+  } catch (e) {
+    URL.revokeObjectURL(url);
+    showToast('영상 처리 실패: ' + e.message, 'error');
+  } finally {
+    hideLoading();
+  }
 }
 
 function renderUploadPreviews(keepTraceResults = false) {
@@ -908,26 +1042,33 @@ function renderUploadPreviews(keepTraceResults = false) {
   state.uploadedImages.forEach((src, i) => {
     const div = document.createElement('div');
     div.className = 'upload-thumb';
-    div.innerHTML = `<img src="${src}" alt="업로드 ${i + 1}"><button class="upload-thumb-del" data-i="${i}" title="삭제">X</button>`;
+    const badge = (state.mode === 'reel' && i === 0 && state.videoUrl) ? '<span class="video-badge">동영상</span>' : '';
+    div.innerHTML = `<img src="${src}" alt="업로드 ${i + 1}">${badge}<button class="upload-thumb-del" data-i="${i}" title="삭제">X</button>`;
     wrap.appendChild(div);
   });
   wrap.querySelectorAll('.upload-thumb-del').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      state.uploadedImages.splice(parseInt(btn.dataset.i), 1);
+      if (state.mode === 'reel') {
+        state.uploadedImages = [];
+        state.videoUrl = null;
+        state.videoName = '';
+      } else {
+        state.uploadedImages.splice(parseInt(btn.dataset.i), 1);
+      }
       renderUploadPreviews();
-      applyUploadedImages();
+      refreshPreview();
     });
   });
-  // 원본 추적 버튼은 이미지가 있을 때만 노출. 이미지 목록이 바뀌면 이전 추적 결과는 초기화.
-  // (원본 후보 클릭으로 교체할 때는 keepTraceResults=true — 추적 결과를 유지)
+  // 원본 추적 버튼은 미디어가 있을 때만 노출. 목록이 바뀌면 이전 추적 결과는 초기화.
+  // (원본 후보 추가 시에는 keepTraceResults=true — 추적 결과 유지)
   document.getElementById('traceGroup').style.display = state.uploadedImages.length ? 'flex' : 'none';
   if (!keepTraceResults) document.getElementById('traceResults').innerHTML = '';
 }
 
-// ===== 기능 1-A: 원본 후보 이미지 — 출처 페이지의 대표 이미지를 가져와 클릭 한 번으로 교체 =====
+// ===== v2.0: 원본 후보 미디어 — 다중 선택 후 "선택한 미디어 추가" =====
 async function loadOriginCandidates(i, data, cardEl) {
-  // 추적 결과의 출처 URL(후보 + 근거)을 모아 최대 3페이지에서 대표 이미지를 추출
+  // 추적 결과의 출처 URL(후보 + 근거)을 모아 최대 3페이지에서 대표 미디어를 추출
   const urls = [
     ...(data.analysis?.originCandidates || []).map(c => c && c.url),
     ...(data.sources || []).map(s => s && s.url),
@@ -936,41 +1077,73 @@ async function loadOriginCandidates(i, data, cardEl) {
   if (!uniq.length) return;
   try {
     const r = await apiFetch('/api/fetch-origin-images', { urls: uniq });
-    const imgs = (r.images || []).slice(0, 4);
-    if (!imgs.length) return;
+    const media = (r.media || []).slice(0, 6);
+    if (!media.length) return;
     const row = document.createElement('div');
-    row.innerHTML = `<div class="trace-note" style="margin-top:8px;"><b>원본 후보 이미지</b> — 누르면 업로드한 이미지 ${i + 1}을(를) 이 원본으로 교체합니다</div>
-      <div class="origin-cands">${imgs.map(im =>
-        `<img class="origin-cand" src="/api/img-proxy?url=${encodeURIComponent(im.imageUrl)}" data-idx="${i}" data-src="${escHtml(im.imageUrl)}" title="${escHtml(im.pageUrl)}" loading="lazy">`
-      ).join('')}</div>`;
+    row.innerHTML = `<div class="trace-note" style="margin-top:8px;"><b>원본 후보 미디어</b> — 눌러서 선택(여러 개 가능)한 뒤 아래 버튼으로 추가하세요</div>
+      <div class="origin-cands">${media.map(m => m.type === 'video'
+        ? `<div class="origin-cand" data-type="video" data-src="${escHtml(m.mediaUrl)}" title="${escHtml(m.pageUrl)}"><video preload="metadata" muted src="/api/img-proxy?url=${encodeURIComponent(m.mediaUrl)}"></video><span class="origin-cand-video-label">영상</span></div>`
+        : `<div class="origin-cand" data-type="image" data-src="${escHtml(m.mediaUrl)}" title="${escHtml(m.pageUrl)}"><img src="/api/img-proxy?url=${encodeURIComponent(m.mediaUrl)}" loading="lazy"></div>`
+      ).join('')}</div>
+      <button type="button" class="btn btn-outline add-origin-btn">선택한 미디어 추가</button>`;
     cardEl.appendChild(row);
     row.querySelectorAll('.origin-cand').forEach(el => {
-      el.addEventListener('error', () => el.remove()); // 못 불러온 후보는 숨김
-      el.addEventListener('click', () => replaceWithOriginImage(parseInt(el.dataset.idx), el.dataset.src));
+      el.addEventListener('click', () => el.classList.toggle('selected'));
+      const img = el.querySelector('img');
+      if (img) img.addEventListener('error', () => el.remove()); // 못 불러온 후보는 숨김
     });
+    row.querySelector('.add-origin-btn').addEventListener('click', () => addSelectedOriginMedia(row));
   } catch {} // 후보 추출 실패는 조용히 무시(추적 결과 자체는 유효)
 }
 
-async function replaceWithOriginImage(idx, imageUrl) {
-  showLoading('원본 이미지 가져오는 중...', '');
+// 원본 미디어 로더 — 프록시로 받아 캔버스에 내려 dataURL로 변환 (긴 변 2000px 축소)
+async function loadOriginImage(mediaUrl) {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  await new Promise((res, rej) => {
+    img.onload = res;
+    img.onerror = () => rej(new Error('이미지 로드 실패'));
+    img.src = '/api/img-proxy?url=' + encodeURIComponent(mediaUrl);
+  });
+  const scale = Math.min(1, 2000 / Math.max(img.width, img.height));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(img.width * scale));
+  c.height = Math.max(1, Math.round(img.height * scale));
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.92);
+}
+
+async function addSelectedOriginMedia(row) {
+  const selected = [...row.querySelectorAll('.origin-cand.selected')];
+  if (!selected.length) { showToast('먼저 후보를 눌러 선택해주세요.', 'warning'); return; }
+  showLoading('선택한 미디어 가져오는 중...', '');
+  let added = 0;
   try {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('이미지 로드 실패')); img.src = '/api/img-proxy?url=' + encodeURIComponent(imageUrl); });
-    // 너무 큰 원본은 긴 변 2000px로 축소해 저장 (카드 배경으론 충분)
-    const scale = Math.min(1, 2000 / Math.max(img.width, img.height));
-    const c = document.createElement('canvas');
-    c.width = Math.max(1, Math.round(img.width * scale));
-    c.height = Math.max(1, Math.round(img.height * scale));
-    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-    const dataUrl = c.toDataURL('image/jpeg', 0.92);
-    if (idx >= 0 && idx < state.uploadedImages.length) state.uploadedImages[idx] = dataUrl;
-    else state.uploadedImages.push(dataUrl);
-    renderUploadPreviews(true); // 추적 결과는 유지
-    await applyUploadedImages();
-    showToast(`이미지 ${idx + 1}을(를) 원본 후보로 교체했습니다. (${img.width}x${img.height})`, 'success');
+    for (const el of selected) {
+      const src = el.dataset.src;
+      if (el.dataset.type === 'video') {
+        if (state.mode !== 'reel') { showToast('영상은 릴스 모드에서 사용해주세요.', 'warning'); continue; }
+        const proxied = '/api/img-proxy?url=' + encodeURIComponent(src);
+        const frame = await extractVideoFrame(proxied);
+        state.videoUrl = proxied;
+        state.videoName = (src.split('/').pop() || 'video').split('?')[0];
+        state.uploadedImages = [frame];
+        added++;
+      } else {
+        const dataUrl = await loadOriginImage(src);
+        if (state.mode === 'reel') state.uploadedImages = [dataUrl];
+        else state.uploadedImages.push(dataUrl);
+        added++;
+      }
+      el.classList.remove('selected');
+    }
+    if (added) {
+      renderUploadPreviews(true); // 추적 결과는 유지
+      refreshPreview();
+      showToast(`미디어 ${added}개를 추가했습니다.`, 'success');
+    }
   } catch (e) {
-    showToast('원본 교체 실패: ' + e.message, 'error');
+    showToast('원본 미디어 추가 실패: ' + e.message, 'error');
   } finally {
     hideLoading();
   }
@@ -1022,7 +1195,7 @@ function renderTraceResult(i, data) {
 }
 
 document.getElementById('traceOriginBtn').addEventListener('click', async () => {
-  if (!state.uploadedImages.length) { showToast('먼저 이미지를 업로드해주세요.', 'warning'); return; }
+  if (!state.uploadedImages.length) { showToast('먼저 미디어를 업로드해주세요.', 'warning'); return; }
   const btn = document.getElementById('traceOriginBtn');
   const box = document.getElementById('traceResults');
   btn.disabled = true;
@@ -1034,7 +1207,7 @@ document.getElementById('traceOriginBtn').addEventListener('click', async () => 
       try {
         const data = await apiFetch('/api/trace-origin', { imageDataUrl: small });
         box.insertAdjacentHTML('beforeend', renderTraceResult(i, data));
-        loadOriginCandidates(i, data, box.lastElementChild); // 원본 후보 이미지는 백그라운드로 추출
+        loadOriginCandidates(i, data, box.lastElementChild); // 원본 후보 미디어는 백그라운드로 추출
       } catch (err) {
         box.insertAdjacentHTML('beforeend',
           `<div class="trace-result"><div class="trace-result-head"><span class="trace-result-title">이미지 ${i + 1}</span><span class="trace-badge unknown">실패</span></div><div>${escHtml(err.message)}</div></div>`);
@@ -1047,9 +1220,9 @@ document.getElementById('traceOriginBtn').addEventListener('click', async () => 
   }
 });
 
-// ===== Phase 3: AI 주제 자동 제안 (Gemini vision — 이미지 → 주제 1 + 핵심 메시지 후보 3) =====
+// ===== AI 주제 자동 제안 (Gemini vision — 이미지 → 주제 1 + 핵심 메시지 후보 3) =====
 document.getElementById('suggestTopicBtn').addEventListener('click', async () => {
-  if (!state.uploadedImages.length) { showToast('먼저 이미지를 업로드해주세요.', 'warning'); return; }
+  if (!state.uploadedImages.length) { showToast('먼저 미디어를 업로드해주세요.', 'warning'); return; }
   const btn = document.getElementById('suggestTopicBtn');
   const box = document.getElementById('topicSuggestions');
   btn.disabled = true; btn.textContent = '분석 중...';
@@ -1082,12 +1255,12 @@ document.getElementById('suggestTopicBtn').addEventListener('click', async () =>
   }
 });
 
-// ===== Phase 2: 텍스트 오버레이 엔진 =====
+// ===== 텍스트 오버레이 엔진 (훅 카드 전용) =====
 // 이미지를 작은 캔버스에 내려 그려 3x3 그리드로 분석한다.
 //  · 위치: 상단 밴드 vs 하단 밴드의 "복잡도"(경계선 밀도 + 명암 편차)를 비교해
 //    덜 복잡한(=피사체가 없을 가능성이 높은) 쪽에 텍스트를 배치. 동률이면 하단(인스타 관례).
 //  · 색상: 선택된 밴드의 평균 밝기 → 밝으면 어두운 글씨+흰 스크림, 어두우면 흰 글씨+검은 스크림.
-const _overlayCache = new Map(); // 같은 이미지를 카드 5장에 재분석하지 않도록 캐시
+const _overlayCache = new Map(); // 같은 이미지를 재분석하지 않도록 캐시
 
 async function analyzeImageForOverlay(src) {
   const img = new Image();
@@ -1121,62 +1294,49 @@ async function analyzeImageForOverlay(src) {
   const band = position === 'top' ? top : bottom;
   const bandLum = band.reduce((a, c) => a + c.mean, 0) / band.length; // 0~255
   const scheme = bandLum > 150 ? 'dark-on-light' : 'light-on-dark';
-  const topLum = top.reduce((a, c) => a + c.mean, 0) / top.length; // 페이지 번호(좌상단) 색 결정용
+  const topLum = top.reduce((a, c) => a + c.mean, 0) / top.length;
   return { position, bandLum: Math.round(bandLum), scheme, topLum: Math.round(topLum) };
 }
 
-// 업로드 이미지를 카드 배경으로 적용 — 1장이면 전체 반복, 여러 장이면 순서대로(부족분은 마지막 장 반복).
-// 카드마다 분석 결과(위치·색상 스킴)를 dataset에 기록 → 미리보기 CSS와 캔버스 저장이 함께 읽는다.
-async function applyUploadedImages() {
-  const cards = document.querySelectorAll('#carouselScroll .card');
-  const imgs = state.uploadedImages;
-  for (let i = 0; i < cards.length; i++) {
-    const card = cards[i];
-    if (!imgs.length) {
-      card.style.backgroundImage = '';
-      delete card.dataset.blobUrl;
-      delete card.dataset.overlayPos;
-      delete card.dataset.overlayScheme;
-      delete card.dataset.overlayTopLum;
-      card.classList.remove('overlay-light', 'overlay-top', 'card-has-image');
-      const numEl0 = card.querySelector('.card-num');
-      if (numEl0) numEl0.style.color = '';
-      continue;
-    }
-    const src = imgs[Math.min(i, imgs.length - 1)];
-    let a;
-    try {
-      if (!_overlayCache.has(src)) _overlayCache.set(src, await analyzeImageForOverlay(src));
-      a = _overlayCache.get(src);
-    } catch {
-      a = { position: 'bottom', bandLum: 0, scheme: 'light-on-dark' }; // 분석 실패 → 안전한 기본값
-    }
-    const light = a.scheme === 'dark-on-light';
-    // 텍스트가 놓이는 쪽에만 스크림을 깐다 — 밝은 배경이면 흰 스크림, 어두우면 검은 스크림
-    const scrim = light
-      ? (a.position === 'top'
-          ? 'linear-gradient(rgba(255,255,255,0.80), rgba(255,255,255,0.22))'
-          : 'linear-gradient(rgba(255,255,255,0.22), rgba(255,255,255,0.80))')
-      : (a.position === 'top'
-          ? 'linear-gradient(rgba(0,0,0,0.72), rgba(0,0,0,0.16))'
-          : 'linear-gradient(rgba(0,0,0,0.16), rgba(0,0,0,0.72))');
-    card.style.backgroundImage = `${scrim}, url("${src}")`;
-    card.style.backgroundSize = 'cover';
-    card.style.backgroundPosition = 'center';
-    card.dataset.blobUrl = src; // 캔버스 저장(buildCardBlob)·릴스 배경이 이 값을 읽는다
-    card.dataset.overlayPos = a.position;
-    card.dataset.overlayScheme = a.scheme;
-    card.dataset.overlayTopLum = String(a.topLum ?? 0);
-    card.classList.add('card-has-image');
-    card.classList.toggle('overlay-light', light);
-    card.classList.toggle('overlay-top', a.position === 'top');
-    // 페이지 번호(좌상단)는 텍스트 밴드가 아니라 "상단" 밝기 기준으로 색을 정한다
-    const numEl = card.querySelector('.card-num');
-    if (numEl) numEl.style.color = (a.topLum ?? 0) > 150 ? 'rgba(17,24,39,0.5)' : 'rgba(255,255,255,0.4)';
+// v2.0: 훅 카드 스타일 적용 — 첫 미디어(이미지/영상 프레임)를 배경으로,
+// 분석 결과를 dataset에 기록(미리보기 CSS + 캔버스 저장이 함께 읽음). 훅은 항상 하단 앵커.
+async function applyHookCardStyle(card) {
+  const src = state.uploadedImages[0];
+  if (!src) {
+    card.style.backgroundImage = '';
+    delete card.dataset.blobUrl;
+    delete card.dataset.overlayPos;
+    delete card.dataset.overlayScheme;
+    delete card.dataset.overlayTopLum;
+    card.classList.remove('overlay-light', 'card-has-image');
+    return;
   }
+  let a;
+  try {
+    if (!_overlayCache.has(src)) _overlayCache.set(src, await analyzeImageForOverlay(src));
+    a = _overlayCache.get(src);
+  } catch {
+    a = { position: 'bottom', bandLum: 0, scheme: 'light-on-dark', topLum: 0 }; // 분석 실패 → 안전한 기본값
+  }
+  const light = a.scheme === 'dark-on-light';
+  // 훅 텍스트는 항상 하단 → 하단에만 스크림 (밝은 배경이면 흰 스크림, 어두우면 검은 스크림)
+  const scrim = light
+    ? 'linear-gradient(rgba(255,255,255,0.15), rgba(255,255,255,0.82))'
+    : 'linear-gradient(rgba(0,0,0,0.10), rgba(0,0,0,0.74))';
+  card.style.backgroundImage = `${scrim}, url("${src}")`;
+  card.style.backgroundSize = 'cover';
+  card.style.backgroundPosition = 'center';
+  card.dataset.blobUrl = src; // 캔버스 저장(buildHookBlob)이 이 값을 읽는다
+  card.dataset.overlayPos = 'bottom';
+  card.dataset.overlayScheme = a.scheme;
+  card.dataset.overlayTopLum = String(a.topLum ?? 0);
+  card.classList.add('card-has-image');
+  card.classList.toggle('overlay-light', light);
+  const numEl = card.querySelector('.card-num');
+  if (numEl) numEl.style.color = (a.topLum ?? 0) > 150 ? 'rgba(17,24,39,0.5)' : 'rgba(255,255,255,0.4)';
 }
 
-// 생성 언어 선택 (v1.2 — 선택 언어로만 생성)
+// 생성 언어 선택 (선택 언어로만 생성)
 document.querySelectorAll('#genLangTabs .lang-tab').forEach(btn => {
   btn.addEventListener('click', () => {
     state.genLang = btn.dataset.genlang;
@@ -1184,40 +1344,62 @@ document.querySelectorAll('#genLangTabs .lang-tab').forEach(btn => {
   });
 });
 
+// ===== v2.0 생성 플로우: 팩트 수집 → 생성 → 자동 검증 =====
 document.getElementById('generateBtn').addEventListener('click', async () => {
   const topic = document.getElementById('inputTopic').value.trim();
   const core = document.getElementById('inputCoreMessage').value.trim();
-  if (!state.uploadedImages.length) { showToast('이미지를 1장 이상 업로드해주세요.', 'warning'); return; }
+  if (state.mode === 'reel') {
+    if (!state.videoUrl) { showToast('동영상을 업로드해주세요.', 'warning'); return; }
+  } else if (!state.uploadedImages.length) {
+    showToast('이미지를 1장 이상 업로드해주세요.', 'warning'); return;
+  }
   if (!topic) { showToast('주제를 입력해주세요.', 'warning'); return; }
   // bookInfo라는 이름은 API 호환용 컨테이너로 유지 (title=주제)
   state.bookInfo = { title: topic, topic, coreMessage: core || topic };
-  await generateCarousel();
+  await runGeneratePipeline();
 });
 
-// ===== Generate Carousel (자동 검증 루프 포함) =====
-async function generateCarousel() {
+async function runGeneratePipeline(reuseFacts = false) {
   state.validation = null;
-  state.reelScript = null; state.reelByLang = null; state.reelValidation = null;  // 새 주제 → 릴스 대본 새로 생성
-  const rp = document.getElementById('reelPreview'); if (rp) rp.style.display = 'none';
   document.getElementById('validationPanel').classList.remove('visible');
   setStep(2);
 
-  showLoading('카드뉴스 생성 중...', 'Claude AI가 5페이지 문구를 작성하고 있습니다');
+  // ① 팩트 수집 (Gemini 구글 검색) — 이 팩트만 근거로 작성
+  if (!reuseFacts || !state.facts) {
+    showLoading('팩트 수집 중...', '구글 검색으로 사실을 확인하고 있습니다');
+    try {
+      const f = await apiFetch('/api/collect-facts', {
+        topic: state.bookInfo.topic,
+        coreMessage: state.bookInfo.coreMessage,
+      });
+      state.facts = f.facts || [];
+      state.factsSummary = f.summary || '';
+      state.factsSources = f.sources || [];
+      renderFactsPanel();
+    } catch (err) {
+      hideLoading();
+      setStep(1);
+      showToast('팩트 수집 실패: ' + err.message, 'error');
+      return;
+    }
+  }
 
+  // ② 훅 + 캡션 생성
+  showLoading('문구 생성 중...', '수집한 팩트만 근거로 훅 문구와 캡션을 작성합니다');
   try {
-    const data = await apiFetch('/api/generate', { ...state.bookInfo, lang: state.genLang });
-    // v1.2: 선택한 언어 하나만 생성 — 다른 언어는 탭 전환 시 지연 번역(캐시)
-    state.pagesByLang = { [state.genLang]: data.pages };
+    const data = await apiFetch('/api/generate', {
+      ...state.bookInfo,
+      lang: state.genLang,
+      mode: state.mode,
+      mediaCount: state.mode === 'post' ? state.uploadedImages.length : 1,
+      facts: state.facts,
+      factsSummary: state.factsSummary,
+    });
+    state.byLang = { [state.genLang]: { hook: data.hook, caption: data.caption || '', hashtags: data.hashtags || [] } };
     state.activeLang = state.genLang;
-    state.pages = data.pages;
-    state.captionsByLang = {};
-    state.reelByLang = {};
     renderLangTabs();
-    renderCarousel(state.pages);
-    await applyUploadedImages(); // 업로드 이미지 적용 + 오버레이 분석(위치·색상)
+    await renderPreview();
     setStep(3);
-    // 캐럿셀과 함께 릴스 대본(연결성 있는 문구)도 생성해 미리보기로 보여준다.
-    generateReelScript();
   } catch (err) {
     hideLoading();
     setStep(1);
@@ -1225,21 +1407,45 @@ async function generateCarousel() {
     return;
   }
 
-  // 자동 품질 검증 루프
+  // ③ 자동 품질 검증 루프
   await autoValidateLoop();
 }
 
-// 검증 → 기준 미달 시 재생성 → 재검증 (생성 언어 기준 — v1.2 단일 언어)
+// v2.0: 수집된 팩트 패널 (접이식)
+function renderFactsPanel() {
+  const panel = document.getElementById('factsPanel');
+  document.getElementById('factsList').innerHTML = (state.facts || []).map(f => `<li>${escHtml(f)}</li>`).join('');
+  const sumEl = document.getElementById('factsSummary');
+  sumEl.textContent = state.factsSummary || '';
+  sumEl.style.display = state.factsSummary ? '' : 'none';
+  document.getElementById('factsSources').innerHTML = (state.factsSources || [])
+    .map(s => `<a href="${escHtml(s.url || '')}" target="_blank" rel="noopener">${escHtml(s.title || s.url || '')}</a>`).join('');
+  panel.classList.remove('collapsed');
+  panel.classList.add('visible');
+  document.getElementById('emptyState').style.display = 'none';
+}
+document.getElementById('factsToggle').addEventListener('click', () => {
+  document.getElementById('factsPanel').classList.toggle('collapsed');
+});
+
+// 검증 → 기준 미달 시 재생성 → 재검증 (생성 언어 기준)
 async function autoValidateLoop() {
-  const MAX = 2;   // 크레딧 절약: 검증 후 재생성은 최대 1회(비싼 main 호출 축소)
-  let best = { score: -1, pages: state.pages, validation: null };
+  const MAX = 2;   // 크레딧 절약: 검증 후 재생성은 최대 1회
+  let best = { score: -1, content: null, validation: null };
 
   for (let attempt = 1; attempt <= MAX; attempt++) {
-    showLoading(`품질 검증 중 (${attempt}/${MAX})...`, 'AI가 콘텐츠를 자동 평가합니다');
+    showLoading(`품질 검증 중 (${attempt}/${MAX})...`, 'AI가 팩트 부합 여부를 자동 평가합니다');
 
+    const cur = state.byLang[state.genLang];
     let result;
     try {
-      result = await apiFetch('/api/validate', { pages: state.pages, bookInfo: state.bookInfo, lang: state.genLang });
+      result = await apiFetch('/api/validate', {
+        hook: cur.hook,
+        caption: cur.caption,
+        facts: state.facts,
+        topic: state.bookInfo.topic,
+        lang: state.genLang,
+      });
     } catch (err) {
       hideLoading();
       showToast(`검증 오류: ${err.message}`, 'error');
@@ -1248,7 +1454,7 @@ async function autoValidateLoop() {
     state.validation = result;
 
     if (result.totalScore > best.score) {
-      best = { score: result.totalScore, pages: state.pages, validation: result };
+      best = { score: result.totalScore, content: cur, validation: result };
     }
 
     if (result.approved) {
@@ -1264,18 +1470,21 @@ async function autoValidateLoop() {
     if (attempt < MAX) {
       showLoading(`재생성 중 (${attempt}/${MAX - 1}회)...`, '피드백을 반영해 다시 작성합니다');
       try {
-        const regenData = await apiFetch('/api/regenerate', {
-          bookInfo: state.bookInfo,
-          previousPages: state.pages,
-          lang: state.genLang,
+        const d = await apiFetch('/api/regenerate', {
+          previousHook: cur.hook,
+          previousCaption: cur.caption,
           feedback: result.feedback,
           improvements: result.improvements || [],
+          facts: state.facts,
+          topic: state.bookInfo.topic,
+          lang: state.genLang,
+          mode: state.mode,
         });
         // 원문이 바뀌었으므로 기존 번역본은 무효 — 생성 언어만 남긴다
-        state.pagesByLang = { [state.genLang]: regenData.pages };
-        state.pages = regenData.pages;
-        renderCarousel(state.pages);
-        await applyUploadedImages();
+        state.byLang = { [state.genLang]: { hook: d.hook, caption: d.caption || '', hashtags: d.hashtags || [] } };
+        state.activeLang = state.genLang;
+        renderLangTabs();
+        await renderPreview();
       } catch (err) {
         hideLoading();
         showToast(`재생성 오류: ${err.message}`, 'error');
@@ -1287,11 +1496,11 @@ async function autoValidateLoop() {
   // 최대 시도 후 최고 점수 결과 표시
   hideLoading();
   if (best.validation) {
-    state.pagesByLang = { [state.genLang]: best.pages };
-    state.pages = best.pages;
+    state.byLang = { [state.genLang]: best.content };
+    state.activeLang = state.genLang;
     state.validation = best.validation;
-    renderCarousel(state.pages);
-    await applyUploadedImages();
+    renderLangTabs();
+    await renderPreview();
     renderValidation(best.validation);
     setStep(best.validation.approved ? 4 : 3);
     showToast(`${MAX}회 완료. 최고점: ${best.score}/100`, best.validation.approved ? 'success' : 'warning');
@@ -1299,15 +1508,15 @@ async function autoValidateLoop() {
   }
 }
 
-// ===== 언어 탭 (한/영/일) — v1.2: 번역 안 된 탭은 흐리게, 첫 클릭 시 지연 번역 =====
+// ===== 언어 탭 (한/영/일) — 번역 안 된 탭은 흐리게, 첫 클릭 시 지연 번역 =====
 function renderLangTabs() {
   const wrap = document.getElementById('langTabs');
   if (!wrap) return;
   wrap.innerHTML = '';
-  if (!state.pagesByLang) return;
+  if (!Object.keys(state.byLang || {}).length) return;
   LANGS.forEach(({ code, label }) => {
     const btn = document.createElement('button');
-    const ready = !!state.pagesByLang[code];
+    const ready = !!state.byLang[code];
     btn.className = 'lang-tab' + (state.activeLang === code ? ' active' : '');
     btn.style.opacity = ready || state.activeLang === code ? '' : '0.55';
     btn.title = ready ? '' : '누르면 이 언어로 번역합니다';
@@ -1317,35 +1526,23 @@ function renderLangTabs() {
   });
 }
 
-// 해당 언어 콘텐츠가 없으면 지금 번역해 캐시한다 (카드 5장 + 있으면 캡션·릴스 대본 함께).
-// 새 창작이 아니라 번역이므로 서버가 싼 모델(light)을 쓴다 — v1.2 비용 절감의 핵심.
+// 해당 언어 콘텐츠가 없으면 지금 번역해 캐시한다 (훅 + 캡션 + 해시태그).
+// 새 창작이 아니라 번역이므로 서버가 싼 모델(light)을 쓴다 — 비용 절감의 핵심.
 async function ensureLangContent(lang) {
-  if (state.pagesByLang?.[lang]) return true;
-  const srcLang = state.pagesByLang?.[state.genLang] ? state.genLang : Object.keys(state.pagesByLang || {})[0];
-  const src = state.pagesByLang?.[srcLang];
+  if (state.byLang?.[lang]) return true;
+  const srcLang = state.byLang?.[state.genLang] ? state.genLang : Object.keys(state.byLang || {})[0];
+  const src = state.byLang?.[srcLang];
   if (!src) return false;
   const label = (LANGS.find(l => l.code === lang) || {}).label || lang;
   showLoading(`${label}로 번역 중...`, '이미 만든 문구를 옮기는 작업이라 가벼운 모델을 사용합니다 (비용 절약)');
   try {
-    const cap = state.captionsByLang?.[srcLang];
-    const reel = state.reelByLang?.[srcLang];
     const data = await apiFetch('/api/translate', {
       targetLang: lang,
-      pages: src,
-      caption: cap?.caption || undefined,
-      hashtags: cap?.hashtags || undefined,
-      reelCaption: cap?.reelCaption || undefined,
-      reelHashtags: cap?.reelHashtags || undefined,
-      reel: reel?.s1 ? reel : undefined,
+      hook: src.hook,
+      caption: src.caption,
+      hashtags: src.hashtags,
     });
-    state.pagesByLang[lang] = data.pages;
-    if (data.caption) {
-      state.captionsByLang[lang] = {
-        caption: data.caption, hashtags: data.hashtags || [],
-        reelCaption: data.reelCaption || '', reelHashtags: data.reelHashtags || [],
-      };
-    }
-    if (data.reel?.s1) state.reelByLang[lang] = data.reel;
+    state.byLang[lang] = { hook: data.hook, caption: data.caption || '', hashtags: data.hashtags || [] };
     return true;
   } catch (e) {
     showToast('번역 실패: ' + e.message, 'error');
@@ -1356,58 +1553,113 @@ async function ensureLangContent(lang) {
 }
 
 async function setActiveLang(lang) {
-  if (!state.pagesByLang || state.activeLang === lang) return;
-  if (!state.pagesByLang[lang]) {
+  if (!Object.keys(state.byLang || {}).length || state.activeLang === lang) return;
+  if (!state.byLang[lang]) {
     const ok = await ensureLangContent(lang); // 첫 방문 언어 → 지연 번역
     if (!ok) return;
   }
   state.activeLang = lang;
-  state.pages = state.pagesByLang[lang];
-  state.reelScript = state.reelByLang?.[lang] || null;
   renderLangTabs();
-  renderCarousel(state.pages);
-  await applyUploadedImages();
-  renderActiveCaption();
-  if (state.reelScript && document.getElementById('reelPreview')?.style.display !== 'none') renderReelPreview();
+  await renderPreview(); // 헤드라인·캡션이 해당 언어로 갱신
 }
 
-// 현재 언어의 캡션+해시태그를 표시 (게시물용 + 릴스용 짧은 후킹형)
-function renderActiveCaption() {
-  const box = document.getElementById('captionResult');
-  if (!box) return;
-  const c = state.captionsByLang?.[state.activeLang];
-  if (!c) { box.style.display = 'none'; return; } // 이 언어 캡션 아직 없음 → "자동 생성" 버튼으로 생성
-  document.getElementById('captionTextContent').textContent = c.caption || '';
-  document.getElementById('captionHashtagsRow').textContent = (c.hashtags || []).join(' ');
-  // Phase 4: 릴스 캡션 (있을 때만 노출)
-  const reelBox = document.getElementById('captionReelBox');
-  const reelBtn = document.getElementById('copyReelCaptionBtn');
-  if (c.reelCaption) {
-    document.getElementById('captionReelContent').textContent = c.reelCaption;
-    document.getElementById('captionReelHashtags').textContent = (c.reelHashtags || []).join(' ');
-    reelBox.style.display = 'block';
-    reelBtn.style.display = 'inline-block';
-  } else {
-    reelBox.style.display = 'none';
-    reelBtn.style.display = 'none';
+// ===== v2.0 Preview: 훅 카드(1장) + 원본 미디어 그대로 =====
+
+// 헤드라인 HTML — 강조 단어를 hook-accent 스팬으로 감싼다 (HTML 이스케이프 후 매칭, 대소문자 무시)
+function accentHtml(headline, accents) {
+  let html = escHtml(headline || '');
+  for (const acc of (accents || [])) {
+    const a = escHtml(String(acc || '')).trim();
+    if (!a) continue;
+    const re = new RegExp(a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    if (re.test(html)) html = html.replace(re, (m) => `<span class="hook-accent">${m}</span>`);
   }
-  box.style.display = 'block';
+  return html;
 }
 
-// ===== Phase 4: 게시물 저장 비율 프리셋 (1:1 / 4:5) — 릴스는 항상 9:16 =====
+function previewCardHeight() {
+  if (state.mode === 'reel') return '262px';
+  return state.postRatio === '1:1' ? '210px' : '262px';
+}
+
+// 미디어가 바뀌었을 때, 미리보기가 이미 떠 있으면 다시 그린다
+function refreshPreview() {
+  if (state.byLang?.[state.activeLang]) renderPreview();
+}
+
+async function renderPreview() {
+  const L = state.byLang?.[state.activeLang];
+  if (!L) return;
+  const scroll = document.getElementById('carouselScroll');
+  scroll.innerHTML = '';
+  scroll.style.fontFamily = FONT_STACKS[state.activeLang] || FONT_STACKS.ko; // 언어별 폰트
+
+  // ① 훅 카드 — 첫 미디어 + 하단 큰 헤드라인(강조 단어 컬러)
+  const hookCard = document.createElement('div');
+  hookCard.className = 'card card-1';
+  hookCard.style.height = previewCardHeight();
+  const rawHeadline = L.hook?.headline || '';
+  const headline = state.activeLang === 'en' ? rawHeadline.toUpperCase() : rawHeadline;
+  hookCard.innerHTML = `<div class="card-inner"><div class="card-num">1</div><div class="card-headline">${accentHtml(headline, L.hook?.accents)}</div></div>`;
+  scroll.appendChild(hookCard);
+  await applyHookCardStyle(hookCard);
+
+  // ② 나머지 장 — 원본 미디어 그대로 (텍스트 없음)
+  if (state.mode === 'post') {
+    for (let i = 1; i < state.uploadedImages.length; i++) {
+      const c = document.createElement('div');
+      c.className = 'card';
+      c.style.height = previewCardHeight();
+      c.style.backgroundImage = `url("${state.uploadedImages[i]}")`;
+      c.style.backgroundSize = 'cover';
+      c.style.backgroundPosition = 'center';
+      c.innerHTML = `<div class="card-inner"><div class="card-num">${i + 1}</div></div>`;
+      scroll.appendChild(c);
+    }
+  } else if (state.videoUrl) {
+    const c = document.createElement('div');
+    c.className = 'card card-video';
+    c.style.height = previewCardHeight();
+    c.innerHTML = `<video controls muted preload="metadata" src="${escHtml(state.videoUrl)}"></video>`;
+    scroll.appendChild(c);
+  }
+
+  document.getElementById('carouselBadge').textContent = state.mode === 'post'
+    ? `${Math.max(1, state.uploadedImages.length)} 페이지`
+    : '커버 + 원본 영상';
+  document.getElementById('ratioToggle').style.display = state.mode === 'post' ? '' : 'none';
+  document.getElementById('saveAllImagesBtn').textContent = state.mode === 'post' ? '이미지 전체 저장' : '커버 + 원본 영상 저장';
+
+  document.getElementById('carouselWrapper').classList.add('visible');
+  document.getElementById('emptyState').style.display = 'none';
+  renderCaptionPanel();
+}
+
+// 캡션 패널 — 캡션은 생성과 함께 온다 (별도 생성 버튼 없음)
+function renderCaptionPanel() {
+  const wrap = document.getElementById('captionWrapper');
+  const L = state.byLang?.[state.activeLang];
+  if (!L) { wrap.classList.remove('visible'); return; }
+  document.getElementById('captionTextContent').textContent = L.caption || '';
+  document.getElementById('captionHashtagsRow').textContent = (L.hashtags || []).join(' ');
+  document.getElementById('captionResult').style.display = 'block';
+  wrap.classList.add('visible');
+}
+
+// ===== 게시물 저장 비율 프리셋 (1:1 / 4:5) — 릴스 커버는 항상 9:16 =====
 document.querySelectorAll('#ratioToggle .lang-tab').forEach(btn => {
   btn.addEventListener('click', () => {
     state.postRatio = btn.dataset.ratio;
     document.querySelectorAll('#ratioToggle .lang-tab').forEach(b => b.classList.toggle('active', b === btn));
     // 미리보기 카드 비율도 맞춰 갱신 (1:1=210x210, 4:5=210x262)
     document.querySelectorAll('#carouselScroll .card').forEach(c => {
-      c.style.height = state.postRatio === '1:1' ? '210px' : '262px';
+      c.style.height = previewCardHeight();
     });
     showToast(`저장 비율: ${state.postRatio} (${state.postRatio === '1:1' ? '1080x1080' : '1080x1350'})`, 'info');
   });
 });
 
-// Phase 4: 제작 완료 시 텔레그램으로 완료 알림 + 확인 링크만 발송 (이미지·문구 미발송)
+// 제작 완료 시 텔레그램으로 완료 알림 + 확인 링크만 발송 (이미지·문구 미발송)
 async function autoSendTelegram() {
   showLoading('텔레그램으로 발송 중...', '제작 완료 알림과 확인 링크를 보내고 있습니다');
   try {
@@ -1422,59 +1674,6 @@ async function autoSendTelegram() {
   } finally {
     hideLoading();
   }
-}
-
-
-// ===== Render Carousel =====
-function renderCarousel(pages) {
-  const scroll = document.getElementById('carouselScroll');
-  scroll.innerHTML = '';
-  scroll.style.fontFamily = FONT_STACKS[state.activeLang] || FONT_STACKS.ko; // 언어별 폰트
-
-  const cardData = [
-    { num: 1, cls: 'card-1', content: pages.page1, type: 'hook' },
-    { num: 2, cls: 'card-2', content: pages.page2, type: 'body' },
-    { num: 3, cls: 'card-3', content: pages.page3, type: 'body' },
-    { num: 4, cls: 'card-4', content: pages.page4, type: 'body' },
-    { num: 5, cls: 'card-5', content: pages.page5, type: 'cta' },
-  ];
-
-  cardData.forEach(({ num, cls, content, type }) => {
-    const card = document.createElement('div');
-    card.className = `card ${cls}`;
-    card.style.height = state.postRatio === '1:1' ? '210px' : '262px'; // 저장 비율 프리셋 반영
-
-    let inner = `<div class="card-inner"><div class="card-num">${num}</div>`;
-
-    if (type === 'cta') {
-      // 마지막 장 = 마무리 CTA (한 문장 정리 + 저장·팔로우 유도)
-      inner += `<div class="card-headline">${escHtml(content.cta || '')}</div>`;
-      if (content.linkText) inner += `<div class="card-body" style="opacity:.9;margin-bottom:16px;">${escHtml(content.linkText)}</div>`;
-      inner += `<div class="card-footer"><span class="card-book-info"></span><button class="card-copy-btn" data-page="${num}">복사</button></div>`;
-    } else if (type === 'hook') {
-      // 1페이지: 헤드라인만, footer 없음 (CSS로도 숨김)
-      inner += `<div class="card-headline">${escHtml(content.headline || '')}</div>`;
-    } else {
-      inner += `<div class="card-headline">${escHtml(content.headline || '')}</div><div class="card-divider"></div><div class="card-body">${escHtml(content.body || '')}</div>`;
-      inner += `<div class="card-footer"><span class="card-book-info"></span><button class="card-copy-btn" data-page="${num}">복사</button></div>`;
-    }
-
-    inner += `</div>`;
-    card.innerHTML = inner;
-    scroll.appendChild(card);
-  });
-
-  scroll.querySelectorAll('.card-copy-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const n = parseInt(btn.dataset.page);
-      copyText(getCardText(pages[`page${n}`], n), `P${n}`);
-    });
-  });
-
-  document.getElementById('carouselWrapper').classList.add('visible');
-  document.getElementById('captionWrapper').classList.add('visible');
-  document.getElementById('captionResult').style.display = 'none';
-  document.getElementById('emptyState').style.display = 'none';
 }
 
 // ===== Validation =====
@@ -1521,10 +1720,17 @@ function renderValidation(result) {
 
 // ===== Buttons =====
 document.getElementById('validateBtn').addEventListener('click', async () => {
-  if (!state.pages || !state.bookInfo) return;
+  const L = state.byLang?.[state.activeLang];
+  if (!L || !state.bookInfo) return;
   showLoading('품질 검증 중...', 'Claude AI가 콘텐츠를 평가하고 있습니다');
   try {
-    const result = await apiFetch('/api/validate', { pages: state.pages, bookInfo: state.bookInfo });
+    const result = await apiFetch('/api/validate', {
+      hook: L.hook,
+      caption: L.caption,
+      facts: state.facts,
+      topic: state.bookInfo.topic,
+      lang: state.activeLang,
+    });
     state.validation = result;
     renderValidation(result);
     setStep(result.approved ? 4 : 3);
@@ -1536,38 +1742,36 @@ document.getElementById('validateBtn').addEventListener('click', async () => {
   }
 });
 
-
 document.getElementById('regenerateBtn').addEventListener('click', async () => {
   if (!state.bookInfo) return;
   state.validation = null;
   document.getElementById('validationPanel').classList.remove('visible');
-  await generateCarousel();
+  await runGeneratePipeline(true); // 이미 수집한 팩트는 재사용 (비용 절약)
 });
 
 document.getElementById('regenFromFeedbackBtn').addEventListener('click', async () => {
-  if (!state.pages || !state.validation || !state.bookInfo) return;
+  const L = state.byLang?.[state.activeLang];
+  if (!L || !state.validation || !state.bookInfo) return;
   showLoading('피드백 반영 재생성 중...', '개선 사항을 반영해 다시 작성하고 있습니다');
   document.getElementById('validationPanel').classList.remove('visible');
   setStep(2);
   try {
-    const data = await apiFetch('/api/regenerate', {
-      bookInfo: state.bookInfo,
-      previousPages: state.pages,
-      lang: state.activeLang,
+    const d = await apiFetch('/api/regenerate', {
+      previousHook: L.hook,
+      previousCaption: L.caption,
       feedback: state.validation.feedback,
       improvements: state.validation.improvements || [],
+      facts: state.facts,
+      topic: state.bookInfo.topic,
+      lang: state.activeLang,
+      mode: state.mode,
     });
     // 원문이 바뀌었으므로 다른 언어 번역본은 무효 — 현재 언어만 남긴다
     state.genLang = state.activeLang;
-    state.pagesByLang = { [state.activeLang]: data.pages };
-    state.captionsByLang = {};
-    state.reelByLang = {};
-    state.reelScript = null;
-    state.pages = data.pages;
+    state.byLang = { [state.activeLang]: { hook: d.hook, caption: d.caption || '', hashtags: d.hashtags || [] } };
     state.validation = null;
     renderLangTabs();
-    renderCarousel(state.pages);
-    await applyUploadedImages();
+    await renderPreview();
     setStep(3);
     showToast('재생성 완료. 다시 검증해보세요.', 'success');
   } catch (err) {
@@ -1578,487 +1782,137 @@ document.getElementById('regenFromFeedbackBtn').addEventListener('click', async 
   }
 });
 
-
-
-
-
-
-
-// 이미지 전체 저장 — 5장 blob 변환 후 Web Share API로 한 번에 공유 (모바일 사진첩 저장)
-async function saveAllCards() {
-  const cards = document.querySelectorAll('#carouselScroll .card');
-  const hasImages = [...cards].some(c => c.dataset.blobUrl);
-  if (!hasImages) {
-    showToast('먼저 이미지를 업로드해 주세요', 'warning');
-    return;
-  }
-  const btn = document.getElementById('saveAllImagesBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '변환 중... (0/5)'; }
-
-  // ① 먼저 5장 모두 blob으로 변환 (setTimeout 없이 연속 처리 → user gesture 컨텍스트 유지)
-  const blobs = [];
-  for (let i = 0; i < Math.min(cards.length, 5); i++) {
-    if (!cards[i]) continue;
-    if (btn) btn.textContent = `변환 중... (${i + 1}/5)`;
-    const blob = await buildCardBlob(cards[i], i + 1);
-    if (blob) blobs.push({ blob, pageNum: i + 1 });
-  }
-
-  if (!blobs.length) {
-    if (btn) { btn.disabled = false; btn.textContent = '이미지 전체 저장'; }
-    showToast('변환된 이미지가 없습니다', 'error');
-    return;
-  }
-  if (btn) btn.textContent = '저장 중...';
-
-  const files = blobs.map(({ blob, pageNum }) =>
-    new File([blob], `carousel_p${pageNum}.png`, { type: 'image/png' })
-  );
-
-  // ② 모바일: Web Share API로 5장 한 번에 공유 → 사진첩 저장
+// ===== v2.0 저장: 훅 카드 캔버스 + 나머지 원본 그대로 =====
+async function shareOrDownload(files, title) {
   if (navigator.canShare && navigator.canShare({ files })) {
     try {
-      await navigator.share({ files, title: '캐럿셀 이미지 5장' });
-      showToast(`${blobs.length}장 저장 완료`, 'success');
+      await navigator.share({ files, title });
+      showToast(`${files.length}개 저장 완료`, 'success');
+      return;
     } catch (e) {
-      if (e.name !== 'AbortError') showToast('저장 실패: ' + e.message, 'error');
+      if (e.name === 'AbortError') return;
+      // 공유 실패 → 다운로드 폴백
     }
-  } else {
-    // ③ 데스크톱 폴백: 순차 다운로드
-    for (const { blob, pageNum } of blobs) {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `carousel_p${pageNum}.png`;
-      document.body.appendChild(a); a.click(); a.remove();
-      await new Promise(r => setTimeout(r, 300));
-    }
-    showToast(`${blobs.length}장 저장 완료`, 'success');
   }
-
-  if (btn) { btn.disabled = false; btn.textContent = '이미지 전체 저장'; }
-}
-
-document.getElementById('saveAllImagesBtn').addEventListener('click', saveAllCards);
-
-// ── 릴스 세트(세로 9:16) ──
-// 한 장당 4~5초 시청 기준 → 한 화면에서 읽히는 분량(2~4줄, 약 50~60자)으로 충분히 담는다.
-// 5장 구성: ① 공감 훅 → ②③④ 본문 핵심(각 페이지 헤드라인+요지) → ⑤ 마무리 CTA(저장·팔로우 유도).
-const REEL_HANDLE = ''; // 계정 핸들 — 계정 확정 시 '@계정명' 형태로 입력하면 릴스 우상단에 표시
-const REEL_ACCENT = { 1: '#C084FC', 2: '#60A5FA', 3: '#34D399', 4: '#F472B6', 5: '#FBBF24' };
-
-// 릴스 한 장에 담을 문구 — 문장 단위로 글자 상한까지 채워 "내용이 읽히게" 만든다.
-// (한 문장만 달랑 자르지 않고, 들어갈 수 있는 만큼 문장을 이어 담는다)
-function reelClamp(text, maxChars) {
-  let s = String(text || '').replace(/\s+/g, ' ').trim();
-  if (!s) return '';
-  if ([...s].length <= maxChars) return s.replace(/[.。]\s*$/, '').trim();
-  const sentences = s.match(/[^.!?。…]+[.!?。…]?/g) || [s];
-  let out = '';
-  for (const sent of sentences) {
-    const cand = (out + ' ' + sent).trim();
-    if ([...cand].length <= maxChars) out = cand; else break;
+  for (const f of files) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(f);
+    a.download = f.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    await new Promise(r => setTimeout(r, 300));
   }
-  if (out.trim()) return out.replace(/[.。]\s*$/, '').trim();
-  // 첫 문장도 너무 길면 단어 경계로 자르고 … 표시(궁금증 유발)
-  let cut = [...s].slice(0, maxChars).join('');
-  const sp = cut.lastIndexOf(' ');
-  if (sp > maxChars * 0.5) cut = cut.slice(0, sp);
-  return cut.trim() + '…';
+  showToast(`${files.length}개 저장 완료`, 'success');
 }
 
-// 긴 문장을 릴스용 짧은 한 줄로: 첫 문장/구절만 취하고 글자 수 상한을 넘으면 띄어쓰기에서 깔끔히 자른다.
-function shortReelLine(text, maxChars) {
-  let s = String(text || '').replace(/\s+/g, ' ').trim();
-  if (!s) return '';
-  // 1) 첫 문장 경계(. ! ? 。 …)에서 끊기
-  const sent = s.match(/^[^.!?。…]*[.!?。…]?/);
-  if (sent && sent[0].trim()) s = sent[0].trim();
-  s = s.replace(/[.。]$/, '').trim();
-  if ([...s].length <= maxChars) return s;
-  // 2) 그래도 길면 콤마 앞 구절로 줄이기
-  const comma = s.split(/[,，]/)[0].trim();
-  if (comma && [...comma].length <= maxChars) return comma;
-  // 3) 마지막 수단: 글자 상한에서 띄어쓰기 기준으로 자르기
-  const arr = [...s].slice(0, maxChars);
-  let cut = arr.join('');
-  const sp = cut.lastIndexOf(' ');
-  if (sp > maxChars * 0.5) cut = cut.slice(0, sp);
-  return cut.trim();
-}
-
-// 배경 cover-fit + 가독성 그라데이션. 공통.
-async function _reelBg(ctx, W, H, blobUrl) {
-  if (blobUrl) {
-    const img = new Image();
-    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
-    const scale = Math.max(W / img.width, H / img.height);
-    const dw = img.width * scale, dh = img.height * scale;
-    ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
-  } else { ctx.fillStyle = '#1a1024'; ctx.fillRect(0, 0, W, H); }
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, 'rgba(0,0,0,0.58)'); g.addColorStop(0.4, 'rgba(0,0,0,0.28)');
-  g.addColorStop(0.7, 'rgba(0,0,0,0.5)'); g.addColorStop(1, 'rgba(0,0,0,0.9)');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-}
-
-// 계정 핸들 — 우측 상단, 너무 위는 아이폰 카메라(다이내믹 아일랜드)에 가리므로 살짝 내려 배치.
-function _reelTopHandle(ctx, W) {
-  if (!REEL_HANDLE) return; // 핸들 미설정 시 표시 생략
-  const PAD = 90;
-  ctx.textAlign = 'right';
-  ctx.font = `800 36px ${activeFontStack()}`; ctx.fillStyle = 'rgba(255,255,255,0.95)';
-  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 14;
-  ctx.fillText(REEL_HANDLE, W - PAD, 232);
-  ctx.shadowBlur = 0; ctx.textAlign = 'left';
-}
-
-// 릴스 텍스트 한 장(세로 1080x1920) — 하나의 큰 문구만. 작은 라벨/하단 푸터 없음.
-async function buildReelTextSlide(blobUrl, slide) {
-  const W = 1080, H = 1920, PAD = 90, TW = W - PAD * 2;
-  const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  await document.fonts.ready;
-  await _reelBg(ctx, W, H, blobUrl);
-  const accent = slide.accent || '#C084FC';
-  const isHook = !!slide.isHook;
-  _reelTopHandle(ctx, W);
-
-  // 훅(1페이지)은 더 크고 굵게 — 탐색 탭 썸네일에서도 읽히도록. 본문 장은 4~5초에 읽히는 분량.
-  const { px, lines } = isHook
-    ? autoFitLines(ctx, slide.text || '', TW, 108, 62, 6, 3, '900')
-    : autoFitLines(ctx, slide.text || '', TW, 84, 46, 5, 4, '900');
-  const LH = Math.round(px * 1.34);
-  const BAR_BLOCK = isHook ? 54 : 46;     // 액센트 바 + 여백
-  const blockH = BAR_BLOCK + lines.length * LH;
-  let y = Math.round(H * (isHook ? 0.42 : 0.46) - blockH / 2);
-
-  // 훅은 가독성·썸네일 대비를 위해 텍스트 블록 뒤에 부드러운 어둠 띠를 깐다.
-  if (isHook) {
-    const padV = 44, top = y - padV, bh = blockH + padV * 1.6;
-    const sg = ctx.createLinearGradient(0, top, 0, top + bh);
-    sg.addColorStop(0, 'rgba(0,0,0,0)'); sg.addColorStop(0.5, 'rgba(0,0,0,0.42)'); sg.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = sg; ctx.fillRect(0, top, W, bh);
-  }
-
-  ctx.textAlign = 'left';
-  ctx.fillStyle = accent; ctx.fillRect(PAD, y, isHook ? 110 : 90, isHook ? 9 : 7);
-  y += BAR_BLOCK + px;
-  ctx.font = `900 ${px}px ${activeFontStack()}`; ctx.fillStyle = '#fff';
-  ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = isHook ? 30 : 22;
-  for (const ln of lines) { ctx.fillText(ln, PAD, y); y += LH; }
-  ctx.shadowBlur = 0;
-  return new Promise(r => canvas.toBlob(r, 'image/png'));
-}
-
-// 릴스 마지막 장 — 마무리 CTA(정리 한 문장 + 저장·팔로우 유도, 가운데 정렬)
-async function buildReelRevealSlide(blobUrl, accent) {
-  const W = 1080, H = 1920, PAD = 90, TW = W - PAD * 2;
-  const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  await document.fonts.ready;
-  await _reelBg(ctx, W, H, blobUrl);
-  _reelTopHandle(ctx, W);
-  const pg5 = state.pages?.page5 || {};
-  const cta = (pg5.cta || '').trim();
-  const link = shortReelLine(pg5.linkText || '', 40); // 저장·팔로우 유도 한 줄
-  ctx.textAlign = 'center';
-
-  // ── 요소 크기 먼저 측정 → 전체 블록을 안전 영역(상단 핸들 아래 ~ 하단 IG UI 위)에 세로 중앙 정렬 ──
-  const BAR_H = 8, GAP_BAR = 48;
-  const { px: cPx, lines: cLines } = autoFitLines(ctx, cta, TW, 76, 46, 5, 4, '900');
-  const cLH = Math.round(cPx * 1.36);
-  const GAP_LINK = 56;
-  let lLines = [], lPx = 36, lLH = 0;
-  if (link) { const r = autoFitLines(ctx, link, TW, 36, 30, 3, 2, '600'); lPx = r.px; lLines = r.lines; lLH = Math.round(lPx * 1.42); }
-
-  const ctaPart = BAR_H + GAP_BAR + cLines.length * cLH;
-  const linkPart = lLines.length ? GAP_LINK + lLines.length * lLH : 0;
-  const blockH = ctaPart + linkPart;
-
-  // 안전 영역: 상단 핸들(~170) ~ 하단 IG 오버레이 위(~1430). 그 안에서 세로 중앙.
-  const bandTop = 200, bandBottom = 1430;
-  let y = Math.round((bandTop + bandBottom) / 2 - blockH / 2);
-  if (y < bandTop) y = bandTop;
-
-  // 액센트 바
-  ctx.fillStyle = accent; ctx.fillRect((W - 110) / 2, y, 110, BAR_H); y += BAR_H + GAP_BAR;
-  // 마무리 문장 (가장 큼)
-  ctx.font = `900 ${cPx}px ${activeFontStack()}`; ctx.fillStyle = '#fff';
-  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 16;
-  for (const ln of cLines) { y += cLH; ctx.fillText(ln, W / 2, y - Math.round(cLH * 0.22)); }
-  ctx.shadowBlur = 0;
-  // 저장·팔로우 유도
-  if (lLines.length) {
-    y += GAP_LINK;
-    ctx.font = `600 ${lPx}px ${activeFontStack()}`; ctx.fillStyle = accent;
-    for (const ln of lLines) { y += lLH; ctx.fillText(ln, W / 2, y - Math.round(lLH * 0.28)); }
-  }
-
-  ctx.textAlign = 'left';
-  return new Promise(r => canvas.toBlob(r, 'image/png'));
-}
-
-// 캐럿셀 문구를 조각내던 폴백(연결성 있는 대본 생성 실패 시에만 사용)
-function _reelFallbackScript(p) {
-  const joinHB = pg => {
-    const h = (pg?.headline || '').trim(), b = (pg?.body || '').trim();
-    if (!h) return b; if (!b) return h;
-    return /[.!?。…]$/.test(h) ? `${h} ${b}` : `${h}. ${b}`;
-  };
-  return { s1: p.page1?.headline || '', s2: joinHB(p.page2), s3: joinHB(p.page3), s4: joinHB(p.page4) };
-}
-
-// 릴스 대본 생성(연결성 있게) + 자동 검증 → state 저장 후 미리보기 렌더.
-async function generateReelScript(force) {
-  if (!state.pages?.page1?.headline) return;
-  if (state.reelScript && !force) { renderReelPreview(); return; }
-  const rbtn = document.getElementById('regenReelBtn');
-  if (rbtn) { rbtn.disabled = true; rbtn.textContent = '만드는 중...'; }
+async function saveAllMedia() {
+  if (!state.uploadedImages.length) { showToast('먼저 미디어를 업로드해 주세요', 'warning'); return; }
+  if (!state.byLang?.[state.activeLang]) { showToast('먼저 콘텐츠를 생성해 주세요', 'warning'); return; }
+  const btn = document.getElementById('saveAllImagesBtn');
+  const restoreLabel = state.mode === 'post' ? '이미지 전체 저장' : '커버 + 원본 영상 저장';
+  btn.disabled = true; btn.textContent = '변환 중...';
   try {
-    // v1.2: 현재 언어 대본만 생성 — 다른 언어는 탭 전환 시 번역으로 채워짐
-    const r = await apiFetch('/api/generate-reel', { pages: state.pages, bookInfo: state.bookInfo, lang: state.activeLang });
-    state.reelByLang = state.reelByLang || {};
-    state.reelByLang[state.activeLang] = r.reel || _reelFallbackScript(state.pages);
-    state.reelScript = state.reelByLang[state.activeLang];
-    state.reelValidation = r.validation || null;
-  } catch (e) {
-    state.reelScript = _reelFallbackScript(state.pages);
-    state.reelValidation = { note: '자동 생성 실패 — 캐럿셀 문구로 대체' };
-  } finally {
-    if (rbtn) { rbtn.disabled = false; rbtn.textContent = '릴스 문구 다시 만들기'; }
-  }
-  renderReelPreview();
-}
-
-// 릴스 문구 미리보기 + 검증 배지 렌더
-function renderReelPreview() {
-  const panel = document.getElementById('reelPreview');
-  if (!panel || !state.reelScript) return;
-  const s = state.reelScript;
-  const pg5 = state.pages?.page5 || {};
-  const rev = [pg5.cta, pg5.linkText].filter(Boolean).join(' / ');
-  const rows = [
-    ['1 · 훅', s.s1], ['2', s.s2], ['3', s.s3], ['4', s.s4], ['5 · 마무리', rev],
-  ];
-  document.getElementById('reelLines').innerHTML = rows.map(([n, t]) =>
-    `<div style="display:flex;gap:8px;"><span style="color:#a78bda;font-weight:700;min-width:52px;">${n}</span><span>${escHtml(t || '—')}</span></div>`
-  ).join('');
-  const v = state.reelValidation || {};
-  const badge = document.getElementById('reelValidBadge');
-  const ok = v.connected !== false && v.readable !== false;
-  badge.textContent = v.score != null ? `검증 ${v.score}점` : (ok ? '검증 통과' : '점검 필요');
-  badge.style.background = ok ? '#dcfce7' : '#fef3c7';
-  badge.style.color = ok ? '#166534' : '#92400e';
-  document.getElementById('reelValidNote').textContent = v.note || '';
-  panel.style.display = 'block';
-}
-document.getElementById('regenReelBtn').addEventListener('click', () => generateReelScript(true));
-
-async function saveReelSet() {
-  if (!state.pages?.page1?.headline) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
-  const cards = document.querySelectorAll('#carouselScroll .card');
-  const bg = (i) => (cards[i] && cards[i].dataset.blobUrl) || null;
-  if (![0,1,2,3,4].some(i => bg(i))) { showToast('먼저 이미지를 업로드해주세요 (배경이 필요합니다).', 'warning'); return; }
-
-  const p = state.pages || {};
-  const btn = document.getElementById('saveReelSetBtn');
-  btn.disabled = true; btn.textContent = '만드는 중...';
-  try {
-    // 연결성 있는 릴스 대본이 아직 없으면 지금 생성(미리보기와 동일한 문구를 저장).
-    if (!state.reelScript) { btn.textContent = '릴스 문구 만드는 중...'; await generateReelScript(true); }
-    btn.textContent = '만드는 중...';
-    const sc = state.reelScript || _reelFallbackScript(p);
-    const textSlides = [
-      { bg: bg(0), text: reelClamp(sc.s1, 46), accent: REEL_ACCENT[1], isHook: true },
-      { bg: bg(1), text: reelClamp(sc.s2, 58), accent: REEL_ACCENT[2] },
-      { bg: bg(2), text: reelClamp(sc.s3, 58), accent: REEL_ACCENT[3] },
-      { bg: bg(3), text: reelClamp(sc.s4, 58), accent: REEL_ACCENT[4] },
-    ];
-    const files = [];
-    for (let i = 0; i < textSlides.length; i++) {
-      const blob = await buildReelTextSlide(textSlides[i].bg, textSlides[i]);
-      if (blob) files.push(new File([blob], `reel_${i + 1}.png`, { type: 'image/png' }));
-    }
-    const revealBlob = await buildReelRevealSlide(bg(4) || bg(0), REEL_ACCENT[5]);
-    if (revealBlob) files.push(new File([revealBlob], `reel_5.png`, { type: 'image/png' }));
-    if (!files.length) { showToast('릴스 이미지 생성 실패', 'error'); return; }
-    if (navigator.canShare && navigator.canShare({ files })) {
-      try { await navigator.share({ files, title: '릴스 세트' }); showToast('릴스 5장 저장 완료 — 인스타 릴스에서 순서대로 선택 + 음악', 'success'); }
-      catch (e) { if (e.name !== 'AbortError') { files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }); showToast('릴스 5장 저장 완료', 'success'); } }
+    if (state.mode === 'post') {
+      const files = [];
+      const hookBlob = await buildHookBlob(state.postRatio);
+      if (hookBlob) files.push(new File([hookBlob], 'card_1_hook.png', { type: 'image/png' }));
+      // 나머지 장은 원본 그대로 (dataURL → blob)
+      for (let i = 1; i < state.uploadedImages.length; i++) {
+        const blob = await (await fetch(state.uploadedImages[i])).blob();
+        const ext = (blob.type || '').includes('png') ? 'png' : 'jpg';
+        files.push(new File([blob], `card_${i + 1}.${ext}`, { type: blob.type || 'image/jpeg' }));
+      }
+      if (!files.length) { showToast('변환된 이미지가 없습니다', 'error'); return; }
+      btn.textContent = '저장 중...';
+      await shareOrDownload(files, `카드 ${files.length}장`);
     } else {
-      files.forEach(f => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); });
-      showToast('릴스 5장 저장 완료', 'success');
+      // 릴스: 커버(9:16) 캔버스 + 원본 영상 다운로드
+      const coverBlob = await buildHookBlob('9:16');
+      if (coverBlob) {
+        btn.textContent = '저장 중...';
+        await shareOrDownload([new File([coverBlob], 'reel_cover.png', { type: 'image/png' })], '릴스 커버');
+      }
+      if (state.videoUrl) {
+        const a = document.createElement('a');
+        a.href = state.videoUrl;
+        a.download = state.videoName || 'reel_video.mp4';
+        document.body.appendChild(a); a.click(); a.remove();
+        showToast('원본 영상 다운로드를 시작했습니다.', 'success');
+      }
     }
   } catch (e) {
-    showToast('릴스 생성 실패: ' + e.message, 'error');
+    showToast('저장 실패: ' + e.message, 'error');
   } finally {
-    btn.disabled = false; btn.textContent = '릴스 세트(세로 5장)';
+    btn.disabled = false; btn.textContent = restoreLabel;
   }
 }
-document.getElementById('saveReelSetBtn').addEventListener('click', saveReelSet);
+document.getElementById('saveAllImagesBtn').addEventListener('click', saveAllMedia);
 
-
-// 오프스크린 캔버스로 각 페이지 텍스트가 몇 줄 나오는지 측정
-// autoFitLines 최소 폰트(헤드 40px/본문 28px)에서도 maxLines를 초과하면 issue로 반환
-function measureCanvasOverflow(pages) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1080; canvas.height = 1080;
-  const ctx = canvas.getContext('2d');
-  const TEXT_W = 1080 - 70 * 2; // 940px
-  const issues = [];
-
-  const check = (pageKey, type, text, startPx, minPx, stepPx, maxLines, weight) => {
-    if (!text) return;
-    const { lines } = autoFitLines(ctx, text, TEXT_W, startPx, minPx, stepPx, maxLines, weight);
-    if (lines.length > maxLines) {
-      issues.push({ page: pageKey, type, text, currentLines: lines.length, maxLines });
-    }
-  };
-
-  for (let p = 1; p <= 5; p++) {
-    const pg = pages[`page${p}`] || {};
-    const headline = p === 5 ? (pg.cta || '') : (pg.headline || '');
-    const body = p === 1 || p === 5 ? (p === 5 ? pg.linkText || '' : '') : (pg.body || '');
-    check(`page${p}`, 'headline', headline, 68, 40, 4, 3, '900');
-    if (body) check(`page${p}`, 'body', body, 42, 28, 3, 5, '400');
-  }
-  return issues;
-}
-
-
-
-
-
-
-// 캔버스 합성 → Blob 반환 (저장/공유 공통 유틸)
-async function buildCardBlob(card, pageNum) {
-  // Phase 4: 게시물 저장 비율 프리셋 — 1:1(1080x1080) / 4:5(1080x1350)
-  const W = 1080, H = state.postRatio === '4:5' ? 1350 : 1080;
+// ===== v2.0: 훅 카드 캔버스 합성 → Blob (1:1 / 4:5 / 9:16 커버) =====
+async function buildHookBlob(ratio) {
+  const r = ratio || (state.mode === 'reel' ? '9:16' : state.postRatio);
+  const W = 1080, H = r === '9:16' ? 1920 : r === '4:5' ? 1350 : 1080;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
 
   await document.fonts.ready;
 
-  // Phase 2 오버레이 엔진 결과 — applyUploadedImages가 dataset에 기록한 위치·색상 스킴
-  const pos = card.dataset.overlayPos || 'bottom';                    // 'top' | 'bottom'
-  const light = card.dataset.overlayScheme === 'dark-on-light';       // 밝은 배경 → 어두운 글씨
+  // 오버레이 엔진 결과 — applyHookCardStyle이 dataset에 기록한 색상 스킴 (훅은 항상 하단 앵커)
+  const hookCard = document.querySelector('#carouselScroll .card');
+  const light = hookCard?.dataset.overlayScheme === 'dark-on-light';
 
-  // ① 배경
-  const blobUrl = card.dataset.blobUrl;
-  if (blobUrl) {
+  // ① 배경 (첫 미디어 cover-fit)
+  const src = state.uploadedImages[0];
+  if (src) {
     const img = new Image();
-    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
-    // cover-fit: 비율을 유지한 채 캔버스를 꽉 채움 (늘어짐 방지 — 4:5에서 특히 중요)
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = src; });
     const scale = Math.max(W / img.width, H / img.height);
     const dw = img.width * scale, dh = img.height * scale;
     ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
-    // 텍스트가 놓이는 쪽에만 스크림 — 밝은 배경이면 흰 스크림, 어두우면 검은 스크림
-    const scrimRGB = light ? '255,255,255' : '0,0,0';
-    const grad = pos === 'top'
-      ? ctx.createLinearGradient(0, 0, 0, H * 0.7)
-      : ctx.createLinearGradient(0, H * 0.3, 0, H);
-    if (pos === 'top') {
-      grad.addColorStop(0, `rgba(${scrimRGB},${light ? 0.88 : 0.9})`);
-      grad.addColorStop(1, `rgba(${scrimRGB},0)`);
-    } else {
-      grad.addColorStop(0, `rgba(${scrimRGB},0)`);
-      grad.addColorStop(1, `rgba(${scrimRGB},${light ? 0.88 : 0.9})`);
-    }
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
   } else {
-    const BG = { 1:['#0a0a0a','#1e1b4b'], 2:['#0f172a','#1e3a8a'], 3:['#1c0a0a','#7f1d1d'], 4:['#0a1a12','#064e3b'], 5:['#1a0a2e','#6d28d9'] };
-    const [c1,c2] = BG[pageNum] || ['#0a0a0a','#1e1b4b'];
-    const grd = ctx.createLinearGradient(0,0,W*0.7,H);
-    grd.addColorStop(0, c1); grd.addColorStop(1, c2);
+    const grd = ctx.createLinearGradient(0, 0, W * 0.7, H);
+    grd.addColorStop(0, '#0a0a0a'); grd.addColorStop(1, '#1e1b4b');
     ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
   }
 
-  // 스킴별 텍스트 색 — 배경과 반대 계열 + 반대색 번짐(halo)으로 가독성 확보
+  // ② 하단 스크림 — 밝은 배경이면 흰 스크림, 어두우면 검은 스크림
+  const scrimRGB = light ? '255,255,255' : '0,0,0';
+  const grad = ctx.createLinearGradient(0, H * (r === '9:16' ? 0.42 : 0.3), 0, H);
+  grad.addColorStop(0, `rgba(${scrimRGB},0)`);
+  grad.addColorStop(1, `rgba(${scrimRGB},${light ? 0.9 : 0.92})`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // ③ 헤드라인 (하단 앵커 · 영문은 대문자 · 강조 단어 컬러)
+  const L = state.byLang?.[state.activeLang] || {};
+  let headline = L.hook?.headline || '';
+  if (state.activeLang === 'en') headline = headline.toUpperCase();
+  const accents = (L.hook?.accents || []).map(a => String(a || '').toLowerCase()).filter(Boolean);
+
+  const PAD_X = 70, TEXT_W = W - PAD_X * 2;
+  const { px, lines } = autoFitLines(ctx, headline, TEXT_W, r === '9:16' ? 84 : 72, 44, 4, 4, '900');
+  const LH = Math.round(px * 1.38);
+  // 텍스트 블록의 아래 끝 — 9:16은 안전영역(y≈1400) 안에, 그 외는 하단 여백 80px
+  const bottomY = r === '9:16' ? 1400 : H - 80;
   const HEAD_COLOR = light ? '#111827' : '#ffffff';
-  const BODY_COLOR = light ? 'rgba(17,24,39,0.85)' : 'rgba(255,255,255,0.78)';
-  // 페이지 번호(좌상단)는 상단 밴드 밝기 기준 — 밝은 상단에 흰 번호가 묻히지 않게
-  const NUM_COLOR  = parseFloat(card.dataset.overlayTopLum || '0') > 150 ? 'rgba(17,24,39,0.45)' : 'rgba(255,255,255,0.45)';
-  const HALO       = light ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.55)';
+  const HALO = light ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.55)';
 
-  // ② 페이지 번호만 (상단 좌측)
-  ctx.font = `700 36px ${activeFontStack()}`;
-  ctx.fillStyle = NUM_COLOR;
   ctx.textAlign = 'left';
-  ctx.fillText(`${pageNum}`, 70, 86);
-
-  // ③ 텍스트 콘텐츠 추출 (5페이지는 cta+linkText를 일반 텍스트로 그린다)
-  const pg = state.pages?.[`page${pageNum}`] || {};
-  let headline = '', body = '';
-  if (pageNum === 5) { headline = pg.cta || ''; body = pg.linkText || ''; }
-  else if (pageNum === 1) { headline = pg.headline || ''; body = ''; }
-  else { headline = pg.headline || ''; body = pg.body || ''; }
-
-  // ④ 동적 레이아웃 — 분석된 여백 밴드(상/하)에 앵커
-  const PAD_X = 70, PAD_BOTTOM = 80, PAD_TOP = 150, PAD_BETWEEN = 36;
-  const ACCENT_H = 6, ACCENT_W = 90, ACCENT_GAP = 28;
-  const TEXT_W = W - PAD_X * 2;
-
-  const { px: hlPx, lines: hlLines } = autoFitLines(ctx, headline, TEXT_W, 68, 40, 4, 3, '900');
-  const HL_LINE_H = Math.round(hlPx * 1.38);
-
-  const { px: bodyPx, lines: bodyLines } = body
-    ? autoFitLines(ctx, body, TEXT_W, 42, 28, 3, 5, '400')
-    : { px: 42, lines: [] };
-  const BODY_LINE_H = Math.round(bodyPx * 1.42);
-
-  const ACC = { 1:'#8B5CF6', 2:'#60A5FA', 3:'#F87171', 4:'#34D399', 5:'#C084FC' };
-  ctx.textAlign = 'left';
+  ctx.font = `900 ${px}px ${activeFontStack()}`;
   ctx.shadowColor = HALO;
+  ctx.shadowBlur = 14;
 
-  if (pos === 'top') {
-    // 상단 앵커: 액센트 바 → 헤드라인 → 본문 순서로 위에서 아래로
-    let curY = PAD_TOP;
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = ACC[pageNum] || '#8B5CF6';
-    ctx.fillRect(PAD_X, curY, ACCENT_W, ACCENT_H);
-    curY += ACCENT_H + ACCENT_GAP;
-
-    ctx.font = `900 ${hlPx}px ${activeFontStack()}`;
-    ctx.fillStyle = HEAD_COLOR;
-    ctx.shadowBlur = 14;
-    for (const ln of hlLines) { curY += HL_LINE_H; ctx.fillText(ln, PAD_X, curY - Math.round(HL_LINE_H * 0.24)); }
-
-    if (bodyLines.length) {
-      curY += PAD_BETWEEN;
-      ctx.font = `400 ${bodyPx}px ${activeFontStack()}`;
-      ctx.fillStyle = BODY_COLOR;
-      ctx.shadowBlur = 10;
-      for (const ln of bodyLines) { curY += BODY_LINE_H; ctx.fillText(ln, PAD_X, curY - Math.round(BODY_LINE_H * 0.26)); }
+  let y = bottomY - (lines.length - 1) * LH;
+  for (const ln of lines) {
+    // 단어 단위로 폭을 재며 그린다 — 강조 단어(부분 일치 포함)만 액센트 컬러
+    let x = PAD_X;
+    for (const word of ln.split(' ')) {
+      const isAcc = accents.some(a => word.toLowerCase().includes(a));
+      ctx.fillStyle = isAcc ? HOOK_ACCENT_COLOR : HEAD_COLOR;
+      ctx.fillText(word, x, y);
+      x += ctx.measureText(word + ' ').width;
     }
-  } else {
-    // 하단 앵커(기본): 아래에서 위로 본문 → 헤드라인 → 액센트 바
-    let curY = H - PAD_BOTTOM;
-
-    if (bodyLines.length) {
-      ctx.font = `400 ${bodyPx}px ${activeFontStack()}`;
-      ctx.fillStyle = BODY_COLOR;
-      ctx.shadowBlur = 10;
-      for (let i = bodyLines.length - 1; i >= 0; i--) {
-        ctx.fillText(bodyLines[i], PAD_X, curY);
-        curY -= BODY_LINE_H;
-      }
-      curY -= PAD_BETWEEN;
-    }
-
-    ctx.font = `900 ${hlPx}px ${activeFontStack()}`;
-    ctx.fillStyle = HEAD_COLOR;
-    ctx.shadowBlur = 14;
-    for (let i = hlLines.length - 1; i >= 0; i--) {
-      ctx.fillText(hlLines[i], PAD_X, curY);
-      curY -= HL_LINE_H;
-    }
-    curY -= ACCENT_GAP;
-
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = ACC[pageNum] || '#8B5CF6';
-    ctx.fillRect(PAD_X, curY, ACCENT_W, ACCENT_H);
+    y += LH;
   }
   ctx.shadowBlur = 0;
 
@@ -2126,79 +1980,25 @@ function autoFitLines(ctx, text, maxWidth, startPx, minPx, stepPx, maxLines, wei
   return { px, lines };
 }
 
-// 한국어 텍스트 캔버스 줄바꿈 (문자 단위)
-function canvasWrapText(ctx, text, x, y, maxWidth, lineH) {
-  if (!text) return y;
-  let line = '', cy = y;
-  const chars = [...text]; // 유니코드 문자 단위 분리
-  for (const ch of chars) {
-    if (ch === '\n') { ctx.fillText(line, x, cy); line = ''; cy += lineH; continue; }
-    const test = line + ch;
-    if (ctx.measureText(test).width > maxWidth && line) {
-      ctx.fillText(line, x, cy); line = ch; cy += lineH;
-    } else { line = test; }
-  }
-  if (line) { ctx.fillText(line, x, cy); cy += lineH; }
-  return cy;
-}
-
-document.getElementById('generateCaptionBtn').addEventListener('click', async () => {
-  if (!state.pages || !state.bookInfo) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
-
-  showLoading('캡션 생성 중...', 'AI가 인스타그램 캡션과 해시태그를 작성하고 있습니다');
-
-  try {
-    const data = await apiFetch('/api/generate-caption', {
-      pages: state.pages,
-      bookInfo: state.bookInfo,
-      lang: state.activeLang,
-    });
-    // v1.2: 현재 언어 캡션만 생성 — 다른 언어는 탭 전환 시 번역으로 채워짐
-    state.captionsByLang = state.captionsByLang || {};
-    state.captionsByLang[state.activeLang] = {
-      caption: data.caption || '', hashtags: data.hashtags || [],
-      reelCaption: data.reelCaption || '', reelHashtags: data.reelHashtags || [],
-    };
-    state.caption = data.caption;
-    state.captionHashtags = data.hashtags;
-    renderActiveCaption();
-    showToast('캡션 생성 완료!', 'success');
-  } catch (err) {
-    showToast(err.message, 'error');
-  } finally {
-    hideLoading();
-  }
-});
-
+// ===== 복사 버튼 =====
 document.getElementById('copyCaptionBtn').addEventListener('click', () => {
-  // 현재 언어 탭의 캡션을 복사
-  const c = state.captionsByLang?.[state.activeLang] || state.captionsByLang?.ko
-    || (state.caption ? { caption: state.caption, hashtags: state.captionHashtags } : null);
-  if (!c) return;
-  const full = (c.caption || '') + '\n\n' + (c.hashtags || []).join(' ');
+  // 현재 언어 탭의 캡션 + 해시태그를 복사
+  const L = state.byLang?.[state.activeLang];
+  if (!L) return;
+  const full = (L.caption || '') + '\n\n' + (L.hashtags || []).join(' ');
   copyText(full, `캡션(${state.activeLang})`);
 });
 
-document.getElementById('copyReelCaptionBtn').addEventListener('click', () => {
-  // 현재 언어 탭의 릴스 캡션(짧은 후킹형)을 복사
-  const c = state.captionsByLang?.[state.activeLang] || state.captionsByLang?.ko;
-  if (!c?.reelCaption) return;
-  const full = c.reelCaption + '\n\n' + (c.reelHashtags || []).join(' ');
-  copyText(full, `릴스 캡션(${state.activeLang})`);
-});
-
 document.getElementById('copyAllBtn').addEventListener('click', () => {
-  if (!state.pages) return;
-  const text = [1,2,3,4,5].map(n => getCardText(state.pages[`page${n}`], n)).join('\n\n---\n\n');
-  copyText(text, '전체');
+  // 전체 복사 = 훅 헤드라인 + 캡션 + 해시태그
+  const L = state.byLang?.[state.activeLang];
+  if (!L) return;
+  const full = [L.hook?.headline, L.caption, (L.hashtags || []).join(' ')].filter(Boolean).join('\n\n');
+  copyText(full, '전체');
 });
-
-
-
-
 
 document.getElementById('telegramBtn').addEventListener('click', async () => {
-  if (!state.pages || !state.bookInfo) return;
+  if (!state.byLang?.[state.activeLang] || !state.bookInfo) return;
   showLoading('텔레그램 발송 중...', '제작 완료 알림과 확인 링크를 보내고 있습니다');
   try {
     // 텔레그램에는 완료 알림 + 확인 링크만 전송 (이미지·문구는 보내지 않음)
@@ -2213,6 +2013,9 @@ document.getElementById('telegramBtn').addEventListener('click', async () => {
     hideLoading();
   }
 });
+
+// 초기화 — 현재 모드에 맞는 업로드 존 문구/accept 적용
+setUploadZoneMode();
 
 </script>
 </body>
