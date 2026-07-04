@@ -438,44 +438,70 @@ async function handleSendTelegram(env, body) {
 
 // ===== Claude 핸들러 =====
 
-// 언어별 페이지 JSON 스키마 (생성·재생성 공용)
+// 페이지 JSON 스키마 (생성·재생성·번역 공용)
 const PAGES_JSON_SHAPE = '{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}';
 
-// 3개 언어 결과에서 pagesByLang 추출 — ko는 필수, en/ja는 없으면 ko로 폴백(부분 실패 허용)
-function normalizePagesByLang(parsed) {
-  const ko = parsed.ko?.page1 ? parsed.ko : (parsed.page1 ? parsed : null);
-  if (!ko) throw new Error('생성 결과 형식 오류 — 한국어 페이지가 없습니다.');
-  return { ko, en: parsed.en?.page1 ? parsed.en : ko, ja: parsed.ja?.page1 ? parsed.ja : ko };
-}
+// 언어별 문체·분량 규칙 — 생성/재생성/캡션/릴스/번역이 공유
+const LANG_STYLE = {
+  ko: { name: '한국어', style: '존댓말·문어체(~습니다/~합니다/~네요). 반말 절대 금지', hl1: 40, hl: 18, line: 40, ex5: '"다시 꺼내보고 싶다면 저장해두세요"', tagEx: '#아침루틴' },
+  en: { name: '영어(English)', style: '원어민이 쓴 듯한 자연스러운 SNS 톤', hl1: 70, hl: 30, line: 60, ex5: '"Save this for the mornings you need it"', tagEx: '#morningroutine' },
+  ja: { name: '일본어(日本語)', style: '정중체(です・ます). 기계번역투 금지', hl1: 40, hl: 18, line: 40, ex5: '"また読み返したくなったら保存してください"', tagEx: '#朝活' },
+};
+function langOf(v) { return ['ko', 'en', 'ja'].includes(v) ? v : 'ko'; }
 
 async function handleGenerate(env, body) {
-  // Phase 3: 한 번의 호출로 한국어 원문 + 영어·일본어 현지화본을 동시에 생성(비용 최적화 — 기획서 STEP 2).
+  // v1.2: 선택한 언어 "하나"로만 생성 — 다른 언어는 탭 전환 시 /api/translate(싼 모델)로 지연 번역.
+  // (3개 언어 동시 생성 대비: 안 쓰는 언어의 비싼 main 모델 토큰 낭비 제거)
   const topic = String(body.topic || body.title || '').trim();
   const coreMessage = String(body.coreMessage || '').trim();
   if (!topic && !coreMessage) throw new Error('주제(topic) 또는 핵심 메시지(coreMessage)가 필요합니다.');
+  const lang = langOf(body.lang);
+  const L = LANG_STYLE[lang];
 
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    env, tier: 'main', max_tokens: 3400,
-    system: `당신은 인스타그램 카드뉴스(캐러셀) 전문 카피라이터이자 한/영/일 현지화(localization) 전문가입니다.\n핵심 규칙(절대 위반 금지):\n1. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.\n2. 과장·공포 조장 금지. 확실하지 않은 통계·수치·연구를 지어내지 않는다.\n3. 독자가 "저장해두고 싶다", "친구에게 보내주고 싶다"고 느낄 공감과 실용성을 담는다.\n4. 이모지 금지. 한국어는 존댓말·문어체(~습니다/~합니다/~네요), 영어는 자연스러운 SNS 톤, 일본어는 정중체(です・ます).\n5. 현지화는 직역이 아니다 — 각 언어 사용자가 실제로 쓰는 자연스러운 관용 표현으로 옮긴다.\n반드시 JSON만 응답한다.`,
-    user: `다음 주제로 5페이지 인스타그램 카드뉴스를 작성하세요.\n\n주제: ${topic || coreMessage}\n${topic && coreMessage ? `핵심 메시지: ${coreMessage}\n` : ''}${body.targetAudience ? `대상 독자: ${body.targetAudience}\n` : ''}\n[작성 순서] 먼저 한국어(ko)로 완성한 뒤, 같은 내용을 영어(en)·일본어(ja)로 현지화하세요. 세 언어 모두 아래 구조·분량 규칙을 지킵니다.\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(후킹 — 헤드라인만): 스크롤을 멈추게 하는 단 하나의 문장으로 카드 전체를 채운다.\n  - headline: 한국어 40자 이내(영어 70자·일본어 40자 이내) 완전한 문장. 독자가 "내 얘기다"라고 느낄 구체적 순간·감정, 또는 궁금증.\n    규칙: 공포·경고 톤 금지. "대부분의 사람들이" 같은 상투 패턴 금지. 주어 없는 단어 조각 금지.\n2페이지(공감·문제): 독자가 겪는 상황을 구체적 장면으로.\n  - headline: 18자 이내(영어 30자) / body: 3~4줄, 한 줄 40자 이내(영어 60자).\n3페이지(이유·원리): 왜 그런지 쉽게 풀어 설명.\n  - headline: 18자 이내(영어 30자) / body: 3~4줄, 한 줄 40자 이내(영어 60자).\n4페이지(방법·실마리): 오늘부터 해볼 수 있는 구체적 방향. 마지막 줄은 여운 있게.\n  - headline: 18자 이내(영어 30자) / body: 3~4줄, 한 줄 40자 이내(영어 60자).\n5페이지(마무리 CTA):\n  - cta: 전체를 한 문장으로 정리하는 마무리 — 독자 가슴에 남는 한 문장.\n  - linkText: 저장·팔로우를 자연스럽게 유도하는 한 줄 (예: ko "다시 꺼내보고 싶다면 저장해두세요" / en "Save this for the mornings you need it" / ja "また読み返したくなったら保存してください").\n\nJSON (세 언어 모두 같은 구조):\n{"ko":${PAGES_JSON_SHAPE},"en":${PAGES_JSON_SHAPE},"ja":${PAGES_JSON_SHAPE}}`
+    env, tier: 'main', max_tokens: 1400,
+    system: `당신은 인스타그램 카드뉴스(캐러셀) 전문 카피라이터입니다.\n핵심 규칙(절대 위반 금지):\n1. 모든 텍스트를 ${L.name}로 작성한다. 문체: ${L.style}.\n2. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.\n3. 과장·공포 조장 금지. 확실하지 않은 통계·수치·연구를 지어내지 않는다.\n4. 독자가 "저장해두고 싶다", "친구에게 보내주고 싶다"고 느낄 공감과 실용성을 담는다. 이모지 금지.\n반드시 JSON만 응답한다.`,
+    user: `다음 주제로 5페이지 인스타그램 카드뉴스를 ${L.name}로 작성하세요.\n\n주제: ${topic || coreMessage}\n${topic && coreMessage ? `핵심 메시지: ${coreMessage}\n` : ''}${body.targetAudience ? `대상 독자: ${body.targetAudience}\n` : ''}\n페이지 가이드 (길이 규칙 엄수):\n1페이지(후킹 — 헤드라인만): 스크롤을 멈추게 하는 단 하나의 문장으로 카드 전체를 채운다.\n  - headline: ${L.hl1}자 이내 완전한 문장. 독자가 "내 얘기다"라고 느낄 구체적 순간·감정, 또는 궁금증.\n    규칙: 공포·경고 톤 금지. "대부분의 사람들이" 같은 상투 패턴 금지. 주어 없는 단어 조각 금지.\n2페이지(공감·문제): 독자가 겪는 상황을 구체적 장면으로.\n  - headline: ${L.hl}자 이내 / body: 3~4줄, 한 줄 ${L.line}자 이내.\n3페이지(이유·원리): 왜 그런지 쉽게 풀어 설명.\n  - headline: ${L.hl}자 이내 / body: 3~4줄, 한 줄 ${L.line}자 이내.\n4페이지(방법·실마리): 오늘부터 해볼 수 있는 구체적 방향. 마지막 줄은 여운 있게.\n  - headline: ${L.hl}자 이내 / body: 3~4줄, 한 줄 ${L.line}자 이내.\n5페이지(마무리 CTA):\n  - cta: 전체를 한 문장으로 정리하는 마무리 — 독자 가슴에 남는 한 문장.\n  - linkText: 저장·팔로우를 자연스럽게 유도하는 한 줄 (예: ${L.ex5}).\n\nJSON:\n${PAGES_JSON_SHAPE}`
   });
 
-  const pagesByLang = normalizePagesByLang(extractJson(text));
-  return { success: true, pages: pagesByLang.ko, pagesByLang };
+  const pages = extractJson(text);
+  if (!pages.page1) throw new Error('생성 결과 형식 오류');
+  return { success: true, pages, lang };
+}
+
+// v1.2: 지연 번역 — 이미 생성된 콘텐츠(카드 5장 + 있으면 캡션·릴스)를 싼 모델(light)로
+// 목표 언어에 현지화한다. 새 창작이 아니라 번역이므로 main 모델이 필요 없다(비용 절감 핵심).
+async function handleTranslate(env, body) {
+  const target = langOf(body.targetLang);
+  const { pages, caption, hashtags, reelCaption, reelHashtags, reel } = body;
+  if (!pages?.page1) throw new Error('번역할 pages가 필요합니다.');
+  const L = LANG_STYLE[target];
+  const input = { pages };
+  if (caption) { input.caption = caption; input.hashtags = hashtags || []; }
+  if (reelCaption) { input.reelCaption = reelCaption; input.reelHashtags = reelHashtags || []; }
+  if (reel?.s1) input.reel = reel;
+
+  const text = await callClaude(env.ANTHROPIC_API_KEY, {
+    env, tier: 'light', max_tokens: 2400,
+    system: `당신은 한/영/일 SNS 콘텐츠 현지화(localization) 전문가입니다.\n규칙:\n1. 모든 텍스트를 ${L.name}로 옮긴다. 문체: ${L.style}.\n2. 직역 금지 — 그 언어 사용자가 실제로 쓰는 자연스러운 관용 표현으로.\n3. 해시태그는 번역이 아니라 그 언어권 인스타그램에서 실제 쓰이는 태그로 교체 (예: ${L.tagEx}). 개수 유지.\n4. 분량 규칙: 1페이지 headline ${L.hl1}자, 2~4페이지 headline ${L.hl}자·줄당 ${L.line}자 이내. 이모지 금지.\n5. 입력 JSON과 완전히 같은 구조로만 응답한다(키 추가·삭제 금지).`,
+    user: `다음 카드뉴스 콘텐츠를 ${L.name}로 현지화하세요.\n\n${JSON.stringify(input, null, 2)}`
+  });
+
+  const out = extractJson(text);
+  if (!out.pages?.page1) throw new Error('번역 결과 형식 오류');
+  return { success: true, targetLang: target, ...out };
 }
 
 async function handleValidate(env, body) {
   const { pages } = body;
   const bookInfo = body.bookInfo || {}; // 프론트가 주제 정보를 담아 보내는 컨테이너(topic/title/coreMessage)
   const topic = String(bookInfo.topic || bookInfo.title || bookInfo.coreMessage || '카드뉴스').trim();
-  // Phase 3: 3개 언어 세트가 오면 현지화 품질(오역·어색한 표현, 특히 일본어)까지 함께 검증 — 기획서 STEP 3
-  const byLang = body.pagesByLang && body.pagesByLang.ko ? body.pagesByLang : null;
-  const content = byLang ? byLang : pages;
+  const L = LANG_STYLE[langOf(body.lang)];
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'light',
     max_tokens: 1024,
-    system: '당신은 소셜미디어 콘텐츠 전문 편집장 겸 한/영/일 현지화 검수자입니다. 반드시 JSON만 응답합니다.',
-    user: `주제 "${topic}" 카드뉴스(캐러셀)를 아래 5가지 기준으로 평가하세요.${byLang ? ' (ko/en/ja 3개 언어 세트 — 세 언어 모두 검토)' : ''}\n\n캐럿셀 내용:\n${JSON.stringify(content, null, 2)}\n\n평가 기준 (100점 만점):\n1. accuracy(주제 부합도): 모든 페이지가 주제를 벗어나지 않고 하나의 흐름으로 일관되게 전개되는가?${byLang ? ' 세 언어의 내용이 서로 어긋나지 않는가?' : ''} 0~20\n2. factual(사실 정확성): 수치·통계·사례에 명백한 오류나 과장, 지어낸 근거가 없는가? 0~20\n3. copyright(안전성): 표절·저작권 침해 소지, 혐오·차별 표현, 의료·법률·투자에 대한 위험한 단정이 없는가? 0~20\n4. engagement(공감·참여 유도): 독자가 "저장해두고 싶다", "공유하고 싶다"고 느낄 공감과 실용성이 있는가? (공포·단정·비난 톤이면 감점) 0~25\n5. quality(문장 품질): 오타·비문·어색한 표현이 없고 간결한가? 한국어 존댓말·문어체 유지?${byLang ? ' 영어·일본어에 오역이나 기계번역투(특히 일본어의 부자연스러운 표현)가 없는가?' : ''} 0~15\n\nJSON: {"totalScore":85,"scores":{"accuracy":17,"factual":16,"copyright":18,"engagement":22,"quality":12},"feedback":"전체 평가 2~3문장","improvements":["구체적 개선점1","개선점2","개선점3"],"approved":true}\napproved는 totalScore>=70이면 true.`
+    system: '당신은 소셜미디어 콘텐츠 전문 편집장 겸 콘텐츠 안전성 검토자입니다. 반드시 JSON만 응답합니다.',
+    user: `주제 "${topic}" ${L.name} 카드뉴스(캐러셀)를 아래 5가지 기준으로 평가하세요.\n\n캐럿셀 내용:\n${JSON.stringify(pages, null, 2)}\n\n평가 기준 (100점 만점):\n1. accuracy(주제 부합도): 모든 페이지가 주제를 벗어나지 않고 하나의 흐름으로 일관되게 전개되는가? 0~20\n2. factual(사실 정확성): 수치·통계·사례에 명백한 오류나 과장, 지어낸 근거가 없는가? 0~20\n3. copyright(안전성): 표절·저작권 침해 소지, 혐오·차별 표현, 의료·법률·투자에 대한 위험한 단정이 없는가? 0~20\n4. engagement(공감·참여 유도): 독자가 "저장해두고 싶다", "공유하고 싶다"고 느낄 공감과 실용성이 있는가? (공포·단정·비난 톤이면 감점) 0~25\n5. quality(문장 품질): 오타·비문·어색한 표현이 없고 간결한가? 문체(${L.style})가 유지되는가? 0~15\n\nJSON: {"totalScore":85,"scores":{"accuracy":17,"factual":16,"copyright":18,"engagement":22,"quality":12},"feedback":"전체 평가 2~3문장","improvements":["구체적 개선점1","개선점2","개선점3"],"approved":true}\napproved는 totalScore>=70이면 true.`
   });
   return { success: true, ...extractJson(text) };
 }
@@ -502,52 +528,37 @@ async function handleReelHook(env, body) {
 
 // 릴스 대본(4장) — 한 편의 흐름으로 "연결되게" 생성하고, 자체 검증(연결성·가독성)까지 한 번에.
 // 캐럿셀의 조각을 잘라 붙이던 방식(어색함)을 대체한다. 5번째 장(마무리 CTA)은 프론트 캔버스가 처리.
-// Phase 4: 릴스 대본도 한/영/일 3개 언어 세트로 생성(언어 탭과 연동).
+// v1.2: 현재 언어 하나로만 생성 — 다른 언어는 탭 전환 시 /api/translate가 함께 번역.
 async function handleGenerateReel(env, body) {
   const { pages, bookInfo } = body;
-  const pByLang = body.pagesByLang && body.pagesByLang.ko ? body.pagesByLang : null;
-  const basePages = pByLang ? pByLang.ko : pages;
-  const arc = [basePages?.page1?.headline, basePages?.page2?.headline, basePages?.page3?.headline, basePages?.page4?.headline, basePages?.page5?.cta]
+  const lang = langOf(body.lang);
+  const L = LANG_STYLE[lang];
+  const arc = [pages?.page1?.headline, pages?.page2?.headline, pages?.page3?.headline, pages?.page4?.headline, pages?.page5?.cta]
     .filter(Boolean).join(' / ');
-  // 폴백: 언어별 캐럿셀 헤드라인 그대로
-  const fbOf = (p) => ({
-    s1: p?.page1?.headline || '', s2: p?.page2?.headline || '',
-    s3: p?.page3?.headline || '', s4: p?.page4?.headline || '',
-  });
-  const fb = fbOf(basePages);
-  const fbByLang = {
-    ko: fb,
-    en: pByLang ? fbOf(pByLang.en) : fb,
-    ja: pByLang ? fbOf(pByLang.ja) : fb,
+  // 폴백: 캐럿셀 헤드라인 그대로
+  const fb = {
+    s1: pages?.page1?.headline || '', s2: pages?.page2?.headline || '',
+    s3: pages?.page3?.headline || '', s4: pages?.page4?.headline || '',
   };
   const topic = String(bookInfo?.topic || bookInfo?.title || bookInfo?.coreMessage || '').trim();
-  const REEL_SHAPE = '{"s1":"...","s2":"...","s3":"...","s4":"..."}';
   try {
     const text = await callClaude(env.ANTHROPIC_API_KEY, {
-      env, tier: 'light', max_tokens: 1600, optional: true, // 예산 절약 모드에서 생략(폴백: 캐럿셀 헤드라인)
-      system: `당신은 인스타 릴스 대본 카피라이터이자 한/영/일 현지화 전문가입니다.\n[목표] 4개의 슬라이드 문구가 "한 편의 이야기처럼 자연스럽게 이어지게" 씁니다(뚝뚝 끊긴 조각 금지).\n[구성·흐름]\n· s1(훅): 스크롤을 멈추는 강한 첫 문장(콕 집는 공감/궁금증). 18~28자.\n· s2: s1에서 자연스럽게 이어받아 상황·문제를 구체적 장면으로.\n· s3: 그 이유나 원리를 쉽게 짚음(비난 금지).\n· s4: 실마리를 건네는 마무리(단정적 해결책 금지, 여운).\n[문체·규칙] 한국어 존댓말·문어체, 영어 자연스러운 SNS 톤, 일본어 정중체(です・ます). 각 슬라이드 한 화면에서 4~5초에 읽히게 45자 이내(영어 70자, 한두 문장). 이모지 금지, 공포·단정 금지. 앞 문장과 접속·지시어로 연결되게.\n[검증] 초안을 쓴 뒤, 4장이 매끄럽게 이어지는지·각 장이 4~5초에 읽히는지 스스로 점검하고 어색하면 고쳐서 최종본만 냅니다.\n반드시 JSON만 응답.`,
-      user: `주제: ${topic}\n캐럿셀 흐름(참고): ${arc}\n\n위 흐름을 살리되, 4개 슬라이드가 자연스럽게 이어지는 릴스 대본을 한국어(ko)로 쓰고, 영어(en)·일본어(ja)로 자연스럽게 현지화하세요(직역 금지). 스스로 검증·보완해 최종본을 내세요.\nJSON: {"reelByLang":{"ko":${REEL_SHAPE},"en":${REEL_SHAPE},"ja":${REEL_SHAPE}},"validation":{"connected":true,"readable":true,"score":0~100,"note":"연결성·가독성 한줄평"}}`,
+      env, tier: 'light', max_tokens: 700, optional: true, // 예산 절약 모드에서 생략(폴백: 캐럿셀 헤드라인)
+      system: `당신은 인스타 릴스 대본 카피라이터입니다. 모든 문구를 ${L.name}로 씁니다. 문체: ${L.style}.\n[목표] 4개의 슬라이드 문구가 "한 편의 이야기처럼 자연스럽게 이어지게" 씁니다(뚝뚝 끊긴 조각 금지).\n[구성·흐름]\n· s1(훅): 스크롤을 멈추는 강한 첫 문장(콕 집는 공감/궁금증).\n· s2: s1에서 자연스럽게 이어받아 상황·문제를 구체적 장면으로.\n· s3: 그 이유나 원리를 쉽게 짚음(비난 금지).\n· s4: 실마리를 건네는 마무리(단정적 해결책 금지, 여운).\n[규칙] 각 슬라이드 한 화면에서 4~5초에 읽히게 ${L.line + 5}자 이내(한두 문장). 이모지 금지, 공포·단정 금지. 앞 문장과 접속·지시어로 연결되게.\n[검증] 초안을 쓴 뒤 4장이 매끄럽게 이어지는지 스스로 점검하고 최종본만 냅니다.\n반드시 JSON만 응답.`,
+      user: `주제: ${topic}\n캐럿셀 흐름(참고): ${arc}\n\n위 흐름을 살리되, 4개 슬라이드가 자연스럽게 이어지는 릴스 대본을 쓰고 스스로 검증·보완해 최종본을 내세요.\nJSON: {"reel":{"s1":"...","s2":"...","s3":"...","s4":"..."},"validation":{"connected":true,"readable":true,"score":0~100,"note":"연결성·가독성 한줄평"}}`,
     });
     const r = extractJson(text);
-    const byLang = r.reelByLang || (r.reel ? { ko: r.reel } : {});
-    const clean = (reel, fbl) => ({
-      s1: (reel?.s1 || fbl.s1).toString().trim(),
-      s2: (reel?.s2 || fbl.s2).toString().trim(),
-      s3: (reel?.s3 || fbl.s3).toString().trim(),
-      s4: (reel?.s4 || fbl.s4).toString().trim(),
-    });
-    const reelByLang = {
-      ko: clean(byLang.ko, fbByLang.ko),
-      en: clean(byLang.en || byLang.ko, fbByLang.en),
-      ja: clean(byLang.ja || byLang.ko, fbByLang.ja),
+    const reel = r.reel || {};
+    const out = {
+      s1: (reel.s1 || fb.s1).toString().trim(),
+      s2: (reel.s2 || fb.s2).toString().trim(),
+      s3: (reel.s3 || fb.s3).toString().trim(),
+      s4: (reel.s4 || fb.s4).toString().trim(),
     };
     const validation = r.validation || { connected: true, readable: true, score: null, note: '' };
-    return { success: true, reel: reelByLang.ko, reelByLang, validation };
+    return { success: true, reel: out, validation, lang };
   } catch (e) {
-    return {
-      success: true, reel: fb, reelByLang: fbByLang,
-      validation: { connected: true, readable: true, score: null, note: '자동 생성 실패 — 캐럿셀 문구로 대체' },
-    };
+    return { success: true, reel: fb, validation: { connected: true, readable: true, score: null, note: '자동 생성 실패 — 캐럿셀 문구로 대체' }, lang };
   }
 }
 
@@ -557,41 +568,37 @@ async function handleGenerateCaption(env, body) {
   if (!pages) throw new Error('캐럿셀 데이터가 필요합니다.');
 
   const topic = String(bookInfo.topic || bookInfo.title || bookInfo.coreMessage || '').trim();
+  const lang = langOf(body.lang);
+  const L = LANG_STYLE[lang];
 
-  // Phase 3: 한/영/일 캡션+해시태그를 한 번에 생성. 해시태그는 번역이 아니라 각 언어권에서
-  // 실제로 쓰이는 태그로 현지화한다(기획서 1-3).
+  // v1.2: 현재 언어 하나로만 생성 — 다른 언어 캡션은 탭 전환 시 /api/translate가 함께 번역
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
     env, tier: 'light',
-    max_tokens: 1200,
-    system: '당신은 인스타그램 콘텐츠 크리에이터이자 한/영/일 현지화 전문가입니다. 독자가 공감해 "저장"하고 "친구에게 공유"하고 싶어지는 캡션을 씁니다. 노골적 판매·공포·단정·비난 금지. 이모지 금지. 한국어는 존댓말, 영어는 자연스러운 SNS 톤, 일본어는 정중체(です・ます). 반드시 JSON만 응답합니다.',
-    user: `주제: ${topic}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n\n인스타그램 캡션을 한국어(ko)·영어(en)·일본어(ja) 3개 언어로 작성하세요. (목적: 저장·공유로 팔로워 늘리기.)\n\n[게시물 캡션(caption) 구조 — 세 언어 공통, 순서 엄수]\n1줄: 독자의 마음을 붙잡는 공감형 한 문장 (공포·단정 금지)\n2~3줄: 캐럿셀 핵심 초간결 요약 (반복 금지)\n끝에서 둘째 줄: 저장 유도 한 문장\n마지막 줄: 공유 또는 팔로우 유도 한 문장\n\n[릴스 캡션(reelCaption) — 세 언어 각각] 짧은 후킹형 1~2줄. 스크롤을 멈춘 시청자가 프로필을 눌러보고 싶어지게. 게시물 캡션의 요약 금지 — 릴스만의 강한 한 마디.\n\n[추가 규칙]\n- hashtags: 게시물용, 언어별 정확히 3개 — 직역 금지, 그 언어권 인스타에서 실제로 쓰이는 태그로 (예: en #morningroutine / ja #朝活)\n- reelHashtags: 릴스용 핵심 태그, 언어별 정확히 2개\n- 게시물 캡션 전체 6줄 이내, 짧고 간결하게\n- 영어·일본어는 한국어의 직역이 아니라 그 언어권 사용자가 쓴 것처럼 자연스럽게\n\nJSON:\n{"ko":{"caption":"...","hashtags":["#","#","#"],"reelCaption":"...","reelHashtags":["#","#"]},"en":{"caption":"...","hashtags":["#","#","#"],"reelCaption":"...","reelHashtags":["#","#"]},"ja":{"caption":"...","hashtags":["#","#","#"],"reelCaption":"...","reelHashtags":["#","#"]}}`,
+    max_tokens: 600,
+    system: `당신은 인스타그램 콘텐츠 크리에이터입니다. 독자가 공감해 "저장"하고 "친구에게 공유"하고 싶어지는 캡션을 ${L.name}로 씁니다. 문체: ${L.style}. 노골적 판매·공포·단정·비난 금지. 이모지 금지. 반드시 JSON만 응답합니다.`,
+    user: `주제: ${topic}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n\n인스타그램 캡션을 ${L.name}로 작성하세요. (목적: 저장·공유로 팔로워 늘리기.)\n\n[게시물 캡션(caption) 구조 — 순서 엄수]\n1줄: 독자의 마음을 붙잡는 공감형 한 문장 (공포·단정 금지)\n2~3줄: 캐럿셀 핵심 초간결 요약 (반복 금지)\n끝에서 둘째 줄: 저장 유도 한 문장\n마지막 줄: 공유 또는 팔로우 유도 한 문장\n\n[릴스 캡션(reelCaption)] 짧은 후킹형 1~2줄. 게시물 캡션의 요약 금지 — 릴스만의 강한 한 마디.\n\n[추가 규칙]\n- hashtags: 게시물용 정확히 3개 — 그 언어권 인스타에서 실제로 쓰이는 태그로 (예: ${L.tagEx})\n- reelHashtags: 릴스용 핵심 태그 정확히 2개\n- 게시물 캡션 전체 6줄 이내, 짧고 간결하게\n\nJSON:\n{"caption":"...","hashtags":["#","#","#"],"reelCaption":"...","reelHashtags":["#","#"]}`,
   });
 
   const parsed = extractJson(text);
-  // 신형(3개 언어) 또는 구형(단일) 응답 모두 허용
-  const captions = parsed.ko?.caption
-    ? { ko: parsed.ko, en: parsed.en || parsed.ko, ja: parsed.ja || parsed.ko }
-    : { ko: { caption: parsed.caption || '', hashtags: parsed.hashtags || [] } };
-  return { success: true, captions, caption: captions.ko.caption, hashtags: captions.ko.hashtags };
+  return {
+    success: true, lang,
+    caption: parsed.caption || '', hashtags: parsed.hashtags || [],
+    reelCaption: parsed.reelCaption || '', reelHashtags: parsed.reelHashtags || [],
+  };
 }
 
 async function handleRegenerate(env, body) {
   const { previousPages, feedback, improvements = [] } = body;
   const bookInfo = body.bookInfo || {}; // 주제 정보 컨테이너(topic/title/coreMessage)
   const topic = String(bookInfo.topic || bookInfo.title || bookInfo.coreMessage || '').trim();
-  // Phase 3: 이전 버전이 3개 언어 세트면 개선본도 3개 언어로 함께 재생성
-  const prevByLang = body.previousPagesByLang && body.previousPagesByLang.ko ? body.previousPagesByLang : null;
+  const lang = langOf(body.lang);
+  const L = LANG_STYLE[lang];
   const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    env, tier: 'main', max_tokens: prevByLang ? 3400 : 1200,
-    system: `당신은 인스타그램 카드뉴스(캐러셀) 전문 카피라이터이자 한/영/일 현지화 전문가입니다.\n핵심 규칙(절대 위반 금지):\n1. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.\n2. 과장·공포 조장 금지. 확실하지 않은 통계·수치를 지어내지 않는다.\n3. 이모지 금지. 한국어는 존댓말·문어체, 영어는 자연스러운 SNS 톤, 일본어는 정중체(です・ます).\n반드시 JSON만 응답한다.`,
-    user: `카드뉴스를 피드백에 맞게 개선하세요.\n주제: ${topic}\n${bookInfo.coreMessage && bookInfo.coreMessage !== topic ? `핵심 메시지: ${bookInfo.coreMessage}\n` : ''}\n이전 버전:\n${JSON.stringify(prevByLang || previousPages, null, 2)}\n\n피드백: ${feedback}\n개선 요청: ${improvements.join(' / ')}\n\n텍스트 길이 기준:\n- 1페이지 headline: 40자 이내(영어 70자) 완전한 문장. 단어 조각 절대 금지. subtext 없음.\n- 2~4페이지 headline: 18자 이내(영어 30자), body: 3~4줄(줄당 한국어·일본어 45자, 영어 60자 이내).\n- 5페이지: cta(마무리 한 문장) + linkText(저장·팔로우 유도 한 줄)\n${prevByLang ? '- 한국어(ko)를 먼저 개선하고, 영어(en)·일본어(ja)도 같은 내용으로 자연스럽게 현지화(직역 금지).\n' : ''}\nJSON:\n${prevByLang ? `{"ko":${PAGES_JSON_SHAPE},"en":${PAGES_JSON_SHAPE},"ja":${PAGES_JSON_SHAPE}}` : PAGES_JSON_SHAPE}`
+    env, tier: 'main', max_tokens: 1400,
+    system: `당신은 인스타그램 카드뉴스(캐러셀) 전문 카피라이터입니다.\n핵심 규칙(절대 위반 금지):\n1. 모든 텍스트를 ${L.name}로 작성한다. 문체: ${L.style}.\n2. 각 페이지 텍스트는 최소한의 단어로 임팩트를 낸다 — 장황한 설명 금지.\n3. 과장·공포 조장 금지. 확실하지 않은 통계·수치를 지어내지 않는다. 이모지 금지.\n반드시 JSON만 응답한다.`,
+    user: `카드뉴스를 피드백에 맞게 개선하세요.\n주제: ${topic}\n${bookInfo.coreMessage && bookInfo.coreMessage !== topic ? `핵심 메시지: ${bookInfo.coreMessage}\n` : ''}\n이전 버전:\n${JSON.stringify(previousPages, null, 2)}\n\n피드백: ${feedback}\n개선 요청: ${improvements.join(' / ')}\n\n텍스트 길이 기준:\n- 1페이지 headline: ${L.hl1}자 이내 완전한 문장. 단어 조각 절대 금지. subtext 없음.\n- 2~4페이지 headline: ${L.hl}자 이내, body: 3~4줄(줄당 ${L.line}자 이내).\n- 5페이지: cta(마무리 한 문장) + linkText(저장·팔로우 유도 한 줄)\n\nJSON:\n${PAGES_JSON_SHAPE}`
   });
-  const parsed = extractJson(text);
-  if (prevByLang) {
-    const pagesByLang = normalizePagesByLang(parsed);
-    return { success: true, pages: pagesByLang.ko, pagesByLang };
-  }
-  return { success: true, pages: parsed };
+  return { success: true, pages: extractJson(text), lang };
 }
 
 // 캔버스 넘침 감지 후 텍스트 단축
@@ -720,6 +727,52 @@ async function handleTraceOrigin(env, body) {
     .slice(0, 8);
 
   return { success: true, analysis, sources, model };
+}
+
+// ===== STEP 0 확장: 출처 페이지에서 원본 후보 이미지 추출 (기능 1-A) =====
+// 원본 추적이 찾은 출처 페이지들을 열어 대표 이미지(og:image 등 — 보통 고화질 원본)를 뽑는다.
+// 사용자가 후보를 클릭하면 업로드 이미지가 원본으로 교체된다(교체 여부는 사용자 선택).
+async function handleFetchOriginImages(env, body) {
+  const urls = (Array.isArray(body.urls) ? body.urls : [])
+    .filter(u => /^https?:\/\//i.test(String(u))).slice(0, 3);
+  if (!urls.length) throw new Error('출처 페이지 URL(urls)이 필요합니다.');
+
+  const found = [];
+  await Promise.all(urls.map(async (pageUrl) => {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 8000);
+      const res = await fetch(pageUrl, {
+        signal: ctrl.signal, redirect: 'follow',
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; card-carousel/1.0)' },
+      });
+      clearTimeout(timer);
+      if (!res.ok) return;
+      const ct = res.headers.get('content-type') || '';
+      if (ct.startsWith('image/')) { found.push({ pageUrl, imageUrl: pageUrl }); return; } // 링크가 이미지 자체
+      if (!ct.includes('html')) return;
+      const html = (await res.text()).slice(0, 500000);
+      const cands = new Set();
+      for (const re of [
+        /<meta[^>]+property=["']og:image(?::secure_url)?["'][^>]*content=["']([^"']+)["']/gi,
+        /<meta[^>]+content=["']([^"']+)["'][^>]*property=["']og:image(?::secure_url)?["']/gi,
+        /<meta[^>]+name=["']twitter:image(?::src)?["'][^>]*content=["']([^"']+)["']/gi,
+      ]) {
+        let m;
+        while ((m = re.exec(html)) && cands.size < 3) cands.add(m[1]);
+      }
+      for (const u of cands) {
+        try { found.push({ pageUrl, imageUrl: new URL(u, pageUrl).href }); } catch {}
+      }
+    } catch {} // 페이지 하나 실패해도 나머지 계속
+  }));
+
+  // 중복 제거 + 최대 6개
+  const seen = new Set(); const images = [];
+  for (const r of found) {
+    if (!seen.has(r.imageUrl)) { seen.add(r.imageUrl); images.push(r); if (images.length >= 6) break; }
+  }
+  return { success: true, images };
 }
 
 // ===== STEP 1 모드 B: 주제 AI 자동 추출 (Gemini vision — 기획서 Phase 3) =====
@@ -889,6 +942,24 @@ export default {
     }
 
     if (url.pathname.startsWith('/api/')) {
+      // 원본 후보 이미지 프록시 — 외부 이미지를 우리 도메인으로 받아 캔버스 CORS 오염 없이 사용
+      if (url.pathname === '/api/img-proxy') {
+        const src = url.searchParams.get('url') || '';
+        if (!/^https?:\/\//i.test(src)) return new Response('bad url', { status: 400, headers: CORS });
+        try {
+          const r = await fetch(src, { redirect: 'follow', headers: { 'User-Agent': 'Mozilla/5.0 (compatible; card-carousel/1.0)' } });
+          const ct = r.headers.get('content-type') || '';
+          if (!r.ok || !ct.startsWith('image/')) return new Response('not image', { status: 415, headers: CORS });
+          const buf = await r.arrayBuffer();
+          if (buf.byteLength > 15 * 1024 * 1024) return new Response('too large', { status: 413, headers: CORS });
+          return new Response(buf, {
+            headers: { 'Content-Type': ct, 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=86400' },
+          });
+        } catch {
+          return new Response('fetch error', { status: 502, headers: CORS });
+        }
+      }
+
       try {
         const body = request.method === 'POST' ? await request.json() : {};
         let result;
@@ -945,6 +1016,8 @@ export default {
         else if (url.pathname === '/api/adjust-text') result = await handleAdjustText(env, body);
         else if (url.pathname === '/api/trace-origin') result = await handleTraceOrigin(env, body);
         else if (url.pathname === '/api/suggest-topic') result = await handleSuggestTopic(env, body);
+        else if (url.pathname === '/api/translate') result = await handleTranslate(env, body);
+        else if (url.pathname === '/api/fetch-origin-images') result = await handleFetchOriginImages(env, body);
         else if (url.pathname === '/api/gemini-ping') {
           // 진단용: Gemini 연결 상태 + 미국 중계기 경유 여부 확인 (브라우저에서 열면 JSON 표시)
           if (!env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY 시크릿이 설정되지 않았습니다.');
