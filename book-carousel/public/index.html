@@ -3581,7 +3581,15 @@ function renderPipelineResults(status, autoSendComposites) {
   if (status.affiliateLinks) state.affiliateLinks = status.affiliateLinks;
   if (status.bookInfo) addToHistory(status.bookInfo.title);
   renderCarousel(status.pages);
-  state.reelScript = null; generateReelScript();  // 자동 배포 결과에도 릴스 대본 생성·미리보기
+  // 릴스 대본: 서버(파이프라인 4단계)가 만들어 저장한 것을 우선 사용 — 브라우저 생성은
+  // 지역 차단 등으로 상습 실패했음. 저장본이 없을 때만 브라우저에서 생성 시도.
+  if (status.reel && status.reel.s1) {
+    state.reelScript = status.reel;
+    state.reelValidation = status.reelValidation || null;
+    renderReelPreview();
+  } else {
+    state.reelScript = null; generateReelScript();
+  }
   if (status.images) applyImagesToCards(status.images);
   if (status.caption) {
     document.getElementById('captionTextContent').textContent = status.caption;

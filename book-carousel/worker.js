@@ -1095,7 +1095,9 @@ async function handleGenerateReel(env, body) {
   const lt = laneTone(bookInfo?.category); // 3레인 톤(설렘/이별/자존감)
   try {
     const text = await callClaude(env.ANTHROPIC_API_KEY, {
-      env, tier: 'light', max_tokens: 700, optional: true, // 예산 절약 모드에서 생략(폴백: 캐럿셀 헤드라인)
+      // ⚠️ optional 아님 — 릴스 대본은 매일 올리는 핵심 결과물. 예산 절약 모드에서도 생성한다.
+      // (optional이던 시절, 소프트캡 초과 시 생략돼 "릴스 문구 자동 생성 실패"가 반복된 원인)
+      env, tier: 'light', max_tokens: 700,
       system: `당신은 인스타 릴스 대본 카피라이터입니다. 타깃은 ${lt.audience} 여성. 감정의 결: ${lt.tone}.\n[목표] 4개의 슬라이드 문구가 "한 편의 이야기처럼 자연스럽게 이어지게" 씁니다(뚝뚝 끊긴 조각 금지).\n[구성·흐름]\n· s1(훅): 스크롤을 멈추는 강한 첫 문장(콕 집는 감정/궁금증). 18~28자.\n· s2: s1에서 자연스럽게 이어받아 그 감정·패턴을 구체적 장면으로. \n· s3: 그 마음의 이유를 따뜻하게 짚음(비난 금지).\n· s4: 희망으로 전환하는 마무리(단정적 해결책 금지, 여운).\n[문체·규칙] 존댓말·문어체, 따뜻하되 강렬. 각 슬라이드 한 화면에서 4~5초에 읽히게 45자 이내(한두 문장). 책 제목·저자 노출 금지, 이모지 금지, 공포·단정 금지. 앞 문장과 접속·지시어로 연결되게(예: "그런데", "사실은", "그래서").\n[검증] 초안을 쓴 뒤, 4장이 매끄럽게 이어지는지·각 장이 4~5초에 읽히는지 스스로 점검하고 어색하면 고쳐서 최종본만 냅니다.\n반드시 JSON만 응답.`,
       user: `책 핵심 주제: ${bookInfo?.coreMessage || ''}\n카테고리: ${bookInfo?.category || '이별·재회·회복'}\n캐럿셀 흐름(참고): ${arc}\n\n위 흐름을 살리되, 4개 슬라이드가 자연스럽게 이어지는 릴스 대본을 쓰고 스스로 검증·보완해 최종본을 내세요.\nJSON: {"reel":{"s1":"...","s2":"...","s3":"...","s4":"..."},"validation":{"connected":true,"readable":true,"score":0~100,"note":"연결성·가독성 한줄평"}}`,
     });
@@ -1414,29 +1416,52 @@ async function runStep(env, pipelineId, step) {
         }
       }
 
-      // 나머지 장(무료 Pollinations) 동시 다운로드. 표지가 Gemini로 됐으면 page1은 건너뜀.
-      await setActive('본문 이미지 다운로드 중 (1~2분 소요)...');
+      // 나머지 장(무료 Pollinations)을 "순차" 다운로드. 표지가 Gemini로 됐으면 page1은 건너뜀.
+      // ⚠️ 동시 5장 요청은 무료 Pollinations의 속도 제한(429)에 걸려 3~5페이지가 상습
+      // 실패하던 원인 → 한 장씩 + 장 사이 간격 + 429/일시오류 재시도(백오프)로 전환.
+      await setActive('본문 이미지 다운로드 중 (2~4분 소요)...');
       const pageKeys = ['page1', 'page2', 'page3', 'page4', 'page5'];
-      const downloadResults = await Promise.allSettled(
-        pageKeys.map(async page => {
-          if (page === 'page1' && coverDone) return { page, size: 0, cover: 'gemini' }; // 이미 저장됨
-          const url = urlMap[page];
-          if (!url) throw new Error('URL 없음');
+      const fetchOnePage = async (page) => {
+        if (page === 'page1' && coverDone) return { page, size: 0, cover: 'gemini' }; // 이미 저장됨
+        const url = urlMap[page];
+        if (!url) throw new Error('URL 없음');
+        const WAITS = [8000, 20000, 35000]; // 429 백오프(무료 티어 간격 고려)
+        let lastErr;
+        for (let attempt = 0; attempt <= WAITS.length; attempt++) {
           const ctrl = new AbortController();
           const timer = setTimeout(() => ctrl.abort(), 90000);
           try {
             const res = await fetch(url, { signal: ctrl.signal });
             clearTimeout(timer);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const buf = await res.arrayBuffer();
-            await env.PENDING_POSTS.put(`img_${pipelineId}_${page}`, buf, { expirationTtl: 24 * 3600 });
-            return { page, size: buf.byteLength };
+            if (res.ok) {
+              const buf = await res.arrayBuffer();
+              await env.PENDING_POSTS.put(`img_${pipelineId}_${page}`, buf, { expirationTtl: 24 * 3600 });
+              return { page, size: buf.byteLength };
+            }
+            lastErr = new Error(`HTTP ${res.status}`);
+            // 429(속도 제한)·5xx만 재시도 가치 있음. 그 외는 즉시 중단.
+            if (res.status !== 429 && res.status < 500) break;
+            const ra = parseInt(res.headers.get('retry-after') || '', 10);
+            const wait = Number.isFinite(ra) ? Math.min(ra * 1000, 45000) : WAITS[Math.min(attempt, WAITS.length - 1)];
+            if (attempt < WAITS.length) await new Promise(r => setTimeout(r, wait));
           } catch (e) {
             clearTimeout(timer);
-            throw e;
+            lastErr = e;
+            if (attempt < WAITS.length) await new Promise(r => setTimeout(r, WAITS[attempt]));
           }
-        })
-      );
+        }
+        throw lastErr || new Error('다운로드 실패');
+      };
+      const downloadResults = [];
+      for (const page of pageKeys) {
+        try {
+          downloadResults.push({ status: 'fulfilled', value: await fetchOnePage(page) });
+        } catch (e) {
+          downloadResults.push({ status: 'rejected', reason: e });
+        }
+        // 장 사이 간격 — 무료 티어의 연속 요청 제한 회피
+        if (page !== 'page5') await new Promise(r => setTimeout(r, 2500));
+      }
 
       // 성공한 페이지는 /api/image 경로, 실패 시 원본 Pollinations URL 폴백
       images = {};
@@ -1468,7 +1493,18 @@ async function runStep(env, pipelineId, step) {
     } catch (e) {
       await logStep(env, pipelineId, { step, phase: 'warn', error: '캡션 생성 실패(계속 진행): ' + e.message });
     }
-    await savePipelineStatus(env, pipelineId, { step: 4, stepStatus: 'done', label: '캡션 + 해시태그 생성 완료', caption, hashtags, dmKeyword });
+    // ⭐ 릴스 대본도 서버(크론)에서 함께 생성해 저장 — 브라우저 생성은 지역 차단·이탈로
+    // 상습 실패했음("자동 생성 실패 — 캐럿셀 문구로 대체"). 프론트는 저장본을 그대로 쓴다.
+    let reel = null, reelValidation = null;
+    try {
+      const rd = await handleGenerateReel(env, { pages, bookInfo });
+      reel = rd.reel || null;
+      reelValidation = rd.validation || null;
+      await logStep(env, pipelineId, { step, phase: 'reel', note: `릴스 대본 생성 (score ${reelValidation?.score ?? '-'})` });
+    } catch (e) {
+      await logStep(env, pipelineId, { step, phase: 'warn', error: '릴스 대본 실패(캐럿셀 문구로 대체): ' + e.message });
+    }
+    await savePipelineStatus(env, pipelineId, { step: 4, stepStatus: 'done', label: '캡션 + 릴스 대본 생성 완료', caption, hashtags, dmKeyword, reel, reelValidation });
     await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0 });
 
   } else if (step === 5) {
