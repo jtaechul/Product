@@ -656,6 +656,14 @@
     /* 3탭이므로 탭 라벨 살짝 압축 */
     .mode-tabs .mode-tab { font-size: 12px; padding: 13px 6px; }
 
+    /* 실제 업로드본 미리보기 스트립 */
+    .fp-head { font-size: 12px; font-weight: 700; color: var(--gray-600); margin-bottom: 8px; }
+    .fp-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+    .fp-strip img { flex: 0 0 auto; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.18); scroll-snap-align: start; background:#eee; }
+    .fp-strip img.fp-post { width: 200px; height: 200px; }
+    .fp-strip img.fp-reel { width: 132px; height: 234px; object-fit: cover; }
+    .fp-loading { font-size: 12px; color: var(--gray-500); padding: 24px 8px; }
+
     /* 책 공개 카드(4페이지) — 1페이지 이미지를 흐림 배경으로 재사용 */
     .card-bg-blur { position: absolute; inset: -26px; background-size: cover; background-position: center;
       filter: blur(22px) brightness(0.72); z-index: 0; }
@@ -945,10 +953,22 @@
   <!-- Carousel preview -->
   <div class="carousel-wrapper" id="carouselWrapper">
     <div class="section-header">
-      <span class="section-title">캐럿셀 미리보기</span>
+      <span class="section-title">편집 · 이미지 로드/페이지별 재생성</span>
       <span class="section-badge" id="carouselBadge">4 페이지</span>
     </div>
     <div class="carousel-scroll" id="carouselScroll"></div>
+    <!-- ⭐ 실제 업로드/다운로드본과 100% 동일한 미리보기 (같은 캔버스 렌더러로 생성) -->
+    <div id="finalPreviewWrap" style="display:none;margin-top:8px;margin-bottom:4px;">
+      <div class="fp-section">
+        <div class="fp-head">게시물 (실제 업로드본) · 정사각형 1:1</div>
+        <div class="fp-strip" id="postFinalPreview"></div>
+      </div>
+      <div class="fp-section" style="margin-top:14px;">
+        <div class="fp-head">릴스 (실제 업로드본) · 세로 9:16</div>
+        <div class="fp-strip" id="reelFinalPreview"></div>
+      </div>
+      <div style="font-size:11px;color:var(--gray-400);margin-top:8px;">위 미리보기는 저장 버튼으로 받는 이미지와 완전히 동일합니다.</div>
+    </div>
     <div class="carousel-actions">
       <button class="btn btn-outline" id="rePickBookBtn" style="color:var(--gray-500);">책 다시 고르기</button>
       <button class="btn btn-outline" id="regenerateBtn">캐럿셀 다시 생성</button>
@@ -1798,6 +1818,7 @@ async function applyImagesToCards(images) {
 
   const loaded = [...cards].filter(c => c.dataset.blobUrl).length;
   showToast(`이미지 로드 완료 (${loaded}/4장)`, loaded === 4 ? 'success' : 'warning');
+  renderFinalPreviews();   // 실제 업로드본 미리보기 갱신
   return loaded;
 }
 
@@ -1936,6 +1957,7 @@ async function regeneratePageImage(card, pageNum) {
     showToast(`페이지 ${pageNum} 이미지를 새 구도로 다시 생성합니다 (최대 1분, 잠시 기다려주세요)`, 'info');
     await loadImageWithRetry(card, newUrl, pageNum, 0);
     if (state.images) state.images[key] = newUrl;
+    renderFinalPreviews();   // 해당 페이지 재생성 → 미리보기 갱신
     if (!state._catalogAdded) autosaveDraft();   // 초안에도 새 이미지 반영
   } catch (e) {
     showToast(`페이지 ${pageNum} 재생성 실패: ${e.message}`, 'error');
@@ -1953,13 +1975,13 @@ async function saveAllCards() {
     return;
   }
   const btn = document.getElementById('saveAllImagesBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '변환 중... (0/5)'; }
+  if (btn) { btn.disabled = true; btn.textContent = '변환 중... (0/4)'; }
 
   // ① 먼저 5장 모두 blob으로 변환 (setTimeout 없이 연속 처리 → user gesture 컨텍스트 유지)
   const blobs = [];
-  for (let i = 0; i < Math.min(cards.length, 5); i++) {
+  for (let i = 0; i < Math.min(cards.length, 4); i++) {
     if (!cards[i]) continue;
-    if (btn) btn.textContent = `변환 중... (${i + 1}/5)`;
+    if (btn) btn.textContent = `변환 중... (${i + 1}/4)`;
     const blob = await buildCardBlob(cards[i], i + 1);
     if (blob) blobs.push({ blob, pageNum: i + 1 });
   }
@@ -2214,6 +2236,7 @@ async function generateReelScript() {
   state.reelScript = _reelFromPages(state.pages);
   state.reelValidation = { connected: true, readable: true, note: '게시물 문구의 핵심(첫 1~2문장)만 발췌 — 추가 생성 없음' };
   renderReelPreview();
+  renderFinalPreviews();   // 릴스 문구 확정 → 릴스 미리보기 갱신
 }
 
 // 릴스 문구 미리보기 + 검증 배지 렌더
@@ -2240,29 +2263,71 @@ function renderReelPreview() {
 }
 document.getElementById('regenReelBtn').style.display = 'none'; // 문구 통일 — 별도 재생성 없음
 
+// 릴스 4장(1080x1920) 생성 — 미리보기와 저장이 "완전히 동일한" 슬라이드를 쓰도록 공통화.
+async function buildReelSlides() {
+  const cards = document.querySelectorAll('#carouselScroll .card');
+  const bg = (i) => (cards[i] && cards[i].dataset.blobUrl) || null;
+  const p = state.pages || {};
+  const sc = state.reelScript || _reelFromPages(p);
+  const textSlides = [
+    { bg: bg(0), text: reelClamp(sc.s1, 46), accent: REEL_ACCENT[1], isHook: true },
+    { bg: bg(1), text: reelClamp(sc.s2, 76), accent: REEL_ACCENT[2] },
+    { bg: bg(2), text: reelClamp(sc.s3, 76), accent: REEL_ACCENT[3] },
+  ];
+  const out = [];
+  for (let i = 0; i < textSlides.length; i++) {
+    const blob = await buildReelTextSlide(textSlides[i].bg, textSlides[i]);
+    if (blob) out.push({ blob, name: `reel_${i + 1}.png` });
+  }
+  const revealBlob = await buildReelRevealSlide(bg(3) || bg(0), REEL_ACCENT[4]);
+  if (revealBlob) out.push({ blob: revealBlob, name: 'reel_4.png' });
+  return out;
+}
+
+// ⭐ 실제 업로드본과 동일한 미리보기 렌더 — 저장에 쓰는 buildCardBlob/buildReelSlides로 생성.
+let _fpRendering = false, _fpQueued = false;
+async function renderFinalPreviews() {
+  const wrap = document.getElementById('finalPreviewWrap');
+  const postEl = document.getElementById('postFinalPreview');
+  const reelEl = document.getElementById('reelFinalPreview');
+  if (!wrap || !postEl || !reelEl) return;
+  const cards = document.querySelectorAll('#carouselScroll .card');
+  const ready = [...cards].some(c => c.dataset.blobUrl);
+  if (!ready) { wrap.style.display = 'none'; return; }
+  if (_fpRendering) { _fpQueued = true; return; }   // 진행 중이면 끝나고 한 번 더
+  _fpRendering = true;
+  try {
+    wrap.style.display = 'block';
+    // 이전 미리보기 blob URL 정리(메모리 누수 방지)
+    postEl.querySelectorAll('img').forEach(im => { try { URL.revokeObjectURL(im.src); } catch {} });
+    reelEl.querySelectorAll('img').forEach(im => { try { URL.revokeObjectURL(im.src); } catch {} });
+    postEl.innerHTML = '<div class="fp-loading">실제 게시물 미리보기 만드는 중…</div>';
+    reelEl.innerHTML = '<div class="fp-loading">실제 릴스 미리보기 만드는 중…</div>';
+    // 게시물 4장 (저장과 동일: buildCardBlob)
+    const postUrls = [];
+    for (let i = 0; i < Math.min(cards.length, 4); i++) {
+      try { const b = await buildCardBlob(cards[i], i + 1); if (b) postUrls.push(URL.createObjectURL(b)); } catch (e) { console.warn('post preview', i, e); }
+    }
+    postEl.innerHTML = postUrls.map((u, i) => `<img class="fp-post" src="${u}" alt="게시물 ${i+1}">`).join('') || '<div class="fp-loading">미리보기 실패</div>';
+    // 릴스 4장 (저장과 동일: buildReelSlides)
+    let reelUrls = [];
+    try { reelUrls = (await buildReelSlides()).map(s => URL.createObjectURL(s.blob)); } catch (e) { console.warn('reel preview', e); }
+    reelEl.innerHTML = reelUrls.map((u, i) => `<img class="fp-reel" src="${u}" alt="릴스 ${i+1}">`).join('') || '<div class="fp-loading">미리보기 실패</div>';
+  } finally {
+    _fpRendering = false;
+    if (_fpQueued) { _fpQueued = false; renderFinalPreviews(); }  // 그 사이 변경분 반영
+  }
+}
+
 async function saveReelSet() {
   if (!state.pages?.page1?.headline) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
   const cards = document.querySelectorAll('#carouselScroll .card');
-  const bg = (i) => (cards[i] && cards[i].dataset.blobUrl) || null;
-  if (![0,1,2,3].some(i => bg(i))) { showToast('먼저 "이미지 생성"을 해주세요 (배경이 필요합니다).', 'warning'); return; }
-
-  const p = state.pages || {};
+  if (![0,1,2,3].some(i => cards[i] && cards[i].dataset.blobUrl)) { showToast('먼저 "이미지 생성"을 해주세요 (배경이 필요합니다).', 'warning'); return; }
   const btn = document.getElementById('saveReelSetBtn');
   btn.disabled = true; btn.textContent = '만드는 중...';
   try {
-    const sc = state.reelScript || _reelFromPages(p);
-    const textSlides = [
-      { bg: bg(0), text: reelClamp(sc.s1, 46), accent: REEL_ACCENT[1], isHook: true },
-      { bg: bg(1), text: reelClamp(sc.s2, 76), accent: REEL_ACCENT[2] },
-      { bg: bg(2), text: reelClamp(sc.s3, 76), accent: REEL_ACCENT[3] },
-    ];
-    const files = [];
-    for (let i = 0; i < textSlides.length; i++) {
-      const blob = await buildReelTextSlide(textSlides[i].bg, textSlides[i]);
-      if (blob) files.push(new File([blob], `reel_${i + 1}.png`, { type: 'image/png' }));
-    }
-    const revealBlob = await buildReelRevealSlide(bg(3) || bg(0), REEL_ACCENT[4]);
-    if (revealBlob) files.push(new File([revealBlob], `reel_4.png`, { type: 'image/png' }));
+    const slides = await buildReelSlides();
+    const files = slides.map(s => new File([s.blob], s.name, { type: 'image/png' }));
     if (!files.length) { showToast('릴스 이미지 생성 실패', 'error'); return; }
     if (navigator.canShare && navigator.canShare({ files })) {
       try { await navigator.share({ files, title: '릴스 세트' }); showToast('릴스 4장 저장 완료 — 인스타 릴스에서 순서대로 선택 + 음악', 'success'); }
