@@ -967,49 +967,70 @@ function parseRedditChildren(children) {
 
 // 서버측 Reddit 인기글 — 브라우저 JSONP가 막혔을 때의 폴백.
 // 데이터센터 IP는 www.reddit.com/.json 이 403나므로, 앱 키가 있으면 공식 OAuth(oauth.reddit.com)로 우회한다.
-// 한 URL을 여러 경로로 시도해 Reddit JSON을 확보한다:
-// ① (키 있으면) OAuth 직접 ② 공개 JSON 직접 ③ 공개 CORS/프록시 서버 경유(데이터센터 IP 차단 우회)
-async function fetchRedditData(env, multi) {
-  const jsonUrl = `https://www.reddit.com/r/${multi}/hot.json?limit=40&raw_json=1`;
-
-  // ① OAuth (앱 키가 있을 때만)
-  const token = await redditToken(env);
-  if (token) {
-    try {
-      const res = await fetch(`https://oauth.reddit.com/r/${multi}/hot?limit=40&raw_json=1`, {
-        headers: { 'User-Agent': REDDIT_UA, 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
-      });
-      if (res.ok) { const j = await res.json().catch(() => null); if (j?.data?.children) return { data: j, via: 'oauth' }; }
-    } catch {}
-  }
-
-  // ②③ 직접 + 공개 프록시들을 '동시에' 쏘고, 가장 먼저 유효 JSON을 주는 경로를 채택
-  // (프록시의 IP가 Reddit에 접근 → 데이터센터 IP 차단 우회. 병렬이라 빠르고 Worker 시간제한 안전)
-  const attempts = [
-    { url: jsonUrl, via: 'direct' },
-    { url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(jsonUrl)}`, via: 'codetabs' },
-    { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(jsonUrl)}`, via: 'allorigins' },
-    { url: `https://corsproxy.io/?url=${encodeURIComponent(jsonUrl)}`, via: 'corsproxy' },
-    { url: `https://thingproxy.freeboard.io/fetch/${jsonUrl}`, via: 'thingproxy' },
-    { url: `https://r.jina.ai/${jsonUrl}`, via: 'jina' },
-  ];
-  const race = attempts.map(a => (async () => {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 12000);
-    try {
-      const res = await fetch(a.url, { signal: ctrl.signal, redirect: 'follow', headers: { 'User-Agent': REDDIT_UA, 'Accept': 'application/json' } });
-      if (!res.ok) throw new Error(String(res.status));
-      const txt = await res.text();
-      const j = JSON.parse(txt);
-      if (!j?.data?.children?.length) throw new Error('no children');
-      return { data: j, via: a.via };
-    } finally { clearTimeout(timer); }
-  })());
+async function fetchJsonWithTimeout(url, ms = 12000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
   try {
-    return await Promise.any(race); // 첫 성공 채택
-  } catch {
-    return null;
+    const res = await fetch(url, { signal: ctrl.signal, redirect: 'follow', headers: { 'User-Agent': REDDIT_UA, 'Accept': 'application/json' } });
+    if (!res.ok) throw new Error(String(res.status));
+    return JSON.parse(await res.text());
+  } finally { clearTimeout(timer); }
+}
+
+// pullpush.io(아카이브 API)의 제출물 배열 → 이미지 게시물 목록
+function parsePullpush(arr) {
+  const posts = [];
+  for (const p of (Array.isArray(arr) ? arr : [])) {
+    if (!p || p.over_18) continue;
+    const direct = p.url_overridden_by_dest || p.url || '';
+    let img = '';
+    if (/i\.redd\.it/i.test(direct) || /\.(jpe?g|png|webp)(\?|$)/i.test(direct)) img = direct;
+    if (!img && p.preview?.images?.[0]?.source?.url) img = String(p.preview.images[0].source.url).replace(/&amp;/g, '&');
+    if (!img) continue;
+    posts.push({
+      title: String(p.title || '').slice(0, 200),
+      subreddit: p.subreddit || '',
+      ups: p.score || 0,
+      permalink: p.permalink ? 'https://www.reddit.com' + p.permalink : (p.full_link || ''),
+      imageUrl: img,
+    });
+    if (posts.length >= 24) break;
   }
+  return posts;
+}
+
+// 여러 경로를 '동시에' 시도해 인기 이미지 게시물을 확보한다(가장 먼저 성공하는 경로 채택):
+// ① OAuth(키) ② reddit .json 직접/프록시 ③ pullpush.io 아카이브 API (데이터센터 IP 허용 → 차단 우회)
+async function fetchRedditData(env, multi, subs) {
+  const jsonUrl = `https://www.reddit.com/r/${multi}/hot.json?limit=40&raw_json=1`;
+  const attempts = [];
+
+  const token = await redditToken(env);
+  if (token) attempts.push((async () => {
+    const j = await fetchJsonWithTimeout(`https://oauth.reddit.com/r/${multi}/hot?limit=40&raw_json=1`);
+    const posts = parseRedditChildren(j?.data?.children || []);
+    if (!posts.length) throw new Error('empty'); return { posts, via: 'oauth' };
+  })());
+
+  for (const [via, url] of [
+    ['direct', jsonUrl],
+    ['codetabs', `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(jsonUrl)}`],
+    ['allorigins', `https://api.allorigins.win/raw?url=${encodeURIComponent(jsonUrl)}`],
+    ['corsproxy', `https://corsproxy.io/?url=${encodeURIComponent(jsonUrl)}`],
+  ]) attempts.push((async () => {
+    const j = await fetchJsonWithTimeout(url);
+    const posts = parseRedditChildren(j?.data?.children || []);
+    if (!posts.length) throw new Error('empty'); return { posts, via };
+  })());
+
+  // pullpush.io — 카테고리의 각 서브레딧에서 점수순 인기 제출물 (auth 불필요, 데이터센터 허용)
+  for (const sub of (subs || []).slice(0, 3)) attempts.push((async () => {
+    const j = await fetchJsonWithTimeout(`https://api.pullpush.io/reddit/search/submission/?subreddit=${encodeURIComponent(sub)}&sort=desc&sort_type=score&size=50&over_18=false`);
+    const posts = parsePullpush(j?.data || []);
+    if (!posts.length) throw new Error('empty'); return { posts, via: 'pullpush:' + sub };
+  })());
+
+  try { return await Promise.any(attempts); } catch { return null; }
 }
 
 async function handleRedditTrending(env, body) {
@@ -1017,11 +1038,11 @@ async function handleRedditTrending(env, body) {
   const subs = REDDIT_CATS[cat] || REDDIT_CATS.popular;
   const multi = subs.join('+');
 
-  const got = await fetchRedditData(env, multi);
+  const got = await fetchRedditData(env, multi, subs);
   if (!got) {
-    throw new Error('REDDIT_BLOCKED: 여러 경로로 시도했지만 Reddit을 불러오지 못했습니다. 잠시 후 다시 시도해주세요. (계속되면 Reddit 앱 키 등록으로 안정화할 수 있습니다.)');
+    throw new Error('REDDIT_BLOCKED: 여러 경로로 시도했지만 Reddit을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
   }
-  return { success: true, category: cat, subs, posts: parseRedditChildren(got.data?.data?.children || []), via: got.via };
+  return { success: true, category: cat, subs, posts: got.posts, via: got.via };
 }
 
 // ===== A단계-2: 캡션 문단 ↔ 원본 이미지 자동 매칭 (Gemini 비전) =====
