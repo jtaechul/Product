@@ -284,7 +284,21 @@
       position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
       color: #fff; font-size: 11px; font-weight: 700; background: rgba(0,0,0,0.45); pointer-events: none;
     }
-    .add-origin-btn { margin-top: 8px; font-size: 11.5px; padding: 7px 12px; }
+    /* 원본 여부 뱃지 — 하단 라벨 */
+    .origin-cand-tag {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      font-size: 9px; font-weight: 700; text-align: center; padding: 1px 0;
+      color: #fff; pointer-events: none; letter-spacing: -0.2px;
+    }
+    .origin-cand-tag.clean { background: rgba(16,185,129,0.85); }   /* 초록 = 글자 없는 원본 */
+    .origin-cand-tag.text  { background: rgba(245,158,11,0.9); }    /* 주황 = 글자 있음(가공본) */
+    .origin-cand.checking { opacity: 0.55; }
+    .origin-cand.has-text { display: none; }                        /* 가공본은 기본 숨김 */
+    .origin-cands.show-text .origin-cand.has-text { display: block; }
+    .origin-cand-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+    .origin-cand-toggle { font-size: 11px; color: var(--primary); background: none; border: none; cursor: pointer; padding: 0; text-decoration: underline; }
+    .origin-cand-empty { margin-top: 6px; font-size: 11.5px; color: var(--warning, #d97706); line-height: 1.5; }
+    .add-origin-btn { font-size: 11.5px; padding: 7px 12px; }
 
     .trace-links { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
     .trace-links a { color: var(--primary); font-size: 11.5px; word-break: break-all; text-decoration: none; }
@@ -1077,23 +1091,99 @@ async function loadOriginCandidates(i, data, cardEl) {
   if (!uniq.length) return;
   try {
     const r = await apiFetch('/api/fetch-origin-images', { urls: uniq });
-    const media = (r.media || []).slice(0, 6);
+    const media = (r.media || []).slice(0, 12);
     if (!media.length) return;
     const row = document.createElement('div');
-    row.innerHTML = `<div class="trace-note" style="margin-top:8px;"><b>원본 후보 미디어</b> — 눌러서 선택(여러 개 가능)한 뒤 아래 버튼으로 추가하세요</div>
+    row.innerHTML = `<div class="trace-note" style="margin-top:8px;"><b>원본 후보 미디어</b> — <b>글자 없는 원본</b>만 골라 보여드립니다. 눌러서 선택(여러 개 가능)한 뒤 추가하세요. 첫 장에만 문구가 들어가고 나머지는 사진 그대로 실립니다.</div>
       <div class="origin-cands">${media.map(m => m.type === 'video'
         ? `<div class="origin-cand" data-type="video" data-src="${escHtml(m.mediaUrl)}" title="${escHtml(m.pageUrl)}"><video preload="metadata" muted src="/api/img-proxy?url=${encodeURIComponent(m.mediaUrl)}"></video><span class="origin-cand-video-label">영상</span></div>`
-        : `<div class="origin-cand" data-type="image" data-src="${escHtml(m.mediaUrl)}" title="${escHtml(m.pageUrl)}"><img src="/api/img-proxy?url=${encodeURIComponent(m.mediaUrl)}" loading="lazy"></div>`
+        : `<div class="origin-cand checking" data-type="image" data-src="${escHtml(m.mediaUrl)}" title="${escHtml(m.pageUrl)}"><img src="/api/img-proxy?url=${encodeURIComponent(m.mediaUrl)}" loading="lazy"></div>`
       ).join('')}</div>
-      <button type="button" class="btn btn-outline add-origin-btn">선택한 미디어 추가</button>`;
+      <div class="origin-cand-empty" style="display:none;"></div>
+      <div class="origin-cand-toolbar">
+        <button type="button" class="btn btn-outline add-origin-btn">선택한 미디어 추가</button>
+        <button type="button" class="origin-cand-toggle" style="display:none;"></button>
+      </div>`;
     cardEl.appendChild(row);
     row.querySelectorAll('.origin-cand').forEach(el => {
-      el.addEventListener('click', () => el.classList.toggle('selected'));
+      el.addEventListener('click', () => { if (!el.classList.contains('checking')) el.classList.toggle('selected'); });
       const img = el.querySelector('img');
       if (img) img.addEventListener('error', () => el.remove()); // 못 불러온 후보는 숨김
     });
     row.querySelector('.add-origin-btn').addEventListener('click', () => addSelectedOriginMedia(row));
+    classifyOriginCandidates(row); // 글자 삽입 여부 판별은 백그라운드로
   } catch {} // 후보 추출 실패는 조용히 무시(추적 결과 자체는 유효)
+}
+
+// 후보 이미지들을 Gemini 비전으로 '글자 없는 원본 vs 가공본'으로 분류해, 원본만 노출한다.
+async function classifyOriginCandidates(row) {
+  const imgCands = [...row.querySelectorAll('.origin-cand[data-type="image"]')];
+  if (!imgCands.length) return;
+  // 프록시로 로드된 썸네일을 작은 JPEG로 만들어 한 번에 판별 요청 (로드 실패분은 제외)
+  const items = [];
+  for (const el of imgCands) {
+    try {
+      const small = await proxiedToSmallDataUrl(el.dataset.src, 512);
+      items.push({ el, small });
+    } catch { el.remove(); } // 못 불러오면 후보에서 제거
+  }
+  if (!items.length) return;
+
+  let results;
+  try {
+    const res = await apiFetch('/api/filter-clean', { images: items.map(i => i.small) });
+    results = res.results || [];
+  } catch {
+    // 판별 실패 시엔 필터링 없이 전부 노출(안전한 폴백)
+    items.forEach(i => i.el.classList.remove('checking'));
+    return;
+  }
+
+  let cleanCount = 0;
+  items.forEach((i, idx) => {
+    i.el.classList.remove('checking');
+    const hasText = results[idx] && results[idx].hasText === true;
+    const tag = document.createElement('span');
+    tag.className = 'origin-cand-tag ' + (hasText ? 'text' : 'clean');
+    tag.textContent = hasText ? '글자 있음' : '원본';
+    i.el.appendChild(tag);
+    if (hasText) i.el.classList.add('has-text');
+    else cleanCount++;
+  });
+
+  // 원본이 하나도 없으면 안내 + 가공본이라도 볼 수 있게 토글 제공
+  const cands = row.querySelector('.origin-cands');
+  const empty = row.querySelector('.origin-cand-empty');
+  const toggle = row.querySelector('.origin-cand-toggle');
+  const textCount = items.length - cleanCount;
+  if (cleanCount === 0) {
+    empty.style.display = 'block';
+    empty.innerHTML = '가공되지 않은 원본 후보를 찾지 못했습니다 — 이 후보들엔 이미 글자가 들어가 있어요. 다른 참고 이미지로 다시 시도하거나, <a href="https://lens.google.com/" target="_blank" rel="noopener" style="color:var(--primary);">구글 렌즈</a>로 직접 원본을 찾아보세요.';
+  }
+  if (textCount > 0) {
+    toggle.style.display = 'inline';
+    let shown = false;
+    const sync = () => { toggle.textContent = shown ? '글자 있는 후보 숨기기' : `글자 있는 후보도 보기 (${textCount}개)`; };
+    sync();
+    toggle.addEventListener('click', () => { shown = !shown; cands.classList.toggle('show-text', shown); sync(); });
+  }
+}
+
+// 프록시 URL의 이미지를 작은 dataURL(JPEG)로 — 판별 전송용(전송량·비용 절약)
+async function proxiedToSmallDataUrl(mediaUrl, maxDim = 512) {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  await new Promise((res, rej) => {
+    img.onload = res;
+    img.onerror = () => rej(new Error('이미지 로드 실패'));
+    img.src = '/api/img-proxy?url=' + encodeURIComponent(mediaUrl);
+  });
+  const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(img.width * scale));
+  c.height = Math.max(1, Math.round(img.height * scale));
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.82);
 }
 
 // 원본 미디어 로더 — 프록시로 받아 캔버스에 내려 dataURL로 변환 (긴 변 2000px 축소)

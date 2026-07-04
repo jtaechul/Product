@@ -686,7 +686,7 @@ async function handleTraceOrigin(env, body) {
     contents: [{
       parts: [
         { inline_data: { mime_type: mime, data: b64 } },
-        { text: '이 이미지의 원본 출처를 추적하려 합니다. 구글 검색을 적극 활용해 아래를 조사하고, 마지막에 반드시 JSON 하나로 정리해 답하세요.\n\n조사 항목:\n1. 이미지에 무엇이 있는가 — 작품명(드라마·영화·애니·게임 등)·인물·장소·워터마크·로고·서명·화면 속 텍스트 같은 출처 단서 포함\n2. 이 이미지의 원본 출처로 추정되는 곳 (원작품/작가/공식 플랫폼)\n3. 저작권·라이선스 위험도 판정:\n   - high: 상업 콘텐츠(방송·영화·웹툰·유료 스톡 등)로 보여 무단 재가공 위험이 큼\n   - medium: 출처가 불명확하거나 이용 조건 확인 필요\n   - low: 퍼블릭 도메인·CC0·자유 이용 가능성이 높음\n   - unknown: 판단 불가\n\nJSON 형식(이 형식만, 다른 텍스트로 끝내지 말 것):\n{"summary":"이미지 설명 한두 문장","clues":["출처 단서1","단서2"],"originGuess":"추정 원본 출처 설명 한두 문장","originCandidates":[{"name":"출처명","url":"https://..."}],"licenseRisk":"high|medium|low|unknown","licenseNote":"위험도 판단 이유 한두 문장"}' },
+        { text: '이 이미지의 원본 출처를 추적하려 합니다. 구글 검색을 적극 활용해 아래를 조사하고, 마지막에 반드시 JSON 하나로 정리해 답하세요.\n\n※ 목표: 이 이미지에 담긴 사건·인물·장면의 \'가공되지 않은 원본 사진\'이 있는 페이지를 찾는 것입니다. 특히 뉴스 기사·통신사·사진작가·공식 계정처럼 자막이나 편집이 없는 원본 사진이 실려 있을 만한 페이지의 URL을 originCandidates에 우선 담아주세요. (남이 자막을 박아 넣은 카드뉴스·짤 게시물보다, 글자 없는 원본이 있는 페이지를 앞에 두세요.)\n\n조사 항목:\n1. 이미지에 무엇이 있는가 — 작품명(드라마·영화·애니·게임 등)·인물·장소·사건·워터마크·로고·서명·화면 속 텍스트 같은 출처 단서 포함\n2. 이 이미지에 이미 삽입된 자막/캡션 글자가 있는가 (hasOverlayText: 사진 위에 겹쳐 넣은 큰 자막·제목·밈 문구가 있으면 true, 없으면 false)\n3. 이 사건·장면의 원본 사진이 있을 법한 출처 (뉴스·통신사·작가·공식 플랫폼)\n4. 저작권·라이선스 위험도 판정:\n   - high: 상업 콘텐츠(방송·영화·웹툰·유료 스톡 등)로 보여 무단 재가공 위험이 큼\n   - medium: 출처가 불명확하거나 이용 조건 확인 필요\n   - low: 퍼블릭 도메인·CC0·자유 이용 가능성이 높음\n   - unknown: 판단 불가\n\nJSON 형식(이 형식만, 다른 텍스트로 끝내지 말 것):\n{"summary":"이미지 설명 한두 문장","clues":["출처 단서1","단서2"],"hasOverlayText":true,"originGuess":"추정 원본 출처 설명 한두 문장","originCandidates":[{"name":"출처명","url":"https://..."}],"licenseRisk":"high|medium|low|unknown","licenseNote":"위험도 판단 이유 한두 문장"}' },
       ],
     }],
     tools: [{ google_search: {} }],
@@ -709,8 +709,9 @@ async function handleTraceOrigin(env, body) {
 // 원본 추적이 찾은 출처 페이지들을 열어 대표 이미지(og:image 등 — 보통 고화질 원본)를 뽑는다.
 // 사용자가 후보를 클릭하면 업로드 이미지가 원본으로 교체된다(교체 여부는 사용자 선택).
 async function handleFetchOriginImages(env, body) {
+  // 더 많은 출처 페이지를 훑어 '가공되지 않은 원본'을 만날 확률을 높인다(5페이지·페이지당 이미지 4장)
   const urls = (Array.isArray(body.urls) ? body.urls : [])
-    .filter(u => /^https?:\/\//i.test(String(u))).slice(0, 3);
+    .filter(u => /^https?:\/\//i.test(String(u))).slice(0, 5);
   if (!urls.length) throw new Error('출처 페이지 URL(urls)이 필요합니다.');
 
   const found = [];
@@ -725,7 +726,7 @@ async function handleFetchOriginImages(env, body) {
       clearTimeout(timer);
       if (!res.ok) return;
       const ct = res.headers.get('content-type') || '';
-      if (ct.startsWith('image/')) { found.push({ pageUrl, imageUrl: pageUrl }); return; } // 링크가 이미지 자체
+      if (ct.startsWith('image/')) { found.push({ type: 'image', pageUrl, mediaUrl: pageUrl }); return; } // 링크가 이미지 자체
       if (!ct.includes('html')) return;
       const html = (await res.text()).slice(0, 500000);
       const imgs = new Set(), vids = new Set();
@@ -735,7 +736,7 @@ async function handleFetchOriginImages(env, body) {
         /<meta[^>]+name=["']twitter:image(?::src)?["'][^>]*content=["']([^"']+)["']/gi,
       ]) {
         let m;
-        while ((m = re.exec(html)) && imgs.size < 3) imgs.add(m[1]);
+        while ((m = re.exec(html)) && imgs.size < 4) imgs.add(m[1]);
       }
       // v2.0: 영상 후보(og:video 등)도 추출 — 릴스 모드 소재
       for (const re of [
@@ -751,12 +752,44 @@ async function handleFetchOriginImages(env, body) {
     } catch {} // 페이지 하나 실패해도 나머지 계속
   }));
 
-  // 중복 제거 + 최대 8개
+  // 중복 제거 + 최대 12개
   const seen = new Set(); const media = [];
   for (const r of found) {
-    if (!seen.has(r.mediaUrl)) { seen.add(r.mediaUrl); media.push(r); if (media.length >= 8) break; }
+    if (!seen.has(r.mediaUrl)) { seen.add(r.mediaUrl); media.push(r); if (media.length >= 12) break; }
   }
   return { success: true, media };
+}
+
+// ===== STEP 0 확장: 후보 이미지의 '글자 삽입 여부' 판별 (기능 1-B, 핵심) =====
+// 역검색으로 나온 후보 중엔 남이 이미 자막·캡션을 박아 넣은 '가공본'이 섞여 있다.
+// 첫 장에만 우리 훅 문구를 얹으려면 배경은 반드시 '글자 없는 원본'이어야 하므로,
+// Gemini 비전으로 후보들을 한 번에 분류해 가공본을 걸러낸다(브라우저는 이 결과로 원본만 노출).
+async function handleFilterCleanImages(env, body) {
+  if (!env.GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY 시크릿이 설정되지 않았습니다. Cloudflare Workers에 등록해주세요.');
+  }
+  const images = Array.isArray(body.images) ? body.images.slice(0, 12) : [];
+  if (!images.length) throw new Error('분류할 이미지(images)가 필요합니다.');
+
+  const parts = [];
+  images.forEach((u, idx) => {
+    const m = String(u).match(/^data:(image\/[a-z0-9+.-]+);base64,([A-Za-z0-9+/=]+)$/i);
+    if (m) parts.push({ inline_data: { mime_type: m[1], data: m[2] } });
+    // 매칭 실패분은 건너뛰되, 아래 프롬프트는 '보낸 순서대로' 판정을 요구하므로 손상 URL은 미리 걸러 보내야 한다.
+  });
+  parts.push({ text: `위 이미지들을 보낸 순서대로 각각 판정하세요. 각 이미지가 '가공되지 않은 원본 사진'인지, 아니면 '누군가 글자(자막·캡션·큰 제목·워터마크·밈 텍스트)를 박아 넣은 가공본'인지 구분합니다.\n\n- hasText=true: 사진 위에 겹쳐 넣은 큰 자막/캡션/제목/워터마크/밈 문구가 있음 (= 카드뉴스·짤·편집본. 배경으로 부적합)\n- hasText=false: 그런 삽입 글자가 없는 깨끗한 원본 사진 (간판·옷의 로고처럼 '실제 현장에 원래 있던 글자'는 삽입 글자가 아니므로 false)\n\n반드시 이미지 개수(${images.length}개)와 같은 길이의 JSON 배열로만 응답하세요. 다른 텍스트 없이:\n[{"hasText":true,"note":"상단에 흰 자막"},{"hasText":false,"note":"깨끗한 원본"}]` });
+
+  const { text } = await callGemini(env, { contents: [{ parts }] });
+  let arr = [];
+  try {
+    const parsed = extractJson(text);
+    arr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.results) ? parsed.results : []);
+  } catch { arr = []; }
+  const results = images.map((_, i) => {
+    const r = arr[i] || {};
+    return { hasText: r.hasText === true, note: String(r.note || '').slice(0, 80) };
+  });
+  return { success: true, results };
 }
 
 // ===== STEP 1 모드 B: 주제 AI 자동 추출 (Gemini vision — 기획서 Phase 3) =====
@@ -1001,6 +1034,7 @@ export default {
         else if (url.pathname === '/api/translate') result = await handleTranslate(env, body);
         else if (url.pathname === '/api/collect-facts') result = await handleCollectFacts(env, body);
         else if (url.pathname === '/api/fetch-origin-images') result = await handleFetchOriginImages(env, body);
+        else if (url.pathname === '/api/filter-clean') result = await handleFilterCleanImages(env, body);
         else if (url.pathname === '/api/gemini-ping') {
           // 진단용: Gemini·Claude 연결 상태 + 미국 중계기 경유 여부 확인 (브라우저에서 열면 JSON 표시)
           if (!env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY 시크릿이 설정되지 않았습니다.');
