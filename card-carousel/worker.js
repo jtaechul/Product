@@ -565,10 +565,36 @@ async function handleCollectFacts(env, body) {
   if (!topic) throw new Error('주제(topic)가 필요합니다.');
   const core = String(body.coreMessage || '').trim();
 
+  // 카드에 실제로 쓰는 이미지(들)를 함께 넣어 '이미지 속 그 대상'으로 팩트를 고정한다 (할루시네이션 방지의 핵심)
+  const imgUrls = Array.isArray(body.imageDataUrls) ? body.imageDataUrls.slice(0, 2)
+    : (body.imageDataUrl ? [body.imageDataUrl] : []);
+  const imgParts = [];
+  for (const u of imgUrls) {
+    const m = String(u).match(/^data:(image\/[a-z0-9+.-]+);base64,([A-Za-z0-9+/=]+)$/i);
+    if (m) imgParts.push({ inline_data: { mime_type: m[1], data: m[2] } });
+  }
+  const hasImage = imgParts.length > 0;
+
+  const promptWithImage = `첨부한 이미지가 이 카드뉴스에 실제로 실릴 사진입니다. 먼저 구글 검색으로 이미지 속 대상을 정확히 식별한 뒤, "그 대상에 관한 확인된 사실만" 수집하세요.
+
+⚠️ 할루시네이션 절대 금지:
+- 이미지와 무관한 다른 인물·다른 사건·다른 종목의 이야기를 절대 섞지 마세요. (예: 이미지가 '피겨스케이팅 선수'인데 '육상 선수 우사인 볼트' 이야기를 넣으면 안 됨)
+- 이미지 속 대상이 누구/무엇인지 확실치 않으면, 확실한 범위(종목·대회·장면 유형)로만 사실을 한정하고 subjectConfidence를 낮게 매기세요.
+- 구글 검색으로 확인되지 않는 내용은 넣지 마세요. 수치·연도·이름은 검색 근거가 있을 때만.
+
+- subject: 이미지가 무엇/누구를 보여주는지 한 문장으로 식별
+- subjectConfidence: high | medium | low (이미지 대상 식별 확신도)
+- facts: '이미지 속 그 대상'에 직접 관련된 확인된 사실 5~8개 (각 사실은 이미지 대상과 직접 관련될 것)
+- summary: 배경 2~3문장
+
+주제 힌트(참고용 — 이미지와 충돌하면 반드시 이미지를 우선): "${topic}"${core && core !== topic ? `\n참고 메시지: ${core}` : ''}
+
+JSON만: {"subject":"...","subjectConfidence":"high|medium|low","facts":["사실1(수치 포함)","..."],"summary":"..."}`;
+
+  const promptNoImage = `주제: "${topic}"${core && core !== topic ? `\n참고 메시지: ${core}` : ''}\n\n이 주제로 인스타그램 정보형 카드뉴스를 만들려 합니다. 구글 검색을 적극 활용해 "확인된 사실"만 수집하세요.\n\n- 흥미로운 사실 5~8개 (구체적 수치·연도·이름 포함), 검색으로 확인되지 않는 내용 금지\n- summary: 배경 2~3문장\n\nJSON만: {"subject":"${topic}","subjectConfidence":"medium","facts":["..."],"summary":"..."}`;
+
   const { data, text } = await callGemini(env, {
-    contents: [{
-      parts: [{ text: `주제: "${topic}"${core && core !== topic ? `\n참고 메시지: ${core}` : ''}\n\n이 주제로 인스타그램 정보형 카드뉴스를 만들려 합니다. 구글 검색을 적극 활용해 "확인된 사실"만 수집하세요.\n\n수집 기준:\n- 시청자가 "오, 몰랐다"라고 느낄 흥미로운 사실 5~8개 (가능하면 구체적 수치·연도·이름 포함)\n- 검색으로 확인되지 않는 내용은 절대 포함하지 말 것 (추측·과장 금지)\n- summary: 이 주제의 배경을 2~3문장으로\n\nJSON만 응답: {"facts":["사실1 (수치 포함)","사실2","..."],"summary":"배경 설명 2~3문장"}` }],
-    }],
+    contents: [{ parts: [...imgParts, { text: hasImage ? promptWithImage : promptNoImage }] }],
     tools: [{ google_search: {} }],
   });
 
@@ -578,8 +604,31 @@ async function handleCollectFacts(env, body) {
   const sources = chunks.map(c => c.web).filter(Boolean)
     .map(w => ({ title: w.title || '', url: w.uri || '' })).filter(s => s.url).slice(0, 6);
   const facts = (Array.isArray(parsed.facts) ? parsed.facts : []).map(f => String(f).trim()).filter(Boolean).slice(0, 8);
-  if (!facts.length) throw new Error('검색으로 확인된 팩트를 찾지 못했습니다. 주제를 조금 더 구체적으로 바꿔보세요.');
-  return { success: true, facts, summary: String(parsed.summary || '').trim(), sources };
+  if (!facts.length) throw new Error('이미지와 관련된, 검색으로 확인된 팩트를 찾지 못했습니다. 주제를 더 구체적으로 하거나 다른 이미지를 사용해보세요.');
+  const subjectConfidence = ['high', 'medium', 'low'].includes(parsed.subjectConfidence) ? parsed.subjectConfidence : (hasImage ? 'medium' : 'medium');
+  return { success: true, facts, summary: String(parsed.summary || '').trim(), sources, subject: String(parsed.subject || '').trim(), subjectConfidence, imageGrounded: hasImage };
+}
+
+// ===== 할루시네이션 게이트: 이미지 ↔ 생성 문구(헤드라인+캡션) 일치 검증 (Gemini 비전) =====
+async function handleVerifyImageMatch(env, body) {
+  if (!env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY 시크릿이 설정되지 않았습니다.');
+  const dataUrl = String(body.imageDataUrl || '');
+  const m = dataUrl.match(/^data:(image\/[a-z0-9+.-]+);base64,([A-Za-z0-9+/=]+)$/i);
+  if (!m) throw new Error('imageDataUrl이 필요합니다.');
+  const headline = String(body.headline || '').trim();
+  const caption = String(body.caption || '').trim();
+
+  const { text } = await callGemini(env, {
+    contents: [{
+      parts: [
+        { inline_data: { mime_type: m[1], data: m[2] } },
+        { text: `이 이미지와 아래 카드뉴스 문구가 "같은 대상"에 관한 것인지 엄격히 판정하세요. 이미지에 보이는 인물·사건·종목과 문구가 말하는 인물·사건·종목이 다르면 관련 없음(false)입니다.\n\n[헤드라인] ${headline}\n[캡션] ${caption.slice(0, 800)}\n\n판정:\n- related: 이미지 속 대상과 문구의 대상이 동일/직접 관련이면 true, 다른 인물·다른 사건이면 false\n- imageSubject: 이미지가 실제로 보여주는 대상 한 문장\n- reason: 판정 이유 한 문장\n\nJSON만: {"related":true|false,"imageSubject":"...","reason":"..."}` },
+      ],
+    }],
+  });
+  let parsed;
+  try { parsed = extractJson(text); } catch { parsed = { related: true, imageSubject: '', reason: '판정 실패(기본 통과)' }; }
+  return { success: true, related: parsed.related !== false, imageSubject: String(parsed.imageSubject || '').trim(), reason: String(parsed.reason || '').trim() };
 }
 
 // STEP B: 훅 + 캡션 생성 — 수집된 팩트만 근거로. mode: 'post'(사진 카드뉴스) | 'reel'(동영상 릴스)
@@ -1256,6 +1305,7 @@ export default {
         else if (url.pathname === '/api/filter-clean') result = await handleFilterCleanImages(env, body);
         else if (url.pathname === '/api/reddit-trending') result = await handleRedditTrending(env, body);
         else if (url.pathname === '/api/match-images') result = await handleMatchImages(env, body);
+        else if (url.pathname === '/api/verify-image-match') result = await handleVerifyImageMatch(env, body);
         else if (url.pathname === '/api/gemini-ping') {
           // 진단용: Gemini·Claude 연결 상태 + 미국 중계기 경유 여부 확인 (브라우저에서 열면 JSON 표시)
           if (!env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY 시크릿이 설정되지 않았습니다.');

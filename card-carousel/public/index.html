@@ -615,6 +615,12 @@
     .word-chip { border: 1px solid var(--gray-700, #374151); background: transparent; color: var(--gray-300, #cbd2dc); font-size: 12px; padding: 4px 9px; border-radius: 14px; cursor: pointer; }
     .word-chip.on { border-color: transparent; color: #fff; font-weight: 700; }
     .edit-hint { font-size: 11px; color: var(--gray-500, #6b7280); margin-top: 7px; }
+    /* 이미지 인식 대상 + 할루시네이션 경고 */
+    .facts-subject { font-size: 12px; margin-bottom: 8px; padding: 7px 10px; border-radius: 8px; background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.3); }
+    .facts-subject.low { background: rgba(217,119,6,0.14); border-color: rgba(217,119,6,0.4); }
+    .mismatch-warn { display: none; margin-bottom: 10px; padding: 11px 13px; border-radius: 10px; background: rgba(220,38,38,0.14); border: 1px solid rgba(220,38,38,0.45); color: #fca5a5; font-size: 12.5px; line-height: 1.55; }
+    .mismatch-warn.show { display: block; }
+    .mismatch-warn b { color: #fecaca; }
 
     /* === Reddit 인기 이미지 그리드 === */
     .reddit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
@@ -828,6 +834,7 @@
       <div class="lang-tabs" id="langTabs"></div>
       <span class="section-badge" id="carouselBadge"></span>
     </div>
+    <div class="mismatch-warn" id="mismatchWarn"></div>
     <div class="carousel-scroll" id="carouselScroll"></div>
     <!-- 제목 편집 + 강조 단어 선택 -->
     <div class="edit-panel" id="editPanel">
@@ -956,6 +963,9 @@ const state = {
   facts: null,            // v2.0: 수집된 팩트 목록
   factsSummary: '',
   factsSources: [],
+  factsSubject: '',       // v2.6: 이미지에서 식별한 대상
+  factsConfidence: '',    // high|medium|low
+  imageMismatch: false,   // v2.6: 이미지 ↔ 문구 불일치(할루시네이션) 감지
   byLang: {},             // v2.0: { [lang]: { hook:{headline,accents}, caption, hashtags } }
   activeLang: 'ko',
   genLang: 'ko',          // 생성 언어 — 이 언어로만 생성, 나머지는 탭 전환 시 지연 번역
@@ -1188,14 +1198,32 @@ document.getElementById('redditLoadBtn').addEventListener('click', async () => {
   try {
     let posts = [];
     const subs = REDDIT_SUBS[state.redditCat] || REDDIT_SUBS.popular;
+    const redUrl = `https://www.reddit.com/r/${subs.join('+')}/hot.json?limit=40&raw_json=1`;
+    // ① 브라우저에서 직접 (사용자 IP) — JSONP → 공개 CORS 프록시 순으로 시도
     try {
-      const data = await fetchRedditJsonp(subs);      // ① 사용자 브라우저에서 직접 (IP 차단 회피)
+      const data = await fetchRedditJsonp(subs);
       posts = parseRedditPosts(data);
     } catch (e1) {
-      const data = await apiFetch('/api/reddit-trending', { category: state.redditCat }); // ② 서버(OAuth) 폴백
-      posts = data.posts || [];
+      for (const mk of [
+        (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+        (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+      ]) {
+        try {
+          const res = await fetch(mk(redUrl), { headers: { 'Accept': 'application/json' } });
+          if (!res.ok) continue;
+          posts = parseRedditPosts(await res.json());
+          if (posts.length) break;
+        } catch {}
+      }
     }
-    if (!posts.length) { grid.innerHTML = '<div class="hint">가져온 인기글이 없습니다. 잠시 후 다시 시도해주세요.</div>'; return; }
+    // ② 서버(OAuth) 폴백
+    if (!posts.length) {
+      try { const data = await apiFetch('/api/reddit-trending', { category: state.redditCat }); posts = data.posts || []; } catch (e2) {}
+    }
+    if (!posts.length) {
+      grid.innerHTML = '<div class="hint">인기글을 불러오지 못했습니다. Reddit이 접근을 막고 있어요. 잠시 후 다시 시도하거나, 안정적으로 쓰려면 Reddit 앱 키(REDDIT_CLIENT_ID/SECRET) 등록이 필요합니다 — 등록 방법을 안내해 드릴게요.</div>';
+      return;
+    }
     posts.forEach(p => {
       const card = document.createElement('div');
       card.className = 'reddit-card';
@@ -1734,18 +1762,28 @@ async function runGeneratePipeline(reuseFacts = false) {
   document.getElementById('validationPanel').classList.remove('visible');
   setStep(2);
 
-  // ① 팩트 수집 (Gemini 구글 검색) — 이 팩트만 근거로 작성
+  // ① 팩트 수집 (Gemini 구글 검색 + 이미지 인식) — 이미지 속 '그 대상'으로 팩트를 고정해 할루시네이션 차단
   if (!reuseFacts || !state.facts) {
-    showLoading('팩트 수집 중...', '구글 검색으로 사실을 확인하고 있습니다');
+    showLoading('팩트 수집 중...', '이미지를 인식하고 그 대상의 사실만 구글로 확인합니다');
     try {
+      // 카드에 실제 쓰는 이미지(들)를 함께 보내 '이미지 속 그 대상'으로 검색을 고정
+      const groundImgs = [];
+      for (const src of state.uploadedImages.slice(0, 2)) { try { groundImgs.push(await downscaleForTrace(src, 768)); } catch {} }
       const f = await apiFetch('/api/collect-facts', {
         topic: state.bookInfo.topic,
         coreMessage: state.bookInfo.coreMessage,
+        imageDataUrls: groundImgs,
       });
       state.facts = f.facts || [];
       state.factsSummary = f.summary || '';
       state.factsSources = f.sources || [];
+      state.factsSubject = f.subject || '';
+      state.factsConfidence = f.subjectConfidence || '';
       renderFactsPanel();
+      // 이미지 대상 식별 확신이 낮으면 경고 (엉뚱한 대상으로 샐 위험)
+      if (f.subjectConfidence === 'low') {
+        showToast('이미지 속 대상을 확실히 식별하지 못했습니다. 결과가 이미지와 다를 수 있어요 — 주제를 더 구체적으로 하거나 다른 원본을 써보세요.', 'warning');
+      }
     } catch (err) {
       hideLoading();
       setStep(1);
@@ -1776,6 +1814,8 @@ async function runGeneratePipeline(reuseFacts = false) {
       try { await autoMatchPagesToCaption(); } catch {}
       hideLoading();
     }
+    // ③ 할루시네이션 게이트 — 이미지와 문구가 같은 대상인지 검증
+    await verifyImageTextMatch();
   } catch (err) {
     hideLoading();
     setStep(1);
@@ -1783,14 +1823,44 @@ async function runGeneratePipeline(reuseFacts = false) {
     return;
   }
 
-  // ③ 자동 품질 검증 루프
+  // ④ 자동 품질 검증 루프
   await autoValidateLoop();
+}
+
+// 이미지 ↔ 생성 문구(헤드라인+캡션) 대상 일치 검증. 불일치면 경고 + 발송 차단.
+async function verifyImageTextMatch() {
+  state.imageMismatch = false;
+  const warn = document.getElementById('mismatchWarn');
+  warn.classList.remove('show'); warn.innerHTML = '';
+  const L = state.byLang?.[state.activeLang];
+  if (!L || !state.uploadedImages[0]) return;
+  try {
+    showLoading('이미지·문구 일치 검증 중...', '이미지와 문구가 같은 대상인지 확인합니다');
+    const small = await downscaleForTrace(state.uploadedImages[0], 768);
+    const r = await apiFetch('/api/verify-image-match', { imageDataUrl: small, headline: L.hook?.headline || '', caption: L.caption || '' });
+    if (r.related === false) {
+      state.imageMismatch = true;
+      warn.innerHTML = `<b>이미지와 문구가 다른 대상일 수 있습니다 (할루시네이션 의심).</b><br>이미지 인식: ${escHtml(r.imageSubject || '알 수 없음')}<br>${escHtml(r.reason || '')}<br>주제를 더 구체적으로 바꾸거나 "다시 생성"을 눌러 이미지에 맞는 문구를 다시 만들어주세요. (검증 통과 전엔 텔레그램 발송이 막힙니다.)`;
+      warn.classList.add('show');
+      showToast('이미지와 문구가 맞지 않아요 — 다시 생성하거나 주제를 구체화해주세요.', 'error');
+    }
+  } catch (e) {
+    // 검증 실패는 통과 처리(게이트가 오작동으로 막지 않게)
+  } finally {
+    hideLoading();
+  }
 }
 
 // v2.0: 수집된 팩트 패널 (접이식)
 function renderFactsPanel() {
   const panel = document.getElementById('factsPanel');
-  document.getElementById('factsList').innerHTML = (state.facts || []).map(f => `<li>${escHtml(f)}</li>`).join('');
+  // 이미지에서 식별한 대상을 먼저 보여줘 사용자가 오인식을 바로 잡을 수 있게 한다
+  let subjectHtml = '';
+  if (state.factsSubject) {
+    const conf = state.factsConfidence === 'low' ? ' (확신 낮음 — 확인 필요)' : state.factsConfidence === 'high' ? '' : '';
+    subjectHtml = `<div class="facts-subject ${state.factsConfidence === 'low' ? 'low' : ''}"><b>이미지 인식:</b> ${escHtml(state.factsSubject)}${escHtml(conf)}</div>`;
+  }
+  document.getElementById('factsList').innerHTML = subjectHtml + (state.facts || []).map(f => `<li>${escHtml(f)}</li>`).join('');
   const sumEl = document.getElementById('factsSummary');
   sumEl.textContent = state.factsSummary || '';
   sumEl.style.display = state.factsSummary ? '' : 'none';
@@ -2233,7 +2303,7 @@ function renderValidation(result) {
     `<div class="improvement-item"><div class="improvement-dot"></div><span>${escHtml(imp)}</span></div>`
   ).join('');
 
-  document.getElementById('telegramBtn').disabled = !approved;
+  document.getElementById('telegramBtn').disabled = !approved || state.imageMismatch; // 할루시네이션 감지 시 발송 차단
   const panel = document.getElementById('validationPanel');
   panel.classList.add('visible');
   // 버튼(validation-actions)이 화면에 보이도록 스크롤 — 패널 하단으로 이동
