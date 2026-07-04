@@ -15,6 +15,17 @@ kv_namespaces = [
 [placement]
 mode = "smart"
 
+# ⭐ Gemini 미국 중계기 — 지역 차단("User location is not supported") 시 미국(wnam)에
+# 고정 생성된 Durable Object를 통해 Gemini를 호출한다(결정적 우회).
+[durable_objects]
+bindings = [
+  { name = "GEMINI_DO", class_name = "GeminiProxy" }
+]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GeminiProxy"]
+
 # Cron Trigger 제거 — 일일 자동 캐럿셀 생성 + 파이프라인 자가복구(도서 자동화)를 Phase 1에서 제거함.
 # 자동화가 필요하면 신규 흐름에 맞춰 Phase 5에서 다시 연결한다.
 

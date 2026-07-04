@@ -626,31 +626,63 @@ async function handleAdjustText(env, body) {
 // ===== Gemini 공통 호출 (지역 차단 방어 포함) =====
 // "User location is not supported" [400] = 키·결제 문제가 아니라 Cloudflare 경유지(출구 IP)가
 // Gemini 미지원 지역(홍콩 등)으로 판정된 것 — book-carousel의 Anthropic 403과 같은 부류의 문제.
-// 3중 방어: ① 워커 내부 재시도(연결마다 출구 IP가 바뀌면 통과) ② REGION_BLOCKED 태깅 →
-// 프론트 apiFetch가 자동 재시도(새 요청은 다른 경유지 가능) ③ Smart Placement(wrangler.toml)가
-// 트래픽이 쌓이면 워커를 백엔드(미국) 근처로 옮겨 근본적으로 회피.
-async function callGemini(env, payload, attempt = 0) {
+// 방어(결정적): 직접 호출이 지역 차단되면 "미국(wnam)에 고정된 Durable Object"를 통해
+// 재호출한다. DO는 생성된 지역에서 실행되므로 출구가 항상 미국 → 경유지 운에 의존하지 않음.
+// 보조 방어: 워커 내부 재시도 + REGION_BLOCKED 태깅(프론트 자동 재시도) + Smart Placement.
+async function callGemini(env, payload, attempt = 0, viaProxy = false) {
   const model = env.GEMINI_MODEL || 'gemini-2.5-flash';
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-    body: JSON.stringify(payload),
-  });
+  let res;
+  if (viaProxy && env.GEMINI_DO) {
+    // 미국 고정 중계기 경유 — idFromName은 같은 객체를 재사용, locationHint는 최초 생성 위치 지정
+    const stub = env.GEMINI_DO.get(env.GEMINI_DO.idFromName('us-gemini-proxy'), { locationHint: 'wnam' });
+    res = await stub.fetch('https://gemini-proxy.internal/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, payload }),
+    });
+  } else {
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+      body: JSON.stringify(payload),
+    });
+  }
   if (!res.ok) {
     const eb = await res.text().catch(() => '');
     const regionBlocked = res.status === 400 && /location is not supported/i.test(eb);
-    if (regionBlocked && attempt < 2) {
-      await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
-      return callGemini(env, payload, attempt + 1); // 재연결 시 출구 IP가 바뀌면 통과될 수 있음
+    if (regionBlocked && !viaProxy && env.GEMINI_DO) {
+      return callGemini(env, payload, 0, true); // 결정적 우회: 미국 중계기로 전환
+    }
+    if (regionBlocked && attempt < 1) {
+      await new Promise(r => setTimeout(r, 800));
+      return callGemini(env, payload, attempt + 1, viaProxy);
     }
     if (regionBlocked) {
-      throw new Error('REGION_BLOCKED: 일시적인 해외 경유지 차단 — 요청이 Gemini 미지원 지역(홍콩 등)을 경유했습니다. API 키·결제 문제가 아니며, 자동 재시도나 1~2분 후 재시도로 해결되는 경우가 많습니다.');
+      throw new Error('REGION_BLOCKED: 일시적인 해외 경유지 차단 — 요청이 Gemini 미지원 지역(홍콩 등)을 경유했습니다. API 키·결제 문제가 아니며, 잠시 후 재시도해주세요.');
     }
     throw new Error(`Gemini 호출 실패 [${res.status}] ${eb.slice(0, 300)}`);
   }
   const data = await res.json();
   const text = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('\n');
-  return { data, text, model };
+  return { data, text, model, viaProxy };
+}
+
+// 미국(wnam)에 고정 생성되는 Gemini 중계기 — 이 객체 안에서의 fetch는 항상 미국에서 나간다.
+export class GeminiProxy {
+  constructor(state, env) { this.env = env; }
+  async fetch(request) {
+    try {
+      const { model, payload } = await request.json();
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': this.env.GEMINI_API_KEY },
+        body: JSON.stringify(payload),
+      });
+      return new Response(await res.text(), { status: res.status, headers: { 'Content-Type': 'application/json' } });
+    } catch (e) {
+      return new Response(JSON.stringify({ error: { message: '중계기 오류: ' + e.message } }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
 }
 
 // ===== STEP 0: 원본 추적 (Gemini API — 이미지 인식 + 구글 검색 그라운딩) =====
@@ -913,6 +945,12 @@ export default {
         else if (url.pathname === '/api/adjust-text') result = await handleAdjustText(env, body);
         else if (url.pathname === '/api/trace-origin') result = await handleTraceOrigin(env, body);
         else if (url.pathname === '/api/suggest-topic') result = await handleSuggestTopic(env, body);
+        else if (url.pathname === '/api/gemini-ping') {
+          // 진단용: Gemini 연결 상태 + 미국 중계기 경유 여부 확인 (브라우저에서 열면 JSON 표시)
+          if (!env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY 시크릿이 설정되지 않았습니다.');
+          const r = await callGemini(env, { contents: [{ parts: [{ text: 'pong 이라는 한 단어로만 답하세요.' }] }] });
+          result = { success: true, ok: /pong/i.test(r.text), reply: r.text.trim().slice(0, 40), viaUsProxy: !!r.viaProxy, model: r.model };
+        }
         else if (url.pathname === '/api/usage') {
           // 오늘(KST) Claude API 사용량 — 크레딧 소진 감시용
           const used = await getApiUsage(env);
