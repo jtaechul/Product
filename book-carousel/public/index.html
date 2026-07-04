@@ -2068,14 +2068,17 @@ function shortReelLine(text, maxChars) {
   return cut.trim();
 }
 
-// 배경 cover-fit + 가독성 그라데이션. 공통.
-async function _reelBg(ctx, W, H, blobUrl) {
+// 배경 cover-fit + 가독성 그라데이션. 공통. (blur=true면 배경을 흐림 처리 — 마지막 릴스 슬라이드)
+async function _reelBg(ctx, W, H, blobUrl, blur) {
   if (blobUrl) {
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
-    const scale = Math.max(W / img.width, H / img.height);
-    const dw = img.width * scale, dh = img.height * scale;
-    ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    if (blur) drawBlurredCover(ctx, img, W, H);
+    else {
+      const scale = Math.max(W / img.width, H / img.height);
+      const dw = img.width * scale, dh = img.height * scale;
+      ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    }
   } else { ctx.fillStyle = '#1a1024'; ctx.fillRect(0, 0, W, H); }
   const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, 'rgba(0,0,0,0.58)'); g.addColorStop(0.4, 'rgba(0,0,0,0.28)');
@@ -2137,7 +2140,7 @@ async function buildReelRevealSlide(blobUrl, accent) {
   const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
   await document.fonts.ready;
-  await _reelBg(ctx, W, H, blobUrl);
+  await _reelBg(ctx, W, H, blobUrl, true);  // ⭐ 마지막 슬라이드 배경 = 1페이지 이미지 흐림
   _reelTopHandle(ctx, W);
   const pg5 = state.pages?.page4 || {};
   const cta = shortReelLine(pg5.cta || '', 40);  // 해결 한 줄
@@ -2344,26 +2347,33 @@ async function saveReelSet() {
 }
 document.getElementById('saveReelSetBtn').addEventListener('click', saveReelSet);
 
-// 흐림 배경 그리기 — ctx.filter 지원 시 사용, 미지원(iOS 구형 사파리)이면
-// "강한 축소 → 확대(스무딩)" 방식으로 블러를 근사한다(마지막 페이지 흐림이 안 되던 원인).
+// ⭐ 신뢰성 있는 캔버스 블러 — ctx.filter에 의존하지 않는다.
+// (iOS 사파리는 ctx.filter의 blur를 drawImage에 적용하지 않는 버그가 있어, 캔버스 합성
+//  결과물의 마지막 페이지가 선명하게 나오던 원인. 축소→확대(bilinear 스무딩)로 대체 —
+//  이 방식은 모든 브라우저에서 동일하게 동작한다.)
+// cover-fit으로 (W×H 비율의) 아주 작은 캔버스에 그린 뒤 전체로 확대 = 부드러운 블러.
+function drawBlurredCover(ctx, img, W, H, smallW) {
+  // 2단계 축소(원본→중간→아주 작게)로 고주파를 확실히 제거한 뒤 확대 → 강하고 부드러운 블러.
+  const sw = Math.max(6, smallW || Math.round(W / 42));      // 매우 작게(1080→~26px) = 강한 블러
+  const sh = Math.max(6, Math.round(sw * H / W));
+  const midW = sw * 4, midH = sh * 4;
+  const m = document.createElement('canvas'); m.width = midW; m.height = midH;
+  const mc = m.getContext('2d'); mc.imageSmoothingEnabled = true; mc.imageSmoothingQuality = 'high';
+  const s = Math.max(midW / img.width, midH / img.height);   // cover-fit
+  const dw = img.width * s, dh = img.height * s;
+  mc.drawImage(img, (midW - dw) / 2, (midH - dh) / 2, dw, dh);   // 1) 중간 축소
+  const t = document.createElement('canvas'); t.width = sw; t.height = sh;
+  const tc = t.getContext('2d'); tc.imageSmoothingEnabled = true; tc.imageSmoothingQuality = 'high';
+  tc.drawImage(m, 0, 0, sw, sh);                                 // 2) 아주 작게
+  ctx.save();
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(t, 0, 0, sw, sh, 0, 0, W, H);                    // 3) 확대 → 블러
+  ctx.restore();
+}
+// 게시물 마지막 페이지 배경용: 블러 + 살짝 어둡게(가독성)
 function drawBlurredBg(ctx, img, W, H) {
-  let supported = false;
-  try { ctx.filter = 'blur(2px)'; supported = !!ctx.filter && ctx.filter !== 'none'; ctx.filter = 'none'; } catch {}
-  const rad = Math.max(24, Math.round(W / 17)); // 캔버스 크기에 비례한 흐림(1080 → ~64px)
-  if (supported) {
-    ctx.filter = `blur(${rad}px) brightness(0.72)`;
-    ctx.drawImage(img, -rad * 2, -rad * 2, W + rad * 4, H + rad * 4);
-    ctx.filter = 'none';
-  } else {
-    const t = document.createElement('canvas');
-    t.width = Math.max(2, Math.round(W / 28)); t.height = Math.max(2, Math.round(H / 28));
-    t.getContext('2d').drawImage(img, 0, 0, t.width, t.height);
-    const t2 = document.createElement('canvas'); t2.width = t.width * 4; t2.height = t.height * 4;
-    const c2 = t2.getContext('2d'); c2.imageSmoothingEnabled = true; c2.drawImage(t, 0, 0, t2.width, t2.height);
-    ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(t2, -40, -40, W + 80, H + 80);
-    ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fillRect(0, 0, W, H); // 밝기 보정(brightness 대체)
-  }
+  drawBlurredCover(ctx, img, W, H);
+  ctx.fillStyle = 'rgba(0,0,0,0.30)'; ctx.fillRect(0, 0, W, H);
 }
 
 // 텍스트+배경 합성 이미지를 base64 data URL로 반환 (텔레그램 발송용)
