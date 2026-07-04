@@ -4,11 +4,9 @@ compatibility_date = "2024-09-23"
 
 # 최상위 키(kv_namespaces)는 어떤 [table] 헤더보다 반드시 먼저 와야 한다.
 # (TOML 규칙: [assets] 뒤에 두면 assets.kv_namespaces로 파싱돼 무시됨 → KV 바인딩 누락)
-# ⚠️ 배포 전 반드시 card-carousel 전용 KV 네임스페이스를 새로 만들어 이 id를 교체할 것.
-#    (아래 id는 실서비스 book-carousel의 것 — 그대로 두면 데이터가 섞인다.)
-#    wrangler kv:namespace create PENDING_POSTS  → 출력된 id로 교체.
+# card-carousel 전용 KV 네임스페이스 (book-carousel과 분리 — 데이터 섞임 방지)
 kv_namespaces = [
-  { binding = "PENDING_POSTS", id = "e1b681762f6c43b9be77ede8061aa2dc" }
+  { binding = "PENDING_POSTS", id = "a1ed73b8732e4be584060d7f1e6c0ab1" }
 ]
 
 # ⭐ Smart Placement — Worker를 사용자(한국) 근처가 아니라 백엔드(api.anthropic.com, 미국)

@@ -1,0 +1,59 @@
+name: Deploy Card Carousel
+
+on:
+  push:
+    branches: ["claude/book-carousel-github-import-2wchbg"]
+    paths:
+      - "card-carousel/**"
+      - ".github/workflows/deploy-card-carousel.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Cloudflare Workers 배포 (card-carousel)
+    steps:
+      - uses: actions/checkout@v4
+
+      # GEMINI_API_KEY가 저장소 시크릿에 아직 없어도 배포가 실패하지 않도록 분기.
+      # (없으면 원본 추적·AI 주제 제안만 비활성 — 앱은 정상 작동. 나중에 시크릿 추가 후 재배포하면 활성화)
+      - name: GEMINI 시크릿 존재 확인
+        id: gem
+        run: |
+          if [ -n "${{ secrets.GEMINI_API_KEY }}" ]; then
+            echo "has=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::GEMINI_API_KEY 저장소 시크릿이 없습니다 — 원본 추적/AI 주제 제안이 비활성 상태로 배포됩니다."
+          fi
+
+      - name: Deploy to Cloudflare Workers (GEMINI 포함)
+        if: steps.gem.outputs.has == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          workingDirectory: card-carousel
+          secrets: |
+            ANTHROPIC_API_KEY
+            GEMINI_API_KEY
+            TELEGRAM_BOT_TOKEN
+            TELEGRAM_CHAT_ID
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+      - name: Deploy to Cloudflare Workers (GEMINI 없이)
+        if: steps.gem.outputs.has == 'false'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          workingDirectory: card-carousel
+          secrets: |
+            ANTHROPIC_API_KEY
+            TELEGRAM_BOT_TOKEN
+            TELEGRAM_CHAT_ID
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
