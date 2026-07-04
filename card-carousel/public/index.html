@@ -453,8 +453,8 @@
       font-size: 8px;
     }
     .card-1 .card-headline {
-      font-size: 19px;
-      line-height: 1.55;
+      font-size: calc(20px * var(--hook-scale, 1));
+      line-height: 1.5;
       letter-spacing: -0.01em;
       text-shadow: 0 2px 16px rgba(0,0,0,0.6);
     }
@@ -584,7 +584,28 @@
     @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
     /* v2.0: 훅 카드 강조 단어 (단일 액센트 컬러 — 밝은/어두운 배경 공통) */
-    .hook-accent { color: #FF6B57; }
+    .hook-accent { color: var(--hook-accent, #FF6B57); }
+
+    /* === 텍스트 스타일 조절 컨트롤 (크기 · 강조색 · 글자색) === */
+    .style-controls {
+      display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center;
+      background: var(--gray-850, #14171d); border: 1px solid var(--gray-800, #1f232b);
+      border-radius: 10px; padding: 10px 12px; margin-bottom: 10px;
+    }
+    .style-row { display: flex; align-items: center; gap: 8px; }
+    .style-label { font-size: 11px; color: var(--gray-400, #9aa3b2); font-weight: 600; white-space: nowrap; }
+    .seg { display: inline-flex; background: var(--gray-800, #1f232b); border-radius: 8px; padding: 2px; }
+    .seg-btn {
+      border: none; background: transparent; color: var(--gray-300, #cbd2dc);
+      font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 6px; cursor: pointer;
+    }
+    .seg-btn.active { background: var(--primary, #7c3aed); color: #fff; }
+    .swatches { display: inline-flex; gap: 5px; }
+    .swatch {
+      width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0;
+    }
+    .swatch.active { border-color: #fff; box-shadow: 0 0 0 2px var(--primary, #7c3aed); }
+    .accent-picker { width: 24px; height: 24px; padding: 0; border: 1px solid var(--gray-700, #374151); border-radius: 6px; background: none; cursor: pointer; }
 
     /* v2.0: 업로드 썸네일 동영상 배지 */
     .upload-thumb .video-badge {
@@ -759,6 +780,36 @@
       <span class="section-badge" id="carouselBadge"></span>
     </div>
     <div class="carousel-scroll" id="carouselScroll"></div>
+    <!-- 텍스트 스타일 조절: 훅 카드 글자 크기 · 강조색 · 글자색 (미리보기·저장 이미지에 함께 적용) -->
+    <div class="style-controls" id="styleControls">
+      <div class="style-row">
+        <span class="style-label">글자 크기</span>
+        <span class="seg" id="scaleToggle">
+          <button type="button" class="seg-btn" data-scale="0.85">작게</button>
+          <button type="button" class="seg-btn active" data-scale="1">보통</button>
+          <button type="button" class="seg-btn" data-scale="1.2">크게</button>
+        </span>
+      </div>
+      <div class="style-row">
+        <span class="style-label">강조색</span>
+        <span class="swatches" id="accentSwatches">
+          <button type="button" class="swatch active" data-color="#FF6B57" style="background:#FF6B57" title="코럴"></button>
+          <button type="button" class="swatch" data-color="#FFD23F" style="background:#FFD23F" title="옐로"></button>
+          <button type="button" class="swatch" data-color="#4ADE80" style="background:#4ADE80" title="그린"></button>
+          <button type="button" class="swatch" data-color="#38BDF8" style="background:#38BDF8" title="블루"></button>
+          <button type="button" class="swatch" data-color="#F472B6" style="background:#F472B6" title="핑크"></button>
+        </span>
+        <input type="color" class="accent-picker" id="accentPicker" value="#FF6B57" title="직접 선택">
+      </div>
+      <div class="style-row">
+        <span class="style-label">글자색</span>
+        <span class="seg" id="headColorToggle">
+          <button type="button" class="seg-btn active" data-head="auto">자동</button>
+          <button type="button" class="seg-btn" data-head="white">흰색</button>
+          <button type="button" class="seg-btn" data-head="dark">검정</button>
+        </span>
+      </div>
+    </div>
     <div class="carousel-actions">
       <span class="ratio-toggle" id="ratioToggle" title="게시물 저장 비율 (릴스 커버는 항상 9:16)">
         <button class="lang-tab active" data-ratio="1:1">1:1</button>
@@ -846,7 +897,18 @@ const state = {
   genLang: 'ko',          // 생성 언어 — 이 언어로만 생성, 나머지는 탭 전환 시 지연 번역
   validation: null,
   postRatio: '1:1',       // 게시물 저장 비율 '1:1'(1080x1080) | '4:5'(1080x1350)
+  style: { scale: 1, accent: '#FF6B57', headColor: 'auto' }, // 훅 텍스트 스타일(크기·강조색·글자색) — 미리보기·저장 공통
 };
+// 저장된 텍스트 스타일 불러오기 (다음에도 유지)
+try {
+  const saved = JSON.parse(localStorage.getItem('cardStyle') || 'null');
+  if (saved && typeof saved === 'object') {
+    state.style.scale = [0.85, 1, 1.2].includes(saved.scale) ? saved.scale : 1;
+    state.style.accent = /^#[0-9a-f]{6}$/i.test(saved.accent || '') ? saved.accent : '#FF6B57';
+    state.style.headColor = ['auto', 'white', 'dark'].includes(saved.headColor) ? saved.headColor : 'auto';
+  }
+} catch {}
+function saveStyle() { try { localStorage.setItem('cardStyle', JSON.stringify(state.style)); } catch {} }
 
 // 언어별 폰트 분리 (한글 Noto Sans KR / 일문 Noto Sans JP / 영문 Inter)
 const LANGS = [
@@ -1448,9 +1510,11 @@ async function applyHookCardStyle(card) {
   } catch {
     a = { position: 'bottom', bandLum: 0, scheme: 'light-on-dark', topLum: 0 }; // 분석 실패 → 안전한 기본값
   }
-  const light = a.scheme === 'dark-on-light';
-  // 훅 텍스트는 항상 하단 → 하단에만 스크림 (밝은 배경이면 흰 스크림, 어두우면 검은 스크림)
-  const scrim = light
+  // 글자색: 자동(배경 밝기 기준) / 흰색 / 검정 — 사용자가 고르면 그에 맞춰 스크림·글씨를 뒤집는다
+  const forced = state.style.headColor;
+  const textIsDark = forced === 'dark' ? true : forced === 'white' ? false : (a.scheme === 'dark-on-light');
+  // 훅 텍스트는 항상 하단 → 하단에만 스크림 (어두운 글씨면 흰 스크림, 흰 글씨면 검은 스크림)
+  const scrim = textIsDark
     ? 'linear-gradient(rgba(255,255,255,0.15), rgba(255,255,255,0.82))'
     : 'linear-gradient(rgba(0,0,0,0.10), rgba(0,0,0,0.74))';
   card.style.backgroundImage = `${scrim}, url("${src}")`;
@@ -1461,9 +1525,9 @@ async function applyHookCardStyle(card) {
   card.dataset.overlayScheme = a.scheme;
   card.dataset.overlayTopLum = String(a.topLum ?? 0);
   card.classList.add('card-has-image');
-  card.classList.toggle('overlay-light', light);
+  card.classList.toggle('overlay-light', textIsDark);
   const numEl = card.querySelector('.card-num');
-  if (numEl) numEl.style.color = (a.topLum ?? 0) > 150 ? 'rgba(17,24,39,0.5)' : 'rgba(255,255,255,0.4)';
+  if (numEl) numEl.style.color = textIsDark ? 'rgba(17,24,39,0.5)' : 'rgba(255,255,255,0.4)';
 }
 
 // 생성 언어 선택 (선택 언어로만 생성)
@@ -1723,6 +1787,8 @@ async function renderPreview() {
   const scroll = document.getElementById('carouselScroll');
   scroll.innerHTML = '';
   scroll.style.fontFamily = FONT_STACKS[state.activeLang] || FONT_STACKS.ko; // 언어별 폰트
+  scroll.style.setProperty('--hook-scale', state.style.scale);  // 글자 크기
+  scroll.style.setProperty('--hook-accent', state.style.accent); // 강조색
 
   // ① 훅 카드 — 첫 미디어 + 하단 큰 헤드라인(강조 단어 컬러)
   const hookCard = document.createElement('div');
@@ -1788,6 +1854,38 @@ document.querySelectorAll('#ratioToggle .lang-tab').forEach(btn => {
     showToast(`저장 비율: ${state.postRatio} (${state.postRatio === '1:1' ? '1080x1080' : '1080x1350'})`, 'info');
   });
 });
+
+// ===== 텍스트 스타일 조절 (크기 · 강조색 · 글자색) — 미리보기·저장 이미지에 함께 적용 =====
+function syncStyleControls() {
+  document.querySelectorAll('#scaleToggle .seg-btn').forEach(b =>
+    b.classList.toggle('active', parseFloat(b.dataset.scale) === state.style.scale));
+  document.querySelectorAll('#headColorToggle .seg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.head === state.style.headColor));
+  let matched = false;
+  document.querySelectorAll('#accentSwatches .swatch').forEach(b => {
+    const on = b.dataset.color.toLowerCase() === state.style.accent.toLowerCase();
+    b.classList.toggle('active', on); if (on) matched = true;
+  });
+  const picker = document.getElementById('accentPicker');
+  picker.value = state.style.accent;
+  picker.style.outline = matched ? 'none' : '2px solid #fff';
+}
+// 스타일 변경 후 미리보기(및 저장 이미지 기준) 갱신
+function applyStyleChange() { saveStyle(); syncStyleControls(); if (state.byLang?.[state.activeLang]) renderPreview(); }
+
+document.querySelectorAll('#scaleToggle .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => { state.style.scale = parseFloat(btn.dataset.scale); applyStyleChange(); });
+});
+document.querySelectorAll('#headColorToggle .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => { state.style.headColor = btn.dataset.head; applyStyleChange(); });
+});
+document.querySelectorAll('#accentSwatches .swatch').forEach(btn => {
+  btn.addEventListener('click', () => { state.style.accent = btn.dataset.color; applyStyleChange(); });
+});
+document.getElementById('accentPicker').addEventListener('input', (e) => {
+  state.style.accent = e.target.value; applyStyleChange();
+});
+syncStyleControls();
 
 // 완성된 카드뉴스를 결과 페이지(/view)에 담을 스냅샷으로 합성 — 훅 카드 이미지 + 원본들 + 캡션
 async function buildResultSnapshot() {
@@ -2023,9 +2121,11 @@ async function buildHookBlob(ratio) {
 
   await document.fonts.ready;
 
-  // 오버레이 엔진 결과 — applyHookCardStyle이 dataset에 기록한 색상 스킴 (훅은 항상 하단 앵커)
+  // 오버레이 엔진 결과 + 사용자 글자색 선택 → 최종 명암 결정 (훅은 항상 하단 앵커)
   const hookCard = document.querySelector('#carouselScroll .card');
-  const light = hookCard?.dataset.overlayScheme === 'dark-on-light';
+  const forced = state.style.headColor;
+  const light = forced === 'dark' ? true : forced === 'white' ? false
+    : (hookCard?.dataset.overlayScheme === 'dark-on-light'); // light = 어두운 글씨(밝은 배경)
 
   // ① 배경 (첫 미디어 cover-fit)
   const src = state.uploadedImages[0];
@@ -2056,7 +2156,10 @@ async function buildHookBlob(ratio) {
   const accents = (L.hook?.accents || []).map(a => String(a || '').toLowerCase()).filter(Boolean);
 
   const PAD_X = 70, TEXT_W = W - PAD_X * 2;
-  const { px, lines } = autoFitLines(ctx, headline, TEXT_W, r === '9:16' ? 84 : 72, 44, 4, 4, '900');
+  const styleScale = state.style.scale || 1; // 글자 크기 배율(작게/보통/크게)
+  const maxPx = Math.round((r === '9:16' ? 84 : 72) * styleScale);
+  const minPx = Math.round(44 * styleScale);
+  const { px, lines } = autoFitLines(ctx, headline, TEXT_W, maxPx, minPx, 4, 4, '900');
   const LH = Math.round(px * 1.38);
   // 텍스트 블록의 아래 끝 — 9:16은 안전영역(y≈1400) 안에, 그 외는 하단 여백 80px
   const bottomY = r === '9:16' ? 1400 : H - 80;
@@ -2074,7 +2177,7 @@ async function buildHookBlob(ratio) {
     let x = PAD_X;
     for (const word of ln.split(' ')) {
       const isAcc = accents.some(a => word.toLowerCase().includes(a));
-      ctx.fillStyle = isAcc ? HOOK_ACCENT_COLOR : HEAD_COLOR;
+      ctx.fillStyle = isAcc ? (state.style.accent || HOOK_ACCENT_COLOR) : HEAD_COLOR;
       ctx.fillText(word, x, y);
       x += ctx.measureText(word + ' ').width;
     }
