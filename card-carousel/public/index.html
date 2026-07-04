@@ -207,6 +207,14 @@
       gap: 8px;
       margin-top: 8px;
     }
+    /* 참고(검색용) 안내 — 눈에 띄게 */
+    .seed-hint { color: var(--warning, #d97706) !important; line-height: 1.5; }
+    /* 검색용 시드 썸네일은 카드에 안 쓰인다는 표식 */
+    #uploadPreviews .upload-thumb::before {
+      content: '검색용'; position: absolute; left: 0; bottom: 0; z-index: 1;
+      font-size: 8px; font-weight: 700; color: #fff; background: rgba(217,119,6,0.9);
+      padding: 1px 3px; border-top-right-radius: 4px; pointer-events: none;
+    }
 
     .upload-thumb {
       position: relative;
@@ -668,28 +676,35 @@
     </div>
 
     <div class="form-group">
-      <label id="uploadLabel">이미지 업로드<span class="req">*</span></label>
+      <label id="uploadLabel">참고 이미지 업로드 (검색용)<span class="req">*</span></label>
       <div class="upload-zone" id="uploadZone">
-        <div class="upload-zone-text" id="uploadZoneText">이미지를 끌어다 놓거나<br>눌러서 선택하세요</div>
-        <div class="upload-zone-sub" id="uploadZoneSub">1장 이상 · 여러 장 가능 (JPG/PNG/WebP)</div>
+        <div class="upload-zone-text" id="uploadZoneText">참고 이미지를 끌어다 놓거나<br>눌러서 선택하세요</div>
+        <div class="upload-zone-sub" id="uploadZoneSub">인스타·유튜브에서 캡처한 이미지로 원본을 찾습니다 (JPG/PNG/WebP)</div>
       </div>
       <input type="file" id="imageInput" accept="image/*" multiple style="display:none;">
       <div class="upload-previews" id="uploadPreviews"></div>
-      <span class="hint" id="uploadHint">1장째가 훅 카드 배경이 되고, 나머지는 원본 그대로 이어집니다</span>
+      <span class="hint seed-hint" id="uploadHint">이 이미지는 <b>원본을 찾기 위한 검색용</b>입니다 — 카드뉴스에는 사용되지 않습니다. 아래 "원본 추적"으로 찾은 원본만 카드에 실립니다.</span>
     </div>
 
     <!-- STEP 0: 원본 추적 (Gemini) -->
     <div class="form-group" id="traceGroup" style="display:none;">
-      <button class="btn btn-outline" id="traceOriginBtn">원본 추적 — 출처·저작권 확인</button>
-      <span class="hint">AI가 이미지를 인식하고 구글 검색으로 출처와 저작권 위험도를 추정합니다 (보조 수단 — 최종 판단은 직접)</span>
+      <button class="btn btn-outline" id="traceOriginBtn">원본 추적 — 검색용 이미지에서 원본 찾기</button>
+      <span class="hint">AI가 이미지를 인식하고 구글 검색으로 <b>글자 없는 원본</b>을 찾아 보여줍니다. 그 중에서 골라 카드에 사용하세요.</span>
       <div id="traceResults"></div>
+    </div>
+
+    <!-- 카드에 실제로 사용할 원본 (역검색 결과에서 선택한 것만) -->
+    <div class="form-group" id="cardMediaGroup" style="display:none;">
+      <label>카드에 사용할 원본<span class="req">*</span></label>
+      <div class="upload-previews" id="cardMediaPreviews"></div>
+      <span class="hint">역방향 검색으로 찾은 원본만 여기에 담깁니다. 1장째가 훅 카드 배경, 나머지는 원본 그대로 이어집니다.</span>
     </div>
 
     <div class="form-group">
       <label>주제<span class="req">*</span></label>
       <div style="display:flex;gap:6px;">
         <input type="text" id="inputTopic" placeholder="예: 아침 루틴으로 하루를 바꾸는 법" style="flex:1;">
-        <button class="btn btn-outline" id="suggestTopicBtn" style="white-space:nowrap;padding:9px 12px;font-size:12px;" title="업로드한 이미지를 AI가 보고 주제를 제안합니다">AI 제안</button>
+        <button class="btn btn-outline" id="suggestTopicBtn" style="white-space:nowrap;padding:9px 12px;font-size:12px;" title="참고 이미지를 AI가 보고 주제를 제안합니다">AI 제안</button>
       </div>
       <div id="topicSuggestions" style="display:none;"></div>
     </div>
@@ -818,8 +833,10 @@ const state = {
   step: 1,
   mode: 'post',           // v2.0: 'post'(사진 카드뉴스) | 'reel'(동영상 릴스)
   bookInfo: null,         // 주제 정보 컨테이너 { title(주제), topic, coreMessage } — API 호환용 이름 유지
-  uploadedImages: [],     // 업로드 이미지 dataURL 목록 (릴스 모드: [영상 첫 프레임])
-  videoUrl: null,         // 릴스 모드 원본 영상 URL (objectURL 또는 프록시 URL)
+  seedImages: [],         // 업로드한 '검색용' 참고 이미지 dataURL 목록 (원본 추적·주제 제안에만 사용, 카드에는 절대 안 씀)
+  uploadedImages: [],     // 카드에 실제로 쓰는 '원본' dataURL 목록 — 역검색으로 찾은 것만 채워짐 (릴스: [원본 영상 첫 프레임])
+  videoUrl: null,         // 릴스 모드 '원본' 영상 URL(프록시) — 역검색으로 찾은 것만 (사용자 업로드 캡처는 절대 사용 안 함)
+  videoOriginUrl: '',     // 원본 영상의 원 URL(프록시 이전) — 결과 페이지 임베드용
   videoName: '',
   facts: null,            // v2.0: 수집된 팩트 목록
   factsSummary: '',
@@ -934,16 +951,17 @@ function setUploadZoneMode() {
   const imageInputEl = document.getElementById('imageInput');
   imageInputEl.accept = reel ? 'video/*' : 'image/*';
   imageInputEl.multiple = !reel;
-  document.getElementById('uploadLabel').innerHTML = (reel ? '동영상 업로드' : '이미지 업로드') + '<span class="req">*</span>';
+  document.getElementById('uploadLabel').innerHTML = (reel ? '참고 동영상 업로드 (검색용)' : '참고 이미지 업로드 (검색용)') + '<span class="req">*</span>';
   document.getElementById('uploadZoneText').innerHTML = reel
-    ? '동영상을 끌어다 놓거나<br>눌러서 선택하세요'
-    : '이미지를 끌어다 놓거나<br>눌러서 선택하세요';
+    ? '참고 동영상을 끌어다 놓거나<br>눌러서 선택하세요'
+    : '참고 이미지를 끌어다 놓거나<br>눌러서 선택하세요';
   document.getElementById('uploadZoneSub').textContent = reel
-    ? '동영상 1개 (MP4/MOV/WebM)'
-    : '1장 이상 · 여러 장 가능 (JPG/PNG/WebP)';
-  document.getElementById('uploadHint').textContent = reel
-    ? '영상의 첫 프레임이 훅 커버가 되고, 원본 영상은 그대로 올립니다'
-    : '1장째가 훅 카드 배경이 되고, 나머지는 원본 그대로 이어집니다';
+    ? '인스타·유튜브에서 캡처한 영상으로 원본을 찾습니다 (MP4/MOV/WebM)'
+    : '인스타·유튜브에서 캡처한 이미지로 원본을 찾습니다 (JPG/PNG/WebP)';
+  document.getElementById('uploadHint').innerHTML = reel
+    ? '이 영상은 <b>원본을 찾기 위한 검색용</b>입니다 — 릴스에는 사용되지 않습니다. "원본 추적"으로 찾은 원본 영상만 사용합니다.'
+    : '이 이미지는 <b>원본을 찾기 위한 검색용</b>입니다 — 카드뉴스에는 사용되지 않습니다. "원본 추적"으로 찾은 원본만 카드에 실립니다.';
+  document.getElementById('cardMediaGroup').querySelector('label').innerHTML = (reel ? '카드에 사용할 원본 영상' : '카드에 사용할 원본') + '<span class="req">*</span>';
 }
 
 function hideResults() {
@@ -964,11 +982,14 @@ document.querySelectorAll('#modeTabs .lang-tab').forEach(btn => {
     state.mode = btn.dataset.mode;
     document.querySelectorAll('#modeTabs .lang-tab').forEach(b => b.classList.toggle('active', b === btn));
     // 모드 전환 → 미디어·결과 초기화
+    state.seedImages = [];
     state.uploadedImages = [];
     state.videoUrl = null;
+    state.videoOriginUrl = '';
     state.videoName = '';
     setUploadZoneMode();
-    renderUploadPreviews();
+    renderSeedPreviews();
+    renderCardMedia();
     hideResults();
   });
 });
@@ -1004,9 +1025,8 @@ function addMediaFiles(fileList) {
     reader.onerror = () => rej(new Error(f.name));
     reader.readAsDataURL(f);
   }))).then(urls => {
-    state.uploadedImages.push(...urls);
-    renderUploadPreviews();
-    refreshPreview(); // 이미 미리보기가 떠 있으면 즉시 갱신
+    state.seedImages.push(...urls); // 검색용 시드 — 카드에는 사용하지 않음
+    renderSeedPreviews();
   }).catch(() => showToast('이미지 읽기에 실패했습니다.', 'error'));
 }
 
@@ -1033,31 +1053,52 @@ async function extractVideoFrame(url) {
 
 async function handleVideoFile(file) {
   const url = URL.createObjectURL(file);
-  showLoading('영상 첫 프레임 추출 중...', '첫 프레임을 훅 커버 배경으로 사용합니다');
+  showLoading('영상 첫 프레임 추출 중...', '원본을 찾기 위한 검색용 프레임을 만듭니다');
   try {
     const frame = await extractVideoFrame(url);
-    state.videoUrl = url;
-    state.videoName = file.name || 'video.mp4';
-    state.uploadedImages = [frame]; // 프레임이 훅 카드 + 오버레이 분석을 이끈다
-    renderUploadPreviews();
-    refreshPreview();
-    showToast('동영상 업로드 완료 — 첫 프레임을 커버로 사용합니다.', 'success');
+    // 업로드한 영상은 '검색용 시드'일 뿐 — 캡처 영상 자체는 릴스에 절대 쓰지 않는다. 프레임만 추적/주제 제안에 사용.
+    state.seedImages = [frame];
+    renderSeedPreviews();
+    showToast('참고 영상 업로드 완료 — 원본 추적으로 원본 영상을 찾으세요.', 'success');
   } catch (e) {
-    URL.revokeObjectURL(url);
     showToast('영상 처리 실패: ' + e.message, 'error');
   } finally {
+    URL.revokeObjectURL(url); // 캡처 영상은 보관하지 않는다
     hideLoading();
   }
 }
 
-function renderUploadPreviews(keepTraceResults = false) {
+// 검색용 시드(업로드한 참고 이미지) 미리보기 — 카드에는 쓰이지 않는다
+function renderSeedPreviews() {
   const wrap = document.getElementById('uploadPreviews');
+  wrap.innerHTML = '';
+  state.seedImages.forEach((src, i) => {
+    const div = document.createElement('div');
+    div.className = 'upload-thumb';
+    div.innerHTML = `<img src="${src}" alt="참고 ${i + 1}"><button class="upload-thumb-del" data-i="${i}" title="삭제">X</button>`;
+    wrap.appendChild(div);
+  });
+  wrap.querySelectorAll('.upload-thumb-del').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      state.seedImages.splice(parseInt(btn.dataset.i), 1);
+      renderSeedPreviews();
+    });
+  });
+  // 원본 추적 버튼은 시드가 있을 때만 노출. 시드가 바뀌면 이전 추적 결과 초기화.
+  document.getElementById('traceGroup').style.display = state.seedImages.length ? 'flex' : 'none';
+  document.getElementById('traceResults').innerHTML = '';
+}
+
+// 카드에 실제로 쓰는 원본(역검색으로 찾은 것) 미리보기
+function renderCardMedia() {
+  const wrap = document.getElementById('cardMediaPreviews');
   wrap.innerHTML = '';
   state.uploadedImages.forEach((src, i) => {
     const div = document.createElement('div');
     div.className = 'upload-thumb';
-    const badge = (state.mode === 'reel' && i === 0 && state.videoUrl) ? '<span class="video-badge">동영상</span>' : '';
-    div.innerHTML = `<img src="${src}" alt="업로드 ${i + 1}">${badge}<button class="upload-thumb-del" data-i="${i}" title="삭제">X</button>`;
+    const badge = (state.mode === 'reel' && i === 0 && state.videoUrl) ? '<span class="video-badge">원본 영상</span>' : '';
+    div.innerHTML = `<img src="${src}" alt="원본 ${i + 1}">${badge}<button class="upload-thumb-del" data-i="${i}" title="삭제">X</button>`;
     wrap.appendChild(div);
   });
   wrap.querySelectorAll('.upload-thumb-del').forEach(btn => {
@@ -1066,18 +1107,16 @@ function renderUploadPreviews(keepTraceResults = false) {
       if (state.mode === 'reel') {
         state.uploadedImages = [];
         state.videoUrl = null;
+        state.videoOriginUrl = '';
         state.videoName = '';
       } else {
         state.uploadedImages.splice(parseInt(btn.dataset.i), 1);
       }
-      renderUploadPreviews();
+      renderCardMedia();
       refreshPreview();
     });
   });
-  // 원본 추적 버튼은 미디어가 있을 때만 노출. 목록이 바뀌면 이전 추적 결과는 초기화.
-  // (원본 후보 추가 시에는 keepTraceResults=true — 추적 결과 유지)
-  document.getElementById('traceGroup').style.display = state.uploadedImages.length ? 'flex' : 'none';
-  if (!keepTraceResults) document.getElementById('traceResults').innerHTML = '';
+  document.getElementById('cardMediaGroup').style.display = state.uploadedImages.length ? 'block' : 'none';
 }
 
 // ===== v2.0: 원본 후보 미디어 — 다중 선택 후 "선택한 미디어 추가" =====
@@ -1216,6 +1255,7 @@ async function addSelectedOriginMedia(row) {
         const proxied = '/api/img-proxy?url=' + encodeURIComponent(src);
         const frame = await extractVideoFrame(proxied);
         state.videoUrl = proxied;
+        state.videoOriginUrl = src; // 결과 페이지 임베드용 원 URL
         state.videoName = (src.split('/').pop() || 'video').split('?')[0];
         state.uploadedImages = [frame];
         added++;
@@ -1228,9 +1268,9 @@ async function addSelectedOriginMedia(row) {
       el.classList.remove('selected');
     }
     if (added) {
-      renderUploadPreviews(true); // 추적 결과는 유지
+      renderCardMedia(); // 카드용 원본 목록 갱신 (추적 결과·시드는 그대로 유지)
       refreshPreview();
-      showToast(`미디어 ${added}개를 추가했습니다.`, 'success');
+      showToast(`원본 ${added}개를 카드에 추가했습니다.`, 'success');
     }
   } catch (e) {
     showToast('원본 미디어 추가 실패: ' + e.message, 'error');
@@ -1285,15 +1325,15 @@ function renderTraceResult(i, data) {
 }
 
 document.getElementById('traceOriginBtn').addEventListener('click', async () => {
-  if (!state.uploadedImages.length) { showToast('먼저 미디어를 업로드해주세요.', 'warning'); return; }
+  if (!state.seedImages.length) { showToast('먼저 참고(검색용) 이미지를 업로드해주세요.', 'warning'); return; }
   const btn = document.getElementById('traceOriginBtn');
   const box = document.getElementById('traceResults');
   btn.disabled = true;
   box.innerHTML = '';
   try {
-    for (let i = 0; i < state.uploadedImages.length; i++) {
-      btn.textContent = `추적 중... (${i + 1}/${state.uploadedImages.length})`;
-      const small = await downscaleForTrace(state.uploadedImages[i]);
+    for (let i = 0; i < state.seedImages.length; i++) {
+      btn.textContent = `추적 중... (${i + 1}/${state.seedImages.length})`;
+      const small = await downscaleForTrace(state.seedImages[i]);
       try {
         const data = await apiFetch('/api/trace-origin', { imageDataUrl: small });
         box.insertAdjacentHTML('beforeend', renderTraceResult(i, data));
@@ -1303,23 +1343,23 @@ document.getElementById('traceOriginBtn').addEventListener('click', async () => 
           `<div class="trace-result"><div class="trace-result-head"><span class="trace-result-title">이미지 ${i + 1}</span><span class="trace-badge unknown">실패</span></div><div>${escHtml(err.message)}</div></div>`);
       }
     }
-    showToast('원본 추적 완료 — 결과를 확인하세요.', 'success');
+    showToast('원본 추적 완료 — 글자 없는 원본을 골라 카드에 추가하세요.', 'success');
   } finally {
     btn.disabled = false;
-    btn.textContent = '원본 추적 — 출처·저작권 확인';
+    btn.textContent = '원본 추적 — 검색용 이미지에서 원본 찾기';
   }
 });
 
 // ===== AI 주제 자동 제안 (Gemini vision — 이미지 → 주제 1 + 핵심 메시지 후보 3) =====
 document.getElementById('suggestTopicBtn').addEventListener('click', async () => {
-  if (!state.uploadedImages.length) { showToast('먼저 미디어를 업로드해주세요.', 'warning'); return; }
+  if (!state.seedImages.length) { showToast('먼저 참고(검색용) 이미지를 업로드해주세요.', 'warning'); return; }
   const btn = document.getElementById('suggestTopicBtn');
   const box = document.getElementById('topicSuggestions');
   btn.disabled = true; btn.textContent = '분석 중...';
   try {
     // 최대 3장을 축소해 전송 (비용·전송량 절약)
     const smalls = [];
-    for (const src of state.uploadedImages.slice(0, 3)) smalls.push(await downscaleForTrace(src));
+    for (const src of state.seedImages.slice(0, 3)) smalls.push(await downscaleForTrace(src));
     const data = await apiFetch('/api/suggest-topic', { imageDataUrls: smalls });
     if (data.topic) document.getElementById('inputTopic').value = data.topic;
     // 핵심 메시지 후보 3개를 칩으로 — 클릭하면 핵심 메시지 입력칸에 채움 (선택·수정은 사용자 몫)
@@ -1439,9 +1479,9 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
   const topic = document.getElementById('inputTopic').value.trim();
   const core = document.getElementById('inputCoreMessage').value.trim();
   if (state.mode === 'reel') {
-    if (!state.videoUrl) { showToast('동영상을 업로드해주세요.', 'warning'); return; }
+    if (!state.videoUrl) { showToast('원본 추적으로 찾은 원본 영상을 선택하세요. 업로드한 영상은 검색용이라 릴스에 쓰이지 않습니다.', 'warning'); return; }
   } else if (!state.uploadedImages.length) {
-    showToast('이미지를 1장 이상 업로드해주세요.', 'warning'); return;
+    showToast('원본 추적으로 찾은 원본 이미지를 최소 1장 선택하세요. 업로드한 이미지는 검색용이라 카드에 쓰이지 않습니다.', 'warning'); return;
   }
   if (!topic) { showToast('주제를 입력해주세요.', 'warning'); return; }
   // bookInfo라는 이름은 API 호환용 컨테이너로 유지 (title=주제)
@@ -1749,13 +1789,49 @@ document.querySelectorAll('#ratioToggle .lang-tab').forEach(btn => {
   });
 });
 
-// 제작 완료 시 텔레그램으로 완료 알림 + 확인 링크만 발송 (이미지·문구 미발송)
-async function autoSendTelegram() {
-  showLoading('텔레그램으로 발송 중...', '제작 완료 알림과 확인 링크를 보내고 있습니다');
+// 완성된 카드뉴스를 결과 페이지(/view)에 담을 스냅샷으로 합성 — 훅 카드 이미지 + 원본들 + 캡션
+async function buildResultSnapshot() {
+  const L = state.byLang[state.activeLang] || {};
+  const images = [];
   try {
+    if (state.mode === 'post') {
+      const hookBlob = await buildHookBlob(state.postRatio);
+      if (hookBlob) {
+        const u = URL.createObjectURL(hookBlob);
+        images.push(await downscaleForTrace(u, 1080));
+        URL.revokeObjectURL(u);
+      }
+      for (let i = 1; i < state.uploadedImages.length; i++) {
+        images.push(await downscaleForTrace(state.uploadedImages[i], 1080));
+      }
+    } else {
+      const coverBlob = await buildHookBlob('9:16');
+      if (coverBlob) {
+        const u = URL.createObjectURL(coverBlob);
+        images.push(await downscaleForTrace(u, 1080));
+        URL.revokeObjectURL(u);
+      }
+    }
+  } catch (e) { /* 이미지 합성 실패해도 캡션은 전달 */ }
+  return {
+    title: state.bookInfo?.title || '',
+    lang: state.activeLang,
+    mode: state.mode,
+    caption: L.caption || '',
+    hashtags: L.hashtags || [],
+    images,
+    videoUrl: state.mode === 'reel' ? (state.videoOriginUrl || '') : '',
+  };
+}
+
+// 제작 완료 시 텔레그램으로 완료 알림 + '완성된 카드뉴스 보기' 링크 발송
+async function autoSendTelegram() {
+  showLoading('텔레그램으로 발송 중...', '완성된 카드뉴스와 결과 링크를 보내고 있습니다');
+  try {
+    const snapshot = await buildResultSnapshot();
     const data = await apiFetch('/api/send-telegram', {
       bookInfo: state.bookInfo,
-      pipelineId: localStorage.getItem('activePipelineId') || '',
+      snapshot,
     });
     showToast(data.message || '텔레그램으로 완료 알림을 보냈습니다!', 'success');
   } catch {
@@ -2089,14 +2165,15 @@ document.getElementById('copyAllBtn').addEventListener('click', () => {
 
 document.getElementById('telegramBtn').addEventListener('click', async () => {
   if (!state.byLang?.[state.activeLang] || !state.bookInfo) return;
-  showLoading('텔레그램 발송 중...', '제작 완료 알림과 확인 링크를 보내고 있습니다');
+  showLoading('텔레그램 발송 중...', '완성된 카드뉴스와 결과 링크를 보내고 있습니다');
   try {
-    // 텔레그램에는 완료 알림 + 확인 링크만 전송 (이미지·문구는 보내지 않음)
-    await apiFetch('/api/send-telegram', {
+    // 완성된 카드뉴스(이미지+캡션)를 스냅샷으로 만들어 전송 → 텔레그램 링크가 결과 페이지를 연다
+    const snapshot = await buildResultSnapshot();
+    const data = await apiFetch('/api/send-telegram', {
       bookInfo: state.bookInfo,
-      pipelineId: localStorage.getItem('activePipelineId') || '',
+      snapshot,
     });
-    showToast('텔레그램으로 완료 알림을 보냈습니다!', 'success');
+    showToast(data.message || '텔레그램으로 완료 알림을 보냈습니다!', 'success');
   } catch (err) {
     showToast(err.message, 'error');
   } finally {

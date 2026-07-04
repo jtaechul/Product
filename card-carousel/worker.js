@@ -431,21 +431,37 @@ async function handleSendTelegramImage(env, body) {
   return { success: true };
 }
 
-// 텔레그램에는 "제작 완료 알림 + 확인하러 가기 링크"만 보낸다.
-// (이미지·세부 문구는 보내지 않음. 인스타그램 게시 결정은 캐럿셀 제작 페이지에서 함.)
+// 텔레그램에는 "제작 완료 알림 + 확인하러 가기 링크"를 보낸다.
+// 링크는 완성된 카드뉴스(훅 카드 이미지 + 캡션)를 그대로 보여주는 결과 페이지(/view?id=)로 연결된다.
 async function handleSendTelegram(env, body) {
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
     throw new Error('TELEGRAM_BOT_TOKEN 또는 TELEGRAM_CHAT_ID가 설정되지 않았습니다.');
   }
 
-  const { bookInfo, pipelineId } = body;
-  // pipelineId가 있으면 해당 결과 페이지로 바로 연결되는 링크를 만든다.
-  const link = pipelineId
-    ? `${WORKER_URL}/?pipeline=${encodeURIComponent(pipelineId)}`
-    : `${WORKER_URL}/`;
-
+  const { bookInfo, snapshot } = body;
   const title = bookInfo?.title ? `"${bookInfo.title}"` : '';
-  const msg = `[카드뉴스 제작 완료]\n\n${title} 카드뉴스(훅 카드 + 캡션)가 완성됐습니다.\n아래 "확인하러 가기"를 눌러 결과를 보고, 게시 여부를 결정해주세요.\n\n${link}`;
+
+  // 완성 스냅샷(이미지·캡션·해시태그)을 KV에 저장하고, 그 결과 페이지 링크를 만든다.
+  let link = `${WORKER_URL}/`;
+  if (snapshot && Array.isArray(snapshot.images) && snapshot.images.length && env.PENDING_POSTS) {
+    const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+    const record = {
+      title: bookInfo?.title || snapshot.title || '',
+      lang: snapshot.lang || 'ko',
+      mode: snapshot.mode || 'post',
+      caption: String(snapshot.caption || ''),
+      hashtags: Array.isArray(snapshot.hashtags) ? snapshot.hashtags.slice(0, 8) : [],
+      images: snapshot.images.slice(0, 12),   // JPEG dataURL 목록 (훅 카드 + 원본들)
+      videoUrl: snapshot.videoUrl || '',       // 릴스: 원본 영상 URL(있으면)
+      createdAt: new Date().toISOString(),
+    };
+    try {
+      await env.PENDING_POSTS.put(`view:${id}`, JSON.stringify(record), { expirationTtl: 2 * 24 * 3600 });
+      link = `${WORKER_URL}/view?id=${id}`;
+    } catch { /* 저장 실패 시 기본 링크로 폴백 */ }
+  }
+
+  const msg = `[카드뉴스 제작 완료]\n\n${title} 카드뉴스(훅 카드 + 캡션)가 완성됐습니다.\n아래 "완성된 카드뉴스 보기"를 눌러 결과를 확인하세요.\n\n${link}`;
 
   const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
     method: 'POST',
@@ -454,7 +470,7 @@ async function handleSendTelegram(env, body) {
       chat_id: env.TELEGRAM_CHAT_ID,
       text: msg,
       reply_markup: {
-        inline_keyboard: [[{ text: '확인하러 가기', url: link }]],
+        inline_keyboard: [[{ text: '완성된 카드뉴스 보기', url: link }]],
       },
     }),
   });
@@ -463,7 +479,62 @@ async function handleSendTelegram(env, body) {
     throw new Error(`텔레그램 발송 실패: ${err.description || res.status}`);
   }
 
-  return { success: true, message: '텔레그램으로 제작 완료 알림과 확인 링크를 보냈습니다.' };
+  return { success: true, message: '텔레그램으로 제작 완료 알림과 결과 링크를 보냈습니다.', link };
+}
+
+// 완성된 카드뉴스 결과 페이지 — 텔레그램 링크(/view?id=)가 여는 읽기 전용 페이지.
+// 저장해 둔 스냅샷(훅 카드 이미지 + 원본들 + 캡션 + 해시태그)을 그대로 보여준다.
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function renderViewPage(rec) {
+  const title = escapeHtml(rec.title || '카드뉴스');
+  const caption = escapeHtml(rec.caption || '');
+  const tags = (rec.hashtags || []).map(escapeHtml).join(' ');
+  const captionFull = caption + (tags ? '\n\n' + tags : '');
+  const imgs = (rec.images || []).map((src, i) =>
+    `<div class="slide"><span class="idx">${i + 1}</span><img src="${escapeHtml(src)}" alt="카드 ${i + 1}"></div>`
+  ).join('');
+  const video = rec.videoUrl
+    ? `<div class="slide"><span class="idx">영상</span><video controls muted playsinline preload="metadata" src="/api/img-proxy?url=${encodeURIComponent(rec.videoUrl)}"></video></div>`
+    : '';
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${title} — 완성된 카드뉴스</title>
+<style>
+  :root{--bg:#0f1115;--card:#181b22;--line:#262b36;--text:#e8eaed;--sub:#9aa3b2;--accent:#7c3aed;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',system-ui,-apple-system,sans-serif;padding:16px;max-width:560px;margin:0 auto;line-height:1.6;}
+  h1{font-size:17px;font-weight:800;margin-bottom:4px;}
+  .meta{color:var(--sub);font-size:12px;margin-bottom:16px;}
+  .slides{display:flex;flex-direction:column;gap:12px;}
+  .slide{position:relative;border-radius:12px;overflow:hidden;background:#000;border:1px solid var(--line);}
+  .slide img,.slide video{width:100%;display:block;}
+  .idx{position:absolute;top:8px;left:8px;z-index:1;background:rgba(0,0,0,0.55);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;}
+  .cap-box{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;}
+  .cap-box h2{font-size:13px;color:var(--sub);font-weight:700;margin-bottom:8px;}
+  .cap-text{white-space:pre-wrap;font-size:14px;}
+  .btn{display:block;width:100%;margin-top:12px;padding:12px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;}
+  .btn.sec{background:transparent;border:1px solid var(--line);color:var(--text);}
+  .foot{color:var(--sub);font-size:11px;text-align:center;margin-top:20px;}
+  .tip{color:var(--sub);font-size:12px;margin-top:6px;}
+</style></head><body>
+  <h1>${title}</h1>
+  <div class="meta">완성된 카드뉴스 · ${escapeHtml(rec.mode === 'reel' ? '릴스' : '사진 카드뉴스')} · ${escapeHtml((rec.lang || 'ko').toUpperCase())}</div>
+  <div class="slides">${imgs}${video}</div>
+  <div class="cap-box">
+    <h2>캡션 + 해시태그</h2>
+    <div class="cap-text" id="cap">${captionFull}</div>
+    <button class="btn" id="copyCap">캡션 복사</button>
+    <div class="tip">이미지는 길게 눌러 저장하세요. 인스타그램에 이미지 업로드 후 캡션을 붙여넣으면 됩니다.</div>
+  </div>
+  <div class="foot">이 페이지는 제작 완료 시점의 결과를 담고 있으며 2일 후 만료됩니다.</div>
+<script>
+  document.getElementById('copyCap').addEventListener('click', async function(){
+    try{ await navigator.clipboard.writeText(document.getElementById('cap').innerText); this.textContent='복사됨!'; setTimeout(()=>this.textContent='캡션 복사',1500);}catch(e){ this.textContent='복사 실패 — 길게 눌러 선택하세요'; }
+  });
+</script>
+</body></html>`;
 }
 
 // ===== Claude 핸들러 =====
@@ -1062,6 +1133,19 @@ export default {
       } catch (err) {
         return json({ error: err.message }, 500);
       }
+    }
+
+    // 완성된 카드뉴스 결과 페이지 (텔레그램 링크가 여는 읽기 전용 페이지)
+    if (request.method === 'GET' && url.pathname === '/view') {
+      const id = url.searchParams.get('id') || '';
+      const notFound = (m) => new Response(
+        `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><body style="font-family:sans-serif;background:#0f1115;color:#e8eaed;padding:24px;text-align:center;"><h2>${m}</h2><p style="color:#9aa3b2">제작 페이지에서 다시 생성하고 발송해주세요.</p><p><a href="/" style="color:#7c3aed">제작 페이지로</a></p></body>`,
+        { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS } });
+      if (!/^[a-z0-9]{6,32}$/i.test(id) || !env.PENDING_POSTS) return notFound('결과를 찾을 수 없습니다');
+      let rec = null;
+      try { rec = await env.PENDING_POSTS.get(`view:${id}`, 'json'); } catch {}
+      if (!rec) return notFound('결과가 만료되었거나 존재하지 않습니다');
+      return new Response(renderViewPage(rec), { headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS } });
     }
 
     return env.ASSETS.fetch(request);
