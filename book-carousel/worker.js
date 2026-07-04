@@ -747,6 +747,70 @@ async function handleAnalyze(env, body) {
   return { success: true, ...result };
 }
 
+// ===== 한국어 문장 교정 (어색·틀린 표현 자동 차단) =====
+// 규칙 기반(무료·즉시) + AI 교정(새 눈으로 재점검) 이중 그물. 생성 직후 실행해
+// "한 겹 가벼워집니다"(→"한결"), 되/돼 혼동 같은 어색·오류 표현을 걸러낸다.
+
+// 고정밀 규칙 교정 — 맥락과 무관하게 거의 항상 틀린 조합만 좁게 잡는다(오탐 방지).
+function fixCommonKoreanErrors(s) {
+  if (typeof s !== 'string' || !s) return s;
+  let t = s;
+  // "한 겹/한겹 + 가벼(워/운/게)…" = 단위 오용 → "한결"(부사: 한층 더)
+  t = t.replace(/한\s*겹(\s*)(가벼|가볍)/g, '한결$1$2');
+  // "몇 일" → "며칠"(표준어)
+  t = t.replace(/몇\s*일(?![가-힣])/g, '며칠');
+  // "왠지" 외 "웬지" → "왠지"
+  t = t.replace(/웬지/g, '왠지');
+  return t;
+}
+// 페이지 객체의 모든 문자열 필드에 규칙 교정 적용
+function applyRuleFixesToPages(pages) {
+  const out = JSON.parse(JSON.stringify(pages || {}));
+  for (const k of Object.keys(out)) {
+    const p = out[k];
+    if (p && typeof p === 'object') {
+      for (const f of ['headline', 'body', 'cta', 'linkText']) {
+        if (typeof p[f] === 'string') p[f] = fixCommonKoreanErrors(p[f]);
+      }
+    }
+  }
+  return out;
+}
+// 교정 결과를 원본에 안전 병합 — 존재하는 문자열 필드만, 비어있지 않을 때만 덮어씀
+// (AI가 구조를 흐트러뜨려도 페이지·필드가 사라지지 않게)
+function mergeProofread(orig, fixed) {
+  const out = JSON.parse(JSON.stringify(orig || {}));
+  for (const k of Object.keys(out)) {
+    const o = out[k], f = fixed && fixed[k];
+    if (o && typeof o === 'object' && f && typeof f === 'object') {
+      for (const fld of ['headline', 'body', 'cta', 'linkText']) {
+        if (typeof o[fld] === 'string' && typeof f[fld] === 'string' && f[fld].trim()) o[fld] = f[fld].trim();
+      }
+    }
+  }
+  return out;
+}
+// 생성 직후 교정 오케스트레이터: ① 규칙 교정 → ② AI 교정(옵션, 예산 절약 모드에선 생략)
+// → 다시 규칙 교정. 실패해도 반드시 유효한 pages를 반환(생성 흐름 절대 안 깨짐).
+async function proofreadPages(env, pages, logCtx) {
+  let out = applyRuleFixesToPages(pages);
+  try {
+    const text = await callClaude(env.ANTHROPIC_API_KEY, {
+      env, tier: 'light', max_tokens: 900, optional: true, // 예산 소프트캡 초과 시 규칙 교정만
+      system: '당신은 한국어 교정 전문 에디터입니다. 의미·톤·길이는 그대로 두고, 어색하거나 틀린 표현만 자연스럽게 고칩니다. 반드시 JSON만 응답합니다.',
+      user: `아래 인스타그램 카드뉴스 문구에서 "어색하거나 틀린 한국어"만 골라 고치세요. 의미·따뜻한 톤·길이는 유지합니다.\n\n[특히 이런 오류를 반드시 잡으세요]\n- 단위/수량 표현 오용: "마음의 짐이 한 겹 가벼워진다"(X)→"한결 가벼워진다"(O). '겹'은 층을 세는 말이라 '가벼워지다'와 안 맞음.\n- 발음이 비슷해 잘못 쓰는 말: 한 겹/한결, 되/돼, -로서/-로써, -든지/-던지, 왠지/웬, 며칠/몇 일, 안/않.\n- 어색한 연어(서로 안 어울리는 단어 조합), 조사·어미 오류, 비문, 오타.\n- 존댓말·문어체 일관성(반말이 섞이면 존댓말로).\n[하지 말 것] 멀쩡한 문장을 취향으로 바꾸지 말 것. 틀리거나 확연히 어색한 것만 최소 수정.\n\n원문(JSON):\n${JSON.stringify(pages)}\n\n같은 구조의 JSON으로 고친 최종본만 반환하세요(고칠 게 없으면 원문 그대로). changes에는 고친 것을 "원래 → 수정" 형태로 넣으세요.\nJSON: {"pages":{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}},"changes":["..."]}`,
+    });
+    const r = extractJson(text);
+    if (r && r.pages && r.pages.page1 && r.pages.page5) {
+      out = mergeProofread(out, r.pages);
+      if (logCtx?.env && logCtx?.pipelineId && Array.isArray(r.changes) && r.changes.length) {
+        await logStep(logCtx.env, logCtx.pipelineId, { step: logCtx.step || 1, phase: 'proofread', note: r.changes.slice(0, 5).join(' · ').slice(0, 120) });
+      }
+    }
+  } catch { /* AI 교정 실패·예산 초과 → 규칙 교정본 유지 */ }
+  return applyRuleFixesToPages(out); // AI 결과에도 규칙 교정 재적용(이중 안전)
+}
+
 async function handleGenerate(env, body) {
   const { title, author, year, coreMessage, targetAudience, category } = body;
   if (!title || !author || !coreMessage) throw new Error('제목, 저자, 핵심 메시지는 필수입니다.');
@@ -796,7 +860,9 @@ async function handleGenerate(env, body) {
     user: `다음 책 정보로 5페이지 인스타그램 캐럿셀을 작성하세요.\n\n카테고리: ${category || '연애·관계 심리'}\n핵심 메시지: ${coreMessage}\n${targetAudience ? `대상: ${targetAudience}` : ''}\n${bookDesc ? `실제 책 소개(출판사 제공 — 이 책의 진짜 내용): ${bookDesc.slice(0, 600)}\n` : ''}\n[근거 규칙 — 절대 위반 금지] ${bookDesc ? '위 "실제 책 소개"가 이 책의 진짜 내용입니다. 3~5페이지의 통찰·위로·솔루션은 반드시 이 소개의 주제·관점과 일치해야 하며, 소개에 없는 개념·주장을 책의 것처럼 지어내지 마세요. 소개의 주제가 카테고리 톤과 거리가 있으면, 톤을 책의 실제 주제 쪽으로 맞추세요(책이 우선).' : '이 책의 실제 내용을 확신할 수 없으므로, 특정 개념·주장을 책의 것처럼 단정하지 말고 핵심 메시지 범위 안의 보편적 위로에 머무르세요.'}\n\n[전체 톤 — 카테고리에 맞춰 조절] 대상: ${lt.audience}.\n톤: ${lt.tone}.\n흐름: ${lt.flow}.\n\n[연결성 — 매우 중요·최우선] 5페이지는 뚝뚝 끊긴 독립 카드가 아니라, 한 사람이 이어서 들려주는 "한 편의 편지"처럼 매끄럽게 이어져야 합니다.\n- 먼저 1→5페이지를 관통하는 하나의 감정 실(한 장면·한 마음)을 정하고, 각 페이지가 그 실을 이어받아 조금씩 나아가게 쓰세요(장면 → 반복 패턴 → 그 마음의 이유 → 바라보는 법 → 오늘의 책).\n- 각 페이지는 바로 앞 페이지가 남긴 감정·표현을 자연스럽게 받아서 풀어야 합니다. 예: 2페이지에서 "먼저 연락하지 못했다"고 했다면, 3페이지는 그 "먼저 다가가지 못하는 마음"의 이유로 이어지고, 4페이지는 그 마음을 다르게 바라보는 법으로 이어짐.\n- 스와이프하며 읽을 때 문장이 이어지는 느낌이 들되, 억지 접속사("그래서/하지만"으로 시작)로 잇지는 말 것. 같은 단어·표현을 페이지마다 반복하지 말고, 감정의 결만 하나로 이으세요.\n- 1페이지 훅에서 꺼낸 구체적 장면·감정이 2·3·4페이지에서 계속 같은 사람의 이야기로 살아 있어야 하고, 5페이지는 그 여정을 감싸 안으며 책으로 건네야 합니다(갑자기 딴 이야기로 튀지 말 것).\n\n페이지 가이드 (길이 규칙 엄수):\n1페이지(공감 훅 — 헤드라인만): 카드 전체를 단 하나의 마음을 건드리는 문장으로 채운다.\n  - headline: 40자 이내 완전한 문장. 독자가 연애에서 겪었을 구체적 순간·감정을 정확히 포착한다.\n    규칙: "당신이 이 사실을 모른다면" 패턴 절대 금지. "대부분의 사람들이" 금지. 공포·경고 톤 금지. 주어 없는 단어 조각 금지.\n    접근법: 독자가 혼자 느꼈던 감정을 들킨 듯한 문장.\n    좋은 예(이번 카테고리 톤): ${lt.hookExample}\n             "좋아할수록 더 차갑게 굴게 되는 사람이 있습니다"\n    나쁜 예(절대 금지): "당신의 연애는 실패하고 있다" / "이대로면 평생 혼자입니다" (공포·단정 톤)\n  - subtext 없음 — JSON에 포함하지 않는다.\n2페이지(패턴 발견): 독자가 반복해온 연애 패턴을 부드럽게 이름 붙여 보여준다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 독자가 "맞아, 나 그래"라고 느낄 구체적 행동·상황 묘사. 수치 금지, 감정과 장면 위주.\n3페이지(마음의 이유): 그 패턴의 심리적 뿌리를 따뜻하게 설명한다(애착, 상처, 두려움 등). 비난하지 않는다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. "당신이 이상한 게 아니라, 이런 마음이 있었던 것입니다" 같은 위로의 통찰. 심리학 개념을 쉽게 풀어 쓰되 학술 인용 금지.\n4페이지(위로의 실마리): 완전한 해답 대신 '이렇게 바라보면 달라진다'는 방향을 부드럽게 암시한다.\n  - headline: 18자 이내\n  - body: 3~4줄, 한 줄 40자 이내. 마지막 줄은 희망적 여운으로 끝낸다. 단정적 해결책 금지.\n5페이지(책 공개 — 마무리): 독자에게 오늘의 책을 건넨다. (제목·저자·표지는 시스템이 자동으로 함께 보여주므로 본문 텍스트에 제목·저자를 직접 쓰지 말 것.)\n  - cta: 4페이지의 위로를 잇는 따뜻한 마무리 + 핵심 솔루션 한 문장(${lt.theme}에서 오늘 가져갈 마음의 방향). A/B·질문·"댓글" 언급 금지. 독자 가슴에 남는 한 문장.\n  - linkText: 그 마음에 책을 자연스럽게 건네는 한 줄 (예: "이 마음에 오래 곁이 되어줄 책을 소개합니다"). 제목은 쓰지 말 것(시스템이 표지·제목·저자를 함께 노출). "프로필 링크" 언급은 불필요.\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
 
-  const pages = extractJson(text);
+  let pages = extractJson(text);
+  // ⭐ 한국어 교정 패스 — 어색·틀린 표현("한 겹"→"한결" 등) 자동 차단(규칙+AI 이중).
+  pages = await proofreadPages(env, pages);
   // 실제로 제작된 책 제목을 기록 → 다음 추천에서 자동 제외(반복 제작 방지). 모든 제작 경로가 여기를 지남.
   await recordUsedBook(env, correctedBook?.title || title).catch(() => {});
   // bookDescription: 검증 단계가 실제 책 소개 기준으로 부합도를 채점할 수 있게 반환
@@ -1133,6 +1199,7 @@ async function handleGenerateCaption(env, body) {
   });
 
   const result = extractJson(text);
+  if (result.caption) result.caption = fixCommonKoreanErrors(result.caption); // 규칙 교정(무료)
   result.dmKeyword = (bookInfo.category || '책').replace(/[^가-힣a-zA-Z0-9]/g, '').slice(0, 4) || '책';
   // 캡션 끝에 오늘의 책 공개(제목·저자) + 계정 핸들 + 프로필 링크 유도.
   // (프로필 바이오의 도서관 링크에 구매 링크가 있으므로 책을 만나고 싶은 사람을 그쪽으로 유도)
@@ -1154,7 +1221,8 @@ async function handleRegenerate(env, body) {
     system: `당신은 연애·관계 심리 책을 소개하는 인스타그램 카드뉴스 전문 카피라이터입니다.\n핵심 규칙(절대 위반 금지):\n1. 책 제목·저자명·구매 링크를 캐럿셀 본문 어디에도 절대 쓰지 않는다.\n2. 각 페이지 텍스트는 최소한의 단어로 마음을 건드린다 — 장황한 설명 금지.\n3. 공포·단정·비난이 아니라 깊은 공감과 위로. 통계·수치·연구 인용 금지, 감정과 경험의 언어만.\n4. 5페이지는 질문·A/B·"댓글" 언급 없이 따뜻한 마무리 한 문장으로 감싼다.\n5. 반말 절대 금지 — 문어체·존댓말(~습니다/~네요/~까요)만.\n반드시 JSON만 응답한다.`,
     user: `캐럿셀을 피드백에 맞게 개선하세요.\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n${bookInfo.description ? `실제 책 소개(출판사 — 통찰·솔루션은 이 소개의 주제와 일치해야 하며, 소개에 없는 개념을 책의 것처럼 지어내지 말 것): ${String(bookInfo.description).slice(0, 600)}\n` : ''}\n이전 버전:\n${JSON.stringify(previousPages, null, 2)}\n\n피드백: ${feedback}\n개선 요청: ${improvements.join(' / ')}\n\n[연결성 — 최우선] 개선본도 5페이지가 "한 편의 편지"처럼 매끄럽게 이어져야 합니다. 1페이지 훅에서 꺼낸 하나의 장면·감정이 2·3·4페이지에서 같은 사람의 이야기로 계속 살아 있고(장면 → 반복 패턴 → 그 마음의 이유 → 바라보는 법), 5페이지가 그 여정을 감싸 안으며 책으로 건네야 합니다. 각 페이지는 앞 페이지가 남긴 감정을 이어받으세요(단, 억지 접속사로 잇지 말고 같은 표현 반복 금지). 갑자기 딴 이야기로 튀지 말 것.\n\n텍스트 길이 기준:\n- 1페이지 headline: 40자 이내 완전한 문장. 단어 조각 절대 금지. subtext 없음.\n- 2~4페이지 headline: 18자 이내, body: 3~4줄(줄당 40자 이내). 감정·장면 위주(수치·사례 금지).\n- 5페이지 cta: 4페이지를 잇는 따뜻한 마무리 한 문장 / linkText: 책을 건네는 다리 한 줄.\n\nJSON:\n{"page1":{"headline":"..."},"page2":{"headline":"...","body":"..."},"page3":{"headline":"...","body":"..."},"page4":{"headline":"...","body":"..."},"page5":{"cta":"...","linkText":"..."}}`
   });
-  return { success: true, pages: extractJson(text) };
+  const pages = await proofreadPages(env, extractJson(text)); // 재생성본도 교정
+  return { success: true, pages };
 }
 
 // 캔버스 넘침 감지 후 텍스트 단축
