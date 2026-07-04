@@ -71,15 +71,26 @@ SITUATIONS = {
 
 
 def resolve_key(query: str) -> str | None:
-    """입력 질의를 시드 키로 정규화."""
+    """입력 질의를 시드 키로 정규화.
+
+    정확 일치(키/일반명 KR·EN/학명) 우선. 부분 일치는 오매칭 방지를 위해
+    '질의가 종 이름의 한 단어와 정확히 일치'하는 경우만 허용(양방향 substring 금지).
+    """
     q = query.strip().lower()
+    if not q:
+        return None
     if q in SPECIES:
         return q
     for key, sp in SPECIES.items():
-        if q in (sp["common_name_en"].lower(), sp["common_name_ko"], sp["scientific_name"].lower()):
+        aliases = {sp["common_name_en"].lower(), sp["common_name_ko"], sp["scientific_name"].lower()}
+        if q in aliases:
             return key
-    # 부분 일치 (예: "dumbo")
-    for key in SPECIES:
-        if q and (q in key or key in q):
-            return key
-    return None
+
+    # 부분 일치: 질의가 종 이름의 '단어' 하나와 정확히 일치할 때만 (예: "dumbo" → dumbo octopus).
+    # 유일하게 매칭될 때만 채택(모호하면 None).
+    matches = set()
+    for key, sp in SPECIES.items():
+        words = set(key.split()) | set(sp["common_name_en"].lower().split()) | {sp["common_name_ko"]}
+        if q in words and len(q) >= 3:
+            matches.add(key)
+    return matches.pop() if len(matches) == 1 else None

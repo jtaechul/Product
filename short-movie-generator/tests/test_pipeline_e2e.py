@@ -42,6 +42,34 @@ def test_veo_without_key_becomes_pipeline_error(tmp_path, monkeypatch):
     assert ei.value.stage == "visualization"
 
 
+def test_qc_failure_blocks_publish(tmp_path, monkeypatch):
+    """QC 실패(무음 등) 시 output/ 에 발행되지 않고 격리+중단 (하드 룰: 무음/부분 산출물 금지)."""
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    from src.core import audio, pipeline
+
+    # 오디오 단계를 무음 통과로 오염 → QC의 audio_present_not_silent 실패 유도
+    def silent(video_path, work_dir, duration_s, spec=None):
+        import subprocess
+        from pathlib import Path
+        out = Path(work_dir) / "with_audio.mp4"
+        subprocess.run(
+            ["ffmpeg", "-y", "-loglevel", "error", "-i", video_path,
+             "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=mono",
+             "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac",
+             "-shortest", str(out)],
+            check=True,
+        )
+        return str(out)
+
+    monkeypatch.setattr(audio, "add_ambient", silent)
+    with pytest.raises(PipelineError) as ei:
+        pipeline.run("deep_sea", "dumbo octopus", "panzoom", base_dir=str(tmp_path))
+    assert ei.value.stage == "output"
+    # 발행물이 output/ 최상위에 없어야 함 (격리 폴더에만)
+    published = list((tmp_path / "output").glob("*.mp4"))
+    assert published == []
+
+
 def test_pipeline_halts_when_all_assets_blocked(tmp_path, monkeypatch):
     """차단 라이선스만 소싱되면 시각화 이전에 안전 중단 (하드 룰)."""
     from src.categories.deep_sea.module import DeepSeaCategory

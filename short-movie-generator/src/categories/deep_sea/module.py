@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from pathlib import Path
 
 from src.categories.deep_sea import data
@@ -28,10 +29,19 @@ _NOAA_CANDIDATES = [
     "https://oceanexplorer.noaa.gov/wp-content/uploads/2020/10/20201106-hires-1024x576.jpg",
 ]
 
-# 금지 픽션/윤리 요소 (spec 13장) — 어떤 컷 프롬프트에도 등장 금지
-_BANNED_TERMS = ["diver", "human", "treasure", "shipwreck", "monster", "attack prey", "giant"]
-# 발광 관련 표현 (bioluminescent=False 종에서 금지)
-_GLOW_TERMS = ["biolumin", "glow", "glowing", "발광", "light-producing"]
+# 금지 픽션/윤리 요소 (spec 13장) — 어간 단위 정규식(어형 변화·우회 차단).
+# 픽션(사람·난파선·보물·괴물·과장 크기) + 안 하는 포식(공격/사냥/포식 어간).
+_BANNED_RE = re.compile(
+    r"\b(diver|divers|human|humans|treasure|shipwreck|monster|giant|colossal|"
+    r"attack\w*|hunt\w*|prey|preying|predat\w*|devour\w*|maul\w*)\b",
+    re.IGNORECASE,
+)
+# 발광 표현 (bioluminescent=False 종에서 금지) — 동의어 포함. '발광'은 별도 검사.
+_GLOW_RE = re.compile(
+    r"\b(biolumin\w*|glow\w*|luminescen\w*|luminous|photophore\w*|phosphoresc\w*|"
+    r"light[- ]producing|light organ\w*)\b",
+    re.IGNORECASE,
+)
 
 
 class DeepSeaCategory:
@@ -135,6 +145,16 @@ class DeepSeaCategory:
             x = cx + i * 34
             d.line([(x, cy + 80), (x + i * 10, cy + 300)], fill=(110, 135, 155), width=16)
         img = img.filter(ImageFilter.GaussianBlur(2))
+        # 종 라벨 표기 (플레이스홀더임을 명시 + 종별 식별). 폰트 없으면 생략.
+        try:
+            from PIL import ImageFont
+
+            d2 = ImageDraw.Draw(img)
+            font = ImageFont.truetype("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc", 40)
+            d2.text((cx, int(h * 0.80)), f"[TEST] {label}", font=font, fill=(220, 235, 245),
+                    anchor="mm", stroke_width=2, stroke_fill=(0, 0, 0))
+        except Exception:  # noqa: BLE001
+            pass
         img.save(dest, quality=88)
 
     # --- 상황/정확성 ---
@@ -154,16 +174,17 @@ class DeepSeaCategory:
         violations: list[str] = []
         glow_ok = bool(situation.accuracy_flags.get("bioluminescent"))
         for cut in situation.cuts:
-            p = cut.prompt.lower()
-            for term in _BANNED_TERMS:
-                if term in p:
-                    violations.append(f"{cut.cut_type}: 금지 요소 '{term}'")
+            p = cut.prompt
+            for m in set(_BANNED_RE.findall(p)):
+                violations.append(f"{cut.cut_type}: 금지 요소 '{m}'")
             if not glow_ok:
-                for term in _GLOW_TERMS:
-                    if term in p:
-                        violations.append(
-                            f"{cut.cut_type}: 발광 표현 '{term}' (accuracy_flags.bioluminescent=false)"
-                        )
+                glow_hits = set(_GLOW_RE.findall(p))
+                if "발광" in p:
+                    glow_hits.add("발광")
+                for m in glow_hits:
+                    violations.append(
+                        f"{cut.cut_type}: 발광 표현 '{m}' (accuracy_flags.bioluminescent=false)"
+                    )
         return violations
 
     # --- 캡션 ---

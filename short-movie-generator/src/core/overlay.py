@@ -74,19 +74,28 @@ def build_overlay_png(
         _text_with_stroke(d, (CLIP_W // 2, y), line, f_hook, anchor="ma")
         y += 66
 
-    # 3) 정보 팩트 — 하단 (최대 2줄)
+    # 하단 블록(팩트+종명)은 크레딧 위로 넘치지 않게 상한을 둔다.
+    credit_y = CLIP_H - 60
+    name_h, gap = 42, 8
     y = CLIP_H - 330
+    # 종명이 크레딧과 겹치지 않는 팩트 하한
+    fact_bottom_limit = credit_y - name_h - gap - 12
+
+    # 3) 정보 팩트 — 하단 (최대 2줄, 하한 초과 시 절단)
     for fact in caption.overlay_facts[:2]:
         for line in _wrap(d, f"· {fact}", f_fact, max_w):
+            if y > fact_bottom_limit:
+                break
             _text_with_stroke(d, (margin, y), line, f_fact, fill=(210, 240, 255, 255))
             y += 50
 
-    # 4) 종명 KR/EN — 팩트 아래
+    # 4) 종명 KR/EN — 팩트 아래(단, 크레딧 위로 클램프)
+    name_y = min(y + gap, credit_y - name_h - gap)
     name_line = f"{info.common_name_ko} ({info.common_name_en})"
-    _text_with_stroke(d, (margin, y + 8), name_line, f_name, fill=(255, 230, 160, 255))
+    _text_with_stroke(d, (margin, name_y), name_line, f_name, fill=(255, 230, 160, 255))
 
     # 5) 출처 크레딧 — 최하단 (하드 룰: 자동 삽입)
-    _text_with_stroke(d, (margin, CLIP_H - 60), credit_string, f_small, fill=(255, 255, 255, 190))
+    _text_with_stroke(d, (margin, credit_y), credit_string, f_small, fill=(255, 255, 255, 190))
 
     img.save(out_path)
     return out_path

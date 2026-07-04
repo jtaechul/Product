@@ -65,6 +65,46 @@ def test_banned_fiction_terms_detected(cat):
     assert len(violations) >= 2  # diver + treasure
 
 
+@pytest.mark.parametrize("prompt", [
+    "the octopus attacks its prey",
+    "hunting a fish in the dark",
+    "preying on small crustaceans",
+    "devours a passing shrimp",
+    "a colossal giant creature looms",
+])
+def test_predation_variants_blocked(cat, prompt):
+    """어형 변화(attacks/hunting/preying/devours)·과장 크기도 차단돼야 함(우회 방지)."""
+    bad = Situation(
+        species="dumbo octopus", scientific_name="x",
+        accuracy_flags={"bioluminescent": True}, situation_id="s",
+        cuts=[CutSpec("behavior", prompt)],
+    )
+    assert cat.validate_cuts(bad), f"차단 실패: {prompt!r}"
+
+
+@pytest.mark.parametrize("prompt", [
+    "a luminescent creature", "glowing photophores line its body",
+    "phosphorescent light organ", "발광하는 심해 생물",
+])
+def test_glow_synonyms_blocked_when_flag_false(cat, prompt):
+    bad = Situation(
+        species="x", scientific_name="x",
+        accuracy_flags={"bioluminescent": False}, situation_id="s",
+        cuts=[CutSpec("detail", prompt)],
+    )
+    assert cat.validate_cuts(bad), f"발광 동의어 차단 실패: {prompt!r}"
+
+
+def test_floodlight_not_flagged_as_bioluminescence(cat):
+    """외부 조명(floodlight/into the light)은 발광이 아니므로 오검출 금지."""
+    ok = Situation(
+        species="x", scientific_name="x",
+        accuracy_flags={"bioluminescent": False}, situation_id="s",
+        cuts=[CutSpec("discovery", "a hard floodlight sweeps as it emerges into the light")],
+    )
+    assert cat.validate_cuts(ok) == []
+
+
 def test_caption_fallback_without_key(cat, monkeypatch):
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     info = cat.get_info("dumbo octopus")

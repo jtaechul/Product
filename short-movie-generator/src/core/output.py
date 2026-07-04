@@ -8,7 +8,13 @@ import subprocess
 import time
 from pathlib import Path
 
-from src.core.contracts import CaptionData, OutputResult, PipelineError, SpeciesInfo
+from src.core.contracts import (
+    ALLOWED_LICENSES,
+    CaptionData,
+    OutputResult,
+    PipelineError,
+    SpeciesInfo,
+)
 from src.core.visualization.base import CLIP_H, CLIP_W
 
 
@@ -64,7 +70,7 @@ def run_qc(video: str, expected_duration_s: float, sidecar: dict) -> dict:
             sidecar.get("credit_string", ""),
         ),
         "license_ok_only": (
-            sidecar.get("license_ok") is True,
+            (sidecar.get("license") or "").strip().lower() in ALLOWED_LICENSES,
             f"license={sidecar.get('license')}",
         ),
     }
@@ -85,9 +91,8 @@ def finalize(
     out.mkdir(parents=True, exist_ok=True)
     ts = time.strftime("%Y%m%d_%H%M%S")
     slug = info.common_name_en.lower().replace(" ", "_")
-    final_video = out / f"{slug}_{ts}.mp4"
-    shutil.copy2(video_path, final_video)
 
+    license_ok = (license_name or "").strip().lower() in ALLOWED_LICENSES
     sidecar = {
         "species": {
             "scientific_name": info.scientific_name,
@@ -102,22 +107,38 @@ def finalize(
         },
         "credit_string": credit_string,
         "license": license_name,
-        "license_ok": True,
+        "license_ok": license_ok,
         "created_at": ts,
         **(extra_meta or {}),
     }
 
-    qc = run_qc(str(final_video), expected_duration_s, sidecar)
+    # QC를 원본(발행 전)에 먼저 수행 → 통과분만 output/ 로 발행 (하드 룰: 부분 산출물 미발행)
+    qc = run_qc(video_path, expected_duration_s, sidecar)
     qc_passed = all(ok for ok, _ in qc.values())
     sidecar["qc"] = {k: {"passed": ok, "detail": detail} for k, (ok, detail) in qc.items()}
     sidecar["qc_passed"] = qc_passed
+    report = {k: {"passed": ok, "detail": d} for k, (ok, d) in qc.items()}
 
+    if not qc_passed:
+        # 격리(발행 금지): output/_qc_failed/ 로 남겨 디버깅만 가능하게 하고 파이프라인 중단
+        fail_dir = out / "_qc_failed"
+        fail_dir.mkdir(parents=True, exist_ok=True)
+        fail_video = fail_dir / f"{slug}_{ts}.mp4"
+        shutil.copy2(video_path, fail_video)
+        fail_video.with_suffix(".json").write_text(
+            json.dumps(sidecar, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        failing = [k for k, (ok, _) in qc.items() if not ok]
+        raise PipelineError("output", f"QC 실패 {failing} → 발행 차단 (격리: {fail_video})")
+
+    final_video = out / f"{slug}_{ts}.mp4"
+    shutil.copy2(video_path, final_video)
     sidecar_path = final_video.with_suffix(".json")
     sidecar_path.write_text(json.dumps(sidecar, ensure_ascii=False, indent=2), encoding="utf-8")
 
     return OutputResult(
         video_path=str(final_video),
         sidecar_meta=str(sidecar_path),
-        qc_passed=qc_passed,
-        qc_report={k: {"passed": ok, "detail": d} for k, (ok, d) in qc.items()},
+        qc_passed=True,
+        qc_report=report,
     )
