@@ -1190,6 +1190,33 @@ function parseRedditPosts(data) {
   }
   return posts;
 }
+// pullpush.io 제출물 배열 → 이미지 게시물 (브라우저에서 직접 호출 — 사용자 IP라 rate-limit·차단 회피)
+function parsePullpushPosts(arr) {
+  const posts = [];
+  for (const p of (Array.isArray(arr) ? arr : [])) {
+    if (!p || p.over_18) continue;
+    const direct = p.url_overridden_by_dest || p.url || '';
+    let img = '';
+    if (/i\.redd\.it/i.test(direct) || /\.(jpe?g|png|webp)(\?|$)/i.test(direct)) img = direct;
+    if (!img && p.preview?.images?.[0]?.source?.url) img = String(p.preview.images[0].source.url).replace(/&amp;/g, '&');
+    if (!img) continue;
+    posts.push({ title: (p.title || '').slice(0, 200), subreddit: p.subreddit || '', ups: p.score || 0, imageUrl: img });
+  }
+  return posts;
+}
+async function fetchPullpushClient(subs) {
+  const out = [];
+  for (const sub of subs.slice(0, 2)) {
+    try {
+      const res = await fetch(`https://api.pullpush.io/reddit/search/submission/?subreddit=${encodeURIComponent(sub)}&sort=desc&sort_type=score&size=40`, { headers: { 'Accept': 'application/json' } });
+      if (!res.ok) continue;
+      const j = await res.json();
+      out.push(...parsePullpushPosts(j.data || []));
+    } catch {}
+    if (out.length >= 18) break;
+  }
+  return out.slice(0, 24);
+}
 
 // Reddit 인기글 불러오기 → 그리드 렌더 (① 브라우저 JSONP → ② 서버 폴백)
 document.getElementById('redditLoadBtn').addEventListener('click', async () => {
@@ -1200,18 +1227,18 @@ document.getElementById('redditLoadBtn').addEventListener('click', async () => {
   try {
     let posts = [];
     const subs = REDDIT_SUBS[state.redditCat] || REDDIT_SUBS.popular;
-    // ① 브라우저에서 직접(사용자 IP·JSONP) 빠르게 시도 → 실패하면 ② 서버(여러 공개 중계 경유)로
-    try {
-      const data = await fetchRedditJsonp(subs);
-      posts = parseRedditPosts(data);
-    } catch (e1) {
+    // ① 브라우저에서 pullpush.io 직접 호출(사용자 IP → rate-limit·차단 회피) — 진단상 유일하게 되는 경로
+    try { posts = await fetchPullpushClient(subs); } catch (e0) {}
+    // ② reddit JSONP(사용자 IP) 보조
+    if (!posts.length) {
+      try { posts = parseRedditPosts(await fetchRedditJsonp(subs)); } catch (e1) {}
+    }
+    // ③ 서버 폴백(OAuth 키가 있으면 안정적)
+    if (!posts.length) {
       try { const data = await apiFetch('/api/reddit-trending', { category: state.redditCat }); posts = data.posts || []; } catch (e2) {}
     }
     if (!posts.length) {
-      try { const data = await apiFetch('/api/reddit-trending', { category: state.redditCat }); posts = data.posts || []; } catch (e3) {}
-    }
-    if (!posts.length) {
-      grid.innerHTML = '<div class="hint">인기글을 불러오지 못했습니다 — 여러 경로로 시도했지만 실패했어요. 잠시 후 다시 눌러보세요. 계속되면 다른 카테고리로 시도하거나 알려주세요.</div>';
+      grid.innerHTML = '<div class="hint">인기글을 불러오지 못했습니다 — 잠시 후 다시 눌러보세요. 계속되면 다른 카테고리로 시도해보세요.</div>';
       return;
     }
     posts.forEach(p => {

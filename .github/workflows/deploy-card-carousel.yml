@@ -46,43 +46,32 @@ jobs:
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
 
-      # 러너(오픈 인터넷)에서 각 소스 직접 진단 — 무엇이 실제로 도달·반환되는지 파악 (비실패)
-      - name: Reddit 소스 진단 (러너 직접)
+      # 앱의 실제 경로(브라우저 → pullpush.io 직접) 검증: ① 이미지 게시물이 파싱되는가 ② CORS로 브라우저가 읽을 수 있는가
+      - name: pullpush 브라우저 경로 검증 (데이터 + CORS)
         run: |
-          RURL="https://www.reddit.com/r/pics+interestingasfuck/hot.json?limit=5&raw_json=1"
-          ENC=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1],safe=''))" "$RURL")
-          probe () { # name url jqpath
-            CODE=$(curl -sS --max-time 30 -A "web:card-carousel:v2.5" -o /tmp/o -w "%{http_code}" "$2" 2>/tmp/e || echo 000)
-            echo "--- $1 : HTTP=$CODE size=$(wc -c </tmp/o 2>/dev/null)"
-            head -c 160 /tmp/o 2>/dev/null | tr '\n' ' '; echo
-          }
-          probe "reddit-direct" "$RURL"
-          probe "codetabs" "https://api.codetabs.com/v1/proxy/?quest=$ENC"
-          probe "allorigins" "https://api.allorigins.win/raw?url=$ENC"
-          probe "corsproxy" "https://corsproxy.io/?url=$ENC"
-          probe "pullpush-pics" "https://api.pullpush.io/reddit/search/submission/?subreddit=pics&sort=desc&sort_type=score&size=5"
-          echo "=== pullpush image-field 확인 ==="
-          curl -sS --max-time 30 "https://api.pullpush.io/reddit/search/submission/?subreddit=pics&sort=desc&sort_type=score&size=5" 2>/dev/null \
-            | python3 -c "import json,sys;d=json.load(sys.stdin).get('data',[]);[print(p.get('subreddit'),'|url=',str(p.get('url'))[:60],'|prev=',bool(p.get('preview'))) for p in d[:5]]" 2>/dev/null || echo "pullpush parse fail"
-        continue-on-error: true
-
-      # 배포된 실제 엔드포인트로 Reddit 인기글 불러오기 검증 (posts>=1 이어야 통과)
-      - name: 배포 엔드포인트 Reddit 불러오기 검증
-        run: |
-          sleep 5
-          for CAT in popular facts nature; do
-            echo "=== worker category: $CAT ==="
-            curl -sS --max-time 70 -o /tmp/w.json -w "HTTP=%{http_code}\n" \
-              -X POST "https://card-carousel.jtaechul.workers.dev/api/reddit-trending" \
-              -H "Content-Type: application/json" -d "{\"category\":\"$CAT\"}" || true
-            head -c 300 /tmp/w.json; echo
-            N=$(python3 -c "import json;print(len(json.load(open('/tmp/w.json')).get('posts',[])))" 2>/dev/null || echo 0)
-            VIA=$(python3 -c "import json;print(json.load(open('/tmp/w.json')).get('via',''))" 2>/dev/null || echo "")
-            echo "posts=$N via=$VIA"
-            if [ "$N" -ge 1 ]; then
-              echo "::notice::Reddit 불러오기 성공 — $CAT: ${N}개 (경로 ${VIA})"
-              exit 0
-            fi
+          ORIGIN="https://card-carousel.jtaechul.workers.dev"
+          OK=0
+          for SUB in pics EarthPorn interestingasfuck; do
+            URL="https://api.pullpush.io/reddit/search/submission/?subreddit=$SUB&sort=desc&sort_type=score&size=40"
+            CODE=$(curl -sS --max-time 30 -D /tmp/h -H "Origin: $ORIGIN" -o /tmp/p.json -w "%{http_code}" "$URL" || echo 000)
+            ACAO=$(grep -i '^access-control-allow-origin:' /tmp/h | tr -d '\r' | head -1)
+            N=$(python3 -c "import json,re;d=json.load(open('/tmp/p.json')).get('data',[]);f=lambda p:(not p.get('over_18')) and (bool(re.search(r'i\.redd\.it',p.get('url') or '')) or bool(re.search(r'\.(jpe?g|png|webp)(\?|\$)',p.get('url') or '',re.I)) or bool((p.get('preview') or {}).get('images')));print(sum(1 for p in d if f(p)))" 2>/dev/null || echo 0)
+            echo "sub=$SUB HTTP=$CODE posts=$N ACAO=[$ACAO]"
+            if [ "$CODE" = "200" ] && [ "$N" -ge 1 ] && [ -n "$ACAO" ]; then OK=1; break; fi
           done
-          echo "::error::Reddit 인기글 posts=0 — 아직 불러오지 못함"
-          exit 1
+          if [ "$OK" = "1" ]; then
+            echo "::notice::pullpush 브라우저 경로 검증 통과 — 이미지 게시물 파싱 + CORS 허용 확인"
+          else
+            echo "::error::pullpush 경로 검증 실패 (데이터 또는 CORS 미충족) — 위 로그 확인"
+            exit 1
+          fi
+
+      # 참고: 서버 폴백 엔드포인트 응답도 출력 (Cloudflare 공유 IP는 429일 수 있음 — 비실패)
+      - name: 서버 폴백 응답 출력 (참고)
+        run: |
+          sleep 3
+          curl -sS --max-time 60 -o /tmp/w.json -w "worker HTTP=%{http_code}\n" \
+            -X POST "https://card-carousel.jtaechul.workers.dev/api/reddit-trending" \
+            -H "Content-Type: application/json" -d '{"category":"popular"}' || true
+          head -c 300 /tmp/w.json; echo
+        continue-on-error: true
