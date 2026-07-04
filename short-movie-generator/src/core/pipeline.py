@@ -15,7 +15,7 @@ from pathlib import Path
 
 from src.core import assembler, audio, license_gate, output, overlay
 from src.core.contracts import OutputResult, PipelineError
-from src.core.visualization import get_visualizer
+from src.core.visualization import VisualizationError, get_visualizer
 from src.registry import get_category
 
 log = logging.getLogger(__name__)
@@ -70,12 +70,15 @@ def run(
         raise PipelineError("situation_bank", f"정확성 규칙 위반: {violations}")
     log.info("[5/9] 상황: %s (%d컷, 정확성 통과)", situation.situation_id, len(situation.cuts))
 
-    # 6. 시각화 (컷별 클립 생성)
+    # 6. 시각화 (컷별 클립 생성) — 시각화 실패도 파이프라인 단계 실패로 통일
     clips = []
     for cut in situation.cuts:
-        clip = viz.generate_clip(
-            asset, cut, situation.situation_id, category.style_profile, str(clips_dir)
-        )
+        try:
+            clip = viz.generate_clip(
+                asset, cut, situation.situation_id, category.style_profile, str(clips_dir)
+            )
+        except VisualizationError as e:
+            raise PipelineError("visualization", str(e)) from e
         log.info("[6/9] 클립: %s (%ss)", clip.clip_path, clip.duration_s)
         clips.append(clip)
 
