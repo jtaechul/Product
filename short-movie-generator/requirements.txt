@@ -1,0 +1,5 @@
+google-genai==2.10.0
+python-dotenv==1.2.2
+pillow==12.3.0
+requests==2.34.2
+pytest==9.1.1
