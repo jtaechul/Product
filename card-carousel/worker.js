@@ -1036,13 +1036,21 @@ async function handleFilterCleanImages(env, body) {
   const images = Array.isArray(body.images) ? body.images.slice(0, 24) : [];
   if (!images.length) throw new Error('분류할 이미지(images)가 필요합니다.');
 
+  // 기준(업로드) 이미지 — 있으면 '같은 대상인지(related)'까지 판정해 무관한 후보를 걸러낸다
+  const refMatch = String(body.refImage || '').match(/^data:(image\/[a-z0-9+.-]+);base64,([A-Za-z0-9+/=]+)$/i);
+  const hasRef = !!refMatch;
+
   const parts = [];
-  images.forEach((u, idx) => {
+  if (hasRef) parts.push({ inline_data: { mime_type: refMatch[1], data: refMatch[2] } });
+  images.forEach((u) => {
     const m = String(u).match(/^data:(image\/[a-z0-9+.-]+);base64,([A-Za-z0-9+/=]+)$/i);
     if (m) parts.push({ inline_data: { mime_type: m[1], data: m[2] } });
-    // 매칭 실패분은 건너뛰되, 아래 프롬프트는 '보낸 순서대로' 판정을 요구하므로 손상 URL은 미리 걸러 보내야 한다.
   });
-  parts.push({ text: `위 이미지들을 보낸 순서대로 각각 판정하세요. 각 이미지가 '가공되지 않은 원본 사진'인지, 아니면 '누군가 글자(자막·캡션·큰 제목·워터마크·밈 텍스트)를 박아 넣은 가공본'인지 구분합니다.\n\n- hasText=true: 사진 위에 겹쳐 넣은 큰 자막/캡션/제목/워터마크/밈 문구가 있음 (= 카드뉴스·짤·편집본. 배경으로 부적합)\n- hasText=false: 그런 삽입 글자가 없는 깨끗한 원본 사진 (간판·옷의 로고처럼 '실제 현장에 원래 있던 글자'는 삽입 글자가 아니므로 false)\n\n반드시 이미지 개수(${images.length}개)와 같은 길이의 JSON 배열로만 응답하세요. 다른 텍스트 없이:\n[{"hasText":true,"note":"상단에 흰 자막"},{"hasText":false,"note":"깨끗한 원본"}]` });
+
+  const promptRef = `첫 번째 이미지는 '기준 이미지'(사용자가 올린, 원본을 찾으려는 대상)입니다. 이어지는 ${images.length}개 후보 이미지를 보낸 순서대로 각각 판정하세요.\n\n- related: 후보가 기준 이미지와 '같은 대상/같은 장소/같은 사건/같은 종류의 장면'을 보여주면 true. 전혀 다른 사물·인물·음식·차트·로고·다른 기사 사진이면 false. (예: 기준이 '사막의 원자로 시설 항공사진'인데 음식·인물·주식차트·커피 사진이면 반드시 false)\n- hasText: 사진 위에 삽입된 자막·캡션·큰 제목·워터마크·밈 문구가 있으면 true, 없으면 false. (간판·옷 로고처럼 현장에 원래 있던 글자는 false)\n\n반드시 후보 개수(${images.length}개)와 같은 길이의 JSON 배열로만: [{"related":true,"hasText":false,"note":"기준과 같은 시설 항공사진"}, ...]`;
+  const promptNoRef = `위 이미지들을 보낸 순서대로 각각 판정하세요. '가공되지 않은 원본 사진'인지, '누군가 글자(자막·캡션·워터마크)를 박아 넣은 가공본'인지.\n- hasText=true: 삽입 자막/캡션/워터마크 있음\n- hasText=false: 삽입 글자 없는 깨끗한 원본\n\n${images.length}개 길이 JSON 배열만: [{"related":true,"hasText":false},...]`;
+
+  parts.push({ text: hasRef ? promptRef : promptNoRef });
 
   const { text } = await callGemini(env, { contents: [{ parts }] });
   let arr = [];
@@ -1052,9 +1060,11 @@ async function handleFilterCleanImages(env, body) {
   } catch { arr = []; }
   const results = images.map((_, i) => {
     const r = arr[i] || {};
-    return { hasText: r.hasText === true, note: String(r.note || '').slice(0, 80) };
+    // 기준 이미지가 있으면 related 판정 사용(누락 시 무관으로 간주해 노이즈 차단), 없으면 모두 관련으로 취급
+    const related = hasRef ? (r.related === true) : true;
+    return { hasText: r.hasText === true, related, note: String(r.note || '').slice(0, 80) };
   });
-  return { success: true, results };
+  return { success: true, results, usedRef: hasRef };
 }
 
 // ===== STEP 1 모드 B: 주제 AI 자동 추출 (Gemini vision — 기획서 Phase 3) =====
