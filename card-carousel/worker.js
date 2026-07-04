@@ -19,6 +19,36 @@ function json(data, status = 200) {
 // 후보 모델에 1토큰 테스트 호출을 실제로 던져 200이 나오는 것만 골라 쓴다.
 let _modelCache = null;
 
+// ===== 미국 중계기 공용 접근 (지역 라우팅 차단 대책) =====
+// 한국발 요청이 홍콩 등 차단 경유지로 나가면 Anthropic이 403("Request not allowed"),
+// Gemini가 400("User location is not supported")을 낸다. 둘 다 미국(wnam)에 고정된
+// Durable Object(GeminiProxy — 범용 중계기로 확장)를 통해 미국 출구로 재시도한다.
+let _relayEnv = null; // fetch 핸들러 진입 시 저장 — 함수 시그니처를 바꾸지 않고 중계기 접근
+
+function relayViaUs(url, init = {}) {
+  const stub = _relayEnv.GEMINI_DO.get(_relayEnv.GEMINI_DO.idFromName('us-gemini-proxy'), { locationHint: 'wnam' });
+  return stub.fetch('https://gemini-proxy.internal/relay', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      url,
+      method: init.method || 'GET',
+      headers: init.headers || {},
+      rawBody: typeof init.body === 'string' ? init.body : null,
+    }),
+  });
+}
+
+// api.anthropic.com 공용 fetch — 403(지역 라우팅 차단)이면 미국 중계기로 즉시 재시도(결정적 우회)
+async function anthropicFetch(url, init = {}) {
+  const res = await fetch(url, init);
+  if (res.status === 403 && _relayEnv?.GEMINI_DO) {
+    const t = await res.clone().text().catch(() => '');
+    if (/request not allowed/i.test(t)) return relayViaUs(url, init);
+  }
+  return res;
+}
+
 // /v1/models 조회 실패 시(네트워크·레이트리밋) 폴백으로 쓸 알려진 모델 목록
 const FALLBACK_MODEL_IDS = [
   'claude-sonnet-4-6', 'claude-opus-4-8', 'claude-haiku-4-5-20251001',
@@ -27,7 +57,7 @@ const FALLBACK_MODEL_IDS = [
 ];
 
 async function listModelIds(apiKey) {
-  const res = await fetch('https://api.anthropic.com/v1/models?limit=100', {
+  const res = await anthropicFetch('https://api.anthropic.com/v1/models?limit=100', {
     headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
   });
   if (!res.ok) return [];
@@ -41,7 +71,7 @@ async function probeModel(apiKey, model, attempt = 0) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 6000);
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await anthropicFetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model, max_tokens: 1, messages: [{ role: 'user', content: 'hi' }] }),
@@ -176,7 +206,7 @@ async function healModelByRealCall(apiKey, opts, badModel) {
   for (const model of candidates) {
     let res;
     try {
-      res = await fetch('https://api.anthropic.com/v1/messages', {
+      res = await anthropicFetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({ model, max_tokens, system, messages: [{ role: 'user', content: user }] }),
@@ -269,7 +299,7 @@ async function callClaude(apiKey, opts, attempt = 0) {
 
   let res;
   try {
-    res = await fetch('https://api.anthropic.com/v1/messages', {
+    res = await anthropicFetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -674,11 +704,24 @@ async function callGemini(env, payload, attempt = 0, viaProxy = false) {
   return { data, text, model, viaProxy };
 }
 
-// 미국(wnam)에 고정 생성되는 Gemini 중계기 — 이 객체 안에서의 fetch는 항상 미국에서 나간다.
+// 미국(wnam)에 고정 생성되는 API 중계기 — 이 객체 안에서의 fetch는 항상 미국에서 나간다.
+// /generate: Gemini 전용 축약형 / /relay: 범용(Anthropic 등 허용 목록 대상만)
 export class GeminiProxy {
   constructor(state, env) { this.env = env; }
   async fetch(request) {
     try {
+      const path = new URL(request.url).pathname;
+
+      if (path === '/relay') {
+        const { url, method = 'GET', headers = {}, rawBody = null } = await request.json();
+        // 허용된 백엔드로만 중계 (오픈 프록시화 방지)
+        if (!/^https:\/\/(api\.anthropic\.com|generativelanguage\.googleapis\.com)\//.test(String(url))) {
+          return new Response(JSON.stringify({ error: { message: '허용되지 않은 중계 대상' } }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
+        const res = await fetch(url, { method, headers, body: rawBody != null ? rawBody : undefined });
+        return new Response(await res.text(), { status: res.status, headers: { 'Content-Type': res.headers.get('content-type') || 'application/json' } });
+      }
+
       const { model, payload } = await request.json();
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: 'POST',
@@ -935,6 +978,7 @@ async function handleSetupWebhook(env) {
 // ===== 메인 라우터 =====
 export default {
   async fetch(request, env, ctx) {
+    _relayEnv = env; // 미국 중계기 접근용 — anthropicFetch가 지역 차단(403) 시 사용
     const url = new URL(request.url);
 
     if (request.method === 'OPTIONS') {
@@ -979,7 +1023,7 @@ export default {
           // 2) /v1/models 원시 응답 그대로 확인
           let rawStatus = null, rawBody = null;
           try {
-            const r = await fetch('https://api.anthropic.com/v1/models?limit=100', {
+            const r = await anthropicFetch('https://api.anthropic.com/v1/models?limit=100', {
               headers: { 'x-api-key': key || '', 'anthropic-version': '2023-06-01' },
             });
             rawStatus = r.status;
@@ -1019,10 +1063,15 @@ export default {
         else if (url.pathname === '/api/translate') result = await handleTranslate(env, body);
         else if (url.pathname === '/api/fetch-origin-images') result = await handleFetchOriginImages(env, body);
         else if (url.pathname === '/api/gemini-ping') {
-          // 진단용: Gemini 연결 상태 + 미국 중계기 경유 여부 확인 (브라우저에서 열면 JSON 표시)
+          // 진단용: Gemini·Claude 연결 상태 + 미국 중계기 경유 여부 확인 (브라우저에서 열면 JSON 표시)
           if (!env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY 시크릿이 설정되지 않았습니다.');
           const r = await callGemini(env, { contents: [{ parts: [{ text: 'pong 이라는 한 단어로만 답하세요.' }] }] });
-          result = { success: true, ok: /pong/i.test(r.text), reply: r.text.trim().slice(0, 40), viaUsProxy: !!r.viaProxy, model: r.model };
+          let claudeOk = null;
+          if (env.ANTHROPIC_API_KEY) {
+            const st = await probeModel(env.ANTHROPIC_API_KEY, HARDCODED_FALLBACK_LIGHT);
+            claudeOk = st === 200; // 403이었어도 anthropicFetch가 미국 중계기로 우회한 결과
+          }
+          result = { success: true, ok: /pong/i.test(r.text), claudeOk, reply: r.text.trim().slice(0, 40), viaUsProxy: !!r.viaProxy, model: r.model };
         }
         else if (url.pathname === '/api/usage') {
           // 오늘(KST) Claude API 사용량 — 크레딧 소진 감시용
