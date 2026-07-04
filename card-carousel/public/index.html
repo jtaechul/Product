@@ -285,6 +285,9 @@
     .lang-tab:hover { border-color: var(--primary-light); }
     .lang-tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 
+    /* Phase 4: 게시물 저장 비율 토글 */
+    .ratio-toggle { display: inline-flex; gap: 4px; align-items: center; margin-right: 4px; }
+
     /* Phase 3: AI 주제 제안 칩 */
     #topicSuggestions { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
     .topic-chip {
@@ -638,6 +641,10 @@
     </div>
     <div class="carousel-scroll" id="carouselScroll"></div>
     <div class="carousel-actions">
+      <span class="ratio-toggle" id="ratioToggle" title="게시물 저장 비율 (릴스는 항상 9:16)">
+        <button class="lang-tab active" data-ratio="1:1">1:1</button>
+        <button class="lang-tab" data-ratio="4:5">4:5</button>
+      </span>
       <button class="btn btn-outline" id="regenerateBtn">캐럿셀 다시 생성</button>
       <button class="btn btn-outline" id="copyAllBtn">전체 복사</button>
       <button class="btn btn-outline" id="saveAllImagesBtn" style="background:linear-gradient(135deg,#064e3b,#065f46);color:#fff;border:none;">이미지 전체 저장</button>
@@ -671,11 +678,19 @@
 
     <div id="captionResult" style="display:none;">
       <div class="caption-box">
-        <div class="caption-label-text">캡션</div>
+        <div class="caption-label-text">게시물 캡션</div>
         <div class="caption-text-content" id="captionTextContent"></div>
         <div class="caption-hashtags-row" id="captionHashtagsRow"></div>
       </div>
-      <button class="btn btn-outline" id="copyCaptionBtn" style="font-size:12px;padding:8px 14px;">캡션 전체 복사</button>
+      <div class="caption-box" id="captionReelBox" style="display:none;margin-top:10px;">
+        <div class="caption-label-text">릴스 캡션 (짧은 후킹형)</div>
+        <div class="caption-text-content" id="captionReelContent"></div>
+        <div class="caption-hashtags-row" id="captionReelHashtags"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-outline" id="copyCaptionBtn" style="font-size:12px;padding:8px 14px;">게시물 캡션 복사</button>
+        <button class="btn btn-outline" id="copyReelCaptionBtn" style="font-size:12px;padding:8px 14px;display:none;">릴스 캡션 복사</button>
+      </div>
     </div>
   </div>
 
@@ -729,8 +744,10 @@ const state = {
   caption: null,
   captionHashtags: null,
   captionsByLang: null,   // Phase 3: { ko: {caption, hashtags}, en, ja }
-  reelScript: null,       // 연결성 있는 릴스 대본 {s1,s2,s3,s4} (한국어 기준 — 릴스 다국어는 Phase 4)
+  reelScript: null,       // 현재 활성 언어의 릴스 대본 {s1,s2,s3,s4}
+  reelByLang: null,       // Phase 4: 릴스 대본 3개 언어 세트 { ko, en, ja }
   reelValidation: null,   // 릴스 문구 자동 검증 결과
+  postRatio: '1:1',       // Phase 4: 게시물 저장 비율 프리셋 '1:1'(1080x1080) | '4:5'(1080x1350)
 };
 
 // Phase 3: 언어별 폰트 분리 (한글 Noto Sans KR / 일문 Noto Sans JP / 영문 Inter)
@@ -1099,7 +1116,7 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
 // ===== Generate Carousel (자동 검증 루프 포함) =====
 async function generateCarousel() {
   state.validation = null;
-  state.reelScript = null; state.reelValidation = null;  // 새 주제 → 릴스 대본 새로 생성
+  state.reelScript = null; state.reelByLang = null; state.reelValidation = null;  // 새 주제 → 릴스 대본 새로 생성
   const rp = document.getElementById('reelPreview'); if (rp) rp.style.display = 'none';
   document.getElementById('validationPanel').classList.remove('visible');
   setStep(2);
@@ -1218,13 +1235,16 @@ async function setActiveLang(lang) {
   if (!state.pagesByLang || state.activeLang === lang) return;
   state.activeLang = lang;
   state.pages = state.pagesByLang[lang] || state.pagesByLang.ko;
+  // Phase 4: 릴스 대본도 활성 언어로 전환
+  if (state.reelByLang) state.reelScript = state.reelByLang[lang] || state.reelByLang.ko;
   renderLangTabs();
   renderCarousel(state.pages);
   await applyUploadedImages();
   renderActiveCaption();
+  if (state.reelScript && document.getElementById('reelPreview')?.style.display !== 'none') renderReelPreview();
 }
 
-// 현재 언어의 캡션+해시태그를 표시 (해당 언어 캡션이 아직 없으면 안내)
+// 현재 언어의 캡션+해시태그를 표시 (게시물용 + 릴스용 짧은 후킹형)
 function renderActiveCaption() {
   const box = document.getElementById('captionResult');
   if (!box || !state.captionsByLang) return;
@@ -1232,8 +1252,33 @@ function renderActiveCaption() {
   if (!c) return;
   document.getElementById('captionTextContent').textContent = c.caption || '';
   document.getElementById('captionHashtagsRow').textContent = (c.hashtags || []).join(' ');
+  // Phase 4: 릴스 캡션 (있을 때만 노출)
+  const reelBox = document.getElementById('captionReelBox');
+  const reelBtn = document.getElementById('copyReelCaptionBtn');
+  if (c.reelCaption) {
+    document.getElementById('captionReelContent').textContent = c.reelCaption;
+    document.getElementById('captionReelHashtags').textContent = (c.reelHashtags || []).join(' ');
+    reelBox.style.display = 'block';
+    reelBtn.style.display = 'inline-block';
+  } else {
+    reelBox.style.display = 'none';
+    reelBtn.style.display = 'none';
+  }
   box.style.display = 'block';
 }
+
+// ===== Phase 4: 게시물 저장 비율 프리셋 (1:1 / 4:5) — 릴스는 항상 9:16 =====
+document.querySelectorAll('#ratioToggle .lang-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.postRatio = btn.dataset.ratio;
+    document.querySelectorAll('#ratioToggle .lang-tab').forEach(b => b.classList.toggle('active', b === btn));
+    // 미리보기 카드 비율도 맞춰 갱신 (1:1=210x210, 4:5=210x262)
+    document.querySelectorAll('#carouselScroll .card').forEach(c => {
+      c.style.height = state.postRatio === '1:1' ? '210px' : '262px';
+    });
+    showToast(`저장 비율: ${state.postRatio} (${state.postRatio === '1:1' ? '1080x1080' : '1080x1350'})`, 'info');
+  });
+});
 
 // Phase 4: 제작 완료 시 텔레그램으로 완료 알림 + 확인 링크만 발송 (이미지·문구 미발송)
 async function autoSendTelegram() {
@@ -1270,6 +1315,7 @@ function renderCarousel(pages) {
   cardData.forEach(({ num, cls, content, type }) => {
     const card = document.createElement('div');
     card.className = `card ${cls}`;
+    card.style.height = state.postRatio === '1:1' ? '210px' : '262px'; // 저장 비율 프리셋 반영
 
     let inner = `<div class="card-inner"><div class="card-num">${num}</div>`;
 
@@ -1636,11 +1682,14 @@ async function generateReelScript(force) {
   const rbtn = document.getElementById('regenReelBtn');
   if (rbtn) { rbtn.disabled = true; rbtn.textContent = '만드는 중...'; }
   try {
-    const r = await apiFetch('/api/generate-reel', { pages: state.pages, bookInfo: state.bookInfo });
-    state.reelScript = r.reel || _reelFallbackScript(state.pages);
+    // Phase 4: 3개 언어 대본을 한 번에 받아 언어 탭과 연동
+    const r = await apiFetch('/api/generate-reel', { pages: state.pages, pagesByLang: state.pagesByLang, bookInfo: state.bookInfo });
+    state.reelByLang = r.reelByLang || (r.reel ? { ko: r.reel, en: r.reel, ja: r.reel } : null);
+    state.reelScript = state.reelByLang?.[state.activeLang] || state.reelByLang?.ko || _reelFallbackScript(state.pages);
     state.reelValidation = r.validation || null;
   } catch (e) {
     state.reelScript = _reelFallbackScript(state.pages);
+    state.reelByLang = null;
     state.reelValidation = { note: '자동 생성 실패 — 캐럿셀 문구로 대체' };
   } finally {
     if (rbtn) { rbtn.disabled = false; rbtn.textContent = '릴스 문구 다시 만들기'; }
@@ -1750,7 +1799,8 @@ function measureCanvasOverflow(pages) {
 
 // 캔버스 합성 → Blob 반환 (저장/공유 공통 유틸)
 async function buildCardBlob(card, pageNum) {
-  const W = 1080, H = 1080;
+  // Phase 4: 게시물 저장 비율 프리셋 — 1:1(1080x1080) / 4:5(1080x1350)
+  const W = 1080, H = state.postRatio === '4:5' ? 1350 : 1080;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
@@ -1766,7 +1816,10 @@ async function buildCardBlob(card, pageNum) {
   if (blobUrl) {
     const img = new Image();
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = blobUrl; });
-    ctx.drawImage(img, 0, 0, W, H);
+    // cover-fit: 비율을 유지한 채 캔버스를 꽉 채움 (늘어짐 방지 — 4:5에서 특히 중요)
+    const scale = Math.max(W / img.width, H / img.height);
+    const dw = img.width * scale, dh = img.height * scale;
+    ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
     // 텍스트가 놓이는 쪽에만 스크림 — 밝은 배경이면 흰 스크림, 어두우면 검은 스크림
     const scrimRGB = light ? '255,255,255' : '0,0,0';
     const grad = pos === 'top'
@@ -1986,6 +2039,14 @@ document.getElementById('copyCaptionBtn').addEventListener('click', () => {
   if (!c) return;
   const full = (c.caption || '') + '\n\n' + (c.hashtags || []).join(' ');
   copyText(full, `캡션(${state.activeLang})`);
+});
+
+document.getElementById('copyReelCaptionBtn').addEventListener('click', () => {
+  // 현재 언어 탭의 릴스 캡션(짧은 후킹형)을 복사
+  const c = state.captionsByLang?.[state.activeLang] || state.captionsByLang?.ko;
+  if (!c?.reelCaption) return;
+  const full = c.reelCaption + '\n\n' + (c.reelHashtags || []).join(' ');
+  copyText(full, `릴스 캡션(${state.activeLang})`);
 });
 
 document.getElementById('copyAllBtn').addEventListener('click', () => {

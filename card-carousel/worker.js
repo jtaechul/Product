@@ -502,34 +502,52 @@ async function handleReelHook(env, body) {
 
 // 릴스 대본(4장) — 한 편의 흐름으로 "연결되게" 생성하고, 자체 검증(연결성·가독성)까지 한 번에.
 // 캐럿셀의 조각을 잘라 붙이던 방식(어색함)을 대체한다. 5번째 장(마무리 CTA)은 프론트 캔버스가 처리.
+// Phase 4: 릴스 대본도 한/영/일 3개 언어 세트로 생성(언어 탭과 연동).
 async function handleGenerateReel(env, body) {
   const { pages, bookInfo } = body;
-  const arc = [pages?.page1?.headline, pages?.page2?.headline, pages?.page3?.headline, pages?.page4?.headline, pages?.page5?.cta]
+  const pByLang = body.pagesByLang && body.pagesByLang.ko ? body.pagesByLang : null;
+  const basePages = pByLang ? pByLang.ko : pages;
+  const arc = [basePages?.page1?.headline, basePages?.page2?.headline, basePages?.page3?.headline, basePages?.page4?.headline, basePages?.page5?.cta]
     .filter(Boolean).join(' / ');
-  // 폴백: 캐럿셀 헤드라인 그대로
-  const fb = {
-    s1: pages?.page1?.headline || '', s2: pages?.page2?.headline || '',
-    s3: pages?.page3?.headline || '', s4: pages?.page4?.headline || '',
+  // 폴백: 언어별 캐럿셀 헤드라인 그대로
+  const fbOf = (p) => ({
+    s1: p?.page1?.headline || '', s2: p?.page2?.headline || '',
+    s3: p?.page3?.headline || '', s4: p?.page4?.headline || '',
+  });
+  const fb = fbOf(basePages);
+  const fbByLang = {
+    ko: fb,
+    en: pByLang ? fbOf(pByLang.en) : fb,
+    ja: pByLang ? fbOf(pByLang.ja) : fb,
   };
   const topic = String(bookInfo?.topic || bookInfo?.title || bookInfo?.coreMessage || '').trim();
+  const REEL_SHAPE = '{"s1":"...","s2":"...","s3":"...","s4":"..."}';
   try {
     const text = await callClaude(env.ANTHROPIC_API_KEY, {
-      env, tier: 'light', max_tokens: 700, optional: true, // 예산 절약 모드에서 생략(폴백: 캐럿셀 헤드라인)
-      system: `당신은 인스타 릴스 대본 카피라이터입니다.\n[목표] 4개의 슬라이드 문구가 "한 편의 이야기처럼 자연스럽게 이어지게" 씁니다(뚝뚝 끊긴 조각 금지).\n[구성·흐름]\n· s1(훅): 스크롤을 멈추는 강한 첫 문장(콕 집는 공감/궁금증). 18~28자.\n· s2: s1에서 자연스럽게 이어받아 상황·문제를 구체적 장면으로.\n· s3: 그 이유나 원리를 쉽게 짚음(비난 금지).\n· s4: 실마리를 건네는 마무리(단정적 해결책 금지, 여운).\n[문체·규칙] 존댓말·문어체, 따뜻하되 강렬. 각 슬라이드 한 화면에서 4~5초에 읽히게 45자 이내(한두 문장). 이모지 금지, 공포·단정 금지. 앞 문장과 접속·지시어로 연결되게(예: "그런데", "사실은", "그래서").\n[검증] 초안을 쓴 뒤, 4장이 매끄럽게 이어지는지·각 장이 4~5초에 읽히는지 스스로 점검하고 어색하면 고쳐서 최종본만 냅니다.\n반드시 JSON만 응답.`,
-      user: `주제: ${topic}\n캐럿셀 흐름(참고): ${arc}\n\n위 흐름을 살리되, 4개 슬라이드가 자연스럽게 이어지는 릴스 대본을 쓰고 스스로 검증·보완해 최종본을 내세요.\nJSON: {"reel":{"s1":"...","s2":"...","s3":"...","s4":"..."},"validation":{"connected":true,"readable":true,"score":0~100,"note":"연결성·가독성 한줄평"}}`,
+      env, tier: 'light', max_tokens: 1600, optional: true, // 예산 절약 모드에서 생략(폴백: 캐럿셀 헤드라인)
+      system: `당신은 인스타 릴스 대본 카피라이터이자 한/영/일 현지화 전문가입니다.\n[목표] 4개의 슬라이드 문구가 "한 편의 이야기처럼 자연스럽게 이어지게" 씁니다(뚝뚝 끊긴 조각 금지).\n[구성·흐름]\n· s1(훅): 스크롤을 멈추는 강한 첫 문장(콕 집는 공감/궁금증). 18~28자.\n· s2: s1에서 자연스럽게 이어받아 상황·문제를 구체적 장면으로.\n· s3: 그 이유나 원리를 쉽게 짚음(비난 금지).\n· s4: 실마리를 건네는 마무리(단정적 해결책 금지, 여운).\n[문체·규칙] 한국어 존댓말·문어체, 영어 자연스러운 SNS 톤, 일본어 정중체(です・ます). 각 슬라이드 한 화면에서 4~5초에 읽히게 45자 이내(영어 70자, 한두 문장). 이모지 금지, 공포·단정 금지. 앞 문장과 접속·지시어로 연결되게.\n[검증] 초안을 쓴 뒤, 4장이 매끄럽게 이어지는지·각 장이 4~5초에 읽히는지 스스로 점검하고 어색하면 고쳐서 최종본만 냅니다.\n반드시 JSON만 응답.`,
+      user: `주제: ${topic}\n캐럿셀 흐름(참고): ${arc}\n\n위 흐름을 살리되, 4개 슬라이드가 자연스럽게 이어지는 릴스 대본을 한국어(ko)로 쓰고, 영어(en)·일본어(ja)로 자연스럽게 현지화하세요(직역 금지). 스스로 검증·보완해 최종본을 내세요.\nJSON: {"reelByLang":{"ko":${REEL_SHAPE},"en":${REEL_SHAPE},"ja":${REEL_SHAPE}},"validation":{"connected":true,"readable":true,"score":0~100,"note":"연결성·가독성 한줄평"}}`,
     });
     const r = extractJson(text);
-    const reel = r.reel || {};
-    const out = {
-      s1: (reel.s1 || fb.s1).toString().trim(),
-      s2: (reel.s2 || fb.s2).toString().trim(),
-      s3: (reel.s3 || fb.s3).toString().trim(),
-      s4: (reel.s4 || fb.s4).toString().trim(),
+    const byLang = r.reelByLang || (r.reel ? { ko: r.reel } : {});
+    const clean = (reel, fbl) => ({
+      s1: (reel?.s1 || fbl.s1).toString().trim(),
+      s2: (reel?.s2 || fbl.s2).toString().trim(),
+      s3: (reel?.s3 || fbl.s3).toString().trim(),
+      s4: (reel?.s4 || fbl.s4).toString().trim(),
+    });
+    const reelByLang = {
+      ko: clean(byLang.ko, fbByLang.ko),
+      en: clean(byLang.en || byLang.ko, fbByLang.en),
+      ja: clean(byLang.ja || byLang.ko, fbByLang.ja),
     };
     const validation = r.validation || { connected: true, readable: true, score: null, note: '' };
-    return { success: true, reel: out, validation };
+    return { success: true, reel: reelByLang.ko, reelByLang, validation };
   } catch (e) {
-    return { success: true, reel: fb, validation: { connected: true, readable: true, score: null, note: '자동 생성 실패 — 캐럿셀 문구로 대체' } };
+    return {
+      success: true, reel: fb, reelByLang: fbByLang,
+      validation: { connected: true, readable: true, score: null, note: '자동 생성 실패 — 캐럿셀 문구로 대체' },
+    };
   }
 }
 
@@ -546,7 +564,7 @@ async function handleGenerateCaption(env, body) {
     env, tier: 'light',
     max_tokens: 1200,
     system: '당신은 인스타그램 콘텐츠 크리에이터이자 한/영/일 현지화 전문가입니다. 독자가 공감해 "저장"하고 "친구에게 공유"하고 싶어지는 캡션을 씁니다. 노골적 판매·공포·단정·비난 금지. 이모지 금지. 한국어는 존댓말, 영어는 자연스러운 SNS 톤, 일본어는 정중체(です・ます). 반드시 JSON만 응답합니다.',
-    user: `주제: ${topic}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n\n인스타그램 캡션을 한국어(ko)·영어(en)·일본어(ja) 3개 언어로 작성하세요. (목적: 저장·공유로 팔로워 늘리기.)\n\n[캡션 구조 — 세 언어 공통, 순서 엄수]\n1줄: 독자의 마음을 붙잡는 공감형 한 문장 (공포·단정 금지)\n2~3줄: 캐럿셀 핵심 초간결 요약 (반복 금지)\n끝에서 둘째 줄: 저장 유도 한 문장\n마지막 줄: 공유 또는 팔로우 유도 한 문장\n\n[추가 규칙]\n- 해시태그: 언어별 정확히 3개 — 직역 금지, 그 언어권 인스타에서 실제로 쓰이는 태그로 (예: en #morningroutine / ja #朝活)\n- 전체 6줄 이내, 짧고 간결하게\n- 영어·일본어는 한국어의 직역이 아니라 그 언어권 사용자가 쓴 것처럼 자연스럽게\n\nJSON:\n{"ko":{"caption":"...","hashtags":["#...","#...","#..."]},"en":{"caption":"...","hashtags":["#...","#...","#..."]},"ja":{"caption":"...","hashtags":["#...","#...","#..."]}}`,
+    user: `주제: ${topic}\n캐럿셀 첫 줄 훅: ${pages.page1?.headline || ''}\n\n인스타그램 캡션을 한국어(ko)·영어(en)·일본어(ja) 3개 언어로 작성하세요. (목적: 저장·공유로 팔로워 늘리기.)\n\n[게시물 캡션(caption) 구조 — 세 언어 공통, 순서 엄수]\n1줄: 독자의 마음을 붙잡는 공감형 한 문장 (공포·단정 금지)\n2~3줄: 캐럿셀 핵심 초간결 요약 (반복 금지)\n끝에서 둘째 줄: 저장 유도 한 문장\n마지막 줄: 공유 또는 팔로우 유도 한 문장\n\n[릴스 캡션(reelCaption) — 세 언어 각각] 짧은 후킹형 1~2줄. 스크롤을 멈춘 시청자가 프로필을 눌러보고 싶어지게. 게시물 캡션의 요약 금지 — 릴스만의 강한 한 마디.\n\n[추가 규칙]\n- hashtags: 게시물용, 언어별 정확히 3개 — 직역 금지, 그 언어권 인스타에서 실제로 쓰이는 태그로 (예: en #morningroutine / ja #朝活)\n- reelHashtags: 릴스용 핵심 태그, 언어별 정확히 2개\n- 게시물 캡션 전체 6줄 이내, 짧고 간결하게\n- 영어·일본어는 한국어의 직역이 아니라 그 언어권 사용자가 쓴 것처럼 자연스럽게\n\nJSON:\n{"ko":{"caption":"...","hashtags":["#","#","#"],"reelCaption":"...","reelHashtags":["#","#"]},"en":{"caption":"...","hashtags":["#","#","#"],"reelCaption":"...","reelHashtags":["#","#"]},"ja":{"caption":"...","hashtags":["#","#","#"],"reelCaption":"...","reelHashtags":["#","#"]}}`,
   });
 
   const parsed = extractJson(text);
