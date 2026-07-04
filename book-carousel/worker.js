@@ -1391,91 +1391,90 @@ async function runStep(env, pipelineId, step) {
     await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0, note: `score ${validation?.totalScore || 0}` });
 
   } else if (step === 3) {
+    // ⭐ 3단계는 "이어하기(재개) 가능" 설계 — 한 번에 다 받으려다 2분을 넘기면 크론이
+    // 멈춤으로 오판해 중복 실행(표지 중복 과금·429 폭풍)하던 문제의 근본 해결.
+    // 진행 상황(imgProg)을 저장하고 stepStatus='partial'로 두면, 다음 advancePipeline이
+    // 스테일 대기 없이 같은 단계를 이어서 실행한다. 표지·프롬프트 생성은 정확히 1회.
     const { pages } = state;
-    await setActive('AI 이미지 프롬프트 생성 중...');
-    await logStep(env, pipelineId, { step, phase: 'start' });
-    let images = null;
-    try {
-      const imgData = await handleGenerateImages(env, { pages, bookInfo });
-      const urlMap = imgData.images; // { page1: 'https://image.pollinations.ai/...', ... }
+    const pageKeys = ['page1', 'page2', 'page3', 'page4', 'page5'];
+    const MAX_TRIES = 3;   // 페이지당 총 시도(틱에 걸쳐) — 초과 시 원본 URL 폴백
 
-      // ⭐ 표지(1페이지)는 Gemini로 우선 생성 — 손·눈 인체 하자 최소화(비용: 표지 1장만).
-      // 키 없음·예산초과·실패 시 자동으로 무료 Pollinations 폴백(아래 다운로드 루프가 처리).
-      let coverDone = false;
+    // (1회만) 이미지 프롬프트·URL 생성 → 상태에 고정 (재진입 시 Claude 재호출 방지)
+    let urlMap = state.imgUrls || null;
+    let fullPrompts = state.imgFullPrompts || null;
+    if (!urlMap) {
+      await setActive('AI 이미지 프롬프트 생성 중...');
+      await logStep(env, pipelineId, { step, phase: 'start' });
+      try {
+        const imgData = await handleGenerateImages(env, { pages, bookInfo });
+        urlMap = imgData.images || {};
+        fullPrompts = imgData.fullPrompts || {};
+      } catch (e) {
+        await logStep(env, pipelineId, { step, phase: 'warn', error: '이미지 프롬프트 생성 실패(계속 진행): ' + e.message });
+        urlMap = {}; fullPrompts = {};
+      }
+      await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'partial', runningStep: 3, imgUrls: urlMap, imgFullPrompts: fullPrompts, label: '이미지 준비 완료 — 내려받기 시작' });
+    }
+
+    const prog = state.imgProg || { done: {}, tries: {}, coverTried: false };
+
+    // Gemini 표지 — 정확히 1회만 시도(coverTried 플래그로 중복 과금 차단)
+    if (!prog.coverTried && !prog.done.page1) {
+      prog.coverTried = true;
       const geminiKey = await getGeminiKey(env);
-      if (geminiKey && imgData.fullPrompts?.page1 && (await getImageUsage(env)) < DAILY_IMAGE_CAP) {
+      if (geminiKey && fullPrompts?.page1 && (await getImageUsage(env)) < DAILY_IMAGE_CAP) {
         await setActive('표지 이미지 생성 중 (Gemini)...');
-        const g = await generateGeminiImageBytes(geminiKey, imgData.fullPrompts.page1);
+        const g = await generateGeminiImageBytes(geminiKey, fullPrompts.page1);
         if (g?.bytes?.length) {
           await env.PENDING_POSTS.put(`img_${pipelineId}_page1`, g.bytes, { expirationTtl: 24 * 3600 });
           await bumpImageUsage(env);
-          coverDone = true;
+          prog.done.page1 = true;
           await logStep(env, pipelineId, { step, phase: 'cover', note: `Gemini 표지 생성 (${g.bytes.length} bytes)` });
         } else {
           await logStep(env, pipelineId, { step, phase: 'warn', error: 'Gemini 표지 실패 → 무료 폴백' });
         }
       }
+      await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'partial', runningStep: 3, imgProg: prog, label: '본문 이미지 내려받는 중...' });
+    }
 
-      // 나머지 장(무료 Pollinations)을 "순차" 다운로드. 표지가 Gemini로 됐으면 page1은 건너뜀.
-      // ⚠️ 동시 5장 요청은 무료 Pollinations의 속도 제한(429)에 걸려 3~5페이지가 상습
-      // 실패하던 원인 → 한 장씩 + 장 사이 간격 + 429/일시오류 재시도(백오프)로 전환.
-      await setActive('본문 이미지 다운로드 중 (2~4분 소요)...');
-      const pageKeys = ['page1', 'page2', 'page3', 'page4', 'page5'];
-      const fetchOnePage = async (page) => {
-        if (page === 'page1' && coverDone) return { page, size: 0, cover: 'gemini' }; // 이미 저장됨
-        const url = urlMap[page];
-        if (!url) throw new Error('URL 없음');
-        const WAITS = [8000, 20000, 35000]; // 429 백오프(무료 티어 간격 고려)
-        let lastErr;
-        for (let attempt = 0; attempt <= WAITS.length; attempt++) {
-          const ctrl = new AbortController();
-          const timer = setTimeout(() => ctrl.abort(), 90000);
-          try {
-            const res = await fetch(url, { signal: ctrl.signal });
-            clearTimeout(timer);
-            if (res.ok) {
-              const buf = await res.arrayBuffer();
-              await env.PENDING_POSTS.put(`img_${pipelineId}_${page}`, buf, { expirationTtl: 24 * 3600 });
-              return { page, size: buf.byteLength };
-            }
-            lastErr = new Error(`HTTP ${res.status}`);
-            // 429(속도 제한)·5xx만 재시도 가치 있음. 그 외는 즉시 중단.
-            if (res.status !== 429 && res.status < 500) break;
-            const ra = parseInt(res.headers.get('retry-after') || '', 10);
-            const wait = Number.isFinite(ra) ? Math.min(ra * 1000, 45000) : WAITS[Math.min(attempt, WAITS.length - 1)];
-            if (attempt < WAITS.length) await new Promise(r => setTimeout(r, wait));
-          } catch (e) {
-            clearTimeout(timer);
-            lastErr = e;
-            if (attempt < WAITS.length) await new Promise(r => setTimeout(r, WAITS[attempt]));
-          }
+    // 남은 페이지를 시간 예산 내에서 순차 다운로드. 페이지당 이번 틱 1회 시도만 —
+    // 긴 백오프 대기 대신 "다음 크론 틱"이 자연스러운 간격(무료 티어 429 회피)이 된다.
+    const TICK_DEADLINE = Date.now() + 40 * 1000;
+    for (const page of pageKeys) {
+      if (prog.done[page]) continue;
+      if ((prog.tries[page] || 0) >= MAX_TRIES) continue;
+      if (!urlMap[page]) { prog.tries[page] = MAX_TRIES; continue; }
+      if (Date.now() > TICK_DEADLINE) break;
+      prog.tries[page] = (prog.tries[page] || 0) + 1;
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 70000);
+        const res = await fetch(urlMap[page], { signal: ctrl.signal });
+        clearTimeout(timer);
+        if (res.ok) {
+          const buf = await res.arrayBuffer();
+          await env.PENDING_POSTS.put(`img_${pipelineId}_${page}`, buf, { expirationTtl: 24 * 3600 });
+          prog.done[page] = true;
+        } else if (res.status !== 429 && res.status < 500) {
+          prog.tries[page] = MAX_TRIES; // 영구 오류 — 재시도 무의미
+          await logStep(env, pipelineId, { step, phase: 'warn', error: `${page} HTTP ${res.status} → 원본 URL 폴백` });
         }
-        throw lastErr || new Error('다운로드 실패');
-      };
-      const downloadResults = [];
-      for (const page of pageKeys) {
-        try {
-          downloadResults.push({ status: 'fulfilled', value: await fetchOnePage(page) });
-        } catch (e) {
-          downloadResults.push({ status: 'rejected', reason: e });
-        }
-        // 장 사이 간격 — 무료 티어의 연속 요청 제한 회피
-        if (page !== 'page5') await new Promise(r => setTimeout(r, 2500));
-      }
+        // 429/5xx는 tries만 늘리고 다음 틱에 재시도
+      } catch (e) { /* 타임아웃·네트워크 → 다음 틱 재시도 */ }
+      // 진행 저장(updatedAt 갱신 → 스테일 오판 방지) + 무료 티어 간격
+      const doneCount = pageKeys.filter(p => prog.done[p]).length;
+      await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'partial', runningStep: 3, imgProg: prog, label: `본문 이미지 내려받는 중 (${doneCount}/5)...` });
+      await new Promise(r => setTimeout(r, 2000));
+    }
 
-      // 성공한 페이지는 /api/image 경로, 실패 시 원본 Pollinations URL 폴백
-      images = {};
-      for (let i = 0; i < pageKeys.length; i++) {
-        const page = pageKeys[i];
-        if (downloadResults[i].status === 'fulfilled') {
-          images[page] = `/api/image?id=${pipelineId}&page=${page}`;
-        } else {
-          images[page] = urlMap[page];
-          await logStep(env, pipelineId, { step, phase: 'warn', error: `${page} 다운로드 실패: ${downloadResults[i].reason?.message}` });
-        }
-      }
-    } catch (e) {
-      await logStep(env, pipelineId, { step, phase: 'warn', error: '이미지 생성 실패(계속 진행): ' + e.message });
+    // 완료 판정: 전 페이지가 성공했거나 시도 소진 → 마감. 아니면 다음 틱이 이어서.
+    const finished = pageKeys.every(p => prog.done[p] || (prog.tries[p] || 0) >= MAX_TRIES);
+    if (!finished) return; // stepStatus='partial' 유지 — 다음 advancePipeline이 재진입
+
+    const images = {};
+    for (const p of pageKeys) {
+      images[p] = prog.done[p] ? `/api/image?id=${pipelineId}&page=${p}` : (urlMap[p] || null);
+      if (!prog.done[p] && urlMap[p]) await logStep(env, pipelineId, { step, phase: 'warn', error: `${p} 내려받기 실패 → 원본 URL 폴백(브라우저가 직접 로드)` });
     }
     await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'done', label: '이미지 저장 완료', images });
     await logStep(env, pipelineId, { step, phase: 'done', durationMs: Date.now() - t0 });
@@ -1573,7 +1572,11 @@ async function advancePipeline(env, pipelineId) {
   const age = Date.now() - (state.updatedAt || 0);
 
   let nextStep;
-  if (stepStatus === 'active') {
+  if (stepStatus === 'partial') {
+    // 이어하기 가능 단계(3단계 이미지) — 스테일 대기 없이 같은 단계를 바로 재진입.
+    // 진행 상황이 상태에 저장돼 있어 중복 작업·중복 과금 없음(멱등).
+    nextStep = step;
+  } else if (stepStatus === 'active') {
     if (age < STEP_STALE_MS) return;             // 아직 진행중 — 건드리지 않음
     nextStep = state.runningStep || step || 1;   // 멈춘 단계를 재실행
     await logStep(env, pipelineId, { step: nextStep, phase: 'recover', note: `${Math.round(age / 1000)}s 멈춤 → 재실행` });
@@ -1698,14 +1701,17 @@ async function runScheduled(env) {
     if (state.status !== 'running') { stale.push(id); continue; } // 완료·오류 → 인덱스 정리
     touched++;
     // 이 파이프라인을 예산이 허용하는 한 연속 전진(진전이 없으면 다음으로)
-    let prevStep = -1, prevStatus = '';
-    for (let k = 0; k < 9; k++) {
+    let prevStep = -1, prevStatus = '', prevUpdated = 0;
+    for (let k = 0; k < 12; k++) {
       if (Date.now() > DEADLINE) break;
       await advancePipeline(env, id);
       const st = await env.PENDING_POSTS.get(`pipeline_${id}`, 'json').catch(() => null);
       if (!st || st.status !== 'running') break;              // 완료·오류·소멸 → 종료
-      if (st.step === prevStep && st.stepStatus === prevStatus) break; // 진전 없음(대기·백오프)
-      prevStep = st.step; prevStatus = st.stepStatus;
+      // 진전 판정: 단계/상태뿐 아니라 updatedAt도 본다 — partial(이미지 이어받기)은
+      // 단계가 같아도 진행 저장 때마다 updatedAt이 갱신되므로 계속 이어서 돌 수 있다.
+      const upd = st.updatedAt || 0;
+      if (st.step === prevStep && st.stepStatus === prevStatus && upd === prevUpdated) break;
+      prevStep = st.step; prevStatus = st.stepStatus; prevUpdated = upd;
     }
   }
   // 끝난(또는 사라진) 파이프라인을 인덱스에서 한 번에 제거
