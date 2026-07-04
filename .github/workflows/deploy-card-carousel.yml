@@ -6,6 +6,7 @@ on:
     paths:
       - "card-carousel/**"
       - ".github/workflows/deploy-card-carousel.yml"
+  workflow_dispatch: {}  # GitHub Actions 화면에서 "Run workflow" 버튼으로 수동 재배포 가능
 
 jobs:
   deploy:
