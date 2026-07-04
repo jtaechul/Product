@@ -55,12 +55,14 @@
 - 스타일 프로필: **deep_sea_realism (사실형)** — 차가운 blue-teal, marine snow, 스포트라이트/자체발광, 다큐 리얼리즘
 - 구조: **3컷** (discovery 발견 → behavior 행동 → detail 디테일), Veo 8초/컷 → FFmpeg concat
 - 카메라: slow push-in / lateral track / slow orbit / macro hold
+- **오디오(필수)**: 최종 영상에는 **심해 앰비언트 사운드가 반드시 포함**된다(무음 출력 금지). 단, Veo 네이티브 오디오(`generate_audio=True`, 비용 약 2배·컷마다 소리 상이)로 만들지 않고, **후처리 audio 모듈에서 로열티프리 심해음을 FFmpeg로 레이어링**한다(저비용·전 컷 일관). → raw 클립 생성 단계는 `generate_audio=False`(무음), 앰비언트는 합성 후 입힘.
 
 ### 카테고리별 하드 룰 (deep_sea)
 - **소싱**: 상업 가능 핵심 = NOAA(퍼블릭 도메인). CC0/CC BY 필터 Wikimedia·Flickr·Pexels, 공공누리1. 상업 불가(MBARI·Schmidt Ocean·아쿠아리움) 차단.
 - **정보 소스**: FishBase·WoRMS·GBIF·OBIS·한국 공공 DB → 재작성 후 출처 표기.
 - **사실 정확성(생물 왜곡 금지)**: 연출(카메라·조명·리빌)은 과감히, 그러나 생물 형태·행동은 실제만. 안 하는 포식·가짜 크기/위험·사람(다이버) 조우·종에 없는 발광·픽션 서사 금지. 자극성은 캡션 훅·리빌이 담당.
 - **정확성 플래그 준수**: 컷 프롬프트는 상황 뱅크의 `accuracy_flags`(예: `bioluminescent`)에 위배 금지.
+- **오디오 필수**: 최종 산출물은 심해 앰비언트 사운드를 반드시 포함(무음 발행 금지). 앰비언트는 후처리에서 레이어링(위 영상 규격 참조).
 
 ---
 
