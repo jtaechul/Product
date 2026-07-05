@@ -345,6 +345,10 @@ class DeepSeaCategory:
         behavior = info.fun_facts[0] if info.fun_facts else ""
         return script.build_script(info, behavior=behavior)
 
+    def build_narrated_caption(self, info: SpeciesInfo) -> CaptionData:
+        """narrated_wildlife 캡션(전환 §6 형식)."""
+        return copywriter.build_narrated_caption(info)
+
     # --- 도감 회차 번호 (커밋되는 원장으로 안정적 누적 — CI 컨테이너 리셋 무관) ---
     def next_episode(self) -> int:
         """다음 도감 엔트리 번호(읽기 전용 예약). 실제 기록은 제작 성공 후 log_catalog에서."""

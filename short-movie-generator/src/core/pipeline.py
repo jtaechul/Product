@@ -122,7 +122,8 @@ def run_narrated(
     with_audio = audio.add_narration(subbed, str(work_dir), total, narration_wav,
                                      category.ambient_audio_spec())
 
-    caption = category.build_caption(info)
+    caption = (category.build_narrated_caption(info)
+               if hasattr(category, "build_narrated_caption") else category.build_caption(info))
     if hasattr(category, "attach_attribution"):
         caption = category.attach_attribution(caption, info, asset.credit_string)
 

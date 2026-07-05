@@ -22,12 +22,13 @@ TONES = ("gravelly", "slow", "whispered", "reverent", "tense", "hushed", "awe")
 _DEFAULT_TONE = "slow"
 
 _PROMPT = (
-    "너는 [{species}]에 대한 30~45초 나레이션 야생 다큐 대본을 한국어로 쓴다.\n"
+    "너는 [{species}]에 대한 약 25초 나레이션 야생 다큐 대본을 한국어로 쓴다.\n"
     "규칙:\n"
-    "- 현재형 단문 5~6개, 감각 동사 중심(짧고 강하게).\n"
+    "- **정확히 5문장**, 현재형 단문, 감각 동사 중심. **각 문장 28자 이내로 짧고 강하게**\n"
+    "  (전체 낭독이 30초를 넘지 않게 — 이건 매우 중요).\n"
     "- 1번 문장 = 호기심 훅(의외의 진실).\n"
-    "- 중간 = 시그니처 행동 + 검증된 실제 팩트 2~3개 (아래 사실만 사용, 지어내기 금지).\n"
-    "- 마지막 문장 = 생존·경이에 관한 감정적 마무리.\n"
+    "- 2~4번 = 시그니처 행동 + 검증된 실제 팩트 2~3개 (아래 사실만 사용, 지어내기 금지).\n"
+    "- 5번 문장 = 생존·경이에 관한 감정적 마무리.\n"
     "- 각 문장 앞에 낭독 톤 태그를 대괄호로: [gravelly][slow][whispered][reverent][awe] 중.\n"
     "- 사실 정확성 필수. 없는 행동·수치·위험·포식 날조 금지.\n"
     "[종 정보]\n"
@@ -63,7 +64,14 @@ def _parse(raw: str) -> list[dict]:
 
 
 def _valid(lines: list[dict]) -> bool:
-    return 4 <= len(lines) <= 7 and all(l.get("text") for l in lines)
+    return 4 <= len(lines) <= 8 and all(l.get("text") for l in lines)
+
+
+def _trim_to_five(lines: list[dict]) -> list[dict]:
+    """길이 초과 시 5문장으로 압축(훅+본문+감정마무리 보존) — 영상 길이·비용 정합."""
+    if len(lines) <= 5:
+        return lines
+    return [lines[0]] + lines[1:len(lines) - 1][:3] + [lines[-1]]
 
 
 def _fallback(info: SpeciesInfo, behavior: str) -> list[dict]:
@@ -99,6 +107,7 @@ def build_script(info: SpeciesInfo, behavior: str = "") -> list[dict]:
     if raw:
         lines = _parse(raw)
         if _valid(lines):
+            lines = _trim_to_five(lines)   # 5문장 상한(영상 24초·Veo 3컷 정합)
             log.info("[script] LLM 대본 %d문장", len(lines))
             return lines
         log.info("[script] LLM 출력 형식 불량 → 폴백")

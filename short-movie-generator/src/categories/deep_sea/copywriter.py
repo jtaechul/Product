@@ -226,6 +226,25 @@ def append_attribution(caption: CaptionData, info: SpeciesInfo, image_credit: st
     return caption
 
 
+def build_narrated_caption(info: SpeciesInfo) -> CaptionData:
+    """narrated_wildlife 캡션(전환 §6): [훅] + [감각 팩트 2~4줄] + [참여 질문 + 👇] + [#종명 포함 해시태그].
+
+    출처 표기(이미지·정보)는 파이프라인이 attach_attribution으로 말미에 덧붙인다.
+    """
+    hook = best_hook(info)
+    facts = [f for f in (info.fun_facts or [])[:4] if f]
+    q = "이 깊은 어둠 속에서, 당신이라면 살아남을 수 있을까요? 👇"
+    fact_block = "\n".join(f"· {f}" for f in facts[:4])
+    body = "\n\n".join(x for x in (hook, fact_block, q) if x)
+    killer = info.fun_facts[1] if len(info.fun_facts) > 1 else (
+        info.fun_facts[0] if info.fun_facts else info.habitat)
+    return CaptionData(
+        hook_text=hook, overlay_facts=[], caption_body=body,
+        hashtags=[f"#{info.common_name_ko}", "#심해생물", "#deepsea"],  # #종명 포함(전환 §6)
+        reveal_name=f"{info.common_name_ko} ({info.common_name_en})", reveal_fact=killer,
+    )
+
+
 def build(info: SpeciesInfo) -> CaptionData:
     """CaptionData 완성 (훅 루프 + 비트 + 스토리텔링 캡션 + 해시태그)."""
     hook = best_hook(info)
