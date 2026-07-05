@@ -14,7 +14,7 @@ import logging
 import subprocess
 from pathlib import Path
 
-from src.core import assembler, audio, endcard, hud, license_gate, output, overlay  # noqa: F401
+from src.core import assembler, audio, endcard, htmlhud, hud, license_gate, output, overlay  # noqa: F401
 from src.core.contracts import OutputResult, PipelineError
 from src.core.visualization import VisualizationError, get_visualizer
 from src.registry import get_category
@@ -109,9 +109,16 @@ def run(
     # 8. 캡션 → 컷별 타이밍 오버레이(리빌 정책) → 오디오(리빌 악센트)
     caption = category.build_caption(info)
     durations = [c.duration_s for c in clips]
-    overlaid = hud.apply_hud(
-        base_video, caption, info, WATERMARK, durations, str(work_dir),
-    )
+    # 애니메이션 HTML HUD(우선) → 브라우저 불가/실패 시 PIL HUD 폴백 (파이프라인 불정지)
+    try:
+        overlaid = htmlhud.apply_hud(
+            base_video, caption, info, WATERMARK, durations, str(work_dir),
+        )
+    except htmlhud.HudRenderError as e:
+        log.warning("HTML HUD 실패 → PIL HUD 폴백: %s", e)
+        overlaid = hud.apply_hud(
+            base_video, caption, info, WATERMARK, durations, str(work_dir),
+        )
     # 시리즈 엔드카드 (재방문·팔로우 유도) — 어둡게 끝나 콜드오픈 루프와 연결
     if episode is None:
         episode = len(list(Path(out_dir).glob("*.json"))) + 1  # 자동 회차

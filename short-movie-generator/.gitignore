@@ -14,3 +14,7 @@ output/
 # 에셋 (소싱/게이트 산출물 — 실행 시 재생성)
 assets/raw/
 assets/approved/
+
+# HUD 폰트 렌더 스크래치 (본 폰트 파일은 커밋)
+vendor/fonts/_*
+vendor/fonts/*.png

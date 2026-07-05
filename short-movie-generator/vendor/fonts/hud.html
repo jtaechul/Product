@@ -1,0 +1,55 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'Orbitron';src:url('Orbitron.ttf');font-weight:900}
+@font-face{font-family:'Rajdhani';src:url('Rajdhani-Bold.ttf');font-weight:700}
+@font-face{font-family:'STM';src:url('ShareTechMono.ttf')}
+@font-face{font-family:'BHS';src:url('BlackHanSans.ttf')}
+@font-face{font-family:'Pretendard';src:url('Pretendard-Black.woff2');font-weight:900}
+@font-face{font-family:'PretendardM';src:url('Pretendard-Medium.woff2')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:720px;height:1280px;overflow:hidden}
+.stage{position:relative;width:720px;height:1280px;background:#000;overflow:hidden;font-family:'Rajdhani'}
+.bg{position:absolute;inset:0;background:var(--bg) center/cover;}
+.vig{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 42%,transparent 40%,rgba(0,10,16,.55) 78%,rgba(0,6,10,.95) 100%);}
+.scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(120,220,240,.035) 0 1px,transparent 1px 3px);}
+.frame{position:absolute;inset:16px;border:1px solid rgba(80,220,240,.18);border-radius:4px;pointer-events:none}
+.brk{position:absolute;width:44px;height:44px;border:2px solid rgba(90,225,245,.9)}
+.tl{top:14px;left:14px;border-right:0;border-bottom:0}.tr{top:14px;right:14px;border-left:0;border-bottom:0}
+.bl{bottom:14px;left:14px;border-right:0;border-top:0}.br{bottom:14px;right:14px;border-left:0;border-top:0}
+.tick{position:absolute;top:12px;left:14px;width:14px;height:4px;background:#FF8A3D}
+.unit{position:absolute;top:34px;left:40px;font-family:'Orbitron';font-weight:900;font-size:15px;letter-spacing:4px;color:#39E0F0;text-shadow:0 0 8px rgba(57,224,240,.6)}
+.rec{position:absolute;top:62px;left:40px;font-family:'STM';font-size:19px;color:#EAF6F8;letter-spacing:1px}
+.rec b{color:#FF5A5A}
+.tel{position:absolute;top:26px;right:22px;width:238px;padding:12px 14px;background:rgba(6,18,26,.42);border:1px solid rgba(80,220,240,.35);border-radius:6px;backdrop-filter:blur(3px)}
+.tel .lab{font-family:'Rajdhani';font-weight:700;font-size:12px;letter-spacing:3px;color:#5FE6F2;text-transform:uppercase}
+.tel .val{font-family:'STM';font-size:23px;color:#EAF6F8;line-height:1.15}
+.tel .val.big{color:#39E0F0;text-shadow:0 0 10px rgba(57,224,240,.5)}
+.tel .sub{font-family:'STM';font-size:14px;color:#8FA6B0}
+.hook{position:absolute;top:120px;left:0;right:0;text-align:center;font-family:'BHS';font-size:60px;line-height:1.12;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.85),0 0 22px rgba(80,200,240,.35);letter-spacing:-1px;padding:0 34px}
+.scanwrap{position:absolute;bottom:250px;left:0;right:0;text-align:center}
+.scanwrap .tag{font-family:'Orbitron';font-weight:900;font-size:30px;letter-spacing:6px;color:#39E0F0;text-shadow:0 0 14px rgba(57,224,240,.7)}
+.scanwrap .sub{font-family:'Rajdhani';font-weight:700;font-size:17px;letter-spacing:3px;color:#FF8A3D;text-transform:uppercase;margin-top:6px}
+.radar{position:absolute;bottom:150px;left:36px;width:120px;height:120px}
+.radar .lab{position:absolute;bottom:-22px;left:0;font-family:'Rajdhani';font-weight:700;font-size:13px;letter-spacing:2px;color:#7FD8DC;text-transform:uppercase}
+.reveal{position:absolute;left:24px;right:24px;bottom:96px;padding:16px 18px;background:rgba(6,18,26,.55);border:1px solid rgba(80,220,240,.5);border-radius:8px;backdrop-filter:blur(4px)}
+.reveal .lab{font-family:'Orbitron';font-weight:900;font-size:16px;letter-spacing:3px;color:#FF8A3D}
+.reveal .name{font-family:'Pretendard';font-weight:900;font-size:40px;color:#FFD98A;text-shadow:0 0 16px rgba(255,200,120,.35);margin-top:4px}
+.reveal .name em{font-family:'Orbitron';font-weight:900;font-size:26px;font-style:normal;color:#FFE9B8}
+.reveal .fact{font-family:'PretendardM';font-size:20px;color:#CFEAF3;margin-top:6px}
+.wm{position:absolute;bottom:38px;right:30px;font-family:'Orbitron';font-weight:900;font-size:16px;letter-spacing:3px;color:rgba(220,235,240,.75)}
+.bar{position:absolute;top:24px;left:50%;transform:translateX(-50%);display:flex;gap:4px}
+.bar i{width:26px;height:4px;background:rgba(90,225,245,.3)}.bar i.on{background:#39E0F0;box-shadow:0 0 6px #39E0F0}
+</style></head><body>
+<div class="stage"><div class="bg"></div><div class="vig"></div><div class="scan"></div>
+<div class="frame"></div><div class="brk tl"></div><div class="brk tr"></div><div class="brk bl"></div><div class="brk br"></div>
+<div class="tick"></div>
+<div class="bar"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+<div class="unit">ROV · DEEP DIVE UNIT</div>
+<div class="rec"><b>●</b> REC 00:00:07</div>
+<div class="tel"><div class="lab">DEPTH</div><div class="val big">4,000 M</div>
+<div class="lab" style="margin-top:6px">TEMP</div><div class="val">2.1°C</div>
+<div class="sub">34.21°N 127.88°E</div></div>
+<svg class="radar" viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="none" stroke="rgba(80,220,240,.5)" stroke-width="1.5"/><circle cx="60" cy="60" r="37" fill="none" stroke="rgba(80,220,240,.35)" stroke-width="1.5"/><circle cx="60" cy="60" r="18" fill="none" stroke="rgba(80,220,240,.3)" stroke-width="1.5"/><line x1="60" y1="60" x2="108" y2="40" stroke="#FF8A3D" stroke-width="2.5"/><circle cx="60" cy="60" r="3" fill="#FF8A3D"/><div class="lab"></div></svg>
+<div style="position:absolute;bottom:128px;left:36px;font-family:'Rajdhani';font-weight:700;font-size:13px;letter-spacing:2px;color:#7FD8DC">SONAR ARRAY</div>
+<!--STATE-->
+<div class="wm">DEEP DIVE LOG</div>
+</div></body></html>
