@@ -193,7 +193,7 @@ class DeepSeaCategory:
 
     # --- 오디오 ---
     def ambient_audio_spec(self) -> dict:
-        return {"noise_color": "brown", "lowpass_hz": 300, "volume": 0.9, "fade_s": 1.5,
+        return {"noise_color": "brown", "lowpass_hz": 300, "volume": 1.25, "fade_s": 1.5,
                 "reveal_accent": True,  # 컷3(리빌) 시작에 서브베이스 스웰+스팅
                 "hud_sfx": True}        # 스캔 소나 핑 + 타이핑 클릭 + 리빌 확정 차임
 

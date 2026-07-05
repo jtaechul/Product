@@ -19,7 +19,7 @@ from src.core.contracts import PipelineError
 _DEFAULT_SPEC = {
     "noise_color": "brown",     # 저주파 웅웅거림 (심해 수압/해류 느낌)
     "lowpass_hz": 320,          # 고음 제거 → 깊은 물속 톤
-    "volume": 0.9,
+    "volume": 1.2,              # 수중 앰비언스 존재감 (↑ 사용자 요청)
     "fade_s": 1.5,
 }
 
@@ -30,6 +30,7 @@ def add_ambient(
     duration_s: float,
     spec: dict | None = None,
     reveal_at_s: float | None = None,
+    sfx_timeline: dict | None = None,
 ) -> str:
     """무음 영상에 합성 앰비언트(+선택: 리빌 악센트·HUD 효과음)를 입혀 with_audio.mp4 반환.
 
@@ -81,23 +82,33 @@ def add_ambient(
         idx += 2
 
     if use_sfx:
-        scan_dur = max(0.5, reveal_at_s)
+        scan_dur = max(0.5, sfx_timeline["scan_end"] if sfx_timeline else reveal_at_s)
         # 소나 핑: 1.15초 주기, 30% 구간만 발음, 지수 감쇠
         ping = r"sin(2*PI*1180*t)*exp(-24*mod(t\,1.15))*lt(mod(t\,1.15)\,0.30)*0.20"
-        # 타이핑: ~17Hz 게이트된 고음 클릭(레트로 터미널)
+        # 타이핑: ~17Hz 게이트된 고음 클릭(레트로 터미널) — 버스트 길이=화면 타이핑 길이
         typ = r"sin(2*PI*2300*t)*exp(-70*mod(t\,0.058))*lt(mod(t\,0.058)\,0.5)*0.11"
         # 확정 차임: 784Hz → 1175Hz 상승 2음
         chime = r"(sin(2*PI*784*t)*exp(-3.2*t)+sin(2*PI*1175*t)*exp(-3*max(t-0.13\,0))*gt(t\,0.13))*0.45"
         cmd += ["-f", "lavfi", "-i", f"aevalsrc={ping}:d={scan_dur:.2f}:s=44100"]
-        cmd += ["-f", "lavfi", "-i", f"aevalsrc={typ}:d=1.4:s=44100"]
-        cmd += ["-f", "lavfi", "-i", f"aevalsrc={typ}:d=1.0:s=44100"]
-        cmd += ["-f", "lavfi", "-i", f"aevalsrc={chime}:d=1.0:s=44100"]
         parts.append(f"[{idx}:a]adelay=0:all=1[png]")
-        parts.append(f"[{idx + 1}:a]adelay=300:all=1[ty1]")           # 훅 타이핑 (0.3s~)
-        parts.append(f"[{idx + 2}:a]adelay={int((reveal_at_s + 0.2) * 1000)}:all=1[ty2]")
-        parts.append(f"[{idx + 3}:a]adelay={int(reveal_at_s * 1000)}:all=1[chm]")
-        mix_labels += ["[png]", "[ty1]", "[ty2]", "[chm]"]
-        idx += 4
+        mix_labels.append("[png]")
+        idx += 1
+
+        # 타이핑 버스트: 타임라인이 있으면 화면 타이핑과 정확히 동기(끝날 때까지 소리),
+        # 없으면 기존 고정 2버스트로 폴백.
+        bursts = sfx_timeline["typing"] if sfx_timeline else [
+            (0.3, 1.4), (reveal_at_s + 0.2, 1.0),
+        ]
+        for k, (start, dur) in enumerate(bursts):
+            cmd += ["-f", "lavfi", "-i", f"aevalsrc={typ}:d={max(0.2, dur):.2f}:s=44100"]
+            parts.append(f"[{idx}:a]adelay={int(start * 1000)}:all=1[ty{k}]")
+            mix_labels.append(f"[ty{k}]")
+            idx += 1
+
+        cmd += ["-f", "lavfi", "-i", f"aevalsrc={chime}:d=1.0:s=44100"]
+        parts.append(f"[{idx}:a]adelay={int(reveal_at_s * 1000)}:all=1[chm]")
+        mix_labels.append("[chm]")
+        idx += 1
 
     n = len(mix_labels)
     fc = ";".join(parts) + ";" + "".join(mix_labels) + \

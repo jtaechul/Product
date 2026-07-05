@@ -52,17 +52,22 @@ _STYLE_BLOCK = (
 )
 
 # 6) 컷별 모션 (맨 끝) — 종 데이터의 cut_behaviors 사용
+# 스토리 아크: 컷1 어둠 속 형체 등장(카메라 미인지) → 컷2 가까이 추적(여전히 미인지, 긴장 상승)
+# → 컷3 카메라를 뒤늦게 알아채고 마주본 뒤 조용히 이탈(반응 페이오프). 전부 실제 행동 범위.
 _CUT_BLOCKS = {
     "discovery": (
-        "It comes into fuller view as the camera drifts gently closer through the calm darkness; "
-        "it {behavior}. Quiet, suspenseful, mysterious mood."
+        "At first only a faint shape resolves out of the black water; the camera drifts slowly "
+        "toward it and it comes into fuller view as it {behavior}, unaware of the camera. "
+        "Quiet, ominous, mysterious mood, slow building tension."
     ),
     "behavior": (
-        "The camera tracks smoothly alongside as it {behavior}. Immersive, observational mood."
+        "The camera glides closer and tracks smoothly alongside, still unnoticed, as it "
+        "{behavior}. Tense, intimate, immersive mood as if secretly observing it."
     ),
     "detail": (
-        "The camera slowly closes to a near-macro view as it {behavior}. The fine texture of its "
-        "soft body is revealed where the light falls, the rest fading to black. Intimate mood."
+        "Then, up close, it {behavior}. Its form is seen clearly where the light falls while the "
+        "rest fades to black — a charged, face-to-face payoff moment before it slips away. "
+        "Intimate, dramatic mood."
     ),
 }
 

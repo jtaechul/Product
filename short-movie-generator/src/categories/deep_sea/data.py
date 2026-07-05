@@ -50,6 +50,8 @@ SPECIES = {
             "long muscular tentacles, curling sucker-covered arms of a shallow-water octopus, "
             "a common-octopus body, extra limbs, or any change to the two ear-like fins"
         ),
+        # 스토리 아크(실제 행동만): 컷1 어둠 속 등장(미인지) → 컷2 유영(아직 미인지) →
+        # 컷3 카메라를 뒤늦게 알아채고 눈맞춤 후 조용히 이탈(=이 종의 진짜 반응, 공격 아님).
         # 3인칭 현재형(as it ___ / while it ___ 에 문법적으로 호응)
         "cut_behaviors": {
             "discovery": "hovers in the open darkness, slowly flapping its two ear-like fins",
@@ -57,8 +59,10 @@ SPECIES = {
                 "swims by gently flapping its two large ear-like fins like wings while its "
                 "webbed arms trail and spread beneath it"
             ),
+            # 컷3 = 반응 비트: 카메라를 알아채고 마주본 뒤 부드럽게 물러남 (실제 회피 행동)
             "detail": (
-                "hovers almost motionless while its two ear-like fins make small slow adjustments"
+                "slowly turns to face the camera, its large dark eyes catching the light, then "
+                "gently flaps its two ear-like fins and drifts backward into the darkness"
             ),
         },
     },

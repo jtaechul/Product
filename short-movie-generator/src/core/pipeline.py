@@ -130,9 +130,11 @@ def run(
     final_duration = total_duration + endcard.ENDCARD_DURATION_S
 
     reveal_at = sum(durations[:-1]) if len(durations) >= 2 else None  # 마지막 컷 시작 = 리빌
+    # 타자 효과음을 화면 타이핑과 동기 (HUD 타임라인 재사용)
+    sfx_tl = htmlhud.sfx_timeline(caption, info, durations)
     with_audio = audio.add_ambient(
         with_endcard, str(work_dir), final_duration, category.ambient_audio_spec(),
-        reveal_at_s=reveal_at,
+        reveal_at_s=reveal_at, sfx_timeline=sfx_tl,
     )
     log.info("[8/9] 오버레이+엔드카드+오디오: %s (리빌 %.0fs, #%d)", with_audio, reveal_at or -1, episode)
 

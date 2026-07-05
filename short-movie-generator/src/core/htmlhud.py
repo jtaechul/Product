@@ -29,6 +29,12 @@ from src.core.visualization.base import CLIP_H, CLIP_W
 log = logging.getLogger(__name__)
 
 HUD_FPS = 12.5  # 오버레이 프레임레이트 (출력 25fps의 1/2 — 부드럽되 렌더 비용 절반)
+
+# 타이핑 타이밍 (초/글자). 시각(render(t))과 효과음(sfx_timeline)이 공유 → 항상 동기.
+HOOK_CPS, BEAT_CPS, NAME_CPS, FACT_CPS = 0.085, 0.075, 0.11, 0.062
+HOOK_START, BEAT_START_OFF = 0.25, 0.15   # 훅 시작(절대), 컷2 비트 시작(=d0+off)
+NAME_START_OFF, FACT_GAP = 0.20, 0.25      # 리빌 이름 시작(=rs+off), 팩트=이름끝+gap
+HOOK_MIN, BEAT_MIN, NAME_MIN, FACT_MIN = 1.0, 0.9, 0.7, 0.9
 _CHROMIUM_CANDIDATES = [
     "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
 ]
@@ -63,21 +69,55 @@ def _config(caption: CaptionData, info: SpeciesInfo, watermark: str,
     name = caption.reveal_name or f"{info.common_name_ko} ({info.common_name_en})"
     m = re.match(r"^(.*?)\s*\(([^)]+)\)\s*$", name)
     name_ko, name_en = (m.group(1), m.group(2)) if m else (name, info.common_name_en)
+    name_ko, name_en = name_ko.strip(), name_en.strip()
+    hook = caption.hook_text or ""
+    beat2 = beats[1] or ""
+    fact = caption.reveal_fact or ""
+    d0 = w[0][1] - w[0][0]
+    rs = w[2][0]
+    # 타이핑 지속시간 (시각·효과음 공유) — 느리게, 최소값 보장
+    hook_dur = max(HOOK_MIN, len(hook) * HOOK_CPS)
+    beat2_dur = max(BEAT_MIN, len(beat2) * BEAT_CPS)
+    name_dur = max(NAME_MIN, len(name_ko) * NAME_CPS)
+    fact_dur = max(FACT_MIN, len(fact) * FACT_CPS)
     return {
-        "d0": w[0][1] - w[0][0],
+        "d0": d0,
         "d1": w[1][1] - w[1][0],
         "total": w[2][1],
-        "revealStart": w[2][0],
+        "revealStart": rs,
         "depthMax": _max_depth_num(info),
         "unit": "ROV · DEEP DIVE UNIT",
         "watermark": watermark,
         "lat": "34.21", "lon": "127.88",
-        "hook": caption.hook_text or "",
-        "beat2": beats[1],
-        "revealName": name_ko.strip(),
-        "revealEn": name_en.strip(),
-        "revealFact": caption.reveal_fact or "",
+        "hook": hook,
+        "beat2": beat2,
+        "revealName": name_ko,
+        "revealEn": name_en,
+        "revealFact": fact,
+        # 타이핑 스케줄 (start 절대초, dur초)
+        "hookStart": HOOK_START, "hookDur": hook_dur,
+        "beat2Start": d0 + BEAT_START_OFF, "beat2Dur": beat2_dur,
+        "nameStart": rs + NAME_START_OFF, "nameDur": name_dur,
+        "factStart": rs + NAME_START_OFF + name_dur + FACT_GAP, "factDur": fact_dur,
     }
+
+
+def sfx_timeline(caption: CaptionData, info: SpeciesInfo, cut_durations: list[float]) -> dict:
+    """효과음 동기용 타임라인 (타이핑 버스트·스캔 종료·리빌 시점).
+
+    render(t)와 동일한 _config 값을 재사용 → 화면 타이핑과 타자 효과음이 정확히 일치.
+    """
+    c = _config(caption, info, "", cut_durations)
+    typing = []
+    for start, dur, text in (
+        (c["hookStart"], c["hookDur"], c["hook"]),
+        (c["beat2Start"], c["beat2Dur"], c["beat2"]),
+        (c["nameStart"], c["nameDur"], c["revealName"]),
+        (c["factStart"], c["factDur"], c["revealFact"]),
+    ):
+        if text:
+            typing.append((round(float(start), 3), round(float(dur), 3)))
+    return {"typing": typing, "scan_end": float(c["revealStart"]), "reveal_at": float(c["revealStart"])}
 
 
 # ─────────────────────────────── HTML 템플릿 ───────────────────────────────
@@ -119,9 +159,12 @@ html,body{width:720px;height:1280px;overflow:hidden;background:transparent}
 .hookwrap::before{content:'';position:absolute;inset:-24px 0;background:radial-gradient(80% 120% at 50% 50%,rgba(0,8,14,.55),transparent 72%);z-index:-1}
 .hook{font-family:'BHS';font-size:60px;line-height:1.14;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.85),0 0 22px rgba(80,200,240,.35);letter-spacing:-1px}
 .hook .car{color:#39E0F0;font-weight:400}
-.scanwrap{position:absolute;bottom:262px;left:0;right:0;text-align:center}
-.scanwrap .tag{font-family:'Orbitron';font-weight:900;font-size:30px;letter-spacing:6px;color:#39E0F0;text-shadow:0 0 14px rgba(57,224,240,.7)}
-.scanwrap .sub{font-family:'Rajdhani';font-weight:700;font-size:18px;letter-spacing:2px;color:#FF8A3D;text-transform:uppercase;margin-top:8px;min-height:22px}
+.scanwrap{position:absolute;bottom:300px;left:52px;right:52px;text-align:center;
+  padding:14px 20px 18px;border-radius:14px;background:rgba(5,16,24,.46);
+  border:1px solid rgba(80,220,240,.30);backdrop-filter:blur(3px)}
+.scanwrap .tag{font-family:'Orbitron';font-weight:900;font-size:31px;letter-spacing:6px;color:#39E0F0;text-shadow:0 0 15px rgba(57,224,240,.75)}
+.scanwrap .sub{font-family:'Pretendard';font-weight:900;font-size:30px;color:#F2F8FB;margin-top:12px;min-height:36px;line-height:1.22;
+  text-shadow:0 2px 0 rgba(0,0,0,.82),0 0 16px rgba(80,200,240,.32)}
 .radar{position:absolute;bottom:150px;left:36px;width:120px;height:120px}
 .sonarlab{position:absolute;bottom:128px;left:36px;font-family:'Rajdhani';font-weight:700;font-size:13px;letter-spacing:2px;color:#7FD8DC}
 .reveal{position:absolute;left:24px;right:24px;bottom:96px;padding:18px 20px;background:linear-gradient(180deg,rgba(8,22,32,.62),rgba(5,14,22,.72));border:1px solid rgba(80,220,240,.5);border-radius:10px;backdrop-filter:blur(5px);opacity:0;box-shadow:0 0 34px rgba(20,120,150,.25)}
@@ -211,21 +254,20 @@ function render(t){
   // --- 훅 (컷1: 타이핑 → 유지 → 컷1 끝 페이드아웃, 컷2·리빌서 숨김) ---
   const hw=$('hookwrap');
   if(t<d0){
-    const hdur=Math.max(0.6,C.hook.length*0.06);
     const fadeIn=clamp((t-0.2)/0.4,0,1);
     const fadeOut=clamp((d0-t)/0.7,0,1);   // 컷1 마지막 0.7s 페이드아웃 → 컷2 클린
     hw.style.opacity=Math.min(fadeIn,fadeOut);
-    const tp=typed(C.hook,0.25,hdur,t);
-    $('hook').innerHTML=tp+(done(C.hook,0.25,hdur,t)?'':caret(t));
+    const tp=typed(C.hook,C.hookStart,C.hookDur,t);
+    $('hook').innerHTML=tp+(done(C.hook,C.hookStart,C.hookDur,t)?'':caret(t));
   } else hw.style.opacity=0;
 
   // --- 스캔/분석 태그 (컷1·2), 리빌서 숨김 ---
   const sw=$('scanwrap');
   if(t<d0){sw.style.opacity=1;$('stag').textContent='SCANNING'+dots(t);
-    $('ssub').style.opacity=(0.55+0.45*Math.abs(Math.sin(t*3)));$('ssub').textContent='UNKNOWN LIFEFORM DETECTED';}
+    $('ssub').style.opacity=(0.72+0.28*Math.abs(Math.sin(t*3)));$('ssub').textContent='미확인 생명체 감지';}
   else if(!inReveal){sw.style.opacity=1;$('stag').textContent='ANALYZING'+dots(t);
-    const tp=typed(C.beat2,d0+0.15,Math.max(0.8,C.beat2.length*0.05),t);
-    $('ssub').style.opacity=1;$('ssub').innerHTML=tp+(done(C.beat2,d0+0.15,C.beat2.length*0.05,t)?'':caret(t));}
+    const tp=typed(C.beat2,C.beat2Start,C.beat2Dur,t);
+    $('ssub').style.opacity=1;$('ssub').innerHTML=tp+(done(C.beat2,C.beat2Start,C.beat2Dur,t)?'':caret(t));}
   else sw.style.opacity=0;
 
   // --- 리빌 패널 (컷3 슬라이드업 + 타이핑) ---
@@ -233,12 +275,11 @@ function render(t){
   if(inReveal){const p=clamp((t-rs)/0.5,0,1);rv.style.opacity=easeOut(p);
     rv.style.transform='translateY('+((1-easeOut(p))*44).toFixed(1)+'px)';
     $('rlab').style.opacity=(0.6+0.4*Math.abs(Math.sin(t*4)));
-    const nDur=Math.max(0.5,C.revealName.length*0.08);
-    const ntp=typed(C.revealName,rs+0.2,nDur,t);
-    $('rname').innerHTML=ntp+(done(C.revealName,rs+0.2,nDur,t)?'':caret(t));
-    $('ren').style.opacity=done(C.revealName,rs+0.2,nDur,t)?1:0;
+    const ntp=typed(C.revealName,C.nameStart,C.nameDur,t);
+    $('rname').innerHTML=ntp+(done(C.revealName,C.nameStart,C.nameDur,t)?'':caret(t));
+    $('ren').style.opacity=done(C.revealName,C.nameStart,C.nameDur,t)?1:0;
     $('ren').textContent=C.revealEn;
-    const fStart=rs+0.25+nDur;const fDur=Math.max(0.6,C.revealFact.length*0.045);
+    const fStart=C.factStart,fDur=C.factDur;
     $('rfact').innerHTML=typed(C.revealFact,fStart,fDur,t)+((t>fStart&&!done(C.revealFact,fStart,fDur,t))?caret(t):'');
   } else {rv.style.opacity=0;}
 }
