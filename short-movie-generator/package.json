@@ -1,12 +1,9 @@
 {
   "name": "shorts-dashboard",
   "private": true,
-  "description": "쇼츠/릴스 자동 제작 대시보드 — Cloudflare Workers + Containers 배포",
+  "description": "쇼츠/릴스 제작 홈페이지 — Cloudflare Workers 무료 배포",
   "scripts": {
     "deploy": "wrangler deploy"
-  },
-  "dependencies": {
-    "@cloudflare/containers": "^0.0.28"
   },
   "devDependencies": {
     "wrangler": "^4.28.0"

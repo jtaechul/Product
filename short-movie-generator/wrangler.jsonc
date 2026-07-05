@@ -1,21 +1,9 @@
-// 쇼츠/릴스 대시보드 — Cloudflare Workers + Containers 배포 설정
-// 배포: GitHub Actions(deploy-shorts-dashboard.yml)가 push 시 자동 실행
+// 쇼츠/릴스 제작 홈페이지 — Cloudflare Workers 무료 배포 설정
+// (영상 제작 자체는 GitHub Actions 무료가 담당 — 이 워커는 조작 페이지만 서빙)
 {
   "name": "shorts-dashboard",
   "main": "worker/index.mjs",
   "compatibility_date": "2025-06-01",
-  "observability": { "enabled": true },
-  "containers": [
-    {
-      "class_name": "Dashboard",
-      "image": "./Dockerfile",
-      "max_instances": 1,
-      // standard: 4GiB 메모리 — Chromium(HUD 렌더) + FFmpeg 동시 구동 여유
-      "instance_type": "standard"
-    }
-  ],
-  "durable_objects": {
-    "bindings": [{ "name": "DASHBOARD", "class_name": "Dashboard" }]
-  },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Dashboard"] }]
+  "workers_dev": true,
+  "observability": { "enabled": true }
 }

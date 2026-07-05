@@ -1,14 +1,21 @@
-name: Deploy Shorts Dashboard
+name: Deploy Shorts Maker Page
 
-# [보류] 유료 Cloudflare Containers 경로 — 무료 운영(generate-short.yml)으로 대체됨.
-# CF 토큰에 Containers 권한 + Workers 유료 플랜이 갖춰지면 수동 실행으로 배포 가능.
+# 쇼츠/릴스 제작 홈페이지(Cloudflare Workers 무료) 자동 배포.
+# 영상 제작은 generate-short.yml(GitHub Actions 무료)이 담당 — 이 워커는 조작 페이지만 서빙.
 on:
+  push:
+    branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
+    paths:
+      - "short-movie-generator/worker/**"
+      - "short-movie-generator/wrangler.jsonc"
+      - "short-movie-generator/package.json"
+      - ".github/workflows/deploy-shorts-dashboard.yml"
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Cloudflare Containers 배포
+    name: Cloudflare Workers 배포 (무료)
     defaults:
       run:
         working-directory: short-movie-generator
@@ -19,23 +26,10 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install wrangler + containers SDK
+      - name: Install wrangler
         run: npm install --no-audit --no-fund
 
-      - name: Deploy (worker + container image)
+      - name: Deploy worker
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-
-      # 시크릿은 '존재하는 것만' 업로드 (없어도 배포는 성공 — panzoom 모드는 키 불필요)
-      - name: Upload runtime secrets (optional)
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          DASH_TOKEN: ${{ secrets.DASH_TOKEN }}
-        run: |
-          put() { if [ -n "$2" ]; then printf '%s' "$2" | npx wrangler secret put "$1"; else echo "skip $1 (미설정)"; fi; }
-          put GEMINI_API_KEY "$GEMINI_API_KEY"
-          put ANTHROPIC_API_KEY "$ANTHROPIC_API_KEY"
-          put DASH_TOKEN "$DASH_TOKEN"
