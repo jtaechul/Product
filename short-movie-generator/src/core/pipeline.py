@@ -129,8 +129,10 @@ def run(
     ec_video = endcard.build_endcard_video(
         caption, series_title, episode, WATERMARK, str(work_dir)
     )
-    with_endcard = endcard.append_endcard(overlaid, ec_video, str(work_dir))
-    final_duration = total_duration + endcard.ENDCARD_DURATION_S
+    # 꼬리 시퀀스: 본편 → 실제 NOAA 사진 카드(신뢰 앵커·출처 크레딧) → 시리즈 엔드카드
+    real_card = endcard.build_real_photo_card(asset.asset_path, asset.credit_string, str(work_dir))
+    with_endcard = endcard.concat_tail([overlaid, real_card, ec_video], str(work_dir))
+    final_duration = total_duration + endcard.REALCARD_DURATION_S + endcard.ENDCARD_DURATION_S
 
     reveal_at = sum(durations[:-1]) if len(durations) >= 2 else None  # 마지막 컷 시작 = 리빌
     # 타자 효과음을 화면 타이핑과 동기 (HUD 타임라인 재사용)

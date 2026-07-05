@@ -175,3 +175,90 @@ def append_endcard(main_video: str, endcard_video: str, work_dir: str) -> str:
     if proc.returncode != 0 or not out.exists():
         raise PipelineError("endcard", f"엔드카드 결합 실패: {proc.stderr[-400:]}")
     return str(out)
+
+
+# ─────────────────── 실제 NOAA 사진 카드 (신뢰 앵커 + 출처 크레딧) ───────────────────
+# AI 영상은 '연출(재현)'이므로, 마지막에 진짜 NOAA 사진을 보여 신뢰를 확보한다.
+# ('실제 포착 이미지' + SOURCE: NOAA · PUBLIC DOMAIN). 출처 크레딧 하드룰도 시각적으로 충족.
+REALCARD_DURATION_S = 2.0
+
+
+def _orbitron(size: int):
+    from PIL import ImageFont
+    p = htmlhud._FONTS_DIR / "Orbitron.ttf"
+    return ImageFont.truetype(str(p), size) if p.exists() else _font(size)
+
+
+def _real_card_overlay_png(credit_string: str, work_dir: str) -> str:
+    """실제 사진 카드용 투명 오버레이(프레임+코너+라벨+크레딧). 사진 위에 합성."""
+    img = Image.new("RGBA", (CLIP_W, CLIP_H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    WHITE, CY = (234, 240, 244, 235), (67, 200, 218, 255)
+    # 얇은 프레임 + 코너 틱
+    d.rectangle([18, 18, CLIP_W - 18, CLIP_H - 18], outline=(234, 240, 244, 70), width=1)
+    for (x, y, dx, dy, c) in [(30, 30, 1, 1, CY), (CLIP_W - 30, 30, -1, 1, WHITE),
+                              (30, CLIP_H - 30, 1, -1, WHITE), (CLIP_W - 30, CLIP_H - 30, -1, -1, CY)]:
+        d.line([(x, y), (x + dx * 26, y)], fill=c, width=2)
+        d.line([(x, y), (x, y + dy * 26)], fill=c, width=2)
+    # 상단 태그
+    _text_with_stroke(d, (40, 44), "ARCHIVE / ACTUAL SPECIMEN", _orbitron(20), fill=CY)
+    # 하단 라벨 바
+    d.rectangle([0, CLIP_H - 190, CLIP_W, CLIP_H - 70], fill=(4, 9, 14, 175))
+    d.line([(0, CLIP_H - 190), (CLIP_W, CLIP_H - 190)], fill=CY, width=2)
+    _text_with_stroke(d, (CLIP_W // 2, CLIP_H - 176), "실제 포착 이미지", _font(46), anchor="ma")
+    _text_with_stroke(d, (CLIP_W // 2, CLIP_H - 118), f"SOURCE: {credit_string}",
+                      _orbitron(20), fill=(200, 214, 222, 235), anchor="ma")
+    out = str(Path(work_dir) / "realcard_overlay.png")
+    img.save(out)
+    return out
+
+
+def build_real_photo_card(asset_path: str, credit_string: str, work_dir: str) -> str:
+    """승인 NOAA 사진 → 9:16 블러확장 + 슬로우 줌 + 라벨/크레딧 오버레이 → 카드 영상."""
+    from src.core import imageprep
+    work = Path(work_dir)
+    if not Path(asset_path).exists():
+        raise PipelineError("endcard", f"실제 사진 없음: {asset_path}")
+    nine = imageprep.to_vertical_9x16(asset_path, str(work / "realcard_9x16.png"))
+    overlay = _real_card_overlay_png(credit_string, work_dir)
+    out = work / "realcard.mp4"
+    fps = CLIP_FPS
+    frames = int(REALCARD_DURATION_S * fps)
+    # 사진 슬로우 줌인 + 오버레이 합성 + 페이드
+    vf = (f"scale={CLIP_W*2}:{CLIP_H*2},"
+          f"zoompan=z='min(1.0+0.0009*on,1.10)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+          f":d={frames}:s={CLIP_W}x{CLIP_H}:fps={fps},setsar=1")
+    proc = subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-t", str(REALCARD_DURATION_S),
+         "-i", nine, "-i", overlay,
+         "-filter_complex",
+         f"[0:v]{vf}[bg];[bg][1:v]overlay=0:0:format=auto,"
+         f"fade=t=in:st=0:d=0.3,fade=t=out:st={REALCARD_DURATION_S-0.3:.2f}:d=0.3[v]",
+         "-map", "[v]", "-t", str(REALCARD_DURATION_S),
+         "-pix_fmt", "yuv420p", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+         "-an", str(out)],
+        capture_output=True, text=True,
+    )
+    if proc.returncode != 0 or not out.exists():
+        raise PipelineError("endcard", f"실제 사진 카드 생성 실패: {proc.stderr[-400:]}")
+    return str(out)
+
+
+def concat_tail(videos: list[str], work_dir: str) -> str:
+    """본편+실제사진카드+엔드카드 등 N개 클립을 재인코딩 concat (규격 통일)."""
+    out = Path(work_dir) / "with_tail.mp4"
+    parts = "".join(
+        f"[{i}:v]scale={CLIP_W}:{CLIP_H},fps={CLIP_FPS},setsar=1[v{i}];"
+        for i in range(len(videos))
+    )
+    joins = "".join(f"[v{i}]" for i in range(len(videos)))
+    fc = f"{parts}{joins}concat=n={len(videos)}:v=1:a=0[outv]"
+    cmd = ["ffmpeg", "-y", "-loglevel", "error"]
+    for v in videos:
+        cmd += ["-i", v]
+    cmd += ["-filter_complex", fc, "-map", "[outv]",
+            "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p", str(out)]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0 or not out.exists():
+        raise PipelineError("endcard", f"tail concat 실패: {proc.stderr[-400:]}")
+    return str(out)

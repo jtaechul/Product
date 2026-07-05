@@ -32,13 +32,14 @@ def test_full_pipeline_panzoom(tmp_path, monkeypatch):
     assert meta["qc"]["resolution_9_16"]["detail"] == "720x1280"
 
 
-def test_veo_without_key_becomes_pipeline_error(tmp_path, monkeypatch):
-    """키 없이 Veo 선택 시 시각화 실패가 PipelineError로 통일돼 깔끔히 중단 (날것 트레이스 금지)."""
+@pytest.mark.parametrize("viz", ["veo_img2video", "veo_text2video"])
+def test_veo_without_key_becomes_pipeline_error(tmp_path, monkeypatch, viz):
+    """키 없이 Veo(img2video/text2video) 선택 시 시각화 실패가 PipelineError로 통일돼 깔끔히 중단."""
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     from src.core import pipeline
 
     with pytest.raises(PipelineError) as ei:
-        pipeline.run("deep_sea", "dumbo octopus", "veo_img2video", base_dir=str(tmp_path))
+        pipeline.run("deep_sea", "dumbo octopus", viz, base_dir=str(tmp_path))
     assert ei.value.stage == "visualization"
 
 
