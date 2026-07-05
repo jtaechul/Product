@@ -17,7 +17,8 @@ def test_three_cuts_in_order(cuts):
 
 @pytest.mark.parametrize("needle", [
     "utterly still and motionless",  # 정적 물 (기포 대신 긍정 서술로 모션공백 채움)
-    "settling gently downward",      # 마린스노우는 아래로 가라앉음
+    "nothing ever rises, streams, jets or floats upward",  # 상승운동 명시 금지(=기포 방지)
+    "sinks slowly DOWNWARD",         # 부유물은 오직 아래로(마린스노우)
     "no letterbox",            # 세로 풀프레임(레터박스 금지)
     "no light shafts from above",  # 태양광/광선 금지
     "lamps on the vehicle right beside the camera",  # 조명=카메라 옆(핀조명 아님)

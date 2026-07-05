@@ -27,13 +27,18 @@ _STYLE_BLOCK = (
     "Gentle mechanical camera drift and faint vibration of an unmanned robotic vehicle. "
     "Practical low-grade scientific camera look: soft focus, visible video noise, mild compression "
     "artifacts, muted desaturated colors, limited dynamic range, slight motion blur. "
-    # 물리 정확성(기포): 부정어('bubble' 등)는 확산모델 주의를 기포에 집중시켜 역효과(핑크코끼리).
-    # → 금지어 없이, 물의 상태를 '정적·고압·무거움'으로 확정지어 모션 공백을 채운다.
-    "The water is utterly still and motionless, a heavy, dense, high-pressure water column that "
-    "hangs silent and undisturbed; its surface is impossibly far above and completely out of view. "
-    "The ONLY movement anywhere in the scene is the animal's own slow, graceful motion and the "
-    "marine snow settling gently downward — everything else in the water is perfectly calm and "
-    "static. "
+    # 물리 정확성(기포) — 종합 해법:
+    #  (a) 명사(bubble/air/gas) 미사용 → 핑크코끼리 역효과 회피(리포트 존중)
+    #  (b) 기포의 정의적 특징인 '상승 운동'을 방향으로 명시 통제 → 명시적 방지(요청 충족)
+    #  (c) 대체 모션 원천을 확정 → 모델이 역동성을 기포로 채울 이유 제거
+    "The water is utterly still and motionless, a heavy, dense, high-pressure column that hangs "
+    "silent and undisturbed; its surface is impossibly far above and completely out of view. "
+    "The only things that move at all are the animal's own slow, graceful motion, the gentle "
+    "drift of the slowly pushing camera, and the marine snow — and the marine snow only ever "
+    "sinks slowly DOWNWARD under gravity. In this sealed, purely liquid environment nothing ever "
+    "rises, streams, jets or floats upward toward the top of the frame; there are no upward trails "
+    "or plumes of any kind; every suspended speck moves only downward or hangs perfectly still. "
+    "Everything else in the water is completely calm and static. "
     # 세로 풀프레임(레터박스 금지)
     "The image fills the entire vertical 9:16 frame edge to edge: no black bars, no letterbox, "
     "no widescreen crop, no cinematic aspect ratio. "
