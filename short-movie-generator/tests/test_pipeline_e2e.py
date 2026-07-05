@@ -48,7 +48,7 @@ def test_qc_failure_blocks_publish(tmp_path, monkeypatch):
     from src.core import audio, pipeline
 
     # 오디오 단계를 무음 통과로 오염 → QC의 audio_present_not_silent 실패 유도
-    def silent(video_path, work_dir, duration_s, spec=None):
+    def silent(video_path, work_dir, duration_s, spec=None, **kwargs):
         import subprocess
         from pathlib import Path
         out = Path(work_dir) / "with_audio.mp4"

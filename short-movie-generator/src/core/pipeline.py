@@ -14,7 +14,7 @@ import logging
 import subprocess
 from pathlib import Path
 
-from src.core import assembler, audio, license_gate, output, overlay
+from src.core import assembler, audio, endcard, license_gate, output, overlay
 from src.core.contracts import OutputResult, PipelineError
 from src.core.visualization import VisualizationError, get_visualizer
 from src.registry import get_category
@@ -43,6 +43,7 @@ def run(
     query: str,
     visualizer_name: str = "panzoom",
     base_dir: str = ".",
+    episode: int | None = None,
 ) -> OutputResult:
     base = Path(base_dir)
     raw_dir = base / "assets" / "raw"
@@ -111,20 +112,31 @@ def run(
     overlaid = overlay.apply_timed_overlays(
         base_video, caption, asset.credit_string, WATERMARK, durations, str(work_dir),
     )
+    # 시리즈 엔드카드 (재방문·팔로우 유도) — 어둡게 끝나 콜드오픈 루프와 연결
+    if episode is None:
+        episode = len(list(Path(out_dir).glob("*.json"))) + 1  # 자동 회차
+    series_title = getattr(category, "series_title", "") or category_id
+    ec_video = endcard.build_endcard_video(
+        caption, series_title, episode, WATERMARK, str(work_dir)
+    )
+    with_endcard = endcard.append_endcard(overlaid, ec_video, str(work_dir))
+    final_duration = total_duration + endcard.ENDCARD_DURATION_S
+
     reveal_at = sum(durations[:-1]) if len(durations) >= 2 else None  # 마지막 컷 시작 = 리빌
     with_audio = audio.add_ambient(
-        overlaid, str(work_dir), total_duration, category.ambient_audio_spec(),
+        with_endcard, str(work_dir), final_duration, category.ambient_audio_spec(),
         reveal_at_s=reveal_at,
     )
-    log.info("[8/9] 오버레이+오디오: %s (리빌 %.0fs)", with_audio, reveal_at or -1)
+    log.info("[8/9] 오버레이+엔드카드+오디오: %s (리빌 %.0fs, #%d)", with_audio, reveal_at or -1, episode)
 
     # 9. 출력 + QC
     result = output.finalize(
         with_audio, info, caption, asset.credit_string, asset.license,
-        str(out_dir), total_duration,
+        str(out_dir), final_duration,
         extra_meta={"category": category_id, "visualizer": viz.name,
                     "style_profile": category.style_profile,
-                    "situation_id": situation.situation_id},
+                    "situation_id": situation.situation_id,
+                    "series": {"title": series_title, "episode": episode}},
     )
     log.info("[9/9] 출력: %s (QC %s)", result.video_path, "통과" if result.qc_passed else "실패")
     return result

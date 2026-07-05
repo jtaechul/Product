@@ -25,12 +25,14 @@ def main() -> int:
         "--visualizer", default="panzoom", choices=["panzoom", "veo_img2video"],
         help="시각화 구현체 (기본: panzoom, Veo는 GEMINI_API_KEY 필요)",
     )
+    parser.add_argument("--episode", type=int, default=None,
+                        help="시리즈 회차 번호 (생략 시 output/ 개수로 자동)")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
     try:
-        result = run(args.category, args.query, args.visualizer)
+        result = run(args.category, args.query, args.visualizer, episode=args.episode)
     except PipelineError as e:
         logging.error("파이프라인 중단: %s", e)
         return 1

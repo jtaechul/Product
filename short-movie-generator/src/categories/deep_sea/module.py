@@ -46,6 +46,7 @@ _GLOW_RE = re.compile(
 class DeepSeaCategory:
     category_id = "deep_sea"
     style_profile = "deep_sea_realism"
+    series_title = "심해 도감"  # 시리즈 브랜딩 (엔드카드·캡션 회차 표기)
 
     # --- 입력/정보 ---
     def parse_input(self, query: str) -> str:

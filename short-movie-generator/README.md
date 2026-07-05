@@ -59,6 +59,11 @@ cp .env.example .env   # GEMINI_API_KEY 채우기
 - 출처 크레딧 자동 삽입 / 시크릿은 `.env`에서만.
 
 ## 현재 상태 / 다음 단계
-- ✅ MVP 수직 슬라이스(panzoom) E2E 완주 + QC 전 항목 통과 + 실사(NOAA 퍼블릭도메인) 경로 검증
-- ⏳ **Veo 실호출**: `GEMINI_API_KEY` 주입 후 `--visualizer veo_img2video` 로 검증 필요(과금)
-- ⏳ Cloudflare Containers 배포(사용자 결정: cut1 검증 후) / 상황뱅크 종 확대 / 로열티프리 실제 앰비언트 음원
+- ✅ MVP 수직 슬라이스 E2E + QC 통과, 실사(NOAA) 경로 검증
+- ✅ Veo 실호출 검증 3회(v1~v3): 프롬프트 템플릿 엔진(종별 자동 조립)·무태양광·무기포·
+  해저 배경·ROV 존재감(장비·레이저·후방산란) 반영 — 남은 보정은 `docs/veo_verification_log.md`
+- ✅ ① 텍스트 파이프라인: 훅 채점 루프(Claude→Gemini→템플릿), 리빌 정책(종명은 컷3 공개)
+- ✅ ② 연출: 레터박스 자동 제거, ROV 그레이딩, 리빌 서브베이스 스웰+스팅
+- ✅ ③ 시리즈: "심해 도감 #N" 엔드카드(종명 리빌·팔로우 유도), `--episode` 회차
+- ⏳ 다음 유료 검증: v4 프롬프트+그레이딩 조합을 Veo 3컷 풀 파이프라인으로 확인
+- ⏳ Cloudflare Containers 배포 / 상황뱅크 종 확대 / 로열티프리 실제 앰비언트 음원
