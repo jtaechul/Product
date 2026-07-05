@@ -50,6 +50,12 @@ SPECIES = {
             "long muscular tentacles, curling sucker-covered arms of a shallow-water octopus, "
             "a common-octopus body, extra limbs, or any change to the two ear-like fins"
         ),
+        # HUD 콜아웃(부위 지시 라벨) — 컷2 분석 비트에서 지시선으로 잠깐 등장. 슬롯은 코어가 좌표화.
+        "hud_callouts": [
+            {"slot": "left-mid", "title": "FIN ×2", "sub": "EAR-LIKE · PADDLE"},
+            {"slot": "right-mid", "title": "OCULAR", "sub": "LOW-LIGHT EYE"},
+            {"slot": "right-low", "title": "ARMS ×8", "sub": "WEBBED · TRAILING"},
+        ],
         # 스토리 아크(실제 행동만): 컷1 어둠 속 등장(미인지) → 컷2 유영(아직 미인지) →
         # 컷3 카메라를 뒤늦게 알아채고 눈맞춤 후 조용히 이탈(=이 종의 진짜 반응, 공격 아님).
         # 3인칭 현재형(as it ___ / while it ___ 에 문법적으로 호응)

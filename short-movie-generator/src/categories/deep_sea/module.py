@@ -170,6 +170,11 @@ class DeepSeaCategory:
             cuts=[CutSpec(cut_type=c["cut_type"], prompt=c["prompt"]) for c in cuts],
         )
 
+    def hud_callouts(self, info: SpeciesInfo) -> list[dict]:
+        """HUD 부위 콜아웃 라벨(슬롯+제목+부제). 코어가 슬롯을 화면 좌표로 변환."""
+        key = data.resolve_key(info.common_name_en)
+        return data.SPECIES.get(key, {}).get("hud_callouts", [])
+
     def validate_cuts(self, situation: Situation) -> list[str]:
         violations: list[str] = []
         glow_ok = bool(situation.accuracy_flags.get("bioluminescent"))

@@ -93,7 +93,10 @@ def _config(caption: CaptionData, info: SpeciesInfo, watermark: str,
         "beat2": beat2,
         "revealName": name_ko,
         "revealEn": name_en,
+        "sciName": info.scientific_name or "",   # 학명 (이탤릭·속명 대문자로 표기)
         "revealFact": fact,
+        "mapLon": 127.9, "mapLat": 34.2,          # 서식지/탐지 좌표(마커) — 추후 종별화
+        "distribution": info.distribution or "",
         # 타이핑 스케줄 (start 절대초, dur초)
         "hookStart": HOOK_START, "hookDur": hook_dur,
         "beat2Start": d0 + BEAT_START_OFF, "beat2Dur": beat2_dur,
@@ -302,20 +305,23 @@ def _chromium_path() -> str | None:
     return None
 
 
-def render_frames(cfg: dict, work_dir: Path, fps: float = HUD_FPS) -> tuple[Path, int]:
-    """render(t)를 fps로 샘플링해 투명 PNG 시퀀스를 만든다. (frames_dir, n_frames)."""
+def render_frames(html_path: Path, total: float, work_dir: Path,
+                  fps: float = HUD_FPS) -> tuple[Path, int]:
+    """render(t)를 fps로 샘플링해 투명 PNG 시퀀스를 만든다. (frames_dir, n_frames).
+
+    html_path: window.render(t) 를 정의한 HTML (테마별로 상위에서 생성해 전달).
+    """
     try:
         from playwright.sync_api import sync_playwright
     except Exception as e:  # noqa: BLE001
         raise HudRenderError(f"playwright 미가용: {e}") from e
 
-    html = _build_html(cfg, work_dir)
+    html = html_path
     frames_dir = work_dir / "hud_frames"
     frames_dir.mkdir(parents=True, exist_ok=True)
     for old in frames_dir.glob("seq_*.png"):
         old.unlink()
 
-    total = float(cfg["total"])
     n = max(1, math.ceil(total * fps) + 2)
     launch = {"args": ["--no-sandbox", "--disable-gpu", "--force-color-profile=srgb"]}
     exe = _chromium_path()
@@ -418,16 +424,283 @@ def render_static(full_html: str, out_png: str, work_dir: str,
     return out_png
 
 
-def apply_hud(base_video: str, caption: CaptionData, info: SpeciesInfo, watermark: str,
-              cut_durations: list[float], work_dir: str) -> str:
-    """애니메이션 HTML HUD를 영상 위에 합성 (PIL hud와 동일 시그니처).
+# ═══════════════════ 스키매틱 테마 (흰/회색 도면 + 시안 소량) ═══════════════════
+# 부위 콜아웃 슬롯 → 화면 좌표 (지시점x1,y1 / 꺾임x2,y2 / 라벨x lx / 정렬).
+# 좌표는 '중앙 정렬된 피사체' 기준 근사 — 콜아웃은 컷2(분석 비트)에서만 잠깐 등장.
+_SCHEM_SLOTS = {
+    # 콜아웃은 상태카드(하단 ~y808↑) 위쪽에만 배치 → 겹침 방지.
+    "left-mid": (175, 520, 120, 470, 40, "l"),
+    "right-mid": (470, 600, 560, 555, 690, "r"),
+    "right-low": (450, 700, 558, 672, 690, "r"),
+    "left-low": (250, 690, 150, 662, 40, "l"),
+    "top": (360, 300, 300, 250, 90, "l"),
+}
+_SCHEM_CONT = [(-100, 45, 34, 20), (-82, 56, 24, 13), (-85, 14, 7, 11), (-60, -20, 15, 24),
+               (-44, 72, 10, 7), (14, 52, 17, 11), (20, 3, 20, 32), (46, 28, 12, 12),
+               (96, 55, 44, 20), (78, 23, 10, 12), (108, 12, 14, 11), (120, -3, 17, 6),
+               (134, -25, 17, 11), (140, 38, 4, 8)]
 
+
+def _schem_is_land(lon: float, lat: float) -> bool:
+    return any(((lon - cl) / rx) ** 2 + ((lat - cy) / ry) ** 2 <= 1.0
+               for cl, cy, rx, ry in _SCHEM_CONT)
+
+
+def _schem_map_svg(mk_lon: float, mk_lat: float) -> str:
+    dots = []
+    for c in range(0, 61):
+        lon = -180 + c * 6
+        for r in range(0, 26):
+            lat = 80 - r * 6
+            x, y = lon + 180, 80 - lat
+            if _schem_is_land(lon, lat):
+                dots.append(f'<circle cx="{x}" cy="{y}" r="1.7" fill="#EAF0F4" opacity="0.92"/>')
+            else:
+                dots.append(f'<circle cx="{x}" cy="{y}" r="0.7" fill="#94A2AC" opacity="0.13"/>')
+    mx, my = mk_lon + 180, 80 - mk_lat
+    marker = (
+        f'<circle id="mkring" cx="{mx}" cy="{my}" r="6" fill="none" stroke="#43C8DA" stroke-width="1.3"/>'
+        f'<circle cx="{mx}" cy="{my}" r="4.2" fill="none" stroke="#43C8DA" stroke-width="1.4"/>'
+        f'<circle id="mkdot" cx="{mx}" cy="{my}" r="2.3" fill="#43C8DA"/>'
+        f'<line x1="{mx}" y1="{my-9}" x2="{mx}" y2="{my+9}" stroke="#43C8DA" stroke-width="0.7" opacity="0.55"/>'
+        f'<line x1="{mx-9}" y1="{my}" x2="{mx+9}" y2="{my}" stroke="#43C8DA" stroke-width="0.7" opacity="0.55"/>'
+    )
+    return (f'<svg viewBox="0 0 360 150" preserveAspectRatio="xMidYMid meet" '
+            f'style="width:100%;height:100%">{"".join(dots)}{marker}</svg>')
+
+
+def _schem_callouts_html(callouts: list[dict]) -> str:
+    parts = []
+    for i, co in enumerate(callouts):
+        slot = co.get("slot", "left-mid")
+        x1, y1, x2, y2, lx, align = _SCHEM_SLOTS.get(slot, _SCHEM_SLOTS["left-mid"])
+        title = _html_escape(co.get("title", ""))
+        sub = _html_escape(co.get("sub", ""))
+        w = abs(lx - x2)
+        left = min(lx, x2)
+        parts.append(
+            f'<svg class="lead" viewBox="0 0 720 1280"><polyline id="lead{i}" '
+            f'points="{x1},{y1} {x2},{y2} {lx},{y2}" fill="none" stroke="#EAF0F4" stroke-width="1.2"/>'
+            f'<circle cx="{x1}" cy="{y1}" r="3.2" fill="none" stroke="#43C8DA" stroke-width="1.3"/></svg>'
+            f'<div class="col {align}" id="col{i}" style="left:{left}px;top:{y2-30}px;width:{w}px">'
+            f'<div class="ct">{title}</div><div class="cv">{sub}</div></div>'
+        )
+    return "".join(parts)
+
+
+def _html_escape(s: str) -> str:
+    import html as _h
+    return _h.escape(s or "")
+
+
+def _schem_ruler_html() -> str:
+    s = ""
+    for i in range(0, 9):
+        y = 60 + i * 145
+        col = "#43C8DA" if i == 4 else "rgba(234,240,244,.65)"
+        s += f'<div class="rk" style="top:{y}px;background:{col}"></div>'
+        s += f'<div class="rn" style="top:{y-9}px">{i}</div>'
+    return s
+
+
+_SCHEM_TEMPLATE = r"""<!doctype html><html><head><meta charset="utf-8"><style>
+%FONTS%
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:720px;height:1280px;overflow:hidden;background:transparent}
+.stage{position:relative;width:720px;height:1280px;overflow:hidden;font-family:'Rajdhani';color:#EAF0F4}
+.vig{position:absolute;inset:0;background:radial-gradient(120% 92% at 50% 44%,transparent 48%,rgba(0,4,8,.5) 84%,rgba(0,3,6,.84) 100%)}
+.grid{position:absolute;inset:0;opacity:.055;background:linear-gradient(#fff 1px,transparent 1px) 0 0/64px 64px,linear-gradient(90deg,#fff 1px,transparent 1px) 0 0/64px 64px}
+.tgt{position:absolute;left:50%;top:470px;width:520px;height:520px;transform:translate(-50%,-50%);border-radius:50%;border:1px solid rgba(67,200,218,.13)}
+.frame{position:absolute;inset:18px;border:1px solid rgba(234,240,244,.26)}
+.brk{position:absolute;width:30px;height:30px;border:1.5px solid #EAF0F4}
+.brk.c{border-color:#43C8DA}
+.tl{top:12px;left:12px;border-right:0;border-bottom:0}.tr{top:12px;right:12px;border-left:0;border-bottom:0}
+.bl{bottom:12px;left:12px;border-right:0;border-top:0}.br{bottom:12px;right:12px;border-left:0;border-top:0}
+.unit{position:absolute;top:34px;left:40px;font-family:'Orbitron';font-weight:900;font-size:15px;letter-spacing:4px;color:#EAF0F4}
+.rec{position:absolute;top:60px;left:40px;font-family:'STM';font-size:18px;color:#94A2AC;letter-spacing:1px}
+.rec b{color:#43C8DA}
+.tel{position:absolute;top:30px;right:40px;width:212px;text-align:right;border-top:1px solid rgba(234,240,244,.5);border-bottom:1px solid rgba(234,240,244,.5);padding:8px 0}
+.tel .row{display:flex;justify-content:space-between;font-family:'STM';font-size:16px;line-height:1.5}
+.tel .row .k{color:#5E6A73;letter-spacing:1px}.tel .row .v{color:#EAF0F4}
+.tel .row .v.c{color:#43C8DA}
+.rk{position:absolute;right:20px;width:12px;height:1px}
+.rn{position:absolute;right:36px;font-family:'STM';font-size:12px;color:#5E6A73}
+.lead{position:absolute;inset:0;pointer-events:none}
+.col{position:absolute}.col.l{text-align:left}.col.r{text-align:right}
+.col .ct{font-family:'Rajdhani';font-weight:700;font-size:17px;letter-spacing:2px;color:#EAF0F4;text-shadow:0 1px 4px rgba(0,0,0,.85)}
+.col .cv{font-family:'STM';font-size:12px;letter-spacing:1px;color:#B8C4CC;text-shadow:0 1px 4px rgba(0,0,0,.9)}
+.hookwrap{position:absolute;top:150px;left:40px;right:40px}
+.hook{font-family:'BHS';font-size:52px;line-height:1.12;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.7)}
+.hook .car{color:#43C8DA;font-weight:400}
+.hrule{margin-top:14px;height:2px;background:linear-gradient(90deg,#43C8DA,rgba(234,240,244,.5) 40%,transparent)}
+.mapwrap{position:absolute;left:36px;bottom:112px;width:270px}
+.mlab{font-family:'STM';font-size:12px;letter-spacing:1px;color:#94A2AC;margin-bottom:6px}
+.map{width:270px;height:118px;border:1px solid rgba(234,240,244,.22);padding:6px;background:rgba(8,12,16,.32)}
+.dial{position:absolute;left:330px;bottom:150px;width:78px;height:78px}
+.dlab{position:absolute;left:342px;bottom:132px;font-family:'Rajdhani';font-weight:700;font-size:11px;letter-spacing:2px;color:#94A2AC}
+/* 리치 상태 카드 (item3) */
+.status{position:absolute;bottom:322px;left:48px;right:48px;padding:14px 20px 16px;background:rgba(8,13,18,.5);border:1px solid rgba(234,240,244,.28);border-left:2px solid #43C8DA;backdrop-filter:blur(3px)}
+.status .cbr{position:absolute;width:12px;height:12px;border:1.5px solid #43C8DA}
+.status .tlc{top:-1px;left:-1px;border-right:0;border-bottom:0}.status .trc{top:-1px;right:-1px;border-left:0;border-bottom:0}
+.status .blc{bottom:-1px;left:-1px;border-right:0;border-top:0}.status .brc{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.shead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.schip{font-family:'STM';font-size:12px;letter-spacing:2px;color:#04121a;background:#43C8DA;padding:2px 8px}
+.sbar{display:flex;gap:3px;flex:1}
+.sbar i{flex:1;height:6px;background:rgba(234,240,244,.16)}
+.sbar i.on{background:#43C8DA}
+.spct{font-family:'STM';font-size:14px;color:#94A2AC;letter-spacing:1px}
+.stag{font-family:'Orbitron';font-weight:900;font-size:27px;letter-spacing:5px;color:#EAF0F4;text-align:center}
+.ssub{font-family:'Pretendard';font-weight:900;font-size:27px;color:#F2F7FB;margin-top:10px;text-align:center;min-height:34px;text-shadow:0 2px 0 rgba(0,0,0,.72)}
+.reveal{position:absolute;left:34px;right:34px;bottom:118px;border:1px solid rgba(234,240,244,.5);border-left:3px solid #43C8DA;padding:18px 22px;background:rgba(8,12,16,.52);backdrop-filter:blur(4px)}
+.reveal .rtag{font-family:'STM';font-size:15px;letter-spacing:3px;color:#43C8DA}
+.reveal .rname{font-family:'BHS';font-size:56px;color:#fff;margin-top:6px;line-height:1}
+.reveal .rname .car{color:#43C8DA}
+.reveal .rsci{margin-top:8px}
+.reveal .rsci .en{font-family:'Orbitron';font-weight:900;font-size:17px;letter-spacing:1px;color:#94A2AC}
+.reveal .rsci .sci{font-family:'PretendardM';font-style:italic;font-size:18px;color:#B8C4CC;margin-left:8px}
+.reveal .rfact{font-family:'PretendardM';font-size:20px;color:#D6E0E7;margin-top:10px}
+.wm{position:absolute;bottom:38px;right:34px;font-family:'Orbitron';font-weight:900;font-size:15px;letter-spacing:3px;color:rgba(234,240,244,.68)}
+</style></head><body>
+<div class="stage">
+<div class="vig"></div><div class="grid"></div><div class="tgt"></div>
+<div class="frame"></div><div class="brk tl c"></div><div class="brk tr"></div><div class="brk bl"></div><div class="brk br c"></div>
+%RULER%
+<div class="unit">ROV · DEEP DIVE UNIT</div>
+<div class="rec"><b>●</b> <span id="rec">REC 00:00:00</span></div>
+<div class="tel"><div class="row"><span class="k">DEPTH</span><span class="v c" id="depth">0 M</span></div>
+  <div class="row"><span class="k">TEMP</span><span class="v" id="temp">2.1°C</span></div>
+  <div class="row"><span class="k">POS</span><span class="v" id="coord"></span></div></div>
+<div class="hookwrap" id="hookwrap"><div class="hook" id="hook"></div><div class="hrule"></div></div>
+<div id="callouts">%CALLOUTS%</div>
+<div class="mapwrap" id="mapwrap"><div class="mlab" id="mlab"></div><div class="map">%MAP%</div></div>
+<svg class="dial" id="dial" viewBox="0 0 92 92">
+  <circle cx="46" cy="46" r="44" fill="none" stroke="#EAF0F4" stroke-width="1"/>
+  <circle cx="46" cy="46" r="28" fill="none" stroke="rgba(148,162,172,.5)" stroke-width="1"/>
+  <line id="dsweep" x1="46" y1="46" x2="90" y2="46" stroke="#43C8DA" stroke-width="1.4"/>
+  <circle cx="46" cy="46" r="2.4" fill="#43C8DA"/></svg>
+<div class="dlab" id="dlab">SONAR</div>
+<div class="status" id="status">
+  <div class="shead"><span class="schip">STATUS</span>
+    <div class="sbar" id="sbar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <span class="spct" id="spct">00%</span></div>
+  <div class="stag" id="stag">SCANNING</div><div class="ssub" id="ssub"></div>
+  <div class="cbr tlc"></div><div class="cbr trc"></div><div class="cbr blc"></div><div class="cbr brc"></div>
+</div>
+<div class="reveal" id="reveal">
+  <div class="rtag">▸ SPECIES IDENTIFIED</div>
+  <div class="rname" id="rname"></div>
+  <div class="rsci"><span class="en" id="ren"></span><span class="sci" id="rsci"></span></div>
+  <div class="rfact" id="rfact"></div></div>
+<div class="wm"></div>
+</div>
+<script>
+const C = /*CONFIG*/;
+document.querySelector('.wm').textContent = C.watermark;
+$id=id=>document.getElementById(id);
+function clamp(x,a,b){return Math.min(b,Math.max(a,x));}
+function easeOut(x){return 1-Math.pow(1-x,3);}
+function comma(n){return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+function typed(s,ts,d,t){return s.slice(0,Math.floor(s.length*clamp((t-ts)/d,0,1)));}
+function done(s,ts,d,t){return (t-ts)>=d;}
+function caret(t){return (Math.floor(t*2)%2)?'<span class="car">▌</span>':'<span class="car" style="opacity:0">▌</span>';}
+function dots(t){return ' '+'. '.repeat(1+Math.floor((t*1.6)%4)).trim();}
+function tc(t){const s=Math.floor(t);return 'REC 00:'+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+
+function render(t){
+  const d0=C.d0,d1=C.d1,rs=C.revealStart,total=C.total,inRev=t>=rs,c2=d0+d1;
+  $id('rec').textContent=tc(t);
+  $id('depth').textContent=comma(C.depthMax*easeOut(clamp(t/1.3,0,1))+(t>1.3?Math.sin(t*7)*3:0))+' M';
+  $id('temp').textContent=(2.1+Math.sin(t*3.1)*0.05).toFixed(1)+'°C';
+  $id('coord').textContent=C.lat+'N '+C.lon+'E';
+  // 소나 다이얼 스윕
+  const ang=(t*150)%360,rad=ang*Math.PI/180;
+  $id('dsweep').setAttribute('x2',(46+44*Math.cos(rad)).toFixed(1));
+  $id('dsweep').setAttribute('y2',(46+44*Math.sin(rad)).toFixed(1));
+  // 월드맵 마커 깜박임 (컷1·2 표시, 리빌서 페이드)
+  const mw=$id('mapwrap'),dl=$id('dial'),dlab=$id('dlab');
+  const mapOn=inRev?clamp(1-(t-rs)/0.4,0,1):1;
+  mw.style.opacity=mapOn;dl.style.opacity=mapOn;dlab.style.opacity=mapOn;
+  $id('mlab').textContent=C.distribution?('HABITAT · '+C.distribution):'GLOBAL HABITAT';
+  const pulse=(t*1.3)%1;
+  $id('mkring').setAttribute('r',(5+8*pulse).toFixed(1));
+  $id('mkring').setAttribute('opacity',Math.max(0,0.9-pulse*0.85).toFixed(2));
+  $id('mkdot').setAttribute('opacity',(0.45+0.55*Math.abs(Math.sin(t*4))).toFixed(2));
+  // 훅 (컷1 타이핑→페이드아웃)
+  const hw=$id('hookwrap');
+  if(t<d0){hw.style.opacity=Math.min(clamp((t-0.2)/0.4,0,1),clamp((d0-t)/0.7,0,1));
+    $id('hook').innerHTML=typed(C.hook,C.hookStart,C.hookDur,t)+(done(C.hook,C.hookStart,C.hookDur,t)?'':caret(t));}
+  else hw.style.opacity=0;
+  // 콜아웃 (컷2 분석 비트) — 지시선 그려짐 + 라벨 페이드, 컷2 끝 사라짐
+  const cg=$id('callouts');
+  if(!inRev && t>=d0){
+    const gOut=clamp((c2-t)/0.6,0,1);cg.style.opacity=gOut;
+    for(let i=0;i<C.nco;i++){const ln=$id('lead'+i),cl=$id('col'+i);if(!ln)continue;
+      const st=d0+0.25+i*0.5;const L=ln.getTotalLength();
+      const p=clamp((t-st)/0.5,0,1);ln.style.strokeDasharray=L;ln.style.strokeDashoffset=L*(1-p);
+      cl.style.opacity=clamp((t-st-0.35)/0.3,0,1);}
+  } else {cg.style.opacity=0;
+    for(let i=0;i<C.nco;i++){const ln=$id('lead'+i);if(ln){const L=ln.getTotalLength();ln.style.strokeDasharray=L;ln.style.strokeDashoffset=L;}}}
+  // 리치 상태 카드
+  const sc=$id('status');
+  if(!inRev){sc.style.opacity=1;
+    const p=clamp(t/c2,0,1);const on=Math.round(p*8);
+    [...$id('sbar').children].forEach((el,i)=>el.className=i<on?'on':'');
+    $id('spct').textContent=String(Math.round(p*100)).padStart(2,'0')+'%';
+    if(t<d0){$id('stag').textContent='SCANNING'+dots(t);
+      $id('ssub').style.opacity=(0.72+0.28*Math.abs(Math.sin(t*3)));$id('ssub').textContent='미확인 생명체 감지';}
+    else{$id('stag').textContent='ANALYZING SPECIMEN';
+      $id('ssub').style.opacity=1;
+      $id('ssub').innerHTML=typed(C.beat2,C.beat2Start,C.beat2Dur,t)+(done(C.beat2,C.beat2Start,C.beat2Dur,t)?'':caret(t));}
+  } else sc.style.opacity=clamp(1-(t-rs)/0.3,0,1);
+  // 리빌
+  const rv=$id('reveal');
+  if(inRev){const p=clamp((t-rs)/0.5,0,1);rv.style.opacity=easeOut(p);
+    rv.style.transform='translateY('+((1-easeOut(p))*40).toFixed(1)+'px)';
+    $id('rname').innerHTML=typed(C.revealName,C.nameStart,C.nameDur,t)+(done(C.revealName,C.nameStart,C.nameDur,t)?'':caret(t));
+    const nd=done(C.revealName,C.nameStart,C.nameDur,t);
+    $id('ren').style.opacity=nd?1:0;$id('ren').textContent=C.revealEn.toUpperCase();
+    $id('rsci').style.opacity=nd?1:0;$id('rsci').textContent=C.sciName;
+    $id('rfact').innerHTML=typed(C.revealFact,C.factStart,C.factDur,t)+((t>C.factStart&&!done(C.revealFact,C.factStart,C.factDur,t))?caret(t):'');
+  } else rv.style.opacity=0;
+}
+window.render=render;
+</script></body></html>"""
+
+
+def _schematic_html(cfg: dict, callouts: list[dict]) -> str:
+    c = dict(cfg)
+    c["nco"] = len(callouts)
+    html = (_SCHEM_TEMPLATE
+            .replace("%FONTS%", fonts_face_css())
+            .replace("%RULER%", _schem_ruler_html())
+            .replace("%MAP%", _schem_map_svg(cfg["mapLon"], cfg["mapLat"]))
+            .replace("%CALLOUTS%", _schem_callouts_html(callouts))
+            .replace("/*CONFIG*/", json.dumps(c)))
+    return html
+
+
+THEME_DEFAULT = "schematic"
+
+
+def apply_hud(base_video: str, caption: CaptionData, info: SpeciesInfo, watermark: str,
+              cut_durations: list[float], work_dir: str,
+              theme: str = THEME_DEFAULT, callouts: list[dict] | None = None) -> str:
+    """애니메이션 HTML HUD를 영상 위에 합성 (PIL hud와 동일 시그니처 + theme/callouts).
+
+    theme: 'schematic'(흰/회색 도면 + 시안 소량, 기본) | 'neon'(청록 SF).
+    callouts: 카테고리가 제공한 부위 라벨 [{slot,title,sub}] (schematic 전용, 없으면 생략).
     실패 시 HudRenderError를 던진다 → pipeline이 PIL hud로 폴백.
     """
     work = Path(work_dir)
     cfg = _config(caption, info, watermark, cut_durations)
-    frames_dir, _n = render_frames(cfg, work)
     total = float(cfg["total"])
+    if theme == "schematic":
+        html_str = _schematic_html(cfg, callouts or [])
+        html_path = work / "hud_render.html"
+        html_path.write_text(html_str, encoding="utf-8")
+    else:
+        html_path = _build_html(cfg, work)
+    frames_dir, _n = render_frames(html_path, total, work)
     result = _overlay_sequence(base_video, frames_dir, total, work)
-    log.info("HTML HUD 합성 완료: %s (%.1fs, %d프레임)", result, total, _n)
+    log.info("HTML HUD 합성 완료(%s): %s (%.1fs, %d프레임)", theme, result, total, _n)
     return result

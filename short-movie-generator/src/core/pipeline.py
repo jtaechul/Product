@@ -110,9 +110,12 @@ def run(
     caption = category.build_caption(info)
     durations = [c.duration_s for c in clips]
     # 애니메이션 HTML HUD(우선) → 브라우저 불가/실패 시 PIL HUD 폴백 (파이프라인 불정지)
+    hud_callouts = category.hud_callouts(info) if hasattr(category, "hud_callouts") else []
+    hud_theme = getattr(category, "hud_theme", htmlhud.THEME_DEFAULT)
     try:
         overlaid = htmlhud.apply_hud(
             base_video, caption, info, WATERMARK, durations, str(work_dir),
+            theme=hud_theme, callouts=hud_callouts,
         )
     except htmlhud.HudRenderError as e:
         log.warning("HTML HUD 실패 → PIL HUD 폴백: %s", e)
