@@ -22,8 +22,9 @@ def main() -> int:
     parser.add_argument("query", help="대상 질의 (예: 'dumbo octopus')")
     parser.add_argument("--category", default="deep_sea", help="카테고리 ID (기본: deep_sea)")
     parser.add_argument(
-        "--visualizer", default="panzoom", choices=["panzoom", "veo_img2video"],
-        help="시각화 구현체 (기본: panzoom, Veo는 GEMINI_API_KEY 필요)",
+        "--visualizer", default="panzoom",
+        choices=["panzoom", "veo_img2video", "veo_text2video"],
+        help="시각화 구현체 (기본: panzoom, Veo 계열은 GEMINI_API_KEY 필요)",
     )
     parser.add_argument("--episode", type=int, default=None,
                         help="시리즈 회차 번호 (생략 시 output/ 개수로 자동)")

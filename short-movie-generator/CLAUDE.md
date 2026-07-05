@@ -137,14 +137,18 @@
 - 카테고리 모듈은 코어가 정의한 계약만 채운다(코어는 카테고리 내부를 모른다)
 - 각 모듈 독립 실행·테스트 가능, 실패 시 명확 로그 + 안전 중단
 
-## 배포 (조작용 웹 대시보드)
-- **Cloudflare Workers + Containers** (`shorts-dashboard`): 워커(worker/index.mjs)가 요청을
-  컨테이너(Dockerfile: python+FFmpeg+Chromium, `webapp.server`:8000)로 프록시.
-- **자동 배포**: `claude/gemini-shorts-reels-generator-dhjfdt` push 시
-  `.github/workflows/deploy-shorts-dashboard.yml`이 이미지 빌드 + `wrangler deploy`.
-- **시크릿**(GitHub repo secrets → 워커 → 컨테이너 env): `CF_API_TOKEN`(필수),
-  `GEMINI_API_KEY`/`ANTHROPIC_API_KEY`(실제 생성용, 선택), `DASH_TOKEN`(접근 토큰 게이트, 선택).
-- 첫 요청 시 컨테이너 콜드스타트(수십 초~수 분) 가능. 20분 무요청 시 절전.
+## 운영 (원격 생성 — 무료 확정)
+- **확정 구조(무료·$0/월)**: 영상 제작은 **GitHub Actions**(`generate-short.yml`, 공개 저장소 무료)가 담당.
+  - 실행: GitHub 웹/모바일 → **Actions → Generate Short → Run workflow** (종·방식·회차 입력)
+  - 결과: **텔레그램 봇으로 영상+캡션 자동 전송**(book-carousel 봇 시크릿 재사용) + 실행 페이지
+    Artifacts(14일 보관) 다운로드 + Job Summary(훅·캡션·QC).
+  - 시크릿: `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`(전송), `GEMINI_API_KEY`(veo_text2video 시),
+    `ANTHROPIC_API_KEY`(훅 LLM). 없으면 해당 기능만 생략(panzoom은 키 불필요).
+- **로컬 대시보드**: `python -m webapp.server` → 브라우저 조작(종 입력→생성→미리보기→다운로드).
+- **[보류] 유료 경로**: Cloudflare Containers 배포(Dockerfile·worker/·wrangler.jsonc·
+  deploy-shorts-dashboard.yml, 수동 실행 전환됨). Workers 유료 플랜($5/월) + CF 토큰
+  Containers:Edit 권한 확보 시 즉시 활성 가능. Workers 무료 티어에는 FFmpeg/Chromium이
+  기술적으로 올라가지 않음(하드 제약)이 유료였던 이유.
 
 ## 하지 말 것 (MVP 범위 밖, Phase 2+에서 지시 시)
 - TTS / 다국어(EN·JP) / 인스타 자동 발행 / 배치 처리 / 동영상 클립 소스

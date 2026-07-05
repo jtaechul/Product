@@ -1,11 +1,8 @@
 name: Deploy Shorts Dashboard
 
+# [보류] 유료 Cloudflare Containers 경로 — 무료 운영(generate-short.yml)으로 대체됨.
+# CF 토큰에 Containers 권한 + Workers 유료 플랜이 갖춰지면 수동 실행으로 배포 가능.
 on:
-  push:
-    branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
-    paths:
-      - "short-movie-generator/**"
-      - ".github/workflows/deploy-shorts-dashboard.yml"
   workflow_dispatch:
 
 jobs:
