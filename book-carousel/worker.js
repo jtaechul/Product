@@ -2583,6 +2583,15 @@ export default {
         else if (url.pathname === '/api/generate-caption') result = await handleGenerateCaption(env, body);
         else if (url.pathname === '/api/validate') result = await handleValidate(env, body);
         else if (url.pathname === '/api/regenerate') result = await handleRegenerate(env, body);
+        else if (url.pathname === '/api/telegram-bot-info') {
+          // 봇 사용자명 확인용(사용자에게 "이 봇에게 먼저 메시지 보내세요" 링크를 안내하기 위함). 토큰 자체는 노출 안 함.
+          if (!env.TELEGRAM_BOT_TOKEN) { result = { success: false, error: '봇 토큰이 설정되지 않았습니다.' }; }
+          else {
+            const r = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getMe`);
+            const d = await r.json().catch(() => ({}));
+            result = d.ok ? { success: true, username: d.result.username } : { success: false, error: d.description || '조회 실패' };
+          }
+        }
         else if (url.pathname === '/api/send-telegram') result = await handleSendTelegram(env, body);
         else if (url.pathname === '/api/send-telegram-image') result = await handleSendTelegramImage(env, body);
         else if (url.pathname === '/api/generate-dm-reply') result = await handleGenerateDmReply(env, body);
