@@ -582,19 +582,38 @@ async function sendTelegramPhotoFile(botToken, chatId, base64DataUrl, caption) {
   return res.json();
 }
 
+// 추가 수신자(앱에서 등록한 텔레그램 채팅 ID들). 터미널·대시보드 없이 앱에서 추가/삭제.
+async function getExtraTelegramChatIds(env) {
+  try { return (await env?.PENDING_POSTS?.get('telegram_extra_chat_ids', 'json')) || []; } catch { return []; }
+}
+// 기본 수신자(TELEGRAM_CHAT_ID 시크릿) + 추가 수신자 목록을 합쳐 중복 제거.
+async function getAllTelegramChatIds(env) {
+  const ids = [];
+  if (env.TELEGRAM_CHAT_ID) ids.push(String(env.TELEGRAM_CHAT_ID));
+  const extra = await getExtraTelegramChatIds(env);
+  for (const id of extra) { const s = String(id).trim(); if (s) ids.push(s); }
+  return [...new Set(ids)];
+}
+
 async function handleSendTelegramImage(env, body) {
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
     throw new Error('TELEGRAM_BOT_TOKEN 또는 TELEGRAM_CHAT_ID가 설정되지 않았습니다.');
   }
   const { imageDataUrl, caption } = body;
   if (!imageDataUrl) throw new Error('imageDataUrl이 필요합니다.');
-  const result = await sendTelegramPhotoFile(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, imageDataUrl, caption || '');
-  if (!result) throw new Error('텔레그램 이미지 전송 실패');
+  const chatIds = await getAllTelegramChatIds(env);
+  let okCount = 0;
+  for (const chatId of chatIds) {
+    const result = await sendTelegramPhotoFile(env.TELEGRAM_BOT_TOKEN, chatId, imageDataUrl, caption || '');
+    if (result) okCount++;
+  }
+  if (!okCount) throw new Error('텔레그램 이미지 전송 실패');
   return { success: true };
 }
 
 // 텔레그램에는 "제작 완료 알림 + 확인하러 가기 링크"만 보낸다.
 // (이미지·세부 문구는 보내지 않음. 인스타그램 게시 결정은 캐럿셀 제작 페이지에서 함.)
+// 등록된 모든 수신자(기본 1명 + 앱에서 추가한 수신자)에게 동일하게 발송한다.
 async function handleSendTelegram(env, body) {
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
     throw new Error('TELEGRAM_BOT_TOKEN 또는 TELEGRAM_CHAT_ID가 설정되지 않았습니다.');
@@ -609,23 +628,35 @@ async function handleSendTelegram(env, body) {
   const title = bookInfo?.title ? `"${bookInfo.title}"` : '';
   const msg = `[북 캐럿셀 제작 완료]\n\n${title} 캐럿셀(카드뉴스 5장 + 캡션)이 완성됐습니다.\n아래 "확인하러 가기"를 눌러 결과를 보고, 인스타그램 게시 여부를 결정해주세요.\n\n${link}`;
 
-  const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: env.TELEGRAM_CHAT_ID,
-      text: msg,
-      reply_markup: {
-        inline_keyboard: [[{ text: '확인하러 가기', url: link }]],
-      },
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(`텔레그램 발송 실패: ${err.description || res.status}`);
+  const chatIds = await getAllTelegramChatIds(env);
+  let okCount = 0;
+  let lastErr = null;
+  for (const chatId of chatIds) {
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: msg,
+          reply_markup: {
+            inline_keyboard: [[{ text: '확인하러 가기', url: link }]],
+          },
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        lastErr = err.description || String(res.status);
+      } else {
+        okCount++;
+      }
+    } catch (e) {
+      lastErr = e.message;
+    }
   }
+  if (!okCount) throw new Error(`텔레그램 발송 실패: ${lastErr || '알 수 없는 오류'}`);
 
-  return { success: true, message: '텔레그램으로 제작 완료 알림과 확인 링크를 보냈습니다.' };
+  return { success: true, message: `텔레그램으로 제작 완료 알림과 확인 링크를 보냈습니다. (수신자 ${okCount}/${chatIds.length}명)` };
 }
 
 // ===== Claude 핸들러 =====
@@ -2599,6 +2630,48 @@ export default {
           } else {
             const has = !!(await getGeminiKey(env));
             result = { success: true, configured: has, source: env.GEMINI_API_KEY ? 'secret' : (has ? 'app' : 'none') };
+          }
+        }
+        else if (url.pathname === '/api/telegram-recipients') {
+          // 앱에서 텔레그램 추가 수신자(채팅 ID) 등록/삭제/조회 (터미널·대시보드 없이).
+          if (request.method === 'POST') {
+            const action = String(body.action || 'add');
+            const chatId = String(body.chatId || '').trim();
+            if (!/^-?\d+$/.test(chatId)) { result = { success: false, error: '채팅 ID는 숫자만 입력하세요 (예: 8231379366).' }; }
+            else {
+              let extra = await getExtraTelegramChatIds(env);
+              if (action === 'remove') {
+                extra = extra.filter(id => String(id) !== chatId);
+                await env.PENDING_POSTS.put('telegram_extra_chat_ids', JSON.stringify(extra));
+                result = { success: true, message: '삭제되었습니다.', extra };
+              } else {
+                if (String(env.TELEGRAM_CHAT_ID || '') === chatId || extra.some(id => String(id) === chatId)) {
+                  result = { success: false, error: '이미 등록된 채팅 ID입니다.' };
+                } else {
+                  extra.push(chatId);
+                  await env.PENDING_POSTS.put('telegram_extra_chat_ids', JSON.stringify(extra));
+                  // 등록 즉시 실제로 알림을 보내 유효한 채팅 ID인지 검증(봇과 대화를 먼저 시작해야 전송 가능).
+                  let verified = false, verifyErr = '';
+                  try {
+                    const vres = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                      method: 'POST', headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ chat_id: chatId, text: '[행간 — 연애 책방] 이 채팅으로 북 캐럿셀 제작 완료 알림을 받도록 등록되었습니다.' }),
+                    });
+                    verified = vres.ok;
+                    if (!vres.ok) { const e = await vres.json().catch(() => ({})); verifyErr = e.description || String(vres.status); }
+                  } catch (e) { verifyErr = e.message; }
+                  if (!verified) {
+                    extra = extra.filter(id => id !== chatId);
+                    await env.PENDING_POSTS.put('telegram_extra_chat_ids', JSON.stringify(extra));
+                    result = { success: false, error: `등록은 했지만 테스트 발송에 실패해 취소했습니다: ${verifyErr}. 먼저 텔레그램에서 해당 봇에게 아무 메시지나 보낸 뒤 다시 시도해주세요.` };
+                  } else {
+                    result = { success: true, message: '등록되었고 테스트 알림도 발송했습니다. 텔레그램을 확인해보세요.', extra };
+                  }
+                }
+              }
+            }
+          } else {
+            result = { success: true, primary: !!env.TELEGRAM_CHAT_ID, extra: await getExtraTelegramChatIds(env) };
           }
         }
         else if (url.pathname === '/api/reset-model-cache') {
