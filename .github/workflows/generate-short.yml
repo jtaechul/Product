@@ -20,6 +20,15 @@ on:
         description: "회차 번호 (비우면 자동)"
         required: false
         default: ""
+      content_id:
+        description: "재생성 대상 콘텐츠 id(3자리, 예: 007). 비우면 신규 제작"
+        required: false
+        default: ""
+      scope:
+        description: "재생성 범위"
+        type: choice
+        options: [all, caption, images, video]
+        default: all
   # 대안 트리거: requests/*.json 푸시로도 생성 가능 (원격 자동화·Claude 조작용)
   push:
     branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
@@ -49,14 +58,33 @@ jobs:
         id: inp
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "query=${{ inputs.query }}" >> "$GITHUB_OUTPUT"
-            echo "visualizer=${{ inputs.visualizer }}" >> "$GITHUB_OUTPUT"
-            echo "episode=${{ inputs.episode }}" >> "$GITHUB_OUTPUT"
+            CID="${{ inputs.content_id }}"
+            if [ -n "$CID" ]; then
+              # 재생성 모드: 기존 콘텐츠 레코드에서 종 복원 → 같은 회차·범위로 다시 제작
+              python - "$CID" "${{ inputs.visualizer }}" "${{ inputs.scope }}" <<'PY' >> "$GITHUB_OUTPUT"
+          import json, sys
+          from pathlib import Path
+          cid, viz, scope = sys.argv[1], sys.argv[2], sys.argv[3]
+          cid = f"{int(cid):03d}"
+          rec = json.loads(Path("content", f"{cid}.json").read_text(encoding="utf-8"))
+          en = rec.get("species", {}).get("common_name_en", "") or "auto"
+          print(f"query={en}")
+          print(f"visualizer={viz}")
+          print(f"episode={int(cid)}")
+          print(f"scope={scope}")
+          PY
+            else
+              echo "query=${{ inputs.query }}" >> "$GITHUB_OUTPUT"
+              echo "visualizer=${{ inputs.visualizer }}" >> "$GITHUB_OUTPUT"
+              echo "episode=${{ inputs.episode }}" >> "$GITHUB_OUTPUT"
+              echo "scope=all" >> "$GITHUB_OUTPUT"
+            fi
           elif [ "${{ github.event_name }}" = "schedule" ]; then
             # 매일 자동: AI 카테고리 자동 로테이션 + 안정적인 panzoom(무쿼터)
             echo "query=auto" >> "$GITHUB_OUTPUT"
             echo "visualizer=panzoom" >> "$GITHUB_OUTPUT"
             echo "episode=" >> "$GITHUB_OUTPUT"
+            echo "scope=all" >> "$GITHUB_OUTPUT"
           else
             F=$(ls -t requests/*.json | head -1)
             python - "$F" <<'PY' >> "$GITHUB_OUTPUT"
@@ -65,6 +93,7 @@ jobs:
           print(f"query={r.get('query','auto')}")
           print(f"visualizer={r.get('visualizer','panzoom')}")
           print(f"episode={r.get('episode','')}")
+          print(f"scope={r.get('scope','all')}")
           PY
           fi
 
@@ -97,11 +126,56 @@ jobs:
         run: |
           EP_ARG=""
           if [ -n "${{ steps.inp.outputs.episode }}" ]; then EP_ARG="--episode ${{ steps.inp.outputs.episode }}"; fi
-          python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --visualizer "${{ steps.inp.outputs.visualizer }}" $EP_ARG
+          SCOPE="${{ steps.inp.outputs.scope }}"; [ -z "$SCOPE" ] && SCOPE="all"
+          python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --visualizer "${{ steps.inp.outputs.visualizer }}" $EP_ARG --scope "$SCOPE"
           VIDEO=$(ls -t output/*.mp4 | head -1)
           META=$(ls -t output/*.json | head -1)
           echo "video=$VIDEO" >> "$GITHUB_OUTPUT"
           echo "meta=$META" >> "$GITHUB_OUTPUT"
+
+      - name: Publish media to Release + patch content record (영구 호스팅)
+        id: media
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # 콘텐츠 id = 도감 회차(메타 series.episode). 미디어를 콘텐츠별 Release에 영구 업로드.
+          ID=$(python - "${{ steps.gen.outputs.meta }}" <<'PY'
+          import json, sys
+          m = json.load(open(sys.argv[1], encoding="utf-8"))
+          print(f"{int(m.get('series',{}).get('episode',0)):03d}")
+          PY
+          )
+          VIDEO="${{ steps.gen.outputs.video }}"
+          [ -z "$ID" ] || [ "$ID" = "000" ] && { echo "::warning::콘텐츠 id 없음 → Release 생략"; exit 0; }
+          mkdir -p work/rel
+          cp "$VIDEO" "work/rel/reels_$ID.mp4"
+          ffmpeg -y -loglevel error -ss 2 -i "$VIDEO" -frames:v 1 -q:v 3 "work/rel/cover_$ID.jpg" || true
+          SRC=$(ls -t assets/approved/*.jpg 2>/dev/null | head -1 || true)
+          [ -n "$SRC" ] && cp "$SRC" "work/rel/source_$ID.jpg"
+          TAG="content-$ID"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --title "Content #$ID" --notes "쇼츠 콘텐츠 #$ID 미디어 (자동 생성)" --target "${{ github.ref_name }}"
+          gh release upload "$TAG" work/rel/* --clobber
+          BASE="${{ github.server_url }}/${{ github.repository }}/releases/download/$TAG"
+          python - "${{ steps.gen.outputs.meta }}" "$ID" "$BASE" <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          meta, cid, base = sys.argv[1], sys.argv[2], sys.argv[3]
+          rp = Path("content") / f"{cid}.json"
+          if not rp.exists():
+              print("::warning::레코드 없음 → media 패치 생략"); sys.exit(0)
+          rec = json.loads(rp.read_text(encoding="utf-8"))
+          media = rec.get("media", {}) or {}
+          media["video_url"] = f"{base}/reels_{cid}.mp4"
+          if Path(f"work/rel/cover_{cid}.jpg").exists():
+              media["cover_url"] = f"{base}/cover_{cid}.jpg"
+          if Path(f"work/rel/source_{cid}.jpg").exists():
+              media["source_image_url"] = f"{base}/source_{cid}.jpg"
+          rec["media"] = media
+          rp.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+          print("media patched:", media)
+          PY
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
 
       - name: Job summary (훅·캡션·QC)
         run: |
@@ -150,15 +224,15 @@ jobs:
             short-movie-generator/output/*.json
           retention-days: 14
 
-      - name: Commit ledgers (중복방지 원장 + 도감 번호 원장 영속화)
+      - name: Commit ledgers + content records (원장 + 콘텐츠 레코드 영속화)
         run: |
           cd "$GITHUB_WORKSPACE"
-          LEDGERS="short-movie-generator/src/categories/deep_sea/used_species.json short-movie-generator/src/categories/deep_sea/catalog.json"
-          if git diff --quiet -- $LEDGERS; then
-            echo "원장 변경 없음"; exit 0
+          PATHS="short-movie-generator/src/categories/deep_sea/used_species.json short-movie-generator/src/categories/deep_sea/catalog.json short-movie-generator/content"
+          git add $PATHS 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "변경 없음"; exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add $LEDGERS
-          git commit -m "chore: 종 중복방지·도감 번호 원장 갱신 [skip ci]"
+          git commit -m "chore: 원장·콘텐츠 레코드 갱신 [skip ci]"
           git push origin HEAD:${{ github.ref_name }}

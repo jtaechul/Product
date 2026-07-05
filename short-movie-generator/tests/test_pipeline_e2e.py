@@ -14,7 +14,10 @@ pytestmark = pytest.mark.e2e
 
 def test_full_pipeline_panzoom(tmp_path, monkeypatch):
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    from src.categories.deep_sea import catalog
     from src.core import pipeline
+    # 도감 원장은 모듈 전역 경로 → 테스트가 저장소 파일을 오염시키지 않도록 tmp로 격리
+    monkeypatch.setattr(catalog, "CATALOG", tmp_path / "catalog.json")
 
     result = pipeline.run("deep_sea", "dumbo octopus", "panzoom", base_dir=str(tmp_path))
 

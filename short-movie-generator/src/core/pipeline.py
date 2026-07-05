@@ -14,7 +14,7 @@ import logging
 import subprocess
 from pathlib import Path
 
-from src.core import assembler, audio, endcard, htmlhud, hud, license_gate, output, overlay  # noqa: F401
+from src.core import assembler, audio, content_store, endcard, htmlhud, hud, license_gate, output, overlay  # noqa: F401
 from src.core.contracts import OutputResult, PipelineError
 from src.core.visualization import VisualizationError, get_visualizer
 from src.registry import get_category
@@ -44,6 +44,7 @@ def run(
     visualizer_name: str = "panzoom",
     base_dir: str = ".",
     episode: int | None = None,
+    scope: str = "all",
 ) -> OutputResult:
     base = Path(base_dir)
     raw_dir = base / "assets" / "raw"
@@ -171,4 +172,13 @@ def run(
     # 제작 성공분을 도감 원장에 기록 → 번호 누적 + 제작 페이지 현황판("#000_국문명") 근거
     if hasattr(category, "log_catalog"):
         category.log_catalog(episode, info)
+    # 콘텐츠 영구 레코드(관리자 페이지용): content/<id>.json. 미디어 URL은 CI가 Release 후 패치.
+    try:
+        content_store.write_record(
+            base_dir, f"{int(episode):03d}", info=info, caption=caption, asset=asset,
+            visualizer=viz.name, video_file=result.video_path, series_title=series_title,
+            scope=scope,
+        )
+    except Exception as e:  # noqa: BLE001 — 레코드 실패해도 발행물은 유효
+        log.warning("콘텐츠 레코드 기록 실패(무시): %s", e)
     return result

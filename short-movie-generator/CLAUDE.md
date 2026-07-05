@@ -150,9 +150,16 @@
 - 각 모듈 독립 실행·테스트 가능, 실패 시 명확 로그 + 안전 중단
 
 ## 운영 (원격 생성 — 무료 확정)
-- **제작 홈페이지(웹앱)**: https://shorts-dashboard.jtaechul.workers.dev — Cloudflare Workers 무료.
-  종 선택→생성 버튼(브라우저가 GitHub API 직접 호출, 최초 1회 개인 토큰을 기기에만 저장)
-  + 실행 현황판. 완성 영상은 텔레그램 자동 전송.
+- **제작·관리 홈페이지(웹앱)**: https://shorts-dashboard.jtaechul.workers.dev — Cloudflare Workers 무료.
+  - `/` 제작(종 선택→생성) + 실행 현황판.
+  - `/library` **콘텐츠 관리자**: 제작된 콘텐츠 목록(#번호_국문명).
+  - `/c/<id>` **상세**: 영상·이미지 미리보기 + 훅·캡션·해시태그 **인라인 편집(저장)** + **재생성**(캡션/이미지/영상/전체).
+  - 브라우저가 GitHub API 직접 호출(최초 1회 개인 토큰을 기기 localStorage에만 저장).
+    토큰 권한: **Actions RW**(생성·재생성) + **Contents RW**(캡션 저장).
+- **콘텐츠 영속화(관리자 기반)**: 제작 성공 시 `content/<id>.json`(종·훅·캡션·해시태그·출처·상태) 커밋 +
+  미디어(mp4·커버·NOAA원본)를 **GitHub Release `content-<id>`** 로 업로드(영구 URL). 레코드 `media`에 URL 패치.
+  - 재생성: 워크플로 `content_id`+`scope`(all/caption/images/video) 입력 → 레코드에서 종 복원 → 같은 회차로
+    다시 제작 → Release·레코드 갱신·텔레그램 재전송. (현 버전은 전체 파이프라인 재실행 + scope로 레코드 병합 표시)
 - **확정 구조(무료·$0/월)**: 영상 제작은 **GitHub Actions**(`generate-short.yml`, 공개 저장소 무료)가 담당.
   - 실행: GitHub 웹/모바일 → **Actions → Generate Short → Run workflow** (종·방식·회차 입력)
   - 결과: **텔레그램 봇으로 영상+캡션 자동 전송**(book-carousel 봇 시크릿 재사용) + 실행 페이지

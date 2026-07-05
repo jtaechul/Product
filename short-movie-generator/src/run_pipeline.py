@@ -27,13 +27,17 @@ def main() -> int:
         help="시각화 구현체 (기본: panzoom, Veo 계열은 GEMINI_API_KEY 필요)",
     )
     parser.add_argument("--episode", type=int, default=None,
-                        help="시리즈 회차 번호 (생략 시 output/ 개수로 자동)")
+                        help="시리즈 회차 번호 (생략 시 도감 원장 기준 자동)")
+    parser.add_argument("--scope", default="all",
+                        choices=["all", "caption", "images", "video"],
+                        help="재생성 범위(기본 all). 관리자 부분 재생성 시 레코드 병합 갱신 표시")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
     try:
-        result = run(args.category, args.query, args.visualizer, episode=args.episode)
+        result = run(args.category, args.query, args.visualizer,
+                     episode=args.episode, scope=args.scope)
     except PipelineError as e:
         logging.error("파이프라인 중단: %s", e)
         return 1
