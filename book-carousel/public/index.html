@@ -3044,72 +3044,62 @@ async function showArchiveList() {
     listEl.querySelectorAll('.arch-item[data-num]').forEach(it =>
       it.addEventListener('click', () => openArchiveDetail(it.dataset.num)));
     listEl.querySelectorAll('.arch-item[data-draft]').forEach(it =>
-      it.addEventListener('click', () => openDraftDetail(it.dataset.draft)));
+      it.addEventListener('click', () => openDraftInEditor(it.dataset.draft)));
   } catch (e) {
     listEl.innerHTML = '<div class="arch-empty">목록을 불러오지 못했습니다.</div>';
   }
 }
 
-// 초안 상세 — 내용 미리보기 + [도서관에 등록(번호 부여)] / [삭제]
-async function openDraftDetail(id) {
-  const detail = document.getElementById('archiveDetailView');
-  document.getElementById('archiveListView').style.display = 'none';
-  detail.style.display = 'block';
-  detail.innerHTML = '<div class="arch-empty">불러오는 중...</div>';
+// 초안 클릭 → 요약 화면이 아니라, 제작 완료와 동일한 "편집 상세 화면"으로 로드한다.
+// (파이프라인 결과 화면 renderPipelineResults 를 그대로 재사용 → 텍스트 편집·이미지 재생성·
+//  캡션 편집·도서관 등록·인스타 게시까지 전부 가능)
+async function openDraftInEditor(id) {
   let r;
   try { r = await apiFetch('/api/get-draft', { draftId: id }); } catch { r = { success: false }; }
-  if (!r || r.success === false) {
-    detail.innerHTML = `<button class="arch-back" id="archBack">← 목록</button><div class="arch-empty">${archEsc(r?.error||'초안을 불러올 수 없습니다.')}</div>`;
-    document.getElementById('archBack').onclick = showArchiveList; return;
+  if (!r || r.success === false || !r.draft) {
+    showToast(r?.error || '초안을 불러올 수 없습니다(보관 기간 만료일 수 있음).', 'error');
+    return;
   }
   const d = r.draft;
-  document.getElementById('archiveTitle').textContent = `초안 · ${d.bookInfo?.title || ''}`;
-  const p = d.pages || {};
-  const parts = [];
-  if (p.page1?.headline) parts.push('1. ' + p.page1.headline);
-  [2,3].forEach(n => { const pg = p['page'+n]; if (pg && pg.headline) parts.push(`${n}. ${pg.headline||''}\n${pg.body||''}`.trim()); });
-  const last = p.page5 || p.page4; // 신규(4p)·구버전(5p) 겸용
-  if (last && (last.cta || last.linkText)) parts.push('책 공개. ' + [last.cta, last.linkText].filter(Boolean).join('\n'));
-  else if (p.page4 && p.page4.headline) parts.push('4. ' + `${p.page4.headline||''}\n${p.page4.body||''}`.trim());
-  const imgs = d.images && typeof d.images === 'object' ? Object.values(d.images) : [];
-  detail.innerHTML = `
-    <button class="arch-back" id="archBack">← 목록</button>
-    <div class="arch-block">
-      <div class="arch-block-label">책</div>
-      <div style="font-weight:700;">${archEsc(d.bookInfo?.title||'(제목 미정)')}</div>
-      <div style="font-size:13px;color:var(--gray-500);">${archEsc(d.bookInfo?.author||'')}${d.bookInfo?.category?' · '+archEsc(d.bookInfo.category):''}</div>
-    </div>
-    ${d.caption ? `<div class="arch-block"><div class="arch-block-label">캡션</div><textarea rows="5" readonly>${archEsc(d.caption)}</textarea></div>` : ''}
-    <div class="arch-block"><div class="arch-block-label">5장 카드 텍스트</div><textarea rows="7" readonly>${archEsc(parts.join('\n\n')) || '텍스트 없음'}</textarea></div>
-    <div class="arch-block">
-      <div class="arch-block-label">이미지 ${imgs.length?'':'(아직 생성 안 함)'}</div>
-      ${imgs.length ? `<div class="arch-imgs">${imgs.map(u=>`<img src="${archEsc(u)}" loading="lazy">`).join('')}</div>` : '<div style="font-size:12px;color:var(--gray-400);">이미지가 없습니다.</div>'}
-    </div>
-    <div class="arch-block" style="border:none;background:none;padding:0;">
-      <div class="arch-actions">
-        <button class="btn btn-primary" id="draftPromote" style="font-size:13px;">도서관에 등록 (번호 부여)</button>
-        <button class="btn btn-outline" id="draftDelete" style="font-size:13px;color:#dc2626;border-color:#dc2626;">초안 삭제</button>
-      </div>
-      <div id="draftStatus" style="display:none;margin-top:10px;font-size:12.5px;color:var(--success);"></div>
-    </div>`;
-  document.getElementById('archBack').onclick = showArchiveList;
-  document.getElementById('draftPromote').onclick = async () => {
-    const btn = document.getElementById('draftPromote'); btn.disabled = true; btn.textContent = '등록 중...';
-    try {
-      const res = await apiFetch('/api/save-post', {
-        bookInfo: d.bookInfo, pages: d.pages, caption: d.caption || '',
-        hashtags: d.hashtags || [], images: d.images || null, cover: d.cover || '',
-      });
-      await apiFetch('/api/delete-draft', { draftId: id }).catch(() => {});
-      showToast(`도서관에 No.${res.bookNumber} 등록 완료`, 'success');
-      showArchiveList();
-    } catch (e) { showToast('등록 실패: ' + e.message, 'error'); btn.disabled = false; btn.textContent = '도서관에 등록 (번호 부여)'; }
+  if (!d.pages) {
+    showToast('이 초안은 아직 카드 텍스트가 없어 편집 화면을 열 수 없습니다.', 'warning');
+    return;
+  }
+
+  // 보관함 닫기
+  _archOverlay.classList.remove('open');
+  document.getElementById('archiveTitle').textContent = '보관함 / 제작·DM 관리';
+
+  // 편집기 상태 초기화 — 이전 파이프라인/초안 잔상 제거
+  clearTimeout(_pipelinePoller);
+  _currentPollId = null;
+  localStorage.removeItem('activePipelineId');
+  _resultsRendered = false;
+  state.draftId = id;            // 이후 편집 자동저장이 "이 초안"을 갱신(중복 방지)
+  state._catalogAdded = false;   // 초안 = 미등록
+  state.bookNumber = null;
+  state.reelScript = null; state.reelValidation = null;
+  const _rp = document.getElementById('reelPreview'); if (_rp) _rp.style.display = 'none';
+
+  // 파이프라인 "완료" 결과와 동일한 형태로 조립 → 같은 렌더 경로를 그대로 태운다.
+  const statusLike = {
+    status: 'complete', step: 7, stepStatus: 'done',
+    pages: d.pages,
+    bookInfo: d.bookInfo || {},
+    images: (d.images && Object.keys(d.images).length) ? d.images : null,
+    caption: d.caption || '',
+    hashtags: d.hashtags || [],
+    bookCover: d.cover || (d.bookInfo && d.bookInfo.cover) || '',
   };
-  document.getElementById('draftDelete').onclick = async () => {
-    if (!confirm('이 초안을 삭제할까요?')) return;
-    try { await apiFetch('/api/delete-draft', { draftId: id }); showToast('초안을 삭제했습니다', 'success'); showArchiveList(); }
-    catch (e) { showToast('삭제 실패: ' + e.message, 'error'); }
-  };
+
+  // 자동배포 탭 + 진행 패널을 완료 상태로 표시 후, 편집 상세를 그린다.
+  switchTab('tabAutoDeploy');
+  const progressPanel = document.getElementById('progressPanel');
+  progressPanel.classList.add('visible');
+  document.getElementById('emptyState').style.display = 'none';
+  applyPipelineStatus(statusLike);
+  renderPipelineResults(statusLike, false);   // false = 텔레그램 자동 전송 안 함
+  progressPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function openArchiveDetail(num) {
