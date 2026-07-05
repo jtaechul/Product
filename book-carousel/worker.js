@@ -672,7 +672,7 @@ async function handleSendTelegram(env, body) {
     : `${WORKER_URL}/`;
 
   const title = bookInfo?.title ? `"${bookInfo.title}"` : '';
-  const msg = `[북 캐럿셀 제작 완료]\n\n${title} 캐럿셀(카드뉴스 5장 + 캡션)이 완성됐습니다.\n아래 "확인하러 가기"를 눌러 결과를 보고, 인스타그램 게시 여부를 결정해주세요.\n\n${link}`;
+  const msg = `[북 캐럿셀 제작 완료]\n\n${title} 캐럿셀(카드 4장 + 캡션)이 완성됐습니다.\n\n[추천 게시 방법 — 시간차 편성]\n· 아침: 릴스 먼저 올리기 (도달·신규 유입)\n· 저녁 8~9시: 게시물(캐러셀) 올리기 (저장 유도)\n※ 릴스·게시물을 동시에 올리지 말고 시간차(몇 시간)를 두세요. 초반 노출이 나뉘지 않아 둘 다 더 멀리 퍼집니다.\n\n아래 "확인하러 가기"를 눌러 결과를 보고 게시하세요.\n\n${link}`;
 
   const chatIds = await getAllTelegramChatIds(env);
   let okCount = 0;
