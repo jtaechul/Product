@@ -51,6 +51,16 @@ def _max_depth_num(info: SpeciesInfo) -> int:
     return int(digits) if digits else 4000
 
 
+def _clip_trait(s: str, limit: int = 28) -> str:
+    """상단 코너 SPECIMEN 패널용 특징 요약 — 문장부호에서 잘라 한 줄로(길면 … 부여)."""
+    s = (s or "").strip()
+    if len(s) <= limit:
+        return s
+    head = s[:limit]
+    cut = max(head.rfind("."), head.rfind(","), head.rfind(" "))
+    return (head[:cut] if cut >= limit - 10 else head).rstrip() + "…"
+
+
 def _deep_sea_temp_c(depth_m: int) -> float:
     """수심(m) → 통상 심해 수온(°C) 역산.
 
@@ -113,12 +123,17 @@ def _config(caption: CaptionData, info: SpeciesInfo, watermark: str,
         "spDepth": f"{info.depth_range_m} m" if info.depth_range_m else "—",
         "spHabitat": info.habitat or "—",
         "spDiet": " · ".join(info.diet[:3]) if info.diet else "—",
-        "spTrait": (info.fun_facts[0] if info.fun_facts else ""),
+        # 상단 코너 패널이라 짧게 유지(길면 아래로 늘어나 피사체를 침범) — 전체 특징은 마지막 페이지에 노출
+        "spTrait": _clip_trait(info.fun_facts[0]) if info.fun_facts else "—",
         # 타이핑 스케줄 (start 절대초, dur초)
         "hookStart": HOOK_START, "hookDur": hook_dur,
         "beat2Start": d0 + BEAT_START_OFF, "beat2Dur": beat2_dur,
         "nameStart": rs + NAME_START_OFF, "nameDur": name_dur,
         "factStart": rs + NAME_START_OFF + name_dur + FACT_GAP, "factDur": fact_dur,
+        # 근접 경보(실제 근접·인지 상황 한정): 컷2 후반(리빌 1.5s 전)에 붉은 경보로 긴장 고조.
+        "alert": bool(caption.alert),
+        "alertText": (caption.alert_text or "개체가 이쪽으로 접근 중"),
+        "alertAt": max(d0 + 0.3, rs - 1.5),
     }
 
 
@@ -137,7 +152,10 @@ def sfx_timeline(caption: CaptionData, info: SpeciesInfo, cut_durations: list[fl
     ):
         if text:
             typing.append((round(float(start), 3), round(float(dur), 3)))
-    return {"typing": typing, "scan_end": float(c["revealStart"]), "reveal_at": float(c["revealStart"])}
+    tl = {"typing": typing, "scan_end": float(c["revealStart"]), "reveal_at": float(c["revealStart"])}
+    if c.get("alert"):  # 근접 경보 시각 타이밍과 동기된 '쿵쿵'+경보음 트리거
+        tl["alert"] = round(float(c["alertAt"]), 3)
+    return tl
 
 
 # ─────────────────────────────── HTML 템플릿 ───────────────────────────────
@@ -546,18 +564,19 @@ html,body{width:720px;height:1280px;overflow:hidden;background:transparent}
 .tel .row .v.c{color:#43C8DA}
 .rk{position:absolute;right:20px;width:12px;height:1px}
 .rn{position:absolute;right:36px;font-family:'STM';font-size:12px;color:#5E6A73}
-/* 생태 데이터 패널 (콜아웃 대체 — 부위 지시 대신 종 생태정보, 임의 종에도 정확) */
-.specimen{position:absolute;left:34px;top:346px;width:312px;padding:12px 14px 13px;
-  background:rgba(6,14,20,.5);border:1px solid rgba(234,240,244,.26);border-left:2px solid #43C8DA;
+/* 생태 데이터 패널 (콜아웃 대체 — 부위 지시 대신 종 생태정보, 임의 종에도 정확)
+   위치: 좌측 '상단' 코너(헤더 아래) — 중앙의 피사체를 가리지 않도록 상단으로 이동. */
+.specimen{position:absolute;left:30px;top:92px;width:292px;padding:10px 13px 11px;
+  background:rgba(6,14,20,.52);border:1px solid rgba(234,240,244,.26);border-left:2px solid #43C8DA;
   backdrop-filter:blur(3px);opacity:0}
 .specimen .cbr{position:absolute;width:11px;height:11px;border:1.5px solid #43C8DA}
 .specimen .a{top:-1px;left:-1px;border-right:0;border-bottom:0}.specimen .b{top:-1px;right:-1px;border-left:0;border-bottom:0}
 .specimen .c{bottom:-1px;left:-1px;border-right:0;border-top:0}.specimen .d{bottom:-1px;right:-1px;border-left:0;border-top:0}
-.sphead{font-family:'Orbitron';font-weight:900;font-size:14px;letter-spacing:3px;color:#43C8DA;margin-bottom:9px}
-.sprow{display:flex;gap:10px;align-items:baseline;margin-top:6px}
-.sprow .k{font-family:'Rajdhani';font-weight:700;font-size:12px;letter-spacing:2px;color:#7C8E98;
-  text-transform:uppercase;width:66px;flex:none}
-.sprow .v{font-family:'PretendardM';font-size:16px;color:#EAF0F4;line-height:1.3;word-break:keep-all}
+.sphead{font-family:'Orbitron';font-weight:900;font-size:13px;letter-spacing:3px;color:#43C8DA;margin-bottom:7px}
+.sprow{display:flex;gap:10px;align-items:baseline;margin-top:5px}
+.sprow .k{font-family:'Rajdhani';font-weight:700;font-size:11px;letter-spacing:2px;color:#7C8E98;
+  text-transform:uppercase;width:62px;flex:none}
+.sprow .v{font-family:'PretendardM';font-size:15px;color:#EAF0F4;line-height:1.25;word-break:keep-all}
 .hookwrap{position:absolute;top:150px;left:40px;right:40px}
 .hook{font-family:'BHS';font-size:52px;line-height:1.12;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.7);word-break:keep-all;text-wrap:pretty}
 .hook .car{color:#43C8DA;font-weight:400}
@@ -579,7 +598,9 @@ html,body{width:720px;height:1280px;overflow:hidden;background:transparent}
 .sbar i.on{background:#43C8DA}
 .spct{font-family:'STM';font-size:14px;color:#94A2AC;letter-spacing:1px}
 .stag{font-family:'Orbitron';font-weight:900;font-size:27px;letter-spacing:5px;color:#EAF0F4;text-align:center}
-.ssub{font-family:'PretendardM';font-weight:500;font-size:25px;color:#C7D2DA;margin-top:11px;text-align:center;min-height:32px;text-shadow:0 2px 5px rgba(0,0,0,.7);word-break:keep-all;text-wrap:pretty}
+/* 식별 서술(ANALYZING)은 앰버로 — 어두운 심해 위에서 '시스템 판독 중' 느낌을 강조하고 가독성↑.
+   근접 경보 시에는 render(t)가 붉은색으로 전환. */
+.ssub{font-family:'PretendardM';font-weight:500;font-size:25px;color:#FFC24D;margin-top:11px;text-align:center;min-height:32px;text-shadow:0 2px 6px rgba(0,0,0,.75);word-break:keep-all;text-wrap:pretty}
 .reveal{position:absolute;left:34px;right:34px;bottom:118px;border:1px solid rgba(234,240,244,.5);border-left:3px solid #43C8DA;padding:18px 22px;background:rgba(8,12,16,.52);backdrop-filter:blur(4px)}
 .reveal .rtag{font-family:'STM';font-size:15px;letter-spacing:3px;color:#43C8DA}
 .reveal .rname{font-family:'BHS';font-size:56px;color:#fff;margin-top:6px;line-height:1;word-break:keep-all}
@@ -684,10 +705,21 @@ function render(t){
     const p=clamp(t/c2,0,1);const on=Math.round(p*8);
     [...$id('sbar').children].forEach((el,i)=>el.className=i<on?'on':'');
     $id('spct').textContent=String(Math.round(p*100)).padStart(2,'0')+'%';
-    if(t<d0){$id('stag').textContent='SCANNING'+dots(t);
+    const alerting = C.alert && t>=C.alertAt && t<rs;   // 근접 경보(실제 근접·인지 한정)
+    if(alerting){
+      const ph=Math.abs(Math.sin(t*11));
+      $id('stag').textContent='▲ 근접 경보';$id('stag').style.color='#FF4D4D';
+      sc.style.borderLeftColor='#FF4D4D';
+      sc.style.transform='translateX('+(Math.sin(t*46)*2.2).toFixed(1)+'px)';  // '쿵쿵' 미세 흔들림
+      $id('ssub').style.color='#FF6B6B';$id('ssub').style.opacity=(0.7+0.3*ph);
+      $id('ssub').textContent=C.alertText;
+    } else if(t<d0){$id('stag').textContent='SCANNING'+dots(t);$id('stag').style.color='#EAF0F4';
+      sc.style.borderLeftColor='#43C8DA';sc.style.transform='none';
+      $id('ssub').style.color='#FFC24D';
       $id('ssub').style.opacity=(0.72+0.28*Math.abs(Math.sin(t*3)));$id('ssub').textContent='미확인 생명체 감지';}
-    else{$id('stag').textContent='ANALYZING SPECIMEN';
-      $id('ssub').style.opacity=1;
+    else{$id('stag').textContent='ANALYZING SPECIMEN';$id('stag').style.color='#EAF0F4';
+      sc.style.borderLeftColor='#43C8DA';sc.style.transform='none';
+      $id('ssub').style.color='#FFC24D';$id('ssub').style.opacity=1;
       $id('ssub').innerHTML=typed(C.beat2,C.beat2Start,C.beat2Dur,t)+(done(C.beat2,C.beat2Start,C.beat2Dur,t)?'':caret(t));}
   } else sc.style.opacity=clamp(1-(t-rs)/0.3,0,1);
   // 리빌

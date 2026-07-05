@@ -58,6 +58,22 @@ def test_schematic_html_has_specimen_panel_and_italic_sci():
     assert "font-style:italic" in html                            # 학명 이탤릭
     assert 'class="schip"' in html and 'class="sbar"' in html     # 리치 상태카드
     assert "viewBox" in html                                       # 월드맵 svg
+    assert "#FFC24D" in html                                       # ANALYZING 서술 앰버
+
+
+def test_proximity_alert_config_and_sfx():
+    """근접 경보(alert) 캡션 → cfg.alert/alertAt + sfx_timeline['alert'] 동기, 없으면 미발생."""
+    cap = _caption()
+    cap.alert = True
+    cap.alert_text = "개체가 이쪽으로 접근 중"
+    cfg = htmlhud._config(cap, _info(), "DEEP DIVE LOG", [8.0, 8.0, 8.0])
+    assert cfg["alert"] is True
+    assert 8.0 < cfg["alertAt"] < 16.0            # 컷2 후반, 리빌 이전
+    assert cfg["alertText"] == "개체가 이쪽으로 접근 중"
+    tl = htmlhud.sfx_timeline(cap, _info(), [8.0, 8.0, 8.0])
+    assert tl["alert"] == round(cfg["alertAt"], 3)
+    # 경보 없는 캡션이면 sfx에 alert 키 없음(차분한 종)
+    assert "alert" not in htmlhud.sfx_timeline(_caption(), _info(), [8.0, 8.0, 8.0])
 
 
 @browser_only

@@ -205,6 +205,27 @@ def _fallback_caption(info: SpeciesInfo, hook: str) -> str:
     return "\n".join(lines)
 
 
+def append_attribution(caption: CaptionData, info: SpeciesInfo, image_credit: str) -> CaptionData:
+    """저작권 표기(필수): 릴스 캡션 말미에 '이미지 출처'와 '종 정보 출처'를 반드시 명시.
+
+    CC-BY 등은 저작자·라이선스 표기가 법적 의무 → image_credit(저작자/출처/라이선스)을 그대로 싣는다.
+    종 정보 출처(info.sources: NOAA·WoRMS 등)도 함께 표기해 사실 출처를 밝힌다.
+    """
+    src_info = " · ".join(s for s in (info.sources or []) if s) or "NOAA · WoRMS"
+    img = (image_credit or "").strip() or "public domain"
+    block = "\n".join([
+        "",
+        "─────────",
+        f"이미지 출처: {img}",
+        f"종 정보 출처: {src_info}",
+    ])
+    body = (caption.caption_body or "").rstrip()
+    # 중복 방지(이미 표기됐으면 그대로)
+    if "이미지 출처:" not in body:
+        caption.caption_body = body + "\n" + block
+    return caption
+
+
 def build(info: SpeciesInfo) -> CaptionData:
     """CaptionData 완성 (훅 루프 + 비트 + 스토리텔링 캡션 + 해시태그)."""
     hook = best_hook(info)

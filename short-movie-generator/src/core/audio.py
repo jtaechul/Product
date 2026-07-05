@@ -124,6 +124,21 @@ def add_ambient(
         mix_labels.append("[chm]")
         idx += 1
 
+        # 근접 경보(실제 근접·인지 상황 한정): '쿵쿵' 저역 타격 2회 + 위급 경보음(비프)
+        alert_at = sfx_timeline.get("alert") if sfx_timeline else None
+        if alert_at is not None and alert_at > 0:
+            thump = r"sin(2*PI*48*t)*(1-exp(-55*t))*exp(-4.8*t)*0.9"        # 단발 '쿵'
+            alarm = r"sin(2*PI*720*t)*lt(mod(t\,0.5)\,0.22)*exp(-1.2*mod(t\,0.5))*0.15"  # 비프비프
+            for k, off in enumerate((0.0, 0.42)):  # 쿵…쿵 (2회)
+                cmd += ["-f", "lavfi", "-i", f"aevalsrc={thump}:d=0.9:s=44100"]
+                parts.append(f"[{idx}:a]adelay={int((alert_at + off) * 1000)}:all=1[thm{k}]")
+                mix_labels.append(f"[thm{k}]")
+                idx += 1
+            cmd += ["-f", "lavfi", "-i", f"aevalsrc={alarm}:d=1.5:s=44100"]
+            parts.append(f"[{idx}:a]adelay={int(alert_at * 1000)}:all=1[alm]")
+            mix_labels.append("[alm]")
+            idx += 1
+
         # 실제 사진 '충격' 리빌 효과음: 저역 붐 + 서브 하모닉 + 트랜지언트 + 확정음
         if photo_at_s is not None and photo_at_s > 0:
             impact = (r"sin(2*PI*46*t)*(1-exp(-40*t))*exp(-3.2*t)*0.75"

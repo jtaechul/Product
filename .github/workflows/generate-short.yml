@@ -150,14 +150,15 @@ jobs:
             short-movie-generator/output/*.json
           retention-days: 14
 
-      - name: Commit species ledger (중복방지 원장 영속화)
+      - name: Commit ledgers (중복방지 원장 + 도감 번호 원장 영속화)
         run: |
           cd "$GITHUB_WORKSPACE"
-          if git diff --quiet -- short-movie-generator/src/categories/deep_sea/used_species.json; then
+          LEDGERS="short-movie-generator/src/categories/deep_sea/used_species.json short-movie-generator/src/categories/deep_sea/catalog.json"
+          if git diff --quiet -- $LEDGERS; then
             echo "원장 변경 없음"; exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add short-movie-generator/src/categories/deep_sea/used_species.json
-          git commit -m "chore: 종 중복방지 원장 갱신 [skip ci]"
+          git add $LEDGERS
+          git commit -m "chore: 종 중복방지·도감 번호 원장 갱신 [skip ci]"
           git push origin HEAD:${{ github.ref_name }}

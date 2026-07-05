@@ -184,6 +184,13 @@ def _register(sp: dict) -> str:
         fixed.append({"slot": slot, "title": str(co.get("title", ""))[:16],
                       "sub": str(co.get("sub", ""))[:24]})
     sp["hud_callouts"] = fixed
+    # 근접 경보: 유영성(nekton) 활동종만 컷2 후반 붉은 경보(실제 근접·인지 연출, 날조 공격 아님).
+    # 표류성(plankton)·저서(benthos)는 차분하게(경보 없음) → 종별 톤 다양화.
+    if sp.get("_biocat") == "nekton":
+        sp["hud_alert"] = True
+        sp.setdefault("alert_text", "개체가 이쪽으로 빠르게 접근 중")
+    else:
+        sp.setdefault("hud_alert", False)
     data.SPECIES[key] = sp
     return key
 

@@ -108,6 +108,9 @@ def run(
 
     # 8. 캡션 → 컷별 타이밍 오버레이(리빌 정책) → 오디오(리빌 악센트)
     caption = category.build_caption(info)
+    # 저작권 표기(하드룰): 릴스 캡션에 이미지 출처(저작자·라이선스) + 종 정보 출처를 반드시 포함
+    if hasattr(category, "attach_attribution"):
+        caption = category.attach_attribution(caption, info, asset.credit_string)
     durations = [c.duration_s for c in clips]
     # 애니메이션 HTML HUD(우선) → 브라우저 불가/실패 시 PIL HUD 폴백 (파이프라인 불정지)
     hud_callouts = category.hud_callouts(info) if hasattr(category, "hud_callouts") else []
@@ -124,7 +127,11 @@ def run(
         )
     # 시리즈 엔드카드 (재방문·팔로우 유도) — 어둡게 끝나 콜드오픈 루프와 연결
     if episode is None:
-        episode = len(list(Path(out_dir).glob("*.json"))) + 1  # 자동 회차
+        # 도감 번호는 카테고리의 커밋되는 원장에서 예약(안정적 누적). CI 컨테이너 리셋 무관.
+        if hasattr(category, "next_episode"):
+            episode = category.next_episode()
+        else:
+            episode = len(list(Path(out_dir).glob("*.json"))) + 1  # 폴백(자동 회차)
     series_title = getattr(category, "series_title", "") or category_id
     # 통합 마지막 페이지: 실제 NOAA 사진(충격 리빌·피사체 중앙 크롭) + 종 도감 도시에
     # (신뢰 앵커·출처·팔로우 + 생태 특성 한 줄)
@@ -160,4 +167,8 @@ def run(
                     "series": {"title": series_title, "episode": episode}},
     )
     log.info("[9/9] 출력: %s (QC %s)", result.video_path, "통과" if result.qc_passed else "실패")
+
+    # 제작 성공분을 도감 원장에 기록 → 번호 누적 + 제작 페이지 현황판("#000_국문명") 근거
+    if hasattr(category, "log_catalog"):
+        category.log_catalog(episode, info)
     return result

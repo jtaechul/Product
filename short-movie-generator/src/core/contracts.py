@@ -96,6 +96,10 @@ class CaptionData:
     cut_beats: list[str] = field(default_factory=list)
     reveal_name: str = ""
     reveal_fact: str = ""
+    # 근접 경보(선택): 실제 행동(개체가 카메라/ROV를 인지·근접)에 한해 컷2 후반 긴장 연출을
+    # 붉은 글씨 + 쿵쿵/경보음으로 강화. 날조된 공격이 아니라 '근접·인지'만 표현(정확성 하드룰).
+    alert: bool = False
+    alert_text: str = ""
 
 
 @dataclass

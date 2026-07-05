@@ -73,3 +73,18 @@ def test_spoiled_candidates_filtered_before_judge(info, monkeypatch):
     monkeypatch.setattr(copywriter.llm, "generate_text", fake_llm)
     hook = copywriter.best_hook(info)
     assert not copywriter.has_spoiler(hook, info)
+
+
+def test_append_attribution_adds_sources_once():
+    """저작권 표기(하드룰): 캡션 말미에 이미지·종정보 출처가 들어가고 중복되지 않는다."""
+    from src.core.contracts import CaptionData, SpeciesInfo
+    info = SpeciesInfo(scientific_name="Chauliodus sloani", common_name_ko="바이퍼피시",
+                       common_name_en="Sloane's viperfish", depth_range_m="500-2500",
+                       distribution="대서양", habitat="심해 중층", diet=["소형 어류"],
+                       fun_facts=["송곳니가 크다"], sources=["NOAA", "WoRMS"])
+    cap = CaptionData(hook_text="h", overlay_facts=[], caption_body="본문.")
+    cap = copywriter.append_attribution(cap, info, "Jane Doe / Wikimedia Commons (cc-by)")
+    assert "이미지 출처: Jane Doe / Wikimedia Commons (cc-by)" in cap.caption_body
+    assert "종 정보 출처: NOAA · WoRMS" in cap.caption_body
+    copywriter.append_attribution(cap, info, "다른출처 (cc0)")  # 2회차
+    assert cap.caption_body.count("이미지 출처:") == 1

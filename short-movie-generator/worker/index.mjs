@@ -129,23 +129,45 @@ $("#go").onclick=async()=>{
 function ago(iso){const s=(Date.now()-new Date(iso))/1000;
   if(s<90)return Math.round(s)+"초 전";if(s<5400)return Math.round(s/60)+"분 전";
   if(s<172800)return Math.round(s/3600)+"시간 전";return Math.round(s/86400)+"일 전";}
+const CATALOG_PATH="short-movie-generator/src/categories/deep_sea/catalog.json";
+function num3(n){return String(n).padStart(3,"0");}
+async function fetchCatalog(){
+  try{
+    const r=await fetch(API+"/contents/"+CATALOG_PATH+"?ref="+BRANCH,
+      {headers:{...headers(true),"Accept":"application/vnd.github.raw+json"}});
+    if(!r.ok)return [];
+    const arr=JSON.parse(await r.text());
+    return Array.isArray(arr)?arr:[];
+  }catch(e){return [];}
+}
 async function loadRuns(){
   try{
-    const r=await fetch(API+"/actions/workflows/"+WF+"/runs?per_page=8",{headers:headers(true)});
+    const [r,cat]=await Promise.all([
+      fetch(API+"/actions/workflows/"+WF+"/runs?per_page=8",{headers:headers(true)}),
+      fetchCatalog(),
+    ]);
     const j=await r.json();
     const el=$("#runs");el.innerHTML="";
-    (j.workflow_runs||[]).forEach(run=>{
-      let st="prog",label="진행 중";
-      if(run.status==="completed"){st=run.conclusion==="success"?"done":"fail";
-        label=run.conclusion==="success"?"완료·전송됨":"실패";}
-      else if(run.status==="queued"){label="대기열";}
+    // 1) 진행 중/대기열 실행 (아직 도감에 기록 전) — 상단에 표시
+    (j.workflow_runs||[]).filter(run=>run.status!=="completed").forEach(run=>{
+      const label=run.status==="queued"?"대기열":"진행 중";
       el.insertAdjacentHTML("beforeend",
-        '<div class="run"><span class="st '+st+'">'+label+'</span>'+
-        '<a href="'+run.html_url+'" target="_blank">#'+run.run_number+' 쇼츠 생성</a>'+
+        '<div class="run"><span class="st prog">'+label+'</span>'+
+        '<a href="'+run.html_url+'" target="_blank">#'+num3(run.run_number)+' 쇼츠 생성</a>'+
         '<span class="t">'+ago(run.created_at)+"</span></div>");
-      });
-    if(!(j.workflow_runs||[]).length)el.innerHTML='<div class="hint">아직 실행 기록이 없습니다.</div>';
-    if((j.workflow_runs||[]).some(r=>r.status!=="completed"))setTimeout(loadRuns,20000);
+    });
+    // 2) 제작 완료된 심해 생물 도감(#000_국문명) — 번호 내림차순(최근 먼저)
+    const logged=[...cat].sort((a,b)=>(b.no||0)-(a.no||0)).slice(0,12);
+    logged.forEach(it=>{
+      const name=it.common_name_ko||it.common_name_en||"종";
+      el.insertAdjacentHTML("beforeend",
+        '<div class="run"><span class="st done">완료·전송됨</span>'+
+        '<a href="https://github.com/'+OWNER+'/'+REPO+'/actions/workflows/'+WF+'" target="_blank">'+
+        '#'+num3(it.no)+'_'+name+' 쇼츠 생성</a>'+
+        '<span class="t">'+(it.date||"")+"</span></div>");
+    });
+    if(!el.innerHTML)el.innerHTML='<div class="hint">아직 실행 기록이 없습니다.</div>';
+    if((j.workflow_runs||[]).some(x=>x.status!=="completed"))setTimeout(loadRuns,20000);
   }catch(e){$("#runs").innerHTML='<div class="hint">현황 조회 실패 — <a href="https://github.com/'+OWNER+'/'+REPO+'/actions" target="_blank" style="color:var(--cy)">GitHub에서 보기</a></div>';}
 }
 $("#refresh").onclick=(e)=>{e.preventDefault();loadRuns();};
