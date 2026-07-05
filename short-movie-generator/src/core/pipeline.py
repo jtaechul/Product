@@ -126,10 +126,16 @@ def run(
     if episode is None:
         episode = len(list(Path(out_dir).glob("*.json"))) + 1  # 자동 회차
     series_title = getattr(category, "series_title", "") or category_id
-    # 통합 마지막 페이지: 실제 NOAA 사진(충격 리빌) + 종 도감 도시에(신뢰 앵커·출처·팔로우)
+    # 통합 마지막 페이지: 실제 NOAA 사진(충격 리빌·피사체 중앙 크롭) + 종 도감 도시에
+    # (신뢰 앵커·출처·팔로우 + 생태 특성 한 줄)
+    eco_bits = [f"수심 {info.depth_range_m}m" if info.depth_range_m else "", info.habitat or ""]
+    if info.diet:
+        eco_bits.append(" ".join(info.diet[:2]))
+    eco_line = " · ".join(b for b in eco_bits if b)
     final_page = endcard.build_final_page(
         caption, series_title, episode, WATERMARK,
         asset.asset_path, asset.credit_string, info.scientific_name, str(work_dir),
+        eco_line=eco_line,
     )
     with_endcard = endcard.concat_tail([overlaid, final_page], str(work_dir))
     final_duration = total_duration + endcard.FINAL_PAGE_DURATION_S

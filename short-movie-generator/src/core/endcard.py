@@ -252,9 +252,11 @@ FINAL_PAGE_DURATION_S = 3.8
 
 
 def _dossier_overlay_html(caption: CaptionData, series_title: str, episode: int,
-                          watermark: str, credit_string: str, sci_name: str) -> str:
+                          watermark: str, credit_string: str, sci_name: str,
+                          eco_line: str = "") -> str:
     name_ko, name_en = _split_name(caption.reveal_name)
     e = lambda s: _html.escape(s or "")  # noqa: E731
+    eco_html = f'<div class="eco">{e(eco_line)}</div>' if eco_line else ""
     return f"""<!doctype html><html><head><meta charset="utf-8"><style>
 {htmlhud.fonts_face_css()}
 *{{margin:0;padding:0;box-sizing:border-box}}
@@ -274,7 +276,8 @@ html,body{{width:720px;height:1280px;overflow:hidden;background:transparent}}
 .sci{{position:absolute;left:42px;right:40px;bottom:284px}}
 .sci .en{{font-family:'Orbitron';font-weight:900;font-size:20px;letter-spacing:1px;color:#CBD6DE}}
 .sci .la{{font-family:'PretendardM';font-style:italic;font-size:19px;color:#9FB0BA;margin-left:8px}}
-.fact{{position:absolute;left:42px;right:44px;bottom:210px;font-family:'PretendardM';font-size:22px;color:#D6E0E7;line-height:1.35;word-break:keep-all;text-wrap:pretty}}
+.eco{{position:absolute;left:42px;right:44px;bottom:244px;font-family:'STM';font-size:16px;letter-spacing:.5px;color:#67C6D6;line-height:1.4;word-break:keep-all}}
+.fact{{position:absolute;left:42px;right:44px;bottom:196px;font-family:'PretendardM';font-size:21px;color:#D6E0E7;line-height:1.32;word-break:keep-all;text-wrap:pretty}}
 .cta{{position:absolute;left:40px;right:40px;bottom:120px;font-family:'Pretendard';font-weight:900;font-size:32px;color:#fff;text-shadow:0 0 16px rgba(80,200,240,.35)}}
 .cta b{{color:#43C8DA}}
 .src{{position:absolute;left:42px;bottom:44px;font-family:'STM';font-size:15px;letter-spacing:1px;color:#8FA0AA}}
@@ -288,6 +291,7 @@ html,body{{width:720px;height:1280px;overflow:hidden;background:transparent}}
   <div class="tag">▶ SPECIES IDENTIFIED</div>
   <div class="name">{e(name_ko)}</div>
   <div class="sci"><span class="en">{e(name_en).upper()}</span><span class="la">{e(sci_name)}</span></div>
+  {eco_html}
   <div class="fact">{e(caption.reveal_fact)}</div>
   <div class="cta">팔로우하고 <b>다음 심해 생물</b> 만나기</div>
   <div class="src">SOURCE: {e(credit_string)}</div>
@@ -296,11 +300,13 @@ html,body{{width:720px;height:1280px;overflow:hidden;background:transparent}}
 
 
 def _dossier_overlay_png(caption: CaptionData, series_title: str, episode: int,
-                         watermark: str, credit_string: str, sci_name: str, work_dir: str) -> str:
+                         watermark: str, credit_string: str, sci_name: str, work_dir: str,
+                         eco_line: str = "") -> str:
     """도시에(정보) 투명 오버레이 PNG. HTML 우선, 브라우저 불가 시 PIL 폴백."""
     out = str(Path(work_dir) / "dossier_overlay.png")
     try:
-        html = _dossier_overlay_html(caption, series_title, episode, watermark, credit_string, sci_name)
+        html = _dossier_overlay_html(caption, series_title, episode, watermark,
+                                     credit_string, sci_name, eco_line)
         return htmlhud.render_static(html, out, work_dir, name="dossier", transparent=True)
     except htmlhud.HudRenderError:
         img = Image.new("RGBA", (CLIP_W, CLIP_H), (0, 0, 0, 0))
@@ -311,7 +317,9 @@ def _dossier_overlay_png(caption: CaptionData, series_title: str, episode: int,
         y = CLIP_H - 360
         for line in _wrap(d, name_ko, _font(64), CLIP_W - 90):
             _text_with_stroke(d, (40, y), line, _font(64), fill=(255, 230, 160, 255)); y += 76
-        _text_with_stroke(d, (42, y), name_en, _orbitron(22), fill=(203, 214, 222, 255)); y += 54
+        _text_with_stroke(d, (42, y), name_en, _orbitron(22), fill=(203, 214, 222, 255)); y += 46
+        if eco_line:
+            _text_with_stroke(d, (42, y), eco_line, _orbitron(16), fill=(103, 198, 214, 255)); y += 44
         for line in _wrap(d, caption.reveal_fact or "", _font(34), CLIP_W - 100):
             _text_with_stroke(d, (42, y), line, _font(34), fill=(214, 224, 231, 255)); y += 46
         _text_with_stroke(d, (40, CLIP_H - 150), "팔로우하고 다음 심해 생물 만나기", _font(34), anchor="lm")
@@ -321,18 +329,54 @@ def _dossier_overlay_png(caption: CaptionData, series_title: str, episode: int,
         return out
 
 
+def _subject_center(asset_path: str) -> tuple[float, float]:
+    """사진 속 생물의 중심을 (0~1, 0~1)로 반환. 비전 모델 사용, 실패 시 중앙(0.5,0.5)."""
+    import os
+    if not os.environ.get("GEMINI_API_KEY"):
+        return (0.5, 0.5)
+    try:
+        from google import genai
+        from google.genai import types
+        client = genai.Client()
+        resp = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                types.Part.from_bytes(data=Path(asset_path).read_bytes(), mime_type="image/jpeg"),
+                "이 사진에서 가장 두드러진 해양생물(피사체) 몸통의 중심점을 이미지 기준 "
+                "정규화 좌표로 알려줘. x는 왼쪽0~오른쪽1, y는 위0~아래1. "
+                "다른 말 없이 'x,y' 숫자만 (예: 0.42,0.55).",
+            ],
+        )
+        m = re.search(r"([01](?:\.\d+)?)\s*,\s*([01](?:\.\d+)?)", getattr(resp, "text", "") or "")
+        if m:
+            cx, cy = float(m.group(1)), float(m.group(2))
+            if 0 <= cx <= 1 and 0 <= cy <= 1:
+                return (cx, cy)
+    except Exception as e:  # noqa: BLE001
+        log_ = __import__("logging").getLogger(__name__)
+        log_.warning("피사체 중심 검출 실패 → 중앙 크롭: %s", e)
+    return (0.5, 0.5)
+
+
 def build_final_page(caption: CaptionData, series_title: str, episode: int, watermark: str,
-                     asset_path: str, credit_string: str, sci_name: str, work_dir: str) -> str:
-    """통합 마지막 페이지: 실제 NOAA 사진(꽉 채움)이 충격 리빌(플래시+줌펀치+스캔)로 등장하고,
-    그 위에 종 도감 도시에(종명·학명 이탤릭·팩트·팔로우·출처)를 얹는다."""
+                     asset_path: str, credit_string: str, sci_name: str, work_dir: str,
+                     eco_line: str = "") -> str:
+    """통합 마지막 페이지: 실제 NOAA 사진(꽉 채움·피사체 중앙 크롭)이 충격 리빌로 등장하고,
+    그 위에 종 도감 도시에(종명·학명 이탤릭·생태특성·팩트·팔로우·출처)를 얹는다."""
     work = Path(work_dir)
     if not Path(asset_path).exists():
         raise PipelineError("endcard", f"실제 사진 없음: {asset_path}")
-    overlay = _dossier_overlay_png(caption, series_title, episode, watermark, credit_string, sci_name, work_dir)
+    overlay = _dossier_overlay_png(caption, series_title, episode, watermark,
+                                   credit_string, sci_name, work_dir, eco_line)
     out = work / "final_page.mp4"
     fps, dur = CLIP_FPS, FINAL_PAGE_DURATION_S
     frames = int(dur * fps)
-    bg = (f"[0:v]scale={CLIP_W}:{CLIP_H}:force_original_aspect_ratio=increase,crop={CLIP_W}:{CLIP_H},"
+    # 피사체 중심 검출 → 그 지점을 중앙에 두고 9:16 cover 크롭 (생물이 화면 중앙에 오도록)
+    cx, cy = _subject_center(asset_path)
+    crop_x = f"clip(iw*{cx:.3f}-{CLIP_W//2},0,iw-{CLIP_W})"
+    crop_y = f"clip(ih*{cy:.3f}-{CLIP_H//2},0,ih-{CLIP_H})"
+    bg = (f"[0:v]scale={CLIP_W}:{CLIP_H}:force_original_aspect_ratio=increase,"
+          f"crop={CLIP_W}:{CLIP_H}:x='{crop_x}':y='{crop_y}',"
           f"scale={CLIP_W*2}:{CLIP_H*2},"
           f"zoompan=z='max(1.03,1.18-0.15*on/8)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
           f":d={frames}:s={CLIP_W}x{CLIP_H}:fps={fps},setsar=1,"

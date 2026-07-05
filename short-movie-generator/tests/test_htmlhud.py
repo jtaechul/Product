@@ -49,17 +49,15 @@ def test_config_splits_reveal_name():
     assert cfg["total"] == 24.0 and cfg["revealStart"] == 16.0
 
 
-def test_schematic_html_has_callouts_and_italic_sci():
-    """스키매틱 테마: 콜아웃 지시선·학명 이탤릭·리치 상태카드 마크업 존재(브라우저 불필요)."""
+def test_schematic_html_has_specimen_panel_and_italic_sci():
+    """스키매틱 테마: 생태 데이터 패널·학명 이탤릭·리치 상태카드 마크업 존재(브라우저 불필요)."""
     cfg = htmlhud._config(_caption(), _info(), "DEEP DIVE LOG", [8.0, 8.0, 8.0])
-    callouts = [{"slot": "left-mid", "title": "FIN ×2", "sub": "EAR-LIKE"},
-                {"slot": "right-mid", "title": "OCULAR", "sub": "EYE"}]
-    html = htmlhud._schematic_html(cfg, callouts)
-    assert 'id="lead0"' in html and 'id="lead1"' in html          # 콜아웃 지시선
-    assert '"nco": 2' in html or '"nco":2' in html                # 콜아웃 개수 주입
+    html = htmlhud._schematic_html(cfg)
+    assert 'id="specimen"' in html and "SPECIMEN DATA" in html     # 생태 데이터 패널
+    assert '"spDepth"' in html and '"spDiet"' in html              # 생태 필드 주입
     assert "font-style:italic" in html                            # 학명 이탤릭
     assert 'class="schip"' in html and 'class="sbar"' in html     # 리치 상태카드
-    assert "world" not in html.lower() or "viewBox" in html       # 월드맵 svg
+    assert "viewBox" in html                                       # 월드맵 svg
 
 
 @browser_only

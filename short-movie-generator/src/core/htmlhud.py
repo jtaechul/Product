@@ -109,6 +109,11 @@ def _config(caption: CaptionData, info: SpeciesInfo, watermark: str,
         "revealFact": fact,
         "mapLon": 127.9, "mapLat": 34.2,          # 서식지/탐지 좌표(마커) — 추후 종별화
         "distribution": info.distribution or "",
+        # 생태 데이터 패널(콜아웃 대체) — 생물 위치와 무관해 임의 종에도 항상 정확
+        "spDepth": f"{info.depth_range_m} m" if info.depth_range_m else "—",
+        "spHabitat": info.habitat or "—",
+        "spDiet": " · ".join(info.diet[:3]) if info.diet else "—",
+        "spTrait": (info.fun_facts[0] if info.fun_facts else ""),
         # 타이핑 스케줄 (start 절대초, dur초)
         "hookStart": HOOK_START, "hookDur": hook_dur,
         "beat2Start": d0 + BEAT_START_OFF, "beat2Dur": beat2_dur,
@@ -541,10 +546,18 @@ html,body{width:720px;height:1280px;overflow:hidden;background:transparent}
 .tel .row .v.c{color:#43C8DA}
 .rk{position:absolute;right:20px;width:12px;height:1px}
 .rn{position:absolute;right:36px;font-family:'STM';font-size:12px;color:#5E6A73}
-.lead{position:absolute;inset:0;pointer-events:none}
-.col{position:absolute}.col.l{text-align:left}.col.r{text-align:right}
-.col .ct{font-family:'Rajdhani';font-weight:700;font-size:17px;letter-spacing:2px;color:#EAF0F4;text-shadow:0 1px 4px rgba(0,0,0,.85)}
-.col .cv{font-family:'STM';font-size:12px;letter-spacing:1px;color:#B8C4CC;text-shadow:0 1px 4px rgba(0,0,0,.9)}
+/* 생태 데이터 패널 (콜아웃 대체 — 부위 지시 대신 종 생태정보, 임의 종에도 정확) */
+.specimen{position:absolute;left:34px;top:346px;width:312px;padding:12px 14px 13px;
+  background:rgba(6,14,20,.5);border:1px solid rgba(234,240,244,.26);border-left:2px solid #43C8DA;
+  backdrop-filter:blur(3px);opacity:0}
+.specimen .cbr{position:absolute;width:11px;height:11px;border:1.5px solid #43C8DA}
+.specimen .a{top:-1px;left:-1px;border-right:0;border-bottom:0}.specimen .b{top:-1px;right:-1px;border-left:0;border-bottom:0}
+.specimen .c{bottom:-1px;left:-1px;border-right:0;border-top:0}.specimen .d{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.sphead{font-family:'Orbitron';font-weight:900;font-size:14px;letter-spacing:3px;color:#43C8DA;margin-bottom:9px}
+.sprow{display:flex;gap:10px;align-items:baseline;margin-top:6px}
+.sprow .k{font-family:'Rajdhani';font-weight:700;font-size:12px;letter-spacing:2px;color:#7C8E98;
+  text-transform:uppercase;width:66px;flex:none}
+.sprow .v{font-family:'PretendardM';font-size:16px;color:#EAF0F4;line-height:1.3;word-break:keep-all}
 .hookwrap{position:absolute;top:150px;left:40px;right:40px}
 .hook{font-family:'BHS';font-size:52px;line-height:1.12;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.7);word-break:keep-all;text-wrap:pretty}
 .hook .car{color:#43C8DA;font-weight:400}
@@ -587,7 +600,14 @@ html,body{width:720px;height:1280px;overflow:hidden;background:transparent}
   <div class="row"><span class="k">TEMP</span><span class="v" id="temp">2.1°C</span></div>
   <div class="row"><span class="k">POS</span><span class="v" id="coord"></span></div></div>
 <div class="hookwrap" id="hookwrap"><div class="hook" id="hook"></div><div class="hrule"></div></div>
-<div id="callouts">%CALLOUTS%</div>
+<div class="specimen" id="specimen">
+  <div class="sphead">◈ SPECIMEN DATA</div>
+  <div class="sprow"><span class="k">DEPTH</span><span class="v" id="spDepth"></span></div>
+  <div class="sprow"><span class="k">HABITAT</span><span class="v" id="spHab"></span></div>
+  <div class="sprow"><span class="k">DIET</span><span class="v" id="spDiet"></span></div>
+  <div class="sprow"><span class="k">TRAIT</span><span class="v" id="spTrait"></span></div>
+  <div class="cbr a"></div><div class="cbr b"></div><div class="cbr c"></div><div class="cbr d"></div>
+</div>
 <div class="mapwrap" id="mapwrap"><div class="mlab" id="mlab"></div><div class="map">%MAP%</div></div>
 <svg class="dial" id="dial" viewBox="0 0 92 92">
   <circle cx="46" cy="46" r="44" fill="none" stroke="#EAF0F4" stroke-width="1"/>
@@ -650,16 +670,14 @@ function render(t){
   if(t<d0){hw.style.opacity=Math.min(clamp((t-0.2)/0.4,0,1),clamp((d0-t)/0.7,0,1));
     $id('hook').innerHTML=typed(C.hook,C.hookStart,C.hookDur,t)+(done(C.hook,C.hookStart,C.hookDur,t)?'':caret(t));}
   else hw.style.opacity=0;
-  // 콜아웃 (컷2 분석 비트) — 지시선 그려짐 + 라벨 페이드, 컷2 끝 사라짐
-  const cg=$id('callouts');
+  // 생태 데이터 패널 (컷2 분석 비트) — 행별로 타이핑 등장, 컷2 끝 페이드아웃
+  const sp=$id('specimen');
   if(!inRev && t>=d0){
-    const gOut=clamp((c2-t)/0.6,0,1);cg.style.opacity=gOut;
-    for(let i=0;i<C.nco;i++){const ln=$id('lead'+i),cl=$id('col'+i);if(!ln)continue;
-      const st=d0+0.25+i*0.5;const L=ln.getTotalLength();
-      const p=clamp((t-st)/0.5,0,1);ln.style.strokeDasharray=L;ln.style.strokeDashoffset=L*(1-p);
-      cl.style.opacity=clamp((t-st-0.35)/0.3,0,1);}
-  } else {cg.style.opacity=0;
-    for(let i=0;i<C.nco;i++){const ln=$id('lead'+i);if(ln){const L=ln.getTotalLength();ln.style.strokeDasharray=L;ln.style.strokeDashoffset=L;}}}
+    sp.style.opacity=Math.min(clamp((t-d0-0.15)/0.35,0,1), clamp((c2-t)/0.5,0,1));
+    const rows=[['spDepth',C.spDepth],['spHab',C.spHabitat],['spDiet',C.spDiet],['spTrait',C.spTrait]];
+    rows.forEach((r,i)=>{const st=d0+0.35+i*0.45;
+      $id(r[0]).innerHTML=typed(String(r[1]),st,Math.max(0.35,String(r[1]).length*0.03),t);});
+  } else sp.style.opacity=0;
   // 리치 상태 카드
   const sc=$id('status');
   if(!inRev){sc.style.opacity=1;
@@ -687,15 +705,13 @@ window.render=render;
 </script></body></html>"""
 
 
-def _schematic_html(cfg: dict, callouts: list[dict]) -> str:
-    c = dict(cfg)
-    c["nco"] = len(callouts)
+def _schematic_html(cfg: dict, callouts: list[dict] | None = None) -> str:
+    # callouts 인자는 하위호환 위해 유지(미사용) — 부위 지시선 대신 생태 데이터 패널 사용.
     html = (_SCHEM_TEMPLATE
             .replace("%FONTS%", fonts_face_css())
             .replace("%RULER%", _schem_ruler_html())
             .replace("%MAP%", _schem_map_svg(cfg["mapLon"], cfg["mapLat"]))
-            .replace("%CALLOUTS%", _schem_callouts_html(callouts))
-            .replace("/*CONFIG*/", json.dumps(c)))
+            .replace("/*CONFIG*/", json.dumps(cfg)))
     return html
 
 
