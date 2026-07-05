@@ -1111,8 +1111,8 @@ async function handleFilterCleanImages(env, body) {
   } catch { arr = []; }
   const results = images.map((_, i) => {
     const r = arr[i] || {};
-    // 기준 이미지가 있으면 related 판정 사용(누락 시 무관으로 간주해 노이즈 차단), 없으면 모두 관련으로 취급
-    const related = hasRef ? (r.related === true) : true;
+    // 관련성은 '명백히 무관(related=false)'일 때만 제외 — 애매하면 후보로 노출(후보가 잘 나오게 완화)
+    const related = hasRef ? (r.related !== false) : true;
     return { hasText: r.hasText === true, related, note: String(r.note || '').slice(0, 80) };
   });
   return { success: true, results, usedRef: hasRef };

@@ -1259,17 +1259,25 @@ document.getElementById('redditLoadBtn').addEventListener('click', async () => {
   }
 });
 
-// Reddit 게시물 선택 → 검색용 시드로 담고, 원본 추적으로 이어지도록 안내
+// Reddit 게시물 선택 → Reddit 이미지는 이미 원본이므로 '카드 원본'으로 바로 추가 (무조건 후보로 사용 가능).
+// 검색용 시드로도 담아 주제 제안·추가 원본추적에 쓸 수 있게 한다.
 async function pickRedditPost(post, cardEl) {
-  showLoading('선택한 이미지 가져오는 중...', '검색용 시드로 담습니다');
+  if (cardEl && cardEl.classList.contains('picked')) { showToast('이미 추가한 이미지입니다.', 'info'); return; }
+  showLoading('선택한 이미지 가져오는 중...', 'Reddit 원본을 카드에 담습니다');
   try {
     const dataUrl = await loadOriginImage(post.imageUrl); // 프록시 → dataURL
-    state.seedImages = [dataUrl];
-    document.querySelectorAll('.reddit-card').forEach(c => c.classList.remove('picked'));
+    state.seedImages = [dataUrl];                          // 주제 AI 제안·원본추적용 시드
     if (cardEl) cardEl.classList.add('picked');
     renderSeedPreviews();
-    showToast('검색용 시드로 담았습니다. "원본 추적"으로 크게 가공되지 않은 원본을 찾으세요.', 'success');
-    document.getElementById('traceGroup').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (state.mode === 'post') {
+      state.uploadedImages.push(dataUrl);                 // ★ Reddit 이미지 = 바로 카드 원본
+      renderCardMedia();
+      refreshPreview();
+      showToast('Reddit 원본을 카드에 추가했습니다. 더 고르거나 아래에서 주제를 입력하세요.', 'success');
+      document.getElementById('cardMediaGroup').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      showToast('참고 시드로 담았습니다. 릴스는 원본 영상이 필요해 "내 이미지로 시작"에서 올려주세요.', 'info');
+    }
   } catch (e) {
     showToast('이미지 가져오기 실패: ' + e.message, 'error');
   } finally {
