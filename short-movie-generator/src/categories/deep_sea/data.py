@@ -31,6 +31,9 @@ SPECIES = {
         },
         # --- 프롬프트 재료 (prompts.py 템플릿이 사용) ---
         "situation_id": "discovery_swim",
+        # 서식대가 배경을 결정 (benthic=해저 퇴적층 / pelagic=원양 흑수).
+        # 덤보문어는 심해 저층 바로 위에서 호버링하는 저서성 → benthic.
+        "habitat_zone": "benthic",
         "appearance": (
             "a dumbo octopus (Grimpoteuthis), a small deep-sea octopus with a soft rounded "
             "gelatinous body and two large paddle-like fins on top of its head that look like "
