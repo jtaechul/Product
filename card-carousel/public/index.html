@@ -305,6 +305,7 @@
     .origin-cand.off { display: none !important; }                  /* 업로드 이미지와 무관한 후보는 항상 숨김 */
     .origin-cand-tag.off { background: rgba(107,114,128,0.9); }
     .origin-cands.show-text .origin-cand.has-text { display: block; }
+    .origin-cands.show-off .origin-cand.off { display: block; }   /* 안전망: 원본 0개일 때 무관 후보도 노출 */
     .origin-cand-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
     .origin-cand-toggle { font-size: 11px; color: var(--primary); background: none; border: none; cursor: pointer; padding: 0; text-decoration: underline; }
     .origin-cand-empty { margin-top: 6px; font-size: 11.5px; color: var(--warning, #d97706); line-height: 1.5; }
@@ -753,7 +754,7 @@
         <button type="button" class="lang-tab" data-cat="history">역사</button>
       </div>
       <button class="btn btn-outline" id="redditLoadBtn" style="margin-top:8px;">인기글 불러오기</button>
-      <span class="hint">마음에 드는 게시물을 누르면 <b>검색용 시드</b>가 됩니다. 이어서 "원본 추적"으로 글자 없는 원본을 찾아 카드에 사용하세요.</span>
+      <span class="hint">마음에 드는 게시물을 누르면 <b>검색용 시드</b>가 됩니다. 이어서 "원본 추적"으로 크게 가공되지 않은 원본을 찾아 카드에 사용하세요.</span>
       <div class="reddit-grid" id="redditGrid"></div>
     </div>
 
@@ -767,7 +768,7 @@
     <!-- STEP 0: 원본 추적 (Gemini) -->
     <div class="form-group" id="traceGroup" style="display:none;">
       <button class="btn btn-outline" id="traceOriginBtn">원본 추적 — 검색용 이미지에서 원본 찾기</button>
-      <span class="hint">AI가 이미지를 인식하고 구글 검색으로 <b>글자 없는 원본</b>을 찾아 보여줍니다. 그 중에서 골라 카드에 사용하세요.</span>
+      <span class="hint">AI가 이미지를 인식하고 구글 검색으로 <b>크게 가공되지 않은 원본</b>을 찾아 보여줍니다. 그 중에서 골라 카드에 사용하세요.</span>
       <div id="traceResults"></div>
     </div>
 
@@ -1267,7 +1268,7 @@ async function pickRedditPost(post, cardEl) {
     document.querySelectorAll('.reddit-card').forEach(c => c.classList.remove('picked'));
     if (cardEl) cardEl.classList.add('picked');
     renderSeedPreviews();
-    showToast('검색용 시드로 담았습니다. "원본 추적"으로 글자 없는 원본을 찾으세요.', 'success');
+    showToast('검색용 시드로 담았습니다. "원본 추적"으로 크게 가공되지 않은 원본을 찾으세요.', 'success');
     document.getElementById('traceGroup').scrollIntoView({ behavior: 'smooth', block: 'center' });
   } catch (e) {
     showToast('이미지 가져오기 실패: ' + e.message, 'error');
@@ -1416,7 +1417,7 @@ async function loadOriginCandidates(i, data, cardEl) {
     const media = (r.media || []).slice(0, 24);
     if (!media.length) return;
     const row = document.createElement('div');
-    row.innerHTML = `<div class="trace-note" style="margin-top:8px;"><b>원본 후보 미디어</b> — 업로드한 이미지와 <b>같은 대상의 글자 없는 원본</b>만 골라 보여드립니다. 눌러서 선택(여러 개 가능)한 뒤 추가하세요. 첫 장에만 문구가 들어가고 나머지는 사진 그대로 실립니다.</div>
+    row.innerHTML = `<div class="trace-note" style="margin-top:8px;"><b>원본 후보 미디어</b> — 업로드한 이미지와 <b>같은 대상의, 크게 가공되지 않은 원본</b>을 골라 보여드립니다. 눌러서 선택(여러 개 가능)한 뒤 추가하세요. 첫 장에만 문구가 들어가고 나머지는 사진 그대로 실립니다.</div>
       <div class="origin-cands">${media.map(m => m.type === 'video'
         ? `<div class="origin-cand" data-type="video" data-src="${escHtml(m.mediaUrl)}" title="${escHtml(m.pageUrl)}"><video preload="metadata" muted src="/api/img-proxy?url=${encodeURIComponent(m.mediaUrl)}"></video><span class="origin-cand-video-label">영상</span></div>`
         : `<div class="origin-cand checking" data-type="image" data-src="${escHtml(m.mediaUrl)}" title="${escHtml(m.pageUrl)}"><img src="/api/img-proxy?url=${encodeURIComponent(m.mediaUrl)}" loading="lazy"></div>`
@@ -1428,7 +1429,7 @@ async function loadOriginCandidates(i, data, cardEl) {
       </div>`;
     cardEl.appendChild(row);
     row.querySelectorAll('.origin-cand').forEach(el => {
-      el.addEventListener('click', () => { if (!el.classList.contains('checking') && !el.classList.contains('off')) el.classList.toggle('selected'); });
+      el.addEventListener('click', () => { if (!el.classList.contains('checking')) el.classList.toggle('selected'); });
       const img = el.querySelector('img');
       if (img) img.addEventListener('error', () => el.remove()); // 못 불러온 후보는 숨김
     });
@@ -1474,7 +1475,7 @@ async function classifyOriginCandidates(row, refSrc) {
     if (!related) {
       i.el.classList.add('off'); tag.className = 'origin-cand-tag off'; tag.textContent = '관련 없음'; offCount++;
     } else if (hasText) {
-      i.el.classList.add('has-text'); tag.className = 'origin-cand-tag text'; tag.textContent = '글자 있음'; textCount++;
+      i.el.classList.add('has-text'); tag.className = 'origin-cand-tag text'; tag.textContent = '가공됨'; textCount++;
     } else {
       tag.className = 'origin-cand-tag clean'; tag.textContent = '원본'; cleanCount++;
     }
@@ -1484,18 +1485,22 @@ async function classifyOriginCandidates(row, refSrc) {
   const cands = row.querySelector('.origin-cands');
   const empty = row.querySelector('.origin-cand-empty');
   const toggle = row.querySelector('.origin-cand-toggle');
-  if (cleanCount === 0) {
+
+  // 안전망: '크게 가공 안 된 원본'이 하나도 없으면, 남은 후보(가공본·무관 포함)를 모두 보여줘 빈 화면을 피한다
+  if (cleanCount === 0 && (textCount + offCount) > 0) {
+    cands.classList.add('show-text', 'show-off');
     empty.style.display = 'block';
-    empty.innerHTML = `업로드한 이미지와 <b>같은 대상의 글자 없는 원본</b>을 찾지 못했습니다${offCount ? ` (무관한 후보 ${offCount}개는 숨김)` : ''}. 다른 참고 이미지로 시도하거나, <a href="https://lens.google.com/" target="_blank" rel="noopener" style="color:var(--primary);">구글 렌즈</a>로 직접 원본을 찾아보세요.`;
+    empty.style.color = 'var(--warning, #d97706)';
+    empty.innerHTML = '크게 가공되지 않은 원본을 확신하지 못해, <b>관련 후보를 모두 보여드립니다</b>. 이 중 사진에 가까운(글자가 크게 덧씌워지지 않은) 것을 골라주세요.';
   } else if (offCount) {
     empty.style.display = 'block';
     empty.style.color = 'var(--gray-500)';
     empty.innerHTML = `업로드 이미지와 무관한 후보 ${offCount}개는 자동으로 숨겼습니다.`;
   }
-  if (textCount > 0) {
+  if (textCount > 0 && cleanCount > 0) {
     toggle.style.display = 'inline';
     let shown = false;
-    const sync = () => { toggle.textContent = shown ? '글자 있는 후보 숨기기' : `글자 있는 후보도 보기 (${textCount}개)`; };
+    const sync = () => { toggle.textContent = shown ? '가공된 후보 숨기기' : `가공된 후보도 보기 (${textCount}개)`; };
     sync();
     toggle.addEventListener('click', () => { shown = !shown; cands.classList.toggle('show-text', shown); sync(); });
   }
@@ -1636,7 +1641,7 @@ document.getElementById('traceOriginBtn').addEventListener('click', async () => 
           `<div class="trace-result"><div class="trace-result-head"><span class="trace-result-title">이미지 ${i + 1}</span><span class="trace-badge unknown">실패</span></div><div>${escHtml(err.message)}</div></div>`);
       }
     }
-    showToast('원본 추적 완료 — 글자 없는 원본을 골라 카드에 추가하세요.', 'success');
+    showToast('원본 추적 완료 — 크게 가공되지 않은 원본을 골라 카드에 추가하세요.', 'success');
   } finally {
     btn.disabled = false;
     btn.textContent = '원본 추적 — 검색용 이미지에서 원본 찾기';

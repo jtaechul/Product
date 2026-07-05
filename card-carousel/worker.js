@@ -1096,8 +1096,10 @@ async function handleFilterCleanImages(env, body) {
     if (m) parts.push({ inline_data: { mime_type: m[1], data: m[2] } });
   });
 
-  const promptRef = `첫 번째 이미지는 '기준 이미지'(사용자가 올린, 원본을 찾으려는 대상)입니다. 이어지는 ${images.length}개 후보 이미지를 보낸 순서대로 각각 판정하세요.\n\n- related: 후보가 기준 이미지와 '같은 대상/같은 장소/같은 사건/같은 종류의 장면'을 보여주면 true. 전혀 다른 사물·인물·음식·차트·로고·다른 기사 사진이면 false. (예: 기준이 '사막의 원자로 시설 항공사진'인데 음식·인물·주식차트·커피 사진이면 반드시 false)\n- hasText: 사진 위에 삽입된 자막·캡션·큰 제목·워터마크·밈 문구가 있으면 true, 없으면 false. (간판·옷 로고처럼 현장에 원래 있던 글자는 false)\n\n반드시 후보 개수(${images.length}개)와 같은 길이의 JSON 배열로만: [{"related":true,"hasText":false,"note":"기준과 같은 시설 항공사진"}, ...]`;
-  const promptNoRef = `위 이미지들을 보낸 순서대로 각각 판정하세요. '가공되지 않은 원본 사진'인지, '누군가 글자(자막·캡션·워터마크)를 박아 넣은 가공본'인지.\n- hasText=true: 삽입 자막/캡션/워터마크 있음\n- hasText=false: 삽입 글자 없는 깨끗한 원본\n\n${images.length}개 길이 JSON 배열만: [{"related":true,"hasText":false},...]`;
+  // hasText는 '크게 가공된 편집본'만 걸러낸다. 사진에 원래 있던 글자나 작은 표식은 원본으로 인정(너무 엄격하면 후보가 0이 됨).
+  const textRule = `- hasText: 이 사진을 '카드뉴스·짤·썸네일'로 만들려고 사진 위에 크게 덧씌운 자막/제목/밈 문구가 있어서 원본 사진으로 쓰기 어려운 '크게 가공된 편집본'일 때만 true.\n  다음은 모두 false(원본으로 사용 가능): 현장에 원래 있던 글자(간판·현수막·유니폼·번호·제품 라벨·표지판), 작은 워터마크·서명·날짜, 사진 구석의 얇은 캡션 한 줄. 즉 '크게 덧씌운 편집'만 true, 그 외 원본에 가까우면 무조건 false.`;
+  const promptRef = `첫 번째 이미지는 '기준 이미지'(사용자가 올린, 원본을 찾으려는 대상)입니다. 이어지는 ${images.length}개 후보 이미지를 보낸 순서대로 각각 판정하세요.\n\n- related: 후보가 기준 이미지와 '같은 대상/같은 장소/같은 사건/같은 종류의 장면'을 보여주면 true. 전혀 다른 사물·인물·음식·차트·로고·다른 기사 사진이면 false. (예: 기준이 '사막의 원자로 시설 항공사진'인데 음식·인물·주식차트·커피 사진이면 반드시 false)\n${textRule}\n\n반드시 후보 개수(${images.length}개)와 같은 길이의 JSON 배열로만: [{"related":true,"hasText":false,"note":"기준과 같은 시설 항공사진"}, ...]`;
+  const promptNoRef = `위 이미지들을 보낸 순서대로 각각 판정하세요.\n${textRule}\n\n${images.length}개 길이 JSON 배열만: [{"related":true,"hasText":false},...]`;
 
   parts.push({ text: hasRef ? promptRef : promptNoRef });
 
