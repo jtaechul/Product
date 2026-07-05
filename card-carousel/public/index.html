@@ -2548,7 +2548,8 @@ async function buildCardBlob(index, ratio) {
     for (const ln of lines) {
       let x = PAD_X;
       for (const word of ln.split(' ')) {
-        const isAcc = accents.some(a => word.toLowerCase().includes(a));
+        // 칩(accentActive)과 같은 양방향 매칭 — AI가 단어보다 긴 구(句)를 강조로 줘도 초기 상태부터 색이 입혀진다
+        const isAcc = accentActive(word, accents);
         ctx.fillStyle = isAcc ? (state.style.accent || HOOK_ACCENT_COLOR) : HEAD_COLOR;
         ctx.fillText(word, x, y);
         x += ctx.measureText(word + ' ').width;
