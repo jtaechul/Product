@@ -2889,15 +2889,12 @@ export default {
     return env.ASSETS.fetch(request);
   },
 
-  // Cron Trigger — 세 가지 스케줄로 분기한다.
-  //   "0 23 * * *" : 매일 오전 8시(KST=UTC+9) — 일일 자동 캐럿셀 생성(아침)
-  //   "0 11 * * *" : 매일 저녁 8시(KST=UTC+9) — 일일 자동 캐럿셀 생성(저녁)
+  // Cron Trigger — 두 가지 스케줄로 분기한다.
+  //   "0 23 * * *" : 매일 오전 8시(KST=UTC+9) — 일일 자동 캐럿셀 생성(1일 1회)
   //   "* * * * *"  : 매 1분 — 진행중 파이프라인을 한 단계씩 전진
   async scheduled(event, env, ctx) {
     if (event.cron === '0 23 * * *') {
       ctx.waitUntil(runDailyAuto(env, 'morning'));
-    } else if (event.cron === '0 11 * * *') {
-      ctx.waitUntil(runDailyAuto(env, 'evening'));
     } else {
       ctx.waitUntil(runScheduled(env));
     }
