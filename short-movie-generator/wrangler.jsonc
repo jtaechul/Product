@@ -5,5 +5,10 @@
   "main": "worker/index.mjs",
   "compatibility_date": "2025-06-01",
   "workers_dev": true,
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // 과거 컨테이너 시도 때 생성된 DO 클래스(Dashboard) 정리 (code 10064 해결)
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["Dashboard"] },
+    { "tag": "v2", "deleted_classes": ["Dashboard"] }
+  ]
 }
