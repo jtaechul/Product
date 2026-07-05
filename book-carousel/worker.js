@@ -421,14 +421,19 @@ async function coupangSellsBook(env, title, author) {
   if (!env?.NAVER_CLIENT_ID || !env?.NAVER_CLIENT_SECRET) return null;
   const base = String(title || '').trim();
   if (!base) return null;
-  // 1차: 제목+저자(정확), 2차: 제목만(넓게) — 어느 쿼리든 쿠팡이 뜨면 판매 확정.
+  const key = _normTitle(base).slice(0, 6);       // 제목 앞부분(정규화)으로 도서 일치 보조 판정
+  // 쿠팡 판매처이면서 "그 책"이 맞는 항목만 인정(예: '아몬드'가 견과류 식품으로 매칭되는
+  // 오탐 방지 — 도서 카테고리이거나 제목이 겹칠 때만 쿠팡 판매로 인정).
+  const isCoupangBook = it => (/쿠팡/.test(it.mall) || /coupang\.com/i.test(it.link))
+    && (/도서/.test(it.category) || (key && _normTitle(it.title).includes(key)));
+  // 1차: 제목+저자(정확), 2차: 제목만(넓게) — 어느 쿼리든 쿠팡 도서가 뜨면 판매 확정.
   const queries = author ? [`${base} ${author}`, base] : [base];
   let sawAny = false;
   for (const q of queries) {
     const r = await naverShopLookup(env, q);
     if (!r || r.ok === false) return null;        // 조회 실패 → 판단 보류
     if (r.items.length) sawAny = true;
-    if (r.items.some(it => /쿠팡/.test(it.mall) || /coupang\.com/i.test(it.link))) return true;
+    if (r.items.some(isCoupangBook)) return true;
   }
   return sawAny ? false : null;                    // 결과가 아예 없으면 판단 보류
 }
@@ -817,16 +822,18 @@ async function handleSuggest(env, body) {
     } catch {} // 게이트 실패는 치명적이지 않음 — 원본 유지
   }
 
-  // ⭐ 쿠팡 판매 검증 — 네이버 쇼핑에 쿠팡 판매처가 뜨는 책만 남긴다(어필리에이트 수익화
-  // 대상만 추천). 쿠팡 웹은 봇 차단이라 직접 조회 불가 → 네이버 쇼핑으로 우회 확인.
-  // false(쇼핑결과는 있으나 쿠팡 없음)만 제외, null(판단 보류)·true는 유지.
+  // ⭐ 쿠팡 판매 검증(네이버 쇼핑 우회) — 쿠팡 웹은 봇 차단이라, 우리가 가진 네이버 쇼핑
+  // 검색으로 쿠팡 판매처가 뜨는 책을 확인한다. 단, 네이버 쇼핑은 도서의 쿠팡 판매처를
+  // 항상 인덱싱하지 않아(예스24·교보 위주) 실제 쿠팡 판매서도 false로 나오는 경우가 많다
+  // → 하드 제외하면 멀쩡한 책(예: 오만과 편견)까지 떨어진다. 따라서 "제외"가 아니라
+  // "쿠팡 확인된 책을 우선 노출(랭킹)"로 쓰고, 최종 상위 4권만 보여준다(false는 자연히 밀림).
   if (usable.length) {
     try {
       const flags = await Promise.all(usable.map(b => coupangSellsBook(env, b.title, b.author).catch(() => null)));
-      usable = usable.map((b, i) => ({ ...b, onCoupang: flags[i] }));
-      const buyable = usable.filter(b => b.onCoupang !== false);
-      if (buyable.length) usable = buyable;   // 전부 탈락이면 원본 유지(빈 결과 방지)
-    } catch {} // 검증 실패는 치명적이지 않음 — 원본 유지
+      usable = usable.map((b, i) => ({ ...b, onCoupang: flags[i] })); // true=쿠팡확인 / null=보류 / false=미확인
+      const rank = v => (v === true ? 0 : (v == null ? 1 : 2));
+      usable.sort((a, b) => rank(a.onCoupang) - rank(b.onCoupang));   // 쿠팡 확인 → 보류 → 미확인 순
+    } catch {} // 검증 실패는 치명적이지 않음 — 순서 유지
   }
 
   usable = usable.slice(0, 4).map(({ _drop, ...rest }) => rest);
