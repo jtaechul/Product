@@ -1606,15 +1606,16 @@ async function advancePipeline(env, pipelineId) {
 }
 
 // 매일 오전 8시(KST) 크론에서 호출 — 요일별 카테고리로 책을 자동 선정해 파이프라인을 시작
-async function runDailyAuto(env) {
+async function runDailyAuto(env, slot = 'morning') {
   if (!env.ANTHROPIC_API_KEY || !env.PENDING_POSTS) return;
 
   // KST 기준 오늘 날짜 계산 (UTC+9)
   const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
   const todayStr = kstNow.toISOString().slice(0, 10); // YYYY-MM-DD
 
-  // 오늘 이미 자동 실행됐으면 스킵 (크론 중복 방지)
-  const todayKey = `daily_auto_${todayStr}`;
+  // 오늘 "이 시간대(아침/저녁)"에 이미 실행됐으면 스킵 (크론 중복 방지).
+  // 아침·저녁을 각각 다른 키로 관리 → 하루 2회(아침 8시·저녁 8시) 생성 가능.
+  const todayKey = `daily_auto_${todayStr}_${slot}`;
   const alreadyRan = await env.PENDING_POSTS.get(todayKey).catch(() => null);
   if (alreadyRan) return;
 
@@ -1650,10 +1651,10 @@ async function runDailyAuto(env) {
     affiliateLinks: [],
     commentKeyword: category,
     startedAt: Date.now(),
-    label: `[자동] 파이프라인 시작 — 책 자동 선정 대기 (${category})`,
+    label: `[자동·${slot === 'evening' ? '저녁' : '아침'}] 파이프라인 시작 — 책 자동 선정 대기 (${category})`,
     isAutoDaily: true,
   });
-  await logStep(env, pipelineId, { step: 0, phase: 'start', note: `[자동] 카테고리: ${category} (책은 1단계에서 자동 선정)` });
+  await logStep(env, pipelineId, { step: 0, phase: 'start', note: `[자동·${slot === 'evening' ? '저녁' : '아침'}] 카테고리: ${category} (책은 1단계에서 자동 선정)` });
 
   // 오늘 실행 기록 저장 (25시간 TTL — 다음 날 자동 실행 전까지 중복 방지)
   await env.PENDING_POSTS.put(todayKey, pipelineId, { expirationTtl: 25 * 3600 });
@@ -2757,12 +2758,15 @@ export default {
     return env.ASSETS.fetch(request);
   },
 
-  // Cron Trigger — 두 가지 스케줄로 분기한다.
-  //   "0 23 * * *" : 매일 오전 8시(KST=UTC+9) — 일일 자동 캐럿셀 생성
+  // Cron Trigger — 세 가지 스케줄로 분기한다.
+  //   "0 23 * * *" : 매일 오전 8시(KST=UTC+9) — 일일 자동 캐럿셀 생성(아침)
+  //   "0 11 * * *" : 매일 저녁 8시(KST=UTC+9) — 일일 자동 캐럿셀 생성(저녁)
   //   "* * * * *"  : 매 1분 — 진행중 파이프라인을 한 단계씩 전진
   async scheduled(event, env, ctx) {
     if (event.cron === '0 23 * * *') {
-      ctx.waitUntil(runDailyAuto(env));
+      ctx.waitUntil(runDailyAuto(env, 'morning'));
+    } else if (event.cron === '0 11 * * *') {
+      ctx.waitUntil(runDailyAuto(env, 'evening'));
     } else {
       ctx.waitUntil(runScheduled(env));
     }
