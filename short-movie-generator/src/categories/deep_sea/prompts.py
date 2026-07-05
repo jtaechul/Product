@@ -140,8 +140,11 @@ _WILD_DEEP_SCENE_BIO = (
     "no rising air bubbles; faint marine snow drifting."
 )
 _WILD_CAM = {
-    # 리빌↔극접사 교차 + 절정 빠른컷(1.7억뷰 릴스 벤치마크)
-    "discovery": "Open on a brief held wide reveal of the whole creature in the open water, then a smooth dynamic push-in.",
+    # 스케일 대비(원경 작은 점 ↔ 극접사) + 리빌↔접사 교차 + 절정 빠른컷(1.7억뷰 릴스 벤치마크)
+    # 주의: 광원 명사(beam/light/spotlight) 사용 금지 — 상단 핀조명 회귀 유발(veo_verification_log v5).
+    "discovery": "Open on an extreme long shot where the creature is only a tiny pale speck in a vast "
+                 "empty black void, giving a sense of its lonely scale, then a smooth dynamic push-in "
+                 "until it fills the frame.",
     "behavior": "The camera glides with it and pushes in on the signature action; a few quick cuts at the most intense moment.",
     "detail": "Extreme macro shots of texture, eye, and body detail, then a slow drift back.",
 }
