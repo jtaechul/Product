@@ -14,7 +14,8 @@ import logging
 import subprocess
 from pathlib import Path
 
-from src.core import assembler, audio, carousel, content_store, endcard, htmlhud, hud, license_gate, output, overlay  # noqa: F401
+from src.core import assembler, audio, carousel, content_store, endcard, htmlhud, hud, license_gate, output, overlay, subtitle, tts  # noqa: F401
+from src.core.visualization.base import CLIP_H, CLIP_W
 from src.core.contracts import OutputResult, PipelineError
 from src.core.visualization import VisualizationError, get_visualizer
 from src.registry import get_category
@@ -36,6 +37,115 @@ def _apply_grade(video_path: str, vf: str, work_dir: str) -> str:
     if proc.returncode != 0 or not out.exists():
         raise PipelineError("grade", f"그레이딩 실패: {proc.stderr[-400:]}")
     return str(out)
+
+
+def _pad_last_frame(video_path: str, target_s: float, work_dir: str) -> str:
+    """영상을 target_s까지 마지막 프레임 복제로 연장(나레이션이 영상보다 길 때)."""
+    out = Path(work_dir) / "padded.mp4"
+    proc = subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-i", video_path,
+         "-vf", f"tpad=stop_mode=clone:stop_duration={target_s:.3f}",
+         "-t", f"{target_s:.3f}", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+         "-pix_fmt", "yuv420p", "-an", str(out)],
+        capture_output=True, text=True,
+    )
+    if proc.returncode != 0 or not out.exists():
+        raise PipelineError("pad", f"영상 연장 실패: {proc.stderr[-300:]}")
+    return str(out)
+
+
+def run_narrated(
+    category_id: str,
+    query: str,
+    visualizer_name: str = "panzoom",
+    base_dir: str = ".",
+    episode: int | None = None,
+) -> OutputResult:
+    """narrated_wildlife 파이프라인: 종→정보→소싱→게이트→대본→동적컷→합성→TTS→단어자막→
+    앰비언트 SFX→출력·QC. HUD/엔드카드/캐러셀 없음(릴스 나레이션 다큐)."""
+    base = Path(base_dir)
+    for d in ("assets/raw", "assets/approved", "work/clips", "work", "output"):
+        (base / d).mkdir(parents=True, exist_ok=True)
+    raw_dir, approved_dir = base / "assets/raw", base / "assets/approved"
+    clips_dir, work_dir, out_dir = base / "work/clips", base / "work", base / "output"
+
+    category = get_category(category_id)
+    viz = get_visualizer(visualizer_name)
+    log.info("[narrated] 시작: category=%s query=%r viz=%s", category_id, query, viz.name)
+
+    subject = category.parse_input(query)
+    info = category.get_info(subject)
+    raw_assets = category.source_assets(info, str(raw_dir))
+    if not raw_assets:
+        raise PipelineError("sourcing", "수집된 에셋 없음")
+    approved = license_gate.filter_assets(raw_assets, str(approved_dir))
+    if not approved:
+        raise PipelineError("license_gate", "통과 에셋 없음 → 제작 중단")
+    asset = approved[0]
+    log.info("[narrated] 게이트 통과: %s (%s)", asset.asset_path, asset.license)
+
+    # 동적 야생다큐 컷 + 정확성 게이트
+    situation = category.get_situation_wildlife(info)
+    violations = category.validate_cuts(situation)
+    if violations:
+        raise PipelineError("situation_bank", f"정확성 규칙 위반: {violations}")
+
+    clips = []
+    for cut in situation.cuts:
+        try:
+            clip = viz.generate_clip(asset, cut, situation.situation_id,
+                                     category.style_profile, str(clips_dir))
+        except VisualizationError as e:
+            raise PipelineError("visualization", str(e)) from e
+        clips.append(clip)
+    base_video = assembler.concat_clips(clips, str(work_dir))
+    video_total = sum(c.duration_s for c in clips)
+    log.info("[narrated] 합성: %s (%.0fs)", base_video, video_total)
+
+    # 대본 → 나레이션(TTS) → 단어 자막
+    script_lines = category.build_script(info)
+    narration_wav, sent_timings = tts.synthesize(script_lines, str(work_dir))
+    total = video_total
+    subbed = base_video
+    if narration_wav and sent_timings:
+        ndur = tts.narration_duration(narration_wav)
+        total = max(video_total, ndur + 0.6)
+        if total > video_total + 0.05:
+            base_video = _pad_last_frame(base_video, total, str(work_dir))
+        words = subtitle.word_timings(sent_timings)
+        ass = subtitle.build_ass(words, str(work_dir / "subs.ass"), CLIP_W, CLIP_H)
+        subbed = subtitle.burn(base_video, ass, str(work_dir))
+        log.info("[narrated] 나레이션 %.1fs + 자막 %d단어", ndur, len(words))
+    else:
+        log.info("[narrated] 나레이션 없음(키 없음/실패) → 앰비언트만")
+
+    with_audio = audio.add_narration(subbed, str(work_dir), total, narration_wav,
+                                     category.ambient_audio_spec())
+
+    caption = category.build_caption(info)
+    if hasattr(category, "attach_attribution"):
+        caption = category.attach_attribution(caption, info, asset.credit_string)
+
+    if episode is None:
+        episode = category.next_episode() if hasattr(category, "next_episode") else 1
+    series_title = getattr(category, "series_title", "") or category_id
+    result = output.finalize(
+        with_audio, info, caption, asset.credit_string, asset.license, str(out_dir), total,
+        extra_meta={"category": category_id, "visualizer": viz.name, "mode": "narrated_wildlife",
+                    "style_profile": "narrated_wildlife", "situation_id": situation.situation_id,
+                    "script": script_lines, "series": {"title": series_title, "episode": episode}},
+    )
+    log.info("[narrated] 출력: %s (QC %s)", result.video_path, "통과" if result.qc_passed else "실패")
+    if hasattr(category, "log_catalog"):
+        category.log_catalog(episode, info)
+    try:
+        content_store.write_record(
+            base_dir, f"{int(episode):03d}", info=info, caption=caption, asset=asset,
+            visualizer=viz.name, video_file=result.video_path, series_title=series_title, scope="all",
+        )
+    except Exception as e:  # noqa: BLE001
+        log.warning("[narrated] 레코드 기록 실패(무시): %s", e)
+    return result
 
 
 def run(

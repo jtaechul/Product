@@ -327,6 +327,24 @@ class DeepSeaCategory:
         key = data.resolve_key(info.common_name_en)
         return data.SPECIES.get(key, {}).get("hud_callouts", [])
 
+    # --- narrated_wildlife 전환: 동적 야생다큐 컷 + 나레이션 대본 ---
+    def get_situation_wildlife(self, info: SpeciesInfo) -> Situation:
+        """야생다큐(동적·수심인지) 3컷 상황. validate_cuts(정확성 게이트)는 공용 재사용."""
+        key = data.resolve_key(info.common_name_en)
+        sp = data.SPECIES[key]
+        cuts = prompts.build_cuts_wildlife(sp)
+        return Situation(
+            species=key, scientific_name=info.scientific_name,
+            accuracy_flags=sp["accuracy_flags"], situation_id=sp["situation_id"],
+            cuts=[CutSpec(cut_type=c["cut_type"], prompt=c["prompt"]) for c in cuts],
+        )
+
+    def build_script(self, info: SpeciesInfo) -> list[dict]:
+        """나레이션 대본 [{text,tone}] — 시그니처 행동 힌트로 첫 fun_fact 사용."""
+        from src.categories.deep_sea import script
+        behavior = info.fun_facts[0] if info.fun_facts else ""
+        return script.build_script(info, behavior=behavior)
+
     # --- 도감 회차 번호 (커밋되는 원장으로 안정적 누적 — CI 컨테이너 리셋 무관) ---
     def next_episode(self) -> int:
         """다음 도감 엔트리 번호(읽기 전용 예약). 실제 기록은 제작 성공 후 log_catalog에서."""

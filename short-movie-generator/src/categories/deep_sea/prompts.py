@@ -102,3 +102,62 @@ def build_cuts(species_entry: dict) -> list[dict]:
         {"cut_type": ct, "prompt": build_cut_prompt(species_entry, ct)}
         for ct in ("discovery", "behavior", "detail")
     ]
+
+
+# ── narrated_wildlife 전환: 동적 야생다큐 프롬프트(수심 인지) ──
+# 스파이크 검증: (A) crisp cinematic 프롬프트는 화질·카메라 우수하나, 심해종은 반드시
+# '수심 인지형(어둠 + 형태 잠금 + 부정 제약: 햇빛·수면·기포·산호초 금지)'이어야 서식지가 맞다.
+import re as _re  # noqa: E402
+
+
+def _max_depth(depth_range_m: str) -> int:
+    d = _re.sub(r"[^\d]", "", (depth_range_m or "").split("-")[-1])
+    return int(d) if d else 4000
+
+
+def _is_deep(depth_range_m: str) -> bool:
+    return _max_depth(depth_range_m) >= 200  # 유광층(~200m) 아래 = 어둠 강제
+
+
+_WILD_DEEP_SCENE = (
+    "in the pitch-black deep sea at about {depth} meters, lit only by a single expedition camera "
+    "light with total darkness all around; no sunlight, no water surface, no rising air bubbles, "
+    "no coral reef; faint marine snow drifting slowly in the light beam."
+)
+_WILD_SHALLOW_SCENE = (
+    "in its natural ocean habitat with soft natural underwater light and gentle marine snow; "
+    "no divers, no boats, no man-made objects."
+)
+_WILD_CAM = {
+    "discovery": "Open on a brief held wide shot in the open water, then a smooth dynamic push-in that snaps focus onto the action.",
+    "behavior": "The camera glides with it while a smooth dynamic push-in snaps focus onto the action at the key moment.",
+    "detail": "A close macro hold on the signature action, then a slow drift back.",
+}
+_WILD_TAIL = (
+    "Naturalistic wildlife-documentary look, crisp cinematic detail. Keep the animal's exact "
+    "anatomy — {anatomy_lock}; do not distort, add, or fabricate features or behavior. Never "
+    "{forbidden}. Energetic, awe-inspiring wildlife mood. Vertical 9:16, filling the frame."
+)
+
+
+def build_cut_prompt_wildlife(species_entry: dict, cut_type: str) -> str:
+    """동적 야생다큐 프롬프트(수심 인지 + 형태 잠금). 정확성 하드룰 유지."""
+    depth = species_entry.get("depth_range_m", "1000-4000")
+    behavior = species_entry["cut_behaviors"][cut_type]
+    subject = f"{species_entry['appearance']}, performing its signature behavior: {behavior}."
+    scene = (_WILD_DEEP_SCENE.format(depth=_max_depth(depth)) if _is_deep(depth)
+             else _WILD_SHALLOW_SCENE)
+    tail = _WILD_TAIL.format(anatomy_lock=species_entry["anatomy_lock"],
+                             forbidden=species_entry["forbidden_features"])
+    parts = [subject, scene, _WILD_CAM[cut_type], tail]
+    if not species_entry.get("accuracy_flags", {}).get("bioluminescent"):
+        parts.insert(1, "It produces no light of its own.")
+    return " ".join(parts)
+
+
+def build_cuts_wildlife(species_entry: dict) -> list[dict]:
+    """야생다큐 3컷(discovery → behavior → detail) 프롬프트."""
+    return [
+        {"cut_type": ct, "prompt": build_cut_prompt_wildlife(species_entry, ct)}
+        for ct in ("discovery", "behavior", "detail")
+    ]

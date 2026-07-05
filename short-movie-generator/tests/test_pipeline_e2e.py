@@ -35,6 +35,24 @@ def test_full_pipeline_panzoom(tmp_path, monkeypatch):
     assert meta["qc"]["resolution_9_16"]["detail"] == "720x1280"
 
 
+def test_narrated_pipeline_panzoom(tmp_path, monkeypatch):
+    """narrated_wildlife 파이프라인(panzoom·무키): 대본→합성→(나레이션 없음)→앰비언트→QC 통과."""
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    from src.categories.deep_sea import catalog
+    from src.core import pipeline
+    monkeypatch.setattr(catalog, "CATALOG", tmp_path / "catalog.json")
+
+    result = pipeline.run_narrated("deep_sea", "dumbo octopus", "panzoom", base_dir=str(tmp_path))
+    assert result.qc_passed, result.qc_report
+    with open(result.sidecar_meta, encoding="utf-8") as f:
+        meta = json.load(f)
+    assert meta["mode"] == "narrated_wildlife"
+    assert 4 <= len(meta["script"]) <= 7           # 대본 문장 삽입
+    assert meta["qc"]["audio_present_not_silent"]["passed"] is True
+    assert meta["qc"]["resolution_9_16"]["detail"] == "720x1280"
+
+
 @pytest.mark.parametrize("viz", ["veo_img2video", "veo_text2video"])
 def test_veo_without_key_becomes_pipeline_error(tmp_path, monkeypatch, viz):
     """키 없이 Veo(img2video/text2video) 선택 시 시각화 실패가 PipelineError로 통일돼 깔끔히 중단."""

@@ -24,6 +24,39 @@ _DEFAULT_SPEC = {
 }
 
 
+def add_narration(
+    video_path: str,
+    work_dir: str,
+    duration_s: float,
+    narration_path: str | None,
+    spec: dict | None = None,
+) -> str:
+    """나레이션(주) + 낮은 심해 앰비언트(SFX)를 영상에 입힌다 (배경음악 없음).
+
+    narrated_wildlife 전환용. narration_path 없으면 앰비언트만(add_ambient 위임).
+    """
+    if not narration_path or not Path(narration_path).exists():
+        return add_ambient(video_path, work_dir, duration_s, spec)
+
+    s = {**_DEFAULT_SPEC, **(spec or {})}
+    out_path = Path(work_dir) / "with_audio.mp4"
+    fade_out = max(0.0, duration_s - s["fade_s"])
+    # 앰비언트는 나레이션 밑에 낮게(0.45) 깔아 존재감만. BGM 없음.
+    amb = (f"anoisesrc=color={s['noise_color']}:amplitude=0.4:duration={duration_s}:sample_rate=44100")
+    fc = (
+        f"[1:a]lowpass=f={s['lowpass_hz']},volume=0.45,"
+        f"afade=t=in:st=0:d={s['fade_s']},afade=t=out:st={fade_out:.2f}:d={s['fade_s']},"
+        f"aformat=channel_layouts=mono[amb];"
+        f"[2:a]adelay=300|300,volume=1.35,aformat=channel_layouts=mono[nar];"
+        f"[amb][nar]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.9[aout]"
+    )
+    cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", video_path,
+           "-f", "lavfi", "-i", amb, "-i", narration_path,
+           "-filter_complex", fc, "-map", "0:v", "-map", "[aout]",
+           "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-t", f"{duration_s:.3f}", str(out_path)]
+    return _run(cmd, out_path)
+
+
 def add_ambient(
     video_path: str,
     work_dir: str,
