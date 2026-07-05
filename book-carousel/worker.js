@@ -392,6 +392,47 @@ async function naverBookLookup(env, query) {
   } catch { return null; }
 }
 
+// 네이버 쇼핑 검색 — 상품별 판매처(mallName)·링크를 가져온다.
+// 쿠팡 웹은 봇 차단(403)이라 직접 조회 불가 → 네이버 쇼핑(우리가 가진 키)에서
+// 쿠팡 판매처가 뜨는지로 "쿠팡에서 파는 책"인지 우회 판정한다.
+async function naverShopLookup(env, query) {
+  if (!env?.NAVER_CLIENT_ID || !env?.NAVER_CLIENT_SECRET) return null; // 키 없으면 판단 불가
+  try {
+    const res = await fetch(`https://openapi.naver.com/v1/search/shop.json?query=${encodeURIComponent(query)}&display=100&sort=sim`, {
+      headers: { 'X-Naver-Client-Id': env.NAVER_CLIENT_ID, 'X-Naver-Client-Secret': env.NAVER_CLIENT_SECRET },
+    });
+    if (!res.ok) return { ok: false, status: res.status, items: [] };
+    const d = await res.json();
+    const items = (d.items || []).map(it => ({
+      title: _clean(it.title),
+      mall: it.mallName || '',
+      link: it.link || '',
+      category: it.category1 || '',
+    }));
+    return { ok: true, total: d.total || 0, items };
+  } catch (e) { return { ok: false, error: e.message, items: [] }; }
+}
+
+// 특정 책이 쿠팡에서 판매되는지 판정.
+//   true  = 네이버 쇼핑에 쿠팡 판매처가 뜸(추천 유지)
+//   false = 쇼핑 결과는 있는데 쿠팡 판매처가 없음(추천 제외)
+//   null  = 판단 불가(키 없음·조회 실패·결과 0 → 제목 매칭 실패 가능 → 제외하지 않음)
+async function coupangSellsBook(env, title, author) {
+  if (!env?.NAVER_CLIENT_ID || !env?.NAVER_CLIENT_SECRET) return null;
+  const base = String(title || '').trim();
+  if (!base) return null;
+  // 1차: 제목+저자(정확), 2차: 제목만(넓게) — 어느 쿼리든 쿠팡이 뜨면 판매 확정.
+  const queries = author ? [`${base} ${author}`, base] : [base];
+  let sawAny = false;
+  for (const q of queries) {
+    const r = await naverShopLookup(env, q);
+    if (!r || r.ok === false) return null;        // 조회 실패 → 판단 보류
+    if (r.items.length) sawAny = true;
+    if (r.items.some(it => /쿠팡/.test(it.mall) || /coupang\.com/i.test(it.link))) return true;
+  }
+  return sawAny ? false : null;                    // 결과가 아예 없으면 판단 보류
+}
+
 // ⭐ 교차검증: 제목으로 네이버에서 실제 책을 찾아 "진짜 제목·저자"로 교정한다.
 // status: 'found'(교정정보 포함) / 'notfound'(실존 안 함 → 차단) / 'unknown'(키없음·조회실패 → 보류)
 async function crossVerifyBook(env, title, author) {
@@ -774,6 +815,18 @@ async function handleSuggest(env, body) {
         if (romance.length) usable = romance;   // 전부 탈락이면 원본 유지(빈 결과 방지)
       }
     } catch {} // 게이트 실패는 치명적이지 않음 — 원본 유지
+  }
+
+  // ⭐ 쿠팡 판매 검증 — 네이버 쇼핑에 쿠팡 판매처가 뜨는 책만 남긴다(어필리에이트 수익화
+  // 대상만 추천). 쿠팡 웹은 봇 차단이라 직접 조회 불가 → 네이버 쇼핑으로 우회 확인.
+  // false(쇼핑결과는 있으나 쿠팡 없음)만 제외, null(판단 보류)·true는 유지.
+  if (usable.length) {
+    try {
+      const flags = await Promise.all(usable.map(b => coupangSellsBook(env, b.title, b.author).catch(() => null)));
+      usable = usable.map((b, i) => ({ ...b, onCoupang: flags[i] }));
+      const buyable = usable.filter(b => b.onCoupang !== false);
+      if (buyable.length) usable = buyable;   // 전부 탈락이면 원본 유지(빈 결과 방지)
+    } catch {} // 검증 실패는 치명적이지 않음 — 원본 유지
   }
 
   usable = usable.slice(0, 4).map(({ _drop, ...rest }) => rest);
@@ -2647,6 +2700,15 @@ export default {
         else if (url.pathname === '/api/generate-caption') result = await handleGenerateCaption(env, body);
         else if (url.pathname === '/api/validate') result = await handleValidate(env, body);
         else if (url.pathname === '/api/regenerate') result = await handleRegenerate(env, body);
+        else if (url.pathname === '/api/coupang-check') {
+          // 진단용 — 특정 책이 네이버 쇼핑에서 쿠팡 판매처로 뜨는지 + 어떤 판매처들이 있는지.
+          const title = url.searchParams.get('title') || body.title || '';
+          const author = url.searchParams.get('author') || body.author || '';
+          const r = await naverShopLookup(env, author ? `${title} ${author}` : title);
+          const onCoupang = await coupangSellsBook(env, title, author);
+          const malls = (r && r.items) ? [...new Set(r.items.map(it => it.mall).filter(Boolean))] : [];
+          result = { success: true, onCoupang, total: r?.total || 0, sampleCount: r?.items?.length || 0, malls: malls.slice(0, 40) };
+        }
         else if (url.pathname === '/api/telegram-bot-info') {
           // 봇 사용자명 확인용(사용자에게 "이 봇에게 먼저 메시지 보내세요" 링크를 안내하기 위함). 토큰 자체는 노출 안 함.
           if (!env.TELEGRAM_BOT_TOKEN) { result = { success: false, error: '봇 토큰이 설정되지 않았습니다.' }; }
