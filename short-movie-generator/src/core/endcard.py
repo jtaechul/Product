@@ -247,6 +247,110 @@ def build_real_photo_card(asset_path: str, credit_string: str, work_dir: str) ->
     return str(out)
 
 
+# ─────────── 통합 마지막 페이지: 실제 NOAA 사진 + 도감 도시에(충격 리빌) ───────────
+FINAL_PAGE_DURATION_S = 3.8
+
+
+def _dossier_overlay_html(caption: CaptionData, series_title: str, episode: int,
+                          watermark: str, credit_string: str, sci_name: str) -> str:
+    name_ko, name_en = _split_name(caption.reveal_name)
+    e = lambda s: _html.escape(s or "")  # noqa: E731
+    return f"""<!doctype html><html><head><meta charset="utf-8"><style>
+{htmlhud.fonts_face_css()}
+*{{margin:0;padding:0;box-sizing:border-box}}
+html,body{{width:720px;height:1280px;overflow:hidden;background:transparent}}
+.d{{position:relative;width:720px;height:1280px;font-family:'Rajdhani';color:#EAF0F4}}
+.topsc{{position:absolute;top:0;left:0;right:0;height:200px;background:linear-gradient(180deg,rgba(3,8,12,.72),transparent)}}
+.botsc{{position:absolute;left:0;right:0;bottom:0;height:640px;background:linear-gradient(0deg,rgba(3,8,12,.92) 30%,rgba(3,8,12,.7) 62%,transparent)}}
+.frame{{position:absolute;inset:18px;border:1px solid rgba(234,240,244,.24)}}
+.brk{{position:absolute;width:30px;height:30px;border:1.5px solid #EAF0F4}}
+.brk.c{{border-color:#43C8DA}}
+.tl{{top:12px;left:12px;border-right:0;border-bottom:0}}.tr{{top:12px;right:12px;border-left:0;border-bottom:0}}
+.bl{{bottom:12px;left:12px;border-right:0;border-top:0}}.br{{bottom:12px;right:12px;border-left:0;border-top:0}}
+.hdr{{position:absolute;top:38px;left:40px;font-family:'Orbitron';font-weight:900;font-size:16px;letter-spacing:4px;color:#43C8DA}}
+.real{{position:absolute;top:40px;right:40px;font-family:'STM';font-size:14px;letter-spacing:2px;color:#9BE8F2;text-align:right}}
+.tag{{position:absolute;left:40px;bottom:404px;font-family:'Orbitron';font-weight:900;font-size:15px;letter-spacing:4px;color:#43C8DA}}
+.name{{position:absolute;left:40px;right:40px;bottom:322px;font-family:'BHS';font-size:76px;line-height:1;color:#fff;word-break:keep-all;text-shadow:0 2px 12px rgba(0,0,0,.6)}}
+.sci{{position:absolute;left:42px;right:40px;bottom:284px}}
+.sci .en{{font-family:'Orbitron';font-weight:900;font-size:20px;letter-spacing:1px;color:#CBD6DE}}
+.sci .la{{font-family:'PretendardM';font-style:italic;font-size:19px;color:#9FB0BA;margin-left:8px}}
+.fact{{position:absolute;left:42px;right:44px;bottom:210px;font-family:'PretendardM';font-size:22px;color:#D6E0E7;line-height:1.35;word-break:keep-all;text-wrap:pretty}}
+.cta{{position:absolute;left:40px;right:40px;bottom:120px;font-family:'Pretendard';font-weight:900;font-size:32px;color:#fff;text-shadow:0 0 16px rgba(80,200,240,.35)}}
+.cta b{{color:#43C8DA}}
+.src{{position:absolute;left:42px;bottom:44px;font-family:'STM';font-size:15px;letter-spacing:1px;color:#8FA0AA}}
+.wm{{position:absolute;right:34px;bottom:44px;font-family:'Orbitron';font-weight:900;font-size:15px;letter-spacing:3px;color:rgba(234,240,244,.72)}}
+</style></head><body>
+<div class="d">
+  <div class="topsc"></div><div class="botsc"></div>
+  <div class="frame"></div><div class="brk tl c"></div><div class="brk tr"></div><div class="brk bl"></div><div class="brk br c"></div>
+  <div class="hdr">◉ DATABASE ENTRY · No.{episode:03d}</div>
+  <div class="real">ARCHIVE / ACTUAL SPECIMEN<br>{e(series_title)}</div>
+  <div class="tag">▶ SPECIES IDENTIFIED</div>
+  <div class="name">{e(name_ko)}</div>
+  <div class="sci"><span class="en">{e(name_en).upper()}</span><span class="la">{e(sci_name)}</span></div>
+  <div class="fact">{e(caption.reveal_fact)}</div>
+  <div class="cta">팔로우하고 <b>다음 심해 생물</b> 만나기</div>
+  <div class="src">SOURCE: {e(credit_string)}</div>
+  <div class="wm">{e(watermark)}</div>
+</div></body></html>"""
+
+
+def _dossier_overlay_png(caption: CaptionData, series_title: str, episode: int,
+                         watermark: str, credit_string: str, sci_name: str, work_dir: str) -> str:
+    """도시에(정보) 투명 오버레이 PNG. HTML 우선, 브라우저 불가 시 PIL 폴백."""
+    out = str(Path(work_dir) / "dossier_overlay.png")
+    try:
+        html = _dossier_overlay_html(caption, series_title, episode, watermark, credit_string, sci_name)
+        return htmlhud.render_static(html, out, work_dir, name="dossier", transparent=True)
+    except htmlhud.HudRenderError:
+        img = Image.new("RGBA", (CLIP_W, CLIP_H), (0, 0, 0, 0))
+        d = ImageDraw.Draw(img)
+        d.rectangle([0, CLIP_H - 640, CLIP_W, CLIP_H], fill=(3, 8, 12, 210))
+        name_ko, name_en = _split_name(caption.reveal_name)
+        _text_with_stroke(d, (40, 40), f"DATABASE ENTRY · No.{episode:03d}", _orbitron(20), fill=(67, 200, 218, 255))
+        y = CLIP_H - 360
+        for line in _wrap(d, name_ko, _font(64), CLIP_W - 90):
+            _text_with_stroke(d, (40, y), line, _font(64), fill=(255, 230, 160, 255)); y += 76
+        _text_with_stroke(d, (42, y), name_en, _orbitron(22), fill=(203, 214, 222, 255)); y += 54
+        for line in _wrap(d, caption.reveal_fact or "", _font(34), CLIP_W - 100):
+            _text_with_stroke(d, (42, y), line, _font(34), fill=(214, 224, 231, 255)); y += 46
+        _text_with_stroke(d, (40, CLIP_H - 150), "팔로우하고 다음 심해 생물 만나기", _font(34), anchor="lm")
+        _text_with_stroke(d, (42, CLIP_H - 60), f"SOURCE: {credit_string}", _orbitron(18), fill=(143, 160, 170, 255))
+        _text_with_stroke(d, (CLIP_W - 34, CLIP_H - 60), watermark, _orbitron(18), fill=(234, 240, 244, 200), anchor="rm")
+        img.save(out)
+        return out
+
+
+def build_final_page(caption: CaptionData, series_title: str, episode: int, watermark: str,
+                     asset_path: str, credit_string: str, sci_name: str, work_dir: str) -> str:
+    """통합 마지막 페이지: 실제 NOAA 사진(꽉 채움)이 충격 리빌(플래시+줌펀치+스캔)로 등장하고,
+    그 위에 종 도감 도시에(종명·학명 이탤릭·팩트·팔로우·출처)를 얹는다."""
+    work = Path(work_dir)
+    if not Path(asset_path).exists():
+        raise PipelineError("endcard", f"실제 사진 없음: {asset_path}")
+    overlay = _dossier_overlay_png(caption, series_title, episode, watermark, credit_string, sci_name, work_dir)
+    out = work / "final_page.mp4"
+    fps, dur = CLIP_FPS, FINAL_PAGE_DURATION_S
+    frames = int(dur * fps)
+    bg = (f"[0:v]scale={CLIP_W}:{CLIP_H}:force_original_aspect_ratio=increase,crop={CLIP_W}:{CLIP_H},"
+          f"scale={CLIP_W*2}:{CLIP_H*2},"
+          f"zoompan=z='max(1.03,1.18-0.15*on/8)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+          f":d={frames}:s={CLIP_W}x{CLIP_H}:fps={fps},setsar=1,"
+          f"eq=brightness=-0.06:saturation=1.06,"
+          f"drawbox=x=0:y='ih*(t/0.6)':w=iw:h=4:color=0x9BE8F2@0.85:t=fill:enable='lt(t,0.6)',"
+          f"fade=t=in:st=0:d=0.18:color=white[bg]")
+    fc = f"{bg};[bg][1:v]overlay=0:0:format=auto,fade=t=out:st={dur-0.4:.2f}:d=0.4[v]"
+    proc = subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-t", str(dur),
+         "-i", asset_path, "-i", overlay, "-filter_complex", fc, "-map", "[v]", "-t", str(dur),
+         "-pix_fmt", "yuv420p", "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-an", str(out)],
+        capture_output=True, text=True,
+    )
+    if proc.returncode != 0 or not out.exists():
+        raise PipelineError("endcard", f"마지막 페이지 생성 실패: {proc.stderr[-400:]}")
+    return str(out)
+
+
 def concat_tail(videos: list[str], work_dir: str) -> str:
     """본편+실제사진카드+엔드카드 등 N개 클립을 재인코딩 concat (규격 통일)."""
     out = Path(work_dir) / "with_tail.mp4"

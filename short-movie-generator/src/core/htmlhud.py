@@ -403,8 +403,8 @@ def fonts_face_css() -> str:
 
 
 def render_static(full_html: str, out_png: str, work_dir: str,
-                  name: str = "static") -> str:
-    """단일 정지 HTML을 불투명 PNG로 렌더 (엔드카드 등). 실패 시 HudRenderError."""
+                  name: str = "static", transparent: bool = False) -> str:
+    """단일 정지 HTML을 PNG로 렌더 (transparent=True면 투명 배경 오버레이). 실패 시 HudRenderError."""
     try:
         from playwright.sync_api import sync_playwright
     except Exception as e:  # noqa: BLE001
@@ -426,7 +426,7 @@ def render_static(full_html: str, out_png: str, work_dir: str,
             page.goto(html_path.as_uri())
             page.evaluate("document.fonts.ready")
             page.wait_for_timeout(250)
-            page.screenshot(path=out_png,
+            page.screenshot(path=out_png, omit_background=transparent,
                             clip={"x": 0, "y": 0, "width": CLIP_W, "height": CLIP_H})
             browser.close()
     except Exception as e:  # noqa: BLE001
@@ -459,6 +459,10 @@ def _schem_is_land(lon: float, lat: float) -> bool:
 
 
 def _schem_map_svg(mk_lon: float, mk_lat: float) -> str:
+    """단색 도트 월드맵 + '스캔' 표현. 좌표가 가상이므로 정점(핀) 대신 좌→우 스캔 스윕.
+
+    스캔 밴드가 지나가는 열의 육지 도트를 밝게 처리해 '탐색 중' 느낌(정확한 위치 특정 회피).
+    """
     dots = []
     for c in range(0, 61):
         lon = -180 + c * 6
@@ -466,19 +470,19 @@ def _schem_map_svg(mk_lon: float, mk_lat: float) -> str:
             lat = 80 - r * 6
             x, y = lon + 180, 80 - lat
             if _schem_is_land(lon, lat):
-                dots.append(f'<circle cx="{x}" cy="{y}" r="1.7" fill="#EAF0F4" opacity="0.92"/>')
+                dots.append(f'<circle class="ld" data-x="{x}" cx="{x}" cy="{y}" r="1.7" '
+                            f'fill="#EAF0F4" opacity="0.55"/>')
             else:
-                dots.append(f'<circle cx="{x}" cy="{y}" r="0.7" fill="#94A2AC" opacity="0.13"/>')
-    mx, my = mk_lon + 180, 80 - mk_lat
-    marker = (
-        f'<circle id="mkring" cx="{mx}" cy="{my}" r="6" fill="none" stroke="#43C8DA" stroke-width="1.3"/>'
-        f'<circle cx="{mx}" cy="{my}" r="4.2" fill="none" stroke="#43C8DA" stroke-width="1.4"/>'
-        f'<circle id="mkdot" cx="{mx}" cy="{my}" r="2.3" fill="#43C8DA"/>'
-        f'<line x1="{mx}" y1="{my-9}" x2="{mx}" y2="{my+9}" stroke="#43C8DA" stroke-width="0.7" opacity="0.55"/>'
-        f'<line x1="{mx-9}" y1="{my}" x2="{mx+9}" y2="{my}" stroke="#43C8DA" stroke-width="0.7" opacity="0.55"/>'
+                dots.append(f'<circle cx="{x}" cy="{y}" r="0.7" fill="#94A2AC" opacity="0.12"/>')
+    scan = (
+        '<defs><linearGradient id="scg" x1="0" y1="0" x2="1" y2="0">'
+        '<stop offset="0" stop-color="#43C8DA" stop-opacity="0"/>'
+        '<stop offset="1" stop-color="#43C8DA" stop-opacity="0.28"/></linearGradient></defs>'
+        '<rect id="mapband" x="0" y="0" width="26" height="150" fill="url(#scg)"/>'
+        '<line id="mapscan" x1="0" y1="0" x2="0" y2="150" stroke="#9BE8F2" stroke-width="1.4" opacity="0.9"/>'
     )
     return (f'<svg viewBox="0 0 360 150" preserveAspectRatio="xMidYMid meet" '
-            f'style="width:100%;height:100%">{"".join(dots)}{marker}</svg>')
+            f'style="width:100%;height:100%">{"".join(dots)}{scan}</svg>')
 
 
 def _schem_callouts_html(callouts: list[dict]) -> str:
@@ -632,11 +636,15 @@ function render(t){
   const mw=$id('mapwrap'),dl=$id('dial'),dlab=$id('dlab');
   const mapOn=inRev?clamp(1-(t-rs)/0.4,0,1):1;
   mw.style.opacity=mapOn;dl.style.opacity=mapOn;dlab.style.opacity=mapOn;
-  $id('mlab').textContent=C.distribution?('HABITAT · '+C.distribution):'GLOBAL HABITAT';
-  const pulse=(t*1.3)%1;
-  $id('mkring').setAttribute('r',(5+8*pulse).toFixed(1));
-  $id('mkring').setAttribute('opacity',Math.max(0,0.9-pulse*0.85).toFixed(2));
-  $id('mkdot').setAttribute('opacity',(0.45+0.55*Math.abs(Math.sin(t*4))).toFixed(2));
+  $id('mlab').textContent=(C.distribution?('DISTRIBUTION · '+C.distribution):'GLOBAL DISTRIBUTION')+' · SCANNING';
+  // 스캔 스윕(좌→우 반복) — 가짜 좌표 정점 대신 '탐색 중' 표현
+  const sx=((t*70)%396)-18;                  // -18~378 이동(맵 밖에서 진입/이탈)
+  $id('mapscan').setAttribute('x1',sx.toFixed(1));$id('mapscan').setAttribute('x2',sx.toFixed(1));
+  $id('mapband').setAttribute('x',(sx-26).toFixed(1));
+  // 스캔 통과 열의 육지 도트 하이라이트
+  document.querySelectorAll('#mapwrap .ld').forEach(el=>{
+    const dx=parseFloat(el.getAttribute('data-x'));
+    el.setAttribute('opacity', (Math.abs(dx-sx)<14 ? 0.98 : 0.5).toFixed(2));});
   // 훅 (컷1 타이핑→페이드아웃)
   const hw=$id('hookwrap');
   if(t<d0){hw.style.opacity=Math.min(clamp((t-0.2)/0.4,0,1),clamp((d0-t)/0.7,0,1));

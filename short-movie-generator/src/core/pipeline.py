@@ -126,13 +126,13 @@ def run(
     if episode is None:
         episode = len(list(Path(out_dir).glob("*.json"))) + 1  # 자동 회차
     series_title = getattr(category, "series_title", "") or category_id
-    ec_video = endcard.build_endcard_video(
-        caption, series_title, episode, WATERMARK, str(work_dir)
+    # 통합 마지막 페이지: 실제 NOAA 사진(충격 리빌) + 종 도감 도시에(신뢰 앵커·출처·팔로우)
+    final_page = endcard.build_final_page(
+        caption, series_title, episode, WATERMARK,
+        asset.asset_path, asset.credit_string, info.scientific_name, str(work_dir),
     )
-    # 꼬리 시퀀스: 본편 → 실제 NOAA 사진 카드(신뢰 앵커·출처 크레딧) → 시리즈 엔드카드
-    real_card = endcard.build_real_photo_card(asset.asset_path, asset.credit_string, str(work_dir))
-    with_endcard = endcard.concat_tail([overlaid, real_card, ec_video], str(work_dir))
-    final_duration = total_duration + endcard.REALCARD_DURATION_S + endcard.ENDCARD_DURATION_S
+    with_endcard = endcard.concat_tail([overlaid, final_page], str(work_dir))
+    final_duration = total_duration + endcard.FINAL_PAGE_DURATION_S
 
     reveal_at = sum(durations[:-1]) if len(durations) >= 2 else None  # 마지막 컷 시작 = 리빌
     # 타자 효과음을 화면 타이핑과 동기 (HUD 타임라인 재사용)

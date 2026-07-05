@@ -200,7 +200,10 @@ class DeepSeaCategory:
     def ambient_audio_spec(self) -> dict:
         return {"noise_color": "brown", "lowpass_hz": 300, "volume": 1.25, "fade_s": 1.5,
                 "reveal_accent": True,  # 컷3(리빌) 시작에 서브베이스 스웰+스팅
-                "hud_sfx": True}        # 스캔 소나 핑 + 타이핑 클릭 + 리빌 확정 차임
+                "hud_sfx": True,        # 스캔 소나 핑 + 타이핑 클릭 + 리빌 확정 차임
+                # 배경음악: 앰비언스 밑에 낮게 레이어 (다크 시네마틱 앰비언트)
+                "bgm_path": "assets/audio/bgm/beneath_the_frozen_shelf.mp3",
+                "bgm_volume": 0.5}
 
     # --- 그레이딩 (deep_sea_realism ROV 질감 — 오버레이 전 적용, 텍스트는 선명 유지) ---
     def grade_filter(self) -> str | None:

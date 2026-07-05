@@ -57,20 +57,33 @@ def add_ambient(
     ready = reveal_at_s is not None and reveal_at_s > 3.0
     use_accent = bool(s.get("reveal_accent")) and ready
     use_sfx = bool(s.get("hud_sfx")) and ready
+    bgm_path = s.get("bgm_path")
+    use_bgm = bool(bgm_path and Path(bgm_path).exists())
 
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", video_path,
            "-f", "lavfi", "-i",
            f"anoisesrc=color={s['noise_color']}:amplitude=0.55:duration={duration_s}:sample_rate=44100"]
 
-    if not use_accent and not use_sfx:
+    if not use_accent and not use_sfx and not use_bgm:
         cmd += ["-af", ambient_chain, "-map", "0:v", "-map", "1:a"]
         cmd += ["-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest", str(out_path)]
         return _run(cmd, out_path)
 
-    # 다중 오디오 소스 → adelay → amix (FFmpeg 표현식: 필터그래프 콤마는 \, 로 이스케이프)
-    parts = [f"[1:a]{ambient_chain}[amb]"]
+    # 배경음악(BGM): 앰비언스 밑에 낮게 깔고 페이드. 무한 루프 후 duration까지 트림.
+    # noise(1) 다음 입력으로 추가 → 항상 인덱스 2 (accent/sfx는 그 뒤).
+    parts = [f"[1:a]{ambient_chain},aformat=channel_layouts=mono[amb]"]
     mix_labels = ["[amb]"]
-    idx = 2  # 다음 lavfi 입력 인덱스
+    idx = 2  # 다음 입력 인덱스
+    if use_bgm:
+        cmd += ["-stream_loop", "-1", "-i", str(bgm_path)]
+        bgm_vol = float(s.get("bgm_volume", 0.5))
+        bfo = max(0.0, duration_s - 2.0)
+        parts.append(
+            f"[{idx}:a]aformat=channel_layouts=mono,atrim=0:{duration_s},asetpts=PTS-STARTPTS,"
+            f"volume={bgm_vol},afade=t=in:st=0:d=2,afade=t=out:st={bfo:.2f}:d=2[bgm]"
+        )
+        mix_labels.append("[bgm]")
+        idx += 1
 
     if use_accent:
         swell = r"sin(2*PI*40*t)*pow(min(t/2.5\,1)\,2)*0.55"
@@ -111,12 +124,13 @@ def add_ambient(
         mix_labels.append("[chm]")
         idx += 1
 
-        # 실제 사진 카드 리빌 효과음: 셔터 클릭 + 확정음(+저역 임팩트)
+        # 실제 사진 '충격' 리빌 효과음: 저역 붐 + 서브 하모닉 + 트랜지언트 + 확정음
         if photo_at_s is not None and photo_at_s > 0:
-            shutter = (r"(sin(2*PI*2600*t)+sin(2*PI*1700*t))*exp(-55*t)*0.22"
-                       r"+(sin(2*PI*950*t)*exp(-4*t)+sin(2*PI*1400*t)*exp(-4*max(t-0.1\,0))*gt(t\,0.1))*0.36"
-                       r"+sin(2*PI*80*t)*(1-exp(-30*t))*exp(-4*t)*0.4")
-            cmd += ["-f", "lavfi", "-i", f"aevalsrc={shutter}:d=1.3:s=44100"]
+            impact = (r"sin(2*PI*46*t)*(1-exp(-40*t))*exp(-3.2*t)*0.75"
+                      r"+sin(2*PI*92*t)*exp(-6*t)*0.4"
+                      r"+(sin(2*PI*2600*t)+sin(2*PI*1700*t))*exp(-60*t)*0.18"
+                      r"+(sin(2*PI*880*t)*exp(-3.5*t)+sin(2*PI*1320*t)*exp(-3.5*max(t-0.12\,0))*gt(t\,0.12))*0.34")
+            cmd += ["-f", "lavfi", "-i", f"aevalsrc={impact}:d=1.6:s=44100"]
             parts.append(f"[{idx}:a]adelay={int(photo_at_s * 1000)}:all=1[pho]")
             mix_labels.append("[pho]")
             idx += 1
