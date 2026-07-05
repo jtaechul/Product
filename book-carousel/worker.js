@@ -2592,6 +2592,19 @@ export default {
             result = d.ok ? { success: true, username: d.result.username } : { success: false, error: d.description || '조회 실패' };
           }
         }
+        else if (url.pathname === '/api/telegram-chat-info') {
+          // 진단용: 등록하려는 채팅 ID가 실제로 어떤 대상(개인/봇/그룹)인지 확인 (토큰 노출 안 함).
+          const chatId = url.searchParams.get('chatId') || body.chatId;
+          if (!env.TELEGRAM_BOT_TOKEN) { result = { success: false, error: '봇 토큰이 설정되지 않았습니다.' }; }
+          else if (!chatId) { result = { success: false, error: 'chatId가 필요합니다.' }; }
+          else {
+            const r = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getChat?chat_id=${encodeURIComponent(chatId)}`);
+            const d = await r.json().catch(() => ({}));
+            result = d.ok
+              ? { success: true, type: d.result.type, isBot: !!d.result.is_bot, firstName: d.result.first_name || null, username: d.result.username || null }
+              : { success: false, error: d.description || '조회 실패' };
+          }
+        }
         else if (url.pathname === '/api/send-telegram') result = await handleSendTelegram(env, body);
         else if (url.pathname === '/api/send-telegram-image') result = await handleSendTelegramImage(env, body);
         else if (url.pathname === '/api/generate-dm-reply') result = await handleGenerateDmReply(env, body);
