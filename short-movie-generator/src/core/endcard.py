@@ -214,27 +214,30 @@ def _real_card_overlay_png(credit_string: str, work_dir: str) -> str:
 
 
 def build_real_photo_card(asset_path: str, credit_string: str, work_dir: str) -> str:
-    """승인 NOAA 사진 → 9:16 블러확장 + 슬로우 줌 + 라벨/크레딧 오버레이 → 카드 영상."""
-    from src.core import imageprep
+    """승인 NOAA 사진 → 9:16 '꽉 채움'(cover, 검은 여백 없음) + 줌인 + 스캔라인/플래시 리빌
+    + 라벨/크레딧 오버레이 → 카드 영상.
+    """
     work = Path(work_dir)
     if not Path(asset_path).exists():
         raise PipelineError("endcard", f"실제 사진 없음: {asset_path}")
-    nine = imageprep.to_vertical_9x16(asset_path, str(work / "realcard_9x16.png"))
     overlay = _real_card_overlay_png(credit_string, work_dir)
     out = work / "realcard.mp4"
     fps = CLIP_FPS
     frames = int(REALCARD_DURATION_S * fps)
-    # 사진 슬로우 줌인 + 오버레이 합성 + 페이드
-    vf = (f"scale={CLIP_W*2}:{CLIP_H*2},"
-          f"zoompan=z='min(1.0+0.0009*on,1.10)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
-          f":d={frames}:s={CLIP_W}x{CLIP_H}:fps={fps},setsar=1")
+    dur = REALCARD_DURATION_S
+    # cover(가득) → 2배 업스케일로 줌 여유 → zoompan 줌인 → 스캔라인 1회 하강 → 흰 플래시 리빌
+    bg = (f"[0:v]scale={CLIP_W}:{CLIP_H}:force_original_aspect_ratio=increase,"
+          f"crop={CLIP_W}:{CLIP_H},scale={CLIP_W*2}:{CLIP_H*2},"
+          f"zoompan=z='min(1.0+0.0011*on,1.12)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+          f":d={frames}:s={CLIP_W}x{CLIP_H}:fps={fps},setsar=1,"
+          f"drawbox=x=0:y='ih*(t/0.7)':w=iw:h=4:color=0x9BE8F2@0.8:t=fill:enable='lt(t,0.7)',"
+          f"fade=t=in:st=0:d=0.28:color=white[bg]")
+    fc = (f"{bg};[bg][1:v]overlay=0:0:format=auto,"
+          f"fade=t=out:st={dur-0.3:.2f}:d=0.3[v]")
     proc = subprocess.run(
-        ["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-t", str(REALCARD_DURATION_S),
-         "-i", nine, "-i", overlay,
-         "-filter_complex",
-         f"[0:v]{vf}[bg];[bg][1:v]overlay=0:0:format=auto,"
-         f"fade=t=in:st=0:d=0.3,fade=t=out:st={REALCARD_DURATION_S-0.3:.2f}:d=0.3[v]",
-         "-map", "[v]", "-t", str(REALCARD_DURATION_S),
+        ["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-t", str(dur),
+         "-i", asset_path, "-i", overlay,
+         "-filter_complex", fc, "-map", "[v]", "-t", str(dur),
          "-pix_fmt", "yuv420p", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
          "-an", str(out)],
         capture_output=True, text=True,

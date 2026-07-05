@@ -31,6 +31,7 @@ def add_ambient(
     spec: dict | None = None,
     reveal_at_s: float | None = None,
     sfx_timeline: dict | None = None,
+    photo_at_s: float | None = None,
 ) -> str:
     """무음 영상에 합성 앰비언트(+선택: 리빌 악센트·HUD 효과음)를 입혀 with_audio.mp4 반환.
 
@@ -109,6 +110,16 @@ def add_ambient(
         parts.append(f"[{idx}:a]adelay={int(reveal_at_s * 1000)}:all=1[chm]")
         mix_labels.append("[chm]")
         idx += 1
+
+        # 실제 사진 카드 리빌 효과음: 셔터 클릭 + 확정음(+저역 임팩트)
+        if photo_at_s is not None and photo_at_s > 0:
+            shutter = (r"(sin(2*PI*2600*t)+sin(2*PI*1700*t))*exp(-55*t)*0.22"
+                       r"+(sin(2*PI*950*t)*exp(-4*t)+sin(2*PI*1400*t)*exp(-4*max(t-0.1\,0))*gt(t\,0.1))*0.36"
+                       r"+sin(2*PI*80*t)*(1-exp(-30*t))*exp(-4*t)*0.4")
+            cmd += ["-f", "lavfi", "-i", f"aevalsrc={shutter}:d=1.3:s=44100"]
+            parts.append(f"[{idx}:a]adelay={int(photo_at_s * 1000)}:all=1[pho]")
+            mix_labels.append("[pho]")
+            idx += 1
 
     n = len(mix_labels)
     fc = ";".join(parts) + ";" + "".join(mix_labels) + \

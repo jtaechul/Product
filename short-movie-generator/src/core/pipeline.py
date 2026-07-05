@@ -140,6 +140,7 @@ def run(
     with_audio = audio.add_ambient(
         with_endcard, str(work_dir), final_duration, category.ambient_audio_spec(),
         reveal_at_s=reveal_at, sfx_timeline=sfx_tl,
+        photo_at_s=total_duration,  # 실제 사진 카드 시작 = 본편 끝 → 셔터/확정 효과음
     )
     log.info("[8/9] 오버레이+엔드카드+오디오: %s (리빌 %.0fs, #%d)", with_audio, reveal_at or -1, episode)
 
