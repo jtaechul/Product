@@ -18,14 +18,20 @@ _SUBJECT_BLOCK = (
 # 2) 형태 잠금 (피사체 바로 뒤, 압축)
 _ANATOMY_BLOCK = "Keep its true anatomy exactly: {anatomy_lock}. Never {forbidden_features}."
 
-# 3) 장면/조명/물 — 무인 ROV, 카메라옆 램프(정면광), 저노출 어둠, 정적 물, 하강 마린스노우
+# 3) 장면/조명/물 — 무인 ROV, 카메라 동축 정면광(설비 미노출), 저노출 어둠, 정적 물, 하강 마린스노우
+# 주의: 'lamp/beam/flashlight/spotlight' 등 명사를 부르지 않는다(핑크코끼리 → 설비·빛기둥 유발).
+# 대신 조명의 '방향(렌즈 뒤→정면 전진)'과 '화면엔 물+생물만' 긍정문으로 서술.
 _SCENE_BLOCK = (
     "Filmed by an unmanned scientific ROV at about {depth_hint} meters in the pitch-black deep "
-    "sea. Lamps mounted beside the camera light the animal head-on; the water around it is an "
-    "immensely dense, absolutely motionless dark liquid void that fades instantly into total "
-    "underexposed blackness at the frame edges. The water stays perfectly calm and still, with "
-    "no movement anywhere except the animal itself and a few faint motes of marine snow drifting "
-    "gently down. The dim light is steady and unchanging."
+    "sea. Everything is lit only from the camera's own viewpoint: the light comes from directly "
+    "behind the lens and travels straight forward in the exact direction the camera looks, so the "
+    "animal is lit from the front and its shadows fall away from the camera into the darkness "
+    "behind it; the light travels horizontally forward and never comes from overhead. Nothing but "
+    "open dark water and the animal is visible in the frame. The water around it is an immensely "
+    "dense, absolutely motionless dark liquid void that fades instantly into total underexposed "
+    "blackness at the frame edges. The water stays perfectly calm and still, with no movement "
+    "anywhere except the animal itself and a few faint motes of marine snow drifting gently down. "
+    "The light is dim, steady and unchanging."
 )
 
 # 4) 서식대 (짧게) — habitat_zone 데이터가 배경 결정

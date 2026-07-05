@@ -20,7 +20,8 @@ def test_three_cuts_in_order(cuts):
     "marine snow drifting",    # 대체 모션: 하강 마린스노우
     "unmanned scientific ROV", # 무인 탐사정(호흡 없음) 시점
     "underexposed blackness",  # 심해 저노출 어둠
-    "Lamps mounted beside the camera",  # 조명=카메라 옆(핀조명 아님)
+    "lit only from the camera's own viewpoint",  # 카메라 동축 정면광(위→아래 아님)
+    "never comes from overhead",  # 무대조명(overhead) 금지
     "Full-frame vertical 9:16",  # 풀프레임 규격
 ])
 def test_every_cut_contains_hard_rule(cuts, needle):
@@ -38,6 +39,7 @@ def test_subject_appears_first(cuts):
     "beam", "laser", "bubble", "breath",   # 핀조명·레이저·기포 유발어
     "column", "vibration", "backscatter",  # Gemini 지적: 기포 오역 유발어(v9 제거)
     "cinematic",                            # 레터박스/시네마틱 유발어
+    "lamp", "flashlight", "spotlight",      # 조명 설비/빛기둥 유발어(설비 노출 방지)
 ])
 def test_no_hallucination_trigger_substrings(cuts, forbidden):
     """유발 단어가 어떤 컷에도 없어야 함 (핑크코끼리 역효과 회피)."""
