@@ -9,12 +9,21 @@
 """
 from __future__ import annotations
 
-# 스타일 블록 (deep_sea_realism v4 — 무태양광·무기포·풀프레임·저화질 ROV 실사)
+# 스타일 블록 (deep_sea_realism v5 — 저노출·무핀조명·무태양광·무기포·풀프레임 ROV 실사)
 _STYLE_BLOCK = (
     "Authentic footage from a scientific deep-sea ROV (remotely operated vehicle) at about "
     "{depth_hint} meters depth, in total darkness far below the reach of any natural light. "
-    "The scene is lit ONLY by the vehicle's own floodlights: a hard, narrow beam with sharp "
-    "falloff into pure black; everything outside the beam stays black. "
+    # 조명 규칙(핵심): 광원은 카메라 옆 램프, 정면 소구역만 밝고 나머지는 거의 검정.
+    # 빛기둥/원뿔/광선/램프 자체는 절대 보이지 않음. 위쪽 광원 없음.
+    "The only illumination comes from lamps on the vehicle right beside the camera, pointing "
+    "forward the same way the camera looks. They light just a small patch directly in front of "
+    "the camera; the lamps themselves and any visible cone, column, shaft or ray of light are "
+    "never shown. Nothing lights the scene from above and nothing overhead is lit. Beyond the "
+    "small lit patch the picture falls off fast into near-total blackness, and the corners and "
+    "edges of the frame are black. "
+    # 밝기(하드): 심해에 맞게 매우 어둡게, 저노출.
+    "The shot is deliberately underexposed and very dark — a dim, only partly-lit subject against "
+    "overwhelming darkness; NOT a bright, evenly lit or daylight-like scene. "
     "Gentle mechanical camera drift and faint vibration of an underwater vehicle. "
     "Practical low-grade scientific camera look: soft focus, visible video noise, mild compression "
     "artifacts, muted desaturated colors, limited dynamic range, slight motion blur. "
@@ -30,35 +39,34 @@ _STYLE_BLOCK = (
     "above, no on-screen text, no HUD, no watermark."
 )
 
-# ROV 존재감 블록 — 조명은 카메라와 동축(그림자·후방산란 방향 일치), 기체 힌트는 가장자리만,
-# 스케일 레이저는 '점 2개'만(빔·선 금지 → 할루시네이션 억제). 생물 접촉 금지.
+# ROV 존재감 블록 — 조명은 카메라와 동축(그림자·후방산란 방향 일치), 기체 힌트는 가장자리만.
+# 스케일 레이저는 제거(실측상 Veo가 허공에 잘못 그림 → 할루시네이션 유발).
 _ROV_BLOCK = (
-    "The floodlights are mounted right next to the camera on the same vehicle, so subjects are "
-    "lit head-on from the camera's position and their shadows fall away from the camera. "
-    "Out-of-focus particles drifting close to the lens catch the beam and bloom into soft pale "
+    "Because the lamps sit right next to the camera, the subject is lit head-on from the camera's "
+    "position and its shadows fall away from the camera into the dark. "
+    "Out-of-focus particles drifting close to the lens catch the light and bloom into soft pale "
     "specks (backscatter), giving the honest look of real underwater vehicle footage. "
     "At the very edge of the frame a hint of the vehicle itself is barely visible — a dark blurred "
     "corner of its metal frame or a folded manipulator arm resting at the bottom edge, out of "
-    "focus; it never reaches toward the animal and never enters the center of the frame. "
-    "Two tiny dim parallel red laser dots are projected onto the animal's body for scientific "
-    "scale measurement — just two small dots, no visible beams, no lines."
+    "focus; it never reaches toward the animal and never enters the center of the frame."
 )
 
 # 서식대별 환경 블록 — habitat_zone 데이터가 배경·부유물 밀도를 결정
 _ENV_BLOCKS = {
-    # 해저(저서): 퇴적층이 하단에 보이고 부유물 짙음
+    # 해저(저서): 정면 소구역만 실트가 보이고 바로 옆은 검정, 부유물 짙음
     "benthic": (
-        "Setting: just above the deep seafloor. A flat plain of pale fine silt and soft sediment "
-        "fills the lower part of the frame and fades into darkness; the water column above stays "
-        "pure black. The water is thick with suspended sediment and marine snow — dense pale "
-        "particles hanging and slowly sinking everywhere in the beam (they never rise), heaviest "
-        "near the bottom, and a faint haze of silt softens everything near the seafloor."
+        "Setting: just above the deep seafloor. Only a small patch of pale fine silt directly in "
+        "front of the vehicle is dimly lit; the seafloor sinks into blackness just beyond that "
+        "patch and the water column above stays pure black. The water is thick with suspended "
+        "sediment and marine snow — dense pale particles hanging and slowly sinking in the lit "
+        "area (they never rise), heaviest near the bottom, with a faint haze of silt softening "
+        "the ground nearby."
     ),
     # 원양(수층): 흑수 배경, 부유물은 옅게
     "pelagic": (
         "Setting: open black midwater far above the seafloor — no bottom, no walls, nothing but "
         "endless dark water in every direction. A light scatter of marine snow drifts and slowly "
-        "sinks through the beam (the particles never rise)."
+        "sinks through the lit area (the particles never rise)."
     ),
 }
 
@@ -74,18 +82,19 @@ _ANATOMY_BLOCK = (
 _CUT_BLOCKS = {
     "discovery": (
         "Discovery shot: at first the frame is almost entirely black water with marine snow. "
-        "The floodlight beam slowly sweeps and the animal gradually emerges from the darkness "
-        "into the edge of the light, {behavior}. The camera drifts slowly toward it. "
+        "As the vehicle moves, the animal gradually emerges out of the darkness into the small "
+        "dim patch of light, {behavior}. The camera drifts slowly toward it. "
         "Suspenseful, quiet documentary mood."
     ),
     "behavior": (
         "Behavior shot: the camera tracks laterally alongside the animal as it {behavior}. "
-        "The floodlight keeps it against pure black open water. Immersive observational mood."
+        "The vehicle's light keeps it dimly visible against pure black water, the surroundings "
+        "lost in darkness. Immersive observational mood."
     ),
     "detail": (
         "Detail shot: the camera very slowly closes in and holds a near-macro view while the "
-        "animal {behavior}. Fine skin texture and body details become visible inside the beam. "
-        "Intimate, mysterious mood."
+        "animal {behavior}. Fine skin texture and body details become visible where the vehicle's "
+        "light directly falls on it, the rest fading to black. Intimate, mysterious mood."
     ),
 }
 
@@ -111,7 +120,7 @@ def build_cut_prompt(species_entry: dict, cut_type: str) -> str:
 
     # 발광 종이 아닌 경우: 스스로 빛나는 표현이 생기지 않도록 명시(금지어 없이 서술)
     if not flags.get("bioluminescent"):
-        parts.insert(2, "The animal itself emits no light of its own; it is visible only where the vehicle's beam hits it.")
+        parts.insert(2, "The animal itself emits no light of its own; it is visible only where the vehicle's light directly falls on it.")
 
     return " ".join(parts)
 

@@ -21,15 +21,22 @@ def test_three_cuts_in_order(cuts):
     "never rise",              # 마린스노우는 가라앉음(상승 아님)
     "no letterbox",            # 세로 풀프레임(레터박스 금지)
     "no light shafts from above",  # 태양광/광선 금지
-    "ONLY by the vehicle's own floodlights",  # ROV 라이트 의존
+    "lamps on the vehicle right beside the camera",  # 조명=카메라 옆(핀조명 아님)
+    "underexposed and very dark",  # 심해 저노출(어둡게)
+    "nothing overhead is lit",  # 위에서 비추는 핀조명 금지
     "backscatter",             # 후방산란 (수중 실사 단서)
     "shadows fall away from the camera",  # 조명=카메라 동축 (방향 일치)
-    "parallel red laser dots", # 스케일 레이저 점 2개
-    "no visible beams",        # 레이저는 점만(빔·선 금지)
 ])
 def test_every_cut_contains_hard_rule(cuts, needle):
     for c in cuts:
         assert needle in c["prompt"], f"{c['cut_type']} 프롬프트에 '{needle}' 누락"
+
+
+@pytest.mark.parametrize("forbidden", ["beam", "laser"])
+def test_no_pinlight_or_laser_vocabulary(cuts, forbidden):
+    """핀조명 유발 어휘(beam)·삭제한 레이저 표현이 어떤 컷에도 없어야 함."""
+    for c in cuts:
+        assert forbidden not in c["prompt"].lower(), f"{c['cut_type']}에 '{forbidden}' 잔존"
 
 
 def test_species_anatomy_injected(cuts):

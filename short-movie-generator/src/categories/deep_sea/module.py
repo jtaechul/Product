@@ -198,11 +198,13 @@ class DeepSeaCategory:
 
     # --- 그레이딩 (deep_sea_realism ROV 질감 — 오버레이 전 적용, 텍스트는 선명 유지) ---
     def grade_filter(self) -> str | None:
-        # Veo의 '예쁜 시네마틱' 편향 보정: 탈채도·저대비 + 비디오 노이즈 + 미세 블러 +
-        # 비네트(상단 광선·과하게 밝은 해저를 어둡게 → 검증 로그 v3 문제 1·2 완화)
+        # Veo의 '예쁜 시네마틱'·과노출 편향 보정 (프롬프트가 무시돼도 어둠을 보장하는 하한선):
+        # 탈채도 + 밝기 하향 + 감마로 미드톤 crush + 블랙 리프트 억제(어두운 곳 더 어둡게) +
+        # 강한 비네트(가장자리·상단 잔여 광선 억제) + 노이즈/미세블러(저화질 실사 질감)
         return (
-            "eq=saturation=0.80:contrast=0.97:brightness=-0.04,"
-            "gblur=sigma=0.45,"
-            "noise=alls=7:allf=t,"
-            "vignette=angle=PI/4.5:mode=forward"
+            "eq=saturation=0.75:contrast=1.06:brightness=-0.12:gamma=0.82,"
+            "curves=all='0/0 0.5/0.4 1/0.95',"
+            "gblur=sigma=0.5,"
+            "noise=alls=8:allf=t,"
+            "vignette=angle=PI/3.6:mode=forward"
         )
