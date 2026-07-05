@@ -830,7 +830,7 @@
     <div class="form-group">
       <label>쿠팡파트너스 링크 (선택)</label>
       <input type="url" id="manualAffiliateLink" placeholder="https://link.coupang.com/a/...">
-      <span class="hint">입력하면 DM 자동 회신 및 도서 카탈로그에 자동으로 포함됩니다</span>
+      <span class="hint">입력하면 도서관(카탈로그)에 자동으로 포함됩니다</span>
     </div>
 
     <button class="btn btn-primary" id="manualGenerateBtn">AI 분석 후 생성</button>
@@ -868,7 +868,7 @@
           <input type="url" class="affiliate-link-input" placeholder="https://link.coupang.com/a/..." style="margin-bottom:6px;">
         </div>
         <button type="button" id="addAffiliateLinkBtn" style="font-size:11px;color:var(--primary);background:none;border:1px solid var(--primary);border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit;margin-bottom:4px;">+ 링크 추가</button>
-        <span class="hint">DM 자동 회신에 모두 포함됩니다</span>
+        <span class="hint">도서관 링크에 포함됩니다</span>
       </div>
       <button class="btn btn-primary" id="deployFetchBooksBtn">자동 진행하기</button>
     </div>
@@ -922,7 +922,7 @@
         <div class="deploy-step-icon">4</div>
         <div><div class="deploy-step-label">캡션 + 해시태그 생성</div><div class="deploy-step-sub" id="dsub-4">인스타그램용 캡션을 작성합니다</div></div>
       </div>
-      <div class="deploy-step" id="dstep-5">
+      <div class="deploy-step" id="dstep-5" style="display:none;">
         <div class="deploy-step-icon">5</div>
         <div><div class="deploy-step-label">DM 자동 회신 생성</div><div class="deploy-step-sub" id="dsub-5">댓글 키워드 감지 시 발송할 DM 내용</div></div>
       </div>
@@ -1015,35 +1015,6 @@
       </div>
       <div class="dm-keyword-info" id="dmKeywordInfo"></div>
       <button class="btn btn-outline" id="copyCaptionBtn" style="font-size:12px;padding:8px 14px;">캡션 전체 복사</button>
-    </div>
-  </div>
-
-  <!-- DM 자동 회신 미리보기 (Phase 5 준비) -->
-  <div class="caption-wrapper" id="dmReplyWrapper" style="display:none;">
-    <div class="section-header">
-      <span class="section-title">DM 자동 회신 미리보기</span>
-      <span class="section-badge" style="background:rgba(124,58,237,0.08);color:var(--primary);">Phase 5 준비</span>
-    </div>
-    <p style="font-size:12px;color:var(--gray-500);line-height:1.7;margin-bottom:12px;">마지막 장 A/B 투표에 댓글을 남긴 방문자에게 보낼 DM입니다. <b>하나의 DM 안에 A·B 두 경우의 내용</b>(성향별 심리 진단 + 솔루션)을 함께 담으며, 해당 책 페이지로 바로 열리는 도서관 링크가 자동 포함됩니다. <b>생성된 DM은 도서 번호로 영구 저장</b>되어, 몇 달 뒤 댓글이 달려도 아래에서 번호로 다시 꺼낼 수 있습니다.</p>
-    <div style="border:1px dashed var(--gray-300);border-radius:10px;padding:12px 14px;margin-bottom:14px;background:var(--gray-50);">
-      <div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:6px;">지난 게시물 DM 찾기</div>
-      <p style="font-size:11px;color:var(--gray-500);line-height:1.6;margin-bottom:8px;">예전 게시물에 댓글이 달렸나요? 캡션의 번호(No.000)를 입력하면 그 게시물의 DM을 다시 꺼내 바로 복사·발송할 수 있습니다.</p>
-      <div style="display:flex;gap:8px;">
-        <input type="text" id="dmLookupNum" placeholder="번호 (예: 1 또는 001)" style="flex:1;">
-        <button class="btn btn-outline" id="dmLookupBtn" style="flex-shrink:0;font-size:12px;padding:9px 14px;white-space:nowrap;">불러오기</button>
-      </div>
-    </div>
-    <div class="form-group" style="margin-bottom:10px;">
-      <label>쿠팡파트너스 어필리에이트 링크 (선택)</label>
-      <input type="url" id="affiliateLinkInput" placeholder="https://link.coupang.com/a/...">
-    </div>
-    <button class="btn btn-outline" id="generateDmBtn" style="font-size:12px;padding:9px 14px;margin-bottom:12px;">DM 자동 회신 생성</button>
-    <div id="dmReplyResult" style="display:none;">
-      <div class="caption-box">
-        <div class="caption-label-text">댓글 응답자에게 보낼 DM (A·B 내용 모두 포함)</div>
-        <div class="caption-text-content" id="dmReplyTextA" style="font-size:12px;white-space:pre-line;"></div>
-        <button class="btn btn-outline" id="copyDmABtn" style="font-size:12px;padding:8px 14px;margin-top:8px;">DM 복사</button>
-      </div>
     </div>
   </div>
 
@@ -1357,11 +1328,8 @@ document.getElementById('manualGenerateBtn').addEventListener('click', async () 
 
   if (!title) { showToast('책 제목을 입력해주세요.', 'warning'); return; }
 
-  // 쿠팡 링크 state 저장 + DM 섹션 입력란에도 반영
+  // 쿠팡 링크 state 저장 (도서관 등록에서 사용)
   state.affiliateLink = affiliateLink || null;
-  if (affiliateLink) {
-    document.getElementById('affiliateLinkInput').value = affiliateLink;
-  }
 
   showLoading('책 정보 분석 중...', coreMessageInput ? 'AI가 추가 정보를 파악하고 있습니다' : 'AI가 핵심 메시지와 독자층을 파악하고 있습니다');
 
@@ -1622,7 +1590,6 @@ function renderCarousel(pages) {
 
   document.getElementById('carouselWrapper').classList.add('visible');
   document.getElementById('captionWrapper').classList.add('visible');
-  document.getElementById('dmReplyWrapper').style.display = 'block';
   document.getElementById('captionResult').style.display = 'none';
   document.getElementById('emptyState').style.display = 'none';
 }
@@ -1700,8 +1667,6 @@ document.getElementById('rePickBookBtn').addEventListener('click', () => {
 
   document.getElementById('carouselWrapper').classList.remove('visible');
   document.getElementById('captionWrapper').classList.remove('visible');
-  document.getElementById('dmReplyWrapper').style.display = 'none';
-  document.getElementById('dmReplyResult').style.display = 'none';
   document.getElementById('captionResult').style.display = 'none';
   document.getElementById('validationPanel').classList.remove('visible');
   document.getElementById('emptyState').style.display = '';
@@ -2392,7 +2357,7 @@ function drawBlurredCover(ctx, img, W, H) {
   const dw = img.width * s, dh = img.height * s;
   wc.drawImage(img, (bw - dw) / 2, (bh - dh) / 2, dw, dh);
   const id = wc.getImageData(0, 0, bw, bh);
-  const r = Math.max(3, Math.round(Math.max(bw, bh) / 19));  // 반경(작업 해상도 기준) — 은은한 소프트(약하게)
+  const r = Math.max(3, Math.round(Math.max(bw, bh) / 26));  // 반경(작업 해상도 기준) — 더 은은하게(약함)
   _boxBlurH(id.data, bw, bh, r); _boxBlurV(id.data, bw, bh, r);
   _boxBlurH(id.data, bw, bh, r); _boxBlurV(id.data, bw, bh, r);
   _boxBlurH(id.data, bw, bh, r); _boxBlurV(id.data, bw, bh, r);  // 3패스 = 가우시안
@@ -2867,54 +2832,7 @@ document.getElementById('clearHistoryBtn').addEventListener('click', () => {
   updateHistoryCount();
 });
 
-// ===== Phase 5 준비: DM 자동 회신 미리보기 =====
-document.getElementById('generateDmBtn').addEventListener('click', async () => {
-  if (!state.pages || !state.bookInfo) { showToast('먼저 캐럿셀을 생성해주세요.', 'warning'); return; }
-  const link = document.getElementById('affiliateLinkInput').value.trim();
-  state.affiliateLink = link || null;
-  const affiliateLinks = link ? [link] : (state.affiliateLinks || []);
-
-  showLoading('DM 자동 회신 생성 중...', 'AI가 A/B 댓글 응답자에게 발송할 DM 내용을 작성합니다');
-  try {
-    const data = await apiFetch('/api/generate-dm-reply', {
-      pages: state.pages,
-      bookInfo: state.bookInfo,
-      affiliateLinks,
-      bookNumber: state.bookNumber || '',
-    });
-    renderDmReplies(data);
-    showToast('DM 자동 회신 생성 완료!', 'success');
-  } catch (err) {
-    showToast(err.message, 'error');
-  } finally {
-    hideLoading();
-  }
-});
-
-document.getElementById('copyDmABtn').addEventListener('click', () => {
-  if (!state.dmReplyA) return;
-  copyText(state.dmReplyA, 'DM');
-});
-
-// 지난 게시물 DM 찾기 — 번호로 영구 저장된 A/B DM을 다시 불러온다
-document.getElementById('dmLookupBtn').addEventListener('click', async () => {
-  const raw = document.getElementById('dmLookupNum').value.trim();
-  if (!raw) { showToast('게시물 번호를 입력하세요.', 'warning'); return; }
-  showLoading('지난 DM 불러오는 중...', `No.${raw} 게시물의 DM을 찾고 있습니다`);
-  try {
-    const data = await apiFetch('/api/get-dm', { number: raw });
-    if (data.success === false) { showToast(data.error || 'DM을 찾을 수 없습니다.', 'error'); return; }
-    state.bookNumber = data.number || raw;
-    document.getElementById('dmReplyWrapper').style.display = 'block';
-    renderDmReplies(data);
-    showToast(`No.${data.number} (${data.title || ''}) DM을 불러왔습니다`, 'success');
-    document.getElementById('dmReplyResult').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  } catch (e) {
-    showToast('불러오기 실패: ' + e.message, 'error');
-  } finally {
-    hideLoading();
-  }
-});
+// (DM 자동 회신 기능 폐기 — 관련 UI·핸들러 제거, Claude 호출 없음)
 
 // ===== 도서관 등록 메뉴 =====
 // 캐럿셀이 준비되면 도서 번호·소개·링크를 보여주고, 사용자가 직접 도서관에 올린다.
@@ -3705,11 +3623,9 @@ function applyPipelineStatus(status) {
 }
 
 // 운영자용 라벨: 이제 댓글 트리거는 A/B 투표 (키워드 입력 아님). category는 DM 라우팅 태그.
-function renderDmKeywordInfo(category) {
+function renderDmKeywordInfo() {
   const el = document.getElementById('dmKeywordInfo');
-  if (!el) return;
-  el.innerHTML = `DM 트리거: 댓글에 <strong>A</strong> 또는 <strong>B</strong>를 남기면 선택에 맞는 DM이 자동 발송됩니다`
-    + (category ? ` <span style="opacity:.65">(라우팅 카테고리: ${escHtml(category)})</span>` : '');
+  if (el) el.innerHTML = '';   // DM 기능 폐기 — 트리거 안내 문구 미표시
 }
 
 // 새 전략(저장·공유 중심)에서는 DM을 사용하지 않는다 → 표시하지 않음(비활성).

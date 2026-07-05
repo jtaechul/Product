@@ -1234,94 +1234,9 @@ async function handleAdjustText(env, body) {
 
 // ===== Phase 5 준비: DM 자동 회신 내용 생성 =====
 async function handleGenerateDmReply(env, body) {
-  const { pages, bookInfo, affiliateLink, affiliateLinks, bookNumber } = body;
-  if (!pages || !bookInfo) throw new Error('캐럿셀 데이터가 필요합니다.');
-
-  // 여러 링크 지원: affiliateLinks 배열 우선, 없으면 단일 affiliateLink 폴백
-  const links = Array.isArray(affiliateLinks) && affiliateLinks.length
-    ? affiliateLinks.filter(l => l && l.trim())
-    : (affiliateLink ? [affiliateLink] : []);
-  const linksText = links.length
-    ? links.map((l, i) => `${i + 1}. ${l}`).join('\n')
-    : '';
-
-  // 책 페이지 딥링크: 도서 번호가 있으면 해당 책 카드로 바로 스크롤되는 앵커(#번호)를 건다.
-  const bookLink = bookNumber ? `${SELF_URL}/books.html#${bookNumber}` : `${SELF_URL}/books.html`;
-  const linkGuide = bookNumber
-    ? `${bookLink} (이 링크를 누르면 오늘의 책(No.${bookNumber}) 페이지가 바로 열립니다)`
-    : `${bookLink}`;
-
-  const text = await callClaude(env.ANTHROPIC_API_KEY, {
-    env, tier: 'main',
-    max_tokens: 1600,
-    system: '당신은 연애·관계 심리 전문 상담가이자 인스타그램 DM 회신 작성자입니다. 게시물 마지막 장 A/B 투표에 댓글을 남긴 팔로워에게 보낼 DM을 "하나의 메시지"로 작성합니다. 이 한 통의 DM 안에 A를 선택한 경우와 B를 선택한 경우의 내용을 모두 담아, 받은 사람이 자기 쪽을 읽으면 되게 합니다. 각 경우마다 그 성향을 따뜻하게 진단하고 책 내용에 근거한 구체적 솔루션을 함께 제시합니다. 단정·비난·공포 금지, 위로와 통찰의 톤. 노골적 판매 금지. 반말 절대 금지 — 존댓말만. 반드시 JSON만 응답합니다.',
-    user: `책 제목: ${bookInfo.title}\n저자: ${bookInfo.author || ''}\n카테고리: ${bookInfo.category || '연애·관계 심리'}\n핵심 메시지: ${bookInfo.coreMessage || ''}\n\n게시물 마지막 장의 A/B 투표 질문(이 선택지의 A·B 의미를 정확히 반영하세요):\n${pages.page4?.cta || ''}\n\n[작업] A·B 댓글 응답자 모두에게 보낼 "하나의 DM"을 작성하세요. A용/B용을 따로 만들지 말고, 한 통의 메시지 안에 두 경우를 모두 담으세요.\n\nDM 구성 순서:\n1. 따뜻한 인사 한 문장\n2. "A를 선택하셨다면" 섹션 — A 성향의 심리 진단(왜 그런 마음이 드는지, 애착·두려움·습관 등 뿌리)과 오늘부터 해볼 수 있는 책 기반 솔루션. 진단+솔루션 합쳐 최소 3문장 이상.\n3. "B를 선택하셨다면" 섹션 — B 성향의 심리 진단과 책 기반 솔루션. 진단+솔루션 합쳐 최소 3문장 이상. (A와 분명히 다른 내용)\n4. 책 안내: 더 깊은 이야기는 오늘의 책 "${bookInfo.title}"에 담겨 있다는 뉘앙스 한 문장.\n5. 도서 링크 안내: 아래 링크를 DM 본문에 그대로 포함(필수, 누락 금지):\n${linkGuide}\n${linksText ? `6. 구매 링크 안내 — 아래 링크도 그대로 포함(누락 금지):\n${linksText}\n` : ''}${linksText ? '7' : '6'}. 따뜻한 마무리 한 문장\n\n[톤 주의] A/B 어느 쪽이든 "당신이 틀렸다"는 뉘앙스 금지. 두 성향 모두 이해받아 마땅하다는 전제로 씁니다. A/B 섹션은 줄바꿈으로 또렷이 구분하세요.\n\nJSON: {"dmText":"A·B 두 경우를 모두 담은 하나의 DM 전체(줄바꿈은 \\n)"}`,
-  });
-
-  const parsed = extractJson(text);
-  const dmText = parsed.dmText || parsed.dmTextA || '';
-
-  // (구) 파이프라인ID 기반 임시 저장 — Phase 5 자동 감지용 (7일)
-  if (env.PENDING_POSTS && body.pipelineId) {
-    const pid = String(body.pipelineId).replace(/[^a-zA-Z0-9]/g, '');
-    if (pid) {
-      await env.PENDING_POSTS.put(`dm_reply_${pid}`, dmText, { expirationTtl: 604800 });
-    }
-  }
-
-  // 도서 번호 기반 영구 저장 — 몇 달 뒤 댓글이 달려도 번호로 DM을 꺼낼 수 있게(유효기간 없음)
-  if (env.PENDING_POSTS && bookNumber) {
-    const num = String(parseInt(String(bookNumber).replace(/[^0-9]/g, ''), 10) || 0).padStart(3, '0');
-    if (num !== '000') {
-      await env.PENDING_POSTS.put(`dm_book_${num}`, JSON.stringify({
-        number: num,
-        title: bookInfo.title || '',
-        dmText,
-        date: new Date().toISOString().slice(0, 10),
-      }));
-    }
-  }
-
-  return { success: true, dmText, dmTextA: dmText, dmTextB: dmText };
+  // ⭐ DM 기능 폐기(저장·공유 전략). Claude를 호출하지 않는다(데이터 낭비 방지).
+  return { success: true, disabled: true, dmText: '' };
 }
-
-// ===== 체인 파이프라인 (탭 닫아도 서버에서 계속 진행) =====
-// 각 단계마다 독립 Worker 인보케이션 → 단계별 새 30초 예산
-
-// ===== 크론 구동 파이프라인 상태머신 =====
-// self-fetch 사슬을 제거하고, 1분마다 도는 Cron Trigger가 "진행중" 파이프라인을
-// 한 단계씩 전진시킨다. 한 단계가 누락/중단돼도 다음 크론 틱이 자동 재개 → 자가복구.
-// (Cloudflare Workers는 긴 작업을 보장하지 않으므로, 복구 가능한 외부 스케줄러가 필요)
-
-const PIPELINE_TTL = 3600;        // 파이프라인 상태 보존(초)
-const PLOG_TTL = 604800;          // 작업 로그 보존(초, 7일) — 사후 오류 분석용
-// 멈춘(active인데 死亡한) 단계를 재실행하기까지의 대기. 킥(fetch waitUntil)이 예산
-// 초과로 죽으면 이만큼 뒤 크론이 복구한다. 5분은 너무 길어 '멈춘 화면'이 오래 감 →
-// 2분으로 단축. 정상 단계는 이보다 빨리 done 되므로 오조기 재실행 위험 없음
-// (가장 긴 이미지 다운로드도 ~90초, 재실행돼도 무료라 무해).
-const STEP_STALE_MS = 2 * 60 * 1000;  // 2분
-const ERROR_RETRY_MS = 15 * 1000;     // 일시적 오류 후 재시도 최소 간격 (크론 다음 틱에 재시도)
-const MAX_ERROR_RETRIES = 5;          // 일시적 오류 자동 재시도 한도 (초과 시 영구 실패로 마감)
-
-// 오류 메시지에서 상태코드를 추출해 "일시적(재시도 가치 있음)" 오류인지 판정한다.
-// callClaude는 실패를 "[403] ..." 형태로 코드를 앞에 붙여 던진다.
-// - 코드가 RETRYABLE_STATUS(429·5xx·529 등)면 일시적 → 크론이 자동 재시도
-// - 403은 영구 오류("Request not allowed") → 재시도 없이 즉시 영구 실패
-// - 코드가 없으면(네트워크·타임아웃·모델 해석 실패 등) 일시적으로 간주
-function isTransientPipelineError(msg) {
-  // 가짜 책(실존 미확인)·성인 차단은 재시도해도 동일 → 영구 오류로 즉시 마감
-  if (/BOOK_NOT_FOUND|ADULT_BLOCKED/.test(msg || '')) return false;
-  // 일일 예산 초과는 재시도할수록 크레딧만 소모 → 영구 오류(다음 날 자동 해제)
-  if (/BUDGET_EXCEEDED/.test(msg || '')) return false;
-  // 지역 라우팅 차단(REGION_BLOCKED)은 일시적 — 다음 크론 틱은 다른 경유지에서
-  // 실행될 수 있으므로 반드시 재시도한다(코드가 [403]이어도 영구 처리 금지).
-  if (/REGION_BLOCKED/.test(msg || '')) return true;
-  const m = /^\[(\d+)\]/.exec(msg || '');
-  if (!m) return true;
-  return RETRYABLE_STATUS.has(parseInt(m[1], 10));
-}
-
-// 작업 로그 기록 — 별도 KV 키(plog_<id>). 파이프라인 상태가 만료돼도 7일간 남아 사후 분석 가능.
 async function logStep(env, pipelineId, entry) {
   if (!env.PENDING_POSTS || !pipelineId) return;
   const key = `plog_${pipelineId}`;
@@ -1893,12 +1808,8 @@ async function executePipeline(env, pipelineId, bookInfo, affiliateLinks, commen
     } catch {}
     await savePipelineStatus(env, pipelineId, { step: 4, stepStatus: 'done', label: '캡션 + 해시태그 생성 완료', caption, hashtags, dmKeyword });
 
-    // Step 5: DM 회신 생성
-    await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'active', label: 'DM 자동 회신 내용 작성 중...' });
-    try {
-      await handleGenerateDmReply(env, { pages, bookInfo, affiliateLinks, commentKeyword: dmKeyword });
-    } catch {}
-    await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'done', label: 'DM 자동 회신 생성 완료' });
+    // Step 5: DM 미사용(저장·공유 전략) — 아무 생성도 하지 않고 통과(Claude 호출 0)
+    await savePipelineStatus(env, pipelineId, { step: 5, stepStatus: 'done', label: 'DM 단계 생략(미사용)' });
 
     // Step 6: 텔레그램 발송 (완료 알림 + 확인 링크만)
     await savePipelineStatus(env, pipelineId, { step: 6, stepStatus: 'active', label: '텔레그램으로 제작 완료 알림 발송 중...' });
