@@ -50,10 +50,16 @@ class DeepSeaCategory:
 
     # --- 입력/정보 ---
     def parse_input(self, query: str) -> str:
-        key = data.resolve_key(query)
+        q = (query or "").strip()
+        # 자동 모드: 'auto' 또는 'auto:benthos|plankton|nekton' → AI가 실존 종 자동 추천(중복 방지)
+        if q.lower() == "auto" or q.lower().startswith("auto:"):
+            from src.categories.deep_sea import suggest
+            cat = q.split(":", 1)[1].strip().lower() if ":" in q else ""
+            return suggest.pick(cat)
+        key = data.resolve_key(q)
         if key is None:
             raise PipelineError(
-                "input", f"미등록 종: {query!r} (등록: {list(data.SPECIES)})"
+                "input", f"미등록 종: {query!r} (자동 추천은 'auto:benthos' 형식 사용)"
             )
         return key
 

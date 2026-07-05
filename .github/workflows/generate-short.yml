@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       query:
-        description: "종명 (영문/한글, 예: dumbo octopus / 덤보문어)"
+        description: "종명 또는 자동(auto / auto:benthos / auto:plankton / auto:nekton)"
         required: true
-        default: "dumbo octopus"
+        default: "auto"
       visualizer:
         description: "영상 생성 방식"
         type: choice
@@ -24,10 +24,16 @@ on:
   push:
     branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
     paths: ["short-movie-generator/requests/*.json"]
+  # 매일 자동 생성: 11:30 KST = 02:30 UTC (AI가 카테고리 로테이션으로 실존 종 자동 선택)
+  schedule:
+    - cron: "30 2 * * *"
 
 concurrency:
   group: generate-short
   cancel-in-progress: false
+
+permissions:
+  contents: write   # 종 중복방지 원장(used_species.json) 커밋용
 
 jobs:
   generate:
@@ -39,19 +45,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Resolve inputs (버튼 or 요청 파일)
+      - name: Resolve inputs (버튼 / 요청파일 / 스케줄)
         id: inp
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "query=${{ inputs.query }}" >> "$GITHUB_OUTPUT"
             echo "visualizer=${{ inputs.visualizer }}" >> "$GITHUB_OUTPUT"
             echo "episode=${{ inputs.episode }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            # 매일 자동: AI 카테고리 자동 로테이션 + 안정적인 panzoom(무쿼터)
+            echo "query=auto" >> "$GITHUB_OUTPUT"
+            echo "visualizer=panzoom" >> "$GITHUB_OUTPUT"
+            echo "episode=" >> "$GITHUB_OUTPUT"
           else
             F=$(ls -t requests/*.json | head -1)
             python - "$F" <<'PY' >> "$GITHUB_OUTPUT"
           import json, sys
           r = json.load(open(sys.argv[1], encoding="utf-8"))
-          print(f"query={r.get('query','dumbo octopus')}")
+          print(f"query={r.get('query','auto')}")
           print(f"visualizer={r.get('visualizer','panzoom')}")
           print(f"episode={r.get('episode','')}")
           PY
@@ -138,3 +149,15 @@ jobs:
             short-movie-generator/output/*.mp4
             short-movie-generator/output/*.json
           retention-days: 14
+
+      - name: Commit species ledger (중복방지 원장 영속화)
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          if git diff --quiet -- short-movie-generator/src/categories/deep_sea/used_species.json; then
+            echo "원장 변경 없음"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add short-movie-generator/src/categories/deep_sea/used_species.json
+          git commit -m "chore: 종 중복방지 원장 갱신 [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}

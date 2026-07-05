@@ -57,10 +57,15 @@ button.go:disabled{opacity:.5}
 <header><div class="dot"></div><h1>DEEP DIVE <span>LOG</span> · 쇼츠 제작</h1><div class="sub mono">FREE FACTORY</div></header>
 
 <div class="card">
-  <span class="lbl">종(種) 선택</span>
-  <select id="species"><option value="dumbo octopus">덤보문어 (Dumbo octopus)</option></select>
-  <span class="lbl">또는 직접 입력</span>
-  <input id="query" placeholder="예: dumbo octopus / 덤보문어" autocomplete="off">
+  <span class="lbl">생물 카테고리 (AI가 실존 종을 자동 추천 · 중복 없음)</span>
+  <select id="species">
+    <option value="auto">🎲 전체 자동 (아무 카테고리나)</option>
+    <option value="auto:benthos">저서생물 (Benthos · 해저에 사는 생물)</option>
+    <option value="auto:plankton">부유생물 (Plankton · 떠다니는 생물)</option>
+    <option value="auto:nekton">유영생물 (Nekton · 헤엄치는 생물)</option>
+  </select>
+  <span class="lbl">또는 특정 종 직접 입력 (선택)</span>
+  <input id="query" placeholder="비워두면 AI가 위 카테고리에서 자동 선택" autocomplete="off">
   <span class="lbl">영상 생성 방식</span>
   <select id="visualizer">
     <option value="panzoom">panzoom · 무료 미리보기 (키 불필요)</option>
