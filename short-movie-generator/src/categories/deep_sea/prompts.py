@@ -24,14 +24,16 @@ _STYLE_BLOCK = (
     # 밝기(하드): 심해에 맞게 매우 어둡게, 저노출.
     "The shot is deliberately underexposed and very dark — a dim, only partly-lit subject against "
     "overwhelming darkness; NOT a bright, evenly lit or daylight-like scene. "
-    "Gentle mechanical camera drift and faint vibration of an underwater vehicle. "
+    "Gentle mechanical camera drift and faint vibration of an unmanned robotic vehicle. "
     "Practical low-grade scientific camera look: soft focus, visible video noise, mild compression "
     "artifacts, muted desaturated colors, limited dynamic range, slight motion blur. "
-    # 물리 정확성(하드): 이 수심엔 사람/호흡장비가 닿을 수 없어 기포원이 없다 → 상승 기포 전면 금지.
-    # (게이트 오탐 방지를 위해 'diver/human' 단어는 쓰지 않고 같은 뜻을 전달)
-    "This depth is far beyond any level people or their breathing gear can reach, so there is no "
-    "source of air at all: absolutely NO air bubbles of any kind, no rising bubbles, no bubble "
-    "streams or columns, no breathing bubbles, no gas escaping anywhere in the scene. "
+    # 물리 정확성(기포): 부정어('bubble' 등)는 확산모델 주의를 기포에 집중시켜 역효과(핑크코끼리).
+    # → 금지어 없이, 물의 상태를 '정적·고압·무거움'으로 확정지어 모션 공백을 채운다.
+    "The water is utterly still and motionless, a heavy, dense, high-pressure water column that "
+    "hangs silent and undisturbed; its surface is impossibly far above and completely out of view. "
+    "The ONLY movement anywhere in the scene is the animal's own slow, graceful motion and the "
+    "marine snow settling gently downward — everything else in the water is perfectly calm and "
+    "static. "
     # 세로 풀프레임(레터박스 금지)
     "The image fills the entire vertical 9:16 frame edge to edge: no black bars, no letterbox, "
     "no widescreen crop, no cinematic aspect ratio. "
@@ -58,15 +60,15 @@ _ENV_BLOCKS = {
         "Setting: just above the deep seafloor. Only a small patch of pale fine silt directly in "
         "front of the vehicle is dimly lit; the seafloor sinks into blackness just beyond that "
         "patch and the water column above stays pure black. The water is thick with suspended "
-        "sediment and marine snow — dense pale particles hanging and slowly sinking in the lit "
-        "area (they never rise), heaviest near the bottom, with a faint haze of silt softening "
+        "sediment and marine snow — dense pale particles hanging almost still and settling gently "
+        "downward in the lit area, heaviest near the bottom, with a faint haze of silt softening "
         "the ground nearby."
     ),
     # 원양(수층): 흑수 배경, 부유물은 옅게
     "pelagic": (
         "Setting: open black midwater far above the seafloor — no bottom, no walls, nothing but "
-        "endless dark water in every direction. A light scatter of marine snow drifts and slowly "
-        "sinks through the lit area (the particles never rise)."
+        "endless still dark water in every direction. A light scatter of marine snow hangs almost "
+        "motionless and settles gently downward through the lit area."
     ),
 }
 

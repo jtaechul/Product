@@ -52,6 +52,8 @@ class VeoImg2VideoVisualizer(Visualizer):
     ) -> ClipResult:
         from google.genai import types
 
+        from src.core import imageprep
+
         client = self._get_client()
         img_path = Path(asset.asset_path)
         if not img_path.exists():
@@ -61,7 +63,11 @@ class VeoImg2VideoVisualizer(Visualizer):
         out.mkdir(parents=True, exist_ok=True)
         clip_path = out / f"{situation_id}_{cut.cut_type}.mp4"
 
-        mime = "image/png" if img_path.suffix.lower() == ".png" else "image/jpeg"
+        # 문제1 근본해결: 9:16 사전 합성 → Veo가 세로 확장을 상상하지 않도록 앵커 제공
+        # (16:9 입력 → 9:16 출력 시 Veo가 위아래 바·기포를 지어내던 문제 제거)
+        prepped = out / f"{situation_id}_{cut.cut_type}_9x16.png"
+        img_path = Path(imageprep.to_vertical_9x16(str(img_path), str(prepped)))
+        mime = "image/png"
         operation = client.models.generate_videos(
             model=MODEL,
             prompt=cut.prompt,

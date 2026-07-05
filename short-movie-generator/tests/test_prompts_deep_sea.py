@@ -16,9 +16,8 @@ def test_three_cuts_in_order(cuts):
 
 
 @pytest.mark.parametrize("needle", [
-    "NO air bubbles",          # 공기 기포 금지 (심해=잠수사 없음)
-    "no rising bubbles",
-    "never rise",              # 마린스노우는 가라앉음(상승 아님)
+    "utterly still and motionless",  # 정적 물 (기포 대신 긍정 서술로 모션공백 채움)
+    "settling gently downward",      # 마린스노우는 아래로 가라앉음
     "no letterbox",            # 세로 풀프레임(레터박스 금지)
     "no light shafts from above",  # 태양광/광선 금지
     "lamps on the vehicle right beside the camera",  # 조명=카메라 옆(핀조명 아님)
@@ -26,17 +25,28 @@ def test_three_cuts_in_order(cuts):
     "nothing overhead is lit",  # 위에서 비추는 핀조명 금지
     "backscatter",             # 후방산란 (수중 실사 단서)
     "shadows fall away from the camera",  # 조명=카메라 동축 (방향 일치)
+    "unmanned robotic vehicle",  # 무인 탐사정(호흡 없음) 시점
 ])
 def test_every_cut_contains_hard_rule(cuts, needle):
     for c in cuts:
         assert needle in c["prompt"], f"{c['cut_type']} 프롬프트에 '{needle}' 누락"
 
 
-@pytest.mark.parametrize("forbidden", ["beam", "laser"])
-def test_no_pinlight_or_laser_vocabulary(cuts, forbidden):
-    """핀조명 유발 어휘(beam)·삭제한 레이저 표현이 어떤 컷에도 없어야 함."""
+@pytest.mark.parametrize("forbidden", ["beam", "laser", "bubble", "breath"])
+def test_no_hallucination_trigger_substrings(cuts, forbidden):
+    """핀조명(beam)·레이저·기포 유발어(bubble/breath)가 어떤 컷에도 없어야 함.
+
+    핑크코끼리 역효과: 부정문이라도 유발 명사를 쓰면 확산모델이 그린다 → 단어 자체를 배제.
+    """
     for c in cuts:
         assert forbidden not in c["prompt"].lower(), f"{c['cut_type']}에 '{forbidden}' 잔존"
+
+
+def test_no_standalone_air_word(cuts):
+    """'air' 단어(공기)도 배제 — 단, hair/pair 등 오탐 없이 단어 경계로만 검사."""
+    import re
+    for c in cuts:
+        assert not re.search(r"\bair\b", c["prompt"], re.IGNORECASE), f"{c['cut_type']}에 'air' 잔존"
 
 
 def test_species_anatomy_injected(cuts):
@@ -67,9 +77,10 @@ def test_generated_prompts_pass_accuracy_gate(cuts):
     assert DeepSeaCategory().validate_cuts(sit) == []
 
 
-def test_bubble_rule_present_even_if_bioluminescent(monkeypatch):
-    """발광 종이어도 무기포 규칙은 유지돼야 함(스타일 블록은 종 무관 고정)."""
+def test_stillness_rule_present_even_if_bioluminescent(monkeypatch):
+    """발광 종이어도 '정적 물' 긍정 서술(기포 방지)은 유지돼야 함(스타일 블록 종 무관 고정)."""
     entry = dict(data.SPECIES["dumbo octopus"])
     entry["accuracy_flags"] = {**entry["accuracy_flags"], "bioluminescent": True}
     for c in prompts.build_cuts(entry):
-        assert "NO air bubbles" in c["prompt"]
+        assert "utterly still and motionless" in c["prompt"]
+        assert "bubble" not in c["prompt"].lower()
