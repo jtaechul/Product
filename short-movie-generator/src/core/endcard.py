@@ -60,11 +60,11 @@ html,body{{width:720px;height:1280px;overflow:hidden}}
   font-family:'Orbitron';font-weight:900;font-size:16px;letter-spacing:5px;color:#FF8A3D}}
 .name{{position:absolute;top:496px;left:40px;right:40px;text-align:center;
   font-family:'Pretendard';font-weight:900;font-size:66px;color:#FFD98A;line-height:1.05;
-  text-shadow:0 0 20px rgba(255,200,120,.4)}}
+  text-shadow:0 0 20px rgba(255,200,120,.4);word-break:keep-all}}
 .en{{position:absolute;top:600px;left:0;right:0;text-align:center;
   font-family:'Orbitron';font-weight:900;font-size:26px;letter-spacing:1px;color:#FFE9B8}}
 .fact{{position:absolute;top:672px;left:70px;right:70px;text-align:center;
-  font-family:'PretendardM';font-size:23px;color:#CFEAF3;line-height:1.4}}
+  font-family:'PretendardM';font-size:23px;color:#CFEAF3;line-height:1.4;word-break:keep-all;text-wrap:pretty}}
 .stat{{position:absolute;top:800px;left:120px;right:120px;text-align:center;
   font-family:'STM';font-size:17px;letter-spacing:2px;color:#4E97A8;
   padding-top:20px;border-top:1px solid rgba(80,220,240,.16)}}

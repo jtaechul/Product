@@ -51,6 +51,17 @@ def _max_depth_num(info: SpeciesInfo) -> int:
     return int(digits) if digits else 4000
 
 
+def _deep_sea_temp_c(depth_m: int) -> float:
+    """수심(m) → 통상 심해 수온(°C) 역산.
+
+    해양 수온 프로파일 근사: 표층은 따뜻하고 수온약층에서 급강하한 뒤 심해는 ~2°C로 수렴.
+    지수 감쇠 모델 T(d) = 1.8 + 16.5·exp(-d/750), 하한 1.5°C.
+    예) 1,000m≈6.2°C / 2,000m≈2.9°C / 4,000m≈1.9°C (실측 대표값과 근사).
+    """
+    t = 1.8 + 16.5 * math.exp(-depth_m / 750.0)
+    return round(max(1.5, t), 1)
+
+
 def _windows(cut_durations: list[float]) -> list[tuple[float, float]]:
     t0, out = 0.0, []
     for d in cut_durations:
@@ -86,6 +97,7 @@ def _config(caption: CaptionData, info: SpeciesInfo, watermark: str,
         "total": w[2][1],
         "revealStart": rs,
         "depthMax": _max_depth_num(info),
+        "tempC": _deep_sea_temp_c(_max_depth_num(info)),  # 수심 기반 역산 수온
         "unit": "ROV · DEEP DIVE UNIT",
         "watermark": watermark,
         "lat": "34.21", "lon": "127.88",
@@ -229,8 +241,8 @@ function render(t){
   const dep = C.depthMax*easeOut(clamp(t/1.3,0,1));
   const jitter = t>1.3 ? Math.sin(t*7.0)*3 : 0;
   $('depth').textContent = comma(dep+jitter)+' M';
-  $('temp').textContent = (2.1+Math.sin(t*3.1)*0.05).toFixed(1)+'°C';
-  $('coord').textContent = C.lat+'°N  '+C.lon+'°E';
+  $('temp').textContent = (C.tempC+Math.sin(t*3.1)*0.05).toFixed(1)+'°C';
+  $('coord').textContent = 'LOCATING'+dots(t);
   // 진행바 (4분할)
   const frac=clamp(t/total,0,1);
   [...$('bar').children].forEach((el,i)=>el.className=((i+1)/4<=frac+1e-3)?'on':'');
@@ -530,7 +542,7 @@ html,body{width:720px;height:1280px;overflow:hidden;background:transparent}
 .col .ct{font-family:'Rajdhani';font-weight:700;font-size:17px;letter-spacing:2px;color:#EAF0F4;text-shadow:0 1px 4px rgba(0,0,0,.85)}
 .col .cv{font-family:'STM';font-size:12px;letter-spacing:1px;color:#B8C4CC;text-shadow:0 1px 4px rgba(0,0,0,.9)}
 .hookwrap{position:absolute;top:150px;left:40px;right:40px}
-.hook{font-family:'BHS';font-size:52px;line-height:1.12;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.7)}
+.hook{font-family:'BHS';font-size:52px;line-height:1.12;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.7);word-break:keep-all;text-wrap:pretty}
 .hook .car{color:#43C8DA;font-weight:400}
 .hrule{margin-top:14px;height:2px;background:linear-gradient(90deg,#43C8DA,rgba(234,240,244,.5) 40%,transparent)}
 .mapwrap{position:absolute;left:36px;bottom:112px;width:270px}
@@ -550,15 +562,15 @@ html,body{width:720px;height:1280px;overflow:hidden;background:transparent}
 .sbar i.on{background:#43C8DA}
 .spct{font-family:'STM';font-size:14px;color:#94A2AC;letter-spacing:1px}
 .stag{font-family:'Orbitron';font-weight:900;font-size:27px;letter-spacing:5px;color:#EAF0F4;text-align:center}
-.ssub{font-family:'Pretendard';font-weight:900;font-size:27px;color:#F2F7FB;margin-top:10px;text-align:center;min-height:34px;text-shadow:0 2px 0 rgba(0,0,0,.72)}
+.ssub{font-family:'PretendardM';font-weight:500;font-size:25px;color:#C7D2DA;margin-top:11px;text-align:center;min-height:32px;text-shadow:0 2px 5px rgba(0,0,0,.7);word-break:keep-all;text-wrap:pretty}
 .reveal{position:absolute;left:34px;right:34px;bottom:118px;border:1px solid rgba(234,240,244,.5);border-left:3px solid #43C8DA;padding:18px 22px;background:rgba(8,12,16,.52);backdrop-filter:blur(4px)}
 .reveal .rtag{font-family:'STM';font-size:15px;letter-spacing:3px;color:#43C8DA}
-.reveal .rname{font-family:'BHS';font-size:56px;color:#fff;margin-top:6px;line-height:1}
+.reveal .rname{font-family:'BHS';font-size:56px;color:#fff;margin-top:6px;line-height:1;word-break:keep-all}
 .reveal .rname .car{color:#43C8DA}
 .reveal .rsci{margin-top:8px}
 .reveal .rsci .en{font-family:'Orbitron';font-weight:900;font-size:17px;letter-spacing:1px;color:#94A2AC}
 .reveal .rsci .sci{font-family:'PretendardM';font-style:italic;font-size:18px;color:#B8C4CC;margin-left:8px}
-.reveal .rfact{font-family:'PretendardM';font-size:20px;color:#D6E0E7;margin-top:10px}
+.reveal .rfact{font-family:'PretendardM';font-size:20px;color:#D6E0E7;margin-top:10px;word-break:keep-all;text-wrap:pretty}
 .wm{position:absolute;bottom:38px;right:34px;font-family:'Orbitron';font-weight:900;font-size:15px;letter-spacing:3px;color:rgba(234,240,244,.68)}
 </style></head><body>
 <div class="stage">
@@ -610,8 +622,8 @@ function render(t){
   const d0=C.d0,d1=C.d1,rs=C.revealStart,total=C.total,inRev=t>=rs,c2=d0+d1;
   $id('rec').textContent=tc(t);
   $id('depth').textContent=comma(C.depthMax*easeOut(clamp(t/1.3,0,1))+(t>1.3?Math.sin(t*7)*3:0))+' M';
-  $id('temp').textContent=(2.1+Math.sin(t*3.1)*0.05).toFixed(1)+'°C';
-  $id('coord').textContent=C.lat+'N '+C.lon+'E';
+  $id('temp').textContent=(C.tempC+Math.sin(t*3.1)*0.05).toFixed(1)+'°C';
+  $id('coord').textContent='LOCATING'+dots(t);   // 임의 좌표 금지 → 좌표 확인중 표기
   // 소나 다이얼 스윕
   const ang=(t*150)%360,rad=ang*Math.PI/180;
   $id('dsweep').setAttribute('x2',(46+44*Math.cos(rad)).toFixed(1));
