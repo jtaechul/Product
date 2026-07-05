@@ -9,16 +9,25 @@
 """
 from __future__ import annotations
 
-# 스타일 블록 (deep_sea_realism v2 — 실측 피드백 반영: 무태양광·저화질 ROV 실사)
+# 스타일 블록 (deep_sea_realism v3 — 실측 피드백: 무태양광·무기포·풀프레임·저화질 ROV 실사)
 _STYLE_BLOCK = (
     "Authentic footage from a scientific deep-sea ROV (remotely operated vehicle) at about "
     "{depth_hint} meters depth, in total darkness far below the reach of any natural light. "
     "The scene is lit ONLY by the vehicle's own floodlights: a hard, narrow beam with sharp "
     "falloff into pure black; everything outside the beam stays black. "
-    "Murky blue-green water, dense drifting marine snow, suspended sediment particles crossing "
-    "the light beam. Gentle mechanical camera drift and faint vibration of an underwater vehicle. "
+    "Murky blue-green water with marine snow — tiny pale flecks of organic detritus that slowly "
+    "drift and gently sink through the beam (they never rise). "
+    "Gentle mechanical camera drift and faint vibration of an underwater vehicle. "
     "Practical low-grade scientific camera look: soft focus, visible video noise, mild compression "
     "artifacts, muted desaturated colors, limited dynamic range, slight motion blur. "
+    # 물리 정확성(하드): 이 수심엔 사람/호흡장비가 닿을 수 없어 기포원이 없다 → 상승 기포 전면 금지.
+    # (게이트 오탐 방지를 위해 'diver/human' 단어는 쓰지 않고 같은 뜻을 전달)
+    "This depth is far beyond any level people or their breathing gear can reach, so there is no "
+    "source of air at all: absolutely NO air bubbles of any kind, no rising bubbles, no bubble "
+    "streams or columns, no breathing bubbles, no gas escaping anywhere in the scene. "
+    # 세로 풀프레임(레터박스 금지)
+    "The image fills the entire vertical 9:16 frame edge to edge: no black bars, no letterbox, "
+    "no widescreen crop, no cinematic aspect ratio. "
     "NOT sharp, NOT cinematic, no dramatic lighting effects, no lens flares, no light shafts from "
     "above, no on-screen text, no HUD, no watermark."
 )
