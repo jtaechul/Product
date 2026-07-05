@@ -46,7 +46,7 @@ def _now_iso() -> str:
 
 def write_record(base_dir: str, content_id: str, *, info, caption, asset,
                  visualizer: str, video_file: str, series_title: str = "",
-                 scope: str = "all") -> str:
+                 scope: str = "all", post: dict | None = None) -> str:
     """제작 성공분을 content/<id>.json에 기록(병합). scope로 갱신 범위 표시(caption/images/video/all).
 
     반환: 기록된 파일 경로(str).
@@ -88,7 +88,11 @@ def write_record(base_dir: str, content_id: str, *, info, caption, asset,
         "license": getattr(asset, "license", "") or "",
     }
     rec.setdefault("media", {})   # CI가 Release 업로드 후 채움(video_url/cover_url/source_image_url)
-    rec.setdefault("post", None)  # 게시물(캐러셀) 파트 — 1번 기능에서 채움
+    # 게시물(캐러셀) 파트 — scope가 게시물에 영향줄 때만 갱신(video 재생성 시 보존)
+    if post is not None and scope in ("all", "images", "caption"):
+        rec["post"] = post
+    else:
+        rec.setdefault("post", None)
     p.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
     log.info("[content] 레코드 기록: %s (scope=%s)", p.name, scope)
     return str(p)

@@ -14,7 +14,7 @@ import logging
 import subprocess
 from pathlib import Path
 
-from src.core import assembler, audio, content_store, endcard, htmlhud, hud, license_gate, output, overlay  # noqa: F401
+from src.core import assembler, audio, carousel, content_store, endcard, htmlhud, hud, license_gate, output, overlay  # noqa: F401
 from src.core.contracts import OutputResult, PipelineError
 from src.core.visualization import VisualizationError, get_visualizer
 from src.registry import get_category
@@ -172,12 +172,32 @@ def run(
     # 제작 성공분을 도감 원장에 기록 → 번호 누적 + 제작 페이지 현황판("#000_국문명") 근거
     if hasattr(category, "log_catalog"):
         category.log_catalog(episode, info)
+
+    # 게시물(캐러셀) 동시 제작 — 도감형 인포그래픽 5장(관리자·발행용). 실패해도 릴스 발행 불정지.
+    post = None
+    if scope in ("all", "images", "caption"):
+        try:
+            post_pngs = carousel.build_carousel(
+                info, caption, asset.credit_string, asset.asset_path,
+                str(out_dir), int(episode), eco_line=eco_line,
+            )
+            if post_pngs:
+                post = {
+                    "format": "carousel-5",
+                    "images": [Path(p).name for p in post_pngs],  # CI가 Release URL로 보완
+                    "caption": caption.caption_body,
+                    "hashtags": list(caption.hashtags or []),
+                }
+                log.info("[+] 게시물 캐러셀 %d장 생성", len(post_pngs))
+        except Exception as e:  # noqa: BLE001 — 게시물 실패해도 릴스는 유효
+            log.warning("게시물(캐러셀) 생성 실패(무시): %s", e)
+
     # 콘텐츠 영구 레코드(관리자 페이지용): content/<id>.json. 미디어 URL은 CI가 Release 후 패치.
     try:
         content_store.write_record(
             base_dir, f"{int(episode):03d}", info=info, caption=caption, asset=asset,
             visualizer=viz.name, video_file=result.video_path, series_title=series_title,
-            scope=scope,
+            scope=scope, post=post,
         )
     except Exception as e:  # noqa: BLE001 — 레코드 실패해도 발행물은 유효
         log.warning("콘텐츠 레코드 기록 실패(무시): %s", e)

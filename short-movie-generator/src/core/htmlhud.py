@@ -426,8 +426,10 @@ def fonts_face_css() -> str:
 
 
 def render_static(full_html: str, out_png: str, work_dir: str,
-                  name: str = "static", transparent: bool = False) -> str:
-    """단일 정지 HTML을 PNG로 렌더 (transparent=True면 투명 배경 오버레이). 실패 시 HudRenderError."""
+                  name: str = "static", transparent: bool = False,
+                  width: int = CLIP_W, height: int = CLIP_H) -> str:
+    """단일 정지 HTML을 PNG로 렌더 (transparent=True면 투명 배경). width/height로 캔버스 지정
+    (기본 9:16 720x1280, 캐러셀은 1080x1350 등). 실패 시 HudRenderError."""
     try:
         from playwright.sync_api import sync_playwright
     except Exception as e:  # noqa: BLE001
@@ -444,13 +446,13 @@ def render_static(full_html: str, out_png: str, work_dir: str,
         with sync_playwright() as p:
             browser = p.chromium.launch(**launch)
             page = browser.new_page(
-                viewport={"width": CLIP_W, "height": CLIP_H}, device_scale_factor=1
+                viewport={"width": width, "height": height}, device_scale_factor=1
             )
             page.goto(html_path.as_uri())
             page.evaluate("document.fonts.ready")
             page.wait_for_timeout(250)
             page.screenshot(path=out_png, omit_background=transparent,
-                            clip={"x": 0, "y": 0, "width": CLIP_W, "height": CLIP_H})
+                            clip={"x": 0, "y": 0, "width": width, "height": height})
             browser.close()
     except Exception as e:  # noqa: BLE001
         raise HudRenderError(f"정지 렌더 실패: {e}") from e

@@ -152,6 +152,8 @@ jobs:
           ffmpeg -y -loglevel error -ss 2 -i "$VIDEO" -frames:v 1 -q:v 3 "work/rel/cover_$ID.jpg" || true
           SRC=$(ls -t assets/approved/*.jpg 2>/dev/null | head -1 || true)
           [ -n "$SRC" ] && cp "$SRC" "work/rel/source_$ID.jpg"
+          # 게시물(캐러셀) 5장 → post_<id>_<n>.png (슬라이드 순서 유지)
+          n=1; for f in $(ls output/post_*.png 2>/dev/null | sort); do cp "$f" "work/rel/post_${ID}_${n}.png"; n=$((n+1)); done
           TAG="content-$ID"
           gh release view "$TAG" >/dev/null 2>&1 || \
             gh release create "$TAG" --title "Content #$ID" --notes "쇼츠 콘텐츠 #$ID 미디어 (자동 생성)" --target "${{ github.ref_name }}"
@@ -172,8 +174,13 @@ jobs:
           if Path(f"work/rel/source_{cid}.jpg").exists():
               media["source_image_url"] = f"{base}/source_{cid}.jpg"
           rec["media"] = media
+          # 게시물(캐러셀) 이미지 URL 패치
+          posts = sorted(Path("work/rel").glob(f"post_{cid}_*.png"),
+                         key=lambda p: int(p.stem.split("_")[-1]))
+          if posts and isinstance(rec.get("post"), dict):
+              rec["post"]["image_urls"] = [f"{base}/{p.name}" for p in posts]
           rp.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
-          print("media patched:", media)
+          print("media patched:", media, "posts:", len(posts))
           PY
           echo "id=$ID" >> "$GITHUB_OUTPUT"
 

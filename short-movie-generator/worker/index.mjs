@@ -72,6 +72,9 @@ button:disabled{opacity:.5}
 .btn.warn{border-color:var(--am);color:var(--am)}
 .btn.rd{border-color:var(--rd);color:var(--rd)}
 .back{color:var(--gy);text-decoration:none;font-size:13px;display:inline-block;margin-bottom:12px}
+.postscroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory}
+.postscroll img{height:300px;border-radius:8px;border:1px solid var(--line);scroll-snap-align:start;flex:none}
+.sect{font-size:11px;letter-spacing:2px;color:var(--cy);text-transform:uppercase;margin:18px 0 8px;border-top:1px solid var(--line);padding-top:14px}
 </style></head>
 <body><div class="wrap">
 <header><div class="dot"></div>
@@ -193,6 +196,17 @@ async function renderLibrary(){
   }).join("");
 }
 
+// 게시물(캐러셀) 섹션: 5장 이미지 가로 스크롤 + 게시물 캡션(다음날 오후 발행용)
+function postSection(post){
+  if(!post||!Array.isArray(post.image_urls)||!post.image_urls.length)
+    return '<div class="sect">게시물(캐러셀)</div><div class="hint">아직 게시물 이미지가 없습니다(제작 직후 잠시 후 반영).</div>';
+  const imgs=post.image_urls.map(u=>'<img src="'+u+'" loading="lazy">').join("");
+  const cap=esc(post.caption||"").replace(/\\n/g,"<br>");
+  return '<div class="sect">게시물(캐러셀) · '+post.image_urls.length+'장 · 다음날 오후 발행</div>'+
+    '<div class="postscroll">'+imgs+'</div>'+
+    (cap?'<div class="hint" style="margin-top:10px;white-space:normal">'+cap+'</div>':'');
+}
+
 // ── 상세: 미리보기 + 캡션 편집 + 재생성 ──
 async function renderDetail(id){
   view().innerHTML='<a class="back" href="/library">← 라이브러리</a><div class="card" id="dcard"><div class="hint">불러오는 중…</div></div>';
@@ -224,6 +238,7 @@ async function renderDetail(id){
       '<button class="btn rd" id="bvid">영상 재생성 (Veo 쿼터)</button>'+
       '<button class="btn" id="ball">전체 재생성</button>'+
     '</div>'+
+    postSection(rec.post)+
     '<div class="hint">이미지 출처: '+esc(src.image_credit||"—")+'<br>정보 출처: '+esc((src.info_sources||[]).join(" · ")||"—")+'</div>';
 
   $("#bsave").onclick=()=>saveCaption(id);
