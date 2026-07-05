@@ -116,6 +116,9 @@ class DeepSeaCategory:
     category_id = "deep_sea"
     style_profile = "deep_sea_realism"
     series_title = "심해 도감"  # 시리즈 브랜딩 (엔드카드·캡션 회차 표기)
+    # 게시물(카드뉴스) 동시 제작 일시 중단 — 나레이션 야생다큐 전환 집중(재개: True).
+    # 캐러셀 코드(carousel.py)·레코드 post 스키마·관리자 표시는 그대로 보존.
+    generate_post = False
 
     # --- 입력/정보 ---
     def parse_input(self, query: str) -> str:

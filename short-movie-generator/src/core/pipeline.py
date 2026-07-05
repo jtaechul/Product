@@ -174,8 +174,10 @@ def run(
         category.log_catalog(episode, info)
 
     # 게시물(캐러셀) 동시 제작 — 도감형 인포그래픽 5장(관리자·발행용). 실패해도 릴스 발행 불정지.
+    # 카테고리가 generate_post=False면 일시 중단(현재: 나레이션 야생다큐 전환 집중 → 릴스만).
     post = None
-    if scope in ("all", "images", "caption"):
+    post_enabled = getattr(category, "generate_post", True)
+    if post_enabled and scope in ("all", "images", "caption"):
         try:
             post_pngs = carousel.build_carousel(
                 info, caption, asset.credit_string, asset.asset_path,
