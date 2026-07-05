@@ -768,10 +768,9 @@
 </header>
 
 <aside class="sidebar">
-  <div class="mode-tabs">
+  <!-- 모드 탭 제거: AI 자동추천·직접입력 폐기(브라우저 Claude 호출 낭비 방지). 자동배포 단일 모드. -->
+  <div class="mode-tabs" style="display:none;">
     <button class="mode-tab active" id="tabAutoDeploy">자동 배포</button>
-    <button class="mode-tab" id="tabAuto">AI 자동 추천</button>
-    <button class="mode-tab" id="tabManual">직접 입력</button>
   </div>
 
   <!-- AUTO MODE -->
@@ -963,8 +962,8 @@
 
   <div class="empty-state" id="emptyState">
     <div class="empty-icon">📚</div>
-    <h3>책을 선정하고 캐럿셀을 만들어보세요</h3>
-    <p>AI 자동 추천으로 베스트셀러를 제안받거나,<br>책 제목만 입력하면 AI가 핵심 메시지를 분석해<br>4페이지 카드뉴스를 자동으로 만들어줍니다.</p>
+    <h3>카테고리만 고르면 자동으로 만들어집니다</h3>
+    <p>카테고리를 선택하고 "자동 진행하기"를 누르면,<br>서버가 책 1권을 골라 4페이지 카드뉴스와 캡션까지<br>한 번에 자동 제작합니다.</p>
   </div>
 
   <!-- Carousel preview -->
@@ -1248,15 +1247,15 @@ function getCardText(page, num) {
 }
 
 // ===== Mode tabs =====
-const ALL_TABS = ['tabAutoDeploy', 'tabAuto', 'tabManual'];
-const ALL_PANELS = ['panelAutoDeploy', 'panelAuto', 'panelManual'];
+// AI 자동추천·직접입력 탭은 폐기(브라우저 Claude 호출 낭비 방지) → 자동배포 단일 모드.
+// panelAuto·panelManual은 DOM에 남아 있으나(핸들러 참조 유지) 탭이 없어 접근 불가.
+const ALL_TABS = ['tabAutoDeploy'];
+const ALL_PANELS = ['panelAutoDeploy'];
 function switchTab(activeTabId) {
-  ALL_TABS.forEach(id => document.getElementById(id).classList.toggle('active', id === activeTabId));
-  ALL_PANELS.forEach(id => document.getElementById(id).classList.toggle('active', id === activeTabId.replace('tab', 'panel')));
+  ALL_TABS.forEach(id => document.getElementById(id)?.classList.toggle('active', id === activeTabId));
+  ALL_PANELS.forEach(id => document.getElementById(id)?.classList.toggle('active', id === activeTabId.replace('tab', 'panel')));
 }
 document.getElementById('tabAutoDeploy').addEventListener('click', () => switchTab('tabAutoDeploy'));
-document.getElementById('tabAuto').addEventListener('click', () => switchTab('tabAuto'));
-document.getElementById('tabManual').addEventListener('click', () => switchTab('tabManual'));
 
 // ===== AUTO MODE =====
 document.getElementById('suggestBtn').addEventListener('click', async () => {
