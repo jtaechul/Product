@@ -17,9 +17,8 @@ from src.core.visualization.base import (
 )
 
 MODEL = "veo-3.1-lite-generate-preview"
-NEGATIVE = (
-    "extra limbs, deformed anatomy, morphing, text, HUD, watermark, human, diver, treasure"
-)
+# 주의: veo-3.1-lite는 negative_prompt 미지원(400 에러) → 왜곡 방지 지시는
+# 상황뱅크 프롬프트 본문("Keep the octopus's exact shape ... do not distort")이 담당.
 _POLL_INTERVAL_S = 10
 _TIMEOUT_S = 15 * 60
 
@@ -67,13 +66,14 @@ class VeoImg2VideoVisualizer(Visualizer):
             model=MODEL,
             prompt=cut.prompt,
             image=types.Image(image_bytes=img_path.read_bytes(), mime_type=mime),
+            # generate_audio 파라미터는 Developer API 모드에서 미지원(전달 시 ValueError).
+            # Veo가 오디오를 포함해 반환해도 assembler가 영상만 concat(a=0)하므로 제거되고,
+            # 앰비언트는 후처리 audio 모듈에서 레이어링한다 (CLAUDE.md 오디오 규칙).
             config=types.GenerateVideosConfig(
                 aspect_ratio="9:16",
                 resolution="720p",
                 duration_seconds=CLIP_DURATION_S,
                 number_of_videos=1,
-                negative_prompt=NEGATIVE,
-                generate_audio=False,  # 앰비언트는 후처리 레이어링 (CLAUDE.md 오디오 규칙)
             ),
         )
 
