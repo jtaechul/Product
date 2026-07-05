@@ -1,12 +1,14 @@
-"""deep_sea 시드 데이터 — 종 정보 + 상황/컷 뱅크 (spec 6장 스키마).
+"""deep_sea 시드 데이터 — 종 정보 + 프롬프트 재료 (형태·행동) + 정확성 플래그.
 
+컷 프롬프트는 하드코딩하지 않는다 → prompts.py 템플릿이 이 데이터로 자동 조립.
+새 종 추가 시 채울 것: 기본 정보 + accuracy_flags + appearance/anatomy_lock/
+forbidden_features/cut_behaviors (+ situation_id).
 정보 소스(FishBase/WoRMS/NOAA 등)에서 재작성한 사실 데이터. API 자동 조회는 Phase 2+.
-accuracy_flags = 정확성 게이트 기준 (컷 프롬프트가 이를 위배하면 제작 차단).
 """
 
-# 종 시드 (키: 소문자 일반명/학명 별칭)
 SPECIES = {
     "dumbo octopus": {
+        # --- 기본 정보 (info/caption 용) ---
         "scientific_name": "Grimpoteuthis spp.",
         "common_name_ko": "덤보문어",
         "common_name_en": "Dumbo octopus",
@@ -20,52 +22,40 @@ SPECIES = {
             "먹이를 통째로 삼킨다",
         ],
         "sources": ["NOAA", "WoRMS", "MBARI(정보만)"],
-        # Grimpoteuthis 속은 발광이 확인되지 않음 → 발광 컷 금지
+        # --- 정확성 플래그 (정확성 게이트 기준) ---
         "accuracy_flags": {
-            "bioluminescent": False,
+            "bioluminescent": False,  # Grimpoteuthis 속은 발광 미확인 → 발광 컷 금지
             "swallows_prey_whole": True,
             "max_depth_m": 4000,
             "has_ear_like_fins": True,
         },
-    },
-}
-
-# 상황 뱅크: 종별 실제 행동을 3컷으로. 새 종은 여기에 항목만 추가.
-SITUATIONS = {
-    "dumbo octopus": {
+        # --- 프롬프트 재료 (prompts.py 템플릿이 사용) ---
         "situation_id": "discovery_swim",
-        "cuts": [
-            {
-                "cut_type": "discovery",
-                "prompt": (
-                    "POV footage from a deep-sea ROV exploring the pitch-black abyss. A hard "
-                    "floodlight beam sweeps through turbid blue-green water thick with marine snow, "
-                    "and a dumbo octopus with large ear-like fins slowly emerges from darkness into "
-                    "the light. Subtle underwater-vehicle camera drift, slowly approaching. Murky "
-                    "low-light look with faint video noise. Keep the octopus's exact shape, "
-                    "proportions, and number of fins and arms unchanged. Vertical 9:16."
-                ),
-            },
-            {
-                "cut_type": "behavior",
-                "prompt": (
-                    "Deep-sea ROV footage tracking a dumbo octopus propelling itself through dark "
-                    "water by flapping its large ear-like fins like wings, webbed arms trailing "
-                    "beneath. Hard floodlight against total blackness; marine snow streaks past. "
-                    "Subtle vehicle vibration. Murky low-light camera look. Keep the octopus's exact "
-                    "shape and number of fins and arms unchanged. Vertical 9:16."
-                ),
-            },
-            {
-                "cut_type": "detail",
-                "prompt": (
-                    "Deep-sea ROV camera slowly closing in on a dumbo octopus near the seafloor, its "
-                    "webbed arms and fine texture revealed under the floodlight in murky blue-green "
-                    "water. Faint suspended particles drift through the beam. Subtle camera shake. "
-                    "Keep the octopus's exact shape and number of arms unchanged. Vertical 9:16."
-                ),
-            },
-        ],
+        "appearance": (
+            "a dumbo octopus (Grimpoteuthis), a small deep-sea octopus with a soft rounded "
+            "gelatinous body and two large paddle-like fins on top of its head that look like "
+            "an elephant's ears"
+        ),
+        "anatomy_lock": (
+            "exactly two ear-like fins on top of the mantle and eight short arms joined by a "
+            "wide umbrella-like web; keep the fin count (2), arm count (8) and the web shape "
+            "unchanged; the body stays soft, rounded and semi-gelatinous"
+        ),
+        "forbidden_features": (
+            "long muscular tentacles, curling sucker-covered arms of a shallow-water octopus, "
+            "a common-octopus body, extra limbs, or any change to the two ear-like fins"
+        ),
+        "cut_behaviors": {
+            "discovery": "hovering in the water and slowly flapping its two ear-like fins",
+            "behavior": (
+                "swimming by gently flapping its two large ear-like fins like wings while its "
+                "webbed arms trail and spread beneath it"
+            ),
+            "detail": (
+                "hovering almost motionless, its webbed arms and soft body seen up close while "
+                "the two ear-like fins make small slow adjustments"
+            ),
+        },
     },
 }
 

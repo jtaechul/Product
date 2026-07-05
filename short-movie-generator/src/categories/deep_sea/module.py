@@ -11,7 +11,7 @@ import os
 import re
 from pathlib import Path
 
-from src.categories.deep_sea import data
+from src.categories.deep_sea import data, prompts
 from src.core.contracts import (
     CaptionData,
     CutSpec,
@@ -161,13 +161,13 @@ class DeepSeaCategory:
     def get_situation(self, info: SpeciesInfo) -> Situation:
         key = data.resolve_key(info.common_name_en)
         sp = data.SPECIES[key]
-        st = data.SITUATIONS[key]
+        cuts = prompts.build_cuts(sp)  # 종 데이터 → 3컷 프롬프트 자동 조립 (템플릿)
         return Situation(
             species=key,
             scientific_name=info.scientific_name,
             accuracy_flags=sp["accuracy_flags"],
-            situation_id=st["situation_id"],
-            cuts=[CutSpec(cut_type=c["cut_type"], prompt=c["prompt"]) for c in st["cuts"]],
+            situation_id=sp["situation_id"],
+            cuts=[CutSpec(cut_type=c["cut_type"], prompt=c["prompt"]) for c in cuts],
         )
 
     def validate_cuts(self, situation: Situation) -> list[str]:
