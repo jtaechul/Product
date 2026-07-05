@@ -40,10 +40,12 @@ SPECIES = {
             "an elephant's ears"
         ),
         "anatomy_lock": (
-            "exactly two ear-like fins on top of the mantle and eight short arms joined by a "
-            "wide umbrella-like web; keep the fin count (2), arm count (8) and the web shape "
-            "unchanged; the body stays soft, rounded and semi-gelatinous"
+            "exactly two ear-like fins on top of the mantle and eight short arms with thin skin "
+            "webbing between the arms close to the body; keep the fin count (2) and arm count (8) "
+            "unchanged; the body stays a single soft, rounded, semi-gelatinous octopus"
         ),
+        # 주의: 우산/해파리 등 트리거 명사를 부정문에라도 넣지 않는다(핑크코끼리). 우산 아티팩트의
+        # 실제 원인이던 긍정 문구 'umbrella-like web'는 anatomy_lock에서 이미 제거함.
         "forbidden_features": (
             "long muscular tentacles, curling sucker-covered arms of a shallow-water octopus, "
             "a common-octopus body, extra limbs, or any change to the two ear-like fins"
