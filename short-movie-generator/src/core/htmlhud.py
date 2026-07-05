@@ -328,7 +328,7 @@ def render_frames(html_path: Path, total: float, work_dir: Path,
     except Exception as e:  # noqa: BLE001
         raise HudRenderError(f"playwright 미가용: {e}") from e
 
-    html = html_path
+    html = html_path.resolve()  # 상대경로는 file:// URI 불가 (CI base_dir='.' 폴백 원인)
     frames_dir = work_dir / "hud_frames"
     frames_dir.mkdir(parents=True, exist_ok=True)
     for old in frames_dir.glob("seq_*.png"):
@@ -411,7 +411,7 @@ def render_static(full_html: str, out_png: str, work_dir: str,
         raise HudRenderError(f"playwright 미가용: {e}") from e
 
     work = Path(work_dir)
-    html_path = work / f"{name}.html"
+    html_path = (work / f"{name}.html").resolve()  # 상대경로 → file:// URI 불가 방지
     html_path.write_text(full_html, encoding="utf-8")
     launch = {"args": ["--no-sandbox", "--disable-gpu", "--force-color-profile=srgb"]}
     exe = _chromium_path()

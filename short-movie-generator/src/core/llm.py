@@ -39,7 +39,10 @@ def _try_claude(prompt: str, max_tokens: int) -> str | None:
             max_tokens=max_tokens,
             messages=[{"role": "user", "content": prompt}],
         )
-        return (msg.content[0].text or "").strip() or None
+        # content에는 thinking 블록이 섞일 수 있음 → text 블록만 추출
+        parts = [getattr(b, "text", "") for b in msg.content
+                 if getattr(b, "type", "") == "text"]
+        return "\n".join(p for p in parts if p).strip() or None
     except Exception as e:  # noqa: BLE001
         log.info("Claude 호출 실패 → Gemini 폴백: %s", e)
         return None

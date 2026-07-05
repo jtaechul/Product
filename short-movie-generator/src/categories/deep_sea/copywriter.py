@@ -154,20 +154,65 @@ def cut_beats(info: SpeciesInfo) -> list[str]:
     ]
 
 
+# ---------- 캡션 본문: 관측 일지형 스토리텔링 (LLM 각색 + 결정적 폴백) ----------
+
+def _storytelling_caption(info: SpeciesInfo, hook: str) -> str | None:
+    """실제 정보(fun_facts)를 '재표현'해 몰입형 관측 일지 캡션 생성. 실패 시 None."""
+    facts = "\n".join(f"- {f}" for f in info.fun_facts[:6])
+    prompt = (
+        "너는 심해 미스터리 쇼츠 채널 'DEEP DIVE LOG'의 카피라이터다. 무인 탐사정(ROV)이 "
+        "심해에서 생물을 포착한 영상의 인스타그램 릴스 캡션을 한국어로 작성하라.\n"
+        "[구조 — 그대로 따를 것]\n"
+        f"1) 첫 줄: 이 훅을 그대로 또는 자연스럽게 변주: \"{hook}\"\n"
+        "2) ROV 관측 일지처럼 몰입감 있는 미니 서사 2~3문장 (칠흑의 하강 → 센서 반응 → 조우). "
+        "긴장감 있게, 현재형으로.\n"
+        f"3) 정체 공개: {info.common_name_ko}({info.common_name_en}). 아래 [실제 정보]에서 "
+        "2~3개를 골라 흥미롭게 각색해 풀어쓴다 (수치·의외성 위주).\n"
+        "4) 마지막 1~2줄: 저장 유도(\"다시 보고 싶다면 저장\") + 팔로우 유도(\"팔로우하면 "
+        "다음 심해 생물\") — 문구는 자연스럽게 변주.\n"
+        "[규칙]\n"
+        "- 300~500자. 존댓말. 이모지는 0~2개만. 해시태그 쓰지 마라(시스템이 붙임).\n"
+        "- [실제 정보]에 없는 사실을 지어내지 마라 (연출·감정 표현은 자유).\n"
+        f"[실제 정보] 종명 {info.common_name_ko}({info.common_name_en}) / 학명 "
+        f"{info.scientific_name} / 수심 {info.depth_range_m}m / 서식 {info.habitat}\n{facts}\n"
+    )
+    raw = llm.generate_text(prompt, max_tokens=900)
+    if not raw:
+        return None
+    text = raw.strip().strip('"')
+    return text if 120 <= len(text) <= 700 else None
+
+
+def _fallback_caption(info: SpeciesInfo, hook: str) -> str:
+    """LLM 불가 시에도 서사 구조를 갖춘 결정적 캡션."""
+    f = info.fun_facts
+    fact1 = f[0] if f else info.habitat
+    fact2 = f[3] if len(f) > 3 else (f[1] if len(f) > 1 else "")
+    fact3 = f[4] if len(f) > 4 else ""
+    d = _depth_str(info)
+    lines = [
+        hook,
+        "",
+        f"칠흑 같은 수심 {d}m. 탐사정의 라이트가 닿는 곳마다 어둠뿐이던 그때, "
+        "센서에 무언가 잡혔습니다. 천천히 다가가자 — 이쪽을 전혀 눈치채지 못한 채 "
+        "유유히 헤엄치는 작은 실루엣.",
+        "",
+        f"정체는 {info.common_name_ko}({info.common_name_en}), 학명 {info.scientific_name}. "
+        f"{fact1}. " + (f"{fact2}. " if fact2 else "") + (f"{fact3}." if fact3 else ""),
+        "",
+        "다시 보고 싶은 장면이라면 저장해두세요. 팔로우하면 다음 심해 생물과 만납니다.",
+    ]
+    return "\n".join(lines)
+
+
 def build(info: SpeciesInfo) -> CaptionData:
-    """CaptionData 완성 (훅 루프 + 비트 + 캡션 + 해시태그)."""
+    """CaptionData 완성 (훅 루프 + 비트 + 스토리텔링 캡션 + 해시태그)."""
     hook = best_hook(info)
     beats = cut_beats(info)
     killer_fact = info.fun_facts[1] if len(info.fun_facts) > 1 else (
         info.fun_facts[0] if info.fun_facts else info.habitat)
 
-    body = (
-        f"{hook}\n\n"
-        f"정체는 바로 {info.common_name_ko}({info.common_name_en}). "
-        f"수심 {info.depth_range_m}m {info.habitat}에서만 사는 진짜 심해 생물입니다. "
-        f"{info.fun_facts[0] if info.fun_facts else ''}.\n\n"
-        f"이런 심해 미스터리를 매일 만나려면 팔로우 필수. 소름 돋았다면 저장해두세요."
-    )
+    body = _storytelling_caption(info, hook) or _fallback_caption(info, hook)
     return CaptionData(
         hook_text=hook,
         overlay_facts=[f"수심 {info.depth_range_m}m",
