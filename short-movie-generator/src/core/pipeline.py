@@ -112,10 +112,15 @@ def run_narrated(
         total = max(video_total, ndur + 0.6)
         if total > video_total + 0.05:
             base_video = _pad_last_frame(base_video, total, str(work_dir))
-        words = subtitle.word_timings(sent_timings)
-        ass = subtitle.build_ass(words, str(work_dir / "subs.ass"), CLIP_W, CLIP_H)
-        subbed = subtitle.burn(base_video, ass, str(work_dir))
-        log.info("[narrated] 나레이션 %.1fs + 자막 %d단어", ndur, len(words))
+        # 자막 번인은 폰트/libass 문제로 실패해도 발행 불정지(자막 없이 진행)
+        try:
+            words = subtitle.word_timings(sent_timings)
+            ass = subtitle.build_ass(words, str(work_dir / "subs.ass"), CLIP_W, CLIP_H)
+            subbed = subtitle.burn(base_video, ass, str(work_dir))
+            log.info("[narrated] 나레이션 %.1fs + 자막 %d단어", ndur, len(words))
+        except Exception as e:  # noqa: BLE001
+            log.warning("[narrated] 자막 번인 실패 → 자막 없이 진행: %s", e)
+            subbed = base_video
     else:
         log.info("[narrated] 나레이션 없음(키 없음/실패) → 앰비언트만")
 
