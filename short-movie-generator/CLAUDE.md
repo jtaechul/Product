@@ -137,6 +137,15 @@
 - 카테고리 모듈은 코어가 정의한 계약만 채운다(코어는 카테고리 내부를 모른다)
 - 각 모듈 독립 실행·테스트 가능, 실패 시 명확 로그 + 안전 중단
 
+## 배포 (조작용 웹 대시보드)
+- **Cloudflare Workers + Containers** (`shorts-dashboard`): 워커(worker/index.mjs)가 요청을
+  컨테이너(Dockerfile: python+FFmpeg+Chromium, `webapp.server`:8000)로 프록시.
+- **자동 배포**: `claude/gemini-shorts-reels-generator-dhjfdt` push 시
+  `.github/workflows/deploy-shorts-dashboard.yml`이 이미지 빌드 + `wrangler deploy`.
+- **시크릿**(GitHub repo secrets → 워커 → 컨테이너 env): `CF_API_TOKEN`(필수),
+  `GEMINI_API_KEY`/`ANTHROPIC_API_KEY`(실제 생성용, 선택), `DASH_TOKEN`(접근 토큰 게이트, 선택).
+- 첫 요청 시 컨테이너 콜드스타트(수십 초~수 분) 가능. 20분 무요청 시 절전.
+
 ## 하지 말 것 (MVP 범위 밖, Phase 2+에서 지시 시)
 - TTS / 다국어(EN·JP) / 인스타 자동 발행 / 배치 처리 / 동영상 클립 소스
 - 활성 카테고리(`deep_sea`) 외 다른 카테고리 선(先)구현 (카테고리는 지시 시 하나씩 추가)
