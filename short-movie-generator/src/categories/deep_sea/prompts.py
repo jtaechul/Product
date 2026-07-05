@@ -53,16 +53,17 @@ _ROV_BLOCK = (
     "focus; it never reaches toward the animal and never enters the center of the frame."
 )
 
-# 서식대별 환경 블록 — habitat_zone 데이터가 배경·부유물 밀도를 결정
+# 서식대별 환경 블록 — habitat_zone 데이터가 배경을 결정.
+# 주의(기포 트리거): '해저 근접·실트 교란' 묘사는 모델이 스러스터 흙먼지→기포로 연상시키므로
+# benthic도 '먼 배경'으로만 둔다(생물은 열린 물에서 호버링, 바닥은 저 아래 부드럽게).
 _ENV_BLOCKS = {
-    # 해저(저서): 정면 소구역만 실트가 보이고 바로 옆은 검정, 부유물 짙음
+    # 해저(저서): 생물은 열린 어둠에 호버링, 해저는 저 멀리 부드럽고 흐릿한 배경으로만
     "benthic": (
-        "Setting: just above the deep seafloor. Only a small patch of pale fine silt directly in "
-        "front of the vehicle is dimly lit; the seafloor sinks into blackness just beyond that "
-        "patch and the water column above stays pure black. The water is thick with suspended "
-        "sediment and marine snow — dense pale particles hanging almost still and settling gently "
-        "downward in the lit area, heaviest near the bottom, with a faint haze of silt softening "
-        "the ground nearby."
+        "Setting: the animal hovers in open, still, pitch-black water. Far below it and well out "
+        "of focus, a faint dark seafloor is only dimly suggested in the distance — soft, calm and "
+        "undisturbed, never close and never kicked up. The water immediately around the animal is "
+        "open and clear of any nearby bottom. A light scatter of marine snow hangs almost "
+        "motionless and settles gently downward."
     ),
     # 원양(수층): 흑수 배경, 부유물은 옅게
     "pelagic": (
@@ -83,10 +84,10 @@ _ANATOMY_BLOCK = (
 # 컷 블록 — 카메라·연출 (스타일 스펙: slow push-in / lateral track / macro hold)
 _CUT_BLOCKS = {
     "discovery": (
-        "Discovery shot: at first the frame is almost entirely black water with marine snow. "
-        "As the vehicle moves, the animal gradually emerges out of the darkness into the small "
-        "dim patch of light, {behavior}. The camera drifts slowly toward it. "
-        "Suspenseful, quiet documentary mood."
+        "Discovery shot: the animal is faintly lit against surrounding darkness, {behavior}. "
+        "Throughout the shot the dim light stays perfectly steady, constant and unchanging. The "
+        "animal comes into fuller view only because the slowly drifting camera pushes gently "
+        "closer through the calm water. Suspenseful, quiet documentary mood."
     ),
     "behavior": (
         "Behavior shot: the camera tracks laterally alongside the animal as it {behavior}. "
