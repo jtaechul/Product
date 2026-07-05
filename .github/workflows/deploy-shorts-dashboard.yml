@@ -1,0 +1,44 @@
+name: Deploy Shorts Dashboard
+
+on:
+  push:
+    branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
+    paths:
+      - "short-movie-generator/**"
+      - ".github/workflows/deploy-shorts-dashboard.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Cloudflare Containers 배포
+    defaults:
+      run:
+        working-directory: short-movie-generator
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install wrangler + containers SDK
+        run: npm install --no-audit --no-fund
+
+      - name: Deploy (worker + container image)
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
+      # 시크릿은 '존재하는 것만' 업로드 (없어도 배포는 성공 — panzoom 모드는 키 불필요)
+      - name: Upload runtime secrets (optional)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DASH_TOKEN: ${{ secrets.DASH_TOKEN }}
+        run: |
+          put() { if [ -n "$2" ]; then printf '%s' "$2" | npx wrangler secret put "$1"; else echo "skip $1 (미설정)"; fi; }
+          put GEMINI_API_KEY "$GEMINI_API_KEY"
+          put ANTHROPIC_API_KEY "$ANTHROPIC_API_KEY"
+          put DASH_TOKEN "$DASH_TOKEN"

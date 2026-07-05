@@ -21,3 +21,7 @@ vendor/fonts/*.png
 
 # 웹 대시보드 생성 산출물
 webapp/runs/
+
+# 배포 도구
+node_modules/
+package-lock.json
