@@ -16,29 +16,31 @@ def test_three_cuts_in_order(cuts):
 
 
 @pytest.mark.parametrize("needle", [
-    "utterly still and motionless",  # 정적 물 (기포 대신 긍정 서술로 모션공백 채움)
-    "nothing ever rises, streams, jets or floats upward",  # 상승운동 명시 금지(=기포 방지)
-    "sinks slowly DOWNWARD",         # 부유물은 오직 아래로(마린스노우)
-    "no letterbox",            # 세로 풀프레임(레터박스 금지)
-    "no light shafts from above",  # 태양광/광선 금지
-    "lamps on the vehicle right beside the camera",  # 조명=카메라 옆(핀조명 아님)
-    "underexposed and very dark",  # 심해 저노출(어둡게)
-    "nothing overhead is lit",  # 위에서 비추는 핀조명 금지
-    "backscatter",             # 후방산란 (수중 실사 단서)
-    "shadows fall away from the camera",  # 조명=카메라 동축 (방향 일치)
-    "unmanned robotic vehicle",  # 무인 탐사정(호흡 없음) 시점
+    "absolutely motionless",   # 정적 물 (상태 확정, 부정어 나열 대신)
+    "marine snow drifting",    # 대체 모션: 하강 마린스노우
+    "unmanned scientific ROV", # 무인 탐사정(호흡 없음) 시점
+    "underexposed blackness",  # 심해 저노출 어둠
+    "Lamps mounted beside the camera",  # 조명=카메라 옆(핀조명 아님)
+    "Full-frame vertical 9:16",  # 풀프레임 규격
 ])
 def test_every_cut_contains_hard_rule(cuts, needle):
     for c in cuts:
         assert needle in c["prompt"], f"{c['cut_type']} 프롬프트에 '{needle}' 누락"
 
 
-@pytest.mark.parametrize("forbidden", ["beam", "laser", "bubble", "breath"])
-def test_no_hallucination_trigger_substrings(cuts, forbidden):
-    """핀조명(beam)·레이저·기포 유발어(bubble/breath)가 어떤 컷에도 없어야 함.
+def test_subject_appears_first(cuts):
+    """피사체 우선 배치: 문어가 프롬프트 앞부분(첫 120자)에 등장해야 함."""
+    for c in cuts:
+        assert "octopus" in c["prompt"][:120].lower(), f"{c['cut_type']}: 피사체가 앞에 없음"
 
-    핑크코끼리 역효과: 부정문이라도 유발 명사를 쓰면 확산모델이 그린다 → 단어 자체를 배제.
-    """
+
+@pytest.mark.parametrize("forbidden", [
+    "beam", "laser", "bubble", "breath",   # 핀조명·레이저·기포 유발어
+    "column", "vibration", "backscatter",  # Gemini 지적: 기포 오역 유발어(v9 제거)
+    "cinematic",                            # 레터박스/시네마틱 유발어
+])
+def test_no_hallucination_trigger_substrings(cuts, forbidden):
+    """유발 단어가 어떤 컷에도 없어야 함 (핑크코끼리 역효과 회피)."""
     for c in cuts:
         assert forbidden not in c["prompt"].lower(), f"{c['cut_type']}에 '{forbidden}' 잔존"
 
@@ -79,9 +81,9 @@ def test_generated_prompts_pass_accuracy_gate(cuts):
 
 
 def test_stillness_rule_present_even_if_bioluminescent(monkeypatch):
-    """발광 종이어도 '정적 물' 긍정 서술(기포 방지)은 유지돼야 함(스타일 블록 종 무관 고정)."""
+    """발광 종이어도 '정적 물' 긍정 서술(기포 방지)은 유지돼야 함(장면 블록 종 무관 고정)."""
     entry = dict(data.SPECIES["dumbo octopus"])
     entry["accuracy_flags"] = {**entry["accuracy_flags"], "bioluminescent": True}
     for c in prompts.build_cuts(entry):
-        assert "utterly still and motionless" in c["prompt"]
+        assert "absolutely motionless" in c["prompt"]
         assert "bubble" not in c["prompt"].lower()
