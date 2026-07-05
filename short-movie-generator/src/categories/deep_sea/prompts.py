@@ -120,9 +120,12 @@ def _is_deep(depth_range_m: str) -> bool:
 
 
 _WILD_DEEP_SCENE = (
-    "in the pitch-black deep sea at about {depth} meters, lit only by a single expedition camera "
-    "light with total darkness all around; no sunlight, no water surface, no rising air bubbles, "
-    "no coral reef; faint marine snow drifting slowly in the light beam."
+    # v5 학습 반영: 광원 명사(beam/lamp/expedition light)를 부르면 상단 핀조명이 생김 → 전면 삭제.
+    # 광원을 지시하지 않고 '저노출 어둠 + 피사체만 옅게 보임'으로 서술. 기포/햇빛/수면/산호초는 부정.
+    "in the deep sea at about {depth} meters, surrounded by near-total darkness; the animal's pale "
+    "body is only faintly and softly visible while everything beyond it fades into an absolutely "
+    "black void; no sunlight, no water surface, no coral reef, no rising air bubbles; only a few "
+    "faint specks of marine snow drifting slowly."
 )
 _WILD_SHALLOW_SCENE = (
     "in its natural ocean habitat with soft natural underwater light and gentle marine snow; "

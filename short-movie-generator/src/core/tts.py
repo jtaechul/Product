@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import os
+import subprocess
 import wave
 from pathlib import Path
 
@@ -20,7 +21,8 @@ log = logging.getLogger(__name__)
 TTS_MODEL = "gemini-2.5-flash-preview-tts"
 VOICE = "Charon"           # 깊은 남성 보이스(다큐 내레이션)
 SR = 24000                 # Gemini TTS 출력: PCM L16 24kHz mono
-GAP_S = 0.35               # 문장 사이 무음(호흡)
+GAP_S = 0.28               # 문장 사이 무음(호흡) — 가속에 맞춰 소폭 단축
+SPEED = 1.2                # 낭독 속도 배율(피치 보존, FFmpeg atempo) — 사용자 요청: 1.2배
 
 # 톤 태그 → 낭독 스타일 지시(자연어). 기본은 깊고 거친 ASMR 다큐.
 _BASE = "in a deep, gravelly, cinematic ASMR documentary voice"
@@ -82,14 +84,29 @@ def synthesize(sentences: list[dict], work_dir: str) -> tuple[str | None, list[d
         timings.append({"text": s["text"], "tone": s.get("tone", "slow"),
                         "start": round(start, 3), "end": round(end, 3)})
         pcm += gap
-    out = str(Path(work_dir) / "narration.wav")
-    with wave.open(out, "wb") as wf:
+    raw = str(Path(work_dir) / "narration_raw.wav")
+    with wave.open(raw, "wb") as wf:
         wf.setnchannels(1)
         wf.setsampwidth(2)
         wf.setframerate(SR)
         wf.writeframes(bytes(pcm))
-    total = len(pcm) / 2 / SR
-    log.info("[tts] 나레이션 %d문장 · %.1fs → %s", len(timings), total, out)
+    # 낭독 속도 1.2배(피치 보존) — atempo. 실패 시 원본 유지. 타이밍도 동일 배율로 축소.
+    out = raw
+    if abs(SPEED - 1.0) > 0.01:
+        sped = str(Path(work_dir) / "narration.wav")
+        proc = subprocess.run(
+            ["ffmpeg", "-y", "-loglevel", "error", "-i", raw,
+             "-filter:a", f"atempo={SPEED}", sped],
+            capture_output=True, text=True,
+        )
+        if proc.returncode == 0 and Path(sped).exists():
+            out = sped
+            timings = [{**t, "start": round(t["start"] / SPEED, 3),
+                        "end": round(t["end"] / SPEED, 3)} for t in timings]
+        else:
+            log.warning("[tts] atempo 가속 실패 → 원속도 유지: %s", proc.stderr[-200:])
+    total = narration_duration(out)
+    log.info("[tts] 나레이션 %d문장 · %.1fs(×%.1f) → %s", len(timings), total, SPEED, out)
     return out, timings
 
 

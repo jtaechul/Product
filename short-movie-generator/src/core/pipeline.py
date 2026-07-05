@@ -114,10 +114,10 @@ def run_narrated(
             base_video = _pad_last_frame(base_video, total, str(work_dir))
         # 자막 번인은 폰트/libass 문제로 실패해도 발행 불정지(자막 없이 진행)
         try:
-            words = subtitle.word_timings(sent_timings)
-            ass = subtitle.build_ass(words, str(work_dir / "subs.ass"), CLIP_W, CLIP_H)
+            # 문장 단위 카라오케(한 문장 표시 + 단어 하이라이트) — 사용자 요청
+            ass = subtitle.build_karaoke_ass(sent_timings, str(work_dir / "subs.ass"), CLIP_W, CLIP_H)
             subbed = subtitle.burn(base_video, ass, str(work_dir))
-            log.info("[narrated] 나레이션 %.1fs + 자막 %d단어", ndur, len(words))
+            log.info("[narrated] 나레이션 %.1fs + 문장 카라오케 자막 %d문장", ndur, len(sent_timings))
         except Exception as e:  # noqa: BLE001
             log.warning("[narrated] 자막 번인 실패 → 자막 없이 진행: %s", e)
             subbed = base_video

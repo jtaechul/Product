@@ -22,15 +22,19 @@ TONES = ("gravelly", "slow", "whispered", "reverent", "tense", "hushed", "awe")
 _DEFAULT_TONE = "slow"
 
 _PROMPT = (
-    "너는 [{species}]에 대한 약 25초 나레이션 야생 다큐 대본을 한국어로 쓴다.\n"
-    "규칙:\n"
-    "- **정확히 5문장**, 현재형 단문, 감각 동사 중심. **각 문장 28자 이내로 짧고 강하게**\n"
-    "  (전체 낭독이 30초를 넘지 않게 — 이건 매우 중요).\n"
-    "- 1번 문장 = 호기심 훅(의외의 진실).\n"
-    "- 2~4번 = 시그니처 행동 + 검증된 실제 팩트 2~3개 (아래 사실만 사용, 지어내기 금지).\n"
-    "- 5번 문장 = 생존·경이에 관한 감정적 마무리.\n"
-    "- 각 문장 앞에 낭독 톤 태그를 대괄호로: [gravelly][slow][whispered][reverent][awe] 중.\n"
-    "- 사실 정확성 필수. 없는 행동·수치·위험·포식 날조 금지.\n"
+    "너는 수백만 조회수를 만드는 심해 야생 다큐 채널의 대본 작가다. [{species}]로 "
+    "약 25초 세로 쇼츠 나레이션을 한국어로 쓴다. 목표는 '정보 나열'이 아니라 '끝까지 보게 만드는 이야기'다.\n"
+    "★가장 중요: 절대 사실을 나열하지 마라. 하나의 미스터리/긴장을 걸고 그것을 풀어주는 서사여야 한다.\n"
+    "[서사 구조 — 정확히 5문장, 현재형 단문, 각 28자 이내]\n"
+    "1) 훅: 종명을 말하지 말고, 의외의 진실이나 질문으로 '호기심 갭'을 연다. (예: '이 바다엔 규칙이 없다')\n"
+    "2) 위기/긴장: 이 생물이 처한 가혹한 조건(짓누르는 수압·영원한 어둠·먹이 없음)을 감각적으로 세운다.\n"
+    "3) 반전: '그런데' 그 생물은 어떻게 살아남는가 — 시그니처 적응/행동을 '답'으로 공개한다.\n"
+    "4) 심화: 그 사실이 얼마나 놀라운지 한 번 더 조인다(검증된 실제 팩트 1개).\n"
+    "5) 감정 페이오프: 생존·경이의 의미로 여운을 남긴다.\n"
+    "[규칙]\n"
+    "- 아래 '검증된 사실'만 사용. 없는 행동·수치·위험·포식·발광 날조 절대 금지.\n"
+    "- 감각 동사·짧고 강한 리듬. 2번과 3번 사이에 반드시 '반전'의 긴장이 있어야 한다.\n"
+    "- 각 문장 앞 낭독 톤 태그: [gravelly][slow][whispered][reverent][awe][tense] 중.\n"
     "[종 정보]\n"
     "이름: {ko} ({en}) / 학명: {sci}\n"
     "수심: {depth}m / 서식: {habitat} / 분포: {dist}\n"
@@ -75,23 +79,18 @@ def _trim_to_five(lines: list[dict]) -> list[dict]:
 
 
 def _fallback(info: SpeciesInfo, behavior: str) -> list[dict]:
-    """LLM 불가 시에도 서사 구조를 갖춘 결정적 대본(실제 사실만)."""
+    """LLM 불가 시에도 '미스터리→위기→반전→여운' 서사 구조를 갖춘 결정적 대본(실제 사실만)."""
     f = list(info.fun_facts or [])
     depth = (info.depth_range_m or "").split("-")[-1] or "수천"
-    hook = f"수심 {depth}m, 빛 한 점 없는 어둠 속. 무언가 움직인다."
     sig = behavior or (f[0] if f else f"{info.common_name_ko}가 천천히 헤엄친다")
-    fact1 = f[1] if len(f) > 1 else (f[0] if f else info.habitat or "")
-    fact2 = f[2] if len(f) > 2 else ""
-    close = "이 깊고 검은 바다에서, 생명은 오늘도 조용히 버틴다."
-    lines = [
-        {"text": hook, "tone": "gravelly"},
-        {"text": f"{sig}.", "tone": "slow"},
-        {"text": f"{fact1}.", "tone": "hushed"},
+    twist = f[1] if len(f) > 1 else (f[0] if f else info.habitat or "")
+    return [
+        {"text": "이 아래엔, 살아남는 방식이 다르다.", "tone": "gravelly"},        # 훅(호기심 갭)
+        {"text": f"수심 {depth}m, 빛도 온기도 없다.", "tone": "tense"},            # 위기/긴장
+        {"text": f"그런데 이 생물은 버틴다 — {sig}.", "tone": "slow"},             # 반전
+        {"text": f"{twist}.", "tone": "hushed"},                                # 심화(실제 사실)
+        {"text": "가장 깊은 어둠이, 가장 질긴 생명을 키운다.", "tone": "reverent"},   # 감정 페이오프
     ]
-    if fact2:
-        lines.append({"text": f"{fact2}.", "tone": "whispered"})
-    lines.append({"text": close, "tone": "reverent"})
-    return lines
 
 
 def build_script(info: SpeciesInfo, behavior: str = "") -> list[dict]:

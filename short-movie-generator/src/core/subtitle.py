@@ -72,6 +72,46 @@ def build_ass(words: list[dict], out_path: str, video_w: int = 720, video_h: int
     return out_path
 
 
+def build_karaoke_ass(sent_timings: list[dict], out_path: str,
+                      video_w: int = 720, video_h: int = 1280) -> str:
+    """문장 단위 카라오케 자막: 한 문장 전체를 보여주고 말하는 단어가 순서대로 하이라이트(\\kf).
+
+    사용자 요청: 단어별 팝업 대신 '한 문장씩'. 그래도 가라오케 느낌은 단어 하이라이트로 유지.
+    """
+    fs = max(48, int(video_w * 0.078))            # 문장 표시라 단어팝업보다 약간 작게
+    # PrimaryColour=하이라이트(밝은 흰), SecondaryColour=대기(흐린 회색) → \kf가 왼→오 하이라이트
+    style = (f"Style: Kara,{FONT_NAME},{fs},&H00FFFFFF,&H00A8A8A8,&H00101010,&H90000000,"
+             f"-1,0,0,0,100,100,0,0,1,4,2,2,80,80,200,1")
+    head = (
+        "[Script Info]\nScriptType: v4.00+\nWrapStyle: 0\n"
+        f"PlayResX: {video_w}\nPlayResY: {video_h}\nScaledBorderAndShadow: yes\n\n"
+        "[V4+ Styles]\n"
+        "Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,"
+        "Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,"
+        "Alignment,MarginL,MarginR,MarginV,Encoding\n"
+        f"{style}\n\n"
+        "[Events]\nFormat: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text\n"
+    )
+    ev = []
+    for s in sent_timings or []:
+        words = str(s.get("text", "")).split()
+        if not words:
+            continue
+        st, en = float(s.get("start", 0)), float(s.get("end", 0))
+        dur = max(0.4, en - st)
+        weights = [max(1, len(w)) for w in words]
+        tot = sum(weights)
+        # 각 단어 하이라이트 지속(centisecond) — 문장 구간을 글자수 비례 분배
+        spans = []
+        for w, wt in zip(words, weights):
+            cs = max(8, round(dur * wt / tot * 100))
+            spans.append("{\\kf%d}%s" % (cs, _esc(w)))
+        txt = "{\\fad(80,80)}" + " ".join(spans)
+        ev.append(f"Dialogue: 0,{_ts(st)},{_ts(en)},Kara,,0,0,0,,{txt}")
+    Path(out_path).write_text(head + "\n".join(ev) + "\n", encoding="utf-8")
+    return out_path
+
+
 def burn(video_path: str, ass_path: str, work_dir: str, out_name: str = "subtitled.mp4") -> str:
     """ASS 자막을 영상에 번인. 한글 폰트는 vendor/fonts 우선, 실패 시 시스템 폰트."""
     out = str(Path(work_dir) / out_name)

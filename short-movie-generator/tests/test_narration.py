@@ -54,6 +54,23 @@ def test_word_timings_partition():
         assert abs(a["end"] - b["start"]) < 0.01
 
 
+def test_karaoke_ass_sentence_level(tmp_path):
+    """문장 단위 카라오케: 문장당 Dialogue 1개 + 단어별 \\kf 하이라이트."""
+    st = [{"text": "이 심연엔 상식이 무너진다", "tone": "gravelly", "start": 0.0, "end": 3.0},
+          {"text": "그런데 버틴다", "tone": "awe", "start": 3.3, "end": 5.0}]
+    ass = subtitle.build_karaoke_ass(st, str(tmp_path / "k.ass"))
+    txt = open(ass, encoding="utf-8").read()
+    assert txt.count("Dialogue:") == 2          # 문장당 1개(단어별 아님)
+    assert "\\kf" in txt and "Kara" in txt      # 카라오케 하이라이트
+    base = tmp_path / "b.mp4"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                    "-i", "color=c=black:s=720x1280:d=5:r=25", "-pix_fmt", "yuv420p", str(base)],
+                   check=True)
+    out = subtitle.burn(str(base), ass, str(tmp_path))
+    from pathlib import Path
+    assert Path(out).exists()
+
+
 def test_build_ass_and_burn(tmp_path):
     """ASS 마크업 생성 + 더미 영상에 번인(ffmpeg만 필요)."""
     ws = subtitle.word_timings([{"text": "어둠 속 심해", "tone": "slow", "start": 0.0, "end": 3.0}])
