@@ -20,16 +20,42 @@ on:
         description: "회차 번호 (비우면 자동)"
         required: false
         default: ""
+  # 대안 트리거: requests/*.json 푸시로도 생성 가능 (원격 자동화·Claude 조작용)
+  push:
+    branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
+    paths: ["short-movie-generator/requests/*.json"]
+
+concurrency:
+  group: generate-short
+  cancel-in-progress: false
 
 jobs:
   generate:
     runs-on: ubuntu-latest
-    name: 쇼츠 생성 (${{ inputs.query }} · ${{ inputs.visualizer }})
+    name: 쇼츠 생성
     defaults:
       run:
         working-directory: short-movie-generator
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve inputs (버튼 or 요청 파일)
+        id: inp
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "query=${{ inputs.query }}" >> "$GITHUB_OUTPUT"
+            echo "visualizer=${{ inputs.visualizer }}" >> "$GITHUB_OUTPUT"
+            echo "episode=${{ inputs.episode }}" >> "$GITHUB_OUTPUT"
+          else
+            F=$(ls -t requests/*.json | head -1)
+            python - "$F" <<'PY' >> "$GITHUB_OUTPUT"
+          import json, sys
+          r = json.load(open(sys.argv[1], encoding="utf-8"))
+          print(f"query={r.get('query','dumbo octopus')}")
+          print(f"visualizer={r.get('visualizer','panzoom')}")
+          print(f"episode={r.get('episode','')}")
+          PY
+          fi
 
       - uses: actions/setup-python@v5
         with:
@@ -59,8 +85,8 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           EP_ARG=""
-          if [ -n "${{ inputs.episode }}" ]; then EP_ARG="--episode ${{ inputs.episode }}"; fi
-          python -m src.run_pipeline "${{ inputs.query }}" --visualizer "${{ inputs.visualizer }}" $EP_ARG
+          if [ -n "${{ steps.inp.outputs.episode }}" ]; then EP_ARG="--episode ${{ steps.inp.outputs.episode }}"; fi
+          python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --visualizer "${{ steps.inp.outputs.visualizer }}" $EP_ARG
           VIDEO=$(ls -t output/*.mp4 | head -1)
           META=$(ls -t output/*.json | head -1)
           echo "video=$VIDEO" >> "$GITHUB_OUTPUT"
