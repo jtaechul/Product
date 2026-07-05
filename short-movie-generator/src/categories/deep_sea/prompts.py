@@ -22,26 +22,26 @@ _ANATOMY_BLOCK = "Keep its true anatomy exactly: {anatomy_lock}. Never {forbidde
 # 주의: 'lamp/beam/flashlight/spotlight' 등 명사를 부르지 않는다(핑크코끼리 → 설비·빛기둥 유발).
 # 대신 조명의 '방향(렌즈 뒤→정면 전진)'과 '화면엔 물+생물만' 긍정문으로 서술.
 _SCENE_BLOCK = (
-    "Filmed by an unmanned scientific ROV at about {depth_hint} meters in the pitch-black deep "
-    "sea. Everything is lit only from the camera's own viewpoint: the light comes from directly "
+    "Filmed by an unmanned scientific ROV at about {depth_hint} meters deep in the pitch-black "
+    "abyss. Everything is lit only from the camera's own viewpoint: the light comes from directly "
     "behind the lens and travels straight forward in the exact direction the camera looks, so the "
     "animal is lit from the front and its shadows fall away from the camera into the darkness "
     "behind it; the light travels horizontally forward and never comes from overhead. Nothing but "
-    "open dark water and the animal is visible in the frame. The water around it is an immensely "
-    "dense, absolutely motionless dark liquid void that fades instantly into total underexposed "
-    "blackness at the frame edges. The water stays perfectly calm and still, with no movement "
-    "anywhere except the animal itself and a few faint motes of marine snow drifting gently down. "
-    "The light is dim, steady and unchanging."
+    "the animal and empty darkness is visible in the frame. The surrounding abyss is a dense, "
+    "absolutely motionless, completely dark void that fades instantly into total underexposed "
+    "blackness at the edges. Everything stays perfectly calm and static, with no movement anywhere "
+    "except the animal itself; the space around it is empty and clear. The light is dim, steady "
+    "and unchanging."
 )
 
 # 4) 서식대 (짧게) — habitat_zone 데이터가 배경 결정
 _ENV_BLOCKS = {
     "benthic": (
         "Far below the animal a faint dark seafloor is only dimly suggested in the distance, calm "
-        "and undisturbed; the animal hovers in open water well above it."
+        "and undisturbed; the animal hovers in the open darkness well above it."
     ),
     "pelagic": (
-        "The animal hovers in open black midwater with no bottom or walls in view."
+        "The animal hovers in the open black abyss with no bottom or walls in view."
     ),
 }
 
@@ -54,15 +54,15 @@ _STYLE_BLOCK = (
 # 6) 컷별 모션 (맨 끝) — 종 데이터의 cut_behaviors 사용
 _CUT_BLOCKS = {
     "discovery": (
-        "It comes into fuller view as the camera drifts gently closer through the calm dark water, "
-        "{behavior}. Quiet, suspenseful, mysterious mood."
+        "It comes into fuller view as the camera drifts gently closer through the calm darkness; "
+        "it {behavior}. Quiet, suspenseful, mysterious mood."
     ),
     "behavior": (
         "The camera tracks smoothly alongside as it {behavior}. Immersive, observational mood."
     ),
     "detail": (
-        "The camera slowly closes to a near-macro view while it {behavior}, revealing the fine "
-        "texture of its soft body where the light falls, the rest fading to black. Intimate mood."
+        "The camera slowly closes to a near-macro view as it {behavior}. The fine texture of its "
+        "soft body is revealed where the light falls, the rest fading to black. Intimate mood."
     ),
 }
 

@@ -16,8 +16,8 @@ def test_three_cuts_in_order(cuts):
 
 
 @pytest.mark.parametrize("needle", [
-    "absolutely motionless",   # 정적 물 (상태 확정, 부정어 나열 대신)
-    "marine snow drifting",    # 대체 모션: 하강 마린스노우
+    "absolutely motionless",   # 정적 매질 (상태 확정, 부정어 나열 대신)
+    "completely dark void",    # void 서술 (water/liquid 완화)
     "unmanned scientific ROV", # 무인 탐사정(호흡 없음) 시점
     "underexposed blackness",  # 심해 저노출 어둠
     "lit only from the camera's own viewpoint",  # 카메라 동축 정면광(위→아래 아님)
@@ -33,6 +33,20 @@ def test_subject_appears_first(cuts):
     """피사체 우선 배치: 문어가 프롬프트 앞부분(첫 120자)에 등장해야 함."""
     for c in cuts:
         assert "octopus" in c["prompt"][:120].lower(), f"{c['cut_type']}: 피사체가 앞에 없음"
+
+
+@pytest.mark.parametrize("bad", ["as it swimming", "while it hovering", "as it hovering"])
+def test_no_grammar_errors(cuts, bad):
+    """분사구문 문법 오류 없음 (as it swims / while it hovers 형태)."""
+    for c in cuts:
+        assert bad not in c["prompt"], f"{c['cut_type']}: 문법 오류 '{bad}'"
+
+
+def test_no_marine_snow_particles(cuts):
+    """마린스노우/부유물 묘사 제거 (흰 입자→기포 씨앗 차단, Gemini 지적)."""
+    for c in cuts:
+        low = c["prompt"].lower()
+        assert "marine snow" not in low and "motes" not in low
 
 
 @pytest.mark.parametrize("forbidden", [
@@ -67,7 +81,7 @@ def test_habitat_zone_drives_environment(cuts):
     entry = dict(data.SPECIES["dumbo octopus"])
     entry["habitat_zone"] = "pelagic"
     for c in prompts.build_cuts(entry):
-        assert "open black midwater" in c["prompt"]
+        assert "open black abyss" in c["prompt"]
         assert "silt" not in c["prompt"]
 
 

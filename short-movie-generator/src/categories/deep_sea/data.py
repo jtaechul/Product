@@ -50,15 +50,15 @@ SPECIES = {
             "long muscular tentacles, curling sucker-covered arms of a shallow-water octopus, "
             "a common-octopus body, extra limbs, or any change to the two ear-like fins"
         ),
+        # 3인칭 현재형(as it ___ / while it ___ 에 문법적으로 호응)
         "cut_behaviors": {
-            "discovery": "hovering in the water and slowly flapping its two ear-like fins",
+            "discovery": "hovers in the open darkness, slowly flapping its two ear-like fins",
             "behavior": (
-                "swimming by gently flapping its two large ear-like fins like wings while its "
+                "swims by gently flapping its two large ear-like fins like wings while its "
                 "webbed arms trail and spread beneath it"
             ),
             "detail": (
-                "hovering almost motionless, its webbed arms and soft body seen up close while "
-                "the two ear-like fins make small slow adjustments"
+                "hovers almost motionless while its two ear-like fins make small slow adjustments"
             ),
         },
     },
