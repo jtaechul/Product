@@ -24,9 +24,9 @@ def test_script_fallback_structure(monkeypatch):
     assert 4 <= len(lines) <= 7
     assert all(l["text"] for l in lines)
     assert all(l["tone"] in script.TONES for l in lines)
-    # 첫 문장=훅, 마지막=감정 마무리(reverent 계열)
-    assert lines[0]["tone"] in ("gravelly", "tense")
-    assert lines[-1]["tone"] in ("reverent", "awe")
+    # 첫 문장=역설/결핍 훅(신비 계열), 마지막=철학적 마무리(마무리 계열)
+    assert lines[0]["tone"] in ("mysterious", "gravelly", "tense", "whispered", "whispering")
+    assert lines[-1]["tone"] in ("final", "reverent", "awe", "thoughtful")
 
 
 def test_script_parse_numbered_tone_lines():

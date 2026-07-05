@@ -21,19 +21,26 @@ log = logging.getLogger(__name__)
 TTS_MODEL = "gemini-2.5-flash-preview-tts"
 VOICE = "Charon"           # 깊은 남성 보이스(다큐 내레이션)
 SR = 24000                 # Gemini TTS 출력: PCM L16 24kHz mono
-GAP_S = 0.28               # 문장 사이 무음(호흡) — 가속에 맞춰 소폭 단축
-SPEED = 1.2                # 낭독 속도 배율(피치 보존, FFmpeg atempo) — 사용자 요청: 1.2배
+GAP_S = 0.22               # 문장 사이 무음(호흡) — 가속에 맞춰 단축
+SPEED = 1.7                # 낭독 속도 배율(피치 보존, FFmpeg atempo). 1.5~2.0 튜닝 구간(사용자 요청)
 
 # 톤 태그 → 낭독 스타일 지시(자연어). 기본은 깊고 거친 ASMR 다큐.
 _BASE = "in a deep, gravelly, cinematic ASMR documentary voice"
 _TONE_STYLE = {
-    "gravelly": "in a deep, gravelly, cinematic voice, slow and deliberate",
-    "slow": "slowly and deliberately, deep and calm",
+    "gravelly": "in a deep, gravelly, cinematic voice",
+    "slow": "in a deep, calm, deliberate voice",
     "whispered": "in a hushed, intimate whisper, very close and quiet",
+    "whispering": "in a hushed, intimate whisper, very close and quiet",
     "hushed": "in a low, hushed, breathy tone",
-    "reverent": "in a reverent, awe-struck tone, slow and solemn",
+    "reverent": "in a reverent, awe-struck tone, solemn",
     "tense": "in a tense, suspenseful low voice",
-    "awe": "in an awe-inspiring, wondrous tone, slow",
+    "awe": "in an awe-inspiring, wondrous tone",
+    # 아귀 릴스 벤치마크 톤(1.7억뷰) — 신비→침울→경외→사색→마무리
+    "mysterious": "in a mysterious, secretive low voice",
+    "somber": "in a somber, heavy, dark tone",
+    "awestruck": "in an awe-struck, wondrous tone",
+    "thoughtful": "in a thoughtful, reflective, quiet tone",
+    "final": "in a slow, resonant, conclusive tone",
 }
 
 

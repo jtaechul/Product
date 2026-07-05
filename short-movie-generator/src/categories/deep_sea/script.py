@@ -18,23 +18,26 @@ from src.core.contracts import SpeciesInfo
 log = logging.getLogger(__name__)
 
 # 허용 톤 태그 (TTS가 문장별 스타일로 매핑). 미지 태그는 'slow'로 정규화.
-TONES = ("gravelly", "slow", "whispered", "reverent", "tense", "hushed", "awe")
+TONES = ("gravelly", "slow", "whispered", "whispering", "reverent", "tense", "hushed", "awe",
+         "mysterious", "somber", "awestruck", "thoughtful", "final")
 _DEFAULT_TONE = "slow"
 
 _PROMPT = (
-    "너는 수백만 조회수를 만드는 심해 야생 다큐 채널의 대본 작가다. [{species}]로 "
-    "약 25초 세로 쇼츠 나레이션을 한국어로 쓴다. 목표는 '정보 나열'이 아니라 '끝까지 보게 만드는 이야기'다.\n"
-    "★가장 중요: 절대 사실을 나열하지 마라. 하나의 미스터리/긴장을 걸고 그것을 풀어주는 서사여야 한다.\n"
-    "[서사 구조 — 정확히 5문장, 현재형 단문, 각 28자 이내]\n"
-    "1) 훅: 종명을 말하지 말고, 의외의 진실이나 질문으로 '호기심 갭'을 연다. (예: '이 바다엔 규칙이 없다')\n"
-    "2) 위기/긴장: 이 생물이 처한 가혹한 조건(짓누르는 수압·영원한 어둠·먹이 없음)을 감각적으로 세운다.\n"
-    "3) 반전: '그런데' 그 생물은 어떻게 살아남는가 — 시그니처 적응/행동을 '답'으로 공개한다.\n"
-    "4) 심화: 그 사실이 얼마나 놀라운지 한 번 더 조인다(검증된 실제 팩트 1개).\n"
-    "5) 감정 페이오프: 생존·경이의 의미로 여운을 남긴다.\n"
+    "너는 조회수 1.7억을 만든 심해 다큐 릴스 공식을 쓰는 대본 작가다. [{species}]로 "
+    "약 25~30초 세로 쇼츠 나레이션을 한국어로 쓴다. 목표는 '정보'가 아니라 '끝까지 보게 만드는 충격'이다.\n"
+    "★핵심 공식(절대 사실 나열 금지): '단 하나의 가장 충격적이면서 검증된 실제 사실'을 척추로 삼고,\n"
+    " 그것을 '2단 리빌 + 재프레이밍'으로 공개한다.\n"
+    "[구조 — 정확히 6문장, 현재형 단문, 각 30자 이내, 갈수록 고조]\n"
+    "1) 훅: 종명 대신 '~에는 비밀이 있다/규칙이 없다'류로 호기심 갭을 연다.\n"
+    "2) 1차 리빌(도입): 그 충격적 사실의 초입을 살짝 연다(긴장).\n"
+    "3) 1차 리빌(공개): 충격 사실의 정체를 공개한다.\n"
+    "4) 2차 리빌: 숨은 두 번째 층(공생·감각·생존기제 등 '또 다른 실제 사실')을 쌓는다.\n"
+    "5) 재프레이밍: 낯설거나 섬뜩한 사실을 '경이'로 뒤집는다.\n"
+    "6) 철학적 마무리: 보편적 여운 한 문장(예: '여기선 아무것도 보이는 그대로가 아니다').\n"
     "[규칙]\n"
-    "- 아래 '검증된 사실'만 사용. 없는 행동·수치·위험·포식·발광 날조 절대 금지.\n"
-    "- 감각 동사·짧고 강한 리듬. 2번과 3번 사이에 반드시 '반전'의 긴장이 있어야 한다.\n"
-    "- 각 문장 앞 낭독 톤 태그: [gravelly][slow][whispered][reverent][awe][tense] 중.\n"
+    "- 아래 '검증된 사실'만 사용. 없는 행동·수치·관계·위험·포식·발광 날조 절대 금지.\n"
+    "- 충격성은 '구조'로 만들고 사실은 진짜만. 문장이 뒤로 갈수록 강해지게.\n"
+    "- 각 문장 앞 낭독 톤 태그: [mysterious][whispering][somber][awestruck][thoughtful][final] 중.\n"
     "[종 정보]\n"
     "이름: {ko} ({en}) / 학명: {sci}\n"
     "수심: {depth}m / 서식: {habitat} / 분포: {dist}\n"
@@ -64,6 +67,11 @@ def _parse(raw: str) -> list[dict]:
                 lines.append({"text": text, "tone": _norm_tone(m.group(1))})
         elif ln and not ln.startswith("["):
             lines.append({"text": ln, "tone": _DEFAULT_TONE})
+    # 잘린(truncated) 마지막 문장 제거: 종결부호 없이 매우 짧으면 LLM 응답이 끊긴 것으로 보고 버림.
+    if len(lines) > 4:
+        last = lines[-1]["text"].rstrip()
+        if len(last) < 8 and not re.search(r"[.!?…\"'」』.]$|다$|까$|라$", last):
+            lines.pop()
     return lines
 
 
@@ -71,25 +79,27 @@ def _valid(lines: list[dict]) -> bool:
     return 4 <= len(lines) <= 8 and all(l.get("text") for l in lines)
 
 
-def _trim_to_five(lines: list[dict]) -> list[dict]:
-    """길이 초과 시 5문장으로 압축(훅+본문+감정마무리 보존) — 영상 길이·비용 정합."""
-    if len(lines) <= 5:
+def _trim(lines: list[dict], cap: int = 6) -> list[dict]:
+    """길이 초과 시 cap문장으로 압축(훅+본문+철학적 마무리 보존) — 영상 길이·비용 정합."""
+    if len(lines) <= cap:
         return lines
-    return [lines[0]] + lines[1:len(lines) - 1][:3] + [lines[-1]]
+    return [lines[0]] + lines[1:len(lines) - 1][:cap - 2] + [lines[-1]]
 
 
 def _fallback(info: SpeciesInfo, behavior: str) -> list[dict]:
-    """LLM 불가 시에도 '미스터리→위기→반전→여운' 서사 구조를 갖춘 결정적 대본(실제 사실만)."""
+    """LLM 불가 시에도 '충격사실→2단 리빌→재프레이밍→철학' 구조를 갖춘 결정적 대본(실제 사실만)."""
     f = list(info.fun_facts or [])
     depth = (info.depth_range_m or "").split("-")[-1] or "수천"
-    sig = behavior or (f[0] if f else f"{info.common_name_ko}가 천천히 헤엄친다")
-    twist = f[1] if len(f) > 1 else (f[0] if f else info.habitat or "")
+    shock = f[0] if f else (behavior or f"{info.common_name_ko}의 생존 방식")
+    second = f[1] if len(f) > 1 else (info.habitat or "")
     return [
-        {"text": "이 아래엔, 살아남는 방식이 다르다.", "tone": "gravelly"},        # 훅(호기심 갭)
-        {"text": f"수심 {depth}m, 빛도 온기도 없다.", "tone": "tense"},            # 위기/긴장
-        {"text": f"그런데 이 생물은 버틴다 — {sig}.", "tone": "slow"},             # 반전
-        {"text": f"{twist}.", "tone": "hushed"},                                # 심화(실제 사실)
-        {"text": "가장 깊은 어둠이, 가장 질긴 생명을 키운다.", "tone": "reverent"},   # 감정 페이오프
+        {"text": f"수심 {depth}m, 이곳엔 비밀이 있다.", "tone": "mysterious"},        # 훅
+        {"text": "빛도 온기도 없는 완전한 어둠.", "tone": "somber"},                 # 1차 리빌 도입
+        {"text": f"그런데, {shock}.", "tone": "whispering"},                       # 1차 리빌 공개
+        {"text": f"게다가 {second}." if second else "그리고 그 몸은 압력을 껴안는다.",
+         "tone": "awestruck"},                                                    # 2차 리빌
+        {"text": "가장 약해 보이는 것이, 이 어둠을 지배한다.", "tone": "thoughtful"},  # 재프레이밍
+        {"text": "여기선, 아무것도 보이는 그대로가 아니다.", "tone": "final"},         # 철학적 마무리
     ]
 
 
@@ -102,11 +112,11 @@ def build_script(info: SpeciesInfo, behavior: str = "") -> list[dict]:
         depth=info.depth_range_m, habitat=info.habitat, dist=info.distribution,
         behavior=behavior or "-", facts=facts,
     )
-    raw = llm.generate_text(prompt, max_tokens=800)
+    raw = llm.generate_text(prompt, max_tokens=1400)  # 6문장 + 여유(과거 800→마지막 문장 잘림)
     if raw:
         lines = _parse(raw)
         if _valid(lines):
-            lines = _trim_to_five(lines)   # 5문장 상한(영상 24초·Veo 3컷 정합)
+            lines = _trim(lines, cap=6)   # 6문장 상한(2단 리빌 구조·가속 낭독 정합)
             log.info("[script] LLM 대본 %d문장", len(lines))
             return lines
         log.info("[script] LLM 출력 형식 불량 → 폴백")

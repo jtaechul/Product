@@ -131,10 +131,19 @@ _WILD_SHALLOW_SCENE = (
     "in its natural ocean habitat with soft natural underwater light and gentle marine snow; "
     "no divers, no boats, no man-made objects."
 )
+# 발광종 전용(정확성 게이트가 bioluminescent=True일 때만 glow 허용) — 자체 발광이 조명이 되어
+# 핀조명 문제 없이 장면을 밝힌다(실제 현상). 아귀 릴스 벤치마크.
+_WILD_DEEP_SCENE_BIO = (
+    "in the pitch-black deep sea at about {depth} meters; the only light comes from the animal's "
+    "own bioluminescent organs, which cast a soft localized glow on its body while everything "
+    "beyond fades into an absolutely black void; no sunlight, no water surface, no coral reef, "
+    "no rising air bubbles; faint marine snow drifting."
+)
 _WILD_CAM = {
-    "discovery": "Open on a brief held wide shot in the open water, then a smooth dynamic push-in that snaps focus onto the action.",
-    "behavior": "The camera glides with it while a smooth dynamic push-in snaps focus onto the action at the key moment.",
-    "detail": "A close macro hold on the signature action, then a slow drift back.",
+    # 리빌↔극접사 교차 + 절정 빠른컷(1.7억뷰 릴스 벤치마크)
+    "discovery": "Open on a brief held wide reveal of the whole creature in the open water, then a smooth dynamic push-in.",
+    "behavior": "The camera glides with it and pushes in on the signature action; a few quick cuts at the most intense moment.",
+    "detail": "Extreme macro shots of texture, eye, and body detail, then a slow drift back.",
 }
 _WILD_TAIL = (
     "Naturalistic wildlife-documentary look, crisp cinematic detail. Keep the animal's exact "
@@ -148,8 +157,13 @@ def build_cut_prompt_wildlife(species_entry: dict, cut_type: str) -> str:
     depth = species_entry.get("depth_range_m", "1000-4000")
     behavior = species_entry["cut_behaviors"][cut_type]
     subject = f"{species_entry['appearance']}, performing its signature behavior: {behavior}."
-    scene = (_WILD_DEEP_SCENE.format(depth=_max_depth(depth)) if _is_deep(depth)
-             else _WILD_SHALLOW_SCENE)
+    bio = bool(species_entry.get("accuracy_flags", {}).get("bioluminescent"))
+    if not _is_deep(depth):
+        scene = _WILD_SHALLOW_SCENE
+    elif bio:
+        scene = _WILD_DEEP_SCENE_BIO.format(depth=_max_depth(depth))  # 자체 발광이 조명(실제)
+    else:
+        scene = _WILD_DEEP_SCENE.format(depth=_max_depth(depth))
     tail = _WILD_TAIL.format(anatomy_lock=species_entry["anatomy_lock"],
                              forbidden=species_entry["forbidden_features"])
     parts = [subject, scene, _WILD_CAM[cut_type], tail]
