@@ -87,12 +87,12 @@ def run(
     total_duration = sum(c.duration_s for c in clips)
     log.info("[7/9] 합성: %s (%.0fs)", base_video, total_duration)
 
-    # 8. 캡션 → 오버레이 → 오디오
+    # 8. 캡션 → 컷별 타이밍 오버레이(리빌 정책) → 오디오
     caption = category.build_caption(info)
-    overlay_png = overlay.build_overlay_png(
-        caption, info, asset.credit_string, WATERMARK, str(work_dir / "overlay.png")
+    overlaid = overlay.apply_timed_overlays(
+        base_video, caption, asset.credit_string, WATERMARK,
+        [c.duration_s for c in clips], str(work_dir),
     )
-    overlaid = overlay.apply_overlay(base_video, overlay_png, str(work_dir))
     with_audio = audio.add_ambient(
         overlaid, str(work_dir), total_duration, category.ambient_audio_spec()
     )

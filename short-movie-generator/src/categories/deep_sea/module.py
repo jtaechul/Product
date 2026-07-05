@@ -7,11 +7,10 @@
 from __future__ import annotations
 
 import logging
-import os
 import re
 from pathlib import Path
 
-from src.categories.deep_sea import data, prompts
+from src.categories.deep_sea import copywriter, data, prompts
 from src.core.contracts import (
     CaptionData,
     CutSpec,
@@ -187,41 +186,9 @@ class DeepSeaCategory:
                     )
         return violations
 
-    # --- 캡션 ---
+    # --- 캡션 (copywriter: 훅 채점 루프 + 리빌 정책) ---
     def build_caption(self, info: SpeciesInfo) -> CaptionData:
-        overlay_facts = [
-            f"수심 {info.depth_range_m}m",
-            info.fun_facts[0] if info.fun_facts else info.habitat,
-        ]
-        hook = self._gemini_hook(info)
-        body = (
-            f"{info.common_name_ko}는 {info.distribution}의 {info.habitat}에 산다. "
-            f"{info.fun_facts[0] if info.fun_facts else ''}"
-        )
-        hashtags = [f"#{info.common_name_ko}", "#심해생물", "#DeepSea"]
-        return CaptionData(
-            hook_text=hook, overlay_facts=overlay_facts, caption_body=body, hashtags=hashtags
-        )
-
-    def _gemini_hook(self, info: SpeciesInfo) -> str:
-        """Gemini 훅 생성(키 있을 때). 없으면 결정적 템플릿 폴백."""
-        fallback = f"수심 4,000m, 이 문어는 '귀'로 헤엄친다"
-        if not os.environ.get("GEMINI_API_KEY"):
-            return fallback
-        try:
-            from google import genai
-
-            client = genai.Client()
-            prompt = (
-                f"심해 생물 릴스의 1초 훅 문장 1개만 한국어로. 15자 내외, 궁금증 유발, 과장/거짓 금지.\n"
-                f"종: {info.common_name_ko}({info.common_name_en}), 특징: {info.fun_facts}"
-            )
-            resp = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
-            text = (resp.text or "").strip().splitlines()[0].strip('"').strip()
-            return text or fallback
-        except Exception as e:  # noqa: BLE001
-            log.info("Gemini 훅 실패 → 폴백: %s", e)
-            return fallback
+        return copywriter.build(info)
 
     # --- 오디오 ---
     def ambient_audio_spec(self) -> dict:

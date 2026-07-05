@@ -82,11 +82,20 @@ class ClipResult:
 
 @dataclass
 class CaptionData:
-    """caption → overlay 계약."""
+    """caption → overlay 계약.
+
+    리빌 정책: 종명·킬러팩트는 컷1~2에서 숨기고 컷3에서 공개(엔드카드에서 재확인).
+    - hook_text: 컷1 상단 훅 (종명 스포일 금지)
+    - cut_beats: 컷별 하단 한 줄 [컷1 미스터리, 컷2 행동, 컷3 리빌]
+    - reveal_name/reveal_fact: 컷3·엔드카드 공개용 종명·킬러팩트
+    """
     hook_text: str
     overlay_facts: list[str]
     caption_body: str
     hashtags: list[str] = field(default_factory=list)
+    cut_beats: list[str] = field(default_factory=list)
+    reveal_name: str = ""
+    reveal_fact: str = ""
 
 
 @dataclass
