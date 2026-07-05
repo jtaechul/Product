@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import logging
+import subprocess
 from pathlib import Path
 
 from src.core import assembler, audio, license_gate, output, overlay
@@ -21,6 +22,20 @@ from src.registry import get_category
 log = logging.getLogger(__name__)
 
 WATERMARK = "DEEP DIVE LOG"  # 브랜드명 [TBD] — 확정 시 교체
+
+
+def _apply_grade(video_path: str, vf: str, work_dir: str) -> str:
+    """카테고리 그레이딩 필터 적용 (오버레이 전 → 텍스트는 영향 없음)."""
+    out = Path(work_dir) / "graded.mp4"
+    proc = subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-i", video_path, "-vf", vf,
+         "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p",
+         "-an", str(out)],
+        capture_output=True, text=True,
+    )
+    if proc.returncode != 0 or not out.exists():
+        raise PipelineError("grade", f"그레이딩 실패: {proc.stderr[-400:]}")
+    return str(out)
 
 
 def run(
@@ -82,21 +97,26 @@ def run(
         log.info("[6/9] 클립: %s (%ss)", clip.clip_path, clip.duration_s)
         clips.append(clip)
 
-    # 7. 합성
+    # 7. 합성 (+레터박스 자동 제거) → 카테고리 그레이딩 (텍스트 전이라 텍스트는 선명)
     base_video = assembler.concat_clips(clips, str(work_dir))
     total_duration = sum(c.duration_s for c in clips)
-    log.info("[7/9] 합성: %s (%.0fs)", base_video, total_duration)
+    grade = category.grade_filter()
+    if grade:
+        base_video = _apply_grade(base_video, grade, str(work_dir))
+    log.info("[7/9] 합성+그레이딩: %s (%.0fs)", base_video, total_duration)
 
-    # 8. 캡션 → 컷별 타이밍 오버레이(리빌 정책) → 오디오
+    # 8. 캡션 → 컷별 타이밍 오버레이(리빌 정책) → 오디오(리빌 악센트)
     caption = category.build_caption(info)
+    durations = [c.duration_s for c in clips]
     overlaid = overlay.apply_timed_overlays(
-        base_video, caption, asset.credit_string, WATERMARK,
-        [c.duration_s for c in clips], str(work_dir),
+        base_video, caption, asset.credit_string, WATERMARK, durations, str(work_dir),
     )
+    reveal_at = sum(durations[:-1]) if len(durations) >= 2 else None  # 마지막 컷 시작 = 리빌
     with_audio = audio.add_ambient(
-        overlaid, str(work_dir), total_duration, category.ambient_audio_spec()
+        overlaid, str(work_dir), total_duration, category.ambient_audio_spec(),
+        reveal_at_s=reveal_at,
     )
-    log.info("[8/9] 오버레이+오디오: %s", with_audio)
+    log.info("[8/9] 오버레이+오디오: %s (리빌 %.0fs)", with_audio, reveal_at or -1)
 
     # 9. 출력 + QC
     result = output.finalize(

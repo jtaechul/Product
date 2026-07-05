@@ -192,4 +192,16 @@ class DeepSeaCategory:
 
     # --- 오디오 ---
     def ambient_audio_spec(self) -> dict:
-        return {"noise_color": "brown", "lowpass_hz": 300, "volume": 0.9, "fade_s": 1.5}
+        return {"noise_color": "brown", "lowpass_hz": 300, "volume": 0.9, "fade_s": 1.5,
+                "reveal_accent": True}  # 컷3(리빌) 시작에 서브베이스 스웰+스팅
+
+    # --- 그레이딩 (deep_sea_realism ROV 질감 — 오버레이 전 적용, 텍스트는 선명 유지) ---
+    def grade_filter(self) -> str | None:
+        # Veo의 '예쁜 시네마틱' 편향 보정: 탈채도·저대비 + 비디오 노이즈 + 미세 블러 +
+        # 비네트(상단 광선·과하게 밝은 해저를 어둡게 → 검증 로그 v3 문제 1·2 완화)
+        return (
+            "eq=saturation=0.80:contrast=0.97:brightness=-0.04,"
+            "gblur=sigma=0.45,"
+            "noise=alls=7:allf=t,"
+            "vignette=angle=PI/4.5:mode=forward"
+        )

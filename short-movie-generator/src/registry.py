@@ -46,6 +46,14 @@ class CategoryModule(ABC):
     def ambient_audio_spec(self) -> dict:
         """앰비언트 오디오 사양 (코어 audio 모듈에 전달)."""
 
+    def grade_filter(self) -> str | None:
+        """(선택) 합성 후 영상에 적용할 FFmpeg 그레이딩 필터 체인.
+
+        텍스트 오버레이 '전'에 적용된다(텍스트는 선명 유지).
+        None이면 그레이딩 생략. 카테고리가 룩 질감을 소유한다.
+        """
+        return None
+
 
 _REGISTRY: dict[str, CategoryModule] = {}
 
