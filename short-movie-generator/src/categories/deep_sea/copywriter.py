@@ -55,25 +55,33 @@ def _depth_str(info: SpeciesInfo) -> str:
 
 
 def _fallback_hooks(info: SpeciesInfo) -> list[str]:
-    """결정적 템플릿 훅 (LLM 불가 시에도 품질 하한 보장)."""
+    """결정적 템플릿 훅 (LLM 불가 시에도 품질 하한 보장).
+
+    전략: 현실 기반 극도로 드라마틱한 심해 미스터리. 자극적·도파민형 호기심 훅.
+    (종명 스포일 금지 — 리빌은 마지막)
+    """
     d = _depth_str(info)
     return [
-        f"수심 {d}m, 빛이 닿지 않는 곳에 이게 있습니다",
-        f"카메라가 수심 {d}m에서 멈춘 이유",
-        "심해 탐사정이 어둠 속에서 마주친 것",
+        f"수심 {d}m, 탐사정 카메라에 '이것'이 잡혔습니다",
+        f"인류가 가본 적 없는 수심 {d}m… 어둠 속에서 뭔가 다가온다",
+        "심해 탐사정이 포착한 정체불명의 생명체",
+        f"수심 {d}m에서 센서가 미친 듯이 울린 이유",
     ]
 
 
 def _generate_hook_candidates(info: SpeciesInfo) -> list[str]:
     facts = " / ".join(info.fun_facts[:3])
     prompt = (
-        "심해 생물 릴스의 첫 1초 훅 문장 후보를 한국어로 정확히 "
-        f"{N_HOOK_CANDIDATES}개 만들어라. 한 줄에 하나씩, 번호·따옴표 없이.\n"
+        "너는 조회수 떡상하는 심해 미스터리 쇼츠의 훅 카피라이터다. 컨셉은 '현실 기반의 "
+        "극도로 드라마틱한 심해 미스터리'(무인 탐사정 ROV가 심해에서 정체불명 생물을 포착). "
+        f"첫 1초 훅 문장 후보를 한국어로 정확히 {N_HOOK_CANDIDATES}개 만들어라. 한 줄에 하나씩, "
+        "번호·따옴표 없이.\n"
         "[규칙]\n"
-        "- 12~22자, 호기심 격차(정체를 궁금하게), 존댓말 또는 명사형 종결\n"
-        "- 종 이름을 절대 쓰지 마라 (리빌은 마지막 컷에서 한다)\n"
-        "- 아래 '검증된 팩트'에 없는 내용을 지어내지 마라 (과장·거짓 위험 금지)\n"
-        f"[검증된 팩트] 수심 {info.depth_range_m}m / {facts}\n"
+        "- 12~26자. 자극적·도파민형: 궁금증 폭발, 긴장·미지의 공포, '이것/정체불명/포착' 같은 표현 활용\n"
+        "- 스크롤을 멈추게 하는 강한 첫 문장. 밋밋한 다큐 톤 금지\n"
+        "- 종 이름을 절대 쓰지 마라 (정체는 마지막에 리빌한다 = 궁금해서 끝까지 보게)\n"
+        "- 생물의 '실제 특징'은 과장해도 되지만, 없는 사실(가짜 위험·포식)을 지어내진 마라\n"
+        f"[실제 특징(참고)] 수심 {info.depth_range_m}m / {facts}\n"
     )
     raw = llm.generate_text(prompt)
     if not raw:
@@ -88,9 +96,9 @@ def _judge_hooks(candidates: list[str], info: SpeciesInfo) -> str | None:
         return None
     listing = "\n".join(f"{i+1}. {c}" for i, c in enumerate(candidates))
     prompt = (
-        "다음은 심해 생물 릴스의 첫 1초 훅 후보다. 기준: 호기심 격차(40) + "
-        "긴장감/미지의 공포(30) + 간결성 12~22자(20) + 자연스러운 한국어(10). "
-        "종 이름이 들어간 후보는 0점. 가장 높은 후보의 번호 '하나만' 출력하라.\n"
+        "다음은 심해 미스터리 쇼츠의 첫 1초 훅 후보다. 기준: 스크롤 정지력/자극성(40) + "
+        "궁금증 폭발·정체 은폐(30) + 긴장/미지의 공포(20) + 자연스러운 한국어(10). "
+        "종 이름이 들어간 후보는 0점(리빌 스포일). 가장 도파민 터지는 후보의 번호 '하나만' 출력하라.\n"
         f"{listing}\n번호:"
     )
     raw = llm.generate_text(prompt, max_tokens=10)
@@ -127,8 +135,8 @@ def cut_beats(info: SpeciesInfo) -> list[str]:
     behavior_fact = info.fun_facts[0] if info.fun_facts else info.habitat
     killer_fact = info.fun_facts[1] if len(info.fun_facts) > 1 else behavior_fact
     return [
-        f"수심 {_depth_str(info)}m · 빛이 닿지 않는 곳",   # 컷1: 종명 없음
-        behavior_fact,                                   # 컷2: 행동 팩트 (종명 없음)
+        f"수심 {_depth_str(info)}m · 미확인 생명체 접근 중",   # 컷1(HUD 미사용): 종명 없음
+        f"움직임 분석 중… {behavior_fact}",                    # 컷2: ANALYZING 라인 (종명 없음)
         f"{info.common_name_ko} ({info.common_name_en}) · {killer_fact}",  # 컷3: 리빌
     ]
 
@@ -142,9 +150,10 @@ def build(info: SpeciesInfo) -> CaptionData:
 
     body = (
         f"{hook}\n\n"
-        f"정답은 {info.common_name_ko}({info.common_name_en}). "
-        f"{info.distribution} {info.habitat}에 살며, {info.fun_facts[0] if info.fun_facts else ''}. "
-        f"\n\n소름 돋는 심해 생물을 계속 만나려면 저장·팔로우 해두세요."
+        f"정체는 바로 {info.common_name_ko}({info.common_name_en}). "
+        f"수심 {info.depth_range_m}m {info.habitat}에서만 사는 진짜 심해 생물입니다. "
+        f"{info.fun_facts[0] if info.fun_facts else ''}.\n\n"
+        f"이런 심해 미스터리를 매일 만나려면 팔로우 필수. 소름 돋았다면 저장해두세요."
     )
     return CaptionData(
         hook_text=hook,
