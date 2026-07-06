@@ -1,0 +1,35 @@
+name: Deploy Shorts Maker Page
+
+# 쇼츠/릴스 제작 홈페이지(Cloudflare Workers 무료) 자동 배포.
+# 영상 제작은 generate-short.yml(GitHub Actions 무료)이 담당 — 이 워커는 조작 페이지만 서빙.
+on:
+  push:
+    branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
+    paths:
+      - "short-movie-generator/worker/**"
+      - "short-movie-generator/wrangler.jsonc"
+      - "short-movie-generator/package.json"
+      - ".github/workflows/deploy-shorts-dashboard.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Cloudflare Workers 배포 (무료)
+    defaults:
+      run:
+        working-directory: short-movie-generator
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install wrangler
+        run: npm install --no-audit --no-fund
+
+      - name: Deploy worker
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}

@@ -1,0 +1,14 @@
+// 쇼츠/릴스 제작 홈페이지 — Cloudflare Workers 무료 배포 설정
+// (영상 제작 자체는 GitHub Actions 무료가 담당 — 이 워커는 조작 페이지만 서빙)
+{
+  "name": "shorts-dashboard",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2025-06-01",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  // 과거 컨테이너 시도 때 생성된 DO 클래스(Dashboard) 정리 (code 10064 해결)
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["Dashboard"] },
+    { "tag": "v2", "deleted_classes": ["Dashboard"] }
+  ]
+}
