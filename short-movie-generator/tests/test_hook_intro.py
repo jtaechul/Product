@@ -49,6 +49,27 @@ def test_render_endcard(tmp_path):
     assert Image.open(out).size == (720, 1280)
 
 
+def test_generate_type_click(tmp_path):
+    out = str(tmp_path / "tk.wav")
+    hi.generate_type_click(out)
+    with wave.open(out) as w:
+        assert w.getframerate() == 44100
+        assert w.getnframes() > 0
+
+
+@pytest.mark.skipif(not hi.fonts_available(), reason="시스템 폰트 없음")
+def test_render_endcard_frames_typewriter(tmp_path):
+    bg = str(tmp_path / "bg.png")
+    Image.new("RGB", (720, 1280), (30, 20, 25)).save(bg)
+    cfg = hi.HookIntroConfig(endcard_dur_s=0.5)  # 빠른 스모크
+    frames, clicks = hi.render_endcard_frames(bg, SPEC, str(tmp_path / "ec"), cfg)
+    assert len(frames) == int(0.5 * 30)
+    assert Image.open(frames[0]).size == (720, 1280)
+    # 타자 클릭 시각은 오름차순·공백 제외
+    assert clicks == sorted(clicks)
+    assert len(clicks) > 0
+
+
 @pytest.mark.skipif(not hi.fonts_available(), reason="시스템 폰트 없음")
 def test_render_opening_frames(tmp_path):
     bg = str(tmp_path / "bg.png")

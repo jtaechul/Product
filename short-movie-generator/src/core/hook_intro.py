@@ -91,12 +91,18 @@ class HookIntroConfig:
     mix_bgm: float = 0.10
     limiter: float = 0.95
     # ── 엔드카드 ──
-    endcard_dur_s: float = 3.6
+    endcard_dur_s: float = 5.2
     end_title_size: int = 112
     end_sci_size: int = 38
     end_depth_size: int = 54
     end_feature_size: int = 40
     end_cyan: tuple = (120, 220, 255)
+    # 타자기(타이핑) 연출 — 글자별 등장 + 타자 사운드 동기
+    type_start_s: float = 0.35          # 첫 줄 타이핑 시작(전환 뒤 여유)
+    type_cps_title: float = 11.0        # 초당 글자수(타이틀)
+    type_cps_body: float = 16.0         # 초당 글자수(학명·수심·특징)
+    type_line_gap_s: float = 0.18       # 줄 사이 간격
+    type_click_dur_s: float = 0.030     # 타자 클릭 길이
 
 
 # ─────────────────────────── 폰트 로더 ───────────────────────────
@@ -379,7 +385,160 @@ def generate_boom(out_path: str, cfg: HookIntroConfig | None = None) -> str:
 
 
 def build_flash_png(out_path: str, cfg: HookIntroConfig | None = None) -> str:
-    """오프닝→본문 전환용 밝은 플래시 프레임."""
+    """전환(오프닝→본문, 본문→엔드카드)용 밝은 플래시 프레임."""
     cfg = cfg or HookIntroConfig()
     Image.new("RGB", (cfg.W, cfg.H), (228, 240, 248)).save(out_path)
     return out_path
+
+
+def generate_type_click(out_path: str, cfg: HookIntroConfig | None = None) -> str:
+    """타자기 타이핑 클릭음(무료·결정론). 짧은 노이즈 어택 + 고역 클릭 → 'tk'."""
+    cfg = cfg or HookIntroConfig()
+    SR = 44100; N = int(SR * cfg.type_click_dur_s)
+    import random as _r
+    rnd = _r.Random(23)
+    buf = []
+    for i in range(N):
+        t = i / SR
+        click = rnd.uniform(-1, 1) * math.exp(-t / 0.0025) * 0.9
+        tone = math.sin(2 * math.pi * 1850 * t) * math.exp(-t / 0.010) * 0.4
+        buf.append(math.tanh((click + tone) * 1.2))
+    peak = max(1e-6, max(abs(x) for x in buf))
+    buf = [x / peak * 0.9 for x in buf]
+    with wave.open(out_path, "w") as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
+        w.writeframes(b"".join(struct.pack("<h", int(x * 32767)) for x in buf))
+    return out_path
+
+
+# ─────────────────────────── 엔드카드(타자기 애니메이션) ───────────────────────────
+def _endcard_base(bg_path: str, cfg: HookIntroConfig) -> Image.Image:
+    """엔드카드 배경(그레이딩 + 상·하 스크림). 피사체는 중간 밴드에 온전히 보이게 준비된 bg 사용."""
+    W, H = cfg.W, cfg.H
+    img = Image.open(bg_path).convert("RGB").resize((W, H))
+    img = ImageEnhance.Brightness(img).enhance(0.9)
+    ov = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d0 = ImageDraw.Draw(ov)
+    for y in range(540):
+        d0.line([0, y, W, y], fill=(4, 12, 24, int(205 * (1 - y / 540))))
+    for y in range(H - 320, H):
+        t = (y - (H - 320)) / 320
+        d0.line([0, y, W, y], fill=(4, 10, 20, int(215 * t)))
+    base = img.convert("RGBA"); base.alpha_composite(ov)
+    return base
+
+
+def _styled_line(spec: SpeciesSpec, cfg: HookIntroConfig):
+    """엔드카드 각 텍스트 줄 → (풀캔버스 RGBA 레이어, 글자별 누적 x경계, y, 시작초, cps)."""
+    W, H = cfg.W, cfg.H
+    CA, CB, GL, CYAN = (120, 200, 250), cfg.grad_magenta, (90, 150, 240), cfg.end_cyan
+    meas = ImageDraw.Draw(Image.new("RGBA", (2, 2)))
+
+    def char_bounds(txt, font):
+        fw = meas.textlength(txt, font=font); lx = W // 2 - fw / 2
+        return lx, [lx + meas.textlength(txt[: i + 1], font=font) for i in range(len(txt))]
+
+    def solid_layer(txt, font, y, fill):
+        lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+        d.text((W // 2 + 1, y + 2), txt, font=font, fill=(0, 0, 0, 150), anchor="mm")
+        d.text((W // 2, y), txt, font=font, fill=fill, anchor="mm")
+        return lay
+
+    def grad_layer(txt, font, y, glow_r):
+        tmp = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        ImageDraw.Draw(tmp).text((W // 2, y), txt, font=font, fill=(255, 255, 255, 255), anchor="mm")
+        bbox = tmp.getbbox(); x0, y0, x1, y1 = bbox; alpha = tmp.split()[3]
+        grad = Image.new("RGB", (W, H)); px = grad.load(); dmin = x0 + y0; dmax = x1 + y1
+        for yy in range(y0, y1):
+            for xx in range(x0, x1):
+                dd = ((xx + yy) - dmin) / max(1, (dmax - dmin)); dd = min(1, max(0, dd))
+                px[xx, yy] = tuple(int(CA[i] + (CB[i] - CA[i]) * dd) for i in range(3))
+        colored = Image.merge("RGBA", (*grad.split(), alpha))
+        ga = alpha.filter(ImageFilter.GaussianBlur(glow_r))
+        gimg = Image.new("RGBA", (W, H), GL + (0,)); gimg.putalpha(ga.point(lambda v: int(v * 0.8)))
+        return Image.alpha_composite(gimg, colored)
+
+    depth_str = f"水深 {spec.depth_min:,}〜{spec.depth_max:,} m"
+    specs = [
+        ("title", spec.jp_name, _serif(cfg.end_title_size), 336, cfg.type_cps_title, grad_layer(spec.jp_name, _serif(cfg.end_title_size), 336, 26)),
+        ("sci", spec.sci_name, _sci(cfg.end_sci_size), 430, cfg.type_cps_body, solid_layer(spec.sci_name, _sci(cfg.end_sci_size), 430, (210, 220, 235, 255))),
+        ("depth", depth_str, _sans_b(cfg.end_depth_size), 512, cfg.type_cps_body, solid_layer(depth_str, _sans_b(cfg.end_depth_size), 512, CYAN + (255,))),
+        ("feature", spec.feature_line, _serif(cfg.end_feature_size), 1060, cfg.type_cps_body, solid_layer(spec.feature_line, _serif(cfg.end_feature_size), 1060, (232, 240, 250, 255))),
+    ]
+    lines = []
+    start = cfg.type_start_s
+    for key, txt, font, y, cps, layer in specs:
+        lx, bounds = char_bounds(txt, font)
+        dur = len(txt) / cps
+        lines.append({"key": key, "txt": txt, "font": font, "y": y, "lx": lx,
+                      "bounds": bounds, "start": start, "cps": cps, "layer": layer})
+        start += dur + cfg.type_line_gap_s
+    return lines
+
+
+def render_endcard_frames(bg_path: str, spec: SpeciesSpec, out_dir: str,
+                          cfg: HookIntroConfig | None = None):
+    """엔드카드를 '타자기'로 렌더 → (프레임 경로들, 타자 클릭 시각들).
+
+    각 줄이 글자 단위로 왼→오 등장(타자기). 클릭음은 글자 등장 시각에 정확히 정합되어
+    타이핑 시작·종료와 사운드 시작·종료가 맞는다. glow 단어 파티클은 특징줄 완성 후 페이드.
+    """
+    cfg = cfg or HookIntroConfig()
+    W, H = cfg.W, cfg.H
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
+    base = _endcard_base(bg_path, cfg)
+    lines = _styled_line(spec, cfg)
+
+    # 타자 클릭 시각(공백 제외) 수집
+    click_times = []
+    for ln in lines:
+        for i, ch in enumerate(ln["txt"]):
+            if ch.strip():
+                click_times.append(round(ln["start"] + i / ln["cps"], 3))
+    feature = next(l for l in lines if l["key"] == "feature")
+    feat_done = feature["start"] + len(feature["txt"]) / feature["cps"]
+
+    def particles(canvas, alpha):
+        line = feature["txt"]; gw = spec.feature_glow_word; idx = line.find(gw)
+        if idx < 0 or alpha <= 0:
+            return
+        meas = ImageDraw.Draw(canvas)
+        f = feature["font"]
+        hx = feature["lx"] + meas.textlength(line[:idx], font=f) + meas.textlength(gw, font=f) / 2
+        dd = ImageDraw.Draw(canvas, "RGBA")
+        for dx, dy, r, a in [(-46, -30, 7, 255), (30, -38, 5, 220), (52, 10, 6, 240),
+                             (-30, 26, 4, 200), (8, -52, 4, 180)]:
+            aa = int(a * alpha)
+            for ex, ey, ln2 in [(0, -1, r), (0, 1, r), (-1, 0, r * 0.6), (1, 0, r * 0.6)]:
+                dd.line([hx + dx, 1060 + dy, hx + dx + ex * ln2, 1060 + dy + ey * ln2],
+                        fill=(210, 240, 255, aa), width=2)
+
+    credit_font = _sans_r(20)
+    paths = []
+    N = int(cfg.endcard_dur_s * cfg.FPS)
+    for fi in range(N):
+        t = fi / cfg.FPS
+        frame = base.copy()
+        for ln in lines:
+            dt = t - ln["start"]
+            if dt < 0:
+                continue
+            n = min(len(ln["txt"]), int(dt * ln["cps"]) + 1)
+            reveal_x = ln["bounds"][n - 1] + 3
+            mask = Image.new("L", (W, H), 0)
+            ImageDraw.Draw(mask).rectangle([0, 0, int(reveal_x), H], fill=255)
+            lay = ln["layer"].copy()
+            lay.putalpha(Image.composite(lay.split()[3], Image.new("L", (W, H), 0), mask))
+            frame.alpha_composite(lay)
+        # 특징줄 완성 후 파티클 페이드인
+        particles(frame, _smooth(min(1, max(0, (t - feat_done) / 0.4))))
+        # 크레딧(타이핑 없이 늦게 페이드인)
+        ca = _smooth(min(1, max(0, (t - feat_done - 0.2) / 0.5)))
+        if ca > 0:
+            cl = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            ImageDraw.Draw(cl).text((W // 2, H - 40), "映像: NOAA Ocean Exploration ・ Public Domain",
+                                    font=credit_font, fill=(160, 175, 200, int(225 * ca)), anchor="mm")
+            frame.alpha_composite(cl)
+        p = str(Path(out_dir) / f"ec_{fi:03d}.png")
+        frame.convert("RGB").save(p)
+        paths.append(p)
+    return paths, click_times
