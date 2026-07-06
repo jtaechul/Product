@@ -5,10 +5,13 @@ Veo 없이(API 키·비용 0) 파이프라인 전체를 완주·검증하기 위
 """
 from __future__ import annotations
 
+import logging
 import subprocess
 from pathlib import Path
 
 from src.core.contracts import ApprovedAsset, ClipResult, CutSpec
+
+log = logging.getLogger(__name__)
 from src.core.visualization.base import (
     CLIP_DURATION_S,
     CLIP_FPS,
@@ -47,6 +50,33 @@ _CAMERA = {
 }
 
 
+def _subject_center(path: str) -> tuple[float, float]:
+    """어두운 배경 위 밝은 심해 생물의 무게중심(가로·세로 비율 0~1)을 추정.
+
+    실사 사진이 가로형이라 9:16 중앙 크롭 시 피사체가 한쪽으로 쏠려 잘리는 문제를 막기 위해,
+    '배경보다 밝은 픽셀'의 무게중심으로 크롭 창을 옮긴다. 실패 시 (0.5, 0.5)=중앙.
+    """
+    try:
+        from PIL import Image
+        im = Image.open(path).convert("L").resize((64, 64))
+        px = list(im.getdata())
+        lo = sorted(px)[int(len(px) * 0.6)]  # 배경(하위 60%) 컷 → 밝은 피사체만 가중
+        sx = sy = sw = 0.0
+        for i, v in enumerate(px):
+            w = v - lo
+            if w <= 0:
+                continue
+            sx += (i % 64) * w
+            sy += (i // 64) * w
+            sw += w
+        if sw <= 0:
+            return 0.5, 0.5
+        return sx / sw / 63.0, sy / sw / 63.0
+    except Exception as e:  # noqa: BLE001
+        log.warning("[panzoom] 피사체 중심 추정 실패 → 중앙 크롭: %s", e)
+        return 0.5, 0.5
+
+
 class PanzoomVisualizer(Visualizer):
     name = "panzoom"
 
@@ -67,9 +97,22 @@ class PanzoomVisualizer(Visualizer):
         clip_path = out / f"{situation_id}_{cut.cut_type}.mp4"
 
         # 1) 이미지를 크게 업스케일(줌 계단현상 방지) 후 9:16 크롭 기준으로 zoompan
+        #    크롭 창은 '피사체 무게중심'을 따라 이동(가로형 사진의 쏠림·잘림 방지).
         # 2) discovery만 1초 페이드인(어둠→등장)
+        sh = CLIP_H * 4
+        try:
+            from PIL import Image
+            w0, h0 = Image.open(asset.asset_path).size
+        except Exception:  # noqa: BLE001
+            w0, h0 = CLIP_W, CLIP_H
+        sw = max(2, round(w0 * sh / max(1, h0)) & ~1)          # scale=-2:sh 후 가로(짝수)
+        cw = min(sw, round(sh * CLIP_W / CLIP_H)) & ~1          # 9:16 크롭 폭
+        ch = min(sh, round(sw * CLIP_H / CLIP_W)) & ~1          # 9:16 크롭 높이
+        fx, fy = _subject_center(asset.asset_path)
+        cx = int(min(max(fx * sw - cw / 2, 0), sw - cw))       # 피사체 중심 정렬(클램프)
+        cy = int(min(max(fy * sh - ch / 2, 0), sh - ch))
         vf = (
-            f"scale=-2:{CLIP_H*4},crop='min(iw,ih*{CLIP_W}/{CLIP_H})':'min(ih,iw*{CLIP_H}/{CLIP_W})',"
+            f"scale=-2:{sh},crop={cw}:{ch}:{cx}:{cy},"
             f"zoompan=z='{cam['z']}':x='{cam['x']}':y='{cam['y']}'"
             f":d={_FRAMES}:s={CLIP_W}x{CLIP_H}:fps={CLIP_FPS}"
         )
