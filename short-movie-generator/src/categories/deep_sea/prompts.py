@@ -140,18 +140,24 @@ _WILD_DEEP_SCENE_BIO = (
     "no rising air bubbles; faint marine snow drifting."
 )
 _WILD_CAM = {
-    # 스케일 대비(원경 작은 점 ↔ 극접사) + 리빌↔접사 교차 + 절정 빠른컷(1.7억뷰 릴스 벤치마크)
-    # 주의: 광원 명사(beam/light/spotlight) 사용 금지 — 상단 핀조명 회귀 유발(veo_verification_log v5).
-    "discovery": "Open on an extreme long shot where the creature is only a tiny pale speck in a vast "
-                 "empty black void, giving a sense of its lonely scale, then a smooth dynamic push-in "
-                 "until it fills the frame.",
-    "behavior": "The camera glides with it and pushes in on the signature action; a few quick cuts at the most intense moment.",
-    "detail": "Extreme macro shots of texture, eye, and body detail, then a slow drift back.",
+    # 벤치마크(What On Earth) 프레임 정밀분석 반영: 카메라는 거의 정지, 느린 관찰. 스케일 대비는
+    # '한 컷 안 빠른 줌'이 아니라 컷 사이(중간거리 와이드 ↔ 극접사)의 '컷 전환'으로 만든다.
+    # 주의: 광원 명사(beam/light/spotlight) 금지(핀조명 회귀). 완전 정면 대칭 앵글 금지.
+    "discovery": "Frame the whole creature at a calm medium distance with wide dark empty water "
+                 "around it, shot from a slight three-quarter angle at eye level. The camera is "
+                 "almost still, only an extremely slow, barely-perceptible drift — never a fast zoom.",
+    "behavior": "The camera drifts very slowly and gently alongside the creature as it {behavior}, "
+                "patient and observational, almost static; no fast moves, no whip pans, no quick cuts.",
+    "detail": "A slow, near-static extreme macro hold on the eye and skin texture, with shallow depth "
+              "of field softly blurring the background.",
 }
 _WILD_TAIL = (
-    "Naturalistic wildlife-documentary look, crisp cinematic detail. Keep the animal's exact "
-    "anatomy — {anatomy_lock}; do not distort, add, or fabricate features or behavior. Never "
-    "{forbidden}. Energetic, awe-inspiring wildlife mood. Vertical 9:16, filling the frame."
+    "Naturalistic wildlife-documentary look, crisp cinematic detail with shallow depth of field. "
+    "Camera discipline: slow and calm, almost static; no fast pans and no fast zoom; film from a "
+    "slight three-quarter or side angle at the animal's eye level, never a dead-on symmetrical front "
+    "view. Keep the animal's exact anatomy — {anatomy_lock}; do not distort, add, or fabricate "
+    "features or behavior. Never {forbidden}. Quiet, awe-inspiring wildlife mood. Vertical 9:16, "
+    "the creature framed with generous dark negative space around it."
 )
 
 

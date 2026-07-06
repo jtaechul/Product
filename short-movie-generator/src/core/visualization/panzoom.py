@@ -25,24 +25,25 @@ _FRAMES = CLIP_DURATION_S * CLIP_FPS
 
 # 컷 타입 → zoompan 표현식 (스타일 스펙의 카메라 무브 매핑)
 # zoompan 안 좌표계: 입력(업스케일된) 이미지 기준, zoom은 1.0=전체 뷰
+# 벤치마크(What On Earth) 카메라 = 거의 정지·느린 관찰. 켄번즈 무브를 전반적으로 약하게 튜닝.
 _CAMERA = {
-    # discovery: slow push-in (어둠→등장 훅과 어울리는 느린 전진)
+    # discovery: 아주 느린 미세 푸시인 (어둠→등장 훅). 빠른 줌 금지.
     "discovery": {
-        "z": f"min(1.0+0.15*on/{_FRAMES},1.15)",
+        "z": f"min(1.0+0.08*on/{_FRAMES},1.08)",
         "x": "iw/2-(iw/zoom/2)",
         "y": "ih/2-(ih/zoom/2)",
         "fade_in": True,
     },
-    # behavior: lateral track (고정 줌으로 좌→우 트래킹)
+    # behavior: 아주 완만한 횡이동 (고정 줌, 이동폭 절반으로 축소 → 부드럽게)
     "behavior": {
-        "z": "1.12",
-        "x": f"(iw-iw/zoom)*on/{_FRAMES}",
+        "z": "1.10",
+        "x": f"(iw-iw/zoom)*(0.35+0.30*on/{_FRAMES})",
         "y": "ih/2-(ih/zoom/2)",
         "fade_in": False,
     },
-    # detail: macro hold (더 깊은 푸시인 → 클로즈업 유지)
+    # detail: 느린 매크로 홀드 (얕은 전진, 급줌 금지)
     "detail": {
-        "z": f"min(1.12+0.28*on/{_FRAMES},1.40)",
+        "z": f"min(1.12+0.16*on/{_FRAMES},1.28)",
         "x": "iw/2-(iw/zoom/2)",
         "y": "ih/2-(ih/zoom/2)",
         "fade_in": False,
