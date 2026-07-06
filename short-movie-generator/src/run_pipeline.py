@@ -31,14 +31,17 @@ def main() -> int:
     parser.add_argument("--scope", default="all",
                         choices=["all", "caption", "images", "video"],
                         help="재생성 범위(기본 all). 관리자 부분 재생성 시 레코드 병합 갱신 표시")
-    parser.add_argument("--mode", default="narrated", choices=["narrated", "hud"],
-                        help="제작 모드(기본 narrated: 나레이션 야생다큐 / hud: 구 ROV HUD)")
+    parser.add_argument("--mode", default="reels", choices=["reels", "narrated", "hud"],
+                        help="제작 모드(기본 reels: 실사영상+일본어 오프닝훅/엔드카드 / narrated: 구 나레이션 / hud: 구 ROV)")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
     try:
-        if args.mode == "narrated":
+        if args.mode == "reels":
+            from src.core.pipeline import run_reels
+            result = run_reels(args.category, args.query, episode=args.episode)
+        elif args.mode == "narrated":
             from src.core.pipeline import run_narrated
             result = run_narrated(args.category, args.query, args.visualizer, episode=args.episode)
         else:

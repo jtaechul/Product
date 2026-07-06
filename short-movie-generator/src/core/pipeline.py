@@ -177,6 +177,106 @@ def run_narrated(
     return result
 
 
+def _probe_duration(path: str) -> float:
+    r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                        "-of", "csv=p=0", path], capture_output=True, text=True)
+    try:
+        return float(r.stdout.strip())
+    except Exception:  # noqa: BLE001
+        return 0.0
+
+
+def run_reels(
+    category_id: str,
+    query: str,
+    base_dir: str = ".",
+    episode: int | None = None,
+) -> OutputResult:
+    """reels 파이프라인(현행 확정 시스템): 실제 PD 심해 '영상' → 9:16 추적 리프레임 + 틸 그레이딩
+    → 일본어 나레이션(edge-tts, 훅/본문) + 카라오케 자막 → 오프닝 훅/엔드카드/전환/임팩트 사운드.
+    팬줌·Veo 미사용. 실사 영상·일본어 훅 확보 실패 시 명확 중단(날조 금지)."""
+    from src.core import footage, hook_intro_stage, narration_sync, reframe
+    from src.core.contracts import ALLOWED_LICENSES
+
+    base = Path(base_dir)
+    for d in ("assets/raw", "work", "output"):
+        (base / d).mkdir(parents=True, exist_ok=True)
+    raw_dir, work_dir, out_dir = base / "assets/raw", base / "work", base / "output"
+    category = get_category(category_id)
+    log.info("[reels] 시작: category=%s query=%r", category_id, query)
+
+    info = category.get_info(category.parse_input(query))
+    if not hasattr(category, "hook_intro_spec"):
+        raise PipelineError("reels", "카테고리가 hook_intro_spec 미제공")
+    spec_t = category.hook_intro_spec(info)
+    if not spec_t:
+        raise PipelineError("reels", "일본어 훅 생성 불가(대표종 시드 또는 LLM 키 필요)")
+    spec, hook_text, bgm = spec_t
+
+    # 1) 실사 심해 영상 소싱 + 라이선스 게이트
+    fv = footage.fetch_footage(info.scientific_name, info.common_name_en, str(raw_dir))
+    if not fv:
+        raise PipelineError("footage", "실사 심해 영상 미확보 → 제작 중단(AI/정지 대체 금지)")
+    if (fv["license"] or "").strip().lower() not in ALLOWED_LICENSES:
+        raise PipelineError("license_gate", f"영상 라이선스 차단: {fv['license']}")
+
+    # 2) 본문 일본어 나레이션 대본 → 합성(단어 타임스탬프)
+    chunks = category.reels_body_script(info) if hasattr(category, "reels_body_script") else None
+    if not chunks:
+        raise PipelineError("script", "본문 일본어 대본 생성 불가(시드/LLM 필요)")
+    nar = narration_sync.synthesize(chunks, str(work_dir))
+    if not nar.get("mp3") or not nar.get("disp"):
+        raise PipelineError("tts", "나레이션 합성 실패")
+    body_dur = float(nar["duration"]) + 0.6
+
+    # 3) 9:16 추적 리프레임 + 틸 그레이딩(본문 길이)
+    body_v = reframe.reframe_to_vertical(fv["path"], str(work_dir / "body_reframed.mp4"),
+                                         body_dur, str(work_dir / "rf"))
+
+    # 4) 카라오케 자막 번인(본문 — 훅 없음)
+    ass = narration_sync.build_synced_ass(nar["disp"], str(work_dir / "body.ass"),
+                                          hook_first=False, w=CLIP_W, h=CLIP_H)
+    subbed = str(work_dir / "body_subbed.mp4")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", body_v, "-vf", f"ass={ass}",
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", "-an", subbed], check=True)
+
+    # 5) 본문 나레이션 오디오 mux
+    body_av = str(work_dir / "body_av.mp4")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", subbed, "-i", nar["mp3"],
+                    "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", body_av], check=True)
+
+    # 6) 오프닝 훅 + 엔드카드 + 전환 + 임팩트 사운드 래핑
+    final = hook_intro_stage.apply(body_av, spec, hook_text, str(work_dir / "hook_intro"), bgm=bgm)
+    if final == body_av:
+        log.warning("[reels] hook_intro 미적용(폰트/edge-tts 전제 미충족) → 본문만 발행")
+
+    # 7) 캡션 + 출력
+    caption = (category.build_narrated_caption(info)
+               if hasattr(category, "build_narrated_caption") else category.build_caption(info))
+    if hasattr(category, "attach_attribution"):
+        caption = category.attach_attribution(caption, info, fv["credit"])
+    if episode is None:
+        episode = category.next_episode() if hasattr(category, "next_episode") else 1
+    series_title = getattr(category, "series_title", "") or category_id
+    total = _probe_duration(final) or body_dur
+    result = output.finalize(
+        final, info, caption, f'{fv["credit"]} · Public Domain', fv["license"], str(out_dir), total,
+        extra_meta={"category": category_id, "mode": "reels", "visualizer": "reels",
+                    "style_profile": "deepsea_reels_jp", "footage_source": fv.get("source", ""),
+                    "series": {"title": series_title, "episode": episode}},
+    )
+    log.info("[reels] 출력: %s (QC %s)", result.video_path, "통과" if result.qc_passed else "실패")
+    if hasattr(category, "log_catalog"):
+        category.log_catalog(episode, info)
+    try:
+        content_store.write_record(base_dir, f"{int(episode):03d}", info=info, caption=caption,
+                                   asset=None, visualizer="reels", video_file=result.video_path,
+                                   series_title=series_title, scope="all")
+    except Exception as e:  # noqa: BLE001
+        log.warning("[reels] 레코드 기록 실패(무시): %s", e)
+    return result
+
+
 def run(
     category_id: str,
     query: str,

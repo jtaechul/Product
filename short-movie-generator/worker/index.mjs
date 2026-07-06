@@ -131,11 +131,7 @@ function renderHome(){
     '</select>'+
     '<span class="lbl">또는 특정 종 직접 입력 (선택)</span>'+
     '<input id="query" placeholder="비워두면 AI가 위 카테고리에서 자동 선택" autocomplete="off">'+
-    '<span class="lbl">영상 생성 방식</span>'+
-    '<select id="visualizer">'+
-      '<option value="panzoom">panzoom · 무료 미리보기 (키 불필요)</option>'+
-      '<option value="veo_text2video">veo_text2video · 실제 AI 영상 (Veo, 하루 10회)</option>'+
-    '</select>'+
+    '<div class="hint" style="margin:4px 0 8px">제작 방식: <b>실사 심해 영상(NOAA·공용도메인) + 일본어 오프닝 훅·엔드카드·전환·임팩트 사운드</b> (팬줌·Veo 미사용)</div>'+
     '<button class="go" id="go">쇼츠 생성 시작</button>'+
     '<div class="banner" id="msg"></div>'+
     '<div class="hint">완성 영상은 2~4분 뒤 <b>텔레그램</b>으로 전송되고, <a href="/library">라이브러리</a>에 등록됩니다.</div>'+
@@ -158,7 +154,7 @@ function renderHome(){
     if(!pat()){$("#tokbox").open=true;banner("최초 1회 GitHub 토큰이 필요합니다. 아래 설정을 따라 주세요.","err");return;}
     $("#go").disabled=true;banner("생성 요청 중…");
     try{const r=await fetch(API+"/actions/workflows/"+WF+"/dispatches",{method:"POST",headers:headers(true),
-        body:JSON.stringify({ref:BRANCH,inputs:{query,visualizer:$("#visualizer").value}})});
+        body:JSON.stringify({ref:BRANCH,inputs:{query}})});
       if(r.status===204){banner("생성 시작! 2~4분 뒤 텔레그램 전송 + 라이브러리 등록.","ok");setTimeout(loadRuns,4000);setTimeout(loadRuns,12000);}
       else{const t=await r.text();banner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
     }catch(e){banner("요청 실패: "+e,"err");}
