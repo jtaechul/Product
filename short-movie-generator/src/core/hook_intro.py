@@ -391,6 +391,33 @@ def build_flash_png(out_path: str, cfg: HookIntroConfig | None = None) -> str:
     return out_path
 
 
+def build_specimen_bg(frame_path: str, out_path: str, cfg: HookIntroConfig | None = None) -> str:
+    """엔드카드 배경: 메인 피사체 프레임을 과도 줌 없이 '중간 밴드'에 온전히 배치.
+    상·하는 어둠(텍스트 영역) — 피사체가 텍스트에 가리지 않고 잘 보이게."""
+    cfg = cfg or HookIntroConfig()
+    W, H = cfg.W, cfg.H
+    BAND_TOP, BAND_BOT = 545, 950
+    src = Image.open(frame_path).convert("RGB")
+    bw = W; bh = int(src.height * bw / src.width)
+    band = src.resize((bw, bh), Image.LANCZOS)
+    band = ImageEnhance.Brightness(band).enhance(0.82)
+    band = ImageEnhance.Contrast(band).enhance(1.06)
+    band = Image.blend(band, Image.new("RGB", (bw, bh), (10, 30, 48)), 0.28)
+    canvas = Image.new("RGB", (W, H), (7, 20, 34))
+    band_y = (BAND_TOP + BAND_BOT) // 2 - bh // 2
+    mask = Image.new("L", (bw, bh), 255); md = ImageDraw.Draw(mask); fea = 70
+    for i in range(fea):
+        a = int(255 * i / fea)
+        md.line([0, i, bw, i], fill=a); md.line([0, bh - 1 - i, bw, bh - 1 - i], fill=a)
+    canvas.paste(band, (0, band_y), mask)
+    vig = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(vig).ellipse([-W * 0.15, band_y - 40, W * 1.15, band_y + bh + 40], fill=255)
+    vig = vig.filter(ImageFilter.GaussianBlur(90))
+    canvas = Image.composite(canvas, ImageEnhance.Brightness(canvas).enhance(0.6), vig)
+    canvas.save(out_path)
+    return out_path
+
+
 def generate_type_click(out_path: str, cfg: HookIntroConfig | None = None) -> str:
     """타자기 타이핑 클릭음(무료·결정론). 짧은 노이즈 어택 + 고역 클릭 → 'tk'."""
     cfg = cfg or HookIntroConfig()

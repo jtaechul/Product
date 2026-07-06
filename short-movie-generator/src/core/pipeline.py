@@ -54,6 +54,25 @@ def _pad_last_frame(video_path: str, target_s: float, work_dir: str) -> str:
     return str(out)
 
 
+def _maybe_apply_hook_intro(category, info, body_video: str, work_dir: str) -> str:
+    """카테고리가 hook_intro_spec(info)→(SpeciesSpec, hook_text[, bgm])를 제공하면
+    오프닝 훅/엔드카드/전환/임팩트 사운드 시스템을 적용. 미제공·실패 시 원본 그대로."""
+    if not hasattr(category, "hook_intro_spec"):
+        return body_video
+    try:
+        from src.core import hook_intro_stage
+        provided = category.hook_intro_spec(info)
+        if not provided:
+            return body_video
+        spec, hook_text = provided[0], provided[1]
+        bgm = provided[2] if len(provided) > 2 else None
+        return hook_intro_stage.apply(body_video, spec, hook_text,
+                                      str(Path(work_dir) / "hook_intro"), bgm=bgm)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[hook_intro] 연결 실패 → 본문 그대로: %s", e)
+        return body_video
+
+
 def run_narrated(
     category_id: str,
     query: str,
@@ -126,6 +145,10 @@ def run_narrated(
 
     with_audio = audio.add_narration(subbed, str(work_dir), total, narration_wav,
                                      category.ambient_audio_spec())
+
+    # 오프닝 훅 + 엔드카드 + 전환 + 임팩트 사운드 시스템(카테고리가 hook_intro_spec 제공 시 적용).
+    # 미제공/전제 미충족 시 원본 그대로(발행 불정지).
+    with_audio = _maybe_apply_hook_intro(category, info, with_audio, str(work_dir))
 
     caption = (category.build_narrated_caption(info)
                if hasattr(category, "build_narrated_caption") else category.build_caption(info))

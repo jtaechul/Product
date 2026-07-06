@@ -1,0 +1,202 @@
+"""hook_intro_stage — 본문 영상을 '오프닝 훅 + 엔드카드 + 전환 + 임팩트 사운드' 시스템으로
+   감싸는 파이프라인 연결 단계.
+
+파이프라인에서의 위치: 본문 영상(합성·자막·오디오 완료) → apply() → 완성본.
+설계 원칙: **절대 발행을 막지 않는다.** edge-tts/폰트/네트워크 등 어떤 전제라도 없으면
+경고만 남기고 원본 본문 영상을 그대로 반환한다(안전 폴백).
+
+구성(모두 hook_intro 모듈의 확정 디자인 사용):
+  오프닝 훅(명조 대형 그라데이션 타이틀·어절 팝·셰이크·홀드)
+  → 플래시 전환 → 본문 → 플래시 전환
+  → 엔드카드(타자기 텍스트·타자음·피사체 중간밴드)
+오디오: 강렬 훅 나레이션 + 딥 붐(어절) + 본문 오디오 + 엔드카드 타자음 (+선택 BGM).
+"""
+from __future__ import annotations
+
+import logging
+import re
+import ssl
+import subprocess
+from pathlib import Path
+
+from src.core import hook_intro as hi
+
+log = logging.getLogger(__name__)
+_PROXY_CA = "/root/.ccr/ca-bundle.crt"
+_PUNCT = re.compile(r"[、。，．・「」『』（）\s]")
+
+
+def _install_ca() -> None:
+    if Path(_PROXY_CA).exists():
+        try:
+            import edge_tts.communicate as ec
+            ec._SSL_CTX = ssl.create_default_context(cafile=_PROXY_CA)
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def _synth_hook(text: str, out_mp3: str, cfg: hi.HookIntroConfig) -> dict | None:
+    """훅 문장 → edge-tts(강조 파라미터)로 합성. 단어 온셋(頭/目/骨 등 어절 첫 글자) 반환.
+    실패(키/네트워크/모듈 없음) 시 None → 상위에서 폴백."""
+    try:
+        import asyncio
+        import edge_tts
+        _install_ca()
+
+        async def _run():
+            c = edge_tts.Communicate(text, "ja-JP-KeitaNeural", rate=cfg.hook_tts_rate,
+                                     pitch=cfg.hook_tts_pitch, volume=cfg.hook_tts_volume,
+                                     boundary="WordBoundary")
+            audio = bytearray(); words = []
+            async for ch in c.stream():
+                if ch["type"] == "audio":
+                    audio += ch["data"]
+                elif ch["type"] == "WordBoundary":
+                    words.append((ch["offset"] / 1e7, ch["duration"] / 1e7, ch["text"]))
+            return bytes(audio), words
+
+        audio, words = asyncio.run(_run())
+        if not audio or not words:
+            return None
+        Path(out_mp3).write_bytes(audio)
+        return {"mp3": out_mp3, "words": words}
+    except Exception as e:  # noqa: BLE001
+        log.warning("[hook_intro] 훅 나레이션 합성 실패 → 오프닝 생략: %s", e)
+        return None
+
+
+def _onsets_for_words(pop_words: list[str], words: list[tuple]) -> dict:
+    """팝 어절 각각의 첫 글자를 실제 단어 온셋에 매핑(정합)."""
+    onsets = {}
+    wi = 0
+    for w in pop_words:
+        core = _PUNCT.sub("", w)
+        if not core:
+            continue
+        first = core[0]
+        # 남은 words에서 first를 포함하는 첫 단어의 시작
+        found = None
+        for j in range(wi, len(words)):
+            if first in words[j][2]:
+                found = words[j][0]; wi = j + 1; break
+        onsets[first] = found if found is not None else (words[wi][0] if wi < len(words) else 0.0)
+    return onsets
+
+
+def _probe(path: str, entry: str) -> str:
+    r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0",
+                        "-show_entries", f"stream={entry}", "-of", "csv=p=0", path],
+                       capture_output=True, text=True)
+    return r.stdout.strip()
+
+
+def _grab_frame(video: str, t: float, out_png: str) -> bool:
+    r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", str(t), "-i", video,
+                        "-frames:v", "1", out_png], capture_output=True, text=True)
+    return r.returncode == 0 and Path(out_png).exists()
+
+
+def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
+          cfg: hi.HookIntroConfig | None = None, bgm: str | None = None) -> str:
+    """본문 영상을 오프닝/엔드카드/전환/사운드로 감싼 완성본 경로 반환.
+    전제 미충족 시 원본 body_video를 그대로 반환(발행 불정지)."""
+    cfg = cfg or hi.HookIntroConfig()
+    wd = Path(work_dir); wd.mkdir(parents=True, exist_ok=True)
+    try:
+        if not hi.fonts_available():
+            log.warning("[hook_intro] 폰트 없음 → 오프닝/엔드카드 생략(본문 그대로)")
+            return body_video
+        dur = float(_probe(body_video, "duration") or 0) or \
+            float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                  "-of", "csv=p=0", body_video], capture_output=True, text=True).stdout or 0)
+        if dur <= 0:
+            return body_video
+
+        # 1) 훅 나레이션 + 온셋
+        hook = _synth_hook(hook_text, str(wd / "hook.mp3"), cfg)
+        if not hook:
+            return body_video
+        onsets = _onsets_for_words(spec.hook_pop_words, hook["words"])
+
+        # 2) 배경 프레임(오프닝=초반, 엔드카드=중반 피사체)
+        open_bg = str(wd / "open_bg.png"); ec_frame = str(wd / "ec_frame.png")
+        if not _grab_frame(body_video, min(0.5, dur * 0.1), open_bg):
+            return body_video
+        _grab_frame(body_video, dur * 0.55, ec_frame)
+        ec_bg = str(wd / "ec_bg.png")
+        hi.build_specimen_bg(ec_frame if Path(ec_frame).exists() else open_bg, ec_bg, cfg)
+
+        # 3) 오프닝/엔드카드 렌더 → mp4
+        of_dir = str(wd / "of"); ec_dir = str(wd / "ecf")
+        hi.render_opening_frames(open_bg, onsets, spec, of_dir, cfg)
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(cfg.FPS),
+                        "-i", f"{of_dir}/of_%03d.png", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                        "-crf", "18", str(wd / "opening.mp4")], check=True)
+        _, clicks = hi.render_endcard_frames(ec_bg, spec, ec_dir, cfg)
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(cfg.FPS),
+                        "-i", f"{ec_dir}/ec_%03d.png", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                        "-crf", "18", str(wd / "endcard.mp4")], check=True)
+
+        # 4) SFX/플래시
+        boom = hi.generate_boom(str(wd / "boom.wav"), cfg)
+        tick = hi.generate_type_click(str(wd / "tick.wav"), cfg)
+        flash = hi.build_flash_png(str(wd / "flash.png"), cfg)
+
+        OPEN = cfg.opening_seg_s; END = cfg.endcard_dur_s
+        BODY_END = OPEN + dur; TOTAL = OPEN + dur + END
+        W, H = cfg.W, cfg.H
+
+        # 5) 영상 concat + 전환 2곳(본문 해상도 정규화)
+        vf = (
+            f"[0:v]scale={W}:{H},setpts=PTS-STARTPTS[o];"
+            f"[1:v]scale={W}:{H},setpts=PTS-STARTPTS[b];"
+            f"[2:v]scale={W}:{H},setpts=PTS-STARTPTS[e];[o][b][e]concat=n=3:v=1:a=0[cat];"
+            f"[3:v]format=yuva420p,colorchannelmixer=aa=0.55,fade=t=in:st={OPEN-0.25}:d=0.22:alpha=1,"
+            f"fade=t=out:st={OPEN}:d=0.28:alpha=1[fl1];"
+            f"[4:v]format=yuva420p,colorchannelmixer=aa=0.6,fade=t=in:st={BODY_END-0.25}:d=0.22:alpha=1,"
+            f"fade=t=out:st={BODY_END}:d=0.30:alpha=1[fl2];"
+            f"[cat][fl1]overlay=0:0[o1];[o1][fl2]overlay=0:0[v]"
+        )
+        vout = str(wd / "wrapped_video.mp4")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error",
+                        "-i", str(wd / "opening.mp4"), "-i", body_video, "-i", str(wd / "endcard.mp4"),
+                        "-loop", "1", "-t", str(TOTAL), "-i", flash,
+                        "-loop", "1", "-t", str(TOTAL), "-i", flash,
+                        "-filter_complex", vf, "-map", "[v]", "-c:v", "libx264",
+                        "-pix_fmt", "yuv420p", "-crf", "19", "-r", str(cfg.FPS), vout], check=True)
+
+        # 6) 오디오: 훅@0.30 + 붐@온셋 + 본문오디오@OPEN + 엔드카드 타자@BODY_END + (BGM)
+        NARR = cfg.narr_start_s
+        inputs = ["-i", hook["mp3"], "-i", body_video, "-i", boom, "-i", tick]
+        af = (f"[0:a]adelay={int(NARR*1000)}|{int(NARR*1000)},volume={cfg.mix_hook}[hk];"
+              f"[1:a]adelay={int(OPEN*1000)}|{int(OPEN*1000)},volume={cfg.mix_body}[bd];")
+        labels = ["[hk]", "[bd]"]
+        for i, (first, on) in enumerate(onsets.items()):
+            at = int((NARR + on) * 1000)
+            af += f"[2:a]adelay={at}|{at},volume={cfg.mix_boom}[bm{i}];"
+            labels.append(f"[bm{i}]")
+        for i, ct in enumerate(clicks):
+            at = int((BODY_END + ct) * 1000)
+            af += f"[3:a]adelay={at}|{at},volume=0.5[tk{i}];"
+            labels.append(f"[tk{i}]")
+        ninp = len(labels)
+        if bgm and Path(bgm).exists():
+            inputs += ["-i", bgm]
+            af += (f"[4:a]atrim=0:{TOTAL},volume={cfg.mix_bgm},afade=t=in:st=0:d=1.5,"
+                   f"afade=t=out:st={TOTAL-2}:d=2.0[bed];")
+            labels.append("[bed]"); ninp += 1
+        af += (f"{''.join(labels)}amix=inputs={ninp}:duration=longest:normalize=0,"
+               f"alimiter=limit={cfg.limiter},atrim=0:{TOTAL},aresample=44100[a]")
+        aout = str(wd / "wrapped_audio.m4a")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error"] + inputs +
+                       ["-filter_complex", af, "-map", "[a]", "-c:a", "aac", "-b:a", "192k", aout],
+                       check=True)
+
+        final = str(wd / "final_wrapped.mp4")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", vout, "-i", aout,
+                        "-c:v", "copy", "-c:a", "copy", "-shortest", final], check=True)
+        log.info("[hook_intro] 오프닝/엔드카드 적용 완료: %s (%.1fs)", final, TOTAL)
+        return final
+    except Exception as e:  # noqa: BLE001
+        log.warning("[hook_intro] 적용 실패 → 본문 그대로 발행: %s", e)
+        return body_video
