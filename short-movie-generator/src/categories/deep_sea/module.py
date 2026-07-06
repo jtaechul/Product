@@ -349,6 +349,38 @@ class DeepSeaCategory:
         """narrated_wildlife 캡션(전환 §6 형식)."""
         return copywriter.build_narrated_caption(info)
 
+    # --- 오프닝 훅 / 엔드카드 시스템 입력 (hook_intro) ---
+    def hook_intro_spec(self, info: SpeciesInfo):
+        """(SpeciesSpec, hook_text, bgm) 반환 → 코어가 오프닝/엔드카드/전환/사운드 자동 적용.
+        일본어 훅 카피 생성 실패 시 None(시스템 휴면·발행 불정지)."""
+        from src.categories.deep_sea import hook as hook_copy
+        from src.core.hook_intro import SpeciesSpec
+        h = hook_copy.build_hook(info)
+        if not h:
+            return None
+        dmin, dmax = self._parse_depth(info.depth_range_m)
+        sci = (info.scientific_name or "").strip()
+        sci = sci[0].upper() + sci[1:] if sci else sci
+        spec = SpeciesSpec(
+            jp_name=h["jp_name"], sci_name=sci, depth_min=dmin, depth_max=dmax,
+            hook_line1=h["hook_line1"], hook_line2=h["hook_line2"],
+            hook_pop_words=list(h["pop_words"]), feature_line=h["feature_line"],
+            feature_glow_word=h.get("feature_glow_word", h["pop_words"][0]),
+        )
+        hook_text = h["hook_line1"] + h["hook_line2"]
+        bgm = Path(__file__).resolve().parents[3] / "assets" / "audio" / "bgm" / "beneath_the_frozen_shelf.mp3"
+        return (spec, hook_text, str(bgm) if bgm.exists() else None)
+
+    @staticmethod
+    def _parse_depth(depth_range_m: str) -> tuple[int, int]:
+        """'1000-4000' → (1000, 4000). 단일값이면 절반~값, 없으면 심해 기본."""
+        nums = [int(x) for x in re.findall(r"\d+", depth_range_m or "")]
+        if not nums:
+            return (200, 2000)
+        if len(nums) == 1:
+            return (max(0, nums[0] // 2), nums[0])
+        return (min(nums), max(nums))
+
     # --- 도감 회차 번호 (커밋되는 원장으로 안정적 누적 — CI 컨테이너 리셋 무관) ---
     def next_episode(self) -> int:
         """다음 도감 엔트리 번호(읽기 전용 예약). 실제 기록은 제작 성공 후 log_catalog에서."""
