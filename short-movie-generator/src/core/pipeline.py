@@ -253,7 +253,10 @@ def run_reels(
                     "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", body_av], check=True)
 
     # 6) 오프닝 훅 + 엔드카드 + 전환 + 임팩트 사운드 래핑
-    final = hook_intro_stage.apply(body_av, spec, hook_text, str(work_dir / "hook_intro"), bgm=bgm)
+    # 배경 소스 분리(재발 방지): 오프닝 배경=자막 번인 '전' 클린 리프레임(body_v) →
+    # 본문 자막 미리 노출 차단 / 엔드카드 피사체=크롭·줌 '전' 원본 광각(fv.path) → 과확대 차단
+    final = hook_intro_stage.apply(body_av, spec, hook_text, str(work_dir / "hook_intro"), bgm=bgm,
+                                   open_bg_video=body_v, subject_video=fv["path"])
     if final == body_av:
         log.warning("[reels] hook_intro 미적용(폰트/edge-tts 전제 미충족) → 본문만 발행")
 
