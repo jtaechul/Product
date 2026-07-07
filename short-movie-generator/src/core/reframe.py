@@ -261,10 +261,10 @@ def delogo_vf(src_w: float, src_h: float, box: tuple) -> str:
     return f"delogo=x=1:y=1:w={lw}:h={lh}"
 
 
-# 세그먼트 줌 패턴(와이드→접사→와이드… 교차)
-_ZOOM_CYCLE = [1.00, 1.35, 1.10, 1.55, 1.15, 1.40]
-# 와이드 우선(난파선 등 큰 구조물): 전신·선체 전체가 넓게 보이도록 줌을 억제.
-_WIDE_ZOOM_CYCLE = [1.00, 1.12, 1.00, 1.15, 1.05, 1.10]
+# 접사(fill) 컷의 줌 배율 — 과도한 줌인 방지를 위해 완만하게(예전 1.35~1.55 → 1.2대).
+_ZOOM_CYCLE = [1.06, 1.20, 1.10, 1.24, 1.12, 1.18]
+# 와이드 우선(난파선 등 큰 구조물): 접사 컷도 거의 줌 없이.
+_WIDE_ZOOM_CYCLE = [1.00, 1.10, 1.00, 1.12, 1.05, 1.08]
 
 
 def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
@@ -320,44 +320,58 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
     lines = []
     import math as _m
     cycle = _WIDE_ZOOM_CYCLE if wide else _ZOOM_CYCLE
+    GRADE = ("eq=contrast=1.12:saturation=1.16:brightness=-0.05,"
+             "colorbalance=rm=-0.03:bm=0.05,vignette=PI/4.2,format=yuv420p")
+    # ★전신 보장(과도한 줌인 방지): 컷의 절반 이상을 '핏(fit)'으로 — 원본 전체를 9:16 안에 담아
+    #   피사체 전신 + 배경까지 다 보이게 하고, 남는 위/아래는 같은 화면의 블러로 채운다(리버스 폐기).
+    #   짝수 인덱스(0,2,4…)=핏 → n_seg의 절반 이상. 홀수=완만한 접사 크롭.
+    n_fit = 0
     for i in range(n_seg):
         a = i * seg_len
-        z = 1.0 if (starts and i == 0) else cycle[i % len(cycle)]
         sa = starts[i] if starts else (a % use if use > 0 else 0.0)
-        fa, fb = int((sa) * fps_trk), int((sa + seg_len) * fps_trk)
-        seg_c = cents[fa:fb] or cents
-        fx = _median([c[0] for c in seg_c])
-        fy = _median([c[1] for c in seg_c])
-        # 줌 상한: 화면 점유율이 60%를 넘지 않게(이미 근접인 소스에 추가 줌 → 식별 불가 차단)
-        med_frac = _median((fracs[fa:fb] or fracs))
-        z_cap = _m.sqrt(0.6 * src_h * W / (max(med_frac, 1e-4) * src_w * H))
-        z = max(1.0, min(z, z_cap))
-        cw = int(round((src_h * W / H) / z)) & ~1
-        ch = int(round(src_h / z)) & ~1
-        cw = min(cw, int(src_w)) & ~1
-        cx = int(min(max(fx * src_w - cw / 2, 0), src_w - cw))
-        cy = int(min(max(fy * src_h - ch / 2, 0), src_h - ch))
-        # 워터마크 대응: 프레임 이동 회피(2안) → 불가 시 그 세그먼트만 delogo(3안)
-        pre_vf = ""
-        if logo_box:
-            cx, cy, need_dl = _logo_avoid(cx, cy, cw, ch, fx * src_w, fy * src_h,
-                                          src_w, src_h, logo_box)
-            if need_dl:
-                pre_vf = delogo_vf(src_w, src_h, logo_box) + ","
         seg_out = wd / f"rf_{i}.mp4"
-        vf = (f"{pre_vf}crop={cw}:{ch}:{cx}:{cy},scale={W}:{H},setsar=1,"
-              f"eq=contrast=1.12:saturation=1.16:brightness=-0.05,"
-              f"colorbalance=rm=-0.03:bm=0.05,vignette=PI/4.2,format=yuv420p")
         cmd = ["ffmpeg", "-y", "-loglevel", "error"]
         if loop:
             cmd += ["-stream_loop", "-1"]
         cmd += ["-ss", f"{sa:.2f}", "-t", f"{seg_len:.2f}", "-i", footage_path,
-                "-vf", vf, "-an", "-r", "30", "-c:v", "libx264", "-preset", "medium",
-                "-crf", "20", str(seg_out)]
+                "-an", "-r", "30", "-c:v", "libx264", "-preset", "medium", "-crf", "20"]
+        if i % 2 == 0:
+            # 핏 컷: 전신 + 배경 전체가 보이도록 원본 전체를 9:16 안에 맞춤(여백=블러 채움)
+            n_fit += 1
+            pre = (delogo_vf(src_w, src_h, logo_box) + ",") if logo_box else ""
+            fc = (f"[0:v]{pre}split=2[a][b];"
+                  f"[a]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
+                  f"gblur=sigma=32,eq=brightness=-0.14:saturation=1.02[bg];"
+                  f"[b]scale={W}:{H}:force_original_aspect_ratio=decrease[fg];"
+                  f"[bg][fg]overlay=(W-w)/2:(H-h)/2,{GRADE}")
+            cmd += ["-filter_complex", fc, str(seg_out)]
+        else:
+            # 접사 컷: 피사체 추적 + 완만한 줌(줌 상한 60% 점유율). 크롭이라 좌우 일부만 보임.
+            z = cycle[i % len(cycle)]
+            fa, fb = int(sa * fps_trk), int((sa + seg_len) * fps_trk)
+            seg_c = cents[fa:fb] or cents
+            fx = _median([c[0] for c in seg_c]); fy = _median([c[1] for c in seg_c])
+            med_frac = _median((fracs[fa:fb] or fracs))
+            z_cap = _m.sqrt(0.6 * src_h * W / (max(med_frac, 1e-4) * src_w * H))
+            z = max(1.0, min(z, z_cap))
+            cw = int(round((src_h * W / H) / z)) & ~1
+            ch = int(round(src_h / z)) & ~1
+            cw = min(cw, int(src_w)) & ~1
+            cx = int(min(max(fx * src_w - cw / 2, 0), src_w - cw))
+            cy = int(min(max(fy * src_h - ch / 2, 0), src_h - ch))
+            pre_vf = ""
+            if logo_box:
+                cx, cy, need_dl = _logo_avoid(cx, cy, cw, ch, fx * src_w, fy * src_h,
+                                              src_w, src_h, logo_box)
+                if need_dl:
+                    pre_vf = delogo_vf(src_w, src_h, logo_box) + ","
+            vf = f"{pre_vf}crop={cw}:{ch}:{cx}:{cy},scale={W}:{H},setsar=1,{GRADE}"
+            cmd += ["-vf", vf, str(seg_out)]
         subprocess.run(cmd, check=True)
         lines.append(f"file '{seg_out.name}'")
     concat.write_text("\n".join(lines), encoding="utf-8")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0",
                     "-i", str(concat), "-c", "copy", out_path], check=True)
-    log.info("[reframe] 9:16 완성: %s (%d컷, %.1fs)", out_path, n_seg, target_dur)
+    log.info("[reframe] 9:16 완성: %s (%d컷 중 전신핏 %d컷 %.0f%%, %.1fs)",
+             out_path, n_seg, n_fit, 100.0 * n_fit / max(n_seg, 1), target_dur)
     return out_path
