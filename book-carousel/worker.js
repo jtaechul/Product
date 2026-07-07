@@ -2768,6 +2768,24 @@ export default {
           result = { success: true, day: _kstDay(), used, softCap: DAILY_SOFT_CAP, hardCap: DAILY_HARD_CAP, savingMode: used > DAILY_SOFT_CAP, blocked: used > DAILY_HARD_CAP,
             geminiCover: !!(await getGeminiKey(env)), imageUsed: imgUsed, imageCap: DAILY_IMAGE_CAP };
         }
+        else if (url.pathname === '/api/daily-status') {
+          // 진단용 — 오늘 일일 자동 생성이 실제로 돌았는지, 파이프라인이 어디서 멈췄는지 확인.
+          const kstNow = new Date(Date.now() + 9 * 3600 * 1000);
+          const todayStr = kstNow.toISOString().slice(0, 10);
+          const out = { day: todayStr, kstNow: kstNow.toISOString().slice(0, 19) };
+          const morningId = await env.PENDING_POSTS.get(`daily_auto_${todayStr}_morning`).catch(() => null);
+          out.dailyMorningPipelineId = morningId || null;
+          const active = await env.PENDING_POSTS.get('active_pipelines', 'json').catch(() => null);
+          out.activePipelines = active || [];
+          const pid = morningId || (active && active[active.length - 1]);
+          if (pid) {
+            const st = await env.PENDING_POSTS.get(`pipeline_${pid}`, 'json').catch(() => null);
+            out.pipeline = st ? { id: pid, status: st.status, step: st.step, stepStatus: st.stepStatus, label: st.label, error: st.error || null, isAutoDaily: st.isAutoDaily, book: st.bookInfo?.title || null, updatedAt: st.updatedAt, startedAt: st.startedAt } : { id: pid, missing: true };
+            const log = await env.PENDING_POSTS.get(`plog_${pid}`, 'json').catch(() => null);
+            out.lastLog = Array.isArray(log) ? log.slice(-6) : null;
+          }
+          result = { success: true, ...out };
+        }
         else if (url.pathname === '/api/gemini-key') {
           // 앱에서 Gemini 키 저장/상태확인 (터미널·대시보드 없이). 값은 절대 반환하지 않는다.
           if (request.method === 'POST') {
