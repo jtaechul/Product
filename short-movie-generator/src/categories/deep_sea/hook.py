@@ -27,6 +27,22 @@ _SEED = {
         "feature_line": "泳ぐ・光る・透ける、深海のナマコ",
         "feature_glow_word": "光る",
     },
+    "opisthoteuthis californiana": {
+        "jp_name": "メンダコ",
+        "hook_line1": "ぺたんこの、体に、",
+        "hook_line2": "耳のひれ。",
+        "pop_words": ["ぺたんこの、", "体に、", "耳のひれ。"],
+        "feature_line": "ひらひら舞う、深海のメンダコ",
+        "feature_glow_word": "舞う",
+    },
+    "graneledone boreopacifica": {
+        "jp_name": "シンカイダコ",
+        "hook_line1": "四年半、ただ、",
+        "hook_line2": "待ちつづけた。",
+        "pop_words": ["四年半、", "ただ、", "待ちつづけた。"],
+        "feature_line": "卵を守る、深海のタコ",
+        "feature_glow_word": "守る",
+    },
 }
 
 _PROMPT = """あなたは日本語のショート動画コピーライターです。深海生物の\
@@ -73,6 +89,20 @@ _BODY_SEED = {
         "ひれのような膜で、", "闇を舞う。", "透きとおる体。", "飲みこんだ泥が、",
         "そのまま透けて見える。", "敵に襲われると、", "光る皮をぬぎ捨て、", "身代わりにする。",
         "深海では、", "もっとも奇妙な姿が、", "もっとも巧みに、", "生きのびる。",
+    ],
+    "opisthoteuthis californiana": [
+        "深海の底に、", "ぺたりと張りつく影。", "その正体は、", "メンダコ。",
+        "タコの仲間です。", "ふだんは、", "体をぺったんこに広げ、", "海底で休む。",
+        "動くときは、", "頭の耳びれを、", "ぱたぱたと羽ばたく。", "腕のあいだには、",
+        "傘のような膜。", "ふわりと広げて、", "水を舞う。", "やわらかなゼリーの体で、",
+        "深い海の圧にも、", "そっと耐える。",
+    ],
+    "graneledone boreopacifica": [
+        "冷たい岩に、", "じっとたたずむ影。", "その正体は、", "深海にすむタコ。",
+        "母ダコは、", "岩に卵を産みつける。", "そして、", "そのそばを離れない。",
+        "四年半もの長い間、", "ほとんど食べずに、", "卵を守りつづける。",
+        "知られるかぎり、", "最も長い子育て。", "やがて卵がかえるころ、",
+        "母は静かに、", "その一生を終える。",
     ],
 }
 
@@ -159,7 +189,7 @@ def build_reels_caption(info: SpeciesInfo, jp_name: str, sci_name: str,
               f"{feature_line}。\n深海にすむ{jp_name}です。\n\n"
               f"心に残ったら保存を。\n同じ深海が気になる人へシェアを。\n\n"
               f"映像: NOAA Ocean Exploration・Public Domain")
-        ko = (f"{hook_line1}{hook_line2} (머리도, 눈도, 뼈도 없다)\n\n"
+        ko = (f"{hook_line1}{hook_line2}\n\n"
               f"{feature_line} — 심해에 사는 {info.common_name_ko}입니다.\n\n"
               f"기억에 남으면 저장하세요.\n같은 심해가 궁금한 사람에게 공유해주세요.\n\n"
               f"영상: NOAA Ocean Exploration · 퍼블릭 도메인")
