@@ -372,13 +372,30 @@ class DeepSeaCategory:
         return (spec, hook_text, str(bgm) if bgm.exists() else None)
 
     def pick_footage_species(self) -> str:
-        """auto 모드: 검증된 실사 영상이 있는 종만 선택(영상 없음 실패 방지). 회차로 로테이션."""
+        """auto 모드: 검증된 실사 영상이 있는 종만 선택.
+
+        ★미제작 우선(큐 재사용): 아직 영상이 만들어지지 않은 종(catalog 미기록)을 먼저 고른다.
+        그래서 확보(시드)만 되고 아직 제작·게시되지 않은 종이 유실되지 않고 반드시 다음 차례에
+        쓰인다. 모든 종이 한 번씩 제작된 뒤에야 회차(episode)로 순환한다.
+        """
+        from src.categories.deep_sea import catalog
         from src.core import footage
         seeded = {k.lower() for k in footage.seeded_keys()}
         pool = [key for key, sp in data.SPECIES.items()
                 if sp["scientific_name"].strip().lower() in seeded]
         if not pool:
             raise PipelineError("input", "실사 영상 보유 종이 없습니다(시드 필요)")
+        made = set()
+        try:
+            for it in catalog._load():
+                made.add(str(it.get("scientific_name", "")).strip().lower())
+                made.add(str(it.get("common_name_en", "")).strip().lower())
+        except Exception:  # noqa: BLE001
+            made = set()
+        unmade = [k for k in pool
+                  if data.SPECIES[k]["scientific_name"].strip().lower() not in made]
+        if unmade:
+            return unmade[0]
         try:
             ep = self.next_episode()
         except Exception:  # noqa: BLE001

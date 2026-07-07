@@ -138,14 +138,20 @@ function route(){
 function renderHome(){
   view().innerHTML=
   '<div class="card">'+
-    '<span class="lbl">생물 카테고리 (AI가 실존 종을 자동 추천 · 중복 없음)</span>'+
+    '<span class="lbl">카테고리</span>'+
+    '<select id="category">'+
+      '<option value="deep_sea">심해 생물 (Deep Sea)</option>'+
+      '<option value="marine_algae">해양 미세조류 (Marine Microalgae)</option>'+
+      '<option value="shipwreck">침몰선 (Shipwreck)</option>'+
+    '</select>'+
+    '<span class="lbl">세부 (심해: 자동 추천 · 중복 없음)</span>'+
     '<select id="species">'+
-      '<option value="auto">전체 자동 (아무 카테고리나)</option>'+
+      '<option value="auto">전체 자동 (아무 대상이나)</option>'+
       '<option value="auto:benthos">저서생물 (Benthos · 해저에 사는 생물)</option>'+
       '<option value="auto:plankton">부유생물 (Plankton · 떠다니는 생물)</option>'+
       '<option value="auto:nekton">유영생물 (Nekton · 헤엄치는 생물)</option>'+
     '</select>'+
-    '<span class="lbl">또는 특정 종 직접 입력 (선택)</span>'+
+    '<span class="lbl">또는 특정 대상 직접 입력 (선택)</span>'+
     '<input id="query" placeholder="비워두면 AI가 위 카테고리에서 자동 선택" autocomplete="off">'+
     '<div class="hint" style="margin:4px 0 8px">제작 방식: <b>실사 심해 영상(NOAA·공용도메인) + 일본어 오프닝 훅·엔드카드·전환·임팩트 사운드</b> (팬줌·Veo 미사용)</div>'+
     '<button class="go" id="go">쇼츠 생성 시작</button>'+
@@ -168,11 +174,14 @@ function renderHome(){
   const _sp=$("#savepat");if(_sp)_sp.onclick=()=>{const v=$("#pat").value.trim();if(!v)return;
     localStorage.setItem("gh_pat",v);$("#pat").value="";const tb=$("#tokbox");if(tb)tb.open=false;banner("토큰 저장 완료. 다시 묻지 않습니다.","ok");};
   $("#go").onclick=async()=>{
-    const query=$("#query").value.trim()||$("#species").value;
+    const category=($("#category")||{}).value||"deep_sea";
+    // 심해가 아니면 세부 auto:* 는 의미 없음 → 그냥 auto
+    let query=$("#query").value.trim()||$("#species").value;
+    if(category!=="deep_sea" && query.startsWith("auto:")) query="auto";
     if(!authReady()){const tb=$("#tokbox");if(tb)tb.open=true;banner("GitHub 토큰을 아래 칸에 붙여넣고 생성을 누르면 이 기기에 저장돼 다시 묻지 않습니다.","err");return;}
     $("#go").disabled=true;banner("생성 요청 중…");
     try{const r=await fetch(API+"/actions/workflows/"+WF+"/dispatches",{method:"POST",headers:headers(true),
-        body:JSON.stringify({ref:BRANCH,inputs:{query}})});
+        body:JSON.stringify({ref:BRANCH,inputs:{query,category}})});
       if(r.status===204){banner("생성 시작! 2~4분 뒤 텔레그램 전송 + 라이브러리 등록.","ok");setTimeout(loadRuns,4000);setTimeout(loadRuns,12000);}
       else{const t=await r.text();banner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
     }catch(e){banner("요청 실패: "+e,"err");}

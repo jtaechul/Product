@@ -74,6 +74,17 @@ _SEED = {
         "license": "cc-by", "credit": "Atsme · CC BY",
         "source": "https://commons.wikimedia.org/wiki/File:Caribbean_Reef_Squid_Encounter.webm",
     },
+    # 신규 카테고리 시드 — 해양 미세조류(marine_algae) / 난파선(shipwreck).
+    "bacillariophyta": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/3/39/Diatom_movement_DSC_1511.webm",
+        "license": "cc-by", "credit": "Michael Clarke Stuff · CC BY",
+        "source": "https://commons.wikimedia.org/wiki/File:Diatom_movement_DSC_1511.webm",
+    },
+    "wreck aries": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/1/15/Wreck_Aries_-_Dive_in_18m_cargo_ship.webm",
+        "license": "cc-by", "credit": "Vitor Alves · CC BY",
+        "source": "https://commons.wikimedia.org/wiki/File:Wreck_Aries_-_Dive_in_18m_cargo_ship.webm",
+    },
 }
 
 

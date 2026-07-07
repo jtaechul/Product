@@ -51,6 +51,9 @@ class SpeciesSpec:
     hook_pop_words: list[str]          # 팝인 어절(순서) 예: [頭も、, 目も、, 骨もない。]
     feature_line: str                  # 엔드카드 특징문구 예: 泳ぐ・光る・透ける、深海のナマコ
     feature_glow_word: str = "光る"     # 파티클을 붙일 단어
+    corner_label: str = "DEEP SEA · ROV CAM"   # 오프닝 좌측 코너 라벨(카테고리별)
+    scale_label: str = "生息水深"       # 우측 스케일 제목(깊이 등). 빈 문자열이면 스케일 숨김
+    show_scale: bool = True            # 우측 수심 스케일 표시 여부(얕은·비생물 대상은 False)
 
 
 @dataclass
@@ -320,16 +323,21 @@ def _static_overlay(spec: SpeciesSpec, cfg: HookIntroConfig) -> Image.Image:
     W, H = cfg.W, cfg.H
     ov = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(ov)
     d.rectangle([0, 0, W, 70], fill=(0, 0, 0, 150)); d.rectangle([0, H - 70, W, H], fill=(0, 0, 0, 150))
-    d.text((44, 455), "DEEP SEA · ROV CAM", font=_mono(19), fill=(150, 190, 205, 170), anchor="lm")
-    # 실제 서식 수심 스케일(얕은 위 → 깊은 아래)
-    x, y0, y1 = 648, 430, 910; col = (150, 200, 220)
-    d.text((690, y0 - 42), "生息水深", font=_sans_r(20), fill=col + (200,), anchor="rm")
-    d.line([x, y0, x, y1], fill=col + (140,), width=2)
-    for i in range(4):
-        t = i / 3; yy = int(y0 + (y1 - y0) * t)
-        depth = int(round((spec.depth_min + (spec.depth_max - spec.depth_min) * t) / 100) * 100)
-        d.line([x - 10, yy, x, yy], fill=col + (190,), width=2)
-        d.text((x - 18, yy), f"{depth:,} m", font=_mono(23), fill=col + (215,), anchor="rm")
+    d.text((44, 455), spec.corner_label, font=_mono(19), fill=(150, 190, 205, 170), anchor="lm")
+    # 우측 수심 스케일(얕은 위 → 깊은 아래). 카테고리가 끄면(show_scale=False) 생략 —
+    # 미세조류/난파선처럼 '서식수심'이 무의미하거나 얕아 눈금이 0으로 뭉치는 경우.
+    scale_ok = spec.show_scale and spec.scale_label and spec.depth_max >= 50
+    if scale_ok:
+        x, y0, y1 = 648, 430, 910; col = (150, 200, 220)
+        d.text((690, y0 - 42), spec.scale_label, font=_sans_r(20), fill=col + (200,), anchor="rm")
+        d.line([x, y0, x, y1], fill=col + (140,), width=2)
+        # 눈금 반올림 단위: 범위가 좁으면 10, 넓으면 100 단위로(0 뭉침 방지)
+        unit = 100 if (spec.depth_max - spec.depth_min) >= 300 else 10
+        for i in range(4):
+            t = i / 3; yy = int(y0 + (y1 - y0) * t)
+            depth = int(round((spec.depth_min + (spec.depth_max - spec.depth_min) * t) / unit) * unit)
+            d.line([x - 10, yy, x, yy], fill=col + (190,), width=2)
+            d.text((x - 18, yy), f"{depth:,} m", font=_mono(23), fill=col + (215,), anchor="rm")
     # 하단 종 라벨(국명 + 이탤릭 학명)
     jp = f"{spec.jp_name}  /  "
     jw = d.textlength(jp, font=_sans_r(26))
