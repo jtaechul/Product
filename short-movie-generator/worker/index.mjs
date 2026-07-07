@@ -114,6 +114,8 @@ function ago(iso){if(!iso)return"";const s=(Date.now()-new Date(iso))/1000;
 function banner(t,cls){let m=$("#msg");if(!m)return;m.className="banner show "+(cls||"");m.innerHTML=t;}
 // Release 미디어 → 워커 프록시 URL(iOS 재생 가능한 inline·video/mp4로 중계)
 function prox(u){return u?"/api/media?u="+encodeURIComponent(u):"";}
+// 저장(다운로드)용: 파일명을 붙여 attachment 로 받게 함
+function proxDl(u,name){return u?prox(u)+"&dl="+encodeURIComponent(name||"video.mp4"):"";}
 // 구버전 합본 캡션(JP+【한국어 참고 번역】+KO) → {jp, ko} 분해(신 레코드는 분리 필드 사용)
 function splitLegacy(cap){const M="【한국어 참고 번역】";const i=(cap||"").indexOf(M);
   if(i<0)return{jp:cap||"",ko:""};
@@ -278,6 +280,7 @@ async function renderDetail(id){
     '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px"><b style="font-size:19px">#'+esc(id)+' '+esc(sp.common_name_ko||"")+'</b>'+
       '<span class="mono" style="color:var(--gy);font-size:12px">'+esc(sp.common_name_en||"")+'</span></div>'+
     mediaHtml+
+    (md.video_url?'<div class="btnrow" style="margin-top:8px"><a class="btn" style="grid-column:1/3;border-color:var(--cy);color:#eafcff;text-align:center;text-decoration:none" href="'+proxDl(md.video_url,esc(id)+"_"+esc(sp.common_name_ko||"reel")+".mp4")+'" download>동영상 저장 (다운로드)</a></div>':"")+
     '<div class="meta" style="margin-top:12px"><b>학명</b> <i>'+esc(sp.scientific_name||"")+'</i> · <b>수심</b> '+esc(sp.depth_range_m||"?")+'m<br>'+
       '<b>서식</b> '+esc(sp.habitat||"?")+' · <b>분포</b> '+esc(sp.distribution||"?")+'</div>'+
     // 캡션·해시태그를 한 프레임에 합쳐 표시(일본어 발행 / 한국어 참고). 저장 시 끝의 해시태그 줄을 분리.
@@ -413,7 +416,14 @@ async function mediaProxy(request, url) {
   if (!resp.ok && resp.status !== 206) return j({ error: "upstream " + resp.status }, 502);
   const out = new Headers();
   out.set("Content-Type", type);
-  out.set("Content-Disposition", "inline");
+  // dl=파일명 이면 저장(attachment)로 응답 → 라이브러리 '동영상 저장' 버튼용. 없으면 inline 재생.
+  const dl = url.searchParams.get("dl");
+  if (dl) {
+    const safe = dl.replace(/[^\w.\-가-힣]/g, "_").slice(0, 80) || ("media." + ext);
+    out.set("Content-Disposition", 'attachment; filename="' + safe + '"');
+  } else {
+    out.set("Content-Disposition", "inline");
+  }
   out.set("Accept-Ranges", "bytes");
   out.set("Cache-Control", "public, max-age=86400");
   for (const k of ["Content-Length", "Content-Range"]) {

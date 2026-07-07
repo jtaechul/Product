@@ -17,27 +17,46 @@ from src.core.contracts import SpeciesInfo
 
 log = logging.getLogger(__name__)
 
-_PROMPT = """あなたは日本のSNS(インスタ/リール)向けの、海洋生物ショート動画の\
-プロのキャプションライターです。次の情報から、**内容豊かで物語性のある**キャプションを作ります。\
-JSONのみ出力(説明・コードブロック禁止)。
+_PROMPT = """あなたは日本の海洋生物系メディアの一流ライターです。以下のデータだけを使い、\
+インスタ/リール用の【読み応えのある物語調キャプション】を書きます。JSONのみ出力(説明・コードブロック禁止)。
 
-対象: 和名={jp} / 学名={sci} / 生息水深={depth}m / 生息域={hab} / 分布={dist}
-確かな事実(この範囲の事実のみ使用・**捏造禁止**):
+対象データ(この範囲の事実のみ使用・**捏造厳禁**。無い行動・数値・発光・捕食は書かない):
+- 和名: {jp}
+- 学名: {sci}
+- 生息水深: {depth} m
+- 生息環境: {hab}
+- 分布: {dist}
+- 確かな事実:
 {facts}
 
-要件:
-- jp_caption: 日本語。**6〜9行**でしっかりした分量。構成:
-  1行目=共感か驚きのフック(種名は出さない)。
-  2〜5行=上の事実から**2〜3個**を選び、単なる列挙でなく**自然な物語の流れ**でつなぐ\
-(擬人化しすぎず、事実に忠実に、しかし情感を込めて)。生息環境(水深・分布)も一言添える。
-  終盤=「心に残ったら保存を」の主旨1行 +「同じ海が気になる人へシェアを」の主旨1行。
-  最終行=「映像: {credit}」。
-- ko_caption: jp_caption の**完全な韓国語訳**(日本語を一切残さない、自然な韓国語)。
+【jp_caption の必須要件】
+- 日本語。**10〜14行**の、しっかりした読み物。箇条書きの羅列は禁止。情感のある物語のように滑らかに。
+- 構成:
+  1) 導入(1〜2行): 想像をかき立てるフック(種名は出さない)。
+  2) 本編(6〜9行): 次を**物語として織り込む**——
+     ・和名と学名(学名は「(学名: {sci})」の形で正式表記で一度だけ入れる)。
+     ・どれくらいの深さ({depth}m)の、どんな海({dist})の、どんな場所({hab})に暮らすのかを情景として描く。
+     ・上の「確かな事実」から2〜3個を選び、ただ述べるのでなく\
+「なぜそうなのか」「どんな姿・どんな暮らしか」を添えて、読者が思わず「へえ」と唸る知識として丁寧に描く。
+  3) 結び(2行): 「心に残ったら保存を」の主旨 +「同じ海が気になる人へシェアを」の主旨。
+  4) 最終行: 「映像: {credit}」。
+- 一文の長短にリズムをつけ、単調な同型文の連続を避ける。専門用語は噛み砕いて説明する。
+- ko_caption: jp_caption の**完全な韓国語訳**(日本語を一切残さない、自然で読みやすい韓国語。情報量は同じ)。
 - hashtags: 日本語ハッシュタグ**ちょうど3個**(例: ["#深海","#生き物","#{jp}"])。
 - ko_hashtags: hashtags の韓国語訳3個。
 
 JSON例: {{"jp_caption":"...","ko_caption":"...","hashtags":["#..","#..","#.."],"ko_hashtags":["#..","#..","#.."]}}
 """
+
+
+def _cap_sci(sci: str) -> str:
+    """학명 표기: 속명 첫 글자 대문자·나머지 소문자 어절(예: 'Enypniastes eximia')."""
+    s = (sci or "").strip()
+    if not s:
+        return s
+    parts = s.split()
+    parts[0] = parts[0][:1].upper() + parts[0][1:].lower()
+    return " ".join(parts)
 
 _KO_TAG = {"#深海": "#심해", "#生き物": "#생물", "#海": "#바다", "#タコ": "#문어",
            "#イカ": "#오징어", "#クラゲ": "#해파리", "#サンゴ礁": "#산호초",
@@ -56,29 +75,36 @@ def _ko_tags(tags: list[str], jp_name: str, ko_name: str) -> list[str]:
     return out
 
 
-def _fallback(info: SpeciesInfo, jp_name: str, feature_line: str, hook_line1: str,
-              hook_line2: str, hook_ko: str, feature_ko: str, credit: str,
+def _fallback(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
+              hook_line1: str, hook_line2: str, hook_ko: str, feature_ko: str, credit: str,
               default_tags: list[str], default_tags_ko: list[str] | None = None) -> dict:
-    """LLM 실패 시 리치 템플릿. 한국어는 실제 fun_facts를 엮어 풍부하게(일본어 잔류 금지).
-    일본어는 보유한 일본어 요소(훅·특징·수심)로 구성(사실 왜곡 없이)."""
+    """LLM 실패 시 리치 템플릿. 학명·수심·분포·서식지·fun_facts를 서술식으로 엮어 풍부하게.
+    한국어는 한국어 데이터로 완전 서술(일본어 잔류 금지). 일본어는 일본어 요소만(혼입 방지)."""
     ko_name = info.common_name_ko or jp_name
-    facts_ko = [f for f in (info.fun_facts or []) if f][:3]
-    # 한국어 캡션 — fun_facts를 문장으로 엮음
-    ko_story = "\n".join(f"· {f}." if not f.endswith(("다", ".", "요")) else f"· {f}"
-                         for f in facts_ko)
-    ko = (f"{hook_ko or (ko_name + '의 이야기.')}\n\n"
-          f"{feature_ko or ('바다에 사는 ' + ko_name)}.\n"
-          f"{ko_story}\n\n"
-          f"수심 {info.depth_range_m}m · {info.distribution}\n\n"
-          f"마음에 남았다면 저장해 두세요.\n같은 바다가 궁금한 사람에게 공유해 주세요.\n\n"
-          f"영상: {credit}")
-    # 일본어 캡션 — 보유 일본어 요소로만 구성(수심·특징). 분포는 한국어 데이터라 JP엔 넣지 않음(혼입 방지)
-    jp = (f"{hook_line1}{hook_line2}\n\n"
-          f"{feature_line}。\n"
-          f"生息水深は {info.depth_range_m}メートル。\n"
-          f"深い海の底に、たしかに生きている。\n\n"
-          f"心に残ったら保存を。\n同じ海が気になる人へシェアを。\n\n"
-          f"映像: {credit}")
+    sci = _cap_sci(sci_name)
+    facts_ko = [f.strip().rstrip(".") for f in (info.fun_facts or []) if f][:3]
+    # 한국어 캡션 — 서술식 읽을거리(학명·수심·분포·서식지·사실 엮음)
+    ko_lines = [hook_ko or f"{ko_name}, 이름을 들어보셨나요?", ""]
+    ko_lines.append(f"{ko_name}(학명: {sci}).")
+    if info.depth_range_m and info.distribution:
+        ko_lines.append(f"수심 {info.depth_range_m}m, {info.distribution}의 바다에 살아갑니다.")
+    if info.habitat:
+        ko_lines.append(f"주로 {info.habitat}에서 지냅니다.")
+    for f in facts_ko:
+        ko_lines.append(f"{f}.")
+    if feature_ko:
+        ko_lines.append(feature_ko + ".")
+    ko_lines += ["", "마음이 복잡한 날, 다시 꺼내보고 싶다면 저장해 두세요.",
+                 "같은 바다가 궁금한 사람에게 조용히 건네주세요.", "", f"영상: {credit}"]
+    ko = "\n".join(ko_lines)
+    # 일본어 캡션 — 일본어 요소 + 세계공통 학명·수심으로 서술(분포·서식지는 한국어라 제외)
+    jp_lines = [f"{hook_line1}{hook_line2}", "",
+                f"{jp_name}(学名: {sci})。",
+                f"生息水深はおよそ {info.depth_range_m} メートル。",
+                f"{feature_line}。",
+                "深い海の底で、たしかに命をつないでいる一種です。", "",
+                "心に残ったら保存を。", "同じ海が気になる人へシェアを。", "", f"映像: {credit}"]
+    jp = "\n".join(jp_lines)
     tags_ko = default_tags_ko if default_tags_ko else _ko_tags(default_tags, jp_name, ko_name)
     return {"jp": jp, "ko": ko, "tags": default_tags, "tags_ko": tags_ko}
 
@@ -91,11 +117,11 @@ def generate(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
     credit = credit or ((info.sources or ["Wikimedia Commons"])[0])
     default_tags = default_tags or ["#海", f"#{jp_name}", "#生き物"]
     facts = "\n".join(f"- {f}" for f in (info.fun_facts or [])[:6]) or "- (追加事実なし)"
-    prompt = _PROMPT.format(jp=jp_name, sci=sci_name, depth=info.depth_range_m,
+    prompt = _PROMPT.format(jp=jp_name, sci=_cap_sci(sci_name), depth=info.depth_range_m,
                             hab=info.habitat, dist=info.distribution, facts=facts, credit=credit)
     out = None
     try:
-        out = llm.generate_text(prompt, max_tokens=1100)
+        out = llm.generate_text(prompt, max_tokens=1800)  # 10~14행 리치 캡션 여유
     except Exception as e:  # noqa: BLE001
         log.warning("[rich_caption] LLM 실패: %s", e)
     if out:
@@ -114,5 +140,5 @@ def generate(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
                     return {"jp": jp, "ko": ko, "tags": tags, "tags_ko": ko_tags}
             except Exception:  # noqa: BLE001
                 pass
-    return _fallback(info, jp_name, feature_line, hook_line1, hook_line2,
+    return _fallback(info, jp_name, sci_name, feature_line, hook_line1, hook_line2,
                      hook_ko, feature_ko, credit, default_tags, default_tags_ko)
