@@ -732,9 +732,10 @@ async function handleSuggest(env, body) {
     : '';
 
   const isStory = laneOf(category) === 'story'; // A안 — 연애 소설(픽션) 추천 모드
-  // ⭐ 토큰 절약 — 자동배포는 1권만 제작하므로 후보를 적게 요청한다(검증 탈락 대비 소량 버퍼).
-  // 예전엔 8권을 요청해 출력 토큰을 낭비했다. 기본 4권(검증 후 1권 사용).
-  const count = Math.max(1, Math.min(8, parseInt(body.count, 10) || (isStory ? 5 : 4)));
+  // ⭐ 토큰 절약 — 자동배포는 1권만 제작하므로 후보를 적게 요청한다(검증 탈락 대비 버퍼).
+  // 단, 소설 레인은 로맨스 소설의 네이버 실존 검증 탈락률이 높아 8권으로 넉넉히(빈 결과→
+  // 파이프라인 실패 방지). 일반 레인은 4권이면 충분(주류 도서는 검증 잘 통과).
+  const count = Math.max(1, Math.min(10, parseInt(body.count, 10) || (isStory ? 8 : 4)));
 
   // 소설 레인은 "실제 로맨스/연애 소설(픽션)"을, 그 외 레인은 심리·에세이 도서를 추천한다.
   const suggestSystem = isStory
@@ -1662,6 +1663,22 @@ async function runStep(env, pipelineId, step) {
     });
     await logStep(env, pipelineId, { step, phase: 'complete' });
   }
+}
+
+// ⭐ 파이프라인 자가복구 상수/판정 — 이전에 정의가 누락돼 있어(참조만 존재) 단계 오류 시
+// isTransientPipelineError 호출에서 ReferenceError가 나 "복구 로직 자체가 크래시" → 오류가
+// 난 파이프라인이 재시도되지 못하고 그대로 죽던 버그가 있었다(예: 소설 레인 추천 실패일).
+const STEP_STALE_MS = 2 * 60 * 1000;   // 진행중(active) 단계가 이 시간 이상 멈추면 죽은 것으로 보고 재실행
+const ERROR_RETRY_MS = 45 * 1000;      // 오류 재시도 최소 간격
+const MAX_ERROR_RETRIES = 4;           // 단계별 최대 재시도 횟수(무한루프·토큰낭비 방지)
+// 단계 오류가 "재시도하면 풀릴 수 있는 일시 오류"인지 판정.
+//   영구(재시도 무의미): 성인 차단 · 예산 초과 · 명백히 존재하지 않는 책(직접 입력)
+//   일시(재시도 가치 있음): 지역 라우팅 차단 · 레이트리밋 · 타임아웃 · 네트워크 · 추천 일시 실패 등
+function isTransientPipelineError(msg) {
+  const m = String(msg || '');
+  if (/ADULT_BLOCKED|BUDGET_EXCEEDED|BOOK_NOT_FOUND/.test(m)) return false;
+  // 그 외(추천 일시 실패·지역차단·과부하 등)는 일시로 보고 소수 재시도한다. 한도가 무한루프를 막는다.
+  return true;
 }
 
 // 파이프라인을 한 단계 전진시킨다 (시작 직후 킥 + 크론 양쪽에서 호출).
