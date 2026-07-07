@@ -90,6 +90,7 @@ button:disabled{opacity:.5}
 <script>
 const OWNER="${OWNER}",REPO="${REPO}",WF="${WORKFLOW}",BRANCH="${BRANCH}";
 const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 Actions 디스패치 → 403 회피)
+const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // 서버 토큰 모드: 워커가 GitHub 토큰을 보관·프록시 → 어느 브라우저/기기에서도 토큰 입력 불필요.
 // 미설정 시 기존 브라우저 토큰(localStorage) 모드로 자동 폴백.
 let SERVER=false;
@@ -295,6 +296,8 @@ async function renderDetail(id){
       '<button class="btn warn" id="bcap">캡션 재생성</button>'+
       '<button class="btn warn" id="bvid">영상 다시 제작 (무료)</button>'+
       '<button class="btn" id="ball" style="grid-column:1/3">전체 재생성 (무료)</button>'+
+      '<button class="btn" id="bigp" style="grid-column:1/3;background:#833ab4;color:#fff">인스타 계정 점검 (발행 안 함)</button>'+
+      '<button class="btn" id="big" style="grid-column:1/3;background:#c13584;color:#fff">인스타 릴스 발행</button>'+
     '</div>'+
     postSection(rec.post)+
     '<div class="hint">이미지 출처: '+esc(src.image_credit||"—")+'<br>정보 출처: '+esc((src.info_sources||[]).join(" · ")||"—")+'</div>';
@@ -304,6 +307,8 @@ async function renderDetail(id){
   $("#bcap").onclick=()=>regen(id,"caption");
   $("#bvid").onclick=()=>{if(confirm("이 회차의 영상을 같은 종으로 처음부터 다시 만듭니다(무료·2~4분). 진행할까요?"))regen(id,"video");};
   $("#ball").onclick=()=>{if(confirm("영상·캡션을 모두 처음부터 다시 만듭니다(무료·2~4분). 진행할까요?"))regen(id,"all");};
+  $("#bigp").onclick=()=>igPublish(id,true);
+  $("#big").onclick=()=>{if(confirm("이 릴스를 인스타그램(@abyss_0cean)에 실제로 발행합니다. 되돌릴 수 없어요. 진행할까요?"))igPublish(id,false);};
 }
 
 async function saveCaption(id){
@@ -324,6 +329,17 @@ async function saveCaption(id){
     if(r.status===204)banner("저장 시작! 20~40초 뒤 저장소에 반영됩니다(새로고침).","ok");
     else{const t=await r.text();banner("저장 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
   }catch(e){banner("저장 오류: "+e,"err");}
+}
+
+async function igPublish(id,probe){
+  if(!authReady()){banner("인스타 발행에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
+  banner(probe?"인스타 계정 점검 중… (발행 안 함)":"인스타 발행 요청 중… (1~3분 소요)");
+  try{
+    const r=await fetch(API+"/actions/workflows/"+IG_WF+"/dispatches",{method:"POST",headers:headers(true),
+      body:JSON.stringify({ref:BRANCH,inputs:{content_id:id,probe:probe?"true":"false"}})});
+    if(r.status===204)banner(probe?"점검 시작! 결과는 텔레그램으로 옵니다(계정 확인 성공/실패).":"발행 시작! 완료되면 텔레그램으로 알림이 옵니다(1~3분).","ok");
+    else{const t=await r.text();banner("실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
+  }catch(e){banner("요청 실패: "+e,"err");}
 }
 
 async function regen(id,scope){

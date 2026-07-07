@@ -1,0 +1,88 @@
+name: Publish to Instagram
+
+# 완성된 콘텐츠 1건을 인스타그램 릴스로 자동 발행.
+# 안전장치: probe=true(기본)이면 발행하지 않고 '어느 계정에 올릴 수 있는지'만 확인한다.
+# 실제 발행은 probe=false 로 실행. 토큰은 IG_ACCESS_TOKEN 시크릿에서만 읽는다.
+
+on:
+  workflow_dispatch:
+    inputs:
+      content_id:
+        description: "콘텐츠 id(3자리, 예: 004)"
+        required: true
+      probe:
+        description: "점검만(발행 안 함) — 처음엔 true 권장"
+        type: choice
+        options: ["true", "false"]
+        default: "true"
+
+concurrency:
+  group: publish-instagram
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  OPS_BRANCH: claude/gemini-shorts-reels-generator-dhjfdt
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    name: 인스타 발행
+    defaults:
+      run:
+        working-directory: short-movie-generator
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/gemini-shorts-reels-generator-dhjfdt
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: short-movie-generator/requirements.txt
+
+      - name: Install deps (requests만 필요)
+        run: pip install requests
+
+      - name: Publish (or probe)
+        id: pub
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+        run: |
+          CID=$(echo "${{ inputs.content_id }}" | tr -cd '0-9' | cut -c1-3)
+          if [ "${{ inputs.probe }}" = "false" ]; then
+            python -m src.run_ig_publish --content-id "$CID" | tee /tmp/ig.log
+          else
+            python -m src.run_ig_publish --content-id "$CID" --probe | tee /tmp/ig.log
+          fi
+
+      - name: Commit record update (발행 성공 시 레코드 반영)
+        if: ${{ inputs.probe == 'false' }}
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          git add short-movie-generator/content/*.json 2>/dev/null || true
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: 인스타 발행 결과 반영 [skip ci]"
+          git push origin HEAD:"$OPS_BRANCH"
+
+      - name: Notify Telegram
+        if: always()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          [ -z "$TG_TOKEN" ] && exit 0
+          MODE="점검"; [ "${{ inputs.probe }}" = "false" ] && MODE="발행"
+          STATUS="성공 ✅"; [ "${{ job.status }}" != "success" ] && STATUS="실패 ❌"
+          BODY=$(tail -3 /tmp/ig.log 2>/dev/null || echo "")
+          MSG=$(printf "인스타 %s %s\n콘텐츠 #%s\n%s" "$MODE" "$STATUS" "${{ inputs.content_id }}" "$BODY")
+          for CHAT in "$TG_CHAT" "8231379366"; do
+            [ -z "$CHAT" ] && continue
+            curl -s -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
+              --data-urlencode "chat_id=$CHAT" --data-urlencode "text=$MSG" >/dev/null || true
+          done
