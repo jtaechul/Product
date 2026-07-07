@@ -27,7 +27,7 @@ jobs:
           mkdir -p /tmp/pages
           cp index.html main.js style.css /tmp/pages/
           cp -r spotlight night-hunter travel-expense holedash color-battle /tmp/pages/
-          cp -r shorts-preview /tmp/pages/
+          cp -r short-movie-generator/preview /tmp/pages/shorts-preview
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
