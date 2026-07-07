@@ -1,0 +1,100 @@
+name: Save Caption
+
+# 대시보드 '캡션·해시태그 저장' 전용 워크플로.
+# 왜: 브라우저(서버 PAT 프록시)가 Contents API로 직접 PUT하면 토큰 권한에 따라
+# 403("Resource not accessible by personal access token")이 나기 쉽다. 대신 Actions만
+# 디스패치하고(=재생성 버튼과 동일 권한), 커밋은 워크플로 내장 GITHUB_TOKEN(contents:write)이
+# 처리한다 → 저장이 항상 성공. 캡션 텍스트는 셸에 직접 넣지 않고 env로 받아 파이썬이 패치(주입 방지).
+
+on:
+  workflow_dispatch:
+    inputs:
+      content_id:
+        description: "콘텐츠 id(3자리, 예: 007)"
+        required: true
+      caption:
+        description: "일본어 캡션(발행)"
+        required: false
+        default: ""
+      caption_ko:
+        description: "한국어 캡션(참고)"
+        required: false
+        default: ""
+      hashtags:
+        description: "일본어 해시태그(공백 구분)"
+        required: false
+        default: ""
+      hashtags_ko:
+        description: "한국어 해시태그(공백 구분)"
+        required: false
+        default: ""
+      hook:
+        description: "일본어 훅(발행)"
+        required: false
+        default: ""
+      hook_ko:
+        description: "한국어 훅(참고)"
+        required: false
+        default: ""
+
+concurrency:
+  group: save-caption-${{ github.event.inputs.content_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  OPS_BRANCH: claude/gemini-shorts-reels-generator-dhjfdt
+
+jobs:
+  save:
+    runs-on: ubuntu-latest
+    name: 캡션 저장
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/gemini-shorts-reels-generator-dhjfdt
+
+      - name: Patch content record (레코드에 캡션 반영)
+        env:
+          CID: ${{ inputs.content_id }}
+          CAP: ${{ inputs.caption }}
+          CAP_KO: ${{ inputs.caption_ko }}
+          TAGS: ${{ inputs.hashtags }}
+          TAGS_KO: ${{ inputs.hashtags_ko }}
+          HOOK: ${{ inputs.hook }}
+          HOOK_KO: ${{ inputs.hook_ko }}
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          python3 - <<'PY'
+          import json, os, re, sys
+          cid = re.sub(r"[^0-9]", "", os.environ.get("CID", ""))[:3].zfill(3)
+          path = f"short-movie-generator/content/{cid}.json"
+          if not os.path.exists(path):
+              print(f"레코드 없음: {path}", file=sys.stderr); sys.exit(1)
+          rec = json.load(open(path, encoding="utf-8"))
+          r = rec.setdefault("reels", {})
+          def spl(v): return [t for t in (v or "").split() if t]
+          if os.environ.get("HOOK"):     r["hook"] = os.environ["HOOK"]
+          if os.environ.get("HOOK_KO") is not None: r["hook_ko"] = os.environ.get("HOOK_KO", "")
+          r["caption"] = os.environ.get("CAP", "")
+          r["caption_ko"] = os.environ.get("CAP_KO", "")
+          r["hashtags"] = spl(os.environ.get("TAGS"))
+          r["hashtags_ko"] = spl(os.environ.get("TAGS_KO"))
+          from datetime import datetime, timezone
+          rec["updated_at"] = datetime.now(timezone.utc).isoformat()
+          json.dump(rec, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+          print(f"패치 완료: {path}")
+          PY
+
+      - name: Commit + push
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          CID=$(echo "${{ inputs.content_id }}" | tr -cd '0-9' | cut -c1-3)
+          git add short-movie-generator/content/*.json 2>/dev/null || true
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "edit: 콘텐츠 캡션 수정 [skip ci]"
+          git push origin HEAD:"$OPS_BRANCH"
