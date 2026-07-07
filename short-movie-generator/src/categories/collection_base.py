@@ -127,20 +127,21 @@ class CollectionCategory(CategoryModule):
         return list(c["body"]) if c and c.get("body") else None
 
     def build_reels_caption(self, info: SpeciesInfo, spec) -> CaptionData:
+        from src.core import rich_caption
         c = self.COPY.get(self._key_for(info), {})
-        jp = (f"{spec.hook_line1}{spec.hook_line2}\n\n{spec.feature_line}。\n\n"
-              f"心に残ったら保存を。\n気になる人へシェアを。\n\n"
-              f"映像: {info.sources[0] if info.sources else 'Wikimedia Commons'}")
-        ko = (f"{c.get('hook_ko','')}\n\n{c.get('feature_ko','')}.\n\n"
-              f"마음에 남았다면 저장해 두세요.\n궁금한 사람에게 공유해 주세요.\n\n"
-              f"영상: {info.sources[0] if info.sources else 'Wikimedia Commons'}")
+        credit = (info.sources or ["Wikimedia Commons"])[0]
+        rc = rich_caption.generate(
+            info, spec.jp_name, spec.sci_name, spec.feature_line,
+            spec.hook_line1, spec.hook_line2, hook_ko=c.get("hook_ko", ""),
+            feature_ko=c.get("feature_ko", ""), credit=credit,
+            default_tags=list(c.get("tags", ["#海", f"#{spec.jp_name}", "#生き物"])),
+            default_tags_ko=list(c["tags_ko"]) if c.get("tags_ko") else None)
         return CaptionData(
             hook_text=spec.hook_line1 + spec.hook_line2,
-            overlay_facts=[info.habitat or ""], caption_body=jp,
-            hashtags=list(c.get("tags", ["#海", f"#{spec.jp_name}", "#神秘"])),
-            reveal_name=f"{spec.jp_name} / {spec.sci_name}", reveal_fact=spec.feature_line,
-            caption_ko=ko, hook_ko=c.get("hook_ko", ""),
-            hashtags_ko=list(c.get("tags_ko", ["#바다", f"#{info.common_name_ko}", "#신비"])),
+            overlay_facts=[info.habitat or ""], caption_body=rc["jp"],
+            hashtags=rc["tags"], reveal_name=f"{spec.jp_name} / {spec.sci_name}",
+            reveal_fact=spec.feature_line, caption_ko=rc["ko"], hook_ko=c.get("hook_ko", ""),
+            hashtags_ko=rc["tags_ko"],
         )
 
     def _key_for(self, info: SpeciesInfo) -> str:

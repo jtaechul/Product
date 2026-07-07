@@ -89,6 +89,7 @@ button:disabled{opacity:.5}
 
 <script>
 const OWNER="${OWNER}",REPO="${REPO}",WF="${WORKFLOW}",BRANCH="${BRANCH}";
+const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 Actions 디스패치 → 403 회피)
 // 서버 토큰 모드: 워커가 GitHub 토큰을 보관·프록시 → 어느 브라우저/기기에서도 토큰 입력 불필요.
 // 미설정 시 기존 브라우저 토큰(localStorage) 모드로 자동 폴백.
 let SERVER=false;
@@ -116,6 +117,17 @@ function prox(u){return u?"/api/media?u="+encodeURIComponent(u):"";}
 function splitLegacy(cap){const M="【한국어 참고 번역】";const i=(cap||"").indexOf(M);
   if(i<0)return{jp:cap||"",ko:""};
   return{jp:cap.slice(0,i).replace(/[─\\s]+$/,""),ko:cap.slice(i+M.length).trim()};}
+// 캡션 + 해시태그를 한 프레임에 합침(끝에 해시태그 한 줄 추가)
+function mergeCap(cap,tagStr){cap=(cap||"").replace(/\\s+$/,"");tagStr=(tagStr||"").trim();
+  return tagStr?cap+"\\n\\n"+tagStr:cap;}
+// 합친 프레임에서 끝쪽 '해시태그만 있는 줄'을 분리 → {caption, tags[]}
+function splitTags(text){const lines=(text||"").replace(/\\s+$/,"").split(/\\n/);const tags=[];
+  while(lines.length){const ln=lines[lines.length-1].trim();
+    if(ln===""){lines.pop();continue;}
+    const toks=ln.split(/\\s+/);
+    if(toks.length&&toks.every(t=>t.startsWith("#"))){tags.unshift(...toks);lines.pop();}
+    else break;}
+  return{caption:lines.join("\\n").replace(/\\s+$/,""),tags};}
 
 async function fetchRaw(path){
   try{const r=await fetch(API+"/contents/"+path+"?ref="+BRANCH,{headers:{...headers(true),"Accept":"application/vnd.github.raw+json"}});
@@ -267,12 +279,15 @@ async function renderDetail(id){
     mediaHtml+
     '<div class="meta" style="margin-top:12px"><b>학명</b> <i>'+esc(sp.scientific_name||"")+'</i> · <b>수심</b> '+esc(sp.depth_range_m||"?")+'m<br>'+
       '<b>서식</b> '+esc(sp.habitat||"?")+' · <b>분포</b> '+esc(sp.distribution||"?")+'</div>'+
-    '<div class="dual"><div><span class="lbl">훅 · 일본어(발행)</span><input id="ehook" value="'+esc(re.hook||"")+'"></div>'+
-      '<div><span class="lbl">훅 · 한국어(참고)</span><input id="ehookko" value="'+esc(hookKO)+'"></div></div>'+
-    '<div class="dual"><div><span class="lbl">캡션 · 일본어(발행 · 그대로 저장)</span><textarea id="ecap">'+esc(capJP)+'</textarea></div>'+
-      '<div><span class="lbl">캡션 · 한국어(참고 번역)</span><textarea id="ecapko">'+esc(capKO)+'</textarea></div></div>'+
-    '<div class="dual"><div><span class="lbl">해시태그 · 일본어(발행)</span><input id="etags" value="'+esc((re.hashtags||[]).join(" "))+'"></div>'+
-      '<div><span class="lbl">해시태그 · 한국어(참고)</span><input id="etagsko" value="'+esc(tagsKO)+'"></div></div>'+
+    // 캡션·해시태그를 한 프레임에 합쳐 표시(일본어 발행 / 한국어 참고). 저장 시 끝의 해시태그 줄을 분리.
+    '<input type="hidden" id="ehook" value="'+esc(re.hook||"")+'">'+
+    '<input type="hidden" id="ehookko" value="'+esc(hookKO)+'">'+
+    '<div class="dual">'+
+      '<div><span class="lbl">캡션 + 해시태그 · 일본어(발행 · 그대로 저장)</span>'+
+        '<textarea id="ecapjp" rows="12">'+esc(mergeCap(capJP,(re.hashtags||[]).join(" ")))+'</textarea></div>'+
+      '<div><span class="lbl">캡션 + 해시태그 · 한국어(참고 번역)</span>'+
+        '<textarea id="ecapko" rows="12">'+esc(mergeCap(capKO,tagsKO))+'</textarea></div>'+
+    '</div>'+
     '<div style="margin-top:6px">'+tags+'</div>'+
     '<div class="banner" id="msg"></div>'+
     '<div class="btnrow">'+
@@ -292,26 +307,22 @@ async function renderDetail(id){
 }
 
 async function saveCaption(id){
-  if(!authReady()){banner("캡션 저장에는 GitHub 토큰(Contents: Read and write)이 필요합니다.","err");return;}
-  const path=CONTENT_DIR+"/"+id+".json";
-  banner("저장 중…");
+  if(!authReady()){banner("캡션 저장에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
+  // Contents API 직접 PUT은 토큰 권한에 따라 403이 나므로, 저장 전용 워크플로를 디스패치한다
+  // (재생성 버튼과 동일한 Actions 권한만 필요 → 항상 성공). 커밋은 워크플로가 GITHUB_TOKEN으로 처리.
+  const jp=splitTags($("#ecapjp").value);          // 일본어 프레임 → 캡션 + 해시태그 분리
+  const ko=splitTags($("#ecapko").value);          // 한국어 프레임 → 캡션 + 해시태그 분리
+  banner("저장 중… (반영까지 20~40초)");
   try{
-    const g=await fetch(API+"/contents/"+path+"?ref="+BRANCH,{headers:headers(true)});
-    if(!g.ok){banner("레코드 조회 실패("+g.status+")","err");return;}
-    const meta=await g.json();
-    const rec=JSON.parse(decodeURIComponent(escape(atob(meta.content.replace(/\\n/g,"")))));
-    rec.reels=rec.reels||{};
-    rec.reels.hook=$("#ehook").value;
-    rec.reels.caption=$("#ecap").value;                                  // 일본어(발행)
-    rec.reels.hashtags=$("#etags").value.split(/[\\s]+/).filter(Boolean);
-    rec.reels.hook_ko=($("#ehookko")||{}).value||"";                     // 한국어(참고)
-    rec.reels.caption_ko=($("#ecapko")||{}).value||"";
-    rec.reels.hashtags_ko=(($("#etagsko")||{}).value||"").split(/[\\s]+/).filter(Boolean);
-    rec.updated_at=new Date().toISOString();
-    const put=await fetch(API+"/contents/"+path,{method:"PUT",headers:headers(true),
-      body:JSON.stringify({message:"edit: 콘텐츠 #"+id+" 캡션 수정 [skip ci]",content:b64(JSON.stringify(rec,null,2)),sha:meta.sha,branch:BRANCH})});
-    if(put.ok)banner("저장 완료. (변경이 저장소에 반영됐습니다)","ok");
-    else{const t=await put.text();banner("저장 실패("+put.status+"): 토큰에 Contents 권한이 있는지 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
+    const r=await fetch(API+"/actions/workflows/"+SAVE_WF+"/dispatches",{method:"POST",headers:headers(true),
+      body:JSON.stringify({ref:BRANCH,inputs:{
+        content_id:id,
+        caption:jp.caption, hashtags:jp.tags.join(" "),
+        caption_ko:ko.caption, hashtags_ko:ko.tags.join(" "),
+        hook:($("#ehook")||{}).value||"", hook_ko:($("#ehookko")||{}).value||"",
+      }})});
+    if(r.status===204)banner("저장 시작! 20~40초 뒤 저장소에 반영됩니다(새로고침).","ok");
+    else{const t=await r.text();banner("저장 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
   }catch(e){banner("저장 오류: "+e,"err");}
 }
 
@@ -348,8 +359,7 @@ async function ghProxy(request, url, env){
   const ok =
     (m==="POST" && /^actions\/workflows\/[^/]+\/dispatches$/.test(rest)) ||
     (m==="GET"  && /^actions\/workflows\/[^/]+\/runs/.test(rest)) ||
-    (m==="GET"  && /^contents\//.test(rest)) ||
-    (m==="PUT"  && /^contents\//.test(rest));
+    (m==="GET"  && /^contents\//.test(rest));
   if(!ok) return j({error:"path not allowed"}, 403);
   const target = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/" + rest + url.search;
   const h = {
