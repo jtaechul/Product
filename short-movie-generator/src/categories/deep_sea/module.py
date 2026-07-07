@@ -371,6 +371,20 @@ class DeepSeaCategory:
         bgm = Path(__file__).resolve().parents[3] / "assets" / "audio" / "bgm" / "beneath_the_frozen_shelf.mp3"
         return (spec, hook_text, str(bgm) if bgm.exists() else None)
 
+    def pick_footage_species(self) -> str:
+        """auto 모드: 검증된 실사 영상이 있는 종만 선택(영상 없음 실패 방지). 회차로 로테이션."""
+        from src.core import footage
+        seeded = {k.lower() for k in footage.seeded_keys()}
+        pool = [key for key, sp in data.SPECIES.items()
+                if sp["scientific_name"].strip().lower() in seeded]
+        if not pool:
+            raise PipelineError("input", "실사 영상 보유 종이 없습니다(시드 필요)")
+        try:
+            ep = self.next_episode()
+        except Exception:  # noqa: BLE001
+            ep = 0
+        return pool[ep % len(pool)]
+
     def reels_body_script(self, info: SpeciesInfo) -> list[str] | None:
         """reels(실사+일본어) 본문 나레이션 절 리스트. 시드/LLM, 실패 시 None."""
         from src.categories.deep_sea import hook as hook_copy

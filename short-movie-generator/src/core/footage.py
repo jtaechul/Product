@@ -19,14 +19,30 @@ _UA = ("DeepSeaShortsBot/1.0 (https://github.com/jtaechul/product; educational d
 _ALLOWED = ("public domain", "pd", "cc0", "cc-by", "cc by", "publicdomain", "kogl")
 _VIDEO_EXT = (".webm", ".ogv", ".ogg", ".mp4", ".mov")
 
-# 대표종 시드 — Commons/NOAA 검증된 PD 영상 직링크(학명 소문자 키)
+# 대표종 시드 — Commons/NOAA 검증된 PD/CC0 영상 직링크(학명 소문자 키).
+# 이 목록에 있는 종만 auto가 선택 → '실사 영상 없음' 실패를 원천 차단.
 _SEED = {
     "enypniastes eximia": {
         "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Ex1402-dive06_red_animal.webm",
-        "license": "public-domain", "credit": "NOAA Ocean Exploration",
+        "license": "cc0", "credit": "NOAA Ocean Exploration",
         "source": "https://commons.wikimedia.org/wiki/File:Ex1402-dive06_red_animal.webm",
     },
+    "opisthoteuthis californiana": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/a/ad/Flapjack_octopus_seafloor.webm",
+        "license": "public-domain", "credit": "NOAA Ocean Exploration",
+        "source": "https://commons.wikimedia.org/wiki/File:Flapjack_octopus_seafloor.webm",
+    },
+    "graneledone boreopacifica": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/0/01/Graneledone_boreopacifica_seafloor.webm",
+        "license": "public-domain", "credit": "NOAA Ocean Exploration",
+        "source": "https://commons.wikimedia.org/wiki/File:Graneledone_boreopacifica_seafloor.webm",
+    },
 }
+
+
+def seeded_keys() -> tuple:
+    """검증된 실사 영상이 있는 종(학명 소문자) 목록 — auto 선택 풀."""
+    return tuple(_SEED.keys())
 
 
 def _norm_license(text: str) -> str | None:
