@@ -48,6 +48,15 @@ def test_subject_score_penalizes_screen_filling_closeup(tmp_path):
     assert reframe.subject_score(whole) > reframe.subject_score(closeup)
 
 
+def test_pick_wide_window_selects_full_body_span():
+    """(전신 보장) 근접 구간(점유율 큼)이 아니라 전신이 보이는 구간이 선택돼야 한다."""
+    # 0~9초: 초근접(frac 0.8), 10~19초: 전신 와이드(frac 0.08), 20~29초: 부재(frac 0)
+    scores = [50.0] * 50 + [40.0] * 50 + [0.0] * 50
+    fracs = [0.80] * 50 + [0.08] * 50 + [0.0] * 50
+    sa = reframe._pick_wide_window(scores, fracs, 5.0, 5.0)
+    assert 9.0 <= sa <= 15.0, f"전신 구간(10~19s)이 아닌 {sa}s 선택"
+
+
 def test_pick_windows_prefers_high_score_spans():
     """소스 앞부분이 아니라 피사체 점수가 높은 구간이 선택돼야 한다."""
     # 0~9초 점수 0(피사체 없음), 10~19초 점수 높음, 20~29초 중간

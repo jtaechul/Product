@@ -63,6 +63,9 @@ button:disabled{opacity:.5}
 .clitem .t{color:var(--gy);font-size:12px;white-space:nowrap}
 /* 상세 */
 .detail video,.detail img{width:100%;border-radius:10px;border:1px solid var(--line);background:#000;display:block}
+/* 일본어(좌)·한국어(우) 동시 열람 2단 프레임 */
+.dual{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dual textarea{min-height:220px}
 .meta{font-size:13px;color:#c6d2da;line-height:1.7}
 .meta b{color:var(--wt)}
 .tag{display:inline-block;font-size:12px;color:var(--cy);border:1px solid var(--line);border-radius:20px;padding:2px 10px;margin:3px 4px 0 0}
@@ -107,6 +110,12 @@ function ago(iso){if(!iso)return"";const s=(Date.now()-new Date(iso))/1000;
   if(s<90)return Math.round(s)+"초 전";if(s<5400)return Math.round(s/60)+"분 전";
   if(s<172800)return Math.round(s/3600)+"시간 전";return Math.round(s/86400)+"일 전";}
 function banner(t,cls){let m=$("#msg");if(!m)return;m.className="banner show "+(cls||"");m.innerHTML=t;}
+// Release 미디어 → 워커 프록시 URL(iOS 재생 가능한 inline·video/mp4로 중계)
+function prox(u){return u?"/api/media?u="+encodeURIComponent(u):"";}
+// 구버전 합본 캡션(JP+【한국어 참고 번역】+KO) → {jp, ko} 분해(신 레코드는 분리 필드 사용)
+function splitLegacy(cap){const M="【한국어 참고 번역】";const i=(cap||"").indexOf(M);
+  if(i<0)return{jp:cap||"",ko:""};
+  return{jp:cap.slice(0,i).replace(/[─\\s]+$/,""),ko:cap.slice(i+M.length).trim()};}
 
 async function fetchRaw(path){
   try{const r=await fetch(API+"/contents/"+path+"?ref="+BRANCH,{headers:{...headers(true),"Accept":"application/vnd.github.raw+json"}});
@@ -205,7 +214,7 @@ async function renderLibrary(){
 function postSection(post){
   if(!post||!Array.isArray(post.image_urls)||!post.image_urls.length)
     return '<div class="sect">게시물(캐러셀)</div><div class="hint">아직 게시물 이미지가 없습니다(제작 직후 잠시 후 반영).</div>';
-  const imgs=post.image_urls.map(u=>'<img src="'+u+'" loading="lazy">').join("");
+  const imgs=post.image_urls.map(u=>'<img src="'+prox(u)+'" loading="lazy">').join("");
   const cap=esc(post.caption||"").replace(/\\n/g,"<br>");
   return '<div class="sect">게시물(캐러셀) · '+post.image_urls.length+'장 · 다음날 오후 발행</div>'+
     '<div class="postscroll">'+imgs+'</div>'+
@@ -231,9 +240,15 @@ async function renderDetail(id){
   }
   const sp=rec.species||{},re=rec.reels||{},md=rec.media||{},src=rec.source||{};
   let mediaHtml="";
-  if(md.video_url)mediaHtml='<video src="'+md.video_url+'" controls playsinline poster="'+(md.cover_url||"")+'"></video>';
-  else if(md.cover_url)mediaHtml='<img src="'+md.cover_url+'">';
+  // Release 자산은 attachment/octet-stream이라 <video> 직접 재생 불가(iOS) → 워커 프록시 경유
+  if(md.video_url)mediaHtml='<video src="'+prox(md.video_url)+'" controls playsinline preload="metadata" poster="'+(md.cover_url?prox(md.cover_url):"")+'"></video>';
+  else if(md.cover_url)mediaHtml='<img src="'+prox(md.cover_url)+'">';
   else mediaHtml='<div class="hint">미디어가 아직 업로드되지 않았습니다(제작 직후 잠시 후 반영).</div>';
+  // 일/한 분리: 신규 레코드는 분리 필드(caption_ko 등), 구 레코드는 합본 캡션을 분해해 표시
+  const legacy=splitLegacy(re.caption||"");
+  const capJP=legacy.jp, capKO=re.caption_ko||legacy.ko;
+  const hookKO=re.hook_ko||"";
+  const tagsKO=(re.hashtags_ko||[]).join(" ");
   const tags=(re.hashtags||[]).map(t=>'<span class="tag">'+esc(t)+'</span>').join("");
   dc.className="card detail";
   dc.innerHTML=
@@ -242,9 +257,12 @@ async function renderDetail(id){
     mediaHtml+
     '<div class="meta" style="margin-top:12px"><b>학명</b> <i>'+esc(sp.scientific_name||"")+'</i> · <b>수심</b> '+esc(sp.depth_range_m||"?")+'m<br>'+
       '<b>서식</b> '+esc(sp.habitat||"?")+' · <b>분포</b> '+esc(sp.distribution||"?")+'</div>'+
-    '<span class="lbl">훅</span><input id="ehook" value="'+esc(re.hook||"")+'">'+
-    '<span class="lbl">캡션 (출처 표기 포함 · 그대로 저장됩니다)</span><textarea id="ecap">'+esc(re.caption||"")+'</textarea>'+
-    '<span class="lbl">해시태그 (공백/줄바꿈 구분)</span><input id="etags" value="'+esc((re.hashtags||[]).join(" "))+'">'+
+    '<div class="dual"><div><span class="lbl">훅 · 일본어(발행)</span><input id="ehook" value="'+esc(re.hook||"")+'"></div>'+
+      '<div><span class="lbl">훅 · 한국어(참고)</span><input id="ehookko" value="'+esc(hookKO)+'"></div></div>'+
+    '<div class="dual"><div><span class="lbl">캡션 · 일본어(발행 · 그대로 저장)</span><textarea id="ecap">'+esc(capJP)+'</textarea></div>'+
+      '<div><span class="lbl">캡션 · 한국어(참고 번역)</span><textarea id="ecapko">'+esc(capKO)+'</textarea></div></div>'+
+    '<div class="dual"><div><span class="lbl">해시태그 · 일본어(발행)</span><input id="etags" value="'+esc((re.hashtags||[]).join(" "))+'"></div>'+
+      '<div><span class="lbl">해시태그 · 한국어(참고)</span><input id="etagsko" value="'+esc(tagsKO)+'"></div></div>'+
     '<div style="margin-top:6px">'+tags+'</div>'+
     '<div class="banner" id="msg"></div>'+
     '<div class="btnrow">'+
@@ -275,8 +293,11 @@ async function saveCaption(id){
     const rec=JSON.parse(decodeURIComponent(escape(atob(meta.content.replace(/\\n/g,"")))));
     rec.reels=rec.reels||{};
     rec.reels.hook=$("#ehook").value;
-    rec.reels.caption=$("#ecap").value;
+    rec.reels.caption=$("#ecap").value;                                  // 일본어(발행)
     rec.reels.hashtags=$("#etags").value.split(/[\\s]+/).filter(Boolean);
+    rec.reels.hook_ko=($("#ehookko")||{}).value||"";                     // 한국어(참고)
+    rec.reels.caption_ko=($("#ecapko")||{}).value||"";
+    rec.reels.hashtags_ko=(($("#etagsko")||{}).value||"").split(/[\\s]+/).filter(Boolean);
     rec.updated_at=new Date().toISOString();
     const put=await fetch(API+"/contents/"+path,{method:"PUT",headers:headers(true),
       body:JSON.stringify({message:"edit: 콘텐츠 #"+id+" 캡션 수정 [skip ci]",content:b64(JSON.stringify(rec,null,2)),sha:meta.sha,branch:BRANCH})});
@@ -336,11 +357,42 @@ async function ghProxy(request, url, env){
     headers:{"Content-Type": resp.headers.get("Content-Type") || "application/json", "Cache-Control":"no-store"}});
 }
 
+// ── 미디어 프록시: GitHub Release 자산을 '인라인 재생 가능'하게 중계 ──
+// 왜(실제 결함): Release 다운로드 URL은 Content-Disposition: attachment +
+// Content-Type: application/octet-stream 으로 응답해 iOS Safari <video>가 재생을 거부했다
+// (라이브러리 영상이 검은 화면 + 재생불가 아이콘). 워커가 올바른 타입·inline으로 바꿔 중계하고
+// Range 요청을 그대로 전달해 스트리밍 탐색도 지원한다.
+const MEDIA_PREFIX = "https://github.com/" + OWNER + "/" + REPO + "/releases/download/";
+const MEDIA_TYPES = { mp4: "video/mp4", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png" };
+
+async function mediaProxy(request, url) {
+  const u = url.searchParams.get("u") || "";
+  if (!u.startsWith(MEDIA_PREFIX)) return j({ error: "url not allowed" }, 403);  // 개방 프록시 방지
+  const ext = (u.split(".").pop() || "").toLowerCase();
+  const type = MEDIA_TYPES[ext];
+  if (!type) return j({ error: "type not allowed" }, 403);
+  const h = { "User-Agent": "deep-dive-log-dashboard" };
+  const range = request.headers.get("Range");
+  if (range) h["Range"] = range;
+  const resp = await fetch(u, { headers: h, redirect: "follow" });
+  if (!resp.ok && resp.status !== 206) return j({ error: "upstream " + resp.status }, 502);
+  const out = new Headers();
+  out.set("Content-Type", type);
+  out.set("Content-Disposition", "inline");
+  out.set("Accept-Ranges", "bytes");
+  out.set("Cache-Control", "public, max-age=86400");
+  for (const k of ["Content-Length", "Content-Range"]) {
+    const v = resp.headers.get(k); if (v) out.set(k, v);
+  }
+  return new Response(resp.body, { status: resp.status, headers: out });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/health") return new Response("ok");
     if (url.pathname === "/api/mode") return j({ server: !!(env && env.GH_PAT) });
+    if (url.pathname === "/api/media") return mediaProxy(request, url);
     if (url.pathname.startsWith("/api/gh/")) return ghProxy(request, url, env);
     return new Response(HTML, {
       headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },

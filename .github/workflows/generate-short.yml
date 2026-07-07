@@ -44,6 +44,12 @@ concurrency:
 permissions:
   contents: write   # 종 중복방지 원장(used_species.json) 커밋용
 
+env:
+  # 운영 브랜치(대시보드·자동생성 공통의 단일 코드 기준).
+  # 왜: schedule 이벤트는 GitHub 규칙상 '기본 브랜치(main)'에서 뜨는데, main의 옛 코드로
+  # 돌면서 매일 실패 메일이 오던 실제 장애가 있었다 → 예약 실행도 운영 브랜치를 체크아웃한다.
+  OPS_BRANCH: claude/gemini-shorts-reels-generator-dhjfdt
+
 jobs:
   generate:
     runs-on: ubuntu-latest
@@ -53,6 +59,9 @@ jobs:
         working-directory: short-movie-generator
     steps:
       - uses: actions/checkout@v4
+        with:
+          # schedule(main에서 뜸)일 때도 운영 브랜치 코드를 사용
+          ref: ${{ github.event_name == 'schedule' && 'claude/gemini-shorts-reels-generator-dhjfdt' || github.ref }}
 
       - name: Resolve inputs (버튼 / 요청파일 / 스케줄)
         id: inp
@@ -243,4 +252,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: 원장·콘텐츠 레코드 갱신 [skip ci]"
-          git push origin HEAD:${{ github.ref_name }}
+          # schedule은 main에서 뜨지만 코드·원장은 운영 브랜치 기준 → 운영 브랜치로 푸시
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            git push origin HEAD:"$OPS_BRANCH"
+          else
+            git push origin HEAD:${{ github.ref_name }}
+          fi

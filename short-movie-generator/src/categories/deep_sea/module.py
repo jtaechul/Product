@@ -391,17 +391,23 @@ class DeepSeaCategory:
         return hook_copy.build_body_jp(info)
 
     def build_reels_caption(self, info: SpeciesInfo, spec) -> CaptionData:
-        """reels 캡션 = 일본어 게시글 + 한국어 참고 번역(운영자용). 해시태그 3(일본어)."""
+        """reels 캡션 — 일본어(발행문)와 한국어(참고 번역)를 **분리 저장**.
+        caption_body=일본어만(발행 그대로), caption_ko/hook_ko/hashtags_ko=한국어 참고.
+        (과거 JP+KO 합본 1필드는 대시보드에서 동시 열람 불가 → 분리 필드로 전환)"""
         from src.categories.deep_sea import hook as hook_copy
+        h = hook_copy.build_hook(info) or {}
         c = hook_copy.build_reels_caption(info, spec.jp_name, spec.sci_name,
-                                          spec.feature_line, spec.hook_line1, spec.hook_line2)
-        body = c["jp"] + "\n\n────────\n【한국어 참고 번역】\n" + c["ko"]
+                                          spec.feature_line, spec.hook_line1, spec.hook_line2,
+                                          hook_ko=h.get("hook_ko", ""),
+                                          feature_ko=h.get("feature_ko", ""))
         return CaptionData(
             hook_text=spec.hook_line1 + spec.hook_line2,
             overlay_facts=[f"水深 {info.depth_range_m} m"],
-            caption_body=body, hashtags=c["tags"],
+            caption_body=c["jp"], hashtags=c["tags"],
             reveal_name=f"{spec.jp_name} / {spec.sci_name}",
-            reveal_fact=spec.feature_line)
+            reveal_fact=spec.feature_line,
+            caption_ko=c["ko"], hook_ko=h.get("hook_ko", "") or "",
+            hashtags_ko=list(c.get("tags_ko", [])))
 
     @staticmethod
     def _parse_depth(depth_range_m: str) -> tuple[int, int]:

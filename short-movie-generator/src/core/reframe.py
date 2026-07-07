@@ -149,6 +149,39 @@ def _pick_windows(scores: list[float], fps_trk: float, seg_len: float, n_seg: in
     return [st / fps_trk for st in chosen]
 
 
+def _pick_wide_window(scores: list[float], fracs: list[float], fps_trk: float,
+                      seg_len: float) -> float:
+    """'피사체 전신이 온전히 보이는' 와이드 구간 1개의 시작초.
+
+    왜: 컷 전부가 근접이면 시청자가 생물의 전체 모습을 한 번도 못 본다(실제 불만).
+    점유율이 적당한(0.4%~25%) 프레임만 유효 점수로 쳐서 최고 구간을 고른다.
+    유효 구간이 없으면 점유율이 가장 낮은 구간(그나마 가장 와이드)을 반환.
+    """
+    win = max(1, int(seg_len * fps_trk))
+    n = len(scores)
+    if n <= win:
+        return 0.0
+    wide = [s if 0.004 <= f <= 0.25 else 0.0 for s, f in zip(scores, fracs)]
+    pre_w = [0.0]; pre_f = [0.0]
+    for w, f in zip(wide, fracs):
+        pre_w.append(pre_w[-1] + w); pre_f.append(pre_f[-1] + f)
+    step = max(1, int(0.5 * fps_trk))
+    best_st, best = 0, -1.0
+    for st in range(0, n - win, step):
+        v = pre_w[st + win] - pre_w[st]
+        if v > best:
+            best, best_st = v, st
+    if best > 0:
+        return best_st / fps_trk
+    # 유효 와이드 없음 → 점유율 최소 구간(최대한 넓은 그림)
+    best_st, best = 0, float("inf")
+    for st in range(0, n - win, step):
+        v = pre_f[st + win] - pre_f[st]
+        if v < best:
+            best, best_st = v, st
+    return best_st / fps_trk
+
+
 # 세그먼트 줌 패턴(와이드→접사→와이드… 교차)
 _ZOOM_CYCLE = [1.00, 1.35, 1.10, 1.55, 1.15, 1.40]
 
@@ -182,12 +215,19 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
     seg_len = target_dur / n_seg
     # 피사체가 가장 잘 보이는 소스 구간 선택(앞부분 무조건 사용 → 근접·부재 구간 유입 차단)
     starts = _pick_windows(scores, fps_trk, seg_len, n_seg) if not loop else None
+    # ★전신 보장: 첫 컷은 '전신 와이드' 구간을 강제 배정(z=1.0) — 최소 1컷은 생물 전체가 보인다
+    if starts:
+        wide_sa = _pick_wide_window(scores, fracs, fps_trk, seg_len)
+        rest = [s for s in starts if abs(s - wide_sa) >= seg_len]
+        starts = ([wide_sa] + rest)[:n_seg]
+        while len(starts) < n_seg:
+            starts.append(rest[len(starts) % len(rest)] if rest else wide_sa)
     concat = wd / "reframe_concat.txt"
     lines = []
     import math as _m
     for i in range(n_seg):
         a = i * seg_len
-        z = _ZOOM_CYCLE[i % len(_ZOOM_CYCLE)]
+        z = 1.0 if (starts and i == 0) else _ZOOM_CYCLE[i % len(_ZOOM_CYCLE)]
         sa = starts[i] if starts else (a % use if use > 0 else 0.0)
         fa, fb = int((sa) * fps_trk), int((sa + seg_len) * fps_trk)
         seg_c = cents[fa:fb] or cents
