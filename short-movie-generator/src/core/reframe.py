@@ -114,25 +114,29 @@ def _median(vals: list[float]) -> float:
 
 
 def text_score(frame_path: str) -> float:
-    """프레임의 '번인 텍스트' 신호(흰색·저채도 픽셀 비율 0~1).
+    """프레임의 '번인 텍스트' 신호(0~1). **밝은 획-에지** 비율로 측정.
 
-    왜(실제 결함): NOAA 영상은 인트로(종 정보 자막판 'EXPRESS West Coast…')와
-    아웃트로(explorer.noaa.gov)에 큰 흰 텍스트가 통째로 박혀 있는데, 구간 선택이
-    피사체 점수만 봐서 이 구간을 컷으로 골라 텍스트가 최종 영상에 그대로 남았다.
-    실측: 텍스트 프레임 ≥0.015, 일반 심해 프레임 ≤0.007 (메ンダコ 소스 89초 전수).
+    왜(실제 결함 2건): NOAA 영상은 인트로 자막판·타이틀 카드(로고+종 정보)와
+    아웃트로 URL에 텍스트가 통째로 박혀 있어, 구간 선택이 이를 컷으로 골라 최종물에 남았다.
+    단순 '밝은 픽셀 비율'은 **밝은 모래 바닥**(대왕등각류 소스)에서 값이 치솟아
+    텍스트와 구분이 안 됐다(그래서 임계 폭주 → 미검출). → 텍스트는 어두운 배경 위의
+    가느다란 '밝은 획'이라 **국소 대비가 크다**. 밝으면서(순백 근처) 근처에 훨씬 어두운
+    픽셀이 있는 '에지 픽셀'만 센다. 균일하게 밝은 모래는 대비가 낮아 걸러진다.
     """
     try:
         from PIL import Image
-        # 주의: 축소하면 가는 글자가 보간으로 뭉개져 점수가 절반 이하로 떨어진다
-        # (실측: 480px 0.020 → 240px 0.010, 아웃트로는 임계 미달로 미검출). 원해상도 유지.
-        im = Image.open(frame_path).convert("RGB")
+        im = Image.open(frame_path).convert("L")   # 밝기만
         w, h = im.size
         px = im.load()
-        n = 0
-        for y in range(h):
-            for x in range(w):
-                r, g, b = px[x, y]
-                if r > 170 and g > 170 and b > 170 and max(r, g, b) - min(r, g, b) < 45:
+        n = 0; S = 3
+        for y in range(0, h - S, 1):
+            for x in range(0, w - S, 1):
+                v = px[x, y]
+                if v < 200:                         # 순백 근처만(텍스트 획)
+                    continue
+                # 국소 대비: 오른/아래 S픽셀 이웃 중 하나라도 훨씬 어두우면 에지(획 경계)
+                if v - px[x + S, y] > 70 or v - px[x, y + S] > 70 or \
+                   v - px[x + S, y + S] > 70:
                     n += 1
         return n / max(1, w * h)
     except Exception:  # noqa: BLE001
@@ -140,10 +144,12 @@ def text_score(frame_path: str) -> float:
 
 
 def _burned_text_threshold(tscores: list[float]) -> float:
-    """번인 텍스트 판정 임계값 — 영상 자체 기준선(중앙값)의 2.5배, 최소 0.010.
-    밝은 장면(장비·모래)으로 기준선이 다소 높아도 절대 하한이 오검을 막고,
-    상대 배수가 소스별 밝기 차이를 흡수한다."""
-    return max(0.010, _median(tscores) * 2.5)
+    """번인 텍스트 판정 임계값 — 고정 하한 + 영상 기준선 반영.
+
+    에지 기반 text_score는 깨끗한 심해 프레임에선 ~0.001 이하, 텍스트/타이틀 카드에선
+    0.01~0.05로 확실히 갈린다(밝은 모래도 대비가 낮아 낮게 나옴). 절대 하한 0.006으로
+    확실한 텍스트만 잡고, 소스가 전반적으로 노이지하면 중앙값 4배까지 올려 오검을 막는다."""
+    return max(0.006, _median(tscores) * 4.0)
 
 
 def _subject_frac(frame_path: str) -> float:

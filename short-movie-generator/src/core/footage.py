@@ -42,6 +42,32 @@ _SEED = {
         "license": "public-domain", "credit": "NOAA Ocean Exploration",
         "source": "https://commons.wikimedia.org/wiki/File:Graneledone_boreopacifica_seafloor.webm",
     },
+    # 2차 확충(2026-07, Commons 전수 sweep + 육안 검수 통과분).
+    "bathynomus giganteus": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/b8/Bathynomus_giganteus.webm",
+        "license": "public-domain", "credit": "NOAA",
+        "source": "https://commons.wikimedia.org/wiki/File:Bathynomus_giganteus.webm",
+    },
+    "crossota sp.": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/9/9f/Okeanos_Explorer_PR_and_USVI_Dive_8-_Psychedelic_Medusa-NOAA-1280x720.webm",
+        "license": "public-domain", "credit": "NOAA Ocean Exploration",
+        "source": "https://commons.wikimedia.org/wiki/File:Okeanos_Explorer_PR_and_USVI_Dive_8-_Psychedelic_Medusa-NOAA-1280x720.webm",
+    },
+    "actinoscyphia aurelia": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/0/02/Venus_Flytrap_Anemone-_2017_American_Samoa.webm",
+        "license": "public-domain", "credit": "NOAA Ocean Exploration",
+        "source": "https://commons.wikimedia.org/wiki/File:Venus_Flytrap_Anemone-_2017_American_Samoa.webm",
+    },
+    "megalodicopia hians": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Predatory_tunicate_-_MBA.webm",
+        "license": "cc-by", "credit": "Eric Polk (MBARI) · CC BY",
+        "source": "https://commons.wikimedia.org/wiki/File:Predatory_tunicate_-_MBA.webm",
+    },
+    "umbellula sp.": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Umbellula_sp._-_MBA.webm",
+        "license": "cc-by", "credit": "Eric Polk (MBARI) · CC BY",
+        "source": "https://commons.wikimedia.org/wiki/File:Umbellula_sp._-_MBA.webm",
+    },
 }
 
 
