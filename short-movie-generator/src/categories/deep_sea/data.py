@@ -121,6 +121,66 @@ SPECIES = {
             "detail": "hovers near the seafloor, sediment visible through its transparent body",
         },
     },
+    "opisthoteuthis californiana": {
+        "scientific_name": "Opisthoteuthis californiana",
+        "common_name_ko": "넓적문어",
+        "common_name_en": "Flapjack octopus",
+        "depth_range_m": "200-1500",
+        "distribution": "북태평양 심해",
+        "habitat": "심해 저층 바로 위",
+        "diet": ["요각류", "단각류"],
+        "fun_facts": [
+            "몸을 팬케이크처럼 납작하게 편다",
+            "팔 사이 우산 같은 막으로 부드럽게 유영한다",
+            "머리 위 귀 같은 지느러미로 방향을 잡는다",
+            "젤리질 몸이라 높은 수압에도 부드럽게 버틴다",
+        ],
+        "sources": ["NOAA Ocean Exploration", "MBARI"],
+        "accuracy_flags": {"bioluminescent": False, "swims": True, "max_depth_m": 1500},
+        "situation_id": "discovery_swim", "habitat_zone": "benthic",
+        "appearance": ("an Opisthoteuthis (flapjack octopus), a small flattened gelatinous "
+                       "deep-sea octopus with a webbed umbrella between short arms and two small fins"),
+        "anatomy_lock": ("a single soft flattened octopus body with webbing between eight short arms "
+                         "and two small ear-like fins; keep the pancake-like flattened form"),
+        "forbidden_features": ("long muscular tentacles, hard shell, fish head, or extra limbs"),
+        "hud_callouts": [{"slot": "left-mid", "title": "FINS ×2", "sub": "EAR-LIKE"},
+                         {"slot": "right-mid", "title": "WEB", "sub": "UMBRELLA"}],
+        "cut_behaviors": {
+            "discovery": "rests flattened on the seafloor in the darkness",
+            "behavior": "spreads its webbed arms like an umbrella and drifts upward",
+            "detail": "flaps its two small fins, its soft body catching the light",
+        },
+    },
+    "graneledone boreopacifica": {
+        "scientific_name": "Graneledone boreopacifica",
+        "common_name_ko": "북태평양심해문어",
+        "common_name_en": "Deep-sea octopus",
+        "depth_range_m": "1000-2600",
+        "distribution": "북동태평양 심해",
+        "habitat": "심해 저층 암반",
+        "diet": ["갑각류", "작은 무척추동물"],
+        "fun_facts": [
+            "알려진 가장 긴 알 품기 기록을 가졌다(약 4년 반)",
+            "그동안 거의 먹지 않고 알 곁을 지킨다",
+            "차갑고 깊은 저층 암반에 붙어 산다",
+            "몸에 작은 돌기가 돋아 있다",
+        ],
+        "sources": ["NOAA Ocean Exploration", "MBARI"],
+        "accuracy_flags": {"bioluminescent": False, "swims": True, "max_depth_m": 2600},
+        "situation_id": "discovery_swim", "habitat_zone": "benthic",
+        "appearance": ("a Graneledone boreopacifica, a purplish deep-sea octopus with a rounded "
+                       "warty mantle and eight arms, resting on rock in the cold deep"),
+        "anatomy_lock": ("a single deep-sea octopus body with eight arms and a rounded bumpy mantle; "
+                         "keep the octopus form unchanged"),
+        "forbidden_features": ("ear-like fins, fish head, hard shell, or extra limbs"),
+        "hud_callouts": [{"slot": "left-mid", "title": "ARMS ×8", "sub": "SUCKERED"},
+                         {"slot": "right-mid", "title": "MANTLE", "sub": "WARTY"}],
+        "cut_behaviors": {
+            "discovery": "clings to dark rock in the cold deep",
+            "behavior": "slowly crawls across the rock with its eight arms",
+            "detail": "turns, its rounded warty mantle catching the ROV light",
+        },
+    },
 }
 
 

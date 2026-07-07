@@ -205,7 +205,14 @@ def run_reels(
     category = get_category(category_id)
     log.info("[reels] 시작: category=%s query=%r", category_id, query)
 
-    info = category.get_info(category.parse_input(query))
+    # auto* 는 '실사 영상 보유 종'에서만 선택(영상 없는 종으로 인한 실패 방지)
+    q = (query or "").strip().lower()
+    if q.startswith("auto") and hasattr(category, "pick_footage_species"):
+        subject = category.pick_footage_species()
+        log.info("[reels] auto → 실사영상 보유 종 선택: %s", subject)
+    else:
+        subject = category.parse_input(query)
+    info = category.get_info(subject)
     if not hasattr(category, "hook_intro_spec"):
         raise PipelineError("reels", "카테고리가 hook_intro_spec 미제공")
     spec_t = category.hook_intro_spec(info)
