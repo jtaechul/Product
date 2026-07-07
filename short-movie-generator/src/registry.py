@@ -71,6 +71,8 @@ def get_category(category_id: str) -> CategoryModule:
             import src.categories.deep_sea  # noqa: F401  (임포트 시 register 호출)
         elif category_id == "marine_algae":
             import src.categories.marine_algae  # noqa: F401
+        elif category_id == "marine_life":
+            import src.categories.marine_life  # noqa: F401
         elif category_id == "shipwreck":
             import src.categories.shipwreck  # noqa: F401
         if category_id not in _REGISTRY:

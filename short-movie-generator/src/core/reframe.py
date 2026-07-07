@@ -263,12 +263,16 @@ def delogo_vf(src_w: float, src_h: float, box: tuple) -> str:
 
 # 세그먼트 줌 패턴(와이드→접사→와이드… 교차)
 _ZOOM_CYCLE = [1.00, 1.35, 1.10, 1.55, 1.15, 1.40]
+# 와이드 우선(난파선 등 큰 구조물): 전신·선체 전체가 넓게 보이도록 줌을 억제.
+_WIDE_ZOOM_CYCLE = [1.00, 1.12, 1.00, 1.15, 1.05, 1.10]
 
 
 def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
-                        work_dir: str, logo_box: tuple | None = None) -> str:
+                        work_dir: str, logo_box: tuple | None = None,
+                        wide: bool = False) -> str:
     """가로 실사 영상 → 9:16 세로(피사체 추적 줌컷 + 틸 그레이딩), 길이 target_dur.
-    logo_box(비율 x,y,w,h)가 오면 워터마크를 프레임 이동으로 회피(2안), 불가 시 delogo(3안)."""
+    logo_box(비율 x,y,w,h)가 오면 워터마크를 프레임 이동으로 회피(2안), 불가 시 delogo(3안).
+    wide=True(난파선 등): 줌을 억제해 선체·구조물 전체가 넓게 보이는 원경 프레이밍."""
     wd = Path(work_dir); wd.mkdir(parents=True, exist_ok=True)
     src_dur = _duration(footage_path) or target_dur
     src_w = _probe(footage_path, "width") or 1920
@@ -315,9 +319,10 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
     concat = wd / "reframe_concat.txt"
     lines = []
     import math as _m
+    cycle = _WIDE_ZOOM_CYCLE if wide else _ZOOM_CYCLE
     for i in range(n_seg):
         a = i * seg_len
-        z = 1.0 if (starts and i == 0) else _ZOOM_CYCLE[i % len(_ZOOM_CYCLE)]
+        z = 1.0 if (starts and i == 0) else cycle[i % len(cycle)]
         sa = starts[i] if starts else (a % use if use > 0 else 0.0)
         fa, fb = int((sa) * fps_trk), int((sa + seg_len) * fps_trk)
         seg_c = cents[fa:fb] or cents

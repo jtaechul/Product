@@ -10,7 +10,7 @@ on:
       category:
         description: "카테고리"
         type: choice
-        options: [deep_sea, marine_algae, shipwreck]
+        options: [deep_sea, marine_life, marine_algae, shipwreck]
         default: deep_sea
       query:
         description: "종명 또는 자동(auto / auto:benthos / auto:plankton / auto:nekton)"
@@ -220,9 +220,11 @@ jobs:
         env:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # 추가 수신자(비밀 아님 — 채팅 ID는 수신자 식별자). 여러 명이면 공백/줄바꿈으로 나열.
+          TG_CHAT_EXTRA: "8231379366"
         run: |
-          if [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ]; then
-            echo "::notice::텔레그램 시크릿 없음 → 전송 생략 (Artifacts에서 다운로드)"
+          if [ -z "$TG_TOKEN" ]; then
+            echo "::notice::텔레그램 봇 토큰 없음 → 전송 생략 (Artifacts에서 다운로드)"
             exit 0
           fi
           CAPTION=$(python - <<'PY'
@@ -235,11 +237,19 @@ jobs:
           print(text[:1000])
           PY
           )
-          curl -sS -F chat_id="$TG_CHAT" \
-               -F video=@"${{ steps.gen.outputs.video }}" \
-               -F caption="$CAPTION" \
-               "https://api.telegram.org/bot${TG_TOKEN}/sendVideo" | head -c 300
-          echo
+          # 수신자 목록 = 기존 시크릿 채팅 + 추가 채팅(중복 제거). 각자에게 개별 전송.
+          RECIPIENTS=$(printf '%s\n%s\n' "$TG_CHAT" "$TG_CHAT_EXTRA" | tr ' ' '\n' | grep -v '^$' | sort -u)
+          if [ -z "$RECIPIENTS" ]; then
+            echo "::notice::수신자 없음 → 전송 생략"; exit 0
+          fi
+          for CID in $RECIPIENTS; do
+            echo "→ Telegram chat $CID"
+            curl -sS -F chat_id="$CID" \
+                 -F video=@"${{ steps.gen.outputs.video }}" \
+                 -F caption="$CAPTION" \
+                 "https://api.telegram.org/bot${TG_TOKEN}/sendVideo" | head -c 300
+            echo
+          done
 
       - name: Upload artifact (백업 다운로드)
         uses: actions/upload-artifact@v4

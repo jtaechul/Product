@@ -60,6 +60,7 @@ class ShipwreckCategory(CollectionCategory):
     corner_label = "WRECK · DIVE CAM"
     scale_label = "水深"          # 서식수심 대신 '수심'
     show_scale = False           # 단일 침몰 수심이라 스케일 눈금 무의미
+    reframe_wide = True          # 선체 전체가 넓게 보이도록 원경 프레이밍(줌 억제)
     SUBJECTS = SUBJECTS
     COPY = COPY
     _dir = Path(__file__).resolve().parent

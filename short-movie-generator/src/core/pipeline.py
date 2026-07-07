@@ -239,7 +239,8 @@ def run_reels(
     # 3) 9:16 추적 리프레임 + 틸 그레이딩(본문 길이)
     body_v = reframe.reframe_to_vertical(fv["path"], str(work_dir / "body_reframed.mp4"),
                                          body_dur, str(work_dir / "rf"),
-                                         logo_box=fv.get("logo_box"))
+                                         logo_box=fv.get("logo_box"),
+                                         wide=bool(getattr(category, "reframe_wide", False)))
 
     # 4) 카라오케 자막 번인(본문 — 훅 없음)
     ass = narration_sync.build_synced_ass(nar["disp"], str(work_dir / "body.ass"),

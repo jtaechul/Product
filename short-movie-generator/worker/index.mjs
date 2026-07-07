@@ -141,6 +141,7 @@ function renderHome(){
     '<span class="lbl">카테고리</span>'+
     '<select id="category">'+
       '<option value="deep_sea">심해 생물 (Deep Sea)</option>'+
+      '<option value="marine_life">일반 해양생물 (Marine Life)</option>'+
       '<option value="marine_algae">해양 미세조류 (Marine Microalgae)</option>'+
       '<option value="shipwreck">침몰선 (Shipwreck)</option>'+
     '</select>'+
