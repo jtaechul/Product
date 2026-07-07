@@ -376,6 +376,19 @@ class DeepSeaCategory:
         from src.categories.deep_sea import hook as hook_copy
         return hook_copy.build_body_jp(info)
 
+    def build_reels_caption(self, info: SpeciesInfo, spec) -> CaptionData:
+        """reels 캡션 = 일본어 게시글 + 한국어 참고 번역(운영자용). 해시태그 3(일본어)."""
+        from src.categories.deep_sea import hook as hook_copy
+        c = hook_copy.build_reels_caption(info, spec.jp_name, spec.sci_name,
+                                          spec.feature_line, spec.hook_line1, spec.hook_line2)
+        body = c["jp"] + "\n\n────────\n【한국어 참고 번역】\n" + c["ko"]
+        return CaptionData(
+            hook_text=spec.hook_line1 + spec.hook_line2,
+            overlay_facts=[f"水深 {info.depth_range_m} m"],
+            caption_body=body, hashtags=c["tags"],
+            reveal_name=f"{spec.jp_name} / {spec.sci_name}",
+            reveal_fact=spec.feature_line)
+
     @staticmethod
     def _parse_depth(depth_range_m: str) -> tuple[int, int]:
         """'1000-4000' → (1000, 4000). 단일값이면 절반~값, 없으면 심해 기본."""

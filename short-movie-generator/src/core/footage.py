@@ -63,16 +63,20 @@ def _download(url: str, dest: Path) -> bool:
 
 
 def _commons_search(query: str) -> dict | None:
-    """Commons에서 종명 영상 검색 → 통과 라이선스 첫 결과의 원본 URL·크레딧 반환."""
+    """Commons에서 종명 영상 검색 → 통과 라이선스 첫 결과의 원본 URL·크레딧 반환.
+    재현율↑: 원문 종명과 '종명 deep sea' 두 변형으로 검색해 영상 파일 후보를 모은다."""
     try:
         import requests
         api = "https://commons.wikimedia.org/w/api.php"
-        s = requests.get(api, headers={"User-Agent": _UA}, timeout=30, params={
-            "action": "query", "format": "json", "list": "search",
-            "srsearch": f"{query} deep sea", "srnamespace": "6", "srlimit": "20",
-        }).json()
-        titles = [h["title"] for h in s.get("query", {}).get("search", [])
-                  if any(h["title"].lower().endswith(e) for e in _VIDEO_EXT)]
+        titles: list[str] = []
+        for term in (query, f"{query} deep sea"):
+            s = requests.get(api, headers={"User-Agent": _UA}, timeout=30, params={
+                "action": "query", "format": "json", "list": "search",
+                "srsearch": f'{term} filetype:video', "srnamespace": "6", "srlimit": "20",
+            }).json()
+            for h in s.get("query", {}).get("search", []):
+                if any(h["title"].lower().endswith(e) for e in _VIDEO_EXT) and h["title"] not in titles:
+                    titles.append(h["title"])
         if not titles:
             return None
         info = requests.get(api, headers={"User-Agent": _UA}, timeout=30, params={

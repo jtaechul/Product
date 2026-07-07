@@ -116,6 +116,57 @@ def build_body_jp(info: SpeciesInfo) -> list[str] | None:
     return chunks if len(chunks) >= 8 else None
 
 
+_CAPTION_PROMPT = """日本のインスタ向け、深海生物ショート動画の**キャプション**を作ります。\
+JSONのみ出力(説明・コードブロック禁止)。
+
+生物: 和名={jp} / 学名={sci} / 生息水深={depth}m / 特徴={facts}
+
+要件:
+- jp_caption: 日本語。1行目=共感・驚きのフック(種名は出さない)。2〜3行=核心の事実を簡潔に。\
+終盤に「保存」を促す1行と「シェア」を促す1行。最後の行は「映像: NOAA Ocean Exploration・Public Domain」。
+- ko_caption: jp_caption の**韓国語訳**(運営者の参考用、自然な韓国語)。
+- hashtags: 日本語ハッシュタグ**ちょうど3個**(例: ["#深海","#生き物","#ユメナマコ"])
+
+JSON例: {{"jp_caption":"...","ko_caption":"...","hashtags":["#深海","#...","#..."]}}
+"""
+
+
+def build_reels_caption(info: SpeciesInfo, jp_name: str, sci_name: str,
+                        feature_line: str, hook_line1: str, hook_line2: str) -> dict:
+    """reels 일본어 캡션 + 한국어 참고 번역 + 해시태그(3). LLM 우선, 실패 시 템플릿 폴백."""
+    facts = " / ".join((info.fun_facts or [])[:4]) or "-"
+    prompt = _CAPTION_PROMPT.format(jp=jp_name, sci=sci_name, depth=info.depth_range_m, facts=facts)
+    try:
+        out = llm.generate_text(prompt, max_tokens=600)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[deep_sea.hook] 캡션 LLM 실패: %s", e)
+        out = None
+    parsed = None
+    if out:
+        m = re.search(r"\{.*\}", out, re.S)
+        if m:
+            try:
+                d = json.loads(m.group(0))
+                if d.get("jp_caption") and d.get("ko_caption"):
+                    tags = [t for t in (d.get("hashtags") or []) if str(t).strip()][:3]
+                    if len(tags) < 3:
+                        tags = (tags + ["#深海", f"#{jp_name}", "#生き物"])[:3]
+                    parsed = {"jp": d["jp_caption"].strip(), "ko": d["ko_caption"].strip(), "tags": tags}
+            except Exception:  # noqa: BLE001
+                parsed = None
+    if not parsed:  # 폴백 템플릿(일본어 + 한국어 참고)
+        jp = (f"{hook_line1}{hook_line2}\n\n"
+              f"{feature_line}。\n深海にすむ{jp_name}です。\n\n"
+              f"心に残ったら保存を。\n同じ深海が気になる人へシェアを。\n\n"
+              f"映像: NOAA Ocean Exploration・Public Domain")
+        ko = (f"{hook_line1}{hook_line2} (머리도, 눈도, 뼈도 없다)\n\n"
+              f"{feature_line} — 심해에 사는 {info.common_name_ko}입니다.\n\n"
+              f"기억에 남으면 저장하세요.\n같은 심해가 궁금한 사람에게 공유해주세요.\n\n"
+              f"영상: NOAA Ocean Exploration · 퍼블릭 도메인")
+        parsed = {"jp": jp, "ko": ko, "tags": ["#深海", f"#{jp_name}", "#生き物"]}
+    return parsed
+
+
 def build_hook(info: SpeciesInfo) -> dict | None:
     """일본어 훅 카피 dict 반환. 실패 시 None(시스템 휴면)."""
     key = (info.scientific_name or "").strip().lower()
