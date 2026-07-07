@@ -334,6 +334,36 @@ SPECIES = {
             "detail": "its crown of polyps catching the ROV light",
         },
     },
+    "sepioteuthis sepioidea": {
+        "scientific_name": "Sepioteuthis sepioidea",
+        "common_name_ko": "카리브암초오징어",
+        "common_name_en": "Caribbean reef squid",
+        "depth_range_m": "1-150",
+        "distribution": "카리브해·서대서양 산호초",
+        "habitat": "얕은 산호초·해초밭(원양성)",
+        "diet": ["작은 물고기", "새우"],
+        "fun_facts": [
+            "몸의 색과 무늬를 순식간에 바꾼다",
+            "색·무늬로 동료에게 신호를 보내며 소통한다",
+            "몸 가장자리의 지느러미를 물결치듯 움직여 정지 비행하듯 머문다",
+            "무리를 지어 산호초 위를 떠다닌다",
+        ],
+        "sources": ["WoRMS", "Wikimedia Commons"],
+        "accuracy_flags": {"bioluminescent": False, "swims": True, "max_depth_m": 150},
+        "situation_id": "discovery_swim", "habitat_zone": "pelagic",
+        "appearance": ("a Sepioteuthis sepioidea (Caribbean reef squid), a torpedo-shaped reef squid "
+                       "with long undulating fins running along the sides of its body and ten arms"),
+        "anatomy_lock": ("a single squid body with fins along both sides and ten arms; keep the squid "
+                         "form; no octopus round head, no shell, no fish fins"),
+        "forbidden_features": ("octopus round mantle, hard shell, fish head, or extra arms"),
+        "hud_callouts": [{"slot": "left-mid", "title": "FINS", "sub": "UNDULATING"},
+                         {"slot": "right-mid", "title": "CHROMATO", "sub": "COLOR CHANGE"}],
+        "cut_behaviors": {
+            "discovery": "hovers over the reef in the blue water",
+            "behavior": "ripples its side fins to hold position",
+            "detail": "flushes new colors and patterns across its body",
+        },
+    },
 }
 
 

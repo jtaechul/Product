@@ -68,6 +68,12 @@ _SEED = {
         "license": "cc-by", "credit": "Eric Polk (MBARI) · CC BY",
         "source": "https://commons.wikimedia.org/wiki/File:Umbellula_sp._-_MBA.webm",
     },
+    # 범위 확장(심해→전 해양) + 다중 소스(GBIF/Commons 전세계) 첫 편입분.
+    "sepioteuthis sepioidea": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/c/ce/Caribbean_Reef_Squid_Encounter.webm",
+        "license": "cc-by", "credit": "Atsme · CC BY",
+        "source": "https://commons.wikimedia.org/wiki/File:Caribbean_Reef_Squid_Encounter.webm",
+    },
 }
 
 
