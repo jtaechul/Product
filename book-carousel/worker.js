@@ -388,6 +388,17 @@ function isSameSexRomance(...parts) {
   return SAMESEX_ROMANCE_PATTERNS.some(re => re.test(t));
 }
 
+// ⭐ 만화·웹툰·코믹 필터 — 소설 레인은 "소설"만 다룬다. BL은 만화·웹툰 비중이 매우 커서
+// (키워드가 안 드러나도) 코믹을 배제하면 상당수 걸러진다. 소설 레인에서만 적용.
+const COMIC_PATTERNS = [
+  /만화/, /웹툰/, /코믹스?/, /\bcomic/i, /\bmanga\b/i, /\bmanhwa\b/i, /그래픽\s*노블/,
+  /\bSL\s*comic/i, /BL\s*코믹/i, /일러스트\s*카드/, /아크릴\s*(스탠드|플레이트)/, /굿즈\s*(포함|증정)/,
+];
+function looksLikeComic(...parts) {
+  const t = parts.filter(Boolean).join(' ');
+  return COMIC_PATTERNS.some(re => re.test(t));
+}
+
 async function naverBookLookup(env, query) {
   if (!env?.NAVER_CLIENT_ID || !env?.NAVER_CLIENT_SECRET) return null; // 키 없으면 판단 불가
   try {
@@ -791,6 +802,8 @@ async function handleSuggest(env, body) {
   usable = usable.filter(b => !containsAdultContent(b.title, b.author, b.category, b.coreMessage, b.description));
   // ⭐ 동성애(BL·GL·퀴어) 로맨스 강제 제외 (프롬프트로 막아도 새어나오면 서버에서 최종 차단)
   usable = usable.filter(b => !isSameSexRomance(b.title, b.author, b.category, b.coreMessage, b.reason, b.description, b.loveAngle, b.lesson));
+  // ⭐ 소설 레인은 만화·웹툰·코믹 배제(소설만) — BL은 만화 비중이 커서 키워드 없이도 상당수 걸러진다.
+  if (isStory) usable = usable.filter(b => !looksLikeComic(b.title, b.author, b.category, b.coreMessage, b.reason, b.description));
   // [강제 제외] AI가 제외 지시를 무시하고 이미 만든 책을 또 넣어도 서버에서 걸러낸다.
   const exNorm = new Set(exclude.map(_normTitle));
   const fresh = usable.filter(b => !exNorm.has(_normTitle(b.title)));
@@ -824,9 +837,9 @@ async function handleSuggest(env, body) {
     try {
       const items = usable.map((b, i) => `${i + 1}. ${b.title} (${b.author}) — ${(b.description || b.coreMessage || '').slice(0, 240)}`).join('\n');
       const rgText = await callLightModel(env, {
-        max_tokens: 200, optional: true,
+        max_tokens: 200, // 동성애·비소설 차단은 안전 게이트라 예산 절약 모드에서도 생략하지 않음
         system: '당신은 로맨스 소설 검수자입니다. 반드시 JSON만 응답합니다.',
-        user: `아래 소설들이 "남녀(이성) 간의 연애(사랑·썸·짝사랑·연인·이별·재회)가 이야기의 중심 줄기인 로맨스/연애 소설"인지 각 소개문 기준으로 판정하세요.\n- 연애가 곁가지이고 사회비판·가족·성장·역사·미스터리·자기성찰이 중심이면 false(예: 82년생 김지영·아몬드·채식주의자 유형은 false).\n- ⭐ 동성 간의 사랑(BL·GL·퀴어·백합·보이즈러브·게이·레즈비언)을 다루는 소설이면 반드시 false.\n\n${items}\n\nJSON: {"fits":[true,false,...]} (순서대로 정확히 ${usable.length}개)`,
+        user: `아래 작품이 "남녀(이성) 간의 연애가 중심 줄기인 로맨스/연애 소설"이면 true, 아니면 false로 판정하세요. 다음 중 하나라도 해당하면 반드시 false:\n- 동성 간의 사랑(BL·GL·퀴어·백합·보이즈러브·게이·레즈비언)을 다룸 (작가·작품이 BL/GL로 알려진 경우 포함)\n- 만화·웹툰·코믹·대본집 등 소설이 아닌 형식\n- 연애가 곁가지이고 사회비판·가족·성장·역사·미스터리·자기성찰이 중심(예: 82년생 김지영·아몬드·채식주의자 유형)\n\n${items}\n\nJSON: {"fits":[true,false,...]} (순서대로 정확히 ${usable.length}개)`,
       });
       const rf = extractJson(rgText);
       if (Array.isArray(rf.fits) && rf.fits.length === usable.length) {
