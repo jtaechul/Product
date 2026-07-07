@@ -76,6 +76,47 @@ def test_subject_score_penalizes_edge_cut_subject(tmp_path):
     assert reframe.subject_score(whole) > reframe.subject_score(cut)
 
 
+# ─────────────── 번인 텍스트(인트로 자막판·아웃트로 URL) 배제 ───────────────
+def _text_banner_frame(path: str):
+    """NOAA 인트로식 큰 흰 텍스트 배너가 있는 프레임."""
+    im = Image.new("RGB", (480, 270), (60, 90, 80))
+    d = ImageDraw.Draw(im)
+    d.rectangle([10, 180, 470, 260], fill=(240, 240, 240))   # 흰 자막판(하단 1/3)
+    im.save(path)
+
+
+def test_text_score_detects_burned_banner(tmp_path):
+    """(실제 결함) 흰 자막판 프레임은 일반 심해 프레임보다 텍스트 점수가 훨씬 높아야 한다."""
+    banner = str(tmp_path / "banner.png"); _text_banner_frame(banner)
+    clean = str(tmp_path / "clean.png"); _synthetic_frame(clean)
+    assert reframe.text_score(banner) > 0.01
+    assert reframe.text_score(clean) < 0.005
+    assert reframe.text_score(banner) > 10 * max(1e-6, reframe.text_score(clean))
+
+
+def test_pick_windows_excludes_text_frames():
+    """텍스트가 박힌 인트로/아웃트로 구간은 점수가 높아도 컷으로 선택되면 안 된다."""
+    # 0~9초: 텍스트 있음(점수 최고), 10~29초: 깨끗(점수 중간)
+    scores = [100.0] * 50 + [10.0] * 100
+    bad = [True] * 50 + [False] * 100
+    starts = reframe._pick_windows(scores, 5.0, 5.0, 2, bad=bad)
+    assert all(s >= 9.0 for s in starts), f"텍스트 구간이 선택됨: {starts}"
+
+
+def test_pick_wide_window_excludes_text_frames():
+    scores = [100.0] * 50 + [50.0] * 100
+    fracs = [0.10] * 150                              # 전부 와이드 적정 점유율
+    bad = [True] * 50 + [False] * 100
+    sa = reframe._pick_wide_window(scores, fracs, 5.0, 5.0, bad=bad)
+    assert sa >= 9.0, f"텍스트 구간이 와이드 컷으로 선택됨: {sa}"
+
+
+def test_burned_text_threshold_adapts_to_baseline():
+    """기준선(중앙값)이 낮으면 절대 하한 0.010, 높으면 중앙값의 2.5배."""
+    assert reframe._burned_text_threshold([0.003] * 50) == 0.010
+    assert abs(reframe._burned_text_threshold([0.008] * 50) - 0.020) < 1e-9
+
+
 # ─────────────── NOAA 워터마크 대응(2안 회피 + 3안 delogo) ───────────────
 BOX = (0.0, 0.0, 0.28, 0.15)   # 좌상단 로고(비율)
 

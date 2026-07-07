@@ -113,6 +113,39 @@ def _median(vals: list[float]) -> float:
     return v[len(v) // 2] if v else 0.5
 
 
+def text_score(frame_path: str) -> float:
+    """프레임의 '번인 텍스트' 신호(흰색·저채도 픽셀 비율 0~1).
+
+    왜(실제 결함): NOAA 영상은 인트로(종 정보 자막판 'EXPRESS West Coast…')와
+    아웃트로(explorer.noaa.gov)에 큰 흰 텍스트가 통째로 박혀 있는데, 구간 선택이
+    피사체 점수만 봐서 이 구간을 컷으로 골라 텍스트가 최종 영상에 그대로 남았다.
+    실측: 텍스트 프레임 ≥0.015, 일반 심해 프레임 ≤0.007 (메ンダコ 소스 89초 전수).
+    """
+    try:
+        from PIL import Image
+        # 주의: 축소하면 가는 글자가 보간으로 뭉개져 점수가 절반 이하로 떨어진다
+        # (실측: 480px 0.020 → 240px 0.010, 아웃트로는 임계 미달로 미검출). 원해상도 유지.
+        im = Image.open(frame_path).convert("RGB")
+        w, h = im.size
+        px = im.load()
+        n = 0
+        for y in range(h):
+            for x in range(w):
+                r, g, b = px[x, y]
+                if r > 170 and g > 170 and b > 170 and max(r, g, b) - min(r, g, b) < 45:
+                    n += 1
+        return n / max(1, w * h)
+    except Exception:  # noqa: BLE001
+        return 0.0
+
+
+def _burned_text_threshold(tscores: list[float]) -> float:
+    """번인 텍스트 판정 임계값 — 영상 자체 기준선(중앙값)의 2.5배, 최소 0.010.
+    밝은 장면(장비·모래)으로 기준선이 다소 높아도 절대 하한이 오검을 막고,
+    상대 배수가 소스별 밝기 차이를 흡수한다."""
+    return max(0.010, _median(tscores) * 2.5)
+
+
 def _subject_frac(frame_path: str) -> float:
     """적색 피사체의 화면 점유율(0~1) — 줌 상한 계산용."""
     try:
@@ -122,11 +155,14 @@ def _subject_frac(frame_path: str) -> float:
         return 0.0
 
 
-def _pick_windows(scores: list[float], fps_trk: float, seg_len: float, n_seg: int) -> list[float]:
+def _pick_windows(scores: list[float], fps_trk: float, seg_len: float, n_seg: int,
+                  bad: list[bool] | None = None) -> list[float]:
     """피사체 점수(subject_score) 기준 '가장 잘 보이는' 소스 구간 n_seg개 시작초 선택.
 
     왜(실제 결함): 소스의 앞부분을 무조건 쓰면 피사체가 없거나 ROV 초근접인 구간이
     그대로 들어가 생물을 식별할 수 없었다. 점수 상위·비중첩 구간을 골라 시간순 배치.
+    bad(번인 텍스트 프레임 마스크)가 오면 **텍스트가 1프레임이라도 포함된 구간을
+    우선 배제**한다(전부 배제 불가 시 텍스트가 가장 적은 구간 순).
     """
     win = max(1, int(seg_len * fps_trk))
     n = len(scores)
@@ -135,10 +171,15 @@ def _pick_windows(scores: list[float], fps_trk: float, seg_len: float, n_seg: in
     pre = [0.0]
     for s in scores:
         pre.append(pre[-1] + s)
+    preb = [0]
+    for b in (bad or [False] * n):
+        preb.append(preb[-1] + (1 if b else 0))
     step = max(1, int(0.5 * fps_trk))
-    cand = sorted(((pre[st + win] - pre[st], st) for st in range(0, n - win, step)), reverse=True)
+    # (텍스트 프레임 수 오름차순 → 점수 내림차순): 깨끗한 구간이 항상 우선
+    cand = sorted(((preb[st + win] - preb[st], -(pre[st + win] - pre[st]), st)
+                   for st in range(0, n - win, step)))
     chosen: list[int] = []
-    for _sc, st in cand:
+    for _bc, _negs, st in cand:
         if all(abs(st - o) >= win for o in chosen):
             chosen.append(st)
         if len(chosen) == n_seg:
@@ -150,12 +191,12 @@ def _pick_windows(scores: list[float], fps_trk: float, seg_len: float, n_seg: in
 
 
 def _pick_wide_window(scores: list[float], fracs: list[float], fps_trk: float,
-                      seg_len: float) -> float:
+                      seg_len: float, bad: list[bool] | None = None) -> float:
     """'피사체 전신이 온전히 보이는' 와이드 구간 1개의 시작초.
 
     왜: 컷 전부가 근접이면 시청자가 생물의 전체 모습을 한 번도 못 본다(실제 불만).
     점유율이 적당한(0.4%~25%) 프레임만 유효 점수로 쳐서 최고 구간을 고른다.
-    유효 구간이 없으면 점유율이 가장 낮은 구간(그나마 가장 와이드)을 반환.
+    bad(번인 텍스트 마스크) 구간은 우선 배제. 유효 구간이 없으면 점유율 최소 구간.
     """
     win = max(1, int(seg_len * fps_trk))
     n = len(scores)
@@ -165,20 +206,24 @@ def _pick_wide_window(scores: list[float], fracs: list[float], fps_trk: float,
     pre_w = [0.0]; pre_f = [0.0]
     for w, f in zip(wide, fracs):
         pre_w.append(pre_w[-1] + w); pre_f.append(pre_f[-1] + f)
+    preb = [0]
+    for b in (bad or [False] * n):
+        preb.append(preb[-1] + (1 if b else 0))
     step = max(1, int(0.5 * fps_trk))
-    best_st, best = 0, -1.0
+    # 1순위: (텍스트 프레임 수 오름차순 → 와이드 점수 내림차순)
+    best_st, best_key = 0, None
     for st in range(0, n - win, step):
-        v = pre_w[st + win] - pre_w[st]
-        if v > best:
-            best, best_st = v, st
-    if best > 0:
+        key = (preb[st + win] - preb[st], -(pre_w[st + win] - pre_w[st]))
+        if best_key is None or key < best_key:
+            best_key, best_st = key, st
+    if best_key is not None and best_key[1] < 0:    # 와이드 점수 > 0 인 구간 존재
         return best_st / fps_trk
-    # 유효 와이드 없음 → 점유율 최소 구간(최대한 넓은 그림)
-    best_st, best = 0, float("inf")
+    # 유효 와이드 없음 → (텍스트 수, 점유율 합) 최소 구간(그나마 가장 넓은 그림)
+    best_st, best_key = 0, None
     for st in range(0, n - win, step):
-        v = pre_f[st + win] - pre_f[st]
-        if v < best:
-            best, best_st = v, st
+        key = (preb[st + win] - preb[st], pre_f[st + win] - pre_f[st])
+        if best_key is None or key < best_key:
+            best_key, best_st = key, st
     return best_st / fps_trk
 
 
@@ -237,16 +282,26 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
     cents = [_subject_centroid(str(f)) for f in frames] or [(0.5, 0.5)]
     fracs = [_subject_frac(str(f)) for f in frames] or [0.0]
     scores = [subject_score(str(f)) for f in frames] or [0.0]
+    # ★번인 텍스트 구간(인트로 자막판·아웃트로 URL 등) 감지 → 컷 선택에서 원천 배제.
+    # 감지 프레임 주변 ±1초를 함께 배제(팽창) — 텍스트 페이드 인/아웃 꼬리까지 커버.
+    tscores = [text_score(str(f)) for f in frames] or [0.0]
+    th = _burned_text_threshold(tscores)
+    raw_bad = [t >= th for t in tscores]
+    PAD = 5   # ±1초(5fps)
+    bad = [any(raw_bad[max(0, i - PAD):i + PAD + 1]) for i in range(len(raw_bad))]
+    if any(bad):
+        log.info("[reframe] 번인 텍스트 프레임 감지: %d(팽창 %d)/%d (임계 %.4f) → 해당 구간 배제",
+                 sum(raw_bad), sum(bad), len(bad), th)
     fps_trk = 5.0
 
     # 세그먼트 분할(≈5초/컷)
     n_seg = max(2, min(8, round(target_dur / 5.0)))
     seg_len = target_dur / n_seg
     # 피사체가 가장 잘 보이는 소스 구간 선택(앞부분 무조건 사용 → 근접·부재 구간 유입 차단)
-    starts = _pick_windows(scores, fps_trk, seg_len, n_seg) if not loop else None
+    starts = _pick_windows(scores, fps_trk, seg_len, n_seg, bad=bad) if not loop else None
     # ★전신 보장: 첫 컷은 '전신 와이드' 구간을 강제 배정(z=1.0) — 최소 1컷은 생물 전체가 보인다
     if starts:
-        wide_sa = _pick_wide_window(scores, fracs, fps_trk, seg_len)
+        wide_sa = _pick_wide_window(scores, fracs, fps_trk, seg_len, bad=bad)
         rest = [s for s in starts if abs(s - wide_sa) >= seg_len]
         starts = ([wide_sa] + rest)[:n_seg]
         while len(starts) < n_seg:

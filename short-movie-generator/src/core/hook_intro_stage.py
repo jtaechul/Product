@@ -152,6 +152,9 @@ def _best_subject_frame(video: str, out_png: str, wd: Path,
         if not _grab_frame(video, t, cand, vf=vf):
             continue
         s = reframe.subject_score(cand)
+        # 번인 텍스트(인트로 자막판·아웃트로 URL) 프레임은 강한 감점 → 엔드카드 배경 배제
+        if reframe.text_score(cand) >= 0.012:
+            s *= 0.02
         if s > best_score:
             best, best_score = cand, s
     if not best:
