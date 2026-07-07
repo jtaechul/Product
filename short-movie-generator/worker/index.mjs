@@ -268,18 +268,17 @@ async function renderDetail(id){
     '<div class="btnrow">'+
       '<button class="btn save" id="bsave">캡션·해시태그 저장 (재생성 없음)</button>'+
       '<button class="btn warn" id="bcap">캡션 재생성</button>'+
-      '<button class="btn warn" id="bimg">이미지 재생성</button>'+
-      '<button class="btn rd" id="bvid">영상 재생성 (Veo 쿼터)</button>'+
-      '<button class="btn" id="ball">전체 재생성</button>'+
+      '<button class="btn warn" id="bvid">영상 다시 제작 (무료)</button>'+
+      '<button class="btn" id="ball" style="grid-column:1/3">전체 재생성 (무료)</button>'+
     '</div>'+
     postSection(rec.post)+
     '<div class="hint">이미지 출처: '+esc(src.image_credit||"—")+'<br>정보 출처: '+esc((src.info_sources||[]).join(" · ")||"—")+'</div>';
 
+  // 현 시스템은 실사 영상 재편집(무료) — Veo·카드뉴스 이미지 재생성은 구 시스템 유물이라 제거
   $("#bsave").onclick=()=>saveCaption(id);
   $("#bcap").onclick=()=>regen(id,"caption");
-  $("#bimg").onclick=()=>regen(id,"images");
-  $("#bvid").onclick=()=>{if(confirm("영상 재생성은 Veo 쿼터/비용을 소모합니다(하루 10회 제한). 진행할까요?"))regen(id,"video");};
-  $("#ball").onclick=()=>{if(confirm("전체 재생성하시겠어요? (영상 포함 시 Veo 쿼터 소모)"))regen(id,"all");};
+  $("#bvid").onclick=()=>{if(confirm("이 회차의 영상을 같은 종으로 처음부터 다시 만듭니다(무료·2~4분). 진행할까요?"))regen(id,"video");};
+  $("#ball").onclick=()=>{if(confirm("영상·캡션을 모두 처음부터 다시 만듭니다(무료·2~4분). 진행할까요?"))regen(id,"all");};
 }
 
 async function saveCaption(id){
@@ -309,7 +308,7 @@ async function saveCaption(id){
 async function regen(id,scope){
   if(!authReady()){banner("재생성에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
   banner("재생성 요청 중… ("+scope+")");
-  const viz=(scope==="video"||scope==="all")?"veo_text2video":"panzoom";
+  const viz="panzoom"; // 현 시스템은 reels(실사 재편집·무료) 고정 — Veo 미사용(워크플로가 --mode reels 강제)
   try{
     const r=await fetch(API+"/actions/workflows/"+WF+"/dispatches",{method:"POST",headers:headers(true),
       body:JSON.stringify({ref:BRANCH,inputs:{content_id:id,scope:scope,visualizer:viz}})});

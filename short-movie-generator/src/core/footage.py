@@ -19,6 +19,11 @@ _UA = ("DeepSeaShortsBot/1.0 (https://github.com/jtaechul/product; educational d
 _ALLOWED = ("public domain", "pd", "cc0", "cc-by", "cc by", "publicdomain", "kogl")
 _VIDEO_EXT = (".webm", ".ogv", ".ogg", ".mp4", ".mov")
 
+# NOAA Ocean Exploration 워터마크(좌상단 고정) 영역 — 원본 대비 비율(x, y, w, h).
+# 실측: 1280x720 기준 로고 텍스트가 x≤261(0.20W)·y≤77(0.11H) → 여유 포함 0.28/0.15.
+# 크롭이 이 영역과 겹치면 ① 프레임을 옆/아래로 밀어 회피(2안) ② 불가 시 delogo로 메움(3안).
+_NOAA_LOGO_BOX = (0.0, 0.0, 0.28, 0.15)
+
 # 대표종 시드 — Commons/NOAA 검증된 PD/CC0 영상 직링크(학명 소문자 키).
 # 이 목록에 있는 종만 auto가 선택 → '실사 영상 없음' 실패를 원천 차단.
 _SEED = {
@@ -137,5 +142,8 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
     elif not _download(cand["url"], out):
         return None
     log.info("[footage] 확보: %s (%s, %s)", out, cand["license"], cand["credit"])
+    # NOAA 소스는 좌상단 워터마크 영역 정보를 함께 반환(하류에서 회피/제거)
+    logo = _NOAA_LOGO_BOX if "noaa" in (cand.get("credit", "") or "").lower() else None
     return {"path": str(out), "license": cand["license"],
-            "credit": cand["credit"], "source": cand.get("source", "")}
+            "credit": cand["credit"], "source": cand.get("source", ""),
+            "logo_box": logo}

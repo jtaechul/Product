@@ -92,9 +92,12 @@ def _probe(path: str, entry: str) -> str:
     return r.stdout.strip()
 
 
-def _grab_frame(video: str, t: float, out_png: str) -> bool:
-    r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", str(t), "-i", video,
-                        "-frames:v", "1", out_png], capture_output=True, text=True)
+def _grab_frame(video: str, t: float, out_png: str, vf: str | None = None) -> bool:
+    cmd = ["ffmpeg", "-y", "-loglevel", "error", "-ss", str(t), "-i", video]
+    if vf:
+        cmd += ["-vf", vf]
+    cmd += ["-frames:v", "1", out_png]
+    r = subprocess.run(cmd, capture_output=True, text=True)
     return r.returncode == 0 and Path(out_png).exists()
 
 
@@ -122,21 +125,31 @@ def _duration_of(path: str) -> float:
         return 0.0
 
 
-def _best_subject_frame(video: str, out_png: str, wd: Path) -> bool:
+def _best_subject_frame(video: str, out_png: str, wd: Path,
+                        logo_box: tuple | None = None) -> bool:
     """영상에서 '피사체가 가장 뚜렷한' 프레임을 골라 out_png로 저장.
 
     왜: 고정 시각(55%) 프레임은 피사체가 흐릿하거나 비어 있을 수 있다.
     10~90% 구간 9개 샘플의 적색 피사체 점수(reframe.subject_score) 최대 프레임 선택.
+    logo_box가 오면 워터마크를 delogo로 메워 엔드카드 배경에 로고가 남지 않게 한다.
     """
     from src.core import reframe
     dur = _duration_of(video)
     if dur <= 0:
         return False
+    vf = None
+    if logo_box:
+        sw = _probe(video, "width") or 1920
+        sh = _probe(video, "height") or 1080
+        try:
+            vf = reframe.delogo_vf(float(sw), float(sh), logo_box)
+        except Exception:  # noqa: BLE001
+            vf = None
     best, best_score = None, -1.0
     for i in range(9):
         t = dur * (0.1 + 0.8 * i / 8)
         cand = str(wd / f"ecs_{i}.png")
-        if not _grab_frame(video, t, cand):
+        if not _grab_frame(video, t, cand, vf=vf):
             continue
         s = reframe.subject_score(cand)
         if s > best_score:
@@ -149,7 +162,8 @@ def _best_subject_frame(video: str, out_png: str, wd: Path) -> bool:
 
 def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
           cfg: hi.HookIntroConfig | None = None, bgm: str | None = None,
-          open_bg_video: str | None = None, subject_video: str | None = None) -> str:
+          open_bg_video: str | None = None, subject_video: str | None = None,
+          logo_box: tuple | None = None) -> str:
     """본문 영상을 오프닝/엔드카드/전환/사운드로 감싼 완성본 경로 반환.
     전제 미충족 시 원본 body_video를 그대로 반환(발행 불정지).
 
@@ -182,7 +196,10 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         odur = _duration_of(src_open) or dur
         if not _grab_frame(src_open, min(0.5, odur * 0.1), open_bg):
             return body_video
-        if not _best_subject_frame(src_subj, ec_frame, wd):
+        # 원본(subject_video)에서 뽑는 피사체 프레임은 워터마크 delogo 적용(엔드카드 로고 잔류 방지).
+        # 리프레임된 body 계열 소스는 reframe 단계에서 이미 회피/제거됨 → 미적용.
+        subj_logo = logo_box if (subject_video and src_subj == subject_video) else None
+        if not _best_subject_frame(src_subj, ec_frame, wd, logo_box=subj_logo):
             _grab_frame(src_subj, (_duration_of(src_subj) or dur) * 0.55, ec_frame)
         ec_bg = str(wd / "ec_bg.png")
         hi.build_specimen_bg(ec_frame if Path(ec_frame).exists() else open_bg, ec_bg, cfg)

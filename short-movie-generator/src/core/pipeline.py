@@ -238,7 +238,8 @@ def run_reels(
 
     # 3) 9:16 추적 리프레임 + 틸 그레이딩(본문 길이)
     body_v = reframe.reframe_to_vertical(fv["path"], str(work_dir / "body_reframed.mp4"),
-                                         body_dur, str(work_dir / "rf"))
+                                         body_dur, str(work_dir / "rf"),
+                                         logo_box=fv.get("logo_box"))
 
     # 4) 카라오케 자막 번인(본문 — 훅 없음)
     ass = narration_sync.build_synced_ass(nar["disp"], str(work_dir / "body.ass"),
@@ -256,7 +257,8 @@ def run_reels(
     # 배경 소스 분리(재발 방지): 오프닝 배경=자막 번인 '전' 클린 리프레임(body_v) →
     # 본문 자막 미리 노출 차단 / 엔드카드 피사체=크롭·줌 '전' 원본 광각(fv.path) → 과확대 차단
     final = hook_intro_stage.apply(body_av, spec, hook_text, str(work_dir / "hook_intro"), bgm=bgm,
-                                   open_bg_video=body_v, subject_video=fv["path"])
+                                   open_bg_video=body_v, subject_video=fv["path"],
+                                   logo_box=fv.get("logo_box"))
     if final == body_av:
         log.warning("[reels] hook_intro 미적용(폰트/edge-tts 전제 미충족) → 본문만 발행")
 

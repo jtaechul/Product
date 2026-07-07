@@ -182,13 +182,42 @@ def _pick_wide_window(scores: list[float], fracs: list[float], fps_trk: float,
     return best_st / fps_trk
 
 
+def _logo_avoid(cx: int, cy: int, cw: int, ch: int, fx_abs: float, fy_abs: float,
+                src_w: float, src_h: float, box: tuple) -> tuple:
+    """좌상단 워터마크 회피(2안 기본 + 3안 보완 판단). 반환 (cx, cy, need_delogo).
+
+    규칙: 크롭이 로고 영역과 겹치면 ① 오른쪽으로 밀기 ② 아래로 밀기 —
+    단 **피사체가 크롭 안 8~92% 구간에 남을 때만**(화면 밖 이탈 금지, 정중앙은 양보 가능).
+    둘 다 불가하면 need_delogo=True → 그 세그먼트만 delogo 필터로 로고를 메운다(3안).
+    """
+    lx1 = (box[0] + box[2]) * src_w
+    ly1 = (box[1] + box[3]) * src_h
+    if cx >= lx1 or cy >= ly1:                      # 이미 안 겹침
+        return cx, cy, False
+    ncx = int(lx1) + 2                              # ① 오른쪽으로 밀어 회피
+    if ncx + cw <= src_w and 0.08 * cw <= fx_abs - ncx <= 0.92 * cw:
+        return ncx, cy, False
+    ncy = int(ly1) + 2                              # ② 아래로 밀어 회피(줌컷일 때 가능)
+    if ncy + ch <= src_h and 0.08 * ch <= fy_abs - ncy <= 0.92 * ch:
+        return cx, ncy, False
+    return cx, cy, True                             # 회피 불가 → delogo 보완
+
+
+def delogo_vf(src_w: float, src_h: float, box: tuple) -> str:
+    """로고 영역을 주변 픽셀로 메우는 ffmpeg delogo 필터 문자열(3안)."""
+    lw = min(int(box[2] * src_w) + 4, int(src_w) - 4)
+    lh = min(int(box[3] * src_h) + 4, int(src_h) - 4)
+    return f"delogo=x=1:y=1:w={lw}:h={lh}"
+
+
 # 세그먼트 줌 패턴(와이드→접사→와이드… 교차)
 _ZOOM_CYCLE = [1.00, 1.35, 1.10, 1.55, 1.15, 1.40]
 
 
 def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
-                        work_dir: str) -> str:
-    """가로 실사 영상 → 9:16 세로(피사체 추적 줌컷 + 틸 그레이딩), 길이 target_dur."""
+                        work_dir: str, logo_box: tuple | None = None) -> str:
+    """가로 실사 영상 → 9:16 세로(피사체 추적 줌컷 + 틸 그레이딩), 길이 target_dur.
+    logo_box(비율 x,y,w,h)가 오면 워터마크를 프레임 이동으로 회피(2안), 불가 시 delogo(3안)."""
     wd = Path(work_dir); wd.mkdir(parents=True, exist_ok=True)
     src_dur = _duration(footage_path) or target_dur
     src_w = _probe(footage_path, "width") or 1920
@@ -242,8 +271,15 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
         cw = min(cw, int(src_w)) & ~1
         cx = int(min(max(fx * src_w - cw / 2, 0), src_w - cw))
         cy = int(min(max(fy * src_h - ch / 2, 0), src_h - ch))
+        # 워터마크 대응: 프레임 이동 회피(2안) → 불가 시 그 세그먼트만 delogo(3안)
+        pre_vf = ""
+        if logo_box:
+            cx, cy, need_dl = _logo_avoid(cx, cy, cw, ch, fx * src_w, fy * src_h,
+                                          src_w, src_h, logo_box)
+            if need_dl:
+                pre_vf = delogo_vf(src_w, src_h, logo_box) + ","
         seg_out = wd / f"rf_{i}.mp4"
-        vf = (f"crop={cw}:{ch}:{cx}:{cy},scale={W}:{H},setsar=1,"
+        vf = (f"{pre_vf}crop={cw}:{ch}:{cx}:{cy},scale={W}:{H},setsar=1,"
               f"eq=contrast=1.12:saturation=1.16:brightness=-0.05,"
               f"colorbalance=rm=-0.03:bm=0.05,vignette=PI/4.2,format=yuv420p")
         cmd = ["ffmpeg", "-y", "-loglevel", "error"]

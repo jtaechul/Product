@@ -74,3 +74,30 @@ def test_subject_score_penalizes_edge_cut_subject(tmp_path):
     ImageDraw.Draw(im).ellipse([-30, 100, 30, 140], fill=(190, 60, 70))  # 왼쪽 경계에 걸침
     im.save(cut)
     assert reframe.subject_score(whole) > reframe.subject_score(cut)
+
+
+# ─────────────── NOAA 워터마크 대응(2안 회피 + 3안 delogo) ───────────────
+BOX = (0.0, 0.0, 0.28, 0.15)   # 좌상단 로고(비율)
+
+
+def test_logo_avoid_shifts_right_when_subject_allows():
+    """(2안) 크롭이 로고와 겹치고 피사체가 오른쪽에 있으면 크롭을 밀어 회피한다."""
+    cx, cy, dl = reframe._logo_avoid(200, 0, 404, 720, 700, 360, 1280, 720, BOX)
+    assert not dl
+    assert cx >= 0.28 * 1280                          # 로고 오른쪽으로 이동
+    assert 0.08 * 404 <= 700 - cx <= 0.92 * 404       # 피사체는 화면 안 유지
+
+
+def test_logo_avoid_falls_back_to_delogo_when_unavoidable():
+    """(3안) 피사체가 로고 바로 옆이라 밀 수 없으면 delogo 보완으로 표시한다."""
+    cx, cy, dl = reframe._logo_avoid(0, 0, 404, 720, 100, 60, 1280, 720, BOX)
+    assert dl and (cx, cy) == (0, 0)
+
+
+def test_logo_avoid_noop_when_not_overlapping():
+    assert reframe._logo_avoid(500, 0, 404, 720, 700, 360, 1280, 720, BOX) == (500, 0, False)
+
+
+def test_delogo_vf_within_bounds():
+    vf = reframe.delogo_vf(1280, 720, BOX)
+    assert vf.startswith("delogo=x=1:y=1:w=") and ":h=" in vf
