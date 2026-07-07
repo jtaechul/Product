@@ -217,7 +217,18 @@ async function renderDetail(id){
   view().innerHTML='<a class="back" href="/library">← 라이브러리</a><div class="card" id="dcard"><div class="hint">불러오는 중…</div></div>';
   const rec=await fetchRecord(id);
   const dc=document.getElementById("dcard");
-  if(!rec){dc.innerHTML='<div class="hint err">콘텐츠 #'+esc(id)+' 레코드를 찾을 수 없습니다. (아직 미디어/레코드 업로드 전일 수 있어요)</div>';return;}
+  if(!rec){
+    // 레코드 없음: 도감 정보로 부드럽게 안내(빨간 오류 대신). 제작 미완료/이전 기록/미디어 미반영 상태.
+    const cat=await fetchCatalog();
+    const it=cat.find(x=>num3(x.no)===id);
+    const nm=it?esc(it.common_name_ko||"종")+(it.common_name_en?' · '+esc(it.common_name_en):''):"";
+    dc.innerHTML='<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px"><b style="font-size:19px">#'+esc(id)+'</b>'+
+        (nm?'<span class="mono" style="color:var(--gy);font-size:13px">'+nm+'</span>':'')+'</div>'+
+      '<div class="hint">이 회차는 아직 제작이 완료되지 않았거나 미디어가 반영되기 전입니다.<br>'+
+        '제작이 끝나면 영상·캡션이 자동으로 채워집니다(보통 2~4분). 완성 영상은 <b>텔레그램</b>으로도 전송됩니다.</div>'+
+      '<div class="btnrow" style="margin-top:14px"><a class="btn" href="/library">← 라이브러리로</a></div>';
+    return;
+  }
   const sp=rec.species||{},re=rec.reels||{},md=rec.media||{},src=rec.source||{};
   let mediaHtml="";
   if(md.video_url)mediaHtml='<video src="'+md.video_url+'" controls playsinline poster="'+(md.cover_url||"")+'"></video>';
