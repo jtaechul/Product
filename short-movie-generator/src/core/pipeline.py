@@ -250,12 +250,15 @@ def run_reels(
     if final == body_av:
         log.warning("[reels] hook_intro 미적용(폰트/edge-tts 전제 미충족) → 본문만 발행")
 
-    # 7) 캡션 + 출력 (캡션 생성 실패해도 발행 불정지)
+    # 7) 캡션(일본어 게시글 + 한국어 참고) + 출력 (캡션 생성 실패해도 발행 불정지)
     try:
-        caption = (category.build_narrated_caption(info)
-                   if hasattr(category, "build_narrated_caption") else category.build_caption(info))
-        if hasattr(category, "attach_attribution"):
-            caption = category.attach_attribution(caption, info, fv["credit"])
+        if hasattr(category, "build_reels_caption"):
+            caption = category.build_reels_caption(info, spec)   # JP 본문 + KR 참고 번역
+        else:
+            caption = (category.build_narrated_caption(info)
+                       if hasattr(category, "build_narrated_caption") else category.build_caption(info))
+            if hasattr(category, "attach_attribution"):
+                caption = category.attach_attribution(caption, info, fv["credit"])
     except Exception as e:  # noqa: BLE001
         log.warning("[reels] 캡션 생성 실패 → 최소 캡션으로 발행: %s", e)
         from src.core.contracts import CaptionData
