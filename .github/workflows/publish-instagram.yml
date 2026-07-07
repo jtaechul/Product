@@ -1,8 +1,11 @@
 name: Publish to Instagram
 
-# 완성된 콘텐츠 1건을 인스타그램 릴스로 자동 발행.
-# 안전장치: probe=true(기본)이면 발행하지 않고 '어느 계정에 올릴 수 있는지'만 확인한다.
-# 실제 발행은 probe=false 로 실행. 토큰은 IG_ACCESS_TOKEN 시크릿에서만 읽는다.
+# 완성된 콘텐츠 1건을 인스타그램 릴스로 발행(또는 안전 점검).
+# 트리거 2가지:
+#  ① 수동(workflow_dispatch): content_id + probe 입력.
+#  ② 요청파일 푸시: short-movie-generator/requests/ig/request.json 을 커밋하면 실행
+#     (원격 자동화·검증용). 파일에 {"content_id":"004","probe":true} 형식.
+# 안전장치: probe=true 면 발행하지 않고 계정 접근만 확인. 토큰은 IG_ACCESS_TOKEN 시크릿에서만.
 
 on:
   workflow_dispatch:
@@ -15,6 +18,9 @@ on:
         type: choice
         options: ["true", "false"]
         default: "true"
+  push:
+    branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
+    paths: ["short-movie-generator/requests/ig/*.json"]
 
 concurrency:
   group: publish-instagram
@@ -38,6 +44,21 @@ jobs:
         with:
           ref: claude/gemini-shorts-reels-generator-dhjfdt
 
+      - name: Resolve inputs (버튼 / 요청파일)
+        id: inp
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            CID="${{ inputs.content_id }}"; PROBE="${{ inputs.probe }}"
+          else
+            REQ="requests/ig/request.json"
+            CID=$(python3 -c "import json;print(json.load(open('$REQ')).get('content_id',''))")
+            PROBE=$(python3 -c "import json;print(str(json.load(open('$REQ')).get('probe',True)).lower())")
+          fi
+          CID=$(echo "$CID" | tr -cd '0-9' | cut -c1-3)
+          echo "cid=$CID" >> "$GITHUB_OUTPUT"
+          echo "probe=$PROBE" >> "$GITHUB_OUTPUT"
+          echo "요청: 콘텐츠 #$CID · probe=$PROBE"
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -52,15 +73,15 @@ jobs:
         env:
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
         run: |
-          CID=$(echo "${{ inputs.content_id }}" | tr -cd '0-9' | cut -c1-3)
-          if [ "${{ inputs.probe }}" = "false" ]; then
+          CID="${{ steps.inp.outputs.cid }}"
+          if [ "${{ steps.inp.outputs.probe }}" = "false" ]; then
             python -m src.run_ig_publish --content-id "$CID" | tee /tmp/ig.log
           else
             python -m src.run_ig_publish --content-id "$CID" --probe | tee /tmp/ig.log
           fi
 
       - name: Commit record update (발행 성공 시 레코드 반영)
-        if: ${{ inputs.probe == 'false' }}
+        if: ${{ steps.inp.outputs.probe == 'false' }}
         run: |
           cd "$GITHUB_WORKSPACE"
           git add short-movie-generator/content/*.json 2>/dev/null || true
@@ -77,10 +98,10 @@ jobs:
           TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           [ -z "$TG_TOKEN" ] && exit 0
-          MODE="점검"; [ "${{ inputs.probe }}" = "false" ] && MODE="발행"
+          MODE="점검"; [ "${{ steps.inp.outputs.probe }}" = "false" ] && MODE="발행"
           STATUS="성공 ✅"; [ "${{ job.status }}" != "success" ] && STATUS="실패 ❌"
           BODY=$(tail -3 /tmp/ig.log 2>/dev/null || echo "")
-          MSG=$(printf "인스타 %s %s\n콘텐츠 #%s\n%s" "$MODE" "$STATUS" "${{ inputs.content_id }}" "$BODY")
+          MSG=$(printf "인스타 %s %s\n콘텐츠 #%s\n%s" "$MODE" "$STATUS" "${{ steps.inp.outputs.cid }}" "$BODY")
           for CHAT in "$TG_CHAT" "8231379366"; do
             [ -z "$CHAT" ] && continue
             curl -s -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
