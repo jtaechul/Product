@@ -1,0 +1,78 @@
+name: Regenerate Caption
+
+# 대시보드 '캡션·해시태그 재생성'용 — 영상은 그대로 두고 발행용 캡션+해시태그만 다시 뽑는다.
+# 전체 재제작(generate-short)과 달리 영상·오디오·자막을 건드리지 않아 빠르고 저비용.
+# LLM(ANTHROPIC/GEMINI) 있으면 풍부한 서술식, 없으면 사실 기반 서술식 폴백.
+
+on:
+  workflow_dispatch:
+    inputs:
+      content_id:
+        description: "콘텐츠 id(3자리, 예: 004)"
+        required: true
+
+concurrency:
+  group: regen-caption-${{ github.event.inputs.content_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  OPS_BRANCH: claude/gemini-shorts-reels-generator-dhjfdt
+
+jobs:
+  regen:
+    runs-on: ubuntu-latest
+    name: 캡션 재생성
+    defaults:
+      run:
+        working-directory: short-movie-generator
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/gemini-shorts-reels-generator-dhjfdt
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: short-movie-generator/requirements.txt
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Regenerate caption (영상 유지)
+        id: cap
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          set -o pipefail
+          CID=$(echo "${{ inputs.content_id }}" | tr -cd '0-9' | cut -c1-3)
+          python -m src.run_regen_caption --content-id "$CID" | tee /tmp/cap.log
+
+      - name: Commit record update
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          git add short-movie-generator/content/*.json 2>/dev/null || true
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: 캡션·해시태그 재생성 [skip ci]"
+          git push origin HEAD:"$OPS_BRANCH"
+
+      - name: Notify Telegram
+        if: always()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          [ -z "$TG_TOKEN" ] && exit 0
+          STATUS="성공 ✅"; [ "${{ job.status }}" != "success" ] && STATUS="실패 ❌"
+          MSG=$(printf "캡션 재생성 %s\n콘텐츠 #%s" "$STATUS" "${{ inputs.content_id }}")
+          for CHAT in "$TG_CHAT" "8231379366"; do
+            [ -z "$CHAT" ] && continue
+            curl -s -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
+              --data-urlencode "chat_id=$CHAT" --data-urlencode "text=$MSG" >/dev/null || true
+          done
