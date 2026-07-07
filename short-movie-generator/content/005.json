@@ -24,7 +24,7 @@
   },
   "reels": {
     "hook": "四年半、ただ、待ちつづけた。",
-    "caption": "四年半、ただ、待ちつづけた。\n\n卵を守る、深海のタコ。\n深海にすむシンカイダコです。\n\n心に残ったら保存を。\n同じ深海が気になる人へシェアを。\n\n映像: NOAA Ocean Exploration・Public Domain\n\n────────\n【한국어 참고 번역】\n四年半、ただ、待ちつづけた。\n\n卵を守る、深海のタコ — 심해에 사는 북태평양심해문어입니다.\n\n기억에 남으면 저장하세요.\n같은 심해가 궁금한 사람에게 공유해주세요.\n\n영상: NOAA Ocean Exploration · 퍼블릭 도메인",
+    "caption": "四年半、ただ、待ちつづけた。\n\n卵を守る、深海のタコ。\n深海にすむシンカイダコです。\n\n心に残ったら保存を。\n同じ深海が気になる人へシェアを。\n\n映像: NOAA Ocean Exploration・Public Domain",
     "hashtags": [
       "#深海",
       "#シンカイダコ",
@@ -33,7 +33,14 @@
     "reveal_name": "シンカイダコ / Graneledone boreopacifica",
     "reveal_fact": "卵を守る、深海のタコ",
     "visualizer": "reels",
-    "video_file": "deep-sea_octopus_20260707_052354.mp4"
+    "video_file": "deep-sea_octopus_20260707_052354.mp4",
+    "caption_ko": "4년 반을, 그저, 기다렸습니다.\n\n알을 지키는 심해의 문어.\n심해에 사는 북태평양심해문어입니다.\n\n마음에 남았다면 저장해 두세요.\n같은 심해가 궁금한 사람에게 공유해 주세요.\n\n영상: NOAA Ocean Exploration · 퍼블릭 도메인",
+    "hook_ko": "4년 반을, 그저, 기다렸습니다.",
+    "hashtags_ko": [
+      "#심해",
+      "#심해문어",
+      "#생물"
+    ]
   },
   "source": {
     "image_credit": "",
