@@ -1,0 +1,58 @@
+{
+  "id": "007",
+  "created_at": "2026-07-07T07:43:18+00:00",
+  "updated_at": "2026-07-07T07:43:18+00:00",
+  "status": "published",
+  "series": "심해 도감",
+  "species": {
+    "common_name_ko": "넓적문어",
+    "common_name_en": "Flapjack octopus",
+    "scientific_name": "Opisthoteuthis californiana",
+    "depth_range_m": "200-1500",
+    "habitat": "심해 저층 바로 위",
+    "distribution": "북태평양 심해",
+    "diet": [
+      "요각류",
+      "단각류"
+    ],
+    "fun_facts": [
+      "몸을 팬케이크처럼 납작하게 편다",
+      "팔 사이 우산 같은 막으로 부드럽게 유영한다",
+      "머리 위 귀 같은 지느러미로 방향을 잡는다",
+      "젤리질 몸이라 높은 수압에도 부드럽게 버틴다"
+    ]
+  },
+  "reels": {
+    "hook": "ぺたんこの、体に、耳のひれ。",
+    "caption": "ぺたんこの、体に、耳のひれ。\n\nひらひら舞う、深海のメンダコ。\n深海にすむメンダコです。\n\n心に残ったら保存を。\n同じ深海が気になる人へシェアを。\n\n映像: NOAA Ocean Exploration・Public Domain",
+    "hashtags": [
+      "#深海",
+      "#メンダコ",
+      "#生き物"
+    ],
+    "reveal_name": "メンダコ / Opisthoteuthis californiana",
+    "reveal_fact": "ひらひら舞う、深海のメンダコ",
+    "hook_ko": "납작한 몸에, 귀 같은 지느러미.",
+    "caption_ko": "납작한 몸에, 귀 같은 지느러미.\n\n하늘하늘 헤엄치는, 심해의 넓적문어.\n심해에 사는 넓적문어입니다.\n\n마음에 남았다면 저장해 두세요.\n같은 심해가 궁금한 사람에게 공유해 주세요.\n\n영상: NOAA Ocean Exploration · 퍼블릭 도메인",
+    "hashtags_ko": [
+      "#심해",
+      "#넓적문어",
+      "#생물"
+    ],
+    "visualizer": "reels",
+    "video_file": "flapjack_octopus_20260707_074318.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "NOAA Ocean Exploration",
+      "MBARI"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-007/reels_007.mp4",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-007/cover_007.jpg"
+  },
+  "post": null
+}

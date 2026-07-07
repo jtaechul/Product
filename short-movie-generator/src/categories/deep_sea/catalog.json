@@ -19,5 +19,12 @@
     "common_name_en": "Headless chicken monster",
     "scientific_name": "Enypniastes eximia",
     "date": "2026-07-07"
+  },
+  {
+    "no": 7,
+    "common_name_ko": "넓적문어",
+    "common_name_en": "Flapjack octopus",
+    "scientific_name": "Opisthoteuthis californiana",
+    "date": "2026-07-07"
   }
 ]
