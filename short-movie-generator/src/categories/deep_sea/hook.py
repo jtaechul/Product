@@ -65,6 +65,57 @@ def _parse_json(text: str) -> dict | None:
     return d
 
 
+# 대표종 본문 나레이션(일본어) 시드
+_BODY_SEED = {
+    "enypniastes eximia": [
+        "深海の闇を、", "ただよう赤い影。", "その正体は、", "ユメナマコ。",
+        "ナマコの仲間です。", "普通のナマコは、", "海底を這う。", "だが、これは泳ぐ。",
+        "ひれのような膜で、", "闇を舞う。", "透きとおる体。", "飲みこんだ泥が、",
+        "そのまま透けて見える。", "敵に襲われると、", "光る皮をぬぎ捨て、", "身代わりにする。",
+        "深海では、", "もっとも奇妙な姿が、", "もっとも巧みに、", "生きのびる。",
+    ],
+}
+
+_BODY_PROMPT = """あなたは深海生物のショート動画ナレーション作家です。次の生物について、\
+**日本語**で30〜40秒・16〜22個の短い節に分けたナレーションを作ります。JSON配列のみ出力(説明禁止)。
+
+生物: 英名={en} / 学名={sci} / 生息水深={depth}m / 生息域={hab}
+特徴: {facts}
+
+要件:
+- 各要素は読点や句点で終わる**短い節**(6〜12文字)。全体で神秘的→驚き→事実→余韻。
+- **実際の形態・行動のみ**。無い発光・捕食・危険・数値の捏造禁止。
+- 序盤で正体(和名)を明かし、中盤で驚きの特徴、終盤で余韻。
+出力例: ["深海の闇に、","揺らめく影。","その正体は、", ...]
+"""
+
+
+def build_body_jp(info: SpeciesInfo) -> list[str] | None:
+    """본문 일본어 나레이션 절 리스트. 시드 → LLM → None."""
+    key = (info.scientific_name or "").strip().lower()
+    if key in _BODY_SEED:
+        return list(_BODY_SEED[key])
+    facts = " / ".join((info.fun_facts or [])[:4]) or "-"
+    prompt = _BODY_PROMPT.format(en=info.common_name_en, sci=info.scientific_name,
+                                 depth=info.depth_range_m, hab=info.habitat, facts=facts)
+    try:
+        out = llm.generate_text(prompt, max_tokens=600)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[deep_sea.hook] 본문 LLM 실패: %s", e)
+        out = None
+    if not out:
+        return None
+    m = re.search(r"\[.*\]", out, re.S)
+    if not m:
+        return None
+    try:
+        arr = json.loads(m.group(0))
+    except Exception:  # noqa: BLE001
+        return None
+    chunks = [str(x).strip() for x in arr if str(x).strip()]
+    return chunks if len(chunks) >= 8 else None
+
+
 def build_hook(info: SpeciesInfo) -> dict | None:
     """일본어 훅 카피 dict 반환. 실패 시 None(시스템 휴면)."""
     key = (info.scientific_name or "").strip().lower()

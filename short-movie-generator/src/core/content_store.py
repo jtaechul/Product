@@ -83,7 +83,7 @@ def write_record(base_dir: str, content_id: str, *, info, caption, asset,
         reels["video_file"] = Path(video_file).name if video_file else reels.get("video_file", "")
     rec["reels"] = reels
     rec["source"] = {
-        "image_credit": asset.credit_string,
+        "image_credit": getattr(asset, "credit_string", "") or "",  # reels는 영상(asset=None) → 빈값
         "info_sources": list(info.sources or []),
         "license": getattr(asset, "license", "") or "",
     }

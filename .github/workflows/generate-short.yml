@@ -127,8 +127,8 @@ jobs:
           EP_ARG=""
           if [ -n "${{ steps.inp.outputs.episode }}" ]; then EP_ARG="--episode ${{ steps.inp.outputs.episode }}"; fi
           SCOPE="${{ steps.inp.outputs.scope }}"; [ -z "$SCOPE" ] && SCOPE="all"
-          # 방향 v3: 나레이션 야생다큐(narrated) 기본. (구 ROV는 --mode hud로만)
-          python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --visualizer "${{ steps.inp.outputs.visualizer }}" $EP_ARG --scope "$SCOPE" --mode narrated
+          # 확정 시스템: reels(실사 심해 영상 + 일본어 오프닝훅/엔드카드/전환/사운드). 팬줌·Veo 미사용.
+          python -m src.run_pipeline "${{ steps.inp.outputs.query }}" $EP_ARG --mode reels
           VIDEO=$(ls -t output/*.mp4 | head -1)
           META=$(ls -t output/*.json | head -1)
           echo "video=$VIDEO" >> "$GITHUB_OUTPUT"

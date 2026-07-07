@@ -43,7 +43,9 @@ def _try_claude(prompt: str, max_tokens: int) -> str | None:
         parts = [getattr(b, "text", "") for b in msg.content
                  if getattr(b, "type", "") == "text"]
         return "\n".join(p for p in parts if p).strip() or None
-    except Exception as e:  # noqa: BLE001
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except BaseException as e:  # noqa: BLE001  # pyo3 PanicException 등 BaseException까지 방어
         log.info("Claude 호출 실패 → Gemini 폴백: %s", e)
         return None
 
@@ -57,6 +59,8 @@ def _try_gemini(prompt: str) -> str | None:
         client = genai.Client()
         resp = client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
         return (resp.text or "").strip() or None
-    except Exception as e:  # noqa: BLE001
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except BaseException as e:  # noqa: BLE001  # google.genai 임포트가 rust 패닉을 낼 수 있음 → 방어
         log.info("Gemini 호출 실패: %s", e)
         return None

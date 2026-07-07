@@ -371,6 +371,11 @@ class DeepSeaCategory:
         bgm = Path(__file__).resolve().parents[3] / "assets" / "audio" / "bgm" / "beneath_the_frozen_shelf.mp3"
         return (spec, hook_text, str(bgm) if bgm.exists() else None)
 
+    def reels_body_script(self, info: SpeciesInfo) -> list[str] | None:
+        """reels(실사+일본어) 본문 나레이션 절 리스트. 시드/LLM, 실패 시 None."""
+        from src.categories.deep_sea import hook as hook_copy
+        return hook_copy.build_body_jp(info)
+
     @staticmethod
     def _parse_depth(depth_range_m: str) -> tuple[int, int]:
         """'1000-4000' → (1000, 4000). 단일값이면 절반~값, 없으면 심해 기본."""

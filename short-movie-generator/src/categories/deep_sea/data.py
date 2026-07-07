@@ -76,6 +76,51 @@ SPECIES = {
             ),
         },
     },
+    "enypniastes eximia": {
+        "scientific_name": "Enypniastes eximia",
+        "common_name_ko": "머리없는닭괴물",
+        "common_name_en": "Headless chicken monster",
+        "depth_range_m": "500-6000",
+        "distribution": "전 세계 심해",
+        "habitat": "심해 저층~중층(유영성 해삼)",
+        "diet": ["해저 퇴적물 속 유기물"],
+        "fun_facts": [
+            "머리·눈·뼈가 없는 심해 해삼이다",
+            "지느러미 같은 막으로 헤엄쳐 이동한다",
+            "몸이 투명해 삼킨 퇴적물이 그대로 비친다",
+            "위협을 받으면 빛나는 피부를 벗어 미끼로 던진다",
+            "대부분의 해삼과 달리 해저를 기지 않고 유영한다",
+        ],
+        "sources": ["NOAA Ocean Exploration", "WoRMS"],
+        "accuracy_flags": {
+            "bioluminescent": True,        # 위협 시 발광 피부 탈락(실제)
+            "swims": True,
+            "max_depth_m": 6000,
+            "transparent_body": True,
+        },
+        "situation_id": "discovery_swim",
+        "habitat_zone": "benthic",
+        "appearance": (
+            "an Enypniastes eximia (headless chicken monster), a translucent reddish "
+            "swimming deep-sea sea cucumber with a webbed veil-like fin and no head, eyes or bones"
+        ),
+        "anatomy_lock": (
+            "a single soft translucent sea cucumber body with a veil-like anterior web; "
+            "no head, no eyes, no bones; keep the gelatinous swimming form unchanged"
+        ),
+        "forbidden_features": (
+            "any fish head, eyes, skeleton, legs, or hard shell; not an octopus or jellyfish"
+        ),
+        "hud_callouts": [
+            {"slot": "left-mid", "title": "VEIL", "sub": "WEBBED FIN"},
+            {"slot": "right-mid", "title": "TRANSLUCENT", "sub": "GUT VISIBLE"},
+        ],
+        "cut_behaviors": {
+            "discovery": "drifts in the open darkness, its translucent body faintly lit",
+            "behavior": "swims by undulating its veil-like webbed fin through the water",
+            "detail": "hovers near the seafloor, sediment visible through its transparent body",
+        },
+    },
 }
 
 
