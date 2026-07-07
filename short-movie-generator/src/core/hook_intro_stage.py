@@ -27,12 +27,14 @@ _PUNCT = re.compile(r"[、。，．・「」『』（）\s]")
 
 
 def _install_ca() -> None:
-    if Path(_PROXY_CA).exists():
-        try:
+    # Path.exists()도 try 안: CI 러너(비 root)에선 /root/.ccr 접근 불가라
+    # Python 3.11 exists()가 PermissionError를 되던진다 → 전부 감싸 삼킨다.
+    try:
+        if Path(_PROXY_CA).exists():
             import edge_tts.communicate as ec
             ec._SSL_CTX = ssl.create_default_context(cafile=_PROXY_CA)
-        except Exception:  # noqa: BLE001
-            pass
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def _synth_hook(text: str, out_mp3: str, cfg: hi.HookIntroConfig) -> dict | None:

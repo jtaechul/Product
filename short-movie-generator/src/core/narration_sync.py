@@ -27,13 +27,18 @@ _PUNCT = re.compile(r"[、。，．・「」『』（）\s]")
 
 
 def _install_ca() -> None:
-    """프록시 CA가 있으면 edge-tts SSL 컨텍스트에 주입(로컬 개발). CI엔 무영향."""
-    if Path(_PROXY_CA).exists():
-        try:
+    """프록시 CA가 있으면 edge-tts SSL 컨텍스트에 주입(로컬 개발). CI엔 무영향.
+
+    주의: Path.exists()도 try 안에 둔다. CI 러너(비 root)에선 /root/.ccr 자체가
+    접근 불가라 Python 3.11의 exists()가 PermissionError(EACCES)를 '되던진다'(ENOENT만 삼킴).
+    이걸 밖에 두면 CI에서 나레이션 합성이 통째로 죽는다(실제 장애 원인). 전부 감싼다.
+    """
+    try:
+        if Path(_PROXY_CA).exists():
             import edge_tts.communicate as ec
             ec._SSL_CTX = ssl.create_default_context(cafile=_PROXY_CA)
-        except Exception:  # noqa: BLE001
-            pass
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def _core(s: str) -> str:
