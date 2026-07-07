@@ -272,8 +272,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: 원장·콘텐츠 레코드 갱신 [skip ci]"
           # schedule은 main에서 뜨지만 코드·원장은 운영 브랜치 기준 → 운영 브랜치로 푸시
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            git push origin HEAD:"$OPS_BRANCH"
-          else
-            git push origin HEAD:${{ github.ref_name }}
-          fi
+          if [ "${{ github.event_name }}" = "schedule" ]; then TARGET="$OPS_BRANCH"; else TARGET="${{ github.ref_name }}"; fi
+          # 원격이 앞서가 있어도(non-fast-forward) 재정렬 후 재시도 → 레코드가 저장 안 되던 문제 방지
+          for i in 1 2 3 4 5; do
+            git fetch origin "$TARGET" \
+              && git rebase "origin/$TARGET" \
+              && git push origin "HEAD:$TARGET" \
+              && { echo "저장 완료"; exit 0; }
+            echo "재시도 $i (원격이 앞서감)…"; git rebase --abort 2>/dev/null || true; sleep 3
+          done
+          echo "저장 실패(push)"; exit 1
