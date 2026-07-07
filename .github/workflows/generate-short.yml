@@ -7,6 +7,11 @@ name: Generate Short
 on:
   workflow_dispatch:
     inputs:
+      category:
+        description: "카테고리"
+        type: choice
+        options: [deep_sea, marine_life, marine_algae, shipwreck]
+        default: deep_sea
       query:
         description: "종명 또는 자동(auto / auto:benthos / auto:plankton / auto:nekton)"
         required: true
@@ -88,12 +93,14 @@ jobs:
               echo "episode=${{ inputs.episode }}" >> "$GITHUB_OUTPUT"
               echo "scope=all" >> "$GITHUB_OUTPUT"
             fi
+            echo "category=${{ inputs.category }}" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.event_name }}" = "schedule" ]; then
             # 매일 자동: AI 카테고리 자동 로테이션 + 안정적인 panzoom(무쿼터)
             echo "query=auto" >> "$GITHUB_OUTPUT"
             echo "visualizer=panzoom" >> "$GITHUB_OUTPUT"
             echo "episode=" >> "$GITHUB_OUTPUT"
             echo "scope=all" >> "$GITHUB_OUTPUT"
+            echo "category=deep_sea" >> "$GITHUB_OUTPUT"
           else
             F=$(ls -t requests/*.json | head -1)
             python - "$F" <<'PY' >> "$GITHUB_OUTPUT"
@@ -103,6 +110,7 @@ jobs:
           print(f"visualizer={r.get('visualizer','panzoom')}")
           print(f"episode={r.get('episode','')}")
           print(f"scope={r.get('scope','all')}")
+          print(f"category={r.get('category','deep_sea')}")
           PY
           fi
 
@@ -136,8 +144,9 @@ jobs:
           EP_ARG=""
           if [ -n "${{ steps.inp.outputs.episode }}" ]; then EP_ARG="--episode ${{ steps.inp.outputs.episode }}"; fi
           SCOPE="${{ steps.inp.outputs.scope }}"; [ -z "$SCOPE" ] && SCOPE="all"
-          # 확정 시스템: reels(실사 심해 영상 + 일본어 오프닝훅/엔드카드/전환/사운드). 팬줌·Veo 미사용.
-          python -m src.run_pipeline "${{ steps.inp.outputs.query }}" $EP_ARG --mode reels
+          CAT="${{ steps.inp.outputs.category }}"; [ -z "$CAT" ] && CAT="deep_sea"
+          # 확정 시스템: reels(실사 영상 + 일본어 오프닝훅/엔드카드/전환/사운드). 팬줌·Veo 미사용.
+          python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --category "$CAT" $EP_ARG --mode reels
           VIDEO=$(ls -t output/*.mp4 | head -1)
           META=$(ls -t output/*.json | head -1)
           echo "video=$VIDEO" >> "$GITHUB_OUTPUT"
@@ -211,9 +220,11 @@ jobs:
         env:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # 추가 수신자(비밀 아님 — 채팅 ID는 수신자 식별자). 여러 명이면 공백/줄바꿈으로 나열.
+          TG_CHAT_EXTRA: "8231379366"
         run: |
-          if [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ]; then
-            echo "::notice::텔레그램 시크릿 없음 → 전송 생략 (Artifacts에서 다운로드)"
+          if [ -z "$TG_TOKEN" ]; then
+            echo "::notice::텔레그램 봇 토큰 없음 → 전송 생략 (Artifacts에서 다운로드)"
             exit 0
           fi
           CAPTION=$(python - <<'PY'
@@ -226,11 +237,19 @@ jobs:
           print(text[:1000])
           PY
           )
-          curl -sS -F chat_id="$TG_CHAT" \
-               -F video=@"${{ steps.gen.outputs.video }}" \
-               -F caption="$CAPTION" \
-               "https://api.telegram.org/bot${TG_TOKEN}/sendVideo" | head -c 300
-          echo
+          # 수신자 목록 = 기존 시크릿 채팅 + 추가 채팅(중복 제거). 각자에게 개별 전송.
+          RECIPIENTS=$(printf '%s\n%s\n' "$TG_CHAT" "$TG_CHAT_EXTRA" | tr ' ' '\n' | grep -v '^$' | sort -u)
+          if [ -z "$RECIPIENTS" ]; then
+            echo "::notice::수신자 없음 → 전송 생략"; exit 0
+          fi
+          for CID in $RECIPIENTS; do
+            echo "→ Telegram chat $CID"
+            curl -sS -F chat_id="$CID" \
+                 -F video=@"${{ steps.gen.outputs.video }}" \
+                 -F caption="$CAPTION" \
+                 "https://api.telegram.org/bot${TG_TOKEN}/sendVideo" | head -c 300
+            echo
+          done
 
       - name: Upload artifact (백업 다운로드)
         uses: actions/upload-artifact@v4
@@ -253,8 +272,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: 원장·콘텐츠 레코드 갱신 [skip ci]"
           # schedule은 main에서 뜨지만 코드·원장은 운영 브랜치 기준 → 운영 브랜치로 푸시
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            git push origin HEAD:"$OPS_BRANCH"
-          else
-            git push origin HEAD:${{ github.ref_name }}
-          fi
+          if [ "${{ github.event_name }}" = "schedule" ]; then TARGET="$OPS_BRANCH"; else TARGET="${{ github.ref_name }}"; fi
+          # 원격이 앞서가 있어도(non-fast-forward) 재정렬 후 재시도 → 레코드가 저장 안 되던 문제 방지
+          for i in 1 2 3 4 5; do
+            git fetch origin "$TARGET" \
+              && git rebase "origin/$TARGET" \
+              && git push origin "HEAD:$TARGET" \
+              && { echo "저장 완료"; exit 0; }
+            echo "재시도 $i (원격이 앞서감)…"; git rebase --abort 2>/dev/null || true; sleep 3
+          done
+          echo "저장 실패(push)"; exit 1
