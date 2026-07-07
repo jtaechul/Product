@@ -1,0 +1,58 @@
+{
+  "id": "006",
+  "created_at": "2026-07-07T07:02:18+00:00",
+  "updated_at": "2026-07-07T07:02:18+00:00",
+  "status": "published",
+  "series": "심해 도감",
+  "species": {
+    "common_name_ko": "머리없는닭괴물",
+    "common_name_en": "Headless chicken monster",
+    "scientific_name": "Enypniastes eximia",
+    "depth_range_m": "500-6000",
+    "habitat": "심해 저층~중층(유영성 해삼)",
+    "distribution": "전 세계 심해",
+    "diet": [
+      "해저 퇴적물 속 유기물"
+    ],
+    "fun_facts": [
+      "머리·눈·뼈가 없는 심해 해삼이다",
+      "지느러미 같은 막으로 헤엄쳐 이동한다",
+      "몸이 투명해 삼킨 퇴적물이 그대로 비친다",
+      "위협을 받으면 빛나는 피부를 벗어 미끼로 던진다",
+      "대부분의 해삼과 달리 해저를 기지 않고 유영한다"
+    ]
+  },
+  "reels": {
+    "hook": "頭も、目も、骨もない。",
+    "caption": "頭も、目も、骨もない。\n\n泳ぐ・光る・透ける、深海のナマコ。\n深海にすむユメナマコです。\n\n心に残ったら保存を。\n同じ深海が気になる人へシェアを。\n\n映像: NOAA Ocean Exploration・Public Domain",
+    "hashtags": [
+      "#深海",
+      "#ユメナマコ",
+      "#生き物"
+    ],
+    "reveal_name": "ユメナマコ / Enypniastes eximia",
+    "reveal_fact": "泳ぐ・光る・透ける、深海のナマコ",
+    "hook_ko": "머리도, 눈도, 뼈도 없다.",
+    "caption_ko": "머리도, 눈도, 뼈도 없다.\n\n헤엄치고·빛나고·비치는, 심해의 해삼.\n심해에 사는 머리없는닭괴물입니다.\n\n마음에 남았다면 저장해 두세요.\n같은 심해가 궁금한 사람에게 공유해 주세요.\n\n영상: NOAA Ocean Exploration · 퍼블릭 도메인",
+    "hashtags_ko": [
+      "#심해",
+      "#머리없는닭괴물",
+      "#생물"
+    ],
+    "visualizer": "reels",
+    "video_file": "headless_chicken_monster_20260707_070218.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "NOAA Ocean Exploration",
+      "WoRMS"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-006/reels_006.mp4",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-006/cover_006.jpg"
+  },
+  "post": null
+}
