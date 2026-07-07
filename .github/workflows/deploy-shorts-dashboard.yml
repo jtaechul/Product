@@ -33,3 +33,17 @@ jobs:
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
+      # 선택: 서버 토큰(GH_PAT) 설정 시 어느 브라우저/기기에서도 GitHub 토큰 입력 불필요.
+      # GitHub 저장소 시크릿 DASHBOARD_GH_PAT(=Actions RW + Contents RW PAT)를 넣으면 자동 반영.
+      - name: Configure server GitHub token (있으면)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          DASHBOARD_GH_PAT: ${{ secrets.DASHBOARD_GH_PAT }}
+        run: |
+          if [ -n "$DASHBOARD_GH_PAT" ]; then
+            printf '%s' "$DASHBOARD_GH_PAT" | npx wrangler secret put GH_PAT
+            echo "서버 토큰 설정 완료 → 브라우저 토큰 입력 불필요"
+          else
+            echo "::notice::DASHBOARD_GH_PAT 미설정 → 기존 브라우저 토큰 모드 유지"
+          fi

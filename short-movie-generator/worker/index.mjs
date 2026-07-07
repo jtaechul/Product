@@ -86,13 +86,20 @@ button:disabled{opacity:.5}
 
 <script>
 const OWNER="${OWNER}",REPO="${REPO}",WF="${WORKFLOW}",BRANCH="${BRANCH}";
-const API="https://api.github.com/repos/"+OWNER+"/"+REPO;
+// 서버 토큰 모드: 워커가 GitHub 토큰을 보관·프록시 → 어느 브라우저/기기에서도 토큰 입력 불필요.
+// 미설정 시 기존 브라우저 토큰(localStorage) 모드로 자동 폴백.
+let SERVER=false;
+let API="https://api.github.com/repos/"+OWNER+"/"+REPO;
 const CONTENT_DIR="short-movie-generator/content";
 const CATALOG_PATH="short-movie-generator/src/categories/deep_sea/catalog.json";
 const $=s=>document.querySelector(s);
 const view=()=>document.getElementById("view");
-function pat(){return localStorage.getItem("gh_pat")||"";}
-function headers(auth){const h={"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"};if(auth&&pat())h["Authorization"]="Bearer "+pat();return h;}
+function pat(){try{return localStorage.getItem("gh_pat")||"";}catch(e){return "";}}
+// 입력칸에 토큰이 있으면 즉시 저장하고 반환 → '저장' 버튼을 따로 누르지 않아도 한 번 입력하면 계속 유지
+function ensurePat(){const el=document.getElementById("pat");if(el&&el.value.trim()){try{localStorage.setItem("gh_pat",el.value.trim());}catch(e){}el.value="";}return pat();}
+function headers(auth){const h={"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"};if(auth&&!SERVER&&pat())h["Authorization"]="Bearer "+pat();return h;}
+// 인증 준비: 서버 모드면 항상 OK(토큰 불필요), 아니면 입력칸/localStorage 토큰 확보
+function authReady(){return SERVER||!!ensurePat();}
 function num3(n){return String(n).padStart(3,"0");}
 function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function b64(str){return btoa(unescape(encodeURIComponent(str)));}
@@ -135,23 +142,25 @@ function renderHome(){
     '<button class="go" id="go">쇼츠 생성 시작</button>'+
     '<div class="banner" id="msg"></div>'+
     '<div class="hint">완성 영상은 2~4분 뒤 <b>텔레그램</b>으로 전송되고, <a href="/library">라이브러리</a>에 등록됩니다.</div>'+
-    '<details class="tok" id="tokbox"><summary>최초 1회 설정 — GitHub 연결 토큰</summary>'+
-      '<ol><li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank">GitHub 토큰 만들기</a>를 여세요.</li>'+
-      '<li>Repository access → Only select repositories → '+OWNER+'/'+REPO+'</li>'+
-      '<li>Permissions → <b>Actions: Read and write</b> + <b>Contents: Read and write</b>(캡션 저장용)</li>'+
-      '<li>Generate token → 코드를 복사해 아래에 붙여넣기</li></ol>'+
-      '<div class="row2"><input id="pat" placeholder="github_pat_..." autocomplete="off"><button id="savepat">저장</button></div>'+
-      '<div class="hint">토큰은 <b>이 기기 브라우저에만</b> 저장됩니다(서버 저장 없음).</div>'+
-    '</details>'+
+    (SERVER
+      ? '<div class="hint ok" style="margin-top:8px">GitHub 연결됨 ✓ — 서버에 저장되어 <b>어느 브라우저/기기에서도 토큰 입력이 필요 없습니다.</b></div>'
+      : ('<details class="tok" id="tokbox"'+(pat()?'':' open')+'><summary>'+(pat()?'GitHub 토큰 — 저장됨 ✓ (변경하려면 열기)':'최초 1회 설정 — GitHub 연결 토큰')+'</summary>'+
+          '<ol><li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank">GitHub 토큰 만들기</a>를 여세요.</li>'+
+          '<li>Repository access → Only select repositories → '+OWNER+'/'+REPO+'</li>'+
+          '<li>Permissions → <b>Actions: Read and write</b> + <b>Contents: Read and write</b>(캡션 저장용)</li>'+
+          '<li>Generate token → 코드를 복사해 아래에 붙여넣고 <b>생성 시작</b>을 누르면 저장됩니다(따로 저장 불필요).</li></ol>'+
+          '<div class="row2"><input id="pat" placeholder="github_pat_..." autocomplete="off"><button id="savepat">저장</button></div>'+
+          '<div class="hint">이 기기 브라우저에 저장됩니다. (여러 기기에서 입력 없이 쓰려면 <b>서버 토큰</b> 설정 필요 — README 참고)</div>'+
+        '</details>'))+
   '</div>'+
   '<div class="card"><span class="lbl">실행 현황 <a href="#" id="refresh" style="color:var(--cy);float:right;text-decoration:none">새로고침</a></span>'+
     '<div class="runs" id="runs"><div class="hint">불러오는 중…</div></div></div>';
 
-  $("#savepat").onclick=()=>{const v=$("#pat").value.trim();if(!v)return;
-    localStorage.setItem("gh_pat",v);$("#pat").value="";$("#tokbox").open=false;banner("토큰 저장 완료.","ok");};
+  const _sp=$("#savepat");if(_sp)_sp.onclick=()=>{const v=$("#pat").value.trim();if(!v)return;
+    localStorage.setItem("gh_pat",v);$("#pat").value="";const tb=$("#tokbox");if(tb)tb.open=false;banner("토큰 저장 완료. 다시 묻지 않습니다.","ok");};
   $("#go").onclick=async()=>{
     const query=$("#query").value.trim()||$("#species").value;
-    if(!pat()){$("#tokbox").open=true;banner("최초 1회 GitHub 토큰이 필요합니다. 아래 설정을 따라 주세요.","err");return;}
+    if(!authReady()){const tb=$("#tokbox");if(tb)tb.open=true;banner("GitHub 토큰을 아래 칸에 붙여넣고 생성을 누르면 이 기기에 저장돼 다시 묻지 않습니다.","err");return;}
     $("#go").disabled=true;banner("생성 요청 중…");
     try{const r=await fetch(API+"/actions/workflows/"+WF+"/dispatches",{method:"POST",headers:headers(true),
         body:JSON.stringify({ref:BRANCH,inputs:{query}})});
@@ -245,7 +254,7 @@ async function renderDetail(id){
 }
 
 async function saveCaption(id){
-  if(!pat()){banner("캡션 저장에는 GitHub 토큰(Contents: Read and write)이 필요합니다.","err");return;}
+  if(!authReady()){banner("캡션 저장에는 GitHub 토큰(Contents: Read and write)이 필요합니다.","err");return;}
   const path=CONTENT_DIR+"/"+id+".json";
   banner("저장 중…");
   try{
@@ -266,7 +275,7 @@ async function saveCaption(id){
 }
 
 async function regen(id,scope){
-  if(!pat()){banner("재생성에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
+  if(!authReady()){banner("재생성에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
   banner("재생성 요청 중… ("+scope+")");
   const viz=(scope==="video"||scope==="all")?"veo_text2video":"panzoom";
   try{
@@ -277,14 +286,51 @@ async function regen(id,scope){
   }catch(e){banner("요청 실패: "+e,"err");}
 }
 
-route();
+// 서버 토큰 모드 감지 후 라우팅(어느 브라우저든 서버에 토큰이 있으면 입력창을 아예 띄우지 않음)
+async function init(){
+  try{const r=await fetch("/api/mode");if(r.ok){const j=await r.json();SERVER=!!j.server;if(SERVER)API="/api/gh";}}catch(e){}
+  route();
+}
+init();
 </script>
 </body></html>`;
 
+// ── 서버 측: GitHub 토큰(Cloudflare Secret env.GH_PAT)로 프록시 → 브라우저 토큰 불필요 ──
+function j(o, status){return new Response(JSON.stringify(o),{status:status||200,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});}
+
+async function ghProxy(request, url, env){
+  const token = env && env.GH_PAT;
+  if(!token) return j({error:"server token not configured"}, 501);
+  const rest = url.pathname.slice("/api/gh/".length);
+  const m = request.method;
+  // 이 앱이 실제로 쓰는 경로/메서드만 허용(토큰 오남용 방지)
+  const ok =
+    (m==="POST" && /^actions\/workflows\/[^/]+\/dispatches$/.test(rest)) ||
+    (m==="GET"  && /^actions\/workflows\/[^/]+\/runs/.test(rest)) ||
+    (m==="GET"  && /^contents\//.test(rest)) ||
+    (m==="PUT"  && /^contents\//.test(rest));
+  if(!ok) return j({error:"path not allowed"}, 403);
+  const target = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/" + rest + url.search;
+  const h = {
+    "Accept": request.headers.get("Accept") || "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+    "Authorization": "Bearer " + token,
+    "User-Agent": "deep-dive-log-dashboard",
+  };
+  const body = (m==="GET"||m==="HEAD") ? undefined : await request.text();
+  if(body) h["Content-Type"] = "application/json";
+  const resp = await fetch(target, {method:m, headers:h, body});
+  const text = await resp.text();
+  return new Response(text, {status:resp.status,
+    headers:{"Content-Type": resp.headers.get("Content-Type") || "application/json", "Cache-Control":"no-store"}});
+}
+
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/health") return new Response("ok");
+    if (url.pathname === "/api/mode") return j({ server: !!(env && env.GH_PAT) });
+    if (url.pathname.startsWith("/api/gh/")) return ghProxy(request, url, env);
     return new Response(HTML, {
       headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
     });
