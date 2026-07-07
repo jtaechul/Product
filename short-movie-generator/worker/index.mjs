@@ -91,6 +91,7 @@ button:disabled{opacity:.5}
 const OWNER="${OWNER}",REPO="${REPO}",WF="${WORKFLOW}",BRANCH="${BRANCH}";
 const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 Actions 디스패치 → 403 회피)
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
+const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 // 서버 토큰 모드: 워커가 GitHub 토큰을 보관·프록시 → 어느 브라우저/기기에서도 토큰 입력 불필요.
 // 미설정 시 기존 브라우저 토큰(localStorage) 모드로 자동 폴백.
 let SERVER=false;
@@ -114,8 +115,6 @@ function ago(iso){if(!iso)return"";const s=(Date.now()-new Date(iso))/1000;
 function banner(t,cls){let m=$("#msg");if(!m)return;m.className="banner show "+(cls||"");m.innerHTML=t;}
 // Release 미디어 → 워커 프록시 URL(iOS 재생 가능한 inline·video/mp4로 중계)
 function prox(u){return u?"/api/media?u="+encodeURIComponent(u):"";}
-// 저장(다운로드)용: 파일명을 붙여 attachment 로 받게 함
-function proxDl(u,name){return u?prox(u)+"&dl="+encodeURIComponent(name||"video.mp4"):"";}
 // 구버전 합본 캡션(JP+【한국어 참고 번역】+KO) → {jp, ko} 분해(신 레코드는 분리 필드 사용)
 function splitLegacy(cap){const M="【한국어 참고 번역】";const i=(cap||"").indexOf(M);
   if(i<0)return{jp:cap||"",ko:""};
@@ -280,7 +279,7 @@ async function renderDetail(id){
     '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px"><b style="font-size:19px">#'+esc(id)+' '+esc(sp.common_name_ko||"")+'</b>'+
       '<span class="mono" style="color:var(--gy);font-size:12px">'+esc(sp.common_name_en||"")+'</span></div>'+
     mediaHtml+
-    (md.video_url?'<div class="btnrow" style="margin-top:8px"><a class="btn" style="grid-column:1/3;border-color:var(--cy);color:#eafcff;text-align:center;text-decoration:none" href="'+proxDl(md.video_url,esc(id)+"_"+esc(sp.common_name_ko||"reel")+".mp4")+'" download>동영상 저장 (다운로드)</a></div>':"")+
+    (md.video_url?'<div class="hint" style="margin-top:8px">동영상 저장: <b>위 영상을 길게 눌러</b> "비디오를 사진에 저장"을 선택하세요. · <a href="'+prox(md.video_url)+'" target="_blank" rel="noopener" style="color:var(--cy)">새 탭에서 크게 열기</a></div>':"")+
     '<div class="meta" style="margin-top:12px"><b>학명</b> <i>'+esc(sp.scientific_name||"")+'</i> · <b>수심</b> '+esc(sp.depth_range_m||"?")+'m<br>'+
       '<b>서식</b> '+esc(sp.habitat||"?")+' · <b>분포</b> '+esc(sp.distribution||"?")+'</div>'+
     // 캡션·해시태그를 한 프레임에 합쳐 표시(일본어 발행 / 한국어 참고). 저장 시 끝의 해시태그 줄을 분리.
@@ -296,7 +295,7 @@ async function renderDetail(id){
     '<div class="banner" id="msg"></div>'+
     '<div class="btnrow">'+
       '<button class="btn save" id="bsave">캡션·해시태그 저장 (재생성 없음)</button>'+
-      '<button class="btn warn" id="bcap">캡션 재생성</button>'+
+      '<button class="btn warn" id="bcap">캡션·해시태그 재생성 (영상 유지)</button>'+
       '<button class="btn warn" id="bvid">영상 다시 제작 (무료)</button>'+
       '<button class="btn" id="ball" style="grid-column:1/3">전체 재생성 (무료)</button>'+
       '<button class="btn" id="bigp" style="grid-column:1/3;background:#833ab4;color:#fff">인스타 계정 점검 (발행 안 함)</button>'+
@@ -307,7 +306,7 @@ async function renderDetail(id){
 
   // 현 시스템은 실사 영상 재편집(무료) — Veo·카드뉴스 이미지 재생성은 구 시스템 유물이라 제거
   $("#bsave").onclick=()=>saveCaption(id);
-  $("#bcap").onclick=()=>regen(id,"caption");
+  $("#bcap").onclick=()=>capRegen(id);
   $("#bvid").onclick=()=>{if(confirm("이 회차의 영상을 같은 종으로 처음부터 다시 만듭니다(무료·2~4분). 진행할까요?"))regen(id,"video");};
   $("#ball").onclick=()=>{if(confirm("영상·캡션을 모두 처음부터 다시 만듭니다(무료·2~4분). 진행할까요?"))regen(id,"all");};
   $("#bigp").onclick=()=>igPublish(id,true);
@@ -332,6 +331,17 @@ async function saveCaption(id){
     if(r.status===204)banner("저장 시작! 20~40초 뒤 저장소에 반영됩니다(새로고침).","ok");
     else{const t=await r.text();banner("저장 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
   }catch(e){banner("저장 오류: "+e,"err");}
+}
+
+async function capRegen(id){
+  if(!authReady()){banner("재생성에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
+  banner("캡션·해시태그 재생성 중… (영상은 그대로, 30~60초)");
+  try{
+    const r=await fetch(API+"/actions/workflows/"+CAP_WF+"/dispatches",{method:"POST",headers:headers(true),
+      body:JSON.stringify({ref:BRANCH,inputs:{content_id:id}})});
+    if(r.status===204)banner("시작! 30~60초 뒤 캡션·해시태그가 새로 채워집니다(새로고침).","ok");
+    else{const t=await r.text();banner("실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
+  }catch(e){banner("요청 실패: "+e,"err");}
 }
 
 async function igPublish(id,probe){
@@ -416,14 +426,7 @@ async function mediaProxy(request, url) {
   if (!resp.ok && resp.status !== 206) return j({ error: "upstream " + resp.status }, 502);
   const out = new Headers();
   out.set("Content-Type", type);
-  // dl=파일명 이면 저장(attachment)로 응답 → 라이브러리 '동영상 저장' 버튼용. 없으면 inline 재생.
-  const dl = url.searchParams.get("dl");
-  if (dl) {
-    const safe = dl.replace(/[^\w.\-가-힣]/g, "_").slice(0, 80) || ("media." + ext);
-    out.set("Content-Disposition", 'attachment; filename="' + safe + '"');
-  } else {
-    out.set("Content-Disposition", "inline");
-  }
+  out.set("Content-Disposition", "inline");   // 항상 inline 재생(iOS '파일 열기' 화면 전환 방지)
   out.set("Accept-Ranges", "bytes");
   out.set("Cache-Control", "public, max-age=86400");
   for (const k of ["Content-Length", "Content-Range"]) {
