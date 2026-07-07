@@ -73,6 +73,7 @@ jobs:
         env:
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
         run: |
+          set -o pipefail   # tee 가 파이썬의 실패 종료코드를 가리지 않도록(거짓 성공 방지)
           CID="${{ steps.inp.outputs.cid }}"
           if [ "${{ steps.inp.outputs.probe }}" = "false" ]; then
             python -m src.run_ig_publish --content-id "$CID" | tee /tmp/ig.log

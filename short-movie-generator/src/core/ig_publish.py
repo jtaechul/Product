@@ -117,6 +117,33 @@ def probe(token: str) -> dict:
     return {"ok": True, "base": base, "ig_user_id": uid, "username": username}
 
 
+def diagnose(token: str) -> str:
+    """토큰으로 각 엔드포인트를 실제 호출해 원인을 정밀 진단(발행 없음).
+
+    어떤 경로가 왜 막히는지(토큰 종류·페이지 연결·권한)를 응답 본문 그대로 보여준다.
+    """
+    checks = [
+        ("A graph.instagram.com/me (인스타로그인 토큰용)", f"{_IG_BASE}/me",
+         {"fields": "user_id,username"}),
+        ("B graph.facebook.com/me (페북 토큰 본인)", f"{_FB_BASE}/me",
+         {"fields": "id,name"}),
+        ("C /me/accounts→연결된 IG비즈계정(페이지연결 필요)", f"{_FB_BASE}/me/accounts",
+         {"fields": "name,instagram_business_account{id,username}"}),
+        ("D /me?accounts{instagram_business_account}", f"{_FB_BASE}/me",
+         {"fields": "accounts{instagram_business_account{id,username}}"}),
+        ("E /me/permissions (토큰 권한)", f"{_FB_BASE}/me/permissions", {}),
+    ]
+    out = []
+    for label, url, params in checks:
+        p = dict(params); p["access_token"] = token
+        try:
+            r = requests.get(url, params=p, timeout=_TIMEOUT)
+            out.append(f"[{label}] HTTP {r.status_code}\n{r.text.replace(token, '***')[:350]}")
+        except Exception as e:  # noqa: BLE001
+            out.append(f"[{label}] 예외: {e}")
+    return "\n\n".join(out)
+
+
 def publish_reel(token: str, video_url: str, caption: str) -> dict:
     """릴스 1편 발행(전 과정). {post_id, ig_user_id, username}."""
     if not token:

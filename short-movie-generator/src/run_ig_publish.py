@@ -51,6 +51,8 @@ def main() -> int:
             info = ig_publish.probe(token)
         except ig_publish.IGPublishError as e:
             log.error("점검 실패: %s", e)
+            log.error("── 원인 정밀 진단(각 엔드포인트 실제 응답) ──\n%s",
+                      ig_publish.diagnose(token))
             return 1
         log.info("점검 성공 ✅  계정=@%s (id=%s)  API=%s",
                  info["username"], info["ig_user_id"], info["base"])
