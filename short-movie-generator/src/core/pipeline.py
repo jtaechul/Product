@@ -250,11 +250,20 @@ def run_reels(
     if final == body_av:
         log.warning("[reels] hook_intro 미적용(폰트/edge-tts 전제 미충족) → 본문만 발행")
 
-    # 7) 캡션 + 출력
-    caption = (category.build_narrated_caption(info)
-               if hasattr(category, "build_narrated_caption") else category.build_caption(info))
-    if hasattr(category, "attach_attribution"):
-        caption = category.attach_attribution(caption, info, fv["credit"])
+    # 7) 캡션 + 출력 (캡션 생성 실패해도 발행 불정지)
+    try:
+        caption = (category.build_narrated_caption(info)
+                   if hasattr(category, "build_narrated_caption") else category.build_caption(info))
+        if hasattr(category, "attach_attribution"):
+            caption = category.attach_attribution(caption, info, fv["credit"])
+    except Exception as e:  # noqa: BLE001
+        log.warning("[reels] 캡션 생성 실패 → 최소 캡션으로 발행: %s", e)
+        from src.core.contracts import CaptionData
+        caption = CaptionData(
+            hook_text=hook_text, caption_body=info.common_name_ko,
+            overlay_facts=[f"수심 {info.depth_range_m}m"],
+            hashtags=[f"#{info.common_name_ko}", "#심해생물", "#深海"],
+            reveal_name=f"{info.common_name_ko} ({info.common_name_en})", reveal_fact="")
     if episode is None:
         episode = category.next_episode() if hasattr(category, "next_episode") else 1
     series_title = getattr(category, "series_title", "") or category_id
