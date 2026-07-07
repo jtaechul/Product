@@ -90,7 +90,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: 인스타 발행 결과 반영 [skip ci]"
-          git push origin HEAD:"$OPS_BRANCH"
+          for i in 1 2 3 4 5; do
+            git fetch origin "$OPS_BRANCH" \
+              && git rebase "origin/$OPS_BRANCH" \
+              && git push origin "HEAD:$OPS_BRANCH" \
+              && { echo "저장 완료"; exit 0; }
+            echo "재시도 $i (원격이 앞서감)…"; git rebase --abort 2>/dev/null || true; sleep 3
+          done
+          echo "저장 실패(push)"; exit 1
 
       - name: Notify Telegram
         if: always()
