@@ -286,15 +286,17 @@ async function renderDetail(id){
     '<input type="hidden" id="ehook" value="'+esc(re.hook||"")+'">'+
     '<input type="hidden" id="ehookko" value="'+esc(hookKO)+'">'+
     '<div class="dual">'+
-      '<div><span class="lbl">캡션 + 해시태그 · 일본어(발행 · 그대로 저장)</span>'+
-        '<textarea id="ecapjp" rows="12">'+esc(mergeCap(capJP,(re.hashtags||[]).join(" ")))+'</textarea></div>'+
+      '<div><span class="lbl">캡션 + 해시태그 · 일본어(발행용)</span>'+
+        '<textarea id="ecapjp" rows="12">'+esc(mergeCap(capJP,(re.hashtags||[]).join(" ")))+'</textarea>'+
+        '<button class="btn save" id="cpjp" style="margin-top:6px">일본어 캡션+해시태그 복사</button></div>'+
       '<div><span class="lbl">캡션 + 해시태그 · 한국어(참고 번역)</span>'+
-        '<textarea id="ecapko" rows="12">'+esc(mergeCap(capKO,tagsKO))+'</textarea></div>'+
+        '<textarea id="ecapko" rows="12">'+esc(mergeCap(capKO,tagsKO))+'</textarea>'+
+        '<button class="btn" id="cpko" style="margin-top:6px">한국어 복사</button></div>'+
     '</div>'+
     '<div style="margin-top:6px">'+tags+'</div>'+
     '<div class="banner" id="msg"></div>'+
     '<div class="btnrow">'+
-      '<button class="btn save" id="bsave">캡션·해시태그 저장 (재생성 없음)</button>'+
+      '<button class="btn save" id="bsave">수정 내용 저장 (재생성 없음)</button>'+
       '<button class="btn warn" id="bcap">캡션·해시태그 재생성 (영상 유지)</button>'+
       '<button class="btn warn" id="bvid">영상 다시 제작 (무료)</button>'+
       '<button class="btn" id="ball" style="grid-column:1/3">전체 재생성 (무료)</button>'+
@@ -306,6 +308,8 @@ async function renderDetail(id){
 
   // 현 시스템은 실사 영상 재편집(무료) — Veo·카드뉴스 이미지 재생성은 구 시스템 유물이라 제거
   if($("#bdl"))$("#bdl").onclick=()=>saveVideo(prox(md.video_url),esc(id)+"_"+(sp.common_name_ko||"reel")+".mp4");
+  $("#cpjp").onclick=()=>copyText($("#ecapjp").value,"일본어 캡션+해시태그를 복사했어요. 릴스에 붙여넣기 하세요.");
+  $("#cpko").onclick=()=>copyText($("#ecapko").value,"한국어(참고)를 복사했어요.");
   $("#bsave").onclick=()=>saveCaption(id);
   $("#bcap").onclick=()=>capRegen(id);
   $("#bvid").onclick=()=>{if(confirm("이 회차의 영상을 같은 종으로 처음부터 다시 만듭니다(무료·2~4분). 진행할까요?"))regen(id,"video");};
@@ -332,6 +336,16 @@ async function saveCaption(id){
     if(r.status===204)banner("저장 시작! 20~40초 뒤 저장소에 반영됩니다(새로고침).","ok");
     else{const t=await r.text();banner("저장 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
   }catch(e){banner("저장 오류: "+e,"err");}
+}
+
+// 클립보드 복사(릴스 붙여넣기용). navigator.clipboard 우선, 실패 시 textarea 폴백.
+async function copyText(text,okmsg){
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(text);}
+    else{const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";
+      document.body.appendChild(ta);ta.focus();ta.select();document.execCommand("copy");ta.remove();}
+    banner(okmsg||"복사했어요.","ok");
+  }catch(e){banner("복사 실패 — 텍스트를 직접 길게 눌러 복사하세요: "+esc(String(e)),"err");}
 }
 
 // 비디오 저장: ① iOS 공유 시트(navigator.share)로 "비디오를 사진에 저장" 직접 노출
