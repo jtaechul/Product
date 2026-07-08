@@ -32,11 +32,31 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 
 # ─────────────────────────── 폰트 경로(시스템/벤더) ───────────────────────────
 _VENDOR = Path(__file__).resolve().parents[2] / "vendor" / "fonts"
+
+
+def _resolve_font(candidates: list[str]) -> str:
+    """후보 폰트 경로 중 실제 존재하는 첫 번째를 반환(없으면 첫 후보 그대로).
+    재발방지: 특정 폰트 1개가 없다고 오프닝/엔드카드 전체가 스킵되지 않도록,
+    학명(라틴) 이탤릭이 없으면 Noto로 대체한다(이탤릭만 손해, 렌더는 계속)."""
+    for c in candidates:
+        try:
+            if Path(c).exists():
+                return c
+        except Exception:  # noqa: BLE001
+            continue
+    return candidates[0]
+
+
 FONT_SERIF = "/usr/share/fonts/opentype/noto/NotoSerifCJK-Bold.ttc"      # 명조(붓 뉘앙스)
 FONT_SANS_B = "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"
 FONT_SANS_R = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
 FONT_MONO = str(_VENDOR / "ShareTechMono.ttf")
-FONT_SCI = "/usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf"  # 학명 이탤릭
+# 학명 이탤릭: Liberation(라틴 이탤릭) 우선, 없으면 Noto로 폴백(전체 스킵 방지).
+FONT_SCI = _resolve_font([
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf",
+    FONT_SANS_B, FONT_SERIF,
+])
 
 
 @dataclass
@@ -123,8 +143,15 @@ def _sci(s: int): return ImageFont.truetype(FONT_SCI, s)
 
 
 def fonts_available() -> bool:
-    """필수 폰트가 모두 있으면 True(없으면 렌더 스킵/테스트 스킵)."""
-    return all(Path(p).exists() for p in (FONT_SERIF, FONT_SANS_R, FONT_MONO, FONT_SCI))
+    """필수(대체 불가) 폰트가 모두 있으면 True.
+    FONT_SCI(학명)는 _resolve_font로 항상 존재폰트로 해석되므로 게이트에서 제외 —
+    CJK 본문 폰트(Noto)와 벤더 모노만 있으면 오프닝/엔드카드를 낸다."""
+    return all(Path(p).exists() for p in (FONT_SERIF, FONT_SANS_R, FONT_MONO))
+
+
+def missing_fonts() -> list[str]:
+    """없는 필수 폰트 경로 목록(진단·프리플라이트용)."""
+    return [p for p in (FONT_SERIF, FONT_SANS_R, FONT_MONO) if not Path(p).exists()]
 
 
 # ─────────────────────────── 공통 그래픽 헬퍼 ───────────────────────────

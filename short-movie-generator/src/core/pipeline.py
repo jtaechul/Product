@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import subprocess
 from pathlib import Path
 
@@ -261,8 +262,19 @@ def run_reels(
     final = hook_intro_stage.apply(body_av, spec, hook_text, str(work_dir / "hook_intro"), bgm=bgm,
                                    open_bg_video=body_v, subject_video=fv["path"],
                                    logo_box=fv.get("logo_box"))
+    # ★재발방지 하드 게이트(기획서 규칙: 모든 영상에 오프닝 훅+엔드카드 필수).
+    # 폰트는 이제 항상 폴백 해석되므로 apply()가 본문을 그대로 돌려주는 건 '진짜 실패'뿐 →
+    # 조용히 발행하지 않고 큰 오류로 멈춰 CI를 빨간불로 만든다(스펙 위반 영상 발행 원천 차단).
+    # 로컬/특수상황은 SHORTS_ALLOW_BODY_ONLY=1 로만 우회 허용.
     if final == body_av:
-        log.warning("[reels] hook_intro 미적용(폰트/edge-tts 전제 미충족) → 본문만 발행")
+        from src.core import hook_intro as _hi
+        miss = _hi.missing_fonts()
+        msg = ("[reels] 오프닝 훅+엔드카드 래핑 실패 → 스펙 위반. "
+               + (f"필수 폰트 누락: {', '.join(miss)}" if miss else "렌더 파이프라인 오류(로그 확인)"))
+        if os.environ.get("SHORTS_ALLOW_BODY_ONLY") == "1":
+            log.warning(msg + " (SHORTS_ALLOW_BODY_ONLY=1 → 본문만 발행 허용)")
+        else:
+            raise PipelineError("hook_intro", msg)
 
     # 7) 캡션(일본어 게시글 + 한국어 참고) + 출력 (캡션 생성 실패해도 발행 불정지)
     try:
