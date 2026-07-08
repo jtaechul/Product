@@ -247,10 +247,14 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         W, H = cfg.W, cfg.H
 
         # 5) 영상 concat + 전환 2곳(본문 해상도 정규화)
+        # ★SAR 정규화(setsar=1) 필수: reframe '전신핏'(블러 배경) 컷은 스케일 반올림으로
+        #   SAR 5120:5121 같은 비1:1 값이 붙는데, 오프닝/엔드카드 mp4는 SAR 0:1(=1:1)이라
+        #   concat이 'SAR 불일치'로 실패했다(오프닝/엔드카드 통째 누락의 실제 근본원인).
+        #   세 입력 모두 setsar=1로 맞춰 concat이 항상 성공하게 한다.
         vf = (
-            f"[0:v]scale={W}:{H},setpts=PTS-STARTPTS[o];"
-            f"[1:v]scale={W}:{H},setpts=PTS-STARTPTS[b];"
-            f"[2:v]scale={W}:{H},setpts=PTS-STARTPTS[e];[o][b][e]concat=n=3:v=1:a=0[cat];"
+            f"[0:v]scale={W}:{H},setsar=1,setpts=PTS-STARTPTS[o];"
+            f"[1:v]scale={W}:{H},setsar=1,setpts=PTS-STARTPTS[b];"
+            f"[2:v]scale={W}:{H},setsar=1,setpts=PTS-STARTPTS[e];[o][b][e]concat=n=3:v=1:a=0[cat];"
             f"[3:v]format=yuva420p,colorchannelmixer=aa=0.55,fade=t=in:st={OPEN-0.25}:d=0.22:alpha=1,"
             f"fade=t=out:st={OPEN}:d=0.28:alpha=1[fl1];"
             f"[4:v]format=yuva420p,colorchannelmixer=aa=0.6,fade=t=in:st={BODY_END-0.25}:d=0.22:alpha=1,"

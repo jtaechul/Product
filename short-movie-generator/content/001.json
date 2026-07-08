@@ -1,7 +1,7 @@
 {
   "id": "001",
   "created_at": "2026-07-08T00:06:03+00:00",
-  "updated_at": "2026-07-08T00:39:11+00:00",
+  "updated_at": "2026-07-08T01:18:10+00:00",
   "status": "published",
   "series": "海の生き物 図鑑",
   "species": {
@@ -40,7 +40,7 @@
       "#산호초"
     ],
     "visualizer": "reels",
-    "video_file": "caribbean_reef_squid_20260708_003911.mp4"
+    "video_file": "caribbean_reef_squid_20260708_011810.mp4"
   },
   "source": {
     "image_credit": "",
