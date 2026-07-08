@@ -152,6 +152,64 @@ def _burned_text_threshold(tscores: list[float]) -> float:
     return max(0.006, _median(tscores) * 4.0)
 
 
+def _row_text_profile(frame_path: str, bands: int = 40) -> list[float]:
+    """프레임을 세로로 bands개 띠로 나눠, 각 띠의 '밝은 획-에지' 밀도(0~1)를 반환.
+    text_score와 동일한 획-에지 기준(밝고 국소대비 큰 픽셀)을 띠 단위로 집계."""
+    try:
+        from PIL import Image
+        im = Image.open(frame_path).convert("L")
+        w, h = im.size
+        px = im.load()
+        S = 3
+        cnt = [0] * bands
+        area = [0] * bands
+        for y in range(0, h - S):
+            b = min(bands - 1, y * bands // h)
+            for x in range(0, w - S):
+                area[b] += 1
+                v = px[x, y]
+                if v < 200:
+                    continue
+                if v - px[x + S, y] > 70 or v - px[x, y + S] > 70 or v - px[x + S, y + S] > 70:
+                    cnt[b] += 1
+        return [cnt[i] / max(1, area[i]) for i in range(bands)]
+    except Exception:  # noqa: BLE001
+        return [0.0] * bands
+
+
+def detect_text_bands(frame_paths: list[str], bands: int = 40) -> tuple[float, float]:
+    """주어진 프레임들에서 '가장자리(위/아래)에 박혀 있는 텍스트 띠'를 찾아 잘라낼
+    상/하 비율(top_frac, bottom_frac)을 반환. **컷 단위로 호출**하는 것을 전제로 한다.
+
+    핵심(오검 방지 + 간헐 자막 포착): 자막판·NOAA 로고·하단 정보카드(Site/Depth 등)는
+    떠 있는 동안 **같은 행에 고정**돼 있다(피사체 반점은 프레임마다 위치가 바뀜).
+    한 컷(≈5초)의 프레임들에 대해 '이 띠가 프레임 대부분에 텍스트로 떠 있나(지속률)'로 판정 →
+    그 컷에 카드가 떠 있으면 대부분 프레임에서 검출돼 크롭되고, 없으면 0. **전체 영상 평균이
+    아니라 컷 단위**라서, 영상 전체에선 10%만 나오는 하단 카드도 '그 카드가 뜬 컷'에서 확실히
+    잡히고, 다른 깨끗한 컷은 과크롭되지 않는다. 가장자리(상·하 각 40%) 띠만 대상 → 중앙 안전.
+    과크롭 상한 35%.
+    """
+    if not frame_paths:
+        return (0.0, 0.0)
+    profs = [_row_text_profile(p, bands) for p in frame_paths]
+    n = len(profs)
+    HIT = 0.010          # 띠 텍스트 판정(획-에지 밀도) — 확실한 텍스트만
+    PERSIST = 0.55       # 이 프레임집합의 절반 이상에 떠 있어야 '박힌 텍스트'
+    persist = [sum(1 for pr in profs if pr[b] >= HIT) / n for b in range(bands)]
+    text_band = [p >= PERSIST for p in persist]
+    # 가장자리 영역(상·하 각 40%) 안에서 '박힌 텍스트' 띠를 찾으면, 오버레이는 보통
+    # 가장자리에서 살짝 안쪽에 여백을 두고 있으므로 **가장자리 ~ 텍스트 안쪽 끝**까지 통째로
+    # 크롭한다(텍스트와 가장자리 사이 여백도 함께 제거). 중앙 피사체는 영역 밖이라 안전.
+    region = int(bands * 0.40)
+    top_hits = [b for b in range(0, region) if text_band[b]]
+    bot_hits = [b for b in range(bands - region, bands) if text_band[b]]
+    top = (max(top_hits) + 1) if top_hits else 0            # 위 텍스트의 '안쪽 끝'까지
+    bot = (bands - min(bot_hits)) if bot_hits else 0        # 아래 텍스트의 '안쪽 끝'까지
+    cap = int(bands * 0.35)
+    top = min(top, cap); bot = min(bot, cap)
+    return (top / bands, bot / bands)
+
+
 def _subject_frac(frame_path: str) -> float:
     """적색 피사체의 화면 점유율(0~1) — 줌 상한 계산용."""
     try:
@@ -289,6 +347,41 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", footage_path,
                     "-vf", "fps=5,scale=480:-1", str(fr_dir / "f_%04d.jpg")], check=True)
     frames = sorted(fr_dir.glob("f_*.jpg"))
+
+    # ★번인 텍스트 '띠' 제거(재발방지 핵심): NOAA/탐사 오버레이(종명·Site·Depth 등)는
+    # 위/아래 가장자리에 '항상 같은 위치'로 박혀 있어, 시간 회피(_pick_windows)로는 못 없앤다
+    # (전 구간에 존재 → 깨끗한 구간이 없음). 지속성 기반으로 텍스트 띠를 찾아 소스에서
+    # 물리적으로 크롭한 '정제 소스'를 만들고, 이후 모든 컷(핏·접사)은 정제 소스로 렌더한다.
+    top_f, bot_f = detect_text_bands([str(f) for f in frames])
+    if top_f > 0 or bot_f > 0:
+        cy0 = int(round(src_h * top_f)) & ~1
+        ch0 = (int(round(src_h * (1 - top_f - bot_f))) & ~1)
+        cleaned = wd / "cleaned_src.mp4"
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", footage_path,
+                        "-vf", f"crop={int(src_w) & ~1}:{ch0}:0:{cy0},setsar=1",
+                        "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+                        str(cleaned)], check=True)
+        log.info("[reframe] 번인 텍스트 띠 제거: 상 %.0f%% · 하 %.0f%% 크롭 → 정제 소스",
+                 top_f * 100, bot_f * 100)
+        footage_path = str(cleaned)
+        # 워터마크 delogo 좌표(비율)를 크롭된 프레임 기준으로 재계산 —
+        # 띠 안에 있던 로고는 이미 잘려 제거(None), 남아 있으면 새 y비율로 보정.
+        if logo_box:
+            lx, ly, lw, lh = logo_box
+            span = 1 - top_f - bot_f
+            ny = (ly - top_f) / span
+            nh = lh / span
+            if ny + nh <= 0.02 or ny >= 0.98:   # 로고가 잘린 띠 안 → 제거됨
+                logo_box = None
+            else:
+                logo_box = (lx, max(0.0, ny), lw, min(nh, 1.0 - max(0.0, ny)))
+        src_h = ch0
+        # 정제 소스로 추적 프레임 재추출(텍스트가 빠져 피사체 중심이 정확해진다)
+        for f in fr_dir.glob("f_*.jpg"):
+            f.unlink()
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", footage_path,
+                        "-vf", "fps=5,scale=480:-1", str(fr_dir / "f_%04d.jpg")], check=True)
+        frames = sorted(fr_dir.glob("f_*.jpg"))
     cents = [_subject_centroid(str(f)) for f in frames] or [(0.5, 0.5)]
     fracs = [_subject_frac(str(f)) for f in frames] or [0.0]
     scores = [subject_score(str(f)) for f in frames] or [0.0]
@@ -338,8 +431,22 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
         if i % 2 == 0:
             # 핏 컷: 전신 + 배경 전체가 보이도록 원본 전체를 9:16 안에 맞춤(여백=블러 채움)
             n_fit += 1
-            pre = (delogo_vf(src_w, src_h, logo_box) + ",") if logo_box else ""
-            fc = (f"[0:v]{pre}split=2[a][b];"
+            # ★핏 컷 번인 텍스트 방지(재발방지 2차 방어): 핏은 원본 프레임 '전체'를 보여줘
+            #   이 컷 구간에 뜬 간헐 오버레이(하단 Site/Depth 카드 등)가 그대로 노출된다.
+            #   → 이 컷 창(window)의 프레임만으로 텍스트 띠를 감지해 그 띠를 먼저 크롭한다.
+            fa5, fb5 = int(sa * fps_trk), int((sa + seg_len) * fps_trk)
+            win_fr = [str(frames[j]) for j in range(max(0, fa5), min(len(frames), fb5))]
+            ct, cb = detect_text_bands(win_fr) if win_fr else (0.0, 0.0)
+            precrop = ""
+            if ct > 0 or cb > 0:
+                pcy = int(round(src_h * ct)) & ~1
+                pch = int(round(src_h * (1 - ct - cb))) & ~1
+                precrop = f"crop={int(src_w) & ~1}:{pch}:0:{pcy},"
+                log.info("[reframe] 컷%d 핏: 번인 텍스트 띠 크롭(상 %.0f%%·하 %.0f%%)",
+                         i, ct * 100, cb * 100)
+            # precrop 활성 시 delogo는 좌표가 어긋나므로 생략(띠 크롭이 로고 영역도 대개 포함)
+            pre = "" if precrop else ((delogo_vf(src_w, src_h, logo_box) + ",") if logo_box else "")
+            fc = (f"[0:v]{precrop}{pre}split=2[a][b];"
                   f"[a]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
                   f"gblur=sigma=32,eq=brightness=-0.14:saturation=1.02[bg];"
                   f"[b]scale={W}:{H}:force_original_aspect_ratio=decrease[fg];"
