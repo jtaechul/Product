@@ -75,11 +75,13 @@ def main() -> int:
     re["caption_ko"] = rc["ko"]
     re["hashtags"] = rc["tags"]
     re["hashtags_ko"] = rc["tags_ko"]
+    re["yt_title"] = rc.get("yt_title", "")
+    re["yt_title_ko"] = rc.get("yt_title_ko", "")
     rec["reels"] = re
     rec["updated_at"] = datetime.now(timezone.utc).isoformat()
     p.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
-    log.info("캡션 재생성 완료 ✅  #%s\n--- JP ---\n%s\n--- KO ---\n%s",
-             cid, rc["jp"], rc["ko"])
+    log.info("캡션 재생성 완료 ✅  #%s\n--- JP ---\n%s\n--- KO ---\n%s\n--- 제목 ---\n%s\n%s",
+             cid, rc["jp"], rc["ko"], rc.get("yt_title", ""), rc.get("yt_title_ko", ""))
     return 0
 
 
