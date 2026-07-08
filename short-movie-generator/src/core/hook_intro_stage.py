@@ -58,13 +58,23 @@ def _synth_hook(text: str, out_mp3: str, cfg: hi.HookIntroConfig) -> dict | None
             return bytes(audio), words
 
         audio, words = asyncio.run(_run())
-        if not audio or not words:
+        if not audio:   # 오디오만 있으면 채택(단어경계 없어도 균등 온셋으로 처리 → 오프닝 유지)
             return None
         Path(out_mp3).write_bytes(audio)
-        return {"mp3": out_mp3, "words": words}
+        return {"mp3": out_mp3, "words": words or []}
     except Exception as e:  # noqa: BLE001
         log.warning("[hook_intro] 훅 나레이션 합성 실패 → 오프닝 생략: %s", e)
         return None
+
+
+def _even_onsets(pop_words: list[str], cfg) -> dict:
+    """단어 온셋을 못 구할 때(나레이션 실패/단어경계 없음) 팝 어절을 오프닝 구간에 균등 배치."""
+    pops = [_PUNCT.sub("", w) for w in (pop_words or [])]
+    pops = [p for p in pops if p]
+    span = max(0.4, cfg.opening_seg_s - cfg.narr_start_s - 0.3)
+    if not pops:
+        return {"": round(span * 0.5, 2)}
+    return {p[0]: round((i + 1) * span / (len(pops) + 1), 2) for i, p in enumerate(pops)}
 
 
 def _onsets_for_words(pop_words: list[str], words: list[tuple]) -> dict:
@@ -186,11 +196,20 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         if dur <= 0:
             return body_video
 
-        # 1) 훅 나레이션 + 온셋
+        # 1) 훅 나레이션 + 온셋. ★기획서 규칙: 모든 영상에 오프닝 훅 + 엔드카드 필수.
+        #    나레이션(edge-tts)이 실패해도 오프닝/엔드카드는 반드시 낸다(무음 훅으로 대체).
         hook = _synth_hook(hook_text, str(wd / "hook.mp3"), cfg)
-        if not hook:
-            return body_video
-        onsets = _onsets_for_words(spec.hook_pop_words, hook["words"])
+        if hook and hook.get("words"):
+            onsets = _onsets_for_words(spec.hook_pop_words, hook["words"])
+        else:
+            onsets = _even_onsets(spec.hook_pop_words, cfg)
+            if not hook:   # 나레이션 완전 실패 → 무음 훅 오디오로 대체(오프닝/엔드카드는 유지)
+                log.warning("[hook_intro] 훅 나레이션 실패 → 무음 훅으로 오프닝/엔드카드 유지")
+                silent = str(wd / "hook_silent.mp3")
+                subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                                "-i", "anullsrc=r=44100:cl=mono", "-t", f"{cfg.opening_seg_s:.2f}",
+                                "-q:a", "9", silent], check=True)
+                hook = {"mp3": silent, "words": []}
 
         # 2) 배경 프레임 — 오프닝=클린 영상 초반, 엔드카드=원본 광각의 피사체 최적 프레임
         src_open = open_bg_video if open_bg_video and Path(open_bg_video).exists() else body_video
