@@ -279,7 +279,7 @@ async function renderDetail(id){
     '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px"><b style="font-size:19px">#'+esc(id)+' '+esc(sp.common_name_ko||"")+'</b>'+
       '<span class="mono" style="color:var(--gy);font-size:12px">'+esc(sp.common_name_en||"")+'</span></div>'+
     mediaHtml+
-    (md.video_url?'<div class="hint" style="margin-top:8px">동영상 저장: <b>위 영상을 길게 눌러</b> "비디오를 사진에 저장"을 선택하세요. · <a href="'+prox(md.video_url)+'" target="_blank" rel="noopener" style="color:var(--cy)">새 탭에서 크게 열기</a></div>':"")+
+    (md.video_url?'<div class="btnrow" style="margin-top:8px"><button class="btn save" id="bdl">비디오 저장하기</button></div><div class="hint" id="dlhint" style="margin-top:6px"></div>':"")+
     '<div class="meta" style="margin-top:12px"><b>학명</b> <i>'+esc(sp.scientific_name||"")+'</i> · <b>수심</b> '+esc(sp.depth_range_m||"?")+'m<br>'+
       '<b>서식</b> '+esc(sp.habitat||"?")+' · <b>분포</b> '+esc(sp.distribution||"?")+'</div>'+
     // 캡션·해시태그를 한 프레임에 합쳐 표시(일본어 발행 / 한국어 참고). 저장 시 끝의 해시태그 줄을 분리.
@@ -305,6 +305,7 @@ async function renderDetail(id){
     '<div class="hint">이미지 출처: '+esc(src.image_credit||"—")+'<br>정보 출처: '+esc((src.info_sources||[]).join(" · ")||"—")+'</div>';
 
   // 현 시스템은 실사 영상 재편집(무료) — Veo·카드뉴스 이미지 재생성은 구 시스템 유물이라 제거
+  if($("#bdl"))$("#bdl").onclick=()=>saveVideo(prox(md.video_url),esc(id)+"_"+(sp.common_name_ko||"reel")+".mp4");
   $("#bsave").onclick=()=>saveCaption(id);
   $("#bcap").onclick=()=>capRegen(id);
   $("#bvid").onclick=()=>{if(confirm("이 회차의 영상을 같은 종으로 처음부터 다시 만듭니다(무료·2~4분). 진행할까요?"))regen(id,"video");};
@@ -331,6 +332,32 @@ async function saveCaption(id){
     if(r.status===204)banner("저장 시작! 20~40초 뒤 저장소에 반영됩니다(새로고침).","ok");
     else{const t=await r.text();banner("저장 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
   }catch(e){banner("저장 오류: "+e,"err");}
+}
+
+// 비디오 저장: ① iOS 공유 시트(navigator.share)로 "비디오를 사진에 저장" 직접 노출
+//             ② 안 되면 Blob 다운로드(파일 앱 저장). 길게눌러가 안 먹는 기기 대응.
+async function saveVideo(u,name){
+  const h=$("#dlhint"); const say=t=>{if(h)h.innerHTML=t;};
+  const btn=$("#bdl"); if(btn)btn.disabled=true;
+  say("동영상 준비 중… (10MB 내외, 잠시만요)");
+  try{
+    const r=await fetch(u); if(!r.ok)throw new Error("불러오기 "+r.status);
+    const blob=await r.blob();
+    const file=new File([blob],name,{type:"video/mp4"});
+    // ① 네이티브 공유 시트(아이폰: "비디오를 사진에 저장"이 여기 있음)
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file],title:name});
+        say('공유 창에서 <b>"비디오를 사진에 저장"</b>을 누르세요.'); if(btn)btn.disabled=false; return;
+      }catch(e){ if(String(e).indexOf("AbortError")>=0){say("취소됨."); if(btn)btn.disabled=false; return;} }
+    }
+    // ② 폴백: Blob 다운로드 → 파일 앱에 저장(거기서 사진으로 옮길 수 있음)
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a"); a.href=url; a.download=name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+    say('저장을 시작했어요. (아이폰은 <b>"파일"에 저장</b> → 사진 앱으로 옮길 수 있어요)');
+  }catch(e){ say("저장 실패: "+esc(String(e))+" — 영상 재생창의 공유 버튼으로도 저장할 수 있어요."); }
+  if(btn)btn.disabled=false;
 }
 
 async function capRegen(id){
