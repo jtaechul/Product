@@ -384,8 +384,10 @@ class DeepSeaCategory:
         cands = [p for p in cands if p.exists()]
         if not cands:
             return None
-        idx = sum(ord(c) for c in (seed or "deep")) % len(cands)
-        return str(cands[idx])
+        # 안정 해시(md5)로 균등 분산 — sum(ord)은 곡이 특정 트랙에 쏠렸다.
+        import hashlib
+        h = int(hashlib.md5((seed or "deep").encode("utf-8")).hexdigest(), 16)
+        return str(cands[h % len(cands)])
 
     def pick_footage_species(self) -> str:
         """auto 모드: 검증된 실사 영상이 있는 종만 선택.
