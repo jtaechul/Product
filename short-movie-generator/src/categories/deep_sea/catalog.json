@@ -33,5 +33,12 @@
     "common_name_en": "Giant isopod",
     "scientific_name": "Bathynomus giganteus",
     "date": "2026-07-08"
+  },
+  {
+    "no": 11,
+    "common_name_ko": "심해붉은해파리",
+    "common_name_en": "Deep-sea red medusa",
+    "scientific_name": "Crossota sp.",
+    "date": "2026-07-08"
   }
 ]
