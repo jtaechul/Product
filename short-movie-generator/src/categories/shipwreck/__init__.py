@@ -57,6 +57,7 @@ class ShipwreckCategory(CollectionCategory):
     category_id = "shipwreck"
     style_profile = "shipwreck_dive"
     series_title = "沈没船 図鑑"
+    bgm_filename = "shipwreck_beneath_the_weight.mp3"
     corner_label = "WRECK · DIVE CAM"
     scale_label = "水深"          # 서식수심 대신 '수심'
     show_scale = False           # 단일 침몰 수심이라 스케일 눈금 무의미
