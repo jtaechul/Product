@@ -27,12 +27,14 @@ _PUNCT = re.compile(r"[、。，．・「」『』（）\s]")
 
 
 def _install_ca() -> None:
-    if Path(_PROXY_CA).exists():
-        try:
+    # Path.exists()도 try 안: CI 러너(비 root)에선 /root/.ccr 접근 불가라
+    # Python 3.11 exists()가 PermissionError를 되던진다 → 전부 감싸 삼킨다.
+    try:
+        if Path(_PROXY_CA).exists():
             import edge_tts.communicate as ec
             ec._SSL_CTX = ssl.create_default_context(cafile=_PROXY_CA)
-        except Exception:  # noqa: BLE001
-            pass
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def _synth_hook(text: str, out_mp3: str, cfg: hi.HookIntroConfig) -> dict | None:
@@ -56,13 +58,23 @@ def _synth_hook(text: str, out_mp3: str, cfg: hi.HookIntroConfig) -> dict | None
             return bytes(audio), words
 
         audio, words = asyncio.run(_run())
-        if not audio or not words:
+        if not audio:   # 오디오만 있으면 채택(단어경계 없어도 균등 온셋으로 처리 → 오프닝 유지)
             return None
         Path(out_mp3).write_bytes(audio)
-        return {"mp3": out_mp3, "words": words}
+        return {"mp3": out_mp3, "words": words or []}
     except Exception as e:  # noqa: BLE001
         log.warning("[hook_intro] 훅 나레이션 합성 실패 → 오프닝 생략: %s", e)
         return None
+
+
+def _even_onsets(pop_words: list[str], cfg) -> dict:
+    """단어 온셋을 못 구할 때(나레이션 실패/단어경계 없음) 팝 어절을 오프닝 구간에 균등 배치."""
+    pops = [_PUNCT.sub("", w) for w in (pop_words or [])]
+    pops = [p for p in pops if p]
+    span = max(0.4, cfg.opening_seg_s - cfg.narr_start_s - 0.3)
+    if not pops:
+        return {"": round(span * 0.5, 2)}
+    return {p[0]: round((i + 1) * span / (len(pops) + 1), 2) for i, p in enumerate(pops)}
 
 
 def _onsets_for_words(pop_words: list[str], words: list[tuple]) -> dict:
@@ -90,39 +102,127 @@ def _probe(path: str, entry: str) -> str:
     return r.stdout.strip()
 
 
-def _grab_frame(video: str, t: float, out_png: str) -> bool:
-    r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", str(t), "-i", video,
-                        "-frames:v", "1", out_png], capture_output=True, text=True)
+def _grab_frame(video: str, t: float, out_png: str, vf: str | None = None) -> bool:
+    cmd = ["ffmpeg", "-y", "-loglevel", "error", "-ss", str(t), "-i", video]
+    if vf:
+        cmd += ["-vf", vf]
+    cmd += ["-frames:v", "1", out_png]
+    r = subprocess.run(cmd, capture_output=True, text=True)
     return r.returncode == 0 and Path(out_png).exists()
 
 
+def _duration_of(path: str) -> float:
+    """영상 실제 길이(초) = duration − start_time.
+
+    왜(실제 결함): NOAA/Commons webm은 타임스탬프가 0에서 시작하지 않는 파일이 있어
+    (start_time≈141,024s) ffprobe duration이 '끝 타임스탬프'(141,113s)를 돌려준다.
+    이 값을 길이로 쓰면 프레임 추출 시각이 영상 밖(수십 시간 뒤)을 가리켜 엔드카드
+    피사체 프레임 추출이 전부 실패했다. start_time을 빼서 실제 구간 길이를 쓴다."""
+    r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=start_time,duration",
+                        "-of", "json", path], capture_output=True, text=True)
+    try:
+        import json as _json
+        fmt = _json.loads(r.stdout or "{}").get("format", {})
+        dur = float(fmt.get("duration") or 0)
+        start = float(fmt.get("start_time") or 0)
+        if dur > 0:
+            return max(0.0, dur - max(0.0, start))
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        return float(_probe(path, "duration") or 0)
+    except Exception:  # noqa: BLE001
+        return 0.0
+
+
+def _best_subject_frame(video: str, out_png: str, wd: Path,
+                        logo_box: tuple | None = None) -> bool:
+    """영상에서 '피사체가 가장 뚜렷한' 프레임을 골라 out_png로 저장.
+
+    왜: 고정 시각(55%) 프레임은 피사체가 흐릿하거나 비어 있을 수 있다.
+    10~90% 구간 9개 샘플의 적색 피사체 점수(reframe.subject_score) 최대 프레임 선택.
+    logo_box가 오면 워터마크를 delogo로 메워 엔드카드 배경에 로고가 남지 않게 한다.
+    """
+    from src.core import reframe
+    dur = _duration_of(video)
+    if dur <= 0:
+        return False
+    vf = None
+    if logo_box:
+        sw = _probe(video, "width") or 1920
+        sh = _probe(video, "height") or 1080
+        try:
+            vf = reframe.delogo_vf(float(sw), float(sh), logo_box)
+        except Exception:  # noqa: BLE001
+            vf = None
+    best, best_score = None, -1.0
+    for i in range(9):
+        t = dur * (0.1 + 0.8 * i / 8)
+        cand = str(wd / f"ecs_{i}.png")
+        if not _grab_frame(video, t, cand, vf=vf):
+            continue
+        s = reframe.subject_score(cand)
+        # 번인 텍스트(인트로 자막판·아웃트로 URL) 프레임은 강한 감점 → 엔드카드 배경 배제
+        if reframe.text_score(cand) >= 0.012:
+            s *= 0.02
+        if s > best_score:
+            best, best_score = cand, s
+    if not best:
+        return False
+    Path(out_png).write_bytes(Path(best).read_bytes())
+    return True
+
+
 def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
-          cfg: hi.HookIntroConfig | None = None, bgm: str | None = None) -> str:
+          cfg: hi.HookIntroConfig | None = None, bgm: str | None = None,
+          open_bg_video: str | None = None, subject_video: str | None = None,
+          logo_box: tuple | None = None) -> str:
     """본문 영상을 오프닝/엔드카드/전환/사운드로 감싼 완성본 경로 반환.
-    전제 미충족 시 원본 body_video를 그대로 반환(발행 불정지)."""
+    전제 미충족 시 원본 body_video를 그대로 반환(발행 불정지).
+
+    배경 소스 규칙(재발 방지 — 실제 결함 2건의 근본 원인):
+    - open_bg_video: 오프닝 배경 프레임 소스. **자막 번인 전 클린 영상**을 넘겨야
+      본문 자막이 오프닝 뒤에 미리 노출되지 않는다(미지정 시 body_video 폴백).
+    - subject_video: 엔드카드 피사체 프레임 소스. **크롭·줌 전 원본 광각 영상**을 넘겨야
+      과확대로 생물을 식별 못 하는 문제가 없다(미지정 시 open_bg_video 폴백).
+    """
     cfg = cfg or hi.HookIntroConfig()
     wd = Path(work_dir); wd.mkdir(parents=True, exist_ok=True)
     try:
         if not hi.fonts_available():
             log.warning("[hook_intro] 폰트 없음 → 오프닝/엔드카드 생략(본문 그대로)")
             return body_video
-        dur = float(_probe(body_video, "duration") or 0) or \
-            float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
-                                  "-of", "csv=p=0", body_video], capture_output=True, text=True).stdout or 0)
+        dur = _duration_of(body_video)
         if dur <= 0:
             return body_video
 
-        # 1) 훅 나레이션 + 온셋
+        # 1) 훅 나레이션 + 온셋. ★기획서 규칙: 모든 영상에 오프닝 훅 + 엔드카드 필수.
+        #    나레이션(edge-tts)이 실패해도 오프닝/엔드카드는 반드시 낸다(무음 훅으로 대체).
         hook = _synth_hook(hook_text, str(wd / "hook.mp3"), cfg)
-        if not hook:
-            return body_video
-        onsets = _onsets_for_words(spec.hook_pop_words, hook["words"])
+        if hook and hook.get("words"):
+            onsets = _onsets_for_words(spec.hook_pop_words, hook["words"])
+        else:
+            onsets = _even_onsets(spec.hook_pop_words, cfg)
+            if not hook:   # 나레이션 완전 실패 → 무음 훅 오디오로 대체(오프닝/엔드카드는 유지)
+                log.warning("[hook_intro] 훅 나레이션 실패 → 무음 훅으로 오프닝/엔드카드 유지")
+                silent = str(wd / "hook_silent.mp3")
+                subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                                "-i", "anullsrc=r=44100:cl=mono", "-t", f"{cfg.opening_seg_s:.2f}",
+                                "-q:a", "9", silent], check=True)
+                hook = {"mp3": silent, "words": []}
 
-        # 2) 배경 프레임(오프닝=초반, 엔드카드=중반 피사체)
+        # 2) 배경 프레임 — 오프닝=클린 영상 초반, 엔드카드=원본 광각의 피사체 최적 프레임
+        src_open = open_bg_video if open_bg_video and Path(open_bg_video).exists() else body_video
+        src_subj = subject_video if subject_video and Path(subject_video).exists() else src_open
         open_bg = str(wd / "open_bg.png"); ec_frame = str(wd / "ec_frame.png")
-        if not _grab_frame(body_video, min(0.5, dur * 0.1), open_bg):
+        odur = _duration_of(src_open) or dur
+        if not _grab_frame(src_open, min(0.5, odur * 0.1), open_bg):
             return body_video
-        _grab_frame(body_video, dur * 0.55, ec_frame)
+        # 원본(subject_video)에서 뽑는 피사체 프레임은 워터마크 delogo 적용(엔드카드 로고 잔류 방지).
+        # 리프레임된 body 계열 소스는 reframe 단계에서 이미 회피/제거됨 → 미적용.
+        subj_logo = logo_box if (subject_video and src_subj == subject_video) else None
+        if not _best_subject_frame(src_subj, ec_frame, wd, logo_box=subj_logo):
+            _grab_frame(src_subj, (_duration_of(src_subj) or dur) * 0.55, ec_frame)
         ec_bg = str(wd / "ec_bg.png")
         hi.build_specimen_bg(ec_frame if Path(ec_frame).exists() else open_bg, ec_bg, cfg)
 

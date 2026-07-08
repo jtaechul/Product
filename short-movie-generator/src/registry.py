@@ -69,6 +69,12 @@ def get_category(category_id: str) -> CategoryModule:
         # 지연 로드: 알려진 카테고리는 임포트가 곧 등록
         if category_id == "deep_sea":
             import src.categories.deep_sea  # noqa: F401  (임포트 시 register 호출)
+        elif category_id == "marine_algae":
+            import src.categories.marine_algae  # noqa: F401
+        elif category_id == "marine_life":
+            import src.categories.marine_life  # noqa: F401
+        elif category_id == "shipwreck":
+            import src.categories.shipwreck  # noqa: F401
         if category_id not in _REGISTRY:
             raise KeyError(f"미등록 카테고리: {category_id} (등록됨: {list(_REGISTRY)})")
     return _REGISTRY[category_id]

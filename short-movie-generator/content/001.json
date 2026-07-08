@@ -1,0 +1,58 @@
+{
+  "id": "001",
+  "created_at": "2026-07-08T00:06:03+00:00",
+  "updated_at": "2026-07-08T00:39:11+00:00",
+  "status": "published",
+  "series": "海の生き物 図鑑",
+  "species": {
+    "common_name_ko": "카리브암초오징어",
+    "common_name_en": "Caribbean reef squid",
+    "scientific_name": "Sepioteuthis sepioidea",
+    "depth_range_m": "1-150",
+    "habitat": "얕은 산호초·해초밭(원양성)",
+    "distribution": "카리브해·서대서양 산호초",
+    "diet": [
+      "작은 물고기",
+      "새우"
+    ],
+    "fun_facts": [
+      "몸의 색과 무늬를 순식간에 바꾼다",
+      "색·무늬로 동료에게 신호를 보내며 소통한다",
+      "몸 가장자리의 지느러미를 물결치듯 움직여 정지 비행하듯 머문다",
+      "무리를 지어 산호초 위를 떠다닌다"
+    ]
+  },
+  "reels": {
+    "hook": "体の色で、会話をする。",
+    "caption": "体の色で、会話をする。\n\nカリブリーフイカ(学名: Sepioteuthis sepioidea)。\n生息水深はおよそ 1-150 メートル。\n色を変えて話す、サンゴ礁のイカ。\n深い海の底で、たしかに命をつないでいる一種です。\n\n心に残ったら保存を。\n同じ海が気になる人へシェアを。\n\n映像: Atsme (Wikimedia Commons) · CC BY",
+    "hashtags": [
+      "#イカ",
+      "#海の生き物",
+      "#サンゴ礁"
+    ],
+    "reveal_name": "カリブリーフイカ / Sepioteuthis sepioidea",
+    "reveal_fact": "色を変えて話す、サンゴ礁のイカ",
+    "hook_ko": "몸의 색으로, 대화를 한다.",
+    "caption_ko": "몸의 색으로, 대화를 한다.\n\n카리브암초오징어(학명: Sepioteuthis sepioidea).\n수심 1-150m, 카리브해·서대서양 산호초의 바다에 살아갑니다.\n주로 얕은 산호초·해초밭(원양성)에서 지냅니다.\n몸의 색과 무늬를 순식간에 바꾼다.\n색·무늬로 동료에게 신호를 보내며 소통한다.\n몸 가장자리의 지느러미를 물결치듯 움직여 정지 비행하듯 머문다.\n색을 바꿔 대화하는, 산호초의 오징어.\n\n마음이 복잡한 날, 다시 꺼내보고 싶다면 저장해 두세요.\n같은 바다가 궁금한 사람에게 조용히 건네주세요.\n\n영상: Atsme (Wikimedia Commons) · CC BY",
+    "hashtags_ko": [
+      "#오징어",
+      "#해양생물",
+      "#산호초"
+    ],
+    "visualizer": "reels",
+    "video_file": "caribbean_reef_squid_20260708_003911.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Atsme (Wikimedia Commons) · CC BY",
+      "WoRMS"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-001/reels_001.mp4",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-001/cover_001.jpg"
+  },
+  "post": null
+}

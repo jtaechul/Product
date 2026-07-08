@@ -372,13 +372,30 @@ class DeepSeaCategory:
         return (spec, hook_text, str(bgm) if bgm.exists() else None)
 
     def pick_footage_species(self) -> str:
-        """auto 모드: 검증된 실사 영상이 있는 종만 선택(영상 없음 실패 방지). 회차로 로테이션."""
+        """auto 모드: 검증된 실사 영상이 있는 종만 선택.
+
+        ★미제작 우선(큐 재사용): 아직 영상이 만들어지지 않은 종(catalog 미기록)을 먼저 고른다.
+        그래서 확보(시드)만 되고 아직 제작·게시되지 않은 종이 유실되지 않고 반드시 다음 차례에
+        쓰인다. 모든 종이 한 번씩 제작된 뒤에야 회차(episode)로 순환한다.
+        """
+        from src.categories.deep_sea import catalog
         from src.core import footage
         seeded = {k.lower() for k in footage.seeded_keys()}
         pool = [key for key, sp in data.SPECIES.items()
                 if sp["scientific_name"].strip().lower() in seeded]
         if not pool:
             raise PipelineError("input", "실사 영상 보유 종이 없습니다(시드 필요)")
+        made = set()
+        try:
+            for it in catalog._load():
+                made.add(str(it.get("scientific_name", "")).strip().lower())
+                made.add(str(it.get("common_name_en", "")).strip().lower())
+        except Exception:  # noqa: BLE001
+            made = set()
+        unmade = [k for k in pool
+                  if data.SPECIES[k]["scientific_name"].strip().lower() not in made]
+        if unmade:
+            return unmade[0]
         try:
             ep = self.next_episode()
         except Exception:  # noqa: BLE001
@@ -391,17 +408,26 @@ class DeepSeaCategory:
         return hook_copy.build_body_jp(info)
 
     def build_reels_caption(self, info: SpeciesInfo, spec) -> CaptionData:
-        """reels 캡션 = 일본어 게시글 + 한국어 참고 번역(운영자용). 해시태그 3(일본어)."""
+        """reels 캡션 — 일본어(발행문)와 한국어(참고 번역)를 **분리 저장**.
+        caption_body=일본어만(발행 그대로), caption_ko/hook_ko/hashtags_ko=한국어 참고.
+        (과거 JP+KO 합본 1필드는 대시보드에서 동시 열람 불가 → 분리 필드로 전환)"""
         from src.categories.deep_sea import hook as hook_copy
-        c = hook_copy.build_reels_caption(info, spec.jp_name, spec.sci_name,
-                                          spec.feature_line, spec.hook_line1, spec.hook_line2)
-        body = c["jp"] + "\n\n────────\n【한국어 참고 번역】\n" + c["ko"]
+        from src.core import rich_caption
+        h = hook_copy.build_hook(info) or {}
+        # 리치 캡션(과학 사실 2~3개를 이야기로 엮음) — LLM 우선, 실패 시 사실 기반 리치 폴백
+        c = rich_caption.generate(
+            info, spec.jp_name, spec.sci_name, spec.feature_line,
+            spec.hook_line1, spec.hook_line2, hook_ko=h.get("hook_ko", ""),
+            feature_ko=h.get("feature_ko", ""), credit="NOAA Ocean Exploration・Public Domain",
+            default_tags=["#深海", f"#{spec.jp_name}", "#生き物"])
         return CaptionData(
             hook_text=spec.hook_line1 + spec.hook_line2,
             overlay_facts=[f"水深 {info.depth_range_m} m"],
-            caption_body=body, hashtags=c["tags"],
+            caption_body=c["jp"], hashtags=c["tags"],
             reveal_name=f"{spec.jp_name} / {spec.sci_name}",
-            reveal_fact=spec.feature_line)
+            reveal_fact=spec.feature_line,
+            caption_ko=c["ko"], hook_ko=h.get("hook_ko", "") or "",
+            hashtags_ko=list(c.get("tags_ko", [])))
 
     @staticmethod
     def _parse_depth(depth_range_m: str) -> tuple[int, int]:

@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import subprocess
 from pathlib import Path
 
@@ -156,7 +157,8 @@ def run_narrated(
         caption = category.attach_attribution(caption, info, asset.credit_string)
 
     if episode is None:
-        episode = category.next_episode() if hasattr(category, "next_episode") else 1
+        # 콘텐츠 id는 전 카테고리 공용 번호(카테고리별 회차 번호 충돌·덮어쓰기 방지)
+        episode = content_store.next_global_id(base_dir)
     series_title = getattr(category, "series_title", "") or category_id
     result = output.finalize(
         with_audio, info, caption, asset.credit_string, asset.license, str(out_dir), total,
@@ -238,7 +240,9 @@ def run_reels(
 
     # 3) 9:16 추적 리프레임 + 틸 그레이딩(본문 길이)
     body_v = reframe.reframe_to_vertical(fv["path"], str(work_dir / "body_reframed.mp4"),
-                                         body_dur, str(work_dir / "rf"))
+                                         body_dur, str(work_dir / "rf"),
+                                         logo_box=fv.get("logo_box"),
+                                         wide=bool(getattr(category, "reframe_wide", False)))
 
     # 4) 카라오케 자막 번인(본문 — 훅 없음)
     ass = narration_sync.build_synced_ass(nar["disp"], str(work_dir / "body.ass"),
@@ -253,9 +257,24 @@ def run_reels(
                     "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", body_av], check=True)
 
     # 6) 오프닝 훅 + 엔드카드 + 전환 + 임팩트 사운드 래핑
-    final = hook_intro_stage.apply(body_av, spec, hook_text, str(work_dir / "hook_intro"), bgm=bgm)
+    # 배경 소스 분리(재발 방지): 오프닝 배경=자막 번인 '전' 클린 리프레임(body_v) →
+    # 본문 자막 미리 노출 차단 / 엔드카드 피사체=크롭·줌 '전' 원본 광각(fv.path) → 과확대 차단
+    final = hook_intro_stage.apply(body_av, spec, hook_text, str(work_dir / "hook_intro"), bgm=bgm,
+                                   open_bg_video=body_v, subject_video=fv["path"],
+                                   logo_box=fv.get("logo_box"))
+    # ★재발방지 하드 게이트(기획서 규칙: 모든 영상에 오프닝 훅+엔드카드 필수).
+    # 폰트는 이제 항상 폴백 해석되므로 apply()가 본문을 그대로 돌려주는 건 '진짜 실패'뿐 →
+    # 조용히 발행하지 않고 큰 오류로 멈춰 CI를 빨간불로 만든다(스펙 위반 영상 발행 원천 차단).
+    # 로컬/특수상황은 SHORTS_ALLOW_BODY_ONLY=1 로만 우회 허용.
     if final == body_av:
-        log.warning("[reels] hook_intro 미적용(폰트/edge-tts 전제 미충족) → 본문만 발행")
+        from src.core import hook_intro as _hi
+        miss = _hi.missing_fonts()
+        msg = ("[reels] 오프닝 훅+엔드카드 래핑 실패 → 스펙 위반. "
+               + (f"필수 폰트 누락: {', '.join(miss)}" if miss else "렌더 파이프라인 오류(로그 확인)"))
+        if os.environ.get("SHORTS_ALLOW_BODY_ONLY") == "1":
+            log.warning(msg + " (SHORTS_ALLOW_BODY_ONLY=1 → 본문만 발행 허용)")
+        else:
+            raise PipelineError("hook_intro", msg)
 
     # 7) 캡션(일본어 게시글 + 한국어 참고) + 출력 (캡션 생성 실패해도 발행 불정지)
     try:
@@ -275,7 +294,8 @@ def run_reels(
             hashtags=[f"#{info.common_name_ko}", "#심해생물", "#深海"],
             reveal_name=f"{info.common_name_ko} ({info.common_name_en})", reveal_fact="")
     if episode is None:
-        episode = category.next_episode() if hasattr(category, "next_episode") else 1
+        # 콘텐츠 id는 전 카테고리 공용 번호(카테고리별 회차 번호 충돌·덮어쓰기 방지)
+        episode = content_store.next_global_id(base_dir)
     series_title = getattr(category, "series_title", "") or category_id
     total = _probe_duration(final) or body_dur
     result = output.finalize(

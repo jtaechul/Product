@@ -1,23 +1,30 @@
 [
   {
-    "no": 1,
-    "common_name_ko": "덤보문어",
-    "common_name_en": "Dumbo octopus",
-    "scientific_name": "Grimpoteuthis spp.",
-    "date": "2026-07-05"
+    "no": 4,
+    "common_name_ko": "넓적문어",
+    "common_name_en": "Flapjack octopus",
+    "scientific_name": "Opisthoteuthis californiana",
+    "date": "2026-07-07"
   },
   {
-    "no": 2,
-    "common_name_ko": "덤보문어",
-    "common_name_en": "Dumbo octopus",
-    "scientific_name": "Grimpoteuthis spp.",
-    "date": "2026-07-05"
+    "no": 5,
+    "common_name_ko": "북태평양심해문어",
+    "common_name_en": "Deep-sea octopus",
+    "scientific_name": "Graneledone boreopacifica",
+    "date": "2026-07-07"
   },
   {
-    "no": 3,
-    "common_name_ko": "심해돼지해삼(바다돼지)",
-    "common_name_en": "Sea pig",
-    "scientific_name": "Scotoplanes globosa",
-    "date": "2026-07-05"
+    "no": 6,
+    "common_name_ko": "머리없는닭괴물",
+    "common_name_en": "Headless chicken monster",
+    "scientific_name": "Enypniastes eximia",
+    "date": "2026-07-07"
+  },
+  {
+    "no": 7,
+    "common_name_ko": "넓적문어",
+    "common_name_en": "Flapjack octopus",
+    "scientific_name": "Opisthoteuthis californiana",
+    "date": "2026-07-07"
   }
 ]

@@ -30,3 +30,23 @@ def test_build_synced_ass(tmp_path):
     assert txt.count("Dialogue:") == 2
     assert "Hook" in txt and "Sub" in txt          # 첫 줄=훅, 나머지=서브
     assert "0:00:00.10" in txt                      # 실제 발화 시각 반영
+
+
+def test_install_ca_swallows_permission_error(monkeypatch):
+    """회귀 테스트(실제 CI 장애): 비 root 러너에서 Path.exists()가 PermissionError를
+    되던져도 _install_ca()가 죽으면 안 된다. 과거 이 예외가 나레이션 합성을 통째로
+    죽여 영상 미제작·텔레그램 무전송을 일으켰다(#54)."""
+    def boom(self):
+        raise PermissionError(13, "Permission denied")
+    monkeypatch.setattr(ns.Path, "exists", boom)
+    ns._install_ca()  # 예외를 밖으로 던지지 않아야 통과
+
+
+def test_hook_intro_install_ca_swallows_permission_error(monkeypatch):
+    """hook_intro_stage 쪽 동일 패턴도 회귀 방지."""
+    from src.core import hook_intro_stage as his
+
+    def boom(self):
+        raise PermissionError(13, "Permission denied")
+    monkeypatch.setattr(his.Path, "exists", boom)
+    his._install_ca()

@@ -25,35 +25,87 @@ def _probe(path: str, entry: str) -> float:
 
 
 def _duration(path: str) -> float:
-    r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
-                        "-of", "csv=p=0", path], capture_output=True, text=True)
+    """실제 길이 = duration − start_time. 일부 NOAA/Commons webm은 타임스탬프가 0에서
+    시작하지 않아 duration이 '끝 타임스탬프'로 읽힌다(수 시간대 오판 → 구간 계산 파괴)."""
+    r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=start_time,duration",
+                        "-of", "json", path], capture_output=True, text=True)
     try:
-        return float(r.stdout.strip())
+        import json as _json
+        fmt = _json.loads(r.stdout or "{}").get("format", {})
+        dur = float(fmt.get("duration") or 0)
+        start = float(fmt.get("start_time") or 0)
+        return max(0.0, dur - max(0.0, start))
     except Exception:  # noqa: BLE001
         return 0.0
 
 
+def _red_pixels(frame_path: str) -> tuple[list, int, int]:
+    """프레임의 적색 신호 픽셀 [(가중치, x, y)]와 축소 해상도(w,h).
+    붉은 심해 생물(r-g)이 강조되는 픽셀만 수집."""
+    from PIL import Image
+    im = Image.open(frame_path).convert("RGB")
+    w, h = im.size
+    im = im.resize((max(2, w // 4), max(2, h // 4)))
+    w, h = im.size
+    px = im.load()
+    pts = []
+    for y in range(h):
+        for x in range(w):
+            r, g, b = px[x, y]
+            wt = r - g
+            if wt > 25:
+                pts.append((wt, x, y))
+    return pts, w, h
+
+
 def _subject_centroid(frame_path: str) -> tuple[float, float]:
-    """붉은 심해 생물 강조(r-g 가중) 무게중심(0~1). 실패 시 중앙."""
+    """붉은 심해 생물의 무게중심(0~1). 실패 시 중앙.
+
+    핵심(재발 방지): 프레임 '전체' 적색 픽셀 평균을 쓰면 해저 퇴적물의 옅은 붉은 기가
+    센트로이드를 오염시켜 크롭이 피사체와 노이즈 '사이'를 겨냥한다(피사체가 화면 가장자리로
+    밀리던 실제 결함). → **가장 강한 적색 상위 픽셀(상위 ~2%)만**으로 계산해
+    가장 선명한 붉은 덩어리(=생물 본체)에 크롭을 고정한다.
+    """
     try:
-        from PIL import Image
-        im = Image.open(frame_path).convert("RGB")
-        w, h = im.size
-        im = im.resize((w // 4, h // 4))
-        w, h = im.size
-        px = im.load()
-        sx = sy = sw = 0.0
-        for y in range(h):
-            for x in range(w):
-                r, g, b = px[x, y]
-                wt = r - g
-                if wt > 25:
-                    sx += x * wt; sy += y * wt; sw += wt
-        if sw <= 0:
+        pts, w, h = _red_pixels(frame_path)
+        if not pts:
             return 0.5, 0.5
-        return sx / sw / (w - 1), sy / sw / (h - 1)
+        pts.sort(key=lambda p: p[0], reverse=True)
+        core = pts[:max(12, len(pts) // 50)]   # 상위 2%(최소 12픽셀) = 피사체 코어
+        sw = sum(p[0] for p in core)
+        sx = sum(p[1] * p[0] for p in core)
+        sy = sum(p[2] * p[0] for p in core)
+        return sx / sw / max(1, w - 1), sy / sw / max(1, h - 1)
     except Exception:  # noqa: BLE001
         return 0.5, 0.5
+
+
+def subject_score(frame_path: str) -> float:
+    """'피사체 전신이 온전히 보이는' 프레임 점수 — 엔드카드 배경 프레임 선택용.
+
+    단순 적색량 최대는 ROV 초근접 컷(생물이 화면을 가득 채워 식별 불가)을 고르는
+    실제 결함이 있었다. 규칙:
+    ① 적색 신호가 있어야 하고(존재) ② 점유율이 과하면 감점(가득 채움=근접 과다)
+    ③ 적색 덩어리가 프레임 경계에 닿으면 감점(전신이 잘림).
+    """
+    try:
+        pts, w, h = _red_pixels(frame_path)
+        if not pts:
+            return 0.0
+        pts.sort(key=lambda p: p[0], reverse=True)
+        strength = float(sum(p[0] for p in pts[:max(12, len(pts) // 50)]))
+        frac = len(pts) / max(1, w * h)          # 화면 점유율
+        if frac <= 0.35:
+            fit = 1.0
+        elif frac >= 0.75:                        # 화면을 거의 가득 채움 → 식별 불가 근접컷
+            fit = 0.05
+        else:
+            fit = 1.0 - (frac - 0.35) / 0.40 * 0.95
+        xs = [p[1] for p in pts]; ys = [p[2] for p in pts]
+        edges = sum([min(xs) <= 1, max(xs) >= w - 2, min(ys) <= 1, max(ys) >= h - 2])
+        return strength * fit * (0.55 ** edges)   # 경계에 잘릴수록 감점
+    except Exception:  # noqa: BLE001
+        return 0.0
 
 
 def _median(vals: list[float]) -> float:
@@ -61,13 +113,166 @@ def _median(vals: list[float]) -> float:
     return v[len(v) // 2] if v else 0.5
 
 
-# 세그먼트 줌 패턴(와이드→접사→와이드… 교차)
-_ZOOM_CYCLE = [1.00, 1.35, 1.10, 1.55, 1.15, 1.40]
+def text_score(frame_path: str) -> float:
+    """프레임의 '번인 텍스트' 신호(0~1). **밝은 획-에지** 비율로 측정.
+
+    왜(실제 결함 2건): NOAA 영상은 인트로 자막판·타이틀 카드(로고+종 정보)와
+    아웃트로 URL에 텍스트가 통째로 박혀 있어, 구간 선택이 이를 컷으로 골라 최종물에 남았다.
+    단순 '밝은 픽셀 비율'은 **밝은 모래 바닥**(대왕등각류 소스)에서 값이 치솟아
+    텍스트와 구분이 안 됐다(그래서 임계 폭주 → 미검출). → 텍스트는 어두운 배경 위의
+    가느다란 '밝은 획'이라 **국소 대비가 크다**. 밝으면서(순백 근처) 근처에 훨씬 어두운
+    픽셀이 있는 '에지 픽셀'만 센다. 균일하게 밝은 모래는 대비가 낮아 걸러진다.
+    """
+    try:
+        from PIL import Image
+        im = Image.open(frame_path).convert("L")   # 밝기만
+        w, h = im.size
+        px = im.load()
+        n = 0; S = 3
+        for y in range(0, h - S, 1):
+            for x in range(0, w - S, 1):
+                v = px[x, y]
+                if v < 200:                         # 순백 근처만(텍스트 획)
+                    continue
+                # 국소 대비: 오른/아래 S픽셀 이웃 중 하나라도 훨씬 어두우면 에지(획 경계)
+                if v - px[x + S, y] > 70 or v - px[x, y + S] > 70 or \
+                   v - px[x + S, y + S] > 70:
+                    n += 1
+        return n / max(1, w * h)
+    except Exception:  # noqa: BLE001
+        return 0.0
+
+
+def _burned_text_threshold(tscores: list[float]) -> float:
+    """번인 텍스트 판정 임계값 — 고정 하한 + 영상 기준선 반영.
+
+    에지 기반 text_score는 깨끗한 심해 프레임에선 ~0.001 이하, 텍스트/타이틀 카드에선
+    0.01~0.05로 확실히 갈린다(밝은 모래도 대비가 낮아 낮게 나옴). 절대 하한 0.006으로
+    확실한 텍스트만 잡고, 소스가 전반적으로 노이지하면 중앙값 4배까지 올려 오검을 막는다."""
+    return max(0.006, _median(tscores) * 4.0)
+
+
+def _subject_frac(frame_path: str) -> float:
+    """적색 피사체의 화면 점유율(0~1) — 줌 상한 계산용."""
+    try:
+        pts, w, h = _red_pixels(frame_path)
+        return len(pts) / max(1, w * h)
+    except Exception:  # noqa: BLE001
+        return 0.0
+
+
+def _pick_windows(scores: list[float], fps_trk: float, seg_len: float, n_seg: int,
+                  bad: list[bool] | None = None) -> list[float]:
+    """피사체 점수(subject_score) 기준 '가장 잘 보이는' 소스 구간 n_seg개 시작초 선택.
+
+    왜(실제 결함): 소스의 앞부분을 무조건 쓰면 피사체가 없거나 ROV 초근접인 구간이
+    그대로 들어가 생물을 식별할 수 없었다. 점수 상위·비중첩 구간을 골라 시간순 배치.
+    bad(번인 텍스트 프레임 마스크)가 오면 **텍스트가 1프레임이라도 포함된 구간을
+    우선 배제**한다(전부 배제 불가 시 텍스트가 가장 적은 구간 순).
+    """
+    win = max(1, int(seg_len * fps_trk))
+    n = len(scores)
+    if n <= win:
+        return [0.0] * n_seg
+    pre = [0.0]
+    for s in scores:
+        pre.append(pre[-1] + s)
+    preb = [0]
+    for b in (bad or [False] * n):
+        preb.append(preb[-1] + (1 if b else 0))
+    step = max(1, int(0.5 * fps_trk))
+    # (텍스트 프레임 수 오름차순 → 점수 내림차순): 깨끗한 구간이 항상 우선
+    cand = sorted(((preb[st + win] - preb[st], -(pre[st + win] - pre[st]), st)
+                   for st in range(0, n - win, step)))
+    chosen: list[int] = []
+    for _bc, _negs, st in cand:
+        if all(abs(st - o) >= win for o in chosen):
+            chosen.append(st)
+        if len(chosen) == n_seg:
+            break
+    while len(chosen) < n_seg:                      # 소스가 짧으면 겹침 허용해 채움
+        chosen.append(chosen[len(chosen) % max(1, len(chosen))] if chosen else 0)
+    chosen.sort()
+    return [st / fps_trk for st in chosen]
+
+
+def _pick_wide_window(scores: list[float], fracs: list[float], fps_trk: float,
+                      seg_len: float, bad: list[bool] | None = None) -> float:
+    """'피사체 전신이 온전히 보이는' 와이드 구간 1개의 시작초.
+
+    왜: 컷 전부가 근접이면 시청자가 생물의 전체 모습을 한 번도 못 본다(실제 불만).
+    점유율이 적당한(0.4%~25%) 프레임만 유효 점수로 쳐서 최고 구간을 고른다.
+    bad(번인 텍스트 마스크) 구간은 우선 배제. 유효 구간이 없으면 점유율 최소 구간.
+    """
+    win = max(1, int(seg_len * fps_trk))
+    n = len(scores)
+    if n <= win:
+        return 0.0
+    wide = [s if 0.004 <= f <= 0.25 else 0.0 for s, f in zip(scores, fracs)]
+    pre_w = [0.0]; pre_f = [0.0]
+    for w, f in zip(wide, fracs):
+        pre_w.append(pre_w[-1] + w); pre_f.append(pre_f[-1] + f)
+    preb = [0]
+    for b in (bad or [False] * n):
+        preb.append(preb[-1] + (1 if b else 0))
+    step = max(1, int(0.5 * fps_trk))
+    # 1순위: (텍스트 프레임 수 오름차순 → 와이드 점수 내림차순)
+    best_st, best_key = 0, None
+    for st in range(0, n - win, step):
+        key = (preb[st + win] - preb[st], -(pre_w[st + win] - pre_w[st]))
+        if best_key is None or key < best_key:
+            best_key, best_st = key, st
+    if best_key is not None and best_key[1] < 0:    # 와이드 점수 > 0 인 구간 존재
+        return best_st / fps_trk
+    # 유효 와이드 없음 → (텍스트 수, 점유율 합) 최소 구간(그나마 가장 넓은 그림)
+    best_st, best_key = 0, None
+    for st in range(0, n - win, step):
+        key = (preb[st + win] - preb[st], pre_f[st + win] - pre_f[st])
+        if best_key is None or key < best_key:
+            best_key, best_st = key, st
+    return best_st / fps_trk
+
+
+def _logo_avoid(cx: int, cy: int, cw: int, ch: int, fx_abs: float, fy_abs: float,
+                src_w: float, src_h: float, box: tuple) -> tuple:
+    """좌상단 워터마크 회피(2안 기본 + 3안 보완 판단). 반환 (cx, cy, need_delogo).
+
+    규칙: 크롭이 로고 영역과 겹치면 ① 오른쪽으로 밀기 ② 아래로 밀기 —
+    단 **피사체가 크롭 안 8~92% 구간에 남을 때만**(화면 밖 이탈 금지, 정중앙은 양보 가능).
+    둘 다 불가하면 need_delogo=True → 그 세그먼트만 delogo 필터로 로고를 메운다(3안).
+    """
+    lx1 = (box[0] + box[2]) * src_w
+    ly1 = (box[1] + box[3]) * src_h
+    if cx >= lx1 or cy >= ly1:                      # 이미 안 겹침
+        return cx, cy, False
+    ncx = int(lx1) + 2                              # ① 오른쪽으로 밀어 회피
+    if ncx + cw <= src_w and 0.08 * cw <= fx_abs - ncx <= 0.92 * cw:
+        return ncx, cy, False
+    ncy = int(ly1) + 2                              # ② 아래로 밀어 회피(줌컷일 때 가능)
+    if ncy + ch <= src_h and 0.08 * ch <= fy_abs - ncy <= 0.92 * ch:
+        return cx, ncy, False
+    return cx, cy, True                             # 회피 불가 → delogo 보완
+
+
+def delogo_vf(src_w: float, src_h: float, box: tuple) -> str:
+    """로고 영역을 주변 픽셀로 메우는 ffmpeg delogo 필터 문자열(3안)."""
+    lw = min(int(box[2] * src_w) + 4, int(src_w) - 4)
+    lh = min(int(box[3] * src_h) + 4, int(src_h) - 4)
+    return f"delogo=x=1:y=1:w={lw}:h={lh}"
+
+
+# 접사(fill) 컷의 줌 배율 — 과도한 줌인 방지를 위해 완만하게(예전 1.35~1.55 → 1.2대).
+_ZOOM_CYCLE = [1.06, 1.20, 1.10, 1.24, 1.12, 1.18]
+# 와이드 우선(난파선 등 큰 구조물): 접사 컷도 거의 줌 없이.
+_WIDE_ZOOM_CYCLE = [1.00, 1.10, 1.00, 1.12, 1.05, 1.08]
 
 
 def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
-                        work_dir: str) -> str:
-    """가로 실사 영상 → 9:16 세로(피사체 추적 줌컷 + 틸 그레이딩), 길이 target_dur."""
+                        work_dir: str, logo_box: tuple | None = None,
+                        wide: bool = False) -> str:
+    """가로 실사 영상 → 9:16 세로(피사체 추적 줌컷 + 틸 그레이딩), 길이 target_dur.
+    logo_box(비율 x,y,w,h)가 오면 워터마크를 프레임 이동으로 회피(2안), 불가 시 delogo(3안).
+    wide=True(난파선 등): 줌을 억제해 선체·구조물 전체가 넓게 보이는 원경 프레이밍."""
     wd = Path(work_dir); wd.mkdir(parents=True, exist_ok=True)
     src_dur = _duration(footage_path) or target_dur
     src_w = _probe(footage_path, "width") or 1920
@@ -85,41 +290,88 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                     "-vf", "fps=5,scale=480:-1", str(fr_dir / "f_%04d.jpg")], check=True)
     frames = sorted(fr_dir.glob("f_*.jpg"))
     cents = [_subject_centroid(str(f)) for f in frames] or [(0.5, 0.5)]
+    fracs = [_subject_frac(str(f)) for f in frames] or [0.0]
+    scores = [subject_score(str(f)) for f in frames] or [0.0]
+    # ★번인 텍스트 구간(인트로 자막판·아웃트로 URL 등) 감지 → 컷 선택에서 원천 배제.
+    # 감지 프레임 주변 ±1초를 함께 배제(팽창) — 텍스트 페이드 인/아웃 꼬리까지 커버.
+    tscores = [text_score(str(f)) for f in frames] or [0.0]
+    th = _burned_text_threshold(tscores)
+    raw_bad = [t >= th for t in tscores]
+    PAD = 5   # ±1초(5fps)
+    bad = [any(raw_bad[max(0, i - PAD):i + PAD + 1]) for i in range(len(raw_bad))]
+    if any(bad):
+        log.info("[reframe] 번인 텍스트 프레임 감지: %d(팽창 %d)/%d (임계 %.4f) → 해당 구간 배제",
+                 sum(raw_bad), sum(bad), len(bad), th)
     fps_trk = 5.0
 
     # 세그먼트 분할(≈5초/컷)
     n_seg = max(2, min(8, round(target_dur / 5.0)))
     seg_len = target_dur / n_seg
+    # 피사체가 가장 잘 보이는 소스 구간 선택(앞부분 무조건 사용 → 근접·부재 구간 유입 차단)
+    starts = _pick_windows(scores, fps_trk, seg_len, n_seg, bad=bad) if not loop else None
+    # ★전신 보장: 첫 컷은 '전신 와이드' 구간을 강제 배정(z=1.0) — 최소 1컷은 생물 전체가 보인다
+    if starts:
+        wide_sa = _pick_wide_window(scores, fracs, fps_trk, seg_len, bad=bad)
+        rest = [s for s in starts if abs(s - wide_sa) >= seg_len]
+        starts = ([wide_sa] + rest)[:n_seg]
+        while len(starts) < n_seg:
+            starts.append(rest[len(starts) % len(rest)] if rest else wide_sa)
     concat = wd / "reframe_concat.txt"
     lines = []
+    import math as _m
+    cycle = _WIDE_ZOOM_CYCLE if wide else _ZOOM_CYCLE
+    GRADE = ("eq=contrast=1.12:saturation=1.16:brightness=-0.05,"
+             "colorbalance=rm=-0.03:bm=0.05,vignette=PI/4.2,format=yuv420p")
+    # ★전신 보장(과도한 줌인 방지): 컷의 절반 이상을 '핏(fit)'으로 — 원본 전체를 9:16 안에 담아
+    #   피사체 전신 + 배경까지 다 보이게 하고, 남는 위/아래는 같은 화면의 블러로 채운다(리버스 폐기).
+    #   짝수 인덱스(0,2,4…)=핏 → n_seg의 절반 이상. 홀수=완만한 접사 크롭.
+    n_fit = 0
     for i in range(n_seg):
-        a, b = i * seg_len, (i + 1) * seg_len
-        z = _ZOOM_CYCLE[i % len(_ZOOM_CYCLE)]
-        # 소스 시간(루프 고려): a를 소스 길이로 모듈로
-        sa = a % use if use > 0 else 0.0
-        fa, fb = int((sa) * fps_trk), int((sa + seg_len) * fps_trk)
-        seg_c = cents[fa:fb] or cents
-        fx = _median([c[0] for c in seg_c])
-        fy = _median([c[1] for c in seg_c])
-        cw = int(round((src_h * W / H) / z)) & ~1
-        ch = int(round(src_h / z)) & ~1
-        cw = min(cw, int(src_w)) & ~1
-        cx = int(min(max(fx * src_w - cw / 2, 0), src_w - cw))
-        cy = int(min(max(fy * src_h - ch / 2, 0), src_h - ch))
+        a = i * seg_len
+        sa = starts[i] if starts else (a % use if use > 0 else 0.0)
         seg_out = wd / f"rf_{i}.mp4"
-        vf = (f"crop={cw}:{ch}:{cx}:{cy},scale={W}:{H},setsar=1,"
-              f"eq=contrast=1.12:saturation=1.16:brightness=-0.05,"
-              f"colorbalance=rm=-0.03:bm=0.05,vignette=PI/4.2,format=yuv420p")
         cmd = ["ffmpeg", "-y", "-loglevel", "error"]
         if loop:
             cmd += ["-stream_loop", "-1"]
         cmd += ["-ss", f"{sa:.2f}", "-t", f"{seg_len:.2f}", "-i", footage_path,
-                "-vf", vf, "-an", "-r", "30", "-c:v", "libx264", "-preset", "medium",
-                "-crf", "20", str(seg_out)]
+                "-an", "-r", "30", "-c:v", "libx264", "-preset", "medium", "-crf", "20"]
+        if i % 2 == 0:
+            # 핏 컷: 전신 + 배경 전체가 보이도록 원본 전체를 9:16 안에 맞춤(여백=블러 채움)
+            n_fit += 1
+            pre = (delogo_vf(src_w, src_h, logo_box) + ",") if logo_box else ""
+            fc = (f"[0:v]{pre}split=2[a][b];"
+                  f"[a]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
+                  f"gblur=sigma=32,eq=brightness=-0.14:saturation=1.02[bg];"
+                  f"[b]scale={W}:{H}:force_original_aspect_ratio=decrease[fg];"
+                  f"[bg][fg]overlay=(W-w)/2:(H-h)/2,{GRADE}")
+            cmd += ["-filter_complex", fc, str(seg_out)]
+        else:
+            # 접사 컷: 피사체 추적 + 완만한 줌(줌 상한 60% 점유율). 크롭이라 좌우 일부만 보임.
+            z = cycle[i % len(cycle)]
+            fa, fb = int(sa * fps_trk), int((sa + seg_len) * fps_trk)
+            seg_c = cents[fa:fb] or cents
+            fx = _median([c[0] for c in seg_c]); fy = _median([c[1] for c in seg_c])
+            med_frac = _median((fracs[fa:fb] or fracs))
+            z_cap = _m.sqrt(0.6 * src_h * W / (max(med_frac, 1e-4) * src_w * H))
+            z = max(1.0, min(z, z_cap))
+            cw = int(round((src_h * W / H) / z)) & ~1
+            ch = int(round(src_h / z)) & ~1
+            cw = min(cw, int(src_w)) & ~1
+            cx = int(min(max(fx * src_w - cw / 2, 0), src_w - cw))
+            cy = int(min(max(fy * src_h - ch / 2, 0), src_h - ch))
+            pre_vf = ""
+            if logo_box:
+                cx, cy, need_dl = _logo_avoid(cx, cy, cw, ch, fx * src_w, fy * src_h,
+                                              src_w, src_h, logo_box)
+                if need_dl:
+                    pre_vf = delogo_vf(src_w, src_h, logo_box) + ","
+            vf = f"{pre_vf}crop={cw}:{ch}:{cx}:{cy},scale={W}:{H},setsar=1,{GRADE}"
+            cmd += ["-vf", vf, str(seg_out)]
         subprocess.run(cmd, check=True)
         lines.append(f"file '{seg_out.name}'")
     concat.write_text("\n".join(lines), encoding="utf-8")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0",
                     "-i", str(concat), "-c", "copy", out_path], check=True)
-    log.info("[reframe] 9:16 완성: %s (%d컷, %.1fs)", out_path, n_seg, target_dur)
+    log.info("[reframe] 9:16 완성: %s (%d컷 중 전신핏 %d컷 %.0f%%, %.1fs)",
+             out_path, n_seg, n_fit, 100.0 * n_fit / max(n_seg, 1), target_dur)
     return out_path

@@ -96,6 +96,11 @@ class CaptionData:
     cut_beats: list[str] = field(default_factory=list)
     reveal_name: str = ""
     reveal_fact: str = ""
+    # 한국어 참고 번역(운영자용) — 일본어(발행문)와 '분리 저장'해 대시보드가 좌(일)/우(한)
+    # 2단으로 나란히 보여준다(합본 1필드는 동시 열람 불가라 폐기).
+    caption_ko: str = ""
+    hook_ko: str = ""
+    hashtags_ko: list[str] = field(default_factory=list)
     # 근접 경보(선택): 실제 행동(개체가 카메라/ROV를 인지·근접)에 한해 컷2 후반 긴장 연출을
     # 붉은 글씨 + 쿵쿵/경보음으로 강화. 날조된 공격이 아니라 '근접·인지'만 표현(정확성 하드룰).
     alert: bool = False

@@ -121,10 +121,20 @@ jobs:
           cache-dependency-path: short-movie-generator/requirements.txt
 
       - name: Install FFmpeg + fonts
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-cjk
+        # 재발방지: 오프닝/엔드카드 렌더에 필요한 폰트를 빠짐없이 설치한다.
+        # fonts-noto-cjk(본문 CJK) + fonts-liberation(학명 라틴 이탤릭). 하나라도 빠지면
+        # fonts_available()가 False가 되어 오프닝/엔드카드가 통째로 스킵되던 사고가 있었다.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-cjk fonts-liberation
 
       - name: Install Python deps
         run: pip install -r requirements.txt
+
+      - name: Verify render fonts present (fail fast)
+        # 프리플라이트: 필수 폰트가 없으면 여기서 즉시 실패(빨간불)시켜, 훅/엔드카드 없는
+        # 영상이 조용히 발행되는 일을 원천 차단한다(PIL 필요 → pip 설치 뒤에 실행).
+        working-directory: short-movie-generator
+        run: |
+          python -c "from src.core import hook_intro as hi; m=hi.missing_fonts(); print('FONT_SCI=', hi.FONT_SCI); assert not m, ('필수 폰트 누락: '+', '.join(m)); print('필수 폰트 OK')"
 
       - name: Cache Playwright Chromium
         uses: actions/cache@v4

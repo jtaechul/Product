@@ -32,11 +32,31 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 
 # ─────────────────────────── 폰트 경로(시스템/벤더) ───────────────────────────
 _VENDOR = Path(__file__).resolve().parents[2] / "vendor" / "fonts"
+
+
+def _resolve_font(candidates: list[str]) -> str:
+    """후보 폰트 경로 중 실제 존재하는 첫 번째를 반환(없으면 첫 후보 그대로).
+    재발방지: 특정 폰트 1개가 없다고 오프닝/엔드카드 전체가 스킵되지 않도록,
+    학명(라틴) 이탤릭이 없으면 Noto로 대체한다(이탤릭만 손해, 렌더는 계속)."""
+    for c in candidates:
+        try:
+            if Path(c).exists():
+                return c
+        except Exception:  # noqa: BLE001
+            continue
+    return candidates[0]
+
+
 FONT_SERIF = "/usr/share/fonts/opentype/noto/NotoSerifCJK-Bold.ttc"      # 명조(붓 뉘앙스)
 FONT_SANS_B = "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"
 FONT_SANS_R = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
 FONT_MONO = str(_VENDOR / "ShareTechMono.ttf")
-FONT_SCI = "/usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf"  # 학명 이탤릭
+# 학명 이탤릭: Liberation(라틴 이탤릭) 우선, 없으면 Noto로 폴백(전체 스킵 방지).
+FONT_SCI = _resolve_font([
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf",
+    FONT_SANS_B, FONT_SERIF,
+])
 
 
 @dataclass
@@ -51,6 +71,9 @@ class SpeciesSpec:
     hook_pop_words: list[str]          # 팝인 어절(순서) 예: [頭も、, 目も、, 骨もない。]
     feature_line: str                  # 엔드카드 특징문구 예: 泳ぐ・光る・透ける、深海のナマコ
     feature_glow_word: str = "光る"     # 파티클을 붙일 단어
+    corner_label: str = "DEEP SEA · ROV CAM"   # 오프닝 좌측 코너 라벨(카테고리별)
+    scale_label: str = "生息水深"       # 우측 스케일 제목(깊이 등). 빈 문자열이면 스케일 숨김
+    show_scale: bool = True            # 우측 수심 스케일 표시 여부(얕은·비생물 대상은 False)
 
 
 @dataclass
@@ -69,6 +92,12 @@ class HookIntroConfig:
     title_size: int = 98
     title_y1: int = 548
     title_y2: int = 672
+    # 넘침 방지(자동 맞춤): 안전여백·최소 크기·2줄 유지 하한.
+    # 확정 디자인(頭も、目も、= 588px @98px)은 safe(608px) 안 → 그대로 유지되고,
+    # 더 긴 훅만 자동 축소되거나(≥min_2line) 어절당 1줄(3줄)로 전환된다.
+    title_safe_x: int = 40             # 좌우 안전여백(셰이크 margin과 별도)
+    title_min_size: int = 56           # 축소 하한
+    title_min_2line: int = 76          # 2줄 유지 최소 크기(미만이면 3줄 전환)
     grad_cyan: tuple = (120, 225, 245)
     grad_magenta: tuple = (240, 95, 205)
     glow: tuple = (80, 175, 240)
@@ -114,8 +143,15 @@ def _sci(s: int): return ImageFont.truetype(FONT_SCI, s)
 
 
 def fonts_available() -> bool:
-    """필수 폰트가 모두 있으면 True(없으면 렌더 스킵/테스트 스킵)."""
-    return all(Path(p).exists() for p in (FONT_SERIF, FONT_SANS_R, FONT_MONO, FONT_SCI))
+    """필수(대체 불가) 폰트가 모두 있으면 True.
+    FONT_SCI(학명)는 _resolve_font로 항상 존재폰트로 해석되므로 게이트에서 제외 —
+    CJK 본문 폰트(Noto)와 벤더 모노만 있으면 오프닝/엔드카드를 낸다."""
+    return all(Path(p).exists() for p in (FONT_SERIF, FONT_SANS_R, FONT_MONO))
+
+
+def missing_fonts() -> list[str]:
+    """없는 필수 폰트 경로 목록(진단·프리플라이트용)."""
+    return [p for p in (FONT_SERIF, FONT_SANS_R, FONT_MONO) if not Path(p).exists()]
 
 
 # ─────────────────────────── 공통 그래픽 헬퍼 ───────────────────────────
@@ -169,6 +205,73 @@ def _grad_sprite_diag(text: str, font, center: tuple, cfg: HookIntroConfig,
     return Image.alpha_composite(gimg, colored), center
 
 
+# ─────────────────────────── 오프닝 타이틀 자동 배치 ───────────────────────────
+def _fit_font(txt: str, base_size: int, max_w: float, loader, min_size: int = 24):
+    """텍스트가 max_w를 넘으면 폰트를 비례 축소(넘침 원천 차단·모든 온스크린 텍스트 공통)."""
+    meas = ImageDraw.Draw(Image.new("RGBA", (2, 2)))
+    w = meas.textlength(txt, font=loader(base_size))
+    if w <= max_w:
+        return loader(base_size)
+    return loader(max(min_size, int(base_size * max_w / max(1, w))))
+
+
+def opening_layout(spec: SpeciesSpec, cfg: HookIntroConfig | None = None) -> dict:
+    """오프닝 타이틀 폰트·어절 중심 좌표 산출(단일 출처 — 화면 밖 넘침 원천 차단).
+
+    왜 존재하나: 과거 고정 98px로 렌더해 긴 훅(ぺたんこの、体に、)이 좌우로 잘려 나갔다.
+    규칙: ① 2줄(확정 디자인)로 safe 폭에 맞는 최대 크기 산출 ② 축소가 과하면
+    (title_min_2line 미만) 어절당 1줄(3줄) 레이아웃으로 전환해 큰 글자를 유지.
+    반환: {font, size, rows, centers[(x,y)], dmin, dmax}
+    """
+    cfg = cfg or HookIntroConfig()
+    W = cfg.W
+    meas = ImageDraw.Draw(Image.new("RGBA", (2, 2)))
+    safe = W - 2 * (cfg.shake_margin + cfg.title_safe_x)
+    words = list(spec.hook_pop_words) or [spec.hook_line1]
+
+    def max_width(texts: list[str], size: int) -> float:
+        f = _serif(size)
+        return max(meas.textlength(t, font=f) for t in texts)
+
+    def fit(texts: list[str]) -> int:
+        w = max_width(texts, cfg.title_size)
+        if w <= safe:
+            return cfg.title_size
+        return max(cfg.title_min_size, int(cfg.title_size * safe / w))
+
+    size = fit([spec.hook_line1, spec.hook_line2])
+    if size >= cfg.title_min_2line or len(words) < 3:
+        rows = 2
+        f = _serif(size)
+        w1 = meas.textlength(spec.hook_line1, font=f)
+        centers: list[tuple] = []
+        if len(words) >= 3:                      # line1 = 앞 어절들, line2 = 마지막 어절
+            x = W / 2 - w1 / 2
+            for wtxt in words[:-1]:
+                ww = meas.textlength(wtxt, font=f)
+                centers.append((int(x + ww / 2), cfg.title_y1)); x += ww
+            centers.append((W // 2, cfg.title_y2))
+        elif len(words) == 2:
+            centers = [(W // 2, cfg.title_y1), (W // 2, cfg.title_y2)]
+        else:
+            centers = [(W // 2, (cfg.title_y1 + cfg.title_y2) // 2)]
+    else:                                        # 3줄: 어절당 1줄 → 큰 글자 유지
+        rows = len(words)
+        size = fit(words)
+        f = _serif(size)
+        gap = int(size * 1.26)
+        cy = (cfg.title_y1 + cfg.title_y2) // 2
+        y0 = cy - gap * (rows - 1) // 2
+        centers = [(W // 2, y0 + gap * i) for i in range(rows)]
+    dmin, dmax = 1e9, -1e9                       # 전 어절 연속 대각 그라데이션 범위
+    for wtxt, (cx, cy2) in zip(words, centers):
+        ww = meas.textlength(wtxt, font=f)
+        dmin = min(dmin, (cx - ww / 2) + (cy2 - 60))
+        dmax = max(dmax, (cx + ww / 2) + (cy2 + 60))
+    return {"font": f, "size": size, "rows": rows, "centers": centers,
+            "dmin": dmin, "dmax": dmax, "safe": safe}
+
+
 # ─────────────────────────── 오프닝 훅 렌더 ───────────────────────────
 def render_opening_frames(bg_path: str, onsets: dict, spec: SpeciesSpec,
                           out_dir: str, cfg: HookIntroConfig | None = None) -> list[str]:
@@ -176,33 +279,19 @@ def render_opening_frames(bg_path: str, onsets: dict, spec: SpeciesSpec,
 
     onsets: {어절: 나레이션_로컬_시작초} — narration_sync WordBoundary에서 도출.
             팝인·셰이크·붐 SFX가 이 온셋에 정합된다.
+    타이틀 배치는 opening_layout()이 단일 출처로 계산(넘침 원천 차단).
     """
     cfg = cfg or HookIntroConfig()
     W, H, M = cfg.W, cfg.H, cfg.shake_margin
     Path(out_dir).mkdir(parents=True, exist_ok=True)
-    f_title = _serif(cfg.title_size)
-    meas = ImageDraw.Draw(Image.new("RGBA", (2, 2)))
-    w1 = meas.textlength(spec.hook_line1, font=f_title)
-    w2 = meas.textlength(spec.hook_line2, font=f_title)
-    y1, y2 = cfg.title_y1, cfg.title_y2
-    dmin = (W // 2 - w1 / 2) + (y1 - 60)
-    dmax = (W // 2 + w2 / 2) + (y2 + 60)
+    lay = opening_layout(spec, cfg)
+    f_title, centers, dmin, dmax = lay["font"], lay["centers"], lay["dmin"], lay["dmax"]
 
-    # 팝인 어절 스프라이트 + 절대 중심(2줄 연속 그라데이션)
+    # 팝인 어절 스프라이트(레이아웃이 준 중심·연속 그라데이션)
     words = spec.hook_pop_words
-    # line1을 두 어절로 가정(頭も、/ 目も、), line2는 나머지 한 어절(骨もない。)
     ph = []
-    if len(words) >= 3:
-        wa = meas.textlength(words[0], font=f_title)
-        wb = meas.textlength(words[1], font=f_title)
-        cx_a = int((W // 2 - w1 / 2) + wa / 2)
-        cx_b = int((W // 2 - w1 / 2) + wa + wb / 2)
-        centers = [(cx_a, y1), (cx_b, y1), (W // 2, y2)]
-    else:  # 어절 수가 다르면 균등 배치(폴백)
-        centers = [(W // 2, y1)] * len(words)
-    key = list(onsets.keys())
     for i, wtxt in enumerate(words):
-        spr, c = _grad_sprite_diag(wtxt, f_title, centers[i], cfg, dmin, dmax, cfg.glow_r)
+        spr, c = _grad_sprite_diag(wtxt, f_title, centers[i % len(centers)], cfg, dmin, dmax, cfg.glow_r)
         onset = cfg.narr_start_s + list(onsets.values())[i % len(onsets)]
         ph.append((spr, c, onset))
 
@@ -261,16 +350,21 @@ def _static_overlay(spec: SpeciesSpec, cfg: HookIntroConfig) -> Image.Image:
     W, H = cfg.W, cfg.H
     ov = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(ov)
     d.rectangle([0, 0, W, 70], fill=(0, 0, 0, 150)); d.rectangle([0, H - 70, W, H], fill=(0, 0, 0, 150))
-    d.text((44, 455), "DEEP SEA · ROV CAM", font=_mono(19), fill=(150, 190, 205, 170), anchor="lm")
-    # 실제 서식 수심 스케일(얕은 위 → 깊은 아래)
-    x, y0, y1 = 648, 430, 910; col = (150, 200, 220)
-    d.text((690, y0 - 42), "生息水深", font=_sans_r(20), fill=col + (200,), anchor="rm")
-    d.line([x, y0, x, y1], fill=col + (140,), width=2)
-    for i in range(4):
-        t = i / 3; yy = int(y0 + (y1 - y0) * t)
-        depth = int(round((spec.depth_min + (spec.depth_max - spec.depth_min) * t) / 100) * 100)
-        d.line([x - 10, yy, x, yy], fill=col + (190,), width=2)
-        d.text((x - 18, yy), f"{depth:,} m", font=_mono(23), fill=col + (215,), anchor="rm")
+    d.text((44, 455), spec.corner_label, font=_mono(19), fill=(150, 190, 205, 170), anchor="lm")
+    # 우측 수심 스케일(얕은 위 → 깊은 아래). 카테고리가 끄면(show_scale=False) 생략 —
+    # 미세조류/난파선처럼 '서식수심'이 무의미하거나 얕아 눈금이 0으로 뭉치는 경우.
+    scale_ok = spec.show_scale and spec.scale_label and spec.depth_max >= 50
+    if scale_ok:
+        x, y0, y1 = 648, 430, 910; col = (150, 200, 220)
+        d.text((690, y0 - 42), spec.scale_label, font=_sans_r(20), fill=col + (200,), anchor="rm")
+        d.line([x, y0, x, y1], fill=col + (140,), width=2)
+        # 눈금 반올림 단위: 범위가 좁으면 10, 넓으면 100 단위로(0 뭉침 방지)
+        unit = 100 if (spec.depth_max - spec.depth_min) >= 300 else 10
+        for i in range(4):
+            t = i / 3; yy = int(y0 + (y1 - y0) * t)
+            depth = int(round((spec.depth_min + (spec.depth_max - spec.depth_min) * t) / unit) * unit)
+            d.line([x - 10, yy, x, yy], fill=col + (190,), width=2)
+            d.text((x - 18, yy), f"{depth:,} m", font=_mono(23), fill=col + (215,), anchor="rm")
     # 하단 종 라벨(국명 + 이탤릭 학명)
     jp = f"{spec.jp_name}  /  "
     jw = d.textlength(jp, font=_sans_r(26))
@@ -328,23 +422,27 @@ def render_endcard(bg_path: str, spec: SpeciesSpec, out_path: str,
             dd.line([cx, cy, cx + dx * ln, cy + dy * ln], fill=(210, 240, 255, a), width=2)
         dd.ellipse([cx - 2, cy - 2, cx + 2, cy + 2], fill=(255, 255, 255, a))
 
-    # 중앙 정렬 텍스트 블록(캡슐·게이지 없음 — 사용자 확정)
-    grad_text((W // 2, 336), spec.jp_name, _serif(cfg.end_title_size), glow_r=26)
-    text((W // 2, 430), spec.sci_name, _sci(cfg.end_sci_size), (210, 220, 235, 255))
+    # 중앙 정렬 텍스트 블록(캡슐·게이지 없음 — 사용자 확정) · 폰트는 화면폭 자동 맞춤
+    max_w = W - 72
+    f_title = _fit_font(spec.jp_name, cfg.end_title_size, max_w, _serif)
+    f_feat = _fit_font(spec.feature_line, cfg.end_feature_size, max_w, _serif)
+    grad_text((W // 2, 336), spec.jp_name, f_title, glow_r=26)
+    text((W // 2, 430), spec.sci_name, _fit_font(spec.sci_name, cfg.end_sci_size, max_w, _sci),
+         (210, 220, 235, 255))
     depth_str = f"水深 {spec.depth_min:,}〜{spec.depth_max:,} m"
-    text((W // 2, 512), depth_str, _sans_b(cfg.end_depth_size), CYAN + (255,))
+    text((W // 2, 512), depth_str, _fit_font(depth_str, cfg.end_depth_size, max_w, _sans_b),
+         CYAN + (255,))
     # 특징문구 + glow 단어 주변 파티클
     line = spec.feature_line
-    text((W // 2, 1060), line, _serif(cfg.end_feature_size), (232, 240, 250, 255))
+    text((W // 2, 1060), line, f_feat, (232, 240, 250, 255))
     dd = ImageDraw.Draw(bg)
     gw = spec.feature_glow_word
     idx = line.find(gw)
     if idx >= 0:
-        full_w = dd.textlength(line, font=_serif(cfg.end_feature_size))
+        full_w = dd.textlength(line, font=f_feat)
         lx = W // 2 - full_w / 2
         pre = line[:idx]
-        hx = lx + dd.textlength(pre, font=_serif(cfg.end_feature_size)) + \
-            dd.textlength(gw, font=_serif(cfg.end_feature_size)) / 2
+        hx = lx + dd.textlength(pre, font=f_feat) + dd.textlength(gw, font=f_feat) / 2
         for dx, dy, r, a in [(-46, -30, 7, 255), (30, -38, 5, 220), (52, 10, 6, 240),
                              (-30, 26, 4, 200), (8, -52, 4, 180)]:
             particle(int(hx + dx), 1060 + dy, r, a)
@@ -399,6 +497,14 @@ def build_specimen_bg(frame_path: str, out_path: str, cfg: HookIntroConfig | Non
     BAND_TOP, BAND_BOT = 545, 950
     src = Image.open(frame_path).convert("RGB")
     bw = W; bh = int(src.height * bw / src.width)
+    # 소스가 세로로 과하면(9:16 리프레임 프레임 등) 중앙 크롭으로 밴드에 맞춤 —
+    # 밴드가 텍스트 영역을 침범하거나 피사체가 확대·잘리는 것 방지.
+    max_bh = (BAND_BOT - BAND_TOP) + 60
+    if bh > max_bh:
+        crop_h = int(src.width * max_bh / bw)
+        top = max(0, (src.height - crop_h) // 2)
+        src = src.crop((0, top, src.width, min(src.height, top + crop_h)))
+        bh = max_bh
     band = src.resize((bw, bh), Image.LANCZOS)
     band = ImageEnhance.Brightness(band).enhance(0.82)
     band = ImageEnhance.Contrast(band).enhance(1.06)
@@ -485,11 +591,17 @@ def _styled_line(spec: SpeciesSpec, cfg: HookIntroConfig):
         return Image.alpha_composite(gimg, colored)
 
     depth_str = f"水深 {spec.depth_min:,}〜{spec.depth_max:,} m"
+    # 각 줄 폰트는 화면폭에 자동 맞춤(_fit_font) — 긴 국명·특징문구도 넘침 원천 차단
+    max_w = W - 72
+    ft = _fit_font(spec.jp_name, cfg.end_title_size, max_w, _serif)
+    fs = _fit_font(spec.sci_name, cfg.end_sci_size, max_w, _sci)
+    fd = _fit_font(depth_str, cfg.end_depth_size, max_w, _sans_b)
+    ff = _fit_font(spec.feature_line, cfg.end_feature_size, max_w, _serif)
     specs = [
-        ("title", spec.jp_name, _serif(cfg.end_title_size), 336, cfg.type_cps_title, grad_layer(spec.jp_name, _serif(cfg.end_title_size), 336, 26)),
-        ("sci", spec.sci_name, _sci(cfg.end_sci_size), 430, cfg.type_cps_body, solid_layer(spec.sci_name, _sci(cfg.end_sci_size), 430, (210, 220, 235, 255))),
-        ("depth", depth_str, _sans_b(cfg.end_depth_size), 512, cfg.type_cps_body, solid_layer(depth_str, _sans_b(cfg.end_depth_size), 512, CYAN + (255,))),
-        ("feature", spec.feature_line, _serif(cfg.end_feature_size), 1060, cfg.type_cps_body, solid_layer(spec.feature_line, _serif(cfg.end_feature_size), 1060, (232, 240, 250, 255))),
+        ("title", spec.jp_name, ft, 336, cfg.type_cps_title, grad_layer(spec.jp_name, ft, 336, 26)),
+        ("sci", spec.sci_name, fs, 430, cfg.type_cps_body, solid_layer(spec.sci_name, fs, 430, (210, 220, 235, 255))),
+        ("depth", depth_str, fd, 512, cfg.type_cps_body, solid_layer(depth_str, fd, 512, CYAN + (255,))),
+        ("feature", spec.feature_line, ff, 1060, cfg.type_cps_body, solid_layer(spec.feature_line, ff, 1060, (232, 240, 250, 255))),
     ]
     lines = []
     start = cfg.type_start_s

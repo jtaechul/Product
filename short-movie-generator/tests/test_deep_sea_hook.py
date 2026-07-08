@@ -37,3 +37,40 @@ def test_unknown_species_without_llm_returns_none():
     import os
     if not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("GEMINI_API_KEY")):
         assert hook.build_hook(info) is None
+
+
+def test_seed_hooks_have_korean_translations():
+    """모든 시드 종은 훅·특징의 한국어 번역을 갖는다(대시보드 우측 프레임용)."""
+    for key, s in hook._SEED.items():
+        assert s.get("hook_ko"), f"{key}: hook_ko 없음"
+        assert s.get("feature_ko"), f"{key}: feature_ko 없음"
+
+
+def _no_japanese(text: str) -> bool:
+    import re
+    return not re.search(r"[ぁ-んァ-ヶ一-龯]", text)
+
+
+def test_fallback_ko_caption_fully_korean(monkeypatch):
+    """(실제 결함 회귀) 폴백 한국어 캡션에 일본어 원문이 그대로 남으면 안 된다."""
+    from src.core import llm
+    monkeypatch.setattr(llm, "generate_text", lambda *a, **k: None)   # LLM 강제 실패 → 폴백
+    c = hook.build_reels_caption(INFO, "ユメナマコ", "Enypniastes eximia",
+                                 "泳ぐ・光る・透ける、深海のナマコ", "頭も、目も、", "骨もない。",
+                                 hook_ko="머리도, 눈도, 뼈도 없다.",
+                                 feature_ko="헤엄치고·빛나고·비치는, 심해의 해삼")
+    assert c["ko"] and _no_japanese(c["ko"]), f"KO 캡션에 일본어 잔류: {c['ko'][:80]}"
+    assert len(c["tags_ko"]) == 3 and all(_no_japanese(t) for t in c["tags_ko"])
+
+
+def test_reels_captiondata_separates_jp_and_ko(monkeypatch):
+    """CaptionData가 JP(발행)와 KO(참고)를 분리 필드로 담는다(합본 금지)."""
+    from src.core import llm
+    monkeypatch.setattr(llm, "generate_text", lambda *a, **k: None)
+    cat = DeepSeaCategory()
+    spec, _t, _b = cat.hook_intro_spec(INFO)
+    cd = cat.build_reels_caption(INFO, spec)
+    assert "한국어 참고 번역" not in cd.caption_body            # 합본 마커 없음
+    assert _no_japanese(cd.caption_ko)
+    assert cd.hook_ko and _no_japanese(cd.hook_ko)
+    assert len(cd.hashtags_ko) == 3

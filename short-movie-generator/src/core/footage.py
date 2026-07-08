@@ -19,6 +19,11 @@ _UA = ("DeepSeaShortsBot/1.0 (https://github.com/jtaechul/product; educational d
 _ALLOWED = ("public domain", "pd", "cc0", "cc-by", "cc by", "publicdomain", "kogl")
 _VIDEO_EXT = (".webm", ".ogv", ".ogg", ".mp4", ".mov")
 
+# NOAA Ocean Exploration 워터마크(좌상단 고정) 영역 — 원본 대비 비율(x, y, w, h).
+# 실측: 1280x720 기준 로고 텍스트가 x≤261(0.20W)·y≤77(0.11H) → 여유 포함 0.28/0.15.
+# 크롭이 이 영역과 겹치면 ① 프레임을 옆/아래로 밀어 회피(2안) ② 불가 시 delogo로 메움(3안).
+_NOAA_LOGO_BOX = (0.0, 0.0, 0.28, 0.15)
+
 # 대표종 시드 — Commons/NOAA 검증된 PD/CC0 영상 직링크(학명 소문자 키).
 # 이 목록에 있는 종만 auto가 선택 → '실사 영상 없음' 실패를 원천 차단.
 _SEED = {
@@ -36,6 +41,49 @@ _SEED = {
         "url": "https://upload.wikimedia.org/wikipedia/commons/0/01/Graneledone_boreopacifica_seafloor.webm",
         "license": "public-domain", "credit": "NOAA Ocean Exploration",
         "source": "https://commons.wikimedia.org/wiki/File:Graneledone_boreopacifica_seafloor.webm",
+    },
+    # 2차 확충(2026-07, Commons 전수 sweep + 육안 검수 통과분).
+    "bathynomus giganteus": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/b8/Bathynomus_giganteus.webm",
+        "license": "public-domain", "credit": "NOAA",
+        "source": "https://commons.wikimedia.org/wiki/File:Bathynomus_giganteus.webm",
+    },
+    "crossota sp.": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/9/9f/Okeanos_Explorer_PR_and_USVI_Dive_8-_Psychedelic_Medusa-NOAA-1280x720.webm",
+        "license": "public-domain", "credit": "NOAA Ocean Exploration",
+        "source": "https://commons.wikimedia.org/wiki/File:Okeanos_Explorer_PR_and_USVI_Dive_8-_Psychedelic_Medusa-NOAA-1280x720.webm",
+    },
+    "actinoscyphia aurelia": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/0/02/Venus_Flytrap_Anemone-_2017_American_Samoa.webm",
+        "license": "public-domain", "credit": "NOAA Ocean Exploration",
+        "source": "https://commons.wikimedia.org/wiki/File:Venus_Flytrap_Anemone-_2017_American_Samoa.webm",
+    },
+    "megalodicopia hians": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Predatory_tunicate_-_MBA.webm",
+        "license": "cc-by", "credit": "Eric Polk (MBARI) · CC BY",
+        "source": "https://commons.wikimedia.org/wiki/File:Predatory_tunicate_-_MBA.webm",
+    },
+    "umbellula sp.": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Umbellula_sp._-_MBA.webm",
+        "license": "cc-by", "credit": "Eric Polk (MBARI) · CC BY",
+        "source": "https://commons.wikimedia.org/wiki/File:Umbellula_sp._-_MBA.webm",
+    },
+    # 범위 확장(심해→전 해양) + 다중 소스(GBIF/Commons 전세계) 첫 편입분.
+    "sepioteuthis sepioidea": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/c/ce/Caribbean_Reef_Squid_Encounter.webm",
+        "license": "cc-by", "credit": "Atsme · CC BY",
+        "source": "https://commons.wikimedia.org/wiki/File:Caribbean_Reef_Squid_Encounter.webm",
+    },
+    # 신규 카테고리 시드 — 해양 미세조류(marine_algae) / 난파선(shipwreck).
+    "bacillariophyta": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/3/39/Diatom_movement_DSC_1511.webm",
+        "license": "cc-by", "credit": "Michael Clarke Stuff · CC BY",
+        "source": "https://commons.wikimedia.org/wiki/File:Diatom_movement_DSC_1511.webm",
+    },
+    "wreck aries": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/1/15/Wreck_Aries_-_Dive_in_18m_cargo_ship.webm",
+        "license": "cc-by", "credit": "Vitor Alves · CC BY",
+        "source": "https://commons.wikimedia.org/wiki/File:Wreck_Aries_-_Dive_in_18m_cargo_ship.webm",
     },
 }
 
@@ -137,5 +185,8 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
     elif not _download(cand["url"], out):
         return None
     log.info("[footage] 확보: %s (%s, %s)", out, cand["license"], cand["credit"])
+    # NOAA 소스는 좌상단 워터마크 영역 정보를 함께 반환(하류에서 회피/제거)
+    logo = _NOAA_LOGO_BOX if "noaa" in (cand.get("credit", "") or "").lower() else None
     return {"path": str(out), "license": cand["license"],
-            "credit": cand["credit"], "source": cand.get("source", "")}
+            "credit": cand["credit"], "source": cand.get("source", ""),
+            "logo_box": logo}

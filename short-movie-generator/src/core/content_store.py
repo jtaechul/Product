@@ -30,6 +30,20 @@ def record_path(base_dir: str, content_id: str) -> Path:
     return content_dir(base_dir) / f"{content_id}.json"
 
 
+def next_global_id(base_dir: str = ".") -> int:
+    """전 카테고리 공용 다음 콘텐츠 번호 = 기존 content/NNN.json 최대값 + 1(없으면 1).
+
+    카테고리별 회차 번호를 콘텐츠 id로 쓰면 서로 다른 카테고리가 같은 번호(#001 등)를 써서
+    content/001.json을 덮어쓰는 충돌이 생긴다. 콘텐츠 id는 전 카테고리 공용으로 매긴다.
+    """
+    d = content_dir(base_dir)
+    mx = 0
+    for p in d.glob("*.json"):
+        if p.stem.isdigit():
+            mx = max(mx, int(p.stem))
+    return mx + 1
+
+
 def load_record(base_dir: str, content_id: str) -> dict | None:
     p = record_path(base_dir, content_id)
     if p.exists():
@@ -73,10 +87,14 @@ def write_record(base_dir: str, content_id: str, *, info, caption, asset,
     if scope in ("caption", "all"):
         reels.update({
             "hook": caption.hook_text,
-            "caption": caption.caption_body,
+            "caption": caption.caption_body,                       # 일본어(발행문)
             "hashtags": list(caption.hashtags or []),
             "reveal_name": caption.reveal_name,
             "reveal_fact": caption.reveal_fact,
+            # 한국어 참고 번역(분리 필드) — 대시보드 좌(일)/우(한) 2단 표시용
+            "hook_ko": getattr(caption, "hook_ko", "") or "",
+            "caption_ko": getattr(caption, "caption_ko", "") or "",
+            "hashtags_ko": list(getattr(caption, "hashtags_ko", []) or []),
         })
     if scope in ("video", "images", "all"):
         reels["visualizer"] = visualizer

@@ -26,6 +26,8 @@ _SEED = {
         "pop_words": ["頭も、", "目も、", "骨もない。"],
         "feature_line": "泳ぐ・光る・透ける、深海のナマコ",
         "feature_glow_word": "光る",
+        "hook_ko": "머리도, 눈도, 뼈도 없다.",
+        "feature_ko": "헤엄치고·빛나고·비치는, 심해의 해삼",
     },
     "opisthoteuthis californiana": {
         "jp_name": "メンダコ",
@@ -34,6 +36,8 @@ _SEED = {
         "pop_words": ["ぺたんこの、", "体に、", "耳のひれ。"],
         "feature_line": "ひらひら舞う、深海のメンダコ",
         "feature_glow_word": "舞う",
+        "hook_ko": "납작한 몸에, 귀 같은 지느러미.",
+        "feature_ko": "하늘하늘 헤엄치는, 심해의 넓적문어",
     },
     "graneledone boreopacifica": {
         "jp_name": "シンカイダコ",
@@ -42,6 +46,58 @@ _SEED = {
         "pop_words": ["四年半、", "ただ、", "待ちつづけた。"],
         "feature_line": "卵を守る、深海のタコ",
         "feature_glow_word": "守る",
+        "hook_ko": "4년 반을, 그저, 기다렸습니다.",
+        "feature_ko": "알을 지키는, 심해의 문어",
+    },
+    "bathynomus giganteus": {
+        "jp_name": "ダイオウグソクムシ",
+        "hook_line1": "ダンゴムシが、",
+        "hook_line2": "巨大化した。",
+        "pop_words": ["ダンゴムシが、", "巨大化した。"],
+        "feature_line": "海底を歩く、深海の大食漢",
+        "feature_glow_word": "歩く",
+        "hook_ko": "공벌레가, 거대해졌다.",
+        "feature_ko": "해저를 걷는, 심해의 대식가",
+    },
+    "crossota sp.": {
+        "jp_name": "シンカイクラゲ",
+        "hook_line1": "赤は、",
+        "hook_line2": "闇にまぎれる色。",
+        "pop_words": ["赤は、", "闇にまぎれる色。"],
+        "feature_line": "ゆらめく赤、深海をただようクラゲ",
+        "feature_glow_word": "ゆらめく",
+        "hook_ko": "붉은색은, 어둠에 숨는 색.",
+        "feature_ko": "일렁이는 붉은빛, 심해를 떠도는 해파리",
+    },
+    "actinoscyphia aurelia": {
+        "jp_name": "ハエトリギンチャク",
+        "hook_line1": "食虫植物に、",
+        "hook_line2": "にた深海の花。",
+        "pop_words": ["食虫植物に、", "にた深海の花。"],
+        "feature_line": "とじて食べる、深海のイソギンチャク",
+        "feature_glow_word": "食べる",
+        "hook_ko": "식충식물을, 닮은 심해의 꽃.",
+        "feature_ko": "닫으며 먹는, 심해의 말미잘",
+    },
+    "megalodicopia hians": {
+        "jp_name": "ニクショクホヤ",
+        "hook_line1": "ホヤなのに、",
+        "hook_line2": "獲物をとらえる。",
+        "pop_words": ["ホヤなのに、", "獲物をとらえる。"],
+        "feature_line": "口をとじて狩る、深海のホヤ",
+        "feature_glow_word": "狩る",
+        "hook_ko": "멍게인데, 먹이를 사냥한다.",
+        "feature_ko": "입을 닫아 사냥하는, 심해의 멍게",
+    },
+    "umbellula sp.": {
+        "jp_name": "シンカイウミエラ",
+        "hook_line1": "一本の茎に、",
+        "hook_line2": "花のような頭。",
+        "pop_words": ["一本の茎に、", "花のような頭。"],
+        "feature_line": "群れでくらす、深海のウミエラ",
+        "feature_glow_word": "くらす",
+        "hook_ko": "가느다란 줄기에, 꽃 같은 머리.",
+        "feature_ko": "군체로 사는, 심해의 바다조름",
     },
 }
 
@@ -59,8 +115,10 @@ JSONのみを出力してください(前後の説明・コードブロック禁
 - pop_words: hook_line1+hook_line2を読点/句点で自然に区切った配列(3要素前後)
 - feature_line: 「A・B・C、〜」形式の短い特徴文(例: 「泳ぐ・光る・透ける、深海のナマコ」)
 - feature_glow_word: feature_line内で光・発光に関わる語(なければ最初の語)
+- hook_ko: hook_line1+hook_line2 の自然な**韓国語訳**(運営者の参考用)
+- feature_ko: feature_line の自然な**韓国語訳**
 
-JSON例: {{"jp_name":"...","hook_line1":"...","hook_line2":"...","pop_words":["...","...","..."],"feature_line":"...","feature_glow_word":"..."}}
+JSON例: {{"jp_name":"...","hook_line1":"...","hook_line2":"...","pop_words":["...","...","..."],"feature_line":"...","feature_glow_word":"...","hook_ko":"...","feature_ko":"..."}}
 """
 
 
@@ -78,6 +136,8 @@ def _parse_json(text: str) -> dict | None:
     if not need.issubset(d) or not isinstance(d.get("pop_words"), list) or len(d["pop_words"]) < 2:
         return None
     d.setdefault("feature_glow_word", d["pop_words"][0])
+    d.setdefault("hook_ko", "")
+    d.setdefault("feature_ko", "")
     return d
 
 
@@ -103,6 +163,41 @@ _BODY_SEED = {
         "四年半もの長い間、", "ほとんど食べずに、", "卵を守りつづける。",
         "知られるかぎり、", "最も長い子育て。", "やがて卵がかえるころ、",
         "母は静かに、", "その一生を終える。",
+    ],
+    "bathynomus giganteus": [
+        "深海の底に、", "うずくまる影。", "その正体は、", "ダイオウグソクムシ。",
+        "ダンゴムシの仲間です。", "体の長さは、", "三十センチをこえる。",
+        "深海の掃除屋として、", "死んだ魚を食べる。", "えさの少ない、", "海の底。",
+        "だから、", "ほとんど動かず、", "エネルギーを使わない。",
+        "何ヶ月も、", "食べないことさえある。", "深い海の、", "静かな大食漢です。",
+    ],
+    "crossota sp.": [
+        "深海の中層を、", "ただよう赤い光。", "その正体は、", "深海性のクラゲ。",
+        "鐘のような体から、", "細い触手を、", "放射状にのばす。",
+        "赤い色は、", "深い海では、", "黒とおなじ。", "光の届かない闇に、", "すがたを消す。",
+        "触手をひろげ、", "小さな獲物を、", "静かに待つ。",
+        "深海をただよう、", "赤い狩人です。",
+    ],
+    "actinoscyphia aurelia": [
+        "流れのはやい、", "深海の崖に、", "咲く花のような影。", "その正体は、",
+        "イソギンチャク。", "食虫植物の、", "ハエトリソウのように、",
+        "触手のついた口を、", "ぱたりととじる。", "流れてきたエサを、",
+        "つつみこみ、", "のがさない。", "海流にむきをあわせ、",
+        "じっと待ちつづける、", "深海の花です。",
+    ],
+    "megalodicopia hians": [
+        "深海の谷の、", "かべにはりつく影。", "その正体は、", "ホヤの仲間。",
+        "ふつうのホヤは、", "水をこして、", "プランクトンを食べる。",
+        "だが、これはちがう。", "大きな口を、", "フードのようにひらき、",
+        "エビのような獲物が、", "近づくと、", "一瞬でとじる。",
+        "動かないのに、", "狩りをする、", "深海のホヤです。",
+    ],
+    "umbellula sp.": [
+        "深海の砂地に、", "すっとのびる影。", "その正体は、", "ウミエラ。",
+        "サンゴの仲間です。", "長い茎の先に、", "ポリプが集まり、", "花のように見える。",
+        "じつはこれ、", "一匹ではない。", "小さな命が集まった、", "群体です。",
+        "茎を砂にさし、", "海流にゆれながら、", "流れてくる養分を、", "とらえて食べる。",
+        "深海にゆれる、", "生きた羽根かざりです。",
     ],
 }
 
@@ -154,20 +249,35 @@ JSONのみ出力(説明・コードブロック禁止)。
 要件:
 - jp_caption: 日本語。1行目=共感・驚きのフック(種名は出さない)。2〜3行=核心の事実を簡潔に。\
 終盤に「保存」を促す1行と「シェア」を促す1行。最後の行は「映像: NOAA Ocean Exploration・Public Domain」。
-- ko_caption: jp_caption の**韓国語訳**(運営者の参考用、自然な韓国語)。
+- ko_caption: jp_caption の**完全な韓国語訳**(運営者の参考用)。日本語の文をそのまま残さず、\
+**すべての行を自然な韓国語に**訳すこと。
 - hashtags: 日本語ハッシュタグ**ちょうど3個**(例: ["#深海","#生き物","#ユメナマコ"])
+- ko_hashtags: hashtags それぞれの**韓国語訳**3個(例: ["#심해","#생물","#유메나마코"])
 
-JSON例: {{"jp_caption":"...","ko_caption":"...","hashtags":["#深海","#...","#..."]}}
+JSON例: {{"jp_caption":"...","ko_caption":"...","hashtags":["#深海","#...","#..."],"ko_hashtags":["#심해","#...","#..."]}}
 """
 
 
+def _ko_tags_fallback(tags: list[str], jp_name: str, ko_name: str) -> list[str]:
+    """일본어 해시태그의 한국어 참고 번역(간이 사전 + 국명 치환)."""
+    table = {"#深海": "#심해", "#生き物": "#생물", "#海": "#바다", "#タコ": "#문어",
+             "#ナマコ": "#해삼", "#イカ": "#오징어", "#魚": "#물고기", f"#{jp_name}": f"#{ko_name}"}
+    return [table.get(t, f"#{ko_name}" if jp_name and jp_name in t else t) for t in tags]
+
+
 def build_reels_caption(info: SpeciesInfo, jp_name: str, sci_name: str,
-                        feature_line: str, hook_line1: str, hook_line2: str) -> dict:
-    """reels 일본어 캡션 + 한국어 참고 번역 + 해시태그(3). LLM 우선, 실패 시 템플릿 폴백."""
+                        feature_line: str, hook_line1: str, hook_line2: str,
+                        hook_ko: str = "", feature_ko: str = "") -> dict:
+    """reels 캡션 — 일본어(발행)와 한국어(참고 번역)를 **분리**해 반환.
+
+    반환: {jp, ko, tags, tags_ko}. ko는 jp의 완전 번역이어야 한다(일본어 원문 잔류 금지 —
+    과거 폴백이 훅·특징 문장을 일본어 그대로 한국어 블록에 끼워 넣던 실제 결함의 재발 방지).
+    LLM 우선, 실패 시 시드 한국어 번역(hook_ko/feature_ko) 기반 완전 한국어 폴백.
+    """
     facts = " / ".join((info.fun_facts or [])[:4]) or "-"
     prompt = _CAPTION_PROMPT.format(jp=jp_name, sci=sci_name, depth=info.depth_range_m, facts=facts)
     try:
-        out = llm.generate_text(prompt, max_tokens=600)
+        out = llm.generate_text(prompt, max_tokens=700)
     except Exception as e:  # noqa: BLE001
         log.warning("[deep_sea.hook] 캡션 LLM 실패: %s", e)
         out = None
@@ -181,19 +291,27 @@ def build_reels_caption(info: SpeciesInfo, jp_name: str, sci_name: str,
                     tags = [t for t in (d.get("hashtags") or []) if str(t).strip()][:3]
                     if len(tags) < 3:
                         tags = (tags + ["#深海", f"#{jp_name}", "#生き物"])[:3]
-                    parsed = {"jp": d["jp_caption"].strip(), "ko": d["ko_caption"].strip(), "tags": tags}
+                    ko_tags = [t for t in (d.get("ko_hashtags") or []) if str(t).strip()][:3]
+                    if len(ko_tags) < 3:
+                        ko_tags = _ko_tags_fallback(tags, jp_name, info.common_name_ko)
+                    parsed = {"jp": d["jp_caption"].strip(), "ko": d["ko_caption"].strip(),
+                              "tags": tags, "tags_ko": ko_tags}
             except Exception:  # noqa: BLE001
                 parsed = None
-    if not parsed:  # 폴백 템플릿(일본어 + 한국어 참고)
+    if not parsed:  # 폴백 템플릿 — 한국어 블록은 '완전 한국어'(일본어 원문 잔류 금지)
+        hk = hook_ko or f"{info.common_name_ko}의 놀라운 비밀."
+        fk = feature_ko or f"심해에 사는 {info.common_name_ko}"
         jp = (f"{hook_line1}{hook_line2}\n\n"
               f"{feature_line}。\n深海にすむ{jp_name}です。\n\n"
               f"心に残ったら保存を。\n同じ深海が気になる人へシェアを。\n\n"
               f"映像: NOAA Ocean Exploration・Public Domain")
-        ko = (f"{hook_line1}{hook_line2}\n\n"
-              f"{feature_line} — 심해에 사는 {info.common_name_ko}입니다.\n\n"
-              f"기억에 남으면 저장하세요.\n같은 심해가 궁금한 사람에게 공유해주세요.\n\n"
+        ko = (f"{hk}\n\n"
+              f"{fk}.\n심해에 사는 {info.common_name_ko}입니다.\n\n"
+              f"마음에 남았다면 저장해 두세요.\n같은 심해가 궁금한 사람에게 공유해 주세요.\n\n"
               f"영상: NOAA Ocean Exploration · 퍼블릭 도메인")
-        parsed = {"jp": jp, "ko": ko, "tags": ["#深海", f"#{jp_name}", "#生き物"]}
+        tags = ["#深海", f"#{jp_name}", "#生き物"]
+        parsed = {"jp": jp, "ko": ko, "tags": tags,
+                  "tags_ko": ["#심해", f"#{info.common_name_ko}", "#생물"]}
     return parsed
 
 
