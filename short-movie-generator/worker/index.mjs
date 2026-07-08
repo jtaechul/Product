@@ -136,6 +136,25 @@ async function fetchRaw(path){
     if(!r.ok)return null;return await r.text();}catch(e){return null;}
 }
 async function fetchCatalog(){const t=await fetchRaw(CATALOG_PATH);try{const a=JSON.parse(t);return Array.isArray(a)?a:[];}catch(e){return [];}}
+// 전 카테고리 콘텐츠 목록: content/*.json 을 직접 나열(카테고리별 catalog에 의존 안 함).
+// 심해뿐 아니라 일반해양생물·미세조류·난파선 등 모든 제작물이 라이브러리/현황에 보이게 함.
+async function listContent(){
+  try{
+    const r=await fetch(API+"/contents/"+CONTENT_DIR+"?ref="+BRANCH,{headers:headers(true)});
+    if(!r.ok)return [];
+    const files=await r.json();
+    const ids=(Array.isArray(files)?files:[]).map(f=>f.name||"").filter(n=>/^\\d{3}\\.json$/.test(n)).map(n=>n.slice(0,3));
+    const recs=await Promise.all(ids.map(async id=>{
+      const rec=await fetchRecord(id); if(!rec)return null;
+      const sp=rec.species||{};
+      return {no:id, common_name_ko:sp.common_name_ko||sp.common_name_en||"종",
+              common_name_en:sp.common_name_en||"", scientific_name:sp.scientific_name||"",
+              date:String(rec.updated_at||rec.created_at||"").slice(0,10),
+              hasVideo:!!(rec.media&&rec.media.video_url)};
+    }));
+    return recs.filter(Boolean).sort((a,b)=>(a.no<b.no?1:-1));
+  }catch(e){return [];}
+}
 async function fetchRecord(id){const t=await fetchRaw(CONTENT_DIR+"/"+id+".json");try{return JSON.parse(t);}catch(e){return null;}}
 
 // ── 라우팅: 전체 페이지 로드마다 경로로 뷰 결정 (worker가 모든 경로에 앱 셸 서빙) ──
@@ -206,12 +225,12 @@ function renderHome(){
 }
 async function loadRuns(){
   try{
-    const [r,cat]=await Promise.all([fetch(API+"/actions/workflows/"+WF+"/runs?per_page=8",{headers:headers(true)}),fetchCatalog()]);
+    const [r,cat]=await Promise.all([fetch(API+"/actions/workflows/"+WF+"/runs?per_page=8",{headers:headers(true)}),listContent()]);
     const j=await r.json();const el=$("#runs");if(!el)return;el.innerHTML="";
     (j.workflow_runs||[]).filter(x=>x.status!=="completed").forEach(run=>{
       el.insertAdjacentHTML("beforeend",'<div class="run"><span class="st prog">'+(run.status==="queued"?"대기열":"진행 중")+'</span>'+
-        '<a href="'+run.html_url+'" target="_blank">#'+num3(run.run_number)+' 쇼츠 생성</a><span class="t">'+ago(run.created_at)+"</span></div>");});
-    [...cat].sort((a,b)=>(b.no||0)-(a.no||0)).slice(0,12).forEach(it=>{
+        '<a href="'+run.html_url+'" target="_blank">#'+num3(run.run_number)+' 쇼츠 생성(진행상황 보기)</a><span class="t">'+ago(run.created_at)+"</span></div>");});
+    cat.slice(0,12).forEach(it=>{
       const name=esc(it.common_name_ko||it.common_name_en||"종");
       el.insertAdjacentHTML("beforeend",'<div class="run"><span class="st done">완료</span>'+
         '<a href="/c/'+num3(it.no)+'">#'+num3(it.no)+'_'+name+' 쇼츠</a><span class="t">'+esc(it.date||"")+"</span></div>");});
@@ -223,10 +242,10 @@ async function loadRuns(){
 // ── 라이브러리: 콘텐츠 목록(도감 기준) ──
 async function renderLibrary(){
   view().innerHTML='<div class="card"><span class="lbl">제작된 콘텐츠 (탭하면 열람·수정·재생성)</span><div id="clist"><div class="hint">불러오는 중…</div></div></div>';
-  const cat=await fetchCatalog();
+  const cat=await listContent();
   const el=document.getElementById("clist");
   if(!cat.length){el.innerHTML='<div class="hint">아직 제작된 콘텐츠가 없습니다. <a href="/">제작하러 가기</a></div>';return;}
-  el.innerHTML=[...cat].sort((a,b)=>(b.no||0)-(a.no||0)).map(it=>{
+  el.innerHTML=cat.map(it=>{
     const id=num3(it.no);
     return '<a class="clitem" href="/c/'+id+'"><span class="no">#'+id+'</span>'+
       '<span class="nm">'+esc(it.common_name_ko||"종")+'<small>'+esc(it.common_name_en||"")+" · "+esc(it.scientific_name||"")+'</small></span>'+
