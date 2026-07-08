@@ -56,6 +56,7 @@ class MarineLifeCategory(CollectionCategory):
     category_id = "marine_life"
     style_profile = "marine_wildlife"
     series_title = "海の生き物 図鑑"
+    bgm_filename = "marinelife_where_light_fails.mp3"
     corner_label = "OCEAN · WILD CAM"
     scale_label = "生息水深"
     show_scale = True

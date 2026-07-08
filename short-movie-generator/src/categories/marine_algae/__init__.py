@@ -59,6 +59,7 @@ class MarineAlgaeCategory(CollectionCategory):
     category_id = "marine_algae"
     style_profile = "marine_micro"
     series_title = "海の微細藻 図鑑"
+    bgm_filename = "marinealgae_seven_miles_below.mp3"
     corner_label = "MARINE · MICRO CAM"
     show_scale = False           # 미세조류는 '서식수심' 스케일이 무의미
     SUBJECTS = SUBJECTS

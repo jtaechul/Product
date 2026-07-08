@@ -368,8 +368,24 @@ class DeepSeaCategory:
             feature_glow_word=h.get("feature_glow_word", h["pop_words"][0]),
         )
         hook_text = h["hook_line1"] + h["hook_line2"]
-        bgm = Path(__file__).resolve().parents[3] / "assets" / "audio" / "bgm" / "beneath_the_frozen_shelf.mp3"
-        return (spec, hook_text, str(bgm) if bgm.exists() else None)
+        bgm = self._pick_bgm(sci or h["jp_name"])
+        return (spec, hook_text, bgm)
+
+    def _pick_bgm(self, seed: str) -> str | None:
+        """심해 전용 BGM 로테이션 — 영상이 많은 카테고리라 단조로움/이탈을 막으려 여러 곡을 돌린다.
+        `assets/audio/bgm/deepsea_*.mp3`(+기존 beneath_the_frozen_shelf)를 후보로 모으고,
+        종명 해시로 결정론 선택(같은 종은 항상 같은 곡 → 재생성 일관, 종마다 곡이 달라 다양성 확보).
+        곡 파일을 추가하면 자동으로 로테이션에 합류(코드 수정 불필요)."""
+        bgm_dir = Path(__file__).resolve().parents[3] / "assets" / "audio" / "bgm"
+        cands = sorted(bgm_dir.glob("deepsea_*.mp3"))
+        legacy = bgm_dir / "beneath_the_frozen_shelf.mp3"
+        if legacy.exists():
+            cands.append(legacy)
+        cands = [p for p in cands if p.exists()]
+        if not cands:
+            return None
+        idx = sum(ord(c) for c in (seed or "deep")) % len(cands)
+        return str(cands[idx])
 
     def pick_footage_species(self) -> str:
         """auto 모드: 검증된 실사 영상이 있는 종만 선택.
