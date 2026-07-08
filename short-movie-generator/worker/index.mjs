@@ -130,12 +130,14 @@ function splitTags(text){const lines=(text||"").replace(/\\s+$/,"").split(/\\n/)
     if(toks.length&&toks.every(t=>t.startsWith("#"))){tags.unshift(...toks);lines.pop();}
     else break;}
   return{caption:lines.join("\\n").replace(/\\s+$/,""),tags};}
-// 유튜브 쇼츠 제목 생성: 훅 문장 + 종명(끝 마침표 제거) + #Shorts. 편집·복사용 기본값.
-function ytTitle(hook,name){
-  hook=(hook||"").trim().replace(/[。．\\.！!]+$/,"");
+// 유튜브 쇼츠 제목 폴백(구 레코드용): 호기심 갭+종명 마케팅 템플릿.
+// 신규 레코드는 시스템(LLM/폴백)이 만든 reels.yt_title/yt_title_ko를 우선 사용.
+function ytTitle(hook,name,ko){
+  hook=(hook||"").trim().replace(/[。．\\.！!?？]+$/,"");
   name=(name||"").trim();
-  const core=[hook,name].filter(Boolean).join("｜");
-  return core?core+" #Shorts":"";}
+  if(!name&&!hook)return "";
+  if(!hook)return (ko?"【깊은 바다의 신비】"+name+"의 알려지지 않은 생태":"【深海の神秘】"+name+"の知られざる生態")+" #Shorts";
+  return (ko?"【충격】"+hook+"——"+name+"의 정체":"【衝撃】"+hook+"——"+name+"の正体")+" #Shorts";}
 
 async function fetchRaw(path){
   try{const r=await fetch(API+"/contents/"+path+"?ref="+BRANCH,{headers:{...headers(true),"Accept":"application/vnd.github.raw+json"}});
@@ -312,10 +314,10 @@ async function renderDetail(id){
     // 유튜브 쇼츠 게시용 '영상 제목'(일/한) 프레임 — 편집·복사 가능(별도 프레임 요청 반영)
     '<div class="dual" style="margin-top:12px">'+
       '<div><span class="lbl">영상 제목 · 일본어(유튜브 쇼츠)</span>'+
-        '<textarea id="etitlejp" rows="2">'+esc(ytTitle(re.hook,jpName))+'</textarea>'+
+        '<textarea id="etitlejp" rows="2">'+esc(re.yt_title||ytTitle(re.hook,jpName))+'</textarea>'+
         '<button class="btn save" id="cptjp" style="margin-top:6px">일본어 제목 복사</button></div>'+
       '<div><span class="lbl">영상 제목 · 한국어(참고)</span>'+
-        '<textarea id="etitleko" rows="2">'+esc(ytTitle(hookKO,sp.common_name_ko))+'</textarea>'+
+        '<textarea id="etitleko" rows="2">'+esc(re.yt_title_ko||ytTitle(hookKO,sp.common_name_ko,1))+'</textarea>'+
         '<button class="btn" id="cptko" style="margin-top:6px">한국어 제목 복사</button></div>'+
     '</div>'+
     // 캡션·해시태그를 한 프레임에 합쳐 표시(일본어 발행 / 한국어 참고). 저장 시 끝의 해시태그 줄을 분리.
@@ -370,6 +372,7 @@ async function saveCaption(id){
         caption:jp.caption, hashtags:jp.tags.join(" "),
         caption_ko:ko.caption, hashtags_ko:ko.tags.join(" "),
         hook:($("#ehook")||{}).value||"", hook_ko:($("#ehookko")||{}).value||"",
+        yt_title:($("#etitlejp")||{}).value||"", yt_title_ko:($("#etitleko")||{}).value||"",
       }})});
     if(r.status===204)banner("저장 시작! 20~40초 뒤 저장소에 반영됩니다(새로고침).","ok");
     else{const t=await r.text();banner("저장 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}

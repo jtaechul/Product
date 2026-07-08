@@ -427,7 +427,8 @@ class DeepSeaCategory:
             reveal_name=f"{spec.jp_name} / {spec.sci_name}",
             reveal_fact=spec.feature_line,
             caption_ko=c["ko"], hook_ko=h.get("hook_ko", "") or "",
-            hashtags_ko=list(c.get("tags_ko", [])))
+            hashtags_ko=list(c.get("tags_ko", [])),
+            yt_title=c.get("yt_title", ""), yt_title_ko=c.get("yt_title_ko", ""))
 
     @staticmethod
     def _parse_depth(depth_range_m: str) -> tuple[int, int]:

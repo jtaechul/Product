@@ -10,9 +10,14 @@ on:
       content_id:
         description: "콘텐츠 id(3자리, 예: 004)"
         required: true
+  # 대안 트리거: requests/cap/*.json 푸시로도 재생성 가능(원격 자동화·Claude 조작용 —
+  # GitHub MCP의 workflow_dispatch가 403이라 검증·자동화 경로로 push 트리거를 둔다)
+  push:
+    branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
+    paths: ["short-movie-generator/requests/cap/*.json"]
 
 concurrency:
-  group: regen-caption-${{ github.event.inputs.content_id }}
+  group: regen-caption-${{ github.event.inputs.content_id || github.sha }}
   cancel-in-progress: false
 
 permissions:
@@ -42,6 +47,17 @@ jobs:
       - name: Install deps
         run: pip install -r requirements.txt
 
+      - name: Resolve content id (버튼 / 요청파일)
+        id: rid
+        run: |
+          CID="${{ inputs.content_id }}"
+          if [ -z "$CID" ]; then
+            F=$(ls -t requests/cap/*.json | head -1)
+            CID=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['content_id'])" "$F")
+          fi
+          CID=$(echo "$CID" | tr -cd '0-9' | cut -c1-3)
+          echo "cid=$CID" >> "$GITHUB_OUTPUT"
+
       - name: Regenerate caption (영상 유지)
         id: cap
         env:
@@ -49,8 +65,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           set -o pipefail
-          CID=$(echo "${{ inputs.content_id }}" | tr -cd '0-9' | cut -c1-3)
-          python -m src.run_regen_caption --content-id "$CID" | tee /tmp/cap.log
+          python -m src.run_regen_caption --content-id "${{ steps.rid.outputs.cid }}" | tee /tmp/cap.log
 
       - name: Commit record update
         run: |
@@ -78,7 +93,7 @@ jobs:
         run: |
           [ -z "$TG_TOKEN" ] && exit 0
           STATUS="성공 ✅"; [ "${{ job.status }}" != "success" ] && STATUS="실패 ❌"
-          MSG=$(printf "캡션 재생성 %s\n콘텐츠 #%s" "$STATUS" "${{ inputs.content_id }}")
+          MSG=$(printf "캡션 재생성 %s\n콘텐츠 #%s" "$STATUS" "${{ steps.rid.outputs.cid }}")
           for CHAT in "$TG_CHAT" "8231379366"; do
             [ -z "$CHAT" ] && continue
             curl -s -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \

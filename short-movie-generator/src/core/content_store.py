@@ -95,6 +95,9 @@ def write_record(base_dir: str, content_id: str, *, info, caption, asset,
             "hook_ko": getattr(caption, "hook_ko", "") or "",
             "caption_ko": getattr(caption, "caption_ko", "") or "",
             "hashtags_ko": list(getattr(caption, "hashtags_ko", []) or []),
+            # 유튜브 쇼츠 제목(일/한) — 시스템 생성(호기심 갭+종명+#Shorts), 대시보드 표시·편집용
+            "yt_title": getattr(caption, "yt_title", "") or "",
+            "yt_title_ko": getattr(caption, "yt_title_ko", "") or "",
         })
     if scope in ("video", "images", "all"):
         reels["visualizer"] = visualizer

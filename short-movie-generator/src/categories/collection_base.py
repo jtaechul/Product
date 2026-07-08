@@ -142,6 +142,7 @@ class CollectionCategory(CategoryModule):
             hashtags=rc["tags"], reveal_name=f"{spec.jp_name} / {spec.sci_name}",
             reveal_fact=spec.feature_line, caption_ko=rc["ko"], hook_ko=c.get("hook_ko", ""),
             hashtags_ko=rc["tags_ko"],
+            yt_title=rc.get("yt_title", ""), yt_title_ko=rc.get("yt_title_ko", ""),
         )
 
     def _key_for(self, info: SpeciesInfo) -> str:

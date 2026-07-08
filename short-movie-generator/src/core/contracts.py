@@ -101,6 +101,10 @@ class CaptionData:
     caption_ko: str = ""
     hook_ko: str = ""
     hashtags_ko: list[str] = field(default_factory=list)
+    # 유튜브 쇼츠 게시용 제목(알고리즘/마케팅 최적화 — 호기심 갭 + 종명 + #Shorts).
+    # 시스템(LLM/폴백)이 캡션과 함께 생성해 레코드에 저장 → 대시보드 제목 프레임에 표시.
+    yt_title: str = ""
+    yt_title_ko: str = ""
     # 근접 경보(선택): 실제 행동(개체가 카메라/ROV를 인지·근접)에 한해 컷2 후반 긴장 연출을
     # 붉은 글씨 + 쿵쿵/경보음으로 강화. 날조된 공격이 아니라 '근접·인지'만 표현(정확성 하드룰).
     alert: bool = False

@@ -36,6 +36,14 @@ on:
         description: "한국어 훅(참고)"
         required: false
         default: ""
+      yt_title:
+        description: "유튜브 쇼츠 제목(일본어)"
+        required: false
+        default: ""
+      yt_title_ko:
+        description: "유튜브 쇼츠 제목(한국어)"
+        required: false
+        default: ""
 
 concurrency:
   group: save-caption-${{ github.event.inputs.content_id }}
@@ -65,6 +73,8 @@ jobs:
           TAGS_KO: ${{ inputs.hashtags_ko }}
           HOOK: ${{ inputs.hook }}
           HOOK_KO: ${{ inputs.hook_ko }}
+          YT_TITLE: ${{ inputs.yt_title }}
+          YT_TITLE_KO: ${{ inputs.yt_title_ko }}
         run: |
           cd "$GITHUB_WORKSPACE"
           python3 - <<'PY'
@@ -82,6 +92,8 @@ jobs:
           r["caption_ko"] = os.environ.get("CAP_KO", "")
           r["hashtags"] = spl(os.environ.get("TAGS"))
           r["hashtags_ko"] = spl(os.environ.get("TAGS_KO"))
+          if os.environ.get("YT_TITLE"):    r["yt_title"] = os.environ["YT_TITLE"]
+          if os.environ.get("YT_TITLE_KO"): r["yt_title_ko"] = os.environ["YT_TITLE_KO"]
           from datetime import datetime, timezone
           rec["updated_at"] = datetime.now(timezone.utc).isoformat()
           json.dump(rec, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
