@@ -416,12 +416,6 @@ def render_endcard(bg_path: str, spec: SpeciesSpec, out_path: str,
             dd.text((center[0] + 1, center[1] + 2), t, font=font, fill=(0, 0, 0, 150), anchor=anchor)
         dd.text(center, t, font=font, fill=fill, anchor=anchor)
 
-    def particle(cx, cy, r, a=255):
-        dd = ImageDraw.Draw(bg, "RGBA")
-        for dx, dy, ln in [(0, -1, r), (0, 1, r), (-1, 0, r * 0.6), (1, 0, r * 0.6)]:
-            dd.line([cx, cy, cx + dx * ln, cy + dy * ln], fill=(210, 240, 255, a), width=2)
-        dd.ellipse([cx - 2, cy - 2, cx + 2, cy + 2], fill=(255, 255, 255, a))
-
     # 중앙 정렬 텍스트 블록(캡슐·게이지 없음 — 사용자 확정) · 폰트는 화면폭 자동 맞춤
     max_w = W - 72
     f_title = _fit_font(spec.jp_name, cfg.end_title_size, max_w, _serif)
@@ -432,20 +426,9 @@ def render_endcard(bg_path: str, spec: SpeciesSpec, out_path: str,
     depth_str = f"水深 {spec.depth_min:,}〜{spec.depth_max:,} m"
     text((W // 2, 512), depth_str, _fit_font(depth_str, cfg.end_depth_size, max_w, _sans_b),
          CYAN + (255,))
-    # 특징문구 + glow 단어 주변 파티클
+    # 특징문구 — glow 단어 파티클('+' 마크)은 텍스트 주변이 지저분해 보여 삭제(사용자 확정)
     line = spec.feature_line
     text((W // 2, 1060), line, f_feat, (232, 240, 250, 255))
-    dd = ImageDraw.Draw(bg)
-    gw = spec.feature_glow_word
-    idx = line.find(gw)
-    if idx >= 0:
-        full_w = dd.textlength(line, font=f_feat)
-        lx = W // 2 - full_w / 2
-        pre = line[:idx]
-        hx = lx + dd.textlength(pre, font=f_feat) + dd.textlength(gw, font=f_feat) / 2
-        for dx, dy, r, a in [(-46, -30, 7, 255), (30, -38, 5, 220), (52, 10, 6, 240),
-                             (-30, 26, 4, 200), (8, -52, 4, 180)]:
-            particle(int(hx + dx), 1060 + dy, r, a)
     text((W // 2, H - 40), "映像: NOAA Ocean Exploration ・ Public Domain",
          _sans_r(20), (160, 175, 200, 225), shadow=False)
     bg.convert("RGB").save(out_path)
@@ -635,21 +618,8 @@ def render_endcard_frames(bg_path: str, spec: SpeciesSpec, out_dir: str,
                 click_times.append(round(ln["start"] + i / ln["cps"], 3))
     feature = next(l for l in lines if l["key"] == "feature")
     feat_done = feature["start"] + len(feature["txt"]) / feature["cps"]
-
-    def particles(canvas, alpha):
-        line = feature["txt"]; gw = spec.feature_glow_word; idx = line.find(gw)
-        if idx < 0 or alpha <= 0:
-            return
-        meas = ImageDraw.Draw(canvas)
-        f = feature["font"]
-        hx = feature["lx"] + meas.textlength(line[:idx], font=f) + meas.textlength(gw, font=f) / 2
-        dd = ImageDraw.Draw(canvas, "RGBA")
-        for dx, dy, r, a in [(-46, -30, 7, 255), (30, -38, 5, 220), (52, 10, 6, 240),
-                             (-30, 26, 4, 200), (8, -52, 4, 180)]:
-            aa = int(a * alpha)
-            for ex, ey, ln2 in [(0, -1, r), (0, 1, r), (-1, 0, r * 0.6), (1, 0, r * 0.6)]:
-                dd.line([hx + dx, 1060 + dy, hx + dx + ex * ln2, 1060 + dy + ey * ln2],
-                        fill=(210, 240, 255, aa), width=2)
+    # glow 단어 파티클('+' 마크)은 특징문구 주변이 지저분해 보여 삭제(사용자 확정) —
+    # 엔드카드 텍스트 연출은 타자기 등장만 남긴다.
 
     credit_font = _sans_r(20)
     paths = []
@@ -696,8 +666,6 @@ def render_endcard_frames(bg_path: str, spec: SpeciesSpec, out_dir: str,
                     cx = (box[0] + box[2]) // 2
                     cy = (box[1] + box[3]) // 2
                     frame.alpha_composite(g2, (cx - g2.width // 2, cy - g2.height // 2))
-        # 특징줄 완성 후 파티클 페이드인
-        particles(frame, _smooth(min(1, max(0, (t - feat_done) / 0.4))))
         # 크레딧(타이핑 없이 늦게 페이드인)
         ca = _smooth(min(1, max(0, (t - feat_done - 0.2) / 0.5)))
         if ca > 0:

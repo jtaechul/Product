@@ -130,14 +130,15 @@ function splitTags(text){const lines=(text||"").replace(/\\s+$/,"").split(/\\n/)
     if(toks.length&&toks.every(t=>t.startsWith("#"))){tags.unshift(...toks);lines.pop();}
     else break;}
   return{caption:lines.join("\\n").replace(/\\s+$/,""),tags};}
-// 유튜브 쇼츠 제목 폴백(구 레코드용): 호기심 갭+종명 마케팅 템플릿.
+// 유튜브 쇼츠 제목 폴백(구 레코드용): 훅 앞세우기+종명. 해시태그·범용 자극어 없음
+// (쇼츠는 형식으로 자동 판정 — #Shorts는 글자 낭비·스팸 인상이라 정책상 금지).
 // 신규 레코드는 시스템(LLM/폴백)이 만든 reels.yt_title/yt_title_ko를 우선 사용.
 function ytTitle(hook,name,ko){
   hook=(hook||"").trim().replace(/[。．\\.！!?？]+$/,"");
   name=(name||"").trim();
   if(!name&&!hook)return "";
-  if(!hook)return (ko?"【깊은 바다의 신비】"+name+"의 알려지지 않은 생태":"【深海の神秘】"+name+"の知られざる生態")+" #Shorts";
-  return (ko?"【충격】"+hook+"——"+name+"의 정체":"【衝撃】"+hook+"——"+name+"の正体")+" #Shorts";}
+  if(!hook)return ko?"깊은 바다에 숨어 사는, "+name+"의 맨얼굴":"深海でひっそり生きる、"+name+"の素顔";
+  return ko?hook+"——"+name+"의 정체":hook+"——"+name+"の正体";}
 
 async function fetchRaw(path){
   try{const r=await fetch(API+"/contents/"+path+"?ref="+BRANCH,{headers:{...headers(true),"Accept":"application/vnd.github.raw+json"}});
