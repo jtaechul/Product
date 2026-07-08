@@ -130,6 +130,12 @@ function splitTags(text){const lines=(text||"").replace(/\\s+$/,"").split(/\\n/)
     if(toks.length&&toks.every(t=>t.startsWith("#"))){tags.unshift(...toks);lines.pop();}
     else break;}
   return{caption:lines.join("\\n").replace(/\\s+$/,""),tags};}
+// 유튜브 쇼츠 제목 생성: 훅 문장 + 종명(끝 마침표 제거) + #Shorts. 편집·복사용 기본값.
+function ytTitle(hook,name){
+  hook=(hook||"").trim().replace(/[。．\\.！!]+$/,"");
+  name=(name||"").trim();
+  const core=[hook,name].filter(Boolean).join("｜");
+  return core?core+" #Shorts":"";}
 
 async function fetchRaw(path){
   try{const r=await fetch(API+"/contents/"+path+"?ref="+BRANCH,{headers:{...headers(true),"Accept":"application/vnd.github.raw+json"}});
@@ -291,6 +297,8 @@ async function renderDetail(id){
   const legacy=splitLegacy(re.caption||"");
   const capJP=legacy.jp, capKO=re.caption_ko||legacy.ko;
   const hookKO=re.hook_ko||"";
+  // 유튜브 제목용 일본어 종명: reveal_name("和名 / 学名")의 앞부분 → 없으면 영문명
+  const jpName=((re.reveal_name||"").split("/")[0]||"").trim()||sp.common_name_en||"";
   const tagsKO=(re.hashtags_ko||[]).join(" ");
   const tags=(re.hashtags||[]).map(t=>'<span class="tag">'+esc(t)+'</span>').join("");
   dc.className="card detail";
@@ -301,6 +309,15 @@ async function renderDetail(id){
     (md.video_url?'<div class="btnrow" style="margin-top:8px"><button class="btn save" id="bdl">비디오 저장하기</button></div><div class="hint" id="dlhint" style="margin-top:6px"></div>':"")+
     '<div class="meta" style="margin-top:12px"><b>학명</b> <i>'+esc(sp.scientific_name||"")+'</i> · <b>수심</b> '+esc(sp.depth_range_m||"?")+'m<br>'+
       '<b>서식</b> '+esc(sp.habitat||"?")+' · <b>분포</b> '+esc(sp.distribution||"?")+'</div>'+
+    // 유튜브 쇼츠 게시용 '영상 제목'(일/한) 프레임 — 편집·복사 가능(별도 프레임 요청 반영)
+    '<div class="dual" style="margin-top:12px">'+
+      '<div><span class="lbl">영상 제목 · 일본어(유튜브 쇼츠)</span>'+
+        '<textarea id="etitlejp" rows="2">'+esc(ytTitle(re.hook,jpName))+'</textarea>'+
+        '<button class="btn save" id="cptjp" style="margin-top:6px">일본어 제목 복사</button></div>'+
+      '<div><span class="lbl">영상 제목 · 한국어(참고)</span>'+
+        '<textarea id="etitleko" rows="2">'+esc(ytTitle(hookKO,sp.common_name_ko))+'</textarea>'+
+        '<button class="btn" id="cptko" style="margin-top:6px">한국어 제목 복사</button></div>'+
+    '</div>'+
     // 캡션·해시태그를 한 프레임에 합쳐 표시(일본어 발행 / 한국어 참고). 저장 시 끝의 해시태그 줄을 분리.
     '<input type="hidden" id="ehook" value="'+esc(re.hook||"")+'">'+
     '<input type="hidden" id="ehookko" value="'+esc(hookKO)+'">'+
@@ -327,6 +344,8 @@ async function renderDetail(id){
 
   // 현 시스템은 실사 영상 재편집(무료) — Veo·카드뉴스 이미지 재생성은 구 시스템 유물이라 제거
   if($("#bdl"))$("#bdl").onclick=()=>saveVideo(prox(md.video_url),esc(id)+"_"+(sp.common_name_ko||"reel")+".mp4");
+  $("#cptjp").onclick=()=>copyText($("#etitlejp").value,"일본어 제목을 복사했어요. 유튜브 쇼츠 제목에 붙여넣기 하세요.");
+  $("#cptko").onclick=()=>copyText($("#etitleko").value,"한국어 제목(참고)을 복사했어요.");
   $("#cpjp").onclick=()=>copyText($("#ecapjp").value,"일본어 캡션+해시태그를 복사했어요. 릴스에 붙여넣기 하세요.");
   $("#cpko").onclick=()=>copyText($("#ecapko").value,"한국어(참고)를 복사했어요.");
   $("#bsave").onclick=()=>saveCaption(id);
