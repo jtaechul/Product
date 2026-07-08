@@ -1,7 +1,7 @@
 {
   "id": "007",
   "created_at": "2026-07-07T07:43:18+00:00",
-  "updated_at": "2026-07-07T10:10:59+00:00",
+  "updated_at": "2026-07-08T00:11:05.697461+00:00",
   "status": "published",
   "series": "심해 도감",
   "species": {
@@ -24,7 +24,7 @@
   },
   "reels": {
     "hook": "ぺたんこの、体に、耳のひれ。",
-    "caption": "ぺたんこの、体に、耳のひれ。\n\nひらひら舞う、深海のメンダコ。\n深海にすむメンダコです。\n\n心に残ったら保存を。\n同じ深海が気になる人へシェアを。\n\n映像: NOAA Ocean Exploration・Public Domain",
+    "caption": "ぺたんこの、体に、耳のひれ。\n\nメンダコ(学名: Opisthoteuthis californiana)。\n生息水深はおよそ 200-1500 メートル。\nひらひら舞う、深海のメンダコ。\n深い海の底で、たしかに命をつないでいる一種です。\n\n心に残ったら保存を。\n同じ海が気になる人へシェアを。\n\n映像: Wikimedia Commons",
     "hashtags": [
       "#深海",
       "#メンダコ",
@@ -33,7 +33,7 @@
     "reveal_name": "メンダコ / Opisthoteuthis californiana",
     "reveal_fact": "ひらひら舞う、深海のメンダコ",
     "hook_ko": "납작한 몸에, 귀 같은 지느러미.",
-    "caption_ko": "납작한 몸에, 귀 같은 지느러미.\n\n하늘하늘 헤엄치는, 심해의 넓적문어.\n심해에 사는 넓적문어입니다.\n\n마음에 남았다면 저장해 두세요.\n같은 심해가 궁금한 사람에게 공유해 주세요.\n\n영상: NOAA Ocean Exploration · 퍼블릭 도메인",
+    "caption_ko": "납작한 몸에, 귀 같은 지느러미.\n\n넓적문어(학명: Opisthoteuthis californiana).\n수심 200-1500m, 북태평양 심해의 바다에 살아갑니다.\n주로 심해 저층 바로 위에서 지냅니다.\n몸을 팬케이크처럼 납작하게 편다.\n팔 사이 우산 같은 막으로 부드럽게 유영한다.\n머리 위 귀 같은 지느러미로 방향을 잡는다.\n\n마음이 복잡한 날, 다시 꺼내보고 싶다면 저장해 두세요.\n같은 바다가 궁금한 사람에게 조용히 건네주세요.\n\n영상: Wikimedia Commons",
     "hashtags_ko": [
       "#심해",
       "#넓적문어",
