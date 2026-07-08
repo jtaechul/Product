@@ -95,7 +95,7 @@ def _display_windows(aligned: list[list]) -> list[tuple]:
 
 
 def synthesize(chunks: list[str], work_dir: str,
-               voice: str = "ja-JP-KeitaNeural", rate: str = "-2%") -> dict:
+               voice: str = "ja-JP-KeitaNeural", rate: str = "+14%") -> dict:
     """청크 리스트 → 나레이션 mp3 + 단어 타이밍 + 표시 창(발화 시각 정합).
 
     반환: {"mp3": path, "words": [...], "disp": [(text,start,end)], "duration": s}

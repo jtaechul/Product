@@ -239,7 +239,8 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
 
         # 4) SFX/플래시
         boom = hi.generate_boom(str(wd / "boom.wav"), cfg)
-        tick = hi.generate_type_click(str(wd / "tick.wav"), cfg)
+        # 엔드카드 사운드 = 붐(쾅). 타자기 폐지 → 엔드카드 등장 순간에 딥 붐을 입힌다.
+        tick = boom
         flash = hi.build_flash_png(str(wd / "flash.png"), cfg)
 
         OPEN = cfg.opening_seg_s; END = cfg.endcard_dur_s

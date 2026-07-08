@@ -83,15 +83,15 @@ class HookIntroConfig:
     H: int = 1280
     FPS: int = 30
     # ── 타이밍(시스템) ──
-    opening_seg_s: float = 4.8         # 오프닝 페이지 총 길이(팝+홀드)
+    opening_seg_s: float = 4.6         # 오프닝 페이지 총 길이(팝+홀드) — 다음 컷 전 여유 확보
     narr_start_s: float = 0.30         # 세그먼트 내 훅 나레이션 시작
     transition_s: float = 0.5          # 오프닝→본문 플래시 전환
     pop_grow_s: float = 0.16           # 어절 확대→축소 시간
     pop_fade_s: float = 0.12           # 어절 알파 인
     # ── 오프닝 타이틀 ──
     title_size: int = 98
-    title_y1: int = 548
-    title_y2: int = 672
+    title_y1: int = 300                 # 오프닝 훅 상단 배치(피사체 가림 방지) — 기존 548
+    title_y2: int = 424                 # (기존 672)
     # 넘침 방지(자동 맞춤): 안전여백·최소 크기·2줄 유지 하한.
     # 확정 디자인(頭も、目も、= 588px @98px)은 safe(608px) 안 → 그대로 유지되고,
     # 더 긴 훅만 자동 축소되거나(≥min_2line) 어절당 1줄(3줄)로 전환된다.
@@ -120,7 +120,13 @@ class HookIntroConfig:
     mix_bgm: float = 0.10
     limiter: float = 0.95
     # ── 엔드카드 ──
-    endcard_dur_s: float = 5.2
+    endcard_dur_s: float = 2.0          # 쾅(임팩트) 1회 등장 → 짧게 홀드(기존 5.2 타자기 폐지)
+    # 엔드카드 임팩트(쾅+화면 흔들림) 파라미터
+    end_impact_at_s: float = 0.12       # 텍스트가 쾅 등장하는 시각
+    end_pop_s: float = 0.16             # 등장 스케일 팝 시간
+    end_shake_amp: float = 30.0         # 화면 흔들림 세기(오프닝 어절팝보다 크게)
+    end_shake_dur_s: float = 0.30       # 흔들림 지속
+    end_shake_decay_s: float = 0.07     # 흔들림 감쇠
     end_title_size: int = 112
     end_sci_size: int = 38
     end_depth_size: int = 54
@@ -599,81 +605,65 @@ def _styled_line(spec: SpeciesSpec, cfg: HookIntroConfig):
 
 def render_endcard_frames(bg_path: str, spec: SpeciesSpec, out_dir: str,
                           cfg: HookIntroConfig | None = None):
-    """엔드카드를 '타자기'로 렌더 → (프레임 경로들, 타자 클릭 시각들).
+    """엔드카드를 '쾅(임팩트)' 1회로 렌더 → (프레임 경로들, 붐 시각들).
 
-    각 줄이 글자 단위로 왼→오 등장(타자기). 클릭음은 글자 등장 시각에 정확히 정합되어
-    타이핑 시작·종료와 사운드 시작·종료가 맞는다. glow 단어 파티클은 특징줄 완성 후 페이드.
+    타자기 폐지(사용자 확정): 모든 텍스트가 **한 번에 슬램 등장**(스케일 팝 + 흰빛 플래시)하며
+    **화면 전체가 흔들린다**(오프닝 어절팝보다 크게). 붐 사운드는 등장 순간에 정합되도록
+    시각 리스트를 반환한다. 텍스트 디자인·위치는 `_styled_line` 그대로(변경 없음).
     """
     cfg = cfg or HookIntroConfig()
     W, H = cfg.W, cfg.H
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     base = _endcard_base(bg_path, cfg)
     lines = _styled_line(spec, cfg)
-
-    # 타자 클릭 시각(공백 제외) 수집
-    click_times = []
+    # 전체 텍스트를 한 장으로 합성(모두 동시 등장) + 크레딧
+    textimg = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     for ln in lines:
-        for i, ch in enumerate(ln["txt"]):
-            if ch.strip():
-                click_times.append(round(ln["start"] + i / ln["cps"], 3))
-    feature = next(l for l in lines if l["key"] == "feature")
-    feat_done = feature["start"] + len(feature["txt"]) / feature["cps"]
-    # glow 단어 파티클('+' 마크)은 특징문구 주변이 지저분해 보여 삭제(사용자 확정) —
-    # 엔드카드 텍스트 연출은 타자기 등장만 남긴다.
+        textimg.alpha_composite(ln["layer"])
+    text_alpha = textimg.split()[3]
+    credit = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(credit).text((W // 2, H - 40), "映像: NOAA Ocean Exploration ・ Public Domain",
+                                font=_sans_r(20), fill=(160, 175, 200, 225), anchor="mm")
 
-    credit_font = _sans_r(20)
+    T0 = cfg.end_impact_at_s
+    POP = cfg.end_pop_s
+    # 흔들림 진폭이 커도 검은 여백이 생기지 않도록 확대율 산정(여유 margin > 진폭)
+    margin = int(cfg.end_shake_amp) + 8
+    Z = 1.0 + 2.0 * margin / W
     paths = []
     N = int(cfg.endcard_dur_s * cfg.FPS)
     for fi in range(N):
         t = fi / cfg.FPS
         frame = base.copy()
-        for ln in lines:
-            dt = t - ln["start"]
-            if dt < 0:
-                continue
-            n = min(len(ln["txt"]), int(dt * ln["cps"]) + 1)
-            # 1) 이미 '박힌' 글자들(1..n-1)만 통째로 노출 → 온전한 글자가 하나씩 남는다(타자기).
-            if n >= 2:
-                reveal_x = ln["bounds"][n - 2]
-                mask = Image.new("L", (W, H), 0)
-                ImageDraw.Draw(mask).rectangle([0, 0, int(reveal_x) + 1, H], fill=255)
-                lay = ln["layer"].copy()
-                lay.putalpha(Image.composite(lay.split()[3], Image.new("L", (W, H), 0), mask))
-                frame.alpha_composite(lay)
-            # 2) 방금 타이핑된 n번째 글자: '키 스트라이크' 팝(살짝 크게 → 제자리 + 흰빛 플래시).
-            #    타자 클릭음과 동시에 글자가 '탁' 박히듯 보여, 왼쪽부터 한 글자씩 등장이 뚜렷해진다.
-            #    팝이 끝나면 scale=1로 수렴 → 다음 프레임에서 base 노출과 정확히 일치(끊김 없음).
-            ch = ln["txt"][n - 1]
-            if ch.strip():
-                pop = min(0.09, 0.9 / ln["cps"])
-                tc = dt - (n - 1) / ln["cps"]                 # n번째 글자가 찍힌 뒤 경과(초)
-                e = max(0.0, 1.0 - tc / pop) if pop > 0 else 0.0   # 1→0 (팝 이후 0)
-                left = ln["lx"] if n == 1 else ln["bounds"][n - 2]
-                right = ln["bounds"][n - 1]
-                fh = int(getattr(ln["font"], "size", 40))
-                box = (max(0, int(left) - 8), max(0, ln["y"] - fh),
-                       min(W, int(right) + 8), min(H, ln["y"] + fh))
-                glyph = ln["layer"].crop(box)
-                if glyph.width > 1 and glyph.height > 1:
-                    sc = 1.0 + 0.30 * e
-                    gw = max(1, int(round(glyph.width * sc)))
-                    gh = max(1, int(round(glyph.height * sc)))
-                    g2 = glyph if e <= 0 else glyph.resize((gw, gh), Image.LANCZOS)
-                    if e > 0:                                  # 착지 순간 흰빛 플래시
-                        white = Image.new("RGBA", g2.size, (255, 255, 255, 0))
-                        white.putalpha(g2.split()[3].point(lambda v: int(v * 0.55 * e)))
-                        g2 = Image.alpha_composite(g2, white)
-                    cx = (box[0] + box[2]) // 2
-                    cy = (box[1] + box[3]) // 2
-                    frame.alpha_composite(g2, (cx - g2.width // 2, cy - g2.height // 2))
-        # 크레딧(타이핑 없이 늦게 페이드인)
-        ca = _smooth(min(1, max(0, (t - feat_done - 0.2) / 0.5)))
-        if ca > 0:
-            cl = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-            ImageDraw.Draw(cl).text((W // 2, H - 40), "映像: NOAA Ocean Exploration ・ Public Domain",
-                                    font=credit_font, fill=(160, 175, 200, int(225 * ca)), anchor="mm")
-            frame.alpha_composite(cl)
+        dt = t - T0
+        if dt >= 0:                                            # 임팩트 이후: 전체 텍스트 등장
+            e = max(0.0, 1.0 - dt / POP) if POP > 0 else 0.0   # 1→0 (팝 이후 0)
+            sc = 1.0 + 0.12 * e
+            if sc > 1.001:
+                tw = textimg.resize((int(W * sc), int(H * sc)), Image.LANCZOS)
+                ox = (tw.width - W) // 2; oy = (tw.height - H) // 2
+                tlayer = tw.crop((ox, oy, ox + W, oy + H))
+            else:
+                tlayer = textimg.copy()
+            if e > 0:                                          # 착지 순간 흰빛 플래시
+                white = Image.new("RGBA", (W, H), (255, 255, 255, 0))
+                white.putalpha(text_alpha.point(lambda v: int(v * 0.5 * e)))
+                tlayer = Image.alpha_composite(tlayer, white)
+            frame.alpha_composite(tlayer)
+            frame.alpha_composite(credit)
+        # 화면 흔들림(쾅과 동시, 감쇠) — 확대 후 오프셋 크롭(검은 여백 방지)
+        dx = dy = 0.0
+        if 0 <= dt < cfg.end_shake_dur_s:
+            amp = cfg.end_shake_amp * math.exp(-dt / cfg.end_shake_decay_s)
+            dx = amp * math.sin(2 * math.pi * 46 * dt)
+            dy = amp * math.cos(2 * math.pi * 38 * dt) * 0.8
+        zf = frame.resize((int(W * Z), int(H * Z)), Image.LANCZOS)
+        cx = (zf.width - W) // 2 + int(round(dx))
+        cy = (zf.height - H) // 2 + int(round(dy))
+        cx = max(0, min(zf.width - W, cx)); cy = max(0, min(zf.height - H, cy))
+        out = zf.crop((cx, cy, cx + W, cy + H))
         p = str(Path(out_dir) / f"ec_{fi:03d}.png")
-        frame.convert("RGB").save(p)
+        out.convert("RGB").save(p)
         paths.append(p)
-    return paths, click_times
+    # 붐(쾅) 2개를 임팩트 순간에 겹쳐 스케줄 → 강한 한 방
+    return paths, [T0, T0]
