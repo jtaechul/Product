@@ -128,8 +128,32 @@ def _parse(out: str):
 
 
 def _is_rich(jp: str) -> bool:
-    """예시 수준 분량인지 — 200자 이상 + 8줄 이상이면 리치로 인정."""
-    return bool(jp) and len(jp) >= 200 and jp.count("\n") >= 8
+    """예시 수준 분량인지 — 글자수 기준(≥260자). 줄바꿈 유무는 보지 않는다
+    (LLM이 한 문단으로 줄 때가 있어 줄 수로 판정하면 좋은 캡션을 놓친다 → _format_lines가 줄바꿈 정리)."""
+    return bool(jp) and len(jp) >= 260
+
+
+def _format_lines(jp: str) -> str:
+    """가독성: 한 문단으로 온 캡션을 문장(。!?) 단위로 줄바꿈해 예시처럼 읽기 좋게 만든다.
+    이미 줄바꿈이 충분하면(≥6) 그대로 둔다. 마지막 '映像:' 크레딧 줄은 분리 유지."""
+    jp = (jp or "").strip()
+    if jp.count("\n") >= 6:
+        return jp
+    cred = ""
+    m = re.search(r"(映像[:：].*)$", jp)
+    if m:
+        cred = m.group(1).strip()
+        jp = jp[:m.start()].strip()
+    # 문장 끝(。!?) 뒤에서 줄바꿈. 기존 줄바꿈은 문단 구분으로 유지.
+    parts = []
+    for para in jp.split("\n"):
+        para = para.strip()
+        if not para:
+            continue
+        sents = re.findall(r"[^。!?！？]*[。!?！？]|[^。!?！？]+$", para)
+        parts.extend(s.strip() for s in sents if s.strip())
+    body = "\n".join(parts)
+    return body + ("\n\n" + cred if cred else "")
 
 
 def generate(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
@@ -163,6 +187,7 @@ def generate(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
 
     jp = str((d or {}).get("jp_caption", "")).strip()
     if _is_rich(jp):
+        jp = _format_lines(jp)   # 한 문단이면 문장 단위 줄바꿈으로 가독성 정리
         tags = [t for t in (d.get("hashtags") or []) if str(t).strip()][:3]
         if len(tags) < 3:
             tags = (tags + default_tags)[:3]
