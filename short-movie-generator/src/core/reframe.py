@@ -319,10 +319,12 @@ def delogo_vf(src_w: float, src_h: float, box: tuple) -> str:
     return f"delogo=x=1:y=1:w={lw}:h={lh}"
 
 
-# 접사(fill) 컷의 줌 배율 — 과도한 줌인 방지를 위해 완만하게(예전 1.35~1.55 → 1.2대).
-_ZOOM_CYCLE = [1.06, 1.20, 1.10, 1.24, 1.12, 1.18]
+# 접사(fill) 컷의 줌 배율 — 과도한 줌인 방지를 위해 완만하게.
+# 가로로 넓은 생물(문어·오징어 등)은 좁은 9:16 크롭에서 잘려 정체불명이 되므로 배율을 더 낮춘다
+# (예전 1.2~1.24대 → 1.1대). 정체 식별을 최우선.
+_ZOOM_CYCLE = [1.05, 1.12, 1.06, 1.14, 1.08, 1.10]
 # 와이드 우선(난파선 등 큰 구조물): 접사 컷도 거의 줌 없이.
-_WIDE_ZOOM_CYCLE = [1.00, 1.10, 1.00, 1.12, 1.05, 1.08]
+_WIDE_ZOOM_CYCLE = [1.00, 1.08, 1.00, 1.10, 1.04, 1.06]
 
 
 def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
@@ -415,9 +417,9 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
     cycle = _WIDE_ZOOM_CYCLE if wide else _ZOOM_CYCLE
     GRADE = ("eq=contrast=1.12:saturation=1.16:brightness=-0.05,"
              "colorbalance=rm=-0.03:bm=0.05,vignette=PI/4.2,format=yuv420p")
-    # ★전신 보장(과도한 줌인 방지): 컷의 절반 이상을 '핏(fit)'으로 — 원본 전체를 9:16 안에 담아
+    # ★전신 보장(과도한 줌인 방지): 컷의 2/3를 '핏(fit)'으로 — 원본 전체를 9:16 안에 담아
     #   피사체 전신 + 배경까지 다 보이게 하고, 남는 위/아래는 같은 화면의 블러로 채운다(리버스 폐기).
-    #   짝수 인덱스(0,2,4…)=핏 → n_seg의 절반 이상. 홀수=완만한 접사 크롭.
+    #   3컷마다 1컷만 완만한 접사 크롭(i%3==2), 나머지는 핏 → 정체 식별을 최우선(과확대 방지).
     n_fit = 0
     for i in range(n_seg):
         a = i * seg_len
@@ -428,7 +430,7 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
             cmd += ["-stream_loop", "-1"]
         cmd += ["-ss", f"{sa:.2f}", "-t", f"{seg_len:.2f}", "-i", footage_path,
                 "-an", "-r", "30", "-c:v", "libx264", "-preset", "medium", "-crf", "20"]
-        if i % 2 == 0:
+        if i % 3 != 2:
             # 핏 컷: 전신 + 배경 전체가 보이도록 원본 전체를 9:16 안에 맞춤(여백=블러 채움)
             n_fit += 1
             # ★핏 컷 번인 텍스트 방지(재발방지 2차 방어): 핏은 원본 프레임 '전체'를 보여줘
@@ -459,7 +461,9 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
             seg_c = cents[fa:fb] or cents
             fx = _median([c[0] for c in seg_c]); fy = _median([c[1] for c in seg_c])
             med_frac = _median((fracs[fa:fb] or fracs))
-            z_cap = _m.sqrt(0.6 * src_h * W / (max(med_frac, 1e-4) * src_w * H))
+            # 점유율 상한 0.6→0.45: 접사에서도 피사체가 크롭의 45%를 넘지 않게 → 주변 맥락·전신이 더 남아
+            # '이게 뭔지' 식별을 확보(과확대 방지).
+            z_cap = _m.sqrt(0.45 * src_h * W / (max(med_frac, 1e-4) * src_w * H))
             z = max(1.0, min(z, z_cap))
             cw = int(round((src_h * W / H) / z)) & ~1
             ch = int(round(src_h / z)) & ~1
