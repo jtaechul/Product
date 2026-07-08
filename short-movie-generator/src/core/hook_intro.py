@@ -662,12 +662,40 @@ def render_endcard_frames(bg_path: str, spec: SpeciesSpec, out_dir: str,
             if dt < 0:
                 continue
             n = min(len(ln["txt"]), int(dt * ln["cps"]) + 1)
-            reveal_x = ln["bounds"][n - 1] + 3
-            mask = Image.new("L", (W, H), 0)
-            ImageDraw.Draw(mask).rectangle([0, 0, int(reveal_x), H], fill=255)
-            lay = ln["layer"].copy()
-            lay.putalpha(Image.composite(lay.split()[3], Image.new("L", (W, H), 0), mask))
-            frame.alpha_composite(lay)
+            # 1) 이미 '박힌' 글자들(1..n-1)만 통째로 노출 → 온전한 글자가 하나씩 남는다(타자기).
+            if n >= 2:
+                reveal_x = ln["bounds"][n - 2]
+                mask = Image.new("L", (W, H), 0)
+                ImageDraw.Draw(mask).rectangle([0, 0, int(reveal_x) + 1, H], fill=255)
+                lay = ln["layer"].copy()
+                lay.putalpha(Image.composite(lay.split()[3], Image.new("L", (W, H), 0), mask))
+                frame.alpha_composite(lay)
+            # 2) 방금 타이핑된 n번째 글자: '키 스트라이크' 팝(살짝 크게 → 제자리 + 흰빛 플래시).
+            #    타자 클릭음과 동시에 글자가 '탁' 박히듯 보여, 왼쪽부터 한 글자씩 등장이 뚜렷해진다.
+            #    팝이 끝나면 scale=1로 수렴 → 다음 프레임에서 base 노출과 정확히 일치(끊김 없음).
+            ch = ln["txt"][n - 1]
+            if ch.strip():
+                pop = min(0.09, 0.9 / ln["cps"])
+                tc = dt - (n - 1) / ln["cps"]                 # n번째 글자가 찍힌 뒤 경과(초)
+                e = max(0.0, 1.0 - tc / pop) if pop > 0 else 0.0   # 1→0 (팝 이후 0)
+                left = ln["lx"] if n == 1 else ln["bounds"][n - 2]
+                right = ln["bounds"][n - 1]
+                fh = int(getattr(ln["font"], "size", 40))
+                box = (max(0, int(left) - 8), max(0, ln["y"] - fh),
+                       min(W, int(right) + 8), min(H, ln["y"] + fh))
+                glyph = ln["layer"].crop(box)
+                if glyph.width > 1 and glyph.height > 1:
+                    sc = 1.0 + 0.30 * e
+                    gw = max(1, int(round(glyph.width * sc)))
+                    gh = max(1, int(round(glyph.height * sc)))
+                    g2 = glyph if e <= 0 else glyph.resize((gw, gh), Image.LANCZOS)
+                    if e > 0:                                  # 착지 순간 흰빛 플래시
+                        white = Image.new("RGBA", g2.size, (255, 255, 255, 0))
+                        white.putalpha(g2.split()[3].point(lambda v: int(v * 0.55 * e)))
+                        g2 = Image.alpha_composite(g2, white)
+                    cx = (box[0] + box[2]) // 2
+                    cy = (box[1] + box[3]) // 2
+                    frame.alpha_composite(g2, (cx - g2.width // 2, cy - g2.height // 2))
         # 특징줄 완성 후 파티클 페이드인
         particles(frame, _smooth(min(1, max(0, (t - feat_done) / 0.4))))
         # 크레딧(타이핑 없이 늦게 페이드인)
