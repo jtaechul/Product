@@ -158,15 +158,21 @@ def _fallback(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
 
 
 def _parse(out: str):
-    """LLM 출력에서 JSON 추출 → dict(없으면 None)."""
+    """LLM 출력에서 JSON 추출 → dict(없으면 None).
+
+    strict=False 필수: 모델이 캡션(13~18행)을 **실제 줄바꿈 포함** JSON 문자열로 줄 때가 있는데
+    기본 json.loads는 제어문자를 거부해 좋은 캡션이 통째로 버려졌다(200 OK인데 폴백으로 빠진 실증).
+    실패 시엔 원인 파악을 위해 출력 앞부분을 로그로 남긴다."""
     if not out:
         return None
     m = re.search(r"\{.*\}", out, re.S)
     if not m:
+        log.warning("[rich_caption] LLM 출력에 JSON 없음: %.120s", out)
         return None
     try:
-        return json.loads(m.group(0))
-    except Exception:  # noqa: BLE001
+        return json.loads(m.group(0), strict=False)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[rich_caption] JSON 파싱 실패(%s): %.160s…", e, m.group(0))
         return None
 
 
@@ -218,7 +224,9 @@ def generate(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
     d = None
     for attempt in range(2):   # 분량 미달이면 1회 재시도
         try:
-            out = llm.generate_text(prompt, max_tokens=2400)
+            # 4000 토큰: JP 캡션(450~700자)+KO 완역+제목까지 담으면 2400으로는 잘려
+            # JSON이 미완성(파싱 실패) → 폴백으로 빠지는 실증 사례가 있었다.
+            out = llm.generate_text(prompt, max_tokens=4000)
         except Exception as e:  # noqa: BLE001
             log.warning("[rich_caption] LLM 실패(%d): %s", attempt, e)
             out = None
