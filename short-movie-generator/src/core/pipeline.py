@@ -156,7 +156,8 @@ def run_narrated(
         caption = category.attach_attribution(caption, info, asset.credit_string)
 
     if episode is None:
-        episode = category.next_episode() if hasattr(category, "next_episode") else 1
+        # 콘텐츠 id는 전 카테고리 공용 번호(카테고리별 회차 번호 충돌·덮어쓰기 방지)
+        episode = content_store.next_global_id(base_dir)
     series_title = getattr(category, "series_title", "") or category_id
     result = output.finalize(
         with_audio, info, caption, asset.credit_string, asset.license, str(out_dir), total,
@@ -281,7 +282,8 @@ def run_reels(
             hashtags=[f"#{info.common_name_ko}", "#심해생물", "#深海"],
             reveal_name=f"{info.common_name_ko} ({info.common_name_en})", reveal_fact="")
     if episode is None:
-        episode = category.next_episode() if hasattr(category, "next_episode") else 1
+        # 콘텐츠 id는 전 카테고리 공용 번호(카테고리별 회차 번호 충돌·덮어쓰기 방지)
+        episode = content_store.next_global_id(base_dir)
     series_title = getattr(category, "series_title", "") or category_id
     total = _probe_duration(final) or body_dur
     result = output.finalize(

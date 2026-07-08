@@ -30,6 +30,20 @@ def record_path(base_dir: str, content_id: str) -> Path:
     return content_dir(base_dir) / f"{content_id}.json"
 
 
+def next_global_id(base_dir: str = ".") -> int:
+    """전 카테고리 공용 다음 콘텐츠 번호 = 기존 content/NNN.json 최대값 + 1(없으면 1).
+
+    카테고리별 회차 번호를 콘텐츠 id로 쓰면 서로 다른 카테고리가 같은 번호(#001 등)를 써서
+    content/001.json을 덮어쓰는 충돌이 생긴다. 콘텐츠 id는 전 카테고리 공용으로 매긴다.
+    """
+    d = content_dir(base_dir)
+    mx = 0
+    for p in d.glob("*.json"):
+        if p.stem.isdigit():
+            mx = max(mx, int(p.stem))
+    return mx + 1
+
+
 def load_record(base_dir: str, content_id: str) -> dict | None:
     p = record_path(base_dir, content_id)
     if p.exists():
