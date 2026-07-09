@@ -98,29 +98,33 @@ JSON例: {{"narration":["深海の底に、","じっと動かない影。", "...
 """
 
 
-def _seed_fallback(info: SpeciesInfo) -> dict | None:
-    """LLM 불가 시: reels 시드 본문 + 사실을 확장한 결정적 상세 나레이션."""
-    base = hook_copy.build_body_jp(info)   # 시드(있으면) 또는 None
-    facts = [f for f in (info.fun_facts or []) if f][:4]
-    chunks: list[str] = list(base) if base else []
-    if not chunks:
-        # 시드도 LLM도 없으면 최소 골격(사실 기반, 敬体)
-        jp = _guess_jp(info)
-        chunks = [f"深海の闇に、", f"ひそむ影。", f"その正体は、{jp}。"]
-    # 사실을 敬体 절로 덧붙여 길이 확장(롱폼은 더 자세히)
-    tail = []
-    for f in facts:
-        s = _ko_fact_to_jp_hint(f)
-        if s:
-            tail.append(s)
-    chunks = chunks + tail
-    stamp_line = (facts[0] if facts else "深海に生きる、静かな存在です。")
-    stamp_line = _clip(_ensure_polite(_ko_to_plain(stamp_line)), 24)
+def _seed_fallback(info: SpeciesInfo) -> dict:
+    """LLM 불가 시: reels 시드 본문(일본어)을 그대로 사용. 한국어 fun_fact는 자막에 넣지 않는다.
+
+    ★스탬프도 일본어 나레이션에서만 도출한다(한국어 fun_fact 주입 금지 — 敬体 위반 방지).
+    시드가 없으면 최소 일본어 골격(사실 왜곡 없는 정보 뼈대)만 낸다.
+    """
+    base = hook_copy.build_body_jp(info)   # 시드(있으면, 일본어) 또는 None
+    jp = _guess_jp(info)
+    chunks: list[str] = list(base) if base else [
+        "深海の闇に、", "ひそむ影。", f"その正体は、{jp}。",
+        "その姿を、", "ゆっくりとご覧ください。",
+    ]
+    # 스탬프: 일본어 나레이션의 마지막(정리) 절을 핵심 한 줄로. 없으면 일반형.
+    tail_jp = [c for c in chunks if _looks_jp(c)]
+    stamp_line = _clip((tail_jp[-1].rstrip("、") if tail_jp else "深海に生きる、静かな存在です。"), 24)
+    if not stamp_line.endswith(("。", "…")):
+        stamp_line += "。"
     return {
         "narration": chunks[:16],
         "stamp_line": stamp_line,
         "stamp_big": _guess_big(info),
     }
+
+
+def _looks_jp(s: str) -> bool:
+    """가나/한자 포함 = 일본어로 간주(한국어 fun_fact 혼입 방지 판별)."""
+    return any("぀" <= ch <= "ヿ" or "一" <= ch <= "鿿" for ch in (s or ""))
 
 
 def _guess_jp(info: SpeciesInfo) -> str:
