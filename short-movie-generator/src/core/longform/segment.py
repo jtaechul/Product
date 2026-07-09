@@ -4,6 +4,7 @@
 연속 베드로 얹음). 세그먼트 자체 오디오 = 모션 SFX + 도달 붐 + 나레이션 + 스탬프 붐.
 """
 from __future__ import annotations
+import math
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -121,7 +122,8 @@ def render_hud(spec: SegmentSpec, out_path: str) -> str:
     return out_path
 
 
-def render_stamp(spec: SegmentSpec, out_path: str) -> str:
+def _stamp_base(spec: SegmentSpec) -> Image.Image:
+    """엔드카드 정지 베이스(RGBA). 슬램 애니는 이 위에 스케일팝+셰이크로 만든다."""
     st = Image.new("RGB", (W, H), (4, 10, 16)).convert("RGBA")
     sd = ImageDraw.Draw(st)
     title = _sprite_grad(spec.jp_name, _serif(96))
@@ -132,8 +134,42 @@ def render_stamp(spec: SegmentSpec, out_path: str) -> str:
     st.alpha_composite(big, (W // 2 - big.width // 2, 470))
     sd.text((W // 2, H - 70), f"ENTRY LOGGED ・ No.{spec.entry_no:03d}", font=_mono(22),
             fill=CYAN + (220,), anchor="mm")
-    st.convert("RGB").save(out_path)
+    return st
+
+
+def render_stamp(spec: SegmentSpec, out_path: str) -> str:
+    _stamp_base(spec).convert("RGB").save(out_path)
     return out_path
+
+
+def render_stamp_frames(spec: SegmentSpec, out_dir: str, cfg: SegmentConfig) -> tuple[str, int]:
+    """엔드카드를 '쾅' 슬램인 애니로 렌더 — 스케일팝 + 화면 흔들림 + 화이트 플래시.
+
+    붐(효과음)은 세그먼트 오디오에서 스탬프 시작 시각에 배치되어 이 슬램과 동기된다.
+    반환: (frames_glob, n).
+    """
+    base = _stamp_base(spec)
+    fdir = Path(out_dir)
+    fdir.mkdir(parents=True, exist_ok=True)
+    n = int(cfg.stamp_s * cfg.fps)
+    for i in range(n):
+        t = i / cfg.fps
+        appear = hi._smooth(min(1.0, t / 0.18))
+        pop = 0.13 * (1.0 - appear)                 # 1.13 → 1.0
+        Z = 1.06 + pop                              # 셰이크 여백 + 팝
+        amp = 34.0 * math.exp(-t / 0.08)            # 빠르게 감쇠하는 흔들림
+        dx, dy = amp * math.sin(t * 95), amp * math.cos(t * 72)
+        bw, bh = int(W * Z), int(H * Z)
+        big = base.resize((bw, bh), Image.LANCZOS)
+        cx = max(0, min(bw - W, (bw - W) // 2 + int(dx)))
+        cy = max(0, min(bh - H, (bh - H) // 2 + int(dy)))
+        fr = big.crop((cx, cy, cx + W, cy + H)).convert("RGB")
+        if t < 0.14:                                # 임팩트 화이트 플래시
+            fa = 200 * (1.0 - hi._smooth(t / 0.14))
+            if fa > 1:
+                fr = Image.blend(fr, Image.new("RGB", (W, H), (255, 255, 255)), fa / 255.0)
+        fr.save(str(fdir / f"s_{i:04d}.png"))
+    return str(fdir / "s_%04d.png"), n
 
 
 def _run(cmd):
@@ -146,8 +182,9 @@ def render_segment(spec: SegmentSpec, out_dir: str, cfg: SegmentConfig | None = 
     wd = Path(out_dir)
     wd.mkdir(parents=True, exist_ok=True)
 
-    # 1) 나레이션(보통속도) + 자막(2x)
-    nar = narration_sync.synthesize(spec.narration, str(wd), voice="ja-JP-KeitaNeural", rate="+0%")
+    # 1) 나레이션(보통속도) + 자막(카라오케: 짧은 단위로 분할해 음성 정합)
+    chunks = narration_sync.karaoke_split(spec.narration)
+    nar = narration_sync.synthesize(chunks, str(wd), voice="ja-JP-KeitaNeural", rate="+0%")
     body_s = float(nar["duration"]) + 0.4
     ass = str(wd / "body.ass")
     narration_sync.build_synced_ass(nar["disp"], ass, hook_first=False, w=W, h=H, sub_scale=cfg.sub_scale)
@@ -164,9 +201,8 @@ def render_segment(spec: SegmentSpec, out_dir: str, cfg: SegmentConfig | None = 
           "-i", meta["frames_glob"], "-vf", f"scale={W}:{H},setsar=1", "-r", str(cfg.fps),
           "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", intro])
 
-    # 3) HUD/스탬프 렌더
+    # 3) HUD 렌더(스탬프는 아래 5)에서 슬램 애니 프레임으로)
     hud = render_hud(spec, str(wd / "hud.png"))
-    stamp = render_stamp(spec, str(wd / "stamp.png"))
 
     # 4) 본문: 실사 delogo→그레이딩→HUD 오버레이→자막
     pre = ""
@@ -184,10 +220,11 @@ def render_segment(spec: SegmentSpec, out_dir: str, cfg: SegmentConfig | None = 
           "-i", spec.footage_path, "-i", hud, "-filter_complex", fc, "-map", "[v]",
           "-r", str(cfg.fps), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", "-an", body])
 
-    # 5) 스탬프
+    # 5) 스탬프(엔드카드) — 쾅 슬램 애니(스케일팝+셰이크+플래시). 붐과 동기.
+    sfg, _sn = render_stamp_frames(spec, str(wd / "sframes"), cfg)
     stampv = str(wd / "stamp.mp4")
-    _run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-t", f"{cfg.stamp_s}",
-          "-i", stamp, "-vf", f"scale={W}:{H},setsar=1,fade=t=in:st=0:d=0.3", "-r", str(cfg.fps),
+    _run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(cfg.fps), "-i", sfg,
+          "-vf", f"scale={W}:{H},setsar=1", "-r", str(cfg.fps),
           "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", stampv])
 
     # 6) concat 영상

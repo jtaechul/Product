@@ -213,17 +213,32 @@ def _hook_sprites(text):
     return out
 
 
-def _cold_open(top_spec, opening, out, cfg):
-    """1위 소재(로고 제거+그레이딩) 위에 도발 훅이 쾅 떨어지는 애니메이션 + 도발 나레이션."""
+def _cold_open(top_spec, opening, out, cfg) -> float:
+    """1위 소재(로고 제거+그레이딩) 위에 도발 훅이 쾅 떨어지는 애니 + 도발 나레이션.
+
+    ★길이는 나레이션이 끝난 뒤 0.9초 여유를 두고 정해진다(말이 끊긴 채 넘어가지 않게).
+    반환: 실제 콜드오픈 길이(초).
+    """
     wd = Path(out).parent
     text = (opening or {}).get("text") or top_spec.stamp_line
     nar_lines = (opening or {}).get("narration") or [text]
+    boom_at = 0.32
+    nar_start = boom_at + 0.28
 
-    # 1) 훅 오버레이 프레임(투명 PNG 시퀀스): 쾅 드롭 스케일팝 + 페이드 + 미세 셰이크
+    # 1) 나레이션 먼저 합성 → 길이 측정 → 클립 길이 = 발화 종료 + 0.9초 홀드
+    boom = hi.generate_boom(str(wd / "cold_boom.wav"), hi.HookIntroConfig())
+    nar_mp3, nar_dur = None, 0.0
+    try:
+        nar = narration_sync.synthesize(nar_lines, str(wd / "conar"), rate="+6%")
+        nar_mp3, nar_dur = nar.get("mp3"), float(nar.get("duration") or 0.0)
+    except Exception:  # noqa: BLE001
+        pass
+    clip = max(cfg.cold_open_s, nar_start + nar_dur + 0.9) if nar_dur else cfg.cold_open_s
+
+    # 2) 훅 오버레이 프레임(투명 PNG 시퀀스): 쾅 드롭 스케일팝 + 페이드 + 미세 셰이크
     sprites = _hook_sprites(text)
     fdir = wd / "coframes"; fdir.mkdir(parents=True, exist_ok=True)
-    n = int(cfg.cold_open_s * cfg.fps)
-    boom_at = 0.32
+    n = int(clip * cfg.fps)
     for i in range(n):
         t = i / cfg.fps
         fr = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -242,44 +257,34 @@ def _cold_open(top_spec, opening, out, cfg):
                 fr.alpha_composite(s2, (cx - w1 // 2 + shx, cy - h1 // 2 + dy))
         fr.save(str(fdir / f"c_{i:04d}.png"))
 
-    # 2) 나레이션(도발·비존댓말 허용) 합성 — 오프닝부터 자극적으로
-    silent = str(wd / "cold_silent.mp4")
-    boom = hi.generate_boom(str(wd / "cold_boom.wav"), hi.HookIntroConfig())
-    try:
-        nar = narration_sync.synthesize(nar_lines, str(wd / "conar"), rate="+6%")
-        nar_mp3 = nar.get("mp3")
-    except Exception:  # noqa: BLE001
-        nar_mp3 = None
-
     # 3) 실사(로고 제거 + 그레이딩) 위에 훅 프레임 오버레이
+    silent = str(wd / "cold_silent.mp4")
     vf_pre = f"scale={W}:{H},setsar=1"
     if top_spec.logo_box:
         try:
             from src.core.reframe import delogo_vf
-            # 16:9 풀프레임에선 NOAA 배너가 더 넓다(스톡 0.28w로는 'EXPLORATION' 미포함)
-            # → 콜드오픈은 배너 전체를 덮도록 폭·높이를 넉넉히 확장(스케일 후 좌표 기준).
+            # 16:9 풀프레임에선 NOAA 배너가 더 넓다 → 배너 전체를 덮도록 폭·높이 확장.
             lx, ly, lw, lh = top_spec.logo_box
             wide = (lx, ly, max(lw, 0.44), max(lh, 0.17))
             vf_pre = f"scale={W}:{H},setsar=1,{delogo_vf(W, H, wide)}"
         except Exception:  # noqa: BLE001
             pass
     _run(["ffmpeg", "-y", "-loglevel", "error",
-          "-ss", f"{top_spec.footage_start}", "-t", f"{cfg.cold_open_s}", "-i", top_spec.footage_path,
+          "-stream_loop", "-1", "-ss", f"{top_spec.footage_start}", "-i", top_spec.footage_path,
           "-framerate", str(cfg.fps), "-i", str(fdir / "c_%04d.png"),
           "-filter_complex",
           f"[0:v]{vf_pre},{cfg.seg_cfg.grade}[g];[g][1:v]overlay=0:0:shortest=1,fade=t=in:st=0:d=0.25[v]",
           "-map", "[v]", "-r", str(cfg.fps), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19",
-          "-an", "-t", f"{cfg.cold_open_s:.3f}", silent])
+          "-an", "-t", f"{clip:.3f}", silent])
 
-    # 4) 오디오: 무음 베드 + 쾅(훅 드롭) + 나레이션
+    # 4) 오디오: 무음 베드(clip 길이) + 쾅(훅 드롭) + 나레이션
     ms = lambda x: int(x * 1000)  # noqa: E731
-    inputs = ["-f", "lavfi", "-t", f"{cfg.cold_open_s:.3f}", "-i", "anullsrc=r=44100:cl=stereo",
-              "-i", boom]
+    inputs = ["-f", "lavfi", "-t", f"{clip:.3f}", "-i", "anullsrc=r=44100:cl=stereo", "-i", boom]
     af = [f"[0:a]volume=0[bd]", f"[1:a]adelay={ms(boom_at)}|{ms(boom_at)},volume=1.0[bm]"]
     mix = ["[bd]", "[bm]"]
     if nar_mp3:
         inputs += ["-i", nar_mp3]
-        af.append(f"[2:a]adelay={ms(boom_at + 0.28)}|{ms(boom_at + 0.28)},volume=1.6[nar]")
+        af.append(f"[2:a]adelay={ms(nar_start)}|{ms(nar_start)},volume=1.6[nar]")
         mix.append("[nar]")
     af.append("".join(mix) + f"amix=inputs={len(mix)}:duration=first:normalize=0,alimiter=limit=0.93[a]")
     coa = str(wd / "cold_a.m4a")
@@ -287,6 +292,7 @@ def _cold_open(top_spec, opening, out, cfg):
           "-map", "[a]", "-c:a", "aac", "-b:a", "192k", coa])
     _run(["ffmpeg", "-y", "-loglevel", "error", "-i", silent, "-i", coa,
           "-c:v", "copy", "-c:a", "aac", "-shortest", out])
+    return round(clip, 3)
 
 
 def _ts(sec):
@@ -304,7 +310,8 @@ def compile_longform(theme_word: str, segments: list[SEG.SegmentSpec], out_dir: 
 
     parts = []          # (label, video_path, dur)
     # 콜드오픈
-    co = str(wd / "cold.mp4"); _cold_open(top, opening, co, cfg); parts.append(("オープニング", co, cfg.cold_open_s))
+    co = str(wd / "cold.mp4"); co_dur = _cold_open(top, opening, co, cfg)
+    parts.append(("オープニング", co, co_dur))
     # 타이틀
     tc = str(wd / "title.mp4"); _still_clip(_title_card(theme_word, n, str(wd / "title.png")), cfg.title_s, tc, cfg)
     parts.append((None, tc, cfg.title_s))

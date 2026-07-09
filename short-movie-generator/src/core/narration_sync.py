@@ -46,6 +46,32 @@ def _core(s: str) -> str:
     return _PUNCT.sub("", s)
 
 
+_SPLIT = re.compile(r"(?<=[、。！？!?])")
+
+
+def karaoke_split(chunks: list[str], max_len: int = 13) -> list[str]:
+    """자막을 카라오케용 짧은 단위로 분할.
+
+    긴 절이 통째로 자막에 뜨지 않도록 문장부호(、。！？)에서 끊고, 그래도 긴 조각은
+    max_len 글자 단위로 추가 분할. 합쳐진 텍스트는 원본과 동일 → TTS 음성/정합 불변.
+    """
+    out: list[str] = []
+    for c in chunks:
+        c = str(c).strip()
+        if not c:
+            continue
+        for part in _SPLIT.split(c):
+            p = part.strip()
+            if not p:
+                continue
+            while len(_core(p)) > max_len + 3:
+                out.append(p[:max_len])
+                p = p[max_len:].strip()
+            if p:
+                out.append(p)
+    return out
+
+
 async def _synth(text: str, voice: str, rate: str) -> tuple[bytes, list[tuple]]:
     import edge_tts
     c = edge_tts.Communicate(text, voice, rate=rate, boundary="WordBoundary")
