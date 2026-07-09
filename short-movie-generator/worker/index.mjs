@@ -262,7 +262,7 @@ function renderHome(){
   $("#refresh").onclick=(e)=>{e.preventDefault();loadRuns();};
   loadRuns();
 }
-function lfbanner(t,c){const m=$("#lfmsg");if(m){m.className="banner "+(c||"");m.innerHTML=t;}}
+function lfbanner(t,c){const m=$("#lfmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
 async function loadRuns(){
   try{
     const [r,cat]=await Promise.all([fetch(API+"/actions/workflows/"+WF+"/runs?per_page=8",{headers:headers(true)}),listContent()]);
