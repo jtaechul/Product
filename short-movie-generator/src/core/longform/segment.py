@@ -88,11 +88,13 @@ def render_hud(spec: SegmentSpec, out_path: str) -> str:
             d.line((x0, yy, x0 + tick, yy), fill=c, width=bw)
             d.line((x1 - tick, yy, x1, yy), fill=c, width=bw)
 
-    # 좌상단 도감
+    # 좌상단 도감 — 종명/학명은 패널 폭에 맞춰 자동 축소(프레임 밖 넘침 원천 차단)
     frame_lr((28, 28, 372, 246))
     d.text((48, 44), "DEEP-SEA DOSSIER", font=_mono(15), fill=CYAN + (220,))
-    d.text((48, 78), spec.jp_name, font=_serif(38), fill=INK + (255,))
-    d.text((50, 128), spec.sci_name, font=_sci(20), fill=DIM + (235,))
+    d.text((48, 78), spec.jp_name, font=hi._fit_font(spec.jp_name, 38, 312, _serif, 18),
+           fill=INK + (255,))
+    d.text((50, 128), spec.sci_name, font=hi._fit_font(spec.sci_name, 20, 310, _sci, 12),
+           fill=DIM + (235,))
     d.text((48, 168), "水深", font=_sansr(17), fill=CYAN + (210,))
     d.text((150, 164), f"{spec.depth_min:,}–{spec.depth_max:,} m", font=_sansb(22), fill=INK + (255,))
     d.text((48, 202), "全長", font=_sansr(17), fill=CYAN + (210,))
@@ -126,11 +128,14 @@ def _stamp_base(spec: SegmentSpec) -> Image.Image:
     """엔드카드 정지 베이스(RGBA). 슬램 애니는 이 위에 스케일팝+셰이크로 만든다."""
     st = Image.new("RGB", (W, H), (4, 10, 16)).convert("RGBA")
     sd = ImageDraw.Draw(st)
-    title = _sprite_grad(spec.jp_name, _serif(96))
+    # 모든 텍스트는 화면 폭(≤W*0.86)에 맞춰 자동 축소 → 프레임/화면 밖 넘침 원천 차단
+    title = _sprite_grad(spec.jp_name, hi._fit_font(spec.jp_name, 96, W * 0.86, _serif, 40))
     st.alpha_composite(title, (W // 2 - title.width // 2, 150))
-    sd.text((W // 2, 300), spec.sci_name, font=_sci(34), fill=DIM + (235,), anchor="mm")
-    sd.text((W // 2, 405), spec.stamp_line, font=_sansb(46), fill=INK + (255,), anchor="mm")
-    big = _sprite_grad(spec.stamp_big, _serif(64))
+    sd.text((W // 2, 300), spec.sci_name, font=hi._fit_font(spec.sci_name, 34, W * 0.86, _sci, 18),
+            fill=DIM + (235,), anchor="mm")
+    sd.text((W // 2, 405), spec.stamp_line, font=hi._fit_font(spec.stamp_line, 46, W * 0.88, _sansb, 24),
+            fill=INK + (255,), anchor="mm")
+    big = _sprite_grad(spec.stamp_big, hi._fit_font(spec.stamp_big, 64, W * 0.8, _serif, 34))
     st.alpha_composite(big, (W // 2 - big.width // 2, 470))
     sd.text((W // 2, H - 70), f"ENTRY LOGGED ・ No.{spec.entry_no:03d}", font=_mono(22),
             fill=CYAN + (220,), anchor="mm")
