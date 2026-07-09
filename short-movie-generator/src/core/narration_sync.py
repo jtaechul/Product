@@ -135,13 +135,14 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
 def build_synced_ass(disp: list[tuple], out_path: str, *, font: str = "Noto Sans CJK JP",
                      accent: str = "&H00EAE06F&", hook_first: bool = True,
-                     w: int = 720, h: int = 1280) -> str:
+                     w: int = 720, h: int = 1280, sub_scale: float = 1.0) -> str:
     """발화 시각에 정합된 disp로 ASS 생성. 청크당 1줄(고정 위치·크기). 첫 청크는 매력형 훅.
 
     accent: ASS 색(&HBBGGRR&). 테마 순환(cyan/gold/coral)을 상위에서 주입.
+    sub_scale: 본문 자막 크기 배율(기본 1.0). 롱폼(16:9)은 h가 작아 자막이 작으므로 2.0 등으로 키운다.
     """
     lines = [_ASS_HEAD.format(w=w, h=h, font=font,
-                              subsz=int(h * 0.039), submv=int(h * 0.16),
+                              subsz=int(h * 0.039 * sub_scale), submv=int(h * 0.16),
                               hooksz=int(h * 0.053), hookmv=int(h * 0.234),
                               accent=accent.strip("&") and accent)]
     for i, (ch, st, en) in enumerate(disp):
