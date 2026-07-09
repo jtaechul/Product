@@ -55,10 +55,13 @@ button:disabled{opacity:.5}
 .row2{display:flex;gap:8px;margin-top:8px}
 .row2 input{flex:1}.row2 button{width:auto;padding:12px 14px}
 .lfgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.lfchip{display:flex;align-items:center;gap:8px;background:#0a1018;border:1px solid var(--line);
-  border-radius:8px;padding:10px 12px;font-size:14px;cursor:pointer;user-select:none;position:relative}
+.lfchip{display:flex;align-items:flex-start;gap:7px;background:#0a1018;border:1px solid var(--line);
+  border-radius:8px;padding:9px 10px;font-size:12px;cursor:pointer;user-select:none;position:relative}
 .lfchip.on{border-color:var(--cy);background:#0d1e26}
-.lfchip input{width:auto;padding:0;margin:0;accent-color:var(--cy)}
+.lfchip input{width:auto;padding:0;margin:2px 0 0;accent-color:var(--cy);flex-shrink:0}
+.lfnm{display:block;line-height:1.35}
+.lfnm i{font-style:normal;color:var(--gy);font-size:10.5px}
+.lfcat{display:block;color:var(--gy);font-size:10px;letter-spacing:.5px;margin-top:2px}
 .lfchip .rk{position:absolute;top:-7px;right:-7px;background:var(--cy);color:#00161c;font-weight:800;
   font-size:11px;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 .lforder{font-size:12px;color:var(--cy);margin-top:8px;min-height:16px}
@@ -103,11 +106,12 @@ const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 // 실사 영상이 확보된 종 풀(코드 시드 추가 시 여기도 함께 갱신 — src/core/footage.py _SEED 참고).
 // value는 data.SPECIES의 common_name_ko(정확 매칭 별칭)라 그대로 --species 인자로 쓸 수 있다.
+// cat: 대시보드 표시용 카테고리 라벨(심해생물/일반해양/미세조류/침몰선). 현재 풀은 전부 심해생물.
 const LF_POOL=[
-  {v:"머리없는닭괴물",jp:"ユメナマコ"},{v:"넓적문어",jp:"メンダコ"},
-  {v:"북태평양심해문어",jp:"シンカイダコ"},{v:"대왕등각류",jp:"ダイオウグソクムシ"},
-  {v:"심해붉은해파리",jp:"シンカイクラゲ"},{v:"파리지옥말미잘",jp:"ハエトリギンチャク"},
-  {v:"육식멍게",jp:"ニクショクホヤ"},{v:"심해바다조름",jp:"シンカイウミエラ"},
+  {v:"머리없는닭괴물",jp:"ユメナマコ",cat:"심해생물"},{v:"넓적문어",jp:"メンダコ",cat:"심해생물"},
+  {v:"북태평양심해문어",jp:"シンカイダコ",cat:"심해생물"},{v:"대왕등각류",jp:"ダイオウグソクムシ",cat:"심해생물"},
+  {v:"심해붉은해파리",jp:"シンカイクラゲ",cat:"심해생물"},{v:"파리지옥말미잘",jp:"ハエトリギンチャク",cat:"심해생물"},
+  {v:"육식멍게",jp:"ニクショクホヤ",cat:"심해생물"},{v:"심해바다조름",jp:"シンカイウミエラ",cat:"심해생물"},
 ];
 // 서버 토큰 모드: 워커가 GitHub 토큰을 보관·프록시 → 어느 브라우저/기기에서도 토큰 입력 불필요.
 // 미설정 시 기존 브라우저 토큰(localStorage) 모드로 자동 폴백.
@@ -234,7 +238,8 @@ function renderHome(){
     '<div class="lfgrid" id="lfgrid">'+
       LF_POOL.map((s,i)=>(
         '<label class="lfchip" data-i="'+i+'"><input type="checkbox" value="'+esc(s.v)+'">'+
-        esc(s.v)+' <span class="hint" style="margin:0">('+esc(s.jp)+')</span></label>'
+        '<span class="lfnm">'+esc(s.v)+' <i>('+esc(s.jp)+')</i>'+
+        '<span class="lfcat">'+esc(s.cat||"")+'</span></span></label>'
       )).join('')+
     '</div>'+
     '<div class="lforder" id="lforder">선택된 종: 없음</div>'+
