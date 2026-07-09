@@ -117,7 +117,7 @@ def _build_meta(theme_key: str, segs: list, chapters: str) -> dict:
         f"登場: {names}\n\n"
         f"映像: NOAA Ocean Exploration ほか・Public Domain / CC0\n"
         f"チャンネル登録で、次の深海へ。\n"
-        f"#深海 #深海生物 #ランキング"
+        f"#深海 #海洋生物 #深海生物 #ランキング"
     )
     sources = [{"jp_name": s.jp_name, "sci_name": s.sci_name, "rank": s.rank,
                 "source": getattr(s, "_source", ""), "credit": getattr(s, "_credit", "")}
