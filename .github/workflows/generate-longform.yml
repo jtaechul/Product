@@ -1,0 +1,222 @@
+name: Generate Longform
+
+# 롱폼(랭킹형 TOP N) 제작 — 무료(GitHub Actions). 결과: ① 유튜브 '비공개' 자동 업로드
+# ② 텔레그램으로 미리보기(커버+제목+유튜브 링크) 전송 → 운영자가 확인 후 유튜브에서 공개 전환.
+# 실행: Actions → Generate Longform → Run workflow (테마 + 종 3~6개 콤마 입력, 입력 순서=순위 1위부터)
+
+on:
+  workflow_dispatch:
+    inputs:
+      theme:
+        description: "테마(자동 = 선택한 종의 사실을 보고 AI가 자동 추론)"
+        type: choice
+        options: [자동, 기이한, 위험한, 놀라운, 미스터리한, 무서운]
+        default: 자동
+      species:
+        description: "종 3~6개 콤마 구분(입력 순서=순위, 첫째=1위). 예: 머리없는닭괴물,대왕등각류,북태평양심해문어"
+        required: true
+        default: "머리없는닭괴물,대왕등각류,북태평양심해문어,넓적문어,심해붉은해파리"
+      privacy:
+        description: "유튜브 공개 범위(게이트: 기본 비공개 → 확인 후 수동 공개)"
+        type: choice
+        options: [private, unlisted, public]
+        default: private
+  # 요청파일 푸시로도 생성 가능(대시보드·원격 조작용)
+  push:
+    branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
+    paths: ["short-movie-generator/requests/longform_*.json"]
+
+concurrency:
+  group: generate-longform
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    name: 롱폼 생성
+    defaults:
+      run:
+        working-directory: short-movie-generator
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve inputs (버튼 / 요청파일)
+        id: inp
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "theme=${{ inputs.theme }}" >> "$GITHUB_OUTPUT"
+            echo "species=${{ inputs.species }}" >> "$GITHUB_OUTPUT"
+            echo "privacy=${{ inputs.privacy }}" >> "$GITHUB_OUTPUT"
+          else
+            F=$(ls -t requests/longform_*.json | head -1)
+            python - "$F" <<'PY' >> "$GITHUB_OUTPUT"
+          import json, sys
+          r = json.load(open(sys.argv[1], encoding="utf-8"))
+          print(f"theme={r.get('theme','자동')}")
+          print(f"species={','.join(r.get('species', []))}")
+          print(f"privacy={r.get('privacy','private')}")
+          PY
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: short-movie-generator/requirements.txt
+
+      - name: Install FFmpeg + fonts
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-cjk fonts-liberation
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: Verify render fonts present (fail fast)
+        run: |
+          python -c "from src.core import hook_intro as hi; m=hi.missing_fonts(); assert not m, ('필수 폰트 누락: '+', '.join(m)); print('필수 폰트 OK')"
+
+      - name: Run longform pipeline
+        id: gen
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python -m src.run_longform --theme "${{ steps.inp.outputs.theme }}" \
+            --species "${{ steps.inp.outputs.species }}" --out output/longform
+          echo "video=output/longform/longform.mp4" >> "$GITHUB_OUTPUT"
+          echo "meta=output/longform/meta.json" >> "$GITHUB_OUTPUT"
+
+      - name: Upload to YouTube (비공개 게이트)
+        id: yt
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          PRIVACY: ${{ steps.inp.outputs.privacy }}
+        run: |
+          python - "${{ steps.gen.outputs.video }}" "${{ steps.gen.outputs.meta }}" <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os, sys
+          from src.core import youtube_upload as yt
+          video, metap = sys.argv[1], sys.argv[2]
+          m = json.load(open(metap, encoding="utf-8"))
+          if not yt.has_credentials():
+              print("yt_url=")
+              print("::notice::YouTube 시크릿 없음 → 업로드 생략(텔레그램 미리보기만)")
+              raise SystemExit(0)
+          try:
+              r = yt.upload(video, m["yt_title"], m["yt_description"],
+                            tags=["深海","深海生物","ランキング","deep sea"],
+                            privacy=os.environ.get("PRIVACY","private"))
+              print(f"yt_url={r['url']}")
+              print(f"yt_privacy={r['privacy']}")
+          except Exception as e:
+              print("yt_url=")
+              print(f"::warning::YouTube 업로드 실패: {e}")
+          PY
+
+      - name: Publish media to Release (영구 호스팅)
+        id: media
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VIDEO="${{ steps.gen.outputs.video }}"
+          ID="lf-${{ github.run_number }}"
+          mkdir -p work/rel
+          cp "$VIDEO" "work/rel/${ID}.mp4"
+          ffmpeg -y -loglevel error -ss 12.5 -i "$VIDEO" -frames:v 1 -q:v 3 "work/rel/${ID}_cover.jpg" || true
+          TAG="longform-${{ github.run_number }}"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --title "Longform #${{ github.run_number }}" --notes "롱폼 TOP N (자동 생성)" --target "${{ github.ref_name }}"
+          gh release upload "$TAG" work/rel/* --clobber
+          BASE="${{ github.server_url }}/${{ github.repository }}/releases/download/$TAG"
+          echo "video_url=$BASE/${ID}.mp4" >> "$GITHUB_OUTPUT"
+          echo "cover=work/rel/${ID}_cover.jpg" >> "$GITHUB_OUTPUT"
+          echo "content_id=$ID" >> "$GITHUB_OUTPUT"
+
+      - name: 콘텐츠 레코드 기록(제목·설명 일/한 + 타임스탬프 — 대시보드 표시용)
+        id: rec
+        env:
+          VIDEO_URL: ${{ steps.media.outputs.video_url }}
+        run: |
+          python - "${{ steps.gen.outputs.meta }}" "${{ steps.media.outputs.content_id }}" <<'PY'
+          import json, os, sys
+          from src.core import content_store
+          metap, cid = sys.argv[1], sys.argv[2]
+          m = json.load(open(metap, encoding="utf-8"))
+          content_store.write_longform_record(
+              ".", cid, m, video_url=os.environ.get("VIDEO_URL", ""),
+              cover_url="")
+          PY
+
+      - name: Commit 콘텐츠 레코드 (원격이 앞서가도 재시도)
+        run: |
+          git add "content/${{ steps.media.outputs.content_id }}.json"
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(longform): 롱폼 #${{ github.run_number }} 결과 레코드 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git fetch origin "${{ github.ref_name }}" \
+              && git rebase "origin/${{ github.ref_name }}" \
+              && git push origin "HEAD:${{ github.ref_name }}" \
+              && { echo "저장 완료"; exit 0; }
+            echo "재시도 $i (원격이 앞서감)…"; git rebase --abort 2>/dev/null || true; sleep 3
+          done
+          echo "저장 실패(push)"; exit 1
+
+      - name: Job summary
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          m = json.load(open("${{ steps.gen.outputs.meta }}", encoding="utf-8"))
+          print("## 롱폼 생성 완료 ✅")
+          print(f"- **제목**: {m.get('yt_title','')}")
+          print(f"- **길이**: {m.get('total_s',0)}s / **{m.get('n',0)}종**")
+          print(f"- **YouTube**: {'${{ steps.yt.outputs.yt_url }}' or '(업로드 생략)'}")
+          print(f"\n**챕터**\n\n{m.get('chapters','')}")
+          PY
+
+      - name: Send preview to Telegram (커버 + 제목 + 유튜브 링크)
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          YT_URL: ${{ steps.yt.outputs.yt_url }}
+          VIDEO_URL: ${{ steps.media.outputs.video_url }}
+          COVER: ${{ steps.media.outputs.cover }}
+        run: |
+          if [ -z "$TG_TOKEN" ]; then echo "::notice::텔레그램 토큰 없음 → 생략"; exit 0; fi
+          CAP=$(python - <<'PY'
+          import json, os
+          m = json.load(open("${{ steps.gen.outputs.meta }}", encoding="utf-8"))
+          yt = os.environ.get("YT_URL","").strip()
+          vu = os.environ.get("VIDEO_URL","").strip()
+          lines = [f"🎬 롱폼 생성 완료 · {m.get('n',0)}종 ({m.get('total_s',0)}s)",
+                   m.get("yt_title",""), ""]
+          if yt:
+              lines += [f"▶ 유튜브(비공개): {yt}", "확인 후 유튜브에서 '공개'로 전환하세요.", ""]
+          lines += [f"📝 제목·설명(일/한) 확인: https://shorts-dashboard.jtaechul.workers.dev/lf/lf-${{ github.run_number }}", ""]
+          lines += [f"⬇ 원본: {vu}", "", "― 目次 ―", m.get("chapters","")]
+          print("\n".join(lines)[:1000])
+          PY
+          )
+          if [ -z "$TG_CHAT" ]; then echo "::notice::수신 채팅 없음 → 생략"; exit 0; fi
+          for CID in $TG_CHAT; do
+            if [ -f "$COVER" ]; then
+              curl -sS -F chat_id="$CID" -F photo=@"$COVER" -F caption="$CAP" \
+                   "https://api.telegram.org/bot${TG_TOKEN}/sendPhoto" | head -c 200; echo
+            else
+              curl -sS -F chat_id="$CID" -F text="$CAP" \
+                   "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" | head -c 200; echo
+            fi
+          done
+
+      - name: Upload artifact (백업)
+        uses: actions/upload-artifact@v4
+        with:
+          name: longform-${{ github.run_number }}
+          path: |
+            short-movie-generator/output/longform/longform.mp4
+            short-movie-generator/output/longform/meta.json
+          retention-days: 14
