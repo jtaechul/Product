@@ -183,6 +183,50 @@ def build_segment_script(info: SpeciesInfo, theme_key: str = DEFAULT_THEME) -> d
     return _seed_fallback(info)
 
 
+# ─────────────── 오프닝 도발 훅(콜드오픈용) ───────────────
+_HOOK_PROMPT = """あなたは登録者1億人のYouTube切り抜きマーケターです。\
+深海生物ランキング動画の「冒頭3秒フック」を作ります。JSONのみ出力(説明禁止)。
+
+テーマ: {adj}深海生物 TOP{n}。登場(和名): {names}
+
+要件:
+- text: 画面に大きく出す挑発的な一言。15字前後、**敬語禁止**(体言止め・言い切り・疑問可)。\
+スワイプを止める恐怖・好奇心・驚き。誇張はしても嘘はつかない(無害な種に嘘の危険を作らない)。
+- narration: それを煽る短いナレーション2〜3節(各短く緊張感、敬語でなくてよい)。
+JSON例: {{"text":"深海に、5つの異形。","narration":["この海の底には、","会ってはいけない生き物がいる。"]}}
+"""
+
+
+def opening_hook(theme_key: str, jp_names: list[str], n: int) -> dict:
+    """콜드오픈 도발 훅. 반환 {text, narration:[...]}. LLM(마케터)→테마 폴백(항상 dict).
+
+    ★훅·오프닝 나레이션은 존댓말 강제 예외(임팩트 우선, 하드룰 #8). 사실 왜곡 금지.
+    """
+    adj, _title, _tone = theme_words(theme_key)
+    names = " / ".join(jp_names[:6]) or "深海生物"
+    out = None
+    try:
+        out = llm.generate_text(_HOOK_PROMPT.format(adj=adj, n=n, names=names), max_tokens=300)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[opening_hook] LLM 실패: %s", e)
+    if out:
+        m = re.search(r"\{.*\}", out, re.S)
+        if m:
+            try:
+                obj = json.loads(m.group(0))
+                text = str(obj.get("text", "")).strip()
+                nar = [str(x).strip() for x in obj.get("narration", []) if str(x).strip()]
+                if text and nar:
+                    return {"text": _clip(text, 18), "narration": nar[:3]}
+            except Exception:  # noqa: BLE001
+                pass
+    # 폴백: 테마 기반 도발 문구(비존댓말 허용)
+    return {
+        "text": f"深海に潜む、{n}の{adj}者",
+        "narration": ["この海の、はるか底に。", f"{adj}生き物が、息をひそめている。"],
+    }
+
+
 def _parse(out: str | None) -> dict | None:
     if not out:
         return None

@@ -92,6 +92,7 @@ const OWNER="${OWNER}",REPO="${REPO}",WF="${WORKFLOW}",BRANCH="${BRANCH}";
 const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 Actions 디스패치 → 403 회피)
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
+const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 // 서버 토큰 모드: 워커가 GitHub 토큰을 보관·프록시 → 어느 브라우저/기기에서도 토큰 입력 불필요.
 // 미설정 시 기존 브라우저 토큰(localStorage) 모드로 자동 폴백.
 let SERVER=false;
@@ -211,6 +212,22 @@ function renderHome(){
           '<div class="hint">이 기기 브라우저에 저장됩니다. (여러 기기에서 입력 없이 쓰려면 <b>서버 토큰</b> 설정 필요 — README 참고)</div>'+
         '</details>'))+
   '</div>'+
+  '<div class="card">'+
+    '<span class="lbl">롱폼 · 랭킹형 TOP N (8분 유튜브)</span>'+
+    '<span class="lbl">테마</span>'+
+    '<select id="lftheme">'+
+      '<option value="기이한">기이한</option>'+
+      '<option value="위험한">위험한</option>'+
+      '<option value="놀라운">놀라운</option>'+
+      '<option value="미스터리한">미스터리한</option>'+
+      '<option value="무서운">무서운</option>'+
+    '</select>'+
+    '<span class="lbl">종 3~6개 (콤마 구분 · 입력 순서 = 순위, 첫째가 1위)</span>'+
+    '<input id="lfspecies" placeholder="머리없는닭괴물,대왕등각류,북태평양심해문어,넓적문어,심해붉은해파리" autocomplete="off">'+
+    '<div class="hint" style="margin:4px 0 8px">각 종의 실사 영상(NOAA·공용도메인)으로 세그먼트 조립 → 유튜브 <b>비공개</b> 자동 업로드 후 텔레그램으로 링크 전송(확인 후 직접 공개).</div>'+
+    '<button class="go" id="golf">롱폼 생성 시작</button>'+
+    '<div class="banner" id="lfmsg"></div>'+
+  '</div>'+
   '<div class="card"><span class="lbl">실행 현황 <a href="#" id="refresh" style="color:var(--cy);float:right;text-decoration:none">새로고침</a></span>'+
     '<div class="runs" id="runs"><div class="hint">불러오는 중…</div></div></div>';
 
@@ -229,9 +246,23 @@ function renderHome(){
       else{const t=await r.text();banner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
     }catch(e){banner("요청 실패: "+e,"err");}
     $("#go").disabled=false;};
+  const _lf=$("#golf");if(_lf)_lf.onclick=async()=>{
+    const theme=($("#lftheme")||{}).value||"기이한";
+    const species=($("#lfspecies").value||"").trim();
+    const n=species.split(",").map(s=>s.trim()).filter(Boolean).length;
+    if(n<3||n>6){lfbanner("종을 3~6개 콤마로 입력하세요(현재 "+n+"개).","err");return;}
+    if(!authReady()){const tb=$("#tokbox");if(tb)tb.open=true;lfbanner("먼저 GitHub 토큰을 설정하세요(위 안내).","err");return;}
+    $("#golf").disabled=true;lfbanner("롱폼 생성 요청 중…");
+    try{const r=await fetch(API+"/actions/workflows/"+LF_WF+"/dispatches",{method:"POST",headers:headers(true),
+        body:JSON.stringify({ref:BRANCH,inputs:{theme,species,privacy:"private"}})});
+      if(r.status===204){lfbanner("롱폼 생성 시작! 완료 후 유튜브 비공개 업로드 + 텔레그램 링크 전송.","ok");setTimeout(loadRuns,4000);setTimeout(loadRuns,15000);}
+      else{const t=await r.text();lfbanner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
+    }catch(e){lfbanner("요청 실패: "+e,"err");}
+    $("#golf").disabled=false;};
   $("#refresh").onclick=(e)=>{e.preventDefault();loadRuns();};
   loadRuns();
 }
+function lfbanner(t,c){const m=$("#lfmsg");if(m){m.className="banner "+(c||"");m.innerHTML=t;}}
 async function loadRuns(){
   try{
     const [r,cat]=await Promise.all([fetch(API+"/actions/workflows/"+WF+"/runs?per_page=8",{headers:headers(true)}),listContent()]);

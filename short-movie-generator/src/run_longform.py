@@ -144,8 +144,11 @@ def run_longform(theme_key: str, species: list[str], base_dir: str = ".",
         raise PipelineError("longform", f"실사 영상 확보 종 부족(확보 {len(segs)}종, 최소 3종)")
 
     _adj, title_word, _tone = LS.theme_words(theme_key)
-    log.info("[longform] %d종 세그먼트 조립 시작 (테마=%s)", len(segs), theme_key)
-    r = C.compile_longform(title_word, segs, str(out / "work"), C.CompileConfig())
+    # 콜드오픈 도발 훅(마케터 페르소나) + 오프닝 나레이션 — 랭킹 순(1위 먼저) 노출명 기준
+    jp_names = [s.jp_name for s in sorted(segs, key=lambda s: s.rank)]
+    opening = LS.opening_hook(theme_key, jp_names, len(segs))
+    log.info("[longform] %d종 세그먼트 조립 시작 (테마=%s, 훅=%r)", len(segs), theme_key, opening["text"])
+    r = C.compile_longform(title_word, segs, str(out / "work"), C.CompileConfig(), opening=opening)
     # 최종 산출물을 out 루트로 이동
     final = out / "longform.mp4"
     Path(r["video"]).replace(final)
