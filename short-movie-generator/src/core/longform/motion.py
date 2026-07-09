@@ -357,6 +357,10 @@ def render_locate_descent(out_dir: str, spec: MotionSpec | None = None,
     total = cfg.t_map + cfg.t_flash + cfg.t_desc + cfg.t_hold
     n = int(total * cfg.FPS)
     boom_s = cfg.t_map + cfg.t_flash + cfg.t_desc * 0.93
+    # SFX 이벤트 시각(초) — 시각 이벤트에 정합
+    scan_s = round(cfg.t_map * 0.18, 3)                 # 스캔 스윕 시작
+    lockon_s = round(cfg.t_map * 0.52, 3)               # 해역 락온
+    splash_s = round(cfg.t_map + cfg.t_flash * 0.15, 3)  # 하강 직전(물속 진입)
     for i in range(n):
         t = i / cfg.FPS
         if t < cfg.t_map:
@@ -375,4 +379,5 @@ def render_locate_descent(out_dir: str, spec: MotionSpec | None = None,
             f = _descent_frame(1.0, max(0.0, 1 - ht * 2.5), spec, cfg)
         f.convert("RGB").save(str(Path(out_dir) / f"m_{i:04d}.png"))
     return {"frames_glob": str(Path(out_dir) / "m_%04d.png"), "fps": cfg.FPS,
-            "total_s": round(total, 3), "boom_s": round(boom_s, 3), "n_frames": n}
+            "total_s": round(total, 3), "boom_s": round(boom_s, 3), "n_frames": n,
+            "scan_s": scan_s, "lockon_s": lockon_s, "splash_s": splash_s}
