@@ -259,7 +259,10 @@ def build_body_jp(info: SpeciesInfo) -> list[str] | None:
     except Exception:  # noqa: BLE001
         return None
     chunks = [str(x).strip() for x in arr if str(x).strip()]
-    return chunks if len(chunks) >= 8 else None
+    if len(chunks) < 8:
+        return None
+    from src.core import naturalness
+    return naturalness.polish_lines(chunks)
 
 
 _CAPTION_PROMPT = """日本のインスタ向け、深海生物ショート動画の**キャプション**を作ります。\

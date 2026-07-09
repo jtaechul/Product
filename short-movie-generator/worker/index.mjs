@@ -186,13 +186,26 @@ async function listContent(){
   }catch(e){return [];}
 }
 async function fetchRecord(id){const t=await fetchRaw(CONTENT_DIR+"/"+id+".json");try{return JSON.parse(t);}catch(e){return null;}}
+// 롱폼 결과 목록: content/lf-*.json 만 나열(쇼츠 3자리 숫자 레코드와 파일명으로 구분).
+async function listLongform(){
+  try{
+    const r=await fetch(API+"/contents/"+CONTENT_DIR+"?ref="+BRANCH,{headers:headers(true)});
+    if(!r.ok)return [];
+    const files=await r.json();
+    const ids=(Array.isArray(files)?files:[]).map(f=>f.name||"").filter(n=>/^lf-\\d+\\.json$/.test(n)).map(n=>n.slice(0,-5));
+    const recs=await Promise.all(ids.map(fetchRecord));
+    return recs.filter(Boolean).sort((a,b)=>(a.id<b.id?1:-1));
+  }catch(e){return [];}
+}
 
 // ── 라우팅: 전체 페이지 로드마다 경로로 뷰 결정 (worker가 모든 경로에 앱 셸 서빙) ──
 function setNav(p){document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("on",a.dataset.p===p));}
 function route(){
   const path=location.pathname;
   const m=path.match(/^\\/c\\/(\\w+)/);
+  const lm=path.match(/^\\/lf\\/(\\S+)/);
   if(m){setNav("library");renderDetail(m[1]);}
+  else if(lm){setNav("home");renderLongformDetail(decodeURIComponent(lm[1]));}
   else if(path.indexOf("/library")===0){setNav("library");renderLibrary();}
   else{setNav("home");renderHome();}
 }
@@ -255,6 +268,7 @@ function renderHome(){
     '<div class="hint" style="margin:4px 0 8px">각 종의 실사 영상(NOAA·공용도메인)으로 세그먼트 조립 → 유튜브 <b>비공개</b> 자동 업로드 후 텔레그램으로 링크 전송(확인 후 직접 공개).</div>'+
     '<button class="go" id="golf">롱폼 생성 시작</button>'+
     '<div class="banner" id="lfmsg"></div>'+
+    '<div class="lfresults" id="lfresults" style="margin-top:14px"></div>'+
   '</div>'+
   '<div class="card"><span class="lbl">실행 현황 <a href="#" id="refresh" style="color:var(--cy);float:right;text-decoration:none">새로고침</a></span>'+
     '<div class="runs" id="runs"><div class="hint">불러오는 중…</div></div></div>';
@@ -315,8 +329,19 @@ function renderHome(){
     $("#golf").disabled=false;};
   $("#refresh").onclick=(e)=>{e.preventDefault();loadRuns();};
   loadRuns();
+  loadLongformResults();
 }
 function lfbanner(t,c){const m=$("#lfmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
+async function loadLongformResults(){
+  const el=$("#lfresults");if(!el)return;
+  const recs=await listLongform();
+  if(!recs.length){el.innerHTML="";return;}
+  el.innerHTML='<span class="lbl">최근 롱폼 결과</span>'+recs.slice(0,6).map(r=>(
+    '<a class="clitem" href="/lf/'+encodeURIComponent(r.id)+'"><span class="no">'+esc(r.n||0)+'종</span>'+
+    '<span class="nm">'+esc(r.yt_title||r.id)+'<small>'+esc(r.yt_title_ko||"")+'</small></span>'+
+    '<span class="t">'+esc(String(r.created_at||"").slice(0,10))+'</span></a>'
+  )).join('');
+}
 async function loadRuns(){
   try{
     const [r,cat]=await Promise.all([fetch(API+"/actions/workflows/"+WF+"/runs?per_page=8",{headers:headers(true)}),listContent()]);
@@ -442,6 +467,44 @@ async function renderDetail(id){
   $("#ball").onclick=()=>{if(confirm("영상·캡션을 모두 처음부터 다시 만듭니다(무료·2~4분). 진행할까요?"))regen(id,"all");};
   $("#bigp").onclick=()=>igPublish(id,true);
   $("#big").onclick=()=>{if(confirm("이 릴스를 인스타그램(@abyss_0cean)에 실제로 발행합니다. 되돌릴 수 없어요. 진행할까요?"))igPublish(id,false);};
+}
+
+// ── 롱폼 상세: 제목·설명(일/한, 타임스탬프 포함) 프레임 + 영상 미리보기 ──
+async function renderLongformDetail(id){
+  view().innerHTML='<a class="back" href="/">← 제작 페이지</a><div class="card" id="lfcard"><div class="hint">불러오는 중…</div></div>';
+  const rec=await fetchRecord(id);
+  const dc=document.getElementById("lfcard");
+  if(!rec){
+    dc.innerHTML='<div class="hint">이 롱폼 기록을 찾을 수 없습니다(아직 제작 중이거나 완료 전).</div>'+
+      '<div class="btnrow" style="margin-top:14px"><a class="btn" href="/">← 제작 페이지로</a></div>';
+    return;
+  }
+  const md=rec.media||{};
+  let mediaHtml="";
+  if(md.video_url)mediaHtml='<video src="'+prox(md.video_url)+'" controls playsinline preload="metadata" poster="'+(md.cover_url?prox(md.cover_url):"")+'"></video>';
+  else if(md.cover_url)mediaHtml='<img src="'+prox(md.cover_url)+'">';
+  dc.className="card detail";
+  dc.innerHTML=
+    '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px"><b style="font-size:19px">'+esc(id)+'</b>'+
+      '<span class="mono" style="color:var(--gy);font-size:12px">'+esc(rec.theme||"")+' · '+esc(rec.n||0)+'종 · '+Math.round(rec.total_s||0)+'초</span></div>'+
+    mediaHtml+
+    '<div class="dual" style="margin-top:12px">'+
+      '<div><span class="lbl">영상 제목 · 일본어(유튜브)</span>'+
+        '<textarea readonly rows="2">'+esc(rec.yt_title||"")+'</textarea></div>'+
+      '<div><span class="lbl">영상 제목 · 한국어(참고)</span>'+
+        '<textarea readonly rows="2">'+esc(rec.yt_title_ko||"")+'</textarea></div>'+
+    '</div>'+
+    '<div class="dual" style="margin-top:8px">'+
+      '<div><span class="lbl">영상 설명(주제 + 00:00 타임스탬프) · 일본어</span>'+
+        '<textarea readonly rows="14">'+esc(rec.yt_description||"")+'</textarea>'+
+        '<button class="btn save" id="lfcpjp" style="margin-top:6px">일본어 설명 복사</button></div>'+
+      '<div><span class="lbl">영상 설명(주제 + 00:00 타임스탬프) · 한국어</span>'+
+        '<textarea readonly rows="14">'+esc(rec.yt_description_ko||"")+'</textarea>'+
+        '<button class="btn" id="lfcpko" style="margin-top:6px">한국어 설명 복사</button></div>'+
+    '</div>';
+  const tas=dc.querySelectorAll("textarea");
+  $("#lfcpjp").onclick=()=>copyText(tas[2].value,"일본어 설명을 복사했어요. 유튜브 설명란에 붙여넣기 하세요.");
+  $("#lfcpko").onclick=()=>copyText(tas[3].value,"한국어 설명(참고)을 복사했어요.");
 }
 
 async function saveCaption(id){

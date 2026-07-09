@@ -284,6 +284,8 @@ def build_segment_script(info: SpeciesInfo, theme_key: str = DEFAULT_THEME) -> d
         log.warning("[longform_script] LLM 실패: %s", e)
     data = _parse(out)
     if data and len(data.get("narration", [])) >= 8:
+        from src.core import naturalness
+        data["narration"] = naturalness.polish_lines(data["narration"])
         return data
     log.info("[longform_script] LLM 부족 → 시드 확장 폴백")
     return _seed_fallback(info)
@@ -327,7 +329,9 @@ def opening_hook(theme_key: str, jp_names: list[str], n: int) -> dict:
                 text = str(obj.get("text", "")).strip()
                 nar = [str(x).strip() for x in obj.get("narration", []) if str(x).strip()]
                 if text and nar:
-                    return {"text": _clip(text, 16), "narration": nar[:4]}
+                    from src.core import naturalness
+                    # text(화면 훅)는 임팩트 우선 카피라 검수 대상 아님. narration(음성)만 검수.
+                    return {"text": _clip(text, 16), "narration": naturalness.polish_lines(nar[:4])}
             except Exception:  # noqa: BLE001
                 pass
     # 폴백: 하우스 톤(畏敬 + 덤덤한 블랙유머 1마디). 화면 훅은 비존댓말 허용.

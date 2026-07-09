@@ -74,6 +74,7 @@ def build_segments(category, species_queries: list[str], theme_key: str, raw_roo
             narration=sc["narration"], stamp_line=sc["stamp_line"], stamp_big=sc["stamp_big"],
             entry_no=base + idx, footage_path=fv["path"], footage_start=8.0,
             target_depth_m=min(6000, max(1000, dmax)), logo_box=fv.get("logo_box"),
+            ko_name=info.common_name_ko or "",
         ))
         specs[-1]._source = fv.get("source", "")   # 메타용(캡션 출처)
         specs[-1]._credit = fv.get("credit", "NOAA Ocean Exploration")
@@ -122,14 +123,40 @@ def _size_label(info) -> str:
     return "—"
 
 
-def _build_meta(theme_key: str, segs: list, chapters: str) -> dict:
+def _fmt_ts(sec: float) -> str:
+    m, s = divmod(int(sec), 60)
+    return f"{m}:{s:02d}"
+
+
+def _ko_chapters(chapters_jp: str, chapter_items: list | None) -> str:
+    """구조화 chapter_items(t·label_jp·rank·ko_name)로 한국어 챕터 문자열 재구성.
+
+    없으면(구버전 compile 결과 등) 일본어 챕터 문자열을 그대로 반환(항상 문자열 보장).
+    """
+    if not chapter_items:
+        return chapters_jp
+    fixed = {"オープニング": "오프닝", "エンディング": "엔딩"}
+    lines = []
+    for it in chapter_items:
+        rank = it.get("rank")
+        if rank:
+            lines.append(f"{_fmt_ts(it['t'])} {rank}위 {it.get('ko_name') or it.get('label_jp', '')}")
+        else:
+            lab_jp = it.get("label_jp", "")
+            lines.append(f"{_fmt_ts(it['t'])} {fixed.get(lab_jp, lab_jp)}")
+    return "\n".join(lines)
+
+
+def _build_meta(theme_key: str, segs: list, chapters: str, chapter_items: list | None = None) -> dict:
     from src.categories.deep_sea import longform_script as LS
     adj, title_word, _tone = LS.theme_words(theme_key)
     n = len(segs)
     top = min(segs, key=lambda s: s.rank)
-    names = " / ".join(s.jp_name for s in sorted(segs, key=lambda s: s.rank))
-    yt_title = f"深海の{adj}生き物 TOP{n}｜{top.jp_name}ほか"
-    yt_title = yt_title[:30]
+    ordered = sorted(segs, key=lambda s: s.rank)
+    names = " / ".join(s.jp_name for s in ordered)
+    names_ko = " / ".join((s.ko_name or s.jp_name) for s in ordered)
+    yt_title = (f"深海の{adj}生き物 TOP{n}｜{top.jp_name}ほか")[:30]
+    yt_title_ko = (f"심해의 {theme_key} 생물 TOP{n} | {top.ko_name or top.jp_name} 외")[:34]
     desc = (
         f"光の届かない深海に潜む、{adj}生き物たちのランキング TOP{n}。\n"
         f"第{n}位から、第1位まで。あなたが一番ゾッとするのはどれでしょうか。\n\n"
@@ -139,11 +166,24 @@ def _build_meta(theme_key: str, segs: list, chapters: str) -> dict:
         f"チャンネル登録で、次の深海へ。\n"
         f"#深海 #海洋生物 #深海生物 #ランキング"
     )
+    chapters_ko = _ko_chapters(chapters, chapter_items)
+    desc_ko = (
+        f"빛이 닿지 않는 심해에 사는, {theme_key} 생물들의 랭킹 TOP{n}.\n"
+        f"{n}위부터 1위까지. 당신이 가장 소름 돋는 건 어느 쪽일까요?\n\n"
+        f"― 목차 ―\n{chapters_ko}\n\n"
+        f"등장: {names_ko}\n\n"
+        f"영상: NOAA Ocean Exploration 외 · Public Domain / CC0\n"
+        f"구독하면, 다음 심해로.\n"
+        f"#심해 #해양생물 #심해생물 #랭킹"
+    )
     sources = [{"jp_name": s.jp_name, "sci_name": s.sci_name, "rank": s.rank,
                 "source": getattr(s, "_source", ""), "credit": getattr(s, "_credit", "")}
-               for s in sorted(segs, key=lambda s: s.rank)]
-    return {"theme": theme_key, "title_word": title_word, "yt_title": yt_title,
-            "yt_description": desc, "chapters": chapters, "n": n, "sources": sources}
+               for s in ordered]
+    return {"theme": theme_key, "title_word": title_word,
+            "yt_title": yt_title, "yt_title_ko": yt_title_ko,
+            "yt_description": desc, "yt_description_ko": desc_ko,
+            "chapters": chapters, "chapters_ko": chapters_ko,
+            "n": n, "sources": sources}
 
 
 def run_longform(theme_key: str, species: list[str], base_dir: str = ".",
@@ -174,7 +214,7 @@ def run_longform(theme_key: str, species: list[str], base_dir: str = ".",
     # 최종 산출물을 out 루트로 이동
     final = out / "longform.mp4"
     Path(r["video"]).replace(final)
-    meta = _build_meta(theme_key, segs, r["chapters"])
+    meta = _build_meta(theme_key, segs, r["chapters"], r.get("chapter_items"))
     meta.update({"video": str(final), "total_s": r["total_s"]})
     (out / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     log.info("[longform] 완료: %s (%.1fs, %d종)", final, r["total_s"], len(segs))

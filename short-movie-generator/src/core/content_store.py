@@ -119,6 +119,30 @@ def write_record(base_dir: str, content_id: str, *, info, caption, asset,
     return str(p)
 
 
+def write_longform_record(base_dir: str, content_id: str, meta: dict, *,
+                          video_url: str = "", cover_url: str = "") -> str:
+    """롱폼(랭킹형 TOP N) 결과 레코드 content/<id>.json 기록.
+
+    쇼츠 레코드(단일 종 중심)와 스키마가 달라 kind="longform"으로 구분. 대시보드가
+    이 필드로 제목·설명(일/한, 타임스탬프 포함)을 2단 프레임에 보여준다.
+    """
+    p = record_path(base_dir, content_id)
+    rec = {
+        "id": str(content_id), "kind": "longform", "created_at": _now_iso(),
+        "status": "published", "theme": meta.get("theme", ""),
+        "yt_title": meta.get("yt_title", ""), "yt_title_ko": meta.get("yt_title_ko", ""),
+        "yt_description": meta.get("yt_description", ""),
+        "yt_description_ko": meta.get("yt_description_ko", ""),
+        "chapters": meta.get("chapters", ""), "chapters_ko": meta.get("chapters_ko", ""),
+        "n": meta.get("n", 0), "total_s": meta.get("total_s", 0),
+        "sources": meta.get("sources", []),
+        "media": {"video_url": video_url, "cover_url": cover_url},
+    }
+    p.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+    log.info("[content] 롱폼 레코드 기록: %s", p.name)
+    return str(p)
+
+
 def update_caption(base_dir: str, content_id: str, *, caption_body: str | None = None,
                    hashtags: list[str] | None = None, hook: str | None = None) -> bool:
     """캡션/해시태그/훅 텍스트 편집(경량, 재생성 없음). 로컬 편집·테스트용."""

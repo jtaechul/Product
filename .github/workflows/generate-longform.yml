@@ -133,6 +133,38 @@ jobs:
           BASE="${{ github.server_url }}/${{ github.repository }}/releases/download/$TAG"
           echo "video_url=$BASE/${ID}.mp4" >> "$GITHUB_OUTPUT"
           echo "cover=work/rel/${ID}_cover.jpg" >> "$GITHUB_OUTPUT"
+          echo "content_id=$ID" >> "$GITHUB_OUTPUT"
+
+      - name: 콘텐츠 레코드 기록(제목·설명 일/한 + 타임스탬프 — 대시보드 표시용)
+        id: rec
+        env:
+          VIDEO_URL: ${{ steps.media.outputs.video_url }}
+        run: |
+          python - "${{ steps.gen.outputs.meta }}" "${{ steps.media.outputs.content_id }}" <<'PY'
+          import json, os, sys
+          from src.core import content_store
+          metap, cid = sys.argv[1], sys.argv[2]
+          m = json.load(open(metap, encoding="utf-8"))
+          content_store.write_longform_record(
+              ".", cid, m, video_url=os.environ.get("VIDEO_URL", ""),
+              cover_url="")
+          PY
+
+      - name: Commit 콘텐츠 레코드 (원격이 앞서가도 재시도)
+        run: |
+          git add "content/${{ steps.media.outputs.content_id }}.json"
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(longform): 롱폼 #${{ github.run_number }} 결과 레코드 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git fetch origin "${{ github.ref_name }}" \
+              && git rebase "origin/${{ github.ref_name }}" \
+              && git push origin "HEAD:${{ github.ref_name }}" \
+              && { echo "저장 완료"; exit 0; }
+            echo "재시도 $i (원격이 앞서감)…"; git rebase --abort 2>/dev/null || true; sleep 3
+          done
+          echo "저장 실패(push)"; exit 1
 
       - name: Job summary
         run: |
@@ -164,6 +196,7 @@ jobs:
                    m.get("yt_title",""), ""]
           if yt:
               lines += [f"▶ 유튜브(비공개): {yt}", "확인 후 유튜브에서 '공개'로 전환하세요.", ""]
+          lines += [f"📝 제목·설명(일/한) 확인: https://shorts-dashboard.jtaechul.workers.dev/lf/lf-${{ github.run_number }}", ""]
           lines += [f"⬇ 원본: {vu}", "", "― 目次 ―", m.get("chapters","")]
           print("\n".join(lines)[:1000])
           PY

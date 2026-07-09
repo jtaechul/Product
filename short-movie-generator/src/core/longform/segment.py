@@ -42,6 +42,7 @@ class SegmentSpec:
     target_depth_m: int = 5000
     creatures: list = field(default_factory=list)
     logo_box: tuple | None = None      # (x,y,w,h) 정규화 — delogo
+    ko_name: str = ""                  # 국문명(대시보드 한국어 설명/챕터용, 화면엔 미노출)
 
 
 @dataclass

@@ -277,6 +277,10 @@ def generate(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
 
     jp = str((d or {}).get("jp_caption", "")).strip()
     if _is_rich(jp):
+        from src.core import naturalness
+        # 번역투/기계어투 검수·보완(사실·존댓말·분량 불변). ko_caption은 검수 전 jp의 번역이라
+        # 미세한 어감 차이가 생길 수 있으나(참고용 번역이라 허용), jp(발행문)만 최종본 취급.
+        jp = naturalness.polish_text(jp)
         jp = _format_lines(jp)   # 한 문단이면 문장 단위 줄바꿈으로 가독성 정리
         tags = [t for t in (d.get("hashtags") or []) if str(t).strip()][:3]
         if len(tags) < 3:

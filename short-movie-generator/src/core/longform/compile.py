@@ -1,8 +1,9 @@
 """롱폼 전체 컴파일 — 콜드오픈 + 타이틀 + 글로벌 지도 + 세그먼트×N(5→1) + 아웃트로.
 
-compile_longform(theme, segments, out_dir, cfg) → {video, chapters, total_s}
+compile_longform(theme, segments, out_dir, cfg) → {video, chapters, chapter_items, total_s}
 - 각 세그먼트는 segment.render_segment로 렌더(모션+SFX+실사+HUD+나레이션+스탬프).
-- 전체에 연속 BGM 베드를 얹고, YouTube 설명용 챕터 타임스탬프 문자열을 생성.
+- 전체에 연속 BGM 베드를 얹고, YouTube 설명용 챕터 타임스탬프 문자열(일본어, chapters)과
+  구조화 항목(chapter_items: t·label_jp·rank·ko_name — 대시보드 한국어 설명 재구성용)을 생성.
 - 표시 순서: 랭킹 내림차순(第N位 → 第1位). 콜드오픈은 1위(최대 충격) 소재 사용.
 """
 from __future__ import annotations
@@ -309,6 +310,7 @@ def compile_longform(theme_word: str, segments: list[SEG.SegmentSpec], out_dir: 
     n = len(segments)
 
     parts = []          # (label, video_path, dur)
+    seg_by_idx = {}     # part 인덱스 → SegmentSpec(챕터 한국어 라벨 구성용)
     # 콜드오픈
     co = str(wd / "cold.mp4"); co_dur = _cold_open(top, opening, co, cfg)
     parts.append(("オープニング", co, co_dur))
@@ -321,6 +323,7 @@ def compile_longform(theme_word: str, segments: list[SEG.SegmentSpec], out_dir: 
     # 세그먼트 ×N (5→1)
     for i, s in enumerate(segs):
         r = SEG.render_segment(s, str(wd / f"seg{i}"), cfg.seg_cfg)
+        seg_by_idx[len(parts)] = s
         parts.append((f"第{s.rank}位 {s.jp_name}", r["video"], r["total_s"]))
     # 아웃트로
     oc = str(wd / "outro.mp4"); _still_clip(_outro_card(segs, str(wd / "outro.png")), cfg.outro_s, oc, cfg)
@@ -369,14 +372,21 @@ def compile_longform(theme_word: str, segments: list[SEG.SegmentSpec], out_dir: 
     else:
         final = body
 
-    # 챕터(YouTube 설명용)
+    # 챕터(YouTube 설명용) + 구조화 타임스탬프(대시보드 한국어 설명 등 재구성용)
     chapters = []
+    chapter_items = []
     acc = 0.0
-    for lab, _v, dur in parts:
+    for idx, (lab, _v, dur) in enumerate(parts):
         if lab:
             chapters.append(f"{_ts(acc)} {lab}")
+            s = seg_by_idx.get(idx)
+            chapter_items.append({
+                "t": round(acc, 2), "label_jp": lab,
+                "rank": s.rank if s else None, "ko_name": (s.ko_name if s else "") or "",
+            })
         acc += dur
-    return {"video": final, "total_s": round(total_s, 2), "chapters": "\n".join(chapters), "n": n}
+    return {"video": final, "total_s": round(total_s, 2), "chapters": "\n".join(chapters),
+            "chapter_items": chapter_items, "n": n}
 
 
 def _has_no_audio(path):

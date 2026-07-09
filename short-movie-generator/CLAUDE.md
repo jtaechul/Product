@@ -88,6 +88,14 @@
   - **사실 왜곡 절대 금지**: 웃기려고 없는 위험·행동·수치를 지어내지 않는다(가혹한 '진짜 사실'을 담담히 말할 뿐).
   - 구현: `deep_sea/longform_script.py`(`_PROMPT`·`_LF_SEED`·`opening_hook`), `deep_sea/hook.py`(`_BODY_PROMPT`),
     `rich_caption.py`(`_PROMPT` 캡션·yt_title).
+- **★자연스러움 검수(발행 전 자동 보완 · 확정)**: LLM이 만든 **나레이션(자막)·캡션 본문**은 발행 전
+  번역투/기계어투 여부를 한 번 더 검수해 자연스럽게 다듬는다(사실·敬体·분량·줄 수는 절대 불변).
+  LLM 미가용/실패 시 원문 그대로 사용(발행 차단 안 함). **오프닝 훅·유튜브 제목은 검수 대상이 아니다**
+  (임팩트 우선 마케팅 카피라 "자연스러운 대화체" 기준과 충돌 — 위 훅·제목 톤 하드룰과 같은 예외 취지).
+  사람이 승인한 시드 문구(`_LF_SEED`/`_BODY_SEED`)도 재검수하지 않는다(불필요한 LLM 호출·드리프트 방지).
+  (구현: `src/core/naturalness.py`의 `polish_lines`/`polish_text`. 연결 지점: `deep_sea/hook.py`
+  `build_body_jp` LLM 분기, `longform_script.py` `build_segment_script`/`opening_hook` LLM 분기,
+  `rich_caption.py` `generate` 리치 분기.)
 - **★해시태그 필수 공통 태그(확정)**: 모든 발행 해시태그에는 **일본어 `#深海` 와 `#海洋生物`를 항상 포함**한다
   (한국어판은 `#심해`·`#해양생물`). 뒤에 종명 등 개별 태그를 이어붙인다.
   (구현: `rich_caption._with_core_tags` 중앙 정규화 + 롱폼 `run_longform._build_meta` 설명란.)
@@ -206,7 +214,15 @@
     5개 테마 중 하나를 골라준다. 직접 지정하고 싶으면 드롭다운에서 선택 가능.
     (구현: 대시보드 `worker/index.mjs`의 `LF_POOL`/체크박스, 백엔드 `longform_script.infer_theme`/
     `is_auto_theme`, `run_longform._infer_theme_for`. 종 풀은 `src/core/footage.py`의 `_SEED`에
-    새 종을 추가할 때 함께 갱신.)
+    새 종을 추가할 때 함께 갱신. 각 종 카드엔 카테고리 라벨(심해생물/일반해양/미세조류/침몰선)도 표시.)
+  - **롱폼 결과 프레임(`/lf/<id>`)**: 제작 완료 후 **제목·설명(주제 설명 + 00:00부터 타임스탬프)을
+    일본어/한국어 2단으로 보여주는 전용 페이지**. 제작 카드 하단 "최근 롱폼 결과"에서 진입, 텔레그램
+    메시지에도 링크 포함. 레코드는 `content/lf-<run>.json`(kind="longform")에 커밋되며 쇼츠 3자리
+    숫자 레코드와 파일명으로 분리(라이브러리 목록에 섞이지 않음).
+    (구현: 백엔드 `content_store.write_longform_record`, `run_longform._build_meta`/`_ko_chapters`
+    — 세그먼트별 국문명은 `SegmentSpec.ko_name`, 타임스탬프는 `compile.compile_longform`의
+    `chapter_items`로 구조화 전달. 대시보드 `renderLongformDetail`/`listLongform`.
+    워크플로 `generate-longform.yml`의 "콘텐츠 레코드 기록"+"Commit" 스텝이 커밋·푸시.)
 - **릴스 + 게시물 동시제작(확정)**: 종 1개 선정 시 릴스(9:16 영상)와 **게시물(인스타 카드뉴스)을 함께 생성**.
   - 게시물 = **도감형 인포그래픽 캐러셀 5장 · 무조건 1:1(1080×1080)** (`src/core/carousel.py`).
     구성: [1]표지(실사 표본 패널+훅) [2]서식·분포(단색 월드맵+수심/수온) [3]표본 데이터(스펙)
