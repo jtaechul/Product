@@ -8,10 +8,10 @@ on:
   workflow_dispatch:
     inputs:
       theme:
-        description: "테마"
+        description: "테마(자동 = 선택한 종의 사실을 보고 AI가 자동 추론)"
         type: choice
-        options: [기이한, 위험한, 놀라운, 미스터리한, 무서운]
-        default: 기이한
+        options: [자동, 기이한, 위험한, 놀라운, 미스터리한, 무서운]
+        default: 자동
       species:
         description: "종 3~6개 콤마 구분(입력 순서=순위, 첫째=1위). 예: 머리없는닭괴물,대왕등각류,북태평양심해문어"
         required: true
@@ -55,7 +55,7 @@ jobs:
             python - "$F" <<'PY' >> "$GITHUB_OUTPUT"
           import json, sys
           r = json.load(open(sys.argv[1], encoding="utf-8"))
-          print(f"theme={r.get('theme','기이한')}")
+          print(f"theme={r.get('theme','자동')}")
           print(f"species={','.join(r.get('species', []))}")
           print(f"privacy={r.get('privacy','private')}")
           PY

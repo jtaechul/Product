@@ -36,6 +36,62 @@ def theme_words(theme_key: str) -> tuple[str, str, str]:
     return THEMES.get(theme_key, THEMES[DEFAULT_THEME])
 
 
+# 자동 테마 추론(사용자가 종만 고르고 테마를 비워둘 때) 키워드 힌트.
+_THEME_HINTS = {
+    "위험한": ("독", "쏘", "찌르", "가시", "맹독"),
+    "무서운": ("괴물", "거대", "촉수", "포식", "썩는", "이빨"),
+    "놀라운": ("최장", "가장", "기록", "유일", "독특한 능력", "가장 깊은"),
+    "미스터리한": ("정체", "알려지지", "미확인", "베일", "관찰이 어려운", "신비"),
+}
+_AUTO_THEME_TOKENS = ("", "자동", "auto", "auto:")
+
+
+def is_auto_theme(theme_key: str) -> bool:
+    """대시보드/워크플로에서 테마를 비워두거나 '자동'으로 넘긴 경우인지 판별."""
+    return (theme_key or "").strip().lower() in _AUTO_THEME_TOKENS
+
+
+_INFER_PROMPT = """次の深海生物たちの「確かな事実」を読み、TOP{n}ランキング動画のテーマとして\
+最もふさわしいものを1つだけ選んでください。JSONのみ出力(説明禁止)。
+
+選択肢(この5つの中から一字一句そのまま1つ): 기이한 / 위험한 / 놀라운 / 미스터리한 / 무서운
+
+生物と事実:
+{facts}
+
+JSON例: {{"theme":"기이한"}}
+"""
+
+
+def infer_theme(species_facts: list[tuple[str, list[str]]]) -> str:
+    """선택된 종들의 사실(facts)만 보고 5개 테마 중 하나를 자동으로 고른다.
+
+    species_facts: [(jp_name_or_query, fun_facts), ...]. LLM 우선, 실패 시 키워드 점수 폴백
+    (항상 기이한이 기본값 — 특정 테마로 왜곡될 근거가 없을 때의 안전한 선택).
+    """
+    blob = "\n".join(f"- {name}: " + " / ".join(facts) for name, facts in species_facts if facts)
+    if blob:
+        try:
+            n = len(species_facts)
+            out = llm.generate_text(_INFER_PROMPT.format(n=n, facts=blob), max_tokens=60)
+            if out:
+                m = re.search(r"\{.*\}", out, re.S)
+                if m:
+                    theme = str(json.loads(m.group(0)).get("theme", "")).strip()
+                    if theme in THEMES:
+                        return theme
+        except Exception as e:  # noqa: BLE001
+            log.warning("[infer_theme] LLM 실패: %s", e)
+    # 결정적 폴백: 키워드 점수. 동점/무매치는 기이한(안전한 기본값).
+    text = " ".join(f for _n, facts in species_facts for f in facts)
+    best, best_score = DEFAULT_THEME, 0
+    for theme, kws in _THEME_HINTS.items():
+        score = sum(text.count(kw) for kw in kws)
+        if score > best_score:
+            best, best_score = theme, score
+    return best
+
+
 # ─────────────── 해역 좌표(지도 정규화) ───────────────
 # nx=lon/360, ny=(90-lat)/180 (Pacific-centered equirectangular, motion.py와 동일)
 def _c(lon: float, lat: float) -> tuple[float, float]:

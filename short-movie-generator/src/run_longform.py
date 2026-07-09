@@ -81,6 +81,26 @@ def build_segments(category, species_queries: list[str], theme_key: str, raw_roo
     return specs
 
 
+def _infer_theme_for(category, species_queries: list[str]) -> str:
+    """테마 미지정('' · '자동') 시 선택된 종들의 사실만 보고 테마를 자동으로 고른다."""
+    from src.categories.deep_sea import longform_script as LS
+
+    facts = []
+    for q in species_queries:
+        q = q.strip()
+        if not q:
+            continue
+        try:
+            subject = category.parse_input(q)
+            info = category.get_info(subject)
+            facts.append((info.common_name_ko or q, info.fun_facts or []))
+        except Exception as e:  # noqa: BLE001
+            log.warning("[longform] 테마 추론용 종 정보 실패(무시): %r (%s)", q, e)
+    theme = LS.infer_theme(facts) if facts else LS.DEFAULT_THEME
+    log.info("[longform] 자동 테마 추론 → %s", theme)
+    return theme
+
+
 def _jp_name(category, info) -> str:
     """일본어 통칭(훅 스펙 재사용, 없으면 학명 카타카나 대체 없이 국문/영문)."""
     try:
@@ -139,6 +159,8 @@ def run_longform(theme_key: str, species: list[str], base_dir: str = ".",
     raw_root.mkdir(parents=True, exist_ok=True)
 
     category = get_category("deep_sea")
+    if LS.is_auto_theme(theme_key):
+        theme_key = _infer_theme_for(category, species)
     segs = build_segments(category, species, theme_key, raw_root)
     if len(segs) < 3:
         raise PipelineError("longform", f"실사 영상 확보 종 부족(확보 {len(segs)}종, 최소 3종)")
@@ -162,7 +184,8 @@ def run_longform(theme_key: str, species: list[str], base_dir: str = ".",
 def main() -> int:
     load_dotenv()
     ap = argparse.ArgumentParser(description="롱폼 랭킹형(TOP N) 제작")
-    ap.add_argument("--theme", default="기이한", help="테마: 기이한/위험한/놀라운/미스터리한/무서운")
+    ap.add_argument("--theme", default="", help="테마: 기이한/위험한/놀라운/미스터리한/무서운 "
+                    "(비우거나 '자동' → 선택된 종의 사실을 보고 자동 추론)")
     ap.add_argument("--species", required=True, help="종 4~6개 콤마 구분(입력 순서=순위, 첫째=1위)")
     ap.add_argument("--base", default=".", help="작업 루트")
     ap.add_argument("--out", default=None, help="출력 디렉토리(기본 {base}/output/longform)")
