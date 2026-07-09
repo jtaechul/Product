@@ -6,3 +6,7 @@ pytest==9.1.1
 anthropic==0.116.0
 playwright==1.61.0
 edge-tts>=7.0
+# 롱폼 유튜브 자동 업로드(YouTube Data API v3). CI에서만 사용, 키 없으면 업로드만 생략.
+google-auth>=2.0
+google-auth-oauthlib>=1.0
+google-api-python-client>=2.0
