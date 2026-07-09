@@ -346,8 +346,9 @@ def compile_longform(theme_word: str, segments: list[SEG.SegmentSpec], out_dir: 
                   "-c:v", "libx264", "-crf", "19", "-c:a", "aac", "-ar", "44100", "-ac", "2", npath])
         norm.append(npath)
 
+    # ★concat 목록은 절대경로로(ffmpeg가 상대경로를 concat.txt 위치 기준으로 재해석 → 경로 중복 버그)
     concat = wd / "concat.txt"
-    concat.write_text("\n".join(f"file '{p}'" for p in norm), encoding="utf-8")
+    concat.write_text("\n".join(f"file '{Path(p).resolve()}'" for p in norm), encoding="utf-8")
     body = str(wd / "body_all.mp4")
     _run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(concat),
           "-c", "copy", body])

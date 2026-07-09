@@ -233,9 +233,11 @@ def render_segment(spec: SegmentSpec, out_dir: str, cfg: SegmentConfig | None = 
           "-vf", f"scale={W}:{H},setsar=1", "-r", str(cfg.fps),
           "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", stampv])
 
-    # 6) concat 영상
+    # 6) concat 영상 — ★concat 목록의 경로는 반드시 절대경로(ffmpeg는 상대경로를
+    #    cat.txt 위치 기준으로 다시 해석해 경로가 중복됨. CI의 상대 --out에서 터졌던 버그).
     cat = wd / "cat.txt"
-    cat.write_text(f"file '{intro}'\nfile '{body}'\nfile '{stampv}'\n", encoding="utf-8")
+    _abs = lambda p: str(Path(p).resolve())  # noqa: E731
+    cat.write_text(f"file '{_abs(intro)}'\nfile '{_abs(body)}'\nfile '{_abs(stampv)}'\n", encoding="utf-8")
     segv = str(wd / "seg_v.mp4")
     _run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(cat),
           "-c", "copy", segv])
