@@ -26,7 +26,18 @@ class _HkCfg:
 W, H = 1280, 720
 CYAN = (120, 225, 245); MAG = (240, 95, 205); INK = (232, 240, 250); DIM = (150, 190, 210)
 _serif, _sansb, _sansr, _sci, _mono = hi._serif, hi._sans_b, hi._sans_r, hi._sci, hi._mono
-_BGM = Path(__file__).resolve().parents[3] / "assets" / "audio" / "bgm" / "longform_midnight_in_the_trench.mp3"
+_BGM_DIR = Path(__file__).resolve().parents[3] / "assets" / "audio" / "bgm"
+
+
+def _bgm_rotation(seed: str) -> list[str]:
+    """롱폼 BGM 4곡(longform_*.mp3)을 시드로 회전 정렬해 반환. 8분을 여러 곡으로 채워 단조로움 방지."""
+    cands = sorted(str(p) for p in _BGM_DIR.glob("longform_*.mp3"))
+    if not cands:
+        return []
+    import hashlib
+    h = int(hashlib.md5((seed or "deep").encode("utf-8")).hexdigest(), 16)
+    k = h % len(cands)
+    return cands[k:] + cands[:k]   # 회전 → 영상마다 시작 곡이 달라짐
 
 
 @dataclass
@@ -332,13 +343,21 @@ def compile_longform(theme_word: str, segments: list[SEG.SegmentSpec], out_dir: 
           "-c", "copy", body])
     total_s = sum(d for _l, _v, d in parts)
 
-    # 연속 BGM 베드 얹기(전체) — 세그먼트 자체 오디오와 amix
+    # 연속 BGM 베드(전체) — 4곡을 회전 순서로 이어붙여 8분을 다채롭게 채운 뒤 세그먼트 오디오와 amix.
     final = str(wd / "longform.mp4")
-    if _BGM.exists():
-        _run(["ffmpeg", "-y", "-loglevel", "error", "-i", body, "-stream_loop", "-1", "-i", str(_BGM),
-              "-filter_complex",
-              f"[1:a]volume=0.20,afade=t=in:st=0:d=2,afade=t=out:st={total_s - 3:.2f}:d=3[bed];"
-              f"[0:a][bed]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.93[a]",
+    bgms = _bgm_rotation(theme_word)
+    if bgms:
+        inputs = ["-i", body]
+        for p in bgms:
+            inputs += ["-i", p]
+        # 각 곡 규격 통일 → 순차 concat → 볼륨/페이드 → 본문과 mix
+        seq = "".join(f"[{i + 1}:a]aformat=sample_rates=44100:channel_layouts=stereo[b{i}];"
+                      for i in range(len(bgms)))
+        seq += "".join(f"[b{i}]" for i in range(len(bgms))) + f"concat=n={len(bgms)}:v=0:a=1[seq];"
+        fc = (seq +
+              f"[seq]volume=0.20,afade=t=in:st=0:d=2,afade=t=out:st={total_s - 3:.2f}:d=3[bed];"
+              f"[0:a][bed]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.93[a]")
+        _run(["ffmpeg", "-y", "-loglevel", "error", *inputs, "-filter_complex", fc,
               "-map", "0:v:0", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-shortest", final])
     else:
         final = body
