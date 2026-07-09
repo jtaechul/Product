@@ -1619,8 +1619,42 @@ async function runStep(env, pipelineId, step) {
       await new Promise(r => setTimeout(r, 2000));
     }
 
-    // 완료 판정: 전 페이지가 성공했거나 시도 소진 → 마감. 아니면 다음 틱이 이어서.
-    const finished = pageKeys.every(p => prog.done[p] || (prog.tries[p] || 0) >= MAX_TRIES);
+    // ⭐ Gemini 폴백(본문) — 무료 Pollinations가 통째로 죽었을 때(실측: 530/1033 장애)
+    // 2·3페이지도 Gemini로 대체 생성한다. 페이지당 정확히 1회(gemTried 선마킹)로 중복 과금 차단,
+    // 일일 이미지 상한(DAILY_IMAGE_CAP)도 그대로 적용. 키 없음·상한 도달이면 폴백 없이 마감.
+    prog.gemTried = prog.gemTried || {};
+    {
+      const geminiKey = await getGeminiKey(env);
+      for (const page of pageKeys) {
+        if (prog.done[page] || (prog.tries[page] || 0) < MAX_TRIES || prog.gemTried[page]) continue;
+        if (!geminiKey) { prog.gemTried[page] = true; continue; }                                  // 폴백 불가 → 마감
+        if ((await getImageUsage(env)) >= DAILY_IMAGE_CAP) { prog.gemTried[page] = true; continue; } // 상한 → 마감
+        if (Date.now() > TICK_DEADLINE) break;                                                     // 다음 틱에 이어서
+        prog.gemTried[page] = true; // 시도 "전" 마킹 — 도중에 죽어도 재과금 없음
+        await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'partial', runningStep: 3, imgProg: prog, label: `무료 이미지 서버 장애 — ${page} Gemini로 대체 생성 중...` });
+        try {
+          // fullPrompts가 없으면(구버전 상태 재개 등) Pollinations URL에 인코딩된 프롬프트를 복원해 사용
+          const prompt = (fullPrompts && fullPrompts[page])
+            || decodeURIComponent(String(urlMap[page] || '').split('/prompt/')[1]?.split('?')[0] || '');
+          if (!prompt) continue;
+          const g = await generateGeminiImageBytes(geminiKey, prompt);
+          if (g?.bytes?.length) {
+            await env.PENDING_POSTS.put(`img_${pipelineId}_${page}`, g.bytes, { expirationTtl: 24 * 3600 });
+            await bumpImageUsage(env);
+            prog.done[page] = true;
+            await logStep(env, pipelineId, { step, phase: 'fallback', note: `${page} Gemini 대체 생성 성공 (${g.bytes.length} bytes)` });
+          } else {
+            await logStep(env, pipelineId, { step, phase: 'warn', error: `${page} Gemini 대체 생성 실패(빈 응답)` });
+          }
+        } catch (e) {
+          await logStep(env, pipelineId, { step, phase: 'warn', error: `${page} Gemini 대체 실패: ${e.message}` });
+        }
+        await savePipelineStatus(env, pipelineId, { step: 3, stepStatus: 'partial', runningStep: 3, imgProg: prog, label: '이미지 대체 생성 중 (Gemini)...' });
+      }
+    }
+
+    // 완료 판정: 전 페이지가 성공했거나 (시도 소진 + Gemini 폴백까지 시도) → 마감. 아니면 다음 틱이 이어서.
+    const finished = pageKeys.every(p => prog.done[p] || ((prog.tries[p] || 0) >= MAX_TRIES && prog.gemTried[p]));
     if (!finished) return; // stepStatus='partial' 유지 — 다음 advancePipeline이 재진입
 
     const images = {};
