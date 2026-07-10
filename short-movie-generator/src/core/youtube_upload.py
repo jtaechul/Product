@@ -27,6 +27,29 @@ def has_credentials() -> bool:
                ("YOUTUBE_CLIENT_ID", "YOUTUBE_CLIENT_SECRET", "YOUTUBE_REFRESH_TOKEN"))
 
 
+def probe() -> dict:
+    """토큰 건강검진 — 업로드 없이 리프레시만 수행. 반환 {"ok": bool, "error": str}.
+
+    성공 = 토큰 살아있음. 이 호출 자체가 토큰을 '사용'하므로 **6개월 미사용 폐기도 예방**한다
+    (주간 스케줄 워크플로가 이걸 돌려 토큰을 상시 워밍 + 만료 조짐 조기 감지).
+    """
+    if not has_credentials():
+        return {"ok": False, "error": "no_credentials"}
+    try:
+        import google.auth.transport.requests as gart
+        from google.oauth2.credentials import Credentials
+        creds = Credentials(
+            token=None, refresh_token=os.environ["YOUTUBE_REFRESH_TOKEN"],
+            client_id=os.environ["YOUTUBE_CLIENT_ID"],
+            client_secret=os.environ["YOUTUBE_CLIENT_SECRET"],
+            token_uri=_TOKEN_URI, scopes=_SCOPES,
+        )
+        creds.refresh(gart.Request())
+        return {"ok": bool(creds.token), "error": ""}
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": str(e)[:200]}
+
+
 def _client():
     from google.oauth2.credentials import Credentials
     from googleapiclient.discovery import build

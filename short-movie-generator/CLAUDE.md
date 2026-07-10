@@ -223,6 +223,17 @@
     — 세그먼트별 국문명은 `SegmentSpec.ko_name`, 타임스탬프는 `compile.compile_longform`의
     `chapter_items`로 구조화 전달. 대시보드 `renderLongformDetail`/`listLongform`.
     워크플로 `generate-longform.yml`의 "콘텐츠 레코드 기록"+"Commit" 스텝이 커밋·푸시.)
+- **★유튜브 자동 업로드 토큰 수명(확정 · 재발 방지)**: 롱폼은 `generate-longform.yml`이 유튜브에
+  **비공개** 자동 업로드한다. 인증은 OAuth 리프레시 토큰(시크릿 `YOUTUBE_*` 3개).
+  - **근본 원인 규칙**: OAuth 동의 화면이 **"테스트(Testing)"** 상태면 리프레시 토큰이 **7일 만에 만료**된다.
+    → 반드시 **"프로덕션(In production)"으로 게시**해야 토큰이 안 만료된다(이게 실제 재발 방지책).
+    프로덕션 토큰은 6개월 미사용 시에만 폐기됨.
+  - **안전장치 3중(구현)**: ① 업로드 실패해도 잡이 안 죽고 영상은 Release+텔레그램으로 나감
+    (`generate-longform.yml` `continue-on-error` + `$GITHUB_OUTPUT`엔 key=value만 기록).
+    ② **주간 파수꾼** `youtube-token-health.yml`(cron 월요일) — 토큰을 리프레시로 상시 워밍(6개월
+    미사용 폐기 예방) + 만료 조짐이면 텔레그램으로 재발급 안내 전송(`youtube_upload.probe()`).
+    ③ 토큰 죽으면 텔레그램 메시지에 "직접 업로드하라 + 재발급 절차" 명시.
+  - ⚠️ **스케줄 워크플로는 기본 브랜치(main)에 있어야 발동**한다 — `youtube-token-health.yml`은 main에도 둔다.
 - **릴스 + 게시물 동시제작(확정)**: 종 1개 선정 시 릴스(9:16 영상)와 **게시물(인스타 카드뉴스)을 함께 생성**.
   - 게시물 = **도감형 인포그래픽 캐러셀 5장 · 무조건 1:1(1080×1080)** (`src/core/carousel.py`).
     구성: [1]표지(실사 표본 패널+훅) [2]서식·분포(단색 월드맵+수심/수온) [3]표본 데이터(스펙)

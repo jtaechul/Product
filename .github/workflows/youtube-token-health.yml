@@ -1,0 +1,80 @@
+name: YouTube Token Health
+
+# 유튜브 리프레시 토큰이 죽지 않게 지키는 파수꾼(무료).
+# ① 매주 토큰을 '리프레시'로 한 번 사용 → 6개월 미사용 폐기 예방(토큰 상시 워밍).
+# ② 리프레시가 실패하면(만료/폐기 조짐) 즉시 텔레그램으로 재발급 안내 전송 → 영상 제작 중
+#    갑자기 업로드가 막히는 사고를 사전 차단.
+# 스케줄은 기본 브랜치(main)에 이 파일이 있어야 발동한다.
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"      # 매주 월요일 00:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: youtube-token-health
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    name: 토큰 건강검진
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install google-auth
+        run: pip install --quiet google-auth google-auth-oauthlib
+
+      - name: Probe refresh token (업로드 없이 리프레시만)
+        id: probe
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        run: |
+          python - <<'PY'
+          import os
+          out = os.environ["GITHUB_OUTPUT"]
+          def emit(k, v):
+              with open(out, "a", encoding="utf-8") as f:
+                  f.write(f"{k}={v}\n")
+          need = ("YOUTUBE_CLIENT_ID", "YOUTUBE_CLIENT_SECRET", "YOUTUBE_REFRESH_TOKEN")
+          if not all(os.environ.get(k) for k in need):
+              emit("ok", "skip"); emit("err", "시크릿 미설정")
+              print("::notice::유튜브 시크릿 미설정 → 점검 생략"); raise SystemExit(0)
+          try:
+              import google.auth.transport.requests as R
+              from google.oauth2.credentials import Credentials
+              c = Credentials(
+                  token=None, refresh_token=os.environ["YOUTUBE_REFRESH_TOKEN"],
+                  client_id=os.environ["YOUTUBE_CLIENT_ID"],
+                  client_secret=os.environ["YOUTUBE_CLIENT_SECRET"],
+                  token_uri="https://oauth2.googleapis.com/token",
+                  scopes=["https://www.googleapis.com/auth/youtube.upload"])
+              c.refresh(R.Request())
+              emit("ok", "1" if c.token else "0"); emit("err", "")
+              print("토큰 정상 ✅ (리프레시 성공 — 워밍 완료)")
+          except Exception as e:
+              msg = str(e).replace("\n", " ").replace("\r", " ")[:150]
+              emit("ok", "0"); emit("err", msg)
+              print(f"::warning::토큰 리프레시 실패: {msg}")
+          PY
+
+      - name: Alert on failure (Telegram)
+        if: steps.probe.outputs.ok == '0'
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ERR: ${{ steps.probe.outputs.err }}
+        run: |
+          if [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ]; then echo "텔레그램 미설정 → 생략"; exit 0; fi
+          MSG=$(printf '⚠️ 유튜브 업로드 토큰 점검 실패\n사유: %s\n\n▶ 조치: 토큰을 새로 발급해 GitHub 시크릿 YOUTUBE_REFRESH_TOKEN 을 갱신하세요.\n(OAuth Playground 재발급 → Settings → Secrets and variables → Actions)\n※ OAuth 앱이 "프로덕션"이면 재발 안 함 — 아직 "테스트"면 프로덕션으로 게시하세요.' "$ERR")
+          for CID in $TG_CHAT; do
+            curl -sS -F chat_id="$CID" -F text="$MSG" \
+                 "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" | head -c 120; echo
+          done
