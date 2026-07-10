@@ -41,8 +41,9 @@ class SegmentSpec:
     footage_start: float = 8.0
     target_depth_m: int = 5000
     creatures: list = field(default_factory=list)
-    logo_box: tuple | None = None      # (x,y,w,h) 정규화 — delogo
+    logo_box: tuple | None = None      # (x,y,w,h) 정규화 — 시드 힌트(자동 스캔에 합쳐짐)
     ko_name: str = ""                  # 국문명(대시보드 한국어 설명/챕터용, 화면엔 미노출)
+    wm_boxes: list = field(default_factory=list)  # ★자동 스캔으로 확정된 delogo 박스(콜드오픈 재사용)
 
 
 @dataclass
@@ -210,22 +211,36 @@ def render_segment(spec: SegmentSpec, out_dir: str, cfg: SegmentConfig | None = 
     # 3) HUD 렌더(스탬프는 아래 5)에서 슬램 애니 프레임으로)
     hud = render_hud(spec, str(wd / "hud.png"))
 
-    # 4) 본문: 실사 → ★delogo(NOAA 로고/글씨 제거) → 그레이딩 → HUD 오버레이 → 자막.
-    #    ★하드룰: 세그먼트 본문에도 반드시 delogo를 적용한다(로고 노출 금지).
-    #    콜드오픈과 달리 본문은 좌상단 도감 패널(x 28~372)이 그 위를 덮으므로, delogo 박스를
-    #    패널 폭 안(≈0.28w·0.15h)으로 잡아 우측 스미어가 패널 밖으로 삐져나오지 않게 한다.
-    pre = ""
-    if spec.logo_box:
-        from src.core.reframe import delogo_vf
-        lx, ly, lw, lh = spec.logo_box
-        box = (lx, ly, max(lw, 0.28), max(lh, 0.15))  # 358×108 — NOAA 배너 덮음 & 패널 안(<372)
-        pre = "," + delogo_vf(W, H, box)     # 1280x720 스케일 후 좌표 기준
+    # 4) 본문: ★워터마크 QC(하드룰 #9) — 좌표 하드코딩 금지, 1초 간격 OCR로 자동 처리.
+    #    ① 원본 클립 전체를 1초 간격 스캔 → 크레딧 슬레이트/대형 URL이 있는 초는 회피(시작점 이동)
+    #    ② 남은 워터마크(로고 등)는 탐지 박스로 delogo → 그레이딩 → HUD → 자막 렌더
+    #    ③ 렌더 결과를 다시 1초 간격 검증(NOAA 등 금지 문구) → 실패 시 박스 보강 1회 재렌더
+    #    ④ 그래도 남으면 RuntimeError(WATERMARK_REMAINS) — 불량 영상 발행 차단.
+    from src.core import watermark_qc as WQ
+    wm = WQ.plan(spec.footage_path, spec.footage_start, body_s + 2.0,
+                 extra_boxes=[spec.logo_box] if spec.logo_box else None)
+    spec.footage_start = wm["start"]        # 콜드오픈(compile)도 같은 깨끗한 구간을 쓰게 반영
+    boxes = list(wm["boxes"])
     body = str(wd / "body.mp4")
-    fc = (f"[0:v]scale={W}:{H},setsar=1{pre},{cfg.grade}[g];"
-          f"[g][1:v]overlay=0:0[o];[o]ass={ass}[v]")
-    _run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{spec.footage_start}", "-t", f"{body_s:.2f}",
-          "-i", spec.footage_path, "-i", hud, "-filter_complex", fc, "-map", "[v]",
-          "-r", str(cfg.fps), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", "-an", body])
+    bad: list = []
+    for attempt in range(2):
+        chain = WQ.delogo_chain(boxes, W, H)
+        pre = ("," + chain) if chain else ""
+        fc = (f"[0:v]scale={W}:{H},setsar=1{pre},{cfg.grade}[g];"
+              f"[g][1:v]overlay=0:0[o];[o]ass={ass}[v]")
+        _run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{spec.footage_start}", "-t", f"{body_s:.2f}",
+              "-i", spec.footage_path, "-i", hud, "-filter_complex", fc, "-map", "[v]",
+              "-r", str(cfg.fps), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", "-an", body])
+        bad = WQ.verify(body)
+        if not bad:
+            break
+        # 검출된 문구 위치를 delogo 박스로 추가해 1회 재렌더(패딩 포함)
+        boxes = WQ._merge_boxes(boxes + [tuple(b["box"]) for b in bad])
+    if bad:
+        raise RuntimeError(
+            f"WATERMARK_REMAINS: rank{spec.rank} {spec.jp_name} — 금지 문구 잔존 "
+            f"{[(round(b['t']), b['text']) for b in bad[:6]]} (발행 차단)")
+    spec.wm_boxes = boxes                   # 콜드오픈(compile)이 같은 박스로 delogo
 
     # 5) 스탬프(엔드카드) — 쾅 슬램 애니(스케일팝+셰이크+플래시). 붐과 동기.
     sfg, _sn = render_stamp_frames(spec, str(wd / "sframes"), cfg)

@@ -238,10 +238,25 @@ def run_reels(
         raise PipelineError("tts", "나레이션 합성 실패")
     body_dur = float(nar["duration"]) + 0.6
 
+    # 2.5) ★워터마크 QC(하드룰 #9): 원본을 1초 간격 OCR 스캔 → 크레딧 슬레이트 초는 회피하고
+    #      탐지된 로고/URL은 delogo한 '깨끗한 소스'를 먼저 만든다. 이후 모든 단계(리프레임·
+    #      오프닝 배경·엔드카드 피사체)는 이 깨끗한 소스만 쓴다(좌표 하드코딩 logo_box 의존 폐기).
+    from src.core import watermark_qc as WQ
+    wm = WQ.plan(fv["path"], 0.0, body_dur + 10,
+                 extra_boxes=[fv["logo_box"]] if fv.get("logo_box") else None)
+    clean = str(work_dir / "footage_clean.mp4")
+    chain = WQ.delogo_chain(wm["boxes"], 1280, 720)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{wm['start']:.2f}",
+                    "-i", fv["path"], "-t", f"{body_dur + 10:.2f}",
+                    "-vf", "scale=1280:720,setsar=1" + (("," + chain) if chain else ""),
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-an", clean],
+                   check=True)
+    fv = {**fv, "path": clean, "logo_box": None}
+
     # 3) 9:16 추적 리프레임 + 틸 그레이딩(본문 길이)
     body_v = reframe.reframe_to_vertical(fv["path"], str(work_dir / "body_reframed.mp4"),
                                          body_dur, str(work_dir / "rf"),
-                                         logo_box=fv.get("logo_box"),
+                                         logo_box=None,
                                          wide=bool(getattr(category, "reframe_wide", False)))
 
     # 4) 카라오케 자막 번인(본문 — 훅 없음)
@@ -275,6 +290,19 @@ def run_reels(
             log.warning(msg + " (SHORTS_ALLOW_BODY_ONLY=1 → 본문만 발행 허용)")
         else:
             raise PipelineError("hook_intro", msg)
+
+    # 6.5) ★최종 게이트(하드룰 #9): 완성본을 1초 간격 OCR 재검증 — NOAA 등 소스 문구가
+    #      남아 있으면 발행 차단. 엔드카드의 '정당한' 크레딧(映像: NOAA…)은 검사에서 제외.
+    try:
+        fdur = float(subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", final],
+            capture_output=True, text=True, check=True).stdout.strip())
+    except Exception:  # noqa: BLE001
+        fdur = 0.0
+    bad = WQ.verify(final, skip_after=(max(1.0, fdur - 8.0) if fdur else None))
+    if bad:
+        raise PipelineError("watermark_qc", "워터마크 잔존(발행 차단): "
+                            + ", ".join(f"{round(b['t'])}s '{b['text']}'" for b in bad[:8]))
 
     # 7) 캡션(일본어 게시글 + 한국어 참고) + 출력 (캡션 생성 실패해도 발행 불정지)
     try:

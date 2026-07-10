@@ -214,6 +214,13 @@ def run_longform(theme_key: str, species: list[str], base_dir: str = ".",
     # 최종 산출물을 out 루트로 이동
     final = out / "longform.mp4"
     Path(r["video"]).replace(final)
+    # ★최종 게이트(하드룰 #9): 완성본 전체를 1초 간격 OCR 재검증 — NOAA 등 소스 문구가
+    # 한 프레임이라도 남아 있으면 여기서 실패시켜 업로드/발행 자체를 차단한다.
+    from src.core import watermark_qc as WQ
+    bad = WQ.verify(str(final))
+    if bad:
+        raise PipelineError("longform", "워터마크 잔존(발행 차단): "
+                            + ", ".join(f"{round(b['t'])}s '{b['text']}'" for b in bad[:8]))
     meta = _build_meta(theme_key, segs, r["chapters"], r.get("chapter_items"))
     meta.update({"video": str(final), "total_s": r["total_s"]})
     (out / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")

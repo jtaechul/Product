@@ -124,7 +124,7 @@ jobs:
         # 재발방지: 오프닝/엔드카드 렌더에 필요한 폰트를 빠짐없이 설치한다.
         # fonts-noto-cjk(본문 CJK) + fonts-liberation(학명 라틴 이탤릭). 하나라도 빠지면
         # fonts_available()가 False가 되어 오프닝/엔드카드가 통째로 스킵되던 사고가 있었다.
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-cjk fonts-liberation
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-cjk fonts-liberation tesseract-ocr
 
       - name: Install Python deps
         run: pip install -r requirements.txt

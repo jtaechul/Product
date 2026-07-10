@@ -193,7 +193,7 @@ def _outro_card(segments_desc, out_png):
         d.text((W // 2, y), f"第{s.rank}位  {s.jp_name}", font=_sansb(34), fill=INK + (235,), anchor="mm")
         y += 56
     d.text((W // 2, H - 130), "チャンネル登録で、次の深海へ。", font=_sansb(30), fill=CYAN + (235,), anchor="mm")
-    d.text((W // 2, H - 70), "각 生き物のショートはプロフィールから", font=_sansr(24), fill=DIM + (220,), anchor="mm")
+    d.text((W // 2, H - 70), "各生き物のショートはプロフィールから", font=_sansr(24), fill=DIM + (220,), anchor="mm")
     im.convert("RGB").save(out_png); return out_png
 
 
@@ -259,17 +259,16 @@ def _cold_open(top_spec, opening, out, cfg) -> float:
         fr.save(str(fdir / f"c_{i:04d}.png"))
 
     # 3) 실사(로고 제거 + 그레이딩) 위에 훅 프레임 오버레이
+    #    ★워터마크 QC(하드룰 #9): 세그먼트 렌더가 1초 OCR 스캔으로 확정한 박스(wm_boxes)와
+    #    깨끗한 시작점(footage_start)을 그대로 재사용해 콜드오픈에서도 문구 노출을 차단.
     silent = str(wd / "cold_silent.mp4")
-    vf_pre = f"scale={W}:{H},setsar=1"
-    if top_spec.logo_box:
-        try:
-            from src.core.reframe import delogo_vf
-            # 16:9 풀프레임에선 NOAA 배너가 더 넓다 → 배너 전체를 덮도록 폭·높이 확장.
-            lx, ly, lw, lh = top_spec.logo_box
-            wide = (lx, ly, max(lw, 0.44), max(lh, 0.17))
-            vf_pre = f"scale={W}:{H},setsar=1,{delogo_vf(W, H, wide)}"
-        except Exception:  # noqa: BLE001
-            pass
+    from src.core import watermark_qc as WQ
+    boxes = list(getattr(top_spec, "wm_boxes", []) or [])
+    if not boxes and top_spec.logo_box:
+        lx, ly, lw, lh = top_spec.logo_box
+        boxes = [(lx, ly, max(lw, 0.44), max(lh, 0.17))]   # 자동 스캔 전 레거시 폴백
+    chain = WQ.delogo_chain(boxes, W, H)
+    vf_pre = f"scale={W}:{H},setsar=1" + (("," + chain) if chain else "")
     _run(["ffmpeg", "-y", "-loglevel", "error",
           "-stream_loop", "-1", "-ss", f"{top_spec.footage_start}", "-i", top_spec.footage_path,
           "-framerate", str(cfg.fps), "-i", str(fdir / "c_%04d.png"),
