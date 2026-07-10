@@ -90,30 +90,36 @@ jobs:
 
       - name: Upload to YouTube (비공개 게이트)
         id: yt
+        continue-on-error: true   # 업로드 실패해도 영상·Release·텔레그램은 계속(운영자가 수동 업로드 가능)
         env:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           PRIVACY: ${{ steps.inp.outputs.privacy }}
         run: |
-          python - "${{ steps.gen.outputs.video }}" "${{ steps.gen.outputs.meta }}" <<'PY' >> "$GITHUB_OUTPUT"
+          python - "${{ steps.gen.outputs.video }}" "${{ steps.gen.outputs.meta }}" <<'PY'
           import json, os, sys
           from src.core import youtube_upload as yt
           video, metap = sys.argv[1], sys.argv[2]
           m = json.load(open(metap, encoding="utf-8"))
+          # ★GITHUB_OUTPUT에는 key=value만 직접 기록(annotation/멀티라인 에러가 섞이면 출력파일이 깨져
+          #   스텝 전체가 실패하고 이후 단계가 통째로 스킵되던 버그 방지). 경고는 stdout annotation으로만.
+          def emit(k, v):
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+                  f.write(f"{k}={v}\n")
           if not yt.has_credentials():
-              print("yt_url=")
+              emit("yt_url", "")
               print("::notice::YouTube 시크릿 없음 → 업로드 생략(텔레그램 미리보기만)")
-              raise SystemExit(0)
+              sys.exit(0)
           try:
               r = yt.upload(video, m["yt_title"], m["yt_description"],
                             tags=["深海","深海生物","ランキング","deep sea"],
                             privacy=os.environ.get("PRIVACY","private"))
-              print(f"yt_url={r['url']}")
-              print(f"yt_privacy={r['privacy']}")
+              emit("yt_url", r["url"]); emit("yt_privacy", r["privacy"])
           except Exception as e:
-              print("yt_url=")
-              print(f"::warning::YouTube 업로드 실패: {e}")
+              emit("yt_url", "")
+              msg = str(e).replace("\n", " ").replace("\r", " ")[:200]
+              print(f"::warning::YouTube 업로드 실패(영상·텔레그램은 계속 진행): {msg}")
           PY
 
       - name: Publish media to Release (영구 호스팅)
@@ -196,6 +202,8 @@ jobs:
                    m.get("yt_title",""), ""]
           if yt:
               lines += [f"▶ 유튜브(비공개): {yt}", "확인 후 유튜브에서 '공개'로 전환하세요.", ""]
+          else:
+              lines += ["⚠ 유튜브 자동 업로드 생략/실패 → 아래 원본으로 직접 업로드하세요.", ""]
           lines += [f"📝 제목·설명(일/한) 확인: https://shorts-dashboard.jtaechul.workers.dev/lf/lf-${{ github.run_number }}", ""]
           lines += [f"⬇ 원본: {vu}", "", "― 目次 ―", m.get("chapters","")]
           print("\n".join(lines)[:1000])
