@@ -1,0 +1,63 @@
+{
+  "id": "lf-3",
+  "kind": "longform",
+  "created_at": "2026-07-10T08:54:24+00:00",
+  "status": "published",
+  "theme": "기이한",
+  "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
+  "yt_title_ko": "심해의 기이한 생물 TOP6 | 심해붉은해파리 외",
+  "yt_description": "光の届かない深海に潜む、奇妙な生き物たちのランキング TOP6。\n第6位から、第1位まで。あなたが一番ゾッとするのはどれでしょうか。\n\n― 目次 ―\n0:00 オープニング\n0:23 第6位 メンダコ\n1:37 第5位 ユメナマコ\n2:30 第4位 シンカイダコ\n3:19 第3位 ダイオウグソクムシ\n4:02 第2位 ハエトリギンチャク\n5:16 第1位 シンカイクラゲ\n6:43 エンディング\n\n登場: シンカイクラゲ / ハエトリギンチャク / ダイオウグソクムシ / シンカイダコ / ユメナマコ / メンダコ\n\n映像: NOAA Ocean Exploration ほか・Public Domain / CC0\nチャンネル登録で、次の深海へ。\n#深海 #海洋生物 #深海生物 #ランキング",
+  "yt_description_ko": "빛이 닿지 않는 심해에 사는, 기이한 생물들의 랭킹 TOP6.\n6위부터 1위까지. 당신이 가장 소름 돋는 건 어느 쪽일까요?\n\n― 목차 ―\n0:00 오프닝\n0:23 6위 넓적문어\n1:37 5위 머리없는닭괴물\n2:30 4위 북태평양심해문어\n3:19 3위 대왕등각류\n4:02 2위 파리지옥말미잘\n5:16 1위 심해붉은해파리\n6:43 엔딩\n\n등장: 심해붉은해파리 / 파리지옥말미잘 / 대왕등각류 / 북태평양심해문어 / 머리없는닭괴물 / 넓적문어\n\n영상: NOAA Ocean Exploration 외 · Public Domain / CC0\n구독하면, 다음 심해로.\n#심해 #해양생물 #심해생물 #랭킹",
+  "chapters": "0:00 オープニング\n0:23 第6位 メンダコ\n1:37 第5位 ユメナマコ\n2:30 第4位 シンカイダコ\n3:19 第3位 ダイオウグソクムシ\n4:02 第2位 ハエトリギンチャク\n5:16 第1位 シンカイクラゲ\n6:43 エンディング",
+  "chapters_ko": "0:00 오프닝\n0:23 6위 넓적문어\n1:37 5위 머리없는닭괴물\n2:30 4위 북태평양심해문어\n3:19 3위 대왕등각류\n4:02 2위 파리지옥말미잘\n5:16 1위 심해붉은해파리\n6:43 엔딩",
+  "n": 6,
+  "total_s": 414.85,
+  "sources": [
+    {
+      "jp_name": "シンカイクラゲ",
+      "sci_name": "Crossota sp.",
+      "rank": 1,
+      "source": "https://commons.wikimedia.org/wiki/File:Okeanos_Explorer_PR_and_USVI_Dive_8-_Psychedelic_Medusa-NOAA-1280x720.webm",
+      "credit": "NOAA Ocean Exploration"
+    },
+    {
+      "jp_name": "ハエトリギンチャク",
+      "sci_name": "Actinoscyphia aurelia",
+      "rank": 2,
+      "source": "https://commons.wikimedia.org/wiki/File:Venus_Flytrap_Anemone-_2017_American_Samoa.webm",
+      "credit": "NOAA Ocean Exploration"
+    },
+    {
+      "jp_name": "ダイオウグソクムシ",
+      "sci_name": "Bathynomus giganteus",
+      "rank": 3,
+      "source": "https://commons.wikimedia.org/wiki/File:Bathynomus_giganteus.webm",
+      "credit": "NOAA"
+    },
+    {
+      "jp_name": "シンカイダコ",
+      "sci_name": "Graneledone boreopacifica",
+      "rank": 4,
+      "source": "https://commons.wikimedia.org/wiki/File:Graneledone_boreopacifica_seafloor.webm",
+      "credit": "NOAA Ocean Exploration"
+    },
+    {
+      "jp_name": "ユメナマコ",
+      "sci_name": "Enypniastes eximia",
+      "rank": 5,
+      "source": "https://commons.wikimedia.org/wiki/File:Ex1402-dive06_red_animal.webm",
+      "credit": "NOAA Ocean Exploration"
+    },
+    {
+      "jp_name": "メンダコ",
+      "sci_name": "Opisthoteuthis californiana",
+      "rank": 6,
+      "source": "https://commons.wikimedia.org/wiki/File:Flapjack_octopus_seafloor.webm",
+      "credit": "NOAA Ocean Exploration"
+    }
+  ],
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/longform-3/lf-3.mp4",
+    "cover_url": ""
+  }
+}
