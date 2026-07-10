@@ -1,0 +1,80 @@
+name: Regen Longform Meta
+
+# 롱폼(랭킹형) 제목·설명·해시태그만 다시 만드는 저비용 워크플로(영상 재렌더 없음).
+# 왜: 과거에 만든 롱폼 레코드는 해시태그 필드가 비어 있을 수 있다 → 대시보드 /lf/<id>의
+# '재생성' 버튼이 이 워크플로를 디스패치해 텍스트 3종(제목/설명/해시태그)을 규칙대로 다시 채운다.
+# 소싱·FFmpeg 불필요(레코드에 저장된 종·챕터·테마만 사용) → 20~40초. 커밋은 GITHUB_TOKEN.
+# ★디스패치 가능화를 위해 이 파일은 기본 브랜치(main)에도 존재해야 한다(GitHub 요구).
+
+on:
+  workflow_dispatch:
+    inputs:
+      content_id:
+        description: "롱폼 id(예: lf-3)"
+        required: true
+      scope:
+        description: "재생성 범위"
+        type: choice
+        options: [all, title, desc, hashtags]
+        default: all
+
+concurrency:
+  group: regen-longform-${{ github.event.inputs.content_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  OPS_BRANCH: claude/gemini-shorts-reels-generator-dhjfdt
+
+jobs:
+  regen:
+    runs-on: ubuntu-latest
+    name: 롱폼 텍스트 재생성
+    defaults:
+      run:
+        working-directory: short-movie-generator
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/gemini-shorts-reels-generator-dhjfdt
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Regenerate title/description/hashtags (레코드 텍스트 갱신)
+        env:
+          CID: ${{ inputs.content_id }}
+          SCOPE: ${{ inputs.scope }}
+        run: |
+          python - <<'PY'
+          import os, re, sys
+          from src.core import content_store
+          cid = re.sub(r"[^a-zA-Z0-9\-]", "", os.environ.get("CID", "")).strip()
+          scope = os.environ.get("SCOPE", "all") or "all"
+          if not cid:
+              print("content_id 없음", file=sys.stderr); sys.exit(1)
+          ok = content_store.regen_longform_text(".", cid, scope)
+          if not ok:
+              print(f"재생성 실패(레코드 없음/롱폼 아님): {cid}", file=sys.stderr); sys.exit(1)
+          print(f"재생성 완료: {cid} (scope={scope})")
+          PY
+
+      - name: Commit + push
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          git add short-movie-generator/content/*.json 2>/dev/null || true
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "edit(longform): 제목·설명·해시태그 재생성 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git fetch origin "$OPS_BRANCH" \
+              && git rebase "origin/$OPS_BRANCH" \
+              && git push origin "HEAD:$OPS_BRANCH" \
+              && { echo "저장 완료"; exit 0; }
+            echo "재시도 $i (원격이 앞서감)…"; git rebase --abort 2>/dev/null || true; sleep 3
+          done
+          echo "저장 실패(push)"; exit 1
