@@ -100,44 +100,43 @@ def _extract_frames(video: str, out_dir: str, start: float = 0.0, dur: float | N
 # 분석이 폭주 → 롱폼 제작이 60분+로 hang. 그래서 이진화 폐기하고 '회색조 + 대비강화'로 되돌린다
 # (회색조 해저는 완만한 그라데이션이라 psm이 빠르고, 반투명 로고도 잘 읽힘 — 검출·속도 모두 유리).
 # 여기에 ①640폭 축소 ②스레드풀 병렬 ③넉넉한 timeout(안전망) 만 얹어 옛 방식보다 빠르게.
-_OCR_MAXW = 640
-_OCR_TIMEOUT = 30          # 초/프레임 안전망(정상 프레임은 <1s, 극단 케이스만 스킵 → hang 방지)
+_OCR_MAXW = 480            # ★480축소(psm 부담↓). 워터마크·URL은 큰 글자라 480서도 읽힘
+_OCR_TIMEOUT = 8           # 초/프레임(CI에서 psm11이 프레임당 12s+ → 대부분 타임아웃하던 문제.
+                           #  8s로 낮춰 '느린 프레임은 빨리 포기'. 프레임 수도 대폭 줄여 총량 최소화)
 _OCR_WORKERS = max(2, (os.cpu_count() or 4) - 1)
 
 
 def _ocr_words(png: Path) -> list[dict]:
-    """프레임 1장 OCR → [{text, conf, x, y, w, h}] (정규화 0~1). 회색조·640축소·대비강화 2패스."""
+    """프레임 1장 OCR → [{text, conf, x, y, w, h}] (정규화 0~1). 회색조·480축소·대비강화 단일패스.
+
+    (2패스→단일패스: 속도 2배. 로고는 모든 프레임에 지속되므로 여러 프레임 중 하나만 잡으면 충분.)
+    """
     from PIL import Image, ImageOps
     import pytesseract
-    im0 = Image.open(png).convert("L")
-    fw, fh = im0.size
+    im = Image.open(png).convert("L")
+    fw, fh = im.size
     if fw > _OCR_MAXW:
-        im0 = im0.resize((_OCR_MAXW, max(1, round(fh * _OCR_MAXW / fw))))
-    dw, dh = im0.size
-    passes = [im0, ImageOps.autocontrast(im0, cutoff=1)]   # 원본 + 대비강화(반투명 로고 대응)
-    words, seen = [], set()
-    for p in passes:
+        im = im.resize((_OCR_MAXW, max(1, round(fh * _OCR_MAXW / fw))))
+    im = ImageOps.autocontrast(im, cutoff=1)               # 대비강화(반투명 로고까지 또렷하게)
+    dw, dh = im.size
+    words = []
+    try:
+        d = pytesseract.image_to_data(im, lang="eng", config="--psm 11 --oem 1",
+                                      output_type=pytesseract.Output.DICT, timeout=_OCR_TIMEOUT)
+    except (RuntimeError, Exception) as e:  # noqa: BLE001  (timeout 포함 — 그 프레임만 스킵)
+        log.info("[wm] OCR 스킵(%s): %s", png.name, str(e)[:60])
+        return words
+    for i in range(len(d["text"])):
+        t = (d["text"][i] or "").strip()
         try:
-            d = pytesseract.image_to_data(p, lang="eng", config="--psm 11 --oem 1",
-                                          output_type=pytesseract.Output.DICT, timeout=_OCR_TIMEOUT)
-        except (RuntimeError, Exception) as e:  # noqa: BLE001  (timeout 포함 — 그 프레임만 스킵)
-            log.info("[wm] OCR 스킵(%s): %s", png.name, str(e)[:60])
+            conf = float(d["conf"][i])
+        except (TypeError, ValueError):
             continue
-        for i in range(len(d["text"])):
-            t = (d["text"][i] or "").strip()
-            try:
-                conf = float(d["conf"][i])
-            except (TypeError, ValueError):
-                continue
-            if conf < _MIN_CONF or len(t) < _MIN_LEN or not _WORD_RE.search(t):
-                continue
-            key = (t.lower(), round(d["left"][i] / 20), round(d["top"][i] / 20))
-            if key in seen:
-                continue
-            seen.add(key)
-            words.append({"text": t, "conf": conf,
-                          "x": d["left"][i] / dw, "y": d["top"][i] / dh,
-                          "w": d["width"][i] / dw, "h": d["height"][i] / dh})
+        if conf < _MIN_CONF or len(t) < _MIN_LEN or not _WORD_RE.search(t):
+            continue
+        words.append({"text": t, "conf": conf,
+                      "x": d["left"][i] / dw, "y": d["top"][i] / dh,
+                      "w": d["width"][i] / dw, "h": d["height"][i] / dh})
     return words
 
 
@@ -205,16 +204,22 @@ def plan(video: str, want_start: float, want_dur: float,
     - want_dur 만큼 슬레이트 없는 연속 구간을 want_start 근처부터 탐색(없으면 슬레이트 최소 구간).
     - 선택 구간 안 텍스트 박스는 여유(패딩)를 두고 병합해 delogo 박스로.
     """
-    # ★속도: 전체 클립을 스캔하지 않는다(140s 클립을 다 스캔하면 낭비). 사용 구간 근방만 스캔해도
-    # 슬레이트 회피·delogo 박스 산출에 충분(오프닝 슬레이트+선택창+여유). 컨테이너 duration은
-    # NOAA webm에서 깨진 경우가 있어 안 믿고, 1초 프레임 추출 개수를 실제 길이로 쓴다.
-    scan_cap = want_start + want_dur + 20.0
-    secs = scan(video, 0.0, scan_cap)
-    dur_s = float(len(secs))
-    slate = {int(s["t"]) for s in secs if _is_slate_second(s["words"])}
+    # ★속도(핵심): CI에서 프레임당 OCR이 매우 느려 '프레임 수'가 곧 제작시간이다. 로고는 위치가
+    # 고정·지속되므로 전 구간을 촘촘히 볼 필요 없이 **띄엄띄엄 ~14장**만 봐도 로고·슬레이트를 찾는다.
+    # (기존 65장/세그먼트 → 14장. 세그먼트 검증까지 없애면 OCR 총량이 1/10로 줄어 hang 해소.)
+    # 로고는 상위(extra_boxes=고정 좌상단 박스)에서 이미 항상 덮이므로, 여기 OCR은 '중앙/하단
+    # 슬레이트(URL·크레딧 카드) 회피'용. 슬레이트는 크고 여러 초 지속 → 8장만 봐도 충분(속도 최우선).
+    scan_cap = want_start + want_dur + 12.0
+    n_samples = 8
+    fps = max(0.1, n_samples / scan_cap)                  # ~8장 균등 샘플
+    secs = scan(video, 0.0, scan_cap, fps=fps)
+    dur_s = scan_cap
+    slate = {round(s["t"]) for s in secs if _is_slate_second(s["words"])}
 
     def dirty_in(st: float) -> int:
-        return sum(1 for k in range(int(st), int(st + want_dur) + 1) if k in slate)
+        # 샘플 간격(1/fps)보다 촘촘한 정수초 검사는 의미 없음 → 샘플된 슬레이트 초와 겹치는지만 본다.
+        lo, hi = st - 1.0 / fps, st + want_dur + 1.0 / fps
+        return sum(1 for k in slate if lo <= k <= hi)
 
     # want_start 근처부터 깨끗한 창 탐색(앞뒤로 번갈아 확장)
     best, best_d = max(0.0, want_start), dirty_in(want_start)

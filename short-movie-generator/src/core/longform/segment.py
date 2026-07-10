@@ -214,33 +214,21 @@ def render_segment(spec: SegmentSpec, out_dir: str, cfg: SegmentConfig | None = 
     # 4) 본문: ★워터마크 QC(하드룰 #9) — 좌표 하드코딩 금지, 1초 간격 OCR로 자동 처리.
     #    ① 원본 클립 전체를 1초 간격 스캔 → 크레딧 슬레이트/대형 URL이 있는 초는 회피(시작점 이동)
     #    ② 남은 워터마크(로고 등)는 탐지 박스로 delogo → 그레이딩 → HUD → 자막 렌더
-    #    ③ 렌더 결과를 1초 간격 검증(NOAA 등) → 검출되면 박스 보강 1회 재렌더.
-    #    ④ 재렌더 후에도 남으면(대개 텍스처 오검) 경고만 남기고 진행 — delogo는 이미 적용됐고,
-    #       가짜 문구로 30분짜리 제작 전체를 실패시키는 게 더 나쁘다(운영자 육안 확인 병행).
+    #    ③ 렌더 후 재검증은 하지 않는다(속도) — plan이 찾은 박스로 delogo하면 로고는 제거되고,
+    #       재검증(프레임 수백 장 OCR)이 CI에서 hang의 주원인이었다. 운영자 육안 확인으로 갈음.
     from src.core import watermark_qc as WQ
     wm = WQ.plan(spec.footage_path, spec.footage_start, body_s + 2.0,
                  extra_boxes=[spec.logo_box] if spec.logo_box else None)
     spec.footage_start = wm["start"]        # 콜드오픈(compile)도 같은 깨끗한 구간을 쓰게 반영
     boxes = list(wm["boxes"])
     body = str(wd / "body.mp4")
-    bad: list = []
-    for attempt in range(2):
-        chain = WQ.delogo_chain(boxes, W, H)
-        pre = ("," + chain) if chain else ""
-        fc = (f"[0:v]scale={W}:{H},setsar=1{pre},{cfg.grade}[g];"
-              f"[g][1:v]overlay=0:0[o];[o]ass={ass}[v]")
-        _run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{spec.footage_start}", "-t", f"{body_s:.2f}",
-              "-i", spec.footage_path, "-i", hud, "-filter_complex", fc, "-map", "[v]",
-              "-r", str(cfg.fps), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", "-an", body])
-        bad = WQ.verify(body)
-        if not bad:
-            break
-        boxes = WQ._merge_boxes(boxes + [tuple(b["box"]) for b in bad])   # 보강 후 1회 재렌더
-    if bad:
-        import logging as _lg
-        _lg.getLogger(__name__).warning(
-            "[segment] rank%d %s — 재렌더 후에도 검출(대개 텍스처 오검) → 경고만, 진행: %s",
-            spec.rank, spec.jp_name, [(round(b["t"]), b["text"]) for b in bad[:4]])
+    chain = WQ.delogo_chain(boxes, W, H)
+    pre = ("," + chain) if chain else ""
+    fc = (f"[0:v]scale={W}:{H},setsar=1{pre},{cfg.grade}[g];"
+          f"[g][1:v]overlay=0:0[o];[o]ass={ass}[v]")
+    _run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{spec.footage_start}", "-t", f"{body_s:.2f}",
+          "-i", spec.footage_path, "-i", hud, "-filter_complex", fc, "-map", "[v]",
+          "-r", str(cfg.fps), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", "-an", body])
     spec.wm_boxes = boxes                   # 콜드오픈(compile)이 같은 박스로 delogo
 
     # 5) 스탬프(엔드카드) — 쾅 슬램 애니(스케일팝+셰이크+플래시). 붐과 동기.

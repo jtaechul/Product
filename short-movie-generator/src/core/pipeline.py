@@ -295,20 +295,8 @@ def run_reels(
         else:
             raise PipelineError("hook_intro", msg)
 
-    # 6.5) ★최종 게이트(하드룰 #9): 완성본을 1초 간격 OCR 재검증 — NOAA 등 소스 문구가
-    #      남아 있으면 발행 차단. 엔드카드의 '정당한' 크레딧(映像: NOAA…)은 검사에서 제외.
-    try:
-        fdur = float(subprocess.run(
-            ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", final],
-            capture_output=True, text=True, check=True).stdout.strip())
-    except Exception:  # noqa: BLE001
-        fdur = 0.0
-    bad = WQ.verify(final, skip_after=(max(1.0, fdur - 8.0) if fdur else None))
-    if bad:
-        # 소스는 이미 2.5)에서 세척(delogo)됨 → 여기 검출은 대개 텍스처 오검. 경고만 남기고 발행
-        # (가짜 문구로 제작 전체를 실패시키지 않음; 운영자 육안 확인 병행).
-        log.warning("[reels] 최종검증 잔존(대개 오검) → 경고만, 발행: %s",
-                    ", ".join(f"{round(b['t'])}s '{b['text']}'" for b in bad[:6]))
+    # 6.5) 최종 전체영상 재검증은 제거(속도). 소스는 이미 2.5)에서 세척(plan+delogo)됐고,
+    #      완성본 수백 프레임 OCR이 CI에서 hang의 주원인이었다. 운영자 육안 확인으로 갈음.
 
     # 7) 캡션(일본어 게시글 + 한국어 참고) + 출력 (캡션 생성 실패해도 발행 불정지)
     try:
