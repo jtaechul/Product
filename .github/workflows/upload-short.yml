@@ -1,0 +1,145 @@
+name: Upload Short to YouTube
+
+# 쇼츠(릴스) 유튜브 '수동' 업로드 — 운영자가 라이브러리 상세 /c/<id> 에서 영상을 확인하고
+# '유튜브 쇼츠로 올리기' 버튼을 눌렀을 때만 디스패치된다(자동 업로드하지 않음).
+# 이미 만들어진 Release 영상(content/<id>.json 의 media.video_url)을 내려받아 그대로 업로드한다.
+# 세로 9:16 · 3분 미만이면 유튜브가 자동으로 Shorts로 인식하며, 제목·설명에 #Shorts 를 덧붙여 보강한다.
+
+on:
+  workflow_dispatch:
+    inputs:
+      content_id:
+        description: "쇼츠 콘텐츠 id (예: 013)"
+        required: true
+      privacy:
+        description: "공개 범위"
+        type: choice
+        options: [public, unlisted, private]
+        default: public
+
+concurrency:
+  group: upload-short-${{ github.event.inputs.content_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    name: 쇼츠 유튜브 업로드
+    defaults:
+      run:
+        working-directory: short-movie-generator
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps (google api)
+        run: pip install google-auth google-auth-oauthlib google-api-python-client
+
+      - name: 레코드에서 영상 URL·업로드 여부 확인
+        id: rec
+        run: |
+          python - "${{ github.event.inputs.content_id }}" <<'PY' >> "$GITHUB_OUTPUT"
+          import json, sys
+          cid = sys.argv[1]
+          rec = json.load(open(f"content/{cid}.json", encoding="utf-8"))
+          media = rec.get("media", {}) or {}
+          vu = media.get("video_url", "")
+          assert vu, "media.video_url 없음 — Release 업로드 전이거나 잘못된 id"
+          print(f"video_url={vu}")
+          print(f"already={media.get('youtube_url','')}")
+          PY
+
+      - name: 이미 업로드됐으면 중단(중복 방지)
+        if: steps.rec.outputs.already != ''
+        run: |
+          echo "::notice::이미 유튜브에 업로드됨: ${{ steps.rec.outputs.already }} → 중복 업로드 생략"
+          exit 0
+
+      - name: Release 영상 내려받기
+        if: steps.rec.outputs.already == ''
+        run: |
+          mkdir -p work
+          curl -sSL -o work/video.mp4 "${{ steps.rec.outputs.video_url }}"
+          ls -la work/video.mp4
+
+      - name: 유튜브 쇼츠 업로드
+        if: steps.rec.outputs.already == ''
+        id: yt
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          PRIVACY: ${{ github.event.inputs.privacy }}
+          CID: ${{ github.event.inputs.content_id }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          from src.core import youtube_upload as yt
+          from src.core import content_store
+          cid = os.environ["CID"]
+          rec = json.load(open(f"content/{cid}.json", encoding="utf-8"))
+          re = rec.get("reels", {}) or {}
+          sp = rec.get("species", {}) or {}
+          if not yt.has_credentials():
+              print("yt_url=")
+              print("::error::YouTube 시크릿(YOUTUBE_CLIENT_ID/SECRET/REFRESH_TOKEN) 미설정 → 업로드 불가")
+              raise SystemExit(1)
+          # 제목: 일본어 유튜브 제목 → 없으면 종명. #Shorts 를 덧붙여 쇼츠 인식 보강(중복 방지).
+          title = (re.get("yt_title") or sp.get("common_name_ko") or sp.get("common_name_en") or "深海生物").strip()
+          if "#shorts" not in title.lower():
+              title = (title + " #Shorts")[:100]
+          # 설명: 발행 캡션 + 해시태그 + #深海/#海洋生物/#Shorts(중복 없이).
+          tags = list(re.get("hashtags") or [])
+          for t in ("#深海", "#海洋生物", "#Shorts"):
+              if t not in tags:
+                  tags.append(t)
+          desc = (re.get("caption") or "").strip()
+          desc = (desc + "\n\n" + " ".join(tags)).strip()
+          r = yt.upload("work/video.mp4", title, desc,
+                        tags=[t.lstrip("#") for t in tags][:15],
+                        privacy=os.environ.get("PRIVACY","public"))
+          content_store.set_short_youtube(".", cid, youtube_url=r["url"], privacy=r["privacy"])
+          print(f"yt_url={r['url']}")
+          print(f"yt_privacy={r['privacy']}")
+          PY
+
+      - name: 레코드 커밋(유튜브 URL 반영)
+        if: steps.rec.outputs.already == '' && steps.yt.outputs.yt_url != ''
+        run: |
+          git add "content/${{ github.event.inputs.content_id }}.json" content/manifest.json
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(short): ${{ github.event.inputs.content_id }} 유튜브 업로드 기록 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git fetch origin "${{ github.ref_name }}" \
+              && git rebase "origin/${{ github.ref_name }}" \
+              && git push origin "HEAD:${{ github.ref_name }}" \
+              && { echo "저장 완료"; exit 0; }
+            echo "재시도 $i…"; git rebase --abort 2>/dev/null || true; sleep 3
+          done
+          echo "저장 실패(push)"; exit 1
+
+      - name: 텔레그램 알림
+        if: steps.rec.outputs.already == '' && steps.yt.outputs.yt_url != ''
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          YT_URL: ${{ steps.yt.outputs.yt_url }}
+          PRIV: ${{ steps.yt.outputs.yt_privacy }}
+          CID: ${{ github.event.inputs.content_id }}
+        run: |
+          if [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ]; then echo "생략"; exit 0; fi
+          MSG="✅ 쇼츠 #${CID} 유튜브 업로드 완료(${PRIV}): ${YT_URL}"
+          for CID2 in $TG_CHAT; do
+            curl -sS -F chat_id="$CID2" -F text="$MSG" \
+                 "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" | head -c 120; echo
+          done

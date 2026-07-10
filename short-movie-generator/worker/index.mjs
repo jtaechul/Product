@@ -105,6 +105,7 @@ const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const UP_WF="upload-longform.yml";    // 롱폼 유튜브 '수동' 업로드(운영자 확인 후 클릭)
+const US_WF="upload-short.yml";       // 쇼츠 유튜브 '수동' 업로드(운영자 확인 후 클릭)
 // 실사 영상이 확보된 종 풀(코드 시드 추가 시 여기도 함께 갱신 — src/core/footage.py _SEED 참고).
 // value는 data.SPECIES의 common_name_ko(정확 매칭 별칭)라 그대로 --species 인자로 쓸 수 있다.
 // cat: 대시보드 표시용 카테고리 라벨(심해생물/일반해양/미세조류/침몰선). 현재 풀은 전부 심해생물.
@@ -162,11 +163,17 @@ function ytTitle(hook,name,ko){
   if(!hook)return ko?"깊은 바다에 숨어 사는, "+name+"의 맨얼굴":"深海でひっそり生きる、"+name+"の素顔";
   return ko?hook+"——"+name+"의 정체":hook+"——"+name+"の正体";}
 
+// 타임아웃 fetch: 인앱 웹뷰(텔레그램·카카오 등)에서 api.github.com 같은 크로스오리진 요청이
+// '영원히 pending' 되어 await가 안 풀리는 사고 방지(→ 라이브러리 '불러오는 중…' 멈춤의 실제 원인).
+async function fetchT(url,opts,ms){
+  const c=new AbortController();const t=setTimeout(()=>c.abort(),ms||7000);
+  try{return await fetch(url,{...(opts||{}),signal:c.signal});}finally{clearTimeout(t);}
+}
 async function fetchRaw(path){
-  // 공개 읽기 프록시 우선(무인증·어느 기기서든 동작). 실패 시 인증 API로 폴백.
-  try{const r=await fetch("/api/pub?path="+encodeURIComponent(path));
+  // 공개 읽기 프록시 우선(무인증·어느 기기서든 동작). 실패 시 인증 API로 폴백(타임아웃).
+  try{const r=await fetchT("/api/pub?path="+encodeURIComponent(path));
     if(r.ok)return await r.text();}catch(e){}
-  try{const r=await fetch(API+"/contents/"+path+"?ref="+BRANCH,{headers:{...headers(true),"Accept":"application/vnd.github.raw+json"}});
+  try{const r=await fetchT(API+"/contents/"+path+"?ref="+BRANCH,{headers:{...headers(true),"Accept":"application/vnd.github.raw+json"}});
     if(!r.ok)return null;return await r.text();}catch(e){return null;}
 }
 async function fetchManifest(){const t=await fetchRaw(CONTENT_DIR+"/manifest.json");try{const a=JSON.parse(t);return Array.isArray(a)?a:[];}catch(e){return [];}}
@@ -179,8 +186,11 @@ async function listContent(){
     no:String(x.id), common_name_ko:x.common_name_ko||x.common_name_en||"종",
     common_name_en:x.common_name_en||"", scientific_name:x.scientific_name||"",
     date:x.date||"", hasVideo:!!x.has_video}));
+  // 매니페스트에 모든 레코드가 들어있으므로, 인증 디렉토리 보강은 '인증 가능한 기기(서버모드/토큰)'에서만.
+  // 무인증 폰(인앱 웹뷰)에선 api.github.com 요청이 멈추므로 아예 건너뛴다(매니페스트만으로 충분).
+  if(!(SERVER||pat()))return out.sort((a,b)=>(a.no<b.no?1:-1));
   try{
-    const r=await fetch(API+"/contents/"+CONTENT_DIR+"?ref="+BRANCH,{headers:headers(true)});
+    const r=await fetchT(API+"/contents/"+CONTENT_DIR+"?ref="+BRANCH,{headers:headers(true)});
     if(r.ok){
       const files=await r.json();
       const have=new Set(out.map(o=>o.no));
@@ -350,7 +360,7 @@ async function loadLongformResults(){
 }
 async function loadRuns(){
   try{
-    const [r,cat]=await Promise.all([fetch(API+"/actions/workflows/"+WF+"/runs?per_page=8",{headers:headers(true)}),listContent()]);
+    const [r,cat]=await Promise.all([fetchT(API+"/actions/workflows/"+WF+"/runs?per_page=8",{headers:headers(true)}),listContent()]);
     const j=await r.json();const el=$("#runs");if(!el)return;el.innerHTML="";
     (j.workflow_runs||[]).filter(x=>x.status!=="completed").forEach(run=>{
       el.insertAdjacentHTML("beforeend",'<div class="run"><span class="st prog">'+(run.status==="queued"?"대기열":"진행 중")+'</span>'+
@@ -418,6 +428,22 @@ async function renderDetail(id){
   if(md.video_url)mediaHtml='<video src="'+prox(md.video_url)+'" controls playsinline preload="metadata" poster="'+(md.cover_url?prox(md.cover_url):"")+'"></video>';
   else if(md.cover_url)mediaHtml='<img src="'+prox(md.cover_url)+'">';
   else mediaHtml='<div class="hint">미디어가 아직 업로드되지 않았습니다(제작 직후 잠시 후 반영).</div>';
+  // ★유튜브 쇼츠 업로드는 자동으로 하지 않는다 — 위 영상을 확인하고 이상 없으면 버튼으로 직접 올린다.
+  let upHtml="";
+  if(md.youtube_url){
+    upHtml='<div class="card" style="margin-top:12px;background:#0d2216;border-color:#1c5">'+
+      '<span class="lbl">유튜브 쇼츠 업로드 완료('+esc(md.youtube_privacy||"")+')</span>'+
+      '<a class="btn save" href="'+esc(md.youtube_url)+'" target="_blank" style="margin-top:8px">유튜브에서 보기 → '+esc(md.youtube_url)+'</a></div>';
+  }else if(md.video_url){
+    upHtml='<div class="card" style="margin-top:12px">'+
+      '<span class="lbl">유튜브 쇼츠 올리기 — 위 영상을 확인하고 이상 없을 때만 누르세요(자동 업로드 안 함)</span>'+
+      '<div class="btnrow" style="margin-top:8px;align-items:center;gap:8px">'+
+        '<select id="shpriv" style="padding:8px;border-radius:8px"><option value="public">공개</option>'+
+          '<option value="unlisted">일부공개(링크 아는 사람만)</option>'+
+          '<option value="private">비공개(나만)</option></select>'+
+        '<button class="btn save" id="shup">유튜브 쇼츠로 올리기</button></div>'+
+      '<div class="hint" style="margin-top:6px">누르면 업로드가 시작되고 1~3분 뒤 이 화면을 새로고침하면 링크가 표시됩니다.</div></div>';
+  }
   // 일/한 분리: 신규 레코드는 분리 필드(caption_ko 등), 구 레코드는 합본 캡션을 분해해 표시
   const legacy=splitLegacy(re.caption||"");
   const capJP=legacy.jp, capKO=re.caption_ko||legacy.ko;
@@ -432,6 +458,7 @@ async function renderDetail(id){
       '<span class="mono" style="color:var(--gy);font-size:12px">'+esc(sp.common_name_en||"")+'</span></div>'+
     mediaHtml+
     (md.video_url?'<div class="btnrow" style="margin-top:8px"><button class="btn save" id="bdl">비디오 저장하기</button></div><div class="hint" id="dlhint" style="margin-top:6px"></div>':"")+
+    upHtml+
     '<div class="meta" style="margin-top:12px"><b>학명</b> <i>'+esc(sp.scientific_name||"")+'</i> · <b>수심</b> '+esc(sp.depth_range_m||"?")+'m<br>'+
       '<b>서식</b> '+esc(sp.habitat||"?")+' · <b>분포</b> '+esc(sp.distribution||"?")+'</div>'+
     // 유튜브 쇼츠 게시용 '영상 제목'(일/한) 프레임 — 편집·복사 가능(별도 프레임 요청 반영)
@@ -479,6 +506,25 @@ async function renderDetail(id){
   $("#ball").onclick=()=>{if(confirm("영상·캡션을 모두 처음부터 다시 만듭니다(무료·2~4분). 진행할까요?"))regen(id,"all");};
   $("#bigp").onclick=()=>igPublish(id,true);
   $("#big").onclick=()=>{if(confirm("이 릴스를 인스타그램(@abyss_0cean)에 실제로 발행합니다. 되돌릴 수 없어요. 진행할까요?"))igPublish(id,false);};
+  const shBtn=document.getElementById("shup");
+  if(shBtn)shBtn.onclick=()=>uploadShort(id);
+}
+
+// 쇼츠 유튜브 '수동' 업로드 — upload-short.yml 디스패치(운영자 확인 후 클릭).
+async function uploadShort(id){
+  if(!authReady()){banner("유튜브 업로드에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
+  const priv=($("#shpriv")||{}).value||"public";
+  const nm={public:"공개",unlisted:"일부공개",private:"비공개"}[priv]||priv;
+  if(!confirm("이 쇼츠를 유튜브에 '"+nm+"'로 올릴까요? 확인을 누르면 업로드가 시작됩니다."))return;
+  const b=$("#shup"); if(b){b.disabled=true;b.textContent="업로드 시작 중…";}
+  banner("유튜브 쇼츠 업로드를 시작합니다… (1~3분 뒤 새로고침하면 링크가 표시됩니다)");
+  try{
+    const r=await fetch(API+"/actions/workflows/"+US_WF+"/dispatches",{method:"POST",headers:headers(true),
+      body:JSON.stringify({ref:BRANCH,inputs:{content_id:id,privacy:priv}})});
+    if(r.status===204)banner("업로드 시작! 1~3분 뒤 이 화면을 새로고침하세요.","ok");
+    else{const t=await r.text();banner("업로드 시작 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");
+      if(b){b.disabled=false;b.textContent="유튜브 쇼츠로 올리기";}}
+  }catch(e){banner("업로드 오류: "+e,"err");if(b){b.disabled=false;b.textContent="유튜브 쇼츠로 올리기";}}
 }
 
 // ── 롱폼 상세: 제목·설명(일/한, 타임스탬프 포함) 프레임 + 영상 미리보기 ──
@@ -509,6 +555,7 @@ async function renderLongformDetail(id){
           '<option value="unlisted">일부공개(링크 아는 사람만)</option>'+
           '<option value="private">비공개(나만)</option></select>'+
         '<button class="btn save" id="lfup">유튜브에 올리기</button></div>'+
+      '<div class="banner" id="msg"></div>'+
       '<div class="hint" style="margin-top:6px">누르면 업로드가 시작되고 1~3분 뒤 이 화면을 새로고침하면 링크가 표시됩니다.</div></div>';
   }
   dc.className="card detail";

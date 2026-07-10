@@ -209,6 +209,34 @@ def set_longform_youtube(base_dir: str, content_id: str, *, youtube_url: str,
     return True
 
 
+def set_short_youtube(base_dir: str, content_id: str, *, youtube_url: str,
+                      privacy: str = "") -> bool:
+    """쇼츠(릴스) 레코드에 유튜브 업로드 결과(URL·공개범위) 기록 + 매니페스트 갱신.
+
+    운영자가 라이브러리 상세(/c/<id>)에서 '유튜브 쇼츠로 올리기'를 눌러 upload-short.yml 이
+    업로드에 성공한 뒤 호출. 대시보드는 이 값을 보고 '이미 업로드됨(재업로드 방지)'을 표시한다.
+    """
+    rec = load_record(base_dir, content_id)
+    if not rec or rec.get("kind") == "longform":
+        return False
+    media = rec.setdefault("media", {})
+    media["youtube_url"] = youtube_url
+    media["youtube_privacy"] = privacy
+    rec["updated_at"] = _now_iso()
+    record_path(base_dir, content_id).write_text(
+        json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+    sp = rec.get("species", {}) or {}
+    upsert_manifest(base_dir, {
+        "id": str(content_id), "kind": "reels",
+        "common_name_ko": sp.get("common_name_ko") or sp.get("common_name_en") or "종",
+        "common_name_en": sp.get("common_name_en", ""),
+        "scientific_name": sp.get("scientific_name", ""),
+        "date": str(rec.get("updated_at") or rec.get("created_at", ""))[:10],
+        "youtube_url": youtube_url,
+    })
+    return True
+
+
 def update_caption(base_dir: str, content_id: str, *, caption_body: str | None = None,
                    hashtags: list[str] | None = None, hook: str | None = None) -> bool:
     """캡션/해시태그/훅 텍스트 편집(경량, 재생성 없음). 로컬 편집·테스트용."""
