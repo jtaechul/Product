@@ -130,7 +130,9 @@ function headers(auth){const h={"Accept":"application/vnd.github+json","X-GitHub
 // 인증 준비: 서버 모드면 항상 OK(토큰 불필요), 아니면 입력칸/localStorage 토큰 확보
 function authReady(){return SERVER||!!ensurePat();}
 function num3(n){return String(n).padStart(3,"0");}
-function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+// s가 숫자(예: 종 수 n=6)여도 안전하게 문자열화 후 이스케이프. (숫자면 .replace가 없어 TypeError→
+// 라이브러리 렌더가 통째로 죽으며 '불러오는 중…'에서 멈추던 실제 버그 수정.)
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function b64(str){return btoa(unescape(encodeURIComponent(str)));}
 function ago(iso){if(!iso)return"";const s=(Date.now()-new Date(iso))/1000;
   if(s<90)return Math.round(s)+"초 전";if(s<5400)return Math.round(s/60)+"분 전";
