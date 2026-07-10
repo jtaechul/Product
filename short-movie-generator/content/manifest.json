@@ -107,5 +107,13 @@
     "total_s": 406.01,
     "date": "2026-07-10",
     "has_video": true
+  },
+  {
+    "id": "014",
+    "kind": "reels",
+    "common_name_ko": "아리에스호 난파선",
+    "common_name_en": "Wreck Aries (cargo ship)",
+    "scientific_name": "Wreck Aries",
+    "date": "2026-07-10"
   }
 ]
