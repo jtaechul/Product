@@ -916,6 +916,7 @@ const REDDIT_CATS = {
   facts:     ['todayilearned', 'Damnthatsinteresting', 'interestingasfuck'],
   space:     ['space', 'spaceporn', 'astrophotography'],
   nature:    ['NatureIsFuckingLit', 'EarthPorn', 'aww'],
+  ocean:     ['TheDepthsBelow', 'marinebiology', 'ocean'],
   history:   ['HistoryPorn', 'history', 'OldSchoolCool'],
 };
 const REDDIT_UA = 'web:card-carousel:v2.5 (card carousel maker)';

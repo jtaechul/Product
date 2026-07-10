@@ -718,9 +718,9 @@
       <label>시작 방법<span class="req">*</span></label>
       <div class="lang-tabs" style="margin:0;" id="sourceTabs">
         <button type="button" class="lang-tab active" data-source="upload">내 이미지로 시작</button>
-        <button type="button" class="lang-tab" data-source="reddit">Reddit 인기글 추천</button>
+        <button type="button" class="lang-tab" data-source="reddit">커뮤니티 인기 추천</button>
       </div>
-      <span class="hint">'내 이미지'는 캡처 이미지를 올려 역검색으로 원본을 찾고, 'Reddit 추천'은 인기글에서 소재를 자동으로 받아옵니다.</span>
+      <span class="hint">'내 이미지'는 캡처 이미지를 올려 역검색으로 원본을 찾고, '커뮤니티 추천'은 Reddit·Lemmy·Commons 인기글에서 소재를 자동으로 받아옵니다.</span>
     </div>
 
     <div class="form-group">
@@ -743,14 +743,15 @@
       <span class="hint seed-hint" id="uploadHint">이 이미지는 <b>원본을 찾기 위한 검색용</b>입니다 — 카드뉴스에는 사용되지 않습니다. 아래 "원본 추적"으로 찾은 원본만 카드에 실립니다.</span>
     </div>
 
-    <!-- [Reddit 인기글 추천] 브라우즈 -->
+    <!-- [커뮤니티 인기 추천] 브라우즈 — Reddit·Lemmy·Wikimedia Commons 여러 곳에서 수집 -->
     <div class="form-group" id="redditGroup" style="display:none;">
-      <label>Reddit 인기 이미지</label>
+      <label>커뮤니티 인기 이미지 <span class="hint" style="font-weight:400;">(Reddit·Lemmy·Commons에서 수집)</span></label>
       <div class="lang-tabs" style="margin:0;flex-wrap:wrap;" id="redditCats">
         <button type="button" class="lang-tab active" data-cat="popular">인기</button>
         <button type="button" class="lang-tab" data-cat="facts">흥미로운 사실</button>
         <button type="button" class="lang-tab" data-cat="space">우주·과학</button>
         <button type="button" class="lang-tab" data-cat="nature">자연·동물</button>
+        <button type="button" class="lang-tab" data-cat="ocean">해양 생물</button>
         <button type="button" class="lang-tab" data-cat="history">역사</button>
       </div>
       <button class="btn btn-outline" id="redditLoadBtn" style="margin-top:8px;">인기글 불러오기</button>
@@ -1143,7 +1144,7 @@ document.querySelectorAll('#sourceTabs .lang-tab').forEach(btn => {
     document.getElementById('uploadGroup').style.display = reddit ? 'none' : 'block';
     document.getElementById('redditGroup').style.display = reddit ? 'block' : 'none';
     // 릴스 모드에서 Reddit는 이미지 소스라 안내 (영상은 '내 이미지 업로드'에서)
-    if (reddit && state.mode === 'reel') showToast('Reddit 추천은 이미지 소스입니다. 릴스 영상은 "내 이미지로 시작"에서 올려주세요.', 'info');
+    if (reddit && state.mode === 'reel') showToast('커뮤니티 추천은 이미지 소스입니다. 릴스 영상은 "내 이미지로 시작"에서 올려주세요.', 'info');
   });
 });
 
@@ -1155,14 +1156,16 @@ document.querySelectorAll('#redditCats .lang-tab').forEach(btn => {
   });
 });
 
-// 클라이언트에서 Reddit을 직접 부르는 우회로 (사용자 IP·JSONP) — 데이터센터 IP 403을 피한다
-const REDDIT_SUBS = {
-  popular: ['pics', 'interestingasfuck', 'Damnthatsinteresting'],
-  facts: ['todayilearned', 'Damnthatsinteresting', 'interestingasfuck'],
-  space: ['space', 'spaceporn', 'astrophotography'],
-  nature: ['NatureIsFuckingLit', 'EarthPorn', 'aww'],
-  history: ['HistoryPorn', 'history', 'OldSchoolCool'],
+// 카테고리별 커뮤니티 소스 — Reddit 서브레딧 / Lemmy 커뮤니티 / Wikimedia Commons 검색어
+const COMMUNITY_CATS = {
+  popular: { subs: ['pics', 'interestingasfuck', 'Damnthatsinteresting'], lemmy: ['pics', 'interestingasfuck'], commons: 'award winning photography' },
+  facts:   { subs: ['todayilearned', 'Damnthatsinteresting', 'interestingasfuck'], lemmy: ['interestingasfuck'], commons: 'unusual natural phenomenon' },
+  space:   { subs: ['space', 'spaceporn', 'astrophotography'], lemmy: ['space', 'astronomy'], commons: 'nebula galaxy astrophotography' },
+  nature:  { subs: ['NatureIsFuckingLit', 'EarthPorn', 'aww'], lemmy: ['aww'], commons: 'wildlife photography' },
+  ocean:   { subs: ['TheDepthsBelow', 'marinebiology', 'ocean'], lemmy: [], commons: 'marine life underwater photography' },
+  history: { subs: ['HistoryPorn', 'history', 'OldSchoolCool'], lemmy: ['oldschoolcool'], commons: 'historical photograph' },
 };
+const REDDIT_SUBS = Object.fromEntries(Object.entries(COMMUNITY_CATS).map(([k, v]) => [k, v.subs])); // JSONP 폴백용
 let _redditCbN = 0;
 function fetchRedditJsonp(subs) {
   return new Promise((resolve, reject) => {
@@ -1205,21 +1208,97 @@ function parsePullpushPosts(arr) {
   }
   return posts;
 }
+// ① Reddit(pullpush 아카이브) — 매번 다른 결과가 나오도록 '최근 랜덤 기간 창'으로 조회.
+//    (예전엔 역대 최고 점수순 고정이라 항상 같은 게시물이 나왔음)
 async function fetchPullpushClient(subs) {
+  const now = Math.floor(Date.now() / 1000);
+  const until = now - Math.floor(Math.random() * 150) * 86400;   // 최근 0~150일 중 랜덤 시점
+  const since = until - 60 * 86400;                              // 그로부터 60일 창
   const out = [];
-  for (const sub of subs.slice(0, 2)) {
+  for (const sub of subs.slice(0, 3)) {
     try {
-      const res = await fetch(`https://api.pullpush.io/reddit/search/submission/?subreddit=${encodeURIComponent(sub)}&sort=desc&sort_type=score&size=40`, { headers: { 'Accept': 'application/json' } });
+      const res = await fetch(`https://api.pullpush.io/reddit/search/submission/?subreddit=${encodeURIComponent(sub)}&sort=desc&sort_type=score&size=30&since=${since}&until=${until}`, { headers: { 'Accept': 'application/json' } });
       if (!res.ok) continue;
       const j = await res.json();
       out.push(...parsePullpushPosts(j.data || []));
     } catch {}
-    if (out.length >= 18) break;
+    if (out.length >= 24) break;
   }
-  return out.slice(0, 24);
+  // 랜덤 기간에 글이 없으면 전체 기간 인기로 보충
+  if (out.length < 6) {
+    for (const sub of subs.slice(0, 2)) {
+      try {
+        const res = await fetch(`https://api.pullpush.io/reddit/search/submission/?subreddit=${encodeURIComponent(sub)}&sort=desc&sort_type=score&size=30`, { headers: { 'Accept': 'application/json' } });
+        if (res.ok) { const j = await res.json(); out.push(...parsePullpushPosts(j.data || [])); }
+      } catch {}
+    }
+  }
+  return out;
 }
 
-// Reddit 인기글 불러오기 → 그리드 렌더 (① 브라우저 JSONP → ② 서버 폴백)
+// ② Lemmy(레딧 대안 커뮤니티, lemmy.world) — 이번 주 인기 (CORS 허용)
+async function fetchLemmyClient(comms) {
+  const out = [];
+  for (const c of (comms || []).slice(0, 2)) {
+    try {
+      const res = await fetch(`https://lemmy.world/api/v3/post/list?community_name=${encodeURIComponent(c)}&sort=TopWeek&limit=25`, { headers: { 'Accept': 'application/json' } });
+      if (!res.ok) continue;
+      const j = await res.json();
+      for (const it of (j.posts || [])) {
+        const p = it.post || {};
+        const u = p.url || '';
+        if (!(/\.(jpe?g|png|webp)(\?|$)/i.test(u) || /pictrs\/image/i.test(u))) continue;
+        if (p.nsfw) continue;
+        out.push({ title: (p.name || '').slice(0, 200), subreddit: 'lemmy/' + c, ups: it.counts?.score || 0, imageUrl: u });
+      }
+    } catch {}
+  }
+  return out;
+}
+
+// ③ Wikimedia Commons — 무료·고품질 사진 검색 (origin=* 로 CORS 허용, 랜덤 오프셋으로 매번 다르게)
+async function fetchCommonsClient(term) {
+  if (!term) return [];
+  try {
+    const offset = Math.floor(Math.random() * 60);
+    const u = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent('filetype:bitmap ' + term)}&gsrnamespace=6&gsrlimit=15&gsroffset=${offset}&prop=imageinfo&iiprop=url&iiurlwidth=1280&format=json&origin=*`;
+    const res = await fetch(u, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) return [];
+    const j = await res.json();
+    const out = [];
+    for (const pg of Object.values(j?.query?.pages || {})) {
+      const info = pg.imageinfo?.[0];
+      const url = info?.thumburl || info?.url;
+      if (!url) continue;
+      const title = String(pg.title || '').replace(/^File:/, '').replace(/\.[a-z]+$/i, '');
+      out.push({ title: title.slice(0, 200), subreddit: 'commons', ups: 0, imageUrl: url });
+    }
+    return out;
+  } catch { return []; }
+}
+
+const _seenCommunityImgs = new Set(); // 이미 보여준 이미지는 다음 로드에서 제외 → 누를 때마다 새 게시물
+function shuffleArr(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+// 여러 커뮤니티(Reddit·Lemmy·Commons)에서 병렬 수집 → 중복·기노출 제거 → 섞어서 추천
+async function fetchCommunityPosts(cat) {
+  const cfg = COMMUNITY_CATS[cat] || COMMUNITY_CATS.popular;
+  const settled = await Promise.allSettled([
+    fetchPullpushClient(cfg.subs),
+    fetchLemmyClient(cfg.lemmy),
+    fetchCommonsClient(cfg.commons),
+  ]);
+  let merged = settled.flatMap(s => s.status === 'fulfilled' ? s.value : []);
+  const seenUrl = new Set();
+  merged = merged.filter(p => { if (seenUrl.has(p.imageUrl)) return false; seenUrl.add(p.imageUrl); return true; });
+  let fresh = merged.filter(p => !_seenCommunityImgs.has(p.imageUrl));
+  if (fresh.length < 8) fresh = merged; // 새 게시물이 부족하면 반복 허용
+  const chosen = shuffleArr(fresh).slice(0, 24);
+  chosen.forEach(p => _seenCommunityImgs.add(p.imageUrl));
+  return chosen;
+}
+
+// 커뮤니티 인기글 불러오기 → 그리드 렌더
 document.getElementById('redditLoadBtn').addEventListener('click', async () => {
   const btn = document.getElementById('redditLoadBtn');
   const grid = document.getElementById('redditGrid');
@@ -1227,9 +1306,9 @@ document.getElementById('redditLoadBtn').addEventListener('click', async () => {
   grid.innerHTML = '';
   try {
     let posts = [];
-    const subs = REDDIT_SUBS[state.redditCat] || REDDIT_SUBS.popular;
-    // ① 브라우저에서 pullpush.io 직접 호출(사용자 IP → rate-limit·차단 회피) — 진단상 유일하게 되는 경로
-    try { posts = await fetchPullpushClient(subs); } catch (e0) {}
+    const subs = (COMMUNITY_CATS[state.redditCat] || COMMUNITY_CATS.popular).subs;
+    // ① Reddit + Lemmy + Commons 병렬 수집 (브라우저 직접 — 사용자 IP)
+    try { posts = await fetchCommunityPosts(state.redditCat); } catch (e0) {}
     // ② reddit JSONP(사용자 IP) 보조
     if (!posts.length) {
       try { posts = parseRedditPosts(await fetchRedditJsonp(subs)); } catch (e1) {}
@@ -1245,13 +1324,15 @@ document.getElementById('redditLoadBtn').addEventListener('click', async () => {
     posts.forEach(p => {
       const card = document.createElement('div');
       card.className = 'reddit-card';
+      const srcLabel = (p.subreddit || '').includes('/') || p.subreddit === 'commons' ? p.subreddit : 'r/' + p.subreddit;
+      const upsLabel = p.ups > 0 ? ` · 추천 ${escHtml(String(p.ups))}` : '';
       card.innerHTML = `<img src="/api/img-proxy?url=${encodeURIComponent(p.imageUrl)}" loading="lazy" alt="">
-        <div class="rc-meta"><span class="rc-sub">r/${escHtml(p.subreddit)}</span> · 추천 ${escHtml(String(p.ups))}<br>${escHtml((p.title || '').slice(0, 50))}</div>`;
+        <div class="rc-meta"><span class="rc-sub">${escHtml(srcLabel)}</span>${upsLabel}<br>${escHtml((p.title || '').slice(0, 50))}</div>`;
       card.querySelector('img').addEventListener('error', () => card.remove()); // 못 불러온 건 숨김
       card.addEventListener('click', () => pickRedditPost(p, card));
       grid.appendChild(card);
     });
-    showToast(`Reddit 인기 이미지 ${posts.length}개를 불러왔습니다.`, 'success');
+    showToast(`커뮤니티 인기 이미지 ${posts.length}개를 불러왔습니다. 다시 누르면 다른 게시물이 나옵니다.`, 'success');
   } catch (e) {
     grid.innerHTML = `<div class="hint">불러오기 실패: ${escHtml(e.message)}</div>`;
   } finally {
@@ -1263,7 +1344,7 @@ document.getElementById('redditLoadBtn').addEventListener('click', async () => {
 // 검색용 시드로도 담아 주제 제안·추가 원본추적에 쓸 수 있게 한다.
 async function pickRedditPost(post, cardEl) {
   if (cardEl && cardEl.classList.contains('picked')) { showToast('이미 추가한 이미지입니다.', 'info'); return; }
-  showLoading('선택한 이미지 가져오는 중...', 'Reddit 원본을 카드에 담습니다');
+  showLoading('선택한 이미지 가져오는 중...', '커뮤니티 원본을 카드에 담습니다');
   try {
     const dataUrl = await loadOriginImage(post.imageUrl); // 프록시 → dataURL
     state.seedImages = [dataUrl];                          // 주제 AI 제안·원본추적용 시드
@@ -1273,7 +1354,7 @@ async function pickRedditPost(post, cardEl) {
       state.uploadedImages.push(dataUrl);                 // ★ Reddit 이미지 = 바로 카드 원본
       renderCardMedia();
       refreshPreview();
-      showToast('Reddit 원본을 카드에 추가했습니다. 더 고르거나 아래에서 주제를 입력하세요.', 'success');
+      showToast('커뮤니티 원본을 카드에 추가했습니다. 더 고르거나 아래에서 주제를 입력하세요.', 'success');
       document.getElementById('cardMediaGroup').scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else {
       showToast('참고 시드로 담았습니다. 릴스는 원본 영상이 필요해 "내 이미지로 시작"에서 올려주세요.', 'info');
