@@ -24,7 +24,7 @@ on:
 
 concurrency:
   group: generate-longform
-  cancel-in-progress: false
+  cancel-in-progress: true   # 새 재생성 요청이 오면 낡은 진행/대기 런을 취소(적체·구버전 산출 방지)
 
 permissions:
   contents: write
