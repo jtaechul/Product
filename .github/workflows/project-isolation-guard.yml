@@ -1,0 +1,77 @@
+name: Project Isolation Guard
+
+# 프로젝트 폴더 격리 강제 — 이 저장소는 여러 프로그램(spotlight/, short-movie-generator/,
+# book-carousel/, holedash/ …)이 한 저장소에 살기 때문에, 과거 '다른 프로젝트 작업이 spotlight
+# 파일을 구버전으로 덮어쓰는' 사고가 실제로 있었다. 재발 방지로 모든 푸시에서 커밋별로 검사한다.
+#
+# 규칙: **한 커밋은 한 프로젝트 폴더만 수정한다.**
+#   - 허용 공용 경로: `.github/` (GitHub가 워크플로 위치를 저장소 루트로 강제하는 유일한 예외)
+#   - 루트 파일(README·CLAUDE.md·index.html 등)은 "(root)" 그룹으로 취급 — 이것도 프로젝트
+#     폴더와 섞이면 위반.
+#   - 머지 커밋은 제외(여러 프로젝트 이력이 합쳐지는 것은 정상). 대신 spotlight 무결성은
+#     별도의 spotlight-guard.yml 이 main 푸시마다 검사한다.
+# 위반 시: 워크플로 실패(빨간 X + 실패 이메일) + 위반 커밋/폴더 목록 출력.
+
+on:
+  push:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    name: 폴더 격리 검사
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 커밋별 프로젝트 폴더 격리 검사
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+        run: |
+          python3 - <<'PY'
+          import os, subprocess, sys
+
+          before = os.environ.get("BEFORE", "")
+          after = os.environ.get("AFTER", "")
+          if not after or set(after) == {"0"}:          # 브랜치 삭제 푸시 → 검사할 것 없음
+              print("브랜치 삭제 푸시 → 통과"); sys.exit(0)
+          if not before or set(before) == {"0"}:        # 새 브랜치 첫 푸시 → 마지막 커밋만 검사
+              shas = [after]
+          else:
+              r = subprocess.run(["git", "rev-list", "--no-merges", f"{before}..{after}"],
+                                 capture_output=True, text=True)
+              shas = r.stdout.split()
+
+          def groups_of(sha):
+              """커밋이 건드린 최상위 그룹들. .github/ 는 공용이라 제외."""
+              r = subprocess.run(["git", "show", "--name-only", "--format=", "--no-renames", sha],
+                                 capture_output=True, text=True)
+              gs = set()
+              for f in r.stdout.splitlines():
+                  f = f.strip()
+                  if not f or f.startswith(".github/"):
+                      continue
+                  gs.add(f.split("/", 1)[0] if "/" in f else "(root)")
+              return gs
+
+          bad = []
+          for sha in shas:
+              gs = groups_of(sha)
+              if len(gs) > 1:
+                  bad.append((sha[:10], sorted(gs)))
+
+          if bad:
+              print("::error::프로젝트 폴더 격리 위반 — 한 커밋이 여러 프로젝트 폴더를 동시에 수정했습니다.")
+              for sha, gs in bad:
+                  print(f"::error::  커밋 {sha} → {', '.join(gs)}")
+              print("")
+              print("규칙: 한 커밋 = 한 프로젝트 폴더 (.github/ 만 공용 허용).")
+              print("수정: 위반 커밋을 프로젝트별로 쪼개서 다시 커밋하세요.")
+              sys.exit(1)
+          print(f"OK: 검사한 커밋 {len(shas)}개 모두 프로젝트 폴더 격리를 지켰습니다.")
+          PY

@@ -181,6 +181,17 @@
 >    - **에셋 확인**: `git diff claude/spotlight-* -- spotlight/assets/` 출력이 있으면
 >      main의 이미지가 작업 브랜치와 다른 것 → spotlight/ 전체 복원 필요
 
+> ## ⭐ 프로젝트 폴더 격리 원칙 (전 프로젝트 공통 · 필수)
+> 이 저장소의 각 프로그램은 **자기 최상위 폴더 안에서만** 산다
+> (`spotlight/`, `short-movie-generator/`, `book-carousel/`, `holedash/`, `upbit-trader/` …).
+> 1. **한 커밋은 한 프로젝트 폴더만 수정한다.** 서로 다른 프로젝트 파일을 한 커밋에 섞지 않는다.
+>    유일한 공용 예외는 `.github/`(GitHub가 워크플로 위치를 저장소 루트로 강제) 뿐이다.
+> 2. 루트 파일(README·index.html 등)도 "(root)" 그룹으로 취급 — 프로젝트 폴더와 섞으면 위반.
+> 3. **GitHub Actions `project-isolation-guard.yml`** 이 모든 브랜치 푸시에서 커밋별로 이를
+>    자동 검사한다. 위반 시 워크플로 실패(빨간 X + 실패 이메일) + 위반 커밋·폴더 목록 출력
+>    → 위반 커밋은 프로젝트별로 쪼개서 다시 커밋한다. (머지 커밋은 제외 — spotlight 무결성은
+>    별도 `spotlight-guard.yml` 이 계속 검사.)
+
 > 웹 2D 배우 육성 시뮬레이션 | Claude Code 개발용 종합 기획서
 > 버전 3.0 *(제목 SPOTLIGHT은 가제 — 변경 가능)*
 > 디자인 지향: **우마무스메식 육성** · 모바일 세로 최적화
