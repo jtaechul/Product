@@ -167,34 +167,74 @@ def _char_px(c: str, subsz: int) -> float:
     return subsz * (1.0 if full else 0.55)
 
 
-def _fit_pieces(text: str, st: float, en: float, max_px: float, subsz: int) -> list[tuple]:
-    """한 자막 청크를 '프레임 폭을 넘지 않는 한 줄' 조각들로 쪼갠다(줄바꿈 대신 순차 표시).
+_PUNCT_JP = "、。，．！？」』）・…"
+_HIRA = lambda o: 0x3040 <= o <= 0x309F                       # noqa: E731
+_KANJI_OR_KATA = lambda o: (0x4E00 <= o <= 0x9FFF or 0x30A0 <= o <= 0x30FF)  # noqa: E731
 
-    - 폭 예측으로 그리디 패킹: 다음 글자를 더하면 max_px 초과 시 조각 확정.
-    - 가능하면 문장부호(、。等) 직후에서 끊어 자연스럽게.
-    - 각 조각의 표시창은 [st,en]을 조각 글자수에 비례해 나눠 배정(발화 싱크 유지).
-    반환: [(piece_text, piece_st, piece_en)]. 한 줄에 들어가면 그대로 1개.
+
+def _break_points(text: str) -> set[int]:
+    """단어(문절)를 쪼개지 않는 '끊어도 되는 위치' 집합 = 각 인덱스 i는 text[:i]|text[i:] 경계.
+
+    일본어 문절 경계 근사(형태소 분석기 없이):
+    1) 문장부호(、。！？…) 바로 뒤 — 가장 강한 경계.
+    2) '히라가나 뒤에 오는 한자/가타카나' 앞 — 새 내용어(단어) 시작. okurigana(활용꼬리 します 등)는
+       한자 뒤 히라가나라 여기서 안 걸림 → 단어 꼬리가 잘려 다음 페이지로 넘어가는 사고 방지.
+    """
+    bps = set()
+    for i in range(1, len(text)):
+        prev, cur = text[i - 1], text[i]
+        if prev in _PUNCT_JP:
+            bps.add(i)
+        elif _KANJI_OR_KATA(ord(cur)) and _HIRA(ord(prev)):
+            bps.add(i)
+    return bps
+
+
+def _fit_pieces(text: str, st: float, en: float, max_px: float, subsz: int) -> list[tuple]:
+    """한 자막 청크를 '한 줄에 들어가는 조각'들로 쪼갠다 — 단어(문절) 단위로만, 글자 중간 금지.
+
+    - 통째로 한 줄에 들어가면 1개.
+    - 넘치면 '끊어도 되는 위치(_break_points)'에서만 나눔 → 절대 단어를 글자 단위로 자르지 않음
+      ("暮らします。"의 꼬리 'す。'만 넘어가는 사고 방지). 각 조각의 표시창은 글자수 비례로 분배.
+    - 문절 경계가 하나도 없는(외자 긴 단어 등) 극단 케이스만 폭 기준 강제 분할(최후 수단).
     """
     text = text.strip()
     if not text:
         return []
-    pieces, cur, cur_px, brk = [], "", 0.0, -1
-    for ch in text:
-        cw = _char_px(ch, subsz)
-        if cur and cur_px + cw > max_px:
-            # 최근 문장부호 직후에서 끊기(조각 끝 근처일 때만) → 자연스러운 분절
-            if brk > 0 and brk >= len(cur) - 4:
-                pieces.append(cur[:brk]); rest = cur[brk:]
-                cur, cur_px = rest, sum(_char_px(x, subsz) for x in rest)
+
+    def width(s):
+        return sum(_char_px(c, subsz) for c in s)
+
+    if width(text) <= max_px:
+        return [(text, st, en)]
+
+    bps = sorted(_break_points(text))
+    pieces, start, n = [], 0, len(text)
+    while start < n:
+        # start에서 폭이 허용되는 최대 end 계산
+        end, cur = start, 0.0
+        while end < n and cur + _char_px(text[end], subsz) <= max_px:
+            cur += _char_px(text[end], subsz)
+            end += 1
+        if end >= n:
+            cut = n
+        else:
+            cand = [b for b in bps if start < b <= end]
+            if cand:
+                cut = max(cand)
+                # 남는 꼬리가 너무 짧으면(고아 방지) 더 앞 경계로 당겨 꼬리를 키움
+                if 0 < n - cut < 2:
+                    earlier = [b for b in cand if n - b >= 2]
+                    cut = max(earlier) if earlier else cut
             else:
-                pieces.append(cur); cur, cur_px = "", 0.0
-            brk = -1
-        cur += ch; cur_px += cw
-        if ch in "、。，．！？」』":
-            brk = len(cur)
-    if cur:
-        pieces.append(cur)
+                cut = end  # 문절 경계 전무 → 최후수단 폭 분할
+        pieces.append(text[start:cut])
+        start = cut
     pieces = [p for p in (s.strip() for s in pieces) if p]
+    # 마지막 조각이 1글자면 앞 조각에 붙여 '한 글자 페이지' 원천 차단(약간 넘쳐도 의미 우선)
+    if len(pieces) >= 2 and len(pieces[-1]) <= 1:
+        pieces[-2] += pieces[-1]
+        pieces.pop()
     if len(pieces) <= 1:
         return [(text, st, en)]
     total = sum(len(p) for p in pieces) or 1
