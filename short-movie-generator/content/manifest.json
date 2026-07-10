@@ -32,14 +32,6 @@
     "date": "2026-07-08"
   },
   {
-    "id": "007",
-    "kind": "reels",
-    "common_name_ko": "넓적문어",
-    "common_name_en": "Flapjack octopus",
-    "scientific_name": "Opisthoteuthis californiana",
-    "date": "2026-07-08"
-  },
-  {
     "id": "008",
     "kind": "reels",
     "common_name_ko": "대왕등각류",
@@ -97,5 +89,13 @@
     "scientific_name": "Actinoscyphia aurelia",
     "date": "2026-07-10",
     "youtube_url": "https://youtu.be/lhfjZZ7QVrY"
+  },
+  {
+    "id": "007",
+    "kind": "reels",
+    "common_name_ko": "넓적문어",
+    "common_name_en": "Flapjack octopus",
+    "scientific_name": "Opisthoteuthis californiana",
+    "date": "2026-07-10"
   }
 ]
