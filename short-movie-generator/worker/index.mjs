@@ -565,6 +565,8 @@ async function renderLongformDetail(id){
     '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px"><b style="font-size:19px">'+esc(id)+'</b>'+
       '<span class="mono" style="color:var(--gy);font-size:12px">'+esc(rec.theme||"")+' · '+esc(rec.n||0)+'종 · '+Math.round(rec.total_s||0)+'초</span></div>'+
     mediaHtml+
+    // 쇼츠 상세와 동일한 저장 UX(#bdl/#dlhint → saveVideo: 공유시트 우선, Blob 다운로드 폴백)
+    (md.video_url?'<div class="btnrow" style="margin-top:8px"><button class="btn save" id="bdl">비디오 저장하기</button></div><div class="hint" id="dlhint" style="margin-top:6px"></div>':"")+
     upHtml+
     '<div class="dual" style="margin-top:12px">'+
       '<div><span class="lbl">영상 제목 · 일본어(유튜브)</span>'+
@@ -583,6 +585,7 @@ async function renderLongformDetail(id){
   const tas=dc.querySelectorAll("textarea");
   $("#lfcpjp").onclick=()=>copyText(tas[2].value,"일본어 설명을 복사했어요. 유튜브 설명란에 붙여넣기 하세요.");
   $("#lfcpko").onclick=()=>copyText(tas[3].value,"한국어 설명(참고)을 복사했어요.");
+  if($("#bdl"))$("#bdl").onclick=()=>saveVideo(prox(md.video_url),esc(id)+"_longform.mp4");
   const upBtn=document.getElementById("lfup");
   if(upBtn)upBtn.onclick=()=>uploadLongform(id);
 }
@@ -640,7 +643,7 @@ async function copyText(text,okmsg){
 async function saveVideo(u,name){
   const h=$("#dlhint"); const say=t=>{if(h)h.innerHTML=t;};
   const btn=$("#bdl"); if(btn)btn.disabled=true;
-  say("동영상 준비 중… (10MB 내외, 잠시만요)");
+  say("동영상 준비 중… (쇼츠 ~10MB는 금방, 롱폼 수십 MB는 수십 초 걸릴 수 있어요)");
   try{
     const r=await fetch(u); if(!r.ok)throw new Error("불러오기 "+r.status);
     const blob=await r.blob();
