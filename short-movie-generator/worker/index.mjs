@@ -581,10 +581,20 @@ async function renderLongformDetail(id){
       '<div><span class="lbl">영상 설명(주제 + 00:00 타임스탬프) · 한국어</span>'+
         '<textarea readonly rows="14">'+esc(rec.yt_description_ko||"")+'</textarea>'+
         '<button class="btn" id="lfcpko" style="margin-top:6px">한국어 설명 복사</button></div>'+
+    '</div>'+
+    '<div class="dual" style="margin-top:8px">'+
+      '<div><span class="lbl">해시태그(SEO 최적화) · 일본어</span>'+
+        '<textarea id="lftagjp" readonly rows="4">'+esc((rec.hashtags||[]).join(" "))+'</textarea>'+
+        '<button class="btn save" id="lfhtjp" style="margin-top:6px">일본어 해시태그 복사</button></div>'+
+      '<div><span class="lbl">해시태그(SEO 최적화) · 한국어(참고)</span>'+
+        '<textarea id="lftagko" readonly rows="4">'+esc((rec.hashtags_ko||[]).join(" "))+'</textarea>'+
+        '<button class="btn" id="lfhtko" style="margin-top:6px">한국어 해시태그 복사</button></div>'+
     '</div>';
   const tas=dc.querySelectorAll("textarea");
   $("#lfcpjp").onclick=()=>copyText(tas[2].value,"일본어 설명을 복사했어요. 유튜브 설명란에 붙여넣기 하세요.");
   $("#lfcpko").onclick=()=>copyText(tas[3].value,"한국어 설명(참고)을 복사했어요.");
+  $("#lfhtjp").onclick=()=>copyText($("#lftagjp").value,"일본어 해시태그를 복사했어요. 유튜브 설명란·태그에 붙여넣기 하세요.");
+  $("#lfhtko").onclick=()=>copyText($("#lftagko").value,"한국어 해시태그(참고)를 복사했어요.");
   if($("#bdl"))$("#bdl").onclick=()=>saveVideo(prox(md.video_url),esc(id)+"_longform.mp4");
   const upBtn=document.getElementById("lfup");
   if(upBtn)upBtn.onclick=()=>uploadLongform(id);

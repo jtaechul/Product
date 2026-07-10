@@ -147,6 +147,49 @@ def _ko_chapters(chapters_jp: str, chapter_items: list | None) -> str:
     return "\n".join(lines)
 
 
+def _tagify(name: str) -> str:
+    """생물명을 해시태그 토큰으로: 공백·괄호·구두점 제거, '#' 접두. (일/한 공통)"""
+    import re as _re
+    s = _re.sub(r"[\s()（）・,、。/／\-—’'\"]+", "", str(name or "")).strip()
+    return ("#" + s) if s else ""
+
+
+def _seo_hashtags(theme_key: str, segs: list) -> tuple[list[str], list[str]]:
+    """롱폼(랭킹형)용 SEO 최적화 해시태그를 일본어/한국어로 도출.
+
+    구성 = ①필수 공통(#深海·#海洋生物 / #심해·#해양생물) ②포맷·랭킹 태그
+    ③테마 태그 ④등장 종명(1위부터) ⑤심해·자연 일반 검색어. 중복 제거 후
+    유튜브 권장 상한(15개 안팎)으로 컷. 사실 왜곡 태그(괴물·UMA 등)는 넣지 않는다.
+    """
+    n = len(segs)
+    ordered = sorted(segs, key=lambda s: s.rank)
+    # ② 포맷/랭킹
+    fmt_jp = ["#深海", "#海洋生物", "#深海生物", "#ランキング", f"#TOP{n}", "#雑学", "#生き物"]
+    fmt_ko = ["#심해", "#해양생물", "#심해생물", "#랭킹", f"#TOP{n}", "#잡학", "#생물"]
+    # ③ 테마
+    theme_map_jp = {"기이한": "#奇妙な生き物", "위험한": "#危険生物", "놀라운": "#驚きの生物",
+                    "미스터리한": "#ミステリー", "무서운": "#閲覧注意"}
+    theme_map_ko = {"기이한": "#기이한생물", "위험한": "#위험생물", "놀라운": "#놀라운생물",
+                    "미스터리한": "#미스터리", "무서운": "#소름"}
+    if theme_map_jp.get(theme_key):
+        fmt_jp.append(theme_map_jp[theme_key]); fmt_ko.append(theme_map_ko[theme_key])
+    # ④ 등장 종명(1위부터)
+    sp_jp = [_tagify(s.jp_name) for s in ordered]
+    sp_ko = [_tagify(s.ko_name or s.jp_name) for s in ordered]
+    # ⑤ 일반 검색어
+    gen_jp = ["#海の生き物", "#深海魚", "#自然", "#海", "#神秘", "#不思議な生き物"]
+    gen_ko = ["#바다생물", "#심해어", "#자연", "#바다", "#신비", "#신기한생물"]
+
+    def _dedup(seq: list[str], limit: int = 15) -> list[str]:
+        out: list[str] = []
+        for t in seq:
+            if t and t not in out:
+                out.append(t)
+        return out[:limit]
+
+    return _dedup(fmt_jp + sp_jp + gen_jp), _dedup(fmt_ko + sp_ko + gen_ko)
+
+
 def _build_meta(theme_key: str, segs: list, chapters: str, chapter_items: list | None = None) -> dict:
     from src.categories.deep_sea import longform_script as LS
     adj, title_word, _tone = LS.theme_words(theme_key)
@@ -157,6 +200,7 @@ def _build_meta(theme_key: str, segs: list, chapters: str, chapter_items: list |
     names_ko = " / ".join((s.ko_name or s.jp_name) for s in ordered)
     yt_title = (f"深海の{adj}生き物 TOP{n}｜{top.jp_name}ほか")[:30]
     yt_title_ko = (f"심해의 {theme_key} 생물 TOP{n} | {top.ko_name or top.jp_name} 외")[:34]
+    tags_jp, tags_ko = _seo_hashtags(theme_key, segs)
     desc = (
         f"光の届かない深海に潜む、{adj}生き物たちのランキング TOP{n}。\n"
         f"第{n}位から、第1位まで。あなたが一番ゾッとするのはどれでしょうか。\n\n"
@@ -164,7 +208,7 @@ def _build_meta(theme_key: str, segs: list, chapters: str, chapter_items: list |
         f"登場: {names}\n\n"
         f"映像: NOAA Ocean Exploration ほか・Public Domain / CC0\n"
         f"チャンネル登録で、次の深海へ。\n"
-        f"#深海 #海洋生物 #深海生物 #ランキング"
+        f"{' '.join(tags_jp)}"
     )
     chapters_ko = _ko_chapters(chapters, chapter_items)
     desc_ko = (
@@ -174,7 +218,7 @@ def _build_meta(theme_key: str, segs: list, chapters: str, chapter_items: list |
         f"등장: {names_ko}\n\n"
         f"영상: NOAA Ocean Exploration 외 · Public Domain / CC0\n"
         f"구독하면, 다음 심해로.\n"
-        f"#심해 #해양생물 #심해생물 #랭킹"
+        f"{' '.join(tags_ko)}"
     )
     sources = [{"jp_name": s.jp_name, "sci_name": s.sci_name, "rank": s.rank,
                 "source": getattr(s, "_source", ""), "credit": getattr(s, "_credit", "")}
@@ -183,6 +227,7 @@ def _build_meta(theme_key: str, segs: list, chapters: str, chapter_items: list |
             "yt_title": yt_title, "yt_title_ko": yt_title_ko,
             "yt_description": desc, "yt_description_ko": desc_ko,
             "chapters": chapters, "chapters_ko": chapters_ko,
+            "hashtags": tags_jp, "hashtags_ko": tags_ko,
             "n": n, "sources": sources}
 
 

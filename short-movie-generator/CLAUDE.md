@@ -244,14 +244,21 @@
     (구현: 대시보드 `worker/index.mjs`의 `LF_POOL`/체크박스, 백엔드 `longform_script.infer_theme`/
     `is_auto_theme`, `run_longform._infer_theme_for`. 종 풀은 `src/core/footage.py`의 `_SEED`에
     새 종을 추가할 때 함께 갱신. 각 종 카드엔 카테고리 라벨(심해생물/일반해양/미세조류/침몰선)도 표시.)
-  - **롱폼 결과 프레임(`/lf/<id>`)**: 제작 완료 후 **제목·설명(주제 설명 + 00:00부터 타임스탬프)을
-    일본어/한국어 2단으로 보여주는 전용 페이지**. 제작 카드 하단 "최근 롱폼 결과"에서 진입, 텔레그램
+  - **롱폼 결과 프레임(`/lf/<id>`)**: 제작 완료 후 **제목·설명(주제 설명 + 00:00부터 타임스탬프)
+    + SEO 해시태그를 일본어/한국어 2단으로 보여주는 전용 페이지**. 제작 카드 하단 "최근 롱폼 결과"에서 진입, 텔레그램
     메시지에도 링크 포함. 레코드는 `content/lf-<run>.json`(kind="longform")에 커밋되며 쇼츠 3자리
     숫자 레코드와 파일명으로 분리(라이브러리 목록에 섞이지 않음).
     (구현: 백엔드 `content_store.write_longform_record`, `run_longform._build_meta`/`_ko_chapters`
     — 세그먼트별 국문명은 `SegmentSpec.ko_name`, 타임스탬프는 `compile.compile_longform`의
     `chapter_items`로 구조화 전달. 대시보드 `renderLongformDetail`/`listLongform`.
     워크플로 `generate-longform.yml`의 "콘텐츠 레코드 기록"+"Commit" 스텝이 커밋·푸시.)
+  - **★롱폼 SEO 해시태그(일/한 · 확정)**: 롱폼 결과 프레임에 **SEO 최적화 해시태그 프레임(일본어/한국어
+    2단, 각각 복사 버튼)**을 둔다. 태그 구성 = ①필수 공통(`#深海`·`#海洋生物` / `#심해`·`#해양생물`,
+    하드룰) ②포맷·랭킹(`#深海生物`·`#ランキング`·`#TOP{n}`·`#雑学`) ③테마 태그 ④등장 종명(1위부터)
+    ⑤심해·자연 일반 검색어 → 중복 제거 후 15개 안팎. **사실 왜곡 태그(괴물·UMA 등) 금지**. 같은 태그가
+    설명란(`yt_description`) 말미에도 자동 삽입된다. (구현: `run_longform._seo_hashtags`/`_tagify`,
+    `_build_meta`가 `hashtags`/`hashtags_ko` 반환, `content_store.write_longform_record` 저장,
+    대시보드 `renderLongformDetail` 해시태그 2단 프레임.)
 - **★유튜브 자동 업로드 토큰 수명(확정 · 재발 방지)**: 롱폼은 `generate-longform.yml`이 유튜브에
   **비공개** 자동 업로드한다. 인증은 OAuth 리프레시 토큰(시크릿 `YOUTUBE_*` 3개).
   - **근본 원인 규칙**: OAuth 동의 화면이 **"테스트(Testing)"** 상태면 리프레시 토큰이 **7일 만에 만료**된다.
