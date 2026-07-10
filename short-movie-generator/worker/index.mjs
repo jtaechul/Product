@@ -104,6 +104,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
+const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
 const UP_WF="upload-longform.yml";    // 롱폼 유튜브 '수동' 업로드(운영자 확인 후 클릭)
 const US_WF="upload-short.yml";       // 쇼츠 유튜브 '수동' 업로드(운영자 확인 후 클릭)
 // 실사 영상이 확보된 종 풀(코드 시드 추가 시 여기도 함께 갱신 — src/core/footage.py _SEED 참고).
@@ -589,12 +590,25 @@ async function renderLongformDetail(id){
       '<div><span class="lbl">해시태그(SEO 최적화) · 한국어(참고)</span>'+
         '<textarea id="lftagko" readonly rows="4">'+esc((rec.hashtags_ko||[]).join(" "))+'</textarea>'+
         '<button class="btn" id="lfhtko" style="margin-top:6px">한국어 해시태그 복사</button></div>'+
-    '</div>';
+    '</div>'+
+    // 부분 재생성(영상 유지·저비용) — 과거 레코드(해시태그 빈칸 등) 보정용. 규칙대로 텍스트만 다시 생성.
+    '<div class="card" style="margin-top:12px">'+
+      '<span class="lbl">제목·설명·해시태그 재생성(영상은 그대로 · 20~40초)</span>'+
+      '<div class="btnrow" style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
+        '<button class="btn warn" id="lfrgtag">해시태그 재생성</button>'+
+        '<button class="btn" id="lfrgtitle">제목 재생성</button>'+
+        '<button class="btn" id="lfrgdesc">설명 재생성</button>'+
+        '<button class="btn" id="lfrgall">전체(제목+설명+해시태그)</button></div>'+
+      '<div class="hint" style="margin-top:6px">누르면 20~40초 뒤 이 화면을 새로고침하면 값이 채워집니다.</div></div>';
   const tas=dc.querySelectorAll("textarea");
   $("#lfcpjp").onclick=()=>copyText(tas[2].value,"일본어 설명을 복사했어요. 유튜브 설명란에 붙여넣기 하세요.");
   $("#lfcpko").onclick=()=>copyText(tas[3].value,"한국어 설명(참고)을 복사했어요.");
   $("#lfhtjp").onclick=()=>copyText($("#lftagjp").value,"일본어 해시태그를 복사했어요. 유튜브 설명란·태그에 붙여넣기 하세요.");
   $("#lfhtko").onclick=()=>copyText($("#lftagko").value,"한국어 해시태그(참고)를 복사했어요.");
+  $("#lfrgtag").onclick=()=>regenLongform(id,"hashtags");
+  $("#lfrgtitle").onclick=()=>regenLongform(id,"title");
+  $("#lfrgdesc").onclick=()=>regenLongform(id,"desc");
+  $("#lfrgall").onclick=()=>regenLongform(id,"all");
   if($("#bdl"))$("#bdl").onclick=()=>saveVideo(prox(md.video_url),esc(id)+"_longform.mp4");
   const upBtn=document.getElementById("lfup");
   if(upBtn)upBtn.onclick=()=>uploadLongform(id);
@@ -615,6 +629,19 @@ async function uploadLongform(id){
     else{const t=await r.text();banner("업로드 시작 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");
       if(b){b.disabled=false;b.textContent="유튜브에 올리기";}}
   }catch(e){banner("업로드 오류: "+e,"err");if(b){b.disabled=false;b.textContent="유튜브에 올리기";}}
+}
+
+// 롱폼 제목·설명·해시태그만 재생성(영상 유지) — regen-longform-meta.yml 디스패치.
+async function regenLongform(id,scope){
+  if(!authReady()){banner("재생성에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
+  const nm={all:"제목·설명·해시태그 전체",title:"제목",desc:"설명",hashtags:"해시태그"}[scope]||scope;
+  banner(nm+" 재생성 중… (영상은 그대로, 20~40초 뒤 새로고침)");
+  try{
+    const r=await fetch(API+"/actions/workflows/"+RGLF_WF+"/dispatches",{method:"POST",headers:headers(true),
+      body:JSON.stringify({ref:BRANCH,inputs:{content_id:id,scope:scope}})});
+    if(r.status===204)banner(nm+" 재생성 시작! 20~40초 뒤 이 화면을 새로고침하면 값이 채워집니다.","ok");
+    else{const t=await r.text();banner("재생성 시작 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
+  }catch(e){banner("재생성 오류: "+e,"err");}
 }
 
 async function saveCaption(id){

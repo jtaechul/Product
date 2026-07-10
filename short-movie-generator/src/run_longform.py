@@ -190,9 +190,14 @@ def _seo_hashtags(theme_key: str, segs: list) -> tuple[list[str], list[str]]:
     return _dedup(fmt_jp + sp_jp + gen_jp), _dedup(fmt_ko + sp_ko + gen_ko)
 
 
-def _build_meta(theme_key: str, segs: list, chapters: str, chapter_items: list | None = None) -> dict:
+def _compose_meta_text(theme_key: str, segs: list, chapters: str, chapters_ko: str) -> dict:
+    """제목·설명·해시태그(일/한) 텍스트만 조립. 챕터(일/한)는 이미 만들어진 값을 그대로 받는다.
+
+    최초 제작(`_build_meta`)과 사후 텍스트 재생성(`rebuild_meta_from_record`)이 같은 규칙을
+    공유하도록 분리한 순수 함수(렌더·소싱 불필요 → 재생성이 빠르고 결정적).
+    """
     from src.categories.deep_sea import longform_script as LS
-    adj, title_word, _tone = LS.theme_words(theme_key)
+    adj, _title_word, _tone = LS.theme_words(theme_key)
     n = len(segs)
     top = min(segs, key=lambda s: s.rank)
     ordered = sorted(segs, key=lambda s: s.rank)
@@ -210,7 +215,6 @@ def _build_meta(theme_key: str, segs: list, chapters: str, chapter_items: list |
         f"チャンネル登録で、次の深海へ。\n"
         f"{' '.join(tags_jp)}"
     )
-    chapters_ko = _ko_chapters(chapters, chapter_items)
     desc_ko = (
         f"빛이 닿지 않는 심해에 사는, {theme_key} 생물들의 랭킹 TOP{n}.\n"
         f"{n}위부터 1위까지. 당신이 가장 소름 돋는 건 어느 쪽일까요?\n\n"
@@ -220,15 +224,61 @@ def _build_meta(theme_key: str, segs: list, chapters: str, chapter_items: list |
         f"구독하면, 다음 심해로.\n"
         f"{' '.join(tags_ko)}"
     )
+    return {"yt_title": yt_title, "yt_title_ko": yt_title_ko,
+            "yt_description": desc, "yt_description_ko": desc_ko,
+            "hashtags": tags_jp, "hashtags_ko": tags_ko}
+
+
+class _RecSeg:
+    """레코드(content/<id>.json)에서 복원한 세그먼트 어댑터(재생성용)."""
+    def __init__(self, rank, jp_name, ko_name, sci_name):
+        self.rank, self.jp_name, self.ko_name, self.sci_name = rank, jp_name, ko_name, sci_name
+
+
+def _segs_from_record(rec: dict) -> list:
+    """레코드의 sources(+chapters_ko)로 세그먼트를 복원. ko_name은 sources에 있으면 그걸,
+    없으면 chapters_ko의 'N위 국문명' 줄에서 순위로 매칭해 채운다(구 레코드 호환)."""
+    import re as _re
+    ko_by_rank: dict[int, str] = {}
+    for ln in (rec.get("chapters_ko") or "").splitlines():
+        m = _re.search(r"(\d+)\s*위\s+(.+)", ln.strip())
+        if m:
+            ko_by_rank[int(m.group(1))] = m.group(2).strip()
+    segs = []
+    for s in rec.get("sources", []):
+        rank = int(s.get("rank", 0) or 0)
+        ko = s.get("ko_name") or ko_by_rank.get(rank) or s.get("jp_name", "")
+        segs.append(_RecSeg(rank, s.get("jp_name", ""), ko, s.get("sci_name", "")))
+    return segs
+
+
+def rebuild_meta_from_record(rec: dict) -> dict:
+    """기존 롱폼 레코드에서 제목·설명·해시태그(일/한)를 다시 도출(영상 재렌더 없음).
+
+    대시보드의 '제목/설명/해시태그 재생성' 버튼이 부르는 저비용 경로. 챕터·종·테마 등
+    영상에 종속된 값은 레코드에 저장된 것을 그대로 재사용한다.
+    """
+    theme_key = rec.get("theme", "") or "기이한"
+    segs = _segs_from_record(rec)
+    if not segs:
+        return {}
+    return _compose_meta_text(theme_key, segs, rec.get("chapters", ""), rec.get("chapters_ko", ""))
+
+
+def _build_meta(theme_key: str, segs: list, chapters: str, chapter_items: list | None = None) -> dict:
+    from src.categories.deep_sea import longform_script as LS
+    _adj, title_word, _tone = LS.theme_words(theme_key)
+    n = len(segs)
+    ordered = sorted(segs, key=lambda s: s.rank)
+    chapters_ko = _ko_chapters(chapters, chapter_items)
+    text = _compose_meta_text(theme_key, segs, chapters, chapters_ko)
     sources = [{"jp_name": s.jp_name, "sci_name": s.sci_name, "rank": s.rank,
+                "ko_name": (s.ko_name or s.jp_name),
                 "source": getattr(s, "_source", ""), "credit": getattr(s, "_credit", "")}
                for s in ordered]
     return {"theme": theme_key, "title_word": title_word,
-            "yt_title": yt_title, "yt_title_ko": yt_title_ko,
-            "yt_description": desc, "yt_description_ko": desc_ko,
             "chapters": chapters, "chapters_ko": chapters_ko,
-            "hashtags": tags_jp, "hashtags_ko": tags_ko,
-            "n": n, "sources": sources}
+            "n": n, "sources": sources, **text}
 
 
 def run_longform(theme_key: str, species: list[str], base_dir: str = ".",

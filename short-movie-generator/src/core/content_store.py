@@ -183,6 +183,41 @@ def write_longform_record(base_dir: str, content_id: str, meta: dict, *,
     return str(p)
 
 
+def regen_longform_text(base_dir: str, content_id: str, scope: str = "all") -> bool:
+    """롱폼 레코드의 제목·설명·해시태그(일/한)를 다시 도출해 부분 갱신(영상 재렌더 없음).
+
+    scope: all(전체) / title(제목만) / desc(설명만) / hashtags(해시태그만).
+    과거에 만든 롱폼(해시태그 필드가 빈 레코드 등)을 영상 재제작 없이 텍스트만 새로 채운다.
+    """
+    from src.run_longform import rebuild_meta_from_record
+    rec = load_record(base_dir, content_id)
+    if not rec or rec.get("kind") != "longform":
+        return False
+    text = rebuild_meta_from_record(rec)
+    if not text:
+        return False
+    sc = (scope or "all").lower()
+    if sc in ("all", "title"):
+        rec["yt_title"] = text["yt_title"]; rec["yt_title_ko"] = text["yt_title_ko"]
+    if sc in ("all", "desc", "description"):
+        rec["yt_description"] = text["yt_description"]
+        rec["yt_description_ko"] = text["yt_description_ko"]
+    if sc in ("all", "hashtags", "tags"):
+        rec["hashtags"] = text["hashtags"]; rec["hashtags_ko"] = text["hashtags_ko"]
+    rec["updated_at"] = _now_iso()
+    record_path(base_dir, content_id).write_text(
+        json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+    upsert_manifest(base_dir, {
+        "id": str(content_id), "kind": "longform",
+        "yt_title": rec.get("yt_title", ""), "yt_title_ko": rec.get("yt_title_ko", ""),
+        "n": rec.get("n", 0), "total_s": rec.get("total_s", 0),
+        "date": str(rec.get("created_at", ""))[:10],
+        "has_video": bool((rec.get("media") or {}).get("video_url")),
+    })
+    log.info("[content] 롱폼 텍스트 재생성: %s (scope=%s)", content_id, sc)
+    return True
+
+
 def set_longform_youtube(base_dir: str, content_id: str, *, youtube_url: str,
                          privacy: str = "") -> bool:
     """롱폼 레코드에 유튜브 업로드 결과(URL·공개범위)를 기록 + 매니페스트 갱신.

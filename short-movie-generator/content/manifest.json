@@ -72,16 +72,6 @@
     "date": "2026-07-10"
   },
   {
-    "id": "lf-3",
-    "kind": "longform",
-    "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
-    "yt_title_ko": "심해의 기이한 생물 TOP6 | 심해붉은해파리 외",
-    "n": 6,
-    "total_s": 414.85,
-    "date": "2026-07-10",
-    "has_video": true
-  },
-  {
     "id": "012",
     "kind": "reels",
     "common_name_ko": "파리지옥말미잘",
@@ -115,5 +105,15 @@
     "common_name_en": "Wreck Aries (cargo ship)",
     "scientific_name": "Wreck Aries",
     "date": "2026-07-10"
+  },
+  {
+    "id": "lf-3",
+    "kind": "longform",
+    "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
+    "yt_title_ko": "심해의 기이한 생물 TOP6 | 심해붉은해파리 외",
+    "n": 6,
+    "total_s": 414.85,
+    "date": "2026-07-10",
+    "has_video": true
   }
 ]
