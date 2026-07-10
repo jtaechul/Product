@@ -72,14 +72,6 @@
     "date": "2026-07-09"
   },
   {
-    "id": "012",
-    "kind": "reels",
-    "common_name_ko": "파리지옥말미잘",
-    "common_name_en": "Venus flytrap anemone",
-    "scientific_name": "Actinoscyphia aurelia",
-    "date": "2026-07-09"
-  },
-  {
     "id": "013",
     "kind": "reels",
     "common_name_ko": "육식멍게",
@@ -96,5 +88,14 @@
     "total_s": 414.85,
     "date": "2026-07-10",
     "has_video": true
+  },
+  {
+    "id": "012",
+    "kind": "reels",
+    "common_name_ko": "파리지옥말미잘",
+    "common_name_en": "Venus flytrap anemone",
+    "scientific_name": "Actinoscyphia aurelia",
+    "date": "2026-07-10",
+    "youtube_url": "https://youtu.be/lhfjZZ7QVrY"
   }
 ]
