@@ -19,6 +19,7 @@ OCR: tesseract(eng). 반투명 로고 대비 대비강화·2배 확대 전처리
 from __future__ import annotations
 
 import logging
+import os
 import re
 import subprocess
 import tempfile
@@ -41,6 +42,44 @@ _MIN_LEN = 3
 _WORD_RE = re.compile(r"[A-Za-z0-9]{3,}")
 
 
+# ★정지-이미지 소스 차단(핵심 규칙): 원본이 '움직이지 않는 정지 화면(사진을 영상으로 포장한 것 등)'
+# 이면 영상으로 제작하지 않는다. 실측: 실제 수중 영상은 인접 프레임 median 밝기차 13~36,
+# 정지 이미지는 0~1로 확연히 갈린다 → 문턱 3.0 아래면 정지로 판정(넉넉한 마진).
+_STATIC_THRESHOLD = 3.0
+
+
+def motion_score(video: str, sample: int = 20) -> float:
+    """원본 클립의 움직임 점수 = 실시간 1fps로 뽑은 인접 프레임들의 median 절대밝기차(0~255).
+
+    컨테이너 duration이 깨진 NOAA webm이 있어 duration에 의존하지 않고 `-frames:v`로 상한만 둔다.
+    낮을수록 정지에 가깝다(사진→영상 포장물 걸러내기용).
+    """
+    from PIL import Image, ImageChops, ImageStat
+    with tempfile.TemporaryDirectory(prefix="motion_") as td:
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", video,
+                        "-vf", "fps=1,scale=320:-2", "-frames:v", str(sample),
+                        str(Path(td) / "m_%03d.png")], capture_output=True)
+        fs = sorted(Path(td).glob("m_*.png"))
+        if len(fs) < 3:
+            return 0.0                      # 프레임이 거의 없음 = 정지로 취급(안전측)
+        diffs = []
+        for a, b in zip(fs, fs[1:]):
+            d = ImageChops.difference(Image.open(a).convert("L"), Image.open(b).convert("L"))
+            diffs.append(ImageStat.Stat(d).mean[0])
+        diffs.sort()
+        return diffs[len(diffs) // 2]
+
+
+def is_static_source(video: str, threshold: float = _STATIC_THRESHOLD) -> bool:
+    """원본이 정지(이미지) 소스인가 → True면 제작 금지(상위에서 소스 폐기)."""
+    score = motion_score(video)
+    if score < threshold:
+        log.warning("[wm] ★정지 소스 판정(움직임 %.2f < %.1f) → 영상 제작 금지: %s", score, threshold, video)
+        return True
+    log.info("[wm] 움직임 %.2f(≥%.1f) → 실사 영상 OK: %s", score, threshold, video)
+    return False
+
+
 def _extract_frames(video: str, out_dir: str, start: float = 0.0, dur: float | None = None,
                     fps: float = 1.0, width: int = 1280) -> list[Path]:
     """1초(기본) 간격 프레임 추출. 반환: PNG 경로 목록(시간순, t = start + i/fps)."""
@@ -56,51 +95,67 @@ def _extract_frames(video: str, out_dir: str, start: float = 0.0, dur: float | N
     return sorted(out.glob("f_*.png"))
 
 
-def _ocr_words(png: Path) -> list[dict]:
-    """프레임 1장 OCR → [{text, conf, x, y, w, h}] (정규화 0~1 좌표).
+# ★속도(빨리감기 검수) + 폭주 차단. OCR은 프레임당 tesseract 서브프로세스라 느리고, 특히
+# 해저 바닥 같은 '고주파 잡음' 프레임에선 레이아웃 분석이 폭주해 수십초~수분 hang이 실측됐다.
+# 대책: ①640폭 축소 ②가벼운 블러+이진화(threshold)로 잡음 제거 — 밝은 워터마크·URL만 남겨
+#   tesseract가 볼 후보 영역을 격감 → 잡음 프레임도 즉시 끝남(글자는 여전히 읽힘)
+# ③프레임당 tesseract 시간제한(hang 방지, 초과 시 그 프레임은 텍스트 없음으로 — 워터마크는
+#   여러 초 지속돼 인접 프레임이 잡으므로 안전) ④스레드풀 병렬(서브프로세스라 실병렬).
+_OCR_MAXW = 640
+_OCR_TIMEOUT = 12          # 초/프레임 — 이 이상 걸리면 잡음으로 보고 스킵(hang 원천 차단)
+_OCR_THRESHOLD = 130       # 이진화 문턱. ★반투명 NOAA 로고까지 잡으려면 너무 높이지 말 것
+                           # (165는 반투명 로고를 놓쳤음 — 검증으로 확인. 130=로고 검출+잡음 억제 양립)
+_OCR_WORKERS = max(2, (os.cpu_count() or 4) - 1)
 
-    반투명 워터마크 검출률을 위해 원본 + 대비강화(autocontrast) 2패스 후 합집합.
-    """
-    from PIL import Image, ImageOps
-    import pytesseract
 
+def _prep_ocr(png: Path):
+    """OCR 전처리: 640폭 축소 → 대비강화 → 가벼운 블러 → 이진화(밝은 글자만). 반환 (img, w, h)."""
+    from PIL import Image, ImageOps, ImageFilter
     im = Image.open(png).convert("L")
     fw, fh = im.size
-    passes = [im, ImageOps.autocontrast(im, cutoff=2)]
-    words, seen = [], set()
-    for p in passes:
+    if fw > _OCR_MAXW:
+        im = im.resize((_OCR_MAXW, max(1, round(fh * _OCR_MAXW / fw))))
+    im = ImageOps.autocontrast(im, cutoff=1)
+    im = im.filter(ImageFilter.GaussianBlur(0.6))        # 미세 텍스처 뭉갬(글자 획은 유지)
+    im = im.point(lambda p: 255 if p > _OCR_THRESHOLD else 0)   # 이진화 → 잡음 영역 제거
+    return im, im.size[0], im.size[1]
+
+
+def _ocr_words(png: Path) -> list[dict]:
+    """프레임 1장 OCR → [{text, conf, x, y, w, h}] (정규화 0~1 좌표). 전처리+시간제한."""
+    import pytesseract
+    im, dw, dh = _prep_ocr(png)
+    words = []
+    try:
+        d = pytesseract.image_to_data(im, lang="eng", config="--psm 11 --oem 1",
+                                      output_type=pytesseract.Output.DICT, timeout=_OCR_TIMEOUT)
+    except (RuntimeError, Exception) as e:  # noqa: BLE001  (timeout 포함 — 그 프레임만 스킵)
+        log.info("[wm] OCR 스킵(%s): %s", png.name, str(e)[:60])
+        return words
+    for i in range(len(d["text"])):
+        t = (d["text"][i] or "").strip()
         try:
-            d = pytesseract.image_to_data(p, lang="eng", config="--psm 11",
-                                          output_type=pytesseract.Output.DICT)
-        except Exception as e:  # noqa: BLE001
-            log.warning("[wm] OCR 실패(%s): %s", png.name, e)
+            conf = float(d["conf"][i])
+        except (TypeError, ValueError):
             continue
-        for i in range(len(d["text"])):
-            t = (d["text"][i] or "").strip()
-            try:
-                conf = float(d["conf"][i])
-            except (TypeError, ValueError):
-                continue
-            if conf < _MIN_CONF or len(t) < _MIN_LEN or not _WORD_RE.search(t):
-                continue
-            key = (t.lower(), round(d["left"][i] / 20), round(d["top"][i] / 20))
-            if key in seen:
-                continue
-            seen.add(key)
-            words.append({"text": t, "conf": conf,
-                          "x": d["left"][i] / fw, "y": d["top"][i] / fh,
-                          "w": d["width"][i] / fw, "h": d["height"][i] / fh})
+        if conf < _MIN_CONF or len(t) < _MIN_LEN or not _WORD_RE.search(t):
+            continue
+        words.append({"text": t, "conf": conf,
+                      "x": d["left"][i] / dw, "y": d["top"][i] / dh,
+                      "w": d["width"][i] / dw, "h": d["height"][i] / dh})
     return words
 
 
 def scan(video: str, start: float = 0.0, dur: float | None = None, fps: float = 1.0) -> list[dict]:
-    """클립을 1초 간격 OCR 스캔 → [{"t": 초, "words": [...]}, ...]."""
+    """클립을 1초 간격 OCR 스캔 → [{"t": 초, "words": [...]}, ...]. 프레임 OCR은 병렬."""
+    from concurrent.futures import ThreadPoolExecutor
     with tempfile.TemporaryDirectory(prefix="wmscan_") as td:
         frames = _extract_frames(video, td, start, dur, fps)
-        out = []
-        for i, f in enumerate(frames):
-            out.append({"t": start + i / fps, "words": _ocr_words(f)})
-        return out
+        if not frames:
+            return []
+        with ThreadPoolExecutor(max_workers=_OCR_WORKERS) as ex:
+            results = list(ex.map(_ocr_words, frames))
+        return [{"t": start + i / fps, "words": w} for i, w in enumerate(results)]
 
 
 # NOAA 계열로 보이는 토큰(부분 인식 포함: LORATION·OCEA·plorer.noaa 등) — 지속성과 무관하게 처리

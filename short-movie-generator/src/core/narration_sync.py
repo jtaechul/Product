@@ -159,6 +159,53 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
 
 
+def _char_px(c: str, subsz: int) -> float:
+    """한 글자의 대략 렌더 폭(px). CJK·전각은 ≈폰트크기, 반각(영문·숫자·공백)은 ≈0.55×."""
+    o = ord(c)
+    full = (0x3000 <= o <= 0x30FF or 0x4E00 <= o <= 0x9FFF or 0xFF00 <= o <= 0xFFEF
+            or 0xAC00 <= o <= 0xD7A3)  # 히라·가타·한자·전각·한글
+    return subsz * (1.0 if full else 0.55)
+
+
+def _fit_pieces(text: str, st: float, en: float, max_px: float, subsz: int) -> list[tuple]:
+    """한 자막 청크를 '프레임 폭을 넘지 않는 한 줄' 조각들로 쪼갠다(줄바꿈 대신 순차 표시).
+
+    - 폭 예측으로 그리디 패킹: 다음 글자를 더하면 max_px 초과 시 조각 확정.
+    - 가능하면 문장부호(、。等) 직후에서 끊어 자연스럽게.
+    - 각 조각의 표시창은 [st,en]을 조각 글자수에 비례해 나눠 배정(발화 싱크 유지).
+    반환: [(piece_text, piece_st, piece_en)]. 한 줄에 들어가면 그대로 1개.
+    """
+    text = text.strip()
+    if not text:
+        return []
+    pieces, cur, cur_px, brk = [], "", 0.0, -1
+    for ch in text:
+        cw = _char_px(ch, subsz)
+        if cur and cur_px + cw > max_px:
+            # 최근 문장부호 직후에서 끊기(조각 끝 근처일 때만) → 자연스러운 분절
+            if brk > 0 and brk >= len(cur) - 4:
+                pieces.append(cur[:brk]); rest = cur[brk:]
+                cur, cur_px = rest, sum(_char_px(x, subsz) for x in rest)
+            else:
+                pieces.append(cur); cur, cur_px = "", 0.0
+            brk = -1
+        cur += ch; cur_px += cw
+        if ch in "、。，．！？」』":
+            brk = len(cur)
+    if cur:
+        pieces.append(cur)
+    pieces = [p for p in (s.strip() for s in pieces) if p]
+    if len(pieces) <= 1:
+        return [(text, st, en)]
+    total = sum(len(p) for p in pieces) or 1
+    out, t = [], st
+    for k, p in enumerate(pieces):
+        seg = (en - st) * (len(p) / total)
+        pe = en if k == len(pieces) - 1 else t + seg
+        out.append((p, t, pe)); t = pe
+    return out
+
+
 def build_synced_ass(disp: list[tuple], out_path: str, *, font: str = "Noto Sans CJK JP",
                      accent: str = "&H00EAE06F&", hook_first: bool = True,
                      w: int = 720, h: int = 1280, sub_scale: float = 1.0) -> str:
@@ -166,9 +213,14 @@ def build_synced_ass(disp: list[tuple], out_path: str, *, font: str = "Noto Sans
 
     accent: ASS 색(&HBBGGRR&). 테마 순환(cyan/gold/coral)을 상위에서 주입.
     sub_scale: 본문 자막 크기 배율(기본 1.0). 롱폼(16:9)은 h가 작아 자막이 작으므로 2.0 등으로 키운다.
+    ★자막이 커져 프레임을 넘칠 땐 줄바꿈(WrapStyle) 대신 _fit_pieces로 '한 줄 조각'으로
+      쪼개 순차 표시한다(세로 쇼츠 가독성·깔끔함 우선, 요청 반영).
     """
+    subsz = int(h * 0.039 * sub_scale)
+    margin = 80                                    # Sub 스타일 MarginL/R
+    max_px = (w - 2 * margin) * 0.96               # 안전 여유 4%
     lines = [_ASS_HEAD.format(w=w, h=h, font=font,
-                              subsz=int(h * 0.039 * sub_scale), submv=int(h * 0.16),
+                              subsz=subsz, submv=int(h * 0.16),
                               hooksz=int(h * 0.053), hookmv=int(h * 0.234),
                               accent=accent.strip("&") and accent)]
     for i, (ch, st, en) in enumerate(disp):
@@ -177,6 +229,7 @@ def build_synced_ass(disp: list[tuple], out_path: str, *, font: str = "Noto Sans
                    r"\bord4\blur7\3c%s\shad0}" % (w // 2, int(h * 0.28), accent))
             lines.append(f"Dialogue: 0,{_ts(st)},{_ts(en)},Hook,,0,0,0,,{tag}{ch}")
         else:
-            lines.append(f"Dialogue: 0,{_ts(st)},{_ts(en)},Sub,,0,0,0,,{{\\fad(70,70)}}{ch}")
+            for piece, ps, pe in _fit_pieces(ch, st, en, max_px, subsz):
+                lines.append(f"Dialogue: 0,{_ts(ps)},{_ts(pe)},Sub,,0,0,0,,{{\\fad(70,70)}}{piece}")
     Path(out_path).write_text("\n".join(lines), encoding="utf-8")
     return out_path

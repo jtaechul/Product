@@ -24,6 +24,9 @@ from src.registry import get_category
 log = logging.getLogger(__name__)
 
 WATERMARK = "DEEP DIVE LOG"  # 브랜드명 [TBD] — 확정 시 교체
+# 쇼츠(9:16) 본문 자막 크기 배율 — 세로 영상 가독성 위해 크게(기본 대비 1.8배).
+# 앞으로 제작되는 모든 쇼츠에 일괄 적용. 조정 시 이 값만 바꾼다.
+REELS_SUB_SCALE = 1.8
 
 
 def _apply_grade(video_path: str, vf: str, work_dir: str) -> str:
@@ -261,7 +264,8 @@ def run_reels(
 
     # 4) 카라오케 자막 번인(본문 — 훅 없음)
     ass = narration_sync.build_synced_ass(nar["disp"], str(work_dir / "body.ass"),
-                                          hook_first=False, w=CLIP_W, h=CLIP_H)
+                                          hook_first=False, w=CLIP_W, h=CLIP_H,
+                                          sub_scale=REELS_SUB_SCALE)
     subbed = str(work_dir / "body_subbed.mp4")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", body_v, "-vf", f"ass={ass}",
                     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", "-an", subbed], check=True)

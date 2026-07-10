@@ -185,6 +185,15 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
     elif not _download(cand["url"], out):
         return None
     log.info("[footage] 확보: %s (%s, %s)", out, cand["license"], cand["credit"])
+    # ★정지-이미지 소스 차단(핵심 규칙 · 절대 위반 금지): 움직임이 없는 '사진→영상 포장물'은
+    # 영상으로 만들지 않는다. 정지로 판정되면 소스 미확보(None)로 처리 → 릴스는 중단, 롱폼은 스킵.
+    try:
+        from src.core import watermark_qc as _wq
+        if _wq.is_static_source(str(out)):
+            log.warning("[footage] 정지 소스 폐기(영상 아님): %s / %s", scientific_name, common_name_en)
+            return None
+    except Exception as e:  # noqa: BLE001  (검사 실패 시 통과 — 검사 오류로 제작 자체를 막지 않음)
+        log.warning("[footage] 정지 검사 생략(오류): %s", e)
     # NOAA 소스는 좌상단 워터마크 영역 정보를 함께 반환(하류에서 회피/제거)
     logo = _NOAA_LOGO_BOX if "noaa" in (cand.get("credit", "") or "").lower() else None
     return {"path": str(out), "license": cand["license"],
