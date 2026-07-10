@@ -1,0 +1,130 @@
+name: Upload Longform to YouTube
+
+# 롱폼 유튜브 '수동' 업로드 — 운영자가 대시보드 /lf/<id> 에서 영상을 확인하고
+# '유튜브에 올리기' 버튼을 눌렀을 때만 디스패치된다(제작 단계에서는 자동 업로드하지 않음).
+# 이미 만들어진 Release 영상(content/<id>.json 의 media.video_url)을 내려받아 그대로 업로드한다.
+
+on:
+  workflow_dispatch:
+    inputs:
+      content_id:
+        description: "롱폼 콘텐츠 id (예: lf-12)"
+        required: true
+      privacy:
+        description: "공개 범위"
+        type: choice
+        options: [public, unlisted, private]
+        default: public
+
+concurrency:
+  group: upload-longform-${{ github.event.inputs.content_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    name: 유튜브 업로드
+    defaults:
+      run:
+        working-directory: short-movie-generator
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps (google api)
+        run: pip install google-auth google-auth-oauthlib google-api-python-client
+
+      - name: 레코드에서 제목·설명·영상 URL 읽기
+        id: rec
+        run: |
+          python - "${{ github.event.inputs.content_id }}" <<'PY' >> "$GITHUB_OUTPUT"
+          import json, sys
+          cid = sys.argv[1]
+          rec = json.load(open(f"content/{cid}.json", encoding="utf-8"))
+          media = rec.get("media", {}) or {}
+          vu = media.get("video_url", "")
+          assert vu, "media.video_url 없음 — Release 업로드 전이거나 잘못된 id"
+          print(f"video_url={vu}")
+          print(f"already={media.get('youtube_url','')}")
+          PY
+
+      - name: 이미 업로드됐으면 중단(중복 방지)
+        if: steps.rec.outputs.already != ''
+        run: |
+          echo "::notice::이미 유튜브에 업로드됨: ${{ steps.rec.outputs.already }} → 중복 업로드 생략"
+          exit 0
+
+      - name: Release 영상 내려받기
+        if: steps.rec.outputs.already == ''
+        run: |
+          mkdir -p work
+          curl -sSL -o work/video.mp4 "${{ steps.rec.outputs.video_url }}"
+          ls -la work/video.mp4
+
+      - name: 유튜브 업로드
+        if: steps.rec.outputs.already == ''
+        id: yt
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          PRIVACY: ${{ github.event.inputs.privacy }}
+          CID: ${{ github.event.inputs.content_id }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          from src.core import youtube_upload as yt
+          from src.core import content_store
+          cid = os.environ["CID"]
+          rec = json.load(open(f"content/{cid}.json", encoding="utf-8"))
+          if not yt.has_credentials():
+              print("yt_url=")
+              print("::error::YouTube 시크릿(YOUTUBE_CLIENT_ID/SECRET/REFRESH_TOKEN) 미설정 → 업로드 불가")
+              raise SystemExit(1)
+          r = yt.upload("work/video.mp4", rec.get("yt_title",""), rec.get("yt_description",""),
+                        tags=["深海","深海生物","ランキング","deep sea"],
+                        privacy=os.environ.get("PRIVACY","public"))
+          content_store.set_longform_youtube(".", cid, youtube_url=r["url"], privacy=r["privacy"])
+          print(f"yt_url={r['url']}")
+          print(f"yt_privacy={r['privacy']}")
+          PY
+
+      - name: 레코드 커밋(유튜브 URL 반영)
+        if: steps.rec.outputs.already == '' && steps.yt.outputs.yt_url != ''
+        run: |
+          git add "content/${{ github.event.inputs.content_id }}.json" content/manifest.json
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(longform): ${{ github.event.inputs.content_id }} 유튜브 업로드 기록 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git fetch origin "${{ github.ref_name }}" \
+              && git rebase "origin/${{ github.ref_name }}" \
+              && git push origin "HEAD:${{ github.ref_name }}" \
+              && { echo "저장 완료"; exit 0; }
+            echo "재시도 $i…"; git rebase --abort 2>/dev/null || true; sleep 3
+          done
+          echo "저장 실패(push)"; exit 1
+
+      - name: 텔레그램 알림
+        if: steps.rec.outputs.already == '' && steps.yt.outputs.yt_url != ''
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          YT_URL: ${{ steps.yt.outputs.yt_url }}
+          PRIV: ${{ steps.yt.outputs.yt_privacy }}
+        run: |
+          if [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT" ]; then echo "생략"; exit 0; fi
+          MSG="✅ 유튜브 업로드 완료(${PRIV}): ${YT_URL}"
+          for CID in $TG_CHAT; do
+            curl -sS -F chat_id="$CID" -F text="$MSG" \
+                 "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" | head -c 120; echo
+          done

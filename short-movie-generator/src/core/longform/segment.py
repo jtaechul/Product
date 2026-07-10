@@ -210,17 +210,18 @@ def render_segment(spec: SegmentSpec, out_dir: str, cfg: SegmentConfig | None = 
     # 3) HUD 렌더(스탬프는 아래 5)에서 슬램 애니 프레임으로)
     hud = render_hud(spec, str(wd / "hud.png"))
 
-    # 4) 본문: 실사 delogo→그레이딩→HUD 오버레이→자막
+    # 4) 본문: 실사 → ★delogo(NOAA 로고/글씨 제거) → 그레이딩 → HUD 오버레이 → 자막.
+    #    ★하드룰: 세그먼트 본문에도 반드시 delogo를 적용한다(로고 노출 금지).
+    #    콜드오픈과 달리 본문은 좌상단 도감 패널(x 28~372)이 그 위를 덮으므로, delogo 박스를
+    #    패널 폭 안(≈0.28w·0.15h)으로 잡아 우측 스미어가 패널 밖으로 삐져나오지 않게 한다.
     pre = ""
     if spec.logo_box:
-        try:
-            from src.core.reframe import delogo_vf
-            # 원본 실측 크기로 delogo (footage는 1280x720로 스케일 전 적용 위해 별도 처리 생략, 스케일 후 좌표는 근사)
-            pre = ""  # 스케일 후 좌표 어긋남 방지: 아래 필터에서 crop 기반 대신 스케일→delogo 근사 생략
-        except Exception:
-            pre = ""
+        from src.core.reframe import delogo_vf
+        lx, ly, lw, lh = spec.logo_box
+        box = (lx, ly, max(lw, 0.28), max(lh, 0.15))  # 358×108 — NOAA 배너 덮음 & 패널 안(<372)
+        pre = "," + delogo_vf(W, H, box)     # 1280x720 스케일 후 좌표 기준
     body = str(wd / "body.mp4")
-    fc = (f"[0:v]scale={W}:{H},setsar=1,{cfg.grade}[g];"
+    fc = (f"[0:v]scale={W}:{H},setsar=1{pre},{cfg.grade}[g];"
           f"[g][1:v]overlay=0:0[o];[o]ass={ass}[v]")
     _run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{spec.footage_start}", "-t", f"{body_s:.2f}",
           "-i", spec.footage_path, "-i", hud, "-filter_complex", fc, "-map", "[v]",

@@ -104,6 +104,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
+const UP_WF="upload-longform.yml";    // 롱폼 유튜브 '수동' 업로드(운영자 확인 후 클릭)
 // 실사 영상이 확보된 종 풀(코드 시드 추가 시 여기도 함께 갱신 — src/core/footage.py _SEED 참고).
 // value는 data.SPECIES의 common_name_ko(정확 매칭 별칭)라 그대로 --species 인자로 쓸 수 있다.
 // cat: 대시보드 표시용 카테고리 라벨(심해생물/일반해양/미세조류/침몰선). 현재 풀은 전부 심해생물.
@@ -162,40 +163,45 @@ function ytTitle(hook,name,ko){
   return ko?hook+"——"+name+"의 정체":hook+"——"+name+"の正体";}
 
 async function fetchRaw(path){
+  // 공개 읽기 프록시 우선(무인증·어느 기기서든 동작). 실패 시 인증 API로 폴백.
+  try{const r=await fetch("/api/pub?path="+encodeURIComponent(path));
+    if(r.ok)return await r.text();}catch(e){}
   try{const r=await fetch(API+"/contents/"+path+"?ref="+BRANCH,{headers:{...headers(true),"Accept":"application/vnd.github.raw+json"}});
     if(!r.ok)return null;return await r.text();}catch(e){return null;}
 }
+async function fetchManifest(){const t=await fetchRaw(CONTENT_DIR+"/manifest.json");try{const a=JSON.parse(t);return Array.isArray(a)?a:[];}catch(e){return [];}}
 async function fetchCatalog(){const t=await fetchRaw(CATALOG_PATH);try{const a=JSON.parse(t);return Array.isArray(a)?a:[];}catch(e){return [];}}
-// 전 카테고리 콘텐츠 목록: content/*.json 을 직접 나열(카테고리별 catalog에 의존 안 함).
-// 심해뿐 아니라 일반해양생물·미세조류·난파선 등 모든 제작물이 라이브러리/현황에 보이게 함.
+// 전 콘텐츠 목록: 공개 매니페스트(manifest.json) 우선 → 어느 기기서든 무인증 조회.
+// 인증 가능한 기기에선 디렉토리 API로 매니페스트에 아직 없는 레거시 레코드를 보강(중복 제거).
 async function listContent(){
+  const man=await fetchManifest();
+  const out=man.filter(x=>x&&x.kind!=="longform").map(x=>({
+    no:String(x.id), common_name_ko:x.common_name_ko||x.common_name_en||"종",
+    common_name_en:x.common_name_en||"", scientific_name:x.scientific_name||"",
+    date:x.date||"", hasVideo:!!x.has_video}));
   try{
     const r=await fetch(API+"/contents/"+CONTENT_DIR+"?ref="+BRANCH,{headers:headers(true)});
-    if(!r.ok)return [];
-    const files=await r.json();
-    const ids=(Array.isArray(files)?files:[]).map(f=>f.name||"").filter(n=>/^\\d{3}\\.json$/.test(n)).map(n=>n.slice(0,3));
-    const recs=await Promise.all(ids.map(async id=>{
-      const rec=await fetchRecord(id); if(!rec)return null;
-      const sp=rec.species||{};
-      return {no:id, common_name_ko:sp.common_name_ko||sp.common_name_en||"종",
-              common_name_en:sp.common_name_en||"", scientific_name:sp.scientific_name||"",
-              date:String(rec.updated_at||rec.created_at||"").slice(0,10),
-              hasVideo:!!(rec.media&&rec.media.video_url)};
-    }));
-    return recs.filter(Boolean).sort((a,b)=>(a.no<b.no?1:-1));
-  }catch(e){return [];}
+    if(r.ok){
+      const files=await r.json();
+      const have=new Set(out.map(o=>o.no));
+      const ids=(Array.isArray(files)?files:[]).map(f=>f.name||"").filter(n=>/^\\d{3}\\.json$/.test(n)).map(n=>n.slice(0,3)).filter(id=>!have.has(id));
+      const recs=await Promise.all(ids.map(async id=>{
+        const rec=await fetchRecord(id); if(!rec)return null; const sp=rec.species||{};
+        return {no:id, common_name_ko:sp.common_name_ko||sp.common_name_en||"종",
+                common_name_en:sp.common_name_en||"", scientific_name:sp.scientific_name||"",
+                date:String(rec.updated_at||rec.created_at||"").slice(0,10),
+                hasVideo:!!(rec.media&&rec.media.video_url)};
+      }));
+      out.push(...recs.filter(Boolean));
+    }
+  }catch(e){}
+  return out.sort((a,b)=>(a.no<b.no?1:-1));
 }
 async function fetchRecord(id){const t=await fetchRaw(CONTENT_DIR+"/"+id+".json");try{return JSON.parse(t);}catch(e){return null;}}
-// 롱폼 결과 목록: content/lf-*.json 만 나열(쇼츠 3자리 숫자 레코드와 파일명으로 구분).
+// 롱폼 결과 목록: 공개 매니페스트에서 kind=longform 만.
 async function listLongform(){
-  try{
-    const r=await fetch(API+"/contents/"+CONTENT_DIR+"?ref="+BRANCH,{headers:headers(true)});
-    if(!r.ok)return [];
-    const files=await r.json();
-    const ids=(Array.isArray(files)?files:[]).map(f=>f.name||"").filter(n=>/^lf-\\d+\\.json$/.test(n)).map(n=>n.slice(0,-5));
-    const recs=await Promise.all(ids.map(fetchRecord));
-    return recs.filter(Boolean).sort((a,b)=>(a.id<b.id?1:-1));
-  }catch(e){return [];}
+  const man=await fetchManifest();
+  return man.filter(x=>x&&x.kind==="longform").sort((a,b)=>(String(a.id)<String(b.id)?1:-1));
 }
 
 // ── 라우팅: 전체 페이지 로드마다 경로로 뷰 결정 (worker가 모든 경로에 앱 셸 서빙) ──
@@ -339,7 +345,7 @@ async function loadLongformResults(){
   el.innerHTML='<span class="lbl">최근 롱폼 결과</span>'+recs.slice(0,6).map(r=>(
     '<a class="clitem" href="/lf/'+encodeURIComponent(r.id)+'"><span class="no">'+esc(r.n||0)+'종</span>'+
     '<span class="nm">'+esc(r.yt_title||r.id)+'<small>'+esc(r.yt_title_ko||"")+'</small></span>'+
-    '<span class="t">'+esc(String(r.created_at||"").slice(0,10))+'</span></a>'
+    '<span class="t">'+esc(String(r.date||r.created_at||"").slice(0,10))+'</span></a>'
   )).join('');
 }
 async function loadRuns(){
@@ -358,18 +364,24 @@ async function loadRuns(){
   }catch(e){const el=$("#runs");if(el)el.innerHTML='<div class="hint">현황 조회 실패 — <a href="https://github.com/'+OWNER+'/'+REPO+'/actions" target="_blank">GitHub</a></div>';}
 }
 
-// ── 라이브러리: 콘텐츠 목록(도감 기준) ──
+// ── 라이브러리: 롱폼 + 쇼츠 콘텐츠 목록 ──
 async function renderLibrary(){
-  view().innerHTML='<div class="card"><span class="lbl">제작된 콘텐츠 (탭하면 열람·수정·재생성)</span><div id="clist"><div class="hint">불러오는 중…</div></div></div>';
-  const cat=await listContent();
+  view().innerHTML='<div class="card"><span class="lbl">롱폼 (탭하면 제목·설명 열람)</span><div id="lflist"><div class="hint">불러오는 중…</div></div></div>'+
+    '<div class="card"><span class="lbl">쇼츠 (탭하면 열람·수정·재생성)</span><div id="clist"><div class="hint">불러오는 중…</div></div></div>';
+  const [lf,cat]=await Promise.all([listLongform(),listContent()]);
+  const lfel=document.getElementById("lflist");
+  lfel.innerHTML=lf.length?lf.map(r=>(
+    '<a class="clitem" href="/lf/'+encodeURIComponent(r.id)+'"><span class="no">'+esc(r.n||0)+'종</span>'+
+    '<span class="nm">'+esc(r.yt_title||r.id)+'<small>'+esc(r.yt_title_ko||"")+'</small></span>'+
+    '<span class="t">'+esc(String(r.date||"").slice(0,10))+'</span></a>'
+  )).join(""):'<div class="hint">아직 롱폼이 없습니다.</div>';
   const el=document.getElementById("clist");
-  if(!cat.length){el.innerHTML='<div class="hint">아직 제작된 콘텐츠가 없습니다. <a href="/">제작하러 가기</a></div>';return;}
-  el.innerHTML=cat.map(it=>{
+  el.innerHTML=cat.length?cat.map(it=>{
     const id=num3(it.no);
     return '<a class="clitem" href="/c/'+id+'"><span class="no">#'+id+'</span>'+
       '<span class="nm">'+esc(it.common_name_ko||"종")+'<small>'+esc(it.common_name_en||"")+" · "+esc(it.scientific_name||"")+'</small></span>'+
       '<span class="t">'+esc(it.date||"")+'</span></a>';
-  }).join("");
+  }).join(""):'<div class="hint">아직 쇼츠가 없습니다. <a href="/">제작하러 가기</a></div>';
 }
 
 // 게시물(캐러셀) 섹션: 5장 이미지 가로 스크롤 + 게시물 캡션(다음날 오후 발행용)
@@ -483,11 +495,28 @@ async function renderLongformDetail(id){
   let mediaHtml="";
   if(md.video_url)mediaHtml='<video src="'+prox(md.video_url)+'" controls playsinline preload="metadata" poster="'+(md.cover_url?prox(md.cover_url):"")+'"></video>';
   else if(md.cover_url)mediaHtml='<img src="'+prox(md.cover_url)+'">';
+  // ★유튜브 업로드는 자동으로 하지 않는다 — 아래 영상을 확인하고 이상 없으면 버튼으로 직접 올린다.
+  let upHtml;
+  if(md.youtube_url){
+    upHtml='<div class="card" style="margin-top:12px;background:#0d2216;border-color:#1c5">'+
+      '<span class="lbl">유튜브 업로드 완료('+esc(md.youtube_privacy||"")+')</span>'+
+      '<a class="btn save" href="'+esc(md.youtube_url)+'" target="_blank" style="margin-top:8px">유튜브에서 보기 → '+esc(md.youtube_url)+'</a></div>';
+  }else{
+    upHtml='<div class="card" style="margin-top:12px">'+
+      '<span class="lbl">유튜브 올리기 — 위 영상을 확인하고 이상 없을 때만 누르세요(자동 업로드 안 함)</span>'+
+      '<div class="btnrow" style="margin-top:8px;align-items:center;gap:8px">'+
+        '<select id="lfpriv" style="padding:8px;border-radius:8px"><option value="public">공개</option>'+
+          '<option value="unlisted">일부공개(링크 아는 사람만)</option>'+
+          '<option value="private">비공개(나만)</option></select>'+
+        '<button class="btn save" id="lfup">유튜브에 올리기</button></div>'+
+      '<div class="hint" style="margin-top:6px">누르면 업로드가 시작되고 1~3분 뒤 이 화면을 새로고침하면 링크가 표시됩니다.</div></div>';
+  }
   dc.className="card detail";
   dc.innerHTML=
     '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px"><b style="font-size:19px">'+esc(id)+'</b>'+
       '<span class="mono" style="color:var(--gy);font-size:12px">'+esc(rec.theme||"")+' · '+esc(rec.n||0)+'종 · '+Math.round(rec.total_s||0)+'초</span></div>'+
     mediaHtml+
+    upHtml+
     '<div class="dual" style="margin-top:12px">'+
       '<div><span class="lbl">영상 제목 · 일본어(유튜브)</span>'+
         '<textarea readonly rows="2">'+esc(rec.yt_title||"")+'</textarea></div>'+
@@ -505,6 +534,25 @@ async function renderLongformDetail(id){
   const tas=dc.querySelectorAll("textarea");
   $("#lfcpjp").onclick=()=>copyText(tas[2].value,"일본어 설명을 복사했어요. 유튜브 설명란에 붙여넣기 하세요.");
   $("#lfcpko").onclick=()=>copyText(tas[3].value,"한국어 설명(참고)을 복사했어요.");
+  const upBtn=document.getElementById("lfup");
+  if(upBtn)upBtn.onclick=()=>uploadLongform(id);
+}
+
+// 롱폼 유튜브 '수동' 업로드 — upload-longform.yml 디스패치(운영자 확인 후 클릭).
+async function uploadLongform(id){
+  if(!authReady()){banner("유튜브 업로드에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
+  const priv=($("#lfpriv")||{}).value||"public";
+  const nm={public:"공개",unlisted:"일부공개",private:"비공개"}[priv]||priv;
+  if(!confirm("이 영상을 유튜브에 '"+nm+"'로 올릴까요? 확인을 누르면 업로드가 시작됩니다."))return;
+  const b=$("#lfup"); if(b){b.disabled=true;b.textContent="업로드 시작 중…";}
+  banner("유튜브 업로드를 시작합니다… (1~3분 뒤 새로고침하면 링크가 표시됩니다)");
+  try{
+    const r=await fetch(API+"/actions/workflows/"+UP_WF+"/dispatches",{method:"POST",headers:headers(true),
+      body:JSON.stringify({ref:BRANCH,inputs:{content_id:id,privacy:priv}})});
+    if(r.status===204)banner("업로드 시작! 1~3분 뒤 이 화면을 새로고침하세요.","ok");
+    else{const t=await r.text();banner("업로드 시작 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");
+      if(b){b.disabled=false;b.textContent="유튜브에 올리기";}}
+  }catch(e){banner("업로드 오류: "+e,"err");if(b){b.disabled=false;b.textContent="유튜브에 올리기";}}
 }
 
 async function saveCaption(id){
@@ -610,6 +658,22 @@ init();
 // ── 서버 측: GitHub 토큰(Cloudflare Secret env.GH_PAT)로 프록시 → 브라우저 토큰 불필요 ──
 function j(o, status){return new Response(JSON.stringify(o),{status:status||200,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});}
 
+// ── 공개 읽기 프록시: content 레코드/카탈로그/매니페스트를 raw.githubusercontent.com(공개·무인증)로 중계 ──
+// 왜(실제 결함): 기기에 PAT 없으면 GitHub API가 403 → 텔레그램 링크로 연 폰에서 레코드가 안 열림
+// (무한 로딩). raw는 공개 리포에 무인증 200 → 어느 기기서든 조회 가능. 허용 경로만(개방 프록시 방지).
+async function pubRead(url){
+  const path = url.searchParams.get("path") || "";
+  if(!/^short-movie-generator\/(content\/[\w.\-]+\.json|src\/categories\/deep_sea\/catalog\.json)$/.test(path))
+    return j({error:"path not allowed"}, 403);
+  const target = "https://raw.githubusercontent.com/" + OWNER + "/" + REPO + "/" + BRANCH + "/" + path;
+  try{
+    const resp = await fetch(target, {headers:{"User-Agent":"deep-dive-log-dashboard"}, cf:{cacheTtl:20, cacheEverything:true}});
+    if(!resp.ok) return new Response("", {status: resp.status});
+    return new Response(await resp.text(), {status:200,
+      headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
+  }catch(e){ return new Response("", {status:502}); }
+}
+
 async function ghProxy(request, url, env){
   const token = env && env.GH_PAT;
   if(!token) return j({error:"server token not configured"}, 501);
@@ -672,6 +736,7 @@ export default {
     if (url.pathname === "/health") return new Response("ok");
     if (url.pathname === "/api/mode") return j({ server: !!(env && env.GH_PAT) });
     if (url.pathname === "/api/media") return mediaProxy(request, url);
+    if (url.pathname === "/api/pub") return pubRead(url);
     if (url.pathname.startsWith("/api/gh/")) return ghProxy(request, url, env);
     return new Response(HTML, {
       headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },

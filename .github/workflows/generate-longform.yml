@@ -1,7 +1,8 @@
 name: Generate Longform
 
-# 롱폼(랭킹형 TOP N) 제작 — 무료(GitHub Actions). 결과: ① 유튜브 '비공개' 자동 업로드
-# ② 텔레그램으로 미리보기(커버+제목+유튜브 링크) 전송 → 운영자가 확인 후 유튜브에서 공개 전환.
+# 롱폼(랭킹형 TOP N) 제작 — 무료(GitHub Actions). 결과: ① 영상 Release 업로드 + 콘텐츠 레코드
+# ② 텔레그램으로 미리보기(커버+제목+대시보드 링크) 전송. ★유튜브 업로드는 하지 않는다 —
+#   운영자가 대시보드 /lf/<id> 에서 확인 후 '유튜브에 올리기' 버튼을 눌러야 upload-longform.yml 이 업로드.
 # 실행: Actions → Generate Longform → Run workflow (테마 + 종 3~6개 콤마 입력, 입력 순서=순위 1위부터)
 
 on:
@@ -16,11 +17,6 @@ on:
         description: "종 3~6개 콤마 구분(입력 순서=순위, 첫째=1위). 예: 머리없는닭괴물,대왕등각류,북태평양심해문어"
         required: true
         default: "머리없는닭괴물,대왕등각류,북태평양심해문어,넓적문어,심해붉은해파리"
-      privacy:
-        description: "유튜브 공개 범위(게이트: 기본 비공개 → 확인 후 수동 공개)"
-        type: choice
-        options: [private, unlisted, public]
-        default: private
   # 요청파일 푸시로도 생성 가능(대시보드·원격 조작용)
   push:
     branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
@@ -49,7 +45,6 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "theme=${{ inputs.theme }}" >> "$GITHUB_OUTPUT"
             echo "species=${{ inputs.species }}" >> "$GITHUB_OUTPUT"
-            echo "privacy=${{ inputs.privacy }}" >> "$GITHUB_OUTPUT"
           else
             F=$(ls -t requests/longform_*.json | head -1)
             python - "$F" <<'PY' >> "$GITHUB_OUTPUT"
@@ -57,7 +52,6 @@ jobs:
           r = json.load(open(sys.argv[1], encoding="utf-8"))
           print(f"theme={r.get('theme','자동')}")
           print(f"species={','.join(r.get('species', []))}")
-          print(f"privacy={r.get('privacy','private')}")
           PY
           fi
 
@@ -88,39 +82,9 @@ jobs:
           echo "video=output/longform/longform.mp4" >> "$GITHUB_OUTPUT"
           echo "meta=output/longform/meta.json" >> "$GITHUB_OUTPUT"
 
-      - name: Upload to YouTube (비공개 게이트)
-        id: yt
-        continue-on-error: true   # 업로드 실패해도 영상·Release·텔레그램은 계속(운영자가 수동 업로드 가능)
-        env:
-          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
-          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
-          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-          PRIVACY: ${{ steps.inp.outputs.privacy }}
-        run: |
-          python - "${{ steps.gen.outputs.video }}" "${{ steps.gen.outputs.meta }}" <<'PY'
-          import json, os, sys
-          from src.core import youtube_upload as yt
-          video, metap = sys.argv[1], sys.argv[2]
-          m = json.load(open(metap, encoding="utf-8"))
-          # ★GITHUB_OUTPUT에는 key=value만 직접 기록(annotation/멀티라인 에러가 섞이면 출력파일이 깨져
-          #   스텝 전체가 실패하고 이후 단계가 통째로 스킵되던 버그 방지). 경고는 stdout annotation으로만.
-          def emit(k, v):
-              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
-                  f.write(f"{k}={v}\n")
-          if not yt.has_credentials():
-              emit("yt_url", "")
-              print("::notice::YouTube 시크릿 없음 → 업로드 생략(텔레그램 미리보기만)")
-              sys.exit(0)
-          try:
-              r = yt.upload(video, m["yt_title"], m["yt_description"],
-                            tags=["深海","深海生物","ランキング","deep sea"],
-                            privacy=os.environ.get("PRIVACY","private"))
-              emit("yt_url", r["url"]); emit("yt_privacy", r["privacy"])
-          except Exception as e:
-              emit("yt_url", "")
-              msg = str(e).replace("\n", " ").replace("\r", " ")[:200]
-              print(f"::warning::YouTube 업로드 실패(영상·텔레그램은 계속 진행): {msg}")
-          PY
+      # ★유튜브 자동 업로드 폐지(운영자 요청): 제작 단계에서는 절대 업로드하지 않는다.
+      #   대신 대시보드 /lf/<id> 에서 운영자가 영상을 확인하고 '유튜브에 올리기' 버튼을 누르면
+      #   upload-longform.yml 이 디스패치되어 그때 업로드한다(사람 확인 게이트).
 
       - name: Publish media to Release (영구 호스팅)
         id: media
@@ -158,7 +122,7 @@ jobs:
 
       - name: Commit 콘텐츠 레코드 (원격이 앞서가도 재시도)
         run: |
-          git add "content/${{ steps.media.outputs.content_id }}.json"
+          git add "content/${{ steps.media.outputs.content_id }}.json" content/manifest.json
           if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -180,7 +144,7 @@ jobs:
           print("## 롱폼 생성 완료 ✅")
           print(f"- **제목**: {m.get('yt_title','')}")
           print(f"- **길이**: {m.get('total_s',0)}s / **{m.get('n',0)}종**")
-          print(f"- **YouTube**: {'${{ steps.yt.outputs.yt_url }}' or '(업로드 생략)'}")
+          print("- **YouTube**: 대시보드에서 확인 후 '유튜브에 올리기' 버튼으로 수동 업로드")
           print(f"\n**챕터**\n\n{m.get('chapters','')}")
           PY
 
@@ -188,7 +152,6 @@ jobs:
         env:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
-          YT_URL: ${{ steps.yt.outputs.yt_url }}
           VIDEO_URL: ${{ steps.media.outputs.video_url }}
           COVER: ${{ steps.media.outputs.cover }}
         run: |
@@ -196,15 +159,11 @@ jobs:
           CAP=$(python - <<'PY'
           import json, os
           m = json.load(open("${{ steps.gen.outputs.meta }}", encoding="utf-8"))
-          yt = os.environ.get("YT_URL","").strip()
           vu = os.environ.get("VIDEO_URL","").strip()
           lines = [f"🎬 롱폼 생성 완료 · {m.get('n',0)}종 ({m.get('total_s',0)}s)",
-                   m.get("yt_title",""), ""]
-          if yt:
-              lines += [f"▶ 유튜브(비공개): {yt}", "확인 후 유튜브에서 '공개'로 전환하세요.", ""]
-          else:
-              lines += ["⚠ 유튜브 자동 업로드 생략/실패 → 아래 원본으로 직접 업로드하세요.", ""]
-          lines += [f"📝 제목·설명(일/한) 확인: https://shorts-dashboard.jtaechul.workers.dev/lf/lf-${{ github.run_number }}", ""]
+                   m.get("yt_title",""), "",
+                   "▶ 제작페이지에서 영상을 확인하고 이상 없으면 '유튜브에 올리기'를 누르세요(자동 업로드 안 함).", ""]
+          lines += [f"📝 확인·업로드: https://shorts-dashboard.jtaechul.workers.dev/lf/lf-${{ github.run_number }}", ""]
           lines += [f"⬇ 원본: {vu}", "", "― 目次 ―", m.get("chapters","")]
           print("\n".join(lines)[:1000])
           PY

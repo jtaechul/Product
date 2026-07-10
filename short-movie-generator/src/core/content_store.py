@@ -44,6 +44,32 @@ def next_global_id(base_dir: str = ".") -> int:
     return mx + 1
 
 
+MANIFEST_NAME = "manifest.json"
+
+
+def _manifest_path(base_dir: str):
+    return content_dir(base_dir) / MANIFEST_NAME
+
+
+def upsert_manifest(base_dir: str, entry: dict) -> None:
+    """content/manifest.json 에 항목 upsert(id 기준). 대시보드가 이 '공개 목록 1파일'만 읽어
+    라이브러리·최근목록을 그린다 → GitHub 디렉토리 API(비인증 403) 없이 어느 기기서든 조회 가능.
+    """
+    p = _manifest_path(base_dir)
+    items = []
+    if p.exists():
+        try:
+            items = json.loads(p.read_text(encoding="utf-8"))
+            if not isinstance(items, list):
+                items = []
+        except Exception:  # noqa: BLE001
+            items = []
+    eid = str(entry.get("id", ""))
+    items = [x for x in items if isinstance(x, dict) and str(x.get("id")) != eid]
+    items.append(entry)
+    p.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def load_record(base_dir: str, content_id: str) -> dict | None:
     p = record_path(base_dir, content_id)
     if p.exists():
@@ -115,6 +141,13 @@ def write_record(base_dir: str, content_id: str, *, info, caption, asset,
     else:
         rec.setdefault("post", None)
     p.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+    upsert_manifest(base_dir, {
+        "id": str(content_id), "kind": "reels",
+        "common_name_ko": info.common_name_ko or info.common_name_en or "종",
+        "common_name_en": info.common_name_en or "",
+        "scientific_name": info.scientific_name or "",
+        "date": rec.get("updated_at", "")[:10],
+    })
     log.info("[content] 레코드 기록: %s (scope=%s)", p.name, scope)
     return str(p)
 
@@ -139,8 +172,41 @@ def write_longform_record(base_dir: str, content_id: str, meta: dict, *,
         "media": {"video_url": video_url, "cover_url": cover_url},
     }
     p.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+    upsert_manifest(base_dir, {
+        "id": str(content_id), "kind": "longform",
+        "yt_title": meta.get("yt_title", ""), "yt_title_ko": meta.get("yt_title_ko", ""),
+        "n": meta.get("n", 0), "total_s": meta.get("total_s", 0),
+        "date": rec.get("created_at", "")[:10], "has_video": bool(video_url),
+    })
     log.info("[content] 롱폼 레코드 기록: %s", p.name)
     return str(p)
+
+
+def set_longform_youtube(base_dir: str, content_id: str, *, youtube_url: str,
+                         privacy: str = "") -> bool:
+    """롱폼 레코드에 유튜브 업로드 결과(URL·공개범위)를 기록 + 매니페스트 갱신.
+
+    운영자가 대시보드에서 '유튜브에 올리기'를 눌러 upload-longform.yml 이 업로드에 성공한 뒤 호출.
+    대시보드는 이 값을 보고 '이미 업로드됨(재업로드 방지)'을 표시한다.
+    """
+    rec = load_record(base_dir, content_id)
+    if not rec or rec.get("kind") != "longform":
+        return False
+    media = rec.setdefault("media", {})
+    media["youtube_url"] = youtube_url
+    media["youtube_privacy"] = privacy
+    rec["updated_at"] = _now_iso()
+    record_path(base_dir, content_id).write_text(
+        json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+    upsert_manifest(base_dir, {
+        "id": str(content_id), "kind": "longform",
+        "yt_title": rec.get("yt_title", ""), "yt_title_ko": rec.get("yt_title_ko", ""),
+        "n": rec.get("n", 0), "total_s": rec.get("total_s", 0),
+        "date": str(rec.get("created_at", ""))[:10],
+        "has_video": bool((rec.get("media") or {}).get("video_url")),
+        "youtube_url": youtube_url,
+    })
+    return True
 
 
 def update_caption(base_dir: str, content_id: str, *, caption_body: str | None = None,
