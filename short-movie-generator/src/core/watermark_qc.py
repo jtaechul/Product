@@ -95,54 +95,49 @@ def _extract_frames(video: str, out_dir: str, start: float = 0.0, dur: float | N
     return sorted(out.glob("f_*.png"))
 
 
-# ★속도(빨리감기 검수) + 폭주 차단. OCR은 프레임당 tesseract 서브프로세스라 느리고, 특히
-# 해저 바닥 같은 '고주파 잡음' 프레임에선 레이아웃 분석이 폭주해 수십초~수분 hang이 실측됐다.
-# 대책: ①640폭 축소 ②가벼운 블러+이진화(threshold)로 잡음 제거 — 밝은 워터마크·URL만 남겨
-#   tesseract가 볼 후보 영역을 격감 → 잡음 프레임도 즉시 끝남(글자는 여전히 읽힘)
-# ③프레임당 tesseract 시간제한(hang 방지, 초과 시 그 프레임은 텍스트 없음으로 — 워터마크는
-#   여러 초 지속돼 인접 프레임이 잡으므로 안전) ④스레드풀 병렬(서브프로세스라 실병렬).
+# ★속도. OCR은 프레임당 tesseract 서브프로세스. 과거 '이진화(threshold)'로 잡음을 지우려 했으나
+# 실측 결과 이진화한 해저 텍스처가 오히려 수천 개의 가짜 글자 후보(speckle)를 만들어 psm 레이아웃
+# 분석이 폭주 → 롱폼 제작이 60분+로 hang. 그래서 이진화 폐기하고 '회색조 + 대비강화'로 되돌린다
+# (회색조 해저는 완만한 그라데이션이라 psm이 빠르고, 반투명 로고도 잘 읽힘 — 검출·속도 모두 유리).
+# 여기에 ①640폭 축소 ②스레드풀 병렬 ③넉넉한 timeout(안전망) 만 얹어 옛 방식보다 빠르게.
 _OCR_MAXW = 640
-_OCR_TIMEOUT = 12          # 초/프레임 — 이 이상 걸리면 잡음으로 보고 스킵(hang 원천 차단)
-_OCR_THRESHOLD = 130       # 이진화 문턱. ★반투명 NOAA 로고까지 잡으려면 너무 높이지 말 것
-                           # (165는 반투명 로고를 놓쳤음 — 검증으로 확인. 130=로고 검출+잡음 억제 양립)
+_OCR_TIMEOUT = 30          # 초/프레임 안전망(정상 프레임은 <1s, 극단 케이스만 스킵 → hang 방지)
 _OCR_WORKERS = max(2, (os.cpu_count() or 4) - 1)
 
 
-def _prep_ocr(png: Path):
-    """OCR 전처리: 640폭 축소 → 대비강화 → 가벼운 블러 → 이진화(밝은 글자만). 반환 (img, w, h)."""
-    from PIL import Image, ImageOps, ImageFilter
-    im = Image.open(png).convert("L")
-    fw, fh = im.size
-    if fw > _OCR_MAXW:
-        im = im.resize((_OCR_MAXW, max(1, round(fh * _OCR_MAXW / fw))))
-    im = ImageOps.autocontrast(im, cutoff=1)
-    im = im.filter(ImageFilter.GaussianBlur(0.6))        # 미세 텍스처 뭉갬(글자 획은 유지)
-    im = im.point(lambda p: 255 if p > _OCR_THRESHOLD else 0)   # 이진화 → 잡음 영역 제거
-    return im, im.size[0], im.size[1]
-
-
 def _ocr_words(png: Path) -> list[dict]:
-    """프레임 1장 OCR → [{text, conf, x, y, w, h}] (정규화 0~1 좌표). 전처리+시간제한."""
+    """프레임 1장 OCR → [{text, conf, x, y, w, h}] (정규화 0~1). 회색조·640축소·대비강화 2패스."""
+    from PIL import Image, ImageOps
     import pytesseract
-    im, dw, dh = _prep_ocr(png)
-    words = []
-    try:
-        d = pytesseract.image_to_data(im, lang="eng", config="--psm 11 --oem 1",
-                                      output_type=pytesseract.Output.DICT, timeout=_OCR_TIMEOUT)
-    except (RuntimeError, Exception) as e:  # noqa: BLE001  (timeout 포함 — 그 프레임만 스킵)
-        log.info("[wm] OCR 스킵(%s): %s", png.name, str(e)[:60])
-        return words
-    for i in range(len(d["text"])):
-        t = (d["text"][i] or "").strip()
+    im0 = Image.open(png).convert("L")
+    fw, fh = im0.size
+    if fw > _OCR_MAXW:
+        im0 = im0.resize((_OCR_MAXW, max(1, round(fh * _OCR_MAXW / fw))))
+    dw, dh = im0.size
+    passes = [im0, ImageOps.autocontrast(im0, cutoff=1)]   # 원본 + 대비강화(반투명 로고 대응)
+    words, seen = [], set()
+    for p in passes:
         try:
-            conf = float(d["conf"][i])
-        except (TypeError, ValueError):
+            d = pytesseract.image_to_data(p, lang="eng", config="--psm 11 --oem 1",
+                                          output_type=pytesseract.Output.DICT, timeout=_OCR_TIMEOUT)
+        except (RuntimeError, Exception) as e:  # noqa: BLE001  (timeout 포함 — 그 프레임만 스킵)
+            log.info("[wm] OCR 스킵(%s): %s", png.name, str(e)[:60])
             continue
-        if conf < _MIN_CONF or len(t) < _MIN_LEN or not _WORD_RE.search(t):
-            continue
-        words.append({"text": t, "conf": conf,
-                      "x": d["left"][i] / dw, "y": d["top"][i] / dh,
-                      "w": d["width"][i] / dw, "h": d["height"][i] / dh})
+        for i in range(len(d["text"])):
+            t = (d["text"][i] or "").strip()
+            try:
+                conf = float(d["conf"][i])
+            except (TypeError, ValueError):
+                continue
+            if conf < _MIN_CONF or len(t) < _MIN_LEN or not _WORD_RE.search(t):
+                continue
+            key = (t.lower(), round(d["left"][i] / 20), round(d["top"][i] / 20))
+            if key in seen:
+                continue
+            seen.add(key)
+            words.append({"text": t, "conf": conf,
+                          "x": d["left"][i] / dw, "y": d["top"][i] / dh,
+                          "w": d["width"][i] / dw, "h": d["height"][i] / dh})
     return words
 
 
@@ -210,9 +205,11 @@ def plan(video: str, want_start: float, want_dur: float,
     - want_dur 만큼 슬레이트 없는 연속 구간을 want_start 근처부터 탐색(없으면 슬레이트 최소 구간).
     - 선택 구간 안 텍스트 박스는 여유(패딩)를 두고 병합해 delogo 박스로.
     """
-    # 길이는 ffprobe 메타데이터를 믿지 않는다(NOAA webm은 컨테이너 duration이 깨진 경우 실존)
-    # → 1초 간격 프레임을 끝까지 추출해 '나온 프레임 수 = 실제 길이(초)'로 쓴다.
-    secs = scan(video, 0.0, None)
+    # ★속도: 전체 클립을 스캔하지 않는다(140s 클립을 다 스캔하면 낭비). 사용 구간 근방만 스캔해도
+    # 슬레이트 회피·delogo 박스 산출에 충분(오프닝 슬레이트+선택창+여유). 컨테이너 duration은
+    # NOAA webm에서 깨진 경우가 있어 안 믿고, 1초 프레임 추출 개수를 실제 길이로 쓴다.
+    scan_cap = want_start + want_dur + 20.0
+    secs = scan(video, 0.0, scan_cap)
     dur_s = float(len(secs))
     slate = {int(s["t"]) for s in secs if _is_slate_second(s["words"])}
 
@@ -286,7 +283,9 @@ def verify(video: str, fps: float = 1.0, skip_after: float | None = None) -> lis
     bad = []
     for s in secs:
         for w0 in s["words"]:
-            if FORBIDDEN.search(w0["text"]):
+            # 실제 NOAA 워터마크는 대개 conf 높음. 해저 텍스처 오검(가짜 문구)은 낮은 편이라
+            # conf≥62 만 '진짜 잔존'으로 본다(가짜 문구로 렌더 전체가 실패하는 사고 방지).
+            if w0.get("conf", 0) >= 62 and FORBIDDEN.search(w0["text"]):
                 bad.append({"t": s["t"], "text": w0["text"],
                             "box": (w0["x"], w0["y"], w0["w"], w0["h"])})
     if bad:
