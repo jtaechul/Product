@@ -1,5 +1,8 @@
 {
+ "mode": "produce",
  "provider": "auto",
- "note": "이 파일을 수정해 main에 push하면 shorts-produce 워크플로우가 실행됩니다. provider: auto | elevenlabs | typecast | clova | mock",
- "requested_at": "2026-07-11T16:20:00Z"
+ "row": "auto",
+ "privacy": "private",
+ "note": "이 파일을 main에 push하면 shorts-produce가 실행됩니다. mode: produce|phase0, provider: auto|elevenlabs|typecast|clova|mock",
+ "requested_at": "2026-07-11T17:20:00Z"
 }

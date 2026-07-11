@@ -64,3 +64,15 @@ assets:
   # 없으면 렌더러가 자체 생성 그라데이션 배경(화이트리스트: 자체 생성물)으로 폴백.
   pexels_query: "night city lights"
   pexels_count: 2
+
+script:                 # M3 대본 생성 (스펙 §M3)
+  model: "claude-sonnet-4-6"   # 스펙 지정 모델 (2026-07 기준 유효 ID 확인)
+  max_tokens: 4000
+
+upload:                 # M7 (스펙 §M7)
+  privacy_default: "private"   # 미인증 API 프로젝트는 자동 private 잠금 → 반자동 공개 전환
+  category_id: "28"            # 과학기술
+
+research:               # M1 (스펙 §M1)
+  min_score: 3.0        # 채널 중앙값 대비 배수
+  recent_videos: 30

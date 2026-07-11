@@ -7,3 +7,4 @@ __pycache__/
 
 # 예외: CC0 배경 원본 영상은 에셋이므로 커밋 허용 (licenses.csv에 출처 기록 필수)
 !assets/backgrounds/*.mp4
+data/research/
