@@ -102,7 +102,11 @@ jobs:
             echo "scope=all" >> "$GITHUB_OUTPUT"
             echo "category=deep_sea" >> "$GITHUB_OUTPUT"
           else
-            F=$(ls -t requests/*.json | head -1)
+            # ★푸시로 '이번에 바뀐' 요청 파일을 우선 선택(결정적). CI 체크아웃은 모든 파일 mtime이
+            #   같아 `ls -t`가 엉뚱한(오래된) 요청을 집던 버그가 있었다(재생성이 딴 회차로 나감).
+            #   longform_*.json은 롱폼 워크플로 소관이라 제외.
+            CH=$(git diff --name-only HEAD~1 HEAD -- 'requests/*.json' 2>/dev/null | grep -v 'longform_' | grep '\.json$' | head -1 || true)
+            if [ -n "$CH" ]; then F="$CH"; else F=$(ls -t requests/*.json | grep -v 'longform_' | head -1); fi
             python - "$F" <<'PY' >> "$GITHUB_OUTPUT"
           import json, sys
           r = json.load(open(sys.argv[1], encoding="utf-8"))
