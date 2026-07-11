@@ -1,0 +1,16 @@
+# 렌더링 — MoviePy 2.x 버전 고정 필수 (스펙 §M6: 2.x에서 API 대격변,
+#   set_position→with_position, fontsize→font_size, TextClip PIL 기반·ImageMagick 불필요)
+moviepy==2.2.1
+
+# TTS·유틸 (Phase 0)
+requests>=2.31,<3
+pyyaml>=6.0,<7
+numpy>=1.26
+
+# M5 타임스탬프 폴백 — 타임스탬프 미제공 TTS(typecast/clova) 사용 시 단어 타임스탬프 추출
+faster-whisper==1.2.1
+
+# Phase 1 이후 사용 예정 (스펙 §11-4 지정 패키지 — 지금은 코드 없음)
+google-api-python-client>=2.100
+google-auth-oauthlib>=1.1
+anthropic>=0.40
