@@ -1,5 +1,5 @@
 {
-  "provider": "mock",
-  "note": "이 파일을 수정해 main에 push하면 shorts-produce 워크플로우가 실행됩니다 (원격 실행용). provider: auto | elevenlabs | typecast | clova | mock",
-  "requested_at": "2026-07-11T15:50:00Z"
+ "provider": "auto",
+ "note": "이 파일을 수정해 main에 push하면 shorts-produce 워크플로우가 실행됩니다. provider: auto | elevenlabs | typecast | clova | mock",
+ "requested_at": "2026-07-11T16:20:00Z"
 }
