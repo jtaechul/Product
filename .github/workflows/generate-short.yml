@@ -67,6 +67,8 @@ jobs:
         with:
           # schedule(main에서 뜸)일 때도 운영 브랜치 코드를 사용
           ref: ${{ github.event_name == 'schedule' && 'claude/gemini-shorts-reels-generator-dhjfdt' || github.ref }}
+          # 요청파일 결정적 선택(git diff HEAD~1)이 실제로 동작하려면 직전 커밋이 필요
+          fetch-depth: 2
 
       - name: Resolve inputs (버튼 / 요청파일 / 스케줄)
         id: inp
@@ -74,11 +76,13 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             CID="${{ inputs.content_id }}"
             if [ -n "$CID" ]; then
-              # 재생성 모드: 기존 콘텐츠 레코드에서 종 복원 → 같은 회차·범위로 다시 제작
-              python - "$CID" "${{ inputs.visualizer }}" "${{ inputs.scope }}" <<'PY' >> "$GITHUB_OUTPUT"
+              # 재생성 모드: 기존 콘텐츠 레코드에서 종·카테고리 복원 → 같은 회차·범위로 다시 제작
+              # ★카테고리는 레코드 값을 우선(침몰선 재생성이 deep_sea로 오복원돼 '미등록 종'으로
+              #   실패하던 사고 방지). 구 레코드에 category가 없으면 버튼 입력값으로 폴백.
+              python - "$CID" "${{ inputs.visualizer }}" "${{ inputs.scope }}" "${{ inputs.category }}" <<'PY' >> "$GITHUB_OUTPUT"
           import json, sys
           from pathlib import Path
-          cid, viz, scope = sys.argv[1], sys.argv[2], sys.argv[3]
+          cid, viz, scope, cat_in = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
           cid = f"{int(cid):03d}"
           rec = json.loads(Path("content", f"{cid}.json").read_text(encoding="utf-8"))
           en = rec.get("species", {}).get("common_name_en", "") or "auto"
@@ -86,14 +90,15 @@ jobs:
           print(f"visualizer={viz}")
           print(f"episode={int(cid)}")
           print(f"scope={scope}")
+          print(f"category={rec.get('category') or cat_in or 'deep_sea'}")
           PY
             else
               echo "query=${{ inputs.query }}" >> "$GITHUB_OUTPUT"
               echo "visualizer=${{ inputs.visualizer }}" >> "$GITHUB_OUTPUT"
               echo "episode=${{ inputs.episode }}" >> "$GITHUB_OUTPUT"
               echo "scope=all" >> "$GITHUB_OUTPUT"
+              echo "category=${{ inputs.category }}" >> "$GITHUB_OUTPUT"
             fi
-            echo "category=${{ inputs.category }}" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.event_name }}" = "schedule" ]; then
             # 매일 자동: AI 카테고리 자동 로테이션 + 안정적인 panzoom(무쿼터)
             echo "query=auto" >> "$GITHUB_OUTPUT"
@@ -298,3 +303,20 @@ jobs:
             echo "재시도 $i (원격이 앞서감)…"; git rebase --abort 2>/dev/null || true; sleep 3
           done
           echo "저장 실패(push)"; exit 1
+
+      # ★실패 알림(운영자 가시성): 제작이 실패하면 텔레그램으로 즉시 알린다 —
+      #   "버튼을 눌렀는데 아무것도 안 나온다"가 조용히 지나가지 않게(로그 링크 포함).
+      - name: Notify failure to Telegram
+        if: failure()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          [ -z "$TG_TOKEN" ] && exit 0
+          MSG="⚠ 쇼츠 제작 실패 (run #${{ github.run_number }})
+          카테고리: ${{ steps.inp.outputs.category }} / 대상: ${{ steps.inp.outputs.query }}
+          로그: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          for CID in $TG_CHAT; do
+            curl -sS -F chat_id="$CID" -F text="$MSG" \
+                 "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" | head -c 120; echo
+          done
