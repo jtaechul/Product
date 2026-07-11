@@ -75,5 +75,12 @@
     "common_name_en": "Deep-sea red medusa",
     "scientific_name": "Crossota sp.",
     "date": "2026-07-11"
+  },
+  {
+    "no": 19,
+    "common_name_ko": "심해 킹크랩(리소드과)",
+    "common_name_en": "Lithodid king crab",
+    "scientific_name": "Lithodidae",
+    "date": "2026-07-11"
   }
 ]
