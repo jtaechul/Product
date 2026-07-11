@@ -5,5 +5,12 @@
     "common_name_en": "Wreck Aries (cargo ship)",
     "scientific_name": "Wreck Aries",
     "date": "2026-07-11"
+  },
+  {
+    "no": 15,
+    "common_name_ko": "U-1277 잠수함 난파선",
+    "common_name_en": "Wreck U-1277 (WWII German U-boat)",
+    "scientific_name": "Wreck U-1277",
+    "date": "2026-07-11"
   }
 ]

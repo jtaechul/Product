@@ -116,5 +116,13 @@
     "date": "2026-07-10",
     "has_video": true,
     "youtube_url": "https://youtu.be/G5eD8VEcEII"
+  },
+  {
+    "id": "015",
+    "kind": "reels",
+    "common_name_ko": "U-1277 잠수함 난파선",
+    "common_name_en": "Wreck U-1277 (WWII German U-boat)",
+    "scientific_name": "Wreck U-1277",
+    "date": "2026-07-11"
   }
 ]
