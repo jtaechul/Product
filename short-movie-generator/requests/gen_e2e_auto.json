@@ -1,0 +1,7 @@
+{
+  "category": "deep_sea",
+  "query": "auto",
+  "visualizer": "panzoom",
+  "scope": "all",
+  "_note": "E2E 검증: auto 후보 순회 폴백 + 캐시 분리 수정 후 쇼츠 제작이 끝까지 완주하는지 확인"
+}
