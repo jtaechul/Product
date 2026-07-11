@@ -142,14 +142,6 @@
     "date": "2026-07-11"
   },
   {
-    "id": "019",
-    "kind": "reels",
-    "common_name_ko": "심해 킹크랩(리소드과)",
-    "common_name_en": "Lithodid king crab",
-    "scientific_name": "Lithodidae",
-    "date": "2026-07-11"
-  },
-  {
     "id": "015",
     "kind": "reels",
     "common_name_ko": "U-1277 잠수함 난파선",
@@ -157,5 +149,14 @@
     "scientific_name": "Wreck U-1277",
     "date": "2026-07-11",
     "youtube_url": "https://youtu.be/XEynXd4Po4M"
+  },
+  {
+    "id": "019",
+    "kind": "reels",
+    "common_name_ko": "심해 킹크랩(리소드과)",
+    "common_name_en": "Lithodid king crab",
+    "scientific_name": "Lithodidae",
+    "date": "2026-07-11",
+    "youtube_url": "https://youtu.be/FnfF6KzStXk"
   }
 ]
