@@ -82,26 +82,25 @@ _SEED = {
     },
     "wreck aries": {
         "url": "https://upload.wikimedia.org/wikipedia/commons/1/15/Wreck_Aries_-_Dive_in_18m_cargo_ship.webm",
-        "license": "cc-by", "credit": "Vitor Alves · CC BY",
+        "license": "cc-by", "credit": "Vitor Alves · CC BY", "trim": (10, 8),
         "source": "https://commons.wikimedia.org/wiki/File:Wreck_Aries_-_Dive_in_18m_cargo_ship.webm",
     },
     # 침몰선(shipwreck) 실사 영상 확충 — 매번 같은 배(아리에스)만 나오던 문제 해결(모두 실존·CC BY·동적영상 검증).
+    # 아마추어 다이빙 영상은 인트로 타이틀카드(로고·문구)·아웃트로 크레딧이 박혀 있다.
+    # trim=(앞초, 뒤초)로 그 구간을 소스에서 물리적으로 잘라 본편(깨끗한 다이브 영상)만 쓴다.
+    # (예: U-1277 인트로에 'SUBMANIA Escola de Mergulho' 로고 → 앞 32초 트림.)
     "wreck u-1277": {
         "url": "https://upload.wikimedia.org/wikipedia/commons/4/4b/Dive_in_U1277_a_wreck_dive_in_a_WWll_German_Submarine.webm",
-        "license": "cc-by", "credit": "Victor Marafona · CC BY",
+        "license": "cc-by", "credit": "Victor Marafona · CC BY", "trim": (32, 8),
         "source": "https://commons.wikimedia.org/wiki/File:Dive_in_U1277_a_wreck_dive_in_a_WWll_German_Submarine.webm",
-    },
-    "wreck ss wisconsin": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/1/19/Lake_Michigan_Wreck_Dive_-_SS_Wisconsin%2C_Waukegan%2C_IL_%28north_of_Chicago%29%2C_summer_2012.webm",
-        "license": "cc-by", "credit": "Daniel Kramer · CC BY",
-        "source": "https://commons.wikimedia.org/wiki/File:Lake_Michigan_Wreck_Dive_-_SS_Wisconsin,_Waukegan,_IL_(north_of_Chicago),_summer_2012.webm",
     },
     "wreck madeirense": {
         "url": "https://upload.wikimedia.org/wikipedia/commons/b/b7/Best_Wreck_dive_in_Portugal_-_Madeirense_Porto_Santo.webm",
-        "license": "cc-by", "credit": "Victor Marafona · CC BY",
+        "license": "cc-by", "credit": "Victor Marafona · CC BY", "trim": (16, 8),
         "source": "https://commons.wikimedia.org/wiki/File:Best_Wreck_dive_in_Portugal_-_Madeirense_Porto_Santo.webm",
     },
 }
+# ※ SS Wisconsin(4:3·960×720)은 세로/가로 규격에 안 맞아 레터박스가 생겨 제외(아래 종횡비 게이트로도 자동 차단).
 
 
 def seeded_keys() -> tuple:
@@ -120,6 +119,32 @@ def _norm_license(text: str) -> str | None:
             return "kogl-type1"
         return "cc-by"
     return None
+
+
+def _probe_dim(path: str) -> tuple[int, int] | None:
+    """ffprobe로 (width, height) 조회. 실패 시 None."""
+    import subprocess
+    try:
+        out = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "v:0",
+             "-show_entries", "stream=width,height", "-of", "csv=p=0:s=x", path],
+            capture_output=True, text=True, timeout=30).stdout.strip()
+        w, h = out.split("x")[:2]
+        return (int(w), int(h))
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _probe_dur(path: str) -> float | None:
+    """ffprobe로 길이(초) 조회. 실패 시 None."""
+    import subprocess
+    try:
+        out = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "csv=p=0", path], capture_output=True, text=True, timeout=30).stdout.strip()
+        return float(out)
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _download(url: str, dest: Path) -> bool:
@@ -201,6 +226,30 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
     elif not _download(cand["url"], out):
         return None
     log.info("[footage] 확보: %s (%s, %s)", out, cand["license"], cand["credit"])
+    # ★종횡비 게이트(레터박스 방지): 9:16/16:9 규격에 안 맞는 소스(예: 4:3)는 검은 여백이
+    #   생기므로 배제한다. 16:9(1.778) 기준 허용 [1.55, 1.95] 밖이면 소스 미확보로 처리.
+    dim = _probe_dim(str(out))
+    if dim:
+        ar = dim[0] / dim[1] if dim[1] else 0
+        if not (1.55 <= ar <= 1.95):
+            log.warning("[footage] 종횡비 부적합 폐기(%.0fx%.0f, AR=%.2f): %s",
+                        dim[0], dim[1], ar, scientific_name)
+            return None
+    # ★인트로/아웃트로 트림(번인 타이틀카드·크레딧 제거): trim=(앞초,뒤초)가 지정된 소스는
+    #   본편만 남겨 로고·문구·인트로 레터박스를 원천 차단한다(아마추어 다이빙 영상 대응).
+    trim = cand.get("trim")
+    if trim:
+        head, tail = float(trim[0]), float(trim[1])
+        dur = _probe_dur(str(out))
+        if dur and dur - head - tail > 8:   # 트림 후 최소 8초는 남아야 함
+            trimmed = dest / f"footage_trim{ext}"
+            import subprocess
+            r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{head:.2f}",
+                                "-to", f"{dur - tail:.2f}", "-i", str(out),
+                                "-c", "copy", str(trimmed)])
+            if r.returncode == 0 and trimmed.exists() and trimmed.stat().st_size > 100_000:
+                log.info("[footage] 인트로/아웃트로 트림: 앞 %.0fs·뒤 %.0fs 제거 → 본편만 사용", head, tail)
+                out = trimmed
     # ★정지-이미지 소스 차단(핵심 규칙 · 절대 위반 금지): 움직임이 없는 '사진→영상 포장물'은
     # 영상으로 만들지 않는다. 정지로 판정되면 소스 미확보(None)로 처리 → 릴스는 중단, 롱폼은 스킵.
     try:

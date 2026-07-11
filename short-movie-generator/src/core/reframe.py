@@ -448,11 +448,19 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                          i, ct * 100, cb * 100)
             # precrop 활성 시 delogo는 좌표가 어긋나므로 생략(띠 크롭이 로고 영역도 대개 포함)
             pre = "" if precrop else ((delogo_vf(src_w, src_h, logo_box) + ",") if logo_box else "")
-            fc = (f"[0:v]{precrop}{pre}split=2[a][b];"
-                  f"[a]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
-                  f"gblur=sigma=32,eq=brightness=-0.14:saturation=1.02[bg];"
-                  f"[b]scale={W}:{H}:force_original_aspect_ratio=decrease[fg];"
-                  f"[bg][fg]overlay=(W-w)/2:(H-h)/2,{GRADE}")
+            if wide:
+                # ★난파선 등 가로 원경 소스: '블러 배경+축소 끼워넣기'(레터박스=얇은 띠)를 쓰지 않는다.
+                #   가로 소스를 9:16에 contain하면 위아래 대부분이 블러가 되어 영상이 얇은 띠로 보인다.
+                #   → 화면을 꽉 채우는 cover 크롭(가장자리 일부만 잘림)으로 선체가 크고 선명하게 보이게 한다.
+                fc = (f"[0:v]{precrop}{pre}"
+                      f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},{GRADE}")
+            else:
+                # 심해 생물 등: 피사체가 작아 전체 맥락이 중요 → 블러 배경 + 전체 프레임(contain).
+                fc = (f"[0:v]{precrop}{pre}split=2[a][b];"
+                      f"[a]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
+                      f"gblur=sigma=32,eq=brightness=-0.14:saturation=1.02[bg];"
+                      f"[b]scale={W}:{H}:force_original_aspect_ratio=decrease[fg];"
+                      f"[bg][fg]overlay=(W-w)/2:(H-h)/2,{GRADE}")
             cmd += ["-filter_complex", fc, str(seg_out)]
         else:
             # 접사 컷: 피사체 추적 + 완만한 줌(줌 상한 60% 점유율). 크롭이라 좌우 일부만 보임.
