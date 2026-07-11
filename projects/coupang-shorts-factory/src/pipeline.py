@@ -130,6 +130,13 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
         result = {"status": "skipped_no_credentials", "hint": youtube.missing_hint()}
         print(f"[pipeline] M7 업로드 건너뜀 — {youtube.missing_hint()}")
         print("[pipeline] 영상은 Actions Artifacts에서 다운로드해 검수하세요")
+        run_url = "{}/{}/actions/runs/{}".format(
+            os.environ.get("GITHUB_SERVER_URL", "https://github.com"),
+            os.environ.get("GITHUB_REPOSITORY", ""), os.environ.get("GITHUB_RUN_ID", ""))
+        if os.environ.get("GITHUB_RUN_ID"):
+            notify.send(f"[쿠팡쇼츠] 영상 생성 완료 — 업로드 대기(유튜브 키 미등록)\n"
+                        f"{script.get('title', '')}\n다운로드(하단 Artifacts): {run_url}\n"
+                        f"업로드 자동화: docs/setup-guide.md의 SHORTS_YT_* 등록")
     (job_dir / "upload_result.json").write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
 
     _step_summary(stats, result, script)

@@ -40,8 +40,12 @@ def generate_script(product: dict, settings: dict) -> dict:
 
     feedback = None
     for attempt in (1, 2):  # 위반 시 1회 재생성 (스펙 §M3)
+        extra = ""
+        if feedback and "낭독 분량" in feedback:
+            extra = ("\n분량 해결법: 라인 수를 15~20개로 늘리고, 셀링포인트마다 구체적 사용 장면을 "
+                     "한 라인씩 추가해 공백 제외 350자를 반드시 넘겨라.")
         content = user_msg if not feedback else (
-            f"{user_msg}\n\n이전 시도가 규칙을 위반했다: {feedback}\n규칙을 지켜 다시 작성하라.")
+            f"{user_msg}\n\n이전 시도가 규칙을 위반했다: {feedback}{extra}\n규칙을 지켜 다시 작성하라.")
         resp = client.messages.create(
             model=model,
             max_tokens=int(cfg.get("max_tokens", 4000)),
