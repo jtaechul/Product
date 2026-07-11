@@ -3,5 +3,5 @@
   "query": "auto",
   "visualizer": "panzoom",
   "scope": "all",
-  "_note": "E2E 검증 v2: --relative 경로 수정 후 auto 제작 완주 확인"
+  "_note": "E2E 검증 v3: manifest 충돌 자동복구 포함 최종 완주 확인"
 }
