@@ -97,14 +97,6 @@
     "date": "2026-07-10"
   },
   {
-    "id": "015",
-    "kind": "reels",
-    "common_name_ko": "U-1277 잠수함 난파선",
-    "common_name_en": "Wreck U-1277 (WWII German U-boat)",
-    "scientific_name": "Wreck U-1277",
-    "date": "2026-07-11"
-  },
-  {
     "id": "lf-3",
     "kind": "longform",
     "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
@@ -156,5 +148,14 @@
     "common_name_en": "Lithodid king crab",
     "scientific_name": "Lithodidae",
     "date": "2026-07-11"
+  },
+  {
+    "id": "015",
+    "kind": "reels",
+    "common_name_ko": "U-1277 잠수함 난파선",
+    "common_name_en": "Wreck U-1277 (WWII German U-boat)",
+    "scientific_name": "Wreck U-1277",
+    "date": "2026-07-11",
+    "youtube_url": "https://youtu.be/XEynXd4Po4M"
   }
 ]
