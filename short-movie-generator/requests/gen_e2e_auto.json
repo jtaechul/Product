@@ -3,5 +3,5 @@
   "query": "auto",
   "visualizer": "panzoom",
   "scope": "all",
-  "_note": "E2E 검증: auto 후보 순회 폴백 + 캐시 분리 수정 후 쇼츠 제작이 끝까지 완주하는지 확인"
+  "_note": "E2E 검증 v2: --relative 경로 수정 후 auto 제작 완주 확인"
 }
