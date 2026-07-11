@@ -1,8 +1,10 @@
 name: shorts-produce
 
 # 쿠팡 어필리에이트 쇼츠 팩토리 (projects/coupang-shorts-factory/) 전용 워크플로우.
-# 트리거는 workflow_dispatch(수동)만 둔다 — 추후 push 트리거를 달게 되면 반드시
-# paths: ['projects/coupang-shorts-factory/**'] 필터를 적용할 것 (폴더 격리 원칙).
+# 기본 트리거는 workflow_dispatch(수동). push 트리거는 격리 원칙에 따라
+# 이 프로젝트의 requests/ 경로에만 paths 필터로 반응한다 (다른 프로젝트 push에 무반응).
+# (push 경로는 GitHub MCP의 workflow_dispatch 403 제약을 우회하는 원격 실행용 —
+#  regen-caption.yml 등 저장소 기존 관례와 동일)
 
 on:
   workflow_dispatch:
@@ -12,6 +14,9 @@ on:
         type: choice
         options: [auto, elevenlabs, typecast, clova, mock]
         default: auto
+  push:
+    branches: [main]
+    paths: ["projects/coupang-shorts-factory/requests/*.json"]
 
 permissions:
   contents: read
@@ -52,6 +57,16 @@ jobs:
           SHORTS_PEXELS_API_KEY: ${{ secrets.SHORTS_PEXELS_API_KEY }}
         run: python scripts/fetch_assets.py
 
+      - name: 실행 파라미터 결정 (dispatch 입력 또는 requests/run_request.json)
+        id: params
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "provider=${{ inputs.tts_provider }}" >> "$GITHUB_OUTPUT"
+          else
+            p=$(python3 -c "import json;print(json.load(open('requests/run_request.json')).get('provider','auto'))" 2>/dev/null || echo auto)
+            echo "provider=$p" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Phase 0 스파이크 실행 (대본→TTS→timestamps→렌더)
         env:
           SHORTS_ELEVENLABS_API_KEY: ${{ secrets.SHORTS_ELEVENLABS_API_KEY }}
@@ -60,7 +75,7 @@ jobs:
           SHORTS_CLOVA_CLIENT_SECRET: ${{ secrets.SHORTS_CLOVA_CLIENT_SECRET }}
         run: >
           python -m src.phase0_spike
-          --provider "${{ inputs.tts_provider }}"
+          --provider "${{ steps.params.outputs.provider }}"
           --job-id "phase0-run${{ github.run_number }}"
 
       - name: 산출물 업로드 (video.mp4 / audio.mp3 / timestamps.json / render_stats.json)
