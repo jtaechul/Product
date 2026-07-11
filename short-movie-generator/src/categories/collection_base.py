@@ -82,10 +82,10 @@ class CollectionCategory(CategoryModule):
             sources=sp.get("sources", []),
         )
 
-    # ── auto 선택: 실사 영상 보유 + '미제작 우선'(큐 재사용) + 후보 폴백 ──
+    # ── auto 선택: 실사 영상 보유 + **미제작만**(중복 제작 금지 · 재탕 폐지) ──
     def footage_candidates(self) -> list[str]:
-        """auto 후보 전체(미제작 우선 → 회차 순환). 파이프라인이 순서대로 시도하다
-        첫 실사 확보 성공 대상으로 제작 — 정지 소스 등 게이트 실패 시 다음 후보로 폴백."""
+        """auto 후보 = 아직 제작 안 한 대상만. 제작 원장에 있으면 영구 제외(중복 금지).
+        미제작이 없으면 빈 리스트 → 파이프라인이 '전 대상 제작 완료'로 중단(중복 대신 정지)."""
         from src.core import footage
         seeded = {k.lower() for k in footage.seeded_keys()}
         pool = [k for k, sp in self.SUBJECTS.items()
@@ -93,20 +93,13 @@ class CollectionCategory(CategoryModule):
         if not pool:
             raise PipelineError("input", f"[{self.category_id}] 실사 영상 보유 대상 없음(시드 필요)")
         made = {str(it.get("scientific_name", "")).strip().lower() for it in self._load_catalog()}
-        unmade = [k for k in pool if self.SUBJECTS[k]["scientific_name"].strip().lower() not in made]
-        try:
-            ep = self.next_episode()
-        except Exception:  # noqa: BLE001
-            ep = 0
-        rotated = pool[ep % len(pool):] + pool[:ep % len(pool)]
-        out: list[str] = []
-        for k in unmade + rotated:
-            if k not in out:
-                out.append(k)
-        return out
+        return [k for k in pool if self.SUBJECTS[k]["scientific_name"].strip().lower() not in made]
 
     def pick_footage_species(self) -> str:
-        return self.footage_candidates()[0]
+        c = self.footage_candidates()
+        if not c:
+            raise PipelineError("input", f"[{self.category_id}] 전 대상 제작 완료 — 중복 방지로 중단(새 대상 시드 필요)")
+        return c[0]
 
     # ── 훅/본문/캡션 ──
     def hook_intro_spec(self, info: SpeciesInfo):

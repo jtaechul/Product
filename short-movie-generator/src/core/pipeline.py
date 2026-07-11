@@ -222,6 +222,8 @@ def run_reels(
         cands = (category.footage_candidates()
                  if hasattr(category, "footage_candidates")
                  else [category.pick_footage_species()])
+        if not cands:   # ★중복 금지: 미제작 종이 없으면 재탕하지 않고 명확히 중단
+            raise PipelineError("input", "전 종 제작 완료 — 중복 방지로 제작 중단(새 종 시드 추가 필요)")
         subject = info = None
         for cand in cands:
             ci = category.get_info(cand)

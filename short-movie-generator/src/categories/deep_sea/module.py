@@ -390,11 +390,11 @@ class DeepSeaCategory:
         return str(cands[h % len(cands)])
 
     def footage_candidates(self) -> list[str]:
-        """auto 후보 전체를 우선순위 순서로 반환: 미제작 종 먼저 → 회차 순환 순.
+        """auto 후보 = **아직 제작 안 한 종만**(중복 제작 절대 금지 · 사용자 확정 규칙).
 
-        ★미제작 우선(큐 재사용) + 폴백: 파이프라인이 이 순서대로 실사 확보를 시도하다
-        첫 성공 종으로 제작한다 — 1순위가 정지 소스 등으로 게이트에 걸려도 다음 후보로
-        넘어가므로, 같은 종만 반복 실패하는 교착(움벨룰라 사고)이 생기지 않는다.
+        ★재탕 금지: 예전엔 풀 소진 시 회차로 순환해 이미 만든 종을 다시 뽑았고(심해붉은해파리
+        중복 사고), 이제 그 순환을 폐지한다. 제작 원장(catalog)에 있는 종은 후보에서 영구 제외.
+        미제작 종이 없으면 빈 리스트를 반환 → 파이프라인이 '전 종 제작 완료'로 중단(중복 대신 정지).
         """
         from src.categories.deep_sea import catalog
         from src.core import footage
@@ -410,22 +410,16 @@ class DeepSeaCategory:
                 made.add(str(it.get("common_name_en", "")).strip().lower())
         except Exception:  # noqa: BLE001
             made = set()
-        unmade = [k for k in pool
-                  if data.SPECIES[k]["scientific_name"].strip().lower() not in made]
-        try:
-            ep = self.next_episode()
-        except Exception:  # noqa: BLE001
-            ep = 0
-        rotated = pool[ep % len(pool):] + pool[:ep % len(pool)]
-        out: list[str] = []
-        for k in unmade + rotated:
-            if k not in out:
-                out.append(k)
-        return out
+        return [k for k in pool
+                if data.SPECIES[k]["scientific_name"].strip().lower() not in made
+                and (data.SPECIES[k].get("common_name_en", "").strip().lower() not in made)]
 
     def pick_footage_species(self) -> str:
-        """auto 모드: 검증된 실사 영상이 있는 종만 선택(후보 1순위)."""
-        return self.footage_candidates()[0]
+        """auto 모드: 미제작 종 중 1순위. 전부 제작됐으면 명확히 중단(중복 금지)."""
+        c = self.footage_candidates()
+        if not c:
+            raise PipelineError("input", "전 종 제작 완료 — 중복 방지로 중단(새 종 시드 추가 필요)")
+        return c[0]
 
     def reels_body_script(self, info: SpeciesInfo) -> list[str] | None:
         """reels(실사+일본어) 본문 나레이션 절 리스트. 시드/LLM, 실패 시 None."""
