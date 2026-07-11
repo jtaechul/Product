@@ -58,7 +58,9 @@
   ],
   "media": {
     "video_url": "https://github.com/jtaechul/Product/releases/download/longform-9/lf-9.mp4",
-    "cover_url": ""
+    "cover_url": "",
+    "youtube_url": "https://youtu.be/G5eD8VEcEII",
+    "youtube_privacy": "public"
   },
   "hashtags": [
     "#深海",
@@ -94,5 +96,5 @@
     "#넓적문어",
     "#바다생물"
   ],
-  "updated_at": "2026-07-11T00:19:41+00:00"
+  "updated_at": "2026-07-11T00:26:50+00:00"
 }
