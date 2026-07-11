@@ -1,0 +1,66 @@
+# 쿠팡 쇼츠 팩토리 — 파이프라인 설정
+# 채널명은 미확정이라 config 변수로 관리 (스펙 §1.2)
+
+channel:
+  name: "미래상점"   # 가칭 — 확정 시 여기만 변경
+
+tts:
+  # provider 선택:
+  #   auto       = 등록된 API 키를 elevenlabs → typecast → clova 순서로 감지해 자동 선택
+  #   elevenlabs = with-timestamps 엔드포인트 (오디오 + 문자 타임스탬프 동시 수신, 권장)
+  #   typecast   = 오디오만 수신 → faster-whisper 폴백으로 단어 타임스탬프 생성
+  #   clova      = 네이버클라우드 CLOVA Voice Premium, 오디오만 → 폴백
+  #   mock       = API 키 없이 렌더 검증용(단어별 비프음 + 정확한 합성 타임스탬프)
+  provider: auto
+
+  elevenlabs:
+    # 기본값은 premade 보이스(Rachel). eleven_multilingual_v2가 한국어를 지원하지만
+    # 자연스러운 한국어 톤을 원하면 보이스 라이브러리에서 한국어 보이스 id로 교체 권장.
+    voice_id: "21m00Tcm4TlvDq8ikWAM"
+    model_id: "eleven_multilingual_v2"
+    output_format: "mp3_44100_128"
+    voice_settings:
+      stability: 0.5
+      similarity_boost: 0.75
+      speed: 1.1        # 빠른 템포 (스펙 §M4: 1.1~1.15배)
+
+  typecast:
+    voice_id: ""        # 비우면 GET /v1/voices 목록에서 자동 선택(실행 로그에 표시)
+    model: "ssfm-v30"
+    language: "kor"     # ISO 639-3
+    audio_tempo: 1.1    # 0.5~2.0
+
+  clova:
+    speaker: "nara"     # 프리미엄 대표 여성 보이스
+    speed: -1           # -5(빠름) ~ 5(느림), -1 ≈ 1.1배속
+    volume: 0
+    pitch: 0
+    format: "mp3"
+
+subtitle:               # 스펙 §M6 - 3
+  font: "assets/fonts/GmarketSansBold.ttf"
+  font_size: 80
+  color: "#FFE400"      # 노랑
+  stroke_color: "#000000"
+  stroke_width: 6
+  y: 1250               # (center, y=1250)
+
+render:                 # 스펙 §M6
+  width: 1080
+  height: 1920
+  fps: 30
+  crf: 20
+  audio_bitrate: "128k"
+  shake_px: 8           # price_shock 쉐이크 ±px
+  shake_seconds: 0.3
+
+whisper:                # M5 폴백 설정
+  model: "small"        # 한국어 정확도/속도 균형 (tiny/base는 한국어 정확도 낮음)
+  compute_type: "int8"
+
+assets:
+  backgrounds_dir: "assets/backgrounds"
+  # SHORTS_PEXELS_API_KEY 시크릿이 있으면 scripts/fetch_assets.py가 세로 배경을 자동 확보.
+  # 없으면 렌더러가 자체 생성 그라데이션 배경(화이트리스트: 자체 생성물)으로 폴백.
+  pexels_query: "night city lights"
+  pexels_count: 2

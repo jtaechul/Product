@@ -1,0 +1,9 @@
+# 영상·음성 산출물은 커밋 금지 — Actions Artifacts로만 전달 (스펙 §4.1)
+data/jobs/
+*.mp4
+*.mp3
+.env
+__pycache__/
+
+# 예외: CC0 배경 원본 영상은 에셋이므로 커밋 허용 (licenses.csv에 출처 기록 필수)
+!assets/backgrounds/*.mp4
