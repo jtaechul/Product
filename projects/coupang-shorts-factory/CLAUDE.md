@@ -42,21 +42,15 @@
 - 한 커밋은 한 프로젝트 폴더만 수정한다(`.github/`만 공용 허용) — 루트의
   `project-isolation-guard.yml`이 모든 푸시에서 자동 검사한다.
 
-## Git 운영 규칙 — 오류 예방 핵심 (전문)
+## Git 운영 규칙 — 핵심 5줄
 
-- 브랜치 생성과 PR 금지, main에서 직접 작업한다.
-  환경 제약으로 브랜치가 강제되는 경우에도 이 세션 안에서 main 머지와
-  푸시까지 완료해야 한다.
-- 의미 단위마다 커밋하고, 커밋 직후 반드시 `git push origin main` 실행.
-- 푸시 직후 `git log origin/main --oneline -1` 로 원격 반영을 확인하고
-  미반영이면 재시도해라.
-- 이유: workflow_dispatch 수동 실행 버튼은 워크플로우 파일이 기본
-  브랜치(main)에 존재해야만 GitHub UI에 나타난다. 푸시 누락 시
-  Actions에서 아무것도 실행할 수 없다.
-- `git push --force`, 이력 재작성, 기존 커밋 되돌리기 금지.
-- 푸시 실패(권한, 충돌 등) 시 우회하지 말고 오류 메시지 원문을 보고해라.
-- 세션 종료 전 `git status` clean 상태와 로컬/원격 HEAD 일치를 확인해
-  결과를 보고해라.
+1. main에서 직접 작업한다 (브랜치·PR 금지, 브랜치가 강제되면 세션 내 main 머지까지 완료).
+2. 의미 단위마다 커밋하고 커밋 즉시 push 한다.
+3. push 직후 `git log origin/main --oneline -1` 로 원격 반영을 확인한다.
+4. force push·이력 재작성·커밋 되돌리기 금지.
+5. push 실패 시 우회하지 말고 오류 원문을 보고하고 멈춘다.
+
+상세 근거·절차는 `coupang-shorts-pipeline-spec.md` 참조.
 
 ## 시크릿 (GitHub Actions Secrets — 코드에 하드코딩 금지)
 
