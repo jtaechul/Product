@@ -238,7 +238,7 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
     def _reject(reason: str):
         """게이트 탈락 소스는 파일까지 지운다 — 다음 시도가 캐시로 오인 재사용하지 않게."""
         log.warning("[footage] %s → 폐기: %s / %s", reason, scientific_name, common_name_en)
-        for p in (out, dest / f"footage_{slug}_trim{ext}"):
+        for p in (out, dest / f"footage_{slug}_trim{ext}", dest / f"footage_{slug}_trim.mp4"):
             try:
                 Path(p).unlink(missing_ok=True)
             except Exception:  # noqa: BLE001
@@ -259,11 +259,17 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
         head, tail = float(trim[0]), float(trim[1])
         dur = _probe_dur(str(out))
         if dur and dur - head - tail > 8:   # 트림 후 최소 8초는 남아야 함
-            trimmed = dest / f"footage_{slug}_trim{ext}"
+            # ★프레임 정확 트림(재발방지 · 핵심): 예전엔 `-c copy`로 잘랐는데, 스트림 카피는
+            #   **키프레임 단위로만** 잘려(-ss 7이 앞쪽 키프레임 0초로 당겨짐) 인트로 타이틀카드
+            #   (NOAA 로고+문구)·아웃트로 크레딧이 그대로 남았다(실제 킹크랩 영상에 카드가 반복
+            #   노출된 사고). → 재인코딩으로 **정확히 head~(dur-tail)** 구간만 남긴다(.mp4).
+            trimmed = dest / f"footage_{slug}_trim.mp4"
+            keep = dur - head - tail
             import subprocess
             r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{head:.2f}",
-                                "-to", f"{dur - tail:.2f}", "-i", str(out),
-                                "-c", "copy", str(trimmed)])
+                                "-i", str(out), "-t", f"{keep:.2f}",
+                                "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+                                "-pix_fmt", "yuv420p", "-an", str(trimmed)])
             if r.returncode == 0 and trimmed.exists() and trimmed.stat().st_size > 100_000:
                 log.info("[footage] 인트로/아웃트로 트림: 앞 %.0fs·뒤 %.0fs 제거 → 본편만 사용", head, tail)
                 out = trimmed
