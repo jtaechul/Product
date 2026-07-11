@@ -297,12 +297,21 @@ jobs:
           # schedule은 main에서 뜨지만 코드·원장은 운영 브랜치 기준 → 운영 브랜치로 푸시
           if [ "${{ github.event_name }}" = "schedule" ]; then TARGET="$OPS_BRANCH"; else TARGET="${{ github.ref_name }}"; fi
           # 원격이 앞서가 있어도(non-fast-forward) 재정렬 후 재시도 → 레코드가 저장 안 되던 문제 방지
+          # ★manifest.json 충돌 자동 복구: manifest는 레코드의 파생물이라 충돌 시 레코드에서
+          #   재생성(rebuild_manifest)해 리베이스를 잇는다(같은 충돌 5회 반복 → 런 실패하던 #41 수정).
           for i in 1 2 3 4 5; do
-            git fetch origin "$TARGET" \
-              && git rebase "origin/$TARGET" \
-              && git push origin "HEAD:$TARGET" \
-              && { echo "저장 완료"; exit 0; }
-            echo "재시도 $i (원격이 앞서감)…"; git rebase --abort 2>/dev/null || true; sleep 3
+            git fetch origin "$TARGET" || { sleep 3; continue; }
+            if ! git rebase "origin/$TARGET"; then
+              if git status --porcelain | grep -q "content/manifest.json"; then
+                (cd short-movie-generator && python -c "from src.core import content_store; content_store.rebuild_manifest('.')")
+                git add short-movie-generator/content/manifest.json
+                GIT_EDITOR=true git rebase --continue || { git rebase --abort 2>/dev/null || true; sleep 3; continue; }
+              else
+                git rebase --abort 2>/dev/null || true; sleep 3; continue
+              fi
+            fi
+            git push origin "HEAD:$TARGET" && { echo "저장 완료"; exit 0; }
+            echo "재시도 $i (원격이 앞서감)…"; sleep 3
           done
           echo "저장 실패(push)"; exit 1
 
