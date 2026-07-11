@@ -132,5 +132,13 @@
     "common_name_en": "Headless chicken monster",
     "scientific_name": "Enypniastes eximia",
     "date": "2026-07-11"
+  },
+  {
+    "id": "017",
+    "kind": "reels",
+    "common_name_ko": "대왕등각류",
+    "common_name_en": "Giant isopod",
+    "scientific_name": "Bathynomus giganteus",
+    "date": "2026-07-11"
   }
 ]
