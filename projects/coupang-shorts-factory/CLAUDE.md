@@ -5,9 +5,14 @@
 
 ## 현재 상태
 
-- **Phase 0 (렌더 스파이크) 완료**: 하드코딩 대본 1건 → TTS → `timestamps.json` → MoviePy 렌더
-  → Actions Artifacts 업로드까지 동작. 실행: GitHub Actions `shorts-produce` 워크플로우(수동).
-- 다음 단계: Phase 1 (반자동 MVP — M2 수동 CSV + M3 대본 생성 + M7 private 업로드)
+- **Phase 0~3 구현 완료**: M1(아웃라이어 리서치, `shorts-research.yml` 주간) /
+  M2(수동 CSV 큐 + 쿠팡 API 모듈은 키 승인 대기) / M3(대본 생성, claude-sonnet-4-6) /
+  M4+M5(TTS 멀티 프로바이더+whisper 폴백) / M6(렌더: 단어 팝업 자막·상품 이미지 줌인·쉐이크) /
+  M7(유튜브 private 업로드+고지 댓글, §3.1 assert 강제) / M8(`src/pipeline.py`).
+- 자동화: 평일 07:30 KST cron 제작(전제조건 미비 시 soft 통과), 큐 상태는 업로드 성공 시
+  CI가 `data/processed.json`을 `[skip ci]` 커밋. 텔레그램 성공/실패 알림(`src/notify.py`).
+- 남은 사용자 작업: `SHORTS_YT_*` 인증 3종·`SHORTS_YT_API_KEY` 등록, 실제 제휴 링크로 CSV 갱신,
+  쿠팡 API 키 승인 시 M2 1안 전환 검증 → `docs/setup-guide.md` 참조.
 
 ## 수행 지침 요약 (스펙 §0)
 
@@ -34,7 +39,7 @@
 ## 폴더 격리 (저장소 공통 규칙)
 
 - 이 프로젝트의 모든 파일은 `projects/coupang-shorts-factory/` 하위에만 둔다.
-- 유일한 예외: `.github/workflows/shorts-produce.yml` (GitHub가 워크플로우 위치를 루트로 강제).
+- 유일한 예외: `.github/workflows/shorts-produce.yml`·`shorts-research.yml` (GitHub가 워크플로우 위치를 루트로 강제).
   - 트리거는 `workflow_dispatch` + `requests/*.json` 전용 push(paths 필터 적용됨).
     push 트리거를 확장할 때도 반드시 `paths: ['projects/coupang-shorts-factory/**']`
     필터를 유지한다.

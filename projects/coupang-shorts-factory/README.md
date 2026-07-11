@@ -4,7 +4,9 @@
 마스터 스펙은 [coupang-shorts-pipeline-spec.md](./coupang-shorts-pipeline-spec.md) (SSOT),
 프로젝트 규칙은 [CLAUDE.md](./CLAUDE.md) 참고.
 
-**현재 구현 단계: Phase 0 — 렌더 스파이크** (하드코딩 대본 1건 → TTS → 자막 싱크 렌더 검증)
+**현재 구현 단계: Phase 1~3 구현 완료** — 상품 CSV 1행 → 대본(M3) → TTS(M4) → 렌더(M6, 상품 이미지 줌인 포함) → 유튜브 private 업로드+고지 댓글(M7)까지 무개입 파이프라인. 평일 아침 자동 제작 cron + 주간 소재 리서치(M1) 포함.
+
+**바로 쓰는 법**: ① [data/products_manual.csv](./data/products_manual.csv)에 상품 1행 추가(제휴 링크 포함) → main 커밋 ② [Actions → shorts-produce 실행](https://github.com/jtaechul/Product/actions/workflows/shorts-produce.yml) (mode=produce) ③ 업로드 키 미등록 시 영상은 Artifacts로 제공. 키 등록 절차는 [docs/setup-guide.md](./docs/setup-guide.md) 참고.
 
 ---
 
