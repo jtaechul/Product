@@ -20,7 +20,11 @@ import logging
 import sys
 from pathlib import Path
 
-from dotenv import load_dotenv
+try:  # 경량 텍스트 재생성 경로(deps 미설치 CI: regen-longform-meta.yml)에서도 임포트 가능하게
+    from dotenv import load_dotenv
+except ImportError:  # python-dotenv 미설치 시 no-op (CLI 제작 경로에서만 .env 로드가 필요)
+    def load_dotenv(*_a, **_k):  # type: ignore[misc]
+        return False
 
 from src.core.contracts import ALLOWED_LICENSES, PipelineError
 

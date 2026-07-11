@@ -89,16 +89,6 @@
     "date": "2026-07-10"
   },
   {
-    "id": "lf-9",
-    "kind": "longform",
-    "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
-    "yt_title_ko": "심해의 기이한 생물 TOP6 | 심해붉은해파리 외",
-    "n": 6,
-    "total_s": 406.01,
-    "date": "2026-07-10",
-    "has_video": true
-  },
-  {
     "id": "014",
     "kind": "reels",
     "common_name_ko": "아리에스호 난파선",
@@ -113,6 +103,16 @@
     "yt_title_ko": "심해의 기이한 생물 TOP6 | 심해붉은해파리 외",
     "n": 6,
     "total_s": 414.85,
+    "date": "2026-07-10",
+    "has_video": true
+  },
+  {
+    "id": "lf-9",
+    "kind": "longform",
+    "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
+    "yt_title_ko": "심해의 기이한 생물 TOP6 | 심해붉은해파리 외",
+    "n": 6,
+    "total_s": 406.01,
     "date": "2026-07-10",
     "has_video": true
   }
