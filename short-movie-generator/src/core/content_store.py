@@ -86,7 +86,7 @@ def _now_iso() -> str:
 
 def write_record(base_dir: str, content_id: str, *, info, caption, asset,
                  visualizer: str, video_file: str, series_title: str = "",
-                 scope: str = "all", post: dict | None = None) -> str:
+                 scope: str = "all", post: dict | None = None, category: str = "") -> str:
     """제작 성공분을 content/<id>.json에 기록(병합). scope로 갱신 범위 표시(caption/images/video/all).
 
     반환: 기록된 파일 경로(str).
@@ -97,6 +97,8 @@ def write_record(base_dir: str, content_id: str, *, info, caption, asset,
     rec.setdefault("created_at", _now_iso())
     rec["updated_at"] = _now_iso()
     rec["status"] = "published"
+    if category:   # 재생성 시 워크플로가 이 값으로 카테고리를 복원(침몰선을 deep_sea로 오복원하던 사고 방지)
+        rec["category"] = category
     rec["series"] = series_title or rec.get("series", "")
     rec["species"] = {
         "common_name_ko": info.common_name_ko,

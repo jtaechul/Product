@@ -63,11 +63,8 @@ _SEED = {
         "license": "cc-by", "credit": "Eric Polk (MBARI) · CC BY",
         "source": "https://commons.wikimedia.org/wiki/File:Predatory_tunicate_-_MBA.webm",
     },
-    "umbellula sp.": {
-        "url": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Umbellula_sp._-_MBA.webm",
-        "license": "cc-by", "credit": "Eric Polk (MBARI) · CC BY",
-        "source": "https://commons.wikimedia.org/wiki/File:Umbellula_sp._-_MBA.webm",
-    },
+    # ※ umbellula sp.(MBARI 클립)는 정지 소스(motion 1.4 < 3.0)로 하드룰 #11 위반 → 시드 제거.
+    #   (CI에서 auto 제작이 이 종에서 반복 실패하던 실제 사고. 움직이는 실사 확보 시 재편입.)
     # 범위 확장(심해→전 해양) + 다중 소스(GBIF/Commons 전세계) 첫 편입분.
     "sepioteuthis sepioidea": {
         "url": "https://upload.wikimedia.org/wikipedia/commons/c/ce/Caribbean_Reef_Squid_Encounter.webm",
@@ -219,22 +216,34 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
         log.info("[footage] 실사 영상 미확보: %s / %s", scientific_name, common_name_en)
         return None
     ext = next((e for e in _VIDEO_EXT if cand["url"].lower().endswith(e)), ".webm")
-    out = dest / f"footage{ext}"
+    # ★캐시 파일명은 종별로 분리(교차 오염 방지): 공용 'footage.webm' 하나만 쓰면, 게이트에
+    #   걸려 폐기된 앞 종의 파일이 남아 다음 후보가 그걸 '캐시'로 재사용 → 전 후보 연쇄 실패.
+    slug = re.sub(r"[^a-z0-9]+", "_", key or (common_name_en or "").lower()).strip("_") or "src"
+    out = dest / f"footage_{slug}{ext}"
     # 캐시 재사용(재실행·레이트리밋 대비): 이미 유효 파일이 있으면 재다운로드 생략
     if out.exists() and out.stat().st_size > 100_000:
         log.info("[footage] 캐시 사용: %s", out)
     elif not _download(cand["url"], out):
         return None
     log.info("[footage] 확보: %s (%s, %s)", out, cand["license"], cand["credit"])
+
+    def _reject(reason: str):
+        """게이트 탈락 소스는 파일까지 지운다 — 다음 시도가 캐시로 오인 재사용하지 않게."""
+        log.warning("[footage] %s → 폐기: %s / %s", reason, scientific_name, common_name_en)
+        for p in (out, dest / f"footage_{slug}_trim{ext}"):
+            try:
+                Path(p).unlink(missing_ok=True)
+            except Exception:  # noqa: BLE001
+                pass
+        return None
+
     # ★종횡비 게이트(레터박스 방지): 9:16/16:9 규격에 안 맞는 소스(예: 4:3)는 검은 여백이
     #   생기므로 배제한다. 16:9(1.778) 기준 허용 [1.55, 1.95] 밖이면 소스 미확보로 처리.
     dim = _probe_dim(str(out))
     if dim:
         ar = dim[0] / dim[1] if dim[1] else 0
         if not (1.55 <= ar <= 1.95):
-            log.warning("[footage] 종횡비 부적합 폐기(%.0fx%.0f, AR=%.2f): %s",
-                        dim[0], dim[1], ar, scientific_name)
-            return None
+            return _reject(f"종횡비 부적합({dim[0]}x{dim[1]}, AR={ar:.2f})")
     # ★인트로/아웃트로 트림(번인 타이틀카드·크레딧 제거): trim=(앞초,뒤초)가 지정된 소스는
     #   본편만 남겨 로고·문구·인트로 레터박스를 원천 차단한다(아마추어 다이빙 영상 대응).
     trim = cand.get("trim")
@@ -242,7 +251,7 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
         head, tail = float(trim[0]), float(trim[1])
         dur = _probe_dur(str(out))
         if dur and dur - head - tail > 8:   # 트림 후 최소 8초는 남아야 함
-            trimmed = dest / f"footage_trim{ext}"
+            trimmed = dest / f"footage_{slug}_trim{ext}"
             import subprocess
             r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{head:.2f}",
                                 "-to", f"{dur - tail:.2f}", "-i", str(out),
@@ -255,8 +264,7 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
     try:
         from src.core import watermark_qc as _wq
         if _wq.is_static_source(str(out)):
-            log.warning("[footage] 정지 소스 폐기(영상 아님): %s / %s", scientific_name, common_name_en)
-            return None
+            return _reject("정지 소스(영상 아님)")
     except Exception as e:  # noqa: BLE001  (검사 실패 시 통과 — 검사 오류로 제작 자체를 막지 않음)
         log.warning("[footage] 정지 검사 생략(오류): %s", e)
     # NOAA 소스는 좌상단 워터마크 영역 정보를 함께 반환(하류에서 회피/제거)

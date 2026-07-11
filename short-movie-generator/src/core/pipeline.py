@@ -175,7 +175,8 @@ def run_narrated(
     try:
         content_store.write_record(
             base_dir, f"{int(episode):03d}", info=info, caption=caption, asset=asset,
-            visualizer=viz.name, video_file=result.video_path, series_title=series_title, scope="all",
+            visualizer=viz.name, video_file=result.video_path, series_title=series_title,
+            scope="all", category=category_id,
         )
     except Exception as e:  # noqa: BLE001
         log.warning("[narrated] 레코드 기록 실패(무시): %s", e)
@@ -211,13 +212,30 @@ def run_reels(
     log.info("[reels] 시작: category=%s query=%r", category_id, query)
 
     # auto* 는 '실사 영상 보유 종'에서만 선택(영상 없는 종으로 인한 실패 방지)
+    # ★후보 순회 폴백(무한 실패 방지 핵심): 첫 후보의 소스가 정지 영상 등으로 게이트에 걸리면
+    #   제작이 실패하고, 실패한 종은 '미제작'으로 남아 다음 실행도 같은 종을 고르는 교착이 실존
+    #   (umbellula 정지 소스로 auto 제작이 전부 실패하던 사고). → 후보 목록을 순서대로 시도해
+    #   실사 확보에 성공하는 첫 종으로 제작한다(게이트 기준은 그대로, 대상만 다음 후보로).
     q = (query or "").strip().lower()
+    fv = None
     if q.startswith("auto") and hasattr(category, "pick_footage_species"):
-        subject = category.pick_footage_species()
-        log.info("[reels] auto → 실사영상 보유 종 선택: %s", subject)
+        cands = (category.footage_candidates()
+                 if hasattr(category, "footage_candidates")
+                 else [category.pick_footage_species()])
+        subject = info = None
+        for cand in cands:
+            ci = category.get_info(cand)
+            cf = footage.fetch_footage(ci.scientific_name, ci.common_name_en, str(raw_dir))
+            if cf:
+                subject, info, fv = cand, ci, cf
+                log.info("[reels] auto → 실사영상 보유 종 선택: %s", subject)
+                break
+            log.warning("[reels] auto 후보 스킵(실사 미확보/정지 소스): %s", cand)
+        if not fv:
+            raise PipelineError("footage", "auto 후보 전원 실사 영상 미확보 → 제작 중단(날조 금지)")
     else:
         subject = category.parse_input(query)
-    info = category.get_info(subject)
+        info = category.get_info(subject)
     if not hasattr(category, "hook_intro_spec"):
         raise PipelineError("reels", "카테고리가 hook_intro_spec 미제공")
     spec_t = category.hook_intro_spec(info)
@@ -225,8 +243,9 @@ def run_reels(
         raise PipelineError("reels", "일본어 훅 생성 불가(대표종 시드 또는 LLM 키 필요)")
     spec, hook_text, bgm = spec_t
 
-    # 1) 실사 심해 영상 소싱 + 라이선스 게이트
-    fv = footage.fetch_footage(info.scientific_name, info.common_name_en, str(raw_dir))
+    # 1) 실사 심해 영상 소싱 + 라이선스 게이트 (auto는 위 후보 순회에서 이미 확보)
+    if fv is None:
+        fv = footage.fetch_footage(info.scientific_name, info.common_name_en, str(raw_dir))
     if not fv:
         raise PipelineError("footage", "실사 심해 영상 미확보 → 제작 중단(AI/정지 대체 금지)")
     if (fv["license"] or "").strip().lower() not in ALLOWED_LICENSES:
@@ -332,7 +351,7 @@ def run_reels(
     try:
         content_store.write_record(base_dir, f"{int(episode):03d}", info=info, caption=caption,
                                    asset=None, visualizer="reels", video_file=result.video_path,
-                                   series_title=series_title, scope="all")
+                                   series_title=series_title, scope="all", category=category_id)
     except Exception as e:  # noqa: BLE001
         log.warning("[reels] 레코드 기록 실패(무시): %s", e)
     return result
@@ -499,7 +518,7 @@ def run(
         content_store.write_record(
             base_dir, f"{int(episode):03d}", info=info, caption=caption, asset=asset,
             visualizer=viz.name, video_file=result.video_path, series_title=series_title,
-            scope=scope, post=post,
+            scope=scope, post=post, category=category_id,
         )
     except Exception as e:  # noqa: BLE001 — 레코드 실패해도 발행물은 유효
         log.warning("콘텐츠 레코드 기록 실패(무시): %s", e)

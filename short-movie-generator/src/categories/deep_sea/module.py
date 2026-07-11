@@ -389,12 +389,12 @@ class DeepSeaCategory:
         h = int(hashlib.md5((seed or "deep").encode("utf-8")).hexdigest(), 16)
         return str(cands[h % len(cands)])
 
-    def pick_footage_species(self) -> str:
-        """auto 모드: 검증된 실사 영상이 있는 종만 선택.
+    def footage_candidates(self) -> list[str]:
+        """auto 후보 전체를 우선순위 순서로 반환: 미제작 종 먼저 → 회차 순환 순.
 
-        ★미제작 우선(큐 재사용): 아직 영상이 만들어지지 않은 종(catalog 미기록)을 먼저 고른다.
-        그래서 확보(시드)만 되고 아직 제작·게시되지 않은 종이 유실되지 않고 반드시 다음 차례에
-        쓰인다. 모든 종이 한 번씩 제작된 뒤에야 회차(episode)로 순환한다.
+        ★미제작 우선(큐 재사용) + 폴백: 파이프라인이 이 순서대로 실사 확보를 시도하다
+        첫 성공 종으로 제작한다 — 1순위가 정지 소스 등으로 게이트에 걸려도 다음 후보로
+        넘어가므로, 같은 종만 반복 실패하는 교착(움벨룰라 사고)이 생기지 않는다.
         """
         from src.categories.deep_sea import catalog
         from src.core import footage
@@ -412,13 +412,20 @@ class DeepSeaCategory:
             made = set()
         unmade = [k for k in pool
                   if data.SPECIES[k]["scientific_name"].strip().lower() not in made]
-        if unmade:
-            return unmade[0]
         try:
             ep = self.next_episode()
         except Exception:  # noqa: BLE001
             ep = 0
-        return pool[ep % len(pool)]
+        rotated = pool[ep % len(pool):] + pool[:ep % len(pool)]
+        out: list[str] = []
+        for k in unmade + rotated:
+            if k not in out:
+                out.append(k)
+        return out
+
+    def pick_footage_species(self) -> str:
+        """auto 모드: 검증된 실사 영상이 있는 종만 선택(후보 1순위)."""
+        return self.footage_candidates()[0]
 
     def reels_body_script(self, info: SpeciesInfo) -> list[str] | None:
         """reels(실사+일본어) 본문 나레이션 절 리스트. 시드/LLM, 실패 시 None."""
