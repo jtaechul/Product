@@ -65,6 +65,14 @@ _SEED = {
     },
     # ※ umbellula sp.(MBARI 클립)는 정지 소스(motion 1.4 < 3.0)로 하드룰 #11 위반 → 시드 제거.
     #   (CI에서 auto 제작이 이 종에서 반복 실패하던 실제 사고. 움직이는 실사 확보 시 재편입.)
+    # 3차 확충(2026-07, deep_sea 7종 소진 → 신규 종): NOAA Okeanos "Windows to the Deep 2018" Dive 11.
+    #   붉고 가시 돋친 킹크랩(리소드과)이 해저를 걷고 거미불가사리를 잡아먹는 PD·16:9 실사(육안 검수 통과).
+    #   앞 7초=NOAA 타이틀카드 / 뒤 15초=URL 오버레이·크레딧 카드 → trim으로 물리 제거(본편 ~91초만 사용).
+    "lithodidae": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/d/d9/King_crab_eating_a_brittle_star.webm",
+        "license": "public-domain", "credit": "NOAA Ocean Exploration", "trim": (7, 15),
+        "source": "https://commons.wikimedia.org/wiki/File:King_crab_eating_a_brittle_star.webm",
+    },
     # 범위 확장(심해→전 해양) + 다중 소스(GBIF/Commons 전세계) 첫 편입분.
     "sepioteuthis sepioidea": {
         "url": "https://upload.wikimedia.org/wikipedia/commons/c/ce/Caribbean_Reef_Squid_Encounter.webm",

@@ -193,7 +193,11 @@ def detect_text_bands(frame_paths: list[str], bands: int = 40) -> tuple[float, f
         return (0.0, 0.0)
     profs = [_row_text_profile(p, bands) for p in frame_paths]
     n = len(profs)
-    HIT = 0.010          # 띠 텍스트 판정(획-에지 밀도) — 확실한 텍스트만
+    # HIT: 띠 텍스트 판정(밝은 획-에지 밀도). 0.010은 너무 낮아 **밝은 모래 바닥·가시 돋친 밝은
+    # 피사체**(예: 킹크랩)의 텍스처 에지를 텍스트로 오검(빈 물·얇은 띠로 과크롭)했다. 실측: 깨끗한
+    # 모래 프레임 ≈0.017 vs 실제 번인 텍스트(로고·URL·타이틀카드) ≈0.12~0.14 → 0.040으로 올려
+    # 모래는 거르고(여유 2.4배) 진짜 텍스트만 잡는다(여전히 3배 이상 여유).
+    HIT = 0.040
     PERSIST = 0.55       # 이 프레임집합의 절반 이상에 떠 있어야 '박힌 텍스트'
     persist = [sum(1 for pr in profs if pr[b] >= HIT) / n for b in range(bands)]
     text_band = [p >= PERSIST for p in persist]

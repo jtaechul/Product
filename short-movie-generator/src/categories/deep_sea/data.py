@@ -334,6 +334,42 @@ SPECIES = {
             "detail": "its crown of polyps catching the ROV light",
         },
     },
+    # 3차 확충(2026-07): NOAA Okeanos "Windows to the Deep 2018" Dive 11 실사(PD·16:9).
+    #   출처가 '리소드과 킹크랩(a type of king crab)' 이라고만 명시 → 속·종 단정 금지, 과(科) 수준으로만 기술.
+    #   모든 사실은 킹크랩 상과(리소드과)의 정설 + 해당 클립에서 실제 관찰된 행동(거미불가사리 포식)만 사용.
+    "king crab": {
+        "scientific_name": "Lithodidae",
+        "common_name_ko": "심해 킹크랩(리소드과)",
+        "common_name_en": "Lithodid king crab",
+        "depth_range_m": "200-2000",
+        "distribution": "전 세계 심해(대서양·태평양 등)",
+        "habitat": "심해 저층(대륙사면·해저 평원)",
+        "diet": ["거미불가사리 등 극피동물", "죽은 사체", "저서 무척추동물"],
+        "fun_facts": [
+            "게처럼 보이지만 사실은 소라게(집게)에 가까운 '가짜 게'다",
+            "걸어 다니는 다리가 세 쌍뿐이다(마지막 한 쌍은 작게 퇴화해 등딱지 아래 숨는다)",
+            "온몸이 단단한 가시로 뒤덮여 포식자로부터 몸을 지킨다",
+            "거미불가사리나 죽은 사체를 먹는 심해의 청소부이자 포식자다",
+            "차갑고 먹이가 적은 심해에서 아주 느리게 자라며 오래 산다",
+        ],
+        "sources": ["NOAA Ocean Exploration", "WoRMS"],
+        "accuracy_flags": {"bioluminescent": False, "swims": False, "anomuran": True, "max_depth_m": 2000},
+        "situation_id": "discovery_swim", "habitat_zone": "benthic",
+        "appearance": ("a deep-sea lithodid king crab, a large red spiny crab-like crustacean with a "
+                       "spine-covered carapace and long legs, walking on the muddy seafloor"),
+        "anatomy_lock": ("a single king crab (family Lithodidae) with a spiny carapace and three visible "
+                         "pairs of long walking legs plus a pair of clawed front legs; keep the crab-like "
+                         "armored body; no fish, no octopus arms, no shell of a hermit crab"),
+        "forbidden_features": ("fish head, octopus arms, snail shell, extra visible leg pairs, or swimming"),
+        "hud_callouts": [{"slot": "left-mid", "title": "CARAPACE", "sub": "SPINED · ARMORED"},
+                         {"slot": "right-mid", "title": "LEGS ×3", "sub": "WALKING PAIRS"},
+                         {"slot": "right-low", "title": "ANOMURA", "sub": "FALSE CRAB"}],
+        "cut_behaviors": {
+            "discovery": "walks slowly across the dark muddy seafloor",
+            "behavior": "moves on its long spiny legs, claws probing the sediment",
+            "detail": "grips and feeds on a brittle star with its front claws",
+        },
+    },
     # (카리브암초오징어는 얕은 바다 종이라 marine_life 카테고리로 이동함)
 }
 
