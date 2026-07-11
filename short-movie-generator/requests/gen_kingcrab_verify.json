@@ -1,0 +1,7 @@
+{
+  "category": "deep_sea",
+  "query": "auto",
+  "visualizer": "panzoom",
+  "scope": "all",
+  "_note": "검증: 신규 종(심해 킹크랩) 자동 소싱→제작 완주 확인 + 밝은배경 텍스트 오검 수정 검증"
+}
