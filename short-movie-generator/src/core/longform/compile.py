@@ -373,6 +373,17 @@ def compile_longform(theme_word: str, segments: list[SEG.SegmentSpec], out_dir: 
         final = body
 
     # 챕터(YouTube 설명용) + 구조화 타임스탬프(대시보드 한국어 설명 등 재구성용)
+    # ★타임스탬프는 '실제 인코딩된 파트 길이'로 누적한다(재발방지 핵심). parts의 보고 길이(dur)와
+    #   실제 concat된 mp4 길이가 조금씩 달라(인코더 패딩·스탬프 프레임수 등) 6개 세그먼트를 지나며
+    #   오차가 누적 → 챕터가 해당 순위 '시작'이 아니라 이미 진행 중인 '중간'을 가리키던 문제 수정.
+    def _dur_of(p: str) -> float:
+        try:
+            out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                  "-of", "csv=p=0", p], capture_output=True, text=True, timeout=30).stdout.strip()
+            return float(out)
+        except Exception:  # noqa: BLE001
+            return 0.0
+    real_durs = [_dur_of(p) for p in norm]
     chapters = []
     chapter_items = []
     acc = 0.0
@@ -384,8 +395,10 @@ def compile_longform(theme_word: str, segments: list[SEG.SegmentSpec], out_dir: 
                 "t": round(acc, 2), "label_jp": lab,
                 "rank": s.rank if s else None, "ko_name": (s.ko_name if s else "") or "",
             })
-        acc += dur
-    return {"video": final, "total_s": round(total_s, 2), "chapters": "\n".join(chapters),
+        rd = real_durs[idx] if idx < len(real_durs) and real_durs[idx] > 0 else dur
+        acc += rd
+    total_real = sum(d for d in real_durs if d > 0) or total_s
+    return {"video": final, "total_s": round(total_real, 2), "chapters": "\n".join(chapters),
             "chapter_items": chapter_items, "n": n}
 
 
