@@ -146,6 +146,8 @@ class ShipwreckCategory(CollectionCategory):
     scale_label = "水深"          # 서식수심 대신 '수심'
     show_scale = False           # 단일 침몰 수심이라 스케일 눈금 무의미
     reframe_wide = True          # 선체 전체가 넓게 보이도록 원경 프레이밍(줌 억제)
+    fixed_hashtag = "#沈没船"     # 고정 공통 태그(난파선은 생물 아님 → 海の生き物 대신)
+    fixed_hashtag_ko = "#난파선"
     SUBJECTS = SUBJECTS
     COPY = COPY
     _dir = Path(__file__).resolve().parent

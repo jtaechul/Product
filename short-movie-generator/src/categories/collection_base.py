@@ -42,6 +42,9 @@ class CollectionCategory(CategoryModule):
     corner_label = "OCEAN · ARCHIVE"        # 오프닝 코너 라벨(카테고리별)
     scale_label = "生息水深"                 # 우측 스케일 제목
     show_scale = True                        # 수심 스케일 표시 여부
+    # 캡션 끝 '고정 공통 해시태그'(카테고리별 override) — 내용 태그 1개 + 이 고정 태그 1개만 붙는다.
+    fixed_hashtag = "#海の生き物"
+    fixed_hashtag_ko = "#해양생물"
     SUBJECTS: dict = {}
     COPY: dict = {}
     _dir = Path(__file__).resolve().parent   # 하위 클래스가 __file__로 override
@@ -136,7 +139,8 @@ class CollectionCategory(CategoryModule):
             spec.hook_line1, spec.hook_line2, hook_ko=c.get("hook_ko", ""),
             feature_ko=c.get("feature_ko", ""), credit=credit,
             default_tags=list(c.get("tags", ["#海", f"#{spec.jp_name}", "#生き物"])),
-            default_tags_ko=list(c["tags_ko"]) if c.get("tags_ko") else None)
+            default_tags_ko=list(c["tags_ko"]) if c.get("tags_ko") else None,
+            fixed_tag=self.fixed_hashtag, fixed_tag_ko=self.fixed_hashtag_ko)
         return CaptionData(
             hook_text=spec.hook_line1 + spec.hook_line2,
             overlay_facts=[info.habitat or ""], caption_body=rc["jp"],

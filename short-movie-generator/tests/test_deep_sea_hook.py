@@ -73,6 +73,10 @@ def test_reels_captiondata_separates_jp_and_ko(monkeypatch):
     assert "한국어 참고 번역" not in cd.caption_body            # 합본 마커 없음
     assert _no_japanese(cd.caption_ko)
     assert cd.hook_ko and _no_japanese(cd.hook_ko)
-    # 공통 태그(#심해·#해양생물)는 항상 앞에 포함(운영자 요청, _with_core_tags). 총 3~5개, 전부 한국어.
-    assert "#심해" in cd.hashtags_ko and "#해양생물" in cd.hashtags_ko
-    assert 3 <= len(cd.hashtags_ko) <= 5 and all(_no_japanese(t) for t in cd.hashtags_ko)
+    # ★해시태그 정책(운영자 확정): 끝에 **정확히 2개 = [내용 1개] + [고정 공통 1개]**.
+    #   #Shorts 미포함, 고정 공통은 카테고리 태그(심해=#심해생물). 전부 한국어.
+    assert cd.hashtags_ko[-1] == "#심해생물"                       # 고정 공통(마지막)
+    assert len(cd.hashtags_ko) == 2 and all(_no_japanese(t) for t in cd.hashtags_ko)
+    assert not any(t.lower() == "#shorts" for t in (cd.hashtags or []) + (cd.hashtags_ko or []))
+    # 일본어판도 동일 정책: [내용, #深海生物]
+    assert cd.hashtags[-1] == "#深海生物" and len(cd.hashtags) == 2
