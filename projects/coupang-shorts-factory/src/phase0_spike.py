@@ -29,7 +29,7 @@ SPIKE_SCRIPT = {
         {"text": "빨래를 3분 만에 끝내는 기계가 있다면 믿으시겠습니까", "price_shock": False},
         {"text": "이 미니 세탁기는 무게가 고작 1.2킬로그램입니다", "price_shock": False},
         {"text": "자취방에서도 캠핑장에서도 바로 돌릴 수 있습니다", "price_shock": False},
-        {"text": "가격은 단돈 4만 9천 9백원입니다", "price_shock": True},
+        {"text": "가격은 단돈 49,900원입니다", "price_shock": True},
         {"text": "이 가격이면 한번 써볼 만하지 않을까요", "price_shock": False},
     ],
 }

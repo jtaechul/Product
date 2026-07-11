@@ -35,7 +35,8 @@ VIDEO_EXTS = {".mp4", ".mov", ".webm", ".m4v"}
 
 
 def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
-                 shake_windows: list | None = None, project_root: Path | None = None) -> dict:
+                 shake_windows: list | None = None, project_root: Path | None = None,
+                 image_windows: list | None = None) -> dict:
     """단어 타임스탬프 기반 쇼츠 렌더. 반환: 렌더 통계 dict (DoD: 렌더 시간 기록)."""
     r = settings.get("render", {})
     s = settings.get("subtitle", {})
@@ -70,10 +71,11 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
         background = background.with_position((-shake_px, -shake_px))
 
     word_clips = _build_word_clips(words, duration, font_path, s, width)
+    image_clips = _build_image_clips(image_windows or [], duration, width)
 
     t0 = time.time()
     final = (
-        CompositeVideoClip([background, *word_clips], size=(width, height))
+        CompositeVideoClip([background, *image_clips, *word_clips], size=(width, height))
         .with_duration(duration)
         .with_audio(audio)
     )
@@ -99,6 +101,7 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
         "realtime_factor": round(render_seconds / max(duration, 0.01), 2),
         "resolution": f"{width}x{height}@{fps}fps",
         "word_clip_count": len(word_clips),
+        "image_clip_count": len(image_clips),
         "font_used": str(font_path),
         "background_used": bg_name,
         "output_bytes": out_path.stat().st_size,
@@ -151,6 +154,31 @@ def _build_background(bg_dir: Path, width: int, height: int, duration: float,
     grad = (top[None, :] * (1 - rows) + bottom[None, :] * rows).astype(np.uint8)
     frame = np.repeat(grad[:, None, :], over_w, axis=1)
     return ImageClip(frame).with_duration(duration), "(자체 생성 그라데이션)"
+
+
+def _build_image_clips(image_windows: list, duration: float, width: int) -> list:
+    """상품 이미지 오버레이 — image_cue 라인 시작에 등장, 상단 중앙,
+    줌인 1.00→1.08 선형 보간 (스펙 §M6-2). 실패한 이미지는 건너뛴다."""
+    clips = []
+    for start, end, img_path in image_windows:
+        end = min(float(end), duration)
+        start = max(0.0, float(start))
+        dur = end - start
+        if dur <= 0.1 or not Path(img_path).exists():
+            continue
+        try:
+            base = ImageClip(str(img_path))
+            target_w = int(width * 0.68)
+            base = base.resized(width=target_w)
+            clip = (
+                base.resized(lambda t, d=dur: 1.0 + 0.08 * min(1.0, t / d))
+                .with_start(start).with_duration(dur)
+                .with_position(("center", 150))
+            )
+            clips.append(clip)
+        except Exception as e:
+            print(f"[render] 경고: 이미지 오버레이 실패({Path(img_path).name}: {e}) — 건너뜀")
+    return clips
 
 
 def _build_word_clips(words: list, duration: float, font_path: Path,
