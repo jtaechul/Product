@@ -327,6 +327,132 @@ _ZOOM_CYCLE = [1.05, 1.12, 1.06, 1.14, 1.08, 1.10]
 _WIDE_ZOOM_CYCLE = [1.00, 1.08, 1.00, 1.10, 1.04, 1.06]
 
 
+def _detect_scene_cuts(path: str, src_dur: float, thr: float = 0.30) -> list[float]:
+    """ffmpeg 씬 점수로 '컷이 전환되는 시각(초)' 리스트를 검출.
+
+    왜: 사용자 규칙 — 해양생물 쇼츠는 원본에서 '씬이 전환되는 부분'을 개별 구간으로 나눠
+    짧게 자주 전환한다. `select='gt(scene,thr)'`가 프레임 간 급변 지점을 잡아 showinfo로
+    그 시각을 stderr에 찍는다. 양끝 0.3초는 잘라 자투리 컷을 배제한다.
+    """
+    import re
+    try:
+        r = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", path,
+                            "-filter:v", f"select='gt(scene,{thr})',showinfo",
+                            "-an", "-f", "null", "-"],
+                           capture_output=True, text=True)
+        ts = []
+        for m in re.finditer(r"pts_time:([0-9.]+)", r.stderr or ""):
+            t = float(m.group(1))
+            if 0.3 < t < src_dur - 0.3:
+                ts.append(round(t, 2))
+        return sorted(set(ts))
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def _build_regions(cuts: list[float], src_dur: float, min_len: float,
+                   want_min: int = 3, want_max: int = 6) -> list[tuple[float, float]]:
+    """씬 컷 시각 → '분절 구간' 리스트. 너무 짧은 씬은 이웃과 병합, 씬이 부족하면 등분 폴백.
+
+    - 씬이 want_min(기본 3)개 미만이면(연속 촬영 원본 등) 소스를 4등분해 변화를 만든다.
+    - 씬이 want_max(기본 6)개 초과면 '가장 긴 구간' 위주로 추려 로테이션 패스가 의미 있게 유지.
+    """
+    bounds = [0.0] + list(cuts) + [float(src_dur)]
+    regions = [(bounds[i], bounds[i + 1]) for i in range(len(bounds) - 1) if bounds[i + 1] > bounds[i]]
+    merged: list[list[float]] = []
+    for s, e in regions:                            # 짧은 씬은 앞 구간에 흡수
+        if merged and (e - s) < min_len:
+            merged[-1][1] = e
+        else:
+            merged.append([s, e])
+    regions = [(s, e) for s, e in merged if e - s >= min_len] or [(s, e) for s, e in merged]
+    if len(regions) < want_min:                     # 씬 부족 → 등분 폴백(연속 원본 대응)
+        n = 4
+        regions = [(i * src_dur / n, (i + 1) * src_dur / n) for i in range(n)]
+    if len(regions) > want_max:                     # 씬 과다 → 긴 구간 우선 추림
+        regions = sorted(regions, key=lambda r: r[1] - r[0], reverse=True)[:want_max]
+        regions.sort()
+    return regions
+
+
+def _pick_windows_in_range(scores: list[float], bad: list[bool], fps: float,
+                           seg_len: float, rs: float, re: float, count: int) -> list[float]:
+    """구간 [rs,re] 안에서 '피사체가 잘 보이는' 비중첩 창 count개의 시작초(시간순).
+
+    같은 씬에서 매 패스마다 다른 순간을 쓰도록(1-1,1-2,1-3이 서로 다른 장면) 점수 상위·비중첩
+    창을 고르고, 번인 텍스트 프레임(bad)은 우선 배제한다. 구간이 짧으면 겹침을 허용해 채운다.
+    """
+    win = max(1, int(seg_len * fps))
+    a = max(0, int(rs * fps + 0.5))          # 씬 시작 이후로 올림(경계 침범 방지)
+    b = min(len(scores), int(re * fps))
+    hi = b - win
+    if count <= 0:
+        return []
+    if hi <= a:                                     # 구간이 한 창보다 짧음 → 시작 반복
+        return [max(0.0, rs)] * count
+    pre = [0.0]
+    for s in scores:
+        pre.append(pre[-1] + s)
+    preb = [0]
+    for bb in bad:
+        preb.append(preb[-1] + (1 if bb else 0))
+    step = max(1, int(0.4 * fps))
+    cand = sorted(((preb[st + win] - preb[st], -(pre[st + win] - pre[st]), st)
+                   for st in range(a, hi, step)))
+    chosen: list[int] = []
+    for _bc, _negs, st in cand:                     # 1순위: 비중첩 최고 창
+        if all(abs(st - o) >= win for o in chosen):
+            chosen.append(st)
+        if len(chosen) == count:
+            break
+    if len(chosen) < count:                         # 부족하면 겹침 허용해 채움
+        for _bc, _negs, st in cand:
+            if st not in chosen:
+                chosen.append(st)
+            if len(chosen) == count:
+                break
+    chosen = sorted(chosen[:count]) or [a]
+    while len(chosen) < count:
+        chosen.append(chosen[-1])
+    return [st / fps for st in chosen]
+
+
+def _plan_scene_interleaved(path: str, src_dur: float, scores: list[float],
+                            bad: list[bool], fps: float, target_dur: float) -> list[dict]:
+    """해양생물 쇼츠용 컷 계획 — 씬 분절 + '라운드로빈 인터리브'로 짧게 자주 전환.
+
+    순서 규칙(사용자 예시): 원본을 N개 씬으로 분절하면 1-1,2-1,3-1,…,N-1,1-2,2-2,… 처럼
+    매 컷마다 다음 씬으로 넘기고, 같은 씬은 한 바퀴 뒤에 그 씬의 '다음 순간'을 쓴다.
+    각 컷은 ≈2.2초로 짧게(지루함 방지). 컷의 1/3은 접사(줌인·얼굴 중앙), 2/3은 전신 핏.
+    """
+    cut_len = 2.2
+    n_cuts = max(2, round(target_dur / cut_len))
+    cut_len = target_dur / n_cuts                   # 합이 정확히 target_dur가 되게 재계산
+    if cut_len < 1.8:
+        n_cuts = max(2, int(target_dur // 1.8)); cut_len = target_dur / n_cuts
+    elif cut_len > 2.8:
+        n_cuts = max(2, -(-int(target_dur * 10) // 28)); cut_len = target_dur / n_cuts
+    cuts = _detect_scene_cuts(path, src_dur)
+    regions = _build_regions(cuts, src_dur, min_len=max(cut_len * 1.3, 2.0))
+    N = len(regions)
+    uses = [0] * N
+    for k in range(n_cuts):
+        uses[k % N] += 1
+    region_starts = [_pick_windows_in_range(scores, bad, fps, cut_len, rs, re, uses[i])
+                     for i, (rs, re) in enumerate(regions)]
+    idx = [0] * N
+    plan: list[dict] = []
+    for k in range(n_cuts):
+        ri = k % N
+        starts = region_starts[ri] or [regions[ri][0]]
+        sa = starts[min(idx[ri], len(starts) - 1)]
+        idx[ri] += 1
+        plan.append({"start": sa, "len": cut_len,
+                     "mode": "closeup" if k % 3 == 2 else "fit"})
+    log.info("[reframe] 씬 인터리브: 씬 %d개 → %d컷×%.2fs (컷당 씬 로테이션)", N, n_cuts, cut_len)
+    return plan
+
+
 def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                         work_dir: str, logo_box: tuple | None = None,
                         wide: bool = False) -> str:
@@ -399,18 +525,25 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                  sum(raw_bad), sum(bad), len(bad), th)
     fps_trk = 5.0
 
-    # 세그먼트 분할(≈5초/컷)
-    n_seg = max(2, min(8, round(target_dur / 5.0)))
-    seg_len = target_dur / n_seg
-    # 피사체가 가장 잘 보이는 소스 구간 선택(앞부분 무조건 사용 → 근접·부재 구간 유입 차단)
-    starts = _pick_windows(scores, fps_trk, seg_len, n_seg, bad=bad) if not loop else None
-    # ★전신 보장: 첫 컷은 '전신 와이드' 구간을 강제 배정(z=1.0) — 최소 1컷은 생물 전체가 보인다
-    if starts:
-        wide_sa = _pick_wide_window(scores, fracs, fps_trk, seg_len, bad=bad)
-        rest = [s for s in starts if abs(s - wide_sa) >= seg_len]
-        starts = ([wide_sa] + rest)[:n_seg]
-        while len(starts) < n_seg:
-            starts.append(rest[len(starts) % len(rest)] if rest else wide_sa)
+    # ── 컷 계획(plan) 수립 ──
+    #  · 해양생물(wide=False): 씬 분절 + 라운드로빈 인터리브로 짧게(≈2.2s) 자주 전환(지루함 방지).
+    #  · 난파선(wide=True): 기존 방식 유지 — ≈5s 컷, 피사체 최고 창 선택 + 첫 컷 전신 와이드 보장.
+    if wide:
+        n_seg = max(2, min(8, round(target_dur / 5.0)))
+        seg_len = target_dur / n_seg
+        starts = _pick_windows(scores, fps_trk, seg_len, n_seg, bad=bad) if not loop else None
+        if starts:
+            wide_sa = _pick_wide_window(scores, fracs, fps_trk, seg_len, bad=bad)
+            rest = [s for s in starts if abs(s - wide_sa) >= seg_len]
+            starts = ([wide_sa] + rest)[:n_seg]
+            while len(starts) < n_seg:
+                starts.append(rest[len(starts) % len(rest)] if rest else wide_sa)
+        plan = [{"start": (starts[i] if starts else (i * seg_len) % (use or target_dur)),
+                 "len": seg_len, "mode": "closeup" if i % 3 == 2 else "fit"}
+                for i in range(n_seg)]
+    else:
+        plan = _plan_scene_interleaved(footage_path, src_dur, scores, bad, fps_trk, target_dur)
+
     concat = wd / "reframe_concat.txt"
     lines = []
     import math as _m
@@ -418,19 +551,19 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
     GRADE = ("eq=contrast=1.12:saturation=1.16:brightness=-0.05,"
              "colorbalance=rm=-0.03:bm=0.05,vignette=PI/4.2,format=yuv420p")
     # ★전신 보장(과도한 줌인 방지): 컷의 2/3를 '핏(fit)'으로 — 원본 전체를 9:16 안에 담아
-    #   피사체 전신 + 배경까지 다 보이게 하고, 남는 위/아래는 같은 화면의 블러로 채운다(리버스 폐기).
-    #   3컷마다 1컷만 완만한 접사 크롭(i%3==2), 나머지는 핏 → 정체 식별을 최우선(과확대 방지).
+    #   피사체 전신 + 배경까지 다 보이게 하고, 남는 위/아래는 같은 화면의 블러로 채운다.
+    #   나머지 1/3만 완만한 접사(줌인) — 심해생물은 얼굴을 화면 중앙에 두고 크롭.
     n_fit = 0
-    for i in range(n_seg):
-        a = i * seg_len
-        sa = starts[i] if starts else (a % use if use > 0 else 0.0)
+    for i, cut in enumerate(plan):
+        sa = cut["start"]
+        seg_len = cut["len"]
         seg_out = wd / f"rf_{i}.mp4"
         cmd = ["ffmpeg", "-y", "-loglevel", "error"]
         if loop:
             cmd += ["-stream_loop", "-1"]
         cmd += ["-ss", f"{sa:.2f}", "-t", f"{seg_len:.2f}", "-i", footage_path,
                 "-an", "-r", "30", "-c:v", "libx264", "-preset", "medium", "-crf", "20"]
-        if i % 3 != 2:
+        if cut["mode"] != "closeup":
             # 핏 컷: 전신 + 배경 전체가 보이도록 원본 전체를 9:16 안에 맞춤(여백=블러 채움)
             n_fit += 1
             # ★핏 컷 번인 텍스트 방지(재발방지 2차 방어): 핏은 원본 프레임 '전체'를 보여줘
@@ -463,16 +596,27 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                       f"[bg][fg]overlay=(W-w)/2:(H-h)/2,{GRADE}")
             cmd += ["-filter_complex", fc, str(seg_out)]
         else:
-            # 접사 컷: 피사체 추적 + 완만한 줌(줌 상한 60% 점유율). 크롭이라 좌우 일부만 보임.
+            # 접사 컷: 피사체 추적 + 완만한 줌. 크롭이라 좌우 일부만 보임.
             z = cycle[i % len(cycle)]
             fa, fb = int(sa * fps_trk), int((sa + seg_len) * fps_trk)
+            # 크롭 중심 = 가장 강한 적색(상위 2%)의 무게중심 = ROV 조명 받는 '얼굴'.
             seg_c = cents[fa:fb] or cents
             fx = _median([c[0] for c in seg_c]); fy = _median([c[1] for c in seg_c])
             med_frac = _median((fracs[fa:fb] or fracs))
-            # 점유율 상한 0.6→0.45: 접사에서도 피사체가 크롭의 45%를 넘지 않게 → 주변 맥락·전신이 더 남아
+            # 점유율 상한 0.45: 접사에서도 피사체가 크롭의 45%를 넘지 않게 → 주변 맥락·전신이 더 남아
             # '이게 뭔지' 식별을 확보(과확대 방지).
             z_cap = _m.sqrt(0.45 * src_h * W / (max(med_frac, 1e-4) * src_w * H))
             z = max(1.0, min(z, z_cap))
+            if not wide:
+                # ★줌인 얼굴 중앙(사용자 규칙): 피사체가 프레임 가장자리에 있으면 넓은 크롭은
+                #   가장자리에 '클램프'되어 얼굴이 화면 옆으로 밀린다. 얼굴을 정중앙에 두려면
+                #   크롭이 [얼굴 중심±절반]이 소스 안에 들어갈 만큼 충분히 좁아야 한다
+                #   (= 약간 더 줌인). 필요한 최소 줌을 계산해 적용하되 상한 1.9로 과확대는 막는다.
+                mx = min(max(fx, 1e-3), 1 - 1e-3); my = min(max(fy, 1e-3), 1 - 1e-3)
+                z_center_x = (src_h * W / H) / max(2 * src_w * min(mx, 1 - mx), 1e-3)
+                z_center_y = 1.0 / (2 * min(my, 1 - my))
+                z = max(z, min(max(z_center_x, z_center_y), 1.9))
+                z = max(1.0, z)
             cw = int(round((src_h * W / H) / z)) & ~1
             ch = int(round(src_h / z)) & ~1
             cw = min(cw, int(src_w)) & ~1
@@ -492,5 +636,5 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0",
                     "-i", str(concat), "-c", "copy", out_path], check=True)
     log.info("[reframe] 9:16 완성: %s (%d컷 중 전신핏 %d컷 %.0f%%, %.1fs)",
-             out_path, n_seg, n_fit, 100.0 * n_fit / max(n_seg, 1), target_dur)
+             out_path, len(plan), n_fit, 100.0 * n_fit / max(len(plan), 1), target_dur)
     return out_path
