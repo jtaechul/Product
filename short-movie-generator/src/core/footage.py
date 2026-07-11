@@ -141,15 +141,27 @@ def _probe_dim(path: str) -> tuple[int, int] | None:
 
 
 def _probe_dur(path: str) -> float | None:
-    """ffprobe로 길이(초) 조회. 실패 시 None."""
+    """실제 길이(초) = duration − start_time. 일부 NOAA/Commons webm은 타임스탬프가 0에서
+    시작하지 않아 raw duration이 '끝 타임스탬프'(수 시간대)로 잡혀 구간 계산이 파괴된다
+    (실측: graneledone 클립이 142219초로 오판). start_time을 빼 실제 재생 길이를 반환."""
     import subprocess
     try:
         out = subprocess.run(
-            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-             "-of", "csv=p=0", path], capture_output=True, text=True, timeout=30).stdout.strip()
-        return float(out)
+            ["ffprobe", "-v", "error", "-show_entries", "format=start_time,duration",
+             "-of", "json", path], capture_output=True, text=True, timeout=30).stdout
+        import json as _json
+        fmt = _json.loads(out or "{}").get("format", {})
+        dur = float(fmt.get("duration") or 0)
+        start = float(fmt.get("start_time") or 0)
+        return max(0.0, dur - max(0.0, start))
     except Exception:  # noqa: BLE001
-        return None
+        try:
+            out = subprocess.run(
+                ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                 "-of", "csv=p=0", path], capture_output=True, text=True, timeout=30).stdout.strip()
+            return float(out)
+        except Exception:  # noqa: BLE001
+            return None
 
 
 def _download(url: str, dest: Path) -> bool:
@@ -170,6 +182,72 @@ def _download(url: str, dest: Path) -> bool:
             log.warning("[footage] 다운로드 실패(%d/4) %s: %s → %ds 후 재시도", attempt + 1, url, e, wait)
             time.sleep(wait)
     return False
+
+
+def _card_flags(video: str, ss: float, span: float, fps: int, tmp: Path) -> list[bool]:
+    """[ss, ss+span] 구간을 fps로 한 번에 추출해, 각 프레임이 '카드/검은 리드인'인지 리스트 반환.
+    카드 = text_score(밝은 획-에지) 높음 + 평균 밝기 어두움, 또는 거의 순검정. 실사와 구분."""
+    import subprocess
+    from src.core import reframe
+    from PIL import Image, ImageStat
+    for f in tmp.glob("cf_*.jpg"):
+        f.unlink(missing_ok=True)
+    try:
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{ss:.2f}", "-t", f"{span:.2f}",
+                        "-i", video, "-vf", f"fps={fps},scale=480:-1", str(tmp / "cf_%03d.jpg")],
+                       check=True, timeout=60)
+    except Exception:  # noqa: BLE001
+        return []
+    flags = []
+    for f in sorted(tmp.glob("cf_*.jpg")):
+        try:
+            ts = reframe.text_score(str(f))
+            br = ImageStat.Stat(Image.open(f).convert("L")).mean[0]
+            flags.append((ts > 0.022 and br < 70) or br < 8)
+        except Exception:  # noqa: BLE001
+            flags.append(False)
+    return flags
+
+
+def _auto_trim_cards(path: str, dur: float, cap: float = 10.0) -> tuple[float, float]:
+    """인트로/아웃트로 타이틀카드(어두운 배경+NOAA 로고·문구)를 **자동 탐지**해 잘라낼
+    (앞초, 뒤초)를 반환. 수동 trim 값이 없는 클립(대다수 NOAA 영상)도 카드가 남지 않게 한다.
+
+    ★재발방지(사용자 규칙): 롱폼 콜드오픈은 `-stream_loop`로 클립을 반복하는데, 인트로 카드가
+    남아 있으면 루프마다 '검은 화면+반쯤 지워진 NOAA 문구'가 재노출됐다. 소스를 물리적으로
+    카드 없는 본편으로 만들어 루프·컷 어디서도 카드가 못 나오게 한다.
+    앞/뒤 각각 cap초까지 4fps로 스캔해 '첫 실사 프레임'(0.75초 연속)까지를 카드로 보고 자른다.
+    """
+    if not dur or dur <= 0:
+        return (0.0, 0.0)
+    fps = 4
+    step = 1.0 / fps
+    need = max(1, int(0.75 * fps))
+    tmp = Path(path).parent / "_cardscan"
+    tmp.mkdir(exist_ok=True)
+
+    def edge(flags: list[bool]) -> float:
+        clean = 0
+        for i, is_card in enumerate(flags):
+            if is_card:
+                clean = 0
+            else:
+                clean += 1
+                if clean >= need:
+                    return max(0.0, (i - (clean - 1)) * step)
+        return 0.0
+
+    span = min(cap, max(0.0, dur))
+    head = edge(_card_flags(path, 0.0, span, fps, tmp))
+    tail = 0.0
+    if dur > cap + 2:
+        rflags = list(reversed(_card_flags(path, dur - span, span, fps, tmp)))
+        tail = edge(rflags)
+    for f in tmp.glob("cf_*.jpg"):
+        f.unlink(missing_ok=True)
+    if dur - head - tail < 8:            # 본편이 8초 미만 남는 과트림은 취소
+        return (0.0, 0.0)
+    return (round(head, 2), round(tail, 2))
 
 
 def _commons_search(query: str) -> dict | None:
@@ -252,12 +330,16 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
         ar = dim[0] / dim[1] if dim[1] else 0
         if not (1.55 <= ar <= 1.95):
             return _reject(f"종횡비 부적합({dim[0]}x{dim[1]}, AR={ar:.2f})")
-    # ★인트로/아웃트로 트림(번인 타이틀카드·크레딧 제거): trim=(앞초,뒤초)가 지정된 소스는
-    #   본편만 남겨 로고·문구·인트로 레터박스를 원천 차단한다(아마추어 다이빙 영상 대응).
+    # ★인트로/아웃트로 트림(번인 타이틀카드·크레딧 제거): 수동 trim=(앞초,뒤초) + **자동 카드
+    #   탐지**를 합쳐 본편만 남긴다. 대다수 NOAA 클립은 수동 trim이 없어도 인트로 카드가 있는데
+    #   (예: 심해붉은해파리 Psychedelic Medusa 앞 ~6초), 롱폼 콜드오픈이 이를 `-stream_loop`로
+    #   반복 노출하던 심각한 사고가 있었다 → 자동 탐지로 카드 없는 소스를 강제한다(재발방지).
     trim = cand.get("trim")
-    if trim:
-        head, tail = float(trim[0]), float(trim[1])
-        dur = _probe_dur(str(out))
+    dur = _probe_dur(str(out))
+    auto_head, auto_tail = _auto_trim_cards(str(out), dur) if dur else (0.0, 0.0)
+    m_head, m_tail = (float(trim[0]), float(trim[1])) if trim else (0.0, 0.0)
+    head, tail = max(m_head, auto_head), max(m_tail, auto_tail)   # 둘 중 큰 값(카드 확실 제거)
+    if head > 0 or tail > 0:
         if dur and dur - head - tail > 8:   # 트림 후 최소 8초는 남아야 함
             # ★프레임 정확 트림(재발방지 · 핵심): 예전엔 `-c copy`로 잘랐는데, 스트림 카피는
             #   **키프레임 단위로만** 잘려(-ss 7이 앞쪽 키프레임 0초로 당겨짐) 인트로 타이틀카드
