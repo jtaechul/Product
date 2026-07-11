@@ -100,12 +100,15 @@ jobs:
               echo "category=${{ inputs.category }}" >> "$GITHUB_OUTPUT"
             fi
           elif [ "${{ github.event_name }}" = "schedule" ]; then
-            # 매일 자동: AI 카테고리 자동 로테이션 + 안정적인 panzoom(무쿼터)
+            # 매일 자동: 카테고리 자동 로테이션. ★category=__rotate__ 센티널만 넘기고, 실제
+            #   카테고리 선택은 파이프라인 실행 단계(파이썬 의존성 설치 후)에서 '미제작 종이 남은
+            #   카테고리'로 결정한다. 예전엔 deep_sea로 하드코딩해, deep_sea가 소진되면 다른
+            #   카테고리에 만들 종이 남아 있어도 매일 아침 실패하던 실제 장애가 있었다.
             echo "query=auto" >> "$GITHUB_OUTPUT"
             echo "visualizer=panzoom" >> "$GITHUB_OUTPUT"
             echo "episode=" >> "$GITHUB_OUTPUT"
             echo "scope=all" >> "$GITHUB_OUTPUT"
-            echo "category=deep_sea" >> "$GITHUB_OUTPUT"
+            echo "category=__rotate__" >> "$GITHUB_OUTPUT"
           else
             # ★푸시로 '이번에 바뀐' 요청 파일을 우선 선택(결정적). CI 체크아웃은 모든 파일 mtime이
             #   같아 `ls -t`가 엉뚱한(오래된) 요청을 집던 버그가 있었다(재생성이 딴 회차로 나감).
@@ -166,6 +169,29 @@ jobs:
           if [ -n "${{ steps.inp.outputs.episode }}" ]; then EP_ARG="--episode ${{ steps.inp.outputs.episode }}"; fi
           SCOPE="${{ steps.inp.outputs.scope }}"; [ -z "$SCOPE" ] && SCOPE="all"
           CAT="${{ steps.inp.outputs.category }}"; [ -z "$CAT" ] && CAT="deep_sea"
+          # ★스케줄 자동 로테이션: __rotate__ 센티널이면 '미제작 종이 남은 카테고리'를 요일별로
+          #   회전 선택(deep_sea 소진 시 marine_life/marine_algae/shipwreck로 넘어가 매일 1편 보장).
+          #   의존성 설치가 끝난 이 단계에서 해석한다(Resolve 단계는 requests 등 미설치라 import 불가).
+          if [ "$CAT" = "__rotate__" ]; then
+            DOY=$(date -u +%j)
+            CAT=$(python - "$DOY" <<'PY'
+          import sys
+          from src import registry
+          doy = int(sys.argv[1])
+          order = ["deep_sea", "marine_life", "marine_algae", "shipwreck"]
+          order = order[doy % len(order):] + order[:doy % len(order)]   # 요일별 시작점 회전(다양성)
+          picked = ""
+          for cid in order:
+              try:
+                  if registry.get_category(cid).footage_candidates():
+                      picked = cid; break
+              except Exception:
+                  continue
+          print(picked or "deep_sea")
+          PY
+          )
+            echo "자동 로테이션 선택 카테고리: $CAT"
+          fi
           # 확정 시스템: reels(실사 영상 + 일본어 오프닝훅/엔드카드/전환/사운드). 팬줌·Veo 미사용.
           python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --category "$CAT" $EP_ARG --mode reels
           VIDEO=$(ls -t output/*.mp4 | head -1)
