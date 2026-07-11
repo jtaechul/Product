@@ -151,8 +151,8 @@ YCbCr Matrix: TV.709
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Sub,  {font}, {subsz}, &H00FFFFFF, &H00FFFFFF, &H00161616, &H00000000, -1, 0, 0, 0, 100, 100, 0.6, 0, 1, 3.4, 1.8, 2, 80, 80, {submv}, 1
-Style: Hook, {font}, {hooksz}, &H00FFFFFF, &H00FFFFFF, {accent}, &H00000000, -1, 0, 0, 0, 100, 100, 2.0, 0, 1, 4, 0, 8, 60, 60, {hookmv}, 1
+Style: Sub,  {font}, {subsz}, &H00FFFFFF, &H00FFFFFF, &H00161616, &H00000000, -1, 0, 0, 0, 100, 100, 0.6, 0, 1, 3.4, 1.8, 2, 88, 88, {submv}, 1
+Style: Hook, {font}, {hooksz}, &H00FFFFFF, &H00FFFFFF, {accent}, &H00000000, -1, 0, 0, 0, 100, 100, 2.0, 0, 1, 4, 0, 8, 88, 88, {hookmv}, 1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -257,7 +257,7 @@ def build_synced_ass(disp: list[tuple], out_path: str, *, font: str = "Noto Sans
       쪼개 순차 표시한다(세로 쇼츠 가독성·깔끔함 우선, 요청 반영).
     """
     subsz = int(h * 0.039 * sub_scale)
-    margin = 80                                    # Sub 스타일 MarginL/R
+    margin = 88                                    # Sub 스타일 MarginL/R(인스타 릴스 좌우 안전여백 ↑)
     max_px = (w - 2 * margin) * 0.96               # 안전 여유 4%
     lines = [_ASS_HEAD.format(w=w, h=h, font=font,
                               subsz=subsz, submv=int(h * 0.16),

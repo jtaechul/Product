@@ -95,7 +95,7 @@ class HookIntroConfig:
     # 넘침 방지(자동 맞춤): 안전여백·최소 크기·2줄 유지 하한.
     # 확정 디자인(頭も、目も、= 588px @98px)은 safe(608px) 안 → 그대로 유지되고,
     # 더 긴 훅만 자동 축소되거나(≥min_2line) 어절당 1줄(3줄)로 전환된다.
-    title_safe_x: int = 40             # 좌우 안전여백(셰이크 margin과 별도)
+    title_safe_x: int = 60             # 좌우 안전여백(인스타 릴스 UI 겹침 방지 ↑)
     title_min_size: int = 56           # 축소 하한
     title_min_2line: int = 76          # 2줄 유지 최소 크기(미만이면 3줄 전환)
     grad_cyan: tuple = (120, 225, 245)
@@ -423,7 +423,7 @@ def render_endcard(bg_path: str, spec: SpeciesSpec, out_path: str,
         dd.text(center, t, font=font, fill=fill, anchor=anchor)
 
     # 중앙 정렬 텍스트 블록(캡슐·게이지 없음 — 사용자 확정) · 폰트는 화면폭 자동 맞춤
-    max_w = W - 72
+    max_w = int(W * 0.76)   # 인스타 릴스 좌우 UI 겹침 안전여백(≈12%)
     f_title = _fit_font(spec.jp_name, cfg.end_title_size, max_w, _serif)
     f_feat = _fit_font(spec.feature_line, cfg.end_feature_size, max_w, _serif)
     grad_text((W // 2, 336), spec.jp_name, f_title, glow_r=26)
@@ -581,7 +581,7 @@ def _styled_line(spec: SpeciesSpec, cfg: HookIntroConfig):
 
     depth_str = f"水深 {spec.depth_min:,}〜{spec.depth_max:,} m"
     # 각 줄 폰트는 화면폭에 자동 맞춤(_fit_font) — 긴 국명·특징문구도 넘침 원천 차단
-    max_w = W - 72
+    max_w = int(W * 0.76)   # 인스타 릴스 좌우 UI 겹침 안전여백(≈12%)
     ft = _fit_font(spec.jp_name, cfg.end_title_size, max_w, _serif)
     fs = _fit_font(spec.sci_name, cfg.end_sci_size, max_w, _sci)
     fd = _fit_font(depth_str, cfg.end_depth_size, max_w, _sans_b)
