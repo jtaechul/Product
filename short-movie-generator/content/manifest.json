@@ -81,14 +81,6 @@
     "youtube_url": "https://youtu.be/lhfjZZ7QVrY"
   },
   {
-    "id": "007",
-    "kind": "reels",
-    "common_name_ko": "넓적문어",
-    "common_name_en": "Flapjack octopus",
-    "scientific_name": "Opisthoteuthis californiana",
-    "date": "2026-07-10"
-  },
-  {
     "id": "014",
     "kind": "reels",
     "common_name_ko": "아리에스호 난파선",
@@ -123,6 +115,14 @@
     "common_name_ko": "U-1277 잠수함 난파선",
     "common_name_en": "Wreck U-1277 (WWII German U-boat)",
     "scientific_name": "Wreck U-1277",
+    "date": "2026-07-11"
+  },
+  {
+    "id": "007",
+    "kind": "reels",
+    "common_name_ko": "넓적문어",
+    "common_name_en": "Flapjack octopus",
+    "scientific_name": "Opisthoteuthis californiana",
     "date": "2026-07-11"
   }
 ]
