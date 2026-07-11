@@ -1,0 +1,73 @@
+name: shorts-produce
+
+# 쿠팡 어필리에이트 쇼츠 팩토리 (projects/coupang-shorts-factory/) 전용 워크플로우.
+# 트리거는 workflow_dispatch(수동)만 둔다 — 추후 push 트리거를 달게 되면 반드시
+# paths: ['projects/coupang-shorts-factory/**'] 필터를 적용할 것 (폴더 격리 원칙).
+
+on:
+  workflow_dispatch:
+    inputs:
+      tts_provider:
+        description: "TTS 프로바이더 (auto=등록된 키 자동 감지, mock=키 없이 렌더 검증)"
+        type: choice
+        options: [auto, elevenlabs, typecast, clova, mock]
+        default: auto
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shorts-produce
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: projects/coupang-shorts-factory
+
+jobs:
+  phase0-render-spike:
+    name: "Phase 0 — 렌더 스파이크 (TTS→자막 싱크 렌더)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: projects/coupang-shorts-factory/requirements.txt
+
+      - name: 의존성 설치
+        run: pip install -r requirements.txt
+
+      - name: Whisper 모델 캐시 (타임스탬프 폴백용)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: whisper-small-v1
+
+      - name: 배경 에셋 확보 (선택 — 실패해도 그라데이션 폴백)
+        env:
+          SHORTS_PEXELS_API_KEY: ${{ secrets.SHORTS_PEXELS_API_KEY }}
+        run: python scripts/fetch_assets.py
+
+      - name: Phase 0 스파이크 실행 (대본→TTS→timestamps→렌더)
+        env:
+          SHORTS_ELEVENLABS_API_KEY: ${{ secrets.SHORTS_ELEVENLABS_API_KEY }}
+          SHORTS_TYPECAST_API_KEY: ${{ secrets.SHORTS_TYPECAST_API_KEY }}
+          SHORTS_CLOVA_CLIENT_ID: ${{ secrets.SHORTS_CLOVA_CLIENT_ID }}
+          SHORTS_CLOVA_CLIENT_SECRET: ${{ secrets.SHORTS_CLOVA_CLIENT_SECRET }}
+        run: >
+          python -m src.phase0_spike
+          --provider "${{ inputs.tts_provider }}"
+          --job-id "phase0-run${{ github.run_number }}"
+
+      - name: 산출물 업로드 (video.mp4 / audio.mp3 / timestamps.json / render_stats.json)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shorts-phase0-run${{ github.run_number }}
+          path: projects/coupang-shorts-factory/data/jobs/
+          retention-days: 14
+          if-no-files-found: warn
