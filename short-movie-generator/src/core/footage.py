@@ -85,6 +85,22 @@ _SEED = {
         "license": "cc-by", "credit": "Vitor Alves · CC BY",
         "source": "https://commons.wikimedia.org/wiki/File:Wreck_Aries_-_Dive_in_18m_cargo_ship.webm",
     },
+    # 침몰선(shipwreck) 실사 영상 확충 — 매번 같은 배(아리에스)만 나오던 문제 해결(모두 실존·CC BY·동적영상 검증).
+    "wreck u-1277": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/4/4b/Dive_in_U1277_a_wreck_dive_in_a_WWll_German_Submarine.webm",
+        "license": "cc-by", "credit": "Victor Marafona · CC BY",
+        "source": "https://commons.wikimedia.org/wiki/File:Dive_in_U1277_a_wreck_dive_in_a_WWll_German_Submarine.webm",
+    },
+    "wreck ss wisconsin": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/1/19/Lake_Michigan_Wreck_Dive_-_SS_Wisconsin%2C_Waukegan%2C_IL_%28north_of_Chicago%29%2C_summer_2012.webm",
+        "license": "cc-by", "credit": "Daniel Kramer · CC BY",
+        "source": "https://commons.wikimedia.org/wiki/File:Lake_Michigan_Wreck_Dive_-_SS_Wisconsin,_Waukegan,_IL_(north_of_Chicago),_summer_2012.webm",
+    },
+    "wreck madeirense": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/b7/Best_Wreck_dive_in_Portugal_-_Madeirense_Porto_Santo.webm",
+        "license": "cc-by", "credit": "Victor Marafona · CC BY",
+        "source": "https://commons.wikimedia.org/wiki/File:Best_Wreck_dive_in_Portugal_-_Madeirense_Porto_Santo.webm",
+    },
 }
 
 
