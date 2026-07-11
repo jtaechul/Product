@@ -319,6 +319,20 @@ def run_longform(theme_key: str, species: list[str], base_dir: str = ".",
     # → 완성본 전체를 420프레임씩 다시 OCR하던 중복(가장 큰 비용)을 없애 제작시간을 크게 단축.
     meta = _build_meta(theme_key, segs, r["chapters"], r.get("chapter_items"))
     meta.update({"video": str(final), "total_s": r["total_s"]})
+    # ★유튜브 썸네일 자동 생성(체계 반영): 1위 종의 대표 프레임 + 테마 제목 + 종수(N選)로
+    #   1280x720 썸네일을 생성해 out/thumbnail.png에 저장하고 meta에 등록한다. 워크플로가
+    #   이를 Release에 올려 대시보드 커버·유튜브 업로드에 사용. 실패해도 본편 발행은 계속.
+    try:
+        from src.core.longform import thumbnail as TH
+        top = sorted(segs, key=lambda s: s.rank)[0]
+        hero = TH.pick_hero_frame(top.footage_path, str(out / "hero.jpg"))
+        TH.render_thumbnail(str(out / "thumbnail.png"), str(out / "work" / "thumb"),
+                            title_lines=["深海の", f"{title_word}生物"], tag="実在します",
+                            count=len(segs), creature_img=hero)
+        meta["thumbnail"] = "thumbnail.png"
+        log.info("[longform] 썸네일 생성 완료: %s", out / "thumbnail.png")
+    except Exception as e:  # noqa: BLE001
+        log.warning("[longform] 썸네일 생성 실패(무시하고 발행 계속): %s", e)
     (out / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     log.info("[longform] 완료: %s (%.1fs, %d종)", final, r["total_s"], len(segs))
     return meta

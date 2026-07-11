@@ -125,6 +125,29 @@ def build_html(title_lines: list[str], tag: str, count: int, unit: str,
 </body></html>"""
 
 
+def pick_hero_frame(footage_path: str, out_jpg: str) -> str:
+    """대표 피사체 프레임 1장 추출 — subject_score(피사체 잘 보임) 최고 프레임.
+    붉은 피사체 신호가 없으면(비적색 생물) 클립 중앙 프레임으로 폴백. 썸네일용."""
+    import shutil
+    import subprocess
+    from src.core import reframe
+    work = Path(out_jpg).parent / "_hero"
+    work.mkdir(parents=True, exist_ok=True)
+    for f in work.glob("h_*.jpg"):
+        f.unlink(missing_ok=True)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", footage_path,
+                    "-vf", "fps=1,scale=1280:720", "-q:v", "2", str(work / "h_%03d.jpg")],
+                   check=True)
+    frames = sorted(work.glob("h_*.jpg"))
+    if not frames:
+        raise RuntimeError(f"hero 프레임 추출 실패: {footage_path}")
+    best = max(frames, key=lambda f: reframe.subject_score(str(f)))
+    if reframe.subject_score(str(best)) <= 0:      # 적색 신호 없음 → 중앙 프레임
+        best = frames[len(frames) // 2]
+    shutil.copy(str(best), out_jpg)
+    return out_jpg
+
+
 def render_thumbnail(out_png: str, work_dir: str, title_lines: list[str], tag: str,
                      count: int, creature_img: str, unit: str = "選") -> str:
     """썸네일 1장 렌더(1280x720 PNG) → out_png 경로 반환. 실패 시 예외."""

@@ -71,6 +71,16 @@ jobs:
         run: |
           python -c "from src.core import hook_intro as hi; m=hi.missing_fonts(); assert not m, ('필수 폰트 누락: '+', '.join(m)); print('필수 폰트 OK')"
 
+      # 썸네일(HTML/CSS→PNG)은 Playwright/Chromium로 렌더한다(고품질 그라데이션·글로우·마스크).
+      # 롱폼 본편은 PIL이라 원래 Chromium이 불필요했지만, 자동 썸네일을 위해 여기서만 설치.
+      - name: Cache Playwright Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-chromium-${{ runner.os }}-1.61.0
+      - name: Install Chromium (썸네일 렌더용)
+        run: playwright install --with-deps chromium
+
       - name: Run longform pipeline
         id: gen
         env:
@@ -95,20 +105,29 @@ jobs:
           ID="lf-${{ github.run_number }}"
           mkdir -p work/rel
           cp "$VIDEO" "work/rel/${ID}.mp4"
-          ffmpeg -y -loglevel error -ss 12.5 -i "$VIDEO" -frames:v 1 -q:v 3 "work/rel/${ID}_cover.jpg" || true
+          # ★커버 = 자동 생성 디자인 썸네일(있으면). 없으면 프레임 그랩으로 폴백.
+          COVER_NAME="${ID}_cover.jpg"
+          if [ -f output/longform/thumbnail.png ]; then
+            cp output/longform/thumbnail.png "work/rel/${ID}_thumb.png"
+            COVER_NAME="${ID}_thumb.png"
+          else
+            ffmpeg -y -loglevel error -ss 12.5 -i "$VIDEO" -frames:v 1 -q:v 3 "work/rel/${ID}_cover.jpg" || true
+          fi
           TAG="longform-${{ github.run_number }}"
           gh release view "$TAG" >/dev/null 2>&1 || \
             gh release create "$TAG" --title "Longform #${{ github.run_number }}" --notes "롱폼 TOP N (자동 생성)" --target "${{ github.ref_name }}"
           gh release upload "$TAG" work/rel/* --clobber
           BASE="${{ github.server_url }}/${{ github.repository }}/releases/download/$TAG"
           echo "video_url=$BASE/${ID}.mp4" >> "$GITHUB_OUTPUT"
-          echo "cover=work/rel/${ID}_cover.jpg" >> "$GITHUB_OUTPUT"
+          echo "cover_url=$BASE/${COVER_NAME}" >> "$GITHUB_OUTPUT"
+          echo "cover=work/rel/${COVER_NAME}" >> "$GITHUB_OUTPUT"   # 텔레그램 사진 첨부용 로컬경로
           echo "content_id=$ID" >> "$GITHUB_OUTPUT"
 
       - name: 콘텐츠 레코드 기록(제목·설명 일/한 + 타임스탬프 — 대시보드 표시용)
         id: rec
         env:
           VIDEO_URL: ${{ steps.media.outputs.video_url }}
+          COVER_URL: ${{ steps.media.outputs.cover_url }}
         run: |
           python - "${{ steps.gen.outputs.meta }}" "${{ steps.media.outputs.content_id }}" <<'PY'
           import json, os, sys
@@ -117,7 +136,7 @@ jobs:
           m = json.load(open(metap, encoding="utf-8"))
           content_store.write_longform_record(
               ".", cid, m, video_url=os.environ.get("VIDEO_URL", ""),
-              cover_url="")
+              cover_url=os.environ.get("COVER_URL", ""))
           PY
 
       - name: Commit 콘텐츠 레코드 (원격이 앞서가도 재시도)
@@ -195,4 +214,5 @@ jobs:
           path: |
             short-movie-generator/output/longform/longform.mp4
             short-movie-generator/output/longform/meta.json
+            short-movie-generator/output/longform/thumbnail.png
           retention-days: 14
