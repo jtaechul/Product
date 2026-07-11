@@ -1,0 +1,51 @@
+name: shorts-research
+
+# 쿠팡 쇼츠 M1 소재 리서치 — 아웃라이어 영상 주간 리포트 (스펙 §M1, §8 Phase 2).
+# projects/coupang-shorts-factory/ 전용. 키/채널 미설정 시 조용히 통과(soft).
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 1"   # KST 월요일 09:00 (주 1회)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shorts-research
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: projects/coupang-shorts-factory
+
+jobs:
+  research:
+    name: "아웃라이어 소재 리서치 (YouTube Data API)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 의존성 설치 (경량)
+        run: pip install -q requests pyyaml
+
+      - name: 리서치 실행
+        env:
+          SHORTS_YT_API_KEY: ${{ secrets.SHORTS_YT_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m src.research.outlier_finder
+
+      - name: 리포트 업로드
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-report-${{ github.run_number }}
+          path: projects/coupang-shorts-factory/data/research/
+          retention-days: 30
+          if-no-files-found: warn

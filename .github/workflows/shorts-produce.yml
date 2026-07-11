@@ -1,25 +1,39 @@
 name: shorts-produce
 
 # 쿠팡 어필리에이트 쇼츠 팩토리 (projects/coupang-shorts-factory/) 전용 워크플로우.
-# 기본 트리거는 workflow_dispatch(수동). push 트리거는 격리 원칙에 따라
-# 이 프로젝트의 requests/ 경로에만 paths 필터로 반응한다 (다른 프로젝트 push에 무반응).
-# (push 경로는 GitHub MCP의 workflow_dispatch 403 제약을 우회하는 원격 실행용 —
-#  regen-caption.yml 등 저장소 기존 관례와 동일)
+# 트리거: 수동(workflow_dispatch) / requests/*.json push(paths 필터로 격리 — 원격 실행용)
+#        / cron 주 5회(KST 월~금 07:30, 전제조건 미비 시 soft로 조용히 통과 — 스펙 §8 Phase 3)
+# push 트리거를 확장할 때도 반드시 projects/coupang-shorts-factory/** paths 필터를 유지할 것.
 
 on:
   workflow_dispatch:
     inputs:
+      mode:
+        description: "실행 모드 (produce=상품 큐→영상→업로드, phase0=렌더 스파이크)"
+        type: choice
+        options: [produce, phase0]
+        default: produce
       tts_provider:
         description: "TTS 프로바이더 (auto=등록된 키 자동 감지, mock=키 없이 렌더 검증)"
         type: choice
         options: [auto, elevenlabs, typecast, clova, mock]
         default: auto
+      row:
+        description: "상품 행 번호(1~) 또는 auto(미처리 첫 행) — produce 모드 전용"
+        default: "auto"
+      privacy:
+        description: "업로드 공개 범위 — produce 모드 전용"
+        type: choice
+        options: [private, unlisted, public]
+        default: private
   push:
     branches: [main]
     paths: ["projects/coupang-shorts-factory/requests/*.json"]
+  schedule:
+    - cron: "30 22 * * 0-4"   # KST 월~금 07:30 (주 5회, 스펙 §1.3 산출량)
 
 permissions:
-  contents: read
+  contents: write   # 업로드 성공 시 큐 상태(data/processed.json) 커밋용
 
 concurrency:
   group: shorts-produce
@@ -30,10 +44,10 @@ defaults:
     working-directory: projects/coupang-shorts-factory
 
 jobs:
-  phase0-render-spike:
-    name: "Phase 0 — 렌더 스파이크 (TTS→자막 싱크 렌더)"
+  produce:
+    name: "쇼츠 제작 파이프라인 (M2→M7)"
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -44,7 +58,7 @@ jobs:
           cache-dependency-path: projects/coupang-shorts-factory/requirements.txt
 
       - name: 의존성 설치
-        run: pip install -r requirements.txt
+        run: pip install -q -r requirements.txt
 
       - name: Whisper 모델 캐시 (타임스탬프 폴백용)
         uses: actions/cache@v4
@@ -57,32 +71,74 @@ jobs:
           SHORTS_PEXELS_API_KEY: ${{ secrets.SHORTS_PEXELS_API_KEY }}
         run: python scripts/fetch_assets.py
 
-      - name: 실행 파라미터 결정 (dispatch 입력 또는 requests/run_request.json)
+      - name: 실행 파라미터 결정 (dispatch 입력 / requests/run_request.json / cron 기본값)
         id: params
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=${{ inputs.mode }}" >> "$GITHUB_OUTPUT"
             echo "provider=${{ inputs.tts_provider }}" >> "$GITHUB_OUTPUT"
+            echo "row=${{ inputs.row }}" >> "$GITHUB_OUTPUT"
+            echo "privacy=${{ inputs.privacy }}" >> "$GITHUB_OUTPUT"
+            echo "soft=" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "mode=produce" >> "$GITHUB_OUTPUT"
+            echo "provider=auto" >> "$GITHUB_OUTPUT"
+            echo "row=auto" >> "$GITHUB_OUTPUT"
+            echo "privacy=private" >> "$GITHUB_OUTPUT"
+            echo "soft=--soft" >> "$GITHUB_OUTPUT"
           else
-            p=$(python3 -c "import json;print(json.load(open('requests/run_request.json')).get('provider','auto'))" 2>/dev/null || echo auto)
-            echo "provider=$p" >> "$GITHUB_OUTPUT"
+            get() { python3 -c "import json;print(json.load(open('requests/run_request.json')).get('$1','$2'))" 2>/dev/null || echo "$2"; }
+            echo "mode=$(get mode produce)" >> "$GITHUB_OUTPUT"
+            echo "provider=$(get provider auto)" >> "$GITHUB_OUTPUT"
+            echo "row=$(get row auto)" >> "$GITHUB_OUTPUT"
+            echo "privacy=$(get privacy private)" >> "$GITHUB_OUTPUT"
+            echo "soft=" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Phase 0 스파이크 실행 (대본→TTS→timestamps→렌더)
+      - name: 파이프라인 실행
         env:
           SHORTS_ELEVENLABS_API_KEY: ${{ secrets.SHORTS_ELEVENLABS_API_KEY }}
           SHORTS_TYPECAST_API_KEY: ${{ secrets.SHORTS_TYPECAST_API_KEY }}
           SHORTS_CLOVA_CLIENT_ID: ${{ secrets.SHORTS_CLOVA_CLIENT_ID }}
           SHORTS_CLOVA_CLIENT_SECRET: ${{ secrets.SHORTS_CLOVA_CLIENT_SECRET }}
-        run: >
-          python -m src.phase0_spike
-          --provider "${{ steps.params.outputs.provider }}"
-          --job-id "phase0-run${{ github.run_number }}"
+          SHORTS_ANTHROPIC_API_KEY: ${{ secrets.SHORTS_ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SHORTS_YT_CLIENT_ID: ${{ secrets.SHORTS_YT_CLIENT_ID }}
+          SHORTS_YT_CLIENT_SECRET: ${{ secrets.SHORTS_YT_CLIENT_SECRET }}
+          SHORTS_YT_REFRESH_TOKEN: ${{ secrets.SHORTS_YT_REFRESH_TOKEN }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ "${{ steps.params.outputs.mode }}" = "phase0" ]; then
+            python -m src.phase0_spike --provider "${{ steps.params.outputs.provider }}" --job-id "phase0-run${{ github.run_number }}"
+          else
+            python -m src.pipeline \
+              --row "${{ steps.params.outputs.row }}" \
+              --privacy "${{ steps.params.outputs.privacy }}" \
+              ${{ steps.params.outputs.provider != 'auto' && format('--provider {0}', steps.params.outputs.provider) || '' }} \
+              --job-id "run${{ github.run_number }}" \
+              ${{ steps.params.outputs.soft }}
+          fi
 
-      - name: 산출물 업로드 (video.mp4 / audio.mp3 / timestamps.json / render_stats.json)
+      - name: 큐 상태 커밋 (업로드 성공으로 processed.json이 바뀐 경우만)
+        if: success()
+        run: |
+          if ! git diff --quiet -- data/processed.json; then
+            git config user.name "shorts-factory-bot"
+            git config user.email "github-actions@users.noreply.github.com"
+            git add data/processed.json
+            git commit -m "coupang-shorts: 큐 상태 갱신(자동 업로드 완료) [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: 산출물 업로드 (video/audio/timestamps/script/stats)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: shorts-phase0-run${{ github.run_number }}
+          name: shorts-run${{ github.run_number }}
           path: projects/coupang-shorts-factory/data/jobs/
           retention-days: 14
           if-no-files-found: warn
