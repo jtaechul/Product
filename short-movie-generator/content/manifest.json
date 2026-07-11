@@ -32,6 +32,14 @@
     "date": "2026-07-08"
   },
   {
+    "id": "007",
+    "kind": "reels",
+    "common_name_ko": "넓적문어",
+    "common_name_en": "Flapjack octopus",
+    "scientific_name": "Opisthoteuthis californiana",
+    "date": "2026-07-11"
+  },
+  {
     "id": "008",
     "kind": "reels",
     "common_name_ko": "대왕등각류",
@@ -64,14 +72,6 @@
     "date": "2026-07-09"
   },
   {
-    "id": "013",
-    "kind": "reels",
-    "common_name_ko": "육식멍게",
-    "common_name_en": "Predatory tunicate",
-    "scientific_name": "Megalodicopia hians",
-    "date": "2026-07-10"
-  },
-  {
     "id": "012",
     "kind": "reels",
     "common_name_ko": "파리지옥말미잘",
@@ -81,12 +81,28 @@
     "youtube_url": "https://youtu.be/lhfjZZ7QVrY"
   },
   {
+    "id": "013",
+    "kind": "reels",
+    "common_name_ko": "육식멍게",
+    "common_name_en": "Predatory tunicate",
+    "scientific_name": "Megalodicopia hians",
+    "date": "2026-07-10"
+  },
+  {
     "id": "014",
     "kind": "reels",
     "common_name_ko": "아리에스호 난파선",
     "common_name_en": "Wreck Aries (cargo ship)",
     "scientific_name": "Wreck Aries",
     "date": "2026-07-10"
+  },
+  {
+    "id": "015",
+    "kind": "reels",
+    "common_name_ko": "U-1277 잠수함 난파선",
+    "common_name_en": "Wreck U-1277 (WWII German U-boat)",
+    "scientific_name": "Wreck U-1277",
+    "date": "2026-07-11"
   },
   {
     "id": "lf-3",
@@ -108,21 +124,5 @@
     "date": "2026-07-10",
     "has_video": true,
     "youtube_url": "https://youtu.be/G5eD8VEcEII"
-  },
-  {
-    "id": "007",
-    "kind": "reels",
-    "common_name_ko": "넓적문어",
-    "common_name_en": "Flapjack octopus",
-    "scientific_name": "Opisthoteuthis californiana",
-    "date": "2026-07-11"
-  },
-  {
-    "id": "015",
-    "kind": "reels",
-    "common_name_ko": "U-1277 잠수함 난파선",
-    "common_name_en": "Wreck U-1277 (WWII German U-boat)",
-    "scientific_name": "Wreck U-1277",
-    "date": "2026-07-11"
   }
 ]

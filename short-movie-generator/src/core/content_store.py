@@ -70,6 +70,47 @@ def upsert_manifest(base_dir: str, entry: dict) -> None:
     p.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def rebuild_manifest(base_dir: str) -> int:
+    """content/*.json 레코드 원본에서 manifest.json을 결정적으로 재생성. 반환: 항목 수.
+
+    CI '레코드 커밋'이 manifest.json 리베이스 충돌로 5회 재시도 모두 실패 → 런 전체가
+    실패 처리되던 사고(run #41)의 복구 장치: 충돌 시 이 함수로 레코드에서 목록을 다시
+    만들어 리베이스를 잇는다(manifest는 레코드의 파생물이라 언제든 재생성 가능)."""
+    base = Path(base_dir) / "content"
+    items: list[dict] = []
+    for p in sorted(base.glob("*.json")):
+        if p.name == "manifest.json":
+            continue
+        try:
+            rec = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        if not isinstance(rec, dict):
+            continue
+        rid = str(rec.get("id") or p.stem)
+        media = rec.get("media") or {}
+        if rec.get("kind") == "longform":
+            e = {"id": rid, "kind": "longform",
+                 "yt_title": rec.get("yt_title", ""), "yt_title_ko": rec.get("yt_title_ko", ""),
+                 "n": rec.get("n", 0), "total_s": rec.get("total_s", 0),
+                 "date": str(rec.get("created_at", ""))[:10],
+                 "has_video": bool(media.get("video_url"))}
+        else:
+            sp = rec.get("species") or {}
+            e = {"id": rid, "kind": "reels",
+                 "common_name_ko": sp.get("common_name_ko") or sp.get("common_name_en") or "종",
+                 "common_name_en": sp.get("common_name_en", ""),
+                 "scientific_name": sp.get("scientific_name", ""),
+                 "date": str(rec.get("updated_at") or rec.get("created_at") or "")[:10]}
+        if media.get("youtube_url"):
+            e["youtube_url"] = media["youtube_url"]
+        items.append(e)
+    _manifest_path(base_dir).write_text(
+        json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+    log.info("[content] manifest 재생성: %d항목", len(items))
+    return len(items)
+
+
 def load_record(base_dir: str, content_id: str) -> dict | None:
     p = record_path(base_dir, content_id)
     if p.exists():
