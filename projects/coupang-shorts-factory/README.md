@@ -19,6 +19,10 @@
    `timestamps.json`, `render_stats.json`(렌더 시간 기록)이 들어 있음
 4. 실행 페이지의 **Summary** 탭에도 렌더 통계표가 자동 기록됨
 
+> 원격 실행 경로(보조): `requests/run_request.json` 파일을 수정해 main에 push해도
+> 같은 워크플로우가 실행됩니다(파일 안 `provider` 값 사용). 자동화(Claude 원격 조작)용 —
+> 다른 프로젝트의 push에는 반응하지 않도록 paths 필터가 걸려 있습니다.
+
 ## 시크릿 등록 (TTS API 키)
 
 GitHub 저장소 → **Settings → Secrets and variables → Actions → New repository secret**

@@ -35,8 +35,9 @@
 
 - 이 프로젝트의 모든 파일은 `projects/coupang-shorts-factory/` 하위에만 둔다.
 - 유일한 예외: `.github/workflows/shorts-produce.yml` (GitHub가 워크플로우 위치를 루트로 강제).
-  - 트리거는 `workflow_dispatch`만. push 트리거를 달게 되면 반드시
-    `paths: ['projects/coupang-shorts-factory/**']` 필터 적용.
+  - 트리거는 `workflow_dispatch` + `requests/*.json` 전용 push(paths 필터 적용됨).
+    push 트리거를 확장할 때도 반드시 `paths: ['projects/coupang-shorts-factory/**']`
+    필터를 유지한다.
 - 저장소의 다른 프로젝트 폴더·파일·워크플로우는 읽기만 하고 절대 수정하지 않는다.
 - 한 커밋은 한 프로젝트 폴더만 수정한다(`.github/`만 공용 허용) — 루트의
   `project-isolation-guard.yml`이 모든 푸시에서 자동 검사한다.
