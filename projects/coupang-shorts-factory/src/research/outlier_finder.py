@@ -84,12 +84,14 @@ def main() -> int:
 
 
 def _scan_channel(requests, key: str, channel_id: str, min_score: float, recent_n: int) -> list:
+    # "@핸들"과 "UC..." 채널 ID 둘 다 지원 — 유튜브 앱에서 핸들을 그대로 복사해 붙여도 된다
+    ident = {"forHandle": channel_id} if channel_id.startswith("@") else {"id": channel_id}
     r = requests.get(f"{API}/channels", params={
-        "part": "contentDetails,snippet", "id": channel_id, "key": key}, timeout=30)
+        "part": "contentDetails,snippet", "key": key, **ident}, timeout=30)
     r.raise_for_status()
     items = r.json().get("items") or []
     if not items:
-        raise RuntimeError("채널 없음(ID 확인)")
+        raise RuntimeError("채널 없음(ID/핸들 확인)")
     uploads = items[0]["contentDetails"]["relatedPlaylists"]["uploads"]
     ch_name = items[0]["snippet"]["title"]
 

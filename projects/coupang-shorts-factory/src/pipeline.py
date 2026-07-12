@@ -25,6 +25,7 @@ from src.audio import tts
 from src.product import manual_queue
 from src.script.generate import DISCLOSURE, anthropic_key, generate_script
 from src.upload import youtube
+from src.video.backgrounds import fetch_product_bg
 from src.video.render import render_video
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -114,11 +115,14 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     shake_windows = [(s, s + shake_sec) for (s, _e), l in zip(line_windows, lines) if l.get("price_shock")]
     image_windows = _image_windows(lines, line_windows, product, job_dir)
 
+    # ---- 상품 연관 배경: 대본과 함께 뽑힌 영어 키워드로 Pexels 세로 영상 검색 (실패 시 기본 배경)
+    bg_path = fetch_product_bg(script.get("bg_keywords"), job_dir)
+
     # ---- M6: 렌더
     out_path = job_dir / "video.mp4"
     stats = render_video(tts_result["audio_path"], words, out_path, settings,
                          shake_windows=shake_windows, project_root=PROJECT_ROOT,
-                         image_windows=image_windows)
+                         image_windows=image_windows, bg_path=bg_path)
     stats = {"job_id": job_id, "product": product["name"],
              "tts_provider": tts_result["provider"],
              "timestamps_source": tts_result["timestamps_source"], **stats}
