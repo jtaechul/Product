@@ -50,11 +50,14 @@ def sanitize_script(script: dict, strict_length: bool = True) -> dict:
     if bad:
         problems.append(f"금지어 포함: {bad}")
 
-    shocks = [l for l in lines if l.get("price_shock")]
-    if len(shocks) != 1:
-        problems.append(f"price_shock 라인이 {len(shocks)}개 (정확히 1개 필요)")
-    elif not re.search(r"[\d,]+원", shocks[0]["text"]):
-        problems.append("가격 라인에 숫자 금액(예: 49,900원)이 없음")
+    punches = [l for l in lines if l.get("punch")]
+    if len(punches) != 1:
+        problems.append(f"punch(쉐이크 강조) 라인이 {len(punches)}개 (정확히 1개 필요 — 훅)")
+
+    # 가격 완전 제거(전략 확정): 대사에 금액 표현(숫자+원, N만원)이 있으면 재생성.
+    # '원룸'·'지원' 등은 앞에 숫자가 없어 오탐 아님. 스펙(500ml·3분·1.2킬로그램)도 통과.
+    if re.search(r"\d[\d,]*\s*원|\d+\s*만\s*원", full):
+        problems.append("금액 표현 포함 — 가격은 영상에서 완전히 뺀다(링크로만 안내)")
 
     hashtags = script.get("hashtags") or []
     if len(hashtags) != 3:

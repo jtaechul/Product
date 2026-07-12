@@ -112,10 +112,10 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     print(f"[pipeline] M4 TTS 완료({tts_result['provider']}/{tts_result['timestamps_source']}) "
           f"{time.time() - t0:.1f}s, 단어 {len(words)}개")
 
-    # ---- 라인 타이밍 → 쉐이크 윈도우 (price_shock 라인)
+    # ---- 라인 타이밍 → 쉐이크 윈도우 (punch 라인 = 가장 충격적인 훅)
     line_windows = _line_windows(lines, words)
     shake_sec = float(settings.get("render", {}).get("shake_seconds", 0.3))
-    shake_windows = [(s, s + shake_sec) for (s, _e), l in zip(line_windows, lines) if l.get("price_shock")]
+    shake_windows = [(s, s + shake_sec) for (s, _e), l in zip(line_windows, lines) if l.get("punch")]
 
     # ---- 상품 히어로 사진: 캡처에서 확보한 것 + 붙여넣은 이미지 URL 다운로드 (화면 주인공)
     product_images = list(product.get("hero_images") or [])
