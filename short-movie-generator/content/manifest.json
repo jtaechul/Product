@@ -166,5 +166,13 @@
     "common_name_en": "Caribbean reef squid",
     "scientific_name": "Sepioteuthis sepioidea",
     "date": "2026-07-11"
+  },
+  {
+    "id": "021",
+    "kind": "reels",
+    "common_name_ko": "마데이렌스호 난파선",
+    "common_name_en": "Wreck Madeirense (cargo ship)",
+    "scientific_name": "Wreck Madeirense",
+    "date": "2026-07-12"
   }
 ]
