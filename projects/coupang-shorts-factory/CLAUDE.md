@@ -23,11 +23,17 @@
 - 자동화: 평일 07:30 KST cron 제작(전제조건 미비 시 soft 통과), 큐 상태는 업로드 성공 시
   CI가 `data/processed.json`을 `[skip ci]` 커밋. 텔레그램 성공/실패 알림(`src/notify.py`).
 - 관리자 페이지(노코드): `admin/public/index.html` — 상품 등록/삭제·제작 실행(workflow_dispatch)·
-  실행 기록·채널 관리. 사용자 PAT(Contents/Actions RW, 브라우저 localStorage에만 저장)로
-  GitHub API를 직접 호출. 서버 로직·서버 시크릿 없음.
+  리서치 실행·실행 기록·채널 관리. 사용자 PAT(Contents/Actions RW, 브라우저 localStorage에만
+  저장)로 GitHub API를 직접 호출. 서버 로직·서버 시크릿 없음.
+- 운영 플로우(쿠팡 API 승인 전): Claude가 아이템 추천 → 사용자가 파트너스에서 제휴링크 생성 →
+  관리자 페이지에 **링크 + 상품 상세·리뷰 붙여넣기**만 등록(`data/notes/{row_hash}.md`) →
+  M2.5(`src/product/enrich.py`)가 상세 텍스트에서 상품명·가격·특징 자동 추출, M3가 notes(후기
+  포함)를 대본 재료로 사용. **쿠팡 페이지 크롤링·리뷰 자동 수집은 봇 차단 + 스펙 §2·§3.2 위반이라
+  구현 금지** (붙여넣기가 공식 대체 경로, API 승인 후 상품 데이터 자동화).
 - 남은 사용자 작업: **유튜브 채널 생성(시작 시 이름·핸들·설정 컨설팅 + 완성 후 피드백을 제공하기로
-  예약됨)**, `SHORTS_YT_*` 인증 3종·`SHORTS_YT_API_KEY` 등록, 실제 제휴 링크로 CSV 갱신,
+  예약됨)**, `SHORTS_YT_*` 인증 3종 등록, 관리자 페이지에서 실상품 등록·벤치마크 채널 추가,
   쿠팡 API 키 승인 시 M2 1안 전환 검증 → `docs/setup-guide.md` 참조.
+  (`SHORTS_YT_API_KEY`는 2026-07-12 등록 완료 — 리서치 M1 사용 가능)
 
 ## 수행 지침 요약 (스펙 §0)
 
