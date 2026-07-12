@@ -13,9 +13,10 @@ description: >-
 $0 운영: GitHub Actions가 제작, Cloudflare Worker가 대시보드. 세부 규칙은 `short-movie-generator/CLAUDE.md`가 최상위.
 
 ## 0. 절대 규칙 (위반 금지 — 먼저 읽는다)
-- **라이선스 게이트**: `public-domain`/`cc0`/`cc-by`/`cc-by-sa`/`kogl-type1`만 사용. `cc-by-nc` 차단. 크레딧·라이선스명 캡션 자동 삽입.
+- **라이선스 게이트**: `public-domain`/`cc0`/`cc-by`/`cc-by-sa`/`kogl-type1`만 사용. **`cc-by-nc`(비상업)·`cc-by-nc-sa` 차단.** 크레딧·라이선스명 캡션 자동 삽입.
+  ⚠️ `'cc by'`가 `'cc by-nc'`의 부분일치라 **NC를 먼저 걸러야** 한다(`_norm_license`에 NC 선차단 유지).
 - **날조 금지**: 생물의 형태·행동·수치는 실제만. 종은 **출처가 식별한 수준(종/속/과)** 으로만 표기, 애매하면 스킵.
-- **종 중복 금지**: 이미 만든 종은 다시 만들지 않는다(재탕 로직 폐지). 풀 소진 시 **다른 카테고리로 로테이션**(스케줄) 또는 명확히 중단.
+- **종 중복 금지**: 이미 만든 종은 다시 만들지 않는다(재탕 로직 폐지). 풀 소진 시 **자동 발굴로 풀 보충**(`discovery.replenish`, 아래 §8) 또는 다른 카테고리로 로테이션.
 - **번인 카드·로고 금지**: 인트로/아웃트로 타이틀카드·NOAA 로고가 본편에 남으면 안 됨(자동 카드트림 + delogo + reframe 텍스트-띠 제거).
 - **OS 이모지 금지**: HUD·엔드카드·썸네일 어디에도 시스템 이모지 금지 → 커스텀 벡터/SVG/텍스트만.
 - **일본어 敬体(존댓말)**: 나레이션·자막·캡션 문어체 존댓말. 반말 금지.
@@ -84,9 +85,23 @@ python3 -c "import subprocess;d=float('$D');[subprocess.run(['ffmpeg','-y','-log
 5. **JP 카피**: `hook._SEED`(훅)·`_BODY_SEED`(본문, 敬体·≤7자 청크). 없으면 LLM 자동생성 폴백.
 6. **검증 제작**: 로컬 auto로 1편 만들어 3장 체크리스트 통과 확인 후 커밋.
 
-## 6. 핵심 파일 맵
+## 6. 자동 발굴(풀 자동보충 · 소스 확대) — `src/core/discovery.py`
+운영자가 매번 시드를 손으로 넣지 않아도 되게, 미제작 종이 소진되면 시스템이 스스로 새 해양생물
+영상을 찾아 풀을 채운다(사용자 확정).
+- **소스**: Wikimedia Commons 전체(NOAA 한정 아님 — MBARI·Ifremer·다이버·수족관 등, **CC-BY-SA 포함**).
+- **날조 금지**: 정체성 = 구조화데이터(P180)→Wikidata 또는 파일명 학명→Wikidata(P31=분류군·P225=학명 실존 종만).
+  사실 = 그 종 Wikipedia(일→영) 발췌(출처 있음). 둘 중 하나라도 없으면 스킵. JP 카피는 이 사실로 LLM 생성.
+- **필터**: 라이선스·종횡비·정지·카드 게이트 + 조류/육상 배제(`_EXCLUDE`) + 연구·사체·해부·양식 배제(`_BADCLIP`).
+- **영속화**: `src/categories/*/discovered.json`(커밋). import 시 `footage._SEED`·`data.SPECIES`에 병합.
+  워크플로 커밋 스텝에 이 파일 포함(§1 generate-short.yml).
+- **연결**: `pipeline.run_reels`가 후보 0/전원탈락이면 `_replenish_and_refresh`로 발굴·병합 후 재시도.
+- **주의(NC 차단)**: `'cc by'`가 `'cc by-nc'` 부분일치라 `_norm_license`가 NC를 먼저 걸러야 오통과가 없다.
+- **수동 발굴**(운영자/개발): `python -c "from src.core import discovery; print(discovery.replenish('deep_sea', want=3))"`.
+
+## 7. 핵심 파일 맵
 - `src/core/pipeline.py` — reels 오케스트레이션(`run_reels`)
-- `src/core/footage.py` — 소싱·게이트·카드트림·시드(`_SEED`)
+- `src/core/footage.py` — 소싱·게이트·카드트림·시드(`_SEED`, discovered 병합)
+- `src/core/discovery.py` — 해양생물 영상 자동 발굴(풀 자동보충·소스 확대·CC-BY-SA)
 - `src/core/reframe.py` — 9:16 씬 인터리브·얼굴중앙·텍스트띠 제거
 - `src/core/watermark_qc.py` — OCR 슬레이트 회피·delogo
 - `src/core/narration_sync.py` — TTS·카라오케 자막
@@ -95,7 +110,7 @@ python3 -c "import subprocess;d=float('$D');[subprocess.run(['ffmpeg','-y','-log
 - `.github/workflows/generate-short.yml` — 제작 워크플로(스케줄=main 동기화 주의)
 - `worker/index.mjs` — 대시보드(Cloudflare Worker)
 
-## 7. 배포 규칙
+## 8. 배포 규칙
 - 개발은 작업 브랜치 `claude/gemini-shorts-reels-generator-dhjfdt`. 커밋은 **한 프로젝트 폴더만**(`.github/`·`.claude/`는 공용 예외).
 - 푸시는 `git push -u origin <branch>`(실패 시 지수 백오프 재시도). PR은 사용자가 명시할 때만.
 - 수정 후 **반드시 §3 검증**을 거친 뒤 보고. 실패/스킵은 그대로 보고(과장 금지).
