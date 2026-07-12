@@ -3,7 +3,8 @@
 렌더 결과(subtitle_plan + 실제 video.mp4 프레임)를 기계 검사한다:
   ① 자막=대본 일치 — 라인별 자막 칸을 이어 붙이면 대본 text와 띄어쓰기까지 완전 일치
   ② 자막 길이 규격(1~16자) — 통문장·파편 방지
-  ③ 위치 고정 — 일반 자막 y가 단 1곳(널뛰기 방지), 밈 카드 ≤1개, react ≤6개
+  ③ 위치 고정 — 일반 자막 y가 단 1곳(널뛰기 방지), 밈 카드 ≤1개,
+     react 추임새(ㅋㅋㅋ 등) = 1개라도 있으면 실패 (핵심규칙: 전면 금지)
   ④ 타이밍 — 시작 시각 단조 증가 + 발화 커버리지(자막 없는 긴 공백 방지)
   ⑤ 프레임 번인 — 실제 영상 프레임 3장에서 자막색 픽셀이 자막 밴드에 실존하는지
   ⑥ 규격 — 프레임 해상도 1080x1920
@@ -20,7 +21,7 @@ from pathlib import Path
 
 SUB_LEN_MAX = 16          # 자막 칸 최대 글자수(공백 포함) — 초과분은 화면 통문장 신호
 COVERAGE_MIN = 0.55       # 영상 길이 대비 자막 표시 시간 최소 비율
-MEME_MAX, REACT_MAX = 1, 6
+MEME_MAX = 1
 YELLOW_MIN_PIXELS = 150   # 자막 밴드에서 자막색으로 인정할 최소 픽셀 수
 
 
@@ -63,9 +64,10 @@ def run_qa(video_path: Path, stats: dict, lines: list, job_dir: Path, settings: 
         problems.append(f"일반 자막 y 위치가 {len(ys)}곳({ys}) — 1곳 고정이어야 함")
     if len(memes) > MEME_MAX:
         problems.append(f"밈 카드 {len(memes)}개 (최대 {MEME_MAX})")
-    if len(reacts) > REACT_MAX:
-        problems.append(f"react 오버레이 {len(reacts)}개 (최대 {REACT_MAX})")
-    checks["layout"] = f"자막 y {ys or '없음'}, 밈 {len(memes)}, react {len(reacts)}"
+    if reacts:  # ⭐ 핵심규칙(2026-07-12): react 추임새 전면 금지 — 하나라도 있으면 발행 차단
+        problems.append(f"react 추임새 {len(reacts)}개 발견 — 전면 금지(핵심규칙): "
+                        + ", ".join(str(p.get("text", ""))[:8] for p in reacts[:3]))
+    checks["layout"] = f"자막 y {ys or '없음'}, 밈 {len(memes)}, react {len(reacts)}(0이어야 함)"
 
     # ④ 타이밍
     if not subs:
