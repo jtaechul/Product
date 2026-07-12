@@ -26,7 +26,7 @@ from src.product import manual_queue
 from src.product.enrich import enrich_product
 from src.script.generate import DISCLOSURE, anthropic_key, generate_script
 from src.upload import youtube
-from src.video.backgrounds import fetch_product_bg, fetch_stock_clips
+from src.video.qa import run_qa
 from src.video.render import build_poster, render_video
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -122,10 +122,12 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     product_images += _download_images(product.get("image_urls") or [], job_dir)
     # ---- 제품 실사용 영상(운영자가 관리자에서 업로드·확인한 것) → 있으면 상품 단계에 풀프레임 사용
     product_videos = [p for p in (product.get("hero_videos") or []) if Path(p).exists()]
-    # ---- 문제 단계(②③)용 스톡 b-roll — 대본 영어 키워드로 Pexels에서 몇 개 확보(항상 시도).
-    #      키 없거나 실패면 빈 리스트 → 렌더가 그라데이션으로 폴백(제작은 계속).
-    stock_clips = fetch_stock_clips(script.get("bg_keywords"), job_dir, n=3)
-    bg_path = None if product_images else (stock_clips[0] if stock_clips else None)
+    # ---- 스톡 b-roll 자동 검색 폐지(2026-07-12 개편): 검색어만으로는 무관한 장면(남의 집
+    #      소파·주방)이 들어와 영상을 망친다. 운영자가 후보 그리드에서 직접 승인한 클립만
+    #      product['stock_clips']로 들어온다(Task: Phase2 후보 그리드). 없으면 문제 구간은
+    #      어두운 상품 배경 변주로 렌더 — 항상 상품과 관련된 화면만 나온다.
+    stock_clips = [p for p in (product.get("stock_clips") or []) if Path(p).exists()]
+    bg_path = None
 
     # ---- M6: 렌더 (대본 단계별 씬 시퀀스 + 구 단위 자막)
     out_path = job_dir / "video.mp4"
@@ -140,6 +142,14 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     (job_dir / "render_stats.json").write_text(json.dumps(stats, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"[pipeline] M6 렌더 완료: {stats['render_seconds']}s, "
           f"{stats['video_duration_seconds']}s 영상, 이미지 {stats['image_clip_count']}개")
+
+    # ---- M6.5: QA 게이트 — 자막=대본 일치·위치·길이·프레임 번인을 기계 검사.
+    #      실패하면 여기서 중단(비정상 종료) → 워크플로우 실패 → 릴리스/업로드 차단.
+    qa_report = run_qa(out_path, stats, lines, job_dir, settings)
+    if not qa_report["passed"]:
+        notify.send("[쿠팡쇼츠] QA 게이트 실패 — 발행 차단 (job={})\n{}".format(
+            job_id, "\n".join(qa_report["problems"][:5])))
+        raise RuntimeError("QA 게이트 실패: " + "; ".join(qa_report["problems"][:5]))
 
     # ---- 대표 썸네일(poster.jpg): 관리자 페이지 영상 목록에서 통일된 카드로 노출 (실패해도 제작은 계속)
     try:

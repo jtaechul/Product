@@ -72,7 +72,9 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     bg_dir = project_root / settings.get("assets", {}).get("backgrounds_dir", "assets/backgrounds")
 
     # 씬 시퀀스: 대본 단계(stage)별로 배경/상품카드를 갈아끼워 '사진 한 장 고정'을 없앤다.
-    use_scenes = bool(line_windows) and bool(lines) and bool(product_images or stock_clips)
+    # 스톡 자동 검색은 폐지(무관 장면 유입) — stock_clips는 운영자가 승인한 클립만 온다.
+    use_scenes = (bool(line_windows) and bool(lines)
+                  and bool(product_images or stock_clips or product_videos))
     bg_layers, card_layers = [], []
     if use_scenes:
         scenes = _plan_scenes(duration, lines, line_windows, len(product_images), len(stock_clips))
@@ -87,7 +89,7 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
                 if card is not None:
                     card_layers.append(card)
         bg_name = (f"씬 {len(scenes)}컷 (상품사진 {len(product_images)}·상품영상 "
-                   f"{len(product_videos)}·스톡 {len(stock_clips)})")
+                   f"{len(product_videos)}·승인스톡 {len(stock_clips)})")
     else:
         if product_images:
             background, bg_name = _blurred_product_bg(product_images[0], over_w, over_h, duration)
@@ -102,12 +104,18 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
             card_layers = _build_image_clips(image_windows or [], duration, width)
 
     scrim = _subtitle_scrim(width, height, duration, s)
-    # 자막: 기본은 가라오케 단어 팝업 + 펀치라인은 큰 밈 카드(subtitle.mode=karaoke).
-    # phrase 모드면 구(라인) 단위. 라인 정보 없으면 전체 가라오케 폴백.
+    # 자막(개편): 대본이 확정한 subs 칸을 그대로 팝업 + punch 라인 1회만 밈 카드 + react 추임새.
+    # phrase 모드면 구(라인) 단위. 라인 정보 없으면 전체 가라오케 폴백(테스트 경로).
+    sub_plan = []
     if lines and line_windows and s.get("mode", "karaoke") == "phrase":
         sub_clips = _build_line_clips(lines, line_windows, duration, font_path, s, width)
     elif lines and line_windows:
-        sub_clips = _build_subtitles(words, lines, line_windows, duration, font_path, s, width)
+        sub_clips, sub_plan = _build_subtitles(words, lines, line_windows, duration,
+                                               font_path, s, width)
+        react_clips, react_plan = _build_react_clips(lines, line_windows, duration,
+                                                     font_path, s, width)
+        sub_clips += react_clips
+        sub_plan += react_plan
     else:
         sub_clips = _build_word_clips(words, duration, font_path, s, width)
 
@@ -149,6 +157,7 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
         "font_used": str(font_path),
         "background_used": bg_name,
         "output_bytes": out_path.stat().st_size,
+        "subtitle_plan": sub_plan,  # QA 게이트(자막=대본 일치·위치·길이) 검사 대상
     }
 
 
@@ -203,10 +212,12 @@ def _build_background(bg_dir: Path, width: int, height: int, duration: float,
     return ImageClip(frame).with_duration(duration), "(자체 생성 그라데이션)"
 
 
-def _blurred_product_bg(img_path: Path, over_w: int, over_h: int, duration: float) -> tuple:
+def _blurred_product_bg(img_path: Path, over_w: int, over_h: int, duration: float,
+                        style: str = "hero") -> tuple:
     """상품 사진을 화면에 꽉 차게 흐리게+어둡게 깔아 배경으로 (항상 상품 관련).
-    같은 사진·캔버스는 캐시해 씬마다 GaussianBlur 재계산을 피한다(렌더 속도 개선)."""
-    key = (str(img_path), int(over_w), int(over_h))
+    style='problem'은 더 어둡고 채도를 빼서 '문제 구간' 무드를 만든다(무관 스톡 대체).
+    같은 사진·캔버스·스타일은 캐시해 씬마다 GaussianBlur 재계산을 피한다(렌더 속도)."""
+    key = (str(img_path), int(over_w), int(over_h), style)
     arr = _BLUR_BG_CACHE.get(key)
     if arr is None:
         from PIL import Image, ImageEnhance, ImageFilter
@@ -216,10 +227,15 @@ def _blurred_product_bg(img_path: Path, over_w: int, over_h: int, duration: floa
         left, top = (im.width - over_w) // 2, (im.height - over_h) // 2
         im = im.crop((left, top, left + over_w, top + over_h))
         im = im.filter(ImageFilter.GaussianBlur(32))
-        im = ImageEnhance.Brightness(im).enhance(0.5)
+        if style == "problem":
+            im = ImageEnhance.Color(im).enhance(0.35)
+            im = ImageEnhance.Brightness(im).enhance(0.32)
+        else:
+            im = ImageEnhance.Brightness(im).enhance(0.5)
         arr = np.array(im)
         _BLUR_BG_CACHE[key] = arr
-    return ImageClip(arr).with_duration(duration), "(흐린 상품사진 배경)"
+    label = "(어두운 상품사진 배경)" if style == "problem" else "(흐린 상품사진 배경)"
+    return ImageClip(arr).with_duration(duration), label
 
 
 def _hero_rgba(img_path: Path, target_w: int) -> np.ndarray:
@@ -312,7 +328,8 @@ def _build_image_clips(image_windows: list, duration: float, width: int) -> list
 def _plan_scenes(duration: float, lines: list, line_windows: list,
                  n_product: int, n_stock: int) -> list:
     """대본을 단계(stage) 연속 구간으로 묶고 각 단계마다 1~2컷 배정 (총 5단계면 5~10컷).
-    문제 단계(②③)는 스톡 b-roll, 나머지는 상품 사진(컷마다 켄번즈 변주)."""
+    문제 단계(②③)는 'problem' 씬(승인 스톡 → 없으면 어두운 상품 배경 변주),
+    나머지는 상품 사진(컷마다 켄번즈 변주) — 무관한 자동 스톡은 쓰지 않는다."""
     problem = {2, 3}
     pairs = [((float(st), float(en)), int(ln.get("stage", 1) or 1))
              for (st, en), ln in zip(line_windows, lines)]
@@ -334,15 +351,17 @@ def _plan_scenes(duration: float, lines: list, line_windows: list,
         dur = en - st
         if dur <= 0.05:
             continue
-        kind = "stock" if (stg in problem and n_stock > 0) else "product"
+        kind = "problem" if stg in problem else "product"
         n = 2 if dur >= 4.0 else 1  # 4초 이상 단계는 2컷, 아니면 1컷 → 단계당 1~2개
         step = dur / n
         for j in range(n):
             a = st + j * step
             b = en if j == n - 1 else a + step
-            if kind == "stock":
-                scenes.append({"start": a, "end": b, "kind": "stock", "asset": stock_i % max(n_stock, 1)})
+            if kind == "problem":
+                scenes.append({"start": a, "end": b, "kind": "problem",
+                               "asset": (stock_i % n_stock) if n_stock else (prod_i % max(n_product, 1))})
                 stock_i += 1
+                prod_i += 1
             else:
                 scenes.append({"start": a, "end": b, "kind": "product",
                                "asset": prod_i % max(n_product, 1), "shot": shot})
@@ -373,13 +392,19 @@ def _video_fullframe(path, over_w: int, over_h: int, dur: float, darken: float =
 
 def _scene_bg_clip(scene: dict, product_images: list, product_videos: list,
                    stock_clips: list, over_w: int, over_h: int):
-    """씬 배경: 문제 씬=어둡게 깐 스톡 영상, 상품 씬=제품 실사용 영상(있으면)·아니면 흐린 상품 사진,
-    최후엔 그라데이션. 제품 영상은 살짝만 어둡게(주인공이므로)."""
+    """씬 배경: 문제 씬=운영자 승인 스톡(있으면)·없으면 어두운 상품 배경 변주(항상 상품 관련),
+    상품 씬=제품 실사용 영상(있으면)·아니면 흐린 상품 사진, 최후엔 그라데이션."""
     dur = scene["end"] - scene["start"]
-    if scene["kind"] == "stock" and stock_clips:
-        clip = _video_fullframe(stock_clips[scene["asset"] % len(stock_clips)],
-                                over_w, over_h, dur, darken=0.55)  # 자막 가독성 위해 어둡게
-        if clip is not None:
+    if scene["kind"] == "problem":
+        if stock_clips:  # 운영자가 후보 그리드에서 직접 고른 클립만 들어온다
+            clip = _video_fullframe(stock_clips[scene["asset"] % len(stock_clips)],
+                                    over_w, over_h, dur, darken=0.55)
+            if clip is not None:
+                return clip
+        if product_images:  # 어둡고 색 빠진 상품 배경 — '문제 구간' 무드, 무관 장면 원천 차단
+            clip, _ = _blurred_product_bg(
+                Path(product_images[scene.get("asset", 0) % len(product_images)]),
+                over_w, over_h, dur, style="problem")
             return clip
     if scene["kind"] == "product" and product_videos:
         clip = _video_fullframe(product_videos[scene.get("asset", 0) % len(product_videos)],
@@ -394,7 +419,7 @@ def _scene_bg_clip(scene: dict, product_images: list, product_videos: list,
     rows = np.linspace(0, 1, over_h)[:, None]
     grad = (top[None, :] * (1 - rows) + bottom[None, :] * rows).astype(np.uint8)
     frame = np.repeat(grad[:, None, :], over_w, axis=1)
-    if scene["kind"] == "stock":
+    if scene["kind"] == "problem":
         frame = (frame * 0.75).astype(np.uint8)
     return ImageClip(frame).with_duration(dur)
 
@@ -529,16 +554,16 @@ def _pop_scale(t: float, d: float = 0.16, lo: float = 0.5) -> float:
 
 
 def _regroup_karaoke(words: list, min_chars: int = 3, max_chars: int = 8) -> list:
-    """가라오케 단위 재편성: 긴 어절은 쪼개고(≤max_chars) 짧은 조각(한두 글자)은 다음과 합쳐
-    각 팝업이 3~8글자가 되게 한다 — 한 글자씩 튀거나 문장이 통째로 나오는 것을 둘 다 방지."""
+    """(폴백 전용 — 라인 subs가 없을 때만) 가라오케 단위 재편성: 긴 어절은 쪼개고 짧은 조각은
+    다음과 합친다. 합칠 때 어절 사이 공백을 반드시 보존한다(띄어쓰기 실종 버그 수정)."""
     toks = _expand_long_words(words, max_chars)
     out, i, n = [], 0, len(toks)
     while i < n:
         text = str(toks[i]["word"])
         start, end = float(toks[i]["start"]), float(toks[i]["end"])
         j = i + 1
-        while len(text) < min_chars and j < n and len(text) + len(str(toks[j]["word"])) <= max_chars:
-            text += str(toks[j]["word"])
+        while len(text) < min_chars and j < n and len(text) + 1 + len(str(toks[j]["word"])) <= max_chars:
+            text += " " + str(toks[j]["word"])
             end = float(toks[j]["end"])
             j += 1
         out.append({"word": text, "start": start, "end": end})
@@ -605,27 +630,130 @@ def _meme_card(text: str, start: float, end: float, font_path: Path, s: dict, wi
         ("center", int(s.get("meme_y", 760))))
 
 
+def _fit_text(text: str, font_path: Path, font_size: int, color: str,
+              stroke_color: str, stroke_width: int, max_w: int) -> TextClip:
+    """자막 텍스트 클립 — 화면 폭을 넘으면 폰트를 줄여서 맞춤(줄바꿈·말줄임 금지)."""
+    clip = _make_text(text, font_path, font_size, color, stroke_color, stroke_width)
+    if clip.w > max_w:
+        shrunk = max(40, int(font_size * max_w / clip.w))
+        clip = _make_text(text, font_path, shrunk, color, stroke_color, stroke_width)
+    return clip
+
+
 def _build_subtitles(words: list, lines: list, line_windows: list, duration: float,
-                     font_path: Path, s: dict, width: int) -> list:
-    """라인별 디스패치: punch/의문형(?) 펀치라인은 큰 밈 카드, 나머지 라인은 가라오케 단어."""
-    min_c = int(s.get("karaoke_min_chars", 3))
-    max_c = int(s.get("karaoke_max_chars", 8))
-    clips = []
-    for (ls, le), ln in zip(line_windows, lines):
-        ls = max(0.0, float(ls))
-        le = min(float(le), duration)
-        if le - ls < 0.1:
-            continue
+                     font_path: Path, s: dict, width: int) -> tuple:
+    """'대본이 곧 자막' (2026-07-12 개편): 라인의 subs(대본이 확정한 자막 칸)를 렌더가
+    재분할 없이 그대로 팝업한다 — 띄어쓰기·문맥·길이 일관성을 대본이 책임진다.
+    위치는 하단 1곳 고정. 중앙 밈 카드는 punch 라인 딱 1회(의문형 자동 트리거 폐지).
+    반환: (클립 목록, QA용 자막 플랜)."""
+    y = int(s.get("y", 1250))
+    max_w = int(width * 0.94)
+    font_size = int(s.get("font_size", 80))
+    color = s.get("color", "#FFE400")
+    stroke_color = s.get("stroke_color", "#000000")
+    stroke_width = int(s.get("stroke_width", 6))
+
+    events, memes, cursor = [], [], 0
+    for li, ((ls, le), ln) in enumerate(zip(line_windows, lines)):
         text = str(ln.get("text", "")).strip()
-        lwords = [w for w in words if ls - 0.01 <= float(w["start"]) < le + 0.01]
-        if bool(ln.get("punch")) or text.endswith("?") or not lwords:
-            mc = _meme_card(text, ls, le, font_path, s, width)
-            if mc is not None:
-                clips.append(mc)
-        else:
-            toks = _regroup_karaoke(lwords, min_c, max_c)
-            clips += _karaoke_clips(toks, le, font_path, s, width)
-    return clips
+        n = len(text.split())
+        lwords = words[cursor:cursor + n]
+        cursor += n
+        ls, le = max(0.0, float(ls)), min(float(le), duration)
+        if not text or le - ls < 0.1:
+            continue
+        if bool(ln.get("punch")):
+            memes.append({"text": text, "start": ls, "end": le, "line_i": li})
+            continue
+        subs = [str(x).strip() for x in (ln.get("subs") or []) if str(x).strip()]
+        if not subs or " ".join(subs) != text:
+            subs = [text]  # sanitize가 계약을 보장하지만 최종 방어
+        wi = 0
+        for sub in subs:
+            k = len(sub.split())
+            grp = lwords[wi:wi + k]
+            wi += k
+            if grp:
+                a, b = float(grp[0]["start"]), float(grp[-1]["end"])
+            else:  # 타임스탬프 부족 방어: 라인 구간을 글자수 비례 배분
+                done = sum(len(x) for x in subs[:subs.index(sub)]) or 0
+                total = sum(len(x) for x in subs) or 1
+                a = ls + (le - ls) * done / total
+                b = min(le, a + (le - ls) * len(sub) / total)
+            events.append({"text": sub, "start": a, "end": b, "line_i": li})
+
+    # 표시 유지: 다음 팝업 시작까지(빈 화면 방지), 단 발화 종료 +0.45s·밈 시작을 넘지 않음
+    meme_starts = sorted(m["start"] for m in memes)
+    for i, ev in enumerate(events):
+        nxt = events[i + 1]["start"] if i + 1 < len(events) else duration
+        show_end = min(max(nxt, ev["start"] + 0.12), ev["end"] + 0.45, duration)
+        for ms in meme_starts:
+            if ev["end"] <= ms < show_end:
+                show_end = ms
+                break
+        ev["show_end"] = show_end
+
+    clips, plan = [], []
+    for ev in events:
+        clip = _fit_text(ev["text"], font_path, font_size, color, stroke_color, stroke_width, max_w)
+        clip = clip.resized(lambda t: _pop_scale(t, 0.14, 0.6))
+        clips.append(clip.with_start(ev["start"]).with_end(ev["show_end"])
+                         .with_position(("center", y)))
+        plan.append({"kind": "sub", "text": ev["text"], "start": round(ev["start"], 3),
+                     "end": round(ev["show_end"], 3), "y": y, "line_i": ev["line_i"]})
+    for m in memes:
+        mc = _meme_card(m["text"], m["start"], m["end"], font_path, s, width)
+        if mc is not None:
+            clips.append(mc)
+            plan.append({"kind": "meme", "text": m["text"], "start": round(m["start"], 3),
+                         "end": round(m["end"], 3), "y": int(s.get("meme_y", 760)),
+                         "line_i": m["line_i"]})
+    return clips, plan
+
+
+def _react_rgba(text: str, font_path: Path, font_size: int, angle: float) -> np.ndarray:
+    """react 추임새('ㅋㅋㅋㅋ', '실화냐')를 손글씨 스티커 느낌으로 — PIL 렌더 + 기울임.
+    자체 생성 텍스트 밈(§3.2 화이트리스트: 자체 생성물)."""
+    from PIL import Image, ImageDraw, ImageFont
+    font = ImageFont.truetype(str(font_path), font_size)
+    stroke = max(4, font_size // 9)
+    probe = ImageDraw.Draw(Image.new("RGBA", (8, 8)))
+    x0, y0, x1, y1 = probe.textbbox((0, 0), text, font=font, stroke_width=stroke)
+    pad = stroke * 2 + 8
+    im = Image.new("RGBA", (x1 - x0 + 2 * pad, y1 - y0 + 2 * pad), (0, 0, 0, 0))
+    ImageDraw.Draw(im).text((pad - x0, pad - y0), text, font=font, fill="#FFFFFF",
+                            stroke_width=stroke, stroke_fill="#000000")
+    return np.array(im.rotate(angle, expand=True, resample=Image.BICUBIC))
+
+
+def _build_react_clips(lines: list, line_windows: list, duration: float,
+                       font_path: Path, s: dict, width: int) -> tuple:
+    """react 오버레이 — 웃음 라인 시작에 화면 상단 구석(좌/우 교대)에서 팡 등장.
+    반환: (클립 목록, QA용 플랜)."""
+    font_size = int(s.get("react_font_size", 66))
+    y = int(s.get("react_y", 300))
+    clips, plan, side = [], [], 0
+    for li, ((ls, le), ln) in enumerate(zip(line_windows, lines)):
+        text = str(ln.get("react", "") or "").strip()
+        if not text:
+            continue
+        ls, le = max(0.0, float(ls)), min(float(le), duration)
+        dur = min(1.6, le - ls)
+        if dur < 0.3:
+            continue
+        try:
+            angle = -8.0 if side % 2 == 0 else 8.0
+            base = ImageClip(_react_rgba(text, font_path, font_size, angle), transparent=True)
+            x = int(width * 0.06) if side % 2 == 0 else width - base.w - int(width * 0.06)
+            clip = (base.resized(lambda t: _pop_scale(t, 0.18, 0.4))
+                        .with_start(ls).with_duration(dur).with_position((x, y)))
+            clips.append(clip)
+            plan.append({"kind": "react", "text": text, "start": round(ls, 3),
+                         "end": round(ls + dur, 3), "y": y, "line_i": li})
+            side += 1
+        except Exception as e:
+            print(f"[render] 경고: react 오버레이 실패({text}: {e}) — 건너뜀")
+    return clips, plan
 
 
 def _make_text(text: str, font_path: Path, font_size: int, color: str,

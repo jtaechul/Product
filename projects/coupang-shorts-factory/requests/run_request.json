@@ -3,6 +3,6 @@
  "provider": "auto",
  "row": "2",
  "privacy": "private",
- "note": "실제 음성 ON: ElevenLabs 한국어 보이스(Sarah) + with-timestamps 가라오케 동기 (WoWo, row 2)",
- "requested_at": "2026-07-12T11:37:49Z"
+ "note": "개편 검증: 대본=자막(subs) + 드립 대본 + react 스티커 + 상품 비주얼 중심 + QA 게이트 (WoWo row2, Typecast)",
+ "requested_at": "2026-07-12T12:44:31Z"
 }
