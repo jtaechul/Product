@@ -64,6 +64,14 @@ def main() -> int:
 
 
 def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
+    # cron(soft) 모드는 업로드까지 가능할 때만 제작한다. 업로드 미설정 상태로 매일 돌면
+    # 같은 상품을 반복 제작해 TTS·대본 크레딧만 소모하므로(큐는 업로드 성공 시에만 소진)
+    # 조용히 종료한다. 수동 실행(dispatch/request)은 영향 없음 — Artifacts 검수용으로 동작.
+    if args.soft and not youtube.is_configured():
+        print(f"[pipeline] cron 모드: 업로드 미설정({youtube.missing_hint()}) "
+              "→ 크레딧 절약을 위해 제작 없이 정상 종료")
+        return 0
+
     # ---- M2: 상품 확보 (기본: 수동 CSV 큐. 쿠팡 API는 키 승인 후 Phase 2에서 전환)
     product = manual_queue.pick(args.row)
     (job_dir / "product.json").write_text(json.dumps(product, ensure_ascii=False, indent=1), encoding="utf-8")
