@@ -7,11 +7,13 @@
 
 - **Phase 0~3 구현 완료**: M1(아웃라이어 리서치, `shorts-research.yml` 주간) /
   M2(수동 CSV 큐 + 쿠팡 API 모듈은 키 승인 대기) / M3(대본 생성, claude-sonnet-4-6) /
-  M4+M5(TTS 멀티 프로바이더+whisper 폴백) / M6(렌더: 단어 팝업 자막·상품 이미지 줌인·쉐이크) /
+  M4+M5(TTS 멀티 프로바이더+whisper 폴백) / M6(렌더: 단어 팝업 자막(긴 어절은 종결어미 분리)·
+  상품 이미지 줌인·쉐이크·상품 연관 Pexels 배경 검색 `src/video/backgrounds.py`) /
   M7(유튜브 private 업로드+고지 댓글, §3.1 assert 강제) / M8(`src/pipeline.py`).
 - 자동화: 평일 07:30 KST cron 제작(전제조건 미비 시 soft 통과), 큐 상태는 업로드 성공 시
   CI가 `data/processed.json`을 `[skip ci]` 커밋. 텔레그램 성공/실패 알림(`src/notify.py`).
-- 남은 사용자 작업: `SHORTS_YT_*` 인증 3종·`SHORTS_YT_API_KEY` 등록, 실제 제휴 링크로 CSV 갱신,
+- 남은 사용자 작업: **유튜브 채널 생성(시작 시 이름·핸들·설정 컨설팅 + 완성 후 피드백을 제공하기로
+  예약됨)**, `SHORTS_YT_*` 인증 3종·`SHORTS_YT_API_KEY` 등록, 실제 제휴 링크로 CSV 갱신,
   쿠팡 API 키 승인 시 M2 1안 전환 검증 → `docs/setup-guide.md` 참조.
 
 ## 수행 지침 요약 (스펙 §0)

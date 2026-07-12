@@ -16,6 +16,8 @@
   분량을 채우는 방법: 셀링포인트마다 구체적 사용 장면(원룸 저녁, 캠핑장 아침 등)을 한 라인씩 추가
 8 image_cue: 각 라인에 어울리는 상품 이미지 인덱스(0부터) 지정
 9 금액 표기: 반드시 콤마 숫자 형식으로 쓴다 (예: 49,900원 — "4만 9천 9백원" 같은 한글 표기 금지)
+10 bg_keywords: 상품 사용 장면과 어울리는 배경 영상 검색어 — 영어 단어 2~3개 배열.
+  상품명이 아니라 장소·분위기 위주로 (예: 미니 세탁기 → ["laundry room", "cozy apartment interior"])
 
 출력 스키마
-{"title": "...", "lines": [{"text": "...", "image_cue": 0, "price_shock": false}], "hashtags": ["...", "...", "..."], "pinned_comment": "...", "description_body": "..."}
+{"title": "...", "lines": [{"text": "...", "image_cue": 0, "price_shock": false}], "hashtags": ["...", "...", "..."], "bg_keywords": ["...", "..."], "pinned_comment": "...", "description_body": "..."}

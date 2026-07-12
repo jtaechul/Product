@@ -36,7 +36,7 @@ VIDEO_EXTS = {".mp4", ".mov", ".webm", ".m4v"}
 
 def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
                  shake_windows: list | None = None, project_root: Path | None = None,
-                 image_windows: list | None = None) -> dict:
+                 image_windows: list | None = None, bg_path: Path | None = None) -> dict:
     """단어 타임스탬프 기반 쇼츠 렌더. 반환: 렌더 통계 dict (DoD: 렌더 시간 기록)."""
     r = settings.get("render", {})
     s = settings.get("subtitle", {})
@@ -52,7 +52,8 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     duration = float(audio.duration) + 0.25
 
     bg_dir = project_root / settings.get("assets", {}).get("backgrounds_dir", "assets/backgrounds")
-    background, bg_name = _build_background(bg_dir, width, height, duration, shake_px)
+    background, bg_name = _build_background(bg_dir, width, height, duration, shake_px,
+                                            override=bg_path)
 
     if shake_windows:
         margin = shake_px
@@ -130,10 +131,13 @@ def _resolve_font(project_root: Path, font_rel: str) -> Path:
 
 
 def _build_background(bg_dir: Path, width: int, height: int, duration: float,
-                      margin: int) -> tuple:
-    """CC0 세로영상 랜덤 선택(cover-fit + 루프/트림). 없으면 그라데이션 자체 생성."""
+                      margin: int, override: Path | None = None) -> tuple:
+    """배경 선택: 상품 연관 영상(override) → CC0 세로영상 랜덤 → 그라데이션 자체 생성."""
     over_w, over_h = width + 2 * margin, height + 2 * margin
-    candidates = [p for p in sorted(bg_dir.glob("*")) if p.suffix.lower() in VIDEO_EXTS]
+    if override and Path(override).exists():
+        candidates = [Path(override)]
+    else:
+        candidates = [p for p in sorted(bg_dir.glob("*")) if p.suffix.lower() in VIDEO_EXTS]
     if candidates:
         pick = random.choice(candidates)
         clip = VideoFileClip(str(pick)).without_audio()
@@ -181,9 +185,56 @@ def _build_image_clips(image_windows: list, duration: float, width: int) -> list
     return clips
 
 
+# 긴 어절을 쪼갤 때 다음 팝업으로 넘길 종결어미 (긴 것부터 매칭)
+_SPLIT_ENDINGS = ("입니다", "합니다", "됩니다", "습니다", "습니까", "하세요", "되세요",
+                  "이에요", "인데요", "거든요", "잖아요", "네요", "데요", "까요",
+                  "예요", "세요", "이죠", "죠")
+
+
+def _split_long_word(text: str, max_chars: int) -> list:
+    """max_chars 초과 어절 분할: 종결어미("~입니다")를 다음 팝업으로 분리, 아니면 균등 분할.
+    예) "49,900원입니다" → ["49,900원", "입니다"] — 한 화면에 긴 자막이 뜨는 것 방지."""
+    if len(text) <= max_chars:
+        return [text]
+    core, trail = text, ""
+    while core and core[-1] in ".,!?…":
+        core, trail = core[:-1], core[-1] + trail
+    for ending in _SPLIT_ENDINGS:
+        if core.endswith(ending) and len(core) - len(ending) >= 2:
+            head = core[: -len(ending)]
+            return _split_long_word(head, max_chars) + [core[-len(ending):] + trail]
+    n_parts = -(-len(core) // max_chars)
+    size = -(-len(core) // n_parts)
+    parts = [core[i:i + size] for i in range(0, len(core), size)]
+    parts[-1] += trail
+    return parts
+
+
+def _expand_long_words(words: list, max_chars: int) -> list:
+    """분할된 조각들에 원래 어절의 발화 구간을 글자 수 비례로 배분."""
+    if max_chars < 3:
+        return words
+    out = []
+    for w in words:
+        parts = _split_long_word(str(w["word"]), max_chars)
+        if len(parts) == 1:
+            out.append(w)
+            continue
+        start, end = float(w["start"]), float(w["end"])
+        total = sum(len(p) for p in parts) or 1
+        t = start
+        for p in parts:
+            dur = (end - start) * len(p) / total
+            out.append({"word": p, "start": t, "end": t + dur})
+            t += dur
+    return out
+
+
 def _build_word_clips(words: list, duration: float, font_path: Path,
                       s: dict, width: int) -> list:
-    """단어 단위 팝업 자막: 각 단어를 발화 시점에 표시, 다음 단어 시작까지 유지."""
+    """단어 단위 팝업 자막: 각 단어를 발화 시점에 표시, 다음 단어 시작까지 유지.
+    긴 어절은 종결어미 기준으로 쪼개 다음 팝업으로 넘긴다(subtitle.max_word_chars)."""
+    words = _expand_long_words(words, int(s.get("max_word_chars", 7)))
     font_size = int(s.get("font_size", 80))
     color = s.get("color", "#FFE400")
     stroke_color = s.get("stroke_color", "#000000")

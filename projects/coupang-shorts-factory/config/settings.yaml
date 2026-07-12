@@ -44,6 +44,7 @@ subtitle:               # 스펙 §M6 - 3
   stroke_color: "#000000"
   stroke_width: 6
   y: 1250               # (center, y=1250)
+  max_word_chars: 7     # 이보다 긴 어절은 종결어미("~입니다" 등)를 다음 자막 팝업으로 분리
 
 render:                 # 스펙 §M6
   width: 1080

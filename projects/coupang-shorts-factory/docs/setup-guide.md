@@ -23,6 +23,8 @@
 ## A. 유튜브 업로드 인증 (SHORTS_YT_* 3종) — 브라우저만으로 가능
 
 사전 준비: 쿠팡 쇼츠용 **새 유튜브 채널**(브랜드 계정 권장)을 만들어 두세요.
+채널을 만들 준비가 되면 Claude에게 "채널 만들자"라고 말하세요 — 이름·핸들·초기 설정
+컨설팅과, 만든 채널에 대한 피드백까지 진행하기로 예약되어 있습니다.
 
 1. [Google Cloud Console](https://console.cloud.google.com/)에서 기존 프로젝트 선택(또는 새로 만들기)
 2. **API 및 서비스 → 라이브러리** → "YouTube Data API v3" 검색 → **사용 설정**
@@ -47,20 +49,64 @@
 등록 후 Actions에서 produce를 실행하면 자동으로 **비공개(private) 업로드 + 고지 댓글 등록**까지 진행됩니다.
 (댓글 "고정"만 유튜브 앱에서 1탭 — API가 고정 기능을 지원하지 않습니다)
 
-## B. 리서치용 API 키 (SHORTS_YT_API_KEY)
+## B. 리서치용 API 키 (SHORTS_YT_API_KEY) — 5분, 무료
 
-1. 같은 Google Cloud 프로젝트 → **사용자 인증 정보 만들기 → API 키**
-2. 키를 `SHORTS_YT_API_KEY`로 등록
-3. [config/competitors.yaml](../config/competitors.yaml)에 벤치마크 채널 ID를 채우면
-   매주 월요일 아침 소재 후보 리포트가 자동 생성됩니다(텔레그램 발송 포함)
+"벤치마크 채널에서 최근 유독 터진 영상"을 매주 자동 수집하는 열쇠입니다.
+A(업로드 인증)와 별개라서 **이것만 먼저 해도 됩니다.**
 
-## C. 쿠팡 파트너스
+1. [Google Cloud Console](https://console.cloud.google.com/) 접속 → 구글 계정으로 로그인
+   - 처음이라 프로젝트가 없으면: 위쪽 프로젝트 선택 → **새 프로젝트** → 이름 아무거나 → 만들기
+2. 왼쪽 메뉴(☰) → **API 및 서비스 → 라이브러리** → 검색창에 `YouTube Data API v3`
+   → 결과 클릭 → 파란 **사용(Enable)** 버튼
+3. 왼쪽 **API 및 서비스 → 사용자 인증 정보** → 상단 **+ 사용자 인증 정보 만들기 → API 키**
+   → 화면에 뜨는 긴 키 문자열 복사 (이 키가 `SHORTS_YT_API_KEY`입니다)
+4. [GitHub 시크릿 등록 페이지](https://github.com/jtaechul/Product/settings/secrets/actions)
+   → **New repository secret** → Name: `SHORTS_YT_API_KEY`, Secret: 복사한 키 → **Add secret**
+5. [competitors.yaml 편집 화면](https://github.com/jtaechul/Product/edit/main/projects/coupang-shorts-factory/config/competitors.yaml)에서
+   벤치마크 채널 추가 — **유튜브 앱에서 채널 이름 밑의 @핸들을 그대로 복사**해 아래처럼 넣으면 끝:
+   ```yaml
+   channels:
+     - "@어떤채널핸들"
+     - "@다른채널핸들"
+   ```
+   → 오른쪽 위 **Commit changes...** → 초록 버튼
 
-1. [쿠팡 파트너스](https://partners.coupang.com) 가입 → 활동 시작(초기엔 링크 수동 생성)
-2. 상품 추가 방법: [data/products_manual.csv](../data/products_manual.csv)에 1행 추가
-   (파트너스에서 만든 제휴 링크를 `affiliate_url` 칸에) → main에 커밋하면 준비 완료
-3. Open API 키가 발급되면(실적 요건 있음) `SHORTS_COUPANG_ACCESS_KEY/SECRET_KEY` 등록
-   → 상품 검색·딥링크 자동화(M2 1안)로 전환 가능
+이후 매주 월요일 09:00 자동 실행 + 텔레그램으로 후보 top5 발송. 바로 돌려보려면
+[리서치 워크플로우](https://github.com/jtaechul/Product/actions/workflows/shorts-research.yml) → **Run workflow**.
+
+## C. 쿠팡 파트너스 — 상품 한 줄 추가하는 법 (iPad 웹만으로 가능)
+
+### C-1. 제휴 링크 만들기
+
+1. [쿠팡 파트너스](https://partners.coupang.com) 로그인 → 상단 **링크 생성 → 상품 링크**
+2. 영상으로 만들 상품 검색 → 원하는 상품의 **링크 생성** 버튼
+3. **단축 URL**(`https://link.coupang.com/a/...` 형태) 복사 — 이게 `제휴링크` 칸에 들어갑니다
+
+### C-2. 상품 이미지 주소 얻기 (같은 화면에서)
+
+1. 링크 생성 결과 화면에서 **이미지** 또는 **이미지+텍스트** 탭 선택
+2. 코드 안에서 `https://` 로 시작해 `.jpg` 나 `.png` 로 끝나는 주소만 골라 복사
+   — 파트너스가 공식 제공하는 상품 이미지라 저작권 걱정 없이 영상에 쓸 수 있습니다 (스펙 §3.2)
+3. 복잡하면 이미지 칸은 **비워도 됩니다** — 영상은 자막+배경만으로 만들어집니다
+   (쿠팡 상품 페이지의 이미지를 임의로 긁어오는 것은 금지 — 파트너스 제공분만 사용)
+
+### C-3. CSV에 한 줄 추가
+
+1. [products_manual.csv 편집 화면 열기](https://github.com/jtaechul/Product/edit/main/projects/coupang-shorts-factory/data/products_manual.csv)
+   (연필 편집 모드가 바로 열립니다)
+2. 맨 아랫줄에 추가 — 칸 순서(쉼표 구분, 상품명에 쉼표 금지, 가격은 숫자만):
+   ```
+   상품명,가격,특징1;특징2;특징3,이미지주소,제휴링크,카테고리
+   ```
+   예: `무선 미니 가습기,19900,무소음 25db;500ml 대용량;USB-C,https://...jpg,https://link.coupang.com/a/abc123,생활가전`
+3. 오른쪽 위 **Commit changes...** → 초록 버튼 한 번 더 → 등록 끝
+   - 여러 상품 = 여러 줄. **위에서부터 한 실행에 하나씩** 소비됩니다
+   - 기존 `[테스트]` 행(PLACEHOLDER 링크)은 실제 운영 전에 삭제하거나 실링크로 교체하세요
+
+### C-4. (나중에) 쿠팡 Open API
+
+Open API 키가 발급되면(파트너스 실적 요건 있음) `SHORTS_COUPANG_ACCESS_KEY/SECRET_KEY` 등록
+→ 상품 검색·딥링크 자동화(M2 1안)로 전환 — 위 수동 과정이 통째로 자동화됩니다.
 
 ## D. 자동 스케줄 (이미 켜져 있음)
 
