@@ -182,6 +182,9 @@ def _extract(text: str, pdf_text: str, images: list, settings: dict) -> dict:
         system=_EXTRACT_PROMPT,
         messages=[{"role": "user", "content": content}],
     )
+    u = getattr(resp, "usage", None)
+    if u:  # 비용 투명화: 입력 1만 토큰 ≈ 45원(Sonnet) 수준
+        print(f"[enrich] 토큰 사용: 입력 {u.input_tokens:,} / 출력 {u.output_tokens:,}")
     out = "".join(b.text for b in resp.content if b.type == "text")
     start, end = out.find("{"), out.rfind("}")
     if start < 0 or end <= start:
