@@ -1,8 +1,8 @@
 {
  "mode": "produce",
  "provider": "mock",
- "row": "auto",
+ "row": "2",
  "privacy": "private",
- "note": "검증: 자막 분할 + 상품 연관 배경 (mock 음성으로 크레딧 절약)",
- "requested_at": "2026-07-12T01:57:36Z"
+ "note": "E2E: PDF 캡처 비전 추출 검증 (WoWo 세탁기, 실링크)",
+ "requested_at": "2026-07-12T03:49:17Z"
 }
