@@ -89,6 +89,17 @@ button:disabled{opacity:.5}
 .postscroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory}
 .postscroll img{height:300px;border-radius:8px;border:1px solid var(--line);scroll-snap-align:start;flex:none}
 .sect{font-size:11px;letter-spacing:2px;color:var(--cy);text-transform:uppercase;margin:18px 0 8px;border-top:1px solid var(--line);padding-top:14px}
+.ccard{display:flex;gap:10px;background:#0a1018;border:1px solid var(--line);border-radius:10px;padding:9px;margin-bottom:9px}
+.cthumb{width:104px;height:74px;object-fit:cover;border-radius:7px;border:1px solid var(--line);flex:none;background:#050a0f}
+.cthumb.noimg{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--gy);text-align:center}
+.cbody{flex:1;min-width:0}
+.ctitle{font-size:14px;font-weight:600;color:var(--wt)}
+.cmeta{font-size:12px;color:var(--cy);margin-top:2px;word-break:break-all}
+.cfact{font-size:12px;color:var(--gy);margin-top:3px;line-height:1.4}
+.cfact.warn{color:var(--am)}
+.cbadge{font-size:10px;color:var(--am);border:1px solid var(--am);border-radius:4px;padding:1px 5px}
+.cgo{margin-top:7px;background:var(--cy);color:#04252b;border:0;border-radius:7px;padding:7px 12px;font-weight:700;font-size:13px;cursor:pointer}
+.cgo:disabled{opacity:.5}
 </style></head>
 <body><div class="wrap">
 <header><div class="dot"></div>
@@ -107,6 +118,7 @@ const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
 const UP_WF="upload-longform.yml";    // 롱폼 유튜브 '수동' 업로드(운영자 확인 후 클릭)
 const US_WF="upload-short.yml";       // 쇼츠 유튜브 '수동' 업로드(운영자 확인 후 클릭)
+const SRC_WF="source-species.yml";    // 소싱(후보 발굴) — "소싱하기" 버튼
 // 실사 영상이 확보된 종 풀(코드 시드 추가 시 여기도 함께 갱신 — src/core/footage.py _SEED 참고).
 // value는 data.SPECIES의 common_name_ko(정확 매칭 별칭)라 그대로 --species 인자로 쓸 수 있다.
 // cat: 대시보드 표시용 카테고리 라벨(심해생물/일반해양/미세조류/침몰선). 현재 풀은 전부 심해생물.
@@ -265,6 +277,19 @@ function renderHome(){
         '</details>'))+
   '</div>'+
   '<div class="card">'+
+    '<span class="lbl">소싱하기 · 새 대상 발굴 (수동)</span>'+
+    '<select id="srccat">'+
+      '<option value="deep_sea">심해 생물 (Deep Sea)</option>'+
+      '<option value="marine_life">일반 해양생물 (Marine Life)</option>'+
+      '<option value="marine_algae">해양 미세조류 (Marine Microalgae)</option>'+
+      '<option value="shipwreck">침몰선 (Shipwreck)</option>'+
+    '</select>'+
+    '<div class="hint" style="margin:4px 0 8px">위키미디어 커먼스(NOAA·MBARI·Ifremer 등, CC 계열)에서 새 대상 영상을 찾아 <b>후보</b>로 담습니다. 1~3분 뒤 아래에 <b>썸네일+정보</b>가 뜨면 확인하고 제작하세요. (침몰선은 이름·정보 확인이 필요할 수 있음)</div>'+
+    '<button class="go" id="gosrc">소싱하기 (후보 발굴)</button>'+
+    '<div class="banner" id="srcmsg"></div>'+
+    '<div class="srccands" id="srccands" style="margin-top:12px"><div class="hint">후보를 불러오는 중…</div></div>'+
+  '</div>'+
+  '<div class="card">'+
     '<span class="lbl">롱폼 · 랭킹형 TOP N (8분 유튜브)</span>'+
     '<span class="lbl">종 선택 (실사 영상 보유 · 3~6개 · 체크한 순서 = 순위, 처음이 1위)</span>'+
     '<div class="lfgrid" id="lfgrid">'+
@@ -346,9 +371,59 @@ function renderHome(){
       else{const t=await r.text();lfbanner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
     }catch(e){lfbanner("요청 실패: "+e,"err");}
     $("#golf").disabled=false;};
+  // ── 소싱하기(후보 발굴) + 후보 검토·제작 ──
+  const _gs=$("#gosrc");if(_gs)_gs.onclick=async()=>{
+    const category=($("#srccat")||{}).value||"deep_sea";
+    if(!authReady()){const tb=$("#tokbox");if(tb)tb.open=true;srcbanner("먼저 GitHub 토큰을 설정하세요(위 안내).","err");return;}
+    $("#gosrc").disabled=true;srcbanner("소싱 요청 중… (1~3분 뒤 아래에 후보가 뜹니다)");
+    try{const r=await fetch(API+"/actions/workflows/"+SRC_WF+"/dispatches",{method:"POST",headers:headers(true),
+        body:JSON.stringify({ref:BRANCH,inputs:{category,want:"6"}})});
+      if(r.status===204){srcbanner("소싱 시작! 1~3분 뒤 '새로고침'을 누르면 후보가 나타납니다.","ok");
+        setTimeout(()=>loadCandidates(category),60000);setTimeout(()=>loadCandidates(category),120000);}
+      else{const t=await r.text();srcbanner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
+    }catch(e){srcbanner("요청 실패: "+e,"err");}
+    $("#gosrc").disabled=false;};
+  const _sc=$("#srccat");if(_sc)_sc.onchange=()=>loadCandidates(_sc.value);
+  loadCandidates(($("#srccat")||{}).value||"deep_sea");
+
   $("#refresh").onclick=(e)=>{e.preventDefault();loadRuns();};
   loadRuns();
   loadLongformResults();
+}
+function srcbanner(t,c){const m=$("#srcmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
+async function loadCandidates(cat){
+  const el=$("#srccands");if(!el)return;
+  el.innerHTML='<div class="hint">후보 목록 확인 중… <a href="#" id="srcref" style="color:var(--cy)">새로고침</a></div>';
+  const path="short-movie-generator/src/categories/"+cat+"/"+cat+"_candidates.json";
+  let arr=[];try{const t=await fetchRaw(path);const a=JSON.parse(t);if(Array.isArray(a))arr=a;}catch(e){}
+  const head='<span class="lbl">소싱된 후보 ('+cat+') · '+arr.length+'개 <a href="#" id="srcref" style="color:var(--cy);float:right;text-decoration:none">새로고침</a></span>';
+  if(!arr.length){el.innerHTML=head+'<div class="hint">아직 후보가 없습니다. 위 <b>소싱하기</b>를 눌러 발굴하세요(발굴 후 1~3분).</div>';
+    const rf=$("#srcref");if(rf)rf.onclick=(e)=>{e.preventDefault();loadCandidates(cat);};return;}
+  el.innerHTML=head+arr.map(c=>{
+    const isW=c.kind==="wreck";
+    const title=isW?esc(c.name||c.key):(esc(c.name||"")+(c.common_name_ko?' <i style="color:var(--gy)">'+esc(c.common_name_ko)+'</i>':''));
+    const thumb=c.thumbnail_url?'<img class="cthumb" src="'+prox(c.thumbnail_url)+'" alt="">':'<div class="cthumb noimg">썸네일 생성 중…</div>';
+    const meta=[c.depth?('수심 '+esc(c.depth)+'m'):'',isW&&c.ship_type?('선종 '+esc(c.ship_type)):'',esc(c.license||'')].filter(Boolean).join(' · ');
+    const fact=(c.facts&&c.facts[0])?('<div class="cfact">'+esc(String(c.facts[0]).slice(0,90))+'</div>'):(isW?'<div class="cfact warn">※ 배 이름·정보를 영상 확인 후 제작하세요.</div>':'');
+    const warn=(isW&&c.needs_confirm)?'<span class="cbadge">확인 필요</span>':'';
+    return '<div class="ccard">'+thumb+'<div class="cbody"><div class="ctitle">'+title+' '+warn+'</div>'+
+      '<div class="cmeta">'+meta+'</div>'+fact+
+      '<div class="cmeta" style="color:var(--gy);font-size:11px">'+esc(c.credit||'')+'</div>'+
+      '<button class="cgo" data-key="'+esc(c.key)+'" data-cat="'+esc(cat)+'">이 대상으로 제작</button></div></div>';
+  }).join('');
+  const rf=$("#srcref");if(rf)rf.onclick=(e)=>{e.preventDefault();loadCandidates(cat);};
+  el.querySelectorAll(".cgo").forEach(b=>{b.onclick=()=>produceCandidate(b.getAttribute("data-cat"),b.getAttribute("data-key"),b);});
+}
+async function produceCandidate(cat,key,btn){
+  if(!authReady()){srcbanner("먼저 GitHub 토큰을 설정하세요.","err");return;}
+  if(!confirm("이 대상으로 쇼츠를 제작할까요?\\n\\n"+key))return;
+  if(btn)btn.disabled=true;srcbanner("제작 요청 중… ("+esc(key)+")");
+  try{const r=await fetch(API+"/actions/workflows/"+WF+"/dispatches",{method:"POST",headers:headers(true),
+      body:JSON.stringify({ref:BRANCH,inputs:{query:key,category:cat}})});
+    if(r.status===204){srcbanner("제작 시작! 2~4분 뒤 텔레그램 전송 + 라이브러리 등록. (후보 목록에서 제외됩니다)","ok");
+      setTimeout(loadRuns,4000);setTimeout(()=>loadCandidates(cat),15000);}
+    else{const t=await r.text();srcbanner("실패("+r.status+"): 토큰 권한 확인.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");if(btn)btn.disabled=false;}
+  }catch(e){srcbanner("요청 실패: "+e,"err");if(btn)btn.disabled=false;}
 }
 function lfbanner(t,c){const m=$("#lfmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
 async function loadLongformResults(){
@@ -752,7 +827,7 @@ function j(o, status){return new Response(JSON.stringify(o),{status:status||200,
 // (무한 로딩). raw는 공개 리포에 무인증 200 → 어느 기기서든 조회 가능. 허용 경로만(개방 프록시 방지).
 async function pubRead(url){
   const path = url.searchParams.get("path") || "";
-  if(!/^short-movie-generator\/(content\/[\w.\-]+\.json|src\/categories\/deep_sea\/catalog\.json)$/.test(path))
+  if(!/^short-movie-generator\/(content\/[\w.\-]+\.json|src\/categories\/deep_sea\/catalog\.json|src\/categories\/[\w\-]+\/[\w\-]+_candidates\.json)$/.test(path))
     return j({error:"path not allowed"}, 403);
   const target = "https://raw.githubusercontent.com/" + OWNER + "/" + REPO + "/" + BRANCH + "/" + path;
   try{
