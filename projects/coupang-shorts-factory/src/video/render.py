@@ -98,10 +98,12 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
             card_layers = _build_image_clips(image_windows or [], duration, width)
 
     scrim = _subtitle_scrim(width, height, duration, s)
-    # 자막: 기본은 가라오케 단어 팝업(썰피자식, subtitle.mode=karaoke).
-    # subtitle.mode=phrase 로 두면 구(라인) 단위로도 낼 수 있다.
-    if s.get("mode", "karaoke") == "phrase" and lines and line_windows:
+    # 자막: 기본은 가라오케 단어 팝업 + 펀치라인은 큰 밈 카드(subtitle.mode=karaoke).
+    # phrase 모드면 구(라인) 단위. 라인 정보 없으면 전체 가라오케 폴백.
+    if lines and line_windows and s.get("mode", "karaoke") == "phrase":
         sub_clips = _build_line_clips(lines, line_windows, duration, font_path, s, width)
+    elif lines and line_windows:
+        sub_clips = _build_subtitles(words, lines, line_windows, duration, font_path, s, width)
     else:
         sub_clips = _build_word_clips(words, duration, font_path, s, width)
 
@@ -305,46 +307,43 @@ def _build_image_clips(image_windows: list, duration: float, width: int) -> list
 
 def _plan_scenes(duration: float, lines: list, line_windows: list,
                  n_product: int, n_stock: int) -> list:
-    """대본 라인 → 시각 씬 목록. 문제 단계(②③)는 스톡, 나머지는 상품 사진.
-    연속 같은 종류는 병합하고, 긴 상품 씬은 여러 컷으로 쪼개 켄번즈를 변주한다(사진 한 장도 여러 컷처럼)."""
+    """대본을 단계(stage) 연속 구간으로 묶고 각 단계마다 1~2컷 배정 (총 5단계면 5~10컷).
+    문제 단계(②③)는 스톡 b-roll, 나머지는 상품 사진(컷마다 켄번즈 변주)."""
     problem = {2, 3}
-    pairs = [((float(st), float(en)), ln) for (st, en), ln in zip(line_windows, lines)]
+    pairs = [((float(st), float(en)), int(ln.get("stage", 1) or 1))
+             for (st, en), ln in zip(line_windows, lines)]
     if not pairs:
         return []
-    segs = []
-    for (st, en), ln in pairs:
-        kind = "stock" if (int(ln.get("stage", 1) or 1) in problem and n_stock > 0) else "product"
-        segs.append([st, en, kind])
-    merged = [segs[0]]
-    for st, en, k in segs[1:]:
-        if k == merged[-1][2] and st <= merged[-1][1] + 0.6:
-            merged[-1][1] = en
+    groups = [[pairs[0][0][0], pairs[0][0][1], pairs[0][1]]]  # [start, end, stage]
+    for (st, en), stg in pairs[1:]:
+        if stg == groups[-1][2]:
+            groups[-1][1] = en
         else:
-            merged.append([st, en, k])
-    merged[0][0] = 0.0
-    merged[-1][1] = duration
-    for i in range(1, len(merged)):
-        merged[i][0] = merged[i - 1][1]
+            groups.append([st, en, stg])
+    groups[0][0] = 0.0
+    groups[-1][1] = duration
+    for i in range(1, len(groups)):
+        groups[i][0] = groups[i - 1][1]
 
-    max_shot = 3.2
     scenes, prod_i, stock_i, shot = [], 0, 0, 0
-    for st, en, k in merged:
-        if en - st <= 0.05:
-            continue
-        if k == "stock":
-            scenes.append({"start": st, "end": en, "kind": "stock", "asset": stock_i % max(n_stock, 1)})
-            stock_i += 1
-            continue
+    for st, en, stg in groups:
         dur = en - st
-        n = max(1, int(-(-dur // max_shot)))
+        if dur <= 0.05:
+            continue
+        kind = "stock" if (stg in problem and n_stock > 0) else "product"
+        n = 2 if dur >= 4.0 else 1  # 4초 이상 단계는 2컷, 아니면 1컷 → 단계당 1~2개
         step = dur / n
         for j in range(n):
             a = st + j * step
             b = en if j == n - 1 else a + step
-            scenes.append({"start": a, "end": b, "kind": "product",
-                           "asset": prod_i % max(n_product, 1), "shot": shot})
-            prod_i += 1
-            shot += 1
+            if kind == "stock":
+                scenes.append({"start": a, "end": b, "kind": "stock", "asset": stock_i % max(n_stock, 1)})
+                stock_i += 1
+            else:
+                scenes.append({"start": a, "end": b, "kind": "product",
+                               "asset": prod_i % max(n_product, 1), "shot": shot})
+                prod_i += 1
+                shot += 1
     return scenes
 
 
@@ -526,34 +525,85 @@ def _regroup_karaoke(words: list, min_chars: int = 3, max_chars: int = 8) -> lis
     return out
 
 
-def _build_word_clips(words: list, duration: float, font_path: Path,
-                      s: dict, width: int) -> list:
-    """가라오케식 단어 팝업 자막(3~8글자 단위, 문장 통째 X) — 중앙·노랑·굵은 검정테두리 +
-    등장 시 통통 튀는 바운스(썰피자식). 각 팝업은 발화 시점에 등장해 다음 팝업 전까지 유지."""
-    toks = _regroup_karaoke(words, int(s.get("karaoke_min_chars", 3)),
-                            int(s.get("karaoke_max_chars", 8)))
+def _karaoke_clips(toks: list, end_bound: float, font_path: Path, s: dict, width: int) -> list:
+    """토큰 목록을 가라오케 단어 팝업 클립으로 — 중앙·노랑·굵은 검정테두리 + 등장 바운스."""
     font_size = int(s.get("font_size", 80))
     color = s.get("color", "#FFE400")
     stroke_color = s.get("stroke_color", "#000000")
     stroke_width = int(s.get("stroke_width", 6))
     y = int(s.get("y", 1250))
-
     clips, n = [], len(toks)
     for i, w in enumerate(toks):
         start = max(0.0, float(w["start"]))
-        end = float(toks[i + 1]["start"]) if i + 1 < n else min(float(w["end"]) + 0.35, duration)
-        end = min(end, duration)
+        end = float(toks[i + 1]["start"]) if i + 1 < n else min(float(w["end"]) + 0.35, end_bound)
+        end = min(end, end_bound)
         if end - start < 0.06:
-            end = min(start + 0.06, duration)
+            end = min(start + 0.06, end_bound)
         if end <= start:
             continue
-
         clip = _make_text(w["word"], font_path, font_size, color, stroke_color, stroke_width)
         if clip.w > width - 60:  # 아주 긴 조각 방어: 화면 폭에 맞게 축소
             shrunk = max(30, int(font_size * (width - 100) / clip.w))
             clip = _make_text(w["word"], font_path, shrunk, color, stroke_color, stroke_width)
         clip = clip.resized(lambda t: _pop_scale(t, 0.16, 0.5))  # 등장 바운스
         clips.append(clip.with_start(start).with_end(end).with_position(("center", y)))
+    return clips
+
+
+def _build_word_clips(words: list, duration: float, font_path: Path,
+                      s: dict, width: int) -> list:
+    """(폴백) 전체 단어를 가라오케 팝업으로 — 라인 정보가 없을 때."""
+    toks = _regroup_karaoke(words, int(s.get("karaoke_min_chars", 3)),
+                            int(s.get("karaoke_max_chars", 8)))
+    return _karaoke_clips(toks, duration, font_path, s, width)
+
+
+def _meme_card(text: str, start: float, end: float, font_path: Path, s: dict, width: int):
+    """펀치라인/의문형 훅을 '큰 밈 텍스트 카드'로 — 화면 중앙, 흰색 굵게 + 두꺼운 검정테두리,
+    큰 바운스로 팡 등장(드립·정곡 순간 강조)."""
+    if end - start < 0.12 or not text:
+        return None
+    font_size = int(s.get("meme_font_size", 92))
+    stroke_width = int(s.get("meme_stroke_width", 8))
+    box_w = int(width * 0.88)
+    pad = stroke_width * 3 + 16
+    tc = None
+    for extra in (dict(text_align="center"), {}):
+        try:
+            tc = TextClip(text=text, font=str(font_path), font_size=font_size,
+                          color=s.get("meme_color", "#FFFFFF"), stroke_color="#000000",
+                          stroke_width=stroke_width, method="caption",
+                          size=(box_w, None), margin=(pad, pad), **extra)
+            break
+        except TypeError:
+            continue
+    if tc is None:
+        return None
+    tc = tc.resized(lambda t: _pop_scale(t, 0.2, 0.4))  # 큰 바운스로 팡
+    return tc.with_start(start).with_end(min(end, start + 30)).with_position(
+        ("center", int(s.get("meme_y", 760))))
+
+
+def _build_subtitles(words: list, lines: list, line_windows: list, duration: float,
+                     font_path: Path, s: dict, width: int) -> list:
+    """라인별 디스패치: punch/의문형(?) 펀치라인은 큰 밈 카드, 나머지 라인은 가라오케 단어."""
+    min_c = int(s.get("karaoke_min_chars", 3))
+    max_c = int(s.get("karaoke_max_chars", 8))
+    clips = []
+    for (ls, le), ln in zip(line_windows, lines):
+        ls = max(0.0, float(ls))
+        le = min(float(le), duration)
+        if le - ls < 0.1:
+            continue
+        text = str(ln.get("text", "")).strip()
+        lwords = [w for w in words if ls - 0.01 <= float(w["start"]) < le + 0.01]
+        if bool(ln.get("punch")) or text.endswith("?") or not lwords:
+            mc = _meme_card(text, ls, le, font_path, s, width)
+            if mc is not None:
+                clips.append(mc)
+        else:
+            toks = _regroup_karaoke(lwords, min_c, max_c)
+            clips += _karaoke_clips(toks, le, font_path, s, width)
     return clips
 
 
