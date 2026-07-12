@@ -1,0 +1,68 @@
+[
+  {
+    "key": "wreck raketa",
+    "kind": "wreck",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/a/a6/The_shipwreck_of_Raketa_on_the_shore_of_Kasispea_village_in_Estonia_%28July_2022%29.webm",
+      "license": "cc-by-sa",
+      "credit": "Sillerkiil · CC BY-SA",
+      "source": "File:The shipwreck of Raketa on the shore of Kasispea village in Estonia (July 2022).webm"
+    },
+    "subject": {
+      "scientific_name": "Wreck Raketa",
+      "common_name_ko": "Raketa 난파선",
+      "common_name_en": "Wreck Raketa",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "침몰선",
+      "diet": [],
+      "fun_facts": [
+        "바다에 가라앉은 배입니다"
+      ],
+      "sources": [
+        "",
+        "Wikimedia Commons (File:The shipwreck of Raketa on the shore of Kasispea village in Estonia (July 2022).webm)"
+      ]
+    },
+    "copy": {
+      "jp_name": "沈没船「Raketa」",
+      "hook_line1": "海の底に、",
+      "hook_line2": "眠る船。",
+      "pop_words": [
+        "海の底に、",
+        "眠る船。"
+      ],
+      "feature_line": "海の命が集う、沈んだ船",
+      "feature_glow_word": "命",
+      "hook_ko": "바다 밑에, 잠든 배.",
+      "feature_ko": "바다 생명이 모이는, 가라앉은 배",
+      "tags": [
+        "#沈没船",
+        "#難破船",
+        "#海"
+      ],
+      "tags_ko": [
+        "#난파선",
+        "#침몰선",
+        "#바다"
+      ],
+      "body": [
+        "青い海の底に、",
+        "静かに横たわる、",
+        "大きな影。",
+        "その正体は、",
+        "沈没船です。",
+        "長い時間をかけて、",
+        "船体には、",
+        "生き物が棲みつきました。",
+        "魚が集まり、",
+        "海藻がゆれる。",
+        "沈んだ船は、",
+        "新しい命の、",
+        "すみかです。",
+        "海に還った、",
+        "静かな船です。"
+      ]
+    }
+  }
+]

@@ -183,5 +183,13 @@
     "common_name_en": "Pycnogonida",
     "scientific_name": "Pycnogonida",
     "date": "2026-07-12"
+  },
+  {
+    "id": "023",
+    "kind": "reels",
+    "common_name_ko": "Raketa 난파선",
+    "common_name_en": "Wreck Raketa",
+    "scientific_name": "Wreck Raketa",
+    "date": "2026-07-12"
   }
 ]
