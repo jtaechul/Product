@@ -104,7 +104,8 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
             card_layers = _build_image_clips(image_windows or [], duration, width)
 
     scrim = _subtitle_scrim(width, height, duration, s)
-    # 자막(개편): 대본이 확정한 subs 칸을 그대로 팝업 + punch 라인 1회만 밈 카드 + react 추임새.
+    # 자막(개편): 대본이 확정한 subs 칸을 그대로 팝업 + punch 라인 1회만 밈 카드.
+    # ⭐ 핵심규칙: 화면 리액션 추임새(react 스티커) 전면 금지 — 자막·밈 카드 외 텍스트 오버레이 없음.
     # phrase 모드면 구(라인) 단위. 라인 정보 없으면 전체 가라오케 폴백(테스트 경로).
     sub_plan = []
     if lines and line_windows and s.get("mode", "karaoke") == "phrase":
@@ -112,10 +113,6 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     elif lines and line_windows:
         sub_clips, sub_plan = _build_subtitles(words, lines, line_windows, duration,
                                                font_path, s, width)
-        react_clips, react_plan = _build_react_clips(lines, line_windows, duration,
-                                                     font_path, s, width)
-        sub_clips += react_clips
-        sub_plan += react_plan
     else:
         sub_clips = _build_word_clips(words, duration, font_path, s, width)
 
@@ -708,51 +705,6 @@ def _build_subtitles(words: list, lines: list, line_windows: list, duration: flo
             plan.append({"kind": "meme", "text": m["text"], "start": round(m["start"], 3),
                          "end": round(m["end"], 3), "y": int(s.get("meme_y", 760)),
                          "line_i": m["line_i"]})
-    return clips, plan
-
-
-def _react_rgba(text: str, font_path: Path, font_size: int, angle: float) -> np.ndarray:
-    """react 추임새('ㅋㅋㅋㅋ', '실화냐')를 손글씨 스티커 느낌으로 — PIL 렌더 + 기울임.
-    자체 생성 텍스트 밈(§3.2 화이트리스트: 자체 생성물)."""
-    from PIL import Image, ImageDraw, ImageFont
-    font = ImageFont.truetype(str(font_path), font_size)
-    stroke = max(4, font_size // 9)
-    probe = ImageDraw.Draw(Image.new("RGBA", (8, 8)))
-    x0, y0, x1, y1 = probe.textbbox((0, 0), text, font=font, stroke_width=stroke)
-    pad = stroke * 2 + 8
-    im = Image.new("RGBA", (x1 - x0 + 2 * pad, y1 - y0 + 2 * pad), (0, 0, 0, 0))
-    ImageDraw.Draw(im).text((pad - x0, pad - y0), text, font=font, fill="#FFFFFF",
-                            stroke_width=stroke, stroke_fill="#000000")
-    return np.array(im.rotate(angle, expand=True, resample=Image.BICUBIC))
-
-
-def _build_react_clips(lines: list, line_windows: list, duration: float,
-                       font_path: Path, s: dict, width: int) -> tuple:
-    """react 오버레이 — 웃음 라인 시작에 화면 상단 구석(좌/우 교대)에서 팡 등장.
-    반환: (클립 목록, QA용 플랜)."""
-    font_size = int(s.get("react_font_size", 66))
-    y = int(s.get("react_y", 300))
-    clips, plan, side = [], [], 0
-    for li, ((ls, le), ln) in enumerate(zip(line_windows, lines)):
-        text = str(ln.get("react", "") or "").strip()
-        if not text:
-            continue
-        ls, le = max(0.0, float(ls)), min(float(le), duration)
-        dur = min(1.6, le - ls)
-        if dur < 0.3:
-            continue
-        try:
-            angle = -8.0 if side % 2 == 0 else 8.0
-            base = ImageClip(_react_rgba(text, font_path, font_size, angle), transparent=True)
-            x = int(width * 0.06) if side % 2 == 0 else width - base.w - int(width * 0.06)
-            clip = (base.resized(lambda t: _pop_scale(t, 0.18, 0.4))
-                        .with_start(ls).with_duration(dur).with_position((x, y)))
-            clips.append(clip)
-            plan.append({"kind": "react", "text": text, "start": round(ls, 3),
-                         "end": round(ls + dur, 3), "y": y, "line_i": li})
-            side += 1
-        except Exception as e:
-            print(f"[render] 경고: react 오버레이 실패({text}: {e}) — 건너뜀")
     return clips, plan
 
 

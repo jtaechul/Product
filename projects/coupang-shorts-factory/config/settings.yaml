@@ -49,8 +49,7 @@ subtitle:               # 스펙 §M6 - 3 (2026-07-12 개편: '대본이 곧 자
   stroke_width: 6
   y: 1250               # 일반 자막 고정 y (하단 중앙 1곳 — 널뛰기 금지, QA가 검사)
   meme_y: 760           # punch 라인 1회만 뜨는 중앙 밈 카드 y (의도된 예외 1곳)
-  react_y: 300          # react 추임새(ㅋㅋㅋ 등) 상단 구석 y — 좌/우 교대
-  react_font_size: 66
+  # (react 추임새 설정은 2026-07-12 핵심규칙으로 전면 금지되어 제거됨)
   # (폴백·phrase 모드용 — 정상 경로에서는 대본 subs를 재분할 없이 그대로 쓴다)
   max_word_chars: 8
   karaoke_min_chars: 3

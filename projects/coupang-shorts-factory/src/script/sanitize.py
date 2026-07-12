@@ -27,8 +27,6 @@ SUB_MAX_CHARS = 12
 SUB_MAX_WORDS = 3
 # 낭독 분량(공백 제외): 빠른 템포 30~40초 목표 (Typecast tempo 1.3 기준 약 6.5자/초)
 CHAR_MIN, CHAR_MAX = 180, 280
-REACT_MAX_COUNT = 6
-REACT_MAX_CHARS = 6
 
 
 class RuleViolation(Exception):
@@ -86,21 +84,16 @@ def sanitize_script(script: dict, strict_length: bool = True) -> dict:
     if not lines:
         raise RuleViolation("lines가 비어 있음")
     repaired = 0
-    react_seen = 0
     for line in lines:
+        # ⭐ 핵심규칙(사용자 확정 2026-07-12): 화면 리액션 추임새(react — ㅋㅋㅋ·실화냐 등) 전면 금지.
+        #    모델이 출력해도 여기서 무조건 제거한다. 렌더·QA도 각각 금지·차단한다.
+        line.pop("react", None)
         line["text"] = clean_text(str(line.get("text", "")))
         if not line["text"]:
             problems.append("빈 대사 라인 존재")
             continue
         if _normalize_subs(line):
             repaired += 1
-        # react: 웃음 추임새 오버레이 — punch 라인 금지, 개수·길이 상한, 초과분은 조용히 제거
-        react = clean_text(str(line.get("react", "") or ""))[:REACT_MAX_CHARS].strip()
-        if react and not line.get("punch") and react_seen < REACT_MAX_COUNT:
-            line["react"] = react
-            react_seen += 1
-        else:
-            line.pop("react", None)
     if repaired:
         print(f"[sanitize] subs 계약 위반/누락 라인 {repaired}개 → 어절 경계 기준 자동 복구")
 
