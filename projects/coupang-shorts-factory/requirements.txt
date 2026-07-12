@@ -14,3 +14,6 @@ faster-whisper==1.2.1
 google-api-python-client>=2.100
 google-auth-oauthlib>=1.1
 anthropic>=0.40
+
+# M2.5 — 쿠팡 페이지 캡처 PDF를 타일 이미지로 분할(비전 추출용)
+pymupdf>=1.24
