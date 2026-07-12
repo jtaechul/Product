@@ -35,14 +35,30 @@ _VIDEO_EXT = (".webm", ".ogv", ".ogg", ".mp4", ".mov")
 # 통과 라이선스(운영자 확정: CC-BY-SA도 오픈). 문자열 부분일치로 판정.
 _ALLOWED = ("public domain", "cc0", "cc by", "cc-by", "cc by-sa", "cc-by-sa", "kogl")
 _BINOMIAL = re.compile(r"\b([A-Z][a-z]{2,})\s+([a-z]{3,})\b")
-# 발굴 검색어(해양생물 전반 — 심해 우선, 이어서 일반 해양). 브랜드(深海) 유지 위해 심해류 먼저.
-_TERMS = [
+# ── 카테고리별 발굴 검색어(핵심 수정) ──
+# 문제: 예전엔 모든 생물 카테고리가 아래 하나의 심해 검색어를 공유해, 미세조류(marine_algae)를
+#   검색조차 안 하고 심해동물만 반환했다(거미까지 샘). → 카테고리마다 고유 검색어를 둔다.
+_TERMS_DEEP = [
     "deep sea creature", "deep sea fish", "abyssal", "hydrothermal vent",
-    "anglerfish", "siphonophore", "sea cucumber", "brittle star", "sea spider",
-    "octopus underwater", "squid underwater", "cuttlefish", "nudibranch", "sea slug",
-    "jellyfish", "comb jelly", "reef fish", "moray eel", "seahorse", "crab underwater",
-    "shrimp underwater", "starfish", "sea anemone", "marine worm",
+    "anglerfish", "siphonophore", "vampire squid", "dumbo octopus", "brittle star",
+    "sea spider", "deep sea cucumber", "chimaera", "viperfish", "hatchetfish",
+    "deep sea jellyfish", "bioluminescent", "ctenophore deep",
 ]
+_TERMS_MARINE = [
+    "reef fish", "octopus underwater", "squid underwater", "cuttlefish", "nudibranch",
+    "sea slug", "jellyfish", "comb jelly", "moray eel", "seahorse", "crab underwater",
+    "shrimp underwater", "starfish", "sea anemone", "manta ray", "stingray",
+    "sea turtle", "clownfish", "pufferfish", "lionfish", "sea urchin", "hermit crab",
+    "sea anemone", "flatworm marine", "octopus reef",
+]
+_TERMS_ALGAE = [
+    "diatom", "microalgae", "phytoplankton", "dinoflagellate", "plankton microscope",
+    "marine algae", "Bacillariophyta", "Isochrysis", "Tetraselmis", "algae microscope",
+    "diatom movement", "dinoflagellate swimming", "phytoplankton microscopy",
+    "Chlorophyta", "cyanobacteria marine", "seaweed underwater", "kelp",
+]
+# 심해 브랜드 유지용 기본(레거시 replenish 호환). deep_sea 검색어와 동일.
+_TERMS = _TERMS_DEEP
 # 수심 파싱(설명·위키 발췌에서 'N m'/'N-메터' 근사) — 없으면 빈 값.
 _DEPTH = re.compile(r"(\d{2,5})\s*(?:m|메터|メートル|meters?|metres?)\b", re.I)
 # 해양생물 확인(날조 방지와 별개 — '채널 주제 적합성'). 위키 발췌·설명에 아래 해양 단서가 있어야 채택.
@@ -57,8 +73,27 @@ _MARINE = re.compile(
 #   도마뱀붙이(Gekko japonicus)가 후보로 새던 사고 → 위키 발췌의 일본어 분류군어까지 배제).
 _EXCLUDE = re.compile(
     r"鳥類|鳥\b|海鳥|昆虫|植物|樹木|爬虫|両生|トカゲ|ヤモリ|ヘビ|蛇|カエル|蛙|イモリ|サンショウウオ|"
+    r"蜘蛛|クモ\b|サソリ|ダニ|"
     r"\bbird\b|seabird|\binsect\b|\bplant\b|reptile|amphibian|\bgecko\b|\blizard\b|\bsnake\b|"
-    r"\bfrog\b|\btoad\b|\bnewt\b|salamander", re.I)
+    r"\bfrog\b|\btoad\b|\bnewt\b|salamander|arachnid|araneae|scorpion|\bmite\b|\btick\b|"
+    r"widow spider|black widow|tarantula|wolf spider|jumping spider|huntsman|"
+    r"\bbeetle\b|\bmoth\b|butterfly|\bwasp\b", re.I)
+# ★주의: 육상 거미만 배제하고 '바다거미(sea spider·ウミグモ=Pycnogonida)'는 채널 대상이라 남긴다.
+#   그래서 바로 위 목록은 'widow spider'·'arachnid' 등 육상 거미 특정어만 넣고, 범용 'spider'는 넣지 않는다.
+# ── 미세조류(marine_algae) 전용 게이트 ──
+# 조류(藻類) '양성 확인': 아래 단서가 학명·영문명·위키 발췌 어딘가에 있어야 채택(동물 오채택 방지).
+_ALGAE = re.compile(
+    r"藻|珪藻|藍藻|渦鞭毛|植物プランクトン|海藻|微細藻|プランクトン|"
+    r"\balgae?\b|algal|diatom|phytoplankton|dinoflagellate|cyanobacteria|"
+    r"Bacillariophy|Chlorophy|Rhodophy|Phaeophy|Haptophy|Cryptophy|Euglenophy|"
+    r"microalga|seaweed|\bkelp\b|Chromista|protist", re.I)
+# 미세조류 후보에서 배제할 '동물' 단서(해양동물이라도 미세조류 카테고리엔 부적합).
+_ANIMAL = re.compile(
+    r"魚類|魚\b|甲殻|軟体動物|棘皮動物|刺胞動物|海綿|タコ|イカ|頭足|貝\b|エビ|カニ|ウニ|ヒトデ|ナマコ|"
+    r"クラゲ|イソギンチャク|"
+    r"\bfish\b|\bcrab\b|shrimp|lobster|octopus|\bsquid\b|cuttlefish|mollus[ck]|cephalopod|"
+    r"echinoderm|cnidaria|jellyfish|anemone|sponge|\bcoral\b|\burchin\b|\bslug\b|"
+    r"\banimal\b|Animalia|vertebrate|mammal", re.I)
 # 피사체가 깔끔하지 않은 '연구·사체·해부·표본·양식장' 클립 배제(파일명·설명 기준). 생물 자체가 주인공인
 # 영상만 채택해 그로테스크/비주제 화면을 막는다(사체 분해 실험 영상 등 자동 오채택 방지).
 _BADCLIP = re.compile(
@@ -185,10 +220,11 @@ def _norm_license(text: str) -> str | None:
     return "cc-by"
 
 
-def _search_titles(exclude_titles: set[str], per_term: int = 12) -> list[str]:
+def _search_titles(exclude_titles: set[str], per_term: int = 12,
+                   terms: list[str] | None = None) -> list[str]:
     titles: list[str] = []
     seen = set(t.lower() for t in exclude_titles)
-    for term in _TERMS:
+    for term in (terms or _TERMS):
         d = _get(_COMMONS, action="query", list="search",
                  srsearch=f"{term} filetype:video", srnamespace="6", srlimit=str(per_term))
         for h in d.get("query", {}).get("search", []):
@@ -231,14 +267,20 @@ def _identity_for(pageid: str, title: str, desc: str) -> dict | None:
 
 
 def discover(exclude_scinames: set[str], exclude_titles: set[str], want: int = 3,
-             validate=None) -> list[dict]:
+             validate=None, terms: list[str] | None = None,
+             exclude_re: "re.Pattern | None" = None,
+             require_re: "re.Pattern | None" = None) -> list[dict]:
     """새 해양생물 영상 후보를 발굴해 '제작 가능한 종 레코드' 리스트를 반환(최대 want개).
 
     validate(url) -> bool : 실사 다운로드+게이트(정지·카드) 검증 콜백(있으면 통과분만 채택).
+    terms       : 카테고리별 검색어(없으면 심해 기본 _TERMS).
+    exclude_re  : 부적합 분류군 배제 정규식(없으면 육상동물 _EXCLUDE).
+    require_re  : 양성 확인 정규식(있으면 학명·영문명·위키에 이 단서가 있어야 채택 — 미세조류용).
     반환 각 항목 = {key, footage:{...}, species:{...}}  (footage._SEED / data.SPECIES 호환).
     """
+    exclude_re = exclude_re or _EXCLUDE
     excl_sci = {s.strip().lower() for s in exclude_scinames if s}
-    titles = _search_titles(exclude_titles)
+    titles = _search_titles(exclude_titles, terms=terms)
     log.info("[discovery] Commons 영상 후보 %d개 수집 → 정체성·사실·게이트 검증", len(titles))
     out: list[dict] = []
     for i in range(0, len(titles), 10):
@@ -278,8 +320,13 @@ def discover(exclude_scinames: set[str], exclude_titles: set[str], want: int = 3
             #   실제 해양생물을 오배제하던 문제가 있었다. 소싱 검색어 자체가 해양 중심이고 운영자 검토가
             #   있으므로, 재현율을 지키기 위해 _EXCLUDE(명백한 육상동물)로만 거른다.
             blob = " ".join(facts) + " " + desc
-            if _EXCLUDE.search(blob):
-                log.info("[discovery] 비해양(육상동물 등)으로 스킵: %s", sci)
+            if exclude_re.search(blob):
+                log.info("[discovery] 부적합 분류군으로 스킵: %s", sci)
+                continue
+            # ★양성 확인(미세조류 등): 학명·영문명·위키 어디에도 요구 단서가 없으면 스킵(동물 오채택 방지).
+            if require_re is not None and not require_re.search(
+                    blob + " " + sci + " " + (ident.get("en") or "") + " " + (ident.get("ja") or "")):
+                log.info("[discovery] 카테고리 양성단서 미확인으로 스킵: %s", sci)
                 continue
             if validate and not validate(url):  # 실사 게이트(정지·카드 등)
                 log.info("[discovery] 실사 게이트 탈락으로 스킵: %s", sci)
@@ -310,12 +357,49 @@ def discover(exclude_scinames: set[str], exclude_titles: set[str], want: int = 3
 
 # ── 침몰선(난파선) 소싱 — 학명이 없어 정체성 경로가 다르다(제목·설명·구조화데이터 → 운영자 확인) ──
 _WRECK_TERMS = ["wreck dive", "shipwreck underwater", "wreck diving", "sunken ship",
-                "ship wreck scuba", "underwater wreck", "沈没船", "難破船"]
+                "ship wreck scuba", "underwater wreck", "wreck scuba", "shipwreck diving",
+                "sunken wreck", "wreck of", "SS wreck", "submarine wreck dive",
+                "sunken ship diver", "沈没船", "難破船", "épave plongée"]
 # 배 이름 파싱: "wreck of X" / "SS X" 등. 오탐(Museum 등)은 _WRECK_BAD로 컷.
 _WRECK_NAME = re.compile(
     r"(?:wreck of (?:the )?|wreck |난파선\s*|epave (?:du |de la |le )?|naufr[aá]gio (?:do |da )?)"
     r"([A-Z][\w'’\-]+(?:\s+[A-Z][\w'’\-]+){0,2})"
-    r"|\b((?:SS|HMS|USS|MV|RMS|MS|HMAS)\s+[A-Z][\w'’\-]+)")
+    r"|\b((?:SS|HMS|USS|MV|RMS|MS|HMAS|U)-?\s?[A-Z0-9][\w'’\-]*)")
+# 느슨한 이름 추출용 잡음어(선박 명이 아닌 일반·지명 단어). 이 단어들은 이름에서 걸러낸다.
+_WRECK_NOISE = {
+    "wreck", "wrecks", "diving", "dive", "dives", "diver", "underwater", "under", "water",
+    "best", "sea", "black", "red", "ocean", "in", "of", "the", "a", "an", "and", "at", "on",
+    "with", "part", "video", "scuba", "cargo", "ship", "boat", "vessel", "sunken", "sunk",
+    "portugal", "porto", "santo", "madeira", "spain", "italy", "greece", "atlantic",
+    "pacific", "mediterranean", "coast", "bay", "island", "reef", "deep", "meter", "meters",
+    "metre", "metres", "day", "hd", "gopro", "final", "new", "old", "great", "big",
+}
+
+
+def _wreck_name_from_title(title: str, desc: str = "") -> str:
+    """제목에서 배 이름을 최선 추출(needs_confirm=True — 운영자가 최종 확인/수정).
+    ① 'wreck of X'·'SS/HMS/U-… X' 강한 패턴 ② 없으면 제목의 '연속된 고유명사 구간'(잡음어 제외).
+    실제 결함: 강한 접두사만 보다가 'Madeirense'·'Jacques Fraissinet' 같은 실제 제목을 전부 놓쳐
+    침몰선 소싱이 0건이었다. 접두사 없이도 이름 후보를 뽑아 소싱이 되게 한다."""
+    base = re.sub(r"^File:", "", title or "")
+    base = re.sub(r"\.(webm|ogv|ogg|mp4|mov)$", "", base, flags=re.I)
+    m = _WRECK_NAME.search(base)
+    if m:
+        return (m.group(1) or m.group(2) or "").strip()
+    # 느슨: 연속된 대문자 시작 토큰(잡음어 제외) 중 가장 긴 구간(최대 3어절)을 이름으로 본다.
+    run: list[str] = []
+    best: list[str] = []
+    for w in re.findall(r"\S+", base):
+        cw = re.sub(r"[^A-Za-z'’\-]", "", w)
+        if cw and cw[0].isupper() and cw.lower() not in _WRECK_NOISE and len(cw) >= 3:
+            run.append(cw)
+            if len(run) > len(best):
+                best = run[:]
+        else:
+            run = []
+    return " ".join(best[:3]).strip()
+
+
 _WRECK_TYPE = re.compile(
     r"cargo ship|화물선|貨物船|passenger|여객선|submarine|잠수함|潜水艦|U-?boat|Uボート|"
     r"tanker|유조선|warship|군함|軍艦|destroyer|frigate|trawler|어선|ferry|bulk carrier", re.I)
@@ -352,11 +436,9 @@ def _wreck_identity(pid: str, title: str, desc: str) -> dict | None:
                 break
     except Exception:  # noqa: BLE001
         pass
-    # ② 제목의 배 이름
+    # ② 제목의 배 이름(강한 패턴 → 느슨한 고유명사 구간). needs_confirm=True라 운영자가 최종 확인.
     if not name:
-        m = _WRECK_NAME.search(re.sub(r"^File:", "", title))
-        if m:
-            name = (m.group(1) or m.group(2) or "").strip()
+        name = _wreck_name_from_title(title, desc) or None
     if not name:
         return None
     tm = _WRECK_TYPE.search(title + " " + (desc or ""))
@@ -418,14 +500,27 @@ def _discover_wrecks(exclude_keys: set[str], want: int) -> list[dict]:
     return out
 
 
+# ── 카테고리별 발굴 설정(핵심 수정) — 각 카테고리가 고유 검색어·게이트를 갖는다 ──
+# terms=검색어, exclude=배제 분류군, require=양성 확인(없으면 None). shipwreck은 별도 경로.
+_CATALOG = {
+    "deep_sea":     {"terms": _TERMS_DEEP,   "exclude": _EXCLUDE, "require": None},
+    "marine_life":  {"terms": _TERMS_MARINE, "exclude": _EXCLUDE, "require": None},
+    # 미세조류: 동물 배제 + 조류 양성 확인(동물 카테고리의 'plant 배제'는 적용 안 함).
+    "marine_algae": {"terms": _TERMS_ALGAE,  "exclude": _ANIMAL,  "require": _ALGAE},
+}
+
+
 def discover_candidates(category_id: str, want: int = 6, exclude_keys: set[str] | None = None) -> list[dict]:
     """관리자 '소싱하기'용 후보 목록(메타 수준 — 다운로드 안 함, 워크플로가 게이트·썸네일 담당).
-    생물 카테고리=학명·사실 자동확보 후보, shipwreck=배 이름·선종 최선추출(needs_confirm)."""
+    생물 카테고리=학명·사실 자동확보 후보, shipwreck=배 이름·선종 최선추출(needs_confirm).
+    ★카테고리마다 고유 검색어·분류 게이트를 써서 '엉뚱한 종·중복'을 막는다."""
     exclude_keys = {k.strip().lower() for k in (exclude_keys or set())}
     if category_id == "shipwreck":
         return _discover_wrecks(exclude_keys, want)
-    # 생물: 기존 discover()의 정체성·사실 로직 재사용(다운로드/게이트는 워크플로에서)
-    recs = discover(exclude_keys, set(), want=want, validate=None)
+    # 생물: 카테고리 설정으로 검색어·게이트 지정(미지정 카테고리는 심해 기본)
+    cfg = _CATALOG.get(category_id, _CATALOG["deep_sea"])
+    recs = discover(exclude_keys, set(), want=want, validate=None,
+                    terms=cfg["terms"], exclude_re=cfg["exclude"], require_re=cfg["require"])
     cands = []
     for r in recs:
         sp = r["species"]
@@ -537,17 +632,34 @@ def save_candidates(category_id: str, items: list[dict]) -> None:
     p.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def source_to_candidates(category_id: str, want: int = 6, validate=None) -> list[dict]:
-    """'소싱하기'가 호출: 새 후보를 발굴해 (선택) 실사 게이트로 거른 뒤 후보 파일에 저장.
-    이미 후보/승인된 대상은 제외. 반환 = 이번에 추가된 후보 목록."""
-    existing = load_candidates(category_id)
-    excl = {c["key"] for c in existing}
-    excl |= {it["key"] for it in load_discovered(category_id)}
+def _all_known_keys() -> set[str]:
+    """전 카테고리의 후보·승인·시드 키를 합친 집합(교차 카테고리 중복 방지용).
+    ★같은 종이 여러 카테고리에 동시에 잡혀 '중복 미리보기'가 되던 문제를 막는다."""
+    keys: set[str] = set()
     try:
-        from src.core import footage as _f
-        excl |= {k.lower() for k in _f.seeded_keys()}
+        for d in _DISCOVERED_DIR.iterdir():
+            if not d.is_dir():
+                continue
+            cid = d.name
+            keys |= {c["key"] for c in load_candidates(cid)}
+            keys |= {it["key"] for it in load_discovered(cid)}
     except Exception:  # noqa: BLE001
         pass
+    try:
+        from src.core import footage as _f
+        keys |= {k.lower() for k in _f.seeded_keys()}
+    except Exception:  # noqa: BLE001
+        pass
+    return keys
+
+
+def source_to_candidates(category_id: str, want: int = 6, validate=None) -> list[dict]:
+    """'소싱하기'가 호출: 새 후보를 발굴해 (선택) 실사 게이트로 거른 뒤 후보 파일에 저장.
+    이미 후보/승인된 대상은 제외(전 카테고리 교차 중복까지). 반환 = 이번에 추가된 후보 목록."""
+    existing = load_candidates(category_id)
+    # ★전 카테고리 키를 제외 → 같은 종이 여러 카테고리에 중복 소싱되지 않게 한다.
+    excl = _all_known_keys()
+    excl |= {c["key"] for c in existing}
     found = discover_candidates(category_id, want=want, exclude_keys=excl)
     if validate:
         found = [c for c in found if validate(c["url"])]
