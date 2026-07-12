@@ -81,17 +81,19 @@ jobs:
           BASE="${{ github.server_url }}/${{ github.repository }}/releases/download/$TAG"
           mkdir -p work/thumbs
           python - "$CATEGORY" "$BASE" <<'PY'
-          import json, sys, tempfile, re
+          import json, os, sys, tempfile, re
           from pathlib import Path
           from src.core import discovery
           cat, base = sys.argv[1], sys.argv[2]
+          # 실행마다 바뀌는 run id를 파일명에 넣어 '새 실행=새 URL'로 만든다(캐시된 옛 썸네일 방지).
+          rev = os.environ.get("GITHUB_RUN_ID", "0")
           cands = discovery.load_candidates(cat)
           tmp = tempfile.mkdtemp()
           for c in cands:
-              if c.get("thumbnail_url"):
-                  continue
+              # ★모든 후보를 매번 재생성(스킵 없음): 예전엔 '썸네일 있으면 건너뛰기'라 잘못 만들어진
+              #   썸네일이 영구히 남았다. make_thumbnail은 URL별 고유 임시파일이라 서로 안 섞인다.
               slug = re.sub(r"[^a-z0-9]+", "_", c["key"].lower()).strip("_") or "cand"
-              out = Path("work/thumbs") / f"thumb_{cat}_{slug}.jpg"
+              out = Path("work/thumbs") / f"thumb_{cat}_{slug}_{rev}.jpg"
               if discovery.make_thumbnail(c["url"], str(out), tmp):
                   c["thumbnail_url"] = f"{base}/{out.name}"
           discovery.save_candidates(cat, cands)
