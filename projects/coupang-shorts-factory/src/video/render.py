@@ -98,8 +98,9 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
             card_layers = _build_image_clips(image_windows or [], duration, width)
 
     scrim = _subtitle_scrim(width, height, duration, s)
-    # 자막: 대본 라인(구) 단위로 또렷하게. 라인 정보 없으면 단어 단위 폴백.
-    if lines and line_windows:
+    # 자막: 기본은 가라오케 단어 팝업(썰피자식, subtitle.mode=karaoke).
+    # subtitle.mode=phrase 로 두면 구(라인) 단위로도 낼 수 있다.
+    if s.get("mode", "karaoke") == "phrase" and lines and line_windows:
         sub_clips = _build_line_clips(lines, line_windows, duration, font_path, s, width)
     else:
         sub_clips = _build_word_clips(words, duration, font_path, s, width)
@@ -387,12 +388,13 @@ def _product_card_clip(scene: dict, product_images: list, width: int, height: in
     except Exception as e:
         print(f"[render] 경고: 히어로 카드 실패({Path(img).name}: {e}) — 건너뜀")
         return None
+    # 등장 바운스(0.88→1) × 켄번즈(줌인/줌아웃 교대) — 팝업되는 느낌 + 컷마다 변주
     if int(scene.get("shot", 0)) % 2 == 0:
         def zoom(t, d=dur):
-            return 1.0 + 0.07 * min(1.0, t / d)
+            return _pop_scale(t, 0.2, 0.88) * (1.0 + 0.07 * min(1.0, t / d))
     else:
         def zoom(t, d=dur):
-            return 1.07 - 0.07 * min(1.0, t / d)
+            return _pop_scale(t, 0.2, 0.88) * (1.07 - 0.07 * min(1.0, t / d))
     return (base.resized(zoom)
             .with_start(scene["start"]).with_duration(dur + 0.05)
             .with_position(("center", int(height * 0.12))))
@@ -496,37 +498,62 @@ def _expand_long_words(words: list, max_chars: int) -> list:
     return out
 
 
+def _pop_scale(t: float, d: float = 0.16, lo: float = 0.5) -> float:
+    """등장 바운스 스케일: lo에서 시작해 살짝 오버슈트 후 1.0으로 안착(ease-out-back)."""
+    if t >= d:
+        return 1.0
+    p = t / d
+    c1 = 1.70158
+    eased = 1 + (c1 + 1) * (p - 1) ** 3 + c1 * (p - 1) ** 2
+    return lo + (1.0 - lo) * eased
+
+
+def _regroup_karaoke(words: list, min_chars: int = 3, max_chars: int = 8) -> list:
+    """가라오케 단위 재편성: 긴 어절은 쪼개고(≤max_chars) 짧은 조각(한두 글자)은 다음과 합쳐
+    각 팝업이 3~8글자가 되게 한다 — 한 글자씩 튀거나 문장이 통째로 나오는 것을 둘 다 방지."""
+    toks = _expand_long_words(words, max_chars)
+    out, i, n = [], 0, len(toks)
+    while i < n:
+        text = str(toks[i]["word"])
+        start, end = float(toks[i]["start"]), float(toks[i]["end"])
+        j = i + 1
+        while len(text) < min_chars and j < n and len(text) + len(str(toks[j]["word"])) <= max_chars:
+            text += str(toks[j]["word"])
+            end = float(toks[j]["end"])
+            j += 1
+        out.append({"word": text, "start": start, "end": end})
+        i = j
+    return out
+
+
 def _build_word_clips(words: list, duration: float, font_path: Path,
                       s: dict, width: int) -> list:
-    """단어 단위 팝업 자막: 각 단어를 발화 시점에 표시, 다음 단어 시작까지 유지.
-    긴 어절은 종결어미 기준으로 쪼개 다음 팝업으로 넘긴다(subtitle.max_word_chars)."""
-    words = _expand_long_words(words, int(s.get("max_word_chars", 7)))
+    """가라오케식 단어 팝업 자막(3~8글자 단위, 문장 통째 X) — 중앙·노랑·굵은 검정테두리 +
+    등장 시 통통 튀는 바운스(썰피자식). 각 팝업은 발화 시점에 등장해 다음 팝업 전까지 유지."""
+    toks = _regroup_karaoke(words, int(s.get("karaoke_min_chars", 3)),
+                            int(s.get("karaoke_max_chars", 8)))
     font_size = int(s.get("font_size", 80))
     color = s.get("color", "#FFE400")
     stroke_color = s.get("stroke_color", "#000000")
     stroke_width = int(s.get("stroke_width", 6))
     y = int(s.get("y", 1250))
 
-    clips = []
-    for i, w in enumerate(words):
+    clips, n = [], len(toks)
+    for i, w in enumerate(toks):
         start = max(0.0, float(w["start"]))
-        if i + 1 < len(words):
-            end = float(words[i + 1]["start"])
-        else:
-            end = min(float(w["end"]) + 0.4, duration)
+        end = float(toks[i + 1]["start"]) if i + 1 < n else min(float(w["end"]) + 0.35, duration)
         end = min(end, duration)
-        if end - start < 0.05:
-            end = min(start + 0.05, duration)
+        if end - start < 0.06:
+            end = min(start + 0.06, duration)
         if end <= start:
             continue
 
         clip = _make_text(w["word"], font_path, font_size, color, stroke_color, stroke_width)
-        if clip.w > width - 40:  # 아주 긴 단어 방어: 화면 폭에 맞게 축소
-            shrunk = max(30, int(font_size * (width - 80) / clip.w))
+        if clip.w > width - 60:  # 아주 긴 조각 방어: 화면 폭에 맞게 축소
+            shrunk = max(30, int(font_size * (width - 100) / clip.w))
             clip = _make_text(w["word"], font_path, shrunk, color, stroke_color, stroke_width)
-        clips.append(
-            clip.with_start(start).with_end(end).with_position(("center", y))
-        )
+        clip = clip.resized(lambda t: _pop_scale(t, 0.16, 0.5))  # 등장 바운스
+        clips.append(clip.with_start(start).with_end(end).with_position(("center", y)))
     return clips
 
 
