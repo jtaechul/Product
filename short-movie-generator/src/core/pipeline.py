@@ -192,40 +192,6 @@ def _probe_duration(path: str) -> float:
         return 0.0
 
 
-def _replenish_and_refresh(category, category_id: str, raw_dir: str, cands_fn, want: int = 2) -> list:
-    """풀 소진/전원 게이트탈락 시 discovery로 새 해양생물 영상을 발굴해 풀을 보충하고
-    갱신된 미제작 후보 리스트를 반환. 발굴은 다운로드 게이트(정지·종횡비)까지 통과한 것만 채택."""
-    # 자동 발굴은 deep_sea 풀(해양생물 일반)로만 보충한다 — 발굴 종의 정체성·사실·JP카피 경로가
-    # deep_sea 모듈에 연결돼 있다. 다른 카테고리는 기존 동작(로테이션/중단) 유지.
-    if category_id != "deep_sea":
-        return []
-    try:
-        from src.core import discovery, footage
-    except Exception as e:  # noqa: BLE001
-        log.warning("[reels] discovery 로드 실패 → 발굴 생략: %s", e)
-        return []
-    log.info("[reels] 미제작 종 소진 → 자동 발굴로 풀 보충 시도(want=%d)", want)
-    try:
-        added = discovery.replenish(
-            category_id, want=want,
-            validate=lambda u: discovery.validate_source_url(u, raw_dir))
-    except Exception as e:  # noqa: BLE001
-        log.warning("[reels] 자동 발굴 실패: %s", e)
-        return []
-    if not added:
-        log.warning("[reels] 자동 발굴 결과 없음(소스 일시 부족)")
-        return []
-    log.info("[reels] 자동 발굴 %d종 추가: %s", len(added), added)
-    # 런타임 병합 갱신: 새로 저장된 discovered.json을 _SEED / SPECIES에 즉시 반영(멱등)
-    try:
-        footage._merge_discovered_seeds()
-        from src.categories.deep_sea import data as _dsdata
-        _dsdata._merge_discovered()
-    except Exception as e:  # noqa: BLE001
-        log.warning("[reels] 발굴 병합 갱신 오류: %s", e)
-    return cands_fn()
-
-
 def run_reels(
     category_id: str,
     query: str,
@@ -253,40 +219,25 @@ def run_reels(
     q = (query or "").strip().lower()
     fv = None
     if q.startswith("auto") and hasattr(category, "pick_footage_species"):
-        def _cands():
-            return (category.footage_candidates()
-                    if hasattr(category, "footage_candidates")
-                    else [category.pick_footage_species()])
-
-        cands = _cands()
-        # ★자동 발굴 보충(사용자 확정 핵심): 미제작 종이 없으면(풀 소진) 예전엔 제작을 중단했다
-        #   → 매번 클로드에서 손으로 시드를 넣어야 했다. 이제 discovery가 Commons 전체(NOAA 한정
-        #   아님·CC-BY-SA 포함)에서 새 해양생물 영상을 날조 없이 발굴해 풀을 채우고 계속 제작한다.
+        cands = (category.footage_candidates()
+                 if hasattr(category, "footage_candidates")
+                 else [category.pick_footage_species()])
+        # ★중복 금지: 미제작 대상이 없으면(풀 소진) 재탕하지 않고 명확히 중단한다.
+        #   소싱은 이제 관리자 페이지의 "소싱하기" 버튼(수동)에서 한다 → 자동 발굴/스케줄 폐지.
         if not cands:
-            cands = _replenish_and_refresh(category, category_id, str(raw_dir), _cands)
-        if not cands:
-            raise PipelineError("input", "새 해양생물 영상 발굴 실패 — 잠시 후 재시도 필요(소스 일시 부족)")
+            raise PipelineError("input",
+                                "제작 가능한 미제작 대상이 없습니다 — 관리자 페이지에서 '소싱하기'로 새 대상을 확보하세요.")
         subject = info = None
         for cand in cands:
             ci = category.get_info(cand)
             cf = footage.fetch_footage(ci.scientific_name, ci.common_name_en, str(raw_dir))
             if cf:
                 subject, info, fv = cand, ci, cf
-                log.info("[reels] auto → 실사영상 보유 종 선택: %s", subject)
+                log.info("[reels] auto → 실사영상 보유 대상 선택: %s", subject)
                 break
             log.warning("[reels] auto 후보 스킵(실사 미확보/정지 소스): %s", cand)
-        # 후보 전원이 게이트에 걸리면 한 번 더 발굴 보충 후 재시도(교착 방지)
         if not fv:
-            extra = _replenish_and_refresh(category, category_id, str(raw_dir), _cands)
-            for cand in extra:
-                ci = category.get_info(cand)
-                cf = footage.fetch_footage(ci.scientific_name, ci.common_name_en, str(raw_dir))
-                if cf:
-                    subject, info, fv = cand, ci, cf
-                    log.info("[reels] auto(발굴) → 종 선택: %s", subject)
-                    break
-        if not fv:
-            raise PipelineError("footage", "auto 후보·발굴 전원 실사 영상 미확보 → 제작 중단(날조 금지)")
+            raise PipelineError("footage", "auto 후보 전원 실사 영상 미확보 → 제작 중단(날조 금지)")
     else:
         subject = category.parse_input(query)
         info = category.get_info(subject)
