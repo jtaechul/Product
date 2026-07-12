@@ -133,5 +133,32 @@
         "Wikimedia Commons (File:Sea spider (Pantopoda or pycnogonids).webm)"
       ]
     }
+  },
+  {
+    "key": "sepia officinalis",
+    "kind": "creature",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/0/04/OPT_3D_reconstruction_showing_the_internal_location_of_the_tentacles_in_a_cuttlefish_hatchling.ogv",
+      "license": "cc-by",
+      "credit": "Oscar A Tarazona Davys H Lopez Leslie A Slota Martin J Cohn · CC BY",
+      "source": "File:OPT 3D reconstruction showing the internal location of the tentacles in a cuttlefish hatchling.ogv"
+    },
+    "species": {
+      "scientific_name": "Sepia officinalis",
+      "common_name_ko": "갑오징어",
+      "common_name_en": "common cuttlefish",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ヨーロッパコウイカ Sepia officinalis（欧羅巴甲烏賊）は、大型で、そしてヨーロッパにおいて最も有名なコウイカ類である。日本近海に生息するトラフコウイカ Sepia pharaonisやカミナリイカ Sepia lycidasと混称で「モンゴウイカ（紋甲烏賊）」と呼ばれる。",
+        "ヨーロッパコウイカは、ヨーロッパ全域の水深50-100 m程度に棲息する。地中海、北海、バルト海の砂や泥の海底に住む。他の多くのコウイカと同様に、浅い海で産卵する。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:OPT 3D reconstruction showing the internal location of the tentacles in a cuttlefish hatchling.ogv)"
+      ]
+    }
   }
 ]

@@ -89,5 +89,12 @@
     "common_name_en": "Pycnogonida",
     "scientific_name": "Pycnogonida",
     "date": "2026-07-12"
+  },
+  {
+    "no": 24,
+    "common_name_ko": "갑오징어",
+    "common_name_en": "common cuttlefish",
+    "scientific_name": "Sepia officinalis",
+    "date": "2026-07-12"
   }
 ]
