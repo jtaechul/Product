@@ -27,7 +27,7 @@ from src.product.enrich import enrich_product
 from src.script.generate import DISCLOSURE, anthropic_key, generate_script
 from src.upload import youtube
 from src.video.backgrounds import fetch_product_bg
-from src.video.render import render_video
+from src.video.render import build_poster, render_video
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -135,6 +135,14 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     print(f"[pipeline] M6 렌더 완료: {stats['render_seconds']}s, "
           f"{stats['video_duration_seconds']}s 영상, 이미지 {stats['image_clip_count']}개")
 
+    # ---- 대표 썸네일(poster.jpg): 관리자 페이지 영상 목록에서 통일된 카드로 노출 (실패해도 제작은 계속)
+    try:
+        build_poster(job_dir / "poster.jpg", product, settings,
+                     project_root=PROJECT_ROOT, product_images=product_images)
+        print("[pipeline] 대표 썸네일 생성: poster.jpg")
+    except Exception as e:
+        print(f"[pipeline] 경고: 대표 썸네일 생성 실패({type(e).__name__}: {e}) — 건너뜀")
+
     # ---- M7: 업로드 (자격 증명 없으면 건너뛰고 안내 — Artifacts로 검수)
     privacy = args.privacy or settings.get("upload", {}).get("privacy_default", "private")
     if youtube.is_configured():
@@ -157,6 +165,18 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
                         f"{script.get('title', '')}\n다운로드(하단 Artifacts): {run_url}\n"
                         f"업로드 자동화: docs/setup-guide.md의 SHORTS_YT_* 등록")
     (job_dir / "upload_result.json").write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    # ---- 릴리스 메타데이터(관리자 페이지 영상 카드용) — 워크플로우가 릴리스 본문으로 발행
+    release_meta = {
+        "name": product.get("name"),
+        "price": product.get("price"),
+        "title": script.get("title"),
+        "affiliate_url": product.get("affiliate_url"),
+        "youtube_url": result.get("url"),
+        "duration": stats.get("video_duration_seconds"),
+    }
+    (job_dir / "release_meta.json").write_text(
+        json.dumps(release_meta, ensure_ascii=False, indent=1), encoding="utf-8")
 
     _step_summary(stats, result, script)
     print(f"[pipeline] 완료: {job_dir}")

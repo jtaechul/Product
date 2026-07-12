@@ -365,3 +365,89 @@ def _make_text(text: str, font_path: Path, font_size: int, color: str,
         stroke_width=stroke_width,
         margin=(pad, pad),
     )
+
+
+def _wrap_pil(text: str, font, max_w: int, max_lines: int = 2) -> list:
+    """PIL 폰트 폭 기준 글자 단위 줄바꿈 (한글은 공백이 없어 글자 기준). 넘치면 말줄임."""
+    from PIL import Image, ImageDraw
+    d = ImageDraw.Draw(Image.new("RGB", (10, 10)))
+    lines, cur = [], ""
+    for ch in text:
+        if d.textbbox((0, 0), cur + ch, font=font)[2] <= max_w:
+            cur += ch
+        else:
+            lines.append(cur)
+            cur = ch
+            if len(lines) >= max_lines:
+                break
+    if len(lines) < max_lines and cur:
+        lines.append(cur)
+    if len(lines) == max_lines:  # 남은 글자가 있으면 마지막 줄 끝에 말줄임
+        used = sum(len(x) for x in lines)
+        if used < len(text) and lines:
+            while lines[-1] and d.textbbox((0, 0), lines[-1] + "…", font=font)[2] > max_w:
+                lines[-1] = lines[-1][:-1]
+            lines[-1] += "…"
+    return lines[:max_lines]
+
+
+def build_poster(out_path: Path, product: dict, settings: dict,
+                 project_root: Path | None = None, product_images: list | None = None) -> Path:
+    """모든 영상에 통일된 느낌의 대표 썸네일(1080x1920) — 흐린 상품 배경 + 히어로 카드 +
+    하단 상품명·가격. 영상 목록에서 poster로 사용. 상품 사진이 없으면 그라데이션 폴백."""
+    from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
+    project_root = project_root or Path.cwd()
+    W, H = 1080, 1920
+    imgs = [Path(p) for p in (product_images or []) if Path(p).exists()]
+
+    if imgs:
+        bg = Image.open(str(imgs[0])).convert("RGB")
+        scale = max(W / bg.width, H / bg.height)
+        bg = bg.resize((max(1, round(bg.width * scale)), max(1, round(bg.height * scale))))
+        left, top = (bg.width - W) // 2, (bg.height - H) // 2
+        bg = bg.crop((left, top, left + W, top + H)).filter(ImageFilter.GaussianBlur(42))
+        canvas = ImageEnhance.Brightness(bg).enhance(0.42).convert("RGBA")
+    else:
+        top_c, bot_c = np.array([12, 14, 34]), np.array([52, 22, 66])
+        rows = np.linspace(0, 1, H)[:, None]
+        grad = (top_c[None, :] * (1 - rows) + bot_c[None, :] * rows).astype(np.uint8)
+        canvas = Image.fromarray(np.repeat(grad[:, None, :], W, axis=1)).convert("RGBA")
+
+    if imgs:
+        try:
+            hero = Image.fromarray(_hero_rgba(imgs[0], int(W * 0.72)))
+            canvas.alpha_composite(hero, ((W - hero.width) // 2, int(H * 0.13)))
+        except Exception as e:
+            print(f"[poster] 경고: 히어로 합성 실패({e})")
+
+    band_top = int(H * 0.60)  # 하단 어둠(텍스트 가독성)
+    band_h = H - band_top
+    ramp = np.clip(np.linspace(0, 1, band_h) / 0.5, 0, 1)
+    scrim = np.zeros((band_h, W, 4), dtype=np.uint8)
+    scrim[..., 3] = (ramp * 210).astype(np.uint8)[:, None]
+    canvas.alpha_composite(Image.fromarray(scrim), (0, band_top))
+
+    canvas = canvas.convert("RGB")
+    draw = ImageDraw.Draw(canvas)
+    font_path = _resolve_font(project_root, settings.get("subtitle", {}).get(
+        "font", "assets/fonts/GmarketSansBold.ttf"))
+    name = (product.get("name") or "상품").strip()
+    price = f"{int(product.get('price') or 0):,}원"
+    name_font = ImageFont.truetype(str(font_path), 64)
+    price_font = ImageFont.truetype(str(font_path), 98)
+
+    y = int(H * 0.70)
+    for ln in _wrap_pil(name, name_font, int(W * 0.86), max_lines=2):
+        w = draw.textbbox((0, 0), ln, font=name_font)[2]
+        draw.text(((W - w) // 2, y), ln, font=name_font, fill="#FFFFFF",
+                  stroke_width=3, stroke_fill="#000000")
+        y += 84
+    y += 20
+    pw = draw.textbbox((0, 0), price, font=price_font)[2]
+    draw.text(((W - pw) // 2, y), price, font=price_font, fill="#FFE400",
+              stroke_width=6, stroke_fill="#000000")
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    canvas.save(str(out_path), "JPEG", quality=88)
+    return out_path
