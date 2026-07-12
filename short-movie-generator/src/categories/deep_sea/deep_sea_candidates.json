@@ -41,7 +41,7 @@
         "Wikimedia Commons (File:Im Roten Meer, Ägypten DSCF6991.webm)"
       ]
     },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_holothuria_leucospilota.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_holothuria_leucospilota_29190290734.jpg"
   },
   {
     "kind": "creature",
@@ -79,7 +79,7 @@
         "Wikimedia Commons (File:Sea spider (Pantopoda or pycnogonids).webm)"
       ]
     },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_pycnogonida.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_pycnogonida_29190290734.jpg"
   },
   {
     "kind": "creature",
@@ -115,6 +115,116 @@
         "Wikimedia Commons (File:Krake (Octopus vulgaris) im Roten Meer. Ägypten. Осьминог в Красном море DSCF1713.webm)"
       ]
     },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_octopus_vulgaris.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_octopus_vulgaris_29190290734.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "gekko japonicus",
+    "needs_confirm": false,
+    "title": "File:Japanese giant spider crab (Macrocheira kaempferi).webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Japanese_giant_spider_crab_%28Macrocheira_kaempferi%29.webm",
+    "license": "cc-by-sa",
+    "credit": "The Nature Box · CC BY-SA",
+    "source": "File:Japanese giant spider crab (Macrocheira kaempferi).webm",
+    "name": "Gekko japonicus",
+    "name_ja": "",
+    "common_name_ko": "도마뱀붙이",
+    "common_name_en": "Schlegel's Japanese gecko",
+    "depth": "",
+    "facts": [
+      "ニホンヤモリ（学名：Gekko japonicus）は、爬虫綱有鱗目ヤモリ科ヤモリ属に分類されるトカゲの一種。日本では単にヤモリと呼ばれることもある。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Gekko japonicus",
+      "common_name_ko": "도마뱀붙이",
+      "common_name_en": "Schlegel's Japanese gecko",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ニホンヤモリ（学名：Gekko japonicus）は、爬虫綱有鱗目ヤモリ科ヤモリ属に分類されるトカゲの一種。日本では単にヤモリと呼ばれることもある。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Japanese giant spider crab (Macrocheira kaempferi).webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_gekko_japonicus_29190290734.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "sepia officinalis",
+    "needs_confirm": false,
+    "title": "File:OPT 3D reconstruction showing the internal location of the tentacles in a cuttlefish hatchling.ogv",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/04/OPT_3D_reconstruction_showing_the_internal_location_of_the_tentacles_in_a_cuttlefish_hatchling.ogv",
+    "license": "cc-by",
+    "credit": "Oscar A Tarazona Davys H Lopez Leslie A Slota Martin J Cohn · CC BY",
+    "source": "File:OPT 3D reconstruction showing the internal location of the tentacles in a cuttlefish hatchling.ogv",
+    "name": "Sepia officinalis",
+    "name_ja": "",
+    "common_name_ko": "갑오징어",
+    "common_name_en": "common cuttlefish",
+    "depth": "",
+    "facts": [
+      "ヨーロッパコウイカ Sepia officinalis（欧羅巴甲烏賊）は、大型で、そしてヨーロッパにおいて最も有名なコウイカ類である。日本近海に生息するトラフコウイカ Sepia pharaonisやカミナリイカ Sepia lycidasと混称で「モンゴウイカ（紋甲烏賊）」と呼ばれる。",
+      "ヨーロッパコウイカは、ヨーロッパ全域の水深50-100 m程度に棲息する。地中海、北海、バルト海の砂や泥の海底に住む。他の多くのコウイカと同様に、浅い海で産卵する。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Sepia officinalis",
+      "common_name_ko": "갑오징어",
+      "common_name_en": "common cuttlefish",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ヨーロッパコウイカ Sepia officinalis（欧羅巴甲烏賊）は、大型で、そしてヨーロッパにおいて最も有名なコウイカ類である。日本近海に生息するトラフコウイカ Sepia pharaonisやカミナリイカ Sepia lycidasと混称で「モンゴウイカ（紋甲烏賊）」と呼ばれる。",
+        "ヨーロッパコウイカは、ヨーロッパ全域の水深50-100 m程度に棲息する。地中海、北海、バルト海の砂や泥の海底に住む。他の多くのコウイカと同様に、浅い海で産卵する。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:OPT 3D reconstruction showing the internal location of the tentacles in a cuttlefish hatchling.ogv)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_sepia_officinalis_29190290734.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "aplysia kurodai",
+    "needs_confirm": false,
+    "title": "File:Aplysia kurodai, Wakayama Japan.ogv",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Aplysia_kurodai%2C_Wakayama_Japan.ogv",
+    "license": "cc-by",
+    "credit": "Laitche · CC BY",
+    "source": "File:Aplysia kurodai, Wakayama Japan.ogv",
+    "name": "Aplysia kurodai",
+    "name_ja": "",
+    "common_name_ko": "군소",
+    "common_name_en": "Aplysia kurodai",
+    "depth": "",
+    "facts": [
+      "Aplysia kurodai is a species of gastropods belonging to the family Aplysiidae."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Aplysia kurodai",
+      "common_name_ko": "군소",
+      "common_name_en": "Aplysia kurodai",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Aplysia kurodai is a species of gastropods belonging to the family Aplysiidae."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Aplysia kurodai, Wakayama Japan.ogv)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_aplysia_kurodai_29190290734.jpg"
   }
 ]
