@@ -6,7 +6,10 @@
 
 **현재 구현 단계: Phase 1~3 구현 완료** — 상품 CSV 1행 → 대본(M3) → TTS(M4) → 렌더(M6, 상품 이미지 줌인 포함) → 유튜브 private 업로드+고지 댓글(M7)까지 무개입 파이프라인. 평일 아침 자동 제작 cron + 주간 소재 리서치(M1) 포함.
 
-**바로 쓰는 법**: ① [data/products_manual.csv](./data/products_manual.csv)에 상품 1행 추가(제휴 링크 포함) → main 커밋 ② [Actions → shorts-produce 실행](https://github.com/jtaechul/Product/actions/workflows/shorts-produce.yml) (mode=produce) ③ 업로드 키 미등록 시 영상은 Artifacts로 제공. 키 등록 절차는 [docs/setup-guide.md](./docs/setup-guide.md) 참고.
+**바로 쓰는 법 (노코드)**: [관리자 페이지](https://shorts-admin.jtaechul.workers.dev)에서
+① 상품 탭에 상품 입력 ② 제작 탭 **지금 제작하기** ③ 실행 기록에서 결과 확인(영상은 Artifacts).
+최초 1회 GitHub 토큰 연결과 키 등록 절차는 [docs/setup-guide.md](./docs/setup-guide.md)의 0번 섹션 참고.
+(파일 직접 편집 경로는 보조 수단으로만 유지)
 
 ---
 

@@ -1,0 +1,37 @@
+name: Deploy Shorts Admin Page
+
+# 쿠팡 쇼츠 관리자 페이지(Cloudflare Workers 정적 에셋, 무료) 자동 배포.
+# 사용자는 이 페이지에서 상품 등록·제작 실행·채널 관리를 UI로만 조작한다 (노코드 원칙).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "projects/coupang-shorts-factory/admin/**"
+      - ".github/workflows/deploy-shorts-admin.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: shorts-admin-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Cloudflare Workers 배포 (관리자 페이지)
+    defaults:
+      run:
+        working-directory: projects/coupang-shorts-factory/admin
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install wrangler
+        run: npm install --no-audit --no-fund
+
+      - name: Deploy worker
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}

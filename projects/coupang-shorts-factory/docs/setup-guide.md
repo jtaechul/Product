@@ -3,6 +3,23 @@
 파이프라인은 코드가 완성돼 있고, 아래 **열쇠(시크릿) 등록만으로 기능이 하나씩 켜집니다.**
 등록 위치: [GitHub 시크릿 등록 페이지](https://github.com/jtaechul/Product/settings/secrets/actions) → **New repository secret**
 
+## 0. 관리자 페이지 — 모든 조작은 여기서 (노코드)
+
+**[관리자 페이지 열기](https://shorts-admin.jtaechul.workers.dev)** — 상품 등록·삭제, 제작 실행,
+실행 기록(영상 다운로드), 벤치마크 채널 관리를 전부 버튼과 입력칸으로 처리합니다.
+파일이나 코드를 직접 편집할 일이 없습니다. (사파리 공유 버튼 → **홈 화면에 추가**를 해두면 앱처럼 열립니다)
+
+최초 1회, 페이지가 저장소를 조작할 수 있게 **GitHub 토큰(출입증)** 을 연결합니다:
+
+1. [GitHub 새 토큰 만들기 화면](https://github.com/settings/personal-access-tokens/new) 열기
+2. Token name: `shorts-admin` / Expiration: **Custom**으로 최대(약 1년) 선택
+3. Repository access: **Only select repositories** → `jtaechul/Product`
+4. Permissions → Repository permissions에서 딱 2개만:
+   **Contents = Read and write**, **Actions = Read and write**
+5. 맨 아래 **Generate token** → 초록색 긴 문자열 복사 → 관리자 페이지 **설정 탭**에 붙여넣고 저장
+
+토큰은 그 기기의 브라우저에만 저장됩니다 (저장소·서버로 올라가지 않음).
+
 ## 시크릿 현황표
 
 | 이름 | 켜지는 기능 | 상태 |
@@ -62,14 +79,8 @@ A(업로드 인증)와 별개라서 **이것만 먼저 해도 됩니다.**
    → 화면에 뜨는 긴 키 문자열 복사 (이 키가 `SHORTS_YT_API_KEY`입니다)
 4. [GitHub 시크릿 등록 페이지](https://github.com/jtaechul/Product/settings/secrets/actions)
    → **New repository secret** → Name: `SHORTS_YT_API_KEY`, Secret: 복사한 키 → **Add secret**
-5. [competitors.yaml 편집 화면](https://github.com/jtaechul/Product/edit/main/projects/coupang-shorts-factory/config/competitors.yaml)에서
-   벤치마크 채널 추가 — **유튜브 앱에서 채널 이름 밑의 @핸들을 그대로 복사**해 아래처럼 넣으면 끝:
-   ```yaml
-   channels:
-     - "@어떤채널핸들"
-     - "@다른채널핸들"
-   ```
-   → 오른쪽 위 **Commit changes...** → 초록 버튼
+5. [관리자 페이지](https://shorts-admin.jtaechul.workers.dev) **채널 탭**에서
+   유튜브 앱의 @핸들을 붙여넣고 **채널 추가** — 끝
 
 이후 매주 월요일 09:00 자동 실행 + 텔레그램으로 후보 top5 발송. 바로 돌려보려면
 [리서치 워크플로우](https://github.com/jtaechul/Product/actions/workflows/shorts-research.yml) → **Run workflow**.
@@ -90,18 +101,12 @@ A(업로드 인증)와 별개라서 **이것만 먼저 해도 됩니다.**
 3. 복잡하면 이미지 칸은 **비워도 됩니다** — 영상은 자막+배경만으로 만들어집니다
    (쿠팡 상품 페이지의 이미지를 임의로 긁어오는 것은 금지 — 파트너스 제공분만 사용)
 
-### C-3. CSV에 한 줄 추가
+### C-3. 관리자 페이지에서 상품 등록
 
-1. [products_manual.csv 편집 화면 열기](https://github.com/jtaechul/Product/edit/main/projects/coupang-shorts-factory/data/products_manual.csv)
-   (연필 편집 모드가 바로 열립니다)
-2. 맨 아랫줄에 추가 — 칸 순서(쉼표 구분, 상품명에 쉼표 금지, 가격은 숫자만):
-   ```
-   상품명,가격,특징1;특징2;특징3,이미지주소,제휴링크,카테고리
-   ```
-   예: `무선 미니 가습기,19900,무소음 25db;500ml 대용량;USB-C,https://...jpg,https://link.coupang.com/a/abc123,생활가전`
-3. 오른쪽 위 **Commit changes...** → 초록 버튼 한 번 더 → 등록 끝
-   - 여러 상품 = 여러 줄. **위에서부터 한 실행에 하나씩** 소비됩니다
-   - 기존 `[테스트]` 행(PLACEHOLDER 링크)은 실제 운영 전에 삭제하거나 실링크로 교체하세요
+1. [관리자 페이지](https://shorts-admin.jtaechul.workers.dev) → **상품 탭**
+2. 상품명·가격·특징·제휴 링크(C-1)·이미지 주소(C-2, 선택)를 입력하고 **상품 추가**
+3. **제작 탭 → 지금 제작하기**를 누르면 대기열 맨 위 상품부터 영상으로 만들어집니다
+   - 기존 `[테스트]` 행은 상품 탭 목록의 **삭제** 버튼으로 정리하세요
 
 ### C-4. (나중에) 쿠팡 Open API
 
