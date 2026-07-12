@@ -52,6 +52,52 @@ def fetch_product_bg(keywords, dest_dir: Path, min_height: int = 1080) -> Path |
         return None
 
 
+def fetch_stock_clips(keywords, dest_dir: Path, n: int = 3, min_height: int = 1080) -> list:
+    """문제 단계(②③)용 스톡 b-roll 여러 개를 Pexels에서 확보. 키 없음/실패면 빈 리스트.
+    각 영상 출처를 stock_sources.json에 기록(스펙 §3.2 화이트리스트: Pexels 무료 라이선스)."""
+    key = os.environ.get("SHORTS_PEXELS_API_KEY", "").strip()
+    query = _clean_query(keywords)
+    if not key or not query:
+        return []
+    try:
+        import requests
+        r = requests.get(SEARCH_URL,
+                         params={"query": query, "orientation": "portrait", "per_page": max(n * 2, 6)},
+                         headers={"Authorization": key}, timeout=30)
+        r.raise_for_status()
+        out, sources = [], []
+        for v in r.json().get("videos") or []:
+            picked = _pick_file([v], min_height)
+            if not picked:
+                continue
+            file_url, video = picked
+            p = dest_dir / f"stock_{len(out)}.mp4"
+            try:
+                with requests.get(file_url, timeout=120, stream=True) as resp:
+                    resp.raise_for_status()
+                    with p.open("wb") as f:
+                        for chunk in resp.iter_content(1 << 20):
+                            f.write(chunk)
+            except Exception as e:
+                print(f"[bg] 스톡 다운로드 실패({e}) — 건너뜀")
+                continue
+            out.append(str(p))
+            sources.append({"file": p.name, "video_url": video.get("url"),
+                            "photographer": (video.get("user") or {}).get("name"),
+                            "license": "Pexels License (free to use)"})
+            if len(out) >= n:
+                break
+        if sources:
+            (dest_dir / "stock_sources.json").write_text(
+                json.dumps({"provider": "pexels", "query": query, "clips": sources},
+                           ensure_ascii=False, indent=1), encoding="utf-8")
+            print(f"[bg] 스톡 b-roll {len(out)}개 확보: '{query}'")
+        return out
+    except Exception as e:
+        print(f"[bg] 경고: 스톡 b-roll 검색 실패({e}) → 스톡 없이 진행")
+        return []
+
+
 def _clean_query(keywords) -> str:
     """모델 출력 키워드를 영문/숫자/공백만 남겨 안전한 검색어로 정리."""
     if isinstance(keywords, str):

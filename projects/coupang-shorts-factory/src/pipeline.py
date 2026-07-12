@@ -26,7 +26,7 @@ from src.product import manual_queue
 from src.product.enrich import enrich_product
 from src.script.generate import DISCLOSURE, anthropic_key, generate_script
 from src.upload import youtube
-from src.video.backgrounds import fetch_product_bg
+from src.video.backgrounds import fetch_product_bg, fetch_stock_clips
 from src.video.render import build_poster, render_video
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -120,14 +120,17 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     # ---- 상품 히어로 사진: 캡처에서 확보한 것 + 붙여넣은 이미지 URL 다운로드 (화면 주인공)
     product_images = list(product.get("hero_images") or [])
     product_images += _download_images(product.get("image_urls") or [], job_dir)
-    # 히어로 사진이 하나도 없을 때만 상품 연관 스톡 배경 폴백(대본 영어 키워드로 Pexels 검색)
-    bg_path = None if product_images else fetch_product_bg(script.get("bg_keywords"), job_dir)
+    # ---- 문제 단계(②③)용 스톡 b-roll — 대본 영어 키워드로 Pexels에서 몇 개 확보(항상 시도).
+    #      키 없거나 실패면 빈 리스트 → 렌더가 그라데이션으로 폴백(제작은 계속).
+    stock_clips = fetch_stock_clips(script.get("bg_keywords"), job_dir, n=3)
+    bg_path = None if product_images else (stock_clips[0] if stock_clips else None)
 
-    # ---- M6: 렌더
+    # ---- M6: 렌더 (대본 단계별 씬 시퀀스 + 구 단위 자막)
     out_path = job_dir / "video.mp4"
     stats = render_video(tts_result["audio_path"], words, out_path, settings,
                          shake_windows=shake_windows, project_root=PROJECT_ROOT,
-                         product_images=product_images, bg_path=bg_path)
+                         product_images=product_images, bg_path=bg_path,
+                         lines=lines, line_windows=line_windows, stock_clips=stock_clips)
     stats = {"job_id": job_id, "product": product["name"],
              "tts_provider": tts_result["provider"],
              "timestamps_source": tts_result["timestamps_source"], **stats}

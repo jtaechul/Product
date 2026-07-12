@@ -2,7 +2,7 @@
 # 채널명은 미확정이라 config 변수로 관리 (스펙 §1.2)
 
 channel:
-  name: "미래상점"   # 가칭 — 확정 시 여기만 변경
+  name: "미래마켓"   # 확정 (핸들 @miraemarket)
 
 tts:
   # provider 선택:
@@ -38,13 +38,20 @@ tts:
     format: "mp3"
 
 subtitle:               # 스펙 §M6 - 3
+  mode: "karaoke"       # karaoke=단어 팝업(썰피자식, 기본) / phrase=구(라인) 단위
   font: "assets/fonts/GmarketSansBold.ttf"
   font_size: 80
   color: "#FFE400"      # 노랑
   stroke_color: "#000000"
   stroke_width: 6
-  y: 1250               # (center, y=1250)
-  max_word_chars: 7     # 이보다 긴 어절은 종결어미("~입니다" 등)를 다음 자막 팝업으로 분리
+  y: 1250               # 자막·스크림 기준 y (하단 중앙)
+  max_word_chars: 8     # 긴 어절은 이 길이로 분리
+  karaoke_min_chars: 3  # 팝업 최소 글자수(한두 글자는 다음과 합침 → 한 글자씩 튐 방지)
+  karaoke_max_chars: 8  # 팝업 최대 글자수(문장 통째 방지)
+  # (phrase 모드용) 구 단위 자막 설정
+  phrase_font_size: 64
+  phrase_color: "#FFFFFF"
+  phrase_y: 1130
 
 render:                 # 스펙 §M6
   width: 1080

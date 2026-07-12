@@ -33,16 +33,22 @@ from moviepy import (
 
 VIDEO_EXTS = {".mp4", ".mov", ".webm", ".m4v"}
 
+# 씬마다 같은 사진의 흐린 배경·히어로 카드를 재계산하지 않도록 캐시(렌더 속도).
+_BLUR_BG_CACHE: dict = {}
+_HERO_RGBA_CACHE: dict = {}
+
 
 def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
                  shake_windows: list | None = None, project_root: Path | None = None,
                  image_windows: list | None = None, bg_path: Path | None = None,
-                 product_images: list | None = None) -> dict:
-    """단어 타임스탬프 기반 쇼츠 렌더. 반환: 렌더 통계 dict (DoD: 렌더 시간 기록).
+                 product_images: list | None = None, lines: list | None = None,
+                 line_windows: list | None = None, stock_clips: list | None = None) -> dict:
+    """대본 단계(stage)별 씬 시퀀스 쇼츠 렌더. 반환: 렌더 통계 dict.
 
-    product_images가 있으면 상품 사진을 화면 주인공(히어로)으로 크게 배치하고,
-    같은 사진을 흐리게+어둡게 깔아 배경을 채운다(항상 상품 관련). 자막 뒤에는
-    가독성용 스크림(반투명 어둠)을 둔다. 상품 사진이 없을 때만 스톡/그라데이션 폴백."""
+    lines(단계 포함)+line_windows가 있으면 '씬 시퀀스'로 렌더한다 — 상품 단계(①④⑤)는
+    상품 사진을 켄번즈 변주로 크게 보여주고, 문제 단계(②③)는 어둡게 깐 스톡 b-roll로
+    갈아끼워 '사진 한 장 고정'을 없앤다. 자막은 대본 라인(구) 단위로 또렷하게 표시한다.
+    씬 정보가 없으면 기존 단일 히어로 + 단어 자막으로 폴백한다."""
     r = settings.get("render", {})
     s = settings.get("subtitle", {})
     width, height = int(r.get("width", 1080)), int(r.get("height", 1920))
@@ -51,6 +57,9 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     shake_windows = shake_windows or []
     project_root = project_root or Path.cwd()
     product_images = [Path(p) for p in (product_images or []) if Path(p).exists()]
+    stock_clips = [Path(p) for p in (stock_clips or []) if Path(p).exists()]
+    lines = list(lines or [])
+    line_windows = list(line_windows or [])
 
     font_path = _resolve_font(project_root, s.get("font", "assets/fonts/GmarketSansBold.ttf"))
 
@@ -59,40 +68,48 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
 
     over_w, over_h = width + 2 * shake_px, height + 2 * shake_px
     bg_dir = project_root / settings.get("assets", {}).get("backgrounds_dir", "assets/backgrounds")
-    if product_images:
-        background, bg_name = _blurred_product_bg(product_images[0], over_w, over_h, duration)
+
+    # 씬 시퀀스: 대본 단계(stage)별로 배경/상품카드를 갈아끼워 '사진 한 장 고정'을 없앤다.
+    use_scenes = bool(line_windows) and bool(lines) and bool(product_images or stock_clips)
+    bg_layers, card_layers = [], []
+    if use_scenes:
+        scenes = _plan_scenes(duration, lines, line_windows, len(product_images), len(stock_clips))
+        for sc in scenes:
+            bgc = _scene_bg_clip(sc, product_images, stock_clips, over_w, over_h)
+            bgc = (bgc.with_start(sc["start"]).with_duration(sc["end"] - sc["start"] + 0.04)
+                      .with_position(_seg_shake_pos(sc["start"], shake_windows, shake_px, fps)))
+            bg_layers.append(bgc)
+            if sc["kind"] == "product" and product_images:
+                card = _product_card_clip(sc, product_images, width, height)
+                if card is not None:
+                    card_layers.append(card)
+        bg_name = f"씬 {len(scenes)}컷 (상품 {len(product_images)}·스톡 {len(stock_clips)})"
     else:
-        background, bg_name = _build_background(bg_dir, width, height, duration, shake_px,
-                                                override=bg_path)
+        if product_images:
+            background, bg_name = _blurred_product_bg(product_images[0], over_w, over_h, duration)
+        else:
+            background, bg_name = _build_background(bg_dir, width, height, duration, shake_px,
+                                                    override=bg_path)
+        background = background.with_position(_seg_shake_pos(0.0, shake_windows, shake_px, fps))
+        bg_layers = [background]
+        if product_images:
+            card_layers = _build_hero_clips(product_images, duration, width, height)
+        else:
+            card_layers = _build_image_clips(image_windows or [], duration, width)
 
-    if shake_windows:
-        margin = shake_px
-        base = (-margin, -margin)
-
-        def bg_pos(t):
-            for a, b in shake_windows:
-                if a <= t <= b:
-                    rnd = random.Random(int(t * fps) * 9973 + 7)  # 프레임별 결정적 랜덤
-                    return (base[0] + rnd.randint(-shake_px, shake_px),
-                            base[1] + rnd.randint(-shake_px, shake_px))
-            return base
-
-        background = background.with_position(bg_pos)
-    else:
-        background = background.with_position((-shake_px, -shake_px))
-
-    if product_images:
-        hero_clips = _build_hero_clips(product_images, duration, width, height)
-    else:
-        hero_clips = _build_image_clips(image_windows or [], duration, width)
     scrim = _subtitle_scrim(width, height, duration, s)
-    word_clips = _build_word_clips(words, duration, font_path, s, width)
+    # 자막: 기본은 가라오케 단어 팝업(썰피자식, subtitle.mode=karaoke).
+    # subtitle.mode=phrase 로 두면 구(라인) 단위로도 낼 수 있다.
+    if s.get("mode", "karaoke") == "phrase" and lines and line_windows:
+        sub_clips = _build_line_clips(lines, line_windows, duration, font_path, s, width)
+    else:
+        sub_clips = _build_word_clips(words, duration, font_path, s, width)
 
     t0 = time.time()
-    layers = [background, *hero_clips]
+    layers = [*bg_layers, *card_layers]
     if scrim is not None:
         layers.append(scrim)
-    layers += word_clips
+    layers += sub_clips
     final = (
         CompositeVideoClip(layers, size=(width, height))
         .with_duration(duration)
@@ -119,8 +136,9 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
         "video_duration_seconds": round(duration, 2),
         "realtime_factor": round(render_seconds / max(duration, 0.01), 2),
         "resolution": f"{width}x{height}@{fps}fps",
-        "word_clip_count": len(word_clips),
-        "image_clip_count": len(hero_clips),
+        "subtitle_clip_count": len(sub_clips),
+        "image_clip_count": len(card_layers),
+        "scene_count": len(bg_layers),
         "hero_from_product": bool(product_images),
         "font_used": str(font_path),
         "background_used": bg_name,
@@ -180,20 +198,30 @@ def _build_background(bg_dir: Path, width: int, height: int, duration: float,
 
 
 def _blurred_product_bg(img_path: Path, over_w: int, over_h: int, duration: float) -> tuple:
-    """상품 사진을 화면에 꽉 차게 흐리게+어둡게 깔아 배경으로 사용 (항상 상품 관련)."""
-    from PIL import Image, ImageEnhance, ImageFilter
-    im = Image.open(str(img_path)).convert("RGB")
-    scale = max(over_w / im.width, over_h / im.height)
-    im = im.resize((max(1, round(im.width * scale)), max(1, round(im.height * scale))))
-    left, top = (im.width - over_w) // 2, (im.height - over_h) // 2
-    im = im.crop((left, top, left + over_w, top + over_h))
-    im = im.filter(ImageFilter.GaussianBlur(32))
-    im = ImageEnhance.Brightness(im).enhance(0.5)
-    return ImageClip(np.array(im)).with_duration(duration), "(흐린 상품사진 배경)"
+    """상품 사진을 화면에 꽉 차게 흐리게+어둡게 깔아 배경으로 (항상 상품 관련).
+    같은 사진·캔버스는 캐시해 씬마다 GaussianBlur 재계산을 피한다(렌더 속도 개선)."""
+    key = (str(img_path), int(over_w), int(over_h))
+    arr = _BLUR_BG_CACHE.get(key)
+    if arr is None:
+        from PIL import Image, ImageEnhance, ImageFilter
+        im = Image.open(str(img_path)).convert("RGB")
+        scale = max(over_w / im.width, over_h / im.height)
+        im = im.resize((max(1, round(im.width * scale)), max(1, round(im.height * scale))))
+        left, top = (im.width - over_w) // 2, (im.height - over_h) // 2
+        im = im.crop((left, top, left + over_w, top + over_h))
+        im = im.filter(ImageFilter.GaussianBlur(32))
+        im = ImageEnhance.Brightness(im).enhance(0.5)
+        arr = np.array(im)
+        _BLUR_BG_CACHE[key] = arr
+    return ImageClip(arr).with_duration(duration), "(흐린 상품사진 배경)"
 
 
 def _hero_rgba(img_path: Path, target_w: int) -> np.ndarray:
-    """상품 사진을 둥근 카드 + 부드러운 그림자로 다듬은 RGBA 배열 (각진 흰 네모 방지)."""
+    """상품 사진을 둥근 카드 + 부드러운 그림자로 다듬은 RGBA 배열 (각진 흰 네모 방지). 캐시 적용."""
+    key = (str(img_path), int(target_w))
+    cached = _HERO_RGBA_CACHE.get(key)
+    if cached is not None:
+        return cached
     from PIL import Image, ImageDraw, ImageFilter
     im = Image.open(str(img_path)).convert("RGB")
     h = max(1, round(im.height * target_w / im.width))
@@ -209,7 +237,9 @@ def _hero_rgba(img_path: Path, target_w: int) -> np.ndarray:
         [pad, pad + 12, pad + target_w, pad + 12 + h], radius=rad, fill=(0, 0, 0, 130))
     canvas = Image.alpha_composite(canvas, shadow.filter(ImageFilter.GaussianBlur(20)))
     canvas.paste(card, (pad, pad), card)
-    return np.array(canvas)
+    arr = np.array(canvas)
+    _HERO_RGBA_CACHE[key] = arr
+    return arr
 
 
 def _build_hero_clips(images: list, duration: float, width: int, height: int) -> list:
@@ -273,6 +303,156 @@ def _build_image_clips(image_windows: list, duration: float, width: int) -> list
     return clips
 
 
+def _plan_scenes(duration: float, lines: list, line_windows: list,
+                 n_product: int, n_stock: int) -> list:
+    """대본 라인 → 시각 씬 목록. 문제 단계(②③)는 스톡, 나머지는 상품 사진.
+    연속 같은 종류는 병합하고, 긴 상품 씬은 여러 컷으로 쪼개 켄번즈를 변주한다(사진 한 장도 여러 컷처럼)."""
+    problem = {2, 3}
+    pairs = [((float(st), float(en)), ln) for (st, en), ln in zip(line_windows, lines)]
+    if not pairs:
+        return []
+    segs = []
+    for (st, en), ln in pairs:
+        kind = "stock" if (int(ln.get("stage", 1) or 1) in problem and n_stock > 0) else "product"
+        segs.append([st, en, kind])
+    merged = [segs[0]]
+    for st, en, k in segs[1:]:
+        if k == merged[-1][2] and st <= merged[-1][1] + 0.6:
+            merged[-1][1] = en
+        else:
+            merged.append([st, en, k])
+    merged[0][0] = 0.0
+    merged[-1][1] = duration
+    for i in range(1, len(merged)):
+        merged[i][0] = merged[i - 1][1]
+
+    max_shot = 3.2
+    scenes, prod_i, stock_i, shot = [], 0, 0, 0
+    for st, en, k in merged:
+        if en - st <= 0.05:
+            continue
+        if k == "stock":
+            scenes.append({"start": st, "end": en, "kind": "stock", "asset": stock_i % max(n_stock, 1)})
+            stock_i += 1
+            continue
+        dur = en - st
+        n = max(1, int(-(-dur // max_shot)))
+        step = dur / n
+        for j in range(n):
+            a = st + j * step
+            b = en if j == n - 1 else a + step
+            scenes.append({"start": a, "end": b, "kind": "product",
+                           "asset": prod_i % max(n_product, 1), "shot": shot})
+            prod_i += 1
+            shot += 1
+    return scenes
+
+
+def _scene_bg_clip(scene: dict, product_images: list, stock_clips: list, over_w: int, over_h: int):
+    """씬 배경: 문제 씬은 어둡게 깐 스톡 영상, 상품 씬은 흐린 상품 사진, 최후엔 그라데이션."""
+    dur = scene["end"] - scene["start"]
+    if scene["kind"] == "stock" and stock_clips:
+        path = stock_clips[scene["asset"] % len(stock_clips)]
+        try:
+            clip = VideoFileClip(str(path)).without_audio()
+            scale = max(over_w / clip.w, over_h / clip.h)
+            clip = clip.resized(scale).cropped(
+                x_center=clip.w * scale / 2, y_center=clip.h * scale / 2,
+                width=over_w, height=over_h)
+            if clip.duration < dur:
+                clip = clip.with_effects([vfx.Loop(duration=dur)])
+            else:
+                clip = clip.subclipped(0, dur)
+            return clip.with_effects([vfx.MultiplyColor(0.55)])  # 자막 가독성 위해 어둡게
+        except Exception as e:
+            print(f"[render] 경고: 스톡 클립 실패({Path(path).name}: {e}) — 대체 배경")
+    if product_images:
+        img = product_images[scene.get("asset", 0) % len(product_images)]
+        clip, _ = _blurred_product_bg(Path(img), over_w, over_h, dur)
+        return clip
+    top, bottom = np.array([12, 14, 34]), np.array([44, 20, 60])
+    rows = np.linspace(0, 1, over_h)[:, None]
+    grad = (top[None, :] * (1 - rows) + bottom[None, :] * rows).astype(np.uint8)
+    frame = np.repeat(grad[:, None, :], over_w, axis=1)
+    if scene["kind"] == "stock":
+        frame = (frame * 0.75).astype(np.uint8)
+    return ImageClip(frame).with_duration(dur)
+
+
+def _product_card_clip(scene: dict, product_images: list, width: int, height: int):
+    """상품 히어로 카드 — 컷마다 켄번즈(줌인/줌아웃 교대)로 변주. 실패 시 None."""
+    img = product_images[scene.get("asset", 0) % len(product_images)]
+    dur = scene["end"] - scene["start"]
+    try:
+        base = ImageClip(_hero_rgba(Path(img), int(width * 0.78)), transparent=True)
+    except Exception as e:
+        print(f"[render] 경고: 히어로 카드 실패({Path(img).name}: {e}) — 건너뜀")
+        return None
+    # 등장 바운스(0.88→1) × 켄번즈(줌인/줌아웃 교대) — 팝업되는 느낌 + 컷마다 변주
+    if int(scene.get("shot", 0)) % 2 == 0:
+        def zoom(t, d=dur):
+            return _pop_scale(t, 0.2, 0.88) * (1.0 + 0.07 * min(1.0, t / d))
+    else:
+        def zoom(t, d=dur):
+            return _pop_scale(t, 0.2, 0.88) * (1.07 - 0.07 * min(1.0, t / d))
+    return (base.resized(zoom)
+            .with_start(scene["start"]).with_duration(dur + 0.05)
+            .with_position(("center", int(height * 0.12))))
+
+
+def _seg_shake_pos(seg_start: float, shake_windows: list, shake_px: int, fps: int):
+    """세그먼트 배경 위치 함수(절대 시각 기준 punch 쉐이크). 쉐이크 없으면 고정 오프셋."""
+    base = (-shake_px, -shake_px)
+    if not shake_windows:
+        return base
+
+    def pos(t):
+        at = float(t) + seg_start
+        for a, b in shake_windows:
+            if a <= at <= b:
+                rnd = random.Random(int(at * fps) * 9973 + 7)
+                return (base[0] + rnd.randint(-shake_px, shake_px),
+                        base[1] + rnd.randint(-shake_px, shake_px))
+        return base
+
+    return pos
+
+
+def _build_line_clips(lines: list, line_windows: list, duration: float,
+                      font_path: Path, s: dict, width: int) -> list:
+    """대본 라인(구) 단위 자막 — 한 구절을 발화 구간 내내 표시(필요 시 2줄 자동 줄바꿈).
+    단어 하나씩 튀던 방식보다 읽기 쉽다."""
+    font_size = int(s.get("phrase_font_size", 64))
+    color = s.get("phrase_color", "#FFFFFF")
+    stroke_color = s.get("stroke_color", "#000000")
+    stroke_width = int(s.get("stroke_width", 6))
+    y = int(s.get("phrase_y", 1130))
+    box_w = int(width * 0.86)
+    pad = stroke_width * 3 + 14
+    clips = []
+    for (start, end), ln in zip(line_windows, lines):
+        start = max(0.0, float(start))
+        end = min(float(end), duration)
+        if end - start < 0.15:
+            continue
+        txt = str(ln.get("text", "")).strip()
+        if not txt:
+            continue
+        tc = None
+        for extra in (dict(text_align="center"), {}):
+            try:
+                tc = TextClip(text=txt, font=str(font_path), font_size=font_size,
+                              color=color, stroke_color=stroke_color, stroke_width=stroke_width,
+                              method="caption", size=(box_w, None), margin=(pad, pad), **extra)
+                break
+            except TypeError:
+                continue
+        if tc is None:
+            continue
+        clips.append(tc.with_start(start).with_end(end).with_position(("center", y)))
+    return clips
+
+
 # 긴 어절을 쪼갤 때 다음 팝업으로 넘길 종결어미 (긴 것부터 매칭)
 _SPLIT_ENDINGS = ("입니다", "합니다", "됩니다", "습니다", "습니까", "하세요", "되세요",
                   "이에요", "인데요", "거든요", "잖아요", "네요", "데요", "까요",
@@ -318,37 +498,62 @@ def _expand_long_words(words: list, max_chars: int) -> list:
     return out
 
 
+def _pop_scale(t: float, d: float = 0.16, lo: float = 0.5) -> float:
+    """등장 바운스 스케일: lo에서 시작해 살짝 오버슈트 후 1.0으로 안착(ease-out-back)."""
+    if t >= d:
+        return 1.0
+    p = t / d
+    c1 = 1.70158
+    eased = 1 + (c1 + 1) * (p - 1) ** 3 + c1 * (p - 1) ** 2
+    return lo + (1.0 - lo) * eased
+
+
+def _regroup_karaoke(words: list, min_chars: int = 3, max_chars: int = 8) -> list:
+    """가라오케 단위 재편성: 긴 어절은 쪼개고(≤max_chars) 짧은 조각(한두 글자)은 다음과 합쳐
+    각 팝업이 3~8글자가 되게 한다 — 한 글자씩 튀거나 문장이 통째로 나오는 것을 둘 다 방지."""
+    toks = _expand_long_words(words, max_chars)
+    out, i, n = [], 0, len(toks)
+    while i < n:
+        text = str(toks[i]["word"])
+        start, end = float(toks[i]["start"]), float(toks[i]["end"])
+        j = i + 1
+        while len(text) < min_chars and j < n and len(text) + len(str(toks[j]["word"])) <= max_chars:
+            text += str(toks[j]["word"])
+            end = float(toks[j]["end"])
+            j += 1
+        out.append({"word": text, "start": start, "end": end})
+        i = j
+    return out
+
+
 def _build_word_clips(words: list, duration: float, font_path: Path,
                       s: dict, width: int) -> list:
-    """단어 단위 팝업 자막: 각 단어를 발화 시점에 표시, 다음 단어 시작까지 유지.
-    긴 어절은 종결어미 기준으로 쪼개 다음 팝업으로 넘긴다(subtitle.max_word_chars)."""
-    words = _expand_long_words(words, int(s.get("max_word_chars", 7)))
+    """가라오케식 단어 팝업 자막(3~8글자 단위, 문장 통째 X) — 중앙·노랑·굵은 검정테두리 +
+    등장 시 통통 튀는 바운스(썰피자식). 각 팝업은 발화 시점에 등장해 다음 팝업 전까지 유지."""
+    toks = _regroup_karaoke(words, int(s.get("karaoke_min_chars", 3)),
+                            int(s.get("karaoke_max_chars", 8)))
     font_size = int(s.get("font_size", 80))
     color = s.get("color", "#FFE400")
     stroke_color = s.get("stroke_color", "#000000")
     stroke_width = int(s.get("stroke_width", 6))
     y = int(s.get("y", 1250))
 
-    clips = []
-    for i, w in enumerate(words):
+    clips, n = [], len(toks)
+    for i, w in enumerate(toks):
         start = max(0.0, float(w["start"]))
-        if i + 1 < len(words):
-            end = float(words[i + 1]["start"])
-        else:
-            end = min(float(w["end"]) + 0.4, duration)
+        end = float(toks[i + 1]["start"]) if i + 1 < n else min(float(w["end"]) + 0.35, duration)
         end = min(end, duration)
-        if end - start < 0.05:
-            end = min(start + 0.05, duration)
+        if end - start < 0.06:
+            end = min(start + 0.06, duration)
         if end <= start:
             continue
 
         clip = _make_text(w["word"], font_path, font_size, color, stroke_color, stroke_width)
-        if clip.w > width - 40:  # 아주 긴 단어 방어: 화면 폭에 맞게 축소
-            shrunk = max(30, int(font_size * (width - 80) / clip.w))
+        if clip.w > width - 60:  # 아주 긴 조각 방어: 화면 폭에 맞게 축소
+            shrunk = max(30, int(font_size * (width - 100) / clip.w))
             clip = _make_text(w["word"], font_path, shrunk, color, stroke_color, stroke_width)
-        clips.append(
-            clip.with_start(start).with_end(end).with_position(("center", y))
-        )
+        clip = clip.resized(lambda t: _pop_scale(t, 0.16, 0.5))  # 등장 바운스
+        clips.append(clip.with_start(start).with_end(end).with_position(("center", y)))
     return clips
 
 
