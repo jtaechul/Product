@@ -277,6 +277,19 @@
     - **침몰선 이름 추출(0건 방지)**: `wreck of`·`SS/HMS` 접두사가 없어도 제목의 **연속 고유명사 구간**을
       뽑아 배 이름으로 삼는다(`_wreck_name_from_title`, needs_confirm=True로 운영자 확인). 과거엔 접두사만
       인식해 'Madeirense'·'Jacques Fraissinet' 같은 실제 난파선 영상을 전부 놓쳐 소싱이 0건이었다.
+      제목 상투어(First Look·Shipwreck·U S 등)는 `_plausible_wreck_name`으로 배제.
+    - **★난파선 무한 소싱 3단(운영자 확정 · 검증 완료)**: 영상만으론 Commons에 ~62개(유한)뿐이라
+      '끝없이'가 불가능 → **사진(수천 장·100% 사용가능)을 켄번즈로 영상화**하는 무한 엔진을 둔다.
+      `_discover_wrecks`가 순서대로:
+      1. **Tier1 영상** — 다국어 검색 + `Wreck diving`·`Shipwreck diving sites` 카테고리 순회로 영상 전부 수확.
+      2. **Tier3 배이름 레지스트리** — `Category:Shipwrecks by ship name`(171개+) 순회 → 실존 명명 난파선 +
+         위키 사실(`_wiki_intro_by_name`). 구조화·중복 없는 무한 대상.
+      3. **Tier2 사진→켄번즈** — 부족분은 고해상 난파선 사진을 후보로(`media_kind=photo`, `image_url`).
+         제작 시 `footage.fetch_footage`가 `_kenburns_clip`으로 **16:9 느린 푸시인 영상**을 합성(정지 배가
+         정적 피사체라 자연스럽고, 모션이 있어 정지-게이트 통과). 사진은 무한이라 공급이 사실상 끝없다.
+      - 사진 후보 연결부: 후보→`promote_candidate`가 footage에 `media_kind=photo`·`image_url` 저장 →
+        `_merge_discovered_seeds`가 _SEED로 전달 → `fetch_footage`가 켄번즈 분기. 썸네일·검증도 이미지 대응
+        (`make_thumbnail`·`validate_source_url`은 사진이면 정지-게이트 미적용·고해상만 확인).
     - **영속화**: 발굴 결과는 `src/categories/*/discovered.json`(커밋됨)에 누적돼 회차 간 유지·중복 방지.
       import 시 `footage._SEED`·`data.SPECIES`에 병합된다. 워크플로 커밋 스텝에 `discovered.json` 포함.
     - **연결 지점(운영자 확정: 수동 소싱)**: 아침 자동 스케줄·제작 중 자동보충은 폐지. 관리자 페이지

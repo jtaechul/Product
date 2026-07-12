@@ -364,16 +364,31 @@ _WRECK_TERMS = ["wreck dive", "shipwreck underwater", "wreck diving", "sunken sh
 _WRECK_NAME = re.compile(
     r"(?:wreck of (?:the )?|wreck |난파선\s*|epave (?:du |de la |le )?|naufr[aá]gio (?:do |da )?)"
     r"([A-Z][\w'’\-]+(?:\s+[A-Z][\w'’\-]+){0,2})"
-    r"|\b((?:SS|HMS|USS|MV|RMS|MS|HMAS|U)-?\s?[A-Z0-9][\w'’\-]*)")
-# 느슨한 이름 추출용 잡음어(선박 명이 아닌 일반·지명 단어). 이 단어들은 이름에서 걸러낸다.
+    r"|\b((?:SS|HMS|USS|MV|RMS|MS|HMAS)\s+[A-Z][\w'’\-]+(?:\s+[A-Z][\w'’\-]+){0,2})"
+    r"|\b(U-?\d{2,4})")   # U-보트는 반드시 번호(U-1277) — 'U S Navy'가 'U S'로 잡히던 오탐 차단
+# 느슨한 이름 추출용 잡음어(선박 명이 아닌 일반·지명·제목상투어). 이 단어들은 이름에서 걸러낸다.
 _WRECK_NOISE = {
-    "wreck", "wrecks", "diving", "dive", "dives", "diver", "underwater", "under", "water",
-    "best", "sea", "black", "red", "ocean", "in", "of", "the", "a", "an", "and", "at", "on",
-    "with", "part", "video", "scuba", "cargo", "ship", "boat", "vessel", "sunken", "sunk",
-    "portugal", "porto", "santo", "madeira", "spain", "italy", "greece", "atlantic",
+    "wreck", "wrecks", "diving", "dive", "dives", "diver", "divers", "underwater", "under", "water",
+    "best", "sea", "black", "red", "ocean", "in", "of", "the", "a", "an", "and", "at", "on", "to",
+    "with", "part", "video", "footage", "scuba", "cargo", "ship", "boat", "vessel", "sunken", "sunk",
+    "portugal", "porto", "santo", "madeira", "spain", "italy", "greece", "atlantic", "france",
     "pacific", "mediterranean", "coast", "bay", "island", "reef", "deep", "meter", "meters",
-    "metre", "metres", "day", "hd", "gopro", "final", "new", "old", "great", "big",
+    "metre", "metres", "day", "hd", "gopro", "final", "new", "old", "great", "big", "site",
+    "first", "look", "world", "war", "wwii", "wwi", "navy", "eod", "ordnance", "removes",
+    "north", "south", "east", "west", "off", "near", "from", "gulf", "lake", "river", "wreckage",
+    "shipwreck", "shipwrecks", "ii", "iii", "nc", "ss", "uss", "hms", "hmas", "mv", "rms",
 }
+# 명백한 비-선명(제목 상투어 조합) — 느슨 추출 결과가 이거면 버린다(운영자 검토 부담 경감).
+_WRECK_JUNK = {"first look", "u s", "world war", "wreck diving", "scuba diving", "mise"}
+
+
+def _plausible_wreck_name(name: str) -> bool:
+    """추출된 이름이 배 이름다운지 최소 검증(잡음 조합·너무 짧음 배제)."""
+    n = (name or "").strip()
+    if len(n.replace(" ", "")) < 3 or n.lower() in _WRECK_JUNK:
+        return False
+    toks = [t for t in n.split() if t]
+    return any(len(t) >= 3 and t.lower() not in _WRECK_NOISE for t in toks)
 
 
 def _wreck_name_from_title(title: str, desc: str = "") -> str:
@@ -382,10 +397,12 @@ def _wreck_name_from_title(title: str, desc: str = "") -> str:
     실제 결함: 강한 접두사만 보다가 'Madeirense'·'Jacques Fraissinet' 같은 실제 제목을 전부 놓쳐
     침몰선 소싱이 0건이었다. 접두사 없이도 이름 후보를 뽑아 소싱이 되게 한다."""
     base = re.sub(r"^File:", "", title or "")
-    base = re.sub(r"\.(webm|ogv|ogg|mp4|mov)$", "", base, flags=re.I)
+    base = re.sub(r"\.(webm|ogv|ogg|mp4|mov|jpg|jpeg|png)$", "", base, flags=re.I)
     m = _WRECK_NAME.search(base)
     if m:
-        return (m.group(1) or m.group(2) or "").strip()
+        nm = (m.group(1) or m.group(2) or m.group(3) or "").strip()
+        if _plausible_wreck_name(nm):
+            return nm
     # 느슨: 연속된 대문자 시작 토큰(잡음어 제외) 중 가장 긴 구간(최대 3어절)을 이름으로 본다.
     run: list[str] = []
     best: list[str] = []
@@ -397,7 +414,8 @@ def _wreck_name_from_title(title: str, desc: str = "") -> str:
                 best = run[:]
         else:
             run = []
-    return " ".join(best[:3]).strip()
+    nm = " ".join(best[:3]).strip()
+    return nm if _plausible_wreck_name(nm) else ""
 
 
 _WRECK_TYPE = re.compile(
@@ -405,6 +423,14 @@ _WRECK_TYPE = re.compile(
     r"tanker|유조선|warship|군함|軍艦|destroyer|frigate|trawler|어선|ferry|bulk carrier", re.I)
 _WRECK_BAD = re.compile(r"museum|박물관|\bmodel\b|모형|replica|game|simulator|minecraft", re.I)
 _SHIP_QIDS = ("Q852190", "Q11446", "Q1229765", "Q17205621")  # shipwreck·ship·watercraft·상선 등
+_IMG_EXT = (".jpg", ".jpeg", ".png")
+# ★난파선 무한 소싱(운영자 확정) — 사진은 영상보다 수천 배 많다. Tier2용 사진 검색어.
+_WRECK_PHOTO_TERMS = ["shipwreck underwater", "wreck dive underwater", "sunken ship underwater",
+                      "shipwreck scuba diving", "underwater shipwreck", "wreck diving site",
+                      "épave sous-marine", "pecio submarino", "沈船 水中"]
+# Tier1 영상 확대용 카테고리(직접 영상 파일 보유). Tier3 명명 레지스트리는 by-ship-name 순회.
+_WRECK_VIDEO_CATS = ["Wreck diving", "Shipwreck diving sites", "Underwater videos of shipwrecks"]
+_WRECK_REGISTRY_CAT = "Shipwrecks by ship name"
 
 
 def _wreck_identity(pid: str, title: str, desc: str) -> dict | None:
@@ -447,20 +473,36 @@ def _wreck_identity(pid: str, title: str, desc: str) -> dict | None:
             "ship_type": tm.group(0) if tm else "", "depth": depth}
 
 
-def _discover_wrecks(exclude_keys: set[str], want: int) -> list[dict]:
+def _catmembers(cat: str, cmtype: str, limit: int = 200) -> list[str]:
+    """Commons 카테고리 멤버(file 또는 subcat) 제목 리스트."""
+    d = _get(_COMMONS, action="query", list="categorymembers", cmtitle=f"Category:{cat}",
+             cmtype=cmtype, cmlimit=str(limit))
+    return [m.get("title", "") for m in d.get("query", {}).get("categorymembers", [])]
+
+
+def _wreck_search_titles(terms: list[str], ext: tuple, filetype: str, per: int = 30) -> list[str]:
+    """검색어들로 Commons에서 파일 제목 수집(영상/사진). ext=허용 확장자."""
     seen: dict[str, int] = {}
-    for term in _WRECK_TERMS:
+    for term in terms:
         d = _get(_COMMONS, action="query", list="search",
-                 srsearch=f"{term} filetype:video", srnamespace="6", srlimit="12")
+                 srsearch=f"{term} filetype:{filetype}", srnamespace="6", srlimit=str(per))
         for h in d.get("query", {}).get("search", []):
-            if h.get("title", "").lower().endswith(_VIDEO_EXT):
-                seen[h["title"]] = 1
-    titles = list(seen)
+            t = h.get("title", "")
+            if t.lower().endswith(ext):
+                seen[t] = 1
+    return list(seen)
+
+
+def _cands_from_titles(titles: list[str], exclude: set[str], want: int,
+                       media_kind: str, out_keys: set[str]) -> list[dict]:
+    """파일 제목들 → 침몰선 후보(라이선스·(영상만)종횡비·이름·오탐 게이트). media_kind=video|photo."""
     out: list[dict] = []
-    for i in range(0, len(titles), 10):
+    is_video = media_kind == "video"
+    ext = _VIDEO_EXT if is_video else _IMG_EXT
+    for i in range(0, len(titles), 20):
         if len(out) >= want:
             break
-        info = _get(_COMMONS, action="query", prop="imageinfo", titles="|".join(titles[i:i + 10]),
+        info = _get(_COMMONS, action="query", prop="imageinfo", titles="|".join(titles[i:i + 20]),
                     iiprop="url|size|extmetadata",
                     iiextmetadatafilter="LicenseShortName|Artist|ImageDescription")
         for pid, page in info.get("query", {}).get("pages", {}).items():
@@ -471,8 +513,13 @@ def _discover_wrecks(exclude_keys: set[str], want: int) -> list[dict]:
             lic = _norm_license(em.get("LicenseShortName", {}).get("value", ""))
             url = ii.get("url", "")
             w, h = ii.get("width", 0), ii.get("height", 0)
-            ar = (w / h) if h else 0
-            if not (lic and url and url.lower().endswith(_VIDEO_EXT) and 1.55 <= ar <= 1.95):
+            if not (lic and url and url.lower().endswith(ext)):
+                continue
+            if is_video:
+                ar = (w / h) if h else 0
+                if not (1.55 <= ar <= 1.95):
+                    continue
+            elif not (w >= 1200 and h >= 800):   # 사진은 켄번즈 확대 여유 위해 고해상만
                 continue
             title = page.get("title", "")
             desc = _strip(em.get("ImageDescription", {}).get("value", ""))
@@ -481,23 +528,98 @@ def _discover_wrecks(exclude_keys: set[str], want: int) -> list[dict]:
             ident = _wreck_identity(pid, title, desc)
             if not ident:
                 continue
-            # 키는 기존 침몰선 규칙과 일치시킨다: 'wreck <이름>'(footage 시드·SUBJECTS·제작 질의 공통).
             key = f"wreck {ident['name'].strip()}".lower()
-            if key in exclude_keys or any(o["key"] == key for o in out):
+            if key in exclude or key in out_keys or any(o["key"] == key for o in out):
                 continue
             artist = _strip(em.get("Artist", {}).get("value", ""))
             credit = artist or "Wikimedia Commons"
             credit += " · CC BY-SA" if lic == "cc-by-sa" else (" · CC BY" if lic == "cc-by" else "")
-            out.append({
-                "kind": "wreck", "key": key, "needs_confirm": True,
+            cand = {
+                "kind": "wreck", "key": key, "needs_confirm": True, "media_kind": media_kind,
                 "title": title, "url": url, "license": lic, "credit": credit, "source": title,
                 "name": ident["name"], "name_ja": ident.get("name_ja") or "",
                 "ship_type": ident.get("ship_type", ""), "depth": ident.get("depth", ""),
                 "facts": ident.get("facts", []), "fact_src": ident.get("fact_src", ""),
                 "desc": desc[:300],
-            })
-            log.info("[discovery] 침몰선 후보: %s (%s)", ident["name"], lic)
+            }
+            if not is_video:
+                cand["image_url"] = url
+            out.append(cand)
+            out_keys.add(key)
+            log.info("[discovery] 침몰선 후보(%s): %s (%s)", media_kind, ident["name"], lic)
     return out
+
+
+def _registry_candidates(exclude: set[str], want: int, out_keys: set[str]) -> list[dict]:
+    """Tier3: 'Shipwrecks by ship name' 하위(배 이름별)를 순회 → 실존 명명 난파선.
+    각 하위 카테고리 = 확인된 배 이름. 그 배의 파일(사진/영상)에서 첫 통과 소스를 후보로."""
+    subs = _catmembers(_WRECK_REGISTRY_CAT, cmtype="subcat", limit=200)
+    out: list[dict] = []
+    for sub in subs:
+        if len(out) >= want:
+            break
+        name = re.sub(r"^Category:", "", sub).strip()
+        key = f"wreck {name}".lower()
+        if not name or key in exclude or key in out_keys or any(o["key"] == key for o in out):
+            continue
+        files = _catmembers(sub, cmtype="file", limit=30)
+        vids = [f for f in files if f.lower().endswith(_VIDEO_EXT)]
+        imgs = [f for f in files if f.lower().endswith(_IMG_EXT)]
+        # 그 배 자체의 파일이므로 이름 게이트는 이미 통과 — 영상 우선, 없으면 고해상 사진.
+        for cand_list, mk in ((vids, "video"), (imgs, "photo")):
+            if not cand_list:
+                continue
+            got = _cands_from_titles(cand_list[:8], exclude, 1, mk, set())
+            if got:
+                c = got[0]
+                c["key"] = key            # 배 이름(레지스트리)을 정식 키로 고정
+                c["name"] = name
+                if not c.get("facts"):
+                    c["facts"], c["fact_src"] = _wiki_intro_by_name(name)
+                out.append(c)
+                out_keys.add(key)
+                log.info("[discovery] 침몰선 레지스트리 후보: %s (%s)", name, mk)
+                break
+    return out
+
+
+def _wiki_intro_by_name(name: str) -> tuple[list[str], str]:
+    """배 이름으로 Wikipedia(영) 도입부 사실 확보(있으면). 없으면 ([], '')."""
+    for lang in ("en", "ja"):
+        d = _get(f"https://{lang}.wikipedia.org/w/api.php", action="query", prop="extracts",
+                 exintro="1", explaintext="1", redirects="1", titles=name)
+        for p in d.get("query", {}).get("pages", {}).values():
+            if int(p.get("pageid", 0) or 0) <= 0:
+                continue
+            text = (p.get("extract") or "").strip()
+            if text and len(text) > 40:
+                sents = re.split(r"(?<=[。.!?])\s+", text)
+                facts = [s.strip() for s in sents if len(s.strip()) > 10][:5]
+                if facts:
+                    return facts, f"Wikipedia ({lang})"
+    return [], ""
+
+
+def _discover_wrecks(exclude_keys: set[str], want: int) -> list[dict]:
+    """침몰선 무한 소싱(운영자 확정 3단):
+    Tier1 영상(검색+카테고리) → Tier3 배이름 레지스트리(명명·사실) → Tier2 사진(켄번즈, 무한).
+    영상·명명 우선(품질), 부족분은 사진으로 무한 보충. 모두 needs_confirm=True(운영자 확인)."""
+    out_keys: set[str] = set()
+    out: list[dict] = []
+    # Tier1: 영상 검색 + 영상 보유 카테고리 순회
+    vtitles = _wreck_search_titles(_WRECK_TERMS, _VIDEO_EXT, "video", per=40)
+    for cat in _WRECK_VIDEO_CATS:
+        vtitles += [t for t in _catmembers(cat, cmtype="file", limit=200)
+                    if t.lower().endswith(_VIDEO_EXT)]
+    out += _cands_from_titles(list(dict.fromkeys(vtitles)), exclude_keys, want, "video", out_keys)
+    # Tier3: 배이름 레지스트리(명명 난파선 + 위키 사실)
+    if len(out) < want:
+        out += _registry_candidates(exclude_keys, want - len(out), out_keys)
+    # Tier2: 사진 → 켄번즈(무한 공급)
+    if len(out) < want:
+        ptitles = _wreck_search_titles(_WRECK_PHOTO_TERMS, _IMG_EXT, "bitmap", per=40)
+        out += _cands_from_titles(ptitles, exclude_keys, want - len(out), "photo", out_keys)
+    return out[:want]
 
 
 # ── 카테고리별 발굴 설정(핵심 수정) — 각 카테고리가 고유 검색어·게이트를 갖는다 ──
@@ -541,16 +663,24 @@ def make_thumbnail(url: str, out_jpg: str, tmp_dir: str) -> bool:
     """후보 영상 URL을 내려받아 '피사체가 잘 보이는 대표 프레임' 1장을 out_jpg로 저장(검토 미리보기용).
     실패 시 False. 다운로드본은 남겨 재사용 가능(정리는 호출측)."""
     import hashlib
+    import subprocess
     from src.core import footage
     from src.core.longform import thumbnail as TH
-    ext = next((e for e in _VIDEO_EXT if url.lower().endswith(e)), ".webm")
+    is_img = url.lower().endswith(_IMG_EXT)
+    ext = (next((e for e in _IMG_EXT if url.lower().endswith(e)), ".jpg") if is_img
+           else next((e for e in _VIDEO_EXT if url.lower().endswith(e)), ".webm"))
     # ★임시 파일명은 URL별 고유(해시)로 만든다. 고정 이름(_thumb_src)이면 여러 후보가 첫 후보의
     #   영상을 캐시로 재사용해 '모든 후보 썸네일이 동일'해지던 버그가 있었다(재발 방지).
     h = hashlib.md5(url.encode("utf-8")).hexdigest()[:12]
     src = Path(tmp_dir) / f"_thumb_{h}{ext}"
+    min_sz = 20_000 if is_img else 100_000
     try:
-        if not (src.exists() and src.stat().st_size > 100_000) and not footage._download(url, src):
+        if not (src.exists() and src.stat().st_size > min_sz) and not footage._download(url, src):
             return False
+        if is_img:   # ★사진 후보(난파선): 이미지를 그대로 미리보기 jpg로 변환(비디오 프레임 추출 아님)
+            r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src),
+                                "-vf", "scale=640:-1", "-frames:v", "1", out_jpg], timeout=60)
+            return r.returncode == 0 and Path(out_jpg).exists()
         TH.pick_hero_frame(str(src), out_jpg)
         return Path(out_jpg).exists()
     except Exception as e:  # noqa: BLE001
@@ -559,15 +689,20 @@ def make_thumbnail(url: str, out_jpg: str, tmp_dir: str) -> bool:
 
 
 def validate_source_url(url: str, tmp_dir: str) -> bool:
-    """발굴 후보 URL을 실제로 내려받아 품질 게이트(종횡비·정지영상)를 통과하는지 검증.
-    통과분만 discovered.json에 넣어, 제작 때 정지/레터박스로 실패하는 일을 예방한다."""
+    """발굴 후보 URL을 실제로 내려받아 품질 게이트를 통과하는지 검증.
+    영상=종횡비·정지영상 게이트. ★사진(난파선 켄번즈 소스)=고해상 이미지인지만 확인
+    (사진은 당연히 '정지'라 정지-게이트를 적용하면 안 된다 → 켄번즈로 영상화하므로 OK)."""
     from src.core import footage
-    ext = next((e for e in _VIDEO_EXT if url.lower().endswith(e)), ".webm")
+    is_img = url.lower().endswith(_IMG_EXT)
+    ext = (next((e for e in _IMG_EXT if url.lower().endswith(e)), ".jpg") if is_img
+           else next((e for e in _VIDEO_EXT if url.lower().endswith(e)), ".webm"))
     dest = Path(tmp_dir) / f"_probe{ext}"
     try:
         if not footage._download(url, dest):
             return False
         dim = footage._probe_dim(str(dest))
+        if is_img:   # 사진: 켄번즈 확대 여유 위해 고해상만 통과(정지 게이트 미적용)
+            return bool(dim and dim[0] >= 1200 and dim[1] >= 800)
         if dim and dim[1] and not (1.55 <= dim[0] / dim[1] <= 1.95):
             return False
         from src.core import watermark_qc as wq
@@ -716,10 +851,15 @@ def promote_candidate(category_id: str, key: str) -> bool:
     if not any(it["key"] == key for it in disc):
         if cand["kind"] == "wreck":
             nm = cand.get("name") or key
+            # ★사진 소스(무한 엔진)는 media_kind=photo + image_url을 실어 fetch_footage가 켄번즈로 영상화.
+            fp = {"url": cand["url"], "license": cand["license"],
+                  "credit": cand["credit"], "source": cand["source"]}
+            if cand.get("media_kind") == "photo":
+                fp["media_kind"] = "photo"
+                fp["image_url"] = cand.get("image_url") or cand["url"]
             entry = {
                 "key": key, "kind": "wreck",
-                "footage": {"url": cand["url"], "license": cand["license"],
-                            "credit": cand["credit"], "source": cand["source"]},
+                "footage": fp,
                 "subject": {
                     "scientific_name": f"Wreck {nm}", "common_name_ko": f"{nm} 난파선",
                     "common_name_en": f"Wreck {nm}", "depth_range_m": cand.get("depth", ""),

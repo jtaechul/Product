@@ -20,6 +20,7 @@ _UA = ("DeepSeaShortsBot/1.0 (https://github.com/jtaechul/product; educational d
 # 명시 키를 둬서 _norm_license가 'cc-by-sa'로 정확히 분류하게 한다(크레딧 표기 구분).
 _ALLOWED = ("public domain", "pd", "cc0", "cc-by", "cc by", "cc-by-sa", "cc by-sa", "publicdomain", "kogl")
 _VIDEO_EXT = (".webm", ".ogv", ".ogg", ".mp4", ".mov")
+_IMAGE_EXT = (".jpg", ".jpeg", ".png")
 
 # NOAA Ocean Exploration 워터마크(좌상단 고정) 영역 — 원본 대비 비율(x, y, w, h).
 # 실측: 1280x720 기준 로고 텍스트가 x≤261(0.20W)·y≤77(0.11H) → 여유 포함 0.28/0.15.
@@ -127,6 +128,11 @@ def _merge_discovered_seeds() -> None:
                     _SEED[key] = {"url": fp["url"], "license": fp.get("license", "cc-by"),
                                   "credit": fp.get("credit", "Wikimedia Commons"),
                                   "source": fp.get("source", "")}
+                    # ★사진 소스(난파선 무한 엔진): media_kind=photo면 fetch_footage가 켄번즈로 영상화한다.
+                    if fp.get("media_kind"):
+                        _SEED[key]["media_kind"] = fp["media_kind"]
+                    if fp.get("image_url"):
+                        _SEED[key]["image_url"] = fp["image_url"]
                     if fp.get("trim"):
                         _SEED[key]["trim"] = tuple(fp["trim"])
         except Exception:  # noqa: BLE001
@@ -321,10 +327,50 @@ def _commons_search(query: str) -> dict | None:
         return None
 
 
+def _kenburns_clip(image_path: str, out_path: str, seconds: int = 14) -> bool:
+    """정지 사진 → 16:9 켄번즈(느린 센터 푸시인) 영상. ★난파선 무한 엔진의 핵심.
+    가라앉은 배는 '정적 피사체'라 사진 위 느린 푸시인이 다큐처럼 자연스럽다(물고기 정지컷과 다름).
+    모션이 있어 정지-소스 게이트를 통과한다. 사진은 영상보다 훨씬 많아 공급이 사실상 무한.
+    이미지를 16:9로 커버(잘라 채움) 후 zoom 1.0→1.12로 천천히 밀어붙인다."""
+    import subprocess
+    fr = int(seconds) * 30
+    vf = ("scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440,"
+          f"zoompan=z='min(zoom+0.00035,1.12)':d={fr}:"
+          "x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1280x720:fps=30,format=yuv420p")
+    try:
+        r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", image_path,
+                            "-vf", vf, "-t", str(int(seconds)), "-c:v", "libx264", "-preset",
+                            "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-an", out_path],
+                           timeout=180)
+        return (r.returncode == 0 and Path(out_path).exists()
+                and Path(out_path).stat().st_size > 100_000)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] 켄번즈 합성 실패: %s", e)
+        return False
+
+
+def _fetch_photo_kenburns(cand: dict, dest: Path, key: str, common_name_en: str) -> dict | None:
+    """사진 소스(media_kind=photo)를 내려받아 켄번즈로 16:9 영상화 → {path,license,credit,source}."""
+    img_url = cand.get("image_url") or cand.get("url") or ""
+    iext = next((e for e in _IMAGE_EXT if img_url.lower().endswith(e)), ".jpg")
+    slug = re.sub(r"[^a-z0-9]+", "_", key or (common_name_en or "").lower()).strip("_") or "src"
+    img = dest / f"photo_{slug}{iext}"
+    if not (img.exists() and img.stat().st_size > 50_000) and not _download(img_url, img):
+        log.info("[footage] 사진 다운로드 실패: %s", img_url)
+        return None
+    clip = dest / f"footage_{slug}_kb.mp4"
+    if not _kenburns_clip(str(img), str(clip)):
+        return None
+    log.info("[footage] 사진→켄번즈 영상화 완료: %s (%s)", clip, cand.get("credit", ""))
+    return {"path": str(clip), "license": cand["license"], "credit": cand["credit"],
+            "source": cand.get("source", ""), "logo_box": None}
+
+
 def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
     """종 실사 영상 확보 → {path, license, credit, source} 또는 None(확보 실패).
 
     실패 시 상위(파이프라인)는 이 종을 '실사 영상 미확보'로 판단해 중단/스킵한다(날조 방지).
+    ★사진 소스(media_kind=photo, 난파선 무한 엔진)는 켄번즈로 영상화해 반환한다.
     """
     dest = Path(dest_dir)
     key = (scientific_name or "").strip().lower()
@@ -334,6 +380,8 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
     if not cand:
         log.info("[footage] 실사 영상 미확보: %s / %s", scientific_name, common_name_en)
         return None
+    if cand.get("media_kind") == "photo":   # ★사진 → 켄번즈 영상화(난파선 무한 공급)
+        return _fetch_photo_kenburns(cand, dest, key, common_name_en)
     ext = next((e for e in _VIDEO_EXT if cand["url"].lower().endswith(e)), ".webm")
     # ★캐시 파일명은 종별로 분리(교차 오염 방지): 공용 'footage.webm' 하나만 쓰면, 게이트에
     #   걸려 폐기된 앞 종의 파일이 남아 다음 후보가 그걸 '캐시'로 재사용 → 전 후보 연쇄 실패.

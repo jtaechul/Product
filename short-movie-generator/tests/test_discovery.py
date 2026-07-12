@@ -74,6 +74,48 @@ def test_wreck_name_extraction_loose():
     assert f("File:random underwater footage.webm") == ""   # 이름 단서 없으면 빈 문자열
 
 
+def test_wreck_name_rejects_title_junk():
+    """제목 상투어(정크)를 배 이름으로 오인하지 않는다(운영자 검토 부담·오제작 방지)."""
+    f = discovery._wreck_name_from_title
+    assert f("File:U S Navy EOD Removes Ordnance from WWII Shipwreck.webm") == ""
+    assert f("File:First Look at World War II Shipwrecks Off NC Coast.webm") == ""
+    assert not discovery._plausible_wreck_name("shipwreck")
+    assert not discovery._plausible_wreck_name("u s")
+    assert discovery._plausible_wreck_name("Madeirense")
+
+
+def test_photo_wreck_promote_carries_media_kind(tmp_path, monkeypatch):
+    """사진 후보 승격 시 media_kind=photo·image_url이 discovered.json에 실려야
+    fetch_footage가 켄번즈로 영상화할 수 있다(무한 엔진 연결부)."""
+    monkeypatch.setattr(discovery, "_DISCOVERED_DIR", tmp_path)
+    (tmp_path / "shipwreck").mkdir()
+    cand = {"kind": "wreck", "key": "wreck carnatic", "needs_confirm": True, "media_kind": "photo",
+            "title": "File:Carnatic.jpg", "url": "https://x/Carnatic.jpg", "image_url": "https://x/Carnatic.jpg",
+            "license": "cc-by-sa", "credit": "X · CC BY-SA", "source": "File:Carnatic.jpg",
+            "name": "Carnatic", "name_ja": "", "ship_type": "", "depth": "", "facts": [], "fact_src": ""}
+    discovery.save_candidates("shipwreck", [cand])
+    assert discovery.promote_candidate("shipwreck", "wreck carnatic")
+    disc = discovery.load_discovered("shipwreck")
+    fp = disc[0]["footage"]
+    assert fp["media_kind"] == "photo" and fp["image_url"].endswith("Carnatic.jpg")
+
+
+def test_kenburns_clip_produces_motion_video(tmp_path):
+    """★사진→켄번즈: 정지 이미지가 모션 있는 16:9 영상이 되어 정지-게이트를 통과한다(무한 엔진 핵심)."""
+    import os
+    from PIL import Image
+    from src.core import footage
+    img = tmp_path / "test.jpg"
+    # 합성 테스트 이미지(랜덤 노이즈 — 텍스처가 풍부해 실제 사진처럼 확대 시 프레임 간 변화 발생).
+    Image.frombytes("RGB", (2000, 1500), os.urandom(2000 * 1500 * 3)).save(str(img), quality=92)
+    out = tmp_path / "kb.mp4"
+    assert footage._kenburns_clip(str(img), str(out), seconds=14)   # 제작 기본 길이
+    dim = footage._probe_dim(str(out))
+    assert dim and 1.55 <= dim[0] / dim[1] <= 1.95     # 16:9
+    from src.core import watermark_qc as wq
+    assert not wq.is_static_source(str(out))            # 정지 아님 → 게이트 통과
+
+
 def test_discovered_roundtrip(tmp_path, monkeypatch):
     monkeypatch.setattr(discovery, "_DISCOVERED_DIR", tmp_path)
     (tmp_path / "deep_sea").mkdir()
