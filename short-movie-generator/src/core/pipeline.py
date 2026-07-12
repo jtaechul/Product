@@ -326,6 +326,21 @@ def run_reels(
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", subbed, "-i", nar["mp3"],
                     "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", body_av], check=True)
 
+    # 5.5) ★오프닝 지도·수심 하강 스팅어(운영자 확정): 훅 뒤에 '지도→해역 락온→실제 수심 하강'을
+    #      ~2.3초 붙인다. 본문 앞에 결합하면 최종 순서가 [훅][스팅어][본문][엔드카드]가 된다.
+    #      실패해도 발행 불정지(스팅어 없이 진행). 수심은 종 실제 서식수심(날조 아님).
+    try:
+        from src.core import reels_stinger
+        st = reels_stinger.build_stinger(info, str(work_dir / "stinger.mp4"),
+                                         str(work_dir / "stinger"))
+        if st:
+            combined = str(work_dir / "body_with_stinger.mp4")
+            if reels_stinger.prepend_to_body(st["path"], body_av, combined):
+                body_av = combined
+                log.info("[reels] 오프닝 하강 스팅어 결합(%.1fs)", st["duration"])
+    except Exception as e:  # noqa: BLE001
+        log.warning("[reels] 스팅어 결합 생략(오류): %s", e)
+
     # 6) 오프닝 훅 + 엔드카드 + 전환 + 임팩트 사운드 래핑
     # 배경 소스 분리(재발 방지): 오프닝 배경=자막 번인 '전' 클린 리프레임(body_v) →
     # 본문 자막 미리 노출 차단 / 엔드카드 피사체=크롭·줌 '전' 원본 광각(fv.path) → 과확대 차단

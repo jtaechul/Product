@@ -1,0 +1,84 @@
+"""reels_stinger — 쇼츠 오프닝 훅 뒤에 붙는 '지도 → 해역 락온 → 수심 하강' 스팅어(9:16, ~2.3초).
+
+운영자 확정(플랜 B): 롱폼의 하강 모션(`longform.motion.render_locate_descent`)을 그대로 재사용해
+세로(720×1280)·압축 타이밍으로 렌더한다. 화면에 표시되는 **수심은 종의 실제 서식수심**(날조 아님),
+해역은 일반화된 라벨(정확한 좌표·숫자는 노출하지 않음 — 하드룰 '임의 좌표 금지' 준수).
+
+반환: {"path": mp4, "duration": s} 또는 None(실패 시 스팅어 없이 진행 — 발행 불정지).
+"""
+from __future__ import annotations
+
+import logging
+import re
+import subprocess
+from pathlib import Path
+
+log = logging.getLogger(__name__)
+
+
+def _depth_max(depth_range_m: str) -> int:
+    nums = [int(x) for x in re.findall(r"\d+", depth_range_m or "")]
+    return max(nums) if nums else 2000
+
+
+def _zones_for(depth: int) -> list[tuple]:
+    """수심 눈금 지층(일반 심해층 — 종 수심 이하만 표시). 과장·날조 없음."""
+    z = [(100, "有光層"), (600, "薄明層"), (2500, "漸深層"), (4600, "深海層")]
+    keep = [(d, n) for d, n in z if d < max(int(depth), 250)]
+    return keep or [(100, "有光層")]
+
+
+def build_stinger(info, out_mp4: str, work_dir: str) -> dict | None:
+    """종 정보로 9:16 하강 스팅어 mp4 생성(무음 오디오 포함 → 본문과 concat 호환)."""
+    try:
+        from src.core.longform import motion
+    except Exception as e:  # noqa: BLE001
+        log.warning("[stinger] motion 로드 실패 → 스팅어 생략: %s", e)
+        return None
+    wd = Path(work_dir)
+    frames_dir = wd / "frames"
+    frames_dir.mkdir(parents=True, exist_ok=True)
+    depth = _depth_max(getattr(info, "depth_range_m", "") or "")
+    try:
+        spec = motion.MotionSpec(target_depth_m=depth, region_label_jp="生息海域",
+                                 region_label_en="HABITAT", zones=_zones_for(depth))
+        # 9:16 세로 + 압축 타이밍(총 ~2.3초) + 세로용 map_box
+        cfg = motion.MotionConfig(W=720, H=1280, FPS=24, t_map=0.9, t_flash=0.15,
+                                  t_desc=1.0, t_hold=0.25, map_box=(70, 300, 650, 820))
+        r = motion.render_locate_descent(str(frames_dir), spec, cfg)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[stinger] 렌더 실패 → 스팅어 생략: %s", e)
+        return None
+    # 프레임 → mp4(720×1280·24fps) + 무음 스테레오 오디오(본문과 concat 시 스트림 정합)
+    try:
+        rc = subprocess.run(
+            ["ffmpeg", "-y", "-loglevel", "error",
+             "-framerate", str(r["fps"]), "-i", r["frames_glob"],
+             "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
+             "-vf", "scale=720:1280,setsar=1", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+             "-crf", "19", "-c:a", "aac", "-b:a", "128k", "-shortest", str(out_mp4)],
+            timeout=120)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[stinger] 인코딩 오류 → 스팅어 생략: %s", e)
+        return None
+    if rc.returncode != 0 or not Path(out_mp4).exists() or Path(out_mp4).stat().st_size < 10_000:
+        log.warning("[stinger] 인코딩 실패 → 스팅어 생략")
+        return None
+    return {"path": str(out_mp4), "duration": float(r["total_s"])}
+
+
+def prepend_to_body(stinger_path: str, body_video: str, out_video: str) -> bool:
+    """스팅어 + 본문영상을 이어붙인다(스케일·오디오 정합 concat 필터, 재인코딩). 성공 시 True."""
+    try:
+        rc = subprocess.run(
+            ["ffmpeg", "-y", "-loglevel", "error", "-i", stinger_path, "-i", body_video,
+             "-filter_complex",
+             "[0:v]scale=720:1280,setsar=1,fps=24[v0];[1:v]scale=720:1280,setsar=1,fps=24[v1];"
+             "[v0][0:a][v1][1:a]concat=n=2:v=1:a=1[v][a]",
+             "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+             "-crf", "19", "-c:a", "aac", "-b:a", "192k", out_video],
+            timeout=240)
+        return rc.returncode == 0 and Path(out_video).exists() and Path(out_video).stat().st_size > 10_000
+    except Exception as e:  # noqa: BLE001
+        log.warning("[stinger] 본문 결합 실패: %s", e)
+        return False
