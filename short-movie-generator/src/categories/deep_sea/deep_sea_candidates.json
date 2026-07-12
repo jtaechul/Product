@@ -41,7 +41,7 @@
         "Wikimedia Commons (File:Im Roten Meer, Ägypten DSCF6991.webm)"
       ]
     },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_holothuria_leucospilota_29190290734.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_holothuria_leucospilota_29211395597.jpg"
   },
   {
     "kind": "creature",
@@ -77,7 +77,7 @@
         "Wikimedia Commons (File:Krake (Octopus vulgaris) im Roten Meer. Ägypten. Осьминог в Красном море DSCF1713.webm)"
       ]
     },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_octopus_vulgaris_29190290734.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_octopus_vulgaris_29211395597.jpg"
   },
   {
     "kind": "creature",
@@ -115,7 +115,7 @@
         "Wikimedia Commons (File:OPT 3D reconstruction showing the internal location of the tentacles in a cuttlefish hatchling.ogv)"
       ]
     },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_sepia_officinalis_29190290734.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_sepia_officinalis_29211395597.jpg"
   },
   {
     "kind": "creature",
@@ -151,6 +151,82 @@
         "Wikimedia Commons (File:Aplysia kurodai, Wakayama Japan.ogv)"
       ]
     },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_aplysia_kurodai_29190290734.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_aplysia_kurodai_29211395597.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "lingulodinium polyedra",
+    "needs_confirm": false,
+    "title": "File:Surfing on bioluminescent wave.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/9/97/Surfing_on_bioluminescent_wave.webm",
+    "license": "cc-by-sa",
+    "credit": "Timothy R Fallon · CC BY-SA",
+    "source": "File:Surfing on bioluminescent wave.webm",
+    "name": "Lingulodinium polyedra",
+    "name_ja": "",
+    "common_name_ko": "Lingulodinium polyedra",
+    "common_name_en": "Lingulodinium polyedra",
+    "depth": "",
+    "facts": [
+      "Lingulodinium polyedra is a species of motile photosynthetic dinoflagellates.",
+      "polyedra are often the cause of red tides in southern California, leading to bioluminescent displays on beaches at night."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Lingulodinium polyedra",
+      "common_name_ko": "Lingulodinium polyedra",
+      "common_name_en": "Lingulodinium polyedra",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Lingulodinium polyedra is a species of motile photosynthetic dinoflagellates.",
+        "polyedra are often the cause of red tides in southern California, leading to bioluminescent displays on beaches at night."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Surfing on bioluminescent wave.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_lingulodinium_polyedra_29211395597.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "duobrachium sparksae",
+    "needs_confirm": false,
+    "title": "File:First footage of Duobrachium Sparksae.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/First_footage_of_Duobrachium_Sparksae.webm",
+    "license": "public-domain",
+    "credit": "NOAA Office of Ocean Exploration and Research",
+    "source": "File:First footage of Duobrachium Sparksae.webm",
+    "name": "Duobrachium sparksae",
+    "name_ja": "",
+    "common_name_ko": "Duobrachium sparksae",
+    "common_name_en": "Duobrachium sparksae",
+    "depth": "",
+    "facts": [
+      "Duobrachium is a monotypic genus of comb jellies (Ctenophora) belonging to the order Cydippida, family unknown.",
+      "The only known species is Duobrachium sparksae."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Duobrachium sparksae",
+      "common_name_ko": "Duobrachium sparksae",
+      "common_name_en": "Duobrachium sparksae",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Duobrachium is a monotypic genus of comb jellies (Ctenophora) belonging to the order Cydippida, family unknown.",
+        "The only known species is Duobrachium sparksae."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:First footage of Duobrachium Sparksae.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_duobrachium_sparksae_29211395597.jpg"
   }
 ]
