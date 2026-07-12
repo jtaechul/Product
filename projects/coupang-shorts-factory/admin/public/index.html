@@ -88,6 +88,25 @@ ol li{margin:8px 0}
 .empty{color:var(--sub); font-size:14px; padding:14px 2px}
 .row2{display:flex; gap:10px}
 .row2>div{flex:1}
+/* 영상 라이브러리 (완성 쇼츠) */
+.vgrid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
+.vcell{position:relative; aspect-ratio:9/16; border-radius:12px; overflow:hidden; cursor:pointer; background:var(--line)}
+.vcell img{width:100%; height:100%; object-fit:cover; display:block}
+.vcell .cap{position:absolute; left:0; right:0; bottom:0; padding:22px 10px 8px; font-size:12px; font-weight:800;
+  color:#fff; background:linear-gradient(transparent, rgba(0,0,0,.78));
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+.vmodal{position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.93); display:none;
+  flex-direction:column; align-items:center; justify-content:center; padding:16px}
+.vmodal.on{display:flex}
+.vmodal video{max-width:100%; max-height:72vh; border-radius:12px; background:#000}
+.vinfo{color:#fff; text-align:center; margin-top:14px; max-width:440px; width:100%}
+.vinfo .t{font-size:16px; font-weight:800}
+.vinfo .s{font-size:13px; color:#c9ccd4; margin-top:2px}
+.vm-actions{display:flex; gap:10px; justify-content:center; margin-top:14px}
+.vm-actions .btn{width:auto; margin-top:0}
+.vm-close{position:absolute; top:calc(10px + env(safe-area-inset-top)); right:14px; z-index:2;
+  width:44px; height:44px; border-radius:999px; border:none; background:rgba(255,255,255,.16);
+  color:#fff; font-size:20px; font-weight:800; cursor:pointer}
 </style>
 </head>
 <body>
@@ -99,6 +118,7 @@ ol li{margin:8px 0}
   <nav>
     <button data-tab="products" class="on">상품</button>
     <button data-tab="run">제작</button>
+    <button data-tab="videos">영상</button>
     <button data-tab="channels">채널</button>
     <button data-tab="setup">설정</button>
   </nav>
@@ -183,6 +203,16 @@ ol li{margin:8px 0}
   </div>
 </section>
 
+<!-- ───────── 영상 탭 ───────── -->
+<section id="tab-videos">
+  <div class="card">
+    <h2>완성된 영상 <button class="btn mini sub" id="btnReloadVideos" style="float:right">새로고침</button></h2>
+    <p class="hint" style="margin:0 0 12px">제작이 끝난 쇼츠를 여기서 바로 재생·저장할 수 있습니다.
+    썸네일을 탭하면 재생됩니다. (최근 10개 보관, 그 이후는 자동 정리)</p>
+    <div id="videoList"><p class="empty">불러오는 중...</p></div>
+  </div>
+</section>
+
 <!-- ───────── 채널 탭 ───────── -->
 <section id="tab-channels">
   <div class="card">
@@ -232,6 +262,21 @@ ol li{margin:8px 0}
 </section>
 
 </main>
+
+<!-- 영상 재생 오버레이 -->
+<div id="vmodal" class="vmodal">
+  <button id="vmClose" class="vm-close" aria-label="닫기">✕</button>
+  <video id="vmVideo" controls playsinline preload="metadata"></video>
+  <div class="vinfo">
+    <div id="vmTitle" class="t"></div>
+    <div id="vmSub" class="s"></div>
+    <div class="vm-actions">
+      <a id="vmDownload" class="btn sub mini" download target="_blank" style="text-decoration:none">영상 저장</a>
+      <a id="vmYoutube" class="btn sub mini" target="_blank" style="text-decoration:none">유튜브에서 보기</a>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -318,6 +363,7 @@ document.querySelectorAll("nav button").forEach((b) => {
       s.classList.toggle("on", s.id === "tab-" + b.dataset.tab));
     if (b.dataset.tab === "products") loadProducts();
     if (b.dataset.tab === "run") loadRuns();
+    if (b.dataset.tab === "videos") loadVideos();
     if (b.dataset.tab === "channels") loadChannels();
   };
 });
@@ -542,6 +588,82 @@ async function loadRuns() {
   } catch (e) { box.innerHTML = ""; toast(e.message, 5000); }
 }
 $("btnReloadRuns").onclick = () => loadRuns();
+
+/* ── 영상 (완성 쇼츠 라이브러리) ───────── */
+const VID_PREFIX = "shorts-run";
+// GitHub Release 자산은 octet-stream/attachment 로 와서 iOS 인라인 재생이 안 됨 →
+// 워커 /media 프록시로 video/mp4·inline 으로 바꿔 받는다(admin/worker/index.mjs).
+function mediaUrl(u) { return "/media?u=" + encodeURIComponent(u); }
+function relMeta(rel) { try { return JSON.parse(rel.body || "{}"); } catch (_) { return {}; } }
+async function loadVideos() {
+  const box = $("videoList");
+  if (!token()) { box.innerHTML = '<p class="empty">설정 탭에서 GitHub 토큰을 먼저 저장하세요.</p>'; return; }
+  box.innerHTML = '<p class="empty">불러오는 중...</p>';
+  try {
+    const rels = await gh(`/repos/${OWNER}/${REPO}/releases?per_page=100`);
+    const vids = (rels || [])
+      .filter((r) => (r.tag_name || "").startsWith(VID_PREFIX))
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 10);
+    if (!vids.length) {
+      box.innerHTML = '<p class="empty">아직 완성된 영상이 없습니다. "제작" 탭에서 영상을 만들면 여기에 모입니다.</p>';
+      return;
+    }
+    const grid = document.createElement("div");
+    grid.className = "vgrid";
+    for (const rel of vids) {
+      const meta = relMeta(rel);
+      const poster = (rel.assets || []).find((a) => /poster\.jpg$/i.test(a.name));
+      const video = (rel.assets || []).find((a) => /video\.mp4$/i.test(a.name));
+      if (!video) continue;
+      const name = rel.name || meta.name || "쿠팡 쇼츠";
+      const cell = document.createElement("div");
+      cell.className = "vcell";
+      // 포스터에는 이미 상품명·가격이 통일된 디자인으로 박혀 있어 자막(cap) 중복 표시 안 함.
+      // 포스터가 없을 때만 상품명 라벨을 얹는다.
+      if (poster) {
+        cell.innerHTML = `<img loading="lazy" alt="">`;
+        cell.querySelector("img").src = mediaUrl(poster.browser_download_url);
+      } else {
+        cell.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:13px">미리보기 없음</div><div class="cap"></div>`;
+        cell.querySelector(".cap").textContent = name;
+      }
+      cell.onclick = () => openVideo({
+        name,
+        when: new Date(rel.created_at).toLocaleString("ko-KR",
+          { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+        price: meta.price,
+        videoUrl: mediaUrl(video.browser_download_url),
+        dlUrl: video.browser_download_url,
+        youtube: meta.youtube_url || "",
+      });
+      grid.appendChild(cell);
+    }
+    box.innerHTML = "";
+    box.appendChild(grid);
+    box.insertAdjacentHTML("beforeend",
+      '<p class="hint">최근 완성 영상 최대 10개입니다. 탭하면 바로 재생됩니다.</p>');
+  } catch (e) { box.innerHTML = ""; toast(e.message, 5000); }
+}
+function openVideo(v) {
+  const m = $("vmodal");
+  $("vmVideo").src = v.videoUrl;
+  $("vmTitle").textContent = v.name;
+  $("vmSub").textContent = (v.price ? Number(v.price).toLocaleString() + "원 · " : "") + v.when;
+  const yt = $("vmYoutube");
+  if (v.youtube) { yt.href = v.youtube; yt.style.display = "inline-flex"; } else { yt.style.display = "none"; }
+  $("vmDownload").href = v.dlUrl;
+  m.classList.add("on");
+  $("vmVideo").play?.().catch(() => {});
+}
+function closeVideo() {
+  const vid = $("vmVideo");
+  vid.pause(); vid.removeAttribute("src"); vid.load();
+  $("vmodal").classList.remove("on");
+}
+$("btnReloadVideos").onclick = () => loadVideos();
+$("vmClose").onclick = closeVideo;
+$("vmodal").addEventListener("click", (ev) => { if (ev.target.id === "vmodal") closeVideo(); });
 
 /* ── 채널 ────────────────────────────── */
 function parseChannels(text) {

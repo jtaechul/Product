@@ -136,6 +136,33 @@ jobs:
             git push origin HEAD:main
           fi
 
+      - name: 결과 영상 릴리스 발행 + 최근 10개만 유지 (produce 모드 · 관리자 페이지 영상 보기용)
+        if: success() && steps.params.outputs.mode == 'produce'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          JOB_DIR="data/jobs/run${{ github.run_number }}"
+          META="$JOB_DIR/release_meta.json"
+          if [ ! -f "$JOB_DIR/video.mp4" ] || [ ! -f "$META" ]; then
+            echo "영상/메타 없음 → 릴리스 생략 (cron 업로드 미설정 등 정상 케이스)"; exit 0
+          fi
+          TAG="shorts-run${{ github.run_number }}"
+          NAME=$(python3 -c "import json;print((json.load(open('$META')).get('name') or '쿠팡 쇼츠')[:90])")
+          # 릴리스 생성(없을 때만) — 본문은 release_meta.json(관리자 페이지가 JSON으로 파싱)
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --title "$NAME" --notes-file "$META" \
+              --target "${{ github.ref_name }}" --latest=false
+          ASSETS="$JOB_DIR/video.mp4"
+          [ -f "$JOB_DIR/poster.jpg" ] && ASSETS="$ASSETS $JOB_DIR/poster.jpg"
+          gh release upload "$TAG" $ASSETS --clobber
+          echo "릴리스 발행: $TAG ($NAME)"
+          # shorts-run* 릴리스 최신 10개만 유지(오래된 것 태그까지 정리) — 다른 프로젝트(content-*)는 건드리지 않음
+          gh release list --limit 100 --json tagName,createdAt \
+            --jq '[.[]|select(.tagName|startswith("shorts-run"))]|sort_by(.createdAt)|reverse|.[10:]|.[].tagName' \
+          | while read -r t; do
+              [ -n "$t" ] && gh release delete "$t" --yes --cleanup-tag && echo "오래된 릴리스 삭제: $t"
+            done
+
       - name: 산출물 업로드 (video/audio/timestamps/script/stats)
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,7 +1,9 @@
 {
-  // 쿠팡 쇼츠 관리자 페이지 — 정적 에셋 전용 워커 (서버 로직·시크릿 없음)
+  // 쿠팡 쇼츠 관리자 페이지 — 정적 에셋 + 미디어 프록시 워커 (서버 로직·시크릿 없음)
   // 배포: .github/workflows/deploy-shorts-admin.yml (main push, admin/** 변경 시)
+  // main(worker) + assets: /media 는 워커가 처리, 그 외 경로는 정적 에셋을 그대로 서빙.
   "name": "shorts-admin",
   "compatibility_date": "2026-06-01",
-  "assets": { "directory": "./public" }
+  "main": "worker/index.mjs",
+  "assets": { "directory": "./public", "binding": "ASSETS" }
 }

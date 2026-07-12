@@ -28,13 +28,20 @@
   M2(수동 CSV 큐 + 쿠팡 API 모듈은 키 승인 대기) / M3(대본 생성, claude-sonnet-4-6) /
   M4+M5(TTS 멀티 프로바이더+whisper 폴백) / M6(렌더: **상품 사진을 히어로로**(둥근 카드+그림자,
   켄번즈 줌) + **같은 사진 흐리게+어둡게 배경**(항상 상품 관련) + 자막 스크림 + 단어 팝업 자막
-  (긴 어절 종결어미 분리)·쉐이크. 상품 사진 없을 때만 Pexels 스톡/그라데이션 폴백) /
-  M7(유튜브 private 업로드+고지 댓글, §3.1 assert 강제) / M8(`src/pipeline.py`).
+  (긴 어절 종결어미 분리)·쉐이크. 상품 사진 없을 때만 Pexels 스톡/그라데이션 폴백. 렌더 후
+  **통일된 대표 썸네일 `poster.jpg`**(흐린 상품 배경+히어로 카드+상품명·가격) 생성 —
+  `render.build_poster`) / M7(유튜브 private 업로드+고지 댓글, §3.1 assert 강제) / M8(`src/pipeline.py`).
 - 자동화: 평일 07:30 KST cron 제작(전제조건 미비 시 soft 통과), 큐 상태는 업로드 성공 시
   CI가 `data/processed.json`을 `[skip ci]` 커밋. 텔레그램 성공/실패 알림(`src/notify.py`).
+  제작(produce) 성공 시 워크플로우가 `video.mp4`+`poster.jpg`를 **GitHub Release `shorts-run{N}`**
+  으로 발행(본문=`release_meta.json`) + **최신 10개만 유지**(오래된 릴리스·태그 자동 정리).
 - 관리자 페이지(노코드): `admin/public/index.html` — 상품 등록/삭제·제작 실행(workflow_dispatch)·
-  리서치 실행·실행 기록·채널 관리. 사용자 PAT(Contents/Actions RW, 브라우저 localStorage에만
-  저장)로 GitHub API를 직접 호출. 서버 로직·서버 시크릿 없음.
+  리서치 실행·실행 기록·**완성 영상 보기(영상 탭)**·채널 관리. 사용자 PAT(Contents/Actions RW,
+  브라우저 localStorage에만 저장)로 GitHub API를 직접 호출. 서버 로직·서버 시크릿 없음.
+  **영상 탭**: `shorts-run*` 릴리스를 대표 썸네일 그리드로 나열 → 탭하면 인라인 재생(iOS 포함).
+  Release 자산은 octet-stream/attachment 라 iOS `<video>`가 인라인 재생을 거부 → `admin/worker/index.mjs`
+  의 **`/media` 프록시**가 `video/mp4`+inline+Range 통과로 재서빙(정적 에셋은 `env.ASSETS`로 폴백,
+  `wrangler.jsonc`에 `main`+`assets.binding`).
 - **수익화 2단계 로드맵 (2026-07-12 확정 — 사용자 스크린샷으로 검증)**:
   ① 지금(채널 0일차~): 쿠팡파트너스 단축링크(`link.coupang.com/a/...`)를 고정 댓글+설명란에.
   ② 자격 달성 후: **유튜브 쇼핑 제휴로 전환/병행** — 한국은 쿠팡이 유튜브 쇼핑 제휴사라서
