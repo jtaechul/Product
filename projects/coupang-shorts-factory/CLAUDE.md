@@ -3,6 +3,16 @@
 > 마스터 스펙(SSOT): 이 폴더의 `coupang-shorts-pipeline-spec.md` — 모든 구현은 스펙 §8 로드맵의
 > Phase 순서를 따르고, 각 Phase의 DoD를 충족한 뒤에만 다음 Phase로 진행한다.
 
+## ⭐ 핵심 규칙 — 사용자 노코드 원칙 (항상 적용)
+
+- 사용자는 **코드·설정·CSV·YAML 파일을 직접 입력하거나 편집하지 않는다.** 사용자 입력이 필요한
+  모든 조작(상품 등록·삭제, 제작 실행, 벤치마크 채널 관리 등)은 **관리자 페이지 UI**로 제공한다:
+  [shorts-admin.jtaechul.workers.dev](https://shorts-admin.jtaechul.workers.dev)
+  (`admin/` 폴더, Cloudflare Workers 정적 에셋, `deploy-shorts-admin.yml`로 자동 배포).
+- 새 기능이 사용자 입력을 요구하게 되면 **관리자 페이지에 해당 입력 UI를 함께 추가**한다.
+  사용자에게 파일 편집·코드 수정을 안내하는 것은 규칙 위반.
+  (허용 예외: GitHub 시크릿 등록, 외부 서비스 키 발급처럼 외부 사이트 자체 화면에서만 가능한 작업)
+
 ## 현재 상태
 
 - **Phase 0~3 구현 완료**: M1(아웃라이어 리서치, `shorts-research.yml` 주간) /
@@ -12,6 +22,9 @@
   M7(유튜브 private 업로드+고지 댓글, §3.1 assert 강제) / M8(`src/pipeline.py`).
 - 자동화: 평일 07:30 KST cron 제작(전제조건 미비 시 soft 통과), 큐 상태는 업로드 성공 시
   CI가 `data/processed.json`을 `[skip ci]` 커밋. 텔레그램 성공/실패 알림(`src/notify.py`).
+- 관리자 페이지(노코드): `admin/public/index.html` — 상품 등록/삭제·제작 실행(workflow_dispatch)·
+  실행 기록·채널 관리. 사용자 PAT(Contents/Actions RW, 브라우저 localStorage에만 저장)로
+  GitHub API를 직접 호출. 서버 로직·서버 시크릿 없음.
 - 남은 사용자 작업: **유튜브 채널 생성(시작 시 이름·핸들·설정 컨설팅 + 완성 후 피드백을 제공하기로
   예약됨)**, `SHORTS_YT_*` 인증 3종·`SHORTS_YT_API_KEY` 등록, 실제 제휴 링크로 CSV 갱신,
   쿠팡 API 키 승인 시 M2 1안 전환 검증 → `docs/setup-guide.md` 참조.
@@ -41,7 +54,8 @@
 ## 폴더 격리 (저장소 공통 규칙)
 
 - 이 프로젝트의 모든 파일은 `projects/coupang-shorts-factory/` 하위에만 둔다.
-- 유일한 예외: `.github/workflows/shorts-produce.yml`·`shorts-research.yml` (GitHub가 워크플로우 위치를 루트로 강제).
+- 유일한 예외: `.github/workflows/shorts-produce.yml`·`shorts-research.yml`·`deploy-shorts-admin.yml`
+  (GitHub가 워크플로우 위치를 루트로 강제).
   - 트리거는 `workflow_dispatch` + `requests/*.json` 전용 push(paths 필터 적용됨).
     push 트리거를 확장할 때도 반드시 `paths: ['projects/coupang-shorts-factory/**']`
     필터를 유지한다.
