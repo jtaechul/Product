@@ -23,6 +23,7 @@ import yaml
 from src import notify
 from src.audio import tts
 from src.product import manual_queue
+from src.product.enrich import enrich_product
 from src.script.generate import DISCLOSURE, anthropic_key, generate_script
 from src.upload import youtube
 from src.video.backgrounds import fetch_product_bg
@@ -75,6 +76,8 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
 
     # ---- M2: 상품 확보 (기본: 수동 CSV 큐. 쿠팡 API는 키 승인 후 Phase 2에서 전환)
     product = manual_queue.pick(args.row)
+    # ---- M2.5: 링크만 등록된 상품은 붙여넣은 상세 텍스트(data/notes)로 이름·가격·특징 보강
+    product = enrich_product(product, settings)
     (job_dir / "product.json").write_text(json.dumps(product, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"[pipeline] M2 상품: {product['name']} ({product['price']:,}원)")
 

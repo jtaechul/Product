@@ -106,31 +106,37 @@ ol li{margin:8px 0}
 <section id="tab-products" class="on">
   <div class="card">
     <h2>새 상품 등록</h2>
-    <label>상품명</label>
-    <input id="pName" placeholder="예: 무선 미니 가습기">
-    <div class="row2">
-      <div>
-        <label>가격 (숫자만)</label>
-        <input id="pPrice" inputmode="numeric" placeholder="19900">
-      </div>
-      <div>
-        <label>카테고리</label>
-        <select id="pCat">
-          <option>생활가전</option><option>주방용품</option><option>디지털</option>
-          <option>홈인테리어</option><option>캠핑용품</option><option>기타</option>
-        </select>
-      </div>
-    </div>
-    <label>특징 1 (숫자 스펙 위주)</label>
-    <input id="pS1" placeholder="예: 무소음 25db">
-    <label>특징 2</label>
-    <input id="pS2" placeholder="예: 500ml 대용량">
-    <label>특징 3 (선택)</label>
-    <input id="pS3" placeholder="예: USB-C 충전">
-    <label>제휴 링크 (쿠팡 파트너스 단축 URL)</label>
+    <p class="hint" style="margin:0 0 4px">제휴 링크만 필수입니다. 상품 페이지의 설명·리뷰를
+    아래 칸에 붙여넣으면 상품명·가격·특징은 제작할 때 자동으로 뽑아냅니다.</p>
+    <label>제휴 링크 (쿠팡 파트너스 단축 URL) — 필수</label>
     <input id="pLink" placeholder="https://link.coupang.com/a/...">
+    <label>상품 상세·리뷰 붙여넣기 (권장)</label>
+    <textarea id="pNotes" rows="7" placeholder="쿠팡 상품 페이지에서 제품 설명과 리뷰 몇 개를 길게 눌러 복사한 뒤 그대로 붙여넣으세요. 길고 지저분해도 괜찮습니다 — 여기서 상품명·가격·특징·후기 포인트를 자동으로 정리해 대본에 씁니다."></textarea>
     <label>상품 이미지 주소 (선택 — 파트너스 링크생성 화면의 이미지)</label>
     <input id="pImg" placeholder="https://...jpg (비워도 됩니다)">
+    <details>
+      <summary>직접 입력 (선택 — 붙여넣기 없이 등록할 때)</summary>
+      <label>상품명</label>
+      <input id="pName" placeholder="비우면 붙여넣은 내용에서 자동 추출">
+      <div class="row2">
+        <div>
+          <label>가격 (숫자만)</label>
+          <input id="pPrice" inputmode="numeric" placeholder="자동 추출 가능">
+        </div>
+        <div>
+          <label>카테고리</label>
+          <select id="pCat">
+            <option value="">자동</option>
+            <option>생활가전</option><option>주방용품</option><option>디지털</option>
+            <option>홈인테리어</option><option>캠핑용품</option><option>기타</option>
+          </select>
+        </div>
+      </div>
+      <label>특징 1~3 (선택)</label>
+      <input id="pS1" placeholder="예: 무소음 25db">
+      <input id="pS2" placeholder="예: 500ml 대용량" style="margin-top:8px">
+      <input id="pS3" placeholder="예: USB-C 충전" style="margin-top:8px">
+    </details>
     <button class="btn" id="btnAddProduct">상품 추가</button>
     <p class="hint">추가하면 제작 대기열에 저장됩니다. 영상 제작은 "제작" 탭에서.</p>
   </div>
@@ -157,6 +163,9 @@ ol li{margin:8px 0}
     <button class="btn" id="btnRun">지금 제작하기</button>
     <p class="hint">대기열 맨 위 상품 1개가 제작됩니다. 완료되면 텔레그램으로 알림이 오고,
     유튜브 키 등록 전에는 아래 실행 기록에서 영상(Artifacts)을 받을 수 있습니다.</p>
+    <button class="btn sub" id="btnResearch">소재 리서치 지금 실행</button>
+    <p class="hint">채널 탭에 등록된 벤치마크 채널에서 최근 터진 소재를 찾아
+    텔레그램으로 보내줍니다. (평소엔 매주 월요일 아침 자동 실행)</p>
   </div>
   <div class="card">
     <h2>최근 실행 기록 <button class="btn mini sub" id="btnReloadRuns" style="float:right">새로고침</button></h2>
@@ -351,8 +360,9 @@ async function loadProducts() {
         </div>
         <span class="chip ${isDone ? "done" : "wait"}">${isDone ? "제작 완료" : "대기"}</span>
         <button class="btn mini danger">삭제</button>`;
-      el.querySelector(".t").textContent = r.name;
-      el.querySelector(".s").textContent = Number(r.price).toLocaleString() + "원 · " + r.cat;
+      el.querySelector(".t").textContent = r.name || "(상품명 자동 추출 — " + r.link.slice(-14) + ")";
+      el.querySelector(".s").textContent =
+        (r.price ? Number(r.price).toLocaleString() + "원" : "가격 자동") + (r.cat ? " · " + r.cat : "");
       el.querySelector("button").onclick = (ev) => busy(ev.target, async () => {
         if (!confirm(`"${r.name}" 을(를) 대기열에서 삭제할까요?`)) return;
         const cur = await getFile(CSV_PATH);
@@ -372,19 +382,25 @@ $("btnAddProduct").onclick = (ev) => busy(ev.target, async () => {
   const specs = [$("pS1").value, $("pS2").value, $("pS3").value].map(clean).filter(Boolean).join(";");
   const link = clean($("pLink").value);
   const img = clean($("pImg").value);
-  const cat = clean($("pCat").value) || "기타";
-  if (!name) throw new Error("상품명을 입력하세요.");
-  if (!price) throw new Error("가격을 숫자로 입력하세요.");
-  if (!specs) throw new Error("특징을 1개 이상 입력하세요.");
+  const cat = clean($("pCat").value);
+  const notes = ($("pNotes").value || "").trim();
   if (!/^https:\/\//.test(link)) throw new Error("제휴 링크(https://...)를 입력하세요.");
   if (!/^https:\/\/link\.coupang\.com\//.test(link) &&
       !confirm("링크가 쿠팡 파트너스 단축 URL(link.coupang.com)이 아닌 것 같습니다. 그래도 추가할까요?")) return;
+  if (!notes && !(name && price && specs))
+    throw new Error("상품 상세를 붙여넣거나, 직접 입력(상품명·가격·특징)을 채워주세요.");
+  const hash = await sha16(`${name}|${link}`);
+  if (notes) {
+    const old = await getFile(`${P}/data/notes/${hash}.md`, true);
+    await putFile(`${P}/data/notes/${hash}.md`, notes + "\n",
+      `admin: 상품 상세 메모 — ${name || link.slice(-12)}`, old ? old.sha : undefined);
+  }
   const cur = await getFile(CSV_PATH);
   const base = cur.text.endsWith("\n") ? cur.text : cur.text + "\n";
-  const line = [name, price, specs, img, link, cat].join(",");
-  await putFile(CSV_PATH, base + line + "\n", `admin: 상품 추가 — ${name}`, cur.sha);
-  ["pName", "pPrice", "pS1", "pS2", "pS3", "pLink", "pImg"].forEach((id) => $(id).value = "");
-  toast("상품을 대기열에 추가했습니다.");
+  const line = [name, price, specs, img, link, cat || (name ? "기타" : "")].join(",");
+  await putFile(CSV_PATH, base + line + "\n", `admin: 상품 추가 — ${name || link.slice(-12)}`, cur.sha);
+  ["pName", "pPrice", "pS1", "pS2", "pS3", "pLink", "pImg", "pNotes"].forEach((id) => $(id).value = "");
+  toast("상품을 대기열에 추가했습니다." + (notes ? " (상세는 제작 시 자동 정리됩니다)" : ""));
   loadProducts();
 });
 
@@ -397,6 +413,12 @@ $("btnRun").onclick = (ev) => busy(ev.target, async () => {
   });
   toast("제작을 시작했습니다. 5분쯤 뒤 실행 기록을 새로고침하세요.");
   setTimeout(loadRuns, 4000);
+});
+$("btnResearch").onclick = (ev) => busy(ev.target, async () => {
+  await gh(`/repos/${OWNER}/${REPO}/actions/workflows/shorts-research.yml/dispatches`, {
+    method: "POST", body: JSON.stringify({ ref: BRANCH }),
+  });
+  toast("리서치를 시작했습니다. 결과는 텔레그램으로 도착합니다. (채널 탭이 비어 있으면 결과 없음)");
 });
 const RUN_LABEL = {
   queued: ["대기 중", "run"], in_progress: ["제작 중", "run"],
