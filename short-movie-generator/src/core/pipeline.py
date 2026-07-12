@@ -192,6 +192,32 @@ def _probe_duration(path: str) -> float:
         return 0.0
 
 
+# ★쇼츠 길이 규칙(기획서: 40초 내외). 본문 나레이션이 길면 총 길이가 1분을 넘는다(소싱 종 LLM 본문이
+#   길게 나오던 사고). 시드 종은 27~29초(총 30~39초)로 이미 규칙 내라 안 건드리고, 과길이 본문만
+#   글자수 예산으로 컷한다. 실측 ja-JP edge-tts ≈ 5.4자/초 → 165자 ≈ 30초 본문 → 총 ≈ 40초.
+_MAX_BODY_CHARS = 165
+_MIN_BODY_CHUNKS = 12
+
+
+def _cap_body_chunks(chunks: list[str], max_chars: int = _MAX_BODY_CHARS,
+                     min_chunks: int = _MIN_BODY_CHUNKS) -> list[str]:
+    """본문 절 리스트를 글자수 예산 내로 자른다(온전한 절 단위). 최소 절 수는 보장해 너무 짧아지지 않게.
+    마지막 원본 절(마무리 비트)을 가능하면 포함해 끝맺음이 살아있게 한다."""
+    total = sum(len(c) for c in chunks)
+    if total <= max_chars or len(chunks) <= min_chunks:
+        return chunks
+    out, used = [], 0
+    for c in chunks:
+        if used + len(c) > max_chars and len(out) >= min_chunks:
+            break
+        out.append(c)
+        used += len(c)
+    # 끝맺음 절 보존: 마지막 원본 절이 빠졌으면 마지막 자리를 그것으로 교체
+    if chunks[-1] not in out:
+        out[-1] = chunks[-1]
+    return out
+
+
 def run_reels(
     category_id: str,
     query: str,
@@ -260,6 +286,7 @@ def run_reels(
     chunks = category.reels_body_script(info) if hasattr(category, "reels_body_script") else None
     if not chunks:
         raise PipelineError("script", "본문 일본어 대본 생성 불가(시드/LLM 필요)")
+    chunks = _cap_body_chunks(chunks)   # ★길이 상한(쇼츠 40초 규칙): 과길이 본문을 ~30초로 컷
     nar = narration_sync.synthesize(chunks, str(work_dir))
     if not nar.get("mp3") or not nar.get("disp"):
         raise PipelineError("tts", "나레이션 합성 실패")
