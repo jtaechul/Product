@@ -16,9 +16,10 @@ from pathlib import Path
 log = logging.getLogger(__name__)
 
 
-def _depth_max(depth_range_m: str) -> int:
+def _depth_max(depth_range_m: str) -> int | None:
+    """서식수심 최댓값(m). 실제 수심 데이터가 없으면 None(→ 스팅어 생략)."""
     nums = [int(x) for x in re.findall(r"\d+", depth_range_m or "")]
-    return max(nums) if nums else 2000
+    return max(nums) if nums else None
 
 
 def _zones_for(depth: int) -> list[tuple]:
@@ -35,10 +36,14 @@ def build_stinger(info, out_mp4: str, work_dir: str) -> dict | None:
     except Exception as e:  # noqa: BLE001
         log.warning("[stinger] motion 로드 실패 → 스팅어 생략: %s", e)
         return None
+    depth = _depth_max(getattr(info, "depth_range_m", "") or "")
+    if depth is None:
+        # ★수심 위치를 모르는 생물은 지도·수심 하강 스팅어를 생략(운영자 확정 · 날조 방지)
+        log.info("[stinger] 서식수심 데이터 없음 → 지도·수심 스팅어 생략")
+        return None
     wd = Path(work_dir)
     frames_dir = wd / "frames"
     frames_dir.mkdir(parents=True, exist_ok=True)
-    depth = _depth_max(getattr(info, "depth_range_m", "") or "")
     try:
         spec = motion.MotionSpec(target_depth_m=depth, region_label_jp="生息海域",
                                  region_label_en="HABITAT", zones=_zones_for(depth))

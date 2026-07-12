@@ -24,6 +24,9 @@ from src.core import hook_intro as hi
 log = logging.getLogger(__name__)
 _PROXY_CA = "/root/.ccr/ca-bundle.crt"
 _PUNCT = re.compile(r"[、。，．・「」『』（）\s]")
+# ★오프닝 홀드(운영자 확정): 마지막 어절 이펙트가 끝난 뒤 본문으로 넘어가기 전 최소 대기(초).
+#   0.5~1.0초 범위 중 0.7초 채택 — 3줄 훅의 마지막 줄이 끝나자마자 넘어가던 어색함 방지.
+_OPEN_HOLD_S = 0.7
 
 
 def _install_ca() -> None:
@@ -201,15 +204,30 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         hook = _synth_hook(hook_text, str(wd / "hook.mp3"), cfg)
         if hook and hook.get("words"):
             onsets = _onsets_for_words(spec.hook_pop_words, hook["words"])
+            narr_failed = False
         else:
             onsets = _even_onsets(spec.hook_pop_words, cfg)
-            if not hook:   # 나레이션 완전 실패 → 무음 훅 오디오로 대체(오프닝/엔드카드는 유지)
-                log.warning("[hook_intro] 훅 나레이션 실패 → 무음 훅으로 오프닝/엔드카드 유지")
-                silent = str(wd / "hook_silent.mp3")
-                subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
-                                "-i", "anullsrc=r=44100:cl=mono", "-t", f"{cfg.opening_seg_s:.2f}",
-                                "-q:a", "9", silent], check=True)
-                hook = {"mp3": silent, "words": []}
+            narr_failed = not hook
+
+        # ★오프닝 홀드 보장(운영자 확정): 긴/3줄 훅은 마지막 어절 이펙트가 끝나자마자 본문으로 넘어가
+        #   어색했다 → 마지막 어절 완료 시각 + 0.7초 홀드를 확보하도록 오프닝 길이를 필요 시 늘린다.
+        #   (짧은 훅은 기본 4.6초로 이미 홀드가 충분하므로 그대로 유지.)
+        try:
+            last_on = max(onsets.values()) if onsets else 0.0
+            pop_end = cfg.narr_start_s + float(last_on) + cfg.pop_grow_s + cfg.pop_fade_s
+            need = pop_end + _OPEN_HOLD_S
+            if need > cfg.opening_seg_s:
+                cfg.opening_seg_s = round(need, 2)
+        except Exception:  # noqa: BLE001
+            pass
+
+        if narr_failed:   # 나레이션 완전 실패 → 무음 훅 오디오로 대체(오프닝/엔드카드는 유지)
+            log.warning("[hook_intro] 훅 나레이션 실패 → 무음 훅으로 오프닝/엔드카드 유지")
+            silent = str(wd / "hook_silent.mp3")
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                            "-i", "anullsrc=r=44100:cl=mono", "-t", f"{cfg.opening_seg_s:.2f}",
+                            "-q:a", "9", silent], check=True)
+            hook = {"mp3": silent, "words": []}
 
         # 2) 배경 프레임 — 오프닝=클린 영상 초반, 엔드카드=원본 광각의 피사체 최적 프레임
         src_open = open_bg_video if open_bg_video and Path(open_bg_video).exists() else body_video
