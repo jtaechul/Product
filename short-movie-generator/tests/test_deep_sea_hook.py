@@ -80,3 +80,18 @@ def test_reels_captiondata_separates_jp_and_ko(monkeypatch):
     assert not any(t.lower() == "#shorts" for t in (cd.hashtags or []) + (cd.hashtags_ko or []))
     # 일본어판도 동일 정책: [내용, #深海生物]
     assert cd.hashtags[-1] == "#深海生物" and len(cd.hashtags) == 2
+
+
+def test_shorts_title_ends_with_two_hashtags(monkeypatch):
+    """★쇼츠 제목 정책(운영자 확정): 모든 쇼츠 제목 끝에 해시태그 정확히 2개.
+    두 태그는 영상 해시태그와 동일(제목·캡션 태그 일치)."""
+    import re
+    from src.core import llm
+    monkeypatch.setattr(llm, "generate_text", lambda *a, **k: None)   # 폴백 강제
+    cat = DeepSeaCategory()
+    spec, _t, _b = cat.hook_intro_spec(INFO)
+    cd = cat.build_reels_caption(INFO, spec)
+    for title, tags in ((cd.yt_title, cd.hashtags), (cd.yt_title_ko, cd.hashtags_ko)):
+        assert title, "쇼츠 제목이 비었음"
+        assert len(re.findall(r"#\S+", title)) == 2, f"제목에 해시태그 2개가 아님: {title}"
+        assert title.rstrip().endswith(" ".join(tags[:2])), f"제목 태그가 영상 태그와 불일치: {title}"

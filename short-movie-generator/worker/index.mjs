@@ -181,6 +181,11 @@ function ytTitle(hook,name,ko){
   if(!name&&!hook)return "";
   if(!hook)return ko?"깊은 바다에 숨어 사는, "+name+"의 맨얼굴":"深海でひっそり生きる、"+name+"の素顔";
   return ko?hook+"——"+name+"의 정체":hook+"——"+name+"の正体";}
+// ★쇼츠 제목 정책(운영자 확정): 제목 끝에 해시태그 2개를 붙인다. 신규 레코드는 시스템이 이미
+// 태그가 붙은 yt_title을 저장하므로, 이 함수는 옛 레코드(제목 미저장) 폴백에만 쓰인다.
+function titleTags(base,tags){base=(base||"").trim();
+  const two=(tags||[]).map(t=>String(t).trim()).filter(Boolean).slice(0,2);
+  return two.length?(base+" "+two.join(" ")).trim():base;}
 
 // 타임아웃 fetch: 인앱 웹뷰(텔레그램·카카오 등)에서 api.github.com 같은 크로스오리진 요청이
 // '영원히 pending' 되어 await가 안 풀리는 사고 방지(→ 라이브러리 '불러오는 중…' 멈춤의 실제 원인).
@@ -548,10 +553,10 @@ async function renderDetail(id){
     // 유튜브 쇼츠 게시용 '영상 제목'(일/한) 프레임 — 편집·복사 가능(별도 프레임 요청 반영)
     '<div class="dual" style="margin-top:12px">'+
       '<div><span class="lbl">영상 제목 · 일본어(유튜브 쇼츠)</span>'+
-        '<textarea id="etitlejp" rows="2">'+esc(re.yt_title||ytTitle(re.hook,jpName))+'</textarea>'+
+        '<textarea id="etitlejp" rows="2">'+esc(re.yt_title||titleTags(ytTitle(re.hook,jpName),re.hashtags))+'</textarea>'+
         '<button class="btn save" id="cptjp" style="margin-top:6px">일본어 제목 복사</button></div>'+
       '<div><span class="lbl">영상 제목 · 한국어(참고)</span>'+
-        '<textarea id="etitleko" rows="2">'+esc(re.yt_title_ko||ytTitle(hookKO,sp.common_name_ko,1))+'</textarea>'+
+        '<textarea id="etitleko" rows="2">'+esc(re.yt_title_ko||titleTags(ytTitle(hookKO,sp.common_name_ko,1),re.hashtags_ko))+'</textarea>'+
         '<button class="btn" id="cptko" style="margin-top:6px">한국어 제목 복사</button></div>'+
     '</div>'+
     // 캡션·해시태그를 한 프레임에 합쳐 표시(일본어 발행 / 한국어 참고). 저장 시 끝의 해시태그 줄을 분리.

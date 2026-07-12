@@ -176,6 +176,18 @@ def _valid_title(t: str, jp_name: str) -> bool:
     return bool(t) and 10 <= len(t) <= 34 and (jp_name in t if jp_name else True)
 
 
+def _title_with_tags(title: str, tags: list[str]) -> str:
+    """★쇼츠 제목 정책(운영자 확정): 모든 쇼츠 제목 끝에 해시태그 **정확히 2개**를 붙인다.
+    태그는 영상 해시태그와 동일한 [내용 태그 1개 + 고정 공통 1개](= _final_tags 결과)를 재사용해
+    제목·캡션의 태그가 일치하게 한다. 제목 본문(태그 앞)은 다른 규칙대로 태그 없이 정리한다.
+    태그가 2개 미만이면 있는 만큼만 붙인다(중복 패딩 안 함)."""
+    base = _clean_title(title)   # 제목 본문에 잔류 태그 없게 정리(멱등)
+    two = [str(t).strip() for t in (tags or []) if str(t).strip()][:2]
+    if not two:
+        return base
+    return f"{base} {' '.join(two)}".strip()
+
+
 def _fallback(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
               hook_line1: str, hook_line2: str, hook_ko: str, feature_ko: str, credit: str,
               default_tags: list[str], default_tags_ko: list[str] | None = None,
@@ -214,7 +226,8 @@ def _fallback(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
     tags_ko = _final_tags(tags_ko, ko_name, fixed_tag_ko)
     tj, tk = _fallback_titles(info, jp_name, f"{hook_line1}{hook_line2}", hook_ko)
     return {"jp": jp, "ko": ko, "tags": default_tags, "tags_ko": tags_ko,
-            "yt_title": tj, "yt_title_ko": tk}
+            "yt_title": _title_with_tags(tj, default_tags),
+            "yt_title_ko": _title_with_tags(tk, tags_ko)}
 
 
 def _parse(out: str):
@@ -334,10 +347,12 @@ def generate(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
             tk = tk if tk else fk
         if not tk or re.search(r"[ぁ-んァ-ヶ]", tk):   # 한국어판에 일본어 잔류 → 폴백
             tk = _fallback_titles(info, jp_name, f"{hook_line1}{hook_line2}", hook_ko)[1]
+        jp_tags = _final_tags(tags, jp_name, fixed_tag)
+        ko_final = _final_tags(ko_tags, info.common_name_ko or jp_name, fixed_tag_ko)
         return {"jp": jp, "ko": ko,
-                "tags": _final_tags(tags, jp_name, fixed_tag),
-                "tags_ko": _final_tags(ko_tags, info.common_name_ko or jp_name, fixed_tag_ko),
-                "yt_title": tj, "yt_title_ko": tk}
+                "tags": jp_tags, "tags_ko": ko_final,
+                "yt_title": _title_with_tags(tj, jp_tags),
+                "yt_title_ko": _title_with_tags(tk, ko_final)}
 
     log.warning("[rich_caption] LLM 리치 캡션 실패 → 사실 기반 폴백 사용")
     return _fallback(info, jp_name, sci_name, feature_line, hook_line1, hook_line2,
