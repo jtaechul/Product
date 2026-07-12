@@ -52,8 +52,13 @@ _MARINE = re.compile(
     r"marine|\bsea\b|ocean|deep[- ]sea|abyssal|hydrotherm|\bfish\b|coral|crustacean|"
     r"mollus[ck]|cephalopod|echinoderm|cnidaria|jellyfish|aquatic|reef|benthic|"
     r"shrimp|crab|lobster|anemone|sponge|plankton|\bsquid\b|octopus", re.I)
-# 채널 부적합(조류·곤충·육상식물·육상동물) 배제 — 해양 단서가 있어도 이게 있으면 스킵.
-_EXCLUDE = re.compile(r"鳥類|鳥\b|海鳥|昆虫|植物|樹木|\bbird\b|seabird|\binsect\b|\bplant\b|reptile|amphibian", re.I)
+# 채널 부적합(조류·파충류·양서류·곤충·육상식물·육상동물) 배제 — 해양 단서가 있어도 이게 있으면 스킵.
+# ★일본어 분류군어도 포함(영어 'reptile'만으론 '爬虫綱·ヤモリ·トカゲ' 같은 육상 파충류를 못 걸러
+#   도마뱀붙이(Gekko japonicus)가 후보로 새던 사고 → 위키 발췌의 일본어 분류군어까지 배제).
+_EXCLUDE = re.compile(
+    r"鳥類|鳥\b|海鳥|昆虫|植物|樹木|爬虫|両生|トカゲ|ヤモリ|ヘビ|蛇|カエル|蛙|イモリ|サンショウウオ|"
+    r"\bbird\b|seabird|\binsect\b|\bplant\b|reptile|amphibian|\bgecko\b|\blizard\b|\bsnake\b|"
+    r"\bfrog\b|\btoad\b|\bnewt\b|salamander", re.I)
 # 피사체가 깔끔하지 않은 '연구·사체·해부·표본·양식장' 클립 배제(파일명·설명 기준). 생물 자체가 주인공인
 # 영상만 채택해 그로테스크/비주제 화면을 막는다(사체 분해 실험 영상 등 자동 오채택 방지).
 _BADCLIP = re.compile(
@@ -268,10 +273,13 @@ def discover(exclude_scinames: set[str], exclude_titles: set[str], want: int = 3
             if not facts:                       # 사실 없으면 스킵(날조 금지)
                 log.info("[discovery] 사실 미확보로 스킵: %s", sci)
                 continue
-            # 채널 주제 적합성: 해양생물 단서 필수 + 조류·곤충·육상 배제(바닷새 오채택 방지)
+            # 채널 주제 적합성: 조류·파충류·양서류·곤충·육상식물 등 명백한 비해양만 배제한다.
+            # ★'해양 단서 필수'는 폐지: _MARINE 키워드 화이트리스트가 불완전해 アメフラシ(바다토끼) 같은
+            #   실제 해양생물을 오배제하던 문제가 있었다. 소싱 검색어 자체가 해양 중심이고 운영자 검토가
+            #   있으므로, 재현율을 지키기 위해 _EXCLUDE(명백한 육상동물)로만 거른다.
             blob = " ".join(facts) + " " + desc
-            if _EXCLUDE.search(blob) or not _MARINE.search(blob):
-                log.info("[discovery] 해양생물 아님으로 스킵: %s", sci)
+            if _EXCLUDE.search(blob):
+                log.info("[discovery] 비해양(육상동물 등)으로 스킵: %s", sci)
                 continue
             if validate and not validate(url):  # 실사 게이트(정지·카드 등)
                 log.info("[discovery] 실사 게이트 탈락으로 스킵: %s", sci)

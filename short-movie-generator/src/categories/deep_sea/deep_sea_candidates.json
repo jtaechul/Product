@@ -119,42 +119,6 @@
   },
   {
     "kind": "creature",
-    "key": "gekko japonicus",
-    "needs_confirm": false,
-    "title": "File:Japanese giant spider crab (Macrocheira kaempferi).webm",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Japanese_giant_spider_crab_%28Macrocheira_kaempferi%29.webm",
-    "license": "cc-by-sa",
-    "credit": "The Nature Box · CC BY-SA",
-    "source": "File:Japanese giant spider crab (Macrocheira kaempferi).webm",
-    "name": "Gekko japonicus",
-    "name_ja": "",
-    "common_name_ko": "도마뱀붙이",
-    "common_name_en": "Schlegel's Japanese gecko",
-    "depth": "",
-    "facts": [
-      "ニホンヤモリ（学名：Gekko japonicus）は、爬虫綱有鱗目ヤモリ科ヤモリ属に分類されるトカゲの一種。日本では単にヤモリと呼ばれることもある。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Gekko japonicus",
-      "common_name_ko": "도마뱀붙이",
-      "common_name_en": "Schlegel's Japanese gecko",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "ニホンヤモリ（学名：Gekko japonicus）は、爬虫綱有鱗目ヤモリ科ヤモリ属に分類されるトカゲの一種。日本では単にヤモリと呼ばれることもある。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Japanese giant spider crab (Macrocheira kaempferi).webm)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_gekko_japonicus_29190290734.jpg"
-  },
-  {
-    "kind": "creature",
     "key": "sepia officinalis",
     "needs_confirm": false,
     "title": "File:OPT 3D reconstruction showing the internal location of the tentacles in a cuttlefish hatchling.ogv",

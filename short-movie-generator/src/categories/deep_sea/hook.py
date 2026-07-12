@@ -367,12 +367,18 @@ def build_hook(info: SpeciesInfo) -> dict | None:
     facts = " / ".join((info.fun_facts or [])[:3]) or "-"
     prompt = _PROMPT.format(en=info.common_name_en, sci=info.scientific_name,
                             depth=info.depth_range_m, hab=info.habitat, facts=facts)
-    try:
-        out = llm.generate_text(prompt, max_tokens=400)
-    except Exception as e:  # noqa: BLE001
-        log.warning("[deep_sea.hook] LLM 호출 실패: %s", e)
-        out = None
-    parsed = _parse_json(out or "")
+    # ★재시도(재발방지): 한 번의 LLM 응답이 JSON 파싱에 실패하면 제작이 통째로 중단됐다(소싱 종 제작
+    #   실패 사고). 일시적 형식 오류·부분 응답에 대비해 2회까지 재시도한다.
+    parsed = None
+    for attempt in range(2):
+        try:
+            out = llm.generate_text(prompt, max_tokens=400)
+        except Exception as e:  # noqa: BLE001
+            log.warning("[deep_sea.hook] LLM 호출 실패(%d): %s", attempt, e)
+            out = None
+        parsed = _parse_json(out or "")
+        if parsed:
+            break
     if not parsed:
         log.info("[deep_sea.hook] 훅 생성 불가(키 없음/파싱 실패) → 오프닝/엔드카드 생략")
     return parsed

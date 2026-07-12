@@ -23,9 +23,19 @@ def test_marine_filter_rejects_birds_and_bad_clips():
     # 바닷새(조류)는 배제 — 해양 단어가 섞여도 _EXCLUDE가 우선
     assert discovery._EXCLUDE.search("コアホウドリは海鳥で、鳥類に分類される")
     assert discovery._EXCLUDE.search("Laysan albatross, a seabird")
+    # ★파충류(도마뱀붙이) 배제 — 일본어 분류군어까지(회귀: gekko japonicus가 후보로 새던 사고)
+    assert discovery._EXCLUDE.search("ニホンヤモリ（Gekko japonicus）は、爬虫綱有鱗目ヤモリ科のトカゲ")
+    assert discovery._EXCLUDE.search("a gecko / lizard")
     # 연구·사체·해부·양식 클립은 별도 배제
     assert discovery._BADCLIP.search("Pig Carcasses decomposition on the seafloor")
     assert discovery._BADCLIP.search("解剖 標本 の魚")
+
+
+def test_marine_filter_keeps_real_sea_creatures():
+    """실제 해양생물은 _EXCLUDE에 안 걸린다(아메프라시=바다토끼 오배제 회귀 방지)."""
+    assert not discovery._EXCLUDE.search("Aplysia kurodai is a species of sea hare (gastropod)")
+    assert not discovery._EXCLUDE.search("ウミグモ綱は鋏角類に属する節足動物")
+    assert not discovery._EXCLUDE.search("ニセクロナマコはナマコの一種")
 
 
 def test_discovered_roundtrip(tmp_path, monkeypatch):
