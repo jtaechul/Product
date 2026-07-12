@@ -3,6 +3,6 @@
  "provider": "mock",
  "row": "2",
  "privacy": "private",
- "note": "영상 보기 기능 검증: poster.jpg 생성 + shorts-run 릴리스 발행 + 관리자 영상 탭 (WoWo, mock)",
- "requested_at": "2026-07-12T06:17:28Z"
+ "note": "영상 개편 완성본 검수: 씬 시퀀스 + 가라오케 자막 + 실사 스톡 b-roll (WoWo, mock 음성)",
+ "requested_at": "2026-07-12T09:35:41Z"
 }
