@@ -177,14 +177,6 @@
     "youtube_url": "https://youtu.be/UXpvm_cw1Aw"
   },
   {
-    "id": "022",
-    "kind": "reels",
-    "common_name_ko": "바다거미목",
-    "common_name_en": "Pycnogonida",
-    "scientific_name": "Pycnogonida",
-    "date": "2026-07-12"
-  },
-  {
     "id": "023",
     "kind": "reels",
     "common_name_ko": "Raketa 난파선",
@@ -198,6 +190,14 @@
     "common_name_ko": "갑오징어",
     "common_name_en": "common cuttlefish",
     "scientific_name": "Sepia officinalis",
+    "date": "2026-07-12"
+  },
+  {
+    "id": "022",
+    "kind": "reels",
+    "common_name_ko": "바다거미목",
+    "common_name_en": "Pycnogonida",
+    "scientific_name": "Pycnogonida",
     "date": "2026-07-12"
   }
 ]
