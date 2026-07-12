@@ -18,6 +18,8 @@
 9 금액 표기: 반드시 콤마 숫자 형식으로 쓴다 (예: 49,900원 — "4만 9천 9백원" 같은 한글 표기 금지)
 10 bg_keywords: 상품 사용 장면과 어울리는 배경 영상 검색어 — 영어 단어 2~3개 배열.
   상품명이 아니라 장소·분위기 위주로 (예: 미니 세탁기 → ["laundry room", "cozy apartment interior"])
+11 입력 JSON에 notes(상품 상세·실사용 후기 발췌)가 있으면 최우선 재료로 써라 —
+  구체 수치, 실제 사용 장면, 후기에서 드러난 통증포인트를 대본에 반영 (과장·왜곡 금지)
 
 출력 스키마
 {"title": "...", "lines": [{"text": "...", "image_cue": 0, "price_shock": false}], "hashtags": ["...", "...", "..."], "bg_keywords": ["...", "..."], "pinned_comment": "...", "description_body": "..."}
