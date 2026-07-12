@@ -106,5 +106,32 @@
         "Wikimedia Commons (File:Lophius piscatorius.ogv)"
       ]
     }
+  },
+  {
+    "key": "pycnogonida",
+    "kind": "creature",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/c/c8/Sea_spider_%28Pantopoda_or_pycnogonids%29.webm",
+      "license": "cc-by",
+      "credit": "Denise King · CC BY",
+      "source": "File:Sea spider (Pantopoda or pycnogonids).webm"
+    },
+    "species": {
+      "scientific_name": "Pycnogonida",
+      "common_name_ko": "바다거미목",
+      "common_name_en": "Pycnogonida",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ウミグモ綱（ウミグモこう、学名: Pycnogonida）は、鋏角類に属する節足動物の分類群（綱）の1つ。構成種はウミグモ（海蜘蛛、ウミグモ類）と総称される。その多くは胴体が小さく、体の大部分が脚という独特な姿をした海棲動物である。名前と大まかな姿が似ているが、クモではない。",
+        "約1,400種を知られ、最古の化石記録はおよそ5億年前のカンブリア紀まで遡る。現生種は皆脚目（かいきゃくもく、Pantopoda）のみからなる。世界中の海域に広く分布するが、その生態と系統に関しては未解明な所が多い。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Sea spider (Pantopoda or pycnogonids).webm)"
+      ]
+    }
   }
 ]

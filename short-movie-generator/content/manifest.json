@@ -175,5 +175,13 @@
     "scientific_name": "Wreck Madeirense",
     "date": "2026-07-12",
     "youtube_url": "https://youtu.be/UXpvm_cw1Aw"
+  },
+  {
+    "id": "022",
+    "kind": "reels",
+    "common_name_ko": "바다거미목",
+    "common_name_en": "Pycnogonida",
+    "scientific_name": "Pycnogonida",
+    "date": "2026-07-12"
   }
 ]

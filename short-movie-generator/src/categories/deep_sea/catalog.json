@@ -82,5 +82,12 @@
     "common_name_en": "Lithodid king crab",
     "scientific_name": "Lithodidae",
     "date": "2026-07-11"
+  },
+  {
+    "no": 22,
+    "common_name_ko": "바다거미목",
+    "common_name_en": "Pycnogonida",
+    "scientific_name": "Pycnogonida",
+    "date": "2026-07-12"
   }
 ]
