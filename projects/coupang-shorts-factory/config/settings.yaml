@@ -72,7 +72,7 @@ script:                 # M3 대본 생성 (스펙 §M3)
 
 upload:                 # M7 (스펙 §M7)
   privacy_default: "private"   # 미인증 API 프로젝트는 자동 private 잠금 → 반자동 공개 전환
-  category_id: "28"            # 과학기술
+  category_id: "26"            # 노하우/스타일 — 상품·리뷰 콘텐츠 표준 (28 과학기술에서 교정)
 
 research:               # M1 (스펙 §M1)
   min_score: 3.0        # 채널 중앙값 대비 배수
