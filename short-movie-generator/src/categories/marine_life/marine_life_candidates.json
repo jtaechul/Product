@@ -1,0 +1,82 @@
+[
+  {
+    "kind": "creature",
+    "key": "holothuria leucospilota",
+    "needs_confirm": false,
+    "title": "File:Im Roten Meer, Ägypten DSCF6991.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b3/Im_Roten_Meer%2C_%C3%84gypten_DSCF6991.webm",
+    "license": "cc-by-sa",
+    "credit": "Kora27 · CC BY-SA",
+    "source": "File:Im Roten Meer, Ägypten DSCF6991.webm",
+    "name": "Holothuria leucospilota",
+    "name_ja": "",
+    "common_name_ko": "Holothuria (Mertensiothuria) leucospilota",
+    "common_name_en": "Holothuria (Mertensiothuria) leucospilota",
+    "depth": "",
+    "facts": [
+      "ニセクロナマコ(偽黒海鼠、贋黒海鼠、Holothuria leucospilota)は、ナマコの一種。楯手目クロナマコ科クロナマコ属に属する。",
+      "体長は20 - 30センチメートル、全身が少し紫を帯びた黒。円柱形の体はやや細長く、特に先端から中程まではやや細みになっている。背中側の体表にはやや細かい円錐形の突起が多数並んでいる。腹面には管足が密生しており、背中側にも疣の間にまばらに見られる。体先端の口は下向きについており、触手を伸ばして岩表面に吸着しているのが見られる。体壁は柔らかい。",
+      "潮間帯に生息し、石の下に見られ、岩の上に這い出しているのもよく見かける。つよく刺激すると肛門からキュビエ器官を出す。これは白い紐状のもので、天敵の体にまとわりついて邪魔をする効果があると考えられている。また、体壁にはホロツリンという有毒成分が含まれる。これを利用し、浅瀬の魚を捕らえる漁がある。ナマコの中では唯一有毒とされている。",
+      "熱帯系の動物で、日本では紀伊半島付近を北限とし、それ以南、インド太平洋域に広く分布し、南アフリカ、中南米太平洋岸まで生息する。",
+      "近似種にクロナマコがある。全身が黒い点などよく似ているが、野外では常に体表に泥を被っているため、白っぽく見えること、またキュビエ器官を持たない点が異なる。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Holothuria leucospilota",
+      "common_name_ko": "Holothuria (Mertensiothuria) leucospilota",
+      "common_name_en": "Holothuria (Mertensiothuria) leucospilota",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ニセクロナマコ(偽黒海鼠、贋黒海鼠、Holothuria leucospilota)は、ナマコの一種。楯手目クロナマコ科クロナマコ属に属する。",
+        "体長は20 - 30センチメートル、全身が少し紫を帯びた黒。円柱形の体はやや細長く、特に先端から中程まではやや細みになっている。背中側の体表にはやや細かい円錐形の突起が多数並んでいる。腹面には管足が密生しており、背中側にも疣の間にまばらに見られる。体先端の口は下向きについており、触手を伸ばして岩表面に吸着しているのが見られる。体壁は柔らかい。",
+        "潮間帯に生息し、石の下に見られ、岩の上に這い出しているのもよく見かける。つよく刺激すると肛門からキュビエ器官を出す。これは白い紐状のもので、天敵の体にまとわりついて邪魔をする効果があると考えられている。また、体壁にはホロツリンという有毒成分が含まれる。これを利用し、浅瀬の魚を捕らえる漁がある。ナマコの中では唯一有毒とされている。",
+        "熱帯系の動物で、日本では紀伊半島付近を北限とし、それ以南、インド太平洋域に広く分布し、南アフリカ、中南米太平洋岸まで生息する。",
+        "近似種にクロナマコがある。全身が黒い点などよく似ているが、野外では常に体表に泥を被っているため、白っぽく見えること、またキュビエ器官を持たない点が異なる。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Im Roten Meer, Ägypten DSCF6991.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_holothuria_leucospilota_29196635137.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "aplysia kurodai",
+    "needs_confirm": false,
+    "title": "File:Aplysia kurodai, Wakayama Japan.ogv",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Aplysia_kurodai%2C_Wakayama_Japan.ogv",
+    "license": "cc-by",
+    "credit": "Laitche · CC BY",
+    "source": "File:Aplysia kurodai, Wakayama Japan.ogv",
+    "name": "Aplysia kurodai",
+    "name_ja": "",
+    "common_name_ko": "군소",
+    "common_name_en": "Aplysia kurodai",
+    "depth": "",
+    "facts": [
+      "Aplysia kurodai is a species of gastropods belonging to the family Aplysiidae."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Aplysia kurodai",
+      "common_name_ko": "군소",
+      "common_name_en": "Aplysia kurodai",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Aplysia kurodai is a species of gastropods belonging to the family Aplysiidae."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Aplysia kurodai, Wakayama Japan.ogv)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_aplysia_kurodai_29196635137.jpg"
+  }
+]
