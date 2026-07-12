@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import re
 import ssl
 import subprocess
@@ -209,15 +210,22 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
             onsets = _even_onsets(spec.hook_pop_words, cfg)
             narr_failed = not hook
 
-        # ★오프닝 홀드 보장(운영자 확정): 긴/3줄 훅은 마지막 어절 이펙트가 끝나자마자 본문으로 넘어가
-        #   어색했다 → 마지막 어절 완료 시각 + 0.7초 홀드를 확보하도록 오프닝 길이를 필요 시 늘린다.
-        #   (짧은 훅은 기본 4.6초로 이미 홀드가 충분하므로 그대로 유지.)
+        # ★오프닝 홀드 보장(운영자 확정 · 실측 기반): 훅 나레이션이 **완전히 끝난 뒤** 최소 0.7초
+        #   여유를 두고 본문으로 넘어가야 한다. 기준은 '마지막 어절의 시작'이 아니라 '나레이션 실제 종료'다.
+        #   (실제 결함: 어절 시작만 보면 마지막 단어를 말하는 ~1초가 누락돼, 3줄 훅에서 훅 음성이
+        #    본문에 겹쳐 재생됐다. → mp3 실제 길이 + 단어경계 끝을 함께 보고 나레이션 종료를 잡는다.)
         try:
+            narr_end = 0.0
+            if hook and hook.get("mp3") and Path(hook["mp3"]).exists():
+                narr_end = cfg.narr_start_s + _duration_of(hook["mp3"])   # mp3 실측(트레일링 포함)
+            if hook and hook.get("words"):
+                last = hook["words"][-1]                                  # (offset_s, dur_s, text)
+                narr_end = max(narr_end, cfg.narr_start_s + float(last[0]) + float(last[1]))
             last_on = max(onsets.values()) if onsets else 0.0
             pop_end = cfg.narr_start_s + float(last_on) + cfg.pop_grow_s + cfg.pop_fade_s
-            need = pop_end + _OPEN_HOLD_S
+            need = max(narr_end, pop_end) + _OPEN_HOLD_S
             if need > cfg.opening_seg_s:
-                cfg.opening_seg_s = round(need, 2)
+                cfg.opening_seg_s = math.ceil(need * 100) / 100.0   # 올림: 홀드가 0.7초 밑으로 안 내려가게
         except Exception:  # noqa: BLE001
             pass
 
