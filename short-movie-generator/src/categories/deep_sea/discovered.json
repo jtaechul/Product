@@ -1,0 +1,110 @@
+[
+  {
+    "key": "rimicaris exoculata",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/4/4a/Fond_abyssal_%28Ifremer_00701-81314%29.webm",
+      "license": "cc-by",
+      "credit": "Ifremer · CC BY",
+      "source": "File:Fond abyssal (Ifremer 00701-81314).webm"
+    },
+    "species": {
+      "scientific_name": "Rimicaris exoculata",
+      "common_name_ko": "vent shrimp",
+      "common_name_en": "vent shrimp",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Rimicaris exoculata, commonly known as the 'blind shrimp', is a species of shrimp.",
+        "It thrives on active hydrothermal edifices at deep-sea vents of the Mid-Atlantic Ridge.",
+        "This species belongs to the Alvinocarididae family of shrimp, named after the DSV Alvin, the vessel that collected the original samples described by M.",
+        "Christoffersen in 1986.",
+        "The genus name Rimicaris is composed of rima (Latin for \"rift\" or \"fissure\", referring to the Mid-Atlantic Ridge) + karis (\"shrimp\" in Greek), while the species epithet benign is Latin for \"rendered eyeless\", referring to the highly modified, non-image-forming eyes."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Fond abyssal (Ifremer 00701-81314).webm)"
+      ]
+    }
+  },
+  {
+    "key": "sardinops sagax",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/d/d1/Sardines_reacting_to_tuna_-_MBA.webm",
+      "license": "cc-by-sa",
+      "credit": "Eric Polk · CC BY-SA",
+      "source": "File:Sardines reacting to tuna - MBA.webm"
+    },
+    "species": {
+      "scientific_name": "Sardinops sagax",
+      "common_name_ko": "정어리",
+      "common_name_en": "Sardinops sagax",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Sardinops is a genus of sardines of the family Alosidae.",
+        "Often considered monotypic with only member as Sardinops sagax, it currently has three valid species:\n\nSardinops melanosticta (Temminck & Schlegel, 1846) (Japanese pilchard)\nSardinops ocellatus (Pappe, 1853) (Southern African pilchard)\nSardinops sagax (Jenyns, 1842)\nSardinops sagax caeruleus (Girard, 1854) (Californian pilchard)\nSardinops sagax musica (Girard, 1855)\nSardinops sagax neopilchardus (Steindachner, 1879) (Australian pilchard)\nIt is found in the Indo-Pacific, East Pacific, Southeastern Atlantic and southwestern Indian oceans.",
+        "Its length is up to 40 cm (16 in).",
+        "It has numerous common or vernacular names, some of which more appropriately refer to subspecies, including blue pilchard, blue-bait, Peruvian Pacific sardine (S.",
+        "sagax), South American pilchard, Chilean sardine, and Pacific sardine."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Sardines reacting to tuna - MBA.webm)"
+      ]
+    }
+  },
+  {
+    "key": "peltospira smaragdina",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Peltospira_smaragdina_gastropod_assemblage_at_the_Y3_site_in_the_Lucky_Strike_vent_field_%28MAR%29_%28Ifremer_00775-88699%29.webm",
+      "license": "cc-by",
+      "credit": "Jozée Sarrazin / Mathilde Cannat / Pierre-Marie Sarradin · CC BY",
+      "source": "File:Peltospira smaragdina gastropod assemblage at the Y3 site in the Lucky Strike vent field (MAR) (Ifremer 00775-88699).webm"
+    },
+    "species": {
+      "scientific_name": "Peltospira smaragdina",
+      "common_name_ko": "Peltospira smaragdina",
+      "common_name_en": "Peltospira smaragdina",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Peltospira smaragdina is a species of sea snail, a marine gastropod mollusk in the family Peltospiridae."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Peltospira smaragdina gastropod assemblage at the Y3 site in the Lucky Strike vent field (MAR) (Ifremer 00775-88699).webm)"
+      ]
+    }
+  },
+  {
+    "key": "lophius piscatorius",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/e/ec/Lophius_piscatorius.ogv",
+      "license": "cc-by-sa",
+      "credit": "Waielbi · CC BY-SA",
+      "source": "File:Lophius piscatorius.ogv"
+    },
+    "species": {
+      "scientific_name": "Lophius piscatorius",
+      "common_name_ko": "Lophius piscatorius",
+      "common_name_en": "Lophius piscatorius",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ニシアンコウ (Lophius piscatorius) はアンコウ科に属する魚類の一種。英語では angler(fish), fishing-frog, frog-fish, sea-devilなどと呼ばれる。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Lophius piscatorius.ogv)"
+      ]
+    }
+  }
+]

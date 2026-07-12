@@ -7,9 +7,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 
-# 통과 라이선스 (spec 12장) — 코어 하드 룰
-ALLOWED_LICENSES = frozenset({"public-domain", "cc0", "cc-by", "kogl-type1"})
-BLOCKED_LICENSES = frozenset({"cc-by-nc", "cc-by-sa", "cc-by-nc-sa", "unknown"})
+# 통과 라이선스 (spec 12장) — 코어 하드 룰.
+# ★CC-BY-SA 오픈(운영자 확정): 소스 풀 확대를 위해 CC-BY-SA도 허용한다(저작자·라이선스 표기 필수).
+#   상업적 이용 가능·표시 조건이므로 크레딧을 반드시 캡션에 넣는다. NC(비상업)는 여전히 차단.
+ALLOWED_LICENSES = frozenset({"public-domain", "cc0", "cc-by", "cc-by-sa", "kogl-type1"})
+BLOCKED_LICENSES = frozenset({"cc-by-nc", "cc-by-nc-sa", "unknown"})
 
 
 class PipelineError(RuntimeError):

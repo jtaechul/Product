@@ -12,13 +12,14 @@ def _asset(license_, caption="", src="NOAA"):
     )
 
 
-@pytest.mark.parametrize("lic", ["public-domain", "cc0", "cc-by", "kogl-type1", "CC0", "Public-Domain"])
+# ★CC-BY-SA 오픈(운영자 확정): 소스 풀 확대를 위해 허용(표시 조건이라 크레딧 필수). NC는 여전히 차단.
+@pytest.mark.parametrize("lic", ["public-domain", "cc0", "cc-by", "cc-by-sa", "kogl-type1", "CC0", "Public-Domain"])
 def test_allowed_licenses_pass(lic):
     ok, _ = license_gate.evaluate(_asset(lic))
     assert ok is True
 
 
-@pytest.mark.parametrize("lic", ["cc-by-nc", "cc-by-sa", "cc-by-nc-sa", "unknown"])
+@pytest.mark.parametrize("lic", ["cc-by-nc", "cc-by-nc-sa", "unknown"])
 def test_blocked_licenses_fail(lic):
     ok, _ = license_gate.evaluate(_asset(lic))
     assert ok is False

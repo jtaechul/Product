@@ -398,3 +398,34 @@ def resolve_key(query: str) -> str | None:
         if q in words and len(q) >= 3:
             matches.add(key)
     return matches.pop() if len(matches) == 1 else None
+
+
+def _merge_discovered() -> None:
+    """자동 발굴(discovery)된 종의 기본정보를 SPECIES에 병합(import 시 1회).
+    reels 경로는 기본정보(학명·이름·수심·서식·사실·출처)만 쓰므로 Veo/HUD용 프롬프트 필드는 불필요.
+    이렇게 하면 손으로 데이터를 넣지 않아도 발굴 종이 auto 후보·get_info에 그대로 편입된다."""
+    try:
+        from src.core import discovery
+    except Exception:  # noqa: BLE001
+        return
+    for it in discovery.load_discovered("deep_sea"):
+        key = (it.get("key") or "").strip().lower()
+        sp = it.get("species") or {}
+        if not key or not sp.get("scientific_name") or key in SPECIES:
+            continue
+        SPECIES[key] = {
+            "scientific_name": sp["scientific_name"],
+            "common_name_ko": sp.get("common_name_ko") or sp["scientific_name"],
+            "common_name_en": sp.get("common_name_en") or sp["scientific_name"],
+            "depth_range_m": sp.get("depth_range_m", ""),
+            "distribution": sp.get("distribution", ""),
+            "habitat": sp.get("habitat", ""),
+            "diet": list(sp.get("diet", [])),
+            "fun_facts": list(sp.get("fun_facts", [])),
+            "sources": list(sp.get("sources", [])),
+            "accuracy_flags": {},
+            "_discovered": True,   # 발굴 종 표시(디버그·리포트용)
+        }
+
+
+_merge_discovered()

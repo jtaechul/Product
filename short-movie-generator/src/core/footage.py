@@ -16,7 +16,9 @@ log = logging.getLogger(__name__)
 
 _UA = ("DeepSeaShortsBot/1.0 (https://github.com/jtaechul/product; educational deep-sea shorts) "
        "requests/2")
-_ALLOWED = ("public domain", "pd", "cc0", "cc-by", "cc by", "publicdomain", "kogl")
+# 통과 라이선스 부분일치 키(운영자 확정: CC-BY-SA 오픈). cc-by-sa는 'cc by'로도 잡히지만
+# 명시 키를 둬서 _norm_license가 'cc-by-sa'로 정확히 분류하게 한다(크레딧 표기 구분).
+_ALLOWED = ("public domain", "pd", "cc0", "cc-by", "cc by", "cc-by-sa", "cc by-sa", "publicdomain", "kogl")
 _VIDEO_EXT = (".webm", ".ogv", ".ogg", ".mp4", ".mov")
 
 # NOAA Ocean Exploration 워터마크(좌상단 고정) 영역 — 원본 대비 비율(x, y, w, h).
@@ -108,6 +110,32 @@ _SEED = {
 # ※ SS Wisconsin(4:3·960×720)은 세로/가로 규격에 안 맞아 레터박스가 생겨 제외(아래 종횡비 게이트로도 자동 차단).
 
 
+def _merge_discovered_seeds() -> None:
+    """자동 발굴(discovery)로 확보된 종의 실사 시드를 _SEED에 병합한다(import 시 1회).
+    이렇게 하면 손으로 시드를 추가하지 않아도 발굴된 종이 fetch_footage·auto 후보에 그대로 편입된다.
+    discovery.load_discovered는 JSON만 읽어 import 순환이 없다."""
+    try:
+        from src.core import discovery
+    except Exception:  # noqa: BLE001
+        return
+    for cid in ("deep_sea", "marine_life", "marine_algae", "shipwreck"):
+        try:
+            for it in discovery.load_discovered(cid):
+                key = (it.get("key") or "").strip().lower()
+                fp = it.get("footage") or {}
+                if key and fp.get("url") and key not in _SEED:
+                    _SEED[key] = {"url": fp["url"], "license": fp.get("license", "cc-by"),
+                                  "credit": fp.get("credit", "Wikimedia Commons"),
+                                  "source": fp.get("source", "")}
+                    if fp.get("trim"):
+                        _SEED[key]["trim"] = tuple(fp["trim"])
+        except Exception:  # noqa: BLE001
+            continue
+
+
+_merge_discovered_seeds()
+
+
 def seeded_keys() -> tuple:
     """검증된 실사 영상이 있는 종(학명 소문자) 목록 — auto 선택 풀."""
     return tuple(_SEED.keys())
@@ -115,6 +143,9 @@ def seeded_keys() -> tuple:
 
 def _norm_license(text: str) -> str | None:
     t = (text or "").strip().lower()
+    # ★NC(비상업) 차단(하드룰): 'cc by'가 'cc by-nc'의 부분일치라 먼저 걸러 오통과를 막는다.
+    if "nc" in t and ("by-nc" in t or "by nc" in t or "noncommercial" in t or "non-commercial" in t):
+        return None
     if any(a in t for a in _ALLOWED):
         if "cc0" in t or "zero" in t:
             return "cc0"
@@ -122,6 +153,8 @@ def _norm_license(text: str) -> str | None:
             return "public-domain"
         if "kogl" in t:
             return "kogl-type1"
+        if "sa" in t and ("by-sa" in t or "by sa" in t):  # CC-BY-SA(오픈, 크레딧 필수)
+            return "cc-by-sa"
         return "cc-by"
     return None
 

@@ -202,9 +202,10 @@ def _fallback(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
     ko = "\n".join(ko_lines)
     # 일본어 캡션 — 일본어 요소 + 세계공통 학명·수심으로 서술(분포·서식지는 한국어라 제외)
     jp_lines = [f"{hook_line1}{hook_line2}", "",
-                f"{jp_name}(学名: {sci})。" if show_sci_name else f"{jp_name}。",
-                f"生息水深はおよそ {info.depth_range_m} メートル。",
-                f"{feature_line}。",
+                f"{jp_name}(学名: {sci})。" if show_sci_name else f"{jp_name}。"]
+    if (info.depth_range_m or "").strip():   # 수심 미상(발굴 종 등)이면 지어내지 않고 생략
+        jp_lines.append(f"生息水深はおよそ {info.depth_range_m} メートル。")
+    jp_lines += [f"{feature_line}。",
                 "深い海の底で、たしかに命をつないでいる一種です。", "",
                 "心に残ったら保存を。", "同じ海が気になる人へシェアを。", "", f"映像: {credit}"]
     jp = "\n".join(jp_lines)
