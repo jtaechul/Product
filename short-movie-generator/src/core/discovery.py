@@ -437,10 +437,14 @@ def discover_candidates(category_id: str, want: int = 6, exclude_keys: set[str] 
 def make_thumbnail(url: str, out_jpg: str, tmp_dir: str) -> bool:
     """후보 영상 URL을 내려받아 '피사체가 잘 보이는 대표 프레임' 1장을 out_jpg로 저장(검토 미리보기용).
     실패 시 False. 다운로드본은 남겨 재사용 가능(정리는 호출측)."""
+    import hashlib
     from src.core import footage
     from src.core.longform import thumbnail as TH
     ext = next((e for e in _VIDEO_EXT if url.lower().endswith(e)), ".webm")
-    src = Path(tmp_dir) / f"_thumb_src{ext}"
+    # ★임시 파일명은 URL별 고유(해시)로 만든다. 고정 이름(_thumb_src)이면 여러 후보가 첫 후보의
+    #   영상을 캐시로 재사용해 '모든 후보 썸네일이 동일'해지던 버그가 있었다(재발 방지).
+    h = hashlib.md5(url.encode("utf-8")).hexdigest()[:12]
+    src = Path(tmp_dir) / f"_thumb_{h}{ext}"
     try:
         if not (src.exists() and src.stat().st_size > 100_000) and not footage._download(url, src):
             return False
