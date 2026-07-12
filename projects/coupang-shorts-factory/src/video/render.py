@@ -42,7 +42,8 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
                  shake_windows: list | None = None, project_root: Path | None = None,
                  image_windows: list | None = None, bg_path: Path | None = None,
                  product_images: list | None = None, lines: list | None = None,
-                 line_windows: list | None = None, stock_clips: list | None = None) -> dict:
+                 line_windows: list | None = None, stock_clips: list | None = None,
+                 product_videos: list | None = None) -> dict:
     """대본 단계(stage)별 씬 시퀀스 쇼츠 렌더. 반환: 렌더 통계 dict.
 
     lines(단계 포함)+line_windows가 있으면 '씬 시퀀스'로 렌더한다 — 상품 단계(①④⑤)는
@@ -58,6 +59,7 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     project_root = project_root or Path.cwd()
     product_images = [Path(p) for p in (product_images or []) if Path(p).exists()]
     stock_clips = [Path(p) for p in (stock_clips or []) if Path(p).exists()]
+    product_videos = [Path(p) for p in (product_videos or []) if Path(p).exists()]
     lines = list(lines or [])
     line_windows = list(line_windows or [])
 
@@ -75,15 +77,17 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     if use_scenes:
         scenes = _plan_scenes(duration, lines, line_windows, len(product_images), len(stock_clips))
         for sc in scenes:
-            bgc = _scene_bg_clip(sc, product_images, stock_clips, over_w, over_h)
+            bgc = _scene_bg_clip(sc, product_images, product_videos, stock_clips, over_w, over_h)
             bgc = (bgc.with_start(sc["start"]).with_duration(sc["end"] - sc["start"] + 0.04)
                       .with_position(_seg_shake_pos(sc["start"], shake_windows, shake_px, fps)))
             bg_layers.append(bgc)
-            if sc["kind"] == "product" and product_images:
+            # 제품 영상이 있으면 그 자체가 주인공(풀프레임) → 사진 카드는 얹지 않음
+            if sc["kind"] == "product" and product_images and not product_videos:
                 card = _product_card_clip(sc, product_images, width, height)
                 if card is not None:
                     card_layers.append(card)
-        bg_name = f"씬 {len(scenes)}컷 (상품 {len(product_images)}·스톡 {len(stock_clips)})"
+        bg_name = (f"씬 {len(scenes)}컷 (상품사진 {len(product_images)}·상품영상 "
+                   f"{len(product_videos)}·스톡 {len(stock_clips)})")
     else:
         if product_images:
             background, bg_name = _blurred_product_bg(product_images[0], over_w, over_h, duration)
@@ -347,27 +351,44 @@ def _plan_scenes(duration: float, lines: list, line_windows: list,
     return scenes
 
 
-def _scene_bg_clip(scene: dict, product_images: list, stock_clips: list, over_w: int, over_h: int):
-    """씬 배경: 문제 씬은 어둡게 깐 스톡 영상, 상품 씬은 흐린 상품 사진, 최후엔 그라데이션."""
+def _video_fullframe(path, over_w: int, over_h: int, dur: float, darken: float = 1.0):
+    """영상을 화면에 꽉 차게(cover) 잘라 오디오 길이에 맞춰 루프/트림, 필요 시 어둡게. 실패 시 None."""
+    try:
+        clip = VideoFileClip(str(path)).without_audio()
+        scale = max(over_w / clip.w, over_h / clip.h)
+        clip = clip.resized(scale).cropped(
+            x_center=clip.w * scale / 2, y_center=clip.h * scale / 2,
+            width=over_w, height=over_h)
+        if clip.duration < dur:
+            clip = clip.with_effects([vfx.Loop(duration=dur)])
+        else:
+            clip = clip.subclipped(0, dur)
+        if darken < 1.0:
+            clip = clip.with_effects([vfx.MultiplyColor(darken)])
+        return clip
+    except Exception as e:
+        print(f"[render] 경고: 영상 로드 실패({Path(path).name}: {e}) — 대체 배경")
+        return None
+
+
+def _scene_bg_clip(scene: dict, product_images: list, product_videos: list,
+                   stock_clips: list, over_w: int, over_h: int):
+    """씬 배경: 문제 씬=어둡게 깐 스톡 영상, 상품 씬=제품 실사용 영상(있으면)·아니면 흐린 상품 사진,
+    최후엔 그라데이션. 제품 영상은 살짝만 어둡게(주인공이므로)."""
     dur = scene["end"] - scene["start"]
     if scene["kind"] == "stock" and stock_clips:
-        path = stock_clips[scene["asset"] % len(stock_clips)]
-        try:
-            clip = VideoFileClip(str(path)).without_audio()
-            scale = max(over_w / clip.w, over_h / clip.h)
-            clip = clip.resized(scale).cropped(
-                x_center=clip.w * scale / 2, y_center=clip.h * scale / 2,
-                width=over_w, height=over_h)
-            if clip.duration < dur:
-                clip = clip.with_effects([vfx.Loop(duration=dur)])
-            else:
-                clip = clip.subclipped(0, dur)
-            return clip.with_effects([vfx.MultiplyColor(0.55)])  # 자막 가독성 위해 어둡게
-        except Exception as e:
-            print(f"[render] 경고: 스톡 클립 실패({Path(path).name}: {e}) — 대체 배경")
-    if product_images:
-        img = product_images[scene.get("asset", 0) % len(product_images)]
-        clip, _ = _blurred_product_bg(Path(img), over_w, over_h, dur)
+        clip = _video_fullframe(stock_clips[scene["asset"] % len(stock_clips)],
+                                over_w, over_h, dur, darken=0.55)  # 자막 가독성 위해 어둡게
+        if clip is not None:
+            return clip
+    if scene["kind"] == "product" and product_videos:
+        clip = _video_fullframe(product_videos[scene.get("asset", 0) % len(product_videos)],
+                                over_w, over_h, dur, darken=0.82)  # 제품이 주인공 → 살짝만
+        if clip is not None:
+            return clip
+    if scene["kind"] == "product" and product_images:
+        clip, _ = _blurred_product_bg(Path(product_images[scene.get("asset", 0) % len(product_images)]),
+                                      over_w, over_h, dur)
         return clip
     top, bottom = np.array([12, 14, 34]), np.array([44, 20, 60])
     rows = np.linspace(0, 1, over_h)[:, None]

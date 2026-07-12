@@ -120,6 +120,8 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     # ---- 상품 히어로 사진: 캡처에서 확보한 것 + 붙여넣은 이미지 URL 다운로드 (화면 주인공)
     product_images = list(product.get("hero_images") or [])
     product_images += _download_images(product.get("image_urls") or [], job_dir)
+    # ---- 제품 실사용 영상(운영자가 관리자에서 업로드·확인한 것) → 있으면 상품 단계에 풀프레임 사용
+    product_videos = [p for p in (product.get("hero_videos") or []) if Path(p).exists()]
     # ---- 문제 단계(②③)용 스톡 b-roll — 대본 영어 키워드로 Pexels에서 몇 개 확보(항상 시도).
     #      키 없거나 실패면 빈 리스트 → 렌더가 그라데이션으로 폴백(제작은 계속).
     stock_clips = fetch_stock_clips(script.get("bg_keywords"), job_dir, n=3)
@@ -130,7 +132,8 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     stats = render_video(tts_result["audio_path"], words, out_path, settings,
                          shake_windows=shake_windows, project_root=PROJECT_ROOT,
                          product_images=product_images, bg_path=bg_path,
-                         lines=lines, line_windows=line_windows, stock_clips=stock_clips)
+                         lines=lines, line_windows=line_windows, stock_clips=stock_clips,
+                         product_videos=product_videos)
     stats = {"job_id": job_id, "product": product["name"],
              "tts_provider": tts_result["provider"],
              "timestamps_source": tts_result["timestamps_source"], **stats}
