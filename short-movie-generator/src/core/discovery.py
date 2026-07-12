@@ -300,6 +300,156 @@ def discover(exclude_scinames: set[str], exclude_titles: set[str], want: int = 3
     return out
 
 
+# ── 침몰선(난파선) 소싱 — 학명이 없어 정체성 경로가 다르다(제목·설명·구조화데이터 → 운영자 확인) ──
+_WRECK_TERMS = ["wreck dive", "shipwreck underwater", "wreck diving", "sunken ship",
+                "ship wreck scuba", "underwater wreck", "沈没船", "難破船"]
+# 배 이름 파싱: "wreck of X" / "SS X" 등. 오탐(Museum 등)은 _WRECK_BAD로 컷.
+_WRECK_NAME = re.compile(
+    r"(?:wreck of (?:the )?|wreck |난파선\s*|epave (?:du |de la |le )?|naufr[aá]gio (?:do |da )?)"
+    r"([A-Z][\w'’\-]+(?:\s+[A-Z][\w'’\-]+){0,2})"
+    r"|\b((?:SS|HMS|USS|MV|RMS|MS|HMAS)\s+[A-Z][\w'’\-]+)")
+_WRECK_TYPE = re.compile(
+    r"cargo ship|화물선|貨物船|passenger|여객선|submarine|잠수함|潜水艦|U-?boat|Uボート|"
+    r"tanker|유조선|warship|군함|軍艦|destroyer|frigate|trawler|어선|ferry|bulk carrier", re.I)
+_WRECK_BAD = re.compile(r"museum|박물관|\bmodel\b|모형|replica|game|simulator|minecraft", re.I)
+_SHIP_QIDS = ("Q852190", "Q11446", "Q1229765", "Q17205621")  # shipwreck·ship·watercraft·상선 등
+
+
+def _wreck_identity(pid: str, title: str, desc: str) -> dict | None:
+    """침몰선 정체성(약한 확신 — 운영자 확인 전제): 배 이름·선종·수심을 최선 추출.
+    ① 구조화데이터 depicts→Wikidata 배/난파선 항목(있으면 위키 사실까지) ② 제목의 배 이름.
+    확인 가능한 게 하나도 없으면 None(완전 불명은 후보에서 제외)."""
+    name = name_ja = None
+    facts: list[str] = []
+    fact_src = ""
+    # ① depicts → Wikidata 배/난파선
+    try:
+        sd = _get(_COMMONS, action="wbgetentities", ids=f"M{pid}")
+        ent = sd.get("entities", {}).get(f"M{pid}", {})
+        st = ent.get("statements", ent.get("claims", {})) or {}
+        for s in st.get("P180", []):
+            q = s.get("mainsnak", {}).get("datavalue", {}).get("value", {}).get("id")
+            if not q:
+                continue
+            e = _wd_entity(q)
+            if not e:
+                continue
+            inst = [c.get("mainsnak", {}).get("datavalue", {}).get("value", {}).get("id")
+                    for c in (e.get("claims", {}) or {}).get("P31", [])]
+            if any(x in _SHIP_QIDS for x in inst):
+                labs = e.get("labels", {})
+                name = (labs.get("en", {}) or {}).get("value") or (labs.get("ja", {}) or {}).get("value")
+                name_ja = (labs.get("ja", {}) or {}).get("value")
+                facts, fact_src = _facts_from_wiki(e.get("sitelinks", {}) or {})
+                break
+    except Exception:  # noqa: BLE001
+        pass
+    # ② 제목의 배 이름
+    if not name:
+        m = _WRECK_NAME.search(re.sub(r"^File:", "", title))
+        if m:
+            name = (m.group(1) or m.group(2) or "").strip()
+    if not name:
+        return None
+    tm = _WRECK_TYPE.search(title + " " + (desc or ""))
+    depth = _depth_from_text(title, desc, " ".join(facts))
+    return {"name": name, "name_ja": name_ja, "facts": facts, "fact_src": fact_src,
+            "ship_type": tm.group(0) if tm else "", "depth": depth}
+
+
+def _discover_wrecks(exclude_keys: set[str], want: int) -> list[dict]:
+    seen: dict[str, int] = {}
+    for term in _WRECK_TERMS:
+        d = _get(_COMMONS, action="query", list="search",
+                 srsearch=f"{term} filetype:video", srnamespace="6", srlimit="12")
+        for h in d.get("query", {}).get("search", []):
+            if h.get("title", "").lower().endswith(_VIDEO_EXT):
+                seen[h["title"]] = 1
+    titles = list(seen)
+    out: list[dict] = []
+    for i in range(0, len(titles), 10):
+        if len(out) >= want:
+            break
+        info = _get(_COMMONS, action="query", prop="imageinfo", titles="|".join(titles[i:i + 10]),
+                    iiprop="url|size|extmetadata",
+                    iiextmetadatafilter="LicenseShortName|Artist|ImageDescription")
+        for pid, page in info.get("query", {}).get("pages", {}).items():
+            if len(out) >= want or int(pid) <= 0:
+                continue
+            ii = (page.get("imageinfo") or [{}])[0]
+            em = ii.get("extmetadata", {})
+            lic = _norm_license(em.get("LicenseShortName", {}).get("value", ""))
+            url = ii.get("url", "")
+            w, h = ii.get("width", 0), ii.get("height", 0)
+            ar = (w / h) if h else 0
+            if not (lic and url and url.lower().endswith(_VIDEO_EXT) and 1.55 <= ar <= 1.95):
+                continue
+            title = page.get("title", "")
+            desc = _strip(em.get("ImageDescription", {}).get("value", ""))
+            if _WRECK_BAD.search(title + " " + desc) or _BADCLIP.search(title + " " + desc):
+                continue
+            ident = _wreck_identity(pid, title, desc)
+            if not ident:
+                continue
+            key = ident["name"].strip().lower()
+            if key in exclude_keys or any(o["key"] == key for o in out):
+                continue
+            artist = _strip(em.get("Artist", {}).get("value", ""))
+            credit = artist or "Wikimedia Commons"
+            credit += " · CC BY-SA" if lic == "cc-by-sa" else (" · CC BY" if lic == "cc-by" else "")
+            out.append({
+                "kind": "wreck", "key": key, "needs_confirm": True,
+                "title": title, "url": url, "license": lic, "credit": credit, "source": title,
+                "name": ident["name"], "name_ja": ident.get("name_ja") or "",
+                "ship_type": ident.get("ship_type", ""), "depth": ident.get("depth", ""),
+                "facts": ident.get("facts", []), "fact_src": ident.get("fact_src", ""),
+                "desc": desc[:300],
+            })
+            log.info("[discovery] 침몰선 후보: %s (%s)", ident["name"], lic)
+    return out
+
+
+def discover_candidates(category_id: str, want: int = 6, exclude_keys: set[str] | None = None) -> list[dict]:
+    """관리자 '소싱하기'용 후보 목록(메타 수준 — 다운로드 안 함, 워크플로가 게이트·썸네일 담당).
+    생물 카테고리=학명·사실 자동확보 후보, shipwreck=배 이름·선종 최선추출(needs_confirm)."""
+    exclude_keys = {k.strip().lower() for k in (exclude_keys or set())}
+    if category_id == "shipwreck":
+        return _discover_wrecks(exclude_keys, want)
+    # 생물: 기존 discover()의 정체성·사실 로직 재사용(다운로드/게이트는 워크플로에서)
+    recs = discover(exclude_keys, set(), want=want, validate=None)
+    cands = []
+    for r in recs:
+        sp = r["species"]
+        cands.append({
+            "kind": "creature", "key": r["key"], "needs_confirm": False,
+            "title": r["footage"]["source"], "url": r["footage"]["url"],
+            "license": r["footage"]["license"], "credit": r["footage"]["credit"],
+            "source": r["footage"]["source"],
+            "name": sp["scientific_name"], "name_ja": "",
+            "common_name_ko": sp["common_name_ko"], "common_name_en": sp["common_name_en"],
+            "depth": sp["depth_range_m"], "facts": sp["fun_facts"], "fact_src": (sp["sources"] or [""])[0],
+            "species": sp,
+        })
+    return cands
+
+
+def make_thumbnail(url: str, out_jpg: str, tmp_dir: str) -> bool:
+    """후보 영상 URL을 내려받아 '피사체가 잘 보이는 대표 프레임' 1장을 out_jpg로 저장(검토 미리보기용).
+    실패 시 False. 다운로드본은 남겨 재사용 가능(정리는 호출측)."""
+    from src.core import footage
+    from src.core.longform import thumbnail as TH
+    ext = next((e for e in _VIDEO_EXT if url.lower().endswith(e)), ".webm")
+    src = Path(tmp_dir) / f"_thumb_src{ext}"
+    try:
+        if not (src.exists() and src.stat().st_size > 100_000) and not footage._download(url, src):
+            return False
+        TH.pick_hero_frame(str(src), out_jpg)
+        return Path(out_jpg).exists()
+    except Exception as e:  # noqa: BLE001
+        log.warning("[discovery] 썸네일 생성 실패(%s): %s", url, e)
+        return False
+
+
 def validate_source_url(url: str, tmp_dir: str) -> bool:
     """발굴 후보 URL을 실제로 내려받아 품질 게이트(종횡비·정지영상)를 통과하는지 검증.
     통과분만 discovered.json에 넣어, 제작 때 정지/레터박스로 실패하는 일을 예방한다."""
@@ -350,6 +500,48 @@ def save_discovered(category_id: str, items: list[dict]) -> None:
     p = _path(category_id)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+# ── 소싱 후보(검토 대기) 영속화 — 승인 전 목록. 승인 시 discovered.json(생물)/shipwreck 풀로 이동 ──
+def _cand_path(category_id: str) -> Path:
+    return _DISCOVERED_DIR / category_id / f"{category_id}_candidates.json"
+
+
+def load_candidates(category_id: str) -> list[dict]:
+    p = _cand_path(category_id)
+    if not p.exists():
+        return []
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+        return d if isinstance(d, list) else []
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def save_candidates(category_id: str, items: list[dict]) -> None:
+    p = _cand_path(category_id)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def source_to_candidates(category_id: str, want: int = 6, validate=None) -> list[dict]:
+    """'소싱하기'가 호출: 새 후보를 발굴해 (선택) 실사 게이트로 거른 뒤 후보 파일에 저장.
+    이미 후보/승인된 대상은 제외. 반환 = 이번에 추가된 후보 목록."""
+    existing = load_candidates(category_id)
+    excl = {c["key"] for c in existing}
+    excl |= {it["key"] for it in load_discovered(category_id)}
+    try:
+        from src.core import footage as _f
+        excl |= {k.lower() for k in _f.seeded_keys()}
+    except Exception:  # noqa: BLE001
+        pass
+    found = discover_candidates(category_id, want=want, exclude_keys=excl)
+    if validate:
+        found = [c for c in found if validate(c["url"])]
+    if not found:
+        return []
+    save_candidates(category_id, existing + found)
+    return found
 
 
 def replenish(category_id: str, want: int = 2, validate=None) -> list[str]:
