@@ -23,6 +23,7 @@ import yaml
 from src import notify
 from src.audio import tts
 from src.product import manual_queue
+from src.product.assets import fetch_product_videos
 from src.product.enrich import enrich_product
 from src.script.generate import DISCLOSURE, anthropic_key, generate_script
 from src.upload import youtube
@@ -120,8 +121,10 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     # ---- 상품 히어로 사진: 캡처에서 확보한 것 + 붙여넣은 이미지 URL 다운로드 (화면 주인공)
     product_images = list(product.get("hero_images") or [])
     product_images += _download_images(product.get("image_urls") or [], job_dir)
-    # ---- 제품 실사용 영상(운영자가 관리자에서 업로드·확인한 것) → 있으면 상품 단계에 풀프레임 사용
+    # ---- 제품 실사용 영상: 관리자 페이지에서 업로드한 것(릴리스 product-assets)을 상품 해시로
+    #      내려받아 상품 단계 풀프레임 배경으로 사용. 없으면 사진 히어로 폴백.
     product_videos = [p for p in (product.get("hero_videos") or []) if Path(p).exists()]
+    product_videos += fetch_product_videos(product["_row_hash"], job_dir)
     # ---- 스톡 b-roll 자동 검색 폐지(2026-07-12 개편): 검색어만으로는 무관한 장면(남의 집
     #      소파·주방)이 들어와 영상을 망친다. 운영자가 후보 그리드에서 직접 승인한 클립만
     #      product['stock_clips']로 들어온다(Task: Phase2 후보 그리드). 없으면 문제 구간은

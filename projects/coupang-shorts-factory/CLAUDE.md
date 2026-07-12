@@ -70,8 +70,15 @@
   제작(produce) 성공 시 워크플로우가 `video.mp4`+`poster.jpg`를 **GitHub Release `shorts-run{N}`**
   으로 발행(본문=`release_meta.json`) + **최신 10개만 유지**(오래된 릴리스·태그 자동 정리).
 - 관리자 페이지(노코드): `admin/public/index.html` — 상품 등록/삭제·제작 실행(workflow_dispatch)·
-  리서치 실행·실행 기록·**완성 영상 보기(영상 탭)**·채널 관리. 사용자 PAT(Contents/Actions RW,
-  브라우저 localStorage에만 저장)로 GitHub API를 직접 호출. 서버 로직·서버 시크릿 없음.
+  리서치 실행·실행 기록·**완성 영상 보기(영상 탭)**·채널 관리·**상품별 제품 영상 업로드**.
+  사용자 PAT(Contents/Actions RW, 브라우저 localStorage에만 저장)로 GitHub API를 직접 호출.
+  서버 로직·서버 시크릿 없음.
+- **제품 영상 시스템 (2026-07-12)**: 상품 목록의 "영상 올리기" → iPad 화면 녹화(쿠팡 상세페이지
+  판매자 시연 영상 등)를 선택 → **Release `product-assets` 자산 `{row_hash}_{시각}.mp4|mov`**로
+  업로드(브라우저→uploads.github.com 직접, CORS 차단 시 워커 `/ghup` 프록시 폴백 — 이 저장소
+  릴리스 URL만 허용). 파이프라인(`src/product/assets.py`)이 상품 해시로 매칭해 최신 3개를
+  내려받아 렌더 상품 구간 풀프레임 배경(hero_videos)으로 자동 사용(목록 조회는 CI `GH_TOKEN`).
+  실패해도 제작은 계속(사진 폴백). `shorts-run*` 정리 로직은 `product-assets`를 건드리지 않음.
   **영상 탭**: `shorts-run*` 릴리스를 대표 썸네일 그리드로 나열 → 탭하면 인라인 재생(iOS 포함).
   Release 자산은 octet-stream/attachment 라 iOS `<video>`가 인라인 재생을 거부 → `admin/worker/index.mjs`
   의 **`/media` 프록시**가 `video/mp4`+inline+Range 통과로 재서빙(정적 에셋은 `env.ASSETS`로 폴백,

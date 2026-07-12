@@ -97,6 +97,7 @@ jobs:
 
       - name: 파이프라인 실행
         env:
+          GH_TOKEN: ${{ github.token }}   # 제품 영상(release product-assets) 목록 조회용
           SHORTS_ELEVENLABS_API_KEY: ${{ secrets.SHORTS_ELEVENLABS_API_KEY }}
           SHORTS_TYPECAST_API_KEY: ${{ secrets.SHORTS_TYPECAST_API_KEY }}
           SHORTS_CLOVA_CLIENT_ID: ${{ secrets.SHORTS_CLOVA_CLIENT_ID }}

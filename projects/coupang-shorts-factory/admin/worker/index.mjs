@@ -42,11 +42,40 @@ async function mediaProxy(request, url) {
   return new Response(resp.body, { status: resp.status, headers: out });
 }
 
+// 제품 영상 릴리스 자산 업로드 프록시(/ghup): 브라우저 → uploads.github.com 직접 업로드가
+// CORS로 막히는 환경 대비 폴백. 같은 출처(POST /ghup?u=...)로 받아 서버 측에서 중계한다.
+// 개방 프록시 방지: 이 저장소의 releases 업로드 URL만 허용, 토큰은 요청 헤더의 사용자 PAT 그대로 전달.
+const UPLOAD_PREFIX = "https://uploads.github.com/repos/" + OWNER + "/" + REPO + "/releases/";
+
+async function ghUploadProxy(request, url) {
+  if (request.method !== "POST") return j({ error: "POST only" }, 405);
+  const u = url.searchParams.get("u") || "";
+  if (!u.startsWith(UPLOAD_PREFIX)) return j({ error: "url not allowed" }, 403);
+  const auth = request.headers.get("Authorization") || "";
+  if (!auth.startsWith("Bearer ")) return j({ error: "missing token" }, 401);
+  const resp = await fetch(u, {
+    method: "POST",
+    headers: {
+      "Authorization": auth,
+      "Accept": "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "Content-Type": request.headers.get("Content-Type") || "application/octet-stream",
+      "User-Agent": "shorts-admin",
+    },
+    body: request.body,
+  });
+  return new Response(resp.body, {
+    status: resp.status,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/health") return new Response("ok");
     if (url.pathname === "/media") return mediaProxy(request, url);
+    if (url.pathname === "/ghup") return ghUploadProxy(request, url);
     return env.ASSETS.fetch(request); // 그 외 경로는 정적 에셋(index.html 등)
   },
 };
