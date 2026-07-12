@@ -1,0 +1,120 @@
+[
+  {
+    "kind": "creature",
+    "key": "holothuria leucospilota",
+    "needs_confirm": false,
+    "title": "File:Im Roten Meer, Ägypten DSCF6991.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b3/Im_Roten_Meer%2C_%C3%84gypten_DSCF6991.webm",
+    "license": "cc-by-sa",
+    "credit": "Kora27 · CC BY-SA",
+    "source": "File:Im Roten Meer, Ägypten DSCF6991.webm",
+    "name": "Holothuria leucospilota",
+    "name_ja": "",
+    "common_name_ko": "Holothuria (Mertensiothuria) leucospilota",
+    "common_name_en": "Holothuria (Mertensiothuria) leucospilota",
+    "depth": "",
+    "facts": [
+      "ニセクロナマコ(偽黒海鼠、贋黒海鼠、Holothuria leucospilota)は、ナマコの一種。楯手目クロナマコ科クロナマコ属に属する。",
+      "体長は20 - 30センチメートル、全身が少し紫を帯びた黒。円柱形の体はやや細長く、特に先端から中程まではやや細みになっている。背中側の体表にはやや細かい円錐形の突起が多数並んでいる。腹面には管足が密生しており、背中側にも疣の間にまばらに見られる。体先端の口は下向きについており、触手を伸ばして岩表面に吸着しているのが見られる。体壁は柔らかい。",
+      "潮間帯に生息し、石の下に見られ、岩の上に這い出しているのもよく見かける。つよく刺激すると肛門からキュビエ器官を出す。これは白い紐状のもので、天敵の体にまとわりついて邪魔をする効果があると考えられている。また、体壁にはホロツリンという有毒成分が含まれる。これを利用し、浅瀬の魚を捕らえる漁がある。ナマコの中では唯一有毒とされている。",
+      "熱帯系の動物で、日本では紀伊半島付近を北限とし、それ以南、インド太平洋域に広く分布し、南アフリカ、中南米太平洋岸まで生息する。",
+      "近似種にクロナマコがある。全身が黒い点などよく似ているが、野外では常に体表に泥を被っているため、白っぽく見えること、またキュビエ器官を持たない点が異なる。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Holothuria leucospilota",
+      "common_name_ko": "Holothuria (Mertensiothuria) leucospilota",
+      "common_name_en": "Holothuria (Mertensiothuria) leucospilota",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ニセクロナマコ(偽黒海鼠、贋黒海鼠、Holothuria leucospilota)は、ナマコの一種。楯手目クロナマコ科クロナマコ属に属する。",
+        "体長は20 - 30センチメートル、全身が少し紫を帯びた黒。円柱形の体はやや細長く、特に先端から中程まではやや細みになっている。背中側の体表にはやや細かい円錐形の突起が多数並んでいる。腹面には管足が密生しており、背中側にも疣の間にまばらに見られる。体先端の口は下向きについており、触手を伸ばして岩表面に吸着しているのが見られる。体壁は柔らかい。",
+        "潮間帯に生息し、石の下に見られ、岩の上に這い出しているのもよく見かける。つよく刺激すると肛門からキュビエ器官を出す。これは白い紐状のもので、天敵の体にまとわりついて邪魔をする効果があると考えられている。また、体壁にはホロツリンという有毒成分が含まれる。これを利用し、浅瀬の魚を捕らえる漁がある。ナマコの中では唯一有毒とされている。",
+        "熱帯系の動物で、日本では紀伊半島付近を北限とし、それ以南、インド太平洋域に広く分布し、南アフリカ、中南米太平洋岸まで生息する。",
+        "近似種にクロナマコがある。全身が黒い点などよく似ているが、野外では常に体表に泥を被っているため、白っぽく見えること、またキュビエ器官を持たない点が異なる。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Im Roten Meer, Ägypten DSCF6991.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_holothuria_leucospilota.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "pycnogonida",
+    "needs_confirm": false,
+    "title": "File:Sea spider (Pantopoda or pycnogonids).webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/c8/Sea_spider_%28Pantopoda_or_pycnogonids%29.webm",
+    "license": "cc-by",
+    "credit": "Denise King · CC BY",
+    "source": "File:Sea spider (Pantopoda or pycnogonids).webm",
+    "name": "Pycnogonida",
+    "name_ja": "",
+    "common_name_ko": "바다거미목",
+    "common_name_en": "Pycnogonida",
+    "depth": "",
+    "facts": [
+      "ウミグモ綱（ウミグモこう、学名: Pycnogonida）は、鋏角類に属する節足動物の分類群（綱）の1つ。構成種はウミグモ（海蜘蛛、ウミグモ類）と総称される。その多くは胴体が小さく、体の大部分が脚という独特な姿をした海棲動物である。名前と大まかな姿が似ているが、クモではない。",
+      "約1,400種を知られ、最古の化石記録はおよそ5億年前のカンブリア紀まで遡る。現生種は皆脚目（かいきゃくもく、Pantopoda）のみからなる。世界中の海域に広く分布するが、その生態と系統に関しては未解明な所が多い。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Pycnogonida",
+      "common_name_ko": "바다거미목",
+      "common_name_en": "Pycnogonida",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ウミグモ綱（ウミグモこう、学名: Pycnogonida）は、鋏角類に属する節足動物の分類群（綱）の1つ。構成種はウミグモ（海蜘蛛、ウミグモ類）と総称される。その多くは胴体が小さく、体の大部分が脚という独特な姿をした海棲動物である。名前と大まかな姿が似ているが、クモではない。",
+        "約1,400種を知られ、最古の化石記録はおよそ5億年前のカンブリア紀まで遡る。現生種は皆脚目（かいきゃくもく、Pantopoda）のみからなる。世界中の海域に広く分布するが、その生態と系統に関しては未解明な所が多い。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Sea spider (Pantopoda or pycnogonids).webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_pycnogonida.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "octopus vulgaris",
+    "needs_confirm": false,
+    "title": "File:Krake (Octopus vulgaris) im Roten Meer. Ägypten. Осьминог в Красном море DSCF1713.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Krake_%28Octopus_vulgaris%29_im_Roten_Meer._%C3%84gypten._%D0%9E%D1%81%D1%8C%D0%BC%D0%B8%D0%BD%D0%BE%D0%B3_%D0%B2_%D0%9A%D1%80%D0%B0%D1%81%D0%BD%D0%BE%D0%BC_%D0%BC%D0%BE%D1%80%D0%B5_DSCF1713.webm",
+    "license": "cc-by-sa",
+    "credit": "Kora27 · CC BY-SA",
+    "source": "File:Krake (Octopus vulgaris) im Roten Meer. Ägypten. Осьминог в Красном море DSCF1713.webm",
+    "name": "Octopus vulgaris",
+    "name_ja": "",
+    "common_name_ko": "참문어",
+    "common_name_en": "common octopus",
+    "depth": "",
+    "facts": [
+      "チチュウカイマダコ（Octopus vulgaris、オクトプス・ウルガリス、オクトプス・ブルガリス、オクトパス・ブルガリス、英語: common octopus, フランス語: Pieuvre, Poulpe de roche, スペイン語: pulpo común）は、大西洋や地中海に生息するタコの一種である。長い間温帯から熱帯の汎存種と考えられてきたが、隠蔽種の存在が指摘され、現在では Octopus sinensis（マダコ）や Octopus tetricus（シドニーダコ）など複数種が認識され、Octopus vulgaris 種群には6種が含まれると考えられている。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Octopus vulgaris",
+      "common_name_ko": "참문어",
+      "common_name_en": "common octopus",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "チチュウカイマダコ（Octopus vulgaris、オクトプス・ウルガリス、オクトプス・ブルガリス、オクトパス・ブルガリス、英語: common octopus, フランス語: Pieuvre, Poulpe de roche, スペイン語: pulpo común）は、大西洋や地中海に生息するタコの一種である。長い間温帯から熱帯の汎存種と考えられてきたが、隠蔽種の存在が指摘され、現在では Octopus sinensis（マダコ）や Octopus tetricus（シドニーダコ）など複数種が認識され、Octopus vulgaris 種群には6種が含まれると考えられている。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Krake (Octopus vulgaris) im Roten Meer. Ägypten. Осьминог в Красном море DSCF1713.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_octopus_vulgaris.jpg"
+  }
+]
