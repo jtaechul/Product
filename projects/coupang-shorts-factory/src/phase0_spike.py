@@ -26,11 +26,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SPIKE_SCRIPT = {
     "title": "Phase 0 렌더 스파이크 — 미니 세탁기",
     "lines": [
-        {"text": "빨래를 3분 만에 끝내는 기계가 있다면 믿으시겠습니까", "price_shock": False},
-        {"text": "이 미니 세탁기는 무게가 고작 1.2킬로그램입니다", "price_shock": False},
-        {"text": "자취방에서도 캠핑장에서도 바로 돌릴 수 있습니다", "price_shock": False},
-        {"text": "가격은 단돈 49,900원입니다", "price_shock": True},
-        {"text": "이 가격이면 한번 써볼 만하지 않을까요", "price_shock": False},
+        {"text": "빨래를 3분 만에 끝내는 기계가 있다면 믿으시겠습니까", "punch": True},
+        {"text": "이 미니 세탁기는 무게가 고작 1.2킬로그램입니다", "punch": False},
+        {"text": "자취방에서도 캠핑장에서도 바로 돌릴 수 있습니다", "punch": False},
+        {"text": "손빨래로 팔 빠지던 시절은 이제 안녕입니다", "punch": False},
+        {"text": "이래도 아직 손빨래 하시겠습니까", "punch": False},
     ],
 }
 
@@ -73,13 +73,13 @@ def main() -> int:
           f"타임스탬프={tts_result['timestamps_source']}): 단어 {len(words)}개, "
           f"{tts_seconds:.1f}초 소요")
 
-    # price_shock 라인 → 쉐이크 구간 (라인 시작 시점부터 shake_seconds)
+    # punch 라인(가장 충격적인 훅) → 쉐이크 구간 (라인 시작 시점부터 shake_seconds)
     shake_windows = []
     shake_sec = float(settings.get("render", {}).get("shake_seconds", 0.3))
     idx = 0
     for line in lines:
         n = len(line["text"].split())
-        if line["price_shock"] and idx < len(words):
+        if line["punch"] and idx < len(words):
             start = float(words[idx]["start"])
             shake_windows.append((start, start + shake_sec))
         idx += n
