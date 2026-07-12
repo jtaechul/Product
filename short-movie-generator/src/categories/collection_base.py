@@ -51,6 +51,24 @@ class CollectionCategory(CategoryModule):
     COPY: dict = {}
     _dir = Path(__file__).resolve().parent   # 하위 클래스가 __file__로 override
 
+    def __init__(self):
+        """수동 소싱으로 승인된 발굴 대상(discovered.json: subject+copy)을 SUBJECTS/COPY에 병합.
+        침omen선처럼 손 시드 외에도 운영자가 소싱·승인한 대상을 제작 가능하게 한다."""
+        try:
+            from src.core import discovery
+            subj = dict(self.SUBJECTS)
+            copy = dict(self.COPY)
+            for it in discovery.load_discovered(self.category_id):
+                key = (it.get("key") or "").strip().lower()
+                s, c = it.get("subject"), it.get("copy")
+                if key and s and c and key not in subj:
+                    subj[key] = s
+                    copy[key] = c
+            self.SUBJECTS = subj
+            self.COPY = copy
+        except Exception:  # noqa: BLE001
+            pass
+
     # ── 원장 경로(카테고리별 분리) ──
     def _catalog_path(self) -> Path:
         return self._dir / f"{self.category_id}_catalog.json"

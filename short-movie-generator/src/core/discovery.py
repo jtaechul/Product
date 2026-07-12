@@ -391,7 +391,8 @@ def _discover_wrecks(exclude_keys: set[str], want: int) -> list[dict]:
             ident = _wreck_identity(pid, title, desc)
             if not ident:
                 continue
-            key = ident["name"].strip().lower()
+            # 키는 기존 침몰선 규칙과 일치시킨다: 'wreck <이름>'(footage 시드·SUBJECTS·제작 질의 공통).
+            key = f"wreck {ident['name'].strip()}".lower()
             if key in exclude_keys or any(o["key"] == key for o in out):
                 continue
             artist = _strip(em.get("Artist", {}).get("value", ""))
@@ -542,6 +543,76 @@ def source_to_candidates(category_id: str, want: int = 6, validate=None) -> list
         return []
     save_candidates(category_id, existing + found)
     return found
+
+
+# 선종 영문/한국어 → 일본어(확인된 것만 표기). 없으면 일반어 '船'.
+_SHIP_JA = {"cargo": "貨物船", "화물선": "貨物船", "submarine": "潜水艦", "잠수함": "潜水艦",
+            "u-boat": "潜水艦", "uボート": "潜水艦", "tanker": "タンカー", "유조선": "タンカー",
+            "passenger": "客船", "여객선": "客船", "ferry": "フェリー", "warship": "軍艦",
+            "군함": "軍艦", "destroyer": "駆逐艦", "frigate": "フリゲート", "trawler": "漁船", "어선": "漁船"}
+
+
+def _wreck_copy(name: str, name_ja: str, ship_type: str, depth: str) -> dict:
+    """침몰선 승인 후보의 일본어 카피(敬体)를 결정론적으로 생성. ★날조 금지: 확인된 이름·선종·수심만
+    쓰고, 미확인 역사(톤수·침몰연도·사연)는 절대 지어내지 않는다. 나머지는 일반적·정직한 표현."""
+    jp_name = (name_ja or "").strip() or f"沈没船「{name}」"
+    tja = ""
+    tl = (ship_type or "").strip().lower()
+    for k, v in _SHIP_JA.items():
+        if k in tl:
+            tja = v
+            break
+    subj = tja or "船"
+    feat = f"海の命が集う、沈んだ{subj}"
+    body = ["青い海の底に、", "静かに横たわる、", "大きな影。", "その正体は、", "沈没船です。"]
+    if tja:
+        body += [f"かつては、", f"海をゆく{tja}。"]
+    if depth:
+        body += ["水深、", f"{depth}メートル。"]
+    body += ["長い時間をかけて、", "船体には、", "生き物が棲みつきました。", "魚が集まり、",
+             "海藻がゆれる。", "沈んだ船は、", "新しい命の、", "すみかです。",
+             "海に還った、", "静かな船です。"]
+    return {"jp_name": jp_name, "hook_line1": "海の底に、", "hook_line2": "眠る船。",
+            "pop_words": ["海の底に、", "眠る船。"], "feature_line": feat, "feature_glow_word": "命",
+            "hook_ko": "바다 밑에, 잠든 배.", "feature_ko": f"바다 생명이 모이는, 가라앉은 배",
+            "tags": ["#沈没船", "#難破船", "#海"], "tags_ko": ["#난파선", "#침몰선", "#바다"],
+            "body": body}
+
+
+def promote_candidate(category_id: str, key: str) -> bool:
+    """검토 승인된 후보를 '제작 가능한 풀'로 승격(생물=discovered.json, 침몰선=shipwreck discovered.json).
+    승격 후 candidates에서 제거. 이미 풀에 있으면 True(멱등). 없으면 False."""
+    key = (key or "").strip().lower()
+    cands = load_candidates(category_id)
+    cand = next((c for c in cands if c["key"] == key), None)
+    if cand is None:
+        # 이미 승격됐으면 성공으로 간주
+        return any(it["key"] == key for it in load_discovered(category_id))
+    disc = load_discovered(category_id)
+    if not any(it["key"] == key for it in disc):
+        if cand["kind"] == "wreck":
+            nm = cand.get("name") or key
+            entry = {
+                "key": key, "kind": "wreck",
+                "footage": {"url": cand["url"], "license": cand["license"],
+                            "credit": cand["credit"], "source": cand["source"]},
+                "subject": {
+                    "scientific_name": f"Wreck {nm}", "common_name_ko": f"{nm} 난파선",
+                    "common_name_en": f"Wreck {nm}", "depth_range_m": cand.get("depth", ""),
+                    "distribution": "", "habitat": "침몰선", "diet": [],
+                    "fun_facts": cand.get("facts", []) or [f"바다에 가라앉은 배입니다"],
+                    "sources": [cand.get("fact_src", ""), f"Wikimedia Commons ({cand['source']})"]},
+                "copy": _wreck_copy(nm, cand.get("name_ja", ""), cand.get("ship_type", ""),
+                                    cand.get("depth", "")),
+            }
+        else:
+            entry = {"key": key, "kind": "creature",
+                     "footage": {"url": cand["url"], "license": cand["license"],
+                                 "credit": cand["credit"], "source": cand["source"]},
+                     "species": cand["species"]}
+        save_discovered(category_id, disc + [entry])
+    save_candidates(category_id, [c for c in cands if c["key"] != key])
+    return True
 
 
 def replenish(category_id: str, want: int = 2, validate=None) -> list[str]:

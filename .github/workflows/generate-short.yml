@@ -151,6 +151,10 @@ jobs:
           if [ -n "${{ steps.inp.outputs.episode }}" ]; then EP_ARG="--episode ${{ steps.inp.outputs.episode }}"; fi
           SCOPE="${{ steps.inp.outputs.scope }}"; [ -z "$SCOPE" ] && SCOPE="all"
           CAT="${{ steps.inp.outputs.category }}"; [ -z "$CAT" ] && CAT="deep_sea"
+          # 소싱 후보로 선택된 대상이면 제작 전에 '제작 가능 풀'로 승격(수동 소싱→검토·선택→제작).
+          #   'auto'·기존 종은 후보가 아니라 무해하게 통과. 승격은 별도 프로세스라 이후 파이프라인이
+          #   import 시 갱신된 discovered.json을 병합해 인식한다.
+          python -c "from src.core import discovery; discovery.promote_candidate('$CAT', '''${{ steps.inp.outputs.query }}'''.strip().lower())" || true
           # 확정 시스템: reels(실사 영상 + 일본어 오프닝훅/엔드카드/전환/사운드). 팬줌·Veo 미사용.
           python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --category "$CAT" $EP_ARG --mode reels
           VIDEO=$(ls -t output/*.mp4 | head -1)
@@ -271,8 +275,9 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           # ★카테고리별 제작 원장(catalog)을 모두 커밋해야 '안 만든 대상 우선' 로테이션이 회차 간 유지된다.
           #   (침몰선 catalog 미커밋 → 매번 같은 배가 나오던 문제 해결). glob으로 전 카테고리 원장 포함.
-          # discovered.json = 자동 발굴로 풀에 추가된 종(커밋해야 회차 간 유지 + 중복 방지).
-          PATHS="short-movie-generator/src/categories/deep_sea/used_species.json short-movie-generator/src/categories/deep_sea/catalog.json short-movie-generator/src/categories/*/*_catalog.json short-movie-generator/src/categories/*/discovered.json short-movie-generator/content"
+          # discovered.json = 소싱·승인으로 풀에 추가된 대상 / *_candidates.json = 검토 대기 목록.
+          #   둘 다 커밋해야 회차 간 유지 + 중복 방지(제작 시 후보→풀 승격 반영).
+          PATHS="short-movie-generator/src/categories/deep_sea/used_species.json short-movie-generator/src/categories/deep_sea/catalog.json short-movie-generator/src/categories/*/*_catalog.json short-movie-generator/src/categories/*/discovered.json short-movie-generator/src/categories/*/*_candidates.json short-movie-generator/content"
           git add $PATHS 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "변경 없음"; exit 0
