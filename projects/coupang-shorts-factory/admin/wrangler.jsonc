@@ -1,0 +1,7 @@
+{
+  // 쿠팡 쇼츠 관리자 페이지 — 정적 에셋 전용 워커 (서버 로직·시크릿 없음)
+  // 배포: .github/workflows/deploy-shorts-admin.yml (main push, admin/** 변경 시)
+  "name": "shorts-admin",
+  "compatibility_date": "2026-06-01",
+  "assets": { "directory": "./public" }
+}
