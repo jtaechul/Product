@@ -65,6 +65,9 @@ input:focus,select:focus{outline:2px solid var(--accent); border-color:transpare
 .item .grow{flex:1; min-width:0}
 .item .t{font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .item .s{font-size:13px; color:var(--sub)}
+.fchip{display:inline-flex; align-items:center; gap:8px; margin:8px 8px 0 0; padding:8px 12px;
+  background:var(--bg); border:1px solid var(--line); border-radius:10px; font-size:13px; font-weight:700}
+.fchip button{border:none; background:none; color:var(--bad); font-weight:800; font-size:15px; cursor:pointer; min-height:32px}
 .chip{font-size:12px; font-weight:800; padding:4px 10px; border-radius:999px; white-space:nowrap}
 .chip.wait{background:var(--wait-bg); color:var(--wait)}
 .chip.done{background:var(--ok-bg); color:var(--ok)}
@@ -110,8 +113,15 @@ ol li{margin:8px 0}
     아래 칸에 붙여넣으면 상품명·가격·특징은 제작할 때 자동으로 뽑아냅니다.</p>
     <label>제휴 링크 (쿠팡 파트너스 단축 URL) — 필수</label>
     <input id="pLink" placeholder="https://link.coupang.com/a/...">
-    <label>상품 상세·리뷰 붙여넣기 (권장)</label>
-    <textarea id="pNotes" rows="7" placeholder="쿠팡 상품 페이지에서 제품 설명과 리뷰 몇 개를 길게 눌러 복사한 뒤 그대로 붙여넣으세요. 길고 지저분해도 괜찮습니다 — 여기서 상품명·가격·특징·후기 포인트를 자동으로 정리해 대본에 씁니다."></textarea>
+    <label>상품 페이지 캡처 (PDF·이미지 — 권장)</label>
+    <input id="pFiles" type="file" accept="application/pdf,image/*" multiple>
+    <div id="fileList"></div>
+    <p class="hint" style="margin-top:6px">만드는 법: 사파리에서 상품 페이지를 연 뒤(리뷰까지 한 번
+    스크롤) 스크린샷 → 왼쪽 아래 미리보기 → 위쪽 <b>전체 페이지</b> → 공유 → <b>파일에 저장</b>.
+    그 PDF를 여기서 선택하면 상품명·가격·특징·후기를 자동으로 읽어냅니다.
+    스크린샷 이미지를 복사해 이 화면에 붙여넣기(⌘V)해도 첨부됩니다.</p>
+    <label>상품 상세·리뷰 텍스트 붙여넣기 (선택)</label>
+    <textarea id="pNotes" rows="4" placeholder="캡처 대신(또는 추가로) 텍스트를 붙여넣어도 됩니다. 길고 지저분해도 괜찮습니다."></textarea>
     <label>상품 이미지 주소 (선택 — 파트너스 링크생성 화면의 이미지)</label>
     <input id="pImg" placeholder="https://...jpg (비워도 됩니다)">
     <details>
@@ -364,11 +374,21 @@ async function loadProducts() {
       el.querySelector(".s").textContent =
         (r.price ? Number(r.price).toLocaleString() + "원" : "가격 자동") + (r.cat ? " · " + r.cat : "");
       el.querySelector("button").onclick = (ev) => busy(ev.target, async () => {
-        if (!confirm(`"${r.name}" 을(를) 대기열에서 삭제할까요?`)) return;
+        const label = r.name || r.link.slice(-14);
+        if (!confirm(`"${label}" 을(를) 대기열에서 삭제할까요?`)) return;
         const cur = await getFile(CSV_PATH);
         const kept = parseCsv(cur.text).filter((x) => x.raw !== r.raw).map((x) => x.raw);
         await putFile(CSV_PATH, CSV_HEADER + "\n" + kept.join("\n") + (kept.length ? "\n" : ""),
-          `admin: 상품 삭제 — ${r.name}`, cur.sha);
+          `admin: 상품 삭제 — ${label}`, cur.sha);
+        // 첨부했던 캡처·메모도 정리
+        const hash = await sha16(`${r.name}|${r.link}`);
+        const dir = await gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/notes?ref=${BRANCH}`, { allow404: true });
+        for (const f of (dir || []).filter((x) => x.name.startsWith(hash))) {
+          await gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/notes/${f.name}`, {
+            method: "DELETE",
+            body: JSON.stringify({ message: `admin: 상품 자료 정리 — ${f.name}`, sha: f.sha, branch: BRANCH }),
+          });
+        }
         toast("삭제했습니다."); loadProducts();
       });
       box.appendChild(el);
@@ -376,6 +396,68 @@ async function loadProducts() {
   } catch (e) { box.innerHTML = ""; toast(e.message, 5000); }
 }
 $("btnReloadProducts").onclick = () => loadProducts();
+
+/* 첨부 파일 상태 (파일 선택 + 화면 붙여넣기) */
+let attached = [];
+function renderFiles() {
+  const box = $("fileList");
+  box.innerHTML = "";
+  attached.forEach((f, i) => {
+    const chip = document.createElement("span");
+    chip.className = "fchip";
+    chip.innerHTML = `<span></span><button type="button" aria-label="삭제">✕</button>`;
+    chip.querySelector("span").textContent =
+      `${f.name} (${(f.blob.size / 1048576).toFixed(1)}MB)`;
+    chip.querySelector("button").onclick = () => { attached.splice(i, 1); renderFiles(); };
+    box.appendChild(chip);
+  });
+}
+async function addFiles(files) {
+  for (const f of files) {
+    if (f.size > 30 * 1048576) { toast(`${f.name}: 30MB 초과 — 핵심 부분만 캡처해 주세요.`, 5000); continue; }
+    if (f.type === "application/pdf" || /\.pdf$/i.test(f.name)) {
+      attached.push({ name: f.name || "capture.pdf", ext: ".pdf", blob: f });
+    } else if (f.type.startsWith("image/")) {
+      const c = await compressImage(f);
+      attached.push(c);
+    } else { toast(`${f.name}: PDF 또는 이미지 파일만 첨부할 수 있습니다.`, 4000); }
+  }
+  renderFiles();
+}
+async function compressImage(file) {
+  // 큰 스크린샷은 폭 1600px JPEG로 줄여 업로드·분석 비용 절약
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    if (scale >= 1 && file.size < 900 * 1024)
+      return { name: file.name || "capture.png", ext: file.type === "image/png" ? ".png" : ".jpg", blob: file };
+    const cv = document.createElement("canvas");
+    cv.width = Math.round(bmp.width * scale); cv.height = Math.round(bmp.height * scale);
+    cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
+    const blob = await new Promise((res) => cv.toBlob(res, "image/jpeg", 0.82));
+    return { name: (file.name || "capture").replace(/\.\w+$/, "") + ".jpg", ext: ".jpg", blob };
+  } catch (e) {
+    return { name: file.name || "capture.png", ext: ".png", blob: file };
+  }
+}
+$("pFiles").onchange = (ev) => { addFiles([...ev.target.files]); ev.target.value = ""; };
+document.addEventListener("paste", (ev) => {
+  if (!document.querySelector("#tab-products").classList.contains("on")) return;
+  const imgs = [...(ev.clipboardData?.items || [])]
+    .filter((it) => it.type.startsWith("image/")).map((it) => it.getAsFile()).filter(Boolean);
+  if (imgs.length) { addFiles(imgs); toast("캡처 이미지를 첨부했습니다."); }
+});
+async function uploadBlob(path, blob, message) {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000)
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  const old = await gh(`/repos/${OWNER}/${REPO}/contents/${path}?ref=${BRANCH}`, { allow404: true });
+  const body = { message, content: btoa(bin), branch: BRANCH };
+  if (old && old.sha) body.sha = old.sha;
+  await gh(`/repos/${OWNER}/${REPO}/contents/${path}`, { method: "PUT", body: JSON.stringify(body) });
+}
+
 $("btnAddProduct").onclick = (ev) => busy(ev.target, async () => {
   const name = clean($("pName").value);
   const price = ($("pPrice").value || "").replace(/[^\d]/g, "");
@@ -387,20 +469,27 @@ $("btnAddProduct").onclick = (ev) => busy(ev.target, async () => {
   if (!/^https:\/\//.test(link)) throw new Error("제휴 링크(https://...)를 입력하세요.");
   if (!/^https:\/\/link\.coupang\.com\//.test(link) &&
       !confirm("링크가 쿠팡 파트너스 단축 URL(link.coupang.com)이 아닌 것 같습니다. 그래도 추가할까요?")) return;
-  if (!notes && !(name && price && specs))
-    throw new Error("상품 상세를 붙여넣거나, 직접 입력(상품명·가격·특징)을 채워주세요.");
+  if (!notes && !attached.length && !(name && price && specs))
+    throw new Error("캡처 파일을 첨부하거나, 상세 텍스트 또는 직접 입력을 채워주세요.");
   const hash = await sha16(`${name}|${link}`);
+  const label = name || link.slice(-12);
+  for (let i = 0; i < attached.length; i++) {
+    toast(`캡처 업로드 중 ${i + 1}/${attached.length}...`, 60000);
+    await uploadBlob(`${P}/data/notes/${hash}_${i + 1}${attached[i].ext}`, attached[i].blob,
+      `admin: 상품 캡처 ${i + 1} — ${label}`);
+  }
   if (notes) {
     const old = await getFile(`${P}/data/notes/${hash}.md`, true);
     await putFile(`${P}/data/notes/${hash}.md`, notes + "\n",
-      `admin: 상품 상세 메모 — ${name || link.slice(-12)}`, old ? old.sha : undefined);
+      `admin: 상품 상세 메모 — ${label}`, old ? old.sha : undefined);
   }
   const cur = await getFile(CSV_PATH);
   const base = cur.text.endsWith("\n") ? cur.text : cur.text + "\n";
   const line = [name, price, specs, img, link, cat || (name ? "기타" : "")].join(",");
-  await putFile(CSV_PATH, base + line + "\n", `admin: 상품 추가 — ${name || link.slice(-12)}`, cur.sha);
+  await putFile(CSV_PATH, base + line + "\n", `admin: 상품 추가 — ${label}`, cur.sha);
   ["pName", "pPrice", "pS1", "pS2", "pS3", "pLink", "pImg", "pNotes"].forEach((id) => $(id).value = "");
-  toast("상품을 대기열에 추가했습니다." + (notes ? " (상세는 제작 시 자동 정리됩니다)" : ""));
+  attached = []; renderFiles();
+  toast("상품을 대기열에 추가했습니다. 상세는 제작 시 자동으로 읽어냅니다.");
   loadProducts();
 });
 

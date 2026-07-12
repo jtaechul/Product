@@ -138,7 +138,9 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     if youtube.is_configured():
         result = youtube.upload(out_path, script, product, settings, privacy=privacy)
         manual_queue.mark_done(product["_row_hash"])  # 성공 시에만 큐 소진(중복 제작 방지)
-        print("[pipeline] 큐 상태 갱신(data/processed.json) — 워크플로우가 커밋합니다")
+        for used in (PROJECT_ROOT / "data" / "notes").glob(f"{product['_row_hash']}*"):
+            used.unlink(missing_ok=True)  # 소비한 캡처·메모 정리(저장소 비대화 방지)
+        print("[pipeline] 큐 상태 갱신 + 사용한 상세 자료 정리 — 워크플로우가 커밋합니다")
         notify.send(f"[쿠팡쇼츠] 영상 업로드 완료({privacy})\n{result['title']}\n{result['url']}\n"
                     f"→ 유튜브 앱에서 ①공개 전환 ②고지 댓글 고정을 확인하세요")
     else:
