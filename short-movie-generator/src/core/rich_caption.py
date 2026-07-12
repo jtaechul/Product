@@ -73,6 +73,15 @@ JSON例: {{"jp_caption":"...","ko_caption":"...","hashtags":["#..","#..","#.."],
 #   #Shorts는 붙이지 않는다(형식으로 자동 판정 · 스팸 인상). 고정 공통 = 채널 주제 태그.
 _FIXED_TAG_JP = "#深海生物"
 _FIXED_TAG_KO = "#심해생물"
+# ★침몰선 등 '학명이 없는 대상'은 캡션에서 "(学名/학명: …)" 표기를 넣지 않는다(운영자 확정 규칙).
+#   scientific_name 필드가 실제 학명이 아닌 라벨(예: 'Wreck Aries')이라 학명처럼 노출하면 오정보.
+#   show_sci_name=False면 프롬프트·폴백·LLM 출력 어디에도 학명 괄호 표기가 남지 않게 한다.
+_SCI_NOTE = re.compile(r"[（(]\s*(?:学名|학명)\s*[：:][^)）]*[)）]")
+
+
+def _strip_sci_note(text: str) -> str:
+    """캡션 문구에서 '(学名: …)'·'(학명: …)' 괄호 표기를 제거한다."""
+    return _SCI_NOTE.sub("", text or "")
 # 내용 태그로 쓰지 않을 범용/중복 태그(고정 공통·형식 태그 등) — 이건 '내용'이 아니므로 제외.
 _GENERIC_TAGS = {"#深海", "#海洋生物", "#深海生物", "#海", "#生き物", "#海の生き物", "#シ ョート",
                  "#심해", "#해양생물", "#심해생물", "#바다", "#생물", "#해양", "#shorts"}
@@ -170,7 +179,8 @@ def _valid_title(t: str, jp_name: str) -> bool:
 def _fallback(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
               hook_line1: str, hook_line2: str, hook_ko: str, feature_ko: str, credit: str,
               default_tags: list[str], default_tags_ko: list[str] | None = None,
-              fixed_tag: str = _FIXED_TAG_JP, fixed_tag_ko: str = _FIXED_TAG_KO) -> dict:
+              fixed_tag: str = _FIXED_TAG_JP, fixed_tag_ko: str = _FIXED_TAG_KO,
+              show_sci_name: bool = True) -> dict:
     """LLM 실패 시 리치 템플릿. 학명·수심·분포·서식지·fun_facts를 서술식으로 엮어 풍부하게.
     한국어는 한국어 데이터로 완전 서술(일본어 잔류 금지). 일본어는 일본어 요소만(혼입 방지)."""
     ko_name = info.common_name_ko or jp_name
@@ -178,7 +188,7 @@ def _fallback(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
     facts_ko = [f.strip().rstrip(".") for f in (info.fun_facts or []) if f][:3]
     # 한국어 캡션 — 서술식 읽을거리(학명·수심·분포·서식지·사실 엮음)
     ko_lines = [hook_ko or f"{ko_name}, 이름을 들어보셨나요?", ""]
-    ko_lines.append(f"{ko_name}(학명: {sci}).")
+    ko_lines.append(f"{ko_name}(학명: {sci})." if show_sci_name else f"{ko_name}.")
     if info.depth_range_m and info.distribution:
         ko_lines.append(f"수심 {info.depth_range_m}m, {info.distribution}의 바다에 살아갑니다.")
     if info.habitat:
@@ -192,7 +202,7 @@ def _fallback(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
     ko = "\n".join(ko_lines)
     # 일본어 캡션 — 일본어 요소 + 세계공통 학명·수심으로 서술(분포·서식지는 한국어라 제외)
     jp_lines = [f"{hook_line1}{hook_line2}", "",
-                f"{jp_name}(学名: {sci})。",
+                f"{jp_name}(学名: {sci})。" if show_sci_name else f"{jp_name}。",
                 f"生息水深はおよそ {info.depth_range_m} メートル。",
                 f"{feature_line}。",
                 "深い海の底で、たしかに命をつないでいる一種です。", "",
@@ -258,7 +268,8 @@ def generate(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
              hook_line1: str, hook_line2: str, hook_ko: str = "", feature_ko: str = "",
              credit: str = "", default_tags: list[str] | None = None,
              default_tags_ko: list[str] | None = None,
-             fixed_tag: str = _FIXED_TAG_JP, fixed_tag_ko: str = _FIXED_TAG_KO) -> dict:
+             fixed_tag: str = _FIXED_TAG_JP, fixed_tag_ko: str = _FIXED_TAG_KO,
+             show_sci_name: bool = True) -> dict:
     """리치 캡션 {jp, ko, tags, tags_ko}. LLM(예시 수준 분량 강제) 우선, 실패 시 리치 폴백.
 
     핵심: 분량이 예시(13~18행)에 못 미치면 1회 재시도. 일본어(발행본)만 충분하면 채택하고,
@@ -269,6 +280,11 @@ def generate(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
     facts = "\n".join(f"- {f}" for f in (info.fun_facts or [])[:6]) or "- (追加事実なし)"
     prompt = _PROMPT.format(jp=jp_name, sci=_cap_sci(sci_name), depth=info.depth_range_m,
                             hab=info.habitat, dist=info.distribution, facts=facts, credit=credit)
+    if not show_sci_name:
+        # 학명 미표기 대상(침몰선 등): 프롬프트에서 학명 괄호·데이터 줄 제거 + 금지 지시 추가
+        prompt = _SCI_NOTE.sub("", prompt)
+        prompt = re.sub(r"\n- 学名: .*", "", prompt)
+        prompt += "\n■ 追加厳守: 学名(ラテン語の二名法)は本文に一切書かない(この対象に学名はありません)。"
     fb = None  # 폴백은 필요할 때만 계산
 
     d = None
@@ -293,13 +309,18 @@ def generate(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
         # 미세한 어감 차이가 생길 수 있으나(참고용 번역이라 허용), jp(발행문)만 최종본 취급.
         jp = naturalness.polish_text(jp)
         jp = _format_lines(jp)   # 한 문단이면 문장 단위 줄바꿈으로 가독성 정리
+        if not show_sci_name:    # 안전망: LLM이 학명을 넣었어도 발행 전 제거
+            jp = _strip_sci_note(jp)
         tags = [t for t in (d.get("hashtags") or []) if str(t).strip()][:3]
         if len(tags) < 3:
             tags = (tags + default_tags)[:3]
         ko = str(d.get("ko_caption", "")).strip()
+        if not show_sci_name:
+            ko = _strip_sci_note(ko)
         if not ko or re.search(r"[ぁ-んァ-ヶ]", ko):   # 한국어 잔류/부재 → 한국어만 폴백 보완
             fb = fb or _fallback(info, jp_name, sci_name, feature_line, hook_line1, hook_line2,
-                                 hook_ko, feature_ko, credit, default_tags, default_tags_ko)
+                                 hook_ko, feature_ko, credit, default_tags, default_tags_ko,
+                                 show_sci_name=show_sci_name)
             ko = fb["ko"]
         ko_tags = [t for t in (d.get("ko_hashtags") or []) if str(t).strip()][:3]
         if len(ko_tags) < 3:
@@ -320,4 +341,4 @@ def generate(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
     log.warning("[rich_caption] LLM 리치 캡션 실패 → 사실 기반 폴백 사용")
     return _fallback(info, jp_name, sci_name, feature_line, hook_line1, hook_line2,
                      hook_ko, feature_ko, credit, default_tags, default_tags_ko,
-                     fixed_tag, fixed_tag_ko)
+                     fixed_tag, fixed_tag_ko, show_sci_name=show_sci_name)

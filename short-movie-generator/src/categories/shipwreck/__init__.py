@@ -148,6 +148,9 @@ class ShipwreckCategory(CollectionCategory):
     reframe_wide = True          # 선체 전체가 넓게 보이도록 원경 프레이밍(줌 억제)
     fixed_hashtag = "#沈没船"     # 고정 공통 태그(난파선은 생물 아님 → 海の生き物 대신)
     fixed_hashtag_ko = "#난파선"
+    # ★규칙(운영자 확정): 침몰선은 생물이 아니라 학명이 없다 → 캡션에 "(学名/학명: …)" 표기 금지.
+    #   scientific_name은 'Wreck Aries' 같은 내부 라벨이라 학명처럼 노출하면 오정보가 된다.
+    show_sci_name = False
     SUBJECTS = SUBJECTS
     COPY = COPY
     _dir = Path(__file__).resolve().parent
