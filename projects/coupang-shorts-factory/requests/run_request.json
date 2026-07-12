@@ -1,8 +1,8 @@
 {
  "mode": "produce",
- "provider": "mock",
+ "provider": "auto",
  "row": "2",
  "privacy": "private",
- "note": "E2E: 히어로 상품사진 화면 + 비전 사진선별 + 6단 구조 대본 (WoWo, mock 음성)",
- "requested_at": "2026-07-12T05:27:46Z"
+ "note": "실제 음성 ON: ElevenLabs 한국어 보이스(Sarah) + with-timestamps 가라오케 동기 (WoWo, row 2)",
+ "requested_at": "2026-07-12T11:37:49Z"
 }
