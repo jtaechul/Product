@@ -3,6 +3,6 @@
  "provider": "mock",
  "row": "2",
  "privacy": "private",
- "note": "E2E: PDF 캡처 비전 추출 검증 (WoWo 세탁기, 실링크)",
- "requested_at": "2026-07-12T03:49:17Z"
+ "note": "E2E: 히어로 상품사진 화면 + 비전 사진선별 + 6단 구조 대본 (WoWo, mock 음성)",
+ "requested_at": "2026-07-12T05:27:46Z"
 }

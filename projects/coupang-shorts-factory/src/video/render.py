@@ -36,8 +36,13 @@ VIDEO_EXTS = {".mp4", ".mov", ".webm", ".m4v"}
 
 def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
                  shake_windows: list | None = None, project_root: Path | None = None,
-                 image_windows: list | None = None, bg_path: Path | None = None) -> dict:
-    """단어 타임스탬프 기반 쇼츠 렌더. 반환: 렌더 통계 dict (DoD: 렌더 시간 기록)."""
+                 image_windows: list | None = None, bg_path: Path | None = None,
+                 product_images: list | None = None) -> dict:
+    """단어 타임스탬프 기반 쇼츠 렌더. 반환: 렌더 통계 dict (DoD: 렌더 시간 기록).
+
+    product_images가 있으면 상품 사진을 화면 주인공(히어로)으로 크게 배치하고,
+    같은 사진을 흐리게+어둡게 깔아 배경을 채운다(항상 상품 관련). 자막 뒤에는
+    가독성용 스크림(반투명 어둠)을 둔다. 상품 사진이 없을 때만 스톡/그라데이션 폴백."""
     r = settings.get("render", {})
     s = settings.get("subtitle", {})
     width, height = int(r.get("width", 1080)), int(r.get("height", 1920))
@@ -45,15 +50,20 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     shake_px = int(r.get("shake_px", 8))
     shake_windows = shake_windows or []
     project_root = project_root or Path.cwd()
+    product_images = [Path(p) for p in (product_images or []) if Path(p).exists()]
 
     font_path = _resolve_font(project_root, s.get("font", "assets/fonts/GmarketSansBold.ttf"))
 
     audio = AudioFileClip(str(audio_path))
     duration = float(audio.duration) + 0.25
 
+    over_w, over_h = width + 2 * shake_px, height + 2 * shake_px
     bg_dir = project_root / settings.get("assets", {}).get("backgrounds_dir", "assets/backgrounds")
-    background, bg_name = _build_background(bg_dir, width, height, duration, shake_px,
-                                            override=bg_path)
+    if product_images:
+        background, bg_name = _blurred_product_bg(product_images[0], over_w, over_h, duration)
+    else:
+        background, bg_name = _build_background(bg_dir, width, height, duration, shake_px,
+                                                override=bg_path)
 
     if shake_windows:
         margin = shake_px
@@ -71,12 +81,20 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     else:
         background = background.with_position((-shake_px, -shake_px))
 
+    if product_images:
+        hero_clips = _build_hero_clips(product_images, duration, width, height)
+    else:
+        hero_clips = _build_image_clips(image_windows or [], duration, width)
+    scrim = _subtitle_scrim(width, height, duration, s)
     word_clips = _build_word_clips(words, duration, font_path, s, width)
-    image_clips = _build_image_clips(image_windows or [], duration, width)
 
     t0 = time.time()
+    layers = [background, *hero_clips]
+    if scrim is not None:
+        layers.append(scrim)
+    layers += word_clips
     final = (
-        CompositeVideoClip([background, *image_clips, *word_clips], size=(width, height))
+        CompositeVideoClip(layers, size=(width, height))
         .with_duration(duration)
         .with_audio(audio)
     )
@@ -102,7 +120,8 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
         "realtime_factor": round(render_seconds / max(duration, 0.01), 2),
         "resolution": f"{width}x{height}@{fps}fps",
         "word_clip_count": len(word_clips),
-        "image_clip_count": len(image_clips),
+        "image_clip_count": len(hero_clips),
+        "hero_from_product": bool(product_images),
         "font_used": str(font_path),
         "background_used": bg_name,
         "output_bytes": out_path.stat().st_size,
@@ -158,6 +177,75 @@ def _build_background(bg_dir: Path, width: int, height: int, duration: float,
     grad = (top[None, :] * (1 - rows) + bottom[None, :] * rows).astype(np.uint8)
     frame = np.repeat(grad[:, None, :], over_w, axis=1)
     return ImageClip(frame).with_duration(duration), "(자체 생성 그라데이션)"
+
+
+def _blurred_product_bg(img_path: Path, over_w: int, over_h: int, duration: float) -> tuple:
+    """상품 사진을 화면에 꽉 차게 흐리게+어둡게 깔아 배경으로 사용 (항상 상품 관련)."""
+    from PIL import Image, ImageEnhance, ImageFilter
+    im = Image.open(str(img_path)).convert("RGB")
+    scale = max(over_w / im.width, over_h / im.height)
+    im = im.resize((max(1, round(im.width * scale)), max(1, round(im.height * scale))))
+    left, top = (im.width - over_w) // 2, (im.height - over_h) // 2
+    im = im.crop((left, top, left + over_w, top + over_h))
+    im = im.filter(ImageFilter.GaussianBlur(32))
+    im = ImageEnhance.Brightness(im).enhance(0.5)
+    return ImageClip(np.array(im)).with_duration(duration), "(흐린 상품사진 배경)"
+
+
+def _hero_rgba(img_path: Path, target_w: int) -> np.ndarray:
+    """상품 사진을 둥근 카드 + 부드러운 그림자로 다듬은 RGBA 배열 (각진 흰 네모 방지)."""
+    from PIL import Image, ImageDraw, ImageFilter
+    im = Image.open(str(img_path)).convert("RGB")
+    h = max(1, round(im.height * target_w / im.width))
+    im = im.resize((target_w, h))
+    rad, pad = int(target_w * 0.045), 48
+    mask = Image.new("L", (target_w, h), 0)
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, target_w - 1, h - 1], radius=rad, fill=255)
+    card = Image.new("RGBA", (target_w, h), (0, 0, 0, 0))
+    card.paste(im, (0, 0), mask)
+    canvas = Image.new("RGBA", (target_w + 2 * pad, h + 2 * pad), (0, 0, 0, 0))
+    shadow = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    ImageDraw.Draw(shadow).rounded_rectangle(
+        [pad, pad + 12, pad + target_w, pad + 12 + h], radius=rad, fill=(0, 0, 0, 130))
+    canvas = Image.alpha_composite(canvas, shadow.filter(ImageFilter.GaussianBlur(20)))
+    canvas.paste(card, (pad, pad), card)
+    return np.array(canvas)
+
+
+def _build_hero_clips(images: list, duration: float, width: int, height: int) -> list:
+    """상품 사진을 화면 주인공으로 — 둥근 카드로 크게(폭 78%) 상단 배치, 켄번즈 줌. 여러 장이면 순차."""
+    clips, n = [], len(images)
+    seg = duration / max(n, 1)
+    target_w, top_y = int(width * 0.78), int(height * 0.13)
+    for i, p in enumerate(images):
+        start = i * seg
+        dur = (duration - start) if i == n - 1 else seg
+        if dur <= 0.1:
+            continue
+        try:
+            base = ImageClip(_hero_rgba(Path(p), target_w), transparent=True)
+            clips.append(
+                base.resized(lambda t, d=dur: 1.0 + 0.06 * min(1.0, t / d))
+                .with_start(start).with_duration(dur + 0.05)
+                .with_position(("center", top_y))
+            )
+        except Exception as e:
+            print(f"[render] 경고: 히어로 이미지 실패({Path(p).name}: {e}) — 건너뜀")
+    return clips
+
+
+def _subtitle_scrim(width: int, height: int, duration: float, s: dict):
+    """자막 뒤 반투명 어둠(위→아래로 짙어짐) — 밝은 배경에서도 자막 가독성 확보."""
+    y = int(s.get("y", 1250))
+    band_top = max(0, y - 150)
+    band_h = height - band_top
+    if band_h < 10:
+        return None
+    ramp = np.linspace(0.0, 1.0, band_h)
+    alpha = (np.clip(ramp / 0.45, 0.0, 1.0) * 165).astype(np.uint8)
+    rgba = np.zeros((band_h, width, 4), dtype=np.uint8)
+    rgba[..., 3] = alpha[:, None]
+    return ImageClip(rgba, transparent=True).with_duration(duration).with_position((0, band_top))
 
 
 def _build_image_clips(image_windows: list, duration: float, width: int) -> list:

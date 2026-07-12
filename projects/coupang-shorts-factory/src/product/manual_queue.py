@@ -32,7 +32,8 @@ def load_rows() -> list:
     if not CSV_PATH.exists():
         return []
     with CSV_PATH.open(encoding="utf-8-sig") as f:
-        return [r for r in csv.DictReader(f) if (r.get("product_name") or "").strip()]
+        # 링크만 등록한 행(상품명은 M2.5 비전 추출이 채움)도 유효 — 판단 기준은 제휴 링크 유무
+        return [r for r in csv.DictReader(f) if (r.get("affiliate_url") or "").strip()]
 
 
 def load_state() -> dict:
@@ -60,7 +61,7 @@ def pick(row_arg: str = "auto") -> dict:
 
     product = {
         "product_id": time.strftime("job_%Y%m%d") + "_" + row_hash(row)[:6],
-        "name": row["product_name"].strip(),
+        "name": (row.get("product_name") or "").strip(),
         "price": int(re.sub(r"[^\d]", "", row.get("price", "0")) or 0),
         "specs": [s.strip() for s in (row.get("key_specs") or "").split(";") if s.strip()],
         "image_urls": [u.strip() for u in (row.get("image_urls") or "").split(";") if u.strip()],
