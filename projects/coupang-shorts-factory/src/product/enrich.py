@@ -31,27 +31,34 @@ MAX_IMAGES = 6
 _EXTRACT_PROMPT = """첨부는 사용자가 올린 쿠팡 상품 페이지 자료다(캡처 이미지/PDF 타일 + 텍스트).
 '메인 상품' 정보만 추출하라 — 페이지에는 광고·추천·비교 상품이 섞여 있으니 전부 무시한다
 (메인 상품 = 페이지 최상단 제목과 가격 박스의 상품).
+첨부 뒤쪽에 '상품사진 후보 0,1,2...' 로 라벨된 이미지들이 있다. 그중 **메인 상품 자체를
+깨끗하게 보여주는 사진**의 인덱스만 product_image_indexes에 넣어라(가장 대표적인 것부터 최대 3개).
+UI 아이콘·버튼 모음, 배송 뱃지, 비교/광고 상품, 글자만 있는 이미지는 제외한다. 확실한 게 없으면 [].
 JSON만 반환, 다른 텍스트·백틱 금지. 스키마:
 {"name": "상품명(30자 내)", "price": 현재판매가_정수, "specs": ["숫자 위주 핵심 특징 2~4개"],
- "category": "카테고리 한 단어", "review_points": ["실사용 후기 요점 0~3개 (후기가 보일 때만)"]}
+ "category": "카테고리 한 단어", "review_points": ["실사용 후기 요점 0~3개 (후기가 보일 때만)"],
+ "product_image_indexes": [메인 상품 사진 후보 인덱스]}
 가격이 여러 개 보이면 할인 적용된 현재 판매가를 고른다. 후기가 안 보이면 review_points는 []."""
 
 
-def enrich_product(product: dict, settings: dict) -> dict:
-    """이름·가격·특징이 비거나 캡처 자료가 있으면 추출해 보강. notes는 항상 첨부."""
+def enrich_product(product: dict, settings: dict, job_dir=None) -> dict:
+    """이름·가격·특징이 비거나 캡처 자료가 있으면 추출해 보강 + 상품 히어로 사진 확보.
+    notes는 항상 첨부, 확보한 상품 사진 경로는 product['hero_images']에 담는다."""
     text, pdf_text, images = _gather_assets(product["_row_hash"])
+    candidates = _gather_image_candidates(product["_row_hash"])
 
     fields_missing = not (product.get("name") and product.get("price", 0) > 0 and product.get("specs"))
-    if not fields_missing and not images:
+    product.setdefault("hero_images", [])
+    if not fields_missing and not images and not candidates:
         if text:
             product["notes"] = text[:4000]
         return product
-    if fields_missing and not (text or images):
+    if fields_missing and not (text or images or candidates):
         raise RuntimeError(
             "상품명·가격·특징이 비어 있고 상세 자료(텍스트/캡처)도 없습니다. "
             "관리자 페이지에서 캡처 파일을 첨부하거나 직접 입력으로 등록해 주세요.")
 
-    data = _extract(text, pdf_text, images, settings)
+    data = _extract(text, pdf_text, images, candidates, settings)
 
     if not product.get("name"):
         product["name"] = str(data.get("name", "")).strip()[:60]
@@ -61,6 +68,8 @@ def enrich_product(product: dict, settings: dict) -> dict:
         product["specs"] = [str(s).strip() for s in (data.get("specs") or []) if str(s).strip()][:4]
     if not product.get("category"):
         product["category"] = str(data.get("category", "")).strip()[:20]
+
+    product["hero_images"] = _save_hero_images(data.get("product_image_indexes"), candidates, job_dir)
 
     reviews = [str(r).strip() for r in (data.get("review_points") or []) if str(r).strip()][:3]
     digest = "특징: " + "; ".join(product.get("specs") or [])
@@ -74,8 +83,28 @@ def enrich_product(product: dict, settings: dict) -> dict:
             "포함됐는지 확인하거나, 관리자 페이지 '직접 입력'에 채워 다시 등록해 주세요.")
     print(f"[enrich] M2.5 보강 완료: {product['name']} ({product['price']:,}원, "
           f"특징 {len(product['specs'])}개, 후기 요점 {len(reviews)}개, "
-          f"자료: 이미지 {len(images)}장/텍스트 {len(text) + len(pdf_text)}자)")
+          f"상품사진 {len(product['hero_images'])}장, 자료: 이미지 {len(images)}·후보 {len(candidates)}장)")
     return product
+
+
+def _save_hero_images(indexes, candidates: list, job_dir) -> list:
+    """비전이 고른 상품 사진 후보를 job_dir에 저장 → 렌더 히어로로 사용. 못 고르면 최상단 1장 폴백."""
+    if not job_dir or not candidates:
+        return []
+    idxs = [i for i in (indexes or []) if isinstance(i, int) and 0 <= i < len(candidates)]
+    if not idxs:
+        print("[enrich] 비전이 상품 사진을 특정 못함 → 최상단 후보 1장 사용(폴백)")
+        idxs = [0]
+    out_dir = Path(job_dir) / "product_images"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    paths = []
+    for k, i in enumerate(idxs[:3]):
+        media, blob = candidates[i]
+        ext = ".png" if "png" in media else (".webp" if "webp" in media else ".jpg")
+        fp = out_dir / f"hero_{k}{ext}"
+        fp.write_bytes(blob)
+        paths.append(str(fp))
+    return paths
 
 
 def _gather_assets(row_hash: str):
@@ -106,6 +135,57 @@ def _gather_assets(row_hash: str):
                 continue
             images.append((IMG_EXTS[suf], data))
     return text, pdf_text[:3500], images
+
+
+def _gather_image_candidates(row_hash: str, max_n: int = 5) -> list:
+    """상품 사진 후보 수집: PDF 임베드 이미지(상단 갤러리) + 업로드 이미지. (media, bytes) 리스트."""
+    cands = []
+    for p in sorted(NOTES_DIR.glob(f"{row_hash}*")):
+        if len(cands) >= max_n:
+            break
+        suf = p.suffix.lower()
+        if suf == ".pdf":
+            try:
+                cands += [("image/png", b) for b in _pdf_image_candidates(p, max_n - len(cands))]
+            except Exception as e:
+                print(f"[enrich] 경고: 이미지 후보 추출 실패({p.name}: {e})")
+        elif suf in IMG_EXTS:
+            data = p.read_bytes()
+            if len(data) <= MAX_IMAGE_BYTES:
+                cands.append((IMG_EXTS[suf], data))  # 업로드 이미지 = 상품 사진 후보
+    return cands[:max_n]
+
+
+def _pdf_image_candidates(pdf_path: Path, max_n: int = 5) -> list:
+    """PDF 임베드 이미지 중 상품 사진 후보(충분히 크고 정사각형~세로, 상단 갤러리) PNG 리스트.
+    아이콘 스프라이트·비교상품이 섞이므로 최종 선별은 비전에 맡긴다(여기선 넉넉히 추린다)."""
+    import fitz
+    doc = fitz.open(pdf_path)
+    cands, seen = [], set()
+    for page in doc:
+        for info in page.get_images(full=True):
+            xref = info[0]
+            if xref in seen:
+                continue
+            seen.add(xref)
+            rects = page.get_image_rects(xref)
+            if not rects:
+                continue
+            y0 = min(r.y0 for r in rects)
+            if y0 > 5000:  # 상단 상품 갤러리 위주 (하단 비교/광고 제외)
+                continue
+            try:
+                pix = fitz.Pixmap(doc, xref)
+            except Exception:
+                continue
+            w, h = pix.width, pix.height
+            if w < 300 or h < 300 or not (0.6 <= w / max(h, 1) <= 1.7):
+                continue
+            if pix.n >= 5:
+                pix = fitz.Pixmap(fitz.csRGB, pix)
+            cands.append((y0, -(w * h), pix.tobytes("png")))
+    cands.sort(key=lambda c: (c[0], c[1]))  # 위→아래, 큰 것 우선
+    return [png for _, _, png in cands[:max_n]]
 
 
 def _pdf_text(pdf_path: Path) -> str:
@@ -155,7 +235,7 @@ def _pdf_tiles(pdf_path: Path, width_px: int = 768, max_tiles: int = 5) -> list:
     return out
 
 
-def _extract(text: str, pdf_text: str, images: list, settings: dict) -> dict:
+def _extract(text: str, pdf_text: str, images: list, candidates: list, settings: dict) -> dict:
     from src.script.generate import anthropic_key
     key = anthropic_key()
     if not key:
@@ -163,10 +243,14 @@ def _extract(text: str, pdf_text: str, images: list, settings: dict) -> dict:
             "상품 정보 자동 추출에 Anthropic 키가 필요합니다 "
             "(SHORTS_ANTHROPIC_API_KEY 또는 ANTHROPIC_API_KEY 시크릿).")
 
-    content = []
-    for media, data in images:
-        content.append({"type": "image", "source": {
-            "type": "base64", "media_type": media, "data": base64.b64encode(data).decode()}})
+    def img_block(media, data):
+        return {"type": "image", "source": {
+            "type": "base64", "media_type": media, "data": base64.b64encode(data).decode()}}
+
+    content = [img_block(m, d) for m, d in images]  # 읽기용 타일
+    for i, (m, d) in enumerate(candidates):          # 상품 사진 후보(라벨과 함께)
+        content.append({"type": "text", "text": f"상품사진 후보 {i}:"})
+        content.append(img_block(m, d))
     body = ""
     if text:
         body += f"\n[사용자가 붙여넣은 텍스트]\n{text[:3000]}"

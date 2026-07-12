@@ -76,8 +76,8 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
 
     # ---- M2: 상품 확보 (기본: 수동 CSV 큐. 쿠팡 API는 키 승인 후 Phase 2에서 전환)
     product = manual_queue.pick(args.row)
-    # ---- M2.5: 링크만 등록된 상품은 붙여넣은 상세 텍스트(data/notes)로 이름·가격·특징 보강
-    product = enrich_product(product, settings)
+    # ---- M2.5: 링크만 등록된 상품은 캡처(data/notes)로 이름·가격·특징·상품사진 자동 확보
+    product = enrich_product(product, settings, job_dir)
     (job_dir / "product.json").write_text(json.dumps(product, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"[pipeline] M2 상품: {product['name']} ({product['price']:,}원)")
 
@@ -112,20 +112,22 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     print(f"[pipeline] M4 TTS 완료({tts_result['provider']}/{tts_result['timestamps_source']}) "
           f"{time.time() - t0:.1f}s, 단어 {len(words)}개")
 
-    # ---- 라인 타이밍 → 쉐이크/이미지 윈도우
+    # ---- 라인 타이밍 → 쉐이크 윈도우 (price_shock 라인)
     line_windows = _line_windows(lines, words)
     shake_sec = float(settings.get("render", {}).get("shake_seconds", 0.3))
     shake_windows = [(s, s + shake_sec) for (s, _e), l in zip(line_windows, lines) if l.get("price_shock")]
-    image_windows = _image_windows(lines, line_windows, product, job_dir)
 
-    # ---- 상품 연관 배경: 대본과 함께 뽑힌 영어 키워드로 Pexels 세로 영상 검색 (실패 시 기본 배경)
-    bg_path = fetch_product_bg(script.get("bg_keywords"), job_dir)
+    # ---- 상품 히어로 사진: 캡처에서 확보한 것 + 붙여넣은 이미지 URL 다운로드 (화면 주인공)
+    product_images = list(product.get("hero_images") or [])
+    product_images += _download_images(product.get("image_urls") or [], job_dir)
+    # 히어로 사진이 하나도 없을 때만 상품 연관 스톡 배경 폴백(대본 영어 키워드로 Pexels 검색)
+    bg_path = None if product_images else fetch_product_bg(script.get("bg_keywords"), job_dir)
 
     # ---- M6: 렌더
     out_path = job_dir / "video.mp4"
     stats = render_video(tts_result["audio_path"], words, out_path, settings,
                          shake_windows=shake_windows, project_root=PROJECT_ROOT,
-                         image_windows=image_windows, bg_path=bg_path)
+                         product_images=product_images, bg_path=bg_path)
     stats = {"job_id": job_id, "product": product["name"],
              "tts_provider": tts_result["provider"],
              "timestamps_source": tts_result["timestamps_source"], **stats}
@@ -176,44 +178,24 @@ def _line_windows(lines: list, words: list) -> list:
     return windows
 
 
-def _image_windows(lines: list, line_windows: list, product: dict, job_dir: Path) -> list:
-    """image_cue 연속 구간별 상품 이미지 표시 윈도우. 다운로드 실패는 건너뜀."""
-    urls = product.get("image_urls") or []
+def _download_images(urls: list, job_dir: Path) -> list:
+    """붙여넣은 상품 이미지 URL(파트너스 공식 이미지)을 내려받아 히어로 후보로. 실패는 건너뜀."""
     if not urls:
         return []
     img_dir = job_dir / "images"
     img_dir.mkdir(exist_ok=True)
-    cached = {}
-
-    def fetch(i: int):
-        if i in cached:
-            return cached[i]
-        path = None
-        if 0 <= i < len(urls):
-            try:
-                import requests
-                r = requests.get(urls[i], timeout=30,
-                                 headers={"User-Agent": "Mozilla/5.0 (shorts-factory)"})
-                r.raise_for_status()
-                path = img_dir / f"img_{i}.jpg"
-                path.write_bytes(r.content)
-            except Exception as e:
-                print(f"[pipeline] 경고: 이미지 {i} 다운로드 실패({e}) — 해당 구간 오버레이 생략")
-                path = None
-        cached[i] = path
-        return path
-
-    windows, cur_cue, cur_start = [], None, None
-    for line, (s, e) in zip(lines, line_windows):
-        cue = line.get("image_cue")
-        if cue != cur_cue:
-            if cur_cue is not None and fetch(cur_cue):
-                windows.append((cur_start, s, str(fetch(cur_cue))))
-            cur_cue, cur_start = cue, s
-        last_end = e
-    if cur_cue is not None and fetch(cur_cue):
-        windows.append((cur_start, last_end + 0.4, str(fetch(cur_cue))))
-    return windows
+    paths = []
+    for i, url in enumerate(urls):
+        try:
+            import requests
+            r = requests.get(url, timeout=30, headers={"User-Agent": "Mozilla/5.0 (shorts-factory)"})
+            r.raise_for_status()
+            fp = img_dir / f"url_{i}.jpg"
+            fp.write_bytes(r.content)
+            paths.append(str(fp))
+        except Exception as e:
+            print(f"[pipeline] 경고: 이미지 URL {i} 다운로드 실패({e}) — 건너뜀")
+    return paths
 
 
 def _print_key_detection() -> None:
