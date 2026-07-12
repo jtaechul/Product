@@ -52,6 +52,9 @@ def generate_script(product: dict, settings: dict) -> dict:
             system=system,
             messages=[{"role": "user", "content": content}],
         )
+        u = getattr(resp, "usage", None)
+        if u:
+            print(f"[script] 토큰 사용: 입력 {u.input_tokens:,} / 출력 {u.output_tokens:,}")
         text = "".join(b.text for b in resp.content if b.type == "text")
         try:
             script = _parse_json(text)
