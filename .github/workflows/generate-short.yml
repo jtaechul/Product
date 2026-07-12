@@ -198,6 +198,10 @@ jobs:
           rec = json.loads(rp.read_text(encoding="utf-8"))
           media = rec.get("media", {}) or {}
           media["video_url"] = f"{base}/reels_{cid}.mp4"
+          # ★콘텐츠 버전(rev): 재생성 시 URL은 그대로(reels_<id>.mp4)라 대시보드가 옛 영상을 캐시로
+          #   저장하던 버그를 막는다. 실행마다 바뀌는 GITHUB_RUN_ID를 rev로 저장 → 대시보드가 ?v=rev를
+          #   붙여 '새 버전=새 URL'로 미리보기·저장이 같은 최신본을 받게 한다.
+          media["rev"] = os.environ.get("GITHUB_RUN_ID", "")
           if Path(f"work/rel/cover_{cid}.jpg").exists():
               media["cover_url"] = f"{base}/cover_{cid}.jpg"
           if Path(f"work/rel/source_{cid}.jpg").exists():

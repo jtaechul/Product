@@ -153,6 +153,10 @@ function ago(iso){if(!iso)return"";const s=(Date.now()-new Date(iso))/1000;
 function banner(t,cls){let m=$("#msg");if(!m)return;m.className="banner show "+(cls||"");m.innerHTML=t;}
 // Release 미디어 → 워커 프록시 URL(iOS 재생 가능한 inline·video/mp4로 중계)
 function prox(u){return u?"/api/media?u="+encodeURIComponent(u):"";}
+// 콘텐츠 버전 캐시버스터: 재생성 시 URL은 그대로(reels_<id>.mp4)라 옛 영상이 캐시로 나오던 문제를
+// 막는다. 레코드의 rev(제작 실행 id)를 쿼리로 붙여 '새 버전 = 새 URL'로 만들어 미리보기·저장이
+// 같은 최신본을 받게 한다. rev 없으면(구 레코드) 원래대로.
+function bust(u,rev){return (u&&rev)?(u+(u.includes("?")?"&":"?")+"v="+encodeURIComponent(rev)):(u||"");}
 // 구버전 합본 캡션(JP+【한국어 참고 번역】+KO) → {jp, ko} 분해(신 레코드는 분리 필드 사용)
 function splitLegacy(cap){const M="【한국어 참고 번역】";const i=(cap||"").indexOf(M);
   if(i<0)return{jp:cap||"",ko:""};
@@ -503,8 +507,10 @@ async function renderDetail(id){
   const sp=rec.species||{},re=rec.reels||{},md=rec.media||{},src=rec.source||{};
   let mediaHtml="";
   // Release 자산은 attachment/octet-stream이라 <video> 직접 재생 불가(iOS) → 워커 프록시 경유
-  if(md.video_url)mediaHtml='<video src="'+prox(md.video_url)+'" controls playsinline preload="metadata" poster="'+(md.cover_url?prox(md.cover_url):"")+'"></video>';
-  else if(md.cover_url)mediaHtml='<img src="'+prox(md.cover_url)+'">';
+  const _rev=md.rev||"r1";   // rev 없는 옛 레코드도 캐시버스터를 붙여 '옛 플레인 URL 캐시'를 한 번 무효화
+  const vurl=bust(md.video_url,_rev), curl=bust(md.cover_url,_rev);
+  if(md.video_url)mediaHtml='<video src="'+prox(vurl)+'" controls playsinline preload="metadata" poster="'+(md.cover_url?prox(curl):"")+'"></video>';
+  else if(md.cover_url)mediaHtml='<img src="'+prox(curl)+'">';
   else mediaHtml='<div class="hint">미디어가 아직 업로드되지 않았습니다(제작 직후 잠시 후 반영).</div>';
   // ★유튜브 쇼츠 업로드는 자동으로 하지 않는다 — 위 영상을 확인하고 이상 없으면 버튼으로 직접 올린다.
   let upHtml="";
@@ -573,7 +579,7 @@ async function renderDetail(id){
     '<div class="hint">이미지 출처: '+esc(src.image_credit||"—")+'<br>정보 출처: '+esc((src.info_sources||[]).join(" · ")||"—")+'</div>';
 
   // 현 시스템은 실사 영상 재편집(무료) — Veo·카드뉴스 이미지 재생성은 구 시스템 유물이라 제거
-  if($("#bdl"))$("#bdl").onclick=()=>saveVideo(prox(md.video_url),esc(id)+"_"+(sp.common_name_ko||"reel")+".mp4");
+  if($("#bdl"))$("#bdl").onclick=()=>saveVideo(prox(bust(md.video_url,md.rev||"r1")),esc(id)+"_"+(sp.common_name_ko||"reel")+".mp4");
   $("#cptjp").onclick=()=>copyText($("#etitlejp").value,"일본어 제목을 복사했어요. 유튜브 쇼츠 제목에 붙여넣기 하세요.");
   $("#cptko").onclick=()=>copyText($("#etitleko").value,"한국어 제목(참고)을 복사했어요.");
   $("#cpjp").onclick=()=>copyText($("#ecapjp").value,"일본어 캡션+해시태그를 복사했어요. 릴스에 붙여넣기 하세요.");
@@ -617,8 +623,10 @@ async function renderLongformDetail(id){
   }
   const md=rec.media||{};
   let mediaHtml="";
-  if(md.video_url)mediaHtml='<video src="'+prox(md.video_url)+'" controls playsinline preload="metadata" poster="'+(md.cover_url?prox(md.cover_url):"")+'"></video>';
-  else if(md.cover_url)mediaHtml='<img src="'+prox(md.cover_url)+'">';
+  const _rev=md.rev||"r1";   // rev 없는 옛 레코드도 캐시버스터를 붙여 '옛 플레인 URL 캐시'를 한 번 무효화
+  const vurl=bust(md.video_url,_rev), curl=bust(md.cover_url,_rev);
+  if(md.video_url)mediaHtml='<video src="'+prox(vurl)+'" controls playsinline preload="metadata" poster="'+(md.cover_url?prox(curl):"")+'"></video>';
+  else if(md.cover_url)mediaHtml='<img src="'+prox(curl)+'">';
   // ★유튜브 업로드는 자동으로 하지 않는다 — 아래 영상을 확인하고 이상 없으면 버튼으로 직접 올린다.
   let upHtml;
   if(md.youtube_url){
@@ -684,7 +692,7 @@ async function renderLongformDetail(id){
   $("#lfrgtitle").onclick=()=>regenLongform(id,"title");
   $("#lfrgdesc").onclick=()=>regenLongform(id,"desc");
   $("#lfrgall").onclick=()=>regenLongform(id,"all");
-  if($("#bdl"))$("#bdl").onclick=()=>saveVideo(prox(md.video_url),esc(id)+"_longform.mp4");
+  if($("#bdl"))$("#bdl").onclick=()=>saveVideo(prox(bust(md.video_url,md.rev||"r1")),esc(id)+"_longform.mp4");
   const upBtn=document.getElementById("lfup");
   if(upBtn)upBtn.onclick=()=>uploadLongform(id);
 }
@@ -875,7 +883,8 @@ const MEDIA_TYPES = { mp4: "video/mp4", jpg: "image/jpeg", jpeg: "image/jpeg", p
 async function mediaProxy(request, url) {
   const u = url.searchParams.get("u") || "";
   if (!u.startsWith(MEDIA_PREFIX)) return j({ error: "url not allowed" }, 403);  // 개방 프록시 방지
-  const ext = (u.split(".").pop() || "").toLowerCase();
+  // 확장자 판정 시 캐시버스터(?v=...) 쿼리는 떼고 본다(붙어 있으면 'mp4?v=1'로 오판돼 403 나던 버그).
+  const ext = (u.split("?")[0].split(".").pop() || "").toLowerCase();
   const type = MEDIA_TYPES[ext];
   if (!type) return j({ error: "type not allowed" }, 403);
   const h = { "User-Agent": "deep-dive-log-dashboard" };
