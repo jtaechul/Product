@@ -1,8 +1,8 @@
 {
  "mode": "produce",
- "provider": "mock",
+ "provider": "auto",
  "row": "2",
  "privacy": "private",
- "note": "영상 개편 완성본 검수: 씬 시퀀스 + 가라오케 자막 + 실사 스톡 b-roll (WoWo, mock 음성)",
- "requested_at": "2026-07-12T09:35:41Z"
+ "note": "실제 음성 ON: ElevenLabs 한국어 보이스(Sarah) + with-timestamps 가라오케 동기 (WoWo, row 2)",
+ "requested_at": "2026-07-12T11:37:49Z"
 }

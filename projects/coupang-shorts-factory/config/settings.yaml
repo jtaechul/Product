@@ -14,9 +14,12 @@ tts:
   provider: auto
 
   elevenlabs:
-    # 기본값은 premade 보이스(Rachel). eleven_multilingual_v2가 한국어를 지원하지만
-    # 자연스러운 한국어 톤을 원하면 보이스 라이브러리에서 한국어 보이스 id로 교체 권장.
-    voice_id: "21m00Tcm4TlvDq8ikWAM"
+    # voice_id: 모든 ElevenLabs 계정에 기본 내장된 premade 보이스라 사용자 키로 바로 호출된다
+    #   (voice 라이브러리에서 별도 추가 불필요). "Sarah" = 밝고 자연스러운 20대 여성 톤 →
+    #   자취생 1인칭 입담 페르소나에 적합. eleven_multilingual_v2로 한국어 발화.
+    #   더 자연스러운(원어민) 한국어를 원하면 ElevenLabs 보이스 라이브러리에서 한국어 보이스를
+    #   내 계정에 Add 후 그 id로 교체(원어민 톤 업그레이드 경로).
+    voice_id: "EXAVITQu4vr4xnSDxMaL"   # Sarah (premade, 전 계정 공용)
     model_id: "eleven_multilingual_v2"
     output_format: "mp3_44100_128"
     voice_settings:
