@@ -271,7 +271,7 @@ ol li{margin:8px 0}
     <div id="vmTitle" class="t"></div>
     <div id="vmSub" class="s"></div>
     <div class="vm-actions">
-      <a id="vmDownload" class="btn sub mini" download target="_blank" style="text-decoration:none">영상 저장</a>
+      <button id="vmDownload" class="btn sub mini" type="button">사진에 저장</button>
       <a id="vmYoutube" class="btn sub mini" target="_blank" style="text-decoration:none">유튜브에서 보기</a>
     </div>
   </div>
@@ -652,7 +652,8 @@ function openVideo(v) {
   $("vmSub").textContent = (v.price ? Number(v.price).toLocaleString() + "원 · " : "") + v.when;
   const yt = $("vmYoutube");
   if (v.youtube) { yt.href = v.youtube; yt.style.display = "inline-flex"; } else { yt.style.display = "none"; }
-  $("vmDownload").href = v.dlUrl;
+  $("vmDownload").dataset.src = v.videoUrl;   // /media 프록시(video/mp4, 같은 출처) — blob fetch용
+  $("vmDownload").dataset.name = v.name || "video";
   m.classList.add("on");
   $("vmVideo").play?.().catch(() => {});
 }
@@ -664,6 +665,37 @@ function closeVideo() {
 $("btnReloadVideos").onclick = () => loadVideos();
 $("vmClose").onclick = closeVideo;
 $("vmodal").addEventListener("click", (ev) => { if (ev.target.id === "vmodal") closeVideo(); });
+
+// "사진에 저장": iOS는 사파리 다운로드 대신 웹 공유 시트를 띄워 '비디오 저장' → 사진 앱에 저장(바로 재생).
+// 미지원 기기는 일반 다운로드로 폴백. (공유는 사용자 탭 제스처 안에서 실행)
+$("vmDownload").onclick = async () => {
+  const btn = $("vmDownload");
+  const url = btn.dataset.src;
+  const name = ((btn.dataset.name || "video").replace(/[^\w가-힣 ._-]/g, "").trim() || "video") + ".mp4";
+  if (!url) return;
+  btn.disabled = true;
+  try {
+    toast("영상 준비 중...", 60000);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("불러오기 실패 " + res.status);
+    const file = new File([await res.blob()], name, { type: "video/mp4" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: name }); // → '비디오 저장' → 사진 앱
+      toast("공유 창에서 '비디오 저장'을 누르면 사진 앱에 저장됩니다.");
+    } else {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(file); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+      toast("영상을 저장했습니다.");
+    }
+  } catch (e) {
+    if (e && e.name === "AbortError") toast("저장을 취소했습니다.");
+    else toast("저장 실패: " + (e.message || e), 5000);
+  } finally {
+    btn.disabled = false;
+  }
+};
 
 /* ── 채널 ────────────────────────────── */
 function parseChannels(text) {
