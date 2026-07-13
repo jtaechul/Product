@@ -160,5 +160,32 @@
         "Wikimedia Commons (File:OPT 3D reconstruction showing the internal location of the tentacles in a cuttlefish hatchling.ogv)"
       ]
     }
+  },
+  {
+    "key": "duobrachium sparksae",
+    "kind": "creature",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/First_footage_of_Duobrachium_Sparksae.webm",
+      "license": "public-domain",
+      "credit": "NOAA Office of Ocean Exploration and Research",
+      "source": "File:First footage of Duobrachium Sparksae.webm"
+    },
+    "species": {
+      "scientific_name": "Duobrachium sparksae",
+      "common_name_ko": "Duobrachium sparksae",
+      "common_name_en": "Duobrachium sparksae",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Duobrachium is a monotypic genus of comb jellies (Ctenophora) belonging to the order Cydippida, family unknown.",
+        "The only known species is Duobrachium sparksae."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:First footage of Duobrachium Sparksae.webm)"
+      ]
+    }
   }
 ]

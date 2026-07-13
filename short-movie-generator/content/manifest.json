@@ -199,5 +199,13 @@
     "common_name_en": "common cuttlefish",
     "scientific_name": "Sepia officinalis",
     "date": "2026-07-13"
+  },
+  {
+    "id": "025",
+    "kind": "reels",
+    "common_name_ko": "Duobrachium sparksae",
+    "common_name_en": "Duobrachium sparksae",
+    "scientific_name": "Duobrachium sparksae",
+    "date": "2026-07-13"
   }
 ]

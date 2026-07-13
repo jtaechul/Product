@@ -152,43 +152,5 @@
       ]
     },
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_lingulodinium_polyedra_29211395597.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "duobrachium sparksae",
-    "needs_confirm": false,
-    "title": "File:First footage of Duobrachium Sparksae.webm",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/First_footage_of_Duobrachium_Sparksae.webm",
-    "license": "public-domain",
-    "credit": "NOAA Office of Ocean Exploration and Research",
-    "source": "File:First footage of Duobrachium Sparksae.webm",
-    "name": "Duobrachium sparksae",
-    "name_ja": "",
-    "common_name_ko": "Duobrachium sparksae",
-    "common_name_en": "Duobrachium sparksae",
-    "depth": "",
-    "facts": [
-      "Duobrachium is a monotypic genus of comb jellies (Ctenophora) belonging to the order Cydippida, family unknown.",
-      "The only known species is Duobrachium sparksae."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Duobrachium sparksae",
-      "common_name_ko": "Duobrachium sparksae",
-      "common_name_en": "Duobrachium sparksae",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Duobrachium is a monotypic genus of comb jellies (Ctenophora) belonging to the order Cydippida, family unknown.",
-        "The only known species is Duobrachium sparksae."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:First footage of Duobrachium Sparksae.webm)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_duobrachium_sparksae_29211395597.jpg"
   }
 ]
