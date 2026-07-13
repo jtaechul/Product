@@ -1,7 +1,7 @@
 {
   "id": "025",
   "created_at": "2026-07-13T14:25:52+00:00",
-  "updated_at": "2026-07-13T14:25:52+00:00",
+  "updated_at": "2026-07-13T14:42:26+00:00",
   "status": "published",
   "category": "deep_sea",
   "series": "심해 도감",
@@ -19,24 +19,24 @@
     ]
   },
   "reels": {
-    "hook": "まるで宇宙、深海の幽霊。",
-    "caption": "真っ暗な深海に、まるで意識だけが漂うように、透明な影がひとつ現れます。\nその姿は輪郭をぼやかせ、深海の闇に溶けていく——そんな神秘を纏う生命が、私たちの知る地球の片隅に存在します。\n\nその名はデュオブラキウム・スパークサエ(学名: Duobrachium sparksae)。\n\n彼らの詳しい生息水深や環境、そして地球上のどこに分布しているのかは、いまだ多くの謎に包まれています。私たちがまだ知り得ない深海の底で、彼らはただ静かに、独自の時間を刻んでいるのかもしれません。\n\n有櫛動物、いわゆるクシクラゲの一員として、その体はほぼ水でできており、かすかな水の流れに乗って漂います。このデュオブラキウム・スパークサエは、デュオブラキウム属において唯一、その存在が確認されている「単型属」の種です。他の近縁種が見つかっていないという事実は、彼らが極めてユニークな進化を遂げた存在であることを物語っています。まるで、広大な生命の系図の中で、たった一人で家系図を埋めているような、独特の立ち位置にいるのです。\nさらに驚くべきことに、彼らは所属する「科」すら不明なままなのです。まるで、社内でどこの部署に配属されるか、まだ上層部も決めかねている新入社員のようで、その分類上のアイデンティティは未だ確定していません。彼らの稀少性と、私たちが地球で出会えた奇跡は、この学術的な空白が静かに示唆しています。\n\nもしこの物語が心に触れたなら、どうか保存しておいてほしい。\nそして、同じ海を想う誰かにも、そっとシェアしてあげてください。\n\n映像: NOAA Ocean Exploration・Public Domain\n写真: NOAA Office of Ocean Exploration and Research, Exploring Puerto Rico’s Seamounts, Trenches, and Troughs",
+    "hook": "この世に、ただ一つ。光る、深海の謎。",
+    "caption": "この世に、ただ一つ。光る、深海の謎。\n\nデュオブラーキウム・スパークサエ(学名: Duobrachium sparksae)。\n漂う・輝く・透明、唯一のクシクラゲ。\n深い海の底で、たしかに命をつないでいる一種です。\n\n心に残ったら保存を。\n同じ海が気になる人へシェアを。\n\n映像: NOAA Ocean Exploration・Public Domain\n写真: NOAA Office of Ocean Exploration and Research, Exploring Puerto Rico’s Seamounts, Trenches, and Troughs",
     "hashtags": [
-      "#デュオブラキウムスパークサエ",
+      "#デュオブラーキウム・スパークサエ",
       "#深海生物"
     ],
-    "reveal_name": "デュオブラキウム・スパークサエ / Duobrachium sparksae",
-    "reveal_fact": "唯一・透明・浮遊、深海のクシクラゲ",
-    "hook_ko": "깊은 바다의, 환영,\n빛나며, 표류.",
-    "caption_ko": "칠흑 같은 심해에, 마치 의식만이 떠다니는 것처럼, 투명한 그림자가 하나 나타납니다.\n그 모습은 윤곽을 흐리게 하며 심해의 어둠 속으로 녹아내리는데—이런 신비를 두른 생명이 우리가 아는 지구 한켠에 존재합니다.\n\n그 이름은 듀오브라키움 스파크사(학명: Duobrachium sparksae)입니다.\n\n이들의 자세한 서식 수심이나 환경, 그리고 지구상 어디에 분포하는지는 아직 많은 미스터리에 싸여 있습니다. 우리가 아직 알지 못하는 심해 깊은 곳에서, 이들은 그저 조용히 자신만의 시간을 새기고 있을지도 모릅니다.\n\n유즐동물, 즉 빗해파리의 일원으로서, 몸은 거의 물로 이루어져 있으며 미세한 물결에 실려 떠다닙니다. 이 듀오브라키움 스파크사는 듀오브라키움 속에서 유일하게 그 존재가 확인된 '단형속' 종입니다. 다른 근연종이 발견되지 않았다는 사실은 이들이 극도로 독특한 진화를 거친 존재임을 말해줍니다. 마치 광대한 생명의 계보 속에서 홀로 가계도를 채우고 있는 듯한 독특한 위치에 있는 것입니다.\n더욱 놀라운 것은, 이들은 소속된 '과'조차 불명인 상태입니다. 마치 회사에서 어느 부서에 배치되어야 할지 아직 상부에서도 결정하지 못한 신입사원처럼, 그 분류학적 정체성은 아직 확정되지 않았습니다. 이들의 희소성과 우리가 지구에서 만날 수 있었던 기적은, 이러한 학술적 공백이 조용히 시사하고 있습니다.\n\n만약 이 이야기가 마음에 와닿았다면, 부디 저장해 두시길 바랍니다.\n그리고 같은 바다를 생각하는 다른 사람에게도 살짝 공유해 주세요.\n\n영상: NOAA Ocean Exploration・Public Domain",
+    "reveal_name": "デュオブラーキウム・スパークサエ / Duobrachium sparksae",
+    "reveal_fact": "漂う・輝く・透明、唯一のクシクラゲ",
+    "hook_ko": "마치, 이계의 빛의 빗, 흔들린다.",
+    "caption_ko": "마치, 이계의 빛의 빗, 흔들린다.\n\nDuobrachium sparksae(학명: Duobrachium sparksae).\nDuobrachium is a monotypic genus of comb jellies (Ctenophora) belonging to the order Cydippida, family unknown.\nThe only known species is Duobrachium sparksae.\n투명하고, 미지의, 흔들리는, 심해의 빗해파리.\n\n마음이 복잡한 날, 다시 꺼내보고 싶다면 저장해 두세요.\n같은 바다가 궁금한 사람에게 조용히 건네주세요.\n\n영상: NOAA Ocean Exploration・Public Domain",
     "hashtags_ko": [
-      "#デュオブラキウムスパークサエ",
+      "#Duobrachium sparksae",
       "#심해생물"
     ],
-    "yt_title": "所属不明の深海生物デュオブラキウム・スパークサエ #デュオブラキウムスパークサエ #深海生物",
-    "yt_title_ko": "소속 불명 심해생물 듀오브라키움 스파크사 #デュオブラキウムスパークサエ #심해생물",
+    "yt_title": "なぜこの世に、ただ一つ。光る、深海の謎のか。デュオブラーキウム・スパークサエ #デュオブラーキウム・スパークサエ #深海生物",
+    "yt_title_ko": "Duobrachium sparksae는 왜? 마치, 이계의 빛의 빗, 흔들린다 #Duobrachium sparksae #심해생물",
     "visualizer": "reels",
-    "video_file": "duobrachium_sparksae_20260713_142551.mp4"
+    "video_file": "duobrachium_sparksae_20260713_144226.mp4"
   },
   "source": {
     "image_credit": "",
@@ -48,7 +48,7 @@
   },
   "media": {
     "video_url": "https://github.com/jtaechul/Product/releases/download/content-025/reels_025.mp4",
-    "rev": "29257282782",
+    "rev": "29258438874",
     "cover_url": "https://github.com/jtaechul/Product/releases/download/content-025/cover_025.jpg"
   },
   "post": null
