@@ -208,5 +208,13 @@
     "scientific_name": "Sepioteuthis sepioidea",
     "date": "2026-07-13",
     "youtube_url": "https://youtu.be/RQnd569jrHM"
+  },
+  {
+    "id": "026",
+    "kind": "reels",
+    "common_name_ko": "Latvia 난파선",
+    "common_name_en": "Wreck Latvia",
+    "scientific_name": "Wreck Latvia",
+    "date": "2026-07-13"
   }
 ]

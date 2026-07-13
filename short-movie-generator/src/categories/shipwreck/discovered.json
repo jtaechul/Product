@@ -64,5 +64,73 @@
         "静かな船です。"
       ]
     }
+  },
+  {
+    "key": "wreck latvia",
+    "kind": "wreck",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/d/d9/U_S_Navy_EOD_Removes_Ordnance_from_WWII_Shipwreck_in_Latvia_%28992014%29.webm",
+      "license": "public-domain",
+      "credit": "U.S. Navy EODG-2 by Petty Officer 2nd Class Jackson Adkins",
+      "source": "File:U S Navy EOD Removes Ordnance from WWII Shipwreck in Latvia (992014).webm"
+    },
+    "subject": {
+      "scientific_name": "Wreck Latvia",
+      "common_name_ko": "Latvia 난파선",
+      "common_name_en": "Wreck Latvia",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "침몰선",
+      "diet": [],
+      "fun_facts": [
+        "바다에 가라앉은 배입니다"
+      ],
+      "sources": [
+        "",
+        "Wikimedia Commons (File:U S Navy EOD Removes Ordnance from WWII Shipwreck in Latvia (992014).webm)"
+      ]
+    },
+    "copy": {
+      "jp_name": "沈没船「Latvia」",
+      "hook_line1": "海の底に、",
+      "hook_line2": "眠る船。",
+      "pop_words": [
+        "海の底に、",
+        "眠る船。"
+      ],
+      "feature_line": "海の命が集う、沈んだ貨物船",
+      "feature_glow_word": "命",
+      "hook_ko": "바다 밑에, 잠든 배.",
+      "feature_ko": "바다 생명이 모이는, 가라앉은 배",
+      "tags": [
+        "#沈没船",
+        "#難破船",
+        "#海"
+      ],
+      "tags_ko": [
+        "#난파선",
+        "#침몰선",
+        "#바다"
+      ],
+      "body": [
+        "青い海の底に、",
+        "静かに横たわる、",
+        "大きな影。",
+        "その正体は、",
+        "沈没船です。",
+        "かつては、",
+        "海をゆく貨物船。",
+        "長い時間をかけて、",
+        "船体には、",
+        "生き物が棲みつきました。",
+        "魚が集まり、",
+        "海藻がゆれる。",
+        "沈んだ船は、",
+        "新しい命の、",
+        "すみかです。",
+        "海に還った、",
+        "静かな船です。"
+      ]
+    }
   }
 ]
