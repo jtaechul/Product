@@ -14,6 +14,26 @@ import json
 from pathlib import Path
 
 
+def strip_corner_watermark(im, frac: float = 0.14):
+    """플랫 배경 밈 이미지의 우하단 워터마크(제미나이/나노바나나 마름모)를 배경으로 덮어 제거.
+
+    밈 규격상 피사체는 상단 2/3에 있고 우하단 코너는 빈 배경이므로, 워터마크 영역 '왼쪽의
+    같은 높이 밴드'에서 배경색을 샘플링해 코너를 그 색으로 채운다(로컬 톤 일치 → 흔적 없음).
+    im: PIL.Image → 반환: 워터마크 지운 RGB PIL.Image.
+    """
+    import numpy as np
+    from PIL import Image, ImageDraw
+
+    im = im.convert("RGB")
+    W, H = im.size
+    s = max(1, int(min(W, H) * frac))          # 우하단 정사각 패치 변 길이
+    lx = max(0, W - 3 * s)
+    band = np.asarray(im.crop((lx, H - s, W - s, H)))  # 코너 왼쪽 밴드(빈 배경) 샘플
+    bg = tuple(int(np.median(band[..., c])) for c in range(3)) if band.size else (245, 244, 238)
+    ImageDraw.Draw(im).rectangle([W - s, H - s, W, H], fill=bg)
+    return im
+
+
 def _manifest_path(project_root: Path) -> Path:
     return Path(project_root) / "assets" / "memes" / "memes.json"
 
