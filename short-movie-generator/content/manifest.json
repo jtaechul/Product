@@ -160,14 +160,6 @@
     "youtube_url": "https://youtu.be/FnfF6KzStXk"
   },
   {
-    "id": "020",
-    "kind": "reels",
-    "common_name_ko": "카리브암초오징어",
-    "common_name_en": "Caribbean reef squid",
-    "scientific_name": "Sepioteuthis sepioidea",
-    "date": "2026-07-11"
-  },
-  {
     "id": "021",
     "kind": "reels",
     "common_name_ko": "마데이렌스호 난파선",
@@ -207,5 +199,14 @@
     "common_name_en": "Duobrachium sparksae",
     "scientific_name": "Duobrachium sparksae",
     "date": "2026-07-13"
+  },
+  {
+    "id": "020",
+    "kind": "reels",
+    "common_name_ko": "카리브암초오징어",
+    "common_name_en": "Caribbean reef squid",
+    "scientific_name": "Sepioteuthis sepioidea",
+    "date": "2026-07-13",
+    "youtube_url": "https://youtu.be/RQnd569jrHM"
   }
 ]
