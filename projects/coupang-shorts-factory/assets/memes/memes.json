@@ -1,54 +1,96 @@
 {
-  "_doc": "AI 밈 이미지 라이브러리 (자체 생성물 = §3.2 화이트리스트). 규칙: 이미지에는 글자를 굽지 않는다(한글 왜곡 회피) — 텍스트는 렌더 파이프라인이 얹는다. 하단 1/3(y≈720~)은 자막·펀치 글자 오버레이용으로 비워둔 이미지를 쓴다. 파일은 미래마켓 화풍으로 나노바나나(Gemini) 생성 후 이 폴더에 저장하고 아래 항목의 file 이름과 똑같이 맞춘다. 파일이 없으면 해당 항목은 자동으로 건너뛴다.",
+  "_doc": "AI 밈 이미지 라이브러리 (자체 생성물 = §3.2 화이트리스트). 규칙: 이미지에는 글자를 굽지 않는다(한글 왜곡 회피) — 텍스트는 렌더 파이프라인이 얹는다. 하단 1/3(y≈720~)은 자막·펀치 글자 오버레이용으로 비워둔 이미지를 쓴다. 캐릭터=카피바라(무심한 사람 눈매 B급), 파일은 아래 file 이름과 똑같이 맞춘다. 파일이 없으면 해당 항목은 자동으로 건너뛴다. 등록 시 우하단 워터마크는 strip_corner_watermark로 제거.",
   "text_overlay_rule": "situations 태그로 펀치라인 상황과 매칭 → 이미지만 꺼내 하단 클린존에 텍스트 삽입. 미등록/무매칭이면 라이브러리 기본(placeholder) 또는 이미지 없이 텍스트 카드로 폴백.",
   "memes": [
+    {
+      "id": "curiosity",
+      "file": "curiosity.png",
+      "situations": ["궁금", "호기심", "이게 뭐", "정체", "수상", "물음"],
+      "desc": "고개 갸웃·눈 살짝 크게 뜨고 관심(오프닝 훅).",
+      "text_zone": "bottom"
+    },
     {
       "id": "shock",
       "file": "shock.png",
       "situations": ["충격", "놀람", "반전", "헉", "대박", "믿기지", "말이 돼", "실화"],
-      "desc": "미래마켓 마스코트가 눈 튀어나오게 놀람. 상단 2/3 주제, 하단 1/3 클린.",
+      "desc": "눈 튀어나오고 입 쩍·팔 허우적(과장). 상단 2/3 주제, 하단 1/3 클린.",
       "text_zone": "bottom"
     },
     {
       "id": "frustration",
       "file": "frustration.png",
       "situations": ["좌절", "빡침", "답답", "불편", "짜증", "스트레스", "현타", "귀찮"],
-      "desc": "페인포인트에 답답해 무너지는 마스코트(문제 구간 훅).",
+      "desc": "인상 팍·대성통곡(과장). 페인포인트 훅.",
       "text_zone": "bottom"
     },
     {
       "id": "relief",
       "file": "relief.png",
       "situations": ["만족", "시원", "해결", "편안", "살았다", "갓생", "행복"],
-      "desc": "문제 해결 후 편안·만족하는 마스코트.",
-      "text_zone": "bottom"
-    },
-    {
-      "id": "curiosity",
-      "file": "curiosity.png",
-      "situations": ["궁금", "호기심", "이게 뭐", "정체", "수상", "물음"],
-      "desc": "고개 갸웃·눈 반짝이며 궁금해하는 마스코트(오프닝 훅).",
+      "desc": "눈 감고 무심한 흐뭇 미소.",
       "text_zone": "bottom"
     },
     {
       "id": "genius",
       "file": "genius.png",
       "situations": ["신박", "천재", "갓템", "미쳤다", "혁신", "어떻게", "발상"],
-      "desc": "무릎 탁 치며 감탄하는 마스코트(신박함 강조).",
+      "desc": "손가락 들고 무심한 '아하'.",
       "text_zone": "bottom"
     },
     {
       "id": "deal",
       "file": "deal.png",
       "situations": ["이득", "가성비", "개꿀", "횡재", "혜자", "완전", "꿀템"],
-      "desc": "이득 보고 흡족해 눈이 하트/별이 되는 마스코트.",
+      "desc": "능글 만족·초록 장바구니.",
+      "text_zone": "bottom"
+    },
+    {
+      "id": "skeptical",
+      "file": "skeptical.png",
+      "situations": ["의심", "설마", "진짜", "에이", "글쎄", "수상"],
+      "desc": "한쪽 눈썹 올리고 곁눈질 '에이 설마'.",
+      "text_zone": "bottom"
+    },
+    {
+      "id": "disgust",
+      "file": "disgust.png",
+      "situations": ["질색", "극혐", "윽", "더러", "역겹", "비위"],
+      "desc": "코 찡그리고 인상 팍 '윽 극혐'.",
+      "text_zone": "bottom"
+    },
+    {
+      "id": "present",
+      "file": "present.png",
+      "situations": ["짜잔", "소개", "등장", "이거", "봐봐", "공개"],
+      "desc": "팔 뻗어 무심하게 소개 '이거 봐봐'.",
+      "text_zone": "bottom"
+    },
+    {
+      "id": "smug",
+      "file": "smug.png",
+      "situations": ["으쓱", "잘난", "역시", "거봐", "내가", "그럴 줄"],
+      "desc": "어깨 으쓱·내려보는 능글 '내가 이런 걸 알지'.",
+      "text_zone": "bottom"
+    },
+    {
+      "id": "chill",
+      "file": "chill.png",
+      "situations": ["힐링", "편안", "늘어", "여유", "꿀잠", "눕"],
+      "desc": "게슴츠레 늘어진 무심 힐링(카피바라 시그니처).",
+      "text_zone": "bottom"
+    },
+    {
+      "id": "want",
+      "file": "want.png",
+      "situations": ["지름신", "사고싶", "갖고싶", "탐나", "눈독", "당장"],
+      "desc": "침 꼴깍·눈 반짝(무심하게) 사고싶어 안달.",
       "text_zone": "bottom"
     },
     {
       "id": "_placeholder",
       "file": "_placeholder_shock.png",
       "situations": [],
-      "desc": "검증용 자체 생성 도형(글자 없음). 실제 생성물이 없을 때의 기본 폴백. 6종 생성 후 삭제 가능.",
+      "desc": "검증용 자체 생성 도형(글자 없음). 실제 생성물이 없을 때의 기본 폴백. 12종 등록 후 삭제 가능.",
       "text_zone": "bottom"
     }
   ]
