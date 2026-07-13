@@ -82,6 +82,14 @@ script:                 # M3 대본 생성 (스펙 §M3)
   model: "claude-sonnet-4-6"   # 스펙 지정 모델 (2026-07 기준 유효 ID 확인)
   max_tokens: 4000
 
+veo:                    # 하이브리드 오프닝 1컷 — Gemini Veo 3.1 (src/video/veo.py)
+  enabled: true         # false면 Veo 생략(전부 무료 스틸). 시크릿 SHORTS_GEMINI_API_KEY 필요
+  model: "veo-3.1-fast-generate-preview"   # 저가 Fast(무음 ≈ $0.10/초). 표준=veo-3.1-generate-preview
+  seconds: 8            # 클립 길이(초) — Veo 3.1 기준 8초
+  aspect_ratio: "9:16"
+  poll_timeout: 300     # 생성 폴링 최대 대기(초)
+  poll_interval: 10
+
 upload:                 # M7 (스펙 §M7)
   privacy_default: "private"   # 미인증 API 프로젝트는 자동 private 잠금 → 반자동 공개 전환
   category_id: "26"            # 노하우/스타일 — 상품·리뷰 콘텐츠 표준 (28 과학기술에서 교정)

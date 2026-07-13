@@ -27,6 +27,7 @@ from src.product.assets import fetch_product_videos
 from src.product.enrich import enrich_product
 from src.script.generate import DISCLOSURE, anthropic_key, generate_script
 from src.upload import youtube
+from src.video import veo
 from src.video.qa import run_qa
 from src.video.render import build_poster, render_video
 
@@ -125,6 +126,13 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     #      내려받아 상품 단계 풀프레임 배경으로 사용. 없으면 사진 히어로 폴백.
     product_videos = [p for p in (product.get("hero_videos") or []) if Path(p).exists()]
     product_videos += fetch_product_videos(product["_row_hash"], job_dir)
+    # ---- 하이브리드 오프닝 1컷: 제품 사진을 씨앗으로 Veo 무음 9:16 클립 1개 생성(맨 앞=오프닝).
+    #      비용 최소화를 위해 딱 1컷만. 실패/키없음 시 None → 스틸(켄번즈) 폴백으로 제작 계속.
+    if veo.is_configured() and product_images:
+        _hero = veo.generate_hero_clip(product_images[0], veo.build_hero_prompt(product),
+                                       job_dir / "veo_hero.mp4", settings=settings)
+        if _hero is not None:
+            product_videos = [str(_hero)] + product_videos
     # ---- 스톡 b-roll 자동 검색 폐지(2026-07-12 개편): 검색어만으로는 무관한 장면(남의 집
     #      소파·주방)이 들어와 영상을 망친다. 운영자가 후보 그리드에서 직접 승인한 클립만
     #      product['stock_clips']로 들어온다(Task: Phase2 후보 그리드). 없으면 문제 구간은
