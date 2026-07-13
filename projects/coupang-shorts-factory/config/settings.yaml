@@ -3,6 +3,8 @@
 
 channel:
   name: "미래마켓"   # 확정 (핸들 @miraemarket)
+  handle: "@miraemarket"
+  logo: "assets/brand/logo.png"   # 있으면 상단 프레임에 로고 합성(없으면 채널명 워드마크만)
 
 tts:
   # provider 선택:
@@ -47,8 +49,8 @@ subtitle:               # 스펙 §M6 - 3 (2026-07-12 개편: '대본이 곧 자
   color: "#FFE400"      # 노랑
   stroke_color: "#000000"
   stroke_width: 6
-  y: 1250               # 일반 자막 고정 y (하단 중앙 1곳 — 널뛰기 금지, QA가 검사)
-  meme_y: 760           # punch 라인 1회만 뜨는 중앙 밈 카드 y (의도된 예외 1곳)
+  y: 1580               # 일반 자막 고정 y — framed 레이아웃의 하단 검정 바 안(널뛰기 금지, QA가 검사)
+  meme_y: 760           # (framed에서는 렌더가 정사각형 중앙으로 자동 계산) punch 밈 카드 y
   # (react 추임새 설정은 2026-07-12 핵심규칙으로 전면 금지되어 제거됨)
   # (폴백·phrase 모드용 — 정상 경로에서는 대본 subs를 재분할 없이 그대로 쓴다)
   max_word_chars: 8
@@ -66,6 +68,11 @@ render:                 # 스펙 §M6
   audio_bitrate: "128k"
   shake_px: 8           # price_shock 쉐이크 ±px
   shake_seconds: 0.3
+  # ⭐ framed 레이아웃(2026-07-13 사용자 확정): 상단 검정바(채널명·로고) + 가운데 정사각형
+  #   (항상 이미지/영상 꽉 참, 빈 화면·흐린 배경 절대 없음) + 하단 검정바(자막).
+  layout: "framed"      # "framed" | "legacy"(과거 흐린배경+카드)
+  square_top: 380       # 정사각형 시작 y (위 검정바 높이). 380 + 1080 = 1460, 아래바 1460~1920(460px)
+  square_size: 1080     # 정사각형 한 변(=화면 폭). 이 영역 밖(상/하 바)은 순수 검정(자막·로고만)
 
 whisper:                # M5 폴백 설정
   model: "small"        # 한국어 정확도/속도 균형 (tiny/base는 한국어 정확도 낮음)

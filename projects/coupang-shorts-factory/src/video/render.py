@@ -38,6 +38,7 @@ VIDEO_EXTS = {".mp4", ".mov", ".webm", ".m4v"}
 # 씬마다 같은 사진의 흐린 배경·히어로 카드를 재계산하지 않도록 캐시(렌더 속도).
 _BLUR_BG_CACHE: dict = {}
 _HERO_RGBA_CACHE: dict = {}
+_SQUARE_ARR_CACHE: dict = {}   # framed 정사각형 cover-fit 배열 캐시
 
 
 def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
@@ -45,7 +46,7 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
                  image_windows: list | None = None, bg_path: Path | None = None,
                  product_images: list | None = None, lines: list | None = None,
                  line_windows: list | None = None, stock_clips: list | None = None,
-                 product_videos: list | None = None) -> dict:
+                 product_videos: list | None = None, scene_images: list | None = None) -> dict:
     """대본 단계(stage)별 씬 시퀀스 쇼츠 렌더. 반환: 렌더 통계 dict.
 
     lines(단계 포함)+line_windows가 있으면 '씬 시퀀스'로 렌더한다 — 상품 단계(①④⑤)는
@@ -62,8 +63,10 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     product_images = [Path(p) for p in (product_images or []) if Path(p).exists()]
     stock_clips = [Path(p) for p in (stock_clips or []) if Path(p).exists()]
     product_videos = [Path(p) for p in (product_videos or []) if Path(p).exists()]
+    scene_images = [Path(p) for p in (scene_images or []) if Path(p).exists()]
     lines = list(lines or [])
     line_windows = list(line_windows or [])
+    layout = str(r.get("layout", "framed")).lower()
 
     font_path = _resolve_font(project_root, s.get("font", "assets/fonts/GmarketSansBold.ttf"))
 
@@ -73,39 +76,65 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     over_w, over_h = width + 2 * shake_px, height + 2 * shake_px
     bg_dir = project_root / settings.get("assets", {}).get("backgrounds_dir", "assets/backgrounds")
 
-    # 씬 시퀀스: 대본 단계(stage)별로 배경/상품카드를 갈아끼워 '사진 한 장 고정'을 없앤다.
-    # 스톡 자동 검색은 폐지(무관 장면 유입) — stock_clips는 운영자가 승인한 클립만 온다.
-    use_scenes = (bool(line_windows) and bool(lines)
-                  and bool(product_images or stock_clips or product_videos))
-    bg_layers, card_layers = [], []
-    if use_scenes:
-        scenes = _plan_scenes(duration, lines, line_windows, len(product_images), len(stock_clips))
-        for sc in scenes:
-            bgc = _scene_bg_clip(sc, product_images, product_videos, stock_clips, over_w, over_h)
-            bgc = (bgc.with_start(sc["start"]).with_duration(sc["end"] - sc["start"] + 0.04)
-                      .with_position(_seg_shake_pos(sc["start"], shake_windows, shake_px, fps)))
-            bg_layers.append(bgc)
-            # 제품 영상이 있으면 그 자체가 주인공(풀프레임) → 사진 카드는 얹지 않음
-            if sc["kind"] == "product" and product_images and not product_videos:
-                card = _product_card_clip(sc, product_images, width, height)
-                if card is not None:
-                    card_layers.append(card)
-        bg_name = (f"씬 {len(scenes)}컷 (상품사진 {len(product_images)}·상품영상 "
-                   f"{len(product_videos)}·승인스톡 {len(stock_clips)})")
-    else:
-        if product_images:
-            background, bg_name = _blurred_product_bg(product_images[0], over_w, over_h, duration)
-        else:
-            background, bg_name = _build_background(bg_dir, width, height, duration, shake_px,
-                                                    override=bg_path)
-        background = background.with_position(_seg_shake_pos(0.0, shake_windows, shake_px, fps))
-        bg_layers = [background]
-        if product_images:
-            card_layers = _build_hero_clips(product_images, duration, width, height)
-        else:
-            card_layers = _build_image_clips(image_windows or [], duration, width)
+    # framed 정사각형 기하 (상단바 sq_top / 정사각형 sq / 하단바 = 나머지)
+    sq = int(r.get("square_size", width))
+    sq_top = int(r.get("square_top", 380))
+    if sq_top + sq > height:                      # 캔버스 밖으로 나가면 중앙 정렬로 안전 클램프
+        sq = min(sq, width); sq_top = max(0, (height - sq) // 2)
+    ch = settings.get("channel", {})
+    logo_path = project_root / str(ch.get("logo", "")) if ch.get("logo") else None
+    framed = (layout == "framed")
 
-    scrim = _subtitle_scrim(width, height, duration, s)
+    bg_layers, card_layers = [], []
+    if framed:
+        # ── framed: 검정 프레임 + 정사각형(항상 이미지/영상 꽉 참) + 상단 채널바 ──
+        base = ImageClip(np.zeros((height, width, 3), dtype=np.uint8)).with_duration(duration)
+        bg_layers = [base]
+        if lines and line_windows and (product_images or product_videos or scene_images):
+            scenes = _plan_scenes(duration, lines, line_windows,
+                                  len(product_images), len(scene_images))
+        else:  # 대본 정보가 없어도 정사각형은 항상 한 컷으로 꽉 채운다
+            scenes = [{"start": 0.0, "end": duration, "kind": "product", "asset": 0, "shot": 0}]
+        for sc in scenes:
+            card_layers.append(_square_content_clip(
+                sc, product_images, product_videos, scene_images, sq, sq_top,
+                ch.get("name", "미래마켓"), font_path))
+        card_layers.append(_brand_bar_clip(width, sq_top, ch.get("name", "미래마켓"),
+                                            ch.get("handle", ""), logo_path, font_path, duration))
+        bg_name = (f"framed {len(scenes)}컷 (정사각형 {sq}px, 상단바 {sq_top}px / "
+                   f"상품사진 {len(product_images)}·문구이미지 {len(scene_images)}·상품영상 {len(product_videos)})")
+        scrim = None
+    else:
+        # ── legacy: 흐린 상품 배경 + 히어로 카드 (과거 방식) ──
+        use_scenes = (bool(line_windows) and bool(lines)
+                      and bool(product_images or stock_clips or product_videos))
+        if use_scenes:
+            scenes = _plan_scenes(duration, lines, line_windows, len(product_images), len(stock_clips))
+            for sc in scenes:
+                bgc = _scene_bg_clip(sc, product_images, product_videos, stock_clips, over_w, over_h)
+                bgc = (bgc.with_start(sc["start"]).with_duration(sc["end"] - sc["start"] + 0.04)
+                          .with_position(_seg_shake_pos(sc["start"], shake_windows, shake_px, fps)))
+                bg_layers.append(bgc)
+                if sc["kind"] == "product" and product_images and not product_videos:
+                    card = _product_card_clip(sc, product_images, width, height)
+                    if card is not None:
+                        card_layers.append(card)
+            bg_name = (f"씬 {len(scenes)}컷 (상품사진 {len(product_images)}·상품영상 "
+                       f"{len(product_videos)}·승인스톡 {len(stock_clips)})")
+        else:
+            if product_images:
+                background, bg_name = _blurred_product_bg(product_images[0], over_w, over_h, duration)
+            else:
+                background, bg_name = _build_background(bg_dir, width, height, duration, shake_px,
+                                                        override=bg_path)
+            background = background.with_position(_seg_shake_pos(0.0, shake_windows, shake_px, fps))
+            bg_layers = [background]
+            if product_images:
+                card_layers = _build_hero_clips(product_images, duration, width, height)
+            else:
+                card_layers = _build_image_clips(image_windows or [], duration, width)
+        scrim = _subtitle_scrim(width, height, duration, s)
+
     # 자막(개편): 대본이 확정한 subs 칸을 그대로 팝업 + punch 라인 1회만 밈 카드.
     # ⭐ 핵심규칙: 화면 리액션 추임새(react 스티커) 전면 금지 — 자막·밈 카드 외 텍스트 오버레이 없음.
     # phrase 모드면 구(라인) 단위. 라인 정보 없으면 전체 가라오케 폴백(테스트 경로).
@@ -119,7 +148,8 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
                                          str(punch_line.get("meme_tag", "")))
                     if punch_line else None)
         sub_clips, sub_plan = _build_subtitles(words, lines, line_windows, duration,
-                                               font_path, s, width, height, meme_img)
+                                               font_path, s, width, height, meme_img,
+                                               framed=framed, sq=sq, sq_top=sq_top)
     else:
         sub_clips = _build_word_clips(words, duration, font_path, s, width)
 
@@ -288,6 +318,137 @@ def _build_hero_clips(images: list, duration: float, width: int, height: int) ->
         except Exception as e:
             print(f"[render] 경고: 히어로 이미지 실패({Path(p).name}: {e}) — 건너뜀")
     return clips
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# framed 레이아웃(2026-07-13): 상단 검정바(채널명·로고) + 가운데 정사각형(항상 이미지/영상
+# 꽉 참, 빈 화면·흐린 배경 절대 없음) + 하단 검정바(자막). 아래 함수들이 그 레이어를 만든다.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _square_cover_arr(img_path: Path, sq: int) -> np.ndarray:
+    """이미지를 정사각형(sq×sq)에 꽉 차게 cover-fit(넘치는 부분 중앙 크롭)한 RGB 배열. 캐시."""
+    key = (str(img_path), int(sq))
+    arr = _SQUARE_ARR_CACHE.get(key)
+    if arr is None:
+        from PIL import Image
+        im = Image.open(str(img_path)).convert("RGB")
+        scale = max(sq / im.width, sq / im.height)
+        im = im.resize((max(1, round(im.width * scale)), max(1, round(im.height * scale))),
+                       Image.LANCZOS)
+        left, top = (im.width - sq) // 2, (im.height - sq) // 2
+        im = im.crop((left, top, left + sq, top + sq))
+        arr = np.array(im)
+        _SQUARE_ARR_CACHE[key] = arr
+    return arr
+
+
+def _branded_fallback_arr(sq: int, name: str, font_path: Path) -> np.ndarray:
+    """이미지가 하나도 없을 때조차 '빈 화면'이 없도록: 채널명이 박힌 브랜드 카드(정사각형).
+    파스텔 그라데이션 + 중앙 채널명 → 흐린 배경이 아니라 의도된 브랜드 화면."""
+    from PIL import Image, ImageDraw, ImageFont
+    top, bottom = np.array([36, 30, 64]), np.array([88, 44, 92])
+    rows = np.linspace(0, 1, sq)[:, None]
+    grad = (top[None, :] * (1 - rows) + bottom[None, :] * rows).astype(np.uint8)
+    im = Image.fromarray(np.repeat(grad[:, None, :], sq, axis=1)).convert("RGB")
+    d = ImageDraw.Draw(im)
+    try:
+        f = ImageFont.truetype(str(font_path), int(sq * 0.11))
+    except Exception:
+        f = ImageFont.load_default()
+    tw = d.textbbox((0, 0), name, font=f)[2]
+    d.text(((sq - tw) // 2, int(sq * 0.44)), name, font=f, fill="#FFFFFF",
+           stroke_width=4, stroke_fill="#000000")
+    return np.array(im)
+
+
+def _square_content_clip(scene: dict, product_images: list, product_videos: list,
+                         scene_images: list, sq: int, sq_top: int, name: str,
+                         font_path: Path):
+    """정사각형 콘텐츠 1컷 — 항상 실사 이미지/영상으로 꽉 채운다(흐린 배경·빈 화면 금지).
+    우선순위: 제품 영상 → (문제 씬)문구 매칭 이미지 → 상품 사진 → 브랜드 카드.
+    반환: (0, sq_top)에 배치된 sq×sq 클립. 어떤 경우에도 None이 아니다."""
+    dur = scene["end"] - scene["start"]
+    start = scene["start"]
+    kind = scene.get("kind")
+
+    # 1) 상품 씬 + 제품 실사용 영상 → 정사각형 cover-fit(모션 있음, 켄번즈 불필요)
+    if kind == "product" and product_videos:
+        v = _video_fullframe(product_videos[scene.get("asset", 0) % len(product_videos)],
+                             sq, sq, dur)
+        if v is not None:
+            return v.with_start(start).with_position((0, sq_top))
+
+    # 2) 이미지 소스 선택: 문제 씬은 문구 매칭 이미지 우선, 없으면 상품 사진(둘 다 없으면 브랜드 카드)
+    src = None
+    if kind == "problem" and scene_images:
+        src = scene_images[scene.get("asset", 0) % len(scene_images)]
+    elif product_images:
+        src = product_images[scene.get("asset", 0) % len(product_images)]
+    elif scene_images:
+        src = scene_images[scene.get("asset", 0) % len(scene_images)]
+
+    if src is not None:
+        try:
+            arr = _square_cover_arr(Path(src), sq)
+        except Exception as e:
+            print(f"[render] 경고: 정사각형 이미지 실패({Path(src).name}: {e}) → 브랜드 카드")
+            arr = _branded_fallback_arr(sq, name, font_path)
+    else:
+        arr = _branded_fallback_arr(sq, name, font_path)
+
+    # 켄번즈(줌인/줌아웃 교대) — 넘침은 sq×sq 내부 합성으로 클립(바 영역 침범 방지)
+    zoom_in = int(scene.get("shot", 0)) % 2 == 0
+    base = ImageClip(arr)
+    if zoom_in:
+        kb = base.resized(lambda t, d=dur: 1.0 + 0.08 * min(1.0, t / d))
+    else:
+        kb = base.resized(lambda t, d=dur: 1.08 - 0.08 * min(1.0, t / d))
+    kb = kb.with_position(("center", "center"))
+    inner = CompositeVideoClip([kb], size=(sq, sq)).with_duration(dur + 0.05)
+    return inner.with_start(start).with_position((0, sq_top))
+
+
+def _brand_bar_clip(width: int, bar_h: int, name: str, handle: str,
+                    logo_path: Path | None, font_path: Path, duration: float):
+    """상단 검정바에 얹을 채널 아이덴티티(로고 있으면 로고+채널명, 없으면 워드마크). 전체 길이 표시."""
+    from PIL import Image, ImageDraw, ImageFont
+    canvas = Image.new("RGBA", (width, bar_h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(canvas)
+    try:
+        name_font = ImageFont.truetype(str(font_path), int(bar_h * 0.30))
+        sub_font = ImageFont.truetype(str(font_path), int(bar_h * 0.13))
+    except Exception:
+        name_font = sub_font = ImageFont.load_default()
+
+    logo_im = None
+    if logo_path and Path(logo_path).exists():
+        try:
+            lg = Image.open(str(logo_path)).convert("RGBA")
+            lh = int(bar_h * 0.5)
+            logo_im = lg.resize((max(1, round(lg.width * lh / lg.height)), lh), Image.LANCZOS)
+        except Exception as e:
+            print(f"[render] 경고: 로고 로드 실패({e}) → 워드마크만")
+
+    nb = d.textbbox((0, 0), name, font=name_font)
+    nw, nh = nb[2] - nb[0], nb[3] - nb[1]
+    gap = int(bar_h * 0.08)
+    if logo_im is not None:
+        total_w = logo_im.width + gap + nw
+        x0 = (width - total_w) // 2
+        cy = int(bar_h * 0.40)
+        canvas.alpha_composite(logo_im, (x0, cy - logo_im.height // 2))
+        tx = x0 + logo_im.width + gap
+    else:
+        tx = (width - nw) // 2
+        cy = int(bar_h * 0.40)
+    d.text((tx, cy - nh // 2 - nb[1]), name, font=name_font, fill="#FFFFFF",
+           stroke_width=3, stroke_fill="#000000")
+    if handle:
+        hb = d.textbbox((0, 0), handle, font=sub_font)
+        d.text(((width - (hb[2] - hb[0])) // 2, int(bar_h * 0.70)), handle,
+               font=sub_font, fill="#C9B8FF")
+    return (ImageClip(np.array(canvas), transparent=True)
+            .with_duration(duration).with_position((0, 0)))
 
 
 def _subtitle_scrim(width: int, height: int, duration: float, s: dict):
@@ -639,9 +800,10 @@ def _meme_image_clip(img_path: Path, start: float, end: float, width: int, heigh
             .with_position(("center", int(height * 0.05))))
 
 
-def _meme_card(text: str, start: float, end: float, font_path: Path, s: dict, width: int):
+def _meme_card(text: str, start: float, end: float, font_path: Path, s: dict, width: int,
+               y_override: int | None = None):
     """펀치라인/의문형 훅을 '큰 밈 텍스트 카드'로 — 화면 중앙, 흰색 굵게 + 두꺼운 검정테두리,
-    큰 바운스로 팡 등장(드립·정곡 순간 강조)."""
+    큰 바운스로 팡 등장(드립·정곡 순간 강조). framed면 y_override로 정사각형 중앙에 얹는다."""
     if end - start < 0.12 or not text:
         return None
     font_size = int(s.get("meme_font_size", 92))
@@ -661,8 +823,22 @@ def _meme_card(text: str, start: float, end: float, font_path: Path, s: dict, wi
     if tc is None:
         return None
     tc = tc.resized(lambda t: _pop_scale(t, 0.2, 0.4))  # 큰 바운스로 팡
-    return tc.with_start(start).with_end(min(end, start + 30)).with_position(
-        ("center", int(s.get("meme_y", 760))))
+    y = int(y_override) if y_override is not None else int(s.get("meme_y", 760))
+    return tc.with_start(start).with_end(min(end, start + 30)).with_position(("center", y))
+
+
+def _meme_square_clip(img_path: Path, start: float, end: float, sq: int, sq_top: int):
+    """framed 펀치: 밈 이미지(글자 없는 원본)를 정사각형에 꽉 채워 얹는다(글자는 _meme_card가 위에).
+    밈은 대개 정사각형이라 cover-fit이 정확히 맞고 바 영역을 침범하지 않는다."""
+    if end - start < 0.12:
+        return None
+    try:
+        arr = _square_cover_arr(Path(img_path), int(sq))
+    except Exception as e:
+        print(f"[render] 경고: 밈 정사각형 로드 실패({Path(img_path).name}: {e}) — 텍스트 카드만")
+        return None
+    return (ImageClip(arr).with_start(start).with_end(min(end, start + 30))
+            .with_position((0, int(sq_top))))
 
 
 def _fit_text(text: str, font_path: Path, font_size: int, color: str,
@@ -677,11 +853,14 @@ def _fit_text(text: str, font_path: Path, font_size: int, color: str,
 
 def _build_subtitles(words: list, lines: list, line_windows: list, duration: float,
                      font_path: Path, s: dict, width: int, height: int = 1920,
-                     meme_img: Path | None = None) -> tuple:
+                     meme_img: Path | None = None, framed: bool = False,
+                     sq: int = 0, sq_top: int = 0) -> tuple:
     """'대본이 곧 자막' (2026-07-12 개편): 라인의 subs(대본이 확정한 자막 칸)를 렌더가
     재분할 없이 그대로 팝업한다 — 띄어쓰기·문맥·길이 일관성을 대본이 책임진다.
     위치는 하단 1곳 고정. 중앙 밈 카드는 punch 라인 딱 1회(의문형 자동 트리거 폐지).
+    framed면 밈 이미지는 정사각형을 꽉 채우고 밈 글자는 정사각형 중앙에 얹는다.
     반환: (클립 목록, QA용 자막 플랜)."""
+    meme_card_y = (sq_top + int(sq * 0.34)) if framed else int(s.get("meme_y", 760))
     y = int(s.get("y", 1250))
     max_w = int(width * 0.94)
     font_size = int(s.get("font_size", 80))
@@ -738,15 +917,19 @@ def _build_subtitles(words: list, lines: list, line_windows: list, duration: flo
         plan.append({"kind": "sub", "text": ev["text"], "start": round(ev["start"], 3),
                      "end": round(ev["show_end"], 3), "y": y, "line_i": ev["line_i"]})
     for m in memes:
-        mc = _meme_card(m["text"], m["start"], m["end"], font_path, s, width)
+        mc = _meme_card(m["text"], m["start"], m["end"], font_path, s, width,
+                        y_override=meme_card_y if framed else None)
         if mc is not None:
             if meme_img is not None:  # 밈 이미지 배경 먼저(아래), 글자 카드는 위에 → 한글 온전
-                mi = _meme_image_clip(meme_img, m["start"], m["end"], width, height, s)
+                if framed:
+                    mi = _meme_square_clip(meme_img, m["start"], m["end"], sq, sq_top)
+                else:
+                    mi = _meme_image_clip(meme_img, m["start"], m["end"], width, height, s)
                 if mi is not None:
                     clips.append(mi)
             clips.append(mc)
             plan.append({"kind": "meme", "text": m["text"], "start": round(m["start"], 3),
-                         "end": round(m["end"], 3), "y": int(s.get("meme_y", 760)),
+                         "end": round(m["end"], 3), "y": meme_card_y,
                          "line_i": m["line_i"],
                          "image": str(meme_img) if meme_img is not None else None})
     return clips, plan
