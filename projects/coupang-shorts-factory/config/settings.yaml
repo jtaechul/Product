@@ -82,13 +82,9 @@ script:                 # M3 대본 생성 (스펙 §M3)
   model: "claude-sonnet-4-6"   # 스펙 지정 모델 (2026-07 기준 유효 ID 확인)
   max_tokens: 4000
 
-veo:                    # 하이브리드 오프닝 1컷 — Gemini Veo 3.1 (src/video/veo.py)
-  enabled: true         # false면 Veo 생략(전부 무료 스틸). 시크릿 SHORTS_GEMINI_API_KEY 필요
-  model: "veo-3.1-fast-generate-preview"   # 저가 Fast(무음 ≈ $0.10/초). 표준=veo-3.1-generate-preview
-  seconds: 8            # 클립 길이(초) — Veo 3.1 기준 8초
-  aspect_ratio: "9:16"
-  poll_timeout: 300     # 생성 폴링 최대 대기(초)
-  poll_interval: 10
+veo:                    # ⛔ Gemini/Veo 영상 생성 폐지 (2026-07-13 사용자 확정 — 품질 대비 값어치 없음)
+  enabled: false        # 절대 켜지 않는다. 상품 비주얼=제품 영상+상품 사진 켄번즈+밈 이미지만.
+  # (파이프라인에서 Veo 호출 자체를 제거했고, 워크플로우 env에서 Gemini 키도 뺐다. 이 블록은 흔적만 남김.)
 
 upload:                 # M7 (스펙 §M7)
   privacy_default: "private"   # 미인증 API 프로젝트는 자동 private 잠금 → 반자동 공개 전환

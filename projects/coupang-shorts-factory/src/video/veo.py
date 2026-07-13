@@ -9,9 +9,12 @@
 API (2026-07, Gemini Developer API):
   시작: POST {BASE}/models/{model}:predictLongRunning  (헤더 x-goog-api-key)
         body: {"instances":[{"prompt":..,"image":{"bytesBase64Encoded":..,"mimeType":..}}],
-               "parameters":{"aspectRatio":"9:16","generateAudio":false,..}}
+               "parameters":{"aspectRatio":"9:16","durationSeconds":8,"negativePrompt":..}}
   폴링: GET {BASE}/{operation.name}  → done=true 되면 response에서 mp4 추출
-비용: Veo 3.1 Fast 무음 ≈ $0.10/초. 시크릿: SHORTS_GEMINI_API_KEY.
+비용(2026-07 확인): Veo 3.1 Lite ≈ $0.05/초(오디오 포함), Fast ≈ $0.15/초(오디오 포함).
+  → Veo 3.1은 오디오가 요금에 포함(무음 할인 없음)이고 fast/lite 모델은 generateAudio 파라미터를
+    거부(400)한다. 우리 파이프라인은 Veo 오디오를 버리고 자체 TTS를 쓰므로 generateAudio를
+    아예 보내지 않는다(모델 기본값). 기본 모델은 저가 Lite. 시크릿: SHORTS_GEMINI_API_KEY.
 """
 
 from __future__ import annotations
@@ -24,7 +27,7 @@ from pathlib import Path
 import requests
 
 BASE = "https://generativelanguage.googleapis.com/v1beta"
-DEFAULT_MODEL = "veo-3.1-fast-generate-preview"   # 저가 Fast(하이브리드). 표준은 veo-3.1-generate-preview
+DEFAULT_MODEL = "veo-3.1-lite-generate-preview"   # 최저가 Lite(≈$0.05/초). Fast=veo-3.1-fast / 표준=veo-3.1-generate
 DEFAULT_NEGATIVE = ("distorted product, warped shape, extra objects, morphing text, fake ui, "
                     "garbled letters, changing logo, watermark, low quality, jitter, flicker")
 
@@ -73,7 +76,8 @@ def generate_hero_clip(image_path, prompt: str, out_path,
             print(f"[veo] 씨앗 이미지 없음({image_path}) → 스틸 폴백")
             return None
         mime = "image/png" if image_path.suffix.lower() == ".png" else "image/jpeg"
-        params = {"aspectRatio": aspect, "generateAudio": False,
+        # generateAudio는 fast/lite 모델이 400으로 거부 → 보내지 않는다(오디오는 렌더에서 버림).
+        params = {"aspectRatio": aspect,
                   "negativePrompt": negative or DEFAULT_NEGATIVE}
         if seconds:
             params["durationSeconds"] = seconds
@@ -95,7 +99,7 @@ def generate_hero_clip(image_path, prompt: str, out_path,
         if not op:
             print(f"[veo] operation name 없음: {r.text[:200]} → 스틸 폴백")
             return None
-        print(f"[veo] 생성 시작({model}, {seconds}s, 무음) op={op}")
+        print(f"[veo] 생성 시작({model}, {seconds}s / Veo오디오는 렌더에서 버림) op={op}")
 
         deadline = time.time() + timeout
         while time.time() < deadline:

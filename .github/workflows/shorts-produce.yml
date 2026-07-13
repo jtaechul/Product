@@ -105,8 +105,8 @@ jobs:
           SHORTS_PEXELS_API_KEY: ${{ secrets.SHORTS_PEXELS_API_KEY }}
           SHORTS_ANTHROPIC_API_KEY: ${{ secrets.SHORTS_ANTHROPIC_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          SHORTS_GEMINI_API_KEY: ${{ secrets.SHORTS_GEMINI_API_KEY }}   # Veo 3.1 하이브리드 오프닝 컷
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}                 # (대체 이름) Veo 키를 이 이름으로 등록한 경우
+          # ⛔ Gemini/Veo 키는 의도적으로 주입하지 않는다 (2026-07-13 사용자 확정: 유료 AI 영상 폐지).
+          #    파이프라인도 Veo 호출을 제거했으므로 이 키가 있어도 쓰이지 않는다.
           SHORTS_YT_CLIENT_ID: ${{ secrets.SHORTS_YT_CLIENT_ID }}
           SHORTS_YT_CLIENT_SECRET: ${{ secrets.SHORTS_YT_CLIENT_SECRET }}
           SHORTS_YT_REFRESH_TOKEN: ${{ secrets.SHORTS_YT_REFRESH_TOKEN }}
