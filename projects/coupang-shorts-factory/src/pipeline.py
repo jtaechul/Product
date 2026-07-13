@@ -28,6 +28,7 @@ from src.product.enrich import enrich_product
 from src.script.generate import DISCLOSURE, anthropic_key, generate_script
 from src.upload import youtube
 from src.video.qa import run_qa
+from src.video import imagesource
 from src.video.render import build_poster, render_video
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -135,13 +136,22 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     stock_clips = [p for p in (product.get("stock_clips") or []) if Path(p).exists()]
     bg_path = None
 
-    # ---- M6: 렌더 (대본 단계별 씬 시퀀스 + 구 단위 자막)
+    # ---- 문구 매칭 이미지 소싱: 문제/훅 씬을 '문구에 맞는 실사 이미지'로 채운다(빈 화면 방지).
+    #      대형 무료 라이브러리(Pexels·Openverse). 실패해도 렌더가 상품 사진으로 폴백(절대 빈 화면 없음).
+    scene_images = []
+    if str(settings.get("render", {}).get("layout", "framed")).lower() == "framed":
+        try:
+            scene_images = imagesource.fetch_scene_images(product, lines, job_dir, settings, want=5)
+        except Exception as e:
+            print(f"[pipeline] 문구 이미지 소싱 실패({type(e).__name__}: {e}) → 상품 사진 폴백")
+
+    # ---- M6: 렌더 (framed 레이아웃: 정사각형에 이미지/영상 항상 꽉 참 + 상/하단 바)
     out_path = job_dir / "video.mp4"
     stats = render_video(tts_result["audio_path"], words, out_path, settings,
                          shake_windows=shake_windows, project_root=PROJECT_ROOT,
                          product_images=product_images, bg_path=bg_path,
                          lines=lines, line_windows=line_windows, stock_clips=stock_clips,
-                         product_videos=product_videos)
+                         product_videos=product_videos, scene_images=scene_images)
     stats = {"job_id": job_id, "product": product["name"],
              "tts_provider": tts_result["provider"],
              "timestamps_source": tts_result["timestamps_source"], **stats}
