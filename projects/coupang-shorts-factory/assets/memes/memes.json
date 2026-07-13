@@ -85,13 +85,6 @@
       "situations": ["지름신", "사고싶", "갖고싶", "탐나", "눈독", "당장"],
       "desc": "침 꼴깍·눈 반짝(무심하게) 사고싶어 안달.",
       "text_zone": "bottom"
-    },
-    {
-      "id": "_placeholder",
-      "file": "_placeholder_shock.png",
-      "situations": [],
-      "desc": "검증용 자체 생성 도형(글자 없음). 실제 생성물이 없을 때의 기본 폴백. 12종 등록 후 삭제 가능.",
-      "text_zone": "bottom"
     }
   ]
 }
