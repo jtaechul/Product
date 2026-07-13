@@ -106,6 +106,14 @@ def _probe(path: str, entry: str) -> str:
     return r.stdout.strip()
 
 
+def _cover_crop(img: str, out_png: str, W: int, H: int) -> bool:
+    """고화소 사진을 캔버스(W×H, 9:16)에 꽉 채워(cover) 크롭한 PNG로 저장. 오프닝/엔드카드 배경용."""
+    vf = (f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1")
+    r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", img, "-vf", vf,
+                        "-frames:v", "1", out_png], capture_output=True, text=True)
+    return r.returncode == 0 and Path(out_png).exists()
+
+
 def _grab_frame(video: str, t: float, out_png: str, vf: str | None = None) -> bool:
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-ss", str(t), "-i", video]
     if vf:
@@ -180,7 +188,7 @@ def _best_subject_frame(video: str, out_png: str, wd: Path,
 def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
           cfg: hi.HookIntroConfig | None = None, bgm: str | None = None,
           open_bg_video: str | None = None, subject_video: str | None = None,
-          logo_box: tuple | None = None) -> str:
+          logo_box: tuple | None = None, hero_image: str | None = None) -> str:
     """본문 영상을 오프닝/엔드카드/전환/사운드로 감싼 완성본 경로 반환.
     전제 미충족 시 원본 body_video를 그대로 반환(발행 불정지).
 
@@ -189,6 +197,8 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
       본문 자막이 오프닝 뒤에 미리 노출되지 않는다(미지정 시 body_video 폴백).
     - subject_video: 엔드카드 피사체 프레임 소스. **크롭·줌 전 원본 광각 영상**을 넘겨야
       과확대로 생물을 식별 못 하는 문제가 없다(미지정 시 open_bg_video 폴백).
+    - hero_image: ★있으면 오프닝·엔드카드 배경을 이 **고화소 원본 사진**으로 만든다(정지 화면이라
+      영상 프레임보다 훨씬 선명·고급). 미지정/실패 시 기존 영상 프레임으로 자동 폴백(발행 불정지).
     """
     cfg = cfg or hi.HookIntroConfig()
     wd = Path(work_dir); wd.mkdir(parents=True, exist_ok=True)
@@ -237,18 +247,26 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
                             "-q:a", "9", silent], check=True)
             hook = {"mp3": silent, "words": []}
 
-        # 2) 배경 프레임 — 오프닝=클린 영상 초반, 엔드카드=원본 광각의 피사체 최적 프레임
+        # 2) 배경 프레임 — ★고화소 히어로 사진이 있으면 오프닝·엔드카드 배경을 그 사진으로(정지 화면이라
+        #    영상 프레임보다 훨씬 선명). 없으면 기존대로 영상 프레임 사용(폴백, 발행 불정지).
+        hero = hero_image if hero_image and Path(hero_image).exists() else None
         src_open = open_bg_video if open_bg_video and Path(open_bg_video).exists() else body_video
         src_subj = subject_video if subject_video and Path(subject_video).exists() else src_open
         open_bg = str(wd / "open_bg.png"); ec_frame = str(wd / "ec_frame.png")
-        odur = _duration_of(src_open) or dur
-        if not _grab_frame(src_open, min(0.5, odur * 0.1), open_bg):
-            return body_video
-        # 원본(subject_video)에서 뽑는 피사체 프레임은 워터마크 delogo 적용(엔드카드 로고 잔류 방지).
-        # 리프레임된 body 계열 소스는 reframe 단계에서 이미 회피/제거됨 → 미적용.
-        subj_logo = logo_box if (subject_video and src_subj == subject_video) else None
-        if not _best_subject_frame(src_subj, ec_frame, wd, logo_box=subj_logo):
-            _grab_frame(src_subj, (_duration_of(src_subj) or dur) * 0.55, ec_frame)
+        if hero and _cover_crop(hero, open_bg, cfg.W, cfg.H):
+            log.info("[hook_intro] 오프닝 배경 = 고화소 히어로 사진")
+        else:
+            odur = _duration_of(src_open) or dur
+            if not _grab_frame(src_open, min(0.5, odur * 0.1), open_bg):
+                return body_video
+        if hero and _cover_crop(hero, ec_frame, cfg.W, cfg.H):
+            log.info("[hook_intro] 엔드카드 배경 = 고화소 히어로 사진")
+        else:
+            # 원본(subject_video)에서 뽑는 피사체 프레임은 워터마크 delogo 적용(엔드카드 로고 잔류 방지).
+            # 리프레임된 body 계열 소스는 reframe 단계에서 이미 회피/제거됨 → 미적용.
+            subj_logo = logo_box if (subject_video and src_subj == subject_video) else None
+            if not _best_subject_frame(src_subj, ec_frame, wd, logo_box=subj_logo):
+                _grab_frame(src_subj, (_duration_of(src_subj) or dur) * 0.55, ec_frame)
         ec_bg = str(wd / "ec_bg.png")
         hi.build_specimen_bg(ec_frame if Path(ec_frame).exists() else open_bg, ec_bg, cfg)
 

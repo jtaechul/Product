@@ -221,15 +221,16 @@ def _norm_license(text: str) -> str | None:
 
 
 def _search_titles(exclude_titles: set[str], per_term: int = 12,
-                   terms: list[str] | None = None) -> list[str]:
+                   terms: list[str] | None = None, filetype: str = "video",
+                   ext: tuple = _VIDEO_EXT) -> list[str]:
     titles: list[str] = []
     seen = set(t.lower() for t in exclude_titles)
     for term in (terms or _TERMS):
         d = _get(_COMMONS, action="query", list="search",
-                 srsearch=f"{term} filetype:video", srnamespace="6", srlimit=str(per_term))
+                 srsearch=f"{term} filetype:{filetype}", srnamespace="6", srlimit=str(per_term))
         for h in d.get("query", {}).get("search", []):
             t = h.get("title", "")
-            if (t.lower().endswith(_VIDEO_EXT) and t.lower() not in seen
+            if (t.lower().endswith(ext) and t.lower() not in seen
                     and t not in titles):
                 titles.append(t)
     return titles
@@ -269,18 +270,21 @@ def _identity_for(pageid: str, title: str, desc: str) -> dict | None:
 def discover(exclude_scinames: set[str], exclude_titles: set[str], want: int = 3,
              validate=None, terms: list[str] | None = None,
              exclude_re: "re.Pattern | None" = None,
-             require_re: "re.Pattern | None" = None) -> list[dict]:
-    """새 해양생물 영상 후보를 발굴해 '제작 가능한 종 레코드' 리스트를 반환(최대 want개).
+             require_re: "re.Pattern | None" = None, media: str = "video") -> list[dict]:
+    """새 해양생물 소재 후보를 발굴해 '제작 가능한 종 레코드' 리스트를 반환(최대 want개).
 
     validate(url) -> bool : 실사 다운로드+게이트(정지·카드) 검증 콜백(있으면 통과분만 채택).
     terms       : 카테고리별 검색어(없으면 심해 기본 _TERMS).
     exclude_re  : 부적합 분류군 배제 정규식(없으면 육상동물 _EXCLUDE).
     require_re  : 양성 확인 정규식(있으면 학명·영문명·위키에 이 단서가 있어야 채택 — 미세조류용).
+    media       : "video"=실사 영상. "photo"=고해상 사진(제작 시 켄번즈로 영상화 — 정적 피사체용).
     반환 각 항목 = {key, footage:{...}, species:{...}}  (footage._SEED / data.SPECIES 호환).
     """
     exclude_re = exclude_re or _EXCLUDE
+    is_photo = media == "photo"
+    ftype, fext = ("bitmap", _IMG_EXT) if is_photo else ("video", _VIDEO_EXT)
     excl_sci = {s.strip().lower() for s in exclude_scinames if s}
-    titles = _search_titles(exclude_titles, terms=terms)
+    titles = _search_titles(exclude_titles, terms=terms, filetype=ftype, ext=fext)
     log.info("[discovery] Commons 영상 후보 %d개 수집 → 정체성·사실·게이트 검증", len(titles))
     out: list[dict] = []
     for i in range(0, len(titles), 10):
@@ -298,9 +302,15 @@ def discover(exclude_scinames: set[str], exclude_titles: set[str], want: int = 3
             lic = _norm_license(em.get("LicenseShortName", {}).get("value", ""))
             url = ii.get("url", "")
             w, h = ii.get("width", 0), ii.get("height", 0)
-            ar = (w / h) if h else 0
-            if not (lic and url and url.lower().endswith(_VIDEO_EXT) and 1.55 <= ar <= 1.95):
+            if not (lic and url and url.lower().endswith(fext)):
                 continue
+            if is_photo:                       # 사진: 켄번즈 확대 여유 위해 고해상만
+                if not (w >= 1200 and h >= 800):
+                    continue
+            else:                              # 영상: 9:16/16:9 규격(레터박스 방지)
+                ar = (w / h) if h else 0
+                if not (1.55 <= ar <= 1.95):
+                    continue
             title = page.get("title", "")
             desc = _strip(em.get("ImageDescription", {}).get("value", ""))
             if _BADCLIP.search(title + " " + desc):   # 연구·사체·해부·양식 클립 배제(피사체 부적합)
@@ -340,10 +350,13 @@ def discover(exclude_scinames: set[str], exclude_titles: set[str], want: int = 3
             ko = ident.get("ko") or ident.get("en") or sci
             en = ident.get("en") or sci
             depth = _depth_from_text(desc, " ".join(facts))
+            fp = {"url": url, "license": lic, "credit": credit, "source": title}
+            if is_photo:   # 사진 → 제작 시 켄번즈로 영상화
+                fp["media_kind"] = "photo"
+                fp["image_url"] = url
             out.append({
                 "key": sci.lower(),
-                "footage": {"url": url, "license": lic, "credit": credit,
-                            "source": title},
+                "footage": fp,
                 "species": {
                     "scientific_name": sci, "common_name_ko": ko, "common_name_en": en,
                     "depth_range_m": depth, "distribution": "", "habitat": "",
@@ -625,17 +638,39 @@ def _discover_wrecks(exclude_keys: set[str], want: int) -> list[dict]:
 # ── 카테고리별 발굴 설정(핵심 수정) — 각 카테고리가 고유 검색어·게이트를 갖는다 ──
 # terms=검색어, exclude=배제 분류군, require=양성 확인(없으면 None). shipwreck은 별도 경로.
 _CATALOG = {
-    "deep_sea":     {"terms": _TERMS_DEEP,   "exclude": _EXCLUDE, "require": None},
-    "marine_life":  {"terms": _TERMS_MARINE, "exclude": _EXCLUDE, "require": None},
+    "deep_sea":     {"terms": _TERMS_DEEP,   "exclude": _EXCLUDE, "require": None, "photo": False},
+    "marine_life":  {"terms": _TERMS_MARINE, "exclude": _EXCLUDE, "require": None, "photo": False},
     # 미세조류: 동물 배제 + 조류 양성 확인(동물 카테고리의 'plant 배제'는 적용 안 함).
-    "marine_algae": {"terms": _TERMS_ALGAE,  "exclude": _ANIMAL,  "require": _ALGAE},
+    # ★photo=True: 미세조류는 현미경 정지사진이 많고 대상도 거의 안 움직여 켄번즈가 잘 맞는다 →
+    #   영상이 부족하면 사진 후보(media_kind=photo)로 보충(제작 시 fetch_footage가 켄번즈 영상화).
+    "marine_algae": {"terms": _TERMS_ALGAE,  "exclude": _ANIMAL,  "require": _ALGAE, "photo": True},
 }
+
+
+def _rec_to_candidate(r: dict) -> dict:
+    """discover() 레코드 → 후보 dict(사진이면 media_kind/image_url 승계)."""
+    sp = r["species"]
+    fp = r["footage"]
+    c = {
+        "kind": "creature", "key": r["key"], "needs_confirm": False,
+        "title": fp["source"], "url": fp["url"],
+        "license": fp["license"], "credit": fp["credit"], "source": fp["source"],
+        "name": sp["scientific_name"], "name_ja": "",
+        "common_name_ko": sp["common_name_ko"], "common_name_en": sp["common_name_en"],
+        "depth": sp["depth_range_m"], "facts": sp["fun_facts"], "fact_src": (sp["sources"] or [""])[0],
+        "species": sp,
+    }
+    if fp.get("media_kind") == "photo":
+        c["media_kind"] = "photo"
+        c["image_url"] = fp.get("image_url") or fp["url"]
+    return c
 
 
 def discover_candidates(category_id: str, want: int = 6, exclude_keys: set[str] | None = None) -> list[dict]:
     """관리자 '소싱하기'용 후보 목록(메타 수준 — 다운로드 안 함, 워크플로가 게이트·썸네일 담당).
     생물 카테고리=학명·사실 자동확보 후보, shipwreck=배 이름·선종 최선추출(needs_confirm).
-    ★카테고리마다 고유 검색어·분류 게이트를 써서 '엉뚱한 종·중복'을 막는다."""
+    ★카테고리마다 고유 검색어·분류 게이트를 써서 '엉뚱한 종·중복'을 막는다.
+    ★photo=True 카테고리(미세조류)는 영상 부족 시 고해상 사진으로 보충(켄번즈 영상화)."""
     exclude_keys = {k.strip().lower() for k in (exclude_keys or set())}
     if category_id == "shipwreck":
         return _discover_wrecks(exclude_keys, want)
@@ -643,19 +678,14 @@ def discover_candidates(category_id: str, want: int = 6, exclude_keys: set[str] 
     cfg = _CATALOG.get(category_id, _CATALOG["deep_sea"])
     recs = discover(exclude_keys, set(), want=want, validate=None,
                     terms=cfg["terms"], exclude_re=cfg["exclude"], require_re=cfg["require"])
-    cands = []
-    for r in recs:
-        sp = r["species"]
-        cands.append({
-            "kind": "creature", "key": r["key"], "needs_confirm": False,
-            "title": r["footage"]["source"], "url": r["footage"]["url"],
-            "license": r["footage"]["license"], "credit": r["footage"]["credit"],
-            "source": r["footage"]["source"],
-            "name": sp["scientific_name"], "name_ja": "",
-            "common_name_ko": sp["common_name_ko"], "common_name_en": sp["common_name_en"],
-            "depth": sp["depth_range_m"], "facts": sp["fun_facts"], "fact_src": (sp["sources"] or [""])[0],
-            "species": sp,
-        })
+    cands = [_rec_to_candidate(r) for r in recs]
+    # 사진 보충(미세조류 등): 영상이 want에 못 미치면 고해상 사진 후보로 채운다.
+    if cfg.get("photo") and len(cands) < want:
+        excl = exclude_keys | {c["key"] for c in cands}
+        precs = discover(excl, set(), want=want - len(cands), validate=None,
+                         terms=cfg["terms"], exclude_re=cfg["exclude"], require_re=cfg["require"],
+                         media="photo")
+        cands += [_rec_to_candidate(r) for r in precs]
     return cands
 
 
@@ -870,10 +900,12 @@ def promote_candidate(category_id: str, key: str) -> bool:
                                     cand.get("depth", "")),
             }
         else:
-            entry = {"key": key, "kind": "creature",
-                     "footage": {"url": cand["url"], "license": cand["license"],
-                                 "credit": cand["credit"], "source": cand["source"]},
-                     "species": cand["species"]}
+            cfp = {"url": cand["url"], "license": cand["license"],
+                   "credit": cand["credit"], "source": cand["source"]}
+            if cand.get("media_kind") == "photo":   # 사진 생물(미세조류 등) → 켄번즈 영상화
+                cfp["media_kind"] = "photo"
+                cfp["image_url"] = cand.get("image_url") or cand["url"]
+            entry = {"key": key, "kind": "creature", "footage": cfp, "species": cand["species"]}
         save_discovered(category_id, disc + [entry])
     save_candidates(category_id, [c for c in cands if c["key"] != key])
     return True

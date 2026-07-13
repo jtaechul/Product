@@ -116,6 +116,58 @@ def test_kenburns_clip_produces_motion_video(tmp_path):
     assert not wq.is_static_source(str(out))            # 정지 아님 → 게이트 통과
 
 
+def _noise_jpg(path, w=2000, h=1500):
+    import os
+    from PIL import Image
+    Image.frombytes("RGB", (w, h), os.urandom(w * h * 3)).save(str(path), quality=92)
+
+
+def test_kenburns_motions_and_vertical(tmp_path):
+    """켄번즈 4방향(in/out/pan_l/pan_r) + 9:16 세로 출력 모두 non-static·정확 규격."""
+    from src.core import footage, watermark_qc as wq
+    img = tmp_path / "p.jpg"; _noise_jpg(img)
+    for m in footage._KENBURNS_MOTIONS:
+        out = tmp_path / f"{m}.mp4"
+        assert footage._kenburns_clip(str(img), str(out), seconds=14, motion=m)  # 16:9
+        assert not wq.is_static_source(str(out))
+    v = tmp_path / "v.mp4"                               # 9:16(본문 컷어웨이용)
+    assert footage._kenburns_clip(str(img), str(v), seconds=14, motion="in", W=720, H=1280)
+    assert footage._probe_dim(str(v)) == (720, 1280)
+    # 대상 키별로 무브가 갈린다(반복 피로 완화)
+    picks = {footage._kenburns_motion_for(k) for k in ("a", "b", "c", "d", "wreck aries", "diatom")}
+    assert len(picks) >= 2
+
+
+def test_insert_cutaways_preserves_timeline(tmp_path):
+    """★본문 컷어웨이: 사진 오버레이 후에도 길이·9:16이 보존된다(자막·오디오 연속성 근거)."""
+    import subprocess
+    from src.core import footage
+    body = tmp_path / "body.mp4"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                    "-i", "testsrc=s=720x1280:d=24:r=30", "-c:v", "libx264",
+                    "-pix_fmt", "yuv420p", str(body)], check=True)
+    photos = []
+    for i in range(2):
+        p = tmp_path / f"cut{i}.jpg"; _noise_jpg(p)
+        photos.append({"path": str(p), "credit": f"Author{i} · CC BY"})
+    before = footage._probe_dur(str(body))
+    out = tmp_path / "body_cut.mp4"
+    res = footage.insert_photo_cutaways(str(body), photos, str(out), before, key="Test species")
+    assert res == str(out)                               # 삽입됨(원본과 다른 경로)
+    assert abs(footage._probe_dur(res) - before) < 0.5   # 길이 보존
+    assert footage._probe_dim(res) == (720, 1280)        # 9:16 유지
+
+
+def test_insert_cutaways_skips_when_short_body(tmp_path):
+    """짧은 본문(<12s)·사진 없음이면 컷어웨이를 넣지 않는다(남발·촙핑 방지 · 발행 불정지)."""
+    from src.core import footage
+    body = tmp_path / "b.mp4"; body.write_bytes(b"x")
+    assert footage.insert_photo_cutaways(str(body), [], str(tmp_path / "o.mp4"), 30, key="k") == str(body)
+    p = tmp_path / "c.jpg"; _noise_jpg(p)
+    assert footage.insert_photo_cutaways(str(body), [{"path": str(p), "credit": "A"}],
+                                         str(tmp_path / "o2.mp4"), 8, key="k") == str(body)
+
+
 def test_discovered_roundtrip(tmp_path, monkeypatch):
     monkeypatch.setattr(discovery, "_DISCOVERED_DIR", tmp_path)
     (tmp_path / "deep_sea").mkdir()

@@ -327,23 +327,223 @@ def _commons_search(query: str) -> dict | None:
         return None
 
 
-def _kenburns_clip(image_path: str, out_path: str, seconds: int = 14) -> bool:
-    """정지 사진 → 16:9 켄번즈(느린 센터 푸시인) 영상. ★난파선 무한 엔진의 핵심.
-    가라앉은 배는 '정적 피사체'라 사진 위 느린 푸시인이 다큐처럼 자연스럽다(물고기 정지컷과 다름).
-    모션이 있어 정지-소스 게이트를 통과한다. 사진은 영상보다 훨씬 많아 공급이 사실상 무한.
-    이미지를 16:9로 커버(잘라 채움) 후 zoom 1.0→1.12로 천천히 밀어붙인다."""
+def _commons_photo_search(query: str, min_w: int = 1200, min_h: int = 800) -> dict | None:
+    """Commons에서 대상의 고해상 실사 사진 1장(통과 라이선스) → {url,license,credit,source} 또는 None.
+    오프닝 훅·엔드카드 배경용 '히어로 이미지'(영상 프레임보다 훨씬 선명)."""
+    try:
+        import requests
+        api = "https://commons.wikimedia.org/w/api.php"
+        titles: list[str] = []
+        for term in (query, f"{query} underwater"):
+            if not (term or "").strip():
+                continue
+            s = requests.get(api, headers={"User-Agent": _UA}, timeout=30, params={
+                "action": "query", "format": "json", "list": "search",
+                "srsearch": f"{term} filetype:bitmap", "srnamespace": "6", "srlimit": "15",
+            }).json()
+            for h in s.get("query", {}).get("search", []):
+                if any(h["title"].lower().endswith(e) for e in _IMAGE_EXT) and h["title"] not in titles:
+                    titles.append(h["title"])
+        if not titles:
+            return None
+        info = requests.get(api, headers={"User-Agent": _UA}, timeout=30, params={
+            "action": "query", "format": "json", "prop": "imageinfo",
+            "titles": "|".join(titles[:20]),
+            "iiprop": "url|size|extmetadata", "iiextmetadatafilter": "LicenseShortName|Artist",
+        }).json()
+        for page in info.get("query", {}).get("pages", {}).values():
+            ii = (page.get("imageinfo") or [{}])[0]
+            meta = ii.get("extmetadata", {})
+            lic = _norm_license(meta.get("LicenseShortName", {}).get("value", ""))
+            url = ii.get("url", "")
+            w, h = ii.get("width", 0), ii.get("height", 0)
+            if lic and url and any(url.lower().endswith(e) for e in _IMAGE_EXT) and w >= min_w and h >= min_h:
+                artist = re.sub("<[^>]+>", "", meta.get("Artist", {}).get("value", "")).strip()
+                cr = artist or "Wikimedia Commons"
+                cr += " · CC BY-SA" if lic == "cc-by-sa" else (" · CC BY" if lic == "cc-by" else "")
+                return {"url": url, "license": lic, "credit": cr, "source": page.get("title", "")}
+        return None
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] 히어로 사진 검색 실패(%s): %s", query, e)
+        return None
+
+
+def _commons_photos(query: str, n: int, min_w: int = 1200, min_h: int = 800) -> list[dict]:
+    """대상의 고해상 사진 여러 장(통과 라이선스) → [{url,license,credit,source}]. 컷어웨이용."""
+    out: list[dict] = []
+    try:
+        import requests
+        api = "https://commons.wikimedia.org/w/api.php"
+        titles: list[str] = []
+        for term in (query, f"{query} underwater"):
+            if not (term or "").strip():
+                continue
+            s = requests.get(api, headers={"User-Agent": _UA}, timeout=30, params={
+                "action": "query", "format": "json", "list": "search",
+                "srsearch": f"{term} filetype:bitmap", "srnamespace": "6", "srlimit": "20",
+            }).json()
+            for h in s.get("query", {}).get("search", []):
+                if any(h["title"].lower().endswith(e) for e in _IMAGE_EXT) and h["title"] not in titles:
+                    titles.append(h["title"])
+        if not titles:
+            return out
+        info = requests.get(api, headers={"User-Agent": _UA}, timeout=30, params={
+            "action": "query", "format": "json", "prop": "imageinfo",
+            "titles": "|".join(titles[:40]),
+            "iiprop": "url|size|extmetadata", "iiextmetadatafilter": "LicenseShortName|Artist",
+        }).json()
+        for page in info.get("query", {}).get("pages", {}).values():
+            ii = (page.get("imageinfo") or [{}])[0]
+            meta = ii.get("extmetadata", {})
+            lic = _norm_license(meta.get("LicenseShortName", {}).get("value", ""))
+            url = ii.get("url", "")
+            w, h = ii.get("width", 0), ii.get("height", 0)
+            if lic and url and any(url.lower().endswith(e) for e in _IMAGE_EXT) and w >= min_w and h >= min_h:
+                artist = re.sub("<[^>]+>", "", meta.get("Artist", {}).get("value", "")).strip()
+                cr = artist or "Wikimedia Commons"
+                cr += " · CC BY-SA" if lic == "cc-by-sa" else (" · CC BY" if lic == "cc-by" else "")
+                out.append({"url": url, "license": lic, "credit": cr, "source": page.get("title", "")})
+                if len(out) >= n:
+                    break
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] 컷어웨이 사진 검색 실패(%s): %s", query, e)
+    return out
+
+
+def fetch_cutaway_photos(scientific_name: str, common_name_en: str, dest_dir: str,
+                         n: int = 2, exclude_sources: tuple = ()) -> list[dict]:
+    """본문 컷어웨이용 같은 대상 고해상 사진 최대 n장 확보 → [{path, credit, license}].
+    같은 대상만(오정보 방지). exclude_sources(히어로 등)와 겹치는 파일은 제외. 없으면 []."""
+    ex = {s for s in exclude_sources if s}
+    got = _commons_photos(scientific_name, n + len(ex) + 2) or _commons_photos(common_name_en, n + 2)
+    dest = Path(dest_dir)
+    key = (scientific_name or common_name_en or "cut").strip().lower()
+    slug = re.sub(r"[^a-z0-9]+", "_", key).strip("_") or "cut"
+    out: list[dict] = []
+    for i, g in enumerate(got):
+        if g.get("source") in ex or g["url"] in ex:
+            continue
+        iext = next((e for e in _IMAGE_EXT if g["url"].lower().endswith(e)), ".jpg")
+        p = dest / f"cutaway_{slug}_{i}{iext}"
+        if not (p.exists() and p.stat().st_size > 50_000) and not _download(g["url"], p):
+            continue
+        out.append({"path": str(p), "credit": g["credit"], "license": g["license"],
+                    "source": g.get("source", "")})
+        if len(out) >= n:
+            break
+    return out
+
+
+def insert_photo_cutaways(body_v: str, photos: list[dict], out_v: str, body_dur: float,
+                          key: str = "") -> str:
+    """본문(9:16, 자막 번인 전)에 같은 대상 고해상 사진 컷어웨이 1~2컷을 짧게 오버레이(디졸브).
+    ★오디오·자막은 이후 단계에서 그대로 얹히므로 타이밍·자막 연속성이 보존된다(길이 불변).
+    소스가 짧아 반복될 때 반복 피로를 깬다. 실패/사진없음 시 원본 body_v 그대로 반환(발행 불정지)."""
+    import subprocess
+    photos = [p for p in (photos or []) if p.get("path") and Path(p["path"]).exists()]
+    # 짧은 본문·사진 없음 → 삽입하지 않는다(긴 본문은 이미 다양 → 불필요, 남발 방지 최대 2컷).
+    if not photos or body_dur < 12:
+        return body_v
+    n = min(2, len(photos), 1 if body_dur < 20 else 2)
+    D = 1.8                                   # 컷어웨이 노출(디졸브 0.3 + 홀드 + 디졸브 0.3)
+    # 창 위치: 본문 중반부에 균등 배치(맨 앞/뒤 리빌 구간은 피한다).
+    fracs = [0.45] if n == 1 else [0.40, 0.68]
+    starts = [round(body_dur * f, 2) for f in fracs[:n]]
+    wd = Path(out_v).parent
+    inputs = ["-i", body_v]
+    fc = []
+    labels_prev = "0:v"
+    ok_clips = 0
+    for i, (ph, T) in enumerate(zip(photos[:n], starts)):
+        clip = wd / f"cut_{i}.mp4"
+        motion = _kenburns_motion_for(f"{key}_cut{i}")
+        if not _kenburns_clip(ph["path"], str(clip), seconds=2, motion=motion, W=720, H=1280):
+            continue
+        inputs += ["-i", str(clip)]
+        ci = ok_clips + 1                      # ffmpeg 입력 인덱스(0=body)
+        fc.append(
+            f"[{ci}:v]format=yuva420p,fade=t=in:st=0:d=0.3:alpha=1,"
+            f"fade=t=out:st={D-0.3}:d=0.3:alpha=1,setpts=PTS+{T}/TB[cv{i}];"
+            f"[{labels_prev}][cv{i}]overlay=0:0:enable='between(t,{T},{T+D})'[bv{i}]")
+        labels_prev = f"bv{i}"
+        ok_clips += 1
+    if ok_clips == 0:
+        return body_v
+    fc_str = ";".join(fc)
+    try:
+        r = subprocess.run(
+            ["ffmpeg", "-y", "-loglevel", "error", *inputs, "-filter_complex", fc_str,
+             "-map", f"[{labels_prev}]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19",
+             "-an", out_v], timeout=300)
+        if r.returncode == 0 and Path(out_v).exists() and Path(out_v).stat().st_size > 100_000:
+            log.info("[footage] 본문 사진 컷어웨이 %d컷 삽입", ok_clips)
+            return out_v
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] 컷어웨이 삽입 실패 → 원본 유지: %s", e)
+    return body_v
+
+
+def fetch_hero_photo(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
+    """오프닝 훅·엔드카드 배경용 고해상 실사 사진 확보 → {path, credit, license, source} 또는 None.
+    학명 우선, 실패 시 영문명. 미확보면 None(상위는 기존 영상 프레임으로 폴백 — 발행 불정지)."""
+    got = _commons_photo_search(scientific_name) or _commons_photo_search(common_name_en)
+    if not got:
+        return None
+    dest = Path(dest_dir)
+    key = (scientific_name or common_name_en or "hero").strip().lower()
+    slug = re.sub(r"[^a-z0-9]+", "_", key).strip("_") or "hero"
+    iext = next((e for e in _IMAGE_EXT if got["url"].lower().endswith(e)), ".jpg")
+    out = dest / f"hero_{slug}{iext}"
+    if not (out.exists() and out.stat().st_size > 50_000) and not _download(got["url"], out):
+        return None
+    return {"path": str(out), "credit": got["credit"], "license": got["license"],
+            "source": got.get("source", "")}
+
+
+_KENBURNS_MOTIONS = ("in", "out", "pan_r", "pan_l")
+
+
+def _kenburns_motion_for(key: str) -> str:
+    """대상 키로 켄번즈 카메라 무브를 결정론 선택(같은 영상 반복돼도 매번 똑같지 않게)."""
+    import hashlib
+    h = int(hashlib.md5((key or "kb").encode("utf-8")).hexdigest(), 16)
+    return _KENBURNS_MOTIONS[h % len(_KENBURNS_MOTIONS)]
+
+
+def _kenburns_vf(motion: str, fr: int, W: int = 1280, H: int = 720) -> str:
+    """켄번즈 vf(줌 방향 다양화): in=푸시인, out=풀아웃, pan_r/pan_l=수평 트랙.
+    출력 W×H로 커버 크롭(16:9 본문 소스 또는 9:16 컷어웨이 둘 다 지원)."""
+    cover = f"scale={2 * W}:{2 * H}:force_original_aspect_ratio=increase,crop={2 * W}:{2 * H},"
+    yc = "y='ih/2-(ih/zoom/2)'"
+    if motion == "out":
+        z = f"z='max(1.13-{0.13/max(fr,1):.6f}*on,1.0)'"
+        xy = f"x='iw/2-(iw/zoom/2)':{yc}"
+    elif motion == "pan_r":
+        z, xy = "z='1.1'", f"x='(iw-iw/zoom)*on/{fr}':{yc}"
+    elif motion == "pan_l":
+        z, xy = "z='1.1'", f"x='(iw-iw/zoom)*(1-on/{fr})':{yc}"
+    else:  # in (기본)
+        z = f"z='min(zoom+{0.12/max(fr,1):.6f},1.12)'"
+        xy = f"x='iw/2-(iw/zoom/2)':{yc}"
+    return f"{cover}zoompan={z}:d={fr}:{xy}:s={W}x{H}:fps=30,format=yuv420p"
+
+
+def _kenburns_clip(image_path: str, out_path: str, seconds: int = 14, motion: str = "in",
+                   W: int = 1280, H: int = 720) -> bool:
+    """정지 사진 → 켄번즈 영상(W×H). ★난파선·미세조류 등 '정적 피사체' 사진의 무한 엔진.
+    모션이 있어 정지-소스 게이트를 통과한다. motion=in/out/pan_r/pan_l로 줌 방향을 다양화해
+    같은 소재가 반복돼도 매번 똑같은 느낌이 안 나게 한다(사진은 영상보다 훨씬 많아 공급이 사실상 무한).
+    W,H로 16:9(본문 소스) 또는 9:16(본문 컷어웨이)을 선택한다."""
     import subprocess
     fr = int(seconds) * 30
-    vf = ("scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440,"
-          f"zoompan=z='min(zoom+0.00035,1.12)':d={fr}:"
-          "x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1280x720:fps=30,format=yuv420p")
+    vf = _kenburns_vf(motion if motion in _KENBURNS_MOTIONS else "in", fr, W, H)
     try:
         r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", image_path,
                             "-vf", vf, "-t", str(int(seconds)), "-c:v", "libx264", "-preset",
                             "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-an", out_path],
                            timeout=180)
         return (r.returncode == 0 and Path(out_path).exists()
-                and Path(out_path).stat().st_size > 100_000)
+                and Path(out_path).stat().st_size > 50_000)
     except Exception as e:  # noqa: BLE001
         log.warning("[footage] 켄번즈 합성 실패: %s", e)
         return False
@@ -359,7 +559,7 @@ def _fetch_photo_kenburns(cand: dict, dest: Path, key: str, common_name_en: str)
         log.info("[footage] 사진 다운로드 실패: %s", img_url)
         return None
     clip = dest / f"footage_{slug}_kb.mp4"
-    if not _kenburns_clip(str(img), str(clip)):
+    if not _kenburns_clip(str(img), str(clip), motion=_kenburns_motion_for(key)):
         return None
     log.info("[footage] 사진→켄번즈 영상화 완료: %s (%s)", clip, cand.get("credit", ""))
     return {"path": str(clip), "license": cand["license"], "credit": cand["credit"],

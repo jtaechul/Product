@@ -313,6 +313,25 @@ def run_reels(
                                          logo_box=None,
                                          wide=bool(getattr(category, "reframe_wide", False)))
 
+    # 3.5) ★본문 사진 컷어웨이(반복 피로 완화): 소스 영상이 짧아 반복될 때, 같은 대상 고해상 사진
+    #      1~2컷을 본문 중반에 짧게 오버레이(디졸브)한다. 자막 번인 '전'에 넣어 자막·오디오는 그대로
+    #      위에 얹혀 타이밍·자막 연속성이 보존된다. 사진 없거나 본문이 길면 생략(발행 불정지).
+    cutaway_credits: list[str] = []
+    try:
+        src_dur = _probe_duration(fv["path"]) or 0.0
+        if src_dur and src_dur < body_dur * 0.9:   # 소스가 본문보다 짧아 반복되는 경우에만
+            cuts = footage.fetch_cutaway_photos(
+                info.scientific_name, info.common_name_en, str(raw_dir), n=2)
+            if cuts:
+                body_v2 = footage.insert_photo_cutaways(
+                    body_v, cuts, str(work_dir / "body_cutaways.mp4"), body_dur,
+                    key=info.scientific_name)
+                if body_v2 != body_v:
+                    body_v = body_v2
+                    cutaway_credits = [c["credit"] for c in cuts if c.get("credit")]
+    except Exception as e:  # noqa: BLE001
+        log.warning("[reels] 컷어웨이 생략(오류): %s", e)
+
     # 4) 카라오케 자막 번인(본문 — 훅 없음)
     ass = narration_sync.build_synced_ass(nar["disp"], str(work_dir / "body.ass"),
                                           hook_first=False, w=CLIP_W, h=CLIP_H,
@@ -342,11 +361,19 @@ def run_reels(
         log.warning("[reels] 스팅어 결합 생략(오류): %s", e)
 
     # 6) 오프닝 훅 + 엔드카드 + 전환 + 임팩트 사운드 래핑
+    # ★고화소 히어로 사진(있으면): 정지 화면인 오프닝·엔드카드 배경을 영상 프레임 대신 이 사진으로
+    #   만든다(훨씬 선명). 미확보 시 기존 영상 프레임으로 자동 폴백(발행 불정지). 같은 대상의 사진만.
+    hero = None
+    try:
+        hero = footage.fetch_hero_photo(info.scientific_name, info.common_name_en, str(raw_dir))
+    except Exception as e:  # noqa: BLE001
+        log.warning("[reels] 히어로 사진 확보 생략(오류): %s", e)
     # 배경 소스 분리(재발 방지): 오프닝 배경=자막 번인 '전' 클린 리프레임(body_v) →
     # 본문 자막 미리 노출 차단 / 엔드카드 피사체=크롭·줌 '전' 원본 광각(fv.path) → 과확대 차단
     final = hook_intro_stage.apply(body_av, spec, hook_text, str(work_dir / "hook_intro"), bgm=bgm,
                                    open_bg_video=body_v, subject_video=fv["path"],
-                                   logo_box=fv.get("logo_box"))
+                                   logo_box=fv.get("logo_box"),
+                                   hero_image=(hero["path"] if hero else None))
     # ★재발방지 하드 게이트(기획서 규칙: 모든 영상에 오프닝 훅+엔드카드 필수).
     # 폰트는 이제 항상 폴백 해석되므로 apply()가 본문을 그대로 돌려주는 건 '진짜 실패'뿐 →
     # 조용히 발행하지 않고 큰 오류로 멈춰 CI를 빨간불로 만든다(스펙 위반 영상 발행 원천 차단).
@@ -381,6 +408,20 @@ def run_reels(
             overlay_facts=[f"수심 {info.depth_range_m}m"],
             hashtags=[f"#{info.common_name_ko}", "#심해생물", "#深海"],
             reveal_name=f"{info.common_name_ko} ({info.common_name_en})", reveal_fact="")
+    # ★사진 크레딧(CC-BY 저작자 표기 의무): 오프닝·엔드카드(히어로)·본문 컷어웨이에 쓴 사진 출처를 캡션에.
+    try:
+        photo_credits = []
+        if hero and hero.get("credit"):
+            photo_credits.append(hero["credit"])
+        photo_credits += cutaway_credits
+        # 중복 제거(순서 유지)
+        seen = set(); photo_credits = [c for c in photo_credits if not (c in seen or seen.add(c))]
+        if photo_credits and getattr(caption, "caption_body", None):
+            for cr in photo_credits:
+                if cr not in caption.caption_body:
+                    caption.caption_body = f"{caption.caption_body}\n写真: {cr}"
+    except Exception:  # noqa: BLE001
+        pass
     if episode is None:
         # 콘텐츠 id는 전 카테고리 공용 번호(카테고리별 회차 번호 충돌·덮어쓰기 방지)
         episode = content_store.next_global_id(base_dir)
