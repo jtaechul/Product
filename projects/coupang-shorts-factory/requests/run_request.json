@@ -1,8 +1,8 @@
 {
  "mode": "produce",
  "provider": "auto",
- "row": "2",
+ "row": "auto",
  "privacy": "private",
- "note": "개편 검증: 대본=자막(subs) + 드립 대본 + react 스티커 + 상품 비주얼 중심 + QA 게이트 (WoWo row2, Typecast)",
- "requested_at": "2026-07-12T12:44:31Z"
+ "note": "라이브 제작 테스트: 노래방 스피커(Break X1) + Veo 하이브리드 오프닝 + 카피바라 밈. private 업로드.",
+ "requested_at": "2026-07-13T14:10:00Z"
 }

@@ -27,7 +27,7 @@ on:
         options: [private, unlisted, public]
         default: private
   push:
-    branches: [main]
+    branches: [main, claude/coupang-shorts-phase-0-k42l1i]   # 작업브랜치=라이브 제작 테스트(임시)
     paths: ["projects/coupang-shorts-factory/requests/*.json"]
   schedule:
     - cron: "30 22 * * 0-4"   # KST 월~금 07:30 (주 5회, 스펙 §1.3 산출량)
