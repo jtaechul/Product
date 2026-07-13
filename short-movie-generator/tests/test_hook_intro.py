@@ -113,6 +113,28 @@ def test_opening_layout_never_overflows_long_hook():
         assert left >= lo - 2 and right <= hi_x + 2, f"어절 넘침: {left:.0f}~{right:.0f}"
 
 
+# ★실제 결함(재발): hook_line1이 좁아도 실제 line1은 pop 어절들의 '가로 연결'이라 더 넓어
+#   오른쪽 화면 밖으로 잘렸다(예: line1="まるで宇宙" 기준으로 맞췄으나 렌더는 "まるで宇宙深海の").
+MISMATCH_SPEC = hi.SpeciesSpec(
+    jp_name="X", sci_name="Duobrachium sparksae",
+    depth_min=200, depth_max=2000,
+    hook_line1="まるで宇宙", hook_line2="深海の幽霊。",           # line1이 join과 다름(좁음)
+    hook_pop_words=["まるで宇宙", "深海の", "幽霊。"],             # 실제 line1 = "まるで宇宙深海の"
+    feature_line="宇宙のような、深海のクラゲ", feature_glow_word="宇宙",
+)
+
+
+@pytest.mark.skipif(not hi.fonts_available(), reason="시스템 폰트 없음")
+def test_opening_layout_no_overflow_when_line1_differs_from_join():
+    """hook_line1 ≠ 앞 어절 연결(join)이어도 실제 렌더 줄이 안전영역 안이어야 한다(오른쪽 잘림 재발 방지)."""
+    cfg = hi.HookIntroConfig()
+    lay = hi.opening_layout(MISMATCH_SPEC, cfg)
+    lo = cfg.shake_margin + cfg.title_safe_x
+    hi_x = cfg.W - lo
+    for left, right in _word_extents(lay, MISMATCH_SPEC.hook_pop_words):
+        assert left >= lo - 2 and right <= hi_x + 2, f"어절 넘침: {left:.0f}~{right:.0f}"
+
+
 @pytest.mark.skipif(not hi.fonts_available(), reason="시스템 폰트 없음")
 def test_opening_layout_keeps_confirmed_flagship_design():
     """확정 디자인(ユメナマコ: 98px·2줄)은 자동 맞춤 도입 후에도 그대로여야 한다."""

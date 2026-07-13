@@ -245,13 +245,19 @@ def opening_layout(spec: SpeciesSpec, cfg: HookIntroConfig | None = None) -> dic
             return cfg.title_size
         return max(cfg.title_min_size, int(cfg.title_size * safe / w))
 
-    size = fit([spec.hook_line1, spec.hook_line2])
+    # ★넘침 원천 차단(재발 방지 · 실제 결함): 폰트 크기는 '실제로 렌더되는 줄'로 맞춰야 한다.
+    #   어절 3개+ 2줄일 때 line1 = 앞 어절들을 **가로로 이어붙인** 줄(join)이라, hook_line1 하나로
+    #   맞추면 실제 line1이 safe를 넘어 오른쪽 화면 밖으로 잘렸다(예: line1="まるで宇宙"로 맞췄는데
+    #   실제로는 "まるで宇宙深海の"가 렌더돼 넘침). → 2줄일 때도 join 폭 기준으로 맞춘다.
+    join1 = "".join(words[:-1]) if len(words) >= 3 else spec.hook_line1
+    two_line_texts = [join1, (words[-1] if len(words) >= 3 else spec.hook_line2)]
+    size = fit(two_line_texts)
     if size >= cfg.title_min_2line or len(words) < 3:
         rows = 2
         f = _serif(size)
-        w1 = meas.textlength(spec.hook_line1, font=f)
         centers: list[tuple] = []
-        if len(words) >= 3:                      # line1 = 앞 어절들, line2 = 마지막 어절
+        if len(words) >= 3:                      # line1 = 앞 어절들(가로 연결), line2 = 마지막 어절
+            w1 = meas.textlength(join1, font=f)  # 실제 line1(join) 폭으로 중앙 정렬
             x = W / 2 - w1 / 2
             for wtxt in words[:-1]:
                 ww = meas.textlength(wtxt, font=f)
