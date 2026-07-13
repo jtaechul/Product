@@ -31,6 +31,8 @@ from moviepy import (
     vfx,
 )
 
+from src.video import memes as meme_lib
+
 VIDEO_EXTS = {".mp4", ".mov", ".webm", ".m4v"}
 
 # 씬마다 같은 사진의 흐린 배경·히어로 카드를 재계산하지 않도록 캐시(렌더 속도).
@@ -111,8 +113,13 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     if lines and line_windows and s.get("mode", "karaoke") == "phrase":
         sub_clips = _build_line_clips(lines, line_windows, duration, font_path, s, width)
     elif lines and line_windows:
+        # 펀치라인 상황에 맞는 AI 밈 이미지(라이브러리)를 골라 밈 카드 배경으로 (글자는 렌더가 얹음)
+        punch_line = next((ln for ln in lines if ln.get("punch")), None)
+        meme_img = (meme_lib.select_meme(project_root, str(punch_line.get("text", "")),
+                                         str(punch_line.get("meme_tag", "")))
+                    if punch_line else None)
         sub_clips, sub_plan = _build_subtitles(words, lines, line_windows, duration,
-                                               font_path, s, width)
+                                               font_path, s, width, height, meme_img)
     else:
         sub_clips = _build_word_clips(words, duration, font_path, s, width)
 
@@ -601,6 +608,37 @@ def _build_word_clips(words: list, duration: float, font_path: Path,
     return _karaoke_clips(toks, duration, font_path, s, width)
 
 
+def _meme_rgba(path: Path, target_w: int):
+    """라이브러리 밈 이미지를 목표 폭으로 리사이즈해 RGBA 배열로(캐시). 글자 없는 원본만 온다."""
+    from PIL import Image
+    key = ("meme", str(path), int(target_w))
+    if key in _HERO_RGBA_CACHE:
+        return _HERO_RGBA_CACHE[key]
+    im = Image.open(path).convert("RGBA")
+    if im.width != int(target_w):
+        h = max(1, int(im.height * int(target_w) / im.width))
+        im = im.resize((int(target_w), h), Image.LANCZOS)
+    arr = np.asarray(im)
+    _HERO_RGBA_CACHE[key] = arr
+    return arr
+
+
+def _meme_image_clip(img_path: Path, start: float, end: float, width: int, height: int, s: dict):
+    """펀치 밈 카드의 '배경 이미지'(글자 없는 라이브러리 짤). 상단 2/3에 크게 팝인 —
+    글자는 _meme_card가 하단 클린존(meme_y)에 얹으므로 한글이 안 깨진다.
+    핵심규칙: 이건 '화면 텍스트'가 아니라 punch 밈 카드 1회의 배경일 뿐(카드 개수 불변)."""
+    if end - start < 0.12:
+        return None
+    try:
+        base = ImageClip(_meme_rgba(Path(img_path), int(width * 0.86)), transparent=True)
+    except Exception as e:
+        print(f"[render] 경고: 밈 이미지 로드 실패({Path(img_path).name}: {e}) — 텍스트 카드만 사용")
+        return None
+    return (base.resized(lambda t: _pop_scale(t, 0.18, 0.45))
+            .with_start(start).with_end(min(end, start + 30))
+            .with_position(("center", int(height * 0.05))))
+
+
 def _meme_card(text: str, start: float, end: float, font_path: Path, s: dict, width: int):
     """펀치라인/의문형 훅을 '큰 밈 텍스트 카드'로 — 화면 중앙, 흰색 굵게 + 두꺼운 검정테두리,
     큰 바운스로 팡 등장(드립·정곡 순간 강조)."""
@@ -638,7 +676,8 @@ def _fit_text(text: str, font_path: Path, font_size: int, color: str,
 
 
 def _build_subtitles(words: list, lines: list, line_windows: list, duration: float,
-                     font_path: Path, s: dict, width: int) -> tuple:
+                     font_path: Path, s: dict, width: int, height: int = 1920,
+                     meme_img: Path | None = None) -> tuple:
     """'대본이 곧 자막' (2026-07-12 개편): 라인의 subs(대본이 확정한 자막 칸)를 렌더가
     재분할 없이 그대로 팝업한다 — 띄어쓰기·문맥·길이 일관성을 대본이 책임진다.
     위치는 하단 1곳 고정. 중앙 밈 카드는 punch 라인 딱 1회(의문형 자동 트리거 폐지).
@@ -701,10 +740,15 @@ def _build_subtitles(words: list, lines: list, line_windows: list, duration: flo
     for m in memes:
         mc = _meme_card(m["text"], m["start"], m["end"], font_path, s, width)
         if mc is not None:
+            if meme_img is not None:  # 밈 이미지 배경 먼저(아래), 글자 카드는 위에 → 한글 온전
+                mi = _meme_image_clip(meme_img, m["start"], m["end"], width, height, s)
+                if mi is not None:
+                    clips.append(mi)
             clips.append(mc)
             plan.append({"kind": "meme", "text": m["text"], "start": round(m["start"], 3),
                          "end": round(m["end"], 3), "y": int(s.get("meme_y", 760)),
-                         "line_i": m["line_i"]})
+                         "line_i": m["line_i"],
+                         "image": str(meme_img) if meme_img is not None else None})
     return clips, plan
 
 
