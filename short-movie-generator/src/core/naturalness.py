@@ -62,16 +62,24 @@ def polish_lines(lines: list[str]) -> list[str]:
 
 
 def polish_text(text: str) -> str:
-    """캡션 등 '긴 본문'을 검수·보완. 실패·분량 급변 시 원문 유지."""
+    """캡션 등 '긴 본문'을 검수·보완(분량 불변). 실패·분량 급변 시 원문 유지.
+
+    ★재발방지(실제 결함): 예전 max_tokens=1000은 450~700자 일본어 캡션(토큰이 자당 1~2개)을
+    다 담지 못해 **검수 출력이 중간에 잘렸고**, 수용 하한이 0.6이라 '잘려서 짧아진' 캡션이 그대로
+    채택돼 발행 캡션이 갑자기 짧아졌다. → ① 토큰 넉넉히(2600) ② 검수는 길이를 보존해야 하므로
+    **짧아진 출력은 거부**(하한 0.9)하고 원문(전체 길이)을 유지한다.
+    """
     text = str(text or "")
     if not text.strip():
         return text
     try:
-        out = llm.generate_text(_POLISH_TEXT_PROMPT.format(text=text), max_tokens=1000)
+        out = llm.generate_text(_POLISH_TEXT_PROMPT.format(text=text), max_tokens=2600)
         out = (out or "").strip()
-        # 분량이 크게 다르면(요약/과편집 의심) 신뢰하지 않고 원문 유지
-        if out and 0.6 <= len(out) / max(1, len(text)) <= 1.6:
+        # 검수는 '자연스럽게 다듬기'라 분량이 보존돼야 한다. 짧아지면(잘림·요약) 거부하고 원문 유지.
+        if out and 0.9 <= len(out) / max(1, len(text)) <= 1.6:
             return out
+        if out:
+            log.warning("[naturalness] 캡션 검수 분량 급변(%d→%d) → 원문 유지", len(text), len(out))
     except Exception as e:  # noqa: BLE001
         log.warning("[naturalness] 캡션 검수 실패(원문 유지): %s", e)
     return text
