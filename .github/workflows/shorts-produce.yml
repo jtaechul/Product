@@ -112,6 +112,8 @@ jobs:
           SHORTS_CLOVA_CLIENT_ID: ${{ secrets.SHORTS_CLOVA_CLIENT_ID }}
           SHORTS_CLOVA_CLIENT_SECRET: ${{ secrets.SHORTS_CLOVA_CLIENT_SECRET }}
           SHORTS_PEXELS_API_KEY: ${{ secrets.SHORTS_PEXELS_API_KEY }}
+          SHORTS_PIXABAY_API_KEY: ${{ secrets.SHORTS_PIXABAY_API_KEY }}   # (선택) 사진 소스 확장
+          SHORTS_GIPHY_API_KEY: ${{ secrets.SHORTS_GIPHY_API_KEY }}       # (선택) 재미있는 움짤(GIF) 소스
           SHORTS_ANTHROPIC_API_KEY: ${{ secrets.SHORTS_ANTHROPIC_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           # Gemini 키 — ⚠️ 텍스트(대본·이미지검색어) 생성 전용. 유료 영상(Veo)은 코드에서 제거되어 호출 불가.
