@@ -113,8 +113,10 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     if args.candidates:
         _pimgs = list(product.get("hero_images") or [])
         _pimgs += _download_images(product.get("image_urls") or [], job_dir)
-        imagesource.fetch_candidates(product, lines, job_dir, settings, product_images=_pimgs)
-        print(f"[pipeline] #2 후보 생성 완료 → {job_dir}/candidates.json (TTS·렌더 생략)")
+        manifest = imagesource.fetch_candidates(product, lines, job_dir, settings, product_images=_pimgs)
+        _publish_candidates(manifest, product, job_dir)
+        print(f"[pipeline] #2 후보 생성 완료 → {job_dir}/candidates/ + cand_{product['_row_hash']}.json "
+              "(TTS·렌더 생략)")
         return 0
 
     # ---- M4(+M5): TTS → audio.mp3 + timestamps.json (또는 --no-narration이면 무음+합성 타이밍)
@@ -306,6 +308,43 @@ def _download_images(urls: list, job_dir: Path) -> list:
         except Exception as e:
             print(f"[pipeline] 경고: 이미지 URL {i} 다운로드 실패({e}) — 건너뜀")
     return paths
+
+
+def _publish_candidates(manifest: list, product: dict, job_dir: Path) -> Path:
+    """#2 관리자 선택기용 웹 매니페스트 — 후보 파일을 row_hash 기반 고유명으로 candidates/에 모으고,
+    브라우저가 읽을 cand_{row_hash}.json 을 만든다(워크플로우가 이 폴더+매니페스트를 릴리스 shorts-cand에 올림).
+    각 후보는 {name(자산 파일명), url(원본 소스 URL·이미지라인), source, is_product}. 관리자가 고른 뒤
+    data/selections/{row_hash}.json 로 저장하면 load_selections가 url을 내려받아 그 라인에 쓴다."""
+    import shutil
+    rh = product["_row_hash"]
+    cdir = job_dir / "candidates"
+    cdir.mkdir(parents=True, exist_ok=True)
+    web = {"row_hash": rh, "product_name": product.get("name", ""), "lines": []}
+    for e in manifest:
+        i = int(e["line_i"])
+        cands = []
+        for j, c in enumerate(e.get("candidates", [])):
+            src_file = c.get("file")
+            if not src_file or not Path(src_file).exists():
+                continue
+            ext = Path(src_file).suffix.lower() or ".jpg"
+            name = f"{rh}__L{i:02d}__{j}{ext}"
+            dest = cdir / name
+            try:
+                if Path(src_file).resolve() != dest.resolve():
+                    shutil.copyfile(src_file, dest)
+            except Exception:
+                continue
+            cands.append({"name": name, "url": c.get("url"), "source": c.get("source", ""),
+                          "is_product": bool(c.get("is_product"))})
+        web["lines"].append({"line_i": i, "text": e.get("text", ""), "stage": e.get("stage"),
+                             "punch": bool(e.get("punch")), "query": e.get("query", ""),
+                             "candidates": cands})
+    man_path = job_dir / f"cand_{rh}.json"
+    man_path.write_text(json.dumps(web, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"[pipeline] #2 웹 매니페스트: {man_path.name} "
+          f"({sum(len(l['candidates']) for l in web['lines'])}장, {len(web['lines'])}라인)")
+    return man_path
 
 
 def _print_key_detection() -> None:

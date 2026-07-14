@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "실행 모드 (produce=상품 큐→영상→업로드, phase0=렌더 스파이크)"
+        description: "실행 모드 (produce=상품 큐→영상→업로드, phase0=렌더 스파이크, candidates=라인별 후보 이미지만)"
         type: choice
-        options: [produce, phase0]
+        options: [produce, phase0, candidates]
         default: produce
       tts_provider:
         description: "TTS 프로바이더 (auto=등록된 키 자동 감지, mock=키 없이 렌더 검증)"
@@ -129,6 +129,8 @@ jobs:
         run: |
           if [ "${{ steps.params.outputs.mode }}" = "phase0" ]; then
             python -m src.phase0_spike --provider "${{ steps.params.outputs.provider }}" --job-id "phase0-run${{ github.run_number }}"
+          elif [ "${{ steps.params.outputs.mode }}" = "candidates" ]; then
+            python -m src.pipeline --candidates --row "${{ steps.params.outputs.row }}" --job-id "run${{ github.run_number }}"
           else
             python -m src.pipeline \
               --row "${{ steps.params.outputs.row }}" \
@@ -178,6 +180,32 @@ jobs:
           | while read -r t; do
               [ -n "$t" ] && gh release delete "$t" --yes --cleanup-tag && echo "오래된 릴리스 삭제: $t"
             done
+
+      - name: 후보 이미지 릴리스 발행 (candidates 모드 · 관리자 이미지 선택기용)
+        if: success() && steps.params.outputs.mode == 'candidates'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          JOB_DIR="data/jobs/run${{ github.run_number }}"
+          CDIR="$JOB_DIR/candidates"
+          MAN=$(ls "$JOB_DIR"/cand_*.json 2>/dev/null | head -1)
+          if [ -z "$MAN" ] || [ ! -d "$CDIR" ]; then
+            echo "후보 매니페스트/폴더 없음 → 발행 생략"; exit 0
+          fi
+          TAG="shorts-cand"
+          # 단일 릴리스에 라인별 후보 이미지 + cand_{row_hash}.json 매니페스트를 자산으로 축적
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --title "이미지 후보 (관리자 선택기)" \
+              --notes "라인별 후보 이미지 — 관리자 페이지 '이미지' 탭에서 자막별로 고른다. row_hash로 구분." \
+              --target "${{ github.ref_name }}" --latest=false
+          gh release upload "$TAG" "$CDIR"/* "$MAN" --clobber
+          echo "후보 발행: $TAG ($(ls "$CDIR" | wc -l)장 + 매니페스트 $(basename "$MAN"))"
+          # 자산 무한 증가 방지 — 최신 180개만 유지(오래된 row 후보부터 정리)
+          gh release view "$TAG" --json assets \
+            --jq '.assets|sort_by(.createdAt)|reverse|.[180:]|.[].name' 2>/dev/null \
+          | while read -r a; do
+              [ -n "$a" ] && gh release delete-asset "$TAG" "$a" --yes 2>/dev/null && echo "오래된 후보 자산 삭제: $a"
+            done || true
 
       - name: 산출물 업로드 (video/audio/timestamps/script/stats)
         if: always()
