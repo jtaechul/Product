@@ -90,6 +90,9 @@ ol li{margin:8px 0}
 .row2>div{flex:1}
 /* 영상 라이브러리 (완성 쇼츠) */
 .vgrid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
+.vitem{display:flex; flex-direction:column; gap:6px}
+.vactions{display:flex; gap:6px}
+.vactions .btn{flex:1}
 .vcell{position:relative; aspect-ratio:9/16; border-radius:12px; overflow:hidden; cursor:pointer; background:var(--line)}
 .vcell img{width:100%; height:100%; object-fit:cover; display:block}
 .vcell .cap{position:absolute; left:0; right:0; bottom:0; padding:22px 10px 8px; font-size:12px; font-weight:800;
@@ -942,6 +945,36 @@ const VID_PREFIX = "shorts-run";
 // 워커 /media 프록시로 video/mp4·inline 으로 바꿔 받는다(admin/worker/index.mjs).
 function mediaUrl(u) { return "/media?u=" + encodeURIComponent(u); }
 function relMeta(rel) { try { return JSON.parse(rel.body || "{}"); } catch (_) { return {}; } }
+// 영상 저장(사진 앱 공유 / 다운로드 폴백) — 모달 버튼과 썸네일 밑 '저장' 버튼 공용
+async function saveVideo(btn, url, rawName) {
+  const name = ((rawName || "video").replace(/[^\w가-힣 ._-]/g, "").trim() || "video") + ".mp4";
+  if (!url) return;
+  btn.disabled = true;
+  try {
+    toast("영상 준비 중...", 60000);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("불러오기 실패 " + res.status);
+    const file = new File([await res.blob()], name, { type: "video/mp4" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: name });
+      toast("공유 창에서 '비디오 저장'을 누르면 사진 앱에 저장됩니다.");
+    } else {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(file); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+      toast("영상을 저장했습니다.");
+    }
+  } catch (e) {
+    if (e && e.name === "AbortError") toast("저장을 취소했습니다.");
+    else toast("저장 실패: " + (e.message || e), 5000);
+  } finally { btn.disabled = false; }
+}
+// 영상(릴리스) 삭제 — 릴리스 + 태그 제거(태그 삭제는 best-effort)
+async function deleteRelease(rel) {
+  await gh(`/repos/${OWNER}/${REPO}/releases/${rel.id}`, { method: "DELETE" });
+  try { await gh(`/repos/${OWNER}/${REPO}/git/refs/tags/${encodeURIComponent(rel.tag_name)}`, { method: "DELETE" }); } catch (_) {}
+}
 async function loadVideos() {
   const box = $("videoList");
   if (!token()) { box.innerHTML = '<p class="empty">설정 탭에서 GitHub 토큰을 먼저 저장하세요.</p>'; return; }
@@ -964,6 +997,8 @@ async function loadVideos() {
       const video = (rel.assets || []).find((a) => /video\.mp4$/i.test(a.name));
       if (!video) continue;
       const name = rel.name || meta.name || "쿠팡 쇼츠";
+      const item = document.createElement("div");
+      item.className = "vitem";
       const cell = document.createElement("div");
       cell.className = "vcell";
       // 포스터에는 이미 상품명·가격이 통일된 디자인으로 박혀 있어 자막(cap) 중복 표시 안 함.
@@ -984,7 +1019,23 @@ async function loadVideos() {
         dlUrl: video.browser_download_url,
         youtube: meta.youtube_url || "",
       });
-      grid.appendChild(cell);
+      item.appendChild(cell);
+      // 썸네일 밑 메뉴 — 저장(사진 앱) / 삭제(이 영상 제거)
+      const actions = document.createElement("div");
+      actions.className = "vactions";
+      const saveB = document.createElement("button");
+      saveB.className = "btn mini sub"; saveB.textContent = "저장";
+      saveB.onclick = () => saveVideo(saveB, mediaUrl(video.browser_download_url), name);
+      const delB = document.createElement("button");
+      delB.className = "btn mini danger"; delB.textContent = "삭제";
+      delB.onclick = (ev) => busy(ev.target, async () => {
+        if (!confirm(`"${name}" 영상을 삭제할까요?\n되돌릴 수 없습니다(제작 기록에서 제거).`)) return;
+        await deleteRelease(rel);
+        toast("영상을 삭제했습니다."); loadVideos();
+      });
+      actions.appendChild(saveB); actions.appendChild(delB);
+      item.appendChild(actions);
+      grid.appendChild(item);
     }
     box.innerHTML = "";
     box.appendChild(grid);
@@ -1015,34 +1066,7 @@ $("vmodal").addEventListener("click", (ev) => { if (ev.target.id === "vmodal") c
 
 // "사진에 저장": iOS는 사파리 다운로드 대신 웹 공유 시트를 띄워 '비디오 저장' → 사진 앱에 저장(바로 재생).
 // 미지원 기기는 일반 다운로드로 폴백. (공유는 사용자 탭 제스처 안에서 실행)
-$("vmDownload").onclick = async () => {
-  const btn = $("vmDownload");
-  const url = btn.dataset.src;
-  const name = ((btn.dataset.name || "video").replace(/[^\w가-힣 ._-]/g, "").trim() || "video") + ".mp4";
-  if (!url) return;
-  btn.disabled = true;
-  try {
-    toast("영상 준비 중...", 60000);
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("불러오기 실패 " + res.status);
-    const file = new File([await res.blob()], name, { type: "video/mp4" });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: name }); // → '비디오 저장' → 사진 앱
-      toast("공유 창에서 '비디오 저장'을 누르면 사진 앱에 저장됩니다.");
-    } else {
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(file); a.download = name;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-      toast("영상을 저장했습니다.");
-    }
-  } catch (e) {
-    if (e && e.name === "AbortError") toast("저장을 취소했습니다.");
-    else toast("저장 실패: " + (e.message || e), 5000);
-  } finally {
-    btn.disabled = false;
-  }
-};
+$("vmDownload").onclick = () => saveVideo($("vmDownload"), $("vmDownload").dataset.src, $("vmDownload").dataset.name);
 
 /* ── 기획 탭 — 기획+스토리보드+대본 생성(plan 모드) → 검토 → 승인(이미지 찾기로) ── */
 const PLAN_DIR = P + "/data/plans";
