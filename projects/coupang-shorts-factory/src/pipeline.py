@@ -49,6 +49,12 @@ def main() -> int:
                    help="렌더 대신 라인별 후보 이미지만 생성(관리자 선택기용) — candidates.json 작성")
     p.add_argument("--plan", action="store_true",
                    help="기획+스토리보드+대본만 생성(승인 단계용) — data/plans/{row_hash}.json 작성, 이미지·제작 생략")
+    p.add_argument("--no-upload", action="store_true",
+                   help="제작(렌더+릴리스)만 하고 유튜브 업로드는 하지 않음 — 검수 단계용(새 흐름 기본)")
+    p.add_argument("--upload", action="store_true",
+                   help="이미 제작된 영상(릴리스 shorts-run)을 유튜브에 업로드 — 검수 통과 후 '올리기'용")
+    p.add_argument("--regen", default=None,
+                   help="기획의 특정 항목만 재생성해 즉시 교체 (title|headline|description|hashtags)")
     args = p.parse_args()
 
     settings = yaml.safe_load((PROJECT_ROOT / "config" / "settings.yaml").read_text(encoding="utf-8"))
@@ -89,6 +95,13 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     product = enrich_product(product, settings, job_dir)
     (job_dir / "product.json").write_text(json.dumps(product, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"[pipeline] M2 상품: {product['name']} ({product['price']:,}원)")
+
+    # ---- 검수 재생성 모드(--regen): 기획의 특정 항목만 새로 만들어 즉시 교체
+    if args.regen:
+        return _regen_field(product, args.regen, settings, PROJECT_ROOT)
+    # ---- 업로드 모드(--upload): 이미 제작된 영상(릴리스)을 찾아 유튜브 업로드 ('올리기')
+    if args.upload:
+        return _upload_existing(product, settings, job_dir, PROJECT_ROOT, args.privacy)
 
     # ---- M3: 대본 (기획 승인 흐름)
     #   --plan          : 항상 새로 생성 → data/plans/{hash}.json 저장 후 종료(승인 대기)
@@ -223,9 +236,12 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     except Exception as e:
         print(f"[pipeline] 경고: 대표 썸네일 생성 실패({type(e).__name__}: {e}) — 건너뜀")
 
-    # ---- M7: 업로드 (자격 증명 없으면 건너뛰고 안내 — Artifacts로 검수)
+    # ---- M7: 업로드 (새 흐름: --no-upload면 제작만 하고 검수 후 '올리기'에서 업로드)
     privacy = args.privacy or settings.get("upload", {}).get("privacy_default", "private")
-    if youtube.is_configured():
+    if args.no_upload:
+        result = {"status": "skipped_no_upload", "hint": "검수 단계 — 업로드는 '올리기' 버튼에서"}
+        print("[pipeline] 제작만 수행(--no-upload) — 유튜브 업로드는 검수 통과 후 '올리기'로")
+    elif youtube.is_configured():
         result = youtube.upload(out_path, script, product, settings, privacy=privacy)
         manual_queue.mark_done(product["_row_hash"])  # 성공 시에만 큐 소진(중복 제작 방지)
         for used in (PROJECT_ROOT / "data" / "notes").glob(f"{product['_row_hash']}*"):
@@ -251,6 +267,7 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
         "name": product.get("name"),
         "price": product.get("price"),
         "title": script.get("title"),
+        "row_hash": product.get("_row_hash"),   # '올리기'가 상품→영상 매칭에 사용
         "affiliate_url": product.get("affiliate_url"),
         "youtube_url": result.get("url"),
         "duration": stats.get("video_duration_seconds"),
@@ -362,6 +379,105 @@ def _publish_candidates(manifest: list, product: dict, job_dir: Path) -> Path:
     print(f"[pipeline] #2 웹 매니페스트: {man_path.name} "
           f"({sum(len(l['candidates']) for l in web['lines'])}장, {len(web['lines'])}라인)")
     return man_path
+
+
+def _regen_field(product: dict, field: str, settings: dict, root: Path) -> int:
+    """검수 재생성(B4) — 기획의 한 항목만 새 안 1개로 만들어 data/plans/{hash}.json 갱신."""
+    from src.script.generate import regenerate_field
+    from src.script.sanitize import clean_text
+    plan_path = root / "data" / "plans" / f"{product['_row_hash']}.json"
+    if not plan_path.exists():
+        print("::error::기획이 없습니다 — 먼저 '기획 만들기'로 기획을 만드세요")
+        return 2
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    try:
+        val = regenerate_field(plan, field, product, settings)
+    except Exception as e:
+        print(f"::error::재생성 실패({type(e).__name__}: {e})")
+        return 2
+    f = field.strip().lower()
+    if f == "hashtags":
+        tags = val if isinstance(val, list) else [val]
+        norm = []
+        for t in tags:
+            tag = "#" + str(t).lstrip("#").replace(" ", "")
+            if len(tag) > 1 and tag not in norm:
+                norm.append(tag)
+        plan["hashtags"] = norm[:3]
+    elif f == "description":
+        plan["description_body"] = clean_text(str(val))
+    else:
+        plan[f] = clean_text(str(val))
+    plan_path.write_text(json.dumps(plan, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"[pipeline] '{field}' 재생성 완료 → data/plans/{product['_row_hash']}.json")
+    return 0
+
+
+def _find_and_download_video(row_hash: str, job_dir: Path) -> Path | None:
+    """제작된 영상 찾기 — 릴리스 shorts-run* 중 release_meta.row_hash가 일치하는 최신본의 video.mp4 다운로드."""
+    import requests
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    repo = os.environ.get("GITHUB_REPOSITORY", "jtaechul/Product")
+    if not token:
+        print("[pipeline] GH_TOKEN 없음 — 릴리스에서 영상 조회 불가")
+        return None
+    h = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
+    try:
+        rels = requests.get(f"https://api.github.com/repos/{repo}/releases?per_page=100",
+                            headers=h, timeout=30).json()
+    except Exception as e:
+        print(f"[pipeline] 릴리스 조회 실패({e})")
+        return None
+    for r in rels if isinstance(rels, list) else []:   # API가 최신순 반환
+        if not str(r.get("tag_name", "")).startswith("shorts-run"):
+            continue
+        try:
+            body = json.loads(r.get("body") or "{}")
+        except Exception:
+            body = {}
+        if body.get("row_hash") != row_hash:
+            continue
+        va = next((a for a in r.get("assets", []) if str(a.get("name", "")).endswith("video.mp4")), None)
+        if not va:
+            continue
+        dest = job_dir / "video.mp4"
+        try:
+            dl = requests.get(va["url"], headers={**h, "Accept": "application/octet-stream"}, timeout=180)
+            dl.raise_for_status()
+            dest.write_bytes(dl.content)
+            print(f"[pipeline] 제작 영상 확보: {r['tag_name']} → {dest.name} ({len(dl.content)//1024}KB)")
+            return dest
+        except Exception as e:
+            print(f"[pipeline] 영상 다운로드 실패({e})")
+            return None
+    return None
+
+
+def _upload_existing(product: dict, settings: dict, job_dir: Path, root: Path, privacy_arg) -> int:
+    """올리기(B5) — 이미 제작된 영상을 릴리스에서 받아 유튜브 업로드(기획의 제목·설명·해시태그 사용)."""
+    if not youtube.is_configured():
+        print(f"::error::유튜브 인증 미등록 — {youtube.missing_hint()}")
+        return 2
+    from src.script.sanitize import sanitize_script
+    plan_path = root / "data" / "plans" / f"{product['_row_hash']}.json"
+    if not plan_path.exists():
+        print("::error::기획이 없습니다 — 먼저 기획·제작을 완료하세요")
+        return 2
+    script = sanitize_script(json.loads(plan_path.read_text(encoding="utf-8")), strict_length=False)
+    script["pinned_comment"] = f"제품 정보는 여기서 확인 → {product['affiliate_url']}\n{DISCLOSURE}"
+    video = _find_and_download_video(product["_row_hash"], job_dir)
+    if not video or not video.exists():
+        print("::error::제작된 영상을 못 찾음 — 먼저 '제작하기'로 영상을 만드세요")
+        return 2
+    privacy = privacy_arg or settings.get("upload", {}).get("privacy_default", "private")
+    result = youtube.upload(video, script, product, settings, privacy=privacy)
+    manual_queue.mark_done(product["_row_hash"])
+    for used in (root / "data" / "notes").glob(f"{product['_row_hash']}*"):
+        used.unlink(missing_ok=True)
+    (job_dir / "upload_result.json").write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
+    notify.send(f"[쿠팡쇼츠] 유튜브 업로드 완료({privacy})\n{result.get('title', '')}\n{result.get('url', '')}")
+    print(f"[pipeline] 업로드 완료: {result.get('url')}")
+    return 0
 
 
 def _print_key_detection() -> None:

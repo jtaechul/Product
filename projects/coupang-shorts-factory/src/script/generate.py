@@ -92,6 +92,44 @@ def generate_script(product: dict, settings: dict) -> dict:
     return script
 
 
+_FIELD_SPEC = {
+    "title": "유튜브 제목 — ①훅의 궁금증 + 검색될 상품 키워드 자연 포함, 40자 이내, 낚시·가격 표기 금지",
+    "headline": "영상 상단 뉴스 헤드라인 — 폭로 기사 제목 톤(문어체), 제품명 감춤, 12~22자",
+    "description": "유튜브 설명란 본문 — 간결·자연스럽게, 가격·금액 금지",
+    "hashtags": "해시태그 정확히 3개(문자열 리스트)",
+}
+
+
+def regenerate_field(plan: dict, field: str, product: dict, settings: dict):
+    """검수 단계 — 기획의 한 항목(title/headline/description/hashtags)만 '새 안 1개'로 재생성해 반환.
+    텍스트 전용(Gemini/Claude). 나머지 대본·기획은 그대로 두고 이 필드만 바꾼다."""
+    field = field.strip().lower()
+    if field not in _FIELD_SPEC:
+        raise ValueError(f"regen 대상 오류: {field} (가능: {list(_FIELD_SPEC)})")
+    cfg = settings.get("script", {})
+    provider = script_provider(settings)
+    model = (cfg.get("gemini_model", "gemini-2.5-flash") if provider == "gemini"
+             else cfg.get("model", "claude-sonnet-4-6"))
+    ctx = {"concept": plan.get("concept"), "제품": product.get("name"),
+           "대사": [l.get("text") for l in plan.get("lines", [])],
+           "현재_title": plan.get("title"), "현재_headline": plan.get("headline"),
+           "현재_hashtags": plan.get("hashtags"), "현재_description": plan.get("description_body")}
+    want = "['태그1','태그2','태그3']" if field == "hashtags" else '"..."'
+    system = "너는 한국어 쇼츠 편집자다. 요청한 항목만 새로 지어 JSON으로만 반환한다. 마크다운·설명 금지."
+    prompt = (
+        f"아래 영상 맥락을 보고 '{field}'를 새로운 안 1개로 다시 지어라: {_FIELD_SPEC[field]}.\n"
+        "기존 것과 확실히 다르게, 더 낫게. 이모지·특수기호·최고/유일/100% 같은 단정 표현·금액 금지.\n"
+        f"맥락 JSON: {json.dumps(ctx, ensure_ascii=False)}\n"
+        f'출력(JSON만): {{"value": {want}}}')
+    text = (_gemini_generate(model, system, prompt, 800) if provider == "gemini" and gemini_key()
+            else _anthropic_generate(model, system, prompt, 800))
+    m = re.search(r"\{.*\}", text, re.S)
+    data = json.loads(m.group(0)) if m else {}
+    if "value" not in data:
+        raise ValueError(f"재생성 응답에 value 없음: {text[:120]}")
+    return data["value"]
+
+
 def _anthropic_generate(model: str, system: str, content: str, max_tokens: int) -> str:
     key = anthropic_key()
     if not key:

@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "실행 모드 (plan=기획+대본, candidates=구간별 후보, produce=최종 영상)"
+        description: "실행 모드 (plan=기획, candidates=후보이미지, produce=영상제작, regen=항목재생성, upload=올리기)"
         type: choice
-        options: [produce, candidates, plan]
+        options: [produce, candidates, plan, regen, upload]
         default: produce
       tts_provider:
         description: "TTS 프로바이더 (auto=등록된 키 자동 감지, mock=키 없이 렌더 검증)"
@@ -31,6 +31,14 @@ on:
         type: choice
         options: ["false", "true"]
         default: "false"
+      no_upload:
+        description: "제작만 하고 유튜브 업로드는 안 함 (produce 모드 · 새 흐름 검수용)"
+        type: choice
+        options: ["false", "true"]
+        default: "false"
+      field:
+        description: "재생성 항목 (regen 모드 전용: title|headline|description|hashtags)"
+        default: ""
   push:
     branches: [main, claude/coupang-shorts-phase-0-k42l1i]   # 작업브랜치=라이브 제작 테스트(임시)
     paths: ["projects/coupang-shorts-factory/requests/*.json"]
@@ -83,17 +91,22 @@ jobs:
             echo "provider=${{ inputs.tts_provider }}" >> "$GITHUB_OUTPUT"
             echo "row=${{ inputs.row }}" >> "$GITHUB_OUTPUT"
             echo "privacy=${{ inputs.privacy }}" >> "$GITHUB_OUTPUT"
+            echo "field=${{ inputs.field }}" >> "$GITHUB_OUTPUT"
             echo "soft=" >> "$GITHUB_OUTPUT"
             [ "${{ inputs.no_narration }}" = "true" ] && echo "nonar=--no-narration" >> "$GITHUB_OUTPUT" || echo "nonar=" >> "$GITHUB_OUTPUT"
+            [ "${{ inputs.no_upload }}" = "true" ] && echo "noup=--no-upload" >> "$GITHUB_OUTPUT" || echo "noup=" >> "$GITHUB_OUTPUT"
           else
             get() { python3 -c "import json;print(json.load(open('requests/run_request.json')).get('$1','$2'))" 2>/dev/null || echo "$2"; }
             echo "mode=$(get mode produce)" >> "$GITHUB_OUTPUT"
             echo "provider=$(get provider auto)" >> "$GITHUB_OUTPUT"
             echo "row=$(get row auto)" >> "$GITHUB_OUTPUT"
             echo "privacy=$(get privacy private)" >> "$GITHUB_OUTPUT"
+            echo "field=$(get field '')" >> "$GITHUB_OUTPUT"
             echo "soft=" >> "$GITHUB_OUTPUT"
             NONAR="$(get no_narration false)"   # JSON true는 파이썬이 'True'로 출력 → 대소문자 모두 허용
             case "$NONAR" in true|True|TRUE|1) echo "nonar=--no-narration" >> "$GITHUB_OUTPUT" ;; *) echo "nonar=" >> "$GITHUB_OUTPUT" ;; esac
+            NOUP="$(get no_upload false)"
+            case "$NOUP" in true|True|TRUE|1) echo "noup=--no-upload" >> "$GITHUB_OUTPUT" ;; *) echo "noup=" >> "$GITHUB_OUTPUT" ;; esac
           fi
 
       - name: 파이프라인 실행
@@ -119,28 +132,36 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          if [ "${{ steps.params.outputs.mode }}" = "plan" ]; then
-            python -m src.pipeline --plan --row "${{ steps.params.outputs.row }}" --job-id "run${{ github.run_number }}"
-          elif [ "${{ steps.params.outputs.mode }}" = "candidates" ]; then
-            python -m src.pipeline --candidates --row "${{ steps.params.outputs.row }}" --job-id "run${{ github.run_number }}"
+          MODE="${{ steps.params.outputs.mode }}"
+          ROW="${{ steps.params.outputs.row }}"
+          JOB="run${{ github.run_number }}"
+          if [ "$MODE" = "plan" ]; then
+            python -m src.pipeline --plan --row "$ROW" --job-id "$JOB"
+          elif [ "$MODE" = "candidates" ]; then
+            python -m src.pipeline --candidates --row "$ROW" --job-id "$JOB"
+          elif [ "$MODE" = "regen" ]; then
+            python -m src.pipeline --regen "${{ steps.params.outputs.field }}" --row "$ROW" --job-id "$JOB"
+          elif [ "$MODE" = "upload" ]; then
+            python -m src.pipeline --upload --row "$ROW" --privacy "${{ steps.params.outputs.privacy }}" --job-id "$JOB"
           else
             python -m src.pipeline \
-              --row "${{ steps.params.outputs.row }}" \
+              --row "$ROW" \
               --privacy "${{ steps.params.outputs.privacy }}" \
               ${{ steps.params.outputs.provider != 'auto' && format('--provider {0}', steps.params.outputs.provider) || '' }} \
-              --job-id "run${{ github.run_number }}" \
+              --job-id "$JOB" \
               ${{ steps.params.outputs.soft }} \
-              ${{ steps.params.outputs.nonar }}
+              ${{ steps.params.outputs.nonar }} \
+              ${{ steps.params.outputs.noup }}
           fi
 
-      - name: 기획 파일 커밋 (plan 모드 — 관리자 승인 화면이 data/plans에서 읽음)
-        if: success() && steps.params.outputs.mode == 'plan'
+      - name: 기획 파일 커밋 (plan/regen 모드 — 관리자 승인·검수 화면이 data/plans에서 읽음)
+        if: success() && (steps.params.outputs.mode == 'plan' || steps.params.outputs.mode == 'regen')
         run: |
           if ! git diff --quiet -- data/plans; then
             git config user.name "shorts-factory-bot"
             git config user.email "github-actions@users.noreply.github.com"
             git add -A data/plans
-            git commit -m "coupang-shorts: 기획+대본 생성 (row ${{ steps.params.outputs.row }}) [skip ci]"
+            git commit -m "coupang-shorts: 기획 ${{ steps.params.outputs.mode }} (row ${{ steps.params.outputs.row }}) [skip ci]"
             git pull --rebase origin main
             git push origin HEAD:main
           fi
