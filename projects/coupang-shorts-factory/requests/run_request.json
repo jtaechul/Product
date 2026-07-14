@@ -1,9 +1,8 @@
 {
  "mode": "produce",
  "provider": "auto",
- "row": "auto",
+ "row": "2",
  "privacy": "private",
- "no_narration": true,
- "note": "무나레이션 7차: Pixabay/Giphy 키 등록 확인 + 움짤 + 짧아진 만담 대본(8~11줄). 나레이션 없음.",
- "requested_at": "2026-07-14T11:05:00Z"
+ "note": "개편 검증: 대본=자막(subs) + 드립 대본 + react 스티커 + 상품 비주얼 중심 + QA 게이트 (WoWo row2, Typecast)",
+ "requested_at": "2026-07-12T12:44:31Z"
 }

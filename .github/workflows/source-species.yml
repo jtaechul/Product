@@ -1,0 +1,135 @@
+name: Source Species
+
+# 관리자 페이지 "소싱하기" 버튼이 트리거(workflow_dispatch)한다. 선택한 카테고리에서
+# 새 대상(생물=학명·사실 자동 / 침몰선=배 이름·선종 최선추출)을 발굴해 후보 목록을 만들고,
+# 각 후보의 대표 썸네일(피사체 프레임)을 Release에 올린 뒤 candidates.json에 커밋한다.
+# → 대시보드가 이 후보들을 썸네일+텍스트로 보여주고, 운영자가 확인·선택해 제작한다.
+# 발행/제작은 하지 않는다(후보 확보까지만).
+
+on:
+  workflow_dispatch:
+    inputs:
+      category:
+        description: "소싱할 카테고리"
+        type: choice
+        options: [deep_sea, marine_life, marine_algae, shipwreck]
+        default: deep_sea
+      want:
+        description: "찾을 후보 개수(최대)"
+        required: false
+        default: "6"
+
+concurrency:
+  group: source-species-${{ github.event.inputs.category }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    name: 소싱(후보 발굴)
+    defaults:
+      run:
+        working-directory: short-movie-generator
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: short-movie-generator/requirements.txt
+
+      - name: Install FFmpeg + tesseract
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg tesseract-ocr
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: 소싱 실행(후보 발굴 + 실사 게이트 + 썸네일)
+        id: src
+        env:
+          CATEGORY: ${{ github.event.inputs.category }}
+          WANT: ${{ github.event.inputs.want }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import os, tempfile
+          from src.core import discovery
+          cat = os.environ["CATEGORY"]; want = int(os.environ.get("WANT") or "6")
+          tmp = tempfile.mkdtemp()
+          # 발굴 + 실사 게이트(정지·종횡비) 통과분만 후보로 저장
+          added = discovery.source_to_candidates(
+              cat, want=want, validate=lambda u: discovery.validate_source_url(u, tmp))
+          print(f"count={len(added)}")
+          print(f"keys={','.join(a['key'] for a in added)}")
+          PY
+
+      - name: 후보 썸네일 생성 + Release 업로드 + URL 패치
+        if: steps.src.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CATEGORY: ${{ github.event.inputs.category }}
+        run: |
+          TAG="sourcing-${CATEGORY}"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --title "Sourcing: $CATEGORY" \
+              --notes "소싱 후보 썸네일(자동)" --target "${{ github.ref_name }}"
+          BASE="${{ github.server_url }}/${{ github.repository }}/releases/download/$TAG"
+          mkdir -p work/thumbs
+          python - "$CATEGORY" "$BASE" <<'PY'
+          import json, os, sys, tempfile, re
+          from pathlib import Path
+          from src.core import discovery
+          cat, base = sys.argv[1], sys.argv[2]
+          # 실행마다 바뀌는 run id를 파일명에 넣어 '새 실행=새 URL'로 만든다(캐시된 옛 썸네일 방지).
+          rev = os.environ.get("GITHUB_RUN_ID", "0")
+          cands = discovery.load_candidates(cat)
+          tmp = tempfile.mkdtemp()
+          for c in cands:
+              # ★모든 후보를 매번 재생성(스킵 없음): 예전엔 '썸네일 있으면 건너뛰기'라 잘못 만들어진
+              #   썸네일이 영구히 남았다. make_thumbnail은 URL별 고유 임시파일이라 서로 안 섞인다.
+              slug = re.sub(r"[^a-z0-9]+", "_", c["key"].lower()).strip("_") or "cand"
+              out = Path("work/thumbs") / f"thumb_{cat}_{slug}_{rev}.jpg"
+              if discovery.make_thumbnail(c["url"], str(out), tmp):
+                  c["thumbnail_url"] = f"{base}/{out.name}"
+          discovery.save_candidates(cat, cands)
+          print("thumbs done")
+          PY
+          if ls work/thumbs/*.jpg >/dev/null 2>&1; then
+            gh release upload "$TAG" work/thumbs/*.jpg --clobber
+          fi
+
+      - name: 후보 파일 커밋
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          git add short-movie-generator/src/categories/*/*_candidates.json 2>/dev/null || true
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(sourcing): ${{ github.event.inputs.category }} 후보 발굴 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git fetch origin "${{ github.ref_name }}" \
+              && git rebase "origin/${{ github.ref_name }}" \
+              && git push origin "HEAD:${{ github.ref_name }}" && { echo "저장 완료"; exit 0; }
+            git rebase --abort 2>/dev/null || true; sleep 3
+          done
+          echo "저장 실패(push)"; exit 1
+
+      - name: 텔레그램 알림
+        if: always()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          CATEGORY: ${{ github.event.inputs.category }}
+          COUNT: ${{ steps.src.outputs.count }}
+        run: |
+          [ -z "$TG_TOKEN" ] && exit 0
+          MSG="소싱 완료: ${CATEGORY} — 새 후보 ${COUNT:-0}개. 관리자 페이지에서 확인·선택하세요."
+          for CID in $TG_CHAT; do
+            curl -sS -F chat_id="$CID" -F text="$MSG" \
+                 "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" | head -c 120; echo
+          done
