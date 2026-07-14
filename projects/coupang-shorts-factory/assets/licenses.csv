@@ -4,4 +4,4 @@ assets/backgrounds/,video,Pexels 또는 자체 생성 그라데이션,Pexels Lic
 assets/backgrounds/pexels_34232317_1080x1920.mp4(런타임 확보),video,Pexels 공식 API,Pexels License(상업적 사용 가능·출처표시 불요),https://www.pexels.com/video/stunning-nighttime-cityscape-of-skyscrapers-34232317/,CI 실행 시 fetch_assets.py가 자동 다운로드(저장소 미커밋)
 assets/backgrounds/pexels_11335976_1080x1920.mp4(런타임 확보),video,Pexels 공식 API,Pexels License(상업적 사용 가능·출처표시 불요),https://www.pexels.com/video/skyscraper-at-night-11335976/,CI 실행 시 fetch_assets.py가 자동 다운로드(저장소 미커밋)
 assets/memes/,image,AI 자체 생성물(나노바나나/Gemini) 또는 자체 제작 도형,자체 생성물(§3.2 화이트리스트),,상황별 밈 이미지 라이브러리(글자 없는 원본만·텍스트는 렌더가 얹음). 이미지 추가 시 memes.json에 등록하고 이 파일에도 1줄 기록. _placeholder_*는 검증용 자체 생성 도형(실제 생성물로 교체 예정)
-assets/sfx/reveal.wav,audio,자체 합성(numpy 신디사이즈),자체 생성물(§3.2 화이트리스트),,제품 등장(폭로 아크 ④단계) 리빌 효과음(휘익→쨍). scripts/make_sfx.py로 결정론 생성(seed 42). 교체·재생성 시 이 파일 갱신
+assets/sfx/reveal.wav,audio,자체 합성(numpy 물리 모델링),자체 생성물(§3.2 화이트리스트),,제품 등장(폭로 아크 ④단계) 리빌 효과음 '두둥'(타이코/팀파니 북 두 방). 비배음 멤브레인 모드+피치하강+서브텀프+잔향. scripts/make_sfx.py로 결정론 생성(seed 고정). 교체·재생성 시 이 파일 갱신
