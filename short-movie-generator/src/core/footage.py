@@ -873,19 +873,21 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
             return _reject(f"피사체 미검출(빈 물/준비 컷 · 가시성 {vis:.0f}<{_MIN_VISIBILITY:.0f})")
     except Exception as e:  # noqa: BLE001
         log.warning("[footage] 가시성 검사 생략(오류): %s", e)
-    # ★Step2 의미검증(비전 LLM · 키 있을 때만): '잠수사 vs 배', '오종', '빈물'을 정확히 구분.
-    #   주제가 거의 안 나오면 폐기 → auto가 다음 후보로. 난파선은 위에서 사진 우선을 이미 시도했다.
-    #   키 없음/실패(None)면 게이트 통과(발행 불정지).
-    try:
-        if key.startswith("wreck "):
+    # ★Step2 의미검증(비전 LLM) — ★난파선 전용(하드 리젝트)으로 한정한다(운영자 확정 · 존폐 사고 재발방지).
+    #   실사고: 생물에 학명(예: 'Holothuria leucospilota')을 주면 비전 LLM이 '그 종'인지 시각으로
+    #   식별하지 못해(384px 프레임에서 종 단위 판별 불가) 진짜 생물 영상까지 전부 폐기 → 소싱한
+    #   심해·해양생물이 100% 제작 실패했다(sepia/octopus/holothuria/plankton 전부).
+    #   → 생물은 Step1(가시성)만으로 게이트한다(빈 물/준비 컷은 Step1이 이미 배제). Step2 종ID 폐지.
+    #   난파선은 '다이버 vs 배'를 구조로만 구분할 수 없어 Step2를 유지(단, 난파선은 이제 다큐/사진
+    #   경로라 이 영상 게이트에 거의 도달하지 않음).
+    if key.startswith("wreck "):
+        try:
             subj = "the sunken shipwreck structure itself (not only divers, bubbles, or open water)"
-        else:
-            subj = common_name_en or scientific_name or "the subject creature"
-        verdict = footage_shows_subject(str(out), subj)
-        if verdict is False:
-            return _reject("주제 피사체 미검출(비전 LLM 의미검증 · 잠수사/빈물/오종)")
-    except Exception as e:  # noqa: BLE001
-        log.warning("[footage] 의미검증 생략(오류): %s", e)
+            verdict = footage_shows_subject(str(out), subj)
+            if verdict is False:
+                return _reject("주제 피사체 미검출(비전 LLM · 난파선: 다이버/빈물)")
+        except Exception as e:  # noqa: BLE001
+            log.warning("[footage] 난파선 의미검증 생략(오류): %s", e)
     # NOAA 소스는 좌상단 워터마크 영역 정보를 함께 반환(하류에서 회피/제거)
     logo = _NOAA_LOGO_BOX if "noaa" in (cand.get("credit", "") or "").lower() else None
     return {"path": str(out), "license": cand["license"],

@@ -800,6 +800,14 @@ def validate_source_url(url: str, tmp_dir: str) -> bool:
         from src.core import watermark_qc as wq
         if wq.is_static_source(str(dest)):
             return False
+        # ★소싱↔제작 게이트 정합(운영자 확정): 제작의 Step1(가시성)을 소싱에서도 적용해
+        #   '빈 물/준비 컷'을 소싱 단계에서 배제한다 → '소싱된 영상 = 제작 가능한 영상'.
+        #   (Step2 종ID 판정은 폐지됐으므로 소싱·제작 게이트가 이제 일치한다.)
+        try:
+            if footage.subject_visibility(str(dest)) < footage._MIN_VISIBILITY:
+                return False
+        except Exception:  # noqa: BLE001
+            pass       # 가시성 검사 오류는 통과(소싱을 막지 않음)
         return True
     except Exception as e:  # noqa: BLE001
         log.warning("[discovery] 검증 오류(%s): %s", url, e)
