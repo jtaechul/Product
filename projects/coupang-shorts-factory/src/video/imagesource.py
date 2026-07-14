@@ -270,8 +270,10 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
 
 
 def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Path) -> list | None:
-    """data/selections/{row_hash}.json 있으면 라인별 선택 이미지 경로 목록(lines 정렬) 반환, 없으면 None.
-    선택 항목이 url이면 내려받고, 로컬/상품 파일이면 그대로. 학습 로그도 남긴다."""
+    """data/selections/{row_hash}.json 있으면 라인별 '선택 이미지 목록'(lines 정렬) 반환, 없으면 None.
+    각 라인은 여러 장 선택 가능(2026-07-14) → line_images[i] = [경로...] (렌더가 그 구간 슬라이드쇼).
+    url이면 내려받고, 커밋 파일(업로드본)이면 그대로, is_product(상품 강제)는 None(렌더가 prod0 사용).
+    포맷: {lines:[{line_i, picks:[{url?/file?/is_product?, source, query}, ...]}]} — 구형 단일도 허용."""
     sel_path = Path(project_root) / "data" / "selections" / f"{row_hash}.json"
     if not sel_path.exists():
         return None
@@ -280,47 +282,55 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
     except Exception as e:
         print(f"[imgsrc] selections 파싱 실패({e}) → 자동 소싱")
         return None
-    picks = {int(x.get("line_i", -1)): x for x in (data.get("lines") or [])}
+    by_line = {int(x.get("line_i", -1)): x for x in (data.get("lines") or [])}
     dl_dir = Path(job_dir) / "selected"
     dl_dir.mkdir(parents=True, exist_ok=True)
     line_images, used = [], 0
     for i in range(len(lines)):
-        pick = picks.get(i)
-        if not pick:
-            line_images.append(None)
+        entry = by_line.get(i)
+        if not entry:
+            line_images.append([])
             continue
-        f = pick.get("file")
-        if f and Path(f).exists():   # 저장소에 커밋된 파일(업로드본 등)
-            line_images.append(Path(f))
-            used += 1
-            continue
-        url = pick.get("url")
-        if url:
-            ext = ".gif" if url.lower().split("?")[0].endswith(".gif") else ".jpg"
-            dest = dl_dir / f"sel_{i:02d}{ext}"
-            if _download_image(url, dest):
-                line_images.append(dest)
-                used += 1
-                continue
-        line_images.append(None)
-    print(f"[imgsrc] 운영자 선택 이미지 적용: {used}/{len(lines)}라인 (data/selections/{row_hash}.json)")
-    _record_learning(project_root, lines, picks)
+        picks = entry.get("picks")
+        if not isinstance(picks, list):    # 구형 단일 포맷(entry 자체가 픽) 하위호환
+            picks = [entry]
+        imgs = []
+        for j, pk in enumerate(picks):
+            f = pk.get("file")
+            if f and Path(f).exists():      # 저장소에 커밋된 파일(업로드본 등)
+                imgs.append(Path(f)); used += 1; continue
+            url = pk.get("url")
+            if url:
+                ext = ".gif" if url.lower().split("?")[0].endswith(".gif") else ".jpg"
+                dest = dl_dir / f"sel_{i:02d}_{j}{ext}"
+                if _download_image(url, dest):
+                    imgs.append(dest); used += 1; continue
+            if pk.get("is_product"):        # 상품 강제 → None(렌더가 prod0 채움)
+                imgs.append(None)
+        line_images.append(imgs)
+    sel_lines = sum(1 for x in line_images if x)
+    print(f"[imgsrc] 운영자 선택 적용: {sel_lines}/{len(lines)}라인 · 이미지 {used}장 "
+          f"(data/selections/{row_hash}.json)")
+    _record_learning(project_root, lines, by_line)
     return line_images
 
 
-def _record_learning(project_root: Path, lines: list, picks: dict):
-    """운영자가 확정한 (자막 문장 → 검색어/소스) 쌍을 학습 로그에 축적 → 다음 검색어 추천에 few-shot."""
+def _record_learning(project_root: Path, lines: list, by_line: dict):
+    """운영자가 확정한 (자막 → 검색어/소스) 쌍을 학습 로그에 축적 → 다음 검색어 추천 few-shot.
+    라인당 여러 픽이면 각 픽을 기록(다중선택 지원)."""
     log = Path(project_root) / "data" / "vision_examples.jsonl"
     log.parent.mkdir(parents=True, exist_ok=True)
     rows = []
     for i, ln in enumerate(lines):
-        pk = picks.get(i)
-        if not pk:
+        entry = by_line.get(i)
+        if not entry:
             continue
-        q = str(pk.get("query", "")).strip()
-        if q:
-            rows.append(json.dumps({"text": str(ln.get("text", "")).strip(), "query": q,
-                                    "source": pk.get("source", "")}, ensure_ascii=False))
+        picks = entry.get("picks") if isinstance(entry.get("picks"), list) else [entry]
+        for pk in picks:
+            q = str(pk.get("query", "")).strip()
+            if q:
+                rows.append(json.dumps({"text": str(ln.get("text", "")).strip(), "query": q,
+                                        "source": pk.get("source", "")}, ensure_ascii=False))
     if rows:
         with log.open("a", encoding="utf-8") as f:
             f.write("\n".join(rows) + "\n")

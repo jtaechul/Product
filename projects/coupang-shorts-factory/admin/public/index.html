@@ -115,9 +115,9 @@ ol li{margin:8px 0}
   background:var(--line); border:3px solid transparent}
 .thumb img{width:100%; height:100%; object-fit:cover; display:block}
 .thumb.sel{border-color:var(--accent)}
-.thumb.sel::after{content:"✓"; position:absolute; top:4px; right:6px; color:var(--accent-ink);
-  background:var(--accent); width:22px; height:22px; border-radius:999px; font-size:14px; font-weight:900;
-  display:flex; align-items:center; justify-content:center}
+.thumb.sel::after{content:attr(data-order); position:absolute; top:4px; right:6px; color:var(--accent-ink);
+  background:var(--accent); min-width:22px; height:22px; padding:0 4px; border-radius:999px; font-size:13px;
+  font-weight:900; display:flex; align-items:center; justify-content:center}
 .thumb .ttag{position:absolute; left:5px; bottom:5px; font-size:11px; font-weight:800; color:#fff;
   background:rgba(0,0,0,.6); padding:2px 7px; border-radius:999px}
 .imgup{display:inline-flex; align-items:center; justify-content:center; cursor:pointer}
@@ -1110,13 +1110,21 @@ $("imgLoad").onclick = (ev) => busy(ev.target, async () => {
   $("imgStatus").textContent = `${imgManifest.lines.length}개 자막 — 라인마다 이미지를 고르세요.`;
   $("imgSaveCard").style.display = "";
 });
+function renumberThumbs(thumbs, arr) {   // 선택된 썸네일에 슬라이드쇼 순서(1,2,3) 배지
+  thumbs.querySelectorAll(".thumb").forEach((t) => {
+    const idx = (arr || []).findIndex((x) => x._key === t.dataset.key);
+    t.dataset.order = idx >= 0 ? String(idx + 1) : "";
+  });
+}
 function renderImgLines() {
   const box = $("imgLines"); box.innerHTML = "";
   for (const ln of imgManifest.lines) {
     const card = document.createElement("div"); card.className = "card imgline";
     card.innerHTML =
       `<div class="imglabel"><span class="chip wait">라인 ${ln.line_i + 1}${ln.punch ? " · 훅" : ""}</span>`
-      + `<span class="imgtext"></span></div><div class="thumbs"></div>`
+      + `<span class="imgtext"></span></div>`
+      + `<p class="hint" style="margin:0 0 6px">여러 장 고르면 그 순서대로 슬라이드쇼로 나옵니다(번호 = 순서). 다시 누르면 해제.</p>`
+      + `<div class="thumbs"></div>`
       + `<div class="row2" style="margin-top:8px">`
       + `<button class="btn mini sub imgredo">다시 찾기(새 후보)</button>`
       + `<label class="btn mini imgup">내 파일 올리기<input type="file" accept="image/*,video/*" hidden></label></div>`;
@@ -1124,17 +1132,22 @@ function renderImgLines() {
     const thumbs = card.querySelector(".thumbs");
     for (const c of (ln.candidates || [])) {
       const url = imgAssetMap[c.name];
-      const t = document.createElement("div"); t.className = "thumb";
+      const t = document.createElement("div"); t.className = "thumb"; t.dataset.key = c.name;
       const img = document.createElement("img"); img.loading = "lazy"; img.alt = "";
       if (url) img.src = mediaUrl(url);
       t.appendChild(img);
       if (c.is_product) { const tag = document.createElement("span"); tag.className = "ttag"; tag.textContent = "상품"; t.appendChild(tag); }
       t.onclick = () => {
-        thumbs.querySelectorAll(".thumb").forEach((x) => x.classList.remove("sel"));
-        t.classList.add("sel");
-        imgPicks[ln.line_i] = c.is_product
-          ? { is_product: true, source: "product", query: ln.query || "" }
-          : { url: c.url, source: c.source || "", query: ln.query || "" };
+        const arr = imgPicks[ln.line_i] || (imgPicks[ln.line_i] = []);
+        const at = arr.findIndex((x) => x._key === c.name);
+        if (at >= 0) { arr.splice(at, 1); t.classList.remove("sel"); }
+        else {
+          arr.push(c.is_product
+            ? { is_product: true, source: "product", query: ln.query || "", _key: c.name }
+            : { url: c.url, source: c.source || "", query: ln.query || "", _key: c.name });
+          t.classList.add("sel");
+        }
+        renumberThumbs(thumbs, imgPicks[ln.line_i]);
       };
       thumbs.appendChild(t);
     }
@@ -1149,29 +1162,34 @@ function renderImgLines() {
     upInput.onchange = () => busy(card.querySelector(".imgup"), async () => {
       const f = upInput.files[0]; if (!f) return;
       const ext = (f.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-      const rel = `data/selections_assets/${imgManifest.row_hash}/L${pad2(ln.line_i)}.${ext}`;
+      const arr = imgPicks[ln.line_i] || (imgPicks[ln.line_i] = []);
+      const upN = arr.filter((x) => x.source === "upload").length;
+      const rel = `data/selections_assets/${imgManifest.row_hash}/L${pad2(ln.line_i)}_${upN}.${ext}`;
       await uploadBlob(`${P}/${rel}`, f, `admin: 라인${ln.line_i + 1} 이미지 업로드`);
-      imgPicks[ln.line_i] = { file: rel, source: "upload", query: ln.query || "" };
-      thumbs.querySelectorAll(".thumb").forEach((x) => x.classList.remove("sel"));
-      if (!card.querySelector(".upok")) {
-        const b = document.createElement("span"); b.className = "chip done upok"; b.textContent = "내 파일 선택됨";
-        card.querySelector(".imglabel").appendChild(b);
-      }
-      toast(`라인 ${ln.line_i + 1} 내 파일을 적용했습니다.`);
+      arr.push({ file: rel, source: "upload", query: ln.query || "", _key: "up:" + rel });
+      let chip = card.querySelector(".upok");
+      if (!chip) { chip = document.createElement("span"); chip.className = "chip done upok"; card.querySelector(".imglabel").appendChild(chip); }
+      chip.textContent = `내 파일 ${arr.filter((x) => x.source === "upload").length}장`;
+      upInput.value = "";
+      toast(`라인 ${ln.line_i + 1} 내 파일 추가 (슬라이드쇼 ${arr.length}번째).`);
     });
     box.appendChild(card);
   }
 }
 $("imgSave").onclick = (ev) => busy(ev.target, async () => {
   if (!imgManifest) { toast("먼저 후보를 불러오세요."); return; }
-  const lines = Object.keys(imgPicks).map((k) => ({ line_i: Number(k), ...imgPicks[k] }));
+  const lines = Object.keys(imgPicks).filter((k) => (imgPicks[k] || []).length).map((k) => ({
+    line_i: Number(k),
+    picks: imgPicks[k].map(({ _key, ...rest }) => rest),   // 내부용 _key 제거
+  }));
   if (!lines.length) { toast("고른 이미지가 없습니다."); return; }
+  const total = lines.reduce((n, l) => n + l.picks.length, 0);
   const path = `${P}/data/selections/${imgManifest.row_hash}.json`;
   const cur = await getFile(path, true);
   const payload = JSON.stringify(
     { row_hash: imgManifest.row_hash, product_name: imgManifest.product_name || "", lines }, null, 1);
-  await putFile(path, payload, `admin: 자막별 이미지 선택 저장 (${lines.length}개)`, cur && cur.sha);
-  toast(`${lines.length}개 라인 선택을 저장했습니다. 다음 제작에 반영됩니다.`);
+  await putFile(path, payload, `admin: 자막별 이미지 선택 저장 (${lines.length}라인 ${total}장)`, cur && cur.sha);
+  toast(`${lines.length}개 라인 · ${total}장 저장 완료. 다음 제작에 반영됩니다.`);
 });
 
 /* ── 설정 ────────────────────────────── */

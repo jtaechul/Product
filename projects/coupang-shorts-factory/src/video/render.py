@@ -499,14 +499,31 @@ def _square_content_clip(scene: dict, product_images: list, product_videos: list
 
 
 def _plan_line_scenes(duration: float, line_windows: list, line_images: list) -> list:
-    """라인별 씬 — 라인마다 1컷, [0,duration] 연속 커버(빈 구간 없음). 각 씬에 그 라인의 이미지."""
+    """라인별 씬 — [0,duration] 연속 커버(빈 구간 없음). 각 라인의 이미지 1장 = 1컷.
+    line_images[i]가 '여러 장(리스트)'이면 그 라인 구간을 균등 분할해 순서대로 슬라이드쇼로 보여준다
+    (운영자가 한 구간에 여러 장 고른 경우 — 2026-07-14 사용자 확정)."""
+    def as_list(v):
+        if v is None:
+            return []
+        return list(v) if isinstance(v, (list, tuple)) else [v]
+
     scenes = []
     for i, (ls, le) in enumerate(line_windows):
-        img = line_images[i] if i < len(line_images) else None
-        scenes.append({"start": float(ls), "end": float(le), "img": img, "shot": i})
+        imgs = as_list(line_images[i]) if i < len(line_images) else []
+        ls, le = float(ls), float(le)
+        if not imgs:
+            scenes.append({"start": ls, "end": le, "img": None, "shot": len(scenes)})
+            continue
+        span = (le - ls) / len(imgs)
+        for j, im in enumerate(imgs):
+            scenes.append({"start": ls + j * span, "end": ls + (j + 1) * span,
+                           "img": im, "shot": len(scenes)})
     if not scenes:
-        return [{"start": 0.0, "end": duration,
-                 "img": (line_images[0] if line_images else None), "shot": 0}]
+        first = None
+        if line_images:
+            f0 = line_images[0]
+            first = (f0[0] if isinstance(f0, (list, tuple)) and f0 else (None if isinstance(f0, (list, tuple)) else f0))
+        return [{"start": 0.0, "end": duration, "img": first, "shot": 0}]
     scenes[0]["start"] = 0.0
     for i in range(1, len(scenes)):
         scenes[i]["start"] = scenes[i - 1]["end"]
