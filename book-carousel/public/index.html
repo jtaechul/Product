@@ -1051,7 +1051,12 @@
     </div>
     <div class="form-group" style="margin-bottom:10px;">
       <label>쿠팡파트너스 어필리에이트 링크</label>
-      <input type="url" id="libRegLink" placeholder="https://link.coupang.com/a/...">
+      <div style="display:flex;gap:6px;align-items:stretch;">
+        <input type="url" id="libRegLink" placeholder="https://link.coupang.com/a/..." style="flex:1;min-width:0;">
+        <a href="https://partners.coupang.com/#affiliate/ws/link" target="_blank" rel="noopener"
+           title="쿠팡파트너스 상품 링크 만들기 페이지 열기"
+           style="flex-shrink:0;display:inline-flex;align-items:center;gap:4px;background:#E8590C;color:#fff;border-radius:9px;padding:0 13px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;">파트너스 링크 만들기 ↗</a>
+      </div>
     </div>
     <button class="btn btn-primary" id="libRegBtn" style="font-size:13px;">도서관에 등록 / 업데이트</button>
     <div id="libRegStatus" style="display:none;margin-top:12px;font-size:12.5px;line-height:1.7;padding:12px 14px;border-radius:10px;background:rgba(16,185,129,0.07);border:1px solid var(--success);color:var(--success);"></div>
