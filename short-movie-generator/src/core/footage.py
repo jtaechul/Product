@@ -786,13 +786,23 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
         return _wreck_doc_footage(cand, scientific_name)
     if cand.get("media_kind") == "photo":   # ★사진 → 켄번즈 영상화(난파선 무한 공급)
         return _fetch_photo_kenburns(cand, dest, key, common_name_en)
-    # ★난파선 주제 보장(Step1): 잠수사·준비 위주 영상이 흔해 '배'가 안 나오는 사고 → 그 배의 사진을
-    #   찾아 켄번즈로 대체(배가 확실히 보임). 사진이 없을 때만 영상 경로로(아래 가시성 게이트 적용).
+    # ★난파선은 아마추어 다이빙 영상을 소스로 절대 쓰지 않는다(운영자 확정 · 재발방지 · 절대 위반 금지).
+    #   실사고(Batelo Cantanhede): 다이빙 영상은 ①인트로 타이틀카드(다이빙스쿨 로고)가 통짜로 박혀
+    #   OCR로 못 지우고 ②배는 안 나오고 잠수사만 ③짧은 클립 반복 → 영상 품질을 근본적으로 무너뜨렸다.
+    #   따라서 난파선 소스는 (1)유명 난파선 다큐(실제 배 사진 시퀀스) 또는 (2)그 배의 사진 켄번즈만
+    #   허용한다. 둘 다 실패하면 raw 영상으로 폴백하지 않고 None → auto 후보 순회가 다음 대상으로.
     if key.startswith("wreck "):
         wp = _wreck_photo_footage(scientific_name, common_name_en, dest, key)
         if wp:
-            log.info("[footage] 난파선 → 사진 켄번즈 우선(주제 피사체 보장)")
+            log.info("[footage] 난파선 → 사진 켄번즈(주제 피사체 보장)")
             return wp
+        # 이름으로 유명 난파선 다큐 자동 승격 시도(위키 제원+커먼스 멀티이미지). 빈약하면 None.
+        doc = _wreck_doc_footage({"wiki_title": ""}, scientific_name)
+        if doc:
+            log.info("[footage] 난파선 → 다큐 자동 승격(그 배 실제 사진들)")
+            return doc
+        log.info("[footage] 난파선 사진·다큐 미확보 → 아마추어 영상 폴백 금지, 스킵: %s", scientific_name)
+        return None
     ext = next((e for e in _VIDEO_EXT if cand["url"].lower().endswith(e)), ".webm")
     # ★캐시 파일명은 종별로 분리(교차 오염 방지): 공용 'footage.webm' 하나만 쓰면, 게이트에
     #   걸려 폐기된 앞 종의 파일이 남아 다음 후보가 그걸 '캐시'로 재사용 → 전 후보 연쇄 실패.

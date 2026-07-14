@@ -685,20 +685,12 @@ def _discover_wrecks(exclude_keys: set[str], want: int) -> list[dict]:
     유명 난파선을 먼저 채워 '인기 소재'를 우선하고, 부족분은 무한 소싱으로 보충."""
     out_keys: set[str] = set()
     out: list[dict] = []
+    # ★아마추어 다이빙 '영상'은 소스로 쓰지 않는다(운영자 확정 · Batelo 사고 재발방지). 다이빙 영상은
+    #   인트로 타이틀카드·잠수사 위주·짧은 반복이라 배가 안 나온다 → '실제 배가 보이는' 소스만 쓴다:
+    #   Tier0 유명 난파선 다큐(그 배 사진 시퀀스) + Tier2 그 배 사진 켄번즈. (구 Tier1 영상·Tier3 영상 폐지)
     # Tier0: 유명 난파선 다큐(문서·제원·사진 풍부) — 인기 소재 우선
     out += _famous_wreck_candidates(exclude_keys, want, out_keys)
-    # Tier1: 영상 검색 + 영상 보유 카테고리 순회
-    if len(out) >= want:
-        return out[:want]
-    vtitles = _wreck_search_titles(_WRECK_TERMS, _VIDEO_EXT, "video", per=40)
-    for cat in _WRECK_VIDEO_CATS:
-        vtitles += [t for t in _catmembers(cat, cmtype="file", limit=200)
-                    if t.lower().endswith(_VIDEO_EXT)]
-    out += _cands_from_titles(list(dict.fromkeys(vtitles)), exclude_keys, want, "video", out_keys)
-    # Tier3: 배이름 레지스트리(명명 난파선 + 위키 사실)
-    if len(out) < want:
-        out += _registry_candidates(exclude_keys, want - len(out), out_keys)
-    # Tier2: 사진 → 켄번즈(무한 공급)
+    # Tier2: 사진 → 켄번즈(무한 공급 · 배가 확실히 보임)
     if len(out) < want:
         ptitles = _wreck_search_titles(_WRECK_PHOTO_TERMS, _IMG_EXT, "bitmap", per=40)
         out += _cands_from_titles(ptitles, exclude_keys, want - len(out), "photo", out_keys)
