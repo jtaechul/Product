@@ -767,25 +767,32 @@ async function copyText(text,okmsg){
 //             ② 안 되면 Blob 다운로드(파일 앱 저장). 길게눌러가 안 먹는 기기 대응.
 async function saveVideo(u,name){
   const h=$("#dlhint"); const say=t=>{if(h)h.innerHTML=t;};
+  // ★가장 확실한 폴백: 프록시 직접 다운로드 링크(dl=1 → 첨부). JS blob이 실패/멈춰도 이 링크는 항상 동작.
+  const dl=u+(u.includes("?")?"&":"?")+"dl=1&name="+encodeURIComponent(name);
+  const link='<a href="'+dl+'" target="_blank" rel="noopener" style="color:var(--cy);text-decoration:underline">여기를 눌러 저장</a>';
   const btn=$("#bdl"); if(btn)btn.disabled=true;
-  say("동영상 준비 중… (쇼츠 ~10MB는 금방, 롱폼 수십 MB는 수십 초 걸릴 수 있어요)");
+  say('동영상 준비 중… (안 되면 '+link+')');
   try{
-    const r=await fetch(u); if(!r.ok)throw new Error("불러오기 "+r.status);
+    // 60초 타임아웃(멈춤 방지 — '준비 중'에서 무한 대기하던 사고 방지)
+    const c=("AbortController"in window)?new AbortController():null;
+    const to=c?setTimeout(()=>c.abort(),60000):0;
+    const r=await fetch(u,c?{signal:c.signal}:{}); if(to)clearTimeout(to);
+    if(!r.ok)throw new Error("HTTP "+r.status);
     const blob=await r.blob();
     const file=new File([blob],name,{type:"video/mp4"});
     // ① 네이티브 공유 시트(아이폰: "비디오를 사진에 저장"이 여기 있음)
     if(navigator.canShare&&navigator.canShare({files:[file]})){
       try{ await navigator.share({files:[file],title:name});
         say('공유 창에서 <b>"비디오를 사진에 저장"</b>을 누르세요.'); if(btn)btn.disabled=false; return;
-      }catch(e){ if(String(e).indexOf("AbortError")>=0){say("취소됨."); if(btn)btn.disabled=false; return;} }
+      }catch(e){ if(String(e).indexOf("AbortError")>=0){say("취소됨. "+link); if(btn)btn.disabled=false; return;} }
     }
     // ② 폴백: Blob 다운로드 → 파일 앱에 저장(거기서 사진으로 옮길 수 있음)
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a"); a.href=url; a.download=name;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),5000);
-    say('저장을 시작했어요. (아이폰은 <b>"파일"에 저장</b> → 사진 앱으로 옮길 수 있어요)');
-  }catch(e){ say("저장 실패: "+esc(String(e))+" — 영상 재생창의 공유 버튼으로도 저장할 수 있어요."); }
+    say('저장을 시작했어요. (안 되면 '+link+')');
+  }catch(e){ say('자동 저장 실패('+esc(String(e))+'). '+link+' 를 눌러 저장하세요.'); }
   if(btn)btn.disabled=false;
 }
 
@@ -887,7 +894,9 @@ const MEDIA_TYPES = { mp4: "video/mp4", jpg: "image/jpeg", jpeg: "image/jpeg", p
 
 async function mediaProxy(request, url) {
   const u = url.searchParams.get("u") || "";
-  if (!u.startsWith(MEDIA_PREFIX)) return j({ error: "url not allowed" }, 403);  // 개방 프록시 방지
+  // ★릴리스 허용 판정은 대소문자 무시(github.repository의 정규 케이스가 'Product'/'product'로 달라도
+  //   403이 나지 않게 — 저장 버튼이 갑자기 안 되던 사고의 방어). 개방 프록시는 여전히 차단.
+  if (!u.toLowerCase().startsWith(MEDIA_PREFIX.toLowerCase())) return j({ error: "url not allowed" }, 403);
   // 확장자 판정 시 캐시버스터(?v=...) 쿼리는 떼고 본다(붙어 있으면 'mp4?v=1'로 오판돼 403 나던 버그).
   const ext = (u.split("?")[0].split(".").pop() || "").toLowerCase();
   const type = MEDIA_TYPES[ext];
@@ -899,7 +908,15 @@ async function mediaProxy(request, url) {
   if (!resp.ok && resp.status !== 206) return j({ error: "upstream " + resp.status }, 502);
   const out = new Headers();
   out.set("Content-Type", type);
-  out.set("Content-Disposition", "inline");   // 항상 inline 재생(iOS '파일 열기' 화면 전환 방지)
+  // ★dl=1이면 첨부(파일 저장)로 내려준다 — JS blob 없이 브라우저 네이티브 다운로드(가장 확실한 폴백).
+  //   없으면 inline(재생용, iOS '파일 열기' 화면 전환 방지).
+  const dl = url.searchParams.get("dl");
+  if (dl) {
+    const name = (url.searchParams.get("name") || "video.mp4").replace(/[^\w.\-가-힣]+/g, "_");
+    out.set("Content-Disposition", 'attachment; filename="' + name + '"');
+  } else {
+    out.set("Content-Disposition", "inline");
+  }
   out.set("Accept-Ranges", "bytes");
   out.set("Cache-Control", "public, max-age=86400");
   for (const k of ["Content-Length", "Content-Range"]) {
