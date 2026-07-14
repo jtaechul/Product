@@ -137,7 +137,7 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
             lines, line_windows, line_images, product_images, product_videos,
             duration, width, height, font_path, settings,
             headline or (ch.get("name", "미래마켓") + " 단독"),
-            r.get("expose_byline", "미래 | 10:25"))
+            str(r.get("expose_author", "미래")).strip())
         scrim = None
         bg_name = f"expose {len(sub_plan)}라인 (뉴스헤더+큰자막+라인이미지 {sum(1 for x in (line_images or []) if x)}장)"
     elif framed:
@@ -621,32 +621,67 @@ def _cover_rect_arr(img_path: Path, w: int, h: int) -> np.ndarray:
     return arr
 
 
-def _expose_header_arr(width: int, header_h: int, channel: str, headline: str,
-                       byline: str, font_path: Path) -> np.ndarray:
-    """상단 고정 헤더: 골드 채널바(햄버거·돋보기 아이콘) + 가짜 기사 제목 + 출처 바이라인 + 구분선."""
+def _board_meta(author: str, headline: str) -> str:
+    """게시판 글 메타줄 — 작성자 · 조회수 · 시간. 조회수는 headline에서 결정론적으로 파생
+    (같은 영상=같은 수치, 다른 영상=다른 수치). '방금 전'으로 최신 글 느낌(바이럴 심리)."""
+    seed = sum(ord(c) for c in (headline or "x"))
+    views = 12000 + (seed * 733) % 388000
+    v = f"{views / 10000:.1f}만".replace(".0만", "만")
+    return f"{author} · 조회 {v} · 방금 전"
+
+
+def _expose_header_arr(width: int, header_h: int, board: str, headline: str,
+                       meta: str, font_path: Path, tag: str = "") -> np.ndarray:
+    """상단 헤더 — 한국 커뮤니티 '게시판 글' 스타일(심플하게 재설계, 2026-07-14).
+    구성: 슬림 보드바(로고+보드명) → 카테고리 칩 → 굵은 글 제목(좌측 정렬, ≤2줄)
+    → 작성자·조회수·시간 메타줄 → 얇은 구분선. 흰 배경에 검정 텍스트로 담백하게.
+    유튜브 쇼츠 UI 고려: 모든 텍스트 '좌측 정렬'(우측 좋아요·댓글·공유 버튼 영역 회피) +
+    상단 안전존 배치(하단 캡션·채널 오버레이와 안 겹침)."""
     from PIL import Image, ImageDraw, ImageFont
     im = Image.new("RGB", (width, header_h), (255, 255, 255))
     d = ImageDraw.Draw(im)
-    gold_h = int(header_h * 0.33)
-    d.rectangle([0, 0, width, gold_h], fill=(212, 170, 76))
-    cf = ImageFont.truetype(str(font_path), int(gold_h * 0.46))
-    cb = d.textbbox((0, 0), channel, font=cf)
-    d.text(((width - (cb[2] - cb[0])) // 2, (gold_h - (cb[3] - cb[1])) // 2 - cb[1]),
-           channel, font=cf, fill=(38, 28, 8))
-    hx, hy = int(width * 0.055), gold_h // 2           # 햄버거
-    for k in (-13, 0, 13):
-        d.line([(hx - 20, hy + k), (hx + 20, hy + k)], fill=(38, 28, 8), width=6)
-    sx, sy = int(width * 0.945), gold_h // 2           # 돋보기
-    d.ellipse([sx - 20, sy - 20, sx + 8, sy + 8], outline=(38, 28, 8), width=6)
-    d.line([(sx + 6, sy + 6), (sx + 24, sy + 24)], fill=(38, 28, 8), width=6)
-    hf = ImageFont.truetype(str(font_path), int(header_h * 0.185))   # 기사 제목(굵은 검정)
-    ty = gold_h + int(header_h * 0.07)
-    for ln in _wrap_pil(headline, hf, int(width * 0.92), max_lines=2):
-        d.text(((width - d.textbbox((0, 0), ln, font=hf)[2]) // 2, ty), ln, font=hf, fill=(17, 17, 17))
-        ty += int(header_h * 0.205)
-    bf = ImageFont.truetype(str(font_path), int(header_h * 0.085))
-    d.text((int(width * 0.045), ty + 2), byline, font=bf, fill=(150, 150, 150))
-    d.line([(0, header_h - 3), (width, header_h - 3)], fill=(214, 214, 214), width=3)
+    mx = int(width * 0.05)                       # 좌우 여백(게시판 글 들여쓰기)
+
+    # 1) 보드바(슬림): 연회색 배경 + 로고 사각형(보드 첫 글자) + 보드명 + 하단 헤어라인
+    bar_h = int(header_h * 0.23)
+    d.rectangle([0, 0, width, bar_h], fill=(244, 244, 246))
+    logo = int(bar_h * 0.56)
+    ly = (bar_h - logo) // 2
+    d.rounded_rectangle([mx, ly, mx + logo, ly + logo], radius=int(logo * 0.28), fill=(212, 170, 76))
+    lf = ImageFont.truetype(str(font_path), int(logo * 0.58))
+    ch0 = (board or "미")[0]
+    lb = d.textbbox((0, 0), ch0, font=lf)
+    d.text((mx + (logo - (lb[2] - lb[0])) // 2 - lb[0], ly + (logo - (lb[3] - lb[1])) // 2 - lb[1]),
+           ch0, font=lf, fill=(255, 255, 255))
+    bnf = ImageFont.truetype(str(font_path), int(bar_h * 0.4))
+    bnb = d.textbbox((0, 0), board, font=bnf)
+    d.text((mx + logo + int(width * 0.022), (bar_h - (bnb[3] - bnb[1])) // 2 - bnb[1]),
+           board, font=bnf, fill=(44, 44, 48))
+    d.line([(0, bar_h), (width, bar_h)], fill=(228, 228, 232), width=2)
+
+    y = bar_h + int(header_h * 0.05)
+    # 2) 카테고리 칩(게시판 태그 느낌) — 브랜드 골드 배경
+    if tag:
+        tf = ImageFont.truetype(str(font_path), int(header_h * 0.072))
+        tb = d.textbbox((0, 0), tag, font=tf)
+        cw, chh = (tb[2] - tb[0]) + int(width * 0.045), (tb[3] - tb[1]) + int(header_h * 0.045)
+        d.rounded_rectangle([mx, y, mx + cw, y + chh], radius=int(chh * 0.34), fill=(212, 170, 76))
+        d.text((mx + (cw - (tb[2] - tb[0])) // 2 - tb[0], y + (chh - (tb[3] - tb[1])) // 2 - tb[1]),
+               tag, font=tf, fill=(40, 30, 8))
+        y += chh + int(header_h * 0.028)
+
+    # 3) 글 제목(좌측 정렬, 굵은 검정, ≤2줄)
+    hf = ImageFont.truetype(str(font_path), int(header_h * 0.15))
+    for ln in _wrap_pil(headline, hf, width - 2 * mx, max_lines=2):
+        d.text((mx, y), ln, font=hf, fill=(20, 20, 20))
+        y += int(header_h * 0.165)
+
+    # 4) 메타줄(작성자 · 조회수 · 시간) — 게시판 핵심 신호
+    if meta:
+        mf = ImageFont.truetype(str(font_path), int(header_h * 0.07))
+        d.text((mx, y + 4), meta, font=mf, fill=(140, 140, 146))
+
+    d.line([(0, header_h - 3), (width, header_h - 3)], fill=(226, 226, 230), width=3)
     return np.array(im)
 
 
@@ -695,7 +730,7 @@ def _expose_image_clip(src, start: float, end: float, width: int, img_top: int, 
 
 def _build_expose(lines: list, line_windows: list, line_images: list, product_images: list,
                   product_videos: list, duration: float, width: int, height: int,
-                  font_path: Path, settings: dict, headline: str, byline: str) -> tuple:
+                  font_path: Path, settings: dict, headline: str, author: str) -> tuple:
     """expose 레이아웃 전체 레이어 + QA용 sub_plan 반환."""
     r = settings.get("render", {})
     s = settings.get("subtitle", {})
@@ -722,9 +757,11 @@ def _build_expose(lines: list, line_windows: list, line_images: list, product_im
                         .with_start(sc["start"]).with_position((0, img_top)))
         if clip is not None:
             layers.append(clip)
-    # 상단 헤더(전체 길이)
-    layers.append(ImageClip(_expose_header_arr(width, header_h, ch.get("name", "미래마켓"),
-                                               headline, byline, font_path))
+    # 상단 헤더(전체 길이) — 게시판 글 스타일(보드명·카테고리 칩·제목·메타줄)
+    board = ch.get("name", "미래마켓")
+    tag = str(r.get("expose_tag", "실화")).strip()
+    meta = _board_meta(author, headline)
+    layers.append(ImageClip(_expose_header_arr(width, header_h, board, headline, meta, font_path, tag))
                   .with_duration(duration).with_position((0, 0)))
     # 상단 큰 자막(라인별, 다음 라인 시작까지 유지)
     ev = []
