@@ -33,7 +33,7 @@
         "Wikimedia Commons (File:Extraordinary-Aggressive-Behavior-from-the-Giant-Coral-Reef-Fish-Bolbometopon-muricatum-in-a-Remote-pone.0038120.s001.ogv)"
       ]
     },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_bolbometopon_muricatum_29210538635.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_bolbometopon_muricatum_29330717649.jpg"
   },
   {
     "kind": "creature",
@@ -73,7 +73,7 @@
         "Wikimedia Commons (File:Red-fluorescence-in-reef-fish - 1472-6785-8-16-S2.ogv)"
       ]
     },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_bryaninops_natans_29210538635.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_bryaninops_natans_29330717649.jpg"
   },
   {
     "kind": "creature",
@@ -113,7 +113,7 @@
         "Wikimedia Commons (File:Red-fluorescence-in-reef-fish-A-novel-signalling-mechanism?-1472-6785-8-16-S3.ogv)"
       ]
     },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_enneapterygius_destai_29210538635.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_enneapterygius_destai_29330717649.jpg"
   },
   {
     "kind": "creature",
@@ -151,6 +151,552 @@
         "Wikimedia Commons (File:Spanish dancer nudibranch.webm)"
       ]
     },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_nudibranchia_29210538635.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_nudibranchia_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "carcharodon carcharias",
+    "needs_confirm": false,
+    "title": "File:Cage diving with great white sharks.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/ec/Cage_diving_with_great_white_sharks.webm",
+    "license": "cc-by",
+    "credit": "Michael Pritchett · CC BY",
+    "source": "File:Cage diving with great white sharks.webm",
+    "name": "Carcharodon carcharias",
+    "name_ja": "",
+    "common_name_ko": "백상아리",
+    "common_name_en": "great white shark",
+    "depth": "",
+    "facts": [
+      "ホホジロザメ（頬白鮫、Carcharodon carcharias）は、ネズミザメ目ネズミザメ科ホホジロザメ属に分類されるサメ。本種のみでホホジロザメ属を形成する。「白い死神」とも呼ばれる。別名ホオジロザメ。ホホジロザメの名称は日本魚類学会発行の『日本産魚類目録』に記載された標準和名である。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Carcharodon carcharias",
+      "common_name_ko": "백상아리",
+      "common_name_en": "great white shark",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ホホジロザメ（頬白鮫、Carcharodon carcharias）は、ネズミザメ目ネズミザメ科ホホジロザメ属に分類されるサメ。本種のみでホホジロザメ属を形成する。「白い死神」とも呼ばれる。別名ホオジロザメ。ホホジロザメの名称は日本魚類学会発行の『日本産魚類目録』に記載された標準和名である。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Cage diving with great white sharks.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_carcharodon_carcharias_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "alopias pelagicus",
+    "needs_confirm": false,
+    "title": "File:Pelagic thresher shark (Alopias pelagicus).webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Pelagic_thresher_shark_%28Alopias_pelagicus%29.webm",
+    "license": "cc0",
+    "credit": "Bo Mancao",
+    "source": "File:Pelagic thresher shark (Alopias pelagicus).webm",
+    "name": "Alopias pelagicus",
+    "name_ja": "",
+    "common_name_ko": "원양환도상어",
+    "common_name_en": "pelagic thresher",
+    "depth": "",
+    "facts": [
+      "ニタリ (Alopias pelagicus) は、ネズミザメ目オナガザメ科に分類されるサメ。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Alopias pelagicus",
+      "common_name_ko": "원양환도상어",
+      "common_name_en": "pelagic thresher",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ニタリ (Alopias pelagicus) は、ネズミザメ目オナガザメ科に分類されるサメ。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Pelagic thresher shark (Alopias pelagicus).webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_alopias_pelagicus_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "sepia mestus",
+    "needs_confirm": false,
+    "title": "File:Red cuttle hunting.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Red_cuttle_hunting.webm",
+    "license": "cc-by-sa",
+    "credit": "John Turnbull · CC BY-SA",
+    "source": "File:Red cuttle hunting.webm",
+    "name": "Sepia mestus",
+    "name_ja": "",
+    "common_name_ko": "Sepia mestus",
+    "common_name_en": "Sepia mestus",
+    "depth": "22",
+    "facts": [
+      "Ascarosepion mestus, also known as the reaper cuttlefish or red cuttlefish, is a species of cuttlefish native to the southwestern Pacific Ocean, specifically Escape Reef off Queensland (15°47′S 145°47′E) to Murrays Beach off Jervis Bay (35°08′S 150°46′E).",
+      "Reports of this species from China and Vietnam are now known to be misidentifications.",
+      "mestus lives at a depth of between 0 and 22 m.",
+      "Ascarosepion mestus exhibits sexual dimorphism.",
+      "Females grow to a mantle length (ML) of 124 millimetres (4.9 in), while males do not exceed 77 mm (3.0 in) ML."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Sepia mestus",
+      "common_name_ko": "Sepia mestus",
+      "common_name_en": "Sepia mestus",
+      "depth_range_m": "22",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Ascarosepion mestus, also known as the reaper cuttlefish or red cuttlefish, is a species of cuttlefish native to the southwestern Pacific Ocean, specifically Escape Reef off Queensland (15°47′S 145°47′E) to Murrays Beach off Jervis Bay (35°08′S 150°46′E).",
+        "Reports of this species from China and Vietnam are now known to be misidentifications.",
+        "mestus lives at a depth of between 0 and 22 m.",
+        "Ascarosepion mestus exhibits sexual dimorphism.",
+        "Females grow to a mantle length (ML) of 124 millimetres (4.9 in), while males do not exceed 77 mm (3.0 in) ML."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Red cuttle hunting.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_sepia_mestus_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "carcharhinus melanopterus",
+    "needs_confirm": false,
+    "title": "File:Aerial view of a blacktip reef shark (Carcharhinus melanopterus) at Lady Musgrave Island, Queensland, Australia.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/8/87/Aerial_view_of_a_blacktip_reef_shark_%28Carcharhinus_melanopterus%29_at_Lady_Musgrave_Island%2C_Queensland%2C_Australia.webm",
+    "license": "cc-by",
+    "credit": "Adam Fish · CC BY",
+    "source": "File:Aerial view of a blacktip reef shark (Carcharhinus melanopterus) at Lady Musgrave Island, Queensland, Australia.webm",
+    "name": "Carcharhinus melanopterus",
+    "name_ja": "",
+    "common_name_ko": "흑기흉상어",
+    "common_name_en": "Blacktip reef shark",
+    "depth": "",
+    "facts": [
+      "ツマグロ Carcharhinus melanopterus は、メジロザメ属に属するサメの一種。インド太平洋熱帯域のサンゴ礁で最も豊富なサメの一つで、主に浅瀬に生息する。名前に反してマグロとは無関係で、鰭の先端に黒い模様があり、そこから名前がつけられた。全長1.6m程度になる。",
+      "縄張りは狭く、あまり移動しない。活動的な捕食者で、主に小さな硬骨魚を捕食する。胎生で、産仔数は2-5。繁殖サイクルは半年、1年、2年と地域によってばらつく。妊娠期間は7-11ヶ月。幼体は大きな群れを作り、成体より浅い場所で生活する。",
+      "臆病だが、餌と間違えて浅瀬を歩く人を攻撃した例がある。食用とされるが重要種ではない。乱獲により個体数が減少しており、IUCNは保全状況を危急としている。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Carcharhinus melanopterus",
+      "common_name_ko": "흑기흉상어",
+      "common_name_en": "Blacktip reef shark",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ツマグロ Carcharhinus melanopterus は、メジロザメ属に属するサメの一種。インド太平洋熱帯域のサンゴ礁で最も豊富なサメの一つで、主に浅瀬に生息する。名前に反してマグロとは無関係で、鰭の先端に黒い模様があり、そこから名前がつけられた。全長1.6m程度になる。",
+        "縄張りは狭く、あまり移動しない。活動的な捕食者で、主に小さな硬骨魚を捕食する。胎生で、産仔数は2-5。繁殖サイクルは半年、1年、2年と地域によってばらつく。妊娠期間は7-11ヶ月。幼体は大きな群れを作り、成体より浅い場所で生活する。",
+        "臆病だが、餌と間違えて浅瀬を歩く人を攻撃した例がある。食用とされるが重要種ではない。乱獲により個体数が減少しており、IUCNは保全状況を危急としている。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Aerial view of a blacktip reef shark (Carcharhinus melanopterus) at Lady Musgrave Island, Queensland, Australia.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_carcharhinus_melanopterus_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "rhinoptera bonasus",
+    "needs_confirm": false,
+    "title": "File:Cownose rays (Rhinoptera bonasus) Shark Reef Aquarium.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Cownose_rays_%28Rhinoptera_bonasus%29_Shark_Reef_Aquarium.webm",
+    "license": "cc-by",
+    "credit": "William Marnoch · CC BY",
+    "source": "File:Cownose rays (Rhinoptera bonasus) Shark Reef Aquarium.webm",
+    "name": "Rhinoptera bonasus",
+    "name_ja": "",
+    "common_name_ko": "Cownose ray",
+    "common_name_en": "Cownose ray",
+    "depth": "",
+    "facts": [
+      "クロガネウシバナトビエイ（Rhinoptera bonasus）は、トビエイ目ウシバナトビエイ属に分類されるエイの一種。",
+      "ニューイングランドからブラジル南部まで、西大西洋およびカリブ海の大部分で見られる。現在、東大西洋の個体群はLusitanian cownose ray(R.",
+      "marginata)とされている。",
+      "沿岸の浅場や河口に生息する。雌雄で大きさ、寿命、成熟度が異なる。頭部にウシの鼻に似た頭鰭がある。寿命は16 - 21 年。二枚貝、甲殻類、軟体動物など、硬い殻を持つ生物を捕食する。渡りを行い、冬には南に、夏には北に移動する。夏の間は チェサピーク湾で見られる。",
+      "2019年に、IUCNレッドリストに絶滅危惧種として記載された。チェサピーク湾で個体数が増加し、乱獲の対象となっている。保護の取り組みはそれほど多くない。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Rhinoptera bonasus",
+      "common_name_ko": "Cownose ray",
+      "common_name_en": "Cownose ray",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "クロガネウシバナトビエイ（Rhinoptera bonasus）は、トビエイ目ウシバナトビエイ属に分類されるエイの一種。",
+        "ニューイングランドからブラジル南部まで、西大西洋およびカリブ海の大部分で見られる。現在、東大西洋の個体群はLusitanian cownose ray(R.",
+        "marginata)とされている。",
+        "沿岸の浅場や河口に生息する。雌雄で大きさ、寿命、成熟度が異なる。頭部にウシの鼻に似た頭鰭がある。寿命は16 - 21 年。二枚貝、甲殻類、軟体動物など、硬い殻を持つ生物を捕食する。渡りを行い、冬には南に、夏には北に移動する。夏の間は チェサピーク湾で見られる。",
+        "2019年に、IUCNレッドリストに絶滅危惧種として記載された。チェサピーク湾で個体数が増加し、乱獲の対象となっている。保護の取り組みはそれほど多くない。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Cownose rays (Rhinoptera bonasus) Shark Reef Aquarium.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_rhinoptera_bonasus_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "carcharhinus amblyrhynchos",
+    "needs_confirm": false,
+    "title": "File:Grey reef shark (Carcharhinus amblyrhynchos) near Sipadan.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Grey_reef_shark_%28Carcharhinus_amblyrhynchos%29_near_Sipadan.webm",
+    "license": "cc-by",
+    "credit": "EMMA TOLMIE · CC BY",
+    "source": "File:Grey reef shark (Carcharhinus amblyrhynchos) near Sipadan.webm",
+    "name": "Carcharhinus amblyrhynchos",
+    "name_ja": "",
+    "common_name_ko": "산호상어",
+    "common_name_en": "Grey reef shark",
+    "depth": "",
+    "facts": [
+      "オグロメジロザメ（Carcharhinus amblyrhynchos）はメジロザメ属に属するサメの一種。インド太平洋のサンゴ礁で見られる最も一般的なサメで、特にドロップオフ周辺に多い。典型的なメジロザメ類の体型で、幅広く丸い吻・大きな眼を持つ。第一背鰭を除いた全ての鰭に黒い模様を持つこと（特に尾鰭の後縁）、2基の背鰭の間に隆起線がないことで他種と区別できる。全長1.9m程度。",
+      "泳ぎは速く、夜間に活動的になり硬骨魚や頭足類を食べる。他種に対しては攻撃的だが同種には寛容で、日中には大きな群れを作る。胎生で、2年毎に1-6匹の仔を産む。雌は浅瀬で群れを作り、高水温によって胎児の成長を促す。威嚇行動は非常によく知られており、近づいた他種のサメやダイバーなどに対して、攻撃の前に通常とは異なる姿勢で特殊な行動を取る。人への攻撃も知られ、特に威嚇行動時には注意すべきである。多数の地域で漁獲され、繁殖・移動力が低いために減少しており、IUCNは保全状況を絶滅危惧としている。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Carcharhinus amblyrhynchos",
+      "common_name_ko": "산호상어",
+      "common_name_en": "Grey reef shark",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "オグロメジロザメ（Carcharhinus amblyrhynchos）はメジロザメ属に属するサメの一種。インド太平洋のサンゴ礁で見られる最も一般的なサメで、特にドロップオフ周辺に多い。典型的なメジロザメ類の体型で、幅広く丸い吻・大きな眼を持つ。第一背鰭を除いた全ての鰭に黒い模様を持つこと（特に尾鰭の後縁）、2基の背鰭の間に隆起線がないことで他種と区別できる。全長1.9m程度。",
+        "泳ぎは速く、夜間に活動的になり硬骨魚や頭足類を食べる。他種に対しては攻撃的だが同種には寛容で、日中には大きな群れを作る。胎生で、2年毎に1-6匹の仔を産む。雌は浅瀬で群れを作り、高水温によって胎児の成長を促す。威嚇行動は非常によく知られており、近づいた他種のサメやダイバーなどに対して、攻撃の前に通常とは異なる姿勢で特殊な行動を取る。人への攻撃も知られ、特に威嚇行動時には注意すべきである。多数の地域で漁獲され、繁殖・移動力が低いために減少しており、IUCNは保全状況を絶滅危惧としている。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Grey reef shark (Carcharhinus amblyrhynchos) near Sipadan.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_carcharhinus_amblyrhynchos_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "triaenodon obesus",
+    "needs_confirm": false,
+    "title": "File:School of whitetip reef sharks (Triaenodon obesus).webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b2/School_of_whitetip_reef_sharks_%28Triaenodon_obesus%29.webm",
+    "license": "cc-by",
+    "credit": "Blane Henderson · CC BY",
+    "source": "File:School of whitetip reef sharks (Triaenodon obesus).webm",
+    "name": "Triaenodon obesus",
+    "name_ja": "",
+    "common_name_ko": "백기흉상어",
+    "common_name_en": "Whitetip reef shark",
+    "depth": "",
+    "facts": [
+      "ネムリブカ（眠鱶、Triaenodon obesus）はメジロザメ科に属するサメの一種。ネムリブカ属は単型である。小型で最大1.6m程度。細い体と短く幅広い吻、管状の前鼻弁、垂直の瞳孔を持ち、背鰭・尾鰭の先端は白い。インド洋と太平洋のサンゴ礁に生息する。底生で、主に深度8-40mで見られる。",
+      "メジロザメ類には珍しく、泳がなくとも呼吸することができる。日中は洞窟内で休むが、夜には集団で岩やサンゴの隙間を這い進んで探索し、硬骨魚・甲殻類・タコを捕食する。棲家をあまり移動せず、数年間に渡って同じ場所で休息する。卵胎生で、2年毎に1-6匹の仔を産む。妊娠期間は10-13ヶ月。好奇心が強く攻撃性は低いが、偶発的に人に噛み付いた例がある。食用とされるがシガテラ毒を持つ可能性がある。IUCNは保全状況を準絶滅危惧としている。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Triaenodon obesus",
+      "common_name_ko": "백기흉상어",
+      "common_name_en": "Whitetip reef shark",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ネムリブカ（眠鱶、Triaenodon obesus）はメジロザメ科に属するサメの一種。ネムリブカ属は単型である。小型で最大1.6m程度。細い体と短く幅広い吻、管状の前鼻弁、垂直の瞳孔を持ち、背鰭・尾鰭の先端は白い。インド洋と太平洋のサンゴ礁に生息する。底生で、主に深度8-40mで見られる。",
+        "メジロザメ類には珍しく、泳がなくとも呼吸することができる。日中は洞窟内で休むが、夜には集団で岩やサンゴの隙間を這い進んで探索し、硬骨魚・甲殻類・タコを捕食する。棲家をあまり移動せず、数年間に渡って同じ場所で休息する。卵胎生で、2年毎に1-6匹の仔を産む。妊娠期間は10-13ヶ月。好奇心が強く攻撃性は低いが、偶発的に人に噛み付いた例がある。食用とされるがシガテラ毒を持つ可能性がある。IUCNは保全状況を準絶滅危惧としている。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:School of whitetip reef sharks (Triaenodon obesus).webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_triaenodon_obesus_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "carcharhinus perezi",
+    "needs_confirm": false,
+    "title": "File:Feeding Caribbean reef sharks.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/be/Feeding_Caribbean_reef_sharks.webm",
+    "license": "cc-by",
+    "credit": "Brett Kotheimer · CC BY",
+    "source": "File:Feeding Caribbean reef sharks.webm",
+    "name": "Carcharhinus perezi",
+    "name_ja": "",
+    "common_name_ko": "카리브암초상어",
+    "common_name_en": "Carcharhinus perezii",
+    "depth": "",
+    "facts": [
+      "ペレスメジロザメ Carcharhinus perezi はメジロザメ属に属するサメの一種。西部大西洋熱帯域のサンゴ礁に分布し、特にカリブ海に多い。体は頑丈な流線型で、ドタブカ・クロトガリザメなどの大型メジロザメ類とよく似ているが、本種は鰭に明瞭な模様がないこと、第二背鰭の後端が短いこと、歯の形と数で区別できる。",
+      "最大で3m。頂点捕食者で、様々な魚や頭足類を食べる。活動的なメジロザメ類としては珍しく、海底や洞窟で休む姿が目撃されている。胎生で、雌は2年毎に4-6匹の仔を産む。バハマでは餌付けされており、エコツーリズムの対象として人気がある。食用として漁獲され個体数が減少しており、IUCNは保全状況を絶滅危惧としている。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Carcharhinus perezi",
+      "common_name_ko": "카리브암초상어",
+      "common_name_en": "Carcharhinus perezii",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ペレスメジロザメ Carcharhinus perezi はメジロザメ属に属するサメの一種。西部大西洋熱帯域のサンゴ礁に分布し、特にカリブ海に多い。体は頑丈な流線型で、ドタブカ・クロトガリザメなどの大型メジロザメ類とよく似ているが、本種は鰭に明瞭な模様がないこと、第二背鰭の後端が短いこと、歯の形と数で区別できる。",
+        "最大で3m。頂点捕食者で、様々な魚や頭足類を食べる。活動的なメジロザメ類としては珍しく、海底や洞窟で休む姿が目撃されている。胎生で、雌は2年毎に4-6匹の仔を産む。バハマでは餌付けされており、エコツーリズムの対象として人気がある。食用として漁獲され個体数が減少しており、IUCNは保全状況を絶滅危惧としている。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Feeding Caribbean reef sharks.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_carcharhinus_perezi_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "carcharias taurus",
+    "needs_confirm": false,
+    "title": "File:Requin taureau (Carcharias taurus), requin nourrice (Ginglymostoma cirratum) et requins (Carcharhinidae, Carangidae, Naso, Lutjanus).ogv",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b7/Requin_taureau_%28Carcharias_taurus%29%2C_requin_nourrice_%28Ginglymostoma_cirratum%29_et_requins_%28Carcharhinidae%2C_Carangidae%2C_Naso%2C_Lutjanus%29.ogv",
+    "license": "cc-by-sa",
+    "credit": "Gzen92 · CC BY-SA",
+    "source": "File:Requin taureau (Carcharias taurus), requin nourrice (Ginglymostoma cirratum) et requins (Carcharhinidae, Carangidae, Naso, Lutjanus).ogv",
+    "name": "Carcharias taurus",
+    "name_ja": "",
+    "common_name_ko": "샌드타이거상어",
+    "common_name_en": "sand tiger shark",
+    "depth": "",
+    "facts": [
+      "シロワニ（白和邇、Carcharias taurusSand tiger shark） は、ネズミザメ目シロワニ科に属するサメ。「ワニ（和邇）」はサメの別称。世界中の暖かい海の沿岸に生息する大型のサメで、全長3.2mに達する。繁殖様式はサメの中でも珍しい卵食・共食い型。",
+      "シロワニはミズワニが属すミズワニ科シロワニ属とされたこともあった。",
+      "2020年の研究結果からオオワニザメ等が属すオオワニザメ科はオオワニザメ属とシロワニ属で単系統群を形成せず、多系統であることが示され、シロワニはオオワニザメ科からシロワニ属のみで構成されるシロワニ科へ変更された。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Carcharias taurus",
+      "common_name_ko": "샌드타이거상어",
+      "common_name_en": "sand tiger shark",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "シロワニ（白和邇、Carcharias taurusSand tiger shark） は、ネズミザメ目シロワニ科に属するサメ。「ワニ（和邇）」はサメの別称。世界中の暖かい海の沿岸に生息する大型のサメで、全長3.2mに達する。繁殖様式はサメの中でも珍しい卵食・共食い型。",
+        "シロワニはミズワニが属すミズワニ科シロワニ属とされたこともあった。",
+        "2020年の研究結果からオオワニザメ等が属すオオワニザメ科はオオワニザメ属とシロワニ属で単系統群を形成せず、多系統であることが示され、シロワニはオオワニザメ科からシロワニ属のみで構成されるシロワニ科へ変更された。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Requin taureau (Carcharias taurus), requin nourrice (Ginglymostoma cirratum) et requins (Carcharhinidae, Carangidae, Naso, Lutjanus).ogv)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_carcharias_taurus_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "nebrius ferrugineus",
+    "needs_confirm": false,
+    "title": "File:Tawny nurse sharks (Nebrius ferrugineus).webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/5/5d/Tawny_nurse_sharks_%28Nebrius_ferrugineus%29.webm",
+    "license": "cc-by",
+    "credit": "Eric Falconi · CC BY",
+    "source": "File:Tawny nurse sharks (Nebrius ferrugineus).webm",
+    "name": "Nebrius ferrugineus",
+    "name_ja": "",
+    "common_name_ko": "tawny nurse shark",
+    "common_name_en": "tawny nurse shark",
+    "depth": "",
+    "facts": [
+      "オオテンジクザメ(大天竺鮫、Nebrius ferrugineus)はテンジクザメ目コモリザメ科に属するサメの一種。オオテンジクザメ属唯一の現生種。インド太平洋沿岸の70m以浅に生息。円筒形の体と平たい頭はホホジロザメ、コモリザメ他に似るが、尖った背鰭と鎌形の胸鰭で区別できる。最大3.2m。",
+      "昼間は洞窟などで休んでいる。夜間は穴などに潜む獲物を活発に探し、吸い込んで食べる。餌は主にタコだが他の小動物も食べる。無体盤性胎生で、テンジクザメ目唯一の卵食性。出生時はかなり大きく、産仔数は少ない。",
+      "コモリザメに比べ大人しいが、強力な顎と鋭い歯を持つ。商業的に漁獲される他、ゲームフィッシュとしても扱われる。IUCNは危急種としている。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Nebrius ferrugineus",
+      "common_name_ko": "tawny nurse shark",
+      "common_name_en": "tawny nurse shark",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "オオテンジクザメ(大天竺鮫、Nebrius ferrugineus)はテンジクザメ目コモリザメ科に属するサメの一種。オオテンジクザメ属唯一の現生種。インド太平洋沿岸の70m以浅に生息。円筒形の体と平たい頭はホホジロザメ、コモリザメ他に似るが、尖った背鰭と鎌形の胸鰭で区別できる。最大3.2m。",
+        "昼間は洞窟などで休んでいる。夜間は穴などに潜む獲物を活発に探し、吸い込んで食べる。餌は主にタコだが他の小動物も食べる。無体盤性胎生で、テンジクザメ目唯一の卵食性。出生時はかなり大きく、産仔数は少ない。",
+        "コモリザメに比べ大人しいが、強力な顎と鋭い歯を持つ。商業的に漁獲される他、ゲームフィッシュとしても扱われる。IUCNは危急種としている。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Tawny nurse sharks (Nebrius ferrugineus).webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_nebrius_ferrugineus_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "rhincodon typus",
+    "needs_confirm": false,
+    "title": "File:Whale shark (Rhincodon typus) near a boat.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Whale_shark_%28Rhincodon_typus%29_near_a_boat.webm",
+    "license": "cc-by-sa",
+    "credit": "WIDTTF [1] · CC BY-SA",
+    "source": "File:Whale shark (Rhincodon typus) near a boat.webm",
+    "name": "Rhincodon typus",
+    "name_ja": "",
+    "common_name_ko": "고래상어",
+    "common_name_en": "whale shark",
+    "depth": "",
+    "facts": [
+      "ジンベエザメ（甚兵衛鮫、甚平鮫、Rhincodon typus）は、テンジクザメ目ジンベエザメ科に属する唯一のサメ。ジンベイザメとも。サメや軟骨魚類としてのみならず、すべての魚類の中で現生最大の種で、鯨類以外での最大の動物（「生物に関する世界一の一覧#魚類」「1 E1 m」も参照）。",
+      "世界中の熱帯・亜熱帯・温帯の表層海域に広く分布する。主食はプランクトンで、動きは緩慢であり、基本的に人にとって危険性のないサメである。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Rhincodon typus",
+      "common_name_ko": "고래상어",
+      "common_name_en": "whale shark",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ジンベエザメ（甚兵衛鮫、甚平鮫、Rhincodon typus）は、テンジクザメ目ジンベエザメ科に属する唯一のサメ。ジンベイザメとも。サメや軟骨魚類としてのみならず、すべての魚類の中で現生最大の種で、鯨類以外での最大の動物（「生物に関する世界一の一覧#魚類」「1 E1 m」も参照）。",
+        "世界中の熱帯・亜熱帯・温帯の表層海域に広く分布する。主食はプランクトンで、動きは緩慢であり、基本的に人にとって危険性のないサメである。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Whale shark (Rhincodon typus) near a boat.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_rhincodon_typus_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "carcharhinus limbatus",
+    "needs_confirm": false,
+    "title": "File:Blacktip sharks (Carcharhinus limbatus) in South Africa.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/1/13/Blacktip_sharks_%28Carcharhinus_limbatus%29_in_South_Africa.webm",
+    "license": "cc-by",
+    "credit": "John Sanders · CC BY",
+    "source": "File:Blacktip sharks (Carcharhinus limbatus) in South Africa.webm",
+    "name": "Carcharhinus limbatus",
+    "name_ja": "",
+    "common_name_ko": "흑단상어",
+    "common_name_en": "blacktip shark",
+    "depth": "",
+    "facts": [
+      "カマストガリザメ Carcharhinus limbatus はメジロザメ属に属するサメの一種。世界中の熱帯沿岸の海・汽水に生息。2つの系統の存在が分かっており、西大西洋の個体群はその他から区別される。頑丈な流線型の体、尖った吻、鰓裂が長く、背鰭間に隆起はない。多くの個体で鰭の先端は黒い。全長1.5m。",
+      "素早い魚食性捕食者で、水上に跳び出すこともある。性格は臆病。年齢・性別ごとに群れを作る。胎生で一年おきに1-10匹の仔を産む。幼体は特定の成育場で育ち、成体になってもそこに戻る。無性生殖した例がある。",
+      "普通は危険ではないが、餌があると人を攻撃することがある。商業漁業上の重要種である。IUCNは危急としている。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Carcharhinus limbatus",
+      "common_name_ko": "흑단상어",
+      "common_name_en": "blacktip shark",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "カマストガリザメ Carcharhinus limbatus はメジロザメ属に属するサメの一種。世界中の熱帯沿岸の海・汽水に生息。2つの系統の存在が分かっており、西大西洋の個体群はその他から区別される。頑丈な流線型の体、尖った吻、鰓裂が長く、背鰭間に隆起はない。多くの個体で鰭の先端は黒い。全長1.5m。",
+        "素早い魚食性捕食者で、水上に跳び出すこともある。性格は臆病。年齢・性別ごとに群れを作る。胎生で一年おきに1-10匹の仔を産む。幼体は特定の成育場で育ち、成体になってもそこに戻る。無性生殖した例がある。",
+        "普通は危険ではないが、餌があると人を攻撃することがある。商業漁業上の重要種である。IUCNは危急としている。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Blacktip sharks (Carcharhinus limbatus) in South Africa.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_carcharhinus_limbatus_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "sphyrnidae",
+    "needs_confirm": false,
+    "title": "File:Hammerhead shark hunting a fish Drone 16x9.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Hammerhead_shark_hunting_a_fish_Drone_16x9.webm",
+    "license": "public-domain",
+    "credit": "Ocean Observatories Initiative",
+    "source": "File:Hammerhead shark hunting a fish Drone 16x9.webm",
+    "name": "Sphyrnidae",
+    "name_ja": "",
+    "common_name_ko": "귀상어과",
+    "common_name_en": "hammerhead sharks",
+    "depth": "",
+    "facts": [
+      "シュモクザメ（撞木鮫、双髻鯊、犁頭魚、英: hammerhead shark）はメジロザメ目のシュモクザメ科（Sphyrnidae）に属するサメの総称。別名カセブカ（桛鱶）、カセワニ（綛鰐）だが、英名でそのままハンマーヘッドシャークと呼ばれることもある。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Sphyrnidae",
+      "common_name_ko": "귀상어과",
+      "common_name_en": "hammerhead sharks",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "シュモクザメ（撞木鮫、双髻鯊、犁頭魚、英: hammerhead shark）はメジロザメ目のシュモクザメ科（Sphyrnidae）に属するサメの総称。別名カセブカ（桛鱶）、カセワニ（綛鰐）だが、英名でそのままハンマーヘッドシャークと呼ばれることもある。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Hammerhead shark hunting a fish Drone 16x9.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_sphyrnidae_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "triakis semifasciata",
+    "needs_confirm": false,
+    "title": "File:Leopard shark (Triakis semifasciata).webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/2/23/Leopard_shark_%28Triakis_semifasciata%29.webm",
+    "license": "cc-by-sa",
+    "credit": "Polygoon-Profilti (producent) / Nederlands Instituut voor Beeld en Geluid (beheerder) · CC BY-SA",
+    "source": "File:Leopard shark (Triakis semifasciata).webm",
+    "name": "Triakis semifasciata",
+    "name_ja": "",
+    "common_name_ko": "leopard shark",
+    "common_name_en": "leopard shark",
+    "depth": "",
+    "facts": [
+      "カリフォルニアドチザメ「California 奴智鮫」Triakis semifasciata はドチザメ科に属するサメの一種。主にアメリカ合衆国西海岸とカリフォルニア半島の沿岸に分布する。全長1.2–1.5 mで、背面の特徴的な鞍状の模様と斑点によって容易に識別できる。浅い湾内や河口の砂泥底で、大きな群れを作って生活する。活発な捕食者で無脊椎動物や小魚を食べる。回遊性は低く、地域ごとに多数の個体群に分かれている。無胎盤性の胎生。妊娠期間は1年ほどで、春に30匹程度の仔を産む。性成熟には10年ほどかかる。",
+      "人には危害を加えない。釣りの対象となる。肉やアクアリウム取引を目的にした漁業が行われているが、個体数が減少したため規制が行われている。IUCNは保全状況を軽度懸念としている。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Triakis semifasciata",
+      "common_name_ko": "leopard shark",
+      "common_name_en": "leopard shark",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "カリフォルニアドチザメ「California 奴智鮫」Triakis semifasciata はドチザメ科に属するサメの一種。主にアメリカ合衆国西海岸とカリフォルニア半島の沿岸に分布する。全長1.2–1.5 mで、背面の特徴的な鞍状の模様と斑点によって容易に識別できる。浅い湾内や河口の砂泥底で、大きな群れを作って生活する。活発な捕食者で無脊椎動物や小魚を食べる。回遊性は低く、地域ごとに多数の個体群に分かれている。無胎盤性の胎生。妊娠期間は1年ほどで、春に30匹程度の仔を産む。性成熟には10年ほどかかる。",
+        "人には危害を加えない。釣りの対象となる。肉やアクアリウム取引を目的にした漁業が行われているが、個体数が減少したため規制が行われている。IUCNは保全状況を軽度懸念としている。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Leopard shark (Triakis semifasciata).webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_triakis_semifasciata_29330717649.jpg"
   }
 ]
