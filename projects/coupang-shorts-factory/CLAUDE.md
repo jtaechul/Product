@@ -123,9 +123,16 @@
   제작(produce) 성공 시 워크플로우가 `video.mp4`+`poster.jpg`를 **GitHub Release `shorts-run{N}`**
   으로 발행(본문=`release_meta.json`) + **최신 10개만 유지**(오래된 릴리스·태그 자동 정리).
 - 관리자 페이지(노코드): `admin/public/index.html` — 상품 등록/삭제·제작 실행(workflow_dispatch)·
-  리서치 실행·실행 기록·**완성 영상 보기(영상 탭)**·채널 관리·**상품별 제품 영상 업로드**.
-  사용자 PAT(Contents/Actions RW, 브라우저 localStorage에만 저장)로 GitHub API를 직접 호출.
-  서버 로직·서버 시크릿 없음.
+  리서치 실행·실행 기록·**완성 영상 보기(영상 탭)**·**자막별 이미지 선택(이미지 탭 · #2)**·채널 관리·
+  **상품별 제품 영상 업로드**. 사용자 PAT(Contents/Actions RW, 브라우저 localStorage에만 저장)로
+  GitHub API를 직접 호출. 서버 로직·서버 시크릿 없음.
+- **#2 자막별 이미지 선택기 (2026-07-14)**: 이미지 탭에서 상품 선택 → "후보 만들기"(워크플로우
+  `mode=candidates` 디스패치 → `pipeline --candidates`가 라인별 후보 이미지 수집 + `_publish_candidates`가
+  `cand_{row_hash}.json` 매니페스트 생성 → 릴리스 **`shorts-cand`**에 발행) → "후보 불러오기"로 라인마다
+  후보 썸네일을 보고 탭 선택(또는 "다시 찾기"로 새 후보 생성, "내 파일 올리기"로 직접 업로드). "선택 저장"은
+  `data/selections/{row_hash}.json` 커밋 → 다음 제작에서 `imagesource.load_selections`가 그 선택을 적용
+  (상품 픽=prod0, url 픽=소스에서 내려받음, 업로드 픽=커밋 파일). `load_selections`가 선택을
+  `vision_examples.jsonl`에 학습 축적 → 자동 검색어 추천(`_learning_examples` few-shot) 정확도 향상.
 - **제품 영상 시스템 (2026-07-12)**: 상품 목록의 "영상 올리기" → iPad 화면 녹화(쿠팡 상세페이지
   판매자 시연 영상 등)를 선택 → **Release `product-assets` 자산 `{row_hash}_{시각}.mp4|mov`**로
   업로드(브라우저→uploads.github.com 직접, CORS 차단 시 워커 `/ghup` 프록시 폴백 — 이 저장소
