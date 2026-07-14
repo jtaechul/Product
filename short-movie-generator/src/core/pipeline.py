@@ -284,7 +284,12 @@ def run_reels(
         raise PipelineError("license_gate", f"영상 라이선스 차단: {fv['license']}")
 
     # 2) 본문 일본어 나레이션 대본 → 합성(단어 타임스탬프)
-    chunks = category.reels_body_script(info) if hasattr(category, "reels_body_script") else None
+    # ★침몰선 다큐(wreck_doc): 그 배 전용 대본(취항→사고→제원→잔해)을 dossier로 생성 → 제네릭 대체.
+    if fv.get("doc"):
+        from src.categories.shipwreck import dossier as _dsr
+        chunks = _dsr.wreck_body_jp(fv["dossier"])
+    else:
+        chunks = category.reels_body_script(info) if hasattr(category, "reels_body_script") else None
     if not chunks:
         raise PipelineError("script", "본문 일본어 대본 생성 불가(시드/LLM 필요)")
     chunks = _cap_body_chunks(chunks)   # ★길이 상한(쇼츠 40초 규칙): 과길이 본문을 ~30초로 컷
@@ -293,45 +298,67 @@ def run_reels(
         raise PipelineError("tts", "나레이션 합성 실패")
     body_dur = float(nar["duration"]) + 0.6
 
-    # 2.5) ★워터마크 QC(하드룰 #9): 원본을 1초 간격 OCR 스캔 → 크레딧 슬레이트 초는 회피하고
-    #      탐지된 로고/URL은 delogo한 '깨끗한 소스'를 먼저 만든다. 이후 모든 단계(리프레임·
-    #      오프닝 배경·엔드카드 피사체)는 이 깨끗한 소스만 쓴다(좌표 하드코딩 logo_box 의존 폐기).
-    from src.core import watermark_qc as WQ
-    wm = WQ.plan(fv["path"], 0.0, body_dur + 10,
-                 extra_boxes=[fv["logo_box"]] if fv.get("logo_box") else None)
-    clean = str(work_dir / "footage_clean.mp4")
-    chain = WQ.delogo_chain(wm["boxes"], 1280, 720)
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{wm['start']:.2f}",
-                    "-i", fv["path"], "-t", f"{body_dur + 10:.2f}",
-                    "-vf", "scale=1280:720,setsar=1" + (("," + chain) if chain else ""),
-                    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-an", clean],
-                   check=True)
-    fv = {**fv, "path": clean, "logo_box": None}
-
-    # 3) 9:16 추적 리프레임 + 틸 그레이딩(본문 길이)
-    body_v = reframe.reframe_to_vertical(fv["path"], str(work_dir / "body_reframed.mp4"),
-                                         body_dur, str(work_dir / "rf"),
-                                         logo_box=None,
-                                         wide=bool(getattr(category, "reframe_wide", False)))
-
-    # 3.5) ★본문 사진 컷어웨이(반복 피로 완화): 소스 영상이 짧아 반복될 때, 같은 대상 고해상 사진
-    #      1~2컷을 본문 중반에 짧게 오버레이(디졸브)한다. 자막 번인 '전'에 넣어 자막·오디오는 그대로
-    #      위에 얹혀 타이밍·자막 연속성이 보존된다. 사진 없거나 본문이 길면 생략(발행 불정지).
     cutaway_credits: list[str] = []
-    try:
-        src_dur = _probe_duration(fv["path"]) or 0.0
-        if src_dur and src_dur < body_dur * 0.9:   # 소스가 본문보다 짧아 반복되는 경우에만
-            cuts = footage.fetch_cutaway_photos(
-                info.scientific_name, info.common_name_en, str(raw_dir), n=2)
-            if cuts:
-                body_v2 = footage.insert_photo_cutaways(
-                    body_v, cuts, str(work_dir / "body_cutaways.mp4"), body_dur,
-                    key=info.scientific_name)
-                if body_v2 != body_v:
-                    body_v = body_v2
-                    cutaway_credits = [c["credit"] for c in cuts if c.get("credit")]
-    except Exception as e:  # noqa: BLE001
-        log.warning("[reels] 컷어웨이 생략(오류): %s", e)
+    if fv.get("doc"):
+        # ★침몰선 다큐 분기: 여러 이미지 시간순 시퀀스(취항→초상→사고→잔해)를 body_dur 길이로 합성.
+        #   WQ/추적리프레임/컷어웨이를 우회한다(소스가 이미 9:16 순서보존 시퀀스 · 워터마크 없음 ·
+        #   신문 스캔 등 정당한 텍스트를 delogo하면 안 됨 · 순서를 뒤섞으면 스토리가 깨짐).
+        from src.categories.shipwreck import dossier as _dsr
+        doss = fv["dossier"]
+        seq = _dsr.ordered_beat_images(doss, max_per_beat=2)
+        card = _dsr.render_spec_card(doss, str(work_dir / "spec_card.png"))
+        has_portrait = any(s.get("beat") == "portrait" for s in seq)
+        overlays = {("portrait" if has_portrait else "afloat"): card} if card else {}
+        docv = footage.build_wreck_documentary(
+            seq, str(work_dir / "wdoc"), target_dur=body_dur + 1.0,
+            key=info.scientific_name, overlays=overlays)
+        if not docv:
+            raise PipelineError("footage", "난파선 다큐 시퀀스 합성 실패")
+        fv = {**fv, "path": docv["path"], "credit": docv.get("credit", fv.get("credit", "")),
+              "license": docv.get("license", fv.get("license", "")), "logo_box": None}
+        body_v = str(work_dir / "body_reframed.mp4")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", docv["path"],
+                        "-t", f"{body_dur:.2f}", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                        "-crf", "19", "-an", body_v], check=True)
+    else:
+        # 2.5) ★워터마크 QC(하드룰 #9): 원본을 1초 간격 OCR 스캔 → 크레딧 슬레이트 초는 회피하고
+        #      탐지된 로고/URL은 delogo한 '깨끗한 소스'를 먼저 만든다. 이후 모든 단계(리프레임·
+        #      오프닝 배경·엔드카드 피사체)는 이 깨끗한 소스만 쓴다(좌표 하드코딩 logo_box 의존 폐기).
+        from src.core import watermark_qc as WQ
+        wm = WQ.plan(fv["path"], 0.0, body_dur + 10,
+                     extra_boxes=[fv["logo_box"]] if fv.get("logo_box") else None)
+        clean = str(work_dir / "footage_clean.mp4")
+        chain = WQ.delogo_chain(wm["boxes"], 1280, 720)
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{wm['start']:.2f}",
+                        "-i", fv["path"], "-t", f"{body_dur + 10:.2f}",
+                        "-vf", "scale=1280:720,setsar=1" + (("," + chain) if chain else ""),
+                        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-an", clean],
+                       check=True)
+        fv = {**fv, "path": clean, "logo_box": None}
+
+        # 3) 9:16 추적 리프레임 + 틸 그레이딩(본문 길이)
+        body_v = reframe.reframe_to_vertical(fv["path"], str(work_dir / "body_reframed.mp4"),
+                                             body_dur, str(work_dir / "rf"),
+                                             logo_box=None,
+                                             wide=bool(getattr(category, "reframe_wide", False)))
+
+        # 3.5) ★본문 사진 컷어웨이(반복 피로 완화): 소스 영상이 짧아 반복될 때, 같은 대상 고해상 사진
+        #      1~2컷을 본문 중반에 짧게 오버레이(디졸브)한다. 자막 번인 '전'에 넣어 자막·오디오는 그대로
+        #      위에 얹혀 타이밍·자막 연속성이 보존된다. 사진 없거나 본문이 길면 생략(발행 불정지).
+        try:
+            src_dur = _probe_duration(fv["path"]) or 0.0
+            if src_dur and src_dur < body_dur * 0.9:   # 소스가 본문보다 짧아 반복되는 경우에만
+                cuts = footage.fetch_cutaway_photos(
+                    info.scientific_name, info.common_name_en, str(raw_dir), n=2)
+                if cuts:
+                    body_v2 = footage.insert_photo_cutaways(
+                        body_v, cuts, str(work_dir / "body_cutaways.mp4"), body_dur,
+                        key=info.scientific_name)
+                    if body_v2 != body_v:
+                        body_v = body_v2
+                        cutaway_credits = [c["credit"] for c in cuts if c.get("credit")]
+        except Exception as e:  # noqa: BLE001
+            log.warning("[reels] 컷어웨이 생략(오류): %s", e)
 
     # 4) 카라오케 자막 번인(본문 — 훅 없음)
     ass = narration_sync.build_synced_ass(nar["disp"], str(work_dir / "body.ass"),
@@ -366,7 +393,13 @@ def run_reels(
     #   만든다(훨씬 선명). 미확보 시 기존 영상 프레임으로 자동 폴백(발행 불정지). 같은 대상의 사진만.
     hero = None
     try:
-        hero = footage.fetch_hero_photo(info.scientific_name, info.common_name_en, str(raw_dir))
+        if fv.get("doc") and fv.get("hero_url"):
+            # 다큐: dossier의 취항(afloat) 사진을 오프닝·엔드카드 배경으로(선명한 원본)
+            hp = raw_dir / "wreck_hero.jpg"
+            if footage._download(fv["hero_url"], hp):
+                hero = {"path": str(hp)}
+        else:
+            hero = footage.fetch_hero_photo(info.scientific_name, info.common_name_en, str(raw_dir))
     except Exception as e:  # noqa: BLE001
         log.warning("[reels] 히어로 사진 확보 생략(오류): %s", e)
     # 배경 소스 분리(재발 방지): 오프닝 배경=자막 번인 '전' 클린 리프레임(body_v) →

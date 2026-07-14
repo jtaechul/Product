@@ -125,13 +125,18 @@ def _merge_discovered_seeds() -> None:
             for it in discovery.load_discovered(cid):
                 key = (it.get("key") or "").strip().lower()
                 fp = it.get("footage") or {}
-                if key and fp.get("url") and key not in _SEED:
-                    _SEED[key] = {"url": fp["url"], "license": fp.get("license", "cc-by"),
+                # 유명 난파선 다큐(wreck_doc)는 단일 url이 없어도 된다(여러 이미지를 런타임에 수집).
+                is_doc = fp.get("media_kind") == "wreck_doc"
+                if key and (fp.get("url") or is_doc) and key not in _SEED:
+                    _SEED[key] = {"url": fp.get("url", ""), "license": fp.get("license", "cc-by"),
                                   "credit": fp.get("credit", "Wikimedia Commons"),
                                   "source": fp.get("source", "")}
                     # ★사진 소스(난파선 무한 엔진): media_kind=photo면 fetch_footage가 켄번즈로 영상화한다.
+                    #   media_kind=wreck_doc면 위키+커먼스 dossier로 여러 이미지 시간순 시퀀스를 만든다.
                     if fp.get("media_kind"):
                         _SEED[key]["media_kind"] = fp["media_kind"]
+                    if fp.get("wiki_title"):
+                        _SEED[key]["wiki_title"] = fp["wiki_title"]
                     if fp.get("image_url"):
                         _SEED[key]["image_url"] = fp["image_url"]
                     if fp.get("trim"):
@@ -742,6 +747,27 @@ def _overlay_card(base_v: str, card_png: str, out_v: str, dur: int) -> bool:
         log.warning("[footage] 카드 오버레이 실패: %s", e); return False
 
 
+def _wreck_doc_footage(cand: dict, scientific_name: str) -> dict | None:
+    """유명 난파선 다큐: dossier(위키 제원+커먼스 멀티이미지)를 확보해 doc 딕트로 반환.
+    실제 시퀀스 합성은 파이프라인이 본문 길이를 안 뒤에 build_wreck_documentary로 수행한다.
+    자료가 빈약하면 None → 상위 auto 후보 순회가 다음 대상으로 넘어간다(날조 방지)."""
+    try:
+        from src.categories.shipwreck import dossier as _dsr
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] dossier 모듈 로드 실패: %s", e); return None
+    title = (cand.get("wiki_title")
+             or re.sub(r"^wreck\s+", "", scientific_name or "", flags=re.I).strip())
+    doss = _dsr.build_dossier(title)
+    if not doss:
+        log.info("[footage] 난파선 다큐 자료 빈약 → 스킵: %s", title)
+        return None
+    afl = (doss.get("beats", {}).get("afloat") or doss.get("images", []))
+    hero = afl[0].get("url") if afl else None
+    return {"doc": True, "dossier": doss, "hero_url": hero, "path": None, "logo_box": None,
+            "license": _rep_license([im.get("license", "") for im in doss.get("images", [])]),
+            "credit": " · ".join(doss.get("credits", []))[:300], "source": "Wikimedia Commons"}
+
+
 def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
     """종 실사 영상 확보 → {path, license, credit, source} 또는 None(확보 실패).
 
@@ -756,6 +782,8 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
     if not cand:
         log.info("[footage] 실사 영상 미확보: %s / %s", scientific_name, common_name_en)
         return None
+    if cand.get("media_kind") == "wreck_doc":   # ★유명 난파선 다큐(여러 이미지 시간순 시퀀스)
+        return _wreck_doc_footage(cand, scientific_name)
     if cand.get("media_kind") == "photo":   # ★사진 → 켄번즈 영상화(난파선 무한 공급)
         return _fetch_photo_kenburns(cand, dest, key, common_name_en)
     # ★난파선 주제 보장(Step1): 잠수사·준비 위주 영상이 흔해 '배'가 안 나오는 사고 → 그 배의 사진을

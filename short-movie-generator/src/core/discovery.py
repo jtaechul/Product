@@ -626,13 +626,70 @@ def _wiki_intro_by_name(name: str) -> tuple[list[str], str]:
     return [], ""
 
 
+def _famous_wreck_candidates(exclude: set[str], want: int, out_keys: set[str],
+                             max_try: int = 24) -> list[dict]:
+    """★Tier0(다큐 우선): 문서·제원·사진이 풍부한 '유명 난파선'을 후보로. media_kind=wreck_doc.
+    제작 시 여러 이미지(취항→사고→잔해)를 시간순 시퀀스로 만들어 '한 장 우려먹기'를 없앤다.
+    자료가 빈약한 배(build_dossier=None)는 건너뛴다(무명 다이빙 클립보다 우선)."""
+    try:
+        from src.categories.shipwreck import dossier as DSR
+    except Exception as e:  # noqa: BLE001
+        log.warning("[discovery] dossier 로드 실패: %s", e); return []
+    out: list[dict] = []
+    tried = 0
+    for title in DSR.FAMOUS_WRECKS:
+        if len(out) >= want or tried >= max_try:
+            break
+        display = re.sub(r"\s*\([^)]*\)\s*$", "", title).strip()
+        name = re.sub(r"^(SS|RMS|HMS|HMHS|MV|MS|USS|MT|SMS|USNS|RMHS)\s+", "", display).strip() or display
+        key = f"wreck {name}".lower()
+        if key in exclude or key in out_keys:
+            continue
+        tried += 1
+        doss = DSR.build_dossier(title)
+        if not doss:
+            continue
+        specs = doss.get("specs", {}) or {}
+        afl = (doss.get("beats", {}).get("afloat") or doss.get("images", []))
+        hero = afl[0].get("url", "") if afl else ""
+        facts = []
+        if specs.get("type"):
+            facts.append(f"선종: {specs['type']}")
+        if specs.get("tonnage"):
+            facts.append(f"총톤수: {specs['tonnage']}")
+        if specs.get("length"):
+            facts.append(f"전장: {specs['length']}")
+        if specs.get("sunk_year"):
+            facts.append(f"침몰: {specs['sunk_year']}년")
+        lic = _norm_license("cc by-sa") or "cc-by-sa"   # 대표(이미지별 실제 라이선스는 build 단계 게이트)
+        out.append({
+            "kind": "wreck", "key": key, "needs_confirm": True, "media_kind": "wreck_doc",
+            "wiki_title": title, "title": f"{display} — 다큐(여러 이미지)", "url": hero,
+            "image_url": hero, "license": lic,
+            "credit": " · ".join(doss.get("credits", []))[:200] or "Wikimedia Commons",
+            "source": f"Wikipedia: {title}", "name": name, "name_ja": "",
+            "ship_type": specs.get("type", ""), "depth": "", "facts": facts,
+            "fact_src": f"Wikipedia: {title}", "desc": (doss.get("summary", "") or "")[:300],
+            "img_count": len(doss.get("images", [])),
+        })
+        out_keys.add(key)
+        log.info("[discovery] 유명 난파선 다큐 후보: %s (이미지 %d장, 제원 %d)",
+                 display, len(doss.get("images", [])), len(specs))
+    return out
+
+
 def _discover_wrecks(exclude_keys: set[str], want: int) -> list[dict]:
-    """침몰선 무한 소싱(운영자 확정 3단):
-    Tier1 영상(검색+카테고리) → Tier3 배이름 레지스트리(명명·사실) → Tier2 사진(켄번즈, 무한).
-    영상·명명 우선(품질), 부족분은 사진으로 무한 보충. 모두 needs_confirm=True(운영자 확인)."""
+    """침몰선 소싱(운영자 확정):
+    Tier0 유명 난파선 다큐(제원+멀티이미지, 우선) → Tier1 영상(검색+카테고리) →
+    Tier3 배이름 레지스트리(명명·사실) → Tier2 사진(켄번즈, 무한).
+    유명 난파선을 먼저 채워 '인기 소재'를 우선하고, 부족분은 무한 소싱으로 보충."""
     out_keys: set[str] = set()
     out: list[dict] = []
+    # Tier0: 유명 난파선 다큐(문서·제원·사진 풍부) — 인기 소재 우선
+    out += _famous_wreck_candidates(exclude_keys, want, out_keys)
     # Tier1: 영상 검색 + 영상 보유 카테고리 순회
+    if len(out) >= want:
+        return out[:want]
     vtitles = _wreck_search_titles(_WRECK_TERMS, _VIDEO_EXT, "video", per=40)
     for cat in _WRECK_VIDEO_CATS:
         vtitles += [t for t in _catmembers(cat, cmtype="file", limit=200)
@@ -840,7 +897,8 @@ def source_to_candidates(category_id: str, want: int = 6, validate=None) -> list
     excl |= {c["key"] for c in existing}
     found = discover_candidates(category_id, want=want, exclude_keys=excl)
     if validate:
-        found = [c for c in found if validate(c["url"])]
+        # 유명 난파선 다큐(wreck_doc)는 단일 url이 없다 → dossier 확보 자체가 리치니스 게이트다.
+        found = [c for c in found if c.get("media_kind") == "wreck_doc" or validate(c["url"])]
     if not found:
         return []
     save_candidates(category_id, existing + found)
@@ -900,6 +958,10 @@ def promote_candidate(category_id: str, key: str) -> bool:
             if cand.get("media_kind") == "photo":
                 fp["media_kind"] = "photo"
                 fp["image_url"] = cand.get("image_url") or cand["url"]
+            elif cand.get("media_kind") == "wreck_doc":
+                # ★유명 난파선 다큐: 단일 소스가 아니라 위키 제목으로 여러 이미지를 런타임 수집.
+                fp["media_kind"] = "wreck_doc"
+                fp["wiki_title"] = cand.get("wiki_title") or nm
             entry = {
                 "key": key, "kind": "wreck",
                 "footage": fp,
