@@ -1,0 +1,122 @@
+name: Delete Content
+
+# 대시보드 '제작물 삭제' 전용 워크플로.
+# 왜: 브라우저에서 Contents/Releases API로 직접 삭제하면 토큰 권한에 따라 403이 나기 쉽다
+# (저장이 save-caption.yml로 우회하는 것과 같은 이유). 대신 Actions만 디스패치하고, 실제 삭제는
+# 워크플로 내장 GITHUB_TOKEN(contents:write)이 처리한다 → 삭제가 항상 성공.
+# 지우는 것: ① 콘텐츠 레코드 content/<id>.json ② manifest.json의 해당 항목
+#           ③ 미디어 릴리스(content-<id> 또는 레코드에 박힌 릴리스 태그) + 태그.
+# id는 쇼츠=3자리(예: 007), 롱폼=lf-<run>(예: lf-1234567).
+
+on:
+  workflow_dispatch:
+    inputs:
+      content_id:
+        description: "콘텐츠 id (쇼츠=3자리 007, 롱폼=lf-1234567)"
+        required: true
+
+concurrency:
+  group: delete-content-${{ github.event.inputs.content_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  OPS_BRANCH: claude/gemini-shorts-reels-generator-dhjfdt
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    name: 제작물 삭제
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/gemini-shorts-reels-generator-dhjfdt
+
+      - name: Delete media release (미디어 릴리스 삭제)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CID: ${{ inputs.content_id }}
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          # id 정규화: 영숫자·하이픈만(경로/명령 주입 방지)
+          ID=$(printf '%s' "$CID" | tr -cd 'A-Za-z0-9-' | cut -c1-40)
+          [ -z "$ID" ] && { echo "::error::빈 id"; exit 1; }
+          REC="short-movie-generator/content/${ID}.json"
+          # 레코드에 박힌 릴리스 태그(있으면)를 우선 사용, 없으면 관례상 content-<ID>
+          TAG=""
+          if [ -f "$REC" ]; then
+            TAG=$(python3 - "$REC" <<'PY'
+          import json, re, sys
+          try:
+              rec = json.load(open(sys.argv[1], encoding="utf-8"))
+          except Exception:
+              print(""); raise SystemExit
+          urls = []
+          for blk in (rec.get("media") or {}, rec.get("post") or {}):
+              for v in (blk.values() if isinstance(blk, dict) else []):
+                  if isinstance(v, str):
+                      urls.append(v)
+                  elif isinstance(v, list):
+                      urls += [u for u in v if isinstance(u, str)]
+          for u in urls:
+              m = re.search(r"/releases/download/([^/]+)/", u)
+              if m:
+                  print(m.group(1)); break
+          else:
+              print("")
+          PY
+          )
+          fi
+          [ -z "$TAG" ] && TAG="content-${ID}"
+          echo "릴리스 태그: $TAG"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release delete "$TAG" --yes --cleanup-tag && echo "릴리스 삭제됨: $TAG" || echo "::warning::릴리스 삭제 실패(무시): $TAG"
+          else
+            echo "릴리스 없음(스킵): $TAG"
+          fi
+
+      - name: Remove record + manifest entry (레코드·매니페스트 정리)
+        env:
+          CID: ${{ inputs.content_id }}
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          python3 - <<'PY'
+          import json, os, re
+          cid = re.sub(r"[^A-Za-z0-9-]", "", os.environ.get("CID", ""))[:40]
+          base = "short-movie-generator/content"
+          rec = f"{base}/{cid}.json"
+          removed = []
+          if os.path.exists(rec):
+              os.remove(rec); removed.append(rec)
+          man_p = f"{base}/manifest.json"
+          if os.path.exists(man_p):
+              try:
+                  man = json.load(open(man_p, encoding="utf-8"))
+              except Exception:
+                  man = []
+              if isinstance(man, list):
+                  new = [x for x in man if str((x or {}).get("id")) != cid]
+                  if len(new) != len(man):
+                      json.dump(new, open(man_p, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+                      removed.append(f"{man_p}(-1)")
+          print("삭제:", removed or "없음")
+          PY
+
+      - name: Commit + push
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          git add -A short-movie-generator/content 2>/dev/null || true
+          if git diff --cached --quiet; then echo "변경 없음(이미 삭제됨)"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "delete: 콘텐츠 삭제 ${{ inputs.content_id }} [skip ci]"
+          for i in 1 2 3 4 5; do
+            git fetch origin "$OPS_BRANCH" \
+              && git rebase "origin/$OPS_BRANCH" \
+              && git push origin "HEAD:$OPS_BRANCH" \
+              && { echo "삭제 반영 완료"; exit 0; }
+            echo "재시도 $i (원격이 앞서감)…"; git rebase --abort 2>/dev/null || true; sleep 3
+          done
+          echo "삭제 push 실패"; exit 1
