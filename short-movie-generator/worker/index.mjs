@@ -300,16 +300,8 @@ function renderHome(){
   '</div>'+
   '<div class="card">'+
     '<span class="lbl">롱폼 · 랭킹형 TOP N (8분 유튜브)</span>'+
-    '<span class="lbl">종 선택 (실사 영상 보유 · 3~6개 · 체크한 순서 = 순위, 처음이 1위)</span>'+
-    '<div class="lfgrid" id="lfgrid">'+
-      LF_POOL.map((s,i)=>(
-        '<label class="lfchip" data-i="'+i+'"><input type="checkbox" value="'+esc(s.v)+'">'+
-        '<span class="lfnm">'+esc(s.v)+' <i>('+esc(s.jp)+')</i>'+
-        '<span class="lfcat">'+esc(s.cat||"")+'</span></span></label>'
-      )).join('')+
-    '</div>'+
-    '<div class="lforder" id="lforder">선택된 종: 없음</div>'+
-    '<span class="lbl">테마 (비워두면 선택한 종을 보고 AI가 자동으로 정함)</span>'+
+    '<div class="hint" style="margin:2px 0 8px">종은 <b>주제별로 랜덤 자동 추출</b>됩니다(수동 선택 폐지). 테마만 고르세요.</div>'+
+    '<span class="lbl">테마 (비워두면 자동 추출된 종을 보고 AI가 자동으로 정함)</span>'+
     '<select id="lftheme">'+
       '<option value="자동" selected>자동 (AI가 종 조합을 보고 정함)</option>'+
       '<option value="기이한">기이한</option>'+
@@ -370,10 +362,10 @@ function renderHome(){
   });
   const _lf=$("#golf");if(_lf)_lf.onclick=async()=>{
     const theme=($("#lftheme")||{}).value||"자동";
-    const species=lfOrder.join(",");
-    if(lfOrder.length<3||lfOrder.length>6){lfbanner("종을 3~6개 선택하세요(현재 "+lfOrder.length+"개).","err");return;}
+    // ★종 수동 선택 폐지 — 백엔드가 주제별로 랜덤 자동 추출(species 비움).
+    const species="";
     if(!authReady()){const tb=$("#tokbox");if(tb)tb.open=true;lfbanner("먼저 GitHub 토큰을 설정하세요(위 안내).","err");return;}
-    $("#golf").disabled=true;lfbanner("롱폼 생성 요청 중…");
+    $("#golf").disabled=true;lfbanner("롱폼 생성 요청 중… (종 자동 추출)");
     try{const r=await fetch(API+"/actions/workflows/"+LF_WF+"/dispatches",{method:"POST",headers:headers(true),
         body:JSON.stringify({ref:BRANCH,inputs:{theme,species,privacy:"private"}})});
       if(r.status===204){lfbanner("롱폼 생성 시작! 완료 후 유튜브 비공개 업로드 + 텔레그램 링크 전송.","ok");setTimeout(loadRuns,4000);setTimeout(loadRuns,15000);}
@@ -386,7 +378,7 @@ function renderHome(){
     if(!authReady()){const tb=$("#tokbox");if(tb)tb.open=true;srcbanner("먼저 GitHub 토큰을 설정하세요(위 안내).","err");return;}
     $("#gosrc").disabled=true;srcbanner("소싱 요청 중… (1~3분 뒤 아래에 후보가 뜹니다)");
     try{const r=await fetch(API+"/actions/workflows/"+SRC_WF+"/dispatches",{method:"POST",headers:headers(true),
-        body:JSON.stringify({ref:BRANCH,inputs:{category,want:"6"}})});
+        body:JSON.stringify({ref:BRANCH,inputs:{category,want:"14"}})});
       if(r.status===204){srcbanner("소싱 시작! 1~3분 뒤 '새로고침'을 누르면 후보가 나타납니다.","ok");
         setTimeout(()=>loadCandidates(category),60000);setTimeout(()=>loadCandidates(category),120000);}
       else{const t=await r.text();srcbanner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}

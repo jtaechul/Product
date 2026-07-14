@@ -285,6 +285,19 @@ def _build_meta(theme_key: str, segs: list, chapters: str, chapter_items: list |
             "n": n, "sources": sources, **text}
 
 
+def _auto_species(n: int = 5) -> list[str]:
+    """실사 영상 보유 deep_sea 종에서 랜덤 n개(common_name_ko)를 뽑는다(종 수동 선택 폐지).
+    ★주제별 랜덤 추출: 테마는 대본 톤을 정하고, 종 조합은 매 회차 무작위로 다양화한다."""
+    import random
+    from src.categories.deep_sea import data
+    from src.core import footage
+    seeded = {k.lower() for k in footage.seeded_keys()}
+    pool = [sp.get("common_name_ko") or k for k, sp in data.SPECIES.items()
+            if sp.get("scientific_name", "").lower() in seeded and sp.get("common_name_ko")]
+    random.shuffle(pool)
+    return pool[:max(3, min(n, len(pool)))]
+
+
 def run_longform(theme_key: str, species: list[str], base_dir: str = ".",
                  out_dir: str | None = None) -> dict:
     from src.core.longform import compile as C
@@ -298,6 +311,10 @@ def run_longform(theme_key: str, species: list[str], base_dir: str = ".",
     raw_root.mkdir(parents=True, exist_ok=True)
 
     category = get_category("deep_sea")
+    # ★종 수동 선택 폐지(운영자 확정): 종이 비어 있으면 실사영상 보유 종에서 랜덤 자동 추출.
+    if not species:
+        species = _auto_species(5)
+        log.info("[longform] 종 미지정 → 랜덤 자동 추출: %s", species)
     if LS.is_auto_theme(theme_key):
         theme_key = _infer_theme_for(category, species)
     segs = build_segments(category, species, theme_key, raw_root)
@@ -343,16 +360,14 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="롱폼 랭킹형(TOP N) 제작")
     ap.add_argument("--theme", default="", help="테마: 기이한/위험한/놀라운/미스터리한/무서운 "
                     "(비우거나 '자동' → 선택된 종의 사실을 보고 자동 추론)")
-    ap.add_argument("--species", required=True, help="종 4~6개 콤마 구분(입력 순서=순위, 첫째=1위)")
+    ap.add_argument("--species", default="", help="종 콤마 구분(비우면 실사영상 보유 종에서 랜덤 자동 추출)")
     ap.add_argument("--base", default=".", help="작업 루트")
     ap.add_argument("--out", default=None, help="출력 디렉토리(기본 {base}/output/longform)")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
-    species = [s for s in (args.species or "").split(",") if s.strip()]
-    if not (3 <= len(species) <= 6):
-        log.error("종 개수는 3~6개여야 합니다(입력 %d개).", len(species))
-        return 2
+    # ★종 수동 선택 폐지: 비었으면 run_longform이 랜덤 자동 추출(주제별). 과다 입력만 상한(6) 컷.
+    species = [s for s in (args.species or "").split(",") if s.strip()][:6]
     try:
         meta = run_longform(args.theme, species, args.base, args.out)
     except PipelineError as e:

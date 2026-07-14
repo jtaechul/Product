@@ -45,11 +45,24 @@ _TERMS_DEEP = [
     "deep sea jellyfish", "bioluminescent", "ctenophore deep",
 ]
 _TERMS_MARINE = [
-    "reef fish", "octopus underwater", "squid underwater", "cuttlefish", "nudibranch",
-    "sea slug", "jellyfish", "comb jelly", "moray eel", "seahorse", "crab underwater",
-    "shrimp underwater", "starfish", "sea anemone", "manta ray", "stingray",
-    "sea turtle", "clownfish", "pufferfish", "lionfish", "sea urchin", "hermit crab",
-    "sea anemone", "flatworm marine", "octopus reef",
+    # 상어·가오리(연골어류) — 인기 주제인데 예전엔 검색어에 아예 없었다
+    "shark underwater", "reef shark", "nurse shark", "whale shark", "hammerhead shark",
+    "leopard shark", "blacktip shark", "manta ray", "stingray", "eagle ray", "electric ray",
+    # 두족류
+    "octopus underwater", "octopus reef", "squid underwater", "reef squid", "cuttlefish",
+    # 해파리·젤리류
+    "jellyfish", "moon jelly", "comb jelly", "box jellyfish", "jellyfish swarm",
+    # 뱀장어류(해양 어류)
+    "moray eel", "garden eel", "ribbon eel",
+    # 암초 어류 다양
+    "reef fish", "clownfish", "pufferfish", "lionfish", "angelfish", "parrotfish",
+    "grouper", "wrasse", "surgeonfish", "triggerfish", "scorpionfish", "frogfish",
+    "seahorse", "pipefish", "batfish", "trumpetfish",
+    # 갑각류
+    "crab underwater", "shrimp underwater", "lobster underwater", "mantis shrimp", "hermit crab",
+    # 극피·연체·기타
+    "nudibranch", "sea slug", "starfish", "sea star", "sea urchin", "sea anemone",
+    "flatworm marine", "sea cucumber reef", "sea snail underwater", "feather star",
 ]
 _TERMS_ALGAE = [
     "diatom", "microalgae", "phytoplankton", "dinoflagellate", "plankton microscope",
