@@ -1,0 +1,57 @@
+{
+  "id": "027",
+  "created_at": "2026-07-14T05:20:50+00:00",
+  "updated_at": "2026-07-14T05:20:50+00:00",
+  "status": "published",
+  "category": "deep_sea",
+  "series": "심해 도감",
+  "species": {
+    "common_name_ko": "vent shrimp",
+    "common_name_en": "vent shrimp",
+    "scientific_name": "Rimicaris exoculata",
+    "depth_range_m": "",
+    "habitat": "",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "Rimicaris exoculata, commonly known as the 'blind shrimp', is a species of shrimp.",
+      "It thrives on active hydrothermal edifices at deep-sea vents of the Mid-Atlantic Ridge.",
+      "This species belongs to the Alvinocarididae family of shrimp, named after the DSV Alvin, the vessel that collected the original samples described by M.",
+      "Christoffersen in 1986.",
+      "The genus name Rimicaris is composed of rima (Latin for \"rift\" or \"fissure\", referring to the Mid-Atlantic Ridge) + karis (\"shrimp\" in Greek), while the species epithet benign is Latin for \"rendered eyeless\", referring to the highly modified, non-image-forming eyes."
+    ]
+  },
+  "reels": {
+    "hook": "目、失い、灼熱に、群れる。",
+    "caption": "光もほとんど届かない海の底で、岩の裂け目からゆらゆらと白い煙が立ちのぼっています。その周りには、目もくらむような灼熱の水に群がる小さな影が、びっしりと張り付いています。目がないのに、なぜか迷わずそこへ集まってくる——そんな不思議なエビが、深海のさらに奥深くに暮らしています。\nその名は盲目のエビ(学名: Rimicaris exoculata)。\n彼女たちが選ぶ住処は、大西洋中央海嶺に点在する熱水噴出孔。硫化水素を含んだ熱水が噴き出す、いわば海底の工場地帯です。日光も酸素もろくにないこの現場で、休憩室も日陰もなく、ただ岩肌に群れて生きています。有給休暇どころか、太陽さえ知らない職場です。\nこの種が初めて見つかったのは、深海探査艇「アルヴィン号」による調査でのことでした。1986年、研究者M.クリストファーセンによって正式に記載された際、発見に貢献したこの潜水艇の名にちなんで、「アルヴィノカリス科」という一族の名がつけられました。暗闇を切り開いた小さな乗り物への、静かな敬意が学名に刻まれています。\n属名のRimicarisは、ラテン語で「裂け目」を意味する”rima”と、ギリシャ語で「エビ」を意味する”karis”を組み合わせたもの。地図にも載らないような海底の亀裂こそが、彼女たちにとって何世代も続く故郷なのです。\n種小名の”exoculata”は「目を失った」という意味。実際、彼女たちの目は、ものの形を映すことをやめてしまった、高度に変化した器官へと姿を変えています。見ることを手放してまで、この暗黒の世界に適応した進化のかたち。目がなくても、なぜか熱水の湧く場所へ静かに吸い寄せられていく姿には、思わず息をのんでしまいます。\nもしこの物語が心に触れたなら、どうか保存しておいてほしいのです。\nそして、同じ海を想う誰かにも、そっとシェアしてあげてください。\n映像: NOAA Ocean Exploration・Public Domain\n写真: null · CC BY",
+    "hashtags": [
+      "#盲目のエビ",
+      "#深海生物"
+    ],
+    "reveal_name": "盲目のエビ / Rimicaris exoculata",
+    "reveal_fact": "盲目・熱水・群生、深海のエビ",
+    "hook_ko": "눈 없어, 작열의 바닥.",
+    "caption_ko": "빛도 거의 닿지 않는 심해 바닥에서, 바위 틈 사이로 하얀 연기가 스멀스멀 피어오릅니다. 그 주위에는 눈이 멀 듯한 뜨거운 물 곁으로 작은 그림자들이 빼곡히 모여듭니다. 눈이 없는데도, 어째서인지 망설임 없이 그곳으로 모여드는——그런 신비로운 새우가 심해 깊은 곳에 살고 있습니다.\n그 이름은 눈먼 새우(학명: Rimicaris exoculata)입니다.\n이들이 선택한 보금자리는 대서양 중앙 해령에 흩어져 있는 열수분출공입니다. 황화수소를 머금은 뜨거운 물이 뿜어져 나오는, 말하자면 해저의 공업지대입니다. 햇빛도 산소도 변변치 않은 이 현장에서, 휴게실도 그늘도 없이 그저 바위에 몸을 붙이고 무리 지어 살아갑니다. 유급휴가는커녕, 태양조차 모르는 일터입니다.\n이 종이 처음 발견된 것은 심해탐사정 ‘앨빈호’의 조사에서였습니다. 1986년, 연구자 M. 크리스토퍼센에 의해 정식으로 기재되었을 때, 발견의 주역이었던 잠수정의 이름이 그대로 이어져 ‘알비노카리스과’라는 한 가문의 이름이 되었습니다. 어둠을 헤치고 나아간 작은 탈것에 대한 조용한 경의가 학명 속에 새겨져 있습니다.\n속명 Rimicaris는 라틴어로 ‘틈’을 뜻하는 ‘rima’와 그리스어로 ‘새우’를 뜻하는 ‘karis’를 합친 말입니다. 지도에도 나오지 않을 법한 해저의 균열이야말로, 이들에게는 몇 세대를 이어온 고향인 것입니다.\n종소명 ‘exoculata’는 ‘눈을 잃었다’는 뜻입니다. 실제로 이들의 눈은 형태를 비추는 기능을 멈춘, 고도로 변형된 기관으로 변해 있습니다. 보는 것을 내려놓으면서까지 이 암흑의 세계에 적응한 진화의 결과. 눈이 없어도 어째서인지 뜨거운 물이 솟는 곳으로 조용히 이끌려가는 그 모습은, 보는 이로 하여금 절로 숨을 죽이게 만듭니다.\n이 이야기가 마음에 닿았다면, 부디 저장해 두시길 바랍니다.\n그리고 같은 바다를 생각하는 누군가에게도, 살며시 공유해 주세요.\n영상: NOAA Ocean Exploration・Public Domain",
+    "hashtags_ko": [
+      "#vent shrimp",
+      "#심해생물"
+    ],
+    "yt_title": "太陽も休暇も知らない盲目のエビの職場 #盲目のエビ #深海生物",
+    "yt_title_ko": "태양도 휴가도 모르는 눈먼 새우의 일터 #vent shrimp #심해생물",
+    "visualizer": "reels",
+    "video_file": "vent_shrimp_20260714_052049.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Wikipedia (en)",
+      "Wikimedia Commons (File:Fond abyssal (Ifremer 00701-81314).webm)"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-027/reels_027.mp4",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-027/cover_027.jpg"
+  },
+  "post": null
+}

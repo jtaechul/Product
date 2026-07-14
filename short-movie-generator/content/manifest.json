@@ -216,5 +216,13 @@
     "common_name_en": "Wreck Latvia",
     "scientific_name": "Wreck Latvia",
     "date": "2026-07-13"
+  },
+  {
+    "id": "027",
+    "kind": "reels",
+    "common_name_ko": "vent shrimp",
+    "common_name_en": "vent shrimp",
+    "scientific_name": "Rimicaris exoculata",
+    "date": "2026-07-14"
   }
 ]
