@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -370,10 +371,12 @@ def run_reels(
         log.warning("[reels] 히어로 사진 확보 생략(오류): %s", e)
     # 배경 소스 분리(재발 방지): 오프닝 배경=자막 번인 '전' 클린 리프레임(body_v) →
     # 본문 자막 미리 노출 차단 / 엔드카드 피사체=크롭·줌 '전' 원본 광각(fv.path) → 과확대 차단
+    yt_thumb = str(work_dir / "yt_thumb.jpg")   # ★유튜브 썸네일: 전체 타이틀 노출 오프닝 프레임
     final = hook_intro_stage.apply(body_av, spec, hook_text, str(work_dir / "hook_intro"), bgm=bgm,
                                    open_bg_video=body_v, subject_video=fv["path"],
                                    logo_box=fv.get("logo_box"),
-                                   hero_image=(hero["path"] if hero else None))
+                                   hero_image=(hero["path"] if hero else None),
+                                   thumb_out=yt_thumb)
     # ★재발방지 하드 게이트(기획서 규칙: 모든 영상에 오프닝 훅+엔드카드 필수).
     # 폰트는 이제 항상 폴백 해석되므로 apply()가 본문을 그대로 돌려주는 건 '진짜 실패'뿐 →
     # 조용히 발행하지 않고 큰 오류로 멈춰 CI를 빨간불로 만든다(스펙 위반 영상 발행 원천 차단).
@@ -434,6 +437,12 @@ def run_reels(
                     "series": {"title": series_title, "episode": episode}},
     )
     log.info("[reels] 출력: %s (QC %s)", result.video_path, "통과" if result.qc_passed else "실패")
+    # ★유튜브 썸네일(전체 타이틀 노출 오프닝 프레임)을 최종 영상 옆에 둔다 → 워크플로가 Release 업로드.
+    try:
+        if Path(yt_thumb).exists():
+            shutil.copy2(yt_thumb, str(Path(result.video_path).with_name("yt_thumb.jpg")))
+    except Exception as e:  # noqa: BLE001
+        log.warning("[reels] 유튜브 썸네일 배치 생략: %s", e)
     if hasattr(category, "log_catalog"):
         category.log_catalog(episode, info)
     try:

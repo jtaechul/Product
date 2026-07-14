@@ -188,7 +188,8 @@ def _best_subject_frame(video: str, out_png: str, wd: Path,
 def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
           cfg: hi.HookIntroConfig | None = None, bgm: str | None = None,
           open_bg_video: str | None = None, subject_video: str | None = None,
-          logo_box: tuple | None = None, hero_image: str | None = None) -> str:
+          logo_box: tuple | None = None, hero_image: str | None = None,
+          thumb_out: str | None = None) -> str:
     """본문 영상을 오프닝/엔드카드/전환/사운드로 감싼 완성본 경로 반환.
     전제 미충족 시 원본 body_video를 그대로 반환(발행 불정지).
 
@@ -272,7 +273,15 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
 
         # 3) 오프닝/엔드카드 렌더 → mp4
         of_dir = str(wd / "of"); ec_dir = str(wd / "ecf")
-        hi.render_opening_frames(open_bg, onsets, spec, of_dir, cfg)
+        of_frames = hi.render_opening_frames(open_bg, onsets, spec, of_dir, cfg)
+        # ★유튜브 썸네일(운영자 요청): '전체 타이틀이 다 드러난' 오프닝 마지막 홀드 프레임을 저장.
+        #   (기본 커버는 t=2s의 애니 도중 프레임이라 제목이 덜 노출됨 → 완전 노출 프레임을 별도 제공.)
+        if thumb_out and of_frames:
+            try:
+                subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", of_frames[-1],
+                                "-q:v", "3", thumb_out], check=False, timeout=30)
+            except Exception as e:  # noqa: BLE001
+                log.warning("[hook_intro] 유튜브 썸네일 저장 실패: %s", e)
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(cfg.FPS),
                         "-i", f"{of_dir}/of_%03d.png", "-c:v", "libx264", "-pix_fmt", "yuv420p",
                         "-crf", "18", str(wd / "opening.mp4")], check=True)

@@ -179,6 +179,8 @@ jobs:
           mkdir -p work/rel
           cp "$VIDEO" "work/rel/reels_$ID.mp4"
           ffmpeg -y -loglevel error -ss 2 -i "$VIDEO" -frames:v 1 -q:v 3 "work/rel/cover_$ID.jpg" || true
+          # ★유튜브 썸네일(전체 타이틀 노출 오프닝 프레임) — 파이프라인이 output/yt_thumb.jpg로 배치
+          [ -f output/yt_thumb.jpg ] && cp output/yt_thumb.jpg "work/rel/ytthumb_$ID.jpg" || true
           SRC=$(ls -t assets/approved/*.jpg 2>/dev/null | head -1 || true)
           [ -n "$SRC" ] && cp "$SRC" "work/rel/source_$ID.jpg"
           # 게시물(캐러셀) 5장 → post_<id>_<n>.png (슬라이드 순서 유지)
@@ -204,6 +206,8 @@ jobs:
           media["rev"] = os.environ.get("GITHUB_RUN_ID", "")
           if Path(f"work/rel/cover_{cid}.jpg").exists():
               media["cover_url"] = f"{base}/cover_{cid}.jpg"
+          if Path(f"work/rel/ytthumb_{cid}.jpg").exists():   # ★유튜브 썸네일(전체 타이틀 노출 프레임)
+              media["yt_thumb_url"] = f"{base}/ytthumb_{cid}.jpg"
           if Path(f"work/rel/source_{cid}.jpg").exists():
               media["source_image_url"] = f"{base}/source_{cid}.jpg"
           rec["media"] = media

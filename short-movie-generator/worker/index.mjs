@@ -539,6 +539,11 @@ async function renderDetail(id){
       '<span class="mono" style="color:var(--gy);font-size:12px">'+esc(sp.common_name_en||"")+'</span></div>'+
     mediaHtml+
     (md.video_url?'<div class="btnrow" style="margin-top:8px"><button class="btn save" id="bdl">비디오 저장하기</button></div><div class="hint" id="dlhint" style="margin-top:6px"></div>':"")+
+    // ★유튜브 썸네일(전체 타이틀 노출 오프닝 프레임) — 미리보기 + 저장(유튜브 커스텀 썸네일용)
+    (md.yt_thumb_url?('<div style="margin-top:12px"><span class="lbl">유튜브 썸네일 (오프닝 훅 · 제목 전체 노출)</span>'+
+      '<img src="'+prox(bust(md.yt_thumb_url,md.rev||"r1"))+'" alt="유튜브 썸네일" style="width:150px;border-radius:8px;display:block;margin:6px 0"/>'+
+      '<div class="btnrow"><button class="btn save" id="ythumb">유튜브 썸네일 저장</button></div>'+
+      '<div class="hint" id="ythint" style="margin-top:4px"></div></div>'):"")+
     upHtml+
     '<div class="meta" style="margin-top:12px"><b>학명</b> <i>'+esc(sp.scientific_name||"")+'</i> · <b>수심</b> '+esc(sp.depth_range_m||"?")+'m<br>'+
       '<b>서식</b> '+esc(sp.habitat||"?")+' · <b>분포</b> '+esc(sp.distribution||"?")+'</div>'+
@@ -577,6 +582,8 @@ async function renderDetail(id){
 
   // 현 시스템은 실사 영상 재편집(무료) — Veo·카드뉴스 이미지 재생성은 구 시스템 유물이라 제거
   if($("#bdl"))$("#bdl").onclick=()=>saveVideo(prox(bust(md.video_url,md.rev||"r1")),esc(id)+"_"+(sp.common_name_ko||"reel")+".mp4");
+  // 유튜브 커스텀 썸네일(오프닝 훅 · 제목 전체 노출 프레임) 저장 — 이미지용 mime/hint/btn 지정
+  if($("#ythumb"))$("#ythumb").onclick=()=>saveVideo(prox(bust(md.yt_thumb_url,md.rev||"r1")),esc(id)+"_"+(sp.common_name_ko||"reel")+"_thumb.jpg",{mime:"image/jpeg",hint:"#ythint",btn:"#ythumb",kind:"이미지"});
   $("#cptjp").onclick=()=>copyText($("#etitlejp").value,"일본어 제목을 복사했어요. 유튜브 쇼츠 제목에 붙여넣기 하세요.");
   $("#cptko").onclick=()=>copyText($("#etitleko").value,"한국어 제목(참고)을 복사했어요.");
   $("#cpjp").onclick=()=>copyText($("#ecapjp").value,"일본어 캡션+해시태그를 복사했어요. 릴스에 붙여넣기 하세요.");
@@ -757,13 +764,18 @@ async function copyText(text,okmsg){
 
 // 비디오 저장: ① iOS 공유 시트(navigator.share)로 "비디오를 사진에 저장" 직접 노출
 //             ② 안 되면 Blob 다운로드(파일 앱 저장). 길게눌러가 안 먹는 기기 대응.
-async function saveVideo(u,name){
-  const h=$("#dlhint"); const say=t=>{if(h)h.innerHTML=t;};
+// 비디오/이미지 공용 저장(공유시트 우선 → Blob 다운로드 → 직접 링크 폴백).
+// opt.hint/opt.btn: 상태·버튼 셀렉터(기본 비디오용). opt.mime: File 타입. opt.kind: 안내 문구('동영상'/'이미지').
+async function saveVideo(u,name,opt){
+  opt=opt||{};
+  const h=$(opt.hint||"#dlhint"); const say=t=>{if(h)h.innerHTML=t;};
+  const mime=opt.mime||"video/mp4"; const kind=opt.kind||"동영상";
+  const saveWord=(mime.indexOf("image")===0)?"이미지를 사진에 저장":"비디오를 사진에 저장";
   // ★가장 확실한 폴백: 프록시 직접 다운로드 링크(dl=1 → 첨부). JS blob이 실패/멈춰도 이 링크는 항상 동작.
   const dl=u+(u.includes("?")?"&":"?")+"dl=1&name="+encodeURIComponent(name);
   const link='<a href="'+dl+'" target="_blank" rel="noopener" style="color:var(--cy);text-decoration:underline">여기를 눌러 저장</a>';
-  const btn=$("#bdl"); if(btn)btn.disabled=true;
-  say('동영상 준비 중… (안 되면 '+link+')');
+  const btn=$(opt.btn||"#bdl"); if(btn)btn.disabled=true;
+  say(kind+' 준비 중… (안 되면 '+link+')');
   try{
     // 60초 타임아웃(멈춤 방지 — '준비 중'에서 무한 대기하던 사고 방지)
     const c=("AbortController"in window)?new AbortController():null;
@@ -771,11 +783,11 @@ async function saveVideo(u,name){
     const r=await fetch(u,c?{signal:c.signal}:{}); if(to)clearTimeout(to);
     if(!r.ok)throw new Error("HTTP "+r.status);
     const blob=await r.blob();
-    const file=new File([blob],name,{type:"video/mp4"});
-    // ① 네이티브 공유 시트(아이폰: "비디오를 사진에 저장"이 여기 있음)
+    const file=new File([blob],name,{type:mime});
+    // ① 네이티브 공유 시트(아이폰: "사진에 저장"이 여기 있음)
     if(navigator.canShare&&navigator.canShare({files:[file]})){
       try{ await navigator.share({files:[file],title:name});
-        say('공유 창에서 <b>"비디오를 사진에 저장"</b>을 누르세요.'); if(btn)btn.disabled=false; return;
+        say('공유 창에서 <b>"'+saveWord+'"</b>을 누르세요.'); if(btn)btn.disabled=false; return;
       }catch(e){ if(String(e).indexOf("AbortError")>=0){say("취소됨. "+link); if(btn)btn.disabled=false; return;} }
     }
     // ② 폴백: Blob 다운로드 → 파일 앱에 저장(거기서 사진으로 옮길 수 있음)
