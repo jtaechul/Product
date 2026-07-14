@@ -86,7 +86,11 @@ assets:
   pexels_count: 2
 
 script:                 # M3 대본 생성 (스펙 §M3)
-  model: "claude-sonnet-4-6"   # 스펙 지정 모델 (2026-07 기준 유효 ID 확인)
+  # provider: 구어체 문구는 Gemini가 낫다는 사용자 판단(2026-07-13)으로 gemini 채택.
+  #   claude=Anthropic / gemini=Gemini generateContent(텍스트 전용 — 유료 영상 Veo와 무관, 초저가).
+  provider: "gemini"
+  model: "claude-sonnet-4-6"        # provider=claude일 때 모델
+  gemini_model: "gemini-2.5-flash"  # provider=gemini일 때 모델(≈대본당 5원). 더 좋은 구어체 원하면 gemini-3-flash 등
   max_tokens: 4000
 
 veo:                    # ⛔ Gemini/Veo 영상 생성 폐지 (2026-07-13 사용자 확정 — 품질 대비 값어치 없음)

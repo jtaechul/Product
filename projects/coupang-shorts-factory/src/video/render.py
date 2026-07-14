@@ -46,7 +46,8 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
                  image_windows: list | None = None, bg_path: Path | None = None,
                  product_images: list | None = None, lines: list | None = None,
                  line_windows: list | None = None, stock_clips: list | None = None,
-                 product_videos: list | None = None, scene_images: list | None = None) -> dict:
+                 product_videos: list | None = None, scene_images: list | None = None,
+                 line_images: list | None = None) -> dict:
     """대본 단계(stage)별 씬 시퀀스 쇼츠 렌더. 반환: 렌더 통계 dict.
 
     lines(단계 포함)+line_windows가 있으면 '씬 시퀀스'로 렌더한다 — 상품 단계(①④⑤)는
@@ -64,6 +65,8 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     stock_clips = [Path(p) for p in (stock_clips or []) if Path(p).exists()]
     product_videos = [Path(p) for p in (product_videos or []) if Path(p).exists()]
     scene_images = [Path(p) for p in (scene_images or []) if Path(p).exists()]
+    # line_images: lines와 정렬된 라인별 이미지(경로 또는 None). None 항목은 렌더가 폴백 처리.
+    line_images = list(line_images) if line_images else []
     lines = list(lines or [])
     line_windows = list(line_windows or [])
     layout = str(r.get("layout", "framed")).lower()
@@ -90,19 +93,31 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
         # ── framed: 검정 프레임 + 정사각형(항상 이미지/영상 꽉 참) + 상단 채널바 ──
         base = ImageClip(np.zeros((height, width, 3), dtype=np.uint8)).with_duration(duration)
         bg_layers = [base]
-        if lines and line_windows and (product_images or product_videos or scene_images):
-            scenes = _plan_scenes(duration, lines, line_windows,
-                                  len(product_images), len(scene_images))
-        else:  # 대본 정보가 없어도 정사각형은 항상 한 컷으로 꽉 채운다
-            scenes = [{"start": 0.0, "end": duration, "kind": "product", "asset": 0, "shot": 0}]
-        for sc in scenes:
-            card_layers.append(_square_content_clip(
-                sc, product_images, product_videos, scene_images, sq, sq_top,
-                ch.get("name", "미래마켓"), font_path))
-        card_layers.append(_brand_bar_clip(width, sq_top, ch.get("name", "미래마켓"),
-                                            ch.get("handle", ""), logo_path, font_path, duration))
-        bg_name = (f"framed {len(scenes)}컷 (정사각형 {sq}px, 상단바 {sq_top}px / "
-                   f"상품사진 {len(product_images)}·문구이미지 {len(scene_images)}·상품영상 {len(product_videos)})")
+        name = ch.get("name", "미래마켓")
+        if line_images and lines and line_windows:
+            # ★ 라인별 배정(권장): 라인마다 다른 이미지(상품 라인만 상품 사진). 매 순간 꽉 참.
+            scenes = _plan_line_scenes(duration, line_windows, line_images)
+            for sc in scenes:
+                card_layers.append(_square_line_clip(
+                    sc, product_images, product_videos, sq, sq_top, name, font_path))
+            n_img = sum(1 for x in line_images if x)
+            bg_name = (f"framed 라인별 {len(scenes)}컷 (라인이미지 {n_img}/{len(line_images)}"
+                       f"·상품사진 {len(product_images)}·상품영상 {len(product_videos)})")
+        else:
+            # 라인 이미지가 없으면 stage 기반 씬(문제=문구이미지풀, 상품=상품사진)으로 폴백
+            if lines and line_windows and (product_images or product_videos or scene_images):
+                scenes = _plan_scenes(duration, lines, line_windows,
+                                      len(product_images), len(scene_images))
+            else:  # 대본 정보가 없어도 정사각형은 항상 한 컷으로 꽉 채운다
+                scenes = [{"start": 0.0, "end": duration, "kind": "product", "asset": 0, "shot": 0}]
+            for sc in scenes:
+                card_layers.append(_square_content_clip(
+                    sc, product_images, product_videos, scene_images, sq, sq_top,
+                    name, font_path))
+            bg_name = (f"framed {len(scenes)}컷 (정사각형 {sq}px, 상단바 {sq_top}px / "
+                       f"상품사진 {len(product_images)}·문구이미지 {len(scene_images)}·상품영상 {len(product_videos)})")
+        card_layers.append(_brand_bar_clip(width, sq_top, name, ch.get("handle", ""),
+                                            logo_path, font_path, duration))
         scrim = None
     else:
         # ── legacy: 흐린 상품 배경 + 히어로 카드 (과거 방식) ──
@@ -398,6 +413,59 @@ def _square_content_clip(scene: dict, product_images: list, product_videos: list
 
     # 켄번즈(줌인/줌아웃 교대) — 넘침은 sq×sq 내부 합성으로 클립(바 영역 침범 방지)
     zoom_in = int(scene.get("shot", 0)) % 2 == 0
+    base = ImageClip(arr)
+    if zoom_in:
+        kb = base.resized(lambda t, d=dur: 1.0 + 0.08 * min(1.0, t / d))
+    else:
+        kb = base.resized(lambda t, d=dur: 1.08 - 0.08 * min(1.0, t / d))
+    kb = kb.with_position(("center", "center"))
+    inner = CompositeVideoClip([kb], size=(sq, sq)).with_duration(dur + 0.05)
+    return inner.with_start(start).with_position((0, sq_top))
+
+
+def _plan_line_scenes(duration: float, line_windows: list, line_images: list) -> list:
+    """라인별 씬 — 라인마다 1컷, [0,duration] 연속 커버(빈 구간 없음). 각 씬에 그 라인의 이미지."""
+    scenes = []
+    for i, (ls, le) in enumerate(line_windows):
+        img = line_images[i] if i < len(line_images) else None
+        scenes.append({"start": float(ls), "end": float(le), "img": img, "shot": i})
+    if not scenes:
+        return [{"start": 0.0, "end": duration,
+                 "img": (line_images[0] if line_images else None), "shot": 0}]
+    scenes[0]["start"] = 0.0
+    for i in range(1, len(scenes)):
+        scenes[i]["start"] = scenes[i - 1]["end"]
+    scenes[-1]["end"] = duration
+    return [s for s in scenes if s["end"] - s["start"] > 0.05]
+
+
+def _square_line_clip(sc: dict, product_images: list, product_videos: list,
+                      sq: int, sq_top: int, name: str, font_path: Path):
+    """라인 1컷의 정사각형 콘텐츠 — 그 라인에 배정된 이미지로 꽉 채운다(cover-fit + 켄번즈).
+    상품 라인(이미지가 상품 사진)에서 제품 영상이 있으면 영상을 우선. 어떤 경우에도 빈 화면 없음."""
+    dur = sc["end"] - sc["start"]
+    start = sc["start"]
+    src = sc.get("img")
+    prod_set = {str(Path(p)) for p in product_images}
+    is_product_line = src is not None and str(Path(src)) in prod_set
+
+    if is_product_line and product_videos:
+        v = _video_fullframe(product_videos[0], sq, sq, dur)
+        if v is not None:
+            return v.with_start(start).with_position((0, sq_top))
+
+    if src is None:
+        src = product_images[0] if product_images else None
+    if src is None:
+        arr = _branded_fallback_arr(sq, name, font_path)
+    else:
+        try:
+            arr = _square_cover_arr(Path(src), sq)
+        except Exception as e:
+            print(f"[render] 경고: 라인 이미지 실패({Path(src).name}: {e}) → 브랜드 카드")
+            arr = _branded_fallback_arr(sq, name, font_path)
+
+    zoom_in = int(sc.get("shot", 0)) % 2 == 0
     base = ImageClip(arr)
     if zoom_in:
         kb = base.resized(lambda t, d=dur: 1.0 + 0.08 * min(1.0, t / d))

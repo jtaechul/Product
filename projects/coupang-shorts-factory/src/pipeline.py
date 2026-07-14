@@ -25,7 +25,8 @@ from src.audio import tts
 from src.product import manual_queue
 from src.product.assets import fetch_product_videos
 from src.product.enrich import enrich_product
-from src.script.generate import DISCLOSURE, anthropic_key, generate_script
+from src.script.generate import (
+    DISCLOSURE, generate_script, have_script_key, missing_key_hint, script_provider)
 from src.upload import youtube
 from src.video.qa import run_qa
 from src.video import imagesource
@@ -42,6 +43,8 @@ def main() -> int:
     p.add_argument("--job-id", default=None)
     p.add_argument("--script-file", default=None, help="M3 우회용 대본 JSON 경로")
     p.add_argument("--soft", action="store_true", help="전제조건 미비 시 정상 종료(cron용)")
+    p.add_argument("--no-narration", action="store_true",
+                   help="나레이션(TTS) 없이 렌더 — 영상/이미지 튜닝용(대본 길이로 자막 타이밍 합성)")
     args = p.parse_args()
 
     settings = yaml.safe_load((PROJECT_ROOT / "config" / "settings.yaml").read_text(encoding="utf-8"))
@@ -91,28 +94,35 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
         script["pinned_comment"] = f"제품 정보는 여기서 확인 → {product['affiliate_url']}\n{DISCLOSURE}"
         print("[pipeline] M3 우회: script-file 사용")
     else:
-        if not anthropic_key():
-            msg = ("대본 생성용 Anthropic API 키 미등록 (SHORTS_ANTHROPIC_API_KEY 또는 ANTHROPIC_API_KEY). "
-                   "등록 전에는 --script-file로만 실행 가능합니다.")
+        if not have_script_key(settings):
+            msg = missing_key_hint(settings) + " (등록 전에는 --script-file로만 실행 가능)"
             if args.soft:
                 print(f"[pipeline] {msg} → cron 모드라 정상 종료")
                 return 0
             raise RuntimeError(msg)
+        print(f"[pipeline] M3 대본 프로바이더: {script_provider(settings)}")
         script = generate_script(product, settings)
     (job_dir / "script.json").write_text(json.dumps(script, ensure_ascii=False, indent=1), encoding="utf-8")
 
     lines = script["lines"]
     text = "\n".join(l["text"] for l in lines)
 
-    # ---- M4(+M5): TTS → audio.mp3 + timestamps.json
-    tts_settings = dict(settings.get("tts", {}))
-    if args.provider:
-        tts_settings["provider"] = args.provider
-    t0 = time.time()
-    tts_result = tts.synthesize_to_files(text, job_dir, tts_settings, settings.get("whisper", {}))
-    words = tts_result["words"]
-    print(f"[pipeline] M4 TTS 완료({tts_result['provider']}/{tts_result['timestamps_source']}) "
-          f"{time.time() - t0:.1f}s, 단어 {len(words)}개")
+    # ---- M4(+M5): TTS → audio.mp3 + timestamps.json (또는 --no-narration이면 무음+합성 타이밍)
+    if args.no_narration:
+        t0 = time.time()
+        tts_result = _silent_track(lines, job_dir)
+        words = tts_result["words"]
+        print(f"[pipeline] M4 나레이션 생략(--no-narration): 무음 {tts_result['duration']:.1f}s, "
+              f"단어 {len(words)}개(대본 길이로 타이밍 합성)")
+    else:
+        tts_settings = dict(settings.get("tts", {}))
+        if args.provider:
+            tts_settings["provider"] = args.provider
+        t0 = time.time()
+        tts_result = tts.synthesize_to_files(text, job_dir, tts_settings, settings.get("whisper", {}))
+        words = tts_result["words"]
+        print(f"[pipeline] M4 TTS 완료({tts_result['provider']}/{tts_result['timestamps_source']}) "
+              f"{time.time() - t0:.1f}s, 단어 {len(words)}개")
 
     # ---- 라인 타이밍 → 쉐이크 윈도우 (punch 라인 = 가장 충격적인 훅)
     line_windows = _line_windows(lines, words)
@@ -136,14 +146,17 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     stock_clips = [p for p in (product.get("stock_clips") or []) if Path(p).exists()]
     bg_path = None
 
-    # ---- 문구 매칭 이미지 소싱: 문제/훅 씬을 '문구에 맞는 실사 이미지'로 채운다(빈 화면 방지).
-    #      대형 무료 라이브러리(Pexels·Openverse). 실패해도 렌더가 상품 사진으로 폴백(절대 빈 화면 없음).
-    scene_images = []
+    # ---- 라인별 비주얼 소싱: 라인마다 '상황에 맞는' 이미지 배정(상품 라인만 상품 사진).
+    #      다양 소스(Pexels·Openverse·Wikimedia). 실패해도 렌더가 상품 사진으로 폴백(빈 화면 없음).
+    line_images = []
     if str(settings.get("render", {}).get("layout", "framed")).lower() == "framed":
         try:
-            scene_images = imagesource.fetch_scene_images(product, lines, job_dir, settings, want=5)
+            line_images, vis_plan = imagesource.fetch_line_images(
+                product, lines, product_images, job_dir, settings)
+            (job_dir / "visual_plan.json").write_text(
+                json.dumps(vis_plan, ensure_ascii=False, indent=1), encoding="utf-8")
         except Exception as e:
-            print(f"[pipeline] 문구 이미지 소싱 실패({type(e).__name__}: {e}) → 상품 사진 폴백")
+            print(f"[pipeline] 라인 이미지 소싱 실패({type(e).__name__}: {e}) → 상품 사진 폴백")
 
     # ---- M6: 렌더 (framed 레이아웃: 정사각형에 이미지/영상 항상 꽉 참 + 상/하단 바)
     out_path = job_dir / "video.mp4"
@@ -151,7 +164,7 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
                          shake_windows=shake_windows, project_root=PROJECT_ROOT,
                          product_images=product_images, bg_path=bg_path,
                          lines=lines, line_windows=line_windows, stock_clips=stock_clips,
-                         product_videos=product_videos, scene_images=scene_images)
+                         product_videos=product_videos, line_images=line_images)
     stats = {"job_id": job_id, "product": product["name"],
              "tts_provider": tts_result["provider"],
              "timestamps_source": tts_result["timestamps_source"], **stats}
@@ -213,6 +226,35 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     _step_summary(stats, result, script)
     print(f"[pipeline] 완료: {job_dir}")
     return 0
+
+
+def _silent_track(lines: list, job_dir: Path) -> dict:
+    """--no-narration: 나레이션 없이 렌더하기 위한 무음 오디오 + 대본 길이 기반 합성 타이밍.
+    한국어 잰 템포(글자수×0.14s + 여유)로 라인 길이를 정하고 단어를 균등 배분한다.
+    반환 형태는 tts.synthesize_to_files 결과와 호환(audio_path/words/provider)."""
+    import wave
+    CPS, PAUSE = 0.14, 0.35
+    words, t = [], 0.0
+    for ln in lines:
+        toks = str(ln.get("text", "")).split()
+        if not toks:
+            continue
+        chars = sum(len(x) for x in toks) or 1
+        dur = max(1.0, chars * CPS + PAUSE)
+        step = dur / len(toks)
+        for w in toks:
+            words.append({"word": w, "start": round(t, 3), "end": round(t + step - 0.02, 3)})
+            t += step
+    total = round(t + 0.3, 3)
+    fr = 44100
+    wavp = job_dir / "audio.wav"
+    with wave.open(str(wavp), "w") as wv:
+        wv.setnchannels(1)
+        wv.setsampwidth(2)
+        wv.setframerate(fr)
+        wv.writeframes(b"\x00\x00" * int(fr * total))
+    return {"audio_path": wavp, "words": words, "duration": total,
+            "provider": "none(silent)", "timestamps_source": "synth"}
 
 
 def _line_windows(lines: list, words: list) -> list:

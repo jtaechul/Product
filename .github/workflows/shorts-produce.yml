@@ -26,6 +26,11 @@ on:
         type: choice
         options: [private, unlisted, public]
         default: private
+      no_narration:
+        description: "나레이션(TTS) 없이 렌더 — 영상/이미지 튜닝용"
+        type: choice
+        options: ["false", "true"]
+        default: "false"
   push:
     branches: [main, claude/coupang-shorts-phase-0-k42l1i]   # 작업브랜치=라이브 제작 테스트(임시)
     paths: ["projects/coupang-shorts-factory/requests/*.json"]
@@ -80,12 +85,14 @@ jobs:
             echo "row=${{ inputs.row }}" >> "$GITHUB_OUTPUT"
             echo "privacy=${{ inputs.privacy }}" >> "$GITHUB_OUTPUT"
             echo "soft=" >> "$GITHUB_OUTPUT"
+            [ "${{ inputs.no_narration }}" = "true" ] && echo "nonar=--no-narration" >> "$GITHUB_OUTPUT" || echo "nonar=" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.event_name }}" = "schedule" ]; then
             echo "mode=produce" >> "$GITHUB_OUTPUT"
             echo "provider=auto" >> "$GITHUB_OUTPUT"
             echo "row=auto" >> "$GITHUB_OUTPUT"
             echo "privacy=private" >> "$GITHUB_OUTPUT"
             echo "soft=--soft" >> "$GITHUB_OUTPUT"
+            echo "nonar=" >> "$GITHUB_OUTPUT"
           else
             get() { python3 -c "import json;print(json.load(open('requests/run_request.json')).get('$1','$2'))" 2>/dev/null || echo "$2"; }
             echo "mode=$(get mode produce)" >> "$GITHUB_OUTPUT"
@@ -93,6 +100,7 @@ jobs:
             echo "row=$(get row auto)" >> "$GITHUB_OUTPUT"
             echo "privacy=$(get privacy private)" >> "$GITHUB_OUTPUT"
             echo "soft=" >> "$GITHUB_OUTPUT"
+            [ "$(get no_narration false)" = "true" ] && echo "nonar=--no-narration" >> "$GITHUB_OUTPUT" || echo "nonar=" >> "$GITHUB_OUTPUT"
           fi
 
       - name: 파이프라인 실행
@@ -105,8 +113,9 @@ jobs:
           SHORTS_PEXELS_API_KEY: ${{ secrets.SHORTS_PEXELS_API_KEY }}
           SHORTS_ANTHROPIC_API_KEY: ${{ secrets.SHORTS_ANTHROPIC_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          # ⛔ Gemini/Veo 키는 의도적으로 주입하지 않는다 (2026-07-13 사용자 확정: 유료 AI 영상 폐지).
-          #    파이프라인도 Veo 호출을 제거했으므로 이 키가 있어도 쓰이지 않는다.
+          # Gemini 키 — ⚠️ 텍스트(대본·이미지검색어) 생성 전용. 유료 영상(Veo)은 코드에서 제거되어 호출 불가.
+          SHORTS_GEMINI_API_KEY: ${{ secrets.SHORTS_GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SHORTS_YT_CLIENT_ID: ${{ secrets.SHORTS_YT_CLIENT_ID }}
           SHORTS_YT_CLIENT_SECRET: ${{ secrets.SHORTS_YT_CLIENT_SECRET }}
           SHORTS_YT_REFRESH_TOKEN: ${{ secrets.SHORTS_YT_REFRESH_TOKEN }}
@@ -123,7 +132,8 @@ jobs:
               --privacy "${{ steps.params.outputs.privacy }}" \
               ${{ steps.params.outputs.provider != 'auto' && format('--provider {0}', steps.params.outputs.provider) || '' }} \
               --job-id "run${{ github.run_number }}" \
-              ${{ steps.params.outputs.soft }}
+              ${{ steps.params.outputs.soft }} \
+              ${{ steps.params.outputs.nonar }}
           fi
 
       - name: 큐 상태 커밋 (업로드 성공으로 processed.json이 바뀐 경우만)
