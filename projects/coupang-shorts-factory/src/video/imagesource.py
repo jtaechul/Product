@@ -188,12 +188,12 @@ def fetch_line_images(product: dict, lines: list, product_images: list,
 
 
 def _search_one(query: str, seen: set, order_seed: int = 0):
-    """검색어 1개 → 이미지 URL 1개. 소스를 order_seed로 로테이션해 화풍 다양화."""
+    """검색어 1개 → 이미지 URL 1개. Pexels(깨끗한 최신 스톡)를 항상 우선, 없을 때만 Openverse→Wikimedia.
+    (과거 소스 로테이션은 저품질 아카이브(군인·흑백)가 먼저 잡히는 문제로 폐기 —
+     다양성은 라인마다 '다른 검색어'에서 나오지 저품질 소스 섞기에서 나오지 않는다.)"""
     if not query:
         return None
-    fns = [_pexels, _openverse, _wikimedia]
-    order = fns[order_seed % 3:] + fns[:order_seed % 3]   # 라인마다 다른 소스 우선
-    for fn in order:
+    for fn in (_pexels, _openverse, _wikimedia):
         try:
             u = fn(query, seen)
             if u:

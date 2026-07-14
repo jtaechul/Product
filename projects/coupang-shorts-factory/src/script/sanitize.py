@@ -97,6 +97,10 @@ def sanitize_script(script: dict, strict_length: bool = True) -> dict:
     if repaired:
         print(f"[sanitize] subs 계약 위반/누락 라인 {repaired}개 → 어절 경계 기준 자동 복구")
 
+    # 제목 이모지 제거(핵심규칙: 이모지 금지) — Gemini가 제목에 🎤 등을 넣는 경우 정화
+    if script.get("title"):
+        script["title"] = clean_text(str(script["title"]))
+
     full = " ".join(l["text"] for l in lines)
     bad = check_forbidden(full + " " + str(script.get("title", "")))
     if bad:

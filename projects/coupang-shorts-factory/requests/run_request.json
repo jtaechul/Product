@@ -4,6 +4,6 @@
  "row": "auto",
  "privacy": "private",
  "no_narration": true,
- "note": "무나레이션 튜닝 3차: 해시태그 자동교정(Gemini 8개→3개) 수정. Gemini 대본 + 라인별 이미지. 나레이션 없음.",
- "requested_at": "2026-07-14T09:52:00Z"
+ "note": "무나레이션 튜닝 4차: Pexels 우선(저품질 아카이브 mismatch 제거) + 제목 이모지 제거. 나레이션 없음.",
+ "requested_at": "2026-07-14T10:05:00Z"
 }
