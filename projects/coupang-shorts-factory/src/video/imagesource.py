@@ -23,6 +23,7 @@ import requests
 from src.script.generate import (
     GEMINI_BASE, anthropic_key, gemini_key, script_provider)
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PEXELS = "https://api.pexels.com/v1/search"
 PIXABAY = "https://pixabay.com/api/"
 GIPHY = "https://api.giphy.com/v1/gifs/search"
@@ -106,6 +107,10 @@ def _plan_via_llm(product: dict, lines: list, settings: dict) -> list | None:
     name = str((product or {}).get("name", "")).strip()
     cat = str((product or {}).get("category", "")).strip()
     numbered = "\n".join(f'{i}: {str(l.get("text", "")).strip()}' for i, l in enumerate(lines))
+    # 학습: 운영자가 과거 확정한 (자막→검색어) 예시를 few-shot으로 먹여 추천 정확도를 올린다.
+    ex = _learning_examples(12)
+    shots = ("\n운영자가 과거에 좋다고 고른 예시(자막 → 검색어) — 이 감각을 따라라:\n"
+             + "\n".join(f'  "{t}" → "{q}"' for t, q in ex)) if ex else ""
     prompt = (
         "너는 한국어 쇼츠의 각 자막 라인에 넣을 '정사각형 비주얼'을 정하는 편집자다.\n"
         f"상품: {name} (카테고리: {cat})\n"
@@ -113,7 +118,8 @@ def _plan_via_llm(product: dict, lines: list, settings: dict) -> list | None:
         '- 그 라인이 "상품 자체·기능·스펙·사용법"을 설명하면 type="product".\n'
         '- 그 외(훅·공감·문제상황·감정·리액션·비교·라이프스타일)는 type="image"이고, 그 장면에\n'
         "  시각적으로 딱 맞는 영어 스톡 검색어 query(2~4단어, 사람·감정·상황 중심)를 준다.\n"
-        "- 특정 브랜드/로고/유명인/워터마크 금지. 매 라인 최대한 '다르게'(같은 이미지 반복 금지).\n"
+        "- 특정 브랜드/로고/유명인/워터마크 금지. 매 라인 최대한 '다르게'(같은 이미지 반복 금지)."
+        + shots + "\n"
         f"라인:\n{numbered}\n\n"
         f'출력: JSON만. {{"plan":[{{"i":0,"type":"image","query":"..."}}, ...]}} — 라인마다 1개, 총 {len(lines)}개.'
     )
@@ -211,6 +217,131 @@ def _search_one(query: str, seen: set, order_seed: int = 0):
         except Exception as e:
             print(f"[imgsrc] {fn.__name__} 실패({query}: {type(e).__name__})")
     return None
+
+
+def _search_many(query: str, n: int, seen: set) -> list:
+    """후보 여러 장 — 소스별 최대 2장씩 모아 다양성 확보. [{url, source}] 반환.
+    기존 단일 소스 함수는 seen에 추가하며 '안 쓴 것 중 첫 장'을 주므로 반복 호출 시 다른 장이 나온다."""
+    if not query:
+        return []
+    out = []
+    for fn in (_pexels, _pixabay, _giphy, _openverse, _wikimedia):
+        src = fn.__name__.lstrip("_")
+        for _ in range(2):
+            if len(out) >= n:
+                return out
+            try:
+                u = fn(query, seen)
+            except Exception:
+                u = None
+            if not u:
+                break
+            out.append({"url": u, "source": src})
+    return out
+
+
+def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
+                     product_images: list | None = None, per_line: int = 6) -> list:
+    """관리자 선택기용 — 라인마다 후보 이미지 여러 장 확보 + candidates.json manifest 작성.
+    상품 사진은 항상 후보에 포함(사용자가 상품을 강제 선택 가능). 이미지 라인은 다양 소스에서 수집."""
+    plan = plan_line_visuals(product, lines, settings)
+    out_dir = Path(job_dir) / "candidates"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    product_images = [str(p) for p in (product_images or []) if Path(p).exists()]
+    manifest, seen = [], set()
+    for i, (ln, pl) in enumerate(zip(lines, plan)):
+        entry = {"line_i": i, "text": ln.get("text", ""), "stage": ln.get("stage"),
+                 "punch": bool(ln.get("punch")), "type": pl["type"],
+                 "query": pl.get("query", ""), "candidates": []}
+        for p in product_images[:2]:   # 상품 사진 후보(강제 선택용)
+            entry["candidates"].append({"file": p, "source": "product", "url": None, "is_product": True})
+        if pl["type"] == "image":
+            for j, c in enumerate(_search_many(pl.get("query", ""), per_line, seen)):
+                ext = ".gif" if c["url"].lower().split("?")[0].endswith(".gif") else ".jpg"
+                dest = out_dir / f"line{i:02d}_{j}{ext}"
+                if _download_image(c["url"], dest):
+                    entry["candidates"].append({"file": str(dest), "source": c["source"], "url": c["url"]})
+        manifest.append(entry)
+    (Path(job_dir) / "candidates.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
+    total = sum(len(e["candidates"]) for e in manifest)
+    print(f"[imgsrc] 후보 생성: {len(manifest)}라인 · 총 {total}장")
+    return manifest
+
+
+def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Path) -> list | None:
+    """data/selections/{row_hash}.json 있으면 라인별 선택 이미지 경로 목록(lines 정렬) 반환, 없으면 None.
+    선택 항목이 url이면 내려받고, 로컬/상품 파일이면 그대로. 학습 로그도 남긴다."""
+    sel_path = Path(project_root) / "data" / "selections" / f"{row_hash}.json"
+    if not sel_path.exists():
+        return None
+    try:
+        data = json.loads(sel_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"[imgsrc] selections 파싱 실패({e}) → 자동 소싱")
+        return None
+    picks = {int(x.get("line_i", -1)): x for x in (data.get("lines") or [])}
+    dl_dir = Path(job_dir) / "selected"
+    dl_dir.mkdir(parents=True, exist_ok=True)
+    line_images, used = [], 0
+    for i in range(len(lines)):
+        pick = picks.get(i)
+        if not pick:
+            line_images.append(None)
+            continue
+        f = pick.get("file")
+        if f and Path(f).exists():   # 저장소에 커밋된 파일(업로드본 등)
+            line_images.append(Path(f))
+            used += 1
+            continue
+        url = pick.get("url")
+        if url:
+            ext = ".gif" if url.lower().split("?")[0].endswith(".gif") else ".jpg"
+            dest = dl_dir / f"sel_{i:02d}{ext}"
+            if _download_image(url, dest):
+                line_images.append(dest)
+                used += 1
+                continue
+        line_images.append(None)
+    print(f"[imgsrc] 운영자 선택 이미지 적용: {used}/{len(lines)}라인 (data/selections/{row_hash}.json)")
+    _record_learning(project_root, lines, picks)
+    return line_images
+
+
+def _record_learning(project_root: Path, lines: list, picks: dict):
+    """운영자가 확정한 (자막 문장 → 검색어/소스) 쌍을 학습 로그에 축적 → 다음 검색어 추천에 few-shot."""
+    log = Path(project_root) / "data" / "vision_examples.jsonl"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    rows = []
+    for i, ln in enumerate(lines):
+        pk = picks.get(i)
+        if not pk:
+            continue
+        q = str(pk.get("query", "")).strip()
+        if q:
+            rows.append(json.dumps({"text": str(ln.get("text", "")).strip(), "query": q,
+                                    "source": pk.get("source", "")}, ensure_ascii=False))
+    if rows:
+        with log.open("a", encoding="utf-8") as f:
+            f.write("\n".join(rows) + "\n")
+
+
+def _learning_examples(limit: int = 12) -> list:
+    """최근 학습 예시(자막→검색어) 몇 개 — 검색어 추천 프롬프트에 few-shot으로 먹인다."""
+    log = PROJECT_ROOT / "data" / "vision_examples.jsonl"
+    if not log.exists():
+        return []
+    out = []
+    try:
+        for line in log.read_text(encoding="utf-8").splitlines()[-limit:]:
+            line = line.strip()
+            if line:
+                d = json.loads(line)
+                if d.get("text") and d.get("query"):
+                    out.append((d["text"], d["query"]))
+    except Exception:
+        return []
+    return out
 
 
 def _pixabay(query: str, seen: set):

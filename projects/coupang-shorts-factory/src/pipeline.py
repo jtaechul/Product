@@ -45,6 +45,8 @@ def main() -> int:
     p.add_argument("--soft", action="store_true", help="전제조건 미비 시 정상 종료(cron용)")
     p.add_argument("--no-narration", action="store_true",
                    help="나레이션(TTS) 없이 렌더 — 영상/이미지 튜닝용(대본 길이로 자막 타이밍 합성)")
+    p.add_argument("--candidates", action="store_true",
+                   help="렌더 대신 라인별 후보 이미지만 생성(관리자 선택기용) — candidates.json 작성")
     args = p.parse_args()
 
     settings = yaml.safe_load((PROJECT_ROOT / "config" / "settings.yaml").read_text(encoding="utf-8"))
@@ -107,6 +109,14 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     lines = script["lines"]
     text = "\n".join(l["text"] for l in lines)
 
+    # ---- 후보 이미지 생성 모드(#2 관리자 선택기용): TTS·렌더 없이 라인별 후보 이미지만 만든다.
+    if args.candidates:
+        _pimgs = list(product.get("hero_images") or [])
+        _pimgs += _download_images(product.get("image_urls") or [], job_dir)
+        imagesource.fetch_candidates(product, lines, job_dir, settings, product_images=_pimgs)
+        print(f"[pipeline] #2 후보 생성 완료 → {job_dir}/candidates.json (TTS·렌더 생략)")
+        return 0
+
     # ---- M4(+M5): TTS → audio.mp3 + timestamps.json (또는 --no-narration이면 무음+합성 타이밍)
     if args.no_narration:
         t0 = time.time()
@@ -151,10 +161,14 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     line_images = []
     if str(settings.get("render", {}).get("layout", "framed")).lower() == "framed":
         try:
-            line_images, vis_plan = imagesource.fetch_line_images(
-                product, lines, product_images, job_dir, settings)
-            (job_dir / "visual_plan.json").write_text(
-                json.dumps(vis_plan, ensure_ascii=False, indent=1), encoding="utf-8")
+            # #2: 운영자가 관리자에서 고른 이미지(data/selections/{row}.json)가 있으면 그걸 최우선 사용.
+            line_images = imagesource.load_selections(
+                product["_row_hash"], lines, PROJECT_ROOT, job_dir)
+            if line_images is None:   # 선택본 없으면 자동 소싱(폴백)
+                line_images, vis_plan = imagesource.fetch_line_images(
+                    product, lines, product_images, job_dir, settings)
+                (job_dir / "visual_plan.json").write_text(
+                    json.dumps(vis_plan, ensure_ascii=False, indent=1), encoding="utf-8")
         except Exception as e:
             print(f"[pipeline] 라인 이미지 소싱 실패({type(e).__name__}: {e}) → 상품 사진 폴백")
 
