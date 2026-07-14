@@ -131,8 +131,9 @@ ol li{margin:8px 0}
   </div>
   <nav>
     <button data-tab="products" class="on">상품</button>
-    <button data-tab="run">제작</button>
+    <button data-tab="plan">기획</button>
     <button data-tab="images">이미지</button>
+    <button data-tab="run">제작</button>
     <button data-tab="videos">영상</button>
     <button data-tab="setup">설정</button>
   </nav>
@@ -214,6 +215,29 @@ ol li{margin:8px 0}
   <div class="card">
     <h2>최근 실행 기록 <button class="btn mini sub" id="btnReloadRuns" style="float:right">새로고침</button></h2>
     <div id="runList"><p class="empty">불러오는 중...</p></div>
+  </div>
+</section>
+
+<!-- ───────── 기획 탭 (기획+스토리보드+대본 검토·승인) ───────── -->
+<section id="tab-plan">
+  <div class="card">
+    <h2>기획 · 대본</h2>
+    <p class="hint" style="margin:0 0 8px">상품을 고르고 <b>기획 만들기</b>를 누르면(약 1~2분) Claude가
+    제품을 분석해 <b>기획서 + 구간별 스토리보드 + 대본</b>을 만듭니다. 검토해서 방향이 맞으면
+    <b>이 기획으로 이미지 찾기</b>로 넘어가고, 아니면 <b>기획 다시 만들기</b>를 누르세요.</p>
+    <label>상품 선택</label>
+    <select id="planProduct"><option value="">토큰 저장 후 불러옵니다…</option></select>
+    <div class="row2" style="margin-top:10px">
+      <button class="btn sub" id="planGen">기획 만들기 (1~2분)</button>
+      <button class="btn" id="planLoad">기획 불러오기</button>
+    </div>
+    <p class="hint" id="planStatus"></p>
+  </div>
+  <div id="planView"></div>
+  <div class="card" id="planActions" style="display:none">
+    <button class="btn" id="planApprove">이 기획으로 이미지 찾기 →</button>
+    <button class="btn sub" id="planRegen" style="margin-top:8px">기획 다시 만들기</button>
+    <p class="hint">승인하면 '이미지' 탭으로 넘어가 구간별 이미지 후보를 만듭니다.</p>
   </div>
 </section>
 
@@ -433,6 +457,7 @@ document.querySelectorAll("nav button").forEach((b) => {
     document.querySelectorAll("main section").forEach((s) =>
       s.classList.toggle("on", s.id === "tab-" + b.dataset.tab));
     if (b.dataset.tab === "products") loadProducts();
+    if (b.dataset.tab === "plan") planInit();
     if (b.dataset.tab === "run") loadRuns();
     if (b.dataset.tab === "images") imgInit();
     if (b.dataset.tab === "videos") loadVideos();
@@ -926,6 +951,101 @@ $("vmDownload").onclick = async () => {
     btn.disabled = false;
   }
 };
+
+/* ── 기획 탭 — 기획+스토리보드+대본 생성(plan 모드) → 검토 → 승인(이미지 찾기로) ── */
+const PLAN_DIR = P + "/data/plans";
+let planData = null;
+
+async function fillProductSelect(sel) {   // 기획·이미지 공용 상품 드롭다운 채우기
+  if (!token()) { sel.innerHTML = '<option value="">설정 탭에서 토큰을 먼저 저장하세요</option>'; return; }
+  const csv = await getFile(CSV_PATH);
+  const rows = parseCsv(csv.text);
+  sel.innerHTML = "";
+  if (!rows.length) { sel.innerHTML = '<option value="">대기 중인 상품이 없습니다</option>'; return; }
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i], h = await sha16(`${r.name}|${r.link}`);
+    const o = document.createElement("option");
+    o.value = String(i); o.dataset.hash = h;
+    o.textContent = `${i + 1}. ` + (r.name || "(자동 추출 — " + r.link.slice(-12) + ")");
+    sel.appendChild(o);
+  }
+}
+function planSelected() {
+  const sel = $("planProduct"), opt = sel.options[sel.selectedIndex];
+  if (!opt || opt.value === "") { toast("상품을 먼저 고르세요."); return null; }
+  return { row: Number(opt.value) + 1, hash: opt.dataset.hash };
+}
+async function planInit() {
+  try { await fillProductSelect($("planProduct")); } catch (e) { toast(e.message, 5000); }
+}
+$("planGen").onclick = (ev) => busy(ev.target, async () => {
+  const p = planSelected(); if (!p) return;
+  await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches`, {
+    method: "POST", body: JSON.stringify({ ref: BRANCH, inputs: { mode: "plan", row: String(p.row) } }) });
+  $("planStatus").textContent = "기획을 만드는 중입니다(약 1~2분). 잠시 뒤 '기획 불러오기'를 누르세요.";
+  toast("기획 생성 시작 — 1~2분 뒤 불러오기");
+});
+$("planLoad").onclick = (ev) => busy(ev.target, async () => {
+  const p = planSelected(); if (!p) return;
+  $("planStatus").textContent = "기획 불러오는 중...";
+  const f = await getFile(`${PLAN_DIR}/${p.hash}.json`, true);
+  if (!f) { $("planStatus").textContent = "아직 기획이 없습니다. '기획 만들기'를 먼저 누르세요(생성에 1~2분)."; return; }
+  planData = JSON.parse(f.text);
+  renderPlan();
+  $("planStatus").textContent = "기획을 검토하세요. 좋으면 아래 '이미지 찾기'로 넘어갑니다.";
+  $("planActions").style.display = "";
+});
+function renderPlan() {
+  const box = $("planView"); box.innerHTML = "";
+  const c = planData.concept || {};
+  const mk = (html) => { const d = document.createElement("div"); d.className = "card"; d.innerHTML = html; return d; };
+  // 기획서
+  const con = mk('<h2>기획서</h2>');
+  for (const [k, label] of [["의도", "의도"], ["타깃", "타깃"], ["후킹", "후킹 포인트"]]) {
+    if (c[k]) { const p = document.createElement("p"); p.style.margin = "6px 0";
+      p.innerHTML = `<b>${label}</b> · `; p.appendChild(document.createTextNode(c[k])); con.appendChild(p); }
+  }
+  if (!c.의도 && !c.타깃 && !c.후킹) con.insertAdjacentHTML("beforeend", '<p class="hint">기획서 정보가 비어 있습니다.</p>');
+  box.appendChild(con);
+  // 스토리보드 + 대본
+  const sb = mk('<h2>스토리보드 · 대본</h2>');
+  for (const [i, ln] of (planData.lines || []).entries()) {
+    const row = document.createElement("div"); row.className = "item";
+    row.innerHTML = `<div class="grow"><div class="t"></div><div class="s"></div></div>`
+      + `<span class="chip ${ln.punch ? "wait" : ""}">${ln.punch ? "훅" : "단계 " + (ln.stage || "-")}</span>`;
+    row.querySelector(".t").textContent = `${i + 1}. ${ln.text}`;
+    row.querySelector(".s").textContent = ln.scene ? "장면: " + ln.scene : "";
+    sb.appendChild(row);
+  }
+  box.appendChild(sb);
+  // 메타(제목/헤드라인/해시태그/설명)
+  const meta = mk('<h2>제목 · 설명 · 해시태그</h2>');
+  const addRow = (label, val) => { const p = document.createElement("p"); p.style.margin = "6px 0";
+    p.innerHTML = `<b>${label}</b> · `; p.appendChild(document.createTextNode(val || "-")); meta.appendChild(p); };
+  addRow("제목", planData.title);
+  addRow("화면 헤드라인", planData.headline);
+  addRow("해시태그", (planData.hashtags || []).map((h) => (h[0] === "#" ? h : "#" + h)).join(" "));
+  addRow("설명", planData.description_body);
+  box.appendChild(meta);
+}
+$("planRegen").onclick = (ev) => busy(ev.target, async () => {
+  const p = planSelected(); if (!p) return;
+  await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches`, {
+    method: "POST", body: JSON.stringify({ ref: BRANCH, inputs: { mode: "plan", row: String(p.row) } }) });
+  toast("기획 다시 만들기 시작 — 1~2분 뒤 '기획 불러오기'");
+});
+$("planApprove").onclick = (ev) => busy(ev.target, async () => {
+  const p = planSelected(); if (!p) return;
+  // '이미지' 탭으로 전환 + 같은 상품 선택 + 후보 생성 자동 시작
+  document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x.dataset.tab === "images"));
+  document.querySelectorAll("main section").forEach((s) => s.classList.toggle("on", s.id === "tab-images"));
+  await imgInit();
+  const sel = $("imgProduct");
+  for (const o of sel.options) if (o.dataset.hash === p.hash) { sel.value = o.value; break; }
+  await imgDispatch(p.row);
+  $("imgStatus").textContent = "기획 승인됨 — 구간별 이미지 후보 생성 시작(1~2분). 잠시 뒤 '후보 불러오기'.";
+  toast("기획 승인 → 이미지 후보 생성 시작");
+});
 
 /* ── 자막별 이미지 선택기 (#2) — shorts-cand 릴리스의 라인별 후보를 골라 data/selections에 저장 ── */
 const IMG_TAG = "shorts-cand";

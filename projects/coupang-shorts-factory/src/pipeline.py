@@ -47,6 +47,8 @@ def main() -> int:
                    help="나레이션(TTS) 없이 렌더 — 영상/이미지 튜닝용(대본 길이로 자막 타이밍 합성)")
     p.add_argument("--candidates", action="store_true",
                    help="렌더 대신 라인별 후보 이미지만 생성(관리자 선택기용) — candidates.json 작성")
+    p.add_argument("--plan", action="store_true",
+                   help="기획+스토리보드+대본만 생성(승인 단계용) — data/plans/{row_hash}.json 작성, 이미지·제작 생략")
     args = p.parse_args()
 
     settings = yaml.safe_load((PROJECT_ROOT / "config" / "settings.yaml").read_text(encoding="utf-8"))
@@ -88,26 +90,41 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     (job_dir / "product.json").write_text(json.dumps(product, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"[pipeline] M2 상품: {product['name']} ({product['price']:,}원)")
 
-    # ---- M3: 대본
+    # ---- M3: 대본 (기획 승인 흐름)
+    #   --plan          : 항상 새로 생성 → data/plans/{hash}.json 저장 후 종료(승인 대기)
+    #   그 외(candidates/produce) : 승인된 기획(data/plans/{hash}.json)이 있으면 그걸 그대로 사용
+    #                              (운영자가 확정한 대본을 재생성하지 않는다). 없으면 즉석 생성(하위호환).
+    from src.script.sanitize import sanitize_script
+    plan_path = PROJECT_ROOT / "data" / "plans" / f"{product['_row_hash']}.json"
     if args.script_file:
         script = json.loads(Path(args.script_file).read_text(encoding="utf-8"))
-        from src.script.sanitize import sanitize_script
         script = sanitize_script(script, strict_length=False)
-        script["pinned_comment"] = f"제품 정보는 여기서 확인 → {product['affiliate_url']}\n{DISCLOSURE}"
         print("[pipeline] M3 우회: script-file 사용")
+    elif plan_path.exists() and not args.plan:
+        script = sanitize_script(json.loads(plan_path.read_text(encoding="utf-8")), strict_length=False)
+        print(f"[pipeline] M3: 승인된 기획+대본 사용 (data/plans/{product['_row_hash']}.json)")
     else:
         if not have_script_key(settings):
             msg = missing_key_hint(settings) + " (등록 전에는 --script-file로만 실행 가능)"
             if args.soft:
-                print(f"[pipeline] {msg} → cron 모드라 정상 종료")
+                print(f"[pipeline] {msg} → 정상 종료")
                 return 0
             raise RuntimeError(msg)
         print(f"[pipeline] M3 대본 프로바이더: {script_provider(settings)}")
         script = generate_script(product, settings)
+    # §3.1 고지문·링크는 항상 코드로 강제 (기획 로드 경로 포함)
+    script["pinned_comment"] = f"제품 정보는 여기서 확인 → {product['affiliate_url']}\n{DISCLOSURE}"
     (job_dir / "script.json").write_text(json.dumps(script, ensure_ascii=False, indent=1), encoding="utf-8")
 
     lines = script["lines"]
     text = "\n".join(l["text"] for l in lines)
+
+    # ---- 기획 생성 모드(--plan): 기획+스토리보드+대본만 만들고 승인 대기 (이미지·제작 생략)
+    if args.plan:
+        plan_path.parent.mkdir(parents=True, exist_ok=True)
+        plan_path.write_text(json.dumps(script, ensure_ascii=False, indent=1), encoding="utf-8")
+        print(f"[pipeline] 기획+대본 생성 완료 → data/plans/{product['_row_hash']}.json (승인 대기)")
+        return 0
 
     # ---- 후보 이미지 생성 모드(#2 관리자 선택기용): TTS·렌더 없이 라인별 후보 이미지만 만든다.
     if args.candidates:

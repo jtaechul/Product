@@ -104,6 +104,14 @@ def sanitize_script(script: dict, strict_length: bool = True) -> dict:
     # headline(폭로 포맷 화면 상단 뉴스 헤더)도 같은 규칙으로 정화 — 이모지·슬래시·파이프 제거
     if script.get("headline"):
         script["headline"] = clean_text(str(script["headline"]))
+    # concept(기획서: 의도·타깃·후킹) — 운영자 검토용 표시 텍스트, 이모지·특수기호 정화
+    concept = script.get("concept")
+    if isinstance(concept, dict):
+        script["concept"] = {k: clean_text(str(v)) for k, v in concept.items() if v}
+    # 각 라인 scene(스토리보드 장면 묘사) 정화 (없으면 빈 문자열)
+    for line in lines:
+        if line.get("scene"):
+            line["scene"] = clean_text(str(line["scene"]))
 
     full = " ".join(l["text"] for l in lines)
     bad = check_forbidden(full + " " + str(script.get("title", "")))
