@@ -38,9 +38,9 @@ nav button{
   font-size:15px; font-weight:700; cursor:pointer; border-bottom:3px solid transparent;
 }
 nav button.on{color:var(--accent); border-bottom-color:var(--accent)}
-main{max-width:680px; margin:0 auto; padding:16px}
+main{max-width:680px; margin:0 auto; padding:16px; display:flex; flex-direction:column}
 section{display:none}
-section.on{display:block}
+section.on{display:block}   /* order 속성으로 만들기 탭 내 섹션 순서: 상품→기획→이미지→제작 */
 .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px}
 .card h2{font-size:16px; font-weight:800; margin-bottom:10px}
 label{display:block; font-size:13px; font-weight:700; color:var(--sub); margin:12px 0 4px}
@@ -130,10 +130,7 @@ ol li{margin:8px 0}
     <span id="connBadge">연결 필요</span>
   </div>
   <nav>
-    <button data-tab="products" class="on">상품</button>
-    <button data-tab="plan">기획</button>
-    <button data-tab="images">이미지</button>
-    <button data-tab="run">제작</button>
+    <button data-tab="make" class="on">만들기</button>
     <button data-tab="videos">영상</button>
     <button data-tab="setup">설정</button>
   </nav>
@@ -141,7 +138,13 @@ ol li{margin:8px 0}
 <main>
 
 <!-- ───────── 상품 탭 ───────── -->
-<section id="tab-products" class="on">
+<section id="tab-products" class="on" data-group="make" style="order:1">
+  <div class="card">
+    <h2>제작할 상품</h2>
+    <p class="hint" style="margin:0 0 6px">상품을 고르면 아래에서 그 상품으로 <b>기획 → 이미지 → 제작</b>이 이어집니다.
+    처음이면 먼저 아래 '새 상품 등록'에서 추가하세요.</p>
+    <select id="mkProduct"><option value="">토큰 저장 후 불러옵니다…</option></select>
+  </div>
   <div class="card">
     <h2>새 상품 등록</h2>
     <p class="hint" style="margin:0 0 4px">제휴 링크만 필수입니다. 상품 페이지의 설명·리뷰를
@@ -192,14 +195,12 @@ ol li{margin:8px 0}
 </section>
 
 <!-- ───────── 제작 탭 ───────── -->
-<section id="tab-run">
+<section id="tab-run" class="on" data-group="make" style="order:4">
   <div class="card">
     <h2>제작 · 검수 · 올리기</h2>
     <p class="hint" style="margin:0 0 8px">기획 승인 + 이미지 선택이 끝난 상품을 고르고 <b>제작하기</b>를
     누르면(약 2~4분) 영상이 만들어집니다. 완성되면 <b>검수 불러오기</b>로 영상·제목·설명·해시태그를
     확인하고, 항목별 <b>다시 생성</b>이나 <b>영상 다시 만들기</b>를 거쳐 <b>유튜브에 올리기</b>로 마무리합니다.</p>
-    <label>상품 선택</label>
-    <select id="mkProduct"><option value="">토큰 저장 후 불러옵니다…</option></select>
     <div class="row2" style="margin-top:10px">
       <button class="btn sub" id="mkProduce">제작하기 (2~4분)</button>
       <button class="btn" id="mkLoad">검수 불러오기</button>
@@ -214,14 +215,12 @@ ol li{margin:8px 0}
 </section>
 
 <!-- ───────── 기획 탭 (기획+스토리보드+대본 검토·승인) ───────── -->
-<section id="tab-plan">
+<section id="tab-plan" class="on" data-group="make" style="order:2">
   <div class="card">
     <h2>기획 · 대본</h2>
     <p class="hint" style="margin:0 0 8px">상품을 고르고 <b>기획 만들기</b>를 누르면(약 1~2분) Claude가
     제품을 분석해 <b>기획서 + 구간별 스토리보드 + 대본</b>을 만듭니다. 검토해서 방향이 맞으면
     <b>이 기획으로 이미지 찾기</b>로 넘어가고, 아니면 <b>기획 다시 만들기</b>를 누르세요.</p>
-    <label>상품 선택</label>
-    <select id="planProduct"><option value="">토큰 저장 후 불러옵니다…</option></select>
     <div class="row2" style="margin-top:10px">
       <button class="btn sub" id="planGen">기획 만들기 (1~2분)</button>
       <button class="btn" id="planLoad">기획 불러오기</button>
@@ -237,15 +236,13 @@ ol li{margin:8px 0}
 </section>
 
 <!-- ───────── 이미지 탭 (자막별 이미지 선택기 #2) ───────── -->
-<section id="tab-images">
+<section id="tab-images" class="on" data-group="make" style="order:3">
   <div class="card">
     <h2>자막별 이미지 선택</h2>
     <p class="hint" style="margin:0 0 8px">자막(문장)마다 어울리는 이미지를 직접 고릅니다. 상품을 고르고
     <b>후보 만들기</b>를 누르면(약 1~2분) 라인마다 후보가 모입니다. 마음에 들면 탭해서 고르고, 없으면
     <b>다시 찾기</b>나 <b>내 파일</b>을 올리세요. 고른 결과는 다음 제작부터 그 상품 영상에 그대로 쓰이고,
     자동 추천도 그 선택을 학습합니다.</p>
-    <label>상품 선택</label>
-    <select id="imgProduct"><option value="">토큰 저장 후 불러옵니다…</option></select>
     <div class="row2" style="margin-top:10px">
       <button class="btn sub" id="imgGen">후보 만들기 (1~2분)</button>
       <button class="btn" id="imgLoad">후보 불러오기</button>
@@ -445,20 +442,24 @@ async function busy(btn, fn) {
   finally { btn.disabled = false; }
 }
 
-/* ── 탭 전환 ─────────────────────────── */
+/* ── 탭 전환 (3탭: 만들기=상품+기획+이미지+제작 / 영상 / 설정) ─────────── */
+//   한 탭 아래 여러 섹션을 묶기 위해 섹션의 data-group(없으면 id의 tab- 뒤)으로 매칭한다.
 document.querySelectorAll("nav button").forEach((b) => {
   b.onclick = () => {
+    const tab = b.dataset.tab;
     document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x === b));
     document.querySelectorAll("main section").forEach((s) =>
-      s.classList.toggle("on", s.id === "tab-" + b.dataset.tab));
-    if (b.dataset.tab === "products") loadProducts();
-    if (b.dataset.tab === "plan") planInit();
-    if (b.dataset.tab === "run") mkInit();
-    if (b.dataset.tab === "images") imgInit();
-    if (b.dataset.tab === "videos") loadVideos();
-    if (b.dataset.tab === "setup") bgmRefresh();
+      s.classList.toggle("on", (s.dataset.group || s.id.replace("tab-", "")) === tab));
+    if (tab === "make") makeInit();
+    if (tab === "videos") loadVideos();
+    if (tab === "setup") bgmRefresh();
   };
 });
+// 만들기 탭 = 상품 선택(공용) + 대기열 + 기획 + 이미지 + 제작 초기화
+async function makeInit() {
+  await mkInit();          // 공용 상품 드롭다운(mkProduct) 채우기 + 실행기록
+  loadProducts();          // 대기열 목록
+}
 
 /* ── 연결 상태 ───────────────────────── */
 async function checkConn() {
@@ -1035,14 +1036,13 @@ async function fillProductSelect(sel) {   // 기획·이미지 공용 상품 드
     sel.appendChild(o);
   }
 }
-function planSelected() {
-  const sel = $("planProduct"), opt = sel.options[sel.selectedIndex];
-  if (!opt || opt.value === "") { toast("상품을 먼저 고르세요."); return null; }
+// 공용 상품 드롭다운(#mkProduct)에서 현재 선택 상품 — 기획·이미지·제작이 모두 공유
+function currentProduct() {
+  const sel = $("mkProduct"), opt = sel && sel.options[sel.selectedIndex];
+  if (!opt || opt.value === "") { toast("맨 위에서 상품을 먼저 고르세요."); return null; }
   return { row: Number(opt.value) + 1, hash: opt.dataset.hash };
 }
-async function planInit() {
-  try { await fillProductSelect($("planProduct")); } catch (e) { toast(e.message, 5000); }
-}
+const planSelected = currentProduct;
 $("planGen").onclick = (ev) => busy(ev.target, async () => {
   const p = planSelected(); if (!p) return;
   await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches`, {
@@ -1101,14 +1101,10 @@ $("planRegen").onclick = (ev) => busy(ev.target, async () => {
 });
 $("planApprove").onclick = (ev) => busy(ev.target, async () => {
   const p = planSelected(); if (!p) return;
-  // '이미지' 탭으로 전환 + 같은 상품 선택 + 후보 생성 자동 시작
-  document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x.dataset.tab === "images"));
-  document.querySelectorAll("main section").forEach((s) => s.classList.toggle("on", s.id === "tab-images"));
-  await imgInit();
-  const sel = $("imgProduct");
-  for (const o of sel.options) if (o.dataset.hash === p.hash) { sel.value = o.value; break; }
+  // 한 탭 안에서 아래 '이미지' 단계로 스크롤 + 후보 생성 자동 시작(공용 상품 사용)
   await imgDispatch(p.row);
   $("imgStatus").textContent = "기획 승인됨 — 구간별 이미지 후보 생성 시작(1~2분). 잠시 뒤 '후보 불러오기'.";
+  document.getElementById("tab-images").scrollIntoView({ behavior: "smooth" });
   toast("기획 승인 → 이미지 후보 생성 시작");
 });
 
@@ -1120,29 +1116,7 @@ let imgAssetMap = {};    // 자산이름 → browser_download_url
 let imgPicks = {};       // line_i → {url?|file?|is_product?, source, query}
 const pad2 = (n) => String(n).padStart(2, "0");
 
-async function imgInit() {
-  const sel = $("imgProduct");
-  if (!token()) { sel.innerHTML = '<option value="">설정 탭에서 토큰을 먼저 저장하세요</option>'; return; }
-  try {
-    const csv = await getFile(CSV_PATH);
-    imgRows = parseCsv(csv.text);
-    sel.innerHTML = "";
-    if (!imgRows.length) { sel.innerHTML = '<option value="">대기 중인 상품이 없습니다</option>'; return; }
-    for (let i = 0; i < imgRows.length; i++) {
-      const r = imgRows[i];
-      const h = await sha16(`${r.name}|${r.link}`);
-      const o = document.createElement("option");
-      o.value = String(i); o.dataset.hash = h;
-      o.textContent = `${i + 1}. ` + (r.name || "(자동 추출 — " + r.link.slice(-12) + ")");
-      sel.appendChild(o);
-    }
-  } catch (e) { toast(e.message, 5000); }
-}
-function imgSelected() {
-  const sel = $("imgProduct"), opt = sel.options[sel.selectedIndex];
-  if (!opt || opt.value === "") { toast("상품을 먼저 고르세요."); return null; }
-  return { row: Number(opt.value) + 1, hash: opt.dataset.hash };
-}
+const imgSelected = currentProduct;   // 공용 상품 드롭다운(#mkProduct) 사용
 async function imgDispatch(row) {
   await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches`, {
     method: "POST",
@@ -1263,7 +1237,7 @@ $("btnSaveToken").onclick = (ev) => busy(ev.target, async () => {
   if (!v) throw new Error("토큰을 붙여넣은 뒤 저장을 누르세요.");
   localStorage.setItem(LS_KEY, v);
   $("tokenInput").value = "";
-  if (await checkConn()) { toast("연결됐습니다. 이제 모든 기능을 쓸 수 있습니다."); loadProducts(); }
+  if (await checkConn()) { toast("연결됐습니다. 이제 모든 기능을 쓸 수 있습니다."); makeInit(); }
 });
 $("btnClearToken").onclick = () => {
   localStorage.removeItem(LS_KEY);
@@ -1337,7 +1311,7 @@ $("memeUp").onclick = (ev) => busy(ev.target, async () => {
 });
 
 /* ── 시작 ────────────────────────────── */
-(async () => { if (await checkConn()) loadProducts(); })();
+(async () => { if (await checkConn()) makeInit(); })();
 </script>
 </body>
 </html>

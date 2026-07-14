@@ -76,6 +76,15 @@ export default {
     if (url.pathname === "/health") return new Response("ok");
     if (url.pathname === "/media") return mediaProxy(request, url);
     if (url.pathname === "/ghup") return ghUploadProxy(request, url);
-    return env.ASSETS.fetch(request); // 그 외 경로는 정적 에셋(index.html 등)
+    // 그 외 경로는 정적 에셋(index.html 등). HTML은 배포 즉시 반영되도록 no-cache로 재발행
+    // (브라우저가 옛 관리자 페이지를 캐시해 "안 바뀜"으로 보이던 문제 해결).
+    const res = await env.ASSETS.fetch(request);
+    const ct = res.headers.get("content-type") || "";
+    if (ct.includes("text/html")) {
+      const h = new Headers(res.headers);
+      h.set("Cache-Control", "no-cache, must-revalidate");
+      return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
+    }
+    return res;
   },
 };
