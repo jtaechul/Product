@@ -24,6 +24,8 @@ from src.script.generate import (
     GEMINI_BASE, anthropic_key, gemini_key, script_provider)
 
 PEXELS = "https://api.pexels.com/v1/search"
+PIXABAY = "https://pixabay.com/api/"
+GIPHY = "https://api.giphy.com/v1/gifs/search"
 OPENVERSE = "https://api.openverse.org/v1/images/"
 WIKIMEDIA = "https://commons.wikimedia.org/w/api.php"
 UA = {"User-Agent": "miraemarket-shorts/1.0 (+https://youtube.com/@miraemarket)"}
@@ -41,6 +43,14 @@ _DEFAULT_QUERIES = ["young person at home", "cozy lifestyle", "everyday moment",
 
 def _pexels_key() -> str:
     return (os.environ.get("SHORTS_PEXELS_API_KEY") or "").strip()
+
+
+def _pixabay_key() -> str:
+    return (os.environ.get("SHORTS_PIXABAY_API_KEY") or "").strip()
+
+
+def _giphy_key() -> str:
+    return (os.environ.get("SHORTS_GIPHY_API_KEY") or "").strip()
 
 
 # ───────────────────────── 라인별 배정(플랜) ─────────────────────────
@@ -176,7 +186,8 @@ def fetch_line_images(product: dict, lines: list, product_images: list,
             continue
         url = _search_one(pl.get("query", ""), seen, order_seed=img_i) if pl["type"] == "image" else None
         img_i += 1
-        dest = out_dir / f"line_{i:02d}.jpg"
+        ext = ".gif" if url and url.lower().split("?")[0].endswith(".gif") else ".jpg"
+        dest = out_dir / f"line_{i:02d}{ext}"
         if url and _download_image(url, dest):
             line_images.append(dest)
             got += 1
@@ -188,18 +199,53 @@ def fetch_line_images(product: dict, lines: list, product_images: list,
 
 
 def _search_one(query: str, seen: set, order_seed: int = 0):
-    """검색어 1개 → 이미지 URL 1개. Pexels(깨끗한 최신 스톡)를 항상 우선, 없을 때만 Openverse→Wikimedia.
-    (과거 소스 로테이션은 저품질 아카이브(군인·흑백)가 먼저 잡히는 문제로 폐기 —
-     다양성은 라인마다 '다른 검색어'에서 나오지 저품질 소스 섞기에서 나오지 않는다.)"""
+    """검색어 1개 → 미디어 URL 1개. 깨끗한 스톡(Pexels·Pixabay)을 우선, 그다음 재미있는 움짤(Giphy),
+    끝으로 CC 아카이브(Openverse·Wikimedia) 폴백. Giphy/Pixabay는 키 없으면 자동 건너뜀."""
     if not query:
         return None
-    for fn in (_pexels, _openverse, _wikimedia):
+    for fn in (_pexels, _pixabay, _giphy, _openverse, _wikimedia):
         try:
             u = fn(query, seen)
             if u:
                 return u
         except Exception as e:
             print(f"[imgsrc] {fn.__name__} 실패({query}: {type(e).__name__})")
+    return None
+
+
+def _pixabay(query: str, seen: set):
+    pk = _pixabay_key()
+    if not pk:
+        return None
+    r = requests.get(PIXABAY, params={"key": pk, "q": query, "per_page": 8,
+                                      "image_type": "photo", "safesearch": "true",
+                                      "orientation": "vertical"}, timeout=25)
+    if not r.ok:
+        return None
+    for hit in r.json().get("hits", []):
+        u = hit.get("largeImageURL") or hit.get("webformatURL")
+        if u and u not in seen:
+            seen.add(u)
+            return u
+    return None
+
+
+def _giphy(query: str, seen: set):
+    """재미있는 반응 움짤(GIF). 렌더가 정사각형에 애니메이션으로 깐다(더 코믹·자주 바뀜)."""
+    gk = _giphy_key()
+    if not gk:
+        return None
+    r = requests.get(GIPHY, params={"api_key": gk, "q": query, "limit": 8,
+                                    "rating": "pg-13", "lang": "en"}, timeout=25)
+    if not r.ok:
+        return None
+    for it in r.json().get("data", []):
+        imgs = it.get("images") or {}
+        u = ((imgs.get("downsized_medium") or {}).get("url")
+             or (imgs.get("original") or {}).get("url"))
+        if u and u not in seen:
+            seen.add(u)
+            return u
     return None
 
 

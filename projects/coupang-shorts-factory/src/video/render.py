@@ -454,6 +454,12 @@ def _square_line_clip(sc: dict, product_images: list, product_videos: list,
         if v is not None:
             return v.with_start(start).with_position((0, sq_top))
 
+    # 움짤(GIF)·영상 라인 이미지 → 정사각형에 '움직이는' 배경으로(더 코믹·자주 바뀜)
+    if src is not None and Path(src).suffix.lower() in VIDEO_EXTS | {".gif"}:
+        v = _video_fullframe(src, sq, sq, dur)
+        if v is not None:
+            return v.with_start(start).with_position((0, sq_top))
+
     if src is None:
         src = product_images[0] if product_images else None
     if src is None:
@@ -926,9 +932,9 @@ def _build_subtitles(words: list, lines: list, line_windows: list, duration: flo
     """'대본이 곧 자막' (2026-07-12 개편): 라인의 subs(대본이 확정한 자막 칸)를 렌더가
     재분할 없이 그대로 팝업한다 — 띄어쓰기·문맥·길이 일관성을 대본이 책임진다.
     위치는 하단 1곳 고정. 중앙 밈 카드는 punch 라인 딱 1회(의문형 자동 트리거 폐지).
-    framed면 밈 이미지는 정사각형을 꽉 채우고 밈 글자는 정사각형 중앙에 얹는다.
+    ⭐ 2026-07-13 개편: 오프닝 훅(punch)도 **다른 라인과 똑같이 하단 가라오케(어절별 팝)**로 띄운다
+    (전체 문장 정적 표시 폐지). 밈 이미지는 punch 구간 정사각형 '배경'으로만 남는다(글자 카드 없음).
     반환: (클립 목록, QA용 자막 플랜)."""
-    meme_card_y = (sq_top + int(sq * 0.34)) if framed else int(s.get("meme_y", 760))
     y = int(s.get("y", 1250))
     max_w = int(width * 0.94)
     font_size = int(s.get("font_size", 80))
@@ -936,7 +942,7 @@ def _build_subtitles(words: list, lines: list, line_windows: list, duration: flo
     stroke_color = s.get("stroke_color", "#000000")
     stroke_width = int(s.get("stroke_width", 6))
 
-    events, memes, cursor = [], [], 0
+    events, meme_windows, cursor = [], [], 0
     for li, ((ls, le), ln) in enumerate(zip(line_windows, lines)):
         text = str(ln.get("text", "")).strip()
         n = len(text.split())
@@ -946,8 +952,8 @@ def _build_subtitles(words: list, lines: list, line_windows: list, duration: flo
         if not text or le - ls < 0.1:
             continue
         if bool(ln.get("punch")):
-            memes.append({"text": text, "start": ls, "end": le, "line_i": li})
-            continue
+            # 훅은 밈 이미지를 정사각형 배경으로만 깔고, 글자는 아래 가라오케로 처리(계속 진행)
+            meme_windows.append({"start": ls, "end": le, "line_i": li})
         subs = [str(x).strip() for x in (ln.get("subs") or []) if str(x).strip()]
         if not subs or " ".join(subs) != text:
             subs = [text]  # sanitize가 계약을 보장하지만 최종 방어
@@ -965,18 +971,22 @@ def _build_subtitles(words: list, lines: list, line_windows: list, duration: flo
                 b = min(le, a + (le - ls) * len(sub) / total)
             events.append({"text": sub, "start": a, "end": b, "line_i": li})
 
-    # 표시 유지: 다음 팝업 시작까지(빈 화면 방지), 단 발화 종료 +0.45s·밈 시작을 넘지 않음
-    meme_starts = sorted(m["start"] for m in memes)
+    # 표시 유지: 다음 팝업 시작까지(빈 화면 방지), 단 발화 종료 +0.45s를 넘지 않음
     for i, ev in enumerate(events):
         nxt = events[i + 1]["start"] if i + 1 < len(events) else duration
-        show_end = min(max(nxt, ev["start"] + 0.12), ev["end"] + 0.45, duration)
-        for ms in meme_starts:
-            if ev["end"] <= ms < show_end:
-                show_end = ms
-                break
-        ev["show_end"] = show_end
+        ev["show_end"] = min(max(nxt, ev["start"] + 0.12), ev["end"] + 0.45, duration)
 
     clips, plan = [], []
+    # punch 밈 이미지(정사각형 배경) — 글자 없이 이미지만. 자막은 아래 가라오케가 담당.
+    for m in meme_windows:
+        if meme_img is not None:
+            mi = (_meme_square_clip(meme_img, m["start"], m["end"], sq, sq_top) if framed
+                  else _meme_image_clip(meme_img, m["start"], m["end"], width, height, s))
+            if mi is not None:
+                clips.append(mi)
+        plan.append({"kind": "meme_img", "start": round(m["start"], 3),
+                     "end": round(m["end"], 3), "line_i": m["line_i"],
+                     "image": str(meme_img) if meme_img is not None else None})
     for ev in events:
         clip = _fit_text(ev["text"], font_path, font_size, color, stroke_color, stroke_width, max_w)
         clip = clip.resized(lambda t: _pop_scale(t, 0.14, 0.6))
@@ -984,22 +994,6 @@ def _build_subtitles(words: list, lines: list, line_windows: list, duration: flo
                          .with_position(("center", y)))
         plan.append({"kind": "sub", "text": ev["text"], "start": round(ev["start"], 3),
                      "end": round(ev["show_end"], 3), "y": y, "line_i": ev["line_i"]})
-    for m in memes:
-        mc = _meme_card(m["text"], m["start"], m["end"], font_path, s, width,
-                        y_override=meme_card_y if framed else None)
-        if mc is not None:
-            if meme_img is not None:  # 밈 이미지 배경 먼저(아래), 글자 카드는 위에 → 한글 온전
-                if framed:
-                    mi = _meme_square_clip(meme_img, m["start"], m["end"], sq, sq_top)
-                else:
-                    mi = _meme_image_clip(meme_img, m["start"], m["end"], width, height, s)
-                if mi is not None:
-                    clips.append(mi)
-            clips.append(mc)
-            plan.append({"kind": "meme", "text": m["text"], "start": round(m["start"], 3),
-                         "end": round(m["end"], 3), "y": meme_card_y,
-                         "line_i": m["line_i"],
-                         "image": str(meme_img) if meme_img is not None else None})
     return clips, plan
 
 

@@ -29,27 +29,25 @@ def run_qa(video_path: Path, stats: dict, lines: list, job_dir: Path, settings: 
     problems, checks = [], {}
     plan = stats.get("subtitle_plan") or []
     subs = [p for p in plan if p.get("kind") == "sub"]
-    memes = [p for p in plan if p.get("kind") == "meme"]
+    memes = [p for p in plan if p.get("kind") in ("meme", "meme_img")]  # 훅 밈은 이제 이미지 배경
     reacts = [p for p in plan if p.get("kind") == "react"]
 
     # ① 자막=대본 일치 (punch 라인은 밈 카드로 검사)
     by_line: dict = {}
     for p in subs:
         by_line.setdefault(int(p.get("line_i", -1)), []).append(str(p["text"]))
+    # 2026-07-13: 오프닝 훅(punch)도 일반 라인과 똑같이 하단 가라오케 자막으로 검사한다
+    #   (밈 글자 카드 폐지 — 밈은 이미지 배경으로만 남으므로 자막=대본 일치만 본다).
     for li, ln in enumerate(lines or []):
         text = str(ln.get("text", "")).strip()
         if not text:
-            continue
-        if ln.get("punch"):
-            if not any(m["text"] == text for m in memes):
-                problems.append(f"라인{li + 1}(punch) 밈 카드 누락")
             continue
         got = " ".join(by_line.get(li, []))
         if not got:
             problems.append(f"라인{li + 1} 자막 누락: '{text[:24]}'")
         elif got != text:
             problems.append(f"라인{li + 1} 자막≠대본(띄어쓰기 포함): '{got[:24]}' vs '{text[:24]}'")
-    checks["script_match"] = "자막=대본 일치"
+    checks["script_match"] = "자막=대본 일치(훅 포함)"
 
     # ② 길이 규격
     for p in subs:
