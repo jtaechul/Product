@@ -111,9 +111,19 @@ def sanitize_script(script: dict, strict_length: bool = True) -> dict:
     if re.search(r"\d[\d,]*\s*원|\d+\s*만\s*원", full):
         problems.append("금액 표현 포함 — 가격은 영상에서 완전히 뺀다(링크로만 안내)")
 
-    hashtags = script.get("hashtags") or []
-    if len(hashtags) != 3:
-        problems.append(f"해시태그 {len(hashtags)}개 (3개 고정)")
+    # 해시태그: 모델(특히 Gemini)이 개수를 안 지켜도 3개로 자동 교정한다 —
+    #   정규화(#+공백제거) + 중복 제거 + 상위 3개만. 3개 미만일 때만 진짜 문제로 본다.
+    raw_tags = script.get("hashtags") or []
+    norm_tags = []
+    for t in raw_tags:
+        tag = "#" + re.sub(r"\s+", "", str(t).lstrip("#"))
+        if len(tag) > 1 and tag not in norm_tags:
+            norm_tags.append(tag)
+    if len(norm_tags) > 3:
+        norm_tags = norm_tags[:3]
+    script["hashtags"] = norm_tags
+    if len(norm_tags) < 3:
+        problems.append(f"해시태그 {len(norm_tags)}개 (3개 필요 — 자동교정 후에도 부족)")
 
     n_chars = len(full.replace(" ", ""))
     if strict_length and not (CHAR_MIN <= n_chars <= CHAR_MAX):
