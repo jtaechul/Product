@@ -81,6 +81,46 @@ def _mix_bgm(audio, project_root, settings, duration, has_narration):
         return audio
 
 
+def _find_reveal_time(lines, line_windows):
+    """제품이 '처음 등장'하는 순간 = 폭로 아크 ④단계(정체 공개=제품 등장) 첫 라인의 시작 시각.
+    stage 정보가 없으면 None(효과음 생략) — 썰피자식 '제품 등장' 효과음 트리거용."""
+    for (ls, _le), ln in zip(line_windows or [], lines or []):
+        try:
+            if int(ln.get("stage", 0) or 0) >= 4:
+                return float(ls)
+        except Exception:
+            continue
+    return None
+
+
+def _mix_reveal_sfx(audio, reveal_time, project_root, settings, duration):
+    """제품 등장 순간에 '리빌' 효과음(휘익→쨍)을 크게 얹는다 — 제품이 나온다는 걸 인식시키는 신호
+    (2026-07-14 사용자 요청, 썰피자 벤치마크). 파일 없거나 시각 부적절하면 원래 오디오 그대로."""
+    cfg = settings.get("sfx", {})
+    if not cfg.get("enabled", True) or reveal_time is None:
+        return audio
+    sfx_path = Path(project_root) / cfg.get("reveal", "assets/sfx/reveal.wav")
+    if not sfx_path.exists() or reveal_time < 0 or reveal_time >= duration:
+        return audio
+    try:
+        from moviepy import AudioFileClip, CompositeAudioClip
+        sfx = AudioFileClip(str(sfx_path))
+        vol = float(cfg.get("reveal_volume", 0.9))   # 나레이션·BGM보다 크게(제품 등장 강조)
+        try:
+            sfx = sfx.with_volume_scaled(vol)
+        except Exception:
+            from moviepy import afx
+            sfx = sfx.with_effects([afx.MultiplyVolume(vol)])
+        if sfx.duration and reveal_time + sfx.duration > duration:
+            sfx = sfx.subclipped(0, max(0.05, duration - reveal_time))
+        sfx = sfx.with_start(float(reveal_time))
+        print(f"[sfx] 제품 등장 효과음 삽입 @ {reveal_time:.1f}s (vol {vol})")
+        return CompositeAudioClip([audio, sfx]) if audio is not None else sfx
+    except Exception as e:
+        print(f"[sfx] 효과음 실패({type(e).__name__}: {e}) → 생략")
+        return audio
+
+
 def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
                  shake_windows: list | None = None, project_root: Path | None = None,
                  image_windows: list | None = None, bg_path: Path | None = None,
@@ -229,6 +269,8 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
             layers.append(scrim)
         layers += sub_clips
     audio = _mix_bgm(audio, project_root, settings, duration, has_narration)
+    audio = _mix_reveal_sfx(audio, _find_reveal_time(lines, line_windows),
+                            project_root, settings, duration)
     final = (
         CompositeVideoClip(layers, size=(width, height))
         .with_duration(duration)
