@@ -19,10 +19,18 @@
 > - **B2 완료**: 구간별 이미지 다중선택 → 슬라이드쇼. selections 포맷 `{lines:[{line_i,picks:[...]}]}`,
 >   `load_selections`가 라인당 배열 반환, `render._plan_line_scenes`가 라인 구간을 균등 분할해 순서대로 재생.
 >   관리자 이미지 탭 다중선택(순서 배지).
-> - **B3~B6 남음**: B3 제작하기(produce=렌더+릴리스, 업로드 분리 필요) · B4 검수+항목별 다시생성
->   (제목/설명/해시태그 regen=**새 안 1개 즉시 교체**, 영상 regen=재제작) · B5 올리기(**'올리기' 버튼
->   자동 유튜브 업로드**, SHORTS_YT 인증 3종 필요) · B6 관리자 UI를 상품→기획→이미지→제작→검수→업로드
->   한 흐름으로 통합. (아래 기존 문서 중 리서치·cron 서술은 B6에서 정리.)
+> - **B3 완료**: 제작하기 = `pipeline`(produce `--no-upload`) 렌더+릴리스만(자동 업로드 안 함).
+>   release_meta에 `row_hash`(상품→영상 매칭).
+> - **B4 완료**: 검수 + 항목별 다시생성. `pipeline --regen FIELD`(title|headline|description|hashtags)이
+>   기획의 그 항목만 새 안 1개로 즉시 교체(`generate.regenerate_field`), 영상 다시 만들기=재제작.
+> - **B5 완료**: 올리기 = `pipeline --upload`가 릴리스 shorts-run에서 영상 받아 유튜브 업로드
+>   (`_find_and_download_video`+`youtube.upload`, 기획 제목·설명·해시태그 사용). **SHORTS_YT 인증 3종 필요**.
+> - **B6 완료**: 관리자 '제작' 탭을 제작·검수·올리기 스튜디오로 재구성 + 탭 순서 상품→기획→이미지→
+>   제작→영상→설정로 흐름 통합(옛 자동제작·리서치 버튼 폐지). 워크플로 mode: plan·candidates·produce·
+>   regen·upload(+no_upload·field 입력).
+> - **개편 전체 완료 — 남은 것**: (1) 작업 브랜치를 main에 반영해 라이브 전환 (2) 실동작 검증
+>   (실상품으로 기획→이미지→제작→검수→업로드 CI 라운드트립) (3) 업로드용 SHORTS_YT 인증 3종 등록.
+>   (아래 기존 문서 중 리서치·cron·자동화 서술은 폐지됨 — 참고만.)
 
 ## ⭐ 핵심 규칙 — 사용자 노코드 원칙 (항상 적용)
 
