@@ -158,6 +158,23 @@ def test_insert_cutaways_preserves_timeline(tmp_path):
     assert footage._probe_dim(res) == (720, 1280)        # 9:16 유지
 
 
+def test_subject_visibility_rejects_empty_water(tmp_path):
+    """★피사체 가시성(Step1): 빈 물/균일 화면은 낮게, 구조가 있는 화면은 높게 → 빈 물 배제 근거."""
+    import subprocess
+    from src.core import footage
+    empty = tmp_path / "empty.mp4"      # 균일한 어두운 물(약한 노이즈만) = '아무것도 안 보임'
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                    "-i", "color=c=0x0a1a2a:s=1280x720:d=4:r=30", "-vf", "noise=alls=4:allf=t",
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", str(empty)], check=True)
+    content = tmp_path / "content.mp4"  # 큰 구조가 있는 화면(피사체 있음 상당)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                    "-i", "testsrc=s=1280x720:d=4:r=30", "-c:v", "libx264",
+                    "-pix_fmt", "yuv420p", str(content)], check=True)
+    ve = footage.subject_visibility(str(empty))
+    vc = footage.subject_visibility(str(content))
+    assert ve < footage._MIN_VISIBILITY <= vc, f"빈물={ve:.1f} 콘텐츠={vc:.1f} 임계={footage._MIN_VISIBILITY}"
+
+
 def test_insert_cutaways_skips_when_short_body(tmp_path):
     """짧은 본문(<12s)·사진 없음이면 컷어웨이를 넣지 않는다(남발·촙핑 방지 · 발행 불정지)."""
     from src.core import footage

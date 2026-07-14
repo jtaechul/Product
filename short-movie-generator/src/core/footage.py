@@ -566,6 +566,62 @@ def _fetch_photo_kenburns(cand: dict, dest: Path, key: str, common_name_en: str)
             "source": cand.get("source", ""), "logo_box": None}
 
 
+def _frame_macro_std(img) -> float:
+    """프레임의 '대구조 밝기 분산' — 32×18로 강하게 줄여 마린스노(잡티)를 지우고 큰 덩어리만 남긴다.
+    빈 물/균일 하강 컷은 낮고(≈0~11), 실제 피사체(생물·구조물)가 있으면 높다(실측 29~53)."""
+    from PIL import ImageStat
+    return ImageStat.Stat(img.convert("L").resize((32, 18))).stddev[0]
+
+
+_MIN_VISIBILITY = 16.0   # p75 macro 기준(실측: 생물 최저 29.5 · 빈물 최고 11 → 16이 안전한 경계)
+
+
+def subject_visibility(video: str, sample: int = 12) -> float:
+    """영상에 '피사체(구조)'가 실제로 담겼는지 점수(대구조 밝기 분산 p75).
+    ★목적: '아무것도 안 보이는 빈 물/준비 컷'을 배제(텐트 쉬림프 사고). 낮을수록 빈 화면.
+    ※ 이 지표는 '구조 유무'만 본다 — '잠수사 vs 배' 같은 주제 일치는 Step2(CLIP 의미검증)가 판정."""
+    import subprocess
+    import tempfile
+    from PIL import Image
+    dur = _probe_dur(video) or 0.0
+    if dur <= 0:
+        return 0.0
+    with tempfile.TemporaryDirectory(prefix="vis_") as td:
+        ms: list[float] = []
+        for i in range(sample):
+            t = dur * (0.08 + 0.84 * i / max(1, sample - 1))
+            f = Path(td) / f"v{i}.jpg"
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{t:.2f}",
+                            "-i", video, "-frames:v", "1", str(f)], capture_output=True)
+            if f.exists():
+                try:
+                    ms.append(_frame_macro_std(Image.open(f)))
+                except Exception:  # noqa: BLE001
+                    pass
+        if len(ms) < 3:
+            return 0.0
+        ms.sort()
+        return ms[int(len(ms) * 0.75)]   # p75(넉넉히 통과 — 일부 구간만 피사체여도 OK)
+
+
+def _wreck_photo_footage(scientific_name: str, common_name_en: str, dest: Path, key: str) -> dict | None:
+    """난파선: 그 배의 실사 사진을 찾아 켄번즈 영상화 → footage dict. 없으면 None.
+    ★잠수사 위주 영상보다 '배가 확실히 보이는 사진'을 우선한다(주제 피사체 보장).
+    질의 변형을 여러 개 시도해 사진 적중률을 높인다(그래도 없으면 상위는 영상 경로로 폴백)."""
+    name = re.sub(r"^wreck\s+", "", scientific_name or "", flags=re.I).strip()
+    got = None
+    for q in (scientific_name, f"{name} shipwreck", f"{name} wreck dive", name, common_name_en):
+        if q and q.strip():
+            got = _commons_photo_search(q)
+            if got:
+                break
+    if not got:
+        return None
+    cand = {"url": got["url"], "image_url": got["url"], "media_kind": "photo",
+            "license": got["license"], "credit": got["credit"], "source": got.get("source", "")}
+    return _fetch_photo_kenburns(cand, dest, key, common_name_en)
+
+
 def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
     """종 실사 영상 확보 → {path, license, credit, source} 또는 None(확보 실패).
 
@@ -582,6 +638,13 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
         return None
     if cand.get("media_kind") == "photo":   # ★사진 → 켄번즈 영상화(난파선 무한 공급)
         return _fetch_photo_kenburns(cand, dest, key, common_name_en)
+    # ★난파선 주제 보장(Step1): 잠수사·준비 위주 영상이 흔해 '배'가 안 나오는 사고 → 그 배의 사진을
+    #   찾아 켄번즈로 대체(배가 확실히 보임). 사진이 없을 때만 영상 경로로(아래 가시성 게이트 적용).
+    if key.startswith("wreck "):
+        wp = _wreck_photo_footage(scientific_name, common_name_en, dest, key)
+        if wp:
+            log.info("[footage] 난파선 → 사진 켄번즈 우선(주제 피사체 보장)")
+            return wp
     ext = next((e for e in _VIDEO_EXT if cand["url"].lower().endswith(e)), ".webm")
     # ★캐시 파일명은 종별로 분리(교차 오염 방지): 공용 'footage.webm' 하나만 쓰면, 게이트에
     #   걸려 폐기된 앞 종의 파일이 남아 다음 후보가 그걸 '캐시'로 재사용 → 전 후보 연쇄 실패.
@@ -644,6 +707,14 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
             return _reject("정지 소스(영상 아님)")
     except Exception as e:  # noqa: BLE001  (검사 실패 시 통과 — 검사 오류로 제작 자체를 막지 않음)
         log.warning("[footage] 정지 검사 생략(오류): %s", e)
+    # ★피사체 가시성 게이트(Step1 · 빈 물/준비 컷 배제): '아무것도 안 보이는' 클립은 버린다.
+    #   → auto 후보 순회가 다음(피사체 있는) 클립으로 넘어간다(텐트 쉬림프 '빈 물' 사고 방지).
+    try:
+        vis = subject_visibility(str(out))
+        if vis < _MIN_VISIBILITY:
+            return _reject(f"피사체 미검출(빈 물/준비 컷 · 가시성 {vis:.0f}<{_MIN_VISIBILITY:.0f})")
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] 가시성 검사 생략(오류): %s", e)
     # NOAA 소스는 좌상단 워터마크 영역 정보를 함께 반환(하류에서 회피/제거)
     logo = _NOAA_LOGO_BOX if "noaa" in (cand.get("credit", "") or "").lower() else None
     return {"path": str(out), "license": cand["license"],
