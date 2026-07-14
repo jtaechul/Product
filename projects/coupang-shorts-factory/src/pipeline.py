@@ -178,7 +178,8 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
                          shake_windows=shake_windows, project_root=PROJECT_ROOT,
                          product_images=product_images, bg_path=bg_path,
                          lines=lines, line_windows=line_windows, stock_clips=stock_clips,
-                         product_videos=product_videos, line_images=line_images)
+                         product_videos=product_videos, line_images=line_images,
+                         has_narration=not args.no_narration)
     stats = {"job_id": job_id, "product": product["name"],
              "tts_provider": tts_result["provider"],
              "timestamps_source": tts_result["timestamps_source"], **stats}

@@ -97,6 +97,14 @@ veo:                    # ⛔ Gemini/Veo 영상 생성 폐지 (2026-07-13 사용
   enabled: false        # 절대 켜지 않는다. 상품 비주얼=제품 영상+상품 사진 켄번즈+밈 이미지만.
   # (파이프라인에서 Veo 호출 자체를 제거했고, 워크플로우 env에서 Gemini 키도 뺐다. 이 블록은 흔적만 남김.)
 
+bgm:                    # 배경음악 — assets/bgm/의 저작권 프리 곡(코믹·발랄)을 렌더가 자동으로 깖
+  enabled: true         # 트랙 없으면 자동 생략(무해). 곡 넣으면 바로 적용
+  dir: "assets/bgm"     # 여기에 .mp3/.wav 등을 넣으면 랜덤 선택
+  volume_solo: 0.42     # 무나레이션(음악이 영상을 캐리)일 때 볼륨
+  volume_duck: 0.14     # 나레이션 있을 때 말 밑으로 깔리는 볼륨(덕킹)
+  fade_in: 0.8
+  fade_out: 1.2
+
 upload:                 # M7 (스펙 §M7)
   privacy_default: "private"   # 미인증 API 프로젝트는 자동 private 잠금 → 반자동 공개 전환
   category_id: "26"            # 노하우/스타일 — 상품·리뷰 콘텐츠 표준 (28 과학기술에서 교정)

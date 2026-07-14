@@ -41,13 +41,53 @@ _HERO_RGBA_CACHE: dict = {}
 _SQUARE_ARR_CACHE: dict = {}   # framed 정사각형 cover-fit 배열 캐시
 
 
+def _mix_bgm(audio, project_root, settings, duration, has_narration):
+    """assets/bgm/의 저작권 프리 곡을 골라 영상 아래에 깐다(루프·페이드). 나레이션 있으면 낮게(덕킹),
+    무나레이션이면 조금 크게. 트랙이 없거나 실패하면 원래 오디오 그대로(BGM은 선택 — 렌더 안 멈춤)."""
+    cfg = settings.get("bgm", {})
+    if not cfg.get("enabled", True):
+        return audio
+    bgm_dir = Path(project_root) / cfg.get("dir", "assets/bgm")
+    exts = {".mp3", ".m4a", ".wav", ".ogg", ".aac"}
+    tracks = sorted(p for p in bgm_dir.glob("*") if p.suffix.lower() in exts) if bgm_dir.exists() else []
+    if not tracks:
+        print("[bgm] assets/bgm 트랙 없음 → BGM 생략(있으면 자동 적용)")
+        return audio
+    pick = random.choice(tracks)
+    try:
+        from moviepy import AudioFileClip, CompositeAudioClip, concatenate_audioclips
+        bgm = AudioFileClip(str(pick))
+        if bgm.duration and bgm.duration < duration:   # 짧으면 루프
+            reps = int(duration // bgm.duration) + 1
+            bgm = concatenate_audioclips([AudioFileClip(str(pick)) for _ in range(reps)])
+        bgm = bgm.subclipped(0, duration)
+        vol = float(cfg.get("volume_solo", 0.42) if not has_narration else cfg.get("volume_duck", 0.14))
+        try:
+            bgm = bgm.with_volume_scaled(vol)
+        except Exception:
+            from moviepy import afx
+            bgm = bgm.with_effects([afx.MultiplyVolume(vol)])
+        try:
+            from moviepy import afx
+            bgm = bgm.with_effects([afx.AudioFadeIn(float(cfg.get("fade_in", 0.8))),
+                                    afx.AudioFadeOut(float(cfg.get("fade_out", 1.2)))])
+        except Exception:
+            pass
+        mixed = CompositeAudioClip([audio, bgm]) if audio is not None else bgm
+        print(f"[bgm] '{pick.name}' 적용 (vol {vol}, {'덕킹' if has_narration else '솔로'})")
+        return mixed
+    except Exception as e:
+        print(f"[bgm] 믹싱 실패({type(e).__name__}: {e}) → BGM 생략")
+        return audio
+
+
 def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
                  shake_windows: list | None = None, project_root: Path | None = None,
                  image_windows: list | None = None, bg_path: Path | None = None,
                  product_images: list | None = None, lines: list | None = None,
                  line_windows: list | None = None, stock_clips: list | None = None,
                  product_videos: list | None = None, scene_images: list | None = None,
-                 line_images: list | None = None) -> dict:
+                 line_images: list | None = None, has_narration: bool = True) -> dict:
     """대본 단계(stage)별 씬 시퀀스 쇼츠 렌더. 반환: 렌더 통계 dict.
 
     lines(단계 포함)+line_windows가 있으면 '씬 시퀀스'로 렌더한다 — 상품 단계(①④⑤)는
@@ -173,6 +213,7 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     if scrim is not None:
         layers.append(scrim)
     layers += sub_clips
+    audio = _mix_bgm(audio, project_root, settings, duration, has_narration)
     final = (
         CompositeVideoClip(layers, size=(width, height))
         .with_duration(duration)
