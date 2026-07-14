@@ -247,6 +247,16 @@
    - 적용 지점: 롱폼 세그먼트 본문(`segment.py render_segment`) + 콜드오픈(`compile.py`, 세그먼트가
      확정한 `wm_boxes`·`footage_start` 재사용) + 롱폼 완성본 최종 게이트(`run_longform.py`) +
      릴스 소스 세척·완성본 게이트(`pipeline.py`, 엔드카드의 정당한 크레딧 구간만 검사 제외).
+   - **★OCR 비의존 인위 삽입물 검출(운영자 아이디어 · 확정 · 재발방지)**: 스타일화된 로고·타이틀카드
+     (예: 'SUBMANIA' 다이빙스쿨 로고)는 **OCR이 그래픽을 못 읽어** 슬레이트 회피가 실패했다(실사고: Batelo).
+     → 글자를 '읽지' 말고 **인위적 합성물인지**를 판별한다: 합성 그래픽은 밑 영상이 움직여도 **픽셀-정확
+     고정(frozen)** + **쨍한 색/날카로운 엣지(graphic)**를 갖는다. `watermark_qc.detect_insert_seconds`가
+     **4초 창**(핵심 — 생물은 4초면 부유물·미세이동으로 frozen이 풀리지만 합성 카드는 4초 내내 고정)으로
+     `frozen∧graphic` 중앙밴드 비율을 재, **중앙 5%↑면 그 구간을 회피 초로**(→시작점 이동) 만든다.
+     `plan()`이 OCR 슬레이트 초와 이 삽입물 초를 합쳐 시작점을 카드 구간 뒤로 옮긴다. **큰 중앙=SKIP,
+     작은 가장자리=기존 delogo**. 실클립 보정: 배텔로 카드 → start 0→10.5s, 깨끗 NOAA(enypniastes) →
+     오탐 0. 파라미터(`_INSERT_FROZEN_MAXDIFF=2`·`_INSERT_WIN_S=4.0`·`_INSERT_SKIP_CENTRAL=0.05`)를
+     낮추면(2초창 등) 정지한 생물을 카드로 오탐하니 되돌리지 말 것. 회귀 테스트: `test_insert_detect.py`.
    - CI 필수 의존성: `tesseract-ocr`(apt) + `pytesseract`(pip) — 워크플로 설치 스텝에서 제거 금지.
    - **속도('빨리감기' 검수)**: OCR은 프레임당 tesseract 서브프로세스라 느리다 → ①프레임을 **720폭으로
      축소**(워터마크는 큰 글자라 충분히 읽힘) ②**대비강화 단패스**(2패스 폐기) ③프레임들을 **스레드풀
