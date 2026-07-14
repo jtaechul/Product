@@ -318,6 +318,26 @@
       뽑아 배 이름으로 삼는다(`_wreck_name_from_title`, needs_confirm=True로 운영자 확인). 과거엔 접두사만
       인식해 'Madeirense'·'Jacques Fraissinet' 같은 실제 난파선 영상을 전부 놓쳐 소싱이 0건이었다.
       제목 상투어(First Look·Shipwreck·U S 등)는 `_plausible_wreck_name`으로 배제.
+    - **★침몰선 다큐멘터리 모드(운영자 확정 · 검증 완료 · 단조로움 방지 핵심)**: 무명 다이빙 클립은
+      **사진 1장(또는 잠수사 준비 영상)을 켄번즈로 우려먹어 단조롭고**, 대본도 배마다 똑같은 제네릭
+      템플릿이었다(실사고: Latvia). 인기 소재인 **유명 난파선**(문서·제원·역사 사진이 풍부)은 이걸
+      **시간축 다큐(취항→사고→제원→잔해)**로 만든다. 구현 3부:
+      - **A. dossier(`categories/shipwreck/dossier.py`)**: `FAMOUS_WRECKS`(Titanic·Lusitania·Britannic·
+        Andrea Doria·Thistlegorm 등) 각각에 대해 위키백과 인포박스 제원(선종·톤수·전장·건조·침몰연도·
+        사유)과 위키미디어 커먼스 이미지 여러 장을 **취항(afloat)·초상(portrait)·사고(sinking)·잔해(wreck)
+        비트로 분류**. 이미지 4장↑ + 제원/요약이 있어야 채택(`build_dossier`; 빈약하면 None → 스킵).
+        ★날조 금지: 제원은 위키 실제 값만, 없으면 생략. 라이선스 NC 선차단.
+      - **B. 시퀀스 빌더(`footage.build_wreck_documentary`)**: 비트 순서(취항→초상→사고→잔해)로 **서로 다른
+        이미지를 각기 다른 켄번즈 무브(9:16) 컷으로 이어붙인 하나의 영상**. 합≥본문길이라 다운스트림
+        무반복. 한 장 우려먹기 폐기.
+      - **C. 전용 대본 + 제원 카드(`dossier.wreck_body_jp`/`render_spec_card`)**: 그 배 사실로 4비트 일본어
+        본문(敬体·하우스톤, LLM 우선 + 결정론 폴백) + `SHIP DATA` 카드(船種·総トン数·全長·進水·沈没)를
+        초상/취항 컷 위에 오버레이.
+      - **배선**: 후보 `media_kind=wreck_doc`(+`wiki_title`) → `promote_candidate`/`_merge_discovered_seeds`가
+        전달 → `footage.fetch_footage`가 `_wreck_doc_footage`로 dossier 확보(doc 딕트) → `pipeline.run_reels`
+        doc 분기가 대본·시퀀스·카드를 조립(WQ/추적리프레임/컷어웨이 우회 — 순서 보존·신문 스캔 등 정당한
+        텍스트 delogo 방지). 소싱은 `_discover_wrecks`의 **Tier0**(유명 난파선 우선)로 노출.
+      - 회귀 테스트: `test_wreck_dossier.py`·`test_wreck_documentary.py`·`test_wreck_doc_promote.py`.
     - **★난파선 무한 소싱 3단(운영자 확정 · 검증 완료)**: 영상만으론 Commons에 ~62개(유한)뿐이라
       '끝없이'가 불가능 → **사진(수천 장·100% 사용가능)을 켄번즈로 영상화**하는 무한 엔진을 둔다.
       `_discover_wrecks`가 순서대로:
