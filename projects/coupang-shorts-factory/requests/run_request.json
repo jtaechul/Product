@@ -4,6 +4,6 @@
  "row": "auto",
  "privacy": "private",
  "no_narration": true,
- "note": "무나레이션 6차: no_narration 파싱 버그 수정(True/true) → TTS 미실행. 만담 대본 + 오프닝 가라오케.",
- "requested_at": "2026-07-14T10:40:00Z"
+ "note": "무나레이션 7차: Pixabay/Giphy 키 등록 확인 + 움짤 + 짧아진 만담 대본(8~11줄). 나레이션 없음.",
+ "requested_at": "2026-07-14T11:05:00Z"
 }
