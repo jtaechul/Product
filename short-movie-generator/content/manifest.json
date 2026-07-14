@@ -193,14 +193,6 @@
     "date": "2026-07-13"
   },
   {
-    "id": "025",
-    "kind": "reels",
-    "common_name_ko": "Duobrachium sparksae",
-    "common_name_en": "Duobrachium sparksae",
-    "scientific_name": "Duobrachium sparksae",
-    "date": "2026-07-13"
-  },
-  {
     "id": "020",
     "kind": "reels",
     "common_name_ko": "카리브암초오징어",
@@ -224,5 +216,14 @@
     "common_name_en": "vent shrimp",
     "scientific_name": "Rimicaris exoculata",
     "date": "2026-07-14"
+  },
+  {
+    "id": "025",
+    "kind": "reels",
+    "common_name_ko": "Duobrachium sparksae",
+    "common_name_en": "Duobrachium sparksae",
+    "scientific_name": "Duobrachium sparksae",
+    "date": "2026-07-14",
+    "youtube_url": "https://youtu.be/9lHZuaUsPRs"
   }
 ]
