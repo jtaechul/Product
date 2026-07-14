@@ -338,6 +338,22 @@
         doc 분기가 대본·시퀀스·카드를 조립(WQ/추적리프레임/컷어웨이 우회 — 순서 보존·신문 스캔 등 정당한
         텍스트 delogo 방지). 소싱은 `_discover_wrecks`의 **Tier0**(유명 난파선 우선)로 노출.
       - 회귀 테스트: `test_wreck_dossier.py`·`test_wreck_documentary.py`·`test_wreck_doc_promote.py`.
+    - **★침몰선 아마추어 다이빙 '영상' 금지(운영자 확정 · 절대 위반 금지 · Batelo 사고 재발방지)**:
+      침몰선 소스로 **아마추어 다이빙 영상을 절대 쓰지 않는다.** 실사고(Batelo Cantanhede): 다이빙 영상은
+      ①인트로 타이틀카드(다이빙스쿨 로고)가 통짜로 박혀 OCR로 못 지우고(스타일 그래픽=OCR 미인식)
+      ②배는 안 나오고 잠수사만 ③짧은 클립 반복 → 영상 품질 붕괴. 대책:
+      - `footage.fetch_footage`는 wreck 키에 대해 (1)그 배 **사진 켄번즈**(`_wreck_photo_footage`)
+        (2)이름으로 **유명 난파선 다큐 자동승격**(`_wreck_doc_footage`)만 허용하고, 둘 다 실패하면
+        **raw 영상으로 폴백하지 않고 None**을 반환한다(→ auto 후보 순회가 다음 대상으로). 절대 raw 영상 사용 금지.
+      - `discovery._discover_wrecks`는 아마추어 영상 티어(구 Tier1 영상검색·Tier3 영상 레지스트리)를
+        **폐지**하고 **Tier0 유명 난파선 다큐 + Tier2 그 배 사진(켄번즈)**만 소싱한다.
+      - 제작 풀에는 유명 난파선 다큐(discovered.json에 `media_kind=wreck_doc`)를 **여러 개 시드**해 둔다
+        (Titanic·Lusitania·Britannic·Andrea Doria·Thistlegorm·Empress of Ireland 등) — auto·수동 모두
+        신뢰 소스로 제작되게(실패 감소). 회귀 테스트: `test_wreck_no_amateur_video.py`.
+    - **★오프닝/엔드카드 배경 프레임은 '텍스트 없는·피사체 있는' 프레임 선택(전 카테고리 · 문제 재발방지)**:
+      인트로 카드·빈 프레임이 오프닝/엔드카드에 새지 않게, 고정 시각(0.5초) 대신 `_best_subject_frame`
+      (피사체 점수 + 번인텍스트 감점 `text_score`)으로 오프닝 배경·엔드카드 피사체 프레임을 고른다.
+      (구현: `hook_intro_stage.apply`. 히어로 사진이 있으면 그 사진 우선 — 난파선 다큐는 취항 사진.)
     - **★난파선 무한 소싱 3단(운영자 확정 · 검증 완료)**: 영상만으론 Commons에 ~62개(유한)뿐이라
       '끝없이'가 불가능 → **사진(수천 장·100% 사용가능)을 켄번즈로 영상화**하는 무한 엔진을 둔다.
       `_discover_wrecks`가 순서대로:

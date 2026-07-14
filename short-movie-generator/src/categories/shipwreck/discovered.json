@@ -1,1 +1,421 @@
-[]
+[
+  {
+    "key": "wreck titanic",
+    "kind": "wreck",
+    "footage": {
+      "url": "",
+      "license": "cc-by-sa",
+      "credit": "AnonymousUnknown author · PUBLIC-DOMAIN · Archives New Zealand from New Zealand · CC-BY-SA · Courtesy of NOAA/Institute for Exploration/University of Rho · PUBLIC-DOMAIN · Formerly attributed to Franc",
+      "source": "Wikipedia: RMS Titanic",
+      "media_kind": "wreck_doc",
+      "wiki_title": "RMS Titanic"
+    },
+    "subject": {
+      "scientific_name": "Wreck Titanic",
+      "common_name_ko": "Titanic 난파선",
+      "common_name_en": "Wreck Titanic",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "침몰선",
+      "diet": [],
+      "fun_facts": [
+        "총톤수: 46329 GRT, 21831 NRT",
+        "침몰: 1912년"
+      ],
+      "sources": [
+        "Wikipedia: RMS Titanic",
+        "Wikimedia Commons"
+      ]
+    },
+    "copy": {
+      "jp_name": "沈没船「Titanic」",
+      "hook_line1": "海の底に、",
+      "hook_line2": "眠る船。",
+      "pop_words": [
+        "海の底に、",
+        "眠る船。"
+      ],
+      "feature_line": "海の命が集う、沈んだ船",
+      "feature_glow_word": "命",
+      "hook_ko": "바다 밑에, 잠든 배.",
+      "feature_ko": "바다 생명이 모이는, 가라앉은 배",
+      "tags": [
+        "#沈没船",
+        "#難破船",
+        "#海"
+      ],
+      "tags_ko": [
+        "#난파선",
+        "#침몰선",
+        "#바다"
+      ],
+      "body": [
+        "青い海の底に、",
+        "静かに横たわる、",
+        "大きな影。",
+        "その正体は、",
+        "沈没船です。",
+        "長い時間をかけて、",
+        "船体には、",
+        "生き物が棲みつきました。",
+        "魚が集まり、",
+        "海藻がゆれる。",
+        "沈んだ船は、",
+        "新しい命の、",
+        "すみかです。",
+        "海に還った、",
+        "静かな船です。"
+      ]
+    }
+  },
+  {
+    "key": "wreck lusitania",
+    "kind": "wreck",
+    "footage": {
+      "url": "",
+      "license": "cc-by-sa",
+      "credit": "AnonymousUnknown author · PUBLIC-DOMAIN · Antonio Jacobsen · PUBLIC-DOMAIN · Cunard Line · PUBLIC-DOMAIN · Derek Hatfield from Peterborough, Canada · CC-BY · Edmund F. Arras · PUBLIC-DOMAIN · George G",
+      "source": "Wikipedia: RMS Lusitania",
+      "media_kind": "wreck_doc",
+      "wiki_title": "RMS Lusitania"
+    },
+    "subject": {
+      "scientific_name": "Wreck Lusitania",
+      "common_name_ko": "Lusitania 난파선",
+      "common_name_en": "Wreck Lusitania",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "침몰선",
+      "diet": [],
+      "fun_facts": [
+        "선종: Ocean liner",
+        "총톤수: 31,550 GRT, 12,611 NRT",
+        "침몰: 1915년"
+      ],
+      "sources": [
+        "Wikipedia: RMS Lusitania",
+        "Wikimedia Commons"
+      ]
+    },
+    "copy": {
+      "jp_name": "沈没船「Lusitania」",
+      "hook_line1": "海の底に、",
+      "hook_line2": "眠る船。",
+      "pop_words": [
+        "海の底に、",
+        "眠る船。"
+      ],
+      "feature_line": "海の命が集う、沈んだ船",
+      "feature_glow_word": "命",
+      "hook_ko": "바다 밑에, 잠든 배.",
+      "feature_ko": "바다 생명이 모이는, 가라앉은 배",
+      "tags": [
+        "#沈没船",
+        "#難破船",
+        "#海"
+      ],
+      "tags_ko": [
+        "#난파선",
+        "#침몰선",
+        "#바다"
+      ],
+      "body": [
+        "青い海の底に、",
+        "静かに横たわる、",
+        "大きな影。",
+        "その正体は、",
+        "沈没船です。",
+        "長い時間をかけて、",
+        "船体には、",
+        "生き物が棲みつきました。",
+        "魚が集まり、",
+        "海藻がゆれる。",
+        "沈んだ船は、",
+        "新しい命の、",
+        "すみかです。",
+        "海に還った、",
+        "静かな船です。"
+      ]
+    }
+  },
+  {
+    "key": "wreck britannic",
+    "kind": "wreck",
+    "footage": {
+      "url": "",
+      "license": "cc-by-sa",
+      "credit": "Allan C. Green · PUBLIC-DOMAIN · AnonymousUnknown author · PUBLIC-DOMAIN · Captain Dayrell Davies (1856 – 1937) · PUBLIC-DOMAIN · HefePine23 (talk · contribs), the original photographer of t · CC-BY-S",
+      "source": "Wikipedia: HMHS Britannic",
+      "media_kind": "wreck_doc",
+      "wiki_title": "HMHS Britannic"
+    },
+    "subject": {
+      "scientific_name": "Wreck Britannic",
+      "common_name_ko": "Britannic 난파선",
+      "common_name_en": "Wreck Britannic",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "침몰선",
+      "diet": [],
+      "fun_facts": [
+        "총톤수: 48158 GRT, 24592 NRT",
+        "침몰: 1916년"
+      ],
+      "sources": [
+        "Wikipedia: HMHS Britannic",
+        "Wikimedia Commons"
+      ]
+    },
+    "copy": {
+      "jp_name": "沈没船「Britannic」",
+      "hook_line1": "海の底に、",
+      "hook_line2": "眠る船。",
+      "pop_words": [
+        "海の底に、",
+        "眠る船。"
+      ],
+      "feature_line": "海の命が集う、沈んだ船",
+      "feature_glow_word": "命",
+      "hook_ko": "바다 밑에, 잠든 배.",
+      "feature_ko": "바다 생명이 모이는, 가라앉은 배",
+      "tags": [
+        "#沈没船",
+        "#難破船",
+        "#海"
+      ],
+      "tags_ko": [
+        "#난파선",
+        "#침몰선",
+        "#바다"
+      ],
+      "body": [
+        "青い海の底に、",
+        "静かに横たわる、",
+        "大きな影。",
+        "その正体は、",
+        "沈没船です。",
+        "長い時間をかけて、",
+        "船体には、",
+        "生き物が棲みつきました。",
+        "魚が集まり、",
+        "海藻がゆれる。",
+        "沈んだ船は、",
+        "新しい命の、",
+        "すみかです。",
+        "海に還った、",
+        "静かな船です。"
+      ]
+    }
+  },
+  {
+    "key": "wreck andrea doria",
+    "kind": "wreck",
+    "footage": {
+      "url": "",
+      "license": "cc-by-sa",
+      "credit": "Al from Lig · CC-BY-SA · Congregation of Sisters of St. Joseph in Canada from Canada · PUBLIC-DOMAIN · Fornasetti · CC-BY-SA · Francesco Prandini · CC-BY-SA · From a variety of images credited above ·",
+      "source": "Wikipedia: SS Andrea Doria",
+      "media_kind": "wreck_doc",
+      "wiki_title": "SS Andrea Doria"
+    },
+    "subject": {
+      "scientific_name": "Wreck Andrea Doria",
+      "common_name_ko": "Andrea Doria 난파선",
+      "common_name_en": "Wreck Andrea Doria",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "침몰선",
+      "diet": [],
+      "fun_facts": [
+        "총톤수: 29083 GRT",
+        "침몰: 1956년"
+      ],
+      "sources": [
+        "Wikipedia: SS Andrea Doria",
+        "Wikimedia Commons"
+      ]
+    },
+    "copy": {
+      "jp_name": "沈没船「Andrea Doria」",
+      "hook_line1": "海の底に、",
+      "hook_line2": "眠る船。",
+      "pop_words": [
+        "海の底に、",
+        "眠る船。"
+      ],
+      "feature_line": "海の命が集う、沈んだ船",
+      "feature_glow_word": "命",
+      "hook_ko": "바다 밑에, 잠든 배.",
+      "feature_ko": "바다 생명이 모이는, 가라앉은 배",
+      "tags": [
+        "#沈没船",
+        "#難破船",
+        "#海"
+      ],
+      "tags_ko": [
+        "#난파선",
+        "#침몰선",
+        "#바다"
+      ],
+      "body": [
+        "青い海の底に、",
+        "静かに横たわる、",
+        "大きな影。",
+        "その正体は、",
+        "沈没船です。",
+        "長い時間をかけて、",
+        "船体には、",
+        "生き物が棲みつきました。",
+        "魚が集まり、",
+        "海藻がゆれる。",
+        "沈んだ船は、",
+        "新しい命の、",
+        "すみかです。",
+        "海に還った、",
+        "静かな船です。"
+      ]
+    }
+  },
+  {
+    "key": "wreck thistlegorm",
+    "kind": "wreck",
+    "footage": {
+      "url": "",
+      "license": "cc-by-sa",
+      "credit": "Diego Delso · CC-BY-SA · Hagainativ · CC-BY-SA · Woodym555 at English Wikipedia · CC-BY-SA · Woodym555 · CC-BY-SA · Woodym555, edited by Fir0002 · CC-BY-SA",
+      "source": "Wikipedia: SS Thistlegorm",
+      "media_kind": "wreck_doc",
+      "wiki_title": "SS Thistlegorm"
+    },
+    "subject": {
+      "scientific_name": "Wreck Thistlegorm",
+      "common_name_ko": "Thistlegorm 난파선",
+      "common_name_en": "Wreck Thistlegorm",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "침몰선",
+      "diet": [],
+      "fun_facts": [
+        "선종: Cargo ship",
+        "총톤수: 4898 GRT, 2750 NRT",
+        "침몰: 1941년"
+      ],
+      "sources": [
+        "Wikipedia: SS Thistlegorm",
+        "Wikimedia Commons"
+      ]
+    },
+    "copy": {
+      "jp_name": "沈没船「Thistlegorm」",
+      "hook_line1": "海の底に、",
+      "hook_line2": "眠る船。",
+      "pop_words": [
+        "海の底に、",
+        "眠る船。"
+      ],
+      "feature_line": "海の命が集う、沈んだ貨物船",
+      "feature_glow_word": "命",
+      "hook_ko": "바다 밑에, 잠든 배.",
+      "feature_ko": "바다 생명이 모이는, 가라앉은 배",
+      "tags": [
+        "#沈没船",
+        "#難破船",
+        "#海"
+      ],
+      "tags_ko": [
+        "#난파선",
+        "#침몰선",
+        "#바다"
+      ],
+      "body": [
+        "青い海の底に、",
+        "静かに横たわる、",
+        "大きな影。",
+        "その正体は、",
+        "沈没船です。",
+        "かつては、",
+        "海をゆく貨物船。",
+        "長い時間をかけて、",
+        "船体には、",
+        "生き物が棲みつきました。",
+        "魚が集まり、",
+        "海藻がゆれる。",
+        "沈んだ船は、",
+        "新しい命の、",
+        "すみかです。",
+        "海に還った、",
+        "静かな船です。"
+      ]
+    }
+  },
+  {
+    "key": "wreck empress of ireland",
+    "kind": "wreck",
+    "footage": {
+      "url": "",
+      "license": "cc-by-sa",
+      "credit": "Agence Rol · PUBLIC-DOMAIN · Alcide55 G.Bouchard · CC-BY-SA · Bain News Service · PUBLIC-DOMAIN · Bain News Service, publisher · PUBLIC-DOMAIN · BiblioArchives / LibraryArchives · PUBLIC-DOMAIN · Boré",
+      "source": "Wikipedia: RMS Empress of Ireland",
+      "media_kind": "wreck_doc",
+      "wiki_title": "RMS Empress of Ireland"
+    },
+    "subject": {
+      "scientific_name": "Wreck Empress of Ireland",
+      "common_name_ko": "Empress of Ireland 난파선",
+      "common_name_en": "Wreck Empress of Ireland",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "침몰선",
+      "diet": [],
+      "fun_facts": [
+        "선종: Ocean liner",
+        "총톤수: 14191 GRT; 8028 NRT",
+        "침몰: 1914년"
+      ],
+      "sources": [
+        "Wikipedia: RMS Empress of Ireland",
+        "Wikimedia Commons"
+      ]
+    },
+    "copy": {
+      "jp_name": "沈没船「Empress of Ireland」",
+      "hook_line1": "海の底に、",
+      "hook_line2": "眠る船。",
+      "pop_words": [
+        "海の底に、",
+        "眠る船。"
+      ],
+      "feature_line": "海の命が集う、沈んだ船",
+      "feature_glow_word": "命",
+      "hook_ko": "바다 밑에, 잠든 배.",
+      "feature_ko": "바다 생명이 모이는, 가라앉은 배",
+      "tags": [
+        "#沈没船",
+        "#難破船",
+        "#海"
+      ],
+      "tags_ko": [
+        "#난파선",
+        "#침몰선",
+        "#바다"
+      ],
+      "body": [
+        "青い海の底に、",
+        "静かに横たわる、",
+        "大きな影。",
+        "その正体は、",
+        "沈没船です。",
+        "長い時間をかけて、",
+        "船体には、",
+        "生き物が棲みつきました。",
+        "魚が集まり、",
+        "海藻がゆれる。",
+        "沈んだ船は、",
+        "新しい命の、",
+        "すみかです。",
+        "海に還った、",
+        "静かな船です。"
+      ]
+    }
+  }
+]
