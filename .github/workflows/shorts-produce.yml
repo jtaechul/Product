@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "실행 모드 (produce=상품 큐→영상→업로드, phase0=렌더 스파이크, candidates=라인별 후보 이미지만)"
+        description: "실행 모드 (produce=상품 큐→영상→업로드, candidates=라인별 후보 이미지만)"
         type: choice
-        options: [produce, phase0, candidates]
+        options: [produce, candidates]
         default: produce
       tts_provider:
         description: "TTS 프로바이더 (auto=등록된 키 자동 감지, mock=키 없이 렌더 검증)"
@@ -34,8 +34,7 @@ on:
   push:
     branches: [main, claude/coupang-shorts-phase-0-k42l1i]   # 작업브랜치=라이브 제작 테스트(임시)
     paths: ["projects/coupang-shorts-factory/requests/*.json"]
-  schedule:
-    - cron: "30 22 * * 0-4"   # KST 월~금 07:30 (주 5회, 스펙 §1.3 산출량)
+  # (자동 제작 cron 폐지 — 2026-07-14 사용자 확정: 완전 수동·사용자 주도 파이프라인으로 전환)
 
 permissions:
   contents: write   # 업로드 성공 시 큐 상태(data/processed.json) 커밋용
@@ -76,7 +75,7 @@ jobs:
           SHORTS_PEXELS_API_KEY: ${{ secrets.SHORTS_PEXELS_API_KEY }}
         run: python scripts/fetch_assets.py
 
-      - name: 실행 파라미터 결정 (dispatch 입력 / requests/run_request.json / cron 기본값)
+      - name: 실행 파라미터 결정 (dispatch 입력 / requests/run_request.json)
         id: params
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -86,13 +85,6 @@ jobs:
             echo "privacy=${{ inputs.privacy }}" >> "$GITHUB_OUTPUT"
             echo "soft=" >> "$GITHUB_OUTPUT"
             [ "${{ inputs.no_narration }}" = "true" ] && echo "nonar=--no-narration" >> "$GITHUB_OUTPUT" || echo "nonar=" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "mode=produce" >> "$GITHUB_OUTPUT"
-            echo "provider=auto" >> "$GITHUB_OUTPUT"
-            echo "row=auto" >> "$GITHUB_OUTPUT"
-            echo "privacy=private" >> "$GITHUB_OUTPUT"
-            echo "soft=--soft" >> "$GITHUB_OUTPUT"
-            echo "nonar=" >> "$GITHUB_OUTPUT"
           else
             get() { python3 -c "import json;print(json.load(open('requests/run_request.json')).get('$1','$2'))" 2>/dev/null || echo "$2"; }
             echo "mode=$(get mode produce)" >> "$GITHUB_OUTPUT"
@@ -127,9 +119,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          if [ "${{ steps.params.outputs.mode }}" = "phase0" ]; then
-            python -m src.phase0_spike --provider "${{ steps.params.outputs.provider }}" --job-id "phase0-run${{ github.run_number }}"
-          elif [ "${{ steps.params.outputs.mode }}" = "candidates" ]; then
+          if [ "${{ steps.params.outputs.mode }}" = "candidates" ]; then
             python -m src.pipeline --candidates --row "${{ steps.params.outputs.row }}" --job-id "run${{ github.run_number }}"
           else
             python -m src.pipeline \
