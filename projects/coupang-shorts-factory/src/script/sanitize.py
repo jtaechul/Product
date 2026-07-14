@@ -101,6 +101,9 @@ def sanitize_script(script: dict, strict_length: bool = True) -> dict:
     # 제목 이모지 제거(핵심규칙: 이모지 금지) — Gemini가 제목에 🎤 등을 넣는 경우 정화
     if script.get("title"):
         script["title"] = clean_text(str(script["title"]))
+    # headline(폭로 포맷 화면 상단 뉴스 헤더)도 같은 규칙으로 정화 — 이모지·슬래시·파이프 제거
+    if script.get("headline"):
+        script["headline"] = clean_text(str(script["headline"]))
 
     full = " ".join(l["text"] for l in lines)
     bad = check_forbidden(full + " " + str(script.get("title", "")))

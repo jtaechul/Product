@@ -27,6 +27,8 @@ YELLOW_MIN_PIXELS = 150   # 자막 밴드에서 자막색으로 인정할 최소
 
 def run_qa(video_path: Path, stats: dict, lines: list, job_dir: Path, settings: dict) -> dict:
     problems, checks = [], {}
+    layout = str(settings.get("render", {}).get("layout", "framed")).lower()
+    expose = layout == "expose"   # 폭로 포맷: 자막이 상단 큰 검정 라인(가라오케 칸 아님)
     plan = stats.get("subtitle_plan") or []
     subs = [p for p in plan if p.get("kind") == "sub"]
     memes = [p for p in plan if p.get("kind") in ("meme", "meme_img")]  # 훅 밈은 이제 이미지 배경
@@ -49,12 +51,13 @@ def run_qa(video_path: Path, stats: dict, lines: list, job_dir: Path, settings: 
             problems.append(f"라인{li + 1} 자막≠대본(띄어쓰기 포함): '{got[:24]}' vs '{text[:24]}'")
     checks["script_match"] = "자막=대본 일치(훅 포함)"
 
-    # ② 길이 규격
+    # ② 길이 규격 (expose는 상단 큰 자막이 '라인 전체 문장'이라 칸 상한을 넉넉히)
+    lo, hi = (1, 40) if expose else (1, SUB_LEN_MAX)
     for p in subs:
         t = str(p["text"])
-        if not (1 <= len(t) <= SUB_LEN_MAX):
+        if not (lo <= len(t) <= hi):
             problems.append(f"자막 길이 위반({len(t)}자): '{t[:20]}'")
-    checks["length"] = f"칸당 1~{SUB_LEN_MAX}자"
+    checks["length"] = f"칸당 {lo}~{hi}자" + (" (expose)" if expose else "")
 
     # ③ 위치 고정 + 오버레이 개수
     ys = sorted({int(p["y"]) for p in subs})
@@ -107,10 +110,16 @@ def _check_frames(video_path: Path, subs: list, settings: dict, job_dir: Path,
     if not subs:
         return problems
     s = settings.get("subtitle", {})
-    y = int(s.get("y", 1250))
-    target = _hex_rgb(s.get("color", "#FFE400"))
-    W = int(settings.get("render", {}).get("width", 1080))
-    H = int(settings.get("render", {}).get("height", 1920))
+    r = settings.get("render", {})
+    W = int(r.get("width", 1080))
+    H = int(r.get("height", 1920))
+    if str(r.get("layout", "framed")).lower() == "expose":
+        # 폭로 포맷: 상단 큰 '검정' 자막. 밴드 중심 = 헤더+간격+밴드절반, 목표색=검정.
+        y = int(r.get("expose_header_h", 340)) + int(r.get("expose_sub_gap", 26)) + int(r.get("expose_sub_h", 300)) // 2
+        target, tol = (20, 20, 20), 120
+    else:
+        y = int(s.get("y", 1250))
+        target, tol = _hex_rgb(s.get("color", "#FFE400")), 210
 
     ff = imageio_ffmpeg.get_ffmpeg_exe()
     frames_dir = job_dir / "qa_frames"
@@ -127,9 +136,9 @@ def _check_frames(video_path: Path, subs: list, settings: dict, job_dir: Path,
         if im.size != (W, H):
             problems.append(f"해상도 {im.size} (기대 {(W, H)})")
             break
-        band = np.asarray(im.crop((0, max(0, y - 70), W, min(H, y + 190))), dtype=int)
+        band = np.asarray(im.crop((0, max(0, y - 130), W, min(H, y + 130))), dtype=int)
         dist = np.abs(band - np.array(target)).sum(axis=2)
-        n_pix = int((dist < 210).sum())
+        n_pix = int((dist < tol).sum())
         if n_pix < YELLOW_MIN_PIXELS:
             found_any_fail += 1
             problems.append(f"{t:.1f}s 프레임 자막 밴드에 자막색 픽셀 {n_pix}개(<{YELLOW_MIN_PIXELS}) "

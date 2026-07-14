@@ -159,7 +159,7 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     # ---- 라인별 비주얼 소싱: 라인마다 '상황에 맞는' 이미지 배정(상품 라인만 상품 사진).
     #      다양 소스(Pexels·Openverse·Wikimedia). 실패해도 렌더가 상품 사진으로 폴백(빈 화면 없음).
     line_images = []
-    if str(settings.get("render", {}).get("layout", "framed")).lower() == "framed":
+    if str(settings.get("render", {}).get("layout", "framed")).lower() in ("framed", "expose"):
         try:
             # #2: 운영자가 관리자에서 고른 이미지(data/selections/{row}.json)가 있으면 그걸 최우선 사용.
             line_images = imagesource.load_selections(
@@ -179,7 +179,8 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
                          product_images=product_images, bg_path=bg_path,
                          lines=lines, line_windows=line_windows, stock_clips=stock_clips,
                          product_videos=product_videos, line_images=line_images,
-                         has_narration=not args.no_narration)
+                         has_narration=not args.no_narration,
+                         headline=script.get("headline", ""))
     stats = {"job_id": job_id, "product": product["name"],
              "tts_provider": tts_result["provider"],
              "timestamps_source": tts_result["timestamps_source"], **stats}

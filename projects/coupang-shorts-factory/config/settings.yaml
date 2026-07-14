@@ -70,9 +70,16 @@ render:                 # 스펙 §M6
   shake_seconds: 0.3
   # ⭐ framed 레이아웃(2026-07-13 사용자 확정): 상단 검정바(채널명·로고) + 가운데 정사각형
   #   (항상 이미지/영상 꽉 참, 빈 화면·흐린 배경 절대 없음) + 하단 검정바(자막).
-  layout: "framed"      # "framed" | "legacy"(과거 흐린배경+카드)
-  square_top: 380       # 정사각형 시작 y (위 검정바 높이). 380 + 1080 = 1460, 아래바 1460~1920(460px)
-  square_size: 1080     # 정사각형 한 변(=화면 폭). 이 영역 밖(상/하 바)은 순수 검정(자막·로고만)
+  # ⭐ expose(폭로/뉴스) 레이아웃 (2026-07-14 사용자 확정 · 썰피자식 포맷 벤치마크):
+  #   흰 배경 + 상단 가짜 뉴스헤더(채널명·기사제목) + 큰 검정 자막(상단) + 라인별 full-width 이미지(하단).
+  layout: "expose"      # "expose"(신규 기본) | "framed" | "legacy"
+  expose_header_h: 340  # 상단 헤더 높이(골드 채널바+기사제목+바이라인)
+  expose_sub_gap: 26    # 헤더~자막 간격
+  expose_sub_h: 300     # 큰 자막 밴드 높이
+  expose_img_gap: 12    # 자막~이미지 간격
+  expose_byline: "미래 | 10:25"   # 기사 가짜 출처(뉴스 느낌)
+  square_top: 380       # (framed 전용) 정사각형 시작 y
+  square_size: 1080     # (framed 전용) 정사각형 한 변
 
 whisper:                # M5 폴백 설정
   model: "small"        # 한국어 정확도/속도 균형 (tiny/base는 한국어 정확도 낮음)

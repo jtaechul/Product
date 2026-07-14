@@ -87,7 +87,8 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
                  product_images: list | None = None, lines: list | None = None,
                  line_windows: list | None = None, stock_clips: list | None = None,
                  product_videos: list | None = None, scene_images: list | None = None,
-                 line_images: list | None = None, has_narration: bool = True) -> dict:
+                 line_images: list | None = None, has_narration: bool = True,
+                 headline: str = "") -> dict:
     """대본 단계(stage)별 씬 시퀀스 쇼츠 렌더. 반환: 렌더 통계 dict.
 
     lines(단계 포함)+line_windows가 있으면 '씬 시퀀스'로 렌더한다 — 상품 단계(①④⑤)는
@@ -127,9 +128,19 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     ch = settings.get("channel", {})
     logo_path = project_root / str(ch.get("logo", "")) if ch.get("logo") else None
     framed = (layout == "framed")
+    expose = (layout == "expose")
 
-    bg_layers, card_layers = [], []
-    if framed:
+    bg_layers, card_layers, expose_layers, sub_plan = [], [], [], []
+    if expose:
+        # ── expose(폭로/뉴스): 흰 배경 + 상단 뉴스헤더 + 큰 자막 + 하단 라인별 이미지 ──
+        expose_layers, sub_plan = _build_expose(
+            lines, line_windows, line_images, product_images, product_videos,
+            duration, width, height, font_path, settings,
+            headline or (ch.get("name", "미래마켓") + " 단독"),
+            r.get("expose_byline", "미래 | 10:25"))
+        scrim = None
+        bg_name = f"expose {len(sub_plan)}라인 (뉴스헤더+큰자막+라인이미지 {sum(1 for x in (line_images or []) if x)}장)"
+    elif framed:
         # ── framed: 검정 프레임 + 정사각형(항상 이미지/영상 꽉 참) + 상단 채널바 ──
         base = ImageClip(np.zeros((height, width, 3), dtype=np.uint8)).with_duration(duration)
         bg_layers = [base]
@@ -193,8 +204,9 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     # 자막(개편): 대본이 확정한 subs 칸을 그대로 팝업 + punch 라인 1회만 밈 카드.
     # ⭐ 핵심규칙: 화면 리액션 추임새(react 스티커) 전면 금지 — 자막·밈 카드 외 텍스트 오버레이 없음.
     # phrase 모드면 구(라인) 단위. 라인 정보 없으면 전체 가라오케 폴백(테스트 경로).
-    sub_plan = []
-    if lines and line_windows and s.get("mode", "karaoke") == "phrase":
+    if expose:
+        sub_clips = []   # 자막은 _build_expose가 이미 레이어에 넣었다
+    elif lines and line_windows and s.get("mode", "karaoke") == "phrase":
         sub_clips = _build_line_clips(lines, line_windows, duration, font_path, s, width)
     elif lines and line_windows:
         # 펀치라인 상황에 맞는 AI 밈 이미지(라이브러리)를 골라 밈 카드 배경으로 (글자는 렌더가 얹음)
@@ -209,10 +221,13 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
         sub_clips = _build_word_clips(words, duration, font_path, s, width)
 
     t0 = time.time()
-    layers = [*bg_layers, *card_layers]
-    if scrim is not None:
-        layers.append(scrim)
-    layers += sub_clips
+    if expose:
+        layers = list(expose_layers)
+    else:
+        layers = [*bg_layers, *card_layers]
+        if scrim is not None:
+            layers.append(scrim)
+        layers += sub_clips
     audio = _mix_bgm(audio, project_root, settings, duration, has_narration)
     final = (
         CompositeVideoClip(layers, size=(width, height))
@@ -417,6 +432,25 @@ def _branded_fallback_arr(sq: int, name: str, font_path: Path) -> np.ndarray:
     return np.array(im)
 
 
+def _branded_rect_arr(w: int, h: int, name: str, font_path: Path) -> np.ndarray:
+    """expose 하단 영역용 브랜드 패널(가로 직사각형) — 라인 이미지·상품 사진이 하나도 없어도
+    흰 여백(빈 화면)이 안 생기게 채널명 박힌 그라데이션으로 채운다(빈 화면 절대 금지 규칙)."""
+    from PIL import Image, ImageDraw, ImageFont
+    top, bottom = np.array([36, 30, 64]), np.array([88, 44, 92])
+    rows = np.linspace(0, 1, max(1, h))[:, None]
+    grad = (top[None, :] * (1 - rows) + bottom[None, :] * rows).astype(np.uint8)
+    im = Image.fromarray(np.repeat(grad[:, None, :], w, axis=1)).convert("RGB")
+    d = ImageDraw.Draw(im)
+    try:
+        f = ImageFont.truetype(str(font_path), int(min(w, h) * 0.12))
+    except Exception:
+        f = ImageFont.load_default()
+    tw = d.textbbox((0, 0), name, font=f)[2]
+    d.text(((w - tw) // 2, int(h * 0.42)), name, font=f, fill="#FFFFFF",
+           stroke_width=4, stroke_fill="#000000")
+    return np.array(im)
+
+
 def _square_content_clip(scene: dict, product_images: list, product_videos: list,
                          scene_images: list, sq: int, sq_top: int, name: str,
                          font_path: Path):
@@ -564,6 +598,151 @@ def _brand_bar_clip(width: int, bar_h: int, name: str, handle: str,
                font=sub_font, fill="#C9B8FF")
     return (ImageClip(np.array(canvas), transparent=True)
             .with_duration(duration).with_position((0, 0)))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# expose(폭로/뉴스) 레이아웃 — 흰 배경 + 상단 가짜 뉴스헤더(채널명·기사제목) + 큰 검정 자막(상단)
+# + 라인별 full-width 이미지(하단). 참고 포맷(썰피자식)의 '구조'만 차용, 대본·콘텐츠는 오리지널.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _cover_rect_arr(img_path: Path, w: int, h: int) -> np.ndarray:
+    """이미지를 w×h에 cover-fit(중앙 크롭)한 RGB 배열. 캐시."""
+    key = ("rect", str(img_path), int(w), int(h))
+    arr = _SQUARE_ARR_CACHE.get(key)
+    if arr is None:
+        from PIL import Image
+        im = Image.open(str(img_path)).convert("RGB")
+        scale = max(w / im.width, h / im.height)
+        im = im.resize((max(1, round(im.width * scale)), max(1, round(im.height * scale))), Image.LANCZOS)
+        left, top = (im.width - w) // 2, (im.height - h) // 2
+        im = im.crop((left, top, left + w, top + h))
+        arr = np.array(im)
+        _SQUARE_ARR_CACHE[key] = arr
+    return arr
+
+
+def _expose_header_arr(width: int, header_h: int, channel: str, headline: str,
+                       byline: str, font_path: Path) -> np.ndarray:
+    """상단 고정 헤더: 골드 채널바(햄버거·돋보기 아이콘) + 가짜 기사 제목 + 출처 바이라인 + 구분선."""
+    from PIL import Image, ImageDraw, ImageFont
+    im = Image.new("RGB", (width, header_h), (255, 255, 255))
+    d = ImageDraw.Draw(im)
+    gold_h = int(header_h * 0.33)
+    d.rectangle([0, 0, width, gold_h], fill=(212, 170, 76))
+    cf = ImageFont.truetype(str(font_path), int(gold_h * 0.46))
+    cb = d.textbbox((0, 0), channel, font=cf)
+    d.text(((width - (cb[2] - cb[0])) // 2, (gold_h - (cb[3] - cb[1])) // 2 - cb[1]),
+           channel, font=cf, fill=(38, 28, 8))
+    hx, hy = int(width * 0.055), gold_h // 2           # 햄버거
+    for k in (-13, 0, 13):
+        d.line([(hx - 20, hy + k), (hx + 20, hy + k)], fill=(38, 28, 8), width=6)
+    sx, sy = int(width * 0.945), gold_h // 2           # 돋보기
+    d.ellipse([sx - 20, sy - 20, sx + 8, sy + 8], outline=(38, 28, 8), width=6)
+    d.line([(sx + 6, sy + 6), (sx + 24, sy + 24)], fill=(38, 28, 8), width=6)
+    hf = ImageFont.truetype(str(font_path), int(header_h * 0.185))   # 기사 제목(굵은 검정)
+    ty = gold_h + int(header_h * 0.07)
+    for ln in _wrap_pil(headline, hf, int(width * 0.92), max_lines=2):
+        d.text(((width - d.textbbox((0, 0), ln, font=hf)[2]) // 2, ty), ln, font=hf, fill=(17, 17, 17))
+        ty += int(header_h * 0.205)
+    bf = ImageFont.truetype(str(font_path), int(header_h * 0.085))
+    d.text((int(width * 0.045), ty + 2), byline, font=bf, fill=(150, 150, 150))
+    d.line([(0, header_h - 3), (width, header_h - 3)], fill=(214, 214, 214), width=3)
+    return np.array(im)
+
+
+def _expose_subtitle(text: str, font_path: Path, font_size: int, box_w: int, band_h: int):
+    """상단 큰 검정 자막(흰 배경 위) — caption 자동 줄바꿈. 밴드보다 크면 폰트 축소."""
+    def make(fs):
+        for extra in (dict(text_align="center"), {}):
+            try:
+                return TextClip(text=text, font=str(font_path), font_size=fs, color="#141414",
+                                method="caption", size=(box_w, None), **extra)
+            except TypeError:
+                continue
+        return TextClip(text=text, font=str(font_path), font_size=fs, color="#141414")
+    tc = make(font_size)
+    if tc.h > band_h and font_size > 34:
+        tc = make(max(34, int(font_size * band_h / tc.h)))
+    return tc
+
+
+def _expose_image_clip(src, start: float, end: float, width: int, img_top: int, img_h: int,
+                       product_images: list, product_videos: list):
+    """하단 full-width 이미지/영상 — cover-fit. 상품 라인+제품영상이면 영상, GIF/영상이면 재생."""
+    dur = end - start
+    if dur <= 0.05:
+        return None
+    prod_set = {str(Path(p)) for p in product_images}
+    if src is not None and str(Path(src)) in prod_set and product_videos:
+        v = _video_fullframe(product_videos[0], width, img_h, dur)
+        if v is not None:
+            return v.with_start(start).with_position((0, img_top))
+    if src is not None and Path(src).suffix.lower() in VIDEO_EXTS | {".gif"}:
+        v = _video_fullframe(src, width, img_h, dur)
+        if v is not None:
+            return v.with_start(start).with_position((0, img_top))
+    if src is None:
+        return None
+    try:
+        arr = _cover_rect_arr(Path(src), width, img_h)
+    except Exception as e:
+        print(f"[render] 경고: expose 이미지 실패({Path(src).name}: {e})")
+        return None
+    kb = ImageClip(arr).resized(lambda t, d=dur: 1.0 + 0.05 * min(1.0, t / d)).with_position(("center", "center"))
+    inner = CompositeVideoClip([kb], size=(width, img_h)).with_duration(dur + 0.05)
+    return inner.with_start(start).with_position((0, img_top))
+
+
+def _build_expose(lines: list, line_windows: list, line_images: list, product_images: list,
+                  product_videos: list, duration: float, width: int, height: int,
+                  font_path: Path, settings: dict, headline: str, byline: str) -> tuple:
+    """expose 레이아웃 전체 레이어 + QA용 sub_plan 반환."""
+    r = settings.get("render", {})
+    s = settings.get("subtitle", {})
+    ch = settings.get("channel", {})
+    header_h = int(r.get("expose_header_h", 340))
+    sub_top = header_h + int(r.get("expose_sub_gap", 26))
+    sub_h = int(r.get("expose_sub_h", 300))
+    img_top = sub_top + sub_h + int(r.get("expose_img_gap", 12))
+    img_h = height - img_top
+    box_w = int(width * 0.92)
+    font_size = int(s.get("expose_font_size", 64))
+
+    layers = [ImageClip(np.full((height, width, 3), 255, dtype=np.uint8)).with_duration(duration)]
+    # 하단 라인별 이미지 (라인 이미지 → 상품 사진0 → 브랜드 패널 순으로 항상 꽉 채움)
+    prod0 = product_images[0] if product_images else None
+    for sc in _plan_line_scenes(duration, line_windows, line_images or []):
+        clip = _expose_image_clip(sc.get("img") or prod0, sc["start"], sc["end"],
+                                  width, img_top, img_h, product_images, product_videos)
+        if clip is None:   # 라인 이미지·상품 사진 모두 없거나 로드 실패 → 빈 흰 여백 대신 브랜드 패널
+            d = sc["end"] - sc["start"]
+            if d > 0.05:
+                arr = _branded_rect_arr(width, img_h, ch.get("name", "미래마켓"), font_path)
+                clip = (ImageClip(arr).with_duration(d + 0.05)
+                        .with_start(sc["start"]).with_position((0, img_top)))
+        if clip is not None:
+            layers.append(clip)
+    # 상단 헤더(전체 길이)
+    layers.append(ImageClip(_expose_header_arr(width, header_h, ch.get("name", "미래마켓"),
+                                               headline, byline, font_path))
+                  .with_duration(duration).with_position((0, 0)))
+    # 상단 큰 자막(라인별, 다음 라인 시작까지 유지)
+    ev = []
+    for li, ((ls, le), ln) in enumerate(zip(line_windows, lines)):
+        text = str(ln.get("text", "")).strip()
+        ls, le = max(0.0, float(ls)), min(float(le), duration)
+        if text and le - ls >= 0.1:
+            ev.append({"text": text, "start": ls, "end": le, "line_i": li})
+    plan = []
+    for i, e in enumerate(ev):
+        nxt = ev[i + 1]["start"] if i + 1 < len(ev) else duration
+        e["show_end"] = min(max(nxt, e["start"] + 0.2), e["end"] + 0.4, duration)
+        tc = _expose_subtitle(e["text"], font_path, font_size, box_w, sub_h)
+        y = sub_top + max(0, (sub_h - tc.h) // 2)
+        layers.append(tc.with_start(e["start"]).with_end(e["show_end"]).with_position(("center", y)))
+        plan.append({"kind": "sub", "text": e["text"], "start": round(e["start"], 3),
+                     "end": round(e["show_end"], 3), "y": sub_top, "line_i": e["line_i"]})
+    return layers, plan
 
 
 def _subtitle_scrim(width: int, height: int, duration: float, s: dict):
