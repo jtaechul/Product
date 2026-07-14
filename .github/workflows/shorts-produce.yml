@@ -100,7 +100,8 @@ jobs:
             echo "row=$(get row auto)" >> "$GITHUB_OUTPUT"
             echo "privacy=$(get privacy private)" >> "$GITHUB_OUTPUT"
             echo "soft=" >> "$GITHUB_OUTPUT"
-            [ "$(get no_narration false)" = "true" ] && echo "nonar=--no-narration" >> "$GITHUB_OUTPUT" || echo "nonar=" >> "$GITHUB_OUTPUT"
+            NONAR="$(get no_narration false)"   # JSON true는 파이썬이 'True'로 출력 → 대소문자 모두 허용
+            case "$NONAR" in true|True|TRUE|1) echo "nonar=--no-narration" >> "$GITHUB_OUTPUT" ;; *) echo "nonar=" >> "$GITHUB_OUTPUT" ;; esac
           fi
 
       - name: 파이프라인 실행
