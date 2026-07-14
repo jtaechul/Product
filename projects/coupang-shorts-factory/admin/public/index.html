@@ -162,6 +162,11 @@ ol li{margin:8px 0}
     <textarea id="pNotes" rows="4" placeholder="캡처 대신(또는 추가로) 텍스트를 붙여넣어도 됩니다. 길고 지저분해도 괜찮습니다."></textarea>
     <label>상품 이미지 주소 (선택 — 파트너스 링크생성 화면의 이미지)</label>
     <input id="pImg" placeholder="https://...jpg (비워도 됩니다)">
+    <label>상품 동영상 (선택 — 있으면 영상 속 상품 소개 장면 배경으로 씁니다)</label>
+    <input id="pVideo" type="file" accept="video/mp4,video/quicktime,video/*" multiple>
+    <div id="pVideoList"></div>
+    <p class="hint" style="margin-top:4px">없어도 됩니다(상품 사진으로 대체). 쿠팡 상세의 판매자 시연 영상을
+    iPad <b>화면 기록</b>으로 녹화해 올리면 제작 시 상품 구간 배경으로 자동 사용됩니다. 개당 150MB 이하.</p>
     <details>
       <summary>직접 입력 (선택 — 붙여넣기 없이 등록할 때)</summary>
       <label>상품명</label>
@@ -784,11 +789,39 @@ $("btnAddProduct").onclick = (ev) => busy(ev.target, async () => {
   const base = cur.text.endsWith("\n") ? cur.text : cur.text + "\n";
   const line = [name, price, specs, img, link, cat || (name ? "기타" : "")].join(",");
   await putFile(CSV_PATH, base + line + "\n", `admin: 상품 추가 — ${label}`, cur.sha);
-  ["pName", "pPrice", "pS1", "pS2", "pS3", "pLink", "pImg", "pNotes"].forEach((id) => $(id).value = "");
+  // 상품 동영상(선택) — 있으면 기존 제품영상 시스템과 동일하게 릴리스 product-assets 에 {hash}_{시각}.ext 업로드.
+  // 실패해도 상품 등록은 완료(선택 항목이므로 경고만).
+  const vids = [...($("pVideo").files || [])];
+  if (vids.length) {
+    try {
+      const rel = await pvRelease(true);
+      let vdone = 0;
+      for (let i = 0; i < vids.length; i++) {
+        const f = vids[i];
+        if (f.size > 150 * 1048576) { toast(`${f.name}: 150MB 초과 — 건너뜀(짧게 잘라 올리세요).`, 6000); continue; }
+        const m = /\.(mp4|mov|m4v|webm)$/i.exec(f.name || "");
+        const vname = `${hash}_${Date.now() + i}.${m ? m[1].toLowerCase() : "mp4"}`;
+        toast(`상품 동영상 업로드 중 ${i + 1}/${vids.length}... (${(f.size / 1048576).toFixed(0)}MB, 잠시 걸립니다)`, 180000);
+        await pvUploadOne(rel.id, f, vname);
+        vdone++;
+      }
+      if (vdone) toast(`상품 동영상 ${vdone}개 업로드 완료. 다음 제작부터 자동 사용됩니다.`);
+    } catch (e) {
+      toast("상품은 추가됐지만 동영상 업로드는 실패: " + (e.message || e), 6000);
+    }
+  }
+  ["pName", "pPrice", "pS1", "pS2", "pS3", "pLink", "pImg", "pNotes", "pVideo"].forEach((id) => $(id).value = "");
+  $("pVideoList").innerHTML = "";
   attached = []; renderFiles();
   toast("상품을 대기열에 추가했습니다. 상세는 제작 시 자동으로 읽어냅니다.");
   loadProducts();
 });
+// 선택한 상품 동영상 파일명 미리보기(비전문가용 확인 — 캡처파일 #fileList 와 같은 칩 스타일)
+$("pVideo").onchange = () => {
+  const fs = [...($("pVideo").files || [])];
+  $("pVideoList").innerHTML = fs.map((f) =>
+    `<span class="fchip">${f.name} · ${(f.size / 1048576).toFixed(0)}MB</span>`).join("");
+};
 
 /* ── 제작 · 검수 · 올리기 (B3~B5) ───────────────────────── */
 function mkSelected() {
