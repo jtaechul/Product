@@ -139,11 +139,10 @@ ol li{margin:8px 0}
 
 <!-- ───────── 상품 탭 ───────── -->
 <section id="tab-products" class="on" data-group="make" style="order:1">
-  <div class="card">
-    <h2>제작할 상품</h2>
-    <p class="hint" style="margin:0 0 6px">상품을 고르면 아래에서 그 상품으로 <b>기획 → 이미지 → 제작</b>이 이어집니다.
-    처음이면 먼저 아래 '새 상품 등록'에서 추가하세요.</p>
-    <select id="mkProduct"><option value="">토큰 저장 후 불러옵니다…</option></select>
+  <div class="card" id="workHeader">
+    <h2>현재 작업 상품</h2>
+    <p class="hint" id="workProduct" style="margin:0">아직 없습니다 — 아래 <b>새 상품 등록</b>에서 등록하면 곧바로 기획·대본이 자동으로 만들어집니다. 이미 등록한 상품은 아래 <b>제작 대기열</b>에서 <b>작업</b>을 누르세요.</p>
+    <p class="hint" id="workStatus" style="margin:6px 0 0;color:#4f46e5"></p>
   </div>
   <div class="card">
     <h2>새 상품 등록</h2>
@@ -190,8 +189,8 @@ ol li{margin:8px 0}
       <input id="pS2" placeholder="예: 500ml 대용량" style="margin-top:8px">
       <input id="pS3" placeholder="예: USB-C 충전" style="margin-top:8px">
     </details>
-    <button class="btn" id="btnAddProduct">상품 추가</button>
-    <p class="hint">추가하면 제작 대기열에 저장됩니다. 영상 제작은 "제작" 탭에서.</p>
+    <button class="btn" id="btnAddProduct">상품 기획하기</button>
+    <p class="hint">누르면 상품이 저장되고 <b>곧바로 기획·대본이 자동으로 만들어집니다</b>(약 1~2분). 완성되면 아래에서 확인 후 이미지 선택 → 제작으로 이어집니다.</p>
   </div>
   <div class="card">
     <h2>제작 대기열 <button class="btn mini sub" id="btnReloadProducts" style="float:right">새로고침</button></h2>
@@ -219,24 +218,13 @@ ol li{margin:8px 0}
   </div>
 </section>
 
-<!-- ───────── 기획 탭 (기획+스토리보드+대본 검토·승인) ───────── -->
+<!-- ───────── 기획 (등록 시 자동 생성된 기획·대본 검토·승인) ───────── -->
 <section id="tab-plan" class="on" data-group="make" style="order:2">
-  <div class="card">
-    <h2>기획 · 대본</h2>
-    <p class="hint" style="margin:0 0 8px">상품을 고르고 <b>기획 만들기</b>를 누르면(약 1~2분) Claude가
-    제품을 분석해 <b>기획서 + 구간별 스토리보드 + 대본</b>을 만듭니다. 검토해서 방향이 맞으면
-    <b>이 기획으로 이미지 찾기</b>로 넘어가고, 아니면 <b>기획 다시 만들기</b>를 누르세요.</p>
-    <div class="row2" style="margin-top:10px">
-      <button class="btn sub" id="planGen">기획 만들기 (1~2분)</button>
-      <button class="btn" id="planLoad">기획 불러오기</button>
-    </div>
-    <p class="hint" id="planStatus"></p>
-  </div>
   <div id="planView"></div>
   <div class="card" id="planActions" style="display:none">
     <button class="btn" id="planApprove">이 기획으로 이미지 찾기 →</button>
     <button class="btn sub" id="planRegen" style="margin-top:8px">기획 다시 만들기</button>
-    <p class="hint">승인하면 '이미지' 탭으로 넘어가 구간별 이미지 후보를 만듭니다.</p>
+    <p class="hint">승인하면 아래 '이미지'에서 구간별 이미지 후보를 만듭니다. 방향이 안 맞으면 '기획 다시 만들기'.</p>
   </div>
 </section>
 
@@ -520,11 +508,16 @@ async function loadProducts() {
           <div class="s"></div>
         </div>
         <span class="chip ${isDone ? "done" : "wait"}">${isDone ? "제작 완료" : "대기"}</span>
+        <button class="btn mini workbtn">작업</button>
         <button class="btn mini sub pvbtn"></button>
         <button class="btn mini danger">삭제</button>`;
       el.querySelector(".t").textContent = label;
       el.querySelector(".s").textContent =
         (r.price ? Number(r.price).toLocaleString() + "원" : "가격 자동") + (r.cat ? " · " + r.cat : "");
+      const workBtn = el.querySelector(".workbtn");
+      workBtn.title = "이 상품으로 기획·이미지·제작 진행";
+      workBtn.onclick = () => selectProduct(i + 1, h, label);
+      if (currentWork && currentWork.hash === h) el.style.outline = "2px solid #4f46e5";
       const pvBtn = el.querySelector(".pvbtn");
       pvBtn.textContent = nVids ? `영상 ${nVids}` : "영상 올리기";
       pvBtn.onclick = () => pvOpen({ hash: h, label });
@@ -813,8 +806,15 @@ $("btnAddProduct").onclick = (ev) => busy(ev.target, async () => {
   ["pName", "pPrice", "pS1", "pS2", "pS3", "pLink", "pImg", "pNotes", "pVideo"].forEach((id) => $(id).value = "");
   $("pVideoList").innerHTML = "";
   attached = []; renderFiles();
-  toast("상품을 대기열에 추가했습니다. 상세는 제작 시 자동으로 읽어냅니다.");
-  loadProducts();
+  // 개편: 등록 = 기획. 방금 등록한 상품을 현재 작업 상품으로 잡고 기획·대본을 자동 생성한다.
+  const newRow = parseCsv(base).length + 1;   // 방금 추가된 행(1-based)
+  setCurrentWork(newRow, hash, label);
+  $("planView").innerHTML = ""; $("planActions").style.display = "none";
+  await planDispatch(newRow);
+  setStatus("상품 등록 완료 — 기획·대본을 자동으로 만들고 있습니다(약 1~2분).");
+  toast("상품 등록 완료 — 기획·대본 자동 생성 시작");
+  document.getElementById("tab-plan").scrollIntoView({ behavior: "smooth" });
+  pollPlan(hash);
 });
 // 선택한 상품 동영상 파일명 미리보기(비전문가용 확인 — 캡처파일 #fileList 와 같은 칩 스타일)
 $("pVideo").onchange = () => {
@@ -824,15 +824,8 @@ $("pVideo").onchange = () => {
 };
 
 /* ── 제작 · 검수 · 올리기 (B3~B5) ───────────────────────── */
-function mkSelected() {
-  const sel = $("mkProduct"), opt = sel.options[sel.selectedIndex];
-  if (!opt || opt.value === "") { toast("상품을 먼저 고르세요."); return null; }
-  return { row: Number(opt.value) + 1, hash: opt.dataset.hash };
-}
-async function mkInit() {
-  try { await fillProductSelect($("mkProduct")); } catch (e) { toast(e.message, 5000); }
-  loadRuns();
-}
+function mkSelected() { return requireWork(); }
+async function mkInit() { loadRuns(); }
 async function mkDispatch(inputs) {
   await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches`, {
     method: "POST", body: JSON.stringify({ ref: BRANCH, inputs }) });
@@ -1055,44 +1048,57 @@ $("vmDownload").onclick = async () => {
 const PLAN_DIR = P + "/data/plans";
 let planData = null;
 
-async function fillProductSelect(sel) {   // 기획·이미지 공용 상품 드롭다운 채우기
-  if (!token()) { sel.innerHTML = '<option value="">설정 탭에서 토큰을 먼저 저장하세요</option>'; return; }
-  const csv = await getFile(CSV_PATH);
-  const rows = parseCsv(csv.text);
-  sel.innerHTML = "";
-  if (!rows.length) { sel.innerHTML = '<option value="">대기 중인 상품이 없습니다</option>'; return; }
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i], h = await sha16(`${r.name}|${r.link}`);
-    const o = document.createElement("option");
-    o.value = String(i); o.dataset.hash = h;
-    o.textContent = `${i + 1}. ` + (r.name || "(자동 추출 — " + r.link.slice(-12) + ")");
-    sel.appendChild(o);
+// 현재 작업 상품(개편: '제작할 상품' 드롭다운 폐지) — 등록 시 자동 지정 / '제작 대기열'의 '작업'으로 전환.
+// 기획·이미지·제작 단계가 모두 이 값을 공유한다.
+let currentWork = null;
+function setCurrentWork(row, hash, label) {
+  currentWork = { row, hash, label };
+  const e = $("workProduct");
+  if (e) e.innerHTML = "<b>현재 상품:</b> " + (label || ("(자동추출 " + String(hash).slice(0, 6) + ")"));
+  loadProducts();   // 대기열에서 현재 상품 하이라이트 갱신
+}
+function requireWork() {
+  if (!currentWork) { toast("먼저 '새 상품 등록'으로 등록하거나, '제작 대기열'에서 상품의 '작업'을 누르세요.", 5000); return null; }
+  return currentWork;
+}
+function setStatus(msg) { const e = $("workStatus"); if (e) e.textContent = msg || ""; }
+async function planDispatch(row) {
+  await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches`, {
+    method: "POST", body: JSON.stringify({ ref: BRANCH, inputs: { mode: "plan", row: String(row) } }) });
+}
+// 기획 파일(data/plans/{hash}.json)이 생길 때까지 폴링 → 완성되면 자동 표시(수동 '불러오기' 폐지)
+async function pollPlan(hash, tries = 0) {
+  if (!currentWork || currentWork.hash !== hash) return;   // 다른 상품으로 전환되면 폴링 중단
+  const f = await getFile(`${PLAN_DIR}/${hash}.json`, true);
+  if (f) {
+    planData = JSON.parse(f.text); renderPlan();
+    $("planActions").style.display = "";
+    setStatus("기획·대본 완성 — 검토 후 '이 기획으로 이미지 찾기'로 넘어가세요.");
+    return;
+  }
+  if (tries >= 24) { setStatus("기획 생성이 예상보다 오래 걸립니다. 잠시 뒤 대기열에서 '작업'을 다시 눌러 확인하세요."); return; }
+  setStatus(`기획·대본 생성 중... (${tries * 15}초 경과 · 보통 1~2분)`);
+  setTimeout(() => pollPlan(hash, tries + 1), 15000);
+}
+// 제작 대기열의 '작업' → 현재 작업 상품 지정 + 기획 표시(없으면 자동 생성 시작)
+async function selectProduct(row, hash, label) {
+  setCurrentWork(row, hash, label);
+  document.getElementById("tab-plan").scrollIntoView({ behavior: "smooth" });
+  const f = await getFile(`${PLAN_DIR}/${hash}.json`, true);
+  if (f) {
+    planData = JSON.parse(f.text); renderPlan();
+    $("planActions").style.display = "";
+    setStatus("기획·대본을 검토하세요. 좋으면 '이 기획으로 이미지 찾기'.");
+  } else {
+    $("planView").innerHTML = ""; $("planActions").style.display = "none";
+    setStatus("이 상품은 아직 기획 전 — 자동으로 생성을 시작합니다(약 1~2분).");
+    await planDispatch(row);
+    pollPlan(hash);
   }
 }
-// 공용 상품 드롭다운(#mkProduct)에서 현재 선택 상품 — 기획·이미지·제작이 모두 공유
-function currentProduct() {
-  const sel = $("mkProduct"), opt = sel && sel.options[sel.selectedIndex];
-  if (!opt || opt.value === "") { toast("맨 위에서 상품을 먼저 고르세요."); return null; }
-  return { row: Number(opt.value) + 1, hash: opt.dataset.hash };
-}
+function currentProduct() { return requireWork(); }
 const planSelected = currentProduct;
-$("planGen").onclick = (ev) => busy(ev.target, async () => {
-  const p = planSelected(); if (!p) return;
-  await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches`, {
-    method: "POST", body: JSON.stringify({ ref: BRANCH, inputs: { mode: "plan", row: String(p.row) } }) });
-  $("planStatus").textContent = "기획을 만드는 중입니다(약 1~2분). 잠시 뒤 '기획 불러오기'를 누르세요.";
-  toast("기획 생성 시작 — 1~2분 뒤 불러오기");
-});
-$("planLoad").onclick = (ev) => busy(ev.target, async () => {
-  const p = planSelected(); if (!p) return;
-  $("planStatus").textContent = "기획 불러오는 중...";
-  const f = await getFile(`${PLAN_DIR}/${p.hash}.json`, true);
-  if (!f) { $("planStatus").textContent = "아직 기획이 없습니다. '기획 만들기'를 먼저 누르세요(생성에 1~2분)."; return; }
-  planData = JSON.parse(f.text);
-  renderPlan();
-  $("planStatus").textContent = "기획을 검토하세요. 좋으면 아래 '이미지 찾기'로 넘어갑니다.";
-  $("planActions").style.display = "";
-});
+// (기획 생성·불러오기는 등록/대기열 '작업'에서 자동 처리 — planDispatch + pollPlan)
 function renderPlan() {
   const box = $("planView"); box.innerHTML = "";
   const c = planData.concept || {};
@@ -1128,9 +1134,11 @@ function renderPlan() {
 }
 $("planRegen").onclick = (ev) => busy(ev.target, async () => {
   const p = planSelected(); if (!p) return;
-  await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches`, {
-    method: "POST", body: JSON.stringify({ ref: BRANCH, inputs: { mode: "plan", row: String(p.row) } }) });
-  toast("기획 다시 만들기 시작 — 1~2분 뒤 '기획 불러오기'");
+  $("planActions").style.display = "none";
+  await planDispatch(p.row);
+  setStatus("기획을 다시 만드는 중... (약 1~2분, 완성되면 자동으로 다시 표시)");
+  toast("기획 다시 만들기 시작");
+  pollPlan(p.hash);
 });
 $("planApprove").onclick = (ev) => busy(ev.target, async () => {
   const p = planSelected(); if (!p) return;
