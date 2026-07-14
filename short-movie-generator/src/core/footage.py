@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import re
 from pathlib import Path
 
@@ -649,6 +650,96 @@ def _wreck_photo_footage(scientific_name: str, common_name_en: str, dest: Path, 
     cand = {"url": got["url"], "image_url": got["url"], "media_kind": "photo",
             "license": got["license"], "credit": got["credit"], "source": got.get("source", "")}
     return _fetch_photo_kenburns(cand, dest, key, common_name_en)
+
+
+def _rep_license(licenses: list[str]) -> str:
+    """혼합 라이선스 → 대표값(가장 강한 표시의무). 전부 통과 라이선스 전제."""
+    ls = [(x or "").lower() for x in licenses]
+    if any("by-sa" in x for x in ls):
+        return "cc-by-sa"
+    if any(x == "cc-by" or "by" in x for x in ls if "sa" not in x):
+        return "cc-by"
+    if any("cc0" in x for x in ls):
+        return "cc0"
+    return "public-domain"
+
+
+def build_wreck_documentary(images: list[dict], dest_dir: str, target_dur: float = 42.0,
+                            key: str = "wreck", overlays: dict | None = None) -> dict | None:
+    """★침몰선 다큐 시퀀스(반복 제거): 서로 다른 이미지를 '취항→(초상)→사고→잔해' 순서로
+    각기 다른 켄번즈 컷(9:16)으로 이어붙인 하나의 영상. 한 장 우려먹기를 대체한다.
+
+    images: dossier.ordered_beat_images() 결과([{url,beat,credit,license,...}] 순서 보존).
+    overlays: {beat: png_path} — 해당 비트 컷 위에 얹을 화면 카드(제원 카드 등, 선택).
+    반환 {path, sequenced:True, credit, license, source, beats} 또는 None(이미지 없음/합성 실패).
+    """
+    import subprocess
+    dest = Path(dest_dir); dest.mkdir(parents=True, exist_ok=True)
+    imgs = [im for im in (images or []) if im.get("url")]
+    if not imgs:
+        return None
+    overlays = overlays or {}
+    n = len(imgs)
+    per = max(3, int(math.ceil(target_dur / n)))     # 컷당 초(정수) — 합 ≥ target_dur → 다운스트림 무반복
+    clips: list[str] = []
+    used: list[dict] = []
+    for i, im in enumerate(imgs):
+        iext = next((e for e in _IMAGE_EXT if im["url"].lower().endswith(e)), ".jpg")
+        img = dest / f"wdoc_{i}{iext}"
+        if not (img.exists() and img.stat().st_size > 50_000) and not _download(im["url"], img):
+            log.info("[footage] 다큐 이미지 다운로드 실패: %s", im["url"]); continue
+        clip = dest / f"wdoc_clip_{i}.mp4"
+        motion = _KENBURNS_MOTIONS[i % len(_KENBURNS_MOTIONS)]   # 컷마다 무브 교대(단조 방지)
+        if not _kenburns_clip(str(img), str(clip), seconds=per, motion=motion, W=720, H=1280):
+            continue
+        # 비트 카드 오버레이(선택): 제원 카드 등을 그 컷 위에 얹는다(디졸브)
+        ov = overlays.get(im.get("beat", ""))
+        if ov and Path(ov).exists():
+            card_clip = dest / f"wdoc_card_{i}.mp4"
+            if _overlay_card(str(clip), ov, str(card_clip), per):
+                clip = card_clip
+                overlays.pop(im.get("beat", ""), None)   # 카드는 한 번만
+        clips.append(str(clip)); used.append(im)
+    if not clips:
+        return None
+    # concat(하드컷 — 켄번즈 무브 연속성으로 컷 전환이 자연스럽다)
+    lst = dest / "wdoc_list.txt"
+    lst.write_text("".join(f"file '{Path(c).name}'\n" for c in clips), encoding="utf-8")
+    out = dest / "wreck_documentary.mp4"
+    try:
+        r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0",
+                            "-i", str(lst), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
+                            "-an", str(out)], cwd=str(dest), timeout=600)
+        if not (r.returncode == 0 and out.exists() and out.stat().st_size > 100_000):
+            return None
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] 다큐 concat 실패: %s", e); return None
+    creds = sorted({im.get("credit", "") for im in used if im.get("credit")})
+    log.info("[footage] 침몰선 다큐 시퀀스 %d컷(%s) 합성 완료", len(clips),
+             "→".join(im.get("beat", "?") for im in used))
+    return {"path": str(out), "sequenced": True, "logo_box": None,
+            "license": _rep_license([im.get("license", "") for im in used]),
+            "credit": " · ".join(creds)[:300], "source": "Wikimedia Commons",
+            "beats": [im.get("beat", "") for im in used], "credits": creds}
+
+
+def _overlay_card(base_v: str, card_png: str, out_v: str, dur: int) -> bool:
+    """base 9:16 영상 위에 카드 PNG(같은 720폭)를 디졸브로 얹는다(컷 중반 노출)."""
+    import subprocess
+    show = max(2.0, dur * 0.66)
+    st = max(0.3, (dur - show) / 2)
+    try:
+        r = subprocess.run(
+            ["ffmpeg", "-y", "-loglevel", "error", "-i", base_v, "-loop", "1", "-i", card_png,
+             "-filter_complex",
+             (f"[1:v]format=yuva420p,fade=t=in:st=0:d=0.4:alpha=1,"
+              f"fade=t=out:st={show-0.4:.2f}:d=0.4:alpha=1,setpts=PTS+{st:.2f}/TB[cd];"
+              f"[0:v][cd]overlay=0:0:enable='between(t,{st:.2f},{st+show:.2f})'[v]"),
+             "-map", "[v]", "-t", str(int(dur)), "-c:v", "libx264", "-pix_fmt", "yuv420p",
+             "-crf", "20", "-an", out_v], timeout=300)
+        return r.returncode == 0 and Path(out_v).exists() and Path(out_v).stat().st_size > 80_000
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] 카드 오버레이 실패: %s", e); return False
 
 
 def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
