@@ -130,7 +130,8 @@ def _gemini_json(prompt: str) -> str:
         headers={"x-goog-api-key": key, "Content-Type": "application/json"},
         json={"contents": [{"role": "user", "parts": [{"text": prompt}]}],
               "generationConfig": {"maxOutputTokens": 1200, "temperature": 0.7,
-                                   "responseMimeType": "application/json"}},
+                                   "responseMimeType": "application/json",
+                                   "thinkingConfig": {"thinkingBudget": 0}}},  # 사고 OFF: JSON 잘림 방지
         timeout=60)
     r.raise_for_status()
     cands = r.json().get("candidates") or []

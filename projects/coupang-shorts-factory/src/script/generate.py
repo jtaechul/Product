@@ -115,8 +115,13 @@ def _gemini_generate(model: str, system: str, content: str, max_tokens: int) -> 
     body = {
         "system_instruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": [{"text": content}]}],
-        "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 1.0,
-                             "responseMimeType": "application/json"},
+        "generationConfig": {
+            "maxOutputTokens": max_tokens, "temperature": 1.0,
+            "responseMimeType": "application/json",
+            # ⚠️ 2.5 Flash는 '사고(thinking)'가 기본 ON이라 출력 예산을 잡아먹어 JSON이 잘린다.
+            #    구조화 JSON 생성에는 사고를 끄고(0) 전체 예산을 답에 쓴다.
+            "thinkingConfig": {"thinkingBudget": 0},
+        },
     }
     r = requests.post(f"{GEMINI_BASE}/models/{model}:generateContent",
                       headers={"x-goog-api-key": key, "Content-Type": "application/json"},
@@ -127,12 +132,18 @@ def _gemini_generate(model: str, system: str, content: str, max_tokens: int) -> 
     um = data.get("usageMetadata") or {}
     if um:
         print(f"[script] 토큰 사용(gemini): 입력 {um.get('promptTokenCount', '?')} / "
-              f"출력 {um.get('candidatesTokenCount', '?')}")
+              f"출력 {um.get('candidatesTokenCount', '?')} / 사고 {um.get('thoughtsTokenCount', 0)}")
     cands = data.get("candidates") or []
     if not cands:
         raise ValueError(f"Gemini 응답에 candidates 없음: {str(data)[:200]}")
+    fin = cands[0].get("finishReason")
     parts = (cands[0].get("content") or {}).get("parts") or []
-    return "".join(p.get("text", "") for p in parts)
+    txt = "".join(p.get("text", "") for p in parts)
+    if fin and fin not in ("STOP", "MAX_TOKENS") or not txt:
+        raise ValueError(f"Gemini 비정상 종료(finishReason={fin}, len={len(txt)})")
+    if fin == "MAX_TOKENS":
+        print(f"[script] 경고: Gemini 출력이 max_tokens에 걸림 → 잘렸을 수 있음(파서가 판단)")
+    return txt
 
 
 def _parse_json(text: str) -> dict:

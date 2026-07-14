@@ -4,6 +4,6 @@
  "row": "auto",
  "privacy": "private",
  "no_narration": true,
- "note": "무나레이션 튜닝: Gemini 대본 + 라인별 문구매칭 이미지(Pexels/Openverse/Wikimedia). 상품사진은 기능라인만. 나레이션 없음.",
- "requested_at": "2026-07-13T16:20:00Z"
+ "note": "무나레이션 튜닝 재시도: Gemini thinking OFF(JSON 잘림 수정) + 라인별 이미지. 나레이션 없음.",
+ "requested_at": "2026-07-14T09:45:00Z"
 }
