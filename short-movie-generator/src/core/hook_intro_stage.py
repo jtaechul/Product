@@ -257,9 +257,12 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         if hero and _cover_crop(hero, open_bg, cfg.W, cfg.H):
             log.info("[hook_intro] 오프닝 배경 = 고화소 히어로 사진")
         else:
+            # ★인트로 타이틀카드·빈 프레임 회피(문제 재발방지): 고정 0.5초 대신 피사체 뚜렷+텍스트 없는
+            #   프레임을 골라 오프닝 배경으로(엔드카드와 동일 로직). 실패 시에만 앞부분 프레임 폴백.
             odur = _duration_of(src_open) or dur
-            if not _grab_frame(src_open, min(0.5, odur * 0.1), open_bg):
-                return body_video
+            if not _best_subject_frame(src_open, open_bg, wd):
+                if not _grab_frame(src_open, min(0.5, odur * 0.1), open_bg):
+                    return body_video
         if hero and _cover_crop(hero, ec_frame, cfg.W, cfg.H):
             log.info("[hook_intro] 엔드카드 배경 = 고화소 히어로 사진")
         else:
