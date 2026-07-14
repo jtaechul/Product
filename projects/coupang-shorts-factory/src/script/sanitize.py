@@ -25,8 +25,8 @@ _ALLOWED = re.compile(r"[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9\s.,?!%~\-()「」『』
 # 자막 칸 규격: 공백 포함 최대 글자수 / 칸당 최대 어절 수 (렌더 화면 폭·가독성 기준)
 SUB_MAX_CHARS = 12
 SUB_MAX_WORDS = 3
-# 낭독 분량(공백 제외): 빠른 템포 30~40초 목표 (Typecast tempo 1.3 기준 약 6.5자/초)
-CHAR_MIN, CHAR_MAX = 180, 280
+# 낭독 분량(공백 제외): 25~32초 목표(쇼츠 최적 길이 — 늘어지면 이탈). 무나레이션은 ≈0.14초/자.
+CHAR_MIN, CHAR_MAX = 150, 230
 
 
 class RuleViolation(Exception):
