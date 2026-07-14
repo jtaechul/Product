@@ -604,6 +604,35 @@ def subject_visibility(video: str, sample: int = 12) -> float:
         return ms[int(len(ms) * 0.75)]   # p75(넉넉히 통과 — 일부 구간만 피사체여도 OK)
 
 
+def footage_shows_subject(video: str, subject: str, sample: int = 6) -> bool | None:
+    """★Step2 의미검증: 비전 LLM으로 영상에 '주제 피사체'가 실제로 나오는지 판정.
+    True=충분히 나옴 / False=거의 안 나옴(잠수사·빈물·오종) / None=검증 불가(키 없음·실패 → 통과).
+    프레임을 소량(작게) 샘플해 비용을 낮춘다. 키가 없으면 None → 상위는 게이트를 건너뛴다(발행 불정지)."""
+    import subprocess
+    import tempfile
+    from src.core import llm
+    dur = _probe_dur(video) or 0.0
+    if dur <= 0:
+        return None
+    with tempfile.TemporaryDirectory(prefix="sv_") as td:
+        frames: list[str] = []
+        for i in range(sample):
+            t = dur * (0.1 + 0.8 * i / max(1, sample - 1))
+            f = Path(td) / f"s{i}.jpg"
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{t:.2f}", "-i", video,
+                            "-vf", "scale=384:-1", "-frames:v", "1", str(f)], capture_output=True)
+            if f.exists():
+                frames.append(str(f))
+        if len(frames) < 3:
+            return None
+        scores = llm.score_frames_subject(frames, subject)
+        if not scores:
+            return None
+        # 주제가 뚜렷한 프레임(≥0.7)이 최소 1/4 이상이면 '충분히 나옴'으로 본다(전 구간일 필요 없음).
+        strong = sum(1 for s in scores if s >= 0.7)
+        return strong >= max(1, len(scores) // 4)
+
+
 def _wreck_photo_footage(scientific_name: str, common_name_en: str, dest: Path, key: str) -> dict | None:
     """난파선: 그 배의 실사 사진을 찾아 켄번즈 영상화 → footage dict. 없으면 None.
     ★잠수사 위주 영상보다 '배가 확실히 보이는 사진'을 우선한다(주제 피사체 보장).
@@ -715,6 +744,19 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
             return _reject(f"피사체 미검출(빈 물/준비 컷 · 가시성 {vis:.0f}<{_MIN_VISIBILITY:.0f})")
     except Exception as e:  # noqa: BLE001
         log.warning("[footage] 가시성 검사 생략(오류): %s", e)
+    # ★Step2 의미검증(비전 LLM · 키 있을 때만): '잠수사 vs 배', '오종', '빈물'을 정확히 구분.
+    #   주제가 거의 안 나오면 폐기 → auto가 다음 후보로. 난파선은 위에서 사진 우선을 이미 시도했다.
+    #   키 없음/실패(None)면 게이트 통과(발행 불정지).
+    try:
+        if key.startswith("wreck "):
+            subj = "the sunken shipwreck structure itself (not only divers, bubbles, or open water)"
+        else:
+            subj = common_name_en or scientific_name or "the subject creature"
+        verdict = footage_shows_subject(str(out), subj)
+        if verdict is False:
+            return _reject("주제 피사체 미검출(비전 LLM 의미검증 · 잠수사/빈물/오종)")
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] 의미검증 생략(오류): %s", e)
     # NOAA 소스는 좌상단 워터마크 영역 정보를 함께 반환(하류에서 회피/제거)
     logo = _NOAA_LOGO_BOX if "noaa" in (cand.get("credit", "") or "").lower() else None
     return {"path": str(out), "license": cand["license"],

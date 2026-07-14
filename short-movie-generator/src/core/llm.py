@@ -64,3 +64,75 @@ def _try_gemini(prompt: str) -> str | None:
     except BaseException as e:  # noqa: BLE001  # google.genai 임포트가 rust 패닉을 낼 수 있음 → 방어
         log.info("Gemini 호출 실패: %s", e)
         return None
+
+
+# ─────────────────────── 비전(멀티모달): 프레임에 주제 피사체가 보이는가 ───────────────────────
+def score_frames_subject(image_paths: list[str], subject: str, max_tokens: int = 300) -> list[float] | None:
+    """각 프레임에 `subject`가 보이는지 0~1 점수 리스트. 비전 LLM(Claude→Gemini). 키 없으면 None.
+    ★주제 피사체 의미검증(Step2): '잠수사 vs 배', '오종', '빈 물'을 정확히 구분한다.
+    반환 None = 검증 불가(키 없음/실패) → 상위는 게이트를 건너뛴다(발행 불정지)."""
+    imgs = [p for p in (image_paths or []) if p]
+    if not imgs:
+        return None
+    prompt = (
+        f"あなたは映像内容の確認アシスタントです。これから{len(imgs)}枚の画像を渡します。"
+        f"各画像に「{subject}」がはっきり写っていれば1.0、部分的/遠い/不明瞭なら0.5、"
+        f"写っていない(空の水中だけ・ダイバーや準備の様子だけ・別の被写体)なら0.0で評価してください。"
+        f"出力はJSONの数値配列だけ(説明禁止)。例: [0.0, 1.0, 0.5]。要素数は必ず{len(imgs)}個。")
+    out = _vision_claude(imgs, prompt, max_tokens) or _vision_gemini(imgs, prompt)
+    if not out:
+        return None
+    import json
+    import re
+    m = re.search(r"\[[^\]]*\]", out)
+    if not m:
+        return None
+    try:
+        arr = json.loads(m.group(0))
+        vals = [max(0.0, min(1.0, float(x))) for x in arr]
+        return vals[:len(imgs)] if vals else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _vision_claude(image_paths: list[str], prompt: str, max_tokens: int) -> str | None:
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return None
+    try:
+        import base64
+
+        import anthropic
+        client = anthropic.Anthropic()
+        content: list = []
+        for p in image_paths:
+            b = base64.b64encode(open(p, "rb").read()).decode()
+            content.append({"type": "image", "source": {"type": "base64",
+                            "media_type": "image/jpeg", "data": b}})
+        content.append({"type": "text", "text": prompt})
+        msg = client.messages.create(model=CLAUDE_MODEL, max_tokens=max_tokens,
+                                     messages=[{"role": "user", "content": content}])
+        parts = [getattr(b, "text", "") for b in msg.content if getattr(b, "type", "") == "text"]
+        return "\n".join(p for p in parts if p).strip() or None
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except BaseException as e:  # noqa: BLE001
+        log.info("Claude vision 실패 → Gemini 폴백: %s", e)
+        return None
+
+
+def _vision_gemini(image_paths: list[str], prompt: str) -> str | None:
+    if not os.environ.get("GEMINI_API_KEY"):
+        return None
+    try:
+        from google import genai
+        from google.genai import types
+        client = genai.Client()
+        parts = [types.Part.from_bytes(data=open(p, "rb").read(), mime_type="image/jpeg")
+                 for p in image_paths]
+        resp = client.models.generate_content(model=GEMINI_MODEL, contents=parts + [prompt])
+        return (resp.text or "").strip() or None
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except BaseException as e:  # noqa: BLE001
+        log.info("Gemini vision 실패: %s", e)
+        return None

@@ -175,6 +175,32 @@ def test_subject_visibility_rejects_empty_water(tmp_path):
     assert ve < footage._MIN_VISIBILITY <= vc, f"빈물={ve:.1f} 콘텐츠={vc:.1f} 임계={footage._MIN_VISIBILITY}"
 
 
+def test_vision_subject_score_parsing_and_nokey(monkeypatch):
+    """비전 주제 점수: 키 없으면 None(게이트 스킵), 있으면 JSON 배열 파싱."""
+    from src.core import llm
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    assert llm.score_frames_subject(["/x.jpg"], "shrimp") is None      # 키 없음 → None
+    monkeypatch.setattr(llm, "_vision_claude", lambda *a, **k: "判定: [1.0, 0.0, 0.5, 0.0]")
+    assert llm.score_frames_subject(["a", "b", "c", "d"], "shrimp") == [1.0, 0.0, 0.5, 0.0]
+
+
+def test_footage_shows_subject_verdict(tmp_path, monkeypatch):
+    """★Step2 의미검증 판정: 주제 뚜렷 프레임이 충분하면 True, 거의 없으면 False, 검증불가면 None."""
+    import subprocess
+    from src.core import footage, llm
+    v = tmp_path / "v.mp4"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                    "-i", "testsrc=s=640x360:d=3:r=10", "-c:v", "libx264",
+                    "-pix_fmt", "yuv420p", str(v)], check=True)
+    monkeypatch.setattr(llm, "score_frames_subject", lambda f, s, **k: [1.0, 1.0, 0, 0, 0, 0])
+    assert footage.footage_shows_subject(str(v), "crab") is True       # 2/6 강함 → 충분
+    monkeypatch.setattr(llm, "score_frames_subject", lambda f, s, **k: [0, 0.5, 0, 0, 0, 0])
+    assert footage.footage_shows_subject(str(v), "crab") is False      # 강한 프레임 없음 → 폐기
+    monkeypatch.setattr(llm, "score_frames_subject", lambda f, s, **k: None)
+    assert footage.footage_shows_subject(str(v), "crab") is None       # 검증불가 → 게이트 스킵
+
+
 def test_insert_cutaways_skips_when_short_body(tmp_path):
     """짧은 본문(<12s)·사진 없음이면 컷어웨이를 넣지 않는다(남발·촙핑 방지 · 발행 불정지)."""
     from src.core import footage
