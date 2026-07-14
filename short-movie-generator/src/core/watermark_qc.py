@@ -194,6 +194,80 @@ def _merge_boxes(boxes: list[tuple], gap: float = 0.03) -> list[tuple]:
     return [tuple(b) for b in boxes]
 
 
+# ── 인위 삽입물(타이틀카드·로고·박힌 그래픽) 검출 — OCR 비의존(운영자 아이디어) ──────────
+# 핵심: 합성된 그래픽은 밑 영상이 움직여도 **픽셀이 정확히 고정(frozen)**되고, **쨍한 색/날카로운
+# 엣지(graphic)**를 갖는다. 진짜 촬영 영상엔 큰 영역이 몇 초씩 '정확히' 얼어있는 경우가 없다
+# (가만히 있는 생물도 부유물·노이즈로 미세하게 변함). 그래서 frozen∧graphic 교집합이 인위 삽입물.
+# 결정(운영자 규칙): 중앙에 크게 있으면 → 그 구간 사용 안 함(SKIP), 작고 가장자리면 → delogo.
+# ★실클립 보정(배텔로 SUBMANIA 카드 vs NOAA enypniastes 깨끗) — 핵심은 '창 길이 4초':
+#   생물은 가만히 있어도 4초면 부유물·조류로 미세 이동해 frozen이 풀리지만, 합성 카드는 4초 내내
+#   픽셀-정확 고정 → 4초 창에서 중앙 5%↑면 카드로 확정. 실측: 4초창 배텔로 카드 10.6% vs 깨끗 0.0%
+#   (2초창은 13~17% vs 4% 로 붙어 오탐 위험 → 반드시 4초창 유지. 되돌리지 말 것).
+_INSERT_FROZEN_MAXDIFF = 2      # 인접프레임 '최대' 밝기차(0~255) 이 미만이면 '정확히 고정'(합성물)
+_INSERT_SAT = 95               # 채도(HSV S) 이상이면 '쨍한 색'(그래픽 후보)
+_INSERT_EDGE = 65              # FIND_EDGES 강도 이상이면 '날카로운 엣지'(렌더 글자/로고)
+_INSERT_WIN_S = 4.0            # ★판정 창 길이(초) — 생물 미세이동으로 오탐을 없애는 핵심 파라미터
+_INSERT_SKIP_CENTRAL = 0.05    # 4초 창 중앙밴드에서 삽입물 비율 이상이면 그 구간 SKIP(마진 큼)
+
+
+def _insert_masks(frames: list["object"]):
+    """연속 프레임(win) → frozen∧graphic 마스크(L, 255=삽입물). PIL만 사용(numpy 불필요)."""
+    from PIL import ImageChops, ImageFilter
+    n = len(frames)
+    if n < 2:
+        return None
+    W, H = frames[0].size
+    mx = None
+    for a, b in zip(frames, frames[1:]):
+        d = ImageChops.difference(a.convert("L"), b.convert("L"))
+        mx = d if mx is None else ImageChops.lighter(mx, d)      # 픽셀별 '최대' 인접차
+    frozen = mx.point(lambda p: 255 if p < _INSERT_FROZEN_MAXDIFF else 0)
+    mid = frames[n // 2]
+    sat = mid.convert("HSV").getchannel("S").point(lambda p: 255 if p > _INSERT_SAT else 0)
+    edge = mid.convert("L").filter(ImageFilter.FIND_EDGES).point(lambda p: 255 if p > _INSERT_EDGE else 0)
+    graphic = ImageChops.logical_or(sat.convert("1"), edge.convert("1")).convert("L")
+    return ImageChops.multiply(frozen, graphic).point(lambda p: 255 if p > 0 else 0)
+
+
+def _central_frac(mask) -> float:
+    """마스크의 중앙밴드(가로22~78%·세로15~80%) 커버리지 비율."""
+    W, H = mask.size
+    cx0, cx1, cy0, cy1 = int(W * .22), int(W * .78), int(H * .15), int(H * .80)
+    px = mask.load()
+    cen = sum(1 for y in range(cy0, cy1) for x in range(cx0, cx1) if px[x, y])
+    return cen / max(1, (cx1 - cx0) * (cy1 - cy0))
+
+
+def detect_insert_seconds(video: str, scan_cap: float, fps: float = 2.0) -> set:
+    """영상에서 '중앙 대형 인위 삽입물(타이틀카드 등)'이 있는 초 집합을 반환(그 구간은 사용 회피).
+    2fps로 프레임을 뽑아 2초 창마다 frozen∧graphic 중앙비율을 보고 임계 초과면 그 창을 dirty로.
+    ★OCR로 못 읽는 스타일 로고(SUBMANIA 등)를 잡는 게 목적. 실패 시 빈 set(발행 불정지)."""
+    try:
+        from PIL import Image
+        with tempfile.TemporaryDirectory(prefix="ins_") as td:
+            paths = _extract_frames(video, td, 0.0, scan_cap, fps=fps, width=240)
+            if len(paths) < 4:
+                return set()
+            frames = [Image.open(p).convert("RGB") for p in paths]
+            win = max(4, int(round(_INSERT_WIN_S * fps)))   # ★4초 창(생물 오탐 방지 핵심)
+            dirty: set = set()
+            for s in range(0, len(frames) - 1, win):
+                w = frames[s:s + win]
+                m = _insert_masks(w)
+                if m is None:
+                    continue
+                if _central_frac(m) >= _INSERT_SKIP_CENTRAL:
+                    t0 = s / fps
+                    for k in range(int(t0), int(t0 + win / fps) + 1):
+                        dirty.add(k)
+            if dirty:
+                log.info("[wm] 인위 삽입물(중앙 대형) 검출 → 회피 초: %s", sorted(dirty))
+            return dirty
+    except Exception as e:  # noqa: BLE001
+        log.info("[wm] 삽입물 검출 스킵: %s", e)
+        return set()
+
+
 def plan(video: str, want_start: float, want_dur: float,
          extra_boxes: list[tuple] | None = None) -> dict:
     """사용 구간 계획: 슬레이트 초 회피(시작점 이동) + 워터마크 delogo 박스 산출.
@@ -215,6 +289,9 @@ def plan(video: str, want_start: float, want_dur: float,
     secs = scan(video, 0.0, scan_cap, fps=fps)
     dur_s = scan_cap
     slate = {round(s["t"]) for s in secs if _is_slate_second(s["words"])}
+    # ★OCR 비의존 삽입물 검출(운영자 아이디어): OCR이 못 읽는 스타일 로고·타이틀카드(중앙 대형
+    #   frozen∧graphic)를 잡아 그 초들도 회피 대상에 합친다 → 시작점이 카드 구간을 건너뛴다.
+    slate |= detect_insert_seconds(video, scan_cap, fps=2.0)
 
     def dirty_in(st: float) -> int:
         # 샘플 간격(1/fps)보다 촘촘한 정수초 검사는 의미 없음 → 샘플된 슬레이트 초와 겹치는지만 본다.
