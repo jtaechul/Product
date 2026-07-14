@@ -259,6 +259,209 @@ def build_dossier(name: str, min_images: int = 4) -> dict | None:
     }
 
 
+# ── 제원 → 화면 카드 / 일본어 대본 ─────────────────────────────────────────
+_JP_SHIP_TYPE = [
+    (r"aircraft carrier|carrier", "空母"), (r"battleship", "戦艦"), (r"cruiser", "巡洋艦"),
+    (r"destroyer", "駆逐艦"), (r"frigate", "フリゲート"), (r"submarine|u-?boat", "潜水艦"),
+    (r"ocean liner|liner", "大型客船"), (r"passenger", "客船"), (r"ferry", "フェリー"),
+    (r"tanker", "タンカー"), (r"cargo|freight", "貨物船"), (r"steamship|steamer", "蒸気船"),
+    (r"yacht", "ヨット"), (r"warship", "軍艦"), (r"ship|vessel|boat", "船"),
+]
+
+
+def _jp_type(en_type: str) -> str:
+    t = (en_type or "").lower()
+    for pat, jp in _JP_SHIP_TYPE:
+        if re.search(pat, t):
+            return jp
+    return ""
+
+
+def _year(v: str) -> str:
+    m = re.search(r"\b(1[5-9]\d\d|20\d\d)\b", v or "")
+    return m.group(1) if m else ""
+
+
+def _tonnage_short(v: str) -> str:
+    m = re.search(r"([\d,]+)\s*(GRT|GT|NRT|DWT|BRT|tons?)", v or "", re.I)
+    if m:
+        return f"{m.group(1)} {m.group(2).upper()}"
+    m2 = re.search(r"([\d,]+)", v or "")
+    return f"{m2.group(1)} t" if m2 else ""
+
+
+def spec_card_lines(dossier: dict) -> list[tuple[str, str]]:
+    """화면 제원 카드용 (일본어 라벨, 값) 목록 — 짧고 화면친화적인 항목만(값 없으면 생략)."""
+    s = dossier.get("specs", {}) or {}
+    rows: list[tuple[str, str]] = []
+    jt = _jp_type(s.get("type", ""))
+    if jt:
+        rows.append(("船種", jt))
+    ton = _tonnage_short(s.get("tonnage", ""))
+    if ton:
+        rows.append(("総トン数", ton))
+    if s.get("length"):
+        rows.append(("全長", s["length"]))
+    ly = _year(s.get("launched", "") or s.get("completed", ""))
+    if ly:
+        rows.append(("進水", f"{ly}年"))
+    sy = s.get("sunk_year") or _year(s.get("fate", ""))
+    if sy:
+        rows.append(("沈没", f"{sy}年"))
+    return rows[:5]
+
+
+def render_spec_card(dossier: dict, out_png: str, W: int = 720, H: int = 1280) -> str | None:
+    """제원 카드 PNG(9:16 투명 배경, 하단 3분의 1 스키매틱 패널). 항목 없으면 None."""
+    rows = spec_card_lines(dossier)
+    if not rows:
+        return None
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except Exception:  # noqa: BLE001
+        return None
+    fp_b = "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"
+    fp_r = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
+
+    def _f(path, sz):
+        try:
+            return ImageFont.truetype(path, sz, index=0)
+        except Exception:  # noqa: BLE001
+            return ImageFont.load_default()
+
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    title = dossier.get("display", "")
+    cyan = (120, 220, 255, 255)
+    # 패널 위치(하단 엄지존 위: 화면 58~86%)
+    x0, y0, x1, y1 = 48, int(H * 0.58), W - 48, int(H * 0.86)
+    d.rectangle([x0, y0, x1, y1], fill=(6, 16, 26, 205))
+    d.rectangle([x0, y0, x1, y0 + 6], fill=cyan)                      # 상단 액센트 바
+    fh = _f(fp_b, 34); fl = _f(fp_r, 30); fv = _f(fp_b, 34); ft = _f(fp_b, 24)
+    d.text((x0 + 26, y0 + 22), "SHIP DATA", font=ft, fill=cyan)
+    d.text((x0 + 26, y0 + 52), f"「{title}」", font=fh, fill=(255, 255, 255, 255))
+    ry = y0 + 108
+    for label, val in rows:
+        d.text((x0 + 26, ry), label, font=fl, fill=(150, 200, 225, 255))
+        d.text((x0 + 210, ry), str(val), font=fv, fill=(255, 255, 255, 255))
+        ry += 46
+    try:
+        im.save(out_png)
+        return out_png
+    except Exception:  # noqa: BLE001
+        return None
+
+
+_WRECK_BODY_PROMPT = """あなたは沈没船ドキュメンタリーのショート動画ナレーション作家です。\
+次の実在の沈没船について、**日本語**で28〜34秒・14〜18個の短い節に分けたナレーションを作ります\
+(★合計180字以内)。JSON配列のみ出力(説明禁止)。
+
+船名: {name}
+判明している事実(この範囲だけを使う。無い情報は書かない): {facts}
+概要: {summary}
+
+■ 構成(この順に、時間軸で):
+1) 就航(かつての姿): どんな船だったか(船種・年代)。
+2) 事故/沈没: いつ・なぜ沈んだか(判明していれば)。
+3) 諸元: トン数・全長など数字を一つ二つ、淡々と。
+4) 今の姿: 海底に眠る船体、生き物のすみか。畏敬で締める。
+
+■ ハウス・トーン(厳守): 畏敬のドキュメンタリーを背骨に、**淡々としたブラックユーモアを1節だけ**。
+笑いは過酷な事実を日常語に置き換えて生む(例:「もう二度と、港には戻れません。」)。はしゃがない。
+■ **★敬体(です・ます)で書く。常体(だ・である)は禁止**。名詞・体言止めの短い節は可。
+■ **事実の捏造は絶対禁止**: 上の事実に無い数値・原因・人的被害・宝物などを足さない(不明なら触れない)。
+出力例: ["これは、ある貨物船の物語です。","かつて海を渡っていました。", ...]
+"""
+
+
+def wreck_body_jp(dossier: dict) -> list[str] | None:
+    """그 배 전용 일본어 4비트 본문(敬体·하우스톤). LLM 우선, 실패 시 결정론 폴백."""
+    s = dossier.get("specs", {}) or {}
+    facts_bits = []
+    if s.get("type"):
+        facts_bits.append(f"船種={s['type']}")
+    if s.get("tonnage"):
+        facts_bits.append(f"トン数={s['tonnage']}")
+    if s.get("length"):
+        facts_bits.append(f"全長={s['length']}")
+    if s.get("launched") or s.get("completed"):
+        facts_bits.append(f"進水={s.get('launched') or s.get('completed')}")
+    if s.get("builder"):
+        facts_bits.append(f"建造={s['builder']}")
+    if s.get("fate"):
+        facts_bits.append(f"最期={s['fate']}")
+    if s.get("owner"):
+        facts_bits.append(f"船主={s['owner']}")
+    facts = " / ".join(facts_bits) or "-"
+    summary = (dossier.get("summary", "") or "")[:600]
+    name = dossier.get("display", "")
+    prompt = _WRECK_BODY_PROMPT.format(name=name, facts=facts, summary=summary)
+    chunks = None
+    try:
+        from src.core import llm
+        for _ in range(2):
+            try:
+                out = llm.generate_text(prompt, max_tokens=1400)
+            except Exception as e:  # noqa: BLE001
+                log.warning("[dossier] 본문 LLM 실패: %s", e); out = None
+            chunks = _parse_body_chunks(out or "")
+            if chunks:
+                break
+    except Exception as e:  # noqa: BLE001
+        log.info("[dossier] LLM 미가용: %s", e)
+    if not chunks:
+        chunks = _fallback_body_jp(dossier)
+    if not chunks:
+        return None
+    try:
+        from src.core import naturalness
+        return naturalness.polish_lines(chunks)
+    except Exception:  # noqa: BLE001
+        return chunks
+
+
+def _parse_body_chunks(out: str) -> list[str] | None:
+    """LLM 본문 → 절 리스트(JSON 배열 우선, 잘림 구제 파싱)."""
+    if not out:
+        return None
+    m = re.search(r"\[.*\]", out, re.S)
+    if m:
+        try:
+            arr = json.loads(m.group(0))
+            chunks = [str(x).strip() for x in arr if str(x).strip()]
+            if len(chunks) >= 8:
+                return chunks
+        except Exception:  # noqa: BLE001
+            pass
+    items = re.findall(r'"([^"\n]{1,40})"', out)
+    chunks = [s.strip() for s in items if s.strip()]
+    return chunks if len(chunks) >= 8 else None
+
+
+def _fallback_body_jp(dossier: dict) -> list[str]:
+    """LLM 미가용 시 결정론 일본어 본문(敬体). 판명된 사실만 사용(날조 없음)."""
+    s = dossier.get("specs", {}) or {}
+    name = dossier.get("display", "")
+    jt = _jp_type(s.get("type", ""))
+    ly = _year(s.get("launched", "") or s.get("completed", ""))
+    sy = s.get("sunk_year") or _year(s.get("fate", ""))
+    ton = _tonnage_short(s.get("tonnage", ""))
+    out: list[str] = ["青い海の底に、", "静かに眠る、", "一隻の船。", f"「{name}」です。"]
+    if jt and ly:
+        out += [f"{ly}年に生まれた、", f"{jt}でした。"]
+    elif jt:
+        out += [f"かつては、{jt}として、", "海を渡っていました。"]
+    if ton:
+        out += [f"総トン数は、{ton}。"]
+    if sy:
+        out += [f"しかし、{sy}年。", "船は海の底へ、", "沈みました。"]
+    else:
+        out += ["やがて船は、", "海の底へ沈みました。"]
+    out += ["もう二度と、", "港には戻れません。",           # 담담한 블랙유머 1마디
+            "今、その船体は、", "魚たちのすみかとなり、", "静かに眠っています。"]
+    return out
+
+
 def ordered_beat_images(dossier: dict, max_per_beat: int = 2) -> list[dict]:
     """다큐 시퀀스용: afloat→portrait→sinking→wreck 순서로 대표 이미지를 골라 평탄화.
     각 비트 최대 max_per_beat장. 비어 있는 비트는 건너뛴다(날조 없이 있는 것만)."""

@@ -41,6 +41,38 @@ def test_classify_beat_orders_story():
     assert D._classify_beat("Lusitania memorial plaque", "") == "skip"
 
 
+def test_jp_type_and_spec_helpers():
+    assert D._jp_type("Cargo ship") == "貨物船"
+    assert D._jp_type("Ocean liner") == "大型客船"
+    assert D._jp_type("WWII German U-boat") == "潜水艦"
+    assert D._jp_type("") == ""
+    assert D._year("9 April 1940") == "1940"
+    assert D._tonnage_short("4898 GRT, 2750 NRT") == "4898 GRT"
+
+
+def test_spec_card_lines_only_known_fields():
+    dossier = {"specs": {"type": "Cargo ship", "tonnage": "4898 GRT", "launched": "9 April 1940",
+                         "sunk_year": "1941"}, "display": "SS Thistlegorm"}
+    rows = dict(D.spec_card_lines(dossier))
+    assert rows["船種"] == "貨物船"
+    assert rows["進水"] == "1940年"
+    assert rows["沈没"] == "1941年"
+    # 값이 없는 필드는 카드에 넣지 않는다(날조 없음)
+    assert "全長" not in rows
+
+
+def test_fallback_body_is_keigo_and_ship_specific():
+    dossier = {"specs": {"type": "Cargo ship", "tonnage": "4898 GRT", "launched": "1940",
+                         "sunk_year": "1941"}, "display": "SS Thistlegorm"}
+    body = D._fallback_body_jp(dossier)
+    joined = "".join(body)
+    assert "SS Thistlegorm" in joined
+    assert "貨物船" in joined and "1941年" in joined
+    # 敬体(하드룰 #8): 반말 종결('だ。'/'する。') 금지
+    assert "だ。" not in joined
+    assert len(body) >= 10
+
+
 def test_ordered_beat_images_follows_story_order():
     dossier = {
         "images": [],
