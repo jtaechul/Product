@@ -43,6 +43,16 @@ _TERMS_DEEP = [
     "anglerfish", "siphonophore", "vampire squid", "dumbo octopus", "brittle star",
     "sea spider", "deep sea cucumber", "chimaera", "viperfish", "hatchetfish",
     "deep sea jellyfish", "bioluminescent", "ctenophore deep",
+    # 검색 폭 확대(소싱 수확↑) — 심해 특정 생물·서식지 다수 추가.
+    "gulper eel", "fangtooth", "frilled shark", "goblin shark", "cookiecutter shark",
+    "sea pig", "yeti crab", "tube worm", "giant isopod", "lanternfish", "dragonfish",
+    "tripod fish", "sea toad", "coffinfish", "deep sea anemone", "glass squid",
+    "cusk eel", "grenadier fish", "rattail fish", "deep sea coral", "bamboo coral",
+    "cold seep", "brine pool", "black swallower", "barreleye",
+    "deep sea shrimp", "deep sea crab", "sea cucumber holothurian", "sea lily crinoid",
+    "amphipod deep", "polychaete worm", "deep sea octopus", "benthic fish",
+    "submarine canyon fauna", "cold water coral", "chemosynthetic",
+    "Okeanos Explorer", "MBARI deep sea", "ROV deep sea", "Nautilus deep sea",
 ]
 _TERMS_MARINE = [
     # 상어·가오리(연골어류) — 인기 주제인데 예전엔 검색어에 아예 없었다
