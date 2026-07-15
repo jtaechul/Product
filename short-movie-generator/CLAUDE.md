@@ -170,6 +170,19 @@
     배제). 이 분기를 다시 생물에 적용하지 말 것. (구현: `fetch_footage`가 `key.startswith("wreck ")`일 때만
     Step2 하드 리젝트.) **소싱↔제작 게이트 정합**: `discovery.validate_source_url`도 Step1(가시성)을 적용해
     '소싱된 영상 = 제작 가능한 영상'이 되게 한다(Step2 종ID 폐지로 소싱·제작 게이트가 일치).
+- **⭐ 심해 적합성 검증 (deep_sea 전용 · 허위사실 방지 · 절대 위반 금지)**: 표층·연안 종이 「심해 도감」에
+  잘못 편입돼 **가짜 수심('水深 200〜2,000 m')**이 자막으로 붙던 사고(실사고: #026 정어리 Sardinops
+  sagax = 표층 회유어). 재발 방지 규칙:
+  - **소싱 게이트**: deep_sea 소싱은 `deepsea_verify.verdict(sci, en, corpus)`를 통과한 종만 채택한다
+    (`discover(..., verify=...)`). ① 표층·연안 분류군(정어리·청어·멸치·고등어·참치·연안 두족류 Sepia/
+    Octopus vulgaris·군소 Aplysia 등)은 **하드 배제** ② 심해 근거(**서식 최대수심 ≥200 m 문헌 수치** 또는
+    **심해대 키워드**: deep-sea·abyssal·bathyal·mesopelagic·hydrothermal vent·深海 …)가 있어야 채택
+    ③ 근거가 없으면 배제. 근거는 종(→상위 분류군) 위키 **본문 발췌**(`_habitat_corpus`, 도입부 아님 —
+    수심은 서식/분포 문단에 흔함)에서 확인.
+  - **수심 날조 금지**: 문헌 수심이 없으면 **지어내지 않는다**. `_parse_depth('')`는 옛 기본값
+    `(200,2000)`을 폐기하고 `(0,0)`(=미상)을 돌려주며, 엔드카드·오버레이는 `depth_max<=0`이면 **수심 줄을
+    아예 생략**한다(`hook_intro`·`module.build_reels_caption`). 검증이 문헌에서 실제 추출한 수심만 표기.
+  - 회귀 테스트: `tests/test_deepsea_verify.py`(정어리 배제·연안종 배제·수심추출·키워드 채택·근거없음 배제).
 - **소싱(종 특정 필수)**: 이미지는 **'그 종'의 실사**여야 한다. `scientific_name`·영문명으로 **위키미디어
   커먼스 → GBIF**를 조회해 통과 라이선스(PD/CC0/CC-BY) 이미지를 받는다(`_fetch_species_photo`).
   실사 사진 우선(오래된 도판·삽화·박제·지도는 후순위 점수화). 미확보 시에만 합성 플레이스홀더(cc0).

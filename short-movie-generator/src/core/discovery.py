@@ -200,16 +200,33 @@ def _search_taxon_by_name(name: str) -> dict | None:
     return None
 
 
-def _wiki_extract(sitelinks: dict, lang: str) -> str | None:
+def _wiki_extract(sitelinks: dict, lang: str, intro_only: bool = True) -> str | None:
     key = f"{lang}wiki"
     node = sitelinks.get(key)
     if not node:
         return None
-    d = _get(f"https://{lang}.wikipedia.org/w/api.php", action="query", prop="extracts",
-             exintro="1", explaintext="1", redirects="1", titles=node["title"])
+    kw = dict(action="query", prop="extracts", explaintext="1", redirects="1",
+              titles=node["title"])
+    if intro_only:
+        kw["exintro"] = "1"            # 사실 요약용(도입부)
+    else:
+        kw["exchars"] = "3000"         # 수심 채굴용(본문 앞 3천자 — 서식·분포에 수심이 흔히 있음)
+    d = _get(f"https://{lang}.wikipedia.org/w/api.php", **kw)
     for p in d.get("query", {}).get("pages", {}).values():
         return (p.get("extract") or "").strip() or None
     return None
+
+
+def _habitat_corpus(ident: dict) -> str:
+    """심해 검증용 텍스트 — 종(→상위 분류군) 위키 '본문 앞부분'(수심·서식이 흔히 나옴)을 모은다.
+    도입부만으로는 수심 수치가 빠지는 일이 많아, 검증에는 본문 발췌(exintro 미적용)를 쓴다."""
+    parts: list[str] = []
+    sit = ident.get("sitelinks", {}) or {}
+    for lang in ("en", "ja"):
+        t = _wiki_extract(sit, lang, intro_only=False)
+        if t:
+            parts.append(t)
+    return " ".join(parts)
 
 
 def _facts_from_wiki(sitelinks: dict) -> tuple[list[str], str]:
@@ -336,7 +353,8 @@ def _identity_for(pageid: str, title: str, desc: str) -> dict | None:
 def discover(exclude_scinames: set[str], exclude_titles: set[str], want: int = 3,
              validate=None, terms: list[str] | None = None,
              exclude_re: "re.Pattern | None" = None,
-             require_re: "re.Pattern | None" = None, media: str = "video") -> list[dict]:
+             require_re: "re.Pattern | None" = None, media: str = "video",
+             verify=None) -> list[dict]:
     """새 해양생물 소재 후보를 발굴해 '제작 가능한 종 레코드' 리스트를 반환(최대 want개).
 
     validate(url) -> bool : 실사 다운로드+게이트(정지·카드) 검증 콜백(있으면 통과분만 채택).
@@ -416,6 +434,15 @@ def discover(exclude_scinames: set[str], exclude_titles: set[str], want: int = 3
             ko = ident.get("ko") or ident.get("en") or sci
             en = ident.get("en") or sci
             depth = _depth_from_text(desc, " ".join(facts))
+            # ★카테고리 적합성 검증(심해 등): 표층·연안 종 배제 + 근거 있는 실제 수심만 채택.
+            #   (정어리가 '심해 도감'에 편입돼 가짜 '水深 200〜2,000 m'가 붙던 사고 방지)
+            if verify is not None:
+                corpus = " ".join(facts) + " " + desc + " " + _habitat_corpus(ident)
+                v = verify(sci, en, corpus)
+                if not v.ok:
+                    log.info("[discovery] 카테고리 부적합으로 스킵: %s (%s)", sci, v.reason)
+                    continue
+                depth = v.depth_range_m or depth   # 검증이 문헌에서 추출한 실제 수심 우선
             fp = {"url": url, "license": lic, "credit": credit, "source": title}
             if is_photo:   # 사진 → 제작 시 켄번즈로 영상화
                 fp["media_kind"] = "photo"
@@ -752,8 +779,15 @@ def _discover_wrecks(exclude_keys: set[str], want: int) -> list[dict]:
 
 # ── 카테고리별 발굴 설정(핵심 수정) — 각 카테고리가 고유 검색어·게이트를 갖는다 ──
 # terms=검색어, exclude=배제 분류군, require=양성 확인(없으면 None). shipwreck은 별도 경로.
+def _deep_sea_verify(sci: str, en: str, corpus: str):
+    """심해 적합성 검증 콜백(표층·연안 종 배제 + 실제 수심만). deepsea_verify에 위임."""
+    from src.core import deepsea_verify
+    return deepsea_verify.verdict(sci, en, corpus)
+
+
 _CATALOG = {
-    "deep_sea":     {"terms": _TERMS_DEEP,   "exclude": _EXCLUDE, "require": None, "photo": False},
+    "deep_sea":     {"terms": _TERMS_DEEP,   "exclude": _EXCLUDE, "require": None, "photo": False,
+                     "verify": _deep_sea_verify},
     "marine_life":  {"terms": _TERMS_MARINE, "exclude": _EXCLUDE, "require": None, "photo": False},
     # 미세조류: 동물 배제 + 조류 양성 확인(동물 카테고리의 'plant 배제'는 적용 안 함).
     # ★photo=True: 미세조류는 현미경 정지사진이 많고 대상도 거의 안 움직여 켄번즈가 잘 맞는다 →
@@ -792,14 +826,15 @@ def discover_candidates(category_id: str, want: int = 6, exclude_keys: set[str] 
     # 생물: 카테고리 설정으로 검색어·게이트 지정(미지정 카테고리는 심해 기본)
     cfg = _CATALOG.get(category_id, _CATALOG["deep_sea"])
     recs = discover(exclude_keys, set(), want=want, validate=None,
-                    terms=cfg["terms"], exclude_re=cfg["exclude"], require_re=cfg["require"])
+                    terms=cfg["terms"], exclude_re=cfg["exclude"], require_re=cfg["require"],
+                    verify=cfg.get("verify"))
     cands = [_rec_to_candidate(r) for r in recs]
     # 사진 보충(미세조류 등): 영상이 want에 못 미치면 고해상 사진 후보로 채운다.
     if cfg.get("photo") and len(cands) < want:
         excl = exclude_keys | {c["key"] for c in cands}
         precs = discover(excl, set(), want=want - len(cands), validate=None,
                          terms=cfg["terms"], exclude_re=cfg["exclude"], require_re=cfg["require"],
-                         media="photo")
+                         media="photo", verify=cfg.get("verify"))
         cands += [_rec_to_candidate(r) for r in precs]
     return cands
 

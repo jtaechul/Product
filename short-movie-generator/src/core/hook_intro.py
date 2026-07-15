@@ -435,9 +435,11 @@ def render_endcard(bg_path: str, spec: SpeciesSpec, out_path: str,
     grad_text((W // 2, 336), spec.jp_name, f_title, glow_r=26)
     text((W // 2, 430), spec.sci_name, _fit_font(spec.sci_name, cfg.end_sci_size, max_w, _sci),
          (210, 220, 235, 255))
-    depth_str = f"水深 {spec.depth_min:,}〜{spec.depth_max:,} m"
-    text((W // 2, 512), depth_str, _fit_font(depth_str, cfg.end_depth_size, max_w, _sans_b),
-         CYAN + (255,))
+    # ★수심 근거가 있을 때만 표기(미상이면 생략 — 날조 금지)
+    if spec.depth_max > 0:
+        depth_str = f"水深 {spec.depth_min:,}〜{spec.depth_max:,} m"
+        text((W // 2, 512), depth_str, _fit_font(depth_str, cfg.end_depth_size, max_w, _sans_b),
+             CYAN + (255,))
     # 특징문구 — glow 단어 파티클('+' 마크)은 텍스트 주변이 지저분해 보여 삭제(사용자 확정)
     line = spec.feature_line
     text((W // 2, 1060), line, f_feat, (232, 240, 250, 255))
@@ -585,19 +587,24 @@ def _styled_line(spec: SpeciesSpec, cfg: HookIntroConfig):
         gimg = Image.new("RGBA", (W, H), GL + (0,)); gimg.putalpha(ga.point(lambda v: int(v * 0.8)))
         return Image.alpha_composite(gimg, colored)
 
-    depth_str = f"水深 {spec.depth_min:,}〜{spec.depth_max:,} m"
+    # ★수심은 근거(depth_max>0)가 있을 때만 표기 — 미상이면 지어내지 않고 생략(날조 금지)
+    show_depth = spec.depth_max > 0
+    depth_str = f"水深 {spec.depth_min:,}〜{spec.depth_max:,} m" if show_depth else ""
     # 각 줄 폰트는 화면폭에 자동 맞춤(_fit_font) — 긴 국명·특징문구도 넘침 원천 차단
     max_w = int(W * 0.76)   # 인스타 릴스 좌우 UI 겹침 안전여백(≈12%)
     ft = _fit_font(spec.jp_name, cfg.end_title_size, max_w, _serif)
     fs = _fit_font(spec.sci_name, cfg.end_sci_size, max_w, _sci)
-    fd = _fit_font(depth_str, cfg.end_depth_size, max_w, _sans_b)
     ff = _fit_font(spec.feature_line, cfg.end_feature_size, max_w, _serif)
     specs = [
         ("title", spec.jp_name, ft, 336, cfg.type_cps_title, grad_layer(spec.jp_name, ft, 336, 26)),
         ("sci", spec.sci_name, fs, 430, cfg.type_cps_body, solid_layer(spec.sci_name, fs, 430, (210, 220, 235, 255))),
-        ("depth", depth_str, fd, 512, cfg.type_cps_body, solid_layer(depth_str, fd, 512, CYAN + (255,))),
-        ("feature", spec.feature_line, ff, 1060, cfg.type_cps_body, solid_layer(spec.feature_line, ff, 1060, (232, 240, 250, 255))),
     ]
+    if show_depth:
+        fd = _fit_font(depth_str, cfg.end_depth_size, max_w, _sans_b)
+        specs.append(("depth", depth_str, fd, 512, cfg.type_cps_body,
+                      solid_layer(depth_str, fd, 512, CYAN + (255,))))
+    specs.append(("feature", spec.feature_line, ff, 1060, cfg.type_cps_body,
+                  solid_layer(spec.feature_line, ff, 1060, (232, 240, 250, 255))))
     lines = []
     start = cfg.type_start_s
     for key, txt, font, y, cps, layer in specs:

@@ -1,234 +1,6 @@
 [
   {
     "kind": "creature",
-    "key": "holothuria leucospilota",
-    "needs_confirm": false,
-    "title": "File:Im Roten Meer, Ägypten DSCF6991.webm",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b3/Im_Roten_Meer%2C_%C3%84gypten_DSCF6991.webm",
-    "license": "cc-by-sa",
-    "credit": "Kora27 · CC BY-SA",
-    "source": "File:Im Roten Meer, Ägypten DSCF6991.webm",
-    "name": "Holothuria leucospilota",
-    "name_ja": "",
-    "common_name_ko": "Holothuria (Mertensiothuria) leucospilota",
-    "common_name_en": "Holothuria (Mertensiothuria) leucospilota",
-    "depth": "",
-    "facts": [
-      "ニセクロナマコ(偽黒海鼠、贋黒海鼠、Holothuria leucospilota)は、ナマコの一種。楯手目クロナマコ科クロナマコ属に属する。",
-      "体長は20 - 30センチメートル、全身が少し紫を帯びた黒。円柱形の体はやや細長く、特に先端から中程まではやや細みになっている。背中側の体表にはやや細かい円錐形の突起が多数並んでいる。腹面には管足が密生しており、背中側にも疣の間にまばらに見られる。体先端の口は下向きについており、触手を伸ばして岩表面に吸着しているのが見られる。体壁は柔らかい。",
-      "潮間帯に生息し、石の下に見られ、岩の上に這い出しているのもよく見かける。つよく刺激すると肛門からキュビエ器官を出す。これは白い紐状のもので、天敵の体にまとわりついて邪魔をする効果があると考えられている。また、体壁にはホロツリンという有毒成分が含まれる。これを利用し、浅瀬の魚を捕らえる漁がある。ナマコの中では唯一有毒とされている。",
-      "熱帯系の動物で、日本では紀伊半島付近を北限とし、それ以南、インド太平洋域に広く分布し、南アフリカ、中南米太平洋岸まで生息する。",
-      "近似種にクロナマコがある。全身が黒い点などよく似ているが、野外では常に体表に泥を被っているため、白っぽく見えること、またキュビエ器官を持たない点が異なる。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Holothuria leucospilota",
-      "common_name_ko": "Holothuria (Mertensiothuria) leucospilota",
-      "common_name_en": "Holothuria (Mertensiothuria) leucospilota",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "ニセクロナマコ(偽黒海鼠、贋黒海鼠、Holothuria leucospilota)は、ナマコの一種。楯手目クロナマコ科クロナマコ属に属する。",
-        "体長は20 - 30センチメートル、全身が少し紫を帯びた黒。円柱形の体はやや細長く、特に先端から中程まではやや細みになっている。背中側の体表にはやや細かい円錐形の突起が多数並んでいる。腹面には管足が密生しており、背中側にも疣の間にまばらに見られる。体先端の口は下向きについており、触手を伸ばして岩表面に吸着しているのが見られる。体壁は柔らかい。",
-        "潮間帯に生息し、石の下に見られ、岩の上に這い出しているのもよく見かける。つよく刺激すると肛門からキュビエ器官を出す。これは白い紐状のもので、天敵の体にまとわりついて邪魔をする効果があると考えられている。また、体壁にはホロツリンという有毒成分が含まれる。これを利用し、浅瀬の魚を捕らえる漁がある。ナマコの中では唯一有毒とされている。",
-        "熱帯系の動物で、日本では紀伊半島付近を北限とし、それ以南、インド太平洋域に広く分布し、南アフリカ、中南米太平洋岸まで生息する。",
-        "近似種にクロナマコがある。全身が黒い点などよく似ているが、野外では常に体表に泥を被っているため、白っぽく見えること、またキュビエ器官を持たない点が異なる。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Im Roten Meer, Ägypten DSCF6991.webm)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_holothuria_leucospilota_29408223775.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "octopus vulgaris",
-    "needs_confirm": false,
-    "title": "File:Krake (Octopus vulgaris) im Roten Meer. Ägypten. Осьминог в Красном море DSCF1713.webm",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Krake_%28Octopus_vulgaris%29_im_Roten_Meer._%C3%84gypten._%D0%9E%D1%81%D1%8C%D0%BC%D0%B8%D0%BD%D0%BE%D0%B3_%D0%B2_%D0%9A%D1%80%D0%B0%D1%81%D0%BD%D0%BE%D0%BC_%D0%BC%D0%BE%D1%80%D0%B5_DSCF1713.webm",
-    "license": "cc-by-sa",
-    "credit": "Kora27 · CC BY-SA",
-    "source": "File:Krake (Octopus vulgaris) im Roten Meer. Ägypten. Осьминог в Красном море DSCF1713.webm",
-    "name": "Octopus vulgaris",
-    "name_ja": "",
-    "common_name_ko": "참문어",
-    "common_name_en": "common octopus",
-    "depth": "",
-    "facts": [
-      "チチュウカイマダコ（Octopus vulgaris、オクトプス・ウルガリス、オクトプス・ブルガリス、オクトパス・ブルガリス、英語: common octopus, フランス語: Pieuvre, Poulpe de roche, スペイン語: pulpo común）は、大西洋や地中海に生息するタコの一種である。長い間温帯から熱帯の汎存種と考えられてきたが、隠蔽種の存在が指摘され、現在では Octopus sinensis（マダコ）や Octopus tetricus（シドニーダコ）など複数種が認識され、Octopus vulgaris 種群には6種が含まれると考えられている。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Octopus vulgaris",
-      "common_name_ko": "참문어",
-      "common_name_en": "common octopus",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "チチュウカイマダコ（Octopus vulgaris、オクトプス・ウルガリス、オクトプス・ブルガリス、オクトパス・ブルガリス、英語: common octopus, フランス語: Pieuvre, Poulpe de roche, スペイン語: pulpo común）は、大西洋や地中海に生息するタコの一種である。長い間温帯から熱帯の汎存種と考えられてきたが、隠蔽種の存在が指摘され、現在では Octopus sinensis（マダコ）や Octopus tetricus（シドニーダコ）など複数種が認識され、Octopus vulgaris 種群には6種が含まれると考えられている。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Krake (Octopus vulgaris) im Roten Meer. Ägypten. Осьминог в Красном море DSCF1713.webm)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_octopus_vulgaris_29408223775.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "aplysia kurodai",
-    "needs_confirm": false,
-    "title": "File:Aplysia kurodai, Wakayama Japan.ogv",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Aplysia_kurodai%2C_Wakayama_Japan.ogv",
-    "license": "cc-by",
-    "credit": "Laitche · CC BY",
-    "source": "File:Aplysia kurodai, Wakayama Japan.ogv",
-    "name": "Aplysia kurodai",
-    "name_ja": "",
-    "common_name_ko": "군소",
-    "common_name_en": "Aplysia kurodai",
-    "depth": "",
-    "facts": [
-      "Aplysia kurodai is a species of gastropods belonging to the family Aplysiidae."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Aplysia kurodai",
-      "common_name_ko": "군소",
-      "common_name_en": "Aplysia kurodai",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Aplysia kurodai is a species of gastropods belonging to the family Aplysiidae."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Aplysia kurodai, Wakayama Japan.ogv)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_aplysia_kurodai_29408223775.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "lingulodinium polyedra",
-    "needs_confirm": false,
-    "title": "File:Surfing on bioluminescent wave.webm",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/9/97/Surfing_on_bioluminescent_wave.webm",
-    "license": "cc-by-sa",
-    "credit": "Timothy R Fallon · CC BY-SA",
-    "source": "File:Surfing on bioluminescent wave.webm",
-    "name": "Lingulodinium polyedra",
-    "name_ja": "",
-    "common_name_ko": "Lingulodinium polyedra",
-    "common_name_en": "Lingulodinium polyedra",
-    "depth": "",
-    "facts": [
-      "Lingulodinium polyedra is a species of motile photosynthetic dinoflagellates.",
-      "polyedra are often the cause of red tides in southern California, leading to bioluminescent displays on beaches at night."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Lingulodinium polyedra",
-      "common_name_ko": "Lingulodinium polyedra",
-      "common_name_en": "Lingulodinium polyedra",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Lingulodinium polyedra is a species of motile photosynthetic dinoflagellates.",
-        "polyedra are often the cause of red tides in southern California, leading to bioluminescent displays on beaches at night."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Surfing on bioluminescent wave.webm)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_lingulodinium_polyedra_29408223775.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "lithodinae",
-    "needs_confirm": false,
-    "title": "File:King crab eating a brittle star.webm",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/d/d9/King_crab_eating_a_brittle_star.webm",
-    "license": "public-domain",
-    "credit": "NOAA Office of Ocean Exploration and Research",
-    "source": "File:King crab eating a brittle star.webm",
-    "name": "Lithodinae",
-    "name_ja": "",
-    "common_name_ko": "Lithodinae",
-    "common_name_en": "Lithodinae",
-    "depth": "",
-    "facts": [
-      "タラバガニ科（タラバガニか、 Lithodidae）は、甲殻類十脚目（エビ目）異尾下目に分類される科。分類学上は、いわゆるカニ（短尾下目）ではなく、ヤドカリ下目ヤドカリ上科の1種である。かつてはタラバガニ上科（Lithodoidea）として分けることもあったが、分子系統解析によってタラバガニ科はヤドカリ上科に内包される結果が繰り返し出ており、ヤドカリ上科を側系統群とするため、2023年以降は用いられない。"
-    ],
-    "fact_src": "Wikipedia (ja) · 상위 분류군",
-    "species": {
-      "scientific_name": "Lithodinae",
-      "common_name_ko": "Lithodinae",
-      "common_name_en": "Lithodinae",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "タラバガニ科（タラバガニか、 Lithodidae）は、甲殻類十脚目（エビ目）異尾下目に分類される科。分類学上は、いわゆるカニ（短尾下目）ではなく、ヤドカリ下目ヤドカリ上科の1種である。かつてはタラバガニ上科（Lithodoidea）として分けることもあったが、分子系統解析によってタラバガニ科はヤドカリ上科に内包される結果が繰り返し出ており、ヤドカリ上科を側系統群とするため、2023年以降は用いられない。"
-      ],
-      "sources": [
-        "Wikipedia (ja) · 상위 분류군",
-        "Wikimedia Commons (File:King crab eating a brittle star.webm)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_lithodinae_29408223775.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "anoplodactylus lentus",
-    "needs_confirm": false,
-    "title": "File:Sea Spiders.webm",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/Sea_Spiders.webm",
-    "license": "cc-by",
-    "credit": "NOAA Sanctuaries · CC BY",
-    "source": "File:Sea Spiders.webm",
-    "name": "Anoplodactylus lentus",
-    "name_ja": "",
-    "common_name_ko": "Anoplodactylus lentus",
-    "common_name_en": "Anoplodactylus lentus",
-    "depth": "",
-    "facts": [
-      "Phoxichilidiidae is a family of sea spiders.",
-      "About 150 species are described, almost all in the genus Anoplodactylus Wilson, 1878."
-    ],
-    "fact_src": "Wikipedia (en) · 상위 분류군",
-    "species": {
-      "scientific_name": "Anoplodactylus lentus",
-      "common_name_ko": "Anoplodactylus lentus",
-      "common_name_en": "Anoplodactylus lentus",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Phoxichilidiidae is a family of sea spiders.",
-        "About 150 species are described, almost all in the genus Anoplodactylus Wilson, 1878."
-      ],
-      "sources": [
-        "Wikipedia (en) · 상위 분류군",
-        "Wikimedia Commons (File:Sea Spiders.webm)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_anoplodactylus_lentus_29408223775.jpg"
-  },
-  {
-    "kind": "creature",
     "key": "annelida",
     "needs_confirm": false,
     "title": "File:Segmented worm DSC 2462.webm",
@@ -280,7 +52,7 @@
     "name_ja": "",
     "common_name_ko": "Paralomis diomedeae",
     "common_name_en": "Paralomis diomedeae",
-    "depth": "935",
+    "depth": "680-935",
     "facts": [
       "Paralomis diomedeae is a species of king crab.",
       "It is considered very rare and is known from Peru, the Gulf of Panama, and Costa Rica's Pacific coast at depths of 680–935 m (2,231–3,068 ft)."
@@ -290,7 +62,7 @@
       "scientific_name": "Paralomis diomedeae",
       "common_name_ko": "Paralomis diomedeae",
       "common_name_en": "Paralomis diomedeae",
-      "depth_range_m": "935",
+      "depth_range_m": "680-935",
       "distribution": "",
       "habitat": "",
       "diet": [],
@@ -356,7 +128,7 @@
     "name_ja": "",
     "common_name_ko": "바다나리",
     "common_name_en": "Crinoidea",
-    "depth": "",
+    "depth": "6000-9000",
     "facts": [
       "ウミユリ綱（ウミユリこう、Crinoidea）は棘皮動物門の下位分類群のひとつで、ウミユリ（海百合）やウミシダと呼ばれる海洋性の生物が属する群である。浅海から6,000メートル級の深海まで広く分布する。名称はギリシア語の krinon 'ユリ'＋-oid '〜のようなもの' より。"
     ],
@@ -365,7 +137,7 @@
       "scientific_name": "Crinoidea",
       "common_name_ko": "바다나리",
       "common_name_en": "Crinoidea",
-      "depth_range_m": "",
+      "depth_range_m": "6000-9000",
       "distribution": "",
       "habitat": "",
       "diet": [],
@@ -378,81 +150,5 @@
       ]
     },
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_crinoidea_29408223775.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "astomonema",
-    "needs_confirm": false,
-    "title": "File:Astomonema 1 cliponly.webm",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/d/d9/Astomonema_1_cliponly.webm",
-    "license": "cc-by-sa",
-    "credit": "Brandon Seah, Max Planck Institute for Marine Microbiology · CC BY-SA",
-    "source": "File:Astomonema 1 cliponly.webm",
-    "name": "Astomonema",
-    "name_ja": "",
-    "common_name_ko": "Astomonema",
-    "common_name_en": "Astomonema",
-    "depth": "",
-    "facts": [
-      "Astomonema is a genus of nematode worms in the family Siphonolaimidae.",
-      "They lack a mouth or conventional digestive tract, but contain symbiotic sulfur-oxidizing bacteria that serve as their primary food source.",
-      "They live in the marine interstitial habitat."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Astomonema",
-      "common_name_ko": "Astomonema",
-      "common_name_en": "Astomonema",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Astomonema is a genus of nematode worms in the family Siphonolaimidae.",
-        "They lack a mouth or conventional digestive tract, but contain symbiotic sulfur-oxidizing bacteria that serve as their primary food source.",
-        "They live in the marine interstitial habitat."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Astomonema 1 cliponly.webm)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_astomonema_29408223775.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "phallodrilinae",
-    "needs_confirm": false,
-    "title": "File:Gutless tmp cliponly.webm",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/f/f3/Gutless_tmp_cliponly.webm",
-    "license": "cc-by-sa",
-    "credit": "Brandon Seah, Max Planck Institute for Marine Microbiology · CC BY-SA",
-    "source": "File:Gutless tmp cliponly.webm",
-    "name": "Phallodrilinae",
-    "name_ja": "",
-    "common_name_ko": "Phallodrilinae",
-    "common_name_en": "Phallodrilinae",
-    "depth": "",
-    "facts": [
-      "Phallodrilinae is a subfamily of clitellate oligochaete worms."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Phallodrilinae",
-      "common_name_ko": "Phallodrilinae",
-      "common_name_en": "Phallodrilinae",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Phallodrilinae is a subfamily of clitellate oligochaete worms."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Gutless tmp cliponly.webm)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_phallodrilinae_29408223775.jpg"
   }
 ]

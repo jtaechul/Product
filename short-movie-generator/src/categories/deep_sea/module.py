@@ -441,7 +441,8 @@ class DeepSeaCategory:
             default_tags=["#深海", f"#{spec.jp_name}", "#生き物"])
         return CaptionData(
             hook_text=spec.hook_line1 + spec.hook_line2,
-            overlay_facts=[f"水深 {info.depth_range_m} m"],
+            # 수심 근거가 있을 때만 오버레이 표기(없으면 지어내지 않고 생략)
+            overlay_facts=([f"水深 {info.depth_range_m} m"] if (info.depth_range_m or "").strip() else []),
             caption_body=c["jp"], hashtags=c["tags"],
             reveal_name=f"{spec.jp_name} / {spec.sci_name}",
             reveal_fact=spec.feature_line,
@@ -451,10 +452,13 @@ class DeepSeaCategory:
 
     @staticmethod
     def _parse_depth(depth_range_m: str) -> tuple[int, int]:
-        """'1000-4000' → (1000, 4000). 단일값이면 절반~값, 없으면 심해 기본."""
+        """'1000-4000' → (1000, 4000). 단일값이면 절반~값, 근거 없으면 (0,0)=미상.
+        ★수심을 지어내지 않는다(날조 금지): 문헌 수치가 없으면 (0,0)을 돌려주고,
+        엔드카드·오버레이는 (0,0)일 때 수심 줄을 아예 표기하지 않는다.
+        (정어리가 심해로 오편입돼 가짜 '水深 200〜2,000 m'가 붙던 사고 방지)"""
         nums = [int(x) for x in re.findall(r"\d+", depth_range_m or "")]
         if not nums:
-            return (200, 2000)
+            return (0, 0)
         if len(nums) == 1:
             return (max(0, nums[0] // 2), nums[0])
         return (min(nums), max(nums))

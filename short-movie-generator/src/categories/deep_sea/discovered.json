@@ -29,35 +29,6 @@
     }
   },
   {
-    "key": "sardinops sagax",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/d/d1/Sardines_reacting_to_tuna_-_MBA.webm",
-      "license": "cc-by-sa",
-      "credit": "Eric Polk · CC BY-SA",
-      "source": "File:Sardines reacting to tuna - MBA.webm"
-    },
-    "species": {
-      "scientific_name": "Sardinops sagax",
-      "common_name_ko": "정어리",
-      "common_name_en": "Sardinops sagax",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Sardinops is a genus of sardines of the family Alosidae.",
-        "Often considered monotypic with only member as Sardinops sagax, it currently has three valid species:\n\nSardinops melanosticta (Temminck & Schlegel, 1846) (Japanese pilchard)\nSardinops ocellatus (Pappe, 1853) (Southern African pilchard)\nSardinops sagax (Jenyns, 1842)\nSardinops sagax caeruleus (Girard, 1854) (Californian pilchard)\nSardinops sagax musica (Girard, 1855)\nSardinops sagax neopilchardus (Steindachner, 1879) (Australian pilchard)\nIt is found in the Indo-Pacific, East Pacific, Southeastern Atlantic and southwestern Indian oceans.",
-        "Its length is up to 40 cm (16 in).",
-        "It has numerous common or vernacular names, some of which more appropriately refer to subspecies, including blue pilchard, blue-bait, Peruvian Pacific sardine (S.",
-        "sagax), South American pilchard, Chilean sardine, and Pacific sardine."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Sardines reacting to tuna - MBA.webm)"
-      ]
-    }
-  },
-  {
     "key": "peltospira smaragdina",
     "footage": {
       "url": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Peltospira_smaragdina_gastropod_assemblage_at_the_Y3_site_in_the_Lucky_Strike_vent_field_%28MAR%29_%28Ifremer_00775-88699%29.webm",
@@ -69,7 +40,7 @@
       "scientific_name": "Peltospira smaragdina",
       "common_name_ko": "Peltospira smaragdina",
       "common_name_en": "Peltospira smaragdina",
-      "depth_range_m": "",
+      "depth_range_m": "870-3520",
       "distribution": "",
       "habitat": "",
       "diet": [],
@@ -80,32 +51,8 @@
         "Wikipedia (en)",
         "Wikimedia Commons (File:Peltospira smaragdina gastropod assemblage at the Y3 site in the Lucky Strike vent field (MAR) (Ifremer 00775-88699).webm)"
       ]
-    }
-  },
-  {
-    "key": "lophius piscatorius",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/e/ec/Lophius_piscatorius.ogv",
-      "license": "cc-by-sa",
-      "credit": "Waielbi · CC BY-SA",
-      "source": "File:Lophius piscatorius.ogv"
     },
-    "species": {
-      "scientific_name": "Lophius piscatorius",
-      "common_name_ko": "Lophius piscatorius",
-      "common_name_en": "Lophius piscatorius",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "ニシアンコウ (Lophius piscatorius) はアンコウ科に属する魚類の一種。英語では angler(fish), fishing-frog, frog-fish, sea-devilなどと呼ばれる。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Lophius piscatorius.ogv)"
-      ]
-    }
+    "depth": "870-3520"
   },
   {
     "key": "pycnogonida",
@@ -135,33 +82,6 @@
     }
   },
   {
-    "key": "sepia officinalis",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/0/04/OPT_3D_reconstruction_showing_the_internal_location_of_the_tentacles_in_a_cuttlefish_hatchling.ogv",
-      "license": "cc-by",
-      "credit": "Oscar A Tarazona Davys H Lopez Leslie A Slota Martin J Cohn · CC BY",
-      "source": "File:OPT 3D reconstruction showing the internal location of the tentacles in a cuttlefish hatchling.ogv"
-    },
-    "species": {
-      "scientific_name": "Sepia officinalis",
-      "common_name_ko": "갑오징어",
-      "common_name_en": "common cuttlefish",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "ヨーロッパコウイカ Sepia officinalis（欧羅巴甲烏賊）は、大型で、そしてヨーロッパにおいて最も有名なコウイカ類である。日本近海に生息するトラフコウイカ Sepia pharaonisやカミナリイカ Sepia lycidasと混称で「モンゴウイカ（紋甲烏賊）」と呼ばれる。",
-        "ヨーロッパコウイカは、ヨーロッパ全域の水深50-100 m程度に棲息する。地中海、北海、バルト海の砂や泥の海底に住む。他の多くのコウイカと同様に、浅い海で産卵する。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:OPT 3D reconstruction showing the internal location of the tentacles in a cuttlefish hatchling.ogv)"
-      ]
-    }
-  },
-  {
     "key": "duobrachium sparksae",
     "kind": "creature",
     "footage": {
@@ -174,7 +94,7 @@
       "scientific_name": "Duobrachium sparksae",
       "common_name_ko": "Duobrachium sparksae",
       "common_name_en": "Duobrachium sparksae",
-      "depth_range_m": "",
+      "depth_range_m": "3910",
       "distribution": "",
       "habitat": "",
       "diet": [],
@@ -186,6 +106,7 @@
         "Wikipedia (en)",
         "Wikimedia Commons (File:First footage of Duobrachium Sparksae.webm)"
       ]
-    }
+    },
+    "depth": "3910"
   }
 ]
