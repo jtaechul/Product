@@ -299,6 +299,27 @@ _SYNTH = {
 
 # ---------------------------------------------------------------- orchestration
 
+def _synth_with_retry(provider: str, text: str, cfg: dict, attempts: int = 3):
+    """한 프로바이더로 합성 — 일시 오류(429/5xx/네트워크)는 백오프 재시도, 계정차단·인증오류
+    (403/401/UNUSUAL_ACTIVITY)는 재시도해도 소용없고 오히려 차단을 악화시키므로 즉시 상위로 던져
+    다음 프로바이더로 넘어가게 한다."""
+    import time
+    last = None
+    for i in range(attempts):
+        try:
+            return _SYNTH[provider](text, cfg)
+        except Exception as e:
+            last = e
+            m = str(e).upper()
+            if any(t in m for t in ("403", "401", "UNUSUAL", "SUSPEND", "FORBIDDEN", "UNAUTHORIZED")):
+                raise   # 계정/인증 문제 — 재시도 무의미, 다음 프로바이더로
+            if i < attempts - 1:
+                wait = 2 ** i
+                print(f"[tts] '{provider}' 일시 오류 → {wait}s 후 재시도({i + 2}/{attempts}): {str(e)[:120]}")
+                time.sleep(wait)
+    raise last
+
+
 def synthesize_to_files(text: str, job_dir: Path, tts_settings: dict,
                         whisper_settings: dict | None = None) -> dict:
     """대본 텍스트 → job_dir/audio.mp3 + job_dir/timestamps.json (공통 계약).
@@ -308,12 +329,32 @@ def synthesize_to_files(text: str, job_dir: Path, tts_settings: dict,
     job_dir = Path(job_dir)
     job_dir.mkdir(parents=True, exist_ok=True)
 
-    provider = resolve_provider(tts_settings.get("provider", "auto"))
+    primary = resolve_provider(tts_settings.get("provider", "auto"))
     avail = detect_available()
     detected = [n for n, ok in avail.items() if ok]
-    print(f"[tts] 감지된 API 키(이름만): {detected or '없음'} → 선택된 프로바이더: {provider}")
+    print(f"[tts] 감지된 API 키(이름만): {detected or '없음'} → 1순위 프로바이더: {primary}")
 
-    out = _SYNTH[provider](text, tts_settings.get(provider, {}) or {})
+    # 폴백 체인: 1순위가 실패(예: Typecast 403 계정차단)해도 다른 등록 프로바이더로 자동 전환.
+    # (한 프로바이더의 일시 장애/계정차단이 제작 전체를 죽이지 않게 한다.)
+    order = [primary] + [p for p in PROVIDER_ORDER if avail.get(p) and p != primary]
+    out, provider, errors = None, None, []
+    for cand in order:
+        try:
+            out = _synth_with_retry(cand, text, tts_settings.get(cand, {}) or {})
+            provider = cand
+            if cand != primary:
+                print(f"[tts] 1순위 실패 → '{cand}'로 폴백 성공")
+            break
+        except Exception as e:
+            errors.append(f"{cand}: {str(e)[:180]}")
+            print(f"[tts] 프로바이더 '{cand}' 실패 → 다음 후보 시도: {str(e)[:150]}")
+    if out is None:
+        raise TTSError(
+            "모든 TTS 프로바이더 실패:\n  " + "\n  ".join(errors)
+            + "\n조치: (1) Typecast 무료계정이 '비정상 활동(UNUSUAL_ACTIVITY)'으로 일시 차단됐을 수 있음 "
+            "→ 잠시(수십 분~수 시간) 뒤 재시도, 또는 (2) SHORTS_ELEVENLABS_API_KEY 등 다른 TTS 키를 "
+            "등록해 폴백을 확보하세요. (급하면 '나레이션 없이' 모드로 비주얼만 먼저 확인 가능)"
+        )
 
     audio_path = job_dir / "audio.mp3"
     if out.audio_ext == "mp3":
