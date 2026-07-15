@@ -135,6 +135,32 @@ class DeepSeaCategory:
             )
         return key
 
+    def verify_subject(self, info: SpeciesInfo) -> None:
+        """★제작 직전 심해 적합성 최종 게이트(표층·연안 종·가짜 수심 발행 원천 차단).
+
+        소싱 게이트를 우회해 data.SPECIES에 들어온 종(수동 입력·구버전 데이터·시드 오류)이라도,
+        여기서 다시 검증해 부적합이면 제작을 중단한다(PipelineError). 이렇게 하면 '소싱에서 통과'와
+        무관하게 **영상이 렌더되는 그 순간** 표층·연안 종(정어리·갑오징어·참문어 등)이 걸러진다.
+        (실사고: Octopus vulgaris·Sepia officinalis·Sardinops sagax 가 '水深 200〜2,000 m'로 발행)"""
+        from src.core import deepsea_verify
+        sci = (info.scientific_name or "").strip()
+        en = (info.common_name_en or "").strip()
+        corpus = " ".join([" ".join(info.fun_facts or []), info.habitat or "",
+                           info.distribution or "", info.depth_range_m or ""])
+        v = deepsea_verify.verdict(sci, en, corpus)
+        if not v.ok:
+            # 로컬 사실이 빈약해 근거를 못 찾았을 수 있다 → 위키 서식 문헌으로 재확인(네트워크)
+            try:
+                from src.core import discovery
+                ident = discovery._search_taxon_by_name(sci) if sci else None
+                if ident:
+                    v = deepsea_verify.verdict(sci, en, corpus + " " + discovery._habitat_corpus(ident))
+            except Exception:  # noqa: BLE001
+                pass
+        if not v.ok:
+            raise PipelineError("verify",
+                                f"심해 부적합으로 제작 차단: {sci} — {v.reason} (표층·연안 종·근거 없는 수심은 발행 금지)")
+
     def get_info(self, subject_query: str) -> SpeciesInfo:
         sp = data.SPECIES[subject_query]
         return SpeciesInfo(

@@ -30,6 +30,15 @@ WATERMARK = "DEEP DIVE LOG"  # 브랜드명 [TBD] — 확정 시 교체
 REELS_SUB_SCALE = 1.5
 
 
+def _verify_subject_or_raise(category, info) -> None:
+    """★제작 직전 카테고리 적합성 최종 게이트(공용).
+    카테고리가 verify_subject(info)를 제공하면 호출한다. 부적합이면 PipelineError를 던져
+    영상이 렌더되기 전에 제작을 중단한다(표층 종·가짜 수심 발행 원천 차단). 미제공 카테고리는 무동작."""
+    fn = getattr(category, "verify_subject", None)
+    if callable(fn):
+        fn(info)
+
+
 def _apply_grade(video_path: str, vf: str, work_dir: str) -> str:
     """카테고리 그레이딩 필터 적용 (오버레이 전 → 텍스트는 영향 없음)."""
     out = Path(work_dir) / "graded.mp4"
@@ -99,6 +108,7 @@ def run_narrated(
 
     subject = category.parse_input(query)
     info = category.get_info(subject)
+    _verify_subject_or_raise(category, info)
     raw_assets = category.source_assets(info, str(raw_dir))
     if not raw_assets:
         raise PipelineError("sourcing", "수집된 에셋 없음")
@@ -268,6 +278,7 @@ def run_reels(
     else:
         subject = category.parse_input(query)
         info = category.get_info(subject)
+    _verify_subject_or_raise(category, info)   # ★제작 직전 카테고리 적합성 최종 게이트
     if not hasattr(category, "hook_intro_spec"):
         raise PipelineError("reels", "카테고리가 hook_intro_spec 미제공")
     spec_t = category.hook_intro_spec(info)
@@ -514,6 +525,7 @@ def run(
 
     # 2. 정보 조회
     info = category.get_info(subject)
+    _verify_subject_or_raise(category, info)   # ★제작 직전 카테고리 적합성 최종 게이트
     log.info("[2/9] 정보: %s (%s)", info.common_name_ko, info.scientific_name)
 
     # 3. 소싱

@@ -2,6 +2,8 @@
 
 사고 재발 방지: 정어리(Sardinops sagax)가 '심해 도감'에 편입돼 가짜 '水深 200〜2,000 m'가
 붙었다. 표층·연안 종은 배제하고, 심해 근거(수심≥200 m·심해대 키워드)가 있는 종만 통과시킨다."""
+import pytest
+
 from src.core import deepsea_verify as V
 
 
@@ -54,3 +56,29 @@ def test_extract_depth_handles_commas_and_ranges():
     assert V.extract_depth("between 200 and 2,000 m") == "200-2000"
     assert V.extract_depth("at a depth of 4,000 m") == "4000"
     assert V.extract_depth("length up to 40 cm; weighs 3 kg") == ""   # 단위 m 아님 → 무시
+
+
+# ── 제작 직전 게이트(verify_subject) — 표층 종은 렌더 전에 차단(네트워크 불필요) ──
+def test_production_gate_blocks_surface_species():
+    from src.categories.deep_sea.module import DeepSeaCategory
+    from src.core.contracts import PipelineError, SpeciesInfo
+    cat = DeepSeaCategory()
+    for sci, ko, en in [("Octopus vulgaris", "참문어", "common octopus"),
+                        ("Sepia officinalis", "갑오징어", "common cuttlefish"),
+                        ("Sardinops sagax", "정어리", "Pacific sardine")]:
+        info = SpeciesInfo(scientific_name=sci, common_name_ko=ko, common_name_en=en,
+                           depth_range_m="", distribution="", habitat="", diet=[],
+                           fun_facts=["a coastal species"], sources=[])
+        with pytest.raises(PipelineError):
+            cat.verify_subject(info)
+
+
+def test_production_gate_allows_deep_species_with_local_evidence():
+    from src.categories.deep_sea.module import DeepSeaCategory
+    from src.core.contracts import SpeciesInfo
+    cat = DeepSeaCategory()
+    info = SpeciesInfo(scientific_name="Rimicaris exoculata", common_name_ko="열수분출공새우",
+                       common_name_en="vent shrimp", depth_range_m="2300",
+                       distribution="", habitat="hydrothermal vents", diet=[],
+                       fun_facts=["lives at hydrothermal vents at 2,300 m depth"], sources=[])
+    cat.verify_subject(info)   # 심해 근거 충분 → 예외 없이 통과
