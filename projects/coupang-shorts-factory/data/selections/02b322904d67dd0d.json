@@ -11,7 +11,7 @@
      "query": "air conditioner"
     },
     {
-     "file": "assets/memes/curiosity.png",
+     "file": "assets/memes/shock.png",
      "source": "meme",
      "query": "air conditioner"
     }
@@ -28,11 +28,6 @@
     {
      "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmajlyajNpdm5teGllZHNodmZyYnY0bjlxcW1saTE0YjZ2a251Nzd4NyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Sxqxi2sGBBhhc3Qb5s/giphy.gif",
      "source": "giphy",
-     "query": "ice valley"
-    },
-    {
-     "file": "assets/memes/frustration.png",
-     "source": "meme",
      "query": "ice valley"
     }
    ]
@@ -56,14 +51,14 @@
    "line_i": 3,
    "picks": [
     {
-     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmeXFhY3QwOTZxejhnaXdyNXJwZG96cTJma3VvMzhycGFnZTZmdm1ubyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/xUNd9R76F4ZGT572Eg/giphy.gif",
-     "source": "giphy",
-     "query": "bedding"
+     "file": "assets/memes/frustration.png",
+     "source": "meme",
+     "query": "thermometer"
     },
     {
-     "file": "assets/memes/disgust.png",
-     "source": "meme",
-     "query": "bedding"
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmNGJkazFwcnMzemxwZnBycGk4N25pMnFzeXJoZmswNjQzdnF5a3IwdCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/C6SLoyQEuq38rH6cWv/giphy.gif",
+     "source": "giphy",
+     "query": "thermometer"
     }
    ]
   },
@@ -86,11 +81,6 @@
    "line_i": 5,
    "picks": [
     {
-     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYWZvbTFnbjh2N3F6cXdubDQ1Zmpxc3MzMGl0eGp3OXpleGg2bHIwYiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/wgmWyQGzaZ6Fy/giphy.gif",
-     "source": "giphy",
-     "query": ""
-    },
-    {
      "is_product": true,
      "source": "product",
      "query": ""
@@ -111,7 +101,7 @@
      "query": "refrigerator door"
     },
     {
-     "file": "assets/memes/shock.png",
+     "file": "assets/memes/frustration.png",
      "source": "meme",
      "query": "refrigerator door"
     }
