@@ -29,6 +29,47 @@ SUB_MAX_WORDS = 3
 # 낭독 분량(공백 제외): 25~32초 목표(쇼츠 최적 길이 — 늘어지면 이탈). 무나레이션은 ≈0.14초/자.
 CHAR_MIN, CHAR_MAX = 150, 230
 
+# ⭐ 정식 제품명 감추기(2026-07-15 사용자 지시): 영상 텍스트(대사·자막·headline·title)에는 제품의
+#   '종류/통상 명사'만 쓰고 브랜드·모델명은 넣지 않는다(정식명칭은 프로필 링크의 쇼핑페이지에서만 공개).
+#   1차 방어는 프롬프트(script_gen.md '제품명 규칙'), 2차 방어가 여기다 — 모델이 흘린 '모델코드'
+#   (영문+숫자가 섞인 토큰: MJJSQ05DY·DR-3000·V12 등, 정식 제품명의 대표 신호)를 결정론적으로 제거한다.
+#   ⚠️ 측정 단위(500ml·1.2kg·60hz 등 '숫자+단위')는 스펙이므로 보존한다(오탐 금지).
+_UNIT_SUFFIX = ("ml", "l", "cc", "w", "kw", "kwh", "kg", "g", "mg", "t", "cm", "mm", "m",
+                "km", "nm", "gb", "tb", "mb", "kb", "mah", "wh", "hz", "khz", "mhz", "ghz",
+                "k", "p", "fps", "dpi", "inch", "ppm", "rpm", "psi", "db", "lux", "lm")
+_MEASURE_RE = re.compile(r"\d[\d.,]*(?:" + "|".join(_UNIT_SUFFIX) + r")$")
+_TOKEN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9\-]*")
+# 제품명이 아니라 '일반 기술용어'인 영숫자 토큰 — 오탐 방지로 보존한다.
+_ALNUM_ALLOW = {"mp3", "mp4", "2d", "3d", "usb2", "usb3", "hdmi2", "fhd", "uhd",
+                "type-c", "usb-c", "a4", "b5"}
+
+
+def _strip_model_codes(text: str) -> str:
+    """영문+숫자 혼합 토큰(모델코드)만 제거. 숫자+단위(스펙)·일반 기술용어는 보존."""
+    def repl(m):
+        tok = m.group(0)
+        low = tok.lower()
+        if low in _ALNUM_ALLOW or _MEASURE_RE.fullmatch(low):
+            return tok
+        if re.search(r"[A-Za-z]", tok) and re.search(r"\d", tok):
+            return ""
+        return tok
+    return re.sub(r"\s{2,}", " ", _TOKEN_RE.sub(repl, text)).strip()
+
+
+def _strip_terms(text: str, terms) -> str:
+    """운영자가 명시한 '화면 금지어'(브랜드·정식명칭)를 제거. 짧은(1자) 토큰은 오탐 위험이라 제외."""
+    for t in (terms or []):
+        t = str(t).strip()
+        if len(t) >= 2:
+            text = re.sub(re.escape(t), "", text, flags=re.IGNORECASE)
+    return re.sub(r"\s{2,}", " ", text).strip()
+
+
+def hide_product_name(text: str, avoid_terms=None) -> str:
+    """대사·자막·헤드라인·제목에서 정식 제품명 흔적(모델코드 + 명시 금지어)을 제거한다."""
+    return _strip_model_codes(_strip_terms(text, avoid_terms))
+
 
 class RuleViolation(Exception):
     pass
@@ -77,8 +118,11 @@ def _normalize_subs(line: dict) -> bool:
     return True
 
 
-def sanitize_script(script: dict, strict_length: bool = True) -> dict:
-    """대본 dict 정화 + 규칙 검증. 위반 시 RuleViolation(재생성 트리거)."""
+def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None) -> dict:
+    """대본 dict 정화 + 규칙 검증. 위반 시 RuleViolation(재생성 트리거).
+
+    avoid_terms: 화면에 노출하면 안 되는 브랜드·정식 제품명 토큰(선택). 상품 데이터에서 넘어온다.
+    """
     problems = []
 
     lines = script.get("lines") or []
@@ -89,7 +133,8 @@ def sanitize_script(script: dict, strict_length: bool = True) -> dict:
         # ⭐ 핵심규칙(사용자 확정 2026-07-12): 화면 리액션 추임새(react — ㅋㅋㅋ·실화냐 등) 전면 금지.
         #    모델이 출력해도 여기서 무조건 제거한다. 렌더·QA도 각각 금지·차단한다.
         line.pop("react", None)
-        line["text"] = clean_text(str(line.get("text", "")))
+        # 정식 제품명(브랜드·모델코드) 흔적 제거 → 종류/통상 명사만 남긴다(2026-07-15).
+        line["text"] = hide_product_name(clean_text(str(line.get("text", ""))), avoid_terms)
         if not line["text"]:
             problems.append("빈 대사 라인 존재")
             continue
@@ -98,12 +143,12 @@ def sanitize_script(script: dict, strict_length: bool = True) -> dict:
     if repaired:
         print(f"[sanitize] subs 계약 위반/누락 라인 {repaired}개 → 어절 경계 기준 자동 복구")
 
-    # 제목 이모지 제거(핵심규칙: 이모지 금지) — Gemini가 제목에 🎤 등을 넣는 경우 정화
+    # 제목 이모지 제거(핵심규칙: 이모지 금지) + 정식 제품명(브랜드·모델코드) 제거 — 종류 키워드만 남긴다
     if script.get("title"):
-        script["title"] = clean_text(str(script["title"]))
-    # headline(폭로 포맷 화면 상단 뉴스 헤더)도 같은 규칙으로 정화 — 이모지·슬래시·파이프 제거
+        script["title"] = hide_product_name(clean_text(str(script["title"])), avoid_terms)
+    # headline(폭로 포맷 화면 상단 뉴스 헤더)도 같은 규칙으로 정화 — 이모지·슬래시·파이프 + 제품명 제거
     if script.get("headline"):
-        script["headline"] = clean_text(str(script["headline"]))
+        script["headline"] = hide_product_name(clean_text(str(script["headline"])), avoid_terms)
     # concept(기획서: 의도·타깃·후킹) — 운영자 검토용 표시 텍스트, 이모지·특수기호 정화
     concept = script.get("concept")
     if isinstance(concept, dict):

@@ -59,6 +59,12 @@ def generate_script(product: dict, settings: dict) -> dict:
     system = template.replace("{channel_name}", settings.get("channel", {}).get("name", "미래상점"))
     user_msg = "상품 데이터:\n" + json.dumps(product, ensure_ascii=False, indent=1)
 
+    # 화면 금지어(브랜드·정식 제품명) — 운영자가 상품에 avoid_onscreen을 지정하면 대사·자막에서 제거한다.
+    #   (미지정이면 프롬프트 + 모델코드 자동제거만으로 방어. 정식명칭은 링크의 쇼핑페이지에서만 공개.)
+    avoid = product.get("avoid_onscreen") or product.get("avoid_terms") or []
+    if isinstance(avoid, str):
+        avoid = [avoid]
+
     feedback = None
     ATTEMPTS = 4   # LLM이 가끔 깨진 JSON·짧은 분량을 낸다. 2회로는 자주 최종 실패 → 넉넉히 재시도(각 ≈5원).
     for attempt in range(1, ATTEMPTS + 1):
@@ -79,7 +85,7 @@ def generate_script(product: dict, settings: dict) -> dict:
         try:
             script = _parse_json(text)
             # 앞 2회는 분량 엄격, 이후엔 완화 — 유효한 대본이 '조금 짧다'는 이유로 최종 실패하지 않게.
-            script = sanitize_script(script, strict_length=(attempt <= 2))
+            script = sanitize_script(script, strict_length=(attempt <= 2), avoid_terms=avoid)
             break
         except (RuleViolation, ValueError) as e:
             feedback = str(e)[:400]
@@ -98,9 +104,9 @@ def generate_script(product: dict, settings: dict) -> dict:
 
 
 _FIELD_SPEC = {
-    "title": "유튜브 제목 — ①훅의 궁금증 + 검색될 상품 키워드 자연 포함, 40자 이내, 낚시·가격 표기 금지",
+    "title": "유튜브 제목 — ①훅의 궁금증 + 검색될 일반 카테고리 키워드(제습기·고데기 등), 브랜드·모델명·정식 제품명 금지, 40자 이내, 낚시·가격 표기 금지",
     "headline": "영상 상단 뉴스 헤드라인 — 폭로 기사 제목 톤(문어체), 제품명 감춤, 12~22자",
-    "description": "유튜브 설명란 본문 — 간결·자연스럽게, 가격·금액 금지",
+    "description": "유튜브 설명란 본문 — 간결·자연스럽게, 정식 제품명·브랜드·가격·금액 금지(제품은 종류로만 지칭)",
     "hashtags": "해시태그 정확히 3개(문자열 리스트)",
 }
 
