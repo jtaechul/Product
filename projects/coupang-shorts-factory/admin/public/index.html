@@ -93,6 +93,10 @@ ol li{margin:8px 0}
 .vitem{display:flex; flex-direction:column; gap:6px}
 .vactions{display:flex; gap:6px}
 .vactions .btn{flex:1}
+.memegrid{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:6px}
+.memecell{text-align:center}
+.memecell img{width:100%; aspect-ratio:1; object-fit:cover; border-radius:8px; background:var(--line)}
+.memecell span{display:block; font-size:11px; color:var(--sub); margin-top:2px; overflow:hidden; text-overflow:ellipsis}
 .vcell{position:relative; aspect-ratio:9/16; border-radius:12px; overflow:hidden; cursor:pointer; background:var(--line)}
 .vcell img{width:100%; height:100%; object-fit:cover; display:block}
 .vcell .cap{position:absolute; left:0; right:0; bottom:0; padding:22px 10px 8px; font-size:12px; font-weight:800;
@@ -239,9 +243,9 @@ ol li{margin:8px 0}
     <p class="hint" style="margin:0 0 8px"><b>상품 기획하기</b>를 누르면 자막(문장)마다 후보 이미지가 여기에
     자동으로 모입니다. 마음에 들면 탭해서 고르고(<b>여러 장 = 슬라이드쇼</b>), 없으면 <b>다시 찾기</b>나
     <b>내 파일</b>을 올리세요. 고른 결과는 제작에 그대로 쓰이고, 자동 추천도 그 선택을 학습합니다.</p>
-    <div class="row2" style="margin-top:10px;display:none">
-      <button class="btn sub" id="imgGen">후보 만들기 (1~2분)</button>
-      <button class="btn" id="imgLoad">후보 불러오기</button>
+    <div class="row2" style="margin-top:10px">
+      <button class="btn" id="imgLoad">이미지 후보 불러오기</button>
+      <button class="btn sub" id="imgGen">이미지 후보 다시 만들기</button>
     </div>
     <p class="hint" id="imgStatus"></p>
   </div>
@@ -306,6 +310,8 @@ ol li{margin:8px 0}
     <h2>밈 이미지 라이브러리</h2>
     <p class="hint" style="margin:0 0 6px">영상 펀치 순간 배경에 깔리는 <b>카피바라 밈</b>입니다. 나노바나나로 만든 PNG를 슬롯에 올리면
     <b>우하단 워터마크가 자동 제거</b>되고 저장소에 등록됩니다. (정사각 1:1 · 글자 없는 그림 · 하단 1/3 비움)</p>
+    <div id="memeList"><p class="hint">불러오는 중...</p></div>
+    <label style="margin-top:12px">밈 교체·추가 (표정 슬롯 선택 후 이미지 올리기)</label>
     <label>표정 슬롯</label>
     <select id="memeSlot">
       <option value="curiosity">궁금 · curiosity</option>
@@ -448,7 +454,7 @@ document.querySelectorAll("nav button").forEach((b) => {
       s.classList.toggle("on", (s.dataset.group || s.id.replace("tab-", "")) === tab));
     if (tab === "make") makeInit();
     if (tab === "videos") loadVideos();
-    if (tab === "setup") bgmRefresh();
+    if (tab === "setup") { bgmRefresh(); loadMemes(); }
   };
 });
 // 만들기 탭 = 상품 선택(공용) + 대기열 + 기획 + 이미지 + 제작 초기화
@@ -458,6 +464,8 @@ async function makeInit() {
   }
   await mkInit();          // 실행 기록
   loadProducts();          // (대기열은 숨김이지만 상품 영상 배지 등 내부 상태 갱신 유지)
+  // 이미 만들어진 이미지 후보가 있으면 자동 표시(새로고침으로 자동 폴링이 끊겨도 복원)
+  if (currentWork && !imgManifest) { try { await loadCandidates(currentWork, true); } catch (_) {} }
 }
 
 /* ── 연결 상태 ───────────────────────── */
@@ -722,6 +730,28 @@ async function uploadBlob(path, blob, message) {
   const body = { message, content: btoa(bin), branch: BRANCH };
   if (old && old.sha) body.sha = old.sha;
   await gh(`/repos/${OWNER}/${REPO}/contents/${path}`, { method: "PUT", body: JSON.stringify(body) });
+}
+
+// ── 등록된 밈 목록 표시 — assets/memes/의 PNG를 썸네일로 보여줌(이미 저장돼 있음을 확인) ──
+async function loadMemes() {
+  const box = $("memeList"); if (!box) return;
+  if (!token()) { box.innerHTML = '<p class="hint">설정 탭에서 토큰을 저장하면 등록된 밈이 보입니다.</p>'; return; }
+  box.innerHTML = '<p class="hint">불러오는 중...</p>';
+  try {
+    const items = await gh(`/repos/${OWNER}/${REPO}/contents/${P}/assets/memes?ref=${BRANCH}`, { allow404: true });
+    const pngs = (items || []).filter((f) => /\.png$/i.test(f.name)).sort((a, b) => a.name.localeCompare(b.name));
+    if (!pngs.length) { box.innerHTML = '<p class="hint">아직 등록된 밈이 없습니다. 아래에서 올리세요.</p>'; return; }
+    box.innerHTML = `<p class="hint" style="margin:0 0 4px">등록된 밈 <b>${pngs.length}종</b> — 영상 펀치 순간에 자동으로 쓰입니다.</p>`;
+    const grid = document.createElement("div"); grid.className = "memegrid";
+    for (const f of pngs) {
+      const cell = document.createElement("div"); cell.className = "memecell";
+      cell.innerHTML = `<img loading="lazy" alt=""><span></span>`;
+      cell.querySelector("img").src = f.download_url;   // 공개 저장소 raw URL
+      cell.querySelector("span").textContent = f.name.replace(/\.png$/i, "");
+      grid.appendChild(cell);
+    }
+    box.appendChild(grid);
+  } catch (e) { box.innerHTML = ""; toast(e.message, 5000); }
 }
 
 // ── 배경음악(BGM) 업로드/관리 — assets/bgm/에 커밋(렌더가 자동 사용) ──
@@ -1194,53 +1224,51 @@ async function imgDispatch(row) {
     body: JSON.stringify({ ref: BRANCH, inputs: { mode: "candidates", row: String(row) } }),
   });
 }
-// 개편(2026-07-15): '상품 기획하기' → candidates 발행까지 폴링 → 완성되면 자동으로 '자막별 이미지 선택' 표시.
+// 개편(2026-07-15): 자동(폴링) + 수동(불러오기 버튼) 둘 다. 공용 로드 함수로 통일.
+// 현재 상품의 후보 매니페스트(cand_{hash}.json)를 로드해 '자막별 이미지 선택'을 채운다. 반환: 로드 성공?
+async function loadCandidates(p, silent) {
+  const rel = await gh(`/repos/${OWNER}/${REPO}/releases/tags/${IMG_TAG}`, { allow404: true });
+  const manAsset = rel && (rel.assets || []).find((a) => a.name === `cand_${p.hash}.json`);
+  if (!manAsset) {
+    if (!silent) $("imgStatus").textContent = "아직 이미지 후보가 없습니다. 잠시 뒤 '이미지 후보 불러오기'를 다시 누르거나, '이미지 후보 다시 만들기'를 누르세요.";
+    return false;
+  }
+  imgAssetMap = {};
+  for (const a of (rel.assets || [])) imgAssetMap[a.name] = a.browser_download_url;
+  const res = await fetch(mediaUrl(manAsset.browser_download_url));   // 워커 /media(json 허용) 경유
+  if (!res.ok) { if (!silent) $("imgStatus").textContent = "후보 불러오기 실패 " + res.status + " — 잠시 뒤 다시 시도하세요."; return false; }
+  imgManifest = await res.json(); imgPicks = {};
+  renderImgLines();
+  $("imgSaveCard").style.display = "";
+  $("imgStatus").textContent = `${imgManifest.lines.length}개 자막 — 라인마다 이미지를 고르세요(여러 장=슬라이드쇼).`;
+  setStatus(`이미지 후보 준비 완료 — ${imgManifest.lines.length}개 자막.`);
+  return true;
+}
+// 상품 기획하기/다시 만들기 후: 후보가 생길 때까지 폴링 → 완성되면 자동 표시(수동 버튼과 병행)
 async function pollCandidates(hash, tries = 0) {
   if (!currentWork || currentWork.hash !== hash) return;   // 다른 상품으로 바뀌면 중단
-  const rel = await gh(`/repos/${OWNER}/${REPO}/releases/tags/${IMG_TAG}`, { allow404: true });
-  const manAsset = rel && (rel.assets || []).find((a) => a.name === `cand_${hash}.json`);
-  if (manAsset) {
-    imgAssetMap = {};
-    for (const a of (rel.assets || [])) imgAssetMap[a.name] = a.browser_download_url;
-    const res = await fetch(mediaUrl(manAsset.browser_download_url));   // 워커 /media(json 허용) 경유
-    if (res.ok) {
-      imgManifest = await res.json(); imgPicks = {};
-      renderImgLines(); $("imgSaveCard").style.display = "";
-      setStatus(`대본 완성 — ${imgManifest.lines.length}개 자막. 라인마다 이미지를 골라 '선택 저장'하세요.`);
-      $("imgStatus").textContent = `${imgManifest.lines.length}개 자막 — 라인마다 이미지를 고르세요.`;
-      document.getElementById("tab-images").scrollIntoView({ behavior: "smooth" });
-      return;
-    }
+  if (await loadCandidates(currentWork, true)) {
+    document.getElementById("tab-images").scrollIntoView({ behavior: "smooth" });
+    return;
   }
-  if (tries >= 32) { setStatus("후보 생성이 오래 걸립니다(3분+). 잠시 뒤 이 페이지를 새로고침해 주세요."); return; }
-  setStatus(`대본·자막별 이미지 후보 만드는 중... (${tries * 15}초 · 보통 1~3분)`);
+  if (tries >= 32) { setStatus("후보 생성이 오래 걸립니다(3분+). '이미지 후보 불러오기'를 눌러 확인하세요."); return; }
+  setStatus(`대본·자막별 이미지 후보 만드는 중... (${tries * 15}초 · 보통 1~3분) — 다 되면 자동으로 뜹니다.`);
   setTimeout(() => pollCandidates(hash, tries + 1), 15000);
 }
+// [이미지 후보 다시 만들기] 현재 상품으로 candidates 재실행 + 폴링
 $("imgGen").onclick = (ev) => busy(ev.target, async () => {
   const p = imgSelected(); if (!p) return;
   await imgDispatch(p.row);
-  $("imgStatus").textContent = "후보 생성을 시작했습니다(약 1~2분). 잠시 뒤 '후보 불러오기'를 누르세요.";
-  toast("후보 생성 시작 — 1~2분 뒤 불러오기");
+  setStatus("이미지 후보를 다시 만드는 중... (약 1~3분, 완성되면 자동 표시)");
+  $("imgStatus").textContent = "이미지 후보 생성을 시작했습니다. 잠시만요...";
+  toast("이미지 후보 다시 만들기 시작");
+  pollCandidates(p.hash);
 });
+// [이미지 후보 불러오기] 지금 상품 후보를 즉시 로드(자동이 놓쳐도 이 버튼으로 언제든)
 $("imgLoad").onclick = (ev) => busy(ev.target, async () => {
   const p = imgSelected(); if (!p) return;
-  $("imgStatus").textContent = "후보 불러오는 중...";
-  const rel = await gh(`/repos/${OWNER}/${REPO}/releases/tags/${IMG_TAG}`, { allow404: true });
-  if (!rel) { $("imgStatus").textContent = "아직 후보가 없습니다. '후보 만들기'를 먼저 누르세요."; return; }
-  imgAssetMap = {};
-  for (const a of (rel.assets || [])) imgAssetMap[a.name] = a.browser_download_url;
-  const manAsset = (rel.assets || []).find((a) => a.name === `cand_${p.hash}.json`);
-  if (!manAsset) {
-    $("imgStatus").textContent = "이 상품 후보가 아직 없습니다. '후보 만들기' 후 1~2분 기다렸다가 다시 불러오세요.";
-    return;
-  }
-  const res = await fetch(mediaUrl(manAsset.browser_download_url));
-  if (!res.ok) throw new Error("매니페스트 로드 실패 " + res.status);
-  imgManifest = await res.json();
-  imgPicks = {};
-  renderImgLines();
-  $("imgStatus").textContent = `${imgManifest.lines.length}개 자막 — 라인마다 이미지를 고르세요.`;
-  $("imgSaveCard").style.display = "";
+  $("imgStatus").textContent = "이미지 후보 불러오는 중...";
+  await loadCandidates(p, false);
 });
 function renumberThumbs(thumbs, arr) {   // 선택된 썸네일에 슬라이드쇼 순서(1,2,3) 배지
   thumbs.querySelectorAll(".thumb").forEach((t) => {
@@ -1399,8 +1427,9 @@ $("memeUp").onclick = (ev) => busy(ev.target, async () => {
   if (cur && cur.sha) body.sha = cur.sha;
   await gh(`/repos/${OWNER}/${REPO}/contents/${path}`, { method: "PUT", body: JSON.stringify(body) });
   memeBlob = null; $("memeUp").style.display = "none"; $("memePrev").innerHTML = "";
-  $("memeMsg").textContent = `✓ ${id} 슬롯 등록 완료! 다음 제작부터 사용됩니다.`;
+  $("memeMsg").textContent = `${id} 슬롯 등록 완료! 다음 제작부터 사용됩니다.`;
   toast(`밈 '${id}' 업로드 완료`);
+  loadMemes();   // 갤러리 즉시 갱신
 });
 
 /* ── 시작 ────────────────────────────── */
