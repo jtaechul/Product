@@ -1241,7 +1241,9 @@ async function imgDispatch(row, line) {
 // waitVer: '다시 찾기' 시작 시점의 매니페스트 updated_at. 매니페스트가 '재업로드되어 값이 바뀔 때까지'
 //   기다린다(시계 오차와 무관 — 옛 매니페스트를 조기 표시하지 않게). undefined면 대기 없이 즉시 로드.
 async function loadCandidates(p, silent, waitVer) {
-  const rel = await gh(`/repos/${OWNER}/${REPO}/releases/tags/${IMG_TAG}`, { allow404: true });
+  // ⭐ no-store 필수: GitHub API는 releases 응답에 Cache-Control: private, max-age=60을 주므로
+  //   캐시를 끄지 않으면 폴링이 최대 60초간 '옛 updated_at'을 봐서 '다시 찾기'가 안 바뀐 것처럼 보인다.
+  const rel = await gh(`/repos/${OWNER}/${REPO}/releases/tags/${IMG_TAG}`, { allow404: true, cache: "no-store" });
   const manAsset = rel && (rel.assets || []).find((a) => a.name === `cand_${p.hash}.json`);
   if (!manAsset) {
     if (!silent) $("imgStatus").textContent = "아직 이미지 후보가 없습니다. 잠시 뒤 '이미지 후보 불러오기'를 다시 누르거나, '이미지 후보 다시 만들기'를 누르세요.";

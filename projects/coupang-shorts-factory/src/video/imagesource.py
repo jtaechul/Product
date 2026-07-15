@@ -338,7 +338,11 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
     exclude_urls/exclude_memes: '다시 찾기'로 재생성할 때 직전에 보여준 이미지·밈을 제외해
     반드시 다른 후보가 나오게 한다(#다시찾기 안 바뀜 방지)."""
     plan = plan_line_visuals(product, lines, settings)
-    out_dir = Path(job_dir) / "candidates"
+    # 원본 다운로드는 candidates/ 가 아니라 cand_raw/ 에 받는다. _publish_candidates가 정규 이름
+    # ({hash}__L{i}__{j})으로 candidates/ 에 복사하고, 워크플로는 candidates/*만 릴리스에 올린다.
+    # (예전엔 원본+정규가 둘 다 candidates/ 에 있어 릴리스 자산이 2배로 불어 180개 상한에서 다른 상품
+    #  후보를 밀어내 썸네일이 깨지던 문제 → 원본을 분리해 업로드 자산을 절반으로 줄임.)
+    out_dir = Path(job_dir) / "cand_raw"
     out_dir.mkdir(parents=True, exist_ok=True)
     product_images = [str(p) for p in (product_images or []) if Path(p).exists()]
     base_page = random.randint(1, 6)
