@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import re
 from pathlib import Path
 
@@ -219,9 +220,10 @@ def _search_one(query: str, seen: set, order_seed: int = 0):
     return None
 
 
-def _search_many(query: str, n: int, seen: set) -> list:
+def _search_many(query: str, n: int, seen: set, page: int = 1) -> list:
     """후보 여러 장 — 소스별 최대 2장씩 모아 다양성 확보. [{url, source}] 반환.
-    기존 단일 소스 함수는 seen에 추가하며 '안 쓴 것 중 첫 장'을 주므로 반복 호출 시 다른 장이 나온다."""
+    기존 단일 소스 함수는 seen에 추가하며 '안 쓴 것 중 첫 장'을 주므로 반복 호출 시 다른 장이 나온다.
+    page: 결과 페이지(관리자 '다시 찾기'가 매 실행 다른 page를 주면 완전히 다른 후보가 나온다)."""
     if not query:
         return []
     out = []
@@ -231,7 +233,7 @@ def _search_many(query: str, n: int, seen: set) -> list:
             if len(out) >= n:
                 return out
             try:
-                u = fn(query, seen)
+                u = fn(query, seen, page)
             except Exception:
                 u = None
             if not u:
@@ -248,6 +250,9 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
     out_dir = Path(job_dir) / "candidates"
     out_dir.mkdir(parents=True, exist_ok=True)
     product_images = [str(p) for p in (product_images or []) if Path(p).exists()]
+    # '다시 찾기'가 매번 다른 후보를 주도록 실행마다 랜덤 페이지에서 시작(각 소스의 결과 창을 이동).
+    # (이전엔 항상 1페이지 첫 결과만 가져와, 재생성해도 같은 이미지가 나왔다.)
+    base_page = random.randint(1, 6)
     manifest, seen = [], set()
     for i, (ln, pl) in enumerate(zip(lines, plan)):
         entry = {"line_i": i, "text": ln.get("text", ""), "stage": ln.get("stage"),
@@ -256,7 +261,7 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
         for p in product_images[:2]:   # 상품 사진 후보(강제 선택용)
             entry["candidates"].append({"file": p, "source": "product", "url": None, "is_product": True})
         if pl["type"] == "image":
-            for j, c in enumerate(_search_many(pl.get("query", ""), per_line, seen)):
+            for j, c in enumerate(_search_many(pl.get("query", ""), per_line, seen, base_page)):
                 ext = ".gif" if c["url"].lower().split("?")[0].endswith(".gif") else ".jpg"
                 dest = out_dir / f"line{i:02d}_{j}{ext}"
                 if _download_image(c["url"], dest):
@@ -354,11 +359,11 @@ def _learning_examples(limit: int = 12) -> list:
     return out
 
 
-def _pixabay(query: str, seen: set):
+def _pixabay(query: str, seen: set, page: int = 1):
     pk = _pixabay_key()
     if not pk:
         return None
-    r = requests.get(PIXABAY, params={"key": pk, "q": query, "per_page": 8,
+    r = requests.get(PIXABAY, params={"key": pk, "q": query, "per_page": 8, "page": max(1, page),
                                       "image_type": "photo", "safesearch": "true",
                                       "orientation": "vertical"}, timeout=25)
     if not r.ok:
@@ -371,12 +376,13 @@ def _pixabay(query: str, seen: set):
     return None
 
 
-def _giphy(query: str, seen: set):
+def _giphy(query: str, seen: set, page: int = 1):
     """재미있는 반응 움짤(GIF). 렌더가 정사각형에 애니메이션으로 깐다(더 코믹·자주 바뀜)."""
     gk = _giphy_key()
     if not gk:
         return None
     r = requests.get(GIPHY, params={"api_key": gk, "q": query, "limit": 8,
+                                    "offset": max(0, page - 1) * 8,
                                     "rating": "pg-13", "lang": "en"}, timeout=25)
     if not r.ok:
         return None
@@ -390,12 +396,13 @@ def _giphy(query: str, seen: set):
     return None
 
 
-def _pexels(query: str, seen: set):
+def _pexels(query: str, seen: set, page: int = 1):
     pk = _pexels_key()
     if not pk:
         return None
     r = requests.get(PEXELS, headers={"Authorization": pk},
-                     params={"query": query, "per_page": 8, "orientation": "square"}, timeout=25)
+                     params={"query": query, "per_page": 8, "page": max(1, page),
+                             "orientation": "square"}, timeout=25)
     if not r.ok:
         return None
     for ph in r.json().get("photos", []):
@@ -406,9 +413,10 @@ def _pexels(query: str, seen: set):
     return None
 
 
-def _openverse(query: str, seen: set):
+def _openverse(query: str, seen: set, page: int = 1):
     r = requests.get(OPENVERSE, headers=UA,
-                     params={"q": query, "page_size": 8, "license_type": "all", "mature": "false"},
+                     params={"q": query, "page_size": 8, "page": max(1, page),
+                             "license_type": "all", "mature": "false"},
                      timeout=25)
     if not r.ok:
         return None
@@ -420,10 +428,11 @@ def _openverse(query: str, seen: set):
     return None
 
 
-def _wikimedia(query: str, seen: set):
+def _wikimedia(query: str, seen: set, page: int = 1):
     r = requests.get(WIKIMEDIA, headers=UA, params={
         "action": "query", "generator": "search", "gsrsearch": f"{query} filetype:bitmap",
-        "gsrnamespace": 6, "gsrlimit": 8, "prop": "imageinfo", "iiprop": "url",
+        "gsrnamespace": 6, "gsrlimit": 8, "gsroffset": max(0, page - 1) * 8,
+        "prop": "imageinfo", "iiprop": "url",
         "iiurlwidth": 1080, "format": "json"}, timeout=25)
     if not r.ok:
         return None

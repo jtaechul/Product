@@ -10,7 +10,9 @@
 const OWNER = "jtaechul";
 const REPO = "Product";
 const MEDIA_PREFIX = "https://github.com/" + OWNER + "/" + REPO + "/releases/download/";
-const MEDIA_TYPES = { mp4: "video/mp4", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", json: "application/json" };
+// gif: 후보 이미지에 Giphy/Openverse 움짤이 섞여 들어와 썸네일이 깨지던 문제(gif 미허용→403) 해결.
+// mov: 아이폰 화면녹화 제품영상(.mov) 인라인 재생.
+const MEDIA_TYPES = { mp4: "video/mp4", mov: "video/quicktime", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", json: "application/json" };
 
 function j(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
