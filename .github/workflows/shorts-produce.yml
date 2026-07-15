@@ -234,9 +234,10 @@ jobs:
               --target "${{ github.ref_name }}" --latest=false
           gh release upload "$TAG" "$CDIR"/* "$MAN" --clobber
           echo "후보 발행: $TAG ($(ls "$CDIR" | wc -l)장 + 매니페스트 $(basename "$MAN"))"
-          # 자산 무한 증가 방지 — 최신 180개만 유지(오래된 row 후보부터 정리)
+          # 자산 무한 증가 방지 — 최신 500개만 유지(오래된 row 후보부터 정리)
+          # (한 상품 전체 재생성 ≈ 50~60자산 → 500이면 여러 상품이 서로 밀어내지 않는다)
           gh release view "$TAG" --json assets \
-            --jq '.assets|sort_by(.createdAt)|reverse|.[180:]|.[].name' 2>/dev/null \
+            --jq '.assets|sort_by(.createdAt)|reverse|.[500:]|.[].name' 2>/dev/null \
           | while read -r a; do
               [ -n "$a" ] && gh release delete-asset "$TAG" "$a" --yes 2>/dev/null && echo "오래된 후보 자산 삭제: $a"
             done || true
