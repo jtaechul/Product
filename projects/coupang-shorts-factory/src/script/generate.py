@@ -60,11 +60,14 @@ def generate_script(product: dict, settings: dict) -> dict:
     user_msg = "상품 데이터:\n" + json.dumps(product, ensure_ascii=False, indent=1)
 
     feedback = None
-    for attempt in (1, 2):  # 위반 시 1회 재생성 (스펙 §M3)
+    ATTEMPTS = 4   # LLM이 가끔 깨진 JSON·짧은 분량을 낸다. 2회로는 자주 최종 실패 → 넉넉히 재시도(각 ≈5원).
+    for attempt in range(1, ATTEMPTS + 1):
         extra = ""
         if feedback and "낭독 분량" in feedback:
             extra = ("\n분량 해결법: 공백 제외 190~260자 사이로 맞춰라 — 모자라면 웃긴 사용 장면 라인을 "
                      "더하고, 넘치면 설명 라인을 잘라라. subs 계약(이어 붙이면 text와 일치)도 유지하라.")
+        if feedback and ("delimiter" in feedback or "JSON" in feedback or "Expecting" in feedback):
+            extra += "\nJSON 형식 엄수: 유효한 JSON만 출력(마크다운·주석·후행 콤마 금지, 모든 키/값 쉼표 확인)."
         content = user_msg if not feedback else (
             f"{user_msg}\n\n이전 시도가 규칙을 위반했다: {feedback}{extra}\n규칙을 지켜 다시 작성하라.")
 
@@ -75,13 +78,15 @@ def generate_script(product: dict, settings: dict) -> dict:
 
         try:
             script = _parse_json(text)
-            script = sanitize_script(script, strict_length=(attempt == 1))
+            # 앞 2회는 분량 엄격, 이후엔 완화 — 유효한 대본이 '조금 짧다'는 이유로 최종 실패하지 않게.
+            script = sanitize_script(script, strict_length=(attempt <= 2))
             break
         except (RuleViolation, ValueError) as e:
             feedback = str(e)[:400]
-            print(f"[script] {attempt}차 생성 규칙 위반 → {'재생성' if attempt == 1 else '중단'}: {feedback}")
-            if attempt == 2:
-                raise RuleViolation(f"재생성 후에도 위반: {feedback}")
+            last = attempt == ATTEMPTS
+            print(f"[script] {attempt}/{ATTEMPTS}차 생성 규칙 위반 → {'중단' if last else '재생성'}: {feedback}")
+            if last:
+                raise RuleViolation(f"{ATTEMPTS}회 재생성 후에도 위반: {feedback}")
 
     # §3.1 고지문·링크는 모델 출력을 신뢰하지 않고 코드로 강제 재구성
     script["pinned_comment"] = (
@@ -185,12 +190,16 @@ def _gemini_generate(model: str, system: str, content: str, max_tokens: int) -> 
 
 
 def _parse_json(text: str) -> dict:
-    t = text.strip()
-    t = re.sub(r"^```(?:json)?\s*|\s*```$", "", t)
+    t = re.sub(r"```(?:json)?", "", text).strip()   # 마크다운 코드펜스 제거(위치 무관)
     start, end = t.find("{"), t.rfind("}")
     if start < 0 or end <= start:
         raise ValueError("응답에 JSON 객체가 없음")
-    data = json.loads(t[start:end + 1])
+    blob = t[start:end + 1]
+    try:
+        data = json.loads(blob)
+    except json.JSONDecodeError:
+        # 흔한 LLM JSON 오류 자동 보정: 후행 콤마 제거 후 1회 재시도(그래도 깨지면 상위 루프가 재생성)
+        data = json.loads(re.sub(r",(\s*[}\]])", r"\1", blob))
     for k in ("title", "lines", "hashtags", "description_body"):
         if k not in data:
             raise ValueError(f"필수 키 누락: {k}")

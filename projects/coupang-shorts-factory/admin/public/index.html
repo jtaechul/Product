@@ -1034,7 +1034,10 @@ async function loadVideos() {
       delB.onclick = (ev) => busy(ev.target, async () => {
         if (!confirm(`"${name}" 영상을 삭제할까요?\n되돌릴 수 없습니다(제작 기록에서 제거).`)) return;
         await deleteRelease(rel);
-        toast("영상을 삭제했습니다."); loadVideos();
+        item.remove();   // 낙관적 제거 — GitHub 릴리스 목록 API가 잠깐 캐시돼 삭제분이 다시 뜨는 문제 회피
+        if (!$("videoList").querySelector(".vitem"))
+          $("videoList").innerHTML = '<p class="empty">완성된 영상이 없습니다.</p>';
+        toast("영상을 삭제했습니다.");
       });
       actions.appendChild(saveB); actions.appendChild(delB);
       item.appendChild(actions);
