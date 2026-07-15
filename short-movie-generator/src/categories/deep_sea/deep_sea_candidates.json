@@ -76,43 +76,5 @@
       ]
     },
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_paralomis_diomedeae_29408223775.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "ridgeia piscesae",
-    "needs_confirm": false,
-    "title": "File:Phenotypic-Variation-and-Fitness-in-a-Metapopulation-of-Tubeworms-(Ridgeia-piscesae-Jones)-at-pone.0110578.s003.ogv",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/2/21/Phenotypic-Variation-and-Fitness-in-a-Metapopulation-of-Tubeworms-%28Ridgeia-piscesae-Jones%29-at-pone.0110578.s003.ogv",
-    "license": "cc-by",
-    "credit": "Tunnicliffe V, St. Germain C, Hilario A · CC BY",
-    "source": "File:Phenotypic-Variation-and-Fitness-in-a-Metapopulation-of-Tubeworms-(Ridgeia-piscesae-Jones)-at-pone.0110578.s003.ogv",
-    "name": "Ridgeia piscesae",
-    "name_ja": "",
-    "common_name_ko": "Ridgeia piscesae",
-    "common_name_en": "Ridgeia piscesae",
-    "depth": "2190",
-    "facts": [
-      "シボグリヌム科 (Siboglinidae) は、環形動物多毛類の科である。ヒゲムシ・ハオリムシ・ホネクイハナムシが属する。以前は有鬚動物（ゆうしゅどうぶつ、Pogonophora）として門の扱いであった（後述）。",
-      "自由生活の左右相称動物でありながら消化管がほぼ完全に欠如しており、栄養は共生細菌より得ている。ハオリムシは浅海や地上の光合成生態系とは独立に、深海底で化学合成に依存する生態系を作り、しかも高密度であることで注目を集める。また、動物分類学の歴史においても興味深い一群で、20世紀初頭の発見当時はシボグリヌム科と名付けられ科の階級に置かれたが、特異な体制が知られるにつれリンネ式分類の階層で3階級引き上げられ、門の地位に置かれた。神経は背側にある解釈で後口動物の1つとされた。しかし、完全な体の発見と分子系統学の研究結果などで環形動物の小グループであることが明らかになり、数十年を経て当初の階級および名称のシボグリヌム科に戻された。背腹も逆に解釈されていたことが判明した。"
-    ],
-    "fact_src": "Wikipedia (ja) · 상위 분류군",
-    "species": {
-      "scientific_name": "Ridgeia piscesae",
-      "common_name_ko": "Ridgeia piscesae",
-      "common_name_en": "Ridgeia piscesae",
-      "depth_range_m": "2190",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "シボグリヌム科 (Siboglinidae) は、環形動物多毛類の科である。ヒゲムシ・ハオリムシ・ホネクイハナムシが属する。以前は有鬚動物（ゆうしゅどうぶつ、Pogonophora）として門の扱いであった（後述）。",
-        "自由生活の左右相称動物でありながら消化管がほぼ完全に欠如しており、栄養は共生細菌より得ている。ハオリムシは浅海や地上の光合成生態系とは独立に、深海底で化学合成に依存する生態系を作り、しかも高密度であることで注目を集める。また、動物分類学の歴史においても興味深い一群で、20世紀初頭の発見当時はシボグリヌム科と名付けられ科の階級に置かれたが、特異な体制が知られるにつれリンネ式分類の階層で3階級引き上げられ、門の地位に置かれた。神経は背側にある解釈で後口動物の1つとされた。しかし、完全な体の発見と分子系統学の研究結果などで環形動物の小グループであることが明らかになり、数十年を経て当初の階級および名称のシボグリヌム科に戻された。背腹も逆に解釈されていたことが判明した。"
-      ],
-      "sources": [
-        "Wikipedia (ja) · 상위 분류군",
-        "Wikimedia Commons (File:Phenotypic-Variation-and-Fitness-in-a-Metapopulation-of-Tubeworms-(Ridgeia-piscesae-Jones)-at-pone.0110578.s003.ogv)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_ridgeia_piscesae_29408223775.jpg"
   }
 ]
