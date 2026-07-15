@@ -16,12 +16,44 @@ from __future__ import annotations
 import logging
 import re
 
+from src.categories.deep_sea import data
 from src.core import llm
 from src.core.contracts import CaptionData, SpeciesInfo
 
 log = logging.getLogger(__name__)
 
 N_HOOK_CANDIDATES = 5
+
+
+# ---------- 심해/얕은종 인지 (어둠·탐사정 톤 vs 자연광 톤) ----------
+
+def _is_deep(info: SpeciesInfo) -> bool:
+    """이 종을 심해(어둠·탐사정)로 다룰지, 얕은 바다(자연광·일반 해양생물)로 다룰지.
+
+    통상 서식 최소수심 200m 기준(data.is_deep_sea). 얕은종엔 '칠흑 어둠/심해 미스터리/
+    수심 수천 m' 프레이밍을 쓰지 않는다(사실 왜곡 방지 — CLAUDE.md 정확성 하드룰).
+    """
+    return data.is_deep_sea(info.depth_range_m)
+
+
+def _hashtags(info: SpeciesInfo) -> list[str]:
+    """발행용 해시태그 세트 — 종명 + 심해/바다 성격에 맞는 태그(중복 제거, 6개 내외).
+
+    (과거 3개 고정으로 짧아졌던 회귀 복구: 종명·분류·서식·언어별 태그로 도달 확대.)
+    """
+    ko = (info.common_name_ko or "").strip()
+    tags = [f"#{ko}"] if ko else []
+    if _is_deep(info):
+        tags += ["#심해생물", "#심해", "#deepsea", "#바다생물", "#해양생물"]
+    else:
+        tags += ["#바다생물", "#해양생물", "#바다", "#sea", "#ocean"]
+    seen: set[str] = set()
+    out: list[str] = []
+    for t in tags:
+        if t and t not in seen:
+            seen.add(t)
+            out.append(t)
+    return out
 
 
 # ---------- 스포일 가드 (코드 강제) ----------
@@ -65,6 +97,15 @@ def _fallback_hooks(info: SpeciesInfo) -> list[str]:
     (종명 스포일 금지 — 리빌은 마지막)
     """
     d = _depth_str(info)
+    if not _is_deep(info):
+        # 얕은종(<200m): 심해·칠흑 어둠·탐사정 프레이밍 금지 → 자연광 관찰 톤(사실 왜곡 방지).
+        return [
+            f"수심 {d}m 바닷속, 당신이 평생 못 볼 장면이 찍혔습니다",
+            f"햇빛이 스미는 바닷속에서, 이것과 마주쳤습니다",
+            f"카메라가 미친 듯 흔들렸다… 수심 {d}m 아래 '무언가'",
+            f"좀처럼 못 보는 수심 {d}m 바닷속, 이것이 다가온다",
+            f"수심 {d}m, 카메라에 잡힌 정체불명의 형체",
+        ]
     return [
         f"수심 {d}m, 당신이 평생 못 볼 장면이 찍혔습니다",
         f"지구에서 가장 깊은 어둠, 수심 {d}m에서 이것과 마주쳤습니다",
@@ -76,14 +117,21 @@ def _fallback_hooks(info: SpeciesInfo) -> list[str]:
 
 def _generate_hook_candidates(info: SpeciesInfo) -> list[str]:
     facts = " / ".join(info.fun_facts[:3])
+    deep = _is_deep(info)
+    channel = "심해 미스터리" if deep else "바다 생물"
+    concept = ("'현실 기반의 극도로 드라마틱한 심해 미스터리'(무인 탐사정 ROV가 심해 어둠 속에서 "
+               "정체불명 생물을 포착)" if deep else
+               "'현실 기반의 드라마틱한 바다 생물 관찰'(자연광이 닿는 얕은 바다에서 정체불명 생물을 포착)")
+    superlative = "'가장 깊은/인류가 거의 못 본'" if deep else "'좀처럼 못 보는/거의 못 본'"
+    tone_rule = ("- 얕은 바다에 사는 종이다. '심해·칠흑 어둠·수천 미터·탐사정' 같은 심해 프레이밍을 "
+                 "쓰지 마라(사실 왜곡). 자연광 속 바다 톤으로.\n") if not deep else ""
     prompt = (
-        "너는 조회수 떡상하는 심해 미스터리 쇼츠의 훅 카피라이터다. 컨셉은 '현실 기반의 "
-        "극도로 드라마틱한 심해 미스터리'(무인 탐사정 ROV가 심해에서 정체불명 생물을 포착). "
+        f"너는 조회수 떡상하는 {channel} 쇼츠의 훅 카피라이터다. 컨셉은 {concept}. "
         f"첫 1초 훅 문장 후보를 한국어로 정확히 {N_HOOK_CANDIDATES}개 만들어라. 한 줄에 하나씩, "
         "번호·따옴표 없이.\n"
         "[반드시 활용할 심리 레버 — 후보마다 다른 조합으로]\n"
         "- 호기심 격차: '이것/정체불명/무언가'로 정답을 감춰 열린 루프를 만든다(끝까지 보게)\n"
-        "- 구체성·최상급: 정확한 수심 숫자, '가장 깊은/인류가 거의 못 본' 최상급으로 각인\n"
+        f"- 구체성·최상급: 정확한 수심 숫자, {superlative} 최상급으로 각인\n"
         "- 개인적 관련성(2인칭·FOMO): '당신이 평생 못 볼', '지금 놓치면' 처럼 시청자를 끌어들임\n"
         "- 미지의 긴장(부정성 편향): 불확실·긴박함으로 불안 자극 (단, 가짜 위험·포식은 날조 금지)\n"
         "- 패턴 인터럽트: 상식을 뒤집는 의외의 한마디\n"
@@ -91,6 +139,7 @@ def _generate_hook_candidates(info: SpeciesInfo) -> list[str]:
         "- 14~28자. 스크롤을 멈추게 하는 강한 첫 문장. 밋밋한 다큐 톤 절대 금지\n"
         "- 종 이름을 절대 쓰지 마라 (정체는 마지막에 리빌 = 궁금해서 끝까지 봄)\n"
         "- 생물의 '실제 특징'은 극적으로 표현하되, 없는 사실(가짜 위험·포식·크기)을 지어내지 마라\n"
+        + tone_rule +
         f"[실제 특징(참고)] 수심 {info.depth_range_m}m / {facts}\n"
     )
     raw = llm.generate_text(prompt)
@@ -159,20 +208,30 @@ def cut_beats(info: SpeciesInfo) -> list[str]:
 def _storytelling_caption(info: SpeciesInfo, hook: str) -> str | None:
     """실제 정보(fun_facts)를 '재표현'해 몰입형 관측 일지 캡션 생성. 실패 시 None."""
     facts = "\n".join(f"- {f}" for f in info.fun_facts[:6])
+    deep = _is_deep(info)
+    intro = ("무인 탐사정(ROV)이 심해에서 생물을 포착한" if deep
+             else "카메라가 얕은 바다에서 생물을 포착한")
+    narr = ("ROV 관측 일지처럼 몰입감 있는 미니 서사 2~3문장 (칠흑의 하강 → 센서 반응 → 조우)"
+            if deep else
+            "관찰 일지처럼 몰입감 있는 미니 서사 2~3문장 (햇빛 스미는 바닷속 → 발견 → 조우)")
+    next_kind = "심해 생물" if deep else "바다 생물"
+    tone_rule = ("" if deep else
+                 "- 얕은 바다 종이다. '심해·칠흑 어둠·수천 미터·탐사정' 프레이밍 금지(사실 왜곡). "
+                 "자연광 속 바다로 묘사.\n")
     prompt = (
-        "너는 심해 미스터리 쇼츠 채널 'DEEP DIVE LOG'의 카피라이터다. 무인 탐사정(ROV)이 "
-        "심해에서 생물을 포착한 영상의 인스타그램 릴스 캡션을 한국어로 작성하라.\n"
+        "너는 바다 생물 쇼츠 채널 'DEEP DIVE LOG'의 카피라이터다. "
+        f"{intro} 영상의 인스타그램 릴스 캡션을 한국어로 작성하라.\n"
         "[구조 — 그대로 따를 것]\n"
         f"1) 첫 줄: 이 훅을 그대로 또는 자연스럽게 변주: \"{hook}\"\n"
-        "2) ROV 관측 일지처럼 몰입감 있는 미니 서사 2~3문장 (칠흑의 하강 → 센서 반응 → 조우). "
-        "긴장감 있게, 현재형으로.\n"
+        f"2) {narr}. 긴장감 있게, 현재형으로.\n"
         f"3) 정체 공개: {info.common_name_ko}({info.common_name_en}). 아래 [실제 정보]에서 "
         "2~3개를 골라 흥미롭게 각색해 풀어쓴다 (수치·의외성 위주).\n"
-        "4) 마지막 1~2줄: 저장 유도(\"다시 보고 싶다면 저장\") + 팔로우 유도(\"팔로우하면 "
-        "다음 심해 생물\") — 문구는 자연스럽게 변주.\n"
+        f"4) 마지막 1~2줄: 저장 유도(\"다시 보고 싶다면 저장\") + 팔로우 유도(\"팔로우하면 "
+        f"다음 {next_kind}\") — 문구는 자연스럽게 변주.\n"
         "[규칙]\n"
         "- 300~500자. 존댓말. 이모지는 0~2개만. 해시태그 쓰지 마라(시스템이 붙임).\n"
         "- [실제 정보]에 없는 사실을 지어내지 마라 (연출·감정 표현은 자유).\n"
+        + tone_rule +
         f"[실제 정보] 종명 {info.common_name_ko}({info.common_name_en}) / 학명 "
         f"{info.scientific_name} / 수심 {info.depth_range_m}m / 서식 {info.habitat}\n{facts}\n"
     )
@@ -190,17 +249,24 @@ def _fallback_caption(info: SpeciesInfo, hook: str) -> str:
     fact2 = f[3] if len(f) > 3 else (f[1] if len(f) > 1 else "")
     fact3 = f[4] if len(f) > 4 else ""
     d = _depth_str(info)
+    if _is_deep(info):
+        scene = (f"칠흑 같은 수심 {d}m. 탐사정의 라이트가 닿는 곳마다 어둠뿐이던 그때, "
+                 "센서에 무언가 잡혔습니다. 천천히 다가가자 — 이쪽을 전혀 눈치채지 못한 채 "
+                 "고요히 움직이는 작은 실루엣.")
+        next_kind = "심해 생물"
+    else:
+        scene = (f"햇빛이 스미는 수심 {d}m의 바닷속. 물결 사이로 무언가 스쳐 지나간 그때, "
+                 "천천히 다가가자 — 이쪽을 전혀 눈치채지 못한 채 고요히 움직이는 작은 실루엣.")
+        next_kind = "바다 생물"
     lines = [
         hook,
         "",
-        f"칠흑 같은 수심 {d}m. 탐사정의 라이트가 닿는 곳마다 어둠뿐이던 그때, "
-        "센서에 무언가 잡혔습니다. 천천히 다가가자 — 이쪽을 전혀 눈치채지 못한 채 "
-        "유유히 헤엄치는 작은 실루엣.",
+        scene,
         "",
         f"정체는 {info.common_name_ko}({info.common_name_en}), 학명 {info.scientific_name}. "
         f"{fact1}. " + (f"{fact2}. " if fact2 else "") + (f"{fact3}." if fact3 else ""),
         "",
-        "다시 보고 싶은 장면이라면 저장해두세요. 팔로우하면 다음 심해 생물과 만납니다.",
+        f"다시 보고 싶은 장면이라면 저장해두세요. 팔로우하면 다음 {next_kind}과 만납니다.",
     ]
     return "\n".join(lines)
 
@@ -227,20 +293,21 @@ def append_attribution(caption: CaptionData, info: SpeciesInfo, image_credit: st
 
 
 def build_narrated_caption(info: SpeciesInfo) -> CaptionData:
-    """narrated_wildlife 캡션(전환 §6): [훅] + [감각 팩트 2~4줄] + [참여 질문 + 👇] + [#종명 포함 해시태그].
+    """narrated_wildlife 릴스 캡션 — [훅] + [스토리텔링 본문] + [저장·팔로우 CTA] + [해시태그 세트].
 
-    출처 표기(이미지·정보)는 파이프라인이 attach_attribution으로 말미에 덧붙인다.
+    회귀 복구: 이전 §6 형식([훅]+[불릿 팩트 4줄]+[참여질문 👇]·해시태그 3개)이 캡션을 크게
+    짧게 만들고 저장·팔로우 CTA를 없앴다(bea0137). → 스토리텔링 본문(LLM `_storytelling_caption`,
+    실패 시 결정적 `_fallback_caption`)으로 복원 — 둘 다 저장·팔로우 CTA를 포함한다. 해시태그도
+    종명·성격에 맞는 세트로 확장(`_hashtags`, 6개 내외). 심해/얕은 프레이밍은 `_is_deep`로 자동 선택.
+    출처 표기(이미지·정보 출처)는 파이프라인이 attach_attribution으로 말미에 덧붙인다.
     """
     hook = best_hook(info)
-    facts = [f for f in (info.fun_facts or [])[:4] if f]
-    q = "이 깊은 어둠 속에서, 당신이라면 살아남을 수 있을까요? 👇"
-    fact_block = "\n".join(f"· {f}" for f in facts[:4])
-    body = "\n\n".join(x for x in (hook, fact_block, q) if x)
+    body = _storytelling_caption(info, hook) or _fallback_caption(info, hook)
     killer = info.fun_facts[1] if len(info.fun_facts) > 1 else (
         info.fun_facts[0] if info.fun_facts else info.habitat)
     return CaptionData(
-        hook_text=hook, overlay_facts=[], caption_body=body,
-        hashtags=[f"#{info.common_name_ko}", "#심해생물", "#deepsea"],  # #종명 포함(전환 §6)
+        hook_text=hook, overlay_facts=[f"수심 {info.depth_range_m}m"], caption_body=body,
+        hashtags=_hashtags(info),
         reveal_name=f"{info.common_name_ko} ({info.common_name_en})", reveal_fact=killer,
     )
 
@@ -258,7 +325,7 @@ def build(info: SpeciesInfo) -> CaptionData:
         overlay_facts=[f"수심 {info.depth_range_m}m",
                        info.fun_facts[0] if info.fun_facts else info.habitat],
         caption_body=body,
-        hashtags=[f"#{info.common_name_ko}", "#심해생물", "#DeepSea"],
+        hashtags=_hashtags(info),
         cut_beats=beats,
         reveal_name=f"{info.common_name_ko} ({info.common_name_en})",
         reveal_fact=killer_fact,

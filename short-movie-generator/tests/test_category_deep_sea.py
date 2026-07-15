@@ -110,5 +110,6 @@ def test_caption_fallback_without_key(cat, monkeypatch):
     info = cat.get_info("dumbo octopus")
     cap = cat.build_caption(info)
     assert cap.hook_text
-    assert len(cap.hashtags) == 3
+    # 회귀 복구: 해시태그 풍부한 세트(종명 포함, 3개 고정 폐기)
+    assert len(cap.hashtags) >= 5 and cap.hashtags[0] == "#덤보문어"
     assert cap.overlay_facts

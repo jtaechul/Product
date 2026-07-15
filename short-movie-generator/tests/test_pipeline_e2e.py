@@ -30,7 +30,7 @@ def test_full_pipeline_panzoom(tmp_path, monkeypatch):
     assert meta["license_ok"] is True
     assert meta["license"] in {"public-domain", "cc0", "cc-by", "kogl-type1"}
     assert meta["caption"]["hook_text"]
-    assert len(meta["caption"]["hashtags"]) == 3
+    assert len(meta["caption"]["hashtags"]) >= 5  # 회귀 복구: 풍부한 해시태그 세트(3개 고정 폐기)
     assert meta["qc"]["audio_present_not_silent"]["passed"] is True
     assert meta["qc"]["resolution_9_16"]["detail"] == "720x1280"
 

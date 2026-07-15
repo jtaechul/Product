@@ -109,6 +109,8 @@ def build_cuts(species_entry: dict) -> list[dict]:
 # '수심 인지형(어둠 + 형태 잠금 + 부정 제약: 햇빛·수면·기포·산호초 금지)'이어야 서식지가 맞다.
 import re as _re  # noqa: E402
 
+from src.categories.deep_sea import data as _data  # noqa: E402
+
 
 def _max_depth(depth_range_m: str) -> int:
     d = _re.sub(r"[^\d]", "", (depth_range_m or "").split("-")[-1])
@@ -116,7 +118,9 @@ def _max_depth(depth_range_m: str) -> int:
 
 
 def _is_deep(depth_range_m: str) -> bool:
-    return _max_depth(depth_range_m) >= 200  # 유광층(~200m) 아래 = 어둠 강제
+    # 심해/얕은 판정 기준을 '최대수심'→'통상 서식 최소수심(얕은 끝)'으로 교정(data.is_deep_sea).
+    # 얕은 곳에도 흔한 종(예: 50-1500m)을 어둠으로 오도하지 않기 위함. <200m이면 얕은종=자연광.
+    return _data.is_deep_sea(depth_range_m)
 
 
 _WILD_DEEP_SCENE = (

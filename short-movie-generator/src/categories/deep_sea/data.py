@@ -6,6 +6,8 @@ forbidden_features/cut_behaviors (+ situation_id).
 정보 소스(FishBase/WoRMS/NOAA 등)에서 재작성한 사실 데이터. API 자동 조회는 Phase 2+.
 """
 
+import re
+
 SPECIES = {
     "dumbo octopus": {
         # --- 기본 정보 (info/caption 용) ---
@@ -186,7 +188,9 @@ SPECIES = {
         "scientific_name": "Bathynomus giganteus",
         "common_name_ko": "대왕등각류",
         "common_name_en": "Giant isopod",
-        "depth_range_m": "170-2140",
+        # 통상 서식 = 저서성 심해(bathyal). 개체의 80% 이상이 365~730m, 전 범위 ~2140m.
+        # (170m는 극단 얕은 기록 → 분류 왜곡 방지 위해 통상 서식 최소수심으로 표기. 심해종 유지.)
+        "depth_range_m": "365-2140",
         "distribution": "서대서양·멕시코만 심해",
         "habitat": "심해 저층(진흙·모래 바닥)",
         "diet": ["죽은 물고기", "고래 사체", "해삼"],
@@ -308,7 +312,9 @@ SPECIES = {
         "scientific_name": "Umbellula sp.",
         "common_name_ko": "심해바다조름",
         "common_name_en": "Deep-sea sea pen",
-        "depth_range_m": "100-6000",
+        # 심해성 자포동물 군체(개별 종 2000~4000m대, 최대 6000m+). 100m는 극지 극단 기록 →
+        # 통상 서식 최소수심(유광층 경계 200m)으로 표기해 심해종 분류 유지.
+        "depth_range_m": "200-6000",
         "distribution": "전 세계 심해 저층",
         "habitat": "심해 저층(진흙·모래에 고정)",
         "diet": ["떠내려오는 동물플랑크톤"],
@@ -362,3 +368,34 @@ def resolve_key(query: str) -> str | None:
         if q in words and len(q) >= 3:
             matches.add(key)
     return matches.pop() if len(matches) == 1 else None
+
+
+# ── 심해/얕은종 분류 (어둠·단일 탐사광 vs 자연광 결정) ─────────────────────────
+# CLAUDE.md 하드룰: 심해종 = 서식 수심 ≥200m(유광층 아래) → 어둠 Veo 프롬프트,
+# 얕은종(<200m) → 자연광. 수심 수치는 종의 '실제' 서식 수심(날조 금지).
+DEEP_SEA_MIN_DEPTH_M = 200  # 유광층(광합성 가능 표층)의 통상 하한 ≈ 200m.
+
+
+def parse_depth_range_m(depth_range_m: str) -> tuple[int, int]:
+    """'365-2140' → (365, 2140). 숫자 없으면 심해 기본값(200, 2000)."""
+    nums = [int(x) for x in re.findall(r"\d+", depth_range_m or "")]
+    if not nums:
+        return (DEEP_SEA_MIN_DEPTH_M, 2000)
+    return (min(nums), max(nums))
+
+
+def min_habitat_depth_m(depth_range_m: str) -> int:
+    """통상 서식 범위의 '얕은 끝'(최소 수심) — 심해/얕은종 분류의 기준값."""
+    return parse_depth_range_m(depth_range_m)[0]
+
+
+def is_deep_sea(depth_range_m: str) -> bool:
+    """심해종(어둠·단일 탐사광)인지 판정. 아니면 얕은종(일반 해양생물·자연광).
+
+    기준: **통상 서식 범위의 최소 수심(얕은 끝)이 200m 이상**이면 심해종.
+    - 왜 최소값(얕은 끝)인가: 얕은 곳에도 흔히 나타나는 종은 사실상 '심해 전용'이 아니다.
+      (예: 50~1500m 종은 유광층에도 흔한 얕은 바다 생물 → 자연광이 사실에 맞다.)
+    - depth_range_m에는 **극단적 관측 기록이 아니라 통상 서식 범위**를 담는다(극단 얕은
+      기록이 분류를 왜곡하지 않도록). 데이터가 틀리면 실제 서식 수심으로 교정한다(날조 금지).
+    """
+    return min_habitat_depth_m(depth_range_m) >= DEEP_SEA_MIN_DEPTH_M

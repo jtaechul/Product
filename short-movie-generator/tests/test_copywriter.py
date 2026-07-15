@@ -46,7 +46,9 @@ def test_build_caption_data_complete(info, no_llm):
     assert len(cap.cut_beats) == 3
     assert cap.reveal_name.startswith("덤보문어")
     assert cap.reveal_fact
-    assert len(cap.hashtags) == 3
+    # 회귀 복구: 해시태그를 종명 + 성격 태그의 풍부한 세트(중복 제거)로 확장(과거 3개 고정 폐기)
+    assert len(cap.hashtags) >= 5 and cap.hashtags[0] == "#덤보문어"
+    assert len(cap.hashtags) == len(set(cap.hashtags))  # 중복 없음
 
 
 def test_hook_judge_loop_picks_candidate(info, monkeypatch):
