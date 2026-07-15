@@ -141,6 +141,12 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
 
     # ---- 후보 이미지 생성 모드(#2 관리자 선택기용): TTS·렌더 없이 라인별 후보 이미지만 만든다.
     if args.candidates:
+        # 개편(2026-07-15): '상품 기획하기'가 곧바로 candidates를 돌린다. 이때 이 대본을 data/plans에
+        # 저장해 제작(produce)이 같은 대본을 재사용하게 한다(대본 불일치·이미지 어긋남 방지).
+        if not plan_path.exists():
+            plan_path.parent.mkdir(parents=True, exist_ok=True)
+            plan_path.write_text(json.dumps(script, ensure_ascii=False, indent=1), encoding="utf-8")
+            print(f"[pipeline] 후보용 대본 저장 → data/plans/{product['_row_hash']}.json (제작에서 재사용)")
         _pimgs = list(product.get("hero_images") or [])
         _pimgs += _download_images(product.get("image_urls") or [], job_dir)
         manifest = imagesource.fetch_candidates(product, lines, job_dir, settings, product_images=_pimgs)

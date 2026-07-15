@@ -193,9 +193,10 @@ ol li{margin:8px 0}
       <input id="pS3" placeholder="예: USB-C 충전" style="margin-top:8px">
     </details>
     <button class="btn" id="btnAddProduct">상품 기획하기</button>
-    <p class="hint">누르면 상품이 저장되고 <b>곧바로 기획·대본이 자동으로 만들어집니다</b>(약 1~2분). 완성되면 아래에서 확인 후 이미지 선택 → 제작으로 이어집니다.</p>
+    <p class="hint">누르면 상품이 저장되고 <b>곧바로 대본과 자막별 이미지 후보가 자동으로 만들어집니다</b>(약 1~3분).
+    완성되면 아래 <b>자막별 이미지 선택</b>이 자동으로 나타납니다. 이미지를 고른 뒤 <b>제작</b>으로 이어집니다.</p>
   </div>
-  <div class="card">
+  <div class="card" style="display:none">
     <h2>제작 대기열 <button class="btn mini sub" id="btnReloadProducts" style="float:right">새로고침</button></h2>
     <div id="productList"><p class="empty">불러오는 중...</p></div>
   </div>
@@ -205,7 +206,7 @@ ol li{margin:8px 0}
 <section id="tab-run" class="on" data-group="make" style="order:4">
   <div class="card">
     <h2>제작 · 검수 · 올리기</h2>
-    <p class="hint" style="margin:0 0 8px">기획 승인 + 이미지 선택이 끝난 상품을 고르고 <b>제작하기</b>를
+    <p class="hint" style="margin:0 0 8px">위에서 자막별 이미지 선택·저장까지 끝났으면 <b>제작하기</b>를
     누르면(약 2~4분) 영상이 만들어집니다. 완성되면 <b>검수 불러오기</b>로 영상·제목·설명·해시태그를
     확인하고, 항목별 <b>다시 생성</b>이나 <b>영상 다시 만들기</b>를 거쳐 <b>유튜브에 올리기</b>로 마무리합니다.</p>
     <div class="row2" style="margin-top:10px">
@@ -221,8 +222,8 @@ ol li{margin:8px 0}
   </div>
 </section>
 
-<!-- ───────── 기획 (등록 시 자동 생성된 기획·대본 검토·승인) ───────── -->
-<section id="tab-plan" class="on" data-group="make" style="order:2">
+<!-- ───────── 기획 (개편: 자동화로 화면에선 생략 — 대본은 자동 생성·저장되어 이미지/제작에 사용) ───────── -->
+<section id="tab-plan" class="on" data-group="make" style="order:2;display:none">
   <div id="planView"></div>
   <div class="card" id="planActions" style="display:none">
     <button class="btn" id="planApprove">이 기획으로 이미지 찾기 →</button>
@@ -235,11 +236,10 @@ ol li{margin:8px 0}
 <section id="tab-images" class="on" data-group="make" style="order:3">
   <div class="card">
     <h2>자막별 이미지 선택</h2>
-    <p class="hint" style="margin:0 0 8px">자막(문장)마다 어울리는 이미지를 직접 고릅니다. 상품을 고르고
-    <b>후보 만들기</b>를 누르면(약 1~2분) 라인마다 후보가 모입니다. 마음에 들면 탭해서 고르고, 없으면
-    <b>다시 찾기</b>나 <b>내 파일</b>을 올리세요. 고른 결과는 다음 제작부터 그 상품 영상에 그대로 쓰이고,
-    자동 추천도 그 선택을 학습합니다.</p>
-    <div class="row2" style="margin-top:10px">
+    <p class="hint" style="margin:0 0 8px"><b>상품 기획하기</b>를 누르면 자막(문장)마다 후보 이미지가 여기에
+    자동으로 모입니다. 마음에 들면 탭해서 고르고(<b>여러 장 = 슬라이드쇼</b>), 없으면 <b>다시 찾기</b>나
+    <b>내 파일</b>을 올리세요. 고른 결과는 제작에 그대로 쓰이고, 자동 추천도 그 선택을 학습합니다.</p>
+    <div class="row2" style="margin-top:10px;display:none">
       <button class="btn sub" id="imgGen">후보 만들기 (1~2분)</button>
       <button class="btn" id="imgLoad">후보 불러오기</button>
     </div>
@@ -453,8 +453,11 @@ document.querySelectorAll("nav button").forEach((b) => {
 });
 // 만들기 탭 = 상품 선택(공용) + 대기열 + 기획 + 이미지 + 제작 초기화
 async function makeInit() {
-  await mkInit();          // 공용 상품 드롭다운(mkProduct) 채우기 + 실행기록
-  loadProducts();          // 대기열 목록
+  if (!currentWork) {   // 새로고침 후 현재 작업 상품 복원(대기열 폐지 → localStorage 사용)
+    try { const w = JSON.parse(localStorage.getItem("shortsCurrentWork") || "null"); if (w && w.hash) setCurrentWork(w.row, w.hash, w.label); } catch (_) {}
+  }
+  await mkInit();          // 실행 기록
+  loadProducts();          // (대기열은 숨김이지만 상품 영상 배지 등 내부 상태 갱신 유지)
 }
 
 /* ── 연결 상태 ───────────────────────── */
@@ -812,12 +815,12 @@ $("btnAddProduct").onclick = (ev) => busy(ev.target, async () => {
   // 개편: 등록 = 기획. 방금 등록한 상품을 현재 작업 상품으로 잡고 기획·대본을 자동 생성한다.
   const newRow = parseCsv(base).length + 1;   // 방금 추가된 행(1-based)
   setCurrentWork(newRow, hash, label);
-  $("planView").innerHTML = ""; $("planActions").style.display = "none";
-  await planDispatch(newRow);
-  setStatus("상품 등록 완료 — 기획·대본을 자동으로 만들고 있습니다(약 1~2분).");
-  toast("상품 등록 완료 — 기획·대본 자동 생성 시작");
-  document.getElementById("tab-plan").scrollIntoView({ behavior: "smooth" });
-  pollPlan(hash);
+  $("imgLines").innerHTML = ""; $("imgSaveCard").style.display = "none";
+  await imgDispatch(newRow);   // candidates 모드 — 대본 생성·저장 + 라인별 후보 이미지 + 매니페스트 발행
+  setStatus("상품 등록 완료 — 대본·자막별 이미지 후보를 자동으로 만들고 있습니다(약 1~3분).");
+  toast("상품 등록 완료 — 자동 생성 시작");
+  document.getElementById("tab-images").scrollIntoView({ behavior: "smooth" });
+  pollCandidates(hash);
 });
 // 선택한 상품 동영상 파일명 미리보기(비전문가용 확인 — 캡처파일 #fileList 와 같은 칩 스타일)
 $("pVideo").onchange = () => {
@@ -1077,9 +1080,9 @@ let planData = null;
 let currentWork = null;
 function setCurrentWork(row, hash, label) {
   currentWork = { row, hash, label };
+  try { localStorage.setItem("shortsCurrentWork", JSON.stringify(currentWork)); } catch (_) {}
   const e = $("workProduct");
   if (e) e.innerHTML = "<b>현재 상품:</b> " + (label || ("(자동추출 " + String(hash).slice(0, 6) + ")"));
-  loadProducts();   // 대기열에서 현재 상품 하이라이트 갱신
 }
 function requireWork() {
   if (!currentWork) { toast("먼저 '새 상품 등록'으로 등록하거나, '제작 대기열'에서 상품의 '작업'을 누르세요.", 5000); return null; }
@@ -1187,6 +1190,28 @@ async function imgDispatch(row) {
     method: "POST",
     body: JSON.stringify({ ref: BRANCH, inputs: { mode: "candidates", row: String(row) } }),
   });
+}
+// 개편(2026-07-15): '상품 기획하기' → candidates 발행까지 폴링 → 완성되면 자동으로 '자막별 이미지 선택' 표시.
+async function pollCandidates(hash, tries = 0) {
+  if (!currentWork || currentWork.hash !== hash) return;   // 다른 상품으로 바뀌면 중단
+  const rel = await gh(`/repos/${OWNER}/${REPO}/releases/tags/${IMG_TAG}`, { allow404: true });
+  const manAsset = rel && (rel.assets || []).find((a) => a.name === `cand_${hash}.json`);
+  if (manAsset) {
+    imgAssetMap = {};
+    for (const a of (rel.assets || [])) imgAssetMap[a.name] = a.browser_download_url;
+    const res = await fetch(mediaUrl(manAsset.browser_download_url));   // 워커 /media(json 허용) 경유
+    if (res.ok) {
+      imgManifest = await res.json(); imgPicks = {};
+      renderImgLines(); $("imgSaveCard").style.display = "";
+      setStatus(`대본 완성 — ${imgManifest.lines.length}개 자막. 라인마다 이미지를 골라 '선택 저장'하세요.`);
+      $("imgStatus").textContent = `${imgManifest.lines.length}개 자막 — 라인마다 이미지를 고르세요.`;
+      document.getElementById("tab-images").scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+  }
+  if (tries >= 32) { setStatus("후보 생성이 오래 걸립니다(3분+). 잠시 뒤 이 페이지를 새로고침해 주세요."); return; }
+  setStatus(`대본·자막별 이미지 후보 만드는 중... (${tries * 15}초 · 보통 1~3분)`);
+  setTimeout(() => pollCandidates(hash, tries + 1), 15000);
 }
 $("imgGen").onclick = (ev) => busy(ev.target, async () => {
   const p = imgSelected(); if (!p) return;
