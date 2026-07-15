@@ -211,14 +211,6 @@
     "date": "2026-07-15"
   },
   {
-    "id": "028",
-    "kind": "reels",
-    "common_name_ko": "바다나리",
-    "common_name_en": "Crinoidea",
-    "scientific_name": "Crinoidea",
-    "date": "2026-07-15"
-  },
-  {
     "id": "029",
     "kind": "reels",
     "common_name_ko": "Ridgeia piscesae",
@@ -226,5 +218,13 @@
     "scientific_name": "Ridgeia piscesae",
     "date": "2026-07-15",
     "youtube_url": "https://youtu.be/xz_Chf8aNYU"
+  },
+  {
+    "id": "028",
+    "kind": "reels",
+    "common_name_ko": "바다나리",
+    "common_name_en": "Crinoidea",
+    "scientific_name": "Crinoidea",
+    "date": "2026-07-15"
   }
 ]
