@@ -201,5 +201,13 @@
     "common_name_en": "Sardinops sagax",
     "scientific_name": "Sardinops sagax",
     "date": "2026-07-15"
+  },
+  {
+    "id": "027",
+    "kind": "reels",
+    "common_name_ko": "Peltospira smaragdina",
+    "common_name_en": "Peltospira smaragdina",
+    "scientific_name": "Peltospira smaragdina",
+    "date": "2026-07-15"
   }
 ]

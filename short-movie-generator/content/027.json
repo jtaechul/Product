@@ -1,0 +1,55 @@
+{
+  "id": "027",
+  "created_at": "2026-07-15T10:56:33+00:00",
+  "updated_at": "2026-07-15T10:56:33+00:00",
+  "status": "published",
+  "category": "deep_sea",
+  "series": "심해 도감",
+  "species": {
+    "common_name_ko": "Peltospira smaragdina",
+    "common_name_en": "Peltospira smaragdina",
+    "scientific_name": "Peltospira smaragdina",
+    "depth_range_m": "",
+    "habitat": "",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "Peltospira smaragdina is a species of sea snail, a marine gastropod mollusk in the family Peltospiridae."
+    ]
+  },
+  "reels": {
+    "hook": "深海に、異界の輝き。動く宝石、その正体。",
+    "caption": "海の底深く、あるいはまだ見ぬどこかの静寂の中で、\nひっそりと時を刻む命が存在します。\n色鮮やかな世界の喧騒から離れ、その姿は多くを語りません。\n\nその名はペルトスピラ・スマラグディナ(学名: Peltospira smaragdina)です。\n\n彼らがどんな水深に生き、\nどんな場所を住処にしているのか、\nその多くは今も謎に包まれています。\n\nこのペルトスピラ・スマラグディナは、\n海の巻貝、すなわち海洋性の腹足類軟体動物に分類される、\nウミウシの一種です。\n「ウミウシ」と聞けば、貝殻を持たず、驚くほどカラフルな姿を思い描くかもしれません。\nしかし、彼らは一般的なイメージとは異なり、巻貝としての堅固な貝殻を持ち、その身を守っています。\nこれは腹足類の進化の過程で、より原始的な形態を今に伝える存在なのかもしれませんね。まるで現代社会の「効率」や「成果」とは無縁に、「定時退社」を貫く職人のような存在です。\n競争とも無縁のその姿は、私たちに「生きる」ことの別の価値観を静かに提示しています。\n\nもしこの物語が心に響いたなら、どうか保存しておいてください。\nそして、同じ海を想う誰かにも、そっとシェアしてあげてください。\n映像: NOAA Ocean Exploration・Public Domain\n写真: Manuel CABALLER · CC BY",
+    "hashtags": [
+      "#ペルトスピラスマラグディナ",
+      "#深海生物"
+    ],
+    "reveal_name": "ペルトスピラ・スマラグディナ / Peltospira smaragdina",
+    "reveal_fact": "輝く・巻貝・深海、深海の軟体動物",
+    "hook_ko": "심해의 보석, 빛나는 껍데기.",
+    "caption_ko": "바다 깊은 곳, 혹은 아직 알려지지 않은 어느 고요함 속에서,\n조용히 시간을 새기는 생명이 존재합니다.\n화려한 세상의 소란에서 벗어나, 그 모습은 많은 것을 말해주지 않습니다.\n\n그 이름은 펠토스피라 스마라그디나(학명: Peltospira smaragdina)입니다.\n\n그들이 어떤 수심에서 살고,\n어떤 곳을 서식지로 삼는지,\n그 대부분은 여전히 미스터리에 싸여 있습니다.\n\n이 펠토스피라 스마라그디나는,\n바다의 고둥, 즉 해양성 복족류 연체동물로 분류되는,\n바다 달팽이의 일종입니다.\n'바다 달팽이'라고 하면 껍데기 없이 놀랍도록 화려한 모습을 떠올릴지도 모릅니다.\n하지만 그들은 일반적인 이미지와는 달리, 고둥으로서 견고한 껍데기를 단단히 지니고 몸을 보호합니다.\n이것은 복족류 진화 과정에서, 더욱 원시적인 형태를 오늘날까지 전하고 있는 존재일지도 모릅니다. 마치 현대 사회의 '효율'이나 '성과'와는 거리가 먼 '정시 퇴근'을 고수하는 장인 같습니다.\n경쟁과도 무관한 그 모습은, 우리에게 '살아감'의 또 다른 가치를 조용히 제시하고 있습니다.\n\n만약 이 이야기가 마음에 닿았다면, 부디 저장해 주세요.\n그리고 같은 바다를 생각하는 누군가에게도, 살짝 공유해 주세요.\n영상: NOAA Ocean Exploration・Public Domain",
+    "hashtags_ko": [
+      "#ペルトスピラスマラグディナ",
+      "#심해생물"
+    ],
+    "yt_title": "定時上がり？貝殻を持つウミウシ、ペルトスピラ・スマラグディナ #ペルトスピラスマラグディナ #深海生物",
+    "yt_title_ko": "정시 퇴근? 껍데기 가진 바다 달팽이, 펠토스피라 스마라그디나 #ペルトスピラスマラグディナ #심해생물",
+    "visualizer": "reels",
+    "video_file": "peltospira_smaragdina_20260715_105633.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Wikipedia (en)",
+      "Wikimedia Commons (File:Peltospira smaragdina gastropod assemblage at the Y3 site in the Lucky Strike vent field (MAR) (Ifremer 00775-88699).webm)"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-027/reels_027.mp4",
+    "rev": "29408721587",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-027/cover_027.jpg",
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-027/ytthumb_027.jpg"
+  },
+  "post": null
+}
