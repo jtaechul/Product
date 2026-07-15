@@ -39,23 +39,54 @@ def _duration(path: str) -> float:
         return 0.0
 
 
-def _red_pixels(frame_path: str) -> tuple[list, int, int]:
-    """프레임의 적색 신호 픽셀 [(가중치, x, y)]와 축소 해상도(w,h).
-    붉은 심해 생물(r-g)이 강조되는 픽셀만 수집."""
+def _subject_pixels(frame_path: str) -> tuple[list, int, int]:
+    """프레임의 '피사체 신호' 픽셀 [(가중치, x, y)]와 축소 해상도(w,h).
+
+    ★일반화(핵심 결함 수정): 예전엔 적색(r-g)만 신호로 삼아 **붉은 생물만** 추적됐고,
+    바다나리(ウミユリ)·흰 해파리·창백한 두족류 등 **색이 옅은 주인공은 신호 0**이 되어
+    크롭이 피사체를 놓치고(화면에서 사라짐) 컷 선택도 빈 배경 프레임을 골랐다.
+    → 색에 의존하지 않도록 **3가지 단서를 결합**한다:
+      ① 적색 신호(r-g)           — 붉은 심해 생물
+      ② 배경 대비 밝기(L-배경중앙값) — 어두운 심해에서 조명받은 밝은 피사체(바다나리 등)
+      ③ 국소 텍스처(이웃 밝기차)   — 팔·촉수·깃털 등 미세구조(균일한 모래·물은 낮음)
+    세 단서의 최댓값을 픽셀 가중치로 삼아, 색과 무관하게 '구조를 가진 눈에 띄는 덩어리'를 잡는다.
+    """
     from PIL import Image
     im = Image.open(frame_path).convert("RGB")
     w, h = im.size
     im = im.resize((max(2, w // 4), max(2, h // 4)))
     w, h = im.size
     px = im.load()
+    # 밝기 격자 + 배경 기준(중앙값) — 배경보다 밝은 피사체를 색과 무관하게 잡기 위함
+    lum = [[0] * w for _ in range(h)]
+    flat = []
+    for y in range(h):
+        row = lum[y]
+        for x in range(w):
+            r, g, b = px[x, y]
+            v = (r * 30 + g * 59 + b * 11) // 100
+            row[x] = v
+            flat.append(v)
+    flat.sort()
+    bg = flat[len(flat) // 2] if flat else 0        # 배경 밝기 중앙값
     pts = []
     for y in range(h):
         for x in range(w):
             r, g, b = px[x, y]
-            wt = r - g
+            red = r - g                              # ① 붉은 생물
+            bright = lum[y][x] - bg                  # ② 배경보다 밝음(조명받은 피사체)
+            tex = 0                                  # ③ 국소 텍스처(미세구조)
+            if x + 1 < w and y + 1 < h:
+                tex = abs(lum[y][x] - lum[y][x + 1]) + abs(lum[y][x] - lum[y + 1][x])
+            wt = max(red, int(bright * 0.9), int(tex * 0.7))
             if wt > 25:
                 pts.append((wt, x, y))
     return pts, w, h
+
+
+# 하위호환 별칭(기존 호출부 유지) — 이제 색 무관 일반 피사체 신호를 반환한다.
+def _red_pixels(frame_path: str) -> tuple[list, int, int]:
+    return _subject_pixels(frame_path)
 
 
 def _subject_centroid(frame_path: str) -> tuple[float, float]:
@@ -106,6 +137,41 @@ def subject_score(frame_path: str) -> float:
         return strength * fit * (0.55 ** edges)   # 경계에 잘릴수록 감점
     except Exception:  # noqa: BLE001
         return 0.0
+
+
+def _subject_focus(frame_path: str) -> tuple[float, float, float]:
+    """'가장 강한 단일 피사체 덩어리'의 중심(fx,fy 0~1)과 분산도(spread 0~1)를 반환.
+
+    사용자 규칙: **1마리면 중앙, 여러마리면 전체구도(줌아웃) 후 한마리를 줌인**. 이를 위해
+    ① 강한 신호 픽셀을 성긴 격자로 뭉쳐 '가장 센 한 덩어리'를 찾고(그 덩어리 중심=줌인 대상),
+    ② 신호가 여러 곳에 퍼져 있으면 spread를 크게 반환(여러 마리 → 접사에서 줌 완화·전체 우선).
+    실패 시 (0.5,0.5,0.0)=중앙·단일 취급.
+    """
+    try:
+        pts, w, h = _subject_pixels(frame_path)
+        if not pts:
+            return 0.5, 0.5, 0.0
+        pts.sort(key=lambda p: p[0], reverse=True)
+        core = pts[:max(20, len(pts) // 20)]        # 상위 5% = 피사체 후보
+        GX, GY = 6, 10                              # 성긴 격자(가로6·세로10)
+        cell = {}
+        for wt, x, y in core:
+            gx = min(GX - 1, x * GX // max(1, w)); gy = min(GY - 1, y * GY // max(1, h))
+            cell[(gx, gy)] = cell.get((gx, gy), 0.0) + wt
+        (bx, by), _ = max(cell.items(), key=lambda kv: kv[1])
+        # 최강 셀 ±1 이웃(=한 덩어리) 안의 픽셀만으로 중심 산정 → '한 마리'에 고정
+        near = [(wt, x, y) for wt, x, y in core
+                if abs(x * GX // max(1, w) - bx) <= 1 and abs(y * GY // max(1, h) - by) <= 1]
+        sw = sum(p[0] for p in near) or 1.0
+        fx = sum(p[1] * p[0] for p in near) / sw / max(1, w - 1)
+        fy = sum(p[2] * p[0] for p in near) / sw / max(1, h - 1)
+        # 분산도: 최강 덩어리가 전체 신호에서 차지하는 비중이 낮을수록(=여러 곳 분산) spread↑
+        total = sum(p[0] for p in core) or 1.0
+        dominance = sum(p[0] for p in near) / total     # 1.0=단일 집중, 낮음=여러 마리
+        spread = max(0.0, min(1.0, 1.0 - dominance))
+        return fx, fy, spread
+    except Exception:  # noqa: BLE001
+        return 0.5, 0.5, 0.0
 
 
 def _median(vals: list[float]) -> float:
@@ -604,9 +670,14 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
             # 접사 컷: 피사체 추적 + 완만한 줌. 크롭이라 좌우 일부만 보임.
             z = cycle[i % len(cycle)]
             fa, fb = int(sa * fps_trk), int((sa + seg_len) * fps_trk)
-            # 크롭 중심 = 가장 강한 적색(상위 2%)의 무게중심 = ROV 조명 받는 '얼굴'.
+            # 크롭 중심 = 피사체 신호(색 무관 일반 saliency)의 무게중심 = 주인공 위치.
             seg_c = cents[fa:fb] or cents
             fx = _median([c[0] for c in seg_c]); fy = _median([c[1] for c in seg_c])
+            # ★단일/다수 판별(_subject_focus의 분산도) — 여러 마리면 전체구도를 남기려 줌을 완화.
+            #   (무게중심은 여러 마리일 때 개체 사이를 겨누므로, 넓은 크롭이라야 전원이 화면에 남는다.)
+            seg_fr = [str(frames[j]) for j in range(max(0, fa), min(len(frames), fb))] or \
+                     [str(frames[min(fa, len(frames) - 1)])]
+            spread = _median([_subject_focus(f)[2] for f in seg_fr])   # 높음=여러 마리 분산
             med_frac = _median((fracs[fa:fb] or fracs))
             # 점유율 상한 0.45: 접사에서도 피사체가 크롭의 45%를 넘지 않게 → 주변 맥락·전신이 더 남아
             # '이게 뭔지' 식별을 확보(과확대 방지).
@@ -622,6 +693,10 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                 z_center_y = 1.0 / (2 * min(my, 1 - my))
                 z = max(z, min(max(z_center_x, z_center_y), 1.9))
                 z = max(1.0, z)
+                # ★여러 마리(spread↑)면 접사 줌을 완화해 '전체구도'를 더 남긴다(사용자 규칙:
+                #   여러마리=전체구도 줌아웃 → 그 중 한 마리를 중심). 단일(spread↓)은 그대로 줌인.
+                if spread >= 0.5:
+                    z = max(1.0, min(z, 1.35))
             cw = int(round((src_h * W / H) / z)) & ~1
             ch = int(round(src_h / z)) & ~1
             cw = min(cw, int(src_w)) & ~1

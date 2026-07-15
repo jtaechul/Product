@@ -188,21 +188,85 @@ def _title_with_tags(title: str, tags: list[str]) -> str:
     return f"{base} {' '.join(two)}".strip()
 
 
+# ★캡션 최소 분량 바닥(운영자 확정): 폴백·짧은 LLM 출력이 '한두 줄'로 빈약해지는 사고 방지.
+#   이 값 미만이면 아래 상시(evergreen) 서술을 덧붙여 읽을거리 분량을 보장한다(날조 아님 —
+#   특정 종에 대한 거짓 주장 없이 '깊은 바다·관측 기록'이라는 일반적 사실만 서술).
+_CAPTION_FLOOR = 230
+# 상시 서술 풀(일반적 사실만 · 종별 거짓 주장 없음). seed 해시로 결정론 선택(영상마다 다르게).
+_EVERGREEN_JP = [
+    "光の届かない深い海には、まだ名前のない生き物が数多く眠っています。",
+    "この映像は実際の深海・海洋の観測記録から。演出のための作り物ではありません。",
+    "水の底の世界は、地球でいちばん探索が進んでいない場所のひとつです。",
+    "見慣れない姿の一つひとつに、その環境を生き抜くための理由があります。",
+    "深海の生き物は、私たちがまだ知らない海の広さを教えてくれます。",
+]
+_EVERGREEN_KO = [
+    "빛이 닿지 않는 깊은 바다에는 아직 이름조차 없는 생물이 수없이 잠들어 있습니다.",
+    "이 영상은 실제 심해·해양 관측 기록에서 가져온 것으로, 연출을 위한 가짜가 아닙니다.",
+    "바다 밑 세계는 지구에서 탐사가 가장 덜 이루어진 곳 가운데 하나입니다.",
+    "낯선 생김새 하나하나에는 그 환경을 살아내기 위한 이유가 담겨 있습니다.",
+    "심해의 생물들은 우리가 아직 모르는 바다의 넓이를 알려줍니다.",
+]
+
+
+def _evergreen(seed: str, ko: bool, n: int = 2) -> list[str]:
+    """상시 서술 n줄을 seed 해시로 결정론 선택(영상마다 다른 조합, 종별 거짓 주장 없음)."""
+    import hashlib
+    pool = _EVERGREEN_KO if ko else _EVERGREEN_JP
+    h = int(hashlib.md5((seed or "x").encode("utf-8")).hexdigest(), 16)
+    out, i = [], 0
+    while len(out) < min(n, len(pool)):
+        line = pool[(h + i) % len(pool)]
+        if line not in out:
+            out.append(line)
+        i += 1
+    return out
+
+
+def _pad_to_floor(text: str, seed: str, ko: bool, credit: str) -> str:
+    """캡션이 바닥 분량 미만이면 상시 서술을 크레딧 앞에 끼워 넣어 분량을 채운다(날조 없음)."""
+    if len(text or "") >= _CAPTION_FLOOR:
+        return text
+    cred_tag = "영상:" if ko else "映像:"
+    lines = (text or "").split("\n")
+    ci = next((k for k, ln in enumerate(lines) if ln.strip().startswith(cred_tag)), len(lines))
+    add = _evergreen(seed, ko, n=3)
+    body = lines[:ci]
+    # 크레딧 직전 빈 줄 정리 후 상시 서술 삽입
+    while body and not body[-1].strip():
+        body.pop()
+    merged = body + [""] + add + [""] + lines[ci:]
+    out = "\n".join(merged)
+    # 여전히 부족하면 한 줄 더(최대 풀 소진까지)
+    if len(out) < _CAPTION_FLOOR:
+        extra = [ln for ln in (_EVERGREEN_KO if ko else _EVERGREEN_JP) if ln not in add]
+        if extra:
+            merged = body + [""] + add + [extra[0]] + [""] + lines[ci:]
+            out = "\n".join(merged)
+    return out
+
+
 def _fallback(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
               hook_line1: str, hook_line2: str, hook_ko: str, feature_ko: str, credit: str,
               default_tags: list[str], default_tags_ko: list[str] | None = None,
               fixed_tag: str = _FIXED_TAG_JP, fixed_tag_ko: str = _FIXED_TAG_KO,
               show_sci_name: bool = True) -> dict:
     """LLM 실패 시 리치 템플릿. 학명·수심·분포·서식지·fun_facts를 서술식으로 엮어 풍부하게.
-    한국어는 한국어 데이터로 완전 서술(일본어 잔류 금지). 일본어는 일본어 요소만(혼입 방지)."""
+    한국어는 한국어 데이터로 완전 서술(일본어 잔류 금지). 일본어는 일본어 요소만(혼입 방지).
+    ★분량 보장: 데이터가 빈약한 발굴 종도 상시 서술을 덧붙여 캡션이 '한두 줄'로 짧아지지 않게 한다."""
     ko_name = info.common_name_ko or jp_name
     sci = _cap_sci(sci_name)
-    facts_ko = [f.strip().rstrip(".") for f in (info.fun_facts or []) if f][:3]
+    facts_ko = [f.strip().rstrip(".") for f in (info.fun_facts or []) if f][:5]   # 3→5: 사실 최대 활용
     # 한국어 캡션 — 서술식 읽을거리(학명·수심·분포·서식지·사실 엮음)
     ko_lines = [hook_ko or f"{ko_name}, 이름을 들어보셨나요?", ""]
     ko_lines.append(f"{ko_name}(학명: {sci})." if show_sci_name else f"{ko_name}.")
+    # 수심·분포·서식지를 각각 독립적으로(둘 다 있을 때만이 아니라 있는 것만) 서술 → 분량 확보
     if info.depth_range_m and info.distribution:
         ko_lines.append(f"수심 {info.depth_range_m}m, {info.distribution}의 바다에 살아갑니다.")
+    elif info.depth_range_m:
+        ko_lines.append(f"수심 약 {info.depth_range_m}m에 살아갑니다.")
+    elif info.distribution:
+        ko_lines.append(f"{info.distribution}의 바다에 살아갑니다.")
     if info.habitat:
         ko_lines.append(f"주로 {info.habitat}에서 지냅니다.")
     for f in facts_ko:
@@ -211,7 +275,7 @@ def _fallback(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
         ko_lines.append(feature_ko + ".")
     ko_lines += ["", "마음이 복잡한 날, 다시 꺼내보고 싶다면 저장해 두세요.",
                  "같은 바다가 궁금한 사람에게 조용히 건네주세요.", "", f"영상: {credit}"]
-    ko = "\n".join(ko_lines)
+    ko = _pad_to_floor("\n".join(ko_lines), sci or jp_name, ko=True, credit=credit)
     # 일본어 캡션 — 일본어 요소 + 세계공통 학명·수심으로 서술(분포·서식지는 한국어라 제외)
     jp_lines = [f"{hook_line1}{hook_line2}", "",
                 f"{jp_name}(学名: {sci})。" if show_sci_name else f"{jp_name}。"]
@@ -220,7 +284,7 @@ def _fallback(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
     jp_lines += [f"{feature_line}。",
                 "深い海の底で、たしかに命をつないでいる一種です。", "",
                 "心に残ったら保存を。", "同じ海が気になる人へシェアを。", "", f"映像: {credit}"]
-    jp = "\n".join(jp_lines)
+    jp = _pad_to_floor("\n".join(jp_lines), sci or jp_name, ko=False, credit=credit)
     tags_ko = default_tags_ko if default_tags_ko else _ko_tags(default_tags, jp_name, ko_name)
     default_tags = _final_tags(default_tags, jp_name, fixed_tag)
     tags_ko = _final_tags(tags_ko, ko_name, fixed_tag_ko)

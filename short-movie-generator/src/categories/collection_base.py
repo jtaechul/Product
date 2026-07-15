@@ -23,10 +23,12 @@ log = logging.getLogger(__name__)
 
 
 def parse_depth(depth_range_m: str) -> tuple[int, int]:
-    """'1-150' → (1, 150). 단일값이면 절반~값, 없으면 기본."""
+    """'1-150' → (1, 150). 단일값이면 절반~값, 근거 없으면 (0,0)=미상.
+    ★수심을 지어내지 않는다(날조 금지): 문헌 수치가 없으면 (0,0)을 돌려주고 엔드카드·오버레이는
+    표기하지 않는다(hook_intro가 depth_max<=0이면 수심 줄 생략)."""
     nums = [int(x) for x in re.findall(r"\d+", depth_range_m or "")]
     if not nums:
-        return (0, 100)
+        return (0, 0)
     if len(nums) == 1:
         return (max(0, nums[0] // 2), nums[0])
     return (min(nums), max(nums))

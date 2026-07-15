@@ -354,7 +354,7 @@ def discover(exclude_scinames: set[str], exclude_titles: set[str], want: int = 3
              validate=None, terms: list[str] | None = None,
              exclude_re: "re.Pattern | None" = None,
              require_re: "re.Pattern | None" = None, media: str = "video",
-             verify=None) -> list[dict]:
+             verify=None, reclassify_out: "list | None" = None) -> list[dict]:
     """새 해양생물 소재 후보를 발굴해 '제작 가능한 종 레코드' 리스트를 반환(최대 want개).
 
     validate(url) -> bool : 실사 다운로드+게이트(정지·카드) 검증 콜백(있으면 통과분만 채택).
@@ -434,29 +434,41 @@ def discover(exclude_scinames: set[str], exclude_titles: set[str], want: int = 3
             ko = ident.get("ko") or ident.get("en") or sci
             en = ident.get("en") or sci
             depth = _depth_from_text(desc, " ".join(facts))
-            # ★카테고리 적합성 검증(심해 등): 표층·연안 종 배제 + 근거 있는 실제 수심만 채택.
-            #   (정어리가 '심해 도감'에 편입돼 가짜 '水深 200〜2,000 m'가 붙던 사고 방지)
-            if verify is not None:
-                corpus = " ".join(facts) + " " + desc + " " + _habitat_corpus(ident)
-                v = verify(sci, en, corpus)
-                if not v.ok:
-                    log.info("[discovery] 카테고리 부적합으로 스킵: %s (%s)", sci, v.reason)
-                    continue
-                depth = v.depth_range_m or depth   # 검증이 문헌에서 추출한 실제 수심 우선
             fp = {"url": url, "license": lic, "credit": credit, "source": title}
             if is_photo:   # 사진 → 제작 시 켄번즈로 영상화
                 fp["media_kind"] = "photo"
                 fp["image_url"] = url
-            out.append({
-                "key": sci.lower(),
-                "footage": fp,
-                "species": {
-                    "scientific_name": sci, "common_name_ko": ko, "common_name_en": en,
-                    "depth_range_m": depth, "distribution": "", "habitat": "",
-                    "diet": [], "fun_facts": facts,
-                    "sources": [fact_src, f"Wikimedia Commons ({title})"],
-                },
-            })
+
+            def _make_record(dep):
+                return {
+                    "key": sci.lower(), "footage": dict(fp),
+                    "species": {
+                        "scientific_name": sci, "common_name_ko": ko, "common_name_en": en,
+                        "depth_range_m": dep, "distribution": "", "habitat": "",
+                        "diet": [], "fun_facts": facts,
+                        "sources": [fact_src, f"Wikimedia Commons ({title})"],
+                    },
+                }
+            # ★카테고리 적합성 검증(심해 등): 표층·연안 종은 심해에서 빼되 **버리지 않고**
+            #   일반 해양생물(marine_life)로 '재분류'하고, 수심은 문헌 실측값으로 바로잡는다.
+            #   (정어리·참문어처럼 심해가 아닌 종을 '심해 도감'에 가짜 수심으로 올리던 사고 방지 +
+            #    쓸 만한 실사 소재를 폐기하지 않고 올바른 카테고리로 살린다.)
+            if verify is not None:
+                corpus = " ".join(facts) + " " + desc + " " + _habitat_corpus(ident)
+                v = verify(sci, en, corpus)
+                if not v.ok:
+                    if reclassify_out is not None:
+                        from src.core import deepsea_verify
+                        # 실제(대개 얕은) 수심을 문헌에서 추출해 바로잡음 — 없으면 지어내지 않고 ''.
+                        real_depth = deepsea_verify.extract_depth(corpus)
+                        reclassify_out.append(_make_record(real_depth))
+                        log.info("[discovery] 심해 부적합 → 일반 해양생물로 재분류: %s (수심교정=%r · %s)",
+                                 sci, real_depth, v.reason)
+                    else:
+                        log.info("[discovery] 카테고리 부적합으로 스킵: %s (%s)", sci, v.reason)
+                    continue
+                depth = v.depth_range_m or depth   # 검증이 문헌에서 추출한 실제 수심 우선
+            out.append(_make_record(depth))
             log.info("[discovery] 채택: %s (ko=%s ja=%s, %s)", sci, ko, ident.get("ja"), lic)
     return out
 
@@ -825,9 +837,11 @@ def discover_candidates(category_id: str, want: int = 6, exclude_keys: set[str] 
         return _discover_wrecks(exclude_keys, want)
     # 생물: 카테고리 설정으로 검색어·게이트 지정(미지정 카테고리는 심해 기본)
     cfg = _CATALOG.get(category_id, _CATALOG["deep_sea"])
+    # ★심해에서 탈락한 표층·연안 종을 담을 재분류 버킷(→ 일반 해양생물 후보로 이관)
+    reclass = [] if category_id == "deep_sea" else None
     recs = discover(exclude_keys, set(), want=want, validate=None,
                     terms=cfg["terms"], exclude_re=cfg["exclude"], require_re=cfg["require"],
-                    verify=cfg.get("verify"))
+                    verify=cfg.get("verify"), reclassify_out=reclass)
     cands = [_rec_to_candidate(r) for r in recs]
     # 사진 보충(미세조류 등): 영상이 want에 못 미치면 고해상 사진 후보로 채운다.
     if cfg.get("photo") and len(cands) < want:
@@ -836,7 +850,30 @@ def discover_candidates(category_id: str, want: int = 6, exclude_keys: set[str] 
                          terms=cfg["terms"], exclude_re=cfg["exclude"], require_re=cfg["require"],
                          media="photo", verify=cfg.get("verify"))
         cands += [_rec_to_candidate(r) for r in precs]
+    # ★재분류 저장: 심해가 아닌 해양생물은 marine_life 후보에 병합(중복 제외) → 폐기하지 않고 살린다.
+    if reclass:
+        _merge_reclassified("marine_life", reclass)
     return cands
+
+
+def _merge_reclassified(target_category: str, recs: list[dict]) -> None:
+    """심해에서 탈락해 재분류된 종을 대상 카테고리(marine_life) 후보에 병합 저장(중복 키 제외)."""
+    try:
+        existing = load_candidates(target_category)
+        seen = {str(c.get("key", "")).lower() for c in existing}
+        seen |= {k.lower() for k in _all_known_keys()}   # 전 카테고리 기제작·후보 키(중복 방지)
+        add = []
+        for r in recs:
+            k = str(r.get("key", "")).lower()
+            if k and k not in seen:
+                seen.add(k)
+                add.append(_rec_to_candidate(r))
+        if add:
+            save_candidates(target_category, existing + add)
+            log.info("[discovery] 재분류 %d종을 %s 후보로 이관: %s",
+                     len(add), target_category, [c["key"] for c in add])
+    except Exception as e:  # noqa: BLE001
+        log.warning("[discovery] 재분류 병합 실패(%s): %s", target_category, e)
 
 
 def make_thumbnail(url: str, out_jpg: str, tmp_dir: str) -> bool:
