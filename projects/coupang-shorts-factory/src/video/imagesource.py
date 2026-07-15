@@ -265,20 +265,20 @@ def _meme_repo_rel(mp) -> str:
 
 
 def _pick_line_memes(project_root: Path, text: str, used: set, k: int) -> list:
-    """라인 텍스트에 어울리는 밈을 고르되, 이미 다른 라인이 쓴 밈은 후순위(로테이션)로 밀어
-    라인마다 다른 밈이 오게 한다(반복 완화 #1). 반환: 경로 리스트(최대 k)."""
+    """라인 텍스트에 어울리는 밈을 고른다. 이미 쓴 밈(used, basename)은 '무조건 뒤로' 밀어
+    안 쓴 밈이 있으면 반드시 그걸 먼저 준다 → 라인마다·'다시 찾기'마다 다른 밈이 나온다.
+    (안 쓴 밈이 부족할 때만 쓴 밈으로 폴백.) 반환: 경로 리스트(최대 k)."""
     from src.video import memes
     lib = memes.load_library(project_root)
     if not lib:
         return []
     text = text or ""
-    scored = []
-    for m in lib:
-        hits = sum(1 for kw in (m.get("situations") or []) if kw and kw in text)
-        fresh = 0 if str(m["_path"]) in used else 3   # 안 쓴 밈 가산 → 라인 간 중복 억제
-        scored.append((hits * 10 + fresh, m["_path"]))
-    scored.sort(key=lambda x: -x[0])
-    return [p for _, p in scored[:max(0, k)]]
+    def hits(m):
+        return sum(1 for kw in (m.get("situations") or []) if kw and kw in text)
+    fresh = sorted((m for m in lib if Path(m["_path"]).name not in used), key=lambda m: -hits(m))
+    stale = sorted((m for m in lib if Path(m["_path"]).name in used), key=lambda m: -hits(m))
+    ordered = fresh + stale   # 안 쓴 밈 먼저(매칭 순), 부족하면 쓴 밈
+    return [m["_path"] for m in ordered[:max(0, k)]]
 
 
 def _funny_urls(query: str, seen: set, page: int, n: int) -> list:
@@ -328,19 +328,25 @@ def _dl_candidate(out_dir: Path, i: int, k: int, url: str):
 
 def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
                      product_images: list | None = None, per_line: int = 6,
-                     only_line: int | None = None) -> list:
+                     only_line: int | None = None, exclude_urls: list | None = None,
+                     exclude_memes: list | None = None) -> list:
     """관리자 선택기용 — 라인마다 후보를 모은다. 설계(2026-07-15 사용자 개선):
     ① 라인마다 다른 검색 페이지 + 밈 로테이션으로 '라인별 차별화'(같은 이미지 반복 제거, #1)
     ② 후보의 절반 이상을 재미(밈·GIF·funny 스톡)로 구성(#2)
     ③ 상품 사진 후보는 'product 타입 라인'에만(그 외 라인엔 상품 후보 없음, #3)
-    only_line 지정 시 그 라인 하나만 재생성('다시 찾기' 라인별 — 파이프라인이 병합)."""
+    only_line 지정 시 그 라인 하나만 재생성('다시 찾기' 라인별 — 파이프라인이 병합).
+    exclude_urls/exclude_memes: '다시 찾기'로 재생성할 때 직전에 보여준 이미지·밈을 제외해
+    반드시 다른 후보가 나오게 한다(#다시찾기 안 바뀜 방지)."""
     plan = plan_line_visuals(product, lines, settings)
     out_dir = Path(job_dir) / "candidates"
     out_dir.mkdir(parents=True, exist_ok=True)
     product_images = [str(p) for p in (product_images or []) if Path(p).exists()]
     base_page = random.randint(1, 6)
     regular_n = max(2, per_line - 4)
-    manifest, seen, used_memes = [], set(), set()
+    # seen에 이전 URL을 미리 넣어두면 그 URL은 다시 안 뽑힌다 → '다시 찾기'가 확실히 새 이미지를 준다.
+    seen = set(u for u in (exclude_urls or []) if u)
+    used_memes = set(Path(m).name for m in (exclude_memes or []) if m)   # 직전 밈 basename 제외
+    manifest = []
     for i, (ln, pl) in enumerate(zip(lines, plan)):
         if only_line is not None and i != int(only_line):
             continue
@@ -357,7 +363,7 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
                 cands.append({"file": p, "source": "product", "url": None, "is_product": True})
         # ② 재미(밈) — 로테이션 2장(#1·#2)
         for mp in _pick_line_memes(PROJECT_ROOT, text, used_memes, 2):
-            used_memes.add(str(mp))
+            used_memes.add(Path(mp).name)
             cands.append({"file": str(mp), "source": "meme", "url": None,
                           "is_meme": True, "meme_rel": _meme_repo_rel(mp)})
         # ③ 재미(GIF/funny 스톡) — 2장(#2)
@@ -384,7 +390,7 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
                 if not more:
                     break
                 for mp in more:
-                    used_memes.add(str(mp))
+                    used_memes.add(Path(mp).name)
                     cands.append({"file": str(mp), "source": "meme", "url": None,
                                   "is_meme": True, "meme_rel": _meme_repo_rel(mp)})
             line_page += 1

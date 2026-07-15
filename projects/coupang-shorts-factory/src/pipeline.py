@@ -158,8 +158,19 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
         if only_line is not None and prev is None:
             print(f"[pipeline] 이전 후보 매니페스트 없음 → 라인 {only_line} 대신 전체 재생성")
             only_line = None
+        # '다시 찾기'가 확실히 다른 이미지를 주도록, 직전에 그 라인에 보여준 URL·밈을 제외 목록으로 넘긴다.
+        excl_urls, excl_memes = [], []
+        if only_line is not None and prev is not None:
+            pl = next((l for l in prev.get("lines", []) if int(l.get("line_i", -1)) == only_line), None)
+            for c in (pl.get("candidates", []) if pl else []):
+                if c.get("url"):
+                    excl_urls.append(c["url"])
+                if c.get("is_meme") and c.get("file"):
+                    excl_memes.append(c["file"])
+            print(f"[pipeline] 라인 {only_line} 재생성 — 직전 이미지 {len(excl_urls)}개·밈 {len(excl_memes)}개 제외")
         manifest = imagesource.fetch_candidates(
-            product, lines, job_dir, settings, product_images=_pimgs, only_line=only_line)
+            product, lines, job_dir, settings, product_images=_pimgs, only_line=only_line,
+            exclude_urls=excl_urls, exclude_memes=excl_memes)
         web_path = _publish_candidates(manifest, product, job_dir)
         if only_line is not None and prev is not None:
             _merge_line_manifest(web_path, prev, only_line)
