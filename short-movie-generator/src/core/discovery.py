@@ -156,8 +156,14 @@ def _taxon_from_entity(qid: str, ent: dict) -> dict | None:
     labels = {k: v["value"] for k, v in ent.get("labels", {}).items()}
     sit = ent.get("sitelinks", {}) or {}
     ko = labels.get("ko") or (sit.get("kowiki", {}) or {}).get("title")
+    # 상위 분류군(P171=parent taxon) QID — 종에 위키백과 문서가 없을 때 속(genus) 문서로 사실을 보충.
+    parent_qid = None
+    try:
+        parent_qid = claims["P171"][0]["mainsnak"]["datavalue"]["value"]["id"]
+    except Exception:  # noqa: BLE001
+        parent_qid = None
     return {"qid": qid, "sci": sci, "ko": ko, "ja": labels.get("ja"),
-            "en": labels.get("en"), "sitelinks": sit}
+            "en": labels.get("en"), "sitelinks": sit, "parent_qid": parent_qid}
 
 
 def _resolve_qid(qid: str) -> dict | None:
@@ -198,6 +204,34 @@ def _facts_from_wiki(sitelinks: dict) -> tuple[list[str], str]:
             src = f"Wikipedia ({lang})"
             if facts:
                 return facts, src
+    return [], ""
+
+
+def _facts_with_fallback(ident: dict) -> tuple[list[str], str]:
+    """종 위키백과 사실 우선, 없으면 **상위 분류군(속/과) 위키백과**로 보충(날조 아님 — 실제 출처).
+    많은 실존 종이 자기 문서는 없어도 속 문서는 있어(예: Anoplodactylus lentus→속 Anoplodactylus),
+    이 폴백이 없으면 '사실 미확보'로 대량 스킵돼 소싱 수확이 0에 수렴한다."""
+    facts, src = _facts_from_wiki(ident.get("sitelinks", {}) or {})
+    if facts:
+        return facts, src
+    # 상위 분류군(속) 문서로 폴백 — 최대 2단계(속→과) 위로 올라가며 시도.
+    seen = set()
+    pq = ident.get("parent_qid")
+    for _ in range(2):
+        if not pq or pq in seen:
+            break
+        seen.add(pq)
+        ent = _wd_entity(pq)
+        if not ent:
+            break
+        sit = ent.get("sitelinks", {}) or {}
+        f, s = _facts_from_wiki(sit)
+        if f:
+            return f, f"{s} · 상위 분류군"
+        try:
+            pq = ent.get("claims", {})["P171"][0]["mainsnak"]["datavalue"]["value"]["id"]
+        except Exception:  # noqa: BLE001
+            break
     return [], ""
 
 
@@ -334,7 +368,7 @@ def discover(exclude_scinames: set[str], exclude_titles: set[str], want: int = 3
             sci = ident["sci"].strip()
             if sci.lower() in excl_sci or any(o["key"] == sci.lower() for o in out):
                 continue
-            facts, fact_src = _facts_from_wiki(ident["sitelinks"])
+            facts, fact_src = _facts_with_fallback(ident)   # 종→속→과 위키백과 폴백(수확 급감 방지)
             if not facts:                       # 사실 없으면 스킵(날조 금지)
                 log.info("[discovery] 사실 미확보로 스킵: %s", sci)
                 continue
