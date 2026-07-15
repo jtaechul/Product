@@ -6,14 +6,34 @@
    "line_i": 0,
    "picks": [
     {
-     "file": "data/selections_assets/02b322904d67dd0d/L00_0.png",
-     "source": "upload",
-     "query": "sweaty person sleeping"
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmN2V1b3I2OWtvZjE4a2ZqNmp6aG4xNDgyYXh1bHg1dWI3dHU1NjhqZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3owyp9gD4GrZtiEbZe/giphy.gif",
+     "source": "giphy",
+     "query": "air conditioner"
     },
     {
-     "url": "https://images.pexels.com/photos/18864132/pexels-photo-18864132.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
-     "source": "pexels",
-     "query": "sweaty person sleeping"
+     "file": "assets/memes/curiosity.png",
+     "source": "meme",
+     "query": "air conditioner"
+    }
+   ]
+  },
+  {
+   "line_i": 1,
+   "picks": [
+    {
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMDB3eGlzcjU4cGp6NTljcnJ2Zm0yMmtqeWI3MG5hMnlldmswbWpjMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3oKIPxua1XGPonJm3C/giphy.gif",
+     "source": "giphy",
+     "query": "ice valley"
+    },
+    {
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmajlyajNpdm5teGllZHNodmZyYnY0bjlxcW1saTE0YjZ2a251Nzd4NyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Sxqxi2sGBBhhc3Qb5s/giphy.gif",
+     "source": "giphy",
+     "query": "ice valley"
+    },
+    {
+     "file": "assets/memes/frustration.png",
+     "source": "meme",
+     "query": "ice valley"
     }
    ]
   },
@@ -21,9 +41,29 @@
    "line_i": 2,
    "picks": [
     {
-     "url": "https://images.pexels.com/photos/1820689/pexels-photo-1820689.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
-     "source": "pexels",
-     "query": "betrayed person sad"
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYXc4eDdkZm0xazFhbW5wMzJoZ3g4dHhwMGhhYnk1N2IxNTZocW4zbCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/hBtSGnI7UnJycboRXZ/giphy.gif",
+     "source": "giphy",
+     "query": "bed"
+    },
+    {
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmc2t2YmE2NG9ydHY5NGxqOXFpdm5rZGhxYW16MmhmdXE2ODhqbTRjMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/KGfLZsWCqvOJzakiBe/giphy-downsized-medium.gif",
+     "source": "giphy",
+     "query": "bed"
+    }
+   ]
+  },
+  {
+   "line_i": 3,
+   "picks": [
+    {
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmeXFhY3QwOTZxejhnaXdyNXJwZG96cTJma3VvMzhycGFnZTZmdm1ubyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/xUNd9R76F4ZGT572Eg/giphy.gif",
+     "source": "giphy",
+     "query": "bedding"
+    },
+    {
+     "file": "assets/memes/disgust.png",
+     "source": "meme",
+     "query": "bedding"
     }
    ]
   },
@@ -31,20 +71,25 @@
    "line_i": 4,
    "picks": [
     {
-     "url": "https://images.pexels.com/photos/20943579/pexels-photo-20943579.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
-     "source": "pexels",
-     "query": "lightbulb moment discovery"
+     "file": "assets/memes/shock.png",
+     "source": "meme",
+     "query": "light bulb moment"
     },
     {
-     "file": "data/selections_assets/02b322904d67dd0d/L04_0.png",
-     "source": "upload",
-     "query": "lightbulb moment discovery"
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYWVxcTIzcHVyNXRud25ub2pqZnF4YWJ5ZDJqZ2thaTlqbGh1eXlhYyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/lYjA4tfvCc8UAju1Op/giphy-downsized-medium.gif",
+     "source": "giphy",
+     "query": "light bulb moment"
     }
    ]
   },
   {
    "line_i": 5,
    "picks": [
+    {
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYWZvbTFnbjh2N3F6cXdubDQ1Zmpxc3MzMGl0eGp3OXpleGg2bHIwYiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/wgmWyQGzaZ6Fy/giphy.gif",
+     "source": "giphy",
+     "query": ""
+    },
     {
      "is_product": true,
      "source": "product",
@@ -61,9 +106,14 @@
    "line_i": 6,
    "picks": [
     {
-     "url": "https://images.pexels.com/photos/10837114/pexels-photo-10837114.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
-     "source": "pexels",
-     "query": "person surprised cold"
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmZmFxeGtja2p6b2hyYmN6Y28weHRxdGdyMXlkdmtnODZoNms3anI0cCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/hcY890u9sEUKs/giphy-downsized-medium.gif",
+     "source": "giphy",
+     "query": "refrigerator door"
+    },
+    {
+     "file": "assets/memes/shock.png",
+     "source": "meme",
+     "query": "refrigerator door"
     }
    ]
   },
@@ -71,14 +121,14 @@
    "line_i": 7,
    "picks": [
     {
-     "url": "https://images.pexels.com/photos/210600/pexels-photo-210600.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
-     "source": "pexels",
-     "query": "money saving happy"
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYXk1czRlYnBhbGw5ZGJ3c2dwYmd0YmUwczcxM3hoaTY2dXA4NjBtdyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/hrpv8r9Fbj6cg5RUlk/giphy.gif",
+     "source": "giphy",
+     "query": "air conditioner remote"
     },
     {
-     "file": "data/selections_assets/02b322904d67dd0d/L07_0.png",
-     "source": "upload",
-     "query": "money saving happy"
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmaXQzNGh4djkwajdqZ216NWZmOThtY3hkbTdndno2cnV3bzMxbXU0ZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/OsxUM4bSKGg2VimzHj/giphy.gif",
+     "source": "giphy",
+     "query": "air conditioner remote"
     }
    ]
   },
@@ -86,14 +136,14 @@
    "line_i": 8,
    "picks": [
     {
-     "url": "https://pixabay.com/get/gec6083f5fb0e82232d3981d550d3c96f1e2c9e13200f11cdd20a3bca63ae4e4491d5269a6816cfa301b274f6243df287f4287eb1618dbbcf11b3a821b12de146_1280.jpg",
-     "source": "pixabay",
-     "query": "person waking up refreshed"
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmbjNreW90ZWd0ZTFha3Iwa3hudTd2bW5zeDA1bnluOTBka3NmZDU1ZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/zxQ9zD2MpOwvYyNLpR/giphy.gif",
+     "source": "giphy",
+     "query": "waking up refreshed"
     },
     {
-     "file": "data/selections_assets/02b322904d67dd0d/L08_0.png",
-     "source": "upload",
-     "query": "person waking up refreshed"
+     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMDRkZmJxcXhrNXplaXMzODZtY3NwdG5vNjFtaWt3NDdmN2NxcWY3NyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/sHPLd2QX11QQ4ElsKp/giphy.gif",
+     "source": "giphy",
+     "query": "waking up refreshed"
     }
    ]
   }
