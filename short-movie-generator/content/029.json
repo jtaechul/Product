@@ -1,7 +1,7 @@
 {
   "id": "029",
   "created_at": "2026-07-15T12:00:57+00:00",
-  "updated_at": "2026-07-15T12:00:57+00:00",
+  "updated_at": "2026-07-15T12:03:00+00:00",
   "status": "published",
   "category": "deep_sea",
   "series": "심해 도감",
@@ -50,7 +50,9 @@
     "video_url": "https://github.com/jtaechul/Product/releases/download/content-029/reels_029.mp4",
     "rev": "29413091963",
     "cover_url": "https://github.com/jtaechul/Product/releases/download/content-029/cover_029.jpg",
-    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-029/ytthumb_029.jpg"
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-029/ytthumb_029.jpg",
+    "youtube_url": "https://youtu.be/xz_Chf8aNYU",
+    "youtube_privacy": "public"
   },
   "post": null
 }
