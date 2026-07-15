@@ -114,41 +114,5 @@
       ]
     },
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_ridgeia_piscesae_29408223775.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "crinoidea",
-    "needs_confirm": false,
-    "title": "File:Unidentified near Phuket.webm",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Unidentified_near_Phuket.webm",
-    "license": "cc-by-sa",
-    "credit": "Amada44 · CC BY-SA",
-    "source": "File:Unidentified near Phuket.webm",
-    "name": "Crinoidea",
-    "name_ja": "",
-    "common_name_ko": "바다나리",
-    "common_name_en": "Crinoidea",
-    "depth": "6000-9000",
-    "facts": [
-      "ウミユリ綱（ウミユリこう、Crinoidea）は棘皮動物門の下位分類群のひとつで、ウミユリ（海百合）やウミシダと呼ばれる海洋性の生物が属する群である。浅海から6,000メートル級の深海まで広く分布する。名称はギリシア語の krinon 'ユリ'＋-oid '〜のようなもの' より。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Crinoidea",
-      "common_name_ko": "바다나리",
-      "common_name_en": "Crinoidea",
-      "depth_range_m": "6000-9000",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "ウミユリ綱（ウミユリこう、Crinoidea）は棘皮動物門の下位分類群のひとつで、ウミユリ（海百合）やウミシダと呼ばれる海洋性の生物が属する群である。浅海から6,000メートル級の深海まで広く分布する。名称はギリシア語の krinon 'ユリ'＋-oid '〜のようなもの' より。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Unidentified near Phuket.webm)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_crinoidea_29408223775.jpg"
   }
 ]

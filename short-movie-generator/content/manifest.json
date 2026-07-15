@@ -209,5 +209,13 @@
     "common_name_en": "Peltospira smaragdina",
     "scientific_name": "Peltospira smaragdina",
     "date": "2026-07-15"
+  },
+  {
+    "id": "028",
+    "kind": "reels",
+    "common_name_ko": "바다나리",
+    "common_name_en": "Crinoidea",
+    "scientific_name": "Crinoidea",
+    "date": "2026-07-15"
   }
 ]

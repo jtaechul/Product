@@ -108,5 +108,31 @@
       ]
     },
     "depth": "3910"
+  },
+  {
+    "key": "crinoidea",
+    "kind": "creature",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Unidentified_near_Phuket.webm",
+      "license": "cc-by-sa",
+      "credit": "Amada44 · CC BY-SA",
+      "source": "File:Unidentified near Phuket.webm"
+    },
+    "species": {
+      "scientific_name": "Crinoidea",
+      "common_name_ko": "바다나리",
+      "common_name_en": "Crinoidea",
+      "depth_range_m": "6000-9000",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ウミユリ綱（ウミユリこう、Crinoidea）は棘皮動物門の下位分類群のひとつで、ウミユリ（海百合）やウミシダと呼ばれる海洋性の生物が属する群である。浅海から6,000メートル級の深海まで広く分布する。名称はギリシア語の krinon 'ユリ'＋-oid '〜のようなもの' より。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Unidentified near Phuket.webm)"
+      ]
+    }
   }
 ]
