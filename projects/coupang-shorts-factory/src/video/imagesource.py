@@ -82,17 +82,24 @@ def plan_line_visuals(product: dict, lines: list, settings: dict) -> list:
         if plan is not None:
             print(f"[imgsrc] 라인 플랜 길이 불일치({len(plan) if plan else 0}≠{n}) → 휴리스틱")
         plan = _heuristic_plan(product, lines)
-    # 정규화 + query 폴백 채움
+    # 정규화 — image 라인은 keywords(라인 명사에서 뽑은 검색어들) 리스트로 통일. query=keywords[0](하위호환).
     cat = str((product or {}).get("category", "")).strip()
     base = _CATEGORY_QUERIES.get(cat, list(_DEFAULT_QUERIES))
     out = []
     for i, item in enumerate(plan):
-        typ = str((item or {}).get("type", "image")).lower()
+        item = item or {}
+        typ = str(item.get("type", "image")).lower()
         if typ == "product":
             out.append({"type": "product"})
-        else:
-            q = str((item or {}).get("query", "")).strip() or base[i % len(base)]
-            out.append({"type": "image", "query": q})
+            continue
+        kws = item.get("keywords")
+        if isinstance(kws, str):
+            kws = [kws]
+        kws = [str(k).strip() for k in (kws or []) if str(k).strip()]
+        if not kws:
+            q = str(item.get("query", "")).strip()
+            kws = [q] if q else [base[i % len(base)], base[(i + 3) % len(base)]]
+        out.append({"type": "image", "keywords": kws, "query": kws[0]})
     return out
 
 
@@ -109,8 +116,9 @@ def _heuristic_plan(product: dict, lines: list) -> list:
         hit = any(tok in text for tok in spec_tokens)
         if stage >= 4 and hit:   # 해결/상품 단계 + 스펙 단어 포함 → 상품 기능 설명으로 간주
             plan.append({"type": "product"})
-        else:
-            plan.append({"type": "image", "query": base[img_i % len(base)]})
+        else:   # LLM 없을 때 폴백 — 카테고리 검색어 2개(라인마다 다르게)
+            plan.append({"type": "image",
+                         "keywords": [base[img_i % len(base)], base[(img_i + 2) % len(base)]]})
             img_i += 1
     return plan
 
@@ -122,19 +130,26 @@ def _plan_via_llm(product: dict, lines: list, settings: dict) -> list | None:
     numbered = "\n".join(f'{i}: {str(l.get("text", "")).strip()}' for i, l in enumerate(lines))
     # 학습: 운영자가 과거 확정한 (자막→검색어) 예시를 few-shot으로 먹여 추천 정확도를 올린다.
     ex = _learning_examples(12)
-    shots = ("\n운영자가 과거에 좋다고 고른 예시(자막 → 검색어) — 이 감각을 따라라:\n"
+    shots = ("\n운영자가 과거에 좋다고 고른 예시(자막 → 검색어) — 이 감각을 참고:\n"
              + "\n".join(f'  "{t}" → "{q}"' for t, q in ex)) if ex else ""
     prompt = (
         "너는 한국어 쇼츠의 각 자막 라인에 넣을 '정사각형 비주얼'을 정하는 편집자다.\n"
         f"상품: {name} (카테고리: {cat})\n"
+        "핵심: 그 라인 문장에 **실제로 등장하는 구체적인 명사·사물·행동**을 뽑아 영어 검색어로 준다.\n"
+        "추상적 감정·분위기 말고 **눈에 보이는 것(사물·장소·동작)** 위주로. 그래야 관련 있는 이미지가 뜬다.\n"
         "규칙:\n"
-        '- 그 라인이 "상품 자체·기능·스펙·사용법"을 설명하면 type="product".\n'
-        '- 그 외(훅·공감·문제상황·감정·리액션·비교·라이프스타일)는 type="image"이고, 그 장면에\n'
-        "  시각적으로 딱 맞는 영어 스톡 검색어 query(2~4단어, 사람·감정·상황 중심)를 준다.\n"
-        "- 특정 브랜드/로고/유명인/워터마크 금지. 매 라인 최대한 '다르게'(같은 이미지 반복 금지)."
+        '- 그 라인이 "상품 자체·기능·스펙·사용법"을 설명하면 {"type":"product"}.\n'
+        '- 그 외 라인은 {"type":"image","keywords":[...]}: 그 문장의 사물/장소/행동을 영어 검색어\n'
+        "  2~4개(각 1~2단어)로. 문장에 사물이 없으면 그 상황을 그리는 사물·행동으로 바꿔라.\n"
+        "예시(감 잡아라):\n"
+        '  "밤새 에어컨 켜도 땀범벅" → ["air conditioner","sweating in bed","hot night"]\n'
+        '  "분명 얼음골이었는데 찜질방" → ["ice","sauna steam","sweating"]\n'
+        '  "침대에 누웠는데 배신감이" → ["bed","tossing in bed","frustrated"]\n'
+        '  "냉장고 열었더니 미쳤다" → ["refrigerator","shocked face","opening fridge"]\n'
+        "- 브랜드/로고/유명인/워터마크 금지."
         + shots + "\n"
         f"라인:\n{numbered}\n\n"
-        f'출력: JSON만. {{"plan":[{{"i":0,"type":"image","query":"..."}}, ...]}} — 라인마다 1개, 총 {len(lines)}개.'
+        f'출력: JSON만. {{"plan":[{{"i":0,"type":"image","keywords":["...","..."]}}, ...]}} — 라인마다 1개, 총 {len(lines)}개.'
     )
     prefer_gemini = script_provider(settings) == "gemini" and gemini_key()
     if prefer_gemini:
@@ -196,16 +211,17 @@ def fetch_line_images(product: dict, lines: list, product_images: list,
     out_dir.mkdir(parents=True, exist_ok=True)
     plan = plan_line_visuals(product, lines, settings)
     prod0 = Path(product_images[0]) if product_images else None
-    line_images, seen, img_i = [], set(), 0
+    giphy_only = _giphy_only(settings)
+    line_images, seen, got = [], set(), 0
     n_img = sum(1 for p in plan if p["type"] == "image")
-    got = 0
     for i, pl in enumerate(plan):
         if pl["type"] == "product" and prod0 is not None:
             line_images.append(prod0)   # 상품 사진은 product(기능 설명) 라인에만
             continue
-        # 이미지 라인: 라인마다 다른 order_seed로 다른 결과 → 라인 간 차별화(#1)
-        url = _search_one(pl.get("query", ""), seen, order_seed=img_i) if pl["type"] == "image" else None
-        img_i += 1
+        # 이미지 라인: 라인 명사(keywords)로 검색(Giphy 우선/ giphy_only면 GIF만). 라인마다 다른 페이지.
+        kws = pl.get("keywords") or ([pl.get("query")] if pl.get("query") else [])
+        res = _keyword_urls(kws, seen, 1 + i * 2, 1, giphy_only)
+        url = res[0]["url"] if res else None
         ext = ".gif" if url and url.lower().split("?")[0].endswith(".gif") else ".jpg"
         dest = out_dir / f"line_{i:02d}{ext}"
         if url and _download_image(url, dest):
@@ -214,8 +230,9 @@ def fetch_line_images(product: dict, lines: list, product_images: list,
         else:
             # ⭐ 실패해도 상품 사진으로 때우지 않는다(상품 반복 방지 #3) → None(렌더가 브랜드 패널)
             line_images.append(None)
+    src = "Giphy(GIF)만" if giphy_only else "Giphy 우선 + 스톡"
     print(f"[imgsrc] 라인 {len(plan)}개 · 이미지 라인 {n_img} → 문구 이미지 {got}장 확보"
-          f"(상품 사진은 product 라인만, 실패는 브랜드 패널). 소스: Pexels/Openverse/Wikimedia")
+          f"(상품 사진은 product 라인만, 실패는 브랜드 패널). 소스: {src}")
     return line_images, plan
 
 
@@ -326,6 +343,44 @@ def _dl_candidate(out_dir: Path, i: int, k: int, url: str):
     return dest if _download_image(url, dest) else None
 
 
+def _giphy_only(settings: dict) -> bool:
+    return bool((settings or {}).get("images", {}).get("giphy_only", False))
+
+
+def _keyword_urls(keywords: list, seen: set, base_page: int, n: int, giphy_only: bool) -> list:
+    """라인의 명사 keywords를 돌아가며 후보 URL n개 확보 — 그 라인 내용과 관련된 이미지가 나오게.
+    Giphy(GIF) 우선(재미), giphy_only가 아니면 부족분을 스톡(Pexels/Openverse/Wikimedia)으로 보충.
+    반환 [{url, source, keyword}]. 키워드마다·페이지마다 달라 라인 간 중복도 준다."""
+    keywords = [str(k).strip() for k in (keywords or []) if str(k).strip()] or ["surprising gadget"]
+    have_giphy = bool(_giphy_key())
+    out, kwi, tries = [], 0, 0
+    while len(out) < n and tries < n * 5 + 8:
+        kw = keywords[kwi % len(keywords)]
+        page = base_page + kwi
+        kwi += 1
+        tries += 1
+        u, src = None, None
+        if have_giphy:
+            try:
+                u = _giphy(kw, seen, page)
+            except Exception:
+                u = None
+            if u:
+                src = "giphy"
+        if not u and not giphy_only:
+            for fn in (_pexels, _openverse, _pixabay, _wikimedia):
+                try:
+                    u = fn(kw, seen, page)
+                except Exception:
+                    u = None
+                if u:
+                    src = fn.__name__.lstrip("_")
+                    break
+        if u:
+            out.append({"url": u, "source": src, "keyword": kw})
+    return out
+
+
 def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
                      product_images: list | None = None, per_line: int = 6,
                      only_line: int | None = None, exclude_urls: list | None = None,
@@ -346,7 +401,7 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
     out_dir.mkdir(parents=True, exist_ok=True)
     product_images = [str(p) for p in (product_images or []) if Path(p).exists()]
     base_page = random.randint(1, 6)
-    regular_n = max(2, per_line - 4)
+    giphy_only = _giphy_only(settings)
     # seen에 이전 URL을 미리 넣어두면 그 URL은 다시 안 뽑힌다 → '다시 찾기'가 확실히 새 이미지를 준다.
     seen = set(u for u in (exclude_urls or []) if u)
     used_memes = set(Path(m).name for m in (exclude_memes or []) if m)   # 직전 밈 basename 제외
@@ -355,41 +410,33 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
         if only_line is not None and i != int(only_line):
             continue
         text = ln.get("text", "")
-        query = pl.get("query", "")
-        line_page = base_page + i          # 라인마다 다른 결과 창 → 라인 간 차별화(#1)
+        keywords = pl.get("keywords") or ([pl.get("query")] if pl.get("query") else [])
+        line_page = base_page + i * 2      # 라인마다 다른 결과 창 → 라인 간 차별화(#1)
         entry = {"line_i": i, "text": text, "stage": ln.get("stage"),
-                 "punch": bool(ln.get("punch")), "type": pl["type"], "query": query, "candidates": []}
+                 "punch": bool(ln.get("punch")), "type": pl["type"],
+                 "query": pl.get("query", ""), "keywords": keywords, "candidates": []}
         cands = entry["candidates"]
         k = 0
         # ① 상품 사진 — product 타입 라인에만(#3)
         if pl["type"] == "product":
             for p in product_images[:2]:
                 cands.append({"file": p, "source": "product", "url": None, "is_product": True})
-        # ② 재미(밈) — 로테이션 2장(#1·#2)
+        # ② 재미(밈) — 로테이션 2장(자체 제작물 = Content ID 안전). 라인 간·재생성 시 다른 밈.
         for mp in _pick_line_memes(PROJECT_ROOT, text, used_memes, 2):
             used_memes.add(Path(mp).name)
             cands.append({"file": str(mp), "source": "meme", "url": None,
                           "is_meme": True, "meme_rel": _meme_repo_rel(mp)})
-        # ③ 재미(GIF/funny 스톡) — 2장(#2)
-        for c in _funny_urls(query, seen, line_page, 2):
+        # ③ 라인 명사(keywords)로 검색 — 그 라인 내용과 '관련된' 이미지/영상. Giphy 우선(재미),
+        #    giphy_only면 GIF만(펙셀 등 스킵). 키워드·페이지 로테이션으로 라인마다 다르게(#1).
+        for c in _keyword_urls(keywords, seen, line_page, per_line, giphy_only):
             d = _dl_candidate(out_dir, i, k, c["url"]); k += 1
             if d:
-                cands.append({"file": str(d), "source": c["source"], "url": c["url"]})
-        # ④ 일반 라인 이미지 — 고유 검색어 + 라인별 페이지(#1)
-        for c in _search_many(query, regular_n, seen, line_page):
-            d = _dl_candidate(out_dir, i, k, c["url"]); k += 1
-            if d:
-                cands.append({"file": str(d), "source": c["source"], "url": c["url"]})
-        # ⑤ 재미 비중 보정 — 재미가 절반 미만이면 더 채운다(#2, 최대 4회)
-        for _ in range(4):
-            if sum(1 for c in cands if _is_funny(c)) * 2 >= len(cands) or not cands:
-                break
-            added = False
-            for c in _funny_urls(query, seen, line_page + 1, 1):
-                d = _dl_candidate(out_dir, i, k, c["url"]); k += 1
-                if d:
-                    cands.append({"file": str(d), "source": c["source"], "url": c["url"]}); added = True
-            if not added:   # 소스가 막히면 밈 로테이션으로 보충
+                cands.append({"file": str(d), "source": c["source"], "url": c["url"], "keyword": c.get("keyword")})
+        # ④ (mixed일 때) 재미가 절반 미만이면 밈으로 보충 — giphy_only면 이미 전부 GIF라 불필요.
+        if not giphy_only:
+            for _ in range(3):
+                if sum(1 for c in cands if _is_funny(c)) * 2 >= len(cands) or not cands:
+                    break
                 more = _pick_line_memes(PROJECT_ROOT, text, used_memes, 1)
                 if not more:
                     break
@@ -397,15 +444,15 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
                     used_memes.add(Path(mp).name)
                     cands.append({"file": str(mp), "source": "meme", "url": None,
                                   "is_meme": True, "meme_rel": _meme_repo_rel(mp)})
-            line_page += 1
         manifest.append(entry)
     (Path(job_dir) / "candidates.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
     total = sum(len(e["candidates"]) for e in manifest)
     funny_total = sum(1 for e in manifest for c in e["candidates"] if _is_funny(c))
     tag = f"(라인 {only_line}만)" if only_line is not None else ""
-    extra = "" if _giphy_key() else " · Giphy 키 없음(밈/funny 스톡 위주 — 더 많은 GIF는 SHORTS_GIPHY_API_KEY 등록)"
-    print(f"[imgsrc] 후보 생성{tag}: {len(manifest)}라인 · 총 {total}장 (재미 {funny_total}장){extra}")
+    mode = "Giphy-only(GIF만)" if giphy_only else "Giphy우선+스톡"
+    warn = "" if _giphy_key() else " · ⚠️ Giphy 키 없음 → 후보 급감(SHORTS_GIPHY_API_KEY 등록 필요)"
+    print(f"[imgsrc] 후보 생성{tag}: {len(manifest)}라인 · 총 {total}장 (재미 {funny_total}장, 소스={mode}){warn}")
     return manifest
 
 
