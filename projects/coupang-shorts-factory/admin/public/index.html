@@ -142,6 +142,7 @@ ol li{margin:8px 0}
   <nav>
     <button data-tab="make" class="on">만들기</button>
     <button data-tab="videos">영상</button>
+    <button data-tab="store">스토어</button>
     <button data-tab="setup">설정</button>
   </nav>
 </header>
@@ -269,6 +270,35 @@ ol li{margin:8px 0}
   </div>
 </section>
 
+<!-- ───────── 스토어 탭 (프로필 링크 쇼핑 페이지) ───────── -->
+<section id="tab-store">
+  <div class="card">
+    <h2>미래마켓 스토어 (프로필 링크 페이지)</h2>
+    <p class="hint" style="margin:0">영상에서는 제품을 <b>종류·통상 명칭</b>으로만 부르고 실제 제품명은 감춥니다.
+      궁금해진 시청자가 프로필 링크로 들어오면 이 <b>스토어</b>에서 실제 상품명과 쿠팡 링크를 봅니다.
+      유튜브 <b>채널 프로필 링크</b>와 영상 <b>고정 댓글·설명란</b>에 아래 주소를 넣으세요.</p>
+    <p style="margin:10px 0 0"><a class="btn sub" href="https://shorts-admin.jtaechul.workers.dev/store" target="_blank" rel="noopener">스토어 열어보기 ↗</a></p>
+    <p class="hint" style="margin:8px 0 0">특정 상품으로 바로 보내려면 주소 끝에 번호를 붙입니다 — 예:
+      <b>shorts-admin.jtaechul.workers.dev/store#3</b> → No.003 상품으로 스크롤됩니다.</p>
+  </div>
+  <div class="card">
+    <h2>등록된 상품에서 추가</h2>
+    <label>상품 선택 (‘만들기 → 상품’에서 등록한 것)</label>
+    <select id="stProduct"><option value="">— 불러오는 중 —</option></select>
+    <label>한 줄 소개 — “무슨 불편을 없애는지” (스토어 카드에 표시)</label>
+    <input id="stPain" placeholder="예: 빨래방 갈 시간을 없애는 3분 초고속 미니 세탁기">
+    <button class="btn" id="stAdd" style="margin-top:10px">스토어에 추가</button>
+    <p class="hint">상품명·쿠팡 링크·이미지·카테고리는 등록된 상품에서 자동으로 가져옵니다. 번호는 자동 부여됩니다.
+      추가한 뒤 아래 <b>스토어 저장</b>을 눌러야 실제로 반영됩니다.</p>
+  </div>
+  <div class="card">
+    <h2>현재 스토어 <button class="btn mini sub" id="stReload" style="float:right">새로고침</button></h2>
+    <div id="storeList"><p class="empty">불러오는 중...</p></div>
+    <button class="btn" id="stSave" style="margin-top:12px">스토어 저장</button>
+    <p class="hint">저장하면 약 1분 뒤 공개 스토어에 반영됩니다(자동 배포). <b>보임</b> 체크를 끄면 스토어에서 숨겨집니다.</p>
+  </div>
+</section>
+
 <!-- ───────── 채널 탭 ───────── -->
 <!-- ───────── 설정 탭 ───────── -->
 <section id="tab-setup">
@@ -379,6 +409,7 @@ const OWNER = "jtaechul", REPO = "Product", BRANCH = "main";
 const P = "projects/coupang-shorts-factory";
 const CSV_PATH = P + "/data/products_manual.csv";
 const STATE_PATH = P + "/data/processed.json";
+const STORE_PATH = P + "/admin/public/store-catalog.json";   // 공개 스토어 카탈로그(정적 에셋)
 const WF = "shorts-produce.yml";
 const CSV_HEADER = "product_name,price,key_specs,image_urls,affiliate_url,category";
 const LS_KEY = "shortsAdminToken";
@@ -457,9 +488,108 @@ document.querySelectorAll("nav button").forEach((b) => {
       s.classList.toggle("on", (s.dataset.group || s.id.replace("tab-", "")) === tab));
     if (tab === "make") makeInit();
     if (tab === "videos") loadVideos();
+    if (tab === "store") storeInit();
     if (tab === "setup") { bgmRefresh(); loadMemes(); }
   };
 });
+/* ── 스토어(공개 상품 페이지) 관리 — data/../admin/public/store-catalog.json 편집 ───── */
+let storeItems = [], storeSha = null, stRows = [];
+async function storeInit() {
+  await Promise.all([storeLoad(), storePopulatePicker()]);
+}
+async function storeLoad() {
+  const box = $("storeList");
+  if (!token()) { box.innerHTML = '<p class="empty">설정 탭에서 GitHub 토큰을 먼저 저장하세요.</p>'; return; }
+  try {
+    const f = await getFile(STORE_PATH, true);
+    storeSha = f ? f.sha : null;
+    try { storeItems = f ? JSON.parse(f.text) : []; } catch { storeItems = []; }
+    if (!Array.isArray(storeItems)) storeItems = [];
+  } catch (e) { box.innerHTML = '<p class="empty">' + (e.message || "불러오기 실패") + '</p>'; return; }
+  storeRender();
+}
+async function storePopulatePicker() {
+  const sel = $("stProduct");
+  if (!token()) { sel.innerHTML = '<option value="">토큰을 먼저 저장하세요</option>'; return; }
+  sel.innerHTML = '<option value="">— 불러오는 중 —</option>';
+  try {
+    const csv = await getFile(CSV_PATH, true);
+    stRows = csv ? parseCsv(csv.text) : [];
+    sel.innerHTML = "";
+    const first = document.createElement("option");
+    first.value = ""; first.textContent = stRows.length ? "— 등록된 상품 선택 —" : "— 등록된 상품이 없습니다 —";
+    sel.appendChild(first);
+    stRows.forEach((r, i) => {
+      const o = document.createElement("option");
+      o.value = String(i);
+      o.textContent = r.name || ("(링크 " + (r.link || "").slice(-16) + ")");
+      sel.appendChild(o);
+    });
+  } catch (e) { sel.innerHTML = '<option value="">상품을 불러오지 못했습니다</option>'; }
+}
+function storeNextNumber() { return storeItems.reduce((m, x) => Math.max(m, Number(x.number) || 0), 0) + 1; }
+async function storeAddFromProduct() {
+  const sel = $("stProduct"), i = sel.value;
+  if (i === "" || !stRows[i]) { toast("먼저 상품을 선택하세요."); return; }
+  const r = stRows[i];
+  const hash = await sha16(`${r.name}|${r.link}`);
+  if (storeItems.some((x) => x.row_hash === hash)) { toast("이미 스토어에 있는 상품입니다."); return; }
+  storeItems.push({
+    number: storeNextNumber(), row_hash: hash, name: (r.name || "").trim(), url: (r.link || "").trim(),
+    image: (r.img || "").trim(), category: (r.cat || "기타").trim(),
+    pain: ($("stPain").value || "").trim(), visible: true, date: new Date().toISOString().slice(0, 10),
+  });
+  $("stPain").value = "";
+  storeRender();
+  toast("추가했습니다. 맨 아래 ‘스토어 저장’을 눌러 반영하세요.", 4200);
+}
+function storeRender() {
+  const box = $("storeList");
+  box.innerHTML = "";
+  if (!storeItems.length) { box.innerHTML = '<p class="empty">아직 스토어에 담긴 상품이 없습니다. 위에서 추가하세요.</p>'; return; }
+  const order = [...storeItems].sort((a, b) => (Number(b.number) || 0) - (Number(a.number) || 0));
+  order.forEach((it) => {
+    const idx = storeItems.indexOf(it);
+    const row = document.createElement("div");
+    row.className = "item";
+    row.style.cssText = "flex-direction:column;align-items:stretch;gap:8px";
+    const head = document.createElement("div");
+    head.style.cssText = "display:flex;align-items:center;gap:8px";
+    const no = document.createElement("span");
+    no.className = "chip"; no.textContent = "No." + String(it.number).padStart(3, "0");
+    const nameI = document.createElement("input");
+    nameI.value = it.name || ""; nameI.placeholder = "상품명(스토어에 그대로 표시)";
+    nameI.style.flex = "1"; nameI.oninput = () => { storeItems[idx].name = nameI.value; };
+    const visL = document.createElement("label");
+    visL.style.cssText = "display:flex;align-items:center;gap:4px;font-size:13px;white-space:nowrap";
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.checked = it.visible !== false;
+    cb.onchange = () => { storeItems[idx].visible = cb.checked; };
+    visL.append(cb, document.createTextNode("보임"));
+    const del = document.createElement("button");
+    del.className = "btn mini danger"; del.textContent = "삭제";
+    del.onclick = () => { storeItems.splice(idx, 1); storeRender(); };
+    head.append(no, nameI, visL, del);
+    const painI = document.createElement("input");
+    painI.value = it.pain || ""; painI.placeholder = "한 줄 소개 — 무슨 불편을 없애는지";
+    painI.oninput = () => { storeItems[idx].pain = painI.value; };
+    row.append(head, painI);
+    box.appendChild(row);
+  });
+}
+async function storeSave(btn) {
+  await busy(btn, async () => {
+    const clean = storeItems.filter((x) => x && (x.url || x.name));
+    await putFile(STORE_PATH, JSON.stringify(clean, null, 1) + "\n", "shorts(admin): 스토어 카탈로그 업데이트", storeSha || undefined);
+    const f = await getFile(STORE_PATH, true);   // sha 갱신(연속 저장 대비)
+    storeSha = f ? f.sha : null;
+    toast("저장했습니다. 약 1분 뒤 공개 스토어에 반영됩니다.", 4500);
+  });
+}
+$("stAdd").onclick = () => busy($("stAdd"), storeAddFromProduct);
+$("stReload").onclick = () => storeInit();
+$("stSave").onclick = () => storeSave($("stSave"));
+
 // 만들기 탭 = 상품 선택(공용) + 대기열 + 기획 + 이미지 + 제작 초기화
 async function makeInit() {
   if (!currentWork) {   // 새로고침 후 현재 작업 상품 복원(대기열 폐지 → localStorage 사용)

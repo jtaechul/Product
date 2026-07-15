@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>미래마켓 · 오늘의 신박한 아이템</title>
+<meta name="description" content="미래에서 온 큐레이터가 오늘의 불편을 없애주는 신박한 물건을 소개합니다.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F4F6FB;--card:#fff;--ink:#0F172A;--sub:#64748B;--line:#E6EAF2;
+  --brand:#4F46E5;--brand2:#06B6D4;--pop:#F97316;--radius:16px;
+}
+body{background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',sans-serif;min-height:100vh;padding-bottom:70px;-webkit-font-smoothing:antialiased}
+
+/* header */
+.hd{background:linear-gradient(135deg,#312E81 0%,#1E1B4B 45%,#0E7490 100%);color:#fff;padding:40px 20px 22px;text-align:center;position:relative;overflow:hidden}
+.hd::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% -20%,rgba(6,182,212,.45),transparent 55%);pointer-events:none}
+.hd-eyebrow{font-size:10px;letter-spacing:5px;color:#67E8F9;font-weight:700;margin-bottom:12px;position:relative}
+.hd-title{font-size:30px;font-weight:900;line-height:1.2;margin-bottom:10px;letter-spacing:-.5px;position:relative}
+.hd-sub{font-size:12.5px;color:#C7D2FE;line-height:1.7;position:relative}
+
+/* search + tabs */
+.tabs-wrap{background:#1E1B4B;padding:14px 16px 16px;position:sticky;top:0;z-index:20}
+.search-input{width:100%;background:#2A265F;color:#fff;border:1px solid #3F3A7A;border-radius:12px;padding:11px 14px 11px 40px;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238B93D6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:14px center}
+.search-input::placeholder{color:#8B93D6}
+.search-input:focus{border-color:var(--brand2)}
+.tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:#2A265F;color:#C7D2FE;border:none;padding:8px 18px;border-radius:20px;font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap;transition:.2s;font-weight:500}
+.tab.active,.tab:hover{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;font-weight:700}
+
+/* catalog */
+.catalog{max-width:540px;margin:0 auto;padding:16px 16px 0;display:flex;flex-direction:column;gap:16px}
+.no-results,.empty{text-align:center;padding:52px 20px;color:var(--sub);font-size:14px}
+.no-results{display:none}
+
+/* card */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:0 2px 16px rgba(15,23,42,.07);overflow:hidden;transition:box-shadow .25s,transform .25s;border:1px solid var(--line)}
+.card:hover{box-shadow:0 10px 34px rgba(49,46,129,.14);transform:translateY(-2px)}
+.card.hidden{display:none}
+.thumb{position:relative;width:100%;aspect-ratio:1/1;background:#EEF1F8 center/cover no-repeat;display:block}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.badge-new{position:absolute;top:12px;left:12px;background:var(--pop);color:#fff;font-size:9px;font-weight:900;padding:4px 10px;border-radius:6px;letter-spacing:1.5px;box-shadow:0 2px 8px rgba(249,115,22,.5)}
+.book-num{position:absolute;top:10px;right:12px;font-size:12px;font-weight:800;color:#fff;background:rgba(15,23,42,.55);padding:3px 10px;border-radius:20px;backdrop-filter:blur(4px)}
+.body{padding:18px 18px 20px}
+.cat-pill{display:inline-block;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:10px;background:#EEF2FF;color:var(--brand)}
+.name{font-size:18px;font-weight:800;line-height:1.4;margin-bottom:10px;letter-spacing:-.3px}
+.pain{font-size:13.5px;line-height:1.7;color:#334155;background:#F1F5FF;border-left:3px solid var(--brand2);border-radius:0 8px 8px 0;padding:11px 14px;margin-bottom:16px}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.date{font-size:11.5px;color:#94A3B8}
+.cta{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;text-decoration:none;padding:11px 20px;border-radius:10px;font-size:13px;font-weight:800;white-space:nowrap;transition:.2s;box-shadow:0 4px 14px rgba(79,70,229,.32)}
+.cta:hover{filter:brightness(1.07)}
+.cta-soon{font-size:12px;color:#94A3B8;font-style:italic}
+
+/* loading */
+.loading{text-align:center;padding:60px 20px;color:var(--sub)}
+.spinner{display:inline-block;width:32px;height:32px;border:3px solid #E2E8F0;border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* footer */
+.pgfoot{max-width:540px;margin:36px auto 0;padding:24px 16px 0;text-align:center;border-top:1px solid var(--line)}
+.pgfoot .insta{font-size:14px;font-weight:800;color:var(--brand);margin-bottom:8px;display:inline-block;text-decoration:none}
+.pgfoot p{font-size:11px;color:#94A3B8;line-height:1.8}
+</style>
+</head>
+<body>
+<header class="hd">
+  <p class="hd-eyebrow">MIRAE MARKET</p>
+  <h1 class="hd-title">미래마켓<br>오늘의 신박한 아이템</h1>
+  <p class="hd-sub">미래에서 온 큐레이터가 오늘의 불편을 없애주는 물건을 소개합니다.<br>영상 속 그 물건, 여기서 바로 만나보세요.</p>
+</header>
+<div class="tabs-wrap">
+  <input type="text" id="searchInput" class="search-input" placeholder="상품명 · 카테고리 · 번호로 검색" autocomplete="off">
+  <div class="tabs" id="tabs" role="tablist"></div>
+</div>
+<main class="catalog" id="catalog">
+  <div class="loading"><div class="spinner"></div><br>불러오는 중...</div>
+</main>
+<div class="no-results" id="noResults">검색 결과가 없습니다.</div>
+<footer class="pgfoot">
+  <a class="insta" href="https://www.youtube.com/@miraemarket" target="_blank" rel="noopener">@miraemarket</a>
+  <p>이 페이지의 상품 구매 링크는 쿠팡 파트너스 활동의 일환으로,<br>이에 따른 일정액의 수수료를 제공받습니다.</p>
+</footer>
+<script>
+// 정적 카탈로그(운영자가 관리자 '스토어' 탭에서 저장) — 캐시 우회로 최신본을 읽는다.
+// 절대경로: /store · /store/ · /store.html 어디로 들어와도 같은 파일을 읽게 한다.
+const CATALOG_URL = "/store-catalog.json?t=" + Date.now();
+// 이미지: 쿠팡 등 핫링크 차단 대비로 워커 프록시(/store-img) 먼저 시도 → 실패 시 원본 → 실패 시 숨김.
+// (원본 URL은 data-raw 속성에 담아 onerror에서 참조 — URL 안의 따옴표로 핸들러가 깨지지 않게.)
+function imgTag(u, alt){
+  if(!u) return "";
+  return `<img src="/store-img?u=${encodeURIComponent(u)}" data-raw="${esc(u)}" alt="${esc(alt)}" loading="lazy" onerror="imgFallback(this)">`;
+}
+function imgFallback(el){
+  if(!el.dataset.tried){ el.dataset.tried=1; el.src=el.dataset.raw; }
+  else { const t=el.closest(".thumb"); if(t) t.style.display="none"; }
+}
+window.imgFallback=imgFallback;
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function num3(n){return String(n).replace(/\D/g,"").padStart(3,"0");}
+
+function render(catalog){
+  const tabsEl=document.getElementById("tabs"), catEl=document.getElementById("catalog");
+  catalog=(catalog||[]).filter(x=>x&&x.visible!==false&&(x.url||x.name));
+  catalog.sort((a,b)=>(Number(b.number)||0)-(Number(a.number)||0)); // 최신(높은 번호) 우선
+
+  if(!catalog.length){
+    tabsEl.innerHTML='<button class="tab active" data-filter="전체">전체</button>';
+    catEl.innerHTML='<div class="empty">곧 첫 번째 아이템이 등록됩니다.</div>';
+    return;
+  }
+  const cats=["전체",...new Set(catalog.map(b=>b.category).filter(Boolean))];
+  tabsEl.innerHTML=cats.map((c,i)=>`<button class="tab${i===0?" active":""}" data-filter="${esc(c)}">${esc(c)}</button>`).join("");
+
+  const newest=catalog.length?Math.max(...catalog.map(b=>Number(b.number)||0)):0;
+  catEl.innerHTML=catalog.map(b=>{
+    const n=num3(b.number);
+    const cta=b.url
+      ? `<a href="${esc(b.url)}" target="_blank" rel="noopener sponsored" class="cta">쿠팡에서 보기 →</a>`
+      : `<span class="cta-soon">링크 준비 중</span>`;
+    const search=`no.${n} ${n} ${b.name||""} ${b.category||""} ${b.pain||""}`.toLowerCase();
+    return `
+<article class="card" id="p${esc(n)}" data-category="${esc(b.category||"기타")}" data-search="${esc(search)}">
+  <div class="thumb">
+    ${(Number(b.number)||0)===newest?'<span class="badge-new">NEW</span>':""}
+    <span class="book-num">No.${esc(n)}</span>
+    ${imgTag(b.image,b.name)}
+  </div>
+  <div class="body">
+    <span class="cat-pill">${esc(b.category||"기타")}</span>
+    <h2 class="name">${esc(b.name||"신박한 아이템")}</h2>
+    ${b.pain?`<blockquote class="pain">${esc(b.pain)}</blockquote>`:""}
+    <div class="foot"><span class="date">${esc(b.date||"")}</span>${cta}</div>
+  </div>
+</article>`;
+  }).join("");
+
+  const tabs=tabsEl.querySelectorAll(".tab"), cards=catEl.querySelectorAll(".card");
+  const searchInput=document.getElementById("searchInput"), noRes=document.getElementById("noResults");
+  function apply(){
+    const q=(searchInput.value||"").trim().toLowerCase();
+    const active=tabsEl.querySelector(".tab.active");
+    const f=active?active.dataset.filter:"전체";
+    let shown=0;
+    cards.forEach(c=>{
+      const okCat=(f==="전체")||(c.dataset.category===f);
+      const okQ=!q||(c.dataset.search||"").includes(q);
+      const vis=okCat&&okQ; c.classList.toggle("hidden",!vis); if(vis)shown++;
+    });
+    noRes.style.display=shown===0?"block":"none";
+  }
+  tabs.forEach(t=>t.onclick=()=>{tabs.forEach(x=>x.classList.remove("active"));t.classList.add("active");apply();});
+  searchInput.oninput=apply;
+
+  // 딥링크: 프로필 링크 .../store#3 → No.003 카드로 스크롤 + 강조
+  const target=(location.hash.replace("#","")||"").replace(/\D/g,"");
+  if(target){
+    const want=num3(target);
+    const card=catEl.querySelector("#p"+want);
+    if(card){setTimeout(()=>card.scrollIntoView({behavior:"smooth",block:"center"}),300);
+      card.style.outline="3px solid #06b6d4";card.style.outlineOffset="3px";}
+  }
+}
+
+fetch(CATALOG_URL).then(r=>r.ok?r.json():[]).then(render).catch(()=>{
+  document.getElementById("catalog").innerHTML='<div class="empty">목록을 불러오지 못했습니다.<br>잠시 후 다시 시도해주세요.</div>';
+});
+</script>
+</body>
+</html>
