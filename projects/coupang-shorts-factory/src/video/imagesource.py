@@ -32,15 +32,27 @@ OPENVERSE = "https://api.openverse.org/v1/images/"
 WIKIMEDIA = "https://commons.wikimedia.org/w/api.php"
 UA = {"User-Agent": "miraemarket-shorts/1.0 (+https://youtube.com/@miraemarket)"}
 
+# 카테고리별 폴백 검색어 — 라인 수가 풀보다 많아도 잘 반복되지 않게 넉넉히(라인별 차별화 #1).
 _CATEGORY_QUERIES = {
-    "가전": ["cozy living room", "home party friends", "modern apartment"],
-    "주방": ["home cooking", "kitchen counter", "family dinner"],
-    "생활": ["tidy home", "daily life routine", "minimal room"],
-    "미용": ["skincare routine", "beauty mirror", "bathroom vanity"],
-    "디지털": ["desk setup", "using smartphone", "modern workspace"],
-    "가구": ["interior room", "home decor", "relaxing at home"],
+    "가전": ["cozy living room", "home party friends", "modern apartment", "messy desk cables",
+             "person relaxing sofa", "smart home gadget", "tired after chores", "surprised face closeup"],
+    "주방": ["home cooking mess", "kitchen counter clutter", "family dinner table", "washing dishes tired",
+             "quick meal alone", "spilled coffee morning", "person tasting food", "empty fridge"],
+    "생활": ["messy room before", "daily life routine", "minimal tidy room", "laundry pile",
+             "person cleaning home", "small apartment living", "organizing drawer", "frustrated at home"],
+    "미용": ["skincare routine mirror", "beauty vanity table", "tired skin morning", "bathroom shelf",
+             "person applying cream", "hair styling struggle", "makeup closeup", "self care evening"],
+    "디지털": ["messy desk setup", "using smartphone night", "modern workspace", "tangled charger cables",
+              "person working laptop", "gaming setup rgb", "confused looking phone", "coffee and laptop"],
+    "가구": ["small interior room", "home decor cozy", "relaxing at home", "assembling furniture",
+             "cramped apartment", "person on sofa", "moving boxes", "tidy bedroom"],
 }
-_DEFAULT_QUERIES = ["young person at home", "cozy lifestyle", "everyday moment", "city night lights"]
+_DEFAULT_QUERIES = ["young person at home", "cozy lifestyle indoor", "everyday moment candid",
+                    "city night lights", "person surprised reaction", "tired stressed person",
+                    "messy before cleanup", "relaxing weekend home", "curious looking closeup",
+                    "frustrated daily struggle"]
+# 재미 소스에 붙이는 수식어(Giphy 키 없을 때 스톡을 더 웃기게)
+_FUNNY_MODS = ["funny", "hilarious", "silly", "awkward", "goofy reaction", "shocked funny"]
 
 
 def _pexels_key() -> str:
@@ -189,8 +201,9 @@ def fetch_line_images(product: dict, lines: list, product_images: list,
     got = 0
     for i, pl in enumerate(plan):
         if pl["type"] == "product" and prod0 is not None:
-            line_images.append(prod0)
+            line_images.append(prod0)   # 상품 사진은 product(기능 설명) 라인에만
             continue
+        # 이미지 라인: 라인마다 다른 order_seed로 다른 결과 → 라인 간 차별화(#1)
         url = _search_one(pl.get("query", ""), seen, order_seed=img_i) if pl["type"] == "image" else None
         img_i += 1
         ext = ".gif" if url and url.lower().split("?")[0].endswith(".gif") else ".jpg"
@@ -199,9 +212,10 @@ def fetch_line_images(product: dict, lines: list, product_images: list,
             line_images.append(dest)
             got += 1
         else:
-            line_images.append(prod0)  # 폴백: 절대 빈 화면 없음
+            # ⭐ 실패해도 상품 사진으로 때우지 않는다(상품 반복 방지 #3) → None(렌더가 브랜드 패널)
+            line_images.append(None)
     print(f"[imgsrc] 라인 {len(plan)}개 · 이미지 라인 {n_img} → 문구 이미지 {got}장 확보"
-          f"(부족분·상품라인은 상품 사진). 소스: Pexels/Openverse/Wikimedia")
+          f"(상품 사진은 product 라인만, 실패는 브랜드 패널). 소스: Pexels/Openverse/Wikimedia")
     return line_images, plan
 
 
@@ -250,57 +264,149 @@ def _meme_repo_rel(mp) -> str:
         return str(mp)
 
 
+def _pick_line_memes(project_root: Path, text: str, used: set, k: int) -> list:
+    """라인 텍스트에 어울리는 밈을 고르되, 이미 다른 라인이 쓴 밈은 후순위(로테이션)로 밀어
+    라인마다 다른 밈이 오게 한다(반복 완화 #1). 반환: 경로 리스트(최대 k)."""
+    from src.video import memes
+    lib = memes.load_library(project_root)
+    if not lib:
+        return []
+    text = text or ""
+    scored = []
+    for m in lib:
+        hits = sum(1 for kw in (m.get("situations") or []) if kw and kw in text)
+        fresh = 0 if str(m["_path"]) in used else 3   # 안 쓴 밈 가산 → 라인 간 중복 억제
+        scored.append((hits * 10 + fresh, m["_path"]))
+    scored.sort(key=lambda x: -x[0])
+    return [p for _, p in scored[:max(0, k)]]
+
+
+def _funny_urls(query: str, seen: set, page: int, n: int) -> list:
+    """재미 소스 URL n개: Giphy GIF 우선(키 있으면), 부족분은 'funny 수식어' 스톡(#2).
+    반환: [{url, source}] — source에 'giphy'/'funny' 포함(재미 집계용)."""
+    out = []
+    if _giphy_key():
+        for _ in range(n):
+            try:
+                u = _giphy(query or "funny reaction", seen, page)
+            except Exception:
+                u = None
+            if not u:
+                break
+            out.append({"url": u, "source": "giphy"})
+    if len(out) < n:
+        mod = _FUNNY_MODS[page % len(_FUNNY_MODS)]
+        fq = (f"{mod} {query}".strip()) or f"{mod} person reaction"
+        for fn in (_pexels, _openverse, _pixabay):
+            for _ in range(2):
+                if len(out) >= n:
+                    break
+                try:
+                    u = fn(fq, seen, page)
+                except Exception:
+                    u = None
+                if not u:
+                    break
+                out.append({"url": u, "source": fn.__name__.lstrip("_") + "-funny"})
+            if len(out) >= n:
+                break
+    return out
+
+
+def _is_funny(c: dict) -> bool:
+    """후보가 '재미' 부류인지 — 밈 / Giphy GIF / funny 수식어 스톡."""
+    s = str(c.get("source") or "")
+    return bool(c.get("is_meme")) or "giphy" in s or "funny" in s
+
+
+def _dl_candidate(out_dir: Path, i: int, k: int, url: str):
+    """후보 이미지/움짤 다운로드 → 경로(실패 시 None). 파일명은 라인·순번으로 유일."""
+    ext = ".gif" if url.lower().split("?")[0].endswith(".gif") else ".jpg"
+    dest = out_dir / f"line{i:02d}_{k}{ext}"
+    return dest if _download_image(url, dest) else None
+
+
 def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
                      product_images: list | None = None, per_line: int = 6,
                      only_line: int | None = None) -> list:
-    """관리자 선택기용 — 라인마다 후보 이미지 여러 장 확보 + candidates.json manifest 작성.
-    상품 사진 + 대본에 어울리는 카피바라 밈 + 다양 소스 검색이미지를 후보로 모은다.
-    only_line 지정 시 그 라인 하나만 재생성한다('다시 찾기' 라인별 재생성 — 파이프라인이 병합)."""
+    """관리자 선택기용 — 라인마다 후보를 모은다. 설계(2026-07-15 사용자 개선):
+    ① 라인마다 다른 검색 페이지 + 밈 로테이션으로 '라인별 차별화'(같은 이미지 반복 제거, #1)
+    ② 후보의 절반 이상을 재미(밈·GIF·funny 스톡)로 구성(#2)
+    ③ 상품 사진 후보는 'product 타입 라인'에만(그 외 라인엔 상품 후보 없음, #3)
+    only_line 지정 시 그 라인 하나만 재생성('다시 찾기' 라인별 — 파이프라인이 병합)."""
     plan = plan_line_visuals(product, lines, settings)
     out_dir = Path(job_dir) / "candidates"
     out_dir.mkdir(parents=True, exist_ok=True)
     product_images = [str(p) for p in (product_images or []) if Path(p).exists()]
-    from src.video import memes  # 대본이 어울리는 밈을 후보에 섞음(2026-07-15)
-    # '다시 찾기'가 매번 다른 후보를 주도록 실행마다 랜덤 페이지에서 시작(각 소스의 결과 창을 이동).
-    # (이전엔 항상 1페이지 첫 결과만 가져와, 재생성해도 같은 이미지가 나왔다.)
     base_page = random.randint(1, 6)
-    manifest, seen = [], set()
+    regular_n = max(2, per_line - 4)
+    manifest, seen, used_memes = [], set(), set()
     for i, (ln, pl) in enumerate(zip(lines, plan)):
         if only_line is not None and i != int(only_line):
             continue
-        entry = {"line_i": i, "text": ln.get("text", ""), "stage": ln.get("stage"),
-                 "punch": bool(ln.get("punch")), "type": pl["type"],
-                 "query": pl.get("query", ""), "candidates": []}
-        for p in product_images[:2]:   # 상품 사진 후보(강제 선택용)
-            entry["candidates"].append({"file": p, "source": "product", "url": None, "is_product": True})
-        # 대본에 어울리는 카피바라 밈(있으면) — 라인마다 최대 2개, 펀치 라인은 최소 1개 보장.
-        try:
-            for mp in memes.match_memes(PROJECT_ROOT, ln.get("text", ""), limit=2,
-                                        ensure_one=bool(ln.get("punch"))):
-                entry["candidates"].append({"file": str(mp), "source": "meme", "url": None,
-                                            "is_meme": True, "meme_rel": _meme_repo_rel(mp)})
-        except Exception as e:
-            print(f"[imgsrc] 밈 매칭 실패({type(e).__name__}) → 밈 없이 진행")
-        if pl["type"] == "image":
-            for j, c in enumerate(_search_many(pl.get("query", ""), per_line, seen, base_page)):
-                ext = ".gif" if c["url"].lower().split("?")[0].endswith(".gif") else ".jpg"
-                dest = out_dir / f"line{i:02d}_{j}{ext}"
-                if _download_image(c["url"], dest):
-                    entry["candidates"].append({"file": str(dest), "source": c["source"], "url": c["url"]})
+        text = ln.get("text", "")
+        query = pl.get("query", "")
+        line_page = base_page + i          # 라인마다 다른 결과 창 → 라인 간 차별화(#1)
+        entry = {"line_i": i, "text": text, "stage": ln.get("stage"),
+                 "punch": bool(ln.get("punch")), "type": pl["type"], "query": query, "candidates": []}
+        cands = entry["candidates"]
+        k = 0
+        # ① 상품 사진 — product 타입 라인에만(#3)
+        if pl["type"] == "product":
+            for p in product_images[:2]:
+                cands.append({"file": p, "source": "product", "url": None, "is_product": True})
+        # ② 재미(밈) — 로테이션 2장(#1·#2)
+        for mp in _pick_line_memes(PROJECT_ROOT, text, used_memes, 2):
+            used_memes.add(str(mp))
+            cands.append({"file": str(mp), "source": "meme", "url": None,
+                          "is_meme": True, "meme_rel": _meme_repo_rel(mp)})
+        # ③ 재미(GIF/funny 스톡) — 2장(#2)
+        for c in _funny_urls(query, seen, line_page, 2):
+            d = _dl_candidate(out_dir, i, k, c["url"]); k += 1
+            if d:
+                cands.append({"file": str(d), "source": c["source"], "url": c["url"]})
+        # ④ 일반 라인 이미지 — 고유 검색어 + 라인별 페이지(#1)
+        for c in _search_many(query, regular_n, seen, line_page):
+            d = _dl_candidate(out_dir, i, k, c["url"]); k += 1
+            if d:
+                cands.append({"file": str(d), "source": c["source"], "url": c["url"]})
+        # ⑤ 재미 비중 보정 — 재미가 절반 미만이면 더 채운다(#2, 최대 4회)
+        for _ in range(4):
+            if sum(1 for c in cands if _is_funny(c)) * 2 >= len(cands) or not cands:
+                break
+            added = False
+            for c in _funny_urls(query, seen, line_page + 1, 1):
+                d = _dl_candidate(out_dir, i, k, c["url"]); k += 1
+                if d:
+                    cands.append({"file": str(d), "source": c["source"], "url": c["url"]}); added = True
+            if not added:   # 소스가 막히면 밈 로테이션으로 보충
+                more = _pick_line_memes(PROJECT_ROOT, text, used_memes, 1)
+                if not more:
+                    break
+                for mp in more:
+                    used_memes.add(str(mp))
+                    cands.append({"file": str(mp), "source": "meme", "url": None,
+                                  "is_meme": True, "meme_rel": _meme_repo_rel(mp)})
+            line_page += 1
         manifest.append(entry)
     (Path(job_dir) / "candidates.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
     total = sum(len(e["candidates"]) for e in manifest)
+    funny_total = sum(1 for e in manifest for c in e["candidates"] if _is_funny(c))
     tag = f"(라인 {only_line}만)" if only_line is not None else ""
-    print(f"[imgsrc] 후보 생성{tag}: {len(manifest)}라인 · 총 {total}장")
+    extra = "" if _giphy_key() else " · Giphy 키 없음(밈/funny 스톡 위주 — 더 많은 GIF는 SHORTS_GIPHY_API_KEY 등록)"
+    print(f"[imgsrc] 후보 생성{tag}: {len(manifest)}라인 · 총 {total}장 (재미 {funny_total}장){extra}")
     return manifest
 
 
-def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Path) -> list | None:
+def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Path,
+                    product_images: list | None = None) -> list | None:
     """data/selections/{row_hash}.json 있으면 라인별 '선택 이미지 목록'(lines 정렬) 반환, 없으면 None.
     각 라인은 여러 장 선택 가능(2026-07-14) → line_images[i] = [경로...] (렌더가 그 구간 슬라이드쇼).
-    url이면 내려받고, 커밋 파일(업로드본)이면 그대로, is_product(상품 강제)는 None(렌더가 prod0 사용).
-    포맷: {lines:[{line_i, picks:[{url?/file?/is_product?, source, query}, ...]}]} — 구형 단일도 허용."""
+    url이면 내려받고, 커밋 파일(업로드본)이면 그대로.
+    ⭐ 상품 사진은 '운영자가 그 라인에 상품을 고른 경우에만' 나온다(2026-07-15 사용자 개선 #3):
+      is_product 픽 → 실제 상품 사진 경로를 넣고, 안 고른 라인은 빈칸([])으로 둬 렌더가 브랜드
+      패널로 채운다(상품 사진으로 때우지 않음). 포맷: {lines:[{line_i, picks:[...]}]} — 구형 단일도 허용."""
     sel_path = Path(project_root) / "data" / "selections" / f"{row_hash}.json"
     if not sel_path.exists():
         return None
@@ -309,6 +415,7 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
     except Exception as e:
         print(f"[imgsrc] selections 파싱 실패({e}) → 자동 소싱")
         return None
+    prod0 = next((Path(p) for p in (product_images or []) if Path(p).exists()), None)
     by_line = {int(x.get("line_i", -1)): x for x in (data.get("lines") or [])}
     dl_dir = Path(job_dir) / "selected"
     dl_dir.mkdir(parents=True, exist_ok=True)
@@ -324,7 +431,7 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
         imgs = []
         for j, pk in enumerate(picks):
             f = pk.get("file")
-            if f and Path(f).exists():      # 저장소에 커밋된 파일(업로드본 등)
+            if f and Path(f).exists():      # 저장소에 커밋된 파일(업로드본·밈 등)
                 imgs.append(Path(f)); used += 1; continue
             url = pk.get("url")
             if url:
@@ -332,12 +439,12 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
                 dest = dl_dir / f"sel_{i:02d}_{j}{ext}"
                 if _download_image(url, dest):
                     imgs.append(dest); used += 1; continue
-            if pk.get("is_product"):        # 상품 강제 → None(렌더가 prod0 채움)
-                imgs.append(None)
+            if pk.get("is_product") and prod0 is not None:   # 상품을 고른 라인에만 상품 사진
+                imgs.append(prod0); used += 1
         line_images.append(imgs)
     sel_lines = sum(1 for x in line_images if x)
     print(f"[imgsrc] 운영자 선택 적용: {sel_lines}/{len(lines)}라인 · 이미지 {used}장 "
-          f"(data/selections/{row_hash}.json)")
+          f"(data/selections/{row_hash}.json · 미선택 라인은 브랜드 패널)")
     _record_learning(project_root, lines, by_line)
     return line_images
 
