@@ -127,6 +127,8 @@ ol li{margin:8px 0}
   font-weight:900; display:flex; align-items:center; justify-content:center}
 .thumb .ttag{position:absolute; left:5px; bottom:5px; font-size:11px; font-weight:800; color:#fff;
   background:rgba(0,0,0,.6); padding:2px 7px; border-radius:999px}
+.thumb.nofile{cursor:default; display:flex; align-items:center; justify-content:center}
+.thumb.nofile .thumbmsg{color:var(--sub); font-size:12px; font-weight:700; text-align:center; padding:6px}
 .imgup{display:inline-flex; align-items:center; justify-content:center; cursor:pointer}
 </style>
 </head>
@@ -976,7 +978,9 @@ $("btnReloadRuns").onclick = () => loadRuns();
 const VID_PREFIX = "shorts-run";
 // GitHub Release 자산은 octet-stream/attachment 로 와서 iOS 인라인 재생이 안 됨 →
 // 워커 /media 프록시로 video/mp4·inline 으로 바꿔 받는다(admin/worker/index.mjs).
-function mediaUrl(u) { return "/media?u=" + encodeURIComponent(u); }
+// v: 캐시버스터(선택). 워커는 u만 읽고 v는 무시 → 같은 이름의 릴리스 자산이 새 내용으로
+// 덮어써졌을 때(후보 '다시 찾기') v를 자산 updated_at으로 주면 브라우저·엣지 캐시를 우회해 새 이미지가 뜬다.
+function mediaUrl(u, v) { return "/media?u=" + encodeURIComponent(u) + (v ? "&v=" + encodeURIComponent(v) : ""); }
 function relMeta(rel) { try { return JSON.parse(rel.body || "{}"); } catch (_) { return {}; } }
 // 영상 저장(사진 앱 공유 / 다운로드 폴백) — 모달 버튼과 썸네일 밑 '저장' 버튼 공용
 async function saveVideo(btn, url, rawName) {
@@ -1214,6 +1218,7 @@ const IMG_TAG = "shorts-cand";
 let imgRows = [];        // parseCsv 행(순서=CSV 행번호-1)
 let imgManifest = null;  // 현재 로드된 cand_{hash}.json
 let imgAssetMap = {};    // 자산이름 → browser_download_url
+let imgAssetVer = {};    // 자산이름 → updated_at(캐시버스터) — '다시 찾기'로 덮어쓴 새 후보를 확실히 반영
 let imgPicks = {};       // line_i → {url?|file?|is_product?, source, query}
 const pad2 = (n) => String(n).padStart(2, "0");
 
@@ -1233,9 +1238,10 @@ async function loadCandidates(p, silent) {
     if (!silent) $("imgStatus").textContent = "아직 이미지 후보가 없습니다. 잠시 뒤 '이미지 후보 불러오기'를 다시 누르거나, '이미지 후보 다시 만들기'를 누르세요.";
     return false;
   }
-  imgAssetMap = {};
-  for (const a of (rel.assets || [])) imgAssetMap[a.name] = a.browser_download_url;
-  const res = await fetch(mediaUrl(manAsset.browser_download_url));   // 워커 /media(json 허용) 경유
+  imgAssetMap = {}; imgAssetVer = {};
+  for (const a of (rel.assets || [])) { imgAssetMap[a.name] = a.browser_download_url; imgAssetVer[a.name] = a.updated_at || String(a.id || ""); }
+  // 매니페스트는 항상 최신으로(no-store + updated_at 캐시버스터) — 재생성 후 옛 후보 목록이 캐시로 남지 않게.
+  const res = await fetch(mediaUrl(manAsset.browser_download_url, manAsset.updated_at || manAsset.id), { cache: "no-store" });
   if (!res.ok) { if (!silent) $("imgStatus").textContent = "후보 불러오기 실패 " + res.status + " — 잠시 뒤 다시 시도하세요."; return false; }
   imgManifest = await res.json(); imgPicks = {};
   renderImgLines();
@@ -1294,10 +1300,20 @@ function renderImgLines() {
       const url = imgAssetMap[c.name];
       const t = document.createElement("div"); t.className = "thumb"; t.dataset.key = c.name;
       const img = document.createElement("img"); img.loading = "lazy"; img.alt = "";
-      if (url) img.src = mediaUrl(url);
-      t.appendChild(img);
+      // 썸네일 로드 폴백: /media(프록시, 캐시버스터) → 릴리스 직접 URL → '불러오기 실패' 표시.
+      // (자산 누락·gif·프록시 오류로 깨진 이미지 아이콘이 뜨던 문제 방지 — 실패분은 선택 불가 처리)
+      const markBroken = () => {
+        img.onerror = null; img.remove(); t.classList.add("nofile"); t.onclick = null; t.style.cursor = "default";
+        const ph = document.createElement("span"); ph.className = "thumbmsg"; ph.textContent = "불러오기 실패"; t.appendChild(ph);
+      };
+      let stage = 0;
+      img.onerror = () => { if (stage === 0 && url) { stage = 1; img.src = url; } else { markBroken(); } };
+      t.appendChild(img);   // 먼저 붙인 뒤 src 지정 — 그래야 자산 누락 시 markBroken의 img.remove()가 실제로 동작
+      if (url) img.src = mediaUrl(url, imgAssetVer[c.name]);
+      else markBroken();
       if (c.is_product) { const tag = document.createElement("span"); tag.className = "ttag"; tag.textContent = "상품"; t.appendChild(tag); }
       t.onclick = () => {
+        if (t.classList.contains("nofile")) return;   // 깨진 후보는 선택 불가
         const arr = imgPicks[ln.line_i] || (imgPicks[ln.line_i] = []);
         const at = arr.findIndex((x) => x._key === c.name);
         if (at >= 0) { arr.splice(at, 1); t.classList.remove("sel"); }
@@ -1313,10 +1329,15 @@ function renderImgLines() {
     }
     if (!(ln.candidates || []).length)
       thumbs.innerHTML = '<p class="empty" style="grid-column:1/-1">후보 없음 — 다시 찾기나 내 파일을 쓰세요.</p>';
+    // '다시 찾기' = 전체 라인 새 후보 재생성(candidates 재실행) + 폴링으로 자동 갱신.
+    // (이전엔 디스패치만 하고 폴링을 안 해서 '눌러도 이미지가 안 바뀌는' 것처럼 보였음)
     card.querySelector(".imgredo").onclick = (ev) => busy(ev.target, async () => {
       const p = imgSelected(); if (!p) return;
       await imgDispatch(p.row);
-      toast("새 후보 생성 시작 — 1~2분 뒤 '후보 불러오기'를 다시 누르세요.");
+      setStatus("새 후보를 만드는 중... (약 1~3분, 완성되면 자동으로 새 이미지로 갱신)");
+      $("imgStatus").textContent = "새 이미지 후보 생성 중 — 완성되면 자동으로 바뀝니다. (안 바뀌면 '이미지 후보 불러오기')";
+      toast("새 후보 생성 시작 — 완성되면 자동 갱신");
+      pollCandidates(p.hash);
     });
     const upInput = card.querySelector(".imgup input");
     upInput.onchange = () => busy(card.querySelector(".imgup"), async () => {
