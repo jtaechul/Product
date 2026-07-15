@@ -830,11 +830,13 @@ def _build_expose(lines: list, line_windows: list, words: list, line_images: lis
 
     layers = [ImageClip(np.full((height, width, 3), 255, dtype=np.uint8)).with_duration(duration)]
     # 하단 라인별 이미지 (라인 이미지 → 상품 사진0 → 브랜드 패널 순으로 항상 꽉 채움)
-    prod0 = product_images[0] if product_images else None
+    # ⭐ 상품 사진 폴백 제거(2026-07-15 사용자 개선 #3): 라인에 배정된 이미지(sc["img"])만 쓴다.
+    #   비어 있으면 상품 사진으로 때우지 않고 브랜드 패널로 채운다 → 상품 사진이 많은 라인에 반복 노출되지 않음.
+    #   (상품 사진은 운영자가 그 라인에 상품을 고른 경우에만 sc["img"]로 들어온다 — load_selections/plan)
     for sc in _plan_line_scenes(duration, line_windows, line_images or []):
-        clip = _expose_image_clip(sc.get("img") or prod0, sc["start"], sc["end"],
+        clip = _expose_image_clip(sc.get("img"), sc["start"], sc["end"],
                                   width, img_top, img_h, product_images, product_videos)
-        if clip is None:   # 라인 이미지·상품 사진 모두 없거나 로드 실패 → 빈 흰 여백 대신 브랜드 패널
+        if clip is None:   # 라인 이미지 없거나 로드 실패 → 빈 흰 여백 대신 브랜드 패널
             d = sc["end"] - sc["start"]
             if d > 0.05:
                 arr = _branded_rect_arr(width, img_h, ch.get("name", "미래마켓"), font_path)

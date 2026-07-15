@@ -213,7 +213,7 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
         try:
             # #2: 운영자가 관리자에서 고른 이미지(data/selections/{row}.json)가 있으면 그걸 최우선 사용.
             line_images = imagesource.load_selections(
-                product["_row_hash"], lines, PROJECT_ROOT, job_dir)
+                product["_row_hash"], lines, PROJECT_ROOT, job_dir, product_images=product_images)
             if line_images is None:   # 선택본 없으면 자동 소싱(폴백)
                 line_images, vis_plan = imagesource.fetch_line_images(
                     product, lines, product_images, job_dir, settings)
