@@ -24,9 +24,12 @@ tts:
     voice_id: "EXAVITQu4vr4xnSDxMaL"   # Sarah (premade, 전 계정 공용)
     model_id: "eleven_multilingual_v2"
     output_format: "mp3_44100_128"
+    # 화난 톤(2026-07-15 사용자 지시): stability를 낮추고 style을 올려 감정·격앙 표현을 강화.
+    #   (v2에는 감정 프리셋이 없어 이 두 레버로 '화난' 느낌을 낸다. 과하면 stability를 올려 완화.)
     voice_settings:
-      stability: 0.5
+      stability: 0.3           # 낮을수록 표현력·기복↑(화난 톤에 유리)
       similarity_boost: 0.75
+      style: 0.6               # 감정 강조(격앙된 발화)
       speed: 1.1        # 빠른 템포 (스펙 §M4: 1.1~1.15배)
 
   typecast:
@@ -34,6 +37,11 @@ tts:
     model: "ssfm-v30"
     language: "kor"     # ISO 639-3
     audio_tempo: 1.3    # 0.5~2.0 — 경박·발랄 콘셉트에 맞춘 잰 템포(1.1은 47초로 처짐)
+    # 화난 톤(2026-07-15 사용자 지시) — ssfm-v30 감정 프리셋. prompt.emotion_preset로 전달.
+    #   preset: normal|happy|sad|angry|whisper|toneup|tonedown, intensity 0.0~2.0.
+    #   비우거나 normal이면 감정 미적용(중립). 과하면 intensity를 낮춘다.
+    emotion_preset: "angry"
+    emotion_intensity: 1.4
 
   clova:
     speaker: "nara"     # 프리미엄 대표 여성 보이스

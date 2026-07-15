@@ -127,6 +127,7 @@ ol li{margin:8px 0}
   font-weight:900; display:flex; align-items:center; justify-content:center}
 .thumb .ttag{position:absolute; left:5px; bottom:5px; font-size:11px; font-weight:800; color:#fff;
   background:rgba(0,0,0,.6); padding:2px 7px; border-radius:999px}
+.thumb .ttag.meme{background:rgba(124,92,255,.85)}   /* 밈 후보 표시(상품과 구분) */
 .thumb.nofile{cursor:default; display:flex; align-items:center; justify-content:center}
 .thumb.nofile .thumbmsg{color:var(--sub); font-size:12px; font-weight:700; text-align:center; padding:6px}
 .imgup{display:inline-flex; align-items:center; justify-content:center; cursor:pointer}
@@ -1220,30 +1221,40 @@ let imgManifest = null;  // 현재 로드된 cand_{hash}.json
 let imgAssetMap = {};    // 자산이름 → browser_download_url
 let imgAssetVer = {};    // 자산이름 → updated_at(캐시버스터) — '다시 찾기'로 덮어쓴 새 후보를 확실히 반영
 let imgPicks = {};       // line_i → {url?|file?|is_product?, source, query}
+let imgRestorePicks = null;  // 라인별 재생성 후 복원할 픽(다른 라인 선택 보존용). null이면 초기화.
 const pad2 = (n) => String(n).padStart(2, "0");
+const cssKey = (s) => (window.CSS && CSS.escape) ? CSS.escape(String(s)) : String(s).replace(/["\\]/g, "\\$&");
 
 const imgSelected = currentProduct;   // 공용 상품 드롭다운(#mkProduct) 사용
-async function imgDispatch(row) {
+// line 지정 시 그 라인 후보만 재생성('다시 찾기' 라인별). 비우면 전체.
+async function imgDispatch(row, line) {
+  const inputs = { mode: "candidates", row: String(row) };
+  if (line !== undefined && line !== null && line !== "") inputs.line = String(line);
   await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches`, {
     method: "POST",
-    body: JSON.stringify({ ref: BRANCH, inputs: { mode: "candidates", row: String(row) } }),
+    body: JSON.stringify({ ref: BRANCH, inputs }),
   });
 }
 // 개편(2026-07-15): 자동(폴링) + 수동(불러오기 버튼) 둘 다. 공용 로드 함수로 통일.
 // 현재 상품의 후보 매니페스트(cand_{hash}.json)를 로드해 '자막별 이미지 선택'을 채운다. 반환: 로드 성공?
-async function loadCandidates(p, silent) {
+async function loadCandidates(p, silent, since) {
   const rel = await gh(`/repos/${OWNER}/${REPO}/releases/tags/${IMG_TAG}`, { allow404: true });
   const manAsset = rel && (rel.assets || []).find((a) => a.name === `cand_${p.hash}.json`);
   if (!manAsset) {
     if (!silent) $("imgStatus").textContent = "아직 이미지 후보가 없습니다. 잠시 뒤 '이미지 후보 불러오기'를 다시 누르거나, '이미지 후보 다시 만들기'를 누르세요.";
     return false;
   }
+  // 재생성 대기(since 지정): 매니페스트가 재생성 시작보다 오래됐으면 아직 옛것 → 로드하지 말고 폴링 지속.
+  // (60초 여유로 시계 오차 흡수. 이게 없으면 재생성 시 옛 매니페스트를 즉시 띄우고 폴링이 멈춰버림)
+  if (since && manAsset.updated_at && Date.parse(manAsset.updated_at) < since - 60000) return false;
   imgAssetMap = {}; imgAssetVer = {};
   for (const a of (rel.assets || [])) { imgAssetMap[a.name] = a.browser_download_url; imgAssetVer[a.name] = a.updated_at || String(a.id || ""); }
   // 매니페스트는 항상 최신으로(no-store + updated_at 캐시버스터) — 재생성 후 옛 후보 목록이 캐시로 남지 않게.
   const res = await fetch(mediaUrl(manAsset.browser_download_url, manAsset.updated_at || manAsset.id), { cache: "no-store" });
   if (!res.ok) { if (!silent) $("imgStatus").textContent = "후보 불러오기 실패 " + res.status + " — 잠시 뒤 다시 시도하세요."; return false; }
-  imgManifest = await res.json(); imgPicks = {};
+  imgManifest = await res.json();
+  imgPicks = imgRestorePicks || {};   // 라인별 재생성이면 다른 라인 픽 복원, 아니면 초기화
+  imgRestorePicks = null;
   renderImgLines();
   $("imgSaveCard").style.display = "";
   $("imgStatus").textContent = `${imgManifest.lines.length}개 자막 — 라인마다 이미지를 고르세요(여러 장=슬라이드쇼).`;
@@ -1251,24 +1262,27 @@ async function loadCandidates(p, silent) {
   return true;
 }
 // 상품 기획하기/다시 만들기 후: 후보가 생길 때까지 폴링 → 완성되면 자동 표시(수동 버튼과 병행)
-async function pollCandidates(hash, tries = 0) {
+// since: 재생성 시작 시각(ms). 그보다 새 매니페스트가 나올 때까지 기다린다(옛것 조기표시 방지).
+async function pollCandidates(hash, tries = 0, since = 0) {
   if (!currentWork || currentWork.hash !== hash) return;   // 다른 상품으로 바뀌면 중단
-  if (await loadCandidates(currentWork, true)) {
+  if (await loadCandidates(currentWork, true, since)) {
     document.getElementById("tab-images").scrollIntoView({ behavior: "smooth" });
     return;
   }
   if (tries >= 32) { setStatus("후보 생성이 오래 걸립니다(3분+). '이미지 후보 불러오기'를 눌러 확인하세요."); return; }
   setStatus(`대본·자막별 이미지 후보 만드는 중... (${tries * 15}초 · 보통 1~3분) — 다 되면 자동으로 뜹니다.`);
-  setTimeout(() => pollCandidates(hash, tries + 1), 15000);
+  setTimeout(() => pollCandidates(hash, tries + 1, since), 15000);
 }
-// [이미지 후보 다시 만들기] 현재 상품으로 candidates 재실행 + 폴링
+// [이미지 후보 다시 만들기] 현재 상품으로 candidates 재실행(전체 라인) + 폴링
 $("imgGen").onclick = (ev) => busy(ev.target, async () => {
   const p = imgSelected(); if (!p) return;
+  imgRestorePicks = null;               // 전체 재생성 → 모든 픽 초기화
+  const since = Date.now();
   await imgDispatch(p.row);
   setStatus("이미지 후보를 다시 만드는 중... (약 1~3분, 완성되면 자동 표시)");
   $("imgStatus").textContent = "이미지 후보 생성을 시작했습니다. 잠시만요...";
   toast("이미지 후보 다시 만들기 시작");
-  pollCandidates(p.hash);
+  pollCandidates(p.hash, 0, since);
 });
 // [이미지 후보 불러오기] 지금 상품 후보를 즉시 로드(자동이 놓쳐도 이 버튼으로 언제든)
 $("imgLoad").onclick = (ev) => busy(ev.target, async () => {
@@ -1312,6 +1326,7 @@ function renderImgLines() {
       if (url) img.src = mediaUrl(url, imgAssetVer[c.name]);
       else markBroken();
       if (c.is_product) { const tag = document.createElement("span"); tag.className = "ttag"; tag.textContent = "상품"; t.appendChild(tag); }
+      else if (c.is_meme) { const tag = document.createElement("span"); tag.className = "ttag meme"; tag.textContent = "밈"; t.appendChild(tag); }
       t.onclick = () => {
         if (t.classList.contains("nofile")) return;   // 깨진 후보는 선택 불가
         const arr = imgPicks[ln.line_i] || (imgPicks[ln.line_i] = []);
@@ -1320,6 +1335,8 @@ function renderImgLines() {
         else {
           arr.push(c.is_product
             ? { is_product: true, source: "product", query: ln.query || "", _key: c.name }
+            : c.is_meme
+            ? { file: c.file, source: "meme", query: ln.query || "", _key: c.name }
             : { url: c.url, source: c.source || "", query: ln.query || "", _key: c.name });
           t.classList.add("sel");
         }
@@ -1329,15 +1346,31 @@ function renderImgLines() {
     }
     if (!(ln.candidates || []).length)
       thumbs.innerHTML = '<p class="empty" style="grid-column:1/-1">후보 없음 — 다시 찾기나 내 파일을 쓰세요.</p>';
-    // '다시 찾기' = 전체 라인 새 후보 재생성(candidates 재실행) + 폴링으로 자동 갱신.
-    // (이전엔 디스패치만 하고 폴링을 안 해서 '눌러도 이미지가 안 바뀌는' 것처럼 보였음)
+    // 기존 선택 복원(라인별 재생성 후 다른 라인 선택 유지): 이 라인의 픽에 sel 배지·순서·업로드 칩 반영
+    const existing = imgPicks[ln.line_i] || [];
+    for (const pk of existing) {
+      const t = pk._key && thumbs.querySelector(`.thumb[data-key="${cssKey(pk._key)}"]`);
+      if (t) t.classList.add("sel");
+    }
+    renumberThumbs(thumbs, existing);
+    const nUp = existing.filter((x) => x.source === "upload").length;
+    if (nUp) {
+      const chip = document.createElement("span"); chip.className = "chip done upok";
+      chip.textContent = `내 파일 ${nUp}장`; card.querySelector(".imglabel").appendChild(chip);
+    }
+    // '다시 찾기' = 이 라인만 새 후보 재생성(--line) + 폴링으로 그 라인만 자동 갱신.
+    // (다른 라인 이미지·선택은 그대로 보존. 이전엔 전체가 바뀌고, 폴링도 안 해 '안 바뀜'처럼 보였음)
     card.querySelector(".imgredo").onclick = (ev) => busy(ev.target, async () => {
       const p = imgSelected(); if (!p) return;
-      await imgDispatch(p.row);
-      setStatus("새 후보를 만드는 중... (약 1~3분, 완성되면 자동으로 새 이미지로 갱신)");
-      $("imgStatus").textContent = "새 이미지 후보 생성 중 — 완성되면 자동으로 바뀝니다. (안 바뀌면 '이미지 후보 불러오기')";
-      toast("새 후보 생성 시작 — 완성되면 자동 갱신");
-      pollCandidates(p.hash);
+      const li = ln.line_i;
+      imgRestorePicks = JSON.parse(JSON.stringify(imgPicks));   // 다른 라인 픽 보존
+      delete imgRestorePicks[li];                               // 이 라인은 후보가 바뀌므로 선택 해제
+      const since = Date.now();
+      await imgDispatch(p.row, li);
+      setStatus(`라인 ${li + 1} 새 후보를 만드는 중... (약 1~3분, 완성되면 그 라인만 자동 갱신)`);
+      $("imgStatus").textContent = `라인 ${li + 1} 이미지 후보 생성 중 — 완성되면 그 라인만 바뀝니다.`;
+      toast(`라인 ${li + 1} 새 후보 생성 시작`);
+      pollCandidates(p.hash, 0, since);
     });
     const upInput = card.querySelector(".imgup input");
     upInput.onchange = () => busy(card.querySelector(".imgup"), async () => {

@@ -242,24 +242,45 @@ def _search_many(query: str, n: int, seen: set, page: int = 1) -> list:
     return out
 
 
+def _meme_repo_rel(mp) -> str:
+    """밈 절대경로 → 저장소 상대경로(assets/memes/xxx.png). 렌더 시 load_selections가 그대로 연다."""
+    try:
+        return str(Path(mp).resolve().relative_to(PROJECT_ROOT))
+    except Exception:
+        return str(mp)
+
+
 def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
-                     product_images: list | None = None, per_line: int = 6) -> list:
+                     product_images: list | None = None, per_line: int = 6,
+                     only_line: int | None = None) -> list:
     """관리자 선택기용 — 라인마다 후보 이미지 여러 장 확보 + candidates.json manifest 작성.
-    상품 사진은 항상 후보에 포함(사용자가 상품을 강제 선택 가능). 이미지 라인은 다양 소스에서 수집."""
+    상품 사진 + 대본에 어울리는 카피바라 밈 + 다양 소스 검색이미지를 후보로 모은다.
+    only_line 지정 시 그 라인 하나만 재생성한다('다시 찾기' 라인별 재생성 — 파이프라인이 병합)."""
     plan = plan_line_visuals(product, lines, settings)
     out_dir = Path(job_dir) / "candidates"
     out_dir.mkdir(parents=True, exist_ok=True)
     product_images = [str(p) for p in (product_images or []) if Path(p).exists()]
+    from src.video import memes  # 대본이 어울리는 밈을 후보에 섞음(2026-07-15)
     # '다시 찾기'가 매번 다른 후보를 주도록 실행마다 랜덤 페이지에서 시작(각 소스의 결과 창을 이동).
     # (이전엔 항상 1페이지 첫 결과만 가져와, 재생성해도 같은 이미지가 나왔다.)
     base_page = random.randint(1, 6)
     manifest, seen = [], set()
     for i, (ln, pl) in enumerate(zip(lines, plan)):
+        if only_line is not None and i != int(only_line):
+            continue
         entry = {"line_i": i, "text": ln.get("text", ""), "stage": ln.get("stage"),
                  "punch": bool(ln.get("punch")), "type": pl["type"],
                  "query": pl.get("query", ""), "candidates": []}
         for p in product_images[:2]:   # 상품 사진 후보(강제 선택용)
             entry["candidates"].append({"file": p, "source": "product", "url": None, "is_product": True})
+        # 대본에 어울리는 카피바라 밈(있으면) — 라인마다 최대 2개, 펀치 라인은 최소 1개 보장.
+        try:
+            for mp in memes.match_memes(PROJECT_ROOT, ln.get("text", ""), limit=2,
+                                        ensure_one=bool(ln.get("punch"))):
+                entry["candidates"].append({"file": str(mp), "source": "meme", "url": None,
+                                            "is_meme": True, "meme_rel": _meme_repo_rel(mp)})
+        except Exception as e:
+            print(f"[imgsrc] 밈 매칭 실패({type(e).__name__}) → 밈 없이 진행")
         if pl["type"] == "image":
             for j, c in enumerate(_search_many(pl.get("query", ""), per_line, seen, base_page)):
                 ext = ".gif" if c["url"].lower().split("?")[0].endswith(".gif") else ".jpg"
@@ -270,7 +291,8 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
     (Path(job_dir) / "candidates.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
     total = sum(len(e["candidates"]) for e in manifest)
-    print(f"[imgsrc] 후보 생성: {len(manifest)}라인 · 총 {total}장")
+    tag = f"(라인 {only_line}만)" if only_line is not None else ""
+    print(f"[imgsrc] 후보 생성{tag}: {len(manifest)}라인 · 총 {total}장")
     return manifest
 
 

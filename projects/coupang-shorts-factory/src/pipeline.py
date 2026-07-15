@@ -18,6 +18,7 @@ import time
 import traceback
 from pathlib import Path
 
+import requests
 import yaml
 
 from src import notify
@@ -47,6 +48,8 @@ def main() -> int:
                    help="나레이션(TTS) 없이 렌더 — 영상/이미지 튜닝용(대본 길이로 자막 타이밍 합성)")
     p.add_argument("--candidates", action="store_true",
                    help="렌더 대신 라인별 후보 이미지만 생성(관리자 선택기용) — candidates.json 작성")
+    p.add_argument("--line", type=int, default=None,
+                   help="--candidates와 함께: 그 라인(0-base) 후보만 재생성해 기존 매니페스트에 병합('다시 찾기' 라인별)")
     p.add_argument("--plan", action="store_true",
                    help="기획+스토리보드+대본만 생성(승인 단계용) — data/plans/{row_hash}.json 작성, 이미지·제작 생략")
     p.add_argument("--no-upload", action="store_true",
@@ -149,10 +152,19 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
             print(f"[pipeline] 후보용 대본 저장 → data/plans/{product['_row_hash']}.json (제작에서 재사용)")
         _pimgs = list(product.get("hero_images") or [])
         _pimgs += _download_images(product.get("image_urls") or [], job_dir)
-        manifest = imagesource.fetch_candidates(product, lines, job_dir, settings, product_images=_pimgs)
-        _publish_candidates(manifest, product, job_dir)
+        # 라인별 '다시 찾기'(--line): 그 라인만 재생성 → 기존 매니페스트에 병합(다른 라인 이미지는 그대로).
+        only_line = args.line if (args.line is not None and args.line >= 0) else None
+        prev = _download_prev_candidates(product["_row_hash"]) if only_line is not None else None
+        if only_line is not None and prev is None:
+            print(f"[pipeline] 이전 후보 매니페스트 없음 → 라인 {only_line} 대신 전체 재생성")
+            only_line = None
+        manifest = imagesource.fetch_candidates(
+            product, lines, job_dir, settings, product_images=_pimgs, only_line=only_line)
+        web_path = _publish_candidates(manifest, product, job_dir)
+        if only_line is not None and prev is not None:
+            _merge_line_manifest(web_path, prev, only_line)
         print(f"[pipeline] #2 후보 생성 완료 → {job_dir}/candidates/ + cand_{product['_row_hash']}.json "
-              "(TTS·렌더 생략)")
+              f"{'(라인 '+str(only_line)+'만 병합)' if only_line is not None else ''}(TTS·렌더 생략)")
         return 0
 
     # ---- M4(+M5): TTS → audio.mp3 + timestamps.json (또는 --no-narration이면 무음+합성 타이밍)
@@ -350,6 +362,42 @@ def _download_images(urls: list, job_dir: Path) -> list:
     return paths
 
 
+def _download_prev_candidates(row_hash: str) -> dict | None:
+    """공개 릴리스 shorts-cand에서 현재 cand_{hash}.json을 받아온다(라인별 재생성 병합용).
+    없으면 None(→ 전체 재생성 폴백). 저장소가 공개라 인증 없이 받는다."""
+    slug = os.environ.get("GITHUB_REPOSITORY", "jtaechul/Product")
+    url = f"https://github.com/{slug}/releases/download/shorts-cand/cand_{row_hash}.json"
+    try:
+        r = requests.get(url, headers={"User-Agent": "shorts-factory"}, timeout=30)
+        if r.ok and r.text.strip():
+            data = r.json()
+            if isinstance(data, dict) and isinstance(data.get("lines"), list):
+                return data
+    except Exception as e:
+        print(f"[pipeline] 이전 후보 매니페스트 다운로드 실패({type(e).__name__}: {e})")
+    return None
+
+
+def _merge_line_manifest(web_path: Path, prev_full: dict, line_i: int) -> None:
+    """이번에 재생성한 라인(web_path의 그 한 라인)을 기존 전체 매니페스트(prev_full)에 끼워 넣어
+    web_path를 '전체 매니페스트'로 다시 쓴다. 다른 라인은 prev_full 그대로 유지(이미지 안 바뀜)."""
+    new = json.loads(web_path.read_text(encoding="utf-8"))
+    new_line = next((l for l in new.get("lines", []) if int(l.get("line_i", -1)) == int(line_i)), None)
+    lines = [dict(l) for l in prev_full.get("lines", [])]
+    replaced = False
+    for idx, l in enumerate(lines):
+        if int(l.get("line_i", -1)) == int(line_i) and new_line is not None:
+            lines[idx] = new_line
+            replaced = True
+            break
+    if not replaced and new_line is not None:
+        lines.append(new_line)
+    merged = dict(prev_full)
+    merged["lines"] = sorted(lines, key=lambda l: int(l.get("line_i", 0)))
+    web_path.write_text(json.dumps(merged, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"[pipeline] 라인 {line_i} 후보를 기존 매니페스트에 병합 → 총 {len(merged['lines'])}라인")
+
+
 def _publish_candidates(manifest: list, product: dict, job_dir: Path) -> Path:
     """#2 관리자 선택기용 웹 매니페스트 — 후보 파일을 row_hash 기반 고유명으로 candidates/에 모으고,
     브라우저가 읽을 cand_{row_hash}.json 을 만든다(워크플로우가 이 폴더+매니페스트를 릴리스 shorts-cand에 올림).
@@ -375,8 +423,12 @@ def _publish_candidates(manifest: list, product: dict, job_dir: Path) -> Path:
                     shutil.copyfile(src_file, dest)
             except Exception:
                 continue
-            cands.append({"name": name, "url": c.get("url"), "source": c.get("source", ""),
-                          "is_product": bool(c.get("is_product"))})
+            cand = {"name": name, "url": c.get("url"), "source": c.get("source", ""),
+                    "is_product": bool(c.get("is_product"))}
+            if c.get("is_meme"):   # 밈 후보: 선택 시 렌더가 저장소 파일을 그대로 쓰게 file(저장소 상대경로) 전달
+                cand["is_meme"] = True
+                cand["file"] = c.get("meme_rel")
+            cands.append(cand)
         web["lines"].append({"line_i": i, "text": e.get("text", ""), "stage": e.get("stage"),
                              "punch": bool(e.get("punch")), "query": e.get("query", ""),
                              "candidates": cands})
