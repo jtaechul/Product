@@ -305,7 +305,7 @@ ol li{margin:8px 0}
     <p class="hint" style="margin:0 0 6px"><a href="https://studio.youtube.com" target="_blank">유튜브 스튜디오</a> → 오디오 보관함에서
     받은 <b>저작권 프리 코믹 트랙</b>을 올리면 영상에 자동으로 깔립니다(나레이션 있을 땐 말 밑으로 볼륨↓).
     여러 개 올리면 랜덤으로 번갈아 씁니다.</p>
-    <input id="bgmFile" type="file" accept="audio/*" multiple>
+    <input id="bgmFile" type="file" accept=".mp3,.m4a,.wav,.ogg,.aac,.flac,audio/mpeg,audio/*" multiple>
     <button class="btn" id="btnBgmUpload">선택한 곡 올리기</button>
     <div id="bgmList" class="hint" style="margin-top:8px">…</div>
   </div>
@@ -724,15 +724,42 @@ document.addEventListener("paste", (ev) => {
     .filter((it) => it.type.startsWith("image/")).map((it) => it.getAsFile()).filter(Boolean);
   if (imgs.length) { addFiles(imgs); toast("캡처 이미지를 첨부했습니다."); }
 });
-async function uploadBlob(path, blob, message) {
+async function blobToB64(blob) {
   const bytes = new Uint8Array(await blob.arrayBuffer());
   let bin = "";
   for (let i = 0; i < bytes.length; i += 0x8000)
     bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+// 큰 파일(수 MB↑)은 Contents API PUT이 자주 실패한다(413/타임아웃) → Git Data API(blob→tree→commit→ref)로.
+// mp3 같은 배경음악이 이 경로로 올라간다. (경로는 저장소 루트 기준 상대경로)
+async function ghCommitBlob(path, contentB64, message) {
+  const ref = await gh(`/repos/${OWNER}/${REPO}/git/ref/heads/${BRANCH}`);
+  const baseSha = ref.object.sha;
+  const baseCommit = await gh(`/repos/${OWNER}/${REPO}/git/commits/${baseSha}`);
+  const blob = await gh(`/repos/${OWNER}/${REPO}/git/blobs`, {
+    method: "POST", body: JSON.stringify({ content: contentB64, encoding: "base64" }) });
+  const tree = await gh(`/repos/${OWNER}/${REPO}/git/trees`, {
+    method: "POST", body: JSON.stringify({ base_tree: baseCommit.tree.sha,
+      tree: [{ path, mode: "100644", type: "blob", sha: blob.sha }] }) });
+  const commit = await gh(`/repos/${OWNER}/${REPO}/git/commits`, {
+    method: "POST", body: JSON.stringify({ message, tree: tree.sha, parents: [baseSha] }) });
+  await gh(`/repos/${OWNER}/${REPO}/git/refs/heads/${BRANCH}`, {
+    method: "PATCH", body: JSON.stringify({ sha: commit.sha }) });
+}
+async function uploadBlob(path, blob, message) {
+  const contentB64 = await blobToB64(blob);
+  // 4MB 초과(예: 배경음악 mp3)는 처음부터 Git Data API로(Contents API가 큰 파일에 불안정)
+  if (blob.size > 4 * 1024 * 1024) { await ghCommitBlob(path, contentB64, message); return; }
   const old = await gh(`/repos/${OWNER}/${REPO}/contents/${path}?ref=${BRANCH}`, { allow404: true });
-  const body = { message, content: btoa(bin), branch: BRANCH };
+  const body = { message, content: contentB64, branch: BRANCH };
   if (old && old.sha) body.sha = old.sha;
-  await gh(`/repos/${OWNER}/${REPO}/contents/${path}`, { method: "PUT", body: JSON.stringify(body) });
+  try {
+    await gh(`/repos/${OWNER}/${REPO}/contents/${path}`, { method: "PUT", body: JSON.stringify(body) });
+  } catch (e) {
+    console.warn("Contents API 업로드 실패 → Git Data API 폴백:", e && e.message);
+    await ghCommitBlob(path, contentB64, message);   // 크기·일시오류 시 폴백
+  }
 }
 
 // ── 등록된 밈 목록 표시 — assets/memes/의 PNG를 썸네일로 보여줌(이미 저장돼 있음을 확인) ──
