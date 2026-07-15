@@ -100,7 +100,16 @@ _EXCLUDE = re.compile(
     r"\bbird\b|seabird|\binsect\b|\bplant\b|reptile|amphibian|\bgecko\b|\blizard\b|\bsnake\b|"
     r"\bfrog\b|\btoad\b|\bnewt\b|salamander|arachnid|araneae|scorpion|\bmite\b|\btick\b|"
     r"widow spider|black widow|tarantula|wolf spider|jumping spider|huntsman|"
-    r"\bbeetle\b|\bmoth\b|butterfly|\bwasp\b", re.I)
+    r"\bbeetle\b|\bmoth\b|butterfly|\bwasp\b|"
+    # ★육상 포유류 배제(운영자 확정 · 재발방지): 'sea pig' 검색어가 진짜 돼지(Sus scrofa) 영상을
+    #   물어오는 등 육상 포유류가 새는 사고 → 아래로 차단. 단, 해양어 오배제 방지를 위해 단어경계
+    #   주의: catfish·dogfish·rattail·seahorse 등은 걸리지 않게 특정 단어만(\brat\b·\bmouse\b는 제외).
+    # ★'sea pig'(Scotoplanes=심해 해삼)은 살리고 진짜 돼지(Sus scrofa)만 차단 — 정체성어로 매칭.
+    r"sus scrofa|\bboar\b|\bswine\b|domestic pig|wild boar|feral pig|"
+    r"\bcattle\b|\bcow\b|\bcows\b|bovine|\bdog\b|\bdogs\b|canine|\bcat\b|\bcats\b|feline|"
+    r"\bhorse\b|equine|\bsheep\b|\bgoat\b|\bdeer\b|\bpony\b|\bmule\b|\bhamster\b|\brabbit\b|"
+    r"\bmonkey\b|primate|\bhuman\b|\bcow\b|livestock|poultry|"
+    r"豚|イノシシ|\b牛\b|\b犬\b|\b猫\b|\b馬\b|\b羊\b|哺乳類(?!.*海)|家畜", re.I)
 # ★주의: 육상 거미만 배제하고 '바다거미(sea spider·ウミグモ=Pycnogonida)'는 채널 대상이라 남긴다.
 #   그래서 바로 위 목록은 'widow spider'·'arachnid' 등 육상 거미 특정어만 넣고, 범용 'spider'는 넣지 않는다.
 # ── 미세조류(marine_algae) 전용 게이트 ──
