@@ -85,3 +85,23 @@ def select_meme(project_root: Path, punch_text: str = "", meme_tag: str = "") ->
             return best["_path"]
 
     return lib[0]["_path"]  # 기본: 첫 항목(항상 하나는 뜨게 — 펀치 순간 밋밋함 방지)
+
+
+def match_memes(project_root: Path, text: str, limit: int = 2, ensure_one: bool = False) -> list:
+    """라인 텍스트에 situations 키워드가 겹치는 밈들을 hits 내림차순으로 최대 limit개 경로 반환.
+    자막별 이미지 후보에 '대본이 어울리는 밈'을 섞기 위한 용도(2026-07-15).
+    ensure_one=True면 매칭이 없어도 라이브러리 첫 항목 1개를 돌려준다(펀치 라인 보장용)."""
+    lib = load_library(project_root)
+    if not lib:
+        return []
+    text = text or ""
+    scored = []
+    for m in lib:
+        hits = sum(1 for kw in (m.get("situations") or []) if kw and kw in text)
+        if hits > 0:
+            scored.append((hits, m["_path"]))
+    scored.sort(key=lambda x: -x[0])
+    paths = [p for _, p in scored[:max(1, limit)]]
+    if not paths and ensure_one:
+        paths = [lib[0]["_path"]]
+    return paths

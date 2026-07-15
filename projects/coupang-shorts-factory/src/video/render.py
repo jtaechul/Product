@@ -174,7 +174,7 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     if expose:
         # ── expose(폭로/뉴스): 흰 배경 + 상단 뉴스헤더 + 큰 자막 + 하단 라인별 이미지 ──
         expose_layers, sub_plan = _build_expose(
-            lines, line_windows, line_images, product_images, product_videos,
+            lines, line_windows, words, line_images, product_images, product_videos,
             duration, width, height, font_path, settings,
             headline or (ch.get("name", "미래마켓") + " 단독"),
             str(r.get("expose_author", "미래")).strip())
@@ -744,22 +744,6 @@ def _expose_header_arr(width: int, header_h: int, board: str, headline: str,
     return np.array(im)
 
 
-def _expose_subtitle(text: str, font_path: Path, font_size: int, box_w: int, band_h: int):
-    """상단 큰 검정 자막(흰 배경 위) — caption 자동 줄바꿈. 밴드보다 크면 폰트 축소."""
-    def make(fs):
-        for extra in (dict(text_align="center"), {}):
-            try:
-                return TextClip(text=text, font=str(font_path), font_size=fs, color="#141414",
-                                method="caption", size=(box_w, None), **extra)
-            except TypeError:
-                continue
-        return TextClip(text=text, font=str(font_path), font_size=fs, color="#141414")
-    tc = make(font_size)
-    if tc.h > band_h and font_size > 34:
-        tc = make(max(34, int(font_size * band_h / tc.h)))
-    return tc
-
-
 def _expose_image_clip(src, start: float, end: float, width: int, img_top: int, img_h: int,
                        product_images: list, product_videos: list):
     """하단 full-width 이미지/영상 — cover-fit. 상품 라인+제품영상이면 영상, GIF/영상이면 재생."""
@@ -787,7 +771,50 @@ def _expose_image_clip(src, start: float, end: float, width: int, img_top: int, 
     return inner.with_start(start).with_position((0, img_top))
 
 
-def _build_expose(lines: list, line_windows: list, line_images: list, product_images: list,
+def _sub_events(words: list, lines: list, line_windows: list, duration: float) -> list:
+    """라인별 subs(대본이 확정한 자막 칸)를 단어 타임스탬프에 맞춰 (sub, start, end, show_end)
+    가라오케 이벤트로 변환한다(_build_subtitles의 타이밍 규칙과 동일 — expose 가라오케 공용).
+    ⭐ 렌더러는 자막을 재분할하지 않는다: subs가 곧 자막(1~3어절, 단어단위). 계약 위반 시 통문장 폴백."""
+    events, cursor = [], 0
+    for li, ((ls, le), ln) in enumerate(zip(line_windows, lines)):
+        text = str(ln.get("text", "")).strip()
+        n = len(text.split())
+        lwords = words[cursor:cursor + n]
+        cursor += n
+        ls, le = max(0.0, float(ls)), min(float(le), duration)
+        if not text or le - ls < 0.1:
+            continue
+        subs = [str(x).strip() for x in (ln.get("subs") or []) if str(x).strip()]
+        if not subs or " ".join(subs) != text:
+            subs = [text]
+        wi = 0
+        for sub in subs:
+            k = len(sub.split())
+            grp = lwords[wi:wi + k]
+            wi += k
+            if grp:
+                a, b = float(grp[0]["start"]), float(grp[-1]["end"])
+            else:   # 타임스탬프 부족 방어: 라인 구간을 글자수 비례 배분
+                done = sum(len(x) for x in subs[:subs.index(sub)]) or 0
+                total = sum(len(x) for x in subs) or 1
+                a = ls + (le - ls) * done / total
+                b = min(le, a + (le - ls) * len(sub) / total)
+            events.append({"text": sub, "start": a, "end": b, "line_i": li})
+    for i, ev in enumerate(events):   # 다음 팝업 시작까지 유지(빈 화면 방지), 발화 종료 +0.45s 이내
+        nxt = events[i + 1]["start"] if i + 1 < len(events) else duration
+        ev["show_end"] = min(max(nxt, ev["start"] + 0.12), ev["end"] + 0.45, duration)
+    return events
+
+
+def _caption_band_arr(w: int, h: int, alpha: int = 150, radius: int = 30):
+    """가라오케 자막 뒤 반투명 어두운 캡션바(흰 게시판 배경에서 노랑 글자 가독성 확보)."""
+    from PIL import Image, ImageDraw
+    im = Image.new("RGBA", (max(1, w), max(1, h)), (0, 0, 0, 0))
+    ImageDraw.Draw(im).rounded_rectangle([0, 0, w - 1, h - 1], radius=radius, fill=(0, 0, 0, alpha))
+    return np.asarray(im)
+
+
+def _build_expose(lines: list, line_windows: list, words: list, line_images: list, product_images: list,
                   product_videos: list, duration: float, width: int, height: int,
                   font_path: Path, settings: dict, headline: str, author: str) -> tuple:
     """expose 레이아웃 전체 레이어 + QA용 sub_plan 반환."""
@@ -800,7 +827,6 @@ def _build_expose(lines: list, line_windows: list, line_images: list, product_im
     img_top = sub_top + sub_h + int(r.get("expose_img_gap", 12))
     img_h = height - img_top
     box_w = int(width * 0.92)
-    font_size = int(s.get("expose_font_size", 64))
 
     layers = [ImageClip(np.full((height, width, 3), 255, dtype=np.uint8)).with_duration(duration)]
     # 하단 라인별 이미지 (라인 이미지 → 상품 사진0 → 브랜드 패널 순으로 항상 꽉 채움)
@@ -822,22 +848,26 @@ def _build_expose(lines: list, line_windows: list, line_images: list, product_im
     meta = _board_meta(author, headline)
     layers.append(ImageClip(_expose_header_arr(width, header_h, board, headline, meta, font_path, tag))
                   .with_duration(duration).with_position((0, 0)))
-    # 상단 큰 자막(라인별, 다음 라인 시작까지 유지)
-    ev = []
-    for li, ((ls, le), ln) in enumerate(zip(line_windows, lines)):
-        text = str(ln.get("text", "")).strip()
-        ls, le = max(0.0, float(ls)), min(float(le), duration)
-        if text and le - ls >= 0.1:
-            ev.append({"text": text, "start": ls, "end": le, "line_i": li})
+    # 상단 자막 밴드 = 가라오케(대본 subs 단위로 어절별 팝업, 통문장 폐지 — 2026-07-15 사용자 지시).
+    #   흰 게시판 배경이라 노랑 글자 가독성을 위해 어두운 캡션바를 뒤에 깔고, 글자는 고정 y 1곳에 팝업.
+    kfs = int(s.get("font_size", 80))
+    kcolor = s.get("color", "#FFE400")
+    kstroke = s.get("stroke_color", "#000000")
+    ksw = int(s.get("stroke_width", 6))
+    band_h = min(sub_h, int(kfs * 1.7))
+    band_top = sub_top + max(0, (sub_h - band_h) // 2)
+    ky = band_top + max(0, (band_h - kfs) // 2)   # 자막 팝업 top y — 밴드 중앙, 전 자막 동일(QA: y 1곳)
+    events = _sub_events(words, lines, line_windows, duration)
+    if events:   # 캡션바(자막 구간 전체) — 자막 뒤 어두운 띠
+        band = _caption_band_arr(box_w, band_h)
+        layers.append(ImageClip(band).with_duration(duration).with_position(("center", band_top)))
     plan = []
-    for i, e in enumerate(ev):
-        nxt = ev[i + 1]["start"] if i + 1 < len(ev) else duration
-        e["show_end"] = min(max(nxt, e["start"] + 0.2), e["end"] + 0.4, duration)
-        tc = _expose_subtitle(e["text"], font_path, font_size, box_w, sub_h)
-        y = sub_top + max(0, (sub_h - tc.h) // 2)
-        layers.append(tc.with_start(e["start"]).with_end(e["show_end"]).with_position(("center", y)))
-        plan.append({"kind": "sub", "text": e["text"], "start": round(e["start"], 3),
-                     "end": round(e["show_end"], 3), "y": sub_top, "line_i": e["line_i"]})
+    for ev in events:
+        clip = _fit_text(ev["text"], font_path, kfs, kcolor, kstroke, ksw, box_w)
+        clip = clip.resized(lambda t: _pop_scale(t, 0.14, 0.6))   # 등장 바운스
+        layers.append(clip.with_start(ev["start"]).with_end(ev["show_end"]).with_position(("center", ky)))
+        plan.append({"kind": "sub", "text": ev["text"], "start": round(ev["start"], 3),
+                     "end": round(ev["show_end"], 3), "y": ky, "line_i": ev["line_i"]})
     return layers, plan
 
 

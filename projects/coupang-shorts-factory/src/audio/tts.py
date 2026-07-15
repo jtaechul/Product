@@ -167,9 +167,21 @@ def _synth_typecast(text: str, cfg: dict) -> TTSOutput:
             "audio_format": "mp3",
         },
     }
+    # 감정 프리셋(ssfm 계열) — 화난 톤 등. normal/빈값이면 미적용(중립).
+    preset = str(cfg.get("emotion_preset", "") or "").strip().lower()
+    if preset and preset != "normal":
+        body["prompt"] = {"emotion_preset": preset,
+                          "emotion_intensity": float(cfg.get("emotion_intensity", 1.0))}
     resp = requests.post(
         "https://api.typecast.ai/v1/text-to-speech", json=body, headers=headers, timeout=180
     )
+    if resp.status_code >= 400 and "prompt" in body:
+        # 일부 모델·계정은 prompt(emotion) 미지원 → 감정 없이 1회 재시도(발화는 유지).
+        print(f"[tts] Typecast prompt(emotion={preset}) 거부됨(HTTP {resp.status_code}) → 감정 없이 재시도")
+        body.pop("prompt")
+        resp = requests.post(
+            "https://api.typecast.ai/v1/text-to-speech", json=body, headers=headers, timeout=180
+        )
     if resp.status_code >= 400:
         raise TTSError(f"Typecast 오류 HTTP {resp.status_code}: {resp.text[:300]}")
     ctype = resp.headers.get("Content-Type", "")
