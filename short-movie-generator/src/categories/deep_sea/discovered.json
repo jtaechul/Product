@@ -161,5 +161,32 @@
         "Wikimedia Commons (File:Phenotypic-Variation-and-Fitness-in-a-Metapopulation-of-Tubeworms-(Ridgeia-piscesae-Jones)-at-pone.0110578.s003.ogv)"
       ]
     }
+  },
+  {
+    "key": "paralomis diomedeae",
+    "kind": "creature",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/9/99/Methane-Carbon-Flow-into-the-Benthic-Food-Web-at-Cold-Seeps---A-Case-Study-from-the-Costa-Rica-pone.0074894.s001.ogv",
+      "license": "cc-by",
+      "credit": "Niemann H, Linke P, Knittel K, MacPherson E, Boetius A, Bruckmann W, Larvik G, Wallmann K, Schacht U, Omoregie E, Hilton D, Brown K, Rehder G · CC BY",
+      "source": "File:Methane-Carbon-Flow-into-the-Benthic-Food-Web-at-Cold-Seeps---A-Case-Study-from-the-Costa-Rica-pone.0074894.s001.ogv"
+    },
+    "species": {
+      "scientific_name": "Paralomis diomedeae",
+      "common_name_ko": "Paralomis diomedeae",
+      "common_name_en": "Paralomis diomedeae",
+      "depth_range_m": "680-935",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Paralomis diomedeae is a species of king crab.",
+        "It is considered very rare and is known from Peru, the Gulf of Panama, and Costa Rica's Pacific coast at depths of 680–935 m (2,231–3,068 ft)."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Methane-Carbon-Flow-into-the-Benthic-Food-Web-at-Cold-Seeps---A-Case-Study-from-the-Costa-Rica-pone.0074894.s001.ogv)"
+      ]
+    }
   }
 ]

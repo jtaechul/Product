@@ -1,0 +1,56 @@
+{
+  "id": "030",
+  "created_at": "2026-07-15T14:59:05+00:00",
+  "updated_at": "2026-07-15T14:59:05+00:00",
+  "status": "published",
+  "category": "deep_sea",
+  "series": "심해 도감",
+  "species": {
+    "common_name_ko": "Paralomis diomedeae",
+    "common_name_en": "Paralomis diomedeae",
+    "scientific_name": "Paralomis diomedeae",
+    "depth_range_m": "680-935",
+    "habitat": "",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "Paralomis diomedeae is a species of king crab.",
+      "It is considered very rare and is known from Peru, the Gulf of Panama, and Costa Rica's Pacific coast at depths of 680–935 m (2,231–3,068 ft)."
+    ]
+  },
+  "reels": {
+    "hook": "深海、その王。誰も知らぬ、幻。",
+    "caption": "光もほとんど届かない深い海の底、静けさだけが支配する世界があります。そこにひっそりと佇む、硬い甲羅をまとった影がひとつ。誰に見つかることもなく、ただ深海の闇に溶け込むようにして暮らしている——そんな生き物が、この海にはいます。\n\nその名はパラロミス・ディオメデアエ(学名: Paralomis diomedeae)。\n\n太平洋の東側、ペルー沖からパナマ湾、そしてコスタリカの太平洋岸まで。水深680mから935mという、光もほとんど届かない深海が彼らの住処です。日照時間もなければ、休憩時間もありません。まさに24時間365日、休みなしの深海勤務。有給休暇という言葉すら、この海には存在しないのです。\n\nこのカニは、タラバガニの仲間、いわゆるキングクラブの一種として知られています。硬い甲羅と長い脚を持ち、冷たい海水の中でじっと身を潜めるようにして暮らしていると考えられています。動かず、語らず、まるで岩そのものであるかのように佇む姿は、深海という孤独な世界に溶け込むための知恵なのかもしれません。\n\nそして何より、この生き物は「非常に稀」な存在として知られています。研究者でさえその姿を目にすることは滅多になく、深海という広大な闇の中で、ひっそりと生涯を過ごしています。人知れず生き、人知れず終える。そんな静かな生き方が、かえって私たちの想像力をかき立てます。\n\n知られている生息地は、ペルー沖、パナマ湾、コスタリカの太平洋岸のみ。広い海の中でも、ごく限られた場所だけに息づいているという事実が、この生き物の特別さを物語っています。\n\nもしこの物語が心に触れたなら、どうか保存しておいてほしいのです。そして、同じ海を想う誰かにも、そっとシェアしてあげてください。\n\n映像: NOAA Ocean Exploration・Public Domain\n写真: Seid et al. (2025). · CC BY",
+    "hashtags": [
+      "#パラロミスディオメデアエ",
+      "#深海生物"
+    ],
+    "reveal_name": "パラロミス・ディオメデアエ / Paralomis diomedeae",
+    "reveal_fact": "深海・稀少・未解明、謎のキングクラブ",
+    "hook_ko": "심해의 왕, 그 모습, 환상",
+    "caption_ko": "빛조차 거의 닿지 않는 깊은 바다 밑바닥, 오직 고요함만이 지배하는 세계가 있습니다. 그곳에 조용히 웅크린, 단단한 갑각을 두른 그림자 하나. 누구에게도 발견되지 않은 채, 그저 심해의 어둠 속에 녹아들듯 살아가는 생명체가 있습니다.\n\n그 이름은 파랄로미스 디오메데아이(학명: Paralomis diomedeae)입니다.\n\n태평양 동쪽, 페루 앞바다에서 파나마만, 그리고 코스타리카 태평양 연안까지. 수심 680m에서 935m라는, 빛이 거의 닿지 않는 심해가 이들의 서식지입니다. 일조 시간도 없고, 휴식 시간도 없습니다. 그야말로 24시간 365일, 쉼 없는 심해 근무입니다. 유급 휴가라는 말조차 이 바다에는 존재하지 않는 셈입니다.\n\n이 게는 킹크랩의 일종으로 알려져 있습니다. 단단한 갑각과 긴 다리를 가지고, 차가운 바닷물 속에서 가만히 몸을 숨긴 채 살아가는 것으로 여겨집니다. 움직이지 않고, 소리도 없이, 마치 바위 그 자체인 듯 웅크린 모습은 심해라는 고독한 세계에 스며들기 위한 지혜일지도 모릅니다.\n\n그리고 무엇보다, 이 생명체는 '매우 희귀한' 존재로 알려져 있습니다. 연구자들조차 그 모습을 목격하는 일이 거의 없으며, 광대한 심해의 어둠 속에서 조용히 생을 보냅니다. 아무도 모르게 살고, 아무도 모르게 생을 마칩니다. 그런 고요한 삶의 방식이 오히려 우리의 상상력을 자극합니다.\n\n알려진 서식지는 페루 앞바다, 파나마만, 코스타리카 태평양 연안뿐입니다. 넓은 바다 안에서도 극히 제한된 곳에서만 살아간다는 사실이, 이 생명체의 특별함을 말해줍니다.\n\n이 이야기가 마음에 닿았다면, 부디 저장해 두시길 바랍니다. 그리고 같은 바다를 그리워하는 누군가에게도, 조용히 공유해 주세요.\n\n영상: NOAA Ocean Exploration・Public Domain",
+    "hashtags_ko": [
+      "#パラロミスディオメデアエ",
+      "#심해생물"
+    ],
+    "yt_title": "幻のキングクラブ、パラロミス・ディオメデアエ #パラロミスディオメデアエ #深海生物",
+    "yt_title_ko": "환상의 킹크랩, 파랄로미스 디오메데아이 #パラロミスディオメデアエ #심해생물",
+    "visualizer": "reels",
+    "video_file": "paralomis_diomedeae_20260715_145905.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Wikipedia (en)",
+      "Wikimedia Commons (File:Methane-Carbon-Flow-into-the-Benthic-Food-Web-at-Cold-Seeps---A-Case-Study-from-the-Costa-Rica-pone.0074894.s001.ogv)"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-030/reels_030.mp4",
+    "rev": "29425506490",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-030/cover_030.jpg",
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-030/ytthumb_030.jpg"
+  },
+  "post": null
+}
