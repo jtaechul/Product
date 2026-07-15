@@ -72,12 +72,41 @@ async function ghUploadProxy(request, url) {
   });
 }
 
+// 스토어(공개 상품 페이지) 이미지 프록시(/store-img): 쿠팡·네이버 등이 <img> 핫링크를 막거나
+// http로 오는 이미지 주소를 안전하게 중계한다. 개방 프록시 방지로 이미지 호스트를 화이트리스트한다.
+// (허용 밖 호스트는 store.html이 원본 URL로 자동 폴백하므로 여기선 403만 반환.)
+const IMG_HOST_OK = [
+  "coupangcdn.com", "coupang.com", "pstatic.net", "phinf.naver.net",
+  "picsum.photos", "images.unsplash.com", "githubusercontent.com", "media.giphy.com",
+];
+async function storeImgProxy(url) {
+  let src = url.searchParams.get("u") || "";
+  try {
+    const h = new URL(src).hostname;
+    if (!IMG_HOST_OK.some((d) => h === d || h.endsWith("." + d))) return j({ error: "host not allowed" }, 403);
+  } catch { return j({ error: "bad url" }, 400); }
+  const resp = await fetch(src, { headers: { "User-Agent": "shorts-admin", "Referer": "" }, redirect: "follow" });
+  if (!resp.ok) return j({ error: "upstream " + resp.status }, 502);
+  const ct = resp.headers.get("Content-Type") || "image/jpeg";
+  if (!ct.startsWith("image/")) return j({ error: "not an image" }, 415);
+  const out = new Headers();
+  out.set("Content-Type", ct);
+  out.set("Cache-Control", "public, max-age=86400");
+  out.set("Access-Control-Allow-Origin", "*");
+  return new Response(resp.body, { status: 200, headers: out });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/health") return new Response("ok");
     if (url.pathname === "/media") return mediaProxy(request, url);
     if (url.pathname === "/ghup") return ghUploadProxy(request, url);
+    if (url.pathname === "/store-img") return storeImgProxy(url);
+    // 공개 스토어 페이지: 깔끔한 URL(/store)로 정적 store.html을 서빙(프로필 링크용).
+    if (url.pathname === "/store" || url.pathname === "/store/") {
+      return env.ASSETS.fetch(new Request(new URL("/store.html", url), request));
+    }
     // 그 외 경로는 정적 에셋(index.html 등). HTML은 배포 즉시 반영되도록 no-cache로 재발행
     // (브라우저가 옛 관리자 페이지를 캐시해 "안 바뀜"으로 보이던 문제 해결).
     const res = await env.ASSETS.fetch(request);
