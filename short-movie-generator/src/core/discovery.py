@@ -844,14 +844,10 @@ def validate_source_url(url: str, tmp_dir: str) -> bool:
         from src.core import watermark_qc as wq
         if wq.is_static_source(str(dest)):
             return False
-        # ★소싱↔제작 게이트 정합(운영자 확정): 제작의 Step1(가시성)을 소싱에서도 적용해
-        #   '빈 물/준비 컷'을 소싱 단계에서 배제한다 → '소싱된 영상 = 제작 가능한 영상'.
-        #   (Step2 종ID 판정은 폐지됐으므로 소싱·제작 게이트가 이제 일치한다.)
-        try:
-            if footage.subject_visibility(str(dest)) < footage._MIN_VISIBILITY:
-                return False
-        except Exception:  # noqa: BLE001
-            pass       # 가시성 검사 오류는 통과(소싱을 막지 않음)
+        # ★소싱에서는 가시성(Step1) 게이트를 걸지 않는다(운영자 확정 · 소싱 0건 재발방지).
+        #   이유: 소싱에 무거운 가시성 검사(프레임 12장 다운로드·샘플)를 넣으면 후보마다 느려지고
+        #   경계값 종을 과배제해 '후보 0건'을 유발했다. 빈 물/준비 컷 배제는 제작 시 Step1이 하고,
+        #   운영자가 썸네일로 검토하므로 소싱은 라이선스·종횡비·정지영상만 본다(수확 우선).
         return True
     except Exception as e:  # noqa: BLE001
         log.warning("[discovery] 검증 오류(%s): %s", url, e)
