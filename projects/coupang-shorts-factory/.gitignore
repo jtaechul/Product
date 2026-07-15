@@ -14,3 +14,7 @@ data/research/
 !assets/bgm/*.wav
 !assets/bgm/*.m4a
 !assets/bgm/*.ogg
+
+# 예외: 제품 등장 효과음(리빌) — 무료 사이트에서 받은 실제 효과음 에셋 커밋 허용 (licenses.csv 기록)
+!assets/sfx/*.mp3
+!assets/sfx/*.wav
