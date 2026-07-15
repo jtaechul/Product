@@ -1,0 +1,101 @@
+{
+ "row_hash": "02b322904d67dd0d",
+ "product_name": "르몽스 아이스필 냉감패드 여름 침대 쿨매트",
+ "lines": [
+  {
+   "line_i": 0,
+   "picks": [
+    {
+     "file": "data/selections_assets/02b322904d67dd0d/L00_0.png",
+     "source": "upload",
+     "query": "sweaty person sleeping"
+    },
+    {
+     "url": "https://images.pexels.com/photos/18864132/pexels-photo-18864132.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+     "source": "pexels",
+     "query": "sweaty person sleeping"
+    }
+   ]
+  },
+  {
+   "line_i": 2,
+   "picks": [
+    {
+     "url": "https://images.pexels.com/photos/1820689/pexels-photo-1820689.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+     "source": "pexels",
+     "query": "betrayed person sad"
+    }
+   ]
+  },
+  {
+   "line_i": 4,
+   "picks": [
+    {
+     "url": "https://images.pexels.com/photos/20943579/pexels-photo-20943579.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+     "source": "pexels",
+     "query": "lightbulb moment discovery"
+    },
+    {
+     "file": "data/selections_assets/02b322904d67dd0d/L04_0.png",
+     "source": "upload",
+     "query": "lightbulb moment discovery"
+    }
+   ]
+  },
+  {
+   "line_i": 5,
+   "picks": [
+    {
+     "is_product": true,
+     "source": "product",
+     "query": ""
+    },
+    {
+     "is_product": true,
+     "source": "product",
+     "query": ""
+    }
+   ]
+  },
+  {
+   "line_i": 6,
+   "picks": [
+    {
+     "url": "https://images.pexels.com/photos/10837114/pexels-photo-10837114.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+     "source": "pexels",
+     "query": "person surprised cold"
+    }
+   ]
+  },
+  {
+   "line_i": 7,
+   "picks": [
+    {
+     "url": "https://images.pexels.com/photos/210600/pexels-photo-210600.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+     "source": "pexels",
+     "query": "money saving happy"
+    },
+    {
+     "file": "data/selections_assets/02b322904d67dd0d/L07_0.png",
+     "source": "upload",
+     "query": "money saving happy"
+    }
+   ]
+  },
+  {
+   "line_i": 8,
+   "picks": [
+    {
+     "url": "https://pixabay.com/get/gec6083f5fb0e82232d3981d550d3c96f1e2c9e13200f11cdd20a3bca63ae4e4491d5269a6816cfa301b274f6243df287f4287eb1618dbbcf11b3a821b12de146_1280.jpg",
+     "source": "pixabay",
+     "query": "person waking up refreshed"
+    },
+    {
+     "file": "data/selections_assets/02b322904d67dd0d/L08_0.png",
+     "source": "upload",
+     "query": "person waking up refreshed"
+    }
+   ]
+  }
+ ]
+}
