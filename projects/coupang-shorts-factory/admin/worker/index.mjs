@@ -10,7 +10,7 @@
 const OWNER = "jtaechul";
 const REPO = "Product";
 const MEDIA_PREFIX = "https://github.com/" + OWNER + "/" + REPO + "/releases/download/";
-const MEDIA_TYPES = { mp4: "video/mp4", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+const MEDIA_TYPES = { mp4: "video/mp4", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", json: "application/json" };
 
 function j(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
