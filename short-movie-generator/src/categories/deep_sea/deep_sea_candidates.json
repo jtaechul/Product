@@ -37,6 +37,42 @@
         "Wikimedia Commons (File:Segmented worm DSC 2462.webm)"
       ]
     },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_annelida_29408223775.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_annelida_29513947625.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "modiolus",
+    "needs_confirm": false,
+    "title": "File:Prélèvement réalisé par le bras articulé du ROV Victor 6000 (Ifremer 00701-81285).webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b7/Pr%C3%A9l%C3%A8vement_r%C3%A9alis%C3%A9_par_le_bras_articul%C3%A9_du_ROV_Victor_6000_%28Ifremer_00701-81285%29.webm",
+    "license": "cc-by",
+    "credit": "null · CC BY",
+    "source": "File:Prélèvement réalisé par le bras articulé du ROV Victor 6000 (Ifremer 00701-81285).webm",
+    "name": "Modiolus",
+    "name_ja": "",
+    "common_name_ko": "Modiolus",
+    "common_name_en": "Modiolus",
+    "depth": "",
+    "facts": [
+      "Modiolus, the horsemussels, are a genus of medium-sized marine bivalve molluscs in the family Mytilidae."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Modiolus",
+      "common_name_ko": "Modiolus",
+      "common_name_en": "Modiolus",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Modiolus, the horsemussels, are a genus of medium-sized marine bivalve molluscs in the family Mytilidae."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Prélèvement réalisé par le bras articulé du ROV Victor 6000 (Ifremer 00701-81285).webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_modiolus_29513947625.jpg"
   }
 ]

@@ -698,5 +698,315 @@
       ]
     },
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_triakis_semifasciata_29330717649.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "sardinops sagax",
+    "needs_confirm": false,
+    "title": "File:Sardines reacting to tuna - MBA.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/d/d1/Sardines_reacting_to_tuna_-_MBA.webm",
+    "license": "cc-by-sa",
+    "credit": "Eric Polk · CC BY-SA",
+    "source": "File:Sardines reacting to tuna - MBA.webm",
+    "name": "Sardinops sagax",
+    "name_ja": "",
+    "common_name_ko": "정어리",
+    "common_name_en": "Sardinops sagax",
+    "depth": "",
+    "facts": [
+      "Sardinops is a genus of sardines of the family Alosidae.",
+      "Often considered monotypic with only member as Sardinops sagax, it currently has three valid species:\n\nSardinops melanosticta (Temminck & Schlegel, 1846) (Japanese pilchard)\nSardinops ocellatus (Pappe, 1853) (Southern African pilchard)\nSardinops sagax (Jenyns, 1842)\nSardinops sagax caeruleus (Girard, 1854) (Californian pilchard)\nSardinops sagax musica (Girard, 1855)\nSardinops sagax neopilchardus (Steindachner, 1879) (Australian pilchard)\nIt is found in the Indo-Pacific, East Pacific, Southeastern Atlantic and southwestern Indian oceans.",
+      "Its length is up to 40 cm (16 in).",
+      "It has numerous common or vernacular names, some of which more appropriately refer to subspecies, including blue pilchard, blue-bait, Peruvian Pacific sardine (S.",
+      "sagax), South American pilchard, Chilean sardine, and Pacific sardine."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Sardinops sagax",
+      "common_name_ko": "정어리",
+      "common_name_en": "Sardinops sagax",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Sardinops is a genus of sardines of the family Alosidae.",
+        "Often considered monotypic with only member as Sardinops sagax, it currently has three valid species:\n\nSardinops melanosticta (Temminck & Schlegel, 1846) (Japanese pilchard)\nSardinops ocellatus (Pappe, 1853) (Southern African pilchard)\nSardinops sagax (Jenyns, 1842)\nSardinops sagax caeruleus (Girard, 1854) (Californian pilchard)\nSardinops sagax musica (Girard, 1855)\nSardinops sagax neopilchardus (Steindachner, 1879) (Australian pilchard)\nIt is found in the Indo-Pacific, East Pacific, Southeastern Atlantic and southwestern Indian oceans.",
+        "Its length is up to 40 cm (16 in).",
+        "It has numerous common or vernacular names, some of which more appropriately refer to subspecies, including blue pilchard, blue-bait, Peruvian Pacific sardine (S.",
+        "sagax), South American pilchard, Chilean sardine, and Pacific sardine."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Sardines reacting to tuna - MBA.webm)"
+      ]
+    }
+  },
+  {
+    "kind": "creature",
+    "key": "lithodinae",
+    "needs_confirm": false,
+    "title": "File:King crab eating a brittle star.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/d/d9/King_crab_eating_a_brittle_star.webm",
+    "license": "public-domain",
+    "credit": "NOAA Office of Ocean Exploration and Research",
+    "source": "File:King crab eating a brittle star.webm",
+    "name": "Lithodinae",
+    "name_ja": "",
+    "common_name_ko": "Lithodinae",
+    "common_name_en": "Lithodinae",
+    "depth": "",
+    "facts": [
+      "タラバガニ科（タラバガニか、 Lithodidae）は、甲殻類十脚目（エビ目）異尾下目に分類される科。分類学上は、いわゆるカニ（短尾下目）ではなく、ヤドカリ下目ヤドカリ上科の1種である。かつてはタラバガニ上科（Lithodoidea）として分けることもあったが、分子系統解析によってタラバガニ科はヤドカリ上科に内包される結果が繰り返し出ており、ヤドカリ上科を側系統群とするため、2023年以降は用いられない。"
+    ],
+    "fact_src": "Wikipedia (ja) · 상위 분류군",
+    "species": {
+      "scientific_name": "Lithodinae",
+      "common_name_ko": "Lithodinae",
+      "common_name_en": "Lithodinae",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "タラバガニ科（タラバガニか、 Lithodidae）は、甲殻類十脚目（エビ目）異尾下目に分類される科。分類学上は、いわゆるカニ（短尾下目）ではなく、ヤドカリ下目ヤドカリ上科の1種である。かつてはタラバガニ上科（Lithodoidea）として分けることもあったが、分子系統解析によってタラバガニ科はヤドカリ上科に内包される結果が繰り返し出ており、ヤドカリ上科を側系統群とするため、2023年以降は用いられない。"
+      ],
+      "sources": [
+        "Wikipedia (ja) · 상위 분류군",
+        "Wikimedia Commons (File:King crab eating a brittle star.webm)"
+      ]
+    }
+  },
+  {
+    "kind": "creature",
+    "key": "diadumene cincta",
+    "needs_confirm": false,
+    "title": "File:Baksteenanemonen op wrak-4885776.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/3/33/Baksteenanemonen_op_wrak-4885776.webm",
+    "license": "cc-by-sa",
+    "credit": "Klaudie Bartelink · CC BY-SA",
+    "source": "File:Baksteenanemonen op wrak-4885776.webm",
+    "name": "Diadumene cincta",
+    "name_ja": "",
+    "common_name_ko": "Diadumene cincta",
+    "common_name_en": "Diadumene cincta",
+    "depth": "",
+    "facts": [
+      "Diadumene cincta, the orange anemone, is a small and delicate, usually orange, sea anemone.",
+      "It has a smooth slender column and up to 200 long tentacles, and normally grows to a length of up to 35 mm (1.4 in), with a base of 10 mm (0.4 in), but specimens twice this size have been recorded.",
+      "Diadumene cincta is found in the northeastern Atlantic Ocean."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Diadumene cincta",
+      "common_name_ko": "Diadumene cincta",
+      "common_name_en": "Diadumene cincta",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Diadumene cincta, the orange anemone, is a small and delicate, usually orange, sea anemone.",
+        "It has a smooth slender column and up to 200 long tentacles, and normally grows to a length of up to 35 mm (1.4 in), with a base of 10 mm (0.4 in), but specimens twice this size have been recorded.",
+        "Diadumene cincta is found in the northeastern Atlantic Ocean."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Baksteenanemonen op wrak-4885776.webm)"
+      ]
+    }
+  },
+  {
+    "kind": "creature",
+    "key": "ophiothrix fragilis",
+    "needs_confirm": false,
+    "title": "File:Brokkelster gegrepen door een slibanemoon-4931683.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Brokkelster_gegrepen_door_een_slibanemoon-4931683.webm",
+    "license": "cc-by-sa",
+    "credit": "Peter van Rodijnen · CC BY-SA",
+    "source": "File:Brokkelster gegrepen door een slibanemoon-4931683.webm",
+    "name": "Ophiothrix fragilis",
+    "name_ja": "",
+    "common_name_ko": "Ophiothrix fragilis",
+    "common_name_en": "Ophiothrix fragilis",
+    "depth": "",
+    "facts": [
+      "Ophiothrix fragilis is a species of brittle star in the order Ophiurida.",
+      "It is found around the coasts of western Europe and is known in Britain as the common brittle star.",
+      "It is also found along the coast of South Africa where it is known as the hairy brittle star."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Ophiothrix fragilis",
+      "common_name_ko": "Ophiothrix fragilis",
+      "common_name_en": "Ophiothrix fragilis",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Ophiothrix fragilis is a species of brittle star in the order Ophiurida.",
+        "It is found around the coasts of western Europe and is known in Britain as the common brittle star.",
+        "It is also found along the coast of South Africa where it is known as the hairy brittle star."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Brokkelster gegrepen door een slibanemoon-4931683.webm)"
+      ]
+    }
+  },
+  {
+    "kind": "creature",
+    "key": "anoplodactylus lentus",
+    "needs_confirm": false,
+    "title": "File:Sea Spiders.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/Sea_Spiders.webm",
+    "license": "cc-by",
+    "credit": "NOAA Sanctuaries · CC BY",
+    "source": "File:Sea Spiders.webm",
+    "name": "Anoplodactylus lentus",
+    "name_ja": "",
+    "common_name_ko": "Anoplodactylus lentus",
+    "common_name_en": "Anoplodactylus lentus",
+    "depth": "",
+    "facts": [
+      "Phoxichilidiidae is a family of sea spiders.",
+      "About 150 species are described, almost all in the genus Anoplodactylus Wilson, 1878."
+    ],
+    "fact_src": "Wikipedia (en) · 상위 분류군",
+    "species": {
+      "scientific_name": "Anoplodactylus lentus",
+      "common_name_ko": "Anoplodactylus lentus",
+      "common_name_en": "Anoplodactylus lentus",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Phoxichilidiidae is a family of sea spiders.",
+        "About 150 species are described, almost all in the genus Anoplodactylus Wilson, 1878."
+      ],
+      "sources": [
+        "Wikipedia (en) · 상위 분류군",
+        "Wikimedia Commons (File:Sea Spiders.webm)"
+      ]
+    }
+  },
+  {
+    "kind": "creature",
+    "key": "astomonema",
+    "needs_confirm": false,
+    "title": "File:Astomonema 2 cliponly.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Astomonema_2_cliponly.webm",
+    "license": "cc-by-sa",
+    "credit": "Brandon Seah, Max Planck Institute for Marine Microbiology · CC BY-SA",
+    "source": "File:Astomonema 2 cliponly.webm",
+    "name": "Astomonema",
+    "name_ja": "",
+    "common_name_ko": "Astomonema",
+    "common_name_en": "Astomonema",
+    "depth": "",
+    "facts": [
+      "Astomonema is a genus of nematode worms in the family Siphonolaimidae.",
+      "They lack a mouth or conventional digestive tract, but contain symbiotic sulfur-oxidizing bacteria that serve as their primary food source.",
+      "They live in the marine interstitial habitat."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Astomonema",
+      "common_name_ko": "Astomonema",
+      "common_name_en": "Astomonema",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Astomonema is a genus of nematode worms in the family Siphonolaimidae.",
+        "They lack a mouth or conventional digestive tract, but contain symbiotic sulfur-oxidizing bacteria that serve as their primary food source.",
+        "They live in the marine interstitial habitat."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Astomonema 2 cliponly.webm)"
+      ]
+    }
+  },
+  {
+    "kind": "creature",
+    "key": "artemia salina",
+    "needs_confirm": false,
+    "title": "File:Direct-Visualization-of-Mucus-Production-by-the-Cold-Water-Coral-Lophelia-pertusa-with-Digital-pone.0146766.s002.ogv",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/0e/Direct-Visualization-of-Mucus-Production-by-the-Cold-Water-Coral-Lophelia-pertusa-with-Digital-pone.0146766.s002.ogv",
+    "license": "cc-by",
+    "credit": "Zetsche E, Baussant T, Meysman F, van Oevelen D · CC BY",
+    "source": "File:Direct-Visualization-of-Mucus-Production-by-the-Cold-Water-Coral-Lophelia-pertusa-with-Digital-pone.0146766.s002.ogv",
+    "name": "Artemia salina",
+    "name_ja": "",
+    "common_name_ko": "씨몽키",
+    "common_name_en": "Artemia salina",
+    "depth": "",
+    "facts": [
+      "Artemia salina is a species of brine shrimp – aquatic crustaceans that are more closely related to Triops and cladocerans than to true shrimp.",
+      "It belongs to a lineage that does not appear to have changed much in 100 million years.",
+      "It is also one of the largest brine shrimp species.",
+      "Artemia salina is native to saline lakes, ponds, and temporary waters (not seas) in the Mediterranean region of Southern Europe, Anatolia, and Northern Africa.",
+      "Considerable taxonomic confusion exists, and some populations elsewhere have formerly been referred to as this species, but are now recognized as separate species."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Artemia salina",
+      "common_name_ko": "씨몽키",
+      "common_name_en": "Artemia salina",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Artemia salina is a species of brine shrimp – aquatic crustaceans that are more closely related to Triops and cladocerans than to true shrimp.",
+        "It belongs to a lineage that does not appear to have changed much in 100 million years.",
+        "It is also one of the largest brine shrimp species.",
+        "Artemia salina is native to saline lakes, ponds, and temporary waters (not seas) in the Mediterranean region of Southern Europe, Anatolia, and Northern Africa.",
+        "Considerable taxonomic confusion exists, and some populations elsewhere have formerly been referred to as this species, but are now recognized as separate species."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Direct-Visualization-of-Mucus-Production-by-the-Cold-Water-Coral-Lophelia-pertusa-with-Digital-pone.0146766.s002.ogv)"
+      ]
+    }
+  },
+  {
+    "kind": "creature",
+    "key": "phallodrilinae",
+    "needs_confirm": false,
+    "title": "File:Gutless tmp cliponly.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/f/f3/Gutless_tmp_cliponly.webm",
+    "license": "cc-by-sa",
+    "credit": "Brandon Seah, Max Planck Institute for Marine Microbiology · CC BY-SA",
+    "source": "File:Gutless tmp cliponly.webm",
+    "name": "Phallodrilinae",
+    "name_ja": "",
+    "common_name_ko": "Phallodrilinae",
+    "common_name_en": "Phallodrilinae",
+    "depth": "",
+    "facts": [
+      "Phallodrilinae is a subfamily of clitellate oligochaete worms."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Phallodrilinae",
+      "common_name_ko": "Phallodrilinae",
+      "common_name_en": "Phallodrilinae",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Phallodrilinae is a subfamily of clitellate oligochaete worms."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Gutless tmp cliponly.webm)"
+      ]
+    }
   }
 ]
