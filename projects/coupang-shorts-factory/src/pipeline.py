@@ -58,6 +58,8 @@ def main() -> int:
                    help="이미 제작된 영상(릴리스 shorts-run)을 유튜브에 업로드 — 검수 통과 후 '올리기'용")
     p.add_argument("--regen", default=None,
                    help="기획의 특정 항목만 재생성해 즉시 교체 (title|headline|description|hashtags)")
+    p.add_argument("--regen-line", type=int, default=None,
+                   help="대본 한 라인의 문구(text)만 재생성해 즉시 교체 (라인 번호 0~)")
     args = p.parse_args()
 
     settings = yaml.safe_load((PROJECT_ROOT / "config" / "settings.yaml").read_text(encoding="utf-8"))
@@ -99,6 +101,9 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     (job_dir / "product.json").write_text(json.dumps(product, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"[pipeline] M2 상품: {product['name']} ({product['price']:,}원)")
 
+    # ---- 라인 문구 재생성 모드(--regen-line): 대본 한 줄의 text만 새로 만들어 즉시 교체
+    if args.regen_line is not None:
+        return _regen_line(product, args.regen_line, settings, PROJECT_ROOT)
     # ---- 검수 재생성 모드(--regen): 기획의 특정 항목만 새로 만들어 즉시 교체
     if args.regen:
         return _regen_field(product, args.regen, settings, PROJECT_ROOT)
@@ -501,6 +506,36 @@ def _regen_field(product: dict, field: str, settings: dict, root: Path) -> int:
     notify.send(
         f"[쿠팡쇼츠] '{field}' 재생성 완료 — {product['name']}\n"
         f"다음: 관리자 '제작' 탭에서 새 내용을 확인하세요.\n"
+        f"https://shorts-admin.jtaechul.workers.dev")
+    return 0
+
+
+def _regen_line(product: dict, line_i: int, settings: dict, root: Path) -> int:
+    """검수 — 대본 한 라인의 문구(text)만 재생성해 기획 JSON에 즉시 교체(스토리 연결성 유지)."""
+    from src.script.generate import regenerate_line
+    plan_path = root / "data" / "plans" / f"{product['_row_hash']}.json"
+    if not plan_path.exists():
+        print("::error::기획이 없습니다 — 먼저 '기획 만들기'로 대본을 만드세요")
+        return 2
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    lines = plan.get("lines") or []
+    if not (0 <= line_i < len(lines)):
+        print(f"::error::라인 번호 범위 밖: {line_i} (0~{len(lines) - 1})")
+        return 2
+    try:
+        newline = regenerate_line(plan, line_i, product, settings)
+    except Exception as e:
+        print(f"::error::라인 문구 재생성 실패({type(e).__name__}: {e})")
+        return 2
+    old = lines[line_i].get("text", "")
+    lines[line_i]["text"] = newline["text"]
+    lines[line_i]["subs"] = newline["subs"]   # subs 계약(join==text) 유지 — 렌더 자막 그대로 사용
+    plan_path.write_text(json.dumps(plan, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"[pipeline] 라인 {line_i} 문구 재생성 완료: '{old}' → '{newline['text']}'")
+    notify.send(
+        f"[쿠팡쇼츠] 라인 {line_i + 1} 문구 재생성 완료 — {product['name']}\n"
+        f"새 문구: {newline['text']}\n"
+        f"다음: 관리자 '기획' 탭에서 확인하세요.\n"
         f"https://shorts-admin.jtaechul.workers.dev")
     return 0
 

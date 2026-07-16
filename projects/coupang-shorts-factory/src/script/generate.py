@@ -18,7 +18,20 @@ from pathlib import Path
 
 import requests
 
-from src.script.sanitize import RuleViolation, product_avoid_terms, sanitize_script
+from src.script.sanitize import (
+    RuleViolation,
+    build_subs,
+    check_forbidden,
+    clean_text,
+    hide_product_name,
+    product_avoid_terms,
+    sanitize_script,
+)
+
+_STAGE_ROLE = {1: "폭로 훅(결론 먼저+미래격차+첫 불편장면)", 2: "공감 확산",
+               3: "원흉 지목", 4: "제품 정체 공개(종류·킬러스펙만)", 5: "증거·반응(루프 이음새)"}
+# 가격 표현(숫자+원 / N만원) — sanitize_script(line 204)와 동일 규칙을 라인 단위로도 강제한다.
+_PRICE_RE = re.compile(r"\d[\d,]*\s*원|\d+\s*만\s*원")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DISCLOSURE = "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다"
@@ -141,6 +154,60 @@ def regenerate_field(plan: dict, field: str, product: dict, settings: dict):
     if "value" not in data:
         raise ValueError(f"재생성 응답에 value 없음: {text[:120]}")
     return data["value"]
+
+
+def regenerate_line(plan: dict, line_i: int, product: dict, settings: dict) -> dict:
+    """검수 — 대본에서 '한 라인의 문구(text)'만 새로 지어 {text, subs}로 반환한다.
+    나머지 라인·stage·punch·scene은 그대로 두고 이 줄의 문구만 바꾼다. 스토리 연결성을 지키려고
+    한줄썰(스파인)·바로 앞뒤 라인을 문맥으로 주고, 앞줄을 이어받아 뒷줄로 넘어가게 요청한다.
+    가드레일(제품명 감춤·가격/금지어·이모지 제거)과 subs 계약(join==text)은 코드가 강제한다."""
+    lines = plan.get("lines") or []
+    if not (0 <= line_i < len(lines)):
+        raise ValueError(f"라인 번호 범위 밖: {line_i} (0~{len(lines) - 1})")
+    cfg = settings.get("script", {})
+    provider = script_provider(settings)
+    model = (cfg.get("gemini_model", "gemini-2.5-flash") if provider == "gemini"
+             else cfg.get("model", "claude-sonnet-4-6"))
+    cur = lines[line_i]
+    prev_t = lines[line_i - 1].get("text", "") if line_i > 0 else "(없음 — 이 줄이 첫 줄=폭로 훅)"
+    next_t = lines[line_i + 1].get("text", "") if line_i + 1 < len(lines) else "(없음 — 이 줄이 마지막=루프 이음새)"
+    spine = str((plan.get("concept") or {}).get("한줄썰") or "").strip() or "(미정)"
+    role = _STAGE_ROLE.get(int(cur.get("stage", 0) or 0), "전개")
+    avoid = product_avoid_terms(product)
+
+    system = ("너는 한국어 쇼츠 대본 작가다. 요청한 '한 줄'만 새로 지어 JSON으로만 반환한다. "
+              "마크다운·설명·백틱 금지. 만담 드립으로 웃기되 스토리 흐름을 지킨다.")
+    prompt = (
+        f"아래 쇼츠 대본에서 {line_i + 1}번째 줄의 '문구(text)'만 새로 지어라.\n"
+        f"[이 영상의 한 줄 썰(모든 줄이 이 사건 하나로 이어짐)] {spine}\n"
+        f"[이 줄의 역할] {cur.get('stage', '?')}단계 = {role}\n"
+        f"[바로 앞 줄] {prev_t}\n"
+        f"[바로 뒤 줄] {next_t}\n"
+        "★ 조건: 앞 줄에서 자연스럽게 이어받아 뒤 줄로 매끄럽게 넘어가게(개연성) + 만담 드립으로 웃기게 "
+        "+ 12~24자 구어체 한 줄. 앞뒤에 없던 새 소재·새 장소를 뜬금없이 꺼내지 마라.\n"
+        "금지: 제품 브랜드·모델명·정식명칭(종류 일반명사로만), 금액·가격, 이모지·특수기호, 최고/유일/100% 단정.\n"
+        f"현재 문구(참고 — 이것과 확실히 다르고 더 웃기게): {cur.get('text', '')}\n"
+        '출력(JSON만): {"text": "새 문구 한 줄"}')
+
+    for attempt in range(1, 4):   # 금지어·가격·형식 위반 방어(각 ≈2원)
+        text = (_gemini_generate(model, system, prompt, 400) if provider == "gemini" and gemini_key()
+                else _anthropic_generate(model, system, prompt, 400))
+        m = re.search(r"\{.*\}", text, re.S)
+        try:
+            raw = str((json.loads(m.group(0)) if m else {}).get("text", "")).strip()
+        except json.JSONDecodeError:
+            raw = ""
+        if not raw:
+            continue
+        # 생성 때와 동일한 라인 단위 가드레일을 적용한다: 제품명(브랜드·모델코드) 제거 → 이모지·특수기호
+        #   정리 → 금지어(최고·유일 등)·가격(숫자+원) 차단. subs 계약(join==text)은 build_subs가 보장.
+        #   (sanitize_script는 punch 1개·분량 등 '스크립트 전체' 규칙까지 봐서 한 줄만 태우면 오탐 → 라인 헬퍼로 정확히.)
+        newt = clean_text(hide_product_name(raw, avoid))
+        if newt and len(newt.replace(" ", "")) >= 4 and not check_forbidden(newt) and not _PRICE_RE.search(newt):
+            print(f"[script] 라인 {line_i} 문구 재생성({provider}/{model}, {attempt}차): {newt}")
+            return {"text": newt, "subs": build_subs(newt)}
+        print(f"[script] 라인 {line_i} 문구 {attempt}차 규칙 위반/부적합 → 재시도")
+    raise RuleViolation("라인 문구 재생성 실패 — 유효한 문구를 얻지 못했습니다(가격·금지어·형식). 다시 시도하세요.")
 
 
 def _anthropic_generate(model: str, system: str, content: str, max_tokens: int) -> str:
