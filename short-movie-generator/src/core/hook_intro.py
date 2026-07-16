@@ -84,7 +84,7 @@ class HookIntroConfig:
     FPS: int = 30
     # ── 타이밍(시스템) ──
     opening_seg_s: float = 4.6         # 오프닝 페이지 총 길이(팝+홀드) — 다음 컷 전 여유 확보
-    narr_start_s: float = 0.30         # 세그먼트 내 훅 나레이션 시작
+    narr_start_s: float = 0.18         # 세그먼트 내 훅 나레이션 시작(리드인 단축 — 문구가 더 빨리 뜸)
     transition_s: float = 0.5          # 오프닝→본문 플래시 전환
     pop_grow_s: float = 0.16           # 어절 확대→축소 시간
     pop_fade_s: float = 0.12           # 어절 알파 인
@@ -109,7 +109,7 @@ class HookIntroConfig:
     shake_dur_s: float = 0.18
     # ── 사운드(무료·결정론) ──
     boom_dur_s: float = 0.46
-    hook_tts_rate: str = "-14%"
+    hook_tts_rate: str = "+16%"        # 훅 나레이션 속도(빠르게 — 문구가 더 빨리 날아옴). 홀드는 별도 유지
     hook_tts_pitch: str = "-6Hz"
     hook_tts_volume: str = "+35%"
     body_tts_rate: str = "-2%"

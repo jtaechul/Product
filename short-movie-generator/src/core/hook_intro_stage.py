@@ -28,6 +28,8 @@ _PUNCT = re.compile(r"[、。，．・「」『』（）\s]")
 # ★오프닝 홀드(운영자 확정): 마지막 어절 이펙트가 끝난 뒤 본문으로 넘어가기 전 최소 대기(초).
 #   0.5~1.0초 범위 중 0.7초 채택 — 3줄 훅의 마지막 줄이 끝나자마자 넘어가던 어색함 방지.
 _OPEN_HOLD_S = 0.7
+# 오프닝 최소 길이(초) — 나레이션이 아주 짧아도 이 밑으로는 내려가지 않게 하한만 보장.
+_OPEN_MIN_S = 2.4
 
 
 def _install_ca() -> None:
@@ -235,8 +237,11 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
             last_on = max(onsets.values()) if onsets else 0.0
             pop_end = cfg.narr_start_s + float(last_on) + cfg.pop_grow_s + cfg.pop_fade_s
             need = max(narr_end, pop_end) + _OPEN_HOLD_S
-            if need > cfg.opening_seg_s:
-                cfg.opening_seg_s = math.ceil(need * 100) / 100.0   # 올림: 홀드가 0.7초 밑으로 안 내려가게
+            # ★오프닝 길이 = '나레이션(문구 날아옴) 실제 종료 + 홀드'로 정확히 맞춘다(항상 재계산).
+            #   예전엔 need가 기본값(4.6)보다 클 때만 늘렸다 → 나레이션을 빠르게 해도 총 길이는 4.6로
+            #   고정돼 '죽은 홀드'만 늘었다. 이제 need로 정확히 축소·확대해 홀드(0.7초)만 유지한 채
+            #   문구 날아오는 시간이 줄면 오프닝 전체도 그만큼 짧아진다. (너무 짧아지지 않게 최소값만 보장)
+            cfg.opening_seg_s = max(_OPEN_MIN_S, math.ceil(need * 100) / 100.0)
         except Exception:  # noqa: BLE001
             pass
 
