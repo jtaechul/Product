@@ -358,6 +358,24 @@ function _clean(s) {
 // (주의: \W 는 한글을 비단어로 보고 지워버리므로 쓰면 안 됨 → 유니코드 letter/number만 남김)
 function _normTitle(s) { return String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ''); }
 
+// ⭐ 판본·부제 차이를 무시한 "본제목" 비교 — 중복 제작 방지의 핵심.
+// 실제 사고: 제외 목록에 "어린 왕자 (한정판)"이 있었는데 새 추천이 "어린왕자"로 와서
+// 완전 일치(_normTitle 등호) 비교를 통과 → 같은 책이 2회 제작됨. 괄호(판본·부제)와
+// 콜론 뒤 부제를 벗긴 본제목으로 비교하고, 접두 일치(4자 이상)도 같은 책으로 본다.
+function _baseTitle(s) {
+  let t = String(s || '');
+  t = t.replace(/[\(\[（【][^\)\]）】]*[\)\]）】]/g, ' '); // (한정판)·[리커버] 등 괄호 제거
+  t = t.split(/[:：|]/)[0];                                // 콜론·파이프 뒤 부제 제거
+  return _normTitle(t);
+}
+function sameBookTitle(a, b) {
+  const x = _baseTitle(a), y = _baseTitle(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  const s = x.length <= y.length ? x : y, l = x.length <= y.length ? y : x;
+  return s.length >= 4 && l.startsWith(s);  // "어린왕자" vs "어린왕자리커버에디션" 등
+}
+
 // ⭐ 성인·에로 콘텐츠 필터 (검열 체계) — 성인만화·성인소설·에로/19금 등이 리뷰로 제작되지 않게 차단.
 // 고정밀 마커만 사용해 건강한 연애·성심리 도서의 오탐(false positive)을 최소화한다.
 const ADULT_PATTERNS = [
@@ -735,13 +753,35 @@ async function handleSendTelegram(env, body) {
 // ===== Claude 핸들러 =====
 
 // 카테고리/이슈 기반 책 추천
-// 제외할 책 제목 = 전달된 목록 + book_catalog(도서관에 실제 게시된 책)만. 정규화 중복 제거.
-// ⭐ 중복 제외 기준은 "도서관 페이지에 실제 게시(등록)된 책"뿐이다. 제작·초안만 만들고
-// 게시하지 않은 책은 다시 추천될 수 있어야 하므로 used_books(제작 이력)는 제외 기준에서 뺀다
-// (추천 풀 고갈 방지 — 세상에 책은 많은데 '만들기만 한' 책까지 영구 차단하던 문제 해소).
+// ⭐ 최근 제작 가드(14일) — "제작된 책"(게시 여부 무관)을 14일 동안만 재추천 금지.
+// 영구 차단은 여전히 도서관 게시본뿐이라 추천 풀은 넓게 유지되지만, 게시 안 한 책이
+// 며칠 만에 또 제작되는 중복(실사고: 어린왕자 2회)을 모든 경로(자동·수동)에서 막는다.
+const RECENT_CREATION_DAYS = 14;
+async function recordRecentCreation(env, title) {
+  if (!env.PENDING_POSTS || !title) return;
+  let arr = [];
+  try { arr = (await env.PENDING_POSTS.get('recent_created_books', 'json')) || []; } catch {}
+  const cutoff = Date.now() - RECENT_CREATION_DAYS * 24 * 3600 * 1000;
+  arr = arr.filter(e => e && e.ts > cutoff && !sameBookTitle(e.t, title));
+  arr.push({ t: title, ts: Date.now() });
+  await env.PENDING_POSTS.put('recent_created_books', JSON.stringify(arr.slice(-40)), { expirationTtl: (RECENT_CREATION_DAYS + 1) * 24 * 3600 }).catch(() => {});
+}
+async function getRecentCreations(env) {
+  try {
+    const arr = (await env.PENDING_POSTS.get('recent_created_books', 'json')) || [];
+    const cutoff = Date.now() - RECENT_CREATION_DAYS * 24 * 3600 * 1000;
+    return arr.filter(e => e && e.ts > cutoff).map(e => e.t);
+  } catch { return []; }
+}
+
+// 제외할 책 제목 = 전달된 목록 + book_catalog(도서관 게시본, 영구) + 최근 14일 제작본(단기)
+// + 현재 살아있는 초안(draft_index — 초안이 있다 = 최근에 제작함). 게시 안 한 책은
+// 14일(초안은 만료 7일)이 지나면 다시 추천될 수 있다(풀 고갈 방지와 중복 방지의 균형).
 async function getUsedExcludes(env, extra = []) {
   const set = [...extra];
   try { const c = (await env.PENDING_POSTS.get('book_catalog', 'json')) || []; set.push(...c.map(b => b && b.title).filter(Boolean)); } catch {}
+  set.push(...await getRecentCreations(env));
+  try { const d = (await env.PENDING_POSTS.get('draft_index', 'json')) || []; set.push(...d.map(x => x && x.title).filter(Boolean)); } catch {}
   const seen = new Set(); const out = [];
   for (const t of set) { const n = _normTitle(t); if (n && !seen.has(n)) { seen.add(n); out.push(t); } }
   return out;
@@ -805,8 +845,9 @@ async function handleSuggest(env, body) {
   // ⭐ 소설 레인은 만화·웹툰·코믹 배제(소설만) — BL은 만화 비중이 커서 키워드 없이도 상당수 걸러진다.
   if (isStory) usable = usable.filter(b => !looksLikeComic(b.title, b.author, b.category, b.coreMessage, b.reason, b.description));
   // [강제 제외] AI가 제외 지시를 무시하고 이미 만든 책을 또 넣어도 서버에서 걸러낸다.
-  const exNorm = new Set(exclude.map(_normTitle));
-  const fresh = usable.filter(b => !exNorm.has(_normTitle(b.title)));
+  // ⭐ 등호 비교가 아니라 판본·부제 무시 비교(sameBookTitle) — "어린 왕자 (한정판)" 제외 목록에
+  // "어린왕자"가 새로 와도 같은 책으로 판정해 차단(실사고 재발 방지).
+  const fresh = usable.filter(b => !exclude.some(t => sameBookTitle(t, b.title)));
   if (fresh.length) usable = fresh;   // 전부 제외되면(신간 부족) 최소 원본 유지
   usable.sort((a, b) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0));  // 실존 확인 책 우선
 
@@ -1030,8 +1071,9 @@ async function handleGenerate(env, body) {
   let pages = extractJson(text);
   // ⭐ 한국어 교정 패스 — 어색·틀린 표현("한 겹"→"한결" 등) 자동 차단(규칙+AI 이중).
   pages = await proofreadPages(env, pages);
-  // ⭐ 중복 제외는 "도서관 게시"로만 판단한다(제작만 하고 게시 안 한 책은 다시 추천 가능).
-  // → 제작 단계에서 used_books에 기록하던 로직 제거(추천 풀 고갈 방지). 게시 시 book_catalog에 등록됨.
+  // ⭐ 최근 제작 기록(14일 가드) — 모든 제작 경로가 이 함수를 지나므로 여기서 기록.
+  // 영구 차단은 도서관 게시본뿐(풀 유지), 이 기록은 14일 내 같은 책 재제작만 막는다.
+  await recordRecentCreation(env, correctedBook?.title || title).catch(() => {});
   // bookDescription: 검증 단계가 실제 책 소개 기준으로 부합도를 채점할 수 있게 반환
   return { success: true, pages, correctedBook, bookCover, bookDescription: bookDesc };
 }
@@ -2424,13 +2466,18 @@ async function handleDeleteBook(env, body) {
   await env.PENDING_POSTS.delete(`post_img_${num}`).catch(() => {});
   await env.PENDING_POSTS.delete(`dm_book_${num}`).catch(() => {});
 
-  // 3) 중복 제작 이력(used_books)에서 제목 제거 → 다시 추천 가능
+  // 3) 중복 제작 이력에서 제목 제거 → 다시 추천 가능 (구 used_books + 최근 14일 가드 양쪽)
   if (title) {
     try {
       const used = (await env.PENDING_POSTS.get('used_books', 'json')) || [];
       const nt = _normTitle(title);
       const nextUsed = used.filter(t => _normTitle(t) !== nt);
       if (nextUsed.length !== used.length) await env.PENDING_POSTS.put('used_books', JSON.stringify(nextUsed));
+    } catch {}
+    try {
+      const rec = (await env.PENDING_POSTS.get('recent_created_books', 'json')) || [];
+      const nextRec = rec.filter(e => !sameBookTitle(e && e.t, title));
+      if (nextRec.length !== rec.length) await env.PENDING_POSTS.put('recent_created_books', JSON.stringify(nextRec));
     } catch {}
   }
 
