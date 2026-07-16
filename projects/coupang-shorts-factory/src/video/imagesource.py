@@ -667,23 +667,51 @@ def _pixabay(query: str, seen: set, page: int = 1):
     return None
 
 
+# Giphy 호출 절약(2026-07-16 — 베타 키 시간당 100회 한도 초과 사고 재발 방지):
+#   예전엔 호출 1번(HTTP)당 8개를 받아 1개만 쓰고 버려서 후보 생성 1회에 수십 콜을 썼다.
+#   이제 쿼리당 한 번에 25개를 받아 풀(pool)에 쌓아 재사용 → 같은 결과 기준 HTTP 호출 ~90% 감소.
+#   429(한도 초과)를 만나면 이번 실행은 Giphy를 끄고 스톡·밈으로만 진행(경고 1회).
+_GIPHY_POOL: dict = {}      # query → 남은 URL 목록
+_GIPHY_FETCHES: dict = {}   # query → HTTP 페치 횟수(다음 offset)
+_GIPHY_OFF = {"blocked": False}
+
+
 def _giphy(query: str, seen: set, page: int = 1):
-    """재미있는 반응 움짤(GIF). 렌더가 정사각형에 애니메이션으로 깐다(더 코믹·자주 바뀜)."""
+    """재미있는 반응 움짤(GIF). 렌더가 정사각형에 애니메이션으로 깐다(더 코믹·자주 바뀜).
+    (page 인자는 소스 체인 시그니처 호환용 — 페이징은 내부 페치 횟수로 관리한다.)"""
     gk = _giphy_key()
-    if not gk:
+    if not gk or _GIPHY_OFF["blocked"]:
         return None
-    r = requests.get(GIPHY, params={"api_key": gk, "q": query, "limit": 8,
-                                    "offset": max(0, page - 1) * 8,
-                                    "rating": "pg-13", "lang": "en"}, timeout=25)
-    if not r.ok:
-        return None
-    for it in r.json().get("data", []):
-        imgs = it.get("images") or {}
-        u = ((imgs.get("downsized_medium") or {}).get("url")
-             or (imgs.get("original") or {}).get("url"))
-        if u and u not in seen:
-            seen.add(u)
-            return u
+    pool = _GIPHY_POOL.setdefault(query, [])
+    for _ in range(4):   # (풀 소진 → 페치) 반복 상한
+        while pool:
+            u = pool.pop(0)
+            if u not in seen:
+                seen.add(u)
+                return u
+        n = _GIPHY_FETCHES.get(query, 0)
+        if n >= 3:       # 쿼리당 최대 3페치(75개) — 그 이상은 결과 질이 떨어질 뿐
+            return None
+        _GIPHY_FETCHES[query] = n + 1
+        r = requests.get(GIPHY, params={"api_key": gk, "q": query, "limit": 25,
+                                        "offset": n * 25, "rating": "pg-13", "lang": "en"}, timeout=25)
+        if r.status_code == 429:
+            _GIPHY_OFF["blocked"] = True
+            print("[imgsrc] ⚠️ Giphy 시간당 호출 한도 초과(429) — 이번 실행은 스톡·밈으로만 진행 "
+                  "(해결: Giphy 개발자 대시보드에서 무료 Production 키 신청)")
+            return None
+        if not r.ok:
+            return None
+        data = r.json().get("data", [])
+        if not data:
+            _GIPHY_FETCHES[query] = 99   # 결과 없는 쿼리 — 재페치 금지
+            return None
+        for it in data:
+            imgs = it.get("images") or {}
+            u = ((imgs.get("downsized_medium") or {}).get("url")
+                 or (imgs.get("original") or {}).get("url"))
+            if u:
+                pool.append(u)
     return None
 
 
