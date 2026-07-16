@@ -17,6 +17,26 @@ from pathlib import Path
 
 DISCLOSURE = "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다"
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]   # coupang-shorts-factory/
+
+
+def _store_number(row_hash: str) -> str | None:
+    """공개 스토어 카탈로그(admin/public/store-catalog.json)에서 이 상품(row_hash)의
+    번호를 찾아 '001' 형태로 반환. 스토어에 없으면 None(번호 미표시)."""
+    if not row_hash:
+        return None
+    try:
+        cat = json.loads((PROJECT_ROOT / "admin" / "public" / "store-catalog.json").read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    for it in (cat if isinstance(cat, list) else []):
+        if str(it.get("row_hash", "")) == str(row_hash) and it.get("number") is not None:
+            try:
+                return f"{int(it['number']):03d}"
+            except (TypeError, ValueError):
+                return None
+    return None
+
 
 def _creds_env() -> dict:
     return {
@@ -48,9 +68,14 @@ def build_description(script: dict, product: dict) -> str:
     avoid = product_avoid_terms(product)
     specs = "\n".join(f"- {hide_product_name(str(s), avoid)}" for s in product.get("specs", []))
     body = hide_product_name(script.get("description_body", "").strip(), avoid)
+    num = _store_number(product.get("_row_hash", ""))   # 스토어 카탈로그 번호(No.###과 동일)
     parts = [
         DISCLOSURE,  # §3.1 ① 최상단 첫 줄 (절대 위치 변경 금지)
         "",
+    ]
+    if num:
+        parts += [f"미래마켓 #{num}", ""]   # 상품 번호 — 영상↔스토어(store#N) 매칭용
+    parts += [
         body,
         "",
         (f"[제품 특징]\n{specs}".strip() if specs.strip() else ""),   # 특징(스펙)만 — 제품명은 넣지 않는다
