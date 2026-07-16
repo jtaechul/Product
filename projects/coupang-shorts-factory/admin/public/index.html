@@ -334,6 +334,24 @@ ol li{margin:8px 0}
     </details>
   </div>
   <div class="card">
+    <h2>Giphy 키 (GIF 검색창용 · 선택)</h2>
+    <p class="hint" style="margin:0">이미지 탭의 라인마다 <b>GIF 검색</b> 창(직접 검색·스크롤·탭 선택)을
+    쓰려면 필요합니다. 한 번 저장하면 이 기기에 계속 유지됩니다.</p>
+    <label>Giphy API 키</label>
+    <input id="giphyKeyInput" type="password" placeholder="Giphy 개발자 키" autocomplete="off">
+    <button class="btn" id="btnSaveGiphy">저장</button>
+    <button class="btn sub" id="btnClearGiphy">이 기기에서 삭제</button>
+    <details>
+      <summary>키 받는 방법 (무료, 3분)</summary>
+      <ol>
+        <li><a href="https://developers.giphy.com/dashboard/" target="_blank">Giphy 개발자 대시보드 열기</a> (가입 또는 로그인)</li>
+        <li><b>Create an App</b> → <b>API</b> 선택 → 이름은 아무거나(예: miraemarket) → 생성</li>
+        <li>화면에 나온 <b>API Key</b>를 복사해 위 칸에 붙여넣고 저장</li>
+      </ol>
+      <p class="hint">GitHub 시크릿 SHORTS_GIPHY_API_KEY와 같은 키를 써도 됩니다(자동 후보 검색용과 동일). 키는 이 기기 브라우저에만 저장됩니다.</p>
+    </details>
+  </div>
+  <div class="card">
     <h2>바로가기</h2>
     <div class="item"><div class="grow"><a href="https://github.com/jtaechul/Product/actions/workflows/shorts-produce.yml" target="_blank">제작 실행 기록 전체 보기 (GitHub Actions)</a></div></div>
     <div class="item"><div class="grow"><a href="https://github.com/jtaechul/Product/settings/secrets/actions" target="_blank">API 키(시크릿) 등록 페이지</a></div></div>
@@ -1568,9 +1586,15 @@ function renderImgLines() {
       + `<p class="hint" style="margin:0 0 6px">여러 장 고르면 그 순서대로 슬라이드쇼로 나옵니다(번호 = 순서). 다시 누르면 해제.</p>`
       + `<div class="thumbs"></div>`
       + `<div class="row2" style="margin-top:8px">`
+      + `<button class="btn mini gifopen">GIF 검색</button>`
       + `<button class="btn mini sub imglineredo">라인 다시 생성</button>`
       + `<button class="btn mini sub imgredo">이미지만 다시</button>`
-      + `<label class="btn mini imgup">내 파일 올리기<input type="file" accept="image/*,video/*" hidden></label></div>`;
+      + `<label class="btn mini imgup">내 파일 올리기<input type="file" accept="image/*,video/*" hidden></label></div>`
+      + `<div class="gifpanel" style="display:none;margin-top:8px">`
+      + `<div style="display:flex;gap:6px"><input class="gifq" placeholder="GIF 검색 (영어 추천)" style="flex:1;margin:0">`
+      + `<button class="btn mini gifgo" style="width:auto">검색</button></div>`
+      + `<div class="thumbs gifres" style="margin-top:6px;max-height:380px;overflow-y:auto"></div>`
+      + `<button class="btn mini sub gifmore" style="display:none;margin-top:6px">더 보기</button></div>`;
     card.querySelector(".imgtext").textContent = ln.text;
     const thumbs = card.querySelector(".thumbs");
     for (const c of (ln.candidates || [])) {
@@ -1606,7 +1630,7 @@ function renderImgLines() {
             : { url: c.url, source: c.source || "", query: ln.query || "", _key: c.name });
           t.classList.add("sel");
         }
-        renumberThumbs(thumbs, imgPicks[ln.line_i]);
+        renumberThumbs(card, imgPicks[ln.line_i]);   // 후보+GIF검색 두 그리드의 순서 배지 동기화
       };
       thumbs.appendChild(t);
     }
@@ -1618,7 +1642,7 @@ function renderImgLines() {
       const t = pk._key && thumbs.querySelector(`.thumb[data-key="${cssKey(pk._key)}"]`);
       if (t) t.classList.add("sel");
     }
-    renumberThumbs(thumbs, existing);
+    renumberThumbs(card, existing);
     const nUp = existing.filter((x) => x.source === "upload").length;
     if (nUp) {
       const chip = document.createElement("span"); chip.className = "chip done upok";
@@ -1668,6 +1692,57 @@ function renderImgLines() {
       upInput.value = "";
       toast(`라인 ${ln.line_i + 1} 내 파일 추가 (슬라이드쇼 ${arr.length}번째).`);
     });
+    // ── GIF 검색창(라인 안에서 직접 검색·스크롤·탭 선택 — Giphy API, 설정 탭 키 필요) ──
+    const gifPanel = card.querySelector(".gifpanel"), gifQ = card.querySelector(".gifq");
+    const gifRes = card.querySelector(".gifres"), gifMore = card.querySelector(".gifmore");
+    let gifOffset = 0, gifQuery = "";
+    async function gifLoad(reset) {
+      const gkey = localStorage.getItem("shortsGiphyKey") || "";
+      if (!gkey) { toast("설정 탭에서 Giphy API 키를 먼저 저장하세요(무료, 3분).", 6000); return; }
+      const q = gifQ.value.trim();
+      if (!q) { toast("검색어를 입력하세요 (영어 추천)."); return; }
+      if (reset) { gifRes.innerHTML = ""; gifOffset = 0; gifQuery = q; }
+      gifMore.style.display = "none";
+      try {
+        const r = await fetch("https://api.giphy.com/v1/gifs/search?api_key=" + encodeURIComponent(gkey)
+          + "&q=" + encodeURIComponent(q) + "&limit=18&offset=" + gifOffset + "&rating=pg-13");
+        if (!r.ok) throw new Error("Giphy 검색 실패 " + r.status
+          + (r.status === 401 || r.status === 403 ? " — 설정 탭의 키를 확인하세요" : ""));
+        const list = ((await r.json()).data) || [];
+        gifOffset += list.length;
+        for (const g of list) {
+          const url = ((((g.images || {}).original || {}).url) || "").split("?")[0];
+          const thumbU = (((g.images || {}).fixed_width || {}).url) || url;
+          if (!url) continue;
+          const keyId = "gy:" + g.id;
+          const t = document.createElement("div"); t.className = "thumb"; t.dataset.key = keyId;
+          const im = document.createElement("img"); im.loading = "lazy"; im.alt = ""; im.src = thumbU;
+          t.appendChild(im);
+          if ((imgPicks[ln.line_i] || []).some((x) => x._key === keyId)) t.classList.add("sel");
+          t.onclick = () => {
+            const arr = imgPicks[ln.line_i] || (imgPicks[ln.line_i] = []);
+            const at = arr.findIndex((x) => x._key === keyId);
+            if (at >= 0) { arr.splice(at, 1); t.classList.remove("sel"); }
+            else { arr.push({ url, source: "giphy", query: gifQuery, _key: keyId }); t.classList.add("sel"); }
+            renumberThumbs(card, arr);
+          };
+          gifRes.appendChild(t);
+        }
+        renumberThumbs(card, imgPicks[ln.line_i] || []);
+        gifMore.style.display = list.length >= 18 ? "" : "none";
+        if (!gifRes.children.length)
+          gifRes.innerHTML = '<p class="empty" style="grid-column:1/-1">결과 없음 — 다른 영어 단어로 검색해 보세요.</p>';
+      } catch (e) { toast(e.message || String(e), 6000); }
+    }
+    card.querySelector(".gifopen").onclick = () => {
+      const show = gifPanel.style.display === "none";
+      gifPanel.style.display = show ? "" : "none";
+      if (show && !gifQ.value) gifQ.value = (ln.query || "").trim();
+      if (show && !gifRes.children.length && gifQ.value.trim()) gifLoad(true);
+    };
+    card.querySelector(".gifgo").onclick = () => gifLoad(true);
+    gifQ.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); gifLoad(true); } };
+    gifMore.onclick = () => gifLoad(false);
     box.appendChild(card);
   }
 }
@@ -1698,6 +1773,17 @@ $("btnSaveToken").onclick = (ev) => busy(ev.target, async () => {
 $("btnClearToken").onclick = () => {
   localStorage.removeItem(LS_KEY);
   checkConn(); toast("이 기기에서 토큰을 삭제했습니다.");
+};
+$("btnSaveGiphy").onclick = () => {
+  const v = $("giphyKeyInput").value.trim();
+  if (!v) { toast("Giphy 키를 붙여넣은 뒤 저장을 누르세요."); return; }
+  localStorage.setItem("shortsGiphyKey", v);
+  $("giphyKeyInput").value = "";
+  toast("Giphy 키 저장 완료 — 이미지 탭 라인의 'GIF 검색'을 쓸 수 있습니다.");
+};
+$("btnClearGiphy").onclick = () => {
+  localStorage.removeItem("shortsGiphyKey");
+  toast("이 기기에서 Giphy 키를 삭제했습니다.");
 };
 
 /* ── 밈 이미지 라이브러리 (우하단 워터마크 자동 제거 → Contents API 커밋) ── */
