@@ -183,6 +183,19 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
         manifest = imagesource.fetch_candidates(
             product, lines, job_dir, settings, product_images=_pimgs, only_line=only_line,
             exclude_urls=excl_urls, exclude_memes=excl_memes)
+        # 제품 영상(링크 추출 + 업로드본)을 라인 후보('제품영상')로 추가 — 실패해도 이미지 후보만으로 계속
+        try:
+            from src.product.video_link import ensure_link_videos
+            pvids = ensure_link_videos(product["_row_hash"], job_dir, PROJECT_ROOT)
+            if len(pvids) < 2:   # 링크본 우선, 남는 슬롯만 업로드본으로(다운로드 시간 절약)
+                seen_pv = {Path(p).name for p in pvids}
+                pvids += [p for p in fetch_product_videos(product["_row_hash"], job_dir,
+                                                          max_n=2 - len(pvids))
+                          if Path(p).name not in seen_pv]
+            if pvids:
+                _append_video_candidates(manifest, pvids, job_dir)
+        except Exception as e:
+            print(f"[pipeline] 제품 영상 후보 추가 실패({type(e).__name__}: {e}) — 이미지 후보만 진행")
         web_path = _publish_candidates(manifest, product, job_dir)
         if only_line is not None and prev is not None:
             _merge_line_manifest(web_path, prev, only_line)
@@ -241,7 +254,8 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
         try:
             # #2: 운영자가 관리자에서 고른 이미지(data/selections/{row}.json)가 있으면 그걸 최우선 사용.
             line_images = imagesource.load_selections(
-                product["_row_hash"], lines, PROJECT_ROOT, job_dir, product_images=product_images)
+                product["_row_hash"], lines, PROJECT_ROOT, job_dir,
+                product_images=product_images, product_videos=product_videos)
             if line_images is None:   # 선택본 없으면 자동 소싱(폴백)
                 line_images, vis_plan = imagesource.fetch_line_images(
                     product, lines, product_images, job_dir, settings)
@@ -411,6 +425,26 @@ def _download_prev_candidates(row_hash: str) -> dict | None:
     return None
 
 
+def _append_video_candidates(manifest: list, pvids: list, job_dir: Path) -> None:
+    """제품 영상(링크 추출·업로드본)을 모든 라인의 후보에 '제품영상'으로 추가.
+    그리드 썸네일은 1초 지점 포스터 프레임(jpg), 실제 영상은 릴리스 자산명(pv_name)으로 참조 —
+    선택 시 load_selections 가 그 자산을 내려받아 렌더가 라인 구간에서 재생한다."""
+    from src.product.video_link import video_poster
+    posters = {}
+    for v in pvids[:2]:
+        vp = Path(v)
+        pj = Path(job_dir) / "cand_raw" / f"pv_{vp.stem}.jpg"
+        if vp.name not in posters and video_poster(vp, pj):
+            posters[vp.name] = pj
+    if not posters:
+        return
+    for e in manifest:
+        for name, pj in posters.items():
+            e["candidates"].append({"file": str(pj), "source": "product_video",
+                                    "url": None, "is_pvideo": True, "pv_name": name})
+    print(f"[pipeline] 제품 영상 후보 {len(posters)}개를 {len(manifest)}개 라인에 추가")
+
+
 def _merge_line_manifest(web_path: Path, prev_full: dict, line_i: int) -> None:
     """이번에 재생성한 라인(web_path의 그 한 라인)을 기존 전체 매니페스트(prev_full)에 끼워 넣어
     web_path를 '전체 매니페스트'로 다시 쓴다. 다른 라인은 prev_full 그대로 유지(이미지 안 바뀜)."""
@@ -463,6 +497,9 @@ def _publish_candidates(manifest: list, product: dict, job_dir: Path) -> Path:
             if c.get("is_meme"):   # 밈 후보: 선택 시 렌더가 저장소 파일을 그대로 쓰게 file(저장소 상대경로) 전달
                 cand["is_meme"] = True
                 cand["file"] = c.get("meme_rel")
+            if c.get("is_pvideo"):   # 제품 영상 후보: 썸네일=포스터, 실제 영상=릴리스 자산명(pv_name)
+                cand["is_pvideo"] = True
+                cand["pv_name"] = c.get("pv_name")
             cands.append(cand)
         web["lines"].append({"line_i": i, "text": e.get("text", ""), "stage": e.get("stage"),
                              "punch": bool(e.get("punch")), "query": e.get("query", ""),

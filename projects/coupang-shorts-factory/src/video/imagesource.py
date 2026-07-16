@@ -458,7 +458,8 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
 
 
 def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Path,
-                    product_images: list | None = None) -> list | None:
+                    product_images: list | None = None,
+                    product_videos: list | None = None) -> list | None:
     """data/selections/{row_hash}.json 있으면 라인별 '선택 이미지 목록'(lines 정렬) 반환, 없으면 None.
     각 라인은 여러 장 선택 가능(2026-07-14) → line_images[i] = [경로...] (렌더가 그 구간 슬라이드쇼).
     url이면 내려받고, 커밋 파일(업로드본)이면 그대로.
@@ -475,6 +476,8 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
         return None
     prod_paths = [Path(p) for p in (product_images or []) if Path(p).exists()]
     prod0 = prod_paths[0] if prod_paths else None
+    # 제품 영상 픽(pv_name=릴리스 자산명) 해석용 — 이미 내려받은 로컬본 매핑(없으면 픽 처리 때 개별 확보)
+    pv_map = {Path(p).name: Path(p) for p in (product_videos or []) if Path(p).exists()}
     by_line = {int(x.get("line_i", -1)): x for x in (data.get("lines") or [])}
     dl_dir = Path(job_dir) / "selected"
     dl_dir.mkdir(parents=True, exist_ok=True)
@@ -490,6 +493,21 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
         imgs = []
         prod_seen = 0   # 이 라인에서 지금까지 고른 상품사진 수(구형 선택 prod_idx 없을 때 등장순서로 매김)
         for j, pk in enumerate(picks):
+            pv = pk.get("pv_name")
+            if pv:                          # 제품 영상 픽 — 그 라인 구간에서 영상 재생(렌더가 mp4/mov 지원)
+                loc = pv_map.get(pv)
+                if loc is None:             # 이번 실행에 안 내려받은 자산이면 그 자산만 개별 확보
+                    try:
+                        from src.product.assets import fetch_product_videos
+                        got = fetch_product_videos(row_hash, dl_dir, prefix=pv, max_n=1)
+                        loc = Path(got[0]) if got else None
+                        if loc:
+                            pv_map[pv] = loc
+                    except Exception as e:
+                        print(f"[imgsrc] 제품영상 픽 확보 실패({pv}: {e}) — 건너뜀")
+                if loc:
+                    imgs.append(loc); used += 1
+                continue
             f = pk.get("file")
             if f and Path(f).exists():      # 저장소에 커밋된 파일(업로드본·밈 등)
                 imgs.append(Path(f)); used += 1; continue

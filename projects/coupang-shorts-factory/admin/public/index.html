@@ -177,6 +177,12 @@ ol li{margin:8px 0}
     <div id="pVideoList"></div>
     <p class="hint" style="margin-top:4px">없어도 됩니다(상품 사진으로 대체). 쿠팡 상세의 판매자 시연 영상을
     iPad <b>화면 기록</b>으로 녹화해 올리면 제작 시 상품 구간 배경으로 자동 사용됩니다. 개당 150MB 이하.</p>
+    <label>상품 영상 링크 (선택 — 유튜브·인스타·틱톡 제품 영상 주소)</label>
+    <input id="pVideoUrl" placeholder="https://youtube.com/... (판매자·브랜드의 제품 영상만)">
+    <p class="hint" style="margin-top:4px">링크를 넣으면 후보를 만들 때 그 영상을 자동으로 추출해 라인별 후보에
+    <b>제품영상</b>으로 올려줍니다(고르면 그 라인에서 영상이 재생). ⚠️ 판매자·제조사가 올린 <b>제품 소개 영상만</b>
+    넣으세요 — 타인 창작 영상은 저작권·Content ID 위험이 있고, 플랫폼이 자동 추출을 차단하면 실패할 수 있습니다
+    (실패 시 텔레그램 알림 + 화면 기록 업로드로 대체).</p>
     <details>
       <summary>직접 입력 (선택 — 붙여넣기 없이 등록할 때)</summary>
       <label>상품명</label>
@@ -985,6 +991,16 @@ $("btnAddProduct").onclick = (ev) => busy(ev.target, async () => {
   const base = cur.text.endsWith("\n") ? cur.text : cur.text + "\n";
   const line = [name, price, specs, img, link, cat || (name ? "기타" : "")].join(",");
   await putFile(CSV_PATH, base + line + "\n", `admin: 상품 추가 — ${label}`, cur.sha);
+  // 상품 영상 링크(선택) — 커밋해 두면 후보 생성(candidates) 때 CI가 추출해 '제품영상' 후보로 올린다.
+  const vurl = clean($("pVideoUrl").value);
+  if (vurl) {
+    if (!/^https:\/\//.test(vurl)) { toast("상품 영상 링크는 https:// 주소만 됩니다 — 링크 없이 등록합니다.", 5000); }
+    else {
+      const oldL = await getFile(`${P}/data/video_links/${hash}.json`, true);
+      await putFile(`${P}/data/video_links/${hash}.json`, JSON.stringify({ urls: [vurl] }, null, 1),
+        `admin: 상품 영상 링크 — ${label}`, oldL ? oldL.sha : undefined);
+    }
+  }
   // 상품 동영상(선택) — 있으면 기존 제품영상 시스템과 동일하게 릴리스 product-assets 에 {hash}_{시각}.ext 업로드.
   // 실패해도 상품 등록은 완료(선택 항목이므로 경고만).
   const vids = [...($("pVideo").files || [])];
@@ -1006,7 +1022,7 @@ $("btnAddProduct").onclick = (ev) => busy(ev.target, async () => {
       toast("상품은 추가됐지만 동영상 업로드는 실패: " + (e.message || e), 6000);
     }
   }
-  ["pName", "pPrice", "pS1", "pS2", "pS3", "pLink", "pImg", "pNotes", "pVideo"].forEach((id) => $(id).value = "");
+  ["pName", "pPrice", "pS1", "pS2", "pS3", "pLink", "pImg", "pNotes", "pVideo", "pVideoUrl"].forEach((id) => $(id).value = "");
   $("pVideoList").innerHTML = "";
   attached = []; renderFiles();
   // 개편: 등록 = 기획. 방금 등록한 상품을 현재 작업 상품으로 잡고 기획·대본을 자동 생성한다.
@@ -1539,6 +1555,7 @@ function renderImgLines() {
       else markBroken();
       if (c.is_product) { const tag = document.createElement("span"); tag.className = "ttag"; tag.textContent = "상품"; t.appendChild(tag); }
       else if (c.is_meme) { const tag = document.createElement("span"); tag.className = "ttag meme"; tag.textContent = "밈"; t.appendChild(tag); }
+      else if (c.is_pvideo) { const tag = document.createElement("span"); tag.className = "ttag"; tag.textContent = "제품영상"; t.appendChild(tag); }
       t.onclick = () => {
         if (t.classList.contains("nofile")) return;   // 깨진 후보는 선택 불가
         const arr = imgPicks[ln.line_i] || (imgPicks[ln.line_i] = []);
@@ -1549,6 +1566,8 @@ function renderImgLines() {
             ? { is_product: true, prod_idx: (c.prod_idx || 0), source: "product", query: ln.query || "", _key: c.name }
             : c.is_meme
             ? { file: c.file, source: "meme", query: ln.query || "", _key: c.name }
+            : c.is_pvideo
+            ? { pv_name: c.pv_name, source: "product_video", query: ln.query || "", _key: c.name }
             : { url: c.url, source: c.source || "", query: ln.query || "", _key: c.name });
           t.classList.add("sel");
         }
