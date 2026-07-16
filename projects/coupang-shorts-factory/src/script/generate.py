@@ -84,6 +84,10 @@ def generate_script(product: dict, settings: dict) -> dict:
             script = _parse_json(text)
             # 앞 2회는 분량 엄격, 이후엔 완화 — 유효한 대본이 '조금 짧다'는 이유로 최종 실패하지 않게.
             script = sanitize_script(script, strict_length=(attempt <= 2), avoid_terms=avoid)
+            if attempt <= 2:   # 개연성 가드 — 스토리 스파인(한줄썰) 없으면 재생성 유도(마지막 시도엔 완화)
+                issue = _story_issues(script)
+                if issue:
+                    raise RuleViolation(issue)
             break
         except (RuleViolation, ValueError) as e:
             feedback = str(e)[:400]
@@ -193,6 +197,18 @@ def _gemini_generate(model: str, system: str, content: str, max_tokens: int) -> 
     return txt
 
 
+def _story_issues(script: dict) -> str | None:
+    """개연성 최소 가드 — 모든 라인이 '하나의 사건'으로 이어지도록 concept.한줄썰(스토리 스파인)이
+    선언됐는지만 기계적으로 확인한다. 의미적 연결성은 프롬프트가 책임지고, 코드는 스파인 존재 여부만
+    보므로 오검출(멀쩡한 대본을 잘못 막음)이 없다. 스파인이 있으면 모델이 그걸 축으로 라인을 잇는다."""
+    concept = script.get("concept") or {}
+    spine = str(concept.get("한줄썰") or concept.get("throughline") or "").strip()
+    if len(spine) < 6:
+        return ("concept.한줄썰(이 영상 전체를 관통하는 '하나의 사건'을 한 줄로)이 비었다 — "
+                "사건을 정하고 8~11줄 모두가 그 사건을 시간순·인과로 이어가게 하라.")
+    return None
+
+
 def _parse_json(text: str) -> dict:
     t = re.sub(r"```(?:json)?", "", text).strip()   # 마크다운 코드펜스 제거(위치 무관)
     start, end = t.find("{"), t.rfind("}")
@@ -204,7 +220,7 @@ def _parse_json(text: str) -> dict:
     except json.JSONDecodeError:
         # 흔한 LLM JSON 오류 자동 보정: 후행 콤마 제거 후 1회 재시도(그래도 깨지면 상위 루프가 재생성)
         data = json.loads(re.sub(r",(\s*[}\]])", r"\1", blob))
-    for k in ("title", "lines", "hashtags", "description_body"):
+    for k in ("concept", "title", "lines", "hashtags", "description_body"):
         if k not in data:
             raise ValueError(f"필수 키 누락: {k}")
     return data

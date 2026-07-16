@@ -1327,11 +1327,11 @@ function renderPlan() {
   const mk = (html) => { const d = document.createElement("div"); d.className = "card"; d.innerHTML = html; return d; };
   // 기획서
   const con = mk('<h2>기획서</h2>');
-  for (const [k, label] of [["의도", "의도"], ["타깃", "타깃"], ["후킹", "후킹 포인트"]]) {
+  for (const [k, label] of [["한줄썰", "한 줄 썰(스토리)"], ["의도", "의도"], ["타깃", "타깃"], ["후킹", "후킹 포인트"]]) {
     if (c[k]) { const p = document.createElement("p"); p.style.margin = "6px 0";
       p.innerHTML = `<b>${label}</b> · `; p.appendChild(document.createTextNode(c[k])); con.appendChild(p); }
   }
-  if (!c.의도 && !c.타깃 && !c.후킹) con.insertAdjacentHTML("beforeend", '<p class="hint">기획서 정보가 비어 있습니다.</p>');
+  if (!c.한줄썰 && !c.의도 && !c.타깃 && !c.후킹) con.insertAdjacentHTML("beforeend", '<p class="hint">기획서 정보가 비어 있습니다.</p>');
   box.appendChild(con);
   // 스토리보드 + 대본
   const sb = mk('<h2>스토리보드 · 대본</h2>');
