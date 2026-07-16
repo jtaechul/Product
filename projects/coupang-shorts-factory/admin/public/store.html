@@ -54,6 +54,10 @@ body{background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',sans-serif
 .cta{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;text-decoration:none;padding:11px 20px;border-radius:10px;font-size:13px;font-weight:800;white-space:nowrap;transition:.2s;box-shadow:0 4px 14px rgba(79,70,229,.32)}
 .cta:hover{filter:brightness(1.07)}
 .cta-soon{font-size:12px;color:#94A3B8;font-style:italic}
+/* 이미지 없는 카드: 빈 회색칸 대신 본문 상단에 번호/NEW 인라인 표시 */
+.nohdr{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.no-inline{font-size:12px;font-weight:800;color:var(--brand);background:#EEF2FF;padding:3px 11px;border-radius:20px}
+.new-inline{font-size:9px;font-weight:900;color:#fff;background:var(--pop);padding:4px 10px;border-radius:6px;letter-spacing:1.5px;box-shadow:0 2px 8px rgba(249,115,22,.4)}
 
 /* loading */
 .loading{text-align:center;padding:60px 20px;color:var(--sub)}
@@ -101,6 +105,21 @@ function imgFallback(el){
 window.imgFallback=imgFallback;
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 function num3(n){return String(n).replace(/\D/g,"").padStart(3,"0");}
+// 카테고리 자동 분류(미래마켓 체계) — 저장된 category가 비었거나 '기타'면 상품명으로 유추.
+function guessCategory(name){
+  const s=String(name||"");
+  const has=(...ks)=>ks.some(k=>s.includes(k));
+  if(has("음식물","처리기","믹서","블렌더","에어프라이어","전기포트","밥솥","주방","조리","도마","프라이팬","텀블러","커피","제빙")) return "주방";
+  if(has("청소기","물걸레","로봇청소","청소","세탁","건조기","먼지","스팀","걸레")) return "청소·세탁";
+  if(has("제습","가습","선풍기","서큘","히터","온풍","난방","냉방","에어컨","쿨","냉감","성에")) return "계절·냉난방";
+  if(has("매트리스","이불","베개","침대","침구","패드","매트","러그","커튼","조명","램프","무드등")) return "침구·홈";
+  if(has("마사지","안마","미용","뷰티","화장","헤어","드라이기","고데기","면도","구강","칫솔","치실","건강","체중","혈압","족욕")) return "미용·건강";
+  if(has("수납","정리","선반","옷걸이","행거","리빙박스","서랍","거치대","걸이")) return "수납·정리";
+  if(has("강아지","고양이","반려","펫","캣","도그")) return "반려동물";
+  if(has("충전","케이블","이어폰","스피커","보조배터리","배터리","블루투스","스마트","전동","USB","무선","가젯")) return "디지털·가젯";
+  return "기타";
+}
+function catOf(b){ const c=(b.category||"").trim(); return (c && c!=="기타") ? c : guessCategory(b.name); }
 
 function render(catalog){
   const tabsEl=document.getElementById("tabs"), catEl=document.getElementById("catalog");
@@ -112,25 +131,29 @@ function render(catalog){
     catEl.innerHTML='<div class="empty">곧 첫 번째 아이템이 등록됩니다.</div>';
     return;
   }
-  const cats=["전체",...new Set(catalog.map(b=>b.category).filter(Boolean))];
+  const cats=["전체",...new Set(catalog.map(catOf).filter(Boolean))];
   tabsEl.innerHTML=cats.map((c,i)=>`<button class="tab${i===0?" active":""}" data-filter="${esc(c)}">${esc(c)}</button>`).join("");
 
   const newest=catalog.length?Math.max(...catalog.map(b=>Number(b.number)||0)):0;
   catEl.innerHTML=catalog.map(b=>{
     const n=num3(b.number);
+    const cat=catOf(b);
+    const isNew=(Number(b.number)||0)===newest;
     const cta=b.url
       ? `<a href="${esc(b.url)}" target="_blank" rel="noopener sponsored" class="cta">쿠팡에서 보기 →</a>`
       : `<span class="cta-soon">링크 준비 중</span>`;
-    const search=`no.${n} ${n} ${b.name||""} ${b.category||""} ${b.pain||""}`.toLowerCase();
+    const search=`no.${n} ${n} ${b.name||""} ${cat} ${b.pain||""}`.toLowerCase();
+    // 이미지가 있으면 정사각 썸네일(번호·NEW 오버레이), 없으면 썸네일 칸을 아예 그리지 않고 본문 상단에 인라인 표시
+    const thumb=b.image
+      ? `<div class="thumb">${isNew?'<span class="badge-new">NEW</span>':""}<span class="book-num">No.${esc(n)}</span>${imgTag(b.image,b.name)}</div>`
+      : "";
+    const inlineHead=b.image ? "" : `<div class="nohdr"><span class="no-inline">No.${esc(n)}</span>${isNew?'<span class="new-inline">NEW</span>':""}</div>`;
     return `
-<article class="card" id="p${esc(n)}" data-category="${esc(b.category||"기타")}" data-search="${esc(search)}">
-  <div class="thumb">
-    ${(Number(b.number)||0)===newest?'<span class="badge-new">NEW</span>':""}
-    <span class="book-num">No.${esc(n)}</span>
-    ${imgTag(b.image,b.name)}
-  </div>
+<article class="card" id="p${esc(n)}" data-category="${esc(cat)}" data-search="${esc(search)}">
+  ${thumb}
   <div class="body">
-    <span class="cat-pill">${esc(b.category||"기타")}</span>
+    ${inlineHead}
+    <span class="cat-pill">${esc(cat)}</span>
     <h2 class="name">${esc(b.name||"신박한 아이템")}</h2>
     ${b.pain?`<blockquote class="pain">${esc(b.pain)}</blockquote>`:""}
     <div class="foot"><span class="date">${esc(b.date||"")}</span>${cta}</div>

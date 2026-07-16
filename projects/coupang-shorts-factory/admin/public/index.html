@@ -526,6 +526,22 @@ document.querySelectorAll("nav button").forEach((b) => {
   };
 });
 /* ── 스토어(공개 상품 페이지) 관리 — data/../admin/public/store-catalog.json 편집 ───── */
+// 미래마켓 카테고리 체계 — 상품을 실사용 장소/용도로 분류(공개 스토어 탭 필터와 동일).
+const STORE_CATS = ["주방", "청소·세탁", "계절·냉난방", "침구·홈", "미용·건강", "수납·정리", "반려동물", "디지털·가젯", "기타"];
+function guessCategory(name) {
+  const s = String(name || "");
+  const has = (...ks) => ks.some((k) => s.includes(k));
+  if (has("음식물", "처리기", "믹서", "블렌더", "에어프라이어", "전기포트", "밥솥", "주방", "조리", "도마", "프라이팬", "텀블러", "커피", "제빙")) return "주방";
+  if (has("청소기", "물걸레", "로봇청소", "청소", "세탁", "건조기", "먼지", "스팀", "걸레")) return "청소·세탁";
+  if (has("제습", "가습", "선풍기", "서큘", "히터", "온풍", "난방", "냉방", "에어컨", "쿨", "냉감", "성에")) return "계절·냉난방";
+  if (has("매트리스", "이불", "베개", "침대", "침구", "패드", "매트", "러그", "커튼", "조명", "램프", "무드등")) return "침구·홈";
+  if (has("마사지", "안마", "미용", "뷰티", "화장", "헤어", "드라이기", "고데기", "면도", "구강", "칫솔", "치실", "건강", "체중", "혈압", "족욕")) return "미용·건강";
+  if (has("수납", "정리", "선반", "옷걸이", "행거", "리빙박스", "서랍", "거치대", "걸이")) return "수납·정리";
+  if (has("강아지", "고양이", "반려", "펫", "캣", "도그")) return "반려동물";
+  if (has("충전", "케이블", "이어폰", "스피커", "보조배터리", "배터리", "블루투스", "스마트", "전동", "USB", "무선", "가젯")) return "디지털·가젯";
+  return "기타";
+}
+function storeCatOf(it) { const c = (it.category || "").trim(); return (c && c !== "기타") ? c : guessCategory(it.name); }
 let storeItems = [], storeSha = null, stRows = [];
 async function storeInit() {
   await Promise.all([storeLoad(), storePopulatePicker()]);
@@ -585,9 +601,11 @@ async function storeAddFromProduct() {
   const ent = pnEntry(hash);
   const dispName = (r.name || ent.name || "").trim();   // 스토어 카드 제목 = 실제 상품명(자동)
   if (!dispName && !confirm("이 상품은 아직 상품명이 추출되지 않았습니다(기획을 한 번 돌리면 자동 추출).\n이름 없이 추가할까요? (추가 후 목록에서 직접 입력 가능)")) return;
+  const csvCat = (r.cat || "").trim();
+  const cat = (csvCat && csvCat !== "기타") ? csvCat : guessCategory(dispName || r.name);   // CSV에 실카테고리 있으면 사용, 없으면 상품명으로 유추
   storeItems.push({
     number: storeNextNumber(), row_hash: hash, name: dispName, url: (r.link || "").trim(),
-    image: (r.img || "").trim(), category: (r.cat || "기타").trim(),
+    image: (r.img || "").trim(), category: cat,
     // 카드 소개 = 입력값 > CI 자동 생성 소개(무슨 불편을 없애는지) — 비워두면 자동으로 채워진다
     pain: ($("stPain").value || ent.pain || "").trim(), visible: true, date: new Date().toISOString().slice(0, 10),
   });
@@ -625,7 +643,25 @@ function storeRender() {
     const painI = document.createElement("input");
     painI.value = it.pain || ""; painI.placeholder = "한 줄 소개 — 무슨 불편을 없애는지";
     painI.oninput = () => { storeItems[idx].pain = painI.value; };
-    row.append(head, painI);
+    // 카테고리(자동분류 + 직접 변경) + 이미지 URL(선택 — 넣으면 카드에 사진, 비우면 사진칸 없음)
+    const sub = document.createElement("div");
+    sub.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;align-items:center";
+    const catSel = document.createElement("select");
+    catSel.style.cssText = "font-size:13px;padding:7px 10px;border-radius:8px";
+    const curCat = storeCatOf(it);
+    for (const c of STORE_CATS) {
+      const o = document.createElement("option"); o.value = c; o.textContent = c;
+      if (c === curCat) o.selected = true;
+      catSel.appendChild(o);
+    }
+    storeItems[idx].category = curCat;   // 자동 분류값을 즉시 반영(저장 시 '기타'로 남지 않게)
+    catSel.onchange = () => { storeItems[idx].category = catSel.value; };
+    const imgI = document.createElement("input");
+    imgI.value = it.image || ""; imgI.placeholder = "이미지 URL(선택) — 비우면 사진칸 없이 표시";
+    imgI.style.flex = "1"; imgI.style.minWidth = "180px";
+    imgI.oninput = () => { storeItems[idx].image = imgI.value.trim(); };
+    sub.append(catSel, imgI);
+    row.append(head, painI, sub);
     box.appendChild(row);
   });
 }
