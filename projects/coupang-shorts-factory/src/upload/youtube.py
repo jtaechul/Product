@@ -42,13 +42,18 @@ def missing_hint() -> str:
 
 
 def build_description(script: dict, product: dict) -> str:
-    specs = "\n".join(f"- {s}" for s in product.get("specs", []))
+    # 정식 제품명은 설명란에도 노출하지 않는다(2026-07-16 사용자 지시 — 궁금증→프로필 링크로 유도).
+    #   ① 하드코딩 '[제품 정보] 상품명' 블록 제거 ② 모델이 쓴 description_body에서도 제품명 흔적 제거.
+    from src.script.sanitize import hide_product_name, product_avoid_terms
+    avoid = product_avoid_terms(product)
+    specs = "\n".join(f"- {hide_product_name(str(s), avoid)}" for s in product.get("specs", []))
+    body = hide_product_name(script.get("description_body", "").strip(), avoid)
     parts = [
         DISCLOSURE,  # §3.1 ① 최상단 첫 줄 (절대 위치 변경 금지)
         "",
-        script.get("description_body", "").strip(),
+        body,
         "",
-        f"[제품 정보]\n{product.get('name', '')}\n{specs}".strip(),
+        (f"[제품 특징]\n{specs}".strip() if specs.strip() else ""),   # 특징(스펙)만 — 제품명은 넣지 않는다
         "",
         f"제품 보러가기: {product.get('affiliate_url', '')}",
         "",

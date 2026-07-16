@@ -114,9 +114,10 @@ def _check_frames(video_path: Path, subs: list, settings: dict, job_dir: Path,
     W = int(r.get("width", 1080))
     H = int(r.get("height", 1920))
     if str(r.get("layout", "framed")).lower() == "expose":
-        # 폭로 포맷: 상단 자막밴드도 가라오케(노랑). 밴드 중심 = 헤더+간격+밴드절반, 목표색=자막색(노랑).
+        # 폭로 포맷: 상단 자막밴드 = 흰 배경에 '검정 본문' 가라오케(회색 캡션바 제거, 2026-07-16).
+        #   밴드 중심 = 헤더+간격+밴드절반, 목표색 = expose 자막색(검정). 흰 배경은 목표색과 멀어 오검출 없음.
         y = int(r.get("expose_header_h", 340)) + int(r.get("expose_sub_gap", 26)) + int(r.get("expose_sub_h", 300)) // 2
-        target, tol = _hex_rgb(s.get("color", "#FFE400")), 210
+        target, tol = _hex_rgb(s.get("expose_color", "#141414")), 150
     else:
         y = int(s.get("y", 1250))
         target, tol = _hex_rgb(s.get("color", "#FFE400")), 210

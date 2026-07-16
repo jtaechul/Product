@@ -110,14 +110,16 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     #   --plan          : 항상 새로 생성 → data/plans/{hash}.json 저장 후 종료(승인 대기)
     #   그 외(candidates/produce) : 승인된 기획(data/plans/{hash}.json)이 있으면 그걸 그대로 사용
     #                              (운영자가 확정한 대본을 재생성하지 않는다). 없으면 즉석 생성(하위호환).
-    from src.script.sanitize import sanitize_script
+    from src.script.sanitize import product_avoid_terms, sanitize_script
+    avoid_terms = product_avoid_terms(product)   # 브랜드·정식명 → 대사·자막에서 제거(승인된 옛 기획 포함)
     plan_path = PROJECT_ROOT / "data" / "plans" / f"{product['_row_hash']}.json"
     if args.script_file:
         script = json.loads(Path(args.script_file).read_text(encoding="utf-8"))
-        script = sanitize_script(script, strict_length=False)
+        script = sanitize_script(script, strict_length=False, avoid_terms=avoid_terms)
         print("[pipeline] M3 우회: script-file 사용")
     elif plan_path.exists() and not args.plan:
-        script = sanitize_script(json.loads(plan_path.read_text(encoding="utf-8")), strict_length=False)
+        script = sanitize_script(json.loads(plan_path.read_text(encoding="utf-8")),
+                                 strict_length=False, avoid_terms=avoid_terms)
         print(f"[pipeline] M3: 승인된 기획+대본 사용 (data/plans/{product['_row_hash']}.json)")
     else:
         if not have_script_key(settings):
@@ -436,6 +438,8 @@ def _publish_candidates(manifest: list, product: dict, job_dir: Path) -> Path:
                 continue
             cand = {"name": name, "url": c.get("url"), "source": c.get("source", ""),
                     "is_product": bool(c.get("is_product"))}
+            if c.get("is_product"):   # 상품 사진: 어느 상품 이미지인지(prod_idx) 보존 → 선택 시 그 사진을 쓴다(#3)
+                cand["prod_idx"] = int(c.get("prod_idx", 0))
             if c.get("is_meme"):   # 밈 후보: 선택 시 렌더가 저장소 파일을 그대로 쓰게 file(저장소 상대경로) 전달
                 cand["is_meme"] = True
                 cand["file"] = c.get("meme_rel")
@@ -527,12 +531,13 @@ def _upload_existing(product: dict, settings: dict, job_dir: Path, root: Path, p
     if not youtube.is_configured():
         print(f"::error::유튜브 인증 미등록 — {youtube.missing_hint()}")
         return 2
-    from src.script.sanitize import sanitize_script
+    from src.script.sanitize import product_avoid_terms, sanitize_script
     plan_path = root / "data" / "plans" / f"{product['_row_hash']}.json"
     if not plan_path.exists():
         print("::error::기획이 없습니다 — 먼저 기획·제작을 완료하세요")
         return 2
-    script = sanitize_script(json.loads(plan_path.read_text(encoding="utf-8")), strict_length=False)
+    script = sanitize_script(json.loads(plan_path.read_text(encoding="utf-8")),
+                             strict_length=False, avoid_terms=product_avoid_terms(product))
     script["pinned_comment"] = f"제품 정보는 여기서 확인 → {product['affiliate_url']}\n{DISCLOSURE}"
     video = _find_and_download_video(product["_row_hash"], job_dir)
     if not video or not video.exists():

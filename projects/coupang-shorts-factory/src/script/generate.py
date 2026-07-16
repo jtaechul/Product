@@ -18,7 +18,7 @@ from pathlib import Path
 
 import requests
 
-from src.script.sanitize import RuleViolation, sanitize_script
+from src.script.sanitize import RuleViolation, product_avoid_terms, sanitize_script
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DISCLOSURE = "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다"
@@ -59,11 +59,9 @@ def generate_script(product: dict, settings: dict) -> dict:
     system = template.replace("{channel_name}", settings.get("channel", {}).get("name", "미래상점"))
     user_msg = "상품 데이터:\n" + json.dumps(product, ensure_ascii=False, indent=1)
 
-    # 화면 금지어(브랜드·정식 제품명) — 운영자가 상품에 avoid_onscreen을 지정하면 대사·자막에서 제거한다.
-    #   (미지정이면 프롬프트 + 모델코드 자동제거만으로 방어. 정식명칭은 링크의 쇼핑페이지에서만 공개.)
-    avoid = product.get("avoid_onscreen") or product.get("avoid_terms") or []
-    if isinstance(avoid, str):
-        avoid = [avoid]
+    # 화면 금지어(브랜드·정식 제품명) — 상품명에서 자동 도출(+운영자 지정) → 대사·자막·헤드라인·제목에서 제거.
+    #   (정식명칭은 링크의 쇼핑페이지에서만 공개. 일반 카테고리어는 최대한 보존.)
+    avoid = product_avoid_terms(product)
 
     feedback = None
     ATTEMPTS = 4   # LLM이 가끔 깨진 JSON·짧은 분량을 낸다. 2회로는 자주 최종 실패 → 넉넉히 재시도(각 ≈5원).

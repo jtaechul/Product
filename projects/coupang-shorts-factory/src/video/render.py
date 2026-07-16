@@ -853,16 +853,15 @@ def _build_expose(lines: list, line_windows: list, words: list, line_images: lis
     # 상단 자막 밴드 = 가라오케(대본 subs 단위로 어절별 팝업, 통문장 폐지 — 2026-07-15 사용자 지시).
     #   흰 게시판 배경이라 노랑 글자 가독성을 위해 어두운 캡션바를 뒤에 깔고, 글자는 고정 y 1곳에 팝업.
     kfs = int(s.get("font_size", 80))
-    kcolor = s.get("color", "#FFE400")
-    kstroke = s.get("stroke_color", "#000000")
-    ksw = int(s.get("stroke_width", 6))
+    # expose(게시판 글) = 흰 배경 + '검정 본문' 자막. 회색 캡션바 제거(2026-07-16 사용자 지시) —
+    #   검정 글자가 흰 배경에서 그대로 읽히므로 뒤에 띠를 깔지 않는다. (color는 expose 전용으로 검정 고정)
+    kcolor = s.get("expose_color", "#141414")     # 흰 배경 게시판 본문 = 진한 검정
+    kstroke = s.get("expose_stroke_color", "#FFFFFF")
+    ksw = int(s.get("expose_stroke_width", 0))    # 흰 배경이라 외곽선 불필요(0)
     band_h = min(sub_h, int(kfs * 1.7))
     band_top = sub_top + max(0, (sub_h - band_h) // 2)
-    ky = band_top + max(0, (band_h - kfs) // 2)   # 자막 팝업 top y — 밴드 중앙, 전 자막 동일(QA: y 1곳)
+    ky = band_top + max(0, (band_h - kfs) // 2)   # 자막 팝업 top y — 전 자막 동일(QA: y 1곳)
     events = _sub_events(words, lines, line_windows, duration)
-    if events:   # 캡션바(자막 구간 전체) — 자막 뒤 어두운 띠
-        band = _caption_band_arr(box_w, band_h)
-        layers.append(ImageClip(band).with_duration(duration).with_position(("center", band_top)))
     plan = []
     for ev in events:
         clip = _fit_text(ev["text"], font_path, kfs, kcolor, kstroke, ksw, box_w)
