@@ -3,7 +3,7 @@
 특정 업체 고정 금지: config/settings.yaml 의 tts.provider 값으로 선택한다.
   - elevenlabs : with-timestamps 엔드포인트로 오디오 + 문자 타임스탬프 동시 수신
   - gemini     : Gemini 2.5 TTS(generateContent, responseModalities=[AUDIO]) — 오디오만 수신
-                 (→ faster-whisper 폴백). 대본 생성용 Gemini 키(SHORTS_GEMINI_API_KEY)를 재사용하고,
+                 (→ faster-whisper 폴백). 대본 생성용 Gemini 키(GEMINI_API_KEY)를 재사용하고,
                  서버/클라우드 친화적이라 무료 소비자 TTS의 'UNUSUAL_ACTIVITY' 차단을 잘 안 겪는다.
                  화난 톤 등은 감정 프리셋이 아니라 style_prompt(자연어 지시)로 제어. (오디오 생성이지
                  유료 '영상' 생성이 아님 — 프로젝트 영상금지 규칙과 무관.)
@@ -43,7 +43,7 @@ PROVIDER_ORDER = ["elevenlabs", "gemini", "typecast", "clova"]
 
 ENV_KEYS = {
     "elevenlabs": ["SHORTS_ELEVENLABS_API_KEY"],
-    "gemini": ["SHORTS_GEMINI_API_KEY"],
+    "gemini": ["GEMINI_API_KEY"],   # 대본 생성용과 동일 시크릿(SHORTS_ 접두사 아님)
     "typecast": ["SHORTS_TYPECAST_API_KEY"],
     "clova": ["SHORTS_CLOVA_CLIENT_ID", "SHORTS_CLOVA_CLIENT_SECRET"],
 }
@@ -286,14 +286,14 @@ def _pcm_to_wav(pcm: bytes, rate: int, channels: int = 1, sampwidth: int = 2) ->
 def _synth_gemini(text: str, cfg: dict) -> TTSOutput:
     """Gemini 2.5 TTS — POST generateContent(responseModalities=[AUDIO]) → 원시 PCM(base64).
 
-    - 키: SHORTS_GEMINI_API_KEY(대본 생성용과 동일 키 재사용) / GEMINI_API_KEY.
+    - 키: GEMINI_API_KEY(대본 생성용과 동일 시크릿 재사용).
     - 낭독 스타일(화난 톤 등)은 감정 프리셋이 아니라 style_prompt(자연어 지시)를 문장 앞에 붙여 제어.
     - 응답 PCM(16-bit mono, 보통 24kHz)을 WAV로 감싸 반환 → 타임스탬프는 whisper 폴백이 생성.
     ⚠️ 이는 오디오(음성) 생성이지 유료 '영상' 생성이 아니다(프로젝트 영상금지 규칙과 무관).
     """
-    key = (os.environ.get("SHORTS_GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY") or "").strip()
+    key = (os.environ.get("GEMINI_API_KEY") or os.environ.get("SHORTS_GEMINI_API_KEY") or "").strip()
     if not key:
-        raise TTSError("Gemini TTS 키가 없습니다 (SHORTS_GEMINI_API_KEY / GEMINI_API_KEY).")
+        raise TTSError("Gemini TTS 키가 없습니다 (GEMINI_API_KEY).")
     model = str(cfg.get("model", "gemini-2.5-flash-preview-tts")).strip()
     voice = str(cfg.get("voice") or "Kore").strip()
     style = str(cfg.get("style_prompt") or "").strip()

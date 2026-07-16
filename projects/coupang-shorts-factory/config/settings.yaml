@@ -36,7 +36,7 @@ tts:
       speed: 1.1        # 빠른 템포 (스펙 §M4: 1.1~1.15배)
 
   gemini:
-    # Gemini 2.5 TTS — 대본 생성용 Gemini 키(SHORTS_GEMINI_API_KEY)를 그대로 재사용한다.
+    # Gemini 2.5 TTS — 대본 생성용 Gemini 키(GEMINI_API_KEY)를 그대로 재사용한다.
     model: "gemini-2.5-flash-preview-tts"   # 저지연·저가 TTS(프리뷰). 더 좋은 표현력은 -pro-preview-tts
     voice: "Kore"       # 프리셋 보이스(음색). 한국어 등 발화 언어는 대본 텍스트로 자동 결정.
     # 화난 톤(자연어 지시) — 문장 앞에 붙여 낭독 스타일·속도를 지시한다(감정 프리셋 대신).
