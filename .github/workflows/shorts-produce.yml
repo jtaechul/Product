@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "실행 모드 (plan=기획, candidates=후보이미지, produce=영상제작, regen=항목재생성, upload=올리기)"
+        description: "실행 모드 (plan=기획, candidates=후보이미지, produce=영상제작, regen=항목재생성, regen-line=라인문구재생성, upload=올리기)"
         type: choice
-        options: [produce, candidates, plan, regen, upload]
+        options: [produce, candidates, plan, regen, regen-line, upload]
         default: produce
       tts_provider:
         description: "TTS 프로바이더 (auto=등록된 키 자동 감지, mock=키 없이 렌더 검증)"
@@ -148,6 +148,8 @@ jobs:
             python -m src.pipeline --candidates --row "$ROW" $LINEARG --job-id "$JOB"
           elif [ "$MODE" = "regen" ]; then
             python -m src.pipeline --regen "${{ steps.params.outputs.field }}" --row "$ROW" --job-id "$JOB"
+          elif [ "$MODE" = "regen-line" ]; then
+            python -m src.pipeline --regen-line "${{ steps.params.outputs.line }}" --row "$ROW" --job-id "$JOB"
           elif [ "$MODE" = "upload" ]; then
             python -m src.pipeline --upload --row "$ROW" --privacy "${{ steps.params.outputs.privacy }}" --job-id "$JOB"
           else
@@ -161,8 +163,8 @@ jobs:
               ${{ steps.params.outputs.noup }}
           fi
 
-      - name: 기획 파일 커밋 (plan/regen/candidates 모드 — 관리자 화면이 data/plans에서 읽음)
-        if: success() && (steps.params.outputs.mode == 'plan' || steps.params.outputs.mode == 'regen' || steps.params.outputs.mode == 'candidates')
+      - name: 기획 파일 커밋 (plan/regen/regen-line/candidates 모드 — 관리자 화면이 data/plans에서 읽음)
+        if: success() && (steps.params.outputs.mode == 'plan' || steps.params.outputs.mode == 'regen' || steps.params.outputs.mode == 'regen-line' || steps.params.outputs.mode == 'candidates')
         run: |
           git config user.name "shorts-factory-bot"
           git config user.email "github-actions@users.noreply.github.com"
