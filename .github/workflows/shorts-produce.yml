@@ -114,9 +114,18 @@ jobs:
             case "$NOUP" in true|True|TRUE|1) echo "noup=--no-upload" >> "$GITHUB_OUTPUT" ;; *) echo "noup=" >> "$GITHUB_OUTPUT" ;; esac
           fi
 
+      - name: PO 토큰 프로바이더 기동 (유튜브 링크 추출용 — 데이터센터 IP 봇 차단 우회)
+        if: contains(fromJSON('["candidates","plan-candidates","regen-line-full"]'), steps.params.outputs.mode)
+        run: |
+          # bgutil: 유튜브 봇 검증(PO) 토큰을 로컬에서 생성 — yt-dlp 플러그인이 자동으로 사용.
+          # 실패해도 제작은 계속(클라이언트 폴백만으로 시도).
+          docker run -d --name bgutil-pot -p 4416:4416 brainicism/bgutil-ytdlp-pot-provider:latest \
+            || echo "::warning::PO 프로바이더 기동 실패 — 클라이언트 폴백만으로 추출 시도"
+
       - name: 파이프라인 실행
         env:
           GH_TOKEN: ${{ github.token }}   # 제품 영상(release product-assets) 목록 조회용
+          SHORTS_YTDLP_COOKIES: ${{ secrets.SHORTS_YTDLP_COOKIES }}   # (선택) 유튜브 cookies.txt — 최후 수단
           SHORTS_ELEVENLABS_API_KEY: ${{ secrets.SHORTS_ELEVENLABS_API_KEY }}
           SHORTS_TYPECAST_API_KEY: ${{ secrets.SHORTS_TYPECAST_API_KEY }}
           SHORTS_CLOVA_CLIENT_ID: ${{ secrets.SHORTS_CLOVA_CLIENT_ID }}
