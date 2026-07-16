@@ -8,12 +8,15 @@ channel:
 
 tts:
   # provider 선택:
-  #   auto       = 등록된 API 키를 elevenlabs → typecast → clova 순서로 감지해 자동 선택
+  #   auto       = 등록된 API 키를 elevenlabs → gemini → typecast → clova 순서로 감지해 자동 선택
   #   elevenlabs = with-timestamps 엔드포인트 (오디오 + 문자 타임스탬프 동시 수신, 권장)
+  #   gemini     = Gemini 2.5 TTS (대본용 Gemini 키 재사용, 클라우드 친화적이라 무료 차단 회피). 오디오만 → 폴백
   #   typecast   = 오디오만 수신 → faster-whisper 폴백으로 단어 타임스탬프 생성
   #   clova      = 네이버클라우드 CLOVA Voice Premium, 오디오만 → 폴백
   #   mock       = API 키 없이 렌더 검증용(단어별 비프음 + 정확한 합성 타임스탬프)
-  provider: auto
+  # 2026-07-15: Typecast 무료계정이 클라우드 IP를 UNUSUAL_ACTIVITY로 차단 → Gemini TTS를 1순위로.
+  #   (gemini 실패 시 폴백 체인이 typecast 등으로 자동 전환. 다시 Typecast로 돌리려면 provider: typecast)
+  provider: gemini
 
   elevenlabs:
     # voice_id: 모든 ElevenLabs 계정에 기본 내장된 premade 보이스라 사용자 키로 바로 호출된다
@@ -31,6 +34,14 @@ tts:
       similarity_boost: 0.75
       style: 0.6               # 감정 강조(격앙된 발화)
       speed: 1.1        # 빠른 템포 (스펙 §M4: 1.1~1.15배)
+
+  gemini:
+    # Gemini 2.5 TTS — 대본 생성용 Gemini 키(SHORTS_GEMINI_API_KEY)를 그대로 재사용한다.
+    model: "gemini-2.5-flash-preview-tts"   # 저지연·저가 TTS(프리뷰). 더 좋은 표현력은 -pro-preview-tts
+    voice: "Kore"       # 프리셋 보이스(음색). 한국어 등 발화 언어는 대본 텍스트로 자동 결정.
+    # 화난 톤(자연어 지시) — 문장 앞에 붙여 낭독 스타일·속도를 지시한다(감정 프리셋 대신).
+    #   과하면 완화, 더 세게 하려면 문구를 조정. 이 값이 비면 중립 낭독.
+    style_prompt: "다음 대사를 화가 잔뜩 나 짜증스럽고 격앙된 말투로, 빠르고 실감나게 읽어줘"
 
   typecast:
     voice_id: ""        # 비우면 GET /v1/voices 목록에서 자동 선택(실행 로그에 표시)
