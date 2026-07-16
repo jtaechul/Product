@@ -118,9 +118,14 @@ jobs:
         if: contains(fromJSON('["candidates","plan-candidates","regen-line-full"]'), steps.params.outputs.mode)
         run: |
           # bgutil: 유튜브 봇 검증(PO) 토큰을 로컬에서 생성 — yt-dlp 플러그인이 자동으로 사용.
-          # 실패해도 제작은 계속(클라이언트 폴백만으로 시도).
-          docker run -d --name bgutil-pot -p 4416:4416 brainicism/bgutil-ytdlp-pot-provider:latest \
-            || echo "::warning::PO 프로바이더 기동 실패 — 클라이언트 폴백만으로 추출 시도"
+          # 실패해도 제작은 계속(클라이언트 폴백 → cobalt 위임으로 시도).
+          if docker run -d --name bgutil-pot -p 4416:4416 brainicism/bgutil-ytdlp-pot-provider:latest; then
+            sleep 4
+            curl -sf http://127.0.0.1:4416/ping && echo "PO 프로바이더 응답 확인(ping OK)" \
+              || echo "::warning::PO 프로바이더가 응답하지 않음(추출은 폴백 체인으로 진행)"
+          else
+            echo "::warning::PO 프로바이더 기동 실패 — 폴백 체인만으로 추출 시도"
+          fi
 
       - name: 파이프라인 실행
         env:
