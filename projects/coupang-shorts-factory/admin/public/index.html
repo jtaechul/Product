@@ -294,8 +294,8 @@ ol li{margin:8px 0}
     <h2>등록된 상품에서 추가</h2>
     <label>상품 선택 (‘만들기 → 상품’에서 등록한 것)</label>
     <select id="stProduct"><option value="">— 불러오는 중 —</option></select>
-    <label>한 줄 소개 — “무슨 불편을 없애는지” (스토어 카드에 표시)</label>
-    <input id="stPain" placeholder="예: 빨래방 갈 시간을 없애는 3분 초고속 미니 세탁기">
+    <label>한 줄 소개 — “무슨 불편을 없애는지” (스토어 카드에 표시 · 자동 제안이 채워집니다)</label>
+    <input id="stPain" placeholder="상품을 고르면 자동으로 제안이 채워집니다 (수정 가능)">
     <button class="btn" id="stAdd" style="margin-top:10px">스토어에 추가</button>
     <p class="hint">상품명·쿠팡 링크·이미지·카테고리는 등록된 상품에서 자동으로 가져옵니다. 번호는 자동 부여됩니다.
       추가한 뒤 아래 <b>스토어 저장</b>을 눌러야 실제로 반영됩니다.</p>
@@ -535,28 +535,41 @@ async function storePopulatePicker() {
     sel.appendChild(first);
     for (let i = 0; i < stRows.length; i++) {
       const r = stRows[i];
-      const h = await sha16(`${r.name}|${r.link}`);   // CI가 추출해 둔 실제 상품명 매핑 키
+      const h = await sha16(`${r.name}|${r.link}`);   // CI가 추출해 둔 실제 상품명·소개 매핑 키
       const o = document.createElement("option");
       o.value = String(i);
-      o.textContent = r.name || productNames[h]
+      o.dataset.hash = h;
+      o.textContent = r.name || pnEntry(h).name
         || ("(상품명 추출 중 · 링크 " + (r.link || "").slice(-10) + ")");
       sel.appendChild(o);
     }
   } catch (e) { sel.innerHTML = '<option value="">상품을 불러오지 못했습니다</option>'; }
 }
 function storeNextNumber() { return storeItems.reduce((m, x) => Math.max(m, Number(x.number) || 0), 0) + 1; }
+// 상품을 고르면 '한 줄 소개'를 CI 자동 제안으로 채운다(수정 가능). 사용자가 직접 친 값은 덮지 않는다
+//   — 직전 자동 채움값 그대로일 때만 새 상품 제안으로 교체(stPainAuto로 추적).
+let stPainAuto = "";
+$("stProduct").onchange = () => {
+  const o = $("stProduct").selectedOptions[0];
+  const pain = (o && o.dataset.hash) ? (pnEntry(o.dataset.hash).pain || "") : "";
+  const cur = $("stPain").value.trim();
+  if (pain && (!cur || cur === stPainAuto)) { $("stPain").value = pain; stPainAuto = pain; }
+  else if (!o || !o.dataset.hash) { if (cur === stPainAuto) $("stPain").value = ""; stPainAuto = ""; }
+};
 async function storeAddFromProduct() {
   const sel = $("stProduct"), i = sel.value;
   if (i === "" || !stRows[i]) { toast("먼저 상품을 선택하세요."); return; }
   const r = stRows[i];
   const hash = await sha16(`${r.name}|${r.link}`);
   if (storeItems.some((x) => x.row_hash === hash)) { toast("이미 스토어에 있는 상품입니다."); return; }
-  const dispName = (r.name || productNames[hash] || "").trim();   // 스토어 카드에도 실제 상품명
+  const ent = pnEntry(hash);
+  const dispName = (r.name || ent.name || "").trim();   // 스토어 카드 제목 = 실제 상품명(자동)
   if (!dispName && !confirm("이 상품은 아직 상품명이 추출되지 않았습니다(기획을 한 번 돌리면 자동 추출).\n이름 없이 추가할까요? (추가 후 목록에서 직접 입력 가능)")) return;
   storeItems.push({
     number: storeNextNumber(), row_hash: hash, name: dispName, url: (r.link || "").trim(),
     image: (r.img || "").trim(), category: (r.cat || "기타").trim(),
-    pain: ($("stPain").value || "").trim(), visible: true, date: new Date().toISOString().slice(0, 10),
+    // 카드 소개 = 입력값 > CI 자동 생성 소개(무슨 불편을 없애는지) — 비워두면 자동으로 채워진다
+    pain: ($("stPain").value || ent.pain || "").trim(), visible: true, date: new Date().toISOString().slice(0, 10),
   });
   $("stPain").value = "";
   storeRender();
@@ -634,14 +647,19 @@ async function checkConn() {
 }
 
 /* ── 상품 ────────────────────────────── */
-// 링크만 등록한 상품의 '실제 상품명' 매핑 — CI(M2.5 비전 추출)가 data/product_names.json에 기록.
-//   (CSV 이름칸은 해시 원료라 채우면 기존 기획·선택 연결이 깨져서, 표시용 매핑 파일을 따로 쓴다.)
+// 링크만 등록한 상품의 '실제 상품명 + 스토어 한줄소개' 매핑 — CI(M2.5 비전 추출 + LLM 카피)가
+//   data/product_names.json에 기록({hash:{name,pain}}). CSV 이름칸은 해시 원료라 채우면 기존
+//   기획·선택 연결이 깨져서, 표시용 매핑 파일을 따로 쓴다. 구형(문자열=이름만)도 허용.
 let productNames = {};
 async function loadProductNames() {
   try {
     const f = await getFile(`${P}/data/product_names.json`, true, true);
     productNames = f ? (JSON.parse(f.text) || {}) : {};
   } catch (_) { productNames = {}; }
+}
+function pnEntry(h) {
+  const e = productNames[h];
+  return typeof e === "string" ? { name: e } : (e || {});
 }
 function parseCsv(text) {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
@@ -674,7 +692,7 @@ async function loadProducts() {
       const r = rows[i];
       const h = await sha16(`${r.name}|${r.link}`);
       const isDone = done.includes(h);
-      const label = r.name || productNames[h] || "(상품명 자동 추출 중 — " + r.link.slice(-14) + ")";
+      const label = r.name || pnEntry(h).name || "(상품명 자동 추출 중 — " + r.link.slice(-14) + ")";
       const nVids = pvAssets.filter((a) => (a.name || "").startsWith(h + "_")).length;
       const el = document.createElement("div");
       el.className = "item";
