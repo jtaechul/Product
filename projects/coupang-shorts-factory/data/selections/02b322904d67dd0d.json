@@ -6,12 +6,12 @@
    "line_i": 0,
    "picks": [
     {
-     "file": "assets/memes/shock.png",
-     "source": "meme",
+     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMXBpY2Y1dXlnYzN2b3pzdXQ4ODI3NDd2dnUxdWZhNWsxb2R5MW5qaiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/PlgZiX7xo0NdiR8489/giphy.gif",
+     "source": "giphy",
      "query": "air conditioner"
     },
     {
-     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmN2V1b3I2OWtvZjE4a2ZqNmp6aG4xNDgyYXh1bHg1dWI3dHU1NjhqZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3owyp9gD4GrZtiEbZe/giphy.gif",
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMXBpY2Y1dXlnYzN2b3pzdXQ4ODI3NDd2dnUxdWZhNWsxb2R5MW5qaiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3o6Mbq9ekMjsEtnV6g/giphy.gif",
      "source": "giphy",
      "query": "air conditioner"
     }
@@ -21,9 +21,9 @@
    "line_i": 1,
    "picks": [
     {
-     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMDB3eGlzcjU4cGp6NTljcnJ2Zm0yMmtqeWI3MG5hMnlldmswbWpjMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3oKIPxua1XGPonJm3C/giphy.gif",
+     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmZjR1dmc1cmowMzV0NXdvOGxnZHgwOWg1Nno2MXl0bDZ5ZTZ3d3dzZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/s4Bi420mMDRBK/giphy.gif",
      "source": "giphy",
-     "query": "ice valley"
+     "query": "ice"
     },
     {
      "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmajlyajNpdm5teGllZHNodmZyYnY0bjlxcW1saTE0YjZ2a251Nzd4NyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Sxqxi2sGBBhhc3Qb5s/giphy.gif",
@@ -36,7 +36,7 @@
    "line_i": 2,
    "picks": [
     {
-     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYXc4eDdkZm0xazFhbW5wMzJoZ3g4dHhwMGhhYnk1N2IxNTZocW4zbCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/hBtSGnI7UnJycboRXZ/giphy.gif",
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmNmc3eWhoY2M5dG42ejBsY29nYzhnOWViaTdia280MGg5NW81bG53NCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/KtM3PLQBpguaI/giphy.gif",
      "source": "giphy",
      "query": "bed"
     },
@@ -51,7 +51,12 @@
    "line_i": 3,
    "picks": [
     {
-     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmbjZ4azB5dGNqM3NvZGx4bzQ3OTVqcDUyb2Zhd3JiNG9xYWN2emd2YSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/N8rUNT4jYtz7T9Y0h9/giphy.gif",
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMzZ1amgxajY3azN3a3h4a3hvZjA2cHFicTRhYmxnaHU4Y3R1aWxnbCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/HTcUO94UUocXpAUfr3/giphy.gif",
+     "source": "giphy",
+     "query": "thermometer"
+    },
+    {
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmaWRmcDg3ZGQ5eHhqMXMwY2R2ZGs5MmlocXdvZjBidzU4NjB2ajd3eCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ED9kSizX5l5N88UMgQ/giphy.gif",
      "source": "giphy",
      "query": "thermometer"
     }
@@ -61,14 +66,14 @@
    "line_i": 4,
    "picks": [
     {
-     "file": "assets/memes/shock.png",
-     "source": "meme",
-     "query": "light bulb moment"
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmZHYwZWcwZzFra2xuN2kzZWY0dnpuY2UzcXZ5dzVuYjEyY3djdDgwaSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/CWbmxaLcHDGahmtqoc/giphy.gif",
+     "source": "giphy",
+     "query": "Idea"
     },
     {
-     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYWVxcTIzcHVyNXRud25ub2pqZnF4YWJ5ZDJqZ2thaTlqbGh1eXlhYyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/lYjA4tfvCc8UAju1Op/giphy-downsized-medium.gif",
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmZHYwZWcwZzFra2xuN2kzZWY0dnpuY2UzcXZ5dzVuYjEyY3djdDgwaSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/VbEuHLBUPQm55MyqJg/giphy.gif",
      "source": "giphy",
-     "query": "light bulb moment"
+     "query": "Idea"
     }
    ]
   },
@@ -77,17 +82,14 @@
    "picks": [
     {
      "is_product": true,
+     "prod_idx": 0,
      "source": "product",
      "query": ""
     },
     {
      "is_product": true,
+     "prod_idx": 0,
      "source": "product",
-     "query": ""
-    },
-    {
-     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYWZvbTFnbjh2N3F6cXdubDQ1Zmpxc3MzMGl0eGp3OXpleGg2bHIwYiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/wgmWyQGzaZ6Fy/giphy.gif",
-     "source": "giphy",
      "query": ""
     }
    ]
@@ -96,12 +98,12 @@
    "line_i": 6,
    "picks": [
     {
-     "file": "assets/memes/frustration.png",
-     "source": "meme",
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMHJ4ZW40aHV1OHQ0ZndwcTQ2YjJ3bmcwOTJpMncwNmEwNWJ2bHZuYyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ood4dvyaNL5f2qdWsO/giphy.gif",
+     "source": "giphy",
      "query": "refrigerator door"
     },
     {
-     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmZmFxeGtja2p6b2hyYmN6Y28weHRxdGdyMXlkdmtnODZoNms3anI0cCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/hcY890u9sEUKs/giphy-downsized-medium.gif",
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMHJ4ZW40aHV1OHQ0ZndwcTQ2YjJ3bmcwOTJpMncwNmEwNWJ2bHZuYyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3pqXvSjuC7rgWpYRrr/giphy.gif",
      "source": "giphy",
      "query": "refrigerator door"
     }
@@ -111,9 +113,9 @@
    "line_i": 7,
    "picks": [
     {
-     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYXk1czRlYnBhbGw5ZGJ3c2dwYmd0YmUwczcxM3hoaTY2dXA4NjBtdyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/hrpv8r9Fbj6cg5RUlk/giphy.gif",
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMXBpY2Y1dXlnYzN2b3pzdXQ4ODI3NDd2dnUxdWZhNWsxb2R5MW5qaiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/xT5LMtgB4l1wRBdS9O/giphy.gif",
      "source": "giphy",
-     "query": "air conditioner remote"
+     "query": "air conditioner"
     },
     {
      "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmaXQzNGh4djkwajdqZ216NWZmOThtY3hkbTdndno2cnV3bzMxbXU0ZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/OsxUM4bSKGg2VimzHj/giphy.gif",
@@ -126,9 +128,9 @@
    "line_i": 8,
    "picks": [
     {
-     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmbjNreW90ZWd0ZTFha3Iwa3hudTd2bW5zeDA1bnluOTBka3NmZDU1ZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/zxQ9zD2MpOwvYyNLpR/giphy.gif",
+     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmaXN1YzVuZGlmZnJhdjIzZzNzZTJvbDZleDFla2I3amU3Mnh3Ym9peCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/32mC2kXYWCsg0/giphy.gif",
      "source": "giphy",
-     "query": "waking up refreshed"
+     "query": "Sweat"
     },
     {
      "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMDRkZmJxcXhrNXplaXMzODZtY3NwdG5vNjFtaWt3NDdmN2NxcWY3NyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/sHPLd2QX11QQ4ElsKp/giphy.gif",
