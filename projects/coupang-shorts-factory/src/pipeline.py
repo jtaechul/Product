@@ -98,6 +98,7 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     product = manual_queue.pick(args.row)
     # ---- M2.5: 링크만 등록된 상품은 캡처(data/notes)로 이름·가격·특징·상품사진 자동 확보
     product = enrich_product(product, settings, job_dir)
+    _persist_product_name(product)   # 추출된 이름을 관리자 표시용으로 기록(링크 조각 라벨 방지)
     (job_dir / "product.json").write_text(json.dumps(product, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"[pipeline] M2 상품: {product['name']} ({product['price']:,}원)")
 
@@ -423,6 +424,30 @@ def _download_prev_candidates(row_hash: str) -> dict | None:
     except Exception as e:
         print(f"[pipeline] 이전 후보 매니페스트 다운로드 실패({type(e).__name__}: {e})")
     return None
+
+
+def _persist_product_name(product: dict) -> None:
+    """M2.5가 추출한 상품명을 data/product_names.json({row_hash: 이름})에 기록 — 관리자 화면
+    (제작 대기열·스토어 상품 선택)이 링크 조각 대신 실제 상품명을 표시하게 한다(워크플로가 커밋).
+    ⚠️ CSV의 이름칸은 절대 채우지 않는다: row_hash가 '이름|링크' 해시라 이름을 채우면 해시가
+    바뀌어 기존 기획·이미지 선택·영상·노트 연결이 전부 끊긴다(별도 파일로만 매핑)."""
+    name = (product.get("name") or "").strip()
+    rh = (product.get("_row_hash") or "").strip()
+    if not name or not rh:
+        return
+    path = PROJECT_ROOT / "data" / "product_names.json"
+    try:
+        names = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+        if not isinstance(names, dict):
+            names = {}
+    except Exception:
+        names = {}
+    if names.get(rh) == name:
+        return
+    names[rh] = name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(names, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"[pipeline] 상품명 기록(관리자 표시용): {rh} → {name}")
 
 
 def _append_video_candidates(manifest: list, pvids: list, job_dir: Path) -> None:
