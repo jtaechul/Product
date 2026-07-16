@@ -250,7 +250,10 @@ ol li{margin:8px 0}
     <div class="row2" style="margin-top:10px">
       <button class="btn" id="imgLoad">이미지 후보 불러오기</button>
       <button class="btn sub" id="imgGen">이미지 후보 다시 만들기</button>
+      <button class="btn sub" id="imgReplan">전체 자막·이미지 다시 만들기</button>
     </div>
+    <p class="hint" style="margin:6px 0 0">‘이미지 후보 다시 만들기’는 대본은 그대로 두고 이미지만 새로 찾습니다.
+      대본(자막)까지 마음에 안 들면 ‘<b>전체 자막·이미지 다시 만들기</b>’로 대본부터 새로 쓴 뒤 이미지 후보를 다시 만듭니다.</p>
     <p class="hint" id="imgStatus"></p>
   </div>
   <div id="imgLines"></div>
@@ -1464,6 +1467,29 @@ async function pollCandidates(hash, tries = 0, waitVer) {
   setStatus(`대본·자막별 이미지 후보 만드는 중... (${tries * 12}초 · 보통 1~3분) — 다 되면 자동으로 뜹니다.`);
   setTimeout(() => pollCandidates(hash, tries + 1, waitVer), 12000);
 }
+// 이미지 탭 라인 카드의 '문구 다시': regen-line은 기획(plan)의 그 줄 text만 바꾼다(후보 매니페스트 아님).
+//   → plan을 폴링해 그 줄 text가 바뀌면 카드 문구를 즉시 갱신하고, 이미지 재탐색을 권한다.
+async function pollImgLineText(hash, li, oldText, card, ln, tries = 0) {
+  if (!currentWork || currentWork.hash !== hash) return;   // 다른 상품으로 전환 시 중단
+  const f = await getFile(`${PLAN_DIR}/${hash}.json`, true);
+  if (f) {
+    try {
+      const d = JSON.parse(f.text);
+      const nt = (d.lines && d.lines[li] && d.lines[li].text) || "";
+      if (nt && nt !== oldText) {
+        ln.text = nt;
+        if (card) { const el = card.querySelector(".imgtext"); if (el) el.textContent = nt; }
+        const lm = imgManifest && imgManifest.lines && imgManifest.lines.find((x) => Number(x.line_i) === Number(li));
+        if (lm) lm.text = nt;   // 매니페스트 표시용 텍스트도 맞춰둔다(제작은 plan을 사용)
+        $("imgStatus").textContent = `라인 ${li + 1} 문구가 바뀌었습니다. 이미지가 안 맞으면 이 라인 '다시 찾기(새 후보)'로 새로 고르세요.`;
+        toast(`라인 ${li + 1} 문구 갱신 완료`);
+        return;
+      }
+    } catch (e) { /* 커밋 중 부분 파일일 수 있음 — 다음 폴링에서 재시도 */ }
+  }
+  if (tries >= 20) { $("imgStatus").textContent = `라인 ${li + 1} 문구 재생성이 오래 걸립니다. 잠시 뒤 '이미지 후보 불러오기'로 확인하세요.`; return; }
+  setTimeout(() => pollImgLineText(hash, li, oldText, card, ln, tries + 1), 12000);
+}
 // [이미지 후보 다시 만들기] 현재 상품으로 candidates 재실행(전체 라인) + 폴링
 $("imgGen").onclick = (ev) => busy(ev.target, async () => {
   const p = imgSelected(); if (!p) return;
@@ -1475,9 +1501,22 @@ $("imgGen").onclick = (ev) => busy(ev.target, async () => {
   toast("이미지 후보 다시 만들기 시작");
   pollCandidates(p.hash, 0, baseVer);
 });
+// [전체 자막·이미지 다시 만들기] 대본(자막)부터 새로 쓰고 → 그 대본으로 이미지 후보까지 재생성(plan→candidates 순차)
+$("imgReplan").onclick = (ev) => busy(ev.target, async () => {
+  const p = imgSelected(); if (!p) return;
+  if (!confirm("현재 대본(자막)을 완전히 새로 쓰고 이미지 후보도 다시 만듭니다.\n기존 대본과 이미지 선택은 사라집니다. 진행할까요?")) return;
+  imgRestorePicks = null;               // 대본이 바뀌므로 모든 픽 초기화
+  const baseVer = imgManifestVer;       // 새 매니페스트가 올라올 때까지 폴링
+  await mkDispatch({ mode: "plan-candidates", row: String(p.row) });
+  setStatus("전체 자막·이미지 후보를 다시 만드는 중... (약 2~4분, 완성되면 자동 표시)");
+  $("imgStatus").textContent = "대본부터 새로 쓰는 중입니다. 잠시만요...";
+  toast("전체 자막·이미지 다시 만들기 시작");
+  pollCandidates(p.hash, 0, baseVer);
+});
 // [이미지 후보 불러오기] 지금 상품 후보를 즉시 로드(자동이 놓쳐도 이 버튼으로 언제든)
 $("imgLoad").onclick = (ev) => busy(ev.target, async () => {
-  const p = imgSelected(); if (!p) return;
+  const p = imgSelected();
+  if (!p) { $("imgStatus").textContent = "먼저 위 '제작 대기열'에서 상품의 '작업'을 눌러 상품을 선택하세요."; return; }
   $("imgStatus").textContent = "이미지 후보 불러오는 중...";
   await loadCandidates(p, false);
 });
@@ -1497,6 +1536,7 @@ function renderImgLines() {
       + `<p class="hint" style="margin:0 0 6px">여러 장 고르면 그 순서대로 슬라이드쇼로 나옵니다(번호 = 순서). 다시 누르면 해제.</p>`
       + `<div class="thumbs"></div>`
       + `<div class="row2" style="margin-top:8px">`
+      + `<button class="btn mini sub imgtxtredo">문구 다시</button>`
       + `<button class="btn mini sub imgredo">다시 찾기(새 후보)</button>`
       + `<label class="btn mini imgup">내 파일 올리기<input type="file" accept="image/*,video/*" hidden></label></div>`;
     card.querySelector(".imgtext").textContent = ln.text;
@@ -1562,6 +1602,18 @@ function renderImgLines() {
       $("imgStatus").textContent = `라인 ${li + 1} 이미지 후보 생성 중 — 완성되면 그 라인만 바뀝니다.`;
       toast(`라인 ${li + 1} 새 후보 생성 시작`);
       pollCandidates(p.hash, 0, baseVer);
+    });
+    // '문구 다시' = 이 라인의 대사(text)만 재생성(regen-line → 기획 plan 갱신). 이미지 후보·선택은 건드리지 않는다.
+    //   문구가 바뀌면 이미지가 안 맞을 수 있어, 갱신 후 '다시 찾기'를 권한다.
+    card.querySelector(".imgtxtredo").onclick = (ev) => busy(ev.target, async () => {
+      const p = imgSelected(); if (!p) return;
+      const li = ln.line_i;
+      const oldText = ln.text || "";
+      await mkDispatch({ mode: "regen-line", row: String(p.row), line: String(li) });
+      setStatus(`라인 ${li + 1} 문구 다시 생성 중... (약 30초, 완성되면 자동 갱신)`);
+      $("imgStatus").textContent = `라인 ${li + 1} 문구를 다시 만드는 중입니다...`;
+      toast(`라인 ${li + 1} 문구 다시 생성 시작`);
+      pollImgLineText(p.hash, li, oldText, card, ln);
     });
     const upInput = card.querySelector(".imgup input");
     upInput.onchange = () => busy(card.querySelector(".imgup"), async () => {
