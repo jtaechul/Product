@@ -263,6 +263,7 @@
 | `SHORTS_TYPECAST_API_KEY` | Typecast TTS (오디오만 → faster-whisper 폴백) |
 | `SHORTS_CLOVA_CLIENT_ID` / `SHORTS_CLOVA_CLIENT_SECRET` | 네이버클라우드 CLOVA Voice Premium (오디오만 → 폴백) |
 | `SHORTS_PEXELS_API_KEY` (선택) | 배경 영상 자동 확보(`scripts/fetch_assets.py`) — 없어도 동작(그라데이션 폴백) |
+| `SHORTS_YTDLP_COOKIES` (선택·최후수단) | 유튜브 링크 추출이 계속 차단될 때만 — cookies.txt 내용. 계정 제재 위험 고지 필수, 기본 미등록 |
 
 - TTS 프로바이더는 `config/settings.yaml`의 `tts.provider`로 선택 (`auto` = 키 자동 감지).
 - 어느 프로바이더든 최종 산출은 `audio.mp3` + `timestamps.json` 으로 동일해야 한다 (공통 계약).

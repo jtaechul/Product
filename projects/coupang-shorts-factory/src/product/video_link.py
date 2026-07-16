@@ -84,14 +84,19 @@ def video_poster(video_path: Path, out_jpg: Path) -> bool:
 
 
 def _ytdlp_download(url: str, out_dir: Path, key: str) -> str:
-    """yt-dlp로 추출 → {key}.{ext} 로 정리해 경로 반환. (임포트는 사용 시점 — 무거움)"""
+    """yt-dlp로 추출 → {key}.{ext} 로 정리해 경로 반환. (임포트는 사용 시점 — 무거움)
+
+    유튜브의 데이터센터 IP 봇 차단("Sign in to confirm you're not a bot")에 3중 대응:
+      ① PO 토큰 프로바이더(bgutil) — 워크플로가 도커로 로컬 기동, 플러그인이 자동 감지해
+         유튜브 봇 검증 토큰을 만들어 통과시킨다(savefrom류 사이트가 쓰는 것과 같은 원리).
+      ② 플레이어 클라이언트 폴백 — tv/android/ios 클라이언트는 웹보다 봇 검증이 느슨하다.
+      ③ (선택) SHORTS_YTDLP_COOKIES 시크릿(cookies.txt 내용) — 로그인 쿠키. 계정 제재 위험이
+         있어 최후 수단(등록 안 하면 그냥 건너뜀)."""
     import imageio_ffmpeg
     import yt_dlp
     tmp = out_dir / "dl"
     tmp.mkdir(parents=True, exist_ok=True)
-    for old in tmp.glob("dl.*"):
-        old.unlink(missing_ok=True)
-    opts = {
+    base = {
         "format": "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b",
         "merge_output_format": "mp4",
         "outtmpl": str(tmp / "dl.%(ext)s"),
@@ -99,15 +104,37 @@ def _ytdlp_download(url: str, out_dir: Path, key: str) -> str:
         "max_filesize": MAX_BYTES,
         "ffmpeg_location": imageio_ffmpeg.get_ffmpeg_exe(),
     }
-    with yt_dlp.YoutubeDL(opts) as ydl:
-        ydl.download([url])
-    got = sorted(tmp.glob("dl.*"), key=lambda p: p.stat().st_size, reverse=True)
-    if not got or got[0].stat().st_size == 0:
-        raise RuntimeError("추출 결과 파일 없음(플랫폼 차단 또는 용량 초과 가능)")
-    ext = got[0].suffix.lower() if got[0].suffix.lower() in _CT else ".mp4"
-    dest = out_dir / f"{key}{ext}"
-    got[0].replace(dest)
-    return str(dest)
+    cookies = (os.environ.get("SHORTS_YTDLP_COOKIES") or "").strip()
+    if cookies:
+        cf = tmp / "cookies.txt"
+        cf.write_text(cookies + "\n", encoding="utf-8")
+        base["cookiefile"] = str(cf)
+        print("[vlink] 쿠키 시크릿 사용(SHORTS_YTDLP_COOKIES)")
+    attempts = [
+        {},   # 기본(웹 클라이언트) — bgutil PO 토큰 프로바이더가 떠 있으면 대부분 여기서 통과
+        {"extractor_args": {"youtube": {"player_client": ["tv", "android"]}}},
+        {"extractor_args": {"youtube": {"player_client": ["ios", "web_safari"]}}},
+    ]
+    last = None
+    for i, extra in enumerate(attempts, 1):
+        for old in tmp.glob("dl.*"):
+            old.unlink(missing_ok=True)
+        try:
+            with yt_dlp.YoutubeDL({**base, **extra}) as ydl:
+                ydl.download([url])
+            got = sorted(tmp.glob("dl.*"), key=lambda p: p.stat().st_size, reverse=True)
+            if got and got[0].stat().st_size > 0:
+                ext = got[0].suffix.lower() if got[0].suffix.lower() in _CT else ".mp4"
+                dest = out_dir / f"{key}{ext}"
+                got[0].replace(dest)
+                if i > 1:
+                    print(f"[vlink] {i}차 방식(클라이언트 폴백)으로 추출 성공")
+                return str(dest)
+            last = RuntimeError("추출 결과 파일 없음(용량 초과 가능)")
+        except Exception as e:
+            last = e
+            print(f"[vlink] 추출 {i}/{len(attempts)}차 실패({type(e).__name__}: {str(e)[:90]}) → 다음 방식")
+    raise last if last else RuntimeError("추출 실패")
 
 
 def _release_assets() -> list:
@@ -171,7 +198,8 @@ def _notify_fail(url: str, msg: str) -> None:
     try:
         from src import notify
         notify.send(f"[쿠팡쇼츠] 상품 영상 링크 추출 실패\n{url[:120]}\n{msg}\n"
-                    f"→ 플랫폼이 자동 추출을 차단했을 수 있어요. 해당 영상을 화면 기록으로 녹화해 "
-                    f"'내 파일 올리기'로 올리면 동일하게 쓸 수 있습니다.")
+                    f"→ ① 잠시 뒤 '이미지 후보 다시 만들기'로 재시도해 보세요(우회 장치가 다시 시도). "
+                    f"② 계속 실패하면 savefrom.net 등에서 영상을 받아 관리자 '내 파일 올리기' 또는 "
+                    f"상품 '영상 올리기'로 업로드하면 동일하게 쓸 수 있습니다.")
     except Exception:
         pass
