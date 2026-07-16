@@ -488,6 +488,7 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
         if not isinstance(picks, list):    # 구형 단일 포맷(entry 자체가 픽) 하위호환
             picks = [entry]
         imgs = []
+        prod_seen = 0   # 이 라인에서 지금까지 고른 상품사진 수(구형 선택 prod_idx 없을 때 등장순서로 매김)
         for j, pk in enumerate(picks):
             f = pk.get("file")
             if f and Path(f).exists():      # 저장소에 커밋된 파일(업로드본·밈 등)
@@ -499,8 +500,11 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
                 if _download_image(url, dest):
                     imgs.append(dest); used += 1; continue
             if pk.get("is_product") and prod_paths:   # 상품을 고른 라인에만 상품 사진
-                # prod_idx로 '고른 그 상품 사진'을 쓴다(#3: 여러 장 골라도 같은 사진이 반복되지 않게).
-                pidx = int(pk.get("prod_idx", 0) or 0)
+                # #3: '고른 그 상품 사진'을 쓴다(여러 장 골라도 반복되지 않게).
+                #   prod_idx가 있으면 그걸, 없으면(구형 선택) 등장 순서(prod_seen)로 상품1·상품2…를 배정.
+                pidx = pk.get("prod_idx")
+                pidx = prod_seen if pidx is None else int(pidx or 0)
+                prod_seen += 1
                 imgs.append(prod_paths[pidx] if 0 <= pidx < len(prod_paths) else prod0)
                 used += 1
         line_images.append(imgs)
