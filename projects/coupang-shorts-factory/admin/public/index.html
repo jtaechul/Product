@@ -32,6 +32,8 @@ header{
 h1{font-size:20px; font-weight:800; flex:1}
 #connBadge{font-size:13px; font-weight:700; padding:6px 12px; border-radius:999px; background:var(--bad-bg); color:var(--bad); white-space:nowrap}
 #connBadge.on{background:var(--ok-bg); color:var(--ok)}
+#connMsg{display:none; margin:8px 0 0; padding:10px 12px; border-radius:10px; background:var(--bad-bg); color:var(--bad); font-size:13px; line-height:1.55}
+#connMsg b{font-weight:800}
 nav{max-width:680px; margin:10px auto 0; display:flex; gap:6px; border-bottom:1px solid var(--line)}
 nav button{
   flex:1; min-height:48px; border:none; background:none; color:var(--sub);
@@ -144,6 +146,7 @@ ol li{margin:8px 0}
     <h1>미래상점 관리자</h1>
     <span id="connBadge">연결 필요</span>
   </div>
+  <div id="connMsg" role="alert"></div>
   <nav>
     <button data-tab="make" class="on">만들기</button>
     <button data-tab="videos">영상</button>
@@ -702,14 +705,27 @@ async function makeInit() {
 
 /* ── 연결 상태 ───────────────────────── */
 async function checkConn() {
-  const badge = $("connBadge");
-  if (!token()) { badge.textContent = "연결 필요"; badge.classList.remove("on"); return false; }
+  const badge = $("connBadge"), msg = $("connMsg");
+  const showMsg = (html) => { if (msg) { msg.innerHTML = html; msg.style.display = "block"; } };
+  const hideMsg = () => { if (msg) msg.style.display = "none"; };
+  if (!token()) {
+    badge.textContent = "연결 필요"; badge.classList.remove("on");
+    showMsg("<b>GitHub 토큰이 없습니다.</b> 아래 <b>설정</b> 탭에서 토큰(PAT)을 등록하세요.");
+    return false;
+  }
   try {
     await gh(`/repos/${OWNER}/${REPO}`);
-    badge.textContent = "연결됨"; badge.classList.add("on"); return true;
+    badge.textContent = "연결됨"; badge.classList.add("on"); hideMsg(); return true;
   } catch (e) {
     badge.textContent = "연결 오류"; badge.classList.remove("on");
-    toast(e.message, 5000); return false;
+    const m = String((e && e.message) || e);
+    let fix;
+    if (/유효하지/.test(m)) fix = "토큰이 <b>만료됐거나 잘못</b>됐습니다. <b>설정</b> 탭에서 <b>새 토큰</b>을 발급·저장하세요.";
+    else if (/권한/.test(m)) fix = "토큰 <b>권한이 부족</b>합니다. 새 토큰을 <b>Contents·Actions = Read and write</b>로 발급하세요.";
+    else if (/Failed to fetch|NetworkError|load failed/i.test(m)) fix = "<b>인터넷 연결</b>을 확인하고 페이지를 <b>새로고침</b>하세요(일시적 오류일 수 있음).";
+    else fix = "잠시 후 <b>새로고침</b>하거나 <b>설정</b> 탭에서 토큰을 다시 저장하세요.";
+    showMsg(`<b>연결 오류</b> — ${fix}<br><span style="opacity:.75">상세: ${m}</span>`);
+    toast(m, 5000); return false;
   }
 }
 
