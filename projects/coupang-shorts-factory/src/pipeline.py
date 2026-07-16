@@ -98,7 +98,7 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     product = manual_queue.pick(args.row)
     # ---- M2.5: 링크만 등록된 상품은 캡처(data/notes)로 이름·가격·특징·상품사진 자동 확보
     product = enrich_product(product, settings, job_dir)
-    _persist_product_name(product)   # 추출된 이름을 관리자 표시용으로 기록(링크 조각 라벨 방지)
+    _persist_product_meta(product, settings)   # 이름 + 스토어 한줄소개를 관리자 표시용으로 기록
     (job_dir / "product.json").write_text(json.dumps(product, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"[pipeline] M2 상품: {product['name']} ({product['price']:,}원)")
 
@@ -426,11 +426,13 @@ def _download_prev_candidates(row_hash: str) -> dict | None:
     return None
 
 
-def _persist_product_name(product: dict) -> None:
-    """M2.5가 추출한 상품명을 data/product_names.json({row_hash: 이름})에 기록 — 관리자 화면
-    (제작 대기열·스토어 상품 선택)이 링크 조각 대신 실제 상품명을 표시하게 한다(워크플로가 커밋).
+def _persist_product_meta(product: dict, settings: dict) -> None:
+    """M2.5가 추출한 상품명 + 스토어 카드용 '한 줄 소개'(무슨 불편을 없애는지)를
+    data/product_names.json({row_hash: {name, pain}})에 기록 — 관리자 대기열·스토어 선택·
+    공개 스토어 카드가 링크 조각 대신 실제 이름과 소개를 자동 표시한다(워크플로가 커밋).
     ⚠️ CSV의 이름칸은 절대 채우지 않는다: row_hash가 '이름|링크' 해시라 이름을 채우면 해시가
-    바뀌어 기존 기획·이미지 선택·영상·노트 연결이 전부 끊긴다(별도 파일로만 매핑)."""
+    바뀌어 기존 기획·이미지 선택·영상·노트 연결이 전부 끊긴다(별도 파일로만 매핑).
+    한 줄 소개는 상품당 1회만 LLM(≈2원)으로 생성 — 이미 있으면 호출하지 않는다."""
     name = (product.get("name") or "").strip()
     rh = (product.get("_row_hash") or "").strip()
     if not name or not rh:
@@ -442,12 +444,61 @@ def _persist_product_name(product: dict) -> None:
             names = {}
     except Exception:
         names = {}
-    if names.get(rh) == name:
+    ent = names.get(rh)
+    ent = {"name": ent} if isinstance(ent, str) else (ent if isinstance(ent, dict) else {})
+    changed = False
+    if ent.get("name") != name:
+        ent["name"] = name
+        changed = True
+    if not (ent.get("pain") or "").strip():
+        pain = _gen_store_pain(product, settings)
+        if pain:
+            ent["pain"] = pain
+            changed = True
+    if not changed:
         return
-    names[rh] = name
+    names[rh] = ent
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(names, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"[pipeline] 상품명 기록(관리자 표시용): {rh} → {name}")
+    print(f"[pipeline] 상품 메타 기록(관리자·스토어 표시용): {rh} → {ent.get('name')} / {ent.get('pain', '(소개 없음)')}")
+
+
+def _gen_store_pain(product: dict, settings: dict) -> str | None:
+    """스토어 카드 한 줄 소개 생성 — '무슨 불편을 없애는지' 12~30자(레퍼런스: '집에서 간편하게
+    즐기는 일본 온천욕' 톤). 키 없음·실패 시 None(관리자에서 직접 입력 가능 — 제작은 안 막음)."""
+    from src.script.generate import (_anthropic_generate, _gemini_generate, anthropic_key,
+                                     gemini_key, script_provider)
+    from src.script.sanitize import check_forbidden, clean_text
+    provider = script_provider(settings)
+    if not (gemini_key() if provider == "gemini" else anthropic_key()):
+        return None
+    cfg = settings.get("script", {})
+    model = (cfg.get("gemini_model", "gemini-2.5-flash") if provider == "gemini"
+             else cfg.get("model", "claude-sonnet-4-6"))
+    system = "너는 한국어 커머스 카피라이터다. JSON만 반환한다. 마크다운·설명 금지."
+    prompt = (
+        "쿠팡 상품의 스토어 카드용 '한 줄 소개'를 지어라 — 이 물건이 무슨 불편을 없애고 뭐가 좋은지, "
+        "12~28자 한국어 한 줄.\n"
+        "스타일 예시: '집에서 간편하게 즐기는 일본 온천욕' / '컵을 감지하면 자동으로 나오는 가글' / "
+        "'점심을 정해주는 마법의 책'\n"
+        "금지: 가격·금액, 이모지·특수기호, 최고/유일/100프로 같은 단정, 물음표 낚시.\n"
+        f"상품명: {product.get('name', '')}\n"
+        f"특징: {'; '.join(product.get('specs') or [])}\n"
+        f"메모: {str(product.get('notes') or '')[:500]}\n"
+        '출력(JSON만): {"line": "..."}')
+    import re as _re
+    for _ in range(2):
+        try:
+            text = (_gemini_generate(model, system, prompt, 300) if provider == "gemini"
+                    else _anthropic_generate(model, system, prompt, 300))
+            m = _re.search(r"\{.*\}", text, _re.S)
+            line = clean_text(str((json.loads(m.group(0)) if m else {}).get("line", "")).strip())
+            if (8 <= len(line) <= 40 and not check_forbidden(line)
+                    and not _re.search(r"\d[\d,]*\s*원|\d+\s*만\s*원", line)):
+                return line
+        except Exception as e:
+            print(f"[pipeline] 한 줄 소개 생성 실패({type(e).__name__}: {e}) — 재시도/생략")
+    return None
 
 
 def _append_video_candidates(manifest: list, pvids: list, job_dir: Path) -> None:
