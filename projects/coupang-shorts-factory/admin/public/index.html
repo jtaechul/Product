@@ -703,10 +703,31 @@ async function loadProducts() {
     const rows = parseCsv(csv.text);
     if (!rows.length) { box.innerHTML = '<p class="empty">대기 중인 상품이 없습니다. 위에서 추가하세요.</p>'; return; }
     let pvAssets = [];   // 제품 영상(릴리스 product-assets) 자산 — 상품별 개수 배지용
+    // ⭐ 진행 현황판(2026-07-16 사용자 요청): 상품마다 기획→이미지→영상→업로드가 어디까지
+    //   됐는지 한눈에 — 안 올린 것/수정할 것을 이 목록에서 바로 식별하고 '작업'으로 진입.
+    const planSet = new Set(), selSet = new Set(), runMap = {};
     try {
-      const pvRel = await gh(`/repos/${OWNER}/${REPO}/releases/tags/${PV_TAG}`, { allow404: true });
+      const [pvRel, pl, se, rels] = await Promise.all([
+        gh(`/repos/${OWNER}/${REPO}/releases/tags/${PV_TAG}`, { allow404: true }),
+        gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/plans?ref=${BRANCH}`, { allow404: true }),
+        gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/selections?ref=${BRANCH}`, { allow404: true }),
+        gh(`/repos/${OWNER}/${REPO}/releases?per_page=100`, { allow404: true }),
+      ]);
       pvAssets = (pvRel && pvRel.assets) || [];
-    } catch (_) { /* 조회 실패해도 목록 표시는 계속 */ }
+      for (const f of (Array.isArray(pl) ? pl : [])) {
+        const m = /^([0-9a-f]{16})\.json$/.exec(f.name || ""); if (m) planSet.add(m[1]);
+      }
+      for (const f of (Array.isArray(se) ? se : [])) {
+        const m = /^([0-9a-f]{16})\.json$/.exec(f.name || ""); if (m) selSet.add(m[1]);
+      }
+      for (const rel of (Array.isArray(rels) ? rels : [])) {   // 최신순 → 상품별 최신 영상만
+        if (!String(rel.tag_name || "").startsWith("shorts-run")) continue;
+        try {
+          const b = JSON.parse(rel.body || "{}");
+          if (b.row_hash && !runMap[b.row_hash]) runMap[b.row_hash] = { url: b.youtube_url || "", tag: rel.tag_name };
+        } catch (_) { /* 본문이 JSON이 아니면 건너뜀 */ }
+      }
+    } catch (_) { /* 현황 조회 실패해도 목록 표시는 계속 */ }
     box.innerHTML = "";
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
@@ -714,20 +735,35 @@ async function loadProducts() {
       const isDone = done.includes(h);
       const label = r.name || pnEntry(h).name || "(상품명 자동 추출 중 — " + r.link.slice(-14) + ")";
       const nVids = pvAssets.filter((a) => (a.name || "").startsWith(h + "_")).length;
+      const stages = [["기획", planSet.has(h)], ["이미지 선택", selSet.has(h)],
+                      ["영상 제작", !!runMap[h]], ["유튜브 업로드", isDone || !!(runMap[h] && runMap[h].url)]];
+      const nextStep = !stages[0][1] ? "작업을 눌러 기획부터"
+        : !stages[1][1] ? "이미지를 골라 선택 저장"
+        : !stages[2][1] ? "제작하기 실행"
+        : !stages[3][1] ? "검수 후 올리기" : "완료";
       const el = document.createElement("div");
       el.className = "item";
       el.innerHTML = `
         <div class="grow">
           <div class="t"></div>
           <div class="s"></div>
+          <div class="stg" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px"></div>
         </div>
-        <span class="chip ${isDone ? "done" : "wait"}">${isDone ? "제작 완료" : "대기"}</span>
         <button class="btn mini workbtn">작업</button>
         <button class="btn mini sub pvbtn"></button>
         <button class="btn mini danger">삭제</button>`;
       el.querySelector(".t").textContent = label;
       el.querySelector(".s").textContent =
-        (r.price ? Number(r.price).toLocaleString() + "원" : "가격 자동") + (r.cat ? " · " + r.cat : "");
+        (r.price ? Number(r.price).toLocaleString() + "원" : "가격 자동") + (r.cat ? " · " + r.cat : "")
+        + " · 다음: " + nextStep;
+      const stg = el.querySelector(".stg");
+      for (const [nm, ok] of stages) {
+        const c = document.createElement("span");
+        c.className = "chip " + (ok ? "done" : "wait");
+        c.style.cssText = "font-size:11px;padding:2px 8px";
+        c.textContent = nm + (ok ? " 완료" : " 전");
+        stg.appendChild(c);
+      }
       const workBtn = el.querySelector(".workbtn");
       workBtn.title = "이 상품으로 기획·이미지·제작 진행";
       workBtn.onclick = () => selectProduct(i + 1, h, label);
