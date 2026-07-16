@@ -528,16 +528,20 @@ async function storePopulatePicker() {
   try {
     const csv = await getFile(CSV_PATH, true);
     stRows = csv ? parseCsv(csv.text) : [];
+    await loadProductNames();
     sel.innerHTML = "";
     const first = document.createElement("option");
     first.value = ""; first.textContent = stRows.length ? "— 등록된 상품 선택 —" : "— 등록된 상품이 없습니다 —";
     sel.appendChild(first);
-    stRows.forEach((r, i) => {
+    for (let i = 0; i < stRows.length; i++) {
+      const r = stRows[i];
+      const h = await sha16(`${r.name}|${r.link}`);   // CI가 추출해 둔 실제 상품명 매핑 키
       const o = document.createElement("option");
       o.value = String(i);
-      o.textContent = r.name || ("(링크 " + (r.link || "").slice(-16) + ")");
+      o.textContent = r.name || productNames[h]
+        || ("(상품명 추출 중 · 링크 " + (r.link || "").slice(-10) + ")");
       sel.appendChild(o);
-    });
+    }
   } catch (e) { sel.innerHTML = '<option value="">상품을 불러오지 못했습니다</option>'; }
 }
 function storeNextNumber() { return storeItems.reduce((m, x) => Math.max(m, Number(x.number) || 0), 0) + 1; }
@@ -547,8 +551,10 @@ async function storeAddFromProduct() {
   const r = stRows[i];
   const hash = await sha16(`${r.name}|${r.link}`);
   if (storeItems.some((x) => x.row_hash === hash)) { toast("이미 스토어에 있는 상품입니다."); return; }
+  const dispName = (r.name || productNames[hash] || "").trim();   // 스토어 카드에도 실제 상품명
+  if (!dispName && !confirm("이 상품은 아직 상품명이 추출되지 않았습니다(기획을 한 번 돌리면 자동 추출).\n이름 없이 추가할까요? (추가 후 목록에서 직접 입력 가능)")) return;
   storeItems.push({
-    number: storeNextNumber(), row_hash: hash, name: (r.name || "").trim(), url: (r.link || "").trim(),
+    number: storeNextNumber(), row_hash: hash, name: dispName, url: (r.link || "").trim(),
     image: (r.img || "").trim(), category: (r.cat || "기타").trim(),
     pain: ($("stPain").value || "").trim(), visible: true, date: new Date().toISOString().slice(0, 10),
   });
@@ -628,6 +634,15 @@ async function checkConn() {
 }
 
 /* ── 상품 ────────────────────────────── */
+// 링크만 등록한 상품의 '실제 상품명' 매핑 — CI(M2.5 비전 추출)가 data/product_names.json에 기록.
+//   (CSV 이름칸은 해시 원료라 채우면 기존 기획·선택 연결이 깨져서, 표시용 매핑 파일을 따로 쓴다.)
+let productNames = {};
+async function loadProductNames() {
+  try {
+    const f = await getFile(`${P}/data/product_names.json`, true, true);
+    productNames = f ? (JSON.parse(f.text) || {}) : {};
+  } catch (_) { productNames = {}; }
+}
 function parseCsv(text) {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
   const rows = [];
@@ -645,6 +660,7 @@ async function loadProducts() {
   try {
     const csv = await getFile(CSV_PATH);
     const state = await getFile(STATE_PATH, true);
+    await loadProductNames();
     const done = state ? (JSON.parse(state.text).done || []) : [];
     const rows = parseCsv(csv.text);
     if (!rows.length) { box.innerHTML = '<p class="empty">대기 중인 상품이 없습니다. 위에서 추가하세요.</p>'; return; }
@@ -658,7 +674,7 @@ async function loadProducts() {
       const r = rows[i];
       const h = await sha16(`${r.name}|${r.link}`);
       const isDone = done.includes(h);
-      const label = r.name || "(상품명 자동 추출 — " + r.link.slice(-14) + ")";
+      const label = r.name || productNames[h] || "(상품명 자동 추출 중 — " + r.link.slice(-14) + ")";
       const nVids = pvAssets.filter((a) => (a.name || "").startsWith(h + "_")).length;
       const el = document.createElement("div");
       el.className = "item";
