@@ -30,7 +30,7 @@ def anthropic_key() -> str | None:
 
 
 def gemini_key() -> str | None:
-    return (os.environ.get("SHORTS_GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY") or "").strip() or None
+    return (os.environ.get("GEMINI_API_KEY") or os.environ.get("SHORTS_GEMINI_API_KEY") or "").strip() or None
 
 
 def script_provider(settings: dict) -> str:
@@ -44,7 +44,7 @@ def have_script_key(settings: dict) -> bool:
 
 def missing_key_hint(settings: dict) -> str:
     if script_provider(settings) == "gemini":
-        return "대본 프로바이더=gemini인데 SHORTS_GEMINI_API_KEY(또는 GEMINI_API_KEY)가 없습니다."
+        return "대본 프로바이더=gemini인데 GEMINI_API_KEY가 없습니다."
     return "대본 프로바이더=claude인데 SHORTS_ANTHROPIC_API_KEY(또는 ANTHROPIC_API_KEY)가 없습니다."
 
 
@@ -160,7 +160,7 @@ def _gemini_generate(model: str, system: str, content: str, max_tokens: int) -> 
     """Gemini generateContent로 대본 텍스트 생성(JSON 강제). 텍스트 전용 — 영상 생성 아님."""
     key = gemini_key()
     if not key:
-        raise RuntimeError("대본 생성용 Gemini API 키가 없습니다 (SHORTS_GEMINI_API_KEY / GEMINI_API_KEY).")
+        raise RuntimeError("대본 생성용 Gemini API 키가 없습니다 (GEMINI_API_KEY).")
     body = {
         "system_instruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": [{"text": content}]}],
