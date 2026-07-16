@@ -2,11 +2,16 @@
 
 특정 업체 고정 금지: config/settings.yaml 의 tts.provider 값으로 선택한다.
   - elevenlabs : with-timestamps 엔드포인트로 오디오 + 문자 타임스탬프 동시 수신
+  - gemini     : Gemini 2.5 TTS(generateContent, responseModalities=[AUDIO]) — 오디오만 수신
+                 (→ faster-whisper 폴백). 대본 생성용 Gemini 키(SHORTS_GEMINI_API_KEY)를 재사용하고,
+                 서버/클라우드 친화적이라 무료 소비자 TTS의 'UNUSUAL_ACTIVITY' 차단을 잘 안 겪는다.
+                 화난 톤 등은 감정 프리셋이 아니라 style_prompt(자연어 지시)로 제어. (오디오 생성이지
+                 유료 '영상' 생성이 아님 — 프로젝트 영상금지 규칙과 무관.)
   - typecast   : 오디오만 수신 (Typecast 공식 SDK 기준 POST /v1/text-to-speech,
                  응답 = 원시 오디오 바이트) → faster-whisper 폴백으로 단어 타임스탬프 생성
   - clova      : 네이버클라우드 CLOVA Voice Premium, 오디오만 수신 → 폴백
   - mock       : API 키 없이 렌더 검증용(단어별 비프음 + 합성 타임스탬프)
-  - auto       : 등록된 키를 elevenlabs → typecast → clova 순으로 감지해 자동 선택
+  - auto       : 등록된 키를 elevenlabs → gemini → typecast → clova 순으로 감지해 자동 선택
 
 공통 계약: 어느 프로바이더든 최종 산출은 job 폴더의
   audio.mp3 + timestamps.json([{"word","start","end"}] 리스트, 스펙 §M5)
@@ -34,10 +39,11 @@ import requests
 
 from src.audio.align_fallback import distribute_by_chars
 
-PROVIDER_ORDER = ["elevenlabs", "typecast", "clova"]
+PROVIDER_ORDER = ["elevenlabs", "gemini", "typecast", "clova"]
 
 ENV_KEYS = {
     "elevenlabs": ["SHORTS_ELEVENLABS_API_KEY"],
+    "gemini": ["SHORTS_GEMINI_API_KEY"],
     "typecast": ["SHORTS_TYPECAST_API_KEY"],
     "clova": ["SHORTS_CLOVA_CLIENT_ID", "SHORTS_CLOVA_CLIENT_SECRET"],
 }
@@ -255,6 +261,72 @@ def _synth_clova(text: str, cfg: dict) -> TTSOutput:
     return TTSOutput(resp.content, payload["format"], None, {"speaker": payload["speaker"]})
 
 
+GEMINI_TTS_BASE = "https://generativelanguage.googleapis.com/v1beta"
+
+
+def _pcm_rate_from_mime(mime: str) -> int:
+    """Gemini 오디오 mimeType(예: 'audio/L16;codec=pcm;rate=24000')에서 샘플레이트 추출."""
+    import re
+    m = re.search(r"rate=(\d+)", mime or "")
+    return int(m.group(1)) if m else 24000
+
+
+def _pcm_to_wav(pcm: bytes, rate: int, channels: int = 1, sampwidth: int = 2) -> bytes:
+    """원시 16-bit PCM → WAV 컨테이너로 감싼다(파이프라인이 이후 mp3로 변환)."""
+    import io
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(channels)
+        wf.setsampwidth(sampwidth)
+        wf.setframerate(rate)
+        wf.writeframes(pcm)
+    return buf.getvalue()
+
+
+def _synth_gemini(text: str, cfg: dict) -> TTSOutput:
+    """Gemini 2.5 TTS — POST generateContent(responseModalities=[AUDIO]) → 원시 PCM(base64).
+
+    - 키: SHORTS_GEMINI_API_KEY(대본 생성용과 동일 키 재사용) / GEMINI_API_KEY.
+    - 낭독 스타일(화난 톤 등)은 감정 프리셋이 아니라 style_prompt(자연어 지시)를 문장 앞에 붙여 제어.
+    - 응답 PCM(16-bit mono, 보통 24kHz)을 WAV로 감싸 반환 → 타임스탬프는 whisper 폴백이 생성.
+    ⚠️ 이는 오디오(음성) 생성이지 유료 '영상' 생성이 아니다(프로젝트 영상금지 규칙과 무관).
+    """
+    key = (os.environ.get("SHORTS_GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY") or "").strip()
+    if not key:
+        raise TTSError("Gemini TTS 키가 없습니다 (SHORTS_GEMINI_API_KEY / GEMINI_API_KEY).")
+    model = str(cfg.get("model", "gemini-2.5-flash-preview-tts")).strip()
+    voice = str(cfg.get("voice") or "Kore").strip()
+    style = str(cfg.get("style_prompt") or "").strip()
+    # style_prompt를 앞에 붙여 '이 대사를 이런 톤으로 읽어라'로 지시한다(Gemini TTS 권장 패턴).
+    prompt = f"{style}:\n{text}" if style else text
+    body = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "responseModalities": ["AUDIO"],
+            "speechConfig": {
+                "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}},
+            },
+        },
+    }
+    r = requests.post(
+        f"{GEMINI_TTS_BASE}/models/{model}:generateContent",
+        headers={"x-goog-api-key": key, "Content-Type": "application/json"},
+        json=body, timeout=180,
+    )
+    if not r.ok:
+        raise TTSError(f"Gemini TTS 오류 HTTP {r.status_code}: {r.text[:300]}")
+    data = r.json()
+    cands = data.get("candidates") or []
+    parts = ((cands[0].get("content") or {}).get("parts") or []) if cands else []
+    inline = next((p.get("inlineData") for p in parts if p.get("inlineData")), None)
+    if not inline or not inline.get("data"):
+        raise TTSError(f"Gemini TTS 응답에 오디오가 없습니다: {str(data)[:200]}")
+    pcm = base64.b64decode(inline["data"])
+    rate = _pcm_rate_from_mime(inline.get("mimeType", ""))
+    wav = _pcm_to_wav(pcm, rate)
+    return TTSOutput(wav, "wav", None, {"voice": voice, "model": model})
+
+
 def _synth_mock(text: str, cfg: dict) -> TTSOutput:
     """API 키 없이 M6 렌더를 검증하기 위한 목업: 단어별 비프음 + 정확한 타임스탬프."""
     sr = 44100
@@ -291,6 +363,7 @@ def _synth_mock(text: str, cfg: dict) -> TTSOutput:
 
 _SYNTH = {
     "elevenlabs": _synth_elevenlabs,
+    "gemini": _synth_gemini,
     "typecast": _synth_typecast,
     "clova": _synth_clova,
     "mock": _synth_mock,
