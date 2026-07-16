@@ -847,8 +847,9 @@ async function handleSuggest(env, body) {
   // [강제 제외] AI가 제외 지시를 무시하고 이미 만든 책을 또 넣어도 서버에서 걸러낸다.
   // ⭐ 등호 비교가 아니라 판본·부제 무시 비교(sameBookTitle) — "어린 왕자 (한정판)" 제외 목록에
   // "어린왕자"가 새로 와도 같은 책으로 판정해 차단(실사고 재발 방지).
-  const fresh = usable.filter(b => !exclude.some(t => sameBookTitle(t, b.title)));
-  if (fresh.length) usable = fresh;   // 전부 제외되면(신간 부족) 최소 원본 유지
+  // ⭐ 전원 중복이어도 원본을 되살리지 않는다(예전 "빈 결과 방지" 폴백이 중복을 재도입한 실사고).
+  //   빈 결과가 중복 제작보다 낫다 — 파이프라인은 일시 오류로 처리돼 크론이 새 후보로 재시도한다.
+  usable = usable.filter(b => !exclude.some(t => sameBookTitle(t, b.title)));
   usable.sort((a, b) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0));  // 실존 확인 책 우선
 
   // ⭐ 연결 가능성 게이트 — 풀을 넓게 가져가되(베스트셀러 등 다양한 분야), 책의 "실제 내용"을
