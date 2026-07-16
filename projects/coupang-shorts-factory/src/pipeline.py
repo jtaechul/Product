@@ -142,6 +142,11 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
         plan_path.parent.mkdir(parents=True, exist_ok=True)
         plan_path.write_text(json.dumps(script, ensure_ascii=False, indent=1), encoding="utf-8")
         print(f"[pipeline] 기획+대본 생성 완료 → data/plans/{product['_row_hash']}.json (승인 대기)")
+        notify.send(
+            f"[쿠팡쇼츠] 기획·대본 완성 — {product['name']}\n"
+            f"제목: {script.get('title', '')}\n"
+            f"다음: 관리자 '기획' 탭에서 검토 후 '이미지 찾기'로 승인하세요.\n"
+            f"https://shorts-admin.jtaechul.workers.dev")
         return 0
 
     # ---- 후보 이미지 생성 모드(#2 관리자 선택기용): TTS·렌더 없이 라인별 후보 이미지만 만든다.
@@ -178,6 +183,11 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
             _merge_line_manifest(web_path, prev, only_line)
         print(f"[pipeline] #2 후보 생성 완료 → {job_dir}/candidates/ + cand_{product['_row_hash']}.json "
               f"{'(라인 '+str(only_line)+'만 병합)' if only_line is not None else ''}(TTS·렌더 생략)")
+        if only_line is None:   # 전체 후보 생성만 알림(라인별 '다시 찾기'는 관리자에서 바로 보이므로 생략 — 노이즈 방지)
+            notify.send(
+                f"[쿠팡쇼츠] 이미지 후보 준비 완료 — {product['name']}\n"
+                f"다음: 관리자 '이미지' 탭에서 라인별로 고르고 '선택 저장'하세요.\n"
+                f"https://shorts-admin.jtaechul.workers.dev")
         return 0
 
     # ---- M4(+M5): TTS → audio.mp3 + timestamps.json (또는 --no-narration이면 무음+합성 타이밍)
@@ -272,6 +282,11 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     if args.no_upload:
         result = {"status": "skipped_no_upload", "hint": "검수 단계 — 업로드는 '올리기' 버튼에서"}
         print("[pipeline] 제작만 수행(--no-upload) — 유튜브 업로드는 검수 통과 후 '올리기'로")
+        notify.send(
+            f"[쿠팡쇼츠] 영상 제작 완료 — 검수 대기\n"
+            f"{product['name']} · {stats.get('video_duration_seconds')}초\n"
+            f"다음: 관리자 '영상' 탭에서 확인 후 문제없으면 '올리기'를 누르세요.\n"
+            f"https://shorts-admin.jtaechul.workers.dev")
     elif youtube.is_configured():
         result = youtube.upload(out_path, script, product, settings, privacy=privacy)
         manual_queue.mark_done(product["_row_hash"])  # 성공 시에만 큐 소진(중복 제작 방지)
@@ -483,6 +498,10 @@ def _regen_field(product: dict, field: str, settings: dict, root: Path) -> int:
         plan[f] = clean_text(str(val))
     plan_path.write_text(json.dumps(plan, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"[pipeline] '{field}' 재생성 완료 → data/plans/{product['_row_hash']}.json")
+    notify.send(
+        f"[쿠팡쇼츠] '{field}' 재생성 완료 — {product['name']}\n"
+        f"다음: 관리자 '제작' 탭에서 새 내용을 확인하세요.\n"
+        f"https://shorts-admin.jtaechul.workers.dev")
     return 0
 
 
