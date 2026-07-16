@@ -1,0 +1,62 @@
+name: Deploy Store Page
+
+# 미래마켓 공개 스토어(프로필 링크 페이지)를 Cloudflare Pages 로 배포 — 개인 계정명이 없는
+# 깔끔한 URL(https://miraemarket.pages.dev, 무료) 제공. 관리자에서 '스토어 저장'으로
+# store-catalog.json 이 커밋되면 자동 재배포된다. (옛 워커 URL /store 도 계속 동작 — 병행)
+on:
+  push:
+    branches: [main]
+    paths:
+      - "projects/coupang-shorts-factory/admin/public/store.html"
+      - "projects/coupang-shorts-factory/admin/public/store-catalog.json"
+      - "projects/coupang-shorts-factory/admin/store-site/**"
+      - ".github/workflows/deploy-store-page.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: store-page-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Cloudflare Pages 배포 (공개 스토어)
+    defaults:
+      run:
+        working-directory: projects/coupang-shorts-factory/admin
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install wrangler
+        run: npm install --no-audit --no-fund
+
+      - name: Stage store site
+        run: |
+          rm -rf store-site/dist
+          mkdir -p store-site/dist
+          cp public/store.html store-site/dist/index.html
+          cp public/store-catalog.json store-site/dist/store-catalog.json
+          cp store-site/_worker.js store-site/dist/_worker.js
+          ls -la store-site/dist
+
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          cd store-site
+          # 이름 선점 대비 후보 순서대로: 프로젝트 생성(이미 있으면 무시) → 배포 성공한 이름 채택
+          for NAME in miraemarket mirae-market miraemarket-store; do
+            npx wrangler pages project create "$NAME" --production-branch=main >/dev/null 2>&1 || true
+            if npx wrangler pages deploy dist --project-name "$NAME" --branch=main --commit-dirty=true; then
+              echo "### ✅ 공개 스토어 배포 완료: https://${NAME}.pages.dev" >> "$GITHUB_STEP_SUMMARY"
+              echo "유튜브 프로필 링크에 위 주소를 사용하세요 (jtaechul 미포함)." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            echo "::warning::'${NAME}' 배포 실패 — 다음 이름 후보로 재시도"
+          done
+          echo "::error::모든 이름 후보 배포 실패 — CF_API_TOKEN에 'Cloudflare Pages: Edit'(계정 권한)가 있는지 확인하세요"
+          exit 1

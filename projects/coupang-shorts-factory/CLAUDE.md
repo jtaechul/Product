@@ -151,6 +151,13 @@
   CI가 `data/processed.json`을 `[skip ci]` 커밋. 텔레그램 성공/실패 알림(`src/notify.py`).
   제작(produce) 성공 시 워크플로우가 `video.mp4`+`poster.jpg`를 **GitHub Release `shorts-run{N}`**
   으로 발행(본문=`release_meta.json`) + **최신 10개만 유지**(오래된 릴리스·태그 자동 정리).
+- **공개 스토어(프로필 링크 페이지, 2026-07-16)**: 유튜브 프로필·고정댓글용 공식 주소는
+  **[miraemarket.pages.dev](https://miraemarket.pages.dev)** (Cloudflare Pages, 무료 — **URL에 개인
+  계정명 금지**가 사용자 요구사항). `deploy-store-page.yml`이 `admin/public/store.html`(→index.html)·
+  `store-catalog.json`·`admin/store-site/_worker.js`(이미지 프록시 /store-img)를 스테이징해 배포하고,
+  이름 선점 시 mirae-market → miraemarket-store 순으로 자동 폴백(성공 주소는 Actions 요약에 표시).
+  옛 워커 경로(`shorts-admin.../store`)도 병행 동작. 카드=번호+실제 상품명+한줄소개(`data/product_names.json`
+  {row_hash:{name,pain}} — CI가 자동 생성, CSV 이름칸은 해시 원료라 불변).
 - 관리자 페이지(노코드): `admin/public/index.html` — 상품 등록/삭제·제작 실행(workflow_dispatch)·
   리서치 실행·실행 기록·**완성 영상 보기(영상 탭)**·**자막별 이미지 선택(이미지 탭 · #2)**·채널 관리·
   **상품별 제품 영상 업로드**. 사용자 PAT(Contents/Actions RW, 브라우저 localStorage에만 저장)로
@@ -229,8 +236,8 @@
 ## 폴더 격리 (저장소 공통 규칙)
 
 - 이 프로젝트의 모든 파일은 `projects/coupang-shorts-factory/` 하위에만 둔다.
-- 유일한 예외: `.github/workflows/shorts-produce.yml`·`shorts-research.yml`·`deploy-shorts-admin.yml`
-  (GitHub가 워크플로우 위치를 루트로 강제).
+- 유일한 예외: `.github/workflows/shorts-produce.yml`·`shorts-research.yml`·`deploy-shorts-admin.yml`·
+  `deploy-store-page.yml` (GitHub가 워크플로우 위치를 루트로 강제).
   - 트리거는 `workflow_dispatch` + `requests/*.json` 전용 push(paths 필터 적용됨).
     push 트리거를 확장할 때도 반드시 `paths: ['projects/coupang-shorts-factory/**']`
     필터를 유지한다.
