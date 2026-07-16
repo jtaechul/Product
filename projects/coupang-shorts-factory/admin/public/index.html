@@ -1497,7 +1497,7 @@ function renderImgLines() {
         if (at >= 0) { arr.splice(at, 1); t.classList.remove("sel"); }
         else {
           arr.push(c.is_product
-            ? { is_product: true, source: "product", query: ln.query || "", _key: c.name }
+            ? { is_product: true, prod_idx: (c.prod_idx || 0), source: "product", query: ln.query || "", _key: c.name }
             : c.is_meme
             ? { file: c.file, source: "meme", query: ln.query || "", _key: c.name }
             : { url: c.url, source: c.source || "", query: ln.query || "", _key: c.name });

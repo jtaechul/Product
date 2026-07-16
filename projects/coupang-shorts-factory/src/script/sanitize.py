@@ -71,6 +71,34 @@ def hide_product_name(text: str, avoid_terms=None) -> str:
     return _strip_model_codes(_strip_terms(text, avoid_terms))
 
 
+def product_avoid_terms(product) -> list:
+    """상품에서 '화면·설명에 숨길 이름'(브랜드·정식명) 후보를 뽑는다(일반 카테고리어는 최대한 보존).
+    - 전체 상품명(정확 일치 제거) + (3어절 이상이면) 첫 토큰=브랜드.
+      (2어절 이하 짧은 이름은 통째로만 제거 — 일반명 오탐 방지.)
+    - 운영자가 지정한 avoid_onscreen/avoid_terms도 합친다.
+    이 목록을 hide_product_name/sanitize_script에 넘기면 대사·자막·헤드라인·제목·설명에서 함께 제거된다."""
+    if not isinstance(product, dict):
+        return []
+    terms = []
+    name = str(product.get("name") or "").strip()
+    if name:
+        terms.append(name)
+        toks = [t for t in name.split() if len(t) >= 2]
+        if len(toks) >= 3:
+            terms.append(toks[0])   # 브랜드(첫 토큰)
+    extra = product.get("avoid_onscreen") or product.get("avoid_terms") or []
+    if isinstance(extra, str):
+        extra = [extra]
+    for e in extra:
+        if str(e).strip():
+            terms.append(str(e).strip())
+    seen, out = set(), []
+    for t in terms:
+        if t and t not in seen:
+            seen.add(t); out.append(t)
+    return out
+
+
 class RuleViolation(Exception):
     pass
 
@@ -149,6 +177,10 @@ def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None) 
     # headline(폭로 포맷 화면 상단 뉴스 헤더)도 같은 규칙으로 정화 — 이모지·슬래시·파이프 + 제품명 제거
     if script.get("headline"):
         script["headline"] = hide_product_name(clean_text(str(script["headline"])), avoid_terms)
+    # description_body(유튜브 설명란 본문)에서도 정식 제품명 제거(2026-07-16) — 줄바꿈은 보존.
+    if script.get("description_body"):
+        body = str(script["description_body"])
+        script["description_body"] = "\n".join(hide_product_name(ln, avoid_terms) for ln in body.split("\n"))
     # concept(기획서: 의도·타깃·후킹) — 운영자 검토용 표시 텍스트, 이모지·특수기호 정화
     concept = script.get("concept")
     if isinstance(concept, dict):

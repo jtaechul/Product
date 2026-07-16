@@ -417,10 +417,11 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
                  "query": pl.get("query", ""), "keywords": keywords, "candidates": []}
         cands = entry["candidates"]
         k = 0
-        # ① 상품 사진 — product 타입 라인에만(#3)
+        # ① 상품 사진 — product 타입 라인에만(#3). prod_idx로 '어느 상품 사진'인지 보존(선택 시 그 사진 사용)
         if pl["type"] == "product":
-            for p in product_images[:2]:
-                cands.append({"file": p, "source": "product", "url": None, "is_product": True})
+            for pidx, p in enumerate(product_images[:2]):
+                cands.append({"file": p, "source": "product", "url": None,
+                              "is_product": True, "prod_idx": pidx})
         # ② 재미(밈) — 로테이션 2장(자체 제작물 = Content ID 안전). 라인 간·재생성 시 다른 밈.
         for mp in _pick_line_memes(PROJECT_ROOT, text, used_memes, 2):
             used_memes.add(Path(mp).name)
@@ -472,7 +473,8 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
     except Exception as e:
         print(f"[imgsrc] selections 파싱 실패({e}) → 자동 소싱")
         return None
-    prod0 = next((Path(p) for p in (product_images or []) if Path(p).exists()), None)
+    prod_paths = [Path(p) for p in (product_images or []) if Path(p).exists()]
+    prod0 = prod_paths[0] if prod_paths else None
     by_line = {int(x.get("line_i", -1)): x for x in (data.get("lines") or [])}
     dl_dir = Path(job_dir) / "selected"
     dl_dir.mkdir(parents=True, exist_ok=True)
@@ -496,8 +498,11 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
                 dest = dl_dir / f"sel_{i:02d}_{j}{ext}"
                 if _download_image(url, dest):
                     imgs.append(dest); used += 1; continue
-            if pk.get("is_product") and prod0 is not None:   # 상품을 고른 라인에만 상품 사진
-                imgs.append(prod0); used += 1
+            if pk.get("is_product") and prod_paths:   # 상품을 고른 라인에만 상품 사진
+                # prod_idx로 '고른 그 상품 사진'을 쓴다(#3: 여러 장 골라도 같은 사진이 반복되지 않게).
+                pidx = int(pk.get("prod_idx", 0) or 0)
+                imgs.append(prod_paths[pidx] if 0 <= pidx < len(prod_paths) else prod0)
+                used += 1
         line_images.append(imgs)
     sel_lines = sum(1 for x in line_images if x)
     print(f"[imgsrc] 운영자 선택 적용: {sel_lines}/{len(lines)}라인 · 이미지 {used}장 "

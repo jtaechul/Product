@@ -283,6 +283,24 @@ def _pcm_to_wav(pcm: bytes, rate: int, channels: int = 1, sampwidth: int = 2) ->
     return buf.getvalue()
 
 
+def _atempo_wav(wav_bytes: bytes, tempo: float) -> bytes:
+    """ffmpeg atempo로 낭독 속도만 조절(피치 유지). Gemini는 서버 템포가 없어 합성 후 가속한다."""
+    tempo = max(0.5, min(2.0, float(tempo)))
+    import imageio_ffmpeg
+    import tempfile
+    ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as fi:
+        fi.write(wav_bytes)
+        src = fi.name
+    dst = src + ".out.wav"
+    subprocess.run([ffmpeg, "-y", "-i", src, "-filter:a", f"atempo={tempo:.3f}", dst],
+                   check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    out = Path(dst).read_bytes()
+    Path(src).unlink(missing_ok=True)
+    Path(dst).unlink(missing_ok=True)
+    return out
+
+
 def _synth_gemini(text: str, cfg: dict) -> TTSOutput:
     """Gemini 2.5 TTS — POST generateContent(responseModalities=[AUDIO]) → 원시 PCM(base64).
 
@@ -324,7 +342,13 @@ def _synth_gemini(text: str, cfg: dict) -> TTSOutput:
     pcm = base64.b64decode(inline["data"])
     rate = _pcm_rate_from_mime(inline.get("mimeType", ""))
     wav = _pcm_to_wav(pcm, rate)
-    return TTSOutput(wav, "wav", None, {"voice": voice, "model": model})
+    tempo = float(cfg.get("audio_tempo", 1.0) or 1.0)
+    if abs(tempo - 1.0) > 0.01:   # 1.3배속 등 — 피치 유지하며 가속(30초 넘김 방지)
+        try:
+            wav = _atempo_wav(wav, tempo)
+        except Exception as e:
+            print(f"[tts] Gemini atempo({tempo}) 실패 → 원속도 사용: {str(e)[:120]}")
+    return TTSOutput(wav, "wav", None, {"voice": voice, "model": model, "tempo": tempo})
 
 
 def _synth_mock(text: str, cfg: dict) -> TTSOutput:
