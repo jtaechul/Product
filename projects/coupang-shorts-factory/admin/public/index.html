@@ -106,10 +106,15 @@ ol li{margin:8px 0}
   flex-direction:column; align-items:center; justify-content:center; padding:16px}
 .vmodal.on{display:flex}
 .vmodal video{max-width:100%; max-height:72vh; border-radius:12px; background:#000}
-.vinfo{color:#fff; text-align:center; margin-top:14px; max-width:440px; width:100%}
+#vmVideo{max-height:50vh}
+.vinfo{color:#fff; text-align:center; margin-top:14px; max-width:460px; width:100%; max-height:40vh; overflow-y:auto}
 .vinfo .t{font-size:16px; font-weight:800}
 .vinfo .s{font-size:13px; color:#c9ccd4; margin-top:2px}
-.vm-actions{display:flex; gap:10px; justify-content:center; margin-top:14px}
+.vmeta{text-align:left; margin-top:12px; display:flex; flex-direction:column; gap:10px}
+.vmeta-block{background:rgba(255,255,255,.08); border-radius:10px; padding:10px 12px}
+.vmeta-h{display:block; font-size:11px; font-weight:800; color:#8ab4ff; margin-bottom:4px; letter-spacing:.5px}
+.vmeta-block p{font-size:13px; line-height:1.6; color:#e6e8ee; white-space:pre-wrap; word-break:break-word; margin:0}
+.vm-actions{display:flex; gap:10px; justify-content:center; margin-top:14px; flex-wrap:wrap}
 .vm-actions .btn{width:auto; margin-top:0}
 .vm-close{position:absolute; top:calc(10px + env(safe-area-inset-top)); right:14px; z-index:2;
   width:44px; height:44px; border-radius:999px; border:none; background:rgba(255,255,255,.16);
@@ -407,7 +412,13 @@ ol li{margin:8px 0}
   <div class="vinfo">
     <div id="vmTitle" class="t"></div>
     <div id="vmSub" class="s"></div>
+    <div class="vmeta">
+      <div class="vmeta-block"><span class="vmeta-h">유튜브 제목</span><p id="vmYtTitle">-</p></div>
+      <div class="vmeta-block"><span class="vmeta-h">설명</span><p id="vmDesc">-</p></div>
+      <div class="vmeta-block"><span class="vmeta-h">해시태그</span><p id="vmTags">-</p></div>
+    </div>
     <div class="vm-actions">
+      <button id="vmUpload" class="btn mini" type="button" style="display:none">유튜브에 Shorts 올리기</button>
       <button id="vmDownload" class="btn sub mini" type="button">사진에 저장</button>
       <a id="vmYoutube" class="btn sub mini" target="_blank" style="text-decoration:none">유튜브에서 보기</a>
     </div>
@@ -1384,7 +1395,10 @@ async function loadVideos() {
   if (!token()) { box.innerHTML = '<p class="empty">설정 탭에서 GitHub 토큰을 먼저 저장하세요.</p>'; return; }
   box.innerHTML = '<p class="empty">불러오는 중...</p>';
   try {
-    const rels = await gh(`/repos/${OWNER}/${REPO}/releases?per_page=100`);
+    const [rels, idx] = await Promise.all([
+      gh(`/repos/${OWNER}/${REPO}/releases?per_page=100`),
+      workIndex(),   // hash→{row,label} — 영상의 상품 행번호 매칭(업로드 dispatch용)
+    ]);
     const vids = (rels || [])
       .filter((r) => (r.tag_name || "").startsWith(VID_PREFIX))
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -1422,6 +1436,8 @@ async function loadVideos() {
         videoUrl: mediaUrl(video.browser_download_url),
         dlUrl: video.browser_download_url,
         youtube: meta.youtube_url || "",
+        rowHash: meta.row_hash || "",
+        row: (idx[meta.row_hash] || {}).row || null,
       });
       item.appendChild(cell);
       // 썸네일 밑 메뉴 — 저장(사진 앱) / 삭제(이 영상 제거)
@@ -1450,17 +1466,50 @@ async function loadVideos() {
       '<p class="hint">최근 완성 영상 최대 10개입니다. 탭하면 바로 재생됩니다.</p>');
   } catch (e) { box.innerHTML = ""; toast(e.message, 5000); }
 }
-function openVideo(v) {
+async function openVideo(v) {
   const m = $("vmodal");
   $("vmVideo").src = v.videoUrl;
   $("vmTitle").textContent = v.name;
   $("vmSub").textContent = (v.price ? Number(v.price).toLocaleString() + "원 · " : "") + v.when;
-  const yt = $("vmYoutube");
-  if (v.youtube) { yt.href = v.youtube; yt.style.display = "inline-flex"; } else { yt.style.display = "none"; }
   $("vmDownload").dataset.src = v.videoUrl;   // /media 프록시(video/mp4, 같은 출처) — blob fetch용
   $("vmDownload").dataset.name = v.name || "video";
+  // 이미 유튜브에 올린 경우 '보기' 링크
+  const yt = $("vmYoutube");
+  if (v.youtube) { yt.href = v.youtube; yt.style.display = "inline-flex"; } else { yt.style.display = "none"; }
+  // 기획 로드 전 초기화
+  $("vmYtTitle").textContent = "불러오는 중...";
+  $("vmDesc").textContent = "불러오는 중...";
+  $("vmTags").textContent = "";
+  const up = $("vmUpload"); up.style.display = "none";
   m.classList.add("on");
   $("vmVideo").play?.().catch(() => {});
+  // 기획(제목·설명·해시태그) — data/plans/{row_hash}.json
+  let plan = null;
+  if (v.rowHash) { try { const f = await getFile(`${PLAN_DIR}/${v.rowHash}.json`, true); plan = f ? JSON.parse(f.text) : null; } catch (_) {} }
+  if (plan) {
+    $("vmYtTitle").textContent = plan.title || v.name || "-";
+    $("vmDesc").textContent = plan.description_body || "-";
+    $("vmTags").textContent = (plan.hashtags || []).map((h) => (h[0] === "#" ? h : "#" + h)).join(" ") || "-";
+  } else {
+    $("vmYtTitle").textContent = v.name || "-";
+    $("vmDesc").textContent = "기획 정보가 없습니다(제목·설명·해시태그는 상품 기획에서 생성됩니다).";
+    $("vmTags").textContent = "-";
+  }
+  // '유튜브에 Shorts 올리기' — 아직 안 올렸고 상품 행을 아는 경우에만 활성
+  if (v.youtube) {
+    up.style.display = "none";   // 이미 올림 → 위 '유튜브에서 보기' 링크 사용
+  } else if (v.row) {
+    up.style.display = "inline-flex"; up.disabled = false; up.textContent = "유튜브에 Shorts 올리기";
+    up.onclick = (ev) => busy(ev.target, async () => {
+      if (!confirm("이 영상을 유튜브에 올릴까요? (비공개(private)로 올라갑니다)")) return;
+      await mkDispatch({ mode: "upload", row: String(v.row), privacy: "private" });
+      toast("유튜브 업로드를 시작했습니다. 완료되면 텔레그램으로 알림이 옵니다.");
+      up.textContent = "업로드 시작됨"; up.disabled = true;
+    });
+  } else {
+    up.style.display = "inline-flex"; up.disabled = true; up.textContent = "올리기 불가(대기열에 상품 없음)";
+    up.onclick = null;
+  }
 }
 function closeVideo() {
   const vid = $("vmVideo");
