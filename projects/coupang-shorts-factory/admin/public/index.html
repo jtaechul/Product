@@ -1146,24 +1146,82 @@ $("mkProduce").onclick = (ev) => busy(ev.target, async () => {
   toast("제작 시작 — 2~4분 뒤 검수 불러오기");
   setTimeout(loadRuns, 4000);
 });
+// 모든 CSV 상품의 hash→{row,label} 인덱스 — 과거 작업을 상품명·행번호로 되짚기 위함(검수/이미지 목록 공용).
+async function workIndex() {
+  try {
+    const csv = await getFile(CSV_PATH);
+    await loadProductNames();
+    const rows = parseCsv(csv.text);
+    const idx = {};
+    for (let i = 0; i < rows.length; i++) {
+      const h = await sha16(`${rows[i].name}|${rows[i].link}`);
+      idx[h] = { row: i + 1, label: rows[i].name || pnEntry(h).name || ("(" + h.slice(0, 6) + ")") };
+    }
+    return idx;
+  } catch (_) { return {}; }
+}
+// [검수 불러오기] 지금 상품 1개가 아니라 '과거 제작한 모든 영상 목록'을 띄운다 → 하나 골라 검수·올리기.
 $("mkLoad").onclick = (ev) => busy(ev.target, async () => {
-  const p = mkSelected(); if (!p) return;
-  $("mkStatus").textContent = "검수 불러오는 중...";
-  // 이 상품(row_hash)으로 제작된 최신 영상 릴리스 찾기
-  const rels = await gh(`/repos/${OWNER}/${REPO}/releases?per_page=100`);
-  const rel = (rels || []).filter((r) => (r.tag_name || "").startsWith("shorts-run"))
-    .filter((r) => relMeta(r).row_hash === p.hash)
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-  // 기획(제목·설명·해시태그)
-  const planF = await getFile(`${PLAN_DIR}/${p.hash}.json`, true);
-  const plan = planF ? JSON.parse(planF.text) : null;
-  if (!rel && !plan) { $("mkStatus").textContent = "아직 제작·기획이 없습니다. 먼저 기획→이미지→제작을 진행하세요."; return; }
-  renderReview(rel, plan, p);
-  $("mkStatus").textContent = rel ? "검수하세요. 문제 없으면 맨 아래 '유튜브에 올리기'." : "영상이 아직 없습니다. '제작하기'를 먼저 누르세요.";
+  $("mkStatus").textContent = "제작한 영상 목록 불러오는 중...";
+  const [rels, idx] = await Promise.all([
+    gh(`/repos/${OWNER}/${REPO}/releases?per_page=100`),
+    workIndex(),
+  ]);
+  const runs = (rels || [])
+    .filter((r) => (r.tag_name || "").startsWith("shorts-run"))
+    .filter((r) => (r.assets || []).some((a) => /video\.mp4$/i.test(a.name)))
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  if (!runs.length) {
+    $("mkReview").innerHTML = "";
+    $("mkStatus").textContent = "아직 제작된 영상이 없습니다. 위 '제작하기'를 먼저 누르세요.";
+    return;
+  }
+  renderReviewList(runs, idx);
+  $("mkStatus").textContent = `제작한 영상 ${runs.length}개 — 검수할 영상을 고르세요. (오래된 영상은 최신 10개까지만 보관)`;
 });
-function renderReview(rel, plan, p) {
+// 제작한 영상 전체 목록(최신순). 항목 탭 → 그 상품을 현재 작업으로 잡고 검수 화면 표시.
+function renderReviewList(runs, idx) {
+  const box = $("mkReview"); box.innerHTML = "";
+  const wrap = document.createElement("div"); wrap.className = "card";
+  wrap.innerHTML = "<h2>제작한 영상 목록</h2>";
+  for (const rel of runs) {
+    const meta = relMeta(rel);
+    const info = idx[meta.row_hash] || {};
+    const label = info.label || meta.product_name || meta.title || ("(" + String(meta.row_hash || rel.tag_name).slice(0, 8) + ")");
+    const when = new Date(rel.created_at).toLocaleString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    const el = document.createElement("div"); el.className = "item";
+    el.innerHTML = `
+      <div class="grow">
+        <div class="t"></div>
+        <div class="s"></div>
+      </div>
+      <button class="btn mini reviewpick">검수</button>`;
+    el.querySelector(".t").textContent = label;
+    el.querySelector(".s").textContent = when + " · " + rel.tag_name + (meta.youtube_url ? " · 업로드됨" : " · 미업로드");
+    el.querySelector(".reviewpick").onclick = (e) => busy(e.target, async () => {
+      const p = { row: info.row || null, hash: meta.row_hash };
+      if (info.row) setCurrentWork(info.row, meta.row_hash, label);
+      const planF = meta.row_hash ? await getFile(`${PLAN_DIR}/${meta.row_hash}.json`, true) : null;
+      const plan = planF ? JSON.parse(planF.text) : null;
+      renderReview(rel, plan, p, () => {
+        renderReviewList(runs, idx);
+        $("mkStatus").textContent = `제작한 영상 ${runs.length}개 — 검수할 영상을 고르세요.`;
+      });
+      $("mkStatus").textContent = "검수하세요. 문제 없으면 맨 아래 '유튜브에 올리기'.";
+    });
+    wrap.appendChild(el);
+  }
+  box.appendChild(wrap);
+}
+function renderReview(rel, plan, p, backFn) {
   const box = $("mkReview"); box.innerHTML = "";
   const mk = (h) => { const d = document.createElement("div"); d.className = "card"; d.innerHTML = h; return d; };
+  const noRow = !p || !p.row;   // 대기열에 없는(삭제된) 상품이면 재제작·다시생성·업로드 잠금(엉뚱한 상품 조작 방지)
+  if (backFn) {
+    const back = document.createElement("button"); back.className = "btn sub"; back.textContent = "← 영상 목록으로";
+    back.style.marginBottom = "10px"; back.onclick = backFn; box.appendChild(back);
+  }
+  if (noRow) box.appendChild(mk('<p class="hint">이 영상의 상품이 대기열에 없어 <b>재제작·다시생성·업로드</b>는 잠깁니다(영상 보기·저장만 가능 — 영상 탭에서 저장).</p>'));
   // 영상
   const vcard = mk("<h2>완성 영상</h2>");
   const video = rel && (rel.assets || []).find((a) => /video\.mp4$/i.test(a.name));
@@ -1176,6 +1234,7 @@ function renderReview(rel, plan, p) {
     vcard.insertAdjacentHTML("beforeend", '<p class="hint">아직 제작된 영상이 없습니다. 위 \'제작하기\'를 누르세요.</p>');
   }
   const redoV = document.createElement("button"); redoV.className = "btn sub"; redoV.textContent = "영상 다시 만들기";
+  redoV.disabled = noRow;
   redoV.onclick = (ev) => busy(ev.target, async () => {
     await mkDispatch({ mode: "produce", row: String(p.row), no_upload: "true" });
     toast("영상 다시 만들기 시작 — 2~4분 뒤 다시 '검수 불러오기'"); setTimeout(loadRuns, 4000);
@@ -1191,6 +1250,7 @@ function renderReview(rel, plan, p) {
       const c = mk(`<h2>${label}</h2>`);
       const t = document.createElement("p"); t.style.margin = "0 0 8px"; t.textContent = val || "-"; c.appendChild(t);
       const b = document.createElement("button"); b.className = "btn mini sub"; b.textContent = "다시 생성";
+      b.disabled = noRow;
       b.onclick = (ev) => busy(ev.target, async () => {
         await mkDispatch({ mode: "regen", row: String(p.row), field: key });
         toast(`${label} 다시 생성 시작(약 30초) — 잠시 뒤 '검수 불러오기'를 다시 누르세요.`);
@@ -1201,7 +1261,7 @@ function renderReview(rel, plan, p) {
   // 올리기
   const up = mk("<h2>유튜브에 올리기</h2>");
   const ub = document.createElement("button"); ub.className = "btn"; ub.textContent = "유튜브에 올리기";
-  ub.disabled = !video;
+  ub.disabled = !video || noRow;
   ub.onclick = (ev) => busy(ev.target, async () => {
     if (!confirm("이 영상을 유튜브에 올릴까요? (비공개로 올라갑니다)")) return;
     await mkDispatch({ mode: "upload", row: String(p.row), privacy: "private" });
@@ -1600,13 +1660,52 @@ $("imgReplan").onclick = (ev) => busy(ev.target, async () => {
   toast("전체 자막·이미지 다시 만들기 시작");
   pollCandidates(p.hash, 0, baseVer);
 });
-// [이미지 후보 불러오기] 지금 상품 후보를 즉시 로드(자동이 놓쳐도 이 버튼으로 언제든)
+// [이미지 후보 불러오기] 지금 상품 1개가 아니라 '후보가 있는 모든 상품 목록'을 띄운다 → 하나 골라 이미지 선택.
 $("imgLoad").onclick = (ev) => busy(ev.target, async () => {
-  const p = imgSelected();
-  if (!p) { $("imgStatus").textContent = "먼저 위 '제작 대기열'에서 상품의 '작업'을 눌러 상품을 선택하세요."; return; }
-  $("imgStatus").textContent = "이미지 후보 불러오는 중...";
-  await loadCandidates(p, false);
+  $("imgStatus").textContent = "이미지 후보 목록 불러오는 중...";
+  const [rel, idx] = await Promise.all([
+    gh(`/repos/${OWNER}/${REPO}/releases/tags/${IMG_TAG}`, { allow404: true, cache: "no-store" }),
+    workIndex(),
+  ]);
+  const cands = (((rel && rel.assets) || [])
+    .map((a) => { const m = /^cand_([0-9a-f]{16})\.json$/.exec(a.name || ""); return m ? { hash: m[1], updated: a.updated_at } : null; })
+    .filter(Boolean))
+    .sort((a, b) => new Date(b.updated || 0) - new Date(a.updated || 0));
+  if (!cands.length) {
+    $("imgLines").innerHTML = ""; $("imgSaveCard").style.display = "none";
+    $("imgStatus").textContent = "아직 이미지 후보가 없습니다. 기획 탭에서 '이 기획으로 이미지 찾기'를 먼저 하세요.";
+    return;
+  }
+  renderCandList(cands, idx);
+  $("imgStatus").textContent = `이미지 후보가 있는 상품 ${cands.length}개 — 이미지를 고를 상품을 누르세요.`;
 });
+// 후보가 있는 모든 상품 목록. 항목 탭 → 그 상품을 현재 작업으로 잡고 후보 로드(라인별 선택 화면).
+function renderCandList(cands, idx) {
+  const box = $("imgLines"); box.innerHTML = "";
+  $("imgSaveCard").style.display = "none";
+  const wrap = document.createElement("div"); wrap.className = "card";
+  wrap.innerHTML = "<h2>이미지 후보가 있는 상품</h2>";
+  for (const c of cands) {
+    const info = idx[c.hash] || {};
+    const label = info.label || ("(" + c.hash.slice(0, 8) + ")");
+    const when = c.updated ? new Date(c.updated).toLocaleString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+    const el = document.createElement("div"); el.className = "item";
+    el.innerHTML = `
+      <div class="grow">
+        <div class="t"></div>
+        <div class="s"></div>
+      </div>
+      <button class="btn mini candpick">이미지 고르기</button>`;
+    el.querySelector(".t").textContent = label + (info.row ? "" : " (대기열에 없음)");
+    el.querySelector(".s").textContent = when ? ("후보 생성 " + when) : "";
+    el.querySelector(".candpick").onclick = (e) => busy(e.target, async () => {
+      if (info.row) setCurrentWork(info.row, c.hash, label);
+      await loadCandidates({ row: info.row || null, hash: c.hash }, false);
+    });
+    wrap.appendChild(el);
+  }
+  box.appendChild(wrap);
+}
 function renumberThumbs(thumbs, arr) {   // 선택된 썸네일에 슬라이드쇼 순서(1,2,3) 배지
   thumbs.querySelectorAll(".thumb").forEach((t) => {
     const idx = (arr || []).findIndex((x) => x._key === t.dataset.key);
