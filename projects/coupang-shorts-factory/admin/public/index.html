@@ -252,7 +252,8 @@ ol li{margin:8px 0}
     <h2>자막별 이미지 선택</h2>
     <p class="hint" style="margin:0 0 8px"><b>상품 기획하기</b>를 누르면 자막(문장)마다 후보 이미지가 여기에
     자동으로 모입니다. 마음에 들면 탭해서 고르고(<b>여러 장 = 슬라이드쇼</b>), 없으면 <b>다시 찾기</b>나
-    <b>내 파일</b>을 올리세요. 고른 결과는 제작에 그대로 쓰이고, 자동 추천도 그 선택을 학습합니다.</p>
+    <b>내 파일</b>을 올리세요. 고른 결과는 제작에 그대로 쓰이고, 자동 추천도 그 선택을 학습합니다.
+    <span style="display:block;margin-top:4px;font-size:11px;font-weight:800;letter-spacing:.4px;color:var(--sub)">GIF 후보·검색: Powered By GIPHY</span></p>
     <div class="row2" style="margin-top:10px">
       <button class="btn" id="imgLoad">이미지 후보 불러오기</button>
       <button class="btn sub" id="imgGen">이미지 후보 다시 만들기</button>
@@ -1593,7 +1594,8 @@ function renderImgLines() {
       + `<div class="gifpanel" style="display:none;margin-top:8px">`
       + `<div style="display:flex;gap:6px"><input class="gifq" placeholder="GIF 검색 (영어 추천)" style="flex:1;margin:0">`
       + `<button class="btn mini gifgo" style="width:auto">검색</button></div>`
-      + `<div class="thumbs gifres" style="margin-top:6px;max-height:380px;overflow-y:auto"></div>`
+      + `<div style="text-align:right;margin-top:4px"><span style="font-size:11px;font-weight:800;letter-spacing:.4px;color:var(--sub)">Powered By GIPHY</span></div>`
+      + `<div class="thumbs gifres" style="margin-top:4px;max-height:380px;overflow-y:auto"></div>`
       + `<button class="btn mini sub gifmore" style="display:none;margin-top:6px">더 보기</button></div>`;
     card.querySelector(".imgtext").textContent = ln.text;
     const thumbs = card.querySelector(".thumbs");
