@@ -23,11 +23,21 @@ from pathlib import Path
 
 import requests
 
-from src.product.assets import REPO, TAG, _headers
+from src.product.assets import REPO, TAG, VIDEO_EXTS, _headers
 
 MAX_LINKS = 2
 MAX_BYTES = 200 * 1024 * 1024
 _CT = {".mp4": "video/mp4", ".mov": "video/quicktime", ".webm": "video/webm", ".m4v": "video/x-m4v"}
+_BROWSER_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+# 최후 폴백 — 공개 cobalt(오픈소스 다운로더 서비스) 인스턴스에 다운로드를 위임한다(savefrom과 같은
+# 계열). 커뮤니티 인스턴스라 수명이 유동적 — 실패하면 다음 인스턴스로 넘어가고,
+# SHORTS_COBALT_INSTANCES 환경변수(콤마 구분)로 교체 가능.
+_COBALT_INSTANCES = [
+    "https://cobalt-api.kwiatekmiki.com",
+    "https://cobalt-backend.canine.tools",
+    "https://cobalt-api.meowing.de",
+    "https://capi.3kh0.net",
+]
 
 
 def ensure_link_videos(row_hash: str, dest_dir: Path, project_root: Path) -> list:
@@ -49,24 +59,72 @@ def ensure_link_videos(row_hash: str, dest_dir: Path, project_root: Path) -> lis
     out = []
     for url in urls:
         key = f"{row_hash}_link{hashlib.sha1(url.encode()).hexdigest()[:10]}"
-        hit = next((a for a in assets if str(a.get("name", "")).startswith(key)), None)
-        if hit:  # ① 이전 실행에서 추출해 둔 캐시 재사용
+        hit = next((a for a in assets
+                    if str(a.get("name", "")).startswith(key)
+                    and str(a.get("name", "")).lower().endswith(VIDEO_EXTS)), None)
+        if hit:  # ① 이전 실행에서 추출해 둔 캐시 재사용 (영상 확장자만 — 실패 마커(.txt)는 제외)
             p = _download_asset(hit, out_dir)
             if p:
                 print(f"[vlink] 링크 영상 캐시 재사용: {Path(p).name}")
                 out.append(p)
                 continue
-        try:    # ② 새로 추출
+        local = None
+        try:    # ② yt-dlp(PO토큰+클라이언트 폴백) 추출
             local = _ytdlp_download(url, out_dir, key)
-        except Exception as e:
-            msg = f"{type(e).__name__}: {str(e)[:160]}"
-            print(f"[vlink] 링크 영상 추출 실패({url[:70]}) — {msg} (이미지 후보만 진행)")
-            _notify_fail(url, msg)
-            continue
+        except Exception as e1:
+            # ③ 최후: 다운로드를 외부 다운로더 서비스(cobalt)에 위임 — 러너 IP가 아닌
+            #    그 서비스의 서버가 유튜브에 접근하므로 러너 IP 차단과 무관하게 성공할 수 있다.
+            print("[vlink] yt-dlp 전 방식 차단 → 다운로더 서비스(cobalt) 인스턴스로 위임 시도")
+            try:
+                local = _cobalt_download(url, out_dir, key)
+            except Exception as e2:
+                msg = (f"yt-dlp: {str(e1)[:110]}\ncobalt: {type(e2).__name__} {str(e2)[:110]}")
+                print(f"[vlink] 링크 영상 추출 최종 실패({url[:70]}) — 이미지 후보만 진행")
+                _maybe_notify_fail(url, msg, key, assets)
+                continue
         _upload_asset(Path(local))   # 실패해도 이번 실행은 로컬본으로 진행(재사용만 안 됨)
         print(f"[vlink] 링크 영상 추출 완료: {Path(local).name} ({Path(local).stat().st_size >> 20}MB)")
         out.append(str(local))
     return out
+
+
+def _cobalt_download(url: str, out_dir: Path, key: str) -> str:
+    """공개 cobalt 인스턴스에 추출을 위임 — POST {url} → tunnel/redirect URL → 파일 스트림."""
+    insts = [i.strip().rstrip("/") for i in (os.environ.get("SHORTS_COBALT_INSTANCES") or "").split(",")
+             if i.strip()] or _COBALT_INSTANCES
+    last = None
+    for inst in insts:
+        try:
+            r = requests.post(inst + "/", json={"url": url, "videoQuality": "1080",
+                                                "youtubeVideoCodec": "h264", "filenameStyle": "basic"},
+                              headers={"Accept": "application/json", "Content-Type": "application/json",
+                                       "User-Agent": _BROWSER_UA}, timeout=30)
+            d = r.json() if r.content else {}
+            if d.get("status") not in ("tunnel", "redirect") or not d.get("url"):
+                err = (d.get("error") or {}).get("code") if isinstance(d.get("error"), dict) else d.get("error")
+                last = RuntimeError(f"{inst}: {d.get('status') or r.status_code} {str(err or '')[:60]}")
+                print(f"[vlink] cobalt {inst} 거절({last}) → 다음 인스턴스")
+                continue
+            dest = out_dir / f"{key}.mp4"
+            size = 0
+            with requests.get(d["url"], stream=True, timeout=600,
+                              headers={"User-Agent": _BROWSER_UA}) as resp:
+                resp.raise_for_status()
+                with dest.open("wb") as f:
+                    for chunk in resp.iter_content(1 << 20):
+                        size += len(chunk)
+                        if size > MAX_BYTES:
+                            raise RuntimeError("용량 초과")
+                        f.write(chunk)
+            if size > 100_000:   # 에러 페이지·빈 응답 방지(최소 크기)
+                print(f"[vlink] cobalt 위임 추출 성공({inst}, {size >> 20}MB)")
+                return str(dest)
+            dest.unlink(missing_ok=True)
+            last = RuntimeError(f"{inst}: 결과 파일이 너무 작음({size}B)")
+        except Exception as e:
+            last = e
+            print(f"[vlink] cobalt {inst} 실패({type(e).__name__}: {str(e)[:80]}) → 다음 인스턴스")
+    raise last if last else RuntimeError("cobalt 인스턴스 전부 실패")
 
 
 def video_poster(video_path: Path, out_jpg: Path) -> bool:
@@ -194,12 +252,24 @@ def _upload_asset(path: Path) -> bool:
         return False
 
 
-def _notify_fail(url: str, msg: str) -> None:
+def _maybe_notify_fail(url: str, msg: str, key: str, assets: list) -> None:
+    """실패 텔레그램은 같은 링크당 1회만(사용자 지시: 반복 실패 알림 금지) — 릴리스에 실패 마커
+    자산({key}.fail.txt)을 남겨 다음 실행부터는 조용히 로그만 남긴다."""
+    marker = f"{key}.fail.txt"
+    if any(str(a.get("name", "")) == marker for a in assets):
+        print(f"[vlink] 실패 알림 생략(이미 알림 — {marker})")
+        return
     try:
         from src import notify
-        notify.send(f"[쿠팡쇼츠] 상품 영상 링크 추출 실패\n{url[:120]}\n{msg}\n"
-                    f"→ ① 잠시 뒤 '이미지 후보 다시 만들기'로 재시도해 보세요(우회 장치가 다시 시도). "
-                    f"② 계속 실패하면 savefrom.net 등에서 영상을 받아 관리자 '내 파일 올리기' 또는 "
-                    f"상품 '영상 올리기'로 업로드하면 동일하게 쓸 수 있습니다.")
+        notify.send(f"[쿠팡쇼츠] 상품 영상 링크 추출 실패 (이 링크는 다시 알리지 않습니다)\n{url[:120]}\n{msg}\n"
+                    f"→ 재시도해도 계속 막히면 savefrom.net 등에서 영상을 받아 관리자 '내 파일 올리기' "
+                    f"또는 상품 '영상 올리기'로 업로드하면 동일하게 쓸 수 있습니다.")
     except Exception:
         pass
+    try:   # 마커 업로드(다음 실행 알림 억제) — 실패해도 무해
+        import tempfile
+        mf = Path(tempfile.mkdtemp()) / marker
+        mf.write_text(msg[:500] + "\n", encoding="utf-8")
+        _upload_asset(mf)
+    except Exception as e:
+        print(f"[vlink] 실패 마커 업로드 생략({e})")
