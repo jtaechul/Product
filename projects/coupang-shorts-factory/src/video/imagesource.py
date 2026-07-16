@@ -129,7 +129,7 @@ def _plan_via_llm(product: dict, lines: list, settings: dict) -> list | None:
     cat = str((product or {}).get("category", "")).strip()
     numbered = "\n".join(f'{i}: {str(l.get("text", "")).strip()}' for i, l in enumerate(lines))
     # 학습: 운영자가 과거 확정한 (자막→검색어) 예시를 few-shot으로 먹여 추천 정확도를 올린다.
-    ex = _learning_examples(12)
+    ex = _learning_examples(20)
     shots = ("\n운영자가 과거에 좋다고 고른 예시(자막 → 검색어) — 이 감각을 참고:\n"
              + "\n".join(f'  "{t}" → "{q}"' for t, q in ex)) if ex else ""
     prompt = (
@@ -347,38 +347,72 @@ def _giphy_only(settings: dict) -> bool:
     return bool((settings or {}).get("images", {}).get("giphy_only", False))
 
 
-def _keyword_urls(keywords: list, seen: set, base_page: int, n: int, giphy_only: bool) -> list:
+def _keyword_urls(keywords: list, seen: set, base_page: int, n: int, giphy_only: bool,
+                  stock_first: bool = True) -> list:
     """라인의 명사 keywords를 돌아가며 후보 URL n개 확보 — 그 라인 내용과 관련된 이미지가 나오게.
-    Giphy(GIF) 우선(재미), giphy_only가 아니면 부족분을 스톡(Pexels/Openverse/Wikimedia)으로 보충.
+    2026-07-16 근접성 우선 개편: 슬롯을 번갈아 ① 실사 스톡(Pexels/Pixabay/Openverse/Wikimedia —
+    자막 키워드와 가장 근접한 매칭) ② Giphy(재미)로 채워 '관련성 반 + 재미 반'을 보장한다.
+    stock_first=False(운영자가 GIF를 더 골라온 학습 결과)면 GIF 슬롯이 먼저. giphy_only=true면 GIF만.
     반환 [{url, source, keyword}]. 키워드마다·페이지마다 달라 라인 간 중복도 준다."""
     keywords = [str(k).strip() for k in (keywords or []) if str(k).strip()] or ["surprising gadget"]
     have_giphy = bool(_giphy_key())
+    stock_chain = (_pexels, _pixabay, _openverse, _wikimedia)
     out, kwi, tries = [], 0, 0
-    while len(out) < n and tries < n * 5 + 8:
+    while len(out) < n and tries < n * 6 + 10:
         kw = keywords[kwi % len(keywords)]
         page = base_page + kwi
         kwi += 1
         tries += 1
+        # 이번 슬롯의 소스 순서: 짝수/홀수 슬롯을 스톡↔GIF로 번갈아(선호 학습이 시작 순서를 정함)
+        want_stock = (not giphy_only) and (((len(out) % 2 == 0) == stock_first) or not have_giphy)
+        if giphy_only:
+            order = [_giphy] if have_giphy else []
+        elif want_stock:
+            order = list(stock_chain) + ([_giphy] if have_giphy else [])
+        else:
+            order = ([_giphy] if have_giphy else []) + list(stock_chain)
         u, src = None, None
-        if have_giphy:
+        for fn in order:
             try:
-                u = _giphy(kw, seen, page)
+                u = fn(kw, seen, page)
             except Exception:
                 u = None
             if u:
-                src = "giphy"
-        if not u and not giphy_only:
-            for fn in (_pexels, _openverse, _pixabay, _wikimedia):
-                try:
-                    u = fn(kw, seen, page)
-                except Exception:
-                    u = None
-                if u:
-                    src = fn.__name__.lstrip("_")
-                    break
+                src = fn.__name__.lstrip("_")
+                break
         if u:
             out.append({"url": u, "source": src, "keyword": kw})
     return out
+
+
+def _source_prefs(limit: int = 60) -> list:
+    """운영자가 실제로 고른 픽의 소스 선호 순서(최근 limit개, 많이 고른 순) — 후보 구성에 반영.
+    (2026-07-16 사용자 지시: 계속 고르면 알고리즘이 학습해 다음 후보가 더 나아져야 함.)"""
+    log = PROJECT_ROOT / "data" / "vision_examples.jsonl"
+    if not log.exists():
+        return []
+    from collections import Counter
+    cnt = Counter()
+    try:
+        for line in log.read_text(encoding="utf-8").splitlines()[-limit:]:
+            line = line.strip()
+            if line:
+                s = str(json.loads(line).get("source", "")).strip().lower()
+                if s:
+                    # 스톡 계열은 하나로 묶어 학습(개별 스톡 API 이름 차이는 취향이 아님)
+                    cnt["stock" if s in ("pexels", "pixabay", "openverse", "wikimedia") else s] += 1
+    except Exception:
+        return []
+    return [s for s, _ in cnt.most_common()]
+
+
+def _category_fallback_queries(product: dict) -> list:
+    """키워드 검색이 말랐을 때 보충용 — 카테고리 일반 검색어(최소 6장 보장 top-up 라운드에서 사용)."""
+    cat = str((product or {}).get("category", "")).strip()
+    for key, qs in _CATEGORY_QUERIES.items():
+        if key and key in cat:
+            return list(qs)
+    return list(_DEFAULT_QUERIES)
 
 
 def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
@@ -402,6 +436,18 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
     product_images = [str(p) for p in (product_images or []) if Path(p).exists()]
     base_page = random.randint(1, 6)
     giphy_only = _giphy_only(settings)
+    # ⭐ 선택 학습 반영(2026-07-16): 운영자가 지금까지 실제로 고른 픽의 소스 분포로
+    #    슬롯 우선순위(실사 스톡 vs GIF)와 밈 장수를 자동 조정 — 고를수록 다음 후보가 취향에 수렴.
+    prefs = _source_prefs()
+    stock_first = not (prefs and prefs[0] == "giphy")
+    meme_n = 2
+    if prefs:
+        if prefs[0] == "meme":
+            meme_n = 3
+        elif "meme" not in prefs[:3]:
+            meme_n = 1
+        print(f"[imgsrc] 학습 반영: 소스 선호 {' > '.join(prefs[:4])} → "
+              f"{'스톡(실사)' if stock_first else 'GIF'} 슬롯 우선 · 밈 {meme_n}장")
     # seen에 이전 URL을 미리 넣어두면 그 URL은 다시 안 뽑힌다 → '다시 찾기'가 확실히 새 이미지를 준다.
     seen = set(u for u in (exclude_urls or []) if u)
     used_memes = set(Path(m).name for m in (exclude_memes or []) if m)   # 직전 밈 basename 제외
@@ -422,14 +468,14 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
             for pidx, p in enumerate(product_images[:2]):
                 cands.append({"file": p, "source": "product", "url": None,
                               "is_product": True, "prod_idx": pidx})
-        # ② 재미(밈) — 로테이션 2장(자체 제작물 = Content ID 안전). 라인 간·재생성 시 다른 밈.
-        for mp in _pick_line_memes(PROJECT_ROOT, text, used_memes, 2):
+        # ② 재미(밈) — 로테이션(자체 제작물 = Content ID 안전, 장수는 학습이 조정). 라인 간·재생성 시 다른 밈.
+        for mp in _pick_line_memes(PROJECT_ROOT, text, used_memes, meme_n):
             used_memes.add(Path(mp).name)
             cands.append({"file": str(mp), "source": "meme", "url": None,
                           "is_meme": True, "meme_rel": _meme_repo_rel(mp)})
-        # ③ 라인 명사(keywords)로 검색 — 그 라인 내용과 '관련된' 이미지/영상. Giphy 우선(재미),
-        #    giphy_only면 GIF만(펙셀 등 스킵). 키워드·페이지 로테이션으로 라인마다 다르게(#1).
-        for c in _keyword_urls(keywords, seen, line_page, per_line, giphy_only):
+        # ③ 라인 명사(keywords)로 검색 — 자막 단어와 '가장 근접한' 실사 스톡 + GIF(재미)를 슬롯 교대로.
+        #    키워드·페이지 로테이션으로 라인마다 다르게(#1).
+        for c in _keyword_urls(keywords, seen, line_page, per_line, giphy_only, stock_first):
             d = _dl_candidate(out_dir, i, k, c["url"]); k += 1
             if d:
                 cands.append({"file": str(d), "source": c["source"], "url": c["url"], "keyword": c.get("keyword")})
@@ -445,6 +491,34 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
                     used_memes.add(Path(mp).name)
                     cands.append({"file": str(mp), "source": "meme", "url": None,
                                   "is_meme": True, "meme_rel": _meme_repo_rel(mp)})
+        # ⑤ ⭐ 최소 보장(2026-07-16 사용자 지시: 라인당 무조건 6장 이상) — 부족하면 보충 라운드:
+        #    1R 같은 키워드·다음 페이지 재검색 → 2R 카테고리 일반 검색어 추가 → 매 라운드 밈 1장씩.
+        #    (상품 사진은 #3 규칙 유지 — product 라인 밖에는 채우지 않는다.)
+        target = max(6, int(per_line))
+        for r in range(1, 4):
+            if len(cands) >= target:
+                break
+            kws = list(keywords or [])
+            if r >= 2:
+                kws += _category_fallback_queries(product)
+            for c in _keyword_urls(kws, seen, line_page + 20 * r, target - len(cands), giphy_only, stock_first):
+                d = _dl_candidate(out_dir, i, k, c["url"]); k += 1
+                if d:
+                    cands.append({"file": str(d), "source": c["source"], "url": c["url"], "keyword": c.get("keyword")})
+        # 최후 보충: 목표에 닿을 때까지 밈으로 채운다(자체 제작물이라 항상 가용 — 같은 라인 중복만 방지,
+        # 라인 간 재사용은 허용). 밈 풀 자체가 바닥나면 그때만 경고.
+        line_memes = {Path(str(c.get("file", ""))).name for c in cands if c.get("is_meme")}
+        while len(cands) < target:
+            more = _pick_line_memes(PROJECT_ROOT, text, line_memes, 1)
+            if not more:
+                break
+            for mp in more:
+                line_memes.add(Path(mp).name)
+                cands.append({"file": str(mp), "source": "meme", "url": None,
+                              "is_meme": True, "meme_rel": _meme_repo_rel(mp)})
+        if len(cands) < target:
+            print(f"[imgsrc] ⚠️ 라인 {i} 후보 {len(cands)}장(<{target}) — 검색 키(SHORTS_GIPHY/PEXELS/"
+                  f"PIXABAY_API_KEY) 등록·확인 필요")
         manifest.append(entry)
     (Path(job_dir) / "candidates.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
