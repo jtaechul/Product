@@ -555,7 +555,7 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
     by_line = {int(x.get("line_i", -1)): x for x in (data.get("lines") or [])}
     dl_dir = Path(job_dir) / "selected"
     dl_dir.mkdir(parents=True, exist_ok=True)
-    line_images, used = [], 0
+    line_images, used, dropped = [], 0, 0
     for i in range(len(lines)):
         entry = by_line.get(i)
         if not entry:
@@ -589,8 +589,11 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
             if url:
                 ext = ".gif" if url.lower().split("?")[0].endswith(".gif") else ".jpg"
                 dest = dl_dir / f"sel_{i:02d}_{j}{ext}"
-                if _download_image(url, dest):
+                # 운영자가 직접 고른 픽: 크기 필터 없음(작은 GIF도 존중) + 2회 재시도 + 실패 로그
+                if _download_image(url, dest, min_side=0, tries=2, tag=f"라인{i + 1} 선택 픽"):
                     imgs.append(dest); used += 1; continue
+                dropped += 1
+                continue
             if pk.get("is_product") and prod_paths:   # 상품을 고른 라인에만 상품 사진
                 # #3: '고른 그 상품 사진'을 쓴다(여러 장 골라도 반복되지 않게).
                 #   prod_idx가 있으면 그걸, 없으면(구형 선택) 등장 순서(prod_seen)로 상품1·상품2…를 배정.
@@ -601,8 +604,9 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
                 used += 1
         line_images.append(imgs)
     sel_lines = sum(1 for x in line_images if x)
-    print(f"[imgsrc] 운영자 선택 적용: {sel_lines}/{len(lines)}라인 · 이미지 {used}장 "
-          f"(data/selections/{row_hash}.json · 미선택 라인은 브랜드 패널)")
+    print(f"[imgsrc] 운영자 선택 적용: {sel_lines}/{len(lines)}라인 · 이미지 {used}장"
+          + (f" · ⚠️ 실패 {dropped}장(위 로그 확인)" if dropped else "")
+          + f" (data/selections/{row_hash}.json · 미선택 라인은 브랜드 패널)")
     _record_learning(project_root, lines, by_line)
     return line_images
 
@@ -733,21 +737,32 @@ def _wikimedia(query: str, seen: set, page: int = 1):
     return None
 
 
-def _download_image(url: str, dest: Path) -> bool:
-    """이미지 다운로드 + 검증(PIL open + 최소 크기). 실패 시 False."""
-    try:
-        r = requests.get(url, headers=UA, timeout=30)
-        if not r.ok or not r.content:
-            return False
-        dest.write_bytes(r.content)
-        from PIL import Image
-        with Image.open(dest) as im:
-            im.verify()
-        with Image.open(dest) as im:
-            if min(im.size) < 300:
-                dest.unlink(missing_ok=True)
-                return False
-        return True
-    except Exception:
-        dest.unlink(missing_ok=True)
-        return False
+def _download_image(url: str, dest: Path, min_side: int = 300, tries: int = 1, tag: str = "") -> bool:
+    """이미지 다운로드 + 검증(PIL open). 실패 시 False.
+    min_side: 자동 소싱 후보엔 300px 하한(저화질 걸러냄). ⚠️ 운영자가 직접 고른 픽에는 0을 줘라 —
+      Giphy 원본 GIF는 300px 미만이 많아 이 필터가 '고른 이미지 소리 없이 탈락'의 주범이었다(2026-07-16).
+    tries: 재시도 횟수(운영자 픽은 2회). tag가 있으면 실패를 로그로 남긴다(무음 탈락 금지)."""
+    last = ""
+    for attempt in range(max(1, tries)):
+        try:
+            r = requests.get(url, headers=UA, timeout=30)
+            if not r.ok or not r.content:
+                last = f"HTTP {r.status_code}"
+                continue
+            dest.write_bytes(r.content)
+            from PIL import Image
+            with Image.open(dest) as im:
+                im.verify()
+            if min_side:
+                with Image.open(dest) as im:
+                    if min(im.size) < min_side:
+                        dest.unlink(missing_ok=True)
+                        last = f"크기 미달({im.size})"
+                        break   # 크기는 재시도해도 같다
+            return True
+        except Exception as e:
+            last = f"{type(e).__name__}: {str(e)[:60]}"
+            dest.unlink(missing_ok=True)
+    if tag:
+        print(f"[imgsrc] ⚠️ 다운로드 실패({tag}): {last} — {url[:90]}")
+    return False
