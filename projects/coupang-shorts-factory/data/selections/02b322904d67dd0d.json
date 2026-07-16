@@ -6,13 +6,13 @@
    "line_i": 0,
    "picks": [
     {
-     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmN2V1b3I2OWtvZjE4a2ZqNmp6aG4xNDgyYXh1bHg1dWI3dHU1NjhqZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3owyp9gD4GrZtiEbZe/giphy.gif",
-     "source": "giphy",
+     "file": "assets/memes/shock.png",
+     "source": "meme",
      "query": "air conditioner"
     },
     {
-     "file": "assets/memes/shock.png",
-     "source": "meme",
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmN2V1b3I2OWtvZjE4a2ZqNmp6aG4xNDgyYXh1bHg1dWI3dHU1NjhqZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3owyp9gD4GrZtiEbZe/giphy.gif",
+     "source": "giphy",
      "query": "air conditioner"
     }
    ]
@@ -51,12 +51,7 @@
    "line_i": 3,
    "picks": [
     {
-     "file": "assets/memes/frustration.png",
-     "source": "meme",
-     "query": "thermometer"
-    },
-    {
-     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmNGJkazFwcnMzemxwZnBycGk4N25pMnFzeXJoZmswNjQzdnF5a3IwdCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/C6SLoyQEuq38rH6cWv/giphy.gif",
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmbjZ4azB5dGNqM3NvZGx4bzQ3OTVqcDUyb2Zhd3JiNG9xYWN2emd2YSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/N8rUNT4jYtz7T9Y0h9/giphy.gif",
      "source": "giphy",
      "query": "thermometer"
     }
@@ -89,6 +84,11 @@
      "is_product": true,
      "source": "product",
      "query": ""
+    },
+    {
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYWZvbTFnbjh2N3F6cXdubDQ1Zmpxc3MzMGl0eGp3OXpleGg2bHIwYiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/wgmWyQGzaZ6Fy/giphy.gif",
+     "source": "giphy",
+     "query": ""
     }
    ]
   },
@@ -96,13 +96,13 @@
    "line_i": 6,
    "picks": [
     {
-     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmZmFxeGtja2p6b2hyYmN6Y28weHRxdGdyMXlkdmtnODZoNms3anI0cCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/hcY890u9sEUKs/giphy-downsized-medium.gif",
-     "source": "giphy",
+     "file": "assets/memes/frustration.png",
+     "source": "meme",
      "query": "refrigerator door"
     },
     {
-     "file": "assets/memes/frustration.png",
-     "source": "meme",
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmZmFxeGtja2p6b2hyYmN6Y28weHRxdGdyMXlkdmtnODZoNms3anI0cCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/hcY890u9sEUKs/giphy-downsized-medium.gif",
+     "source": "giphy",
      "query": "refrigerator door"
     }
    ]
