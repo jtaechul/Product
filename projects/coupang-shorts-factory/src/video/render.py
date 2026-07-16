@@ -298,7 +298,9 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
         "realtime_factor": round(render_seconds / max(duration, 0.01), 2),
         "resolution": f"{width}x{height}@{fps}fps",
         "subtitle_clip_count": len(sub_clips),
-        "image_clip_count": len(card_layers),
+        # expose는 라인 이미지가 expose_layers에 들어가므로 배정된 라인 이미지 수로 집계
+        #   (예전엔 card_layers만 세서 expose 로그가 '이미지 0개'로 나오는 오해를 낳았다 — 2026-07-16)
+        "image_clip_count": (sum(1 for x in (line_images or []) if x) if expose else len(card_layers)),
         "scene_count": len(bg_layers),
         "hero_from_product": bool(product_images),
         "font_used": str(font_path),

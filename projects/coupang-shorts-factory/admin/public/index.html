@@ -1640,7 +1640,26 @@ function renderImgLines() {
     const existing = imgPicks[ln.line_i] || [];
     for (const pk of existing) {
       const t = pk._key && thumbs.querySelector(`.thumb[data-key="${cssKey(pk._key)}"]`);
-      if (t) t.classList.add("sel");
+      if (t) { t.classList.add("sel"); continue; }
+      if (!pk._key) continue;
+      // ⭐ 유령 픽 방지(2026-07-16): 재렌더로 타일이 사라진 기존 선택(GIF검색 픽·교체된 후보)을
+      //   '이전 선택' 타일로 되살린다 — 안 보이는 선택이 순서 배지(3,4...)와 저장 데이터를 오염시키던 버그.
+      //   탭하면 해제(제거)되고, 그대로 두면 저장에 포함된다.
+      const g = document.createElement("div"); g.className = "thumb sel"; g.dataset.key = pk._key;
+      if (pk.url) { const im = document.createElement("img"); im.loading = "lazy"; im.alt = ""; im.src = pk.url; g.appendChild(im); }
+      else {
+        g.style.cssText += ";display:flex;align-items:center;justify-content:center";
+        const m = document.createElement("span"); m.className = "thumbmsg"; m.textContent = "미리보기 없음"; g.appendChild(m);
+      }
+      const gt = document.createElement("span"); gt.className = "ttag"; gt.textContent = "이전 선택"; g.appendChild(gt);
+      g.onclick = () => {
+        const arr = imgPicks[ln.line_i] || [];
+        const at = arr.findIndex((x) => x._key === g.dataset.key);
+        if (at >= 0) arr.splice(at, 1);
+        g.remove();
+        renumberThumbs(card, arr);
+      };
+      thumbs.appendChild(g);
     }
     renumberThumbs(card, existing);
     const nUp = existing.filter((x) => x.source === "upload").length;
