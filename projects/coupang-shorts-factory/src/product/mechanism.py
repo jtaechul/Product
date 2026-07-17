@@ -54,16 +54,18 @@ def load(project_root: Path, row_hash: str) -> dict | None:
 
 
 def chosen_text(data: dict | None) -> str | None:
-    """운영자 확정 텍스트: custom(4안·직접 의견) > options[chosen] > options[0](기본 1안). 없으면 None.
-
-    ⭐ custom(4안)은 '1안과 2안을 종합해' 같은 **조합 지시**일 수 있다(2026-07-17 실사고: 지시 문장만
-    전달돼 대본 AI가 1·2안 내용을 몰라 반영 불가). → custom이 있으면 지시 + 3안 전체 내용을 함께
-    합성해 전달한다(대본 AI가 지시대로 안들을 조합·수정할 수 있게)."""
+    """운영자 확정 텍스트 — **선택된 안만 쓴다**(2026-07-17 사용자 확정: 4안도 1·2·3안과 같은 선택지).
+    - chosen = 0/1/2  → 그 안의 내용 (custom이 적혀 있어도 무시 — 선택이 진실)
+    - chosen = "custom" → 4안: '[운영자 확정 지시] {custom}' + 1·2·3안 전체 내용 합성
+      ('1안과 2안을 종합해' 같은 조합 지시를 대본 AI가 실행할 수 있게 안들 원문을 같이 전달)
+    - chosen 없음(null): custom이 있으면 4안(구버전 호환), 없으면 1안 기본."""
     if not data:
         return None
     opts = [o for o in (data.get("options") or []) if str((o or {}).get("mechanism", "")).strip()]
+    ch = data.get("chosen")
     custom = str(data.get("custom") or "").strip()
-    if custom:
+    use_custom = bool(custom) and (ch == "custom" or not isinstance(ch, int))
+    if use_custom:
         if not opts:
             return custom
         listing = "\n".join(
@@ -73,7 +75,6 @@ def chosen_text(data: dict | None) -> str | None:
                 f"(아래 안들을 위 지시대로 반영·조합해 제품 공개의 뼈대로 사용하라)\n{listing}")
     if not opts:
         return None
-    ch = data.get("chosen")
     i = ch if isinstance(ch, int) and 0 <= ch < len(opts) else 0
     o = opts[i]
     return f"{o.get('title', '').strip()}: {o['mechanism'].strip()}".lstrip(": ").strip()
@@ -106,12 +107,19 @@ def _extract(product: dict, settings: dict) -> list:
 
 
 def is_confirmed(data: dict | None) -> bool:
-    """운영자가 방향을 확정했는가 — confirmed 플래그, 직접 의견(custom), 번호 선택(chosen) 중 하나면 확정."""
+    """운영자가 방향을 확정했는가 — confirmed 플래그 / 번호 선택 / 4안 선택(chosen="custom"+내용) /
+    구버전(custom만 적힘) 중 하나면 확정."""
     if not data:
         return False
-    return (data.get("confirmed") is True
-            or bool(str(data.get("custom") or "").strip())
-            or isinstance(data.get("chosen"), int))
+    if data.get("confirmed") is True:
+        return True
+    ch = data.get("chosen")
+    if isinstance(ch, int):
+        return True
+    custom = str(data.get("custom") or "").strip()
+    if ch == "custom" and custom:
+        return True
+    return bool(custom) and ch is None   # 구버전 호환: 번호 없이 custom만 적혀 있으면 확정
 
 
 def prepare(product: dict, settings: dict, project_root: Path,
@@ -142,6 +150,9 @@ def prepare(product: dict, settings: dict, project_root: Path,
         return None, True                     # 운영자 선택 대기 — 대본 생성 전 중단
     txt = chosen_text(data)
     if txt:
-        which = "직접 의견" if (data or {}).get("custom") else f"{((data or {}).get('chosen') or 0) + 1}안"
+        ch = (data or {}).get("chosen")
+        cu = str((data or {}).get("custom") or "").strip()
+        which = ("4안(직접 의견)" if cu and (ch == "custom" or not isinstance(ch, int))
+                 else f"{(ch if isinstance(ch, int) else 0) + 1}안")
         print(f"[mech] 대본 뼈대 사용: {which} — {txt[:60]}...")
     return txt, False
