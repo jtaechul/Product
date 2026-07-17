@@ -84,6 +84,9 @@ def generate_script(product: dict, settings: dict) -> dict:
         if feedback and "낭독 분량" in feedback:
             extra = ("\n분량 해결법: 공백 제외 190~260자 사이로 맞춰라 — 모자라면 웃긴 사용 장면 라인을 "
                      "더하고, 넘치면 설명 라인을 잘라라. subs 계약(이어 붙이면 text와 일치)도 유지하라.")
+        if feedback and "구간 배분" in feedback:
+            extra += ("\n배분 해결법: ②③(문제)은 합쳐 2~3줄로 압축하고, ④를 2~3줄(남들이 못한 것·"
+                      "기능구조·작동방식), ⑤를 1~2줄(결과 체감)로 늘려 제품 구간이 절반 가까이 되게 하라.")
         if feedback and ("delimiter" in feedback or "JSON" in feedback or "Expecting" in feedback):
             extra += "\nJSON 형식 엄수: 유효한 JSON만 출력(마크다운·주석·후행 콤마 금지, 모든 키/값 쉼표 확인)."
         content = user_msg if not feedback else (
