@@ -119,9 +119,11 @@ def build_pinned_comment(product: dict, settings: dict) -> str:
     스토어 URL 끝에 그 상품 번호(#001)를 붙이면 store.html 딥링크 핸들러가 해당 상품 카드로
     바로 스크롤·강조한다(2026-07-17 사용자 제안). 번호가 아직 없으면 스토어 홈으로 보낸다."""
     num = _store_number(product.get("_row_hash", ""))
-    store_url = settings.get("channel", {}).get("store_url", "https://miraemarket.pages.dev")
-    link = f"{store_url}#{num}" if num else store_url
-    return f"{DISCLOSURE}\n\n미래마켓에서 이 제품 보기 → {link}"
+    base = settings.get("channel", {}).get("store_url", "https://miraemarket.pages.dev").rstrip("/")
+    # ⭐ 링크 형식(2026-07-17 사용자 확정): 도메인 뒤 반드시 "/" 다음 "#번호" — '.dev#005'처럼 /없이
+    #   #이 붙으면 유튜브 댓글 자동 링크 인식이 깨져 클릭이 안 된다. URL은 줄 단독으로 둬야 확실히 인식.
+    link = f"{base}/#{num}" if num else f"{base}/"
+    return f"{DISCLOSURE}\n미래마켓에서 이 제품 보기 →\n{link}"
 
 
 def upload(video_path: Path, script: dict, product: dict, settings: dict,
