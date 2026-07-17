@@ -233,7 +233,7 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
                  line_windows: list | None = None, stock_clips: list | None = None,
                  product_videos: list | None = None, scene_images: list | None = None,
                  line_images: list | None = None, has_narration: bool = True,
-                 headline: str = "", thumb_hook: str = "") -> dict:
+                 headline: str = "", thumb_hook: str = "", selections_applied: bool = False) -> dict:
     """대본 단계(stage)별 씬 시퀀스 쇼츠 렌더. 반환: 렌더 통계 dict.
 
     lines(단계 포함)+line_windows가 있으면 '씬 시퀀스'로 렌더한다 — 상품 단계(①④⑤)는
@@ -295,7 +295,7 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
             lines, line_windows, words, line_images, product_images, product_videos,
             duration, width, height, font_path, settings,
             headline or (ch.get("name", "미래마켓") + " 단독"),
-            str(r.get("expose_author", "미래")).strip())
+            str(r.get("expose_author", "미래")).strip(), selections_applied)
         scrim = None
         bg_name = f"expose {len(sub_plan)}라인 (뉴스헤더+큰자막+라인이미지 {sum(1 for x in (line_images or []) if x)}장)"
     elif framed:
@@ -990,8 +990,13 @@ def _caption_band_arr(w: int, h: int, alpha: int = 150, radius: int = 30):
 
 def _build_expose(lines: list, line_windows: list, words: list, line_images: list, product_images: list,
                   product_videos: list, duration: float, width: int, height: int,
-                  font_path: Path, settings: dict, headline: str, author: str) -> tuple:
-    """expose 레이아웃 전체 레이어 + QA용 sub_plan 반환."""
+                  font_path: Path, settings: dict, headline: str, author: str,
+                  selections_applied: bool = False) -> tuple:
+    """expose 레이아웃 전체 레이어 + QA용 sub_plan 반환.
+
+    selections_applied=True(운영자가 라인별 이미지를 직접 고른 경우)면 '상품 사진→제품 영상 자동
+    치환'을 끈다: 운영자가 상품 '사진'을 고르면 그 사진을 그대로 노출한다(2026-07-17 사용자 버그).
+    제품 '영상'을 원하면 운영자가 제품영상 후보를 고르면 된다(그 픽은 영상 경로라 자동 재생)."""
     r = settings.get("render", {})
     s = settings.get("subtitle", {})
     ch = settings.get("channel", {})
@@ -1007,9 +1012,12 @@ def _build_expose(lines: list, line_windows: list, words: list, line_images: lis
     # ⭐ 상품 사진 폴백 제거(2026-07-15 사용자 개선 #3): 라인에 배정된 이미지(sc["img"])만 쓴다.
     #   비어 있으면 상품 사진으로 때우지 않고 브랜드 패널로 채운다 → 상품 사진이 많은 라인에 반복 노출되지 않음.
     #   (상품 사진은 운영자가 그 라인에 상품을 고른 경우에만 sc["img"]로 들어온다 — load_selections/plan)
+    # 운영자 선택본이면 제품영상 자동치환 비활성(빈 리스트 전달) — 고른 상품 '사진'을 그대로 노출.
+    #   (제품영상 픽은 sc["img"]가 영상 경로라 아래 _expose_image_clip의 영상-확장자 분기로 그대로 재생됨)
+    swap_videos = [] if selections_applied else product_videos
     for sc in _plan_line_scenes(duration, line_windows, line_images or []):
         clip = _expose_image_clip(sc.get("img"), sc["start"], sc["end"],
-                                  width, img_top, img_h, product_images, product_videos)
+                                  width, img_top, img_h, product_images, swap_videos)
         if clip is None:   # 라인 이미지 없거나 로드 실패 → 빈 흰 여백 대신 브랜드 패널
             d = sc["end"] - sc["start"]
             if d > 0.05:

@@ -251,12 +251,14 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     # ---- 라인별 비주얼 소싱: 라인마다 '상황에 맞는' 이미지 배정(상품 라인만 상품 사진).
     #      다양 소스(Pexels·Openverse·Wikimedia). 실패해도 렌더가 상품 사진으로 폴백(빈 화면 없음).
     line_images = []
+    selections_applied = False   # 운영자 선택본이면 상품사진→제품영상 자동치환을 끈다(고른 사진 존중)
     if str(settings.get("render", {}).get("layout", "framed")).lower() in ("framed", "expose"):
         try:
             # #2: 운영자가 관리자에서 고른 이미지(data/selections/{row}.json)가 있으면 그걸 최우선 사용.
             line_images = imagesource.load_selections(
                 product["_row_hash"], lines, PROJECT_ROOT, job_dir,
                 product_images=product_images, product_videos=product_videos)
+            selections_applied = line_images is not None
             if line_images is None:   # 선택본 없으면 자동 소싱(폴백)
                 line_images, vis_plan = imagesource.fetch_line_images(
                     product, lines, product_images, job_dir, settings)
@@ -274,7 +276,8 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
                          product_videos=product_videos, line_images=line_images,
                          has_narration=not args.no_narration,
                          headline=script.get("headline", ""),
-                         thumb_hook=script.get("thumb_hook", ""))
+                         thumb_hook=script.get("thumb_hook", ""),
+                         selections_applied=selections_applied)
     stats = {"job_id": job_id, "product": product["name"],
              "tts_provider": tts_result["provider"],
              "timestamps_source": tts_result["timestamps_source"], **stats}
