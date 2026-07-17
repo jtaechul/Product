@@ -68,6 +68,11 @@ def missing_hint() -> str:
 # 자동 분류하므로 일부러 넣지 않는다(노이즈 방지).
 FIXED_HASHTAGS = ["#미래마켓", "#꿀템"]
 
+# 제품·구매처 안내는 설명란에 스펙·raw 링크를 늘어놓지 않고(신규 채널은 설명란 링크가 클릭 안 되고
+# 궁금증→프로필 유도 전략과도 어긋남) '프로필 링크(미래마켓 스토어)로 오라'는 한 줄로만 둔다(2026-07-17).
+# 실제 클릭되는 쿠팡 어필리에이트 링크는 링크가 살아있는 '고정 댓글'에 있다(youtube 업로드 시 등록).
+PROFILE_CTA = "제품이 궁금하다면? 프로필 링크(미래마켓 스토어)에서 확인하세요"
+
 
 def merge_hashtags(script: dict) -> list:
     """고정 브랜드 태그 + 모델 태그를 합쳐 중복 제거한 최종 해시태그 리스트(브랜드 먼저)."""
@@ -90,18 +95,17 @@ def build_description(script: dict, product: dict) -> str:
     #   ① 하드코딩 '[제품 정보] 상품명' 블록 제거 ② 모델이 쓴 description_body에서도 제품명 흔적 제거.
     from src.script.sanitize import hide_product_name, product_avoid_terms
     avoid = product_avoid_terms(product)
-    specs = "\n".join(f"- {hide_product_name(str(s), avoid)}" for s in product.get("specs", []))
     body = hide_product_name(script.get("description_body", "").strip(), avoid)
     num = _store_number(product.get("_row_hash", ""))   # 스토어 카탈로그 번호(No.###과 동일)
+    # 설명란은 '읽히게' 담백히: 훅 본문 → (빈 줄) → 프로필 안내 한 줄 → (빈 줄) → 해시태그 → 맨 아래 고지문.
+    #   상세 스펙 나열·클릭 안 되는 raw 링크는 뺀다(2026-07-17 사용자 지시). 구매는 프로필/고정 댓글로.
     parts = []
     if num:
         parts += [f"미래마켓 #{num}", ""]   # 상품 번호 — 영상↔스토어(store#N) 매칭용
     parts += [
         body,
         "",
-        (f"[제품 특징]\n{specs}".strip() if specs.strip() else ""),   # 특징(스펙)만 — 제품명은 넣지 않는다
-        "",
-        f"제품 보러가기: {product.get('affiliate_url', '')}",
+        PROFILE_CTA,          # 제품·구매처 안내는 프로필 링크 한 줄로만(별도 문단이라 안 겹침)
         "",
         " ".join(merge_hashtags(script)),
     ]
