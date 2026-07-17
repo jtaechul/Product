@@ -213,14 +213,6 @@
     "youtube_url": "https://youtu.be/L6z6ElGjwvE"
   },
   {
-    "id": "030",
-    "kind": "reels",
-    "common_name_ko": "Lusitania 난파선",
-    "common_name_en": "Wreck Lusitania",
-    "scientific_name": "Wreck Lusitania",
-    "date": "2026-07-17"
-  },
-  {
     "id": "005",
     "kind": "reels",
     "common_name_ko": "북태평양심해문어",
@@ -228,5 +220,13 @@
     "scientific_name": "Graneledone boreopacifica",
     "date": "2026-07-17",
     "youtube_url": "https://youtu.be/H4eqffFqeTQ"
+  },
+  {
+    "id": "030",
+    "kind": "reels",
+    "common_name_ko": "Lusitania 난파선",
+    "common_name_en": "Wreck Lusitania",
+    "scientific_name": "Wreck Lusitania",
+    "date": "2026-07-17"
   }
 ]
