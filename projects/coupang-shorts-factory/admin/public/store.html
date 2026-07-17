@@ -47,7 +47,8 @@ body{background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',sans-serif
 .book-num{position:absolute;top:10px;right:12px;font-size:12px;font-weight:800;color:#fff;background:rgba(15,23,42,.55);padding:3px 10px;border-radius:20px;backdrop-filter:blur(4px)}
 .body{padding:18px 18px 20px}
 .cat-pill{display:inline-block;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:10px;background:#EEF2FF;color:var(--brand)}
-.name{font-size:18px;font-weight:800;line-height:1.4;margin-bottom:10px;letter-spacing:-.3px}
+.name{font-size:18px;font-weight:800;line-height:1.4;margin-bottom:6px;letter-spacing:-.3px}
+.realname{font-size:12.5px;color:#94A3B8;font-weight:600;margin-bottom:12px}
 .pain{font-size:13.5px;line-height:1.7;color:#334155;background:#F1F5FF;border-left:3px solid var(--brand2);border-radius:0 8px 8px 0;padding:11px 14px;margin-bottom:16px}
 .foot{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .date{font-size:11.5px;color:#94A3B8}
@@ -142,7 +143,7 @@ function render(catalog){
     const cta=b.url
       ? `<a href="${esc(b.url)}" target="_blank" rel="noopener sponsored" class="cta">쿠팡에서 보기 →</a>`
       : `<span class="cta-soon">링크 준비 중</span>`;
-    const search=`no.${n} ${n} ${b.name||""} ${cat} ${b.pain||""}`.toLowerCase();
+    const search=`no.${n} ${n} ${b.title||""} ${b.name||""} ${cat} ${b.pain||""}`.toLowerCase();
     // 이미지가 있으면 정사각 썸네일(번호·NEW 오버레이), 없으면 썸네일 칸을 아예 그리지 않고 본문 상단에 인라인 표시
     const thumb=b.image
       ? `<div class="thumb">${isNew?'<span class="badge-new">NEW</span>':""}<span class="book-num">No.${esc(n)}</span>${imgTag(b.image,b.name)}</div>`
@@ -154,7 +155,8 @@ function render(catalog){
   <div class="body">
     ${inlineHead}
     <span class="cat-pill">${esc(cat)}</span>
-    <h2 class="name">${esc(b.name||"신박한 아이템")}</h2>
+    <h2 class="name">${esc(b.title||b.name||"신박한 아이템")}</h2>
+    ${(b.title&&b.name&&b.title!==b.name)?`<p class="realname">${esc(b.name)}</p>`:""}
     ${b.pain?`<blockquote class="pain">${esc(b.pain)}</blockquote>`:""}
     <div class="foot"><span class="date">${esc(b.date||"")}</span>${cta}</div>
   </div>
