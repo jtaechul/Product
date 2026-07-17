@@ -155,6 +155,19 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     font_path = _resolve_font(project_root, s.get("font", "assets/fonts/GmarketSansBold.ttf"))
 
     audio = AudioFileClip(str(audio_path))
+    # ── 썸네일 홀드(2026-07-17 사용자 확정): 0:00에 '헤더 제목 + 훅 이미지'만 있는(자막 없는)
+    #    프레임을 잠깐 넣어 쇼츠 그리드 썸네일로 쓴다 — 쇼츠는 커스텀 썸네일 업로드가 안 되고
+    #    영상 프레임에서 뽑히므로(벤치마크 채널들도 첫 프레임에 제목 카드를 굽는 방식).
+    #    구현: 나레이션·자막·씬·SFX 타임라인을 통째로 +hold 시프트. 홀드 동안 화면은
+    #    헤더(큰 제목)+첫 라인 이미지뿐(_plan_line_scenes가 첫 씬을 0초로 당겨 빈 화면 없음).
+    thumb_hold = max(0.0, float(r.get("thumb_hold_sec", 0.5)))
+    if thumb_hold > 0:
+        from moviepy import CompositeAudioClip
+        words = [{**w, "start": float(w.get("start", 0)) + thumb_hold,
+                  "end": float(w.get("end", 0)) + thumb_hold} for w in (words or [])]
+        line_windows = [(float(a) + thumb_hold, float(b) + thumb_hold) for a, b in line_windows]
+        shake_windows = [(float(a) + thumb_hold, float(b) + thumb_hold) for a, b in shake_windows]
+        audio = CompositeAudioClip([audio.with_start(thumb_hold)])
     duration = float(audio.duration) + 0.25
 
     over_w, over_h = width + 2 * shake_px, height + 2 * shake_px
