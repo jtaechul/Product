@@ -5,3 +5,4 @@ assets/backgrounds/pexels_34232317_1080x1920.mp4(런타임 확보),video,Pexels 
 assets/backgrounds/pexels_11335976_1080x1920.mp4(런타임 확보),video,Pexels 공식 API,Pexels License(상업적 사용 가능·출처표시 불요),https://www.pexels.com/video/skyscraper-at-night-11335976/,CI 실행 시 fetch_assets.py가 자동 다운로드(저장소 미커밋)
 assets/memes/,image,AI 자체 생성물(나노바나나/Gemini) 또는 자체 제작 도형,자체 생성물(§3.2 화이트리스트),,상황별 밈 이미지 라이브러리(글자 없는 원본만·텍스트는 렌더가 얹음). 이미지 추가 시 memes.json에 등록하고 이 파일에도 1줄 기록. _placeholder_*는 검증용 자체 생성 도형(실제 생성물로 교체 예정)
 assets/sfx/reveal.mp3,audio,Freesound #40472 (medium explosion) — 사용자 업로드,라이선스 확인 필요(운영자 Freesound 페이지에서 CC0/CC-BY 확인 · CC-BY면 설명란 크레딧 · CC-BY-NC면 상업사용 불가라 교체),https://freesound.org/s/40472/,제품 등장(폭로 아크 ④단계) 리빌 효과음(실제 폭발음, 2.16s). 합성음 폐기 후 사용자가 무료 사이트에서 받아 업로드. settings.sfx.reveal 로 참조
+pop.wav,자체 물리 합성(사인 피치드랍+노이즈 · scripts 없음/일회 합성),자체 생성물(저작권 없음),assets/sfx/pop.wav,자막 리듬 팝 효과음
