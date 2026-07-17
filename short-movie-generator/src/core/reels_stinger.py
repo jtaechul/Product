@@ -94,6 +94,59 @@ def build_stinger(info, out_mp4: str, work_dir: str) -> dict | None:
     return {"path": str(out_mp4), "duration": float(r["total_s"])}
 
 
+def build_map_cut(lat: float, lon: float, region_jp: str | None, region_en: str | None,
+                  out_mp4: str, work_dir: str, dur: float = 3.2) -> dict | None:
+    """★침몰 위치 지도 컷(9:16, 무음): 우리 세계지도 → 침몰 해역 락온 → 지점 마커 + 해역명.
+    난파선 다큐 본문(무음) 시퀀스의 '사고·침몰' 구간에 삽입되며, 나레이션이 위에 얹힌다
+    (그래서 지도 컷 자체는 무음 — SFX를 넣으면 나레이션과 겹친다). 실패 시 None(지도 컷 생략).
+
+    ★난파선 좌표는 위키백과에 문서화된 사실 → 지도 표기는 하드룰 '임의 좌표 금지' 대상이 아니다."""
+    import shutil
+    try:
+        from src.core.longform import motion
+    except Exception as e:  # noqa: BLE001
+        log.warning("[mapcut] motion 로드 실패 → 지도 컷 생략: %s", e)
+        return None
+    wd = Path(work_dir); frames = wd / "mapframes"
+    frames.mkdir(parents=True, exist_ok=True)
+    nx = lon / 360.0
+    ny = (90.0 - lat) / 180.0
+    spec = motion.MotionSpec(region_nx=nx, region_ny=ny,
+                             region_label_jp=region_jp or "沈没地点",
+                             region_label_en=region_en or "SINKING SITE",
+                             locate_label="LOCATING WRECK…")
+    cfg = motion.MotionConfig(W=720, H=1280, FPS=30, map_box=(70, 300, 650, 820))
+    FPS = 30
+    t_anim = max(1.6, dur * 0.62)          # 스캔 → 줌인
+    n_anim = max(2, int(t_anim * FPS))
+    n_hold = max(1, int(max(0.8, dur - t_anim) * FPS))   # 마지막(락온) 홀드
+    try:
+        for i in range(n_anim):
+            f = motion._map_frame(min(1.0, i / (n_anim - 1)), spec, cfg)
+            f.convert("RGB").save(str(frames / f"mc_{i:04d}.png"))
+        last = frames / f"mc_{n_anim - 1:04d}.png"
+        for j in range(n_hold):             # 홀드는 마지막 프레임 복사(재렌더 불필요)
+            shutil.copyfile(last, frames / f"mc_{n_anim + j:04d}.png")
+    except Exception as e:  # noqa: BLE001
+        log.warning("[mapcut] 프레임 렌더 실패 → 지도 컷 생략: %s", e)
+        return None
+    total = n_anim + n_hold
+    try:
+        rc = subprocess.run(
+            ["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(FPS),
+             "-i", str(frames / "mc_%04d.png"), "-frames:v", str(total),
+             "-vf", "scale=720:1280,setsar=1,format=yuv420p",
+             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", "-an", str(out_mp4)],
+            timeout=180)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[mapcut] 인코딩 오류 → 지도 컷 생략: %s", e)
+        return None
+    if rc.returncode != 0 or not Path(out_mp4).exists() or Path(out_mp4).stat().st_size < 10_000:
+        log.warning("[mapcut] 인코딩 실패 → 지도 컷 생략")
+        return None
+    return {"path": str(out_mp4), "duration": round(total / FPS, 3)}
+
+
 def prepend_to_body(stinger_path: str, body_video: str, out_video: str) -> bool:
     """스팅어 + 본문영상을 이어붙인다(스케일·오디오 정합 concat 필터, 재인코딩). 성공 시 True."""
     try:

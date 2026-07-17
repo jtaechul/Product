@@ -120,3 +120,36 @@ def test_ordered_beats_no_wreck_available_ok():
                       "portrait": [], "sinking": [], "wreck": []}, "images": []}
     seq = D.ordered_beat_images(doss)
     assert all(s["beat"] != "wreck" for s in seq)   # 날조 없음
+
+
+def test_ordered_beats_wreck_cap_plus3():
+    """★운영자 확정: 뒷부분 수중 컷을 한 컷 더 → wreck 상한 = max_per_beat+3."""
+    doss = {"beats": {"afloat": [{"url": f"http://x/a{i}", "beat": "afloat"} for i in range(9)],
+                      "portrait": [], "sinking": [],
+                      "wreck": [{"url": f"http://x/w{i}", "beat": "wreck"} for i in range(9)]},
+            "images": []}
+    seq = D.ordered_beat_images(doss, max_per_beat=2)
+    beats = [s["beat"] for s in seq]
+    assert beats.count("wreck") == 5          # 2 + 3
+    assert beats.count("afloat") == 2         # 다른 비트는 max_per_beat 유지
+
+
+def test_extract_coord_dms_decimal_and_display_first():
+    # DMS(도·분·초 + 방향)
+    assert D._extract_coord("{{Coord|41|43|57|N|49|56|49|W|display=title}}") == (41.7325, -49.9469)
+    # display=title가 숫자 '앞'에 오는 경우(에스토니아식)도 파싱
+    ll = D._extract_coord("{{coord|display=title|59|22.92|N|21|40.92|E|type:landmark}}")
+    assert ll and abs(ll[0] - 59.382) < 0.01 and abs(ll[1] - 21.682) < 0.01
+    # 십진 쌍(방향 없음)
+    assert D._extract_coord("{{coord|48.17|-16.20}}") == (48.17, -16.2)
+    # 좌표 없음 → None(날조 안 함)
+    assert D._extract_coord("본문에 좌표 템플릿이 전혀 없음") is None
+
+
+def test_ocean_label_known_wreck_sites():
+    assert D._ocean_label(41.73, -49.95)[0] == "北大西洋"       # 타이타닉
+    assert D._ocean_label(37.70, 24.28)[0] == "地中海"          # 브리태닉(에게해)
+    assert D._ocean_label(59.38, 21.68)[0] == "バルト海"        # 에스토니아
+    assert D._ocean_label(27.81, 33.92)[0] == "紅海"            # 시슬곰(홍해)
+    assert D._ocean_label(46.0, -85.0)[0] == "五大湖"           # 에드먼드 피츠제럴드(담수호)
+    assert D._ocean_label(30.37, 128.07)[0] == "北太平洋"       # 야마토

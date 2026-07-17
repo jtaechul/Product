@@ -317,6 +317,25 @@ def run_reels(
         from src.categories.shipwreck import dossier as _dsr
         doss = fv["dossier"]
         seq = _dsr.ordered_beat_images(doss, max_per_beat=2)
+        # ★침몰 위치 지도 컷(운영자 확정): 위키 문서 좌표가 있으면 우리 세계지도로 침몰 해역을 락온한
+        #   9:16 컷을 만들어 '사고·침몰' 구간(첫 sinking 컷 앞, 없으면 첫 wreck 앞)에 시간순 삽입한다.
+        #   좌표는 문서화된 사실 → '임의 좌표 금지' 대상 아님. 좌표 없으면 생략(날조 안 함).
+        if doss.get("sink_lat") is not None and doss.get("sink_lon") is not None:
+            try:
+                from src.core import reels_stinger as _rs
+                mc = _rs.build_map_cut(doss["sink_lat"], doss["sink_lon"],
+                                       doss.get("sink_region_jp"), doss.get("sink_region_en"),
+                                       str(work_dir / "wreck_map.mp4"), str(work_dir / "wmap"))
+                if mc:
+                    entry = {"video": mc["path"], "beat": "map",
+                             "credit": "地図: Natural Earth", "license": "public-domain"}
+                    ins = next((k for k, s in enumerate(seq) if s.get("beat") == "sinking"), None)
+                    if ins is None:
+                        ins = next((k for k, s in enumerate(seq) if s.get("beat") == "wreck"), len(seq))
+                    seq.insert(ins, entry)
+                    log.info("[reels] 침몰 위치 지도 컷 삽입(%s)", doss.get("sink_region_en"))
+            except Exception as e:  # noqa: BLE001
+                log.warning("[reels] 지도 컷 생략(오류): %s", e)
         card = _dsr.render_spec_card(doss, str(work_dir / "spec_card.png"))
         has_portrait = any(s.get("beat") == "portrait" for s in seq)
         overlays = {("portrait" if has_portrait else "afloat"): card} if card else {}
@@ -387,17 +406,20 @@ def run_reels(
     # 5.5) ★오프닝 지도·수심 하강 스팅어(운영자 확정): 훅 뒤에 '지도→해역 락온→실제 수심 하강'을
     #      ~2.3초 붙인다. 본문 앞에 결합하면 최종 순서가 [훅][스팅어][본문][엔드카드]가 된다.
     #      실패해도 발행 불정지(스팅어 없이 진행). 수심은 종 실제 서식수심(날조 아님).
-    try:
-        from src.core import reels_stinger
-        st = reels_stinger.build_stinger(info, str(work_dir / "stinger.mp4"),
-                                         str(work_dir / "stinger"))
-        if st:
-            combined = str(work_dir / "body_with_stinger.mp4")
-            if reels_stinger.prepend_to_body(st["path"], body_av, combined):
-                body_av = combined
-                log.info("[reels] 오프닝 하강 스팅어 결합(%.1fs)", st["duration"])
-    except Exception as e:  # noqa: BLE001
-        log.warning("[reels] 스팅어 결합 생략(오류): %s", e)
+    #      ★난파선 다큐(doc)는 제외: '생식해역·수심 하강'은 생물용 프레이밍이라 부적절하고,
+    #        침몰 위치는 본문 안 '지도 컷'(위 doc 분기)이 사고 구간에 이미 정확히 보여준다.
+    if not fv.get("doc"):
+        try:
+            from src.core import reels_stinger
+            st = reels_stinger.build_stinger(info, str(work_dir / "stinger.mp4"),
+                                             str(work_dir / "stinger"))
+            if st:
+                combined = str(work_dir / "body_with_stinger.mp4")
+                if reels_stinger.prepend_to_body(st["path"], body_av, combined):
+                    body_av = combined
+                    log.info("[reels] 오프닝 하강 스팅어 결합(%.1fs)", st["duration"])
+        except Exception as e:  # noqa: BLE001
+            log.warning("[reels] 스팅어 결합 생략(오류): %s", e)
 
     # 6) 오프닝 훅 + 엔드카드 + 전환 + 임팩트 사운드 래핑
     # ★고화소 히어로 사진(있으면): 정지 화면인 오프닝·엔드카드 배경을 영상 프레임 대신 이 사진으로

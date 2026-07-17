@@ -418,6 +418,24 @@
         "wreck"**로 전용 검색해 수중 잔해를 반드시 수확한다(실측: Titanic 잔해 1→31장). 시퀀스는 **시간순
         (취항→…→잔해)을 유지**하되, `ordered_beat_images`가 잔해(wreck) 비트를 **더 넉넉히·우선** 담는다
         (있으면 반드시 포함, 없으면 지어내지 않음). 회귀: `test_ordered_beats_prioritize_underwater_wreck`.
+      - **★침몰 위치 지도 컷(운영자 확정)**: 침몰선은 침몰 위치가 문서로 특정되므로, 위키백과
+        인포박스 좌표(`{{coord}}`)를 뽑아 **우리 세계지도(청록 도트, `longform.motion._map_frame`)로
+        침몰 해역을 락온한 9:16 지도 컷(~3.2초, 무음)**을 만들어 **'사고·침몰' 구간(첫 sinking 컷 앞,
+        없으면 첫 wreck 앞)에 시간순 삽입**한다(취항→…→**[지도]**→사고→잔해). 지도 컷은 **무음**이고
+        나레이션이 위에 얹힌다(SFX 넣으면 나레이션과 겹침). 해역명 라벨은 좌표→대양/폐쇄해 basin
+        (`dossier._ocean_label`: 北大西洋·地中海·バルト海·紅海·五大湖 등, 미확신은 대양 basin·못 뽑으면
+        생략). ★난파선 좌표는 **문서화된 사실**이라 하드룰 '임의 좌표 금지' 대상이 아니다(생물의 서식
+        좌표 날조 금지와는 반대 상황). 좌표가 없으면 **지도 컷 생략**(날조 안 함). 난파선 다큐에는
+        생물용 '오프닝 수심-하강 스팅어'를 **붙이지 않는다**(생식해역·수심 프레이밍 부적절 · 지도 컷이 대체).
+        구현: `dossier._extract_coord`/`_ocean_label`→`build_dossier`(sink_lat/lon/region), `reels_stinger.build_map_cut`,
+        `footage.build_wreck_documentary`(video 항목 지원), `pipeline` doc 분기 삽입 + doc 스팅어 스킵.
+        회귀: `test_extract_coord_*`·`test_ocean_label_*`·`test_build_map_cut_*`·`test_build_documentary_inserts_video_map_cut`.
+      - **★다큐 컷 길이 배분(재발방지 · 잔해 컷 트림 방지)**: 예전 `build_wreck_documentary`는 컷당
+        `per=max(3,ceil(target/n))`으로 **총합이 target보다 과하게 넘쳐**(예 40s vs 31s), 파이프라인이
+        본문 길이로 트림할 때 **마지막 잔해(수중) 컷들이 통째로 잘려나갔다**(수중 컷이 적게 보인 원인).
+        → 컷당 최소 2초를 보장하되 **뒤(사고·잔해) 컷에 +1초를 배분해 총합을 target 바로 위로 맞춘다**
+        (무반복 보장 + 잔해 컷 표시). 잔해 상한도 `ordered_beat_images`에서 `max_per_beat+3`으로 늘려
+        **뒷부분 수중 컷을 한 컷 더** 담는다(운영자 확정, 있는 만큼만·없으면 안 지어냄).
       - 회귀 테스트: `test_wreck_dossier.py`·`test_wreck_documentary.py`(상대 work_dir 포함)·`test_wreck_doc_promote.py`.
     - **★침몰선 아마추어 다이빙 '영상' 금지(운영자 확정 · 절대 위반 금지 · Batelo 사고 재발방지)**:
       침몰선 소스로 **아마추어 다이빙 영상을 절대 쓰지 않는다.** 실사고(Batelo Cantanhede): 다이빙 영상은

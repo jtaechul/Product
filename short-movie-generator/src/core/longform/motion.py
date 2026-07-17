@@ -95,6 +95,7 @@ class MotionSpec:
     region_ny: float = 0.25            # 해역 중심 y((90-lat)/180)
     region_label_jp: str = "北東太平洋"
     region_label_en: str = "生息海域"
+    locate_label: str = "LOCATING SPECIMEN…"   # 지도 스캔 중 상단 상태문구(난파선은 'LOCATING WRECK…')
     target_depth_m: int = 5000
     creatures: list[Creature] = field(default_factory=list)
     zones: list[tuple] = field(default_factory=lambda: [
@@ -251,7 +252,8 @@ def _map_frame(t, spec, cfg):
             gd.line((bx0, sy - k, bx1, sy - k), fill=CYAN + (int(55 * (1 - k / 70)),))
         ov.alpha_composite(g)
         d.line((bx0, sy, bx1, sy), fill=CYAN + (230,), width=2)
-        d.text((bx0 + 10, 95), "LOCATING SPECIMEN…", font=_mono(22), fill=INK + (240,))
+        d.text((bx0 + 10, 95), getattr(spec, "locate_label", "LOCATING SPECIMEN…"),
+               font=_mono(22), fill=INK + (240,))
     if t > 0.35:
         at = _smooth((t - 0.35) / 0.3)
         cx, cy = P(spec.region_nx, spec.region_ny)

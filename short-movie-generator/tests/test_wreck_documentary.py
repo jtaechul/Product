@@ -57,6 +57,45 @@ def test_build_documentary_empty_returns_none(tmp_path):
 
 
 @pytest.mark.skipif(not _has_ffmpeg(), reason="ffmpeg 없음")
+def test_build_map_cut_silent_vertical(tmp_path):
+    """★침몰 위치 지도 컷: 9:16 무음 mp4가 만들어지고 좌표 락온 프레임이 나온다."""
+    from src.core import reels_stinger as RS
+    out = tmp_path / "map.mp4"
+    r = RS.build_map_cut(41.73, -49.95, "北大西洋", "N. ATLANTIC",
+                         str(out), str(tmp_path / "wmap"), dur=2.6)
+    assert r and os.path.exists(r["path"])
+    assert (F._probe_dur(r["path"]) or 0) >= 2.0
+    # 무음(오디오 스트림 없음) 확인
+    pr = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a",
+                         "-show_entries", "stream=index", "-of", "csv=p=0", r["path"]],
+                        capture_output=True, text=True)
+    assert pr.stdout.strip() == "", "지도 컷은 무음이어야(나레이션이 위에 얹힘)"
+
+
+@pytest.mark.skipif(not _has_ffmpeg(), reason="ffmpeg 없음")
+def test_build_documentary_inserts_video_map_cut(tmp_path):
+    """★사전 렌더 영상(지도 컷) 항목이 시퀀스에 그대로 들어가고, 총 길이가 target에 근접한다
+    (뒤쪽 잔해 컷이 과오버슛 트림으로 잘리지 않도록)."""
+    dest = tmp_path / "d"; dest.mkdir()
+    for i in (0, 2, 3):                       # afloat·sinking·wreck 이미지(다운로드 우회)
+        _noise_png(str(dest / f"wdoc_{i}.png"), color=40 + i * 40)
+    mapv = tmp_path / "mapcut.mp4"            # 지도 컷(무음 영상 항목)
+    from src.core import reels_stinger as RS
+    RS.build_map_cut(41.73, -49.95, "北大西洋", "N. ATLANTIC", str(mapv), str(tmp_path / "wm"), dur=2.6)
+    images = [
+        {"url": "http://x/a.png", "beat": "afloat", "license": "public-domain", "credit": "A"},
+        {"video": str(mapv), "beat": "map", "license": "public-domain", "credit": "地図"},
+        {"url": "http://x/c.png", "beat": "sinking", "license": "cc-by", "credit": "C"},
+        {"url": "http://x/d.png", "beat": "wreck", "license": "cc-by-sa", "credit": "D"},
+    ]
+    res = F.build_wreck_documentary(images, str(dest), target_dur=18.0, key="map test")
+    assert res and res["sequenced"] is True
+    assert "map" in res["beats"] and res["beats"].index("map") < res["beats"].index("wreck")
+    dur = F._probe_dur(res["path"]) or 0
+    assert 18.0 - 0.5 <= dur <= 18.0 + 2.5, f"총 길이가 target 근접이어야(과오버슛 금지): {dur}"
+
+
+@pytest.mark.skipif(not _has_ffmpeg(), reason="ffmpeg 없음")
 def test_build_documentary_with_relative_workdir(tmp_path, monkeypatch):
     """★재발방지(실사고: 난파선 5건 전부 실패): work_dir가 **상대경로**(CI 조건)일 때도
     concat이 성공해야 한다. 예전엔 cwd=dest로 실행하면서 -i·출력에 cwd-상대경로를 넘겨

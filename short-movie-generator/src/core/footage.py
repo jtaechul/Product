@@ -669,6 +669,21 @@ def _rep_license(licenses: list[str]) -> str:
     return "public-domain"
 
 
+def _normalize_doc_clip(src_v: str, out_v: str) -> bool:
+    """사전 렌더 클립(지도 컷 등)을 다큐 켄번즈 컷과 동일 규격(720×1280·30fps·SAR1·무음)으로 재인코딩.
+    concat 재인코딩 전 규격을 맞춰 컷 전환이 매끄럽게 이어지게 한다."""
+    import subprocess
+    try:
+        r = subprocess.run(
+            ["ffmpeg", "-y", "-loglevel", "error", "-i", src_v,
+             "-vf", "scale=720:1280,setsar=1,fps=30,format=yuv420p",
+             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-an", out_v],
+            timeout=180)
+        return r.returncode == 0 and Path(out_v).exists() and Path(out_v).stat().st_size > 50_000
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] 다큐 영상 정규화 실패: %s", e); return False
+
+
 def build_wreck_documentary(images: list[dict], dest_dir: str, target_dur: float = 42.0,
                             key: str = "wreck", overlays: dict | None = None) -> dict | None:
     """★침몰선 다큐 시퀀스(반복 제거): 서로 다른 이미지를 '취항→(초상)→사고→잔해' 순서로
@@ -680,27 +695,61 @@ def build_wreck_documentary(images: list[dict], dest_dir: str, target_dur: float
     """
     import subprocess
     dest = Path(dest_dir); dest.mkdir(parents=True, exist_ok=True)
-    imgs = [im for im in (images or []) if im.get("url")]
-    if not imgs:
+    items = [im for im in (images or []) if im.get("url") or im.get("video")]
+    if not items:
         return None
     overlays = overlays or {}
-    n = len(imgs)
-    per = max(3, int(math.ceil(target_dur / n)))     # 컷당 초(정수) — 합 ≥ target_dur → 다운스트림 무반복
-    clips: list[str] = []
-    used: list[dict] = []
-    for i, im in enumerate(imgs):
+    # ── Phase 1: 각 항목 준비(이미지 다운로드 / 사전 렌더 영상 항목 확인) ────────────────
+    #   ★video 항목: 미리 렌더된 9:16 클립(침몰 위치 지도 컷 등)을 시퀀스에 그대로 끼운다.
+    prepared: list[dict] = []
+    for i, im in enumerate(items):
+        v = im.get("video")
+        if v:
+            if Path(v).exists() and Path(v).stat().st_size > 10_000:
+                prepared.append({"kind": "vid", "src": v, "im": im, "dur": _probe_dur(v) or 3.0})
+            else:
+                log.info("[footage] 다큐 영상 항목 누락: %s", v)
+            continue
         iext = next((e for e in _IMAGE_EXT if im["url"].lower().endswith(e)), ".jpg")
         img = dest / f"wdoc_{i}{iext}"
         if not (img.exists() and img.stat().st_size > 50_000) and not _download(im["url"], img):
             log.info("[footage] 다큐 이미지 다운로드 실패: %s", im["url"]); continue
-        clip = dest / f"wdoc_clip_{i}.mp4"
-        motion = _KENBURNS_MOTIONS[i % len(_KENBURNS_MOTIONS)]   # 컷마다 무브 교대(단조 방지)
-        if not _kenburns_clip(str(img), str(clip), seconds=per, motion=motion, W=720, H=1280):
+        prepared.append({"kind": "img", "src": str(img), "im": im})
+    if not prepared:
+        return None
+    # ── Phase 2: 이미지 컷 길이 배분 ─────────────────────────────────────────────────
+    #   ★합을 target에 근접시켜 뒤쪽(잔해) 컷이 트림으로 잘려나가지 않게 한다(운영자 확정 · 재발방지).
+    #   예전엔 per=max(3,ceil(target/n))으로 총합이 target보다 과하게 넘쳐(예: 40s vs 31s),
+    #   파이프라인이 body_dur로 트림할 때 마지막 잔해 컷들이 통째로 잘렸다(수중 컷이 적게 보인 원인).
+    #   → 컷당 최소 2초를 보장하되 뒤 컷에 +1초를 배분해 총합을 target 바로 위로 맞춘다.
+    vids_dur = sum(p["dur"] for p in prepared if p["kind"] == "vid")
+    m = sum(1 for p in prepared if p["kind"] == "img")
+    base = extra = 0
+    if m:
+        img_target = max(2.0 * m, float(target_dur) - vids_dur)   # 컷당 최소 2초
+        base = max(2, int(img_target // m))
+        extra = min(m, max(0, int(math.ceil(img_target - base * m))))
+    # ── Phase 3: 클립 생성(순서 유지) ───────────────────────────────────────────────
+    clips: list[str] = []
+    used: list[dict] = []
+    img_idx = 0
+    for p in prepared:
+        im = p["im"]
+        if p["kind"] == "vid":
+            clip = dest / f"wdoc_vid_{len(clips)}.mp4"
+            if _normalize_doc_clip(p["src"], str(clip)):     # 켄번즈 컷과 규격 통일(720×1280·30fps·무음)
+                clips.append(str(clip)); used.append(im)
+            continue
+        per = base + (1 if img_idx >= m - extra else 0)       # 뒤(사고·잔해) 컷에 +1초
+        img_idx += 1
+        clip = dest / f"wdoc_clip_{len(clips)}.mp4"
+        motion = _KENBURNS_MOTIONS[len(clips) % len(_KENBURNS_MOTIONS)]   # 컷마다 무브 교대(단조 방지)
+        if not _kenburns_clip(p["src"], str(clip), seconds=per, motion=motion, W=720, H=1280):
             continue
         # 비트 카드 오버레이(선택): 제원 카드 등을 그 컷 위에 얹는다(디졸브)
         ov = overlays.get(im.get("beat", ""))
         if ov and Path(ov).exists():
-            card_clip = dest / f"wdoc_card_{i}.mp4"
+            card_clip = dest / f"wdoc_card_{len(clips)}.mp4"
             if _overlay_card(str(clip), ov, str(card_clip), per):
                 clip = card_clip
                 overlays.pop(im.get("beat", ""), None)   # 카드는 한 번만

@@ -122,8 +122,98 @@ _SPEC_FIELDS = {
 }
 
 
+def _dms_to_dec(parts: list[str]) -> float | None:
+    """['41','43','57','N'] 또는 ['41.7325','N'] → 십진 도(度). 방향 S/W면 음수."""
+    nums: list[float] = []
+    hemi = None
+    for p in parts:
+        p = p.strip()
+        if p.upper() in ("N", "S", "E", "W"):
+            hemi = p.upper()
+        else:
+            try:
+                nums.append(float(p))
+            except ValueError:
+                pass
+    if not nums:
+        return None
+    dec = nums[0] + (nums[1] / 60 if len(nums) > 1 else 0) + (nums[2] / 3600 if len(nums) > 2 else 0)
+    if hemi in ("S", "W"):
+        dec = -dec
+    return dec
+
+
+def _parse_coord_tokens(toks: list[str]) -> tuple[float, float] | None:
+    up = [t.upper() for t in toks]
+    if any(t in ("N", "S", "E", "W") for t in up):
+        try:
+            i = next(k for k, t in enumerate(up) if t in ("N", "S"))
+            j = next(k for k, t in enumerate(up) if t in ("E", "W") and k > i)
+        except StopIteration:
+            return None
+        lat = _dms_to_dec(toks[0:i + 1]); lon = _dms_to_dec(toks[i + 1:j + 1])
+    else:                                                  # 십진 쌍(예: 41.73|-49.95)
+        nums: list[float] = []
+        for t in toks:
+            try:
+                nums.append(float(t))
+            except ValueError:
+                pass
+        if len(nums) < 2:
+            return None
+        lat, lon = nums[0], nums[1]
+    if lat is None or lon is None or not (-90 <= lat <= 90 and -180 <= lon <= 180):
+        return None
+    return (round(lat, 4), round(lon, 4))
+
+
+def _extract_coord(w: str) -> tuple[float, float] | None:
+    """위키텍스트의 {{coord|…}}에서 침몰 좌표(십진 lat,lon) 추출. display=title 우선. 없으면 None.
+    ★난파선은 침몰 위치가 문서화된 사실 → 지도 표기는 하드룰 '임의 좌표 금지' 대상이 아니다(근거 있음)."""
+    cands = re.findall(r"\{\{\s*[Cc]oord\s*\|([^{}]*)\}\}", w or "")
+    if not cands:
+        return None
+
+    def score(s: str) -> int:
+        sl = s.lower()
+        return 2 if "display=title" in sl or "title,inline" in sl or "inline,title" in sl else (
+            1 if "title" in sl else 0)
+
+    for c in sorted(cands, key=score, reverse=True):
+        # 지시자(display=title, scale:…, type:…, region:… 등 '='·':' 포함)는 위치 무관하게 건너뛰고
+        #   숫자·방향(N/S/E/W) 토큰만 취한다(에스토니아처럼 display=title가 숫자 앞에 오는 경우 대응).
+        toks = [p.strip() for p in c.split("|")
+                if "=" not in p and ":" not in p and p.strip()]
+        ll = _parse_coord_tokens(toks)
+        if ll:
+            return ll
+    return None
+
+
+# 해역명 라벨(십진 좌표 → 대양·폐쇄해). 폐쇄해·특수수역을 먼저 판정(정확도), 미확신은 대양 basin.
+def _ocean_label(lat: float, lon: float) -> tuple[str, str]:
+    la, lo = lat, lon
+
+    def box(a0, a1, o0, o1) -> bool:
+        return a0 <= la <= a1 and o0 <= lo <= o1
+
+    if box(41, 49, -93, -76): return ("五大湖", "GREAT LAKES")        # 담수호(에드먼드 피츠제럴드 등)
+    if box(30, 46, -6, 37):   return ("地中海", "MEDITERRANEAN")      # 아드리아·에게·이오니아 포함
+    if box(40, 48, 27, 42):   return ("黒海", "BLACK SEA")
+    if box(53, 66, 9, 31):    return ("バルト海", "BALTIC SEA")
+    if box(12, 30, 32, 44):   return ("紅海", "RED SEA")
+    if box(9, 22, -89, -60):  return ("カリブ海", "CARIBBEAN SEA")
+    if la > 66:  return ("北極海", "ARCTIC OCEAN")
+    if la < -60: return ("南極海", "SOUTHERN OCEAN")
+    if -100 <= lo <= 20:
+        return ("北大西洋", "N. ATLANTIC") if la >= 0 else ("南大西洋", "S. ATLANTIC")
+    if 20 < lo < 100:
+        return ("インド洋", "INDIAN OCEAN")
+    return ("北太平洋", "N. PACIFIC") if la >= 0 else ("南太平洋", "S. PACIFIC")
+
+
 def _wiki_specs(name: str) -> dict:
-    """위키백과 인포박스 → 제원 dict + 요약문. 실패 시 {}."""
+    """위키백과 인포박스 → 제원 dict + 요약문 + 침몰 좌표(sink_lat/sink_lon). 실패 시 {}."""
     out: dict = {}
     try:
         q = (f"{_WIKI}?action=parse&page={urllib.parse.quote(name)}"
@@ -138,6 +228,9 @@ def _wiki_specs(name: str) -> dict:
             c = _clean_field(m.group(1))
             if _valid_spec(c):
                 out[dk] = c
+    coord = _extract_coord(w)                              # 침몰 좌표(있으면)
+    if coord:
+        out["sink_lat"], out["sink_lon"] = coord
     # 침몰 연도(fate/launched 등에서 4자리 연도 추출)
     yr = None
     for src in (out.get("fate", ""), out.get("in_service", "")):
@@ -256,6 +349,12 @@ def build_dossier(name: str, min_images: int = 4) -> dict | None:
     if not specs and not summary:
         log.info("[dossier] %s 제원·요약 전무 → 스킵", name)
         return None
+    # 침몰 좌표(있으면) → 해역명 라벨. 지도 컷(파이프라인)에서 사용. 없으면 지도 컷 생략(날조 안 함).
+    sink_lat = specs.pop("sink_lat", None)
+    sink_lon = specs.pop("sink_lon", None)
+    region_jp = region_en = None
+    if sink_lat is not None and sink_lon is not None:
+        region_jp, region_en = _ocean_label(sink_lat, sink_lon)
     # 비트별 이미지 그룹(각 비트 대표 몇 장)
     beats: dict[str, list[dict]] = {b: [] for b in _BEAT_ORDER}
     for im in imgs:
@@ -266,6 +365,8 @@ def build_dossier(name: str, min_images: int = 4) -> dict | None:
         "display": re.sub(r"\s*\([^)]*\)\s*$", "", name).strip(),   # 괄호 각주 제거
         "specs": specs,
         "summary": summary,
+        "sink_lat": sink_lat, "sink_lon": sink_lon,
+        "sink_region_jp": region_jp, "sink_region_en": region_en,
         "images": imgs,
         "beats": {b: beats.get(b, []) for b in _BEAT_ORDER},
         "credits": sorted({im["credit"] for im in imgs}),
@@ -485,8 +586,9 @@ def ordered_beat_images(dossier: dict, max_per_beat: int = 2) -> list[dict]:
     beats = dossier.get("beats", {})
     out: list[dict] = []
     for b in _BEAT_ORDER:
-        # 잔해(wreck)는 촬영본이 있으면 우선 → 상한을 +2 크게(최소 max_per_beat 보장)
-        cap = (max_per_beat + 2) if b == "wreck" else max_per_beat
+        # 잔해(wreck)는 촬영본이 있으면 우선 → 상한을 +3 크게(운영자 확정: 뒷부분 수중 컷 한 컷 더).
+        #   시퀀스 마지막이 실제 수중 잔해 컷으로 끝나도록 넉넉히 담는다(있는 만큼만, 없으면 안 지어냄).
+        cap = (max_per_beat + 3) if b == "wreck" else max_per_beat
         for im in (beats.get(b) or [])[:cap]:
             out.append({**im, "beat": b})
     if not out:

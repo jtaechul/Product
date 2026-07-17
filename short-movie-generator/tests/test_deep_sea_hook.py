@@ -27,7 +27,8 @@ def test_depth_parsing():
     p = DeepSeaCategory._parse_depth
     assert p("1000-4000") == (1000, 4000)
     assert p("2000") == (1000, 2000)
-    assert p("") == (200, 2000)
+    # ★수심 날조 금지(하드룰): 미상('')은 옛 기본값(200,2000)을 폐기하고 (0,0)=미상 → 수심 줄 생략
+    assert p("") == (0, 0)
 
 
 def test_unknown_species_without_llm_returns_none():
