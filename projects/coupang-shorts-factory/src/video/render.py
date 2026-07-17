@@ -731,11 +731,11 @@ def _expose_header_arr(width: int, header_h: int, board: str, headline: str,
                tag, font=tf, fill=(40, 30, 8))
         y += chh + int(header_h * 0.028)
 
-    # 3) 글 제목(좌측 정렬, 굵은 검정, ≤2줄)
-    hf = ImageFont.truetype(str(font_path), int(header_h * 0.15))
+    # 3) 글 제목(좌측 정렬, 굵은 검정, ≤2줄) — 후킹의 핵심이라 크게(2026-07-17, header 410 기준 ≈72px)
+    hf = ImageFont.truetype(str(font_path), int(header_h * 0.175))
     for ln in _wrap_pil(headline, hf, width - 2 * mx, max_lines=2):
         d.text((mx, y), ln, font=hf, fill=(20, 20, 20))
-        y += int(header_h * 0.165)
+        y += int(header_h * 0.185)
 
     # 4) 메타줄(작성자 · 조회수 · 시간) — 게시판 핵심 신호
     if meta:
