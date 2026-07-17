@@ -85,3 +85,38 @@ def test_ordered_beat_images_follows_story_order():
     }
     seq = D.ordered_beat_images(dossier, max_per_beat=1)
     assert [s["beat"] for s in seq] == ["afloat", "portrait", "sinking", "wreck"]
+
+
+def test_wreck_body_has_no_black_humor():
+    """★침몰선=인명 사고 → 코믹·블랙유머 완전 배제(팩트만). 폴백·프롬프트 모두 확인."""
+    body = D._fallback_body_jp({"display": "テスト号",
+                                "specs": {"type": "cargo ship", "tonnage": "5000", "sunk_year": "1912"}})
+    joined = "".join(body)
+    assert "港には戻れません" not in joined            # 예전 '블랙유머 1마디' 제거 확인
+    # 프롬프트도 유머 금지·사실 전달 지시로 바뀌었는지
+    assert "ブラックユーモア" in D._WRECK_BODY_PROMPT and "禁止" in D._WRECK_BODY_PROMPT
+    assert "淡々としたブラックユーモアを1節" not in D._WRECK_BODY_PROMPT
+
+
+def test_ordered_beats_prioritize_underwater_wreck():
+    """수중 잔해(wreck) 촬영본이 있으면 반드시 포함하고 더 넉넉히(우선) 담는다.
+    순서는 시간순 유지(잔해는 마지막)."""
+    doss = {"beats": {
+        "afloat": [{"url": f"http://x/a{i}.jpg", "beat": "afloat"} for i in range(6)],
+        "portrait": [], "sinking": [{"url": "http://x/s.jpg", "beat": "sinking"}],
+        "wreck": [{"url": f"http://x/w{i}.jpg", "beat": "wreck"} for i in range(5)],
+    }, "images": []}
+    seq = D.ordered_beat_images(doss, max_per_beat=2)
+    beats = [s["beat"] for s in seq]
+    assert beats.count("wreck") >= 3, "수중 잔해가 우선 포함(≥3컷)돼야"
+    assert beats.count("wreck") > beats.count("afloat"), "잔해가 취항컷보다 많이(우선) 담겨야"
+    # 시간순: 첫 컷은 afloat, 마지막 컷은 wreck
+    assert beats[0] == "afloat" and beats[-1] == "wreck"
+
+
+def test_ordered_beats_no_wreck_available_ok():
+    """수중 잔해 촬영본이 없으면(없는 배) 지어내지 않고 있는 비트만 — wreck 0컷 정상."""
+    doss = {"beats": {"afloat": [{"url": "http://x/a.jpg", "beat": "afloat"}],
+                      "portrait": [], "sinking": [], "wreck": []}, "images": []}
+    seq = D.ordered_beat_images(doss)
+    assert all(s["beat"] != "wreck" for s in seq)   # 날조 없음

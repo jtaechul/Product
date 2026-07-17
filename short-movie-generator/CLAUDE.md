@@ -409,6 +409,15 @@
       - **★소싱↔제작 연계(재발방지)**: '소싱된 = 제작 가능'을 코드로 보장한다. `_famous_wreck_candidates`는
         후보를 노출하기 전에 **제작이 실제 소비하는 함수 `ordered_beat_images`로 컷 수(≥2)를 확인**하고,
         미달이면 후보에서 제외한다(제작 불가한 배를 소싱해 파이프라인이 죽는 것 방지).
+      - **★침몰선 톤(운영자 확정 · 절대 위반 금지)**: 침몰선은 **실제 인명 사고**다. **블랙유머·코믹·
+        아이러니·농담·말장난·오チ를 전면 금지**하고(다른 카테고리의 하우스 블랙유머 톤은 여기 적용 안 함),
+        **조용하고 존중하는, 사실 전달에만 집중하는** 다큐 나레이션만 쓴다. 구현: `_WRECK_BODY_PROMPT`
+        (유머 금지 명시)·`_fallback_body_jp`(옛 블랙유머 줄 제거). 회귀: `test_wreck_body_has_no_black_humor`.
+      - **★수중 잔해(촬영본) 우선 포함(운영자 확정)**: 일반 이름 검색은 역사(취항) 사진 위주라 **실제 수중
+        촬영본이 상위에 안 잡힌다** → `build_dossier`가 **접두어(RMS/HMS 등) 뗀 짧은 이름 + "underwater"/
+        "wreck"**로 전용 검색해 수중 잔해를 반드시 수확한다(실측: Titanic 잔해 1→31장). 시퀀스는 **시간순
+        (취항→…→잔해)을 유지**하되, `ordered_beat_images`가 잔해(wreck) 비트를 **더 넉넉히·우선** 담는다
+        (있으면 반드시 포함, 없으면 지어내지 않음). 회귀: `test_ordered_beats_prioritize_underwater_wreck`.
       - 회귀 테스트: `test_wreck_dossier.py`·`test_wreck_documentary.py`(상대 work_dir 포함)·`test_wreck_doc_promote.py`.
     - **★침몰선 아마추어 다이빙 '영상' 금지(운영자 확정 · 절대 위반 금지 · Batelo 사고 재발방지)**:
       침몰선 소스로 **아마추어 다이빙 영상을 절대 쓰지 않는다.** 실사고(Batelo Cantanhede): 다이빙 영상은
