@@ -162,7 +162,11 @@ ol li{margin:8px 0}
 .gifmodal-head .gtitle{font-weight:900; font-size:15px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .gifmodal-search{display:flex; gap:6px; margin-bottom:8px}
 .gifmodal-search input{flex:1; margin:0}
-.gifmodal-res{flex:1; overflow-y:auto; display:grid; grid-template-columns:repeat(2,1fr); gap:8px; align-content:start; min-height:120px}
+.gifmodal-res{flex:1; overflow-y:auto; display:grid; grid-template-columns:repeat(2,1fr); gap:8px; align-content:start; grid-auto-rows:150px; min-height:120px}
+/* iOS Safari는 flex+overflow 컨테이너 안 grid 항목의 aspect-ratio 높이를 못 잡아 GIF가 겹쳐 보였다
+   → 모달 GIF 타일은 aspect-ratio 대신 '고정 높이(150px)'로 확정(겹침 방지·크게 보임). */
+.gifmodal-res .thumb{aspect-ratio:auto; height:150px}
+.gifmodal-res .thumb img{width:100%; height:100%; object-fit:cover}
 .gifmodal-foot{text-align:right; font-size:11px; font-weight:800; letter-spacing:.4px; color:var(--sub); margin-top:6px}
 </style>
 </head>
