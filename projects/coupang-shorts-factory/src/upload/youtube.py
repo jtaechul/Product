@@ -145,7 +145,10 @@ def upload(video_path: Path, script: dict, product: dict, settings: dict,
     )
     yt = build("youtube", "v3", credentials=creds, cache_discovery=False)
 
-    title = (script.get("title") or product.get("name", ""))[:95]
+    # 제목=순수 특장점(2026-07-17 사용자 확정) — 예전에 저장된 기획이 올라와도 타깃 서술어(자취 등)는
+    # 업로드 직전 최종 관문에서 한 번 더 제거한다(생성·재생성 단계와 동일 규칙).
+    from src.script.sanitize import strip_target_words
+    title = strip_target_words(script.get("title") or product.get("name", ""))[:95]
     description = build_description(script, product)
     body = {
         "snippet": {
