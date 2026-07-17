@@ -6,9 +6,9 @@
    "line_i": 0,
    "picks": [
     {
-     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMDRxazljcmhtaWl0ajh3cHUydDBwZ2R4Z2F0b3VmZjJ2OWpoYnk2dyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/1zh6PZO70dyHRRkLv3/giphy.gif",
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmY2k2N3ZtdW13ZmdiY2FibDhibnJpeWl1NWN0bjV2ZmhxeGJrdzl0YyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/1zh6PZO70dyHRRkLv3/giphy.gif",
      "source": "giphy",
-     "query": "makeup ruin"
+     "query": "Makeup ruined"
     },
     {
      "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmNGo2YXQyMW5lOXVqaXJxOTBidWswNnNya2M3cDUzeXFsNWJzOGczcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/4ZgPxFbkSTaIVBri4c/giphy-downsized-medium.gif",
@@ -39,6 +39,11 @@
      "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmdTdnbGtnM20zdzVvOXFvZzVoOGJrd2psc2l3aXpmdHAxdTl2bGRyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/iXIgdQL45dtpK7Gq9O/giphy.gif",
      "source": "giphy",
      "query": "hiding face"
+    },
+    {
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmdjV4Z3RuZ2Y1NGkxc25weWNkbDh6eGE3cWx0ZzZ3d2VwOGM4cXV4MyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/6cqyuoVuZVQNRtKuva/giphy.gif",
+     "source": "giphy",
+     "query": "hiding face"
     }
    ]
   },
@@ -46,14 +51,14 @@
    "line_i": 3,
    "picks": [
     {
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmemIzZTl3MXpoeDB5eGw3NnY4NXkxN2dwdDQxd3Vwa2FxajdpazZsZiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/6ttI2oOhpIS0b1NtRC/giphy.gif",
+     "source": "giphy",
+     "query": "Arm pain"
+    },
+    {
      "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmY3AxeW4wb2E1dmU3bTNiaXl3cG1oZmhyd2trYXh0ejcza2kxMnBlYiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/FWZ1OyaAtsnQs/giphy.gif",
      "source": "giphy",
      "query": "hand fan"
-    },
-    {
-     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYzNxdXpwOXNrNThzZ2VveDkzMDBvdWNzanYwM2Z3aXdtMGdzdnp2dSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3otPoPiEfcI9JYVm0g/giphy.gif",
-     "source": "giphy",
-     "query": "Get ugly"
     }
    ]
   },
@@ -66,7 +71,7 @@
      "query": "magic item"
     },
     {
-     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmc3pyczFheWw3bmVzZ3JsbHBreWp1a2hjNXNjOHB2dzV0cTY1N2lqOCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/oYtVHSxngR3lC/giphy.gif",
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmc3pyczFheWw3bmVzZ3JsbHBreWp1a2hjNXNjOHB2dzV0cTY1N2lqOCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/5VKbvrjxpVJCM/giphy.gif",
      "source": "giphy",
      "query": "Wow"
     }
@@ -82,10 +87,9 @@
      "query": ""
     },
     {
-     "is_product": true,
-     "prod_idx": 0,
-     "source": "product",
-     "query": ""
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmODN2ZGtxeHZ1cWMxNWkyOWF4bDIzcnc4bHZwdW1sMHl1NDJ1Z2V1aCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/SrWZZhSLGBN6M/giphy.gif",
+     "source": "giphy",
+     "query": "Strong wind"
     }
    ]
   },
@@ -103,14 +107,14 @@
    "line_i": 7,
    "picks": [
     {
-     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmZm9iczZsbHE0Mm1sMHA5MnhqOWV1ZGtoM3FnY3ltZmF0cDJ4aG1oNCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3o7qDDrngD99ZVOi2s/giphy.gif",
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmazIzdTM1N3BqeGludWlrZ3Y4bG1pYTdqdTJnY2xmZGxjdGZveTh0YyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ZArR0IM5rtYM7YgKHb/giphy.gif",
      "source": "giphy",
-     "query": "Wind"
+     "query": "fan blowing"
     },
     {
-     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmOHl6eDlqNzJzcTdhZTAyMXNzZ2NpOWY3Yzg4MXZ3czEza2Q2djJ6eiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/26Ffcedtl4F6NFzd6/giphy.gif",
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmazIzdTM1N3BqeGludWlrZ3Y4bG1pYTdqdTJnY2xmZGxjdGZveTh0YyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3ov9jZgHq5rZrDwMH6/giphy.gif",
      "source": "giphy",
-     "query": "Long time"
+     "query": "fan blowing"
     }
    ]
   },
@@ -118,14 +122,14 @@
    "line_i": 8,
    "picks": [
     {
-     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmcDVkb2J0YXBqYmxvdGEyM2tqNHRwYzdsMW1nb3l3eG0ydmVieHA0aCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/x4pNxhrhl6Smfl3ivP/giphy.gif",
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmOTRxNnk4Y2o0N2dwdms0a3hnOWxnNmk3dnB4dmZ6dXc2bXM1ejRkZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/EpbGbcmaevW5TJqudi/giphy.gif",
      "source": "giphy",
-     "query": "Charming face"
+     "query": "confident face"
     },
     {
-     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmcDVkb2J0YXBqYmxvdGEyM2tqNHRwYzdsMW1nb3l3eG0ydmVieHA0aCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/6ra84Uso2hoir3YCgb/giphy.gif",
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmZ2t6MTY3M2E2NjVyMHNzcHM1bDFpbnFlY3dvdHY5ZG45anAyZG44dSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/fJv0eklQfjZX8plZX3/giphy.gif",
      "source": "giphy",
-     "query": "Charming face"
+     "query": "Charming"
     }
    ]
   }
