@@ -32,11 +32,14 @@ _BROWSER_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.3
 # 최후 폴백 — 공개 cobalt(오픈소스 다운로더 서비스) 인스턴스에 다운로드를 위임한다(savefrom과 같은
 # 계열). 커뮤니티 인스턴스라 수명이 유동적 — 실패하면 다음 인스턴스로 넘어가고,
 # SHORTS_COBALT_INSTANCES 환경변수(콤마 구분)로 교체 가능.
+# ⚠️ 대부분의 공개 cobalt(v10+) 인스턴스는 이제 API 키/Turnstile 인증을 요구해(익명 POST 거절:
+#   error.api.auth.* ) 서버-서버 위임이 갈수록 막힌다. 그래서 이 자동 폴백은 '되면 좋고' 수준이고,
+#   확실한 길은 사람이 브라우저(cobalt.tools 등)에서 받아 관리자로 올리는 것이다(_maybe_notify_fail 안내).
+#   SHORTS_COBALT_INSTANCES(콤마 구분)로 직접 교체·확장 가능.
 _COBALT_INSTANCES = [
     "https://cobalt-api.kwiatekmiki.com",
     "https://cobalt-backend.canine.tools",
     "https://cobalt-api.meowing.de",
-    "https://capi.3kh0.net",
 ]
 
 
@@ -261,9 +264,14 @@ def _maybe_notify_fail(url: str, msg: str, key: str, assets: list) -> None:
         return
     try:
         from src import notify
-        notify.send(f"[쿠팡쇼츠] 상품 영상 링크 추출 실패 (이 링크는 다시 알리지 않습니다)\n{url[:120]}\n{msg}\n"
-                    f"→ 재시도해도 계속 막히면 savefrom.net 등에서 영상을 받아 관리자 '내 파일 올리기' "
-                    f"또는 상품 '영상 올리기'로 업로드하면 동일하게 쓸 수 있습니다.")
+        notify.send(
+            "[쿠팡쇼츠] 상품 영상 링크 추출 실패 (이 링크는 다시 알리지 않습니다)\n"
+            f"{url[:120]}\n{msg}\n\n"
+            "유튜브가 서버(클라우드) IP를 봇으로 막아 자동 추출이 실패했습니다 — 흔한 문제이며,\n"
+            "가장 확실한 해결은 폰/PC 브라우저에서 직접 받아 올리는 것입니다(가입 불필요):\n"
+            "1) cobalt.tools 접속 → 링크 붙여넣기 → Download 로 mp4 저장\n"
+            "2) 관리자 상품 목록에서 그 상품 '영상 올리기'(또는 이미지 탭 '내 파일 올리기')로 업로드\n"
+            "→ 이러면 추출 없이 동일하게 영상 후보로 쓰입니다.")
     except Exception:
         pass
     try:   # 마커 업로드(다음 실행 알림 억제) — 실패해도 무해
