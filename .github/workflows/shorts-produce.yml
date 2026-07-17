@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "실행 모드 (plan=기획, candidates=후보, plan-candidates=대본+후보, produce=제작, regen=항목, regen-line=라인문구, regen-line-full=라인 대사+이미지, upload=올리기)"
+        description: "실행 모드 (plan=기획, candidates=후보, plan-candidates=대본+후보, produce=제작, regen=항목, regen-line=라인문구, regen-line-full=라인 대사+이미지, upload=올리기, voice_samples=보이스 샘플 텔레그램 발송)"
         type: choice
-        options: [produce, candidates, plan, plan-candidates, regen, regen-line, regen-line-full, upload]
+        options: [produce, candidates, plan, plan-candidates, regen, regen-line, regen-line-full, upload, voice_samples]
         default: produce
       tts_provider:
         description: "TTS 프로바이더 (auto=등록된 키 자동 감지, mock=키 없이 렌더 검증)"
@@ -175,6 +175,8 @@ jobs:
             python -m src.pipeline --candidates --line "$L" --row "$ROW" --job-id "$JOB"
           elif [ "$MODE" = "upload" ]; then
             python -m src.pipeline --upload --row "$ROW" --privacy "${{ steps.params.outputs.privacy }}" --job-id "$JOB"
+          elif [ "$MODE" = "voice_samples" ]; then
+            python scripts/voice_samples.py
           else
             python -m src.pipeline \
               --row "$ROW" \
