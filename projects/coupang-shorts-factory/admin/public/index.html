@@ -369,6 +369,13 @@ ol li{margin:8px 0}
     <div id="sfxSlots"><p class="empty">불러오는 중...</p></div>
   </div>
   <div class="card">
+    <h2>목소리(나레이션) 샘플 듣기</h2>
+    <p class="hint" style="margin:0 0 8px">지금 목소리가 마음에 안 들면, 여러 목소리로 <b>같은 대사를 합성해 텔레그램으로</b> 보내드립니다.
+    들어보고 마음에 드는 <b>번호</b>를 알려주시면 그 목소리로 고정합니다. (요청 후 약 1~2분 뒤 텔레그램 도착)</p>
+    <button class="btn" id="btnVoiceSamples">보이스 샘플 받기 (텔레그램)</button>
+    <div id="voiceSampleStatus" class="hint" style="margin-top:8px"></div>
+  </div>
+  <div class="card">
     <h2>바로가기</h2>
     <div class="item"><div class="grow"><a href="https://github.com/jtaechul/Product/actions/workflows/shorts-produce.yml" target="_blank">제작 실행 기록 전체 보기 (GitHub Actions)</a></div></div>
     <div class="item"><div class="grow"><a href="https://github.com/jtaechul/Product/settings/secrets/actions" target="_blank">API 키(시크릿) 등록 페이지</a></div></div>
@@ -1286,6 +1293,12 @@ $("btnBgmUpload").onclick = (ev) => busy(ev.target, async () => {
     await uploadBlob(`${BGM_DIR}/${safe}`, f, `admin: BGM 추가 — ${safe}`);
   }
   $("bgmFile").value = ""; toast("BGM 업로드 완료. 다음 제작부터 자동 적용됩니다."); bgmRefresh();
+});
+
+$("btnVoiceSamples").onclick = (ev) => busy(ev.target, async () => {
+  await mkDispatch({ mode: "voice_samples" });   // CI가 여러 목소리로 합성→텔레그램 발송
+  $("voiceSampleStatus").textContent = "요청됨 — 1~2분 뒤 텔레그램으로 목소리 샘플이 도착합니다. 마음에 드는 번호를 알려주세요.";
+  toast("보이스 샘플 생성 시작 — 텔레그램을 확인하세요");
 });
 
 $("btnAddProduct").onclick = (ev) => busy(ev.target, async () => {
