@@ -1,0 +1,57 @@
+{
+  "id": "031",
+  "created_at": "2026-07-17T15:07:14+00:00",
+  "updated_at": "2026-07-17T15:07:14+00:00",
+  "status": "published",
+  "category": "shipwreck",
+  "series": "沈没船 図鑑",
+  "species": {
+    "common_name_ko": "Empress of Ireland 난파선",
+    "common_name_en": "Wreck Empress of Ireland",
+    "scientific_name": "Wreck Empress of Ireland",
+    "depth_range_m": "",
+    "habitat": "침몰선",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "선종: Ocean liner",
+      "총톤수: 14191 GRT; 8028 NRT",
+      "침몰: 1914년"
+    ]
+  },
+  "reels": {
+    "hook": "海の底に、眠る船。",
+    "caption": "海の底に、眠る船。\n\n沈没船「Empress of Ireland」。\n海の命が集う、沈んだ船。\n深い海の底で、たしかに命をつないでいる一種です。\n\n心に残ったら保存を。\n同じ海が気になる人へシェアを。\n\n深海の生き物は、私たちがまだ知らない海の広さを教えてくれます。\n光の届かない深い海には、まだ名前のない生き物が数多く眠っています。\nこの映像は実際の深海・海洋の観測記録から。演出のための作り物ではありません。\n\n映像: Wikipedia: RMS Empress of Ireland",
+    "hashtags": [
+      "#難破船",
+      "#沈没船"
+    ],
+    "reveal_name": "沈没船「Empress of Ireland」 / Wreck Empress of Ireland",
+    "reveal_fact": "海の命が集う、沈んだ船",
+    "hook_ko": "바다 밑에, 잠든 배.",
+    "caption_ko": "바다 밑에, 잠든 배.\n\nEmpress of Ireland 난파선.\n주로 침몰선에서 지냅니다.\n선종: Ocean liner.\n총톤수: 14191 GRT; 8028 NRT.\n침몰: 1914년.\n바다 생명이 모이는, 가라앉은 배.\n\n마음이 복잡한 날, 다시 꺼내보고 싶다면 저장해 두세요.\n같은 바다가 궁금한 사람에게 조용히 건네주세요.\n\n심해의 생물들은 우리가 아직 모르는 바다의 넓이를 알려줍니다.\n빛이 닿지 않는 깊은 바다에는 아직 이름조차 없는 생물이 수없이 잠들어 있습니다.\n이 영상은 실제 심해·해양 관측 기록에서 가져온 것으로, 연출을 위한 가짜가 아닙니다.\n\n영상: Wikipedia: RMS Empress of Ireland",
+    "hashtags_ko": [
+      "#침몰선",
+      "#난파선"
+    ],
+    "yt_title": "海の底に、眠る船。沈没船「Empress of Ireland」の知られざる生態 #難破船 #沈没船",
+    "yt_title_ko": "바다 밑에, 잠든 배. Empress of Ireland 난파선의 알려지지 않은 생태 #침몰선 #난파선",
+    "visualizer": "reels",
+    "video_file": "wreck_empress_of_ireland_20260717_150713.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Wikipedia: RMS Empress of Ireland",
+      "Wikimedia Commons"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-031/reels_031.mp4",
+    "rev": "29590385965",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-031/cover_031.jpg",
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-031/ytthumb_031.jpg"
+  },
+  "post": null
+}

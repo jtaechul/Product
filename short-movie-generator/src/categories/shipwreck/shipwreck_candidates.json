@@ -50,32 +50,5 @@
     "desc": "HMHS Britannic was the third and final vessel of the White Star Line's Olympic class of ocean liners and the second White Star ship to bear the name Britannic. She was the younger sister of RMS Olympic and RMS Titanic and was intended to enter service as a transatlantic passenger liner. She operated",
     "img_count": 39,
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-shipwreck/thumb_shipwreck_wreck_britannic_29332273854.jpg"
-  },
-  {
-    "kind": "wreck",
-    "key": "wreck empress of ireland",
-    "needs_confirm": true,
-    "media_kind": "wreck_doc",
-    "wiki_title": "RMS Empress of Ireland",
-    "title": "RMS Empress of Ireland — 다큐(여러 이미지)",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/2/28/1913_Officers_Of_Canadian_Pacific_Ocean_Liner_Rms_Empress_Of_Ireland_1913.jpg",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/2/28/1913_Officers_Of_Canadian_Pacific_Ocean_Liner_Rms_Empress_Of_Ireland_1913.jpg",
-    "license": "cc-by-sa",
-    "credit": "Agence Rol · PUBLIC-DOMAIN · Alcide55 G.Bouchard · CC-BY-SA · Bain News Service · PUBLIC-DOMAIN · Bain News Service, publisher · PUBLIC-DOMAIN · BiblioArchives / LibraryArchives · PUBLIC-DOMAIN · Boré",
-    "source": "Wikipedia: RMS Empress of Ireland",
-    "name": "Empress of Ireland",
-    "name_ja": "",
-    "ship_type": "Ocean liner",
-    "depth": "",
-    "facts": [
-      "선종: Ocean liner",
-      "총톤수: 14191 GRT; 8028 NRT",
-      "전장: 570 ft oa; 548.9 ft pp",
-      "침몰: 1914년"
-    ],
-    "fact_src": "Wikipedia: RMS Empress of Ireland",
-    "desc": "RMS Empress of Ireland was a British-built ocean liner that sank near the mouth of the Saint Lawrence River in Canada following a collision in thick fog with the Norwegian collier Storstad in the early hours of 29 May 1914, en route to Liverpool. Although the ship was equipped with watertight compar",
-    "img_count": 26,
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-shipwreck/thumb_shipwreck_wreck_empress_of_ireland_29332273854.jpg"
   }
 ]
