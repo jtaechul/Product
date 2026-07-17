@@ -108,6 +108,24 @@ def clean_text(text: str) -> str:
     return re.sub(r"\s+", " ", _ALLOWED.sub("", text)).strip()
 
 
+# ⭐ 제목=순수 특장점 (2026-07-17 사용자 확정): 채널 정체성(카테고리 불문 페인포인트 해소)과 안 맞는
+#   타깃·주거 서술어("자취" 등)가 제목에 반복 유입 → 프롬프트 금지 + 여기서 하드 제거(이중 잠금).
+_TITLE_TARGET_RE = re.compile(r"자취[방생러]?|원룸|1인\s*가구")
+
+
+def strip_target_words(title: str) -> str:
+    """제목에서 자취·원룸·1인가구 같은 타깃·주거 서술어를 제거하고 남은 구두점·공백을 정리한다."""
+    t = _TITLE_TARGET_RE.sub("", str(title))
+    t = re.sub(r"·\s*·", "·", t)                    # 제거로 생긴 연속 구분점
+    t = re.sub(r"[(\[]\s*[·,\s]*[)\]]", "", t)      # 내용이 다 지워져 빈 괄호
+    t = re.sub(r"([(\[])\s*[·,]\s*", r"\1", t)      # 여는 괄호 뒤 고아 구분자
+    t = re.sub(r"\s*[·,]\s*([)\]])", r"\1", t)      # 닫는 괄호 앞 고아 구분자
+    t = re.sub(r"([(\[])\s+", r"\1", t)
+    t = re.sub(r"\s+([)\]])", r"\1", t)
+    t = re.sub(r"\s{2,}", " ", t)
+    return t.strip(" ·,")
+
+
 def check_forbidden(text: str) -> list:
     return [w for w in FORBIDDEN if w in text]
 
@@ -173,7 +191,10 @@ def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None) 
 
     # 제목 이모지 제거(핵심규칙: 이모지 금지) + 정식 제품명(브랜드·모델코드) 제거 — 종류 키워드만 남긴다
     if script.get("title"):
-        script["title"] = hide_product_name(clean_text(str(script["title"])), avoid_terms)
+        t0 = hide_product_name(clean_text(str(script["title"])), avoid_terms)
+        script["title"] = strip_target_words(t0)
+        if script["title"] != t0:
+            print("[sanitize] 제목에서 타깃·주거 서술어(자취·원룸 등) 제거 — 제목은 순수 특장점만(2026-07-17 사용자 확정)")
     # headline(폭로 포맷 화면 상단 뉴스 헤더)도 같은 규칙으로 정화 — 이모지·슬래시·파이프 + 제품명 제거
     if script.get("headline"):
         script["headline"] = hide_product_name(clean_text(str(script["headline"])), avoid_terms)

@@ -26,6 +26,7 @@ from src.script.sanitize import (
     hide_product_name,
     product_avoid_terms,
     sanitize_script,
+    strip_target_words,
 )
 
 _STAGE_ROLE = {1: "훅(한줄썰 사건의 구체적 손해를 보여줌 — 주제는 드러내고 해결책만 감춤, 추상 선언·시대드립 금지)",
@@ -126,7 +127,7 @@ def generate_script(product: dict, settings: dict) -> dict:
 
 
 _FIELD_SPEC = {
-    "title": "유튜브 제목 — 45~70자(공백 포함)로 길고 구체적으로: ①훅의 궁금증(앞쪽) + ②상황·페인포인트 + ③검색될 일반 카테고리 키워드·연관 검색어 2개 이상(제습기·자취·원룸 등). 브랜드·모델명·정식 제품명 금지, 가격 표기 금지",
+    "title": "유튜브 제목 — 45~70자(공백 포함)로 길고 구체적으로: ①훅의 궁금증(앞쪽) + ②이 제품의 차별 특장점·작동 방식(뭐가 어떻게 좋아지는지) + ③검색될 일반 카테고리 키워드와 기능·효용 연관 검색어 2개 이상(예: 제습기·전기요금·소음). ⭐타깃·주거 서술어 금지(자취·원룸·1인가구 등) — 제목은 순수하게 제품 특장점으로 세운다(2026-07-17 사용자 확정). 브랜드·모델명·정식 제품명 금지, 가격 표기 금지",
     "headline": "영상 상단 뉴스 헤드라인 — 폭로 기사 제목 톤(문어체), 제품명 감춤, 12~22자",
     "thumb_hook": "0:00 썸네일에 크게 박히는 오프닝 훅 — concept.한줄썰의 '그 상황'이 한눈에 읽히면서 결말이 궁금해지는 한 방(10~18자, 1~2줄). 무슨 얘긴지 알아채게 구체적으로. '이거 왜 이제 앎?'식 아무 데나 붙는 뜬구름·정체불명 문구 금지. 제품명·가격 금지",
     "description": "유튜브 설명란 본문 — 간결·자연스럽게, 정식 제품명·브랜드·가격·금액 금지(제품은 종류로만 지칭)",
@@ -161,7 +162,10 @@ def regenerate_field(plan: dict, field: str, product: dict, settings: dict):
     data = json.loads(m.group(0)) if m else {}
     if "value" not in data:
         raise ValueError(f"재생성 응답에 value 없음: {text[:120]}")
-    return data["value"]
+    val = data["value"]
+    if field == "title":   # 제목=순수 특장점(2026-07-17) — 재생성 경로에도 타깃 서술어 하드 제거
+        val = strip_target_words(str(val))
+    return val
 
 
 def regenerate_line(plan: dict, line_i: int, product: dict, settings: dict) -> dict:
