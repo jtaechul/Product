@@ -123,15 +123,17 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     # ---- 차별점·작동방식(2026-07-17): 상품 자료에서 3안 추출 → ⭐ 선택 게이트(사용자 확정) —
     #      기획(plan) 모드는 운영자가 3안 중 방향을 고르기 전에는 대본을 만들지 않고 여기서 멈춘다.
     #      (선택은 관리자 기획 탭 → '이 선택으로 기획·대본 만들기'가 plan을 다시 돌린다.)
+    #      ⚠️ 게이트는 '새 대본이 만들어지는 모든 모드'에 적용한다(plan만 걸면 candidates/produce의
+    #      즉석 생성이 우회함 — 2026-07-17 실사고: 등록→candidates가 3안 선택 없이 대본을 만들어버림).
+    will_generate = bool((args.plan or not plan_path.exists()) and not args.script_file)
     try:
         from src.product import mechanism
         mech_txt, need_choice = mechanism.prepare(
-            product, settings, PROJECT_ROOT,
-            extract=bool(args.plan or not plan_path.exists()), gate=bool(args.plan))
+            product, settings, PROJECT_ROOT, extract=will_generate, gate=will_generate)
     except Exception as e:
         print(f"[mech] 차별점 준비 실패({type(e).__name__}: {e}) — 기존 흐름으로 계속")
         mech_txt, need_choice = None, False
-    if need_choice and args.plan:
+    if need_choice and will_generate:
         print("[mech] 차별점 3안 준비 완료 — 운영자 선택 대기(대본 생성 전 중단)")
         notify.send(
             f"[미래마켓] 기획 방향(차별점) 3안 준비 완료 — {product['name']}\n"
