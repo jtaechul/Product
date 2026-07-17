@@ -5,6 +5,7 @@ channel:
   name: "미래마켓"   # 확정 (핸들 @miraemarket)
   handle: "@miraemarket"
   logo: "assets/brand/logo.png"   # 있으면 상단 프레임에 로고 합성(없으면 채널명 워드마크만)
+  store_url: "https://miraemarket.pages.dev"   # 공개 스토어(브랜드 안전 URL) — 고정 댓글 링크로 사용
 
 tts:
   # provider 선택:
