@@ -128,7 +128,7 @@ def _mix_sub_pop_sfx(audio, sub_plan: list, line_windows: list, project_root,
     mode: pop=자막 팝(칸)마다(기본·벤치마크와 동일) | line=대사 라인 시작만 | off=끔.
     소리는 자체 물리 합성(assets/sfx/pop.wav) — 저작권 무관(§3.2 자체 생성물)."""
     cfg = settings.get("sfx", {})
-    mode = str(cfg.get("sub_pop_mode", "pop")).lower()
+    mode = str(cfg.get("sub_pop_mode", "off")).lower()   # 기본 off(2026-07-17 사용자 확정 — 라인 효과음만)
     if not cfg.get("enabled", True) or mode in ("off", "none", "false"):
         return audio
     path = Path(project_root) / cfg.get("sub_pop", "assets/sfx/pop.wav")
@@ -157,6 +157,73 @@ def _mix_sub_pop_sfx(audio, sub_plan: list, line_windows: list, project_root,
     except Exception as e:
         print(f"[sfx] 자막 팝 실패({type(e).__name__}: {e}) → 생략")
         return audio
+
+
+def _find_sfx_file(project_root, rel: str):
+    """설정 경로 그대로 → 없으면 같은 이름의 다른 확장자(mp3/wav/m4a/ogg) 순회 — 관리자가
+    어떤 포맷으로 업로드해도 슬롯이 잡히게."""
+    p = Path(project_root) / rel
+    if p.exists():
+        return p
+    for ext in (".mp3", ".wav", ".m4a", ".ogg"):
+        q = p.with_suffix(ext)
+        if q.exists():
+            return q
+    return None
+
+
+def _mix_line_sfx(audio, lines: list, line_windows: list, reveal_time,
+                  project_root, settings: dict, duration: float):
+    """라인(문장) 시작마다 '문맥에 맞는' 효과음(2026-07-17 사용자 확정 · 1안 세트) —
+    폭로 아크 stage별 매핑: ①훅=띠링(새 글 알림) ②공감=동동동(댓글 연타) ③지목=둥(서스펜스)
+    ⑤증거=찰칵(셔터), punch 라인=띠용(스프링). ④제품 공개는 기존 '쾅'(reveal)이 담당하므로
+    생략하고, reveal ±1.5s 안의 라인도 건너뛴다(소리 겹침 방지). 같은 소리가 반복되면
+    0.8배씩 줄여 피로를 막는다. 파일은 관리자 설정 탭에서 업로드(없는 슬롯은 조용히 생략)."""
+    cfg = settings.get("sfx", {})
+    mapping = cfg.get("line_sfx") or {}
+    if not cfg.get("enabled", True) or not mapping or not lines or not line_windows:
+        return audio
+    base_vol = float(cfg.get("line_sfx_volume", 0.35))
+    guard = 1.5
+    from moviepy import AudioFileClip, CompositeAudioClip
+    clips, seen, missing = [], {}, set()
+    for i, ln in enumerate(lines):
+        if i >= len(line_windows):
+            break
+        t = float(line_windows[i][0])
+        if t < 0 or t >= duration - 0.05:
+            continue
+        if reveal_time is not None and abs(t - float(reveal_time)) < guard:
+            continue   # 쾅(제품 공개)과 겹침 방지
+        key = "punch" if ln.get("punch") else f"stage{int(ln.get('stage', 1) or 1)}"
+        rel = mapping.get(key)
+        if not rel:
+            continue   # stage4 등 매핑 없는 라인은 무음(쾅이 담당)
+        path = _find_sfx_file(project_root, str(rel))
+        if path is None:
+            missing.add(key)
+            continue
+        try:
+            sfx = AudioFileClip(str(path))
+            k = seen.get(key, 0)
+            seen[key] = k + 1
+            vol = base_vol * (0.8 ** k)   # 같은 소리 반복 시 점감
+            try:
+                sfx = sfx.with_volume_scaled(vol)
+            except Exception:
+                from moviepy import afx
+                sfx = sfx.with_effects([afx.MultiplyVolume(vol)])
+            if sfx.duration and t + sfx.duration > duration:
+                sfx = sfx.subclipped(0, max(0.05, duration - t))
+            clips.append(sfx.with_start(t))
+        except Exception as e:
+            print(f"[sfx] 라인 효과음 실패({key}: {type(e).__name__}: {e}) → 생략")
+    if missing:
+        print(f"[sfx] 라인 효과음 파일 없음(슬롯 건너뜀): {sorted(missing)} — 관리자 설정 탭에서 업로드")
+    if not clips:
+        return audio
+    print(f"[sfx] 라인 효과음 {len(clips)}개 삽입 (vol {base_vol}, 반복 점감)")
+    return CompositeAudioClip([audio, *clips]) if audio is not None else CompositeAudioClip(clips)
 
 
 def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
@@ -320,8 +387,9 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
             layers.append(scrim)
         layers += sub_clips
     audio = _mix_bgm(audio, project_root, settings, duration, has_narration)
-    audio = _mix_reveal_sfx(audio, _find_reveal_time(lines, line_windows),
-                            project_root, settings, duration)
+    reveal_t = _find_reveal_time(lines, line_windows)
+    audio = _mix_reveal_sfx(audio, reveal_t, project_root, settings, duration)
+    audio = _mix_line_sfx(audio, lines, line_windows, reveal_t, project_root, settings, duration)
     audio = _mix_sub_pop_sfx(audio, sub_plan, line_windows, project_root, settings, duration)
     final = (
         CompositeVideoClip(layers, size=(width, height))
