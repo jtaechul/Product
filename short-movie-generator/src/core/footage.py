@@ -708,13 +708,17 @@ def build_wreck_documentary(images: list[dict], dest_dir: str, target_dur: float
     if not clips:
         return None
     # concat(하드컷 — 켄번즈 무브 연속성으로 컷 전환이 자연스럽다)
-    lst = dest / "wdoc_list.txt"
-    lst.write_text("".join(f"file '{Path(c).name}'\n" for c in clips), encoding="utf-8")
-    out = dest / "wreck_documentary.mp4"
+    # ★경로는 반드시 절대경로(재발방지 · 실사고): 예전엔 cwd=dest로 실행하면서 -i·-out에는
+    #   '원래 cwd 기준 상대경로'(work/wdoc/…)를 넘겨, ffmpeg가 cwd(=work/wdoc) 밑에서 다시
+    #   해석해 work/wdoc/work/wdoc/… 로 이중 중첩 → "No such file"로 난파선 다큐가 전부 실패했다.
+    #   → list 엔트리·-i·출력 모두 절대경로로 고정하고 cwd 의존을 제거한다.
+    lst = (dest / "wdoc_list.txt").resolve()
+    lst.write_text("".join(f"file '{Path(c).resolve()}'\n" for c in clips), encoding="utf-8")
+    out = (dest / "wreck_documentary.mp4").resolve()
     try:
         r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0",
                             "-i", str(lst), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
-                            "-an", str(out)], cwd=str(dest), timeout=600)
+                            "-an", str(out)], timeout=600)
         if not (r.returncode == 0 and out.exists() and out.stat().st_size > 100_000):
             return None
     except Exception as e:  # noqa: BLE001

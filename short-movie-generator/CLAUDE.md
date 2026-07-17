@@ -400,7 +400,16 @@
         전달 → `footage.fetch_footage`가 `_wreck_doc_footage`로 dossier 확보(doc 딕트) → `pipeline.run_reels`
         doc 분기가 대본·시퀀스·카드를 조립(WQ/추적리프레임/컷어웨이 우회 — 순서 보존·신문 스캔 등 정당한
         텍스트 delogo 방지). 소싱은 `_discover_wrecks`의 **Tier0**(유명 난파선 우선)로 노출.
-      - 회귀 테스트: `test_wreck_dossier.py`·`test_wreck_documentary.py`·`test_wreck_doc_promote.py`.
+      - **★concat 경로는 반드시 절대경로(재발방지 · 절대 위반 금지)**: `build_wreck_documentary`의
+        ffmpeg concat은 list 엔트리·`-i`·출력 **모두 절대경로**로, cwd 의존 없이 실행한다. 실사고:
+        예전엔 `cwd=dest`로 실행하며 `-i`에 cwd-상대경로(`work/wdoc/…`)를 넘겨 `work/wdoc/work/wdoc/…`로
+        **이중 중첩** → "No such file" → **유명 난파선 5건(lusitania·britannic·empress of ireland 등)이
+        전부 제작 실패**했다(소싱은 이미지 32~38장 정상, 순수 제작 경로 버그). 회귀 테스트는 반드시
+        **상대 work_dir**로 검증한다(`test_build_documentary_with_relative_workdir`).
+      - **★소싱↔제작 연계(재발방지)**: '소싱된 = 제작 가능'을 코드로 보장한다. `_famous_wreck_candidates`는
+        후보를 노출하기 전에 **제작이 실제 소비하는 함수 `ordered_beat_images`로 컷 수(≥2)를 확인**하고,
+        미달이면 후보에서 제외한다(제작 불가한 배를 소싱해 파이프라인이 죽는 것 방지).
+      - 회귀 테스트: `test_wreck_dossier.py`·`test_wreck_documentary.py`(상대 work_dir 포함)·`test_wreck_doc_promote.py`.
     - **★침몰선 아마추어 다이빙 '영상' 금지(운영자 확정 · 절대 위반 금지 · Batelo 사고 재발방지)**:
       침몰선 소스로 **아마추어 다이빙 영상을 절대 쓰지 않는다.** 실사고(Batelo Cantanhede): 다이빙 영상은
       ①인트로 타이틀카드(다이빙스쿨 로고)가 통짜로 박혀 OCR로 못 지우고(스타일 그래픽=OCR 미인식)

@@ -741,6 +741,16 @@ def _famous_wreck_candidates(exclude: set[str], want: int, out_keys: set[str],
         doss = DSR.build_dossier(title)
         if not doss:
             continue
+        # ★소싱↔제작 연계(재발방지): '소싱된 = 제작 가능'을 보장하려면, 제작이 실제로 소비하는
+        #   함수(ordered_beat_images)로 컷 수를 확인한다. 제작 최소치(≥2컷)를 못 채우면 후보로
+        #   surface하지 않는다(제작 불가한 배를 소싱해 파이프라인이 죽는 일 방지).
+        try:
+            producible_cuts = len(DSR.ordered_beat_images(doss, max_per_beat=2))
+        except Exception:  # noqa: BLE001
+            producible_cuts = 0
+        if producible_cuts < 2:
+            log.info("[discovery] 난파선 제작가능 컷 부족(%d<2) → 후보 제외: %s", producible_cuts, title)
+            continue
         specs = doss.get("specs", {}) or {}
         afl = (doss.get("beats", {}).get("afloat") or doss.get("images", []))
         hero = afl[0].get("url", "") if afl else ""

@@ -54,3 +54,24 @@ def test_build_documentary_sequences_distinct_images(tmp_path):
 
 def test_build_documentary_empty_returns_none(tmp_path):
     assert F.build_wreck_documentary([], str(tmp_path), target_dur=10) is None
+
+
+@pytest.mark.skipif(not _has_ffmpeg(), reason="ffmpeg 없음")
+def test_build_documentary_with_relative_workdir(tmp_path, monkeypatch):
+    """★재발방지(실사고: 난파선 5건 전부 실패): work_dir가 **상대경로**(CI 조건)일 때도
+    concat이 성공해야 한다. 예전엔 cwd=dest로 실행하면서 -i·출력에 cwd-상대경로를 넘겨
+    'work/wdoc/work/wdoc/wdoc_list.txt'로 이중 중첩 → No such file로 전부 죽었다."""
+    monkeypatch.chdir(tmp_path)                 # 파이프라인처럼 임의 작업 디렉토리에서 실행
+    rel = os.path.join("work", "wdoc")          # ★상대 work_dir(핵심 조건)
+    os.makedirs(rel, exist_ok=True)
+    for i in range(3):
+        _noise_png(os.path.join(rel, f"wdoc_{i}.png"), color=30 + i * 50)
+    images = [
+        {"url": "http://x/a.png", "beat": "afloat", "license": "cc-by", "credit": "A · CC BY"},
+        {"url": "http://x/b.png", "beat": "sinking", "license": "public-domain", "credit": "B"},
+        {"url": "http://x/c.png", "beat": "wreck", "license": "cc-by-sa", "credit": "C · CC BY-SA"},
+    ]
+    res = F.build_wreck_documentary(images, rel, target_dur=12.0, key="wreck relative")
+    assert res and res.get("sequenced") is True, "상대 work_dir에서 다큐 합성 실패(경로 이중중첩 회귀)"
+    assert os.path.exists(res["path"])
+    assert (F._probe_dur(res["path"]) or 0) >= 12.0 - 0.5
