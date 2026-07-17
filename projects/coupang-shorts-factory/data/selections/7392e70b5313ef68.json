@@ -26,9 +26,9 @@
      "query": "laptop pouch"
     },
     {
-     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmOXk4b3Q5YnQ0cXdrNmYyMzNoZXN1YXNpbGNhbGR0YTdwenU5ZDdoMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/eV2aKlCgjx3ecHZDZ3/giphy.gif",
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmM2hjNWd6emdrdm40aDBuYnp0aTl2aGk1eXg4aWRlb2JwdGl6YzZpZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/jMPq5SJwkA0rm/giphy.gif",
      "source": "giphy",
-     "query": "Laptop bag"
+     "query": "laptop pouch"
     }
    ]
   },
@@ -41,9 +41,9 @@
      "query": "Computer mouse"
     },
     {
-     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMTZvMHJ2OGczMGtoYnduNWU2ajBsYXBwbW5obWx3Z3BwMm5jYXd2OCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/NQtz04buKQOHMUIYUi/giphy.gif",
+     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmZmk1dWRwbW45ZHIwd3lqd3F4Y3l1OGtia2Rjd285d2toYWFvMGYyeSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/32dafjpUDR5Pa/giphy.gif",
      "source": "giphy",
-     "query": "laptop mouse"
+     "query": "Computer mouse"
     }
    ]
   },
@@ -52,14 +52,19 @@
    "picks": [
     {
      "is_product": true,
-     "prod_idx": 0,
+     "prod_idx": 1,
      "source": "product",
      "query": ""
     },
     {
      "is_product": true,
-     "prod_idx": 1,
+     "prod_idx": 0,
      "source": "product",
+     "query": ""
+    },
+    {
+     "detail_idx": 6,
+     "source": "detail",
      "query": ""
     }
    ]
@@ -68,14 +73,17 @@
    "line_i": 4,
    "picks": [
     {
-     "is_product": true,
-     "prod_idx": 2,
-     "source": "product",
+     "pv_name": "7392e70b5313ef68_1784285488576.mp4",
+     "pv_start": 3.7,
+     "pv_end": 7,
+     "source": "product_video",
      "query": ""
     },
     {
-     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmdmo5c2lpcndxYnh3am82cWp2ajgwbGNqcWtwaG82b2F1cXo2bDdkcCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/SUVhbSqRfHz4xtta2q/giphy.gif",
-     "source": "giphy",
+     "pv_name": "7392e70b5313ef68_1784285488576.mp4",
+     "pv_start": 17.3,
+     "pv_end": 19.9,
+     "source": "product_video",
      "query": ""
     }
    ]
@@ -89,13 +97,17 @@
      "query": ""
     },
     {
-     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmcm5mN3o5bXVtOXJrem5mMTI3MHlnZmtmcDc3OTJuOGgxNHppNHhyYyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/fDtbHtmbYeDSv6QVKr/giphy.gif",
-     "source": "giphy",
-     "query": "Battery charge"
+     "pv_name": "7392e70b5313ef68_1784285488576.mp4",
+     "pv_start": 22,
+     "pv_end": 26.2,
+     "source": "product_video",
+     "query": ""
     },
     {
-     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmdmo5c2lpcndxYnh3am82cWp2ajgwbGNqcWtwaG82b2F1cXo2bDdkcCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/vTW5G6EWsymtO/giphy.gif",
-     "source": "giphy",
+     "pv_name": "7392e70b5313ef68_1784285488576.mp4",
+     "pv_start": 35.2,
+     "pv_end": 38.7,
+     "source": "product_video",
      "query": ""
     }
    ]
@@ -104,19 +116,19 @@
    "line_i": 6,
    "picks": [
     {
-     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmaGRxMDk3NnJpcGFvaGg2dXdhemN3c3ZldDFjY3d5bWwwbWZzNjhqdCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/TvgawHKmF1XlS/giphy.gif",
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmc2JmNTB5dGU5cWE1azNpeWdsZXdhMmJuaGJiZHRrazBpZXdobGF1ZiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Ub8mUYSV1krYY/giphy.gif",
      "source": "giphy",
-     "query": "Thin paper"
+     "query": "Thin"
     },
     {
-     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmenI4ZjR6NW5nN3JmdXFmOGczODd2ZTB4bHRwNTI3bDdmY2t3dXkzNiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/SaINlGV0wUoa3JH2CO/giphy.gif",
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmaWRwamh4NTliaG9xaTFscXMwNTBwZ2V4aWhvb3pvMWI4ZHdraTR3eSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/JKskHBDvnIjhGilcX5/giphy.gif",
      "source": "giphy",
-     "query": "laptop pouch"
+     "query": "Wow"
     },
     {
-     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmcWo4bXlkMHN6b3EydDc5emRvYTJjNWgxYXBld2xmeHhycm0zamd1ZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/u5xNL7P4xsCNvLYuiV/giphy.gif",
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmbXVqZGhyN2ZoYmJjY3p4c2hod2ExbzUxdjFndzc5ZGRrd2M1NHV1aSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/KastytLf5Fxm0B8jTz/giphy.gif",
      "source": "giphy",
-     "query": "laptop pouch"
+     "query": "Wow"
     }
    ]
   }
