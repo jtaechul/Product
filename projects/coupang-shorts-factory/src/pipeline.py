@@ -120,16 +120,26 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     from src.script.sanitize import product_avoid_terms, sanitize_script
     avoid_terms = product_avoid_terms(product)   # 브랜드·정식명 → 대사·자막에서 제거(승인된 옛 기획 포함)
     plan_path = PROJECT_ROOT / "data" / "plans" / f"{product['_row_hash']}.json"
-    # ---- 차별점·작동방식(2026-07-17): 상품 자료에서 3안 추출(plan 때) → 운영자 선택본을 대본 ④의 뼈대로.
-    #      새 대본을 만들 때만 추출(plan 또는 첫 생성). 실패해도 기존 흐름 그대로(soft).
+    # ---- 차별점·작동방식(2026-07-17): 상품 자료에서 3안 추출 → ⭐ 선택 게이트(사용자 확정) —
+    #      기획(plan) 모드는 운영자가 3안 중 방향을 고르기 전에는 대본을 만들지 않고 여기서 멈춘다.
+    #      (선택은 관리자 기획 탭 → '이 선택으로 기획·대본 만들기'가 plan을 다시 돌린다.)
     try:
         from src.product import mechanism
-        mech_txt = mechanism.prepare(product, settings, PROJECT_ROOT,
-                                     extract=bool(args.plan or not plan_path.exists()))
-        if mech_txt:
-            product["차별점_작동방식"] = mech_txt   # generate_script의 상품 JSON에 그대로 노출됨
+        mech_txt, need_choice = mechanism.prepare(
+            product, settings, PROJECT_ROOT,
+            extract=bool(args.plan or not plan_path.exists()), gate=bool(args.plan))
     except Exception as e:
         print(f"[mech] 차별점 준비 실패({type(e).__name__}: {e}) — 기존 흐름으로 계속")
+        mech_txt, need_choice = None, False
+    if need_choice and args.plan:
+        print("[mech] 차별점 3안 준비 완료 — 운영자 선택 대기(대본 생성 전 중단)")
+        notify.send(
+            f"[미래마켓] 기획 방향(차별점) 3안 준비 완료 — {product['name']}\n"
+            f"관리자 기획 탭에서 하나를 고르거나 직접 적으면, 그 방향으로 대본을 씁니다.\n"
+            f"https://shorts-admin.jtaechul.workers.dev")
+        return 0
+    if mech_txt:
+        product["차별점_작동방식"] = mech_txt   # generate_script의 상품 JSON에 그대로 노출됨
     if args.script_file:
         script = json.loads(Path(args.script_file).read_text(encoding="utf-8"))
         script = sanitize_script(script, strict_length=False, avoid_terms=avoid_terms)
