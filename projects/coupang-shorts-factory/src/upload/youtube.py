@@ -183,8 +183,21 @@ def upload(video_path: Path, script: dict, product: dict, settings: dict,
         ).execute()
         comment_id = cresp.get("id")
         print("[upload] 고지 댓글 등록 완료 (앱에서 '고정'만 눌러주세요)")
-    except Exception as e:  # 댓글 실패는 업로드 자체를 무효화하지 않음 — 보고만
-        print(f"[upload] 경고: 댓글 등록 실패({e}) — 수동 등록 필요")
+    except Exception as e:  # 댓글 실패는 업로드 자체를 무효화하지 않음 — 보고 + 텔레그램 알림
+        emsg = str(e)
+        print(f"[upload] 경고: 댓글 등록 실패({emsg}) — 수동 등록 필요")
+        # 가장 흔한 원인: 리프레시 토큰에 'youtube.force-ssl'(댓글 권한)이 없음(업로드 권한만 승인됨).
+        hint = ""
+        if any(k in emsg for k in ("403", "insufficient", "forbidden", "not be properly authorized")):
+            hint = ("\n원인(추정): 유튜브 토큰에 '댓글 권한(youtube.force-ssl)'이 빠졌습니다. "
+                    "OAuth Playground에서 토큰을 다시 만들 때 두 권한(upload + force-ssl)을 모두 승인한 뒤 "
+                    "SHORTS_YT_REFRESH_TOKEN 시크릿만 교체하면 됩니다.")
+        try:
+            from src import notify
+            notify.send(f"[미래마켓] 영상은 올라갔지만 고지·링크 '고정 댓글' 자동 등록이 실패했습니다.{hint}\n"
+                        f"영상: {url}")
+        except Exception:
+            pass
 
     return {"videoId": video_id, "url": url, "status": privacy,
             "comment_id": comment_id, "title": title}
