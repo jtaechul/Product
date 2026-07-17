@@ -310,6 +310,7 @@ def run_reels(
     body_dur = float(nar["duration"]) + 0.6
 
     cutaway_credits: list[str] = []
+    doc_map_start = None      # 난파선 지도 컷 시작 시각(있으면) — 지도 SFX 믹스 타이밍
     if fv.get("doc"):
         # ★침몰선 다큐 분기: 여러 이미지 시간순 시퀀스(취항→초상→사고→잔해)를 body_dur 길이로 합성.
         #   WQ/추적리프레임/컷어웨이를 우회한다(소스가 이미 9:16 순서보존 시퀀스 · 워터마크 없음 ·
@@ -344,6 +345,7 @@ def run_reels(
             key=info.scientific_name, overlays=overlays)
         if not docv:
             raise PipelineError("footage", "난파선 다큐 시퀀스 합성 실패")
+        doc_map_start = docv.get("map_start")   # 지도 컷 시작 시각(SFX 믹스용)
         fv = {**fv, "path": docv["path"], "credit": docv.get("credit", fv.get("credit", "")),
               "license": docv.get("license", fv.get("license", "")), "logo_box": None}
         body_v = str(work_dir / "body_reframed.mp4")
@@ -402,6 +404,31 @@ def run_reels(
     body_av = str(work_dir / "body_av.mp4")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", subbed, "-i", nar["mp3"],
                     "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", body_av], check=True)
+
+    # 5.6) ★난파선 지도 컷 효과음(운영자 확정 · 무음 지적): 다큐 본문은 무음이라 지도 컷도 무음으로
+    #      넣었더니 '지도 줌업' 순간에 소리가 하나도 안 났다 → 지도 컷 시작(스캔)·줌인(락온) 타이밍에
+    #      scan/lockon SFX를 나레이션 위에 믹스한다(나레이션은 그대로 유지). 실패해도 발행 불정지.
+    if fv.get("doc") and doc_map_start is not None:
+        try:
+            from src.core.longform import sfx as _sfx
+            sd = _sfx.gen_all(str(work_dir / "mapsfx"))
+            def _ms(t):  # noqa: E306
+                return max(0, int(t * 1000))
+            scan_at, lock_at = doc_map_start + 0.1, doc_map_start + 1.2   # 스캔 스윕 / 줌인 락온
+            mixed = str(work_dir / "body_mapsfx.mp4")
+            r = subprocess.run(
+                ["ffmpeg", "-y", "-loglevel", "error", "-i", body_av,
+                 "-i", sd["scan"], "-i", sd["lockon"], "-filter_complex",
+                 (f"[1:a]adelay={_ms(scan_at)}|{_ms(scan_at)},volume=1.2[sc];"
+                  f"[2:a]adelay={_ms(lock_at)}|{_ms(lock_at)},volume=1.35[lk];"
+                  f"[0:a][sc][lk]amix=inputs=3:duration=first:normalize=0,alimiter=limit=0.95[a]"),
+                 "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", mixed],
+                timeout=180)
+            if r.returncode == 0 and Path(mixed).exists() and Path(mixed).stat().st_size > 10_000:
+                body_av = mixed
+                log.info("[reels] 지도 컷 SFX 믹스(scan@%.1fs·lockon@%.1fs)", scan_at, lock_at)
+        except Exception as e:  # noqa: BLE001
+            log.warning("[reels] 지도 SFX 믹스 생략(오류): %s", e)
 
     # 5.5) ★오프닝 지도·수심 하강 스팅어(운영자 확정): 훅 뒤에 '지도→해역 락온→실제 수심 하강'을
     #      ~2.3초 붙인다. 본문 앞에 결합하면 최종 순서가 [훅][스팅어][본문][엔드카드]가 된다.
@@ -462,7 +489,21 @@ def run_reels(
 
     # 7) 캡션(일본어 게시글 + 한국어 참고) + 출력 (캡션 생성 실패해도 발행 불정지)
     try:
-        if hasattr(category, "build_reels_caption"):
+        if fv.get("doc"):
+            # ★침몰선 다큐 전용 캡션(운영자 확정): 생물 관점(生息·서식 등) 배제 → 배의 역사·침몰
+            #   경위·수심·해역·수중 잔해 중심의 스토리 캡션 + 침몰선 해시태그(생물 태그 아님).
+            from src.categories.shipwreck import dossier as _dsr
+            from src.core.contracts import CaptionData
+            c = _dsr.wreck_caption(fv["dossier"], depth_m=info.depth_range_m or "")
+            dep = _dsr._depth_num(info.depth_range_m or "")
+            caption = CaptionData(
+                hook_text=spec.hook_line1 + spec.hook_line2,
+                overlay_facts=([f"水深 {dep} m"] if dep else []),
+                caption_body=c["jp"], hashtags=c["tags"],
+                reveal_name=fv["dossier"].get("display", info.scientific_name), reveal_fact="",
+                caption_ko=c["ko"], hook_ko="", hashtags_ko=list(c["tags_ko"]),
+                yt_title=c["yt_title"], yt_title_ko=c["yt_title_ko"])
+        elif hasattr(category, "build_reels_caption"):
             caption = category.build_reels_caption(info, spec)   # JP 본문 + KR 참고 번역
         else:
             caption = (category.build_narrated_caption(info)

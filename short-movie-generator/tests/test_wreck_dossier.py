@@ -1,4 +1,6 @@
 """shipwreck 다큐멘터리 — dossier 순수 함수(네트워크 불필요) 회귀 테스트."""
+import re
+
 from src.categories.shipwreck import dossier as D
 
 
@@ -153,3 +155,24 @@ def test_ocean_label_known_wreck_sites():
     assert D._ocean_label(27.81, 33.92)[0] == "紅海"            # 시슬곰(홍해)
     assert D._ocean_label(46.0, -85.0)[0] == "五大湖"           # 에드먼드 피츠제럴드(담수호)
     assert D._ocean_label(30.37, 128.07)[0] == "北太平洋"       # 야마토
+
+
+def test_wreck_caption_is_history_not_biology():
+    """★침몰선 캡션은 생물 관점이 아니라 배의 역사·침몰 경위·수심·해역 중심(운영자 확정)."""
+    doss = {"display": "タイタニック", "sink_region_jp": "北大西洋", "sink_region_en": "N. ATLANTIC",
+            "specs": {"type": "Ocean liner", "launched": "1911", "sunk_year": "1912"},
+            "summary": ""}
+    c = D.wreck_caption(doss, depth_m="3800")   # LLM 키 없음 → 결정론 폴백
+    jp = c["jp"]
+    # 생물 표현 절대 금지(주로 침몰선에서 지냅니다 류)
+    assert not re.search(r"生息|棲息|暮らし|に生きる|すみか", jp)
+    # 역사·침몰 경위·수심·해역이 담겨야
+    assert "1912" in jp and "沈" in jp
+    assert "水深 3800m" in jp or "水深3800m" in jp
+    assert "北大西洋" in jp
+    assert len(jp.replace("\n", "")) >= 230                     # 캡션 최소 분량
+    # 해시태그는 침몰선 계열(생물 태그 아님)
+    assert c["tags"][0] == "#沈没船" and "#海洋生物" not in c["tags"]
+    assert c["tags_ko"][0] == "#침몰선"
+    assert "沈没船" in c["yt_title"]
+import re  # noqa: E402  (테스트 상단에서 이미 dossier import; re는 여기서 사용)

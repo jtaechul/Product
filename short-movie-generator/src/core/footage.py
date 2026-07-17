@@ -733,12 +733,17 @@ def build_wreck_documentary(images: list[dict], dest_dir: str, target_dur: float
     clips: list[str] = []
     used: list[dict] = []
     img_idx = 0
+    t_cursor = 0.0            # 시퀀스 내 누적 시각(지도 컷 SFX 타이밍용)
+    map_start = None          # 지도(map) 컷 시작 시각 — 파이프라인이 이 시각에 스캔/락온 SFX를 믹스
     for p in prepared:
         im = p["im"]
         if p["kind"] == "vid":
             clip = dest / f"wdoc_vid_{len(clips)}.mp4"
             if _normalize_doc_clip(p["src"], str(clip)):     # 켄번즈 컷과 규격 통일(720×1280·30fps·무음)
+                if im.get("beat") == "map" and map_start is None:
+                    map_start = round(t_cursor, 2)
                 clips.append(str(clip)); used.append(im)
+                t_cursor += float(p.get("dur") or 0.0)
             continue
         per = base + (1 if img_idx >= m - extra else 0)       # 뒤(사고·잔해) 컷에 +1초
         img_idx += 1
@@ -754,6 +759,7 @@ def build_wreck_documentary(images: list[dict], dest_dir: str, target_dur: float
                 clip = card_clip
                 overlays.pop(im.get("beat", ""), None)   # 카드는 한 번만
         clips.append(str(clip)); used.append(im)
+        t_cursor += float(per)
     if not clips:
         return None
     # concat(하드컷 — 켄번즈 무브 연속성으로 컷 전환이 자연스럽다)
@@ -778,7 +784,8 @@ def build_wreck_documentary(images: list[dict], dest_dir: str, target_dur: float
     return {"path": str(out), "sequenced": True, "logo_box": None,
             "license": _rep_license([im.get("license", "") for im in used]),
             "credit": " · ".join(creds)[:300], "source": "Wikimedia Commons",
-            "beats": [im.get("beat", "") for im in used], "credits": creds}
+            "beats": [im.get("beat", "") for im in used], "credits": creds,
+            "map_start": map_start}   # 지도 컷 시작 시각(없으면 None) — 파이프라인 SFX 믹스용
 
 
 def _overlay_card(base_v: str, card_png: str, out_v: str, dur: int) -> bool:

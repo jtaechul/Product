@@ -579,6 +579,166 @@ def _fallback_body_jp(dossier: dict) -> list[str]:
     return out
 
 
+_WRECK_CAPTION_PROMPT = """あなたは沈没船ドキュメンタリーのSNS投稿キャプション作家です。\
+次の実在の沈没船について、**日本語**の投稿キャプションを書きます。JSONのみ出力(説明禁止)。
+
+船名: {name}
+判明している事実(この範囲だけを使う。無い情報は書かない): {facts}
+概要: {summary}
+
+■ 内容(船の歴史・物語として · 時間軸で):
+  ① どんな船で、いつ建造されたか ② いつ・なぜ沈んだか(判明していれば) ③ 今どの海域・水深何mに眠るか
+  ④ 潜水調査・水中映像で記録される現在の姿。
+■ ★これは生物の紹介では**ありません**。船の歴史・沈没の経緯・水深・海底に眠る姿に焦点を当てる。
+  「〜に生息します」「主に〜で暮らします」など**生物の表現は絶対禁止**。
+■ トーン: 静かで敬意ある、事実重視のドキュメンタリー。**ブラックユーモア・軽口・オチは一切禁止**
+  (実際に人命が失われた事故)。**敬体(です・ます)**。
+■ 事実の捏造は絶対禁止(人的被害の数・原因・宝物などを勝手に足さない。不明なら触れない)。
+■ 分量: 日本語250〜380字。最後の1〜2行で「保存/また見返したくなる」誘導を1つ入れる。
+出力JSON: {{"jp_caption":"…(改行\\nを含む本文)","ko_caption":"…(韓国語の全訳·敬語)",\
+"hashtags":["#沈没船","#…","#…"],"ko_hashtags":["#침몰선","#…","#…"],\
+"yt_title":"…(30字以内·刺激的でも可)","ko_title":"…(한국어 제목)"}}
+"""
+
+
+def _wreck_caption_tags(dossier: dict) -> tuple[list[str], list[str]]:
+    """침몰선 전용 해시태그(생물 태그 배제). JP·KO 각 3개."""
+    reg = dossier.get("sink_region_jp")
+    jp = ["#沈没船", "#難破船", (f"#{reg}" if reg else "#海底")]
+    ko = ["#침몰선", "#난파선", "#해저"]
+    return jp, ko
+
+
+def _depth_num(depth_m: str) -> str:
+    nums = re.findall(r"\d[\d,]*", depth_m or "")
+    return nums[-1] if nums else ""
+
+
+def _fallback_wreck_caption(dossier: dict, depth_m: str = "") -> dict:
+    """LLM 미가용 시 결정론 침몰선 캡션(敬体·역사 서술·생물 표현 없음·날조 없음)."""
+    s = dossier.get("specs", {}) or {}
+    name = dossier.get("display", "")
+    jt = _jp_type(s.get("type", ""))
+    ly = _year(s.get("launched", "") or s.get("completed", ""))
+    sy = s.get("sunk_year") or _year(s.get("fate", ""))
+    reg = dossier.get("sink_region_jp")
+    dep = _depth_num(depth_m)
+    L: list[str] = [f"「{name}」——"]
+    if jt and ly:
+        L.append(f"{ly}年に建造された、{jt}でした。")
+    elif jt:
+        L.append(f"かつて海を渡った、{jt}でした。")
+    elif ly:
+        L.append(f"{ly}年に、この船は生まれました。")
+    if sy:
+        L += [f"しかし{sy}年、その航海は終わりを迎えます。", "船は静かに、海の底へと沈んでいきました。"]
+    else:
+        L.append("やがて船は、深い海の底へと沈みました。")
+    if reg and dep:
+        L.append(f"今、その船体は{reg}の海底、水深{dep}mに横たわっています。")
+    elif reg:
+        L.append(f"今、その船体は{reg}の海底に、静かに眠っています。")
+    elif dep:
+        L.append(f"今、その船体は水深{dep}mの闇の中に眠っています。")
+    else:
+        L.append("今、その船体は深い海の底に、静かに横たわっています。")
+    L.append("光の届かない海底で記録されたその姿は、潜水調査の映像として今も伝えられています。")
+    # ★생물 표현 없이 역사·기록 관점의 상시 서술로 분량 확보(날조 없음)
+    _EVER = ["時が止まったような船内に、当時の面影が残ります。",
+             "沈黙の中に、かつての航海の記憶が刻まれています。",
+             "海に沈んだ、もう一つの歴史がここにあります。"]
+    body = "\n".join(L)
+    i = 0
+    while len(body.replace("\n", "")) < 230 and i < len(_EVER):
+        body += "\n" + _EVER[i]; i += 1
+    body += "\n\n海の底に眠る歴史を、また見返したくなったら保存してください。"
+    # 한국어 참고 번역(결정론)
+    ko_L = [f"'{name}'——"]
+    if sy:
+        ko_L.append(f"{sy}년, 이 배의 항해는 끝을 맞이했습니다.")
+    ko_L.append("배는 조용히 바다 밑으로 가라앉았습니다.")
+    if reg and dep:
+        ko_L.append(f"지금 선체는 {reg}({dossier.get('sink_region_en','')})의 해저, 수심 {dep}m에 잠들어 있습니다.")
+    elif dep:
+        ko_L.append(f"지금 선체는 수심 {dep}m의 어둠 속에 잠들어 있습니다.")
+    else:
+        ko_L.append("지금 선체는 깊은 바다 밑에 조용히 누워 있습니다.")
+    ko_L.append("빛이 닿지 않는 해저에서 촬영된 그 모습은 지금도 잠수 조사 영상으로 전해집니다.")
+    ko_L.append("\n바다에 가라앉은 또 하나의 역사를, 다시 보고 싶다면 저장해 두세요.")
+    jp_tags, ko_tags = _wreck_caption_tags(dossier)
+    yt = f"【沈没船】{name}、最期の記録"
+    yk = f"【침몰선】{name}, 최후의 기록"
+    return {"jp": body, "ko": "\n".join(ko_L),
+            "tags": jp_tags, "tags_ko": ko_tags,
+            "yt_title": f"{yt} {jp_tags[0]} {jp_tags[1]}",
+            "yt_title_ko": f"{yk} {ko_tags[0]} {ko_tags[1]}"}
+
+
+def wreck_caption(dossier: dict, depth_m: str = "") -> dict:
+    """★침몰선 전용 캡션(생물 관점 배제 · 역사/침몰 경위/수심/수중 잔해 중심 · 敬体).
+    반환 {jp, ko, tags, tags_ko, yt_title, yt_title_ko}(rich_caption.generate와 동일 형태).
+    LLM 우선(스토리), 실패 시 결정론 폴백. 사실은 dossier 실제 값만(날조 금지)."""
+    s = dossier.get("specs", {}) or {}
+    bits = []
+    for k, lab in (("type", "船種"), ("tonnage", "トン数"), ("length", "全長"),
+                   ("launched", "進水"), ("completed", "竣工"), ("builder", "建造"),
+                   ("owner", "船主"), ("fate", "最期"), ("sunk_year", "沈没年")):
+        if s.get(k):
+            bits.append(f"{lab}={s[k]}")
+    if dossier.get("sink_region_jp"):
+        bits.append(f"沈没海域={dossier['sink_region_jp']}")
+    if _depth_num(depth_m):
+        bits.append(f"水深={_depth_num(depth_m)}m")
+    facts = " / ".join(bits) or "-"
+    summary = (dossier.get("summary", "") or "")[:600]
+    prompt = _WRECK_CAPTION_PROMPT.format(name=dossier.get("display", ""), facts=facts, summary=summary)
+    d = None
+    try:
+        from src.core import llm
+        for _ in range(2):
+            try:
+                out = llm.generate_text(prompt, max_tokens=2200)
+            except Exception as e:  # noqa: BLE001
+                log.warning("[dossier] 캡션 LLM 실패: %s", e); out = None
+            m = re.search(r"\{.*\}", out or "", re.S)
+            if m:
+                try:
+                    cand = json.loads(m.group(0))
+                except Exception:  # noqa: BLE001
+                    cand = None
+                if cand and len(str(cand.get("jp_caption", "")).replace("\n", "")) >= 180:
+                    d = cand; break
+    except Exception as e:  # noqa: BLE001
+        log.info("[dossier] 캡션 LLM 미가용: %s", e)
+    if not d:
+        return _fallback_wreck_caption(dossier, depth_m)
+    jp = str(d.get("jp_caption", "")).strip()
+    ko = str(d.get("ko_caption", "")).strip()
+    jp_tags, ko_tags = _wreck_caption_tags(dossier)
+    # LLM 태그가 있으면 앞 3개 채택하되 침몰선 코어 태그를 보장
+    lt = [t for t in (d.get("hashtags") or []) if str(t).strip()][:3]
+    if lt:
+        jp_tags = (["#沈没船"] + [t for t in lt if t != "#沈没船"])[:3]
+    lk = [t for t in (d.get("ko_hashtags") or []) if str(t).strip()][:3]
+    if lk:
+        ko_tags = (["#침몰선"] + [t for t in lk if t != "#침몰선"])[:3]
+    fb = _fallback_wreck_caption(dossier, depth_m)
+    if not jp or re.search(r"生息|棲息|暮らし", jp):     # 생물 표현 유입 시 폴백(안전망)
+        return fb
+    try:
+        from src.core import naturalness
+        jp = naturalness.polish_text(jp)
+    except Exception:  # noqa: BLE001
+        pass
+    if not ko or re.search(r"[ぁ-んァ-ヶ]", ko):
+        ko = fb["ko"]
+    yt = str(d.get("yt_title", "")).strip() or f"【沈没船】{dossier.get('display','')}、最期の記録"
+    yk = str(d.get("ko_title", "")).strip() or f"【침몰선】{dossier.get('display','')}, 최후의 기록"
+    return {"jp": jp, "ko": ko, "tags": jp_tags, "tags_ko": ko_tags,
+            "yt_title": f"{yt} {jp_tags[0]} {jp_tags[1]}",
+            "yt_title_ko": f"{yk} {ko_tags[0]} {ko_tags[1]}"}
+
+
 def ordered_beat_images(dossier: dict, max_per_beat: int = 2) -> list[dict]:
     """다큐 시퀀스용: afloat→portrait→sinking→wreck **시간순**으로 대표 이미지를 골라 평탄화.
     ★수중 잔해(wreck)는 이 콘텐츠의 핵심 자료 → **있으면 반드시 포함하고 더 많이(우선) 담는다**

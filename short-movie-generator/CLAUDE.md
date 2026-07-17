@@ -430,6 +430,17 @@
         구현: `dossier._extract_coord`/`_ocean_label`→`build_dossier`(sink_lat/lon/region), `reels_stinger.build_map_cut`,
         `footage.build_wreck_documentary`(video 항목 지원), `pipeline` doc 분기 삽입 + doc 스팅어 스킵.
         회귀: `test_extract_coord_*`·`test_ocean_label_*`·`test_build_map_cut_*`·`test_build_documentary_inserts_video_map_cut`.
+      - **★지도 컷 효과음(운영자 확정 · 무음 금지)**: 다큐 본문은 무음(나레이션만 위에 얹힘)이라
+        지도 컷도 무음으로 넣었더니 '지도 줌업' 순간 소리가 하나도 없었다 → `build_wreck_documentary`가
+        지도 컷 시작 시각(`map_start`)을 반환하고, 파이프라인(5.6)이 그 시각에 **scan(스캔 스윕)@map_start,
+        lockon(줌인 락온)@map_start+1.2s** SFX를 나레이션 위에 amix로 얹는다(나레이션은 그대로). 실패해도
+        발행 불정지. 검증: 지도 컷 구간만 음량 ↑(−11dB) · 나머지 무음(−91dB).
+      - **★침몰선 전용 캡션(운영자 확정 · 생물 관점 배제)**: 침몰선 캡션이 생물용(`rich_caption`, 「〜に
+        生息」류)에 치우쳐 부적절했다 → `dossier.wreck_caption(dossier, depth_m)`이 **배의 역사·침몰 경위·
+        수심·해역·수중 잔해 중심의 스토리 캡션**(敬体·블랙유머 금지·생물 표현 금지)을 생성(LLM 우선+결정론
+        폴백·≥230자). 해시태그도 **침몰선 계열**(#沈没船·#難破船·#해역 / #침몰선·#난파선·#해저) — 생물 태그
+        (#海洋生物)를 쓰지 않는다. 파이프라인은 `fv.get("doc")`일 때 `build_reels_caption`(생물) 대신 이걸 쓴다.
+        회귀: `test_wreck_caption_is_history_not_biology`.
       - **★다큐 컷 길이 배분(재발방지 · 잔해 컷 트림 방지)**: 예전 `build_wreck_documentary`는 컷당
         `per=max(3,ceil(target/n))`으로 **총합이 target보다 과하게 넘쳐**(예 40s vs 31s), 파이프라인이
         본문 길이로 트림할 때 **마지막 잔해(수중) 컷들이 통째로 잘려나갔다**(수중 컷이 적게 보인 원인).

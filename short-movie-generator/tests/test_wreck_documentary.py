@@ -91,6 +91,8 @@ def test_build_documentary_inserts_video_map_cut(tmp_path):
     res = F.build_wreck_documentary(images, str(dest), target_dur=18.0, key="map test")
     assert res and res["sequenced"] is True
     assert "map" in res["beats"] and res["beats"].index("map") < res["beats"].index("wreck")
+    # ★지도 컷 시작 시각을 반환해야(파이프라인이 이 시각에 스캔/락온 SFX를 믹스)
+    assert res["map_start"] is not None and res["map_start"] > 0
     dur = F._probe_dur(res["path"]) or 0
     assert 18.0 - 0.5 <= dur <= 18.0 + 2.5, f"총 길이가 target 근접이어야(과오버슛 금지): {dur}"
 
