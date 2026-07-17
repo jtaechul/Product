@@ -884,12 +884,25 @@ def _thumb_hook_overlay(text: str, width: int, height: int, hold: float,
     if not text or hold <= 0:
         return None
     s = settings.get("subtitle", {})
-    fs = int(s.get("thumb_hook_font_size", 116))
+    max_fs = int(s.get("thumb_hook_font_size", 116))
+    min_fs = int(s.get("thumb_hook_font_min", 60))
     mx = int(width * 0.07)
+    avail = width - 2 * mx
+    # 글씨 크기를 줄여가며 '단어 안 끊고 2줄 이내'에 딱 들어오는 최대 폰트를 찾는다(사용자 지시).
+    fs, lines = max_fs, None
+    while fs >= min_fs:
+        f = ImageFont.truetype(str(font_path), fs)
+        wrapped = _wrap_pil(text, f, avail, max_lines=99)   # 말줄임 없이 실제 줄 수만 확인
+        if len(wrapped) <= 2:
+            lines = wrapped
+            break
+        fs -= 4
+    if lines is None:                                        # 최소 폰트로도 2줄 초과 → 최소 폰트 2줄(말줄임)
+        fs = min_fs
+        lines = _wrap_pil(text, ImageFont.truetype(str(font_path), fs), avail, max_lines=2)
+    font = ImageFont.truetype(str(font_path), fs)
     img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    font = ImageFont.truetype(str(font_path), fs)
-    lines = _wrap_pil(text, font, width - 2 * mx, max_lines=3)
     lh = int(fs * 1.22)
     block_h = lh * len(lines)
     top = int(height * 0.46) - block_h // 2          # 화면 중앙(헤더/하단 이미지와 안 겹치는 미들존)
@@ -1539,27 +1552,38 @@ def _make_text(text: str, font_path: Path, font_size: int, color: str,
 
 
 def _wrap_pil(text: str, font, max_w: int, max_lines: int = 2) -> list:
-    """PIL 폰트 폭 기준 글자 단위 줄바꿈 (한글은 공백이 없어 글자 기준). 넘치면 말줄임."""
+    """어절(공백) 단위 줄바꿈 — 단어 중간에서 끊지 않는다(사용자 규칙). 한 어절이 한 줄보다 길 때만
+    그 어절을 글자 단위로 쪼갠다(불가피). max_lines 초과분은 마지막 줄 끝에 말줄임(…)."""
     from PIL import Image, ImageDraw
     d = ImageDraw.Draw(Image.new("RGB", (10, 10)))
+    def wpx(s):
+        return d.textbbox((0, 0), s, font=font)[2]
     lines, cur = [], ""
-    for ch in text:
-        if d.textbbox((0, 0), cur + ch, font=font)[2] <= max_w:
-            cur += ch
-        else:
+    for word in str(text).split():
+        trial = f"{cur} {word}".strip() if cur else word
+        if wpx(trial) <= max_w:
+            cur = trial
+            continue
+        if cur:                       # 현재 줄을 마무리하고 새 줄에서 이 어절을 시작
             lines.append(cur)
-            cur = ch
-            if len(lines) >= max_lines:
-                break
-    if len(lines) < max_lines and cur:
+            cur = ""
+        if wpx(word) > max_w:         # 어절 하나가 한 줄보다 긴 경우에만 글자 단위로 쪼갬
+            for ch in word:
+                if wpx(cur + ch) <= max_w:
+                    cur += ch
+                else:
+                    lines.append(cur)
+                    cur = ch
+        else:
+            cur = word
+    if cur:
         lines.append(cur)
-    if len(lines) == max_lines:  # 남은 글자가 있으면 마지막 줄 끝에 말줄임
-        used = sum(len(x) for x in lines)
-        if used < len(text) and lines:
-            while lines[-1] and d.textbbox((0, 0), lines[-1] + "…", font=font)[2] > max_w:
-                lines[-1] = lines[-1][:-1]
-            lines[-1] += "…"
-    return lines[:max_lines]
+    if len(lines) > max_lines:        # 넘치면 마지막 줄에 말줄임
+        lines = lines[:max_lines]
+        while lines[-1] and d.textbbox((0, 0), lines[-1] + "…", font=font)[2] > max_w:
+            lines[-1] = lines[-1][:-1]
+        lines[-1] = lines[-1].rstrip() + "…"
+    return lines
 
 
 def build_poster(out_path: Path, product: dict, settings: dict,

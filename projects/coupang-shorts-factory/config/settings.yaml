@@ -72,7 +72,8 @@ subtitle:               # 스펙 §M6 - 3 (2026-07-12 개편: '대본이 곧 자
   font_size: 80
   expose_font_size: 62       # expose 자막 크기 — 헤더 제목(≈72px)보다 작게(위계: 제목>자막, 2026-07-17)
   expose_hl_color: "#FFE86B" # expose 자막 형광펜 하이라이트(제목과 구분) — off로 끔
-  thumb_hook_font_size: 116  # 0:00 썸네일 훅(오프닝 카드) 글자 크기 — 그리드에서도 읽히게 크게(2026-07-17)
+  thumb_hook_font_size: 116  # 0:00 썸네일 훅(오프닝 카드) 최대 글자 크기 — 그리드에서도 읽히게 크게(2026-07-17)
+  thumb_hook_font_min: 60    # 훅이 길면 이 크기까지 자동 축소해 '단어 안 끊고 2줄 이내'로 맞춘다(2026-07-17)
   color: "#FFE400"      # 노랑
   stroke_color: "#000000"
   stroke_width: 6
