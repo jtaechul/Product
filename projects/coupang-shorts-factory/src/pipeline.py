@@ -187,6 +187,13 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
             print(f"[pipeline] 후보용 대본 저장 → data/plans/{product['_row_hash']}.json (제작에서 재사용)")
         _pimgs = list(product.get("hero_images") or [])
         _pimgs += _download_images(product.get("image_urls") or [], job_dir)
+        # 상세컷(2026-07-17): PDF 기능 설명 구간 크롭을 상품 라인 후보로 추가 — 선택폭 확대
+        try:
+            from src.product.enrich import harvest_detail_images
+            detail_imgs = harvest_detail_images(product["_row_hash"], job_dir / "detail")
+        except Exception as e:
+            print(f"[pipeline] 상세컷 추출 실패({type(e).__name__}: {e}) — 대표컷만 사용")
+            detail_imgs = []
         # 라인별 '다시 찾기'(--line): 그 라인만 재생성 → 기존 매니페스트에 병합(다른 라인 이미지는 그대로).
         only_line = args.line if (args.line is not None and args.line >= 0) else None
         prev = _download_prev_candidates(product["_row_hash"]) if only_line is not None else None
@@ -205,7 +212,7 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
             print(f"[pipeline] 라인 {only_line} 재생성 — 직전 이미지 {len(excl_urls)}개·밈 {len(excl_memes)}개 제외")
         manifest = imagesource.fetch_candidates(
             product, lines, job_dir, settings, product_images=_pimgs, only_line=only_line,
-            exclude_urls=excl_urls, exclude_memes=excl_memes)
+            exclude_urls=excl_urls, exclude_memes=excl_memes, detail_images=detail_imgs)
         # 제품 영상(링크 추출 + 업로드본)을 라인 후보('제품영상')로 추가 — 실패해도 이미지 후보만으로 계속
         try:
             from src.product.video_link import ensure_link_videos
@@ -602,6 +609,9 @@ def _publish_candidates(manifest: list, product: dict, job_dir: Path) -> Path:
             if c.get("is_pvideo"):   # 제품 영상 후보: 썸네일=포스터, 실제 영상=릴리스 자산명(pv_name)
                 cand["is_pvideo"] = True
                 cand["pv_name"] = c.get("pv_name")
+            if c.get("is_detail"):   # 상세컷(PDF 기능 설명 크롭): detail_idx로 제작 때 같은 컷 재현
+                cand["is_detail"] = True
+                cand["detail_idx"] = int(c.get("detail_idx", 0))
             cands.append(cand)
         web["lines"].append({"line_i": i, "text": e.get("text", ""), "stage": e.get("stage"),
                              "punch": bool(e.get("punch")), "query": e.get("query", ""),

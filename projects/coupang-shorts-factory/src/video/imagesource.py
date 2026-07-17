@@ -418,7 +418,8 @@ def _category_fallback_queries(product: dict) -> list:
 def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
                      product_images: list | None = None, per_line: int = 6,
                      only_line: int | None = None, exclude_urls: list | None = None,
-                     exclude_memes: list | None = None) -> list:
+                     exclude_memes: list | None = None,
+                     detail_images: list | None = None) -> list:
     """관리자 선택기용 — 라인마다 후보를 모은다. 설계(2026-07-15 사용자 개선):
     ① 라인마다 다른 검색 페이지 + 밈 로테이션으로 '라인별 차별화'(같은 이미지 반복 제거, #1)
     ② 후보의 절반 이상을 재미(밈·GIF·funny 스톡)로 구성(#2)
@@ -465,9 +466,17 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
         k = 0
         # ① 상품 사진 — product 타입 라인에만(#3). prod_idx로 '어느 상품 사진'인지 보존(선택 시 그 사진 사용)
         if pl["type"] == "product":
-            for pidx, p in enumerate(product_images[:2]):
+            for pidx, p in enumerate(product_images[:3]):   # 2→3장(2026-07-17 선택폭 확대)
                 cands.append({"file": p, "source": "product", "url": None,
                               "is_product": True, "prod_idx": pidx})
+            # 상세컷(PDF 기능 설명 구간 크롭, 2026-07-17) — 라인마다 시작점을 돌려 다른 컷이 먼저 보이게.
+            #   선택은 detail_idx로 저장 → 제작 때 harvest_detail_images가 같은 컷을 재현(load_selections).
+            dpairs = list(enumerate(detail_images or []))
+            if dpairs:
+                start = (i * 2) % len(dpairs)
+                for didx, dp in (dpairs[start:] + dpairs[:start])[:4]:
+                    cands.append({"file": str(dp), "source": "detail", "url": None,
+                                  "is_detail": True, "detail_idx": didx})
         # ② 재미(밈) — 로테이션(자체 제작물 = Content ID 안전, 장수는 학습이 조정). 라인 간·재생성 시 다른 밈.
         for mp in _pick_line_memes(PROJECT_ROOT, text, used_memes, meme_n):
             used_memes.add(Path(mp).name)
@@ -556,6 +565,7 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
     dl_dir = Path(job_dir) / "selected"
     dl_dir.mkdir(parents=True, exist_ok=True)
     line_images, used, dropped = [], 0, 0
+    detail_cache = None   # 상세컷 픽(detail_idx) 재추출 캐시 — 첫 픽에서 1회만 PDF에서 수확
     for i in range(len(lines)):
         entry = by_line.get(i)
         if not entry:
@@ -581,6 +591,21 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
                         print(f"[imgsrc] 제품영상 픽 확보 실패({pv}: {e}) — 건너뜀")
                 if loc:
                     imgs.append(loc); used += 1
+                continue
+            if pk.get("detail_idx") is not None:   # 상세컷 픽(2026-07-17) — PDF에서 같은 컷을 재추출(결정론)
+                if detail_cache is None:
+                    try:
+                        from src.product.enrich import harvest_detail_images
+                        detail_cache = harvest_detail_images(row_hash, Path(job_dir) / "detail_sel")
+                    except Exception as e:
+                        print(f"[imgsrc] 상세컷 재추출 실패({type(e).__name__}: {e})")
+                        detail_cache = []
+                di = int(pk.get("detail_idx") or 0)
+                if 0 <= di < len(detail_cache):
+                    imgs.append(detail_cache[di]); used += 1
+                else:
+                    print(f"[imgsrc] 상세컷 {di}번 없음(추출 {len(detail_cache)}장) — 건너뜀")
+                    dropped += 1
                 continue
             f = pk.get("file")
             if f and Path(f).exists():      # 저장소에 커밋된 파일(업로드본·밈 등)

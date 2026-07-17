@@ -192,6 +192,92 @@ def _pdf_image_candidates(pdf_path: Path, max_n: int = 5) -> list:
     return [png for _, _, png in cands[:max_n]]
 
 
+def harvest_detail_images(row_hash: str, out_dir, max_n: int = 8) -> list:
+    """상세페이지 PDF에서 '기능 설명 구간' 크롭(상세컷)을 추출 — 이미지 후보 선택폭 확대(2026-07-17).
+    임베드 이미지를 위→아래 순서로 모아, 세로로 긴 스트립(기능 설명 나열)은 정사각 타일로 잘라
+    백지·단색·중복 타일을 걸러 최대 max_n장 저장. **결정론적**(같은 PDF → 항상 같은 순서·인덱스)이라
+    관리자가 고른 detail_idx가 제작 시점에 같은 컷으로 재현된다. 반환: 저장된 파일 경로 리스트."""
+    import io
+    from PIL import Image
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    tiles, sigs = [], set()
+
+    def _sig(im):   # 근사 중복 제거용 서명(16x16 그레이 양자화)
+        g = im.convert("L").resize((16, 16))
+        return bytes(p // 16 for p in g.getdata())
+
+    def _keep(im):
+        g = im.convert("L").resize((64, 64))
+        px = list(g.getdata())
+        mean = sum(px) / len(px)
+        std = (sum((p - mean) ** 2 for p in px) / len(px)) ** 0.5
+        if std < 14 or (mean > 243 and std < 30):   # 백지·단색(여백) 컷 제외
+            return False
+        s = _sig(im)
+        if s in sigs:
+            return False
+        sigs.add(s)
+        return True
+
+    try:
+        import fitz
+    except Exception:
+        return []
+    for pdf in sorted(NOTES_DIR.glob(f"{row_hash}*.pdf")):
+        try:
+            doc = fitz.open(pdf)
+        except Exception as e:
+            print(f"[enrich] 상세컷: PDF 열기 실패({pdf.name}: {e})")
+            continue
+        entries, seen = [], set()
+        for pno, page in enumerate(doc):
+            for info in page.get_images(full=True):
+                xref = info[0]
+                if xref in seen:
+                    continue
+                seen.add(xref)
+                rects = page.get_image_rects(xref)
+                y0 = min((r.y0 for r in rects), default=0.0)
+                entries.append((pno, y0, xref))
+        entries.sort()
+        for pno, y0, xref in entries:
+            if len(tiles) >= max_n:
+                break
+            try:
+                pix = fitz.Pixmap(doc, xref)
+                if pix.n >= 5:
+                    pix = fitz.Pixmap(fitz.csRGB, pix)
+                im = Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB")
+            except Exception:
+                continue
+            w, h = im.size
+            if w < 350 or h < 350:
+                continue
+            if h / w > 1.8:   # 세로 스트립(기능 설명 나열) → 정사각 타일로 분할
+                step = w
+                for top in range(0, h - step // 2, step):
+                    if len(tiles) >= max_n:
+                        break
+                    tile = im.crop((0, top, w, min(top + step, h)))
+                    if tile.size[1] >= step // 2 and _keep(tile):
+                        tiles.append(tile)
+            elif _keep(im):
+                tiles.append(im)
+        doc.close()
+        if len(tiles) >= max_n:
+            break
+    paths = []
+    for k, im in enumerate(tiles[:max_n]):
+        im.thumbnail((1080, 1080))
+        fp = out_dir / f"detail_{k:02d}.jpg"
+        im.save(fp, "JPEG", quality=88)
+        paths.append(fp)
+    if paths:
+        print(f"[enrich] 상세컷 {len(paths)}장 추출(기능 설명 구간) → {out_dir}")
+    return paths
+
+
 def _pdf_text(pdf_path: Path) -> str:
     import fitz
     doc = fitz.open(pdf_path)
