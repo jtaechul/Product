@@ -710,6 +710,9 @@ def build_wreck_documentary(images: list[dict], dest_dir: str, target_dur: float
             else:
                 log.info("[footage] 다큐 영상 항목 누락: %s", v)
             continue
+        local = im.get("image_path")             # 사진 다큐: 이미 내려받아 검증한 로컬 파일 재사용
+        if local and Path(local).exists() and Path(local).stat().st_size > 50_000:
+            prepared.append({"kind": "img", "src": local, "im": im}); continue
         iext = next((e for e in _IMAGE_EXT if im["url"].lower().endswith(e)), ".jpg")
         img = dest / f"wdoc_{i}{iext}"
         if not (img.exists() and img.stat().st_size > 50_000) and not _download(im["url"], img):
@@ -828,11 +831,10 @@ def _wreck_doc_footage(cand: dict, scientific_name: str) -> dict | None:
             "credit": " · ".join(doss.get("credits", []))[:300], "source": "Wikimedia Commons"}
 
 
-def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
-    """종 실사 영상 확보 → {path, license, credit, source} 또는 None(확보 실패).
-
-    실패 시 상위(파이프라인)는 이 종을 '실사 영상 미확보'로 판단해 중단/스킵한다(날조 방지).
+def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
+    """종 실사 **영상** 확보 → {path, license, credit, source} 또는 None(영상 확보 실패).
     ★사진 소스(media_kind=photo, 난파선 무한 엔진)는 켄번즈로 영상화해 반환한다.
+    (실사 사진 다큐 폴백은 상위 래퍼 `fetch_footage`가 담당 — 영상 우선·없으면 이미지.)
     """
     dest = Path(dest_dir)
     key = (scientific_name or "").strip().lower()
@@ -953,3 +955,107 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
     return {"path": str(out), "license": cand["license"],
             "credit": cand["credit"], "source": cand.get("source", ""),
             "logo_box": logo}
+
+
+# ── 실사 사진 다큐(영상 미확보 생물 → 여러 실사 이미지 켄번즈 시퀀스) ────────────────────
+_PHOTODOC_MIN = 4          # 실사 최소 장수(미달이면 제작 안 함 · 날조·빈약 방지)
+_PHOTODOC_MAX = 6          # 시퀀스 최대 컷 수
+_PHOTODOC_MIN_STRUCT = 12.0   # 이미지 최소 구조변별(macro std) — 밋밋한(빈) 표본 컷 배제
+#   실측: 좋은 실사 14.8~85, 빈 표본 매크로 1.2~3.1 → 12가 안전한 경계. 좋은 사진이 4장 미만인
+#   종(빈약한 소스)은 자동으로 제작 대상에서 빠진다(나쁜 영상 방지).
+# 실사 필터: 삽화·도판·표본·오래된(–1949) 그림을 배제(살아있는 생물 다큐엔 실사만).
+_NONPHOTO_RE = re.compile(
+    r"illustration|drawing|\bplate\b|lithograph|vintage|poster|engraving|sketch|"
+    r"painting|diagram|woodcut|etching|\bholotype\b|\bdried\b|dissect|\bjar\b|"
+    r"\b(1[5-8]\d\d|19[0-4]\d)\b", re.I)
+
+
+def _is_realistic_photo(p: dict) -> bool:
+    """1차(메타데이터) 실사 필터: 파일명·크레딧에 삽화/도판/오래된-그림 단서가 없으면 True."""
+    return not _NONPHOTO_RE.search(f"{p.get('credit', '')} {p.get('url', '')}")
+
+
+def _looks_photographic(path: str) -> bool:
+    """2차(시각) 실사 필터: 실제 픽셀로 '사진 vs 삽화·도판'을 가른다. 파일명에 단서가 없는
+    흑백/세피아 도판(예: Carl Chun 1903 판)이 종이 흰 배경 위에 그려진 것을 배제한다.
+    실측 근거: 실사(수중·표본)는 흰 배경이 거의 없음(0~19%). 도판은 흰 배경 70%+.
+    검사 실패 시 True(막지 않음 — 검사 오류로 제작 차단하지 않음)."""
+    try:
+        from PIL import Image, ImageStat
+        im = Image.open(path).convert("RGB").resize((96, 96))
+    except Exception:  # noqa: BLE001
+        return True
+    hsv = im.convert("HSV")
+    mean_s = ImageStat.Stat(hsv.getchannel("S")).mean[0]         # 평균 채도
+    hist = hsv.getchannel("V").histogram()                      # 명도 히스토그램(256)
+    white = sum(hist[236:]) / max(1, sum(hist))                 # 밝은(종이) 배경 비율
+    if white > 0.55:                       # 넓은 흰/종이 배경 = 도판·삽화·고립 스캔
+        return False
+    if mean_s < 12 and white > 0.25:       # 흑백 라인드로잉
+        return False
+    return True
+
+
+def species_photo_doc(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
+    """★영상 미확보 생물 → 실사 사진 여러 장을 확보(라이선스+실사 필터). 4장 이상이면 사진 다큐로
+    제작 가능. 실제 시퀀스 합성은 파이프라인이 본문 길이를 안 뒤 build_wreck_documentary로 수행한다
+    (난파선 다큐와 동일 엔진). 부족하면 None(→ 제작 안 함 · 날조 없음).
+
+    반환: {photo_doc:True, photos:[{url,beat,license,credit}], hero_url, license, credit, source, path:None}.
+    """
+    got = _commons_photos(scientific_name, 16) or _commons_photos(common_name_en, 16) or []
+    cand = [p for p in got if _is_realistic_photo(p)]          # 1차: 메타데이터 필터
+    if len(cand) < _PHOTODOC_MIN:
+        log.info("[footage] 실사 후보 부족(1차 %d<%d) → 사진 다큐 스킵: %s",
+                 len(cand), _PHOTODOC_MIN, scientific_name or common_name_en)
+        return None
+    # 2차: 실제 내려받아 '사진 vs 삽화·도판' 시각 판별(흰 배경 도판 배제). 통과분만 채택.
+    chk = Path(dest_dir) / "photocheck"; chk.mkdir(parents=True, exist_ok=True)
+    good: list[dict] = []
+    for i, p in enumerate(cand):
+        iext = next((e for e in _IMAGE_EXT if p["url"].lower().endswith(e)), ".jpg")
+        fp = chk / f"chk_{i}{iext}"
+        if not (fp.exists() and fp.stat().st_size > 50_000) and not _download(p["url"], fp):
+            continue
+        if not _looks_photographic(str(fp)):
+            continue
+        try:                                   # 밋밋한(빈) 표본 매크로 컷 배제(구조변별)
+            from PIL import Image as _Im
+            if _frame_macro_std(_Im.open(fp)) < _PHOTODOC_MIN_STRUCT:
+                continue
+        except Exception:  # noqa: BLE001
+            pass
+        good.append({**p, "image_path": str(fp)})
+        if len(good) >= _PHOTODOC_MAX:
+            break
+    if len(good) < _PHOTODOC_MIN:
+        log.info("[footage] 실사 사진 부족(2차 %d<%d) → 사진 다큐 스킵: %s",
+                 len(good), _PHOTODOC_MIN, scientific_name or common_name_en)
+        return None
+    seq = [{"url": g["url"], "image_path": g["image_path"], "beat": f"p{i}",
+            "license": g["license"], "credit": g.get("credit", "")} for i, g in enumerate(good)]
+    log.info("[footage] 실사 사진 다큐 후보 확보: %s (실사 %d장)", scientific_name, len(seq))
+    return {"photo_doc": True, "photos": seq, "hero_url": good[0].get("image_path") or good[0]["url"],
+            "path": None, "logo_box": None, "license": _rep_license([g["license"] for g in good]),
+            "credit": " · ".join(sorted({g.get("credit", "") for g in good if g.get("credit")}))[:300],
+            "source": "Wikimedia Commons"}
+
+
+def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
+    """종 실사 소스 확보 → {path|photo_doc, license, credit, source} 또는 None.
+
+    ★영상 우선·없으면 이미지(운영자 확정): 실사 영상을 먼저 시도하고, 영상이 없거나 게이트에 탈락하면
+    같은 종의 **실사 사진 여러 장을 켄번즈 시퀀스**로 만들 수 있는지(사진 다큐) 확인해 폴백한다.
+    이미지가 Commons에 훨씬 많아(영상 0개인 심해종 다수) 제작 가능 풀이 크게 늘어난다.
+    실패 시 상위(파이프라인)는 '실사 미확보'로 판단해 중단/스킵한다(날조 방지).
+    """
+    v = _fetch_video_footage(scientific_name, common_name_en, dest_dir)
+    if v:
+        return v
+    # 난파선은 사진 다큐(그 배 전용) 경로가 이미 _fetch_video_footage 안에 있으므로 여기선 생물만.
+    if (scientific_name or "").strip().lower().startswith("wreck "):
+        return None
+    doc = species_photo_doc(scientific_name, common_name_en, dest_dir)
+    if doc:
+        log.info("[footage] 영상 미확보 → 실사 사진 다큐로 폴백: %s", scientific_name)
+    return doc

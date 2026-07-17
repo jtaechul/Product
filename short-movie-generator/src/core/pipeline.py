@@ -352,6 +352,22 @@ def run_reels(
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", docv["path"],
                         "-t", f"{body_dur:.2f}", "-c:v", "libx264", "-pix_fmt", "yuv420p",
                         "-crf", "19", "-an", body_v], check=True)
+    elif fv.get("photo_doc"):
+        # ★실사 사진 다큐(영상 미확보 생물 · 운영자 확정 "영상 우선·없으면 이미지"): 같은 종의 실사
+        #   여러 장을 body_dur 길이의 켄번즈 9:16 시퀀스로 합성(난파선과 동일 엔진). 나레이션·자막·
+        #   오프닝 훅·엔드카드·수심 스팅어는 생물 기본 경로 그대로(캡션·대본도 생물 기본). WQ/추적
+        #   리프레임/컷어웨이는 우회한다(이미 9:16 시퀀스 · 워터마크 없음).
+        docv = footage.build_wreck_documentary(
+            fv["photos"], str(work_dir / "pdoc"), target_dur=body_dur + 1.0,
+            key=info.scientific_name)
+        if not docv:
+            raise PipelineError("footage", "실사 사진 다큐 시퀀스 합성 실패")
+        fv = {**fv, "path": docv["path"], "credit": docv.get("credit", fv.get("credit", "")),
+              "license": docv.get("license", fv.get("license", "")), "logo_box": None}
+        body_v = str(work_dir / "body_reframed.mp4")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", docv["path"],
+                        "-t", f"{body_dur:.2f}", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                        "-crf", "19", "-an", body_v], check=True)
     else:
         # 2.5) ★워터마크 QC(하드룰 #9): 원본을 1초 간격 OCR 스캔 → 크레딧 슬레이트 초는 회피하고
         #      탐지된 로고/URL은 delogo한 '깨끗한 소스'를 먼저 만든다. 이후 모든 단계(리프레임·
@@ -455,9 +471,9 @@ def run_reels(
     #   만든다(훨씬 선명). 미확보 시 기존 영상 프레임으로 자동 폴백(발행 불정지). 같은 대상의 사진만.
     hero = None
     try:
-        if fv.get("doc") and fv.get("hero_url"):
-            # 다큐: dossier의 취항(afloat) 사진을 오프닝·엔드카드 배경으로(선명한 원본)
-            hp = raw_dir / "wreck_hero.jpg"
+        if (fv.get("doc") or fv.get("photo_doc")) and fv.get("hero_url"):
+            # 다큐/사진다큐: 첫 대표 사진을 오프닝·엔드카드 배경으로(선명한 원본)
+            hp = raw_dir / "doc_hero.jpg"
             if footage._download(fv["hero_url"], hp):
                 hero = {"path": str(hp)}
         else:
