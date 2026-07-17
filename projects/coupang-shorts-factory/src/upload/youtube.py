@@ -1,6 +1,7 @@
 """M7. 유튜브 업로드 — YouTube Data API v3 videos.insert (스펙 §M7).
 
-- 미인증 API 프로젝트는 업로드 영상이 자동 private 잠금 → 기본 privacy=private (스펙 §M7-2)
+- 기본 privacy=unlisted(일부공개, 2026-07-17 확정): 비공개(private)는 유튜브가 댓글을 막아
+  고지 댓글 자동 등록이 불가(run129 검증) → 일부공개로 올려 댓글까지 자동, 검수 후 공개 전환
 - 제휴 고지문(§3.1)은 설명란 '최상단 첫 줄' + 댓글에 코드로 강제, 누락 시 assert로 업로드 중단
   (공정위 근접성 원칙상 최상단이 가장 안전 — 2026-07-17 사용자 재확정)
 - 고정(핀) 지정은 API 미지원 → 댓글 자동 등록까지 수행, 핀 고정은 유튜브 앱에서 1탭(문서화)
@@ -189,12 +190,20 @@ def upload(video_path: Path, script: dict, product: dict, settings: dict,
     except Exception as e:  # 댓글 실패는 업로드 자체를 무효화하지 않음 — 보고 + 텔레그램 알림
         emsg = str(e)
         print(f"[upload] 경고: 댓글 등록 실패({emsg}) — 수동 등록 필요")
-        # 가장 흔한 원인: 리프레시 토큰에 'youtube.force-ssl'(댓글 권한)이 없음(업로드 권한만 승인됨).
-        hint = ""
-        if any(k in emsg for k in ("403", "insufficient", "forbidden", "not be properly authorized")):
-            hint = ("\n원인(추정): 유튜브 토큰에 '댓글 권한(youtube.force-ssl)'이 빠졌습니다. "
-                    "OAuth Playground에서 토큰을 다시 만들 때 두 권한(upload + force-ssl)을 모두 승인한 뒤 "
-                    "SHORTS_YT_REFRESH_TOKEN 시크릿만 교체하면 됩니다.")
+        # 원인 판별(2026-07-17 run129 검증): 'insufficient authentication scopes'=토큰 권한 누락 /
+        # 'comment thread could not be created'=비공개(private) 영상은 유튜브가 댓글 자체를 막음(스코프 정상).
+        if "insufficient authentication scopes" in emsg or "ACCESS_TOKEN_SCOPE_INSUFFICIENT" in emsg:
+            hint = ("\n원인: 유튜브 토큰에 '댓글 권한(youtube.force-ssl)'이 빠졌습니다. "
+                    "OAuth Playground에서 두 권한(upload + force-ssl)을 모두 승인해 토큰 재발급 후 "
+                    "SHORTS_YT_REFRESH_TOKEN 시크릿만 교체하세요.")
+        elif "comment thread could not be created" in emsg:
+            hint = (f"\n원인: 비공개(private) 영상에는 유튜브가 댓글을 막습니다(토큰은 정상). "
+                    f"유튜브 스튜디오에서 이 영상을 공개/일부공개로 전환한 뒤, 아래 내용을 댓글로 직접 "
+                    f"붙여넣고 고정해 주세요.\n──댓글 내용──\n{pinned}\n──────")
+        elif "commentsDisabled" in emsg:
+            hint = "\n원인: 이 영상의 댓글 기능이 꺼져 있습니다 — 유튜브 스튜디오에서 댓글 허용을 켜 주세요."
+        else:
+            hint = ""
         try:
             from src import notify
             notify.send(f"[미래마켓] 영상은 올라갔지만 고지·링크 '고정 댓글' 자동 등록이 실패했습니다.{hint}\n"
