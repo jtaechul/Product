@@ -1600,7 +1600,7 @@ async function renderReview(rel, plan, p, backFn) {
     toast("유튜브 업로드를 시작했습니다. 완료되면 텔레그램으로 알림이 옵니다.");
   });
   up.appendChild(ub);
-  up.insertAdjacentHTML("beforeend", '<p class="hint">비공개(private)로 올라갑니다. 유튜브 스튜디오에서 확인 후 공개로 바꾸세요. (SHORTS_YT 인증 필요)</p>');
+  up.insertAdjacentHTML("beforeend", '<p class="hint">바로 \'공개\'로 올라가고 고지 댓글이 자동 등록됩니다 — 올리기 전에 검수를 마쳐주세요. 남는 수동 작업은 댓글 \'고정\' 1탭뿐. (SHORTS_YT 인증 필요)</p>');
   box.appendChild(up);
 }
 const RUN_LABEL = {
