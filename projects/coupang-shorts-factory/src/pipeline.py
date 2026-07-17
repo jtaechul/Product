@@ -273,7 +273,8 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
                          lines=lines, line_windows=line_windows, stock_clips=stock_clips,
                          product_videos=product_videos, line_images=line_images,
                          has_narration=not args.no_narration,
-                         headline=script.get("headline", ""))
+                         headline=script.get("headline", ""),
+                         thumb_hook=script.get("thumb_hook", ""))
     stats = {"job_id": job_id, "product": product["name"],
              "tts_provider": tts_result["provider"],
              "timestamps_source": tts_result["timestamps_source"], **stats}

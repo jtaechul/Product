@@ -177,6 +177,9 @@ def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None) 
     # headline(폭로 포맷 화면 상단 뉴스 헤더)도 같은 규칙으로 정화 — 이모지·슬래시·파이프 + 제품명 제거
     if script.get("headline"):
         script["headline"] = hide_product_name(clean_text(str(script["headline"])), avoid_terms)
+    # thumb_hook(0:00 썸네일 홀드에 크게 얹는 오프닝 훅) — 화면 텍스트라 headline과 동일 규칙 정화
+    if script.get("thumb_hook"):
+        script["thumb_hook"] = hide_product_name(clean_text(str(script["thumb_hook"])), avoid_terms)
     # description_body(유튜브 설명란 본문)에서도 정식 제품명 제거(2026-07-16) — 줄바꿈은 보존.
     if script.get("description_body"):
         body = str(script["description_body"])
