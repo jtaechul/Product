@@ -77,11 +77,15 @@ def enrich_product(product: dict, settings: dict, job_dir=None) -> dict:
         digest += "\n실사용 후기 요점: " + " / ".join(reviews)
     product["notes"] = ((text + "\n" if text else "") + "[캡처에서 추출한 요점]\n" + digest)[:4000]
 
-    if not product["name"] or product["price"] <= 0:
+    if not product["name"]:
         raise RuntimeError(
-            "자료에서 상품명 또는 가격을 찾지 못했습니다. 캡처에 상단 제목·가격 부분이 "
-            "포함됐는지 확인하거나, 관리자 페이지 '직접 입력'에 채워 다시 등록해 주세요.")
-    print(f"[enrich] M2.5 보강 완료: {product['name']} ({product['price']:,}원, "
+            "자료에서 상품명을 찾지 못했습니다. 캡처에 상단 제목 부분이 포함됐는지 확인하거나, "
+            "관리자 페이지 '직접 입력'에 상품명을 채워 다시 등록해 주세요.")
+    # 가격은 필수 아님(2026-07-17 사용자 확정): 대본·영상은 가격 미표기 정책이라 없어도 제작에 지장 없음.
+    if product["price"] <= 0:
+        print("[enrich] 가격 미확인 — 가격 없이 계속 진행(영상·대본은 가격을 쓰지 않음)")
+    price_txt = f"{product['price']:,}원" if product["price"] > 0 else "가격 미확인"
+    print(f"[enrich] M2.5 보강 완료: {product['name']} ({price_txt}, "
           f"특징 {len(product['specs'])}개, 후기 요점 {len(reviews)}개, "
           f"상품사진 {len(product['hero_images'])}장, 자료: 이미지 {len(images)}·후보 {len(candidates)}장)")
     return product

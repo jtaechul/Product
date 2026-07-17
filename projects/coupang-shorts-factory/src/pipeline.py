@@ -100,7 +100,8 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     product = enrich_product(product, settings, job_dir)
     _persist_product_meta(product, settings)   # 이름 + 스토어 한줄소개를 관리자 표시용으로 기록
     (job_dir / "product.json").write_text(json.dumps(product, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"[pipeline] M2 상품: {product['name']} ({product['price']:,}원)")
+    _p = int(product.get("price") or 0)
+    print(f"[pipeline] M2 상품: {product['name']} ({f'{_p:,}원' if _p > 0 else '가격 미확인'})")
 
     # ---- 라인 문구 재생성 모드(--regen-line): 대본 한 줄의 text만 새로 만들어 즉시 교체
     if args.regen_line is not None:

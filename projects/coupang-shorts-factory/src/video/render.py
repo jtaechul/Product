@@ -1646,9 +1646,10 @@ def build_poster(out_path: Path, product: dict, settings: dict,
                   stroke_width=3, stroke_fill="#000000")
         y += 84
     y += 20
-    pw = draw.textbbox((0, 0), price, font=price_font)[2]
-    draw.text(((W - pw) // 2, y), price, font=price_font, fill="#FFE400",
-              stroke_width=6, stroke_fill="#000000")
+    if int(product.get("price") or 0) > 0:   # 가격 미확인이면 '0원'을 굽지 않는다(2026-07-17)
+        pw = draw.textbbox((0, 0), price, font=price_font)[2]
+        draw.text(((W - pw) // 2, y), price, font=price_font, fill="#FFE400",
+                  stroke_width=6, stroke_fill="#000000")
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
