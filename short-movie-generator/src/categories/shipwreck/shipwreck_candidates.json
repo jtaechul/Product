@@ -27,32 +27,6 @@
   },
   {
     "kind": "wreck",
-    "key": "wreck lusitania",
-    "needs_confirm": true,
-    "media_kind": "wreck_doc",
-    "wiki_title": "RMS Lusitania",
-    "title": "RMS Lusitania — 다큐(여러 이미지)",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Antonio_Jacobsen_-_The_R.M.S._Lusitania_under_full_steam_-_1908.png",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Antonio_Jacobsen_-_The_R.M.S._Lusitania_under_full_steam_-_1908.png",
-    "license": "cc-by-sa",
-    "credit": "AnonymousUnknown author · PUBLIC-DOMAIN · Antonio Jacobsen · PUBLIC-DOMAIN · Cunard Line · PUBLIC-DOMAIN · Derek Hatfield from Peterborough, Canada · CC-BY · Edmund F. Arras · PUBLIC-DOMAIN · George G",
-    "source": "Wikipedia: RMS Lusitania",
-    "name": "Lusitania",
-    "name_ja": "",
-    "ship_type": "Ocean liner",
-    "depth": "",
-    "facts": [
-      "선종: Ocean liner",
-      "총톤수: 31,550 GRT, 12,611 NRT",
-      "침몰: 1915년"
-    ],
-    "fact_src": "Wikipedia: RMS Lusitania",
-    "desc": "RMS Lusitania was a British ocean liner launched by the Cunard Line in 1906 as a Royal Mail Ship. She was the world's largest passenger ship until the completion of her running mate Mauretania three months later. In 1907, she gained the Blue Riband appellation for the fastest Atlantic crossing, whic",
-    "img_count": 35,
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-shipwreck/thumb_shipwreck_wreck_lusitania_29332273854.jpg"
-  },
-  {
-    "kind": "wreck",
     "key": "wreck britannic",
     "needs_confirm": true,
     "media_kind": "wreck_doc",
