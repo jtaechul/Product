@@ -873,6 +873,10 @@ async function makeInit() {
   }
   await mkInit();          // 실행 기록
   loadProducts();          // (대기열은 숨김이지만 상품 영상 배지 등 내부 상태 갱신 유지)
+  // ⭐ 창을 닫았다 열어도 이어서(2026-07-17 사용자 요청): 마지막 작업 상품의 진행 화면을 자동 복원 —
+  //   방향 선택 대기면 ② 메뉴에 3안, 확정+대본이면 검토 화면, 방향 전이면 '기획방향 수립' 버튼.
+  //   (selectProduct는 이제 아무것도 자동 실행하지 않으므로 로드 시 호출해도 안전)
+  if (currentWork) { try { await selectProduct(currentWork.row, currentWork.hash, currentWork.label); } catch (_) {} }
   // 이미 만들어진 이미지 후보가 있으면 자동 표시(새로고침으로 자동 폴링이 끊겨도 복원)
   if (currentWork && !imgManifest) { try { await loadCandidates(currentWork, true); } catch (_) {} }
 }
@@ -942,12 +946,13 @@ async function loadProducts() {
     let pvAssets = [];   // 제품 영상(릴리스 product-assets) 자산 — 상품별 개수 배지용
     // ⭐ 진행 현황판(2026-07-16 사용자 요청): 상품마다 기획→이미지→영상→업로드가 어디까지
     //   됐는지 한눈에 — 안 올린 것/수정할 것을 이 목록에서 바로 식별하고 '작업'으로 진입.
-    const planSet = new Set(), selSet = new Set(), runMap = {};
+    const planSet = new Set(), selSet = new Set(), mechSet = new Set(), runMap = {};
     try {
-      const [pvRel, pl, se, rels] = await Promise.all([
+      const [pvRel, pl, se, me, rels] = await Promise.all([
         gh(`/repos/${OWNER}/${REPO}/releases/tags/${PV_TAG}`, { allow404: true }),
         gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/plans?ref=${BRANCH}`, { allow404: true }),
         gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/selections?ref=${BRANCH}`, { allow404: true }),
+        gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/mechanism?ref=${BRANCH}`, { allow404: true }),
         gh(`/repos/${OWNER}/${REPO}/releases?per_page=100`, { allow404: true }),
       ]);
       pvAssets = (pvRel && pvRel.assets) || [];
@@ -956,6 +961,9 @@ async function loadProducts() {
       }
       for (const f of (Array.isArray(se) ? se : [])) {
         const m = /^([0-9a-f]{16})\.json$/.exec(f.name || ""); if (m) selSet.add(m[1]);
+      }
+      for (const f of (Array.isArray(me) ? me : [])) {   // 기획 방향(3안) 파일 — '방향 선택 대기' 표시용
+        const m = /^([0-9a-f]{16})\.json$/.exec(f.name || ""); if (m) mechSet.add(m[1]);
       }
       for (const rel of (Array.isArray(rels) ? rels : [])) {   // 최신순 → 상품별 최신 영상만
         if (!String(rel.tag_name || "").startsWith("shorts-run")) continue;
@@ -972,9 +980,12 @@ async function loadProducts() {
       const isDone = done.includes(h);
       const label = r.name || pnEntry(h).name || "(상품명 자동 추출 중 — " + r.link.slice(-14) + ")";
       const nVids = pvAssets.filter((a) => (a.name || "").startsWith(h + "_")).length;
+      // '방향' 단계: 대본이 있으면 방향은 지난 것 / 3안만 있으면 '선택 대기'(창 닫아도 여기서 재개)
+      const dirState = planSet.has(h) ? "done" : (mechSet.has(h) ? "pick" : "todo");
       const stages = [["기획", planSet.has(h)], ["이미지 선택", selSet.has(h)],
                       ["영상 제작", !!runMap[h]], ["유튜브 업로드", isDone || !!(runMap[h] && runMap[h].url)]];
-      const nextStep = !stages[0][1] ? "작업을 눌러 기획부터"
+      const nextStep = !stages[0][1]
+        ? (dirState === "pick" ? "기획 방향(3안)을 골라주세요 — '작업'" : "'작업'을 눌러 기획방향 수립부터")
         : !stages[1][1] ? "이미지를 골라 선택 저장"
         : !stages[2][1] ? "제작하기 실행"
         : !stages[3][1] ? "검수 후 올리기" : "완료";
@@ -994,6 +1005,11 @@ async function loadProducts() {
         (r.price ? Number(r.price).toLocaleString() + "원" : "가격 자동") + (r.cat ? " · " + r.cat : "")
         + " · 다음: " + nextStep;
       const stg = el.querySelector(".stg");
+      const dc = document.createElement("span");   // '방향' 칩 — 선택 대기면 눈에 띄게
+      dc.className = "chip " + (dirState === "done" ? "done" : "wait");
+      dc.style.cssText = "font-size:11px;padding:2px 8px" + (dirState === "pick" ? ";font-weight:900" : "");
+      dc.textContent = dirState === "done" ? "방향 완료" : dirState === "pick" ? "방향 선택 대기" : "방향 전";
+      stg.appendChild(dc);
       for (const [nm, ok] of stages) {
         const c = document.createElement("span");
         c.className = "chip " + (ok ? "done" : "wait");
@@ -1922,13 +1938,22 @@ async function selectProduct(row, hash, label) {
     document.getElementById("tab-direction").scrollIntoView({ behavior: "smooth" });
     setStatus("'기획방향 수립'을 누르면 3안을 만듭니다.");
   } else {
-    // 방향은 확정됐는데 대본이 아직 없음(중단 등) → 확정한 방향으로 대본 생성 재개
+    // 방향은 확정됐는데 대본이 아직 없음(창 닫힘·중단 등) → 자동 실행하지 않고 '재개 버튼'
+    //   (페이지 로드 복원 시 워크플로가 몰래 돌지 않게 — 2026-07-17)
     $("planView").innerHTML = ""; $("planActions").style.display = "none";
     setDirDone(mech.data);
+    const dv = $("dirView");
+    const b = document.createElement("button"); b.className = "btn"; b.style.marginTop = "8px";
+    b.textContent = "확정한 방향으로 기획·대본 만들기 (재개)";
+    b.onclick = (ev) => busy(ev.target, async () => {
+      const pf = await getFile(`${PLAN_DIR}/${hash}.json`, true, true);
+      await planDispatch(row);
+      setStatus("확정된 방향으로 기획·대본을 만드는 중... (약 1~2분, 완성되면 자동 표시)");
+      toast("기획·대본 생성 시작"); pollPlan(hash, 0, pf && pf.sha);
+    });
+    dv.appendChild(b);
     document.getElementById("tab-direction").scrollIntoView({ behavior: "smooth" });
-    setStatus("확정된 방향으로 기획·대본을 만드는 중... (약 1~2분)");
-    await planDispatch(row);
-    pollPlan(hash);
+    setStatus("방향은 확정돼 있습니다 — 버튼을 눌러 기획·대본 생성을 이어가세요.");
   }
 }
 function currentProduct() { return requireWork(); }
