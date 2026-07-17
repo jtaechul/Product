@@ -905,13 +905,14 @@ def _build_expose(lines: list, line_windows: list, words: list, line_images: lis
     layers.append(ImageClip(_expose_header_arr(width, header_h, board, headline, meta, font_path, tag))
                   .with_duration(duration).with_position((0, 0)))
     # 상단 자막 밴드 = 가라오케(대본 subs 단위로 어절별 팝업, 통문장 폐지 — 2026-07-15 사용자 지시).
-    #   흰 게시판 배경이라 노랑 글자 가독성을 위해 어두운 캡션바를 뒤에 깔고, 글자는 고정 y 1곳에 팝업.
-    kfs = int(s.get("font_size", 80))
-    # expose(게시판 글) = 흰 배경 + '검정 본문' 자막. 회색 캡션바 제거(2026-07-16 사용자 지시) —
-    #   검정 글자가 흰 배경에서 그대로 읽히므로 뒤에 띠를 깔지 않는다. (color는 expose 전용으로 검정 고정)
-    kcolor = s.get("expose_color", "#141414")     # 흰 배경 게시판 본문 = 진한 검정
+    #   ⭐ 제목 vs 자막 구분(2026-07-17 사용자 지시): 제목(헤더)은 '큰 굵은 검정', 자막(대사)은
+    #   제목보다 작게 + '노란 형광펜 하이라이트' 위 검정 글자 — 게시판 글에 형광펜 친 본문 느낌.
+    #   같은 폰트·같은 검정·자막이 더 컸던 이전 상태가 위계 혼란의 원인이라 크기·배경으로 분리.
+    kfs = int(s.get("expose_font_size", 62))      # 자막은 헤더 제목(≈72px)보다 확실히 작게
+    kcolor = s.get("expose_color", "#141414")     # 흰 배경 게시판 본문 = 진한 검정(QA 검사색 유지)
     kstroke = s.get("expose_stroke_color", "#FFFFFF")
     ksw = int(s.get("expose_stroke_width", 0))    # 흰 배경이라 외곽선 불필요(0)
+    hl_color = str(s.get("expose_hl_color", "#FFE86B"))   # 형광펜 노랑("" 또는 off면 하이라이트 없음)
     band_h = min(sub_h, int(kfs * 1.7))
     band_top = sub_top + max(0, (sub_h - band_h) // 2)
     ky = band_top + max(0, (band_h - kfs) // 2)   # 자막 팝업 top y — 전 자막 동일(QA: y 1곳)
@@ -919,11 +920,28 @@ def _build_expose(lines: list, line_windows: list, words: list, line_images: lis
     plan = []
     for ev in events:
         clip = _fit_text(ev["text"], font_path, kfs, kcolor, kstroke, ksw, box_w)
+        if hl_color and hl_color.lower() not in ("off", "none", "false"):
+            clip = _highlight_unit(clip, kfs, hl_color)   # 노란 형광펜 배경과 한 덩어리로
         clip = clip.resized(lambda t: _pop_scale(t, 0.14, 0.6))   # 등장 바운스
         layers.append(clip.with_start(ev["start"]).with_end(ev["show_end"]).with_position(("center", ky)))
         plan.append({"kind": "sub", "text": ev["text"], "start": round(ev["start"], 3),
                      "end": round(ev["show_end"], 3), "y": ky, "line_i": ev["line_i"]})
     return layers, plan
+
+
+def _highlight_unit(txt_clip, font_size: int, color: str):
+    """자막 글자 뒤에 '형광펜' 라운드 사각형을 깔아 한 덩어리 클립으로 — 제목(순수 검정 굵은
+    글씨)과 자막(형광펜 위 검정)을 한눈에 구분(2026-07-17). 팝 바운스는 덩어리째 적용된다."""
+    from PIL import Image, ImageDraw
+    pad_x, pad_y = int(font_size * 0.26), int(font_size * 0.14)
+    w, h = int(txt_clip.w) + 2 * pad_x, int(txt_clip.h) + 2 * pad_y
+    rgb = tuple(int(color.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
+    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    ImageDraw.Draw(im).rounded_rectangle([0, 0, w - 1, h - 1], radius=int(h * 0.18),
+                                         fill=(*rgb, 255))
+    bg = ImageClip(np.array(im), transparent=True)
+    return CompositeVideoClip([bg.with_position((0, 0)), txt_clip.with_position((pad_x, pad_y))],
+                              size=(w, h))
 
 
 def _subtitle_scrim(width: int, height: int, duration: float, s: dict):
