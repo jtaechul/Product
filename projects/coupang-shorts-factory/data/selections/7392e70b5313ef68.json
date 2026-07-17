@@ -1,0 +1,124 @@
+{
+ "row_hash": "7392e70b5313ef68",
+ "product_name": "오리 마우스 접이식 블루투스 초경량38g 5mm",
+ "lines": [
+  {
+   "line_i": 0,
+   "picks": [
+    {
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmNGltZGhrbjU2djd2OHc1NWdvZmxmNHlhNGdwd29wMXdmY2xiNDU0ZCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/2vllwG8FoP1J147xhV/giphy.gif",
+     "source": "giphy",
+     "query": "Full bag"
+    },
+    {
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmeGZ0eWwyMmZrajRqYWk0dGFhNjRwYWhuYm9yY2t6N3N2aW1vMXgweSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/5w7gQZYkgH05y/giphy.gif",
+     "source": "giphy",
+     "query": "bag"
+    }
+   ]
+  },
+  {
+   "line_i": 1,
+   "picks": [
+    {
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmaWp4cW93aXJ0b2YxcjBnaXF3bjV6YnU3dDdrdXIxcXQ5Ym1oYWdiayZlcD12MV9naWZzX3NlYXJjaCZjdD1n/MuPe4OFkceuChGQk1L/giphy.gif",
+     "source": "giphy",
+     "query": "laptop pouch"
+    },
+    {
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmOXk4b3Q5YnQ0cXdrNmYyMzNoZXN1YXNpbGNhbGR0YTdwenU5ZDdoMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/eV2aKlCgjx3ecHZDZ3/giphy.gif",
+     "source": "giphy",
+     "query": "Laptop bag"
+    }
+   ]
+  },
+  {
+   "line_i": 2,
+   "picks": [
+    {
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmZmk1dWRwbW45ZHIwd3lqd3F4Y3l1OGtia2Rjd285d2toYWFvMGYyeSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/adCYGzZimxBZCqqe8H/giphy.gif",
+     "source": "giphy",
+     "query": "Computer mouse"
+    },
+    {
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMTZvMHJ2OGczMGtoYnduNWU2ajBsYXBwbW5obWx3Z3BwMm5jYXd2OCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/NQtz04buKQOHMUIYUi/giphy.gif",
+     "source": "giphy",
+     "query": "laptop mouse"
+    }
+   ]
+  },
+  {
+   "line_i": 3,
+   "picks": [
+    {
+     "is_product": true,
+     "prod_idx": 0,
+     "source": "product",
+     "query": ""
+    },
+    {
+     "is_product": true,
+     "prod_idx": 1,
+     "source": "product",
+     "query": ""
+    }
+   ]
+  },
+  {
+   "line_i": 4,
+   "picks": [
+    {
+     "is_product": true,
+     "prod_idx": 2,
+     "source": "product",
+     "query": ""
+    },
+    {
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmdmo5c2lpcndxYnh3am82cWp2ajgwbGNqcWtwaG82b2F1cXo2bDdkcCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/SUVhbSqRfHz4xtta2q/giphy.gif",
+     "source": "giphy",
+     "query": ""
+    }
+   ]
+  },
+  {
+   "line_i": 5,
+   "picks": [
+    {
+     "detail_idx": 3,
+     "source": "detail",
+     "query": ""
+    },
+    {
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmcm5mN3o5bXVtOXJrem5mMTI3MHlnZmtmcDc3OTJuOGgxNHppNHhyYyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/fDtbHtmbYeDSv6QVKr/giphy.gif",
+     "source": "giphy",
+     "query": "Battery charge"
+    },
+    {
+     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmdmo5c2lpcndxYnh3am82cWp2ajgwbGNqcWtwaG82b2F1cXo2bDdkcCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/vTW5G6EWsymtO/giphy.gif",
+     "source": "giphy",
+     "query": ""
+    }
+   ]
+  },
+  {
+   "line_i": 6,
+   "picks": [
+    {
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmaGRxMDk3NnJpcGFvaGg2dXdhemN3c3ZldDFjY3d5bWwwbWZzNjhqdCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/TvgawHKmF1XlS/giphy.gif",
+     "source": "giphy",
+     "query": "Thin paper"
+    },
+    {
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmenI4ZjR6NW5nN3JmdXFmOGczODd2ZTB4bHRwNTI3bDdmY2t3dXkzNiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/SaINlGV0wUoa3JH2CO/giphy.gif",
+     "source": "giphy",
+     "query": "laptop pouch"
+    },
+    {
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmcWo4bXlkMHN6b3EydDc5emRvYTJjNWgxYXBld2xmeHhycm0zamd1ZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/u5xNL7P4xsCNvLYuiV/giphy.gif",
+     "source": "giphy",
+     "query": "laptop pouch"
+    }
+   ]
+  }
+ ]
+}
