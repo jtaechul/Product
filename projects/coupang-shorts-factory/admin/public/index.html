@@ -361,6 +361,14 @@ ol li{margin:8px 0}
     </details>
   </div>
   <div class="card">
+    <h2>영상 효과음 (라인 사운드)</h2>
+    <p class="hint" style="margin:0 0 8px">라인(문장)이 바뀔 때 문맥별 효과음이 납니다. 아래 슬롯에
+    Freesound에서 받은 소리(1~2초, 2MB 이하)를 올리면 <b>다음 제작부터 자동 적용</b>됩니다.
+    없는 슬롯은 무음으로 건너뜁니다. 반드시 상업 사용 가능한 <b>CC0</b>를 고르세요.
+    (④제품 공개의 '쾅'은 별도 유지 — 여기 슬롯과 무관)</p>
+    <div id="sfxSlots"><p class="empty">불러오는 중...</p></div>
+  </div>
+  <div class="card">
     <h2>바로가기</h2>
     <div class="item"><div class="grow"><a href="https://github.com/jtaechul/Product/actions/workflows/shorts-produce.yml" target="_blank">제작 실행 기록 전체 보기 (GitHub Actions)</a></div></div>
     <div class="item"><div class="grow"><a href="https://github.com/jtaechul/Product/settings/secrets/actions" target="_blank">API 키(시크릿) 등록 페이지</a></div></div>
@@ -536,7 +544,7 @@ document.querySelectorAll("nav button").forEach((b) => {
     if (tab === "make") makeInit();
     if (tab === "videos") loadVideos();
     if (tab === "store") storeInit();
-    if (tab === "setup") { bgmRefresh(); loadMemes(); }
+    if (tab === "setup") { bgmRefresh(); loadMemes(); sfxInit(); }
   };
 });
 /* ── 스토어(공개 상품 페이지) 관리 — data/../admin/public/store-catalog.json 편집 ───── */
@@ -1122,6 +1130,80 @@ async function ghCommitBlob(path, contentB64, message) {
     method: "POST", body: JSON.stringify({ message, tree: tree.sha, parents: [baseSha] }) });
   await gh(`/repos/${OWNER}/${REPO}/git/refs/heads/${BRANCH}`, {
     method: "PATCH", body: JSON.stringify({ sha: commit.sha }) });
+}
+
+/* ── 라인 효과음 업로드(설정 탭) — 문맥별 사운드 슬롯(1안 세트, 2026-07-17) ───────── */
+const SFX_DIR = P + "/assets/sfx";
+const SFX_SLOTS = [
+  ["line_hook", "① 폭로 훅 — 띠링 (새 글 알림 벨)", "notification ding"],
+  ["line_empathy", "② 공감 확산 — 동동동 (댓글 알림 연타)", "message pop"],
+  ["line_suspect", "③ 원흉 지목 — 둥 (낮은 서스펜스 드럼)", "suspense drum hit"],
+  ["line_proof", "⑤ 증거·반응 — 찰칵 (카메라 셔터)", "camera shutter click"],
+  ["line_punch", "펀치(밈 카드) — 띠용 (스프링)", "cartoon boing"],
+];
+async function sfxInit() {
+  const box = $("sfxSlots");
+  if (!box) return;
+  if (!token()) { box.innerHTML = '<p class="empty">먼저 위에서 GitHub 토큰을 저장하세요.</p>'; return; }
+  let files = [];
+  try {
+    const d = await gh(`/repos/${OWNER}/${REPO}/contents/${SFX_DIR}?ref=${BRANCH}`, { allow404: true });
+    files = (Array.isArray(d) ? d : []).map((f) => f.name);
+  } catch (_) {}
+  box.innerHTML = "";
+  for (const [slot, label, q] of SFX_SLOTS) {
+    const cur = files.find((n) => n.startsWith(slot + "."));
+    const fs = `https://freesound.org/search/?q=${encodeURIComponent(q)}&f=license%3A%22Creative+Commons+0%22`;
+    const row = document.createElement("div");
+    row.className = "item";
+    row.innerHTML = `
+      <div class="grow">
+        <div class="t"></div>
+        <div class="s"><span class="st"></span> · <a target="_blank" rel="noopener">Freesound CC0 검색</a></div>
+      </div>
+      <label class="btn mini sub" style="cursor:pointer">올리기<input type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg" hidden></label>`;
+    row.querySelector(".t").textContent = label;
+    row.querySelector(".st").textContent = cur ? ("등록됨: " + cur) : "미등록(무음)";
+    row.querySelector("a").href = fs;
+    row.querySelector("input").onchange = (ev) => { sfxUpload(ev.target.files[0], slot); ev.target.value = ""; };
+    box.appendChild(row);
+  }
+}
+async function sfxUpload(file, slot) {
+  if (!file) return;
+  if (file.size > 2 * 1048576) { toast("2MB 이하의 짧은 효과음(1~2초)을 올려주세요.", 5000); return; }
+  const m = (file.name || "").match(/\.(mp3|wav|m4a|ogg)$/i);
+  const ext = m ? m[0].toLowerCase() : ".mp3";
+  try {
+    toast("효과음 업로드 중...", 30000);
+    const b64 = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result).split(",")[1]); r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+    // 같은 슬롯의 옛 파일(다른 확장자) 정리 — 렌더가 mp3→wav 순으로 잡아 옛 소리가 남지 않게
+    try {
+      const d = await gh(`/repos/${OWNER}/${REPO}/contents/${SFX_DIR}?ref=${BRANCH}`, { allow404: true });
+      for (const f of (Array.isArray(d) ? d : []).filter((x) => x.name.startsWith(slot + ".") && x.name !== slot + ext)) {
+        await gh(`/repos/${OWNER}/${REPO}/contents/${SFX_DIR}/${f.name}`, {
+          method: "DELETE",
+          body: JSON.stringify({ message: `admin: 효과음 교체 정리 — ${f.name}`, sha: f.sha, branch: BRANCH }),
+        });
+      }
+    } catch (_) {}
+    await ghCommitBlob(`${SFX_DIR}/${slot}${ext}`, b64, `admin: 라인 효과음 업로드 — ${slot}${ext}`);
+    // 에셋 대장(licenses.csv)에 출처 기록 — 규칙: 에셋 추가 시 기록(운영자가 CC0 확인)
+    try {
+      const lic = await getFile(P + "/assets/licenses.csv", true);
+      if (lic) {
+        await putFile(P + "/assets/licenses.csv",
+          lic.text.replace(/\n*$/, "\n") + `${slot}${ext},audio,Freesound(운영자 업로드 · CC0 확인),assets/sfx/${slot}${ext},라인 효과음(${slot})\n`,
+          `admin: licenses.csv — ${slot}${ext} 기록`, lic.sha);
+      }
+    } catch (_) {}
+    toast("업로드 완료 — 다음 제작부터 자동 적용됩니다.", 4500);
+    sfxInit();
+  } catch (e) { toast("업로드 실패: " + (e.message || e), 6000); }
 }
 async function uploadBlob(path, blob, message) {
   const contentB64 = await blobToB64(blob);
