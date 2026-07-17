@@ -25,7 +25,7 @@ on:
         description: "업로드 공개 범위 — produce 모드 전용 (비공개는 고지 댓글 자동 등록 불가)"
         type: choice
         options: [private, unlisted, public]
-        default: unlisted
+        default: public
       no_narration:
         description: "나레이션(TTS) 없이 렌더 — 영상/이미지 튜닝용"
         type: choice
@@ -104,7 +104,7 @@ jobs:
             echo "mode=$(get mode produce)" >> "$GITHUB_OUTPUT"
             echo "provider=$(get provider auto)" >> "$GITHUB_OUTPUT"
             echo "row=$(get row auto)" >> "$GITHUB_OUTPUT"
-            echo "privacy=$(get privacy unlisted)" >> "$GITHUB_OUTPUT"
+            echo "privacy=$(get privacy public)" >> "$GITHUB_OUTPUT"
             echo "field=$(get field '')" >> "$GITHUB_OUTPUT"
             echo "line=$(get line '')" >> "$GITHUB_OUTPUT"
             echo "soft=" >> "$GITHUB_OUTPUT"

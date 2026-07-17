@@ -173,6 +173,19 @@ def upload(video_path: Path, script: dict, product: dict, settings: dict,
     video_id = resp["id"]
     url = f"https://youtu.be/{video_id}"
     print(f"[upload] 업로드 완료: {url} (privacy={privacy})")
+    # ⭐ 비공개 잠금 감지(2026-07-17 공개 업로드 전환): 유튜브는 API 심사(audit)를 안 받은 프로젝트가
+    #   API로 올린 영상을 '비공개 잠금'으로 강제할 수 있다 — 요청(공개)과 실제 상태가 다르면 즉시 알린다.
+    got_privacy = (resp.get("status") or {}).get("privacyStatus", "")
+    if got_privacy and got_privacy != privacy:
+        print(f"[upload] 경고: 요청 공개범위({privacy})와 실제({got_privacy})가 다릅니다 — 비공개 잠금 의심")
+        try:
+            from src import notify
+            notify.send(f"[미래마켓] 업로드는 됐지만 유튜브가 영상을 '{got_privacy}'로 강제했습니다"
+                        f"(요청: {privacy}).\n원인(추정): API 프로젝트 심사(audit) 미완료 시 유튜브가 "
+                        f"API 업로드 영상을 비공개로 잠그는 정책. 스튜디오에서 공개 전환을 시도해 보고, "
+                        f"잠겨서 전환이 안 되면 알려주세요(심사 신청 폼 안내).\n영상: {url}")
+        except Exception:
+            pass
 
     # §3.1 ② 링크 옆 고지문 — 댓글 자동 등록 (핀 고정은 UI에서 1탭)
     #   업로드 시점에 스토어 번호(_store_number)로 딥링크(#001)까지 붙여 그 상품으로 바로 이동.
