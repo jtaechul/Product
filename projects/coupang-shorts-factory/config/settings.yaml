@@ -70,6 +70,8 @@ subtitle:               # 스펙 §M6 - 3 (2026-07-12 개편: '대본이 곧 자
   mode: "karaoke"       # karaoke=대본 subs 칸 팝업(기본) / phrase=구(라인) 단위
   font: "assets/fonts/GmarketSansBold.ttf"
   font_size: 80
+  expose_font_size: 62       # expose 자막 크기 — 헤더 제목(≈72px)보다 작게(위계: 제목>자막, 2026-07-17)
+  expose_hl_color: "#FFE86B" # expose 자막 형광펜 하이라이트(제목과 구분) — off로 끔
   color: "#FFE400"      # 노랑
   stroke_color: "#000000"
   stroke_width: 6
