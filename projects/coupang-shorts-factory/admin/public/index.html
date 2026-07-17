@@ -359,8 +359,8 @@ ol li{margin:8px 0}
   </div>
   <div class="card">
     <h2>현재 스토어 <button class="btn mini sub" id="stReload" style="float:right">새로고침</button></h2>
+    <button class="btn" id="stSave" style="margin:2px 0 12px">스토어 저장</button>
     <div id="storeList"><p class="empty">불러오는 중...</p></div>
-    <button class="btn" id="stSave" style="margin-top:12px">스토어 저장</button>
     <p class="hint">저장하면 약 1분 뒤 공개 스토어에 반영됩니다(자동 배포). <b>보임</b> 체크를 끄면 스토어에서 숨겨집니다.</p>
   </div>
 </section>
@@ -789,13 +789,14 @@ function storeRender() {
     const row = document.createElement("div");
     row.className = "item";
     row.style.cssText = "flex-direction:column;align-items:stretch;gap:8px";
+    // 상단 줄: 번호(왼쪽) — 보임·삭제(오른쪽). 좁은 화면에서 잘리지 않게 space-between + wrap,
+    //   상품명은 아래 '자기 줄 전체 너비'로 내려(옛 한 줄에 몰려 잘리던 문제 해결, 2026-07-17).
     const head = document.createElement("div");
-    head.style.cssText = "display:flex;align-items:center;gap:8px";
+    head.style.cssText = "display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap";
     const no = document.createElement("span");
     no.className = "chip"; no.textContent = "No." + String(it.number).padStart(3, "0");
-    const nameI = document.createElement("input");
-    nameI.value = it.name || ""; nameI.placeholder = "상품명(스토어에 그대로 표시)";
-    nameI.style.flex = "1"; nameI.oninput = () => { storeItems[idx].name = nameI.value; };
+    const ctrls = document.createElement("div");
+    ctrls.style.cssText = "display:flex;align-items:center;gap:12px";
     const visL = document.createElement("label");
     visL.style.cssText = "display:flex;align-items:center;gap:4px;font-size:13px;white-space:nowrap";
     const cb = document.createElement("input");
@@ -805,7 +806,12 @@ function storeRender() {
     const del = document.createElement("button");
     del.className = "btn mini danger"; del.textContent = "삭제";
     del.onclick = () => { storeItems.splice(idx, 1); storeRender(); };
-    head.append(no, nameI, visL, del);
+    ctrls.append(visL, del);
+    head.append(no, ctrls);
+    // 상품명 — 자기 줄 전체 너비(길어도 안 잘림)
+    const nameI = document.createElement("input");
+    nameI.value = it.name || ""; nameI.placeholder = "상품명(스토어에 그대로 표시)";
+    nameI.style.width = "100%"; nameI.oninput = () => { storeItems[idx].name = nameI.value; };
     // 카드 제목 = 영상(유튜브) 제목 — 시청자가 홈에서 그 영상 상품을 바로 찾게. 비우면 위 상품명 사용.
     const titleI = document.createElement("input");
     titleI.value = it.title || ""; titleI.placeholder = "카드 제목 = 영상 제목(비우면 상품명 사용)";
@@ -831,7 +837,7 @@ function storeRender() {
     imgI.style.flex = "1"; imgI.style.minWidth = "180px";
     imgI.oninput = () => { storeItems[idx].image = imgI.value.trim(); };
     sub.append(catSel, imgI);
-    row.append(head, titleI, painI, sub);
+    row.append(head, nameI, titleI, painI, sub);
     box.appendChild(row);
   });
 }
