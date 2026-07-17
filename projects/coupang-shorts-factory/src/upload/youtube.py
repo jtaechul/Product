@@ -97,15 +97,14 @@ def build_description(script: dict, product: dict) -> str:
     avoid = product_avoid_terms(product)
     body = hide_product_name(script.get("description_body", "").strip(), avoid)
     num = _store_number(product.get("_row_hash", ""))   # 스토어 카탈로그 번호(No.###과 동일)
-    # 설명란은 '읽히게' 담백히: 고지문(맨 위 첫 줄) → 번호 → 훅 본문 → 프로필 안내 한 줄 → 해시태그.
+    # 설명란은 '읽히게' 담백히: 고지문(맨 위 첫 줄) → 바로 밑 프로필 안내 → 번호 → 훅 본문 → 해시태그.
     #   상세 스펙 나열·클릭 안 되는 raw 링크는 뺀다(2026-07-17 사용자 지시). 구매는 프로필/고정 댓글로.
-    parts = [DISCLOSURE, ""]              # §3.1 고지문 — 설명란 최상단 첫 줄(2026-07-17 사용자 재확정, 공정위 근접성 원칙상 최안전)
+    #   §3.1 고지문 바로 다음 줄에 프로필 안내를 붙인다(2026-07-17 사용자 지시 — 고지 옆 유도).
+    parts = [DISCLOSURE, "", PROFILE_CTA, ""]   # 고지문(최상단 첫 줄) + 바로 밑 프로필 안내
     if num:
         parts += [f"미래마켓 #{num}", ""]   # 상품 번호 — 영상↔스토어(store#N) 매칭용
     parts += [
         body,
-        "",
-        PROFILE_CTA,          # 제품·구매처 안내는 프로필 링크 한 줄로만(별도 문단이라 안 겹침)
         "",
         " ".join(merge_hashtags(script)),
     ]
