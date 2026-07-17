@@ -1595,8 +1595,8 @@ async function renderReview(rel, plan, p, backFn) {
   const ub = document.createElement("button"); ub.className = "btn"; ub.textContent = "유튜브에 올리기";
   ub.disabled = !video || noRow;
   ub.onclick = (ev) => busy(ev.target, async () => {
-    if (!confirm("이 영상을 유튜브에 올릴까요? (일부공개로 올라가고 고지 댓글이 자동 등록됩니다 — 검수 후 스튜디오에서 '공개'로 전환)")) return;
-    await mkDispatch({ mode: "upload", row: String(p.row), privacy: "unlisted" });
+    if (!confirm("이 영상을 유튜브에 바로 '공개'로 올릴까요? (고지 댓글 자동 등록 — 올리는 즉시 모두에게 보입니다)")) return;
+    await mkDispatch({ mode: "upload", row: String(p.row), privacy: "public" });
     toast("유튜브 업로드를 시작했습니다. 완료되면 텔레그램으로 알림이 옵니다.");
   });
   up.appendChild(ub);
@@ -1786,8 +1786,8 @@ async function openVideo(v) {
   } else if (v.row) {
     up.style.display = "inline-flex"; up.disabled = false; up.textContent = "유튜브에 Shorts 올리기";
     up.onclick = (ev) => busy(ev.target, async () => {
-      if (!confirm("이 영상을 유튜브에 올릴까요? (일부공개로 올라가고 고지 댓글이 자동 등록됩니다 — 검수 후 스튜디오에서 '공개'로 전환)")) return;
-      await mkDispatch({ mode: "upload", row: String(v.row), privacy: "unlisted" });
+      if (!confirm("이 영상을 유튜브에 바로 '공개'로 올릴까요? (고지 댓글 자동 등록 — 올리는 즉시 모두에게 보입니다)")) return;
+      await mkDispatch({ mode: "upload", row: String(v.row), privacy: "public" });
       toast("유튜브 업로드를 시작했습니다. 완료되면 텔레그램으로 알림이 옵니다.");
       up.textContent = "업로드 시작됨"; up.disabled = true;
     });
