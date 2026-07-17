@@ -2055,7 +2055,9 @@ function renderPlan() {
     const row = document.createElement("div"); row.className = "item";
     row.innerHTML = `<div class="grow"><div class="t"></div><div class="s"></div></div>`
       + `<span class="chip ${ln.punch ? "wait" : ""}">${ln.punch ? "훅" : "단계 " + (ln.stage || "-")}</span>`;
-    row.querySelector(".t").textContent = `${i + 1}. ${ln.text}`;
+    const tEl = row.querySelector(".t");
+    tEl.style.cssText = "white-space:normal;overflow:visible;text-overflow:clip";   // 대사는 전문 표시(한 줄 말줄임 해제)
+    tEl.textContent = `${i + 1}. ${ln.text}`;
     row.querySelector(".s").textContent = ln.scene ? "장면: " + ln.scene : "";
     if (sel) {
       const rb = document.createElement("button");
