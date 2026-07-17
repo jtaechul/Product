@@ -54,13 +54,23 @@ def load(project_root: Path, row_hash: str) -> dict | None:
 
 
 def chosen_text(data: dict | None) -> str | None:
-    """운영자 확정 텍스트: custom > options[chosen] > options[0](기본 1안). 없으면 None."""
+    """운영자 확정 텍스트: custom(4안·직접 의견) > options[chosen] > options[0](기본 1안). 없으면 None.
+
+    ⭐ custom(4안)은 '1안과 2안을 종합해' 같은 **조합 지시**일 수 있다(2026-07-17 실사고: 지시 문장만
+    전달돼 대본 AI가 1·2안 내용을 몰라 반영 불가). → custom이 있으면 지시 + 3안 전체 내용을 함께
+    합성해 전달한다(대본 AI가 지시대로 안들을 조합·수정할 수 있게)."""
     if not data:
         return None
+    opts = [o for o in (data.get("options") or []) if str((o or {}).get("mechanism", "")).strip()]
     custom = str(data.get("custom") or "").strip()
     if custom:
-        return custom
-    opts = [o for o in (data.get("options") or []) if str((o or {}).get("mechanism", "")).strip()]
+        if not opts:
+            return custom
+        listing = "\n".join(
+            f"{i + 1}안 {str(o.get('title', '')).strip()}: {str(o.get('mechanism', '')).strip()}"
+            for i, o in enumerate(opts))
+        return (f"[운영자 확정 지시] {custom}\n"
+                f"(아래 안들을 위 지시대로 반영·조합해 제품 공개의 뼈대로 사용하라)\n{listing}")
     if not opts:
         return None
     ch = data.get("chosen")
