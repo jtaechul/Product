@@ -5,7 +5,7 @@
   "name": "미닉스 더플렌더 Max 건조분쇄 음식물처리기",
   "url": "https://link.coupang.com/a/fqB1cxBf5g",
   "image": "",
-  "category": "기타",
+  "category": "주방",
   "pain": "음식물 쓰레기 냄새와 초파리를 끝내는 건조분쇄기",
   "visible": true,
   "date": "2026-07-16"
@@ -16,9 +16,21 @@
   "name": "틴도우 스마트 물걸레 로봇청소기 BR151",
   "url": "https://link.coupang.com/a/fqSmrkjlRY",
   "image": "",
-  "category": "기타",
+  "category": "청소·세탁",
   "pain": "혼자서 구석구석 쓸고 닦는 우리 집 청소 박사",
   "visible": true,
   "date": "2026-07-16"
+ },
+ {
+  "number": 3,
+  "row_hash": "02b322904d67dd0d",
+  "name": "르몽스 아이스필 냉감패드 여름 침대 쿨매트",
+  "url": "https://link.coupang.com/a/foT6vh0hBQ",
+  "image": "",
+  "category": "계절·냉난방",
+  "title": "여름밤 전기세 도둑의 정체 밝혀짐? 이불만 바꿔도 에어컨 필요없네",
+  "pain": "열대야에도 닿는 순간 시원한 침대 쿨매트",
+  "visible": true,
+  "date": "2026-07-17"
  }
 ]
