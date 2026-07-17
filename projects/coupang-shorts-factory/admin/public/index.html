@@ -1802,18 +1802,36 @@ async function planDispatch(row) {
     method: "POST", body: JSON.stringify({ ref: BRANCH, inputs: { mode: "plan", row: String(row) } }) });
 }
 // 기획 파일(data/plans/{hash}.json)이 생길 때까지 폴링 → 완성되면 자동 표시(수동 '불러오기' 폐지)
-async function pollPlan(hash, tries = 0) {
+// waitSha: 재기획이면 기존 파일 sha가 '바뀔 때까지' 대기(옛 대본 조기 표시 방지).
+// ⭐ 선택 게이트(2026-07-17): 대본보다 차별점 3안이 먼저 도착하면 '기획 방향 선택 화면'을 띄우고 멈춘다 —
+//    운영자가 고르기 전에는 대본을 만들지 않는다(선택하면 renderMechanism이 재기획을 시작).
+async function pollPlan(hash, tries = 0, waitSha) {
   if (!currentWork || currentWork.hash !== hash) return;   // 다른 상품으로 전환되면 폴링 중단
   const f = await getFile(`${PLAN_DIR}/${hash}.json`, true, true);
-  if (f) {
+  if (f && (!waitSha || f.sha !== waitSha)) {
     planData = JSON.parse(f.text); renderPlan();
     $("planActions").style.display = "";
     setStatus("기획·대본 완성 — 검토 후 '이 기획으로 이미지 찾기'로 넘어가세요.");
     return;
   }
+  const mf = await getFile(`${P}/data/mechanism/${hash}.json`, true, true);
+  if (mf) {
+    let md = null; try { md = JSON.parse(mf.text); } catch (_) {}
+    const confirmed = md && (md.confirmed === true || String(md.custom || "").trim() || typeof md.chosen === "number");
+    if (md && !confirmed) {
+      const box = $("planView"); box.innerHTML = "";
+      const card = document.createElement("div"); card.className = "card";
+      card.innerHTML = '<h2>기획 방향 선택 — 차별점 · 작동 방식 (3안)</h2><div class="mechbody"></div>';
+      box.appendChild(card);
+      renderMechanism(card.querySelector(".mechbody"));
+      $("planActions").style.display = "none";
+      setStatus("차별점 3안이 준비됐습니다 — 하나를 고르거나 직접 적은 뒤 '이 선택으로 기획·대본 만들기'를 누르세요.");
+      return;   // 운영자 선택 대기(폴링 종료)
+    }
+  }
   if (tries >= 24) { setStatus("기획 생성이 예상보다 오래 걸립니다. 잠시 뒤 대기열에서 '작업'을 다시 눌러 확인하세요."); return; }
   setStatus(`기획·대본 생성 중... (${tries * 15}초 경과 · 보통 1~2분)`);
-  setTimeout(() => pollPlan(hash, tries + 1), 15000);
+  setTimeout(() => pollPlan(hash, tries + 1, waitSha), 15000);
 }
 // 라인 문구 재생성: 기획은 이미 존재하므로 '해당 줄 text가 바뀔 때까지' 폴링해야 옛 내용을 안 보여준다.
 async function pollLineText(hash, i, oldText, tries = 0) {
@@ -1860,15 +1878,16 @@ async function renderMechanism(body) {
   const sha = f && f.sha;
   body.innerHTML = "";
   const hint = document.createElement("p"); hint.className = "hint"; hint.style.margin = "0 0 8px";
-  hint.textContent = "영상이 '뭘 파는지' 또렷해지게, 대본의 제품 공개 구간이 이 내용 위에 세워집니다. 안을 고르거나 직접 적은 뒤 '이 선택으로 대본 다시 쓰기'를 누르세요.";
+  hint.textContent = "영상이 '뭘 파는지' 또렷해지게, 대본의 제품 공개 구간이 이 내용 위에 세워집니다. 하나를 고르거나 직접 적은 뒤 '이 선택으로 기획·대본 만들기'를 누르세요 — 고르기 전에는 대본을 만들지 않습니다.";
   body.appendChild(hint);
   if (!data || !(data.options || []).length) {
-    body.insertAdjacentHTML("beforeend", '<p class="empty">아직 3안이 없습니다 — 아래 버튼을 누르면 상품 자료(PDF·캡처)에서 자동 추출하고 대본도 새로 씁니다.</p>');
-    const b = document.createElement("button"); b.className = "btn mini"; b.textContent = "차별점 3안 뽑기 (대본 새로 쓰기 포함)";
+    body.insertAdjacentHTML("beforeend", '<p class="empty">아직 3안이 없습니다 — 아래 버튼을 누르면 상품 자료(PDF·캡처)에서 3안을 추출해 선택 화면을 띄웁니다.</p>');
+    const b = document.createElement("button"); b.className = "btn mini"; b.textContent = "차별점 3안 뽑기";
     b.onclick = (ev) => busy(ev.target, async () => {
+      const pf = await getFile(`${PLAN_DIR}/${sel.hash}.json`, true, true);
       await planDispatch(sel.row);
-      setStatus("차별점 3안 추출 + 기획·대본 생성 중... (약 1~2분, 완성되면 자동 표시)");
-      toast("차별점 추출 시작"); pollPlan(sel.hash);
+      setStatus("차별점 3안 추출 중... (약 1분, 준비되면 선택 화면이 자동으로 뜹니다)");
+      toast("차별점 추출 시작"); pollPlan(sel.hash, 0, pf && pf.sha);
     });
     body.appendChild(b);
     return;
@@ -1889,7 +1908,7 @@ async function renderMechanism(body) {
   ta.value = data.custom || "";
   body.appendChild(ta);
   const btns = document.createElement("div"); btns.className = "row2"; btns.style.marginTop = "8px";
-  const apply = document.createElement("button"); apply.className = "btn mini"; apply.textContent = "이 선택으로 대본 다시 쓰기";
+  const apply = document.createElement("button"); apply.className = "btn mini"; apply.textContent = "이 선택으로 기획·대본 만들기";
   const redo = document.createElement("button"); redo.className = "btn mini sub"; redo.textContent = "3안 다시 뽑기";
   btns.append(apply, redo); body.appendChild(btns);
   function paint() {
@@ -1904,18 +1923,21 @@ async function renderMechanism(body) {
   }
   paint();
   apply.onclick = (ev) => busy(ev.target, async () => {
-    const payload = { options: data.options, chosen, custom: ta.value.trim() };
-    await putFile(MECH, JSON.stringify(payload, null, 1) + "\n", "admin: 차별점·작동방식 선택 저장", sha || undefined);
+    // 선택 확정(confirmed) 저장 → 기획 재실행. waitSha로 '새 대본'이 나올 때까지 대기(옛 대본 조기표시 방지).
+    const payload = { options: data.options, chosen, custom: ta.value.trim(), confirmed: true };
+    await putFile(MECH, JSON.stringify(payload, null, 1) + "\n", "admin: 차별점·작동방식 선택 확정", sha || undefined);
+    const pf = await getFile(`${PLAN_DIR}/${sel.hash}.json`, true, true);
     await planDispatch(sel.row);
-    setStatus("선택한 차별점으로 기획·대본을 다시 쓰는 중... (약 1~2분, 완성되면 자동 표시)");
-    toast("대본 다시 쓰기 시작"); pollPlan(sel.hash);
+    setStatus("선택한 차별점으로 기획·대본을 쓰는 중... (약 1~2분, 완성되면 자동 표시)");
+    toast("기획·대본 생성 시작"); pollPlan(sel.hash, 0, pf && pf.sha);
   });
   redo.onclick = (ev) => busy(ev.target, async () => {
     if (sha) await gh(`/repos/${OWNER}/${REPO}/contents/${MECH}`, { method: "DELETE",
       body: JSON.stringify({ message: "admin: 차별점 3안 다시 추출", sha, branch: BRANCH }) });
+    const pf = await getFile(`${PLAN_DIR}/${sel.hash}.json`, true, true);
     await planDispatch(sel.row);
-    setStatus("차별점 3안을 다시 뽑고 대본도 새로 쓰는 중... (약 1~2분, 완성되면 자동 표시)");
-    toast("3안 다시 뽑기 시작"); pollPlan(sel.hash);
+    setStatus("차별점 3안을 다시 뽑는 중... (약 1분, 준비되면 선택 화면이 자동으로 뜹니다)");
+    toast("3안 다시 뽑기 시작"); pollPlan(sel.hash, 0, pf && pf.sha);
   });
 }
 function renderPlan() {
@@ -1971,10 +1993,11 @@ function renderPlan() {
 $("planRegen").onclick = (ev) => busy(ev.target, async () => {
   const p = planSelected(); if (!p) return;
   $("planActions").style.display = "none";
+  const pf = await getFile(`${PLAN_DIR}/${p.hash}.json`, true, true);   // 새 대본이 나올 때까지 대기용
   await planDispatch(p.row);
   setStatus("기획을 다시 만드는 중... (약 1~2분, 완성되면 자동으로 다시 표시)");
   toast("기획 다시 만들기 시작");
-  pollPlan(p.hash);
+  pollPlan(p.hash, 0, pf && pf.sha);
 });
 $("planApprove").onclick = (ev) => busy(ev.target, async () => {
   const p = planSelected(); if (!p) return;

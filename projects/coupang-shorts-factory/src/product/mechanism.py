@@ -95,28 +95,43 @@ def _extract(product: dict, settings: dict) -> list:
     return opts
 
 
-def prepare(product: dict, settings: dict, project_root: Path, extract: bool) -> str | None:
-    """대본 생성 직전 호출. 파일이 있으면 확정안(custom>chosen>1안)을 반환.
-    없고 extract=True(새 대본을 만들 때)면 3안을 추출·저장 후 1안을 반환. 실패·자료없음이면 None(기존 흐름)."""
+def is_confirmed(data: dict | None) -> bool:
+    """운영자가 방향을 확정했는가 — confirmed 플래그, 직접 의견(custom), 번호 선택(chosen) 중 하나면 확정."""
+    if not data:
+        return False
+    return (data.get("confirmed") is True
+            or bool(str(data.get("custom") or "").strip())
+            or isinstance(data.get("chosen"), int))
+
+
+def prepare(product: dict, settings: dict, project_root: Path,
+            extract: bool, gate: bool = False) -> tuple:
+    """대본 생성 직전 호출. 반환 (확정 텍스트|None, need_choice).
+
+    ⭐ 선택 게이트(2026-07-17 사용자 확정): gate=True(기획 모드)면 **운영자가 3안 중 방향을 확정하기
+    전에는 대본을 만들지 않는다** — 3안만 추출·저장하고 need_choice=True를 돌려 파이프라인이 멈추게 한다.
+    확정(custom/chosen/confirmed) 후 재실행되면 그 텍스트를 반환. 자료 없음·키 없음·추출 실패면
+    게이트 없이 (None, False)로 기존 흐름 계속(운영자가 막히지 않게)."""
     data = load(project_root, product.get("_row_hash", ""))
-    if data is None and extract:
-        if not have_script_key(settings):
-            return None
-        if not (product.get("notes") or product.get("specs")):
-            print("[mech] 상세 자료(notes/specs) 없음 — 차별점 추출 생략")
-            return None
+    if data is None:
+        if not extract or not have_script_key(settings) or not (product.get("notes") or product.get("specs")):
+            if extract:
+                print("[mech] 상세 자료(notes/specs) 또는 키 없음 — 차별점 추출 생략(게이트 없이 진행)")
+            return None, False
         try:
-            data = {"options": _extract(product, settings), "chosen": None, "custom": ""}
+            data = {"options": _extract(product, settings), "chosen": None, "custom": "", "confirmed": False}
             p = _path(project_root, product["_row_hash"])
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
             print(f"[mech] 차별점·작동방식 3안 추출 완료 → data/mechanism/{product['_row_hash']}.json "
                   f"({' / '.join(o['title'] for o in data['options'])})")
         except Exception as e:
-            print(f"[mech] 차별점 추출 실패({type(e).__name__}: {e}) — 기존 흐름으로 계속")
-            return None
+            print(f"[mech] 차별점 추출 실패({type(e).__name__}: {e}) — 게이트 없이 기존 흐름으로 계속")
+            return None, False
+    if gate and not is_confirmed(data):
+        return None, True                     # 운영자 선택 대기 — 대본 생성 전 중단
     txt = chosen_text(data)
     if txt:
         which = "직접 의견" if (data or {}).get("custom") else f"{((data or {}).get('chosen') or 0) + 1}안"
         print(f"[mech] 대본 뼈대 사용: {which} — {txt[:60]}...")
-    return txt
+    return txt, False
