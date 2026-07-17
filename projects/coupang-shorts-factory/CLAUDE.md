@@ -169,6 +169,11 @@
   `data/selections/{row_hash}.json` 커밋 → 다음 제작에서 `imagesource.load_selections`가 그 선택을 적용
   (상품 픽=prod0, url 픽=소스에서 내려받음, 업로드 픽=커밋 파일). `load_selections`가 선택을
   `vision_examples.jsonl`에 학습 축적 → 자동 검색어 추천(`_learning_examples` few-shot) 정확도 향상.
+  - **소싱·UI 개편 (2026-07-17 사용자 확정)**: ① 실사 스톡(Pexels 등) 폐지 → `images.giphy_only: true`
+    (후보 = 밈·제품사진·제품영상 + 미리 깔린 Giphy GIF, 나머지 장면은 직접 GIF 검색). ② 라인마다
+    **선택 트레이**(고른 이미지를 순서 번호·× 제거로 항상 표시 — 여러 번 검색·창 닫아도 유지). ③ **GIF 검색은
+    전체 오버레이 모달**(열었다/닫았다, 2열 큰 미리보기, 모달 안 스크롤이라 페이지가 안 길어짐, 담을 때마다
+    '담김' 개수 + 트레이 반영). 픽에 `_thumb`(트레이 미리보기)·`_key`(내부) 보관, 저장 시 둘 다 제거.
 - **제품 영상 시스템 (2026-07-12)**: 상품 목록의 "영상 올리기" → iPad 화면 녹화(쿠팡 상세페이지
   판매자 시연 영상 등)를 선택 → **Release `product-assets` 자산 `{row_hash}_{시각}.mp4|mov`**로
   업로드(브라우저→uploads.github.com 직접, CORS 차단 시 워커 `/ghup` 프록시 폴백 — 이 저장소
