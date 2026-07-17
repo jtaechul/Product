@@ -1817,21 +1817,7 @@ async function pollPlan(hash, tries = 0, waitSha) {
     setStatus("기획·대본 완성 — 검토 후 '이 기획으로 이미지 찾기'로 넘어가세요.");
     return;
   }
-  const mf = await getFile(`${P}/data/mechanism/${hash}.json`, true, true);
-  if (mf) {
-    let md = null; try { md = JSON.parse(mf.text); } catch (_) {}
-    const confirmed = md && (md.confirmed === true || String(md.custom || "").trim() || typeof md.chosen === "number");
-    if (md && !confirmed) {
-      const box = $("planView"); box.innerHTML = "";
-      const card = document.createElement("div"); card.className = "card";
-      card.innerHTML = '<h2>기획 방향 선택 — 차별점 · 작동 방식 (3안)</h2><div class="mechbody"></div>';
-      box.appendChild(card);
-      renderMechanism(card.querySelector(".mechbody"));
-      $("planActions").style.display = "none";
-      setStatus("차별점 3안이 준비됐습니다 — 하나를 고르거나 직접 적은 뒤 '이 선택으로 기획·대본 만들기'를 누르세요.");
-      return;   // 운영자 선택 대기(폴링 종료)
-    }
-  }
+  if (await maybeShowMechStep(hash)) return;   // ① 방향 선택 단계 — 미확정이면 선택 화면만(폴링 종료)
   if (tries >= 24) { setStatus("기획 생성이 예상보다 오래 걸립니다. 잠시 뒤 대기열에서 '작업'을 다시 눌러 확인하세요."); return; }
   setStatus(`기획·대본 생성 중... (${tries * 15}초 경과 · 보통 1~2분)`);
   setTimeout(() => pollPlan(hash, tries + 1, waitSha), 15000);
@@ -1851,10 +1837,34 @@ async function pollLineText(hash, i, oldText, tries = 0) {
   setStatus(`${i + 1}번째 줄 문구 재생성 중... (${tries * 12}초 경과)`);
   setTimeout(() => pollLineText(hash, i, oldText, tries + 1), 12000);
 }
-// 제작 대기열의 '작업' → 현재 작업 상품 지정 + 기획 표시(없으면 자동 생성 시작)
+// ── ① 기획 방향 선택 단계 (2026-07-17 사용자 확정: 프로세스 완전 분리) ──
+async function loadMech(hash) {
+  let f = null; try { f = await getFile(`${P}/data/mechanism/${hash}.json`, true, true); } catch (_) {}
+  let d = null; try { d = f ? JSON.parse(f.text) : null; } catch (_) {}
+  const confirmed = !!(d && (d.confirmed === true || String(d.custom || "").trim() || typeof d.chosen === "number"));
+  return { data: d, sha: f && f.sha, confirmed };
+}
+// 방향 미확정이면 '① 방향 선택 화면'만 띄운다 — **대본이 이미 있어도 절대 보여주지 않는다**(분리 원칙).
+async function maybeShowMechStep(hash) {
+  const mech = await loadMech(hash);
+  if (!mech.data || mech.confirmed) return false;
+  const box = $("planView"); box.innerHTML = "";
+  const card = document.createElement("div"); card.className = "card";
+  card.innerHTML = '<h2>① 기획 방향 선택 — 차별점 · 작동 방식 (3안)</h2>'
+    + '<p class="hint" style="margin:0 0 8px">방향을 확정해야 다음 단계(대본)로 넘어갑니다. '
+    + '이전에 만들어진 대본이 있어도 무시하고, 확정한 방향으로 새로 씁니다.</p>'
+    + '<div class="mechbody"></div>';
+  box.appendChild(card);
+  renderMechanism(card.querySelector(".mechbody"));
+  $("planActions").style.display = "none";
+  setStatus("기획 방향 3안이 준비됐습니다 — 하나를 고르거나 직접 적은 뒤 '이 선택으로 기획·대본 만들기'를 누르세요.");
+  return true;
+}
+// 제작 대기열의 '작업' → ① 방향 미확정이면 선택 화면만 / ② 확정이면 대본 검토 / 없으면 방향 생성부터
 async function selectProduct(row, hash, label) {
   setCurrentWork(row, hash, label);
   document.getElementById("tab-plan").scrollIntoView({ behavior: "smooth" });
+  if (await maybeShowMechStep(hash)) return;
   const f = await getFile(`${PLAN_DIR}/${hash}.json`, true, true);
   if (f) {
     planData = JSON.parse(f.text); renderPlan();
@@ -1862,7 +1872,7 @@ async function selectProduct(row, hash, label) {
     setStatus("기획·대본을 검토하세요. 좋으면 '이 기획으로 이미지 찾기'.");
   } else {
     $("planView").innerHTML = ""; $("planActions").style.display = "none";
-    setStatus("이 상품은 아직 기획 전 — 자동으로 생성을 시작합니다(약 1~2분).");
+    setStatus("이 상품은 아직 기획 전 — 기획 방향(3안)부터 자동으로 만듭니다(약 1분).");
     await planDispatch(row);
     pollPlan(hash);
   }
@@ -1955,8 +1965,8 @@ function renderPlan() {
   }
   if (!c.한줄썰 && !c.의도 && !c.타깃 && !c.후킹) con.insertAdjacentHTML("beforeend", '<p class="hint">기획서 정보가 비어 있습니다.</p>');
   box.appendChild(con);
-  // ⭐ 차별점·작동 방식 3안(2026-07-17) — 대본 ④(제품 공개)의 뼈대. 선택/직접 의견/다시 뽑기.
-  const mech = mk('<h2>차별점 · 작동 방식 (3안)</h2><div class="mechbody"><p class="hint">불러오는 중...</p></div>');
+  // 기획 방향(확정본) — 대본 검토 화면에서는 '확정된 방향 + 바꾸기'로 표시(① 선택 단계는 maybeShowMechStep)
+  const mech = mk('<h2>기획 방향 — 확정됨 (다른 안으로 바꾸면 대본을 다시 씁니다)</h2><div class="mechbody"><p class="hint">불러오는 중...</p></div>');
   box.appendChild(mech);
   renderMechanism(mech.querySelector(".mechbody"));
   // 스토리보드 + 대본 (라인마다 '문구 다시' = 그 줄 text만 재생성, 앞뒤 스토리 흐름 유지)
@@ -2090,6 +2100,11 @@ $("imgGen").onclick = (ev) => busy(ev.target, async () => {
 // [전체 자막·이미지 다시 만들기] 대본(자막)부터 새로 쓰고 → 그 대본으로 이미지 후보까지 재생성(plan→candidates 순차)
 $("imgReplan").onclick = (ev) => busy(ev.target, async () => {
   const p = imgSelected(); if (!p) return;
+  const mech = await loadMech(p.hash);   // 방향 미확정이면 ① 선택 단계로 보냄(서버 게이트와 일치)
+  if (mech.data && !mech.confirmed) {
+    toast("먼저 기획 화면에서 '기획 방향(3안)'을 골라야 합니다 — 이동합니다.", 5000);
+    await selectProduct(p.row, p.hash, p.label); return;
+  }
   if (!confirm("현재 대본(자막)을 완전히 새로 쓰고 이미지 후보도 다시 만듭니다.\n기존 대본과 이미지 선택은 사라집니다. 진행할까요?")) return;
   imgRestorePicks = null;               // 대본이 바뀌므로 모든 픽 초기화
   const baseVer = imgManifestVer;       // 새 매니페스트가 올라올 때까지 폴링
