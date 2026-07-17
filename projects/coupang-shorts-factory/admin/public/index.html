@@ -1176,11 +1176,6 @@ async function sfxUpload(file, slot) {
   const ext = m ? m[0].toLowerCase() : ".mp3";
   try {
     toast("효과음 업로드 중...", 30000);
-    const b64 = await new Promise((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res(String(r.result).split(",")[1]); r.onerror = rej;
-      r.readAsDataURL(file);
-    });
     // 같은 슬롯의 옛 파일(다른 확장자) 정리 — 렌더가 mp3→wav 순으로 잡아 옛 소리가 남지 않게
     try {
       const d = await gh(`/repos/${OWNER}/${REPO}/contents/${SFX_DIR}?ref=${BRANCH}`, { allow404: true });
@@ -1191,7 +1186,8 @@ async function sfxUpload(file, slot) {
         });
       }
     } catch (_) {}
-    await ghCommitBlob(`${SFX_DIR}/${slot}${ext}`, b64, `admin: 라인 효과음 업로드 — ${slot}${ext}`);
+    // Contents API PUT(원자적·sha 자동 처리)로 올린다 — git-data ref PATCH는 동시 갱신 시 409/422("저장이 겹쳤습니다")
+    await uploadBlob(`${SFX_DIR}/${slot}${ext}`, file, `admin: 라인 효과음 업로드 — ${slot}${ext}`);
     // 에셋 대장(licenses.csv)에 출처 기록 — 규칙: 에셋 추가 시 기록(운영자가 CC0 확인)
     try {
       const lic = await getFile(P + "/assets/licenses.csv", true);
