@@ -114,6 +114,16 @@ def build_description(script: dict, product: dict) -> str:
     return desc
 
 
+def build_pinned_comment(product: dict, settings: dict) -> str:
+    """고정 댓글(§3.1 ②) — 고지문(첫 줄) + 클릭되는 미래마켓 스토어 '딥링크'.
+    스토어 URL 끝에 그 상품 번호(#001)를 붙이면 store.html 딥링크 핸들러가 해당 상품 카드로
+    바로 스크롤·강조한다(2026-07-17 사용자 제안). 번호가 아직 없으면 스토어 홈으로 보낸다."""
+    num = _store_number(product.get("_row_hash", ""))
+    store_url = settings.get("channel", {}).get("store_url", "https://miraemarket.pages.dev")
+    link = f"{store_url}#{num}" if num else store_url
+    return f"{DISCLOSURE}\n\n미래마켓에서 이 제품 보기 → {link}"
+
+
 def upload(video_path: Path, script: dict, product: dict, settings: dict,
            privacy: str = "private") -> dict:
     """업로드 + 고지 댓글 등록. 반환: upload_result dict (videoId, url, status)."""
@@ -162,7 +172,8 @@ def upload(video_path: Path, script: dict, product: dict, settings: dict,
     print(f"[upload] 업로드 완료: {url} (privacy={privacy})")
 
     # §3.1 ② 링크 옆 고지문 — 댓글 자동 등록 (핀 고정은 UI에서 1탭)
-    pinned = script.get("pinned_comment") or ""
+    #   업로드 시점에 스토어 번호(_store_number)로 딥링크(#001)까지 붙여 그 상품으로 바로 이동.
+    pinned = build_pinned_comment(product, settings)
     assert DISCLOSURE in pinned, "고지문이 댓글에 없음 — 등록 중단(§3.1)"
     comment_id = None
     try:
