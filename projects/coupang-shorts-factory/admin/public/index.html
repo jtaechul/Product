@@ -606,6 +606,11 @@ $("stProduct").onchange = () => {
   if (pain && (!cur || cur === stPainAuto)) { $("stPain").value = pain; stPainAuto = pain; }
   else if (!o || !o.dataset.hash) { if (cur === stPainAuto) $("stPain").value = ""; stPainAuto = ""; }
 };
+// 기획(data/plans/{hash}.json)의 영상 제목 — 스토어 카드 제목 기본값으로 사용
+async function _planTitle(hash) {
+  try { const f = await getFile(`${PLAN_DIR}/${hash}.json`, true); return f ? (JSON.parse(f.text).title || "") : ""; }
+  catch (_) { return ""; }
+}
 async function storeAddFromProduct() {
   const sel = $("stProduct"), i = sel.value;
   if (i === "" || !stRows[i]) { toast("먼저 상품을 선택하세요."); return; }
@@ -617,9 +622,10 @@ async function storeAddFromProduct() {
   if (!dispName && !confirm("이 상품은 아직 상품명이 추출되지 않았습니다(기획을 한 번 돌리면 자동 추출).\n이름 없이 추가할까요? (추가 후 목록에서 직접 입력 가능)")) return;
   const csvCat = (r.cat || "").trim();
   const cat = (csvCat && csvCat !== "기타") ? csvCat : guessCategory(dispName || r.name);   // CSV에 실카테고리 있으면 사용, 없으면 상품명으로 유추
+  const vtitle = await _planTitle(hash);   // 영상(유튜브) 제목 = 스토어 카드 제목 → 시청자가 홈에서 그 영상 상품을 바로 찾음
   storeItems.push({
     number: storeNextNumber(), row_hash: hash, name: dispName, url: (r.link || "").trim(),
-    image: (r.img || "").trim(), category: cat,
+    image: (r.img || "").trim(), category: cat, title: (vtitle || "").trim(),
     // 카드 소개 = 입력값 > CI 자동 생성 소개(무슨 불편을 없애는지) — 비워두면 자동으로 채워진다
     pain: ($("stPain").value || ent.pain || "").trim(), visible: true, date: new Date().toISOString().slice(0, 10),
   });
@@ -654,6 +660,10 @@ function storeRender() {
     del.className = "btn mini danger"; del.textContent = "삭제";
     del.onclick = () => { storeItems.splice(idx, 1); storeRender(); };
     head.append(no, nameI, visL, del);
+    // 카드 제목 = 영상(유튜브) 제목 — 시청자가 홈에서 그 영상 상품을 바로 찾게. 비우면 위 상품명 사용.
+    const titleI = document.createElement("input");
+    titleI.value = it.title || ""; titleI.placeholder = "카드 제목 = 영상 제목(비우면 상품명 사용)";
+    titleI.oninput = () => { storeItems[idx].title = titleI.value; };
     const painI = document.createElement("input");
     painI.value = it.pain || ""; painI.placeholder = "한 줄 소개 — 무슨 불편을 없애는지";
     painI.oninput = () => { storeItems[idx].pain = painI.value; };
@@ -675,7 +685,7 @@ function storeRender() {
     imgI.style.flex = "1"; imgI.style.minWidth = "180px";
     imgI.oninput = () => { storeItems[idx].image = imgI.value.trim(); };
     sub.append(catSel, imgI);
-    row.append(head, painI, sub);
+    row.append(head, titleI, painI, sub);
     box.appendChild(row);
   });
 }
