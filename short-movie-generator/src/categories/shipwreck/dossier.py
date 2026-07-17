@@ -347,8 +347,9 @@ def render_spec_card(dossier: dict, out_png: str, W: int = 720, H: int = 1280) -
     d = ImageDraw.Draw(im)
     title = dossier.get("display", "")
     cyan = (120, 220, 255, 255)
-    # 패널 위치(하단 엄지존 위: 화면 58~86%)
-    x0, y0, x1, y1 = 48, int(H * 0.58), W - 48, int(H * 0.86)
+    # 패널 위치(화면 46~74%). ★본문 자막(submv=h*0.16 → 세로 약 78~84%)과 겹치지 않도록
+    #   위로 올린다(실사고: 자막이 제원 카드를 가림). 카드 하단 74% < 자막 상단 ≈78%.
+    x0, y0, x1, y1 = 48, int(H * 0.46), W - 48, int(H * 0.74)
     d.rectangle([x0, y0, x1, y1], fill=(6, 16, 26, 205))
     d.rectangle([x0, y0, x1, y0 + 6], fill=cyan)                      # 상단 액센트 바
     fh = _f(fp_b, 34); fl = _f(fp_r, 30); fv = _f(fp_b, 34); ft = _f(fp_b, 24)
