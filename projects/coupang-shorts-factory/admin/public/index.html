@@ -417,7 +417,7 @@ ol li{margin:8px 0}
     <div id="vmSub" class="s"></div>
     <div class="vmeta">
       <div class="vmeta-block"><span class="vmeta-h">유튜브 제목</span><p id="vmYtTitle">-</p></div>
-      <div class="vmeta-block"><span class="vmeta-h">설명</span><p id="vmDesc">-</p></div>
+      <div class="vmeta-block"><span class="vmeta-h">설명 (업로드 미리보기 — 번호 자동 포함)</span><p id="vmDesc">-</p></div>
       <div class="vmeta-block"><span class="vmeta-h">해시태그</span><p id="vmTags">-</p></div>
     </div>
     <div class="vm-actions">
@@ -612,6 +612,24 @@ async function _planTitle(hash) {
   try { const f = await getFile(`${PLAN_DIR}/${hash}.json`, true); return f ? (JSON.parse(f.text).title || "") : ""; }
   catch (_) { return ""; }
 }
+// 업로드될 유튜브 설명 미리보기 — 실제 업로드(src/upload/youtube.py build_description)와 같은
+//   앞부분(고지문 첫 줄 + 스토어 번호)을 붙여 보여준다. 화면엔 기획 원문만 보여서 '번호가 안
+//   들어갔다'는 혼란이 있었음(2026-07-17) — 번호는 업로드 시 자동 삽입되며 여기서 미리 확인.
+const DISCLOSURE_LINE = "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다";
+let _storeNumCache = null;
+async function storeNumberOf(hash) {
+  if (!hash) return "";
+  if (!_storeNumCache) {
+    try { const f = await getFile(STORE_PATH, true); _storeNumCache = f ? JSON.parse(f.text) : []; }
+    catch (_) { _storeNumCache = []; }
+  }
+  const it = (Array.isArray(_storeNumCache) ? _storeNumCache : []).find((x) => x && x.row_hash === hash && x.number != null);
+  return it ? String(it.number).replace(/\D/g, "").padStart(3, "0") : "";
+}
+async function descPreview(hash, plan) {
+  const num = await storeNumberOf(hash);
+  return DISCLOSURE_LINE + "\n\n" + (num ? `미래마켓 #${num}\n\n` : "") + ((plan && plan.description_body) || "");
+}
 // 상품 대표 사진 자동 추출 — 영상 제작에 쓴 상품 사진(릴리스 shorts-cand의 is_product 후보,
 //   prod_idx 0 = 대표컷)을 그대로 스토어 카드에 쓴다. 수동 이미지 URL 입력 불필요.
 async function storeProductImage(hash, rel) {
@@ -746,6 +764,7 @@ async function storeSave(btn) {
     await putFile(STORE_PATH, JSON.stringify(clean, null, 1) + "\n", "shorts(admin): 스토어 카탈로그 업데이트", storeSha || undefined);
     const f = await getFile(STORE_PATH, true);   // sha 갱신(연속 저장 대비)
     storeSha = f ? f.sha : null;
+    _storeNumCache = null;   // 번호가 바뀌었을 수 있음 — 설명 미리보기 캐시 갱신
     toast("저장했습니다. 약 1분 뒤 공개 스토어에 반영됩니다.", 4500);
   });
 }
@@ -1337,7 +1356,7 @@ function renderReviewList(runs, idx) {
   }
   box.appendChild(wrap);
 }
-function renderReview(rel, plan, p, backFn) {
+async function renderReview(rel, plan, p, backFn) {
   const box = $("mkReview"); box.innerHTML = "";
   const mk = (h) => { const d = document.createElement("div"); d.className = "card"; d.innerHTML = h; return d; };
   const noRow = !p || !p.row;   // 대기열에 없는(삭제된) 상품이면 재제작·다시생성·업로드 잠금(엉뚱한 상품 조작 방지)
@@ -1369,10 +1388,10 @@ function renderReview(rel, plan, p, backFn) {
   if (plan) {
     const fields = [["title", "제목", plan.title], ["headline", "화면 헤드라인", plan.headline],
       ["hashtags", "해시태그", (plan.hashtags || []).map((h) => (h[0] === "#" ? h : "#" + h)).join(" ")],
-      ["description", "설명", plan.description_body]];
+      ["description", "설명 (업로드 미리보기 — 고지문·스토어 번호 자동 포함)", await descPreview(p && p.hash, plan)]];
     for (const [key, label, val] of fields) {
       const c = mk(`<h2>${label}</h2>`);
-      const t = document.createElement("p"); t.style.margin = "0 0 8px"; t.textContent = val || "-"; c.appendChild(t);
+      const t = document.createElement("p"); t.style.cssText = "margin:0 0 8px;white-space:pre-wrap"; t.textContent = val || "-"; c.appendChild(t);
       const b = document.createElement("button"); b.className = "btn mini sub"; b.textContent = "다시 생성";
       b.disabled = noRow;
       b.onclick = (ev) => busy(ev.target, async () => {
@@ -1565,7 +1584,7 @@ async function openVideo(v) {
   if (v.rowHash) { try { const f = await getFile(`${PLAN_DIR}/${v.rowHash}.json`, true); plan = f ? JSON.parse(f.text) : null; } catch (_) {} }
   if (plan) {
     $("vmYtTitle").textContent = plan.title || v.name || "-";
-    $("vmDesc").textContent = plan.description_body || "-";
+    $("vmDesc").textContent = await descPreview(v.rowHash, plan);   // 고지문+스토어 번호 포함(업로드 미리보기)
     $("vmTags").textContent = (plan.hashtags || []).map((h) => (h[0] === "#" ? h : "#" + h)).join(" ") || "-";
   } else {
     $("vmYtTitle").textContent = v.name || "-";
