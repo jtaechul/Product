@@ -1,8 +1,8 @@
 """M7. 유튜브 업로드 — YouTube Data API v3 videos.insert (스펙 §M7).
 
 - 미인증 API 프로젝트는 업로드 영상이 자동 private 잠금 → 기본 privacy=private (스펙 §M7-2)
-- 제휴 고지문(§3.1)은 설명란 '맨 아래'(2026-07-17 개정) + 댓글에 코드로 강제, 누락 시 assert로 업로드 중단
-  (1차 표시면은 링크 옆 고정 댓글 고지 — 쇼츠 설명란은 '더보기'로 접힘)
+- 제휴 고지문(§3.1)은 설명란 '최상단 첫 줄' + 댓글에 코드로 강제, 누락 시 assert로 업로드 중단
+  (공정위 근접성 원칙상 최상단이 가장 안전 — 2026-07-17 사용자 재확정)
 - 고정(핀) 지정은 API 미지원 → 댓글 자동 등록까지 수행, 핀 고정은 유튜브 앱에서 1탭(문서화)
 
 시크릿: SHORTS_YT_REFRESH_TOKEN(필수 — 쿠팡 쇼츠 '새 채널' 계정으로 발급),
@@ -97,9 +97,9 @@ def build_description(script: dict, product: dict) -> str:
     avoid = product_avoid_terms(product)
     body = hide_product_name(script.get("description_body", "").strip(), avoid)
     num = _store_number(product.get("_row_hash", ""))   # 스토어 카탈로그 번호(No.###과 동일)
-    # 설명란은 '읽히게' 담백히: 훅 본문 → (빈 줄) → 프로필 안내 한 줄 → (빈 줄) → 해시태그 → 맨 아래 고지문.
+    # 설명란은 '읽히게' 담백히: 고지문(맨 위 첫 줄) → 번호 → 훅 본문 → 프로필 안내 한 줄 → 해시태그.
     #   상세 스펙 나열·클릭 안 되는 raw 링크는 뺀다(2026-07-17 사용자 지시). 구매는 프로필/고정 댓글로.
-    parts = []
+    parts = [DISCLOSURE, ""]              # §3.1 고지문 — 설명란 최상단 첫 줄(2026-07-17 사용자 재확정, 공정위 근접성 원칙상 최안전)
     if num:
         parts += [f"미래마켓 #{num}", ""]   # 상품 번호 — 영상↔스토어(store#N) 매칭용
     parts += [
@@ -109,13 +109,8 @@ def build_description(script: dict, product: dict) -> str:
         "",
         " ".join(merge_hashtags(script)),
     ]
-    # §3.1 고지문 위치(2026-07-17 사용자 확정): 설명란 '맨 아래'로 이동. 쇼츠는 설명란이 '더보기'로
-    #   접혀 top/bottom 노출 차이가 작고, 1차 표시면은 링크 옆 '고정 댓글' 고지(upload에서 assert 강제).
-    #   본문이 4900자를 넘어도 고지문이 잘리지 않게 항상 마지막에 덧붙인다(잘림 방지).
-    tail = "\n\n" + DISCLOSURE
-    head = "\n".join(parts).strip()
-    desc = head[: max(0, 4900 - len(tail))].rstrip() + tail
-    assert desc.rstrip().endswith(DISCLOSURE), "고지문이 설명란에 없음 — 업로드 중단(§3.1)"
+    desc = "\n".join(parts).strip()[:4900]
+    assert desc.split("\n")[0] == DISCLOSURE, "고지문이 설명란 첫 줄이 아님 — 업로드 중단(§3.1)"
     return desc
 
 

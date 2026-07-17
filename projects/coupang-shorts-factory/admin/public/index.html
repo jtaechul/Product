@@ -649,9 +649,9 @@ async function storeNumberOf(hash) {
 const PROFILE_CTA = "제품이 궁금하다면? 프로필 링크(미래마켓 스토어)에서 확인하세요";
 async function descPreview(hash, plan) {
   const num = await storeNumberOf(hash);
-  // 실제 업로드(youtube.build_description)와 순서 일치: 번호 → 본문 → 프로필 안내 → (해시태그) → 맨 아래 고지문
+  // 실제 업로드(youtube.build_description)와 순서 일치: 맨 위 고지문 → 번호 → 본문 → 프로필 안내 → (해시태그)
   const body = (plan && plan.description_body) || "";
-  return (num ? `미래마켓 #${num}\n\n` : "") + body + "\n\n" + PROFILE_CTA + "\n\n" + DISCLOSURE_LINE;
+  return DISCLOSURE_LINE + "\n\n" + (num ? `미래마켓 #${num}\n\n` : "") + body + "\n\n" + PROFILE_CTA;
 }
 // 상품 대표 사진 자동 추출 — 영상 제작에 쓴 상품 사진(릴리스 shorts-cand의 is_product 후보,
 //   prod_idx 0 = 대표컷)을 그대로 스토어 카드에 쓴다. 수동 이미지 URL 입력 불필요.
