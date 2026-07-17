@@ -590,6 +590,25 @@ def load_selections(row_hash: str, lines: list, project_root: Path, job_dir: Pat
                     except Exception as e:
                         print(f"[imgsrc] 제품영상 픽 확보 실패({pv}: {e}) — 건너뜀")
                 if loc:
+                    s0 = pk.get("pv_start")
+                    if s0 is not None:   # ⭐ 특징 구간 픽(2026-07-17) — 고른 구간만 잘라 그 라인에서 재생
+                        e0 = float(pk.get("pv_end") or 0) or (float(s0) + 8.0)
+                        cut = dl_dir / f"pvseg_{i:02d}_{j}_{int(float(s0) * 10)}.mp4"
+                        if not cut.exists():
+                            try:
+                                import subprocess
+                                import imageio_ffmpeg
+                                ff = imageio_ffmpeg.get_ffmpeg_exe()
+                                subprocess.run([ff, "-y", "-ss", f"{float(s0):.2f}", "-i", str(loc),
+                                                "-t", f"{max(0.8, e0 - float(s0)):.2f}", "-an",
+                                                "-c:v", "libx264", "-preset", "veryfast", str(cut)],
+                                               check=True, capture_output=True)
+                            except Exception as ex:
+                                print(f"[imgsrc] 구간 자르기 실패({type(ex).__name__}) — 전체 영상 사용")
+                                cut = None
+                        if cut is not None and Path(cut).exists():
+                            print(f"[imgsrc] 라인{i + 1}: 제품영상 {float(s0):.1f}~{e0:.1f}초 구간 사용")
+                            loc = Path(cut)
                     imgs.append(loc); used += 1
                 continue
             if pk.get("detail_idx") is not None:   # 상세컷 픽(2026-07-17) — PDF에서 같은 컷을 재추출(결정론)

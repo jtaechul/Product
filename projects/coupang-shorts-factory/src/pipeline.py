@@ -536,24 +536,49 @@ def _gen_store_pain(product: dict, settings: dict) -> str | None:
     return None
 
 
+def _pv_frame(vp: Path, t: float, out: Path) -> bool:
+    """영상의 t초 프레임을 jpg로 저장(구간 대표 썸네일용)."""
+    try:
+        from PIL import Image
+        from moviepy import VideoFileClip
+        clip = VideoFileClip(str(vp))
+        tt = min(max(0.1, float(t)), max(0.1, float(clip.duration or 1) - 0.1))
+        Image.fromarray(clip.get_frame(tt)).save(str(out), quality=85)
+        clip.close()
+        return True
+    except Exception as e:
+        print(f"[pipeline] 포스터 실패({vp.name}@{t:.1f}s: {e})")
+        return False
+
+
 def _append_video_candidates(manifest: list, pvids: list, job_dir: Path) -> None:
-    """제품 영상(링크 추출·업로드본)을 모든 라인의 후보에 '제품영상'으로 추가.
-    그리드 썸네일은 1초 지점 포스터 프레임(jpg), 실제 영상은 릴리스 자산명(pv_name)으로 참조 —
-    선택 시 load_selections 가 그 자산을 내려받아 렌더가 라인 구간에서 재생한다."""
-    from src.product.video_link import video_poster
-    posters = {}
+    """제품 영상을 '특징 구간'별 후보로 추가(2026-07-17 사용자 확정 — 이전엔 영상 앞부분만 재생됨).
+    장면 전환을 탐지해(vsegment) 구간마다 그 구간 한가운데 프레임을 썸네일로 만들고
+    pv_start/pv_end(초)를 실어 보낸다 — 운영자가 고른 구간만 잘라 그 라인에서 재생된다."""
+    from src.video.vsegment import detect_segments
+    raw = Path(job_dir) / "cand_raw"
+    raw.mkdir(parents=True, exist_ok=True)
+    entries = []
     for v in pvids[:2]:
         vp = Path(v)
-        pj = Path(job_dir) / "cand_raw" / f"pv_{vp.stem}.jpg"
-        if vp.name not in posters and video_poster(vp, pj):
-            posters[vp.name] = pj
-    if not posters:
+        try:
+            segs = detect_segments(vp, max_n=4 if len(pvids) == 1 else 2)
+        except Exception as e:
+            print(f"[pipeline] 구간 탐지 실패({vp.name}: {e}) — 앞 8초 1구간")
+            segs = [(0.0, 8.0)]
+        for k, (s, e) in enumerate(segs):
+            pj = raw / f"pv_{vp.stem}_s{k}.jpg"
+            if _pv_frame(vp, (s + e) / 2, pj):
+                entries.append({"file": str(pj), "pv_name": vp.name,
+                                "pv_start": round(float(s), 2), "pv_end": round(float(e), 2)})
+    if not entries:
         return
-    for e in manifest:
-        for name, pj in posters.items():
-            e["candidates"].append({"file": str(pj), "source": "product_video",
-                                    "url": None, "is_pvideo": True, "pv_name": name})
-    print(f"[pipeline] 제품 영상 후보 {len(posters)}개를 {len(manifest)}개 라인에 추가")
+    for e0 in manifest:
+        for c in entries:
+            e0["candidates"].append({"file": c["file"], "source": "product_video", "url": None,
+                                     "is_pvideo": True, "pv_name": c["pv_name"],
+                                     "pv_start": c["pv_start"], "pv_end": c["pv_end"]})
+    print(f"[pipeline] 제품 영상 특징구간 후보 {len(entries)}개를 {len(manifest)}개 라인에 추가")
 
 
 def _merge_line_manifest(web_path: Path, prev_full: dict, line_i: int) -> None:
@@ -611,6 +636,9 @@ def _publish_candidates(manifest: list, product: dict, job_dir: Path) -> Path:
             if c.get("is_pvideo"):   # 제품 영상 후보: 썸네일=포스터, 실제 영상=릴리스 자산명(pv_name)
                 cand["is_pvideo"] = True
                 cand["pv_name"] = c.get("pv_name")
+                if c.get("pv_start") is not None:   # 특징 구간(초) — 선택 시 그 구간만 잘라 재생
+                    cand["pv_start"] = float(c.get("pv_start"))
+                    cand["pv_end"] = float(c.get("pv_end") or 0)
             if c.get("is_detail"):   # 상세컷(PDF 기능 설명 크롭): detail_idx로 제작 때 같은 컷 재현
                 cand["is_detail"] = True
                 cand["detail_idx"] = int(c.get("detail_idx", 0))

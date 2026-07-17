@@ -2354,7 +2354,9 @@ function renderImgLines() {
       if (c.is_product) { const tag = document.createElement("span"); tag.className = "ttag"; tag.textContent = "상품"; t.appendChild(tag); }
       else if (c.is_detail) { const tag = document.createElement("span"); tag.className = "ttag"; tag.textContent = "상세컷"; t.appendChild(tag); }
       else if (c.is_meme) { const tag = document.createElement("span"); tag.className = "ttag meme"; tag.textContent = "밈"; t.appendChild(tag); }
-      else if (c.is_pvideo) { const tag = document.createElement("span"); tag.className = "ttag"; tag.textContent = "제품영상"; t.appendChild(tag); }
+      else if (c.is_pvideo) { const tag = document.createElement("span"); tag.className = "ttag";
+        tag.textContent = (c.pv_start != null) ? `영상 ${Math.round(c.pv_start)}~${Math.round(c.pv_end)}초` : "제품영상";
+        t.appendChild(tag); }
       else { const tag = document.createElement("span"); tag.className = "ttag"; tag.textContent = "GIF"; t.appendChild(tag); }
       t.onclick = () => {
         if (t.classList.contains("nofile")) return;
@@ -2362,7 +2364,7 @@ function renderImgLines() {
         const pick = c.is_product ? { is_product: true, prod_idx: (c.prod_idx || 0), source: "product", query: ln.query || "", _key: c.name, _thumb: thumbUrl }
           : c.is_detail ? { detail_idx: (c.detail_idx || 0), source: "detail", query: ln.query || "", _key: c.name, _thumb: thumbUrl }
           : c.is_meme ? { file: c.file, source: "meme", query: ln.query || "", _key: c.name, _thumb: thumbUrl }
-          : c.is_pvideo ? { pv_name: c.pv_name, source: "product_video", query: ln.query || "", _key: c.name, _thumb: thumbUrl }
+          : c.is_pvideo ? { pv_name: c.pv_name, pv_start: c.pv_start, pv_end: c.pv_end, source: "product_video", query: ln.query || "", _key: c.name, _thumb: thumbUrl }
           : { url: c.url, source: c.source || "", query: ln.query || "", _key: c.name, _thumb: thumbUrl };
         togglePick(li, pick);
       };
