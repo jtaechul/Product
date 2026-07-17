@@ -225,6 +225,25 @@ def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None) 
     if strict_length and not (CHAR_MIN <= n_chars <= CHAR_MAX):
         problems.append(f"낭독 분량 공백 제외 {n_chars}자 ({CHAR_MIN}~{CHAR_MAX}자 필요)")
 
+    # ⭐ 구간 배분 강제(2026-07-17 사용자 확정): 페인포인트(②③)는 짧고 간결하게, 제품 설명·
+    #    특장점·혁신성(④⑤)을 강조. 프롬프트 규칙만으론 모델이 어겨서(실측 문제 48%) 검증으로 강제 —
+    #    위반 시 RuleViolation → 재생성 루프가 배분을 고쳐 다시 쓴다.
+    def _st_chars(*stages):
+        return sum(len(str(l.get("text", "")).replace(" ", "")) for l in lines
+                   if int(l.get("stage") or 0) in stages)
+    #    (strict 생성 검증에서만 — 승인된 옛 기획을 불러올 때(strict_length=False)는 막지 않는다)
+    pain, prod = _st_chars(2, 3), _st_chars(4, 5)
+    prod_lines = sum(1 for l in lines if int(l.get("stage") or 0) in (4, 5))
+    if strict_length and n_chars > 0:
+        if pain * 100 > n_chars * 38:
+            problems.append(f"구간 배분 위반: 문제(②③) {pain * 100 // n_chars}% (38% 이하로 짧고 간결하게 — "
+                            "공감·원흉 라인을 줄이거나 압축하라)")
+        if prod * 100 < n_chars * 45:
+            problems.append(f"구간 배분 위반: 제품(④⑤) {prod * 100 // n_chars}% (45% 이상 필요 — "
+                            "특장점·작동 원리·혁신성 라인을 더 쓰라)")
+        if prod_lines < 4:
+            problems.append(f"제품 구간(④⑤) {prod_lines}줄 (4줄 이상 필요 — 차별점·작동 방식·결과를 나눠 쓰라)")
+
     if problems:
         raise RuleViolation("; ".join(problems))
 
