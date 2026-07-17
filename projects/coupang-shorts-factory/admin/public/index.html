@@ -1878,7 +1878,7 @@ function setDirDone(mechData) {
   const dv = $("dirView"); dv.innerHTML = "";
   let label = "";
   if (mechData) {
-    label = String(mechData.custom || "").trim() ? "직접 의견"
+    label = String(mechData.custom || "").trim() ? "4안(직접 의견)"
       : ((mechData.options || [])[typeof mechData.chosen === "number" ? mechData.chosen : 0] || {}).title || "";
   }
   const p = document.createElement("p"); p.className = "hint";
@@ -1970,7 +1970,7 @@ async function renderMechanism(body) {
     rows.push(it); body.appendChild(it);
   });
   const ta = document.createElement("textarea");
-  ta.placeholder = "직접 의견·수정 — 여기 적으면 위 3안 대신 이 내용을 대본 뼈대로 씁니다";
+  ta.placeholder = "4안 · 직접 작성 — '1안과 2안을 종합해서'처럼 조합 지시도 됩니다(3안 내용과 함께 대본 AI에 전달)";
   ta.style.cssText = "width:100%;min-height:64px;margin-top:8px;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);box-sizing:border-box";
   ta.value = data.custom || "";
   body.appendChild(ta);
