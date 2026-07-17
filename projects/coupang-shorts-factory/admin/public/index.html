@@ -255,7 +255,7 @@ ol li{margin:8px 0}
 </section>
 
 <!-- ───────── 제작 탭 ───────── -->
-<section id="tab-run" class="on" data-group="make" style="order:4">
+<section id="tab-run" class="on" data-group="make" style="order:5">
   <div class="card">
     <h2>제작 · 검수 · 올리기</h2>
     <p class="hint" style="margin:0 0 8px">위에서 자막별 이미지 선택·저장까지 끝났으면 <b>제작하기</b>를
@@ -275,7 +275,18 @@ ol li{margin:8px 0}
 </section>
 
 <!-- ───────── 기획 (개편: 자동화로 화면에선 생략 — 대본은 자동 생성·저장되어 이미지/제작에 사용) ───────── -->
-<section id="tab-plan" class="on" data-group="make" style="order:2;display:none">
+<!-- ───────── ② 기획 방향 선택 — '새 상품 등록'과 '자막별 이미지 선택' 사이 독립 메뉴 (2026-07-17 사용자 확정) ───────── -->
+<section id="tab-direction" class="on" data-group="make" style="order:2">
+  <div class="card">
+    <h2>② 기획 방향 선택 (차별점 3안)</h2>
+    <p class="hint" style="margin:0 0 8px">상품을 등록하면 자료(PDF·캡처)에서 ‘차별점·작동 방식’ 3안을 뽑아 여기에 띄웁니다.
+      <b>여기서 하나를 골라 확정해야</b> 대본이 만들어집니다.</p>
+    <div id="dirView"><p class="empty">진행 중인 상품이 없습니다 — 위에서 상품을 등록하거나, 제작 대기열의 ‘작업’을 누르세요.</p></div>
+  </div>
+</section>
+
+<!-- ───────── ③ 기획·대본 검토 (방향 확정 후 여기 표시 — 이전엔 display:none으로 통째로 숨겨져 있던 버그 수정) ───────── -->
+<section id="tab-plan" class="on" data-group="make" style="order:3">
   <div id="planView"></div>
   <div class="card" id="planActions" style="display:none">
     <button class="btn" id="planApprove">이 기획으로 이미지 찾기 →</button>
@@ -285,7 +296,7 @@ ol li{margin:8px 0}
 </section>
 
 <!-- ───────── 이미지 탭 (자막별 이미지 선택기 #2) ───────── -->
-<section id="tab-images" class="on" data-group="make" style="order:3">
+<section id="tab-images" class="on" data-group="make" style="order:4">
   <div class="card">
     <h2>자막별 이미지 선택</h2>
     <p class="hint" style="margin:0 0 8px"><b>상품 기획하기</b>를 누르면 자막(문장)마다 후보 이미지가 여기에
@@ -1424,10 +1435,11 @@ $("btnAddProduct").onclick = (ev) => busy(ev.target, async () => {
   setCurrentWork(newRow, hash, label);
   $("imgLines").innerHTML = ""; $("imgSaveCard").style.display = "none";
   $("planView").innerHTML = ""; $("planActions").style.display = "none";
+  $("dirView").innerHTML = '<p class="empty">기획 방향(3안)을 만드는 중... (약 1분, 준비되면 여기에 뜹니다)</p>';
   await planDispatch(newRow);
-  setStatus("상품 등록 완료 — 기획 방향(차별점 3안)을 만들고 있습니다(약 1분). 준비되면 여기서 골라주세요.");
+  setStatus("상품 등록 완료 — 기획 방향(차별점 3안)을 만들고 있습니다(약 1분). 준비되면 아래 '② 기획 방향 선택'에서 골라주세요.");
   toast("상품 등록 완료 — 기획 방향 3안 생성 시작");
-  document.getElementById("tab-plan").scrollIntoView({ behavior: "smooth" });
+  document.getElementById("tab-direction").scrollIntoView({ behavior: "smooth" });
   pollPlan(hash);
 });
 // 선택한 상품 동영상 파일명 미리보기(비전문가용 확인 — 캡처파일 #fileList 와 같은 칩 스타일)
@@ -1814,6 +1826,8 @@ async function pollPlan(hash, tries = 0, waitSha) {
   if (f && (!waitSha || f.sha !== waitSha)) {
     planData = JSON.parse(f.text); renderPlan();
     $("planActions").style.display = "";
+    try { setDirDone((await loadMech(hash)).data); } catch (_) {}   // ② 메뉴를 '확정됨'으로
+    document.getElementById("tab-plan").scrollIntoView({ behavior: "smooth" });
     setStatus("기획·대본 완성 — 검토 후 '이 기획으로 이미지 찾기'로 넘어가세요.");
     return;
   }
@@ -1844,34 +1858,51 @@ async function loadMech(hash) {
   const confirmed = !!(d && (d.confirmed === true || String(d.custom || "").trim() || typeof d.chosen === "number"));
   return { data: d, sha: f && f.sha, confirmed };
 }
-// 방향 미확정이면 '① 방향 선택 화면'만 띄운다 — **대본이 이미 있어도 절대 보여주지 않는다**(분리 원칙).
+// 방향 미확정이면 '② 기획 방향 선택' 메뉴(독립 섹션 #dirView)에 3안을 띄운다 —
+// **대본이 이미 있어도 절대 보여주지 않는다**(프로세스 분리 원칙).
 async function maybeShowMechStep(hash) {
   const mech = await loadMech(hash);
   if (!mech.data || mech.confirmed) return false;
-  const box = $("planView"); box.innerHTML = "";
-  const card = document.createElement("div"); card.className = "card";
-  card.innerHTML = '<h2>① 기획 방향 선택 — 차별점 · 작동 방식 (3안)</h2>'
-    + '<p class="hint" style="margin:0 0 8px">방향을 확정해야 다음 단계(대본)로 넘어갑니다. '
-    + '이전에 만들어진 대본이 있어도 무시하고, 확정한 방향으로 새로 씁니다.</p>'
-    + '<div class="mechbody"></div>';
-  box.appendChild(card);
-  renderMechanism(card.querySelector(".mechbody"));
-  $("planActions").style.display = "none";
-  setStatus("기획 방향 3안이 준비됐습니다 — 하나를 고르거나 직접 적은 뒤 '이 선택으로 기획·대본 만들기'를 누르세요.");
+  const dv = $("dirView"); dv.innerHTML = "";
+  const note = document.createElement("p"); note.className = "hint"; note.style.margin = "0 0 8px";
+  note.textContent = "방향을 확정해야 다음 단계(대본)로 넘어갑니다. 이전에 만들어진 대본이 있어도 무시하고, 확정한 방향으로 새로 씁니다.";
+  dv.appendChild(note);
+  const body = document.createElement("div"); dv.appendChild(body);
+  renderMechanism(body);
+  $("planView").innerHTML = ""; $("planActions").style.display = "none";   // 대본 화면 비움(분리)
+  document.getElementById("tab-direction").scrollIntoView({ behavior: "smooth" });
+  setStatus("기획 방향 3안이 준비됐습니다 — '② 기획 방향 선택'에서 하나를 고르거나 직접 적으세요.");
   return true;
 }
-// 제작 대기열의 '작업' → ① 방향 미확정이면 선택 화면만 / ② 확정이면 대본 검토 / 없으면 방향 생성부터
+// '② 기획 방향 선택' 메뉴의 확정 후 표시 — 어떤 방향이 확정됐는지 + 바꾸는 곳 안내
+function setDirDone(mechData) {
+  const dv = $("dirView"); dv.innerHTML = "";
+  let label = "";
+  if (mechData) {
+    label = String(mechData.custom || "").trim() ? "직접 의견"
+      : ((mechData.options || [])[typeof mechData.chosen === "number" ? mechData.chosen : 0] || {}).title || "";
+  }
+  const p = document.createElement("p"); p.className = "hint";
+  p.textContent = "✓ 방향 확정됨" + (label ? " — " + label : "")
+    + ". 아래 기획·대본을 검토하세요. (방향을 바꾸려면 아래 '기획 방향 — 확정됨' 카드에서)";
+  dv.appendChild(p);
+}
+// 제작 대기열의 '작업' → ② 방향 미확정이면 선택 메뉴만 / 확정이면 대본 검토 / 없으면 방향 생성부터
 async function selectProduct(row, hash, label) {
   setCurrentWork(row, hash, label);
-  document.getElementById("tab-plan").scrollIntoView({ behavior: "smooth" });
   if (await maybeShowMechStep(hash)) return;
+  const mech = await loadMech(hash);
   const f = await getFile(`${PLAN_DIR}/${hash}.json`, true, true);
   if (f) {
+    if (mech.data) setDirDone(mech.data);
     planData = JSON.parse(f.text); renderPlan();
     $("planActions").style.display = "";
+    document.getElementById("tab-plan").scrollIntoView({ behavior: "smooth" });
     setStatus("기획·대본을 검토하세요. 좋으면 '이 기획으로 이미지 찾기'.");
   } else {
     $("planView").innerHTML = ""; $("planActions").style.display = "none";
+    $("dirView").innerHTML = '<p class="empty">기획 방향(3안)을 만드는 중... (약 1분, 준비되면 여기에 뜹니다)</p>';
+    document.getElementById("tab-direction").scrollIntoView({ behavior: "smooth" });
     setStatus("이 상품은 아직 기획 전 — 기획 방향(3안)부터 자동으로 만듭니다(약 1분).");
     await planDispatch(row);
     pollPlan(hash);
