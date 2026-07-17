@@ -119,6 +119,16 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     from src.script.sanitize import product_avoid_terms, sanitize_script
     avoid_terms = product_avoid_terms(product)   # 브랜드·정식명 → 대사·자막에서 제거(승인된 옛 기획 포함)
     plan_path = PROJECT_ROOT / "data" / "plans" / f"{product['_row_hash']}.json"
+    # ---- 차별점·작동방식(2026-07-17): 상품 자료에서 3안 추출(plan 때) → 운영자 선택본을 대본 ④의 뼈대로.
+    #      새 대본을 만들 때만 추출(plan 또는 첫 생성). 실패해도 기존 흐름 그대로(soft).
+    try:
+        from src.product import mechanism
+        mech_txt = mechanism.prepare(product, settings, PROJECT_ROOT,
+                                     extract=bool(args.plan or not plan_path.exists()))
+        if mech_txt:
+            product["차별점_작동방식"] = mech_txt   # generate_script의 상품 JSON에 그대로 노출됨
+    except Exception as e:
+        print(f"[mech] 차별점 준비 실패({type(e).__name__}: {e}) — 기존 흐름으로 계속")
     if args.script_file:
         script = json.loads(Path(args.script_file).read_text(encoding="utf-8"))
         script = sanitize_script(script, strict_length=False, avoid_terms=avoid_terms)
@@ -136,8 +146,9 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
             raise RuntimeError(msg)
         print(f"[pipeline] M3 대본 프로바이더: {script_provider(settings)}")
         script = generate_script(product, settings)
-    # §3.1 고지문·링크는 항상 코드로 강제 (기획 로드 경로 포함)
-    script["pinned_comment"] = f"제품 정보는 여기서 확인 → {product['affiliate_url']}\n{DISCLOSURE}"
+    # §3.1 고지문·링크는 항상 코드로 강제 (기획 로드 경로 포함) — 실제 등록도 upload가 같은 함수로 재생성
+    from src.upload.youtube import build_pinned_comment
+    script["pinned_comment"] = build_pinned_comment(product, settings)
     (job_dir / "script.json").write_text(json.dumps(script, ensure_ascii=False, indent=1), encoding="utf-8")
 
     lines = script["lines"]

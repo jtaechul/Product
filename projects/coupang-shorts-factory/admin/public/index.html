@@ -1849,6 +1849,75 @@ async function selectProduct(row, hash, label) {
 function currentProduct() { return requireWork(); }
 const planSelected = currentProduct;
 // (기획 생성·불러오기는 등록/대기열 '작업'에서 자동 처리 — planDispatch + pollPlan)
+// ── 차별점·작동 방식 3안(2026-07-17) — data/mechanism/{hash}.json: 3안 표시 → 선택/직접 의견/다시 뽑기.
+//    '이 선택으로 대본 다시 쓰기'가 선택을 저장(putFile)하고 plan을 재실행해 대본 ④에 반영한다.
+async function renderMechanism(body) {
+  const sel = planSelected(); if (!sel) { body.innerHTML = ""; return; }
+  const MECH = `${P}/data/mechanism/${sel.hash}.json`;
+  let f = null;
+  try { f = await getFile(MECH, true, true); } catch (_) {}
+  const data = f ? JSON.parse(f.text) : null;
+  const sha = f && f.sha;
+  body.innerHTML = "";
+  const hint = document.createElement("p"); hint.className = "hint"; hint.style.margin = "0 0 8px";
+  hint.textContent = "영상이 '뭘 파는지' 또렷해지게, 대본의 제품 공개 구간이 이 내용 위에 세워집니다. 안을 고르거나 직접 적은 뒤 '이 선택으로 대본 다시 쓰기'를 누르세요.";
+  body.appendChild(hint);
+  if (!data || !(data.options || []).length) {
+    body.insertAdjacentHTML("beforeend", '<p class="empty">아직 3안이 없습니다 — 아래 버튼을 누르면 상품 자료(PDF·캡처)에서 자동 추출하고 대본도 새로 씁니다.</p>');
+    const b = document.createElement("button"); b.className = "btn mini"; b.textContent = "차별점 3안 뽑기 (대본 새로 쓰기 포함)";
+    b.onclick = (ev) => busy(ev.target, async () => {
+      await planDispatch(sel.row);
+      setStatus("차별점 3안 추출 + 기획·대본 생성 중... (약 1~2분, 완성되면 자동 표시)");
+      toast("차별점 추출 시작"); pollPlan(sel.hash);
+    });
+    body.appendChild(b);
+    return;
+  }
+  let chosen = (typeof data.chosen === "number") ? data.chosen : null;   // null = 1안 기본 사용
+  const rows = [];
+  (data.options || []).forEach((o, i) => {
+    const it = document.createElement("div"); it.className = "item"; it.style.cursor = "pointer";
+    it.innerHTML = `<div class="grow"><div class="t"></div><div class="s"></div></div><span class="chip"></span>`;
+    it.querySelector(".t").textContent = `${i + 1}안 · ${o.title || "차별점"}`;
+    it.querySelector(".s").textContent = o.mechanism || "";
+    it.onclick = () => { chosen = i; paint(); };
+    rows.push(it); body.appendChild(it);
+  });
+  const ta = document.createElement("textarea");
+  ta.placeholder = "직접 의견·수정 — 여기 적으면 위 3안 대신 이 내용을 대본 뼈대로 씁니다";
+  ta.style.cssText = "width:100%;min-height:64px;margin-top:8px;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);box-sizing:border-box";
+  ta.value = data.custom || "";
+  body.appendChild(ta);
+  const btns = document.createElement("div"); btns.className = "row2"; btns.style.marginTop = "8px";
+  const apply = document.createElement("button"); apply.className = "btn mini"; apply.textContent = "이 선택으로 대본 다시 쓰기";
+  const redo = document.createElement("button"); redo.className = "btn mini sub"; redo.textContent = "3안 다시 뽑기";
+  btns.append(apply, redo); body.appendChild(btns);
+  function paint() {
+    rows.forEach((r, i) => {
+      const on = (chosen === null ? i === 0 : i === chosen);
+      r.style.outline = on ? "2px solid var(--accent)" : "";
+      r.style.outlineOffset = on ? "-2px" : "";
+      const chip = r.querySelector(".chip");
+      chip.textContent = on ? (chosen === null ? "기본 사용" : "선택됨") : "";
+      chip.className = "chip" + (on ? " done" : "");
+    });
+  }
+  paint();
+  apply.onclick = (ev) => busy(ev.target, async () => {
+    const payload = { options: data.options, chosen, custom: ta.value.trim() };
+    await putFile(MECH, JSON.stringify(payload, null, 1) + "\n", "admin: 차별점·작동방식 선택 저장", sha || undefined);
+    await planDispatch(sel.row);
+    setStatus("선택한 차별점으로 기획·대본을 다시 쓰는 중... (약 1~2분, 완성되면 자동 표시)");
+    toast("대본 다시 쓰기 시작"); pollPlan(sel.hash);
+  });
+  redo.onclick = (ev) => busy(ev.target, async () => {
+    if (sha) await gh(`/repos/${OWNER}/${REPO}/contents/${MECH}`, { method: "DELETE",
+      body: JSON.stringify({ message: "admin: 차별점 3안 다시 추출", sha, branch: BRANCH }) });
+    await planDispatch(sel.row);
+    setStatus("차별점 3안을 다시 뽑고 대본도 새로 쓰는 중... (약 1~2분, 완성되면 자동 표시)");
+    toast("3안 다시 뽑기 시작"); pollPlan(sel.hash);
+  });
+}
 function renderPlan() {
   const box = $("planView"); box.innerHTML = "";
   const c = planData.concept || {};
@@ -1861,6 +1930,10 @@ function renderPlan() {
   }
   if (!c.한줄썰 && !c.의도 && !c.타깃 && !c.후킹) con.insertAdjacentHTML("beforeend", '<p class="hint">기획서 정보가 비어 있습니다.</p>');
   box.appendChild(con);
+  // ⭐ 차별점·작동 방식 3안(2026-07-17) — 대본 ④(제품 공개)의 뼈대. 선택/직접 의견/다시 뽑기.
+  const mech = mk('<h2>차별점 · 작동 방식 (3안)</h2><div class="mechbody"><p class="hint">불러오는 중...</p></div>');
+  box.appendChild(mech);
+  renderMechanism(mech.querySelector(".mechbody"));
   // 스토리보드 + 대본 (라인마다 '문구 다시' = 그 줄 text만 재생성, 앞뒤 스토리 흐름 유지)
   const sb = mk('<h2>스토리보드 · 대본</h2>');
   const sel = planSelected();
