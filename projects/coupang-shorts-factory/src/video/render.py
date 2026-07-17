@@ -121,6 +121,44 @@ def _mix_reveal_sfx(audio, reveal_time, project_root, settings, duration):
         return audio
 
 
+def _mix_sub_pop_sfx(audio, sub_plan: list, line_windows: list, project_root,
+                     settings: dict, duration: float):
+    """자막 리듬 효과음(2026-07-17 사용자 확정 · 썰피자 벤치마크 분석 반영) — 자막이 바뀌는
+    순간마다 낮은 볼륨의 '뽁' 팝을 얹어 타닥타닥 리듬을 만든다(벤치마크는 0.35~0.5s 간격 팝).
+    mode: pop=자막 팝(칸)마다(기본·벤치마크와 동일) | line=대사 라인 시작만 | off=끔.
+    소리는 자체 물리 합성(assets/sfx/pop.wav) — 저작권 무관(§3.2 자체 생성물)."""
+    cfg = settings.get("sfx", {})
+    mode = str(cfg.get("sub_pop_mode", "pop")).lower()
+    if not cfg.get("enabled", True) or mode in ("off", "none", "false"):
+        return audio
+    path = Path(project_root) / cfg.get("sub_pop", "assets/sfx/pop.wav")
+    if not path.exists():
+        return audio
+    if mode == "line":
+        times = [float(a) for a, _b in (line_windows or [])]
+    else:
+        times = [float(p["start"]) for p in (sub_plan or []) if p.get("kind") == "sub"]
+    times = sorted(t for t in times if 0 <= t < duration - 0.05)
+    if not times:
+        return audio
+    try:
+        import wave as _wave
+        from moviepy import CompositeAudioClip
+        from moviepy.audio.AudioClip import AudioArrayClip
+        # wav를 직접 읽는다(AudioFileClip.to_soundarray는 짧은 클립에서 버퍼 오류) — 스테레오로 확장
+        with _wave.open(str(path)) as wf:
+            sr_ = wf.getframerate()
+            raw = np.frombuffer(wf.readframes(wf.getnframes()), dtype=np.int16).astype(np.float64) / 32768.0
+            arr = raw.reshape(-1, 2) if wf.getnchannels() == 2 else np.column_stack([raw, raw])
+        vol = float(cfg.get("sub_pop_volume", 0.25))   # 나레이션 아래 깔리는 낮은 리듬(기본 0.25)
+        pops = [AudioArrayClip(arr * vol, fps=sr_).with_start(t) for t in times]
+        print(f"[sfx] 자막 팝 {len(pops)}개 삽입 (mode={mode}, vol {vol})")
+        return CompositeAudioClip([audio, *pops]) if audio is not None else CompositeAudioClip(pops)
+    except Exception as e:
+        print(f"[sfx] 자막 팝 실패({type(e).__name__}: {e}) → 생략")
+        return audio
+
+
 def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
                  shake_windows: list | None = None, project_root: Path | None = None,
                  image_windows: list | None = None, bg_path: Path | None = None,
@@ -284,6 +322,7 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     audio = _mix_bgm(audio, project_root, settings, duration, has_narration)
     audio = _mix_reveal_sfx(audio, _find_reveal_time(lines, line_windows),
                             project_root, settings, duration)
+    audio = _mix_sub_pop_sfx(audio, sub_plan, line_windows, project_root, settings, duration)
     final = (
         CompositeVideoClip(layers, size=(width, height))
         .with_duration(duration)
