@@ -559,6 +559,7 @@ function storeCatOf(it) { const c = (it.category || "").trim(); return (c && c !
 let storeItems = [], storeSha = null, stRows = [];
 async function storeInit() {
   await Promise.all([storeLoad(), storePopulatePicker()]);
+  storeBackfillImages();   // 이미지 없는 항목에 상품 사진 자동 채움(백그라운드, 완료 시 자동 저장+토스트)
 }
 async function storeLoad() {
   const box = $("storeList");
@@ -611,6 +612,49 @@ async function _planTitle(hash) {
   try { const f = await getFile(`${PLAN_DIR}/${hash}.json`, true); return f ? (JSON.parse(f.text).title || "") : ""; }
   catch (_) { return ""; }
 }
+// 상품 대표 사진 자동 추출 — 영상 제작에 쓴 상품 사진(릴리스 shorts-cand의 is_product 후보,
+//   prod_idx 0 = 대표컷)을 그대로 스토어 카드에 쓴다. 수동 이미지 URL 입력 불필요.
+async function storeProductImage(hash, rel) {
+  try {
+    const man = (rel.assets || []).find((a) => a.name === `cand_${hash}.json`);
+    if (!man) return "";
+    const res = await fetch(mediaUrl(man.browser_download_url, man.updated_at || ""), { cache: "no-store" });
+    if (!res.ok) return "";
+    const m = await res.json();
+    const urlOf = {};
+    for (const a of (rel.assets || [])) urlOf[a.name] = a.browser_download_url;
+    const prods = [];
+    for (const ln of (m.lines || []))
+      for (const c of (ln.candidates || []))
+        if (c.is_product && c.name && urlOf[c.name]) prods.push([Number(c.prod_idx) || 0, urlOf[c.name]]);
+    prods.sort((a, b) => a[0] - b[0]);
+    return prods.length ? prods[0][1] : "";
+  } catch (_) { return ""; }
+}
+// 스토어 이미지 자동 백필 — 이미지 없는 항목에 상품 사진을 채워 자동 저장(스토어 탭 열 때마다 검사).
+async function storeBackfillImages() {
+  if (!token()) return;
+  const missing = storeItems.filter((x) => x && !x.image && x.row_hash);
+  if (!missing.length) return;
+  let rel = null;
+  try { rel = await gh(`/repos/${OWNER}/${REPO}/releases/tags/${IMG_TAG}`, { allow404: true }); } catch (_) {}
+  if (!rel) return;
+  let changed = 0;
+  for (const it of missing) {
+    const u = await storeProductImage(it.row_hash, rel);
+    if (u) { it.image = u; changed++; }
+  }
+  if (!changed) return;
+  try {
+    const clean = storeItems.filter((x) => x && (x.url || x.name));
+    await putFile(STORE_PATH, JSON.stringify(clean, null, 1) + "\n",
+      `shorts(admin): 스토어 상품 이미지 자동 등록 (${changed}개)`, storeSha || undefined);
+    const f = await getFile(STORE_PATH, true);
+    storeSha = f ? f.sha : null;
+    storeRender();
+    toast(`상품 이미지 ${changed}개를 자동으로 넣고 저장했습니다.`, 4500);
+  } catch (e) { toast("상품 이미지 자동 저장 실패: " + (e.message || e), 5000); }
+}
 async function storeAddFromProduct() {
   const sel = $("stProduct"), i = sel.value;
   if (i === "" || !stRows[i]) { toast("먼저 상품을 선택하세요."); return; }
@@ -623,9 +667,16 @@ async function storeAddFromProduct() {
   const csvCat = (r.cat || "").trim();
   const cat = (csvCat && csvCat !== "기타") ? csvCat : guessCategory(dispName || r.name);   // CSV에 실카테고리 있으면 사용, 없으면 상품명으로 유추
   const vtitle = await _planTitle(hash);   // 영상(유튜브) 제목 = 스토어 카드 제목 → 시청자가 홈에서 그 영상 상품을 바로 찾음
+  let img = (r.img || "").trim();
+  if (!img) {   // CSV에 이미지가 없으면 영상 제작에 쓴 상품 사진을 자동으로 사용(수동 입력 불필요)
+    try {
+      const rel = await gh(`/repos/${OWNER}/${REPO}/releases/tags/${IMG_TAG}`, { allow404: true });
+      if (rel) img = await storeProductImage(hash, rel);
+    } catch (_) {}
+  }
   storeItems.push({
     number: storeNextNumber(), row_hash: hash, name: dispName, url: (r.link || "").trim(),
-    image: (r.img || "").trim(), category: cat, title: (vtitle || "").trim(),
+    image: img, category: cat, title: (vtitle || "").trim(),
     // 카드 소개 = 입력값 > CI 자동 생성 소개(무슨 불편을 없애는지) — 비워두면 자동으로 채워진다
     pain: ($("stPain").value || ent.pain || "").trim(), visible: true, date: new Date().toISOString().slice(0, 10),
   });
@@ -681,7 +732,7 @@ function storeRender() {
     storeItems[idx].category = curCat;   // 자동 분류값을 즉시 반영(저장 시 '기타'로 남지 않게)
     catSel.onchange = () => { storeItems[idx].category = catSel.value; };
     const imgI = document.createElement("input");
-    imgI.value = it.image || ""; imgI.placeholder = "이미지 URL(선택) — 비우면 사진칸 없이 표시";
+    imgI.value = it.image || ""; imgI.placeholder = "이미지 URL — 비우면 상품 사진 자동 등록";
     imgI.style.flex = "1"; imgI.style.minWidth = "180px";
     imgI.oninput = () => { storeItems[idx].image = imgI.value.trim(); };
     sub.append(catSel, imgI);

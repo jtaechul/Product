@@ -79,16 +79,25 @@ const IMG_HOST_OK = [
   "coupangcdn.com", "coupang.com", "pstatic.net", "phinf.naver.net",
   "picsum.photos", "images.unsplash.com", "githubusercontent.com", "media.giphy.com",
 ];
+// 이 저장소 릴리스 자산(상품 사진 후보 등)만 github.com에서 추가 허용 — 경로 prefix 고정(개방 프록시 방지).
+const REPO_RELEASE_PREFIX = "/jtaechul/Product/releases/download/";
+const EXT_CT = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", gif: "image/gif" };
 async function storeImgProxy(url) {
   let src = url.searchParams.get("u") || "";
-  try {
-    const h = new URL(src).hostname;
-    if (!IMG_HOST_OK.some((d) => h === d || h.endsWith("." + d))) return j({ error: "host not allowed" }, 403);
-  } catch { return j({ error: "bad url" }, 400); }
+  let u;
+  try { u = new URL(src); } catch { return j({ error: "bad url" }, 400); }
+  const h = u.hostname;
+  const hostOk = IMG_HOST_OK.some((d) => h === d || h.endsWith("." + d));
+  const relOk = h === "github.com" && u.pathname.startsWith(REPO_RELEASE_PREFIX);
+  if (!hostOk && !relOk) return j({ error: "host not allowed" }, 403);
   const resp = await fetch(src, { headers: { "User-Agent": "shorts-admin", "Referer": "" }, redirect: "follow" });
   if (!resp.ok) return j({ error: "upstream " + resp.status }, 502);
-  const ct = resp.headers.get("Content-Type") || "image/jpeg";
-  if (!ct.startsWith("image/")) return j({ error: "not an image" }, 415);
+  let ct = resp.headers.get("Content-Type") || "image/jpeg";
+  if (!ct.startsWith("image/")) {
+    const ext = (u.pathname.split(".").pop() || "").toLowerCase();
+    if (relOk && EXT_CT[ext]) ct = EXT_CT[ext];   // 릴리스 자산은 octet-stream → 확장자로 보정
+    else return j({ error: "not an image" }, 415);
+  }
   const out = new Headers();
   out.set("Content-Type", ct);
   out.set("Cache-Control", "public, max-age=86400");
