@@ -110,9 +110,12 @@ def generate_script(product: dict, settings: dict) -> dict:
             if last:
                 raise RuleViolation(f"{ATTEMPTS}회 재생성 후에도 위반: {feedback}")
 
-    # §3.1 고지문·링크는 모델 출력을 신뢰하지 않고 코드로 강제 재구성
+    # §3.1 고지문·링크는 모델 출력을 신뢰하지 않고 코드로 강제 재구성(2026-07-17 사용자 확정):
+    #   고정 댓글은 링크가 '클릭 가능'하다는 점을 활용 → ① 고지문 먼저 ② 바로 밑에 미래마켓 스토어 링크.
+    #   스토어 페이지(store.html)에 각 상품의 쿠팡 어필리에이트 링크 + 자체 고지문이 이미 있다(구매 경로 유지).
+    store_url = settings.get("channel", {}).get("store_url", "https://miraemarket.pages.dev")
     script["pinned_comment"] = (
-        f"제품 정보는 여기서 확인 → {product.get('affiliate_url', '')}\n{DISCLOSURE}")
+        f"{DISCLOSURE}\n\n미래마켓에서 이 제품과 다른 발견템 보기 → {store_url}")
     print(f"[script] 생성 완료: '{script.get('title', '')[:40]}' "
           f"라인 {len(script['lines'])}개, 공백 제외 {script.get('_char_count', '?')}자 "
           f"(프로바이더 {provider}/{model})")
