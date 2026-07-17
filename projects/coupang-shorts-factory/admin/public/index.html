@@ -363,8 +363,8 @@ ol li{margin:8px 0}
   <div class="card">
     <h2>영상 효과음 (라인 사운드)</h2>
     <p class="hint" style="margin:0 0 8px">라인(문장)이 바뀔 때 문맥별 효과음이 납니다. 아래 슬롯에
-    Freesound에서 받은 소리(1~2초, 2MB 이하)를 올리면 <b>다음 제작부터 자동 적용</b>됩니다.
-    없는 슬롯은 무음으로 건너뜁니다. 반드시 상업 사용 가능한 <b>CC0</b>를 고르세요.
+    Pixabay 등에서 받은 소리(1~2초, 2MB 이하)를 올리면 <b>다음 제작부터 자동 적용</b>됩니다.
+    없는 슬롯은 무음으로 건너뜁니다. Pixabay·Mixkit은 <b>가입 없이 다운로드</b> 가능하고 상업 사용 무료입니다.
     (④제품 공개의 '쾅'은 별도 유지 — 여기 슬롯과 무관)</p>
     <div id="sfxSlots"><p class="empty">불러오는 중...</p></div>
   </div>
@@ -1135,11 +1135,11 @@ async function ghCommitBlob(path, contentB64, message) {
 /* ── 라인 효과음 업로드(설정 탭) — 문맥별 사운드 슬롯(1안 세트, 2026-07-17) ───────── */
 const SFX_DIR = P + "/assets/sfx";
 const SFX_SLOTS = [
-  ["line_hook", "① 폭로 훅 — 띠링 (새 글 알림 벨)", "notification ding"],
+  ["line_hook", "① 폭로 훅 — 띠링 (새 글 알림 벨)", "notification"],
   ["line_empathy", "② 공감 확산 — 동동동 (댓글 알림 연타)", "message pop"],
-  ["line_suspect", "③ 원흉 지목 — 둥 (낮은 서스펜스 드럼)", "suspense drum hit"],
-  ["line_proof", "⑤ 증거·반응 — 찰칵 (카메라 셔터)", "camera shutter click"],
-  ["line_punch", "펀치(밈 카드) — 띠용 (스프링)", "cartoon boing"],
+  ["line_suspect", "③ 원흉 지목 — 둥 (낮은 서스펜스 드럼)", "suspense hit"],
+  ["line_proof", "⑤ 증거·반응 — 찰칵 (카메라 셔터)", "camera shutter"],
+  ["line_punch", "펀치(밈 카드) — 띠용 (스프링)", "boing"],
 ];
 async function sfxInit() {
   const box = $("sfxSlots");
@@ -1153,13 +1153,13 @@ async function sfxInit() {
   box.innerHTML = "";
   for (const [slot, label, q] of SFX_SLOTS) {
     const cur = files.find((n) => n.startsWith(slot + "."));
-    const fs = `https://freesound.org/search/?q=${encodeURIComponent(q)}&f=license%3A%22Creative+Commons+0%22`;
+    const fs = `https://pixabay.com/sound-effects/search/${encodeURIComponent(q)}/`;   // 가입 없이 다운로드 가능
     const row = document.createElement("div");
     row.className = "item";
     row.innerHTML = `
       <div class="grow">
         <div class="t"></div>
-        <div class="s"><span class="st"></span> · <a target="_blank" rel="noopener">Freesound CC0 검색</a></div>
+        <div class="s"><span class="st"></span> · <a target="_blank" rel="noopener">Pixabay에서 검색(가입 불필요)</a></div>
       </div>
       <label class="btn mini sub" style="cursor:pointer">올리기<input type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg" hidden></label>`;
     row.querySelector(".t").textContent = label;
@@ -1197,7 +1197,7 @@ async function sfxUpload(file, slot) {
       const lic = await getFile(P + "/assets/licenses.csv", true);
       if (lic) {
         await putFile(P + "/assets/licenses.csv",
-          lic.text.replace(/\n*$/, "\n") + `${slot}${ext},audio,Freesound(운영자 업로드 · CC0 확인),assets/sfx/${slot}${ext},라인 효과음(${slot})\n`,
+          lic.text.replace(/\n*$/, "\n") + `${slot}${ext},audio,무료 사운드 사이트(Pixabay 등 · 운영자 업로드),assets/sfx/${slot}${ext},라인 효과음(${slot})\n`,
           `admin: licenses.csv — ${slot}${ext} 기록`, lic.sha);
       }
     } catch (_) {}
