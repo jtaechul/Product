@@ -419,8 +419,10 @@ def run_reels(
             r = subprocess.run(
                 ["ffmpeg", "-y", "-loglevel", "error", "-i", body_av,
                  "-i", sd["scan"], "-i", sd["lockon"], "-filter_complex",
-                 (f"[1:a]adelay={_ms(scan_at)}|{_ms(scan_at)},volume=1.2[sc];"
-                  f"[2:a]adelay={_ms(lock_at)}|{_ms(lock_at)},volume=1.35[lk];"
+                 # ★볼륨 50%로 축소(운영자 확정): 지도 SFX가 나레이션·자막 낭독을 덮지 않도록
+                 #   (scan 1.2→0.6, lockon 1.35→0.68). 나레이션이 항상 위로 들리게.
+                 (f"[1:a]adelay={_ms(scan_at)}|{_ms(scan_at)},volume=0.6[sc];"
+                  f"[2:a]adelay={_ms(lock_at)}|{_ms(lock_at)},volume=0.68[lk];"
                   f"[0:a][sc][lk]amix=inputs=3:duration=first:normalize=0,alimiter=limit=0.95[a]"),
                  "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", mixed],
                 timeout=180)
