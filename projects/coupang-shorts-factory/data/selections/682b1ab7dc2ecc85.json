@@ -1,0 +1,143 @@
+{
+ "row_hash": "682b1ab7dc2ecc85",
+ "product_name": "듀플렉스 1등급 제습기 20L",
+ "lines": [
+  {
+   "line_i": 0,
+   "picks": [
+    {
+     "url": "https://images.pexels.com/photos/16191185/pexels-photo-16191185.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+     "source": "pexels",
+     "query": "laundry drying rack"
+    },
+    {
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmOWViZW54ZWZ6dHRpY2dva3phNmtwemFtcm93amx5MzU5ZzRqdnhpZiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/f1uLXYevRrNFS/giphy.gif",
+     "source": "giphy",
+     "query": "laundry drying rack"
+    }
+   ]
+  },
+  {
+   "line_i": 1,
+   "picks": [
+    {
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmNng2b3c2OXp1MGJ3cXl1MXAydm5yZWw2NnlxbHp4dHlsOHJqaWpybSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/N8mnwl4hrc5RSTdOBI/giphy.gif",
+     "source": "giphy",
+     "query": "Stinky smell"
+    },
+    {
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmNng2b3c2OXp1MGJ3cXl1MXAydm5yZWw2NnlxbHp4dHlsOHJqaWpybSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/j1P8gayLo0ZVCcc14l/giphy.gif",
+     "source": "giphy",
+     "query": "Stinky smell"
+    }
+   ]
+  },
+  {
+   "line_i": 2,
+   "picks": [
+    {
+     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmcTRpbWJ5cThzaDQ5YzExaGJucDZpYjU3bGV3cjh3MGNpbnVpbnRtaiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/JVoB3xK3snedO3nAmy/giphy.gif",
+     "source": "giphy",
+     "query": "moldy laundry"
+    },
+    {
+     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmcTRpbWJ5cThzaDQ5YzExaGJucDZpYjU3bGV3cjh3MGNpbnVpbnRtaiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/xT5LMx6rCLspqzJ9Bu/giphy.gif",
+     "source": "giphy",
+     "query": "moldy laundry"
+    }
+   ]
+  },
+  {
+   "line_i": 3,
+   "picks": [
+    {
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmdjh6dWQ4ZjQ3OHBwM3l3cm4waXRiNGx1dXE3YnBpb2pueW8zY3VqbiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/MJd3uGnPA0sh6VZMge/giphy.gif",
+     "source": "giphy",
+     "query": "humid room"
+    },
+    {
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmdjh6dWQ4ZjQ3OHBwM3l3cm4waXRiNGx1dXE3YnBpb2pueW8zY3VqbiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/7w6qQ5WHOeV3i/giphy.gif",
+     "source": "giphy",
+     "query": "humid room"
+    }
+   ]
+  },
+  {
+   "line_i": 4,
+   "picks": [
+    {
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmNXFqbGNodTgxdDlhN29pOWRnaHY0bjYxanl0MzMxa2V4Z2JsM3NreCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ApvAo01cvvH5rQw5r6/giphy.gif",
+     "source": "giphy",
+     "query": "person frustrated"
+    },
+    {
+     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmNXFqbGNodTgxdDlhN29pOWRnaHY0bjYxanl0MzMxa2V4Z2JsM3NreCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/8Z5h4NjPAYnqabnQvD/giphy.gif",
+     "source": "giphy",
+     "query": "person frustrated"
+    }
+   ]
+  },
+  {
+   "line_i": 5,
+   "picks": [
+    {
+     "is_product": true,
+     "prod_idx": 1,
+     "source": "product",
+     "query": ""
+    },
+    {
+     "is_product": true,
+     "prod_idx": 0,
+     "source": "product",
+     "query": ""
+    }
+   ]
+  },
+  {
+   "line_i": 6,
+   "picks": [
+    {
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMDVxZTFsczg5bWIybXg3MHZyZW41MGZ3NWVjeDNjeXVkaW9xejk3ZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/4ERIrF2hYumwU/giphy.gif",
+     "source": "giphy",
+     "query": "Dry"
+    },
+    {
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMDVxZTFsczg5bWIybXg3MHZyZW41MGZ3NWVjeDNjeXVkaW9xejk3ZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/gJZodrb2HIiGY/giphy.gif",
+     "source": "giphy",
+     "query": "Dry"
+    }
+   ]
+  },
+  {
+   "line_i": 7,
+   "picks": [
+    {
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmbW1uaWwwODh0N2V3NTQ5ZWp4dzNxdzNkbXFzdDFtenduMm80cGJraiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/SUVhbSqRfHz4xtta2q/giphy.gif",
+     "source": "giphy",
+     "query": ""
+    },
+    {
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYXNscWNscjVlY2hpZW04MXBoaWd0ZW1xcXlwdXVuczB2NGU5ejlhNCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/C8WUfEDHQDdGU/giphy.gif",
+     "source": "giphy",
+     "query": "Wheel"
+    }
+   ]
+  },
+  {
+   "line_i": 8,
+   "picks": [
+    {
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmcWZpcDR5OXcwMDY4ZWV0cnpqcXB6djRyeG1kMWlzMzdoNjdtdG05NCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/l4FAWslFCN2Q7p6UM/giphy.gif",
+     "source": "giphy",
+     "query": "fresh laundry"
+    },
+    {
+     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmcWZpcDR5OXcwMDY4ZWV0cnpqcXB6djRyeG1kMWlzMzdoNjdtdG05NCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/I8JyzVTb8UGxl5BTNd/giphy.gif",
+     "source": "giphy",
+     "query": "fresh laundry"
+    }
+   ]
+  }
+ ]
+}
