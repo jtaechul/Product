@@ -1,7 +1,8 @@
 """M7. 유튜브 업로드 — YouTube Data API v3 videos.insert (스펙 §M7).
 
 - 미인증 API 프로젝트는 업로드 영상이 자동 private 잠금 → 기본 privacy=private (스펙 §M7-2)
-- 제휴 고지문(§3.1)은 설명란 '최상단 첫 줄' + 댓글에 코드로 강제, 누락 시 assert로 업로드 중단
+- 제휴 고지문(§3.1)은 설명란 '맨 아래'(2026-07-17 개정) + 댓글에 코드로 강제, 누락 시 assert로 업로드 중단
+  (1차 표시면은 링크 옆 고정 댓글 고지 — 쇼츠 설명란은 '더보기'로 접힘)
 - 고정(핀) 지정은 API 미지원 → 댓글 자동 등록까지 수행, 핀 고정은 유튜브 앱에서 1탭(문서화)
 
 시크릿: SHORTS_YT_REFRESH_TOKEN(필수 — 쿠팡 쇼츠 '새 채널' 계정으로 발급),
@@ -61,6 +62,29 @@ def missing_hint() -> str:
     return "미등록 시크릿: " + ", ".join(need)
 
 
+# 항상 붙는 브랜드+발견 해시태그(2026-07-17 사용자 확정). #미래마켓=클릭 시 우리 채널 영상만 모여
+# '정주행' 유도(브랜드 그룹핑), #꿀템=검색량 크고 카테고리 불문 채널에 두루 맞는 발견 태그.
+# 모델이 만든 상품별 태그 앞에 붙이고 중복(#·대소문자 무시)은 제거한다. #쇼츠는 유튜브가 포맷으로
+# 자동 분류하므로 일부러 넣지 않는다(노이즈 방지).
+FIXED_HASHTAGS = ["#미래마켓", "#꿀템"]
+
+
+def merge_hashtags(script: dict) -> list:
+    """고정 브랜드 태그 + 모델 태그를 합쳐 중복 제거한 최종 해시태그 리스트(브랜드 먼저)."""
+    out, seen = [], set()
+    for h in FIXED_HASHTAGS + list(script.get("hashtags", []) or []):
+        t = str(h).strip()
+        if not t:
+            continue
+        if not t.startswith("#"):
+            t = "#" + t
+        key = t.lower().lstrip("#")
+        if key and key not in seen:
+            seen.add(key)
+            out.append(t)
+    return out
+
+
 def build_description(script: dict, product: dict) -> str:
     # 정식 제품명은 설명란에도 노출하지 않는다(2026-07-16 사용자 지시 — 궁금증→프로필 링크로 유도).
     #   ① 하드코딩 '[제품 정보] 상품명' 블록 제거 ② 모델이 쓴 description_body에서도 제품명 흔적 제거.
@@ -69,10 +93,7 @@ def build_description(script: dict, product: dict) -> str:
     specs = "\n".join(f"- {hide_product_name(str(s), avoid)}" for s in product.get("specs", []))
     body = hide_product_name(script.get("description_body", "").strip(), avoid)
     num = _store_number(product.get("_row_hash", ""))   # 스토어 카탈로그 번호(No.###과 동일)
-    parts = [
-        DISCLOSURE,  # §3.1 ① 최상단 첫 줄 (절대 위치 변경 금지)
-        "",
-    ]
+    parts = []
     if num:
         parts += [f"미래마켓 #{num}", ""]   # 상품 번호 — 영상↔스토어(store#N) 매칭용
     parts += [
@@ -82,11 +103,16 @@ def build_description(script: dict, product: dict) -> str:
         "",
         f"제품 보러가기: {product.get('affiliate_url', '')}",
         "",
-        " ".join(script.get("hashtags", [])),
+        " ".join(merge_hashtags(script)),
     ]
-    desc = "\n".join(parts).strip()
-    assert desc.split("\n")[0] == DISCLOSURE, "고지문이 설명란 첫 줄이 아님 — 업로드 중단(§3.1)"
-    return desc[:4900]
+    # §3.1 고지문 위치(2026-07-17 사용자 확정): 설명란 '맨 아래'로 이동. 쇼츠는 설명란이 '더보기'로
+    #   접혀 top/bottom 노출 차이가 작고, 1차 표시면은 링크 옆 '고정 댓글' 고지(upload에서 assert 강제).
+    #   본문이 4900자를 넘어도 고지문이 잘리지 않게 항상 마지막에 덧붙인다(잘림 방지).
+    tail = "\n\n" + DISCLOSURE
+    head = "\n".join(parts).strip()
+    desc = head[: max(0, 4900 - len(tail))].rstrip() + tail
+    assert desc.rstrip().endswith(DISCLOSURE), "고지문이 설명란에 없음 — 업로드 중단(§3.1)"
+    return desc
 
 
 def upload(video_path: Path, script: dict, product: dict, settings: dict,
@@ -117,7 +143,7 @@ def upload(video_path: Path, script: dict, product: dict, settings: dict,
         "snippet": {
             "title": title,
             "description": description,
-            "tags": [h.lstrip("#") for h in script.get("hashtags", [])],
+            "tags": [h.lstrip("#") for h in merge_hashtags(script)],
             "categoryId": str(settings.get("upload", {}).get("category_id", "28")),
         },
         "status": {

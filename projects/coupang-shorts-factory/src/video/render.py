@@ -233,7 +233,7 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
                  line_windows: list | None = None, stock_clips: list | None = None,
                  product_videos: list | None = None, scene_images: list | None = None,
                  line_images: list | None = None, has_narration: bool = True,
-                 headline: str = "") -> dict:
+                 headline: str = "", thumb_hook: str = "") -> dict:
     """대본 단계(stage)별 씬 시퀀스 쇼츠 렌더. 반환: 렌더 통계 dict.
 
     lines(단계 포함)+line_windows가 있으면 '씬 시퀀스'로 렌더한다 — 상품 단계(①④⑤)는
@@ -386,6 +386,14 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
         if scrim is not None:
             layers.append(scrim)
         layers += sub_clips
+    # ── 오프닝 훅 '썸네일 페이지'(2026-07-17 사용자 확정): 0:00 홀드 동안에만 큰 훅 문구를 얹어
+    #    쇼츠 그리드·공유 썸네일로 뽑히게 한다(쇼츠는 커스텀 썸네일 업로드가 안 됨). 홀드가 끝나면
+    #    사라지므로 본편 화면 텍스트 규칙(하단 자막 + punch 밈 1개)엔 영향이 없다.
+    if thumb_hold > 0:
+        hook_clip = _thumb_hook_overlay(thumb_hook or headline, width, height,
+                                        thumb_hold, font_path, settings)
+        if hook_clip is not None:
+            layers.append(hook_clip)
     audio = _mix_bgm(audio, project_root, settings, duration, has_narration)
     reveal_t = _find_reveal_time(lines, line_windows)
     audio = _mix_reveal_sfx(audio, reveal_t, project_root, settings, duration)
@@ -864,6 +872,37 @@ def _expose_header_arr(width: int, header_h: int, board: str, headline: str,
 
     d.line([(0, header_h - 3), (width, header_h - 3)], fill=(226, 226, 230), width=3)
     return np.array(im)
+
+
+def _thumb_hook_overlay(text: str, width: int, height: int, hold: float,
+                        font_path: Path, settings: dict):
+    """0:00 썸네일 홀드 동안에만 보이는 '오프닝 훅 카드'(2026-07-17).
+    큰 훅 문구를 화면 중앙에 굵게(노랑 글자 + 검정 두꺼운 외곽선 + 반투명 검정 밴드) 얹어
+    쇼츠 그리드·공유용 썸네일로 뽑히게 한다. 홀드가 끝나면(본편 시작) 사라진다."""
+    from PIL import Image, ImageDraw, ImageFont
+    text = " ".join(str(text or "").split()).strip()
+    if not text or hold <= 0:
+        return None
+    s = settings.get("subtitle", {})
+    fs = int(s.get("thumb_hook_font_size", 116))
+    mx = int(width * 0.07)
+    img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    font = ImageFont.truetype(str(font_path), fs)
+    lines = _wrap_pil(text, font, width - 2 * mx, max_lines=3)
+    lh = int(fs * 1.22)
+    block_h = lh * len(lines)
+    top = int(height * 0.46) - block_h // 2          # 화면 중앙(헤더/하단 이미지와 안 겹치는 미들존)
+    pad = int(fs * 0.42)
+    d.rectangle([0, top - pad, width, top + block_h + pad], fill=(0, 0, 0, 150))
+    y = top
+    for ln in lines:
+        b = d.textbbox((0, 0), ln, font=font, stroke_width=8)
+        d.text(((width - (b[2] - b[0])) // 2 - b[0], y), ln, font=font,
+               fill="#FFE86B", stroke_width=8, stroke_fill="#000000")
+        y += lh
+    return (ImageClip(np.array(img), transparent=True)
+            .with_duration(hold).with_start(0).with_position((0, 0)))
 
 
 def _expose_image_clip(src, start: float, end: float, width: int, img_top: int, img_h: int,
