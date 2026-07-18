@@ -27,7 +27,7 @@ _ALLOWED = re.compile(r"[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9\s.,?!%~\-()「」『』
 SUB_MAX_CHARS = 12
 SUB_MAX_WORDS = 3
 # 낭독 분량(공백 제외): 25~32초 목표(쇼츠 최적 길이 — 늘어지면 이탈). 무나레이션은 ≈0.14초/자.
-CHAR_MIN, CHAR_MAX = 150, 230
+CHAR_MIN, CHAR_MAX = 110, 170   # 본문(훅 카드 제외) 공백 제외 — 포맷 v2(2026-07-18): 총 20~28초 다이어트
 
 # ⭐ 정식 제품명 감추기(2026-07-15 사용자 지시): 영상 텍스트(대사·자막·headline·title)에는 제품의
 #   '종류/통상 명사'만 쓰고 브랜드·모델명은 넣지 않는다(정식명칭은 프로필 링크의 쇼핑페이지에서만 공개).
@@ -262,11 +262,32 @@ def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None) 
         if prod * 100 < n_chars * 45:
             problems.append(f"구간 배분 위반: 제품(④⑤) {prod * 100 // n_chars}% (45% 이상 필요 — "
                             "특장점·작동 원리·혁신성 라인을 더 쓰라)")
-        if prod_lines < 4:
-            problems.append(f"제품 구간(④⑤) {prod_lines}줄 (4줄 이상 필요 — 차별점·작동 방식·결과를 나눠 쓰라)")
+        if prod_lines < 3:
+            problems.append(f"제품 구간(④⑤) {prod_lines}줄 (3줄 이상 필요 — 차별점·작동 방식·결과를 나눠 쓰라)")
+
+    # 포맷 v2: 훅 카드 문구(=제목=첫 낭독)는 필수 + 카드에 크게 박히는 길이(공백 포함 8~28자)
+    _hk = str(script.get("thumb_hook") or "").strip()
+    if strict_length and not (lines and lines[0].get("is_hook")):
+        if not _hk:
+            problems.append("thumb_hook(훅 카드 문구=제목) 누락 — 12~25자 궁금증 문장으로 반드시 생성")
+        elif not (8 <= len(_hk) <= 28):
+            problems.append(f"thumb_hook 길이 {len(_hk)}자 (공백 포함 12~25자 권장, 8~28자 허용)")
 
     if problems:
         raise RuleViolation("; ".join(problems))
+
+    # ⭐ 포맷 v2 — 훅 삼위일체(2026-07-18 사용자 확정): thumb_hook(훅 카드 문구) = 유튜브 제목 =
+    #   첫 나레이션. ① 제목을 훅과 동일하게 강제 ② 훅을 낭독 라인 0(is_hook)으로 삽입해 TTS·자막
+    #   타이밍 기계가 그대로 처리하게 한다(렌더는 is_hook 라인을 하단 자막 대신 '훅 카드'로 그림).
+    hook = str(script.get("thumb_hook") or "").strip()
+    if hook:
+        hook = strip_target_words(hook).strip()   # 카드·제목 겸용 — 타깃 서술어 금지 규칙 동일 적용
+        script["thumb_hook"] = hook
+    if hook:
+        script["title"] = hook
+        if not (lines and lines[0].get("is_hook")):   # 재정화(idempotent) 시 중복 삽입 방지
+            lines.insert(0, {"text": hook, "subs": build_subs(hook), "is_hook": True, "stage": 1})
+            script["lines"] = lines
 
     script["_char_count"] = n_chars
     return script

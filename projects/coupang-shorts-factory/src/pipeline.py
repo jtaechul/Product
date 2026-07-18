@@ -644,8 +644,8 @@ def _publish_candidates(manifest: list, product: dict, job_dir: Path) -> Path:
                 cand["detail_idx"] = int(c.get("detail_idx", 0))
             cands.append(cand)
         web["lines"].append({"line_i": i, "text": e.get("text", ""), "stage": e.get("stage"),
-                             "punch": bool(e.get("punch")), "query": e.get("query", ""),
-                             "candidates": cands})
+                             "punch": bool(e.get("punch")), "is_hook": bool(e.get("is_hook")),
+                             "query": e.get("query", ""), "candidates": cands})
     man_path = job_dir / f"cand_{rh}.json"
     man_path.write_text(json.dumps(web, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"[pipeline] #2 웹 매니페스트: {man_path.name} "
@@ -678,6 +678,15 @@ def _regen_field(product: dict, field: str, settings: dict, root: Path) -> int:
         plan["hashtags"] = norm[:3]
     elif f == "description":
         plan["description_body"] = clean_text(str(val))
+    elif f in ("title", "thumb_hook"):
+        # 포맷 v2(2026-07-18): 제목=훅 카드 문구=첫 낭독 삼위일체 — 하나를 재생성하면 셋 다 갱신.
+        from src.script.sanitize import build_subs, strip_target_words
+        hook = strip_target_words(clean_text(str(val))).strip()
+        plan["title"] = plan["thumb_hook"] = hook
+        lines = plan.get("lines") or []
+        if lines and lines[0].get("is_hook"):   # 낭독 라인 0(훅 카드)도 같은 문장으로
+            lines[0]["text"] = hook
+            lines[0]["subs"] = build_subs(hook)
     else:
         plan[f] = clean_text(str(val))
     plan_path.write_text(json.dumps(plan, ensure_ascii=False, indent=1), encoding="utf-8")

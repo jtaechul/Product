@@ -2337,7 +2337,7 @@ function renderImgLines() {
     const li = ln.line_i;
     const card = document.createElement("div"); card.className = "card imgline";
     card.innerHTML =
-      `<div class="imglabel"><span class="chip wait">라인 ${li + 1}${ln.punch ? " · 훅" : ""}</span><span class="imgtext"></span></div>`
+      `<div class="imglabel"><span class="chip wait">${ln.is_hook ? "훅 카드(0:00 제목 배경)" : `라인 ${li + 1}${ln.punch ? " · 훅" : ""}`}</span><span class="imgtext"></span></div>`
       + `<div class="picktray"></div>`
       + `<p class="hint" style="margin:0 0 6px">고른 이미지가 위 칸에 순서대로 담깁니다(번호=슬라이드쇼 순서, × 로 빼기). 후보를 탭하거나 ‘GIF 검색’을 쓰세요.</p>`
       + `<div class="thumbs"></div>`

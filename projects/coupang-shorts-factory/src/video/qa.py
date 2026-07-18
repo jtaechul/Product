@@ -33,6 +33,7 @@ def run_qa(video_path: Path, stats: dict, lines: list, job_dir: Path, settings: 
     subs = [p for p in plan if p.get("kind") == "sub"]
     memes = [p for p in plan if p.get("kind") in ("meme", "meme_img")]  # 훅 밈은 이제 이미지 배경
     reacts = [p for p in plan if p.get("kind") == "react"]
+    hook_cards = [p for p in plan if p.get("kind") == "hook"]   # 포맷 v2 훅 카드(2026-07-18)
 
     # ① 자막=대본 일치 (punch 라인은 밈 카드로 검사)
     by_line: dict = {}
@@ -40,9 +41,16 @@ def run_qa(video_path: Path, stats: dict, lines: list, job_dir: Path, settings: 
         by_line.setdefault(int(p.get("line_i", -1)), []).append(str(p["text"]))
     # 2026-07-13: 오프닝 훅(punch)도 일반 라인과 똑같이 하단 가라오케 자막으로 검사한다
     #   (밈 글자 카드 폐지 — 밈은 이미지 배경으로만 남으므로 자막=대본 일치만 본다).
+    # 포맷 v2(2026-07-18): is_hook 라인은 하단 자막 대신 '훅 카드'로 그려진다 —
+    #   카드 플랜(kind=hook)의 문구가 대본과 일치하는지로 검사한다.
     for li, ln in enumerate(lines or []):
         text = str(ln.get("text", "")).strip()
         if not text:
+            continue
+        if ln.get("is_hook"):
+            got = " ".join(str(h.get("text", "")).strip() for h in hook_cards).strip()
+            if got != text:
+                problems.append(f"훅 카드 문구 누락/불일치: '{got[:24]}' vs '{text[:24]}'")
             continue
         got = " ".join(by_line.get(li, []))
         if not got:
@@ -65,6 +73,8 @@ def run_qa(video_path: Path, stats: dict, lines: list, job_dir: Path, settings: 
         problems.append(f"일반 자막 y 위치가 {len(ys)}곳({ys}) — 1곳 고정이어야 함")
     if len(memes) > MEME_MAX:
         problems.append(f"밈 카드 {len(memes)}개 (최대 {MEME_MAX})")
+    if len(hook_cards) > 1:
+        problems.append(f"훅 카드 {len(hook_cards)}개 (최대 1 — 0:00 오프닝 한 번뿐)")
     if reacts:  # ⭐ 핵심규칙(2026-07-12): react 추임새 전면 금지 — 하나라도 있으면 발행 차단
         problems.append(f"react 추임새 {len(reacts)}개 발견 — 전면 금지(핵심규칙): "
                         + ", ".join(str(p.get("text", ""))[:8] for p in reacts[:3]))
