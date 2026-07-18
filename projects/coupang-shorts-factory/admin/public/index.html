@@ -190,7 +190,7 @@ ol li{margin:8px 0}
 <section id="tab-products" class="on" data-group="make" style="order:1">
   <div class="card" id="workHeader">
     <h2>현재 작업 상품</h2>
-    <p class="hint" id="workProduct" style="margin:0">아직 없습니다 — 아래 <b>새 상품 등록</b>에서 등록하면 곧바로 기획·대본이 자동으로 만들어집니다. 이미 등록한 상품은 아래 <b>제작 대기열</b>에서 <b>작업</b>을 누르세요.</p>
+    <p class="hint" id="workProduct" style="margin:0">아직 없습니다 — 아래 <b>새 상품 등록</b>에서 등록하면 곧바로 기획·대본이 자동으로 만들어집니다. 이미 등록한 상품은 아래 <b>② 기획 방향 선택</b>의 <b>기획한 상품 불러오기</b>로 불러오세요.</p>
     <p class="hint" id="workStatus" style="margin:6px 0 0;color:#4f46e5"></p>
   </div>
   <div class="card">
@@ -248,10 +248,6 @@ ol li{margin:8px 0}
     <p class="hint">누르면 상품이 저장되고 <b>곧바로 대본과 자막별 이미지 후보가 자동으로 만들어집니다</b>(약 1~3분).
     완성되면 아래 <b>자막별 이미지 선택</b>이 자동으로 나타납니다. 이미지를 고른 뒤 <b>제작</b>으로 이어집니다.</p>
   </div>
-  <div class="card" style="display:none">
-    <h2>제작 대기열 <button class="btn mini sub" id="btnReloadProducts" style="float:right">새로고침</button></h2>
-    <div id="productList"><p class="empty">불러오는 중...</p></div>
-  </div>
 </section>
 
 <!-- ───────── 제작 탭 ───────── -->
@@ -281,7 +277,15 @@ ol li{margin:8px 0}
     <h2>② 기획 방향 선택 (차별점 3안)</h2>
     <p class="hint" style="margin:0 0 8px">상품 등록 후 <b>‘기획방향 수립’</b>을 누르면 자료(PDF·캡처)에서
       ‘차별점·작동 방식’ 3안을 뽑아 여기에 띄웁니다. <b>여기서 하나를 골라 확정해야</b> 대본이 만들어집니다.</p>
-    <div id="dirView"><p class="empty">진행 중인 상품이 없습니다 — 위에서 상품을 등록하거나, 제작 대기열의 ‘작업’을 누르세요.</p></div>
+    <div id="dirView"><p class="empty">진행 중인 상품이 없습니다 — 위에서 새로 등록하거나, 아래 ‘기획한 상품 불러오기’로 등록해둔 상품을 불러오세요.</p></div>
+    <div class="row2" style="margin-top:10px"><button class="btn sub" id="dirLoadBtn">기획한 상품 불러오기</button></div>
+    <div id="dirQueue" style="display:none;margin-top:10px;border-top:1px solid rgba(128,128,128,.25);padding-top:10px">
+      <h2 style="font-size:15px;margin:0 0 6px">등록된 상품 <button class="btn mini sub" id="btnReloadProducts" style="float:right">새로고침</button></h2>
+      <p class="hint" style="margin:0 0 8px">‘불러오기’를 누르면 그 상품(등록해둔 캡처·제휴링크 자료)이 이 메뉴에 올라옵니다 —
+      방향 미확정이면 3안 선택부터, 이미 기획된 상품이면 검토 화면의 <b>‘기획 다시 만들기’</b>로 새 포맷으로 다시
+      기획할 수 있습니다. 업로드까지 끝난 상품은 캡처 자료가 정리되어 있을 수 있어요(캡처를 다시 등록하면 기획 재료가 풍부해집니다).</p>
+      <div id="productList"><p class="empty">불러오는 중...</p></div>
+    </div>
   </div>
 </section>
 
@@ -947,14 +951,17 @@ async function loadProducts() {
     // ⭐ 진행 현황판(2026-07-16 사용자 요청): 상품마다 기획→이미지→영상→업로드가 어디까지
     //   됐는지 한눈에 — 안 올린 것/수정할 것을 이 목록에서 바로 식별하고 '작업'으로 진입.
     const planSet = new Set(), selSet = new Set(), mechSet = new Set(), runMap = {};
+    let notesNames = [];   // 캡처·메모 자료(data/notes) 파일명 — 상품별 '자료 있음/정리됨' 표시용
     try {
-      const [pvRel, pl, se, me, rels] = await Promise.all([
+      const [pvRel, pl, se, me, rels, no] = await Promise.all([
         gh(`/repos/${OWNER}/${REPO}/releases/tags/${PV_TAG}`, { allow404: true }),
         gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/plans?ref=${BRANCH}`, { allow404: true }),
         gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/selections?ref=${BRANCH}`, { allow404: true }),
         gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/mechanism?ref=${BRANCH}`, { allow404: true }),
         gh(`/repos/${OWNER}/${REPO}/releases?per_page=100`, { allow404: true }),
+        gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/notes?ref=${BRANCH}`, { allow404: true }),
       ]);
+      notesNames = (Array.isArray(no) ? no : []).map((f) => String(f.name || ""));
       pvAssets = (pvRel && pvRel.assets) || [];
       for (const f of (Array.isArray(pl) ? pl : [])) {
         const m = /^([0-9a-f]{16})\.json$/.exec(f.name || ""); if (m) planSet.add(m[1]);
@@ -985,7 +992,7 @@ async function loadProducts() {
       const stages = [["기획", planSet.has(h)], ["이미지 선택", selSet.has(h)],
                       ["영상 제작", !!runMap[h]], ["유튜브 업로드", isDone || !!(runMap[h] && runMap[h].url)]];
       const nextStep = !stages[0][1]
-        ? (dirState === "pick" ? "기획 방향(3안)을 골라주세요 — '작업'" : "'작업'을 눌러 기획방향 수립부터")
+        ? (dirState === "pick" ? "기획 방향(3안)을 골라주세요 — '불러오기'" : "'불러오기' 후 기획방향 수립부터")
         : !stages[1][1] ? "이미지를 골라 선택 저장"
         : !stages[2][1] ? "제작하기 실행"
         : !stages[3][1] ? "검수 후 올리기" : "완료";
@@ -997,7 +1004,7 @@ async function loadProducts() {
           <div class="s"></div>
           <div class="stg" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px"></div>
         </div>
-        <button class="btn mini workbtn">작업</button>
+        <button class="btn mini workbtn">불러오기</button>
         <button class="btn mini sub pvbtn"></button>
         <button class="btn mini danger">삭제</button>`;
       el.querySelector(".t").textContent = label;
@@ -1010,6 +1017,12 @@ async function loadProducts() {
       dc.style.cssText = "font-size:11px;padding:2px 8px" + (dirState === "pick" ? ";font-weight:900" : "");
       dc.textContent = dirState === "done" ? "방향 완료" : dirState === "pick" ? "방향 선택 대기" : "방향 전";
       stg.appendChild(dc);
+      const hasNotes = notesNames.some((n) => n.startsWith(h));   // 캡처·메모 자료 존재 여부
+      const nc = document.createElement("span");
+      nc.className = "chip " + (hasNotes ? "done" : "wait");
+      nc.style.cssText = "font-size:11px;padding:2px 8px";
+      nc.textContent = hasNotes ? "캡처 자료 있음" : (isDone ? "캡처 정리됨(재등록 권장)" : "캡처 없음");
+      stg.appendChild(nc);
       for (const [nm, ok] of stages) {
         const c = document.createElement("span");
         c.className = "chip " + (ok ? "done" : "wait");
@@ -1018,7 +1031,7 @@ async function loadProducts() {
         stg.appendChild(c);
       }
       const workBtn = el.querySelector(".workbtn");
-      workBtn.title = "이 상품으로 기획·이미지·제작 진행";
+      workBtn.title = "이 상품을 ② 기획 방향 선택 메뉴로 불러와 기획 진행/재기획";
       workBtn.onclick = () => selectProduct(i + 1, h, label);
       if (currentWork && currentWork.hash === h) el.style.outline = "2px solid #4f46e5";
       const pvBtn = el.querySelector(".pvbtn");
@@ -1047,6 +1060,15 @@ async function loadProducts() {
   } catch (e) { box.innerHTML = ""; toast(e.message, 5000); }
 }
 $("btnReloadProducts").onclick = () => loadProducts();
+// ⭐ 기획한 상품 불러오기(2026-07-18 사용자 요청): ② 기획 방향 선택 메뉴에서 등록해둔 상품
+//   (캡처·제휴링크)을 목록으로 열고, '불러오기'로 그 상품의 기획을 이어가거나 새 포맷으로 재기획한다.
+$("dirLoadBtn").onclick = () => {
+  const q = $("dirQueue");
+  const show = q.style.display === "none";
+  q.style.display = show ? "" : "none";
+  $("dirLoadBtn").textContent = show ? "목록 접기" : "기획한 상품 불러오기";
+  if (show) loadProducts();
+};
 
 /* ── 제품 영상 (상품별 실사용·시연 영상 → 릴리스 product-assets 자산) ──
    자산 이름 {상품해시}_{시각}.mp4|mov — 제작 파이프라인이 해시로 매칭해 상품 구간 배경으로 사용.
@@ -1847,7 +1869,7 @@ async function pollPlan(hash, tries = 0, waitSha) {
     return;
   }
   if (await maybeShowMechStep(hash)) return;   // ① 방향 선택 단계 — 미확정이면 선택 화면만(폴링 종료)
-  if (tries >= 24) { setStatus("기획 생성이 예상보다 오래 걸립니다. 잠시 뒤 대기열에서 '작업'을 다시 눌러 확인하세요."); return; }
+  if (tries >= 24) { setStatus("기획 생성이 예상보다 오래 걸립니다. 잠시 뒤 '기획한 상품 불러오기'에서 그 상품을 다시 불러와 확인하세요."); return; }
   setStatus(`기획·대본 생성 중... (${tries * 15}초 경과 · 보통 1~2분)`);
   setTimeout(() => pollPlan(hash, tries + 1, waitSha), 15000);
 }
@@ -1862,7 +1884,7 @@ async function pollLineText(hash, i, oldText, tries = 0) {
       if (nt && nt !== oldText) { planData = d; renderPlan(); setStatus(`${i + 1}번째 줄 문구가 갱신됐습니다.`); return; }
     } catch (e) { /* 커밋 중 부분 파일일 수 있음 — 다음 폴링에서 재시도 */ }
   }
-  if (tries >= 20) { setStatus("라인 재생성이 오래 걸립니다. 잠시 뒤 대기열에서 '작업'을 다시 눌러 확인하세요."); return; }
+  if (tries >= 20) { setStatus("라인 재생성이 오래 걸립니다. 잠시 뒤 '기획한 상품 불러오기'에서 그 상품을 다시 불러와 확인하세요."); return; }
   setStatus(`${i + 1}번째 줄 문구 재생성 중... (${tries * 12}초 경과)`);
   setTimeout(() => pollLineText(hash, i, oldText, tries + 1), 12000);
 }
