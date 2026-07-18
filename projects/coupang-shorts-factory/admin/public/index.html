@@ -2147,7 +2147,16 @@ function renderPlan() {
   box.appendChild(mech);
   renderMechanism(mech.querySelector(".mechbody"));
   // 스토리보드 + 대본 (라인마다 '문구 다시' = 그 줄 text만 재생성, 앞뒤 스토리 흐름 유지)
-  const sb = mk('<h2>스토리보드 · 대본</h2>');
+  // 새로고침(2026-07-18 사용자 요청): 저장소의 최신 대본을 다시 불러와 즉시 갱신(재생성 대기 중 확인용)
+  const sb = mk('<h2>스토리보드 · 대본 <button class="btn mini sub" id="sbReload" style="float:right">새로고침</button></h2>');
+  sb.querySelector("#sbReload").onclick = (ev) => busy(ev.target, async () => {
+    const sel = planSelected(); if (!sel) return;
+    const f = await getFile(`${PLAN_DIR}/${sel.hash}.json`, true, true);
+    if (!f) { toast("아직 저장된 대본이 없습니다 — 생성 중이면 잠시 뒤 다시 눌러주세요.", 5000); return; }
+    planData = JSON.parse(f.text); renderPlan();
+    $("planActions").style.display = "";
+    toast("스토리보드·대본을 최신으로 새로고침했습니다.");
+  });
   const sel = planSelected();
   for (const [i, ln] of (planData.lines || []).entries()) {
     const row = document.createElement("div"); row.className = "item";
