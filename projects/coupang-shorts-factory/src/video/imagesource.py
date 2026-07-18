@@ -460,7 +460,7 @@ def fetch_candidates(product: dict, lines: list, job_dir: Path, settings: dict,
         keywords = pl.get("keywords") or ([pl.get("query")] if pl.get("query") else [])
         line_page = base_page + i * 2      # 라인마다 다른 결과 창 → 라인 간 차별화(#1)
         entry = {"line_i": i, "text": text, "stage": ln.get("stage"),
-                 "punch": bool(ln.get("punch")), "type": pl["type"],
+                 "punch": bool(ln.get("punch")), "is_hook": bool(ln.get("is_hook")), "type": pl["type"],
                  "query": pl.get("query", ""), "keywords": keywords, "candidates": []}
         cands = entry["candidates"]
         k = 0

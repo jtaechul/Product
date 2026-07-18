@@ -266,6 +266,11 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
     #    구현: 나레이션·자막·씬·SFX 타임라인을 통째로 +hold 시프트. 홀드 동안 화면은
     #    헤더(큰 제목)+첫 라인 이미지뿐(_plan_line_scenes가 첫 씬을 0초로 당겨 빈 화면 없음).
     thumb_hold = max(0.0, float(r.get("thumb_hold_sec", 0.5)))
+    # ⭐ 포맷 v2(2026-07-18 사용자 확정): 대본 라인 0이 is_hook(훅 카드 낭독 라인)이면 무음 홀드를
+    #    끈다 — 카드가 '나레이션이 훅을 읽는 동안' 제품 영상/이미지 배경 위에 떠 있다가 본편으로
+    #    넘어간다(_build_expose가 그림). 정지+무음으로 시작하던 옛 홀드가 스와이프 이탈 원인이었다.
+    if lines and lines[0].get("is_hook"):
+        thumb_hold = 0.0
     if thumb_hold > 0:
         from moviepy import CompositeAudioClip
         words = [{**w, "start": float(w.get("start", 0)) + thumb_hold,
@@ -1044,7 +1049,18 @@ def _build_expose(lines: list, line_windows: list, words: list, line_images: lis
     band_h = min(sub_h, int(kfs * 1.7))
     band_top = sub_top + max(0, (sub_h - band_h) // 2)
     ky = band_top + max(0, (band_h - kfs) // 2)   # 자막 팝업 top y — 전 자막 동일(QA: y 1곳)
+    # ⭐ 포맷 v2 — 훅 카드(2026-07-18 사용자 확정): 라인 0이 is_hook이면 그 낭독 구간 동안
+    #    전체 화면을 '제품 영상/이미지 배경 + 큰 훅 문구' 카드로 덮는다(하단 가라오케 자막은 생략 —
+    #    카드의 큰 글씨가 곧 자막). 카드는 다음 라인 시작에 딱 맞춰 사라져 본편(게시판)으로 이어진다.
+    has_hook = bool(lines and lines[0].get("is_hook") and line_windows)
+    hook_end = 0.0
+    if has_hook:
+        hook_end = (float(line_windows[1][0]) if len(line_windows) > 1
+                    else float(line_windows[0][1]) + 0.25)
+        hook_end = max(0.8, min(hook_end, duration))
     events = _sub_events(words, lines, line_windows, duration)
+    if has_hook:
+        events = [ev for ev in events if ev["line_i"] != 0]
     plan = []
     for ev in events:
         clip = _fit_text(ev["text"], font_path, kfs, kcolor, kstroke, ksw, box_w)
@@ -1054,6 +1070,24 @@ def _build_expose(lines: list, line_windows: list, words: list, line_images: lis
         layers.append(clip.with_start(ev["start"]).with_end(ev["show_end"]).with_position(("center", ky)))
         plan.append({"kind": "sub", "text": ev["text"], "start": round(ev["start"], 3),
                      "end": round(ev["show_end"], 3), "y": ky, "line_i": ev["line_i"]})
+    if has_hook:
+        # 배경 우선순위: 운영자가 훅 라인에 고른 픽 → 제품 영상(움직임) → 상품 사진(켄번즈) → 브랜드 패널
+        hook_text = str(lines[0].get("text", "")).strip()
+        hook_pick = line_images[0] if line_images else None
+        src = hook_pick or (product_videos[0] if product_videos
+                            else (product_images[0] if product_images else None))
+        bg = (_expose_image_clip(src, 0.0, hook_end, width, 0, height, product_images,
+                                 [] if selections_applied else product_videos)
+              if src is not None else None)
+        if bg is None:
+            arr = _branded_rect_arr(width, height, ch.get("name", "미래마켓"), font_path)
+            bg = ImageClip(arr).with_duration(hook_end).with_position((0, 0))
+        layers.append(bg)
+        txt = _thumb_hook_overlay(hook_text, width, height, hook_end, font_path, settings)
+        if txt is not None:
+            layers.append(txt)
+        plan.append({"kind": "hook", "text": hook_text, "start": 0.0,
+                     "end": round(hook_end, 3), "y": 0, "line_i": 0})
     return layers, plan
 
 
