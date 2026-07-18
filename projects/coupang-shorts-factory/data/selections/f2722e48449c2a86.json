@@ -100,24 +100,19 @@
      "detail_idx": 2,
      "source": "detail",
      "query": ""
-    }
-   ]
-  },
-  {
-   "line_i": 6,
-   "picks": [
+    },
     {
      "pv_name": "f2722e48449c2a86_1784253543439.mov",
      "pv_start": 0,
      "pv_end": 7.7,
      "source": "product_video",
      "query": ""
-    },
-    {
-     "detail_idx": 4,
-     "source": "detail",
-     "query": ""
-    },
+    }
+   ]
+  },
+  {
+   "line_i": 6,
+   "picks": [
     {
      "pv_name": "f2722e48449c2a86_1784253543439.mov",
      "pv_start": 1.4,
