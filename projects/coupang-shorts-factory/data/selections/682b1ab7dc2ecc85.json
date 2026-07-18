@@ -6,14 +6,9 @@
    "line_i": 0,
    "picks": [
     {
-     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMmRnMHA4ZjV4cWp6bXdydGlhZ215bjU1amRmNDJlbTJ2a2x5OGlpaiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/32mC2kXYWCsg0/giphy.gif",
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYmtoZTRqNzNmdXdyeGV4Z2tvb3N4Y2k3bWt5Z3RyYmwwamFsNGh3ZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/e7Te7IzEInCMQhpcBt/giphy.gif",
      "source": "giphy",
-     "query": "Sweat"
-    },
-    {
-     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlma2NrNGF5Zmt5dXQzZnk3ZDNyMjIzMTZ3ZmJkc2hqY2RxdXB1bHM1ZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/shXQ9mE4XYSwo/giphy.gif",
-     "source": "giphy",
-     "query": "Insomnia"
+     "query": "Insomnia sweat"
     }
    ]
   },
@@ -26,7 +21,12 @@
      "query": "bed"
     },
     {
-     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMnZieWlhdWtycndmeXp6NzR1eGo3OHo5ZTVtbTdnMmN4amxzN3ZxeCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/NvowuSBBkkrcofuzwx/giphy.gif",
+     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmM3NwOTR5ZmtjZjhzc3J1aGYzOHhkbXNnbmJpcGt1b3l1cDNkYXFwMyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/y7ZWNmtIcf2TxTBDmE/giphy.gif",
+     "source": "giphy",
+     "query": "Splash"
+    },
+    {
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMnZieWlhdWtycndmeXp6NzR1eGo3OHo5ZTVtbTdnMmN4amxzN3ZxeCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/l0MYKtrCEHRzb4fZe/giphy.gif",
      "source": "giphy",
      "query": "Splash"
     }
@@ -36,14 +36,19 @@
    "line_i": 2,
    "picks": [
     {
-     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmZTJ4aGFjZGFnYjRmMnUxZ29uMTRpNzBrMmxicWx1bzY5c3M4NHNmOSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/eaBro4mE3Oe2I/giphy.gif",
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmZTJ4aGFjZGFnYjRmMnUxZ29uMTRpNzBrMmxicWx1bzY5c3M4NHNmOSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/xT5LMXMOoMctfuATVS/giphy.gif",
      "source": "giphy",
      "query": "sticky floor"
     },
     {
-     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYjVtY3Z0MnhhenZ5OTd0cHhzcTN1OHI5cHU1c3VobzIzcGQ3anFwciZlcD12MV9naWZzX3NlYXJjaCZjdD1n/l0HUg6Ypas42ubkXu/giphy.gif",
+     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMDdoODJ0ZmNzZXNhbm54NGhkcGlrMzdpb3V5MXE4enhyZ2gwcnZjZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/l0HUg6Ypas42ubkXu/giphy.gif",
      "source": "giphy",
-     "query": "Laundry smell"
+     "query": "Smells"
+    },
+    {
+     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmMDdoODJ0ZmNzZXNhbm54NGhkcGlrMzdpb3V5MXE4enhyZ2gwcnZjZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/j1P8gayLo0ZVCcc14l/giphy.gif",
+     "source": "giphy",
+     "query": "Smells"
     }
    ]
   },
@@ -64,6 +69,11 @@
      "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmcjNpMXg1eXI2Znh0NWV2ZHhxNjhnZ3I4ejMyYWVtYnNvcm9lc2h1YSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/DYK94ODBXGlgnra4mS/giphy.gif",
      "source": "giphy",
      "query": "Hot wind"
+    },
+    {
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmcjVqcGxhMmhpbjk0OHBvYW93Nms2c3M5MThicXl2dXQ4b2E1OHNlaCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/UZ3XvKxX5ee4g/giphy.gif",
+     "source": "giphy",
+     "query": "Hot wind"
     }
    ]
   },
@@ -77,9 +87,8 @@
      "query": ""
     },
     {
-     "is_product": true,
-     "prod_idx": 2,
-     "source": "product",
+     "file": "data/selections_assets/682b1ab7dc2ecc85/L04_0.jpeg",
+     "source": "upload",
      "query": ""
     }
    ]
@@ -88,19 +97,19 @@
    "line_i": 5,
    "picks": [
     {
-     "detail_idx": 4,
-     "source": "detail",
-     "query": ""
-    },
-    {
-     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYTMxNXpobnB6cm9kczI0YXYzMDhnaGtsMHloMGV1eGIxMGYzMG9vaSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/gHbjuTVHSmlVxRKIHb/giphy.gif",
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmbHB3dHdnYmxseGJnYXFxZ2M4bzVpeWF5a2RrMWU5bWM1NnllYWdzbSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3ov9jW5LkqPw06WDCw/giphy.gif",
      "source": "giphy",
-     "query": "Dringking water"
+     "query": "Water drinking"
     },
     {
      "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmdWs0aTV0OGw4dmdueXZpcTQwbzdvempyM3ltbzZvajZ6Y2Q0MnhjZCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/inwfkSU2zmRwI/giphy.gif",
      "source": "giphy",
      "query": "Wheel"
+    },
+    {
+     "file": "data/selections_assets/682b1ab7dc2ecc85/L05_0.jpeg",
+     "source": "upload",
+     "query": ""
     }
    ]
   },
@@ -108,19 +117,19 @@
    "line_i": 6,
    "picks": [
     {
-     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmdHo2Z216cjNzMWZ4eXk3dnR2OTF5cDR6c21rNGVxOHE2OGFraHRrMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/YlGSfHSKoIvVc1YPp7/giphy.gif",
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmcHZkcnZhcTZpNTM0cng4c2l3Y203NzlheWh1dGx2d3F4d3Vmc2R6cCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/GVcQtnmqBiEg0/giphy.gif",
      "source": "giphy",
-     "query": "Red buttom"
+     "query": "Red button"
     },
     {
-     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmc2FnOWpzMjNkeTN0MnFvbWZ3bzl3cjA3a3I4eXlvemVlbjRvdjNweiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/xHoZgUSj7FhVqp92bg/giphy.gif",
+     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmOGhldWEydTk2eXB5aWN1Nnl3bXo4anN3czk2YjU0NDlpaTh1ZXdxeiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/otxUeqwCnLYafFC1cY/giphy.gif",
      "source": "giphy",
-     "query": "Dry condition"
+     "query": "Drying"
     },
     {
-     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmazJqZm0waTIzdWl6ZWozOG9nbGc0cGdtcHE0dnh0eXltNmF4NDloOCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/hMYam42K5GSGjSnUpz/giphy.gif",
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmdm1ibHh2d3piYjE3MWJpeTF1MDlqc2ozZnNhOTRsZXoycjZrOHRieiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/t8GdMbyjzwHvkzdraw/giphy.gif",
      "source": "giphy",
-     "query": "Feel so good"
+     "query": "Feeling good"
     }
    ]
   }
