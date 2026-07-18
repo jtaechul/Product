@@ -1,0 +1,56 @@
+{
+  "id": "032",
+  "created_at": "2026-07-18T05:11:59+00:00",
+  "updated_at": "2026-07-18T05:11:59+00:00",
+  "status": "published",
+  "category": "shipwreck",
+  "series": "沈没船 図鑑",
+  "species": {
+    "common_name_ko": "Titanic 난파선",
+    "common_name_en": "Wreck Titanic",
+    "scientific_name": "Wreck Titanic",
+    "depth_range_m": "",
+    "habitat": "침몰선",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "총톤수: 46329 GRT, 21831 NRT",
+      "침몰: 1912년"
+    ]
+  },
+  "reels": {
+    "hook": "海の底に、眠る船。",
+    "caption": "1911年5月31日に英国ベルファストで進水したRMSタイタニックは、全長882フィート、46,329総トンを誇るホワイト・スター・ラインの客船として、1912年4月2日に竣工しました。\n処女航海の途上、1912年4月15日未明、氷山との衝突により北大西洋の海に沈みました。\n現在も同海域の深海に、その姿を留めています。\n潜水調査によって記録された映像は、当時の造船技術や航海の記録を今に伝えています。\nこの歴史をぜひ保存して、何度も見返してください。",
+    "hashtags": [
+      "#沈没船",
+      "#タイタニック",
+      "#RMSタイタニック"
+    ],
+    "reveal_name": "RMS Titanic",
+    "reveal_fact": "",
+    "hook_ko": "",
+    "caption_ko": "1911년 5월 31일, 영국 벨파스트에서 진수된 RMS 타이타닉. 전장 882피트, 46,329총톤급의 화이트 스타 라인 소속 여객선으로 1912년 4월 2일 완공되었습니다.\n처녀항해 도중이던 1912년 4월 15일 새벽, 빙산과의 충돌로 북대서양에 침몰했습니다.\n지금도 같은 해역의 심해에 그 모습을 남기고 있습니다.\n잠수 조사를 통해 기록된 영상은 당시의 조선 기술과 항해의 흔적을 오늘날까지 전하고 있습니다.\n이 역사를 꼭 저장해두고 다시 돌아보시기 바랍니다.",
+    "hashtags_ko": [
+      "#침몰선",
+      "#타이타닉",
+      "#RMS타이타닉"
+    ],
+    "yt_title": "氷山に消えた巨船、タイタニックの最期 #沈没船 #タイタニック",
+    "yt_title_ko": "빙산에 사라진 거대한 배, 타이타닉의 최후 #침몰선 #타이타닉",
+    "visualizer": "reels",
+    "video_file": "wreck_titanic_20260718_051158.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Wikipedia: RMS Titanic",
+      "Wikimedia Commons"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-032/reels_032.mp4",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-032/cover_032.jpg"
+  },
+  "post": null
+}

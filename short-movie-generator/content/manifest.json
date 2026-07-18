@@ -236,5 +236,13 @@
     "common_name_en": "Wreck Lusitania",
     "scientific_name": "Wreck Lusitania",
     "date": "2026-07-17"
+  },
+  {
+    "id": "032",
+    "kind": "reels",
+    "common_name_ko": "Titanic 난파선",
+    "common_name_en": "Wreck Titanic",
+    "scientific_name": "Wreck Titanic",
+    "date": "2026-07-18"
   }
 ]
