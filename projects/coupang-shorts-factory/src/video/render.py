@@ -1074,6 +1074,8 @@ def _build_expose(lines: list, line_windows: list, words: list, line_images: lis
         # 배경 우선순위: 운영자가 훅 라인에 고른 픽 → 제품 영상(움직임) → 상품 사진(켄번즈) → 브랜드 패널
         hook_text = str(lines[0].get("text", "")).strip()
         hook_pick = line_images[0] if line_images else None
+        if isinstance(hook_pick, (list, tuple)):   # 다중선택(B2) 라인 픽은 리스트 — 카드 배경은 첫 픽
+            hook_pick = hook_pick[0] if hook_pick else None
         src = hook_pick or (product_videos[0] if product_videos
                             else (product_images[0] if product_images else None))
         bg = (_expose_image_clip(src, 0.0, hook_end, width, 0, height, product_images,
