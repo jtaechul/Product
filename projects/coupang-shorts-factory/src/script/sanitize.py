@@ -205,10 +205,17 @@ def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None) 
     if script.get("description_body"):
         body = str(script["description_body"])
         script["description_body"] = "\n".join(hide_product_name(ln, avoid_terms) for ln in body.split("\n"))
-    # concept(기획서: 의도·타깃·후킹) — 운영자 검토용 표시 텍스트, 이모지·특수기호 정화
+    # concept(기획서: 의도·타깃·후킹·한줄썰) — 운영자 검토용 표시 텍스트, 이모지·특수기호 정화
+    # ⭐ + 타깃·주거 서술어 하드 제거(2026-07-18 사용자 확정 확대): 제목만 막았더니 기획서로 유입 —
+    #   '자취·원룸·1인가구'는 기획서·헤드라인·설명 등 모든 산출 텍스트에서 제거한다.
     concept = script.get("concept")
     if isinstance(concept, dict):
-        script["concept"] = {k: clean_text(str(v)) for k, v in concept.items() if v}
+        script["concept"] = {k: strip_target_words(clean_text(str(v))) for k, v in concept.items() if v}
+    if script.get("headline"):
+        script["headline"] = strip_target_words(script["headline"])
+    if script.get("description_body"):
+        script["description_body"] = "\n".join(
+            strip_target_words(ln) for ln in str(script["description_body"]).split("\n"))
     # 각 라인 scene(스토리보드 장면 묘사) 정화 (없으면 빈 문자열)
     for line in lines:
         if line.get("scene"):
@@ -227,6 +234,15 @@ def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None) 
     # '원룸'·'지원' 등은 앞에 숫자가 없어 오탐 아님. 스펙(500ml·3분·1.2킬로그램)도 통과.
     if re.search(r"\d[\d,]*\s*원|\d+\s*만\s*원", full):
         problems.append("금액 표현 포함 — 가격은 영상에서 완전히 뺀다(링크로만 안내)")
+
+    # 타깃·주거 서술어(자취·원룸·1인가구) — 대사에도 금지(2026-07-18 사용자 확정 확대).
+    #   strict(새 생성)에서만 검사해 재생성 피드백으로 고친다. 옛 기획 로드는 막지 않음
+    #   (대사는 자막=대본 계약 때문에 강제 수정 불가 — '기획 다시 만들기'로 해소).
+    if strict_length:
+        bad_ln = next((l["text"] for l in lines if _TITLE_TARGET_RE.search(str(l.get("text", "")))), None)
+        if bad_ln:
+            problems.append("대사에 타깃·주거 서술어(자취·원룸·1인가구) 포함 — 금지. 누가 쓰는지가 아니라 "
+                            f"불편 자체로 묘사하라: '{bad_ln[:24]}'")
 
     # 해시태그: 모델(특히 Gemini)이 개수를 안 지켜도 3개로 자동 교정한다 —
     #   정규화(#+공백제거) + 중복 제거 + 상위 3개만. 3개 미만일 때만 진짜 문제로 본다.
