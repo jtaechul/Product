@@ -131,14 +131,30 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
         mech_txt, need_choice = mechanism.prepare(
             product, settings, PROJECT_ROOT, extract=will_generate, gate=will_generate)
     except Exception as e:
-        print(f"[mech] 차별점 준비 실패({type(e).__name__}: {e}) — 기존 흐름으로 계속")
+        if will_generate:   # ⭐ 절대 게이트(2026-07-18): 준비가 죽어도 방향 미확정 대본을 만들지 않는다
+            print(f"::error::[mech] 차별점 준비 실패({type(e).__name__}: {e}) — 게이트 유지, 대본 생성 중단")
+            notify.send(f"[미래마켓] 기획 방향 준비 실패 — {product.get('name', '')}\n"
+                        f"{type(e).__name__}: {str(e)[:200]}\n"
+                        f"관리자 ② 메뉴에서 '3안 다시 뽑기'로 재시도하거나 직접 의견(4안)으로 확정하세요.")
+            return 2
+        print(f"[mech] 차별점 준비 실패({type(e).__name__}: {e}) — (비게이트) 기존 흐름으로 계속")
         mech_txt, need_choice = None, False
     if need_choice and will_generate:
-        print("[mech] 차별점 3안 준비 완료 — 운영자 선택 대기(대본 생성 전 중단)")
-        notify.send(
-            f"[미래마켓] 기획 방향(차별점) 3안 준비 완료 — {product['name']}\n"
-            f"관리자 기획 탭에서 하나를 고르거나 직접 적으면, 그 방향으로 대본을 씁니다.\n"
-            f"https://shorts-admin.jtaechul.workers.dev")
+        from src.product import mechanism as _mech
+        _d = _mech.load(PROJECT_ROOT, product["_row_hash"]) or {}
+        if _d.get("options"):
+            print("[mech] 차별점 3안 준비 완료 — 운영자 선택 대기(대본 생성 전 중단)")
+            notify.send(
+                f"[미래마켓] 기획 방향(차별점) 3안 준비 완료 — {product['name']}\n"
+                f"관리자 ② 메뉴에서 하나를 고르거나 직접 적으면, 그 방향으로 대본을 씁니다.\n"
+                f"https://shorts-admin.jtaechul.workers.dev")
+        else:   # 스텁(자료 부족·추출 실패) — 대본은 절대 만들지 않고 운영자 조치 안내
+            note = _d.get("note") or "3안을 만들지 못했습니다"
+            print(f"[mech] {note} — 운영자 조치 대기(대본 생성 중단)")
+            notify.send(
+                f"[미래마켓] 기획 방향 3안 추출 불가 — {product['name']}\n{note}\n"
+                f"관리자 ② 메뉴에서 직접 의견(4안)으로 확정하거나, 캡처 등록 후 '3안 다시 뽑기'를 눌러주세요.\n"
+                f"https://shorts-admin.jtaechul.workers.dev")
         return 0
     if mech_txt:
         product["차별점_작동방식"] = mech_txt   # generate_script의 상품 JSON에 그대로 노출됨

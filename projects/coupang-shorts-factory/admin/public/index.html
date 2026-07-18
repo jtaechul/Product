@@ -2041,7 +2041,7 @@ async function renderMechanism(body) {
   const hint = document.createElement("p"); hint.className = "hint"; hint.style.margin = "0 0 8px";
   hint.textContent = "영상이 '뭘 파는지' 또렷해지게, 대본의 제품 공개 구간이 이 내용 위에 세워집니다. 하나를 고르거나 직접 적은 뒤 '이 선택으로 기획·대본 만들기'를 누르세요 — 고르기 전에는 대본을 만들지 않습니다.";
   body.appendChild(hint);
-  if (!data || !(data.options || []).length) {
+  if (!data) {
     body.insertAdjacentHTML("beforeend", '<p class="empty">아직 3안이 없습니다 — 아래 버튼을 누르면 상품 자료(PDF·캡처)에서 3안을 추출해 선택 화면을 띄웁니다.</p>');
     const b = document.createElement("button"); b.className = "btn mini"; b.textContent = "차별점 3안 뽑기";
     b.onclick = (ev) => busy(ev.target, async () => {
@@ -2057,6 +2057,16 @@ async function renderMechanism(body) {
   //    chosen: 0/1/2 = 그 안, "custom" = 4안(입력칸 내용), null = 1안 기본.
   let chosen = (typeof data.chosen === "number") ? data.chosen
     : ((data.chosen === "custom" || String(data.custom || "").trim()) ? "custom" : null);
+  // 빈 3안(자료 부족·추출 실패 스텁, 2026-07-18 절대 게이트): 사유를 보여주고 4안(직접 의견)만으로
+  // 확정해 진행할 수 있게 한다 — 대본은 여기서 확정하기 전엔 절대 만들어지지 않는다.
+  if (!(data.options || []).length) {
+    chosen = "custom";
+    const warn = document.createElement("p"); warn.className = "hint";
+    warn.style.cssText = "margin:0 0 8px;color:#b45309;font-weight:700";
+    warn.textContent = (data.note || "자료가 부족해 3안을 만들지 못했습니다") +
+      " — 아래 4안에 방향을 직접 적어 확정하거나, 캡처 등록 후 '3안 다시 뽑기'를 누르세요.";
+    body.appendChild(warn);
+  }
   const rows = [];
   (data.options || []).forEach((o, i) => {
     const it = document.createElement("div"); it.className = "item"; it.style.cursor = "pointer";
