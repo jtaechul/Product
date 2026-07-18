@@ -1073,18 +1073,30 @@ def _build_expose(lines: list, line_windows: list, words: list, line_images: lis
     if has_hook:
         # 배경 우선순위: 운영자가 훅 라인에 고른 픽 → 제품 영상(움직임) → 상품 사진(켄번즈) → 브랜드 패널
         hook_text = str(lines[0].get("text", "")).strip()
-        hook_pick = line_images[0] if line_images else None
-        if isinstance(hook_pick, (list, tuple)):   # 다중선택(B2) 라인 픽은 리스트 — 카드 배경은 첫 픽
-            hook_pick = hook_pick[0] if hook_pick else None
-        src = hook_pick or (product_videos[0] if product_videos
-                            else (product_images[0] if product_images else None))
-        bg = (_expose_image_clip(src, 0.0, hook_end, width, 0, height, product_images,
-                                 [] if selections_applied else product_videos)
-              if src is not None else None)
-        if bg is None:
-            arr = _branded_rect_arr(width, height, ch.get("name", "미래마켓"), font_path)
-            bg = ImageClip(arr).with_duration(hook_end).with_position((0, 0))
-        layers.append(bg)
+        # 다중선택(B2) 픽은 본문과 동일하게 카드 구간을 균등 분할해 순서대로 보여준다(2026-07-18 사용자
+        # 확인 — '첫 장만'은 run155 크래시를 급히 막던 임시 처리였음). 단 카드가 짧아(≈2초) 장당
+        # 최소 0.7초는 확보되게, 시간이 모자라면 앞쪽 픽부터 들어가는 만큼만 쓴다.
+        raw = line_images[0] if line_images else None
+        picks = [p for p in (raw if isinstance(raw, (list, tuple)) else [raw]) if p]
+        if not picks:
+            fb = (product_videos[0] if product_videos
+                  else (product_images[0] if product_images else None))
+            picks = [fb] if fb is not None else []
+        max_n = max(1, int(hook_end / 0.7))
+        if len(picks) > max_n:
+            print(f"[render] 훅 카드 픽 {len(picks)}장 중 앞 {max_n}장만 사용(카드 {hook_end:.1f}초 — 장당 0.7초 확보)")
+            picks = picks[:max_n]
+        step = hook_end / max(1, len(picks))
+        for k, src in enumerate(picks or [None]):
+            a = k * step
+            b = hook_end if k == len(picks) - 1 else (k + 1) * step
+            bg = (_expose_image_clip(src, a, b, width, 0, height, product_images,
+                                     [] if selections_applied else product_videos)
+                  if src is not None else None)
+            if bg is None:
+                arr = _branded_rect_arr(width, height, ch.get("name", "미래마켓"), font_path)
+                bg = ImageClip(arr).with_duration(max(0.1, b - a)).with_start(a).with_position((0, 0))
+            layers.append(bg)
         txt = _thumb_hook_overlay(hook_text, width, height, hook_end, font_path, settings)
         if txt is not None:
             layers.append(txt)
