@@ -126,25 +126,53 @@ def prepare(product: dict, settings: dict, project_root: Path,
             extract: bool, gate: bool = False) -> tuple:
     """대본 생성 직전 호출. 반환 (확정 텍스트|None, need_choice).
 
-    ⭐ 선택 게이트(2026-07-17 사용자 확정): gate=True(기획 모드)면 **운영자가 3안 중 방향을 확정하기
-    전에는 대본을 만들지 않는다** — 3안만 추출·저장하고 need_choice=True를 돌려 파이프라인이 멈추게 한다.
-    확정(custom/chosen/confirmed) 후 재실행되면 그 텍스트를 반환. 자료 없음·키 없음·추출 실패면
-    게이트 없이 (None, False)로 기존 흐름 계속(운영자가 막히지 않게)."""
-    data = load(project_root, product.get("_row_hash", ""))
-    if data is None:
-        if not extract or not have_script_key(settings) or not (product.get("notes") or product.get("specs")):
-            if extract:
-                print("[mech] 상세 자료(notes/specs) 또는 키 없음 — 차별점 추출 생략(게이트 없이 진행)")
+    ⭐⭐ 절대 게이트(2026-07-18 사용자 재확정 — "3안/4안 확정 전에는 절대 대본을 만들지 마라"):
+    gate=True(대본이 새로 만들어지는 모드)면 **어떤 예외 상황에서도 대본 생성으로 넘어가지 않는다.**
+    자료 부족·키 없음·추출 실패면 '빈 3안(스텁) + note'를 저장하고 need_choice=True로 멈춰서,
+    운영자가 ② 메뉴에서 직접 의견(4안)으로 확정하거나 자료 등록 후 '3안 다시 뽑기'를 하게 한다.
+    (이전의 '게이트 없이 진행' 폴백이 방향 미확정 대본을 만들어 토큰을 낭비하던 구멍 — 전면 폐지.)
+    비게이트 호출(gate=False: 이미 승인된 기획 사용 등)은 기존처럼 (확정 텍스트|None, False)."""
+    rh = product.get("_row_hash", "")
+
+    def _save_stub(note):
+        p = _path(project_root, rh)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps({"options": [], "chosen": None, "custom": "",
+                                 "confirmed": False, "note": note}, ensure_ascii=False, indent=1),
+                     encoding="utf-8")
+
+    data = load(project_root, rh)
+    # 빈 스텁(이전 실패 기록)인데 재추출이 가능해졌으면 다시 시도(자료를 새로 등록한 경우 자동 회복)
+    stub_retry = bool(data is not None and extract and not is_confirmed(data)
+                      and not (data.get("options") or str(data.get("custom") or "").strip()))
+    if data is None or stub_retry:
+        if not extract:
+            return None, False
+        note = None
+        if not have_script_key(settings):
+            note = "대본용 키(Gemini/Anthropic)가 없어 3안을 추출할 수 없습니다"
+        elif not (product.get("notes") or product.get("specs")):
+            note = "상세 자료(캡처 PDF/특징)가 없어 3안을 추출할 수 없습니다 — 캡처를 등록해 '3안 다시 뽑기'를 하거나, 직접 의견(4안)으로 확정하세요"
+        if note:
+            if gate:
+                _save_stub(note)
+                print(f"[mech] {note} → 절대 게이트: 대본 생성 중단(운영자 확정 대기)")
+                return None, True
+            print(f"[mech] {note} — (비게이트 호출) 뼈대 없이 진행")
             return None, False
         try:
             data = {"options": _extract(product, settings), "chosen": None, "custom": "", "confirmed": False}
-            p = _path(project_root, product["_row_hash"])
+            p = _path(project_root, rh)
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-            print(f"[mech] 차별점·작동방식 3안 추출 완료 → data/mechanism/{product['_row_hash']}.json "
+            print(f"[mech] 차별점·작동방식 3안 추출 완료 → data/mechanism/{rh}.json "
                   f"({' / '.join(o['title'] for o in data['options'])})")
         except Exception as e:
-            print(f"[mech] 차별점 추출 실패({type(e).__name__}: {e}) — 게이트 없이 기존 흐름으로 계속")
+            if gate:
+                _save_stub(f"3안 추출 실패({type(e).__name__}) — '3안 다시 뽑기'로 재시도하거나 직접 의견(4안)으로 확정하세요")
+                print(f"[mech] 차별점 추출 실패({type(e).__name__}: {e}) → 절대 게이트: 대본 생성 중단")
+                return None, True
+            print(f"[mech] 차별점 추출 실패({type(e).__name__}: {e}) — (비게이트 호출) 뼈대 없이 진행")
             return None, False
     if gate and not is_confirmed(data):
         return None, True                     # 운영자 선택 대기 — 대본 생성 전 중단
