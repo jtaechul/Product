@@ -65,7 +65,12 @@ input:focus,select:focus{outline:2px solid var(--accent); border-color:transpare
 .item{display:flex; align-items:center; gap:10px; padding:12px 2px; border-bottom:1px solid var(--line)}
 .item:last-child{border-bottom:none}
 .item .grow{flex:1; min-width:0}
-.item .t{font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.item .t{font-weight:700; white-space:normal; word-break:break-word}   /* 상품명 전체 표시(말줄임 폐지 — 2026-07-18 사용자 요청) */
+section[data-group="make"] .sechead{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:13px 16px;margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  font-weight:900;font-size:16px;cursor:pointer;user-select:none}
+section[data-group="make"] .sechead .secarrow{color:var(--sub);font-size:12px;font-weight:700;flex:none}
+section[data-group="make"].collapsed .secbody{display:none}
 .item .s{font-size:13px; color:var(--sub)}
 .fchip{display:inline-flex; align-items:center; gap:8px; margin:8px 8px 0 0; padding:8px 12px;
   background:var(--bg); border:1px solid var(--line); border-radius:10px; font-size:13px; font-weight:700}
@@ -1477,7 +1482,7 @@ $("btnAddProduct").onclick = (ev) => busy(ev.target, async () => {
   showDirStart("등록 완료 — 아래 버튼을 누르면 자료에서 차별점 3안을 뽑아 여기에 띄웁니다.");
   setStatus("상품 등록 완료 — 아래 '② 기획 방향 선택'에서 '기획방향 수립'을 눌러 시작하세요.");
   toast("상품 등록 완료");
-  document.getElementById("tab-direction").scrollIntoView({ behavior: "smooth" });
+  focusSection("tab-direction");
 });
 // 선택한 상품 동영상 파일명 미리보기(비전문가용 확인 — 캡처파일 #fileList 와 같은 칩 스타일)
 $("pVideo").onchange = () => {
@@ -1848,6 +1853,42 @@ function requireWork() {
   if (!currentWork) { toast("먼저 '새 상품 등록'으로 등록하거나, '제작 대기열'에서 상품의 '작업'을 누르세요.", 5000); return null; }
   return currentWork;
 }
+// ⭐ 단계 아코디언(2026-07-18 사용자 요청): 지금 쓰는 단계만 펼치고 나머지는 접는다 — 헤더 탭으로 수동 토글.
+//   '현재 작업 상품' 카드(진행 상태 표시 workStatus 포함)는 접기 대상에서 빼 항상 보인다.
+const MK_SECTIONS = [["tab-products", "① 상품 등록"], ["tab-direction", "② 기획 방향 선택"],
+                     ["tab-plan", "③ 기획·대본 검토"], ["tab-images", "④ 자막별 이미지 선택"],
+                     ["tab-run", "⑤ 제작·검수·올리기"]];
+function setSecOpen(id, open) {
+  const sec = document.getElementById(id); if (!sec) return;
+  sec.classList.toggle("collapsed", !open);
+  const ar = sec.querySelector(":scope > .sechead .secarrow");
+  if (ar) ar.textContent = open ? "접기" : "펼치기";
+}
+function focusSection(id) {
+  for (const [sid] of MK_SECTIONS) setSecOpen(sid, sid === id);
+  const sec = document.getElementById(id);
+  if (sec) sec.scrollIntoView({ behavior: "smooth" });
+}
+function initAccordion() {
+  for (const [id, label] of MK_SECTIONS) {
+    const sec = document.getElementById(id);
+    if (!sec || sec.querySelector(":scope > .sechead")) continue;
+    const ws = document.getElementById("workStatus");
+    const keep = (id === "tab-products" && ws) ? ws.closest(".card") : null;
+    const body = document.createElement("div"); body.className = "secbody";
+    while (sec.firstChild) body.appendChild(sec.firstChild);
+    const head = document.createElement("div"); head.className = "sechead";
+    const ttl = document.createElement("span"); ttl.textContent = label;
+    const ar = document.createElement("span"); ar.className = "secarrow"; ar.textContent = "접기";
+    head.appendChild(ttl); head.appendChild(ar);
+    head.onclick = () => setSecOpen(id, sec.classList.contains("collapsed"));
+    if (keep) sec.appendChild(keep);
+    sec.appendChild(head); sec.appendChild(body);
+  }
+  for (const [sid] of MK_SECTIONS) setSecOpen(sid, sid === "tab-products");   // 기본: ①만 펼침
+}
+initAccordion();
+
 function setStatus(msg) { const e = $("workStatus"); if (e) e.textContent = msg || ""; }
 async function planDispatch(row) {
   await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches`, {
@@ -1869,7 +1910,7 @@ async function pollPlan(hash, tries = 0, waitSha) {
       $("imgLines").innerHTML = ""; $("imgSaveCard").style.display = "none";
       $("imgStatus").textContent = "대본이 새로 만들어졌습니다 — ③ 검토 후 '이 기획으로 이미지 찾기'를 누르면 새 대본 기준 후보가 생성됩니다.";
     }
-    document.getElementById("tab-plan").scrollIntoView({ behavior: "smooth" });
+    focusSection("tab-plan");
     setStatus("기획·대본 완성 — 검토 후 '이 기획으로 이미지 찾기'로 넘어가세요.");
     return;
   }
@@ -1912,7 +1953,7 @@ async function maybeShowMechStep(hash) {
   const body = document.createElement("div"); dv.appendChild(body);
   renderMechanism(body);
   $("planView").innerHTML = ""; $("planActions").style.display = "none";   // 대본 화면 비움(분리)
-  document.getElementById("tab-direction").scrollIntoView({ behavior: "smooth" });
+  focusSection("tab-direction");
   setStatus("기획 방향 3안이 준비됐습니다 — '② 기획 방향 선택'에서 하나를 고르거나 직접 적으세요.");
   return true;
 }
@@ -1957,13 +1998,13 @@ async function selectProduct(row, hash, label) {
     if (mech.data) setDirDone(mech.data);
     planData = JSON.parse(f.text); renderPlan();
     $("planActions").style.display = "";
-    document.getElementById("tab-plan").scrollIntoView({ behavior: "smooth" });
+    focusSection("tab-plan");
     setStatus("기획·대본을 검토하세요. 좋으면 '이 기획으로 이미지 찾기'.");
   } else if (!mech.data) {
     // 아직 방향 추출 전 — 자동 시작하지 않고 '기획방향 수립' 버튼을 보여준다(운영자가 시작)
     $("planView").innerHTML = ""; $("planActions").style.display = "none";
     showDirStart();
-    document.getElementById("tab-direction").scrollIntoView({ behavior: "smooth" });
+    focusSection("tab-direction");
     setStatus("'기획방향 수립'을 누르면 3안을 만듭니다.");
   } else {
     // 방향은 확정됐는데 대본이 아직 없음(창 닫힘·중단 등) → 자동 실행하지 않고 '재개 버튼'
@@ -1980,7 +2021,7 @@ async function selectProduct(row, hash, label) {
       toast("기획·대본 생성 시작"); pollPlan(hash, 0, pf && pf.sha);
     });
     dv.appendChild(b);
-    document.getElementById("tab-direction").scrollIntoView({ behavior: "smooth" });
+    focusSection("tab-direction");
     setStatus("방향은 확정돼 있습니다 — 버튼을 눌러 기획·대본 생성을 이어가세요.");
   }
 }
@@ -2156,7 +2197,7 @@ $("planApprove").onclick = (ev) => busy(ev.target, async () => {
   $("imgLines").innerHTML = ""; $("imgSaveCard").style.display = "none";
   await imgDispatch(p.row);
   $("imgStatus").textContent = "기획 승인 — 새 대본 기준으로 이미지 후보를 만드는 중(1~3분)... 완성되면 자동으로 뜹니다.";
-  document.getElementById("tab-images").scrollIntoView({ behavior: "smooth" });
+  focusSection("tab-images");
   toast("기획 승인 → 새 대본으로 이미지 후보 생성 시작");
   pollCandidates(p.hash, 0, baseVer === "none" ? undefined : baseVer);
 });
@@ -2219,7 +2260,7 @@ async function loadCandidates(p, silent, waitVer) {
 async function pollCandidates(hash, tries = 0, waitVer) {
   if (!currentWork || currentWork.hash !== hash) return;   // 다른 상품으로 바뀌면 중단
   if (await loadCandidates(currentWork, true, waitVer)) {
-    document.getElementById("tab-images").scrollIntoView({ behavior: "smooth" });
+    focusSection("tab-images");
     return;
   }
   if (tries >= 40) { setStatus("후보 생성이 오래 걸립니다(3분+). '이미지 후보 불러오기'를 눌러 확인하세요."); return; }
