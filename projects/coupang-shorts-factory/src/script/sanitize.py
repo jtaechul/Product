@@ -281,6 +281,16 @@ def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None) 
         if prod_lines < 3:
             problems.append(f"제품 구간(④⑤) {prod_lines}줄 (3줄 이상 필요 — 차별점·작동 방식·결과를 나눠 쓰라)")
 
+    # 라인 수·토막 검증(2026-07-18 사용자 보고 — 문장이 너무 짧고 앞뒤가 어색): 본문 5~7줄(8줄 허용),
+    # 라인당 공백 제외 10자 이상. 짧은 조각 라인이 이어지면 흐름이 끊긴다 → 재생성 피드백으로 교정.
+    if strict_length:
+        if not (5 <= len(lines) <= 8):
+            problems.append(f"본문 라인 {len(lines)}줄 (5~7줄로 맞춰라 — 줄을 합치거나 나눠라)")
+        _shorty = next((str(l.get("text", "")).strip() for l in lines
+                        if 0 < len(str(l.get("text", "")).replace(" ", "")) < 10), None)
+        if _shorty:
+            problems.append(f"토막 라인 발견('{_shorty}') — 라인당 공백 포함 16~32자의 완결 문장으로 쓰거나 옆 줄과 합쳐라")
+
     # 포맷 v2: 훅 카드 문구(=제목=첫 낭독)는 필수 + 카드에 크게 박히는 길이(공백 포함 8~28자)
     _hk = str(script.get("thumb_hook") or "").strip()
     if strict_length and not (lines and lines[0].get("is_hook")):
