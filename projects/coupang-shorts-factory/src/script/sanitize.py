@@ -285,11 +285,16 @@ def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None,
         if prod_lines < 3:
             problems.append(f"제품 구간(④⑤) {prod_lines}줄 (3줄 이상 필요 — 차별점·작동 방식·결과를 나눠 쓰라)")
 
-    # 라인 수·토막 검증(2026-07-18 사용자 보고 — 문장이 너무 짧고 앞뒤가 어색): 본문 5~7줄(8줄 허용),
-    # 라인당 공백 제외 10자 이상. 짧은 조각 라인이 이어지면 흐름이 끊긴다 → 재생성 피드백으로 교정.
+    # 라인 수·토막 검증: 본문 정확히 6줄(훅 카드 포함 화면 총 7라인 — 2026-07-19 사용자 확정,
+    # 어중간한 엔딩 문제로 ⑥ 마무리 라인 추가) + 라인당 공백 제외 10자 이상(토막글 금지 2026-07-18).
+    # (재정화 대비 훅 라인은 본문 수에서 제외. 승인된 옛 기획 로드는 strict_length=False라 안 막는다.)
     if strict_length:
-        if not (5 <= len(lines) <= 8):
-            problems.append(f"본문 라인 {len(lines)}줄 (5~7줄로 맞춰라 — 줄을 합치거나 나눠라)")
+        _body = [l for l in lines if not l.get("is_hook")]
+        if len(_body) != 6:
+            problems.append(f"본문 라인 {len(_body)}줄 (정확히 6줄로 맞춰라 — ①1 ②③1~2 ④2~3 ⑤1 ⑥1 합 6줄)")
+        if not any(int(l.get("stage") or 0) == 6 for l in _body):
+            problems.append("⑥ 마무리 라인(stage 6) 없음 — 마지막 줄은 훅을 되받아 '이제 옛날 일'로 뒤집고 "
+                            "미래 큐레이터의 여운 한 마디로 닫아라(스펙·가격·구매 유도 금지)")
         _shorty = next((str(l.get("text", "")).strip() for l in lines
                         if 0 < len(str(l.get("text", "")).replace(" ", "")) < 10), None)
         if _shorty:
