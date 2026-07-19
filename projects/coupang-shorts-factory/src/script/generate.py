@@ -31,7 +31,8 @@ from src.script.sanitize import (
 
 _STAGE_ROLE = {1: "훅(한줄썰 사건의 구체적 손해를 보여줌 — 주제는 드러내고 해결책만 감춤, 추상 선언·시대드립 금지)",
                2: "공감 확산(앞 줄을 지시어로 즉시 이어받아 같은 장면 심화)",
-               3: "원흉 지목", 4: "제품 정체 공개(종류·킬러스펙만)", 5: "증거·반응(루프 이음새)"}
+               3: "원흉 지목", 4: "제품 정체 공개(종류·킬러스펙만)", 5: "증거·반응(체감 감탄)",
+               6: "마무리(훅의 손해를 '이제 옛날 일'로 되받고 미래 큐레이터의 여운 한 마디로 닫기 — 스펙·가격·구매 유도 금지)"}
 # 가격 표현(숫자+원 / N만원) — sanitize_script(line 204)와 동일 규칙을 라인 단위로도 강제한다.
 _PRICE_RE = re.compile(r"\d[\d,]*\s*원|\d+\s*만\s*원")
 
@@ -96,6 +97,10 @@ def generate_script(product: dict, settings: dict) -> dict:
         if feedback and "토막" in feedback:
             extra += ("\n토막 해결법: 10자 미만 조각 라인을 앞뒤 줄과 합쳐, 라인당 공백 포함 16~32자의 "
                       "완결 문장으로 다시 써라(연결어로 앞 줄을 이어받기).")
+        if feedback and ("본문 라인" in feedback or "마무리 라인" in feedback):
+            extra += ("\n라인 구성 해결법: 본문은 정확히 6줄 — ①훅전개 1줄, ②③공감·원흉 1~2줄, ④제품 "
+                      "2~3줄, ⑤체감 1줄, ⑥마무리(stage 6) 1줄(합 6줄). ⑥은 훅의 손해를 '이제 옛날 일'로 "
+                      "되받고 미래 큐레이터 여운 한 마디로 닫아라.")
         if feedback and ("delimiter" in feedback or "JSON" in feedback or "Expecting" in feedback):
             extra += "\nJSON 형식 엄수: 유효한 JSON만 출력(마크다운·주석·후행 콤마 금지, 모든 키/값 쉼표 확인)."
         content = user_msg if not feedback else (
