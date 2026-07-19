@@ -93,6 +93,12 @@ def run_qa(video_path: Path, stats: dict, lines: list, job_dir: Path, settings: 
             checks["coverage"] = f"{cover / dur:.0%}"
             if cover / dur < COVERAGE_MIN:
                 problems.append(f"자막 커버리지 {cover / dur:.0%} (< {COVERAGE_MIN:.0%})")
+            # ⭐ 최소 길이 게이트(2026-07-19 사용자 확정): 20초 이하 영상은 내용 파악이 안 되는
+            #    '볼 게 없는' 영상 — 렌더 엔딩 홀드(최대 3.5초)로도 못 채웠으면 불합격시켜
+            #    대본을 더 길게 다시 쓰게 한다(업로드 차단).
+            min_dur = float(settings.get("render", {}).get("min_duration_sec", 20.0))
+            if dur <= min_dur:
+                problems.append(f"영상 길이 {dur:.1f}초 — 최소 {min_dur:.0f}초를 넘어야 함(대본 분량을 늘려 재생성 필요)")
 
     # ⑤+⑥ 실제 프레임 검사 (자막색 픽셀 실존 + 해상도)
     try:
