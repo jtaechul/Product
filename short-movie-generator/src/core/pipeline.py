@@ -460,9 +460,12 @@ def run_reels(
                                              str(work_dir / "stinger"))
             if st:
                 combined = str(work_dir / "body_with_stinger.mp4")
-                if reels_stinger.prepend_to_body(st["path"], body_av, combined):
+                # ★전환 효과음: 지도·수심 표시 → 본 영상 경계(=스팅어 길이)에 다이브 후시 SFX
+                if reels_stinger.prepend_to_body(st["path"], body_av, combined,
+                                                 boundary_s=st.get("duration"),
+                                                 work_dir=str(work_dir / "trsfx")):
                     body_av = combined
-                    log.info("[reels] 오프닝 하강 스팅어 결합(%.1fs)", st["duration"])
+                    log.info("[reels] 오프닝 하강 스팅어 결합(%.1fs) + 전환 SFX", st["duration"])
         except Exception as e:  # noqa: BLE001
             log.warning("[reels] 스팅어 결합 생략(오류): %s", e)
 

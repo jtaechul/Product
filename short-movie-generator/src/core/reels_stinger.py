@@ -29,6 +29,32 @@ def _zones_for(depth: int) -> list[tuple]:
     return keep or [(100, "有光層")]
 
 
+def _habitat_region_for(info):
+    """★서식해역(대양 basin) 라벨을 문헌 검증으로 판정 → 침몰선 지도와 동일 표기(北大西洋 등).
+    data(분포)를 화면 후보로, 위키 서식 문헌을 근거로 교차검증한다(문헌이 뒷받침할 때만 표기).
+    반환: deepsea_verify.HabitatRegion 또는 None(문헌 미확인 → 일반 라벨 '生息海域'로 폴백)."""
+    try:
+        from src.core import deepsea_verify as dv
+    except Exception:  # noqa: BLE001
+        return None
+    distribution = (getattr(info, "distribution", "") or "").strip()
+    facts = " ".join(getattr(info, "fun_facts", []) or [])
+    habitat = (getattr(info, "habitat", "") or "")
+    corpus = f"{facts} {habitat}"                       # 로컬 문헌 근거(분포는 제외 → 교차검증 의미)
+    try:                                               # 위키 서식/분포 본문으로 근거 보강(네트워크·실패 무해)
+        from src.core import discovery
+        sci = (getattr(info, "scientific_name", "") or "").strip()
+        ident = discovery._search_taxon_by_name(sci) if sci else None
+        if ident:
+            corpus += " " + (discovery._habitat_corpus(ident) or "")
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        return dv.habitat_region(distribution, corpus)
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def build_stinger(info, out_mp4: str, work_dir: str) -> dict | None:
     """종 정보로 9:16 하강 스팅어 mp4 생성(무음 오디오 포함 → 본문과 concat 호환)."""
     try:
@@ -44,9 +70,18 @@ def build_stinger(info, out_mp4: str, work_dir: str) -> dict | None:
     wd = Path(work_dir)
     frames_dir = wd / "frames"
     frames_dir.mkdir(parents=True, exist_ok=True)
+    # ★서식해역 표기(운영자 확정): 문헌 검증을 통과하면 침몰선 지도처럼 대양명(北大西洋 등)을 쓰고
+    #   해당 basin 중심으로 락온한다. 근거 없으면 일반 라벨 '生息海域'로 폴백(날조 금지).
+    label_jp, label_en, region_kw = "生息海域", "HABITAT", {}
+    region = _habitat_region_for(info)
+    if region:
+        label_jp, label_en = region.label_jp, region.label_en
+        if region.lat is not None and region.lon is not None:
+            region_kw = {"region_nx": region.lon / 360.0, "region_ny": (90.0 - region.lat) / 180.0}
+        log.info("[stinger] 서식해역 표기: %s / %s (%s)", label_jp, label_en, region.reason)
     try:
-        spec = motion.MotionSpec(target_depth_m=depth, region_label_jp="生息海域",
-                                 region_label_en="HABITAT", zones=_zones_for(depth))
+        spec = motion.MotionSpec(target_depth_m=depth, region_label_jp=label_jp,
+                                 region_label_en=label_en, zones=_zones_for(depth), **region_kw)
         # 9:16 세로 + 압축 타이밍(총 ~2.3초) + 세로용 map_box
         cfg = motion.MotionConfig(W=720, H=1280, FPS=24, t_map=0.9, t_flash=0.15,
                                   t_desc=1.0, t_hold=0.25, map_box=(70, 300, 650, 820))
@@ -147,17 +182,72 @@ def build_map_cut(lat: float, lon: float, region_jp: str | None, region_en: str 
     return {"path": str(out_mp4), "duration": round(total / FPS, 3)}
 
 
-def prepend_to_body(stinger_path: str, body_video: str, out_video: str) -> bool:
-    """스팅어 + 본문영상을 이어붙인다(스케일·오디오 정합 concat 필터, 재인코딩). 성공 시 True."""
+_SFX_EXT = (".wav", ".mp3", ".ogg", ".m4a", ".aac", ".flac")
+
+
+def _operator_transition_sfx() -> str | None:
+    """★운영자가 고른 전환 효과음 파일(있으면). `assets/sfx/dive_transition.<ext>`에 두면 사용한다.
+    운영자가 추천 사이트에서 다운로드해 이 경로에 넣는다(없으면 합성 폴백)."""
+    base = Path(__file__).resolve().parents[2] / "assets" / "sfx"     # short-movie-generator/assets/sfx
+    for stem in ("dive_transition", "transition"):
+        for ext in _SFX_EXT:
+            p = base / f"{stem}{ext}"
+            if p.exists() and p.stat().st_size > 1000:
+                return str(p)
+    return None
+
+
+def _resolve_transition_sfx(work_dir: str) -> str | None:
+    """전환 효과음 경로: 운영자 파일 우선, 없으면 결정론 합성('다이브 후시') 폴백. 실패 시 None(무음)."""
+    op = _operator_transition_sfx()
+    if op:
+        return op
     try:
-        rc = subprocess.run(
-            ["ffmpeg", "-y", "-loglevel", "error", "-i", stinger_path, "-i", body_video,
-             "-filter_complex",
-             "[0:v]scale=720:1280,setsar=1,fps=24[v0];[1:v]scale=720:1280,setsar=1,fps=24[v1];"
-             "[v0][0:a][v1][1:a]concat=n=2:v=1:a=1[v][a]",
-             "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-pix_fmt", "yuv420p",
-             "-crf", "19", "-c:a", "aac", "-b:a", "192k", out_video],
-            timeout=240)
+        from src.core.longform import sfx as SFX
+        wd = Path(work_dir); wd.mkdir(parents=True, exist_ok=True)
+        return SFX.gen_dive_transition(str(wd / "sfx_transition.wav"))
+    except Exception as e:  # noqa: BLE001
+        log.warning("[stinger] 전환 SFX 합성 실패 → 무음 전환: %s", e)
+        return None
+
+
+def prepend_to_body(stinger_path: str, body_video: str, out_video: str,
+                    boundary_s: float | None = None, work_dir: str | None = None) -> bool:
+    """스팅어 + 본문영상을 이어붙인다(스케일·오디오 정합 concat, 재인코딩). 성공 시 True.
+
+    ★전환 효과음(운영자 확정): 지도·수심 표시 → 본 영상으로 넘어가는 '경계'(=스팅어 길이 지점)에
+    다이브 후시 SFX를 얹는다(운영자 파일 우선, 없으면 합성 폴백). boundary_s 미지정 시 스팅어 길이를
+    ffprobe로 구한다. SFX 확보 실패 시 조용히 효과음 없이 결합(발행 불정지)."""
+    # 경계 시각(스팅어 길이) — 미지정 시 ffprobe
+    if boundary_s is None:
+        try:
+            pr = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                 "-of", "default=nw=1:nk=1", stinger_path],
+                                capture_output=True, text=True, timeout=30)
+            boundary_s = float((pr.stdout or "0").strip() or 0) or None
+        except Exception:  # noqa: BLE001
+            boundary_s = None
+    sfx = _resolve_transition_sfx(work_dir or str(Path(out_video).parent / "trsfx")) \
+        if boundary_s is not None else None
+    base_v = ("[0:v]scale=720:1280,setsar=1,fps=24[v0];[1:v]scale=720:1280,setsar=1,fps=24[v1];"
+              "[v0][0:a][v1][1:a]concat=n=2:v=1:a=1[v]")
+    try:
+        if sfx:
+            # SFX가 '컷'에 정점이 오도록 약간 앞서 시작(0.25s 리드), 볼륨 0.85 + amix + 리미터
+            lead = max(0.0, float(boundary_s) - 0.25)
+            ms = max(0, int(lead * 1000))
+            fc = (base_v + "[acat];"
+                  f"[2:a]adelay={ms}|{ms},volume=0.85[tr];"
+                  "[acat][tr]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.95[a]")
+            cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", stinger_path, "-i", body_video,
+                   "-i", sfx, "-filter_complex", fc, "-map", "[v]", "-map", "[a]"]
+        else:
+            fc = base_v + "[a]"
+            cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", stinger_path, "-i", body_video,
+                   "-filter_complex", fc, "-map", "[v]", "-map", "[a]"]
+        cmd += ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19",
+                "-c:a", "aac", "-b:a", "192k", out_video]
+        rc = subprocess.run(cmd, timeout=240)
         return rc.returncode == 0 and Path(out_video).exists() and Path(out_video).stat().st_size > 10_000
     except Exception as e:  # noqa: BLE001
         log.warning("[stinger] 본문 결합 실패: %s", e)

@@ -90,6 +90,29 @@ def gen_splash(path: str, dur: float = 0.9) -> str:
     return _write(path, buf)
 
 
+def gen_dive_transition(path: str, dur: float = 0.85) -> str:
+    """★수심 표시 → 본 영상 전환용 '다이브 후시(whoosh)'(합성 폴백). 운영자가 고른 실제 SFX를
+    아직 안 넣었을 때 무음이 되지 않도록 쓰는 결정론 합성음. 하강하는 필터드 노이즈 스윕 +
+    저역 서브 드롭 + 짧은 물 임팩트로 '심해로 빨려드는' 느낌을 만든다(mono 16bit 44.1kHz)."""
+    N = int(SR * dur)
+    rnd = random.Random(51)
+    buf = [0.0] * N
+    prev = 0.0
+    for i in range(N):
+        t = i / SR
+        p = t / dur
+        # 하강 whoosh: 밴드 노이즈를 고→저로 스윕(공기가 아래로 훑고 지나가는 느낌)
+        n = rnd.uniform(-1, 1)
+        prev = prev + (0.05 + 0.25 * (1 - p)) * (n - prev)     # p↑일수록 저역(어두워짐)
+        env = math.sin(math.pi * min(1.0, p / 0.9)) ** 0.7     # 부드러운 인/아웃
+        whoosh = prev * env * 0.85
+        # 저역 서브 드롭(피치 하강)
+        f = 180 * math.exp(-t / 0.30) + 38
+        sub = math.sin(2 * math.pi * f * t) * math.exp(-t / 0.5) * 0.55
+        buf[i] = math.tanh((whoosh + sub) * 1.15)
+    return _write(path, buf)
+
+
 def gen_all(work_dir: str) -> dict:
     """세 SFX 파일 경로를 생성해 반환."""
     from pathlib import Path

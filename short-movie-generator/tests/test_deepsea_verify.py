@@ -82,3 +82,36 @@ def test_production_gate_allows_deep_species_with_local_evidence():
                        distribution="", habitat="hydrothermal vents", diet=[],
                        fun_facts=["lives at hydrothermal vents at 2,300 m depth"], sources=[])
     cat.verify_subject(info)   # 심해 근거 충분 → 예외 없이 통과
+
+
+def test_habitat_region_verified_against_literature():
+    """★서식해역 표기(北大西洋 등) + 문헌 일치 검증. 문헌이 뒷받침할 때만 라벨을 내고,
+    데이터만 있고 문헌 근거 없으면 None(일반 라벨 폴백 · 날조 금지). 문헌이 데이터와 다르면 문헌 우선."""
+    from src.core import deepsea_verify as dv
+    # 데이터·문헌 일치 → 그 basin
+    r = dv.habitat_region("북태평양 심해", "found in the North Pacific at bathyal depths")
+    assert r and (r.label_jp, r.label_en) == ("北太平洋", "N. PACIFIC")
+    assert r.lat is not None and r.lon is not None            # basin 중심 락온 좌표 존재
+    # 범존(cosmopolitan) → 全世界の海(특정 락온 없음)
+    r = dv.habitat_region("전 세계 심해", "cosmopolitan species found worldwide in all oceans")
+    assert r and r.label_en == "WORLDWIDE" and r.lat is None
+    # 데이터는 해역 주장, 문헌은 근거 없음 → None(폴백, 날조 금지)
+    assert dv.habitat_region("북태평양 심해", "just some facts, no ocean named") is None
+    # 문헌이 데이터와 다른 구체 basin → 문헌 우선
+    r = dv.habitat_region("북태평양", "actually recorded only from the South Pacific")
+    assert r and r.label_en == "S. PACIFIC"
+    # 지중해 고유종
+    r = dv.habitat_region("지중해", "endemic to the Mediterranean Sea, deep water")
+    assert r and r.label_en == "MEDITERRANEAN"
+
+
+def test_dive_transition_sfx_synthesizes_valid_wav(tmp_path):
+    """★전환 효과음 합성 폴백(운영자 파일 없을 때 무음 방지): 유효한 WAV를 만든다."""
+    import wave
+    from src.core.longform import sfx
+    p = sfx.gen_dive_transition(str(tmp_path / "tr.wav"))
+    w = wave.open(p)
+    try:
+        assert w.getframerate() == 44100 and 0.5 < w.getnframes() / w.getframerate() < 1.5
+    finally:
+        w.close()
