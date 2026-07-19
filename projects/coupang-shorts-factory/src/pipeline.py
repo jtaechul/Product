@@ -56,6 +56,9 @@ def main() -> int:
                    help="제작(렌더+릴리스)만 하고 유튜브 업로드는 하지 않음 — 검수 단계용(새 흐름 기본)")
     p.add_argument("--upload", action="store_true",
                    help="이미 제작된 영상(릴리스 shorts-run)을 유튜브에 업로드 — 검수 통과 후 '올리기'용")
+    p.add_argument("--enrich-only", action="store_true",
+                   help="상품 자료(PDF·캡처) 분석만 1회 수행해 data/enrich 캐시를 채우고 종료 — "
+                        "자료 업로드 직후 관리자 페이지가 자동 호출(업로드 시점 1회 분석 원칙)")
     p.add_argument("--regen", default=None,
                    help="기획의 특정 항목만 재생성해 즉시 교체 (title|headline|description|hashtags)")
     p.add_argument("--regen-line", type=int, default=None,
@@ -96,12 +99,23 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
 
     # ---- M2: 상품 확보 (기본: 수동 CSV 큐. 쿠팡 API는 키 승인 후 Phase 2에서 전환)
     product = manual_queue.pick(args.row)
+    # ---- 분석 전용 모드(--enrich-only) 사전 체크: 자료가 아예 없으면 분석할 게 없으니 조용히 통과
+    #      (직접 입력만으로 등록된 상품 등 — 실패 알림을 울리지 않는다)
+    if args.enrich_only and not any((PROJECT_ROOT / "data" / "notes").glob(f"{product['_row_hash']}*")):
+        print("[pipeline] 분석 전용: 등록된 자료(data/notes)가 없어 분석할 것이 없음 → 통과")
+        return 0
     # ---- M2.5: 링크만 등록된 상품은 캡처(data/notes)로 이름·가격·특징·상품사진 자동 확보
+    #      ⭐ 분석은 상품당 1회 원칙 — 결과는 data/enrich 캐시에 저장되고, 자료 지문이 같으면 재사용
     product = enrich_product(product, settings, job_dir)
     _persist_product_meta(product, settings)   # 이름 + 스토어 한줄소개를 관리자 표시용으로 기록
     (job_dir / "product.json").write_text(json.dumps(product, ensure_ascii=False, indent=1), encoding="utf-8")
     _p = int(product.get("price") or 0)
     print(f"[pipeline] M2 상품: {product['name']} ({f'{_p:,}원' if _p > 0 else '가격 미확인'})")
+    # ---- 분석 전용 모드: 업로드(등록) 시점에 관리자 페이지가 자동 호출 — 여기서 딱 1회 분석하고 종료.
+    #      이후 기획·대본·이미지·제작 등 모든 실행은 위 캐시를 재사용한다(재분석 없음).
+    if args.enrich_only:
+        print("[pipeline] 분석 전용 완료 — 결과는 data/enrich 캐시로 저장, 이후 모든 실행이 재사용")
+        return 0
 
     # ⭐ 가격 금지 예외(2026-07-18 사용자 확정): 운영자가 기획 방향 '직접 의견(4안)'에서 가격을
     #    직접 언급한 상품은 대본·검증·한줄 재생성에서 가격 표현을 허용한다(모든 모드 공통).

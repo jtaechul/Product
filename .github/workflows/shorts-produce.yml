@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "실행 모드 (plan=기획, candidates=후보, plan-candidates=대본+후보, produce=제작, regen=항목, regen-line=라인문구, regen-line-full=라인 대사+이미지, upload=올리기, voice_samples=보이스 샘플 텔레그램 발송)"
+        description: "실행 모드 (enrich=자료 분석 1회(업로드 직후 자동), plan=기획, candidates=후보, plan-candidates=대본+후보, produce=제작, regen=항목, regen-line=라인문구, regen-line-full=라인 대사+이미지, upload=올리기, voice_samples=보이스 샘플 텔레그램 발송)"
         type: choice
-        options: [produce, candidates, plan, plan-candidates, regen, regen-line, regen-line-full, upload, voice_samples]
+        options: [produce, candidates, plan, plan-candidates, regen, regen-line, regen-line-full, upload, voice_samples, enrich]
         default: produce
       tts_provider:
         description: "TTS 프로바이더 (auto=등록된 키 자동 감지, mock=키 없이 렌더 검증)"
@@ -81,6 +81,9 @@ jobs:
           path: ~/.cache/huggingface
           key: whisper-small-v1
 
+      - name: ⭐ 분석 캐시 회귀 검증 (자료 업로드당 LLM 분석 1회 원칙 — 깨지면 토큰 쓰기 전에 실패)
+        run: python tests/test_enrich_cache.py
+
       - name: 배경 에셋 확보 (선택 — 실패해도 그라데이션 폴백)
         env:
           SHORTS_PEXELS_API_KEY: ${{ secrets.SHORTS_PEXELS_API_KEY }}
@@ -126,6 +129,15 @@ jobs:
           else
             echo "::warning::PO 프로바이더 기동 실패 — 폴백 체인만으로 추출 시도"
           fi
+
+      - name: 최신 분석 캐시·자료 동기화 (대기열에서 늦게 시작한 실행도 직전 실행의 분석 결과를 재사용)
+        run: |
+          # workflow_dispatch는 '요청 시점'의 커밋을 체크아웃하므로, 바로 앞 실행(enrich 등)이 방금
+          # 커밋한 data/enrich 캐시가 이 실행에는 없을 수 있다 → main 최신에서 캐시·자료만 당겨와
+          # 같은 자료를 두 번 분석하는 틈(등록 직후 연달아 실행)을 막는다. 코드는 그대로 둔다.
+          git fetch origin main
+          git restore --source FETCH_HEAD -- data/enrich 2>/dev/null || echo "분석 캐시 없음(첫 실행) — 계속"
+          git restore --source FETCH_HEAD -- data/notes  2>/dev/null || echo "상세 자료 없음 — 계속"
 
       - name: 파이프라인 실행
         env:
@@ -173,6 +185,10 @@ jobs:
             L="${{ steps.params.outputs.line }}"
             python -m src.pipeline --regen-line "$L" --row "$ROW" --job-id "$JOB"
             python -m src.pipeline --candidates --line "$L" --row "$ROW" --job-id "$JOB"
+          elif [ "$MODE" = "enrich" ]; then
+            # 자료 업로드 직후 관리자 페이지가 자동 호출 — 업로드 시점에 딱 1회 분석해 캐시를 채운다.
+            # 이후 기획~제작의 모든 실행은 이 캐시를 재사용한다(재분석 없음 — 아래 캐시 커밋 스텝이 저장).
+            python -m src.pipeline --enrich-only --row "$ROW" --job-id "$JOB"
           elif [ "$MODE" = "upload" ]; then
             python -m src.pipeline --upload --row "$ROW" --privacy "${{ steps.params.outputs.privacy }}" --job-id "$JOB"
           elif [ "$MODE" = "voice_samples" ]; then
@@ -214,6 +230,7 @@ jobs:
           git add -A data/processed.json 2>/dev/null || true
           git add -A data/notes 2>/dev/null || true
           git add -A data/enrich 2>/dev/null || true
+          git add -A data/product_names.json 2>/dev/null || true   # enrich 모드가 추출한 상품명을 관리자 목록에 반영
           if ! git diff --cached --quiet; then
             git commit -m "coupang-shorts: 큐 상태·분석 캐시 갱신 [skip ci]"
             git pull --rebase origin main
