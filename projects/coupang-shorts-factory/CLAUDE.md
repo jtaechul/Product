@@ -195,6 +195,14 @@
   이름 선점 시 mirae-market → miraemarket-store 순으로 자동 폴백(성공 주소는 Actions 요약에 표시).
   옛 워커 경로(`shorts-admin.../store`)도 병행 동작. 카드=번호+실제 상품명+한줄소개(`data/product_names.json`
   {row_hash:{name,pain}} — CI가 자동 생성, CSV 이름칸은 해시 원료라 불변).
+  **⭐ 스토어 이미지 영구 저장 (2026-07-19 사용자 확정 — 르몽스 이미지 소실 사고 재발 방지)**:
+  릴리스 자산(shorts-cand)은 500개 상한으로 오래된 것이 자동 삭제돼, 그걸 가리키던 스토어 이미지가
+  깨진 사고 발생(르몽스·틴도우). → 스토어에 담긴 상품 이미지는 **저장소
+  `admin/public/product-img/{row_hash}.jpg`에 커밋해 영구 보존**하고 카탈로그는 상대경로
+  `product-img/...`를 쓴다(스토어 사이트와 함께 배포·서빙, 프록시 불필요).
+  관리자 '스토어 저장'·이미지 자동 백필이 외부 URL을 만나면 `storeMaterializeImages`가
+  내려받아 커밋 후 상대경로로 교체(실패 시 URL 유지 + 다음 저장 때 재시도).
+  **카탈로그 이미지에 릴리스 URL·외부 핫링크를 그대로 남기는 코드로 되돌리지 말 것.**
 - 관리자 페이지(노코드): `admin/public/index.html` — 상품 등록/삭제·제작 실행(workflow_dispatch)·
   리서치 실행·실행 기록·**완성 영상 보기(영상 탭)**·**자막별 이미지 선택(이미지 탭 · #2)**·채널 관리·
   **상품별 제품 영상 업로드**. 사용자 PAT(Contents/Actions RW, 브라우저 localStorage에만 저장)로

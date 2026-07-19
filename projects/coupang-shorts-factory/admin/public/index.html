@@ -762,6 +762,7 @@ async function storeBackfillImages() {
   if (!changed) return;
   try {
     const clean = storeItems.filter((x) => x && (x.url || x.name));
+    await storeMaterializeImages(clean);   // ⭐ 백필한 릴리스 URL도 즉시 영구 복사(소실 방지)
     await putFile(STORE_PATH, JSON.stringify(clean, null, 1) + "\n",
       `shorts(admin): 스토어 상품 이미지 자동 등록 (${changed}개)`, storeSha || undefined);
     const f = await getFile(STORE_PATH, true);
@@ -861,9 +862,44 @@ function storeRender() {
     box.appendChild(row);
   });
 }
+// ⭐ 스토어 이미지 영구 저장(2026-07-19 사용자 확정 — 르몽스 이미지 소실 재발 방지):
+//   릴리스 자산(shorts-cand)은 500개 상한으로 오래되면 자동 삭제돼 스토어 이미지가 깨진다.
+//   → 저장 시점에 외부 URL 이미지를 내려받아 저장소 admin/public/product-img/{hash}.{확장자}로
+//   커밋하고, 카탈로그는 영구 상대경로로 바꾼다(스토어 사이트와 함께 배포·서빙, 절대 안 사라짐).
+//   실패하면 원본 URL 유지 + 안내(다음 저장 때 자동 재시도).
+async function _imgSniff(blob) {   // 매직바이트로 이미지 여부·확장자 판별(프록시가 CT를 안 줄 때 대비)
+  const b = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+  const s = (i) => String.fromCharCode(...b.slice(i, i + 4));
+  if (b[0] === 0x89 && s(1).startsWith("PNG")) return ".png";
+  if (b[0] === 0xFF && b[1] === 0xD8) return ".jpg";
+  if (s(0) === "RIFF" && s(8) === "WEBP") return ".webp";
+  if (s(0).startsWith("GIF8")) return ".gif";
+  return "";
+}
+async function storeMaterializeImages(items) {
+  for (const it of items) {
+    const u = (it.image || "").trim();
+    if (!u || !/^https?:/i.test(u) || !it.row_hash) continue;   // 비었거나 이미 영구 경로면 통과
+    try {
+      const res = await fetch(mediaUrl(u, ""), { cache: "no-store" });   // 워커 /media 프록시(CORS·핫링크 우회)
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const blob = await res.blob();
+      const ext = await _imgSniff(blob);
+      if (!ext || blob.size < 2000) throw new Error("이미지 파일이 아님");
+      const rel = `product-img/${it.row_hash}${ext}`;
+      await uploadBlob(`${P}/admin/public/${rel}`, blob,
+        `admin(store): 상품 이미지 영구 저장 — ${(it.name || it.row_hash).slice(0, 40)}`);
+      it.image = rel;
+    } catch (e) {
+      console.warn("이미지 영구 저장 실패(원본 URL 유지):", it.name, e);
+      toast(`'${(it.name || "상품").slice(0, 14)}' 이미지 영구 저장 실패 — 일단 외부 주소로 표시합니다(다음 저장 때 자동 재시도)`, 5000);
+    }
+  }
+}
 async function storeSave(btn) {
   await busy(btn, async () => {
     const clean = storeItems.filter((x) => x && (x.url || x.name));
+    await storeMaterializeImages(clean);   // ⭐ 외부 URL 이미지 → 저장소 영구 복사(소실 방지)
     await putFile(STORE_PATH, JSON.stringify(clean, null, 1) + "\n", "shorts(admin): 스토어 카탈로그 업데이트", storeSha || undefined);
     const f = await getFile(STORE_PATH, true);   // sha 갱신(연속 저장 대비)
     storeSha = f ? f.sha : null;
