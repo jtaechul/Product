@@ -770,6 +770,20 @@ def _regen_line(product: dict, line_i: int, settings: dict, root: Path) -> int:
     return 0
 
 
+def _video_duration(path: Path) -> float:
+    """영상 실측 길이(초). 확인 실패 시 0(게이트는 실측된 경우에만 작동 — 오탐 차단 방지)."""
+    try:
+        from moviepy import VideoFileClip
+        clip = VideoFileClip(str(path))
+        try:
+            return float(clip.duration or 0)
+        finally:
+            clip.close()
+    except Exception as e:
+        print(f"[pipeline] 영상 길이 확인 실패({type(e).__name__}: {e}) — 길이 게이트 생략")
+        return 0.0
+
+
 def _find_and_download_video(row_hash: str, job_dir: Path) -> Path | None:
     """제작된 영상 찾기 — 릴리스 shorts-run* 중 release_meta.row_hash가 일치하는 최신본의 video.mp4 다운로드."""
     import requests
@@ -826,6 +840,17 @@ def _upload_existing(product: dict, settings: dict, job_dir: Path, root: Path, p
     video = _find_and_download_video(product["_row_hash"], job_dir)
     if not video or not video.exists():
         print("::error::제작된 영상을 못 찾음 — 먼저 '제작하기'로 영상을 만드세요")
+        return 2
+    # ⭐ 최소 길이 게이트(2026-07-19 사용자 확정 — "무조건 20초 초과"): QA는 제작 때만 돌므로,
+    #    규칙 이전에 만들어둔 짧은 영상이 '올리기'로 빠져나가지 않게 업로드 직전에도 실측한다.
+    min_dur = float(settings.get("render", {}).get("min_duration_sec", 20.0))
+    dur = _video_duration(video)
+    if dur and dur <= min_dur:
+        print(f"::error::영상 길이 {dur:.1f}초 — 최소 {min_dur:.0f}초를 넘어야 업로드됩니다. "
+              "'영상 만들기'로 다시 제작하면 새 규칙(분량·엔딩 홀드)으로 자동으로 20초를 넘습니다.")
+        notify.send(f"[쿠팡쇼츠] 업로드 차단 — {product['name']}\n"
+                    f"영상이 {dur:.1f}초로 최소 {min_dur:.0f}초에 못 미칩니다(규칙 이전 제작본).\n"
+                    "관리자에서 '영상 만들기'로 다시 제작한 뒤 올려주세요.")
         return 2
     privacy = privacy_arg or settings.get("upload", {}).get("privacy_default", "private")
     result = youtube.upload(video, script, product, settings, privacy=privacy)
