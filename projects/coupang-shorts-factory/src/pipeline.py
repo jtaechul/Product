@@ -834,8 +834,11 @@ def _upload_existing(product: dict, settings: dict, job_dir: Path, root: Path, p
     if not plan_path.exists():
         print("::error::기획이 없습니다 — 먼저 기획·제작을 완료하세요")
         return 2
+    # ⭐ 올리기는 '이미 제작된 영상'의 메타데이터만 다듬는 단계 → 텍스트 규칙(가격·분량 등)으로
+    #    다 만든 영상을 다시 막지 않는다(enforce=False, 2026-07-19 사용자 확정). 가격 예외도 그대로 허용.
     script = sanitize_script(json.loads(plan_path.read_text(encoding="utf-8")),
-                             strict_length=False, avoid_terms=product_avoid_terms(product))
+                             strict_length=False, avoid_terms=product_avoid_terms(product),
+                             allow_price=True, enforce=False)
     script["pinned_comment"] = f"제품 정보는 여기서 확인 → {product['affiliate_url']}\n{DISCLOSURE}"
     video = _find_and_download_video(product["_row_hash"], job_dir)
     if not video or not video.exists():
