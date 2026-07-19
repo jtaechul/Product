@@ -9,6 +9,7 @@ on:
     paths:
       - "projects/coupang-shorts-factory/admin/public/store.html"
       - "projects/coupang-shorts-factory/admin/public/store-catalog.json"
+      - "projects/coupang-shorts-factory/admin/public/product-img/**"
       - "projects/coupang-shorts-factory/admin/store-site/**"
       - ".github/workflows/deploy-store-page.yml"
   workflow_dispatch:
@@ -41,6 +42,8 @@ jobs:
           cp public/store.html store-site/dist/index.html
           cp public/store-catalog.json store-site/dist/store-catalog.json
           cp store-site/_worker.js store-site/dist/_worker.js
+          # ⭐ 영구 상품 이미지(저장소 커밋본) — 릴리스 자산과 달리 삭제되지 않아 이미지가 사라질 일 없음
+          [ -d public/product-img ] && cp -r public/product-img store-site/dist/product-img || true
           ls -la store-site/dist
 
       - name: Deploy to Cloudflare Pages
