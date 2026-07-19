@@ -363,7 +363,7 @@ ol li{margin:8px 0}
 <!-- ───────── 스토어 탭 (프로필 링크 쇼핑 페이지) ───────── -->
 <section id="tab-store">
   <div class="card">
-    <h2>미래마켓 스토어 (프로필 링크 페이지)</h2>
+    <h2>미래에서 온 만물상 스토어 (프로필 링크 페이지)</h2>
     <p class="hint" style="margin:0">영상에서는 제품을 <b>종류·통상 명칭</b>으로만 부르고 실제 제품명은 감춥니다.
       궁금해진 시청자가 프로필 링크로 들어오면 이 <b>스토어</b>에서 실제 상품명과 쿠팡 링크를 봅니다.
       유튜브 <b>채널 프로필 링크</b>와 영상 <b>고정 댓글·설명란</b>에 아래 주소를 넣으세요.</p>
@@ -704,7 +704,7 @@ async function _planTitle(hash) {
 //   들어갔다'는 혼란이 있었음(2026-07-17) — 번호는 업로드 시 자동 삽입되며 여기서 미리 확인.
 const DISCLOSURE_LINE = "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다";
 // 항상 붙는 브랜드+발견 해시태그(youtube.py FIXED_HASHTAGS와 동일하게 유지) — 미리보기가 실제 업로드와 일치하도록
-const FIXED_HASHTAGS = ["#미래마켓", "#꿀템"];
+const FIXED_HASHTAGS = ["#미래만물상", "#꿀템", "#인생꿀템", "#인생꿀팁", "#생활꿀팁", "#생활꿀템"];
 function fmtTags(arr) {
   const out = [], seen = new Set();
   for (const h of FIXED_HASHTAGS.concat(arr || [])) {
@@ -725,12 +725,12 @@ async function storeNumberOf(hash) {
   const it = (Array.isArray(_storeNumCache) ? _storeNumCache : []).find((x) => x && x.row_hash === hash && x.number != null);
   return it ? String(it.number).replace(/\D/g, "").padStart(3, "0") : "";
 }
-const PROFILE_CTA = "제품이 궁금하다면? 프로필 링크(미래마켓 스토어)에서 확인하세요";
+const PROFILE_CTA = "제품이 궁금하다면? 프로필 링크(미래에서 온 만물상 스토어)에서 확인하세요";
 async function descPreview(hash, plan) {
   const num = await storeNumberOf(hash);
   // 실제 업로드(youtube.build_description)와 순서 일치: 맨 위 고지문 → 바로 밑 프로필 안내 → 번호 → 본문 → (해시태그)
   const body = (plan && plan.description_body) || "";
-  return DISCLOSURE_LINE + "\n\n" + PROFILE_CTA + "\n\n" + (num ? `미래마켓 #${num}\n\n` : "") + body;
+  return DISCLOSURE_LINE + "\n\n" + PROFILE_CTA + "\n\n" + (num ? `미래에서 온 만물상 #${num}\n\n` : "") + body;
 }
 // 상품 대표 사진 자동 추출 — 영상 제작에 쓴 상품 사진(릴리스 shorts-cand의 is_product 후보,
 //   prod_idx 0 = 대표컷)을 그대로 스토어 카드에 쓴다. 수동 이미지 URL 입력 불필요.
@@ -1653,7 +1653,7 @@ async function renderReview(rel, plan, p, backFn) {
   // 제목·설명·해시태그 (항목별 다시 생성)
   if (plan) {
     const fields = [["title", "제목", plan.title], ["headline", "화면 헤드라인", plan.headline],
-      ["hashtags", "해시태그 (미래마켓·꿀템 자동 포함)", fmtTags(plan.hashtags)],
+      ["hashtags", "해시태그 (미래만물상 등 자동 포함)", fmtTags(plan.hashtags)],
       ["description", "설명 (업로드 미리보기 — 고지문·스토어 번호 자동 포함)", await descPreview(p && p.hash, plan)]];
     for (const [key, label, val] of fields) {
       const c = mk(`<h2>${label}</h2>`);
@@ -1672,12 +1672,12 @@ async function renderReview(rel, plan, p, backFn) {
   const ub = document.createElement("button"); ub.className = "btn"; ub.textContent = "유튜브에 올리기";
   ub.disabled = !video || noRow;
   ub.onclick = (ev) => busy(ev.target, async () => {
-    if (!confirm("이 영상을 유튜브에 바로 '공개'로 올릴까요? (고지 댓글 자동 등록 — 올리는 즉시 모두에게 보입니다)")) return;
-    await mkDispatch({ mode: "upload", row: String(p.row), privacy: "public" });
-    toast("유튜브 업로드를 시작했습니다. 완료되면 텔레그램으로 알림이 옵니다.");
+    if (!confirm("이 영상을 유튜브에 '비공개'로 올릴까요? (아무에게도 안 보입니다. 스튜디오에서 예약으로 공개 시간을 정하세요)")) return;
+    await mkDispatch({ mode: "upload", row: String(p.row), privacy: "private" });
+    toast("비공개 업로드를 시작했습니다. 완료되면 텔레그램으로 알림이 옵니다.");
   });
   up.appendChild(ub);
-  up.insertAdjacentHTML("beforeend", '<p class="hint">바로 \'공개\'로 올라가고 고지 댓글이 자동 등록됩니다 — 올리기 전에 검수를 마쳐주세요. 남는 수동 작업은 댓글 \'고정\' 1탭뿐. (SHORTS_YT 인증 필요)</p>');
+  up.insertAdjacentHTML("beforeend", '<p class="hint"><b>비공개</b>로 올라갑니다 — 유튜브 스튜디오에서 <b>예약</b>으로 공개 시간을 정하세요. 공개되면 시스템이 고지·링크 댓글을 <b>자동으로</b> 답니다(그 댓글 \'고정\'만 앱에서 1탭). (SHORTS_YT 인증 필요)</p>');
   box.appendChild(up);
 }
 const RUN_LABEL = {
@@ -1863,9 +1863,9 @@ async function openVideo(v) {
   } else if (v.row) {
     up.style.display = "inline-flex"; up.disabled = false; up.textContent = "유튜브에 Shorts 올리기";
     up.onclick = (ev) => busy(ev.target, async () => {
-      if (!confirm("이 영상을 유튜브에 바로 '공개'로 올릴까요? (고지 댓글 자동 등록 — 올리는 즉시 모두에게 보입니다)")) return;
-      await mkDispatch({ mode: "upload", row: String(v.row), privacy: "public" });
-      toast("유튜브 업로드를 시작했습니다. 완료되면 텔레그램으로 알림이 옵니다.");
+      if (!confirm("이 영상을 유튜브에 '비공개'로 올릴까요? (아무에게도 안 보입니다. 스튜디오에서 예약으로 공개 시간을 정하세요)")) return;
+      await mkDispatch({ mode: "upload", row: String(v.row), privacy: "private" });
+      toast("비공개 업로드를 시작했습니다. 완료되면 텔레그램으로 알림이 옵니다.");
       up.textContent = "업로드 시작됨"; up.disabled = true;
     });
   } else {

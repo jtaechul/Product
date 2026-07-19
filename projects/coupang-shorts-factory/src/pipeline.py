@@ -59,6 +59,9 @@ def main() -> int:
     p.add_argument("--enrich-only", action="store_true",
                    help="상품 자료(PDF·캡처) 분석만 1회 수행해 data/enrich 캐시를 채우고 종료 — "
                         "자료 업로드 직후 관리자 페이지가 자동 호출(업로드 시점 1회 분석 원칙)")
+    p.add_argument("--post-comments", action="store_true",
+                   help="비공개→공개(예약공개 포함)된 영상에 고지 댓글을 자동 등록 — "
+                        "shorts-comments 워크플로가 주기적으로 호출(상품 큐와 무관)")
     p.add_argument("--regen", default=None,
                    help="기획의 특정 항목만 재생성해 즉시 교체 (title|headline|description|hashtags)")
     p.add_argument("--regen-line", type=int, default=None,
@@ -89,6 +92,11 @@ def main() -> int:
 
 
 def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
+    # ---- 대기 고지 댓글 처리 모드(--post-comments): 상품 큐와 무관 — 비공개→공개된 영상에
+    #      고지 댓글을 자동 등록하고 종료(shorts-comments 워크플로가 주기 호출).
+    if getattr(args, "post_comments", False):
+        youtube.process_pending_comments()
+        return 0
     # cron(soft) 모드는 업로드까지 가능할 때만 제작한다. 업로드 미설정 상태로 매일 돌면
     # 같은 상품을 반복 제작해 TTS·대본 크레딧만 소모하므로(큐는 업로드 성공 시에만 소진)
     # 조용히 종료한다. 수동 실행(dispatch/request)은 영향 없음 — Artifacts 검수용으로 동작.
@@ -157,7 +165,7 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     except Exception as e:
         if will_generate:   # ⭐ 절대 게이트(2026-07-18): 준비가 죽어도 방향 미확정 대본을 만들지 않는다
             print(f"::error::[mech] 차별점 준비 실패({type(e).__name__}: {e}) — 게이트 유지, 대본 생성 중단")
-            notify.send(f"[미래마켓] 기획 방향 준비 실패 — {product.get('name', '')}\n"
+            notify.send(f"[미래에서 온 만물상] 기획 방향 준비 실패 — {product.get('name', '')}\n"
                         f"{type(e).__name__}: {str(e)[:200]}\n"
                         f"관리자 ② 메뉴에서 '3안 다시 뽑기'로 재시도하거나 직접 의견(4안)으로 확정하세요.")
             return 2
@@ -169,14 +177,14 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
         if _d.get("options"):
             print("[mech] 차별점 3안 준비 완료 — 운영자 선택 대기(대본 생성 전 중단)")
             notify.send(
-                f"[미래마켓] 기획 방향(차별점) 3안 준비 완료 — {product['name']}\n"
+                f"[미래에서 온 만물상] 기획 방향(차별점) 3안 준비 완료 — {product['name']}\n"
                 f"관리자 ② 메뉴에서 하나를 고르거나 직접 적으면, 그 방향으로 대본을 씁니다.\n"
                 f"https://shorts-admin.jtaechul.workers.dev")
         else:   # 스텁(자료 부족·추출 실패) — 대본은 절대 만들지 않고 운영자 조치 안내
             note = _d.get("note") or "3안을 만들지 못했습니다"
             print(f"[mech] {note} — 운영자 조치 대기(대본 생성 중단)")
             notify.send(
-                f"[미래마켓] 기획 방향 3안 추출 불가 — {product['name']}\n{note}\n"
+                f"[미래에서 온 만물상] 기획 방향 3안 추출 불가 — {product['name']}\n{note}\n"
                 f"관리자 ② 메뉴에서 직접 의견(4안)으로 확정하거나, 캡처 등록 후 '3안 다시 뽑기'를 눌러주세요.\n"
                 f"https://shorts-admin.jtaechul.workers.dev")
         return 0
@@ -390,8 +398,7 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
         # ⭐ 캡처·메모(notes)는 삭제하지 않는다(2026-07-18 사용자 확정): 업로드 후 지우던 설계가
         #    '불러오기 재기획'에서 재료 없음 오류(run147~149)를 냈다 — 자료는 상품의 원천이라 보존.
         print("[pipeline] 큐 상태 갱신 — 워크플로우가 커밋합니다 (캡처 자료는 재기획용으로 보존)")
-        notify.send(f"[쿠팡쇼츠] 영상 업로드 완료({privacy})\n{result['title']}\n{result['url']}\n"
-                    f"→ 유튜브 앱에서 ①공개 전환 ②고지 댓글 고정을 확인하세요")
+        _after_upload(result, product)
     else:
         result = {"status": "skipped_no_credentials", "hint": youtube.missing_hint()}
         print(f"[pipeline] M7 업로드 건너뜀 — {youtube.missing_hint()}")
@@ -860,9 +867,25 @@ def _upload_existing(product: dict, settings: dict, job_dir: Path, root: Path, p
     manual_queue.mark_done(product["_row_hash"])
     # 캡처·메모(notes) 보존 — 업로드 후에도 재기획(불러오기)에 쓴다(2026-07-18 사용자 확정, 위와 동일)
     (job_dir / "upload_result.json").write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
-    notify.send(f"[쿠팡쇼츠] 유튜브 업로드 완료({privacy})\n{result.get('title', '')}\n{result.get('url', '')}")
+    _after_upload(result, product)
     print(f"[pipeline] 업로드 완료: {result.get('url')}")
     return 0
+
+
+def _after_upload(result: dict, product: dict) -> None:
+    """업로드 직후 공통 처리 — 비공개면 고지 댓글을 대기열에 넣고, 공개 후 자동 등록됨을 안내한다.
+    공개/일부공개면 이미 댓글이 달렸으니 '고정만 1탭' 안내."""
+    status = result.get("status", "")
+    if result.get("comment_pending"):
+        youtube.queue_pending_comment(result, product)
+        notify.send(
+            f"[미래에서 온 만물상] 영상을 '{status}'로 올렸습니다.\n{result.get('title','')}\n{result.get('url','')}\n"
+            f"→ 유튜브 스튜디오에서 '예약'으로 공개 시간을 정하세요. 공개되면 시스템이 고지·링크 댓글을 "
+            f"자동으로 답니다(그 댓글 '고정'만 앱에서 1탭). 지금은 아무 것도 안 하셔도 됩니다.")
+    else:
+        notify.send(
+            f"[미래에서 온 만물상] 영상 업로드 완료({status})\n{result.get('title','')}\n{result.get('url','')}\n"
+            f"→ 고지·링크 댓글은 자동 등록됐습니다. 유튜브 앱에서 그 댓글 '고정'만 1탭 눌러주세요.")
 
 
 def _print_key_detection() -> None:

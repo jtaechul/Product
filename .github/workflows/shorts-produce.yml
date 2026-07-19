@@ -22,10 +22,10 @@ on:
         description: "상품 행 번호(1~) 또는 auto(미처리 첫 행) — produce 모드 전용"
         default: "auto"
       privacy:
-        description: "업로드 공개 범위 — produce 모드 전용 (비공개는 고지 댓글 자동 등록 불가)"
+        description: "업로드 공개 범위 (기본 비공개 — 예약 공개 후 shorts-comments가 고지 댓글 자동 등록)"
         type: choice
         options: [private, unlisted, public]
-        default: public
+        default: private
       no_narration:
         description: "나레이션(TTS) 없이 렌더 — 영상/이미지 튜닝용"
         type: choice
@@ -107,7 +107,7 @@ jobs:
             echo "mode=$(get mode produce)" >> "$GITHUB_OUTPUT"
             echo "provider=$(get provider auto)" >> "$GITHUB_OUTPUT"
             echo "row=$(get row auto)" >> "$GITHUB_OUTPUT"
-            echo "privacy=$(get privacy public)" >> "$GITHUB_OUTPUT"
+            echo "privacy=$(get privacy private)" >> "$GITHUB_OUTPUT"
             echo "field=$(get field '')" >> "$GITHUB_OUTPUT"
             echo "line=$(get line '')" >> "$GITHUB_OUTPUT"
             echo "soft=" >> "$GITHUB_OUTPUT"
@@ -138,6 +138,8 @@ jobs:
           git fetch origin main
           git restore --source FETCH_HEAD -- data/enrich 2>/dev/null || echo "분석 캐시 없음(첫 실행) — 계속"
           git restore --source FETCH_HEAD -- data/notes  2>/dev/null || echo "상세 자료 없음 — 계속"
+          # 고지 댓글 대기열도 최신본에 추가해야 shorts-comments가 갱신한 내용과 리베이스 충돌이 안 난다.
+          git restore --source FETCH_HEAD -- data/pending_comments.json 2>/dev/null || echo "대기열 없음 — 계속"
 
       - name: 파이프라인 실행
         env:
@@ -231,6 +233,7 @@ jobs:
           git add -A data/notes 2>/dev/null || true
           git add -A data/enrich 2>/dev/null || true
           git add -A data/product_names.json 2>/dev/null || true   # enrich 모드가 추출한 상품명을 관리자 목록에 반영
+          git add -A data/pending_comments.json 2>/dev/null || true   # 비공개 업로드 시 고지 댓글 대기열(공개 후 자동 등록)
           if ! git diff --cached --quiet; then
             git commit -m "coupang-shorts: 큐 상태·분석 캐시 갱신 [skip ci]"
             git pull --rebase origin main

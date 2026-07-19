@@ -18,8 +18,10 @@ import os
 from pathlib import Path
 
 DISCLOSURE = "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다"
+BRAND = "미래에서 온 만물상"   # 채널 표시명(2026-07-19 사용자 확정, 핸들 @miraemarket·스토어 URL은 유지)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]   # coupang-shorts-factory/
+PENDING_PATH = PROJECT_ROOT / "data" / "pending_comments.json"   # 비공개→공개 대기 중인 고지 댓글 큐
 
 
 def _store_number(row_hash: str) -> str | None:
@@ -69,12 +71,12 @@ def missing_hint() -> str:
 # 자동 분류하므로 일부러 넣지 않는다(노이즈 방지).
 # 고정 해시태그 — 모든 업로드의 설명란·유튜브 태그에 항상 포함(merge_hashtags가 병합).
 # ⭐ 2026-07-19 사용자 확정: #인생꿀템 #인생꿀팁 #생활꿀팁 #생활꿀템 4종은 반드시 들어간다(빼지 말 것).
-FIXED_HASHTAGS = ["#미래마켓", "#꿀템", "#인생꿀템", "#인생꿀팁", "#생활꿀팁", "#생활꿀템"]
+FIXED_HASHTAGS = ["#미래만물상", "#꿀템", "#인생꿀템", "#인생꿀팁", "#생활꿀팁", "#생활꿀템"]
 
 # 제품·구매처 안내는 설명란에 스펙·raw 링크를 늘어놓지 않고(신규 채널은 설명란 링크가 클릭 안 되고
 # 궁금증→프로필 유도 전략과도 어긋남) '프로필 링크(미래마켓 스토어)로 오라'는 한 줄로만 둔다(2026-07-17).
 # 실제 클릭되는 쿠팡 어필리에이트 링크는 링크가 살아있는 '고정 댓글'에 있다(youtube 업로드 시 등록).
-PROFILE_CTA = "제품이 궁금하다면? 프로필 링크(미래마켓 스토어)에서 확인하세요"
+PROFILE_CTA = f"제품이 궁금하다면? 프로필 링크({BRAND} 스토어)에서 확인하세요"
 
 
 def merge_hashtags(script: dict) -> list:
@@ -105,7 +107,7 @@ def build_description(script: dict, product: dict) -> str:
     #   §3.1 고지문 바로 다음 줄에 프로필 안내를 붙인다(2026-07-17 사용자 지시 — 고지 옆 유도).
     parts = [DISCLOSURE, "", PROFILE_CTA, ""]   # 고지문(최상단 첫 줄) + 바로 밑 프로필 안내
     if num:
-        parts += [f"미래마켓 #{num}", ""]   # 상품 번호 — 영상↔스토어(store#N) 매칭용
+        parts += [f"{BRAND} #{num}", ""]   # 상품 번호 — 영상↔스토어(store#N) 매칭용
     parts += [
         body,
         "",
@@ -125,20 +127,16 @@ def build_pinned_comment(product: dict, settings: dict) -> str:
     # ⭐ 링크 형식(2026-07-17 사용자 확정): 도메인 뒤 반드시 "/" 다음 "#번호" — '.dev#005'처럼 /없이
     #   #이 붙으면 유튜브 댓글 자동 링크 인식이 깨져 클릭이 안 된다. URL은 줄 단독으로 둬야 확실히 인식.
     link = f"{base}/#{num}" if num else f"{base}/"
-    return f"{DISCLOSURE}\n미래마켓에서 이 제품 보기 →\n{link}"
+    return f"{DISCLOSURE}\n{BRAND}에서 이 제품 보기 →\n{link}"
 
 
-def upload(video_path: Path, script: dict, product: dict, settings: dict,
-           privacy: str = "private") -> dict:
-    """업로드 + 고지 댓글 등록. 반환: upload_result dict (videoId, url, status)."""
+def _yt_client():
+    """YouTube Data API 클라이언트 — upload·댓글·상태조회 공용. 자격증명은 환경변수에서."""
     c = _creds_env()
     if not all(c.values()):
-        raise RuntimeError(f"유튜브 업로드 자격 증명 부족 — {missing_hint()}")
-
+        raise RuntimeError(f"유튜브 자격 증명 부족 — {missing_hint()}")
     from google.oauth2.credentials import Credentials
     from googleapiclient.discovery import build
-    from googleapiclient.http import MediaFileUpload
-
     creds = Credentials(
         token=None,
         refresh_token=c["refresh_token"],
@@ -148,7 +146,37 @@ def upload(video_path: Path, script: dict, product: dict, settings: dict,
         scopes=["https://www.googleapis.com/auth/youtube.upload",
                 "https://www.googleapis.com/auth/youtube.force-ssl"],
     )
-    yt = build("youtube", "v3", credentials=creds, cache_discovery=False)
+    return build("youtube", "v3", credentials=creds, cache_discovery=False)
+
+
+def get_privacy_status(video_id: str) -> str | None:
+    """영상의 현재 공개 상태(public|unlisted|private) 반환. 삭제·조회불가면 None."""
+    yt = _yt_client()
+    resp = yt.videos().list(part="status", id=video_id).execute()
+    items = resp.get("items") or []
+    if not items:
+        return None
+    return (items[0].get("status") or {}).get("privacyStatus")
+
+
+def post_pinned_comment(video_id: str, pinned: str) -> str:
+    """고지 댓글을 단다(공개·일부공개 영상에서만 가능). 반환: comment_id."""
+    assert DISCLOSURE in pinned, "고지문이 댓글에 없음 — 등록 중단(§3.1)"
+    yt = _yt_client()
+    cresp = yt.commentThreads().insert(
+        part="snippet",
+        body={"snippet": {"videoId": video_id,
+                          "topLevelComment": {"snippet": {"textOriginal": pinned}}}},
+    ).execute()
+    return cresp.get("id")
+
+
+def upload(video_path: Path, script: dict, product: dict, settings: dict,
+           privacy: str = "private") -> dict:
+    """업로드 + (공개/일부공개면) 고지 댓글 등록. 비공개면 댓글은 미루고 대기열용 정보를 반환.
+    반환: {videoId, url, status, comment_id, comment_pending, pinned, title}."""
+    from googleapiclient.http import MediaFileUpload
+    yt = _yt_client()
 
     # 제목=순수 특장점(2026-07-17 사용자 확정) — 예전에 저장된 기획이 올라와도 타깃 서술어(자취 등)는
     # 업로드 직전 최종 관문에서 한 번 더 제거한다(생성·재생성 단계와 동일 규칙).
@@ -179,54 +207,125 @@ def upload(video_path: Path, script: dict, product: dict, settings: dict,
     print(f"[upload] 업로드 완료: {url} (privacy={privacy})")
     # ⭐ 비공개 잠금 감지(2026-07-17 공개 업로드 전환): 유튜브는 API 심사(audit)를 안 받은 프로젝트가
     #   API로 올린 영상을 '비공개 잠금'으로 강제할 수 있다 — 요청(공개)과 실제 상태가 다르면 즉시 알린다.
-    got_privacy = (resp.get("status") or {}).get("privacyStatus", "")
-    if got_privacy and got_privacy != privacy:
-        print(f"[upload] 경고: 요청 공개범위({privacy})와 실제({got_privacy})가 다릅니다 — 비공개 잠금 의심")
-        try:
-            from src import notify
-            notify.send(f"[미래마켓] 업로드는 됐지만 유튜브가 영상을 '{got_privacy}'로 강제했습니다"
-                        f"(요청: {privacy}).\n원인(추정): API 프로젝트 심사(audit) 미완료 시 유튜브가 "
-                        f"API 업로드 영상을 비공개로 잠그는 정책. 스튜디오에서 공개 전환을 시도해 보고, "
-                        f"잠겨서 전환이 안 되면 알려주세요(심사 신청 폼 안내).\n영상: {url}")
-        except Exception:
-            pass
+    got_privacy = (resp.get("status") or {}).get("privacyStatus", "") or privacy
 
-    # §3.1 ② 링크 옆 고지문 — 댓글 자동 등록 (핀 고정은 UI에서 1탭)
-    #   업로드 시점에 스토어 번호(_store_number)로 딥링크(#001)까지 붙여 그 상품으로 바로 이동.
+    # §3.1 ② 링크 옆 고지문 — 댓글. 업로드 시점에 스토어 번호(_store_number)로 딥링크(#001)까지 붙인다.
     pinned = build_pinned_comment(product, settings)
     assert DISCLOSURE in pinned, "고지문이 댓글에 없음 — 등록 중단(§3.1)"
     comment_id = None
-    try:
-        cresp = yt.commentThreads().insert(
-            part="snippet",
-            body={"snippet": {"videoId": video_id,
-                              "topLevelComment": {"snippet": {"textOriginal": pinned}}}},
-        ).execute()
-        comment_id = cresp.get("id")
-        print("[upload] 고지 댓글 등록 완료 (앱에서 '고정'만 눌러주세요)")
-    except Exception as e:  # 댓글 실패는 업로드 자체를 무효화하지 않음 — 보고 + 텔레그램 알림
-        emsg = str(e)
-        print(f"[upload] 경고: 댓글 등록 실패({emsg}) — 수동 등록 필요")
-        # 원인 판별(2026-07-17 run129 검증): 'insufficient authentication scopes'=토큰 권한 누락 /
-        # 'comment thread could not be created'=비공개(private) 영상은 유튜브가 댓글 자체를 막음(스코프 정상).
-        if "insufficient authentication scopes" in emsg or "ACCESS_TOKEN_SCOPE_INSUFFICIENT" in emsg:
-            hint = ("\n원인: 유튜브 토큰에 '댓글 권한(youtube.force-ssl)'이 빠졌습니다. "
-                    "OAuth Playground에서 두 권한(upload + force-ssl)을 모두 승인해 토큰 재발급 후 "
-                    "SHORTS_YT_REFRESH_TOKEN 시크릿만 교체하세요.")
-        elif "comment thread could not be created" in emsg:
-            hint = (f"\n원인: 비공개(private) 영상에는 유튜브가 댓글을 막습니다(토큰은 정상). "
-                    f"유튜브 스튜디오에서 이 영상을 공개/일부공개로 전환한 뒤, 아래 내용을 댓글로 직접 "
-                    f"붙여넣고 고정해 주세요.\n──댓글 내용──\n{pinned}\n──────")
-        elif "commentsDisabled" in emsg:
-            hint = "\n원인: 이 영상의 댓글 기능이 꺼져 있습니다 — 유튜브 스튜디오에서 댓글 허용을 켜 주세요."
-        else:
-            hint = ""
+    comment_pending = False
+    # ⭐ 비공개(private) 영상은 유튜브가 댓글을 막는다(run129 검증) → 지금 달지 않고 '대기열'에 넣어
+    #    공개된 뒤(예약공개 포함) 자동으로 단다(2026-07-19 사용자 확정: 비공개 예약 → 공개 후 자동 댓글).
+    #    공개·일부공개면 지금 바로 단다(기존 동작 유지).
+    if got_privacy in ("public", "unlisted"):
         try:
-            from src import notify
-            notify.send(f"[미래마켓] 영상은 올라갔지만 고지·링크 '고정 댓글' 자동 등록이 실패했습니다.{hint}\n"
-                        f"영상: {url}")
-        except Exception:
-            pass
+            comment_id = post_pinned_comment(video_id, pinned)
+            print("[upload] 고지 댓글 등록 완료 (앱에서 '고정'만 눌러주세요)")
+        except Exception as e:  # 댓글 실패는 업로드 자체를 무효화하지 않음 — 대기열로 넘겨 재시도
+            emsg = str(e)
+            print(f"[upload] 경고: 댓글 등록 실패({emsg}) — 대기열로 넘겨 공개 후 재시도")
+            if "insufficient authentication scopes" in emsg or "ACCESS_TOKEN_SCOPE_INSUFFICIENT" in emsg:
+                try:
+                    from src import notify
+                    notify.send(f"[{BRAND}] 고지 댓글 실패 — 유튜브 토큰에 '댓글 권한(youtube.force-ssl)'이 "
+                                f"빠졌습니다. OAuth Playground에서 upload+force-ssl 두 권한을 승인해 토큰 "
+                                f"재발급 후 SHORTS_YT_REFRESH_TOKEN 시크릿만 교체하세요.\n영상: {url}")
+                except Exception:
+                    pass
+            comment_pending = True   # 다음 폴링에서 재시도
+    else:
+        comment_pending = True
+        print(f"[upload] 비공개(privacy={got_privacy}) — 고지 댓글은 공개 후 자동 등록(대기열 추가)")
 
-    return {"videoId": video_id, "url": url, "status": privacy,
-            "comment_id": comment_id, "title": title}
+    return {"videoId": video_id, "url": url, "status": got_privacy,
+            "comment_id": comment_id, "comment_pending": comment_pending,
+            "pinned": pinned, "title": title}
+
+
+# ── 비공개→공개 대기 고지 댓글 큐 (예약공개 후 자동 등록) ──────────────────────────
+def _load_pending() -> list:
+    if PENDING_PATH.exists():
+        try:
+            return json.loads(PENDING_PATH.read_text(encoding="utf-8")) or []
+        except Exception:
+            return []
+    return []
+
+
+def _save_pending(items: list) -> None:
+    PENDING_PATH.parent.mkdir(parents=True, exist_ok=True)
+    PENDING_PATH.write_text(json.dumps(items, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def queue_pending_comment(result: dict, product: dict) -> None:
+    """업로드가 비공개여서 지금 못 단 고지 댓글을 대기열에 등록(공개되면 폴링이 자동으로 단다)."""
+    import datetime
+    vid = result.get("videoId")
+    if not vid or not result.get("pinned"):
+        return
+    items = [e for e in _load_pending() if e.get("video_id") != vid]   # 같은 영상 중복 제거
+    items.append({
+        "video_id": vid, "row_hash": product.get("_row_hash", ""),
+        "name": product.get("name", ""), "url": result.get("url", ""),
+        "pinned": result["pinned"], "tries": 0,
+        "queued_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+    })
+    _save_pending(items)
+    print(f"[upload] 고지 댓글 대기열 등록 — 공개되면 자동 등록됩니다(대기 {len(items)}건)")
+
+
+def process_pending_comments() -> dict:
+    """대기열의 영상들을 확인해, 공개(예약공개 포함)된 것에 고지 댓글을 자동으로 단다.
+    shorts-comments 워크플로가 주기적으로 호출. 반환: {posted, waiting, dropped}."""
+    import datetime
+    items = _load_pending()
+    if not items:
+        print("[comments] 대기 중인 고지 댓글 없음")
+        return {"posted": 0, "waiting": 0, "dropped": 0}
+    if not is_configured():
+        print(f"[comments] 유튜브 인증 미설정 — {missing_hint()}")
+        return {"posted": 0, "waiting": len(items), "dropped": 0}
+    from src import notify
+    now = datetime.datetime.now(datetime.timezone.utc)
+    kept, posted, dropped = [], 0, 0
+    for e in items:
+        vid = e.get("video_id")
+        # 14일 넘게 안 열린 건 만료 처리(예약을 안 잡았거나 취소) — 수동 확인 안내 후 드롭
+        try:
+            age_days = (now - datetime.datetime.fromisoformat(e.get("queued_at"))).days
+        except Exception:
+            age_days = 0
+        if age_days >= 14:
+            dropped += 1
+            notify.send(f"[{BRAND}] '{e.get('name','')}' 고지 댓글 대기 14일 경과 — 공개 예약을 안 잡았거나 "
+                        f"취소된 것 같습니다. 직접 확인해 주세요.\n{e.get('url','')}")
+            continue
+        try:
+            status = get_privacy_status(vid)
+        except Exception as ex:
+            print(f"[comments] 상태조회 실패({vid}: {ex}) — 다음에 재시도")
+            kept.append(e)
+            continue
+        if status is None:
+            dropped += 1   # 삭제된 영상 — 조용히 제거
+            continue
+        if status in ("public", "unlisted"):
+            try:
+                post_pinned_comment(vid, e["pinned"])
+                posted += 1
+                notify.send(f"[{BRAND}] '{e.get('name','')}' 공개 확인 — 고지·링크 댓글을 자동으로 달았습니다. "
+                            f"유튜브 앱에서 그 댓글 '고정'만 1탭 눌러주세요.\n{e.get('url','')}")
+            except Exception as ex:
+                e["tries"] = int(e.get("tries", 0)) + 1
+                if e["tries"] >= 5:
+                    dropped += 1
+                    notify.send(f"[{BRAND}] '{e.get('name','')}' 고지 댓글 자동 등록 5회 실패 — 아래 내용을 "
+                                f"직접 댓글로 달고 고정해 주세요.\n──댓글 내용──\n{e['pinned']}\n──────\n{e.get('url','')}")
+                else:
+                    print(f"[comments] 댓글 등록 실패({vid}: {ex}) — 재시도 예정({e['tries']}/5)")
+                    kept.append(e)
+        else:
+            kept.append(e)   # 아직 비공개/예약 — 유지
+    _save_pending(kept)
+    print(f"[comments] 공개 영상 {posted}건 댓글 등록 / 대기 {len(kept)}건 / 정리 {dropped}건")
+    return {"posted": posted, "waiting": len(kept), "dropped": dropped}

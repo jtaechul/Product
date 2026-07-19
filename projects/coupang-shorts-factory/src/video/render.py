@@ -313,7 +313,7 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
         expose_layers, sub_plan = _build_expose(
             lines, line_windows, words, line_images, product_images, product_videos,
             duration, width, height, font_path, settings,
-            headline or (ch.get("name", "미래마켓") + " 단독"),
+            headline or (ch.get("name", "미래에서 온 만물상") + " 단독"),
             str(r.get("expose_author", "미래")).strip(), selections_applied)
         scrim = None
         bg_name = f"expose {len(sub_plan)}라인 (뉴스헤더+큰자막+라인이미지 {sum(1 for x in (line_images or []) if x)}장)"
@@ -321,7 +321,7 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
         # ── framed: 검정 프레임 + 정사각형(항상 이미지/영상 꽉 참) + 상단 채널바 ──
         base = ImageClip(np.zeros((height, width, 3), dtype=np.uint8)).with_duration(duration)
         bg_layers = [base]
-        name = ch.get("name", "미래마켓")
+        name = ch.get("name", "미래에서 온 만물상")
         if line_images and lines and line_windows:
             # ★ 라인별 배정(권장): 라인마다 다른 이미지(상품 라인만 상품 사진). 매 순간 꽉 참.
             scenes = _plan_line_scenes(duration, line_windows, line_images)
@@ -632,10 +632,19 @@ def _branded_rect_arr(w: int, h: int, name: str, font_path: Path) -> np.ndarray:
     grad = (top[None, :] * (1 - rows) + bottom[None, :] * rows).astype(np.uint8)
     im = Image.fromarray(np.repeat(grad[:, None, :], w, axis=1)).convert("RGB")
     d = ImageDraw.Draw(im)
-    try:
-        f = ImageFont.truetype(str(font_path), int(min(w, h) * 0.12))
-    except Exception:
-        f = ImageFont.load_default()
+    # 브랜드명 길이에 맞춰 폰트를 줄여 가로 폭 안에 반드시 들어오게(긴 이름도 안 잘림, 2026-07-19).
+    f, tw = None, 0
+    size = int(min(w, h) * 0.12)
+    while size >= 12:
+        try:
+            f = ImageFont.truetype(str(font_path), size)
+        except Exception:
+            f = ImageFont.load_default()
+            break
+        tw = d.textbbox((0, 0), name, font=f)[2]
+        if tw <= w * 0.88:
+            break
+        size -= 4
     tw = d.textbbox((0, 0), name, font=f)[2]
     d.text(((w - tw) // 2, int(h * 0.42)), name, font=f, fill="#FFFFFF",
            stroke_width=4, stroke_fill="#000000")
@@ -1045,13 +1054,13 @@ def _build_expose(lines: list, line_windows: list, words: list, line_images: lis
         if clip is None:   # 라인 이미지 없거나 로드 실패 → 빈 흰 여백 대신 브랜드 패널
             d = sc["end"] - sc["start"]
             if d > 0.05:
-                arr = _branded_rect_arr(width, img_h, ch.get("name", "미래마켓"), font_path)
+                arr = _branded_rect_arr(width, img_h, ch.get("name", "미래에서 온 만물상"), font_path)
                 clip = (ImageClip(arr).with_duration(d + 0.05)
                         .with_start(sc["start"]).with_position((0, img_top)))
         if clip is not None:
             layers.append(clip)
     # 상단 헤더(전체 길이) — 게시판 글 스타일(보드명·카테고리 칩·제목·메타줄)
-    board = ch.get("name", "미래마켓")
+    board = ch.get("name", "미래에서 온 만물상")
     tag = str(r.get("expose_tag", "실화")).strip()
     meta = _board_meta(author, headline)
     layers.append(ImageClip(_expose_header_arr(width, header_h, board, headline, meta, font_path, tag))
@@ -1113,7 +1122,7 @@ def _build_expose(lines: list, line_windows: list, words: list, line_images: lis
                                      [] if selections_applied else product_videos)
                   if src is not None else None)
             if bg is None:
-                arr = _branded_rect_arr(width, height, ch.get("name", "미래마켓"), font_path)
+                arr = _branded_rect_arr(width, height, ch.get("name", "미래에서 온 만물상"), font_path)
                 bg = ImageClip(arr).with_duration(max(0.1, b - a)).with_start(a).with_position((0, 0))
             layers.append(bg)
         txt = _thumb_hook_overlay(hook_text, width, height, hook_end, font_path, settings)
