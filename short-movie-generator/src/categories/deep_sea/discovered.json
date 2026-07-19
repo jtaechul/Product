@@ -246,5 +246,36 @@
         "Wikimedia Commons (File:Observation d'une chimère par 220 m de fond (Ifremer 00621-73295).jpg)"
       ]
     }
+  },
+  {
+    "key": "pannychia moseleyi",
+    "kind": "creature",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/4/40/Solaster_feeding_on_Pannychia_moseleyi.jpg",
+      "license": "cc0",
+      "credit": "NOAA/MBARI 2006",
+      "source": "File:Solaster feeding on Pannychia moseleyi.jpg",
+      "media_kind": "photo",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/4/40/Solaster_feeding_on_Pannychia_moseleyi.jpg"
+    },
+    "species": {
+      "scientific_name": "Pannychia moseleyi",
+      "common_name_ko": "Pannychia moseleyi",
+      "common_name_en": "Pannychia moseleyi",
+      "depth_range_m": "400",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Pannychia moseleyi  is a sea cucumber in the family Laetmogonidae.",
+        "It was first described by Johan Hjalmar Théel in 1882.",
+        "It can be up to 200 mm long and 40 mm wide.",
+        "It occurs in the benthic zone at depths greater than 400 m."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Solaster feeding on Pannychia moseleyi.jpg)"
+      ]
+    }
   }
 ]
