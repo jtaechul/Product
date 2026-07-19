@@ -93,8 +93,13 @@ ol li{margin:8px 0}
 }
 #toast.show{opacity:1}
 .empty{color:var(--sub); font-size:14px; padding:14px 2px}
-.row2{display:flex; gap:10px}
+.row2{display:flex; gap:10px; flex-wrap:wrap}
 .row2>div{flex:1}
+/* 버튼이 많아 한 줄에 안 들어가면 다음 줄로 내려가고(줄바꿈), 버튼 안 글자는 한 줄로 유지
+   — 좁은 모바일에서 글자가 세로로 한 자씩 쪼개지던 문제 해결(2026-07-19). 각 버튼은 라벨
+   길이만큼 자리 잡되 남는 폭은 고르게 나눠 채운다. */
+.row2 .btn{flex:1 1 auto; white-space:nowrap}
+.row2 .btn.mini{min-width:84px; padding:0 14px}
 /* 영상 라이브러리 (완성 쇼츠) */
 .vgrid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
 .vitem{display:flex; flex-direction:column; gap:6px}
