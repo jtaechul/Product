@@ -16,6 +16,15 @@
     "date": "2026-07-07"
   },
   {
+    "id": "005",
+    "kind": "reels",
+    "common_name_ko": "북태평양심해문어",
+    "common_name_en": "Deep-sea octopus",
+    "scientific_name": "Graneledone boreopacifica",
+    "date": "2026-07-17",
+    "youtube_url": "https://youtu.be/H4eqffFqeTQ"
+  },
+  {
     "id": "006",
     "kind": "reels",
     "common_name_ko": "머리없는닭괴물",
@@ -81,25 +90,13 @@
     "date": "2026-07-10"
   },
   {
-    "id": "lf-3",
-    "kind": "longform",
-    "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
-    "yt_title_ko": "심해의 기이한 생물 TOP6 | 심해붉은해파리 외",
-    "n": 6,
-    "total_s": 414.85,
-    "date": "2026-07-10",
-    "has_video": true
-  },
-  {
-    "id": "lf-9",
-    "kind": "longform",
-    "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
-    "yt_title_ko": "심해의 기이한 생물 TOP6 | 심해붉은해파리 외",
-    "n": 6,
-    "total_s": 406.01,
-    "date": "2026-07-10",
-    "has_video": true,
-    "youtube_url": "https://youtu.be/G5eD8VEcEII"
+    "id": "015",
+    "kind": "reels",
+    "common_name_ko": "U-1277 잠수함 난파선",
+    "common_name_en": "Wreck U-1277 (WWII German U-boat)",
+    "scientific_name": "Wreck U-1277",
+    "date": "2026-07-11",
+    "youtube_url": "https://youtu.be/XEynXd4Po4M"
   },
   {
     "id": "016",
@@ -126,15 +123,6 @@
     "date": "2026-07-11"
   },
   {
-    "id": "015",
-    "kind": "reels",
-    "common_name_ko": "U-1277 잠수함 난파선",
-    "common_name_en": "Wreck U-1277 (WWII German U-boat)",
-    "scientific_name": "Wreck U-1277",
-    "date": "2026-07-11",
-    "youtube_url": "https://youtu.be/XEynXd4Po4M"
-  },
-  {
     "id": "019",
     "kind": "reels",
     "common_name_ko": "심해 킹크랩(리소드과)",
@@ -142,6 +130,15 @@
     "scientific_name": "Lithodidae",
     "date": "2026-07-11",
     "youtube_url": "https://youtu.be/FnfF6KzStXk"
+  },
+  {
+    "id": "020",
+    "kind": "reels",
+    "common_name_ko": "카리브암초오징어",
+    "common_name_en": "Caribbean reef squid",
+    "scientific_name": "Sepioteuthis sepioidea",
+    "date": "2026-07-13",
+    "youtube_url": "https://youtu.be/RQnd569jrHM"
   },
   {
     "id": "021",
@@ -161,13 +158,12 @@
     "date": "2026-07-12"
   },
   {
-    "id": "020",
+    "id": "023",
     "kind": "reels",
-    "common_name_ko": "카리브암초오징어",
-    "common_name_en": "Caribbean reef squid",
-    "scientific_name": "Sepioteuthis sepioidea",
-    "date": "2026-07-13",
-    "youtube_url": "https://youtu.be/RQnd569jrHM"
+    "common_name_ko": "Raketa 난파선",
+    "common_name_en": "Wreck Raketa",
+    "scientific_name": "Wreck Raketa",
+    "date": "2026-07-14"
   },
   {
     "id": "025",
@@ -179,29 +175,12 @@
     "youtube_url": "https://youtu.be/9lHZuaUsPRs"
   },
   {
-    "id": "023",
-    "kind": "reels",
-    "common_name_ko": "Raketa 난파선",
-    "common_name_en": "Wreck Raketa",
-    "scientific_name": "Wreck Raketa",
-    "date": "2026-07-14"
-  },
-  {
     "id": "027",
     "kind": "reels",
     "common_name_ko": "Peltospira smaragdina",
     "common_name_en": "Peltospira smaragdina",
     "scientific_name": "Peltospira smaragdina",
     "date": "2026-07-15"
-  },
-  {
-    "id": "029",
-    "kind": "reels",
-    "common_name_ko": "Ridgeia piscesae",
-    "common_name_en": "Ridgeia piscesae",
-    "scientific_name": "Ridgeia piscesae",
-    "date": "2026-07-15",
-    "youtube_url": "https://youtu.be/xz_Chf8aNYU"
   },
   {
     "id": "028",
@@ -213,21 +192,13 @@
     "youtube_url": "https://youtu.be/L6z6ElGjwvE"
   },
   {
-    "id": "005",
+    "id": "029",
     "kind": "reels",
-    "common_name_ko": "북태평양심해문어",
-    "common_name_en": "Deep-sea octopus",
-    "scientific_name": "Graneledone boreopacifica",
-    "date": "2026-07-17",
-    "youtube_url": "https://youtu.be/H4eqffFqeTQ"
-  },
-  {
-    "id": "031",
-    "kind": "reels",
-    "common_name_ko": "Empress of Ireland 난파선",
-    "common_name_en": "Wreck Empress of Ireland",
-    "scientific_name": "Wreck Empress of Ireland",
-    "date": "2026-07-17"
+    "common_name_ko": "Ridgeia piscesae",
+    "common_name_en": "Ridgeia piscesae",
+    "scientific_name": "Ridgeia piscesae",
+    "date": "2026-07-15",
+    "youtube_url": "https://youtu.be/xz_Chf8aNYU"
   },
   {
     "id": "030",
@@ -237,6 +208,23 @@
     "scientific_name": "Wreck Lusitania",
     "date": "2026-07-18",
     "youtube_url": "https://youtu.be/-qRIkExYiKo"
+  },
+  {
+    "id": "031",
+    "kind": "reels",
+    "common_name_ko": "Empress of Ireland 난파선",
+    "common_name_en": "Wreck Empress of Ireland",
+    "scientific_name": "Wreck Empress of Ireland",
+    "date": "2026-07-19"
+  },
+  {
+    "id": "032",
+    "kind": "reels",
+    "common_name_ko": "Titanic 난파선",
+    "common_name_en": "Wreck Titanic",
+    "scientific_name": "Wreck Titanic",
+    "date": "2026-07-19",
+    "youtube_url": "https://youtu.be/gD_HuD_qhCk"
   },
   {
     "id": "033",
@@ -271,12 +259,24 @@
     "date": "2026-07-19"
   },
   {
-    "id": "032",
-    "kind": "reels",
-    "common_name_ko": "Titanic 난파선",
-    "common_name_en": "Wreck Titanic",
-    "scientific_name": "Wreck Titanic",
-    "date": "2026-07-19",
-    "youtube_url": "https://youtu.be/gD_HuD_qhCk"
+    "id": "lf-3",
+    "kind": "longform",
+    "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
+    "yt_title_ko": "심해의 기이한 생물 TOP6 | 심해붉은해파리 외",
+    "n": 6,
+    "total_s": 414.85,
+    "date": "2026-07-10",
+    "has_video": true
+  },
+  {
+    "id": "lf-9",
+    "kind": "longform",
+    "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
+    "yt_title_ko": "심해의 기이한 생물 TOP6 | 심해붉은해파리 외",
+    "n": 6,
+    "total_s": 406.01,
+    "date": "2026-07-10",
+    "has_video": true,
+    "youtube_url": "https://youtu.be/G5eD8VEcEII"
   }
 ]
