@@ -1,7 +1,7 @@
 {
   "id": "032",
   "created_at": "2026-07-18T05:11:59+00:00",
-  "updated_at": "2026-07-18T05:11:59+00:00",
+  "updated_at": "2026-07-19T08:13:16+00:00",
   "status": "published",
   "category": "shipwreck",
   "series": "沈没船 図鑑",
@@ -50,7 +50,9 @@
   },
   "media": {
     "video_url": "https://github.com/jtaechul/Product/releases/download/content-032/reels_032.mp4",
-    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-032/cover_032.jpg"
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-032/cover_032.jpg",
+    "youtube_url": "https://youtu.be/gD_HuD_qhCk",
+    "youtube_privacy": "public"
   },
   "post": null
 }
