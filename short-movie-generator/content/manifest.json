@@ -235,14 +235,6 @@
     "date": "2026-07-19"
   },
   {
-    "id": "035",
-    "kind": "reels",
-    "common_name_ko": "은상어목",
-    "common_name_en": "Chimaeriformes",
-    "scientific_name": "Chimaeriformes",
-    "date": "2026-07-19"
-  },
-  {
     "id": "036",
     "kind": "reels",
     "common_name_ko": "Pannychia moseleyi",
@@ -285,6 +277,14 @@
     "common_name_ko": "Dumbo octopus",
     "common_name_en": "Dumbo octopus",
     "scientific_name": "Grimpoteuthis discoveryi",
+    "date": "2026-07-19"
+  },
+  {
+    "id": "035",
+    "kind": "reels",
+    "common_name_ko": "은상어목",
+    "common_name_en": "Chimaeriformes",
+    "scientific_name": "Chimaeriformes",
     "date": "2026-07-19"
   }
 ]
