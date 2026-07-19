@@ -2314,6 +2314,9 @@ async function loadCandidates(p, silent, waitVer) {
   imgPicks = imgRestorePicks || {};   // 라인별 재생성이면 다른 라인 픽 복원, 아니면 초기화
   imgRestorePicks = null;
   await imgPlanLoad(imgManifest.row_hash);   // ⭐ 대사 직접 수정용 — 기획(대본) 원본을 함께 로드
+  // ⭐ 저장된 선택 복원(2026-07-19 사용자 확정): '선택 저장'해둔 라인별 이미지·영상이 다시 열어도
+  //    사라지지 않고 그대로 담긴 상태로 보인다(라인 재생성 복원 imgRestorePicks가 있으면 그쪽 우선).
+  if (!Object.keys(imgPicks).length) await imgRestoreSaved();
   renderImgLines();
   $("imgSaveCard").style.display = "";
   $("imgStatus").textContent = `${imgManifest.lines.length}개 자막 — 라인마다 이미지를 고르세요(여러 장=슬라이드쇼).`;
@@ -2492,6 +2495,49 @@ async function imgPlanLoad(hash) {
 function planLineText(li) {   // 화면 표시용 대사 — 기획 파일(최신)이 있으면 그쪽, 없으면 후보 매니페스트 값
   const l = imgPlanDoc && Array.isArray(imgPlanDoc.lines) ? imgPlanDoc.lines[li] : null;
   return (l && l.text) || "";
+}
+/* ── ⭐ 저장된 자막별 선택 복원 (2026-07-19 사용자 확정 — 다시 열어도 선택 유지) ──
+   '선택 저장'이 커밋한 data/selections/{hash}.json 을 읽어 imgPicks로 되살린다.
+   저장본에는 내부 키(_key)·미리보기(_thumb)가 없으므로 현재 후보 매니페스트와 내용으로
+   대조해 재구성한다 — 매칭되면 후보 그리드에도 선택 표시가 켜진다. */
+function _matchCand(p, cands) {
+  for (const c of cands) {
+    if (p.is_product && c.is_product && (c.prod_idx || 0) === (p.prod_idx || 0)) return c;
+    if (p.detail_idx != null && c.is_detail && (c.detail_idx || 0) === (p.detail_idx || 0)) return c;
+    if (p.source === "meme" && c.is_meme && c.file === p.file) return c;
+    if (p.pv_name && c.is_pvideo && c.pv_name === p.pv_name
+        && c.pv_start === p.pv_start && c.pv_end === p.pv_end) return c;
+    if (p.url && c.url === p.url) return c;
+  }
+  return null;
+}
+async function imgRestoreSaved() {
+  try {
+    const f = await getFile(`${P}/data/selections/${imgManifest.row_hash}.json`, true);
+    if (!f) return;
+    const doc = JSON.parse(f.text);
+    const byLine = {};
+    for (const ln of (imgManifest.lines || [])) byLine[ln.line_i] = ln.candidates || [];
+    let n = 0;
+    for (const e of (doc.lines || [])) {
+      const li = Number(e.line_i), cands = byLine[li] || [], arr = [];
+      for (const p of (e.picks || [])) {
+        const m = _matchCand(p, cands);
+        const key = m ? m.name
+          : (p.source === "upload" && p.file) ? "up:" + p.file
+          : (p.pv_name != null && p.pv_start != null) ? `pvc:${p.pv_name}:${Number(p.pv_start).toFixed(1)}-${Number(p.pv_end).toFixed(1)}`
+          : p.url ? "url:" + p.url
+          : "restored:" + li + ":" + arr.length;
+        const thumb = (m && imgAssetMap[m.name]) ? mediaUrl(imgAssetMap[m.name], imgAssetVer[m.name])
+          : p.url ? mediaUrl(p.url, "")
+          : (p.source === "upload" && p.file)
+            ? `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${P}/${p.file}` : "";
+        arr.push({ ...p, _key: key, _thumb: thumb });
+      }
+      if (arr.length) { imgPicks[li] = arr; n += arr.length; }
+    }
+    if (n) toast(`저장해둔 이미지 선택 ${n}장을 복원했습니다 — 바꾸고 싶은 라인만 다시 고르면 됩니다.`, 4500);
+  } catch (e) { console.warn("저장된 선택 복원 실패(새로 고르면 됩니다)", e); }
 }
 function subsBuild(text) {
   // 파이썬 sanitize.build_subs 와 동일 규칙: 어절 경계로만, 1~3어절·공백 포함 12자 이하,
@@ -2762,10 +2808,42 @@ $("imgSave").onclick = (ev) => busy(ev.target, async () => {
   const path = `${P}/data/selections/${imgManifest.row_hash}.json`;
   const cur = await getFile(path, true);
   const payload = JSON.stringify(
-    { row_hash: imgManifest.row_hash, product_name: imgManifest.product_name || "", lines }, null, 1);
+    { row_hash: imgManifest.row_hash, product_name: imgManifest.product_name || "",
+      saved_at: new Date().toISOString(), lines }, null, 1);   // saved_at = 최근 10개 보존 기준
   await putFile(path, payload, `admin: 자막별 이미지 선택 저장 (${lines.length}라인 ${total}장)`, cur && cur.sha);
-  toast(`${lines.length}개 라인 · ${total}장 저장 완료. 다음 제작에 반영됩니다.`);
+  toast(`${lines.length}개 라인 · ${total}장 저장 완료. 다음 제작에 반영되고, 다시 열어도 유지됩니다.`);
+  selectionsPrune().catch((e) => console.warn("선택 보관 정리 실패(무시 가능)", e));
 });
+// ⭐ 선택 보관 정리(2026-07-19 사용자 확정): 자막별 선택은 최근 10개 상품까지 보존 — 초과분은
+//    가장 오래된 것(saved_at 없으면 최우선 정리)부터 selections JSON + 업로드 원본을 삭제한다.
+async function selectionsPrune(keep = 10) {
+  const dir = await gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/selections?ref=${BRANCH}`, { allow404: true });
+  const files = (dir || []).filter((x) => /\.json$/i.test(x.name));
+  if (files.length <= keep) return;
+  const metas = [];
+  for (const f of files) {
+    let at = "";
+    try { const g = await getFile(`${P}/data/selections/${f.name}`, true); at = (JSON.parse(g.text).saved_at) || ""; }
+    catch (_) {}
+    metas.push({ name: f.name, sha: f.sha, at });
+  }
+  metas.sort((a, b) => (a.at || "0").localeCompare(b.at || "0"));   // 오래된 순
+  for (const old of metas.slice(0, metas.length - keep)) {
+    await gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/selections/${old.name}`, {
+      method: "DELETE",
+      body: JSON.stringify({ message: `admin: 선택 보관 정리(최근 ${keep}개 유지) — ${old.name}`, sha: old.sha, branch: BRANCH }),
+    });
+    const h = old.name.replace(/\.json$/i, "");   // 그 상품의 업로드 원본(내 파일)도 함께 정리
+    const adir = await gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/selections_assets/${h}?ref=${BRANCH}`, { allow404: true });
+    for (const a of (adir || [])) {
+      await gh(`/repos/${OWNER}/${REPO}/contents/${P}/data/selections_assets/${h}/${a.name}`, {
+        method: "DELETE",
+        body: JSON.stringify({ message: `admin: 선택 보관 정리 — ${h}/${a.name}`, sha: a.sha, branch: BRANCH }),
+      });
+    }
+    console.log("선택 보관 정리:", old.name);
+  }
+}
 
 /* ── 설정 ────────────────────────────── */
 $("btnSaveToken").onclick = (ev) => busy(ev.target, async () => {
