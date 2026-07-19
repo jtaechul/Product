@@ -24,6 +24,44 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 NOTES_DIR = PROJECT_ROOT / "data" / "notes"
+ENRICH_CACHE_DIR = PROJECT_ROOT / "data" / "enrich"   # ⭐ PDF 분석 캐시(2026-07-18 사용자 확정)
+
+
+def _notes_fingerprint(row_hash: str) -> str:
+    """이 상품의 자료(data/notes/{hash}*) 내용 지문 — 자료가 1바이트라도 바뀌면 값이 달라진다."""
+    import hashlib
+    h = hashlib.sha256()
+    for fp in sorted(NOTES_DIR.glob(f"{row_hash}*")):
+        h.update(fp.name.encode())
+        h.update(fp.read_bytes())
+    return h.hexdigest()[:20]
+
+
+def _cache_load(row_hash: str, fingerprint: str) -> dict | None:
+    p = ENRICH_CACHE_DIR / f"{row_hash}.json"
+    if not p.exists():
+        return None
+    try:
+        c = json.loads(p.read_text(encoding="utf-8"))
+        d = c.get("data") or {}
+        # 지문 일치 + 의미 있는 필드가 하나라도 있어야 유효.
+        # (빈 껍데기 {}는 일시 오류 결과로 보고 재분석. 상품명이 캡처에 없어도 specs·사진 인덱스가
+        #  있으면 정상 결과이므로 재사용 — 이름은 관리자 '직접 입력' 값으로 채워질 수 있다.)
+        ok = bool(str(d.get("name", "")).strip() or d.get("specs") or d.get("product_image_indexes"))
+        if c.get("fingerprint") == fingerprint and ok:
+            return d
+    except Exception as e:
+        print(f"[enrich] 캐시 파싱 실패({e}) — 재분석")
+    return None
+
+
+def _cache_save(row_hash: str, fingerprint: str, data: dict) -> None:
+    ENRICH_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    (ENRICH_CACHE_DIR / f"{row_hash}.json").write_text(
+        json.dumps({"fingerprint": fingerprint, "data": data}, ensure_ascii=False, indent=1),
+        encoding="utf-8")
+
+
 IMG_EXTS = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
 MAX_IMAGE_BYTES = 4_500_000  # Anthropic 이미지 한도(5MB) 아래로 방어
 MAX_IMAGES = 6
@@ -58,7 +96,17 @@ def enrich_product(product: dict, settings: dict, job_dir=None) -> dict:
             "상품명·가격·특징이 비어 있고 상세 자료(텍스트/캡처)도 없습니다. "
             "관리자 페이지에서 캡처 파일을 첨부하거나 직접 입력으로 등록해 주세요.")
 
-    data = _extract(text, pdf_text, images, candidates, settings)
+    # ⭐ 분석 캐시(2026-07-18 사용자 확정 — "같은 PDF를 여러 번 분석하는 건 명백한 결함"):
+    #    자료 지문이 같으면 저장된 분석 결과를 재사용한다(토큰 0). 자료를 새로 올리면 자동 재분석.
+    #    (이미지 후보 수집·타일 분할은 로컬 연산이라 무료 — LLM 호출만 캐시한다.)
+    rh = product["_row_hash"]
+    fp = _notes_fingerprint(rh)
+    data = _cache_load(rh, fp)
+    if data is not None:
+        print("[enrich] 분석 캐시 사용 — PDF 재분석 생략(토큰 0)")
+    else:
+        data = _extract(text, pdf_text, images, candidates, settings)
+        _cache_save(rh, fp, data)
 
     if not product.get("name"):
         product["name"] = str(data.get("name", "")).strip()[:60]
@@ -351,7 +399,8 @@ def _extract(text: str, pdf_text: str, images: list, candidates: list, settings:
     import anthropic
     client = anthropic.Anthropic(api_key=key)
     resp = client.messages.create(
-        model=settings.get("script", {}).get("model", "claude-sonnet-4-6"),
+        model=(settings.get("enrich", {}).get("model")
+               or settings.get("script", {}).get("model", "claude-sonnet-4-6")),
         max_tokens=800,
         system=_EXTRACT_PROMPT,
         messages=[{"role": "user", "content": content}],
