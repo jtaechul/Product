@@ -399,6 +399,11 @@ def discover(exclude_scinames: set[str], exclude_titles: set[str], want: int = 3
             desc = _strip(em.get("ImageDescription", {}).get("value", ""))
             if _BADCLIP.search(title + " " + desc):   # 연구·사체·해부·양식 클립 배제(피사체 부적합)
                 continue
+            if is_photo:   # ★실사 필터(생물 사진): 옛 삽화·도판은 살아있는 생물 다큐에 부적합 → 배제
+                from src.core import footage as _ft
+                if not _ft._is_realistic_photo({"url": url, "credit": f"{title} {desc}"}):
+                    log.info("[discovery] 삽화·도판 사진 배제: %s", title)
+                    continue
             ident = _identity_for(pid, title, desc)
             if not ident or not ident.get("sci"):
                 continue
@@ -808,9 +813,13 @@ def _deep_sea_verify(sci: str, en: str, corpus: str):
 
 
 _CATALOG = {
-    "deep_sea":     {"terms": _TERMS_DEEP,   "exclude": _EXCLUDE, "require": None, "photo": False,
+    # ★photo=True(운영자 확정 · 소싱/제작 불능 수정): 심해·일반 해양생물은 Commons에 영상이 거의
+    #   없어(상징종 다수 영상 0개) 영상만 찾으면 소싱 0건 → 제작 씨앗도 비어 둘 다 실패했다. 영상이
+    #   want에 못 미치면 **실사 사진 후보**로 보충한다(제작 시 fetch_footage가 여러 장을 다큐 시퀀스로
+    #   영상화 = species_photo_doc). '영상 우선·없으면 이미지' 원칙.
+    "deep_sea":     {"terms": _TERMS_DEEP,   "exclude": _EXCLUDE, "require": None, "photo": True,
                      "verify": _deep_sea_verify},
-    "marine_life":  {"terms": _TERMS_MARINE, "exclude": _EXCLUDE, "require": None, "photo": False},
+    "marine_life":  {"terms": _TERMS_MARINE, "exclude": _EXCLUDE, "require": None, "photo": True},
     # 미세조류: 동물 배제 + 조류 양성 확인(동물 카테고리의 'plant 배제'는 적용 안 함).
     # ★photo=True: 미세조류는 현미경 정지사진이 많고 대상도 거의 안 움직여 켄번즈가 잘 맞는다 →
     #   영상이 부족하면 사진 후보(media_kind=photo)로 보충(제작 시 fetch_footage가 켄번즈 영상화).

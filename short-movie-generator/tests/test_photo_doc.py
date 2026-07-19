@@ -61,3 +61,17 @@ def test_photodoc_constants_sane():
     assert F._PHOTODOC_MIN >= 4                 # 최소 4장(빈약 방지)
     assert F._PHOTODOC_MAX >= F._PHOTODOC_MIN
     assert F._PHOTODOC_MIN_STRUCT >= 10         # 빈 컷 배제 임계
+
+
+def test_catalog_enables_photo_sourcing_for_creatures():
+    """★소싱/제작 불능 수정: 심해·일반 해양생물은 영상이 거의 없어 사진 후보 보충이 필수 →
+    _CATALOG의 photo 플래그가 켜져 있어야 '소싱하기'가 사진 후보를 낸다(0건 방지)."""
+    from src.core import discovery as D
+    assert D._CATALOG["deep_sea"]["photo"] is True
+    assert D._CATALOG["marine_life"]["photo"] is True
+
+
+def test_inaturalist_parses_cc_license_shape():
+    """iNaturalist 응답이 없어도(오프라인) 함수가 안전하게 [] 반환하고, 라이선스 매핑이 온전한지."""
+    # 네트워크 없이 도는 방어: 빈 종명은 즉시 []
+    assert F._inaturalist_photos("") == []

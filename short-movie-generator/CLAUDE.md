@@ -349,6 +349,19 @@
     - **날조 금지 유지**: 종 정체성·사실은 지금처럼 위키백과에서. 이미지는 그 종의 실제 사진만(라이선스
       게이트 통과분). 검증: 대왕등각류·프릴상어 = 실사만으로 선명한 24초 영상 제작 성공(모션 12), 삽화·
       빈 표본 컷은 필터로 제거됨. 회귀: `test_photo_doc.py`.
+    - **★소싱까지 연결(운영자 확정 · 소싱/제작 둘 다 불능이던 실사고 수정)**: 예전엔 `discovery._CATALOG`의
+      `deep_sea`·`marine_life`가 `photo:False`라 **영상만** 발굴 → 심해종은 영상이 거의 없어(상징종 다수
+      0개) "소싱하기"가 0건 → 제작 씨앗도 비어 **소싱·제작이 동시에 실패**했다. 수정: 두 카테고리를
+      `photo:True`로 → `discover_candidates`가 영상이 want에 못 미치면 **실사 사진 후보**(media_kind=photo)로
+      보충한다. 승격되면 `fetch_footage`가 그 종을 `species_photo_doc`(여러 실사→다큐 시퀀스)로 영상화한다
+      (4장 미만이면 단일 켄번즈 폴백). `discover(media=photo)`에도 실사 필터(`_is_realistic_photo`)를 걸어
+      삽화·도판이 후보로 새지 않게 한다. 검증(라이브): deep_sea 사진 후보(리프티아·말미잘·흡혈오징어) 발굴 +
+      리프티아 실사 6장 제작 가능 확인. `validate_source_url`은 이미 사진(고해상)을 통과시키므로 소싱
+      게이트도 정합.
+    - **★소싱처 확대(운영자 확정 · 추가 사이트)**: 실사 풀을 넓히려 **iNaturalist**(CC0/CC-BY/CC-BY-SA
+      research-grade 관측 사진 · `footage._inaturalist_photos`)를 Wikimedia Commons와 **병합**해 쓴다
+      (`species_photo_doc`). 심해종은 시민관측이 드물어 적게 나오지만(무해), **얕은·연안·수족관 해양생물**
+      에서 크게 확대된다(실측: Octopus vulgaris·Hippocampus·흰동가리 각 6장+). 저작자·라이선스 표기 유지.
 
 12. **★소스 품질 게이트(번인 로고·인트로 카드·레터박스 방지 · 절대 위반 금지).** 아마추어 소스
     (다이빙 영상 등)는 인트로 타이틀카드·로고(예: 'SUBMANIA Escola de Mergulho')·아웃트로 크레딧이

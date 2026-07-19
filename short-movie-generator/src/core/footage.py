@@ -416,6 +416,42 @@ def _commons_photos(query: str, n: int, min_w: int = 1200, min_h: int = 800) -> 
     return out
 
 
+def _inaturalist_photos(scientific_name: str, n: int = 8) -> list[dict]:
+    """★추가 소싱처(iNaturalist): 종명 → CC 라이선스 research-grade 관측 사진 [{url,license,credit,source}].
+    Commons에 부족한 해양생물 실사를 넓게 보충한다(특히 얕은·연안·수족관 종). 심해종은 시민관측이
+    드물어 적게 나오지만(무해), 일반 해양생물에선 크게 확대된다. CC0/CC-BY/CC-BY-SA만 채택(저작자 표기)."""
+    sci = (scientific_name or "").strip()
+    if not sci:
+        return []
+    _LIC = {"cc0": "cc0", "cc-by": "cc-by", "cc-by-sa": "cc-by-sa"}
+    out: list[dict] = []
+    seen: set = set()
+    try:
+        import requests
+        d = requests.get("https://api.inaturalist.org/v1/observations",
+                         headers={"User-Agent": _UA}, timeout=25, params={
+                             "taxon_name": sci, "photo_license": "cc0,cc-by,cc-by-sa",
+                             "quality_grade": "research", "photos": "true",
+                             "per_page": str(max(10, n * 2)), "order_by": "votes"}).json()
+    except Exception as e:  # noqa: BLE001
+        log.info("[footage] iNaturalist 조회 실패(%s): %s", sci, e)
+        return out
+    for o in d.get("results", []):
+        for ph in (o.get("photos") or []):
+            lic = _LIC.get((ph.get("license_code") or "").lower())
+            url = (ph.get("url") or "").replace("/square.", "/large.").replace("square", "large")
+            if not (lic and url) or url in seen:
+                continue
+            seen.add(url)
+            attr = re.sub(r"\s+", " ", (ph.get("attribution") or "").strip())[:120] or "iNaturalist"
+            cr = attr if "inaturalist" in attr.lower() else f"{attr} · iNaturalist"
+            out.append({"url": url, "license": lic, "credit": cr, "source": "iNaturalist"})
+            break   # 관측당 대표 1장
+        if len(out) >= n:
+            break
+    return out
+
+
 def fetch_cutaway_photos(scientific_name: str, common_name_en: str, dest_dir: str,
                          n: int = 2, exclude_sources: tuple = ()) -> list[dict]:
     """본문 컷어웨이용 같은 대상 고해상 사진 최대 n장 확보 → [{path, credit, license}].
@@ -846,7 +882,14 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
         return None
     if cand.get("media_kind") == "wreck_doc":   # ★유명 난파선 다큐(여러 이미지 시간순 시퀀스)
         return _wreck_doc_footage(cand, scientific_name)
-    if cand.get("media_kind") == "photo":   # ★사진 → 켄번즈 영상화(난파선 무한 공급)
+    if cand.get("media_kind") == "photo":   # ★사진 후보 → 영상화
+        # ★생물(난파선 아님)은 '여러 실사'를 다큐 시퀀스로(한 장 우려먹기 방지). 4장 미만이면
+        #   단일 켄번즈로 폴백. 미세조류(현미경 정지사진 · 흰 배경)는 실사필터에 걸려 자동으로
+        #   단일 켄번즈 경로로 떨어진다(species_photo_doc이 None → 폴백).
+        if not (scientific_name or "").strip().lower().startswith("wreck "):
+            doc = species_photo_doc(scientific_name, common_name_en, dest_dir)
+            if doc:
+                return doc
         return _fetch_photo_kenburns(cand, dest, key, common_name_en)
     # ★난파선은 아마추어 다이빙 영상을 소스로 절대 쓰지 않는다(운영자 확정 · 재발방지 · 절대 위반 금지).
     #   실사고(Batelo Cantanhede): 다이빙 영상은 ①인트로 타이틀카드(다이빙스쿨 로고)가 통짜로 박혀
@@ -1003,7 +1046,13 @@ def species_photo_doc(scientific_name: str, common_name_en: str, dest_dir: str) 
 
     반환: {photo_doc:True, photos:[{url,beat,license,credit}], hero_url, license, credit, source, path:None}.
     """
-    got = _commons_photos(scientific_name, 16) or _commons_photos(common_name_en, 16) or []
+    # ★소싱처 확대(운영자 확정): Wikimedia Commons + iNaturalist(CC 관측 사진)를 합쳐 실사 풀을 넓힌다.
+    got = (_commons_photos(scientific_name, 14) or [])
+    got += _inaturalist_photos(scientific_name, 10)
+    if len({p["url"] for p in got if p.get("url")}) < _PHOTODOC_MIN * 2:
+        got += _commons_photos(common_name_en, 10) or []
+    _seen: set = set()                                        # URL 중복 제거(소스 간 겹침 정리)
+    got = [p for p in got if p.get("url") and not (p["url"] in _seen or _seen.add(p["url"]))]
     cand = [p for p in got if _is_realistic_photo(p)]          # 1차: 메타데이터 필터
     if len(cand) < _PHOTODOC_MIN:
         log.info("[footage] 실사 후보 부족(1차 %d<%d) → 사진 다큐 스킵: %s",
