@@ -89,8 +89,9 @@ def generate_script(product: dict, settings: dict) -> dict:
     for attempt in range(1, ATTEMPTS + 1):
         extra = ""
         if feedback and "낭독 분량" in feedback:
-            extra = ("\n분량 해결법: 본문(훅 제외) 공백 제외 110~170자 사이로 맞춰라 — 모자라면 웃긴 사용 "
-                     "장면 라인을 더하고, 넘치면 설명 라인을 잘라라. subs 계약(이어 붙이면 text와 일치)도 유지하라.")
+            extra = ("\n분량 해결법: 본문(훅 제외) 공백 제외 135~170자 사이로 맞춰라 — 모자라면 각 줄을 "
+                     "26~32자 완결 문장으로 꽉 채워 늘려라(영상 20초 미만 금지). "
+                     "subs 계약(이어 붙이면 text와 일치)도 유지하라.")
         if feedback and "구간 배분" in feedback:
             extra += ("\n배분 해결법: ②③(문제)은 합쳐 1~2줄로 압축하고, ④를 2~3줄(남들이 못한 것·"
                       "기능구조·작동방식), ⑤를 1줄(결과 체감)로 써 제품 구간이 절반 가까이 되게 하라.")

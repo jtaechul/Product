@@ -279,6 +279,20 @@ def render_video(audio_path: Path, words: list, out_path: Path, settings: dict,
         shake_windows = [(float(a) + thumb_hold, float(b) + thumb_hold) for a, b in shake_windows]
         audio = CompositeAudioClip([audio.with_start(thumb_hold)])
     duration = float(audio.duration) + 0.25
+    # ⭐ 최소 길이 보장(2026-07-19 사용자 확정 — "영상은 무조건 20초를 넘어야 한다"):
+    #    낭독이 빨라 짧게 나온 회차는 마지막 컷(⑥ 마무리 자막·배경)을 그대로 붙잡는 엔딩 홀드로
+    #    최소 길이를 채운다(BGM은 계속 흐름 → 여운 컷). 홀드 상한 3.5초 — 그래도 모자라면
+    #    QA 게이트가 20초 미만을 불합격시켜 대본 보강(재생성)을 요구한다. 근본 해결은 대본
+    #    분량 하한 상향(sanitize CHAR_MIN 135자)이고 이 홀드는 보정 장치다.
+    min_dur = float(r.get("min_duration_sec", 20.0))
+    if duration <= min_dur + 0.3:
+        end_hold = min(max(0.0, min_dur + 0.5 - duration), 3.5)
+        if end_hold > 0:
+            print(f"[render] 낭독 {duration:.1f}s ≤ 최소 {min_dur:.0f}s → 엔딩 홀드 +{end_hold:.1f}s")
+            duration += end_hold
+            if line_windows:   # 마지막 라인(⑥ 마무리)의 자막·배경을 홀드 끝까지 유지(빈 화면 방지)
+                _a, _b = line_windows[-1]
+                line_windows[-1] = (float(_a), float(_b) + end_hold)
 
     over_w, over_h = width + 2 * shake_px, height + 2 * shake_px
     bg_dir = project_root / settings.get("assets", {}).get("backgrounds_dir", "assets/backgrounds")
@@ -981,7 +995,12 @@ def _sub_events(words: list, lines: list, line_windows: list, duration: float) -
             events.append({"text": sub, "start": a, "end": b, "line_i": li})
     for i, ev in enumerate(events):   # 다음 팝업 시작까지 유지(빈 화면 방지), 발화 종료 +0.45s 이내
         nxt = events[i + 1]["start"] if i + 1 < len(events) else duration
-        ev["show_end"] = min(max(nxt, ev["start"] + 0.12), ev["end"] + 0.45, duration)
+        cap = ev["end"] + 0.45
+        if i == len(events) - 1 and line_windows:
+            # ⭐ 마지막 자막(⑥ 마무리)은 라인 창 끝까지 유지 — 최소 20초 엔딩 홀드(2026-07-19) 동안
+            #    자막이 사라져 빈 화면이 되는 것을 막는다(창은 render_video가 홀드만큼 늘려 놓음).
+            cap = max(cap, float(line_windows[-1][1]))
+        ev["show_end"] = min(max(nxt, ev["start"] + 0.12), cap, duration)
     return events
 
 
