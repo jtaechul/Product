@@ -73,6 +73,11 @@ def generate_script(product: dict, settings: dict) -> dict:
     template = (PROJECT_ROOT / "config" / "prompts" / "script_gen.md").read_text(encoding="utf-8")
     system = template.replace("{channel_name}", settings.get("channel", {}).get("name", "미래상점"))
     user_msg = "상품 데이터:\n" + json.dumps(product, ensure_ascii=False, indent=1)
+    allow_price = bool(product.get("_price_ok"))
+    if allow_price:   # ⭐ 예외(2026-07-18 사용자 확정): 운영자가 기획 방향(4안)에서 가격을 직접 언급
+        user_msg += ("\n\n[운영자 가격 언급 예외] 운영자가 기획 방향에서 가격을 직접 언급했다 — "
+                     "이번 대본에서는 '작성 규칙 2(가격 금지)'를 해제한다. 운영자가 준 가격 맥락 그대로만 "
+                     "언급하고, 지어내거나 과장('반값' 등 비교 단정)하지 마라.")
 
     # 화면 금지어(브랜드·정식 제품명) — 상품명에서 자동 도출(+운영자 지정) → 대사·자막·헤드라인·제목에서 제거.
     #   (정식명칭은 링크의 쇼핑페이지에서만 공개. 일반 카테고리어는 최대한 보존.)
@@ -104,7 +109,8 @@ def generate_script(product: dict, settings: dict) -> dict:
         try:
             script = _parse_json(text)
             # 앞 2회는 분량 엄격, 이후엔 완화 — 유효한 대본이 '조금 짧다'는 이유로 최종 실패하지 않게.
-            script = sanitize_script(script, strict_length=(attempt <= 2), avoid_terms=avoid)
+            script = sanitize_script(script, strict_length=(attempt <= 2), avoid_terms=avoid,
+                                     allow_price=allow_price)
             if attempt <= 2:   # 개연성 가드 — 스토리 스파인(한줄썰) 없으면 재생성 유도(마지막 시도엔 완화)
                 issue = _story_issues(script)
                 if issue:
@@ -220,7 +226,8 @@ def regenerate_line(plan: dict, line_i: int, product: dict, settings: dict) -> d
         #   정리 → 금지어(최고·유일 등)·가격(숫자+원) 차단. subs 계약(join==text)은 build_subs가 보장.
         #   (sanitize_script는 punch 1개·분량 등 '스크립트 전체' 규칙까지 봐서 한 줄만 태우면 오탐 → 라인 헬퍼로 정확히.)
         newt = clean_text(hide_product_name(raw, avoid))
-        if newt and len(newt.replace(" ", "")) >= 4 and not check_forbidden(newt) and not _PRICE_RE.search(newt):
+        if newt and len(newt.replace(" ", "")) >= 4 and not check_forbidden(newt) \
+                and (product.get("_price_ok") or not _PRICE_RE.search(newt)):
             print(f"[script] 라인 {line_i} 문구 재생성({provider}/{model}, {attempt}차): {newt}")
             return {"text": newt, "subs": build_subs(newt)}
         print(f"[script] 라인 {line_i} 문구 {attempt}차 규칙 위반/부적합 → 재시도")

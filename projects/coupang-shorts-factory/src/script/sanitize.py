@@ -164,7 +164,8 @@ def _normalize_subs(line: dict) -> bool:
     return True
 
 
-def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None) -> dict:
+def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None,
+                    allow_price: bool = False) -> dict:
     """대본 dict 정화 + 규칙 검증. 위반 시 RuleViolation(재생성 트리거).
 
     avoid_terms: 화면에 노출하면 안 되는 브랜드·정식 제품명 토큰(선택). 상품 데이터에서 넘어온다.
@@ -233,7 +234,10 @@ def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None) 
     # 가격 완전 제거(전략 확정): 대사에 금액 표현(숫자+원, N만원)이 있으면 재생성.
     # '원룸'·'지원' 등은 앞에 숫자가 없어 오탐 아님. 스펙(500ml·3분·1.2킬로그램)도 통과.
     if re.search(r"\d[\d,]*\s*원|\d+\s*만\s*원", full):
-        problems.append("금액 표현 포함 — 가격은 영상에서 완전히 뺀다(링크로만 안내)")
+        if allow_price:   # ⭐ 예외(2026-07-18 사용자 확정): 운영자가 기획 방향(4안)에서 가격을 직접 언급한 상품
+            print("[sanitize] 금액 표현 감지 — 운영자 기획 방향 가격 언급 예외로 허용")
+        else:
+            problems.append("금액 표현 포함 — 가격은 영상에서 완전히 뺀다(링크로만 안내)")
 
     # 타깃·주거 서술어(자취·원룸·1인가구) — 대사에도 금지(2026-07-18 사용자 확정 확대).
     #   strict(새 생성)에서만 검사해 재생성 피드백으로 고친다. 옛 기획 로드는 막지 않음

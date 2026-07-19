@@ -103,6 +103,16 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
     _p = int(product.get("price") or 0)
     print(f"[pipeline] M2 상품: {product['name']} ({f'{_p:,}원' if _p > 0 else '가격 미확인'})")
 
+    # ⭐ 가격 금지 예외(2026-07-18 사용자 확정): 운영자가 기획 방향 '직접 의견(4안)'에서 가격을
+    #    직접 언급한 상품은 대본·검증·한줄 재생성에서 가격 표현을 허용한다(모든 모드 공통).
+    try:
+        from src.product import mechanism as _mech0
+        if _mech0.price_allowed(_mech0.load(PROJECT_ROOT, product["_row_hash"])):
+            product["_price_ok"] = True
+            print("[mech] 운영자 기획 방향(4안)에 가격 언급 — 가격 금지 규칙 예외 적용")
+    except Exception:
+        pass
+
     # ---- 라인 문구 재생성 모드(--regen-line): 대본 한 줄의 text만 새로 만들어 즉시 교체
     if args.regen_line is not None:
         return _regen_line(product, args.regen_line, settings, PROJECT_ROOT)
@@ -160,11 +170,13 @@ def _run(args, settings: dict, job_id: str, job_dir: Path) -> int:
         product["차별점_작동방식"] = mech_txt   # generate_script의 상품 JSON에 그대로 노출됨
     if args.script_file:
         script = json.loads(Path(args.script_file).read_text(encoding="utf-8"))
-        script = sanitize_script(script, strict_length=False, avoid_terms=avoid_terms)
+        script = sanitize_script(script, strict_length=False, avoid_terms=avoid_terms,
+                                 allow_price=bool(product.get("_price_ok")))
         print("[pipeline] M3 우회: script-file 사용")
     elif plan_path.exists() and not args.plan:
         script = sanitize_script(json.loads(plan_path.read_text(encoding="utf-8")),
-                                 strict_length=False, avoid_terms=avoid_terms)
+                                 strict_length=False, avoid_terms=avoid_terms,
+                                 allow_price=bool(product.get("_price_ok")))
         print(f"[pipeline] M3: 승인된 기획+대본 사용 (data/plans/{product['_row_hash']}.json)")
     else:
         if not have_script_key(settings):
