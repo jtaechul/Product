@@ -1007,6 +1007,54 @@ def save_candidates(category_id: str, items: list[dict]) -> None:
     p.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def remove_candidates(category_id: str, keys) -> list[str]:
+    """소싱 후보에서 지정 key들을 삭제(관리자 '삭제' 기능). 삭제된 key 리스트 반환."""
+    kill = {str(k).strip().lower() for k in (keys or []) if str(k).strip()}
+    if not kill:
+        return []
+    cands = load_candidates(category_id)
+    kept = [c for c in cands if str(c.get("key", "")).lower() not in kill]
+    removed = [c["key"] for c in cands if str(c.get("key", "")).lower() in kill]
+    if removed:
+        save_candidates(category_id, kept)
+    return removed
+
+
+def prune_unproducible(category_id: str, tmp_dir: str) -> list[str]:
+    """★소싱 후보 중 '실제로 쇼츠 영상 제작이 되지 않는' 소스를 자동 삭제(운영자 확정).
+    소싱 게이트(validate_source_url)는 라이선스·종횡비·정지영상만 보지만, 제작은 더 많은 관문
+    (가시성·트림·사진 다큐 4장 등)을 거쳐 일부 후보가 '소싱됐지만 제작 불가'로 남았다.
+    → **제작이 실제 소비하는 관문 footage.fetch_footage로 각 후보를 굴려 보고**, 소스를 못 만들면
+    (None) 그 후보를 삭제한다. 삭제된 key 리스트 반환.
+
+    ★영상 우선·없으면 이미지: fetch_footage가 영상 실패 시 실사 사진 다큐로 폴백하므로,
+    '사진으로라도 제작 가능한' 후보는 살아남는다(둘 다 불가한 것만 삭제)."""
+    from src.core import footage
+    cands = load_candidates(category_id)
+    if not cands:
+        return []
+    keep: list[dict] = []
+    removed: list[str] = []
+    for c in cands:
+        sci = c.get("name") or (c.get("species") or {}).get("scientific_name") or c.get("key", "")
+        en = c.get("common_name_en") or (c.get("species") or {}).get("common_name_en") or ""
+        producible = False
+        try:
+            fv = footage.fetch_footage(sci, en, tmp_dir)
+            producible = bool(fv and (fv.get("path") or fv.get("photo_doc") or fv.get("doc")))
+        except Exception as e:  # noqa: BLE001
+            log.warning("[discovery] 제작 가능성 검사 오류(%s): %s", sci, e)
+            producible = True   # 검사 오류로는 삭제하지 않는다(오삭제 방지)
+        if producible:
+            keep.append(c)
+        else:
+            removed.append(c["key"])
+            log.info("[discovery] 제작 불가 후보 삭제: %s (%s)", c.get("key"), sci)
+    if removed:
+        save_candidates(category_id, keep)
+    return removed
+
+
 def _all_known_keys() -> set[str]:
     """전 카테고리의 후보·승인·시드 키를 합친 집합(교차 카테고리 중복 방지용).
     ★같은 종이 여러 카테고리에 동시에 잡혀 '중복 미리보기'가 되던 문제를 막는다."""

@@ -362,6 +362,19 @@
       research-grade 관측 사진 · `footage._inaturalist_photos`)를 Wikimedia Commons와 **병합**해 쓴다
       (`species_photo_doc`). 심해종은 시민관측이 드물어 적게 나오지만(무해), **얕은·연안·수족관 해양생물**
       에서 크게 확대된다(실측: Octopus vulgaris·Hippocampus·흰동가리 각 6장+). 저작자·라이선스 표기 유지.
+    - **★피사체 중심 고정(운영자 확정 · '피사체가 화면 밖으로' 수정)**: 사진 켄번즈가 피사체 위치를 모르고
+      **중앙 크롭**을 해, 세로(9:16) 프레임에 넓은 사진을 담을 때 좌우가 잘려 피사체가 화면 밖으로
+      나가던 문제 → `footage._subject_crop`이 켄번즈 **전에** 피사체를 '학습'(`reframe._subject_focus`
+      3단서 색무관 검출)해 출력 종횡비 크롭을 피사체 무게중심에 고정한다. 안전장치: 피사체가 이미 중앙
+      근처(±0.12)면 크롭 안 함(과보정 방지), 이동은 0.85 댐핑. 실측 A/B(중앙크롭 대비 피사체 신호):
+      프릴상어 +2039%·덤보문어 +449%·뱀파이어오징어 +133~178%(중앙크롭이 놓치던 피사체를 살림).
+      `_kenburns_clip` 전 단계에 적용(사진 다큐·컷어웨이·엔드카드 공통). 회귀: `test_subject_crop_*`.
+    - **★소싱 후보 삭제 기능(운영자 확정)**: 소싱 게이트(라이선스·종횡비·정지)는 제작 관문보다 느슨해
+      '소싱됐지만 제작 불가'한 후보가 남았다 → ① `discovery.remove_candidates(cat, keys)` 특정 후보 수동
+      삭제 ② `discovery.prune_unproducible(cat, tmp)` **제작이 실제 소비하는 `footage.fetch_footage`로
+      각 후보를 굴려 보고 소스를 못 만들면(None) 자동 삭제**(영상·사진 둘 다 불가한 것만 — 사진으로라도
+      되면 유지). 소싱 워크플로 `source-species.yml`에 '수동 삭제 + 자동 프룬' 스텝 추가(입력
+      `remove_keys`·`prune_unproducible`). 회귀: `test_remove_and_prune_candidates`.
 
 12. **★소스 품질 게이트(번인 로고·인트로 카드·레터박스 방지 · 절대 위반 금지).** 아마추어 소스
     (다이빙 영상 등)는 인트로 타이틀카드·로고(예: 'SUBMANIA Escola de Mergulho')·아웃트로 크레딧이

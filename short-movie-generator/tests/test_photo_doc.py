@@ -75,3 +75,68 @@ def test_inaturalist_parses_cc_license_shape():
     """iNaturalist 응답이 없어도(오프라인) 함수가 안전하게 [] 반환하고, 라이선스 매핑이 온전한지."""
     # 네트워크 없이 도는 방어: 빈 종명은 즉시 []
     assert F._inaturalist_photos("") == []
+
+
+def _blob(im, x0, x1, y0, y1, rnd):
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            im.putpixel((x, y), (200 + rnd.randint(-40, 55), 150 + rnd.randint(-40, 40),
+                                 90 + rnd.randint(-40, 40)))   # 밝고 질감 있는 피사체
+
+
+def test_subject_crop_rescues_offcenter_subject(tmp_path):
+    """★피사체가 한쪽에 치우친 넓은 사진 → 피사체 크롭이 중앙크롭보다 피사체를 더 담아야
+    (사용자 불만: 시작 시 피사체가 화면 밖으로). 이미 중앙이면 크롭 안 함(과보정 방지)."""
+    import random
+    from PIL import Image
+    from src.core import reframe
+    rnd = random.Random(3)
+
+    def signal(path):
+        pts, _, _ = reframe._subject_pixels(path)
+        return sum(p[0] for p in pts)
+
+    def center_crop(path, W, H):
+        im = Image.open(path).convert("RGB"); iw, ih = im.size; tar = W / H
+        cw, ch = (int(ih * tar), ih) if iw / ih > tar else (iw, int(iw / tar))
+        x0 = (iw - cw) // 2; y0 = (ih - ch) // 2
+        o = str(path) + "_c.jpg"; im.crop((x0, y0, x0 + cw, y0 + ch)).save(o); return o
+
+    # 넓은(16:9급) 이미지, 어두운 배경 + 피사체를 '왼쪽 끝'에 배치
+    im = Image.new("RGB", (1600, 900), (10, 10, 14))
+    _blob(im, 120, 460, 340, 620, rnd)          # 좌측(중심 x≈0.18)
+    p = tmp_path / "off.jpg"; im.save(p)
+    c = F._subject_crop(str(p), 720, 1280)
+    assert c is not None, "치우친 피사체는 크롭 이동이 일어나야"
+    assert signal(c) > signal(center_crop(str(p), 720, 1280)), "피사체 크롭이 피사체를 더 담아야"
+
+    # 중앙에 피사체 → 크롭 안 함(안전)
+    im2 = Image.new("RGB", (1600, 900), (10, 10, 14))
+    _blob(im2, 700, 900, 380, 560, rnd)         # 중앙(x≈0.5)
+    p2 = tmp_path / "ctr.jpg"; im2.save(p2)
+    assert F._subject_crop(str(p2), 720, 1280) is None
+
+
+def test_remove_and_prune_candidates(tmp_path, monkeypatch):
+    """★관리자 삭제 기능: 특정 key 수동 삭제 + '제작 불가' 후보 자동 삭제(제작 가능 후보는 유지)."""
+    from src.core import discovery as D, footage as FT
+    cat = "marine_life"
+    orig = D._cand_path(cat)
+    bak = orig.read_text(encoding="utf-8") if orig.exists() else None
+    try:
+        D.save_candidates(cat, [{"key": "aaa", "name": "Aaa", "common_name_en": "a"},
+                                {"key": "bbb", "name": "Bbb", "common_name_en": "b"},
+                                {"key": "ccc", "name": "Ccc", "common_name_en": "c"}])
+        assert D.remove_candidates(cat, ["bbb"]) == ["bbb"]
+        assert [c["key"] for c in D.load_candidates(cat)] == ["aaa", "ccc"]
+        # aaa만 제작가능하게 몽키패치 → ccc는 제작 불가로 삭제, aaa 유지
+        monkeypatch.setattr(FT, "fetch_footage",
+                            lambda sci, en, tmp: {"path": "x.mp4"} if sci == "Aaa" else None)
+        removed = D.prune_unproducible(cat, str(tmp_path))
+        assert "ccc" in removed
+        assert [c["key"] for c in D.load_candidates(cat)] == ["aaa"]
+    finally:
+        if bak is not None:
+            orig.write_text(bak, encoding="utf-8")
+        else:
+            orig.unlink(missing_ok=True)

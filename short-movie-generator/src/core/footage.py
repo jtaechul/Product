@@ -570,17 +570,56 @@ def _kenburns_vf(motion: str, fr: int, W: int = 1280, H: int = 720) -> str:
     return f"{cover}zoompan={z}:d={fr}:{xy}:s={W}x{H}:fps=30,format=yuv420p"
 
 
+def _subject_crop(image_path: str, W: int, H: int) -> str | None:
+    """★사진에서 피사체를 '학습'해 출력 종횡비(W:H)에 맞춘 크롭을 피사체 무게중심에 고정.
+    켄번즈(중앙 줌) 전에 피사체를 프레임 중앙으로 옮겨, 세로(9:16) 프레임에서 넓은 사진의 좌우가
+    잘려 피사체가 화면 밖으로 나가던 문제를 없앤다. 실패/미검출 시 None(원본 그대로 사용)."""
+    try:
+        from PIL import Image
+        from src.core import reframe
+        im = Image.open(image_path).convert("RGB")
+        iw, ih = im.size
+        if iw < 8 or ih < 8:
+            return None
+        cx, cy, _ = reframe._subject_focus(image_path)         # 색무관 3단서 검출(미검출 시 0.5,0.5)
+        tar = W / H
+        if iw / ih > tar:                                      # 이미지가 더 넓음 → 좌우(x) 크롭
+            ch = ih; cw = max(8, int(round(ih * tar))); axis = "x"
+        else:                                                  # 이미지가 더 높음 → 상하(y) 크롭
+            cw = iw; ch = max(8, int(round(iw / tar))); axis = "y"
+        if cw >= iw and ch >= ih:                              # 이미 목표 종횡비면 크롭 불필요
+            return None
+        # ★크롭되는 축에서 피사체가 '명백히' 치우쳤을 때만 이동(중앙 근처면 중앙크롭에 맡겨
+        #   검출 노이즈로 이미 잘 잡힌 컷을 흔들지 않는다). 이동은 살짝 댐핑(0.85)해 과보정 방지.
+        f = cx if axis == "x" else cy
+        if abs(f - 0.5) < 0.12:
+            return None
+        cc = 0.5 + (f - 0.5) * 0.85
+        if axis == "x":
+            x0 = max(0, min(int(round(cc * iw - cw / 2)), iw - cw)); y0 = (ih - ch) // 2
+        else:
+            y0 = max(0, min(int(round(cc * ih - ch / 2)), ih - ch)); x0 = (iw - cw) // 2
+        out = f"{Path(image_path).with_suffix('')}_subj_{W}x{H}.jpg"
+        im.crop((x0, y0, x0 + cw, y0 + ch)).save(out, quality=92)
+        return out
+    except Exception as e:  # noqa: BLE001
+        log.info("[footage] 피사체 크롭 생략(오류): %s", e)
+        return None
+
+
 def _kenburns_clip(image_path: str, out_path: str, seconds: int = 14, motion: str = "in",
                    W: int = 1280, H: int = 720) -> bool:
     """정지 사진 → 켄번즈 영상(W×H). ★난파선·미세조류 등 '정적 피사체' 사진의 무한 엔진.
     모션이 있어 정지-소스 게이트를 통과한다. motion=in/out/pan_r/pan_l로 줌 방향을 다양화해
     같은 소재가 반복돼도 매번 똑같은 느낌이 안 나게 한다(사진은 영상보다 훨씬 많아 공급이 사실상 무한).
-    W,H로 16:9(본문 소스) 또는 9:16(본문 컷어웨이)을 선택한다."""
+    W,H로 16:9(본문 소스) 또는 9:16(본문 컷어웨이)을 선택한다.
+    ★피사체 중심 프리크롭: 켄번즈 전에 피사체를 프레임 중앙에 고정(화면밖 이탈 방지)."""
     import subprocess
+    src = _subject_crop(image_path, W, H) or image_path       # 피사체 학습·중앙 고정
     fr = int(seconds) * 30
     vf = _kenburns_vf(motion if motion in _KENBURNS_MOTIONS else "in", fr, W, H)
     try:
-        r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", image_path,
+        r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", src,
                             "-vf", vf, "-t", str(int(seconds)), "-c:v", "libx264", "-preset",
                             "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-an", out_path],
                            timeout=180)

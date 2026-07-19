@@ -18,6 +18,15 @@ on:
         description: "찾을 후보 개수(최대)"
         required: false
         default: "6"
+      remove_keys:
+        description: "삭제할 후보 key(쉼표 구분, 선택) — 특정 소스 수동 삭제용"
+        required: false
+        default: ""
+      prune_unproducible:
+        description: "제작 불가 후보 자동 삭제(느림 · 각 후보를 실제 소싱해 확인)"
+        type: boolean
+        required: false
+        default: true
 
 concurrency:
   group: source-species-${{ github.event.inputs.category }}
@@ -68,8 +77,30 @@ jobs:
           print(f"keys={','.join(a['key'] for a in added)}")
           PY
 
+      - name: 후보 삭제(수동 key + 제작 불가 자동 프룬)
+        if: always()
+        env:
+          CATEGORY: ${{ github.event.inputs.category }}
+          REMOVE_KEYS: ${{ github.event.inputs.remove_keys }}
+          PRUNE: ${{ github.event.inputs.prune_unproducible }}
+        run: |
+          python - <<'PY'
+          import os, tempfile
+          from src.core import discovery
+          cat = os.environ["CATEGORY"]
+          # ① 수동 삭제(운영자가 지정한 특정 후보)
+          keys = [k for k in (os.environ.get("REMOVE_KEYS") or "").replace(",", " ").split() if k]
+          if keys:
+              rm = discovery.remove_candidates(cat, keys)
+              print(f"수동 삭제: {len(rm)}개 {rm}")
+          # ② 제작 불가 후보 자동 삭제(실제 소싱 관문으로 확인 — 영상/사진 둘 다 불가한 것만)
+          if (os.environ.get("PRUNE") or "true").lower() == "true":
+              rm2 = discovery.prune_unproducible(cat, tempfile.mkdtemp())
+              print(f"제작 불가 자동 삭제: {len(rm2)}개 {rm2}")
+          PY
+
       - name: 후보 썸네일 생성 + Release 업로드 + URL 패치
-        if: steps.src.outputs.count != '0'
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
           CATEGORY: ${{ github.event.inputs.category }}
