@@ -235,14 +235,6 @@
     "date": "2026-07-19"
   },
   {
-    "id": "034",
-    "kind": "reels",
-    "common_name_ko": "Peltospira smaragdina",
-    "common_name_en": "Peltospira smaragdina",
-    "scientific_name": "Peltospira smaragdina",
-    "date": "2026-07-19"
-  },
-  {
     "id": "035",
     "kind": "reels",
     "common_name_ko": "은상어목",
@@ -278,5 +270,13 @@
     "date": "2026-07-10",
     "has_video": true,
     "youtube_url": "https://youtu.be/G5eD8VEcEII"
+  },
+  {
+    "id": "034",
+    "kind": "reels",
+    "common_name_ko": "Peltospira smaragdina",
+    "common_name_en": "Peltospira smaragdina",
+    "scientific_name": "Peltospira smaragdina",
+    "date": "2026-07-19"
   }
 ]
