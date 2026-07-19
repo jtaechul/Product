@@ -2313,6 +2313,7 @@ async function loadCandidates(p, silent, waitVer) {
   imgManifestVer = ver;               // 다음 '다시 찾기'의 기준값
   imgPicks = imgRestorePicks || {};   // 라인별 재생성이면 다른 라인 픽 복원, 아니면 초기화
   imgRestorePicks = null;
+  await imgPlanLoad(imgManifest.row_hash);   // ⭐ 대사 직접 수정용 — 기획(대본) 원본을 함께 로드
   renderImgLines();
   $("imgSaveCard").style.display = "";
   $("imgStatus").textContent = `${imgManifest.lines.length}개 자막 — 라인마다 이미지를 고르세요(여러 장=슬라이드쇼).`;
@@ -2475,6 +2476,69 @@ function togglePick(li, pick) {
   if (at >= 0) arr.splice(at, 1); else arr.push(pick);
   syncLine(li);
 }
+/* ── ⭐ 라인 대사(자막) 직접 수정 (2026-07-19 사용자 요청 #4) ──
+   이미지 탭에서 각 라인의 대사를 운영자가 직접 고친다. 저장하면 기획(대본) 파일
+   data/plans/{hash}.json 의 text·subs가 갱신되고, 제작은 그 파일을 읽어 낭독(TTS)·화면
+   자막을 만들므로 **다음 제작부터 수정한 문장이 그대로 낭독·표시**된다.
+   훅 라인(0번)을 고치면 훅 삼위일체 규칙대로 유튜브 제목·훅 카드 문구도 함께 바뀐다. */
+let imgPlanDoc = null, imgPlanSha = null;   // 이미지 탭이 로드한 기획(대본) 원본 + sha(연속 저장 대비)
+async function imgPlanLoad(hash) {
+  imgPlanDoc = null; imgPlanSha = null;
+  try {
+    const f = await getFile(`${PLAN_DIR}/${hash}.json`, true);
+    if (f) { imgPlanDoc = JSON.parse(f.text); imgPlanSha = f.sha; }
+  } catch (_) {}
+}
+function planLineText(li) {   // 화면 표시용 대사 — 기획 파일(최신)이 있으면 그쪽, 없으면 후보 매니페스트 값
+  const l = imgPlanDoc && Array.isArray(imgPlanDoc.lines) ? imgPlanDoc.lines[li] : null;
+  return (l && l.text) || "";
+}
+function subsBuild(text) {
+  // 파이썬 sanitize.build_subs 와 동일 규칙: 어절 경계로만, 1~3어절·공백 포함 12자 이하,
+  // 마지막 칸이 1~2자면 앞 칸에 합침(찰나 팝업 방지). 제작 때 파이썬이 같은 규칙으로 재검증한다.
+  const toks = String(text).split(/\s+/).filter(Boolean);
+  const subs = []; let cur = "";
+  for (const w of toks) {
+    const cand = cur ? cur + " " + w : w;
+    if (cur && (cand.length > 12 || cur.split(" ").length >= 3)) { subs.push(cur); cur = w; }
+    else cur = cand;
+  }
+  if (cur) subs.push(cur);
+  const n = subs.length;
+  if (n >= 2 && subs[n - 1].length <= 2 && (subs[n - 2] + " " + subs[n - 1]).length <= 14)
+    subs.splice(n - 2, 2, subs[n - 2] + " " + subs[n - 1]);
+  return subs;
+}
+async function imgTextSave(li, rawText) {
+  const text = String(rawText || "").replace(/\s+/g, " ").trim();
+  if (!imgManifest) throw new Error("먼저 이미지 후보를 불러오세요.");
+  if (!imgPlanDoc || !Array.isArray(imgPlanDoc.lines) || !imgPlanDoc.lines[li])
+    throw new Error("기획(대본) 파일이 아직 없습니다 — 만들기 탭에서 기획·대본을 먼저 만든 뒤 고칠 수 있습니다.");
+  if (!text) throw new Error("대사가 비어 있습니다.");
+  if (text.replace(/ /g, "").length < 6) throw new Error("대사가 너무 짧습니다 — 공백 제외 6자 이상의 완결 문장으로 써 주세요.");
+  const ln = imgPlanDoc.lines[li], isHook = !!ln.is_hook;
+  if (text === ln.text) { toast("바뀐 내용이 없습니다."); return false; }
+  if (text.length > 44 && !confirm(`대사가 공백 포함 ${text.length}자로 깁니다(권장 16~32자 — 길수록 낭독이 늘어집니다). 그래도 저장할까요?`)) return false;
+  if (/\d[\d,]*\s*원|\d+\s*만\s*원/.test(text)
+      && !confirm("금액 표현이 들어 있습니다. 기획 방향 '직접 의견(4안)'에 가격을 언급한 상품이 아니면 제작 단계에서 차단됩니다. 그래도 저장할까요?")) return false;
+  if (/자취|원룸|1인\s*가구/.test(text)
+      && !confirm("'자취·원룸·1인가구'는 채널 규칙상 쓰지 않기로 한 말입니다. 그래도 대사에 넣을까요?")) return false;
+  if (isHook && !(text.length >= 8 && text.length <= 28)
+      && !confirm(`훅 카드 문구(=유튜브 제목)는 공백 포함 8~28자가 규격입니다(지금 ${text.length}자). 그래도 저장할까요?`)) return false;
+  ln.text = text;
+  ln.subs = subsBuild(text);   // 자막 칸도 새 문장 기준으로 재생성(낭독 타이밍과 자동 동기화)
+  if (isHook) { imgPlanDoc.thumb_hook = text; imgPlanDoc.title = text; }   // 훅 삼위일체: 카드=제목=첫낭독
+  const path = `${PLAN_DIR}/${imgManifest.row_hash}.json`;
+  await putFile(path, JSON.stringify(imgPlanDoc, null, 1),
+    `admin: 대사 직접 수정 — 라인 ${li + 1}${isHook ? "(훅 카드·제목)" : ""}`, imgPlanSha || undefined);
+  const f = await getFile(path, true); imgPlanSha = f ? f.sha : null;
+  if (lineEls[li]) { const t = lineEls[li].card.querySelector(".imgtext"); if (t) t.textContent = text; }
+  if (planData && currentWork && currentWork.hash === imgManifest.row_hash) { planData = imgPlanDoc; renderPlan(); }
+  toast(isHook
+    ? "훅 카드 문구 저장 완료 — 유튜브 제목·0:00 낭독·카드 문구가 함께 바뀝니다(다음 제작부터)."
+    : `라인 ${li + 1} 대사 저장 완료 — 다음 제작부터 낭독(TTS)과 화면 자막이 이 문장으로 나갑니다.`, 5000);
+  return true;
+}
 function renderImgLines() {
   const box = $("imgLines"); box.innerHTML = ""; lineEls = {};
   for (const ln of imgManifest.lines) {
@@ -2486,11 +2550,18 @@ function renderImgLines() {
       + `<p class="hint" style="margin:0 0 6px">고른 이미지가 위 칸에 순서대로 담깁니다(번호=슬라이드쇼 순서, × 로 빼기). 후보를 탭하거나 ‘GIF 검색’을 쓰세요.</p>`
       + `<div class="thumbs"></div>`
       + `<div class="row2" style="margin-top:8px">`
+      + `<button class="btn mini sub txteditbtn">대사 고치기</button>`
       + `<button class="btn mini gifopen">GIF 검색</button>`
       + `<button class="btn mini sub pvcut" style="display:none">영상 구간 지정</button>`
       + `<button class="btn mini sub imglineredo">라인 다시 생성</button>`
       + `<button class="btn mini sub imgredo">이미지만 다시</button>`
       + `<label class="btn mini imgup">내 파일 올리기<input type="file" accept="image/*,video/*" hidden></label></div>`
+      + `<div class="txtedit" style="display:none;margin-top:8px">`
+      + `<textarea class="txtarea" rows="2" style="width:100%;padding:10px;border-radius:10px;font-size:15px;box-sizing:border-box"></textarea>`
+      + `<div class="row2" style="margin-top:6px"><button class="btn mini txtsavebtn">이 대사로 저장</button>`
+      + `<button class="btn mini sub txtcancel">취소</button></div>`
+      + `<p class="hint" style="margin:6px 0 0">저장하면 <b>다음 제작부터 낭독(TTS)과 화면 자막이 이 문장으로</b> 나갑니다(권장 16~32자). `
+      + `내용이 많이 달라졌다면 ‘이미지만 다시’로 새 이미지 후보를 받는 걸 추천합니다.</p></div>`
       + `<div class="pvcutpanel" style="display:none;margin-top:8px">`
       + `<select class="pvsel" style="width:100%;margin-bottom:6px;padding:8px;border-radius:8px"></select>`
       + `<video class="pvplayer" controls playsinline muted style="width:100%;max-height:300px;border-radius:10px;background:#000"></video>`
@@ -2499,10 +2570,22 @@ function renderImgLines() {
       + `<button class="btn mini sub pve">여기까지 끝</button>`
       + `<button class="btn mini pvadd">이 구간 담기</button></div>`
       + `<p class="hint pvrange" style="margin:6px 0 0">영상을 재생·이동해 놓고 ‘여기부터/여기까지’를 눌러 구간을 정하세요.</p></div>`;
-    card.querySelector(".imgtext").textContent = ln.text;
+    card.querySelector(".imgtext").textContent = planLineText(li) || ln.text;   // 기획 파일(최신 대사) 우선
     const thumbs = card.querySelector(".thumbs");
     const tray = card.querySelector(".picktray");
     lineEls[li] = { card, thumbs, tray };
+    // ── 대사 고치기(운영자 직접 수정 → 대본 저장 → 다음 제작 TTS·자막 반영) ──
+    const editBox = card.querySelector(".txtedit"), ta = card.querySelector(".txtarea");
+    card.querySelector(".txteditbtn").onclick = () => {
+      const show = editBox.style.display === "none";
+      if (show) ta.value = planLineText(li) || ln.text || "";
+      editBox.style.display = show ? "" : "none";
+      if (show) ta.focus();
+    };
+    card.querySelector(".txtcancel").onclick = () => { editBox.style.display = "none"; };
+    card.querySelector(".txtsavebtn").onclick = (ev) => busy(ev.target, async () => {
+      if (await imgTextSave(li, ta.value)) editBox.style.display = "none";
+    });
     // ── 후보 그리드: 밈·제품·제품영상 + 미리 깔린 Giphy GIF (스톡 없음) ──
     for (const c of (ln.candidates || [])) {
       const url = imgAssetMap[c.name];
