@@ -124,6 +124,10 @@ assets:
   pexels_query: "night city lights"
   pexels_count: 2
 
+enrich:                 # M2.5 상품 자료(PDF·캡처) 분석 — ⭐ 캐시로 상품당 1회만 호출(2026-07-18)
+  model: "claude-sonnet-4-6"  # 사용자 확정(2026-07-19): Haiku 전환 안 함, Sonnet 유지(정확도 우선).
+                              # 캐시 덕에 상품당 1회만 호출되므로 회당 ≈62원 × 상품 수가 전체 비용
+
 script:                 # M3 대본 생성 (스펙 §M3)
   # provider: 구어체 문구는 Gemini가 낫다는 사용자 판단(2026-07-13)으로 gemini 채택.
   #   claude=Anthropic / gemini=Gemini generateContent(텍스트 전용 — 유료 영상 Veo와 무관, 초저가).
