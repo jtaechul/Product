@@ -218,5 +218,33 @@
         "Wikimedia Commons (File:Pu - Vampyroteuthis infernalis - 2.jpg)"
       ]
     }
+  },
+  {
+    "key": "chimaeriformes",
+    "kind": "creature",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Observation_d%27une_chim%C3%A8re_par_220_m_de_fond_%28Ifremer_00621-73295%29.jpg",
+      "license": "cc-by",
+      "credit": "null · CC BY",
+      "source": "File:Observation d'une chimère par 220 m de fond (Ifremer 00621-73295).jpg",
+      "media_kind": "photo",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Observation_d%27une_chim%C3%A8re_par_220_m_de_fond_%28Ifremer_00621-73295%29.jpg"
+    },
+    "species": {
+      "scientific_name": "Chimaeriformes",
+      "common_name_ko": "은상어목",
+      "common_name_en": "Chimaeriformes",
+      "depth_range_m": "220",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ギンザメ目（学名：Chimaeriformes）は、軟骨魚綱全頭亜綱（ぜんとうあこう）の下位分類群。3科6属に約50種が含まれ、日本近海には11種が生息している。現在は50種ほどの小さな分類群だが、化石記録によると多様で豊富な分類群であったとされる。板鰓亜綱との共通祖先は約4億年前に存在した。現生種は多くが深海に生息する。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Observation d'une chimère par 220 m de fond (Ifremer 00621-73295).jpg)"
+      ]
+    }
   }
 ]

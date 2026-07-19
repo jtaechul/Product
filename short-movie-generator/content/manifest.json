@@ -261,5 +261,13 @@
     "common_name_en": "Peltospira smaragdina",
     "scientific_name": "Peltospira smaragdina",
     "date": "2026-07-19"
+  },
+  {
+    "id": "035",
+    "kind": "reels",
+    "common_name_ko": "은상어목",
+    "common_name_en": "Chimaeriformes",
+    "scientific_name": "Chimaeriformes",
+    "date": "2026-07-19"
   }
 ]

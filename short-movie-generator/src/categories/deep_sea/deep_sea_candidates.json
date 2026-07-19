@@ -363,44 +363,6 @@
   },
   {
     "kind": "creature",
-    "key": "chimaeriformes",
-    "needs_confirm": false,
-    "title": "File:Observation d'une chimère par 220 m de fond (Ifremer 00621-73295).jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Observation_d%27une_chim%C3%A8re_par_220_m_de_fond_%28Ifremer_00621-73295%29.jpg",
-    "license": "cc-by",
-    "credit": "null · CC BY",
-    "source": "File:Observation d'une chimère par 220 m de fond (Ifremer 00621-73295).jpg",
-    "name": "Chimaeriformes",
-    "name_ja": "",
-    "common_name_ko": "은상어목",
-    "common_name_en": "Chimaeriformes",
-    "depth": "220",
-    "facts": [
-      "ギンザメ目（学名：Chimaeriformes）は、軟骨魚綱全頭亜綱（ぜんとうあこう）の下位分類群。3科6属に約50種が含まれ、日本近海には11種が生息している。現在は50種ほどの小さな分類群だが、化石記録によると多様で豊富な分類群であったとされる。板鰓亜綱との共通祖先は約4億年前に存在した。現生種は多くが深海に生息する。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Chimaeriformes",
-      "common_name_ko": "은상어목",
-      "common_name_en": "Chimaeriformes",
-      "depth_range_m": "220",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "ギンザメ目（学名：Chimaeriformes）は、軟骨魚綱全頭亜綱（ぜんとうあこう）の下位分類群。3科6属に約50種が含まれ、日本近海には11種が生息している。現在は50種ほどの小さな分類群だが、化石記録によると多様で豊富な分類群であったとされる。板鰓亜綱との共通祖先は約4億年前に存在した。現生種は多くが深海に生息する。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Observation d'une chimère par 220 m de fond (Ifremer 00621-73295).jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Observation_d%27une_chim%C3%A8re_par_220_m_de_fond_%28Ifremer_00621-73295%29.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_chimaeriformes_29671512093.jpg"
-  },
-  {
-    "kind": "creature",
     "key": "rhizostoma octopus",
     "needs_confirm": false,
     "title": "File:Profileur Arvor CM en surface avec une méduse (Rhizostoma octopus) (Ifremer 00575-68734).jpg",
