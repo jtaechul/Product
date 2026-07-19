@@ -253,5 +253,13 @@
     "common_name_en": "Vampire squid",
     "scientific_name": "Vampyroteuthis infernalis",
     "date": "2026-07-19"
+  },
+  {
+    "id": "034",
+    "kind": "reels",
+    "common_name_ko": "Peltospira smaragdina",
+    "common_name_en": "Peltospira smaragdina",
+    "scientific_name": "Peltospira smaragdina",
+    "date": "2026-07-19"
   }
 ]
