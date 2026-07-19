@@ -117,6 +117,27 @@ def test_subject_crop_rescues_offcenter_subject(tmp_path):
     assert F._subject_crop(str(p2), 720, 1280) is None
 
 
+def test_nonsubject_filter_rejects_vehicles():
+    """★엉뚱한 이미지 배제(동음이의어: Chimaera=물고기이자 TVR 자동차): 자동차·미술품·인물
+    카테고리는 거르고, 어류 카테고리는 통과."""
+    R = F._NONSUBJECT_CAT_RE
+    for bad in ["Category:Automobiles with license plates", "Category:Red roadsters",
+                "TVR Chimaera IMG 8082.jpg", "Category:Sculptures", "Category:Paintings"]:
+        assert R.search(bad), f"거르지 못함: {bad}"
+    for ok in ["Category:Fish of Sardinia", "Category:Chimaera monstrosa",
+               "Chimaera cubana.jpg", "Category:Chondrichthyes"]:
+        assert not R.search(ok), f"잘못 거름: {ok}"
+
+
+def test_eye_focus_safe_on_blank(tmp_path):
+    """눈 검출은 확신 없으면 None(몸통 폴백) — 균일/작은 이미지에서 안전하게 None."""
+    from PIL import Image
+    from src.core import reframe
+    p = tmp_path / "blank.png"
+    Image.new("RGB", (300, 300), (40, 40, 44)).save(p)
+    assert reframe._eye_focus(str(p)) is None
+
+
 def test_remove_and_prune_candidates(tmp_path, monkeypatch):
     """★관리자 삭제 기능: 특정 key 수동 삭제 + '제작 불가' 후보 자동 삭제(제작 가능 후보는 유지)."""
     from src.core import discovery as D, footage as FT

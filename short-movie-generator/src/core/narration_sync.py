@@ -190,6 +190,36 @@ def _break_points(text: str) -> set[int]:
     return bps
 
 
+# 숫자와 한 덩어리로 붙는 단위·구두점(날짜·수치를 통째로 유지) — 이 안에서는 절대 줄바꿈 금지.
+_NUM_UNIT = set("0123456789０１２３４５６７８９年月日時分秒円ドル億万千百%％‰.,:mkgtcℓ")
+
+
+def _num_spans(text: str) -> list[tuple]:
+    """'숫자 그룹'(숫자+단위/구두점) 구간 [start,end) 목록. 예: '1914年5月29日'을 하나로 본다.
+    자막을 폭으로 강제 분할할 때 이 구간 '내부'로 자르지 않게 하려는 용도(1914年5 | 月29日 방지)."""
+    spans, i, n = [], 0, len(text)
+    while i < n:
+        if text[i].isdigit():
+            j = i
+            while j < n and text[j] in _NUM_UNIT:
+                j += 1
+            while j - 1 > i and text[j - 1] in ".,:":      # 끝에 붙은 구두점은 그룹에서 제외
+                j -= 1
+            spans.append((i, j)); i = j
+        else:
+            i += 1
+    return spans
+
+
+def _snap_out_of_num(cut: int, start: int, spans: list[tuple]) -> int:
+    """자를 위치 cut이 숫자 그룹 내부면 그룹 경계로 옮긴다: 앞쪽 진행이 있으면 그룹 시작으로
+    (그룹을 다음 조각으로 통째로), 없으면 그룹 끝으로(약간 넘쳐도 날짜를 쪼개지 않음)."""
+    for a, b in spans:
+        if a < cut < b:
+            return a if a > start else b
+    return cut
+
+
 def _fit_pieces(text: str, st: float, en: float, max_px: float, subsz: int) -> list[tuple]:
     """한 자막 청크를 '한 줄에 들어가는 조각'들로 쪼갠다 — 단어(문절) 단위로만, 글자 중간 금지.
 
@@ -209,6 +239,7 @@ def _fit_pieces(text: str, st: float, en: float, max_px: float, subsz: int) -> l
         return [(text, st, en)]
 
     bps = sorted(_break_points(text))
+    spans = _num_spans(text)                     # 숫자·날짜 그룹(내부 분할 금지)
     pieces, start, n = [], 0, len(text)
     while start < n:
         # start에서 폭이 허용되는 최대 end 계산
@@ -228,6 +259,9 @@ def _fit_pieces(text: str, st: float, en: float, max_px: float, subsz: int) -> l
                     cut = max(earlier) if earlier else cut
             else:
                 cut = end  # 문절 경계 전무 → 최후수단 폭 분할
+        cut = _snap_out_of_num(cut, start, spans)   # ★숫자·날짜 한가운데 자르지 않기(1914年5月29日 유지)
+        if cut <= start:                            # 안전판(그룹이 통째로 max_px 초과 등) — 폭 분할로 진행
+            cut = max(end, start + 1)
         pieces.append(text[start:cut])
         start = cut
     pieces = [p for p in (s.strip() for s in pieces) if p]

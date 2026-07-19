@@ -394,8 +394,8 @@ def _commons_photos(query: str, n: int, min_w: int = 1200, min_h: int = 800) -> 
         if not titles:
             return out
         info = requests.get(api, headers={"User-Agent": _UA}, timeout=30, params={
-            "action": "query", "format": "json", "prop": "imageinfo",
-            "titles": "|".join(titles[:40]),
+            "action": "query", "format": "json", "prop": "imageinfo|categories",
+            "titles": "|".join(titles[:40]), "cllimit": "50",
             "iiprop": "url|size|extmetadata", "iiextmetadatafilter": "LicenseShortName|Artist",
         }).json()
         for page in info.get("query", {}).get("pages", {}).values():
@@ -404,6 +404,13 @@ def _commons_photos(query: str, n: int, min_w: int = 1200, min_h: int = 800) -> 
             lic = _norm_license(meta.get("LicenseShortName", {}).get("value", ""))
             url = ii.get("url", "")
             w, h = ii.get("width", 0), ii.get("height", 0)
+            # ★엉뚱한 피사체 배제(핵심 · 동음이의어 사고: Chimaera=물고기 속명이자 TVR 자동차):
+            #   파일의 Commons 카테고리로 자동차·인물·미술품 등 비(非)생물을 거른다(실측 근거:
+            #   차=Automobiles/Red roadsters, 물고기=Fish of…/학명). 카테고리는 같은 배치 호출로 받아 무비용.
+            cats = " ".join(c.get("title", "") for c in page.get("categories", []) or [])
+            if _NONSUBJECT_CAT_RE.search(cats) or _NONSUBJECT_CAT_RE.search(page.get("title", "")):
+                log.info("[footage] 비생물 피사체 배제: %s", page.get("title", ""))
+                continue
             if lic and url and any(url.lower().endswith(e) for e in _IMAGE_EXT) and w >= min_w and h >= min_h:
                 artist = re.sub("<[^>]+>", "", meta.get("Artist", {}).get("value", "")).strip()
                 cr = artist or "Wikimedia Commons"
@@ -414,6 +421,16 @@ def _commons_photos(query: str, n: int, min_w: int = 1200, min_h: int = 800) -> 
     except Exception as e:  # noqa: BLE001
         log.warning("[footage] 컷어웨이 사진 검색 실패(%s): %s", query, e)
     return out
+
+
+# ★비(非)생물 피사체 배제(동음이의어 오삽입 방지): 자동차·탈것·인물·미술품·건물 등. Commons 카테고리·
+#   파일명에 이 단서가 있으면 그 사진을 쓰지 않는다(실사고: Chimaera 물고기에 TVR Chimaera 자동차 삽입).
+_NONSUBJECT_CAT_RE = re.compile(
+    r"automobile|roadster|\bcars?\b|\bvehicle|motorcycle|aircraft|airplane|\btrain\b|locomotive|"
+    r"\bboat\b|firearm|\bweapon|\brifle|pistol|architecture|building|cathedral|castle|"
+    r"sculptur|\bstatue|paintings?|\bdrawings?\b|engraving|lithograph|comics?|coins?|"
+    r"\bstamps?\b|\bflags?\b|\blogos?\b|mytholog|\bactor|actress|politician|footballer|"
+    r"\bTVR\b|Ferrari|Porsche|\bplayers?\b", re.I)
 
 
 def _inaturalist_photos(scientific_name: str, n: int = 8) -> list[dict]:
@@ -581,7 +598,12 @@ def _subject_crop(image_path: str, W: int, H: int) -> str | None:
         iw, ih = im.size
         if iw < 8 or ih < 8:
             return None
-        cx, cy, _ = reframe._subject_focus(image_path)         # 색무관 3단서 검출(미검출 시 0.5,0.5)
+        # ★눈 우선(사용자 규칙): 피사체 얼굴의 눈이 인식되면 눈을 중앙에, 아니면 몸통 중심.
+        eye = reframe._eye_focus(image_path)
+        if eye:
+            cx, cy = eye
+        else:
+            cx, cy, _ = reframe._subject_focus(image_path)     # 색무관 3단서 검출(미검출 시 0.5,0.5)
         tar = W / H
         if iw / ih > tar:                                      # 이미지가 더 넓음 → 좌우(x) 크롭
             ch = ih; cw = max(8, int(round(ih * tar))); axis = "x"

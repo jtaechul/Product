@@ -50,3 +50,25 @@ def test_hook_intro_install_ca_swallows_permission_error(monkeypatch):
         raise PermissionError(13, "Permission denied")
     monkeypatch.setattr(his.Path, "exists", boom)
     his._install_ca()
+
+
+def test_fit_pieces_keeps_date_number_whole():
+    """★자막 줄바꿈 수정: 숫자·날짜(1914年5月29日)를 조각 경계에서 쪼개지 않는다
+    (실사고: '1914年5' | '月29日'로 분리)."""
+    subsz = int(1280 * 0.039 * 1.5)
+    max_px = (720 - 2 * 88) * 0.96
+    for text in ["しかし1914年5月29日、船は沈みました", "総トン数は14191トンでした", "約4億年前の生命"]:
+        pieces = [p for p, _, _ in ns._fit_pieces(text, 0.0, 3.0, max_px, subsz)]
+        joined = "".join(pieces)
+        assert joined == text                      # 글자 손실 없음
+        # 숫자 그룹이 두 조각에 걸쳐 쪼개지지 않았는지: 각 그룹이 어느 한 조각에 통째로 들어감
+        for a, b in ns._num_spans(text):
+            grp = text[a:b]
+            assert any(grp in p for p in pieces), f"숫자그룹 '{grp}'가 쪼개짐: {pieces}"
+
+
+def test_num_spans_detects_date_and_number():
+    t = "しかし1914年5月29日、"
+    assert ns._num_spans(t) == [(3, 13)] and t[3:13] == "1914年5月29日"   # 날짜 통째
+    assert ns._num_spans("14191トン") and ns._num_spans("14191トン")[0][0] == 0
+    assert ns._num_spans("あいうえお") == []                        # 숫자 없음

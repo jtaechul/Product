@@ -174,6 +174,60 @@ def _subject_focus(frame_path: str) -> tuple[float, float, float]:
         return 0.5, 0.5, 0.0
 
 
+def _eye_focus(frame_path: str) -> tuple[float, float] | None:
+    """피사체 안에서 '눈(동공)'을 추정해 정규화 좌표(ex,ey)를 반환. 확신 없으면 None.
+
+    사용자 규칙: **눈이 인식되면 눈을 화면 중앙에**, 안 되면 몸통 중심(상위에서 폴백).
+    휴리스틱: 눈은 피사체 안에서 '주변보다 뚜렷이 어두운 작은 점(동공)'이다. 피사체 코어 영역에서
+    이웃 대비 가장 어두운(local dark) 지점을 찾되, ① 충분히 어둡고 ② 피사체 안이고 ③ 배경(피사체
+    밖)이 아닌 경우만 채택(문턱 미달이면 None → 몸통 폴백). 오검출 위험이 커 보수적으로 임계를 둔다.
+    """
+    try:
+        from PIL import Image
+        pts, w, h = _subject_pixels(frame_path)
+        if len(pts) < 40 or w < 6 or h < 6:
+            return None
+        pts.sort(key=lambda p: p[0], reverse=True)
+        core = pts[:max(40, len(pts) // 8)]
+        subj = {(x, y) for _, x, y in core}
+        xs = [x for _, x, y in core]; ys = [y for _, x, y in core]
+        x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
+        if x1 - x0 < 3 or y1 - y0 < 3:
+            return None
+        im = Image.open(frame_path).convert("L").resize((w, h))
+        gray = im.load()
+        from PIL import ImageStat
+        gmed = ImageStat.Stat(im).median[0]          # 전체 밝기 중앙값(밝은 몸통 vs 어두운 배경 기준)
+        # 피사체 몸통 중심(눈은 이 근처 · 배경 어두운 점 오검출 방지)
+        fx, fy, _ = _subject_focus(frame_path)
+        cxp, cyp = fx * (w - 1), fy * (h - 1)
+        rad = 0.32 * max(x1 - x0, y1 - y0)           # 몸통 중심에서 이 반경 안만 눈 후보
+        best, best_c = None, 0.0
+        R = 2                                        # 동공 주변 링 반경
+        for (x, y) in subj:
+            if not (x0 + R <= x <= x1 - R and y0 + R <= y <= y1 - R):
+                continue
+            if (x - cxp) ** 2 + (y - cyp) ** 2 > rad * rad:   # 가드①: 몸통 중심 근처만
+                continue
+            v = gray[x, y]
+            ring = [gray[x + dx, y + dy] for dx in (-R, 0, R) for dy in (-R, 0, R)
+                    if (dx or dy) and 0 <= x + dx < w and 0 <= y + dy < h]
+            if not ring:
+                continue
+            ring_mean = sum(ring) / len(ring)
+            if ring_mean < gmed:                     # 가드②: 눈은 '밝은 몸통'에 둘러싸임(어두운 배경 배제)
+                continue
+            contrast = ring_mean - v                 # 주변보다 얼마나 어두운가(동공 신호)
+            if contrast > best_c:
+                best_c, best = contrast, (x, y)
+        # ★보수적 임계: 뚜렷한 어두운 점이 없으면(약한 대비) 눈 미검출 → 몸통 폴백
+        if best is None or best_c < 40:
+            return None
+        return best[0] / max(1, w - 1), best[1] / max(1, h - 1)
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def _median(vals: list[float]) -> float:
     v = sorted(vals)
     return v[len(v) // 2] if v else 0.5
