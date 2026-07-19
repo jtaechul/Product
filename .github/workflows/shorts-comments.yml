@@ -1,0 +1,63 @@
+name: shorts-comments
+
+# 쿠팡 쇼츠 — 비공개→공개(예약공개 포함)된 영상에 고지·링크 '고정 댓글'을 자동 등록.
+# (2026-07-19 사용자 확정: 비공개로 먼저 올리고 스튜디오에서 예약 공개 → 공개되면 여기서 자동 댓글.)
+# 유튜브는 비공개 영상 댓글을 막으므로(run129) 업로드 시점엔 못 달고 대기열(data/pending_comments.json)에
+# 넣어둔 뒤, 이 워크플로가 주기적으로 공개 여부를 확인해 공개된 것에만 댓글을 단다. 핀 고정만 앱에서 1탭.
+
+on:
+  schedule:
+    - cron: "23 * * * *"   # 매시 23분(정각 몰림 방지) — 예약 공개 직후 대체로 1시간 안에 댓글이 달린다
+  workflow_dispatch:        # 수동 즉시 실행
+
+permissions:
+  contents: write           # 대기열(data/pending_comments.json) 갱신 커밋용
+
+concurrency:
+  group: shorts-comments
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: projects/coupang-shorts-factory
+
+jobs:
+  poll:
+    name: "공개된 영상에 고지 댓글 자동 등록"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 유튜브 클라이언트만 설치 (가볍게 — 렌더·TTS 미포함)
+        run: pip install -q google-auth google-auth-oauthlib google-api-python-client requests
+
+      - name: 대기 고지 댓글 처리
+        env:
+          SHORTS_YT_CLIENT_ID: ${{ secrets.SHORTS_YT_CLIENT_ID }}
+          SHORTS_YT_CLIENT_SECRET: ${{ secrets.SHORTS_YT_CLIENT_SECRET }}
+          SHORTS_YT_REFRESH_TOKEN: ${{ secrets.SHORTS_YT_REFRESH_TOKEN }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/post_comments.py
+
+      - name: 대기열 변화 커밋 (댓글을 달았거나 정리된 경우만)
+        if: always()
+        run: |
+          if ! git diff --quiet -- data/pending_comments.json 2>/dev/null; then
+            git config user.name "shorts-factory-bot"
+            git config user.email "github-actions@users.noreply.github.com"
+            git add -A data/pending_comments.json
+            git commit -m "coupang-shorts: 고지 댓글 대기열 갱신 [skip ci]"
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push origin HEAD:main && break || sleep 4
+            done
+          else
+            echo "대기열 변화 없음 — 커밋 생략"
+          fi

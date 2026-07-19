@@ -135,8 +135,9 @@ def generate_script(product: dict, settings: dict) -> dict:
     store_url = settings.get("channel", {}).get("store_url", "https://miraemarket.pages.dev").rstrip("/")
     # 링크 형식(2026-07-17 사용자 확정): 도메인 뒤 "/" 필수 + URL은 줄 단독(유튜브 자동 링크 인식).
     # 실제 업로드 댓글은 youtube.build_pinned_comment(상품 번호 딥링크 포함)가 다시 만든다 — 여긴 미리보기용.
+    _brand = settings.get("channel", {}).get("name", "미래에서 온 만물상")
     script["pinned_comment"] = (
-        f"{DISCLOSURE}\n미래마켓에서 이 제품 보기 →\n{store_url}/")
+        f"{DISCLOSURE}\n{_brand}에서 이 제품 보기 →\n{store_url}/")
     print(f"[script] 생성 완료: '{script.get('title', '')[:40]}' "
           f"라인 {len(script['lines'])}개, 공백 제외 {script.get('_char_count', '?')}자 "
           f"(프로바이더 {provider}/{model})")
