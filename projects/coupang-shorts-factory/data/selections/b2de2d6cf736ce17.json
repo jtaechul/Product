@@ -1,7 +1,7 @@
 {
  "row_hash": "b2de2d6cf736ce17",
  "product_name": "미닉스 더플렌더 Max 건조분쇄 음식물처리기",
- "saved_at": "2026-07-19T23:00:55.714Z",
+ "saved_at": "2026-07-19T23:02:02.183Z",
  "lines": [
   {
    "line_i": 0,
@@ -131,6 +131,11 @@
      "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYXBieWQyY2N4Mm1kd295dGJ5dWtsOGpyZWJmOTVtZXRocmc3cTIzbCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/jURWvLCpsTpKdgTmcH/giphy.gif",
      "source": "giphy",
      "query": "Nice feeling"
+    },
+    {
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmNnphang0Z21xOGd4dmV6NWhpZ2FnY3NpYWVmajNkZGVsa24wb3VscCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/mlqkBi7iYscCY/giphy.gif",
+     "source": "giphy",
+     "query": "So Clean"
     }
    ]
   }
