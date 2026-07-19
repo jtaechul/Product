@@ -2445,10 +2445,20 @@ function renderTray(li) {
   if (!arr.length) { tray.innerHTML = '<span class="traymsg">아직 고른 이미지가 없습니다 — 아래 후보를 탭하거나 ‘GIF 검색’을 누르세요.</span>'; return; }
   arr.forEach((pk, i) => {
     const t = document.createElement("div"); t.className = "traytile";
-    if (pk._thumb) {
+    // ⭐ 미리보기 소스 폴백 체인(2026-07-19): 확정 썸네일 → 원본 URL 직접 로드 → /media 프록시.
+    //   /media 프록시는 GitHub 릴리스 자산만 허용(giphy 등 외부는 403)하므로, GIF는 원본 URL을
+    //   브라우저가 직접 로드해야 미리보기가 뜬다(선택 트레이가 '미리보기 없음'으로 뜨던 문제 해결).
+    const srcs = [...new Set([pk._thumb, pk.url, pk.url && mediaUrl(pk.url, "")].filter(Boolean))];
+    if (srcs.length) {
       const im = document.createElement("img"); im.loading = "lazy"; im.alt = "";
-      im.onerror = () => { im.remove(); t.classList.add("nothumb"); const s = document.createElement("span"); s.textContent = "미리보기 없음"; t.insertBefore(s, t.firstChild); };
-      im.src = pk._thumb; t.appendChild(im);
+      let si = 0;
+      im.onerror = () => {
+        if (si < srcs.length) { im.src = srcs[si++]; return; }   // 다음 소스로 재시도
+        im.onerror = null; im.remove(); t.classList.add("nothumb");
+        const s = document.createElement("span"); s.textContent = pk.source === "upload" ? "내 파일" : "미리보기 없음";
+        t.insertBefore(s, t.firstChild);
+      };
+      im.src = srcs[si++]; t.appendChild(im);
     } else {
       t.classList.add("nothumb"); const s = document.createElement("span"); s.textContent = pk.source === "upload" ? "내 파일" : "미리보기 없음"; t.appendChild(s);
     }
@@ -2534,7 +2544,7 @@ async function imgRestoreSaved() {
           : p.url ? "url:" + p.url
           : "restored:" + li + ":" + arr.length;
         const thumb = (m && imgAssetMap[m.name]) ? mediaUrl(imgAssetMap[m.name], imgAssetVer[m.name])
-          : p.url ? mediaUrl(p.url, "")
+          : p.url ? p.url                        // ⭐ 외부 이미지(GIF 등)는 직접 로드 — /media 프록시는 릴리스 전용(giphy 403)
           : (p.source === "upload" && p.file)
             ? `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${P}/${p.file}` : "";
         arr.push({ ...p, _key: key, _thumb: thumb });
