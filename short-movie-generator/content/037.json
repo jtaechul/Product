@@ -1,0 +1,57 @@
+{
+  "id": "037",
+  "created_at": "2026-07-19T14:07:07+00:00",
+  "updated_at": "2026-07-19T14:07:07+00:00",
+  "status": "published",
+  "category": "deep_sea",
+  "series": "심해 도감",
+  "species": {
+    "common_name_ko": "Dumbo octopus",
+    "common_name_en": "Dumbo octopus",
+    "scientific_name": "Grimpoteuthis discoveryi",
+    "depth_range_m": "2600-4870",
+    "habitat": "",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "Grimpoteuthis discoveryi is a small species of octopus known from more than 50 specimens.",
+      "It was described in 2003, but specimens have been found as early as 1910.",
+      "The type species was found at  49°35'N, 14°01'W, southwest of Ireland."
+    ]
+  },
+  "reels": {
+    "hook": "まるで耳、深海の、奇妙",
+    "caption": "漆黒の海の底、光という光がすでに旅を終えた場所で、まるで童話の中の耳のようなヒレが、ゆっくりと羽ばたきます。音もなく漂うその姿は、まるで深海が見せる小さな夢のようです。\n\nその名はダンボオクトパス(学名: Grimpoteuthis discoveryi)。\n\n住処は水深2600メートルから4870メートル、太陽の光が届くことなど一度もない、静寂だけが支配する世界です。タイプ標本が見つかったのは、北緯49度35分・西経14度01分、アイルランド南西沖の深い海の底でした。地図で指し示すことはできても、実際にそこへ立つ人間はほとんどいません。\n\nこの生き物の存在が世に知られているのは、これまでに見つかった標本がわずか50体あまりだからです。深海という広大な闇の中で、50体という数字は、奇跡に近い出会いの記録と言えるでしょう。姿を見せることさえ稀な、そんな控えめな暮らしぶりがうかがえます。\n\n正式に「ダンボオクトパス」として記載されたのは2003年のことでした。けれど実は、最初の標本が見つかったのは1910年。名前も肩書きもないまま、深海でおよそ93年間、ただじっと漂い続けていたことになります。昇進も、履歴書も、必要のない世界です。\n\n深い海の底で、静かに、確かに生き続けてきたこの姿。\nもしこの物語が心に触れたなら、どうか保存しておいてください。\nそして、同じ海を想う誰かにも、そっとシェアしてあげてください。\n\n映像: NOAA Ocean Exploration・Public Domain",
+    "hashtags": [
+      "#ダンボオクトパス",
+      "#深海生物"
+    ],
+    "reveal_name": "ダンボオクトパス / Grimpoteuthis discoveryi",
+    "reveal_fact": "深い・耳ヒレ・浮遊、深海のタコ",
+    "hook_ko": "심해의 귀, 마치 우주에서? 문어",
+    "caption_ko": "칠흑 같은 바다 밑, 빛이라는 빛이 이미 여행을 마친 그곳에서, 마치 동화 속 귀처럼 생긴 지느러미가 천천히 나부낍니다. 소리 없이 떠다니는 그 모습은, 마치 심해가 보여주는 작은 꿈처럼 느껴집니다.\n\n그 이름은 덤보문어(학명: Grimpoteuthis discoveryi)입니다.\n\n서식지는 수심 2600미터에서 4870미터, 햇빛이 단 한 번도 닿은 적 없는, 정적만이 지배하는 세계입니다. 기준 표본이 발견된 곳은 북위 49도 35분, 서경 14도 01분, 아일랜드 남서쪽 먼바다의 깊은 해저였습니다. 지도 위에서는 짚어낼 수 있어도, 실제로 그곳에 서 본 사람은 거의 없습니다.\n\n이 생물의 존재가 세상에 알려진 것은, 지금까지 발견된 표본이 겨우 50여 개체뿐이기 때문입니다. 심해라는 광대한 어둠 속에서 50개체라는 숫자는, 기적에 가까운 만남의 기록이라 할 수 있습니다. 모습을 드러내는 일조차 드문, 그런 조용한 삶을 짐작하게 합니다.\n\n정식으로 '덤보문어'라는 이름으로 기재된 것은 2003년의 일이었습니다. 하지만 사실 최초의 표본이 발견된 것은 1910년. 이름도 직함도 없이, 심해에서 약 93년 동안 그저 조용히 떠다니고 있었던 셈입니다. 승진도, 이력서도 필요 없는 세계입니다.\n\n깊은 바다 밑에서, 조용히, 그러나 확실히 살아온 이 모습.\n이 이야기가 마음에 닿으셨다면, 부디 저장해 두시기 바랍니다.\n그리고 같은 바다를 생각하는 누군가에게도, 살며시 공유해 주시기 바랍니다.\n\n영상: NOAA Ocean Exploration・Public Domain",
+    "hashtags_ko": [
+      "#Dumbo octopus",
+      "#심해생물"
+    ],
+    "yt_title": "93年間、名前なき深海タコ ダンボオクトパス #ダンボオクトパス #深海生物",
+    "yt_title_ko": "93년간 이름 없던 심해 문어 덤보문어 #Dumbo octopus #심해생물",
+    "visualizer": "reels",
+    "video_file": "dumbo_octopus_20260719_140707.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Wikipedia (en)",
+      "Wikimedia Commons (File:Grimpoteuthis discoveryi.jpg)"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-037/reels_037.mp4",
+    "rev": "29689924451",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-037/cover_037.jpg",
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-037/ytthumb_037.jpg"
+  },
+  "post": null
+}

@@ -277,5 +277,35 @@
         "Wikimedia Commons (File:Solaster feeding on Pannychia moseleyi.jpg)"
       ]
     }
+  },
+  {
+    "key": "grimpoteuthis discoveryi",
+    "kind": "creature",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Grimpoteuthis_discoveryi.jpg",
+      "license": "public-domain",
+      "credit": "Mike Vecchione, NOAA",
+      "source": "File:Grimpoteuthis discoveryi.jpg",
+      "media_kind": "photo",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Grimpoteuthis_discoveryi.jpg"
+    },
+    "species": {
+      "scientific_name": "Grimpoteuthis discoveryi",
+      "common_name_ko": "Dumbo octopus",
+      "common_name_en": "Dumbo octopus",
+      "depth_range_m": "2600-4870",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Grimpoteuthis discoveryi is a small species of octopus known from more than 50 specimens.",
+        "It was described in 2003, but specimens have been found as early as 1910.",
+        "The type species was found at  49°35'N, 14°01'W, southwest of Ireland."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Grimpoteuthis discoveryi.jpg)"
+      ]
+    }
   }
 ]

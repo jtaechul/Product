@@ -278,5 +278,13 @@
     "common_name_en": "Peltospira smaragdina",
     "scientific_name": "Peltospira smaragdina",
     "date": "2026-07-19"
+  },
+  {
+    "id": "037",
+    "kind": "reels",
+    "common_name_ko": "Dumbo octopus",
+    "common_name_en": "Dumbo octopus",
+    "scientific_name": "Grimpoteuthis discoveryi",
+    "date": "2026-07-19"
   }
 ]
