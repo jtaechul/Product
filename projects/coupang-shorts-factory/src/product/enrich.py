@@ -56,9 +56,28 @@ def _cache_load(row_hash: str, fingerprint: str) -> dict | None:
 
 
 def _cache_save(row_hash: str, fingerprint: str, data: dict) -> None:
+    """분석 결과 저장 + ⭐ 중복 분석 감시 장부(재발 방지 검증 — 2026-07-19 사용자 확정).
+
+    analyzed 이력에 같은 지문이 이미 있는데 또 저장하러 왔다면, 같은 자료를 두 번 이상
+    LLM 분석했다는 뜻이다. 직전 결과가 빈 껍데기였던 정당한 재시도가 아니라면 코드 결함이므로
+    CI 로그에 ::warning::으로 크게 남긴다(운영은 막지 않되 회귀를 즉시 드러낸다)."""
+    import datetime
     ENRICH_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    (ENRICH_CACHE_DIR / f"{row_hash}.json").write_text(
-        json.dumps({"fingerprint": fingerprint, "data": data}, ensure_ascii=False, indent=1),
+    p = ENRICH_CACHE_DIR / f"{row_hash}.json"
+    history = []
+    try:
+        history = json.loads(p.read_text(encoding="utf-8")).get("analyzed") or []
+    except Exception:
+        pass
+    if any(h.get("fingerprint") == fingerprint for h in history):
+        print(f"::warning::[enrich] 같은 자료(지문 {fingerprint})를 다시 LLM 분석했습니다 — "
+              "직전 결과가 비어 있었거나 캐시 파일이 지워진 경우가 아니라면 캐시 코드 결함입니다. "
+              "(원칙: 자료 업로드당 분석 1회)")
+    history.append({"at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+                    "fingerprint": fingerprint})
+    p.write_text(
+        json.dumps({"fingerprint": fingerprint, "data": data, "analyzed": history[-20:]},
+                   ensure_ascii=False, indent=1),
         encoding="utf-8")
 
 

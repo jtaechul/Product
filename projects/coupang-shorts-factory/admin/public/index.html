@@ -1468,6 +1468,7 @@ $("btnAddProduct").onclick = (ev) => busy(ev.target, async () => {
       toast("상품은 추가됐지만 동영상 업로드는 실패: " + (e.message || e), 6000);
     }
   }
+  const hadMaterials = attached.length > 0 || !!notes;   // 자료(캡처·메모)가 실제로 올라갔는지 — 아래 1회 분석 트리거 조건
   ["pName", "pPrice", "pS1", "pS2", "pS3", "pLink", "pImg", "pNotes", "pVideo", "pVideoUrl"].forEach((id) => $(id).value = "");
   $("pVideoList").innerHTML = "";
   attached = []; renderFiles();
@@ -1480,7 +1481,15 @@ $("btnAddProduct").onclick = (ev) => busy(ev.target, async () => {
   $("planView").innerHTML = ""; $("planActions").style.display = "none";
   // 자동 시작 폐지(2026-07-17 사용자 확정): 등록 후 운영자가 '기획방향 수립' 버튼을 눌러 시작한다.
   showDirStart("등록 완료 — 아래 버튼을 누르면 자료에서 차별점 3안을 뽑아 여기에 띄웁니다.");
-  setStatus("상품 등록 완료 — 아래 '② 기획 방향 선택'에서 '기획방향 수립'을 눌러 시작하세요.");
+  // ⭐ 업로드 시점 1회 분석(2026-07-19 사용자 확정): 자료가 올라간 등록이면 지금 바로 CI가 딱 한 번
+  //    분석해 결과를 저장(data/enrich)한다. 이후 기획~제작의 모든 실행은 저장된 결과를 재사용(재분석 없음).
+  //    분석이 끝나기를 기다릴 필요 없음 — 바로 기획을 시작해도 대기열이 순서를 지켜 이중 분석을 막는다.
+  if (hadMaterials) {
+    try { await mkDispatch({ mode: "enrich", row: String(newRow) }); } catch (e) { console.warn("분석 예약 실패(등록은 완료)", e); }
+    setStatus("상품 등록 완료 — 자료 분석을 시작했습니다(이번 딱 1회, 이후 재분석 없음). 기다릴 필요 없이 '② 기획 방향 선택'에서 '기획방향 수립'을 눌러 진행하세요.");
+  } else {
+    setStatus("상품 등록 완료 — 아래 '② 기획 방향 선택'에서 '기획방향 수립'을 눌러 시작하세요.");
+  }
   toast("상품 등록 완료");
   focusSection("tab-direction");
 });
