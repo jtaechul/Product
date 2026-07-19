@@ -155,48 +155,6 @@
   },
   {
     "kind": "creature",
-    "key": "vampyroteuthis infernalis",
-    "needs_confirm": false,
-    "title": "File:Pu - Vampyroteuthis infernalis - 2.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Pu_-_Vampyroteuthis_infernalis_-_2.jpg",
-    "license": "cc-by-sa",
-    "credit": "Emőke Dénes · CC BY-SA",
-    "source": "File:Pu - Vampyroteuthis infernalis - 2.jpg",
-    "name": "Vampyroteuthis infernalis",
-    "name_ja": "",
-    "common_name_ko": "흡혈오징어",
-    "common_name_en": "Vampire squid",
-    "depth": "",
-    "facts": [
-      "コウモリダコ（蝙蝠蛸、蝙蝠鮹、Vampyroteuthis）は、コウモリダコ目コウモリダコ科に属する、上位分類の定めがたい頭足類。現生するのは V.",
-      "infernalis （ヴァンピロテウティス・インフェルナリス）の1種のみである。",
-      "熱帯・温帯地域の約600mから900mにかけての深海に生息する。体長は約30cm。鰭（ひれ）の付け根には青白い光を発する発光器を4つ備えている。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Vampyroteuthis infernalis",
-      "common_name_ko": "흡혈오징어",
-      "common_name_en": "Vampire squid",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "コウモリダコ（蝙蝠蛸、蝙蝠鮹、Vampyroteuthis）は、コウモリダコ目コウモリダコ科に属する、上位分類の定めがたい頭足類。現生するのは V.",
-        "infernalis （ヴァンピロテウティス・インフェルナリス）の1種のみである。",
-        "熱帯・温帯地域の約600mから900mにかけての深海に生息する。体長は約30cm。鰭（ひれ）の付け根には青白い光を発する発光器を4つ備えている。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Pu - Vampyroteuthis infernalis - 2.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Pu_-_Vampyroteuthis_infernalis_-_2.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_vampyroteuthis_infernalis_29671512093.jpg"
-  },
-  {
-    "kind": "creature",
     "key": "grimpoteuthis discoveryi",
     "needs_confirm": false,
     "title": "File:Grimpoteuthis discoveryi.jpg",

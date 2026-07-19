@@ -188,5 +188,35 @@
         "Wikimedia Commons (File:Methane-Carbon-Flow-into-the-Benthic-Food-Web-at-Cold-Seeps---A-Case-Study-from-the-Costa-Rica-pone.0074894.s001.ogv)"
       ]
     }
+  },
+  {
+    "key": "vampyroteuthis infernalis",
+    "kind": "creature",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Pu_-_Vampyroteuthis_infernalis_-_2.jpg",
+      "license": "cc-by-sa",
+      "credit": "Emőke Dénes · CC BY-SA",
+      "source": "File:Pu - Vampyroteuthis infernalis - 2.jpg",
+      "media_kind": "photo",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Pu_-_Vampyroteuthis_infernalis_-_2.jpg"
+    },
+    "species": {
+      "scientific_name": "Vampyroteuthis infernalis",
+      "common_name_ko": "흡혈오징어",
+      "common_name_en": "Vampire squid",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "コウモリダコ（蝙蝠蛸、蝙蝠鮹、Vampyroteuthis）は、コウモリダコ目コウモリダコ科に属する、上位分類の定めがたい頭足類。現生するのは V.",
+        "infernalis （ヴァンピロテウティス・インフェルナリス）の1種のみである。",
+        "熱帯・温帯地域の約600mから900mにかけての深海に生息する。体長は約30cm。鰭（ひれ）の付け根には青白い光を発する発光器を4つ備えている。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Pu - Vampyroteuthis infernalis - 2.jpg)"
+      ]
+    }
   }
 ]

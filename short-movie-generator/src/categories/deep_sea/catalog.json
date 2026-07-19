@@ -124,5 +124,12 @@
     "common_name_en": "Paralomis diomedeae",
     "scientific_name": "Paralomis diomedeae",
     "date": "2026-07-15"
+  },
+  {
+    "no": 33,
+    "common_name_ko": "흡혈오징어",
+    "common_name_en": "Vampire squid",
+    "scientific_name": "Vampyroteuthis infernalis",
+    "date": "2026-07-19"
   }
 ]

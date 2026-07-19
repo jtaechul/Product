@@ -245,5 +245,13 @@
     "scientific_name": "Wreck Lusitania",
     "date": "2026-07-18",
     "youtube_url": "https://youtu.be/-qRIkExYiKo"
+  },
+  {
+    "id": "033",
+    "kind": "reels",
+    "common_name_ko": "흡혈오징어",
+    "common_name_en": "Vampire squid",
+    "scientific_name": "Vampyroteuthis infernalis",
+    "date": "2026-07-19"
   }
 ]
