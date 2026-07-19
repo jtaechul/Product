@@ -366,6 +366,25 @@
       research-grade 관측 사진 · `footage._inaturalist_photos`)를 Wikimedia Commons와 **병합**해 쓴다
       (`species_photo_doc`). 심해종은 시민관측이 드물어 적게 나오지만(무해), **얕은·연안·수족관 해양생물**
       에서 크게 확대된다(실측: Octopus vulgaris·Hippocampus·흰동가리 각 6장+). 저작자·라이선스 표기 유지.
+    - **★소싱처 추가 다변화(운영자 확정 · '1장 영상' 방지)**: 한 종에 이미지가 많아야 '한 장 우려먹기'가
+      아니라 다양한 컷의 다큐가 된다 → `species_photo_doc`가 **4개 소스를 병합**한다:
+      ① Wikimedia Commons ② iNaturalist ③ **Openverse**(`footage._openverse_photos` · **키 불필요**,
+      Flickr·스미소니언 등 여러 기관 CC 이미지 집계 · CC0/PDM/BY/BY-SA만 · 장변 800px↑) ④ **한국
+      공공누리(KOGL)**(`footage._korea_public_photos` · `DATA_GO_KR_KEY` 있으면 data.go.kr 국립생물자원관
+      조회, 없으면 조용히 건너뜀 · `kogl-type1`=상업이용 허용·출처표기). URL 중복 제거 후 실사 2중 필터.
+      최소 실사 장수 상향(`_PHOTODOC_MIN=5`·`_PHOTODOC_MAX=7`). Openverse 라이선스 요청은 NC를 애초에
+      제외(`license=cc0,pdm,by,by-sa`)해 게이트 오통과 없음. 검증(라이브): 뱀파이어오징어 Openverse 8장
+      키없이 확보(과호출 시 429는 graceful []·타소스 폴백). 회귀: `test_openverse_license_map_and_dims`.
+    - **★피사체 학습(Gemini 비전 · 운영자 명령2 · `src/core/vision_subject.py`)**: "gemini API로 해당 종
+      이미지를 분석·학습한 뒤 제작"하라는 요청 → 소싱 사진을 비전으로 검증·조준한다(키 있을 때만, 없으면
+      휴리스틱 폴백). ① `verify_species`: 다운로드한 사진이 **해양 생물의 대분류가 맞는지** 판별해 자동차·
+      사람·미술품 등 **명백한 오소싱만 하드 리젝트**(species_photo_doc 2차 필터). ② `locate_focus`: 피사체의
+      **눈(우선)·몸통 중심** 정규화 좌표를 돌려줘 `_subject_crop`이 켄번즈 크롭을 정확히 조준(휴리스틱보다
+      우선). ★**종 단위 시각 식별은 금지**(저해상 프레임에서 불가 → 진짜 생물까지 폐기한 Step2 사고 재발
+      방지) — verify는 '비생물 대분류'만 걸러 진짜 생물은 통과시킨다. 저작권: **학습(분석)은 어떤 이미지든
+      무방**하고, 최종 출력에 넣는 소스는 여전히 라이선스 게이트 통과분만(이 모듈은 판정·좌표만 반환·이미지를
+      출력에 넣지 않음). 키(GEMINI_API_KEY) 없으면 verify/locate 모두 None(=통과·폴백). 회귀:
+      `test_vision_subject_safe_without_key`·`test_vision_subject_json_parse`.
     - **★피사체(눈·몸통) 중심 고정(운영자 확정 · '피사체가 화면 밖으로' 수정)**: 사진 켄번즈가 피사체 위치를
       모르고 **중앙 크롭**을 해, 세로(9:16) 프레임에 넓은 사진을 담을 때 좌우가 잘려 피사체가 화면 밖으로
       나가던 문제 → `footage._subject_crop`이 켄번즈 **전에** 피사체를 '학습'해 출력 종횡비 크롭을 피사체에

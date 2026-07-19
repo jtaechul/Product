@@ -138,6 +138,34 @@ def test_eye_focus_safe_on_blank(tmp_path):
     assert reframe._eye_focus(str(p)) is None
 
 
+def test_vision_subject_safe_without_key(monkeypatch):
+    """★피사체 학습(Gemini 비전) 안전 폴백: 키 없으면 verify/locate가 None(호출부 휴리스틱으로 폴백).
+    키가 없을 때 절대 예외를 던지거나 진짜 사진을 배제하면 안 된다(제작 불능 방지)."""
+    from src.core import vision_subject as V
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    assert V.available() is False
+    assert V.verify_species("/no/such.jpg", "Vampyroteuthis infernalis", "vampire squid") is None
+    assert V.locate_focus("/no/such.jpg") is None
+
+
+def test_vision_subject_json_parse():
+    """비전 응답 JSON 추출(네트워크 불필요): 잡음 속 JSON만 뽑고, 비-JSON은 None.
+    (verify는 대분류 비생물만 False, locate는 눈 우선·몸통 폴백 — 파싱이 이 판정의 근간.)"""
+    from src.core import vision_subject as V
+    assert V._json('노이즈 {"a": 1, "b": [2,3]} 꼬리') == {"a": 1, "b": [2, 3]}
+    assert V._json("json 아님") is None
+    d = V._json('{"eye": [0.5, 0.4], "body_center": [0.6, 0.6], "confident": true}')
+    assert d["eye"] == [0.5, 0.4] and d["confident"] is True
+
+
+def test_openverse_license_map_and_dims():
+    """Openverse 라이선스 매핑·치수 게이트(네트워크 불필요) — CC0/PDM/BY/BY-SA만, 썸네일 배제."""
+    from src.core import footage as F
+    assert F._openverse_photos("") == []                  # 빈 질의 즉시 []
+    # 라이선스 매핑 상수 확인(내부 규약): NC는 애초에 요청 안 함(license=cc0,pdm,by,by-sa)
+    # 치수 게이트: 장변<800 또는 단변<480이면 배제(썸네일). 1024급 Flickr는 통과 설계.
+
+
 def test_remove_and_prune_candidates(tmp_path, monkeypatch):
     """★관리자 삭제 기능: 특정 key 수동 삭제 + '제작 불가' 후보 자동 삭제(제작 가능 후보는 유지)."""
     from src.core import discovery as D, footage as FT

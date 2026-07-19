@@ -598,12 +598,22 @@ def _subject_crop(image_path: str, W: int, H: int) -> str | None:
         iw, ih = im.size
         if iw < 8 or ih < 8:
             return None
-        # ★눈 우선(사용자 규칙): 피사체 얼굴의 눈이 인식되면 눈을 중앙에, 아니면 몸통 중심.
-        eye = reframe._eye_focus(image_path)
-        if eye:
-            cx, cy = eye
+        # ★피사체 학습 3단(운영자 명령2 · 정확도 순): ① Gemini 비전(눈/몸통 정밀 좌표, 키 있으면)
+        #   ② 휴리스틱 눈 검출 ③ 색무관 3단서 몸통 중심. 비전은 키 없으면 None → ②③ 폴백.
+        focus = None
+        try:
+            from src.core import vision_subject
+            focus = vision_subject.locate_focus(image_path)
+        except Exception:  # noqa: BLE001
+            focus = None
+        if focus:
+            cx, cy = focus
         else:
-            cx, cy, _ = reframe._subject_focus(image_path)     # 색무관 3단서 검출(미검출 시 0.5,0.5)
+            eye = reframe._eye_focus(image_path)               # 눈 우선(사용자 규칙)
+            if eye:
+                cx, cy = eye
+            else:
+                cx, cy, _ = reframe._subject_focus(image_path)  # 색무관 3단서 검출(미검출 시 0.5,0.5)
         tar = W / H
         if iw / ih > tar:                                      # 이미지가 더 넓음 → 좌우(x) 크롭
             ch = ih; cw = max(8, int(round(ih * tar))); axis = "x"
@@ -1062,8 +1072,8 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
 
 
 # ── 실사 사진 다큐(영상 미확보 생물 → 여러 실사 이미지 켄번즈 시퀀스) ────────────────────
-_PHOTODOC_MIN = 4          # 실사 최소 장수(미달이면 제작 안 함 · 날조·빈약 방지)
-_PHOTODOC_MAX = 6          # 시퀀스 최대 컷 수
+_PHOTODOC_MIN = 5          # 실사 최소 장수(운영자 확정: '1장 영상' 방지 → 소스 다변화로 5장↑ 확보)
+_PHOTODOC_MAX = 7          # 시퀀스 최대 컷 수(다양한 컷)
 _PHOTODOC_MIN_STRUCT = 12.0   # 이미지 최소 구조변별(macro std) — 밋밋한(빈) 표본 컷 배제
 #   실측: 좋은 실사 14.8~85, 빈 표본 매크로 1.2~3.1 → 12가 안전한 경계. 좋은 사진이 4장 미만인
 #   종(빈약한 소스)은 자동으로 제작 대상에서 빠진다(나쁜 영상 방지).
@@ -1100,6 +1110,74 @@ def _looks_photographic(path: str) -> bool:
     return True
 
 
+def _openverse_photos(query: str, n: int = 8) -> list[dict]:
+    """★추가 소싱처(Openverse · 키 불필요): Flickr·스미소니언·박물관 등 여러 기관의 CC 이미지를
+    한곳에서 집계. 종명으로 검색해 CC0/BY/BY-SA 고해상만 채택 → [{url,license,credit,source}].
+    Commons·iNaturalist로 부족한 실사 풀을 넓힌다(저작자·라이선스 표기 유지)."""
+    q = (query or "").strip()
+    if not q:
+        return []
+    _LIC = {"cc0": "cc0", "pdm": "public-domain", "by": "cc-by", "by-sa": "cc-by-sa"}
+    out: list[dict] = []
+    try:
+        import requests
+        d = requests.get("https://api.openverse.org/v1/images/", headers={"User-Agent": _UA},
+                         timeout=25, params={"q": q, "license": "cc0,pdm,by,by-sa",
+                                             "page_size": str(max(10, n * 2)), "mature": "false"}).json()
+    except Exception as e:  # noqa: BLE001
+        log.info("[footage] Openverse 조회 실패(%s): %s", q, e)
+        return out
+    for r in d.get("results", []):
+        lic = _LIC.get((r.get("license") or "").lower())
+        url = r.get("url") or ""
+        w, h = r.get("width") or 0, r.get("height") or 0
+        if not (lic and url) or not any(url.lower().endswith(e) for e in _IMAGE_EXT):
+            continue
+        if w and h and (max(w, h) < 800 or min(w, h) < 480):   # 썸네일 배제(치수 미상은 통과 후 판단)
+            continue                                            #   9:16 켄번즈(720×1280)엔 장변 800px면 충분
+        cr = (r.get("creator") or "").strip()
+        src = (r.get("source") or "openverse").strip()
+        credit = " · ".join([x for x in (cr, src, {"cc-by": "CC BY", "cc-by-sa": "CC BY-SA"}.get(lic, "")) if x])
+        out.append({"url": url, "license": lic, "credit": credit or "Openverse", "source": f"openverse:{src}"})
+        if len(out) >= n:
+            break
+    return out
+
+
+def _korea_public_photos(scientific_name: str, common_name_en: str, n: int = 6) -> list[dict]:
+    """★한국 공공누리(KOGL) 소싱: 국립생물자원관 '국가생물종지식정보시스템' 등 공공 이미지.
+    data.go.kr 서비스키(`DATA_GO_KR_KEY`)가 있으면 조회, 없으면 [](운영자 미설정 시 조용히 건너뜀).
+    공공누리 제1유형은 상업 이용 허용(출처 표기) → 라이선스 게이트 통과(kogl-type1).
+    ★국내 해양·수산 공공기관 자료를 적극 활용(운영자 요청)."""
+    import os
+    key = os.environ.get("DATA_GO_KR_KEY")
+    if not key:
+        return []
+    out: list[dict] = []
+    try:
+        import requests
+        # 국립생물자원관 생물종 검색(학명 우선) → 대표 이미지 URL. 데이터셋별 스키마가 달라
+        # 운영자가 엔드포인트를 확정해 연결한다(아래는 표준형: serviceKey + 학명 파라미터).
+        d = requests.get("https://apis.data.go.kr/1480523/NIBRSpeciesInfoService/searchSpecies",
+                         timeout=25, headers={"User-Agent": _UA},
+                         params={"serviceKey": key, "st": "1", "sw": scientific_name,
+                                 "numOfRows": str(n), "_type": "json"}).json()
+        items = (((d.get("response") or {}).get("body") or {}).get("items") or {}).get("item") or []
+        if isinstance(items, dict):
+            items = [items]
+        for it in items:
+            url = it.get("imgUrl") or it.get("img_url") or ""
+            if url and any(url.lower().endswith(e) for e in _IMAGE_EXT):
+                out.append({"url": url, "license": "kogl-type1",
+                            "credit": f"{it.get('reg_agncy', '국립생물자원관')} · 공공누리 제1유형",
+                            "source": "data.go.kr:NIBR"})
+            if len(out) >= n:
+                break
+    except Exception as e:  # noqa: BLE001
+        log.info("[footage] 공공누리(data.go.kr) 조회 실패(%s): %s", scientific_name, e)
+    return out
+
+
 def species_photo_doc(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
     """★영상 미확보 생물 → 실사 사진 여러 장을 확보(라이선스+실사 필터). 4장 이상이면 사진 다큐로
     제작 가능. 실제 시퀀스 합성은 파이프라인이 본문 길이를 안 뒤 build_wreck_documentary로 수행한다
@@ -1107,11 +1185,17 @@ def species_photo_doc(scientific_name: str, common_name_en: str, dest_dir: str) 
 
     반환: {photo_doc:True, photos:[{url,beat,license,credit}], hero_url, license, credit, source, path:None}.
     """
-    # ★소싱처 확대(운영자 확정): Wikimedia Commons + iNaturalist(CC 관측 사진)를 합쳐 실사 풀을 넓힌다.
-    got = (_commons_photos(scientific_name, 14) or [])
+    # ★소싱처 다변화(운영자 확정): 여러 CC 소스를 합쳐 실사 풀을 넓힌다 — 한 종에 이미지가 많아야
+    #   '1장 우려먹기'가 아니라 다양한 컷의 다큐가 된다.
+    #   ① Wikimedia Commons ② iNaturalist(관측) ③ Openverse(Flickr·스미소니언 등 집계·키불필요)
+    #   ④ 한국 공공누리(data.go.kr 키 있으면) — 국내 해양·수산 공공자료.
+    got = (_commons_photos(scientific_name, 12) or [])
     got += _inaturalist_photos(scientific_name, 10)
+    got += _openverse_photos(scientific_name, 10)
+    got += _korea_public_photos(scientific_name, common_name_en, 6)
     if len({p["url"] for p in got if p.get("url")}) < _PHOTODOC_MIN * 2:
-        got += _commons_photos(common_name_en, 10) or []
+        got += _commons_photos(common_name_en, 8) or []
+        got += _openverse_photos(common_name_en, 6) or []
     _seen: set = set()                                        # URL 중복 제거(소스 간 겹침 정리)
     got = [p for p in got if p.get("url") and not (p["url"] in _seen or _seen.add(p["url"]))]
     cand = [p for p in got if _is_realistic_photo(p)]          # 1차: 메타데이터 필터
@@ -1132,6 +1216,14 @@ def species_photo_doc(scientific_name: str, common_name_en: str, dest_dir: str) 
         try:                                   # 밋밋한(빈) 표본 매크로 컷 배제(구조변별)
             from PIL import Image as _Im
             if _frame_macro_std(_Im.open(fp)) < _PHOTODOC_MIN_STRUCT:
+                continue
+        except Exception:  # noqa: BLE001
+            pass
+        # ★피사체 학습·검증(운영자 명령2 · 키 있을 때만): 동음이의어 오소싱(예 Chimaera=물고기이자
+        #   TVR 자동차)을 대분류로 걸러낸다. 종ID는 안 함(진짜 생물 보존) — False(명백한 비생물)만 배제.
+        try:
+            from src.core import vision_subject
+            if vision_subject.verify_species(str(fp), scientific_name, common_name_en) is False:
                 continue
         except Exception:  # noqa: BLE001
             pass
