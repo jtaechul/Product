@@ -1,8 +1,6 @@
 {
- "mode": "produce",
- "provider": "auto",
- "row": "2",
- "privacy": "private",
- "note": "개편 검증: 대본=자막(subs) + 드립 대본 + react 스티커 + 상품 비주얼 중심 + QA 게이트 (WoWo row2, Typecast)",
- "requested_at": "2026-07-12T12:44:31Z"
+ "mode": "enrich",
+ "row": "13",
+ "note": "캐시 실검증 1차 — 업로드 시점 1회 분석이 실제로 일어나는지 확인(테스트 상품, 검증 후 정리)",
+ "requested_at": "2026-07-19T01:58:00Z"
 }
