@@ -167,10 +167,14 @@ def _normalize_subs(line: dict) -> bool:
 
 
 def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None,
-                    allow_price: bool = False) -> dict:
+                    allow_price: bool = False, enforce: bool = True) -> dict:
     """대본 dict 정화 + 규칙 검증. 위반 시 RuleViolation(재생성 트리거).
 
     avoid_terms: 화면에 노출하면 안 되는 브랜드·정식 제품명 토큰(선택). 상품 데이터에서 넘어온다.
+    enforce: True면 규칙 위반 시 차단(생성 단계 — 재생성으로 고친다). ⭐ False면 차단하지 않고
+             경고만 남긴 뒤 정화본을 그대로 돌려준다(2026-07-19 사용자 확정): '올리기(업로드)'는
+             **이미 제작된 영상**의 메타데이터(제목·설명·해시태그)만 다듬는 단계라, 텍스트 규칙으로
+             다 만든 영상을 다시 막지 않는다. (법적 고지문은 build_description이 항상 강제 — 별개.)
     """
     problems = []
 
@@ -311,7 +315,10 @@ def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None,
             problems.append(f"thumb_hook 길이 {len(_hk)}자 (공백 포함 12~25자 권장, 8~28자 허용)")
 
     if problems:
-        raise RuleViolation("; ".join(problems))
+        if enforce:
+            raise RuleViolation("; ".join(problems))
+        # 비강제(업로드 등): 이미 만든 영상을 막지 않는다 — 경고만 남기고 정화본을 그대로 쓴다.
+        print(f"[sanitize] 경고(비강제 경로 — 업로드 차단 안 함): {'; '.join(problems)}")
 
     # ⭐ 포맷 v2 — 훅 삼위일체(2026-07-18 사용자 확정): thumb_hook(훅 카드 문구) = 유튜브 제목 =
     #   첫 나레이션. ① 제목을 훅과 동일하게 강제 ② 훅을 낭독 라인 0(is_hook)으로 삽입해 TTS·자막
