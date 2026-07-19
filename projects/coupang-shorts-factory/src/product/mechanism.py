@@ -38,6 +38,25 @@ _PROMPT = """아래 상품 자료를 분석해, 이 제품이 **같은 종류의
 """
 
 
+_PRICE_MENTION = re.compile(r"\d[\d,]*\s*원|\d+\s*만\s*원|가격|만원|천원|원대")
+
+
+def price_allowed(data: dict | None) -> bool:
+    """⭐ 가격 금지 규칙 예외(2026-07-18 사용자 확정): 운영자가 기획 방향의 '직접 의견(4안)'에서
+    가격을 스스로 언급했다면, 그 상품은 대본에 가격 표현을 허용한다(운영자 확정 지시가 우선).
+    4안이 실제 사용되는 상태(chosen=="custom" 또는 구버전 custom-only)에서만 발동 — AI가 만든
+    1~3안 선택 시에는 예외 없음."""
+    if not data:
+        return False
+    custom = str(data.get("custom") or "").strip()
+    if not custom:
+        return False
+    ch = data.get("chosen")
+    if not (ch == "custom" or not isinstance(ch, int)):   # 선택이 진실 — 4안이 활성일 때만
+        return False
+    return bool(_PRICE_MENTION.search(custom))
+
+
 def _path(project_root: Path, row_hash: str) -> Path:
     return Path(project_root) / "data" / "mechanism" / f"{row_hash}.json"
 
