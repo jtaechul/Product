@@ -1028,28 +1028,55 @@ def prune_unproducible(category_id: str, tmp_dir: str) -> list[str]:
     (None) 그 후보를 삭제한다. 삭제된 key 리스트 반환.
 
     ★영상 우선·없으면 이미지: fetch_footage가 영상 실패 시 실사 사진 다큐로 폴백하므로,
-    '사진으로라도 제작 가능한' 후보는 살아남는다(둘 다 불가한 것만 삭제)."""
+    '사진으로라도 제작 가능한' 후보는 살아남는다(둘 다 불가한 것만 삭제).
+
+    ★풀패스 검사(운영자 확정 · 재발방지 #135 cranchiidae): 소스(fetch_footage)뿐 아니라 **카테고리
+    적합성(verify_subject)** 까지 굴려, 소스는 되는데 적합성/제작 게이트에서 죽는 후보도 제거한다.
+    훅·본문은 결정론 폴백이 있어 더는 실패하지 않으므로(hook._fallback_*), 이 두 관문이 실질 게이트다."""
     from src.core import footage
+    cat = None
+    try:
+        from src.registry import get_category
+        cat = get_category(category_id)
+    except Exception:  # noqa: BLE001
+        cat = None
     cands = load_candidates(category_id)
     if not cands:
         return []
     keep: list[dict] = []
     removed: list[str] = []
     for c in cands:
-        sci = c.get("name") or (c.get("species") or {}).get("scientific_name") or c.get("key", "")
-        en = c.get("common_name_en") or (c.get("species") or {}).get("common_name_en") or ""
-        producible = False
+        sp = c.get("species") or {}
+        sci = c.get("name") or sp.get("scientific_name") or c.get("key", "")
+        en = c.get("common_name_en") or sp.get("common_name_en") or ""
+        producible, reason = False, ""
         try:
             fv = footage.fetch_footage(sci, en, tmp_dir)
             producible = bool(fv and (fv.get("path") or fv.get("photo_doc") or fv.get("doc")))
+            if not producible:
+                reason = "실사 소스 미확보"
         except Exception as e:  # noqa: BLE001
             log.warning("[discovery] 제작 가능성 검사 오류(%s): %s", sci, e)
-            producible = True   # 검사 오류로는 삭제하지 않는다(오삭제 방지)
+            producible, reason = True, ""   # 검사 오류로는 삭제하지 않는다(오삭제 방지)
+        # ★카테고리 적합성(verify_subject)까지 확인 — 소스는 되는데 적합성에서 죽는 후보 제거.
+        if producible and cat is not None and hasattr(cat, "verify_subject") and sp.get("scientific_name"):
+            try:
+                from src.core.contracts import SpeciesInfo, PipelineError
+                info = SpeciesInfo(
+                    scientific_name=sp.get("scientific_name", ""), common_name_ko=sp.get("common_name_ko", ""),
+                    common_name_en=en, depth_range_m=sp.get("depth_range_m", ""),
+                    distribution=sp.get("distribution", ""), habitat=sp.get("habitat", ""),
+                    diet=sp.get("diet", []), fun_facts=sp.get("fun_facts", []), sources=sp.get("sources", []))
+                cat.verify_subject(info)
+            except PipelineError as e:
+                producible, reason = False, f"적합성 탈락({str(e)[:40]})"
+            except Exception:  # noqa: BLE001
+                pass                          # 검증 오류(네트워크 등)로는 삭제하지 않음
         if producible:
             keep.append(c)
         else:
             removed.append(c["key"])
-            log.info("[discovery] 제작 불가 후보 삭제: %s (%s)", c.get("key"), sci)
+            log.info("[discovery] 제작 불가 후보 삭제: %s (%s) — %s", c.get("key"), sci, reason)
     if removed:
         save_candidates(category_id, keep)
     return removed

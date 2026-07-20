@@ -41,42 +41,6 @@
   },
   {
     "kind": "creature",
-    "key": "modiolus",
-    "needs_confirm": false,
-    "title": "File:Prélèvement réalisé par le bras articulé du ROV Victor 6000 (Ifremer 00701-81285).webm",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b7/Pr%C3%A9l%C3%A8vement_r%C3%A9alis%C3%A9_par_le_bras_articul%C3%A9_du_ROV_Victor_6000_%28Ifremer_00701-81285%29.webm",
-    "license": "cc-by",
-    "credit": "null · CC BY",
-    "source": "File:Prélèvement réalisé par le bras articulé du ROV Victor 6000 (Ifremer 00701-81285).webm",
-    "name": "Modiolus",
-    "name_ja": "",
-    "common_name_ko": "Modiolus",
-    "common_name_en": "Modiolus",
-    "depth": "",
-    "facts": [
-      "Modiolus, the horsemussels, are a genus of medium-sized marine bivalve molluscs in the family Mytilidae."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Modiolus",
-      "common_name_ko": "Modiolus",
-      "common_name_en": "Modiolus",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Modiolus, the horsemussels, are a genus of medium-sized marine bivalve molluscs in the family Mytilidae."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Prélèvement réalisé par le bras articulé du ROV Victor 6000 (Ifremer 00701-81285).webm)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_modiolus_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
     "key": "riftia pachyptila",
     "needs_confirm": false,
     "title": "File:Nur04507.jpg",
@@ -114,44 +78,6 @@
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e9/Nur04507.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_riftia_pachyptila_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "anemone",
-    "needs_confirm": false,
-    "title": "File:Grande anémone du Pacifique sur le site Krasnov (Ifremer 00556-66812).jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/1/17/Grande_an%C3%A9mone_du_Pacifique_sur_le_site_Krasnov_%28Ifremer_00556-66812%29.jpg",
-    "license": "cc-by",
-    "credit": "null · CC BY",
-    "source": "File:Grande anémone du Pacifique sur le site Krasnov (Ifremer 00556-66812).jpg",
-    "name": "Anemone",
-    "name_ja": "",
-    "common_name_ko": "바람꽃속",
-    "common_name_en": "Anemone",
-    "depth": "3700",
-    "facts": [
-      "イチリンソウ属（イチリンソウぞく、学名:Anemone ）はキンポウゲ科の属の一つ。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Anemone",
-      "common_name_ko": "바람꽃속",
-      "common_name_en": "Anemone",
-      "depth_range_m": "3700",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "イチリンソウ属（イチリンソウぞく、学名:Anemone ）はキンポウゲ科の属の一つ。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Grande anémone du Pacifique sur le site Krasnov (Ifremer 00556-66812).jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/17/Grande_an%C3%A9mone_du_Pacifique_sur_le_site_Krasnov_%28Ifremer_00556-66812%29.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_anemone_29755719911.jpg"
   },
   {
     "kind": "creature",
@@ -274,50 +200,6 @@
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/11/Actinopyga_echinites1.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_actinopyga_echinites_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "rhizostoma octopus",
-    "needs_confirm": false,
-    "title": "File:Profileur Arvor CM en surface avec une méduse (Rhizostoma octopus) (Ifremer 00575-68734).jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/d/d4/Profileur_Arvor_CM_en_surface_avec_une_m%C3%A9duse_%28Rhizostoma_octopus%29_%28Ifremer_00575-68734%29.jpg",
-    "license": "cc-by",
-    "credit": "Olivier Dugornay · CC BY",
-    "source": "File:Profileur Arvor CM en surface avec une méduse (Rhizostoma octopus) (Ifremer 00575-68734).jpg",
-    "name": "Rhizostoma octopus",
-    "name_ja": "",
-    "common_name_ko": "Rhizostoma octopus",
-    "common_name_en": "Rhizostoma octopus",
-    "depth": "400",
-    "facts": [
-      "Rhizostoma octopus is a species of marine invertebrate.",
-      "They are most commonly found in the English Channel, the North Sea, and the North Atlantic up to the Norwegian Sea.",
-      "Predators include leatherback sea turtles.",
-      "These jellyfish are harvested as a natural source of collagen."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Rhizostoma octopus",
-      "common_name_ko": "Rhizostoma octopus",
-      "common_name_en": "Rhizostoma octopus",
-      "depth_range_m": "400",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Rhizostoma octopus is a species of marine invertebrate.",
-        "They are most commonly found in the English Channel, the North Sea, and the North Atlantic up to the Norwegian Sea.",
-        "Predators include leatherback sea turtles.",
-        "These jellyfish are harvested as a natural source of collagen."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Profileur Arvor CM en surface avec une méduse (Rhizostoma octopus) (Ifremer 00575-68734).jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/d4/Profileur_Arvor_CM_en_surface_avec_une_m%C3%A9duse_%28Rhizostoma_octopus%29_%28Ifremer_00575-68734%29.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_rhizostoma_octopus_29755719911.jpg"
   },
   {
     "kind": "creature",
@@ -639,48 +521,6 @@
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Diaphus_effulgens_headlights.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_diaphus_effulgens_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "bathypterois grallator",
-    "needs_confirm": false,
-    "title": "File:Campagne BIOZAIRE 2 - Poisson trépied ou poisson tripode (Ifremer 00574-68561).jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/5/57/Campagne_BIOZAIRE_2_-_Poisson_tr%C3%A9pied_ou_poisson_tripode_%28Ifremer_00574-68561%29.jpg",
-    "license": "cc-by",
-    "credit": "null · CC BY",
-    "source": "File:Campagne BIOZAIRE 2 - Poisson trépied ou poisson tripode (Ifremer 00574-68561).jpg",
-    "name": "Bathypterois grallator",
-    "name_ja": "",
-    "common_name_ko": "세발치",
-    "common_name_en": "tripod fish",
-    "depth": "5000",
-    "facts": [
-      "The tripod fish (also known as the tripod spiderfish), Bathypterois grallator, is a grinner in the family Ipnopidae found at lower latitudes.",
-      "Because of its unique way of \"standing\" on the seafloor, B.",
-      "grallator is one of the best-known benthic fish, and it is one of the few members of its genus to be directly observed and photographed by submersibles."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Bathypterois grallator",
-      "common_name_ko": "세발치",
-      "common_name_en": "tripod fish",
-      "depth_range_m": "5000",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "The tripod fish (also known as the tripod spiderfish), Bathypterois grallator, is a grinner in the family Ipnopidae found at lower latitudes.",
-        "Because of its unique way of \"standing\" on the seafloor, B.",
-        "grallator is one of the best-known benthic fish, and it is one of the few members of its genus to be directly observed and photographed by submersibles."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Campagne BIOZAIRE 2 - Poisson trépied ou poisson tripode (Ifremer 00574-68561).jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/57/Campagne_BIOZAIRE_2_-_Poisson_tr%C3%A9pied_ou_poisson_tripode_%28Ifremer_00574-68561%29.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_bathypterois_grallator_29755719911.jpg"
   },
   {
     "kind": "creature",
@@ -1054,46 +894,6 @@
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Otolithes_de_grenadier_raton_%28Coelorinchus_caelorhinchus-Coelorhynchus_coelorhynchus%29_%28Ifremer_00677-78952_-_31898%29.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_coelorinchus_caelorhincus_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "larimichthys crocea",
-    "needs_confirm": false,
-    "title": "File:Expl1801 - Flickr - NOAA Photo Library.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/5/58/Expl1801_-_Flickr_-_NOAA_Photo_Library.jpg",
-    "license": "public-domain",
-    "credit": "Image courtesy of Expedition to the Deep Slope 2007, NOAA-OE.",
-    "source": "File:Expl1801 - Flickr - NOAA Photo Library.jpg",
-    "name": "Larimichthys crocea",
-    "name_ja": "",
-    "common_name_ko": "부세",
-    "common_name_en": "Larimichthys crocea",
-    "depth": "",
-    "facts": [
-      "Larimichthys crocea, commonly called the  large yellow croaker, yellow croaker or croceine croaker, is a species of marine ray-finned fish belonging to the family Sciaenidae, the drums and croakers.",
-      "This species is found in the Western Pacific Ocean."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Larimichthys crocea",
-      "common_name_ko": "부세",
-      "common_name_en": "Larimichthys crocea",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Larimichthys crocea, commonly called the  large yellow croaker, yellow croaker or croceine croaker, is a species of marine ray-finned fish belonging to the family Sciaenidae, the drums and croakers.",
-        "This species is found in the Western Pacific Ocean."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Expl1801 - Flickr - NOAA Photo Library.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/58/Expl1801_-_Flickr_-_NOAA_Photo_Library.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_larimichthys_crocea_29755719911.jpg"
   },
   {
     "kind": "creature",

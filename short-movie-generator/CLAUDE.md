@@ -440,6 +440,22 @@
       소스를 못 만드는 후보를 애초에 후보 파일에 넣지 않는다(영상·사진 둘 다 불가한 것만 · 네트워크 오류는
       후보 유지). 실측: marine_life 28후보 스윕 → 27 제작가능(영상 17·사진다큐 10)·1 제작불가(ophiopsila
       polyacantha) 프룬.
+    - **★훅·본문 결정론 폴백(핵심 · 재발방지 실사고 #135 cranchiidae 'LLM 파싱 실패로 제작 중단')**:
+      `hook.build_hook`/`build_body_jp`는 LLM JSON 파싱이 실패하면 **None → 파이프라인 하드 중단**이었다
+      (소스는 확보됐는데 훅/본문 LLM 한 번 삐끗해서 제작 실패). → `_fallback_hook`/`_fallback_body_jp`가
+      종 이름·실제 수심만으로 유효한 일본어 훅·본문을 결정론 생성한다(날조 없음 — 일반적 심해 사실 + 실측
+      수심만, 敬体, 국문 혼입 없음). 이제 이름 있는 종은 **훅·본문이 절대 하드실패하지 않는다**(품질은 LLM
+      경로가 담당, 폴백은 최후 안전판). 실측: cranchiidae가 LLM 없이 훅+14절 본문 생성 확인. 회귀:
+      `test_hook_fallback`.
+    - **★풀패스 프룬(운영자 확정 · '되는 것만 소싱목록에')**: `prune_unproducible`이 소스(fetch_footage)뿐
+      아니라 **카테고리 적합성(`verify_subject`)** 까지 굴려, 소스는 되는데 적합성에서 죽는 후보도 제거한다
+      (훅·본문은 이제 폴백이 있어 실질 게이트는 이 둘). 실측 프룬: deep_sea 21→17(modiolus·anemone·rhizostoma
+      octopus·bathypterois grallator 제거), marine_life 28→27. 검사 오류(네트워크)로는 삭제 안 함(오삭제 방지).
+    - **★지속 소싱 자동화(운영자 확정 · 후보 풀 마름 방지)**: `source-species.yml`에 **매일 cron**
+      (`0 18 * * *`=03:00 KST)을 추가해 deep_sea·marine_life 후보를 자동 top-up한다. 스케줄 런은 inputs가
+      비므로 env 기본값(`|| 'deep_sea,marine_life'`)으로 두 카테고리를 돌리고, 소싱 시 제작가능 검증 +
+      자동 프룬까지 수행해 **되는 후보만 목록에 남긴다**. auto_replenish가 이 후보를 (적합·제작가능할 때만)
+      승격 → 아침 auto 제작이 마르지 않는다.
     - **★★NOAA OER 자동 영상 소싱(운영자 목표 달성 · 숨은 API 발굴 · 검증 완료)**: 처음엔 "NCEI 포털은
       공개 API 없음"이라 결론냈으나, **프론트엔드 JS(`callapi.js`)를 역분석**해 포털이 실제로는 **ESRI
       Geoportal OpenSearch JSON API**를 두들기는 것을 찾아냈다 → **완전 자동화 성공**. 파이프라인:

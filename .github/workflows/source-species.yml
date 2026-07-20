@@ -7,10 +7,14 @@ name: Source Species
 # 발행/제작은 하지 않는다(후보 확보까지만).
 
 on:
+  # ★지속 소싱(운영자 확정): 매일 자동으로 후보 풀을 채워 auto가 마르지 않게 한다(auto_replenish가
+  #   이 후보들을 제작 가능·적합할 때만 승격). 스케줄 런은 inputs가 비므로 아래 env에서 기본값을 준다.
+  schedule:
+    - cron: "0 18 * * *"        # 매일 03:00 KST(UTC 18:00) — 후보 top-up
   workflow_dispatch:
     inputs:
       category:
-        description: "소싱할 카테고리"
+        description: "소싱할 카테고리(스케줄은 deep_sea,marine_life 자동)"
         type: choice
         options: [deep_sea, marine_life, marine_algae, shipwreck]
         default: deep_sea
@@ -59,59 +63,67 @@ jobs:
       - name: Install Python deps
         run: pip install -r requirements.txt
 
-      - name: 소싱 실행(후보 발굴 + 실사 게이트 + 썸네일)
+      - name: 소싱 실행(후보 발굴 + 실사 게이트 + 제작가능 검증)
         id: src
         env:
-          CATEGORY: ${{ github.event.inputs.category }}
-          WANT: ${{ github.event.inputs.want }}
+          # 스케줄 런(inputs 없음)은 deep_sea,marine_life 둘 다 자동 top-up.
+          CATEGORY: ${{ github.event.inputs.category || 'deep_sea,marine_life' }}
+          WANT: ${{ github.event.inputs.want || '6' }}
         run: |
           python - <<'PY' >> "$GITHUB_OUTPUT"
           import os, tempfile
           from src.core import discovery
-          cat = os.environ["CATEGORY"]; want = int(os.environ.get("WANT") or "6")
-          tmp = tempfile.mkdtemp()
-          # 발굴 + 실사 게이트(정지·종횡비) 통과분만 후보로 저장
-          added = discovery.source_to_candidates(
-              cat, want=want, validate=lambda u: discovery.validate_source_url(u, tmp))
-          print(f"count={len(added)}")
-          print(f"keys={','.join(a['key'] for a in added)}")
+          cats = [c for c in (os.environ["CATEGORY"] or "").replace(",", " ").split() if c]
+          want = int(os.environ.get("WANT") or "6")
+          total = []
+          for cat in cats:
+              tmp = tempfile.mkdtemp()
+              # 발굴 + 실사 게이트(정지·종횡비) + ★제작가능 검증(verify_producible 기본 켜짐)
+              added = discovery.source_to_candidates(
+                  cat, want=want, validate=lambda u: discovery.validate_source_url(u, tmp))
+              total += [a["key"] for a in added]
+              print(f"# {cat}: +{len(added)}", flush=True)
+          print(f"count={len(total)}")
+          print(f"keys={','.join(total)}")
           PY
 
       - name: 후보 삭제(수동 key + 제작 불가 자동 프룬)
         if: always()
         env:
-          CATEGORY: ${{ github.event.inputs.category }}
+          CATEGORY: ${{ github.event.inputs.category || 'deep_sea,marine_life' }}
           REMOVE_KEYS: ${{ github.event.inputs.remove_keys }}
-          PRUNE: ${{ github.event.inputs.prune_unproducible }}
+          PRUNE: ${{ github.event.inputs.prune_unproducible || 'true' }}
         run: |
           python - <<'PY'
           import os, tempfile
           from src.core import discovery
-          cat = os.environ["CATEGORY"]
-          # ① 수동 삭제(운영자가 지정한 특정 후보)
+          cats = [c for c in (os.environ["CATEGORY"] or "").replace(",", " ").split() if c]
+          # ① 수동 삭제(운영자가 지정한 특정 후보) — 단일 카테고리 dispatch에서만 의미
           keys = [k for k in (os.environ.get("REMOVE_KEYS") or "").replace(",", " ").split() if k]
-          if keys:
-              rm = discovery.remove_candidates(cat, keys)
+          if keys and len(cats) == 1:
+              rm = discovery.remove_candidates(cats[0], keys)
               print(f"수동 삭제: {len(rm)}개 {rm}")
-          # ② 제작 불가 후보 자동 삭제(실제 소싱 관문으로 확인 — 영상/사진 둘 다 불가한 것만)
+          # ② ★제작 불가/부적합 후보 자동 삭제(제작 관문 footage+verify_subject로 확인 — 되는 것만 남김)
           if (os.environ.get("PRUNE") or "true").lower() == "true":
-              rm2 = discovery.prune_unproducible(cat, tempfile.mkdtemp())
-              print(f"제작 불가 자동 삭제: {len(rm2)}개 {rm2}")
+              for cat in cats:
+                  rm2 = discovery.prune_unproducible(cat, tempfile.mkdtemp())
+                  print(f"[{cat}] 제작 불가 자동 삭제: {len(rm2)}개 {rm2}")
           PY
 
       - name: 후보 썸네일 생성 + Release 업로드 + URL 패치
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
-          CATEGORY: ${{ github.event.inputs.category }}
+          CATEGORY: ${{ github.event.inputs.category || 'deep_sea,marine_life' }}
         run: |
-          TAG="sourcing-${CATEGORY}"
+          for CAT in $(echo "$CATEGORY" | tr ',' ' '); do
+          TAG="sourcing-${CAT}"
           gh release view "$TAG" >/dev/null 2>&1 || \
-            gh release create "$TAG" --title "Sourcing: $CATEGORY" \
+            gh release create "$TAG" --title "Sourcing: $CAT" \
               --notes "소싱 후보 썸네일(자동)" --target "${{ github.ref_name }}"
           BASE="${{ github.server_url }}/${{ github.repository }}/releases/download/$TAG"
           mkdir -p work/thumbs
-          python - "$CATEGORY" "$BASE" <<'PY'
+          python - "$CAT" "$BASE" <<'PY'
           import json, os, sys, tempfile, re
           from pathlib import Path
           from src.core import discovery
@@ -130,9 +142,10 @@ jobs:
           discovery.save_candidates(cat, cands)
           print("thumbs done")
           PY
-          if ls work/thumbs/*.jpg >/dev/null 2>&1; then
-            gh release upload "$TAG" work/thumbs/*.jpg --clobber
+          if ls work/thumbs/*_"${CAT}"_*.jpg >/dev/null 2>&1; then
+            gh release upload "$TAG" work/thumbs/*_"${CAT}"_*.jpg --clobber
           fi
+          done
 
       - name: 후보 파일 커밋
         run: |
@@ -141,7 +154,7 @@ jobs:
           if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(sourcing): ${{ github.event.inputs.category }} 후보 발굴 [skip ci]"
+          git commit -m "chore(sourcing): ${{ github.event.inputs.category || 'deep_sea,marine_life' }} 후보 발굴·프룬 [skip ci]"
           for i in 1 2 3 4 5; do
             git fetch origin "${{ github.ref_name }}" \
               && git rebase "origin/${{ github.ref_name }}" \
@@ -155,11 +168,11 @@ jobs:
         env:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
-          CATEGORY: ${{ github.event.inputs.category }}
+          CATEGORY: ${{ github.event.inputs.category || 'deep_sea,marine_life' }}
           COUNT: ${{ steps.src.outputs.count }}
         run: |
           [ -z "$TG_TOKEN" ] && exit 0
-          MSG="소싱 완료: ${CATEGORY} — 새 후보 ${COUNT:-0}개. 관리자 페이지에서 확인·선택하세요."
+          MSG="소싱 완료: ${CATEGORY} — 새 후보 ${COUNT:-0}개(제작가능 검증됨). 관리자 페이지에서 확인·선택하세요."
           for CID in $TG_CHAT; do
             curl -sS -F chat_id="$CID" -F text="$MSG" \
                  "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" | head -c 120; echo

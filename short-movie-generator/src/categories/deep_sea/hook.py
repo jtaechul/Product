@@ -296,8 +296,11 @@ def build_body_jp(info: SpeciesInfo) -> list[str] | None:
         if chunks:
             break
     if not chunks:
-        log.info("[deep_sea.hook] 본문 대본 생성 실패(파싱/분량) → None")
-        return None
+        # ★LLM 실패 → 결정론 폴백으로 제작 지속(예전엔 None → 제작 중단 #135 cranchiidae).
+        log.info("[deep_sea.hook] 본문 LLM 실패 → 결정론 폴백 사용(제작 지속)")
+        chunks = _fallback_body_jp(info)
+        if not chunks:
+            return None
     # 다듬기(polish)가 실패해도 원본 절은 살린다(다듬기 오류로 제작이 죽지 않게).
     try:
         from src.core import naturalness
@@ -305,6 +308,26 @@ def build_body_jp(info: SpeciesInfo) -> list[str] | None:
     except Exception as e:  # noqa: BLE001
         log.warning("[deep_sea.hook] 본문 다듬기 실패 → 원문 사용: %s", e)
         return chunks
+
+
+def _fallback_body_jp(info: SpeciesInfo) -> list[str] | None:
+    """★결정론 본문 폴백(敬体 · LLM 실패해도 제작 지속): 실제 수심·서식만 쓰고 일반적 심해 사실만
+    서술한다(날조 금지 — 없는 행동·수치 안 지어냄). 종별 상세는 LLM 경로가 담당, 이건 최후 안전판."""
+    import re as _re
+    if not (info.scientific_name or info.common_name_en or "").strip():
+        return None
+    nums = [int(x) for x in _re.findall(r"\d+", info.depth_range_m or "")]
+    dmax = max(nums) if nums else 0
+    lines = ["深海に、", "ひっそりと生きる、", "一匹の生きものがいます。"]
+    if dmax >= 200:
+        lines += [f"水深、およそ{dmax}メートル。", "光の届かない、", "暗く冷たい世界です。"]
+    else:
+        lines += ["光の少ない、", "静かな海の底です。"]
+    # ※서식지(habitat)는 데이터가 국문일 수 있어 일본어 본문에 섞지 않는다(언어 혼입 방지).
+    lines += ["高い水圧の中で、", "この生きものは、", "静かに暮らしています。",
+              "厳しい環境に、", "適応してきた姿です。", "深い海には、",
+              "まだ知られていない、", "命が息づいています。"]
+    return lines
 
 
 _CAPTION_PROMPT = """日本のインスタ向け、深海生物ショート動画の**キャプション**を作ります。\
@@ -383,8 +406,30 @@ def build_reels_caption(info: SpeciesInfo, jp_name: str, sci_name: str,
     return parsed
 
 
+def _fallback_hook(info: SpeciesInfo) -> dict:
+    """★결정론 훅 폴백(LLM 파싱 실패해도 제작이 죽지 않게 · 재발방지 실사고 #135 cranchiidae):
+    종 정보(실제 수심·이름)만으로 유효한 일본어 훅을 구성한다. 날조 없음(일반적 심해 사실 + 실제 수심).
+    번역 불가한 일본어명은 영문/학명 표시명으로 대체(제작 완료 우선 · 품질은 LLM 경로가 담당)."""
+    import re as _re
+    sci = (info.scientific_name or "").strip()
+    en = (info.common_name_en or "").strip()
+    ko = (info.common_name_ko or "").strip()
+    jp = (en.title() if en else sci) or "深海の生きもの"
+    nums = [int(x) for x in _re.findall(r"\d+", info.depth_range_m or "")]
+    dmax = max(nums) if nums else 0
+    if dmax >= 200:
+        pop = [f"水深{dmax}mに、", "潜む姿。"]
+        ko_hook = f"수심 {dmax}m에, 숨은 존재."
+    else:
+        pop = ["深海に、", "知られざる姿。"]
+        ko_hook = "심해에, 알려지지 않은 존재."
+    return {"jp_name": jp, "hook_line1": pop[0], "hook_line2": pop[1], "pop_words": pop,
+            "feature_line": f"深海に生きる、{jp}", "feature_glow_word": "深海",
+            "hook_ko": ko_hook, "feature_ko": f"심해에 사는, {ko or en or sci}"}
+
+
 def build_hook(info: SpeciesInfo) -> dict | None:
-    """일본어 훅 카피 dict 반환. 실패 시 None(시스템 휴면)."""
+    """일본어 훅 카피 dict 반환. 시드 → LLM(2회 재시도) → **결정론 폴백**(절대 None 아님 · 이름 있으면)."""
     key = (info.scientific_name or "").strip().lower()
     if key in _SEED:
         return _SEED[key]
@@ -403,6 +448,10 @@ def build_hook(info: SpeciesInfo) -> dict | None:
         parsed = _parse_json(out or "")
         if parsed:
             break
-    if not parsed:
-        log.info("[deep_sea.hook] 훅 생성 불가(키 없음/파싱 실패) → 오프닝/엔드카드 생략")
-    return parsed
+    if parsed:
+        return parsed
+    # ★LLM 실패(키 없음·파싱 실패) → 결정론 폴백으로 제작 지속(예전엔 여기서 None → 제작 중단 #135).
+    if (info.scientific_name or info.common_name_en or "").strip():
+        log.info("[deep_sea.hook] 훅 LLM 실패 → 결정론 폴백 사용(제작 지속)")
+        return _fallback_hook(info)
+    return None
