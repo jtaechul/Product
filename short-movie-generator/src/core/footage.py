@@ -629,9 +629,18 @@ def _inaturalist_photos(scientific_name: str, n: int = 8) -> list[dict]:
 def fetch_cutaway_photos(scientific_name: str, common_name_en: str, dest_dir: str,
                          n: int = 2, exclude_sources: tuple = ()) -> list[dict]:
     """본문 컷어웨이용 같은 대상 고해상 사진 최대 n장 확보 → [{path, credit, license}].
-    같은 대상만(오정보 방지). exclude_sources(히어로 등)와 겹치는 파일은 제외. 없으면 []."""
+    같은 대상만(오정보 방지). exclude_sources(히어로 등)와 겹치는 파일은 제외. 없으면 [].
+    ★다양성(운영자 요청): 짧은 영상이 반복될 때 컷어웨이를 여럿 넣으므로, n이 크면 커먼스뿐 아니라
+    iNaturalist·Openverse까지 합쳐 '같은 대상'의 서로 다른 사진을 넉넉히 모은다(중복 URL 제거)."""
     ex = {s for s in exclude_sources if s}
-    got = _commons_photos(scientific_name, n + len(ex) + 2) or _commons_photos(common_name_en, n + 2)
+    got = list(_commons_photos(scientific_name, n + len(ex) + 2) or _commons_photos(common_name_en, n + 2))
+    if len(got) < n + len(ex):        # 부족하면 소스 확대(관측·집계 CC 사진)
+        try:
+            got += _inaturalist_photos(scientific_name, n) + _openverse_photos(scientific_name, n)
+        except Exception:  # noqa: BLE001
+            pass
+        _seen: set = set()            # URL 중복 제거(소스 간 겹침)
+        got = [g for g in got if g.get("url") and not (g["url"] in _seen or _seen.add(g["url"]))]
     dest = Path(dest_dir)
     key = (scientific_name or common_name_en or "cut").strip().lower()
     slug = re.sub(r"[^a-z0-9]+", "_", key).strip("_") or "cut"
@@ -651,19 +660,27 @@ def fetch_cutaway_photos(scientific_name: str, common_name_en: str, dest_dir: st
 
 
 def insert_photo_cutaways(body_v: str, photos: list[dict], out_v: str, body_dur: float,
-                          key: str = "") -> str:
-    """본문(9:16, 자막 번인 전)에 같은 대상 고해상 사진 컷어웨이 1~2컷을 짧게 오버레이(디졸브).
+                          key: str = "", max_cover: float = 0.45) -> str:
+    """본문(9:16, 자막 번인 전)에 같은 대상 고해상 사진 컷어웨이를 짧게 오버레이(디졸브).
     ★오디오·자막은 이후 단계에서 그대로 얹히므로 타이밍·자막 연속성이 보존된다(길이 불변).
-    소스가 짧아 반복될 때 반복 피로를 깬다. 실패/사진없음 시 원본 body_v 그대로 반환(발행 불정지)."""
+    ★다양성(운영자 요청): 소스 영상이 짧아 반복될 때, **사진이 충분하면 컷어웨이 수를 늘려** 같은
+    영상만 반복되는 피로를 깬다. 단, 컷어웨이 총합이 본문의 `max_cover`(기본 45%)를 넘지 않아 실제
+    피사체 영상이 여전히 주가 되게 한다. 실패/사진없음 시 원본 body_v 그대로 반환(발행 불정지)."""
     import subprocess
     photos = [p for p in (photos or []) if p.get("path") and Path(p["path"]).exists()]
-    # 짧은 본문·사진 없음 → 삽입하지 않는다(긴 본문은 이미 다양 → 불필요, 남발 방지 최대 2컷).
     if not photos or body_dur < 12:
         return body_v
-    n = min(2, len(photos), 1 if body_dur < 20 else 2)
-    D = 1.8                                   # 컷어웨이 노출(디졸브 0.3 + 홀드 + 디졸브 0.3)
-    # 창 위치: 본문 중반부에 균등 배치(맨 앞/뒤 리빌 구간은 피한다).
-    fracs = [0.45] if n == 1 else [0.40, 0.68]
+    D = 2.0                                   # 컷어웨이 노출(디졸브 0.3 + 홀드 + 디졸브 0.3)
+    # ★컷 수 = min(확보 사진 수, 커버상한으로 허용되는 수, 하드상한 6). 영상이 짧아 많이 반복될수록
+    #   더 많은 사진을 넣지만, 총 커버가 본문의 45%를 넘지 않게(영상이 주·사진이 양념).
+    n_by_cover = max(1, int(body_dur * max_cover / D))
+    n = max(1, min(len(photos), n_by_cover, 6))
+    # 창 위치: 본문 중반 70%(0.13~0.85)에 균등 배치(맨 앞/뒤 리빌 구간 회피 · 겹침 없게).
+    if n == 1:
+        fracs = [0.45]
+    else:
+        lo, hi = 0.13, 0.85
+        fracs = [lo + (hi - lo) * i / (n - 1) for i in range(n)]
     starts = [round(body_dur * f, 2) for f in fracs[:n]]
     wd = Path(out_v).parent
     inputs = ["-i", body_v]

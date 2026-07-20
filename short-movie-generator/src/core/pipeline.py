@@ -405,8 +405,12 @@ def run_reels(
         try:
             src_dur = _probe_duration(fv["path"]) or 0.0
             if src_dur and src_dur < body_dur * 0.9:   # 소스가 본문보다 짧아 반복되는 경우에만
+                # ★반복이 심할수록 컷어웨이를 늘린다(운영자 요청: 같은 영상 반복보다 다양한 소스가 낫다).
+                #   loops=본문/소스 길이. 2~6컷 목표(사진이 충분할 때만 · insert가 커버상한으로 최종 조정).
+                loops = body_dur / max(1.0, src_dur)
+                n_cut = int(min(6, max(2, round((loops - 1) * 2.5))))
                 cuts = footage.fetch_cutaway_photos(
-                    info.scientific_name, info.common_name_en, str(raw_dir), n=2)
+                    info.scientific_name, info.common_name_en, str(raw_dir), n=n_cut)
                 if cuts:
                     body_v2 = footage.insert_photo_cutaways(
                         body_v, cuts, str(work_dir / "body_cutaways.mp4"), body_dur,
