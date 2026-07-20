@@ -1045,5 +1045,42 @@
         "Wikimedia Commons (File:Surfing on bioluminescent wave.webm)"
       ]
     }
+  },
+  {
+    "kind": "creature",
+    "key": "ophiopsila polyacantha",
+    "needs_confirm": false,
+    "title": "File:Ophiopsila polyacantha bioluminescence.ogv",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/e3/Ophiopsila_polyacantha_bioluminescence.ogv",
+    "license": "cc-by",
+    "credit": "Okanishi, Masanori (2020): Okanishi_2020_supl 1.mp4. figshare. Media. https://doi.org/10.6084/m9.figshare.12636929.v1 · CC BY",
+    "source": "File:Ophiopsila polyacantha bioluminescence.ogv",
+    "name": "Ophiopsila polyacantha",
+    "name_ja": "",
+    "common_name_ko": "Ophiopsila polyacantha",
+    "common_name_en": "Ophiopsila polyacantha",
+    "depth": "",
+    "facts": [
+      "Ophiopsila is a genus of brittle star belonging to the family Ophiocomidae.",
+      "Many species are bioluminescent."
+    ],
+    "fact_src": "Wikipedia (en) · 상위 분류군",
+    "species": {
+      "scientific_name": "Ophiopsila polyacantha",
+      "common_name_ko": "Ophiopsila polyacantha",
+      "common_name_en": "Ophiopsila polyacantha",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Ophiopsila is a genus of brittle star belonging to the family Ophiocomidae.",
+        "Many species are bioluminescent."
+      ],
+      "sources": [
+        "Wikipedia (en) · 상위 분류군",
+        "Wikimedia Commons (File:Ophiopsila polyacantha bioluminescence.ogv)"
+      ]
+    }
   }
 ]

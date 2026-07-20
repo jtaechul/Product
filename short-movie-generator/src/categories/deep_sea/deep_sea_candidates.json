@@ -37,7 +37,7 @@
         "Wikimedia Commons (File:Segmented worm DSC 2462.webm)"
       ]
     },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_annelida_29671512093.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_annelida_29751178503.jpg"
   },
   {
     "kind": "creature",
@@ -73,7 +73,7 @@
         "Wikimedia Commons (File:Prélèvement réalisé par le bras articulé du ROV Victor 6000 (Ifremer 00701-81285).webm)"
       ]
     },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_modiolus_29671512093.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_modiolus_29751178503.jpg"
   },
   {
     "kind": "creature",
@@ -113,7 +113,7 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e9/Nur04507.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_riftia_pachyptila_29671512093.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_riftia_pachyptila_29751178503.jpg"
   },
   {
     "kind": "creature",
@@ -151,7 +151,7 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/17/Grande_an%C3%A9mone_du_Pacifique_sur_le_site_Krasnov_%28Ifremer_00556-66812%29.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_anemone_29671512093.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_anemone_29751178503.jpg"
   },
   {
     "kind": "creature",
@@ -195,7 +195,7 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Deep_sea_hydrothermal_sea_vent_cucumber_Chiridota_heheva.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_chiridota_heheva_29671512093.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_chiridota_heheva_29751178503.jpg"
   },
   {
     "kind": "creature",
@@ -233,7 +233,7 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/14/Sea_cucumber_swimming_near_Puerto_Rico_April_2015.png",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_holothuroidea_29671512093.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_holothuroidea_29751178503.jpg"
   },
   {
     "kind": "creature",
@@ -273,7 +273,7 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/11/Actinopyga_echinites1.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_actinopyga_echinites_29671512093.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_actinopyga_echinites_29751178503.jpg"
   },
   {
     "kind": "creature",
@@ -317,7 +317,7 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/d4/Profileur_Arvor_CM_en_surface_avec_une_m%C3%A9duse_%28Rhizostoma_octopus%29_%28Ifremer_00575-68734%29.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_rhizostoma_octopus_29671512093.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_rhizostoma_octopus_29751178503.jpg"
   },
   {
     "kind": "creature",
@@ -355,7 +355,7 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Eurypharynx.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_eurypharynx_pelecanoides_29671512093.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_eurypharynx_pelecanoides_29751178503.jpg"
   },
   {
     "kind": "creature",
@@ -393,6 +393,453 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Anoplogaster_cornuta_X-ray.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_anoplogaster_cornuta_29671512093.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_anoplogaster_cornuta_29751178503.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "thalassocalyce",
+    "needs_confirm": false,
+    "title": "File:Ctneophore - Flickr - NOAA Ocean Exploration ^ Research.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/1/12/Ctneophore_-_Flickr_-_NOAA_Ocean_Exploration_%5E_Research.jpg",
+    "license": "cc-by-sa",
+    "credit": "NOAA Ocean Exploration &amp; Research from USA · CC BY-SA",
+    "source": "File:Ctneophore - Flickr - NOAA Ocean Exploration ^ Research.jpg",
+    "name": "Thalassocalyce",
+    "name_ja": "",
+    "common_name_ko": "Thalassocalyce",
+    "common_name_en": "Thalassocalyce",
+    "depth": "3500",
+    "facts": [
+      "Thalassocalyce is a genus of ctenophore, or comb jellies, known from the California Coast, Gulf of Mexico, and west north Atlantic.",
+      "It is represented by a single species, Thalassocalyce inconstans, which is the only species in the family Thalassocalycidae and the order Thalassocalycida.",
+      "inconstans is a pelagic ctenophore typically occurring in upper-mesopelagic depths, but has been observed at depths up to 3,500 m in Monterey Canyon.",
+      "Due to their fragility, gelatinous zooplankton are inherently difficult to sample by traditional methods (i.e.",
+      "net tows), and among ctenophorans Thalassocalyce inconstans is especially fragile having thin, flaccid tissues, likely contributing to broad under-sampling."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Thalassocalyce",
+      "common_name_ko": "Thalassocalyce",
+      "common_name_en": "Thalassocalyce",
+      "depth_range_m": "3500",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Thalassocalyce is a genus of ctenophore, or comb jellies, known from the California Coast, Gulf of Mexico, and west north Atlantic.",
+        "It is represented by a single species, Thalassocalyce inconstans, which is the only species in the family Thalassocalycidae and the order Thalassocalycida.",
+        "inconstans is a pelagic ctenophore typically occurring in upper-mesopelagic depths, but has been observed at depths up to 3,500 m in Monterey Canyon.",
+        "Due to their fragility, gelatinous zooplankton are inherently difficult to sample by traditional methods (i.e.",
+        "net tows), and among ctenophorans Thalassocalyce inconstans is especially fragile having thin, flaccid tissues, likely contributing to broad under-sampling."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Ctneophore - Flickr - NOAA Ocean Exploration ^ Research.jpg)"
+      ]
+    },
+    "media_kind": "photo",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/12/Ctneophore_-_Flickr_-_NOAA_Ocean_Exploration_%5E_Research.jpg",
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_thalassocalyce_29751178503.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "mitsukurina owstoni",
+    "needs_confirm": false,
+    "title": "File:Goblin shark, Pengo.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Goblin_shark%2C_Pengo.jpg",
+    "license": "cc-by-sa",
+    "credit": "Wikimedia Commons · CC BY-SA",
+    "source": "File:Goblin shark, Pengo.jpg",
+    "name": "Mitsukurina owstoni",
+    "name_ja": "",
+    "common_name_ko": "마귀상어",
+    "common_name_en": "goblin shark",
+    "depth": "100-2000",
+    "facts": [
+      "ミツクリザメ（箕作鮫、学名：Mitsukurina owstoni、英: Goblin shark）は、ネズミザメ目ミツクリザメ科に属するサメ。ミツクリザメ科はミツクリザメ属 Mitsukurina 1属で、本種のみを含む。希少種。日本の東京湾、駿河湾、相模湾などをはじめ、世界各地で散発的に報告されている。表層から水深1,300 m、あるいはそれ以上の深海に生息する。推定全長6m。ブレード状の長い吻が特徴である。写真や図では顎が飛び出した状態のものが多いが、通常遊泳時は奥に引っ込んでいる。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Mitsukurina owstoni",
+      "common_name_ko": "마귀상어",
+      "common_name_en": "goblin shark",
+      "depth_range_m": "100-2000",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ミツクリザメ（箕作鮫、学名：Mitsukurina owstoni、英: Goblin shark）は、ネズミザメ目ミツクリザメ科に属するサメ。ミツクリザメ科はミツクリザメ属 Mitsukurina 1属で、本種のみを含む。希少種。日本の東京湾、駿河湾、相模湾などをはじめ、世界各地で散発的に報告されている。表層から水深1,300 m、あるいはそれ以上の深海に生息する。推定全長6m。ブレード状の長い吻が特徴である。写真や図では顎が飛び出した状態のものが多いが、通常遊泳時は奥に引っ込んでいる。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Goblin shark, Pengo.jpg)"
+      ]
+    },
+    "media_kind": "photo",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Goblin_shark%2C_Pengo.jpg",
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_mitsukurina_owstoni_29751178503.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "scotoplanes globosa",
+    "needs_confirm": false,
+    "title": "File:Scotoplanes globosa and crab.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Scotoplanes_globosa_and_crab.jpg",
+    "license": "cc-by-sa",
+    "credit": "NOAA/MBARI · CC BY-SA",
+    "source": "File:Scotoplanes globosa and crab.jpg",
+    "name": "Scotoplanes globosa",
+    "name_ja": "",
+    "common_name_ko": "Scotoplanes globosa",
+    "common_name_en": "Scotoplanes globosa",
+    "depth": "6000",
+    "facts": [
+      "センジュナマコ（千手海鼠、学名：Scotoplanes globosa）は深海性のナマコの一種である。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Scotoplanes globosa",
+      "common_name_ko": "Scotoplanes globosa",
+      "common_name_en": "Scotoplanes globosa",
+      "depth_range_m": "6000",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "センジュナマコ（千手海鼠、学名：Scotoplanes globosa）は深海性のナマコの一種である。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Scotoplanes globosa and crab.jpg)"
+      ]
+    },
+    "media_kind": "photo",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Scotoplanes_globosa_and_crab.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "kiwa hirsuta",
+    "needs_confirm": false,
+    "title": "File:Galathée yéti, un habitant des profondeurs abyssales (Ifremer 00569-68091 - 25272).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/e2/Galath%C3%A9e_y%C3%A9ti%2C_un_habitant_des_profondeurs_abyssales_%28Ifremer_00569-68091_-_25272%29.jpg",
+    "license": "cc-by",
+    "credit": "Alexis Fifis (Ifremer), null · CC BY",
+    "source": "File:Galathée yéti, un habitant des profondeurs abyssales (Ifremer 00569-68091 - 25272).jpg",
+    "name": "Kiwa hirsuta",
+    "name_ja": "",
+    "common_name_ko": "예티크랩",
+    "common_name_en": "Kiwa hirsuta",
+    "depth": "2200-2300",
+    "facts": [
+      "キワ・ヒルスタ（Kiwa hirsuta）は、キワ属に分類される甲殻類の一種。2005年に南太平洋で発見された。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Kiwa hirsuta",
+      "common_name_ko": "예티크랩",
+      "common_name_en": "Kiwa hirsuta",
+      "depth_range_m": "2200-2300",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "キワ・ヒルスタ（Kiwa hirsuta）は、キワ属に分類される甲殻類の一種。2005年に南太平洋で発見された。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Galathée yéti, un habitant des profondeurs abyssales (Ifremer 00569-68091 - 25272).jpg)"
+      ]
+    },
+    "media_kind": "photo",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e2/Galath%C3%A9e_y%C3%A9ti%2C_un_habitant_des_profondeurs_abyssales_%28Ifremer_00569-68091_-_25272%29.jpg",
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_kiwa_hirsuta_29751178503.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "bathynomus",
+    "needs_confirm": false,
+    "title": "File:Bathynomus (10.3897-zookeys.947.53906) Figure 6.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/09/Bathynomus_%2810.3897-zookeys.947.53906%29_Figure_6.jpg",
+    "license": "cc-by",
+    "credit": "Sidabalok CM, Wong HP-S, Ng PKL (2020) Description of the supergiant isopod Bathynomus raksasa sp. nov. (Crustacea, Isopoda, Cirolanidae) from southern Java, the first record of the genus from Indonesia. ZooKeys 947: 39-52. · CC BY",
+    "source": "File:Bathynomus (10.3897-zookeys.947.53906) Figure 6.jpg",
+    "name": "Bathynomus",
+    "name_ja": "",
+    "common_name_ko": "바티노무스속",
+    "common_name_en": "Bathynomus",
+    "depth": "",
+    "facts": [
+      "Giant isopods are large marine isopods in the genus Bathynomus.",
+      "They are bottom-dwelling deep-sea scavengers that are abundant in the Atlantic, Pacific, and Indian oceans.",
+      "Bathynomus giganteus, the species upon which the generitype is based, is often considered the largest isopod in the world, though other comparably poorly known species of Bathynomus may reach similar sizes.",
+      "Giant isopods are noted for their resemblance to the much smaller terrestrial woodlice, to which they are related.",
+      "French zoologist Alphonse Milne-Edwards was the first to describe the genus in 1879 after his colleague Alexander Agassiz collected a juvenile male B."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Bathynomus",
+      "common_name_ko": "바티노무스속",
+      "common_name_en": "Bathynomus",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Giant isopods are large marine isopods in the genus Bathynomus.",
+        "They are bottom-dwelling deep-sea scavengers that are abundant in the Atlantic, Pacific, and Indian oceans.",
+        "Bathynomus giganteus, the species upon which the generitype is based, is often considered the largest isopod in the world, though other comparably poorly known species of Bathynomus may reach similar sizes.",
+        "Giant isopods are noted for their resemblance to the much smaller terrestrial woodlice, to which they are related.",
+        "French zoologist Alphonse Milne-Edwards was the first to describe the genus in 1879 after his colleague Alexander Agassiz collected a juvenile male B."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Bathynomus (10.3897-zookeys.947.53906) Figure 6.jpg)"
+      ]
+    },
+    "media_kind": "photo",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/09/Bathynomus_%2810.3897-zookeys.947.53906%29_Figure_6.jpg",
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_bathynomus_29751178503.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "diaphus effulgens",
+    "needs_confirm": false,
+    "title": "File:Diaphus effulgens headlights.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Diaphus_effulgens_headlights.jpg",
+    "license": "cc-by-sa",
+    "credit": "HulloThere · CC BY-SA",
+    "source": "File:Diaphus effulgens headlights.jpg",
+    "name": "Diaphus effulgens",
+    "name_ja": "",
+    "common_name_ko": "Diaphus effulgens",
+    "common_name_en": "Diaphus effulgens",
+    "depth": "",
+    "facts": [
+      "The headlight fish (Diaphus effulgens) is a species of lanternfish in the family Myctophidae.",
+      "It is also sometimes referred to as the headlight lanternfish, or even the lanternfish, though it is not the only species to be called this."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Diaphus effulgens",
+      "common_name_ko": "Diaphus effulgens",
+      "common_name_en": "Diaphus effulgens",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "The headlight fish (Diaphus effulgens) is a species of lanternfish in the family Myctophidae.",
+        "It is also sometimes referred to as the headlight lanternfish, or even the lanternfish, though it is not the only species to be called this."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Diaphus effulgens headlights.jpg)"
+      ]
+    },
+    "media_kind": "photo",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Diaphus_effulgens_headlights.jpg",
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_diaphus_effulgens_29751178503.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "bathypterois grallator",
+    "needs_confirm": false,
+    "title": "File:Campagne BIOZAIRE 2 - Poisson trépied ou poisson tripode (Ifremer 00574-68561).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/5/57/Campagne_BIOZAIRE_2_-_Poisson_tr%C3%A9pied_ou_poisson_tripode_%28Ifremer_00574-68561%29.jpg",
+    "license": "cc-by",
+    "credit": "null · CC BY",
+    "source": "File:Campagne BIOZAIRE 2 - Poisson trépied ou poisson tripode (Ifremer 00574-68561).jpg",
+    "name": "Bathypterois grallator",
+    "name_ja": "",
+    "common_name_ko": "세발치",
+    "common_name_en": "tripod fish",
+    "depth": "5000",
+    "facts": [
+      "The tripod fish (also known as the tripod spiderfish), Bathypterois grallator, is a grinner in the family Ipnopidae found at lower latitudes.",
+      "Because of its unique way of \"standing\" on the seafloor, B.",
+      "grallator is one of the best-known benthic fish, and it is one of the few members of its genus to be directly observed and photographed by submersibles."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Bathypterois grallator",
+      "common_name_ko": "세발치",
+      "common_name_en": "tripod fish",
+      "depth_range_m": "5000",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "The tripod fish (also known as the tripod spiderfish), Bathypterois grallator, is a grinner in the family Ipnopidae found at lower latitudes.",
+        "Because of its unique way of \"standing\" on the seafloor, B.",
+        "grallator is one of the best-known benthic fish, and it is one of the few members of its genus to be directly observed and photographed by submersibles."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Campagne BIOZAIRE 2 - Poisson trépied ou poisson tripode (Ifremer 00574-68561).jpg)"
+      ]
+    },
+    "media_kind": "photo",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/57/Campagne_BIOZAIRE_2_-_Poisson_tr%C3%A9pied_ou_poisson_tripode_%28Ifremer_00574-68561%29.jpg",
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_bathypterois_grallator_29751178503.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "ipnopidae",
+    "needs_confirm": false,
+    "title": "File:Tripod fish1.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Tripod_fish1.jpg",
+    "license": "public-domain",
+    "credit": "NOAA Okeanos Explorer Program, INDEX-SATAL 2010, NOAA/OER",
+    "source": "File:Tripod fish1.jpg",
+    "name": "Ipnopidae",
+    "name_ja": "",
+    "common_name_ko": "긴촉수매퉁이과",
+    "common_name_en": "Ipnopidae",
+    "depth": "",
+    "facts": [
+      "チョウチンハダカ科（Ipnopidae）は、ヒメ目アオメエソ亜目に所属する魚類の分類群の一つ。イトヒキイワシ・ナガヅエエソなど、底生性の深海魚を中心に5属29種が所属する。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Ipnopidae",
+      "common_name_ko": "긴촉수매퉁이과",
+      "common_name_en": "Ipnopidae",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "チョウチンハダカ科（Ipnopidae）は、ヒメ目アオメエソ亜目に所属する魚類の分類群の一つ。イトヒキイワシ・ナガヅエエソなど、底生性の深海魚を中心に5属29種が所属する。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Tripod fish1.jpg)"
+      ]
+    },
+    "media_kind": "photo",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Tripod_fish1.jpg",
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_ipnopidae_29751178503.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "cranchiidae",
+    "needs_confirm": false,
+    "title": "File:Huevas de calamar (Liocranchia sp.), Anilao, Filipinas, 2023-08-24, DD 76.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/07/Huevas_de_calamar_%28Liocranchia_sp.%29%2C_Anilao%2C_Filipinas%2C_2023-08-24%2C_DD_76.jpg",
+    "license": "cc-by-sa",
+    "credit": "Diego Delso · CC BY-SA",
+    "source": "File:Huevas de calamar (Liocranchia sp.), Anilao, Filipinas, 2023-08-24, DD 76.jpg",
+    "name": "Cranchiidae",
+    "name_ja": "",
+    "common_name_ko": "악어가죽주머니오징어과",
+    "common_name_en": "Cranchiidae",
+    "depth": "",
+    "facts": [
+      "サメハダホウズキイカ科 (Cranchiidae) はイカの科の一つ。約60種を含む。全世界の海洋の表層から中層に生息する。大きさは外套長10cm程度の小型種から、3mに達するダイオウホウズキイカまで様々である。",
+      "英名はGlass squid・cockatoo squid・cranchiid・cranch squid・bathyscaphoid squidなどがある。\"Glass squid\" はほとんどの種で体が透明であることに由来し、\"bathyscaphoid squid\" は浮力調節方法がバチスカーフに似ていることによる。",
+      "他のイカのように、幼生は表層で過ごし、成熟すると深海に降りる。水深2000mにまで降りる種もいる。成長に連れて形態が大きく変化するため、幼生が別種だと思われていたものも多い。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Cranchiidae",
+      "common_name_ko": "악어가죽주머니오징어과",
+      "common_name_en": "Cranchiidae",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "サメハダホウズキイカ科 (Cranchiidae) はイカの科の一つ。約60種を含む。全世界の海洋の表層から中層に生息する。大きさは外套長10cm程度の小型種から、3mに達するダイオウホウズキイカまで様々である。",
+        "英名はGlass squid・cockatoo squid・cranchiid・cranch squid・bathyscaphoid squidなどがある。\"Glass squid\" はほとんどの種で体が透明であることに由来し、\"bathyscaphoid squid\" は浮力調節方法がバチスカーフに似ていることによる。",
+        "他のイカのように、幼生は表層で過ごし、成熟すると深海に降りる。水深2000mにまで降りる種もいる。成長に連れて形態が大きく変化するため、幼生が別種だと思われていたものも多い。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Huevas de calamar (Liocranchia sp.), Anilao, Filipinas, 2023-08-24, DD 76.jpg)"
+      ]
+    },
+    "media_kind": "photo",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/07/Huevas_de_calamar_%28Liocranchia_sp.%29%2C_Anilao%2C_Filipinas%2C_2023-08-24%2C_DD_76.jpg",
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_cranchiidae_29751178503.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "spectrunculus grandis",
+    "needs_confirm": false,
+    "title": "File:Spectrunculus grandis.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Spectrunculus_grandis.jpg",
+    "license": "public-domain",
+    "credit": "NOAA/MBARI",
+    "source": "File:Spectrunculus grandis.jpg",
+    "name": "Spectrunculus grandis",
+    "name_ja": "",
+    "common_name_ko": "Spectrunculus grandis",
+    "common_name_en": "Spectrunculus grandis",
+    "depth": "1000-6000",
+    "facts": [
+      "ソコボウズ（底坊主、学名：Spectrunculus grandis）とは、条鰭綱アシロ目に属する魚類の一種。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Spectrunculus grandis",
+      "common_name_ko": "Spectrunculus grandis",
+      "common_name_en": "Spectrunculus grandis",
+      "depth_range_m": "1000-6000",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ソコボウズ（底坊主、学名：Spectrunculus grandis）とは、条鰭綱アシロ目に属する魚類の一種。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Spectrunculus grandis.jpg)"
+      ]
+    },
+    "media_kind": "photo",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Spectrunculus_grandis.jpg",
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_spectrunculus_grandis_29751178503.jpg"
+  },
+  {
+    "kind": "creature",
+    "key": "chilara taylori",
+    "needs_confirm": false,
+    "title": "File:Chilara taylori.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/1/1d/Chilara_taylori.jpg",
+    "license": "cc-by-sa",
+    "credit": "Helge Weissig · CC BY-SA",
+    "source": "File:Chilara taylori.jpg",
+    "name": "Chilara taylori",
+    "name_ja": "",
+    "common_name_ko": "Chilara taylori",
+    "common_name_en": "Chilara taylori",
+    "depth": "280",
+    "facts": [
+      "Chilara taylori, the spotted cusk-eel, is a species of cusk-eel found along the eastern coast of the Pacific Ocean where it is found at depths down to around 280 metres (920 ft) from Washington, United States to Ecuador.",
+      "This species grows to a length of 40.4 centimetres (15.9 in) TL.",
+      "It is the only known member of its genus."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Chilara taylori",
+      "common_name_ko": "Chilara taylori",
+      "common_name_en": "Chilara taylori",
+      "depth_range_m": "280",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Chilara taylori, the spotted cusk-eel, is a species of cusk-eel found along the eastern coast of the Pacific Ocean where it is found at depths down to around 280 metres (920 ft) from Washington, United States to Ecuador.",
+        "This species grows to a length of 40.4 centimetres (15.9 in) TL.",
+        "It is the only known member of its genus."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Chilara taylori.jpg)"
+      ]
+    },
+    "media_kind": "photo",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/1d/Chilara_taylori.jpg",
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_chilara_taylori_29751178503.jpg"
   }
 ]
