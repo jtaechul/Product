@@ -31,3 +31,36 @@ def test_download_copies_local_file(tmp_path):
     dest = tmp_path / "d.mp4"
     assert F._download(str(src), dest) is True and dest.exists()
     assert F._download("file://" + str(src), tmp_path / "d2.mp4") is True
+
+
+def test_noaa_oer_search_parses_and_matches_dive(monkeypatch):
+    """★NOAA OER 자동 소싱(숨은 geoportal API): 종명 검색→그 종 다이브의 하이라이트 MP4 URL 구성.
+    네트워크 없이(monkeypatch) 파싱·다이브 매칭·URL 조립을 검증. '_'가 word char라 \\b 대신 (?!\\d)."""
+    class _Resp:
+        def __init__(self, payload=None, text=""):
+            self._p = payload; self.text = text
+        def json(self): return self._p
+
+    def fake_get(url, **kw):
+        if "opensearch" in url:
+            return _Resp(payload={"results": [
+                {"_source": {"apiso_Identifier_s": "EX1711_DIVE14_20171217T010000Z_CPHD",
+                             "apiso_Abstract_txt": "chimaera observed at 1500 m"}},
+                {"_source": {"apiso_Identifier_s": "EX1708_DIVE01_x"}},   # 다이브 하이라이트 없음 → 스킵
+            ]})
+        # Compressed 디렉토리 리스팅
+        if "EX1711" in url:
+            return _Resp(text='<a href="EX1711_VID_20171217_DIVE14_CARTOON_CHIMAERA_Low.mp4">x</a>'
+                              '<a href="EX1711_VID_x_DIVE02_OTHER_Low.mp4">y</a>')
+        return _Resp(text="")
+    import src.core.footage as FT
+    monkeypatch.setattr(FT, "requests", __import__("types").SimpleNamespace(get=fake_get), raising=False)
+    # requests는 함수 안에서 import되므로 sys.modules로 주입
+    import sys, types
+    monkeypatch.setitem(sys.modules, "requests", types.SimpleNamespace(get=fake_get))
+    got = FT._noaa_oer_videos("chimaera", 3)
+    assert len(got) == 1                                   # DIVE14만 매칭(DIVE01은 하이라이트 없음)
+    assert got[0]["license"] == "public-domain"
+    assert got[0]["url"].endswith("EX1711_VID_20171217_DIVE14_CARTOON_CHIMAERA_Low.mp4")
+    assert "DIVE14" in got[0]["source"]
+    assert FT._noaa_oer_videos("") == []

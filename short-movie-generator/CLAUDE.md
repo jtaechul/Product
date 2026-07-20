@@ -433,11 +433,26 @@
       소스를 못 만드는 후보를 애초에 후보 파일에 넣지 않는다(영상·사진 둘 다 불가한 것만 · 네트워크 오류는
       후보 유지). 실측: marine_life 28후보 스윕 → 27 제작가능(영상 17·사진다큐 10)·1 제작불가(ophiopsila
       polyacantha) 프룬.
-    - **★공개영상 소스 확대(운영자 요청: "NOAA 같은 사이트 왜 안 쓰나" · 정직한 결론 + 실효 경로)**:
-      실측 결론 — ①**NOAA NCEI 비디오 포털**은 영상이 방대·전부 PD지만 **공개 API가 없다**(검색폼→ZIP/이메일,
-      다이브 단위라 종별 매칭도 약함) → 자동화 불가 ②**Internet Archive**는 API·직다운로드는 되나 `collection:noaa`
-      **0건**, 있는 건 유튜브 미러(출처 위험)·무관 영상뿐 → 자동 소싱 부적합 ③**Wikimedia Commons**가 종명
-      라벨·라이선스·API 다 갖춘 **최적 자동 소스**(그래서 주력). 이에 두 갈래로 확대:
+    - **★★NOAA OER 자동 영상 소싱(운영자 목표 달성 · 숨은 API 발굴 · 검증 완료)**: 처음엔 "NCEI 포털은
+      공개 API 없음"이라 결론냈으나, **프론트엔드 JS(`callapi.js`)를 역분석**해 포털이 실제로는 **ESRI
+      Geoportal OpenSearch JSON API**를 두들기는 것을 찾아냈다 → **완전 자동화 성공**. 파이프라인:
+      ① `GET https://www.ncei.noaa.gov/metadata/granule/geoportal/opensearch?q=(종명)&max=N&f=pjson`
+         → 그 종이 **관측·주석된 다이브 세그먼트** 목록(실측: anglerfish 115건). 각 결과에 탐사ID
+         (`EX####`)·다이브번호·수심·종키워드가 있다(`apiso_Identifier_s`·`apiso_Abstract_txt`).
+      ② 탐사의 `…/oer/video/<EX>/Video/Compressed/` 리스팅에서 그 다이브의 **하이라이트 MP4(`_Low.mp4`)**
+         를 매칭(다이브 번호 정규식 `DIVE0*<n>(?!\d)` — `_`가 word char라 `\b` 금지). 하이라이트는
+         ~60초·생물이 꽉 찬 큐레이션 컷이라 심해 B롤로 최적.
+      ③ 직다운로드 URL(퍼블릭도메인 · `video/mp4` · 640×360 h264+aac) → 공통 게이트(종횡비·정지·워터마크
+         delogo)를 그대로 통과. 실측 E2E: `Chimaera` → `EX1711 DIVE14 CARTOON_CHIMAERA` MP4 다운로드·게이트
+         통과·트림 완료. 구현: `footage._noaa_oer_videos`/`_oer_compressed_listing`, `fetch_footage` 확장
+         분기(커먼스 없으면 **NOAA OER 먼저**, 그다음 Internet Archive). 회귀: `test_noaa_oer_search_parses_and_matches_dive`.
+      - 한계(정직): 다운로드본은 **다이브 하이라이트**(그 종이 관측된 다이브의 큐레이션 컷)이라 그 컷에
+        해당 종이 항상 정면으로 잡힌단 보장은 없다(피사체 가시성 게이트가 생물 프레임을 고른다). 세그먼트
+        단위 개별 클립·풀해상도는 이메일 주문이라 자동화 제외. 그래도 '영상 0개 → 제작 불가'가 사라진다.
+    - **★공개영상 소스 확대(보조 · Internet Archive)**:
+      실측: ②**Internet Archive**는 API·직다운로드는 되나 `collection:noaa` **0건**, 있는 건 유튜브
+      미러(출처 위험)·무관 영상뿐이라 **NOAA OER의 보조**로만(안전필터 통과분). ③**Wikimedia Commons**가
+      종명 라벨·라이선스·API 다 갖춘 최적 자동 소스(주력). 이에 세 갈래(수동 드롭·NOAA OER·IA)로 확대:
       - **운영자 수동 드롭(최우선 · 실효 경로 · `footage._operator_footage`)**: NOAA 포털·유튜브 등에서 운영자가
         직접 받은 PD 클립을 `assets/footage/<학명slug>.<mp4|webm|mov|mkv|m4v>`에 넣으면 그 종 제작에 **자동
         소싱보다 먼저** 쓴다(SFX 드롭과 같은 패턴). 저작자는 `<학명>.credit.txt` 사이드카(없으면 일반

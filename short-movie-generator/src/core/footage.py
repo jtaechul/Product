@@ -184,6 +184,70 @@ def _operator_footage(key: str, common_name_en: str = "") -> dict | None:
     return None
 
 
+# ★NOAA Ocean Exploration 자동 소싱(운영자 목표 · 숨은 API 발굴): NCEI 비디오 포털은 공개 문서엔
+#   API가 없다고 돼 있지만, 프론트엔드(callapi.js)를 뜯어보니 **ESRI Geoportal OpenSearch JSON API**를
+#   호출한다. 이걸 직접 두들기면 종명으로 검색→그 종이 관측된 다이브를 특정→다이브 하이라이트 MP4
+#   (퍼블릭도메인·직다운로드)를 얻는다. 실측: 'anglerfish' 115건, EX1708 DIVE21 → 640×360 h264 MP4.
+_OER_OPENSEARCH = "https://www.ncei.noaa.gov/metadata/granule/geoportal/opensearch"
+_OER_VIDEO_BASE = "https://www.ncei.noaa.gov/data/oceans/oer/video"
+
+
+def _oer_compressed_listing(exp: str) -> tuple[str, list[str]]:
+    """탐사(EX####)의 압축 하이라이트 폴더를 나열 → (base_url, [파일명]). 없으면 (base, [])."""
+    base = f"{_OER_VIDEO_BASE}/{exp}/Video/Compressed/"
+    try:
+        import requests
+        html = requests.get(base, headers={"User-Agent": _UA}, timeout=30).text
+        return base, re.findall(r'href="([^"]+_Low\.mp4)"', html)
+    except Exception:  # noqa: BLE001
+        return base, []
+
+
+def _noaa_oer_videos(query: str, n: int = 3) -> list[dict]:
+    """★NOAA OER 자동 영상 소싱: 종명으로 OpenSearch→그 종 관측 다이브의 하이라이트 MP4(PD 직다운로드).
+    반환 [{url, license:'public-domain', credit:'NOAA Ocean Exploration', source}]. 오류·미매치는 []."""
+    q = (query or "").strip()
+    if not q:
+        return []
+    try:
+        import requests
+        d = requests.get(_OER_OPENSEARCH, headers={"User-Agent": _UA}, timeout=40,
+                         params={"q": f"({q})", "start": 1, "max": n * 8,
+                                 "orderBy": "title", "f": "pjson"}).json()
+        results = d.get("results") or []
+    except Exception as e:  # noqa: BLE001
+        log.info("[footage] NOAA OER 검색 실패(%s): %s", q, e)
+        return []
+    listings: dict[str, tuple[str, list[str]]] = {}
+    out: list[dict] = []
+    seen: set = set()
+    for r in results:
+        src = r.get("_source", {}) or {}
+        ident = src.get("apiso_Identifier_s") or ""
+        m = re.match(r"(EX\d+)_DIVE(\d+)", ident)
+        if not m:
+            continue
+        exp, dive = m.group(1), int(m.group(2))
+        if exp not in listings:
+            listings[exp] = _oer_compressed_listing(exp)
+        base, files = listings[exp]
+        if not files:
+            continue
+        pat = re.compile(rf"DIVE0*{dive}(?![0-9])", re.I)   # '_'가 word char라 \b 대신 (?!\d)
+        match = [f for f in files if pat.search(f)]
+        if not match:
+            continue                                        # 그 다이브 하이라이트가 없으면 스킵(관련성 우선)
+        url = base + match[0]
+        if url in seen:
+            continue
+        seen.add(url)
+        out.append({"url": url, "license": "public-domain", "credit": "NOAA Ocean Exploration",
+                    "source": f"NOAA OER {exp} DIVE{dive:02d} ({_OER_OPENSEARCH})"})
+        if len(out) >= n:
+            break
+    return out
+
+
 def _archive_org_videos(query: str, n: int = 4) -> list[dict]:
     """Internet Archive에서 종 관련 **PD/CC 실사 영상**을 찾아 직다운로드 URL로 반환.
     저작권 안전(수익화): 유튜브·플리커 미러 제외 + (명시 PD/CC 라이선스 또는 미국 정부 업로더)만.
@@ -1044,12 +1108,13 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
     if not cand:
         cand = _commons_search(scientific_name) or _commons_search(common_name_en)
     if not cand and not key.startswith("wreck "):
-        # ★커먼스에 없으면 Internet Archive(NOAA 등 PD 영상)로 확장(운영자 요청). 저작권 안전 필터
-        #   통과분만. 아래 공통 다운로드·종횡비·정지·워터마크 게이트를 그대로 통과해야 채택된다.
-        ia = (_archive_org_videos(scientific_name) or _archive_org_videos(common_name_en))
-        if ia:
-            cand = ia[0]
-            log.info("[footage] Internet Archive 후보 채택: %s (%s)", cand["source"], cand["license"])
+        # ★커먼스에 없으면 자동 확장(운영자 목표): ①NOAA OER(숨은 geoportal API·종명 검색·PD 하이라이트)
+        #   ②Internet Archive(안전필터). 아래 공통 다운로드·종횡비·정지·워터마크 게이트를 그대로 통과해야 채택.
+        ext = (_noaa_oer_videos(scientific_name) or _noaa_oer_videos(common_name_en)
+               or _archive_org_videos(scientific_name) or _archive_org_videos(common_name_en))
+        if ext:
+            cand = ext[0]
+            log.info("[footage] 확장 소스 후보 채택: %s (%s)", cand["source"], cand["license"])
     if not cand:
         log.info("[footage] 실사 영상 미확보: %s / %s", scientific_name, common_name_en)
         return None
