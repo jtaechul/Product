@@ -447,6 +447,52 @@ class DeepSeaCategory:
             raise PipelineError("input", "전 종 제작 완료 — 중복 방지로 중단(새 종 시드 추가 필요)")
         return c[0]
 
+    def auto_replenish(self) -> str | None:
+        """★풀 소진 자동 보충(운영자 확정 · auto 교착 해소): 시드 풀이 전부 제작돼 후보가 0이면,
+        **이미 소싱된(승인 대기) 후보** 중 심해 적합·제작 가능한 첫 종을 승격해 auto가 계속 돌게 한다.
+        (예전엔 여기서 무조건 중단 → deep_sea auto가 '대상 없음'으로 반복 실패. NOAA/커먼스 소싱으로
+        후보가 실제 제작 가능해졌으니 자동 승격이 안전.) 테스트 통과분만 승격(부적합·불가는 안 건드림).
+        반환: 승격된 종 key 또는 None(승격 가능 후보 없음)."""
+        import tempfile
+        from src.core import discovery, footage
+        from src.core.contracts import SpeciesInfo
+        from src.categories.deep_sea import catalog
+        made = set()
+        try:
+            for it in catalog._load():
+                made.add(str(it.get("scientific_name", "")).strip().lower())
+                made.add(str(it.get("common_name_en", "")).strip().lower())
+        except Exception:  # noqa: BLE001
+            made = set()
+        for c in discovery.load_candidates(self.category_id):
+            key = (c.get("key") or "").strip().lower()
+            sp = c.get("species") or {}
+            sci = (sp.get("scientific_name") or "").strip()
+            en = (sp.get("common_name_en") or "").strip()
+            if not sci or sci.lower() in made or (en and en.lower() in made):
+                continue
+            info = SpeciesInfo(
+                scientific_name=sci, common_name_ko=sp.get("common_name_ko", ""),
+                common_name_en=en, depth_range_m=sp.get("depth_range_m", ""),
+                distribution=sp.get("distribution", ""), habitat=sp.get("habitat", ""),
+                diet=sp.get("diet", []), fun_facts=sp.get("fun_facts", []),
+                sources=sp.get("sources", []))
+            try:                                    # 심해 적합성(표층·연안·가짜수심 차단) 먼저
+                self.verify_subject(info)
+            except PipelineError:
+                continue
+            try:                                    # 제작 가능(영상/사진 확보)까지 확인 후에만 승격
+                if not footage.fetch_footage(sci, en, tempfile.mkdtemp()):
+                    continue
+            except Exception:  # noqa: BLE001
+                continue
+            discovery.promote_candidate(self.category_id, key)
+            data._merge_discovered()                # SPECIES에 즉시 반영(같은 프로세스)
+            footage._merge_discovered_seeds()        # _SEED에 즉시 반영
+            log.info("[deep_sea] auto 풀 소진 → 후보 자동 승격: %s (%s)", key, sci)
+            return key if key in data.SPECIES else None
+        return None
+
     def reels_body_script(self, info: SpeciesInfo) -> list[str] | None:
         """reels(실사+일본어) 본문 나레이션 절 리스트. 시드/LLM, 실패 시 None."""
         from src.categories.deep_sea import hook as hook_copy

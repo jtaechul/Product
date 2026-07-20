@@ -259,8 +259,17 @@ def run_reels(
         cands = (category.footage_candidates()
                  if hasattr(category, "footage_candidates")
                  else [category.pick_footage_species()])
-        # ★중복 금지: 미제작 대상이 없으면(풀 소진) 재탕하지 않고 명확히 중단한다.
-        #   소싱은 이제 관리자 페이지의 "소싱하기" 버튼(수동)에서 한다 → 자동 발굴/스케줄 폐지.
+        # ★풀 소진 자동 보충(운영자 확정 · auto 교착 해소): 미제작 시드가 0이면, 이미 소싱된 승인대기
+        #   후보 중 '제작 가능·적합'한 첫 종을 자동 승격해 계속 돈다(중복은 여전히 금지 — 승격은 미제작만).
+        #   승격 가능 후보도 없을 때만 명확히 중단(소싱하기 안내).
+        if not cands and hasattr(category, "auto_replenish"):
+            try:
+                rk = category.auto_replenish()
+                if rk:
+                    cands = [rk]
+                    log.info("[reels] auto 풀 소진 → 후보 자동 승격 사용: %s", rk)
+            except Exception as e:  # noqa: BLE001
+                log.warning("[reels] auto 자동 승격 실패: %s", e)
         if not cands:
             raise PipelineError("input",
                                 "제작 가능한 미제작 대상이 없습니다 — 관리자 페이지에서 '소싱하기'로 새 대상을 확보하세요.")
