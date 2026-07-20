@@ -62,9 +62,18 @@ class CollectionCategory(CategoryModule):
             copy = dict(self.COPY)
             for it in discovery.load_discovered(self.category_id):
                 key = (it.get("key") or "").strip().lower()
-                s, c = it.get("subject"), it.get("copy")
-                if key and s and c and key not in subj:
-                    subj[key] = s
+                if not key or key in subj:
+                    continue
+                # ★두 스키마 모두 지원(재발방지 · 실사고: 소싱 승격 생물이 '미등록 대상'으로 제작 실패):
+                #   · 난파선 등 = subject(+copy) 쌍 · 소싱 승격 생물 = species(+footage, copy 없음).
+                #   promote_candidate가 creature를 {key,kind,footage,species}로 쓰는데 예전엔 subject+copy만
+                #   병합해 생물이 SUBJECTS에 안 들어가 parse_input이 전부 실패했다.
+                s = it.get("subject") or it.get("species")
+                if not s:
+                    continue
+                subj[key] = s
+                c = it.get("copy")
+                if c:                               # copy는 선택(없으면 LLM이 훅·본문·캡션 생성)
                     copy[key] = c
             self.SUBJECTS = subj
             self.COPY = copy
