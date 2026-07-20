@@ -1,14 +1,20 @@
 {
  "row_hash": "b2de2d6cf736ce17",
  "product_name": "미닉스 더플렌더 Max 건조분쇄 음식물처리기",
+ "saved_at": "2026-07-19T23:02:02.183Z",
  "lines": [
   {
    "line_i": 0,
    "picks": [
     {
-     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmbmtmaWJhZ2VzaHhsMGhtcHN1Z2lnNnAwcWc1djczdHBveXBzM2t2eCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/hWclJwbAeUvz9P8s4B/giphy.gif",
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmaGZid2Q2ZWJzdHBtbDZpODZxODlraDM4dmI0N2JvcmN3amxiejBqNCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/LS9vm8wBMXLbDYWQJb/giphy.gif",
      "source": "giphy",
      "query": "Through up"
+    },
+    {
+     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmY3dhYjVyeDYyaGZxMTB3b2p4Y3NjMmplcHlwcnd5bzcxcHRwYmgzciZlcD12MV9naWZzX3NlYXJjaCZjdD1n/X1pJbfIqRfP8jSSfDD/giphy.gif",
+     "source": "giphy",
+     "query": "Bad smell"
     }
    ]
   },
@@ -36,19 +42,14 @@
    "line_i": 2,
    "picks": [
     {
-     "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmZDRhMmtmNXlnYW0xMWxrdDJnaHl4dWt2dDJzYXUxOGRzMmppeXM1dCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/RYGx6QTDLY3VzAlR1L/giphy.gif",
-     "source": "giphy",
-     "query": "opening refrigerator"
-    },
-    {
      "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmeDJ4MjNpenJ6bmZyM2MweG51bzd1b3prcTVnOWNncjg2b3I5N2Z3ZyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/l3nFiVO0D1qbS4dos/giphy.gif",
      "source": "giphy",
      "query": "opening refrigerator"
     },
     {
-     "url": "https://media0.giphy.com/media/v1.Y2lkPWE2MzZjNTlmd2p5ajNuYXczcHIxeTJxcG02eWswam5mYnY5NjZ3NzQzMDNxMWVnMiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/WgOcyQMENRVfLMLIUj/giphy.gif",
+     "url": "https://media4.giphy.com/media/v1.Y2lkPWE2MzZjNTlmejhzdzE4Zmo0djdxNzVtMWRkbGxvajM0cnIzdmw4ZjllczFpYTJxaiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/xUA7aT1vNqVWHPY1cA/giphy.gif",
      "source": "giphy",
-     "query": "opening refrigerator"
+     "query": "Party"
     }
    ]
   },
@@ -62,11 +63,6 @@
     },
     {
      "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmaHlreWF2dHIwbmQzOHEzd2Fsdzd5bG95M25lZDJ4NGN1dmZwbm9waiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/j1P8gayLo0ZVCcc14l/giphy.gif",
-     "source": "giphy",
-     "query": "Stingky smell"
-    },
-    {
-     "url": "https://media3.giphy.com/media/v1.Y2lkPWE2MzZjNTlmaHlreWF2dHIwbmQzOHEzd2Fsdzd5bG95M25lZDJ4NGN1dmZwbm9waiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/GLKhSgFg0VKLAmsSSR/giphy.gif",
      "source": "giphy",
      "query": "Stingky smell"
     }
@@ -135,6 +131,11 @@
      "url": "https://media2.giphy.com/media/v1.Y2lkPWE2MzZjNTlmYXBieWQyY2N4Mm1kd295dGJ5dWtsOGpyZWJmOTVtZXRocmc3cTIzbCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/jURWvLCpsTpKdgTmcH/giphy.gif",
      "source": "giphy",
      "query": "Nice feeling"
+    },
+    {
+     "url": "https://media1.giphy.com/media/v1.Y2lkPWE2MzZjNTlmNnphang0Z21xOGd4dmV6NWhpZ2FnY3NpYWVmajNkZGVsa24wb3VscCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/mlqkBi7iYscCY/giphy.gif",
+     "source": "giphy",
+     "query": "So Clean"
     }
    ]
   }
