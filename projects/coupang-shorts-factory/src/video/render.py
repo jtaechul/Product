@@ -947,8 +947,9 @@ def _thumb_hook_overlay(text: str, width: int, height: int, hold: float,
 
 
 def _expose_image_clip(src, start: float, end: float, width: int, img_top: int, img_h: int,
-                       product_images: list, product_videos: list):
-    """하단 full-width 이미지/영상 — cover-fit. 상품 라인+제품영상이면 영상, GIF/영상이면 재생."""
+                       product_images: list, product_videos: list, kb_zoom: float = 0.05):
+    """하단 full-width 이미지/영상 — cover-fit. 상품 라인+제품영상이면 영상, GIF/영상이면 재생.
+    kb_zoom: 정지사진 켄번즈 줌 폭(본편 0.05 유지, 훅 카드는 정지처럼 보이지 않게 더 크게)."""
     dur = end - start
     if dur <= 0.05:
         return None
@@ -968,7 +969,7 @@ def _expose_image_clip(src, start: float, end: float, width: int, img_top: int, 
     except Exception as e:
         print(f"[render] 경고: expose 이미지 실패({Path(src).name}: {e})")
         return None
-    kb = ImageClip(arr).resized(lambda t, d=dur: 1.0 + 0.05 * min(1.0, t / d)).with_position(("center", "center"))
+    kb = ImageClip(arr).resized(lambda t, d=dur, z=kb_zoom: 1.0 + z * min(1.0, t / d)).with_position(("center", "center"))
     inner = CompositeVideoClip([kb], size=(width, img_h)).with_duration(dur + 0.05)
     return inner.with_start(start).with_position((0, img_top))
 
@@ -1114,16 +1115,24 @@ def _build_expose(lines: list, line_windows: list, words: list, line_images: lis
         if len(picks) > max_n:
             print(f"[render] 훅 카드 픽 {len(picks)}장 중 앞 {max_n}장만 사용(카드 {hook_end:.1f}초 — 장당 0.7초 확보)")
             picks = picks[:max_n]
+        # ⭐ 훅 배경은 절대 정지처럼 보이면 안 된다(2026-07-20 사용자 확정 — 첫 1~2초 스와이프 방어):
+        #    영상/GIF 픽은 그대로 재생되고, 정지사진 픽은 본편(+5%)보다 큰 줌으로 확실히 움직이게 한다.
+        hook_zoom = float(r.get("hook_kb_zoom", 0.14))
         step = hook_end / max(1, len(picks))
         for k, src in enumerate(picks or [None]):
             a = k * step
             b = hook_end if k == len(picks) - 1 else (k + 1) * step
             bg = (_expose_image_clip(src, a, b, width, 0, height, product_images,
-                                     [] if selections_applied else product_videos)
+                                     [] if selections_applied else product_videos, kb_zoom=hook_zoom)
                   if src is not None else None)
-            if bg is None:
+            if bg is None:   # 최후 폴백(브랜드 패널)도 같은 줌을 걸어 정지 화면을 남기지 않는다
                 arr = _branded_rect_arr(width, height, ch.get("name", "미래에서 온 만물상"), font_path)
-                bg = ImageClip(arr).with_duration(max(0.1, b - a)).with_start(a).with_position((0, 0))
+                d = max(0.1, b - a)
+                kb = (ImageClip(arr)
+                      .resized(lambda t, dd=d, z=hook_zoom: 1.0 + z * min(1.0, t / dd))
+                      .with_position(("center", "center")))
+                bg = (CompositeVideoClip([kb], size=(width, height)).with_duration(d + 0.05)
+                      .with_start(a).with_position((0, 0)))
             layers.append(bg)
         txt = _thumb_hook_overlay(hook_text, width, height, hook_end, font_path, settings)
         if txt is not None:

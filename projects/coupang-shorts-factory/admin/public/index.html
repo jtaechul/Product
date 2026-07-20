@@ -2605,10 +2605,15 @@ function renderImgLines() {
   for (const ln of imgManifest.lines) {
     const li = ln.line_i;
     const card = document.createElement("div"); card.className = "card imgline";
+    // 훅 카드 배경은 '신박한 한 가지'가 눈에 보이는 움직이는 클립이 최우선(2026-07-20 사용자 확정 —
+    // 3단계 확보 안내). 정지사진을 골라도 렌더가 자동 줌을 걸어 정지 화면은 안 나간다.
+    const pickHint = ln.is_hook
+      ? "여기서 고른 픽이 0:00 훅 카드 배경입니다. <b>제품의 '신박한 한 가지'가 눈에 보이는 움직이는 클립</b>을 고르세요 — ① 제품 동작 영상(아래 ‘영상 구간 지정’) ② 대체 샷(비교·리액션·시연 GIF) ③ 둘 다 없으면 제품 사진(자동 줌으로 움직임 처리). 여러 개 고르면 순서대로 나옵니다."
+      : "고른 이미지가 위 칸에 순서대로 담깁니다(번호=슬라이드쇼 순서, × 로 빼기). 후보를 탭하거나 ‘GIF 검색’을 쓰세요.";
     card.innerHTML =
       `<div class="imglabel"><span class="chip wait">${ln.is_hook ? "훅 카드(0:00 제목 배경)" : `라인 ${li + 1}${ln.punch ? " · 훅" : ""}`}</span><span class="imgtext"></span></div>`
       + `<div class="picktray"></div>`
-      + `<p class="hint" style="margin:0 0 6px">고른 이미지가 위 칸에 순서대로 담깁니다(번호=슬라이드쇼 순서, × 로 빼기). 후보를 탭하거나 ‘GIF 검색’을 쓰세요.</p>`
+      + `<p class="hint" style="margin:0 0 6px">${pickHint}</p>`
       + `<div class="thumbs"></div>`
       + `<div class="row2" style="margin-top:8px">`
       + `<button class="btn mini sub txteditbtn">대사 고치기</button>`
@@ -2648,7 +2653,14 @@ function renderImgLines() {
       if (await imgTextSave(li, ta.value)) editBox.style.display = "none";
     });
     // ── 후보 그리드: 밈·제품·제품영상 + 미리 깔린 Giphy GIF (스톡 없음) ──
-    for (const c of (ln.candidates || [])) {
+    // 훅 라인만 '움직이는 후보(제품영상·GIF)'를 앞으로 정렬(2026-07-20 — 훅 배경은 움직임 우선).
+    //   표시 순서만 바뀐다: 픽·복원 매칭은 내용 키(_key=c.name) 기반이라 정렬과 무관(안전).
+    let candList = ln.candidates || [];
+    if (ln.is_hook) {
+      const still = (c) => (c.is_product || c.is_detail || c.is_meme) ? 1 : 0;
+      candList = candList.slice().sort((a, b) => still(a) - still(b));
+    }
+    for (const c of candList) {
       const url = imgAssetMap[c.name];
       const t = document.createElement("div"); t.className = "thumb"; t.dataset.key = c.name;
       const img = document.createElement("img"); img.loading = "lazy"; img.alt = "";
