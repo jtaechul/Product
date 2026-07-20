@@ -150,14 +150,6 @@
     "youtube_url": "https://youtu.be/UXpvm_cw1Aw"
   },
   {
-    "id": "022",
-    "kind": "reels",
-    "common_name_ko": "바다거미목",
-    "common_name_en": "Pycnogonida",
-    "scientific_name": "Pycnogonida",
-    "date": "2026-07-12"
-  },
-  {
     "id": "023",
     "kind": "reels",
     "common_name_ko": "Raketa 난파선",
@@ -277,6 +269,14 @@
     "common_name_ko": "규조류",
     "common_name_en": "Diatom",
     "scientific_name": "Bacillariophyta",
+    "date": "2026-07-20"
+  },
+  {
+    "id": "022",
+    "kind": "reels",
+    "common_name_ko": "바다거미목",
+    "common_name_en": "Pycnogonida",
+    "scientific_name": "Pycnogonida",
     "date": "2026-07-20"
   }
 ]
