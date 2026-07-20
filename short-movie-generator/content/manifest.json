@@ -270,5 +270,13 @@
     "date": "2026-07-10",
     "has_video": true,
     "youtube_url": "https://youtu.be/G5eD8VEcEII"
+  },
+  {
+    "id": "038",
+    "kind": "reels",
+    "common_name_ko": "규조류",
+    "common_name_en": "Diatom",
+    "scientific_name": "Bacillariophyta",
+    "date": "2026-07-20"
   }
 ]
