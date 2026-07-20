@@ -235,14 +235,6 @@
     "date": "2026-07-19"
   },
   {
-    "id": "037",
-    "kind": "reels",
-    "common_name_ko": "Dumbo octopus",
-    "common_name_en": "Dumbo octopus",
-    "scientific_name": "Grimpoteuthis discoveryi",
-    "date": "2026-07-19"
-  },
-  {
     "id": "lf-3",
     "kind": "longform",
     "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
@@ -278,5 +270,14 @@
     "common_name_en": "Pycnogonida",
     "scientific_name": "Pycnogonida",
     "date": "2026-07-20"
+  },
+  {
+    "id": "037",
+    "kind": "reels",
+    "common_name_ko": "Dumbo octopus",
+    "common_name_en": "Dumbo octopus",
+    "scientific_name": "Grimpoteuthis discoveryi",
+    "date": "2026-07-20",
+    "youtube_url": "https://youtu.be/JF8f4Mu7UZk"
   }
 ]
