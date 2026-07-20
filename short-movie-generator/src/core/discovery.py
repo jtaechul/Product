@@ -1076,9 +1076,15 @@ def _all_known_keys() -> set[str]:
     return keys
 
 
-def source_to_candidates(category_id: str, want: int = 6, validate=None) -> list[dict]:
+def source_to_candidates(category_id: str, want: int = 6, validate=None,
+                         verify_producible: bool = True) -> list[dict]:
     """'소싱하기'가 호출: 새 후보를 발굴해 (선택) 실사 게이트로 거른 뒤 후보 파일에 저장.
-    이미 후보/승인된 대상은 제외(전 카테고리 교차 중복까지). 반환 = 이번에 추가된 후보 목록."""
+    이미 후보/승인된 대상은 제외(전 카테고리 교차 중복까지). 반환 = 이번에 추가된 후보 목록.
+
+    ★소싱=제작가능 보장(운영자 확정 · 재발방지 실사고: 소싱 게이트가 제작보다 느슨해 제작 불가
+    후보가 쌓임): verify_producible=True면 새 후보를 **제작이 실제 소비하는 footage.fetch_footage로
+    한 번씩 굴려** 소스를 못 만드는 후보를 애초에 버린다(영상·사진 둘 다 불가한 것만). 이렇게 하면
+    '소싱됐지만 제작 안 됨' 자체가 안 생긴다. 네트워크 오류는 무해 처리(후보 유지 · 다음 프룬이 정리)."""
     existing = load_candidates(category_id)
     # ★전 카테고리 키를 제외 → 같은 종이 여러 카테고리에 중복 소싱되지 않게 한다.
     excl = _all_known_keys()
@@ -1087,10 +1093,38 @@ def source_to_candidates(category_id: str, want: int = 6, validate=None) -> list
     if validate:
         # 유명 난파선 다큐(wreck_doc)는 단일 url이 없다 → dossier 확보 자체가 리치니스 게이트다.
         found = [c for c in found if c.get("media_kind") == "wreck_doc" or validate(c["url"])]
+    if verify_producible and found:
+        found = _keep_producible(found)
     if not found:
         return []
     save_candidates(category_id, existing + found)
     return found
+
+
+def _keep_producible(cands: list[dict]) -> list[dict]:
+    """후보들을 제작 경로(footage.fetch_footage)로 실제 굴려 '영상으로 만들 수 있는' 것만 남긴다.
+    소싱=제작가능을 코드로 보장(제작 관문과 동일 함수 사용). 드롭한 후보는 로그로 남긴다(무단 절삭 금지)."""
+    import tempfile
+    try:
+        from src.core import footage as _F
+    except Exception:  # noqa: BLE001
+        return cands
+    ok, dropped = [], []
+    for c in cands:
+        if c.get("media_kind") == "wreck_doc":     # 다큐는 dossier 확보 자체가 게이트(별경로)
+            ok.append(c); continue
+        sp = c.get("species") or {}
+        sci = sp.get("scientific_name") or c.get("name") or c.get("key") or ""
+        en = sp.get("common_name_en") or c.get("common_name_en") or ""
+        try:
+            r = _F.fetch_footage(sci, en, tempfile.mkdtemp())
+            (ok if r else dropped).append(c)
+        except Exception as e:  # noqa: BLE001  네트워크 등 일시 오류는 후보 유지(다음 프룬이 정리)
+            log.info("[discovery] 제작가능 검증 오류(유지): %s — %s", c.get("key"), e)
+            ok.append(c)
+    if dropped:
+        log.info("[discovery] 소싱 시 제작 불가로 제외: %s", [c.get("key") for c in dropped])
+    return ok
 
 
 # 선종 영문/한국어 → 일본어(확인된 것만 표기). 없으면 일반어 '船'.

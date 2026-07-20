@@ -427,6 +427,19 @@
       각 후보를 굴려 보고 소스를 못 만들면(None) 자동 삭제**(영상·사진 둘 다 불가한 것만 — 사진으로라도
       되면 유지). 소싱 워크플로 `source-species.yml`에 '수동 삭제 + 자동 프룬' 스텝 추가(입력
       `remove_keys`·`prune_unproducible`). 회귀: `test_remove_and_prune_candidates`.
+    - **★소싱=제작가능 보장(운영자 확정 · 소싱 시점 게이트 · 재발방지)**: 소싱 게이트(`validate_source_url`)가
+      제작 관문보다 느슨해 '소싱됐지만 제작 불가'가 쌓이던 문제 → `source_to_candidates(verify_producible=True,
+      기본 켜짐)`가 새 후보를 **제작이 실제 소비하는 `footage.fetch_footage`로 한 번씩 굴려**(`_keep_producible`)
+      소스를 못 만드는 후보를 애초에 후보 파일에 넣지 않는다(영상·사진 둘 다 불가한 것만 · 네트워크 오류는
+      후보 유지). 실측: marine_life 28후보 스윕 → 27 제작가능(영상 17·사진다큐 10)·1 제작불가(ophiopsila
+      polyacantha) 프룬.
+    - **★소싱 승격 생물 등록 버그(핵심 · 절대 회귀 금지 · 실사고 run #131~133 marine_life 전량 실패)**:
+      `promote_candidate`는 생물을 `{key,kind:"creature",footage,species}`로 쓰는데,
+      `collection_base._merge_discovered`가 예전엔 **`subject`+`copy`만** 병합해(난파선 스키마) 승격된
+      생물이 `SUBJECTS`에 안 들어가 `parse_input`이 **'미등록 대상'으로 전량 실패**했다(footage는 정상인데
+      제작 입력단에서 죽음). → 이제 `subject`(난파선) **또는 `species`(생물)** 둘 다 병합하고 `copy`는 선택
+      (없으면 LLM이 훅·본문·캡션 생성). deep_sea는 자체 `data._merge_discovered`가 `species`를 읽어 무관.
+      회귀: `test_creature_promote_registers`.
 
 12. **★소스 품질 게이트(번인 로고·인트로 카드·레터박스 방지 · 절대 위반 금지).** 아마추어 소스
     (다이빙 영상 등)는 인트로 타이틀카드·로고(예: 'SUBMANIA Escola de Mergulho')·아웃트로 크레딧이
