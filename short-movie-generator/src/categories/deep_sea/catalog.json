@@ -159,5 +159,12 @@
     "common_name_en": "Dumbo octopus",
     "scientific_name": "Grimpoteuthis discoveryi",
     "date": "2026-07-19"
+  },
+  {
+    "no": 39,
+    "common_name_ko": "마귀상어",
+    "common_name_en": "goblin shark",
+    "scientific_name": "Mitsukurina owstoni",
+    "date": "2026-07-20"
   }
 ]

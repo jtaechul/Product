@@ -279,5 +279,13 @@
     "scientific_name": "Grimpoteuthis discoveryi",
     "date": "2026-07-20",
     "youtube_url": "https://youtu.be/JF8f4Mu7UZk"
+  },
+  {
+    "id": "039",
+    "kind": "reels",
+    "common_name_ko": "마귀상어",
+    "common_name_en": "goblin shark",
+    "scientific_name": "Mitsukurina owstoni",
+    "date": "2026-07-20"
   }
 ]

@@ -325,44 +325,6 @@
   },
   {
     "kind": "creature",
-    "key": "mitsukurina owstoni",
-    "needs_confirm": false,
-    "title": "File:Goblin shark, Pengo.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Goblin_shark%2C_Pengo.jpg",
-    "license": "cc-by-sa",
-    "credit": "Wikimedia Commons · CC BY-SA",
-    "source": "File:Goblin shark, Pengo.jpg",
-    "name": "Mitsukurina owstoni",
-    "name_ja": "",
-    "common_name_ko": "마귀상어",
-    "common_name_en": "goblin shark",
-    "depth": "100-2000",
-    "facts": [
-      "ミツクリザメ（箕作鮫、学名：Mitsukurina owstoni、英: Goblin shark）は、ネズミザメ目ミツクリザメ科に属するサメ。ミツクリザメ科はミツクリザメ属 Mitsukurina 1属で、本種のみを含む。希少種。日本の東京湾、駿河湾、相模湾などをはじめ、世界各地で散発的に報告されている。表層から水深1,300 m、あるいはそれ以上の深海に生息する。推定全長6m。ブレード状の長い吻が特徴である。写真や図では顎が飛び出した状態のものが多いが、通常遊泳時は奥に引っ込んでいる。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Mitsukurina owstoni",
-      "common_name_ko": "마귀상어",
-      "common_name_en": "goblin shark",
-      "depth_range_m": "100-2000",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "ミツクリザメ（箕作鮫、学名：Mitsukurina owstoni、英: Goblin shark）は、ネズミザメ目ミツクリザメ科に属するサメ。ミツクリザメ科はミツクリザメ属 Mitsukurina 1属で、本種のみを含む。希少種。日本の東京湾、駿河湾、相模湾などをはじめ、世界各地で散発的に報告されている。表層から水深1,300 m、あるいはそれ以上の深海に生息する。推定全長6m。ブレード状の長い吻が特徴である。写真や図では顎が飛び出した状態のものが多いが、通常遊泳時は奥に引っ込んでいる。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Goblin shark, Pengo.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Goblin_shark%2C_Pengo.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_mitsukurina_owstoni_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
     "key": "scotoplanes globosa",
     "needs_confirm": false,
     "title": "File:Scotoplanes globosa and crab.jpg",
