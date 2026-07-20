@@ -433,6 +433,20 @@
       소스를 못 만드는 후보를 애초에 후보 파일에 넣지 않는다(영상·사진 둘 다 불가한 것만 · 네트워크 오류는
       후보 유지). 실측: marine_life 28후보 스윕 → 27 제작가능(영상 17·사진다큐 10)·1 제작불가(ophiopsila
       polyacantha) 프룬.
+    - **★공개영상 소스 확대(운영자 요청: "NOAA 같은 사이트 왜 안 쓰나" · 정직한 결론 + 실효 경로)**:
+      실측 결론 — ①**NOAA NCEI 비디오 포털**은 영상이 방대·전부 PD지만 **공개 API가 없다**(검색폼→ZIP/이메일,
+      다이브 단위라 종별 매칭도 약함) → 자동화 불가 ②**Internet Archive**는 API·직다운로드는 되나 `collection:noaa`
+      **0건**, 있는 건 유튜브 미러(출처 위험)·무관 영상뿐 → 자동 소싱 부적합 ③**Wikimedia Commons**가 종명
+      라벨·라이선스·API 다 갖춘 **최적 자동 소스**(그래서 주력). 이에 두 갈래로 확대:
+      - **운영자 수동 드롭(최우선 · 실효 경로 · `footage._operator_footage`)**: NOAA 포털·유튜브 등에서 운영자가
+        직접 받은 PD 클립을 `assets/footage/<학명slug>.<mp4|webm|mov|mkv|m4v>`에 넣으면 그 종 제작에 **자동
+        소싱보다 먼저** 쓴다(SFX 드롭과 같은 패턴). 저작자는 `<학명>.credit.txt` 사이드카(없으면 일반
+        'Public Domain'—오귀속 방지). 로컬 파일은 `_download`가 HTTP 아닌 **복사**로 처리. 공통 게이트
+        (9:16·워터마크·정지)는 그대로 적용.
+      - **Internet Archive 자동 폴백(저작권 안전 · 저수율 · `footage._archive_org_videos`)**: 커먼스에 영상이
+        없을 때만 시도. **유튜브·플리커 미러 제외 + 명시 PD/CC 라이선스 또는 확인된 미국 정부 업로더(NOAA·USGS·
+        MBARI 등)만** 채택, 거대 다이브 파일은 220MB 상한. 실측상 수율은 낮지만(안전필터가 미러·무관물 배제)
+        무해(없으면 [] → 커먼스/사진다큐로). 회귀: `test_footage_sources`.
     - **★소싱 승격 생물 등록 버그(핵심 · 절대 회귀 금지 · 실사고 run #131~133 marine_life 전량 실패)**:
       `promote_candidate`는 생물을 `{key,kind:"creature",footage,species}`로 쓰는데,
       `collection_base._merge_discovered`가 예전엔 **`subject`+`copy`만** 병합해(난파선 스키마) 승격된

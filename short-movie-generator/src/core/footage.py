@@ -153,6 +153,89 @@ def seeded_keys() -> tuple:
     return tuple(_SEED.keys())
 
 
+# ★공개영상 소스 확대(운영자 요청 · NOAA 등 커먼스 밖 PD 영상): Internet Archive(archive.org)는
+#   공개 JSON API + 직다운로드 URL을 제공해 자동화 가능하다(NOAA 포털은 API가 없어 자동화 불가 →
+#   운영자 수동). 수익화 채널이라 저작권을 엄격히: ①유튜브·플리커 미러(출처 불명확)는 제외
+#   ②명시적 PD/CC 라이선스 또는 확인된 미국 정부 업로더만 채택 ③거대 다이브 통짜 파일은 용량 상한.
+_IA_GOV_RE = re.compile(r"\b(noaa|usgs|usfws|nasa|bureau of ocean|smithsonian|mbari)\b", re.I)
+_IA_SKIP_PREFIX = ("youtube-", "flickr-")          # 미러(출처 불명확) 배제
+_IA_MAX_BYTES = 220_000_000                        # ~220MB 상한(다이브 통짜 GB 파일 회피)
+
+
+def _operator_footage(key: str, common_name_en: str = "") -> dict | None:
+    """★운영자 수동 드롭 영상(최우선 소스 · 운영자 요청): NOAA 포털·유튜브 등 API로 자동화 못 하는
+    풍부한 PD 영상을 운영자가 직접 받아 `assets/footage/<학명slug>.<mp4|webm|mov|mkv|m4v>`로 넣으면
+    그 종 제작에 이 클립을 최우선으로 쓴다(자동 소싱보다 우선). 커먼스에 영상이 없는 종을 손으로 채우는
+    확실한 길. 라이선스: 운영자가 PD/상업허용만 넣는다(NOAA=public-domain 크레딧). 없으면 None(자동 소싱)."""
+    base = Path(__file__).resolve().parents[2] / "assets" / "footage"
+    slug = re.sub(r"[^a-z0-9]+", "_", (key or common_name_en or "").lower()).strip("_")
+    if not slug:
+        return None
+    for stem in (slug, (common_name_en or "").lower().replace(" ", "_")):
+        for ext in (".mp4", ".webm", ".mov", ".mkv", ".m4v"):
+            p = base / f"{stem}{ext}"
+            if p.exists() and p.stat().st_size > 100_000:
+                # 크레딧: 같은 이름의 .credit.txt 사이드카가 있으면 그것, 없으면 일반 PD 표기(오귀속 방지).
+                sc = p.with_suffix(".credit.txt")
+                credit = sc.read_text(encoding="utf-8").strip()[:120] if sc.exists() else "Public Domain"
+                log.info("[footage] 운영자 드롭 영상 사용: %s (%s)", p, credit)
+                return {"url": str(p), "license": "public-domain",
+                        "credit": credit, "source": "operator: assets/footage"}
+    return None
+
+
+def _archive_org_videos(query: str, n: int = 4) -> list[dict]:
+    """Internet Archive에서 종 관련 **PD/CC 실사 영상**을 찾아 직다운로드 URL로 반환.
+    저작권 안전(수익화): 유튜브·플리커 미러 제외 + (명시 PD/CC 라이선스 또는 미국 정부 업로더)만.
+    반환: [{url, license, credit, source}] (없으면 []). 오류·오프라인은 무해([])."""
+    q = (query or "").strip()
+    if not q:
+        return []
+    out: list[dict] = []
+    try:
+        import requests
+        sr = requests.get("https://archive.org/advancedsearch.php",
+                          headers={"User-Agent": _UA}, timeout=25,
+                          params=[("q", f'({q}) AND mediatype:movies'), ("rows", str(n * 4)),
+                                  ("output", "json"), ("fl[]", "identifier"),
+                                  ("fl[]", "licenseurl"), ("fl[]", "uploader"),
+                                  ("fl[]", "collection"), ("fl[]", "title")]).json()
+        docs = (sr.get("response") or {}).get("docs") or []
+    except Exception as e:  # noqa: BLE001
+        log.info("[footage] Internet Archive 검색 실패(%s): %s", q, e)
+        return out
+    for d in docs:
+        ident = (d.get("identifier") or "").strip()
+        if not ident or ident.lower().startswith(_IA_SKIP_PREFIX):
+            continue
+        # 저작권 판정: 명시 라이선스(_norm_license 통과) 우선, 없으면 정부 업로더/컬렉션만 PD로 인정.
+        lic = _norm_license(d.get("licenseurl") or "")
+        blob = f"{d.get('uploader', '')} {d.get('collection', '')} {ident}"
+        if not lic:
+            if _IA_GOV_RE.search(blob):
+                lic = "public-domain"
+            else:
+                continue                                   # 근거 없는 라이선스는 채택 안 함(안전)
+        try:                                               # 아이템 파일 목록 → 용량 상한 내 최대 영상
+            md = requests.get(f"https://archive.org/metadata/{ident}",
+                              headers={"User-Agent": _UA}, timeout=25).json()
+        except Exception:  # noqa: BLE001
+            continue
+        vids = [f for f in (md.get("files") or [])
+                if str(f.get("name", "")).lower().endswith(_VIDEO_EXT)
+                and 300_000 < int(f.get("size") or 0) <= _IA_MAX_BYTES]
+        if not vids:
+            continue
+        best = max(vids, key=lambda f: int(f.get("size") or 0))
+        cred = "NOAA Ocean Exploration" if _IA_GOV_RE.search(blob) else (d.get("title") or ident)[:80]
+        out.append({"url": f"https://archive.org/download/{ident}/{best['name']}",
+                    "license": lic, "credit": f"{cred} · Internet Archive",
+                    "source": f"https://archive.org/details/{ident}"})
+        if len(out) >= n:
+            break
+    return out
+
+
 def _norm_license(text: str) -> str | None:
     t = (text or "").strip().lower()
     # ★NC(비상업) 차단(하드룰): 'cc by'가 'cc by-nc'의 부분일치라 먼저 걸러 오통과를 막는다.
@@ -213,6 +296,16 @@ def _download(url: str, dest: Path) -> bool:
     import time
     import requests
     dest.parent.mkdir(parents=True, exist_ok=True)
+    # ★로컬 파일(운영자 수동 드롭 등)은 복사로 처리(HTTP 아님).
+    src = url[7:] if url.startswith("file://") else url
+    if src and not src.lower().startswith(("http://", "https://")) and Path(src).exists():
+        try:
+            import shutil
+            shutil.copyfile(src, dest)
+            return dest.exists() and dest.stat().st_size > 10_000
+        except Exception as e:  # noqa: BLE001
+            log.warning("[footage] 로컬 파일 복사 실패 %s: %s", src, e)
+            return False
     for attempt in range(4):  # 429/네트워크 대비 백오프 재시도
         try:
             with requests.get(url, headers={"User-Agent": _UA}, stream=True, timeout=120) as r:
@@ -945,9 +1038,18 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
     """
     dest = Path(dest_dir)
     key = (scientific_name or "").strip().lower()
-    cand = _SEED.get(key)
+    cand = _operator_footage(key, common_name_en)   # ★운영자 수동 드롭 최우선(있으면 그 클립 사용)
+    if not cand:
+        cand = _SEED.get(key)
     if not cand:
         cand = _commons_search(scientific_name) or _commons_search(common_name_en)
+    if not cand and not key.startswith("wreck "):
+        # ★커먼스에 없으면 Internet Archive(NOAA 등 PD 영상)로 확장(운영자 요청). 저작권 안전 필터
+        #   통과분만. 아래 공통 다운로드·종횡비·정지·워터마크 게이트를 그대로 통과해야 채택된다.
+        ia = (_archive_org_videos(scientific_name) or _archive_org_videos(common_name_en))
+        if ia:
+            cand = ia[0]
+            log.info("[footage] Internet Archive 후보 채택: %s (%s)", cand["source"], cand["license"])
     if not cand:
         log.info("[footage] 실사 영상 미확보: %s / %s", scientific_name, common_name_en)
         return None
