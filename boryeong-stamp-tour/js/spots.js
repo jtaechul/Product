@@ -12,30 +12,37 @@ export const EVENT = {
   requiredCount: 3,
 };
 
+// ⚠️ 아래 lat/lng 는 대략적인 근사 좌표입니다(자동 조회 제한).
+//    실제 런칭 전, 각 지점의 "인증 기준점"을 네이버/카카오 지도에서 확인해
+//    정확한 좌표로 교체하세요. (반경 200m 인증이라 오차가 크면 인증이 안 됩니다.)
+//    coordsConfirmed: true 로 바꾸면 확정 좌표라는 표시입니다.
 export const SPOTS = [
   {
-    id: 'daecheon',
-    name: '대천해수욕장',
-    desc: '서해안 대표 해변. 머드로 유명한 보령의 상징적인 관광지입니다.',
-    lat: 36.31150,
-    lng: 126.51400,
+    id: 'sohwang',
+    name: '소황사구',
+    desc: '충남 보령시 웅천읍 소황리 일원의 해안 사구. 해양보호구역으로 지정된 가을 산책 명소입니다.',
+    lat: 36.25060,
+    lng: 126.50650,
     radiusM: 200,
+    coordsConfirmed: false,
   },
   {
     id: 'muchangpo',
     name: '무창포해수욕장',
-    desc: '바닷길이 열리는 신비의 해변. 가을 낙조 명소로 사랑받습니다.',
-    lat: 36.25400,
-    lng: 126.53900,
+    desc: '바닷길이 열리는 신비의 해변. 가을 낙조 명소로 사랑받습니다. (보령시 웅천읍)',
+    lat: 36.25430,
+    lng: 126.53860,
     radiusM: 200,
+    coordsConfirmed: false,
   },
   {
-    id: 'gaehwa',
-    name: '개화예술공원',
-    desc: '조각과 야생화가 어우러진 예술 공원. 가을 산책에 좋습니다.',
-    lat: 36.39000,
-    lng: 126.64800,
+    id: 'gunheon',
+    name: '군헌어촌계',
+    desc: '충남 보령시 오천면의 갯벌체험 어촌마을. 서해 갯벌과 어촌 정취를 느낄 수 있습니다.',
+    lat: 36.34300,
+    lng: 126.47000,
     radiusM: 200,
+    coordsConfirmed: false,
   },
 ];
 
