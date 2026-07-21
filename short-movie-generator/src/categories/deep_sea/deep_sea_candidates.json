@@ -524,48 +524,6 @@
   },
   {
     "kind": "creature",
-    "key": "cranchiidae",
-    "needs_confirm": false,
-    "title": "File:Huevas de calamar (Liocranchia sp.), Anilao, Filipinas, 2023-08-24, DD 76.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/0/07/Huevas_de_calamar_%28Liocranchia_sp.%29%2C_Anilao%2C_Filipinas%2C_2023-08-24%2C_DD_76.jpg",
-    "license": "cc-by-sa",
-    "credit": "Diego Delso · CC BY-SA",
-    "source": "File:Huevas de calamar (Liocranchia sp.), Anilao, Filipinas, 2023-08-24, DD 76.jpg",
-    "name": "Cranchiidae",
-    "name_ja": "",
-    "common_name_ko": "악어가죽주머니오징어과",
-    "common_name_en": "Cranchiidae",
-    "depth": "",
-    "facts": [
-      "サメハダホウズキイカ科 (Cranchiidae) はイカの科の一つ。約60種を含む。全世界の海洋の表層から中層に生息する。大きさは外套長10cm程度の小型種から、3mに達するダイオウホウズキイカまで様々である。",
-      "英名はGlass squid・cockatoo squid・cranchiid・cranch squid・bathyscaphoid squidなどがある。\"Glass squid\" はほとんどの種で体が透明であることに由来し、\"bathyscaphoid squid\" は浮力調節方法がバチスカーフに似ていることによる。",
-      "他のイカのように、幼生は表層で過ごし、成熟すると深海に降りる。水深2000mにまで降りる種もいる。成長に連れて形態が大きく変化するため、幼生が別種だと思われていたものも多い。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Cranchiidae",
-      "common_name_ko": "악어가죽주머니오징어과",
-      "common_name_en": "Cranchiidae",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "サメハダホウズキイカ科 (Cranchiidae) はイカの科の一つ。約60種を含む。全世界の海洋の表層から中層に生息する。大きさは外套長10cm程度の小型種から、3mに達するダイオウホウズキイカまで様々である。",
-        "英名はGlass squid・cockatoo squid・cranchiid・cranch squid・bathyscaphoid squidなどがある。\"Glass squid\" はほとんどの種で体が透明であることに由来し、\"bathyscaphoid squid\" は浮力調節方法がバチスカーフに似ていることによる。",
-        "他のイカのように、幼生は表層で過ごし、成熟すると深海に降りる。水深2000mにまで降りる種もいる。成長に連れて形態が大きく変化するため、幼生が別種だと思われていたものも多い。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Huevas de calamar (Liocranchia sp.), Anilao, Filipinas, 2023-08-24, DD 76.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/07/Huevas_de_calamar_%28Liocranchia_sp.%29%2C_Anilao%2C_Filipinas%2C_2023-08-24%2C_DD_76.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_cranchiidae_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
     "key": "chilara taylori",
     "needs_confirm": false,
     "title": "File:Chilara taylori.jpg",
