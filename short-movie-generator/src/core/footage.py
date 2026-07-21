@@ -23,6 +23,10 @@ _ALLOWED = ("public domain", "pd", "cc0", "cc-by", "cc by", "cc-by-sa", "cc by-s
 _VIDEO_EXT = (".webm", ".ogv", ".ogg", ".mp4", ".mov")
 _IMAGE_EXT = (".jpg", ".jpeg", ".png")
 
+# 다운로드 1건 상한(소싱 무한 행 방지): 총 벽시계 4분 · 총 240MB. 초과하면 그 소스 포기(다음 후보로).
+_DL_MAX_SECS = 240
+_DL_MAX_BYTES = 240 * (1 << 20)
+
 # NOAA Ocean Exploration 워터마크(좌상단 고정) 영역 — 원본 대비 비율(x, y, w, h).
 # 실측: 1280x720 기준 로고 텍스트가 x≤261(0.20W)·y≤77(0.11H) → 여유 포함 0.28/0.15.
 # 크롭이 이 영역과 겹치면 ① 프레임을 옆/아래로 밀어 회피(2안) ② 불가 시 delogo로 메움(3안).
@@ -370,13 +374,38 @@ def _download(url: str, dest: Path) -> bool:
         except Exception as e:  # noqa: BLE001
             log.warning("[footage] 로컬 파일 복사 실패 %s: %s", src, e)
             return False
+    # ★전체 벽시계 마감 + 크기 상한(운영자 확정 · 소싱 무한 행 재발방지): requests의 timeout=120은
+    #   '읽기 1회'마다 리셋되는 값이라, 데이터를 조금씩 흘려보내는 느린(트리클) 서버는 청크가 120초 안에
+    #   계속 오면 영원히 끝나지 않는다 → 소싱/데일리 CRON 전체가 한 후보에서 멈추는 사고. 다운로드 하나에
+    #   **총 _DL_MAX_SECS 초 · _DL_MAX_BYTES 바이트** 상한을 걸어 초과 시 그 소스를 포기한다(재시도 안 함 —
+    #   느리거나 거대한 소스는 다시 받아도 같으므로 다음 후보로 넘어가는 게 낫다).
     for attempt in range(4):  # 429/네트워크 대비 백오프 재시도
+        aborted = False
         try:
+            deadline = time.time() + _DL_MAX_SECS
             with requests.get(url, headers={"User-Agent": _UA}, stream=True, timeout=120) as r:
                 r.raise_for_status()
+                written = 0
                 with open(dest, "wb") as f:
                     for chunk in r.iter_content(1 << 16):
-                        f.write(chunk)
+                        if time.time() > deadline:
+                            log.warning("[footage] 다운로드 마감(%ds) 초과 → 포기: %s", _DL_MAX_SECS, url)
+                            aborted = True
+                            break
+                        if chunk:
+                            written += len(chunk)
+                            if written > _DL_MAX_BYTES:
+                                log.warning("[footage] 다운로드 크기(%dMB) 초과 → 포기: %s",
+                                            _DL_MAX_BYTES // (1 << 20), url)
+                                aborted = True
+                                break
+                            f.write(chunk)
+            if aborted:
+                try:
+                    dest.unlink(missing_ok=True)   # 부분 파일 제거(캐시 오인 방지)
+                except Exception:  # noqa: BLE001
+                    pass
+                return False                        # 느림/거대 소스는 재시도 없이 다음 후보로
             if dest.exists() and dest.stat().st_size > 10_000:
                 return True
         except Exception as e:  # noqa: BLE001

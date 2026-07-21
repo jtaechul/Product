@@ -33,6 +33,41 @@ def test_download_copies_local_file(tmp_path):
     assert F._download("file://" + str(src), tmp_path / "d2.mp4") is True
 
 
+class _StreamResp:
+    """느린/거대 다운로드를 흉내내는 스트리밍 응답(컨텍스트 매니저)."""
+    def __init__(self, chunks):
+        self._chunks = chunks
+    def __enter__(self): return self
+    def __exit__(self, *a): return False
+    def raise_for_status(self): pass
+    def iter_content(self, n):
+        for c in self._chunks:
+            yield c
+
+
+def test_download_size_cap_aborts(tmp_path, monkeypatch):
+    """★소싱 무한 행 방지: 다운로드가 크기 상한(_DL_MAX_BYTES)을 넘으면 포기(False)하고 부분 파일 제거."""
+    import sys, types
+    monkeypatch.setattr(F, "_DL_MAX_BYTES", 200_000, raising=False)   # 200KB로 낮춰 테스트
+    big = b"\x00" * 100_000
+    fake = types.SimpleNamespace(get=lambda *a, **k: _StreamResp([big, big, big]))  # 300KB > 200KB
+    monkeypatch.setitem(sys.modules, "requests", fake)
+    dest = tmp_path / "big.mp4"
+    assert F._download("https://x/big.mp4", dest) is False
+    assert not dest.exists()                                          # 부분 파일 삭제
+
+
+def test_download_deadline_aborts(tmp_path, monkeypatch):
+    """★느린(트리클) 서버: 총 벽시계 마감(_DL_MAX_SECS) 초과 시 재시도 없이 포기(False)."""
+    import sys, types
+    monkeypatch.setattr(F, "_DL_MAX_SECS", 0, raising=False)          # 즉시 마감 → 첫 청크에서 중단
+    fake = types.SimpleNamespace(get=lambda *a, **k: _StreamResp([b"\x00" * 50_000]))
+    monkeypatch.setitem(sys.modules, "requests", fake)
+    dest = tmp_path / "slow.mp4"
+    assert F._download("https://x/slow.mp4", dest) is False
+    assert not dest.exists()
+
+
 def test_noaa_oer_search_parses_and_matches_dive(monkeypatch):
     """★NOAA OER 자동 소싱(숨은 geoportal API): 종명 검색→그 종 다이브의 하이라이트 MP4 URL 구성.
     네트워크 없이(monkeypatch) 파싱·다이브 매칭·URL 조립을 검증. '_'가 word char라 \\b 대신 (?!\\d)."""
