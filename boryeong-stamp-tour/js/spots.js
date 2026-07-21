@@ -28,10 +28,11 @@ export const SPOTS = [
     id: 'muchangpo',
     name: '무창포해수욕장',
     desc: '바닷길이 열리는 신비의 해변. 가을 낙조 명소로 사랑받습니다. (보령시 웅천읍)',
-    lat: 36.25430,
-    lng: 126.53860,
+    // 36°15'20.9"N 126°32'02.2"E (사용자 확정)
+    lat: 36.255806,
+    lng: 126.533944,
     radiusM: 200,
-    coordsConfirmed: false, // 근사값 — 확정 좌표 받으면 교체
+    coordsConfirmed: true,
   },
   {
     id: 'gunheon',
