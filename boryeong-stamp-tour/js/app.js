@@ -101,12 +101,17 @@ function renderIntro() {
 
   const consentBlock = (id, title, html) => `
     <div class="consent-block">
-      <label class="check">
-        <input type="checkbox" name="agree_${id}" checked />
-        <span class="check-box"></span>
-        <span class="check-text"><strong>${title}</strong></span>
-      </label>
-      <div class="consent-detail">${html}</div>
+      <div class="consent-row">
+        <label class="check check--box-only">
+          <input type="checkbox" name="agree_${id}" />
+          <span class="check-box"></span>
+        </label>
+        <button type="button" class="consent-title" data-toggle="${id}" aria-expanded="false">
+          <strong>${title}</strong>
+          <span class="chev" aria-hidden="true"></span>
+        </button>
+      </div>
+      <div class="consent-detail" id="detail_${id}" hidden>${html}</div>
     </div>`;
 
   root.innerHTML = `
@@ -154,7 +159,7 @@ function renderIntro() {
         </div>
 
         <div class="consent">
-          <div class="consent-head">약관 동의<span class="consent-auto">상세 내역 자동 표시 · 기본 동의</span></div>
+          <div class="consent-head">약관 동의<span class="consent-auto">항목을 누르면 내용이 펼쳐집니다</span></div>
           ${consentBlock('privacy', '[필수] 개인정보 수집·이용 동의', DOC_PRIVACY)}
           ${consentBlock('terms', '[필수] 이벤트 유의사항 동의', DOC_TERMS)}
           ${consentBlock('photo', '[필수] 사진 수집·이용 동의', DOC_PHOTO)}
@@ -186,6 +191,17 @@ function renderIntro() {
   const allConsented = () => consents.every((c) => c.checked);
   const updateStart = () => { startBtn.disabled = !(emailVerified && allConsented()); };
   consents.forEach((c) => c.addEventListener('change', updateStart));
+
+  // 아코디언: 제목을 누르면 상세 내용 펼침/접힘
+  root.querySelectorAll('.consent-title').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const detail = root.querySelector('#detail_' + btn.dataset.toggle);
+      const willOpen = detail.hidden;
+      detail.hidden = !willOpen;
+      btn.classList.toggle('open', willOpen);
+      btn.setAttribute('aria-expanded', String(willOpen));
+    });
+  });
 
   const resetVerified = () => {
     if (!emailVerified && otpArea.hidden) return;
