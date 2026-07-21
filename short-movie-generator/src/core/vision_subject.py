@@ -97,6 +97,32 @@ def verify_species(image_path: str, scientific_name: str = "", common_name_en: s
     return True
 
 
+def is_single_subject(image_path: str, species_hint: str = "") -> bool | None:
+    """★오프닝훅·엔드카드용 히어로 이미지 게이트(운영자 확정 · 절대 위반 금지): 이미지에 **한 종·한 개체가
+    또렷하게 크게** 나와야 한다. 여러 종·여러 개체가 나온 도판(taxonomic plate)·비교표·다중패널 그림은
+    거부(실사고: 물고기 E/F/G/H 표본이 나란한 도판이 엔드카드에 삽입됨).
+
+    반환: True(단일 개체 · 히어로 적격) · False(도판/다중 개체/비교표 → 거부) · None(키 없음/불확실).
+    ★None이면 호출부는 '확정 아님'으로 보고 그 사진을 쓰지 않는다(안전 폴백=실제 영상 프레임)."""
+    hint = f' The subject should be "{species_hint}".' if species_hint else ""
+    prompt = (
+        "You are choosing a HERO image for a video title card. It must show ONE single animal "
+        f"specimen, clearly and prominently.{hint} Answer STRICT JSON only: "
+        '{"single_clear_subject": true|false, "reason": "<multi_panel_plate|multiple_specimens|'
+        'comparison_figure|tiny_or_unclear|single_ok>"}. '
+        "Set single_clear_subject=false if the image is a scientific figure/plate with multiple "
+        "specimens or panels (e.g. labeled A/B/C or E/F/G/H), a comparison chart, a collage, or shows "
+        "several animals. Set true ONLY for one clear individual animal filling much of the frame."
+    )
+    d = _json(_ask(image_path, prompt) or "")
+    if not d or "single_clear_subject" not in d:
+        return None
+    ok = bool(d.get("single_clear_subject"))
+    if not ok:
+        log.info("[vision] 히어로 거부(다중/도판): %s (%s)", image_path, d.get("reason"))
+    return ok
+
+
 def locate_focus(image_path: str) -> tuple[float, float] | None:
     """피사체의 초점(눈 우선, 없으면 몸통 중심)을 정규화 좌표(0~1)로. 켄번즈 크롭 중심에 쓴다.
 

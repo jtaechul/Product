@@ -392,7 +392,7 @@
       0개) "소싱하기"가 0건 → 제작 씨앗도 비어 **소싱·제작이 동시에 실패**했다. 수정: 두 카테고리를
       `photo:True`로 → `discover_candidates`가 영상이 want에 못 미치면 **실사 사진 후보**(media_kind=photo)로
       보충한다. 승격되면 `fetch_footage`가 그 종을 `species_photo_doc`(여러 실사→다큐 시퀀스)로 영상화한다
-      (4장 미만이면 단일 켄번즈 폴백). `discover(media=photo)`에도 실사 필터(`_is_realistic_photo`)를 걸어
+      (**4장 미만이면 제작 불가 → None**, 단일 켄번즈 폴백 폐기 · 아래 하드룰 #17 참조). `discover(media=photo)`에도 실사 필터(`_is_realistic_photo`)를 걸어
       삽화·도판이 후보로 새지 않게 한다. 검증(라이브): deep_sea 사진 후보(리프티아·말미잘·흡혈오징어) 발굴 +
       리프티아 실사 6장 제작 가능 확인. `validate_source_url`은 이미 사진(고해상)을 통과시키므로 소싱
       게이트도 정합.
@@ -406,7 +406,7 @@
       Flickr·스미소니언 등 여러 기관 CC 이미지 집계 · CC0/PDM/BY/BY-SA만 · 장변 800px↑) ④ **한국
       공공누리(KOGL)**(`footage._korea_public_photos` · `DATA_GO_KR_KEY` 있으면 data.go.kr 국립생물자원관
       조회, 없으면 조용히 건너뜀 · `kogl-type1`=상업이용 허용·출처표기). URL 중복 제거 후 실사 2중 필터.
-      최소 실사 장수 상향(`_PHOTODOC_MIN=5`·`_PHOTODOC_MAX=7`). Openverse 라이선스 요청은 NC를 애초에
+      최소 실사 장수(`_PHOTODOC_MIN=4`·`_PHOTODOC_MAX=7`). Openverse 라이선스 요청은 NC를 애초에
       제외(`license=cc0,pdm,by,by-sa`)해 게이트 오통과 없음. 검증(라이브): 뱀파이어오징어 Openverse 8장
       키없이 확보(과호출 시 429는 graceful []·타소스 폴백). 회귀: `test_openverse_license_map_and_dims`.
     - **★피사체 학습(Gemini 비전 · 운영자 명령2 · `src/core/vision_subject.py`)**: "gemini API로 해당 종
@@ -499,6 +499,20 @@
       제작 입력단에서 죽음). → 이제 `subject`(난파선) **또는 `species`(생물)** 둘 다 병합하고 `copy`는 선택
       (없으면 LLM이 훅·본문·캡션 생성). deep_sea는 자체 `data._merge_discovered`가 `species`를 읽어 무관.
       회귀: `test_creature_promote_registers`.
+    - **★★한 장짜리 영상 절대 금지(운영자 확정 · 하드룰 · 절대 위반 금지 · 실사고 반복)**: 이미지 한 장을
+      켄번즈로 우려먹으면 영상이 단조롭다 → **생물은 실사 4장 이상(`_PHOTODOC_MIN=4`)을 다큐 시퀀스로 엮을
+      수 있을 때만 제작·소싱한다.** `_fetch_video_footage`의 사진 후보 분기에서 `species_photo_doc`(4장↑
+      다큐)이 실패하면 **단일 켄번즈 폴백(`_fetch_photo_kenburns`) 없이 None**을 돌려, 그 종은 `fetch_footage`
+      None → `prune_unproducible`/`source_to_candidates`가 **소싱 목록에 올리지 않는다**(4장 미만 = 제작
+      대상 아님). 난파선은 별도 전용 사진 경로(`_wreck_photo_footage`)라 무관(그 배 실제 사진 다큐/켄번즈).
+      즉 생물 제작 조건 = **실사 영상 OR 실사 4장↑**, 그 외엔 제작 가능 목록에서 자동 제외.
+    - **★오프닝훅·엔드카드 히어로 = 단일 개체 이미지만(운영자 확정 · 실사고: 물고기 E/F/G/H 도판이
+      엔드카드에 삽입 "나랑 장난하냐")**: 타이틀카드/엔드카드 배경에 **여러 종·여러 개체가 나온 도판
+      (taxonomic plate)·비교표·다중패널 합성**을 넣지 않는다 → `footage.fetch_hero_photo`가 후보를 순회하며
+      `_looks_photographic`(도판·흰배경 배제) + `vision_subject.is_single_subject`(Gemini: 단일 개체 True/
+      도판·다중 False)로 게이트한다. **비전 키가 없으면(불확실) 사진을 쓰지 않고 None** → 안전 폴백으로
+      실제 영상 프레임(`_best_subject_frame`, 본질적으로 단일 피사체)을 쓴다. 회귀: `test_footage_sources`
+      (`test_hero_single_subject_gate`·`test_is_single_subject_json_verdict`·`test_commons_photo_candidates_empty_query`).
 
 12. **★소스 품질 게이트(번인 로고·인트로 카드·레터박스 방지 · 절대 위반 금지).** 아마추어 소스
     (다이빙 영상 등)는 인트로 타이틀카드·로고(예: 'SUBMANIA Escola de Mergulho')·아웃트로 크레딧이

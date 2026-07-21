@@ -490,6 +490,52 @@ def _commons_search(query: str) -> dict | None:
         return None
 
 
+def _commons_photo_candidates(query: str, n: int = 8, min_w: int = 1100, min_h: int = 800) -> list[dict]:
+    """Commons 고해상 실사 사진 후보 여러 장(통과 라이선스) → [{url,license,credit,source}].
+    ★히어로(오프닝훅·엔드카드)용: 여러 후보를 받아 상위(단일 피사체) 게이트로 고를 수 있게 한다."""
+    out: list[dict] = []
+    if not (query or "").strip():
+        return out
+    try:
+        import requests
+        api = "https://commons.wikimedia.org/w/api.php"
+        titles: list[str] = []
+        for term in (query, f"{query} underwater"):
+            if not (term or "").strip():
+                continue
+            s = requests.get(api, headers={"User-Agent": _UA}, timeout=30, params={
+                "action": "query", "format": "json", "list": "search",
+                "srsearch": f"{term} filetype:bitmap", "srnamespace": "6", "srlimit": "20",
+            }).json()
+            for h in s.get("query", {}).get("search", []):
+                if any(h["title"].lower().endswith(e) for e in _IMAGE_EXT) and h["title"] not in titles:
+                    titles.append(h["title"])
+        if not titles:
+            return out
+        info = requests.get(api, headers={"User-Agent": _UA}, timeout=30, params={
+            "action": "query", "format": "json", "prop": "imageinfo",
+            "titles": "|".join(titles[:30]),
+            "iiprop": "url|size|extmetadata", "iiextmetadatafilter": "LicenseShortName|Artist",
+        }).json()
+        for page in info.get("query", {}).get("pages", {}).values():
+            title = page.get("title", "")
+            if _NONSUBJECT_CAT_RE.search(title):      # 파일명 단계 오소싱(자동차·인물·도판어) 배제
+                continue
+            ii = (page.get("imageinfo") or [{}])[0]
+            meta = ii.get("extmetadata", {})
+            lic = _norm_license(meta.get("LicenseShortName", {}).get("value", ""))
+            url = ii.get("url", "")
+            w, h = ii.get("width", 0), ii.get("height", 0)
+            if lic and url and any(url.lower().endswith(e) for e in _IMAGE_EXT) and w >= min_w and h >= min_h:
+                artist = re.sub("<[^>]+>", "", meta.get("Artist", {}).get("value", "")).strip()
+                cr = artist or "Wikimedia Commons"
+                cr += " · CC BY-SA" if lic == "cc-by-sa" else (" · CC BY" if lic == "cc-by" else "")
+                out.append({"url": url, "license": lic, "credit": cr, "source": title})
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] 히어로 후보 검색 실패(%s): %s", query, e)
+    return out[:n]
+
+
 def _commons_photo_search(query: str, min_w: int = 1200, min_h: int = 800) -> dict | None:
     """Commons에서 대상의 고해상 실사 사진 1장(통과 라이선스) → {url,license,credit,source} 또는 None.
     오프닝 훅·엔드카드 배경용 '히어로 이미지'(영상 프레임보다 훨씬 선명)."""
@@ -718,19 +764,47 @@ def insert_photo_cutaways(body_v: str, photos: list[dict], out_v: str, body_dur:
 
 def fetch_hero_photo(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
     """오프닝 훅·엔드카드 배경용 고해상 실사 사진 확보 → {path, credit, license, source} 또는 None.
-    학명 우선, 실패 시 영문명. 미확보면 None(상위는 기존 영상 프레임으로 폴백 — 발행 불정지)."""
-    got = _commons_photo_search(scientific_name) or _commons_photo_search(common_name_en)
-    if not got:
+
+    ★단일 피사체 강제(운영자 확정 · 절대 위반 금지 · 실사고: 여러 종 도판이 엔드카드에 삽입):
+    후보 여러 장을 받아 순서대로 ① 실사 사진성(`_looks_photographic`) ② **단일 개체 게이트**
+    (`vision_subject.is_single_subject` — Gemini. 여러 종·도판·비교표·다중패널은 거부)를 통과한
+    **첫 사진만** 히어로로 쓴다. 하나도 통과 못 하면 None → 상위는 **실제 영상 프레임**(진짜 단일
+    피사체)으로 폴백(발행 불정지). ★비전 키가 없으면 '단일 확정 불가'로 보고 사진을 쓰지 않는다
+    (도판 위험 회피 우선 · 영상 프레임 폴백이 안전)."""
+    cands = _commons_photo_candidates(scientific_name, 8) or _commons_photo_candidates(common_name_en, 8)
+    if not cands:
         return None
+    try:
+        from src.core import vision_subject
+        vision_on = vision_subject.available()
+    except Exception:  # noqa: BLE001
+        vision_subject, vision_on = None, False
     dest = Path(dest_dir)
     key = (scientific_name or common_name_en or "hero").strip().lower()
     slug = re.sub(r"[^a-z0-9]+", "_", key).strip("_") or "hero"
-    iext = next((e for e in _IMAGE_EXT if got["url"].lower().endswith(e)), ".jpg")
-    out = dest / f"hero_{slug}{iext}"
-    if not (out.exists() and out.stat().st_size > 50_000) and not _download(got["url"], out):
-        return None
-    return {"path": str(out), "credit": got["credit"], "license": got["license"],
-            "source": got.get("source", "")}
+    hint = scientific_name or common_name_en or ""
+    for i, got in enumerate(cands):
+        iext = next((e for e in _IMAGE_EXT if got["url"].lower().endswith(e)), ".jpg")
+        out = dest / f"hero_{slug}_{i}{iext}"
+        if not (out.exists() and out.stat().st_size > 50_000) and not _download(got["url"], out):
+            continue
+        if not _looks_photographic(str(out)):        # 삽화·흰배경 도판 배제
+            continue
+        # ★단일 개체 게이트: 비전 사용 가능하면 통과분만, 비전 없으면 사진 사용 안 함(도판 위험 회피).
+        if vision_on:
+            verdict = None
+            try:
+                verdict = vision_subject.is_single_subject(str(out), hint)
+            except Exception:  # noqa: BLE001
+                verdict = None
+            if verdict is not True:                  # False(도판·다중) 또는 None(불확실) → 스킵
+                continue
+        else:
+            # 비전 키 없음: 안전을 위해 히어로 사진을 쓰지 않는다(영상 프레임 폴백이 단일 피사체 보장).
+            return None
+        return {"path": str(out), "credit": got["credit"], "license": got["license"],
+                "source": got.get("source", "")}
+    return None
 
 
 _KENBURNS_MOTIONS = ("in", "out", "pan_r", "pan_l")
@@ -1138,13 +1212,17 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
     if cand.get("media_kind") == "wreck_doc":   # ★유명 난파선 다큐(여러 이미지 시간순 시퀀스)
         return _wreck_doc_footage(cand, scientific_name)
     if cand.get("media_kind") == "photo":   # ★사진 후보 → 영상화
-        # ★생물(난파선 아님)은 '여러 실사'를 다큐 시퀀스로(한 장 우려먹기 방지). 4장 미만이면
-        #   단일 켄번즈로 폴백. 미세조류(현미경 정지사진 · 흰 배경)는 실사필터에 걸려 자동으로
-        #   단일 켄번즈 경로로 떨어진다(species_photo_doc이 None → 폴백).
+        # ★운영자 확정(절대 위반 금지): 생물은 **한 장짜리 켄번즈 영상 제작 금지**(단조로움).
+        #   반드시 실사 4장 이상을 시간순 다큐 시퀀스로 만든다(_PHOTODOC_MIN=4). 4장을 못 채우면
+        #   여기서 None을 돌려 소싱 목록에서 자동 제외되게 한다(단일 이미지 폴백 폐기).
+        #   난파선은 아래 전용 사진 경로(_wreck_photo_footage)가 처리하므로 여기서 걸리지 않는다.
         if not (scientific_name or "").strip().lower().startswith("wreck "):
             doc = species_photo_doc(scientific_name, common_name_en, dest_dir)
             if doc:
                 return doc
+            log.info("[footage] 생물 실사 4장 미확보 → 단일 이미지 폴백 폐기, 스킵: %s / %s",
+                     scientific_name, common_name_en)
+            return None
         return _fetch_photo_kenburns(cand, dest, key, common_name_en)
     # ★난파선은 아마추어 다이빙 영상을 소스로 절대 쓰지 않는다(운영자 확정 · 재발방지 · 절대 위반 금지).
     #   실사고(Batelo Cantanhede): 다이빙 영상은 ①인트로 타이틀카드(다이빙스쿨 로고)가 통짜로 박혀
@@ -1256,7 +1334,7 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
 
 
 # ── 실사 사진 다큐(영상 미확보 생물 → 여러 실사 이미지 켄번즈 시퀀스) ────────────────────
-_PHOTODOC_MIN = 5          # 실사 최소 장수(운영자 확정: '1장 영상' 방지 → 소스 다변화로 5장↑ 확보)
+_PHOTODOC_MIN = 4          # 실사 최소 장수(운영자 확정: '1장 영상' 절대 금지 → 실사 4장↑만 제작·소싱)
 _PHOTODOC_MAX = 7          # 시퀀스 최대 컷 수(다양한 컷)
 _PHOTODOC_MIN_STRUCT = 12.0   # 이미지 최소 구조변별(macro std) — 밋밋한(빈) 표본 컷 배제
 #   실측: 좋은 실사 14.8~85, 빈 표본 매크로 1.2~3.1 → 12가 안전한 경계. 좋은 사진이 4장 미만인

@@ -64,3 +64,29 @@ def test_noaa_oer_search_parses_and_matches_dive(monkeypatch):
     assert got[0]["url"].endswith("EX1711_VID_20171217_DIVE14_CARTOON_CHIMAERA_Low.mp4")
     assert "DIVE14" in got[0]["source"]
     assert FT._noaa_oer_videos("") == []
+
+
+def test_hero_single_subject_gate(monkeypatch):
+    """★히어로(오프닝훅·엔드카드) 단일 개체 게이트(재발방지: 여러 종 도판이 엔드카드에 삽입).
+    비전 키 없으면 fetch_hero_photo는 None(안전 폴백=영상 프레임). is_single_subject 폴백도 None."""
+    from src.core import footage as F, vision_subject as V
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    assert V.is_single_subject("/no/such.jpg", "fish") is None
+    # 후보가 있어도 비전 키 없으면 히어로 사진을 쓰지 않는다(영상 프레임 폴백)
+    monkeypatch.setattr(F, "_commons_photo_candidates",
+                        lambda q, n=8: [{"url": "http://x/a.jpg", "license": "cc0",
+                                         "credit": "c", "source": "s"}])
+    import tempfile
+    assert F.fetch_hero_photo("Melanocetus johnsonii", "anglerfish", tempfile.mkdtemp()) is None
+
+
+def test_is_single_subject_json_verdict():
+    """비전 응답 파싱: 다중패널/도판이면 False, 단일이면 True."""
+    from src.core import vision_subject as V
+    assert V._json('{"single_clear_subject": false, "reason": "multi_panel_plate"}')["single_clear_subject"] is False
+    assert V._json('{"single_clear_subject": true, "reason": "single_ok"}')["single_clear_subject"] is True
+
+
+def test_commons_photo_candidates_empty_query():
+    from src.core import footage as F
+    assert F._commons_photo_candidates("") == []

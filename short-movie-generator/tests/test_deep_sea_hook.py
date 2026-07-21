@@ -31,13 +31,18 @@ def test_depth_parsing():
     assert p("") == (0, 0)
 
 
-def test_unknown_species_without_llm_returns_none():
-    # LLM 키 없으면 시드 외 종은 None(시스템 휴면·발행 불정지)
+def test_unknown_species_without_llm_uses_deterministic_fallback():
+    # ★재발방지 #135(cranchiidae 'LLM 파싱 실패로 제작 중단'): LLM 키가 없어도 시드 외 종은
+    #   이름·실제 수심만으로 유효한 일본어 훅을 결정론 생성한다(_fallback_hook). 하드 None 금지.
     info = SpeciesInfo(scientific_name="Xxx yyy", common_name_ko="가", common_name_en="z",
                        depth_range_m="100-200", distribution="", habitat="")
     import os
     if not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("GEMINI_API_KEY")):
-        assert hook.build_hook(info) is None
+        h = hook.build_hook(info)
+        assert h and h.get("hook_line1") and h.get("hook_line2")   # 폴백이 유효 훅 생성
+        # 날조 방지: 미상 아닌 실제 수심(100-200)이 반영, 국문 혼입 없음
+        joined = h["hook_line1"] + h["hook_line2"]
+        assert "가" not in joined
 
 
 def test_seed_hooks_have_korean_translations():
