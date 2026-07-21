@@ -202,14 +202,6 @@
     "youtube_url": "https://youtu.be/-qRIkExYiKo"
   },
   {
-    "id": "031",
-    "kind": "reels",
-    "common_name_ko": "Empress of Ireland 난파선",
-    "common_name_en": "Wreck Empress of Ireland",
-    "scientific_name": "Wreck Empress of Ireland",
-    "date": "2026-07-19"
-  },
-  {
     "id": "032",
     "kind": "reels",
     "common_name_ko": "Titanic 난파선",
@@ -287,5 +279,14 @@
     "common_name_en": "Wreck Britannic",
     "scientific_name": "Wreck Britannic",
     "date": "2026-07-21"
+  },
+  {
+    "id": "031",
+    "kind": "reels",
+    "common_name_ko": "Empress of Ireland 난파선",
+    "common_name_en": "Wreck Empress of Ireland",
+    "scientific_name": "Wreck Empress of Ireland",
+    "date": "2026-07-21",
+    "youtube_url": "https://youtu.be/PXECvaEV4gY"
   }
 ]
