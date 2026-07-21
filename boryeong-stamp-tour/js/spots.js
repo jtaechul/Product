@@ -12,19 +12,17 @@ export const EVENT = {
   requiredCount: 3,
 };
 
-// ⚠️ 아래 lat/lng 는 대략적인 근사 좌표입니다(자동 조회 제한).
-//    실제 런칭 전, 각 지점의 "인증 기준점"을 네이버/카카오 지도에서 확인해
-//    정확한 좌표로 교체하세요. (반경 200m 인증이라 오차가 크면 인증이 안 됩니다.)
-//    coordsConfirmed: true 로 바꾸면 확정 좌표라는 표시입니다.
+// coordsConfirmed: true = 사용자가 확정한 정확 좌표 / false = 근사값(런칭 전 교체 필요)
 export const SPOTS = [
   {
     id: 'sohwang',
-    name: '소황사구',
-    desc: '충남 보령시 웅천읍 소황리 일원의 해안 사구. 해양보호구역으로 지정된 가을 산책 명소입니다.',
-    lat: 36.25060,
-    lng: 126.50650,
+    name: '소황사구해역 해양보호구역',
+    desc: '충남 보령시 웅천읍 앞바다의 해양보호구역. 해안 사구와 철새가 어우러진 가을 명소입니다.',
+    // 36°11'59.6"N 126°32'21.6"E (사용자 확정)
+    lat: 36.199889,
+    lng: 126.539333,
     radiusM: 200,
-    coordsConfirmed: false,
+    coordsConfirmed: true,
   },
   {
     id: 'muchangpo',
@@ -33,16 +31,17 @@ export const SPOTS = [
     lat: 36.25430,
     lng: 126.53860,
     radiusM: 200,
-    coordsConfirmed: false,
+    coordsConfirmed: false, // 근사값 — 확정 좌표 받으면 교체
   },
   {
     id: 'gunheon',
-    name: '군헌어촌계',
-    desc: '충남 보령시 오천면의 갯벌체험 어촌마을. 서해 갯벌과 어촌 정취를 느낄 수 있습니다.',
-    lat: 36.34300,
-    lng: 126.47000,
+    name: '군헌어촌체험휴양마을',
+    desc: '충남 보령시 오천면의 갯벌체험 휴양마을. 서해 갯벌과 어촌 정취를 즐길 수 있습니다.',
+    // 36°20'15.2"N 126°31'57.7"E (사용자 확정)
+    lat: 36.337556,
+    lng: 126.532694,
     radiusM: 200,
-    coordsConfirmed: false,
+    coordsConfirmed: true,
   },
 ];
 
