@@ -1,0 +1,56 @@
+{
+  "id": "041",
+  "created_at": "2026-07-21T05:38:50+00:00",
+  "updated_at": "2026-07-21T05:38:50+00:00",
+  "status": "published",
+  "category": "shipwreck",
+  "series": "沈没船 図鑑",
+  "species": {
+    "common_name_ko": "Britannic 난파선",
+    "common_name_en": "Wreck Britannic",
+    "scientific_name": "Wreck Britannic",
+    "depth_range_m": "",
+    "habitat": "침몰선",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "총톤수: 48158 GRT, 24592 NRT",
+      "침몰: 1916년"
+    ]
+  },
+  "reels": {
+    "hook": "海の底に、眠る船。",
+    "caption": "HMHS Britannicは、White Star Lineのオリンピック級三番船としてHarland & Wolff(ベルファスト)で建造され、1914年2月26日に進水、1915年12月12日に竣工しました。姉妹船はRMS OlympicとRMS Titanicです。第一次世界大戦下で病院船として運用され、当時世界最大の病院船でもありました。1916年11月21日、エーゲ海のケア島付近で機雷に触れて沈没。以来、地中海の海底に静かに眠り続けており、潜水調査によって今もその姿が記録されています。\nこの歴史の記憶を、ぜひ保存して、また見返してみてください。",
+    "hashtags": [
+      "#沈没船",
+      "#Britannic",
+      "#タイタニックの姉妹船"
+    ],
+    "reveal_name": "HMHS Britannic",
+    "reveal_fact": "",
+    "hook_ko": "",
+    "caption_ko": "HMHS 브리태닉호는 화이트 스타 라인의 올림픽급 세 번째 선박으로 벨파스트의 할랜드 앤 울프 조선소에서 건조되어, 1914년 2월 26일 진수되고 1915년 12월 12일 취항했습니다. 자매선으로는 RMS 올림픽호와 RMS 타이타닉호가 있습니다. 제1차 세계대전 중에는 병원선으로 운항되었으며, 당시 세계 최대의 병원선이기도 했습니다. 1916년 11월 21일, 에게해의 케아섬 근처에서 기뢰에 접촉해 침몰했습니다. 그 이후로 지중해 해역에 조용히 잠들어 있으며, 잠수 조사를 통해 오늘날에도 그 모습이 기록되고 있습니다.\n이 역사의 기억을, 꼭 저장하고 다시 돌아보시기 바랍니다.",
+    "hashtags_ko": [
+      "#침몰선",
+      "#브리태닉",
+      "#타이타닉자매선"
+    ],
+    "yt_title": "タイタニックの妹船、エーゲ海に消える #沈没船 #Britannic",
+    "yt_title_ko": "타이타닉의 자매선, 에게해에 잠들다 #침몰선 #브리태닉",
+    "visualizer": "reels",
+    "video_file": "wreck_britannic_20260721_053850.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Wikipedia: HMHS Britannic",
+      "Wikimedia Commons"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-041/reels_041.mp4",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-041/cover_041.jpg"
+  },
+  "post": null
+}

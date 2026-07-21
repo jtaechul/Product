@@ -295,5 +295,13 @@
     "common_name_en": "Spectrunculus grandis",
     "scientific_name": "Spectrunculus grandis",
     "date": "2026-07-21"
+  },
+  {
+    "id": "041",
+    "kind": "reels",
+    "common_name_ko": "Britannic 난파선",
+    "common_name_en": "Wreck Britannic",
+    "scientific_name": "Wreck Britannic",
+    "date": "2026-07-21"
   }
 ]
