@@ -185,46 +185,6 @@
   },
   {
     "kind": "creature",
-    "key": "ipnopidae",
-    "needs_confirm": false,
-    "title": "File:Tripod fish1.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Tripod_fish1.jpg",
-    "license": "public-domain",
-    "credit": "NOAA Okeanos Explorer Program, INDEX-SATAL 2010, NOAA/OER",
-    "source": "File:Tripod fish1.jpg",
-    "name": "Ipnopidae",
-    "name_ja": "",
-    "common_name_ko": "긴촉수매퉁이과",
-    "common_name_en": "Ipnopidae",
-    "depth": "",
-    "facts": [
-      "チョウチンハダカ科（Ipnopidae）は、ヒメ目アオメエソ亜目に所属する魚類の分類群の一つ。イトヒキイワシ・ナガヅエエソなど、底生性の深海魚を中心に5属29種が所属する。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Ipnopidae",
-      "common_name_ko": "긴촉수매퉁이과",
-      "common_name_en": "Ipnopidae",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "チョウチンハダカ科（Ipnopidae）は、ヒメ目アオメエソ亜目に所属する魚類の分類群の一つ。イトヒキイワシ・ナガヅエエソなど、底生性の深海魚を中心に5属29種が所属する。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Tripod fish1.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Tripod_fish1.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_ipnopidae_29755719911.jpg",
-    "video_status": "video",
-    "video_source": "NOAA OER EX1711 DIVE01 (https://www.ncei.noaa.gov/metadata/g"
-  },
-  {
-    "kind": "creature",
     "key": "macrouridae",
     "needs_confirm": false,
     "title": "File:Grenadier (Macrouridae) par 400 m de fond (Ifremer 00621-73302).jpg",
