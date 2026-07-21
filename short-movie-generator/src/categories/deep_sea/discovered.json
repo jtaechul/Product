@@ -393,5 +393,37 @@
         "Wikimedia Commons (File:Huevas de calamar (Liocranchia sp.), Anilao, Filipinas, 2023-08-24, DD 76.jpg)"
       ]
     }
+  },
+  {
+    "key": "chaunax stigmaeus",
+    "kind": "creature",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/1/16/Chaunax_stigmaeus_dorsal_view2.jpg",
+      "license": "public-domain",
+      "credit": "Derivate work by Citron from :\n\nDr. Steve Ross, UNC-W. NOAA Office of Ocean Exploration.",
+      "source": "File:Chaunax stigmaeus dorsal view2.jpg",
+      "media_kind": "photo",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/16/Chaunax_stigmaeus_dorsal_view2.jpg"
+    },
+    "species": {
+      "scientific_name": "Chaunax stigmaeus",
+      "common_name_ko": "Redeye gaper",
+      "common_name_en": "Redeye gaper",
+      "depth_range_m": "90-730",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "The redeye gaper, Chaunax stigmaeus, is a sedentary species of anglerfish in the family Chaunacidae.",
+        "It is native to deep waters in the western North Atlantic from the Georges Bank off New England southward to the Blake Plateau off South Carolina.",
+        "The species is found on the outer continental shelf and upper continental slope at a depth of 90–730 m and among dense beds of dead coral (Lophelia pertusa) rubble, their preferred habitat.",
+        "The original type specimen was caught in a trawl off Atlantic City on March 1, 1946, and donated to the Academy of Natural Sciences by Carroll B.",
+        "The name stigmaeus means \"speckled\" in Greek."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Chaunax stigmaeus dorsal view2.jpg)"
+      ]
+    }
   }
 ]

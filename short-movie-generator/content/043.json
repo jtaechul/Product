@@ -1,0 +1,59 @@
+{
+  "id": "043",
+  "created_at": "2026-07-21T15:26:24+00:00",
+  "updated_at": "2026-07-21T15:26:24+00:00",
+  "status": "published",
+  "category": "deep_sea",
+  "series": "심해 도감",
+  "species": {
+    "common_name_ko": "Redeye gaper",
+    "common_name_en": "Redeye gaper",
+    "scientific_name": "Chaunax stigmaeus",
+    "depth_range_m": "90-730",
+    "habitat": "",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "The redeye gaper, Chaunax stigmaeus, is a sedentary species of anglerfish in the family Chaunacidae.",
+      "It is native to deep waters in the western North Atlantic from the Georges Bank off New England southward to the Blake Plateau off South Carolina.",
+      "The species is found on the outer continental shelf and upper continental slope at a depth of 90–730 m and among dense beds of dead coral (Lophelia pertusa) rubble, their preferred habitat.",
+      "The original type specimen was caught in a trawl off Atlantic City on March 1, 1946, and donated to the Academy of Natural Sciences by Carroll B.",
+      "The name stigmaeus means \"speckled\" in Greek."
+    ]
+  },
+  "reels": {
+    "hook": "深海の死体か？赤い目、ただ見つめる。",
+    "caption": "深海の死体か？赤い目、ただ見つめる。\n\nアカメアンコウ(学名: Chaunax stigmaeus)。\n生息水深はおよそ 90-730 メートル。\nじっと・赤目、深海で待つアンコウ。\n深い海の底で、たしかに命をつないでいる一種です。\n\n心に残ったら保存を。\n同じ海が気になる人へシェアを。\n\nこの映像は実際の深海・海洋の観測記録から。演出のための作り物ではありません。\n水の底の世界は、地球でいちばん探索が進んでいない場所のひとつです。\n見慣れない姿の一つひとつに、その環境を生き抜くための理由があります。\n\n映像: NOAA Ocean Exploration・Public Domain",
+    "hashtags": [
+      "#アカメアンコウ",
+      "#深海生物"
+    ],
+    "reveal_name": "アカメアンコウ / Chaunax stigmaeus",
+    "reveal_fact": "じっと・赤目、深海で待つアンコウ",
+    "hook_ko": "지구에서 가장, 움직이지 않는 심해의 덫.",
+    "caption_ko": "지구에서 가장, 움직이지 않는 심해의 덫.\n\nRedeye gaper(학명: Chaunax stigmaeus).\n수심 약 90-730m에 살아갑니다.\nThe redeye gaper, Chaunax stigmaeus, is a sedentary species of anglerfish in the family Chaunacidae.\nIt is native to deep waters in the western North Atlantic from the Georges Bank off New England southward to the Blake Plateau off South Carolina.\nThe species is found on the outer continental shelf and upper continental slope at a depth of 90–730 m and among dense beds of dead coral (Lophelia pertusa) rubble, their preferred habitat.\nThe original type specimen was caught in a trawl off Atlantic City on March 1, 1946, and donated to the Academy of Natural Sciences by Carroll B.\nThe name stigmaeus means \"speckled\" in Greek.\n움직이지 않고, 먹이를 유인하며, 잔해에 숨어있는 심해 아귀.\n\n마음이 복잡한 날, 다시 꺼내보고 싶다면 저장해 두세요.\n같은 바다가 궁금한 사람에게 조용히 건네주세요.\n\n영상: NOAA Ocean Exploration・Public Domain",
+    "hashtags_ko": [
+      "#Redeye gaper",
+      "#심해생물"
+    ],
+    "yt_title": "深海の死体か？赤い目、ただ見つめる…その名はアカメアンコウ #アカメアンコウ #深海生物",
+    "yt_title_ko": "지구에서 가장, 움직이지 않는 심해의 덫…그 이름은 Redeye gaper #Redeye gaper #심해생물",
+    "visualizer": "reels",
+    "video_file": "redeye_gaper_20260721_152624.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Wikipedia (en)",
+      "Wikimedia Commons (File:Chaunax stigmaeus dorsal view2.jpg)"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-043/reels_043.mp4",
+    "rev": "29843219491",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-043/cover_043.jpg",
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-043/ytthumb_043.jpg"
+  },
+  "post": null
+}
