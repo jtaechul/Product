@@ -8,6 +8,7 @@
 """
 from __future__ import annotations
 
+import json
 import logging
 import math
 import re
@@ -26,6 +27,61 @@ _IMAGE_EXT = (".jpg", ".jpeg", ".png")
 # 다운로드 1건 상한(소싱 무한 행 방지): 총 벽시계 4분 · 총 240MB. 초과하면 그 소스 포기(다음 후보로).
 _DL_MAX_SECS = 240
 _DL_MAX_BYTES = 240 * (1 << 20)
+
+# ── 영상 URL 캐시(운영자 확정 · 재발방지 실사고 044: '영상 확보'인데 이미지로 제작) ────────────
+# 원인 = NOAA OER **검색(geoportal API)** 이 간헐적이라, 같은 종이 어떤 실행엔 영상·어떤 실행엔 '영상
+# 없음'으로 갈렸다(영상 파일 자체는 NOAA에 영구 호스팅됨 — 흔들리는 건 '검색'뿐). → 한 번 찾은 영상의
+# **URL·라이선스·트림을 캐시**해, 이후엔 검색을 건너뛰고 그 파일을 바로 받아 **분류=제작이 항상 일치**하게 한다.
+_VIDEO_CACHE_PATH = Path(__file__).resolve().parents[1] / "categories" / "_video_cache.json"
+_VIDEO_CACHE: dict | None = None
+
+
+def _video_cache() -> dict:
+    global _VIDEO_CACHE
+    if _VIDEO_CACHE is None:
+        try:
+            _VIDEO_CACHE = json.loads(_VIDEO_CACHE_PATH.read_text(encoding="utf-8"))
+            if not isinstance(_VIDEO_CACHE, dict):
+                _VIDEO_CACHE = {}
+        except Exception:  # noqa: BLE001  (없거나 깨지면 빈 캐시)
+            _VIDEO_CACHE = {}
+    return _VIDEO_CACHE
+
+
+def _video_cache_get(key: str) -> dict | None:
+    ref = _video_cache().get((key or "").strip().lower())
+    return dict(ref) if isinstance(ref, dict) and ref.get("url") else None
+
+
+def _video_cache_put(key: str, cand: dict) -> None:
+    k = (key or "").strip().lower()
+    url = (cand or {}).get("url")
+    if not k or not url:
+        return
+    ref = {"url": url, "license": cand.get("license", ""), "credit": cand.get("credit", ""),
+           "source": cand.get("source", "")}
+    if cand.get("trim"):
+        ref["trim"] = cand["trim"]
+    c = _video_cache()
+    if c.get(k) == ref:
+        return
+    c[k] = ref
+    try:
+        _VIDEO_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _VIDEO_CACHE_PATH.write_text(json.dumps(c, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] 영상 캐시 저장 실패: %s", e)
+
+
+def _video_cache_pop(key: str) -> None:
+    k = (key or "").strip().lower()
+    c = _video_cache()
+    if k in c:
+        c.pop(k, None)
+        try:
+            _VIDEO_CACHE_PATH.write_text(json.dumps(c, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
+        except Exception:  # noqa: BLE001
+            pass
 
 # NOAA Ocean Exploration 워터마크(좌상단 고정) 영역 — 원본 대비 비율(x, y, w, h).
 # 실측: 1280x720 기준 로고 텍스트가 x≤261(0.20W)·y≤77(0.11H) → 여유 포함 0.28/0.15.
@@ -1319,15 +1375,30 @@ def _wreck_doc_footage(cand: dict, scientific_name: str) -> dict | None:
 
 
 def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
-    """종 실사 **영상** 확보 → {path, license, credit, source} 또는 None(영상 확보 실패).
-    ★사진 소스(media_kind=photo, 난파선 무한 엔진)는 켄번즈로 영상화해 반환한다.
-    (실사 사진 다큐 폴백은 상위 래퍼 `fetch_footage`가 담당 — 영상 우선·없으면 이미지.)
+    """종 실사 **영상만** 확보 → {path, license, credit, source} 또는 None(영상 미확보).
+    ★엄격 영상 전용(운영자 확정 · 재발방지): 생물은 절대 photo_doc(이미지 다큐)을 반환하지 않는다.
+    사진 다큐 폴백은 상위 래퍼 `fetch_footage`가 담당한다 — 여기서 photo_doc을 돌려주면 '영상 확보'로
+    오분류돼 실제 제작은 이미지 슬라이드로 나오는 사고가 난다(실사고: NOAA 간헐 실패 시 사진 시드가
+    영상 탐색을 가로채 이미지 쇼츠 생성). 그래서 **사진 후보는 영상 탐색을 가로막지 못하게** 한다.
+    (난파선만 전용 사진 켄번즈를 여기서 처리 — 그 배 실제 사진.)
     """
     dest = Path(dest_dir)
     key = (scientific_name or "").strip().lower()
+    is_wreck = key.startswith("wreck ")
+    from_cache = False
     cand = _operator_footage(key, common_name_en)   # ★운영자 수동 드롭 최우선(있으면 그 클립 사용)
+    if not cand and not is_wreck:
+        # ★영상 URL 캐시 우선(NOAA 검색 간헐 실패 우회 · 분류=제작 일치): 한 번 찾은 영상은 그 URL을 바로 받는다.
+        cref = _video_cache_get(key)
+        if cref:
+            cand = cref
+            from_cache = True
     if not cand:
         cand = _SEED.get(key)
+    # ★생물의 '사진' 후보(operator 사진 드롭·photo 시드·discovered 사진)는 영상이 아니므로 여기서
+    #   버리고 아래 영상 소스(커먼스·카테고리·NOAA)를 계속 탐색한다. (난파선 사진은 전용 경로 유지)
+    if cand and cand.get("media_kind") == "photo" and not is_wreck:
+        cand = None
     if not cand:
         # 키워드 검색(피사체 검증 게이트 적용) → 없으면 분류군 카테고리 순회(피사체 정확·영상 추가확보).
         cand = (_commons_search(scientific_name, scientific_name, common_name_en)
@@ -1346,19 +1417,12 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
         return None
     if cand.get("media_kind") == "wreck_doc":   # ★유명 난파선 다큐(여러 이미지 시간순 시퀀스)
         return _wreck_doc_footage(cand, scientific_name)
-    if cand.get("media_kind") == "photo":   # ★사진 후보 → 영상화
-        # ★운영자 확정(절대 위반 금지): 생물은 **한 장짜리 켄번즈 영상 제작 금지**(단조로움).
-        #   반드시 실사 4장 이상을 시간순 다큐 시퀀스로 만든다(_PHOTODOC_MIN=4). 4장을 못 채우면
-        #   여기서 None을 돌려 소싱 목록에서 자동 제외되게 한다(단일 이미지 폴백 폐기).
-        #   난파선은 아래 전용 사진 경로(_wreck_photo_footage)가 처리하므로 여기서 걸리지 않는다.
-        if not (scientific_name or "").strip().lower().startswith("wreck "):
-            doc = species_photo_doc(scientific_name, common_name_en, dest_dir)
-            if doc:
-                return doc
-            log.info("[footage] 생물 실사 4장 미확보 → 단일 이미지 폴백 폐기, 스킵: %s / %s",
-                     scientific_name, common_name_en)
+    if cand.get("media_kind") == "photo":   # ★사진 후보
+        # ★생물은 영상 전용 함수에서 photo_doc/켄번즈를 절대 반환하지 않는다 → None(상위 fetch_footage가
+        #   실사 사진 다큐로 처리). 이렇게 해야 '영상 확보' 분류가 정직해진다(이미지가 영상으로 오분류 안 됨).
+        if not is_wreck:
             return None
-        return _fetch_photo_kenburns(cand, dest, key, common_name_en)
+        return _fetch_photo_kenburns(cand, dest, key, common_name_en)   # 난파선 전용(그 배 사진)
     # ★난파선은 아마추어 다이빙 영상을 소스로 절대 쓰지 않는다(운영자 확정 · 재발방지 · 절대 위반 금지).
     #   실사고(Batelo Cantanhede): 다이빙 영상은 ①인트로 타이틀카드(다이빙스쿨 로고)가 통짜로 박혀
     #   OCR로 못 지우고 ②배는 안 나오고 잠수사만 ③짧은 클립 반복 → 영상 품질을 근본적으로 무너뜨렸다.
@@ -1385,11 +1449,15 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
     if out.exists() and out.stat().st_size > 100_000:
         log.info("[footage] 캐시 사용: %s", out)
     elif not _download(cand["url"], out):
+        if from_cache:
+            _video_cache_pop(key)   # 캐시 URL 다운로드 실패 → 캐시 폐기(다음 실행이 재검색)
         return None
     log.info("[footage] 확보: %s (%s, %s)", out, cand["license"], cand["credit"])
 
     def _reject(reason: str):
         """게이트 탈락 소스는 파일까지 지운다 — 다음 시도가 캐시로 오인 재사용하지 않게."""
+        if from_cache:
+            _video_cache_pop(key)   # 캐시 URL이 게이트 탈락 → 캐시 폐기(다음 실행이 재검색)
         log.warning("[footage] %s → 폐기: %s / %s", reason, scientific_name, common_name_en)
         for p in (out, dest / f"footage_{slug}_trim{ext}", dest / f"footage_{slug}_trim.mp4"):
             try:
@@ -1461,6 +1529,9 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
                 return _reject("주제 피사체 미검출(비전 LLM · 난파선: 다이버/빈물)")
         except Exception as e:  # noqa: BLE001
             log.warning("[footage] 난파선 의미검증 생략(오류): %s", e)
+    # ★영상 확정 → URL 캐시(다음부터 검색 없이 그 파일을 바로 받아 분류=제작 일치)
+    if not is_wreck:
+        _video_cache_put(key, cand)
     # NOAA 소스는 좌상단 워터마크 영역 정보를 함께 반환(하류에서 회피/제거)
     logo = _NOAA_LOGO_BOX if "noaa" in (cand.get("credit", "") or "").lower() else None
     return {"path": str(out), "license": cand["license"],

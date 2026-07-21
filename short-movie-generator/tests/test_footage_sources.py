@@ -101,6 +101,41 @@ def test_noaa_oer_search_parses_and_matches_dive(monkeypatch):
     assert FT._noaa_oer_videos("") == []
 
 
+def test_video_cache_roundtrip(monkeypatch, tmp_path):
+    """★영상 URL 캐시(재발방지 044): 한 번 찾은 영상 URL을 저장→재사용(검색 우회로 분류=제작 일치)."""
+    monkeypatch.setattr(F, "_VIDEO_CACHE_PATH", tmp_path / "_video_cache.json", raising=False)
+    monkeypatch.setattr(F, "_VIDEO_CACHE", None, raising=False)
+    assert F._video_cache_get("Ipnopidae") is None
+    F._video_cache_put("Ipnopidae", {"url": "https://noaa/x_Low.mp4", "license": "public-domain",
+                                     "credit": "NOAA", "source": "NOAA OER EX1 DIVE1", "trim": [2, 1]})
+    got = F._video_cache_get("ipnopidae")            # 대소문자 무관
+    assert got and got["url"].endswith("_Low.mp4") and got["trim"] == [2, 1]
+    # 새 인스턴스에서도 파일로 영속(글로벌 리셋 후 재로드)
+    monkeypatch.setattr(F, "_VIDEO_CACHE", None, raising=False)
+    assert F._video_cache_get("Ipnopidae")["source"].startswith("NOAA OER")
+    F._video_cache_pop("Ipnopidae")
+    monkeypatch.setattr(F, "_VIDEO_CACHE", None, raising=False)
+    assert F._video_cache_get("Ipnopidae") is None
+
+
+def test_fetch_video_footage_never_returns_photo_doc(monkeypatch, tmp_path):
+    """★재발방지(실사고 044 이프노푸스: '영상 확보'로 분류됐는데 이미지 슬라이드로 제작): 영상 전용
+    함수는 생물에 대해 절대 photo_doc을 반환하지 않는다 — 사진 시드가 있고 영상 소스가 전무하면 None
+    (예전엔 사진 시드가 photo_doc을 반환·영상 탐색을 가로채 '영상 확보'로 오분류)."""
+    monkeypatch.setattr(F, "_SEED", {"testus fishus": {"url": "https://x/p.jpg", "media_kind": "photo",
+                                                        "license": "cc-by", "credit": "X", "source": "photo"}}, raising=False)
+    monkeypatch.setattr(F, "_operator_footage", lambda *a, **k: None)
+    monkeypatch.setattr(F, "_commons_search", lambda *a, **k: None)
+    monkeypatch.setattr(F, "_commons_category_videos", lambda *a, **k: None)
+    monkeypatch.setattr(F, "_noaa_oer_videos", lambda *a, **k: [])
+    monkeypatch.setattr(F, "_archive_org_videos", lambda *a, **k: [])
+    called = {"photodoc": False}
+    monkeypatch.setattr(F, "species_photo_doc", lambda *a, **k: called.__setitem__("photodoc", True) or {"photo_doc": True})
+    r = F._fetch_video_footage("Testus fishus", "test fish", str(tmp_path))
+    assert r is None                       # 영상 전용 함수는 None(photo_doc 반환 금지)
+    assert called["photodoc"] is False     # 사진 다큐는 상위 래퍼가 담당 — 여기서 호출 안 함
+
+
 def test_video_subject_gate_rejects_misidentified():
     """★키워드 오소싱 배제(실사고): 무관 영상은 거부, 진짜 피사체 영상은 통과."""
     ok = F._video_subject_ok

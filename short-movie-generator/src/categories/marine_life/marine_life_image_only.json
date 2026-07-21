@@ -1,6 +1,128 @@
 [
   {
     "kind": "creature",
+    "key": "bolbometopon muricatum",
+    "needs_confirm": false,
+    "title": "File:Extraordinary-Aggressive-Behavior-from-the-Giant-Coral-Reef-Fish-Bolbometopon-muricatum-in-a-Remote-pone.0038120.s001.ogv",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/0b/Extraordinary-Aggressive-Behavior-from-the-Giant-Coral-Reef-Fish-Bolbometopon-muricatum-in-a-Remote-pone.0038120.s001.ogv",
+    "license": "cc-by",
+    "credit": "Muñoz R, Zgliczynski B, Laughlin J, Teer B · CC BY",
+    "source": "File:Extraordinary-Aggressive-Behavior-from-the-Giant-Coral-Reef-Fish-Bolbometopon-muricatum-in-a-Remote-pone.0038120.s001.ogv",
+    "name": "Bolbometopon muricatum",
+    "name_ja": "",
+    "common_name_ko": "Bolbometopon muricatum",
+    "common_name_en": "Bolbometopon muricatum",
+    "depth": "",
+    "facts": [
+      "カンムリブダイ（学名：Bolbometopon muricatum）は、ブダイ亜科に属する海水魚。カンムリブダイ属は単型。ブダイ亜科の最大種で、体長は1メートル以上。インド洋から太平洋にかけての熱帯海域に分布する。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Bolbometopon muricatum",
+      "common_name_ko": "Bolbometopon muricatum",
+      "common_name_en": "Bolbometopon muricatum",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "カンムリブダイ（学名：Bolbometopon muricatum）は、ブダイ亜科に属する海水魚。カンムリブダイ属は単型。ブダイ亜科の最大種で、体長は1メートル以上。インド洋から太平洋にかけての熱帯海域に分布する。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Extraordinary-Aggressive-Behavior-from-the-Giant-Coral-Reef-Fish-Bolbometopon-muricatum-in-a-Remote-pone.0038120.s001.ogv)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_bolbometopon_muricatum_29330717649.jpg",
+    "video_status": "image_only",
+    "video_note": "제목상 다른 어종(grouper) 의심 격리"
+  },
+  {
+    "kind": "creature",
+    "key": "bryaninops natans",
+    "needs_confirm": false,
+    "title": "File:Red-fluorescence-in-reef-fish - 1472-6785-8-16-S2.ogv",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/d/d9/Red-fluorescence-in-reef-fish_-_1472-6785-8-16-S2.ogv",
+    "license": "cc-by",
+    "credit": "Michiels N, Anthes N, Hart N, Herler J, Meixner A, Schleifenbaum F, Schulte G, Siebeck U, Sprenger D, Wucherer M · CC BY",
+    "source": "File:Red-fluorescence-in-reef-fish - 1472-6785-8-16-S2.ogv",
+    "name": "Bryaninops natans",
+    "name_ja": "",
+    "common_name_ko": "Bryaninops natans",
+    "common_name_en": "Bryaninops natans",
+    "depth": "17-25",
+    "facts": [
+      "Bryaninops natans, known commonly as the redeye goby, is a species of marine fish in the family Gobiidae.",
+      "The redeye goby is widespread throughout the tropical waters of the Indo-Pacific area, including Red Sea.",
+      "natans is a small size that can reach a maximum size of 2.5 cm length."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Bryaninops natans",
+      "common_name_ko": "Bryaninops natans",
+      "common_name_en": "Bryaninops natans",
+      "depth_range_m": "17-25",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Bryaninops natans, known commonly as the redeye goby, is a species of marine fish in the family Gobiidae.",
+        "The redeye goby is widespread throughout the tropical waters of the Indo-Pacific area, including Red Sea.",
+        "natans is a small size that can reach a maximum size of 2.5 cm length."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Red-fluorescence-in-reef-fish - 1472-6785-8-16-S2.ogv)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_bryaninops_natans_29330717649.jpg",
+    "video_status": "image_only",
+    "video_note": "동일 논문 일반 클립 공유 격리"
+  },
+  {
+    "kind": "creature",
+    "key": "enneapterygius destai",
+    "needs_confirm": false,
+    "title": "File:Red-fluorescence-in-reef-fish-A-novel-signalling-mechanism?-1472-6785-8-16-S3.ogv",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Red-fluorescence-in-reef-fish-A-novel-signalling-mechanism%3F-1472-6785-8-16-S3.ogv",
+    "license": "cc-by",
+    "credit": "Michiels N, Anthes N, Hart N, Herler J, Meixner A, Schleifenbaum F, Schulte G, Siebeck U, Sprenger D, Wucherer M · CC BY",
+    "source": "File:Red-fluorescence-in-reef-fish-A-novel-signalling-mechanism?-1472-6785-8-16-S3.ogv",
+    "name": "Enneapterygius destai",
+    "name_ja": "",
+    "common_name_ko": "Enneapterygius destai",
+    "common_name_en": "Enneapterygius destai",
+    "depth": "20",
+    "facts": [
+      "Enneapterygius destai is a species of triplefin blenny which is endemic to the Red Sea where it is found at depths of 2 to 20 metres (6.6 to 65.6 ft) in bays and lagoons which have dense populations of coral.",
+      "Within these it is normally associated with corals in the genus Porites and can be found in crevices near these corals or on the vertical faces made up of them.",
+      "The specific name honours the Ethiopian admiral Prince Alexander Desta (1934–1974) who was executed when the Derg took power in Ethiopia."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Enneapterygius destai",
+      "common_name_ko": "Enneapterygius destai",
+      "common_name_en": "Enneapterygius destai",
+      "depth_range_m": "20",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Enneapterygius destai is a species of triplefin blenny which is endemic to the Red Sea where it is found at depths of 2 to 20 metres (6.6 to 65.6 ft) in bays and lagoons which have dense populations of coral.",
+        "Within these it is normally associated with corals in the genus Porites and can be found in crevices near these corals or on the vertical faces made up of them.",
+        "The specific name honours the Ethiopian admiral Prince Alexander Desta (1934–1974) who was executed when the Derg took power in Ethiopia."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Red-fluorescence-in-reef-fish-A-novel-signalling-mechanism?-1472-6785-8-16-S3.ogv)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_enneapterygius_destai_29330717649.jpg",
+    "video_status": "image_only",
+    "video_note": "동일 논문 일반 클립 공유 격리"
+  },
+  {
+    "kind": "creature",
     "key": "alopias pelagicus",
     "needs_confirm": false,
     "title": "File:Pelagic thresher shark (Alopias pelagicus).webm",
@@ -35,7 +157,8 @@
     },
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_alopias_pelagicus_29330717649.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -75,7 +198,8 @@
     },
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_rhincodon_typus_29330717649.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -117,7 +241,8 @@
     },
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_carcharhinus_limbatus_29330717649.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -155,7 +280,8 @@
     },
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_sphyrnidae_29330717649.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -200,7 +326,8 @@
       ]
     },
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -241,7 +368,8 @@
       ]
     },
     "video_status": "image_only",
-    "photo_count": 5
+    "photo_count": 5,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -282,7 +410,8 @@
       ]
     },
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -327,6 +456,7 @@
       ]
     },
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   }
 ]

@@ -40,7 +40,7 @@
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_annelida_29755719911.jpg",
     "video_status": "image_only",
     "photo_count": null,
-    "video_note": "영상 후보가 오소싱(문맥부적합) → 영상 제외, 사진만 보관"
+    "video_note": "오소싱(육상 지렁이·문 과다광범) 격리"
   },
   {
     "kind": "creature",
@@ -80,7 +80,8 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/14/Sea_cucumber_swimming_near_Puerto_Rico_April_2015.png",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_holothuroidea_29755719911.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -122,7 +123,8 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/11/Actinopyga_echinites1.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_actinopyga_echinites_29755719911.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -162,7 +164,8 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Eurypharynx.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_eurypharynx_pelecanoides_29755719911.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -202,7 +205,8 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Anoplogaster_cornuta_X-ray.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_anoplogaster_cornuta_29755719911.jpg",
     "video_status": "image_only",
-    "photo_count": 5
+    "photo_count": 5,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -241,7 +245,8 @@
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Scotoplanes_globosa_and_crab.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -281,7 +286,8 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e2/Galath%C3%A9e_y%C3%A9ti%2C_un_habitant_des_profondeurs_abyssales_%28Ifremer_00569-68091_-_25272%29.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_kiwa_hirsuta_29755719911.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -323,7 +329,8 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Diaphus_effulgens_headlights.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_diaphus_effulgens_29755719911.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -367,7 +374,8 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/1d/Chilara_taylori.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_chilara_taylori_29755719911.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -415,7 +423,8 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/6/69/Electrona_risso_specimen.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_electrona_risso_29755719911.jpg",
     "video_status": "image_only",
-    "photo_count": 5
+    "photo_count": 5,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -461,7 +470,8 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Otolithes_de_Grenadier_de_roche_%28Coryphaenoides_rupestris%29_%28Ifremer_00785-89653_-_49971%29.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_coryphaenoides_rupestris_29755719911.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -501,7 +511,8 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Hal_-_Chiasmodon_niger_-_1.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_chiasmodon_niger_29755719911.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -545,7 +556,8 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Hal_-_Opisthoproctus_soleatus_-_1.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_opisthoproctus_soleatus_29755719911.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -593,7 +605,8 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Rimicaris_exoculata_%28MNHN-IU-2008-13957%29.jpeg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_rimicaris_29755719911.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   },
   {
     "kind": "creature",
@@ -635,6 +648,7 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Japanese_Spider_Crab_Monterey_Bay_Aquarium.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_macrocheira_kaempferi_29755719911.jpg",
     "video_status": "image_only",
-    "photo_count": 7
+    "photo_count": 7,
+    "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
   }
 ]

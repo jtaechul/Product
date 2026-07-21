@@ -499,6 +499,21 @@
       배제한다. 커먼스는 파일을 분류군으로 분류하므로 카테고리가 신뢰 신호(공통명 미저장 종도 살림).
       한계(정직): **문(phylum)·강(class) 등 과다광범 후보**는 그 분류군의 무관 멤버(예: 육상 지렁이)가
       카테고리 매칭돼 통과할 수 있다 → 이런 건 인벤토리에서 격리(아래). 회귀: `test_video_subject_gate_*`.
+    - **★★`_fetch_video_footage`는 '영상만'(생물 photo_doc 반환 금지 · 재발방지 실사고 044 이프노푸스:
+      '영상 확보'로 분류됐는데 이미지 슬라이드로 제작)**: 원인 = ① 사진 시드/discovered 승격분(`media_kind=photo`)이
+      `_SEED.get(key)`로 잡히면 **NOAA·커먼스 영상 탐색을 가로채** 곧장 photo_doc을 반환 → '영상 확보'로 오분류.
+      조치 = 영상 전용 함수에서 **생물의 photo 후보는 버리고 영상 소스를 계속 탐색**하고, 그래도 영상이 없으면
+      **None**(photo_doc·켄번즈 반환 금지). 사진 다큐는 오직 상위 래퍼 `fetch_footage`가 담당. 실측: 사진 시드에
+      가로막혀 photo_doc이던 chaunax가 영상 재탐색으로 NOAA 영상 확보. 회귀: `test_fetch_video_footage_never_returns_photo_doc`.
+    - **★★영상 URL 캐시(핵심 재발방지 · '분류=제작' 일치 · `footage._video_cache*` · `categories/_video_cache.json`)**:
+      NOAA OER **검색(geoportal API)** 이 간헐적이라, 같은 종이 분류 땐 영상·제작 땐 '영상없음'으로 갈려 이미지
+      쇼츠가 나왔다(영상 **파일**은 NOAA에 영구 호스팅 — 흔들리는 건 검색뿐). → 한 번 찾은 영상의 URL·라이선스·
+      트림을 캐시해 이후엔 **검색을 건너뛰고 그 파일을 바로 받는다**(`_fetch_video_footage`가 operator 다음·시드/검색
+      앞에서 캐시 조회). 캐시 URL이 죽으면(다운로드/게이트 실패) 자동 폐기 후 재검색. 이로써 '영상 확보' 종은
+      제작 때도 그 영상을 쓴다. 회귀: `test_video_cache_roundtrip`.
+    - **★영상/이미지 분류는 '영상 전용' 함수 + 캐시로 한다(정직성)**: 후보 `video_status`는 `_fetch_video_footage`가
+      실제 영상을 돌려주는 종만 `video`(URL 캐시됨), 나머지 `image_only`. 오소싱(육상 지렁이 annelida·다른 어종
+      제목 bolbometopon·논문 공유 클립 bryaninops/enneapterygius)은 **강제 격리**(image_only + 캐시 제거).
     - **★영상 추가 확보 — Commons 분류군 카테고리 순회(`footage._commons_category_videos`)**: 키워드 검색이
       놓치는 CC 영상을, 그 종의 **Commons 카테고리(Category:<학명>) 안 영상 파일**을 직접 수확해 건진다.
       카테고리 소속이 곧 피사체 보증이라 **정확 + 추가 확보** 동시 달성(실측: macrouridae·nudibranchia·

@@ -39,7 +39,7 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e9/Nur04507.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_riftia_pachyptila_29755719911.jpg",
     "video_status": "video",
-    "video_source": "NOAA OER EX1711 DIVE13 (https://www.ncei.noaa.gov/metadata/g"
+    "video_source": "NOAA OER EX1711 DIVE13 (https://www.ncei.noaa.gov/metadata/granule/geoportal/opensearch)"
   },
   {
     "kind": "creature",
@@ -85,7 +85,7 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Deep_sea_hydrothermal_sea_vent_cucumber_Chiridota_heheva.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_chiridota_heheva_29755719911.jpg",
     "video_status": "video",
-    "video_source": "NOAA OER EX1711 DIVE10 (https://www.ncei.noaa.gov/metadata/g"
+    "video_source": "NOAA OER EX1711 DIVE10 (https://www.ncei.noaa.gov/metadata/granule/geoportal/opensearch)"
   },
   {
     "kind": "creature",
@@ -133,7 +133,7 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/12/Ctneophore_-_Flickr_-_NOAA_Ocean_Exploration_%5E_Research.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_thalassocalyce_29755719911.jpg",
     "video_status": "video",
-    "video_source": "NOAA OER EX1708 DIVE11 (https://www.ncei.noaa.gov/metadata/g"
+    "video_source": "NOAA OER EX1708 DIVE11 (https://www.ncei.noaa.gov/metadata/granule/geoportal/opensearch)"
   },
   {
     "kind": "creature",
@@ -262,6 +262,6 @@
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Otolithes_de_grenadier_raton_%28Coelorinchus_caelorhinchus-Coelorhynchus_coelorhynchus%29_%28Ifremer_00677-78952_-_31898%29.jpg",
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_coelorinchus_caelorhincus_29755719911.jpg",
     "video_status": "video",
-    "video_source": "NOAA OER EX1803 DIVE15 (https://www.ncei.noaa.gov/metadata/g"
+    "video_source": "NOAA OER EX1803 DIVE15 (https://www.ncei.noaa.gov/metadata/granule/geoportal/opensearch)"
   }
 ]
