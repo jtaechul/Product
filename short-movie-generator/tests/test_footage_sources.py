@@ -101,6 +101,53 @@ def test_noaa_oer_search_parses_and_matches_dive(monkeypatch):
     assert FT._noaa_oer_videos("") == []
 
 
+def test_video_subject_gate_rejects_misidentified():
+    """★키워드 오소싱 배제(실사고): 무관 영상은 거부, 진짜 피사체 영상은 통과."""
+    ok = F._video_subject_ok
+    # 오소싱(거부) — 파일명·카테고리 어디에도 피사체 토큰 없음
+    assert ok("Earthworm moving.webm", ["Category:Lumbricus"], "Annelida", "") is False
+    assert ok('"Cosmic Sea Slug" Hubble.webm', ["Category:Hubble images"], "Holothuroidea", "sea cucumber") is False
+    assert ok("Aotearoa Pasifika Performance.webm", ["Category:Dance"], "Kiwa hirsuta", "yeti crab") is False
+    assert ok("Alcohol - Drugslab.webm", ["Category:Harm reduction"], "Chiasmodon niger", "black swallower") is False
+    # 진짜(통과) — 파일명 학명 / 공통명 토큰 / 카테고리 분류군
+    assert ok("Bathynomus giganteus.webm", [], "Bathynomus", "") is True
+    assert ok("Cage diving with a great white shark.webm", [], "Carcharodon carcharias", "great white shark") is True
+    assert ok("Feeding Caribbean reef sharks.webm", ["Category:Carcharhinus perezi"], "Carcharhinus perezi", "") is True
+    assert ok("Grey reef shark (Carcharhinus amblyrhynchos).webm", [], "Carcharhinus amblyrhynchos", "") is True
+
+
+def test_token_hit_prefix_and_wholeword():
+    assert F._token_hit(["cuttlefish"], "Red cuttle hunting") is True     # 접두 cuttle⊂cuttlefish
+    assert F._token_hit(["annelida"], "Earthworm moving") is False        # worm은 earthworm의 전체어 아님
+    assert F._token_hit(["shark", "white"], "great white shark") is True
+
+
+def test_commons_category_videos_parses(monkeypatch):
+    """분류군 카테고리 순회로 CC 영상 수확(피사체 정확)."""
+    import sys, types
+    class _R:
+        def __init__(self, p): self._p = p
+        def json(self): return self._p
+    def fake_get(url, **kw):
+        p = kw.get("params", {})
+        if p.get("list") == "search":
+            return _R({"query": {"search": [{"title": "Category:Bathynomus"}]}})
+        if p.get("list") == "categorymembers":
+            return _R({"query": {"categorymembers": [
+                {"title": "File:Bathynomus giganteus swimming.webm"},
+                {"title": "File:Some diagram.svg"}]}})
+        if p.get("prop") == "imageinfo":
+            return _R({"query": {"pages": {"1": {"title": "File:Bathynomus giganteus swimming.webm",
+                "imageinfo": [{"url": "https://x/Bathynomus_giganteus_swimming.webm",
+                    "extmetadata": {"LicenseShortName": {"value": "CC BY-SA 4.0"},
+                                    "Artist": {"value": "Diver"}}}]}}}})
+        return _R({})
+    monkeypatch.setitem(sys.modules, "requests", types.SimpleNamespace(get=fake_get))
+    got = F._commons_category_videos("Bathynomus", "")
+    assert got and got["url"].endswith(".webm") and got["license"] == "cc-by-sa"
+    assert F._commons_category_videos("") is None
+
+
 def test_hero_single_subject_gate(monkeypatch):
     """★히어로(오프닝훅·엔드카드) 단일 개체 게이트(재발방지: 여러 종 도판이 엔드카드에 삽입).
     비전 키 없으면 fetch_hero_photo는 None(안전 폴백=영상 프레임). is_single_subject 폴백도 None."""

@@ -1,46 +1,6 @@
 [
   {
     "kind": "creature",
-    "key": "annelida",
-    "needs_confirm": false,
-    "title": "File:Segmented worm DSC 2462.webm",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/f/f4/Segmented_worm_DSC_2462.webm",
-    "license": "cc-by",
-    "credit": "Brandon Seah · CC BY",
-    "source": "File:Segmented worm DSC 2462.webm",
-    "name": "Annelida",
-    "name_ja": "",
-    "common_name_ko": "환형동물",
-    "common_name_en": "Annelida",
-    "depth": "",
-    "facts": [
-      "環形動物（かんけいどうぶつ）とは、環形動物門（学名: Annelida）に属する動物の総称である。多くが原則として体節制をもち、体は環状の柔らかい体節に分かれている蠕虫状の動物である。",
-      "環帯類（ミミズとヒル）、多毛類（ゴカイなど）を含むほか、有鬚動物（ヒゲムシやハオリムシ）、ユムシ動物、星口動物（ホシムシ）、スイクチムシ類を含む事が分子系統解析から分かっている。多毛類は非単系統群であり、ユムシやホシムシなどは二次的に体節構造を失ったと考えられている。",
-      "学名の由来は「環 annelum」である。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Annelida",
-      "common_name_ko": "환형동물",
-      "common_name_en": "Annelida",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "環形動物（かんけいどうぶつ）とは、環形動物門（学名: Annelida）に属する動物の総称である。多くが原則として体節制をもち、体は環状の柔らかい体節に分かれている蠕虫状の動物である。",
-        "環帯類（ミミズとヒル）、多毛類（ゴカイなど）を含むほか、有鬚動物（ヒゲムシやハオリムシ）、ユムシ動物、星口動物（ホシムシ）、スイクチムシ類を含む事が分子系統解析から分かっている。多毛類は非単系統群であり、ユムシやホシムシなどは二次的に体節構造を失ったと考えられている。",
-        "学名の由来は「環 annelum」である。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Segmented worm DSC 2462.webm)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_annelida_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
     "key": "riftia pachyptila",
     "needs_confirm": false,
     "title": "File:Nur04507.jpg",
@@ -77,7 +37,9 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e9/Nur04507.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_riftia_pachyptila_29755719911.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_riftia_pachyptila_29755719911.jpg",
+    "video_status": "video",
+    "video_source": "NOAA OER EX1711 DIVE13 (https://www.ncei.noaa.gov/metadata/g"
   },
   {
     "kind": "creature",
@@ -121,161 +83,9 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Deep_sea_hydrothermal_sea_vent_cucumber_Chiridota_heheva.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_chiridota_heheva_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "holothuroidea",
-    "needs_confirm": false,
-    "title": "File:Sea cucumber swimming near Puerto Rico April 2015.png",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/1/14/Sea_cucumber_swimming_near_Puerto_Rico_April_2015.png",
-    "license": "public-domain",
-    "credit": "NOAA Office of Ocean Exploration and Research",
-    "source": "File:Sea cucumber swimming near Puerto Rico April 2015.png",
-    "name": "Holothuroidea",
-    "name_ja": "",
-    "common_name_ko": "해삼류",
-    "common_name_en": "Holothuroidea",
-    "depth": "",
-    "facts": [
-      "ナマコ（海鼠、土肉、塗筍、別名:俵子、英: sea cucumber）は棘皮動物門のグループの一つで、ナマコ綱 Holothuroidea に分類される。体が細長く口が水平に向くなどの特徴を共有する一群である。世界に約1,500種、日本にはそのうち200種ほどが分布する。食用になるのはマナマコなど約30種類。寿命は約5-10年。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Holothuroidea",
-      "common_name_ko": "해삼류",
-      "common_name_en": "Holothuroidea",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "ナマコ（海鼠、土肉、塗筍、別名:俵子、英: sea cucumber）は棘皮動物門のグループの一つで、ナマコ綱 Holothuroidea に分類される。体が細長く口が水平に向くなどの特徴を共有する一群である。世界に約1,500種、日本にはそのうち200種ほどが分布する。食用になるのはマナマコなど約30種類。寿命は約5-10年。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Sea cucumber swimming near Puerto Rico April 2015.png)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/14/Sea_cucumber_swimming_near_Puerto_Rico_April_2015.png",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_holothuroidea_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "actinopyga echinites",
-    "needs_confirm": false,
-    "title": "File:Actinopyga echinites1.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/1/11/Actinopyga_echinites1.jpg",
-    "license": "cc-by",
-    "credit": "François Michonneau · CC BY",
-    "source": "File:Actinopyga echinites1.jpg",
-    "name": "Actinopyga echinites",
-    "name_ja": "",
-    "common_name_ko": "Actinopyga echinites",
-    "common_name_en": "Actinopyga echinites",
-    "depth": "",
-    "facts": [
-      "Actinopyga echinites, commonly known as the brownfish or deep water redfish, is a species of sea cucumber in the family Holothuriidae.",
-      "It is native to the tropical Indo-Pacific region and is harvested for food."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Actinopyga echinites",
-      "common_name_ko": "Actinopyga echinites",
-      "common_name_en": "Actinopyga echinites",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Actinopyga echinites, commonly known as the brownfish or deep water redfish, is a species of sea cucumber in the family Holothuriidae.",
-        "It is native to the tropical Indo-Pacific region and is harvested for food."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Actinopyga echinites1.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/11/Actinopyga_echinites1.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_actinopyga_echinites_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "eurypharynx pelecanoides",
-    "needs_confirm": false,
-    "title": "File:Eurypharynx.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Eurypharynx.jpg",
-    "license": "cc-by",
-    "credit": "Alexei Orlov · CC BY",
-    "source": "File:Eurypharynx.jpg",
-    "name": "Eurypharynx pelecanoides",
-    "name_ja": "",
-    "common_name_ko": "펠리칸장어",
-    "common_name_en": "Eurypharynx pelecanoides",
-    "depth": "",
-    "facts": [
-      "フクロウナギ（袋鰻、英:Pelican eel）は、ウナギ目フクロウナギ科に属する魚類。フクロウナギ科は1科1属1種の単型である。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Eurypharynx pelecanoides",
-      "common_name_ko": "펠리칸장어",
-      "common_name_en": "Eurypharynx pelecanoides",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "フクロウナギ（袋鰻、英:Pelican eel）は、ウナギ目フクロウナギ科に属する魚類。フクロウナギ科は1科1属1種の単型である。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Eurypharynx.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Eurypharynx.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_eurypharynx_pelecanoides_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "anoplogaster cornuta",
-    "needs_confirm": false,
-    "title": "File:Anoplogaster cornuta X-ray.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Anoplogaster_cornuta_X-ray.jpg",
-    "license": "public-domain",
-    "credit": "Sandra Raredon/Smithsonian Institution",
-    "source": "File:Anoplogaster cornuta X-ray.jpg",
-    "name": "Anoplogaster cornuta",
-    "name_ja": "",
-    "common_name_ko": "Anoplogaster cornuta",
-    "common_name_en": "Anoplogaster cornuta",
-    "depth": "500-5000",
-    "facts": [
-      "オニキンメ（鬼金目、学名：Anoplogaster cornuta）は、オニキンメ科に属する深海魚。世界中の温帯および熱帯の海に分布し、水深2-5,000メートル、成魚は通常500-5,000メートルに生息し、幼魚は通常海面近くで見られる。全長約18センチメートルに達する。外洋性の肉食魚に捕食され、漁業の対象ではない。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Anoplogaster cornuta",
-      "common_name_ko": "Anoplogaster cornuta",
-      "common_name_en": "Anoplogaster cornuta",
-      "depth_range_m": "500-5000",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "オニキンメ（鬼金目、学名：Anoplogaster cornuta）は、オニキンメ科に属する深海魚。世界中の温帯および熱帯の海に分布し、水深2-5,000メートル、成魚は通常500-5,000メートルに生息し、幼魚は通常海面近くで見られる。全長約18センチメートルに達する。外洋性の肉食魚に捕食され、漁業の対象ではない。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Anoplogaster cornuta X-ray.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Anoplogaster_cornuta_X-ray.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_anoplogaster_cornuta_29755719911.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_chiridota_heheva_29755719911.jpg",
+    "video_status": "video",
+    "video_source": "NOAA OER EX1711 DIVE10 (https://www.ncei.noaa.gov/metadata/g"
   },
   {
     "kind": "creature",
@@ -321,82 +131,9 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/12/Ctneophore_-_Flickr_-_NOAA_Ocean_Exploration_%5E_Research.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_thalassocalyce_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "scotoplanes globosa",
-    "needs_confirm": false,
-    "title": "File:Scotoplanes globosa and crab.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Scotoplanes_globosa_and_crab.jpg",
-    "license": "cc-by-sa",
-    "credit": "NOAA/MBARI · CC BY-SA",
-    "source": "File:Scotoplanes globosa and crab.jpg",
-    "name": "Scotoplanes globosa",
-    "name_ja": "",
-    "common_name_ko": "Scotoplanes globosa",
-    "common_name_en": "Scotoplanes globosa",
-    "depth": "6000",
-    "facts": [
-      "センジュナマコ（千手海鼠、学名：Scotoplanes globosa）は深海性のナマコの一種である。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Scotoplanes globosa",
-      "common_name_ko": "Scotoplanes globosa",
-      "common_name_en": "Scotoplanes globosa",
-      "depth_range_m": "6000",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "センジュナマコ（千手海鼠、学名：Scotoplanes globosa）は深海性のナマコの一種である。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Scotoplanes globosa and crab.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Scotoplanes_globosa_and_crab.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "kiwa hirsuta",
-    "needs_confirm": false,
-    "title": "File:Galathée yéti, un habitant des profondeurs abyssales (Ifremer 00569-68091 - 25272).jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/e/e2/Galath%C3%A9e_y%C3%A9ti%2C_un_habitant_des_profondeurs_abyssales_%28Ifremer_00569-68091_-_25272%29.jpg",
-    "license": "cc-by",
-    "credit": "Alexis Fifis (Ifremer), null · CC BY",
-    "source": "File:Galathée yéti, un habitant des profondeurs abyssales (Ifremer 00569-68091 - 25272).jpg",
-    "name": "Kiwa hirsuta",
-    "name_ja": "",
-    "common_name_ko": "예티크랩",
-    "common_name_en": "Kiwa hirsuta",
-    "depth": "2200-2300",
-    "facts": [
-      "キワ・ヒルスタ（Kiwa hirsuta）は、キワ属に分類される甲殻類の一種。2005年に南太平洋で発見された。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Kiwa hirsuta",
-      "common_name_ko": "예티크랩",
-      "common_name_en": "Kiwa hirsuta",
-      "depth_range_m": "2200-2300",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "キワ・ヒルスタ（Kiwa hirsuta）は、キワ属に分類される甲殻類の一種。2005年に南太平洋で発見された。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Galathée yéti, un habitant des profondeurs abyssales (Ifremer 00569-68091 - 25272).jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e2/Galath%C3%A9e_y%C3%A9ti%2C_un_habitant_des_profondeurs_abyssales_%28Ifremer_00569-68091_-_25272%29.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_kiwa_hirsuta_29755719911.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_thalassocalyce_29755719911.jpg",
+    "video_status": "video",
+    "video_source": "NOAA OER EX1708 DIVE11 (https://www.ncei.noaa.gov/metadata/g"
   },
   {
     "kind": "creature",
@@ -442,47 +179,9 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/09/Bathynomus_%2810.3897-zookeys.947.53906%29_Figure_6.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_bathynomus_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "diaphus effulgens",
-    "needs_confirm": false,
-    "title": "File:Diaphus effulgens headlights.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Diaphus_effulgens_headlights.jpg",
-    "license": "cc-by-sa",
-    "credit": "HulloThere · CC BY-SA",
-    "source": "File:Diaphus effulgens headlights.jpg",
-    "name": "Diaphus effulgens",
-    "name_ja": "",
-    "common_name_ko": "Diaphus effulgens",
-    "common_name_en": "Diaphus effulgens",
-    "depth": "",
-    "facts": [
-      "The headlight fish (Diaphus effulgens) is a species of lanternfish in the family Myctophidae.",
-      "It is also sometimes referred to as the headlight lanternfish, or even the lanternfish, though it is not the only species to be called this."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Diaphus effulgens",
-      "common_name_ko": "Diaphus effulgens",
-      "common_name_en": "Diaphus effulgens",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "The headlight fish (Diaphus effulgens) is a species of lanternfish in the family Myctophidae.",
-        "It is also sometimes referred to as the headlight lanternfish, or even the lanternfish, though it is not the only species to be called this."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Diaphus effulgens headlights.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Diaphus_effulgens_headlights.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_diaphus_effulgens_29755719911.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_bathynomus_29755719911.jpg",
+    "video_status": "video",
+    "video_source": "File:Bathynomus giganteus.webm"
   },
   {
     "kind": "creature",
@@ -520,95 +219,9 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Tripod_fish1.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_ipnopidae_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "chilara taylori",
-    "needs_confirm": false,
-    "title": "File:Chilara taylori.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/1/1d/Chilara_taylori.jpg",
-    "license": "cc-by-sa",
-    "credit": "Helge Weissig · CC BY-SA",
-    "source": "File:Chilara taylori.jpg",
-    "name": "Chilara taylori",
-    "name_ja": "",
-    "common_name_ko": "Chilara taylori",
-    "common_name_en": "Chilara taylori",
-    "depth": "280",
-    "facts": [
-      "Chilara taylori, the spotted cusk-eel, is a species of cusk-eel found along the eastern coast of the Pacific Ocean where it is found at depths down to around 280 metres (920 ft) from Washington, United States to Ecuador.",
-      "This species grows to a length of 40.4 centimetres (15.9 in) TL.",
-      "It is the only known member of its genus."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Chilara taylori",
-      "common_name_ko": "Chilara taylori",
-      "common_name_en": "Chilara taylori",
-      "depth_range_m": "280",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Chilara taylori, the spotted cusk-eel, is a species of cusk-eel found along the eastern coast of the Pacific Ocean where it is found at depths down to around 280 metres (920 ft) from Washington, United States to Ecuador.",
-        "This species grows to a length of 40.4 centimetres (15.9 in) TL.",
-        "It is the only known member of its genus."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Chilara taylori.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/1d/Chilara_taylori.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_chilara_taylori_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "electrona risso",
-    "needs_confirm": false,
-    "title": "File:Electrona risso specimen.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/6/69/Electrona_risso_specimen.jpg",
-    "license": "cc-by-sa",
-    "credit": "HulloThere · CC BY-SA",
-    "source": "File:Electrona risso specimen.jpg",
-    "name": "Electrona risso",
-    "name_ja": "",
-    "common_name_ko": "Electrona risso",
-    "common_name_en": "Electrona risso",
-    "depth": "90-820",
-    "facts": [
-      "Electrona risso is a species of myctophiform ray-finned fish in the family Myctophidae, the lanternfishes.",
-      "It is known commonly as the electric lantern fish, chubby flashlight fish, and Risso's lantern-fish.",
-      "It is a widespread species of all the oceans.",
-      "The male reaches a maximum length of about 8.2 centimeters.",
-      "It becomes sexually mature at about 5.9 centimeters."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Electrona risso",
-      "common_name_ko": "Electrona risso",
-      "common_name_en": "Electrona risso",
-      "depth_range_m": "90-820",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Electrona risso is a species of myctophiform ray-finned fish in the family Myctophidae, the lanternfishes.",
-        "It is known commonly as the electric lantern fish, chubby flashlight fish, and Risso's lantern-fish.",
-        "It is a widespread species of all the oceans.",
-        "The male reaches a maximum length of about 8.2 centimeters.",
-        "It becomes sexually mature at about 5.9 centimeters."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Electrona risso specimen.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/6/69/Electrona_risso_specimen.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_electrona_risso_29755719911.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_ipnopidae_29755719911.jpg",
+    "video_status": "video",
+    "video_source": "NOAA OER EX1711 DIVE01 (https://www.ncei.noaa.gov/metadata/g"
   },
   {
     "kind": "creature",
@@ -654,7 +267,9 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/16/Chaunax_stigmaeus_dorsal_view2.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_chaunax_stigmaeus_29755719911.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_chaunax_stigmaeus_29755719911.jpg",
+    "video_status": "video",
+    "video_source": "NOAA OER EX1711 DIVE15 (https://www.ncei.noaa.gov/metadata/g"
   },
   {
     "kind": "creature",
@@ -691,51 +306,9 @@
       ]
     },
     "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/0d/Grenadier_%28Macrouridae%29_par_400_m_de_fond_%28Ifremer_00621-73302%29.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "coryphaenoides rupestris",
-    "needs_confirm": false,
-    "title": "File:Otolithes de Grenadier de roche (Coryphaenoides rupestris) (Ifremer 00785-89653 - 49971).jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Otolithes_de_Grenadier_de_roche_%28Coryphaenoides_rupestris%29_%28Ifremer_00785-89653_-_49971%29.jpg",
-    "license": "cc-by",
-    "credit": "Romain (1) Elleboode · CC BY",
-    "source": "File:Otolithes de Grenadier de roche (Coryphaenoides rupestris) (Ifremer 00785-89653 - 49971).jpg",
-    "name": "Coryphaenoides rupestris",
-    "name_ja": "",
-    "common_name_ko": "Coryphaenoides rupestris",
-    "common_name_en": "Coryphaenoides rupestris",
-    "depth": "",
-    "facts": [
-      "Coryphaenoides rupestris is a species of marine ray-finned fish in the family Macrouridae.",
-      "Its common names include the rock grenadier, the roundnose grenadier and the roundhead rat-tail.",
-      "In France it is known as grenadier de roche and in Spain as  granadero de roca.",
-      "It is a large, deep-water species and is fished commercially in the northern Atlantic Ocean."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Coryphaenoides rupestris",
-      "common_name_ko": "Coryphaenoides rupestris",
-      "common_name_en": "Coryphaenoides rupestris",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Coryphaenoides rupestris is a species of marine ray-finned fish in the family Macrouridae.",
-        "Its common names include the rock grenadier, the roundnose grenadier and the roundhead rat-tail.",
-        "In France it is known as grenadier de roche and in Spain as  granadero de roca.",
-        "It is a large, deep-water species and is fished commercially in the northern Atlantic Ocean."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Otolithes de Grenadier de roche (Coryphaenoides rupestris) (Ifremer 00785-89653 - 49971).jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Otolithes_de_Grenadier_de_roche_%28Coryphaenoides_rupestris%29_%28Ifremer_00785-89653_-_49971%29.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_coryphaenoides_rupestris_29755719911.jpg"
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/0d/Grenadier_%28Macrouridae%29_par_400_m_de_fond_%28Ifremer_00621-73302%29.jpg",
+    "video_status": "video",
+    "video_source": "File:Ex1402-dive11 fish.webm"
   },
   {
     "kind": "creature",
@@ -775,172 +348,8 @@
     },
     "media_kind": "photo",
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Otolithes_de_grenadier_raton_%28Coelorinchus_caelorhinchus-Coelorhynchus_coelorhynchus%29_%28Ifremer_00677-78952_-_31898%29.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_coelorinchus_caelorhincus_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "chiasmodon niger",
-    "needs_confirm": false,
-    "title": "File:Hal - Chiasmodon niger - 1.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Hal_-_Chiasmodon_niger_-_1.jpg",
-    "license": "cc-by-sa",
-    "credit": "Emőke Dénes · CC BY-SA",
-    "source": "File:Hal - Chiasmodon niger - 1.jpg",
-    "name": "Chiasmodon niger",
-    "name_ja": "",
-    "common_name_ko": "Black swallower",
-    "common_name_en": "Black swallower",
-    "depth": "700-2745",
-    "facts": [
-      "オニボウズギス（鬼坊主鱚、学名：Chiasmodon niger）はクロボウズギス科の深海魚。古い図鑑では学名からキャスモドンやカイアスモドンなどと記載されていることもあった。自分より大きな魚を飲み込む能力で知られている。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Chiasmodon niger",
-      "common_name_ko": "Black swallower",
-      "common_name_en": "Black swallower",
-      "depth_range_m": "700-2745",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "オニボウズギス（鬼坊主鱚、学名：Chiasmodon niger）はクロボウズギス科の深海魚。古い図鑑では学名からキャスモドンやカイアスモドンなどと記載されていることもあった。自分より大きな魚を飲み込む能力で知られている。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Hal - Chiasmodon niger - 1.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Hal_-_Chiasmodon_niger_-_1.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_chiasmodon_niger_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "opisthoproctus soleatus",
-    "needs_confirm": false,
-    "title": "File:Hal - Opisthoproctus soleatus - 1.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Hal_-_Opisthoproctus_soleatus_-_1.jpg",
-    "license": "cc-by-sa",
-    "credit": "Emőke Dénes · CC BY-SA",
-    "source": "File:Hal - Opisthoproctus soleatus - 1.jpg",
-    "name": "Opisthoproctus soleatus",
-    "name_ja": "",
-    "common_name_ko": "barreleye",
-    "common_name_en": "barreleye",
-    "depth": "500-700",
-    "facts": [
-      "Opisthoproctus soleatus is an argentiniform species of fish referred to as the barreleye, being the type genus and species of the family Opisthoproctidae.",
-      "The species lives in most tropical seas, but is more common in the eastern Atlantic, from western Ireland to Mauritania and from Sierra Leone to Angola, and also in the South China Sea.",
-      "soleatus can grow to a standard length of 10.5 centimetres (4.1 in) and usually live from about 500 to 700 metres (1,600 to 2,300 ft) deep."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Opisthoproctus soleatus",
-      "common_name_ko": "barreleye",
-      "common_name_en": "barreleye",
-      "depth_range_m": "500-700",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Opisthoproctus soleatus is an argentiniform species of fish referred to as the barreleye, being the type genus and species of the family Opisthoproctidae.",
-        "The species lives in most tropical seas, but is more common in the eastern Atlantic, from western Ireland to Mauritania and from Sierra Leone to Angola, and also in the South China Sea.",
-        "soleatus can grow to a standard length of 10.5 centimetres (4.1 in) and usually live from about 500 to 700 metres (1,600 to 2,300 ft) deep."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Hal - Opisthoproctus soleatus - 1.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Hal_-_Opisthoproctus_soleatus_-_1.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_opisthoproctus_soleatus_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "rimicaris",
-    "needs_confirm": false,
-    "title": "File:Rimicaris exoculata (MNHN-IU-2008-13957).jpeg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Rimicaris_exoculata_%28MNHN-IU-2008-13957%29.jpeg",
-    "license": "cc-by",
-    "credit": "Laura FLAMME · CC BY",
-    "source": "File:Rimicaris exoculata (MNHN-IU-2008-13957).jpeg",
-    "name": "Rimicaris",
-    "name_ja": "",
-    "common_name_ko": "Rimicaris",
-    "common_name_en": "Rimicaris",
-    "depth": "",
-    "facts": [
-      "Alvinocarididae is a family of shrimp, originally described by M.",
-      "Christoffersen in 1986 from samples collected by DSV Alvin, from which they derive their name.",
-      "Shrimp of the family Alvinocarididae generally inhabit deep sea hydrothermal vent regions, and hydrocarbon cold seep environments.",
-      "Carotenoid pigment has been found in their bodies.",
-      "The family Alvinocarididae comprises 7 extant genera."
-    ],
-    "fact_src": "Wikipedia (en) · 상위 분류군",
-    "species": {
-      "scientific_name": "Rimicaris",
-      "common_name_ko": "Rimicaris",
-      "common_name_en": "Rimicaris",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Alvinocarididae is a family of shrimp, originally described by M.",
-        "Christoffersen in 1986 from samples collected by DSV Alvin, from which they derive their name.",
-        "Shrimp of the family Alvinocarididae generally inhabit deep sea hydrothermal vent regions, and hydrocarbon cold seep environments.",
-        "Carotenoid pigment has been found in their bodies.",
-        "The family Alvinocarididae comprises 7 extant genera."
-      ],
-      "sources": [
-        "Wikipedia (en) · 상위 분류군",
-        "Wikimedia Commons (File:Rimicaris exoculata (MNHN-IU-2008-13957).jpeg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Rimicaris_exoculata_%28MNHN-IU-2008-13957%29.jpeg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_rimicaris_29755719911.jpg"
-  },
-  {
-    "kind": "creature",
-    "key": "macrocheira kaempferi",
-    "needs_confirm": false,
-    "title": "File:Japanese Spider Crab Monterey Bay Aquarium.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Japanese_Spider_Crab_Monterey_Bay_Aquarium.jpg",
-    "license": "cc-by-sa",
-    "credit": "Macrophyseter · CC BY-SA",
-    "source": "File:Japanese Spider Crab Monterey Bay Aquarium.jpg",
-    "name": "Macrocheira kaempferi",
-    "name_ja": "",
-    "common_name_ko": "키다리게",
-    "common_name_en": "Japanese spider crabs",
-    "depth": "50-800",
-    "facts": [
-      "タカアシガニ（高脚蟹・学名：Macrocheira kaempferi）は、タカアシガニ科に分類されるカニ。日本近海の深海に生息する巨大なカニで、現生の節足動物では世界最大である。",
-      "カニ類の中では系統的に古い種で、生きた化石とよばれる。現生のタカアシガニ属（Macrocheira属）は1属1種のみだが、他に化石種が4種類（日本国内に2種、アメリカ合衆国ワシントン州に2種）報告されている。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Macrocheira kaempferi",
-      "common_name_ko": "키다리게",
-      "common_name_en": "Japanese spider crabs",
-      "depth_range_m": "50-800",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "タカアシガニ（高脚蟹・学名：Macrocheira kaempferi）は、タカアシガニ科に分類されるカニ。日本近海の深海に生息する巨大なカニで、現生の節足動物では世界最大である。",
-        "カニ類の中では系統的に古い種で、生きた化石とよばれる。現生のタカアシガニ属（Macrocheira属）は1属1種のみだが、他に化石種が4種類（日本国内に2種、アメリカ合衆国ワシントン州に2種）報告されている。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Japanese Spider Crab Monterey Bay Aquarium.jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Japanese_Spider_Crab_Monterey_Bay_Aquarium.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_macrocheira_kaempferi_29755719911.jpg"
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_coelorinchus_caelorhincus_29755719911.jpg",
+    "video_status": "video",
+    "video_source": "NOAA OER EX1803 DIVE15 (https://www.ncei.noaa.gov/metadata/g"
   }
 ]

@@ -225,3 +225,17 @@ def test_discovered_roundtrip(tmp_path, monkeypatch):
     got = discovery.load_discovered("deep_sea")
     assert got and got[0]["key"] == "rimicaris exoculata"
     assert discovery.load_discovered("marine_life") == []   # 없으면 빈 리스트
+
+
+def test_image_only_roundtrip_and_exclusion(tmp_path, monkeypatch):
+    """★영상/이미지전용 분리: 별도 보관 파일 저장·로드 + 재소싱 제외에 보관분 키 반영."""
+    monkeypatch.setattr(discovery, "_DISCOVERED_DIR", tmp_path)
+    (tmp_path / "deep_sea").mkdir()
+    held = [{"key": "kiwa hirsuta", "video_status": "image_only", "photo_count": 7,
+             "species": {"scientific_name": "Kiwa hirsuta"}}]
+    discovery.save_image_only("deep_sea", held)
+    got = discovery.load_image_only("deep_sea")
+    assert got and got[0]["key"] == "kiwa hirsuta" and got[0]["video_status"] == "image_only"
+    assert discovery.load_image_only("marine_life") == []
+    # 별도 보관 키는 재소싱 제외집합에 포함(중복 재발굴 방지)
+    assert "kiwa hirsuta" in discovery._all_known_keys()

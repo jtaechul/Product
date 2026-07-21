@@ -481,9 +481,53 @@ def _auto_trim_cards(path: str, dur: float, cap: float = 10.0) -> tuple[float, f
     return (round(head, 2), round(tail, 2))
 
 
-def _commons_search(query: str) -> dict | None:
-    """Commons에서 종명 영상 검색 → 통과 라이선스 첫 결과의 원본 URL·크레딧 반환.
-    재현율↑: 원문 종명과 '종명 deep sea' 두 변형으로 검색해 영상 파일 후보를 모은다."""
+# 피사체 매칭에서 무시하는 일반어(이게 걸려도 '그 종'이라 볼 수 없음).
+_SUBJ_STOP = {"sea", "deep", "ocean", "water", "marine", "reef", "fish", "giant", "common",
+              "great", "underwater", "aquarium", "wild", "from", "with", "near", "view",
+              "aerial", "the", "and", "video", "footage", "clip", "animal", "animals",
+              "life", "species", "coral", "diving", "cage", "juvenile", "adult", "male", "female"}
+
+
+def _subject_tokens(scientific_name: str, common_name_en: str) -> list[str]:
+    """학명·공통명에서 '피사체 식별 토큰'(길이 4↑·일반어 제외)을 뽑는다."""
+    toks: list[str] = []
+    for s in (scientific_name or "", common_name_en or ""):
+        for w in re.findall(r"[a-z]+", s.lower()):
+            if len(w) >= 4 and w not in _SUBJ_STOP and w not in toks:
+                toks.append(w)
+    return toks
+
+
+def _token_hit(tokens: list[str], text: str) -> bool:
+    """text 안의 단어 중 하나라도 tokens와 (접두 포함) 일치하면 True. 'earthworm'≠'worm'(전체어),
+    'cuttlefish'⊃'cuttle'(접두)은 허용 — 오검(다른 종/무관물)만 걸러내고 진짜는 살린다."""
+    words = re.findall(r"[a-z]+", (text or "").lower())
+    for w in tokens:
+        for u in words:
+            if u == w or (len(w) >= 4 and u.startswith(w)) or (len(u) >= 4 and w.startswith(u)):
+                return True
+    return False
+
+
+def _video_subject_ok(title: str, categories: list[str], sci: str, en: str) -> bool:
+    """Commons 영상이 '그 피사체'인지 검증(오소싱 배제 · 실사고: annelida→지렁이, holothuroidea→허블
+    성운, kiwa hirsuta→공연, chiasmodon→마약교육 영상). 신호: ① 파일명에 학명/강한 공통명 토큰,
+    또는 ② 파일의 **Commons 카테고리**(커먼스는 분류군으로 분류)에 그 토큰. 둘 다 없으면 거부.
+    ★키워드 검색이 동음이의·무관물을 물어오는 걸 막는 핵심 게이트."""
+    toks = _subject_tokens(sci, en)
+    if not toks:
+        return True                      # 토큰이 없으면(빈 이름) 판단 불가 → 통과(기존 동작)
+    if _token_hit(toks, title):
+        return True
+    return any(_token_hit(toks, c) for c in (categories or []))
+
+
+def _commons_search(query: str, scientific_name: str = "", common_name_en: str = "") -> dict | None:
+    """Commons에서 종명 영상 검색 → **피사체 검증(_video_subject_ok)** 통과한 첫 결과의 URL·크레딧.
+    재현율↑: 원문 종명과 '종명 deep sea' 변형으로 후보를 모으되, 오소싱(동음이의·무관물)은 파일
+    카테고리/파일명으로 배제한다. sci/en 미지정 시 query를 학명으로 간주(하위호환)."""
+    sci = scientific_name or query
+    en = common_name_en or ""
     try:
         import requests
         api = "https://commons.wikimedia.org/w/api.php"
@@ -499,8 +543,66 @@ def _commons_search(query: str) -> dict | None:
         if not titles:
             return None
         info = requests.get(api, headers={"User-Agent": _UA}, timeout=30, params={
+            "action": "query", "format": "json", "prop": "imageinfo|categories",
+            "titles": "|".join(titles[:10]), "cllimit": "max", "clshow": "!hidden",
+            "iiprop": "url|extmetadata", "iiextmetadatafilter": "LicenseShortName|Artist",
+        }).json()
+        for page in info.get("query", {}).get("pages", {}).values():
+            ii = (page.get("imageinfo") or [{}])[0]
+            meta = ii.get("extmetadata", {})
+            lic = _norm_license(meta.get("LicenseShortName", {}).get("value", ""))
+            url = ii.get("url", "")
+            if not (lic and url and any(url.lower().endswith(e) for e in _VIDEO_EXT)):
+                continue
+            cats = [c.get("title", "") for c in (page.get("categories") or [])]
+            if not _video_subject_ok(page.get("title", ""), cats, sci, en):
+                log.info("[footage] Commons 영상 피사체 불일치 배제: %s (%s)", page.get("title", ""), sci)
+                continue
+            artist = re.sub("<[^>]+>", "", meta.get("Artist", {}).get("value", "")).strip()
+            return {"url": url, "license": lic,
+                    "credit": artist or "Wikimedia Commons",
+                    "source": page.get("title", "")}
+        return None
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] Commons 검색 실패(%s): %s", query, e)
+        return None
+
+
+def _commons_category_videos(scientific_name: str, common_name_en: str = "") -> dict | None:
+    """★영상 추가 확보(운영자 요청 · 피사체 정확): Commons의 **분류군 카테고리**(예: Category:<학명>)에
+    담긴 CC 영상을 직접 수확한다. 파일이 그 분류군 카테고리 아래 있으므로 **피사체가 정확**하고,
+    키워드 검색이 놓치는 영상을 건진다(동음이의 오소싱 없음). 통과 라이선스 첫 영상 반환, 없으면 None."""
+    sci = (scientific_name or "").strip()
+    if not sci or sci.lower().startswith("wreck "):
+        return None
+    try:
+        import requests
+        api = "https://commons.wikimedia.org/w/api.php"
+        # 후보 카테고리: 학명 그대로 + 검색으로 찾은 분류군 카테고리(대소문자·명명 변형 대응).
+        cats: list[str] = [f"Category:{sci}"]
+        cs = requests.get(api, headers={"User-Agent": _UA}, timeout=30, params={
+            "action": "query", "format": "json", "list": "search",
+            "srsearch": sci, "srnamespace": "14", "srlimit": "5",
+        }).json()
+        for h in cs.get("query", {}).get("search", []):
+            t = h.get("title", "")
+            if t and t not in cats and _token_hit(_subject_tokens(sci, common_name_en), t):
+                cats.append(t)
+        files: list[str] = []
+        for cat in cats[:4]:
+            m = requests.get(api, headers={"User-Agent": _UA}, timeout=30, params={
+                "action": "query", "format": "json", "list": "categorymembers",
+                "cmtitle": cat, "cmtype": "file", "cmlimit": "50",
+            }).json()
+            for it in m.get("query", {}).get("categorymembers", []):
+                t = it.get("title", "")
+                if any(t.lower().endswith(e) for e in _VIDEO_EXT) and t not in files:
+                    files.append(t)
+        if not files:
+            return None
+        info = requests.get(api, headers={"User-Agent": _UA}, timeout=30, params={
             "action": "query", "format": "json", "prop": "imageinfo",
-            "titles": "|".join(titles[:10]),
+            "titles": "|".join(files[:20]),
             "iiprop": "url|extmetadata", "iiextmetadatafilter": "LicenseShortName|Artist",
         }).json()
         for page in info.get("query", {}).get("pages", {}).values():
@@ -510,12 +612,13 @@ def _commons_search(query: str) -> dict | None:
             url = ii.get("url", "")
             if lic and url and any(url.lower().endswith(e) for e in _VIDEO_EXT):
                 artist = re.sub("<[^>]+>", "", meta.get("Artist", {}).get("value", "")).strip()
+                log.info("[footage] Commons 카테고리 영상 채택: %s (%s)", page.get("title", ""), lic)
                 return {"url": url, "license": lic,
                         "credit": artist or "Wikimedia Commons",
                         "source": page.get("title", "")}
         return None
     except Exception as e:  # noqa: BLE001
-        log.warning("[footage] Commons 검색 실패(%s): %s", query, e)
+        log.warning("[footage] Commons 카테고리 영상 검색 실패(%s): %s", sci, e)
         return None
 
 
@@ -1226,7 +1329,10 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
     if not cand:
         cand = _SEED.get(key)
     if not cand:
-        cand = _commons_search(scientific_name) or _commons_search(common_name_en)
+        # 키워드 검색(피사체 검증 게이트 적용) → 없으면 분류군 카테고리 순회(피사체 정확·영상 추가확보).
+        cand = (_commons_search(scientific_name, scientific_name, common_name_en)
+                or _commons_search(common_name_en, scientific_name, common_name_en)
+                or _commons_category_videos(scientific_name, common_name_en))
     if not cand and not key.startswith("wreck "):
         # ★커먼스에 없으면 자동 확장(운영자 목표): ①NOAA OER(숨은 geoportal API·종명 검색·PD 하이라이트)
         #   ②Internet Archive(안전필터). 아래 공통 다운로드·종횡비·정지·워터마크 게이트를 그대로 통과해야 채택.

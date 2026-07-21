@@ -1007,6 +1007,31 @@ def save_candidates(category_id: str, items: list[dict]) -> None:
     p.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+# ── 이미지전용 별도 보관(운영자 확정: '영상 없는 소스'는 색출해 따로 정리) ──────────────────
+# 영상이 아예 없어 사진 다큐로만 제작되는 후보를 메인 후보목록에서 빼서 여기 보관한다. 제작 풀은
+# '영상 확보' 후보만 남겨 image-only 쇼츠 남발을 막고, 보관분은 삭제하지 않고 보존(나중에 영상
+# 확보되면 되돌리거나, 필요 시 사진 다큐로 되살릴 수 있게).
+def _image_only_path(category_id: str) -> Path:
+    return _DISCOVERED_DIR / category_id / f"{category_id}_image_only.json"
+
+
+def load_image_only(category_id: str) -> list[dict]:
+    p = _image_only_path(category_id)
+    if not p.exists():
+        return []
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+        return d if isinstance(d, list) else []
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def save_image_only(category_id: str, items: list[dict]) -> None:
+    p = _image_only_path(category_id)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def remove_candidates(category_id: str, keys) -> list[str]:
     """소싱 후보에서 지정 key들을 삭제(관리자 '삭제' 기능). 삭제된 key 리스트 반환."""
     kill = {str(k).strip().lower() for k in (keys or []) if str(k).strip()}
@@ -1093,6 +1118,7 @@ def _all_known_keys() -> set[str]:
             cid = d.name
             keys |= {c["key"] for c in load_candidates(cid)}
             keys |= {it["key"] for it in load_discovered(cid)}
+            keys |= {c["key"] for c in load_image_only(cid)}   # 별도 보관분도 재소싱 제외
     except Exception:  # noqa: BLE001
         pass
     try:

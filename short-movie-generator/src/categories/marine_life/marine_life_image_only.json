@@ -1,0 +1,332 @@
+[
+  {
+    "kind": "creature",
+    "key": "alopias pelagicus",
+    "needs_confirm": false,
+    "title": "File:Pelagic thresher shark (Alopias pelagicus).webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Pelagic_thresher_shark_%28Alopias_pelagicus%29.webm",
+    "license": "cc0",
+    "credit": "Bo Mancao",
+    "source": "File:Pelagic thresher shark (Alopias pelagicus).webm",
+    "name": "Alopias pelagicus",
+    "name_ja": "",
+    "common_name_ko": "원양환도상어",
+    "common_name_en": "pelagic thresher",
+    "depth": "",
+    "facts": [
+      "ニタリ (Alopias pelagicus) は、ネズミザメ目オナガザメ科に分類されるサメ。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Alopias pelagicus",
+      "common_name_ko": "원양환도상어",
+      "common_name_en": "pelagic thresher",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ニタリ (Alopias pelagicus) は、ネズミザメ目オナガザメ科に分類されるサメ。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Pelagic thresher shark (Alopias pelagicus).webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_alopias_pelagicus_29330717649.jpg",
+    "video_status": "image_only",
+    "photo_count": 7
+  },
+  {
+    "kind": "creature",
+    "key": "rhincodon typus",
+    "needs_confirm": false,
+    "title": "File:Whale shark (Rhincodon typus) near a boat.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Whale_shark_%28Rhincodon_typus%29_near_a_boat.webm",
+    "license": "cc-by-sa",
+    "credit": "WIDTTF [1] · CC BY-SA",
+    "source": "File:Whale shark (Rhincodon typus) near a boat.webm",
+    "name": "Rhincodon typus",
+    "name_ja": "",
+    "common_name_ko": "고래상어",
+    "common_name_en": "whale shark",
+    "depth": "",
+    "facts": [
+      "ジンベエザメ（甚兵衛鮫、甚平鮫、Rhincodon typus）は、テンジクザメ目ジンベエザメ科に属する唯一のサメ。ジンベイザメとも。サメや軟骨魚類としてのみならず、すべての魚類の中で現生最大の種で、鯨類以外での最大の動物（「生物に関する世界一の一覧#魚類」「1 E1 m」も参照）。",
+      "世界中の熱帯・亜熱帯・温帯の表層海域に広く分布する。主食はプランクトンで、動きは緩慢であり、基本的に人にとって危険性のないサメである。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Rhincodon typus",
+      "common_name_ko": "고래상어",
+      "common_name_en": "whale shark",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ジンベエザメ（甚兵衛鮫、甚平鮫、Rhincodon typus）は、テンジクザメ目ジンベエザメ科に属する唯一のサメ。ジンベイザメとも。サメや軟骨魚類としてのみならず、すべての魚類の中で現生最大の種で、鯨類以外での最大の動物（「生物に関する世界一の一覧#魚類」「1 E1 m」も参照）。",
+        "世界中の熱帯・亜熱帯・温帯の表層海域に広く分布する。主食はプランクトンで、動きは緩慢であり、基本的に人にとって危険性のないサメである。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Whale shark (Rhincodon typus) near a boat.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_rhincodon_typus_29330717649.jpg",
+    "video_status": "image_only",
+    "photo_count": 7
+  },
+  {
+    "kind": "creature",
+    "key": "carcharhinus limbatus",
+    "needs_confirm": false,
+    "title": "File:Blacktip sharks (Carcharhinus limbatus) in South Africa.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/1/13/Blacktip_sharks_%28Carcharhinus_limbatus%29_in_South_Africa.webm",
+    "license": "cc-by",
+    "credit": "John Sanders · CC BY",
+    "source": "File:Blacktip sharks (Carcharhinus limbatus) in South Africa.webm",
+    "name": "Carcharhinus limbatus",
+    "name_ja": "",
+    "common_name_ko": "흑단상어",
+    "common_name_en": "blacktip shark",
+    "depth": "",
+    "facts": [
+      "カマストガリザメ Carcharhinus limbatus はメジロザメ属に属するサメの一種。世界中の熱帯沿岸の海・汽水に生息。2つの系統の存在が分かっており、西大西洋の個体群はその他から区別される。頑丈な流線型の体、尖った吻、鰓裂が長く、背鰭間に隆起はない。多くの個体で鰭の先端は黒い。全長1.5m。",
+      "素早い魚食性捕食者で、水上に跳び出すこともある。性格は臆病。年齢・性別ごとに群れを作る。胎生で一年おきに1-10匹の仔を産む。幼体は特定の成育場で育ち、成体になってもそこに戻る。無性生殖した例がある。",
+      "普通は危険ではないが、餌があると人を攻撃することがある。商業漁業上の重要種である。IUCNは危急としている。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Carcharhinus limbatus",
+      "common_name_ko": "흑단상어",
+      "common_name_en": "blacktip shark",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "カマストガリザメ Carcharhinus limbatus はメジロザメ属に属するサメの一種。世界中の熱帯沿岸の海・汽水に生息。2つの系統の存在が分かっており、西大西洋の個体群はその他から区別される。頑丈な流線型の体、尖った吻、鰓裂が長く、背鰭間に隆起はない。多くの個体で鰭の先端は黒い。全長1.5m。",
+        "素早い魚食性捕食者で、水上に跳び出すこともある。性格は臆病。年齢・性別ごとに群れを作る。胎生で一年おきに1-10匹の仔を産む。幼体は特定の成育場で育ち、成体になってもそこに戻る。無性生殖した例がある。",
+        "普通は危険ではないが、餌があると人を攻撃することがある。商業漁業上の重要種である。IUCNは危急としている。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Blacktip sharks (Carcharhinus limbatus) in South Africa.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_carcharhinus_limbatus_29330717649.jpg",
+    "video_status": "image_only",
+    "photo_count": 7
+  },
+  {
+    "kind": "creature",
+    "key": "sphyrnidae",
+    "needs_confirm": false,
+    "title": "File:Hammerhead shark hunting a fish Drone 16x9.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Hammerhead_shark_hunting_a_fish_Drone_16x9.webm",
+    "license": "public-domain",
+    "credit": "Ocean Observatories Initiative",
+    "source": "File:Hammerhead shark hunting a fish Drone 16x9.webm",
+    "name": "Sphyrnidae",
+    "name_ja": "",
+    "common_name_ko": "귀상어과",
+    "common_name_en": "hammerhead sharks",
+    "depth": "",
+    "facts": [
+      "シュモクザメ（撞木鮫、双髻鯊、犁頭魚、英: hammerhead shark）はメジロザメ目のシュモクザメ科（Sphyrnidae）に属するサメの総称。別名カセブカ（桛鱶）、カセワニ（綛鰐）だが、英名でそのままハンマーヘッドシャークと呼ばれることもある。"
+    ],
+    "fact_src": "Wikipedia (ja)",
+    "species": {
+      "scientific_name": "Sphyrnidae",
+      "common_name_ko": "귀상어과",
+      "common_name_en": "hammerhead sharks",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "シュモクザメ（撞木鮫、双髻鯊、犁頭魚、英: hammerhead shark）はメジロザメ目のシュモクザメ科（Sphyrnidae）に属するサメの総称。別名カセブカ（桛鱶）、カセワニ（綛鰐）だが、英名でそのままハンマーヘッドシャークと呼ばれることもある。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Hammerhead shark hunting a fish Drone 16x9.webm)"
+      ]
+    },
+    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_sphyrnidae_29330717649.jpg",
+    "video_status": "image_only",
+    "photo_count": 7
+  },
+  {
+    "kind": "creature",
+    "key": "sardinops sagax",
+    "needs_confirm": false,
+    "title": "File:Sardines reacting to tuna - MBA.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/d/d1/Sardines_reacting_to_tuna_-_MBA.webm",
+    "license": "cc-by-sa",
+    "credit": "Eric Polk · CC BY-SA",
+    "source": "File:Sardines reacting to tuna - MBA.webm",
+    "name": "Sardinops sagax",
+    "name_ja": "",
+    "common_name_ko": "정어리",
+    "common_name_en": "Sardinops sagax",
+    "depth": "",
+    "facts": [
+      "Sardinops is a genus of sardines of the family Alosidae.",
+      "Often considered monotypic with only member as Sardinops sagax, it currently has three valid species:\n\nSardinops melanosticta (Temminck & Schlegel, 1846) (Japanese pilchard)\nSardinops ocellatus (Pappe, 1853) (Southern African pilchard)\nSardinops sagax (Jenyns, 1842)\nSardinops sagax caeruleus (Girard, 1854) (Californian pilchard)\nSardinops sagax musica (Girard, 1855)\nSardinops sagax neopilchardus (Steindachner, 1879) (Australian pilchard)\nIt is found in the Indo-Pacific, East Pacific, Southeastern Atlantic and southwestern Indian oceans.",
+      "Its length is up to 40 cm (16 in).",
+      "It has numerous common or vernacular names, some of which more appropriately refer to subspecies, including blue pilchard, blue-bait, Peruvian Pacific sardine (S.",
+      "sagax), South American pilchard, Chilean sardine, and Pacific sardine."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Sardinops sagax",
+      "common_name_ko": "정어리",
+      "common_name_en": "Sardinops sagax",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Sardinops is a genus of sardines of the family Alosidae.",
+        "Often considered monotypic with only member as Sardinops sagax, it currently has three valid species:\n\nSardinops melanosticta (Temminck & Schlegel, 1846) (Japanese pilchard)\nSardinops ocellatus (Pappe, 1853) (Southern African pilchard)\nSardinops sagax (Jenyns, 1842)\nSardinops sagax caeruleus (Girard, 1854) (Californian pilchard)\nSardinops sagax musica (Girard, 1855)\nSardinops sagax neopilchardus (Steindachner, 1879) (Australian pilchard)\nIt is found in the Indo-Pacific, East Pacific, Southeastern Atlantic and southwestern Indian oceans.",
+        "Its length is up to 40 cm (16 in).",
+        "It has numerous common or vernacular names, some of which more appropriately refer to subspecies, including blue pilchard, blue-bait, Peruvian Pacific sardine (S.",
+        "sagax), South American pilchard, Chilean sardine, and Pacific sardine."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Sardines reacting to tuna - MBA.webm)"
+      ]
+    },
+    "video_status": "image_only",
+    "photo_count": 7
+  },
+  {
+    "kind": "creature",
+    "key": "diadumene cincta",
+    "needs_confirm": false,
+    "title": "File:Baksteenanemonen op wrak-4885776.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/3/33/Baksteenanemonen_op_wrak-4885776.webm",
+    "license": "cc-by-sa",
+    "credit": "Klaudie Bartelink · CC BY-SA",
+    "source": "File:Baksteenanemonen op wrak-4885776.webm",
+    "name": "Diadumene cincta",
+    "name_ja": "",
+    "common_name_ko": "Diadumene cincta",
+    "common_name_en": "Diadumene cincta",
+    "depth": "",
+    "facts": [
+      "Diadumene cincta, the orange anemone, is a small and delicate, usually orange, sea anemone.",
+      "It has a smooth slender column and up to 200 long tentacles, and normally grows to a length of up to 35 mm (1.4 in), with a base of 10 mm (0.4 in), but specimens twice this size have been recorded.",
+      "Diadumene cincta is found in the northeastern Atlantic Ocean."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Diadumene cincta",
+      "common_name_ko": "Diadumene cincta",
+      "common_name_en": "Diadumene cincta",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Diadumene cincta, the orange anemone, is a small and delicate, usually orange, sea anemone.",
+        "It has a smooth slender column and up to 200 long tentacles, and normally grows to a length of up to 35 mm (1.4 in), with a base of 10 mm (0.4 in), but specimens twice this size have been recorded.",
+        "Diadumene cincta is found in the northeastern Atlantic Ocean."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Baksteenanemonen op wrak-4885776.webm)"
+      ]
+    },
+    "video_status": "image_only",
+    "photo_count": 5
+  },
+  {
+    "kind": "creature",
+    "key": "ophiothrix fragilis",
+    "needs_confirm": false,
+    "title": "File:Brokkelster gegrepen door een slibanemoon-4931683.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Brokkelster_gegrepen_door_een_slibanemoon-4931683.webm",
+    "license": "cc-by-sa",
+    "credit": "Peter van Rodijnen · CC BY-SA",
+    "source": "File:Brokkelster gegrepen door een slibanemoon-4931683.webm",
+    "name": "Ophiothrix fragilis",
+    "name_ja": "",
+    "common_name_ko": "Ophiothrix fragilis",
+    "common_name_en": "Ophiothrix fragilis",
+    "depth": "",
+    "facts": [
+      "Ophiothrix fragilis is a species of brittle star in the order Ophiurida.",
+      "It is found around the coasts of western Europe and is known in Britain as the common brittle star.",
+      "It is also found along the coast of South Africa where it is known as the hairy brittle star."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Ophiothrix fragilis",
+      "common_name_ko": "Ophiothrix fragilis",
+      "common_name_en": "Ophiothrix fragilis",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Ophiothrix fragilis is a species of brittle star in the order Ophiurida.",
+        "It is found around the coasts of western Europe and is known in Britain as the common brittle star.",
+        "It is also found along the coast of South Africa where it is known as the hairy brittle star."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Brokkelster gegrepen door een slibanemoon-4931683.webm)"
+      ]
+    },
+    "video_status": "image_only",
+    "photo_count": 7
+  },
+  {
+    "kind": "creature",
+    "key": "artemia salina",
+    "needs_confirm": false,
+    "title": "File:Direct-Visualization-of-Mucus-Production-by-the-Cold-Water-Coral-Lophelia-pertusa-with-Digital-pone.0146766.s002.ogv",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/0e/Direct-Visualization-of-Mucus-Production-by-the-Cold-Water-Coral-Lophelia-pertusa-with-Digital-pone.0146766.s002.ogv",
+    "license": "cc-by",
+    "credit": "Zetsche E, Baussant T, Meysman F, van Oevelen D · CC BY",
+    "source": "File:Direct-Visualization-of-Mucus-Production-by-the-Cold-Water-Coral-Lophelia-pertusa-with-Digital-pone.0146766.s002.ogv",
+    "name": "Artemia salina",
+    "name_ja": "",
+    "common_name_ko": "씨몽키",
+    "common_name_en": "Artemia salina",
+    "depth": "",
+    "facts": [
+      "Artemia salina is a species of brine shrimp – aquatic crustaceans that are more closely related to Triops and cladocerans than to true shrimp.",
+      "It belongs to a lineage that does not appear to have changed much in 100 million years.",
+      "It is also one of the largest brine shrimp species.",
+      "Artemia salina is native to saline lakes, ponds, and temporary waters (not seas) in the Mediterranean region of Southern Europe, Anatolia, and Northern Africa.",
+      "Considerable taxonomic confusion exists, and some populations elsewhere have formerly been referred to as this species, but are now recognized as separate species."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Artemia salina",
+      "common_name_ko": "씨몽키",
+      "common_name_en": "Artemia salina",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Artemia salina is a species of brine shrimp – aquatic crustaceans that are more closely related to Triops and cladocerans than to true shrimp.",
+        "It belongs to a lineage that does not appear to have changed much in 100 million years.",
+        "It is also one of the largest brine shrimp species.",
+        "Artemia salina is native to saline lakes, ponds, and temporary waters (not seas) in the Mediterranean region of Southern Europe, Anatolia, and Northern Africa.",
+        "Considerable taxonomic confusion exists, and some populations elsewhere have formerly been referred to as this species, but are now recognized as separate species."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Direct-Visualization-of-Mucus-Production-by-the-Cold-Water-Coral-Lophelia-pertusa-with-Digital-pone.0146766.s002.ogv)"
+      ]
+    },
+    "video_status": "image_only",
+    "photo_count": 7
+  }
+]

@@ -492,6 +492,28 @@
         없을 때만 시도. **유튜브·플리커 미러 제외 + 명시 PD/CC 라이선스 또는 확인된 미국 정부 업로더(NOAA·USGS·
         MBARI 등)만** 채택, 거대 다이브 파일은 220MB 상한. 실측상 수율은 낮지만(안전필터가 미러·무관물 배제)
         무해(없으면 [] → 커먼스/사진다큐로). 회귀: `test_footage_sources`.
+    - **★영상 피사체 검증 게이트(운영자 확정 · 오소싱 배제 · 실사고: annelida→육상 지렁이·holothuroidea→
+      허블 성운·kiwa hirsuta→공연·chiasmodon→마약교육 영상)**: 키워드 영상 검색이 동음이의·무관물을
+      물어와 엉뚱한 영상이 쇼츠에 들어가던 문제 → `footage._commons_search`가 후보 영상의 **파일명 +
+      Commons 카테고리(분류군)** 에 학명/강한 공통명 토큰이 있는지 검증(`_video_subject_ok`)해 불일치를
+      배제한다. 커먼스는 파일을 분류군으로 분류하므로 카테고리가 신뢰 신호(공통명 미저장 종도 살림).
+      한계(정직): **문(phylum)·강(class) 등 과다광범 후보**는 그 분류군의 무관 멤버(예: 육상 지렁이)가
+      카테고리 매칭돼 통과할 수 있다 → 이런 건 인벤토리에서 격리(아래). 회귀: `test_video_subject_gate_*`.
+    - **★영상 추가 확보 — Commons 분류군 카테고리 순회(`footage._commons_category_videos`)**: 키워드 검색이
+      놓치는 CC 영상을, 그 종의 **Commons 카테고리(Category:<학명>) 안 영상 파일**을 직접 수확해 건진다.
+      카테고리 소속이 곧 피사체 보증이라 **정확 + 추가 확보** 동시 달성(실측: macrouridae·nudibranchia·
+      lithodinae·riftia가 이미지전용→영상으로 전환). `_fetch_video_footage`에서 키워드 검색 다음·NOAA 앞에
+      배선. 회귀: `test_commons_category_videos_parses`.
+    - **★다운로드 무한 행 방지(운영자 확정)**: `_download`는 총 `_DL_MAX_SECS(240s)`·`_DL_MAX_BYTES(240MB)`
+      상한 — 느린(트리클) 서버가 소싱/CRON 전체를 멈추던 사고 차단(초과 시 그 소스 포기·부분파일 삭제).
+      회귀: `test_download_size_cap_aborts`·`test_download_deadline_aborts`.
+    - **★★영상/이미지전용 소스 분리 인벤토리(운영자 확정 · 'image-only 쇼츠 남발' 방지)**: 전 후보를 제작
+      경로로 굴려 **영상 확보 vs 영상 없음(사진만)** 으로 분류한다(`discovery` + 감사 스크립트). 결과:
+      ① **영상+이미지 확보** = `*_candidates.json`(자동 제작 풀 · `video_status:"video"`, `video_source`).
+      ② **이미지전용(영상 없음)** = `*_image_only.json`(**별도 보관** · `video_status:"image_only"`, `photo_count`)
+      로 옮겨 자동 풀에서 제외(삭제 아님 · 영상 확보되면 복귀 가능). `discovery.load/save_image_only`,
+      `_all_known_keys`가 보관분 키를 재소싱 제외. 현황(실측): 영상 27(deep_sea 9·marine_life 18) ·
+      이미지전용 23(deep_sea 15·marine_life 8). 전체 목록·수동확인 플래그는 `docs/footage_inventory.md`.
     - **★소싱 승격 생물 등록 버그(핵심 · 절대 회귀 금지 · 실사고 run #131~133 marine_life 전량 실패)**:
       `promote_candidate`는 생물을 `{key,kind:"creature",footage,species}`로 쓰는데,
       `collection_base._merge_discovered`가 예전엔 **`subject`+`copy`만** 병합해(난파선 스키마) 승격된
