@@ -287,5 +287,13 @@
     "common_name_en": "goblin shark",
     "scientific_name": "Mitsukurina owstoni",
     "date": "2026-07-20"
+  },
+  {
+    "id": "040",
+    "kind": "reels",
+    "common_name_ko": "Spectrunculus grandis",
+    "common_name_en": "Spectrunculus grandis",
+    "scientific_name": "Spectrunculus grandis",
+    "date": "2026-07-21"
   }
 ]

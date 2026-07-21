@@ -335,5 +335,33 @@
         "Wikimedia Commons (File:Goblin shark, Pengo.jpg)"
       ]
     }
+  },
+  {
+    "key": "spectrunculus grandis",
+    "kind": "creature",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Spectrunculus_grandis.jpg",
+      "license": "public-domain",
+      "credit": "NOAA/MBARI",
+      "source": "File:Spectrunculus grandis.jpg",
+      "media_kind": "photo",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Spectrunculus_grandis.jpg"
+    },
+    "species": {
+      "scientific_name": "Spectrunculus grandis",
+      "common_name_ko": "Spectrunculus grandis",
+      "common_name_en": "Spectrunculus grandis",
+      "depth_range_m": "1000-6000",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ソコボウズ（底坊主、学名：Spectrunculus grandis）とは、条鰭綱アシロ目に属する魚類の一種。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Spectrunculus grandis.jpg)"
+      ]
+    }
   }
 ]

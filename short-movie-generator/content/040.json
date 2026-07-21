@@ -1,0 +1,55 @@
+{
+  "id": "040",
+  "created_at": "2026-07-21T00:01:01+00:00",
+  "updated_at": "2026-07-21T00:01:01+00:00",
+  "status": "published",
+  "category": "deep_sea",
+  "series": "심해 도감",
+  "species": {
+    "common_name_ko": "Spectrunculus grandis",
+    "common_name_en": "Spectrunculus grandis",
+    "scientific_name": "Spectrunculus grandis",
+    "depth_range_m": "1000-6000",
+    "habitat": "",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "ソコボウズ（底坊主、学名：Spectrunculus grandis）とは、条鰭綱アシロ目に属する魚類の一種。"
+    ]
+  },
+  "reels": {
+    "hook": "深海、地球の果て。何者か、底の坊主。",
+    "caption": "真っ暗な海の底、光も音も届かない場所に、ぽつりと佇む影がある。まるで僧侶が瞑想するように、じっと動かず、深海の重い水圧に身をゆだねている。そんな静かな佇まいをもつ魚が、深海には棲んでいるのです。\n\nその名はソコボウズ(学名: Spectrunculus grandis)。\n\nその名の通り、住処は海の「底」。水深にして1000メートルから、実に6000メートルという途方もない深さにまで及びます。太陽の光は届かず、水温は氷のように低く、水圧は私たちの想像を軽々と超えていきます。そんな漆黒の世界を、当たり前の日常として生きているのです。\n\nソコボウズは、アシロ目という魚のグループに属する一員です。深海にはこの仲間がひっそりと多く暮らしていて、ソコボウズもまたその一員として、深海という職場に静かに勤め続けているような存在です。昼休みも、有給休暇の概念も、もちろんありません。坊主のように丸く、飾り気のない姿は、厳しい環境の中で無駄をそぎ落とした結果なのかもしれません。\n\n学名の「grandis」は、ラテン語で「大きい」を意味する言葉。その名の通り、深海魚としては堂々とした体格を持つことで知られています。光の届かぬ世界で、静かに、しかし確かな存在感を放ちながら、ソコボウズは今日もその深さに佇んでいるのです。\n\nもしこの物語が心に触れたなら、どうか保存しておいてほしいのです。\nそして、同じ海を想う誰かにも、そっとシェアしてあげてください。\n\n映像: NOAA Ocean Exploration・Public Domain\n写真: NOAA/MBARI\n写真: Unknown authorUnknown author",
+    "hashtags": [
+      "#ソコボウズ",
+      "#深海生物"
+    ],
+    "reveal_name": "ソコボウズ / Spectrunculus grandis",
+    "reveal_fact": "水深1000m・極限・暗闇、底の魚",
+    "hook_ko": "깊은 바다, 어둠.\n녀석은, \"스님\"인가?",
+    "caption_ko": "칠흑 같은 바다 밑바닥, 빛도 소리도 닿지 않는 곳에 조용히 자리한 그림자가 있습니다. 마치 승려가 명상을 하듯, 미동도 없이 깊은 수압에 몸을 맡기고 있습니다. 그런 고요한 자태를 지닌 물고기가, 심해에 살고 있습니다.\n\n그 이름은 소코보즈(학명: Spectrunculus grandis)입니다.\n\n이름 그대로, 그의 터전은 바다의 '바닥'입니다. 수심 1000미터부터 무려 6000미터에 이르는 아득한 깊이까지 뻗어 있습니다. 태양빛은 닿지 않고, 수온은 얼음처럼 차가우며, 수압은 우리의 상상을 가볍게 뛰어넘습니다. 그런 칠흑의 세계를, 지극히 당연한 일상으로 살아가고 있는 것입니다.\n\n소코보즈는 아시로목이라는 물고기 그룹에 속한 일원입니다. 심해에는 이 동료들이 조용히 많이 살고 있으며, 소코보즈 또한 그 일원으로서 심해라는 직장에 묵묵히 근무하고 있는 듯한 존재입니다. 점심시간도, 유급휴가라는 개념도, 물론 없습니다. 승려처럼 둥글고 꾸밈없는 모습은, 가혹한 환경 속에서 불필요한 것을 덜어낸 결과일지도 모릅니다.\n\n학명의 'grandis'는 라틴어로 '크다'라는 뜻을 지닌 말입니다. 그 이름처럼, 심해어치고는 당당한 몸집을 가진 것으로 알려져 있습니다. 빛이 닿지 않는 세계에서, 조용히, 그러나 확실한 존재감을 내뿜으며, 소코보즈는 오늘도 그 깊은 곳에 자리하고 있습니다.\n\n이 이야기가 마음에 닿았다면, 부디 저장해 주시기 바랍니다.\n그리고 같은 바다를 생각하는 누군가에게도, 살며시 공유해 주세요.\n\n영상: NOAA Ocean Exploration・Public Domain",
+    "hashtags_ko": [
+      "#소코보즈",
+      "#심해생물"
+    ],
+    "yt_title": "有給なし、深海一筋の坊主魚ソコボウズ #ソコボウズ #深海生物",
+    "yt_title_ko": "무급휴가 없이 심해서 일하는 승려물고기 소코보즈 #소코보즈 #심해생물",
+    "visualizer": "reels",
+    "video_file": "spectrunculus_grandis_20260721_000101.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Wikipedia (ja)",
+      "Wikimedia Commons (File:Spectrunculus grandis.jpg)"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-040/reels_040.mp4",
+    "rev": "29788658616",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-040/cover_040.jpg",
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-040/ytthumb_040.jpg"
+  },
+  "post": null
+}
