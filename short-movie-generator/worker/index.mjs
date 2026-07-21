@@ -294,7 +294,7 @@ function renderHome(){
       '<option value="marine_algae">해양 미세조류 (Marine Microalgae)</option>'+
       '<option value="shipwreck">침몰선 (Shipwreck)</option>'+
     '</select>'+
-    '<div class="hint" style="margin:4px 0 8px">위키미디어 커먼스(NOAA·MBARI·Ifremer 등, CC 계열)에서 새 대상 영상을 찾아 <b>후보</b>로 담습니다. 1~3분 뒤 아래에 <b>썸네일+정보</b>가 뜨면 확인하고 제작하세요. (침몰선은 이름·정보 확인이 필요할 수 있음)</div>'+
+    '<div class="hint" style="margin:4px 0 8px">위키미디어 커먼스(NOAA·MBARI·Ifremer 등, CC 계열)에서 새 대상 영상을 찾아 <b>후보</b>로 담습니다. 아래 목록은 <b>영상+이미지 확보</b>와 <b>이미지전용(영상없음)</b> 두 탭으로 구분됩니다 — 영상 확보분만 자동 제작 풀에 들어갑니다. (침몰선은 이름·정보 확인이 필요할 수 있음)</div>'+
     '<button class="go" id="gosrc">소싱하기 (후보 발굴)</button>'+
     '<div class="banner" id="srcmsg"></div>'+
     '<div class="srccands" id="srccands" style="margin-top:12px"><div class="hint">후보를 불러오는 중…</div></div>'+
@@ -393,27 +393,51 @@ function renderHome(){
   loadLongformResults();
 }
 function srcbanner(t,c){const m=$("#srcmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
-async function loadCandidates(cat){
+let _srcMode="video";   // "video"=영상+이미지 확보(제작 풀) · "image"=이미지전용(영상 없음·별도 보관)
+async function loadCandidates(cat,mode){
+  if(mode)_srcMode=mode;mode=_srcMode;
   const el=$("#srccands");if(!el)return;
-  el.innerHTML='<div class="hint">후보 목록 확인 중… <a href="#" id="srcref" style="color:var(--cy)">새로고침</a></div>';
-  const path="short-movie-generator/src/categories/"+cat+"/"+cat+"_candidates.json";
-  let arr=[];try{const t=await fetchRaw(path);const a=JSON.parse(t);if(Array.isArray(a))arr=a;}catch(e){}
-  const head='<span class="lbl">소싱된 후보 ('+cat+') · '+arr.length+'개 <a href="#" id="srcref" style="color:var(--cy);float:right;text-decoration:none">새로고침</a></span>';
-  if(!arr.length){el.innerHTML=head+'<div class="hint">아직 후보가 없습니다. 위 <b>소싱하기</b>를 눌러 발굴하세요(발굴 후 1~3분).</div>';
-    const rf=$("#srcref");if(rf)rf.onclick=(e)=>{e.preventDefault();loadCandidates(cat);};return;}
-  el.innerHTML=head+arr.map(c=>{
+  const isImg=mode==="image";
+  // 두 목록의 개수를 함께 읽어 탭에 표시(영상 확보 vs 이미지전용을 한눈에 구분).
+  const base="short-movie-generator/src/categories/"+cat+"/"+cat+"_";
+  el.innerHTML='<div class="hint">목록 확인 중…</div>';
+  async function get(sfx){try{const t=await fetchRaw(base+sfx+".json");const a=JSON.parse(t);return Array.isArray(a)?a:[];}catch(e){return [];}}
+  const [vids,imgs]=await Promise.all([get("candidates"),get("image_only")]);
+  const arr=isImg?imgs:vids;
+  const tabBtn=(m,label,n,on)=>'<button class="stab" data-mode="'+m+'" style="flex:1;padding:8px 6px;border:1px solid '+(on?'var(--cy)':'#2a3550')+';background:'+(on?'rgba(90,200,245,.14)':'transparent')+';color:'+(on?'var(--cy)':'var(--gy)')+';border-radius:8px;font-weight:'+(on?'700':'500')+';cursor:pointer">'+label+' <b>'+n+'</b></button>';
+  const tabs='<div style="display:flex;gap:8px;margin:2px 0 10px">'+
+      tabBtn("video","영상+이미지 확보",vids.length,!isImg)+
+      tabBtn("image","이미지전용(영상없음)",imgs.length,isImg)+'</div>';
+  const desc=isImg
+    ?'<div class="hint" style="margin:-4px 0 8px">영상이 <b>전혀 없어</b> 사진(4장↑) 다큐로만 만들 수 있는 소스입니다. 자동 제작 풀에서 <b>제외·별도 보관</b> 중이며, 참고·수동 제작용으로만 봅니다.</div>'
+    :'<div class="hint" style="margin:-4px 0 8px">실사 <b>영상</b>이 확보돼 자동 제작 풀에 있는 소스입니다.</div>';
+  const head='<span class="lbl">소싱 인벤토리 ('+cat+') <a href="#" id="srcref" style="color:var(--cy);float:right;text-decoration:none">새로고침</a></span>';
+  const bindTabs=()=>{el.querySelectorAll(".stab").forEach(b=>{b.onclick=()=>loadCandidates(cat,b.getAttribute("data-mode"));});
+    const rf=$("#srcref");if(rf)rf.onclick=(e)=>{e.preventDefault();loadCandidates(cat);};};
+  if(!arr.length){el.innerHTML=head+tabs+desc+'<div class="hint">'+(isImg?'이미지전용 소스가 없습니다.':'아직 영상 확보 후보가 없습니다. 위 <b>소싱하기</b>를 눌러 발굴하세요.')+'</div>';bindTabs();return;}
+  el.innerHTML=head+tabs+desc+arr.map(c=>{
     const isW=c.kind==="wreck";
     const title=isW?esc(c.name||c.key):(esc(c.name||"")+(c.common_name_ko?' <i style="color:var(--gy)">'+esc(c.common_name_ko)+'</i>':''));
     const thumb=c.thumbnail_url?'<img class="cthumb" src="'+prox(c.thumbnail_url)+'" alt="">':'<div class="cthumb noimg">썸네일 생성 중…</div>';
     const meta=[c.depth?('수심 '+esc(c.depth)+'m'):'',isW&&c.ship_type?('선종 '+esc(c.ship_type)):'',esc(c.license||'')].filter(Boolean).join(' · ');
     const fact=(c.facts&&c.facts[0])?('<div class="cfact">'+esc(String(c.facts[0]).slice(0,90))+'</div>'):(isW?'<div class="cfact warn">※ 배 이름·정보를 영상 확인 후 제작하세요.</div>':'');
+    // 소싱 종류 배지(영상 확보 vs 이미지전용) — 두 그룹을 카드에서도 구분.
+    const badge=isImg
+      ?'<span style="display:inline-block;background:rgba(240,180,60,.18);color:#f0b43c;border:1px solid #6a5320;border-radius:6px;padding:1px 7px;font-size:11px">이미지전용·영상없음</span>'
+      :'<span style="display:inline-block;background:rgba(90,200,120,.16);color:#5ac878;border:1px solid #2c5a3a;border-radius:6px;padding:1px 7px;font-size:11px">영상 확보</span>';
+    const src=isImg
+      ?(c.photo_count?('<div class="cmeta" style="font-size:11px">사진 '+esc(String(c.photo_count))+'장 확보'+(c.video_note?(' · '+esc(c.video_note)):'')+'</div>'):'')
+      :(c.video_source?('<div class="cmeta" style="font-size:11px;color:var(--gy)">영상: '+esc(String(c.video_source).slice(0,60))+'</div>'):'');
+    const rev=c.video_review?('<div class="cfact warn">※ '+esc(c.video_review)+'</div>'):'';
     const warn=(isW&&c.needs_confirm)?'<span class="cbadge">확인 필요</span>':'';
-    return '<div class="ccard">'+thumb+'<div class="cbody"><div class="ctitle">'+title+' '+warn+'</div>'+
-      '<div class="cmeta">'+meta+'</div>'+fact+
-      '<div class="cmeta" style="color:var(--gy);font-size:11px">'+esc(c.credit||'')+'</div>'+
-      '<button class="cgo" data-key="'+esc(c.key)+'" data-cat="'+esc(cat)+'">이 대상으로 제작</button></div></div>';
+    const btn=isImg
+      ?'<button class="cgo" data-key="'+esc(c.key)+'" data-cat="'+esc(cat)+'" style="background:#3a3320;border-color:#6a5320;color:#f0b43c">이미지로 수동 제작</button>'
+      :'<button class="cgo" data-key="'+esc(c.key)+'" data-cat="'+esc(cat)+'">이 대상으로 제작</button>';
+    return '<div class="ccard">'+thumb+'<div class="cbody"><div class="ctitle">'+title+' '+badge+' '+warn+'</div>'+
+      '<div class="cmeta">'+meta+'</div>'+src+fact+rev+
+      '<div class="cmeta" style="color:var(--gy);font-size:11px">'+esc(c.credit||'')+'</div>'+btn+'</div></div>';
   }).join('');
-  const rf=$("#srcref");if(rf)rf.onclick=(e)=>{e.preventDefault();loadCandidates(cat);};
+  bindTabs();
   el.querySelectorAll(".cgo").forEach(b=>{b.onclick=()=>produceCandidate(b.getAttribute("data-cat"),b.getAttribute("data-key"),b);});
 }
 async function produceCandidate(cat,key,btn){
@@ -874,7 +898,7 @@ function j(o, status){return new Response(JSON.stringify(o),{status:status||200,
 // (무한 로딩). raw는 공개 리포에 무인증 200 → 어느 기기서든 조회 가능. 허용 경로만(개방 프록시 방지).
 async function pubRead(url){
   const path = url.searchParams.get("path") || "";
-  if(!/^short-movie-generator\/(content\/[\w.\-]+\.json|src\/categories\/deep_sea\/catalog\.json|src\/categories\/[\w\-]+\/[\w\-]+_candidates\.json)$/.test(path))
+  if(!/^short-movie-generator\/(content\/[\w.\-]+\.json|src\/categories\/deep_sea\/catalog\.json|src\/categories\/[\w\-]+\/[\w\-]+_(candidates|image_only)\.json)$/.test(path))
     return j({error:"path not allowed"}, 403);
   const target = "https://raw.githubusercontent.com/" + OWNER + "/" + REPO + "/" + BRANCH + "/" + path;
   try{
