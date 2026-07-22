@@ -23,6 +23,10 @@ from pathlib import Path
 from src.core import hook_intro as hi
 
 log = logging.getLogger(__name__)
+
+# 오프닝/엔드카드 배경 프레임의 최소 구조점수(빈 물 배제). 아래면 '피사체 없음'으로 보고 폴백.
+# footage._frame_macro_std 실측: 빈 어두운 물 1~4, 피사체·질감 있는 프레임 12~85.
+_MIN_FRAME_STRUCT = 8.0
 _PROXY_CA = "/root/.ccr/ca-bundle.crt"
 _PUNCT = re.compile(r"[、。，．・「」『』（）\s]")
 # ★오프닝 홀드(운영자 확정): 마지막 어절 이펙트가 끝난 뒤 본문으로 넘어가기 전 최소 대기(초).
@@ -153,11 +157,15 @@ def _best_subject_frame(video: str, out_png: str, wd: Path,
                         logo_box: tuple | None = None) -> bool:
     """영상에서 '피사체가 가장 뚜렷한' 프레임을 골라 out_png로 저장.
 
-    왜: 고정 시각(55%) 프레임은 피사체가 흐릿하거나 비어 있을 수 있다.
-    10~90% 구간 9개 샘플의 적색 피사체 점수(reframe.subject_score) 최대 프레임 선택.
-    logo_box가 오면 워터마크를 delogo로 메워 엔드카드 배경에 로고가 남지 않게 한다.
+    왜(재발방지 실사고 macrouridae): 예전엔 **적색 피사체 점수(subject_score)** 만 썼다 → 회색 소코다라가
+    탄색 모래 위에 있는 종은 적색이 0이라 전 프레임 점수 0 → 아무 프레임(빈 검은 물)이 오프닝/엔드카드에
+    박혔다. → **색 무관 구조점수(footage._frame_macro_std: 빈 물=낮음, 피사체·질감=높음)** 를 주로 쓰고,
+    적색 점수는 보너스로만 더한다. '빈 물' 프레임은 구조점수가 낮아 자동 탈락 → 피사체 있는 프레임 선택.
+    10~90% 구간 9개 샘플. logo_box가 오면 워터마크를 delogo로 메운다.
     """
     from src.core import reframe
+    from src.core.footage import _frame_macro_std
+    from PIL import Image
     dur = _duration_of(video)
     if dur <= 0:
         return False
@@ -175,13 +183,20 @@ def _best_subject_frame(video: str, out_png: str, wd: Path,
         cand = str(wd / f"ecs_{i}.png")
         if not _grab_frame(video, t, cand, vf=vf):
             continue
-        s = reframe.subject_score(cand)
+        # 색 무관 구조점수(빈 물 배제) + 적색 피사체 보너스(붉은 생물엔 가산). 빈 프레임은 구조가 낮아 탈락.
+        try:
+            struct = _frame_macro_std(Image.open(cand))
+        except Exception:  # noqa: BLE001
+            struct = 0.0
+        s = struct + 30.0 * reframe.subject_score(cand)
         # 번인 텍스트(인트로 자막판·아웃트로 URL) 프레임은 강한 감점 → 엔드카드 배경 배제
         if reframe.text_score(cand) >= 0.012:
             s *= 0.02
         if s > best_score:
             best, best_score = cand, s
-    if not best:
+    # ★'빈 물' 방지: 최고점 프레임의 구조가 너무 낮으면(거의 빈 화면) 실패로 보고, 상위가 히어로/폴백 처리.
+    if not best or best_score < _MIN_FRAME_STRUCT:
+        log.info("[hook_intro] 피사체 프레임 구조 부족(%.1f<%.1f) → 배경 프레임 선택 실패", best_score, _MIN_FRAME_STRUCT)
         return False
     Path(out_png).write_bytes(Path(best).read_bytes())
     return True

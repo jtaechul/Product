@@ -769,9 +769,13 @@ def _commons_photo_search(query: str, min_w: int = 1200, min_h: int = 800) -> di
         return None
 
 
-def _commons_photos(query: str, n: int, min_w: int = 1200, min_h: int = 800) -> list[dict]:
-    """대상의 고해상 사진 여러 장(통과 라이선스) → [{url,license,credit,source}]. 컷어웨이용."""
+def _commons_photos(query: str, n: int, min_w: int = 1200, min_h: int = 800,
+                    sci_name: str = "") -> list[dict]:
+    """대상의 고해상 사진 여러 장(통과 라이선스) → [{url,license,credit,source}]. 컷어웨이용.
+    ★sci_name 주면 **학명 토큰이 파일명/카테고리에 있는 사진만** 채택(동음이의어 오삽입 방지 · 실사고:
+    'grenadier'=물고기이자 군 척탄병 → 병사 사진 삽입). 학명은 동음이의어가 거의 없어 안전한 양성 신호."""
     out: list[dict] = []
+    sci_tokens = _subject_tokens(sci_name, "") if sci_name else []
     try:
         import requests
         api = "https://commons.wikimedia.org/w/api.php"
@@ -803,8 +807,13 @@ def _commons_photos(query: str, n: int, min_w: int = 1200, min_h: int = 800) -> 
             #   파일의 Commons 카테고리로 자동차·인물·미술품 등 비(非)생물을 거른다(실측 근거:
             #   차=Automobiles/Red roadsters, 물고기=Fish of…/학명). 카테고리는 같은 배치 호출로 받아 무비용.
             cats = " ".join(c.get("title", "") for c in page.get("categories", []) or [])
-            if _NONSUBJECT_CAT_RE.search(cats) or _NONSUBJECT_CAT_RE.search(page.get("title", "")):
-                log.info("[footage] 비생물 피사체 배제: %s", page.get("title", ""))
+            title = page.get("title", "")
+            if _NONSUBJECT_CAT_RE.search(cats) or _NONSUBJECT_CAT_RE.search(title):
+                log.info("[footage] 비생물 피사체 배제: %s", title)
+                continue
+            # ★학명 양성검증(동음이의어 배제): 학명 토큰이 파일명·카테고리 어디에도 없으면 그 종이 아님.
+            if sci_tokens and not _token_hit(sci_tokens, title + " " + cats):
+                log.info("[footage] 학명 불일치(동음이의 의심) 배제: %s (학명 %s)", title, sci_name)
                 continue
             if lic and url and any(url.lower().endswith(e) for e in _IMAGE_EXT) and w >= min_w and h >= min_h:
                 artist = re.sub("<[^>]+>", "", meta.get("Artist", {}).get("value", "")).strip()
@@ -825,7 +834,13 @@ _NONSUBJECT_CAT_RE = re.compile(
     r"\bboat\b|firearm|\bweapon|\brifle|pistol|architecture|building|cathedral|castle|"
     r"sculptur|\bstatue|paintings?|\bdrawings?\b|engraving|lithograph|comics?|coins?|"
     r"\bstamps?\b|\bflags?\b|\blogos?\b|mytholog|\bactor|actress|politician|footballer|"
-    r"\bTVR\b|Ferrari|Porsche|\bplayers?\b", re.I)
+    r"\bTVR\b|Ferrari|Porsche|\bplayers?\b|"
+    # ★군인·인물·의장대(동음이의어 사고: Macrouridae='grenadier'=척추동물 물고기이자 군 '척탄병'
+    #   → grenadier guard 병사 사진이 삽입됨). 생물 사진엔 군사·인물·행진 범주가 없다.
+    r"soldiers?|\bmilitary\b|\barmy\b|\bnavy\b|\bair force\b|regiment|infantry|cavalry|"
+    r"grenadier guard|royal guard|guardsm|carabinier|gendarmer|\bpolice\b|\bparade\b|"
+    r"ceremonial|\buniforms?\b|marching|\bband\b|bearskin|\bhelmets?\b|"
+    r"portraits?|\bpeople\b|\bmen\b|\bwomen\b|human", re.I)
 
 
 def _inaturalist_photos(scientific_name: str, n: int = 8) -> list[dict]:
@@ -871,7 +886,9 @@ def fetch_cutaway_photos(scientific_name: str, common_name_en: str, dest_dir: st
     ★다양성(운영자 요청): 짧은 영상이 반복될 때 컷어웨이를 여럿 넣으므로, n이 크면 커먼스뿐 아니라
     iNaturalist·Openverse까지 합쳐 '같은 대상'의 서로 다른 사진을 넉넉히 모은다(중복 URL 제거)."""
     ex = {s for s in exclude_sources if s}
-    got = list(_commons_photos(scientific_name, n + len(ex) + 2) or _commons_photos(common_name_en, n + 2))
+    # ★학명 양성검증을 두 검색 모두에 적용(공통명 'grenadier' 검색으로 군인 사진이 들어오던 사고 차단).
+    got = list(_commons_photos(scientific_name, n + len(ex) + 2, sci_name=scientific_name)
+               or _commons_photos(common_name_en, n + 2, sci_name=scientific_name))
     if len(got) < n + len(ex):        # 부족하면 소스 확대(관측·집계 CC 사진)
         try:
             got += _inaturalist_photos(scientific_name, n) + _openverse_photos(scientific_name, n)
@@ -1663,12 +1680,13 @@ def species_photo_doc(scientific_name: str, common_name_en: str, dest_dir: str) 
     #   '1장 우려먹기'가 아니라 다양한 컷의 다큐가 된다.
     #   ① Wikimedia Commons ② iNaturalist(관측) ③ Openverse(Flickr·스미소니언 등 집계·키불필요)
     #   ④ 한국 공공누리(data.go.kr 키 있으면) — 국내 해양·수산 공공자료.
-    got = (_commons_photos(scientific_name, 12) or [])
+    got = (_commons_photos(scientific_name, 12) or [])   # 학명 검색은 이미 온토픽(양성필터 불필요)
     got += _inaturalist_photos(scientific_name, 10)
     got += _openverse_photos(scientific_name, 10)
     got += _korea_public_photos(scientific_name, common_name_en, 6)
     if len({p["url"] for p in got if p.get("url")}) < _PHOTODOC_MIN * 2:
-        got += _commons_photos(common_name_en, 8) or []
+        # 공통명 검색은 동음이의(예: grenadier=군인) 위험 → 학명 양성검증을 함께 건다.
+        got += _commons_photos(common_name_en, 8, sci_name=scientific_name) or []
         got += _openverse_photos(common_name_en, 6) or []
     _seen: set = set()                                        # URL 중복 제거(소스 간 겹침 정리)
     got = [p for p in got if p.get("url") and not (p["url"] in _seen or _seen.add(p["url"]))]

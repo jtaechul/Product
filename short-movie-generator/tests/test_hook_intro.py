@@ -180,3 +180,43 @@ def test_specimen_bg_caps_tall_source(tmp_path):
     out = str(tmp_path / "bg.png")
     hi.build_specimen_bg(src, out)
     assert Image.open(out).size == (720, 1280)
+
+
+def test_best_subject_frame_prefers_structure_not_red(tmp_path, monkeypatch):
+    """★재발방지(macrouridae): 회색 피사체(적색 0)라도 '빈 물' 대신 구조 있는(피사체) 프레임을 고른다.
+    9개 샘플 중 4번만 질감(노이즈)=피사체, 나머지는 평평한 회색=빈 물. 적색점수는 전부 0."""
+    from PIL import Image, ImageDraw
+    from src.core import hook_intro_stage as H, reframe
+    empty = tmp_path / "empty.png"; Image.new("RGB", (640, 360), (18, 22, 30)).save(empty)   # 어두운 빈 물
+    subj = tmp_path / "subj.png"
+    im = Image.new("RGB", (640, 360), (18, 22, 30)); d = ImageDraw.Draw(im)
+    d.ellipse([200, 120, 460, 260], fill=(210, 205, 190))   # 밝은 대구조=피사체(물고기 몸통)
+    im.save(subj)
+    calls = {"i": 0}
+    def fake_grab(video, t, out_png, vf=None):
+        src = subj if calls["i"] == 4 else empty     # 5번째(i=4)만 피사체
+        calls["i"] += 1
+        Path(out_png).write_bytes(Path(src).read_bytes()); return True
+    monkeypatch.setattr(H, "_grab_frame", fake_grab)
+    monkeypatch.setattr(H, "_duration_of", lambda v: 30.0)
+    monkeypatch.setattr(reframe, "subject_score", lambda p: 0.0)     # 회색 생물 → 적색 0
+    monkeypatch.setattr(reframe, "text_score", lambda p: 0.0)
+    out = tmp_path / "picked.png"
+    assert H._best_subject_frame("fake.mp4", str(out), tmp_path) is True
+    # 고른 프레임 = 피사체(질감) 프레임이어야 한다(빈 물 아님)
+    from src.core.footage import _frame_macro_std
+    assert _frame_macro_std(Image.open(out)) >= H._MIN_FRAME_STRUCT
+
+
+def test_best_subject_frame_rejects_all_empty(tmp_path, monkeypatch):
+    """전 구간이 빈 물이면 False(상위가 히어로/폴백 처리) — 빈 프레임을 오프닝에 박지 않는다."""
+    from PIL import Image
+    from src.core import hook_intro_stage as H, reframe
+    empty = tmp_path / "e.png"; Image.new("RGB", (640, 360), (16, 20, 28)).save(empty)
+    def fake_grab(video, t, out_png, vf=None):
+        Path(out_png).write_bytes(Path(empty).read_bytes()); return True
+    monkeypatch.setattr(H, "_grab_frame", fake_grab)
+    monkeypatch.setattr(H, "_duration_of", lambda v: 30.0)
+    monkeypatch.setattr(reframe, "subject_score", lambda p: 0.0)
+    monkeypatch.setattr(reframe, "text_score", lambda p: 0.0)
+    assert H._best_subject_frame("fake.mp4", str(tmp_path / "o.png"), tmp_path) is False

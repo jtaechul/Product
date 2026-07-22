@@ -217,3 +217,44 @@ def test_video_motion_bar_stricter_than_static(monkeypatch):
     assert wq.is_static_source("x.mp4") is False                 # 기본 3.0 → 통과(켄번즈용)
     assert wq.is_static_source("x.mp4", threshold=F._MIN_VIDEO_MOTION) is True   # 8.0 → 영상 거부
     assert F._MIN_VIDEO_MOTION >= 8.0
+
+
+def test_nonsubject_filter_blocks_military_homonym():
+    """★동음이의어(grenadier=물고기이자 군 척탄병) 오삽입 차단: 군사·의장대 범주는 배제, 물고기는 통과."""
+    r = F._NONSUBJECT_CAT_RE
+    assert r.search("Grenadier Guards")
+    assert r.search("Category:Carabinieri of Italy")
+    assert r.search("Soldiers in ceremonial uniform")
+    assert r.search("Military parade")
+    assert not r.search("Grenadier (Macrouridae) par 400 m de fond")   # 물고기는 통과
+    assert not r.search("Coryphaenoides rupestris")
+
+
+def test_commons_photos_positive_sciname_filter(monkeypatch):
+    """★학명 양성검증: 공통명 'grenadier'로 검색해도 학명(Macrouridae) 토큰이 없는 병사 사진은 배제,
+    학명이 든 물고기 사진만 채택."""
+    import sys, types
+    class _R:
+        def __init__(self, p): self._p = p
+        def json(self): return self._p
+    def fake_get(url, **kw):
+        p = kw.get("params", {})
+        if p.get("list") == "search":
+            return _R({"query": {"search": [
+                {"title": "File:Grenadier (Macrouridae) 400m.jpg"},
+                {"title": "File:Grenadier Guard at palace.jpg"}]}})
+        # imageinfo|categories
+        return _R({"query": {"pages": {
+            "1": {"title": "File:Grenadier (Macrouridae) 400m.jpg",
+                  "categories": [{"title": "Category:Macrouridae"}],
+                  "imageinfo": [{"url": "https://x/fish.jpg", "width": 1600, "height": 1200,
+                                 "extmetadata": {"LicenseShortName": {"value": "CC BY-SA"}, "Artist": {"value": "Ifremer"}}}]},
+            "2": {"title": "File:Grenadier Guard at palace.jpg",
+                  "categories": [{"title": "Category:Grenadier Guards"}, {"title": "Category:Soldiers"}],
+                  "imageinfo": [{"url": "https://x/guard.jpg", "width": 1600, "height": 1200,
+                                 "extmetadata": {"LicenseShortName": {"value": "CC BY-SA"}, "Artist": {"value": "X"}}}]}}}})
+    monkeypatch.setitem(sys.modules, "requests", types.SimpleNamespace(get=fake_get))
+    got = F._commons_photos("grenadier", 5, sci_name="Macrouridae")
+    urls = [g["url"] for g in got]
+    assert "https://x/fish.jpg" in urls           # 물고기 채택
+    assert "https://x/guard.jpg" not in urls       # 병사 배제(학명 불일치 + 군사 범주)

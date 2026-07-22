@@ -435,6 +435,18 @@
       (automobile·roadster·vehicle·TVR·sculpture·painting·person 등)에 걸리면 그 사진을 배제한다(실측:
       차=Automobiles/Red roadsters, 물고기=Fish of…/학명 카테고리로 확실히 구분). 회귀:
       `test_nonsubject_filter_rejects_vehicles`.
+    - **★군인 동음이의어 배제 + 학명 양성검증(운영자 확정 · 실사고: Macrouridae 공통명 'grenadier'가
+      물고기이자 군 '척탄병' → grenadier guard 병사 사진이 컷어웨이로 삽입)**: 두 겹으로 막는다.
+      ① `_NONSUBJECT_CAT_RE`에 **군사·의장대·인물**(soldier·military·guard·carabinieri·regiment·uniform·
+      parade·ceremonial·people·portrait…) 추가. ② `_commons_photos(query, …, sci_name=학명)`에 **학명 양성
+      검증** — 파일명/카테고리에 학명 토큰이 있어야 채택(동음이의어는 학명이 없어 배제). 공통명 검색
+      (`fetch_cutaway_photos`·`species_photo_doc` 폴백)에 항상 sci_name을 넘긴다. 회귀:
+      `test_nonsubject_filter_blocks_military_homonym`·`test_commons_photos_positive_sciname_filter`.
+    - **★오프닝/엔드카드 빈-프레임 방지(운영자 확정 · 실사고 macrouridae: 회색 소코다라 오프닝에 빈 물)**:
+      `_best_subject_frame`가 예전엔 **적색 피사체 점수만** 써서 회색 생물(적색 0)은 전 프레임 0 → 빈 물이
+      박혔다. → **색 무관 구조점수(`_frame_macro_std`)** 를 주로, 적색은 보너스로. 최고점 구조가
+      `_MIN_FRAME_STRUCT(8)` 미만이면 실패로 보고 히어로/폴백. 회귀:
+      `test_best_subject_frame_prefers_structure_not_red`·`test_best_subject_frame_rejects_all_empty`.
     - **★소싱 후보 삭제 기능(운영자 확정)**: 소싱 게이트(라이선스·종횡비·정지)는 제작 관문보다 느슨해
       '소싱됐지만 제작 불가'한 후보가 남았다 → ① `discovery.remove_candidates(cat, keys)` 특정 후보 수동
       삭제 ② `discovery.prune_unproducible(cat, tmp)` **제작이 실제 소비하는 `footage.fetch_footage`로
