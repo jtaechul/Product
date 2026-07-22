@@ -120,6 +120,8 @@ const UP_WF="upload-longform.yml";    // 롱폼 유튜브 '수동' 업로드(운
 const US_WF="upload-short.yml";       // 쇼츠 유튜브 '수동' 업로드(운영자 확인 후 클릭)
 const SRC_WF="source-species.yml";    // 소싱(후보 발굴) — "소싱하기" 버튼
 const DEL_WF="delete-content.yml";    // 제작물 삭제(레코드+매니페스트+미디어 릴리스)
+const NV_WF="narrate-video.yml";      // 첨부 영상 나레이션(일본어 나레이션·자막)
+const NV_TAG="attach-input";          // 첨부 영상 업로드용 릴리스 태그(에셋으로 보관)
 // 실사 영상이 확보된 종 풀(코드 시드 추가 시 여기도 함께 갱신 — src/core/footage.py _SEED 참고).
 // value는 data.SPECIES의 common_name_ko(정확 매칭 별칭)라 그대로 --species 인자로 쓸 수 있다.
 // cat: 대시보드 표시용 카테고리 라벨(심해생물/일반해양/미세조류/침몰선). 현재 풀은 전부 심해생물.
@@ -300,6 +302,18 @@ function renderHome(){
     '<div class="srccands" id="srccands" style="margin-top:12px"><div class="hint">후보를 불러오는 중…</div></div>'+
   '</div>'+
   '<div class="card">'+
+    '<span class="lbl">첨부 영상 나레이션 · 일본어 자막·나레이션 입히기</span>'+
+    '<div class="hint" style="margin:4px 0 8px">직접 받은 영상(퍼블릭도메인/CC 등 <b>재가공 허용</b> 소스만)을 올리면 <b>일본어 나레이션+자막</b>을 입혀 완성본을 만듭니다. 제목·내용 설명을 바탕으로 대본이 생성됩니다(없는 사실은 만들지 않음). 출처·크레딧 표기는 운영자 책임입니다.</div>'+
+    '<div class="row2" style="margin-bottom:6px"><label style="flex:1"><input type="radio" name="nvmode" value="shorts" checked> 숏츠 (9:16)</label>'+
+      '<label style="flex:1"><input type="radio" name="nvmode" value="longform"> 롱폼 (16:9)</label></div>'+
+    '<input id="nvfile" type="file" accept="video/*" style="margin-bottom:6px">'+
+    '<input id="nvurl" placeholder="또는 영상 URL 붙여넣기 (예: NOAA 다운로드 링크)" style="margin-bottom:6px">'+
+    '<input id="nvtitle" placeholder="제목 (일본어/한국어 · 대본 생성용)" style="margin-bottom:6px">'+
+    '<textarea id="nvnotes" placeholder="내용 설명 (무슨 영상인지 · 대본에 반영, 없는 사실 창작 금지)" style="width:100%;min-height:64px;margin-bottom:8px"></textarea>'+
+    '<button class="go" id="gonv">나레이션 제작</button>'+
+    '<div class="banner" id="nvmsg"></div>'+
+  '</div>'+
+  '<div class="card">'+
     '<span class="lbl">롱폼 · 랭킹형 TOP N (8분 유튜브)</span>'+
     '<div class="hint" style="margin:2px 0 8px">종은 <b>주제별로 랜덤 자동 추출</b>됩니다(수동 선택 폐지). 테마만 고르세요.</div>'+
     '<span class="lbl">테마 (비워두면 자동 추출된 종을 보고 AI가 자동으로 정함)</span>'+
@@ -388,11 +402,76 @@ function renderHome(){
   const _sc=$("#srccat");if(_sc)_sc.onchange=()=>loadCandidates(_sc.value);
   loadCandidates(($("#srccat")||{}).value||"deep_sea");
 
+  // ── 첨부 영상 나레이션(일본어 나레이션·자막) ──
+  const _gnv=$("#gonv");if(_gnv)_gnv.onclick=()=>narrateAttached();
+
   $("#refresh").onclick=(e)=>{e.preventDefault();loadRuns();};
   loadRuns();
   loadLongformResults();
 }
 function srcbanner(t,c){const m=$("#srcmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
+function nvbanner(t,c){const m=$("#nvmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
+// 첨부 영상을 GitHub Release(태그 NV_TAG) 에셋으로 올리고 공개 다운로드 URL을 돌려준다.
+// 워크플로가 이 URL을 urllib로 받아 나레이션을 입힌다(공개 저장소라 무인증 접근 가능).
+async function uploadToRelease(file){
+  // 1) 입력 보관용 릴리스 확보(없으면 생성)
+  let rel=null;
+  try{
+    const g=await fetch(API+"/releases/tags/"+NV_TAG,{headers:headers(true)});
+    if(g.ok)rel=await g.json();
+    else if(g.status===404){
+      const c=await fetch(API+"/releases",{method:"POST",headers:{...headers(true),"Content-Type":"application/json"},
+        body:JSON.stringify({tag_name:NV_TAG,name:"첨부 영상 입력",target_commitish:BRANCH,
+          body:"첨부 영상 나레이션용 입력 파일 보관(자동 생성)"})});
+      if(c.ok)rel=await c.json();
+    }
+  }catch(e){}
+  if(!rel||!rel.id)return "";
+  // 2) 에셋 업로드(파일명은 타임스탬프로 유니크 → 같은 이름 충돌 방지)
+  const ext=((file.name||"").split(".").pop()||"mp4").toLowerCase().replace(/[^a-z0-9]/g,"")||"mp4";
+  const name="attach_"+Date.now()+"."+ext;
+  const ctype=file.type||"application/octet-stream";
+  let up;
+  try{
+    if(SERVER){
+      // 서버 토큰 모드: 워커가 uploads.github.com으로 중계(브라우저에 토큰 없음)
+      up=await fetch("/api/ghupload?release_id="+rel.id+"&name="+encodeURIComponent(name)+"&ctype="+encodeURIComponent(ctype),
+        {method:"POST",body:file});
+    }else{
+      up=await fetch("https://uploads.github.com/repos/"+OWNER+"/"+REPO+"/releases/"+rel.id+"/assets?name="+encodeURIComponent(name),
+        {method:"POST",headers:{"Authorization":"Bearer "+pat(),"Content-Type":ctype,"X-GitHub-Api-Version":"2022-11-28"},body:file});
+    }
+  }catch(e){return "";}
+  if(!up||!up.ok)return "";
+  try{const a=await up.json();if(a&&a.browser_download_url)return a.browser_download_url;}catch(e){}
+  return "https://github.com/"+OWNER+"/"+REPO+"/releases/download/"+NV_TAG+"/"+name;
+}
+// 첨부 영상 나레이션: (파일 업로드 또는 URL) → 워크플로 디스패치
+async function narrateAttached(){
+  if(!authReady()){const tb=$("#tokbox");if(tb)tb.open=true;nvbanner("먼저 GitHub 토큰을 설정하세요(위 안내).","err");return;}
+  const mode=(document.querySelector('input[name=nvmode]:checked')||{}).value||"shorts";
+  const title=(($("#nvtitle")||{}).value||"").trim();
+  const notes=(($("#nvnotes")||{}).value||"").trim();
+  const urlInput=(($("#nvurl")||{}).value||"").trim();
+  const fileEl=$("#nvfile");const file=fileEl&&fileEl.files&&fileEl.files[0];
+  if(!urlInput&&!file){nvbanner("영상 파일을 올리거나 URL을 붙여넣으세요.","err");return;}
+  if(!title&&!notes){nvbanner("제목이나 내용 설명을 입력하세요(대본 생성에 필요합니다).","err");return;}
+  const btn=$("#gonv");btn.disabled=true;
+  try{
+    let videoUrl=urlInput;
+    if(!videoUrl&&file){
+      nvbanner("영상 업로드 중… (파일 크기에 따라 시간이 걸립니다)");
+      videoUrl=await uploadToRelease(file);
+      if(!videoUrl){nvbanner("영상 업로드 실패. 파일 크기·토큰 권한(Contents RW)을 확인하세요.","err");btn.disabled=false;return;}
+    }
+    nvbanner("나레이션 제작 요청 중…");
+    const r=await fetch(API+"/actions/workflows/"+NV_WF+"/dispatches",{method:"POST",headers:headers(true),
+        body:JSON.stringify({ref:BRANCH,inputs:{video_url:videoUrl,mode,title,notes}})});
+    if(r.status===204){nvbanner("제작 시작! 완료되면 <b>텔레그램</b>으로 완성본이 전송됩니다(5~15분). 결과 영상은 Release에도 올라갑니다.","ok");}
+    else{const t=await r.text();nvbanner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
+  }catch(e){nvbanner("요청 실패: "+e,"err");}
+  btn.disabled=false;
+}
 let _srcMode="video";   // "video"=영상+이미지 확보(제작 풀) · "image"=이미지전용(영상 없음·별도 보관)
 async function loadCandidates(cat,mode){
   if(mode)_srcMode=mode;mode=_srcMode;
@@ -918,7 +997,9 @@ async function ghProxy(request, url, env){
   const ok =
     (m==="POST" && /^actions\/workflows\/[^/]+\/dispatches$/.test(rest)) ||
     (m==="GET"  && /^actions\/workflows\/[^/]+\/runs/.test(rest)) ||
-    (m==="GET"  && /^contents\//.test(rest));
+    (m==="GET"  && /^contents\//.test(rest)) ||
+    (m==="GET"  && /^releases\/tags\//.test(rest)) ||   // 첨부 영상 나레이션: 입력 릴리스 조회
+    (m==="POST" && /^releases$/.test(rest));            // 첨부 영상 나레이션: 입력 릴리스 생성
   if(!ok) return j({error:"path not allowed"}, 403);
   const target = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/" + rest + url.search;
   const h = {
@@ -933,6 +1014,30 @@ async function ghProxy(request, url, env){
   const text = await resp.text();
   return new Response(text, {status:resp.status,
     headers:{"Content-Type": resp.headers.get("Content-Type") || "application/json", "Cache-Control":"no-store"}});
+}
+
+// ── 첨부 영상 업로드 프록시: 브라우저 파일 → uploads.github.com Release 에셋 ──
+// 서버 토큰 모드에서 브라우저에 토큰이 없으므로, 워커가 env.GH_PAT로 uploads.github.com에 중계한다.
+// (파일 본문은 스트림 그대로 전달 → 큰 영상도 메모리 폭주 없이 업로드.)
+async function ghUpload(request, url, env){
+  const token = env && env.GH_PAT;
+  if(!token) return j({error:"server token not configured"}, 501);
+  if(request.method !== "POST") return j({error:"method not allowed"}, 405);
+  const rid = url.searchParams.get("release_id") || "";
+  const name = url.searchParams.get("name") || "";
+  const ctype = url.searchParams.get("ctype") || "application/octet-stream";
+  if(!/^\d+$/.test(rid) || !name) return j({error:"bad params"}, 400);
+  const target = "https://uploads.github.com/repos/" + OWNER + "/" + REPO +
+    "/releases/" + rid + "/assets?name=" + encodeURIComponent(name);
+  const resp = await fetch(target, {method:"POST", headers:{
+    "Authorization": "Bearer " + token,
+    "Content-Type": ctype,
+    "X-GitHub-Api-Version": "2022-11-28",
+    "User-Agent": "deep-dive-log-dashboard",
+  }, body: request.body});
+  const text = await resp.text();
+  return new Response(text, {status:resp.status,
+    headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
 }
 
 // ── 미디어 프록시: GitHub Release 자산을 '인라인 재생 가능'하게 중계 ──
@@ -983,6 +1088,7 @@ export default {
     if (url.pathname === "/api/mode") return j({ server: !!(env && env.GH_PAT) });
     if (url.pathname === "/api/media") return mediaProxy(request, url);
     if (url.pathname === "/api/pub") return pubRead(url);
+    if (url.pathname === "/api/ghupload") return ghUpload(request, url, env);
     if (url.pathname.startsWith("/api/gh/")) return ghProxy(request, url, env);
     return new Response(HTML, {
       headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },

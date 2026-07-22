@@ -1,0 +1,117 @@
+name: Narrate Attached Video
+
+# 운영자가 첨부한 영상(퍼블릭도메인/CC 등 재가공 허용 소스)에 일본어 나레이션·자막을 입혀
+# 쇼츠(9:16) 또는 롱폼(16:9) 완성본을 만든다. 관리자 페이지의 "첨부 영상 나레이션" 카드가 트리거.
+# 결과: ① 텔레그램 전송 ② Release(narrate-<runid>)에 mp4 업로드 ③ Actions Artifacts.
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: "첨부 영상 URL(관리자 페이지가 릴리스 에셋으로 업로드 후 자동 전달)"
+        required: true
+      mode:
+        description: "형태"
+        type: choice
+        options: [shorts, longform]
+        default: shorts
+      title:
+        description: "제목(일본어 대본 생성용)"
+        required: false
+        default: ""
+      notes:
+        description: "내용 설명(대본 생성용 · 없는 사실 창작 금지)"
+        required: false
+        default: ""
+
+concurrency:
+  group: narrate-video
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  narrate:
+    runs-on: ubuntu-latest
+    name: 첨부 영상 나레이션
+    defaults:
+      run:
+        working-directory: short-movie-generator
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: short-movie-generator/requirements.txt
+
+      - name: Install FFmpeg + fonts
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-cjk fonts-liberation
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: 나레이션 제작(첨부 영상 → 일본어 나레이션·자막)
+        id: run
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          set -e
+          OUT=$(python -m src.narrate_video \
+            --url "${{ inputs.video_url }}" \
+            --mode "${{ inputs.mode }}" \
+            --title "${{ inputs.title }}" \
+            --notes "${{ inputs.notes }}" \
+            --out-name "narrated_${{ inputs.mode }}_${{ github.run_id }}")
+          echo "출력: $OUT"
+          echo "out=$OUT" >> "$GITHUB_OUTPUT"
+          [ -f "$OUT" ] || { echo "::error::완성본이 생성되지 않았습니다"; exit 1; }
+
+      - name: Release 업로드(영구 호스팅)
+        id: rel
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="narrate-${{ github.run_id }}"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --title "Narrated ${{ inputs.mode }} #${{ github.run_id }}" \
+              --notes "첨부 영상 나레이션(${{ inputs.mode }})" --target "${{ github.ref_name }}"
+          gh release upload "$TAG" "${{ steps.run.outputs.out }}" --clobber
+          BASE="${{ github.server_url }}/${{ github.repository }}/releases/download/$TAG"
+          FN=$(basename "${{ steps.run.outputs.out }}")
+          echo "url=$BASE/$FN" >> "$GITHUB_OUTPUT"
+          echo "다운로드: $BASE/$FN"
+
+      - name: Artifact 업로드
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: narrated-${{ inputs.mode }}-${{ github.run_id }}
+          path: short-movie-generator/output/*.mp4
+          if-no-files-found: ignore
+
+      - name: 텔레그램 전송
+        if: always()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          OUT: ${{ steps.run.outputs.out }}
+          URL: ${{ steps.rel.outputs.url }}
+        run: |
+          [ -z "$TG_TOKEN" ] && exit 0
+          MSG="첨부 영상 나레이션 완료(${{ inputs.mode }}): ${{ inputs.title }}%0A${URL:-}"
+          for CID in $TG_CHAT; do
+            if [ -f "$OUT" ] && [ "$(stat -c%s "$OUT")" -lt 49000000 ]; then
+              curl -sS -F chat_id="$CID" -F caption="$MSG" -F video=@"$OUT" \
+                   "https://api.telegram.org/bot${TG_TOKEN}/sendVideo" | head -c 200; echo
+            else
+              curl -sS -F chat_id="$CID" -F text="$MSG" \
+                   "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" | head -c 200; echo
+            fi
+          done

@@ -849,6 +849,21 @@
     Artifacts(14일 보관) 다운로드 + Job Summary(훅·캡션·QC).
   - 시크릿: `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`(전송), `GEMINI_API_KEY`(veo_text2video 시),
     `ANTHROPIC_API_KEY`(훅 LLM). 없으면 해당 기능만 생략(panzoom은 키 불필요).
+- **★첨부 영상 나레이션(운영자 확정 · 소싱 경로와 독립)**: 운영자가 **직접 받은 영상(퍼블릭도메인/CC 등
+  재가공 허용 소스)**을 대시보드에 올리면 **일본어 나레이션+카라오케 자막**을 입혀 **쇼츠(9:16 720×1280)
+  또는 롱폼(16:9 1920×1080)** 완성본을 만든다. 종·카테고리 파이프라인을 타지 않는 별도 경로다.
+  - **관리자 UI**: 홈 "첨부 영상 나레이션" 카드 — 형태(숏츠/롱폼) 선택 + 파일 업로드(또는 URL) + 제목·
+    내용 설명 입력 → "나레이션 제작". 파일은 브라우저가 GitHub Release(태그 `attach-input`) 에셋으로
+    올려 공개 URL을 얻고, 그 URL로 `narrate-video.yml`을 디스패치한다(서버 토큰 모드는 워커
+    `/api/ghupload`가 uploads.github.com으로 중계, PAT 모드는 브라우저가 직접). 결과는 텔레그램 전송 +
+    Release(`narrate-<runid>`) + Artifact.
+  - **대본(날조 금지)**: 제목·내용 설명만으로 `llm.generate_text`가 敬体 일본어 나레이션을 쓰고, 키
+    없거나 실패 시 입력 문장을 구두점 단위로 쪼개는 결정론 폴백(`_jp_chunks_from_notes`) — **없는 사실은
+    만들지 않는다**. 출처·크레딧 표기는 운영자 책임(모듈은 영상을 소싱하지 않음).
+  - 구현: 백엔드 `src/core/narrate_attached.py`(`narrate_video`) · CLI `src/narrate_video.py` ·
+    워크플로 `.github/workflows/narrate-video.yml` · 대시보드 `worker/index.mjs`(`narrateAttached`/
+    `uploadToRelease`/`ghUpload`) · 회귀 `tests/test_narrate_attached.py`(숏츠 720×1280·롱폼 1920×1080
+    실렌더 E2E). ⚠️ `workflow_dispatch`는 **기본 브랜치(main)에도 워크플로가 있어야** API 실행됨(하드룰 #15③).
 - **로컬 대시보드**: `python -m webapp.server` → 브라우저 조작(종 입력→생성→미리보기→다운로드).
 - **[보류] 유료 경로**: Cloudflare Containers 배포(Dockerfile·worker/·wrangler.jsonc·
   deploy-shorts-dashboard.yml, 수동 실행 전환됨). Workers 유료 플랜($5/월) + CF 토큰
