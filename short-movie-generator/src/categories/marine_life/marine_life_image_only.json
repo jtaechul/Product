@@ -458,5 +458,83 @@
     "video_status": "image_only",
     "photo_count": 7,
     "video_note": "영상 미확보(검색 3회 실패)→이미지전용"
+  },
+  {
+    "kind": "creature",
+    "key": "astomonema",
+    "needs_confirm": false,
+    "title": "File:Astomonema 2 cliponly.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Astomonema_2_cliponly.webm",
+    "license": "cc-by-sa",
+    "credit": "Brandon Seah, Max Planck Institute for Marine Microbiology · CC BY-SA",
+    "source": "File:Astomonema 2 cliponly.webm",
+    "name": "Astomonema",
+    "name_ja": "",
+    "common_name_ko": "Astomonema",
+    "common_name_en": "Astomonema",
+    "depth": "",
+    "facts": [
+      "Astomonema is a genus of nematode worms in the family Siphonolaimidae.",
+      "They lack a mouth or conventional digestive tract, but contain symbiotic sulfur-oxidizing bacteria that serve as their primary food source.",
+      "They live in the marine interstitial habitat."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Astomonema",
+      "common_name_ko": "Astomonema",
+      "common_name_en": "Astomonema",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Astomonema is a genus of nematode worms in the family Siphonolaimidae.",
+        "They lack a mouth or conventional digestive tract, but contain symbiotic sulfur-oxidizing bacteria that serve as their primary food source.",
+        "They live in the marine interstitial habitat."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Astomonema 2 cliponly.webm)"
+      ]
+    },
+    "video_status": "image_only",
+    "video_note": "영상이 거의 정지(움직임 6.4<8)=moving image → 이미지전용"
+  },
+  {
+    "kind": "creature",
+    "key": "phallodrilinae",
+    "needs_confirm": false,
+    "title": "File:Gutless tmp cliponly.webm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/f/f3/Gutless_tmp_cliponly.webm",
+    "license": "cc-by-sa",
+    "credit": "Brandon Seah, Max Planck Institute for Marine Microbiology · CC BY-SA",
+    "source": "File:Gutless tmp cliponly.webm",
+    "name": "Phallodrilinae",
+    "name_ja": "",
+    "common_name_ko": "Phallodrilinae",
+    "common_name_en": "Phallodrilinae",
+    "depth": "",
+    "facts": [
+      "Phallodrilinae is a subfamily of clitellate oligochaete worms."
+    ],
+    "fact_src": "Wikipedia (en)",
+    "species": {
+      "scientific_name": "Phallodrilinae",
+      "common_name_ko": "Phallodrilinae",
+      "common_name_en": "Phallodrilinae",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Phallodrilinae is a subfamily of clitellate oligochaete worms."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Gutless tmp cliponly.webm)"
+      ]
+    },
+    "video_status": "image_only",
+    "video_note": "영상이 거의 정지(움직임 6.1<8)=moving image → 이미지전용"
   }
 ]

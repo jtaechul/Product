@@ -514,6 +514,11 @@
     - **★영상/이미지 분류는 '영상 전용' 함수 + 캐시로 한다(정직성)**: 후보 `video_status`는 `_fetch_video_footage`가
       실제 영상을 돌려주는 종만 `video`(URL 캐시됨), 나머지 `image_only`. 오소싱(육상 지렁이 annelida·다른 어종
       제목 bolbometopon·논문 공유 클립 bryaninops/enneapterygius)은 **강제 격리**(image_only + 캐시 제거).
+    - **★'진짜 움직이는 영상'만(운영자 확정 · "moving image지 진짜 영상 아니다")**: 실사 영상 소스는 정지문턱(3.0)
+      보다 높은 `footage._MIN_VIDEO_MOTION=8.0`으로 거른다 — 느린 심해 드리프트(움직임 4~7 · 피사체 거의 안
+      움직여 슬라이드 느낌)를 배제. 실측 분포(21종): 느림 4.7~6.8 / 6.8~9.2 공백 / 역동 9~43. 미달 종은
+      이미지전용으로. **사진 켄번즈(photo-doc)는 기본 3.0 문턱을 그대로 써 무관**(켄번즈 모션 ~6). 강등 실측:
+      chiridota(4.7)·thalassocalyce(6.1)·riftia(6.8)·phallodrilinae(6.1)·astomonema(6.4). 회귀: `test_video_motion_bar_stricter_than_static`.
     - **★영상 추가 확보 — Commons 분류군 카테고리 순회(`footage._commons_category_videos`)**: 키워드 검색이
       놓치는 CC 영상을, 그 종의 **Commons 카테고리(Category:<학명>) 안 영상 파일**을 직접 수확해 건진다.
       카테고리 소속이 곧 피사체 보증이라 **정확 + 추가 확보** 동시 달성(실측: macrouridae·nudibranchia·

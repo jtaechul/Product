@@ -28,6 +28,10 @@ _IMAGE_EXT = (".jpg", ".jpeg", ".png")
 _DL_MAX_SECS = 240
 _DL_MAX_BYTES = 240 * (1 << 20)
 
+# 실사 영상 소스가 '진짜 움직이는 영상'으로 인정받을 최소 움직임(느린 심해 드리프트=moving image 배제).
+# 기본 정지문턱(3.0)은 사진 켄번즈가 통과해야 해 낮게 두고, 실사 영상만 이 값(8.0)으로 강화한다.
+_MIN_VIDEO_MOTION = 8.0
+
 # ── 영상 URL 캐시(운영자 확정 · 재발방지 실사고 044: '영상 확보'인데 이미지로 제작) ────────────
 # 원인 = NOAA OER **검색(geoportal API)** 이 간헐적이라, 같은 종이 어떤 실행엔 영상·어떤 실행엔 '영상
 # 없음'으로 갈렸다(영상 파일 자체는 NOAA에 영구 호스팅됨 — 흔들리는 건 '검색'뿐). → 한 번 찾은 영상의
@@ -1498,14 +1502,16 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
             if r.returncode == 0 and trimmed.exists() and trimmed.stat().st_size > 100_000:
                 log.info("[footage] 인트로/아웃트로 트림: 앞 %.0fs·뒤 %.0fs 제거 → 본편만 사용", head, tail)
                 out = trimmed
-    # ★정지-이미지 소스 차단(핵심 규칙 · 절대 위반 금지): 움직임이 없는 '사진→영상 포장물'은
-    # 영상으로 만들지 않는다. 정지로 판정되면 소스 미확보(None)로 처리 → 릴스는 중단, 롱폼은 스킵.
+    # ★'진짜 움직이는 영상'만 통과(운영자 확정 · 재발방지 "moving image지 진짜 영상 아니다"): 실사 영상
+    # 소스는 정지(0~1)뿐 아니라 **느린 심해 드리프트(4~7 · 피사체 거의 안 움직임=슬라이드 느낌)** 도 배제한다.
+    # 실측 분포(21종): 느림 4.7~6.8 / 6.8~9.2 공백 / 역동 9~43 → 문턱 _MIN_VIDEO_MOTION(8.0). 미달이면
+    # 소스 미확보(None) → 상위 래퍼가 실사 사진 다큐(켄번즈)로 폴백(켄번즈는 기본 3.0 문턱이라 무관).
     try:
         from src.core import watermark_qc as _wq
-        if _wq.is_static_source(str(out)):
-            return _reject("정지 소스(영상 아님)")
+        if _wq.is_static_source(str(out), threshold=_MIN_VIDEO_MOTION):
+            return _reject(f"움직임 부족(moving image · <{_MIN_VIDEO_MOTION})")
     except Exception as e:  # noqa: BLE001  (검사 실패 시 통과 — 검사 오류로 제작 자체를 막지 않음)
-        log.warning("[footage] 정지 검사 생략(오류): %s", e)
+        log.warning("[footage] 움직임 검사 생략(오류): %s", e)
     # ★피사체 가시성 게이트(Step1 · 빈 물/준비 컷 배제): '아무것도 안 보이는' 클립은 버린다.
     #   → auto 후보 순회가 다음(피사체 있는) 클립으로 넘어간다(텐트 쉬림프 '빈 물' 사고 방지).
     try:

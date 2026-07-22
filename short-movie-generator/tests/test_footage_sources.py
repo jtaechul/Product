@@ -207,3 +207,13 @@ def test_is_single_subject_json_verdict():
 def test_commons_photo_candidates_empty_query():
     from src.core import footage as F
     assert F._commons_photo_candidates("") == []
+
+
+def test_video_motion_bar_stricter_than_static(monkeypatch):
+    """★'moving image' 배제(운영자 확정): 실사 영상은 정지문턱(3)보다 높은 _MIN_VIDEO_MOTION(8)으로
+    거른다 — 느린 드리프트(움직임 6)는 사진 켄번즈로는 통과하되 실사 영상 소스로는 거부."""
+    from src.core import watermark_qc as wq
+    monkeypatch.setattr(wq, "motion_score", lambda *a, **k: 6.0)
+    assert wq.is_static_source("x.mp4") is False                 # 기본 3.0 → 통과(켄번즈용)
+    assert wq.is_static_source("x.mp4", threshold=F._MIN_VIDEO_MOTION) is True   # 8.0 → 영상 거부
+    assert F._MIN_VIDEO_MOTION >= 8.0
