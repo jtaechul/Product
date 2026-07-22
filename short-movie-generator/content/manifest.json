@@ -320,5 +320,13 @@
     "common_name_en": "Wreck Andrea Doria",
     "scientific_name": "Wreck Andrea Doria",
     "date": "2026-07-22"
+  },
+  {
+    "id": "046",
+    "kind": "reels",
+    "common_name_ko": "민태과",
+    "common_name_en": "Macrouridae",
+    "scientific_name": "Macrouridae",
+    "date": "2026-07-22"
   }
 ]

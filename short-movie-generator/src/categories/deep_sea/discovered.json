@@ -453,5 +453,33 @@
         "Wikimedia Commons (File:Tripod fish1.jpg)"
       ]
     }
+  },
+  {
+    "key": "macrouridae",
+    "kind": "creature",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/0/0d/Grenadier_%28Macrouridae%29_par_400_m_de_fond_%28Ifremer_00621-73302%29.jpg",
+      "license": "cc-by",
+      "credit": "null · CC BY",
+      "source": "File:Grenadier (Macrouridae) par 400 m de fond (Ifremer 00621-73302).jpg",
+      "media_kind": "photo",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/0d/Grenadier_%28Macrouridae%29_par_400_m_de_fond_%28Ifremer_00621-73302%29.jpg"
+    },
+    "species": {
+      "scientific_name": "Macrouridae",
+      "common_name_ko": "민태과",
+      "common_name_en": "Macrouridae",
+      "depth_range_m": "100-6000",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "ソコダラ科（学名:Macrouridae）は、タラ目ソコダラ亜目に所属する魚類の分類群の一つ。タラ目で最大のグループである。学名の由来は、ギリシャ語の「makros（大きな）」+「oura（尾）」から。"
+      ],
+      "sources": [
+        "Wikipedia (ja)",
+        "Wikimedia Commons (File:Grenadier (Macrouridae) par 400 m de fond (Ifremer 00621-73302).jpg)"
+      ]
+    }
   }
 ]

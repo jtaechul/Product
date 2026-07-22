@@ -1,0 +1,55 @@
+{
+  "id": "046",
+  "created_at": "2026-07-22T13:38:57+00:00",
+  "updated_at": "2026-07-22T13:38:57+00:00",
+  "status": "published",
+  "category": "deep_sea",
+  "series": "심해 도감",
+  "species": {
+    "common_name_ko": "민태과",
+    "common_name_en": "Macrouridae",
+    "scientific_name": "Macrouridae",
+    "depth_range_m": "100-6000",
+    "habitat": "",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "ソコダラ科（学名:Macrouridae）は、タラ目ソコダラ亜目に所属する魚類の分類群の一つ。タラ目で最大のグループである。学名の由来は、ギリシャ語の「makros（大きな）」+「oura（尾）」から。"
+    ]
+  },
+  "reels": {
+    "hook": "まるで、巨大な尾宇宙の生命体か。",
+    "caption": "光もほとんど届かない、深い深い海の底。静けさだけがどこまでも続くその世界で、すっと長い尾を引くように、ひとつの影が漂っています。\n泳ぐというより、そこに“在る”ような、静かな存在感。\nその名はソコダラ(学名:Macrouridae)。\n\n住処は水深100メートルから、なんと6000メートルにまで及ぶといいます。浅い海の縁から、光の届かぬ深海平原まで——まるで海のあらゆる階層に配属された社員のように、幅広い深さで暮らしているのです。\n\nソコダラは、タラ目ソコダラ亜目というグループに属し、実はタラ目の中で最大の一族なのだそうです。数えきれないほどの仲間が、この暗闇の中でそれぞれの持ち場を守っている——深海の勤務地に、こんなにも大所帯がいるとは、誰が想像したでしょうか。もちろん昼休みも、有給もありません。\n\nそして、その名の由来もまた印象的です。学名はギリシャ語の「makros(大きな)」と「oura(尾)」に由来するのだとか。つまり「大きな尾を持つもの」という意味です。すらりと長く伸びるその尾は、まるで暗闇に垂らされた一本のロープのよう。光のない世界で、静かに、しかし確かに、自分の存在を伸ばし続けているのです。\n\nもしこの物語が心に触れたなら、どうか保存しておいてください。\nそして、同じ海を想う誰かにも、そっとシェアしてあげてください。\n映像: NOAA Ocean Exploration・Public Domain\n写真: NOAA Photo Library\n写真: Marie-Lan Nguyen · CC BY",
+    "hashtags": [
+      "#ソコダラ",
+      "#深海生物"
+    ],
+    "reveal_name": "ソコダラ / Macrouridae",
+    "reveal_fact": "深海・長い尾・タラ目最大、謎の魚",
+    "hook_ko": "심해 깊은 곳, 꼬리가, 비정상적으로 길다.",
+    "caption_ko": "빛조차 거의 닿지 않는, 깊고 깊은 바다 밑바닥.\n고요함만이 끝없이 이어지는 그 세계에, 마치 긴 꼬리를 끌듯 하나의 그림자가 떠 있습니다.\n헤엄친다기보다, 그저 그 자리에 ‘존재’하는 듯한 조용한 존재감.\n그 이름은 솔치꼬리대구(학명: Macrouridae)입니다.\n\n서식지는 수심 100미터에서 무려 6000미터에 이른다고 합니다. 얕은 바다의 가장자리부터, 빛이 닿지 않는 심해 평원까지——마치 바다의 모든 층에 배치된 직원처럼, 폭넓은 수심에 걸쳐 살아가고 있는 것입니다.\n\n솔치꼬리대구는 대구목 솔치꼬리대구아목이라는 그룹에 속하며, 사실 대구목 중에서도 가장 큰 무리라고 합니다. 셀 수 없이 많은 동료들이 이 어둠 속에서 저마다의 자리를 지키고 있다니——이런 심해 근무지에 이렇게나 대가족이 있을 줄, 누가 상상이나 했을까요. 물론 점심시간도, 유급휴가도 없습니다.\n\n그리고 그 이름의 유래 또한 인상적입니다. 학명은 그리스어 ‘makros(큰)’와 ‘oura(꼬리)’에서 왔다고 합니다. 즉 ‘큰 꼬리를 가진 것’이라는 뜻. 길게 뻗은 그 꼬리는 마치 어둠 속에 드리워진 한 가닥 밧줄 같습니다. 빛 없는 세계에서, 조용히 그러나 확실하게, 자신의 존재를 뻗어가고 있는 것입니다.\n\n이 이야기가 마음에 닿았다면, 부디 저장해 두시기 바랍니다.\n그리고 같은 바다를 그리워하는 누군가에게도, 살며시 공유해 주세요.\n영상: NOAA Ocean Exploration・Public Domain",
+    "hashtags_ko": [
+      "#민태과",
+      "#심해생물"
+    ],
+    "yt_title": "深海6000m勤務、有給ゼロのソコダラ一族 #ソコダラ #深海生物",
+    "yt_title_ko": "심해 6000m 근무, 유급휴가 없는 대구 일족 #민태과 #심해생물",
+    "visualizer": "reels",
+    "video_file": "macrouridae_20260722_133857.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Wikipedia (ja)",
+      "Wikimedia Commons (File:Grenadier (Macrouridae) par 400 m de fond (Ifremer 00621-73302).jpg)"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-046/reels_046.mp4",
+    "rev": "29924277456",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-046/cover_046.jpg",
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-046/ytthumb_046.jpg"
+  },
+  "post": null
+}
