@@ -1203,6 +1203,43 @@ def footage_shows_subject(video: str, subject: str, sample: int = 6) -> bool | N
         return strong >= max(1, len(scores) // 4)
 
 
+def _video_taxon_ok(video: str, scientific_name: str, common_name_en: str, sample: int = 4) -> bool:
+    """★큰 몸꼴(대분류) 일치 검증(운영자 확정 · 재발방지: 이프노푸스=심해어로 소싱한 NOAA 클립이 실제로는
+    대왕등각류=갑각류 → 오프닝 사진과 본문 영상이 다른 종). 프레임 몇 장을 Gemini 비전으로 보고 **명백히
+    다른 큰 몸꼴(물고기↔갑각류↔해파리 등)** 일 때만 False. 종·과 식별은 안 함(진짜 영상 보존). 키 없거나
+    불확실하면 True(통과 — 로컬·무키 환경 무영향, 게이트는 CI에서만 실효)."""
+    import subprocess
+    import tempfile
+    try:
+        from src.core import vision_subject
+        if not vision_subject.available():
+            return True
+    except Exception:  # noqa: BLE001
+        return True
+    dur = _probe_dur(video) or 0.0
+    if dur <= 0:
+        return True
+    with tempfile.TemporaryDirectory(prefix="tax_") as td:
+        verdicts: list[bool] = []
+        for i in range(sample):
+            t = dur * (0.15 + 0.7 * i / max(1, sample - 1))
+            f = Path(td) / f"t{i}.jpg"
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{t:.2f}", "-i", video,
+                            "-vf", "scale=512:-1", "-frames:v", "1", str(f)], capture_output=True)
+            if not f.exists():
+                continue
+            v = vision_subject.verify_taxon_match(str(f), scientific_name, common_name_en)
+            if v is False:
+                verdicts.append(False)
+            elif v is True:
+                verdicts.append(True)
+        if not verdicts:
+            return True                                  # 판정 불가 → 통과(진짜 영상 보존)
+        # 과반이 '명백한 오종'이면 배제(단발 오탐은 무시 — 빈/불명확 프레임 대비).
+        mism = sum(1 for x in verdicts if x is False)
+        return mism < max(2, (len(verdicts) + 1) // 2)
+
+
 def _wreck_photo_footage(scientific_name: str, common_name_en: str, dest: Path, key: str) -> dict | None:
     """난파선: 그 배의 실사 사진을 찾아 켄번즈 영상화 → footage dict. 없으면 None.
     ★잠수사 위주 영상보다 '배가 확실히 보이는 사진'을 우선한다(주제 피사체 보장).
@@ -1552,6 +1589,15 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
                 return _reject("주제 피사체 미검출(비전 LLM · 난파선: 다이버/빈물)")
         except Exception as e:  # noqa: BLE001
             log.warning("[footage] 난파선 의미검증 생략(오류): %s", e)
+    # ★큰 몸꼴(대분류) 일치 검증(생물 · 재발방지: 이프노푸스=심해어로 소싱한 NOAA 클립이 실제 대왕등각류
+    #   =갑각류 → 오프닝 사진과 본문 영상이 다른 종). 물고기↔갑각류↔해파리 같은 **명백한 오종만** 배제
+    #   (종·과 식별 아님 · 키 없으면 통과 → 진짜 영상 보존). 오종이면 캐시도 폐기(_reject)하고 None.
+    if not is_wreck:
+        try:
+            if not _video_taxon_ok(str(out), scientific_name, common_name_en):
+                return _reject("큰 몸꼴 불일치(오종 영상 · 비전)")
+        except Exception as e:  # noqa: BLE001
+            log.warning("[footage] 몸꼴 검증 생략(오류): %s", e)
     # ★영상 확정 → URL 캐시(다음부터 검색 없이 그 파일을 바로 받아 분류=제작 일치)
     if not is_wreck:
         _video_cache_put(key, cand)

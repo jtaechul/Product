@@ -258,3 +258,48 @@ def test_commons_photos_positive_sciname_filter(monkeypatch):
     urls = [g["url"] for g in got]
     assert "https://x/fish.jpg" in urls           # 물고기 채택
     assert "https://x/guard.jpg" not in urls       # 병사 배제(학명 불일치 + 군사 범주)
+
+
+def test_verify_taxon_match_gross_mismatch(monkeypatch):
+    """★큰 몸꼴 불일치만 배제(종 식별 아님): 물고기 기대인데 갑각류면 False, 물고기면 True, 키없으면 None."""
+    from src.core import vision_subject as V
+    monkeypatch.setenv("GEMINI_API_KEY", "x")   # available()=True로
+    # 명백한 오종(갑각류) + confident → False
+    monkeypatch.setattr(V, "_ask", lambda *a, **k:
+                        '{"expected_group":"fish","dominant_group":"crustacean","clear_mismatch":true,"confident":true}')
+    assert V.verify_taxon_match("/f.jpg", "Ipnopidae", "tripod fish") is False
+    # 일치(물고기) → True
+    monkeypatch.setattr(V, "_ask", lambda *a, **k:
+                        '{"expected_group":"fish","dominant_group":"fish","clear_mismatch":false,"confident":true}')
+    assert V.verify_taxon_match("/f.jpg", "Ipnopidae", "tripod fish") is True
+    # 불확실(confident=false)이면 통과(True) — 진짜 영상 보존
+    monkeypatch.setattr(V, "_ask", lambda *a, **k:
+                        '{"expected_group":"fish","dominant_group":"other","clear_mismatch":true,"confident":false}')
+    assert V.verify_taxon_match("/f.jpg", "Ipnopidae", "tripod fish") is True
+
+
+def test_verify_taxon_match_no_key(monkeypatch):
+    from src.core import vision_subject as V
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    assert V.verify_taxon_match("/f.jpg", "Ipnopidae", "tripod fish") is None
+
+
+def test_video_taxon_ok_without_vision_passes(monkeypatch, tmp_path):
+    """키 없으면 몸꼴 게이트는 통과(로컬·무키 무영향 · 진짜 영상 보존)."""
+    from src.core import vision_subject as V
+    monkeypatch.setattr(V, "available", lambda: False)
+    assert F._video_taxon_ok(str(tmp_path / "no.mp4"), "Ipnopidae", "tripod fish") is True
+
+
+def test_video_taxon_ok_rejects_majority_mismatch(monkeypatch, tmp_path):
+    """★과반 프레임이 '명백한 오종'이면 False(오종 영상 배제). 실제 프레임 추출 + 판정만 모의."""
+    import subprocess
+    from src.core import vision_subject as V
+    vid = tmp_path / "clip.mp4"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                    "-i", "color=c=gray:s=320x240:d=3", "-pix_fmt", "yuv420p", str(vid)], check=True)
+    monkeypatch.setattr(V, "available", lambda: True)
+    monkeypatch.setattr(V, "verify_taxon_match", lambda *a, **k: False)   # 전 프레임 오종
+    assert F._video_taxon_ok(str(vid), "Ipnopidae", "tripod fish") is False
+    monkeypatch.setattr(V, "verify_taxon_match", lambda *a, **k: True)    # 전 프레임 일치
+    assert F._video_taxon_ok(str(vid), "Ipnopidae", "tripod fish") is True

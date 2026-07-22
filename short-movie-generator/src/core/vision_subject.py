@@ -97,6 +97,44 @@ def verify_species(image_path: str, scientific_name: str = "", common_name_en: s
     return True
 
 
+# 큰 몸꼴(대분류) 그룹 — 이 수준의 불일치만 잡는다(종 단위 식별 아님 · 저해상서도 신뢰 가능).
+_BODY_GROUPS = ("fish", "shark_or_ray", "crustacean", "cephalopod", "gastropod_or_nudibranch",
+                "jellyfish_or_ctenophore", "sea_star_or_urchin", "worm", "sea_anemone_or_coral",
+                "marine_mammal", "sea_turtle", "other")
+
+
+def verify_taxon_match(image_path: str, scientific_name: str = "", common_name_en: str = "") -> bool | None:
+    """★큰 몸꼴(대분류) 일치 검증(운영자 확정 · 실사고: '이프노푸스(다리로 선 심해어)'로 소싱한 NOAA 클립이
+    실제로는 **대왕등각류(갑각류)** 였다 → 오프닝 사진(물고기)과 본문 영상(갑각류)이 다른 종). 저해상에서
+    **종 식별은 불가**하지만 '물고기 vs 갑각류 vs 해파리' 같은 **큰 몸꼴 차이는 확실히** 구분된다.
+    이 함수는 그 **명백한 몸꼴 불일치만** False로 잡는다(종·과 단위는 판단 안 함 → 진짜 영상 보존).
+
+    반환: True(일치 또는 불확실 → 통과) · False(명백히 다른 큰 몸꼴 · 오종) · None(키 없음)."""
+    name = (common_name_en or scientific_name or "").strip()
+    if not name:
+        return None
+    prompt = (
+        "You are a marine biologist checking whether a video frame shows the CORRECT kind of animal. "
+        f"The clip is supposed to show \"{scientific_name}\" (\"{common_name_en}\"). "
+        "Judge ONLY the broad body plan / major group, NOT the exact species. Answer STRICT JSON only: "
+        '{"expected_group": "<one of: ' + "|".join(_BODY_GROUPS) + '>", '
+        '"dominant_group": "<same set, the main animal actually visible>", '
+        '"clear_mismatch": true|false, "confident": true|false}. '
+        "Set clear_mismatch=true ONLY when the dominant visible animal is UNMISTAKABLY a different major "
+        "group than expected (e.g. expected a fish but it is a crustacean/isopod; expected a crab but it "
+        "is a jellyfish). If the frame is empty/dark/unclear, or the animal could plausibly be the "
+        "expected group, set clear_mismatch=false and confident=false. Never judge fine species."
+    )
+    d = _json(_ask(image_path, prompt) or "")
+    if not d or "clear_mismatch" not in d:
+        return None
+    if d.get("clear_mismatch") is True and d.get("confident") is True:
+        log.info("[vision] 큰 몸꼴 불일치(오종) 배제: %s (기대 %s / 실제 %s)",
+                 image_path, d.get("expected_group"), d.get("dominant_group"))
+        return False
+    return True
+
+
 def is_single_subject(image_path: str, species_hint: str = "") -> bool | None:
     """★오프닝훅·엔드카드용 히어로 이미지 게이트(운영자 확정 · 절대 위반 금지): 이미지에 **한 종·한 개체가
     또렷하게 크게** 나와야 한다. 여러 종·여러 개체가 나온 도판(taxonomic plate)·비교표·다중패널 그림은

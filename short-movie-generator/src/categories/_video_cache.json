@@ -53,12 +53,6 @@
   "source": "NOAA OER EX1803 DIVE15 (https://www.ncei.noaa.gov/metadata/granule/geoportal/opensearch)",
   "url": "https://www.ncei.noaa.gov/data/oceans/oer/video/EX1803/Video/Compressed/EX1803_VID_20180502_DIVE15_SWIMMING_SQUID_SERENADE_Low.mp4"
  },
- "ipnopidae": {
-  "credit": "NOAA Ocean Exploration",
-  "license": "public-domain",
-  "source": "NOAA OER EX1711 DIVE01 (https://www.ncei.noaa.gov/metadata/granule/geoportal/opensearch)",
-  "url": "https://www.ncei.noaa.gov/data/oceans/oer/video/EX1711/Video/Compressed/EX1711_VID_20171130_DIVE01_GIANT_ISOPOD_Low.mp4"
- },
  "lithodinae": {
   "credit": "NOAA Office of Ocean Exploration and Research",
   "license": "public-domain",

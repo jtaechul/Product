@@ -207,6 +207,14 @@
     배제). 이 분기를 다시 생물에 적용하지 말 것. (구현: `fetch_footage`가 `key.startswith("wreck ")`일 때만
     Step2 하드 리젝트.) **소싱↔제작 게이트 정합**: `discovery.validate_source_url`도 Step1(가시성)을 적용해
     '소싱된 영상 = 제작 가능한 영상'이 되게 한다(Step2 종ID 폐지로 소싱·제작 게이트가 일치).
+  - **★큰 몸꼴(대분류) 일치 검증 = 종ID와 다르다(운영자 확정 · 재발방지: 이프노푸스(심해어)로 소싱한 NOAA
+    클립이 실제 **대왕등각류=갑각류** → 오프닝 사진(물고기)과 본문 영상(갑각류)이 다른 종)**: Step2 종ID는
+    저해상서 불가라 폐기했지만, **'물고기 vs 갑각류 vs 해파리' 같은 큰 몸꼴 차이는 저해상서도 확실**하다.
+    `vision_subject.verify_taxon_match`(Gemini) + `footage._video_taxon_ok`(프레임 4장 샘플·과반 판정)로
+    **명백한 오종(다른 대분류)만** 배제한다 — 종·과는 판단 안 함(진짜 영상 보존). `_fetch_video_footage`가
+    영상 확정 직전 검사, 오종이면 `_reject`(캐시도 폐기)→None→다음 소스/사진 다큐. 키(GEMINI) 없으면 통과
+    (게이트는 CI에서 실효). **매 fetch마다 재검사**하므로 캐시된 오종도 사용 시점에 걸러진다. 회귀:
+    `test_verify_taxon_match_gross_mismatch`·`test_video_taxon_ok_rejects_majority_mismatch`.
 - **⭐ 심해 적합성 검증 (deep_sea 전용 · 허위사실 방지 · 절대 위반 금지)**: 표층·연안 종이 「심해 도감」에
   잘못 편입돼 **가짜 수심('水深 200〜2,000 m')**이 자막으로 붙던 사고(실사고: #026 정어리 Sardinops
   sagax = 표층 회유어). 재발 방지 규칙:
