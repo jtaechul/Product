@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -20,6 +21,7 @@ log = logging.getLogger("shorts")
 
 SHORTS_W, SHORTS_H = 720, 1280
 LONG_W, LONG_H = 1920, 1080
+_OPEN_DUR = 2.8   # 오프닝 훅(타이틀 카드) 길이(초)
 
 
 def _probe_dur(video: str) -> float:
@@ -128,9 +130,11 @@ def _fallback_meta(chunks: list[str], mode: str) -> dict:
     first = (chunks[0] if chunks else "").strip() or "海の映像"
     title_jp = (first[:22] + ("…" if len(first) > 22 else ""))
     desc_jp = (body[:180] + "。") if body else "海の映像に日本語ナレーションと字幕を付けた作品です。"
+    hook_jp = re.sub(r"[。.、,！!？?]+$", "", first)[:18] or "この光景を、ご存知ですか"
     return {
         "title_jp": title_jp, "title_ko": "",
         "desc_jp": desc_jp, "desc_ko": "",
+        "hook_jp": hook_jp,
         "tags_jp": _dedup_tags(["#海", "#自然", "#癒し"], []),
         "tags_ko": ["#바다", "#자연", "#힐링"],
     }
@@ -147,7 +151,8 @@ def _gen_metadata(chunks: list[str], mode: str) -> dict:
         f"この{kind}動画の公開用メタデータを作ってください。★本文にない事実・数値・固有名詞は創作しないこと。\n\n"
         f"【ナレーション】\n{script}\n\n"
         "次のJSONだけを出力(説明・記号なし):\n"
-        '{\"title_jp\":\"日本語タイトル(30字以内・クリックを誘う)\",'
+        '{\"hook_jp\":\"12〜18字の強いオープニングフック(冒頭2秒で指を止める一言・体言止め/問いかけ可)\",'
+        '\"title_jp\":\"日本語タイトル(30字以内・クリックを誘う)\",'
         '\"title_ko\":\"上のタイトルの自然な韓国語訳\",'
         '\"desc_jp\":\"日本語の説明文(2〜4文・敬体)\",'
         '\"desc_ko\":\"上の説明の自然な韓国語訳\",'
@@ -161,7 +166,9 @@ def _gen_metadata(chunks: list[str], mode: str) -> dict:
                 d = json.loads(m.group(0))
                 tj = _dedup_tags(d.get("tags_jp") or [], [])
                 tk = _dedup_tags(d.get("tags_ko") or [], [])
+                hook = re.sub(r"[。.、,！!？?]*$", "", str(d.get("hook_jp", "")).strip())[:22]
                 out = {
+                    "hook_jp": hook,
                     "title_jp": str(d.get("title_jp", "")).strip(),
                     "title_ko": str(d.get("title_ko", "")).strip(),
                     "desc_jp": str(d.get("desc_jp", "")).strip(),
@@ -169,6 +176,8 @@ def _gen_metadata(chunks: list[str], mode: str) -> dict:
                     "tags_jp": tj, "tags_ko": tk,
                 }
                 if out["title_jp"] and out["desc_jp"] and out["tags_jp"]:
+                    if not out["hook_jp"]:
+                        out["hook_jp"] = _fallback_meta(chunks, mode)["hook_jp"]
                     return out
             except Exception:  # noqa: BLE001
                 pass
@@ -185,6 +194,161 @@ def _normalize_landscape(video: str, out: str, dur: float, work_dir: str) -> str
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *loop, "-i", video,
                     "-t", f"{dur:.2f}", "-vf", vf, "-c:v", "libx264", "-preset", "veryfast",
                     "-crf", "20", "-an", out], check=True, timeout=900)
+    return out
+
+
+# ─────────────────────── 오프닝 훅(타이틀 카드) + 유튜브 썸네일 ───────────────────────
+def _pick_hero_frame(video: str, work: Path, w: int) -> str:
+    """영상에서 '피사체가 잘 보이는(구조 분산 큰)' 시각을 골라 그 프레임을 고해상으로 뽑는다.
+    오프닝 훅·썸네일 배경용. 실패 시 ''(호출부가 훅 생략)."""
+    dur = _probe_dur(video) or 0.0
+    if dur <= 0:
+        return ""
+    work.mkdir(parents=True, exist_ok=True)
+    try:
+        from PIL import Image, ImageStat
+    except Exception:  # noqa: BLE001
+        return ""
+    n = 5
+    best_t, best_s = dur * 0.5, -1.0
+    for i in range(n):
+        t = dur * (i + 0.5) / n
+        p = work / f"s_{i}.jpg"
+        try:
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{t:.2f}", "-i", video,
+                            "-frames:v", "1", "-vf", "scale=160:-1", str(p)], check=True, timeout=60)
+            s = ImageStat.Stat(Image.open(p).convert("L")).stddev[0]
+        except Exception:  # noqa: BLE001
+            s = 0.0
+        if s > best_s:
+            best_s, best_t = s, t
+    hero = work / "hero.jpg"
+    try:
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{best_t:.2f}", "-i", video,
+                        "-frames:v", "1", "-vf", f"scale={w}:-1", str(hero)], check=True, timeout=60)
+        return str(hero) if hero.exists() and hero.stat().st_size > 1000 else ""
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def _cover_crop(im, w: int, h: int):
+    from PIL import Image
+    iw, ih = im.size
+    sc = max(w / iw, h / ih)
+    nw, nh = max(1, int(iw * sc + 0.5)), max(1, int(ih * sc + 0.5))
+    im = im.resize((nw, nh), Image.LANCZOS)
+    x, y = (nw - w) // 2, (nh - h) // 2
+    return im.crop((x, y, x + w, y + h))
+
+
+def _wrap_cjk(draw, text: str, font, max_w: float) -> list[str]:
+    """공백 없는 일본어를 폭에 맞춰 글자 단위로 줄바꿈(온스크린 텍스트 넘침 방지 하드룰)."""
+    lines, cur = [], ""
+    for ch in str(text):
+        if ch == "\n":
+            lines.append(cur); cur = ""; continue
+        if draw.textlength(cur + ch, font=font) <= max_w or not cur:
+            cur += ch
+        else:
+            lines.append(cur); cur = ch
+    if cur:
+        lines.append(cur)
+    return lines
+
+
+def _fit_block(draw, text: str, max_w: float, max_lines: int, base: int, minsz: int):
+    from PIL import ImageFont
+    from src.core import hook_intro as hi
+    size = base
+    while size >= minsz:
+        font = ImageFont.truetype(hi.FONT_SANS_B, size, index=0)
+        lines = _wrap_cjk(draw, text, font, max_w)
+        if len(lines) <= max_lines:
+            return font, lines
+        size -= 4
+    font = ImageFont.truetype(hi.FONT_SANS_B, minsz, index=0)
+    return font, _wrap_cjk(draw, text, font, max_w)
+
+
+def _render_hook_and_thumb(bg_path: str, hook: str, title: str, w: int, h: int,
+                           card_png: str, thumb_png: str) -> bool:
+    """훅 문구를 배경(피사체 프레임) 위에 크게 얹어 ① 오프닝 카드(card_png) ② 유튜브 썸네일(thumb_png)을 만든다.
+    ★이모지·시스템 아이콘 금지(하드룰) — 텍스트+벡터 도형만. 실패 시 False(훅 생략)."""
+    try:
+        from PIL import Image, ImageDraw
+        base = Image.open(bg_path).convert("RGB")
+        bg = _cover_crop(base, w, h)
+        # 상·하단 어둡게(가독성) + 전체 살짝 딤
+        dimmed = Image.blend(bg, Image.new("RGB", (w, h), (4, 10, 16)), 0.42)
+        grad = Image.new("L", (1, h), 0)
+        for yy in range(h):
+            f = 0.0
+            if yy < h * 0.30:
+                f = (1 - yy / (h * 0.30)) * 0.55
+            elif yy > h * 0.68:
+                f = ((yy - h * 0.68) / (h * 0.32)) * 0.70
+            grad.putpixel((0, yy), int(255 * f))
+        grad = grad.resize((w, h))
+        dark = Image.composite(Image.new("RGB", (w, h), (0, 0, 0)), dimmed, grad)
+
+        accent = (242, 193, 78)   # 골드 포인트(팔레트)
+
+        def _compose(hook_max_lines: int, with_title: bool):
+            im = dark.copy()
+            d = ImageDraw.Draw(im)
+            safe = int(w * 0.86)
+            font, lines = _fit_block(d, hook, safe, hook_max_lines, int(h * 0.13), int(h * 0.055))
+            asc = font.getbbox("あ")[3]
+            line_h = int(asc * 1.28)
+            total = line_h * len(lines)
+            y = int(h * 0.5 - total / 2) - (int(h * 0.06) if with_title else 0)
+            # 골드 강조 바(훅 위)
+            d.rectangle([(w - safe) // 2, y - int(h * 0.045), (w - safe) // 2 + int(w * 0.10), y - int(h * 0.028)],
+                        fill=accent)
+            for ln in lines:
+                tw = d.textlength(ln, font=font)
+                d.text(((w - tw) / 2, y), ln, font=font, fill=(255, 255, 255),
+                       stroke_width=max(4, int(h * 0.006)), stroke_fill=(0, 0, 0))
+                y += line_h
+            if with_title and title:
+                tf, tl = _fit_block(d, title, safe, 2, int(h * 0.05), int(h * 0.028))
+                tasc = tf.getbbox("あ")[3]
+                ty = int(h * 0.80)
+                for ln in tl:
+                    tw = d.textlength(ln, font=tf)
+                    d.text(((w - tw) / 2, ty), ln, font=tf, fill=accent,
+                           stroke_width=max(3, int(h * 0.004)), stroke_fill=(0, 0, 0))
+                    ty += int(tasc * 1.3)
+            return im
+
+        _compose(3, False).save(card_png, quality=92)          # 오프닝 카드(영상): 훅만
+        _compose(2, True).save(thumb_png, quality=90)           # 썸네일: 훅 + 제목
+        return Path(card_png).exists() and Path(thumb_png).exists()
+    except Exception as e:  # noqa: BLE001
+        log.info("[narrate] 훅/썸네일 렌더 실패(생략): %s", e)
+        return False
+
+
+def _build_hook_clip(card_png: str, out: str, dur: float, w: int, h: int) -> str:
+    """정지 훅 카드 → 무음(나레이션과 겹침 방지) 인트로 클립. 페이드인으로 부드럽게."""
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", card_png,
+                    "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", f"{dur:.2f}",
+                    "-vf", f"scale={w}:{h},setsar=1,fps=30,format=yuv420p,fade=t=in:st=0:d=0.5",
+                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-pix_fmt", "yuv420p",
+                    "-c:a", "aac", "-b:a", "192k", "-shortest", out], check=True, timeout=300)
+    return out
+
+
+def _concat_av(a: str, b: str, out: str, w: int, h: int) -> str:
+    """두 mp4를 [a][b] 순서로 이어붙인다(해상도·fps·오디오 포맷 통일 후 concat 필터)."""
+    fc = (f"[0:v]scale={w}:{h},setsar=1,fps=30[v0];[1:v]scale={w}:{h},setsar=1,fps=30[v1];"
+          "[0:a]aresample=44100,aformat=sample_fmts=fltp:channel_layouts=stereo[a0];"
+          "[1:a]aresample=44100,aformat=sample_fmts=fltp:channel_layouts=stereo[a1];"
+          "[v0][a0][v1][a1]concat=n=2:v=1:a=1[v][a]")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", a, "-i", b,
+                    "-filter_complex", fc, "-map", "[v]", "-map", "[a]",
+                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-pix_fmt", "yuv420p",
+                    "-c:a", "aac", "-b:a", "192k", out], check=True, timeout=1200)
     return out
 
 
@@ -245,21 +409,48 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
                     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", "-an", subbed],
                    check=True, timeout=900)
 
-    # 5) 나레이션 오디오 mux → 완성본
+    # 5) 나레이션 오디오 mux → 본문 완성본(훅 앞에 붙이기 전 단계)
     name = out_name or f"narrated_{mode}"
     final = str(out_dir / f"{name}.mp4")
+    body_final = str(work / "body_final.mp4")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", subbed, "-i", nar["mp3"],
-                    "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", final],
+                    "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", body_final],
                    check=True, timeout=300)
-    # 6) 대본 → 공개용 메타데이터(제목·설명·해시태그, 일본어+한국어) 자동 생성
+
+    # 6) 대본 → 공개용 메타데이터(제목·설명·해시태그·훅, 일본어+한국어) 자동 생성
     meta = _gen_metadata(chunks, mode)
     meta_path = out_dir / f"{name}.meta.json"
     try:
         meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     except Exception:  # noqa: BLE001
         pass
-    log.info("[narrate] 완성: %s (%s · %.1fs · %d청크) title=%s",
-             final, mode, dur, len(chunks), meta.get("title_jp", ""))
+
+    # 7) 오프닝 훅(타이틀 카드) 생성 + 유튜브 썸네일 저장(운영자 확정 · 실패해도 발행 불정지)
+    thumb_path = out_dir / f"{name}_thumb.jpg"
+    hook_txt = (meta.get("hook_jp") or "").strip()
+    hooked = False
+    try:
+        from src.core import hook_intro as hi
+        if hook_txt and hi.fonts_available():
+            hero = _pick_hero_frame(str(vp), work / "hero", w)
+            if hero:
+                card = str(work / "hookcard.png")
+                if _render_hook_and_thumb(hero, hook_txt, meta.get("title_jp", ""), w, h,
+                                          card, str(thumb_path)):
+                    hookclip = str(work / "hook.mp4")
+                    _build_hook_clip(card, hookclip, _OPEN_DUR, w, h)
+                    _concat_av(hookclip, body_final, final, w, h)
+                    hooked = True
+    except Exception as e:  # noqa: BLE001
+        log.info("[narrate] 오프닝 훅 합성 실패(본문만 발행): %s", e)
+    if not hooked:
+        shutil.move(body_final, final)   # 훅 없이 본문만
+        thumb_out = str(thumb_path) if thumb_path.exists() else ""
+    else:
+        thumb_out = str(thumb_path) if thumb_path.exists() else ""
+
+    log.info("[narrate] 완성: %s (%s · %.1fs · %d청크 · 훅=%s · 썸=%s) title=%s",
+             final, mode, dur, len(chunks), hooked, bool(thumb_out), meta.get("title_jp", ""))
     return {"path": final, "duration": dur, "mode": mode, "chunks": chunks,
             "meta": meta, "meta_path": str(meta_path), "description": desc,
-            "width": w, "height": h}
+            "hooked": hooked, "thumb": thumb_out, "width": w, "height": h}

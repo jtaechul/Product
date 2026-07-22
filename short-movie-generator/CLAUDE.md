@@ -863,9 +863,16 @@
     만들고, ③ **대본을 근거로 제목·설명·해시태그를 일본어+한국어로 자동 생성**한다(`_gen_metadata`,
     LLM JSON 우선 · 실패 시 결정론 폴백). ★날조 금지: 화면에 보이는 것/대본 범위 안에서만.
     비전·근거가 모두 없으면 지어내지 않고 실패 처리.
+  - **★오프닝 훅 + 유튜브 썸네일 자동 생성(운영자 확정 · 쇼츠·롱폼 공통)**: 대본 근거로 **오프닝 훅 문구**
+    (`hook_jp`)도 함께 생성하고, 영상에서 **피사체가 잘 보이는 프레임**을 골라 그 위에 훅을 크게 얹은
+    ① **오프닝 타이틀 카드**(~2.8초, 무음·페이드인)를 본문 앞에 붙이고 ② **유튜브 커스텀 썸네일**
+    (`output/<name>_thumb.jpg`, 훅+제목)을 저장한다. 폰트·프레임 확보 실패 시 훅 없이 본문만 발행(불정지).
+    구현: `narrate_attached._pick_hero_frame`/`_render_hook_and_thumb`(PIL·이모지 금지)/`_build_hook_clip`/
+    `_concat_av`. 회귀: `test_hook_and_thumb_render` + E2E가 훅·썸네일 확인.
   - **결과 확인(관리자 페이지)**: 완료 시 `content/nv-<runid>.json`(kind="narrate") 레코드를 커밋 →
-    홈 카드 하단 "최근 나레이션 결과" + `/nv/<id>` 상세에서 **영상 미리보기 + 제목·설명·해시태그를
-    일/한 2단으로 복사**. 텔레그램 메시지에도 제목·설명·해시태그(일/한)가 포함된다.
+    홈 카드 하단 "최근 나레이션 결과" + `/nv/<id>` 상세에서 **영상·썸네일 미리보기 + 오프닝 훅 + 제목·설명·
+    해시태그를 일/한 2단으로 복사**(썸네일은 "썸네일 저장" 버튼). 워크플로가 썸네일 jpg를 Release에 함께
+    올려 레코드 `media.thumb_url`에 반영. 텔레그램 메시지에도 제목·설명·해시태그(일/한)가 포함된다.
   - 구현: 백엔드 `src/core/narrate_attached.py`(`narrate_video`/`_describe_video`/`_gen_metadata`) ·
     `llm.describe_frames`(비전) · `content_store.write_narrate_record` · CLI `src/narrate_video.py`
     (`--source-topic`) · 워크플로 `.github/workflows/narrate-video.yml` · 대시보드 `worker/index.mjs`

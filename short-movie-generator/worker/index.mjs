@@ -513,12 +513,19 @@ async function renderNarrateDetail(id){
   const md=rec.media||{};
   const mediaHtml=md.video_url?('<video src="'+prox(md.video_url)+'" controls playsinline preload="metadata"></video>'):"";
   const tagsJp=(rec.hashtags||[]).join(" "), tagsKo=(rec.hashtags_ko||[]).join(" ");
+  const thumbHtml=md.thumb_url?(
+    '<div style="margin-top:12px"><span class="lbl">유튜브 커스텀 썸네일 (오프닝 훅 자동 생성)</span>'+
+    '<img src="'+prox(md.thumb_url)+'" style="width:100%;max-width:480px;border-radius:8px;display:block;margin-top:6px">'+
+    '<div class="btnrow" style="margin-top:6px"><button class="btn save" id="thdl">썸네일 저장</button></div><div class="hint" id="thhint"></div></div>'
+  ):"";
   dc.className="card detail";
   dc.innerHTML=
     '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px"><b style="font-size:19px">'+esc(id)+'</b>'+
       '<span class="mono" style="color:var(--gy);font-size:12px">'+esc(rec.mode==="longform"?"롱폼(16:9)":"숏츠(9:16)")+' · 첨부 영상 나레이션</span></div>'+
+    (rec.hook?('<div class="hint" style="margin-bottom:8px">오프닝 훅: <b style="color:#f0c552">'+esc(rec.hook)+'</b></div>'):"")+
     mediaHtml+
     (md.video_url?'<div class="btnrow" style="margin-top:8px"><button class="btn save" id="bdl">비디오 저장하기</button></div><div class="hint" id="dlhint" style="margin-top:6px"></div>':"")+
+    thumbHtml+
     '<div class="hint" style="margin:10px 0 2px">아래 제목·설명·해시태그는 <b>영상 대본을 근거로 자동 생성</b>된 값입니다(유튜브 업로드용 복사).</div>'+
     '<div class="dual" style="margin-top:8px">'+
       '<div><span class="lbl">제목 · 일본어</span><textarea id="nvtj" readonly rows="2">'+esc(rec.yt_title||"")+'</textarea>'+
@@ -545,6 +552,7 @@ async function renderNarrateDetail(id){
   B("nvcpdj","nvdj","일본어 설명을 복사했어요.");B("nvcpdk","nvdk","한국어 설명을 복사했어요.");
   B("nvcphj","nvhj","일본어 해시태그를 복사했어요.");B("nvcphk","nvhk","한국어 해시태그를 복사했어요.");
   if(md.video_url){const bd=document.getElementById("bdl");if(bd)bd.onclick=()=>saveVideo(prox(md.video_url),id+".mp4");}
+  if(md.thumb_url){const th=document.getElementById("thdl");if(th)th.onclick=()=>saveVideo(prox(md.thumb_url),id+"_thumb.jpg",{btn:"#thdl",hint:"#thhint",mime:"image/jpeg",kind:"이미지"});}
 }
 function vsbanner(t,c){const m=$("#vsmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
 function vsDur(s){s=Math.round(s||0);if(!s)return"";const m=Math.floor(s/60),ss=s%60;return m+":"+String(ss).padStart(2,"0");}
