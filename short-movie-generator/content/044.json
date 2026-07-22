@@ -1,7 +1,7 @@
 {
   "id": "044",
   "created_at": "2026-07-21T22:43:57+00:00",
-  "updated_at": "2026-07-21T22:43:57+00:00",
+  "updated_at": "2026-07-22T13:48:03+00:00",
   "status": "published",
   "category": "deep_sea",
   "series": "심해 도감",
@@ -18,24 +18,24 @@
     ]
   },
   "reels": {
-    "hook": "深海の、底に。謎めく、物体。",
-    "caption": "深海の、底に。謎めく、物体。\n\nイプノピ(学名: Ipnopidae)。\n底生・深海・長きヒレ、未知の魚。\n深い海の底で、たしかに命をつないでいる一種です。\n\n心に残ったら保存を。\n同じ海が気になる人へシェアを。\n\n深海の生き物は、私たちがまだ知らない海の広さを教えてくれます。\n光の届かない深い海には、まだ名前のない生き物が数多く眠っています。\nこの映像は実際の深海・海洋の観測記録から。演出のための作り物ではありません。\n\n映像: NOAA Ocean Exploration・Public Domain",
+    "hook": "まるで宇宙、底に立つ、者？",
+    "caption": "まるで宇宙、底に立つ、者？\n\nチョウチンハダカ科(学名: Ipnopidae)。\n立つ・長いヒレ・底生、深海の魚。\n深い海の底で、たしかに命をつないでいる一種です。\n\n心に残ったら保存を。\n同じ海が気になる人へシェアを。\n\n深海の生き物は、私たちがまだ知らない海の広さを教えてくれます。\n光の届かない深い海には、まだ名前のない生き物が数多く眠っています。\nこの映像は実際の深海・海洋の観測記録から。演出のための作り物ではありません。\n\n映像: NOAA Ocean Exploration・Public Domain\n写真: NOAA Photo Library",
     "hashtags": [
-      "#イプノピ",
+      "#チョウチンハダカ科",
       "#深海生物"
     ],
-    "reveal_name": "イプノピ / Ipnopidae",
-    "reveal_fact": "底生・深海・長きヒレ、未知の魚",
-    "hook_ko": "심해의 바닥, 헤매는 미지의 다리.",
-    "caption_ko": "심해의 바닥, 헤매는 미지의 다리.\n\n긴촉수매퉁이과(학명: Ipnopidae).\nチョウチンハダカ科（Ipnopidae）は、ヒメ目アオメエソ亜目に所属する魚類の分類群の一つ。イトヒキイワシ・ナガヅエエソなど、底生性の深海魚を中心に5属29種が所属する。.\n저서성・심해・긴 다리, 기묘한 어류.\n\n마음이 복잡한 날, 다시 꺼내보고 싶다면 저장해 두세요.\n같은 바다가 궁금한 사람에게 조용히 건네주세요.\n\n영상: NOAA Ocean Exploration・Public Domain",
+    "reveal_name": "チョウチンハダカ科 / Ipnopidae",
+    "reveal_fact": "立つ・長いヒレ・底生、深海の魚",
+    "hook_ko": "마치, 이성. 지팡이를, 조종하다.",
+    "caption_ko": "마치, 이성. 지팡이를, 조종하다.\n\n긴촉수매퉁이과(학명: Ipnopidae).\nチョウチンハダカ科（Ipnopidae）は、ヒメ目アオメエソ亜目に所属する魚類の分類群の一つ。イトヒキイワシ・ナガヅエエソなど、底生性の深海魚を中心に5属29種が所属する。.\n저생, 긴 지느러미, 배회, 심해의 지팡이.\n\n마음이 복잡한 날, 다시 꺼내보고 싶다면 저장해 두세요.\n같은 바다가 궁금한 사람에게 조용히 건네주세요.\n\n영상: NOAA Ocean Exploration・Public Domain",
     "hashtags_ko": [
       "#긴촉수매퉁이과",
       "#심해생물"
     ],
-    "yt_title": "なぜ深海の、底に。謎めく、物体のか。イプノピ #イプノピ #深海生物",
-    "yt_title_ko": "긴촉수매퉁이과는 왜? 심해의 바닥, 헤매는 미지의 다리 #긴촉수매퉁이과 #심해생물",
+    "yt_title": "なぜまるで宇宙、底に立つ、者のか。チョウチンハダカ科 #チョウチンハダカ科 #深海生物",
+    "yt_title_ko": "긴촉수매퉁이과는 왜? 마치, 이성. 지팡이를, 조종하다 #긴촉수매퉁이과 #심해생물",
     "visualizer": "reels",
-    "video_file": "ipnopidae_20260721_224357.mp4"
+    "video_file": "ipnopidae_20260722_134803.mp4"
   },
   "source": {
     "image_credit": "",
@@ -47,7 +47,7 @@
   },
   "media": {
     "video_url": "https://github.com/jtaechul/Product/releases/download/content-044/reels_044.mp4",
-    "rev": "29874318835",
+    "rev": "29924306321",
     "cover_url": "https://github.com/jtaechul/Product/releases/download/content-044/cover_044.jpg",
     "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-044/ytthumb_044.jpg"
   },
