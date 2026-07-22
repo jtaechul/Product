@@ -864,6 +864,22 @@
     워크플로 `.github/workflows/narrate-video.yml` · 대시보드 `worker/index.mjs`(`narrateAttached`/
     `uploadToRelease`/`ghUpload`) · 회귀 `tests/test_narrate_attached.py`(숏츠 720×1280·롱폼 1920×1080
     실렌더 E2E). ⚠️ `workflow_dispatch`는 **기본 브랜치(main)에도 워크플로가 있어야** API 실행됨(하드룰 #15③).
+- **★다운로드 가능 영상 찾기(운영자 확정 · 썸네일·주제 미리보기)**: 키워드로 **키(API) 없이 직접
+  다운로드 가능한 무료 영상**을 찾아 **썸네일 + 주제(제목·설명) + 라이선스 + 길이**를 카드로 미리 보여준다.
+  각 카드의 "나레이션에 사용"을 누르면 위 첨부 나레이션 카드에 URL·제목·설명이 자동 입력된다("찾기→나레이션"
+  연결). 결과 카드엔 "다운로드"·"원본 페이지" 링크도 있다.
+  - **소스**: ① **Wikimedia Commons**(항상 자유 라이선스 · 직다운 URL · 썸네일) ② **Internet Archive**
+    (검색을 `licenseurl:*creativecommons*|*publicdomain*` 또는 PD 컬렉션으로 좁힘 + 메타데이터로 실제
+    mp4/webm 직다운 URL 해석). 둘 다 **키 불필요**.
+  - **★저작권 안전판(핵심)**: 나레이션·자막을 입히는 것은 **2차 저작물**이라 **변경금지(ND)·비상업(NC)은
+    배제**하고 **PD·CC0·CC BY·CC BY-SA만 "안전(safe)"**(초록 배지)으로 표시한다. 확인 필요는 앰버 배지.
+    **Internet Archive의 유튜브 미러(`youtube-*`)는 항상 제외**(저작권 위험). 최종 사용 전 원본 페이지에서
+    권리 재확인은 운영자 책임.
+  - **구현**: 워커 라이브 엔드포인트 `worker/index.mjs` `/api/vsearch`(서버측 fetch → CORS 무관 · 즉시
+    미리보기) — `videoSearch`/`vsCommons`/`vsArchive`/`vsArchiveResolve` + 라이선스 판정
+    `vsLicenseFromUrl`/`vsCommonsLicense`/`vsArchiveLicense`. 브라우저 `findVideos`/`renderVsResults`/`vsUse`.
+    회귀: `worker/vsearch_check.mjs`(순수 로직 · `node worker/vsearch_check.mjs`). 라이브 검증: Commons
+    (anglerfish·jellyfish·octopus 4~5건 · 썸네일 확보) + IA(ocean·deep sea·marine 각 4건 · PD/CC0 직다운 해석).
 - **로컬 대시보드**: `python -m webapp.server` → 브라우저 조작(종 입력→생성→미리보기→다운로드).
 - **[보류] 유료 경로**: Cloudflare Containers 배포(Dockerfile·worker/·wrangler.jsonc·
   deploy-shorts-dashboard.yml, 수동 실행 전환됨). Workers 유료 플랜($5/월) + CF 토큰

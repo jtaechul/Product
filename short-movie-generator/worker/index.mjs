@@ -302,6 +302,15 @@ function renderHome(){
     '<div class="srccands" id="srccands" style="margin-top:12px"><div class="hint">후보를 불러오는 중…</div></div>'+
   '</div>'+
   '<div class="card">'+
+    '<span class="lbl">다운로드 가능 영상 찾기 · 썸네일·주제 미리보기</span>'+
+    '<div class="hint" style="margin:4px 0 8px">키워드로 <b>키(API) 없이 직접 다운로드 가능한 무료 영상</b>을 찾아 썸네일·주제와 함께 보여줍니다. 소스: Wikimedia Commons(자유 라이선스) + Internet Archive(안전 필터). 나레이션에 쓰려면 <b>2차 저작</b>이 가능해야 하므로 <b>변경금지(ND)·비상업(NC)은 제외</b>하고 재사용 가능(PD·CC0·CC BY·CC BY-SA)만 <span style="color:#7CFC9B">안전</span>으로 표시합니다. 최종 사용 전 원본 페이지에서 권리를 확인하세요.</div>'+
+    '<div class="row2" style="margin-bottom:6px"><input id="vsq" placeholder="검색어 (예: deep sea anglerfish, jellyfish, shipwreck)" style="flex:2">'+
+      '<select id="vssrc" style="flex:1"><option value="all">전체</option><option value="commons">커먼스만</option><option value="archive">아카이브만</option></select></div>'+
+    '<button class="go" id="govs">영상 찾기</button>'+
+    '<div class="banner" id="vsmsg"></div>'+
+    '<div id="vsresults" style="margin-top:12px"></div>'+
+  '</div>'+
+  '<div class="card">'+
     '<span class="lbl">첨부 영상 나레이션 · 일본어 자막·나레이션 입히기</span>'+
     '<div class="hint" style="margin:4px 0 8px">직접 받은 영상(퍼블릭도메인/CC 등 <b>재가공 허용</b> 소스만)을 올리면 <b>일본어 나레이션+자막</b>을 입혀 완성본을 만듭니다. 제목·내용 설명을 바탕으로 대본이 생성됩니다(없는 사실은 만들지 않음). 출처·크레딧 표기는 운영자 책임입니다.</div>'+
     '<div class="row2" style="margin-bottom:6px"><label style="flex:1"><input type="radio" name="nvmode" value="shorts" checked> 숏츠 (9:16)</label>'+
@@ -402,6 +411,10 @@ function renderHome(){
   const _sc=$("#srccat");if(_sc)_sc.onchange=()=>loadCandidates(_sc.value);
   loadCandidates(($("#srccat")||{}).value||"deep_sea");
 
+  // ── 다운로드 가능 영상 찾기 ──
+  const _gvs=$("#govs");if(_gvs)_gvs.onclick=()=>findVideos();
+  const _vsq=$("#vsq");if(_vsq)_vsq.onkeydown=(e)=>{if(e.key==="Enter")findVideos();};
+
   // ── 첨부 영상 나레이션(일본어 나레이션·자막) ──
   const _gnv=$("#gonv");if(_gnv)_gnv.onclick=()=>narrateAttached();
 
@@ -471,6 +484,62 @@ async function narrateAttached(){
     else{const t=await r.text();nvbanner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
   }catch(e){nvbanner("요청 실패: "+e,"err");}
   btn.disabled=false;
+}
+function vsbanner(t,c){const m=$("#vsmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
+function vsDur(s){s=Math.round(s||0);if(!s)return"";const m=Math.floor(s/60),ss=s%60;return m+":"+String(ss).padStart(2,"0");}
+let _vsList=[];
+// 다운로드 가능 영상 검색 → 썸네일·주제 카드 렌더
+async function findVideos(){
+  const q=(($("#vsq")||{}).value||"").trim();
+  const src=(($("#vssrc")||{}).value||"all");
+  if(!q){vsbanner("검색어를 입력하세요.","err");return;}
+  const btn=$("#govs");if(btn)btn.disabled=true;
+  vsbanner("검색 중… (5~15초)");
+  try{
+    const r=await fetch("/api/vsearch?q="+encodeURIComponent(q)+"&src="+encodeURIComponent(src));
+    const d=await r.json();
+    if(!r.ok){vsbanner("검색 실패("+r.status+")","err");if(btn)btn.disabled=false;return;}
+    _vsList=(d.results||[]);
+    if(!_vsList.length){vsbanner("결과가 없습니다. 다른 검색어(영문 권장)를 시도해 보세요.","");}
+    else{vsbanner("총 "+_vsList.length+"개 — <span style='color:#7CFC9B'>안전</span>=재사용 가능. '나레이션에 사용'을 누르면 아래 나레이션 카드에 자동 입력됩니다.","ok");}
+    renderVsResults();
+  }catch(e){vsbanner("요청 실패: "+e,"err");}
+  if(btn)btn.disabled=false;
+}
+function renderVsResults(){
+  const el=$("#vsresults");if(!el)return;
+  if(!_vsList.length){el.innerHTML="";return;}
+  let h='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">';
+  _vsList.forEach((v,i)=>{
+    const badge=v.safe
+      ?'<span style="background:#12351f;color:#7CFC9B;border:1px solid #2e7d4f;border-radius:4px;padding:1px 5px;font-size:10px">안전 · '+esc(v.license)+'</span>'
+      :'<span style="background:#3a2f12;color:#f0c552;border:1px solid #7d652e;border-radius:4px;padding:1px 5px;font-size:10px">확인 필요 · '+esc(v.license)+'</span>';
+    const dur=v.duration?('<span style="position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.75);color:#fff;font-size:10px;padding:1px 4px;border-radius:3px">'+vsDur(v.duration)+'</span>'):'';
+    h+='<div style="border:1px solid #24303a;border-radius:8px;overflow:hidden;background:#0e161d">'+
+      '<div style="position:relative;aspect-ratio:16/9;background:#050a0e">'+
+        (v.thumb?('<img loading="lazy" src="'+esc(v.thumb)+'" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\\'none\\'">'):'')+dur+'</div>'+
+      '<div style="padding:7px 8px">'+
+        '<div style="font-size:12px;line-height:1.3;max-height:32px;overflow:hidden">'+esc(v.title)+'</div>'+
+        '<div class="hint" style="font-size:10px;margin:3px 0;max-height:26px;overflow:hidden">'+esc(v.topic||"")+'</div>'+
+        '<div style="margin:4px 0">'+badge+' <span class="hint" style="font-size:10px">'+esc(v.source)+'</span></div>'+
+        '<div class="row2" style="gap:5px">'+
+          '<button class="mini" onclick="vsUse('+i+')" style="flex:1">나레이션에 사용</button>'+
+          '<a class="mini" href="'+esc(v.download)+'" target="_blank" rel="noopener" style="flex:1;text-align:center;text-decoration:none">다운로드</a>'+
+        '</div>'+
+        '<div style="margin-top:4px"><a class="hint" href="'+esc(v.page)+'" target="_blank" rel="noopener" style="font-size:10px">원본 페이지 · 권리 확인</a></div>'+
+      '</div></div>';
+  });
+  h+='</div>';
+  el.innerHTML=h;
+}
+// 찾은 영상을 첨부 나레이션 카드에 채우기(URL·제목) + 스크롤
+function vsUse(i){
+  const v=_vsList[i];if(!v)return;
+  const u=$("#nvurl");if(u)u.value=v.download;
+  const t=$("#nvtitle");if(t&&!t.value.trim())t.value=v.title||"";
+  const n=$("#nvnotes");if(n&&!n.value.trim())n.value=v.topic||"";
+  nvbanner("영상 URL을 나레이션 카드에 넣었습니다. 형태(숏츠/롱폼)·제목·설명을 확인하고 '나레이션 제작'을 누르세요.","ok");
+  const card=$("#gonv");if(card&&card.scrollIntoView)card.scrollIntoView({behavior:"smooth",block:"center"});
 }
 let _srcMode="video";   // "video"=영상+이미지 확보(제작 풀) · "image"=이미지전용(영상 없음·별도 보관)
 async function loadCandidates(cat,mode){
@@ -972,6 +1041,148 @@ init();
 // ── 서버 측: GitHub 토큰(Cloudflare Secret env.GH_PAT)로 프록시 → 브라우저 토큰 불필요 ──
 function j(o, status){return new Response(JSON.stringify(o),{status:status||200,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});}
 
+// ── 다운로드 가능 영상 찾기(키 없이 · 썸네일·주제 미리보기) ──
+// 목적: 운영자가 직접 소싱할 '다운로드 가능한' 영상을 키워드로 찾아 썸네일·주제와 함께 보여준다.
+// 소스: ① Wikimedia Commons(항상 자유 라이선스 · 직다운 URL) ② Internet Archive(엄격 안전필터).
+// ★저작권: 나레이션·자막을 입히는 것은 '2차 저작물'이라 변경금지(ND)·비상업(NC)은 배제하고
+//   PD/CC0/CC-BY/CC-BY-SA만 '안전(safe)'으로 표시한다. 유튜브 미러(archive의 youtube-*)는 항상 제외.
+//   운영자는 최종 사용 전 원본 페이지에서 권리를 다시 확인한다(모듈은 소싱 후보만 제시).
+const VS_UA = "deep-dive-log-dashboard";
+// Internet Archive에서 라이선스 표기가 없어도 퍼블릭도메인으로 신뢰할 수 있는 컬렉션(정부·기록보관)
+const VS_PD_COLLECTIONS = ["prelinger","nasa","noaa","usgs","navalhistory","naval-history",
+  "usnationalarchives","nara","peabodyawards","fedflix","usgovfilms","biodiversity"];
+
+// 라이선스 URL/토큰 → 재사용(2차 저작·상업) 허용 여부. NC/ND는 불허, PD/CC0/BY/BY-SA만 허용.
+function vsLicenseFromUrl(u){
+  const s = String(u || "").toLowerCase();
+  if(!s) return null;
+  if(s.includes("publicdomain") || s.includes("/zero/") || s.includes("cc0"))
+    return {label:"Public Domain / CC0", safe:true};
+  const m = s.match(/licenses\/(by(?:-[a-z]+)*)\b/);
+  const tok = m ? m[1] : "";
+  if(!tok.startsWith("by")) return null;                 // 알 수 없음
+  if(tok.includes("nc") || tok.includes("nd"))           // 비상업·변경금지 → 나레이션 불가
+    return {label:"CC "+tok.toUpperCase()+" (사용 불가)", safe:false, blocked:true};
+  return {label:"CC "+tok.toUpperCase(), safe:true};
+}
+// Commons extmetadata → 라이선스 라벨/안전여부. nc/nd면 제외(null).
+function vsCommonsLicense(em){
+  const lic = String(((em.License||{}).value)||"").toLowerCase();          // 예: cc-by-sa-4.0, cc0, pd
+  const name = String(((em.LicenseShortName||{}).value)||"");
+  if(lic.includes("nc") || lic.includes("nd") || /-(nc|nd)\b/.test(name.toLowerCase())) return null;
+  if(lic.includes("cc0") || lic==="pd" || lic.includes("publicdomain") || /public domain|cc0/i.test(name))
+    return {label:name||"Public Domain", safe:true};
+  if(lic.startsWith("cc-by") || /^cc by/i.test(name))
+    return {label:name||"CC BY", safe:true};
+  // Commons는 대체로 자유 라이선스지만, 명확치 않으면 '확인 필요'(amber)로 노출
+  return {label:name||"라이선스 확인 필요", safe:false};
+}
+// Internet Archive 문서 → 라이선스 판정(null=제외). youtube 미러는 호출 전 제외.
+function vsArchiveLicense(doc){
+  const lic = vsLicenseFromUrl(doc.licenseurl);
+  if(lic){ if(lic.blocked) return null; return lic; }
+  const colls = [].concat(doc.collection || []).map(c => String(c).toLowerCase());
+  if(colls.some(c => VS_PD_COLLECTIONS.includes(c)))
+    return {label:"Public Domain (아카이브 컬렉션)", safe:true};
+  return null;                                            // 라이선스 불명 → 위험(제외)
+}
+function vsCleanTitle(t){
+  return String(t||"").replace(/\.[a-z0-9]{2,4}$/i,"").replace(/[_]+/g," ")
+    .replace(/\s+/g," ").trim().slice(0,120);
+}
+function vsStrip(t){
+  return String(t||"").replace(/<[^>]*>/g," ").replace(/&[a-z]+;/gi," ")
+    .replace(/\s+/g," ").trim().slice(0,180);
+}
+function vsFmtRank(name){
+  const e=(String(name).split(".").pop()||"").toLowerCase();
+  return e==="mp4"?0:e==="m4v"?1:e==="webm"?2:e==="ogv"?3:4;
+}
+
+async function vsCommons(q){
+  const api = "https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search"+
+    "&gsrsearch="+encodeURIComponent(q+" filetype:video")+"&gsrnamespace=6&gsrlimit=14"+
+    "&prop=imageinfo&iiprop=url%7Csize%7Cmime%7Cextmetadata&iiurlwidth=360";
+  const r = await fetch(api, {headers:{"User-Agent":VS_UA}});
+  if(!r.ok) return [];
+  const d = await r.json();
+  const pages = ((d.query||{}).pages) || {};
+  const out = [];
+  for(const p of Object.values(pages)){
+    const ii = ((p.imageinfo||[])[0]) || {};
+    if(!ii.url || !String(ii.mime||"").startsWith("video")) continue;
+    const lic = vsCommonsLicense(ii.extmetadata||{});
+    if(!lic) continue;                                    // nc/nd 제외
+    const title = vsCleanTitle(String(p.title||"").replace(/^File:/,""));
+    const desc = vsStrip(((ii.extmetadata||{}).ImageDescription||{}).value) || title;
+    out.push({source:"Wikimedia Commons", title, topic:desc,
+      thumb:ii.thumburl||"", download:ii.url,
+      page:"https://commons.wikimedia.org/wiki/"+encodeURIComponent(p.title||""),
+      license:lic.label, safe:lic.safe,
+      duration:ii.duration?Math.round(ii.duration):0, mime:ii.mime||""});
+  }
+  return out;
+}
+async function vsArchiveResolve(doc, lic){
+  const id = String(doc.identifier);
+  const m = await fetch("https://archive.org/metadata/"+encodeURIComponent(id), {headers:{"User-Agent":VS_UA}});
+  if(!m.ok) return null;
+  const d = await m.json();
+  const files = (d.files||[]).filter(f => /\.(mp4|webm|ogv|m4v)$/i.test(String(f.name||"")));
+  if(!files.length || !d.server || !d.dir) return null;
+  files.sort((a,b)=>vsFmtRank(a.name)-vsFmtRank(b.name));
+  const f = files[0];
+  const dur = parseFloat(f.length||"0");  // 'H:MM:SS' 또는 초. 숫자만 신뢰.
+  return {source:"Internet Archive", title:vsCleanTitle(doc.title||id),
+    topic:vsStrip(doc.description) || vsCleanTitle(doc.title||id),
+    thumb:"https://archive.org/services/img/"+encodeURIComponent(id),
+    download:"https://"+d.server+d.dir+"/"+encodeURIComponent(f.name),
+    page:"https://archive.org/details/"+encodeURIComponent(id),
+    license:lic.label, safe:lic.safe,
+    duration:Number.isFinite(dur)?Math.round(dur):0, mime:""};
+}
+async function vsArchive(q){
+  // 검색 단계에서 이미 '라이선스 있음 또는 PD 컬렉션'으로 좁힌다(안 그러면 상위 결과가 미러·미라이선스
+  // 영화로 차서 코드 필터 후 0건이 된다). NC/ND는 vsArchiveLicense가 코드에서 다시 걸러낸다.
+  const lc = "(licenseurl:(*creativecommons* OR *publicdomain*) OR collection:(prelinger OR nasa OR noaa OR usgs OR fedflix OR biodiversity))";
+  const api = "https://archive.org/advancedsearch.php?q="+
+    encodeURIComponent("("+q+") AND mediatype:movies AND "+lc)+
+    "&fl[]=identifier&fl[]=title&fl[]=description&fl[]=licenseurl&fl[]=collection&rows=14&output=json";
+  const r = await fetch(api, {headers:{"User-Agent":VS_UA}});
+  if(!r.ok) return [];
+  const d = await r.json();
+  const docs = ((d.response||{}).docs) || [];
+  const picks = [];
+  for(const x of docs){
+    const id = String(x.identifier||"");
+    if(!id || id.toLowerCase().startsWith("youtube-")) continue;   // 유튜브 미러 제외
+    const lic = vsArchiveLicense(x);
+    if(!lic) continue;
+    picks.push({x, lic});
+    if(picks.length>=6) break;
+  }
+  const res = await Promise.all(picks.map(p => vsArchiveResolve(p.x, p.lic).catch(()=>null)));
+  return res.filter(Boolean);
+}
+async function videoSearch(url){
+  const q = (url.searchParams.get("q")||"").trim();
+  const src = (url.searchParams.get("src")||"all").toLowerCase();
+  if(!q) return j({error:"empty query", results:[]}, 400);
+  const tasks = [];
+  if(src==="all"||src==="commons") tasks.push(vsCommons(q).catch(()=>[]));
+  if(src==="all"||src==="archive") tasks.push(vsArchive(q).catch(()=>[]));
+  const arr = (await Promise.all(tasks)).flat();
+  const seen = new Set(); const out = [];
+  for(const rr of arr){
+    if(!rr || !rr.download || seen.has(rr.download)) continue;
+    seen.add(rr.download); out.push(rr);
+  }
+  out.sort((a,b)=>(b.safe?1:0)-(a.safe?1:0));            // 안전(재사용 가능) 먼저
+  return j({q, count:out.length, results:out.slice(0,24)});
+}
+// 테스트용(순수 로직) export — 네트워크 없이 회귀 검증
+export { vsLicenseFromUrl, vsCommonsLicense, vsArchiveLicense, vsCleanTitle, vsStrip, vsFmtRank };
+
 // ── 공개 읽기 프록시: content 레코드/카탈로그/매니페스트를 raw.githubusercontent.com(공개·무인증)로 중계 ──
 // 왜(실제 결함): 기기에 PAT 없으면 GitHub API가 403 → 텔레그램 링크로 연 폰에서 레코드가 안 열림
 // (무한 로딩). raw는 공개 리포에 무인증 200 → 어느 기기서든 조회 가능. 허용 경로만(개방 프록시 방지).
@@ -1089,6 +1300,7 @@ export default {
     if (url.pathname === "/api/media") return mediaProxy(request, url);
     if (url.pathname === "/api/pub") return pubRead(url);
     if (url.pathname === "/api/ghupload") return ghUpload(request, url, env);
+    if (url.pathname === "/api/vsearch") return videoSearch(url);
     if (url.pathname.startsWith("/api/gh/")) return ghProxy(request, url, env);
     return new Response(HTML, {
       headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
