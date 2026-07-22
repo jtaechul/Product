@@ -1,0 +1,56 @@
+{
+  "id": "045",
+  "created_at": "2026-07-22T05:37:25+00:00",
+  "updated_at": "2026-07-22T05:37:25+00:00",
+  "status": "published",
+  "category": "shipwreck",
+  "series": "沈没船 図鑑",
+  "species": {
+    "common_name_ko": "Andrea Doria 난파선",
+    "common_name_en": "Wreck Andrea Doria",
+    "scientific_name": "Wreck Andrea Doria",
+    "depth_range_m": "",
+    "habitat": "침몰선",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "총톤수: 29083 GRT",
+      "침몰: 1956년"
+    ]
+  },
+  "reels": {
+    "hook": "海の底に、眠る船。",
+    "caption": "イタリア客船アンドレア・ドーリア号は、1951年6月16日にイタリア・ジェノヴァのアンサルド造船所で進水し、1953年にイタリア・ラインの旗艦として就航しました。\n全長213.80メートル、総トン数29,083トンを誇るこの豪華客船は、大西洋横断航路で多くの乗客を運びました。\n1956年7月26日、衝突事故により北大西洋で沈没。1706名の乗客・乗員のうち1660名が救助されるという劇的な出来事として、当時世界中で報じられました。\n今も北大西洋の海底にその船体は静かに横たわり、潜水調査や水中映像によってその姿が記録され続けています。\n歴史の重みを伝えるこの記録を、ぜひ保存してご覧ください。",
+    "hashtags": [
+      "#沈没船",
+      "#アンドレアドーリア号",
+      "#イタリアライン"
+    ],
+    "reveal_name": "SS Andrea Doria",
+    "reveal_fact": "",
+    "hook_ko": "",
+    "caption_ko": "이탈리아 여객선 안드레아 도리아호는 1951년 6월 16일 이탈리아 제노바의 안살도 조선소에서 진수되어, 1953년 이탈리아 라인의 기함으로 취항했습니다.\n전장 213.80미터, 총톤수 29,083톤을 자랑하는 이 호화 여객선은 대서양 횡단 항로에서 많은 승객을 실어 날랐습니다.\n1956년 7월 26일, 충돌 사고로 인해 북대서양에서 침몰했습니다. 승객과 승무원 1,706명 중 1,660명이 구조되어 당시 전 세계에 보도된 극적인 사건이 되었습니다.\n지금도 북대서양 해저에 선체가 고요히 잠들어 있으며, 잠수 조사와 수중 영상을 통해 그 모습이 계속 기록되고 있습니다.\n역사의 무게를 담은 이 기록을, 꼭 저장하고 다시 찾아보시기 바랍니다.",
+    "hashtags_ko": [
+      "#침몰선",
+      "#안드레아도리아호",
+      "#이탈리아라인"
+    ],
+    "yt_title": "アンドレア・ドーリア号 悲劇の最期 #沈没船 #アンドレアドーリア号",
+    "yt_title_ko": "안드레아 도리아호, 비극의 최후 #침몰선 #안드레아도리아호",
+    "visualizer": "reels",
+    "video_file": "wreck_andrea_doria_20260722_053725.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Wikipedia: SS Andrea Doria",
+      "Wikimedia Commons"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-045/reels_045.mp4",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-045/cover_045.jpg"
+  },
+  "post": null
+}

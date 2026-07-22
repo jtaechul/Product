@@ -312,5 +312,13 @@
     "common_name_en": "Ipnopidae",
     "scientific_name": "Ipnopidae",
     "date": "2026-07-21"
+  },
+  {
+    "id": "045",
+    "kind": "reels",
+    "common_name_ko": "Andrea Doria 난파선",
+    "common_name_en": "Wreck Andrea Doria",
+    "scientific_name": "Wreck Andrea Doria",
+    "date": "2026-07-22"
   }
 ]
