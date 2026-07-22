@@ -209,7 +209,7 @@ async function fetchCatalog(){const t=await fetchRaw(CATALOG_PATH);try{const a=J
 // 인증 가능한 기기에선 디렉토리 API로 매니페스트에 아직 없는 레거시 레코드를 보강(중복 제거).
 async function listContent(){
   const man=await fetchManifest();
-  const out=man.filter(x=>x&&x.kind!=="longform").map(x=>({
+  const out=man.filter(x=>x&&x.kind!=="longform"&&x.kind!=="narrate").map(x=>({
     no:String(x.id), common_name_ko:x.common_name_ko||x.common_name_en||"종",
     common_name_en:x.common_name_en||"", scientific_name:x.scientific_name||"",
     date:x.date||"", hasVideo:!!x.has_video}));
@@ -247,7 +247,9 @@ function route(){
   const path=location.pathname;
   const m=path.match(/^\\/c\\/(\\w+)/);
   const lm=path.match(/^\\/lf\\/(\\S+)/);
+  const nv=path.match(/^\\/nv\\/(\\S+)/);
   if(m){setNav("library");renderDetail(m[1]);}
+  else if(nv){setNav("home");renderNarrateDetail(decodeURIComponent(nv[1]));}
   else if(lm){setNav("home");renderLongformDetail(decodeURIComponent(lm[1]));}
   else if(path.indexOf("/library")===0){setNav("library");renderLibrary();}
   else{setNav("home");renderHome();}
@@ -312,15 +314,14 @@ function renderHome(){
   '</div>'+
   '<div class="card">'+
     '<span class="lbl">첨부 영상 나레이션 · 일본어 자막·나레이션 입히기</span>'+
-    '<div class="hint" style="margin:4px 0 8px">직접 받은 영상(퍼블릭도메인/CC 등 <b>재가공 허용</b> 소스만)을 올리면 <b>일본어 나레이션+자막</b>을 입혀 완성본을 만듭니다. 제목·내용 설명을 바탕으로 대본이 생성됩니다(없는 사실은 만들지 않음). 출처·크레딧 표기는 운영자 책임입니다.</div>'+
+    '<div class="hint" style="margin:4px 0 8px">직접 받은 영상(퍼블릭도메인/CC 등 <b>재가공 허용</b> 소스만)을 올리면 <b>영상 내용을 분석해 대본을 자동 생성</b>하고 <b>일본어 나레이션+자막</b>을 입힙니다. <b>제목·설명·해시태그</b>는 대본을 근거로 <b>일본어+한국어</b>로 자동 생성되어(직접 입력 불필요), 완료 후 텔레그램과 결과 페이지(/nv)에서 확인·복사할 수 있습니다. 출처·크레딧 표기는 운영자 책임입니다.</div>'+
     '<div class="row2" style="margin-bottom:6px"><label style="flex:1"><input type="radio" name="nvmode" value="shorts" checked> 숏츠 (9:16)</label>'+
       '<label style="flex:1"><input type="radio" name="nvmode" value="longform"> 롱폼 (16:9)</label></div>'+
     '<input id="nvfile" type="file" accept="video/*" style="margin-bottom:6px">'+
-    '<input id="nvurl" placeholder="또는 영상 URL 붙여넣기 (예: NOAA 다운로드 링크)" style="margin-bottom:6px">'+
-    '<input id="nvtitle" placeholder="제목 (일본어/한국어 · 대본 생성용)" style="margin-bottom:6px">'+
-    '<textarea id="nvnotes" placeholder="내용 설명 (무슨 영상인지 · 대본에 반영, 없는 사실 창작 금지)" style="width:100%;min-height:64px;margin-bottom:8px"></textarea>'+
+    '<input id="nvurl" placeholder="또는 영상 URL 붙여넣기 (예: NOAA 다운로드 링크)" style="margin-bottom:8px">'+
     '<button class="go" id="gonv">나레이션 제작</button>'+
     '<div class="banner" id="nvmsg"></div>'+
+    '<div id="nvresults" style="margin-top:12px"></div>'+
   '</div>'+
   '<div class="card">'+
     '<span class="lbl">롱폼 · 랭킹형 TOP N (8분 유튜브)</span>'+
@@ -421,6 +422,7 @@ function renderHome(){
   $("#refresh").onclick=(e)=>{e.preventDefault();loadRuns();};
   loadRuns();
   loadLongformResults();
+  loadNarrateResults();
 }
 function srcbanner(t,c){const m=$("#srcmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
 function nvbanner(t,c){const m=$("#nvmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
@@ -459,16 +461,15 @@ async function uploadToRelease(file){
   try{const a=await up.json();if(a&&a.browser_download_url)return a.browser_download_url;}catch(e){}
   return "https://github.com/"+OWNER+"/"+REPO+"/releases/download/"+NV_TAG+"/"+name;
 }
-// 첨부 영상 나레이션: (파일 업로드 또는 URL) → 워크플로 디스패치
+let _nvTopic="";   // 소싱 출처(커먼스/아카이브) 설명 — '찾기'에서 넘어오면 대본 근거로만 사용(운영자 입력 아님)
+// 첨부 영상 나레이션: (파일 업로드 또는 URL) → 워크플로 디스패치.
+// ★제목·설명은 입력받지 않는다 — 영상 내용을 보고 대본을 만들고, 대본에서 제목·설명·해시태그(일/한)를 자동 생성.
 async function narrateAttached(){
   if(!authReady()){const tb=$("#tokbox");if(tb)tb.open=true;nvbanner("먼저 GitHub 토큰을 설정하세요(위 안내).","err");return;}
   const mode=(document.querySelector('input[name=nvmode]:checked')||{}).value||"shorts";
-  const title=(($("#nvtitle")||{}).value||"").trim();
-  const notes=(($("#nvnotes")||{}).value||"").trim();
   const urlInput=(($("#nvurl")||{}).value||"").trim();
   const fileEl=$("#nvfile");const file=fileEl&&fileEl.files&&fileEl.files[0];
   if(!urlInput&&!file){nvbanner("영상 파일을 올리거나 URL을 붙여넣으세요.","err");return;}
-  if(!title&&!notes){nvbanner("제목이나 내용 설명을 입력하세요(대본 생성에 필요합니다).","err");return;}
   const btn=$("#gonv");btn.disabled=true;
   try{
     let videoUrl=urlInput;
@@ -477,13 +478,73 @@ async function narrateAttached(){
       videoUrl=await uploadToRelease(file);
       if(!videoUrl){nvbanner("영상 업로드 실패. 파일 크기·토큰 권한(Contents RW)을 확인하세요.","err");btn.disabled=false;return;}
     }
-    nvbanner("나레이션 제작 요청 중…");
+    nvbanner("나레이션 제작 요청 중… (영상 내용 분석 → 대본 → 제목·설명·해시태그 자동 생성)");
+    const src=(urlInput&&!file)?"":_nvTopic;   // '찾기'에서 온 경우에만 출처 설명을 근거로 전달
     const r=await fetch(API+"/actions/workflows/"+NV_WF+"/dispatches",{method:"POST",headers:headers(true),
-        body:JSON.stringify({ref:BRANCH,inputs:{video_url:videoUrl,mode,title,notes}})});
-    if(r.status===204){nvbanner("제작 시작! 완료되면 <b>텔레그램</b>으로 완성본이 전송됩니다(5~15분). 결과 영상은 Release에도 올라갑니다.","ok");}
+        body:JSON.stringify({ref:BRANCH,inputs:{video_url:videoUrl,mode,source_topic:(src||"").slice(0,600)}})});
+    if(r.status===204){nvbanner("제작 시작! 완료되면 <b>텔레그램</b>과 아래 <b>최근 나레이션 결과</b>에서 제목·설명·해시태그(일/한)를 확인·복사할 수 있습니다(5~15분).","ok");
+      setTimeout(loadNarrateResults,90000);setTimeout(loadNarrateResults,180000);}
     else{const t=await r.text();nvbanner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
   }catch(e){nvbanner("요청 실패: "+e,"err");}
   btn.disabled=false;
+}
+// 완료된 나레이션 결과(레코드) 목록 — 홈 나레이션 카드 하단
+async function listNarrate(){
+  const man=await fetchManifest();
+  return (man||[]).filter(x=>x&&x.kind==="narrate").sort((a,b)=>(String(a.id)<String(b.id)?1:-1));
+}
+async function loadNarrateResults(){
+  const el=$("#nvresults");if(!el)return;
+  let recs=[];try{recs=await listNarrate();}catch(e){}
+  if(!recs.length){el.innerHTML="";return;}
+  el.innerHTML='<span class="lbl">최근 나레이션 결과</span>'+recs.slice(0,6).map(r=>(
+    '<a class="clitem" href="/nv/'+encodeURIComponent(r.id)+'"><span class="no">'+esc(r.mode==="longform"?"롱폼":"숏츠")+'</span>'+
+    '<span class="nm">'+esc(r.yt_title||r.id)+'<small>'+esc(r.yt_title_ko||"")+'</small></span>'+
+    '<span class="t">'+esc(String(r.date||r.created_at||"").slice(0,10))+'</span></a>'
+  )).join('');
+}
+// 나레이션 결과 상세: 영상 + 자동 생성 제목·설명·해시태그(일/한) 복사
+async function renderNarrateDetail(id){
+  view().innerHTML='<a class="back" href="/">← 제작 페이지</a><div class="card" id="nvcard"><div class="hint">불러오는 중…</div></div>';
+  const rec=await fetchRecord(id);
+  const dc=document.getElementById("nvcard");
+  if(!rec){dc.innerHTML='<div class="hint">이 나레이션 기록을 찾을 수 없습니다(아직 제작 중이거나 완료 전).</div>'+
+      '<div class="btnrow" style="margin-top:14px"><a class="btn" href="/">← 제작 페이지로</a></div>';return;}
+  const md=rec.media||{};
+  const mediaHtml=md.video_url?('<video src="'+prox(md.video_url)+'" controls playsinline preload="metadata"></video>'):"";
+  const tagsJp=(rec.hashtags||[]).join(" "), tagsKo=(rec.hashtags_ko||[]).join(" ");
+  dc.className="card detail";
+  dc.innerHTML=
+    '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px"><b style="font-size:19px">'+esc(id)+'</b>'+
+      '<span class="mono" style="color:var(--gy);font-size:12px">'+esc(rec.mode==="longform"?"롱폼(16:9)":"숏츠(9:16)")+' · 첨부 영상 나레이션</span></div>'+
+    mediaHtml+
+    (md.video_url?'<div class="btnrow" style="margin-top:8px"><button class="btn save" id="bdl">비디오 저장하기</button></div><div class="hint" id="dlhint" style="margin-top:6px"></div>':"")+
+    '<div class="hint" style="margin:10px 0 2px">아래 제목·설명·해시태그는 <b>영상 대본을 근거로 자동 생성</b>된 값입니다(유튜브 업로드용 복사).</div>'+
+    '<div class="dual" style="margin-top:8px">'+
+      '<div><span class="lbl">제목 · 일본어</span><textarea id="nvtj" readonly rows="2">'+esc(rec.yt_title||"")+'</textarea>'+
+        '<button class="btn save" id="nvcptj" style="margin-top:6px">일본어 제목 복사</button></div>'+
+      '<div><span class="lbl">제목 · 한국어(참고)</span><textarea id="nvtk" readonly rows="2">'+esc(rec.yt_title_ko||"")+'</textarea>'+
+        '<button class="btn" id="nvcptk" style="margin-top:6px">한국어 제목 복사</button></div>'+
+    '</div>'+
+    '<div class="dual" style="margin-top:8px">'+
+      '<div><span class="lbl">설명 · 일본어</span><textarea id="nvdj" readonly rows="6">'+esc(rec.yt_description||"")+'</textarea>'+
+        '<button class="btn save" id="nvcpdj" style="margin-top:6px">일본어 설명 복사</button></div>'+
+      '<div><span class="lbl">설명 · 한국어(참고)</span><textarea id="nvdk" readonly rows="6">'+esc(rec.yt_description_ko||"")+'</textarea>'+
+        '<button class="btn" id="nvcpdk" style="margin-top:6px">한국어 설명 복사</button></div>'+
+    '</div>'+
+    '<div class="dual" style="margin-top:8px">'+
+      '<div><span class="lbl">해시태그 · 일본어</span><textarea id="nvhj" readonly rows="3">'+esc(tagsJp)+'</textarea>'+
+        '<button class="btn save" id="nvcphj" style="margin-top:6px">일본어 해시태그 복사</button></div>'+
+      '<div><span class="lbl">해시태그 · 한국어(참고)</span><textarea id="nvhk" readonly rows="3">'+esc(tagsKo)+'</textarea>'+
+        '<button class="btn" id="nvcphk" style="margin-top:6px">한국어 해시태그 복사</button></div>'+
+    '</div>'+
+    '<div class="banner" id="msg" style="margin-top:10px"></div>';
+  const V=s=>((document.getElementById(s)||{}).value||"");
+  const B=(id2,src,msg)=>{const b=document.getElementById(id2);if(b)b.onclick=()=>copyText(V(src),msg);};
+  B("nvcptj","nvtj","일본어 제목을 복사했어요.");B("nvcptk","nvtk","한국어 제목을 복사했어요.");
+  B("nvcpdj","nvdj","일본어 설명을 복사했어요.");B("nvcpdk","nvdk","한국어 설명을 복사했어요.");
+  B("nvcphj","nvhj","일본어 해시태그를 복사했어요.");B("nvcphk","nvhk","한국어 해시태그를 복사했어요.");
+  if(md.video_url){const bd=document.getElementById("bdl");if(bd)bd.onclick=()=>saveVideo(prox(md.video_url),id+".mp4");}
 }
 function vsbanner(t,c){const m=$("#vsmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
 function vsDur(s){s=Math.round(s||0);if(!s)return"";const m=Math.floor(s/60),ss=s%60;return m+":"+String(ss).padStart(2,"0");}
@@ -536,9 +597,8 @@ function renderVsResults(){
 function vsUse(i){
   const v=_vsList[i];if(!v)return;
   const u=$("#nvurl");if(u)u.value=v.download;
-  const t=$("#nvtitle");if(t&&!t.value.trim())t.value=v.title||"";
-  const n=$("#nvnotes");if(n&&!n.value.trim())n.value=v.topic||"";
-  nvbanner("영상 URL을 나레이션 카드에 넣었습니다. 형태(숏츠/롱폼)·제목·설명을 확인하고 '나레이션 제작'을 누르세요.","ok");
+  _nvTopic=(v.topic||v.title||"");   // 대본 근거로만 사용(운영자 입력 아님 · 제목·설명은 자동 생성)
+  nvbanner("영상 URL을 나레이션 카드에 넣었습니다. 형태(숏츠/롱폼)만 고르고 '나레이션 제작'을 누르세요 — 제목·설명·해시태그는 자동 생성됩니다.","ok");
   const card=$("#gonv");if(card&&card.scrollIntoView)card.scrollIntoView({behavior:"smooth",block:"center"});
 }
 let _srcMode="video";   // "video"=영상+이미지 확보(제작 풀) · "image"=이미지전용(영상 없음·별도 보관)

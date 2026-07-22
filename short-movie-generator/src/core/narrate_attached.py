@@ -10,6 +10,7 @@
 영상을 소싱하지 않고 '운영자가 첨부한 것'만 가공한다(출처·크레딧은 운영자가 캡션/설명에 표기)."""
 from __future__ import annotations
 
+import json
 import logging
 import re
 import subprocess
@@ -28,6 +29,42 @@ def _probe_dur(video: str) -> float:
         return float(out)
     except Exception:  # noqa: BLE001
         return 0.0
+
+
+def _sample_frames(video: str, work: Path, n: int = 4) -> list[str]:
+    """영상에서 고르게 n장 프레임 추출(비전 분석용). 실패 시 []."""
+    dur = _probe_dur(video) or 0.0
+    work.mkdir(parents=True, exist_ok=True)
+    out: list[str] = []
+    if dur <= 0:
+        return out
+    for i in range(n):
+        t = dur * (i + 0.5) / n
+        fp = work / f"vf_{i}.jpg"
+        try:
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{t:.2f}", "-i", video,
+                            "-frames:v", "1", "-vf", "scale=512:-1", str(fp)], check=True, timeout=60)
+            if fp.exists() and fp.stat().st_size > 1000:
+                out.append(str(fp))
+        except Exception:  # noqa: BLE001
+            continue
+    return out
+
+
+def _describe_video(video: str, work: Path) -> str:
+    """영상 프레임을 비전 LLM으로 '눈으로 보고' 사실 설명(일본어)을 만든다 → 대본 근거.
+    ★날조 금지: 화면에 실제로 보이는 것만 서술(없는 사실·수치·고유명 금지). 키 없으면 ''(폴백)."""
+    frames = _sample_frames(video, work / "frames", 4)
+    if not frames:
+        return ""
+    from src.core import llm
+    prompt = (
+        "あなたは映像内容の記述アシスタントです。渡された複数フレームは1本の動画から等間隔で抜いたものです。"
+        "画面に実際に写っているものだけを、日本語で3〜5文の短い事実説明にしてください。"
+        "被写体・場所・動き・雰囲気を客観的に。★推測や創作は禁止（映っていない固有名詞・数値・物語は書かない）。"
+        "出力は説明文のみ。")
+    txt = llm.describe_frames(frames, prompt, max_tokens=400)
+    return (txt or "").strip()
 
 
 def _jp_chunks_from_notes(title: str, notes: str, max_chunks: int = 18) -> list[str]:
@@ -71,6 +108,73 @@ def _jp_script(title: str, notes: str, mode: str) -> list[str]:
     return _jp_chunks_from_notes(title, notes, 18 if mode == "shorts" else 44)
 
 
+def _dedup_tags(tags, core_jp) -> list[str]:
+    out: list[str] = []
+    for t in list(core_jp) + list(tags or []):
+        t = str(t).strip()
+        if not t:
+            continue
+        if not t.startswith("#"):
+            t = "#" + t.lstrip("#")
+        t = t.replace(" ", "")
+        if t not in out:
+            out.append(t)
+    return out[:6]
+
+
+def _fallback_meta(chunks: list[str], mode: str) -> dict:
+    """LLM 미가용 시 대본에서 결정론으로 제목·설명·해시태그(일/한) 도출(날조 없음)."""
+    body = "。".join(c.strip("。.、,") for c in chunks[:4] if c.strip())
+    first = (chunks[0] if chunks else "").strip() or "海の映像"
+    title_jp = (first[:22] + ("…" if len(first) > 22 else ""))
+    desc_jp = (body[:180] + "。") if body else "海の映像に日本語ナレーションと字幕を付けた作品です。"
+    return {
+        "title_jp": title_jp, "title_ko": "",
+        "desc_jp": desc_jp, "desc_ko": "",
+        "tags_jp": _dedup_tags(["#海", "#自然", "#癒し"], []),
+        "tags_ko": ["#바다", "#자연", "#힐링"],
+    }
+
+
+def _gen_metadata(chunks: list[str], mode: str) -> dict:
+    """완성된 일본어 나레이션(대본)으로부터 제목·설명·해시태그를 일본어+한국어로 생성.
+    ★운영자 요청: 입력 없이 대본을 근거로 자동 생성(수치·사실은 대본 범위 내). LLM 실패 시 결정론 폴백."""
+    from src.core import llm
+    script = "\n".join(c for c in chunks if c and c.strip())
+    kind = "YouTubeショート(縦型)" if mode == "shorts" else "YouTube長編(横型)"
+    prompt = (
+        "あなたは動画のメタデータ編集者です。以下は完成した日本語ナレーション(字幕本文)です。"
+        f"この{kind}動画の公開用メタデータを作ってください。★本文にない事実・数値・固有名詞は創作しないこと。\n\n"
+        f"【ナレーション】\n{script}\n\n"
+        "次のJSONだけを出力(説明・記号なし):\n"
+        '{\"title_jp\":\"日本語タイトル(30字以内・クリックを誘う)\",'
+        '\"title_ko\":\"上のタイトルの自然な韓国語訳\",'
+        '\"desc_jp\":\"日本語の説明文(2〜4文・敬体)\",'
+        '\"desc_ko\":\"上の説明の自然な韓国語訳\",'
+        '\"tags_jp\":[\"#日本語タグ\",\"…3〜5個\"],'
+        '\"tags_ko\":[\"#한국어태그\",\"…3〜5個\"]}')
+    raw = llm.generate_text(prompt, max_tokens=700)
+    if raw:
+        m = re.search(r"\{.*\}", raw, re.S)
+        if m:
+            try:
+                d = json.loads(m.group(0))
+                tj = _dedup_tags(d.get("tags_jp") or [], [])
+                tk = _dedup_tags(d.get("tags_ko") or [], [])
+                out = {
+                    "title_jp": str(d.get("title_jp", "")).strip(),
+                    "title_ko": str(d.get("title_ko", "")).strip(),
+                    "desc_jp": str(d.get("desc_jp", "")).strip(),
+                    "desc_ko": str(d.get("desc_ko", "")).strip(),
+                    "tags_jp": tj, "tags_ko": tk,
+                }
+                if out["title_jp"] and out["desc_jp"] and out["tags_jp"]:
+                    return out
+            except Exception:  # noqa: BLE001
+                pass
+    return _fallback_meta(chunks, mode)
+
+
 def _normalize_landscape(video: str, out: str, dur: float, work_dir: str) -> str:
     """롱폼(16:9): 소스를 1920×1080에 **cover**(잘라 채움)로 맞추고 dur 길이로 만든다(레터박스 없음).
     소스가 짧으면 -stream_loop로 채운다. 무음(나레이션은 뒤에서 mux)."""
@@ -84,9 +188,14 @@ def _normalize_landscape(video: str, out: str, dur: float, work_dir: str) -> str
     return out
 
 
-def narrate_video(video_path: str, mode: str = "shorts", title: str = "", notes: str = "",
+def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
                   base_dir: str = ".", out_name: str | None = None) -> dict:
-    """첨부 영상 → 일본어 나레이션·자막 완성본. 반환 {path, duration, mode, chunks, title}.
+    """첨부 영상 → 일본어 나레이션·자막 완성본.
+
+    ★운영자 확정: 제목·설명은 입력받지 않는다. 영상 내용을 비전으로 '보고' 대본을 만들고,
+    그 대본으로부터 제목·설명·해시태그를 일본어+한국어로 자동 생성해 반환한다.
+    `source_topic`: 소싱 출처(커먼스/아카이브)의 설명 — 있으면 근거로 활용(운영자 입력 아님).
+    반환 {path, duration, mode, chunks, meta{title_jp/ko, desc_jp/ko, tags_jp/ko}, description}.
 
     mode: 'shorts'(9:16 720×1280) 또는 'longform'(16:9 1920×1080)."""
     mode = "longform" if str(mode).lower().startswith("long") else "shorts"
@@ -99,10 +208,18 @@ def narrate_video(video_path: str, mode: str = "shorts", title: str = "", notes:
     work.mkdir(parents=True, exist_ok=True); out_dir.mkdir(parents=True, exist_ok=True)
     w, h = (SHORTS_W, SHORTS_H) if mode == "shorts" else (LONG_W, LONG_H)
 
-    # 1) 일본어 대본(청크) — LLM 또는 결정론 폴백
-    chunks = _jp_script(title, notes, mode)
+    # 0) 영상 내용 파악(비전) — 소싱 출처 설명이 있으면 근거로 합치고, 없으면 프레임을 보고 서술
+    desc = (source_topic or "").strip()
+    seen = _describe_video(str(vp), work)
+    if seen:
+        desc = (desc + "\n" + seen).strip() if desc else seen
+    if not desc:
+        raise ValueError("영상 내용을 파악하지 못했습니다(GEMINI_API_KEY 또는 소싱 출처 설명 필요).")
+
+    # 1) 일본어 대본(청크) — 영상 내용을 근거로 LLM 생성(실패 시 결정론 폴백)
+    chunks = _jp_script("", desc, mode)
     if not chunks:
-        raise ValueError("나레이션 대본을 만들 수 없습니다(제목·내용 설명을 입력하세요).")
+        raise ValueError("나레이션 대본을 만들 수 없습니다.")
 
     # 2) 나레이션 합성(일본어 TTS + 표시 타이밍)
     from src.core import narration_sync
@@ -134,6 +251,15 @@ def narrate_video(video_path: str, mode: str = "shorts", title: str = "", notes:
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", subbed, "-i", nar["mp3"],
                     "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", final],
                    check=True, timeout=300)
-    log.info("[narrate] 완성: %s (%s · %.1fs · %d청크)", final, mode, dur, len(chunks))
+    # 6) 대본 → 공개용 메타데이터(제목·설명·해시태그, 일본어+한국어) 자동 생성
+    meta = _gen_metadata(chunks, mode)
+    meta_path = out_dir / f"{name}.meta.json"
+    try:
+        meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:  # noqa: BLE001
+        pass
+    log.info("[narrate] 완성: %s (%s · %.1fs · %d청크) title=%s",
+             final, mode, dur, len(chunks), meta.get("title_jp", ""))
     return {"path": final, "duration": dur, "mode": mode, "chunks": chunks,
-            "title": title, "width": w, "height": h}
+            "meta": meta, "meta_path": str(meta_path), "description": desc,
+            "width": w, "height": h}

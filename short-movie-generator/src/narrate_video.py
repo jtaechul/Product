@@ -34,8 +34,7 @@ def main() -> int:
     ap.add_argument("--url", default="", help="영상 URL(첨부 릴리스 에셋 등)")
     ap.add_argument("--path", default="", help="로컬 영상 경로(--url 없을 때)")
     ap.add_argument("--mode", default="shorts", choices=["shorts", "longform"])
-    ap.add_argument("--title", default="", help="제목(대본 생성용)")
-    ap.add_argument("--notes", default="", help="내용 설명(대본 생성용 · 날조 방지)")
+    ap.add_argument("--source-topic", default="", help="소싱 출처(커먼스/아카이브)의 설명 · 근거용(운영자 입력 아님)")
     ap.add_argument("--out-name", default="", help="출력 파일명(확장자 제외)")
     ap.add_argument("--base-dir", default=".")
     a = ap.parse_args()
@@ -55,11 +54,12 @@ def main() -> int:
 
     from src.core.narrate_attached import narrate_video
     try:
-        res = narrate_video(video, mode=a.mode, title=a.title, notes=a.notes,
+        res = narrate_video(video, mode=a.mode, source_topic=a.source_topic,
                             base_dir=a.base_dir, out_name=(a.out_name or None))
     except Exception as e:  # noqa: BLE001
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
+    # 표준출력 = 완성본 경로(워크플로가 파싱). 메타(JSON)는 output/<name>.meta.json에 별도 기록됨.
     print(res["path"])
     return 0
 

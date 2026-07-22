@@ -2,7 +2,9 @@ name: Narrate Attached Video
 
 # 운영자가 첨부한 영상(퍼블릭도메인/CC 등 재가공 허용 소스)에 일본어 나레이션·자막을 입혀
 # 쇼츠(9:16) 또는 롱폼(16:9) 완성본을 만든다. 관리자 페이지의 "첨부 영상 나레이션" 카드가 트리거.
-# 결과: ① 텔레그램 전송 ② Release(narrate-<runid>)에 mp4 업로드 ③ Actions Artifacts.
+# ★제목·설명은 입력받지 않는다 — 영상 내용을 비전으로 보고 대본을 만들고, 그 대본에서 제목·설명·
+#   해시태그를 일본어+한국어로 자동 생성한다(대시보드 /nv/<id> + 텔레그램으로 확인).
+# 결과: ① 텔레그램 전송(제목·설명·해시태그 일/한) ② Release(narrate-<runid>) mp4 ③ 콘텐츠 레코드.
 
 on:
   workflow_dispatch:
@@ -15,12 +17,8 @@ on:
         type: choice
         options: [shorts, longform]
         default: shorts
-      title:
-        description: "제목(일본어 대본 생성용)"
-        required: false
-        default: ""
-      notes:
-        description: "내용 설명(대본 생성용 · 없는 사실 창작 금지)"
+      source_topic:
+        description: "소싱 출처 설명(있으면 대본 근거로만 사용 · 운영자 입력 아님)"
         required: false
         default: ""
 
@@ -55,21 +53,22 @@ jobs:
       - name: Install Python deps
         run: pip install -r requirements.txt
 
-      - name: 나레이션 제작(첨부 영상 → 일본어 나레이션·자막)
+      - name: 나레이션 제작(첨부 영상 → 대본 자동 + 일본어 나레이션·자막)
         id: run
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           set -e
+          NAME="narrated_${{ inputs.mode }}_${{ github.run_id }}"
           OUT=$(python -m src.narrate_video \
             --url "${{ inputs.video_url }}" \
             --mode "${{ inputs.mode }}" \
-            --title "${{ inputs.title }}" \
-            --notes "${{ inputs.notes }}" \
-            --out-name "narrated_${{ inputs.mode }}_${{ github.run_id }}")
+            --source-topic "${{ inputs.source_topic }}" \
+            --out-name "$NAME")
           echo "출력: $OUT"
           echo "out=$OUT" >> "$GITHUB_OUTPUT"
+          echo "meta=output/${NAME}.meta.json" >> "$GITHUB_OUTPUT"
           [ -f "$OUT" ] || { echo "::error::완성본이 생성되지 않았습니다"; exit 1; }
 
       - name: Release 업로드(영구 호스팅)
@@ -88,6 +87,51 @@ jobs:
           echo "url=$BASE/$FN" >> "$GITHUB_OUTPUT"
           echo "다운로드: $BASE/$FN"
 
+      - name: 콘텐츠 레코드 기록(제목·설명·해시태그 일/한 — 대시보드 /nv/ 표시용)
+        id: rec
+        if: success()
+        env:
+          VIDEO_URL: ${{ steps.rel.outputs.url }}
+          SRC_URL: ${{ inputs.video_url }}
+          MODE: ${{ inputs.mode }}
+        run: |
+          CID="nv-${{ github.run_id }}"
+          echo "content_id=$CID" >> "$GITHUB_OUTPUT"
+          python - "${{ steps.run.outputs.meta }}" "$CID" <<'PY'
+          import json, os, sys
+          from src.core import content_store
+          metap, cid = sys.argv[1], sys.argv[2]
+          m = json.load(open(metap, encoding="utf-8"))
+          content_store.write_narrate_record(
+              ".", cid, m, mode=os.environ.get("MODE", "shorts"),
+              video_url=os.environ.get("VIDEO_URL", ""),
+              source_url=os.environ.get("SRC_URL", ""))
+          PY
+
+      - name: Commit 콘텐츠 레코드 (원격이 앞서가도 재시도)
+        if: success()
+        run: |
+          git add "content/${{ steps.rec.outputs.content_id }}.json" content/manifest.json
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(narrate): 첨부 영상 나레이션 #${{ github.run_number }} 레코드 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git fetch origin "${{ github.ref_name }}" || { sleep 3; continue; }
+            if ! git rebase "origin/${{ github.ref_name }}"; then
+              if git status --porcelain | grep -q "content/manifest.json"; then
+                python -c "from src.core import content_store; content_store.rebuild_manifest('.')"
+                git add content/manifest.json
+                GIT_EDITOR=true git rebase --continue || { git rebase --abort 2>/dev/null || true; sleep 3; continue; }
+              else
+                git rebase --abort 2>/dev/null || true; sleep 3; continue
+              fi
+            fi
+            git push origin "HEAD:${{ github.ref_name }}" && { echo "저장 완료"; exit 0; }
+            echo "재시도 $i (원격이 앞서감)…"; sleep 3
+          done
+          echo "저장 실패(push)"; exit 1
+
       - name: Artifact 업로드
         if: always()
         uses: actions/upload-artifact@v4
@@ -96,22 +140,42 @@ jobs:
           path: short-movie-generator/output/*.mp4
           if-no-files-found: ignore
 
-      - name: 텔레그램 전송
+      - name: 텔레그램 전송(영상 + 제목·설명·해시태그 일/한)
         if: always()
         env:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
           OUT: ${{ steps.run.outputs.out }}
+          META: ${{ steps.run.outputs.meta }}
           URL: ${{ steps.rel.outputs.url }}
+          CID: ${{ steps.rec.outputs.content_id }}
+          MODE: ${{ inputs.mode }}
         run: |
           [ -z "$TG_TOKEN" ] && exit 0
-          MSG="첨부 영상 나레이션 완료(${{ inputs.mode }}): ${{ inputs.title }}%0A${URL:-}"
-          for CID in $TG_CHAT; do
-            if [ -f "$OUT" ] && [ "$(stat -c%s "$OUT")" -lt 49000000 ]; then
-              curl -sS -F chat_id="$CID" -F caption="$MSG" -F video=@"$OUT" \
-                   "https://api.telegram.org/bot${TG_TOKEN}/sendVideo" | head -c 200; echo
-            else
-              curl -sS -F chat_id="$CID" -F text="$MSG" \
-                   "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" | head -c 200; echo
-            fi
-          done
+          CAP=$(python - <<'PY'
+          import json, os
+          try:
+              m = json.load(open(os.environ.get("META", ""), encoding="utf-8"))
+          except Exception:
+              m = {}
+          def tags(x): return " ".join(m.get(x, []) or [])
+          L = ["첨부 영상 나레이션 완료 (%s)" % os.environ.get("MODE", "")]
+          if m.get("title_jp"): L += ["", "【제목·JP】 " + m["title_jp"]]
+          if m.get("title_ko"): L += ["【제목·KO】 " + m["title_ko"]]
+          if m.get("desc_jp"):  L += ["", "【설명·JP】 " + m["desc_jp"]]
+          if m.get("desc_ko"):  L += ["【설명·KO】 " + m["desc_ko"]]
+          if tags("tags_jp"):   L += ["", tags("tags_jp")]
+          if tags("tags_ko"):   L += [tags("tags_ko")]
+          cid = os.environ.get("CID", "")
+          if cid: L += ["", "확인: https://shorts-dashboard.jtaechul.workers.dev/nv/%s" % cid]
+          print("\n".join(L))
+          PY
+          )
+          if [ -f "$OUT" ] && [ "$(stat -c%s "$OUT")" -lt 49000000 ]; then
+            curl -sS -F chat_id="$TG_CHAT" -F caption="$CAP" -F video=@"$OUT" \
+                 "https://api.telegram.org/bot${TG_TOKEN}/sendVideo" | head -c 200; echo
+          else
+            MSG="$CAP"$'\n'"${URL:-}"
+            curl -sS -F chat_id="$TG_CHAT" -F text="$MSG" \
+                 "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" | head -c 200; echo
+          fi

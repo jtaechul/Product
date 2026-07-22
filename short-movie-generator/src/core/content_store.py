@@ -226,6 +226,32 @@ def write_longform_record(base_dir: str, content_id: str, meta: dict, *,
     return str(p)
 
 
+def write_narrate_record(base_dir: str, content_id: str, meta: dict, *,
+                         mode: str = "shorts", video_url: str = "",
+                         source_url: str = "") -> str:
+    """첨부 영상 나레이션 결과 레코드 content/<id>.json (kind="narrate").
+
+    대본에서 자동 생성한 제목·설명·해시태그를 일본어/한국어 2단으로 보관 → 대시보드가
+    /nv/<id> 상세에서 영상 미리보기와 함께 보여준다(운영자 유튜브 업로드용 복사)."""
+    p = record_path(base_dir, content_id)
+    rec = {
+        "id": str(content_id), "kind": "narrate", "created_at": _now_iso(),
+        "status": "published", "mode": mode, "source_url": source_url,
+        "yt_title": meta.get("title_jp", ""), "yt_title_ko": meta.get("title_ko", ""),
+        "yt_description": meta.get("desc_jp", ""), "yt_description_ko": meta.get("desc_ko", ""),
+        "hashtags": meta.get("tags_jp", []), "hashtags_ko": meta.get("tags_ko", []),
+        "media": {"video_url": video_url},
+    }
+    p.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+    upsert_manifest(base_dir, {
+        "id": str(content_id), "kind": "narrate",
+        "yt_title": meta.get("title_jp", ""), "yt_title_ko": meta.get("title_ko", ""),
+        "mode": mode, "date": rec.get("created_at", "")[:10], "has_video": bool(video_url),
+    })
+    log.info("[content] 나레이션 레코드 기록: %s", p.name)
+    return str(p)
+
+
 def regen_longform_text(base_dir: str, content_id: str, scope: str = "all") -> bool:
     """롱폼 레코드의 제목·설명·해시태그(일/한)를 다시 도출해 부분 갱신(영상 재렌더 없음).
 

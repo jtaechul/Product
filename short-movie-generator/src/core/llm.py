@@ -95,6 +95,15 @@ def score_frames_subject(image_paths: list[str], subject: str, max_tokens: int =
         return None
 
 
+def describe_frames(image_paths: list[str], prompt: str, max_tokens: int = 400) -> str | None:
+    """프레임 여러 장 + 프롬프트 → 자유형 텍스트(비전 LLM: Claude→Gemini). 키 없으면 None.
+    첨부 영상 나레이션에서 '영상 내용을 눈으로 보고' 사실 설명을 뽑는 데 쓴다(대본 근거)."""
+    imgs = [p for p in (image_paths or []) if p]
+    if not imgs:
+        return None
+    return _vision_claude(imgs, prompt, max_tokens) or _vision_gemini(imgs, prompt)
+
+
 def _vision_claude(image_paths: list[str], prompt: str, max_tokens: int) -> str | None:
     if not os.environ.get("ANTHROPIC_API_KEY"):
         return None

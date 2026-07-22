@@ -852,18 +852,26 @@
 - **★첨부 영상 나레이션(운영자 확정 · 소싱 경로와 독립)**: 운영자가 **직접 받은 영상(퍼블릭도메인/CC 등
   재가공 허용 소스)**을 대시보드에 올리면 **일본어 나레이션+카라오케 자막**을 입혀 **쇼츠(9:16 720×1280)
   또는 롱폼(16:9 1920×1080)** 완성본을 만든다. 종·카테고리 파이프라인을 타지 않는 별도 경로다.
-  - **관리자 UI**: 홈 "첨부 영상 나레이션" 카드 — 형태(숏츠/롱폼) 선택 + 파일 업로드(또는 URL) + 제목·
-    내용 설명 입력 → "나레이션 제작". 파일은 브라우저가 GitHub Release(태그 `attach-input`) 에셋으로
-    올려 공개 URL을 얻고, 그 URL로 `narrate-video.yml`을 디스패치한다(서버 토큰 모드는 워커
-    `/api/ghupload`가 uploads.github.com으로 중계, PAT 모드는 브라우저가 직접). 결과는 텔레그램 전송 +
-    Release(`narrate-<runid>`) + Artifact.
-  - **대본(날조 금지)**: 제목·내용 설명만으로 `llm.generate_text`가 敬体 일본어 나레이션을 쓰고, 키
-    없거나 실패 시 입력 문장을 구두점 단위로 쪼개는 결정론 폴백(`_jp_chunks_from_notes`) — **없는 사실은
-    만들지 않는다**. 출처·크레딧 표기는 운영자 책임(모듈은 영상을 소싱하지 않음).
-  - 구현: 백엔드 `src/core/narrate_attached.py`(`narrate_video`) · CLI `src/narrate_video.py` ·
-    워크플로 `.github/workflows/narrate-video.yml` · 대시보드 `worker/index.mjs`(`narrateAttached`/
-    `uploadToRelease`/`ghUpload`) · 회귀 `tests/test_narrate_attached.py`(숏츠 720×1280·롱폼 1920×1080
-    실렌더 E2E). ⚠️ `workflow_dispatch`는 **기본 브랜치(main)에도 워크플로가 있어야** API 실행됨(하드룰 #15③).
+  - **관리자 UI**: 홈 "첨부 영상 나레이션" 카드 — 형태(숏츠/롱폼)만 선택 + 파일 업로드(또는 URL) →
+    "나레이션 제작". 파일은 브라우저가 GitHub Release(태그 `attach-input`) 에셋으로 올려 공개 URL을
+    얻고, 그 URL로 `narrate-video.yml`을 디스패치한다(서버 토큰 모드는 워커 `/api/ghupload`가
+    uploads.github.com으로 중계, PAT 모드는 브라우저가 직접). 결과는 텔레그램 전송 +
+    Release(`narrate-<runid>`) + Artifact + 콘텐츠 레코드.
+  - **★제목·설명·해시태그 자동 생성(운영자 확정 · 입력란 폐지)**: 제목·내용 설명을 **입력받지 않는다**.
+    ① 영상 프레임을 비전 LLM으로 '보고' 사실 설명을 뽑고(`_describe_video`→`llm.describe_frames`,
+    소싱 출처 설명이 있으면 근거로 합침 · 없으면 프레임만), ② 그 설명으로 敬体 일본어 나레이션(대본)을
+    만들고, ③ **대본을 근거로 제목·설명·해시태그를 일본어+한국어로 자동 생성**한다(`_gen_metadata`,
+    LLM JSON 우선 · 실패 시 결정론 폴백). ★날조 금지: 화면에 보이는 것/대본 범위 안에서만.
+    비전·근거가 모두 없으면 지어내지 않고 실패 처리.
+  - **결과 확인(관리자 페이지)**: 완료 시 `content/nv-<runid>.json`(kind="narrate") 레코드를 커밋 →
+    홈 카드 하단 "최근 나레이션 결과" + `/nv/<id>` 상세에서 **영상 미리보기 + 제목·설명·해시태그를
+    일/한 2단으로 복사**. 텔레그램 메시지에도 제목·설명·해시태그(일/한)가 포함된다.
+  - 구현: 백엔드 `src/core/narrate_attached.py`(`narrate_video`/`_describe_video`/`_gen_metadata`) ·
+    `llm.describe_frames`(비전) · `content_store.write_narrate_record` · CLI `src/narrate_video.py`
+    (`--source-topic`) · 워크플로 `.github/workflows/narrate-video.yml` · 대시보드 `worker/index.mjs`
+    (`narrateAttached`/`uploadToRelease`/`ghUpload`/`renderNarrateDetail`/`loadNarrateResults`) · 회귀
+    `tests/test_narrate_attached.py`(숏츠·롱폼 실렌더 E2E + 메타 생성·근거없음 실패). ⚠️ `workflow_dispatch`는
+    **기본 브랜치(main)에도 워크플로가 있어야** API 실행됨(하드룰 #15③).
 - **★다운로드 가능 영상 찾기(운영자 확정 · 썸네일·주제 미리보기)**: 키워드로 **키(API) 없이 직접
   다운로드 가능한 무료 영상**을 찾아 **썸네일 + 주제(제목·설명) + 라이선스 + 길이**를 카드로 미리 보여준다.
   각 카드의 "나레이션에 사용"을 누르면 위 첨부 나레이션 카드에 URL·제목·설명이 자동 입력된다("찾기→나레이션"
