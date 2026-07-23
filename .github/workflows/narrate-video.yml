@@ -29,6 +29,11 @@ on:
         description: "더빙형 검수 편집본 대본(JSON). 대시보드에서 수정 후 '재제작' 시 전달 — 있으면 전사·번역을 건너뛰고 이 대본으로 정렬 제작."
         required: false
         default: ""
+      scope:
+        description: "재생성 범위 — all(전체 제작) / meta(제목·설명만) / thumb(썸네일만)"
+        type: choice
+        options: [all, meta, thumb]
+        default: all
 
 concurrency:
   group: narrate-video
@@ -39,6 +44,7 @@ permissions:
 
 jobs:
   narrate:
+    if: ${{ inputs.scope == 'all' || inputs.scope == '' }}
     runs-on: ubuntu-latest
     name: 첨부 영상 나레이션
     defaults:
@@ -222,3 +228,100 @@ jobs:
             curl -sS -F chat_id="$TG_CHAT" -F text="$MSG" \
                  "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" | head -c 200; echo
           fi
+
+  # ── 부분 재생성(운영자 버튼): 영상 재렌더 없이 ① 제목·설명(meta) ② 썸네일(thumb)만 갱신 ──
+  partial:
+    if: ${{ inputs.scope == 'meta' || inputs.scope == 'thumb' }}
+    runs-on: ubuntu-latest
+    name: 부분 재생성(제목·설명/썸네일)
+    defaults:
+      run:
+        working-directory: short-movie-generator
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: short-movie-generator/requirements.txt
+
+      - name: Install FFmpeg + fonts (썸네일 렌더·프레임 추출용)
+        if: inputs.scope == 'thumb'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-cjk fonts-liberation
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: 부분 재생성 실행
+        id: run
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -e
+          CID=$(printf '%s' "${{ inputs.content_id }}" | tr -cd 'A-Za-z0-9-' | cut -c1-40)
+          [ -z "$CID" ] && { echo "::error::content_id 필요(부분 재생성은 기존 콘텐츠 대상)"; exit 1; }
+          echo "cid=$CID" >> "$GITHUB_OUTPUT"
+          OUT=$(python -m src.narrate_partial --cid "$CID" --scope "${{ inputs.scope }}" \
+                --video-url "${{ inputs.video_url }}" | tail -1)
+          echo "out=$OUT"
+          echo "thumb=$OUT" >> "$GITHUB_OUTPUT"
+
+      - name: 썸네일 릴리스 업로드 + 레코드 갱신
+        if: inputs.scope == 'thumb'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          CID="${{ steps.run.outputs.cid }}"
+          TAG="narrate-$CID"
+          FN="thumb_${{ github.run_id }}.jpg"
+          cp "${{ steps.run.outputs.thumb }}" "$FN"
+          gh release upload "$TAG" "$FN" --clobber
+          URL="${{ github.server_url }}/${{ github.repository }}/releases/download/$TAG/$FN"
+          python - "$CID" "$URL" <<'PY'
+          import sys
+          from src.core import content_store
+          assert content_store.set_narrate_thumb(".", sys.argv[1], sys.argv[2]), "레코드 갱신 실패"
+          print("썸네일:", sys.argv[2])
+          PY
+
+      - name: 레코드 커밋 (원격이 앞서가도 재시도)
+        run: |
+          git add "content/${{ steps.run.outputs.cid }}.json" content/manifest.json || true
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(narrate): ${{ steps.run.outputs.cid }} ${{ inputs.scope }} 재생성 [skip ci]"
+          for i in 1 2 3 4 5; do
+            git fetch origin "${{ github.ref_name }}" || { sleep 3; continue; }
+            if ! git rebase "origin/${{ github.ref_name }}"; then
+              if git status --porcelain | grep -q "content/manifest.json"; then
+                python -c "from src.core import content_store; content_store.rebuild_manifest('.')"
+                git add content/manifest.json
+                GIT_EDITOR=true git rebase --continue || { git rebase --abort 2>/dev/null || true; sleep 3; continue; }
+              else
+                git rebase --abort 2>/dev/null || true; sleep 3; continue
+              fi
+            fi
+            git push origin "HEAD:${{ github.ref_name }}" && { echo "저장 완료"; exit 0; }
+            echo "재시도 $i (원격이 앞서감)…"; sleep 3
+          done
+          echo "저장 실패(push)"; exit 1
+
+      - name: 텔레그램 알림
+        if: always()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          [ -z "$TG_TOKEN" ] && exit 0
+          LBL="제목·설명"; [ "${{ inputs.scope }}" = "thumb" ] && LBL="썸네일"
+          MSG="나레이션 ${LBL} 재생성 완료: https://shorts-dashboard.jtaechul.workers.dev/nv/${{ steps.run.outputs.cid }}"
+          for C in $TG_CHAT; do
+            curl -sS -F chat_id="$C" -F text="$MSG" \
+                 "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" | head -c 120; echo
+          done

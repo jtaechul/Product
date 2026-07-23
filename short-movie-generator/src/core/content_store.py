@@ -293,6 +293,47 @@ def regen_longform_text(base_dir: str, content_id: str, scope: str = "all") -> b
     return True
 
 
+def update_narrate_meta(base_dir: str, content_id: str, meta: dict) -> bool:
+    """나레이트 레코드의 제목·설명·해시태그(일/한)·훅만 부분 갱신(영상·썸네일 유지).
+    운영자가 /nv에서 '제목·설명 재생성'을 눌렀을 때 narrate_partial(scope=meta)이 호출."""
+    rec = load_record(base_dir, content_id)
+    if not rec or rec.get("kind") != "narrate":
+        return False
+    rec["hook"] = meta.get("hook_jp", rec.get("hook", ""))
+    rec["yt_title"] = meta.get("title_jp", rec.get("yt_title", ""))
+    rec["yt_title_ko"] = meta.get("title_ko", rec.get("yt_title_ko", ""))
+    rec["yt_description"] = meta.get("desc_jp", rec.get("yt_description", ""))
+    rec["yt_description_ko"] = meta.get("desc_ko", rec.get("yt_description_ko", ""))
+    if meta.get("tags_jp"):
+        rec["hashtags"] = meta["tags_jp"]
+    if meta.get("tags_ko"):
+        rec["hashtags_ko"] = meta["tags_ko"]
+    rec["updated_at"] = _now_iso()
+    record_path(base_dir, content_id).write_text(
+        json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+    upsert_manifest(base_dir, {
+        "id": str(content_id), "kind": "narrate",
+        "yt_title": rec.get("yt_title", ""), "yt_title_ko": rec.get("yt_title_ko", ""),
+        "mode": rec.get("mode", ""), "date": str(rec.get("created_at", ""))[:10],
+        "has_video": bool((rec.get("media") or {}).get("video_url")),
+    })
+    log.info("[content] 나레이트 메타 재생성: %s", content_id)
+    return True
+
+
+def set_narrate_thumb(base_dir: str, content_id: str, thumb_url: str) -> bool:
+    """나레이트 레코드의 썸네일 URL만 갱신(썸네일 재생성 후 새 릴리스 에셋 반영)."""
+    rec = load_record(base_dir, content_id)
+    if not rec or rec.get("kind") != "narrate":
+        return False
+    rec.setdefault("media", {})["thumb_url"] = thumb_url
+    rec["updated_at"] = _now_iso()
+    record_path(base_dir, content_id).write_text(
+        json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+    log.info("[content] 나레이트 썸네일 갱신: %s", content_id)
+    return True
+
+
 def set_narrate_youtube(base_dir: str, content_id: str, *, youtube_url: str,
                         privacy: str = "") -> bool:
     """나레이트(첨부 영상 나레이션) 레코드에 유튜브 업로드 결과(URL·공개범위)를 기록 + 매니페스트 갱신.

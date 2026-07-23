@@ -516,10 +516,14 @@ async function renderNarrateDetail(id){
     '<div class="card" style="margin-top:12px">'+
       '<span class="lbl">이 나레이션 영상 관리</span>'+
       '<div class="btnrow" style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
-        (rec.source_url?'<button class="btn" id="nvregen">다시 제작(재생성)</button>':'<button class="btn" id="nvregen" disabled title="원본 URL 없음">재생성 불가</button>')+
+        '<button class="btn" id="nvmeta">제목·설명 재생성</button>'+
+        (rec.source_url?'<button class="btn" id="nvthumb">썸네일 재생성</button>':'<button class="btn" id="nvthumb" disabled title="원본 URL 없음">썸네일 재생성 불가</button>')+
+        (rec.source_url?'<button class="btn" id="nvregen">전체 다시 제작(재생성)</button>':'<button class="btn" id="nvregen" disabled title="원본 URL 없음">재생성 불가</button>')+
         '<button class="btn" id="nvdel" style="background:#8b1a1a;color:#fff">이 영상 삭제 (영구)</button></div>'+
       '<div class="hint" style="margin-top:6px">'+
-        (rec.source_url?'재생성은 <b>같은 원본</b>으로 다시 만들어 이 화면(같은 주소)을 갱신합니다(5~15분). ':'원본 URL 정보가 없어 재생성은 불가합니다(삭제만 가능). ')+
+        '<b>제목·설명 재생성</b>은 대본을 근거로 제목·설명·해시태그만 다시 만듭니다(1~2분 · 영상 유지). '+
+        '<b>썸네일 재생성</b>은 원본에서 피사체 장면을 다시 골라 썸네일만 새로 만듭니다(2~5분 · 영상 유지). '+
+        (rec.source_url?'전체 재생성은 <b>같은 원본</b>으로 처음부터 다시 만듭니다(5~15분). ':'원본 URL 정보가 없어 전체 재생성·썸네일은 불가합니다. ')+
         '삭제는 영상·기록을 되돌릴 수 없이 지웁니다.</div></div>'+
     '<div class="banner" id="msg" style="margin-top:10px"></div>';
   const V=s=>((document.getElementById(s)||{}).value||"");
@@ -534,7 +538,28 @@ async function renderNarrateDetail(id){
   const dub=document.getElementById("nvdub");
   if(dub&&rec.source_url)dub.onclick=()=>regenNarrateDub(id,rec.source_url,rec.mode||"longform");
   const nvu=document.getElementById("nvup");if(nvu)nvu.onclick=()=>uploadNarrate(id);
+  const nvm=document.getElementById("nvmeta");
+  if(nvm)nvm.onclick=()=>regenNarratePartial(id,rec.source_url||"-",rec.mode||"longform","meta","nvmeta","제목·설명");
+  const nvt=document.getElementById("nvthumb");
+  if(nvt&&rec.source_url)nvt.onclick=()=>regenNarratePartial(id,rec.source_url,rec.mode||"longform","thumb","nvthumb","썸네일");
   const nvd=document.getElementById("nvdel");if(nvd)nvd.onclick=()=>deleteContent(id,"narrate");
+}
+
+// 나레이션 부분 재생성(영상 유지): scope=meta(제목·설명) | thumb(썸네일) — narrate-video.yml 디스패치.
+async function regenNarratePartial(id,sourceUrl,mode,scope,btnId,label){
+  if(!authReady()){banner("재생성에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
+  const mins=(scope==="thumb")?"2~5분":"1~2분";
+  if(!confirm(label+"만 다시 만듭니다(영상은 그대로).\\n\\n완료까지 약 "+mins+", 이 화면을 새로고침하면 반영됩니다.\\n계속할까요?"))return;
+  const b=document.getElementById(btnId); if(b){b.disabled=true;b.textContent=label+" 재생성 중…";}
+  banner(label+" 재생성을 시작합니다… ("+mins+" 뒤 새로고침)");
+  try{
+    const r=await fetch(API+"/actions/workflows/"+NV_WF+"/dispatches",{method:"POST",headers:headers(true),
+      body:JSON.stringify({ref:BRANCH,inputs:{video_url:(sourceUrl||"-"),mode:(mode||"longform"),
+        content_id:String(id),scope:scope}})});
+    if(r.status===204)banner(label+" 재생성 시작! "+mins+" 뒤 이 화면을 새로고침하세요.","ok");
+    else{const t=await r.text();banner("시작 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");
+      if(b){b.disabled=false;b.textContent=label+" 재생성";}}
+  }catch(e){banner("오류: "+e,"err");if(b){b.disabled=false;b.textContent=label+" 재생성";}}
 }
 
 // 나레이션 영상 유튜브 '수동' 업로드 — 롱폼과 같은 upload-longform.yml 디스패치(레코드 kind로 분기).
