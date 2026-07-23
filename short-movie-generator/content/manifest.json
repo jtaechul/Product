@@ -323,15 +323,6 @@
     "date": "2026-07-23"
   },
   {
-    "id": "nv-29999730295",
-    "kind": "narrate",
-    "yt_title": "海底で発見された謎の沈没船と潜水艦の正体",
-    "yt_title_ko": "해저에서 발견된 의문의 침몰선과 잠수함의 정체",
-    "mode": "longform",
-    "date": "2026-07-23",
-    "has_video": true
-  },
-  {
     "id": "047",
     "kind": "reels",
     "common_name_ko": "Thistlegorm 난파선",
@@ -339,5 +330,14 @@
     "scientific_name": "Wreck Thistlegorm",
     "date": "2026-07-23",
     "youtube_url": "https://youtu.be/K2rwgOQhvPA"
+  },
+  {
+    "id": "nv-29999730295",
+    "kind": "narrate",
+    "yt_title": "夜の海に月明かりが広がり",
+    "yt_title_ko": "",
+    "mode": "longform",
+    "date": "2026-07-23",
+    "has_video": true
   }
 ]
