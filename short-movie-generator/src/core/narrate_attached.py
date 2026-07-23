@@ -225,8 +225,8 @@ def _gen_metadata(chunks: list[str], mode: str) -> dict:
         f"この{kind}動画の公開用メタデータを作ってください。★本文にない事実・数値・固有名詞は創作しないこと。\n\n"
         f"【ナレーション】\n{script}\n\n"
         "次のJSONだけを出力(説明・記号なし):\n"
-        '{\"hook_jp\":\"12〜18字の強いオープニングフック(冒頭2秒で指を止める一言・体言止め/問いかけ可)\",'
-        '\"title_jp\":\"日本語タイトル(30字以内・クリックを誘う)\",'
+        '{\"hook_jp\":\"12〜18字の強いオープニングフック(冒頭2秒で指を止める一言・体言止め/問いかけ可)。★タイトルと同じ文言の使い回しは禁止(別の表現にする)\",'
+        '\"title_jp\":\"日本語タイトル(30字以内)。★台本全体を読んで内容を要約し、視聴者が『何の映像で・何が見られるか』を予測できる具体的なタイトルにする(対象+見どころ・事実を含める)。意味のない問いかけだけのタイトルや抽象的な釣り文句は禁止\",'
         '\"title_ko\":\"上のタイトルの自然な韓国語訳\",'
         '\"desc_jp\":\"日本語の説明文(2〜4文・敬体)\",'
         '\"desc_ko\":\"上の説明の自然な韓国語訳\",'
@@ -407,65 +407,115 @@ def _corner_brackets(d, w: int, h: int, color, alpha: int = 235):
 
 
 def _pill(im, x: int, y: int, text: str, fontsize: int) -> int:
-    """화이트 라운드 '필' 태그(레퍼런스의 「実在します」 칩). 반환: 필 높이."""
+    """딥네이비 라운드 '필' 태그(ROV HUD 톤 · 골드 테두리 + 화이트 텍스트). 반환: 필 높이.
+    ★스타일 변경(운영자 확정): 예전 화이트 칩 → 우주선/ROV UI 톤의 네이비 칩(화면 라벨 오버레이와 통일)."""
     from PIL import ImageDraw, ImageFont
     from src.core import hook_intro as hi
-    d = ImageDraw.Draw(im)
+    d = ImageDraw.Draw(im, "RGBA")
     f = ImageFont.truetype(hi.FONT_SANS_B, fontsize, index=0)
     tw = d.textlength(text, font=f)
     asc = f.getbbox("あ")[3]
     padx, pady = int(fontsize * 0.6), int(fontsize * 0.42)
     rw, rh = int(tw + 2 * padx), int(asc + 2 * pady)
-    d.rounded_rectangle([x, y, x + rw, y + rh], radius=int(rh * 0.26), fill=_CREAM)
-    d.text((x + padx, y + pady - int(fontsize * 0.06)), text, font=f, fill=(22, 28, 36))
+    d.rounded_rectangle([x, y, x + rw, y + rh], radius=int(rh * 0.26),
+                        fill=(12, 20, 34, 235), outline=_ACCENT + (220,),
+                        width=max(2, int(fontsize * 0.07)))
+    d.text((x + padx, y + pady - int(fontsize * 0.06)), text, font=f, fill=(245, 244, 240))
     return rh
+
+
+def _kicker_text(hook: str, title: str) -> str:
+    """썸네일 필(작은 칩) 문구 — 제목에서 추출하되 **큰 글씨(훅)와 중복이면 배제**.
+
+    ★실사고(운영자 지적): 큰 글씨와 필 안 작은 글씨가 똑같이 들어감 → 필은 '제목(내용 예고)'을
+    보여주는 자리이므로, 훅과 같은/포함 관계인 조각은 건너뛰고 다른 조각을 쓴다. 전부 중복이면 ''(필 생략)."""
+    hook_n = re.sub(r"\s+", "", (hook or ""))
+    for seg in re.split(r"[、。，,・|/\n]", (title or "").strip()):
+        seg = seg.strip()[:16]
+        seg_n = re.sub(r"\s+", "", seg)
+        if not seg_n:
+            continue
+        if hook_n and (seg_n in hook_n or hook_n in seg_n):
+            continue
+        return seg
+    return ""
+
+
+def _gradient_glow_lines(im, x0: int, y0: int, lines: list[str], font, line_h: int, h: int):
+    """세로 그라디언트(시안→핑크) + 소프트 글로우 타이틀(쇼츠 오프닝 HUD와 동일 룩). 순수 PIL.
+    글자 마스크를 만들어 ① 옅은 블루 글로우를 깔고 ② 블록 세로 그라디언트로 채운다."""
+    from PIL import Image, ImageDraw, ImageFilter
+    W, H = im.size
+    mask = Image.new("L", (W, H), 0)
+    md = ImageDraw.Draw(mask)
+    yy = y0
+    for ln in lines:
+        md.text((x0, yy), ln, font=font, fill=255,
+                stroke_width=max(2, int(h * 0.0022)), stroke_fill=255)
+        yy += line_h
+    block_h = max(1, yy - y0)
+    # ① 글로우(옅은 블루) — 넓게 블러한 마스크로 은은한 발광
+    glow = mask.filter(ImageFilter.GaussianBlur(max(6, int(h * 0.014))))
+    im.paste(Image.new("RGB", (W, H), (110, 170, 255)), (0, 0),
+             glow.point(lambda v: int(v * 0.55)))
+    # ② 본문: 시안(#9FD3FF) → 핑크(#F79ADF) 세로 그라디언트
+    top, bot = (159, 211, 255), (247, 154, 223)
+    grad = Image.new("RGB", (1, block_h))
+    for i in range(block_h):
+        t = i / (block_h - 1) if block_h > 1 else 0.0
+        grad.putpixel((0, i), tuple(int(a + (b - a) * t) for a, b in zip(top, bot)))
+    full = Image.new("RGB", (W, H), top)
+    full.paste(grad.resize((W, block_h)), (0, y0))
+    im.paste(full, (0, 0), mask)
+    return yy
 
 
 def _render_hook_and_thumb(bg_path: str, hook: str, title: str, w: int, h: int,
                            card_png: str, thumb_png: str) -> bool:
     """훅 문구를 배경(피사체 프레임) 위에 얹어 ① 오프닝 카드 ② 유튜브 썸네일을 만든다.
-    ★레퍼런스 양식(운영자 확정 · IMG_3526): 네 모서리 코너 브래킷 + 좌측 세로 어둠(피사체는 우측 노출) +
-    좌측 정렬 대형 화이트 볼드 타이틀 + 골드 언더라인 + 화이트 라운드 필 킥커. 소프트 글로우·드롭섀도.
+    ★우주선/ROV HUD 양식(운영자 확정 · 쇼츠 오프닝과 브랜드 통일): 네 모서리 코너 브래킷 +
+    상단 모노 HUD 라벨(DEEP SEA · ROV CAM / REC · DIVE LOG + 벡터 레드닷) + 전체 딤·비네트 +
+    대형 그라디언트(시안→핑크) 글로우 타이틀. 썸네일에는 딥네이비 필 킥커(★훅과 중복 문구 배제 —
+    `_kicker_text`가 제목의 '내용 예고' 조각을 고름).
     ★이모지·시스템 아이콘 금지(하드룰) — 텍스트+벡터 도형만. 실패 시 False(훅 생략)."""
     try:
-        from PIL import Image, ImageDraw, ImageEnhance
+        from PIL import Image, ImageDraw, ImageEnhance, ImageFont
+        from src.core import hook_intro as hi
         base = Image.open(bg_path).convert("RGB")
         bg = _cover_crop(base, w, h)
-        bg = ImageEnhance.Contrast(bg).enhance(1.10)
-        bg = ImageEnhance.Color(bg).enhance(1.08)
-        # 좌측 세로 어둠(텍스트 가독) — 왼쪽 짙게 → 오른쪽(피사체)로 투명해지는 수평 그라디언트
-        grad = Image.new("L", (w, 1), 0)
-        gp = grad.load()
-        for xx in range(w):
-            f = (1 - xx / (w * 0.62)) * 0.86 if xx < w * 0.62 else 0.0
-            gp[xx, 0] = int(255 * max(0.0, f))
-        dark = Image.composite(Image.new("RGB", (w, h), (3, 8, 15)), bg, grad.resize((w, h)))
-        dark = Image.blend(dark, Image.new("RGB", (w, h), (2, 6, 12)), 0.10)   # 아주 옅은 전체 딤
+        bg = ImageEnhance.Contrast(bg).enhance(1.08)
+        bg = ImageEnhance.Color(bg).enhance(1.06)
+        # 전체 딤(HUD 톤) + 비네트 — 어두운 심해 계기판 위에 발광 텍스트가 뜨는 룩
+        dark = Image.blend(bg, Image.new("RGB", (w, h), (3, 8, 16)), 0.42)
+        dark = _vignette(dark, strength=0.55)
 
         x0 = int(w * 0.058)                       # 좌측 텍스트 컬럼 시작
-        col_w = int(w * 0.50)                     # 컬럼 폭(우측 피사체 침범 방지)
+        col_w = int(w * 0.62)                     # 타이틀 컬럼 폭
 
         def _compose(with_pill: bool):
             im = dark.copy()
             d = ImageDraw.Draw(im, "RGBA")
-            _corner_brackets(d, w, h, _CREAM, 230)
-            font, lines = _fit_block(d, hook, col_w, 3, int(h * 0.140), int(h * 0.062))
+            _corner_brackets(d, w, h, _CREAM, 220)
+            # 상단 HUD 라벨(모노): 좌 = 채널 시그니처 · 우 = REC 레드닷(벡터) + DIVE LOG
+            mono = ImageFont.truetype(hi.FONT_MONO, max(14, int(h * 0.030)))
+            ly = int(h * 0.072)
+            d.text((x0, ly), "DEEP SEA · ROV CAM", font=mono, fill=(198, 219, 240, 225))
+            rtxt = "REC · DIVE LOG"
+            rw_ = d.textlength(rtxt, font=mono)
+            rx = w - x0 - int(rw_)
+            rr = max(4, int(h * 0.009))
+            d.ellipse([rx - rr * 3, ly + rr * 0.6, rx - rr, ly + rr * 2.6], fill=(232, 64, 64, 235))
+            d.text((rx, ly), rtxt, font=mono, fill=(198, 219, 240, 225))
+            # 대형 그라디언트 글로우 타이틀(쇼츠 오프닝 룩)
+            font, lines = _fit_block(d, hook, col_w, 3, int(h * 0.150), int(h * 0.064))
             asc = font.getbbox("あ")[3]
-            line_h = int(asc * 1.30)
-            y = int(h * 0.135)
-            for ln in lines:
-                _shadow_text(im, (x0, y), ln, font, blur=max(7, int(h * 0.012)), grow=max(3, int(h * 0.004)))
-                dd = ImageDraw.Draw(im, "RGBA")
-                dd.text((x0, y), ln, font=font, fill=(255, 255, 255),
-                        stroke_width=max(4, int(h * 0.006)), stroke_fill=_INK)
-                y += line_h
-            d = ImageDraw.Draw(im, "RGBA")
-            d.rectangle([x0, y + int(h * 0.012), x0 + int(w * 0.15), y + int(h * 0.012) + max(4, int(h * 0.008))],
-                        fill=_ACCENT)                        # 골드 언더라인
+            line_h = int(asc * 1.28)
+            y = int(h * 0.175)
+            y_end = _gradient_glow_lines(im, x0, y, lines, font, line_h, h)
             if with_pill and title:
-                kick = re.split(r"[、。，,\n]", title.strip())[0][:14] or title.strip()[:14]
+                kick = _kicker_text(hook, title)   # ★훅(큰 글씨)과 중복이면 다른 조각/생략
                 if kick:
-                    _pill(im, x0, y + int(h * 0.045), kick, int(h * 0.046))
+                    _pill(im, x0, y_end + int(h * 0.050), kick, int(h * 0.048))
             return im
 
         _compose(False).convert("RGB").save(card_png, quality=93)      # 오프닝 카드(영상): 훅만
