@@ -324,19 +324,19 @@
     "date": "2026-07-23"
   },
   {
-    "id": "046",
-    "kind": "reels",
-    "common_name_ko": "민태과",
-    "common_name_en": "Macrouridae",
-    "scientific_name": "Macrouridae",
-    "date": "2026-07-23"
-  },
-  {
     "id": "044",
     "kind": "reels",
     "common_name_ko": "긴촉수매퉁이과",
     "common_name_en": "Ipnopidae",
     "scientific_name": "Ipnopidae",
+    "date": "2026-07-23"
+  },
+  {
+    "id": "046",
+    "kind": "reels",
+    "common_name_ko": "민태과",
+    "common_name_en": "Macrouridae",
+    "scientific_name": "Macrouridae",
     "date": "2026-07-23"
   }
 ]
