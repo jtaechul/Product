@@ -50,7 +50,8 @@ def regen_meta(base_dir: str, cid: str, scope: str = "meta") -> bool:
         lines = [x for x in (rec.get("hook", ""), body) if x and x.strip()]
     if not lines:
         raise SystemExit("ERROR: 재생성 근거(대본/설명)가 없습니다.")
-    meta = N._gen_metadata(lines, rec.get("mode", "longform"))
+    meta = N._gen_metadata(lines, rec.get("mode", "longform"),
+                           source_topic=str(rec.get("source_topic", "")).strip())
     if scope in ("meta", "desc"):
         # 챕터(타임스탬프) 블록 보존 — 새 설명 끝에 다시 붙인다
         _, ch_jp = _strip_chapters(rec.get("yt_description", ""), "▼ チャプター")

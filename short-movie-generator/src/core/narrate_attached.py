@@ -198,19 +198,73 @@ def _dedup_tags(tags, core_jp) -> list[str]:
     return out[:6]
 
 
-def _fallback_meta(chunks: list[str], mode: str) -> dict:
+def _fallback_title_jp(chunks: list[str], source_topic: str = "") -> str:
+    """LLM 미가용 시 결정론 제목(A안 폴백 · 날조 없음).
+
+    ★실사고: 예전 폴백은 '첫 문장을 절 단위로 누적'이라 밋밋하고 내용 예측이 안 됐다
+    (「私たちはちょうど、ある海域のマッピングを終え…」). → 대본/출처에 **문자 그대로 등장하는** 사실
+    (수심 水深○m·주역 대상어)만으로 후킹형 사실 템플릿을 만든다. 없으면 가장 구체적인(수치·주역이 든)
+    절을 골라 쓰고, 그것도 없으면 기존 절 누적으로 폴백. ★대본에 없는 사실·수치는 절대 만들지 않는다."""
+    joined = "。".join(c.strip("。.、,") for c in chunks if c and c.strip())
+    corpus = (joined + "。" + (source_topic or "")).strip()
+    first = (chunks[0] if chunks else "").strip() or "海の映像"
+
+    # ① 대본/출처에 실제로 있는 수심(水深○○m) → 【深海】+주역+水深○mの記録
+    depth = ""
+    m = re.search(r"水深[^\d]{0,4}([0-9,]{2,6})\s*(?:m|メートル|ｍ)", corpus)
+    if m:
+        depth = m.group(1).replace(",", "")
+    # 주역(대상) 후보: 대본에 등장하는 생물명(문자 그대로). ★수심이 있으면 그 수심이 언급된 절 안에서
+    #   먼저 찾는다(엉뚱한 공정어 'マッピング' 등이 주역으로 뽑히던 문제 방지). 없으면 전체에서.
+    _SUBJ_RE = r"([ァ-ヴ]{2,}(?:イカ|タコ|クラゲ|エビ|カニ|ザメ|ウナギ|ナマコ|ヒトデ|ダラ|ウオ|フグ|アンコウ|ダコ)|[ァ-ヴー]{3,}|[一-龠]{2,4}(?:イカ|タコ|クラゲ|エビ|カニ|ザメ|ウナギ|ナマコ|ヒトデ|魚|貝))"
+    subj = ""
+    if depth:
+        for sent in re.split(r"(?<=[。\n])", corpus):   # 문장(。) 단위 — 같은 문장 안의 생물명 우선
+            if "水深" in sent:
+                sm2 = re.search(_SUBJ_RE, re.sub(r"水深[^\d]{0,4}[0-9,]{2,6}\s*(?:m|メートル|ｍ)", "", sent))
+                if sm2:
+                    subj = sm2.group(1)
+                    break
+    if not subj:
+        sm = re.search(_SUBJ_RE, corpus)
+        if sm:
+            subj = sm.group(1)
+    if depth:
+        head = f"【深海】{subj}" if subj else "【深海】"
+        cand = f"{head} 水深{depth}mの記録"
+        if len(cand) <= 30:
+            return cand
+
+    # ② 수치·주역이 든 '가장 구체적인 절'을 제목으로(문자 그대로, 30자 이내)
+    parts = [p.strip("、。 ") for p in re.split(r"(?<=[、。])", joined) if p.strip()]
+    scored = []
+    for p in parts:
+        if not p or len(p) > 30:
+            continue
+        score = len(re.findall(r"[0-9]", p)) * 3 + (2 if subj and subj in p else 0)
+        # 一人称の状況説明(私たち…)より、対象・現象を述べる절を優先(감점)
+        if re.search(r"^(私|僕|我々|私たち)", p):
+            score -= 2
+        if score > 0:
+            scored.append((score, p))
+    if scored:
+        scored.sort(key=lambda x: (-x[0], len(x[1])))
+        return scored[0][1]
+
+    # ③ 최후: 첫 문장을 절 단위로 누적(기존 동작 · 말줄임/중간절단 없음)
+    title = ""
+    for p in [q for q in re.split(r"(?<=[、。])", first) if q.strip()]:
+        if len(title + p) > 30:
+            break
+        title += p
+    return re.sub(r"[、。]+$", "", title) or _trim_jp(first, 30)
+
+
+def _fallback_meta(chunks: list[str], mode: str, source_topic: str = "") -> dict:
     """LLM 미가용 시 대본에서 결정론으로 제목·설명·해시태그(일/한) 도출(날조 없음)."""
     body = "。".join(c.strip("。.、,") for c in chunks[:4] if c.strip())
     first = (chunks[0] if chunks else "").strip() or "海の映像"
-    # ★잘린 제목 금지(실사고: '…を終え…'): 글자수 절단+말줄임 대신 **절(구두점) 단위로 누적**해
-    #   한도 안에서 온전한 절까지만 담는다(말줄임표 없음 · 중간 절단 없음).
-    parts = [p for p in re.split(r"(?<=[、。])", first) if p.strip()]
-    title_jp = ""
-    for p in parts:
-        if len(title_jp + p) > 30:
-            break
-        title_jp += p
-    title_jp = re.sub(r"[、。]+$", "", title_jp) or _trim_jp(first, 30)
+    title_jp = _fallback_title_jp(chunks, source_topic)
     desc_jp = (body[:180] + "。") if body else "海の映像に日本語ナレーションと字幕を付けた作品です。"
     hook_jp = _trim_jp(re.sub(r"[。.！!？?]+$", "", first), 18) or "この光景を、ご存知ですか"
     return {
@@ -222,26 +276,51 @@ def _fallback_meta(chunks: list[str], mode: str) -> dict:
     }
 
 
-def _gen_metadata(chunks: list[str], mode: str) -> dict:
+def _gen_metadata(chunks: list[str], mode: str, source_topic: str = "") -> dict:
     """완성된 일본어 나레이션(대본)으로부터 제목·설명·해시태그를 일본어+한국어로 생성.
-    ★운영자 요청: 입력 없이 대본을 근거로 자동 생성(수치·사실은 대본 범위 내). LLM 실패 시 결정론 폴백."""
+    ★운영자 요청: 입력 없이 대본을 근거로 자동 생성(수치·사실은 대본 범위 내). LLM 실패 시 결정론 폴백.
+
+    ★제목 도출 고도화(A안 · 운영자 확정 · 실사고: 롱폼 제목이 후킹·내용예측 실패):
+    예전 프롬프트는 '本文を要約' 수준이라 화자가 말한 대로 밋밋한 제목이 나왔다(예: 「私たちはちょうど、
+    ある海域のマッピングを終え…」 — 무엇의 영상인지·볼거리·시청 이유가 전무). → **한 번의 LLM 호출 안에서**
+    ① 대본 전체를 종합해 ② 시청자에게 가장 강한 '피사체 + 사실/미스터리' 하나를 먼저 뽑고 ③ 검증된 일본어
+    유튜브 제목 공식으로 후보 5개를 만든 뒤 ④ 스스로 채점해 가장 내용예측·후킹이 강한 하나를 고르게 한다.
+    ★날조 금지는 그대로: 대본(+소싱 출처)에 있는 사실·수치·고유명사만 사용."""
     from src.core import llm
     script = "\n".join(c for c in chunks if c and c.strip())
+    topic = (source_topic or "").strip()
     kind = "YouTubeショート(縦型)" if mode == "shorts" else "YouTube長編(横型)"
+    src_block = (f"【素材の出典説明(参考・事実根拠)】\n{topic[:600]}\n\n" if topic else "")
     prompt = (
-        "あなたは動画のメタデータ編集者です。以下は完成した日本語ナレーション(字幕本文)です。"
-        f"この{kind}動画の公開用メタデータを作ってください。★本文にない事実・数値・固有名詞は創作しないこと。\n\n"
-        f"【ナレーション】\n{script}\n\n"
-        "次のJSONだけを出力(説明・記号なし):\n"
-        '{\"hook_jp\":\"12〜18字の強いオープニングフック(冒頭2秒で指を止める一言・体言止め/問いかけ可)。★タイトルと同じ文言の使い回しは禁止(別の表現にする)\",'
-        '\"title_jp\":\"日本語タイトル(30字以内)。★台本全体を読んで内容を要約し、視聴者が『何の映像で・何が見られるか』を予測できる具体的なタイトルにする(対象+見どころ・事実を含める)。意味のない問いかけだけのタイトルや抽象的な釣り文句は禁止\",'
-        '\"title_ko\":\"上のタイトルの自然な韓国語訳\",'
+        "あなたはチャンネル登録者を伸ばすプロの動画編集者兼サムネ・タイトル設計者です。"
+        f"以下は完成した日本語ナレーション(字幕本文)です。この{kind}動画の公開用メタデータ、"
+        "特に『クリックされるタイトル』を設計してください。\n\n"
+        f"{src_block}"
+        f"【ナレーション(台本全体)】\n{script}\n\n"
+        "■ タイトル設計の手順(頭の中で実行し、最終結果だけをJSONで出す):\n"
+        "1) 台本全体を通読し、要約ではなく『この動画で最も視聴者の興味を引く一点』"
+        "(=主役の対象+意外な事実 or 謎 or 見どころ)を1つだけ特定する。\n"
+        "2) その一点を核に、実証済みの日本語YouTubeタイトル公式で候補を5つ作る:"
+        "(a)【対象名】+具体的な事実/数値、(b)好奇心ギャップの問いかけ(答えは動画内)、"
+        "(c)意外性・衝撃(「実は〜」)、(d)断定+具体、(e)対象名を先頭に置く。\n"
+        "3) 5候補を『内容が予測できるか/続きが気になるか/釣りすぎ(誇張)ないか/30字以内か/"
+        "台本の事実に忠実か』で自己採点し、最も強い1つを選ぶ。\n"
+        "★制約: 本文(と出典)にない事実・数値・固有名詞は創作しない。UMA・怪物・宇宙人など事実歪曲は禁止"
+        "(比喩や問いかけは可)。抽象的な釣り文句だけ・意味のない問いかけだけのタイトルは不可。\n\n"
+        "次のJSONだけを出力(説明・記号・前置きなし):\n"
+        '{\"subject\":\"台本の主役(対象)を短く\",'
+        '\"key_point\":\"最も引きの強い一点を一文で(内部用)\",'
+        '\"title_candidates\":[\"候補1\",\"候補2\",\"候補3\",\"候補4\",\"候補5\"],'
+        '\"title_jp\":\"最終タイトル(30字以内・上記で選んだ最良の1つ。視聴者が何の映像で何が見られるかを予測でき、続きが気になるもの)\",'
+        '\"title_ko\":\"上の最終タイトルの自然な韓国語訳\",'
+        '\"hook_jp\":\"12〜18字の強いオープニングフック(冒頭2秒で指を止める一言・体言止め/問いかけ可)。★タイトルと同じ文言の使い回しは禁止(別表現)\",'
         '\"desc_jp\":\"日本語の説明文(2〜4文・敬体)\",'
         '\"desc_ko\":\"上の説明の自然な韓国語訳\",'
         '\"tags_jp\":[\"#日本語タグ\",\"…3〜5個\"],'
         '\"tags_ko\":[\"#한국어태그\",\"…3〜5個\"]}')
-    # ★일시 오류로 폴백(잘린 제목·빈 한국어)이 발행되는 걸 줄이기 위해 실패 시 1회 재시도
-    raw = llm.generate_text(prompt, max_tokens=700) or llm.generate_text(prompt, max_tokens=700)
+    # ★일시 오류로 폴백(잘린 제목·빈 한국어)이 발행되는 걸 줄이기 위해 실패 시 1회 재시도.
+    #   후보 5개+자기채점을 담아 max_tokens 상향(900).
+    raw = llm.generate_text(prompt, max_tokens=900) or llm.generate_text(prompt, max_tokens=900)
     if raw:
         m = re.search(r"\{.*\}", raw, re.S)
         if m:
@@ -250,9 +329,16 @@ def _gen_metadata(chunks: list[str], mode: str) -> dict:
                 tj = _dedup_tags(d.get("tags_jp") or [], [])
                 tk = _dedup_tags(d.get("tags_ko") or [], [])
                 hook = _trim_jp(re.sub(r"[。.！!？?]*$", "", str(d.get("hook_jp", "")).strip()), 22)
+                # 최종 제목이 비었으면 후보 중 첫 유효안으로 보강(자기채점이 빠져도 후보는 활용)
+                title = str(d.get("title_jp", "")).strip()
+                if not title:
+                    for c in (d.get("title_candidates") or []):
+                        if str(c).strip():
+                            title = str(c).strip()
+                            break
                 out = {
                     "hook_jp": hook,
-                    "title_jp": str(d.get("title_jp", "")).strip(),
+                    "title_jp": title,
                     "title_ko": str(d.get("title_ko", "")).strip(),
                     "desc_jp": str(d.get("desc_jp", "")).strip(),
                     "desc_ko": str(d.get("desc_ko", "")).strip(),
@@ -260,11 +346,11 @@ def _gen_metadata(chunks: list[str], mode: str) -> dict:
                 }
                 if out["title_jp"] and out["desc_jp"] and out["tags_jp"]:
                     if not out["hook_jp"]:
-                        out["hook_jp"] = _fallback_meta(chunks, mode)["hook_jp"]
+                        out["hook_jp"] = _fallback_meta(chunks, mode, source_topic)["hook_jp"]
                     return _fill_missing_ko(out)
             except Exception:  # noqa: BLE001
                 pass
-    return _fill_missing_ko(_fallback_meta(chunks, mode))
+    return _fill_missing_ko(_fallback_meta(chunks, mode, source_topic))
 
 
 def _fill_missing_ko(meta: dict) -> dict:
@@ -1139,7 +1225,8 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
                    check=True, timeout=600)
 
     # 6) 대본 → 공개용 메타데이터(제목·설명·해시태그·훅, 일본어+한국어) 자동 생성
-    meta = _gen_metadata(chunks, mode)
+    #    ★A안: 소싱 출처 설명(source_topic)도 사실 근거로 함께 넘겨 제목의 내용예측력↑(날조 없음).
+    meta = _gen_metadata(chunks, mode, source_topic=source_topic)
 
     # 7) 오프닝 훅(타이틀 카드) 생성 + 유튜브 썸네일 저장(운영자 확정 · 실패해도 발행 불정지)
     thumb_path = out_dir / f"{name}_thumb.jpg"

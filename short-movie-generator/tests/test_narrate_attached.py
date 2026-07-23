@@ -75,6 +75,32 @@ def test_gen_metadata_fallback_and_llm(monkeypatch):
     assert d["hook_jp"] == "深海に潜むもの"
 
 
+def test_gen_metadata_uses_title_candidate_when_final_blank(monkeypatch):
+    """A안: 최종 title_jp가 비어도 후보(title_candidates)에서 유효안을 채택한다."""
+    from src.core import llm
+    payload = ('{"subject":"ソコダラ","key_point":"水深千mの記録","title_candidates":'
+               '["","【深海】ソコダラの素顔","候補3"],"title_jp":"",'
+               '"hook_jp":"深海の主","desc_jp":"記録です。","desc_ko":"기록입니다.",'
+               '"tags_jp":["#深海"],"tags_ko":["#심해"]}')
+    monkeypatch.setattr(llm, "generate_text", lambda *a, **k: payload)
+    d = N._gen_metadata(["深海の生き物です。"], "longform", source_topic="")
+    assert d["title_jp"] == "【深海】ソコダラの素顔"
+
+
+def test_fallback_title_prefers_facts_over_first_sentence():
+    """A안 폴백: 밋밋한 1인칭 상황 서술보다 수심 사실 템플릿/구체 절을 제목으로."""
+    # ① 대본에 수심이 실제로 있으면 【深海】…水深○mの記録 템플릿
+    chunks = ["私たちはちょうど、ある海域のマッピングを終えたところです。",
+              "水深1200mでソコダラが現れます。"]
+    t = N._fallback_title_jp(chunks)
+    assert "水深1200m" in t and len(t) <= 30
+    # ② 수심이 없으면 최소한 1인칭 상황 서술 그대로를 제목으로 쓰지 않는다(구체 절 우선)
+    chunks2 = ["私たちはちょうど、ある海域のマッピングを終えたところです。",
+               "3匹のダイオウイカが確認されました。"]
+    t2 = N._fallback_title_jp(chunks2)
+    assert "マッピング" not in t2 and len(t2) <= 30
+
+
 def test_hook_and_thumb_render(tmp_path):
     """훅/썸네일 렌더 — 배경 프레임 위에 훅 문구를 얹어 카드+썸네일(jpg) 생성."""
     from src.core import hook_intro as hi
