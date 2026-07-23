@@ -1,0 +1,57 @@
+{
+  "id": "047",
+  "created_at": "2026-07-23T05:44:36+00:00",
+  "updated_at": "2026-07-23T05:44:36+00:00",
+  "status": "published",
+  "category": "shipwreck",
+  "series": "沈没船 図鑑",
+  "species": {
+    "common_name_ko": "Thistlegorm 난파선",
+    "common_name_en": "Wreck Thistlegorm",
+    "scientific_name": "Wreck Thistlegorm",
+    "depth_range_m": "",
+    "habitat": "침몰선",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "선종: Cargo ship",
+      "총톤수: 4898 GRT, 2750 NRT",
+      "침몰: 1941년"
+    ]
+  },
+  "reels": {
+    "hook": "海の底に、眠る船。",
+    "caption": "SS Thistlegormは、1940年にイギリスのJ.L. Thompson and Sons社によって建造された貨物蒸気船です。総トン数4898トン、全長126.5メートル（415.1フィート）という大きな船体を誇りました。\nしかし、竣工からわずか1年後の1941年10月6日、紅海を航行中にドイツ軍機の攻撃を受けて沈没し、その短い生涯を終えました。\n現在、彼女の残骸は紅海の海底に静かに横たわり、ラス・ムハンマド国立公園近くの有名なダイビングスポットとなっています。水中にたたずむその姿は数多くの潜水調査や映像に記録され、過ぎ去った時代の物語を今に伝えています。\nこの歴史的な沈没船の物語を、ぜひ保存して後で見返してください。",
+    "hashtags": [
+      "#沈没船",
+      "#SSThistlegorm",
+      "#紅海"
+    ],
+    "reveal_name": "SS Thistlegorm",
+    "reveal_fact": "",
+    "hook_ko": "",
+    "caption_ko": "SS Thistlegorm은 1940년 영국 J.L. Thompson and Sons 사에 의해 건조된 화물 증기선입니다. 4898 총톤, 전장 126.5미터(415.1피트)의 거대한 몸체를 자랑했습니다.\n그러나 준공 후 불과 1년만인 1941년 10월 6일, 홍해를 항해하던 중 독일군 항공기의 공격을 받아 침몰했습니다. 그렇게 짧은 운명을 마쳤습니다.\n현재 그녀의 잔해는 홍해 해저에 고요히 누워있으며, 라스 무함마드 국립공원 근처의 유명한 다이빙 장소가 되었습니다. 물속에 자리한 그 모습은 많은 잠수 조사와 영상에 의해 기록되며, 지나간 시대의 이야기를 오늘날까지 전하고 있습니다.\n이 역사적인 침몰선의 이야기를 꼭 저장하여 다시 보시길 바랍니다.",
+    "hashtags_ko": [
+      "#침몰선",
+      "#SS티슬곰",
+      "#홍해"
+    ],
+    "yt_title": "沈没船SS Thistlegorm：紅海の海底に眠る戦場の記憶 #沈没船 #SSThistlegorm",
+    "yt_title_ko": "침몰선 SS 티슬곰: 홍해 해저에 잠든 전장의 기억 #침몰선 #SS티슬곰",
+    "visualizer": "reels",
+    "video_file": "wreck_thistlegorm_20260723_054436.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Wikipedia: SS Thistlegorm",
+      "Wikimedia Commons"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-047/reels_047.mp4",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-047/cover_047.jpg"
+  },
+  "post": null
+}

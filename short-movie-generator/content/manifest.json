@@ -321,5 +321,13 @@
     "common_name_en": "Ipnopidae",
     "scientific_name": "Ipnopidae",
     "date": "2026-07-22"
+  },
+  {
+    "id": "047",
+    "kind": "reels",
+    "common_name_ko": "Thistlegorm 난파선",
+    "common_name_en": "Wreck Thistlegorm",
+    "scientific_name": "Wreck Thistlegorm",
+    "date": "2026-07-23"
   }
 ]
