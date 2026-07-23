@@ -498,6 +498,20 @@ async function renderNarrateDetail(id){
           '</div>')).join('')+'</div>'+
         (rec.source_url?'<button class="btn save" id="nvdub" style="margin-top:8px">수정 대본으로 재제작</button>':'<div class="hint">원본 URL이 없어 재제작 불가</div>')+
       '</div>'):'')+
+    // ★유튜브 업로드(운영자 확정): 영상 확인 후 클릭 시에만 upload-longform.yml 디스패치(자동 업로드 없음).
+    //   이미 업로드된 레코드는 링크만 표시(중복 업로드 방지 — 워크플로도 2중 가드).
+    (md.youtube_url?(
+      '<div class="card" style="margin-top:12px"><span class="lbl">유튜브</span>'+
+        '<div class="hint" style="margin:4px 0 6px">이미 유튜브에 업로드된 영상입니다.</div>'+
+        '<a class="btn save" href="'+esc(md.youtube_url)+'" target="_blank">유튜브에서 보기 → '+esc(md.youtube_url)+'</a></div>'
+    ):(md.video_url?(
+      '<div class="card" style="margin-top:12px"><span class="lbl">유튜브에 올리기</span>'+
+        '<div class="hint" style="margin:4px 0 8px">위 영상·제목·설명을 확인한 뒤 올리세요. 제목·설명·해시태그(일본어)가 그대로 사용됩니다.</div>'+
+        '<div class="row2" style="margin-bottom:8px"><select id="nvpriv" style="flex:1">'+
+          '<option value="public">공개</option><option value="unlisted">일부공개(링크 공유)</option><option value="private">비공개</option>'+
+        '</select></div>'+
+        '<button class="btn save" id="nvup">유튜브에 올리기</button></div>'
+    ):''))+
     // ★관리(운영자 확정): 이 나레이션 영상을 원본 그대로 다시 제작(재생성)하거나 영구 삭제.
     '<div class="card" style="margin-top:12px">'+
       '<span class="lbl">이 나레이션 영상 관리</span>'+
@@ -519,7 +533,25 @@ async function renderNarrateDetail(id){
   if(rgn&&rec.source_url)rgn.onclick=()=>regenNarrate(id,rec.source_url,rec.mode||"shorts");
   const dub=document.getElementById("nvdub");
   if(dub&&rec.source_url)dub.onclick=()=>regenNarrateDub(id,rec.source_url,rec.mode||"longform");
+  const nvu=document.getElementById("nvup");if(nvu)nvu.onclick=()=>uploadNarrate(id);
   const nvd=document.getElementById("nvdel");if(nvd)nvd.onclick=()=>deleteContent(id,"narrate");
+}
+
+// 나레이션 영상 유튜브 '수동' 업로드 — 롱폼과 같은 upload-longform.yml 디스패치(레코드 kind로 분기).
+async function uploadNarrate(id){
+  if(!authReady()){banner("유튜브 업로드에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
+  const priv=(document.getElementById("nvpriv")||{}).value||"public";
+  const nm={public:"공개",unlisted:"일부공개",private:"비공개"}[priv]||priv;
+  if(!confirm("이 영상을 유튜브에 '"+nm+"'로 올릴까요? 확인을 누르면 업로드가 시작됩니다."))return;
+  const b=document.getElementById("nvup"); if(b){b.disabled=true;b.textContent="업로드 시작 중…";}
+  banner("유튜브 업로드를 시작합니다… (1~3분 뒤 새로고침하면 링크가 표시됩니다)");
+  try{
+    const r=await fetch(API+"/actions/workflows/"+UP_WF+"/dispatches",{method:"POST",headers:headers(true),
+      body:JSON.stringify({ref:BRANCH,inputs:{content_id:String(id),privacy:priv}})});
+    if(r.status===204)banner("업로드 시작! 1~3분 뒤 이 화면을 새로고침하면 유튜브 링크가 표시됩니다.","ok");
+    else{const t=await r.text();banner("업로드 시작 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");
+      if(b){b.disabled=false;b.textContent="유튜브에 올리기";}}
+  }catch(e){banner("업로드 오류: "+e,"err");if(b){b.disabled=false;b.textContent="유튜브에 올리기";}}
 }
 
 // 더빙 대본 재제작: 화면의 수정된 일본어 대본(원문·시각 유지)을 모아 narrate-video.yml에 transcript로

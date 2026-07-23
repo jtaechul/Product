@@ -1,14 +1,15 @@
 name: Upload Longform to YouTube
 
-# 롱폼 유튜브 '수동' 업로드 — 운영자가 대시보드 /lf/<id> 에서 영상을 확인하고
-# '유튜브에 올리기' 버튼을 눌렀을 때만 디스패치된다(제작 단계에서는 자동 업로드하지 않음).
+# 롱폼·나레이션 유튜브 '수동' 업로드 — 운영자가 대시보드 /lf/<id> 또는 /nv/<id> 에서 영상을
+# 확인하고 '유튜브에 올리기' 버튼을 눌렀을 때만 디스패치된다(제작 단계에서는 자동 업로드하지 않음).
 # 이미 만들어진 Release 영상(content/<id>.json 의 media.video_url)을 내려받아 그대로 업로드한다.
+# 제목·설명·태그는 레코드(yt_title/yt_description/hashtags)에서 읽고, kind에 맞게 레코드에 URL을 기록.
 
 on:
   workflow_dispatch:
     inputs:
       content_id:
-        description: "롱폼 콘텐츠 id (예: lf-12)"
+        description: "콘텐츠 id (롱폼 lf-12 / 나레이션 nv-123)"
         required: true
       privacy:
         description: "공개 범위"
@@ -89,10 +90,17 @@ jobs:
               print("yt_url=")
               print("::error::YouTube 시크릿(YOUTUBE_CLIENT_ID/SECRET/REFRESH_TOKEN) 미설정 → 업로드 불가")
               raise SystemExit(1)
+          # 태그 = 레코드 해시태그('#' 제거) 우선, 없으면 기존 기본값(롱폼 하위호환)
+          tags = [str(t).lstrip("#").strip() for t in (rec.get("hashtags") or []) if str(t).strip("#").strip()]
+          if not tags:
+              tags = ["深海", "深海生物", "ランキング", "deep sea"]
           r = yt.upload("work/video.mp4", rec.get("yt_title",""), rec.get("yt_description",""),
-                        tags=["深海","深海生物","ランキング","deep sea"],
-                        privacy=os.environ.get("PRIVACY","public"))
-          content_store.set_longform_youtube(".", cid, youtube_url=r["url"], privacy=r["privacy"])
+                        tags=tags, privacy=os.environ.get("PRIVACY","public"))
+          # kind에 맞는 레코드 기록(나레이트=/nv, 롱폼=/lf)
+          if rec.get("kind") == "narrate":
+              content_store.set_narrate_youtube(".", cid, youtube_url=r["url"], privacy=r["privacy"])
+          else:
+              content_store.set_longform_youtube(".", cid, youtube_url=r["url"], privacy=r["privacy"])
           print(f"yt_url={r['url']}")
           print(f"yt_privacy={r['privacy']}")
           PY
@@ -104,7 +112,7 @@ jobs:
           if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(longform): ${{ github.event.inputs.content_id }} 유튜브 업로드 기록 [skip ci]"
+          git commit -m "chore(upload): ${{ github.event.inputs.content_id }} 유튜브 업로드 기록 [skip ci]"
           for i in 1 2 3 4 5; do
             git fetch origin "${{ github.ref_name }}" \
               && git rebase "origin/${{ github.ref_name }}" \

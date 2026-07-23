@@ -293,6 +293,32 @@ def regen_longform_text(base_dir: str, content_id: str, scope: str = "all") -> b
     return True
 
 
+def set_narrate_youtube(base_dir: str, content_id: str, *, youtube_url: str,
+                        privacy: str = "") -> bool:
+    """나레이트(첨부 영상 나레이션) 레코드에 유튜브 업로드 결과(URL·공개범위)를 기록 + 매니페스트 갱신.
+
+    운영자가 대시보드 /nv/<id>에서 '유튜브에 올리기'를 눌러 업로드 워크플로가 성공한 뒤 호출.
+    대시보드는 media.youtube_url 을 보고 '이미 업로드됨(재업로드 방지)'을 표시한다."""
+    rec = load_record(base_dir, content_id)
+    if not rec or rec.get("kind") != "narrate":
+        return False
+    media = rec.setdefault("media", {})
+    media["youtube_url"] = youtube_url
+    media["youtube_privacy"] = privacy
+    rec["updated_at"] = _now_iso()
+    record_path(base_dir, content_id).write_text(
+        json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+    upsert_manifest(base_dir, {
+        "id": str(content_id), "kind": "narrate",
+        "yt_title": rec.get("yt_title", ""), "yt_title_ko": rec.get("yt_title_ko", ""),
+        "mode": rec.get("mode", ""), "date": str(rec.get("created_at", ""))[:10],
+        "has_video": bool((rec.get("media") or {}).get("video_url")),
+        "youtube_url": youtube_url,
+    })
+    log.info("[content] 나레이트 유튜브 기록: %s → %s", content_id, youtube_url)
+    return True
+
+
 def set_longform_youtube(base_dir: str, content_id: str, *, youtube_url: str,
                          privacy: str = "") -> bool:
     """롱폼 레코드에 유튜브 업로드 결과(URL·공개범위)를 기록 + 매니페스트 갱신.
