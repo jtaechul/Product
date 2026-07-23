@@ -766,24 +766,35 @@ def _audio_active_regions(video: str, dur: float) -> list[tuple]:
     return [(a, b) for a, b in active if b - a >= 0.6]
 
 
-def _mix_bg_narration(video: str, narration_mp3: str, dur: float, work: Path) -> str:
+def _mix_bg_narration(video: str, narration_mp3: str, dur: float, work: Path,
+                      bg_audio: str | None = None, bgm: str | None = None) -> str:
     """★#1: 원본 오디오(효과음·배경 보존)를 나레이션 밑으로 '덕킹'하고 나레이션을 더 크게 얹은 최종 오디오.
     - 원본이 무음이면 나레이션만 그대로 반환(현행).
     - 원본 목소리는 배경으로 낮추고(volume 0.8), 나레이션은 키운다(volume 1.8).
-    - 나레이션이 울리는 구간엔 사이드체인으로 원본을 더 눌러 나레이션이 확실히 크게 들리게 한다
-      (그 사이엔 원본 효과음·배경음이 살아난다)."""
-    if not _has_audio(video):
+    - 나레이션이 울리는 구간엔 사이드체인으로 원본을 더 눌러 나레이션이 확실히 크게 들리게 한다.
+    ★저작권 음악 제거(운영자 확정): bg_audio가 오면 원본 오디오 **대신** 그 파일(음악 제거된
+    목소리 트랙)을 배경으로 쓰고, bgm이 오면 보유 자체 BGM을 낮게(0.20) 루프로 깔아
+    빠진 음악 자리를 채운다(페이드 인/아웃)."""
+    src_a = bg_audio if (bg_audio and Path(bg_audio).exists()) else None
+    if src_a is None and not _has_audio(video):
         return narration_mp3
     out = str(work / "mixed.m4a")
+    cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", (src_a or video), "-i", narration_mp3]
     fc = ("[0:a]aformat=sample_fmts=fltp:channel_layouts=stereo:sample_rates=44100,volume=0.8[bg];"
           "[1:a]aformat=sample_fmts=fltp:channel_layouts=stereo:sample_rates=44100,volume=1.8,"
           "asplit=2[vo][vok];"
-          "[bg][vok]sidechaincompress=threshold=0.02:ratio=14:attack=15:release=350[bgd];"
-          "[bgd][vo]amix=inputs=2:normalize=0:duration=longest,alimiter=limit=0.97[a]")
+          "[bg][vok]sidechaincompress=threshold=0.02:ratio=14:attack=15:release=350[bgd];")
+    if bgm and Path(bgm).exists():
+        cmd += ["-stream_loop", "-1", "-i", bgm]
+        fc += (f"[2:a]aformat=sample_fmts=fltp:channel_layouts=stereo:sample_rates=44100,"
+               f"atrim=0:{dur:.2f},volume=0.20,afade=t=in:st=0:d=2,"
+               f"afade=t=out:st={max(0.0, dur - 3):.2f}:d=3[mus];"
+               f"[bgd][vo][mus]amix=inputs=3:normalize=0:duration=longest,alimiter=limit=0.97[a]")
+    else:
+        fc += "[bgd][vo]amix=inputs=2:normalize=0:duration=longest,alimiter=limit=0.97[a]"
     try:
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", video, "-i", narration_mp3,
-                        "-filter_complex", fc, "-map", "[a]", "-t", f"{dur:.2f}",
-                        "-c:a", "aac", "-b:a", "192k", out], check=True, timeout=600)
+        subprocess.run(cmd + ["-filter_complex", fc, "-map", "[a]", "-t", f"{dur:.2f}",
+                              "-c:a", "aac", "-b:a", "192k", out], check=True, timeout=600)
         return out if Path(out).exists() and Path(out).stat().st_size > 2000 else narration_mp3
     except Exception as e:  # noqa: BLE001
         log.info("[narrate] 원본+나레이션 믹스 실패 → 나레이션만: %s", e)
@@ -1109,7 +1120,20 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     name = out_name or f"narrated_{mode}"
     final = str(out_dir / f"{name}.mp4")
     body_final = str(work / "body_final.mp4")
-    mixed_audio = _mix_bg_narration(src, nar["mp3"], dur, work)
+    # ★저작권 음악 자동 제거(운영자 확정 · 유튜브 Content ID 재발방지 · 롱폼만):
+    #   순서 보장 — ①전사·번역(자막/나레이션)은 위에서 이미 '원본 오디오'로 끝났다(분리 열화 무관).
+    #   ②이제 원본에서 상용 음악을 제거(보컬 분리 → 목소리만) ③빠진 음악 자리는 보유 자체 BGM
+    #   (assets/audio/bgm/longform_*)으로 채운다. 분리 실패/미설치 시 원본 오디오 그대로(발행 불정지).
+    bg_audio = bgm_path = None
+    if mode == "longform":
+        try:
+            from src.core import music_strip
+            bg_audio = music_strip.strip_music(src, str(work / "ms"))
+            if bg_audio:
+                bgm_path = music_strip.pick_bgm(seed=Path(str(vp)).name, base_dir=base_dir)
+        except Exception as e:  # noqa: BLE001
+            log.info("[narrate] 음악 제거 생략(오류): %s", e)
+    mixed_audio = _mix_bg_narration(src, nar["mp3"], dur, work, bg_audio=bg_audio, bgm=bgm_path)
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", subbed, "-i", mixed_audio,
                     "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", body_final],
                    check=True, timeout=600)

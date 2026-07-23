@@ -67,6 +67,12 @@ jobs:
       - name: Install Python deps
         run: pip install -r requirements.txt
 
+      - name: Install Demucs (롱폼 원본 음악 제거 · CPU 전용 · 무료)
+        if: inputs.mode == 'longform'
+        run: |
+          pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+          pip install --no-cache-dir demucs soundfile
+
       - name: 나레이션 제작(첨부 영상 → 대본 자동 + 일본어 나레이션·자막)
         id: run
         env:
