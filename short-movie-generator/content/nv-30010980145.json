@@ -22,7 +22,9 @@
   ],
   "media": {
     "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30010980145/narrated_longform_30010980145.mp4",
-    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30010980145/narrated_longform_30010980145_thumb.jpg"
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30010980145/narrated_longform_30010980145_thumb.jpg",
+    "youtube_url": "https://youtu.be/yENuq56WCPM",
+    "youtube_privacy": "public"
   },
   "transcript": [
     {
@@ -331,5 +333,6 @@
       "orig": "to be on the next horizon into the depths of the ocean.",
       "jp": "海の深みへと続く次なる地平を見据えているのです。"
     }
-  ]
+  ],
+  "updated_at": "2026-07-23T14:00:14+00:00"
 }
