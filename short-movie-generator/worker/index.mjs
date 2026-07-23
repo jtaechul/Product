@@ -541,6 +541,15 @@ async function renderNarrateDetail(id){
       '<div><span class="lbl">해시태그 · 한국어(참고)</span><textarea id="nvhk" readonly rows="3">'+esc(tagsKo)+'</textarea>'+
         '<button class="btn" id="nvcphk" style="margin-top:6px">한국어 해시태그 복사</button></div>'+
     '</div>'+
+    // ★관리(운영자 확정): 이 나레이션 영상을 원본 그대로 다시 제작(재생성)하거나 영구 삭제.
+    '<div class="card" style="margin-top:12px">'+
+      '<span class="lbl">이 나레이션 영상 관리</span>'+
+      '<div class="btnrow" style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
+        (rec.source_url?'<button class="btn" id="nvregen">다시 제작(재생성)</button>':'<button class="btn" id="nvregen" disabled title="원본 URL 없음">재생성 불가</button>')+
+        '<button class="btn" id="nvdel" style="background:#8b1a1a;color:#fff">이 영상 삭제 (영구)</button></div>'+
+      '<div class="hint" style="margin-top:6px">'+
+        (rec.source_url?'재생성은 <b>같은 원본</b>으로 다시 만들어 이 화면(같은 주소)을 갱신합니다(5~15분). ':'원본 URL 정보가 없어 재생성은 불가합니다(삭제만 가능). ')+
+        '삭제는 영상·기록을 되돌릴 수 없이 지웁니다.</div></div>'+
     '<div class="banner" id="msg" style="margin-top:10px"></div>';
   const V=s=>((document.getElementById(s)||{}).value||"");
   const B=(id2,src,msg)=>{const b=document.getElementById(id2);if(b)b.onclick=()=>copyText(V(src),msg);};
@@ -549,6 +558,24 @@ async function renderNarrateDetail(id){
   B("nvcphj","nvhj","일본어 해시태그를 복사했어요.");B("nvcphk","nvhk","한국어 해시태그를 복사했어요.");
   if(md.video_url){const bd=document.getElementById("bdl");if(bd)bd.onclick=()=>saveVideo(prox(md.video_url),id+".mp4");}
   if(md.thumb_url){const th=document.getElementById("thdl");if(th)th.onclick=()=>saveVideo(prox(md.thumb_url),id+"_thumb.jpg",{btn:"#thdl",hint:"#thhint",mime:"image/jpeg",kind:"이미지"});}
+  const rgn=document.getElementById("nvregen");
+  if(rgn&&rec.source_url)rgn.onclick=()=>regenNarrate(id,rec.source_url,rec.mode||"shorts");
+  const nvd=document.getElementById("nvdel");if(nvd)nvd.onclick=()=>deleteContent(id,"narrate");
+}
+
+// 나레이션 영상 재생성: 같은 원본 URL·형태로 narrate-video.yml을 디스패치하되 content_id를 넘겨
+// 같은 레코드(같은 /nv/<id>)를 덮어쓴다(영상·썸네일·메타 갱신).
+async function regenNarrate(id,sourceUrl,mode){
+  if(!authReady()){banner("재생성에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
+  if(!sourceUrl){banner("원본 URL 정보가 없어 재생성할 수 없습니다.","err");return;}
+  if(!confirm("이 나레이션 영상을 같은 원본으로 다시 제작합니다.\\n\\n같은 화면(주소)이 새 결과로 갱신됩니다(5~15분).\\n계속할까요?"))return;
+  banner("재생성 요청 중… (같은 원본으로 다시 제작 · 5~15분)");
+  try{
+    const r=await fetch(API+"/actions/workflows/"+NV_WF+"/dispatches",{method:"POST",headers:headers(true),
+      body:JSON.stringify({ref:BRANCH,inputs:{video_url:sourceUrl,mode:(mode||"shorts"),content_id:String(id)}})});
+    if(r.status===204)banner("재생성 시작! 5~15분 뒤 이 화면을 새로고침하면 새 결과가 표시됩니다.","ok");
+    else{const t=await r.text();banner("재생성 시작 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
+  }catch(e){banner("재생성 오류: "+e,"err");}
 }
 function vsbanner(t,c){const m=$("#vsmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
 function vsDur(s){s=Math.round(s||0);if(!s)return"";const m=Math.floor(s/60),ss=s%60;return m+":"+String(ss).padStart(2,"0");}
@@ -997,7 +1024,7 @@ async function saveCaption(id){
 // Contents/Releases API 직접 삭제는 토큰에 따라 403 → 저장과 동일하게 전용 워크플로 디스패치.
 async function deleteContent(id,kind){
   if(!authReady()){banner("삭제에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
-  const label=(kind==="longform")?"이 롱폼":"이 쇼츠";
+  const label=(kind==="longform")?"이 롱폼":(kind==="narrate")?"이 나레이션 영상":"이 쇼츠";
   if(!confirm(label+" 제작물을 영구 삭제합니다.\\n\\n· 영상·이미지(릴리스 미디어)\\n· 콘텐츠 기록\\n\\n되돌릴 수 없습니다. 계속할까요?\\n\\nid: "+id))return;
   banner("삭제 중… (반영까지 20~40초)");
   try{
@@ -1005,8 +1032,8 @@ async function deleteContent(id,kind){
       body:JSON.stringify({ref:BRANCH,inputs:{content_id:String(id)}})});
     if(r.status===204){
       banner("삭제 시작! 20~40초 뒤 목록에서 사라집니다.","ok");
-      // 잠시 뒤 목록으로 이동(상세는 곧 사라짐)
-      setTimeout(()=>{location.href=(kind==="longform")?"/":"/library";},1600);
+      // 잠시 뒤 목록으로 이동(상세는 곧 사라짐). 롱폼·나레이션 결과는 홈, 쇼츠는 라이브러리.
+      setTimeout(()=>{location.href=(kind==="longform"||kind==="narrate")?"/":"/library";},1600);
     }else{const t=await r.text();banner("삭제 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
   }catch(e){banner("삭제 오류: "+e,"err");}
 }

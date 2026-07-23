@@ -96,12 +96,15 @@ def score_frames_subject(image_paths: list[str], subject: str, max_tokens: int =
 
 
 def describe_frames(image_paths: list[str], prompt: str, max_tokens: int = 400) -> str | None:
-    """프레임 여러 장 + 프롬프트 → 자유형 텍스트(비전 LLM: Claude→Gemini). 키 없으면 None.
-    첨부 영상 나레이션에서 '영상 내용을 눈으로 보고' 사실 설명을 뽑는 데 쓴다(대본 근거)."""
+    """프레임 여러 장 + 프롬프트 → 자유형 텍스트(비전 LLM). 키 없으면 None.
+    첨부 영상 나레이션에서 '영상 내용을 눈으로 보고' 사실 설명을 뽑는 데 쓴다(대본 근거).
+    ★비용 최소화(운영자 확정): 이 프레임 서술은 **Gemini 우선**(gemini-2.5-flash, 저가) → Claude 폴백.
+      단순 '화면에 뭐가 보이나' 판별은 Flash로 충분하고, 회차당 여러 번 부르므로 비용 차이가 크다.
+      (텍스트 카피 `generate_text`는 품질 위해 Claude 우선 유지 — 여기만 비전을 Gemini 우선으로 둔다.)"""
     imgs = [p for p in (image_paths or []) if p]
     if not imgs:
         return None
-    return _vision_claude(imgs, prompt, max_tokens) or _vision_gemini(imgs, prompt)
+    return _vision_gemini(imgs, prompt) or _vision_claude(imgs, prompt, max_tokens)
 
 
 def _vision_claude(image_paths: list[str], prompt: str, max_tokens: int) -> str | None:

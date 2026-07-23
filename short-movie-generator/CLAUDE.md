@@ -900,6 +900,17 @@
     홈 카드 하단 "최근 나레이션 결과" + `/nv/<id>` 상세에서 **영상·썸네일 미리보기 + 오프닝 훅 + 제목·설명·
     해시태그를 일/한 2단으로 복사**(썸네일은 "썸네일 저장" 버튼). 워크플로가 썸네일 jpg를 Release에 함께
     올려 레코드 `media.thumb_url`에 반영. 텔레그램 메시지에도 제목·설명·해시태그(일/한)가 포함된다.
+  - **★결과 관리 — 재생성·삭제(운영자 확정)**: `/nv/<id>` 상세에 **"다시 제작(재생성)"·"삭제"** 버튼을 둔다.
+    ① **재생성**: 레코드의 `source_url`(원본 URL)·`mode`로 `narrate-video.yml`을 **`content_id`를 넘겨** 디스패치 →
+    같은 id로 레코드·릴리스(`narrate-<id>`)를 덮어써 **같은 /nv/<id> 화면이 새 결과로 갱신**된다(원본 URL 없으면
+    버튼 비활성). ② **삭제**: 기존 `delete-content.yml`(`deleteContent(id,"narrate")`) — 레코드가 박은 릴리스
+    태그를 URL에서 읽어 미디어까지 지운다. 구현: 워크플로 `narrate-video.yml`(입력 `content_id` 추가·CID를
+    릴리스/레코드에 일관 적용), 대시보드 `worker/index.mjs`(`renderNarrateDetail` 관리 카드·`regenNarrate`·
+    `deleteContent` narrate 라벨/리다이렉트).
+  - **★비전 비용 최소화(운영자 확정 · Gemini 키 활용)**: 프레임 서술(`llm.describe_frames`, 나레이션 전용)은
+    **Gemini(gemini-2.5-flash) 우선 → Claude 폴백**으로 둔다(회차당 여러 번 호출 · '화면에 뭐가 보이나'는
+    Flash로 충분). 텍스트 카피(`generate_text`)는 품질 위해 Claude 우선 유지. 회차당 대략 Gemini만이면
+    수십 원 수준. 워크플로는 이미 `GEMINI_API_KEY` 시크릿을 전달(narrate-video.yml).
   - 구현: 백엔드 `src/core/narrate_attached.py`(`narrate_video`/`_describe_video`/`_gen_metadata`) ·
     `llm.describe_frames`(비전) · `content_store.write_narrate_record` · CLI `src/narrate_video.py`
     (`--source-topic`) · 워크플로 `.github/workflows/narrate-video.yml` · 대시보드 `worker/index.mjs`
