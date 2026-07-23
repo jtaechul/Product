@@ -232,6 +232,63 @@ def screen_photo(image_path: str, scientific_name: str = "", common_name_en: str
             "single_ok": (d.get("single_clear_subject") is True) if need_single else None}
 
 
+def _ask_images(image_paths: list[str], prompt: str, max_px: int = 384) -> str | None:
+    """여러 이미지 + 프롬프트 → Gemini 배치 호출(각 이미지를 max_px로 축소 · 토큰 절감). 키 없으면 None."""
+    cl = _client()
+    if cl is None:
+        return None
+    try:
+        import tempfile
+        from google.genai import types
+        from PIL import Image
+        parts = []
+        with tempfile.TemporaryDirectory(prefix="askimgs_") as td:
+            for i, p in enumerate(image_paths):
+                im = Image.open(p).convert("RGB")
+                im.thumbnail((max_px, max_px), Image.LANCZOS)
+                sp = f"{td}/f{i}.jpg"
+                im.save(sp, quality=82)
+                parts.append(types.Part.from_bytes(data=open(sp, "rb").read(), mime_type="image/jpeg"))
+            resp = cl.models.generate_content(model=_MODEL, contents=parts + [prompt])
+        return (resp.text or "").strip() or None
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except BaseException as e:  # noqa: BLE001
+        log.info("[vision] 배치 비전 호출 실패: %s", e)
+        return None
+
+
+def pick_subject_frame(frame_paths: list[str], subject_hint: str = "") -> int | None:
+    """★여러 후보 프레임 중 '피사체(생물)가 가장 또렷하게 크게 보이는' 프레임의 인덱스를 Gemini로 직접 고른다
+    (실사고 #046 소코다라: 오프닝훅·엔드카드에 빈 해저/빈 물이 계속 박힘 → 휴리스틱 대신 비전이 직접 선택).
+
+    ★비용 최소화: 후보 전부를 **한 번의 배치 호출**로, 각 프레임을 384px로 축소해 보낸다(프레임당 ~258토큰).
+    반환: 인덱스(int) 또는 None(키 없음/불확실/실패 → 호출부 휴리스틱 폴백). 생물이 하나도 안 보이면 None."""
+    imgs = [p for p in (frame_paths or []) if p]
+    if len(imgs) < 2:
+        return None
+    hint = f' The animal is roughly "{subject_hint}".' if subject_hint else ""
+    prompt = (
+        f"These are {len(imgs)} candidate frames (index 0 to {len(imgs) - 1}) from ONE deep-sea video."
+        f"{hint} Pick the SINGLE frame where the main animal (a fish/creature) is MOST clearly and "
+        "prominently visible — NOT empty water, NOT just bare seabed/sediment/rock. "
+        'Answer STRICT JSON only: {"best_index": <int>, "shows_animal": true|false}. '
+        f"best_index must be between 0 and {len(imgs) - 1}. Set shows_animal=false only if NONE of the frames "
+        "contain any animal at all."
+    )
+    d = _json(_ask_images(imgs, prompt) or "")
+    if not d or "best_index" not in d or d.get("shows_animal") is False:
+        return None
+    try:
+        idx = int(d["best_index"])
+    except (TypeError, ValueError):
+        return None
+    if 0 <= idx < len(imgs):
+        log.info("[vision] 피사체 프레임 선택: index %d/%d", idx, len(imgs))
+        return idx
+    return None
+
+
 def locate_focus(image_path: str) -> tuple[float, float] | None:
     """피사체의 초점(눈 우선, 없으면 몸통 중심)을 정규화 좌표(0~1)로. 켄번즈 크롭 중심에 쓴다.
 

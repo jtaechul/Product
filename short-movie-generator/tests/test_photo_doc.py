@@ -149,6 +149,23 @@ def test_vision_subject_safe_without_key(monkeypatch):
     assert V.is_live_wild_subject("/no/such.jpg", "grenadier") is None      # 키 없으면 통과(현행 유지)
     assert V.screen_photo("/no/such.jpg", "Coryphaenoides", "grenadier") is None
     assert V.screen_photo("/no/such.jpg", "x", "y", need_single=True) is None
+    assert V.pick_subject_frame(["/a.jpg", "/b.jpg"], "grenadier") is None      # 키 없으면 None(휴리스틱 폴백)
+
+
+def test_pick_subject_frame_verdict(monkeypatch):
+    """★#046 소코다라: Gemini가 후보 프레임 중 피사체 또렷한 것의 인덱스를 고른다(빈 바다 회피).
+    범위 밖/생물없음/파싱실패는 None(호출부 휴리스틱)."""
+    from src.core import vision_subject as V
+    frames = ["/f0.jpg", "/f1.jpg", "/f2.jpg", "/f3.jpg"]
+    monkeypatch.setattr(V, "_ask_images", lambda imgs, prompt, **k: '{"best_index": 2, "shows_animal": true}')
+    assert V.pick_subject_frame(frames, "grenadier") == 2
+    monkeypatch.setattr(V, "_ask_images", lambda imgs, prompt, **k: '{"best_index": 0, "shows_animal": false}')
+    assert V.pick_subject_frame(frames, "grenadier") is None        # 생물 없음 → None
+    monkeypatch.setattr(V, "_ask_images", lambda imgs, prompt, **k: '{"best_index": 9, "shows_animal": true}')
+    assert V.pick_subject_frame(frames, "grenadier") is None        # 범위 밖 → None
+    monkeypatch.setattr(V, "_ask_images", lambda imgs, prompt, **k: "설명만 있고 JSON 없음")
+    assert V.pick_subject_frame(frames, "grenadier") is None
+    assert V.pick_subject_frame(["/only.jpg"], "x") is None          # 후보 1장 → None
 
 
 def test_screen_photo_combined_verdict(monkeypatch):

@@ -187,11 +187,14 @@ def _temporal_foreground_scores(frame_paths: list[str]) -> list[float]:
     return out
 
 
-def _score_best_frame(video: str, wd: Path, logo_box: tuple | None = None) -> tuple[str | None, float]:
+def _score_best_frame(video: str, wd: Path, logo_box: tuple | None = None,
+                      hint: str = "") -> tuple[str | None, float]:
     """피사체가 가장 뚜렷한 프레임 후보 경로 + 점수를 돌려준다(임계 판정은 호출부에서).
 
-    점수 = 색무관 구조점수(_frame_macro_std) + 적색 피사체 보너스 + ★시간축 전경(움직이는 피사체) 보너스.
-    번인 텍스트 프레임은 강한 감점. 10~90% 구간 12개 샘플. logo_box가 오면 delogo로 메운다.
+    ★#046 소코다라(빈 바다 반복) 최종 대책: **Gemini가 후보 프레임 중 피사체가 또렷한 것을 직접 고른다**
+    (`vision_subject.pick_subject_frame` · 후보 전부 1회 배치 · 저비용). 비전 키 없거나 실패 시에만
+    휴리스틱(색무관 구조점수 + 적색 보너스 + 시간축 전경 + 번인텍스트 감점)으로 폴백.
+    10~90% 구간 14개 샘플. logo_box가 오면 delogo로 메운다.
     """
     from src.core import reframe
     from src.core.footage import _frame_macro_std
@@ -208,13 +211,21 @@ def _score_best_frame(video: str, wd: Path, logo_box: tuple | None = None) -> tu
         except Exception:  # noqa: BLE001
             vf = None
     grabbed: list[str] = []
-    for i in range(12):
-        t = dur * (0.08 + 0.84 * i / 11)
+    for i in range(14):
+        t = dur * (0.06 + 0.88 * i / 13)
         cand = str(wd / f"ecs_{i}.png")
         if _grab_frame(video, t, cand, vf=vf):
             grabbed.append(cand)
     if not grabbed:
         return None, -1.0
+    # ★Gemini 우선: 후보 중 피사체가 가장 또렷한 프레임을 직접 선택(빈 바다 회피). 키 없으면 None → 휴리스틱.
+    try:
+        from src.core import vision_subject
+        idx = vision_subject.pick_subject_frame(grabbed, hint)
+        if idx is not None and 0 <= idx < len(grabbed):
+            return grabbed[idx], 999.0        # 비전 확정 → 임계 통과로 취급
+    except Exception:  # noqa: BLE001
+        pass
     fgs = _temporal_foreground_scores(grabbed)              # ★움직이는 피사체 가려내기(빈 물 배제 핵심)
     best, best_score = None, -1.0
     for cand, fg in zip(grabbed, fgs):
@@ -323,35 +334,32 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         hero = hero_image if hero_image and Path(hero_image).exists() else None
         src_open = open_bg_video if open_bg_video and Path(open_bg_video).exists() else body_video
         src_subj = subject_video if subject_video and Path(subject_video).exists() else src_open
+        subj_hint = (getattr(spec, "sci_name", "") or getattr(spec, "jp_name", "") or "").strip()
         open_bg = str(wd / "open_bg.png"); ec_frame = str(wd / "ec_frame.png")
+        # ★#046 최종대책(운영자 확정): 피사체 프레임은 **원본 클립(subject_video)에서** 고른다(리프레임된
+        #   body는 이미 피사체를 놓쳤을 수 있음 → 원본엔 피사체가 반드시 나오는 순간이 있다). Gemini가 후보 중
+        #   피사체가 또렷한 프레임을 직접 선택(_score_best_frame). 이 한 프레임을 오프닝·엔드카드가 공유(비전 1회).
+        subj_logo = logo_box if (subject_video and src_subj == subject_video) else None
+        subj_frame = None
+        if not hero:
+            sf, _ = _score_best_frame(src_subj, wd, logo_box=subj_logo, hint=subj_hint)
+            subj_frame = sf if sf and Path(sf).exists() else None
+        # 오프닝 배경(9:16 커버 크롭): 히어로 사진 > 원본 피사체 프레임 > 앞부분 폴백
         if hero and _cover_crop(hero, open_bg, cfg.W, cfg.H):
             log.info("[hook_intro] 오프닝 배경 = 고화소 히어로 사진")
+        elif subj_frame and _cover_crop(subj_frame, open_bg, cfg.W, cfg.H):
+            log.info("[hook_intro] 오프닝 배경 = 원본 피사체 프레임(비전 선택)")
         else:
-            # ★인트로 타이틀카드·빈 프레임 회피(문제 재발방지): 고정 0.5초 대신 피사체 뚜렷+텍스트 없는
-            #   프레임을 골라 오프닝 배경으로(엔드카드와 동일 로직). 실패 시에만 앞부분 프레임 폴백.
             odur = _duration_of(src_open) or dur
-            # ★#046 재발방지: 후보를 한 번 스캔해 '최선 프레임'을 쓴다. 임계 미달이어도 고정 시각(0.5초)
-            #   블라인드 grab(대개 빈 물)보다 '가장 덜 빈' 프레임이 낫다 → 후보가 있으면 그걸 쓴다.
-            op_best, op_score = _score_best_frame(src_open, wd)
-            if op_best:
-                Path(open_bg).write_bytes(Path(op_best).read_bytes())
-                if op_score < _MIN_FRAME_STRUCT:
-                    log.info("[hook_intro] 오프닝 배경 임계 미달이나 최선 프레임 사용(빈 고정프레임 회피)")
-            elif not _grab_frame(src_open, min(0.5, odur * 0.1), open_bg):
+            if not _grab_frame(src_open, min(0.5, odur * 0.1), open_bg):
                 return body_video
+        # 엔드카드 배경: 히어로 사진 > 원본 피사체 프레임 > 고정 시각 폴백
         if hero and _cover_crop(hero, ec_frame, cfg.W, cfg.H):
             log.info("[hook_intro] 엔드카드 배경 = 고화소 히어로 사진")
+        elif subj_frame:
+            Path(ec_frame).write_bytes(Path(subj_frame).read_bytes())
         else:
-            # 원본(subject_video)에서 뽑는 피사체 프레임은 워터마크 delogo 적용(엔드카드 로고 잔류 방지).
-            # 리프레임된 body 계열 소스는 reframe 단계에서 이미 회피/제거됨 → 미적용.
-            subj_logo = logo_box if (subject_video and src_subj == subject_video) else None
-            ec_best, ec_score = _score_best_frame(src_subj, wd, logo_box=subj_logo)
-            if ec_best:
-                Path(ec_frame).write_bytes(Path(ec_best).read_bytes())
-                if ec_score < _MIN_FRAME_STRUCT:
-                    log.info("[hook_intro] 엔드카드 배경 임계 미달이나 최선 프레임 사용(빈 고정프레임 회피)")
-            else:
-                _grab_frame(src_subj, (_duration_of(src_subj) or dur) * 0.55, ec_frame)
+            _grab_frame(src_subj, (_duration_of(src_subj) or dur) * 0.55, ec_frame)
         ec_bg = str(wd / "ec_bg.png")
         hi.build_specimen_bg(ec_frame if Path(ec_frame).exists() else open_bg, ec_bg, cfg)
 

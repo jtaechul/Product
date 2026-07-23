@@ -487,6 +487,12 @@
       **고정 시각(0.5초·55%) 블라인드 grab(대개 빈 물) 대신 후보 중 최고점 프레임을 쓴다**(덜 빈 프레임이 항상
       낫다). 후보가 아예 없을 때만 고정 시각. 회귀: `test_score_best_frame_picks_moving_lowcontrast_subject`
       (subject_score=0로 시간축 전경만으로 판정) + 실mp4 검증(움직이는 저대비 블롭 프레임 선택).
+      ③ **★★Gemini가 피사체 프레임을 직접 선택(최종대책 · 운영자 확정 · 소코다라 빈바다 반복)**: 휴리스틱이
+      계속 빈 해저를 골라 → `vision_subject.pick_subject_frame`이 **후보 14프레임을 1회 배치**로 Gemini에 보내
+      (각 384px 축소 · 프레임당 ~258토큰 · 회당 ≈$0.001) **피사체가 또렷한 프레임의 인덱스를 직접 고른다**
+      (`_score_best_frame`가 휴리스틱보다 **우선** 사용, 키 없으면 폴백). ★프레임은 **원본 클립(subject_video)에서**
+      뽑는다(리프레임된 body는 피사체를 놓쳤을 수 있음 · 원본엔 반드시 나오는 순간이 있음). 오프닝(9:16 커버크롭)·
+      엔드카드가 **같은 프레임 공유**(비전 1회). 회귀: `test_pick_subject_frame_verdict` + 통합(선택 인덱스 채택).
     - **★소싱 후보 삭제 기능(운영자 확정)**: 소싱 게이트(라이선스·종횡비·정지)는 제작 관문보다 느슨해
       '소싱됐지만 제작 불가'한 후보가 남았다 → ① `discovery.remove_candidates(cat, keys)` 특정 후보 수동
       삭제 ② `discovery.prune_unproducible(cat, tmp)` **제작이 실제 소비하는 `footage.fetch_footage`로
