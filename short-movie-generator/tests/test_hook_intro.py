@@ -208,6 +208,38 @@ def test_best_subject_frame_prefers_structure_not_red(tmp_path, monkeypatch):
     assert _frame_macro_std(Image.open(out)) >= H._MIN_FRAME_STRUCT
 
 
+def test_score_best_frame_picks_moving_lowcontrast_subject(tmp_path, monkeypatch):
+    """★#046(민태과) 재발방지: 회색 저대비 물고기라도 '움직이는(그 프레임에만 있는)' 피사체를
+    정적 빈 물(마린스노우 낀)보다 우선 고른다 — 시간축 전경 점수가 결정. struct·적색만으론 구분 불가."""
+    import random
+    from PIL import Image, ImageDraw
+    from src.core import hook_intro_stage as H, reframe
+
+    def _base():
+        im = Image.new("RGB", (640, 360), (20, 24, 32)); d = ImageDraw.Draw(im)
+        rnd = random.Random(7)                       # 고정 시드 → 모든 빈 프레임이 '정적'으로 동일
+        for _ in range(40):
+            x, y = rnd.randint(0, 636), rnd.randint(0, 356)
+            d.ellipse([x, y, x + 3, y + 3], fill=(200, 205, 210))    # 마린스노우 specks
+        return im
+    empty = tmp_path / "empty.png"; _base().save(empty)
+    im = _base(); ImageDraw.Draw(im).ellipse([280, 150, 380, 200], fill=(72, 76, 82))  # 작은 회색 저대비 물고기
+    subj = tmp_path / "subj.png"; im.save(subj)
+    calls = {"i": 0}
+
+    def fake_grab(video, t, out_png, vf=None):
+        src = subj if calls["i"] == 6 else empty     # 물고기는 한 프레임(i=6)에만 등장 = '움직임'
+        calls["i"] += 1
+        Path(out_png).write_bytes(Path(src).read_bytes()); return True
+    monkeypatch.setattr(H, "_grab_frame", fake_grab)
+    monkeypatch.setattr(H, "_duration_of", lambda v: 30.0)
+    monkeypatch.setattr(reframe, "subject_score", lambda p: 0.0)     # 회색 → 적색 신호 0
+    monkeypatch.setattr(reframe, "text_score", lambda p: 0.0)
+    best, score = H._score_best_frame("fake.mp4", tmp_path)
+    assert best is not None
+    assert Path(best).read_bytes() == Path(subj).read_bytes(), "움직이는 저대비 피사체 프레임을 골라야(빈 물 아님)"
+
+
 def test_best_subject_frame_rejects_all_empty(tmp_path, monkeypatch):
     """전 구간이 빈 물이면 False(상위가 히어로/폴백 처리) — 빈 프레임을 오프닝에 박지 않는다."""
     from PIL import Image

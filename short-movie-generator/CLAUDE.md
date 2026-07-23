@@ -455,6 +455,15 @@
       박혔다. → **색 무관 구조점수(`_frame_macro_std`)** 를 주로, 적색은 보너스로. 최고점 구조가
       `_MIN_FRAME_STRUCT(8)` 미만이면 실패로 보고 히어로/폴백. 회귀:
       `test_best_subject_frame_prefers_structure_not_red`·`test_best_subject_frame_rejects_all_empty`.
+    - **★★시간축 전경 + 최선 프레임 폴백(운영자 확정 · 실사고 #046 민태과: 여전히 빈 바다)**: 구조점수·
+      적색만으론 **회색 저대비 물고기**가 조명 그라디언트·마린스노우 낀 '빈 물'과 구분 안 돼 여전히 빈 물이
+      박혔다. 두 갈래로 해결(구현 `hook_intro_stage._score_best_frame`):
+      ① **시간축 전경 점수**(`_temporal_foreground_scores`): 피사체는 **움직인다** → 12프레임의 시간 평균
+      대비 '국소(상위 10%) 차이'가 큰 프레임을 가산(정적 빈 물은 프레임끼리 같아 ≈0). 색·대비 무관.
+      ② **최선 프레임 폴백**(`_best_effort_frame` · apply 호출부): `_best_subject_frame`가 임계 미달로 실패해도
+      **고정 시각(0.5초·55%) 블라인드 grab(대개 빈 물) 대신 후보 중 최고점 프레임을 쓴다**(덜 빈 프레임이 항상
+      낫다). 후보가 아예 없을 때만 고정 시각. 회귀: `test_score_best_frame_picks_moving_lowcontrast_subject`
+      (subject_score=0로 시간축 전경만으로 판정) + 실mp4 검증(움직이는 저대비 블롭 프레임 선택).
     - **★소싱 후보 삭제 기능(운영자 확정)**: 소싱 게이트(라이선스·종횡비·정지)는 제작 관문보다 느슨해
       '소싱됐지만 제작 불가'한 후보가 남았다 → ① `discovery.remove_candidates(cat, keys)` 특정 후보 수동
       삭제 ② `discovery.prune_unproducible(cat, tmp)` **제작이 실제 소비하는 `footage.fetch_footage`로
@@ -869,6 +878,16 @@
     (`output/<name>_thumb.jpg`, 훅+제목)을 저장한다. 폰트·프레임 확보 실패 시 훅 없이 본문만 발행(불정지).
     구현: `narrate_attached._pick_hero_frame`/`_render_hook_and_thumb`(PIL·이모지 금지)/`_build_hook_clip`/
     `_concat_av`. 회귀: `test_hook_and_thumb_render` + E2E가 훅·썸네일 확인.
+  - **★롱폼 = 원본 전체 길이 유지 + 나레이션 분산 + 타임스탬프(운영자 확정 · 실사고: 5분22초 원본이 48초로 잘림)**:
+    예전 롱폼은 출력 길이를 나레이션 길이로 맞춰 **원본 대부분을 버렸다**. 수정(`narrate_attached`):
+    ① **출력 길이 = 원본 전체 길이**(자르지 않음). ② 나레이션을 **구간(segment)별로 타임라인 전체에 분산**
+    배치(`_build_long_narration`/`_mix_delayed` adelay+amix). 비전 있으면 구간마다 그 구간을 보고 다른 내용의
+    나레이션(`_describe_segment`), 없으면 전역 대본을 구간 수로 **분할**해 분산(★날조 없이 '있는 내용만 펼침').
+    ③ **설명란 타임스탬프**: 구간을 근거로 챕터(제목+시각) 생성 → `▼ チャプター(目次)`/`▼ 챕터(목차)` 목차를
+    설명란에 삽입(첫 줄 00:00 · 유튜브 규칙, 훅 길이 오프셋 반영, KO 제목 1회 LLM 번역·폴백). ④ **자막 2배+**
+    (`sub_scale` 롱폼 2.2·쇼츠 1.8). ⑤ **오프닝훅·썸네일 리뉴얼**(라디얼 비네트+하단 그라디언트 패널+골드
+    킥커/언더라인+소프트 드롭섀도 · `_vignette`/`_shadow_text`). 회귀:
+    `test_longform_keeps_full_length_and_chapters`.
   - **결과 확인(관리자 페이지)**: 완료 시 `content/nv-<runid>.json`(kind="narrate") 레코드를 커밋 →
     홈 카드 하단 "최근 나레이션 결과" + `/nv/<id>` 상세에서 **영상·썸네일 미리보기 + 오프닝 훅 + 제목·설명·
     해시태그를 일/한 2단으로 복사**(썸네일은 "썸네일 저장" 버튼). 워크플로가 썸네일 jpg를 Release에 함께

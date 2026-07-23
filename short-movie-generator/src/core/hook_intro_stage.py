@@ -153,22 +153,52 @@ def _duration_of(path: str) -> float:
         return 0.0
 
 
-def _best_subject_frame(video: str, out_png: str, wd: Path,
-                        logo_box: tuple | None = None) -> bool:
-    """영상에서 '피사체가 가장 뚜렷한' 프레임을 골라 out_png로 저장.
+def _temporal_foreground_scores(frame_paths: list[str]) -> list[float]:
+    """각 프레임의 '시간축 전경(움직이는 피사체)' 점수. 정적 빈 물=낮음, 움직이는 생물=높음.
 
-    왜(재발방지 실사고 macrouridae): 예전엔 **적색 피사체 점수(subject_score)** 만 썼다 → 회색 소코다라가
-    탄색 모래 위에 있는 종은 적색이 0이라 전 프레임 점수 0 → 아무 프레임(빈 검은 물)이 오프닝/엔드카드에
-    박혔다. → **색 무관 구조점수(footage._frame_macro_std: 빈 물=낮음, 피사체·질감=높음)** 를 주로 쓰고,
-    적색 점수는 보너스로만 더한다. '빈 물' 프레임은 구조점수가 낮아 자동 탈락 → 피사체 있는 프레임 선택.
-    10~90% 구간 9개 샘플. logo_box가 오면 워터마크를 delogo로 메운다.
+    왜(재발방지 실사고 #046 민태과): 회색 저대비 물고기(구조·적색 신호가 약함)는 struct·subject_score
+    로는 빈 물과 구분이 안 돼, 오히려 조명 그라디언트·마린스노우가 낀 '빈 물'이 더 높은 점수를 받았다.
+    → 피사체는 **움직인다**. 프레임들의 시간 평균 대비 '국소(상위 10%) 차이'가 크면 그 프레임에
+    움직이는 피사체가 있다는 뜻(정적 빈 물은 프레임끼리 거의 같아 차이 ≈ 0). 색·대비 무관.
+    """
+    try:
+        from PIL import Image
+    except Exception:  # noqa: BLE001
+        return [0.0] * len(frame_paths)
+    gw, gh = 64, 36
+    grids: list[list[int] | None] = []
+    for p in frame_paths:
+        try:
+            grids.append(list(Image.open(p).convert("L").resize((gw, gh)).tobytes()))
+        except Exception:  # noqa: BLE001
+            grids.append(None)
+    valid = [g for g in grids if g]
+    if len(valid) < 2:
+        return [0.0] * len(frame_paths)
+    n = gw * gh
+    mean = [sum(g[i] for g in valid) / len(valid) for i in range(n)]
+    k = max(1, n // 10)                          # 상위 10% 픽셀만(국소 피사체 신호, 전역 희석 방지)
+    out: list[float] = []
+    for g in grids:
+        if not g:
+            out.append(0.0); continue
+        diffs = sorted((abs(g[i] - mean[i]) for i in range(n)), reverse=True)
+        out.append(sum(diffs[:k]) / k)
+    return out
+
+
+def _score_best_frame(video: str, wd: Path, logo_box: tuple | None = None) -> tuple[str | None, float]:
+    """피사체가 가장 뚜렷한 프레임 후보 경로 + 점수를 돌려준다(임계 판정은 호출부에서).
+
+    점수 = 색무관 구조점수(_frame_macro_std) + 적색 피사체 보너스 + ★시간축 전경(움직이는 피사체) 보너스.
+    번인 텍스트 프레임은 강한 감점. 10~90% 구간 12개 샘플. logo_box가 오면 delogo로 메운다.
     """
     from src.core import reframe
     from src.core.footage import _frame_macro_std
     from PIL import Image
     dur = _duration_of(video)
     if dur <= 0:
-        return False
+        return None, -1.0
     vf = None
     if logo_box:
         sw = _probe(video, "width") or 1920
@@ -177,29 +207,49 @@ def _best_subject_frame(video: str, out_png: str, wd: Path,
             vf = reframe.delogo_vf(float(sw), float(sh), logo_box)
         except Exception:  # noqa: BLE001
             vf = None
-    best, best_score = None, -1.0
-    for i in range(9):
-        t = dur * (0.1 + 0.8 * i / 8)
+    grabbed: list[str] = []
+    for i in range(12):
+        t = dur * (0.08 + 0.84 * i / 11)
         cand = str(wd / f"ecs_{i}.png")
-        if not _grab_frame(video, t, cand, vf=vf):
-            continue
-        # 색 무관 구조점수(빈 물 배제) + 적색 피사체 보너스(붉은 생물엔 가산). 빈 프레임은 구조가 낮아 탈락.
+        if _grab_frame(video, t, cand, vf=vf):
+            grabbed.append(cand)
+    if not grabbed:
+        return None, -1.0
+    fgs = _temporal_foreground_scores(grabbed)              # ★움직이는 피사체 가려내기(빈 물 배제 핵심)
+    best, best_score = None, -1.0
+    for cand, fg in zip(grabbed, fgs):
         try:
             struct = _frame_macro_std(Image.open(cand))
         except Exception:  # noqa: BLE001
             struct = 0.0
-        s = struct + 30.0 * reframe.subject_score(cand)
-        # 번인 텍스트(인트로 자막판·아웃트로 URL) 프레임은 강한 감점 → 엔드카드 배경 배제
-        if reframe.text_score(cand) >= 0.012:
+        s = struct + 30.0 * reframe.subject_score(cand) + 0.7 * fg
+        if reframe.text_score(cand) >= 0.012:              # 번인 텍스트 프레임 강한 감점
             s *= 0.02
         if s > best_score:
             best, best_score = cand, s
-    # ★'빈 물' 방지: 최고점 프레임의 구조가 너무 낮으면(거의 빈 화면) 실패로 보고, 상위가 히어로/폴백 처리.
+    return best, best_score
+
+
+def _best_subject_frame(video: str, out_png: str, wd: Path,
+                        logo_box: tuple | None = None) -> bool:
+    """피사체가 뚜렷한 프레임을 골라 out_png로 저장(구조 임계 통과 시 True). 미달이면 False."""
+    best, best_score = _score_best_frame(video, wd, logo_box)
     if not best or best_score < _MIN_FRAME_STRUCT:
         log.info("[hook_intro] 피사체 프레임 구조 부족(%.1f<%.1f) → 배경 프레임 선택 실패", best_score, _MIN_FRAME_STRUCT)
         return False
     Path(out_png).write_bytes(Path(best).read_bytes())
     return True
+
+
+def _best_effort_frame(video: str, out_png: str, wd: Path, logo_box: tuple | None = None) -> bool:
+    """★#046 재발방지: 임계 미달이어도 '가장 덜 빈(피사체 신호 최고)' 후보 프레임을 쓴다.
+    고정 시각(0.5초·55%) 블라인드 grab은 대개 빈 물이라, 후보가 하나라도 있으면 그중 최고점을 쓰는 게 항상 낫다.
+    후보 자체가 없을 때만 False(그때만 상위가 고정 시각 폴백)."""
+    best, _ = _score_best_frame(video, wd, logo_box)
+    if best and Path(best).exists():
+        Path(out_png).write_bytes(Path(best).read_bytes())
+        return True
+    return False
 
 
 def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
@@ -280,16 +330,27 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
             # ★인트로 타이틀카드·빈 프레임 회피(문제 재발방지): 고정 0.5초 대신 피사체 뚜렷+텍스트 없는
             #   프레임을 골라 오프닝 배경으로(엔드카드와 동일 로직). 실패 시에만 앞부분 프레임 폴백.
             odur = _duration_of(src_open) or dur
-            if not _best_subject_frame(src_open, open_bg, wd):
-                if not _grab_frame(src_open, min(0.5, odur * 0.1), open_bg):
-                    return body_video
+            # ★#046 재발방지: 후보를 한 번 스캔해 '최선 프레임'을 쓴다. 임계 미달이어도 고정 시각(0.5초)
+            #   블라인드 grab(대개 빈 물)보다 '가장 덜 빈' 프레임이 낫다 → 후보가 있으면 그걸 쓴다.
+            op_best, op_score = _score_best_frame(src_open, wd)
+            if op_best:
+                Path(open_bg).write_bytes(Path(op_best).read_bytes())
+                if op_score < _MIN_FRAME_STRUCT:
+                    log.info("[hook_intro] 오프닝 배경 임계 미달이나 최선 프레임 사용(빈 고정프레임 회피)")
+            elif not _grab_frame(src_open, min(0.5, odur * 0.1), open_bg):
+                return body_video
         if hero and _cover_crop(hero, ec_frame, cfg.W, cfg.H):
             log.info("[hook_intro] 엔드카드 배경 = 고화소 히어로 사진")
         else:
             # 원본(subject_video)에서 뽑는 피사체 프레임은 워터마크 delogo 적용(엔드카드 로고 잔류 방지).
             # 리프레임된 body 계열 소스는 reframe 단계에서 이미 회피/제거됨 → 미적용.
             subj_logo = logo_box if (subject_video and src_subj == subject_video) else None
-            if not _best_subject_frame(src_subj, ec_frame, wd, logo_box=subj_logo):
+            ec_best, ec_score = _score_best_frame(src_subj, wd, logo_box=subj_logo)
+            if ec_best:
+                Path(ec_frame).write_bytes(Path(ec_best).read_bytes())
+                if ec_score < _MIN_FRAME_STRUCT:
+                    log.info("[hook_intro] 엔드카드 배경 임계 미달이나 최선 프레임 사용(빈 고정프레임 회피)")
+            else:
                 _grab_frame(src_subj, (_duration_of(src_subj) or dur) * 0.55, ec_frame)
         ec_bg = str(wd / "ec_bg.png")
         hi.build_specimen_bg(ec_frame if Path(ec_frame).exists() else open_bg, ec_bg, cfg)
