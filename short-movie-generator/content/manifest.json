@@ -324,21 +324,20 @@
     "date": "2026-07-23"
   },
   {
-    "id": "nv-30010980145",
-    "kind": "narrate",
-    "yt_title": "私たちはちょうど、",
-    "yt_title_ko": "",
-    "mode": "longform",
-    "date": "2026-07-23",
-    "has_video": true,
-    "youtube_url": "https://youtu.be/yENuq56WCPM"
-  },
-  {
     "id": "046",
     "kind": "reels",
     "common_name_ko": "민태과",
     "common_name_en": "Macrouridae",
     "scientific_name": "Macrouridae",
     "date": "2026-07-23"
+  },
+  {
+    "id": "nv-30010980145",
+    "kind": "narrate",
+    "yt_title": "私たちはちょうど、ある海域のマッピングを終え…",
+    "yt_title_ko": "",
+    "mode": "longform",
+    "date": "2026-07-23",
+    "has_video": true
   }
 ]

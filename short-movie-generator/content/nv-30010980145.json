@@ -5,8 +5,8 @@
   "status": "published",
   "mode": "longform",
   "source_url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2024/12/EX2103_VID_20211101_THAT_TRUE_DISCOVERY_FEELING_Web-1.mp4",
-  "hook": "私たちはちょうど",
-  "yt_title": "私たちはちょうど、",
+  "hook": "私たちはちょうど、ある海域のマッピン",
+  "yt_title": "私たちはちょうど、ある海域のマッピングを終え…",
   "yt_title_ko": "",
   "yt_description": "私たちはちょうど。ある海域のマッピングを終えたところで。す。この海域は。\n\n▼ チャプター(目次)\n00:00 We just finished map…\n00:18 wreck point from the…\n00:24 and Heritage Command\n00:32 Maritime archaeologi…\n00:36 haystack and then we…\n00:42 and we have great to…\n00:47 just right\n00:50 You need to have the…\n00:52 You need to have the…\n00:56 You can't have it be…\n00:58 This really has that…\n01:03 I'm really excited\n01:05 And yeah, we'll put …\n01:09 I guess we'll see wh…\n01:11 Okay, let's proceed …\n01:15 Pilot, we're going o…\n01:19 Pilot copies\n01:32 We have an object\n01:37 and then beyond it a…\n01:45 You know, we're off …\n01:55 Visual\n01:56 All right, so archae…\n02:21 It's definitely a sh…\n02:27 and that makes me a …\n02:29 This is looking subm…\n02:32 And it's great news\n02:34 Oh yeah, there's def…\n02:39 So that's a confirm\n02:41 What you're seeing r…\n02:46 originally as USS mu…\n02:54 whom Ita of the Braz…\n02:57 but you can see the …\n03:02 It's about as defini…\n03:06 The vessel's service…\n03:29 and the Pacific thea…\n03:38 as a target vessel u…\n03:43 and hasn't been seen…\n03:55 Any time we find one…\n04:14 The history that we …\n04:20 that we don't wish t…\n04:22 Shipwreck can be hab…\n04:30 that has become like…\n04:33 This is an incredibl…\n04:37 These corals are gor…\n04:42 I think even S\n04:45 It's pretty extraord…\n04:47 By sharing this with…\n04:52 it makes all of us p…\n04:56 that connects us to …\n04:59 We're learning, we'r…\n05:03 to be on the next ho…",
   "yt_description_ko": "▼ 챕터(목차)\n00:00 We just finished map…\n00:18 wreck point from the…\n00:24 and Heritage Command\n00:32 Maritime archaeologi…\n00:36 haystack and then we…\n00:42 and we have great to…\n00:47 just right\n00:50 You need to have the…\n00:52 You need to have the…\n00:56 You can't have it be…\n00:58 This really has that…\n01:03 I'm really excited\n01:05 And yeah, we'll put …\n01:09 I guess we'll see wh…\n01:11 Okay, let's proceed …\n01:15 Pilot, we're going o…\n01:19 Pilot copies\n01:32 We have an object\n01:37 and then beyond it a…\n01:45 You know, we're off …\n01:55 Visual\n01:56 All right, so archae…\n02:21 It's definitely a sh…\n02:27 and that makes me a …\n02:29 This is looking subm…\n02:32 And it's great news\n02:34 Oh yeah, there's def…\n02:39 So that's a confirm\n02:41 What you're seeing r…\n02:46 originally as USS mu…\n02:54 whom Ita of the Braz…\n02:57 but you can see the …\n03:02 It's about as defini…\n03:06 The vessel's service…\n03:29 and the Pacific thea…\n03:38 as a target vessel u…\n03:43 and hasn't been seen…\n03:55 Any time we find one…\n04:14 The history that we …\n04:20 that we don't wish t…\n04:22 Shipwreck can be hab…\n04:30 that has become like…\n04:33 This is an incredibl…\n04:37 These corals are gor…\n04:42 I think even S\n04:45 It's pretty extraord…\n04:47 By sharing this with…\n04:52 it makes all of us p…\n04:56 that connects us to …\n04:59 We're learning, we'r…\n05:03 to be on the next ho…",
@@ -22,7 +22,7 @@
   ],
   "media": {
     "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30010980145/narrated_longform_30010980145.mp4",
-    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30010980145/narrated_longform_30010980145_thumb.jpg",
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30010980145/thumb_30016797618.jpg",
     "youtube_url": "https://youtu.be/yENuq56WCPM",
     "youtube_privacy": "public"
   },
@@ -334,5 +334,5 @@
       "jp": "海の深みへと続く次なる地平を見据えているのです。"
     }
   ],
-  "updated_at": "2026-07-23T14:00:14+00:00"
+  "updated_at": "2026-07-23T14:40:11+00:00"
 }
