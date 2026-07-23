@@ -315,14 +315,6 @@
     "date": "2026-07-22"
   },
   {
-    "id": "047",
-    "kind": "reels",
-    "common_name_ko": "Thistlegorm 난파선",
-    "common_name_en": "Wreck Thistlegorm",
-    "scientific_name": "Wreck Thistlegorm",
-    "date": "2026-07-23"
-  },
-  {
     "id": "046",
     "kind": "reels",
     "common_name_ko": "민태과",
@@ -338,5 +330,14 @@
     "mode": "longform",
     "date": "2026-07-23",
     "has_video": true
+  },
+  {
+    "id": "047",
+    "kind": "reels",
+    "common_name_ko": "Thistlegorm 난파선",
+    "common_name_en": "Wreck Thistlegorm",
+    "scientific_name": "Wreck Thistlegorm",
+    "date": "2026-07-23",
+    "youtube_url": "https://youtu.be/K2rwgOQhvPA"
   }
 ]
