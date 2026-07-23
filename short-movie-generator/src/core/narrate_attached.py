@@ -202,9 +202,10 @@ def _fallback_meta(chunks: list[str], mode: str) -> dict:
     """LLM 미가용 시 대본에서 결정론으로 제목·설명·해시태그(일/한) 도출(날조 없음)."""
     body = "。".join(c.strip("。.、,") for c in chunks[:4] if c.strip())
     first = (chunks[0] if chunks else "").strip() or "海の映像"
-    title_jp = (first[:22] + ("…" if len(first) > 22 else ""))
+    # ★단어 중간 절단 금지(실사고: 'マッピング'→'マッピン') — 구두점 경계 트림(_trim_jp)
+    title_jp = _trim_jp(first, 22) + ("…" if len(first) > 22 else "")
     desc_jp = (body[:180] + "。") if body else "海の映像に日本語ナレーションと字幕を付けた作品です。"
-    hook_jp = re.sub(r"[。.、,！!？?]+$", "", first)[:18] or "この光景を、ご存知ですか"
+    hook_jp = _trim_jp(re.sub(r"[。.！!？?]+$", "", first), 18) or "この光景を、ご存知ですか"
     return {
         "title_jp": title_jp, "title_ko": "",
         "desc_jp": desc_jp, "desc_ko": "",
@@ -240,7 +241,7 @@ def _gen_metadata(chunks: list[str], mode: str) -> dict:
                 d = json.loads(m.group(0))
                 tj = _dedup_tags(d.get("tags_jp") or [], [])
                 tk = _dedup_tags(d.get("tags_ko") or [], [])
-                hook = re.sub(r"[。.、,！!？?]*$", "", str(d.get("hook_jp", "")).strip())[:22]
+                hook = _trim_jp(re.sub(r"[。.！!？?]*$", "", str(d.get("hook_jp", "")).strip()), 22)
                 out = {
                     "hook_jp": hook,
                     "title_jp": str(d.get("title_jp", "")).strip(),
@@ -252,10 +253,33 @@ def _gen_metadata(chunks: list[str], mode: str) -> dict:
                 if out["title_jp"] and out["desc_jp"] and out["tags_jp"]:
                     if not out["hook_jp"]:
                         out["hook_jp"] = _fallback_meta(chunks, mode)["hook_jp"]
-                    return out
+                    return _fill_missing_ko(out)
             except Exception:  # noqa: BLE001
                 pass
-    return _fallback_meta(chunks, mode)
+    return _fill_missing_ko(_fallback_meta(chunks, mode))
+
+
+def _fill_missing_ko(meta: dict) -> dict:
+    """제목·설명 한국어 번역이 비어 있으면 소형 LLM 호출로 채운다(실사고: 제목·한국어 빈칸).
+    본 생성 호출이 실패(폴백)했어도 번역만 따로 재시도 — 그래도 실패하면 빈 채 유지(발행 불정지)."""
+    from src.core import llm
+    need = [k for k, src in (("title_ko", "title_jp"), ("desc_ko", "desc_jp"))
+            if not str(meta.get(k, "")).strip() and str(meta.get(src, "")).strip()]
+    if not need:
+        return meta
+    try:
+        src_txt = "\n---\n".join(str(meta.get({"title_ko": "title_jp", "desc_ko": "desc_jp"}[k], "")) for k in need)
+        txt = llm.generate_text(
+            "次の日本語を自然な韓国語に翻訳してください。項目は '---' で区切られています。"
+            "訳文のみを同じ順序で '---' 区切りで出力(説明・記号なし)。\n" + src_txt, max_tokens=600)
+        if txt:
+            parts = [p.strip() for p in txt.split("---")]
+            for k, v in zip(need, parts):
+                if v:
+                    meta[k] = v
+    except Exception:  # noqa: BLE001
+        pass
+    return meta
 
 
 def _normalize_landscape(video: str, out: str, dur: float, work_dir: str) -> str:
@@ -408,27 +432,58 @@ def _corner_brackets(d, w: int, h: int, color, alpha: int = 235):
 
 def _pill(im, x: int, y: int, text: str, fontsize: int) -> int:
     """딥네이비 라운드 '필' 태그(ROV HUD 톤 · 골드 테두리 + 화이트 텍스트). 반환: 필 높이.
-    ★스타일 변경(운영자 확정): 예전 화이트 칩 → 우주선/ROV UI 톤의 네이비 칩(화면 라벨 오버레이와 통일)."""
+    ★프레임 이탈 금지(운영자 확정 · 실사고: 칩이 썸네일 하단 밖으로 삐져나감): 어떤 입력에서도
+    칩 전체가 캔버스 안에 있도록 ① y를 하단 여백 안으로 클램프 ② 텍스트가 길면 말줄임(…)으로
+    가로 폭을 맞춘다. 다시는 박스가 프레임 밖으로 나가지 않는다."""
     from PIL import ImageDraw, ImageFont
     from src.core import hook_intro as hi
+    W_, H_ = im.size
     d = ImageDraw.Draw(im, "RGBA")
     f = ImageFont.truetype(hi.FONT_SANS_B, fontsize, index=0)
-    tw = d.textlength(text, font=f)
     asc = f.getbbox("あ")[3]
     padx, pady = int(fontsize * 0.6), int(fontsize * 0.42)
+    margin = max(8, int(H_ * 0.030))
+    # ② 가로: 캔버스 안에 들어갈 때까지 말줄임
+    max_rw = W_ - x - margin
+    t = str(text)
+    while t and int(d.textlength(t + ("…" if t != text else ""), font=f) + 2 * padx) > max_rw:
+        t = t[:-1]
+    if not t:
+        return 0
+    if t != text:
+        t += "…"
+    tw = d.textlength(t, font=f)
     rw, rh = int(tw + 2 * padx), int(asc + 2 * pady)
+    # ① 세로: 하단 여백 안으로 클램프(코너 브래킷 영역 침범 최소화)
+    y = max(margin, min(y, H_ - margin - rh))
     d.rounded_rectangle([x, y, x + rw, y + rh], radius=int(rh * 0.26),
                         fill=(12, 20, 34, 235), outline=_ACCENT + (220,),
                         width=max(2, int(fontsize * 0.07)))
-    d.text((x + padx, y + pady - int(fontsize * 0.06)), text, font=f, fill=(245, 244, 240))
+    d.text((x + padx, y + pady - int(fontsize * 0.06)), t, font=f, fill=(245, 244, 240))
     return rh
 
 
-def _kicker_text(hook: str, title: str) -> str:
-    """썸네일 필(작은 칩) 문구 — 제목에서 추출하되 **큰 글씨(훅)와 중복이면 배제**.
+def _trim_jp(text: str, maxn: int) -> str:
+    """일본어 문구를 maxn자 이내로 줄이되 **단어 중간이 아닌 구두점 경계**에서 자른다.
+    ★실사고(운영자 지적): 훅이 'マッピング'의 중간('マッピン')에서 잘려 어색 → 한도 안의 마지막
+    구두점(、。・)까지로 줄이고, 구두점이 없으면 그때만 글자수로 자른다. 끝 구두점은 제거."""
+    t = (text or "").strip()
+    if len(t) <= maxn:
+        return re.sub(r"[、。，,]+$", "", t)
+    cut = t[:maxn]
+    m = max(cut.rfind("、"), cut.rfind("。"), cut.rfind("・"))
+    if m >= max(6, maxn // 3):                 # 너무 앞이면(내용 소실) 구두점 컷 포기
+        cut = cut[:m]
+    return re.sub(r"[、。，,]+$", "", cut)
 
-    ★실사고(운영자 지적): 큰 글씨와 필 안 작은 글씨가 똑같이 들어감 → 필은 '제목(내용 예고)'을
-    보여주는 자리이므로, 훅과 같은/포함 관계인 조각은 건너뛰고 다른 조각을 쓴다. 전부 중복이면 ''(필 생략)."""
+
+def _kicker_text(hook: str, title: str) -> str:
+    """썸네일 필(작은 칩) 문구 — 제목에서 추출하되 **큰 글씨(훅)와 중복·유사면 배제**.
+
+    ★실사고 2건(운영자 지적): ① 같은 문구가 큰 글씨와 칩에 그대로 ② 포함관계는 아니지만
+    사실상 같은 문장(훅=제목 앞 22자 절단본)이 칩에 들어감 → 포함 검사에 더해
+    **유사도(SequenceMatcher ≥0.5) 검사**로 '거의 같은' 조각도 배제. 전부 중복이면 ''(칩 생략)."""
+    from difflib import SequenceMatcher
     hook_n = re.sub(r"\s+", "", (hook or ""))
     for seg in re.split(r"[、。，,・|/\n]", (title or "").strip()):
         seg = seg.strip()[:16]
@@ -436,6 +491,8 @@ def _kicker_text(hook: str, title: str) -> str:
         if not seg_n:
             continue
         if hook_n and (seg_n in hook_n or hook_n in seg_n):
+            continue
+        if hook_n and SequenceMatcher(None, seg_n, hook_n).ratio() >= 0.5:
             continue
         return seg
     return ""
