@@ -876,7 +876,11 @@ def _cutaway_image_ok(path: str, credit: str = "", source: str = "", hint: str =
         return True
     try:
         from src.core import vision_subject
-        if vision_subject.is_live_wild_subject(path, hint) is False:
+        # ★#046 재발방지(실사고: 피사체 없는 '빈 해저' 사진이 컷어웨이·엔드카드에 삽입됨): '살아있음/물속'만
+        #   보면 피사체가 아예 없는 빈 모래바닥도 통과했다(죽은 것도 물 밖도 아니므로). → 피사체(생물)가
+        #   **또렷하게 존재**하는지까지 요구(need_single)해, 생물이 안 보이는 빈 바다 사진을 배제한다.
+        v = vision_subject.screen_photo(path, common_name_en=hint, need_single=True)
+        if v and v.get("reject"):                 # 비생물·죽음/물밖·빈바다(단일피사체 없음) 모두 배제
             return False
     except Exception:  # noqa: BLE001
         pass

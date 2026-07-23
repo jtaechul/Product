@@ -75,10 +75,14 @@ def _subject_pixels(frame_path: str) -> tuple[list, int, int]:
             r, g, b = px[x, y]
             red = r - g                              # ① 붉은 생물
             bright = lum[y][x] - bg                  # ② 배경보다 밝음(조명받은 피사체)
+            dark = bg - lum[y][x]                    # ②' 배경보다 어두움(밝은 모래 위 검은 물고기 등)
             tex = 0                                  # ③ 국소 텍스처(미세구조)
             if x + 1 < w and y + 1 < h:
                 tex = abs(lum[y][x] - lum[y][x + 1]) + abs(lum[y][x] - lum[y + 1][x])
-            wt = max(red, int(bright * 0.9), int(tex * 0.7))
+            # ★암색 피사체 대응(실사고 #046 소코다라: 밝은 모래 위 '어두운' 물고기가 신호 0이 되어
+            #   빈 모래보다 낮은 점수 → 오프닝·엔드카드·본문컷이 모두 모래를 선택). 밝기 편차(밝든 어둡든
+            #   배경과 다른 정도)를 함께 신호로 삼아, 색·명암과 무관하게 '배경에서 튀는 덩어리'를 잡는다.
+            wt = max(red, int(bright * 0.9), int(dark * 0.85), int(tex * 0.7))
             if wt > 25:
                 pts.append((wt, x, y))
     return pts, w, h

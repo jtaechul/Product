@@ -66,6 +66,26 @@ def test_pick_windows_prefers_high_score_spans():
     assert starts == sorted(starts)                   # 시간순 배치
 
 
+def test_subject_score_detects_dark_subject_on_bright_bg(tmp_path):
+    """(실사고 #046 소코다라) 밝은 모래 위 '어두운' 물고기는 빈 모래보다 점수가 높아야 한다.
+    예전엔 어두운 피사체 신호가 0이라 질감 많은 빈 모래가 더 높은 점수를 받아 빈 바다가 선택됐다."""
+    def _bright_sand():
+        im = Image.new("RGB", (480, 270))
+        px = im.load()
+        for y in range(270):
+            for x in range(480):
+                v = ((x * 7 + y * 13) % 80) + 150      # 밝은 질감(150~230) = 모래
+                px[x, y] = (v, max(0, v - 10), max(0, v - 20))
+        return im
+    with_fish = str(tmp_path / "darkfish.png")
+    im = _bright_sand()
+    ImageDraw.Draw(im).ellipse([200, 110, 285, 172], fill=(30, 28, 36))   # 어두운 물고기
+    im.save(with_fish)
+    plain = str(tmp_path / "plainsand.png"); _bright_sand().save(plain)
+    assert reframe.subject_score(with_fish) > reframe.subject_score(plain), \
+        "어두운 피사체가 빈 밝은 모래보다 낮게 평가됨(암색 피사체 미검출)"
+
+
 def test_subject_score_penalizes_edge_cut_subject(tmp_path):
     """생물이 프레임 경계에 잘려 있으면 온전히 보이는 프레임보다 점수가 낮아야 한다."""
     whole = str(tmp_path / "whole.png"); _synthetic_frame(whole)
