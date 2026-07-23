@@ -87,6 +87,25 @@ def test_gen_metadata_uses_title_candidate_when_final_blank(monkeypatch):
     assert d["title_jp"] == "【深海】ソコダラの素顔"
 
 
+def test_hashtags_are_content_based_and_plentiful(monkeypatch):
+    """해시태그: LLM은 8~12개 살아남고, 폴백도 대본 내용(대상어·주제)에서 다수 도출(고정 3개 탈피)."""
+    from src.core import llm
+    chunks = ["水深980mの海底に、ソコダラの仲間が姿を見せます。", "長い尾を引きずるように泳ぎます。"]
+    # 폴백(LLM 미가용): 내용 기반 태그 + 종명(ソコダラ) 포함, 고정 3개(#海/#自然/#癒し)만은 아님
+    monkeypatch.setattr(llm, "generate_text", lambda *a, **k: None)
+    fb = N._gen_metadata(chunks, "longform", source_topic="Macrouridae deep-sea fish")
+    assert "#深海" in fb["tags_jp"] and "#ソコダラ" in fb["tags_jp"]
+    assert fb["tags_jp"] != ["#海", "#自然", "#癒し"]
+    # LLM 정상: 8개 태그가 상한(12) 안에서 모두 유지
+    many = ('{"subject":"ソコダラ","title_candidates":["a"],"title_jp":"【深海】ソコダラの記録",'
+            '"title_ko":"기록","hook_jp":"深海の主","desc_jp":"記録です。","desc_ko":"기록.",'
+            '"tags_jp":["#深海","#ソコダラ","#深海魚","#海洋生物","#生き物","#自然","#水中映像","#ドキュメンタリー"],'
+            '"tags_ko":["#심해","#해양생물"]}')
+    monkeypatch.setattr(llm, "generate_text", lambda *a, **k: many)
+    d = N._gen_metadata(chunks, "longform")
+    assert len(d["tags_jp"]) == 8 and "#ドキュメンタリー" in d["tags_jp"]
+
+
 def test_fallback_title_prefers_facts_over_first_sentence():
     """A안 폴백: 밋밋한 1인칭 상황 서술보다 수심 사실 템플릿/구체 절을 제목으로."""
     # ① 대본에 수심이 실제로 있으면 【深海】…水深○mの記録 템플릿

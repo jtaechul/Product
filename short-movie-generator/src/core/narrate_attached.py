@@ -184,18 +184,25 @@ def _jp_script(title: str, notes: str, mode: str) -> list[str]:
     return _jp_chunks_from_notes(title, notes, 18 if mode == "shorts" else 44)
 
 
-def _dedup_tags(tags, core_jp) -> list[str]:
+def _dedup_tags(tags, core_jp, limit: int = 12) -> list[str]:
+    """해시태그 정규화·중복제거. ★유튜브 SEO상 태그가 3개뿐이면 검색 노출이 약하다(운영자 지적:
+    '말도 안 되는 3개') → 상한을 12개로 올려 내용 기반 태그가 넉넉히 살아남게 한다."""
     out: list[str] = []
     for t in list(core_jp) + list(tags or []):
         t = str(t).strip()
         if not t:
             continue
+        # 문장·설명이 태그로 새는 것 방지(너무 긴 것·공백 다수 배제)
         if not t.startswith("#"):
             t = "#" + t.lstrip("#")
-        t = t.replace(" ", "")
+        t = re.sub(r"\s+", "", t)
+        t = re.sub(r"[、。,.!！?？…·・/|]+", "", t)
+        core = t.lstrip("#")
+        if not core or len(core) > 20:      # 태그다운 길이만(문장 배제)
+            continue
         if t not in out:
             out.append(t)
-    return out[:6]
+    return out[:limit]
 
 
 def _fallback_title_jp(chunks: list[str], source_topic: str = "") -> str:
@@ -260,6 +267,44 @@ def _fallback_title_jp(chunks: list[str], source_topic: str = "") -> str:
     return re.sub(r"[、。]+$", "", title) or _trim_jp(first, 30)
 
 
+# 대본에 이 단서가 있으면 붙이는 발견형 광범위 태그(내용 일치할 때만 · 날조 아님)
+_TOPIC_TAGS_JP = [
+    (r"深海|海底|水深|abyss|deep.?sea", ["#深海", "#深海生物", "#海洋生物"]),
+    (r"クラゲ|水母", ["#クラゲ"]),
+    (r"イカ|烏賊|タコ|蛸", ["#頭足類"]),
+    (r"サメ|鮫", ["#サメ"]),
+    (r"魚|ウオ|フィッシュ", ["#魚"]),
+    (r"沈没|難破|沈船|shipwreck|wreck", ["#沈没船", "#難破船"]),
+    (r"海|ocean|sea|マリン", ["#海", "#海洋生物"]),
+    (r"珊瑚|サンゴ", ["#サンゴ"]),
+]
+_TOPIC_TAGS_KO = {
+    "#深海": "#심해", "#深海生物": "#심해생물", "#海洋生物": "#해양생물", "#クラゲ": "#해파리",
+    "#頭足類": "#두족류", "#サメ": "#상어", "#魚": "#물고기", "#沈没船": "#침몰선",
+    "#難破船": "#난파선", "#海": "#바다", "#サンゴ": "#산호",
+}
+
+
+def _fallback_tags(chunks: list[str], source_topic: str) -> tuple[list[str], list[str]]:
+    """LLM 미가용 시 대본·출처에서 내용 기반 해시태그(일/한) 도출(날조 없음).
+    ★실사고: 폴백이 항상 '#海 #自然 #癒し' 3개뿐 → 검색 노출 약함. 대본에 실제로 있는 대상어·주제
+    단서로 태그를 넓힌다(내용과 일치하는 단서만 채택)."""
+    corpus = ("。".join(c for c in chunks if c) + " " + (source_topic or "")).lower()
+    tags_jp: list[str] = []
+    for pat, tags in _TOPIC_TAGS_JP:
+        if re.search(pat, corpus, re.I):
+            tags_jp.extend(tags)
+    # 대본에 등장하는 생물명(카타카나 고유명)도 태그로(문자 그대로 · 짧은 이름 ソコダラ 등 포함)
+    for m in re.findall(r"[ァ-ヴ]{2,}(?:イカ|タコ|クラゲ|エビ|カニ|ザメ|ダラ|ウオ|フグ|アンコウ|ダコ|ウニ|ナマコ)", corpus):
+        tags_jp.append("#" + m)
+    if not tags_jp:
+        tags_jp = ["#海", "#海洋生物", "#自然"]
+    tags_jp = _dedup_tags(tags_jp, [])
+    tags_ko = _dedup_tags([_TOPIC_TAGS_KO.get(t, "") for t in tags_jp if _TOPIC_TAGS_KO.get(t)],
+                          []) or ["#바다", "#해양생물", "#자연"]
+    return tags_jp, tags_ko
+
+
 def _fallback_meta(chunks: list[str], mode: str, source_topic: str = "") -> dict:
     """LLM 미가용 시 대본에서 결정론으로 제목·설명·해시태그(일/한) 도출(날조 없음)."""
     body = "。".join(c.strip("。.、,") for c in chunks[:4] if c.strip())
@@ -267,12 +312,13 @@ def _fallback_meta(chunks: list[str], mode: str, source_topic: str = "") -> dict
     title_jp = _fallback_title_jp(chunks, source_topic)
     desc_jp = (body[:180] + "。") if body else "海の映像に日本語ナレーションと字幕を付けた作品です。"
     hook_jp = _trim_jp(re.sub(r"[。.！!？?]+$", "", first), 18) or "この光景を、ご存知ですか"
+    tags_jp, tags_ko = _fallback_tags(chunks, source_topic)
     return {
         "title_jp": title_jp, "title_ko": "",
         "desc_jp": desc_jp, "desc_ko": "",
         "hook_jp": hook_jp,
-        "tags_jp": _dedup_tags(["#海", "#自然", "#癒し"], []),
-        "tags_ko": ["#바다", "#자연", "#힐링"],
+        "tags_jp": tags_jp,
+        "tags_ko": tags_ko,
     }
 
 
@@ -305,6 +351,12 @@ def _gen_metadata(chunks: list[str], mode: str, source_topic: str = "") -> dict:
         "(c)意外性・衝撃(「実は〜」)、(d)断定+具体、(e)対象名を先頭に置く。\n"
         "3) 5候補を『内容が予測できるか/続きが気になるか/釣りすぎ(誇張)ないか/30字以内か/"
         "台本の事実に忠実か』で自己採点し、最も強い1つを選ぶ。\n"
+        "4) ハッシュタグは台本の内容から視聴者を集められるSEOタグを日本語で8〜12個作る:"
+        "(a)対象・主役の具体名(種名・生き物名など台本に出るもの)、"
+        "(b)発見・検索されやすい広めのタグ(例:深海・海洋生物・生き物・自然・野生動物・水中映像・"
+        "ドキュメンタリー・神秘 など、映像内容に合うものだけ)、(c)形式タグ。"
+        "各タグは#付き・空白なし・短く(1タグ=1語句)。文章をタグにしない。無関係・意味不明・"
+        "誇張(怪物/UMA等)タグは禁止。★台本(と出典)に無い固有名詞・事実は作らない。\n"
         "★制約: 本文(と出典)にない事実・数値・固有名詞は創作しない。UMA・怪物・宇宙人など事実歪曲は禁止"
         "(比喩や問いかけは可)。抽象的な釣り文句だけ・意味のない問いかけだけのタイトルは不可。\n\n"
         "次のJSONだけを出力(説明・記号・前置きなし):\n"
@@ -316,8 +368,8 @@ def _gen_metadata(chunks: list[str], mode: str, source_topic: str = "") -> dict:
         '\"hook_jp\":\"12〜18字の強いオープニングフック(冒頭2秒で指を止める一言・体言止め/問いかけ可)。★タイトルと同じ文言の使い回しは禁止(別表現)\",'
         '\"desc_jp\":\"日本語の説明文(2〜4文・敬体)\",'
         '\"desc_ko\":\"上の説明の自然な韓国語訳\",'
-        '\"tags_jp\":[\"#日本語タグ\",\"…3〜5個\"],'
-        '\"tags_ko\":[\"#한국어태그\",\"…3〜5個\"]}')
+        '\"tags_jp\":[\"#具体タグ\",\"#広めのタグ\",\"…8〜12個\"],'
+        '\"tags_ko\":[\"#한국어태그\",\"…8〜12個\"]}')
     # ★일시 오류로 폴백(잘린 제목·빈 한국어)이 발행되는 걸 줄이기 위해 실패 시 1회 재시도.
     #   후보 5개+자기채점을 담아 max_tokens 상향(900).
     raw = llm.generate_text(prompt, max_tokens=900) or llm.generate_text(prompt, max_tokens=900)

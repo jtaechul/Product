@@ -196,9 +196,11 @@ async function fetchT(url,opts,ms){
   const c=new AbortController();const t=setTimeout(()=>c.abort(),ms||7000);
   try{return await fetch(url,{...(opts||{}),signal:c.signal});}finally{clearTimeout(t);}
 }
-async function fetchRaw(path){
+async function fetchRaw(path,fresh){
   // 공개 읽기 프록시 우선(무인증·어느 기기서든 동작). 실패 시 인증 API로 폴백(타임아웃).
-  try{const r=await fetchT("/api/pub?path="+encodeURIComponent(path));
+  // fresh=true면 cb(타임스탬프)로 raw CDN·엣지 캐시를 우회해 최신 커밋을 즉시 읽는다(재생성 직후용).
+  const cbq = fresh ? ("&cb="+Date.now()) : "";
+  try{const r=await fetchT("/api/pub?path="+encodeURIComponent(path)+cbq);
     if(r.ok)return await r.text();}catch(e){}
   try{const r=await fetchT(API+"/contents/"+path+"?ref="+BRANCH,{headers:{...headers(true),"Accept":"application/vnd.github.raw+json"}});
     if(!r.ok)return null;return await r.text();}catch(e){return null;}
@@ -234,7 +236,7 @@ async function listContent(){
   }catch(e){}
   return out.sort((a,b)=>(a.no<b.no?1:-1));
 }
-async function fetchRecord(id){const t=await fetchRaw(CONTENT_DIR+"/"+id+".json");try{return JSON.parse(t);}catch(e){return null;}}
+async function fetchRecord(id,fresh){const t=await fetchRaw(CONTENT_DIR+"/"+id+".json",fresh);try{return JSON.parse(t);}catch(e){return null;}}
 // 롱폼 결과 목록: 공개 매니페스트에서 kind=longform 만.
 async function listLongform(){
   const man=await fetchManifest();
@@ -443,9 +445,9 @@ async function loadNarrateResults(){
   )).join('');
 }
 // 나레이션 결과 상세: 영상 + 자동 생성 제목·설명·해시태그(일/한) 복사
-async function renderNarrateDetail(id){
+async function renderNarrateDetail(id,fresh){
   view().innerHTML='<a class="back" href="/">← 제작 페이지</a><div class="card" id="nvcard"><div class="hint">불러오는 중…</div></div>';
-  const rec=await fetchRecord(id);
+  const rec=await fetchRecord(id,fresh);
   const dc=document.getElementById("nvcard");
   if(!rec){dc.innerHTML='<div class="hint">이 나레이션 기록을 찾을 수 없습니다(아직 제작 중이거나 완료 전).</div>'+
       '<div class="btnrow" style="margin-top:14px"><a class="btn" href="/">← 제작 페이지로</a></div>';return;}
@@ -553,17 +555,41 @@ async function renderNarrateDetail(id){
 async function regenNarratePartial(id,sourceUrl,mode,scope,btnId,label){
   if(!authReady()){banner("재생성에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
   const mins=(scope==="thumb"||scope==="title")?"2~5분":"1~2분";
-  if(!confirm(label+"만 다시 만듭니다(영상은 그대로).\\n\\n완료까지 약 "+mins+", 이 화면을 새로고침하면 반영됩니다.\\n계속할까요?"))return;
+  if(!confirm(label+"만 다시 만듭니다(영상은 그대로).\\n\\n완료되면 이 화면이 자동으로 갱신됩니다(약 "+mins+").\\n계속할까요?"))return;
   const b=document.getElementById(btnId); if(b){b.disabled=true;b.textContent=label+" 재생성 중…";}
-  banner(label+" 재생성을 시작합니다… ("+mins+" 뒤 새로고침)");
+  // ★현행화(운영자 지적): 재생성 완료 즉시 반영. 시작 시점의 updated_at을 스냅샷 → 레코드가 갱신되면
+  //   자동으로 화면을 다시 그린다(수동 새로고침 불필요 · raw 캐시는 fresh 조회로 우회).
+  const before=(await fetchRecord(id,true)||{}).updated_at||"";
+  banner(label+" 재생성을 시작합니다… 완료되면 자동으로 갱신됩니다.");
   try{
     const r=await fetch(API+"/actions/workflows/"+NV_WF+"/dispatches",{method:"POST",headers:headers(true),
       body:JSON.stringify({ref:BRANCH,inputs:{video_url:(sourceUrl||"-"),mode:(mode||"longform"),
         content_id:String(id),scope:scope}})});
-    if(r.status===204)banner(label+" 재생성 시작! "+mins+" 뒤 이 화면을 새로고침하세요.","ok");
+    if(r.status===204){banner(label+" 재생성 시작! 완료되면 이 화면이 자동으로 갱신됩니다(약 "+mins+").","ok");
+      pollNarrateUpdate(id,before,label);}
     else{const t=await r.text();banner("시작 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");
       if(b){b.disabled=false;b.textContent=label+" 재생성";}}
   }catch(e){banner("오류: "+e,"err");if(b){b.disabled=false;b.textContent=label+" 재생성";}}
+}
+
+// 재생성 완료 자동 감지 → 화면 갱신. 시작 시점 updated_at과 달라지면(=새 커밋 반영) 상세를 다시 그린다.
+// raw CDN 지연을 피하려 항상 fresh 조회. 최대 ~12분(15초 간격) 폴링 후 종료(수동 새로고침 안내).
+async function pollNarrateUpdate(id,before,label){
+  let tries=0; const max=48;
+  const timer=setInterval(async()=>{
+    tries++;
+    // 현재 상세 화면이 이 id가 아니면(다른 곳으로 이동) 폴링 중단
+    if(!location.pathname.startsWith("/nv/")){clearInterval(timer);return;}
+    let rec=null; try{rec=await fetchRecord(id,true);}catch(e){}
+    if(rec&&(rec.updated_at||"")&&rec.updated_at!==before){
+      clearInterval(timer);
+      banner((label||"내용")+" 재생성 완료 — 화면을 갱신했습니다.","ok");
+      renderNarrateDetail(id,true);
+      return;
+    }
+    if(tries>=max){clearInterval(timer);
+      banner("아직 처리 중일 수 있습니다. 잠시 뒤 새로고침해 주세요.","err");}
+  },15000);
 }
 
 // 나레이션 영상 유튜브 '수동' 업로드 — 롱폼과 같은 upload-longform.yml 디스패치(레코드 kind로 분기).
@@ -1365,9 +1391,16 @@ async function pubRead(url){
   const path = url.searchParams.get("path") || "";
   if(!/^short-movie-generator\/(content\/[\w.\-]+\.json|src\/categories\/deep_sea\/catalog\.json|src\/categories\/[\w\-]+\/[\w\-]+_(candidates|image_only)\.json)$/.test(path))
     return j({error:"path not allowed"}, 403);
-  const target = "https://raw.githubusercontent.com/" + OWNER + "/" + REPO + "/" + BRANCH + "/" + path;
+  // ★현행화 지연 수정(운영자 지적: 재생성 완료 텔레그램 받았는데 관리자 페이지가 한참 뒤에 갱신):
+  //   raw.githubusercontent.com은 경로 기준 CDN 캐시(~5분)가 있어, 재생성 커밋이 올라와도 옛 JSON을
+  //   한동안 돌려준다. 클라이언트가 최신을 원할 때 cb(타임스탬프)를 붙여 오면 ①raw URL에 그 값을 실어
+  //   CDN 캐시를 우회하고 ②워커 엣지 캐시도 끈다 → 즉시 현행화.
+  const cb = url.searchParams.get("cb") || "";
+  const q = cb ? ("?cb=" + encodeURIComponent(cb)) : "";
+  const target = "https://raw.githubusercontent.com/" + OWNER + "/" + REPO + "/" + BRANCH + "/" + path + q;
+  const cfopt = cb ? {cacheTtl:0, cacheEverything:false} : {cacheTtl:20, cacheEverything:true};
   try{
-    const resp = await fetch(target, {headers:{"User-Agent":"deep-dive-log-dashboard"}, cf:{cacheTtl:20, cacheEverything:true}});
+    const resp = await fetch(target, {headers:{"User-Agent":"deep-dive-log-dashboard"}, cf:cfopt});
     if(!resp.ok) return new Response("", {status: resp.status});
     return new Response(await resp.text(), {status:200,
       headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
