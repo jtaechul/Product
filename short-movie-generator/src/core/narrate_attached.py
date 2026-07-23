@@ -272,13 +272,28 @@ def _normalize_landscape(video: str, out: str, dur: float, work_dir: str) -> str
 
 
 # ─────────────────────── 오프닝 훅(타이틀 카드) + 유튜브 썸네일 ───────────────────────
-def _pick_hero_frame(video: str, work: Path, w: int) -> str:
-    """영상에서 '피사체가 잘 보이는(구조 분산 큰)' 시각을 골라 그 프레임을 고해상으로 뽑는다.
-    오프닝 훅·썸네일 배경용. 실패 시 ''(호출부가 훅 생략)."""
+def _pick_hero_frame(video: str, work: Path, w: int, subject_hint: str = "") -> str:
+    """영상에서 '피사체(생물)가 또렷하게 나온' 프레임을 골라 오프닝 훅·썸네일 배경용으로 돌려준다.
+    실패 시 ''(호출부가 훅 생략).
+
+    ★재발방지(실사고 · ソコダラ 등 오프닝훅에 빈 바다만 나옴): 예전엔 밝기 표준편차(stddev)만으로 5개
+    프레임 중 골라, **질감 많은 빈 모래 바닥이 어두운 물고기보다 높은 점수**를 받아 빈 바다가 표지가 됐다.
+    → 릴스 경로와 **동일한 Gemini 우선 선택기**(`hook_intro_stage._score_best_frame`: 촘촘한 20프레임을
+    Gemini가 직접 보고 피사체 프레임 선택, 키 없으면 움직임 기반 폴백)로 통일한다. 이 함수는 비전을
+    쓰지 않던 유일한 구멍이었다. 실패 시에만 옛 stddev 방식으로 마지막 폴백."""
     dur = _probe_dur(video) or 0.0
     if dur <= 0:
         return ""
     work.mkdir(parents=True, exist_ok=True)
+    # ★릴스와 동일한 Gemini 우선 피사체 프레임 선택(빈 바다 회피). 반환은 원본 해상도 프레임(cover_crop이 리사이즈).
+    try:
+        from src.core import hook_intro_stage as his
+        best, _score = his._score_best_frame(video, work, hint=subject_hint, n_samples=24)
+        if best and Path(best).exists() and Path(best).stat().st_size > 1000:
+            return best
+    except Exception as e:  # noqa: BLE001
+        log.info("[narrate] 히어로 프레임 비전 선택 실패 → stddev 폴백: %s", e)
+    # 마지막 폴백(비전·릴스경로 모두 실패): 옛 밝기 표준편차 방식
     try:
         from PIL import Image, ImageStat
     except Exception:  # noqa: BLE001
@@ -834,7 +849,8 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     try:
         from src.core import hook_intro as hi
         if hook_txt and hi.fonts_available():
-            hero = _pick_hero_frame(src, work / "hero", w)
+            hero = _pick_hero_frame(src, work / "hero", w,
+                                    subject_hint=(source_topic or meta.get("title_jp", "") or "").strip())
             if hero:
                 card = str(work / "hookcard.png")
                 if _render_hook_and_thumb(hero, hook_txt, meta.get("title_jp", ""), w, h,

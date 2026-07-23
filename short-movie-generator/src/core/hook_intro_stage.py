@@ -188,13 +188,18 @@ def _temporal_foreground_scores(frame_paths: list[str]) -> list[float]:
 
 
 def _score_best_frame(video: str, wd: Path, logo_box: tuple | None = None,
-                      hint: str = "") -> tuple[str | None, float]:
+                      hint: str = "", n_samples: int = 20) -> tuple[str | None, float]:
     """피사체가 가장 뚜렷한 프레임 후보 경로 + 점수를 돌려준다(임계 판정은 호출부에서).
 
     ★#046 소코다라(빈 바다 반복) 최종 대책: **Gemini가 후보 프레임 중 피사체가 또렷한 것을 직접 고른다**
     (`vision_subject.pick_subject_frame` · 후보 전부 1회 배치 · 저비용). 비전 키 없거나 실패 시에만
-    휴리스틱(색무관 구조점수 + 적색 보너스 + 시간축 전경 + 번인텍스트 감점)으로 폴백.
-    10~90% 구간 14개 샘플. logo_box가 오면 delogo로 메운다.
+    휴리스틱으로 폴백.
+    ★재발방지 보강(2차): ① 샘플을 촘촘히(기본 20개, 5~95% 균등) 떠서 '피사체가 잠깐 나오는' 순간을
+    Gemini 후보에 반드시 포함시킨다(예전 14개로는 짧게 등장하는 물고기를 놓쳐 Gemini도 못 골랐다).
+    ② 폴백 점수는 **움직임(temporal foreground)을 주신호**로 삼는다 — 예전엔 구조도(struct=매크로 표준편차)를
+    가중 없이 그대로 더해 '질감 많은 빈 모래 바닥'이 어두운 물고기보다 높은 점수를 받았다(빈 바다 선택의 근본
+    원인). struct는 미세 타이브레이커로만(0.1배) 두고, 움직이는 피사체(fg)와 색·구조 saliency(subject_score)로
+    고른다. logo_box가 오면 delogo로 메운다.
     """
     from src.core import reframe
     from src.core.footage import _frame_macro_std
@@ -210,9 +215,10 @@ def _score_best_frame(video: str, wd: Path, logo_box: tuple | None = None,
             vf = reframe.delogo_vf(float(sw), float(sh), logo_box)
         except Exception:  # noqa: BLE001
             vf = None
+    N = max(6, int(n_samples))
     grabbed: list[str] = []
-    for i in range(14):
-        t = dur * (0.06 + 0.88 * i / 13)
+    for i in range(N):
+        t = dur * (0.05 + 0.90 * i / (N - 1))            # 5~95% 균등(촘촘히 → 짧게 나오는 피사체 포착)
         cand = str(wd / f"ecs_{i}.png")
         if _grab_frame(video, t, cand, vf=vf):
             grabbed.append(cand)
@@ -223,9 +229,11 @@ def _score_best_frame(video: str, wd: Path, logo_box: tuple | None = None,
         from src.core import vision_subject
         idx = vision_subject.pick_subject_frame(grabbed, hint)
         if idx is not None and 0 <= idx < len(grabbed):
+            log.info("[hook_intro] 배경 프레임 = Gemini 선택(index %d/%d)", idx, len(grabbed))
             return grabbed[idx], 999.0        # 비전 확정 → 임계 통과로 취급
     except Exception:  # noqa: BLE001
         pass
+    # 폴백(비전 미가동): 움직이는 피사체(fg) 주신호 + saliency, struct는 미세 타이브레이커(빈 모래 편애 제거)
     fgs = _temporal_foreground_scores(grabbed)              # ★움직이는 피사체 가려내기(빈 물 배제 핵심)
     best, best_score = None, -1.0
     for cand, fg in zip(grabbed, fgs):
@@ -233,7 +241,7 @@ def _score_best_frame(video: str, wd: Path, logo_box: tuple | None = None,
             struct = _frame_macro_std(Image.open(cand))
         except Exception:  # noqa: BLE001
             struct = 0.0
-        s = struct + 30.0 * reframe.subject_score(cand) + 0.7 * fg
+        s = 30.0 * reframe.subject_score(cand) + 3.0 * fg + 0.10 * struct
         if reframe.text_score(cand) >= 0.012:              # 번인 텍스트 프레임 강한 감점
             s *= 0.02
         if s > best_score:
