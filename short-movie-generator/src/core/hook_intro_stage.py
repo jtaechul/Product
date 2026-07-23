@@ -275,7 +275,7 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
           cfg: hi.HookIntroConfig | None = None, bgm: str | None = None,
           open_bg_video: str | None = None, subject_video: str | None = None,
           logo_box: tuple | None = None, hero_image: str | None = None,
-          thumb_out: str | None = None) -> str:
+          thumb_out: str | None = None, include_endcard: bool = True) -> str:
     """본문 영상을 오프닝/엔드카드/전환/사운드로 감싼 완성본 경로 반환.
     전제 미충족 시 원본 body_video를 그대로 반환(발행 불정지).
 
@@ -385,10 +385,15 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(cfg.FPS),
                         "-i", f"{of_dir}/of_%03d.png", "-c:v", "libx264", "-pix_fmt", "yuv420p",
                         "-crf", "18", str(wd / "opening.mp4")], check=True)
-        _, clicks = hi.render_endcard_frames(ec_bg, spec, ec_dir, cfg)
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(cfg.FPS),
-                        "-i", f"{ec_dir}/ec_%03d.png", "-c:v", "libx264", "-pix_fmt", "yuv420p",
-                        "-crf", "18", str(wd / "endcard.mp4")], check=True)
+        # ★엔드카드 이중 노출 방지(운영자 확정 · 실사고 #046: 엔드카드가 두 번 노출·첫 번째 무음):
+        #   파이프라인이 별도 '통합 마지막 페이지'(NOAA 사진·팔로우)를 뒤에 붙이므로, 여기 자체 엔드카드는
+        #   include_endcard=False면 만들지 않는다(오프닝 훅만). → 엔드카드는 최종 1장만 남는다.
+        clicks: list = []
+        if include_endcard:
+            _, clicks = hi.render_endcard_frames(ec_bg, spec, ec_dir, cfg)
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(cfg.FPS),
+                            "-i", f"{ec_dir}/ec_%03d.png", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                            "-crf", "18", str(wd / "endcard.mp4")], check=True)
 
         # 4) SFX/플래시
         boom = hi.generate_boom(str(wd / "boom.wav"), cfg)
@@ -396,32 +401,45 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         tick = boom
         flash = hi.build_flash_png(str(wd / "flash.png"), cfg)
 
-        OPEN = cfg.opening_seg_s; END = cfg.endcard_dur_s
+        OPEN = cfg.opening_seg_s; END = cfg.endcard_dur_s if include_endcard else 0.0
         BODY_END = OPEN + dur; TOTAL = OPEN + dur + END
         W, H = cfg.W, cfg.H
 
-        # 5) 영상 concat + 전환 2곳(본문 해상도 정규화)
+        # 5) 영상 concat + 전환(본문 해상도 정규화)
         # ★SAR 정규화(setsar=1) 필수: reframe '전신핏'(블러 배경) 컷은 스케일 반올림으로
         #   SAR 5120:5121 같은 비1:1 값이 붙는데, 오프닝/엔드카드 mp4는 SAR 0:1(=1:1)이라
-        #   concat이 'SAR 불일치'로 실패했다(오프닝/엔드카드 통째 누락의 실제 근본원인).
-        #   세 입력 모두 setsar=1로 맞춰 concat이 항상 성공하게 한다.
-        vf = (
-            f"[0:v]scale={W}:{H},setsar=1,setpts=PTS-STARTPTS[o];"
-            f"[1:v]scale={W}:{H},setsar=1,setpts=PTS-STARTPTS[b];"
-            f"[2:v]scale={W}:{H},setsar=1,setpts=PTS-STARTPTS[e];[o][b][e]concat=n=3:v=1:a=0[cat];"
-            f"[3:v]format=yuva420p,colorchannelmixer=aa=0.55,fade=t=in:st={OPEN-0.25}:d=0.22:alpha=1,"
-            f"fade=t=out:st={OPEN}:d=0.28:alpha=1[fl1];"
-            f"[4:v]format=yuva420p,colorchannelmixer=aa=0.6,fade=t=in:st={BODY_END-0.25}:d=0.22:alpha=1,"
-            f"fade=t=out:st={BODY_END}:d=0.30:alpha=1[fl2];"
-            f"[cat][fl1]overlay=0:0[o1];[o1][fl2]overlay=0:0[v]"
-        )
+        #   concat이 'SAR 불일치'로 실패했다. 모든 입력을 setsar=1로 맞춰 concat이 항상 성공하게 한다.
         vout = str(wd / "wrapped_video.mp4")
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error",
-                        "-i", str(wd / "opening.mp4"), "-i", body_video, "-i", str(wd / "endcard.mp4"),
-                        "-loop", "1", "-t", str(TOTAL), "-i", flash,
-                        "-loop", "1", "-t", str(TOTAL), "-i", flash,
-                        "-filter_complex", vf, "-map", "[v]", "-c:v", "libx264",
-                        "-pix_fmt", "yuv420p", "-crf", "19", "-r", str(cfg.FPS), vout], check=True)
+        vcmd = ["ffmpeg", "-y", "-loglevel", "error",
+                "-i", str(wd / "opening.mp4"), "-i", body_video]
+        if include_endcard:
+            # 오프닝 + 본문 + 엔드카드(3컷) + 전환 플래시 2곳(오프닝→본문, 본문→엔드카드)
+            vcmd += ["-i", str(wd / "endcard.mp4"),
+                     "-loop", "1", "-t", str(TOTAL), "-i", flash,
+                     "-loop", "1", "-t", str(TOTAL), "-i", flash]
+            vf = (
+                f"[0:v]scale={W}:{H},setsar=1,setpts=PTS-STARTPTS[o];"
+                f"[1:v]scale={W}:{H},setsar=1,setpts=PTS-STARTPTS[b];"
+                f"[2:v]scale={W}:{H},setsar=1,setpts=PTS-STARTPTS[e];[o][b][e]concat=n=3:v=1:a=0[cat];"
+                f"[3:v]format=yuva420p,colorchannelmixer=aa=0.55,fade=t=in:st={OPEN-0.25}:d=0.22:alpha=1,"
+                f"fade=t=out:st={OPEN}:d=0.28:alpha=1[fl1];"
+                f"[4:v]format=yuva420p,colorchannelmixer=aa=0.6,fade=t=in:st={BODY_END-0.25}:d=0.22:alpha=1,"
+                f"fade=t=out:st={BODY_END}:d=0.30:alpha=1[fl2];"
+                f"[cat][fl1]overlay=0:0[o1];[o1][fl2]overlay=0:0[v]"
+            )
+        else:
+            # 오프닝 + 본문(2컷) + 전환 플래시 1곳(오프닝→본문). 엔드카드는 파이프라인 최종 페이지가 담당.
+            vcmd += ["-loop", "1", "-t", str(TOTAL), "-i", flash]
+            vf = (
+                f"[0:v]scale={W}:{H},setsar=1,setpts=PTS-STARTPTS[o];"
+                f"[1:v]scale={W}:{H},setsar=1,setpts=PTS-STARTPTS[b];[o][b]concat=n=2:v=1:a=0[cat];"
+                f"[2:v]format=yuva420p,colorchannelmixer=aa=0.55,fade=t=in:st={OPEN-0.25}:d=0.22:alpha=1,"
+                f"fade=t=out:st={OPEN}:d=0.28:alpha=1[fl1];"
+                f"[cat][fl1]overlay=0:0[v]"
+            )
+        vcmd += ["-filter_complex", vf, "-map", "[v]", "-c:v", "libx264",
+                 "-pix_fmt", "yuv420p", "-crf", "19", "-r", str(cfg.FPS), vout]
+        subprocess.run(vcmd, check=True)
 
         # 6) 오디오: 훅@0.30 + 붐@온셋 + 본문오디오@OPEN + 엔드카드 타자@BODY_END + (BGM)
         NARR = cfg.narr_start_s

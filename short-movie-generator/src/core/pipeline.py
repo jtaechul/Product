@@ -500,11 +500,14 @@ def run_reels(
     # 배경 소스 분리(재발 방지): 오프닝 배경=자막 번인 '전' 클린 리프레임(body_v) →
     # 본문 자막 미리 노출 차단 / 엔드카드 피사체=크롭·줌 '전' 원본 광각(fv.path) → 과확대 차단
     yt_thumb = str(work_dir / "yt_thumb.jpg")   # ★유튜브 썸네일: 전체 타이틀 노출 오프닝 프레임
+    # ★엔드카드 이중 노출 방지(실사고 #046): 아래에서 파이프라인이 '통합 마지막 페이지'(NOAA 사진·종
+    #   도감·팔로우 유도)를 붙이므로, 오프닝 훅 단계에서는 자체 엔드카드를 만들지 않는다(오프닝만).
+    #   → 최종 영상에 엔드카드는 딱 1장(통합 마지막 페이지)만 남는다.
     final = hook_intro_stage.apply(body_av, spec, hook_text, str(work_dir / "hook_intro"), bgm=bgm,
                                    open_bg_video=body_v, subject_video=fv["path"],
                                    logo_box=fv.get("logo_box"),
                                    hero_image=(hero["path"] if hero else None),
-                                   thumb_out=yt_thumb)
+                                   thumb_out=yt_thumb, include_endcard=False)
     # ★재발방지 하드 게이트(기획서 규칙: 모든 영상에 오프닝 훅+엔드카드 필수).
     # 폰트는 이제 항상 폴백 해석되므로 apply()가 본문을 그대로 돌려주는 건 '진짜 실패'뿐 →
     # 조용히 발행하지 않고 큰 오류로 멈춰 CI를 빨간불로 만든다(스펙 위반 영상 발행 원천 차단).
