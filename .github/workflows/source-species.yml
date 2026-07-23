@@ -69,6 +69,10 @@ jobs:
           # 스케줄 런(inputs 없음)은 deep_sea,marine_life 둘 다 자동 top-up.
           CATEGORY: ${{ github.event.inputs.category || 'deep_sea,marine_life' }}
           WANT: ${{ github.event.inputs.want || '6' }}
+          # ★소싱의 '제작가능 검증'이 제작(generate-short)과 같은 비전 게이트(죽음/물밖/오소싱 배제)를
+          #   쓰도록 Gemini 키를 넘긴다 → '소싱된 = 제작가능' 일치(#046 재발방지).
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           python - <<'PY' >> "$GITHUB_OUTPUT"
           import os, tempfile
@@ -93,6 +97,9 @@ jobs:
           CATEGORY: ${{ github.event.inputs.category || 'deep_sea,marine_life' }}
           REMOVE_KEYS: ${{ github.event.inputs.remove_keys }}
           PRUNE: ${{ github.event.inputs.prune_unproducible || 'true' }}
+          # 프룬(제작 불가 자동 삭제)도 제작과 같은 비전 게이트를 쓰도록 Gemini 키 전달.
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           python - <<'PY'
           import os, tempfile
