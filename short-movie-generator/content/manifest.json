@@ -307,14 +307,6 @@
     "youtube_url": "https://youtu.be/VcMk7XUsivA"
   },
   {
-    "id": "046",
-    "kind": "reels",
-    "common_name_ko": "민태과",
-    "common_name_en": "Macrouridae",
-    "scientific_name": "Macrouridae",
-    "date": "2026-07-22"
-  },
-  {
     "id": "044",
     "kind": "reels",
     "common_name_ko": "긴촉수매퉁이과",
@@ -338,5 +330,13 @@
     "mode": "longform",
     "date": "2026-07-23",
     "has_video": true
+  },
+  {
+    "id": "046",
+    "kind": "reels",
+    "common_name_ko": "민태과",
+    "common_name_en": "Macrouridae",
+    "scientific_name": "Macrouridae",
+    "date": "2026-07-23"
   }
 ]
