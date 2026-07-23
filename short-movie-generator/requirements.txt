@@ -11,3 +11,5 @@ google-auth>=2.0
 google-auth-oauthlib>=1.0
 google-api-python-client>=2.0
 pytesseract>=0.3.10
+# 롱폼 더빙형: 원본 음성 전사(무료·오프라인·CPU). 문장별 타임스탬프로 자막·나레이션을 원본 발화에 정렬.
+faster-whisper>=1.0

@@ -650,6 +650,114 @@ def _mix_bg_narration(video: str, narration_mp3: str, dur: float, work: Path) ->
         return narration_mp3
 
 
+def _jp_lines_for_subtitle(jp: str, max_len: int = 18) -> list[str]:
+    """일본어 한 덩어리를 자막용 짧은 줄(≈18자)로 분절. 문장부호 우선, 길면 글자수로 자른다."""
+    jp = (jp or "").strip()
+    if not jp:
+        return []
+    parts = [p.strip() for p in re.split(r"(?<=[。！？、])", jp) if p.strip()]
+    lines: list[str] = []
+    for p in parts:
+        while len(p) > max_len:
+            lines.append(p[:max_len]); p = p[max_len:]
+        if p:
+            lines.append(p)
+    return lines or [jp[:max_len]]
+
+
+def _translate_segments_jp(segments: list[dict], lang: str = "") -> list[str] | None:
+    """전사 문장들을 **한 번의 제미나이 호출**로 일본어 나레이션으로 번역(행수·순서 보존).
+    반환: 세그먼트 수만큼의 일본어 리스트(일부 빈 문자열 가능) 또는 None(절반도 못 얻으면 실패).
+    ★번역만 제미나이(저렴)·전사는 Whisper — 역할 분담(운영자 확정)."""
+    from src.core import llm
+    if not segments:
+        return None
+    src_lines = "\n".join(f"{i + 1}. {s.get('text', '')}" for i, s in enumerate(segments))
+    prompt = (
+        f"次の各行は動画音声の書き起こし原文です（元言語: {lang or '不明'}）。各行を、自然で落ち着いた"
+        "日本語のドキュメンタリー・ナレーション(敬体)に翻訳してください。"
+        "★厳守: 入力と同じ行数・同じ順序で、各行の先頭に元の番号を付けて出力する（例: 1. 本文）。"
+        "原文の意味を保ち、創作・要約・情報の追加はしない。前置きや説明・記号の装飾は書かない。\n" + src_lines)
+    txt = llm.generate_text(prompt, max_tokens=min(3000, 80 + 40 * len(segments)))
+    if not txt:
+        return None
+    got: dict[int, str] = {}
+    for ln in txt.splitlines():
+        m = re.match(r"\s*(\d+)[.)、:：\-\s]+(.+)", ln.strip())
+        if m:
+            got[int(m.group(1))] = m.group(2).strip()
+    out = [got.get(i + 1, "").strip() for i in range(len(segments))]
+    if sum(1 for x in out if x) < max(1, len(segments) // 2):   # 절반도 못 얻으면 번역 실패로 간주
+        return None
+    return out
+
+
+def _dub_transcript(video: str, work: Path) -> list[dict] | None:
+    """전사(Whisper) → 일본어 번역(제미나이) → 검수용 대본 [{start,end,orig,jp}]. 실패 시 None.
+    ★2단계 검수의 1단계 산출물이자 더빙 렌더의 입력(같은 로직 공유)."""
+    from src.core import transcribe as _tr
+    tr = _tr.transcribe(video, str(work / "asr"))
+    if not tr:
+        return None
+    segs = tr["segments"]
+    jps = _translate_segments_jp(segs, tr.get("lang", ""))
+    if not jps:
+        return None
+    return [{"start": float(s["start"]), "end": float(s["end"]),
+             "orig": s.get("text", ""), "jp": jps[i]} for i, s in enumerate(segs)]
+
+
+def _build_dub_narration(video: str, orig_dur: float, work: Path,
+                         transcript: list[dict] | None = None) -> dict | None:
+    """★더빙형 롱폼: 원본 발화를 **전사→일본어 번역→그 발화 시각에 정렬**해 나레이션·자막을 얹는다.
+    (기존 비전 기반 `_build_long_narration`은 화면을 보고 지어내 원본 음성과 어긋났다 → 더빙으로 해결.)
+
+    - transcript(대시보드 검수 편집본 [{start,end,orig,jp}])가 오면 전사·번역을 건너뛰고 그대로 사용.
+    - 없으면: Whisper 전사 → 제미나이 번역 → transcript 구성.
+    - 각 일본어 문장을 **원본 발화 시작 시각(anchor)** 에 배치(자막·TTS 모두). 원본 오디오는 상위에서 덕킹.
+    반환 {mp3, disp, chunks, chapters, duration, transcript} 또는 None(전사·번역 실패 → 비전 폴백)."""
+    from src.core import narration_sync
+    if transcript is None:
+        transcript = _dub_transcript(video, work)
+        if not transcript:
+            return None
+
+    all_disp: list[tuple] = []
+    audio_parts: list[tuple] = []
+    chapters: list[tuple] = []
+    all_chunks: list[str] = []
+    prev_end = 0.0
+    for i, seg in enumerate(transcript):
+        jp = (seg.get("jp") or "").strip()
+        if not jp:
+            continue
+        lines = _jp_lines_for_subtitle(jp)
+        if not lines:
+            continue
+        try:
+            nar = narration_sync.synthesize(lines, str(work / f"dub{i}"))
+        except Exception as e:  # noqa: BLE001
+            log.info("[narrate] 더빙 구간%d 합성 실패(건너뜀): %s", i, e)
+            continue
+        if not nar.get("mp3") or not nar.get("disp"):
+            continue
+        anchor = max(float(seg.get("start", 0.0)), prev_end + 0.05)   # 원본 발화 시작에 정렬(비겹침 보정)
+        anchor = min(anchor, max(0.0, orig_dur - 0.4))
+        for (txt, s, e) in nar["disp"]:
+            all_disp.append((txt, s + anchor, e + anchor))
+        audio_parts.append((nar["mp3"], anchor))
+        all_chunks.extend(lines)
+        chapters.append((anchor, _chapter_title(seg.get("orig", ""), lines)))
+        prev_end = anchor + float(nar.get("duration") or 0)
+    if not audio_parts:
+        return None
+    mp3 = _mix_delayed(audio_parts, orig_dur, work)
+    all_disp.sort(key=lambda d: d[1])
+    log.info("[narrate] 더빙형 나레이션: %d발화 정렬(원본 음성 시각 기준)", len(audio_parts))
+    return {"mp3": mp3, "disp": all_disp, "chunks": all_chunks,
+            "chapters": chapters, "duration": orig_dur, "transcript": transcript}
+
+
 def _build_long_narration(video: str, orig_dur: float, seen_global: str, source_topic: str,
                           work: Path) -> dict:
     """★롱폼: 원본 전체 길이(orig_dur)를 유지하며 나레이션을 타임라인 전체에 분산 배치한다.
@@ -751,7 +859,8 @@ def _chapter_block(chapters: list[tuple], offset: float, header: str, titles: li
 
 
 def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
-                  base_dir: str = ".", out_name: str | None = None) -> dict:
+                  base_dir: str = ".", out_name: str | None = None,
+                  phase: str = "render", transcript: list[dict] | None = None) -> dict:
     """첨부 영상 → 일본어 나레이션·자막 완성본.
 
     ★운영자 확정: 제목·설명은 입력받지 않는다. 영상 내용을 비전으로 '보고' 대본을 만들고,
@@ -773,6 +882,16 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     # 0) 번인 로고 제거(NOAA 등 지속 로고 delogo) — ★롱폼은 안 함(운영자 확정: 쓸데없는 부분을 자꾸
     #    가려 거슬림). 쇼츠만 delogo(짧은 영상은 로고 노출이 더 거슬림). 롱폼은 운영자가 소스를 고르므로 원본 그대로.
     src = _clean_watermark(str(vp), work / "wm") if mode == "shorts" else str(vp)
+
+    # ★2단계 더빙 검수(운영자 확정): phase="transcribe"면 렌더 없이 '전사→일본어 번역' 대본만 만들어
+    #   돌려준다(대시보드에서 검수·수정 후 phase="render"로 확정 제작). 롱폼 전용(원본 화자 발화 더빙).
+    if mode == "longform" and str(phase).lower() == "transcribe":
+        tr = _dub_transcript(src, work)
+        if not tr:
+            raise ValueError("원본 음성 전사에 실패했습니다(무음이거나 faster-whisper 미설치).")
+        log.info("[narrate] 전사 단계 완료: %d문장 대본(검수 대기)", len(tr))
+        return {"phase": "transcribe", "mode": mode, "transcript": tr,
+                "source_url": "", "duration": _probe_dur(src)}
 
     # 0ب) 영상 내용 파악(비전) — 소싱 출처 설명이 있으면 근거로 합침.
     #   ★비용절감(운영자 확정): 쇼츠만 전체 영상을 1회 서술한다. 롱폼은 구간별로 각자 서술하므로
@@ -799,7 +918,16 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
         orig_dur = _probe_dur(src)
         if orig_dur <= 0:
             raise ValueError("원본 영상 길이를 읽지 못했습니다.")
-        nar = _build_long_narration(src, orig_dur, seen, source_topic, work)
+        # ★더빙형 우선(운영자 확정): 원본 화자가 말하면 그 발화를 전사→일본어 번역→발화 시각에 정렬해
+        #   자막·나레이션이 정확히 맞물리게 한다. 검수 편집본(transcript)이 오면 그대로 사용. 전사 실패/
+        #   무음이면 기존 비전 기반(_build_long_narration)으로 안전 폴백(발행 불정지).
+        nar = None
+        if transcript:
+            nar = _build_dub_narration(src, orig_dur, work, transcript=transcript)
+        elif _has_audio(src):
+            nar = _build_dub_narration(src, orig_dur, work)
+        if not nar:
+            nar = _build_long_narration(src, orig_dur, seen, source_topic, work)
         chunks = nar["chunks"]
         chapters = nar.get("chapters") or []
         dur = orig_dur
