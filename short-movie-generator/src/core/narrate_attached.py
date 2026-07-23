@@ -947,6 +947,13 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
         body_v = reframe.reframe_to_vertical(src, body_v, dur, str(work / "rf"), wide=False)
     else:
         _normalize_landscape(src, body_v, dur, str(work))
+        # ★원본 화면의 정적 라벨(종명·수심·타이틀 등)을 딥네이비 박스+일본어로 번역해 얹기(롱폼 전용).
+        #   자막 번인 '전'에 적용(좌표는 정규화된 본문 프레임 기준). 없거나 실패면 원본 그대로(발행 불정지).
+        try:
+            from src.core import onscreen_translate as ost
+            body_v = ost.apply(body_v, str(work / "ost_body.mp4"), str(work / "ost"), dur, w, h)
+        except Exception as e:  # noqa: BLE001
+            log.info("[narrate] 화면 라벨 번역 오버레이 생략: %s", e)
 
     # 4) 카라오케 자막 번인 — ★자막 크게(쇼츠 1.8 · 롱폼 2.2로 2배 이상)
     sub_scale = 1.8 if mode == "shorts" else 2.2

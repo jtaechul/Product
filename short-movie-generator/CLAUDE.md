@@ -944,6 +944,17 @@
     원본이 소리 나는 구간을 찾아 각 나레이션 앵커를 그 구간 시작에 맞춘다(원본 목소리 위에 일본어가 겹쳐 나옴).
   - **★롱폼 delogo 비활성화(운영자 확정)**: 롱폼 나레이션은 **delogo를 하지 않는다**(쓸데없는 부분을 가려 거슬림).
     쇼츠만 `_clean_watermark` 적용. 롱폼은 운영자가 소스를 고르므로 원본 그대로 사용.
+  - **★롱폼 더빙형(운영자 확정 · 원본 화자 발화 정렬)**: 원본에 사람 발화가 있으면 **전사(faster-whisper·무료)
+    → 일본어 번역(제미나이) → 원본 발화 시각에 자막·나레이션 정렬** 더빙. 전사/무음 실패 시 기존 비전 기반
+    (`_build_long_narration`)으로 폴백. 구현 `src/core/transcribe.py` + `narrate_attached._build_dub_narration`.
+    검수: `narrate_video(phase="transcribe")`가 대본만 생성 → 레코드에 `transcript` 보관 → 대시보드 /nv에서
+    일본어만 수정 → `transcript` 입력으로 재제작(narrate-video.yml). 역할 분담: 전사=Whisper, 번역=제미나이.
+  - **★롱폼 화면 라벨 일본어 오버레이(운영자 확정 · 정적 라벨만 · 롱폼 전용)**: 원본에 박힌 정적 텍스트
+    (종명·수심·타이틀 카드 등)를 감지해 **딥네이비 라운드 박스(우리 톤)로 가리고 일본어 번역을 얹는다**.
+    하이브리드: `watermark_qc._ocr_words`(tesseract·무료)로 '언제·어디' 지속 라벨을 찾고(움직이는 텍스트는
+    프레임 간 위치 불일치로 자동 제외 · 큰 중앙 영역은 피사체 가림 방지로 제외), 제미나이로 보정·번역,
+    이벤트별 PNG를 `overlay=...:enable='between(t,s,e)'`로 그 시간에만 합성. 구현 `src/core/onscreen_translate.py`
+    (`apply`가 자막 번인 前 `body_v`에 적용). tesseract 없음/번역 실패/이벤트 없음이면 원본 그대로(발행 불정지).
   - **★오프닝훅·썸네일 = 레퍼런스 양식(운영자 확정 · IMG_3526)**: `_render_hook_and_thumb`를 **네 모서리 코너
     브래킷 + 좌측 세로 어둠(피사체 우측 노출) + 좌측정렬 대형 화이트 볼드 타이틀 + 골드 언더라인 + 화이트
     라운드 필 킥커**로 재작성(`_corner_brackets`/`_pill`). 매 제작에 동일 양식 적용. 회귀: `test_hook_and_thumb_render`.
