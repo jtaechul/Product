@@ -305,9 +305,9 @@ function renderHome(){
   '</div>'+
   '<div class="card">'+
     '<span class="lbl">다운로드 가능 영상 찾기 · 썸네일·주제 미리보기</span>'+
-    '<div class="hint" style="margin:4px 0 8px">키워드로 <b>키(API) 없이 직접 다운로드 가능한 무료 영상</b>을 찾아 썸네일·주제와 함께 보여줍니다. 소스: Wikimedia Commons(자유 라이선스) + Internet Archive(안전 필터). 나레이션에 쓰려면 <b>2차 저작</b>이 가능해야 하므로 <b>변경금지(ND)·비상업(NC)은 제외</b>하고 재사용 가능(PD·CC0·CC BY·CC BY-SA)만 <span style="color:#7CFC9B">안전</span>으로 표시합니다. 최종 사용 전 원본 페이지에서 권리를 확인하세요.</div>'+
+    '<div class="hint" style="margin:4px 0 8px">키워드로 <b>키(API) 없이 직접 다운로드 가능한 무료 영상</b>을 찾아 썸네일·주제와 함께 보여줍니다. 소스: Wikimedia Commons(자유 라이선스) + Internet Archive(안전 필터) + <b>NOAA(미 해양대기청 · 미국 정부 저작물=퍼블릭도메인)</b>. 나레이션에 쓰려면 <b>2차 저작</b>이 가능해야 하므로 <b>변경금지(ND)·비상업(NC)은 제외</b>하고 재사용 가능(PD·CC0·CC BY·CC BY-SA)만 <span style="color:#7CFC9B">안전</span>으로 표시합니다. 최종 사용 전 원본 페이지에서 권리를 확인하세요.</div>'+
     '<div class="row2" style="margin-bottom:6px"><input id="vsq" placeholder="검색어 (예: deep sea anglerfish, jellyfish, shipwreck)" style="flex:2">'+
-      '<select id="vssrc" style="flex:1"><option value="all">전체</option><option value="commons">커먼스만</option><option value="archive">아카이브만</option></select></div>'+
+      '<select id="vssrc" style="flex:1"><option value="all">전체</option><option value="noaa">NOAA만</option><option value="commons">커먼스만</option><option value="archive">아카이브만</option></select></div>'+
     '<button class="go" id="govs">영상 찾기</button>'+
     '<div class="banner" id="vsmsg"></div>'+
     '<div id="vsresults" style="margin-top:12px"></div>'+
@@ -1226,11 +1226,63 @@ async function vsArchive(q){
   const res = await Promise.all(picks.map(p => vsArchiveResolve(p.x, p.lic).catch(()=>null)));
   return res.filter(Boolean);
 }
+// NOAA(미 해양대기청) 전용 소스. NOAA는 미국 연방정부 저작물이라 **퍼블릭도메인**(직접 다운로드·2차 저작 자유).
+// NOAA 자체 검색 API가 없으므로, NOAA 자료가 실제로 '직접 다운로드 가능한' 두 경로를 모아 보여준다:
+//   ① Wikimedia Commons의 NOAA 영상(오케아노스 심해 ROV 등 다수가 PD로 업로드) ② Internet Archive의 NOAA 컬렉션.
+// 둘 다 직다운 URL + PD라 안전. (오케아노스 등 심해 영상이 NOAA의 핵심 자산이라 심해 콘텐츠에 특히 유용.)
+async function vsNoaa(q){
+  const out = [];
+  // ① Commons — NOAA 태그 영상
+  try{
+    const api = "https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search"+
+      "&gsrsearch="+encodeURIComponent(q+" NOAA filetype:video")+"&gsrnamespace=6&gsrlimit=14"+
+      "&prop=imageinfo&iiprop=url%7Csize%7Cmime%7Cextmetadata&iiurlwidth=360";
+    const r = await fetch(api, {headers:{"User-Agent":VS_UA}});
+    if(r.ok){
+      const d = await r.json();
+      for(const p of Object.values(((d.query||{}).pages)||{})){
+        const ii = ((p.imageinfo||[])[0]) || {};
+        if(!ii.url || !String(ii.mime||"").startsWith("video")) continue;
+        const lic = vsCommonsLicense(ii.extmetadata||{});
+        if(!lic) continue;
+        const title = vsCleanTitle(String(p.title||"").replace(/^File:/,""));
+        out.push({source:"NOAA (US)", title,
+          topic:vsStrip(((ii.extmetadata||{}).ImageDescription||{}).value)||title,
+          thumb:ii.thumburl||"", download:ii.url,
+          page:"https://commons.wikimedia.org/wiki/"+encodeURIComponent(p.title||""),
+          license:lic.label, safe:lic.safe,
+          duration:ii.duration?Math.round(ii.duration):0, mime:ii.mime||""});
+      }
+    }
+  }catch(e){/* Commons NOAA 실패는 무시 */}
+  // ② Internet Archive — NOAA 컬렉션(미국 정부 기록 = PD)
+  try{
+    const api = "https://archive.org/advancedsearch.php?q="+
+      encodeURIComponent("("+q+") AND mediatype:movies AND collection:(noaa OR noaaphotolib OR nationaloceanandatmosphericadministration OR oceanexplorergov)")+
+      "&fl[]=identifier&fl[]=title&fl[]=description&fl[]=licenseurl&fl[]=collection&rows=10&output=json";
+    const r = await fetch(api, {headers:{"User-Agent":VS_UA}});
+    if(r.ok){
+      const d = await r.json();
+      const picks = [];
+      for(const x of (((d.response||{}).docs)||[])){
+        const id = String(x.identifier||"");
+        if(!id || id.toLowerCase().startsWith("youtube-")) continue;
+        picks.push(x);
+        if(picks.length>=6) break;
+      }
+      const res = await Promise.all(picks.map(x =>
+        vsArchiveResolve(x, {label:"Public Domain (NOAA · US Gov)", safe:true}).catch(()=>null)));
+      for(const rr of res){ if(rr){ rr.source = "NOAA (US)"; out.push(rr); } }
+    }
+  }catch(e){/* Archive NOAA 실패는 무시 */}
+  return out;
+}
 async function videoSearch(url){
   const q = (url.searchParams.get("q")||"").trim();
   const src = (url.searchParams.get("src")||"all").toLowerCase();
   if(!q) return j({error:"empty query", results:[]}, 400);
   const tasks = [];
+  if(src==="all"||src==="noaa") tasks.push(vsNoaa(q).catch(()=>[]));
   if(src==="all"||src==="commons") tasks.push(vsCommons(q).catch(()=>[]));
   if(src==="all"||src==="archive") tasks.push(vsArchive(q).catch(()=>[]));
   const arr = (await Promise.all(tasks)).flat();
