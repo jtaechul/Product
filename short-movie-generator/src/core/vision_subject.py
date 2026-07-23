@@ -161,6 +161,34 @@ def is_single_subject(image_path: str, species_hint: str = "") -> bool | None:
     return ok
 
 
+def is_live_wild_subject(image_path: str, species_hint: str = "") -> bool | None:
+    """★살아있는 야생 개체(물속)인지 게이트(운영자 확정 · 실사고 #046 민태과: 해변 모래 위 죽은 물고기 +
+    사람 발이 나온 사진이 본문·오프닝에 삽입됨). 저비용 Gemini로 '문맥'만 판별한다 — **죽었거나·물 밖·육상/
+    해변/갑판·사람이 손질/파지·접시·시장·표본** 사진을 거부(살아있는 바다/수족관 개체는 통과).
+
+    ★종ID가 아니라 '문맥(살아있음·물속)' 판별이라 저해상서도 확실(모래 위 물고기+발 vs 어두운 물속 개체).
+    반환: True(살아있는 물속 개체) · False(죽음/물 밖/사람손질/육상/식품/표본 · 확신할 때만) · None(키 없음/불확실).
+    """
+    hint = f' The intended animal is roughly "{species_hint}".' if species_hint else ""
+    prompt = (
+        "You are screening a stock photo for a WILDLIFE video that must show a LIVING sea animal in water."
+        f"{hint} Answer STRICT JSON only: "
+        '{"living_in_water": true|false, "context": "<underwater|aquarium|out_of_water_on_land|'
+        'held_by_human|on_deck_or_boat|on_plate_or_food|dead_or_specimen|unclear>", "confident": true|false}. '
+        "Set living_in_water=false if the animal is clearly DEAD, OUT OF WATER, lying on sand/ground/beach/"
+        "deck/table, being held or handled by a person, on a plate, at a market/fishmonger, or a preserved "
+        "specimen. Set true only for a live animal in the sea or an aquarium. Do NOT judge the exact species. "
+        "If you cannot tell, set confident=false."
+    )
+    d = _json(_ask(image_path, prompt) or "")
+    if not d or "living_in_water" not in d:
+        return None
+    if d.get("living_in_water") is False and d.get("confident") is True:
+        log.info("[vision] 비(非)살아있음/물밖 배제: %s (%s)", image_path, d.get("context"))
+        return False
+    return True
+
+
 def locate_focus(image_path: str) -> tuple[float, float] | None:
     """피사체의 초점(눈 우선, 없으면 몸통 중심)을 정규화 좌표(0~1)로. 켄번즈 크롭 중심에 쓴다.
 

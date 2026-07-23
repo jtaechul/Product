@@ -458,6 +458,15 @@
       ② **시각**(`_cutaway_image_ok`→`_looks_photographic`): 흰 종이·스튜디오·접시 배경(밝은 배경 55%↑)이면
       배제(다운로드 후 검사, 부적합이면 파일 삭제). 살아있는 수중 개체(어두운 배경)는 통과. 회귀:
       `test_nonliving_food_photo_rejected` + 실이미지(종이 위 건어물 vs 수중 개체) 검증.
+    - **★★죽음/물밖/사람손질 배제 = 저비용 Gemini 문맥 게이트(운영자 확정 · 실사고 #046 2차: 해변 모래 위
+      죽은 물고기 + 사람 발 사진이 본문·오프닝에 삽입)**: Macrouridae는 상업 어획종이라 Commons·iNaturalist에
+      **어부가 잡아 해변·갑판에 둔 죽은 개체 사진**이 많다. 이건 ①메타에 식품어가 없고 ②**모래밭은 흰색이
+      아니라** `_looks_photographic`을 통과하며 ③`verify_species`는 '물고기 맞음'만 봐서 전부 통과했다.
+      → `vision_subject.is_live_wild_subject`(Gemini 2.5-flash · 사진 1장당 1회 ≈ $0.0002)가 **종ID가 아니라
+      '문맥'**(살아있음·물속 vs 죽음·물밖·해변/갑판·사람손질·접시·표본)만 판별해 배제한다(확신할 때만 · 불확실은
+      통과 → 진짜 사진 보존, Step2 사고 회피). 적용: `species_photo_doc`(본문 사진)·`fetch_hero_photo`(오프닝/
+      엔드카드)·`fetch_cutaway_photos`(컷어웨이) 세 경로 모두. **키(GEMINI) 없으면 이 단계는 건너뜀(현행 유지)**.
+      회귀: `test_is_live_wild_subject_verdict`(해변 죽은 개체=배제 · 수중=통과 · 불확실=통과) + 안전 폴백.
     - **★오프닝/엔드카드 빈-프레임 방지(운영자 확정 · 실사고 macrouridae: 회색 소코다라 오프닝에 빈 물)**:
       `_best_subject_frame`가 예전엔 **적색 피사체 점수만** 써서 회색 생물(적색 0)은 전 프레임 0 → 빈 물이
       박혔다. → **색 무관 구조점수(`_frame_macro_std`)** 를 주로, 적색은 보너스로. 최고점 구조가

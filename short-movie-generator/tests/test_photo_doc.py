@@ -146,6 +146,25 @@ def test_vision_subject_safe_without_key(monkeypatch):
     assert V.available() is False
     assert V.verify_species("/no/such.jpg", "Vampyroteuthis infernalis", "vampire squid") is None
     assert V.locate_focus("/no/such.jpg") is None
+    assert V.is_live_wild_subject("/no/such.jpg", "grenadier") is None      # 키 없으면 통과(현행 유지)
+
+
+def test_is_live_wild_subject_verdict(monkeypatch):
+    """★#046: 저비용 Gemini '살아있는 물속 개체' 게이트 — 해변의 죽은 물고기(사람 발)만 배제,
+    수중 개체는 통과, 불확실은 통과(진짜 사진 보존)."""
+    from src.core import vision_subject as V
+    # 해변의 죽은 물고기 + 사람 → 확신 False → 배제
+    monkeypatch.setattr(V, "_ask", lambda p, q: '{"living_in_water": false, "context": "out_of_water_on_land", "confident": true}')
+    assert V.is_live_wild_subject("x.jpg", "grenadier") is False
+    # 수중 개체 → 통과
+    monkeypatch.setattr(V, "_ask", lambda p, q: '{"living_in_water": true, "context": "underwater", "confident": true}')
+    assert V.is_live_wild_subject("x.jpg", "grenadier") is True
+    # 물 밖이지만 불확실 → 통과(진짜 사진 오배제 방지)
+    monkeypatch.setattr(V, "_ask", lambda p, q: '{"living_in_water": false, "context": "unclear", "confident": false}')
+    assert V.is_live_wild_subject("x.jpg", "grenadier") is True
+    # 파싱 불가 → None
+    monkeypatch.setattr(V, "_ask", lambda p, q: "설명만 있고 JSON 없음")
+    assert V.is_live_wild_subject("x.jpg", "grenadier") is None
 
 
 def test_vision_subject_json_parse():

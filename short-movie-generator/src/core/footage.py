@@ -860,17 +860,27 @@ _NONLIVING_RE = re.compile(
     r"干物|乾物|食用|料理|水産物|鮮魚|市場|標本|博物館|剥製|解剖|冷凍|塩漬", re.I)
 
 
-def _cutaway_image_ok(path: str, credit: str = "", source: str = "") -> bool:
+def _cutaway_image_ok(path: str, credit: str = "", source: str = "", hint: str = "") -> bool:
     """컷어웨이 사진이 '살아있는 개체(수중/자연)'로 보이는지 최소 검증(실사고 #046 재발방지).
     ① 식품·건어물·표본·시장 등 비생물 상태 단서(credit/source)면 배제.
     ② 밝은 종이·스튜디오·접시 배경(도판·식품·표본 촬영은 흰 배경 55%↑)이면 배제(`_looks_photographic`).
+    ③ ★저비용 Gemini(키 있을 때): 죽었거나·물 밖·해변/갑판·사람이 손질한 사진 배제(모래밭 배경은 흰색이
+       아니라 ②를 통과하므로 문맥 판별이 필요). 키 없으면 이 단계는 건너뜀(현행 유지).
     검사 오류 시 True(막지 않음 — 발행 차단 아님)."""
     if _NONLIVING_RE.search(f"{credit} {source}"):
         return False
     try:
-        return _looks_photographic(path)
+        if not _looks_photographic(path):
+            return False
     except Exception:  # noqa: BLE001
         return True
+    try:
+        from src.core import vision_subject
+        if vision_subject.is_live_wild_subject(path, hint) is False:
+            return False
+    except Exception:  # noqa: BLE001
+        pass
+    return True
 
 
 def _inaturalist_photos(scientific_name: str, n: int = 8) -> list[dict]:
@@ -937,8 +947,9 @@ def fetch_cutaway_photos(scientific_name: str, common_name_en: str, dest_dir: st
         p = dest / f"cutaway_{slug}_{i}{iext}"
         if not (p.exists() and p.stat().st_size > 50_000) and not _download(g["url"], p):
             continue
-        # ★#046 재발방지: 식품·건어물·표본·흰 종이/스튜디오 배경 사진을 컷어웨이로 쓰지 않는다(살아있는 개체만).
-        if not _cutaway_image_ok(str(p), g.get("credit", ""), g.get("source", "")):
+        # ★#046 재발방지: 식품·건어물·표본·흰 종이/스튜디오 배경·죽은/물밖 사진을 컷어웨이로 쓰지 않는다.
+        if not _cutaway_image_ok(str(p), g.get("credit", ""), g.get("source", ""),
+                                 hint=(common_name_en or scientific_name or "")):
             log.info("[footage] 컷어웨이 부적합(식품/표본/종이배경) 배제: %s", g.get("source", ""))
             try:
                 p.unlink()
@@ -1046,6 +1057,12 @@ def fetch_hero_photo(scientific_name: str, common_name_en: str, dest_dir: str) -
                 verdict = None
             if verdict is not True:                  # False(도판·다중) 또는 None(불확실) → 스킵
                 continue
+            # ★#046 재발방지: 오프닝훅·엔드카드 배경도 '살아있는 물속 개체'만(죽은/물밖/사람손질 배제).
+            try:
+                if vision_subject.is_live_wild_subject(str(out), hint) is False:
+                    continue
+            except Exception:  # noqa: BLE001
+                pass
         else:
             # 비전 키 없음: 안전을 위해 히어로 사진을 쓰지 않는다(영상 프레임 폴백이 단일 피사체 보장).
             return None
@@ -1800,6 +1817,10 @@ def species_photo_doc(scientific_name: str, common_name_en: str, dest_dir: str) 
         try:
             from src.core import vision_subject
             if vision_subject.verify_species(str(fp), scientific_name, common_name_en) is False:
+                continue
+            # ★#046 재발방지(저비용 Gemini): 죽었거나·물 밖·해변/갑판·사람이 손질/파지한 사진 배제.
+            #   verify_species는 '물고기 맞음'만 보므로 '해변의 죽은 물고기+사람 발'은 통과했다 → 문맥 판별로 차단.
+            if vision_subject.is_live_wild_subject(str(fp), common_name_en or scientific_name) is False:
                 continue
         except Exception:  # noqa: BLE001
             pass
