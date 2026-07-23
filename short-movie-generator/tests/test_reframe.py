@@ -187,14 +187,32 @@ def test_pushin_no_motion_when_flat():
     assert reframe._pushin(1.08, 0) == ""
 
 
-def test_pushin_filter_is_comma_safe_and_sized():
-    """푸시인 필터는 zoompan이며 9:16 출력 크기를 지정하고, zoompan 식 안에 콤마가 없어야
-    filtergraph(콤마=필터구분자)를 깨지 않는다."""
+def test_pushin_normalizes_fps_before_zoompan():
+    """★#046 재발방지: zoompan은 입력 프레임 수를 fps= 타임베이스로 다시 찍어 비30fps 소스에서
+    길이를 왜곡한다(25fps→짧아짐·60fps→2배). 반드시 fps=30 정규화가 zoompan 앞에 있어야 한다."""
     f = reframe._pushin(1.08, 2.2)
-    assert f.startswith("zoompan=") and f"s={reframe.W}x{reframe.H}" in f
-    # zoompan= 뒤 옵션 값들(작은따옴표 식) 안에는 콤마가 없어야 한다
-    body = f.split("zoompan=", 1)[1]
-    assert "," not in body, "zoompan 식에 콤마가 있으면 필터그래프가 깨진다"
+    assert f.startswith("fps=30,zoompan=") and f"s={reframe.W}x{reframe.H}" in f
+
+
+def test_motion_vf_variety_and_fps_guard():
+    """역할별 모션이 서로 달라야 하고(다양화), 전부 fps=30 정규화를 포함해야 한다(길이 보존)."""
+    fs = {r: reframe._motion_vf(r, 0, 2.2) for r in ("reveal", "establish", "behavior", "detail", "settle")}
+    for r, f in fs.items():
+        assert f.startswith("fps=30,zoompan="), f"{r}: fps 정규화 누락"
+    assert fs["reveal"] != fs["establish"] != fs["behavior"], "모션이 전부 동일(다양화 실패)"
+    # behavior 팬은 순번에 따라 방향이 교대돼야 한다
+    assert reframe._motion_vf("behavior", 0, 2.2) != reframe._motion_vf("behavior", 1, 2.2)
+
+
+def test_role_weights_rhythm_sum():
+    """리듬 변주: 역할 가중 컷 길이의 합은 target_dur와 일치(누적 오차 없음)."""
+    W_ = {"reveal": 1.25, "establish": 1.15, "behavior": 1.0, "detail": 0.8, "settle": 1.15}
+    n, target = 12, 26.4
+    roles = [reframe._role_for(k, n) for k in range(n)]
+    s = sum(W_.get(r, 1.0) for r in roles)
+    lens = [target * W_.get(r, 1.0) / s for r in roles]
+    assert abs(sum(lens) - target) < 1e-6
+    assert max(lens) > min(lens), "컷 길이 강약이 없음"
 
 
 def test_role_arc_sequence():

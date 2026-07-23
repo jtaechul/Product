@@ -479,17 +479,45 @@ def _role_for(k: int, n: int) -> str:
 def _pushin(z_extra: float, seg_len: float, fps: int = 30) -> str:
     """★샷 안에서 '천천히 밀고 들어가는' 완만한 푸시인(켄번즈) ffmpeg zoompan 필터.
     이미 9:16(WxH)로 완성된 컷 프레임 위에 얹어, 컷 지속시간 동안 중심으로 서서히 확대(1.0→z_extra)한다.
-    정지 슬라이드처럼 붙어 있던 컷을 살아있는 다큐 샷으로 만든다. z_extra≤1이면 빈 문자열(모션 없음).
+    z_extra≤1이면 빈 문자열(모션 없음).
 
-    구현 주의: filtergraph에서 콤마는 필터 구분자라 zoompan 식에 콤마를 쓰지 않는다(min/clip 금지).
-    누적식 z='zoom+k'(초기 zoom=1.0)로 클리핑 없이 선형 증가시키고, 중심 확대라 x/y 팬이 없어
-    저지터. 길이가 고정이라 오버슈트 위험 없음. 심해 저해상 보호를 위해 z_extra는 작게(≤1.08) 쓴다."""
+    ★★길이 보존(실사고 #046: 25fps NOAA 소스에서 본문이 짧아져 끝 5.8초가 정지화면 + 엔드카드가
+    무음으로 먼저 뜸): zoompan은 '입력 프레임 수'를 fps= 파라미터의 타임베이스로 다시 찍는다 —
+    소스가 25fps면 출력이 30분의 25로 '짧아지고', 60fps면 2배로 늘어난다(재현 실험으로 확정).
+    → zoompan 앞에 **fps=30 정규화**를 반드시 붙여 어떤 소스 fps에서도 컷 길이가 보존되게 한다."""
     if z_extra <= 1.0 or seg_len <= 0:
         return ""
     n = max(2, int(round(seg_len * fps)))
     k = (z_extra - 1.0) / n
-    return (f"zoompan=z='zoom+{k:.6f}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+    return (f"fps={fps},zoompan=z='zoom+{k:.6f}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
             f":d=1:fps={fps}:s={W}x{H}")
+
+
+# ★컷 역할별 '모션 종류' — 무빙 다양화(운영자 확정: 푸시인만 반복 → 단조). zoompan 식의 콤마는
+#   작은따옴표 안이면 필터 구분자로 해석되지 않는다(ffmpeg 공식 예시 z='min(zoom+0.0015,1.5)').
+#   push_in(밀고 들어감)·pull_out(빠짐)·pan_l/pan_r(수평 이동)을 역할·순번으로 섞는다.
+def _motion_vf(role: str, idx: int, seg_len: float, fps: int = 30) -> str:
+    """역할+순번 → 다양한 카메라 모션 필터(fps 정규화 포함). 완성된 9:16 컷 위에 얹는다."""
+    n = max(2, int(round(seg_len * fps)))
+    base = f"fps={fps},zoompan="
+    tail = f":d=1:fps={fps}:s={W}x{H}"
+    cx, cy = "x='iw/2-(iw/zoom/2)'", "y='ih/2-(ih/zoom/2)'"
+    if role == "reveal":                      # 리빌: 또렷하게 밀고 들어가 '공개'
+        zmax = 1.10
+        return f"{base}z='min(1+{(zmax - 1) / n:.6f}*on,{zmax})':{cx}:{cy}{tail}"
+    if role in ("establish", "settle"):       # 설정·마무리: 넓어지며 빠짐(pull-out)
+        z0 = 1.10
+        return f"{base}z='max({z0}-{(z0 - 1) / n:.6f}*on,1.0)':{cx}:{cy}{tail}"
+    if role == "detail":                      # 디테일: 강한 푸시인
+        zmax = 1.14
+        return f"{base}z='min(1+{(zmax - 1) / n:.6f}*on,{zmax})':{cx}:{cy}{tail}"
+    # behavior: 좌↔우 팬(순번에 따라 방향 교대) — 고정 줌 1.08에서 수평 드리프트
+    z = 1.08
+    if idx % 2 == 0:
+        x = f"x='(iw-iw/zoom)*(on/{n})'"
+    else:
+        x = f"x='(iw-iw/zoom)*(1-on/{n})'"
+    return f"{base}z='{z}':{x}:{cy}{tail}"
 
 
 def _reveal_start(frames: list, scores: list, bad: list, fps: float,
@@ -628,7 +656,7 @@ def _plan_scene_interleaved(path: str, src_dur: float, scores: list[float],
     각 컷은 ≈2.2초로 짧게(지루함 방지)."""
     cut_len = 2.2
     n_cuts = max(2, round(target_dur / cut_len))
-    cut_len = target_dur / n_cuts                   # 합이 정확히 target_dur가 되게 재계산
+    cut_len = target_dur / n_cuts                   # 평균 컷 길이(창 선택용)
     if cut_len < 1.8:
         n_cuts = max(2, int(target_dur // 1.8)); cut_len = target_dur / n_cuts
     elif cut_len > 2.8:
@@ -641,22 +669,28 @@ def _plan_scene_interleaved(path: str, src_dur: float, scores: list[float],
         uses[k % N] += 1
     region_starts = [_pick_windows_in_range(scores, bad, fps, cut_len, rs, re, uses[i])
                      for i, (rs, re) in enumerate(regions)]
+    # ★리듬 변주(운영자 확정 · 균일 2.2초 반복은 단조): 역할별 길이 가중 —
+    #   리빌·설정·마무리는 길게 홀드(음미), 디테일은 짧게 침. 합은 target_dur로 정규화.
+    _WEIGHT = {"reveal": 1.25, "establish": 1.15, "behavior": 1.0, "detail": 0.8, "settle": 1.15}
+    roles = [_role_for(k, n_cuts) for k in range(n_cuts)]
+    wsum = sum(_WEIGHT.get(r, 1.0) for r in roles)
+    lens = [target_dur * _WEIGHT.get(r, 1.0) / wsum for r in roles]
     idx = [0] * N
     plan: list[dict] = []
     for k in range(n_cuts):
-        role = _role_for(k, n_cuts)
+        role = roles[k]
         if k == 0 and reveal_start is not None:      # 리빌: 피사체 최선명 순간에서 공개
-            sa = min(max(0.0, reveal_start), max(0.0, src_dur - cut_len))
+            sa = min(max(0.0, reveal_start), max(0.0, src_dur - lens[0]))
         else:
             ri = k % N
             starts = region_starts[ri] or [regions[ri][0]]
             sa = starts[min(idx[ri], len(starts) - 1)]
             idx[ri] += 1
         mode = "closeup" if role in ("reveal", "detail") else "fit"
-        plan.append({"start": sa, "len": cut_len, "mode": mode,
+        plan.append({"start": sa, "len": lens[k], "mode": mode,
                      "role": role, "push": _ROLE_PUSH.get(role, 1.03)})
-    log.info("[reframe] 서사 아크: 씬 %d개 → %d컷×%.2fs (리빌→설정→행동/디테일→마무리 + 샷 내 푸시인)",
-             N, n_cuts, cut_len)
+    log.info("[reframe] 서사 아크: 씬 %d개 → %d컷(%.1f~%.1fs 변주) 리빌→설정→행동/디테일→마무리 + 컷별 모션",
+             N, n_cuts, min(lens), max(lens))
     return plan
 
 
@@ -806,7 +840,9 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                       f"gblur=sigma=32,eq=brightness=-0.14:saturation=1.02[bg];"
                       f"[b]scale={W}:{H}:force_original_aspect_ratio=decrease[fg];"
                       f"[bg][fg]overlay=(W-w)/2:(H-h)/2,{GRADE}")
-            pv = _pushin(cut.get("push", 1.0), seg_len)   # ★샷 내 완만한 푸시인(정지 슬라이드 방지)
+            # ★샷 내 모션(정지 슬라이드 방지): 생물=역할별 다양 모션(푸시인/풀아웃/팬), 난파선=완만 푸시인
+            pv = (_pushin(cut.get("push", 1.0), seg_len) if wide
+                  else _motion_vf(cut.get("role", "behavior"), i, seg_len))
             if pv:
                 fc = f"{fc},{pv}"
             cmd += ["-filter_complex", fc, str(seg_out)]
@@ -856,7 +892,9 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                 if need_dl:
                     pre_vf = delogo_vf(src_w, src_h, logo_box) + ","
             vf = f"{pre_vf}crop={cw}:{ch}:{cx}:{cy},scale={W}:{H},setsar=1,{GRADE}"
-            pv = _pushin(cut.get("push", 1.0), seg_len)   # ★접사 위에 완만한 푸시인 추가(생동감)
+            # ★접사 위 모션(생동감): 생물=역할별 다양 모션, 난파선=완만 푸시인
+            pv = (_pushin(cut.get("push", 1.0), seg_len) if wide
+                  else _motion_vf(cut.get("role", "detail"), i, seg_len))
             if pv:
                 vf = f"{vf},{pv}"
             cmd += ["-vf", vf, str(seg_out)]

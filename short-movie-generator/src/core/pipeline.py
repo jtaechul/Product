@@ -507,14 +507,14 @@ def run_reels(
     # 배경 소스 분리(재발 방지): 오프닝 배경=자막 번인 '전' 클린 리프레임(body_v) →
     # 본문 자막 미리 노출 차단 / 엔드카드 피사체=크롭·줌 '전' 원본 광각(fv.path) → 과확대 차단
     yt_thumb = str(work_dir / "yt_thumb.jpg")   # ★유튜브 썸네일: 전체 타이틀 노출 오프닝 프레임
-    # ★엔드카드 이중 노출 방지(실사고 #046): 아래에서 파이프라인이 '통합 마지막 페이지'(NOAA 사진·종
-    #   도감·팔로우 유도)를 붙이므로, 오프닝 훅 단계에서는 자체 엔드카드를 만들지 않는다(오프닝만).
-    #   → 최종 영상에 엔드카드는 딱 1장(통합 마지막 페이지)만 남는다.
+    # ★정정(재발방지 기록): '엔드카드 2번' 오진으로 include_endcard=False를 넣었었다 — 릴스에서
+    #   hook_intro 엔드카드는 **유일한** 엔드카드다(final_page는 run() 전용). 실제 '무음 선노출' 원인은
+    #   reframe zoompan의 비30fps 길이 왜곡(수정됨). 엔드카드는 반드시 켠다(기획서: 전 영상 필수).
     final = hook_intro_stage.apply(body_av, spec, hook_text, str(work_dir / "hook_intro"), bgm=bgm,
                                    open_bg_video=body_v, subject_video=fv["path"],
                                    logo_box=fv.get("logo_box"),
                                    hero_image=(hero["path"] if hero else None),
-                                   thumb_out=yt_thumb, include_endcard=False)
+                                   thumb_out=yt_thumb, include_endcard=True)
     # ★재발방지 하드 게이트(기획서 규칙: 모든 영상에 오프닝 훅+엔드카드 필수).
     # 폰트는 이제 항상 폴백 해석되므로 apply()가 본문을 그대로 돌려주는 건 '진짜 실패'뿐 →
     # 조용히 발행하지 않고 큰 오류로 멈춰 CI를 빨간불로 만든다(스펙 위반 영상 발행 원천 차단).
@@ -709,8 +709,10 @@ def run(
     if info.diet:
         eco_bits.append(" ".join(info.diet[:2]))
     eco_line = " · ".join(b for b in eco_bits if b)
-    # ★엔드카드(통합 마지막 페이지) 배경도 커밋된 히어로 프레임 우선(오프닝과 동일 이미지 · #046 재발방지):
+    # ★엔드카드(통합 마지막 페이지) 배경도 커밋된 히어로 프레임 우선(#046 재발방지):
     #   소싱 사진이 빈 바다/불명확일 수 있어, 실사 피사체 프레임이 있으면 그걸 엔드카드 사진으로 쓴다.
+    #   (주의: 이 블록은 run() 소속 — run_reels의 _hf와 별개로 여기서 직접 조회한다.)
+    _hf = footage.seed_hero_frame(info.scientific_name, info.common_name_en)
     _ec_photo = _hf or asset.asset_path
     final_page = endcard.build_final_page(
         caption, series_title, episode, WATERMARK,
