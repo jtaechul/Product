@@ -33,6 +33,80 @@ def _probe_dur(video: str) -> float:
         return 0.0
 
 
+def _probe_wh(video: str) -> tuple[int, int]:
+    try:
+        out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+                              "stream=width,height", "-of", "csv=p=0:s=x", video],
+                             capture_output=True, text=True, timeout=30).stdout.strip()
+        w, h = out.split("x")[:2]
+        return int(w), int(h)
+    except Exception:  # noqa: BLE001
+        return 0, 0
+
+
+def _watermark_boxes(video: str, dur: float) -> list[tuple]:
+    """전 구간 OCR 스캔 → '지속 번인 로고' 박스(정규화). NOAA 계열 토큰 무조건 + 같은 위치 다수 초 지속."""
+    from src.core import watermark_qc as wq
+    fps = max(0.4, min(1.0, 12.0 / max(1.0, dur)))
+    secs = wq.scan(video, 0.0, dur, fps=fps)
+    if not secs:
+        return []
+    cell = lambda w: (int((w["x"] + w["w"] / 2) * 8), int((w["y"] + w["h"] / 2) * 8))  # noqa: E731
+    counts: dict = {}
+    by_cell: dict = {}
+    noaa: list = []
+    for s in secs:
+        seen = set()
+        for w in s["words"]:
+            c = cell(w)
+            if c not in seen:
+                counts[c] = counts.get(c, 0) + 1
+                seen.add(c)
+            by_cell.setdefault(c, []).append(w)
+            if wq._NOAAISH.search(w["text"]):
+                noaa.append(w)
+    pad = 0.014
+    need = max(2, int(len(secs) * 0.4))
+    raw: list = []
+    def add(w):
+        raw.append((max(0.0, w["x"] - pad), max(0.0, w["y"] - pad),
+                    min(1.0, w["w"] + 2 * pad), min(1.0, w["h"] + 2 * pad)))
+    for w in noaa:
+        add(w)
+    for c, n in counts.items():
+        if n >= need and by_cell.get(c):
+            add(by_cell[c][0])
+    boxes = wq._merge_boxes(raw)
+    return sorted(boxes, key=lambda b: -(b[2] * b[3]))[:5]
+
+
+def _clean_watermark(video: str, work: Path) -> str:
+    """★NOAA 등 '지속되는 번인 로고/URL'을 delogo로 제거. 잠깐 문구는 안 건드림. OCR 없거나 박스 없으면 원본 반환."""
+    try:
+        from src.core import watermark_qc as wq
+        dur = _probe_dur(video)
+        sw, sh = _probe_wh(video)
+        if dur <= 0 or sw <= 0 or sh <= 0:
+            return video
+        boxes = _watermark_boxes(video, dur)
+        chain = wq.delogo_chain(boxes, sw, sh) if boxes else ""
+        if not chain:
+            return video
+        work.mkdir(parents=True, exist_ok=True)
+        out = str(work / "clean.mp4")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", video, "-vf", chain,
+                        "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
+                        "-c:a", "copy", out], check=True, timeout=1200)
+        # ★검증은 '길이'로(delogo는 길이 보존). 바이트 크기 문턱은 압축 잘되는 소스 오탈락(실사고: 단색 3KB) → 폐기.
+        if Path(out).exists() and _probe_dur(out) >= dur * 0.8:
+            log.info("[narrate] 워터마크 delogo 적용: %d박스 (%s)", len(boxes), video)
+            return out
+        return video
+    except Exception as e:  # noqa: BLE001
+        log.info("[narrate] 워터마크 정리 생략(tesseract 없음/실패): %s", e)
+        return video
+
+
 def _sample_frames(video: str, work: Path, n: int = 4) -> list[str]:
     """영상에서 고르게 n장 프레임 추출(비전 분석용). 실패 시 []."""
     dur = _probe_dur(video) or 0.0
@@ -372,9 +446,12 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     work.mkdir(parents=True, exist_ok=True); out_dir.mkdir(parents=True, exist_ok=True)
     w, h = (SHORTS_W, SHORTS_H) if mode == "shorts" else (LONG_W, LONG_H)
 
-    # 0) 영상 내용 파악(비전) — 소싱 출처 설명이 있으면 근거로 합치고, 없으면 프레임을 보고 서술
+    # 0) 번인 로고 제거(NOAA 등 지속 로고 delogo) — 이후 모든 단계가 깨끗한 소스를 쓰게 한다.
+    src = _clean_watermark(str(vp), work / "wm")
+
+    # 0ب) 영상 내용 파악(비전) — 소싱 출처 설명이 있으면 근거로 합치고, 없으면 프레임을 보고 서술
     desc = (source_topic or "").strip()
-    seen = _describe_video(str(vp), work)
+    seen = _describe_video(src, work)
     if seen:
         desc = (desc + "\n" + seen).strip() if desc else seen
     if not desc:
@@ -396,9 +473,9 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     body_v = str(work / "body.mp4")
     if mode == "shorts":
         from src.core import reframe
-        body_v = reframe.reframe_to_vertical(str(vp), body_v, dur, str(work / "rf"), wide=False)
+        body_v = reframe.reframe_to_vertical(src, body_v, dur, str(work / "rf"), wide=False)
     else:
-        _normalize_landscape(str(vp), body_v, dur, str(work))
+        _normalize_landscape(src, body_v, dur, str(work))
 
     # 4) 카라오케 자막 번인
     sub_scale = 1.5 if mode == "shorts" else 1.0
@@ -432,7 +509,7 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     try:
         from src.core import hook_intro as hi
         if hook_txt and hi.fonts_available():
-            hero = _pick_hero_frame(str(vp), work / "hero", w)
+            hero = _pick_hero_frame(src, work / "hero", w)
             if hero:
                 card = str(work / "hookcard.png")
                 if _render_hook_and_thumb(hero, hook_txt, meta.get("title_jp", ""), w, h,

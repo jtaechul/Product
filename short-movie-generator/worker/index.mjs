@@ -429,35 +429,30 @@ function nvbanner(t,c){const m=$("#nvmsg");if(m){m.className="banner show "+(c||
 // 첨부 영상을 GitHub Release(태그 NV_TAG) 에셋으로 올리고 공개 다운로드 URL을 돌려준다.
 // 워크플로가 이 URL을 urllib로 받아 나레이션을 입힌다(공개 저장소라 무인증 접근 가능).
 async function uploadToRelease(file){
-  // 1) 입력 보관용 릴리스 확보(없으면 생성)
+  // 0) 크기 가드 — Cloudflare Workers 무료 요청 본문 상한(≈100MB).
+  if(file&&file.size>95*1024*1024)
+    throw new Error("파일이 100MB를 넘습니다("+Math.round(file.size/1048576)+"MB). 아래 URL 칸에 직접 다운로드 링크를 붙여넣어 주세요(대용량은 워커 업로드 제한).");
+  // 1) 릴리스 확보(api.github.com은 CORS 허용 → 브라우저 직접).
   let rel=null;
-  try{
-    const g=await fetch(API+"/releases/tags/"+NV_TAG,{headers:headers(true)});
-    if(g.ok)rel=await g.json();
-    else if(g.status===404){
-      const c=await fetch(API+"/releases",{method:"POST",headers:{...headers(true),"Content-Type":"application/json"},
-        body:JSON.stringify({tag_name:NV_TAG,name:"첨부 영상 입력",target_commitish:BRANCH,
-          body:"첨부 영상 나레이션용 입력 파일 보관(자동 생성)"})});
-      if(c.ok)rel=await c.json();
-    }
-  }catch(e){}
-  if(!rel||!rel.id)return "";
-  // 2) 에셋 업로드(파일명은 타임스탬프로 유니크 → 같은 이름 충돌 방지)
+  const g=await fetch(API+"/releases/tags/"+NV_TAG,{headers:headers(true)});
+  if(g.ok)rel=await g.json();
+  else if(g.status===404){
+    const c=await fetch(API+"/releases",{method:"POST",headers:{...headers(true),"Content-Type":"application/json"},
+      body:JSON.stringify({tag_name:NV_TAG,name:"첨부 영상 입력",target_commitish:BRANCH,
+        body:"첨부 영상 나레이션용 입력 파일 보관(자동 생성)"})});
+    if(c.ok)rel=await c.json();
+    else{const t=await c.text();throw new Error("릴리스 생성 실패("+c.status+") — 토큰에 Contents: Read and write 권한이 필요합니다. "+t.slice(0,100));}
+  }else{const t=await g.text();throw new Error("릴리스 조회 실패("+g.status+"). "+t.slice(0,100));}
+  if(!rel||!rel.id)throw new Error("릴리스 정보를 얻지 못했습니다.");
+  // 2) 에셋 업로드 — 항상 워커 중계(uploads.github.com은 CORS 미지원 → 브라우저 직접 업로드 차단).
   const ext=((file.name||"").split(".").pop()||"mp4").toLowerCase().replace(/[^a-z0-9]/g,"")||"mp4";
   const name="attach_"+Date.now()+"."+ext;
   const ctype=file.type||"application/octet-stream";
-  let up;
-  try{
-    if(SERVER){
-      // 서버 토큰 모드: 워커가 uploads.github.com으로 중계(브라우저에 토큰 없음)
-      up=await fetch("/api/ghupload?release_id="+rel.id+"&name="+encodeURIComponent(name)+"&ctype="+encodeURIComponent(ctype),
-        {method:"POST",body:file});
-    }else{
-      up=await fetch("https://uploads.github.com/repos/"+OWNER+"/"+REPO+"/releases/"+rel.id+"/assets?name="+encodeURIComponent(name),
-        {method:"POST",headers:{"Authorization":"Bearer "+pat(),"Content-Type":ctype,"X-GitHub-Api-Version":"2022-11-28"},body:file});
-    }
-  }catch(e){return "";}
-  if(!up||!up.ok)return "";
+  const hdr={"Content-Type":ctype};
+  if(!SERVER&&pat())hdr["Authorization"]="Bearer "+pat();   // 같은 출처 워커에만 전달
+  const up=await fetch("/api/ghupload?release_id="+rel.id+"&name="+encodeURIComponent(name)+"&ctype="+encodeURIComponent(ctype),
+    {method:"POST",headers:hdr,body:file});
+  if(!up.ok){const t=await up.text();throw new Error("업로드 실패("+up.status+") — 토큰 권한(Contents: Read and write) 또는 파일 크기를 확인하세요. "+t.slice(0,100));}
   try{const a=await up.json();if(a&&a.browser_download_url)return a.browser_download_url;}catch(e){}
   return "https://github.com/"+OWNER+"/"+REPO+"/releases/download/"+NV_TAG+"/"+name;
 }
@@ -475,8 +470,9 @@ async function narrateAttached(){
     let videoUrl=urlInput;
     if(!videoUrl&&file){
       nvbanner("영상 업로드 중… (파일 크기에 따라 시간이 걸립니다)");
-      videoUrl=await uploadToRelease(file);
-      if(!videoUrl){nvbanner("영상 업로드 실패. 파일 크기·토큰 권한(Contents RW)을 확인하세요.","err");btn.disabled=false;return;}
+      try{ videoUrl=await uploadToRelease(file); }
+      catch(e){ nvbanner("영상 업로드 실패 — "+esc(String(e&&e.message||e)),"err"); btn.disabled=false; return; }
+      if(!videoUrl){nvbanner("영상 업로드 실패(원인 불명). 잠시 후 다시 시도하세요.","err");btn.disabled=false;return;}
     }
     nvbanner("나레이션 제작 요청 중… (영상 내용 분석 → 대본 → 제목·설명·해시태그 자동 생성)");
     const src=(urlInput&&!file)?"":_nvTopic;   // '찾기'에서 온 경우에만 출처 설명을 근거로 전달
@@ -1299,9 +1295,11 @@ async function ghProxy(request, url, env){
 // 서버 토큰 모드에서 브라우저에 토큰이 없으므로, 워커가 env.GH_PAT로 uploads.github.com에 중계한다.
 // (파일 본문은 스트림 그대로 전달 → 큰 영상도 메모리 폭주 없이 업로드.)
 async function ghUpload(request, url, env){
-  const token = env && env.GH_PAT;
-  if(!token) return j({error:"server token not configured"}, 501);
   if(request.method !== "POST") return j({error:"method not allowed"}, 405);
+  // 토큰: 서버 시크릿(GH_PAT) 우선, 없으면 브라우저가 넘긴 Authorization(PAT 모드) 사용.
+  const fwd = (request.headers.get("Authorization") || "").replace(/^[Bb]earer\s+/, "");
+  const token = (env && env.GH_PAT) || fwd;
+  if(!token) return j({error:"토큰이 없습니다(로그인 또는 토큰 설정 필요)"}, 401);
   const rid = url.searchParams.get("release_id") || "";
   const name = url.searchParams.get("name") || "";
   const ctype = url.searchParams.get("ctype") || "application/octet-stream";

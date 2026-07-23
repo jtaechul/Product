@@ -30,6 +30,7 @@ def test_narrate_attached_e2e(tmp_path, monkeypatch, mode, w, h):
     from src.core import narration_sync, llm
     monkeypatch.setattr(narration_sync, "synthesize", lambda chunks, work, **k: _fake_tts(work))
     monkeypatch.setattr(llm, "generate_text", lambda *a, **k: None)   # 결정론 폴백 강제
+    monkeypatch.setattr(N, "_clean_watermark", lambda v, w: v)   # delogo는 별도 테스트로
     # 비전 미가용(키 없음) → 소싱 출처 설명(source_topic)을 대본 근거로 사용
     res = N.narrate_video(str(vid), mode=mode, base_dir=str(tmp_path),
                           source_topic="潜水艦の残骸です。水深百m。")
@@ -88,6 +89,31 @@ def test_hook_and_thumb_render(tmp_path):
                                   1920, 1080, str(card), str(thumb))
     assert ok and card.exists() and thumb.exists()
     assert Image.open(str(thumb)).size == (1920, 1080)
+
+
+def test_clean_watermark_graceful(tmp_path):
+    """로고 없는 영상 → 검출 박스 없음 → 원본 그대로 반환(정리 생략, 발행 불정지)."""
+    vid = tmp_path / "plain.mp4"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                    "-i", "color=c=blue:s=320x240:rate=10:duration=2", "-pix_fmt", "yuv420p", str(vid)], check=True)
+    out = N._clean_watermark(str(vid), tmp_path / "wm")
+    assert out == str(vid)
+    assert N._probe_wh(str(vid)) == (320, 240)
+
+
+def test_clean_watermark_applies_delogo(tmp_path, monkeypatch):
+    """검출 박스가 있으면 그 영역을 delogo로 지운다(OCR 우회 결정론 · 길이 기준 검증)."""
+    vid = tmp_path / "noaa.mp4"
+    vf = "drawtext=text='OCEANEXPLORER.NOAA.GOV':x=(w-tw)/2:y=h-52:fontsize=34:fontcolor=white"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                    "-i", "color=c=0x0a1a2a:s=640x360:rate=12:duration=3", "-vf", vf,
+                    "-pix_fmt", "yuv420p", str(vid)], check=True)
+    monkeypatch.setattr(N, "_watermark_boxes", lambda video, dur: [(0.18, 0.86, 0.64, 0.10)])
+    out = N._clean_watermark(str(vid), tmp_path / "wm")
+    from pathlib import Path as _P
+    assert out != str(vid) and _P(out).exists()
+    assert N._probe_wh(out) == (640, 360)
+    assert N._probe_dur(out) >= 2.4
 
 
 def test_narrate_requires_content(tmp_path, monkeypatch):

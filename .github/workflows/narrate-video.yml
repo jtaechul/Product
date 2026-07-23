@@ -47,8 +47,8 @@ jobs:
           cache: pip
           cache-dependency-path: short-movie-generator/requirements.txt
 
-      - name: Install FFmpeg + fonts
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-cjk fonts-liberation
+      - name: Install FFmpeg + fonts + OCR(tesseract, NOAA 로고 delogo용)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-cjk fonts-liberation tesseract-ocr
 
       - name: Install Python deps
         run: pip install -r requirements.txt
