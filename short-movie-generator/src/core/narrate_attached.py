@@ -202,8 +202,15 @@ def _fallback_meta(chunks: list[str], mode: str) -> dict:
     """LLM 미가용 시 대본에서 결정론으로 제목·설명·해시태그(일/한) 도출(날조 없음)."""
     body = "。".join(c.strip("。.、,") for c in chunks[:4] if c.strip())
     first = (chunks[0] if chunks else "").strip() or "海の映像"
-    # ★단어 중간 절단 금지(실사고: 'マッピング'→'マッピン') — 구두점 경계 트림(_trim_jp)
-    title_jp = _trim_jp(first, 22) + ("…" if len(first) > 22 else "")
+    # ★잘린 제목 금지(실사고: '…を終え…'): 글자수 절단+말줄임 대신 **절(구두점) 단위로 누적**해
+    #   한도 안에서 온전한 절까지만 담는다(말줄임표 없음 · 중간 절단 없음).
+    parts = [p for p in re.split(r"(?<=[、。])", first) if p.strip()]
+    title_jp = ""
+    for p in parts:
+        if len(title_jp + p) > 30:
+            break
+        title_jp += p
+    title_jp = re.sub(r"[、。]+$", "", title_jp) or _trim_jp(first, 30)
     desc_jp = (body[:180] + "。") if body else "海の映像に日本語ナレーションと字幕を付けた作品です。"
     hook_jp = _trim_jp(re.sub(r"[。.！!？?]+$", "", first), 18) or "この光景を、ご存知ですか"
     return {
@@ -233,7 +240,8 @@ def _gen_metadata(chunks: list[str], mode: str) -> dict:
         '\"desc_ko\":\"上の説明の自然な韓国語訳\",'
         '\"tags_jp\":[\"#日本語タグ\",\"…3〜5個\"],'
         '\"tags_ko\":[\"#한국어태그\",\"…3〜5個\"]}')
-    raw = llm.generate_text(prompt, max_tokens=700)
+    # ★일시 오류로 폴백(잘린 제목·빈 한국어)이 발행되는 걸 줄이기 위해 실패 시 1회 재시도
+    raw = llm.generate_text(prompt, max_tokens=700) or llm.generate_text(prompt, max_tokens=700)
     if raw:
         m = re.search(r"\{.*\}", raw, re.S)
         if m:
@@ -354,16 +362,41 @@ def _cover_crop(im, w: int, h: int):
     return im.crop((x, y, x + w, y + h))
 
 
+# 일본어 '단어(문자종 런)' 토크나이저 — 가타카나/한자/히라가나/영숫자 런을 한 덩어리로 취급
+_JP_TOK_RE = re.compile(r"[ァ-ヶヴー]+|[一-龯々〆]+|[ぁ-ゖ]+|[A-Za-z0-9]+|[０-９Ａ-Ｚａ-ｚ]+|\n|.")
+# 행두 금칙(금속처리): 이 문자로 줄을 시작하지 않는다 → 앞 토큰에 붙임
+_KINSOKU_HEAD = set("、。，,！!？?…・ー」』）)]｝}〟”’")
+
+
 def _wrap_cjk(draw, text: str, font, max_w: float) -> list[str]:
-    """공백 없는 일본어를 폭에 맞춰 글자 단위로 줄바꿈(온스크린 텍스트 넘침 방지 하드룰)."""
-    lines, cur = [], ""
-    for ch in str(text):
-        if ch == "\n":
-            lines.append(cur); cur = ""; continue
-        if draw.textlength(cur + ch, font=font) <= max_w or not cur:
-            cur += ch
+    """일본어를 **단어(문자종 런) 단위**로 폭에 맞춰 줄바꿈 + 행두 금칙(넘침 방지 하드룰).
+
+    ★실사고(운영자 지적): 글자 단위 줄바꿈이 'ちょうど'를 'ちょう/ど', 'マッピング'을 중간에서
+    쪼갰다 → 가타카나·한자·히라가나·영숫자 '런'을 한 덩어리(단어)로 묶어 그 경계에서만 줄을 바꾼다.
+    구두점(、。 등)은 앞 단어에 붙여 행두에 오지 않게 한다. 한 단어가 폭보다 길 때만 글자 분할."""
+    toks: list[str] = []
+    for m in _JP_TOK_RE.finditer(str(text)):
+        t = m.group(0)
+        if t != "\n" and toks and toks[-1] != "\n" and t and t[0] in _KINSOKU_HEAD:
+            toks[-1] += t                      # 구두점류는 앞 단어에 부착(행두 금칙)
         else:
-            lines.append(cur); cur = ch
+            toks.append(t)
+    lines, cur = [], ""
+    for t in toks:
+        if t == "\n":
+            lines.append(cur); cur = ""; continue
+        if not cur or draw.textlength(cur + t, font=font) <= max_w:
+            cur += t
+            continue
+        if draw.textlength(t, font=font) <= max_w:
+            lines.append(cur); cur = t         # 단어째 다음 줄로
+            continue
+        # 단어 자체가 한 줄보다 긺 → 그 단어만 글자 분할(최후 수단)
+        for ch in t:
+            if not cur or draw.textlength(cur + ch, font=font) <= max_w:
+                cur += ch
+            else:
+                lines.append(cur); cur = ch
     if cur:
         lines.append(cur)
     return lines
