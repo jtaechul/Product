@@ -128,6 +128,33 @@ def test_longform_keeps_full_length_and_chapters(tmp_path, monkeypatch):
     assert "챕터" in res["meta"]["desc_ko"]
 
 
+def test_audio_mix_and_active_regions(tmp_path):
+    """★#1·#2: 원본 오디오 보존+덕킹 믹스 + 원본 발화(소리) 구간 검출.
+    무음 소스는 나레이션만, 오디오 소스는 믹스 파일 + active 구간 검출."""
+    mp3 = tmp_path / "n.mp3"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                    "-i", "sine=frequency=300:duration=2", "-q:a", "9", str(mp3)], check=True)
+    # (a) 무음 영상 → _has_audio False, 믹스는 나레이션 그대로
+    v0 = tmp_path / "noaud.mp4"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                    "-i", "color=c=black:s=320x240:r=10:d=3", "-pix_fmt", "yuv420p", str(v0)], check=True)
+    assert N._has_audio(str(v0)) is False
+    assert N._mix_bg_narration(str(v0), str(mp3), 3.0, tmp_path) == str(mp3)
+    assert N._audio_active_regions(str(v0), 3.0) == []
+    # (b) 앞 2s 무음 + 뒤 2s 톤 → 뒤쪽에 active 구간, 믹스는 새 파일
+    v1 = tmp_path / "aud.mp4"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error",
+                    "-f", "lavfi", "-i", "color=c=black:s=320x240:r=10:d=4",
+                    "-f", "lavfi", "-i", "sine=frequency=400:duration=4",
+                    "-filter_complex", "[1:a]volume=volume='if(gt(t,2),0.9,0)':eval=frame[a]",
+                    "-map", "0:v", "-map", "[a]", "-t", "4", "-pix_fmt", "yuv420p", "-c:a", "aac", str(v1)], check=True)
+    assert N._has_audio(str(v1)) is True
+    regs = N._audio_active_regions(str(v1), 4.0)
+    assert any(b > 2.0 for a, b in regs), f"뒤쪽(발화) 구간 검출 실패: {regs}"
+    out = N._mix_bg_narration(str(v1), str(mp3), 4.0, tmp_path)
+    assert out != str(mp3) and Path(out).exists() and Path(out).stat().st_size > 2000
+
+
 def test_clean_watermark_graceful(tmp_path):
     """로고 없는 영상 → 검출 박스 없음 → 원본 그대로 반환(정리 생략, 발행 불정지)."""
     vid = tmp_path / "plain.mp4"

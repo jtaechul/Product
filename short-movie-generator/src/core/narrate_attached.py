@@ -377,72 +377,84 @@ def _shadow_text(im, xy, text, font, *, blur: int = 10, grow: int = 3):
     im.paste(lay, (0, 0), lay)
 
 
+_CREAM = (244, 240, 232)     # 코너 브래킷·필 배경(따뜻한 화이트)
+
+
+def _corner_brackets(d, w: int, h: int, color, alpha: int = 235):
+    """네 모서리에 얇은 L자 코너 브래킷(레퍼런스 썸네일 양식). 정제된 프레임 악센트."""
+    m = int(min(w, h) * 0.045)
+    arm = int(min(w, h) * 0.075)
+    t = max(3, int(min(w, h) * 0.006))
+    col = color + (alpha,) if len(color) == 3 else color
+    for cx, cy, sx, sy in [(m, m, 1, 1), (w - m, m, -1, 1), (m, h - m, 1, -1), (w - m, h - m, -1, -1)]:
+        d.line([(cx, cy), (cx + sx * arm, cy)], fill=col, width=t)
+        d.line([(cx, cy), (cx, cy + sy * arm)], fill=col, width=t)
+
+
+def _pill(im, x: int, y: int, text: str, fontsize: int) -> int:
+    """화이트 라운드 '필' 태그(레퍼런스의 「実在します」 칩). 반환: 필 높이."""
+    from PIL import ImageDraw, ImageFont
+    from src.core import hook_intro as hi
+    d = ImageDraw.Draw(im)
+    f = ImageFont.truetype(hi.FONT_SANS_B, fontsize, index=0)
+    tw = d.textlength(text, font=f)
+    asc = f.getbbox("あ")[3]
+    padx, pady = int(fontsize * 0.6), int(fontsize * 0.42)
+    rw, rh = int(tw + 2 * padx), int(asc + 2 * pady)
+    d.rounded_rectangle([x, y, x + rw, y + rh], radius=int(rh * 0.26), fill=_CREAM)
+    d.text((x + padx, y + pady - int(fontsize * 0.06)), text, font=f, fill=(22, 28, 36))
+    return rh
+
+
 def _render_hook_and_thumb(bg_path: str, hook: str, title: str, w: int, h: int,
                            card_png: str, thumb_png: str) -> bool:
-    """훅 문구를 배경(피사체 프레임) 위에 얹어 ① 오프닝 카드(card_png) ② 유튜브 썸네일(thumb_png)을 만든다.
-    ★리뉴얼: 라디얼 비네트 + 하단 그라디언트 패널 + 골드 킥커/언더라인 + 소프트 드롭섀도로 고퀄 썸네일.
+    """훅 문구를 배경(피사체 프레임) 위에 얹어 ① 오프닝 카드 ② 유튜브 썸네일을 만든다.
+    ★레퍼런스 양식(운영자 확정 · IMG_3526): 네 모서리 코너 브래킷 + 좌측 세로 어둠(피사체는 우측 노출) +
+    좌측 정렬 대형 화이트 볼드 타이틀 + 골드 언더라인 + 화이트 라운드 필 킥커. 소프트 글로우·드롭섀도.
     ★이모지·시스템 아이콘 금지(하드룰) — 텍스트+벡터 도형만. 실패 시 False(훅 생략)."""
     try:
         from PIL import Image, ImageDraw, ImageEnhance
         base = Image.open(bg_path).convert("RGB")
         bg = _cover_crop(base, w, h)
-        # 배경 톤: 대비·채도 살짝 부스트 → 심해감·펀치
-        bg = ImageEnhance.Contrast(bg).enhance(1.14)
-        bg = ImageEnhance.Color(bg).enhance(1.10)
-        bg = _vignette(bg, 0.60)
-        # 하단 그라디언트 패널(텍스트 가독) + 아주 옅은 전체 딤
-        bg = Image.blend(bg, Image.new("RGB", (w, h), _INK), 0.16)
-        grad = Image.new("L", (1, h), 0)
+        bg = ImageEnhance.Contrast(bg).enhance(1.10)
+        bg = ImageEnhance.Color(bg).enhance(1.08)
+        # 좌측 세로 어둠(텍스트 가독) — 왼쪽 짙게 → 오른쪽(피사체)로 투명해지는 수평 그라디언트
+        grad = Image.new("L", (w, 1), 0)
         gp = grad.load()
-        for yy in range(h):
-            f = 0.0
-            if yy < h * 0.16:
-                f = (1 - yy / (h * 0.16)) * 0.45
-            elif yy > h * 0.55:
-                f = ((yy - h * 0.55) / (h * 0.45)) * 0.80
-            gp[0, yy] = int(255 * min(1.0, f))
-        dark = Image.composite(Image.new("RGB", (w, h), (2, 6, 12)), bg, grad.resize((w, h)))
+        for xx in range(w):
+            f = (1 - xx / (w * 0.62)) * 0.86 if xx < w * 0.62 else 0.0
+            gp[xx, 0] = int(255 * max(0.0, f))
+        dark = Image.composite(Image.new("RGB", (w, h), (3, 8, 15)), bg, grad.resize((w, h)))
+        dark = Image.blend(dark, Image.new("RGB", (w, h), (2, 6, 12)), 0.10)   # 아주 옅은 전체 딤
 
-        def _compose(hook_max_lines: int, with_title: bool):
+        x0 = int(w * 0.058)                       # 좌측 텍스트 컬럼 시작
+        col_w = int(w * 0.50)                     # 컬럼 폭(우측 피사체 침범 방지)
+
+        def _compose(with_pill: bool):
             im = dark.copy()
-            d = ImageDraw.Draw(im)
-            safe = int(w * 0.84)
-            font, lines = _fit_block(d, hook, safe, hook_max_lines, int(h * 0.135), int(h * 0.058))
+            d = ImageDraw.Draw(im, "RGBA")
+            _corner_brackets(d, w, h, _CREAM, 230)
+            font, lines = _fit_block(d, hook, col_w, 3, int(h * 0.140), int(h * 0.062))
             asc = font.getbbox("あ")[3]
-            line_h = int(asc * 1.32)
-            total = line_h * len(lines)
-            base_y = 0.60 if with_title else 0.56
-            y0 = int(h * base_y - total / 2)
-            # 골드 킥커 바(훅 블록 왼쪽 위) + 훅 위 짧은 강조선
-            kx = (w - safe) // 2
-            d.rectangle([kx, y0 - int(h * 0.052), kx + int(w * 0.13), y0 - int(h * 0.034)], fill=_ACCENT)
-            y = y0
+            line_h = int(asc * 1.30)
+            y = int(h * 0.135)
             for ln in lines:
-                tw = d.textlength(ln, font=font)
-                x = (w - tw) / 2
-                _shadow_text(im, (x, y), ln, font, blur=max(6, int(h * 0.010)), grow=max(3, int(h * 0.004)))
-                d = ImageDraw.Draw(im)
-                d.text((x, y), ln, font=font, fill=(255, 255, 255),
-                       stroke_width=max(4, int(h * 0.006)), stroke_fill=_INK)
+                _shadow_text(im, (x0, y), ln, font, blur=max(7, int(h * 0.012)), grow=max(3, int(h * 0.004)))
+                dd = ImageDraw.Draw(im, "RGBA")
+                dd.text((x0, y), ln, font=font, fill=(255, 255, 255),
+                        stroke_width=max(4, int(h * 0.006)), stroke_fill=_INK)
                 y += line_h
-            # 훅 아래 골드 언더라인
-            uw = int(w * 0.22)
-            d.rectangle([(w - uw) // 2, y + int(h * 0.006), (w + uw) // 2, y + int(h * 0.006) + max(4, int(h * 0.007))],
-                        fill=_ACCENT)
-            if with_title and title:
-                tf, tl = _fit_block(d, title, int(w * 0.90), 2, int(h * 0.050), int(h * 0.030))
-                tasc = tf.getbbox("あ")[3]
-                tlh = int(tasc * 1.34)
-                ty = int(h * 0.855) - (tlh * (len(tl) - 1)) // 2
-                for ln in tl:
-                    tw = d.textlength(ln, font=tf)
-                    d.text(((w - tw) / 2, ty), ln, font=tf, fill=_ACCENT,
-                           stroke_width=max(3, int(h * 0.004)), stroke_fill=_INK)
-                    ty += tlh
+            d = ImageDraw.Draw(im, "RGBA")
+            d.rectangle([x0, y + int(h * 0.012), x0 + int(w * 0.15), y + int(h * 0.012) + max(4, int(h * 0.008))],
+                        fill=_ACCENT)                        # 골드 언더라인
+            if with_pill and title:
+                kick = re.split(r"[、。，,\n]", title.strip())[0][:14] or title.strip()[:14]
+                if kick:
+                    _pill(im, x0, y + int(h * 0.045), kick, int(h * 0.046))
             return im
 
-        _compose(3, False).convert("RGB").save(card_png, quality=93)   # 오프닝 카드(영상): 훅만
-        _compose(2, True).convert("RGB").save(thumb_png, quality=92)    # 썸네일: 훅 + 제목
+        _compose(False).convert("RGB").save(card_png, quality=93)      # 오프닝 카드(영상): 훅만
+        _compose(True).convert("RGB").save(thumb_png, quality=92)      # 썸네일: 훅 + 필 킥커
         return Path(card_png).exists() and Path(thumb_png).exists()
     except Exception as e:  # noqa: BLE001
         log.info("[narrate] 훅/썸네일 렌더 실패(생략): %s", e)
@@ -556,6 +568,73 @@ def _mix_delayed(parts: list[tuple], total: float, work: Path) -> str:
     return out
 
 
+def _has_audio(video: str) -> bool:
+    try:
+        out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries",
+                              "stream=codec_type", "-of", "csv=p=0", video],
+                             capture_output=True, text=True, timeout=30).stdout
+        return "audio" in out
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _audio_active_regions(video: str, dur: float) -> list[tuple]:
+    """원본에서 소리가 나는(대개 목소리·행동) 구간 [(start,end)] — silencedetect의 반대.
+    ★#2: 나레이션·자막을 '원본이 말하는(소리 나는) 부분'에 맞춰 배치하려는 용도."""
+    if not _has_audio(video):
+        return []
+    try:
+        r = subprocess.run(["ffmpeg", "-i", video, "-af", "silencedetect=noise=-30dB:d=0.5",
+                            "-f", "null", "-"], capture_output=True, text=True, timeout=240)
+    except Exception:  # noqa: BLE001
+        return []
+    txt = r.stderr or ""
+    sil: list[tuple] = []
+    cur = None
+    for ln in txt.splitlines():
+        ms = re.search(r"silence_start:\s*([0-9.]+)", ln)
+        me = re.search(r"silence_end:\s*([0-9.]+)", ln)
+        if ms:
+            cur = float(ms.group(1))
+        elif me and cur is not None:
+            sil.append((cur, float(me.group(1)))); cur = None
+    if cur is not None:
+        sil.append((cur, dur))
+    active: list[tuple] = []
+    t = 0.0
+    for s, e in sil:
+        if s > t:
+            active.append((t, min(s, dur)))
+        t = max(t, e)
+    if t < dur:
+        active.append((t, dur))
+    return [(a, b) for a, b in active if b - a >= 0.6]
+
+
+def _mix_bg_narration(video: str, narration_mp3: str, dur: float, work: Path) -> str:
+    """★#1: 원본 오디오(효과음·배경 보존)를 나레이션 밑으로 '덕킹'하고 나레이션을 더 크게 얹은 최종 오디오.
+    - 원본이 무음이면 나레이션만 그대로 반환(현행).
+    - 원본 목소리는 배경으로 낮추고(volume 0.8), 나레이션은 키운다(volume 1.8).
+    - 나레이션이 울리는 구간엔 사이드체인으로 원본을 더 눌러 나레이션이 확실히 크게 들리게 한다
+      (그 사이엔 원본 효과음·배경음이 살아난다)."""
+    if not _has_audio(video):
+        return narration_mp3
+    out = str(work / "mixed.m4a")
+    fc = ("[0:a]aformat=sample_fmts=fltp:channel_layouts=stereo:sample_rates=44100,volume=0.8[bg];"
+          "[1:a]aformat=sample_fmts=fltp:channel_layouts=stereo:sample_rates=44100,volume=1.8,"
+          "asplit=2[vo][vok];"
+          "[bg][vok]sidechaincompress=threshold=0.02:ratio=14:attack=15:release=350[bgd];"
+          "[bgd][vo]amix=inputs=2:normalize=0:duration=longest,alimiter=limit=0.97[a]")
+    try:
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", video, "-i", narration_mp3,
+                        "-filter_complex", fc, "-map", "[a]", "-t", f"{dur:.2f}",
+                        "-c:a", "aac", "-b:a", "192k", out], check=True, timeout=600)
+        return out if Path(out).exists() and Path(out).stat().st_size > 2000 else narration_mp3
+    except Exception as e:  # noqa: BLE001
+        log.info("[narrate] 원본+나레이션 믹스 실패 → 나레이션만: %s", e)
+        return narration_mp3
+
+
 def _build_long_narration(video: str, orig_dur: float, seen_global: str, source_topic: str,
                           work: Path) -> dict:
     """★롱폼: 원본 전체 길이(orig_dur)를 유지하며 나레이션을 타임라인 전체에 분산 배치한다.
@@ -584,10 +663,14 @@ def _build_long_narration(video: str, orig_dur: float, seen_global: str, source_
             grp = glob[i * per:(i + 1) * per]
             paras.append((grp, (grp[0] if grp else "")))
 
+    # ★#2: 원본이 '말하는(소리 나는)' 구간을 찾아, 각 나레이션을 그 구간 시작에 맞춰 배치한다
+    #   (원본 목소리 구간에 일본어 나레이션·자막이 겹쳐 나오게). 없으면 균등 분할 시각 사용.
+    regions = _audio_active_regions(video, orig_dur)
     all_disp: list[tuple] = []
     audio_parts: list[tuple] = []
     chapters: list[tuple] = []
     all_chunks: list[str] = []
+    prev_end = 0.0
     for i, (chunks, basis) in enumerate(paras):
         chunks = [c for c in (chunks or []) if c and c.strip()]
         if not chunks:
@@ -601,13 +684,17 @@ def _build_long_narration(video: str, orig_dur: float, seen_global: str, source_
             continue
         if not nar.get("mp3") or not nar.get("disp"):
             continue
-        anchor = min(i * seg_len, max(0.0, orig_dur - 1.0))
-        if i == 0:
+        t0, t1 = i * seg_len, (i + 1) * seg_len
+        anchor = next((s for s, e in regions if t0 - 0.1 <= s < t1), t0)   # 그 구간의 원본 발화 시작
+        if i == 0 and anchor < 0.2:
             anchor = 0.2
+        anchor = max(anchor, prev_end + 0.25)                             # 순서·비겹침
+        anchor = min(anchor, max(0.0, orig_dur - 0.5))                    # 끝 넘침 방지
         for (txt, s, e) in nar["disp"]:
             all_disp.append((txt, s + anchor, e + anchor))
         audio_parts.append((nar["mp3"], anchor))
         chapters.append((anchor, _chapter_title(basis, chunks)))
+        prev_end = anchor + float(nar.get("duration") or 0)
     if not audio_parts:
         raise ValueError("나레이션을 만들 수 없습니다(구간 대본 없음).")
     mp3 = _mix_delayed(audio_parts, orig_dur, work)
@@ -668,8 +755,9 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     work.mkdir(parents=True, exist_ok=True); out_dir.mkdir(parents=True, exist_ok=True)
     w, h = (SHORTS_W, SHORTS_H) if mode == "shorts" else (LONG_W, LONG_H)
 
-    # 0) 번인 로고 제거(NOAA 등 지속 로고 delogo) — 이후 모든 단계가 깨끗한 소스를 쓰게 한다.
-    src = _clean_watermark(str(vp), work / "wm")
+    # 0) 번인 로고 제거(NOAA 등 지속 로고 delogo) — ★롱폼은 안 함(운영자 확정: 쓸데없는 부분을 자꾸
+    #    가려 거슬림). 쇼츠만 delogo(짧은 영상은 로고 노출이 더 거슬림). 롱폼은 운영자가 소스를 고르므로 원본 그대로.
+    src = _clean_watermark(str(vp), work / "wm") if mode == "shorts" else str(vp)
 
     # 0ب) 영상 내용 파악(비전) — 소싱 출처 설명이 있으면 근거로 합침.
     #   ★비용절감(운영자 확정): 쇼츠만 전체 영상을 1회 서술한다. 롱폼은 구간별로 각자 서술하므로
@@ -726,11 +814,13 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
                     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", "-an", subbed],
                    check=True, timeout=1800)
 
-    # 5) 나레이션 오디오 mux → 본문 완성본(훅 앞에 붙이기 전 단계)
+    # 5) 오디오 = 원본(효과음·배경 보존) 덕킹 + 나레이션(더 크게) 믹스 → 본문 완성본
+    #    ★#1: 원본 배경/효과음을 살리고, 나레이션이 원본 목소리보다 크게 들리도록 사이드체인 덕킹.
     name = out_name or f"narrated_{mode}"
     final = str(out_dir / f"{name}.mp4")
     body_final = str(work / "body_final.mp4")
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", subbed, "-i", nar["mp3"],
+    mixed_audio = _mix_bg_narration(src, nar["mp3"], dur, work)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", subbed, "-i", mixed_audio,
                     "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", body_final],
                    check=True, timeout=600)
 
