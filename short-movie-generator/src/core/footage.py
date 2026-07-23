@@ -811,6 +811,10 @@ def _commons_photos(query: str, n: int, min_w: int = 1200, min_h: int = 800,
             if _NONSUBJECT_CAT_RE.search(cats) or _NONSUBJECT_CAT_RE.search(title):
                 log.info("[footage] 비생물 피사체 배제: %s", title)
                 continue
+            # ★비생물 '상태'(식품·건어물·표본·시장 등) 배제 — 살아있는 개체 다큐에 부적합(실사고 #046).
+            if _NONLIVING_RE.search(f"{title} {cats}"):
+                log.info("[footage] 비생물 상태(식품·표본) 배제: %s", title)
+                continue
             # ★학명 양성검증(동음이의어 배제): 학명 토큰이 파일명·카테고리 어디에도 없으면 그 종이 아님.
             if sci_tokens and not _token_hit(sci_tokens, title + " " + cats):
                 log.info("[footage] 학명 불일치(동음이의 의심) 배제: %s (학명 %s)", title, sci_name)
@@ -841,6 +845,32 @@ _NONSUBJECT_CAT_RE = re.compile(
     r"grenadier guard|royal guard|guardsm|carabinier|gendarmer|\bpolice\b|\bparade\b|"
     r"ceremonial|\buniforms?\b|marching|\bband\b|bearskin|\bhelmets?\b|"
     r"portraits?|\bpeople\b|\bmen\b|\bwomen\b|human", re.I)
+
+
+# ★비(非)생물 '상태' 배제(살아있는 개체 다큐에 부적합 · 실사고 #046 민태과: 흰 종이 위 '건어물(식품)'
+#   사진이 컷어웨이로 삽입됨). 식품·조리·건어물·시장·표본·박제·해부·사체·냉동 등 단서가 파일명/카테고리/
+#   크레딧에 있으면 그 사진을 쓰지 않는다(살아있는 심해어가 아니라 식품·표본이므로).
+_NONLIVING_RE = re.compile(
+    r"dried|salted|smoked|cooked|grilled|fried|roast|boiled|canned|"
+    r"\bfood\b|\bdish(?:es)?\b|cuisine|cooking|recipe|\bmeal\b|seafood|sashimi|sushi|fillet|"
+    r"fish\s*market|fishmonger|fishery\s*product|for\s*sale|bycatch|"
+    r"\bdead\b|carcass|carcase|deceased|"
+    r"specimen|preserved|formalin|museum|taxiderm|\bmounted\b|"
+    r"dissect|dissection|skeleton|otolith|frozen|"
+    r"干物|乾物|食用|料理|水産物|鮮魚|市場|標本|博物館|剥製|解剖|冷凍|塩漬", re.I)
+
+
+def _cutaway_image_ok(path: str, credit: str = "", source: str = "") -> bool:
+    """컷어웨이 사진이 '살아있는 개체(수중/자연)'로 보이는지 최소 검증(실사고 #046 재발방지).
+    ① 식품·건어물·표본·시장 등 비생물 상태 단서(credit/source)면 배제.
+    ② 밝은 종이·스튜디오·접시 배경(도판·식품·표본 촬영은 흰 배경 55%↑)이면 배제(`_looks_photographic`).
+    검사 오류 시 True(막지 않음 — 발행 차단 아님)."""
+    if _NONLIVING_RE.search(f"{credit} {source}"):
+        return False
+    try:
+        return _looks_photographic(path)
+    except Exception:  # noqa: BLE001
+        return True
 
 
 def _inaturalist_photos(scientific_name: str, n: int = 8) -> list[dict]:
@@ -906,6 +936,14 @@ def fetch_cutaway_photos(scientific_name: str, common_name_en: str, dest_dir: st
         iext = next((e for e in _IMAGE_EXT if g["url"].lower().endswith(e)), ".jpg")
         p = dest / f"cutaway_{slug}_{i}{iext}"
         if not (p.exists() and p.stat().st_size > 50_000) and not _download(g["url"], p):
+            continue
+        # ★#046 재발방지: 식품·건어물·표본·흰 종이/스튜디오 배경 사진을 컷어웨이로 쓰지 않는다(살아있는 개체만).
+        if not _cutaway_image_ok(str(p), g.get("credit", ""), g.get("source", "")):
+            log.info("[footage] 컷어웨이 부적합(식품/표본/종이배경) 배제: %s", g.get("source", ""))
+            try:
+                p.unlink()
+            except Exception:  # noqa: BLE001
+                pass
             continue
         out.append({"path": str(p), "credit": g["credit"], "license": g["license"],
                     "source": g.get("source", "")})

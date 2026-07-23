@@ -450,6 +450,14 @@
       검증** — 파일명/카테고리에 학명 토큰이 있어야 채택(동음이의어는 학명이 없어 배제). 공통명 검색
       (`fetch_cutaway_photos`·`species_photo_doc` 폴백)에 항상 sci_name을 넘긴다. 회귀:
       `test_nonsubject_filter_blocks_military_homonym`·`test_commons_photos_positive_sciname_filter`.
+    - **★비생물 '상태'(식품·건어물·표본) 배제(운영자 확정 · 실사고 #046 민태과: 30초 지점에 흰 종이 위
+      '건어물(식품)' 사진이 컷어웨이로 삽입)**: 공통명·과(family) 검색이 **식품·표본** 사진을 물어왔고(진짜
+      Macrouridae라 학명·카테고리 양성검증도 통과), 컷어웨이 경로엔 **시각 필터가 아예 없었다**. 두 겹으로 막는다.
+      ① **메타데이터**(`_NONLIVING_RE`): 파일명/카테고리/크레딧에 dried·salted·cooked·food·market·specimen·
+      museum·frozen·干物·標本·市場 등 식품·사체·표본 단서가 있으면 배제(`_commons_photos` + 컷어웨이).
+      ② **시각**(`_cutaway_image_ok`→`_looks_photographic`): 흰 종이·스튜디오·접시 배경(밝은 배경 55%↑)이면
+      배제(다운로드 후 검사, 부적합이면 파일 삭제). 살아있는 수중 개체(어두운 배경)는 통과. 회귀:
+      `test_nonliving_food_photo_rejected` + 실이미지(종이 위 건어물 vs 수중 개체) 검증.
     - **★오프닝/엔드카드 빈-프레임 방지(운영자 확정 · 실사고 macrouridae: 회색 소코다라 오프닝에 빈 물)**:
       `_best_subject_frame`가 예전엔 **적색 피사체 점수만** 써서 회색 생물(적색 0)은 전 프레임 0 → 빈 물이
       박혔다. → **색 무관 구조점수(`_frame_macro_std`)** 를 주로, 적색은 보너스로. 최고점 구조가
