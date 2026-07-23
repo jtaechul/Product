@@ -37,6 +37,10 @@ def main() -> int:
     ap.add_argument("--source-topic", default="", help="소싱 출처(커먼스/아카이브)의 설명 · 근거용(운영자 입력 아님)")
     ap.add_argument("--out-name", default="", help="출력 파일명(확장자 제외)")
     ap.add_argument("--base-dir", default=".")
+    ap.add_argument("--phase", default="render", choices=["render", "transcribe"],
+                    help="transcribe=전사 대본만 생성(검수용) · render=최종 제작(기본)")
+    ap.add_argument("--transcript", default="",
+                    help="검수 편집본 JSON 파일 경로(더빙 렌더 입력). 있으면 전사·번역을 건너뛰고 그대로 사용")
     a = ap.parse_args()
 
     base = Path(a.base_dir)
@@ -52,13 +56,36 @@ def main() -> int:
         print("ERROR: --url 또는 --path 필요", file=sys.stderr)
         return 2
 
+    import json
+    transcript = None
+    if a.transcript:
+        try:
+            transcript = json.loads(Path(a.transcript).read_text(encoding="utf-8"))
+        except Exception as e:  # noqa: BLE001
+            print(f"ERROR: transcript 로드 실패: {e}", file=sys.stderr)
+            return 2
+
     from src.core.narrate_attached import narrate_video
     try:
         res = narrate_video(video, mode=a.mode, source_topic=a.source_topic,
-                            base_dir=a.base_dir, out_name=(a.out_name or None))
+                            base_dir=a.base_dir, out_name=(a.out_name or None),
+                            phase=a.phase, transcript=transcript)
     except Exception as e:  # noqa: BLE001
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
+
+    name = a.out_name or "narrate"
+    tpath = base / "output" / f"{name}.transcript.json"
+    tpath.parent.mkdir(parents=True, exist_ok=True)
+    # 전사 단계: 대본만 파일로 저장하고 그 경로를 출력(워크플로가 검수 레코드로 기록)
+    if a.phase == "transcribe":
+        tpath.write_text(json.dumps(res.get("transcript") or [], ensure_ascii=False, indent=2),
+                         encoding="utf-8")
+        print(str(tpath))
+        return 0
+    # 렌더 단계: 더빙 대본(있으면)도 함께 저장 → 레코드에 담아 대시보드 검수/재제작에 사용
+    if res.get("transcript"):
+        tpath.write_text(json.dumps(res["transcript"], ensure_ascii=False, indent=2), encoding="utf-8")
     # 표준출력 = 완성본 경로(워크플로가 파싱). 메타(JSON)는 output/<name>.meta.json에 별도 기록됨.
     print(res["path"])
     return 0

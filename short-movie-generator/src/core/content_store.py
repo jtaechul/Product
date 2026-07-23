@@ -228,11 +228,14 @@ def write_longform_record(base_dir: str, content_id: str, meta: dict, *,
 
 def write_narrate_record(base_dir: str, content_id: str, meta: dict, *,
                          mode: str = "shorts", video_url: str = "",
-                         thumb_url: str = "", source_url: str = "") -> str:
+                         thumb_url: str = "", source_url: str = "",
+                         transcript: list | None = None) -> str:
     """첨부 영상 나레이션 결과 레코드 content/<id>.json (kind="narrate").
 
     대본에서 자동 생성한 훅·제목·설명·해시태그를 일본어/한국어 2단으로 보관 + 유튜브
-    커스텀 썸네일 URL. 대시보드가 /nv/<id> 상세에서 영상·썸네일 미리보기와 함께 보여준다."""
+    커스텀 썸네일 URL. 대시보드가 /nv/<id> 상세에서 영상·썸네일 미리보기와 함께 보여준다.
+    ★transcript(더빙형 롱폼): 원문·일본어 대본([{start,end,orig,jp}]) — 대시보드에서 표로 보여주고
+    운영자가 어색한 줄을 고쳐 '수정 대본으로 재제작'할 수 있게 보관한다."""
     p = record_path(base_dir, content_id)
     rec = {
         "id": str(content_id), "kind": "narrate", "created_at": _now_iso(),
@@ -243,6 +246,8 @@ def write_narrate_record(base_dir: str, content_id: str, meta: dict, *,
         "hashtags": meta.get("tags_jp", []), "hashtags_ko": meta.get("tags_ko", []),
         "media": {"video_url": video_url, "thumb_url": thumb_url},
     }
+    if transcript:
+        rec["transcript"] = transcript
     p.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
     upsert_manifest(base_dir, {
         "id": str(content_id), "kind": "narrate",

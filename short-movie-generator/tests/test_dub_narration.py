@@ -83,3 +83,15 @@ def test_transcribe_none_without_audio(tmp_path):
     """오디오 스트림이 없으면(또는 파일 부재) 전사는 None → 호출부는 비전 폴백."""
     fake = tmp_path / "noaudio.txt"; fake.write_text("not a video")
     assert tr.transcribe(str(fake), str(tmp_path / "asr")) is None
+
+
+def test_narrate_video_transcribe_phase_returns_draft(tmp_path, monkeypatch):
+    """phase='transcribe'면 렌더 없이 검수용 대본만 반환해야 한다(2단계 검수의 1단계)."""
+    vid = tmp_path / "in.mp4"; vid.write_bytes(b"x" * 20000)
+    fake_tr = [{"start": 0.0, "end": 2.0, "orig": "hello", "jp": "こんにちは。"}]
+    monkeypatch.setattr(na, "_dub_transcript", lambda video, work: fake_tr)
+    monkeypatch.setattr(na, "_probe_dur", lambda v: 42.0)
+    res = na.narrate_video(str(vid), mode="longform", base_dir=str(tmp_path), phase="transcribe")
+    assert res["phase"] == "transcribe"
+    assert res["transcript"] == fake_tr
+    assert "path" not in res      # 렌더 안 함(영상 없음)

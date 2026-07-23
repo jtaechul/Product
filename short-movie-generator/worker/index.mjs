@@ -484,6 +484,20 @@ async function renderNarrateDetail(id){
       '<div><span class="lbl">해시태그 · 한국어(참고)</span><textarea id="nvhk" readonly rows="3">'+esc(tagsKo)+'</textarea>'+
         '<button class="btn" id="nvcphk" style="margin-top:6px">한국어 해시태그 복사</button></div>'+
     '</div>'+
+    // ★더빙 대본 검수(운영자 확정): 원본 화자 발화를 전사→일본어 번역한 대본을 표로 보여주고,
+    //   어색한 '일본어' 줄을 고쳐 '수정 대본으로 재제작'하면 그 대본으로 발화 시각에 맞춰 다시 더빙한다.
+    ((Array.isArray(rec.transcript)&&rec.transcript.length)?(
+      '<div class="card" style="margin-top:12px">'+
+        '<span class="lbl">더빙 대본 검수 (원문 → 일본어)</span>'+
+        '<div class="hint" style="margin:4px 0 8px">원본 화자의 말을 <b>그 시각에 맞춰</b> 일본어로 더빙합니다. <b>일본어 칸만</b> 고치세요(시간·정렬은 자동). 다 고쳤으면 아래 <b>수정 대본으로 재제작</b>.</div>'+
+        '<div id="trlist">'+ rec.transcript.map((s,i)=>(
+          '<div class="trrow" style="display:grid;grid-template-columns:52px 1fr 1fr;gap:6px;margin-bottom:6px;align-items:start">'+
+            '<span class="mono" style="font-size:11px;color:#89a;padding-top:6px">'+esc(vsDur(s.start||0))+'</span>'+
+            '<textarea class="tro" readonly rows="2" style="font-size:12px;opacity:.75">'+esc(s.orig||"")+'</textarea>'+
+            '<textarea class="trj" rows="2" data-start="'+(Number(s.start)||0)+'" data-end="'+(Number(s.end)||0)+'" style="font-size:12px">'+esc(s.jp||"")+'</textarea>'+
+          '</div>')).join('')+'</div>'+
+        (rec.source_url?'<button class="btn save" id="nvdub" style="margin-top:8px">수정 대본으로 재제작</button>':'<div class="hint">원본 URL이 없어 재제작 불가</div>')+
+      '</div>'):'')+
     // ★관리(운영자 확정): 이 나레이션 영상을 원본 그대로 다시 제작(재생성)하거나 영구 삭제.
     '<div class="card" style="margin-top:12px">'+
       '<span class="lbl">이 나레이션 영상 관리</span>'+
@@ -503,7 +517,32 @@ async function renderNarrateDetail(id){
   if(md.thumb_url){const th=document.getElementById("thdl");if(th)th.onclick=()=>saveVideo(prox(md.thumb_url),id+"_thumb.jpg",{btn:"#thdl",hint:"#thhint",mime:"image/jpeg",kind:"이미지"});}
   const rgn=document.getElementById("nvregen");
   if(rgn&&rec.source_url)rgn.onclick=()=>regenNarrate(id,rec.source_url,rec.mode||"shorts");
+  const dub=document.getElementById("nvdub");
+  if(dub&&rec.source_url)dub.onclick=()=>regenNarrateDub(id,rec.source_url,rec.mode||"longform");
   const nvd=document.getElementById("nvdel");if(nvd)nvd.onclick=()=>deleteContent(id,"narrate");
+}
+
+// 더빙 대본 재제작: 화면의 수정된 일본어 대본(원문·시각 유지)을 모아 narrate-video.yml에 transcript로
+// 넘겨, 전사·번역을 건너뛰고 그 대본으로 원본 발화 시각에 맞춰 다시 더빙한다(같은 /nv/<id> 갱신).
+async function regenNarrateDub(id,sourceUrl,mode){
+  if(!authReady()){banner("재제작에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
+  if(!sourceUrl){banner("원본 URL 정보가 없어 재제작할 수 없습니다.","err");return;}
+  const rows=[...document.querySelectorAll('#trlist .trrow')];
+  const tr=rows.map(row=>{
+    const j=row.querySelector('.trj'),o=row.querySelector('.tro');
+    return {start:parseFloat(j&&j.dataset.start)||0,end:parseFloat(j&&j.dataset.end)||0,
+            orig:(o?o.value:""),jp:((j?j.value:"")||"").trim()};
+  }).filter(x=>x.jp);
+  if(!tr.length){banner("일본어 대본이 비어 있습니다.","err");return;}
+  if(!confirm("수정한 더빙 대본으로 이 영상을 다시 제작합니다.\\n\\n원본 발화 시각에 맞춰 다시 더빙하고 같은 화면(주소)이 갱신됩니다(5~15분).\\n계속할까요?"))return;
+  banner("수정 대본으로 재제작 요청 중… (5~15분)");
+  try{
+    const r=await fetch(API+"/actions/workflows/"+NV_WF+"/dispatches",{method:"POST",headers:headers(true),
+      body:JSON.stringify({ref:BRANCH,inputs:{video_url:sourceUrl,mode:(mode||"longform"),
+        content_id:String(id),transcript:JSON.stringify(tr)}})});
+    if(r.status===204)banner("재제작 시작! 5~15분 뒤 이 화면을 새로고침하면 수정 대본이 반영됩니다.","ok");
+    else{const t=await r.text();banner("재제작 시작 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
+  }catch(e){banner("재제작 오류: "+e,"err");}
 }
 
 // 나레이션 영상 재생성: 같은 원본 URL·형태로 narrate-video.yml을 디스패치하되 content_id를 넘겨

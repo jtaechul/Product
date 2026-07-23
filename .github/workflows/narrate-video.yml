@@ -25,6 +25,10 @@ on:
         description: "재생성 시 기존 콘텐츠 id(예: nv-123). 비우면 새 nv-<run_id> 생성."
         required: false
         default: ""
+      transcript:
+        description: "더빙형 검수 편집본 대본(JSON). 대시보드에서 수정 후 '재제작' 시 전달 — 있으면 전사·번역을 건너뛰고 이 대본으로 정렬 제작."
+        required: false
+        default: ""
 
 concurrency:
   group: narrate-video
@@ -70,11 +74,22 @@ jobs:
           [ -z "$CID" ] && CID="nv-${{ github.run_id }}"
           echo "cid=$CID" >> "$GITHUB_OUTPUT"
           NAME="narrated_${{ inputs.mode }}_${{ github.run_id }}"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          # ★더빙형 검수(운영자 확정): 대시보드에서 수정한 대본(transcript)이 오면 파일로 저장해
+          #   전사·번역을 건너뛰고 그 대본으로 정렬 제작(원본 발화 시각에 자막·나레이션 맞춤).
+          TRARG=""
+          cat > /tmp/tr_in.json <<'TRJSON'
+          ${{ inputs.transcript }}
+          TRJSON
+          if [ -s /tmp/tr_in.json ] && grep -q '[^[:space:]]' /tmp/tr_in.json; then
+            TRARG="--transcript /tmp/tr_in.json"
+            echo "검수 편집본 대본 사용(더빙 재제작)"
+          fi
           OUT=$(python -m src.narrate_video \
             --url "${{ inputs.video_url }}" \
             --mode "${{ inputs.mode }}" \
             --source-topic "${{ inputs.source_topic }}" \
-            --out-name "$NAME")
+            --out-name "$NAME" $TRARG)
           echo "출력: $OUT"
           echo "out=$OUT" >> "$GITHUB_OUTPUT"
           echo "meta=output/${NAME}.meta.json" >> "$GITHUB_OUTPUT"
@@ -115,16 +130,25 @@ jobs:
         run: |
           CID="${{ steps.run.outputs.cid }}"
           echo "content_id=$CID" >> "$GITHUB_OUTPUT"
-          python - "${{ steps.run.outputs.meta }}" "$CID" <<'PY'
+          TRJ="output/${{ steps.run.outputs.name }}.transcript.json"
+          python - "${{ steps.run.outputs.meta }}" "$CID" "$TRJ" <<'PY'
           import json, os, sys
           from src.core import content_store
           metap, cid = sys.argv[1], sys.argv[2]
+          trj = sys.argv[3] if len(sys.argv) > 3 else ""
           m = json.load(open(metap, encoding="utf-8"))
+          transcript = None
+          try:                                   # 더빙형 검수 대본(있으면) 레코드에 보관 → 대시보드 수정·재제작
+              if trj and os.path.exists(trj):
+                  transcript = json.load(open(trj, encoding="utf-8")) or None
+          except Exception:
+              transcript = None
           content_store.write_narrate_record(
               ".", cid, m, mode=os.environ.get("MODE", "shorts"),
               video_url=os.environ.get("VIDEO_URL", ""),
               thumb_url=os.environ.get("THUMB_URL", ""),
-              source_url=os.environ.get("SRC_URL", ""))
+              source_url=os.environ.get("SRC_URL", ""),
+              transcript=transcript)
           PY
 
       - name: Commit 콘텐츠 레코드 (원격이 앞서가도 재시도)

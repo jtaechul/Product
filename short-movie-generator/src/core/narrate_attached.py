@@ -1018,4 +1018,6 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
              final, mode, dur, len(chunks), len(chapters), hooked, bool(thumb_out), meta.get("title_jp", ""))
     return {"path": final, "duration": dur, "mode": mode, "chunks": chunks,
             "meta": meta, "meta_path": str(meta_path), "description": desc, "chapters": chapters,
-            "hooked": hooked, "thumb": thumb_out, "width": w, "height": h}
+            "hooked": hooked, "thumb": thumb_out, "width": w, "height": h,
+            # ★더빙형 검수용: 원문·일본어 대본(전사 편집본). 대시보드에서 수정 후 재제작에 재사용.
+            "transcript": (nar.get("transcript") if isinstance(nar, dict) else None)}
