@@ -91,6 +91,43 @@ def test_hook_and_thumb_render(tmp_path):
     assert Image.open(str(thumb)).size == (1920, 1080)
 
 
+def test_longform_keeps_full_length_and_chapters(tmp_path, monkeypatch):
+    """★롱폼: 원본을 나레이션 길이로 자르지 않고 전체 길이를 유지하며, 나레이션을 분산 배치하고
+    설명란에 타임스탬프(챕터)를 넣는다."""
+    vid = tmp_path / "src.mp4"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                    "-i", "testsrc=size=1280x720:rate=24:duration=24", "-pix_fmt", "yuv420p", str(vid)], check=True)
+    from src.core import narration_sync, llm
+
+    def fake_tts(chunks, work, **k):
+        Path(work).mkdir(parents=True, exist_ok=True)
+        mp3 = str(Path(work) / "narration.mp3")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi",
+                        "-i", "sine=frequency=280:duration=4", "-q:a", "9", mp3], check=True)
+        disp = [("深海の", 0.2, 2.0), ("記録です。", 2.1, 3.8)]
+        return {"mp3": mp3, "words": [("x", 0.2, 3.7)], "disp": disp, "duration": 3.8}
+
+    monkeypatch.setattr(narration_sync, "synthesize", fake_tts)
+    monkeypatch.setattr(llm, "generate_text", lambda *a, **k: None)      # 결정론 폴백
+    monkeypatch.setattr(N, "_clean_watermark", lambda v, w: v)
+    monkeypatch.setattr(N, "_render_hook_and_thumb", lambda *a, **k: False)   # 훅 생략 → 길이 판정 단순화
+    res = N.narrate_video(str(vid), mode="longform", base_dir=str(tmp_path),
+                          source_topic="潜水艦の残骸を捉えた映像です。水深はおよそ百メートル。周囲は暗く静かです。")
+    out = Path(res["path"])
+
+    def _dur(p):
+        return float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                     "-of", "csv=p=0", str(p)], capture_output=True, text=True).stdout.strip())
+    orig = _dur(vid)
+    got = _dur(out)
+    # ★핵심: 나레이션(짧음)이 아니라 원본 전체 길이(24s)를 유지 — 예전엔 ~4s로 잘렸다
+    assert got >= orig - 1.5, f"output {got:.1f}s must keep full source {orig:.1f}s (not narration length)"
+    # 챕터 + 타임스탬프가 설명란에 삽입되고, 첫 챕터는 00:00
+    assert res["chapters"], "chapters must be generated for longform"
+    assert "チャプター" in res["meta"]["desc_jp"] and "00:00" in res["meta"]["desc_jp"]
+    assert "챕터" in res["meta"]["desc_ko"]
+
+
 def test_clean_watermark_graceful(tmp_path):
     """로고 없는 영상 → 검출 박스 없음 → 원본 그대로 반환(정리 생략, 발행 불정지)."""
     vid = tmp_path / "plain.mp4"

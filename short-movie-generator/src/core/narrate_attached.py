@@ -344,59 +344,105 @@ def _fit_block(draw, text: str, max_w: float, max_lines: int, base: int, minsz: 
     return font, _wrap_cjk(draw, text, font, max_w)
 
 
+_ACCENT = (245, 197, 66)     # 골드 포인트
+_INK = (10, 16, 24)          # 딥 네이비 잉크(패널·그림자)
+
+
+def _vignette(im, strength: float = 0.62):
+    """가장자리를 어둡게(라디얼 비네트) — 시선을 중앙 훅으로 모은다. 순수 PIL(넘파이 불필요)."""
+    from PIL import Image
+    w, h = im.size
+    sw, sh = 96, int(96 * h / w) or 54
+    mask = Image.new("L", (sw, sh), 0)
+    px = mask.load()
+    cx, cy = (sw - 1) / 2, (sh - 1) / 2
+    maxd = (cx ** 2 + cy ** 2) ** 0.5
+    for yy in range(sh):
+        for xx in range(sw):
+            d = ((xx - cx) ** 2 + (yy - cy) ** 2) ** 0.5 / maxd
+            v = max(0.0, (d - 0.45) / 0.55) ** 1.4
+            px[xx, yy] = int(255 * min(1.0, v) * strength)
+    mask = mask.resize((w, h), Image.BILINEAR)
+    return Image.composite(Image.new("RGB", (w, h), (0, 0, 0)), im, mask)
+
+
+def _shadow_text(im, xy, text, font, *, blur: int = 10, grow: int = 3):
+    """부드러운 드롭섀도(블러) 레이어를 얹어 텍스트에 입체감·가독성을 준다."""
+    from PIL import Image, ImageDraw, ImageFilter
+    w, h = im.size
+    lay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    ImageDraw.Draw(lay).text((xy[0], xy[1] + grow), text, font=font, fill=(0, 0, 0, 210),
+                             stroke_width=grow, stroke_fill=(0, 0, 0, 210))
+    lay = lay.filter(ImageFilter.GaussianBlur(blur))
+    im.paste(lay, (0, 0), lay)
+
+
 def _render_hook_and_thumb(bg_path: str, hook: str, title: str, w: int, h: int,
                            card_png: str, thumb_png: str) -> bool:
-    """훅 문구를 배경(피사체 프레임) 위에 크게 얹어 ① 오프닝 카드(card_png) ② 유튜브 썸네일(thumb_png)을 만든다.
+    """훅 문구를 배경(피사체 프레임) 위에 얹어 ① 오프닝 카드(card_png) ② 유튜브 썸네일(thumb_png)을 만든다.
+    ★리뉴얼: 라디얼 비네트 + 하단 그라디언트 패널 + 골드 킥커/언더라인 + 소프트 드롭섀도로 고퀄 썸네일.
     ★이모지·시스템 아이콘 금지(하드룰) — 텍스트+벡터 도형만. 실패 시 False(훅 생략)."""
     try:
-        from PIL import Image, ImageDraw
+        from PIL import Image, ImageDraw, ImageEnhance
         base = Image.open(bg_path).convert("RGB")
         bg = _cover_crop(base, w, h)
-        # 상·하단 어둡게(가독성) + 전체 살짝 딤
-        dimmed = Image.blend(bg, Image.new("RGB", (w, h), (4, 10, 16)), 0.42)
+        # 배경 톤: 대비·채도 살짝 부스트 → 심해감·펀치
+        bg = ImageEnhance.Contrast(bg).enhance(1.14)
+        bg = ImageEnhance.Color(bg).enhance(1.10)
+        bg = _vignette(bg, 0.60)
+        # 하단 그라디언트 패널(텍스트 가독) + 아주 옅은 전체 딤
+        bg = Image.blend(bg, Image.new("RGB", (w, h), _INK), 0.16)
         grad = Image.new("L", (1, h), 0)
+        gp = grad.load()
         for yy in range(h):
             f = 0.0
-            if yy < h * 0.30:
-                f = (1 - yy / (h * 0.30)) * 0.55
-            elif yy > h * 0.68:
-                f = ((yy - h * 0.68) / (h * 0.32)) * 0.70
-            grad.putpixel((0, yy), int(255 * f))
-        grad = grad.resize((w, h))
-        dark = Image.composite(Image.new("RGB", (w, h), (0, 0, 0)), dimmed, grad)
-
-        accent = (242, 193, 78)   # 골드 포인트(팔레트)
+            if yy < h * 0.16:
+                f = (1 - yy / (h * 0.16)) * 0.45
+            elif yy > h * 0.55:
+                f = ((yy - h * 0.55) / (h * 0.45)) * 0.80
+            gp[0, yy] = int(255 * min(1.0, f))
+        dark = Image.composite(Image.new("RGB", (w, h), (2, 6, 12)), bg, grad.resize((w, h)))
 
         def _compose(hook_max_lines: int, with_title: bool):
             im = dark.copy()
             d = ImageDraw.Draw(im)
-            safe = int(w * 0.86)
-            font, lines = _fit_block(d, hook, safe, hook_max_lines, int(h * 0.13), int(h * 0.055))
+            safe = int(w * 0.84)
+            font, lines = _fit_block(d, hook, safe, hook_max_lines, int(h * 0.135), int(h * 0.058))
             asc = font.getbbox("あ")[3]
-            line_h = int(asc * 1.28)
+            line_h = int(asc * 1.32)
             total = line_h * len(lines)
-            y = int(h * 0.5 - total / 2) - (int(h * 0.06) if with_title else 0)
-            # 골드 강조 바(훅 위)
-            d.rectangle([(w - safe) // 2, y - int(h * 0.045), (w - safe) // 2 + int(w * 0.10), y - int(h * 0.028)],
-                        fill=accent)
+            base_y = 0.60 if with_title else 0.56
+            y0 = int(h * base_y - total / 2)
+            # 골드 킥커 바(훅 블록 왼쪽 위) + 훅 위 짧은 강조선
+            kx = (w - safe) // 2
+            d.rectangle([kx, y0 - int(h * 0.052), kx + int(w * 0.13), y0 - int(h * 0.034)], fill=_ACCENT)
+            y = y0
             for ln in lines:
                 tw = d.textlength(ln, font=font)
-                d.text(((w - tw) / 2, y), ln, font=font, fill=(255, 255, 255),
-                       stroke_width=max(4, int(h * 0.006)), stroke_fill=(0, 0, 0))
+                x = (w - tw) / 2
+                _shadow_text(im, (x, y), ln, font, blur=max(6, int(h * 0.010)), grow=max(3, int(h * 0.004)))
+                d = ImageDraw.Draw(im)
+                d.text((x, y), ln, font=font, fill=(255, 255, 255),
+                       stroke_width=max(4, int(h * 0.006)), stroke_fill=_INK)
                 y += line_h
+            # 훅 아래 골드 언더라인
+            uw = int(w * 0.22)
+            d.rectangle([(w - uw) // 2, y + int(h * 0.006), (w + uw) // 2, y + int(h * 0.006) + max(4, int(h * 0.007))],
+                        fill=_ACCENT)
             if with_title and title:
-                tf, tl = _fit_block(d, title, safe, 2, int(h * 0.05), int(h * 0.028))
+                tf, tl = _fit_block(d, title, int(w * 0.90), 2, int(h * 0.050), int(h * 0.030))
                 tasc = tf.getbbox("あ")[3]
-                ty = int(h * 0.80)
+                tlh = int(tasc * 1.34)
+                ty = int(h * 0.855) - (tlh * (len(tl) - 1)) // 2
                 for ln in tl:
                     tw = d.textlength(ln, font=tf)
-                    d.text(((w - tw) / 2, ty), ln, font=tf, fill=accent,
-                           stroke_width=max(3, int(h * 0.004)), stroke_fill=(0, 0, 0))
-                    ty += int(tasc * 1.3)
+                    d.text(((w - tw) / 2, ty), ln, font=tf, fill=_ACCENT,
+                           stroke_width=max(3, int(h * 0.004)), stroke_fill=_INK)
+                    ty += tlh
             return im
 
-        _compose(3, False).save(card_png, quality=92)          # 오프닝 카드(영상): 훅만
-        _compose(2, True).save(thumb_png, quality=90)           # 썸네일: 훅 + 제목
+        _compose(3, False).convert("RGB").save(card_png, quality=93)   # 오프닝 카드(영상): 훅만
+        _compose(2, True).convert("RGB").save(thumb_png, quality=92)    # 썸네일: 훅 + 제목
         return Path(card_png).exists() and Path(thumb_png).exists()
     except Exception as e:  # noqa: BLE001
         log.info("[narrate] 훅/썸네일 렌더 실패(생략): %s", e)
@@ -424,6 +470,182 @@ def _concat_av(a: str, b: str, out: str, w: int, h: int) -> str:
                     "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-pix_fmt", "yuv420p",
                     "-c:a", "aac", "-b:a", "192k", out], check=True, timeout=1200)
     return out
+
+
+# ─────────────────────── 롱폼: 원본 전체 길이 유지 + 나레이션 분산 + 타임스탬프 ───────────────────────
+def _ts_mmss(t: float) -> str:
+    t = max(0, int(round(t)))
+    return f"{t // 60:02d}:{t % 60:02d}"
+
+
+def _sample_range_frames(video: str, work: Path, t0: float, t1: float, n: int = 3) -> list[str]:
+    """구간 [t0,t1)에서 고르게 n장 프레임 추출(비전 분석용). 실패 시 []."""
+    work.mkdir(parents=True, exist_ok=True)
+    span = max(0.2, t1 - t0)
+    out: list[str] = []
+    for i in range(n):
+        t = t0 + span * (i + 0.5) / n
+        fp = work / f"f{i}.jpg"
+        try:
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{t:.2f}", "-i", video,
+                            "-frames:v", "1", "-vf", "scale=512:-1", str(fp)], check=True, timeout=60)
+            if fp.exists() and fp.stat().st_size > 1000:
+                out.append(str(fp))
+        except Exception:  # noqa: BLE001
+            continue
+    return out
+
+
+def _describe_segment(video: str, work: Path, t0: float, t1: float, idx: int) -> str:
+    """구간 [t0,t1)의 프레임을 비전 LLM으로 보고 사실 설명(일본어 1~2문). 키 없으면 ''."""
+    frames = _sample_range_frames(video, work / f"segf{idx}", t0, t1, 3)
+    if not frames:
+        return ""
+    from src.core import llm
+    prompt = ("この複数フレームは1本の動画のある区間から抜いたものです。画面に実際に写るものだけを"
+              "日本語1〜2文で簡潔に述べてください。★推測・創作は禁止(写っていない固有名詞・数値は書かない)。説明文のみ。")
+    return (llm.describe_frames(frames, prompt, max_tokens=200) or "").strip()
+
+
+def _jp_segment_chunks(basis: str, idx: int, n_seg: int) -> list[str]:
+    """구간 설명(basis)으로 그 구간의 짧은 일본어 나레이션(3~5행)을 만든다. LLM 실패 시 결정론 폴백."""
+    from src.core import llm
+    basis = (basis or "").strip()
+    if not basis:
+        return []
+    prompt = (
+        "あなたは自然・海洋ドキュメンタリーの日本語ナレーターです。次の映像区間の事実説明だけを使い、"
+        "落ち着いた敬体(です・ます)で短いナレーションを3〜5行書いてください。事実の創作は禁止——"
+        "説明にない固有名詞・数値・断定は書かないこと。1行に日本語で8〜16文字程度。各行は字幕として画面に出ます。\n"
+        f"【区間{idx + 1}/{n_seg}の映像説明】{basis}\n"
+        "出力は本文のみ。1行1チャンクで、記号や番号は付けないでください。")
+    txt = llm.generate_text(prompt, max_tokens=400)
+    if txt:
+        lines = [re.sub(r"^[\s0-9.\-・*]+", "", ln).strip() for ln in txt.splitlines()]
+        lines = [ln for ln in lines if ln and not ln.startswith("【")]
+        if lines:
+            return lines[:6]
+    return _jp_chunks_from_notes("", basis, 6)
+
+
+def _chapter_title(basis: str, chunks: list[str]) -> str:
+    """구간 챕터 제목(짧게). 설명 첫 문장 또는 첫 청크에서 도출(날조 없음)."""
+    src = (basis or (chunks[0] if chunks else "")).strip()
+    src = re.split(r"[。.\n]", src)[0].strip()
+    src = re.sub(r"[、,]+$", "", src)
+    return (src[:20] + ("…" if len(src) > 20 else "")) if src else "映像"
+
+
+def _mix_delayed(parts: list[tuple], total: float, work: Path) -> str:
+    """여러 나레이션 mp3를 각자의 앵커 시각에 배치(adelay)해 total 길이 오디오로 합성.
+    parts=[(mp3, anchor_s)]. 한 개면 amix 없이 처리. 결과 mp3 경로."""
+    out = str(work / "narration_full.mp3")
+    inputs: list[str] = []
+    fc: list[str] = []
+    for k, (mp3, anchor) in enumerate(parts):
+        inputs += ["-i", mp3]
+        d = max(0, int(anchor * 1000))
+        fc.append(f"[{k}]adelay={d}|{d}[a{k}]")
+    if len(parts) == 1:
+        fc.append(f"[a0]apad,atrim=0:{total:.2f}[a]")
+    else:
+        labels = "".join(f"[a{k}]" for k in range(len(parts)))
+        fc.append(f"{labels}amix=inputs={len(parts)}:normalize=0:dropout_transition=0,apad,atrim=0:{total:.2f}[a]")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *inputs, "-filter_complex", ";".join(fc),
+                    "-map", "[a]", "-c:a", "libmp3lame", "-q:a", "4", out], check=True, timeout=600)
+    return out
+
+
+def _build_long_narration(video: str, orig_dur: float, seen_global: str, source_topic: str,
+                          work: Path) -> dict:
+    """★롱폼: 원본 전체 길이(orig_dur)를 유지하며 나레이션을 타임라인 전체에 분산 배치한다.
+    - 구간(segment)마다 프레임을 비전으로 보고 그 구간의 나레이션을 만든다(있으면 · 구간별 다른 내용).
+    - 비전이 없으면(키 없음) 전역 대본 하나를 구간 수만큼 나눠 분산 배치한다(같은 내용 반복 대신 분할).
+    - 각 나레이션은 자기 구간 시작 시각에 배치 → 영상을 자르지 않고 소리가 전체에 걸쳐 흐른다.
+    반환 {mp3, disp, chunks, chapters:[(t, title)], duration=orig_dur}."""
+    from src.core import narration_sync
+    n_seg = max(3, min(8, round(orig_dur / 40.0)))
+    seg_len = orig_dur / n_seg
+    seg_descs = [_describe_segment(video, work, i * seg_len, (i + 1) * seg_len, i) for i in range(n_seg)]
+    have_vision = sum(1 for d in seg_descs if d) >= max(2, n_seg // 2)
+
+    paras: list[tuple] = []      # (chunks, basis_for_title)
+    if have_vision:
+        for i in range(n_seg):
+            basis = seg_descs[i] or source_topic or seen_global
+            paras.append((_jp_segment_chunks(basis, i, n_seg), seg_descs[i] or basis))
+    else:
+        # 비전 없음 → 전역 대본(진짜 정보만)을 구간 수로 분할해 분산(내용 반복 대신 분할)
+        glob = _jp_script("", (source_topic or seen_global), "longform")
+        if not glob:
+            glob = _jp_chunks_from_notes("", (source_topic or seen_global), 44)
+        per = max(1, -(-len(glob) // n_seg))   # ceil
+        for i in range(n_seg):
+            grp = glob[i * per:(i + 1) * per]
+            paras.append((grp, (grp[0] if grp else "")))
+
+    all_disp: list[tuple] = []
+    audio_parts: list[tuple] = []
+    chapters: list[tuple] = []
+    all_chunks: list[str] = []
+    for i, (chunks, basis) in enumerate(paras):
+        chunks = [c for c in (chunks or []) if c and c.strip()]
+        if not chunks:
+            continue
+        all_chunks.extend(chunks)
+        segw = work / f"tts{i}"
+        try:
+            nar = narration_sync.synthesize(chunks, str(segw))
+        except Exception as e:  # noqa: BLE001
+            log.info("[narrate] 구간%d 나레이션 합성 실패(건너뜀): %s", i, e)
+            continue
+        if not nar.get("mp3") or not nar.get("disp"):
+            continue
+        anchor = min(i * seg_len, max(0.0, orig_dur - 1.0))
+        if i == 0:
+            anchor = 0.2
+        for (txt, s, e) in nar["disp"]:
+            all_disp.append((txt, s + anchor, e + anchor))
+        audio_parts.append((nar["mp3"], anchor))
+        chapters.append((anchor, _chapter_title(basis, chunks)))
+    if not audio_parts:
+        raise ValueError("나레이션을 만들 수 없습니다(구간 대본 없음).")
+    mp3 = _mix_delayed(audio_parts, orig_dur, work)
+    all_disp.sort(key=lambda d: d[1])
+    return {"mp3": mp3, "disp": all_disp, "chunks": all_chunks,
+            "chapters": chapters, "duration": orig_dur}
+
+
+def _ko_titles(titles: list[str]) -> list[str]:
+    """챕터 제목(일본어) 목록을 한 번의 LLM 호출로 한국어 번역. 실패 시 원문 유지."""
+    from src.core import llm
+    titles = [t for t in titles if t]
+    if not titles:
+        return []
+    raw = llm.generate_text("次の日本語の見出しリストを自然な韓国語に訳し、同じ個数のJSON配列だけを出力:\n"
+                            + json.dumps(titles, ensure_ascii=False), max_tokens=400)
+    if raw:
+        m = re.search(r"\[.*\]", raw, re.S)
+        if m:
+            try:
+                arr = json.loads(m.group(0))
+                if isinstance(arr, list) and len(arr) == len(titles):
+                    return [str(x).strip() or titles[i] for i, x in enumerate(arr)]
+            except Exception:  # noqa: BLE001
+                pass
+    return list(titles)
+
+
+def _chapter_block(chapters: list[tuple], offset: float, header: str, titles: list[str] | None = None) -> str:
+    """[(t, title)] → '00:00 제목' 줄들(첫 줄은 항상 00:00 · 유튜브 챕터 규칙)."""
+    if not chapters:
+        return ""
+    out = [header]
+    for idx, (t, title) in enumerate(chapters):
+        tt = titles[idx] if (titles and idx < len(titles)) else title
+        disp_t = 0.0 if idx == 0 else (t + offset)
+        out.append(f"{_ts_mmss(disp_t)} {tt}")
+    return "\n".join(out)
 
 
 def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
@@ -457,19 +679,28 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     if not desc:
         raise ValueError("영상 내용을 파악하지 못했습니다(GEMINI_API_KEY 또는 소싱 출처 설명 필요).")
 
-    # 1) 일본어 대본(청크) — 영상 내용을 근거로 LLM 생성(실패 시 결정론 폴백)
-    chunks = _jp_script("", desc, mode)
-    if not chunks:
-        raise ValueError("나레이션 대본을 만들 수 없습니다.")
-
-    # 2) 나레이션 합성(일본어 TTS + 표시 타이밍)
+    # 1~2) 나레이션 — 쇼츠=단일 대본(짧게) · 롱폼=원본 전체 길이에 분산 배치(구간별)
     from src.core import narration_sync
-    nar = narration_sync.synthesize(chunks, str(work))
+    chapters: list[tuple] = []
+    if mode == "longform":
+        # ★원본을 자르지 않는다: 출력 길이 = 원본 전체 길이. 나레이션은 타임라인 전체에 분산.
+        orig_dur = _probe_dur(src)
+        if orig_dur <= 0:
+            raise ValueError("원본 영상 길이를 읽지 못했습니다.")
+        nar = _build_long_narration(src, orig_dur, seen, source_topic, work)
+        chunks = nar["chunks"]
+        chapters = nar.get("chapters") or []
+        dur = orig_dur
+    else:
+        chunks = _jp_script("", desc, mode)
+        if not chunks:
+            raise ValueError("나레이션 대본을 만들 수 없습니다.")
+        nar = narration_sync.synthesize(chunks, str(work))
+        dur = float(nar.get("duration") or 0) + 0.6
     if not nar.get("mp3") or not nar.get("disp"):
         raise ValueError("나레이션 합성 실패(TTS)")
-    dur = float(nar["duration"]) + 0.6
 
-    # 3) 영상 정규화(쇼츠=9:16 추적 리프레임 · 롱폼=16:9 cover)
+    # 3) 영상 정규화(쇼츠=9:16 추적 리프레임 · 롱폼=16:9 cover, 원본 전체 길이)
     body_v = str(work / "body.mp4")
     if mode == "shorts":
         from src.core import reframe
@@ -477,14 +708,14 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     else:
         _normalize_landscape(src, body_v, dur, str(work))
 
-    # 4) 카라오케 자막 번인
-    sub_scale = 1.5 if mode == "shorts" else 1.0
+    # 4) 카라오케 자막 번인 — ★자막 크게(쇼츠 1.8 · 롱폼 2.2로 2배 이상)
+    sub_scale = 1.8 if mode == "shorts" else 2.2
     ass = narration_sync.build_synced_ass(nar["disp"], str(work / "subs.ass"),
                                           hook_first=False, w=w, h=h, sub_scale=sub_scale)
     subbed = str(work / "subbed.mp4")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", body_v, "-vf", f"ass={ass}",
                     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", "-an", subbed],
-                   check=True, timeout=900)
+                   check=True, timeout=1800)
 
     # 5) 나레이션 오디오 mux → 본문 완성본(훅 앞에 붙이기 전 단계)
     name = out_name or f"narrated_{mode}"
@@ -492,15 +723,10 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     body_final = str(work / "body_final.mp4")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", subbed, "-i", nar["mp3"],
                     "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", body_final],
-                   check=True, timeout=300)
+                   check=True, timeout=600)
 
     # 6) 대본 → 공개용 메타데이터(제목·설명·해시태그·훅, 일본어+한국어) 자동 생성
     meta = _gen_metadata(chunks, mode)
-    meta_path = out_dir / f"{name}.meta.json"
-    try:
-        meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
-    except Exception:  # noqa: BLE001
-        pass
 
     # 7) 오프닝 훅(타이틀 카드) 생성 + 유튜브 썸네일 저장(운영자 확정 · 실패해도 발행 불정지)
     thumb_path = out_dir / f"{name}_thumb.jpg"
@@ -522,12 +748,31 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
         log.info("[narrate] 오프닝 훅 합성 실패(본문만 발행): %s", e)
     if not hooked:
         shutil.move(body_final, final)   # 훅 없이 본문만
-        thumb_out = str(thumb_path) if thumb_path.exists() else ""
-    else:
-        thumb_out = str(thumb_path) if thumb_path.exists() else ""
+    thumb_out = str(thumb_path) if thumb_path.exists() else ""
 
-    log.info("[narrate] 완성: %s (%s · %.1fs · %d청크 · 훅=%s · 썸=%s) title=%s",
-             final, mode, dur, len(chunks), hooked, bool(thumb_out), meta.get("title_jp", ""))
+    # 8) ★설명란에 타임스탬프(구체 챕터) 삽입(롱폼) — 훅이 붙었으면 본문 시작이 밀리므로 오프셋 반영
+    if mode == "longform" and chapters:
+        offset = _OPEN_DUR if hooked else 0.0
+        titles_jp = [t for _, t in chapters]
+        titles_ko = _ko_titles(titles_jp)
+        blk_jp = _chapter_block(chapters, offset, "▼ チャプター(目次)", titles_jp)
+        blk_ko = _chapter_block(chapters, offset, "▼ 챕터(목차)", titles_ko)
+        if blk_jp:
+            meta["desc_jp"] = (meta.get("desc_jp", "").strip() + "\n\n" + blk_jp).strip()
+        if blk_ko:
+            meta["desc_ko"] = (meta.get("desc_ko", "").strip() + "\n\n" + blk_ko).strip()
+        meta["chapters"] = [{"t": (0.0 if i == 0 else t + offset), "title_jp": titles_jp[i],
+                             "title_ko": (titles_ko[i] if i < len(titles_ko) else titles_jp[i])}
+                            for i, (t, _) in enumerate(chapters)]
+
+    meta_path = out_dir / f"{name}.meta.json"
+    try:
+        meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:  # noqa: BLE001
+        pass
+
+    log.info("[narrate] 완성: %s (%s · %.1fs · %d청크 · %d챕터 · 훅=%s · 썸=%s) title=%s",
+             final, mode, dur, len(chunks), len(chapters), hooked, bool(thumb_out), meta.get("title_jp", ""))
     return {"path": final, "duration": dur, "mode": mode, "chunks": chunks,
-            "meta": meta, "meta_path": str(meta_path), "description": desc,
+            "meta": meta, "meta_path": str(meta_path), "description": desc, "chapters": chapters,
             "hooked": hooked, "thumb": thumb_out, "width": w, "height": h}
