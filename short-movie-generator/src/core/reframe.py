@@ -451,6 +451,76 @@ _ZOOM_CYCLE = [1.05, 1.12, 1.06, 1.14, 1.08, 1.10]
 # 와이드 우선(난파선 등 큰 구조물): 접사 컷도 거의 줌 없이.
 _WIDE_ZOOM_CYCLE = [1.00, 1.08, 1.00, 1.10, 1.04, 1.06]
 
+# ★서사 아크(다큐멘터리 촬영기법): 무작위 far/mid/close 반복 대신 '피사체 공개(reveal) → 설정(establish)
+#   → 행동(behavior)/디테일(detail) 교차 → 마무리(settle)'의 흐름으로 컷 역할을 배정한다.
+#   각 역할은 렌더 모드(fit/closeup)와 '샷 안에서 천천히 밀고 들어가는' 푸시인 강도를 결정한다.
+#   (조사: 다큐는 컷을 마구 나누기보다 한 샷 안의 완만한 푸시인으로 생동감을 주고, 넓은 설정→디테일
+#    순서로 쌓는다 — theasc.com/Documenting Nature, nofilmschool 접사 시퀀스, MasterClass 켄번즈.)
+_ROLE_PUSH = {"reveal": 1.07, "establish": 1.03, "behavior": 1.04,
+              "detail": 1.08, "settle": 1.025, "wide": 1.03, "wide_close": 1.07}
+
+
+def _role_for(k: int, n: int) -> str:
+    """컷 인덱스 k(0-based)와 총 컷수 n → 서사 역할. 첫 컷=리빌, 마지막=마무리, 중간은 행동 위주에
+    3컷마다 디테일(접사). 설정(establish)은 컷이 충분(≥5)할 때 2번째 컷에 둔다."""
+    if k == 0:
+        return "reveal"
+    if n >= 3 and k == n - 1:
+        return "settle"
+    if n >= 5 and k == 1:
+        return "establish"
+    return "detail" if (k % 3 == 0) else "behavior"
+
+
+def _pushin(z_extra: float, seg_len: float, fps: int = 30) -> str:
+    """★샷 안에서 '천천히 밀고 들어가는' 완만한 푸시인(켄번즈) ffmpeg zoompan 필터.
+    이미 9:16(WxH)로 완성된 컷 프레임 위에 얹어, 컷 지속시간 동안 중심으로 서서히 확대(1.0→z_extra)한다.
+    정지 슬라이드처럼 붙어 있던 컷을 살아있는 다큐 샷으로 만든다. z_extra≤1이면 빈 문자열(모션 없음).
+
+    구현 주의: filtergraph에서 콤마는 필터 구분자라 zoompan 식에 콤마를 쓰지 않는다(min/clip 금지).
+    누적식 z='zoom+k'(초기 zoom=1.0)로 클리핑 없이 선형 증가시키고, 중심 확대라 x/y 팬이 없어
+    저지터. 길이가 고정이라 오버슈트 위험 없음. 심해 저해상 보호를 위해 z_extra는 작게(≤1.08) 쓴다."""
+    if z_extra <= 1.0 or seg_len <= 0:
+        return ""
+    n = max(2, int(round(seg_len * fps)))
+    k = (z_extra - 1.0) / n
+    return (f"zoompan=z='zoom+{k:.6f}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+            f":d=1:fps={fps}:s={W}x{H}")
+
+
+def _reveal_start(frames: list, scores: list, bad: list, fps: float,
+                  seg_len: float, subject_hint: str = "") -> float | None:
+    """★오프닝 '리빌' 컷의 시작초 — 피사체가 가장 또렷한 순간을 고른다.
+    ① subject_score 상위 후보 창 몇 개를 뽑고 ② (제미나이 키가 있으면·최소 1회 배치 호출로)
+    그중 생물이 가장 선명한 프레임을 vision_subject.pick_subject_frame으로 직접 고른다.
+    키 없거나 불확실하면 휴리스틱 최고점 창으로 폴백(안전). 프레임 없으면 None."""
+    if not frames:
+        return None
+    best = _pick_windows(scores, fps, seg_len, 1, bad=bad)   # 휴리스틱 폴백: 최고점 창 1개
+    best_start = best[0] if best else 0.0
+    cands = _pick_windows(scores, fps, seg_len, 5, bad=bad)
+    starts: list[float] = []
+    fpaths: list[str] = []
+    seen: set = set()
+    for s in cands:
+        key = round(s, 1)
+        if key in seen:
+            continue
+        seen.add(key)
+        fi = max(0, min(len(frames) - 1, int((s + seg_len / 2) * fps)))
+        starts.append(s)
+        fpaths.append(str(frames[fi]))
+    if len(fpaths) >= 2:
+        try:
+            from src.core import vision_subject
+            idx = vision_subject.pick_subject_frame(fpaths, subject_hint)
+            if idx is not None and 0 <= idx < len(starts):
+                log.info("[reframe] 리빌 컷: 제미나이가 피사체 최선명 순간 선택(%.2fs)", starts[idx])
+                return starts[idx]
+        except Exception:  # noqa: BLE001
+            pass
+    return best_start
+
 
 def _detect_scene_cuts(path: str, src_dur: float, thr: float = 0.30) -> list[float]:
     """ffmpeg 씬 점수로 '컷이 전환되는 시각(초)' 리스트를 검출.
@@ -543,13 +613,15 @@ def _pick_windows_in_range(scores: list[float], bad: list[bool], fps: float,
 
 
 def _plan_scene_interleaved(path: str, src_dur: float, scores: list[float],
-                            bad: list[bool], fps: float, target_dur: float) -> list[dict]:
-    """해양생물 쇼츠용 컷 계획 — 씬 분절 + '라운드로빈 인터리브'로 짧게 자주 전환.
+                            bad: list[bool], fps: float, target_dur: float,
+                            reveal_start: float | None = None) -> list[dict]:
+    """해양생물 쇼츠용 컷 계획 — 씬 분절 + '서사 아크(다큐멘터리식)' 배정.
 
-    순서 규칙(사용자 예시): 원본을 N개 씬으로 분절하면 1-1,2-1,3-1,…,N-1,1-2,2-2,… 처럼
-    매 컷마다 다음 씬으로 넘기고, 같은 씬은 한 바퀴 뒤에 그 씬의 '다음 순간'을 쓴다.
-    각 컷은 ≈2.2초로 짧게(지루함 방지). 컷의 1/3은 접사(줌인·얼굴 중앙), 2/3은 전신 핏.
-    """
+    ★개선(무작위 far/mid/close 반복 → 서사 흐름): 원본을 N개 씬으로 분절해 컷마다 씬을 로테이션하되
+    (공간 다양성 유지), 각 컷의 '역할'을 리빌→설정→행동/디테일→마무리 순으로 배정한다(_role_for).
+    · 첫 컷=리빌: 피사체가 가장 또렷한 순간(reveal_start)에서 중간 프레이밍으로 공개(첫 3초 훅).
+    · 역할이 렌더 모드(접사/핏)와 '샷 안 푸시인' 강도를 정한다 → 정지 슬라이드 느낌 제거.
+    각 컷은 ≈2.2초로 짧게(지루함 방지)."""
     cut_len = 2.2
     n_cuts = max(2, round(target_dur / cut_len))
     cut_len = target_dur / n_cuts                   # 합이 정확히 target_dur가 되게 재계산
@@ -568,22 +640,29 @@ def _plan_scene_interleaved(path: str, src_dur: float, scores: list[float],
     idx = [0] * N
     plan: list[dict] = []
     for k in range(n_cuts):
-        ri = k % N
-        starts = region_starts[ri] or [regions[ri][0]]
-        sa = starts[min(idx[ri], len(starts) - 1)]
-        idx[ri] += 1
-        plan.append({"start": sa, "len": cut_len,
-                     "mode": "closeup" if k % 3 == 2 else "fit"})
-    log.info("[reframe] 씬 인터리브: 씬 %d개 → %d컷×%.2fs (컷당 씬 로테이션)", N, n_cuts, cut_len)
+        role = _role_for(k, n_cuts)
+        if k == 0 and reveal_start is not None:      # 리빌: 피사체 최선명 순간에서 공개
+            sa = min(max(0.0, reveal_start), max(0.0, src_dur - cut_len))
+        else:
+            ri = k % N
+            starts = region_starts[ri] or [regions[ri][0]]
+            sa = starts[min(idx[ri], len(starts) - 1)]
+            idx[ri] += 1
+        mode = "closeup" if role in ("reveal", "detail") else "fit"
+        plan.append({"start": sa, "len": cut_len, "mode": mode,
+                     "role": role, "push": _ROLE_PUSH.get(role, 1.03)})
+    log.info("[reframe] 서사 아크: 씬 %d개 → %d컷×%.2fs (리빌→설정→행동/디테일→마무리 + 샷 내 푸시인)",
+             N, n_cuts, cut_len)
     return plan
 
 
 def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                         work_dir: str, logo_box: tuple | None = None,
-                        wide: bool = False) -> str:
+                        wide: bool = False, subject_hint: str = "") -> str:
     """가로 실사 영상 → 9:16 세로(피사체 추적 줌컷 + 틸 그레이딩), 길이 target_dur.
     logo_box(비율 x,y,w,h)가 오면 워터마크를 프레임 이동으로 회피(2안), 불가 시 delogo(3안).
-    wide=True(난파선 등): 줌을 억제해 선체·구조물 전체가 넓게 보이는 원경 프레이밍."""
+    wide=True(난파선 등): 줌을 억제해 선체·구조물 전체가 넓게 보이는 원경 프레이밍.
+    subject_hint(학명/일본어명): 리빌 컷에서 피사체 최선명 프레임을 제미나이로 고를 때 힌트(선택·안전)."""
     wd = Path(work_dir); wd.mkdir(parents=True, exist_ok=True)
     src_dur = _duration(footage_path) or target_dur
     src_w = _probe(footage_path, "width") or 1920
@@ -664,10 +743,14 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
             while len(starts) < n_seg:
                 starts.append(rest[len(starts) % len(rest)] if rest else wide_sa)
         plan = [{"start": (starts[i] if starts else (i * seg_len) % (use or target_dur)),
-                 "len": seg_len, "mode": "closeup" if i % 3 == 2 else "fit"}
+                 "len": seg_len, "mode": "closeup" if i % 3 == 2 else "fit",
+                 "role": "wide", "push": _ROLE_PUSH["wide_close"] if i % 3 == 2 else _ROLE_PUSH["wide"]}
                 for i in range(n_seg)]
     else:
-        plan = _plan_scene_interleaved(footage_path, src_dur, scores, bad, fps_trk, target_dur)
+        # ★리빌 컷: 피사체가 가장 또렷한 순간을 (제미나이 최소 1회·안전 폴백) 골라 첫 컷으로 공개.
+        reveal_start = _reveal_start(frames, scores, bad, fps_trk, 2.2, subject_hint) if not loop else None
+        plan = _plan_scene_interleaved(footage_path, src_dur, scores, bad, fps_trk,
+                                       target_dur, reveal_start=reveal_start)
 
     concat = wd / "reframe_concat.txt"
     lines = []
@@ -719,6 +802,9 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                       f"gblur=sigma=32,eq=brightness=-0.14:saturation=1.02[bg];"
                       f"[b]scale={W}:{H}:force_original_aspect_ratio=decrease[fg];"
                       f"[bg][fg]overlay=(W-w)/2:(H-h)/2,{GRADE}")
+            pv = _pushin(cut.get("push", 1.0), seg_len)   # ★샷 내 완만한 푸시인(정지 슬라이드 방지)
+            if pv:
+                fc = f"{fc},{pv}"
             cmd += ["-filter_complex", fc, str(seg_out)]
         else:
             # 접사 컷: 피사체 추적 + 완만한 줌. 크롭이라 좌우 일부만 보임.
@@ -751,6 +837,9 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                 #   여러마리=전체구도 줌아웃 → 그 중 한 마리를 중심). 단일(spread↓)은 그대로 줌인.
                 if spread >= 0.5:
                     z = max(1.0, min(z, 1.35))
+                # ★리빌 컷은 '공개'가 목적 → 너무 조이지 않는 중간 프레이밍(≤1.3)으로 피사체 정체를 보여준다.
+                if cut.get("role") == "reveal":
+                    z = max(1.0, min(z, 1.3))
             cw = int(round((src_h * W / H) / z)) & ~1
             ch = int(round(src_h / z)) & ~1
             cw = min(cw, int(src_w)) & ~1
@@ -763,6 +852,9 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                 if need_dl:
                     pre_vf = delogo_vf(src_w, src_h, logo_box) + ","
             vf = f"{pre_vf}crop={cw}:{ch}:{cx}:{cy},scale={W}:{H},setsar=1,{GRADE}"
+            pv = _pushin(cut.get("push", 1.0), seg_len)   # ★접사 위에 완만한 푸시인 추가(생동감)
+            if pv:
+                vf = f"{vf},{pv}"
             cmd += ["-vf", vf, str(seg_out)]
         subprocess.run(cmd, check=True)
         lines.append(f"file '{seg_out.name}'")

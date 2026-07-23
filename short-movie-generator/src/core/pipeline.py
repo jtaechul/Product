@@ -397,7 +397,8 @@ def run_reels(
         body_v = reframe.reframe_to_vertical(fv["path"], str(work_dir / "body_reframed.mp4"),
                                              body_dur, str(work_dir / "rf"),
                                              logo_box=None,
-                                             wide=bool(getattr(category, "reframe_wide", False)))
+                                             wide=bool(getattr(category, "reframe_wide", False)),
+                                             subject_hint=(info.scientific_name or info.common_name_en or ""))
 
         # 3.5) ★본문 사진 컷어웨이(반복 피로 완화): 소스 영상이 짧아 반복될 때, 같은 대상 고해상 사진
         #      1~2컷을 본문 중반에 짧게 오버레이(디졸브)한다. 자막 번인 '전'에 넣어 자막·오디오는 그대로

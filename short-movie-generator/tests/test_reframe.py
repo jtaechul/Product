@@ -157,3 +157,49 @@ def test_logo_avoid_noop_when_not_overlapping():
 def test_delogo_vf_within_bounds():
     vf = reframe.delogo_vf(1280, 720, BOX)
     assert vf.startswith("delogo=x=1:y=1:w=") and ":h=" in vf
+
+
+# ─────────────── 서사 아크 + 샷 내 푸시인(다큐멘터리식 줌 구도) ───────────────
+def test_pushin_no_motion_when_flat():
+    """z_extra≤1 또는 길이 0이면 모션 없음(빈 필터)."""
+    assert reframe._pushin(1.0, 2.2) == ""
+    assert reframe._pushin(0.9, 2.2) == ""
+    assert reframe._pushin(1.08, 0) == ""
+
+
+def test_pushin_filter_is_comma_safe_and_sized():
+    """푸시인 필터는 zoompan이며 9:16 출력 크기를 지정하고, zoompan 식 안에 콤마가 없어야
+    filtergraph(콤마=필터구분자)를 깨지 않는다."""
+    f = reframe._pushin(1.08, 2.2)
+    assert f.startswith("zoompan=") and f"s={reframe.W}x{reframe.H}" in f
+    # zoompan= 뒤 옵션 값들(작은따옴표 식) 안에는 콤마가 없어야 한다
+    body = f.split("zoompan=", 1)[1]
+    assert "," not in body, "zoompan 식에 콤마가 있으면 필터그래프가 깨진다"
+
+
+def test_role_arc_sequence():
+    """서사 아크: 첫 컷=리빌, 마지막=마무리, 컷 충분하면 2번째=설정, 중간은 행동/디테일 교차."""
+    n = 12
+    roles = [reframe._role_for(k, n) for k in range(n)]
+    assert roles[0] == "reveal"
+    assert roles[-1] == "settle"
+    assert roles[1] == "establish"
+    assert "behavior" in roles and "detail" in roles
+    # 리빌·디테일만 접사(closeup), 나머지는 핏 → 전신 식별 가능 컷이 다수
+    closeups = sum(1 for r in roles if r in ("reveal", "detail"))
+    assert closeups < n / 2, "접사가 과반이면 전신 식별성이 떨어진다"
+
+
+def test_reveal_start_falls_back_to_top_score_without_key(tmp_path, monkeypatch):
+    """제미나이 키가 없으면 리빌 시작은 '피사체 점수 최고 구간'으로 폴백해야 한다(안전)."""
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    # 5fps × 30초: 0~9초 무피사체(점수0), 10~19초 최고점, 20~29초 중간
+    scores = [0.0] * 50 + [10.0] * 50 + [3.0] * 50
+    bad = [False] * 150
+    frames = []
+    for i in range(150):                    # 더미 프레임 파일(경로만 필요)
+        p = tmp_path / f"f_{i:04d}.jpg"
+        Image.new("RGB", (32, 18), (0, 0, 0)).save(p)
+        frames.append(p)
+    sa = reframe._reveal_start(frames, scores, bad, 5.0, 2.2, "")
+    assert sa is not None and 9.0 <= sa <= 19.0, f"리빌이 최고점(10~19s) 아닌 {sa}s 선택"
