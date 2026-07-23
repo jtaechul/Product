@@ -294,14 +294,6 @@
     "date": "2026-07-22"
   },
   {
-    "id": "046",
-    "kind": "reels",
-    "common_name_ko": "민태과",
-    "common_name_en": "Macrouridae",
-    "scientific_name": "Macrouridae",
-    "date": "2026-07-23"
-  },
-  {
     "id": "047",
     "kind": "reels",
     "common_name_ko": "Thistlegorm 난파선",
@@ -337,6 +329,14 @@
     "common_name_ko": "종",
     "common_name_en": "",
     "scientific_name": "",
+    "date": "2026-07-23"
+  },
+  {
+    "id": "046",
+    "kind": "reels",
+    "common_name_ko": "민태과",
+    "common_name_en": "Macrouridae",
+    "scientific_name": "Macrouridae",
     "date": "2026-07-23"
   }
 ]
