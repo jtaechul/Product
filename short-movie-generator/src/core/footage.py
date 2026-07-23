@@ -1024,6 +1024,28 @@ def insert_photo_cutaways(body_v: str, photos: list[dict], out_v: str, body_dur:
     return body_v
 
 
+def seed_hero_frame(scientific_name: str, common_name_en: str = "") -> str | None:
+    """★커밋된 종별 히어로 프레임 오버라이드(운영자 확정 · 실사고 #046 소코다라: 오프닝/엔드카드에
+    빈 바다·ROV만 5회 반복). 오프닝/엔드카드 배경을 '자동 프레임 선택'(휴리스틱은 어두운 물고기를
+    빈 모래·ROV와 구분 못 함이 실측 확인됨)에 맡기지 않고, `assets/hero_frames/<종키>.jpg`가 있으면
+    그 **실사 피사체 프레임**을 최우선으로 쓴다. 특정 종이 계속 빈 바다로 나오면 이 파일만 커밋하면
+    확실히 고정된다(실사 프레임이라 날조 아님). 반환: 이미지 경로 또는 None(없으면 기존 자동 로직)."""
+    base = Path(__file__).resolve().parents[2] / "assets" / "hero_frames"
+    for name in (scientific_name, common_name_en):
+        k = re.sub(r"[^a-z0-9]+", "_", (name or "").strip().lower()).strip("_")
+        if not k:
+            continue
+        for ext in (".jpg", ".jpeg", ".png"):
+            p = base / f"{k}{ext}"
+            try:
+                if p.exists() and p.stat().st_size > 2000:
+                    log.info("[footage] 커밋된 히어로 프레임 사용: %s", p.name)
+                    return str(p)
+            except Exception:  # noqa: BLE001
+                continue
+    return None
+
+
 def fetch_hero_photo(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
     """오프닝 훅·엔드카드 배경용 고해상 실사 사진 확보 → {path, credit, license, source} 또는 None.
 

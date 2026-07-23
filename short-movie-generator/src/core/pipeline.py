@@ -487,8 +487,15 @@ def run_reels(
     # ★고화소 히어로 사진(있으면): 정지 화면인 오프닝·엔드카드 배경을 영상 프레임 대신 이 사진으로
     #   만든다(훨씬 선명). 미확보 시 기존 영상 프레임으로 자동 폴백(발행 불정지). 같은 대상의 사진만.
     hero = None
+    # ★최우선: 커밋된 종별 히어로 프레임(assets/hero_frames/<종>.jpg)이 있으면 그 실사 피사체 프레임을
+    #   오프닝·엔드카드 배경으로 확정 사용(자동 선택이 빈 바다·ROV를 고르는 #046류 재발 원천 차단).
+    _hf = footage.seed_hero_frame(info.scientific_name, info.common_name_en)
+    if _hf:
+        hero = {"path": _hf}
     try:
-        if (fv.get("doc") or fv.get("photo_doc")) and fv.get("hero_url"):
+        if hero:
+            pass
+        elif (fv.get("doc") or fv.get("photo_doc")) and fv.get("hero_url"):
             # 다큐/사진다큐: 첫 대표 사진을 오프닝·엔드카드 배경으로(선명한 원본)
             hp = raw_dir / "doc_hero.jpg"
             if footage._download(fv["hero_url"], hp):
@@ -702,9 +709,12 @@ def run(
     if info.diet:
         eco_bits.append(" ".join(info.diet[:2]))
     eco_line = " · ".join(b for b in eco_bits if b)
+    # ★엔드카드(통합 마지막 페이지) 배경도 커밋된 히어로 프레임 우선(오프닝과 동일 이미지 · #046 재발방지):
+    #   소싱 사진이 빈 바다/불명확일 수 있어, 실사 피사체 프레임이 있으면 그걸 엔드카드 사진으로 쓴다.
+    _ec_photo = _hf or asset.asset_path
     final_page = endcard.build_final_page(
         caption, series_title, episode, WATERMARK,
-        asset.asset_path, asset.credit_string, info.scientific_name, str(work_dir),
+        _ec_photo, asset.credit_string, info.scientific_name, str(work_dir),
         eco_line=eco_line,
     )
     with_endcard = endcard.concat_tail([overlaid, final_page], str(work_dir))
