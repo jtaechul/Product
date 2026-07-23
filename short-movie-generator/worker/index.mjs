@@ -516,14 +516,16 @@ async function renderNarrateDetail(id){
     '<div class="card" style="margin-top:12px">'+
       '<span class="lbl">이 나레이션 영상 관리</span>'+
       '<div class="btnrow" style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
-        '<button class="btn" id="nvmeta">제목·설명 재생성</button>'+
-        (rec.source_url?'<button class="btn" id="nvthumb">썸네일 재생성</button>':'<button class="btn" id="nvthumb" disabled title="원본 URL 없음">썸네일 재생성 불가</button>')+
+        '<button class="btn" id="nvtitle">제목 재생성 (썸네일 포함)</button>'+
+        '<button class="btn" id="nvdesc">설명 재생성</button>'+
+        (rec.source_url?'<button class="btn" id="nvthumb">썸네일만 재생성</button>':'<button class="btn" id="nvthumb" disabled title="원본 URL 없음">썸네일 재생성 불가</button>')+
         (rec.source_url?'<button class="btn" id="nvregen">전체 다시 제작(재생성)</button>':'<button class="btn" id="nvregen" disabled title="원본 URL 없음">재생성 불가</button>')+
-        '<button class="btn" id="nvdel" style="background:#8b1a1a;color:#fff">이 영상 삭제 (영구)</button></div>'+
+        '<button class="btn" id="nvdel" style="background:#8b1a1a;color:#fff;grid-column:1/-1">이 영상 삭제 (영구)</button></div>'+
       '<div class="hint" style="margin-top:6px">'+
-        '<b>제목·설명 재생성</b>은 대본을 근거로 제목·설명·해시태그만 다시 만듭니다(1~2분 · 영상 유지). '+
-        '<b>썸네일 재생성</b>은 원본에서 피사체 장면을 다시 골라 썸네일만 새로 만듭니다(2~5분 · 영상 유지). '+
-        (rec.source_url?'전체 재생성은 <b>같은 원본</b>으로 처음부터 다시 만듭니다(5~15분). ':'원본 URL 정보가 없어 전체 재생성·썸네일은 불가합니다. ')+
+        '<b>제목 재생성</b>은 대본으로 제목·훅을 다시 만들고 <b>썸네일도 새 제목으로 함께</b> 다시 그립니다(2~5분 · 영상 유지'+(rec.source_url?'':' · 원본 URL이 없어 이 건은 텍스트만 갱신')+'). '+
+        '<b>설명 재생성</b>은 설명·해시태그만 다시 만듭니다(1~2분 · 타임스탬프 목차 유지). '+
+        '<b>썸네일만 재생성</b>은 문구는 그대로 두고 배경 장면만 다시 고릅니다(2~5분). '+
+        (rec.source_url?'전체 재생성은 <b>같은 원본</b>으로 처음부터 다시 만듭니다(5~15분). ':'')+
         '삭제는 영상·기록을 되돌릴 수 없이 지웁니다.</div></div>'+
     '<div class="banner" id="msg" style="margin-top:10px"></div>';
   const V=s=>((document.getElementById(s)||{}).value||"");
@@ -538,8 +540,10 @@ async function renderNarrateDetail(id){
   const dub=document.getElementById("nvdub");
   if(dub&&rec.source_url)dub.onclick=()=>regenNarrateDub(id,rec.source_url,rec.mode||"longform");
   const nvu=document.getElementById("nvup");if(nvu)nvu.onclick=()=>uploadNarrate(id);
-  const nvm=document.getElementById("nvmeta");
-  if(nvm)nvm.onclick=()=>regenNarratePartial(id,rec.source_url||"-",rec.mode||"longform","meta","nvmeta","제목·설명");
+  const nvti=document.getElementById("nvtitle");
+  if(nvti)nvti.onclick=()=>regenNarratePartial(id,rec.source_url||"-",rec.mode||"longform","title","nvtitle","제목(+썸네일)");
+  const nvde=document.getElementById("nvdesc");
+  if(nvde)nvde.onclick=()=>regenNarratePartial(id,rec.source_url||"-",rec.mode||"longform","desc","nvdesc","설명");
   const nvt=document.getElementById("nvthumb");
   if(nvt&&rec.source_url)nvt.onclick=()=>regenNarratePartial(id,rec.source_url,rec.mode||"longform","thumb","nvthumb","썸네일");
   const nvd=document.getElementById("nvdel");if(nvd)nvd.onclick=()=>deleteContent(id,"narrate");
@@ -548,7 +552,7 @@ async function renderNarrateDetail(id){
 // 나레이션 부분 재생성(영상 유지): scope=meta(제목·설명) | thumb(썸네일) — narrate-video.yml 디스패치.
 async function regenNarratePartial(id,sourceUrl,mode,scope,btnId,label){
   if(!authReady()){banner("재생성에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
-  const mins=(scope==="thumb")?"2~5분":"1~2분";
+  const mins=(scope==="thumb"||scope==="title")?"2~5분":"1~2분";
   if(!confirm(label+"만 다시 만듭니다(영상은 그대로).\\n\\n완료까지 약 "+mins+", 이 화면을 새로고침하면 반영됩니다.\\n계속할까요?"))return;
   const b=document.getElementById(btnId); if(b){b.disabled=true;b.textContent=label+" 재생성 중…";}
   banner(label+" 재생성을 시작합니다… ("+mins+" 뒤 새로고침)");

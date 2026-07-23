@@ -36,8 +36,9 @@ def _load_record(base: Path, cid: str) -> dict:
     return rec
 
 
-def regen_meta(base_dir: str, cid: str) -> bool:
-    """제목·설명·해시태그(일/한)·훅 재생성 → 레코드 갱신. 챕터 블록 보존."""
+def regen_meta(base_dir: str, cid: str, scope: str = "meta") -> bool:
+    """텍스트 재생성 → 레코드 갱신. scope=title(제목+훅)/desc(설명+해시태그)/meta(둘 다).
+    설명 갱신 시 챕터(타임스탬프) 블록은 보존."""
     from src.core import content_store
     from src.core import narrate_attached as N
     base = Path(base_dir)
@@ -50,14 +51,15 @@ def regen_meta(base_dir: str, cid: str) -> bool:
     if not lines:
         raise SystemExit("ERROR: 재생성 근거(대본/설명)가 없습니다.")
     meta = N._gen_metadata(lines, rec.get("mode", "longform"))
-    # 챕터(타임스탬프) 블록 보존 — 새 설명 끝에 다시 붙인다
-    _, ch_jp = _strip_chapters(rec.get("yt_description", ""), "▼ チャプター")
-    _, ch_ko = _strip_chapters(rec.get("yt_description_ko", ""), "▼ 챕터")
-    if ch_jp:
-        meta["desc_jp"] = (str(meta.get("desc_jp", "")).strip() + "\n\n" + ch_jp).strip()
-    if ch_ko:
-        meta["desc_ko"] = (str(meta.get("desc_ko", "")).strip() + "\n\n" + ch_ko).strip()
-    return content_store.update_narrate_meta(base_dir, cid, meta)
+    if scope in ("meta", "desc"):
+        # 챕터(타임스탬프) 블록 보존 — 새 설명 끝에 다시 붙인다
+        _, ch_jp = _strip_chapters(rec.get("yt_description", ""), "▼ チャプター")
+        _, ch_ko = _strip_chapters(rec.get("yt_description_ko", ""), "▼ 챕터")
+        if ch_jp:
+            meta["desc_jp"] = (str(meta.get("desc_jp", "")).strip() + "\n\n" + ch_jp).strip()
+        if ch_ko:
+            meta["desc_ko"] = (str(meta.get("desc_ko", "")).strip() + "\n\n" + ch_ko).strip()
+    return content_store.update_narrate_meta(base_dir, cid, meta, scope=scope)
 
 
 def regen_thumb(base_dir: str, cid: str, video_url: str) -> str:
@@ -93,16 +95,24 @@ def regen_thumb(base_dir: str, cid: str, video_url: str) -> str:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="나레이트 부분 재생성(제목·설명/썸네일)")
+    ap = argparse.ArgumentParser(description="나레이트 부분 재생성(제목/설명/썸네일)")
     ap.add_argument("--cid", required=True, help="콘텐츠 id (예: nv-123)")
-    ap.add_argument("--scope", required=True, choices=["meta", "thumb"])
-    ap.add_argument("--video-url", default="", help="thumb 스코프: 원본 영상 URL(또는 로컬 경로)")
+    ap.add_argument("--scope", required=True, choices=["meta", "title", "desc", "thumb"])
+    ap.add_argument("--video-url", default="", help="thumb/title 스코프: 원본 영상 URL(또는 로컬 경로)")
     ap.add_argument("--base-dir", default=".")
     a = ap.parse_args()
-    if a.scope == "meta":
-        if not regen_meta(a.base_dir, a.cid):
+    if a.scope in ("meta", "title", "desc"):
+        if not regen_meta(a.base_dir, a.cid, scope=a.scope):
             print("ERROR: 레코드 갱신 실패", file=sys.stderr)
             return 1
+        # ★제목 재생성은 썸네일도 함께 갱신(운영자 확정): 썸네일 큰글씨=훅·칩=제목이 구워져 있어
+        #   제목만 바꾸면 썸네일이 낡는다 → 새 훅·제목으로 재렌더. 원본 URL 없으면 건너뜀(텍스트만).
+        if a.scope in ("meta", "title") and a.video_url and a.video_url != "-":
+            try:
+                print(regen_thumb(a.base_dir, a.cid, a.video_url))   # 마지막 줄 = 썸네일 경로
+                return 0
+            except SystemExit as e:
+                print(f"WARN: 썸네일 갱신 실패(텍스트만 반영): {e}", file=sys.stderr)
         print("META_OK")
         return 0
     thumb = regen_thumb(a.base_dir, a.cid, a.video_url)

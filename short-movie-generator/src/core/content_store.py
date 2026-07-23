@@ -293,21 +293,26 @@ def regen_longform_text(base_dir: str, content_id: str, scope: str = "all") -> b
     return True
 
 
-def update_narrate_meta(base_dir: str, content_id: str, meta: dict) -> bool:
-    """나레이트 레코드의 제목·설명·해시태그(일/한)·훅만 부분 갱신(영상·썸네일 유지).
-    운영자가 /nv에서 '제목·설명 재생성'을 눌렀을 때 narrate_partial(scope=meta)이 호출."""
+def update_narrate_meta(base_dir: str, content_id: str, meta: dict, scope: str = "meta") -> bool:
+    """나레이트 레코드의 텍스트 부분 갱신(영상 유지). scope:
+    - "title": 제목(일/한)+훅만 (★썸네일 큰글씨=훅·칩=제목이라, 호출부가 썸네일 재렌더를 이어감)
+    - "desc" : 설명(일/한)+해시태그만
+    - "meta" : 둘 다(하위호환)."""
     rec = load_record(base_dir, content_id)
     if not rec or rec.get("kind") != "narrate":
         return False
-    rec["hook"] = meta.get("hook_jp", rec.get("hook", ""))
-    rec["yt_title"] = meta.get("title_jp", rec.get("yt_title", ""))
-    rec["yt_title_ko"] = meta.get("title_ko", rec.get("yt_title_ko", ""))
-    rec["yt_description"] = meta.get("desc_jp", rec.get("yt_description", ""))
-    rec["yt_description_ko"] = meta.get("desc_ko", rec.get("yt_description_ko", ""))
-    if meta.get("tags_jp"):
-        rec["hashtags"] = meta["tags_jp"]
-    if meta.get("tags_ko"):
-        rec["hashtags_ko"] = meta["tags_ko"]
+    sc = (scope or "meta").lower()
+    if sc in ("meta", "title"):
+        rec["hook"] = meta.get("hook_jp", rec.get("hook", ""))
+        rec["yt_title"] = meta.get("title_jp", rec.get("yt_title", ""))
+        rec["yt_title_ko"] = meta.get("title_ko", rec.get("yt_title_ko", ""))
+    if sc in ("meta", "desc"):
+        rec["yt_description"] = meta.get("desc_jp", rec.get("yt_description", ""))
+        rec["yt_description_ko"] = meta.get("desc_ko", rec.get("yt_description_ko", ""))
+        if meta.get("tags_jp"):
+            rec["hashtags"] = meta["tags_jp"]
+        if meta.get("tags_ko"):
+            rec["hashtags_ko"] = meta["tags_ko"]
     rec["updated_at"] = _now_iso()
     record_path(base_dir, content_id).write_text(
         json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -30,9 +30,9 @@ on:
         required: false
         default: ""
       scope:
-        description: "재생성 범위 — all(전체 제작) / meta(제목·설명만) / thumb(썸네일만)"
+        description: "재생성 범위 — all(전체 제작) / title(제목+썸네일) / desc(설명만) / meta(제목·설명) / thumb(썸네일만)"
         type: choice
-        options: [all, meta, thumb]
+        options: [all, meta, title, desc, thumb]
         default: all
 
 concurrency:
@@ -231,7 +231,7 @@ jobs:
 
   # ── 부분 재생성(운영자 버튼): 영상 재렌더 없이 ① 제목·설명(meta) ② 썸네일(thumb)만 갱신 ──
   partial:
-    if: ${{ inputs.scope == 'meta' || inputs.scope == 'thumb' }}
+    if: ${{ inputs.scope == 'meta' || inputs.scope == 'thumb' || inputs.scope == 'title' || inputs.scope == 'desc' }}
     runs-on: ubuntu-latest
     name: 부분 재생성(제목·설명/썸네일)
     defaults:
@@ -249,7 +249,7 @@ jobs:
           cache-dependency-path: short-movie-generator/requirements.txt
 
       - name: Install FFmpeg + fonts (썸네일 렌더·프레임 추출용)
-        if: inputs.scope == 'thumb'
+        if: inputs.scope == 'thumb' || inputs.scope == 'title' || inputs.scope == 'meta'
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-cjk fonts-liberation
 
       - name: Install Python deps
@@ -271,15 +271,21 @@ jobs:
           echo "thumb=$OUT" >> "$GITHUB_OUTPUT"
 
       - name: 썸네일 릴리스 업로드 + 레코드 갱신
-        if: inputs.scope == 'thumb'
+        if: inputs.scope == 'thumb' || inputs.scope == 'title' || inputs.scope == 'meta'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -e
           CID="${{ steps.run.outputs.cid }}"
           TAG="narrate-$CID"
+          TH="${{ steps.run.outputs.thumb }}"
+          # 제목 재생성인데 원본 URL이 없어 썸네일을 못 만든 경우(META_OK) → 텍스트만 반영하고 통과
+          if [ ! -f "$TH" ]; then
+            [ "${{ inputs.scope }}" = "thumb" ] && { echo "::error::썸네일 미생성"; exit 1; }
+            echo "썸네일 없음(텍스트만 갱신) — 업로드 생략"; exit 0
+          fi
           FN="thumb_${{ github.run_id }}.jpg"
-          cp "${{ steps.run.outputs.thumb }}" "$FN"
+          cp "$TH" "$FN"
           gh release upload "$TAG" "$FN" --clobber
           URL="${{ github.server_url }}/${{ github.repository }}/releases/download/$TAG/$FN"
           python - "$CID" "$URL" <<'PY'
@@ -319,7 +325,7 @@ jobs:
           TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           [ -z "$TG_TOKEN" ] && exit 0
-          LBL="제목·설명"; [ "${{ inputs.scope }}" = "thumb" ] && LBL="썸네일"
+          case "${{ inputs.scope }}" in thumb) LBL="썸네일";; title) LBL="제목(+썸네일)";; desc) LBL="설명";; *) LBL="제목·설명";; esac
           MSG="나레이션 ${LBL} 재생성 완료: https://shorts-dashboard.jtaechul.workers.dev/nv/${{ steps.run.outputs.cid }}"
           for C in $TG_CHAT; do
             curl -sS -F chat_id="$C" -F text="$MSG" \
