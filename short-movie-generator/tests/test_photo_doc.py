@@ -147,6 +147,31 @@ def test_vision_subject_safe_without_key(monkeypatch):
     assert V.verify_species("/no/such.jpg", "Vampyroteuthis infernalis", "vampire squid") is None
     assert V.locate_focus("/no/such.jpg") is None
     assert V.is_live_wild_subject("/no/such.jpg", "grenadier") is None      # 키 없으면 통과(현행 유지)
+    assert V.screen_photo("/no/such.jpg", "Coryphaenoides", "grenadier") is None
+    assert V.screen_photo("/no/such.jpg", "x", "y", need_single=True) is None
+
+
+def test_screen_photo_combined_verdict(monkeypatch):
+    """★비용절감: 사진 스크리닝을 Gemini 1회로 합침 — 비생물·죽음/물밖·(히어로)도판을 한 번에 판별.
+    확신 있을 때만 배제, 불확실은 보존."""
+    from src.core import vision_subject as V
+    # 해변의 죽은 물고기 → reject
+    monkeypatch.setattr(V, "_ask", lambda p, q: '{"is_marine_organism": true, "living_in_water": false, "confident": true}')
+    assert V.screen_photo("x.jpg", "Coryphaenoides", "grenadier")["reject"] is True
+    # 살아있는 수중 개체 → 통과
+    monkeypatch.setattr(V, "_ask", lambda p, q: '{"is_marine_organism": true, "living_in_water": true, "confident": true}')
+    assert V.screen_photo("x.jpg", "", "grenadier")["reject"] is False
+    # 히어로(need_single): 도판/다중 → reject + single_ok False
+    monkeypatch.setattr(V, "_ask", lambda p, q: '{"is_marine_organism": true, "living_in_water": true, "single_clear_subject": false, "confident": true}')
+    v = V.screen_photo("x.jpg", "", "grenadier", need_single=True)
+    assert v["reject"] is True and v["single_ok"] is False
+    # 히어로 단일·수중 → 통과 + single_ok True
+    monkeypatch.setattr(V, "_ask", lambda p, q: '{"is_marine_organism": true, "living_in_water": true, "single_clear_subject": true, "confident": true}')
+    v = V.screen_photo("x.jpg", "", "grenadier", need_single=True)
+    assert v["reject"] is False and v["single_ok"] is True
+    # 불확실 → 배제 안 함(진짜 사진 보존)
+    monkeypatch.setattr(V, "_ask", lambda p, q: '{"is_marine_organism": false, "living_in_water": false, "confident": false}')
+    assert V.screen_photo("x.jpg", "", "grenadier")["reject"] is False
 
 
 def test_is_live_wild_subject_verdict(monkeypatch):

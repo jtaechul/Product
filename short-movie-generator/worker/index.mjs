@@ -323,23 +323,6 @@ function renderHome(){
     '<div class="banner" id="nvmsg"></div>'+
     '<div id="nvresults" style="margin-top:12px"></div>'+
   '</div>'+
-  '<div class="card">'+
-    '<span class="lbl">롱폼 · 랭킹형 TOP N (8분 유튜브)</span>'+
-    '<div class="hint" style="margin:2px 0 8px">종은 <b>주제별로 랜덤 자동 추출</b>됩니다(수동 선택 폐지). 테마만 고르세요.</div>'+
-    '<span class="lbl">테마 (비워두면 자동 추출된 종을 보고 AI가 자동으로 정함)</span>'+
-    '<select id="lftheme">'+
-      '<option value="자동" selected>자동 (AI가 종 조합을 보고 정함)</option>'+
-      '<option value="기이한">기이한</option>'+
-      '<option value="위험한">위험한</option>'+
-      '<option value="놀라운">놀라운</option>'+
-      '<option value="미스터리한">미스터리한</option>'+
-      '<option value="무서운">무서운</option>'+
-    '</select>'+
-    '<div class="hint" style="margin:4px 0 8px">각 종의 실사 영상(NOAA·공용도메인)으로 세그먼트 조립 → 유튜브 <b>비공개</b> 자동 업로드 후 텔레그램으로 링크 전송(확인 후 직접 공개).</div>'+
-    '<button class="go" id="golf">롱폼 생성 시작</button>'+
-    '<div class="banner" id="lfmsg"></div>'+
-    '<div class="lfresults" id="lfresults" style="margin-top:14px"></div>'+
-  '</div>'+
   '<div class="card"><span class="lbl">실행 현황 <a href="#" id="refresh" style="color:var(--cy);float:right;text-decoration:none">새로고침</a></span>'+
     '<div class="runs" id="runs"><div class="hint">불러오는 중…</div></div></div>';
 
@@ -358,45 +341,6 @@ function renderHome(){
       else{const t=await r.text();banner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
     }catch(e){banner("요청 실패: "+e,"err");}
     $("#go").disabled=false;};
-  // 체크 순서 = 순위(1위부터). 클릭한 순서를 배열로 추적(DOM 순서가 아님).
-  let lfOrder=[];
-  function lfRenderOrder(){
-    const grid=$("#lfgrid");
-    if(grid)grid.querySelectorAll(".lfchip").forEach(ch=>{
-      const v=ch.querySelector("input").value;
-      const rk=lfOrder.indexOf(v);
-      ch.classList.toggle("on",rk>=0);
-      const old=ch.querySelector(".rk");if(old)old.remove();
-      if(rk>=0){const b=document.createElement("span");b.className="rk";b.textContent=String(rk+1);ch.appendChild(b);}
-    });
-    const ord=$("#lforder");
-    if(ord)ord.textContent=lfOrder.length?("선택 순서: "+lfOrder.map((v,i)=>(i+1)+")"+v).join("  ")):"선택된 종: 없음";
-  }
-  const lfGrid=$("#lfgrid");
-  if(lfGrid)lfGrid.querySelectorAll(".lfchip").forEach(ch=>{
-    ch.onclick=(e)=>{
-      e.preventDefault();
-      const cb=ch.querySelector("input");const v=cb.value;
-      const i=lfOrder.indexOf(v);
-      if(i>=0)lfOrder.splice(i,1);
-      else if(lfOrder.length<6)lfOrder.push(v);
-      else{lfbanner("최대 6개까지 선택할 수 있어요.","err");return;}
-      cb.checked=lfOrder.includes(v);
-      lfRenderOrder();
-    };
-  });
-  const _lf=$("#golf");if(_lf)_lf.onclick=async()=>{
-    const theme=($("#lftheme")||{}).value||"자동";
-    // ★종 수동 선택 폐지 — 백엔드가 주제별로 랜덤 자동 추출(species 비움).
-    const species="";
-    if(!authReady()){const tb=$("#tokbox");if(tb)tb.open=true;lfbanner("먼저 GitHub 토큰을 설정하세요(위 안내).","err");return;}
-    $("#golf").disabled=true;lfbanner("롱폼 생성 요청 중… (종 자동 추출)");
-    try{const r=await fetch(API+"/actions/workflows/"+LF_WF+"/dispatches",{method:"POST",headers:headers(true),
-        body:JSON.stringify({ref:BRANCH,inputs:{theme,species,privacy:"private"}})});
-      if(r.status===204){lfbanner("롱폼 생성 시작! 완료 후 유튜브 비공개 업로드 + 텔레그램 링크 전송.","ok");setTimeout(loadRuns,4000);setTimeout(loadRuns,15000);}
-      else{const t=await r.text();lfbanner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
-    }catch(e){lfbanner("요청 실패: "+e,"err");}
-    $("#golf").disabled=false;};
   // ── 소싱하기(후보 발굴) + 후보 검토·제작 ──
   const _gs=$("#gosrc");if(_gs)_gs.onclick=async()=>{
     const category=($("#srccat")||{}).value||"deep_sea";
@@ -421,7 +365,6 @@ function renderHome(){
 
   $("#refresh").onclick=(e)=>{e.preventDefault();loadRuns();};
   loadRuns();
-  loadLongformResults();
   loadNarrateResults();
 }
 function srcbanner(t,c){const m=$("#srcmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
@@ -689,17 +632,6 @@ async function produceCandidate(cat,key,btn){
       setTimeout(loadRuns,4000);setTimeout(()=>loadCandidates(cat),15000);}
     else{const t=await r.text();srcbanner("실패("+r.status+"): 토큰 권한 확인.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");if(btn)btn.disabled=false;}
   }catch(e){srcbanner("요청 실패: "+e,"err");if(btn)btn.disabled=false;}
-}
-function lfbanner(t,c){const m=$("#lfmsg");if(m){m.className="banner show "+(c||"");m.innerHTML=t;}}
-async function loadLongformResults(){
-  const el=$("#lfresults");if(!el)return;
-  const recs=await listLongform();
-  if(!recs.length){el.innerHTML="";return;}
-  el.innerHTML='<span class="lbl">최근 롱폼 결과</span>'+recs.slice(0,6).map(r=>(
-    '<a class="clitem" href="/lf/'+encodeURIComponent(r.id)+'"><span class="no">'+esc(r.n||0)+'종</span>'+
-    '<span class="nm">'+esc(r.yt_title||r.id)+'<small>'+esc(r.yt_title_ko||"")+'</small></span>'+
-    '<span class="t">'+esc(String(r.date||r.created_at||"").slice(0,10))+'</span></a>'
-  )).join('');
 }
 async function loadRuns(){
   try{

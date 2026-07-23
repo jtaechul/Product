@@ -671,13 +671,22 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     # 0) 번인 로고 제거(NOAA 등 지속 로고 delogo) — 이후 모든 단계가 깨끗한 소스를 쓰게 한다.
     src = _clean_watermark(str(vp), work / "wm")
 
-    # 0ب) 영상 내용 파악(비전) — 소싱 출처 설명이 있으면 근거로 합치고, 없으면 프레임을 보고 서술
+    # 0ب) 영상 내용 파악(비전) — 소싱 출처 설명이 있으면 근거로 합침.
+    #   ★비용절감(운영자 확정): 쇼츠만 전체 영상을 1회 서술한다. 롱폼은 구간별로 각자 서술하므로
+    #   전체 서술(_describe_video)을 생략한다(중복 Gemini 호출 제거). 롱폼은 _build_long_narration이 담당.
+    import os
     desc = (source_topic or "").strip()
-    seen = _describe_video(src, work)
-    if seen:
-        desc = (desc + "\n" + seen).strip() if desc else seen
-    if not desc:
-        raise ValueError("영상 내용을 파악하지 못했습니다(GEMINI_API_KEY 또는 소싱 출처 설명 필요).")
+    if mode == "shorts":
+        seen = _describe_video(src, work)
+        if seen:
+            desc = (desc + "\n" + seen).strip() if desc else seen
+        if not desc:
+            raise ValueError("영상 내용을 파악하지 못했습니다(GEMINI_API_KEY 또는 소싱 출처 설명 필요).")
+    else:
+        seen = ""   # 롱폼: 전체 서술 생략(구간별 비전이 담당)
+        _vision_ok = bool(os.environ.get("GEMINI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY"))
+        if not desc and not _vision_ok:      # 근거 전무(출처 없음+비전 키 없음)면 지어내지 않고 실패
+            raise ValueError("영상 내용을 파악하지 못했습니다(GEMINI_API_KEY 또는 소싱 출처 설명 필요).")
 
     # 1~2) 나레이션 — 쇼츠=단일 대본(짧게) · 롱폼=원본 전체 길이에 분산 배치(구간별)
     from src.core import narration_sync

@@ -1048,21 +1048,16 @@ def fetch_hero_photo(scientific_name: str, common_name_en: str, dest_dir: str) -
             continue
         if not _looks_photographic(str(out)):        # 삽화·흰배경 도판 배제
             continue
-        # ★단일 개체 게이트: 비전 사용 가능하면 통과분만, 비전 없으면 사진 사용 안 함(도판 위험 회피).
+        # ★단일 개체 게이트(비전 사용 가능하면 통과분만, 없으면 사진 사용 안 함): 도판·다중 배제 + 죽음/물밖/
+        #   사람손질 배제(#046)를 **Gemini 1회로 합쳐** 판별(비용절감). 단일 확정(single_ok)일 때만 채택.
         if vision_on:
-            verdict = None
+            v = None
             try:
-                verdict = vision_subject.is_single_subject(str(out), hint)
+                v = vision_subject.screen_photo(str(out), hint, need_single=True)
             except Exception:  # noqa: BLE001
-                verdict = None
-            if verdict is not True:                  # False(도판·다중) 또는 None(불확실) → 스킵
+                v = None
+            if not v or v["reject"] or v.get("single_ok") is not True:   # 배제/불확실/비단일 → 스킵
                 continue
-            # ★#046 재발방지: 오프닝훅·엔드카드 배경도 '살아있는 물속 개체'만(죽은/물밖/사람손질 배제).
-            try:
-                if vision_subject.is_live_wild_subject(str(out), hint) is False:
-                    continue
-            except Exception:  # noqa: BLE001
-                pass
         else:
             # 비전 키 없음: 안전을 위해 히어로 사진을 쓰지 않는다(영상 프레임 폴백이 단일 피사체 보장).
             return None
@@ -1812,15 +1807,12 @@ def species_photo_doc(scientific_name: str, common_name_en: str, dest_dir: str) 
                 continue
         except Exception:  # noqa: BLE001
             pass
-        # ★피사체 학습·검증(운영자 명령2 · 키 있을 때만): 동음이의어 오소싱(예 Chimaera=물고기이자
-        #   TVR 자동차)을 대분류로 걸러낸다. 종ID는 안 함(진짜 생물 보존) — False(명백한 비생물)만 배제.
+        # ★피사체 스크리닝(키 있을 때만 · 사진당 Gemini 1회로 합침 · 비용절감): 대분류 비생물(자동차·사람·
+        #   미술품)과 죽음/물밖/사람손질(#046 해변의 죽은 물고기+발)을 한 번에 판별해 배제. 종ID는 안 함(보존).
         try:
             from src.core import vision_subject
-            if vision_subject.verify_species(str(fp), scientific_name, common_name_en) is False:
-                continue
-            # ★#046 재발방지(저비용 Gemini): 죽었거나·물 밖·해변/갑판·사람이 손질/파지한 사진 배제.
-            #   verify_species는 '물고기 맞음'만 보므로 '해변의 죽은 물고기+사람 발'은 통과했다 → 문맥 판별로 차단.
-            if vision_subject.is_live_wild_subject(str(fp), common_name_en or scientific_name) is False:
+            v = vision_subject.screen_photo(str(fp), scientific_name, common_name_en)
+            if v and v["reject"]:
                 continue
         except Exception:  # noqa: BLE001
             pass

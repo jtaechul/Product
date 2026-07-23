@@ -189,6 +189,49 @@ def is_live_wild_subject(image_path: str, species_hint: str = "") -> bool | None
     return True
 
 
+def screen_photo(image_path: str, scientific_name: str = "", common_name_en: str = "",
+                 need_single: bool = False) -> dict | None:
+    """★비용 절감(운영자 확정): 사진 스크리닝을 **한 번의 Gemini 호출**로 합친다(예전엔 verify_species +
+    is_live_wild_subject + is_single_subject를 따로 불러 사진당 2~3회 → 1회). 종ID는 안 한다(문맥·대분류만).
+
+    반환 dict 또는 None(키 없음/파싱 실패 → 호출부는 통과=진짜 사진 보존).
+      {"reject": bool(명백한 배제만), "reason": str, "single_ok": bool|None(need_single일 때만)}
+    배제 기준(확신 있을 때만): ① 대분류 비생물(자동차·사람·미술품·육상동물) ② 죽음/물밖/해변·갑판/사람손질/
+    접시/표본. need_single이면 ③ 도판·다중개체·비교표는 confident 무관 배제(히어로 부적격)."""
+    name = (common_name_en or scientific_name or "").strip()
+    hint = f' The intended subject is roughly "{name}".' if name else ""
+    single_field = ' "single_clear_subject": true|false,' if need_single else ""
+    single_rule = ("" if not need_single else
+                   " single_clear_subject=false if it is a scientific plate with multiple specimens/panels, a "
+                   "comparison figure, a collage, or several animals; true only for one clear individual.")
+    prompt = (
+        "You are screening a stock photo for a LIVING marine-wildlife video."
+        f"{hint} Answer STRICT JSON only: "
+        '{"is_marine_organism": true|false, "living_in_water": true|false,' + single_field +
+        ' "confident": true|false}. '
+        "is_marine_organism=false ONLY for an obvious non-marine subject (car, person portrait, painting, "
+        "land animal, logo). living_in_water=false if the animal is clearly dead, out of water, on sand/beach/"
+        "deck/table, handled by a person, on a plate, at a market, or a preserved specimen; true for a live "
+        "animal in the sea or an aquarium." + single_rule +
+        " Do NOT judge the exact species. If unsure about a field, set confident=false."
+    )
+    d = _json(_ask(image_path, prompt) or "")
+    if not d:
+        return None
+    conf = d.get("confident") is True
+    reject, reason = False, "ok"
+    if conf and d.get("is_marine_organism") is False:
+        reject, reason = True, "non_marine"
+    elif conf and d.get("living_in_water") is False:
+        reject, reason = True, "dead_or_out_of_water"
+    elif need_single and d.get("single_clear_subject") is False:
+        reject, reason = True, "multi_or_plate"          # 도판·다중은 현행 is_single_subject처럼 confident 무관 배제
+    if reject:
+        log.info("[vision] 스크리닝 배제: %s (%s)", image_path, reason)
+    return {"reject": reject, "reason": reason,
+            "single_ok": (d.get("single_clear_subject") is True) if need_single else None}
+
+
 def locate_focus(image_path: str) -> tuple[float, float] | None:
     """피사체의 초점(눈 우선, 없으면 몸통 중심)을 정규화 좌표(0~1)로. 켄번즈 크롭 중심에 쓴다.
 
