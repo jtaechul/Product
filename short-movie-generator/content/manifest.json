@@ -269,6 +269,48 @@
     "date": "2026-07-21"
   },
   {
+    "id": "043",
+    "kind": "reels",
+    "common_name_ko": "Redeye gaper",
+    "common_name_en": "Redeye gaper",
+    "scientific_name": "Chaunax stigmaeus",
+    "date": "2026-07-22",
+    "youtube_url": "https://youtu.be/VcMk7XUsivA"
+  },
+  {
+    "id": "044",
+    "kind": "reels",
+    "common_name_ko": "긴촉수매퉁이과",
+    "common_name_en": "Ipnopidae",
+    "scientific_name": "Ipnopidae",
+    "date": "2026-07-22"
+  },
+  {
+    "id": "045",
+    "kind": "reels",
+    "common_name_ko": "Andrea Doria 난파선",
+    "common_name_en": "Wreck Andrea Doria",
+    "scientific_name": "Wreck Andrea Doria",
+    "date": "2026-07-22"
+  },
+  {
+    "id": "046",
+    "kind": "reels",
+    "common_name_ko": "민태과",
+    "common_name_en": "Macrouridae",
+    "scientific_name": "Macrouridae",
+    "date": "2026-07-23"
+  },
+  {
+    "id": "047",
+    "kind": "reels",
+    "common_name_ko": "Thistlegorm 난파선",
+    "common_name_en": "Wreck Thistlegorm",
+    "scientific_name": "Wreck Thistlegorm",
+    "date": "2026-07-23",
+    "youtube_url": "https://youtu.be/K2rwgOQhvPA"
+  },
+  {
     "id": "lf-3",
     "kind": "longform",
     "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
@@ -290,54 +332,11 @@
     "youtube_url": "https://youtu.be/G5eD8VEcEII"
   },
   {
-    "id": "045",
-    "kind": "reels",
-    "common_name_ko": "Andrea Doria 난파선",
-    "common_name_en": "Wreck Andrea Doria",
-    "scientific_name": "Wreck Andrea Doria",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "043",
-    "kind": "reels",
-    "common_name_ko": "Redeye gaper",
-    "common_name_en": "Redeye gaper",
-    "scientific_name": "Chaunax stigmaeus",
-    "date": "2026-07-22",
-    "youtube_url": "https://youtu.be/VcMk7XUsivA"
-  },
-  {
-    "id": "044",
-    "kind": "reels",
-    "common_name_ko": "긴촉수매퉁이과",
-    "common_name_en": "Ipnopidae",
-    "scientific_name": "Ipnopidae",
-    "date": "2026-07-22"
-  },
-  {
-    "id": "046",
-    "kind": "reels",
-    "common_name_ko": "민태과",
-    "common_name_en": "Macrouridae",
-    "scientific_name": "Macrouridae",
-    "date": "2026-07-23"
-  },
-  {
-    "id": "047",
-    "kind": "reels",
-    "common_name_ko": "Thistlegorm 난파선",
-    "common_name_en": "Wreck Thistlegorm",
-    "scientific_name": "Wreck Thistlegorm",
-    "date": "2026-07-23",
-    "youtube_url": "https://youtu.be/K2rwgOQhvPA"
-  },
-  {
     "id": "nv-29999730295",
-    "kind": "narrate",
-    "yt_title": "夜の海に月明かりが広がり",
-    "yt_title_ko": "",
-    "mode": "longform",
-    "date": "2026-07-23",
-    "has_video": true
+    "kind": "reels",
+    "common_name_ko": "종",
+    "common_name_en": "",
+    "scientific_name": "",
+    "date": "2026-07-23"
   }
 ]
