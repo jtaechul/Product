@@ -36,7 +36,9 @@
   ],
   "media": {
     "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30010980145/narrated_longform_30053730656.mp4",
-    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30010980145/narrated_longform_30053730656_thumb.jpg"
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30010980145/narrated_longform_30053730656_thumb.jpg",
+    "youtube_url": "https://youtu.be/XmczQVuAKH0",
+    "youtube_privacy": "public"
   },
   "transcript": [
     {
@@ -327,5 +329,6 @@
       "orig": "To beyond the next horizon into the depths of the ocean.",
       "jp": "その先の水平線の向こう、深海の奥底へと。"
     }
-  ]
+  ],
+  "updated_at": "2026-07-24T00:07:45+00:00"
 }
