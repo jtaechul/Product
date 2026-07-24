@@ -44,14 +44,18 @@ def test_narrate_attached_e2e(tmp_path, monkeypatch, mode, w, h):
     a = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries",
                         "stream=codec_type", "-of", "csv=p=0", str(out)], capture_output=True, text=True).stdout
     assert "audio" in a
+    # ★오프닝 훅 '영상 카드' 폐지(운영자 확정): 최종 영상 길이는 본문(dur) 그대로 — 옛 ~2.8초 훅 클립이
+    #   더는 앞에 붙지 않는다(썸네일이 이미 훅을 담당하므로 재생 시작에 정지 카드가 끼지 않아야 함).
+    real_dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                     "-of", "csv=p=0", str(out)], capture_output=True, text=True).stdout.strip())
+    assert abs(real_dur - res["duration"]) < 1.0
     # 메타데이터(제목·설명·해시태그·훅, 일/한) 자동 생성 — 폴백이라도 채워짐
     meta = res["meta"]
     assert meta["title_jp"] and meta["desc_jp"] and meta["tags_jp"] and meta["hook_jp"]
     assert Path(res["meta_path"]).exists()
-    # 오프닝 훅 + 썸네일: 폰트가 있으면 훅이 붙고 썸네일(jpg)이 나온다
+    # 썸네일: 폰트가 있으면 훅+제목을 얹은 jpg가 나온다(영상에는 붙지 않음)
     from src.core import hook_intro as hi
     if hi.fonts_available():
-        assert res["hooked"] is True
         assert res["thumb"] and Path(res["thumb"]).exists()
         tw = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
                              "stream=width,height", "-of", "csv=p=0:s=x", res["thumb"]],

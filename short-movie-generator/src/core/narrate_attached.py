@@ -21,7 +21,6 @@ log = logging.getLogger("shorts")
 
 SHORTS_W, SHORTS_H = 720, 1280
 LONG_W, LONG_H = 1920, 1080
-_OPEN_DUR = 2.8   # 오프닝 훅(타이틀 카드) 길이(초)
 
 
 def _probe_dur(video: str) -> float:
@@ -754,29 +753,6 @@ def _render_hook_and_thumb(bg_path: str, hook: str, title: str, w: int, h: int,
         return False
 
 
-def _build_hook_clip(card_png: str, out: str, dur: float, w: int, h: int) -> str:
-    """정지 훅 카드 → 무음(나레이션과 겹침 방지) 인트로 클립. 페이드인으로 부드럽게."""
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", card_png,
-                    "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo", "-t", f"{dur:.2f}",
-                    "-vf", f"scale={w}:{h},setsar=1,fps=30,format=yuv420p,fade=t=in:st=0:d=0.5",
-                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-pix_fmt", "yuv420p",
-                    "-c:a", "aac", "-b:a", "192k", "-shortest", out], check=True, timeout=300)
-    return out
-
-
-def _concat_av(a: str, b: str, out: str, w: int, h: int) -> str:
-    """두 mp4를 [a][b] 순서로 이어붙인다(해상도·fps·오디오 포맷 통일 후 concat 필터)."""
-    fc = (f"[0:v]scale={w}:{h},setsar=1,fps=30[v0];[1:v]scale={w}:{h},setsar=1,fps=30[v1];"
-          "[0:a]aresample=44100,aformat=sample_fmts=fltp:channel_layouts=stereo[a0];"
-          "[1:a]aresample=44100,aformat=sample_fmts=fltp:channel_layouts=stereo[a1];"
-          "[v0][a0][v1][a1]concat=n=2:v=1:a=1[v][a]")
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", a, "-i", b,
-                    "-filter_complex", fc, "-map", "[v]", "-map", "[a]",
-                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-pix_fmt", "yuv420p",
-                    "-c:a", "aac", "-b:a", "192k", out], check=True, timeout=1200)
-    return out
-
-
 # ─────────────────────── 롱폼: 원본 전체 길이 유지 + 나레이션 분산 + 타임스탬프 ───────────────────────
 def _ts_mmss(t: float) -> str:
     t = max(0, int(round(t)))
@@ -1280,41 +1256,39 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     #    ★A안: 소싱 출처 설명(source_topic)도 사실 근거로 함께 넘겨 제목의 내용예측력↑(날조 없음).
     meta = _gen_metadata(chunks, mode, source_topic=source_topic)
 
-    # 7) 오프닝 훅(타이틀 카드) 생성 + 유튜브 썸네일 저장(운영자 확정 · 실패해도 발행 불정지)
+    # 7) 유튜브 썸네일 저장(운영자 확정: 오프닝 훅 '영상 카드'는 폐지). 커스텀 썸네일이 이미 훅·제목을
+    #    보여주므로, 영상 시작에 같은 문구를 정지 카드(무음 ~2.8초)로 또 보여주는 건 중복이고 재생 시작
+    #    직후 '아무 일도 안 일어나는' 구간이라 초반 이탈(retention)에도 불리하다 → 본문이 곧바로 시작한다.
+    #    썸네일 렌더(_render_hook_and_thumb)는 그대로 재사용(카드 이미지는 만들되 영상에는 붙이지 않음).
+    #    실패해도 발행 불정지(썸네일만 생략).
     thumb_path = out_dir / f"{name}_thumb.jpg"
     hook_txt = (meta.get("hook_jp") or "").strip()
-    hooked = False
+    thumb_rendered = False
     try:
         from src.core import hook_intro as hi
         if hook_txt and hi.fonts_available():
             hero = _pick_hero_frame(src, work / "hero", w,
                                     subject_hint=(source_topic or meta.get("title_jp", "") or "").strip())
             if hero:
-                card = str(work / "hookcard.png")
-                if _render_hook_and_thumb(hero, hook_txt, meta.get("title_jp", ""), w, h,
-                                          card, str(thumb_path)):
-                    hookclip = str(work / "hook.mp4")
-                    _build_hook_clip(card, hookclip, _OPEN_DUR, w, h)
-                    _concat_av(hookclip, body_final, final, w, h)
-                    hooked = True
+                card = str(work / "hookcard.png")   # 썸네일과 같은 렌더의 부산물(영상에는 미사용)
+                thumb_rendered = _render_hook_and_thumb(hero, hook_txt, meta.get("title_jp", ""), w, h,
+                                                        card, str(thumb_path))
     except Exception as e:  # noqa: BLE001
-        log.info("[narrate] 오프닝 훅 합성 실패(본문만 발행): %s", e)
-    if not hooked:
-        shutil.move(body_final, final)   # 훅 없이 본문만
+        log.info("[narrate] 썸네일 렌더 실패(생략): %s", e)
+    shutil.move(body_final, final)   # 오프닝 훅 영상 카드 없이 본문이 그대로 최종본
     thumb_out = str(thumb_path) if thumb_path.exists() else ""
 
-    # 8) ★설명란에 타임스탬프(구체 챕터) 삽입(롱폼) — 훅이 붙었으면 본문 시작이 밀리므로 오프셋 반영
+    # 8) ★설명란에 타임스탬프(구체 챕터) 삽입(롱폼) — 오프닝 훅 영상 폐지로 본문은 항상 0초부터 시작
     if mode == "longform" and chapters:
-        offset = _OPEN_DUR if hooked else 0.0
         titles_jp = [t for _, t in chapters]
         titles_ko = _ko_titles(titles_jp)
-        blk_jp = _chapter_block(chapters, offset, "▼ チャプター(目次)", titles_jp)
-        blk_ko = _chapter_block(chapters, offset, "▼ 챕터(목차)", titles_ko)
+        blk_jp = _chapter_block(chapters, 0.0, "▼ チャプター(目次)", titles_jp)
+        blk_ko = _chapter_block(chapters, 0.0, "▼ 챕터(목차)", titles_ko)
         if blk_jp:
             meta["desc_jp"] = (meta.get("desc_jp", "").strip() + "\n\n" + blk_jp).strip()
         if blk_ko:
             meta["desc_ko"] = (meta.get("desc_ko", "").strip() + "\n\n" + blk_ko).strip()
-        meta["chapters"] = [{"t": (0.0 if i == 0 else t + offset), "title_jp": titles_jp[i],
+        meta["chapters"] = [{"t": t, "title_jp": titles_jp[i],
                              "title_ko": (titles_ko[i] if i < len(titles_ko) else titles_jp[i])}
                             for i, (t, _) in enumerate(chapters)]
 
@@ -1324,10 +1298,10 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     except Exception:  # noqa: BLE001
         pass
 
-    log.info("[narrate] 완성: %s (%s · %.1fs · %d청크 · %d챕터 · 훅=%s · 썸=%s) title=%s",
-             final, mode, dur, len(chunks), len(chapters), hooked, bool(thumb_out), meta.get("title_jp", ""))
+    log.info("[narrate] 완성: %s (%s · %.1fs · %d청크 · %d챕터 · 썸=%s) title=%s",
+             final, mode, dur, len(chunks), len(chapters), bool(thumb_out), meta.get("title_jp", ""))
     return {"path": final, "duration": dur, "mode": mode, "chunks": chunks,
             "meta": meta, "meta_path": str(meta_path), "description": desc, "chapters": chapters,
-            "hooked": hooked, "thumb": thumb_out, "width": w, "height": h,
+            "hooked": thumb_rendered, "thumb": thumb_out, "width": w, "height": h,
             # ★더빙형 검수용: 원문·일본어 대본(전사 편집본). 대시보드에서 수정 후 재제작에 재사용.
             "transcript": (nar.get("transcript") if isinstance(nar, dict) else None)}
