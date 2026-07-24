@@ -270,14 +270,6 @@
     "youtube_url": "https://youtu.be/VcMk7XUsivA"
   },
   {
-    "id": "045",
-    "kind": "reels",
-    "common_name_ko": "Andrea Doria 난파선",
-    "common_name_en": "Wreck Andrea Doria",
-    "scientific_name": "Wreck Andrea Doria",
-    "date": "2026-07-22"
-  },
-  {
     "id": "047",
     "kind": "reels",
     "common_name_ko": "Thistlegorm 난파선",
@@ -341,5 +333,13 @@
     "scientific_name": "Macrouridae",
     "date": "2026-07-24",
     "youtube_url": "https://youtu.be/k6AnanOPhc4"
+  },
+  {
+    "id": "045",
+    "kind": "reels",
+    "common_name_ko": "Andrea Doria 난파선",
+    "common_name_en": "Wreck Andrea Doria",
+    "scientific_name": "Wreck Andrea Doria",
+    "date": "2026-07-24"
   }
 ]
