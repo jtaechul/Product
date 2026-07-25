@@ -40,7 +40,9 @@
   ],
   "media": {
     "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30139691538/narrated_longform_30139691538.mp4",
-    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30139691538/thumb_30140025507.jpg"
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30139691538/thumb_30140025507.jpg",
+    "youtube_url": "https://youtu.be/-1gfSI8n26Y",
+    "youtube_privacy": "public"
   },
-  "updated_at": "2026-07-25T02:14:36+00:00"
+  "updated_at": "2026-07-25T02:16:32+00:00"
 }
