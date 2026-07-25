@@ -297,6 +297,19 @@
   ① `run_reels`가 성공 시 `log_catalog` 기록(구현됨) ② **워크플로 커밋 스텝이 `src/categories/*/*_catalog.json`을
   반드시 포함**(`generate-short.yml`). ③ 한 카테고리엔 실사영상 확보 대상을 **여러 개** 시드해야 로테이션이 의미가 있다
   (침몰선=아리에스·U-1277·마데이렌스 3척). 새 카테고리 추가 시 이 3가지를 반드시 지킨다.
+  - **★★'특정 대상 직접 입력' 경로는 중복 검사가 아예 없었다(핵심 재발방지 · 실사고: 대왕등각류
+    Bathynomus giganteus가 catalog.json에 no=8·17로 두 번, 이후 원장에 없는 신규 회차로 또 반복 제작됨)**:
+    위 중복 방지는 전부 **`auto` 경로**(`footage_candidates()`가 원장과 대조)에만 있었다. 대시보드 홈
+    "또는 특정 대상 직접 입력" 칸에 종명을 직접 타이핑해 제작하면 `pipeline.run_reels`의 `else` 분기
+    (`category.parse_input(query)`)로 가는데, 이 분기는 **원장을 전혀 안 본다** — 이미 만든 종이어도
+    그대로 새 회차로 다시 만들어버렸다(auto와 달리 무방비). → `DeepSeaCategory`/`CollectionCategory`에
+    `is_already_produced(info)`(학명·영문명으로 원장 대조 → `(회차, 날짜)` 또는 `None`)를 추가하고,
+    `run_reels`가 이 `else` 분기에서 **`episode`가 명시되지 않은(=신규 제작) 경우에만** 대조해 이미
+    있으면 `PipelineError`로 즉시 중단(회차·날짜를 메시지에 포함, 재생성 경로 안내). `episode`가 명시된
+    경우(대시보드 "재생성"이 `content_id`로 그 회차를 복원해 보낸 것)는 의도된 재제작이므로 막지 않는다.
+    또 실패 사유를 운영자가 CI 로그를 뒤지지 않아도 알 수 있게, `generate-short.yml`의 "Run pipeline"
+    스텝이 로그를 `work/pipeline.log`로 남기고 "Notify failure to Telegram"이 그 사유(`파이프라인 중단: …`)를
+    알림 본문에 포함한다. 회귀: `tests/test_dedup_explicit_query.py`.
 
 ---
 

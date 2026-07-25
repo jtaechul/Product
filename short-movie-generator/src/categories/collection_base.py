@@ -117,6 +117,30 @@ class CollectionCategory(CategoryModule):
         )
 
     # ── auto 선택: 실사 영상 보유 + **미제작만**(중복 제작 금지 · 재탕 폐지) ──
+    def _made_set(self) -> set[str]:
+        """제작 원장(catalog)에 이미 있는 대상의 학명·영문명(소문자) 집합.
+        `footage_candidates`(auto 경로)와 `is_already_produced`(명시 대상명 경로) 공용."""
+        made: set[str] = set()
+        for it in self._load_catalog():
+            made.add(str(it.get("scientific_name", "")).strip().lower())
+            made.add(str(it.get("common_name_en", "")).strip().lower())
+        return made
+
+    def is_already_produced(self, info: SpeciesInfo) -> tuple[int, str] | None:
+        """이 대상이 제작 원장에 이미 있으면 (회차 번호, 날짜)를, 없으면 None.
+        ★대시보드 '특정 대상 직접 입력'으로 이미 만든 대상을 다시 요청하면 auto와 달리 중복
+        검사가 없어 그대로 재생산되던 사고 재발방지용."""
+        sci = (info.scientific_name or "").strip().lower()
+        en = (info.common_name_en or "").strip().lower()
+        if not sci and not en:
+            return None
+        for it in self._load_catalog():
+            it_sci = str(it.get("scientific_name", "")).strip().lower()
+            it_en = str(it.get("common_name_en", "")).strip().lower()
+            if (sci and it_sci == sci) or (en and it_en == en):
+                return (int(it.get("no", 0)), str(it.get("date", "")))
+        return None
+
     def footage_candidates(self) -> list[str]:
         """auto 후보 = 아직 제작 안 한 대상만. 제작 원장에 있으면 영구 제외(중복 금지).
         미제작이 없으면 빈 리스트 → 파이프라인이 '전 대상 제작 완료'로 중단(중복 대신 정지)."""
@@ -126,7 +150,7 @@ class CollectionCategory(CategoryModule):
                 if sp["scientific_name"].strip().lower() in seeded]
         if not pool:
             raise PipelineError("input", f"[{self.category_id}] 실사 영상 보유 대상 없음(시드 필요)")
-        made = {str(it.get("scientific_name", "")).strip().lower() for it in self._load_catalog()}
+        made = self._made_set()
         return [k for k in pool if self.SUBJECTS[k]["scientific_name"].strip().lower() not in made]
 
     def pick_footage_species(self) -> str:

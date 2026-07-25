@@ -287,6 +287,21 @@ def run_reels(
     else:
         subject = category.parse_input(query)
         info = category.get_info(subject)
+        # ★명시 대상명 재발방지(운영자 확정 · 실사고: 대왕등각류가 대시보드 '특정 대상 직접 입력'으로
+        #   여러 날짜에 걸쳐 반복 제작). auto 경로는 footage_candidates()가 원장(catalog)과 대조해
+        #   이미 만든 대상을 걸러내지만, 이 명시-이름 경로는 그 검사를 거치지 않아 같은 대상을 몇 번이든
+        #   새 회차로 다시 만들 수 있었다. episode가 명시(=대시보드 '재생성'이 콘텐츠 id로 그 회차를
+        #   복원해 보낸 것)되지 않은 '신규 제작'일 때만 원장을 대조해 이미 있으면 즉시 중단한다
+        #   (재생성·의도적 덮어쓰기는 episode가 오므로 막지 않음).
+        if episode is None and hasattr(category, "is_already_produced"):
+            dup = category.is_already_produced(info)
+            if dup:
+                no, made_date = dup
+                raise PipelineError(
+                    "input",
+                    f"이미 제작된 대상입니다 — #{no:03d}({made_date}) {info.common_name_ko or info.common_name_en} "
+                    f"({info.scientific_name}). 중복 제작 방지로 중단합니다. 재생성이 필요하면 관리자 "
+                    f"페이지의 해당 콘텐츠(#{no:03d})에서 '재생성'을 사용하세요.")
     _verify_subject_or_raise(category, info)   # ★제작 직전 카테고리 적합성 최종 게이트
     if not hasattr(category, "hook_intro_spec"):
         raise PipelineError("reels", "카테고리가 hook_intro_spec 미제공")

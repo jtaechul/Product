@@ -156,7 +156,10 @@ jobs:
           #   import 시 갱신된 discovered.json을 병합해 인식한다.
           python -c "from src.core import discovery; discovery.promote_candidate('$CAT', '''${{ steps.inp.outputs.query }}'''.strip().lower())" || true
           # 확정 시스템: reels(실사 영상 + 일본어 오프닝훅/엔드카드/전환/사운드). 팬줌·Veo 미사용.
-          python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --category "$CAT" $EP_ARG --mode reels
+          # ★실패 사유를 텔레그램 알림에 담기 위해 로그를 파일로도 남긴다(운영자가 이유를 바로 알게).
+          set -o pipefail
+          mkdir -p work
+          python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --category "$CAT" $EP_ARG --mode reels 2>&1 | tee work/pipeline.log
           VIDEO=$(ls -t output/*.mp4 | head -1)
           META=$(ls -t output/*.json | head -1)
           echo "video=$VIDEO" >> "$GITHUB_OUTPUT"
@@ -322,9 +325,13 @@ jobs:
           TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           [ -z "$TG_TOKEN" ] && exit 0
+          # ★실패 사유(운영자 확정): 파이프라인 중단 사유(예: 중복 제작 차단)를 로그에서 그대로 뽑아
+          #   알림에 담는다 — 예전엔 "실패했다"만 알고 이유를 확인하려 CI 로그를 열어야 했다.
+          REASON=$(grep -m1 "파이프라인 중단:" work/pipeline.log 2>/dev/null | sed 's/^ERROR[^:]*: //' || true)
           MSG="⚠ 쇼츠 제작 실패 (run #${{ github.run_number }})
           카테고리: ${{ steps.inp.outputs.category }} / 대상: ${{ steps.inp.outputs.query }}
-          로그: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          ${REASON:+사유: $REASON
+          }로그: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           for CID in $TG_CHAT; do
             curl -sS -F chat_id="$CID" -F text="$MSG" \
                  "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" | head -c 120; echo

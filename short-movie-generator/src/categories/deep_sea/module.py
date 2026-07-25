@@ -415,6 +415,38 @@ class DeepSeaCategory:
         h = int(hashlib.md5((seed or "deep").encode("utf-8")).hexdigest(), 16)
         return str(cands[h % len(cands)])
 
+    def _made_set(self) -> set[str]:
+        """제작 원장(catalog)에 이미 있는 종의 학명·영문명(소문자) 집합.
+        `footage_candidates`(auto 경로)와 `is_already_produced`(명시 종명 경로) 공용."""
+        from src.categories.deep_sea import catalog
+        made: set[str] = set()
+        try:
+            for it in catalog._load():
+                made.add(str(it.get("scientific_name", "")).strip().lower())
+                made.add(str(it.get("common_name_en", "")).strip().lower())
+        except Exception:  # noqa: BLE001
+            pass
+        return made
+
+    def is_already_produced(self, info: SpeciesInfo) -> tuple[int, str] | None:
+        """이 종이 제작 원장에 이미 있으면 (회차 번호, 날짜)를, 없으면 None을 돌려준다.
+        ★대시보드 '특정 대상 직접 입력'으로 이미 만든 종을 다시 요청하면 auto와 달리 중복
+        검사가 없어 그대로 재생산되던 사고(예: 대왕등각류 반복 제작) 재발방지용."""
+        from src.categories.deep_sea import catalog
+        sci = (info.scientific_name or "").strip().lower()
+        en = (info.common_name_en or "").strip().lower()
+        if not sci and not en:
+            return None
+        try:
+            for it in catalog._load():
+                it_sci = str(it.get("scientific_name", "")).strip().lower()
+                it_en = str(it.get("common_name_en", "")).strip().lower()
+                if (sci and it_sci == sci) or (en and it_en == en):
+                    return (int(it.get("no", 0)), str(it.get("date", "")))
+        except Exception:  # noqa: BLE001
+            return None
+        return None
+
     def footage_candidates(self) -> list[str]:
         """auto 후보 = **아직 제작 안 한 종만**(중복 제작 절대 금지 · 사용자 확정 규칙).
 
@@ -422,20 +454,13 @@ class DeepSeaCategory:
         중복 사고), 이제 그 순환을 폐지한다. 제작 원장(catalog)에 있는 종은 후보에서 영구 제외.
         미제작 종이 없으면 빈 리스트를 반환 → 파이프라인이 '전 종 제작 완료'로 중단(중복 대신 정지).
         """
-        from src.categories.deep_sea import catalog
         from src.core import footage
         seeded = {k.lower() for k in footage.seeded_keys()}
         pool = [key for key, sp in data.SPECIES.items()
                 if sp["scientific_name"].strip().lower() in seeded]
         if not pool:
             raise PipelineError("input", "실사 영상 보유 종이 없습니다(시드 필요)")
-        made = set()
-        try:
-            for it in catalog._load():
-                made.add(str(it.get("scientific_name", "")).strip().lower())
-                made.add(str(it.get("common_name_en", "")).strip().lower())
-        except Exception:  # noqa: BLE001
-            made = set()
+        made = self._made_set()
         return [k for k in pool
                 if data.SPECIES[k]["scientific_name"].strip().lower() not in made
                 and (data.SPECIES[k].get("common_name_en", "").strip().lower() not in made)]
