@@ -953,8 +953,16 @@
     배치(`_build_long_narration`/`_mix_delayed` adelay+amix). 비전 있으면 구간마다 그 구간을 보고 다른 내용의
     나레이션(`_describe_segment`), 없으면 전역 대본을 구간 수로 **분할**해 분산(★날조 없이 '있는 내용만 펼침').
     ③ **설명란 타임스탬프**: 구간을 근거로 챕터(제목+시각) 생성 → `▼ チャプター(目次)`/`▼ 챕터(목차)` 목차를
-    설명란에 삽입(첫 줄 00:00 · 유튜브 규칙, 훅 길이 오프셋 반영, KO 제목 1회 LLM 번역·폴백). ④ **자막 2배+**
+    설명란에 삽입(첫 줄 00:00 · 유튜브 규칙, KO 제목 1회 LLM 번역·폴백). ④ **자막 2배+**
     (`sub_scale` 롱폼 2.2·쇼츠 1.8). 회귀: `test_longform_keeps_full_length_and_chapters`.
+    - **★타임스탬프 과다 방지(운영자 확정 · '세네 개 정도가 적당' · 실사고: 더빙형이 문장마다 챕터를
+      만들어 몇 분짜리 영상에도 수십 개가 생김)**: 더빙형(`_build_dub_narration`)은 원본 발화 문장
+      (Whisper 세그먼트)마다 챕터 하나씩을 만든다. 유튜브 챕터는 '큰 국면 전환'만 표기하는 게 정상이므로
+      `_condense_chapters(chapters, target=4)`가 목표 개수(4개)로 줄인다: ① LLM(있으면)에게 전체 후보
+      (시각+제목)를 보여주고 화제가 실제로 바뀌는 지점만 고르게 함(`_condense_chapters_llm`) ② LLM
+      미가용/실패 시 시간축 균등 다운샘플(첫 챕터는 항상 포함)로 폴백. `narrate_video`가 `chapters = nar.get(...)`
+      직후 적용해 더빙형·비전형 둘 다 적용된다. 회귀: `test_condense_chapters_fallback_downsamples_evenly`·
+      `test_condense_chapters_uses_llm_selection`.
   - **★오디오 = 원본 보존 + 덕킹 + 나레이션 확대(운영자 확정 · 실사고: 원본 배경/효과음이 아예 안 들림)**:
     예전엔 원본 오디오를 버리고 나레이션만 얹었다 → 수정: `_mix_bg_narration`이 **원본(효과음·배경)을 유지**하되
     나레이션 밑으로 **사이드체인 덕킹**(원본 volume 0.8·나레이션 1.8)해 **나레이션이 원본 목소리보다 크게**,

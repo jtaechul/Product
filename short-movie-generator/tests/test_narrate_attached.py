@@ -124,6 +124,28 @@ def test_fallback_title_prefers_facts_over_first_sentence():
     assert "マッピング" not in t2 and len(t2) <= 30
 
 
+def test_condense_chapters_fallback_downsamples_evenly(monkeypatch):
+    """★타임스탬프 과다 방지: LLM 미가용 시 20개 챕터도 목표(4개)로 균등 다운샘플되고 첫 챕터 포함."""
+    from src.core import llm
+    monkeypatch.setattr(llm, "generate_text", lambda *a, **k: None)
+    many = [(float(i) * 5.0, f"区間{i}") for i in range(20)]
+    out = N._condense_chapters(many, target=4)
+    assert len(out) <= 5   # 폴백은 n(<=target) + 항상 0번 포함이라 최대 target개 근처
+    assert out[0] == many[0]
+    # 이미 적으면 그대로 통과(불필요한 축소 없음)
+    few = many[:3]
+    assert N._condense_chapters(few, target=4) == few
+
+
+def test_condense_chapters_uses_llm_selection(monkeypatch):
+    """LLM이 고른 인덱스만 채택되고, 0번이 빠지면 자동으로 포함된다."""
+    from src.core import llm
+    many = [(float(i) * 5.0, f"区間{i}") for i in range(10)]
+    monkeypatch.setattr(llm, "generate_text", lambda *a, **k: '{"indices":[2,5,8]}')
+    out = N._condense_chapters(many, target=4)
+    assert out == [many[0], many[2], many[5], many[8]]
+
+
 def test_hook_and_thumb_render(tmp_path):
     """훅/썸네일 렌더 — 배경 프레임 위에 훅 문구를 얹어 카드+썸네일(jpg) 생성."""
     from src.core import hook_intro as hi

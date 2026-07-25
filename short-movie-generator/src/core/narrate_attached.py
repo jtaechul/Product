@@ -1111,6 +1111,54 @@ def _ko_titles(titles: list[str]) -> list[str]:
     return list(titles)
 
 
+def _condense_chapters_llm(chapters: list[tuple], target: int) -> list[tuple] | None:
+    """전체 챕터 후보를 LLM에 보여주고 '진짜 국면 전환' 지점만 고르게 한다. 실패 시 None."""
+    from src.core import llm
+    listing = "\n".join(f"{i}. [{_ts_mmss(t)}] {title}" for i, (t, title) in enumerate(chapters))
+    prompt = (
+        "以下は動画のナレーション区間の一覧(時刻・見出し)です。この中から、内容が実際に大きく転換する"
+        f"箇所だけを{max(3, target - 1)}〜{target}個選び、YouTubeのチャプター(目次)として使います。"
+        "似た話題が続く区間はまとめて1つだけ選び、最初の区間(0番)は必ず含めてください。\n\n"
+        f"{listing}\n\n"
+        '選んだ番号だけをJSON配列で出力(説明・記号なし): 例 {"indices":[0,4,9,15]}')
+    raw = llm.generate_text(prompt, max_tokens=200)
+    if not raw:
+        return None
+    m = re.search(r"\{.*\}", raw, re.S)
+    if not m:
+        return None
+    try:
+        d = json.loads(m.group(0))
+        idxs = sorted({int(i) for i in d.get("indices", []) if 0 <= int(i) < len(chapters)})
+    except Exception:  # noqa: BLE001
+        return None
+    if not idxs:
+        return None
+    if 0 not in idxs:
+        idxs = [0] + idxs
+    if len(idxs) > target + 1:      # 모델이 규칙을 안 지키고 과다 반환한 경우 방어
+        idxs = idxs[: target + 1]
+    return [chapters[i] for i in idxs]
+
+
+def _condense_chapters(chapters: list[tuple], target: int = 4) -> list[tuple]:
+    """★타임스탬프 과다 방지(운영자 확정 · '세네 개 정도가 적당'): 더빙형(`_build_dub_narration`)은
+    원본 발화 문장(Whisper 세그먼트)마다 챕터를 하나씩 만들어, 몇 분짜리 영상에도 수십 개가 생겼다.
+    유튜브 챕터는 '큰 국면 전환'만 표기하는 게 정상이므로 목표 개수(기본 4개)로 줄인다.
+    ① LLM(있으면)에게 전체 후보(시각+제목)를 보여주고 화제가 실제로 바뀌는 지점만 고르게 한다.
+    ② LLM 미가용/실패 시 시간축 균등 다운샘플(전체 구간에 고르게 퍼진 지점, 첫 챕터는 항상 포함)로 폴백."""
+    if len(chapters) <= target:
+        return chapters
+    picked = _condense_chapters_llm(chapters, target)
+    if picked:
+        return picked
+    n = max(3, min(target, len(chapters)))
+    idxs = sorted({round(i * (len(chapters) - 1) / (n - 1)) for i in range(n)}) if n > 1 else [0]
+    if 0 not in idxs:
+        idxs = [0] + idxs
+    return [chapters[i] for i in idxs]
+
+
 def _chapter_block(chapters: list[tuple], offset: float, header: str, titles: list[str] | None = None) -> str:
     """[(t, title)] → '00:00 제목' 줄들(첫 줄은 항상 00:00 · 유튜브 챕터 규칙)."""
     if not chapters:
@@ -1194,7 +1242,9 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
         if not nar:
             nar = _build_long_narration(src, orig_dur, seen, source_topic, work)
         chunks = nar["chunks"]
-        chapters = nar.get("chapters") or []
+        # ★타임스탬프 과다 방지(운영자 확정): 더빙형은 문장마다 챕터가 생겨 폭증하므로 큰 국면 전환
+        #   지점만 남도록 목표 개수(4개)로 줄인다(LLM 우선·실패 시 균등 다운샘플).
+        chapters = _condense_chapters(nar.get("chapters") or [], target=4)
         dur = orig_dur
     else:
         chunks = _jp_script("", desc, mode)
