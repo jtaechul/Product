@@ -253,14 +253,6 @@
     "date": "2026-07-21"
   },
   {
-    "id": "042",
-    "kind": "reels",
-    "common_name_ko": "악어가죽주머니오징어과",
-    "common_name_en": "Cranchiidae",
-    "scientific_name": "Cranchiidae",
-    "date": "2026-07-21"
-  },
-  {
     "id": "043",
     "kind": "reels",
     "common_name_ko": "Redeye gaper",
@@ -351,5 +343,14 @@
     "date": "2026-07-25",
     "has_video": true,
     "youtube_url": "https://youtu.be/-1gfSI8n26Y"
+  },
+  {
+    "id": "042",
+    "kind": "reels",
+    "common_name_ko": "악어가죽주머니오징어과",
+    "common_name_en": "Cranchiidae",
+    "scientific_name": "Cranchiidae",
+    "date": "2026-07-25",
+    "youtube_url": "https://youtu.be/nagxMGm4EBk"
   }
 ]
