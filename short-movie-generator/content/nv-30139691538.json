@@ -1,0 +1,45 @@
+{
+  "id": "nv-30139691538",
+  "kind": "narrate",
+  "created_at": "2026-07-25T02:11:03+00:00",
+  "status": "published",
+  "mode": "longform",
+  "source_url": "https://upload.wikimedia.org/wikipedia/commons/7/7a/First_Look_at_World_War_II_Shipwrecks_Off_NC_Coast.webm",
+  "hook": "海底に眠る沈没潜水艦 U-576",
+  "yt_title": "海底に沈むU-576、潜水艇が捉えた光景",
+  "yt_title_ko": "해저에 가라앉은 U-576, 잠수정이 포착한 광경",
+  "yt_description": "深海に沈むU-576の姿を捉えた貴重な映像です。現代の潜水艇が海底深くへと潜り、その雄大な姿に迫ります。船体に刻まれた歴史、付着物や魚たちが織りなす神秘的な海底の光景をご覧ください。\n\n▼ チャプター(目次)\n00:00 水面に浮かびクレーンで吊り下げられている…\n00:41 海底に沈んだ複数の人工構造物が写っていま…\n01:22 この複数フレームに写っているものは以下の…",
+  "yt_description_ko": "심해에 가라앉은 U-576의 모습을 포착한 귀중한 영상입니다. 현대 잠수정이 해저 깊숙이 잠수하여 그 웅장한 모습에 다가갑니다. 선체에 새겨진 역사, 부착물과 물고기들이 어우러진 신비로운 해저 광경을 감상하세요.\n\n▼ 챕터(목차)\n00:00 수면에 떠 있으며 크레인으로 매달려 있는…\n00:41 해저에 가라앉은 여러 개의 인공 구조물이 찍혀 있습니…\n01:22 이 여러 프레임에 찍힌 것은 다음과 같습니…",
+  "hashtags": [
+    "#U576",
+    "#潜水艦",
+    "#沈没船",
+    "#深海",
+    "#海底",
+    "#水中映像",
+    "#ドキュメンタリー",
+    "#潜水艇",
+    "#歴史",
+    "#探査",
+    "#発見",
+    "#自然"
+  ],
+  "hashtags_ko": [
+    "#U576",
+    "#잠수함",
+    "#침몰선",
+    "#심해",
+    "#해저",
+    "#수중영상",
+    "#다큐멘터리",
+    "#잠수정",
+    "#역사",
+    "#탐사",
+    "#발견",
+    "#자연"
+  ],
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30139691538/narrated_longform_30139691538.mp4",
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30139691538/narrated_longform_30139691538_thumb.jpg"
+  }
+}

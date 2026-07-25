@@ -341,5 +341,14 @@
     "common_name_en": "Wreck Andrea Doria",
     "scientific_name": "Wreck Andrea Doria",
     "date": "2026-07-24"
+  },
+  {
+    "id": "nv-30139691538",
+    "kind": "narrate",
+    "yt_title": "海底に沈むU-576、潜水艇が捉えた光景",
+    "yt_title_ko": "해저에 가라앉은 U-576, 잠수정이 포착한 광경",
+    "mode": "longform",
+    "date": "2026-07-25",
+    "has_video": true
   }
 ]
