@@ -33,21 +33,47 @@ def _candidate(sv: SourceVideo) -> dict:
             "download_url": sv.download_url, "cover": sv.cover}
 
 
+def _merge_naver(svs_info: list) -> dict:
+    """여러 검색어 결과(find_coupang dict들)를 병합 — 후보를 대량 확보(진짜 상품이 들 확률↑, 2026-07-26).
+    첫 결과 기준 real_title, 후보는 제목으로 dedup 병합, 쿠팡 판매는 어느 검색에서든 잡히면 채택."""
+    infos = [i for i in svs_info if i]
+    if not infos:
+        return {}
+    merged = dict(infos[0])
+    cands, have = [], set()
+    for info in infos:
+        for c in (info.get("candidates") or []):
+            key = (c.get("title") or "").strip()
+            if key and key not in have:
+                have.add(key)
+                cands.append(c)
+        if not merged.get("coupang") and info.get("coupang"):   # 쿠팡 판매 보강
+            for k in ("coupang", "coupang_title", "coupang_lprice", "mall", "image"):
+                merged[k] = info.get(k)
+    cands.sort(key=lambda c: 0 if c.get("coupang") else 1)   # 쿠팡 항목 앞으로
+    merged["candidates"] = cands[:10]
+    return merged
+
+
 def enrich_naver(svs: list, finder=find_coupang, matcher=match_naver_by_image) -> None:
     """후보마다 네이버 쇼핑으로 '진짜 상품명 + 쿠팡 판매 여부' 부착(키 없으면 조용히 스킵).
-    검색어는 후보의 첫 쿠팡 검색어(없으면 한국어 설명)를 쓴다. finder/matcher 주입 가능(테스트).
+    ⭐ 여러 쿠팡 검색어로 검색·병합해 후보를 대량 확보(2026-07-26 사용자 확정 — 진짜 상품 일치도↑).
+    finder(단일 검색어)/matcher 주입 가능(테스트).
 
-    ⭐ 비전 자동 대조(2026-07-26 사용자 아이디어): 네이버 후보 이미지들을 틱톡 썸네일과 비교해
-    '같은 상품'을 자동 선택(best_match)하고 확신도(match_confidence)를 붙인다 — 운영자의 ② 기본선택 보조."""
+    ⭐ 비전 자동 대조(사용자 아이디어): 네이버 후보 이미지들을 틱톡 썸네일과 비교해 '같은 상품'을
+    자동 선택(best_match)하고 확신도(match_confidence)를 붙인다 — 운영자의 ② 기본선택 보조."""
     for s in svs:
-        q = (s.coupang_keywords[0] if s.coupang_keywords else None) or s.title_ko or s.title
-        if not q:
+        queries = [q for q in (s.coupang_keywords or [])[:3] if q] or [s.title_ko or s.title]
+        queries = [q for q in queries if q]
+        if not queries:
             continue
-        try:
-            info = finder(q)
-        except Exception as e:
-            print(f"[discover] 네이버 확인 실패: {e}")
-            info = {}
+        results = []
+        for q in queries:
+            try:
+                results.append(finder(q))
+            except Exception as e:
+                print(f"[discover] 네이버 확인 실패({q}): {e}")
+        info = _merge_naver(results)
         if info:
             cands = info.get("candidates") or []
             if cands and s.cover:
@@ -63,25 +89,33 @@ def enrich_naver(svs: list, finder=find_coupang, matcher=match_naver_by_image) -
 
 
 def discover(keyword: str, limit: int = 10, adapter: TikwmAdapter | None = None,
-             terms: list | None = None, page: int = 0) -> list:
-    """한국어 키워드 → (중국어로 확장) → 여러 검색어로 틱톡 검색 → 병합·조회수 정렬 → page 배치 슬라이스.
+             terms: list | None = None, cursor: int = 0, exclude: list | None = None) -> tuple:
+    """한국어 키워드 → (중국어로 확장) → 여러 검색어로 틱톡 검색(커서 페이지네이션) → 병합·조회수 정렬.
 
-    page=0은 조회수 상위 limit개, page=1은 그다음 limit개…('새로고침'으로 이미 본 것 말고 다른
-    고조회수 영상을 받기 위함). 한국어 설명·쿠팡 검색어·네이버 확인은 반환하는 슬라이스에만 적용.
-    terms/adapter 주입 가능(테스트)."""
+    반환 (svs, next_cursor). ⭐ 새로고침이 '진짜 새 영상'을 받도록 tikwm 커서를 넘긴다(2026-07-26 개선:
+    이전엔 cursor 고정이라 늘 같은 상위 풀 → 새로고침해도 그대로였음). exclude(이미 본 source_url)는
+    제외. 한국어 설명·쿠팡 검색어·네이버 확인은 반환 슬라이스에만 적용. terms/adapter 주입 가능(테스트)."""
     ad = adapter or TikwmAdapter()
     terms = terms if terms is not None else expand_zh_terms(keyword)
-    page = max(0, int(page or 0))
-    need = (page + 1) * limit + 10   # 이 배치 슬라이스를 덮을 만큼 풀을 넉넉히
-    pool = {}   # source_url|id → SourceVideo(최고 조회수 유지)
+    seen = set(exclude or [])
+    fetch = limit * 3 + 10   # exclude 후에도 limit 확보하도록 넉넉히
+    pool, next_cursor = {}, 0   # source_url|id → SourceVideo(최고 조회수 유지)
     for t in terms:
-        for sv in ad.search(Seed(kind="keyword", value=t), limit=max(need, 15)):
+        try:
+            svs_t, nxt, _more = ad.search_page(Seed(kind="keyword", value=t), limit=fetch, cursor=cursor)
+        except Exception as e:
+            print(f"[discover] 검색 실패({t}): {e}")
+            svs_t, nxt = [], 0
+        next_cursor = max(next_cursor, int(nxt or 0))
+        for sv in svs_t:
+            if sv.source_url and sv.source_url in seen:   # 이미 본 영상 제외
+                continue
             k = sv.source_url or sv.id
             cur = pool.get(k)
             if cur is None or (sv.view_count or 0) > (cur.view_count or 0):
                 pool[k] = sv
     ordered = sorted(pool.values(), key=lambda s: (s.view_count or 0), reverse=True)
-    svs = ordered[page * limit: page * limit + limit]   # page별 다른(조회수순) 슬라이스
+    svs = ordered[:limit]
     # ⭐ 상품 식별을 '제목 텍스트 추측'이 아니라 '썸네일 이미지'로 한다(2026-07-26 오매칭 개선):
     #   비전이 실제 상품을 보고 정확한 쿠팡 검색어(ko) + 같은상품 중국어어(zh, ③용)를 준다.
     meta = identify_by_image([{"title": s.title or "", "cover": s.cover or ""} for s in svs])
@@ -90,13 +124,14 @@ def discover(keyword: str, limit: int = 10, adapter: TikwmAdapter | None = None,
         s.coupang_keywords = m["keywords"]
         s.zh_terms = m.get("zh") or []
     enrich_naver(svs)   # 네이버 쇼핑으로 진짜 상품명 + 쿠팡 판매 여부(키 없으면 스킵)
-    return svs
+    return svs, next_cursor
 
 
 def build_manifest(keyword: str, row_hash: str, svs: list, terms: list | None = None,
-                   page: int = 0, nonce: str = "") -> dict:
+                   page: int = 0, nonce: str = "", next_cursor: int = 0) -> dict:
     return {"keyword": keyword, "hash": row_hash, "source": "tiktok_tikwm",
             "search_terms": terms or [], "page": int(page or 0), "nonce": str(nonce or ""),
+            "next_cursor": int(next_cursor or 0),   # 새로고침이 이걸 넘겨 tikwm 다음 페이지를 받는다
             "count": len(svs), "candidates": [_candidate(s) for s in svs]}
 
 
@@ -113,18 +148,21 @@ def main(argv=None) -> int:
     ap.add_argument("--keyword", required=True)
     ap.add_argument("--hash", default="manual")
     ap.add_argument("--limit", type=int, default=10)
-    ap.add_argument("--page", type=int, default=0, help="새로고침 배치(0=상위, 1=다음 배치…)")
+    ap.add_argument("--page", type=int, default=0, help="새로고침 배치 라벨(0=상위, 1=다음…) — 실제 페이지는 --cursor")
+    ap.add_argument("--cursor", type=int, default=0, help="tikwm 커서(새로고침 시 이전 next_cursor를 넘겨 진짜 다음 영상)")
+    ap.add_argument("--exclude", default="", help="쉼표구분 source_url(이미 본 영상 제외)")
     ap.add_argument("--nonce", default="", help="폴링 신선도 매칭용(관리자가 넘김)")
     ap.add_argument("--terms", default="", help="쉼표구분 검색어(주면 한국어→중국어 확장 생략 — ③ 홍보영상: 확정 상품의 중국어어로 직접 검색)")
     a = ap.parse_args(argv)
 
     given = [t.strip() for t in (a.terms or "").split(",") if t.strip()]
+    exclude = [u.strip() for u in (a.exclude or "").split(",") if u.strip()]
     # --terms 주면 그걸 그대로(왕복 번역 없이) — ③ 홍보영상은 ①에서 비전 식별한 '같은 상품' 중국어어로 검색.
     terms = given or expand_zh_terms(a.keyword)   # 한국어 → 중국어 검색어(매니페스트에도 기록)
-    svs = discover(a.keyword, limit=a.limit, terms=terms, page=a.page)
-    manifest = build_manifest(a.keyword, a.hash, svs, terms=terms, page=a.page, nonce=a.nonce)
+    svs, next_cursor = discover(a.keyword, limit=a.limit, terms=terms, cursor=a.cursor, exclude=exclude)
+    manifest = build_manifest(a.keyword, a.hash, svs, terms=terms, page=a.page, nonce=a.nonce, next_cursor=next_cursor)
     p = write_manifest(a.hash, manifest)
-    print(f"[discover] 키워드='{a.keyword}' · 배치(page)={a.page} → 검색어(중국어확장)={terms} → 후보 {len(svs)}개 저장: {p}")
+    print(f"[discover] 키워드='{a.keyword}' · 배치={a.page} · cursor={a.cursor}→{next_cursor} · 제외 {len(exclude)}건 → 검색어={terms} → 후보 {len(svs)}개: {p}")
     for i, c in enumerate(manifest["candidates"], 1):
         kws = " / ".join(c.get("coupang_keywords") or []) or "(검색어 없음)"
         nv = c.get("naver") or {}
