@@ -1,0 +1,39 @@
+name: shorts-produce-probe
+
+# 소싱 ⑤ 제작 CI 검증 — produce()가 홍보 클립 2개를 9:16으로 이어붙이고 그 위에 카라오케 자막 +
+# 브랜드바 + 스크림을 얹어 video.mp4(1080x1920 · 오디오 有)를 만드는지 실증한다(moviepy 2.2.1).
+# 로컬에 moviepy/ffmpeg가 없어 produce를 여기서 검증한다.
+# 이 환경은 dispatch API 권한이 없어(403) push 트리거도 지원: requests/produce-probe/*.json.
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main, claude/coupang-shorts-phase-0-k42l1i]
+    paths: ["projects/coupang-shorts-factory/requests/produce-probe/*.json"]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: projects/coupang-shorts-factory
+
+jobs:
+  probe:
+    name: "제작 프로브 (합성+자막+나레이션 트랙)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: projects/coupang-shorts-factory/requirements.txt
+
+      - name: 의존성 설치 (moviepy 2.2.1 등)
+        run: pip install -q -r requirements.txt
+
+      - name: 제작 프로브 실행
+        run: python scripts/produce_probe.py
