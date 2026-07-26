@@ -16,7 +16,7 @@ from pathlib import Path
 from src.sourcing.base import Seed
 from src.sourcing.models import SOURCES_DIR, SourceVideo
 from src.sourcing.tiktok_tikwm import TikwmAdapter
-from src.sourcing.translate import expand_zh_terms, translate_titles_ko
+from src.sourcing.translate import describe_and_keywords_ko, expand_zh_terms
 
 DISCOVER_DIR = SOURCES_DIR / "discover"
 
@@ -24,7 +24,8 @@ DISCOVER_DIR = SOURCES_DIR / "discover"
 def _candidate(sv: SourceVideo) -> dict:
     """관리자 추천 카드가 쓰는 표시용 dict."""
     return {"id": sv.id, "platform": sv.platform, "title": sv.title,
-            "title_ko": sv.title_ko, "view_count": sv.view_count, "uploader": sv.uploader,
+            "title_ko": sv.title_ko, "coupang_keywords": list(sv.coupang_keywords or []),
+            "view_count": sv.view_count, "uploader": sv.uploader,
             "duration": sv.duration, "source_url": sv.source_url,
             "download_url": sv.download_url, "cover": sv.cover}
 
@@ -43,9 +44,10 @@ def discover(keyword: str, limit: int = 10, adapter: TikwmAdapter | None = None,
             if cur is None or (sv.view_count or 0) > (cur.view_count or 0):
                 pool[k] = sv
     svs = sorted(pool.values(), key=lambda s: (s.view_count or 0), reverse=True)[:limit]
-    ko = translate_titles_ko([s.title or "" for s in svs])   # 카드용 한국어 설명
-    for s, k in zip(svs, ko):
-        s.title_ko = k
+    meta = describe_and_keywords_ko([s.title or "" for s in svs])   # 카드용 한국어 설명 + 쿠팡 검색어
+    for s, m in zip(svs, meta):
+        s.title_ko = m["ko"]
+        s.coupang_keywords = m["keywords"]
     return svs
 
 
@@ -76,7 +78,9 @@ def main(argv=None) -> int:
     p = write_manifest(a.hash, manifest)
     print(f"[discover] 키워드='{a.keyword}' → 검색어(중국어확장)={terms} → 후보 {len(svs)}개 저장: {p}")
     for i, c in enumerate(manifest["candidates"], 1):
-        print(f"  {i}. 조회 {(c['view_count'] or 0):>10,} · {str(c.get('title_ko') or c['title'])[:44]} · @{c['uploader']}")
+        kws = " / ".join(c.get("coupang_keywords") or []) or "(검색어 없음)"
+        print(f"  {i}. 조회 {(c['view_count'] or 0):>10,} · {str(c.get('title_ko') or c['title'])[:40]} · @{c['uploader']}")
+        print(f"      쿠팡 검색어: {kws}")
     if not svs:
         print("[discover] 경고: 후보 0개 (tikwm 응답 없음/차단) — 관리자에서 재시도/다른 키워드 안내.")
     return 0

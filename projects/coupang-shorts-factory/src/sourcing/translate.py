@@ -77,6 +77,39 @@ def expand_zh_terms(korean_keyword: str, call=None) -> list:
         return [kw]
 
 
+def describe_and_keywords_ko(titles: list, call=None) -> list:
+    """영상 제목/설명(주로 중국어) → 각 항목 [{"ko": 한 줄 설명, "keywords": [쿠팡 검색어 2~4개]}].
+
+    §1(발굴) 카드에 '한국어 설명 + 운영자가 쿠팡에서 검색할 한국어 상품 검색어'를 함께 붙인다.
+    개수·순서 보존. 키 없음/실패 시 폴백(ko=원문, keywords=[]) — 발굴은 계속 동작.
+    """
+    titles = [("" if t is None else str(t)) for t in (titles or [])]
+    if not titles:
+        return []
+    fallback = [{"ko": t, "keywords": []} for t in titles]
+    if call is None and not gemini_key():
+        return list(fallback)
+    system = ("너는 한국 쇼핑 쇼츠 소싱 도우미다. 틱톡 쇼핑 영상의 제목/설명(주로 중국어)을 보고 "
+              "① 무슨 상품·무슨 내용인지 한국어 한 줄 설명 ② 그 상품을 한국 '쿠팡'에서 검색할 "
+              "한국어 상품 검색어 2~4개를 뽑는다. 검색어는 상품의 '종류·핵심기능' 위주의 짧은 명사구로 "
+              "(브랜드·과장·이모지·해시태그·'링크 클릭' 같은 판매유도 문구 제외). JSON만 출력.")
+    numbered = "\n".join(f"{i}. {t}" for i, t in enumerate(titles))
+    prompt = (f"각 항목을 처리하라(입력 순서·개수 그대로):\n{numbered}\n"
+              '출력 JSON: {"items": [{"ko": "한 줄 설명", "keywords": ["검색어1", "검색어2"]}, ...]}')
+    try:
+        items = _gemini_json(prompt, system, 2048, call=call).get("items") or []
+        out = []
+        for i in range(len(titles)):
+            it = items[i] if i < len(items) and isinstance(items[i], dict) else {}
+            ko = str(it.get("ko") or "").strip() or titles[i]
+            kws = [str(k).strip() for k in (it.get("keywords") or []) if str(k).strip()][:4]
+            out.append({"ko": ko, "keywords": kws})
+        return out
+    except Exception as e:
+        print(f"[translate] 설명·검색어 추출 실패: {e} → 원문 폴백")
+        return list(fallback)
+
+
 def translate_titles_ko(titles: list, call=None) -> list:
     """영상 제목/설명 → 한국어 한 줄 설명(개수·순서 보존, 실패 시 원문 폴백)."""
     titles = [("" if t is None else str(t)) for t in (titles or [])]

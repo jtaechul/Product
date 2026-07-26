@@ -11,7 +11,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.sourcing.discover import build_manifest, discover, write_manifest      # noqa: E402
 from src.sourcing.tiktok_tikwm import TikwmAdapter, TikwmClient                 # noqa: E402
-from src.sourcing.translate import expand_zh_terms, translate_titles_ko         # noqa: E402
+from src.sourcing.translate import (                                            # noqa: E402
+    describe_and_keywords_ko, expand_zh_terms, translate_titles_ko)
 
 _fails = []
 
@@ -45,9 +46,11 @@ def test_discover_terms_and_ko():
     check(len(svs) == 2, f"후보 2개 ({len(svs)})")
     check(svs[0].view_count == 88000, "조회수 상위 먼저")
     check(all(s.title_ko for s in svs), "title_ko 채워짐(폴백이라도)")
+    check(all(isinstance(s.coupang_keywords, list) for s in svs), "coupang_keywords 리스트(폴백 빈배열)")
     m = build_manifest("꿀템", "h", svs, terms=["厨房好物"])
     c0 = m["candidates"][0]
-    check("title_ko" in c0 and m["search_terms"] == ["厨房好物"], "매니페스트에 title_ko·search_terms")
+    check("title_ko" in c0 and "coupang_keywords" in c0 and m["search_terms"] == ["厨房好物"],
+          "매니페스트에 title_ko·coupang_keywords·search_terms")
 
 
 def test_write_manifest():
@@ -87,8 +90,28 @@ def test_translate_injected():
     check(out == ["하나만", "B"], "개수 불일치 → 부족분 원문 폴백")
 
 
+def test_describe_and_keywords():
+    print("[T5] 설명+쿠팡검색어 동시 추출(Gemini 주입)")
+    def call_items(body):
+        payload = ('{"items":[{"ko":"휴대용 미니 다지기","keywords":["미니 다지기","휴대용 채칼"]},'
+                   '{"ko":"회전 고기 슬라이서","keywords":["고기 슬라이서"]}]}')
+        return {"candidates": [{"content": {"parts": [{"text": payload}]}}]}
+    out = describe_and_keywords_ko(["便携绞菜器", "旋转切肉机"], call=call_items)
+    check(out[0]["ko"] == "휴대용 미니 다지기" and out[0]["keywords"] == ["미니 다지기", "휴대용 채칼"],
+          "0번 설명·검색어")
+    check(out[1]["keywords"] == ["고기 슬라이서"], "1번 검색어")
+
+    # 키 없음/개수불일치 → 폴백(ko=원문, keywords=[])
+    def call_short(body):
+        return {"candidates": [{"content": {"parts": [{"text": '{"items":[{"ko":"하나"}]}'}]}}]}
+    out2 = describe_and_keywords_ko(["A", "B"], call=call_short)
+    check(out2[0] == {"ko": "하나", "keywords": []} and out2[1] == {"ko": "B", "keywords": []},
+          "개수 부족 → 뒤 항목 원문 폴백")
+
+
 if __name__ == "__main__":
-    for fn in [test_discover_terms_and_ko, test_write_manifest, test_empty, test_translate_injected]:
+    for fn in [test_discover_terms_and_ko, test_write_manifest, test_empty,
+               test_translate_injected, test_describe_and_keywords]:
         fn()
     print()
     if _fails:
