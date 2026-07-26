@@ -5,92 +5,262 @@
   "search_terms": [
     "清洁神器",
     "懒人清洁",
-    "居家好物清洁",
-    "卫生间清洁神器",
-    "厨房清洁神器"
+    "居家清洁好物",
+    "厨房清洁用品",
+    "卫生间清洁神器"
   ],
+  "page": 0,
+  "nonce": "",
   "count": 3,
   "candidates": [
     {
-      "id": "sv_8bbb24ffc04c",
+      "id": "sv_a741cfa6757d",
       "platform": "tiktok",
       "title": "Kitchen Spray Cleaner and Degreaser,Antibactrial All Purspose Cleaner for Kitchens,Counter tops,Ovens,and Appliances#TikTokshop #TikTokShopDealsforYouDays #FlyCleanse#TikTokShopStockUp#SummerWins",
-      "title_ko": "주방용 다목적 스프레이 클리너 및 기름때 제거제",
+      "title_ko": "주방 기름때 제거 및 다목적 세정제",
       "coupang_keywords": [
-        "주방 스프레이 클리너",
+        "주방 세정제",
         "기름때 제거제",
-        "다목적 세정제"
+        "다목적 클리너",
+        "주방 클리너"
+      ],
+      "zh_terms": [
+        "厨房清洁剂",
+        "油污净",
+        "多功能清洁剂"
       ],
       "naver": {
-        "query": "주방 스프레이 클리너",
-        "real_title": "핑크스터프 미라클 멀티클리너 스프레이 750ml, 1개",
-        "lprice": "13080",
+        "query": "주방 세정제",
+        "real_title": "은나노스텝 시즌3 다용도 다목적 세정제 클리너 기름때 찌든때 제거 냉장고 전자레인지 오븐 주방 렌지 후드 화장실 인덕션 청소 세척 (550ml 1개 + 1100ml 리필 3개)",
+        "lprice": "29790",
         "coupang": false,
-        "coupang_title": "핑크스터프 미라클 멀티클리너 스프레이 750ml, 1개",
+        "coupang_title": "은나노스텝 시즌3 다용도 다목적 세정제 클리너 기름때 찌든때 제거 냉장고 전자레인지 오븐 주방 렌지 후드 화장실 인덕션 청소 세척 (550ml 1개 + 1100ml 리필 3개)",
         "coupang_lprice": null,
-        "mall": "네이버",
-        "image": "https://shopping-phinf.pstatic.net/main_5810565/58105656484.20260514122415.jpg"
+        "mall": "생활감동 세제맛집",
+        "image": "https://shopping-phinf.pstatic.net/main_8744654/87446545663.6.jpg",
+        "candidates": [
+          {
+            "title": "은나노스텝 시즌3 다용도 다목적 세정제 클리너 기름때 찌든때 제거 냉장고 전자레인지 오븐 주방 렌지 후드 화장실 인덕션 청소 세척 (550ml 1개 + 1100ml 리필 3개)",
+            "image": "https://shopping-phinf.pstatic.net/main_8744654/87446545663.6.jpg",
+            "mall": "생활감동 세제맛집",
+            "lprice": "29790",
+            "link": "https://smartstore.naver.com/main/products/9902043390",
+            "coupang": false
+          },
+          {
+            "title": "은나노스텝 시즌3 다용도 다목적 세정제 클리너 기름때 찌든때 제거 냉장고 전자레인지 오븐 주방 렌지 후드 화장실 인덕션 청소 세척 (550ml 1개+1100ml리필 1개)",
+            "image": "https://shopping-phinf.pstatic.net/main_8744654/87446542302.3.jpg",
+            "mall": "생활감동 세제맛집",
+            "lprice": "15900",
+            "link": "https://smartstore.naver.com/main/products/9902040029",
+            "coupang": false
+          },
+          {
+            "title": "생활공작소 주방세제 자몽향 4L, 2개",
+            "image": "https://shopping-phinf.pstatic.net/main_5192919/51929191507.20241213204944.jpg",
+            "mall": "네이버",
+            "lprice": "22900",
+            "link": "https://search.shopping.naver.com/catalog/51929191507",
+            "coupang": false
+          },
+          {
+            "title": "태원 오썸 비건 주방세제 레몬, 1L, 1개",
+            "image": "https://shopping-phinf.pstatic.net/main_6096201/60962017574.20260723142048.jpg",
+            "mall": "네이버",
+            "lprice": "6900",
+            "link": "https://search.shopping.naver.com/catalog/60962017574",
+            "coupang": false
+          },
+          {
+            "title": "주방세제 과일세척 대용량 클린부스트 주방세제 1000ml",
+            "image": "https://shopping-phinf.pstatic.net/main_8932869/89328699625.4.jpg",
+            "mall": "리피트인",
+            "lprice": "6900",
+            "link": "https://smartstore.naver.com/main/products/11784189038",
+            "coupang": false
+          },
+          {
+            "title": "1+1 생활감동 다용도 다목적 세정제 클리너 기름때 찌든때 제거 냉장고 전자레인지 오븐 주방 후드 화장실 인덕션 청소 세척 500ml",
+            "image": "https://shopping-phinf.pstatic.net/main_8780256/87802561773.3.jpg",
+            "mall": "생활감동 세제맛집",
+            "lprice": "9900",
+            "link": "https://smartstore.naver.com/main/products/10258058050",
+            "coupang": false
+          }
+        ]
       },
-      "view_count": 38530483,
+      "view_count": 38564707,
       "uploader": "Alyssa",
       "duration": 30,
       "source_url": "https://www.tiktok.com/@honey_getvq0z/video/7649586788775759117",
-      "download_url": "https://v45.tiktokcdn-us.com/66a21c12a2bb9e9aff736aa844613512/6a663be6/video/tos/useast5/tos-useast5-ve-0068c002-tx/owpiaPGEIpiZg3oBrMKysoiUBHQ4ojtAEEaz1/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1639&ft=aEKfuqT0m0LPD12I1lnI3wUX_KBFMeF~O5&mime_type=video_mp4&rc=Ojg7ZmllM2c5MzVmNjQ5N0BpajtndHE5cjpmOzMzZzczNEAwLTVeM15fXi8xLy8zXjM2YSNuaWFgMmQ0aGhhLS1kMS9zcw%3D%3D&vvpl=1&l=20260726105431B74C506F5069E1D4DD48&btag=e0008d000",
-      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/osfcARXRMqTpQgEGlW1FzEBDBfKqKQRRouSADD~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=dc52b3e5&x-expires=1785146400&x-signature=q8CBTvvgFP%2BqrbrOk6LhQgAwI%2Bw%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+      "download_url": "https://v45.tiktokcdn-us.com/1f5ea0f1da5014d1feca467947ee9d93/6a6666d0/video/tos/useast5/tos-useast5-ve-0068c002-tx/owpiaPGEIpiZg3oBrMKysoiUBHQ4ojtAEEaz1/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1639&ft=73kDHDyjNMRVQQUnU~d-sdOKhmZqYlkj_1-~hWLrK&mime_type=video_mp4&rc=Ojg7ZmllM2c5MzVmNjQ5N0BpajtndHE5cjpmOzMzZzczNEAwLTVeM15fXi8xLy8zXjM2YSNuaWFgMmQ0aGhhLS1kMS9zcw%3D%3D&vvpl=1&l=20260726135737B56B22150904D4B40FC4&btag=e0008d000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/osfcARXRMqTpQgEGlW1FzEBDBfKqKQRRouSADD~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=21a9635e&x-expires=1785157200&x-signature=hs4ZypOHM5okLG6ZZitntB%2FgE8M%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     },
     {
-      "id": "sv_660a4aa540e2",
+      "id": "sv_4e0775b2e222",
       "platform": "tiktok",
-      "title": "TikTok finds.#fyp #asmr #goodthing #kitchencleaning #CleanTok #kitchencleaningfoam #foamcleaner #greasecleaner #foryou #tiktokmademebuyit ",
-      "title_ko": "주방 기름때 제거용 거품 클리너",
+      "title": "Greenhouses, tiles, pot bottoms, ovens... One bottle takes care of the entire kitchen! #TikTokShop #fyp I #Useful #CleaningTools #SpringCleaning ",
+      "title_ko": "찌든 때 제거용 주방 세척 스프레이",
       "coupang_keywords": [
-        "주방 거품 클리너",
-        "기름때 세정제",
-        "주방 청소용품"
+        "주방 세척제",
+        "기름때 제거제",
+        "냄비 세척 스프레이",
+        "강력 세정제"
+      ],
+      "zh_terms": [
+        "厨房清洁剂",
+        "油污净",
+        "锅具清洁喷雾"
       ],
       "naver": {
-        "query": "주방 거품 클리너",
-        "real_title": "다기능 강력 거품 청소제 다기능 거품 클리너 자동차 직물시트 청소 스프레이",
-        "lprice": "13420",
+        "query": "주방 세척제",
+        "real_title": "애경산업 트리오 항균 주방세제 13.6L, 1개",
+        "lprice": "12110",
         "coupang": false,
-        "coupang_title": "다기능 강력 거품 청소제 다기능 거품 클리너 자동차 직물시트 청소 스프레이",
+        "coupang_title": "애경산업 트리오 항균 주방세제 13.6L, 1개",
         "coupang_lprice": null,
-        "mall": "혜제트레이드 주식회사",
-        "image": "https://shopping-phinf.pstatic.net/main_9116623/91166236059.jpg"
+        "mall": "네이버",
+        "image": "https://shopping-phinf.pstatic.net/main_5192951/51929510430.20241213221153.jpg",
+        "candidates": [
+          {
+            "title": "애경산업 트리오 항균 주방세제 13.6L, 1개",
+            "image": "https://shopping-phinf.pstatic.net/main_5192951/51929510430.20241213221153.jpg",
+            "mall": "네이버",
+            "lprice": "12110",
+            "link": "https://search.shopping.naver.com/catalog/51929510430",
+            "coupang": false
+          },
+          {
+            "title": "암웨이 디쉬 드랍스 식기세정제 1L, 1개",
+            "image": "https://shopping-phinf.pstatic.net/main_5192925/51929251248.20241213210801.jpg",
+            "mall": "네이버",
+            "lprice": "9900",
+            "link": "https://search.shopping.naver.com/catalog/51929251248",
+            "coupang": false
+          },
+          {
+            "title": "멜라루카 레몬 브라이트 주방용 세척제 리필 946ml, 1개",
+            "image": "https://shopping-phinf.pstatic.net/main_5192912/51929124094.20241213204138.jpg",
+            "mall": "네이버",
+            "lprice": "12340",
+            "link": "https://search.shopping.naver.com/catalog/51929124094",
+            "coupang": false
+          },
+          {
+            "title": "엘지생활건강 세이프 천연미네랄 주방세제 리필 1L, 1개",
+            "image": "https://shopping-phinf.pstatic.net/main_5192919/51929191839.20241213204532.jpg",
+            "mall": "네이버",
+            "lprice": "5900",
+            "link": "https://search.shopping.naver.com/catalog/51929191839",
+            "coupang": false
+          },
+          {
+            "title": "1+1 감성리빙 칼슘파우더 과일 세정제 야채 세척제 200g",
+            "image": "https://shopping-phinf.pstatic.net/main_8984936/89849363927.1.jpg",
+            "mall": "감성리빙",
+            "lprice": "12800",
+            "link": "https://smartstore.naver.com/main/products/12304853210",
+            "coupang": false
+          },
+          {
+            "title": "엘지생활건강 퐁퐁 베이킹소다 주방세제 3L, 4개",
+            "image": "https://shopping-phinf.pstatic.net/main_5192958/51929589899.20241213221937.jpg",
+            "mall": "네이버",
+            "lprice": "19900",
+            "link": "https://search.shopping.naver.com/catalog/51929589899",
+            "coupang": false
+          }
+        ]
       },
-      "view_count": 29727602,
-      "uploader": "Sophie",
+      "view_count": 9693135,
+      "uploader": "vds",
+      "duration": 48,
+      "source_url": "https://www.tiktok.com/@bfsdgbsdf54/video/7633262907412860191",
+      "download_url": "https://v45.tiktokcdn-us.com/b6e3416c9bd971cd768b8e9c60978379/6a6666e1/video/tos/useast8/tos-useast8-ve-0068c002-tx2/ocBmReDz7bsfwQkLuB7RVkvEgckFQEpjEIAAGg/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1442&ft=aEKfuqT0m0LPD12m5enI3wUKHv3FMeF~O5&mime_type=video_mp4&rc=Zmc7NjtpZWQ5aDdlOzk6NkBpM2pxZGw5cmVmOjMzaTczNEBjYl9eMjYtNWAxNV8xNmNfYSM0MDEtMmRzbGthLS1kMTJzcw%3D%3D&vvpl=1&l=202607261357368651E118C9F502B4F74B&btag=e0008d000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/o4sBVFDiREEGhQ4v9uEQRwBAzCjAEkeL7pfcgP~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=5a25202b&x-expires=1785157200&x-signature=zwS3HEAZR84xSlMypDD8pJBXl9I%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&sc=feed_cover&biz_tag=tt_video&s=SEARCH"
+    },
+    {
+      "id": "sv_6d1736cfbae9",
+      "platform": "tiktok",
+      "title": "Easy to clean kitchen😏#gadgets #coolstuff #coolgadgets #amazonfinds #fyp ",
+      "title_ko": "주방 싱크대 물기 제거용 미니 스크래퍼",
+      "coupang_keywords": [
+        "싱크대 물기 제거기",
+        "미니 스크래퍼",
+        "주방 물기 닦이",
+        "욕실 물기 제거"
+      ],
+      "zh_terms": [
+        "厨房刮水器",
+        "迷你刮板",
+        "台面刮水器"
+      ],
+      "naver": {
+        "query": "싱크대 물기 제거기",
+        "real_title": "3단 롱스퀴지 욕실 유리창청소 창문닦기 스퀴즈 스쿼지 물기제거기 스키지 물끌개 물긁개305",
+        "lprice": "27900",
+        "coupang": false,
+        "coupang_title": "3단 롱스퀴지 욕실 유리창청소 창문닦기 스퀴즈 스쿼지 물기제거기 스키지 물끌개 물긁개305",
+        "coupang_lprice": null,
+        "mall": "홈도가",
+        "image": "https://shopping-phinf.pstatic.net/main_9088827/90888276035.2.jpg",
+        "candidates": [
+          {
+            "title": "3단 롱스퀴지 욕실 유리창청소 창문닦기 스퀴즈 스쿼지 물기제거기 스키지 물끌개 물긁개305",
+            "image": "https://shopping-phinf.pstatic.net/main_9088827/90888276035.2.jpg",
+            "mall": "홈도가",
+            "lprice": "27900",
+            "link": "https://smartstore.naver.com/main/products/13343765703",
+            "coupang": false
+          },
+          {
+            "title": "스텐 욕실스퀴지 유리창청소 창문닦기 스퀴즈 스쿼지 물기제거기 물기제거 스키지 물끌개 물긁개",
+            "image": "https://shopping-phinf.pstatic.net/main_8962590/89625908067.1.jpg",
+            "mall": "홈도가",
+            "lprice": "12900",
+            "link": "https://smartstore.naver.com/main/products/12081397362",
+            "coupang": false
+          },
+          {
+            "title": "욕실 주방 스퀴지 스펀지 물기제거 유리 창문 싱크대 청소 미니 클리너 밀대 걸레",
+            "image": "https://shopping-phinf.pstatic.net/main_8990034/89900347481.1.jpg",
+            "mall": "스탠다드엔",
+            "lprice": "5400",
+            "link": "https://smartstore.naver.com/main/products/12355836764",
+            "coupang": false
+          },
+          {
+            "title": "3세대 스펀지 스퀴지 화장실 욕실 주방 청소 물기제거 유리창문 싱크대클리너 밀대 걸레 빌쓰",
+            "image": "https://shopping-phinf.pstatic.net/main_9117996/91179969554.jpg",
+            "mall": "빌쓰 BILSSEU",
+            "lprice": "2900",
+            "link": "https://smartstore.naver.com/main/products/13635458873",
+            "coupang": false
+          },
+          {
+            "title": "싱크대물기제거기 주방스퀴지 싱크대물기제거 거울스퀴지",
+            "image": "https://shopping-phinf.pstatic.net/main_9062979/90629793773.jpg",
+            "mall": "소온서온",
+            "lprice": "6500",
+            "link": "https://smartstore.naver.com/main/products/13085282681",
+            "coupang": false
+          },
+          {
+            "title": "라미스홈 주방 싱크대 욕실 화장실 청소 정리 미니 스퀴지 물기제거 사각 스퀴지 스퀴즈",
+            "image": "https://shopping-phinf.pstatic.net/main_8186939/81869399466.10.jpg",
+            "mall": "라미스홈",
+            "lprice": "3300",
+            "link": "https://smartstore.naver.com/main/products/4324877533",
+            "coupang": false
+          }
+        ]
+      },
+      "view_count": 6294695,
+      "uploader": "airlandolists",
       "duration": 10,
-      "source_url": "https://www.tiktok.com/@sophie.goodthing/video/7199553388034493701",
-      "download_url": "https://v45.tiktokcdn-us.com/f818a342e700524238dc4f86559f8c8f/6a663bd2/video/tos/useast2a/tos-useast2a-pve-0068/osKpQpNDf4IU0C7HAVQUj85eUbLpRnISCnDCge/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1708&ft=aEKfuqT0m0LPD12I1lnI3wUX_KBFMeF~O5&mime_type=video_mp4&rc=OTU4aWZnaDk5PDw3ZTs4Z0Bpam5taTg6Znh5aTMzNzczM0BjMDBhMzQyNjIxNGJjMTQwYSMucDMycjQwM2hgLS1kMTZzcw%3D%3D&vvpl=1&l=20260726105431B74C506F5069E1D4DD48&btag=e000b5000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-maliva-p-0068/afdb27ff48174376beab07453ae73d11_1676276659~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=31c67e88&x-expires=1785146400&x-signature=eUg9XD3OcHYW%2Fytjwci2ytnikYQ%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
-    },
-    {
-      "id": "sv_f72b4a4a4755",
-      "platform": "tiktok",
-      "title": "#asmr #asmrvideo #organizedhome #minigoods #goodthings #unboxing #cleaning #CleanTok #cleaningtiktok #foryou #fyp #fypシ゚ ",
-      "title_ko": "정리 및 청소용 미니 상품 언박싱",
-      "coupang_keywords": [
-        "정리용품",
-        "청소용품",
-        "미니 청소도구"
-      ],
-      "naver": {
-        "query": "정리용품",
-        "real_title": "리빙박스 수납 정리함 옷 수납박스 펜트리 수납함 5호",
-        "lprice": "6900",
-        "coupang": false,
-        "coupang_title": "리빙박스 수납 정리함 옷 수납박스 펜트리 수납함 5호",
-        "coupang_lprice": null,
-        "mall": "메디퓨어",
-        "image": "https://shopping-phinf.pstatic.net/main_8472888/84728889135.6.jpg"
-      },
-      "view_count": 22500486,
-      "uploader": "Lin Wang",
-      "duration": 265,
-      "source_url": "https://www.tiktok.com/@lin.wang92/video/7482186999202467118",
-      "download_url": "https://v16m.tiktokcdn-us.com/32377ff70ece9f50dd27eac78253df65/6a663ccf/video/tos/useast5/tos-useast5-ve-0068c004-tx/o8ICPHRDECGBANAPgWGICt9sUkLejrFIVelrev/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1463&ft=aEKfuqT0m0LPD12-1lnI3wUCwZnFMeF~O5&mime_type=video_mp4&rc=NGRmNjtnaDk4PDozODxmOUBpamtnaWo5cjQ0eTMzZzczNEAvX2MtLzM0Xy4xNl5iYTFgYSNeLW5xMmRzLl9gLS1kMS9zcw%3D%3D&vvpl=1&l=20260726105429B9F99457E896EEBE95C3&btag=e00098000",
-      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/o0YQIVF33fSHjR1WDBDAIC1hR1ngEBzExhETf6~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=3f8d642a&x-expires=1785146400&x-signature=0wYyAGhV5mDvQP2EzEgi%2F3lRkD0%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&s=SEARCH&sc=feed_cover&biz_tag=tt_video"
+      "source_url": "https://www.tiktok.com/@airlandolists/video/7537701539553496334",
+      "download_url": "https://v16m.tiktokcdn-us.com/37223f409f1bd4f48981d7083d074f80/6a6666bb/video/tos/useast5/tos-useast5-pve-0068-tx/ocgDb5k8jRQ3MkHBCeM2ecXp87VNAAaQkflCII/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=1122&ft=aEKfuqT0m0LPD12m5enI3wUKHv3FMeF~O5&mime_type=video_mp4&rc=NDhoaTdkPDo1NDw3OjM1Z0BpMzR4O3U5cjpuNTMzZzczNEBjNDBiYmM0Xy8xYjYuM141YSNtcm9eMmQ0a2FhLS1kMS9zcw%3D%3D&vvpl=1&l=202607261357368651E118C9F502B4F74B&btag=e000b0000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/ooVHecRbBSjDQ5kIXpAewQQMbANkNceCkr8J9a~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=b3a1bcd4&x-expires=1785157200&x-signature=tsM5tQLPaNIhfsv4UWnv%2BmVL9nw%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     }
   ]
 }
