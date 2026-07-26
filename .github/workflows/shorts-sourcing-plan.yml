@@ -1,0 +1,75 @@
+name: shorts-sourcing-plan
+
+# 소싱 ③b — 방향 3안 게이트 + 대본·제목·설명·해시태그 생성.
+#   mode=directions : 상품/홍보영상 자료에서 차별점 3안 추출(⭐ 절대 게이트) → data/mechanism/{hash}.json
+#   mode=script     : 방향이 '확정'된 경우에만 대본 생성 → data/sources/plan/{hash}.json
+# 텍스트 전용(Gemini/Claude). 이 환경은 dispatch API 권한이 없어(403) push 트리거도 지원:
+#   requests/sourcing-plan/*.json (produce의 requests/*.json 글롭과 하위폴더라 충돌 없음).
+
+on:
+  workflow_dispatch:
+    inputs:
+      hash:
+        description: "상품 해시(product/{hash}.json)"
+        required: true
+      mode:
+        description: "directions(3안 추출) | script(대본 생성)"
+        default: "directions"
+      nonce:
+        description: "폴링 신선도 매칭용(관리자가 커밋 메시지로 확인)"
+        default: ""
+  push:
+    branches: [main, claude/coupang-shorts-phase-0-k42l1i]
+    paths: ["projects/coupang-shorts-factory/requests/sourcing-plan/*.json"]
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: projects/coupang-shorts-factory
+
+jobs:
+  plan:
+    name: "소싱 방향·대본 (3안 게이트)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}   # 결과 커밋을 위해 브랜치로 체크아웃(비-detached)
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 파라미터 결정 (dispatch 입력 / requests/sourcing-plan/*.json)
+        id: p
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            HS='${{ inputs.hash }}'; MD='${{ inputs.mode }}'; NC='${{ inputs.nonce }}'
+          else
+            f=$(ls -t requests/sourcing-plan/*.json | head -1)
+            HS=$(jq -r '.hash' "$f"); MD=$(jq -r '.mode // "directions"' "$f"); NC=$(jq -r '.nonce // ""' "$f")
+          fi
+          { echo "hash=$HS"; echo "mode=${MD:-directions}"; echo "nonce=$NC"; } >> "$GITHUB_OUTPUT"
+
+      - name: 의존성 설치 (텍스트 생성용 — requests + pyyaml만, 렌더 의존성 불필요)
+        run: pip install -q requests pyyaml
+
+      - name: 방향/대본 실행 (텍스트 전용 — Gemini 기본, 키 없으면 게이트 스텁)
+        env:
+          SHORTS_GEMINI_API_KEY: ${{ secrets.SHORTS_GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SHORTS_ANTHROPIC_API_KEY: ${{ secrets.SHORTS_ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python -m src.sourcing.plan --hash "${{ steps.p.outputs.hash }}" --mode "${{ steps.p.outputs.mode }}"
+
+      - name: 결과 커밋 (관리자 폴링이 읽음, 실패해도 로그로 확인)
+        continue-on-error: true
+        run: |
+          git config user.name "Claude"
+          git config user.email "noreply@anthropic.com"
+          git add data/mechanism/*.json data/sources/plan/*.json 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "sourcing(plan): ${{ steps.p.outputs.mode }} ${{ steps.p.outputs.hash }} nonce=${{ steps.p.outputs.nonce }} [skip ci]"
+          git push || true
