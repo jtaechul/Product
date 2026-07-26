@@ -52,7 +52,10 @@ jobs:
           fi
           { echo "keyword=$KW"; echo "hash=$HS"; echo "limit=$LM"; } >> "$GITHUB_OUTPUT"
 
-      - name: 발굴 실행 (stdlib만 — 의존성 설치 불필요)
+      - name: 발굴 실행 (stdlib만 — 의존성 설치 불필요; Gemini는 번역·중국어확장용, 키 없으면 원문 폴백)
+        env:
+          SHORTS_GEMINI_API_KEY: ${{ secrets.SHORTS_GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python -m src.sourcing.discover --keyword "${{ steps.p.outputs.keyword }}" --hash "${{ steps.p.outputs.hash }}" --limit "${{ steps.p.outputs.limit }}"
 
       - name: 추천 매니페스트 커밋 (관리자 카드가 읽음, 실패해도 로그로 확인)

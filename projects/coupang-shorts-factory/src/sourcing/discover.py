@@ -16,6 +16,7 @@ from pathlib import Path
 from src.sourcing.base import Seed
 from src.sourcing.models import SOURCES_DIR, SourceVideo
 from src.sourcing.tiktok_tikwm import TikwmAdapter
+from src.sourcing.translate import expand_zh_terms, translate_titles_ko
 
 DISCOVER_DIR = SOURCES_DIR / "discover"
 
@@ -23,20 +24,35 @@ DISCOVER_DIR = SOURCES_DIR / "discover"
 def _candidate(sv: SourceVideo) -> dict:
     """관리자 추천 카드가 쓰는 표시용 dict."""
     return {"id": sv.id, "platform": sv.platform, "title": sv.title,
-            "view_count": sv.view_count, "uploader": sv.uploader,
+            "title_ko": sv.title_ko, "view_count": sv.view_count, "uploader": sv.uploader,
             "duration": sv.duration, "source_url": sv.source_url,
             "download_url": sv.download_url, "cover": sv.cover}
 
 
-def discover(keyword: str, limit: int = 10, adapter: TikwmAdapter | None = None) -> list:
-    """키워드 → 틱톡 후보 SourceVideo 리스트(조회수 상위). adapter 주입 가능(테스트)."""
+def discover(keyword: str, limit: int = 10, adapter: TikwmAdapter | None = None,
+             terms: list | None = None) -> list:
+    """한국어 키워드 → (중국어로 확장) → 여러 검색어로 틱톡 검색 → 병합·조회수 상위 → 한국어 설명 번역.
+    terms 주입 시 그 검색어들을 쓴다(없으면 keyword를 중국어로 확장). adapter/terms 주입 가능(테스트)."""
     ad = adapter or TikwmAdapter()
-    return ad.search(Seed(kind="keyword", value=keyword), limit=limit)
+    terms = terms if terms is not None else expand_zh_terms(keyword)
+    pool = {}   # source_url|id → SourceVideo(최고 조회수 유지)
+    for t in terms:
+        for sv in ad.search(Seed(kind="keyword", value=t), limit=max(limit, 15)):
+            k = sv.source_url or sv.id
+            cur = pool.get(k)
+            if cur is None or (sv.view_count or 0) > (cur.view_count or 0):
+                pool[k] = sv
+    svs = sorted(pool.values(), key=lambda s: (s.view_count or 0), reverse=True)[:limit]
+    ko = translate_titles_ko([s.title or "" for s in svs])   # 카드용 한국어 설명
+    for s, k in zip(svs, ko):
+        s.title_ko = k
+    return svs
 
 
-def build_manifest(keyword: str, row_hash: str, svs: list) -> dict:
+def build_manifest(keyword: str, row_hash: str, svs: list, terms: list | None = None) -> dict:
     return {"keyword": keyword, "hash": row_hash, "source": "tiktok_tikwm",
-            "count": len(svs), "candidates": [_candidate(s) for s in svs]}
+            "search_terms": terms or [], "count": len(svs),
+            "candidates": [_candidate(s) for s in svs]}
 
 
 def write_manifest(row_hash: str, manifest: dict, base_dir: Path | None = None) -> Path:
@@ -54,12 +70,13 @@ def main(argv=None) -> int:
     ap.add_argument("--limit", type=int, default=10)
     a = ap.parse_args(argv)
 
-    svs = discover(a.keyword, limit=a.limit)
-    manifest = build_manifest(a.keyword, a.hash, svs)
+    terms = expand_zh_terms(a.keyword)   # 한국어 → 중국어 검색어(매니페스트에도 기록)
+    svs = discover(a.keyword, limit=a.limit, terms=terms)
+    manifest = build_manifest(a.keyword, a.hash, svs, terms=terms)
     p = write_manifest(a.hash, manifest)
-    print(f"[discover] 키워드='{a.keyword}' → 후보 {len(svs)}개 저장: {p}")
+    print(f"[discover] 키워드='{a.keyword}' → 검색어(중국어확장)={terms} → 후보 {len(svs)}개 저장: {p}")
     for i, c in enumerate(manifest["candidates"], 1):
-        print(f"  {i}. 조회 {(c['view_count'] or 0):>10,} · {str(c['title'])[:42]} · @{c['uploader']}")
+        print(f"  {i}. 조회 {(c['view_count'] or 0):>10,} · {str(c.get('title_ko') or c['title'])[:44]} · @{c['uploader']}")
     if not svs:
         print("[discover] 경고: 후보 0개 (tikwm 응답 없음/차단) — 관리자에서 재시도/다른 키워드 안내.")
     return 0
