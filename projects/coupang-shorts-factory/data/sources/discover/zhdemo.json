@@ -5,131 +5,842 @@
   "search_terms": [
     "厨房神器",
     "厨房好物",
-    "创意厨房用品",
     "厨房小工具",
-    "懒人厨房用品"
+    "创意厨房用品",
+    "懒人厨房神器"
   ],
+  "page": 0,
+  "nonce": "",
   "count": 10,
   "candidates": [
     {
-      "id": "sv_4c55d6bfdb0f",
+      "id": "sv_2da99df05af9",
       "platform": "tiktok",
-      "title": "Best kitchen gadget #food #fypシ #tiktokmademebuyit #kitchen #kitchengadgets #kitchenware ",
-      "title_ko": "최고의 주방용품",
-      "view_count": 56169787,
-      "uploader": "connor",
-      "duration": 9,
-      "source_url": "https://www.tiktok.com/@kitchenconqueror/video/7170801533565766958",
-      "download_url": "https://v45.tiktokcdn-us.com/9ccb03ec30f9d1722571a5b0b983e69d/6a660c22/video/tos/useast5/tos-useast5-ve-0068c001-tx/2fe6080986e54e6e976bcc80832ac166/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1454&ft=73kDHDyjNl~VQQUnU~d-sdWEbmZqYlu1lX-~hWLrK&mime_type=video_mp4&rc=ODo0ZjtnNDZnNDw4NTZoZ0BpM3k7bzg6Zjd2aDMzZzczNEAxM2JfNl5hNi4xXl8uXmNeYSNkMzYvcjRnby5gLS1kMS9zcw%3D%3D&vvpl=1&l=202607260731050D8ED310FEAB77B95395&btag=e000b5000",
-      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/bee28b09b14945a7a2d39bbdafb1eff8_1669582350~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=e69373ed&x-expires=1785135600&x-signature=tM%2FU3qClLdDxCiL2mXNsk9NGQaw%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+      "title": "Tool Items!😍New Gadgets, Smart Appliances, Kitchen Utensils_Home Cleaning_Beauty, Inventions #shorts #KitchenHacks #kitchen",
+      "title_ko": "만두피를 넣고 누르면 만두가 자동으로 만들어지는 만두 제조기",
+      "coupang_keywords": [
+        "만두 제조기",
+        "만두 만들기",
+        "만두 메이커",
+        "만두 프레스"
+      ],
+      "zh_terms": [
+        "饺子机",
+        "饺子制作器",
+        "手动饺子器"
+      ],
+      "naver": {
+        "query": "만두 제조기",
+        "real_title": "플라스틱 만두제조기 3p 송편 만두메이커",
+        "lprice": "1440",
+        "coupang": false,
+        "coupang_title": "플라스틱 만두제조기 3p 송편 만두메이커",
+        "coupang_lprice": null,
+        "mall": "마켓보스",
+        "image": "https://shopping-phinf.pstatic.net/main_8925077/89250774059.jpg",
+        "candidates": [
+          {
+            "title": "플라스틱 만두제조기 3p 송편 만두메이커",
+            "image": "https://shopping-phinf.pstatic.net/main_8925077/89250774059.jpg",
+            "mall": "마켓보스",
+            "lprice": "1440",
+            "link": "https://smartstore.naver.com/main/products/11706263592",
+            "coupang": false
+          },
+          {
+            "title": "잼만드는기계 식품 교반기 자동 만두속 국솥 제조기",
+            "image": "https://shopping-phinf.pstatic.net/main_8867419/88674191278.jpg",
+            "mall": "엉클프레이즈",
+            "lprice": "183940",
+            "link": "https://smartstore.naver.com/main/products/11129680956",
+            "coupang": false
+          },
+          {
+            "title": "플라스틱 만두제조기 물만두틀 만두수동빚기",
+            "image": "https://shopping-phinf.pstatic.net/main_9112805/91128055144.jpg",
+            "mall": "상품추천모아",
+            "lprice": "1840",
+            "link": "https://smartstore.naver.com/main/products/13583544732",
+            "coupang": false
+          },
+          {
+            "title": "플라스틱 만두제조기 간편간식 성형기 주방도구",
+            "image": "https://shopping-phinf.pstatic.net/main_9108638/91086389549.jpg",
+            "mall": "하우스픽업",
+            "lprice": "1760",
+            "link": "https://smartstore.naver.com/main/products/13541879196",
+            "coupang": false
+          },
+          {
+            "title": "플라스틱 만두제조기 3p 성형기 만두틀",
+            "image": "https://shopping-phinf.pstatic.net/main_9108598/91085985887.jpg",
+            "mall": "쿠잉쿠잉 마켓",
+            "lprice": "1760",
+            "link": "https://smartstore.naver.com/main/products/13541475534",
+            "coupang": false
+          },
+          {
+            "title": "가정용 수동만두제조기 메이커 만두성형기",
+            "image": "https://shopping-phinf.pstatic.net/main_9107275/91072759922.jpg",
+            "mall": "루꺼라운드",
+            "lprice": "7910",
+            "link": "https://smartstore.naver.com/main/products/13528249569",
+            "coupang": false
+          }
+        ]
+      },
+      "view_count": 60446377,
+      "uploader": "Homekitchen_T94",
+      "duration": 10,
+      "source_url": "https://www.tiktok.com/@homekitchen_t94/video/7211016042791963947",
+      "download_url": "https://v45.tiktokcdn-us.com/d14ab850897559d96e0a091346fd320b/6a6664ec/video/tos/useast5/tos-useast5-ve-0068c004-tx/05c6d65783ed42118dbf602ae68f46ce/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=898&ft=73kDHDyjNkhVQQUnU~d-sdd.hmZqYl.JKs-~hWLrK&mime_type=video_mp4&rc=NzY6NTZkMzlkNjo5MzMzOkBpM2R1cDo6ZjpkajMzZzgzNEAyX18yNjBfNl8xLTJeXmIyYSNycWYycjRvbjZgLS1kLy9zcw%3D%3D&vvpl=1&l=20260726134953B22D15A1028DE9DC2351&btag=e000b5000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/70ec22892dbc49eeb96cc1f835c05c79_1678945627~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=62b041ac&x-expires=1785157200&x-signature=7rQsQzXWxJdV0F6ATU3F4nRMw2Y%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     },
     {
-      "id": "sv_6edb3dd328df",
+      "id": "sv_7e0c0fd3b1f6",
+      "platform": "tiktok",
+      "title": "#CapCut #foryou #KitchenHacks  #goodthings #creative #lifehacks #homehacks #yummy  #yummyfood  #LearnOnTikTok #tiktokmademebuyit #fyp #usa #convenient ",
+      "title_ko": "만두나 덤플링을 쉽고 빠르게 만들 수 있는 당근 모양 수동 만두 메이커",
+      "coupang_keywords": [
+        "만두 메이커",
+        "만두 만들기",
+        "수동 만두 기계",
+        "덤플링 메이커"
+      ],
+      "zh_terms": [
+        "饺子神器",
+        "手动饺子机",
+        "饺子模具"
+      ],
+      "naver": {
+        "query": "만두 메이커",
+        "real_title": "플라스틱 만두제조기 3p 송편 만두메이커",
+        "lprice": "1440",
+        "coupang": false,
+        "coupang_title": "플라스틱 만두제조기 3p 송편 만두메이커",
+        "coupang_lprice": null,
+        "mall": "마켓보스",
+        "image": "https://shopping-phinf.pstatic.net/main_8925077/89250774059.jpg",
+        "candidates": [
+          {
+            "title": "플라스틱 만두제조기 3p 송편 만두메이커",
+            "image": "https://shopping-phinf.pstatic.net/main_8925077/89250774059.jpg",
+            "mall": "마켓보스",
+            "lprice": "1440",
+            "link": "https://smartstore.naver.com/main/products/11706263592",
+            "coupang": false
+          },
+          {
+            "title": "가정용 만두성형기 빚는 만드는 기계 제조기 만두메이커",
+            "image": "https://shopping-phinf.pstatic.net/main_6021642/60216426697.1.jpg",
+            "mall": "가성비추천도매",
+            "lprice": "2650",
+            "link": "https://antshop.kr/goods/goods_view.php?goodsNo=1000159858&inflow=naver",
+            "coupang": false
+          },
+          {
+            "title": "수동 가정용 만두성형기 제조기 만두메이커",
+            "image": "https://shopping-phinf.pstatic.net/main_6021642/60216428682.1.jpg",
+            "mall": "가성비추천도매",
+            "lprice": "7900",
+            "link": "https://antshop.kr/goods/goods_view.php?goodsNo=1000159753&inflow=naver",
+            "coupang": false
+          },
+          {
+            "title": "가정용 스텐 만두메이커 빗기틀 교자만드는기계 도구",
+            "image": "https://shopping-phinf.pstatic.net/main_9110783/91107833130.jpg",
+            "mall": "WizSeller",
+            "lprice": "5540",
+            "link": "https://smartstore.naver.com/main/products/13563322751",
+            "coupang": false
+          },
+          {
+            "title": "만두피 만두 메이커 성형기 만두 제조기",
+            "image": "https://shopping-phinf.pstatic.net/main_9095608/90956082131.jpg",
+            "mall": "봄 여름 남자 가을 여자",
+            "lprice": "8320",
+            "link": "https://smartstore.naver.com/main/products/13411571795",
+            "coupang": false
+          },
+          {
+            "title": "전기 교자 만두 메이커 모모스 만들기 기계 데스크탑 만두 채우기",
+            "image": "https://shopping-phinf.pstatic.net/main_6093707/60937074479.jpg",
+            "mall": "G마켓",
+            "lprice": "5223800",
+            "link": "https://link.gmarket.co.kr/gate/pcs?item-no=4020964703&sub-id=1003&service-code=10000003&lcd=100000076",
+            "coupang": false
+          }
+        ]
+      },
+      "view_count": 54549748,
+      "uploader": "Quick",
+      "duration": 8,
+      "source_url": "https://www.tiktok.com/@topnice00/video/7168842849998556462",
+      "download_url": "https://v45.tiktokcdn-us.com/ab0b5d9df6bb9f368762eb1a4ca3bc0e/6a6664ea/video/tos/useast5/tos-useast5-ve-0068c003-tx/o4wM0XmCVUOA2SxNNaIMuizkTXwfhDxKBgEers/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=790&ft=73kDHDyjNkhVQQUnU~d-sdd.hmZqYl.JKs-~hWLrK&mime_type=video_mp4&rc=O2Q5OzgzNjo6PDQ4NzkzNUBpM247ZWc6ZnJkbDMzZzgzNEAzXjY0MmItX2ExNGMvMl5eYSNsbWg0cjRncmxgLS1kLy9zcw%3D%3D&vvpl=1&l=20260726134953B22D15A1028DE9DC2351&btag=e000b5000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/cdc8c9507d0b4d6895c41a543b1cce43_1689300841~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=f4c66fdf&x-expires=1785157200&x-signature=QBByfVAoSJiKJZudnGYmvQr0exM%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&s=SEARCH&sc=feed_cover&biz_tag=tt_video"
+    },
+    {
+      "id": "sv_7b5b94683844",
       "platform": "tiktok",
       "title": "切肉器 这个切肉器还挺好用的  #厨房好物 #厨房神器 #切肉 #测评 #brother_sharing ",
-      "title_ko": "고기 슬라이서 리뷰",
-      "view_count": 10807680,
+      "title_ko": "고기를 얇게 썰 수 있도록 고정해주는 고기 슬라이서",
+      "coupang_keywords": [
+        "고기 슬라이서",
+        "육류 절단기",
+        "수동 고기 커터"
+      ],
+      "zh_terms": [
+        "切肉器",
+        "手动切肉机",
+        "肉片切割器"
+      ],
+      "naver": {
+        "query": "고기 슬라이서",
+        "real_title": "가정용 육절기 냉동 대패 고기 썰기 슬라이서 샤브샤브 소형 수동 절단기",
+        "lprice": "20800",
+        "coupang": false,
+        "coupang_title": "가정용 육절기 냉동 대패 고기 썰기 슬라이서 샤브샤브 소형 수동 절단기",
+        "coupang_lprice": null,
+        "mall": "리브문",
+        "image": "https://shopping-phinf.pstatic.net/main_8655889/86558892258.jpg",
+        "candidates": [
+          {
+            "title": "가정용 육절기 냉동 대패 고기 썰기 슬라이서 샤브샤브 소형 수동 절단기",
+            "image": "https://shopping-phinf.pstatic.net/main_8655889/86558892258.jpg",
+            "mall": "리브문",
+            "lprice": "20800",
+            "link": "https://smartstore.naver.com/main/products/9014391935",
+            "coupang": false
+          },
+          {
+            "title": "후지 육절기 탁상용 냉동 가정용 냉동육 차돌박이 햄슬라이서",
+            "image": "https://shopping-phinf.pstatic.net/main_9112325/91123251154.jpg",
+            "mall": "꼬구마상점",
+            "lprice": "334040",
+            "link": "https://smartstore.naver.com/main/products/13578740743",
+            "coupang": false
+          },
+          {
+            "title": "전자동 12 육절기 탁상용 냉동육 고기 절단기 업소용",
+            "image": "https://shopping-phinf.pstatic.net/main_8802801/88028014849.jpg",
+            "mall": "마켓 터치",
+            "lprice": "690000",
+            "link": "https://smartstore.naver.com/main/products/10483509547",
+            "coupang": false
+          },
+          {
+            "title": "ritter 리터 E16 가정용 육절기",
+            "image": "https://shopping-phinf.pstatic.net/main_8140205/81402059303.4.jpg",
+            "mall": "바이에른",
+            "lprice": "59900",
+            "link": "https://smartstore.naver.com/main/products/3857539297",
+            "coupang": false
+          },
+          {
+            "title": "ritter 리터 E16 가정용 육절기",
+            "image": "https://shopping-phinf.pstatic.net/main_8213783/82137838967.2.jpg",
+            "mall": "하이유로",
+            "lprice": "159900",
+            "link": "https://smartstore.naver.com/main/products/4593318778",
+            "coupang": false
+          },
+          {
+            "title": "리터 가정용 전동 육절기 푸드 슬라이서 슬라이스기계 주방기기 ritter",
+            "image": "https://shopping-phinf.pstatic.net/main_8831431/88314319158.jpg",
+            "mall": "로맨틱딜리버",
+            "lprice": "99800",
+            "link": "https://smartstore.naver.com/main/products/10769813168",
+            "coupang": false
+          }
+        ]
+      },
+      "view_count": 10807715,
       "uploader": "兄弟好物分享🛒TikTok Shop🛍️",
       "duration": 167,
       "source_url": "https://www.tiktok.com/@brother_sharing/video/7562936865913949458",
-      "download_url": "https://v45.tiktokcdn-us.com/a806f75e1909e38f8eb0392ee64ced46/6a660cc0/video/tos/alisg/tos-alisg-pve-0037c001/o4jfQ0ZRAGIKeATUk8vFeLykWGQc5IEbGe0TXg/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=495&ft=73kDHDyjNeRVQQUnU~d-sd~EbmZqYlkIuC-~hWLrK&mime_type=video_mp4&rc=ODllNDc2ZDpnNjw1OWVpZEBpM2ZtZnM5cnFpNjMzODczNEBgNTUtNjUtX2IxXy4yX14uYSNtcjUwMmQ0Mm5hLS1kMTFzcw%3D%3D&vvpl=1&l=20260726073104A148935CA770C2CC6DF4&btag=e000d5000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/oAUDygtMEDZBIwFgojMAJ8PfNLyRBcE90IBLif~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=e6352c1a&x-expires=1785135600&x-signature=gcaQk8PegegAFsWBHkJBp7gxj5w%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+      "download_url": "https://v45.tiktokcdn-us.com/b9e4d00c2662b5182c1d05ee8ed67763/6a666586/video/tos/alisg/tos-alisg-pve-0037c001/o4jfQ0ZRAGIKeATUk8vFeLykWGQc5IEbGe0TXg/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=495&ft=aEKfuqT0m0LPD12l4enI3wU06l7FMeF~O5&mime_type=video_mp4&rc=ODllNDc2ZDpnNjw1OWVpZEBpM2ZtZnM5cnFpNjMzODczNEBgNTUtNjUtX2IxXy4yX14uYSNtcjUwMmQ0Mm5hLS1kMTFzcw%3D%3D&vvpl=1&l=20260726134950738F2B05C59657C4B65F&btag=e000cd000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/oAUDygtMEDZBIwFgojMAJ8PfNLyRBcE90IBLif~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=a2ca5f00&x-expires=1785157200&x-signature=imJ46x9hvAf%2BH0sAOUnc8JnS2WE%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&s=SEARCH&sc=feed_cover&biz_tag=tt_video"
     },
     {
-      "id": "sv_602c3252ef93",
+      "id": "sv_efcf03d348f0",
       "platform": "tiktok",
       "title": "A multifunctional peeler with a shell. #Peeler #ParingKnife  #DoudouGoodThing #KitchenGoodGoodsRecommendation #GoodThingRecommendation #fpy #TikTokIsGood                ",
-      "title_ko": "껍질이 있는 다기능 필러",
-      "view_count": 7203126,
+      "title_ko": "껍질 보관통이 있는 다기능 필러",
+      "coupang_keywords": [
+        "껍질 보관 필러",
+        "다용도 채칼",
+        "수동 야채 필러",
+        "감자칼"
+      ],
+      "zh_terms": [
+        "带收纳盒削皮刀",
+        "多功能削皮器",
+        "厨房削皮刀"
+      ],
+      "naver": {
+        "query": "껍질 보관 필러",
+        "real_title": "맥킨더 야채채칼 필러 껍질 보관통",
+        "lprice": "2100",
+        "coupang": false,
+        "coupang_title": "맥킨더 야채채칼 필러 껍질 보관통",
+        "coupang_lprice": null,
+        "mall": "네이버",
+        "image": "https://shopping-phinf.pstatic.net/main_4338119/43381197829.20231021184521.jpg",
+        "candidates": [
+          {
+            "title": "맥킨더 야채채칼 필러 껍질 보관통",
+            "image": "https://shopping-phinf.pstatic.net/main_4338119/43381197829.20231021184521.jpg",
+            "mall": "네이버",
+            "lprice": "2100",
+            "link": "https://search.shopping.naver.com/catalog/43381197829",
+            "coupang": false
+          },
+          {
+            "title": "조셉조셉 필스토어 껍질보관통 야채필러 1개",
+            "image": "https://shopping-phinf.pstatic.net/main_6088826/60888265630.20260718041125.jpg",
+            "mall": "네이버",
+            "lprice": "15400",
+            "link": "https://search.shopping.naver.com/catalog/60888265630",
+            "coupang": false
+          },
+          {
+            "title": "껍질 보관 필러 다용도 감자칼 주방용 야채칼",
+            "image": "https://shopping-phinf.pstatic.net/main_6003734/60037344096.jpg",
+            "mall": "11번가",
+            "lprice": "12320",
+            "link": "https://www.11st.co.kr/connect/Gateway.tmall?method=Xsite&prdNo=9352062889&tid=1000000061",
+            "coupang": false
+          },
+          {
+            "title": "껍질안튀는 수납형 감자칼 껍질보관 필러 감자깎이 채칼 다용도 과일깎이 주방꿀템",
+            "image": "https://shopping-phinf.pstatic.net/main_9100186/91001869808.jpg",
+            "mall": "엘림온 ElimON",
+            "lprice": "11400",
+            "link": "https://smartstore.naver.com/main/products/13457359456",
+            "coupang": false
+          },
+          {
+            "title": "껍질 보관통 만능채칼 감자칼 필러 양배추 야채칼",
+            "image": "https://shopping-phinf.pstatic.net/main_6051936/60519365888.jpg",
+            "mall": "옥션",
+            "lprice": "9090",
+            "link": "https://link.auction.co.kr/gate/pcs?item-no=F593333987&sub-id=1&service-code=10000003",
+            "coupang": false
+          },
+          {
+            "title": "껍질보관 채칼 슬라이서 감자칼 야채 채소 필러",
+            "image": "https://shopping-phinf.pstatic.net/main_8834719/88347197870.jpg",
+            "mall": "레이커스토어",
+            "lprice": "5890",
+            "link": "https://smartstore.naver.com/main/products/10802691880",
+            "coupang": false
+          }
+        ]
+      },
+      "view_count": 7203134,
       "uploader": "doudou good thing",
       "duration": 11,
       "source_url": "https://www.tiktok.com/@doudougoodthing/video/7364019063690956074",
-      "download_url": "https://v45.tiktokcdn-us.com/62268f2c404c72ad96d44c254aad0994/6a660c27/video/tos/useast5/tos-useast5-pve-0068-tx/oc8EyciM0IBtu8QAfzJgfbinmyEmR1ODSCGjQB/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1497&ft=73kDHDyjNNRVQQUnU~d-sdyEbmZqYltMGf-~hWLrK&mime_type=video_mp4&rc=ZWlmZ2c6Nmk8ZjY4NGhnZkBpam51cHY5cnE2cjMzZzczNEBgYDVgMC0zNjIxXi4yYTEwYSNtMm1nMmRjc21gLS1kMS9zcw%3D%3D&vvpl=1&l=2026072607310773ED7E8C1F3579A71CE8&btag=e000b5000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/24bce473af9e4af2b6981be5c79f4e27_1714569317~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=57b37988&x-expires=1785135600&x-signature=MnCz2MGXJ177MirD2aO0AWfCXJY%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&s=SEARCH&sc=feed_cover&biz_tag=tt_video"
+      "download_url": "https://v45.tiktokcdn-us.com/32c1ae36c7ab09e7522b273eebffda46/6a6664ed/video/tos/useast5/tos-useast5-pve-0068-tx/oc8EyciM0IBtu8QAfzJgfbinmyEmR1ODSCGjQB/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1497&ft=73kDHDyjNkhVQQUnU~d-sdd.hmZqYl.JKs-~hWLrK&mime_type=video_mp4&rc=ZWlmZ2c6Nmk8ZjY4NGhnZkBpam51cHY5cnE2cjMzZzczNEBgYDVgMC0zNjIxXi4yYTEwYSNtMm1nMmRjc21gLS1kMS9zcw%3D%3D&vvpl=1&l=20260726134953B22D15A1028DE9DC2351&btag=e000b5000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/24bce473af9e4af2b6981be5c79f4e27_1714569317~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=dc14ab36&x-expires=1785157200&x-signature=%2Bw0ISWtjsXNLAY1IJpwDEPcNgRg%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     },
     {
-      "id": "sv_ba3036ca8bd4",
+      "id": "sv_9ad0afdd1676",
       "platform": "tiktok",
-      "title": "A standable, food-grade silicone food container that is safe for use in both the microwave and the freezer. #fyp #Home #kitchen #gadgets #homeimprovement ",
-      "title_ko": "전자레인지 및 냉동고 사용 가능한 실리콘 식품 용기",
-      "view_count": 5374264,
-      "uploader": "Nice Life",
-      "duration": 14,
-      "source_url": "https://www.tiktok.com/@nicelife.hacks/video/7624556539252100365",
-      "download_url": "https://v45.tiktokcdn-us.com/ad9f0f44ba9be11980ff37573e34d708/6a660c28/video/tos/useast5/tos-useast5-ve-0068c003-tx/oUe6MGn6RAkx4BAIsHuIgEMHpgsjAbLYTfCxAe/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1030&ft=73kDHDyjNl~VQQUnU~d-sdWEbmZqYlu1lX-~hWLrK&mime_type=video_mp4&rc=PDNpPDU6ZThkZDs3NDg0NUBpMzNyNnU5cjl3OjMzZzczNEAzNDUzNDIzNWIxYF5jNDAzYSM1Ly80MmQ0MDRhLS1kMS9zcw%3D%3D&vvpl=1&l=202607260731050D8ED310FEAB77B95395&btag=e000bd000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/owkCnrxAM6YGj4sDDt7jexeMIBHLfuITAgAgEJ~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=2359f81d&x-expires=1785135600&x-signature=rjEgK4O9qyccEshYAMXthdR1Mmg%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&s=SEARCH&sc=feed_cover&biz_tag=tt_video"
+      "title": "Easy to clean kitchen😏#gadgets #coolstuff #coolgadgets #amazonfinds #fyp ",
+      "title_ko": "주방 싱크대 물기 제거용 미니 스크래퍼",
+      "coupang_keywords": [
+        "싱크대 물기 제거",
+        "주방 스크래퍼",
+        "미니 스퀴지",
+        "유리창 물기 제거"
+      ],
+      "zh_terms": [
+        "迷你刮水器",
+        "厨房台面刮水器",
+        "玻璃刮"
+      ],
+      "naver": {
+        "query": "싱크대 물기 제거",
+        "real_title": "3단 롱스퀴지 욕실 유리창청소 창문닦기 스퀴즈 스쿼지 물기제거기 스키지 물끌개 물긁개305",
+        "lprice": "27900",
+        "coupang": false,
+        "coupang_title": "3단 롱스퀴지 욕실 유리창청소 창문닦기 스퀴즈 스쿼지 물기제거기 스키지 물끌개 물긁개305",
+        "coupang_lprice": null,
+        "mall": "홈도가",
+        "image": "https://shopping-phinf.pstatic.net/main_9088827/90888276035.2.jpg",
+        "candidates": [
+          {
+            "title": "3단 롱스퀴지 욕실 유리창청소 창문닦기 스퀴즈 스쿼지 물기제거기 스키지 물끌개 물긁개305",
+            "image": "https://shopping-phinf.pstatic.net/main_9088827/90888276035.2.jpg",
+            "mall": "홈도가",
+            "lprice": "27900",
+            "link": "https://smartstore.naver.com/main/products/13343765703",
+            "coupang": false
+          },
+          {
+            "title": "롱핸들 와이퍼 스쿼지 고무날 아파트 창문 먼지 청소 화장실 싱크대 스퀴지 스퀴즈",
+            "image": "https://shopping-phinf.pstatic.net/main_9099820/90998203541.jpg",
+            "mall": "홈에담다",
+            "lprice": "8500",
+            "link": "https://smartstore.naver.com/main/products/13453693189",
+            "coupang": false
+          },
+          {
+            "title": "3세대 스펀지 스퀴지 화장실 욕실 주방 청소 물기제거 유리창문 싱크대클리너 밀대 걸레 빌쓰",
+            "image": "https://shopping-phinf.pstatic.net/main_9117996/91179969554.jpg",
+            "mall": "빌쓰 BILSSEU",
+            "lprice": "2900",
+            "link": "https://smartstore.naver.com/main/products/13635458873",
+            "coupang": false
+          },
+          {
+            "title": "스텐 욕실스퀴지 유리창청소 창문닦기 스퀴즈 스쿼지 물기제거기 물기제거 스키지 물끌개 물긁개",
+            "image": "https://shopping-phinf.pstatic.net/main_8962590/89625908067.1.jpg",
+            "mall": "홈도가",
+            "lprice": "12900",
+            "link": "https://smartstore.naver.com/main/products/12081397362",
+            "coupang": false
+          },
+          {
+            "title": "욕실 주방 스퀴지 스펀지 물기제거 유리 창문 싱크대 청소 미니 클리너 밀대 걸레",
+            "image": "https://shopping-phinf.pstatic.net/main_8990034/89900347481.1.jpg",
+            "mall": "스탠다드엔",
+            "lprice": "5400",
+            "link": "https://smartstore.naver.com/main/products/12355836764",
+            "coupang": false
+          },
+          {
+            "title": "세트미 미니 스퀴지 주방 싱크대 욕실 화장실 핸드 물기제거 스퀴즈 3개입",
+            "image": "https://shopping-phinf.pstatic.net/main_8899695/88996958962.2.jpg",
+            "mall": "The전문몰",
+            "lprice": "6800",
+            "link": "https://smartstore.naver.com/main/products/11452448597",
+            "coupang": false
+          }
+        ]
+      },
+      "view_count": 6294688,
+      "uploader": "airlandolists",
+      "duration": 10,
+      "source_url": "https://www.tiktok.com/@airlandolists/video/7537701539553496334",
+      "download_url": "https://v45.tiktokcdn-us.com/b5d9b3cb31b5082e0f2d83fa5291ff77/6a6664ea/video/tos/useast5/tos-useast5-pve-0068-tx/ocgDb5k8jRQ3MkHBCeM2ecXp87VNAAaQkflCII/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1122&ft=73kDHDyjNj0VQQUnU~d-sdl.hmZqYllm5_-~hWLrK&mime_type=video_mp4&rc=NDhoaTdkPDo1NDw3OjM1Z0BpMzR4O3U5cjpuNTMzZzczNEBjNDBiYmM0Xy8xYjYuM141YSNtcm9eMmQ0a2FhLS1kMS9zcw%3D%3D&vvpl=1&l=20260726134952A3F7AEA14CDBFEC4A830&btag=e000b5000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/ooVHecRbBSjDQ5kIXpAewQQMbANkNceCkr8J9a~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=b3a1bcd4&x-expires=1785157200&x-signature=tsM5tQLPaNIhfsv4UWnv%2BmVL9nw%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     },
     {
-      "id": "sv_3df6f9b7441b",
+      "id": "sv_b4c11b9ba36f",
       "platform": "tiktok",
       "title": "Your kitchen’s power helper. One-touch electric food processor for veggies & fruits. #electricchopper #multifunctionchopper #kitchenhack #tiktokmademebuyit #fyp",
-      "title_ko": "원터치 전동 야채/과일 푸드 프로세서",
-      "view_count": 4023935,
+      "title_ko": "무선 미니 전기 다지기로 마늘, 고추 등 소량의 재료를 간편하게 다질 수 있습니다.",
+      "coupang_keywords": [
+        "무선 미니 다지기",
+        "미니 푸드 프로세서",
+        "전기 야채 다지기",
+        "마늘 다지기"
+      ],
+      "zh_terms": [
+        "无线迷你电动切菜器",
+        "小型食物料理机",
+        "蒜泥神器"
+      ],
+      "naver": {
+        "query": "무선 미니 다지기",
+        "real_title": "레꼴뜨 무선 소형분쇄기 유리 미니초퍼 야채다지기 이유식 만능 마늘",
+        "lprice": "49000",
+        "coupang": true,
+        "coupang_title": "레꼴뜨 무선 미니 다지기 초퍼 RCP-5C 크림화이트  전동분쇄기 곡물 가루 믹서기 제분기 멀티다지기",
+        "coupang_lprice": "48000",
+        "mall": "쿠팡",
+        "image": "https://shopping-phinf.pstatic.net/main_5758533/57585339257.1.jpg",
+        "candidates": [
+          {
+            "title": "레꼴뜨 무선 소형분쇄기 유리 미니초퍼 야채다지기 이유식 만능 마늘",
+            "image": "https://shopping-phinf.pstatic.net/main_8389940/83899402975.12.jpg",
+            "mall": "레꼴뜨 공식스토어",
+            "lprice": "49000",
+            "link": "https://smartstore.naver.com/main/products/6354902653",
+            "coupang": false
+          },
+          {
+            "title": "케어프린 자동 무선 미니 야채 이유식 마늘 다지기 쵸퍼 푸드프로세서 250ml",
+            "image": "https://shopping-phinf.pstatic.net/main_8443278/84432783323.1.jpg",
+            "mall": "케어프린",
+            "lprice": "24800",
+            "link": "https://smartstore.naver.com/main/products/6888283001",
+            "coupang": false
+          },
+          {
+            "title": "26년형 무선다지기 만능 분쇄기 마늘 야채 멀티 이유식 쵸퍼믹서",
+            "image": "https://shopping-phinf.pstatic.net/main_9037044/90370448373.7.jpg",
+            "mall": "한일공식몰",
+            "lprice": "22900",
+            "link": "https://smartstore.naver.com/main/products/12825937424",
+            "coupang": false
+          },
+          {
+            "title": "쿠팸 전동 다지기 만능 미니 이유식 다지기 무선 차퍼 야채 마늘다지기 350mL",
+            "image": "https://shopping-phinf.pstatic.net/main_8886664/88866647825.jpg",
+            "mall": "GAZO",
+            "lprice": "25800",
+            "link": "https://smartstore.naver.com/main/products/11322137494",
+            "coupang": false
+          },
+          {
+            "title": "미니 셰프 무선 전동 마늘 다지기 만능 야채 다지기 마늘가는기계 이유식 초퍼+유리용기 4p",
+            "image": "https://shopping-phinf.pstatic.net/main_9064024/90640247672.jpg",
+            "mall": "트레이딩",
+            "lprice": "35760",
+            "link": "https://smartstore.naver.com/main/products/13095736580",
+            "coupang": false
+          },
+          {
+            "title": "필쿡 FK-TM02 화이트",
+            "image": "https://shopping-phinf.pstatic.net/main_6001517/60015179785.20260512180757.jpg",
+            "mall": "네이버",
+            "lprice": "19350",
+            "link": "https://search.shopping.naver.com/catalog/60015179785",
+            "coupang": false
+          }
+        ]
+      },
+      "view_count": 4024106,
       "uploader": "Daily Sunbeam",
       "duration": 20,
       "source_url": "https://www.tiktok.com/@dailysunbeam/video/7598570731848338695",
-      "download_url": "https://v45.tiktokcdn-us.com/25829f42cf66384af274920df4fbe730/6a660c2d/video/tos/alisg/tos-alisg-pve-0037c001/ogtuqIOEBoJXcAilwif9A3Q9ZiI0D0ACo0VIyz/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1574&ft=73kDHDyjNeRVQQUnU~d-sd~EbmZqYlkIuC-~hWLrK&mime_type=video_mp4&rc=M2c4Nzk3Zjg5OTU6NGVmNkBpajg0Z245cjpyODMzODczNEAvNjNgLWNeXi0xMTJiXmJgYSNeZzIxMmRja21hLS1kMTFzcw%3D%3D&vvpl=1&l=20260726073104A148935CA770C2CC6DF4&btag=e000bd000",
-      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/oMII9dl0ABiuoqZzCVidwXIiIA0iBwOfCdA0Mc~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=191f26ef&x-expires=1785135600&x-signature=ZyACaEpicrCaI6sxglk2BMq8MV8%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&sc=feed_cover&biz_tag=tt_video&s=SEARCH"
+      "download_url": "https://v45.tiktokcdn-us.com/daef48fadc99469203312c7ffa76f63a/6a6664f4/video/tos/alisg/tos-alisg-pve-0037c001/ogtuqIOEBoJXcAilwif9A3Q9ZiI0D0ACo0VIyz/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=1574&ft=73kDHDyjNj0VQQUnU~d-sdl.hmZqYllm5_-~hWLrK&mime_type=video_mp4&rc=M2c4Nzk3Zjg5OTU6NGVmNkBpajg0Z245cjpyODMzODczNEAvNjNgLWNeXi0xMTJiXmJgYSNeZzIxMmRja21hLS1kMTFzcw%3D%3D&vvpl=1&l=20260726134952A3F7AEA14CDBFEC4A830&btag=e000b5000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/oMII9dl0ABiuoqZzCVidwXIiIA0iBwOfCdA0Mc~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=05ab773e&x-expires=1785157200&x-signature=PQj%2B0AqouAkrA5oeY%2F5rLrDLN28%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&sc=feed_cover&biz_tag=tt_video&s=SEARCH"
     },
     {
-      "id": "sv_2cdbb362f855",
+      "id": "sv_49034a5018a4",
       "platform": "tiktok",
-      "title": "冬天家里有这个锅啊真的很方便，下班回家开盖就是热乎乎的饭菜！ #厨房好物推荐 #厨房小家电 #电压力锅 #厨房好物 #居家好物",
-      "title_ko": "퇴근 후 따뜻한 식사를 위한 전기 압력솥",
-      "view_count": 2247831,
-      "uploader": "diystore88",
-      "duration": 26,
-      "source_url": "https://www.tiktok.com/@gaoxiaodonghuapian/video/7464646728709459208",
-      "download_url": "https://v45.tiktokcdn-us.com/a3c73fed885677534395c78aea84dad5/6a660c34/video/tos/alisg/tos-alisg-pve-0037c001/o8GsvWeFgf14PLJIoO6CAFoWILIDgQgAjQ8bf6/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1462&ft=73kDHDyjNl~VQQUnU~d-sdWEbmZqYlu1lX-~hWLrK&mime_type=video_mp4&rc=PGU0ZDVpNWZlMzY0ZDg6ZUBpanR4bHg5cjt2eDMzODczNEBiXjYtYzJeXzMxNi1jLi8zYSNpZC5pMmRrLl9gLS1kMTFzcw%3D%3D&vvpl=1&l=202607260731050D8ED310FEAB77B95395&btag=e000fd000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/o8PtEBAFoI0eCRBgr5ElaCI8brwiDfFBUKhnIX~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=d27555e9&x-expires=1785135600&x-signature=dXPhxAki69YcFecXIDCYRZnIpAA%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
-    },
-    {
-      "id": "sv_a04efc6a3dad",
-      "platform": "tiktok",
-      "title": "This smart tray defrosts meats and fish quickly and uniformly!  #defrost #defrosting #amazonhome #kitchenfinds #thawing ",
-      "title_ko": "고기와 생선을 빠르고 균일하게 해동하는 스마트 트레이",
-      "view_count": 1608537,
+      "title": "Really loving this one handed salt & pepper grinder! You can also add a third pod for another spice if you want to 😊 #amazonhome #kitchenaccessories #kitchenmusthaves #kitchen #saltandpepper #spicegrinder #grinder #dining #saltandpeppershakers #homefinds #cookingaccessories",
+      "title_ko": "한 손으로 사용하는 소금 후추 그라인더",
+      "coupang_keywords": [
+        "자동 소금 그라인더",
+        "자동 후추 그라인더",
+        "전동 양념 그라인더",
+        "한손 조작 그라인더"
+      ],
+      "zh_terms": [
+        "电动研磨器",
+        "单手操作研磨器",
+        "盐胡椒研磨器"
+      ],
+      "naver": {
+        "query": "자동 소금 그라인더",
+        "real_title": "한샘 소금 후추 전동 그라인더 자동 그라인더 전동 갈이 양념 분쇄기",
+        "lprice": "14900",
+        "coupang": true,
+        "coupang_title": "키볼리 LED 전동 소금 후추 그라인더 2p 세트  원터치 자동 입자조절 깨갈이 양념통 후추통",
+        "coupang_lprice": "25120",
+        "mall": "쿠팡",
+        "image": "https://shopping-phinf.pstatic.net/main_4411912/44119129131.6.jpg",
+        "candidates": [
+          {
+            "title": "키볼리 LED 전동 소금 후추 그라인더 2p 세트  원터치 자동 입자조절 깨갈이 양념통 후추통",
+            "image": "https://shopping-phinf.pstatic.net/main_4411912/44119129131.6.jpg",
+            "mall": "쿠팡",
+            "lprice": "25120",
+            "link": "https://link.coupang.com/re/PCSNAVERPCSDP?pageKey=7563041453&ctag=7563041453&lptag=I19929618950&itemId=19929618950&vendorItemId=87029187658&spec=10305197",
+            "coupang": true
+          },
+          {
+            "title": "모타모타 무선 충전식 소금 후추 자동 전동 그라인더 통후추 깨갈이 1+1  1세트  40ml",
+            "image": "https://shopping-phinf.pstatic.net/main_5985087/59850877008.1.jpg",
+            "mall": "쿠팡",
+            "lprice": "24950",
+            "link": "https://link.coupang.com/re/PCSNAVERPCSDP?pageKey=9517866081&ctag=9517866081&lptag=I28370044348&itemId=28370044348&vendorItemId=95322439649&spec=10305198",
+            "coupang": true
+          },
+          {
+            "title": "한샘 소금 후추 전동 그라인더 자동 그라인더 전동 갈이 양념 분쇄기",
+            "image": "https://shopping-phinf.pstatic.net/main_8924130/89241308853.jpg",
+            "mall": "라베노",
+            "lprice": "14900",
+            "link": "https://smartstore.naver.com/main/products/11696798386",
+            "coupang": false
+          },
+          {
+            "title": "프로피 듀오 충전식 2in1 양방향 전동 소금 후추 그라인더 자동 통후추 페퍼밀",
+            "image": "https://shopping-phinf.pstatic.net/main_8615034/86150342537.5.jpg",
+            "mall": "프라이스클럽",
+            "lprice": "39800",
+            "link": "https://smartstore.naver.com/main/products/8605842214",
+            "coupang": false
+          },
+          {
+            "title": "자동소금통 통깨 그라인더 소금가는기계 후추",
+            "image": "https://shopping-phinf.pstatic.net/main_8730988/87309881560.3.jpg",
+            "mall": "소품날",
+            "lprice": "16900",
+            "link": "https://smartstore.naver.com/main/products/9765379287",
+            "coupang": false
+          },
+          {
+            "title": "스테인리스 전동 후추그라인더 자동 소금 통 깨갈이",
+            "image": "https://shopping-phinf.pstatic.net/main_5864506/58645064202.jpg",
+            "mall": "11번가",
+            "lprice": "9730",
+            "link": "https://www.11st.co.kr/connect/Gateway.tmall?method=Xsite&prdNo=4411482696&tid=1000000061",
+            "coupang": false
+          }
+        ]
+      },
+      "view_count": 1578858,
       "uploader": "Anya",
-      "duration": 12,
-      "source_url": "https://www.tiktok.com/@anya.bumag/video/7664691613918153992",
-      "download_url": "https://v45.tiktokcdn-us.com/1bf16fa366bf731b8a5e592f80d993a9/6a660c26/video/tos/alisg/tos-alisg-pve-0037c001/oYchR9PqQEUEbGCBn6qE8DPBXIf1cSwfgA9FSR/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=299&ft=73kDHDyjNl~VQQUnU~d-sdWEbmZqYlu1lX-~hWLrK&mime_type=video_mp4&rc=ZzhnNzhpOjc6OzY0PDQ0N0BpamQ7aHg5cnI6PDMzODczNEAwYmEtLWNgNjUxY14wLzQzYSNeZmhzMmRjNWNhLS1kMWBzcw%3D%3D&vvpl=1&l=202607260731050D8ED310FEAB77B95395&btag=e000bd000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/oAHQgE9BRREQqAdfePqXCnHy1UmDEBFhc9dB3S~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=ecccbfa2&x-expires=1785135600&x-signature=8DEfQuIedwhl95hlaqbV2D4Qxeg%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+      "duration": 13,
+      "source_url": "https://www.tiktok.com/@anya.bumag/video/7519657719339437318",
+      "download_url": "https://v45.tiktokcdn-us.com/2c11298a4d4213c9c7527f1010785d12/6a6664ed/video/tos/alisg/tos-alisg-ve-0068c800-sg/oQOEWfzbwQiRD3BEQseEA0BJMBWFImQ8oMCDUN/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=780&ft=73kDHDyjNj0VQQUnU~d-sdl.hmZqYllm5_-~hWLrK&mime_type=video_mp4&rc=aDY7OzZkNzo0Z2hmNWg3O0BpM2ZteXg5cmdtNDMzNzczM0AzMS41MjM1NTIxXl8tYjAzYSNfLTIuMmQ0LmFhLS1kMTZzcw%3D%3D&vvpl=1&l=20260726134952A3F7AEA14CDBFEC4A830&btag=e000b5000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-maliva-p-0068/oYIRCJoAz35DL0WbDBIwMWFlMaABsQfeEMEx8O~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=b81afedc&x-expires=1785157200&x-signature=Ccfr8w2i%2BbzfQmGT3Ex2GEg0nSA%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     },
     {
-      "id": "sv_db24ca0fe9bb",
+      "id": "sv_6a04aba084cf",
       "platform": "tiktok",
       "title": "Best kitchen gadget to keep food fresh! kaam adjusts to fit any size bag in your kitchen, ranging from small bread bags to large Costco-size bags. kaam also has a strong built in magnet. Visit us at www.kaamshop.com. Happiness guaranteed, our it's on us! #BagClip #KeepFoodFresh #KitchenHacks #KitchenGadgets #Products #GoodThing #MustHaves #TikTokMadeMeBuyIt",
-      "title_ko": "어떤 크기 봉투에도 맞는 자석 내장 밀봉 집게",
-      "view_count": 1486022,
+      "title_ko": "음식 봉투를 밀봉하여 신선하게 보관하는 조절 가능한 자석식 밀봉 클립",
+      "coupang_keywords": [
+        "봉투 밀봉 클립",
+        "음식 신선 보관 클립",
+        "주방 밀봉 집게",
+        "자석 봉투 클립"
+      ],
+      "zh_terms": [
+        "食品袋密封夹",
+        "可调节密封夹",
+        "磁性食物夹"
+      ],
+      "naver": {
+        "query": "봉투 밀봉 클립",
+        "real_title": "이케아 과자 봉지 밀봉 클립 비닐 봉투 집게 24P",
+        "lprice": "2800",
+        "coupang": false,
+        "coupang_title": "이케아 과자 봉지 밀봉 클립 비닐 봉투 집게 24P",
+        "coupang_lprice": null,
+        "mall": "온라인커머스24",
+        "image": "https://shopping-phinf.pstatic.net/main_9117290/91172902888.jpg",
+        "candidates": [
+          {
+            "title": "이케아 과자 봉지 밀봉 클립 비닐 봉투 집게 24P",
+            "image": "https://shopping-phinf.pstatic.net/main_9117290/91172902888.jpg",
+            "mall": "온라인커머스24",
+            "lprice": "2800",
+            "link": "https://smartstore.naver.com/main/products/13628392279",
+            "coupang": false
+          },
+          {
+            "title": "이케아 봉투집게 베바라 밀봉클립 봉지집게 24개",
+            "image": "https://shopping-phinf.pstatic.net/main_1351154/13511540153.5.jpg",
+            "mall": "토리몰 1st",
+            "lprice": "2700",
+            "link": "https://smartstore.naver.com/main/products/2498099912",
+            "coupang": false
+          },
+          {
+            "title": "이케아 봉투집게 봉지집게 밀봉클립 베바라 6개",
+            "image": "https://shopping-phinf.pstatic.net/main_1319411/13194117748.2.jpg",
+            "mall": "토리몰 1st",
+            "lprice": "1650",
+            "link": "https://smartstore.naver.com/main/products/2413832191",
+            "coupang": false
+          },
+          {
+            "title": "봉지집게 밀봉집게 컬러 4개 과자 빵 봉투 클립 스토퍼",
+            "image": "https://shopping-phinf.pstatic.net/main_8423591/84235915611.2.jpg",
+            "mall": "베이킹팜",
+            "lprice": "1500",
+            "link": "https://smartstore.naver.com/main/products/6691415289",
+            "coupang": false
+          },
+          {
+            "title": "하루네 감자튀김 모양 밀봉 집게 12개입 클립 과자 봉지 봉투 집게",
+            "image": "https://shopping-phinf.pstatic.net/main_8689098/86890986833.jpg",
+            "mall": "하루네하우스",
+            "lprice": "890",
+            "link": "https://smartstore.naver.com/main/products/9346486510",
+            "coupang": false
+          },
+          {
+            "title": "24개입 재사용 가능한 식품봉투 밀봉 클립",
+            "image": "https://shopping-phinf.pstatic.net/main_5851924/58519247564.jpg",
+            "mall": "TEMU kr",
+            "lprice": "11472",
+            "link": "https://www.temu.com/ul/mos/naver_cpc?mos_rid=969786&_x_ads_set={campaign}&_x_ads_creative_id={ad}&_x_ads_id={ad_group}&_x_ns_keyword={query}&adg_ctx=a-aee9b1f8&_x_ns_gid=601099648056730&_x_ns_product_id=17592709296441",
+            "coupang": false
+          }
+        ]
+      },
+      "view_count": 1486030,
       "uploader": "kaam.together",
       "duration": 5,
       "source_url": "https://www.tiktok.com/@kaam.together/video/7398312433758113055",
-      "download_url": "https://v45.tiktokcdn-us.com/c2acbbaa7b901a23fbbc8a664165b9cd/6a660c21/video/tos/useast8/tos-useast8-ve-0068c003-tx2/osmYVgszdBcQBAFRwELIbg2VorE5AxfeXXFDEE/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=938&ft=73kDHDyjNNRVQQUnU~d-sdyEbmZqYltMGf-~hWLrK&mime_type=video_mp4&rc=NWlnNDMzOTU5Omg8N2hlZkBpM2hsdXI5cnE0dDMzaTczNEA2XmIuY18wXi4xLTUxMjJjYSMuX2NgMmRjX2pgLS1kMTJzcw%3D%3D&vvpl=1&l=2026072607310773ED7E8C1F3579A71CE8&btag=e000b5000",
-      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/a5272465ab784fa09555e7226bf3ef6a_1722553861~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=ea2395f6&x-expires=1785135600&x-signature=gvF3uAZg0qiOXsxqZturinVrz8I%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+      "download_url": "https://v45.tiktokcdn-us.com/70024a1419f9a78a81bb5ed220676bd4/6a6664e7/video/tos/useast8/tos-useast8-ve-0068c003-tx2/osmYVgszdBcQBAFRwELIbg2VorE5AxfeXXFDEE/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=938&ft=73kDHDyjNkhVQQUnU~d-sdd.hmZqYl.JKs-~hWLrK&mime_type=video_mp4&rc=NWlnNDMzOTU5Omg8N2hlZkBpM2hsdXI5cnE0dDMzaTczNEA2XmIuY18wXi4xLTUxMjJjYSMuX2NgMmRjX2pgLS1kMTJzcw%3D%3D&vvpl=1&l=20260726134953B22D15A1028DE9DC2351&btag=e000b5000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/a5272465ab784fa09555e7226bf3ef6a_1722553861~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=4367fbca&x-expires=1785157200&x-signature=qHMoKVjRgvODC%2FZ%2Fy1nkkmY1XjY%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     },
     {
-      "id": "sv_5516e3b53935",
+      "id": "sv_e35c0e82cad2",
       "platform": "tiktok",
       "title": "你絕對想不到，就這麼一個小小的置物架用處有多大 #置物架 #廚房好物 #好物分享 #好物推薦 #收納 ",
-      "title_ko": "작지만 활용도 높은 주방 선반",
-      "view_count": 1479661,
+      "title_ko": "벽에 부착하여 주방 도구들을 걸어 보관하는 자석식 주방 걸이",
+      "coupang_keywords": [
+        "자석 주방 걸이",
+        "벽걸이 조리도구 걸이",
+        "주방 수납 걸이",
+        "칼 가위 걸이"
+      ],
+      "zh_terms": [
+        "磁吸置物架",
+        "厨房挂架",
+        "免打孔置物架"
+      ],
+      "naver": {
+        "query": "자석 주방 걸이",
+        "real_title": "[특대형] 키친타올걸이 마그넷 홀더 주방 수납 정리 코스트코",
+        "lprice": "17900",
+        "coupang": false,
+        "coupang_title": "[특대형] 키친타올걸이 마그넷 홀더 주방 수납 정리 코스트코",
+        "coupang_lprice": null,
+        "mall": "데몬하우스",
+        "image": "https://shopping-phinf.pstatic.net/main_8617197/86171978379.4.jpg",
+        "candidates": [
+          {
+            "title": "[특대형] 키친타올걸이 마그넷 홀더 주방 수납 정리 코스트코",
+            "image": "https://shopping-phinf.pstatic.net/main_8617197/86171978379.4.jpg",
+            "mall": "데몬하우스",
+            "lprice": "17900",
+            "link": "https://smartstore.naver.com/main/products/8627478056",
+            "coupang": false
+          },
+          {
+            "title": "무타공마켓 자석 키친타올걸이 홀더 행주걸이 건조대 냉장고 선반",
+            "image": "https://shopping-phinf.pstatic.net/main_8390989/83909893390.jpg",
+            "mall": "무타공마켓",
+            "lprice": "7900",
+            "link": "https://smartstore.naver.com/main/products/6365393068",
+            "coupang": false
+          },
+          {
+            "title": "므어므어 컬러랙 키친타올걸이 스틸 마그넷 홀더",
+            "image": "https://shopping-phinf.pstatic.net/main_8232732/82327328542.11.jpg",
+            "mall": "므어므어스튜디오",
+            "lprice": "14400",
+            "link": "https://smartstore.naver.com/main/products/4782806100",
+            "coupang": false
+          },
+          {
+            "title": "므어므어 코코랙 키친타올걸이 마그넷 홀더",
+            "image": "https://shopping-phinf.pstatic.net/main_6032592/60325921805.20260626070957.jpg",
+            "mall": "네이버",
+            "lprice": "15900",
+            "link": "https://search.shopping.naver.com/catalog/60325921805",
+            "coupang": false
+          },
+          {
+            "title": "다이소 자석타입 키친 타올걸이 1020777",
+            "image": "https://shopping-phinf.pstatic.net/main_4478856/44788564643.2.jpg",
+            "mall": "다이소몰",
+            "lprice": "3000",
+            "link": "https://www.daisomall.co.kr/pd/pdr/SCR_PDR_0001?pdNo=1020777&infl_path=naver_ep",
+            "coupang": false
+          },
+          {
+            "title": "냉장고 자석 선반 주방 컵 거치대 정리 용품 수납 영양제보관함",
+            "image": "https://shopping-phinf.pstatic.net/main_8675763/86757630908.jpg",
+            "mall": "제로링꾸",
+            "lprice": "5900",
+            "link": "https://smartstore.naver.com/main/products/9213130585",
+            "coupang": false
+          }
+        ]
+      },
+      "view_count": 1479672,
       "uploader": "每日精品推薦",
       "duration": 23,
       "source_url": "https://www.tiktok.com/@ence5511p14/video/7572828928163745079",
-      "download_url": "https://v45.tiktokcdn-us.com/e1fe74bac806ed508b86542fd0da81ff/6a660c31/video/tos/useast5/tos-useast5-ve-0068c003-tx/owIIAE7gjfEQSALfwX6MoCfXlzDDICFbkdgH13/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1452&ft=73kDHDyjNl~VQQUnU~d-sdWEbmZqYlu1lX-~hWLrK&mime_type=video_mp4&rc=Nzg8aTg0NDU3OzY2Njo4O0BpanM8Znc5cnA0NzMzZzczNEBjLWAvMjAyXzIxMDIvYTVhYSNya2hrMmRzY2BhLS1kMS9zcw%3D%3D&vvpl=1&l=202607260731050D8ED310FEAB77B95395&btag=e000bd000",
-      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/oEIE1bQAkgAF6ECL4Jjz7MflIfD0HCPQ3CfSdw~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=78a81e3d&x-expires=1785135600&x-signature=4RmPgYXir6b3Xw%2BHMWCGcfEtA1k%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&s=SEARCH&sc=feed_cover&biz_tag=tt_video"
+      "download_url": "https://v45.tiktokcdn-us.com/b7cac1803d002f6c6a06fbebb0710974/6a6664f6/video/tos/useast5/tos-useast5-ve-0068c003-tx/owIIAE7gjfEQSALfwX6MoCfXlzDDICFbkdgH13/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1452&ft=aEKfuqT0m0LPD12l4enI3wU06l7FMeF~O5&mime_type=video_mp4&rc=Nzg8aTg0NDU3OzY2Njo4O0BpanM8Znc5cnA0NzMzZzczNEBjLWAvMjAyXzIxMDIvYTVhYSNya2hrMmRzY2BhLS1kMS9zcw%3D%3D&vvpl=1&l=20260726134950738F2B05C59657C4B65F&btag=e000bd000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/oEIE1bQAkgAF6ECL4Jjz7MflIfD0HCPQ3CfSdw~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=69b8d8cd&x-expires=1785157200&x-signature=H9tleYGG%2FoauWXr%2BtvvHEWKLzGU%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     },
     {
-      "id": "sv_0cb6796489ee",
+      "id": "sv_0d24e4831c24",
       "platform": "tiktok",
-      "title": "沉浸式开箱📦丨超实用厨房好物分享👏#好物分享 #厨房好物 ",
-      "title_ko": "실용적인 주방용품 언박싱",
-      "view_count": 1454935,
-      "uploader": "Treasure Good Stuff Cottage",
-      "duration": 155,
-      "source_url": "https://www.tiktok.com/@yu.wang949/video/7638651273427897620",
-      "download_url": "https://v45.tiktokcdn-us.com/a310c29dff74df94a983db9710e0e7c1/6a660cb6/video/tos/alisg/tos-alisg-pve-0037c001/ocAvA8rAviEZgCPQI1iBwRfkEqC7whBdAoBduI/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1350&ft=aEKfuqT0m0LPD12rYCnI3wUyAYyFMeF~O5&mime_type=video_mp4&rc=O2VkNjk1aDRnOTxnMzxkOUBpM2U5Omo5cmh5OzMzODczNEAwMS1hY2FjNjExXi9jLV8tYSNmcTVkMmRzLi1hLS1kMS1zcw%3D%3D&vvpl=1&l=202607260731065508F20C6BA470A82B6B&btag=e000d5000",
-      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/o8YDChD1FlX7A4DLWjVIACdIAhDQQgBfAUf6fE~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=cab8d0ed&x-expires=1785135600&x-signature=GOd52M1Ga0lDKSKqu5dFpOUFJjg%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+      "title": "Cartoon Elephant Mini Fan for Cooling Down Food #fyp #gadgets #kitchen #homefinds #lifehacks ",
+      "title_ko": "음식을 식히는 데 사용되는 코끼리 모양의 휴대용 미니 선풍기",
+      "coupang_keywords": [
+        "코끼리 미니 선풍기",
+        "음식 식힘 선풍기",
+        "휴대용 미니 팬",
+        "유아식 식힘 선풍기"
+      ],
+      "zh_terms": [
+        "卡通大象迷你风扇",
+        "食物冷却风扇",
+        "婴儿辅食降温风扇"
+      ],
+      "naver": {
+        "query": "코끼리 미니 선풍기",
+        "real_title": "코끼리 100단 빅팬 폴딩 휴대용 선풍기 캠핑 손선풍기",
+        "lprice": "29900",
+        "coupang": true,
+        "coupang_title": "코끼리 100단 폴딩 빅팬 휴대용 탁상용 선풍기  카키 그레이  KPF-BF2",
+        "coupang_lprice": "28900",
+        "mall": "쿠팡",
+        "image": "https://shopping-phinf.pstatic.net/main_5999652/59996523172.jpg",
+        "candidates": [
+          {
+            "title": "코끼리 100단 폴딩 빅팬 휴대용 탁상용 선풍기  카키 그레이  KPF-BF2",
+            "image": "https://shopping-phinf.pstatic.net/main_5999652/59996523172.jpg",
+            "mall": "쿠팡",
+            "lprice": "28900",
+            "link": "https://link.coupang.com/re/PCSNAVERPCSDP?pageKey=9533888628&ctag=9533888628&lptag=I28433837447&itemId=28433837447&vendorItemId=95384681185&spec=10305197",
+            "coupang": true
+          },
+          {
+            "title": "코끼리 100단 빅팬 폴딩 휴대용 선풍기 캠핑 손선풍기",
+            "image": "https://shopping-phinf.pstatic.net/main_9101546/91015463694.jpg",
+            "mall": "코끼리 공식몰",
+            "lprice": "29900",
+            "link": "https://smartstore.naver.com/main/products/13470953342",
+            "coupang": false
+          },
+          {
+            "title": "코끼리 휴대용 선풍기 무선 손 미니 손풍기",
+            "image": "https://shopping-phinf.pstatic.net/main_8777288/87772882360.jpg",
+            "mall": "코끼리 공식몰",
+            "lprice": "13900",
+            "link": "https://smartstore.naver.com/main/products/10228378809",
+            "coupang": false
+          },
+          {
+            "title": "코끼리 핸디선풍기 손선풍기 휴대용 미니 선풍기 무선 손풍기 BLDC",
+            "image": "https://shopping-phinf.pstatic.net/main_8786982/87869823452.jpg",
+            "mall": "GAZO",
+            "lprice": "14800",
+            "link": "https://smartstore.naver.com/main/products/10325319250",
+            "coupang": false
+          },
+          {
+            "title": "크리츠월드 코끼리 KPF-BF1",
+            "image": "https://shopping-phinf.pstatic.net/main_4859160/48591609618.20240621090509.jpg",
+            "mall": "네이버",
+            "lprice": "14170",
+            "link": "https://search.shopping.naver.com/catalog/48591609618",
+            "coupang": false
+          },
+          {
+            "title": "초경량 초소형 핸디선풍기 휴대용",
+            "image": "https://shopping-phinf.pstatic.net/main_8206105/82061055717.5.jpg",
+            "mall": "페이브샵",
+            "lprice": "6400",
+            "link": "https://smartstore.naver.com/main/products/4516532573",
+            "coupang": false
+          }
+        ]
+      },
+      "view_count": 1199154,
+      "uploader": "Nice Life",
+      "duration": 11,
+      "source_url": "https://www.tiktok.com/@nicelife.hacks/video/7650933770291301645",
+      "download_url": "https://v45.tiktokcdn-us.com/803d17ad22d348c7b7b631318c33bf5f/6a6664ed/video/tos/useast5/tos-useast5-pve-0068-tx/owRBOFDFgnbf52LF7qeqAoSbvKQEICMXDZJUEg/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=776&ft=73kDHDyjNkhVQQUnU~d-sdd.hmZqYl.JKs-~hWLrK&mime_type=video_mp4&rc=OjQ0NzQzODQzNjU2ZmZnaUBpM2RoZnU5cjlzOzMzZzczNEBfYDQzNC9hXjUxLWIuYmNeYSNeYHEuMmRzNGphLS1kMS9zcw%3D%3D&vvpl=1&l=20260726134953B22D15A1028DE9DC2351&btag=e000b5000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/owfRQEOFo2bdwentUNBIQPXkgAF9DqAZLMDS2E~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=b93b11b4&x-expires=1785157200&x-signature=55H1vCQnp9MMSgkdUPzO0cKgfDo%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     }
   ]
 }
