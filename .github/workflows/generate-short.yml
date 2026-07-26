@@ -38,9 +38,17 @@ on:
   push:
     branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
     paths: ["short-movie-generator/requests/*.json"]
-  # 매일 자동 생성: 11:30 KST = 02:30 UTC (AI가 카테고리 로테이션으로 실존 종 자동 선택)
-  schedule:
-    - cron: "30 2 * * *"
+  # ★매일 자동 생성(schedule) 일시 중단 — 운영자 승인(2026-07-26)
+  #   사고: 매일 같은 대상(bathynomus)으로 '자막만 다른 같은 영상'이 반복 생성되고, 마지막
+  #   저장 단계(rebase)가 매번 실패해 "제작 실패" 알림까지 함께 왔다. 원인 3중 —
+  #   ① 이 cron이 main에 살아 있었고(작업 브랜치에서 지운 건 무효 — schedule은 main에서만 뜬다)
+  #   ② 승인대기 후보가 2개뿐이라 매일 1순위가 같은 대상으로 뽑혔고
+  #   ③ 저장 실패로 '만들었음' 기록이 안 남아 다음날 또 같은 대상을 미제작으로 판단.
+  #   → ②③ 수정이 끝난 뒤 오후 2~3시 발행 기준으로 다시 켠다(그때 이 블록을 복구).
+  #   ⚠ 다시 켤 때 주의: GitHub 스케줄은 큐 지연이 커서 설정 시각보다 최대 3시간 늦게 뜬다
+  #     (실측: 02:30 UTC 설정 → 05:07~05:52 UTC 실행). 원하는 발행 시각에서 역산할 것.
+  # schedule:
+  #   - cron: "30 2 * * *"
 
 concurrency:
   group: generate-short
