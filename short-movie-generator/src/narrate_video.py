@@ -35,6 +35,10 @@ def main() -> int:
     ap.add_argument("--path", default="", help="로컬 영상 경로(--url 없을 때)")
     ap.add_argument("--mode", default="shorts", choices=["shorts", "longform"])
     ap.add_argument("--source-topic", default="", help="소싱 출처(커먼스/아카이브)의 설명 · 근거용(운영자 입력 아님)")
+    ap.add_argument("--credit", default="",
+                    help="저작자 표기 — 캡션 말미 출처 줄. 엔드카드가 없으므로 여기가 유일한 표기다")
+    ap.add_argument("--license-id", default="",
+                    help="라이선스(public-domain/cc0/cc-by/cc-by-sa/kogl-type1)")
     ap.add_argument("--out-name", default="", help="출력 파일명(확장자 제외)")
     ap.add_argument("--base-dir", default=".")
     ap.add_argument("--phase", default="render", choices=["render", "transcribe"],
@@ -69,7 +73,8 @@ def main() -> int:
     try:
         res = narrate_video(video, mode=a.mode, source_topic=a.source_topic,
                             base_dir=a.base_dir, out_name=(a.out_name or None),
-                            phase=a.phase, transcript=transcript)
+                            phase=a.phase, transcript=transcript,
+                            credit=a.credit, license_id=a.license_id)
     except Exception as e:  # noqa: BLE001
         print(f"ERROR: {e}", file=sys.stderr)
         return 1

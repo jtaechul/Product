@@ -126,6 +126,29 @@ def _sample_frames(video: str, work: Path, n: int = 4) -> list[str]:
     return out
 
 
+_LICENSE_LABEL = {
+    "public-domain": "Public Domain", "cc0": "CC0",
+    "cc-by": "CC BY", "cc-by-sa": "CC BY-SA", "kogl-type1": "KOGL Type 1",
+}
+
+
+def _credit_line(credit: str, license_id: str) -> str:
+    """'저작자 · 라이선스' 한 줄. 둘 다 없으면 ''(빈 줄을 넣지 않는다).
+    ★나레이션형은 엔드카드가 없어 캡션이 유일한 표기 위치다(운영자 확정)."""
+    c = (credit or "").strip()
+    label = _LICENSE_LABEL.get((license_id or "").strip().lower(), "")
+    if not c and not label:
+        return ""
+    if not c:
+        return label
+    if not label:
+        return c
+    flat = c.replace(" ", "").replace("-", "").upper()
+    if label.replace(" ", "").replace("-", "").upper() in flat:
+        return c            # 크레딧에 이미 라이선스가 적혀 있으면 중복 금지
+    return f"{c} · {label}"
+
+
 def _speech_notes(video: str, work: Path, limit: int = 2400) -> str:
     """원본 음성을 전사해 **대본 근거 텍스트**로 돌려준다(번역 안 함 — _jp_script가 일본어로 쓴다).
 
@@ -1205,7 +1228,8 @@ def _chapter_block(chapters: list[tuple], offset: float, header: str, titles: li
 
 def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
                   base_dir: str = ".", out_name: str | None = None,
-                  phase: str = "render", transcript: list[dict] | None = None) -> dict:
+                  phase: str = "render", transcript: list[dict] | None = None,
+                  credit: str = "", license_id: str = "") -> dict:
     """첨부 영상 → 일본어 나레이션·자막 완성본.
 
     ★운영자 확정: 제목·설명은 입력받지 않는다. 영상 내용을 비전으로 '보고' 대본을 만들고,
@@ -1372,6 +1396,18 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
         log.info("[narrate] 썸네일 렌더 실패(생략): %s", e)
     shutil.move(body_final, final)   # 오프닝 훅 영상 카드 없이 본문이 그대로 최종본
     thumb_out = str(thumb_path) if thumb_path.exists() else ""
+
+    # 8-00) ★저작권 표기(운영자 확정 "캡션에만"): 나레이션형은 엔드카드가 없어 **캡션이 유일한
+    #       표기 위치**다. CC BY·CC BY-SA는 저작자 표시가 라이선스 의무이므로 반드시 넣는다.
+    #       (하드룰 #1 · 표기 없으면 이용 조건 위반)
+    _cred = _credit_line(credit, license_id)
+    if _cred:
+        for _k, _tag in (("desc_jp", "映像"), ("desc_ko", "영상")):
+            _t = (meta.get(_k) or "").strip()
+            _line = f"{_tag}: {_cred}"
+            if _line not in _t:
+                meta[_k] = (_t + ("\n\n" if _t else "") + _line).strip()
+        log.info("[narrate] 캡션 저작권 표기: %s", _cred)
 
     # 8-0) ★설명란 CTA(구독+댓글) — 챕터 목차보다 **위**에 둔다(목차 아래는 접혀서 안 보임).
     #      나레이션에는 넣지 않는다(마무리 여운·시청완료율 보호). 문구는 릴스 캡션과 동일 출처.

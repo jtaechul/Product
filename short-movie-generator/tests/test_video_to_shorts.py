@@ -92,3 +92,21 @@ def test_footage_record_shape_matches_discovered_schema(monkeypatch):
     assert set(rec["footage"]) >= {"url", "license", "credit", "source"}
     assert set(rec["species"]) >= {"scientific_name", "common_name_ko", "common_name_en",
                                    "depth_range_m", "fun_facts", "sources"}
+
+
+# ── 나레이션형 저작권 표기(엔드카드 없음 → 캡션이 유일한 표기) ────────────────
+import pytest as _pytest
+
+from src.core import narrate_attached as _na
+
+
+@_pytest.mark.parametrize("credit,lic,expect", [
+    ("John Turnbull", "cc-by-sa", "John Turnbull · CC BY-SA"),
+    ("NOAA Ocean Exploration", "public-domain", "NOAA Ocean Exploration · Public Domain"),
+    ("Gary Williams · CC BY-SA", "cc-by-sa", "Gary Williams · CC BY-SA"),   # 중복 미부착
+    ("", "cc-by", "CC BY"),
+    ("작가만", "", "작가만"),
+    ("", "", ""),                                                          # 빈 줄 안 넣음
+])
+def test_narrate_credit_line(credit, lic, expect):
+    assert _na._credit_line(credit, lic) == expect

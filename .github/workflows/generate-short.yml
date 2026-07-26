@@ -85,6 +85,7 @@ concurrency:
 
 permissions:
   contents: write   # 종 중복방지 원장(used_species.json) 커밋용
+  actions: write    # ★종 확보 실패 시 나레이션형 워크플로로 자동 전환(디스패치)
 
 jobs:
   generate:
@@ -179,7 +180,45 @@ jobs:
       - name: Install Chromium (HUD 렌더용)
         run: playwright install --with-deps chromium
 
+      # ★자동 판별(운영자 확정): 운영자가 고른 영상에 종·학명이 붙지 않으면 **실패 대신**
+      #   '일반 나레이션형'으로 넘긴다. 고래·심해탐사처럼 특정 종이 아닌 영상도 제작되게 하려는 것.
+      #   여기선 렌더 없이 정체성 조회만 하므로 몇 초면 끝난다.
+      - name: 종·학명 확보 여부 사전 판별(찾은 영상으로 제작할 때만)
+        id: idcheck
+        if: ${{ inputs.video_url != '' }}
+        env:
+          VURL: ${{ inputs.video_url }}
+          VTITLE: ${{ inputs.video_title }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import os
+          from src.core import discovery
+          rec = None
+          try:
+              rec = discovery.resolve_from_video(os.environ["VURL"], os.environ.get("VTITLE", ""), "")
+          except Exception as e:
+              print(f"::warning::종 조회 오류 → 나레이션형으로 진행: {e}")
+          print("has_species=" + ("true" if rec else "false"))
+          if rec:
+              print("sci=" + rec["species"]["scientific_name"])
+          PY
+
+      - name: 종 미확보 → 일반 나레이션형으로 전환(제작 계속)
+        if: ${{ inputs.video_url != '' && steps.idcheck.outputs.has_species == 'false' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "::notice::종·학명 미확보 → 일반 나레이션형(narrate-video)으로 전환합니다."
+          gh workflow run narrate-video.yml --ref "${{ github.ref_name }}" \
+            -f video_url="${{ inputs.video_url }}" \
+            -f mode=shorts \
+            -f source_topic="${{ inputs.video_title }}" \
+            -f credit="${{ inputs.video_credit }}" \
+            -f license_id="${{ inputs.video_license }}"
+          echo "전환 완료 — 나레이션형 워크플로가 이어서 제작합니다."
+
       - name: Run pipeline
+        if: ${{ inputs.video_url == '' || steps.idcheck.outputs.has_species != 'false' }}
         id: gen
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
