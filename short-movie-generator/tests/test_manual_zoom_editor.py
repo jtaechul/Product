@@ -91,13 +91,48 @@ def test_editor_on_both_detail_pages(worker):
 
 def test_editor_is_box_based_and_per_cut(worker):
     """★운영자 확정: 줌·크롭을 따로 고르지 않고 **9:16 사각형 하나**로 합치고, **컷마다 개별** 지정.
-    또 영상 재생에 의존하지 않는다(원본 대부분이 WebM이라 아이폰에서 재생 불가 → 0초만 입력됐다)."""
+    구간은 ①원본 재생 중 '여기 시작/여기 끝' ②프레임 사진 탭 — 어느 쪽이든 **입력칸에 초가 보여야**
+    한다(운영자 지적: 눌러도 칸이 안 채워졌다)."""
     start = worker.index("function cutEditorHTML(")
-    body = worker[start:worker.index("function cutEditorInputs(")]
-    assert "data-cetab" in body, "컷별 탭이 없습니다(컷마다 개별 지정 불가)"
+    body = worker[start:worker.index("// ★칸이 곧 값이다")]
+    assert "data-mk=" in body, "'여기 시작/여기 끝' 버튼이 없습니다"
+    assert "여기 시작" in body and "여기 끝" in body
+    assert "placeholder=\"시작(초)\"" in body and "placeholder=\"끝(초)\"" in body, "시작·끝 입력칸이 없습니다"
+    assert "data-cesel=" in body, "컷별 '잘라낼 곳' 선택이 없습니다(컷마다 개별 지정 불가)"
     assert "strip" in body and "사진" in body, "프레임 사진 스트립이 없습니다"
     assert "box" in body and "stage" in body, "크롭 사각형이 없습니다"
-    assert "여기 시작" not in body, "재생 위치에 의존하던 옛 버튼이 남아 있습니다"
+
+
+def test_marker_buttons_fill_the_visible_inputs(worker):
+    """★실사고 회귀 금지: 버튼을 눌러도 칸이 비어 있던 문제.
+    시작·끝 값은 **입력칸(ceVal/ceSet)** 에만 담고, 버튼 핸들러가 그 칸을 채워야 한다."""
+    assert "function ceVal(" in worker and "function ceSet(" in worker
+    start = worker.index("function bindCutEditor(")
+    body = worker[start:worker.index("// extra = 편집 패널이 만든")]
+    assert "[data-mk^='" in body, "버튼 핸들러 배선이 없습니다"
+    assert "ceSet(pfx,i,f,t)" in body, "버튼이 입력칸을 채우지 않습니다"
+    assert "v.currentTime" in body, "재생 위치를 읽지 않습니다"
+    # 값은 상태가 아니라 칸에서 읽는다(칸이 비어 보이는데 값이 들어간 척하는 일 방지)
+    inp = worker[worker.index("function cutEditorInputs("):worker.index("function bindCutEditor(")]
+    assert 'ceVal(pfx,i,"a")' in inp and 'ceVal(pfx,i,"b")' in inp
+
+
+def test_editor_shows_required_total_seconds(worker):
+    """★운영자 확정: "구간을 반복해 채우지 말고 **총 몇 초가 필요한지** 알려주면 내가 그만큼 고른다."
+    → 본문 길이(레코드 body_dur)와 지금 고른 합·부족분을 항상 보여준다."""
+    assert "'need'" in worker or '"need"' in worker
+    assert "필요한 총 길이" in worker, "필요한 총 길이 안내가 없습니다"
+    assert "초 부족" in worker and "지금 고른 합" in worker
+    assert "rec.body_dur" in worker, "레코드의 본문 길이를 읽지 않습니다"
+
+
+def test_editor_card_is_full_width_on_mobile(worker):
+    """★아이폰 최적화(운영자 지적 "너무 좁게 표현된다"): 편집 카드가 2열 그리드 안에서 절반 폭으로
+    찌그러져 한글이 세로로 쪼개졌다 → 전체 폭(grid-column:1/-1) + 터치 44px 이상."""
+    i = worker.index('id="nvcutbox"')
+    assert "grid-column:1/-1" in worker[i - 120:i + 160], "나레이션형 편집 카드가 전체 폭이 아닙니다"
+    assert "min-height:44px" in worker, "터치 타깃(44px 이상)이 없습니다"
+    assert "white-space:nowrap" in worker, "버튼 글자가 세로로 쪼개지는 것을 막지 않았습니다"
 
 
 def test_editor_inputs_are_per_cut_boxes(worker):
@@ -168,3 +203,5 @@ def test_detail_render_checker_exists():
     assert chk.exists(), "상세 렌더 검사기가 없습니다"
     body = chk.read_text(encoding="utf-8")
     assert "renderDetail" in body and "구간·줌 직접 지정" in body
+    # ★렌더만 보면 '눌러도 안 채워지는' 사고를 못 잡는다 → 버튼 클릭까지 흉내 내는지 확인
+    assert "onclick()" in body and "컷1 시작 칸" in body, "버튼 동작 검사가 빠졌습니다"

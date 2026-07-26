@@ -1580,6 +1580,9 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     src_sheet = source_preview.make_frame_sheet(str(vp), str(sheet_path))
     if src_sheet:
         meta["sheet_meta"] = src_sheet
+    # ★필요한 총 길이(운영자 확정): "구간을 반복해 채우지 말고, 총 몇 초가 필요한지 알려주면
+    #   내가 그만큼 고르겠다." → 본문 길이(=나레이션 길이)를 레코드에 남겨 대시보드가 보여준다.
+    meta["body_dur"] = round(float(dur), 1)
 
     meta_path = out_dir / f"{name}.meta.json"
     try:

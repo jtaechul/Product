@@ -265,6 +265,12 @@ def write_narrate_record(base_dir: str, content_id: str, meta: dict, *,
     # ★프레임 사진 시트(구간·크롭 편집용): {url, cols, rows, n, step, tw, th}
     if sheet and sheet.get("url"):
         rec["media"]["sheet"] = sheet
+    # ★본문 길이(초) — 운영자가 컷 구간을 고를 때 "총 몇 초가 필요한지" 화면에 보여주기 위한 값.
+    try:
+        if float(meta.get("body_dur") or 0) > 0:
+            rec["body_dur"] = round(float(meta["body_dur"]), 1)
+    except (TypeError, ValueError):
+        pass
     if transcript:
         rec["transcript"] = transcript
     p.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
