@@ -22,6 +22,9 @@ on:
       nonce:
         description: "폴링 신선도 매칭용"
         default: ""
+      terms:
+        description: "쉼표구분 검색어(주면 한국어→중국어 확장 생략 · ③ 홍보영상용)"
+        default: ""
   push:
     branches: [main, claude/coupang-shorts-phase-0-k42l1i]
     paths: ["projects/coupang-shorts-factory/requests/sourcing/*.json"]
@@ -52,13 +55,13 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             KW='${{ inputs.keyword }}'; HS='${{ inputs.hash }}'; LM='${{ inputs.limit }}'
-            PG='${{ inputs.page }}'; NC='${{ inputs.nonce }}'
+            PG='${{ inputs.page }}'; NC='${{ inputs.nonce }}'; TM='${{ inputs.terms }}'
           else
             f=$(ls -t requests/sourcing/*.json | head -1)
             KW=$(jq -r '.keyword' "$f"); HS=$(jq -r '.hash // "manual"' "$f"); LM=$(jq -r '.limit // 10' "$f")
-            PG=$(jq -r '.page // 0' "$f"); NC=$(jq -r '.nonce // ""' "$f")
+            PG=$(jq -r '.page // 0' "$f"); NC=$(jq -r '.nonce // ""' "$f"); TM=$(jq -r '.terms // ""' "$f")
           fi
-          { echo "keyword=$KW"; echo "hash=$HS"; echo "limit=$LM"; echo "page=${PG:-0}"; echo "nonce=$NC"; } >> "$GITHUB_OUTPUT"
+          { echo "keyword=$KW"; echo "hash=$HS"; echo "limit=$LM"; echo "page=${PG:-0}"; echo "nonce=$NC"; echo "terms=$TM"; } >> "$GITHUB_OUTPUT"
 
       - name: 발굴 실행 (stdlib만 — 의존성 설치 불필요; Gemini는 번역·중국어확장용, 키 없으면 원문 폴백)
         env:
@@ -69,7 +72,7 @@ jobs:
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           SHORTS_NAVER_CLIENT_ID: ${{ secrets.SHORTS_NAVER_CLIENT_ID }}
           SHORTS_NAVER_CLIENT_SECRET: ${{ secrets.SHORTS_NAVER_CLIENT_SECRET }}
-        run: python -m src.sourcing.discover --keyword "${{ steps.p.outputs.keyword }}" --hash "${{ steps.p.outputs.hash }}" --limit "${{ steps.p.outputs.limit }}" --page "${{ steps.p.outputs.page }}" --nonce "${{ steps.p.outputs.nonce }}"
+        run: python -m src.sourcing.discover --keyword "${{ steps.p.outputs.keyword }}" --hash "${{ steps.p.outputs.hash }}" --limit "${{ steps.p.outputs.limit }}" --page "${{ steps.p.outputs.page }}" --nonce "${{ steps.p.outputs.nonce }}" --terms "${{ steps.p.outputs.terms }}"
 
       - name: 추천 매니페스트 커밋 (관리자 카드가 읽음, 실패해도 로그로 확인)
         continue-on-error: true

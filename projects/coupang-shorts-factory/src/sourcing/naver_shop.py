@@ -70,6 +70,12 @@ def find_coupang(query: str, http=None) -> dict:
         return {}
     top = items[0]
     coup = next((it for it in items if "쿠팡" in (it.get("mall") or "")), None)
+    # 상위 후보(이미지 포함)를 함께 반환 → 운영자가 틱톡 썸네일과 '나란히' 대조해 같은 상품을 고른다
+    # ('맨 위 결과 맹신'으로 다른 상품이 잡히던 문제 완화). 쿠팡 판매 항목을 앞으로 정렬.
+    cand = [{"title": it.get("title") or "", "image": it.get("image"), "mall": it.get("mall"),
+             "lprice": it.get("lprice"), "link": it.get("link"),
+             "coupang": "쿠팡" in (it.get("mall") or "")} for it in items[:6]]
+    cand.sort(key=lambda c: 0 if c["coupang"] else 1)
     return {
         "query": query,
         "real_title": top.get("title") or "",
@@ -78,5 +84,6 @@ def find_coupang(query: str, http=None) -> dict:
         "coupang_title": (coup.get("title") if coup else top.get("title")) or "",
         "coupang_lprice": (coup.get("lprice") if coup else None),
         "mall": (coup.get("mall") if coup else top.get("mall")),
-        "image": top.get("image"),
+        "image": (coup.get("image") if coup else top.get("image")),
+        "candidates": cand,
     }
