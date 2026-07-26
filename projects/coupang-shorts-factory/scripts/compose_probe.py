@@ -33,7 +33,8 @@ def main() -> int:
             v = VideoFileClip(str(out))
             sz = tuple(v.size)
             n = out.stat().st_size
-            ok = sz == (W, H) and n > 10000 and v.duration > 1.5
+            # 단색 테스트 클립은 극도로 잘 압축돼 수 KB — 규격(9:16·길이·유효 mp4)만 본다.
+            ok = sz == (W, H) and n > 2000 and v.duration > 1.5
             print(f"COMPOSE_PROBE: size={sz} dur={v.duration:.2f}s bytes={n}")
             print(f"VERDICT: compose={'OK' if ok else 'FAIL'} (기대 {W}x{H} · 두 클립 ≈2초)")
     except Exception as e:
