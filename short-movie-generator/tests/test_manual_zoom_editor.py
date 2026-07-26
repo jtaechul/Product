@@ -121,3 +121,28 @@ def test_sourcing_makes_preview():
           ).read_text(encoding="utf-8")
     assert "source_preview" in wf and "preview_url" in wf
     assert re.search(r"gh release upload \"\$TAG\" work/preview/\*\.mp4", wf)
+
+
+# ── ★렌더 검증(운영자 지적 "메뉴가 아예 없다" 재발방지) ──────────────────────
+def test_editor_is_not_collapsed(worker):
+    """접힌 <details>로 두면 모바일에서 한 줄만 보여 '메뉴가 없다'고 느낀다(실제로 그랬다).
+    → 편집 패널은 **항상 펼쳐진 카드**여야 하고, 버튼 그리드에도 진입 버튼이 있어야 한다."""
+    assert '<details class="tok" id="cutbox"' not in worker, "도감형 편집 패널이 다시 접혔습니다"
+    assert '<details class="tok" id="nvcutbox"' not in worker, "나레이션형 편집 패널이 다시 접혔습니다"
+    assert 'id="bcut"' in worker, "버튼 그리드에 '구간·줌 직접 지정' 진입 버튼이 없습니다"
+    assert 'id="cutbox"' in worker and 'id="nvcutbox"' in worker
+
+
+def test_build_stamp_shown(worker):
+    """화면 하단 빌드 표시 — '안 바뀌었다'가 배포 문제인지 화면 캐시인지 즉시 구분하기 위함."""
+    assert "const BUILD=" in worker
+    assert "insertAdjacentHTML(\"beforeend\"" in worker or "BUILD+" in worker
+
+
+def test_detail_render_checker_exists():
+    """소스에 코드가 있는 것과 **실제로 렌더되는 것**은 다르다 → 렌더 검사기를 유지한다.
+    (실행: node worker/detail_render_check.mjs)"""
+    chk = Path(__file__).resolve().parents[1] / "worker" / "detail_render_check.mjs"
+    assert chk.exists(), "상세 렌더 검사기가 없습니다"
+    body = chk.read_text(encoding="utf-8")
+    assert "renderDetail" in body and "구간·줌 직접 지정" in body

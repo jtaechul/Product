@@ -113,6 +113,9 @@ button:disabled{opacity:.5}
 const OWNER="${OWNER}",REPO="${REPO}",WF="${WORKFLOW}",BRANCH="${BRANCH}";
 const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 Actions 디스패치 → 403 회피)
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
+// ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
+//   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
+const BUILD="v2026-07-26-3 (구간·줌 편집)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -279,6 +282,12 @@ function route(){
   else if(lm){setNav("home");renderLongformDetail(decodeURIComponent(lm[1]));}
   else if(path.indexOf("/library")===0){setNav("library");renderLibrary();}
   else{setNav("home");renderHome();}
+  // ★모든 화면 하단에 빌드 표시 — 화면이 최신인지 눈으로 바로 확인(캐시 혼선 방지).
+  try{
+    const v=view();
+    if(v)v.insertAdjacentHTML("beforeend",
+      '<div class="hint" style="text-align:center;opacity:.55;margin:14px 0 4px;font-size:11px">'+BUILD+'</div>');
+  }catch(e){}
 }
 
 // ── 홈: 생성 + 실행 현황 ──
@@ -715,10 +724,11 @@ async function renderNarrateDetail(id,fresh){
         // ★결과를 보고 구간을 다시 잡는 패널(운영자 확정 "일단 만들고 내가 고치기").
         //   원본을 여기서 재생하고, 원하는 지점에서 버튼을 눌러 컷 구간을 채운 뒤 재제작한다.
         (rec.source_url?(
-          '<details class="tok" id="nvcutbox" style="margin-top:10px"><summary>구간·줌 다시 잡기 — 내가 직접 지정해서 다시 만들기</summary>'+
+          '<div class="card" id="nvcutbox" style="margin-top:10px;border:1px solid var(--cy)">'+
+            '<span class="lbl" style="color:var(--cy)">구간·줌 직접 지정 — 내가 정해서 다시 만들기</span>'+
             cutEditorHTML("nc")+
             '<button class="btn save" id="ncgo" style="margin-top:8px">이 설정으로 다시 만들기 (같은 회차 덮어쓰기)</button>'+
-          '</details>'
+          '</div>'
         ):'')+
         '<button class="btn" id="nvdel" style="background:#8b1a1a;color:#fff;grid-column:1/-1">이 영상 삭제 (영구)</button></div>'+
       '<div class="hint" style="margin-top:6px">'+
@@ -742,14 +752,10 @@ async function renderNarrateDetail(id,fresh){
   //   지정한 컷·줌·크롭으로 **같은 회차에 덮어써** 다시 만든다(운영자 확정).
   const _cb=$("#nvcutbox");
   if(_cb&&rec.source_url){
-    _cb.addEventListener("toggle",()=>{
-      if(!_cb.open||_cb.dataset.ready)return;
-      _cb.dataset.ready="1";
-      bindCutEditor("nc",[md.source_mp4_url, nvTranscode(rec.source_url), rec.source_url],()=>{
-        const inp=cutEditorInputs("nc");
-        if(!Object.keys(inp).length){banner("컷 구간·줌·크롭 중 최소 하나는 지정하세요.","err");return;}
-        regenNarrate(id,rec.source_url,rec.mode||"shorts",inp);
-      });
+    bindCutEditor("nc",[md.source_mp4_url, nvTranscode(rec.source_url), rec.source_url],()=>{
+      const inp=cutEditorInputs("nc");
+      if(!Object.keys(inp).length){banner("컷 구간·줌·크롭 중 최소 하나는 지정하세요.","err");return;}
+      regenNarrate(id,rec.source_url,rec.mode||"shorts",inp);
     });
   }
   const dub=document.getElementById("nvdub");
@@ -1252,15 +1258,18 @@ async function renderDetail(id){
       '<button class="btn" id="ball" style="grid-column:1/3">전체 재생성 (무료)</button>'+
       '<button class="btn" id="bigp" style="grid-column:1/3;background:#833ab4;color:#fff">인스타 계정 점검 (발행 안 함)</button>'+
       '<button class="btn" id="big" style="grid-column:1/3;background:#c13584;color:#fff">인스타 릴스 발행</button>'+
+      '<button class="btn" id="bcut" style="grid-column:1/3;border-color:var(--cy);color:var(--cy)">구간·줌 직접 지정해서 다시 만들기</button>'+
       '<button class="btn" id="bdel" style="grid-column:1/3;background:#8b1a1a;color:#fff">이 제작물 삭제 (영상·기록 영구 삭제)</button>'+
     '</div>'+
     // ★구간·줌 직접 지정(운영자 확정): 자동으로 만든 결과가 마음에 안 들 때 여기서 잡아 다시 만든다.
     //   같은 회차에 덮어쓴다(운영자 선택). 비운 항목은 그 항목만 자동.
-    '<details class="tok" id="cutbox" style="margin-top:10px">'+
-      '<summary>구간·줌 다시 잡기 — 내가 직접 지정해서 다시 만들기</summary>'+
+    // ★접어두지 않는다(운영자 지적 "메뉴가 아예 없다"): <details>로 접어두면 모바일에서 한 줄로만
+    //   보여 있는지조차 모른다 → **항상 펼쳐진 카드**로 두고 제목을 크게 단다.
+    '<div class="card" id="cutbox" style="margin-top:10px;border:1px solid var(--cy)">'+
+      '<span class="lbl" style="color:var(--cy)">구간·줌 직접 지정 — 내가 정해서 다시 만들기</span>'+
       cutEditorHTML("ce")+
       '<button class="btn save" id="cego" style="margin-top:8px">이 설정으로 다시 만들기 (같은 회차 덮어쓰기)</button>'+
-    '</details>'+
+    '</div>'+
     postSection(rec.post)+
     '<div class="hint">이미지 출처: '+esc(src.image_credit||"—")+'<br>정보 출처: '+esc((src.info_sources||[]).join(" · ")||"—")+'</div>';
 
@@ -1281,10 +1290,11 @@ async function renderDetail(id){
   $("#bdel").onclick=()=>deleteContent(id,"reel");
   // ★구간·줌 편집 패널: 열 때 원본을 찾아 재생(미리보기 mp4 우선 — 아이폰에서 WebM 재생 불가).
   //   원본 URL은 레코드에 없고 소싱 캐시(_video_cache.json)에 학명 키로 들어 있다.
+  const _bcut=document.getElementById("bcut");
+  if(_bcut)_bcut.onclick=()=>{const c=document.getElementById("cutbox");
+    if(c&&c.scrollIntoView)c.scrollIntoView({behavior:"smooth",block:"start"});};
   const _cb=document.getElementById("cutbox");
-  if(_cb)_cb.addEventListener("toggle",async()=>{
-    if(!_cb.open||_cb.dataset.ready)return;
-    _cb.dataset.ready="1";
+  if(_cb)(async()=>{
     let cands=[];
     try{
       const txt=await fetchRaw("short-movie-generator/src/categories/_video_cache.json");
@@ -1299,7 +1309,7 @@ async function renderDetail(id){
       if(!confirm("지정한 구간·줌으로 이 회차를 다시 만듭니다(같은 번호에 덮어쓰기).\\n진행할까요?"))return;
       regen(id,"video",inp);
     });
-  });
+  })();
   const shBtn=document.getElementById("shup");
   if(shBtn)shBtn.onclick=()=>uploadShort(id);
 }
