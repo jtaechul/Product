@@ -753,7 +753,10 @@ def run(
     # ★엔드카드(통합 마지막 페이지) 배경도 커밋된 히어로 프레임 우선(#046 재발방지):
     #   소싱 사진이 빈 바다/불명확일 수 있어, 실사 피사체 프레임이 있으면 그걸 엔드카드 사진으로 쓴다.
     #   (주의: 이 블록은 run() 소속 — run_reels의 _hf와 별개로 여기서 직접 조회한다.)
-    _hf = footage.seed_hero_frame(info.scientific_name, info.common_name_en)
+    # ★버그 수정: footage는 run_reels 안에서만 지역 import 되어 있어 run()에서 NameError로 죽었다
+    #   (ecbcfbf 이후 test_pipeline_e2e 4건 실패). run()에서도 여기서 직접 import 한다.
+    from src.core import footage as _footage
+    _hf = _footage.seed_hero_frame(info.scientific_name, info.common_name_en)
     _ec_photo = _hf or asset.asset_path
     final_page = endcard.build_final_page(
         caption, series_title, episode, WATERMARK,
