@@ -74,6 +74,12 @@ class SpeciesSpec:
     corner_label: str = "DEEP SEA · ROV CAM"   # 오프닝 좌측 코너 라벨(카테고리별)
     scale_label: str = "生息水深"       # 우측 스케일 제목(깊이 등). 빈 문자열이면 스케일 숨김
     show_scale: bool = True            # 우측 수심 스케일 표시 여부(얕은·비생물 대상은 False)
+    # ★화면에 굽는 출처 크레딧(라이선스 준수 · 절대 하드코딩 금지).
+    #   예전엔 "映像: NOAA Ocean Exploration ・ Public Domain"이 코드에 박혀 있어, 커먼스의
+    #   CC BY-SA 영상을 써도 화면엔 NOAA·퍼블릭도메인이라 적혔다 — **오귀속 + 허위 라이선스 표기**다.
+    #   (deep_sea는 실제로 NOAA가 많아 드러나지 않았고, marine_life 등 커먼스 소스에서 문제가 된다.)
+    #   빈 값이면 아래 기본 문구를 쓰되, 파이프라인은 항상 실제 크레딧을 채워 넣는다.
+    credit_line: str = ""
 
 
 @dataclass
@@ -144,6 +150,18 @@ class HookIntroConfig:
 def _serif(s: int): return ImageFont.truetype(FONT_SERIF, s, index=0)
 def _sans_b(s: int): return ImageFont.truetype(FONT_SANS_B, s, index=0)
 def _sans_r(s: int): return ImageFont.truetype(FONT_SANS_R, s, index=0)
+
+
+# 화면 하단 크레딧 문구. spec.credit_line(실제 출처·라이선스)이 있으면 그것을, 없을 때만 기본값.
+# ★기본값을 그대로 믿고 쓰지 말 것 — 소스가 NOAA가 아니면 허위 표기가 된다(라이선스 하드룰).
+_DEFAULT_CREDIT = "映像: NOAA Ocean Exploration ・ Public Domain"
+
+
+def _credit_text(spec) -> str:
+    c = (getattr(spec, "credit_line", "") or "").strip()
+    if not c:
+        return _DEFAULT_CREDIT
+    return c if c.startswith("映像:") else f"映像: {c}"
 def _mono(s: int): return ImageFont.truetype(FONT_MONO, s)
 def _sci(s: int): return ImageFont.truetype(FONT_SCI, s)
 
@@ -443,7 +461,7 @@ def render_endcard(bg_path: str, spec: SpeciesSpec, out_path: str,
     # 특징문구 — glow 단어 파티클('+' 마크)은 텍스트 주변이 지저분해 보여 삭제(사용자 확정)
     line = spec.feature_line
     text((W // 2, 1060), line, f_feat, (232, 240, 250, 255))
-    text((W // 2, H - 40), "映像: NOAA Ocean Exploration ・ Public Domain",
+    text((W // 2, H - 40), _credit_text(spec),
          _sans_r(20), (160, 175, 200, 225), shadow=False)
     bg.convert("RGB").save(out_path)
     return out_path
@@ -635,7 +653,7 @@ def render_endcard_frames(bg_path: str, spec: SpeciesSpec, out_dir: str,
         textimg.alpha_composite(ln["layer"])
     text_alpha = textimg.split()[3]
     credit = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    ImageDraw.Draw(credit).text((W // 2, H - 40), "映像: NOAA Ocean Exploration ・ Public Domain",
+    ImageDraw.Draw(credit).text((W // 2, H - 40), _credit_text(spec),
                                 font=_sans_r(20), fill=(160, 175, 200, 225), anchor="mm")
 
     T0 = cfg.end_impact_at_s

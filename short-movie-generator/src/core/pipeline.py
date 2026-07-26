@@ -30,6 +30,28 @@ WATERMARK = "DEEP DIVE LOG"  # 브랜드명 [TBD] — 확정 시 교체
 REELS_SUB_SCALE = 1.5
 
 
+# ★라이선스 표기(하드룰 #1 · 허위 표기 금지). 예전엔 크레딧 뒤에 "· Public Domain"을
+#   **무조건** 붙였고 엔드카드에도 NOAA·PD가 하드코딩돼 있었다 → 커먼스의 CC BY-SA 영상을
+#   써도 화면·메타에 "Public Domain"이라 적히는 오귀속·허위 라이선스 표기가 났다.
+#   실제 라이선스(fv["license"])로 라벨을 만든다.
+_LICENSE_LABEL = {
+    "public-domain": "Public Domain", "cc0": "CC0",
+    "cc-by": "CC BY", "cc-by-sa": "CC BY-SA", "kogl-type1": "KOGL Type 1",
+}
+
+
+def _credit_with_license(credit: str, license_id: str) -> str:
+    """'저작자 · 라이선스' 문자열. 크레딧에 이미 라이선스가 적혀 있으면 중복해 붙이지 않는다."""
+    c = (credit or "").strip() or "Wikimedia Commons"
+    label = _LICENSE_LABEL.get((license_id or "").strip().lower(), "")
+    if not label:
+        return c
+    flat = c.replace(" ", "").replace("-", "").upper()
+    if label.replace(" ", "").replace("-", "").upper() in flat:
+        return c
+    return f"{c} · {label}"
+
+
 def _verify_subject_or_raise(category, info) -> None:
     """★제작 직전 카테고리 적합성 최종 게이트(공용).
     카테고리가 verify_subject(info)를 제공하면 호출한다. 부적합이면 PipelineError를 던져
@@ -551,6 +573,12 @@ def run_reels(
     # ★정정(재발방지 기록): '엔드카드 2번' 오진으로 include_endcard=False를 넣었었다 — 릴스에서
     #   hook_intro 엔드카드는 **유일한** 엔드카드다(final_page는 run() 전용). 실제 '무음 선노출' 원인은
     #   reframe zoompan의 비30fps 길이 왜곡(수정됨). 엔드카드는 반드시 켠다(기획서: 전 영상 필수).
+    # ★화면에 굽는 크레딧을 실제 출처·라이선스로 채운다(하드룰 #1 · 허위 표기 금지).
+    #   비워 두면 hook_intro가 기본 NOAA·PD 문구를 쓰므로, 커먼스 CC BY-SA 소스에서 오귀속이 난다.
+    try:
+        spec.credit_line = _credit_with_license(fv.get("credit", ""), fv.get("license", ""))
+    except Exception as e:  # noqa: BLE001
+        log.warning("[reels] 엔드카드 크레딧 주입 실패(기본 문구 사용): %s", e)
     final = hook_intro_stage.apply(body_av, spec, hook_text, str(work_dir / "hook_intro"), bgm=bgm,
                                    open_bg_video=body_v, subject_video=fv["path"],
                                    logo_box=fv.get("logo_box"),
@@ -624,7 +652,8 @@ def run_reels(
     series_title = getattr(category, "series_title", "") or category_id
     total = _probe_duration(final) or body_dur
     result = output.finalize(
-        final, info, caption, f'{fv["credit"]} · Public Domain', fv["license"], str(out_dir), total,
+        final, info, caption, _credit_with_license(fv.get("credit", ""), fv.get("license", "")),
+        fv["license"], str(out_dir), total,
         extra_meta={"category": category_id, "mode": "reels", "visualizer": "reels",
                     "style_profile": "deepsea_reels_jp", "footage_source": fv.get("source", ""),
                     "series": {"title": series_title, "episode": episode}},

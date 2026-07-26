@@ -104,3 +104,50 @@ def test_topic_table_covers_collection_categories():
     for cid in ("marine_life", "marine_algae"):
         cat = get_category(cid)
         assert cat.jp_topic in dhook._TOPICS, cid
+
+
+# ── 크레딧/라이선스 표기(하드룰 #1) ────────────────────────────────────────────
+def test_credit_label_follows_actual_license():
+    """★실사고: 커먼스 CC BY-SA 영상인데 메타·화면에 'Public Domain'이라 적혔다(허위 표기).
+    라벨은 실제 라이선스에서 나와야 한다."""
+    from src.core import pipeline as P
+    assert P._credit_with_license("John Turnbull", "cc-by-sa") == "John Turnbull · CC BY-SA"
+    assert P._credit_with_license("NOAA Ocean Exploration", "public-domain") \
+        == "NOAA Ocean Exploration · Public Domain"
+    assert P._credit_with_license("", "cc-by") == "Wikimedia Commons · CC BY"
+    # 이미 라이선스가 적힌 크레딧에 중복해 붙이지 않는다
+    assert P._credit_with_license("Gary Williams · CC BY-SA", "cc-by-sa") == "Gary Williams · CC BY-SA"
+
+
+def test_endcard_credit_uses_spec_not_hardcoded_noaa():
+    """★실사고: 엔드카드에 'NOAA ・ Public Domain'이 하드코딩돼 커먼스 영상에도 굽혔다(오귀속)."""
+    from src.core import hook_intro as hi
+    spec = hi.SpeciesSpec(
+        jp_name="X", sci_name="X sp.", depth_min=0, depth_max=22,
+        hook_line1="a", hook_line2="b", hook_pop_words=["a", "b"], feature_line="f",
+        credit_line="John Turnbull · CC BY-SA")
+    assert hi._credit_text(spec) == "映像: John Turnbull · CC BY-SA"
+    # 크레딧이 비면(주입 실패) 기존 기본 문구로 폴백
+    spec.credit_line = ""
+    assert hi._credit_text(spec) == hi._DEFAULT_CREDIT
+
+
+def test_shallow_caption_has_no_deep_sea_wording():
+    """얕은 바다 종 캡션에 '深海/深い海/심해'가 남지 않는다."""
+    cat = _marine_life_with_subject()
+    spec, _hook, _ = cat.hook_intro_spec(_SHALLOW)
+    cap = cat.build_reels_caption(_SHALLOW, spec)
+    jp, ko = cap.caption_body or "", cap.caption_ko or ""
+    assert "深海" not in jp and "深い海" not in jp
+    assert "심해" not in ko
+
+
+def test_deep_sea_caption_keeps_deep_wording():
+    """반대로 심해 종 캡션은 기존 심해 서술을 유지한다(회귀 없음)."""
+    from src.core import rich_caption as rc
+    i = SpeciesInfo("Bathynomus giganteus", "다이오우구소쿠무시", "Giant isopod",
+                    "200-2000", "대서양", "심해저", [], [], ["NOAA"])
+    out = rc._fallback(i, "ダイオウグソクムシ", "Bathynomus giganteus", "深海の掃除屋",
+                       "深海の底に、", "うずくまる影。", "심해 바닥.", "심해의 청소부.",
+                       "NOAA · Public Domain", ["#深海"], ["#심해"])
+    assert "深い海の底で、たしかに命をつないでいる一種です。" in out["jp"]

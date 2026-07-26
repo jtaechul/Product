@@ -238,7 +238,9 @@ class CollectionCategory(CategoryModule):
             default_tags=list(c.get("tags", ["#海", f"#{spec.jp_name}", "#生き物"])),
             default_tags_ko=list(c["tags_ko"]) if c.get("tags_ko") else None,
             fixed_tag=self.fixed_hashtag, fixed_tag_ko=self.fixed_hashtag_ko,
-            show_sci_name=self.show_sci_name)
+            show_sci_name=self.show_sci_name,
+            # 심해 카테고리가 아니면 '深海/심해' 상시 서술을 빼서 사실 왜곡을 막는다.
+            deep=(self.jp_topic == "deep_sea"))
         return CaptionData(
             hook_text=spec.hook_line1 + spec.hook_line2,
             overlay_facts=[info.habitat or ""], caption_body=rc["jp"],
