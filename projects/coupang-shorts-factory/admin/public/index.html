@@ -1638,7 +1638,58 @@ const coupangSearchUrl = (q) => `https://partners.coupang.com/#affiliate/ws/link
 let srcState = { hash: null, keyword: "", cands: [], picked: null, page: 0, nonce: "" };
 function srcEsc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 function srcNonce() { return "n" + Date.now() + Math.floor(Math.random() * 1e6); }
-function sourcingInit() { /* 진입 시 특별 로드 없음 — 발굴은 버튼으로 시작 */ }
+function sourcingInit() { srcRestoreState(); }   // 진입 시 이전 진행상태 복원(초기화 방지)
+
+/* ── 진행상태 유지(2026-07-26 사용자 보고: 탭 이동·닫기 시 초기화됨) ──────────
+   모바일은 다른 앱/창으로 나가면 페이지가 언로드돼 메모리 상태(발굴결과·선택·홍보영상·방향·대본)가
+   사라진다. 스냅샷을 localStorage에 저장하고 로드/탭진입 시 복원해 진행 단계를 그대로 이어가게 한다. */
+const SRC_LS = "mm_src_v1";
+let srcRestored = false, srcRestoring = false;   // srcRestoring: 복원 중엔 스크롤 점프·중복저장 억제
+function srcShown(id) { const e = $(id); return !!e && e.style.display !== "none"; }
+function srcSaveState() {
+  try {
+    const s = srcState || {};
+    if (!s.hash) return;   // 발굴 시작 전이면 저장 안 함
+    const pr = srcPromoState || {}, pl = srcPlanState || {};
+    const snap = { v: 1,
+      kw: (($("srcKeyword") || {}).value) || s.keyword || "",
+      src: { hash: s.hash, keyword: s.keyword, cands: s.cands || [], picked: s.picked || null, page: s.page || 0 },
+      aff: (($("srcAffiliate") || {}).value) || "",
+      promo: pr.productHash ? { productHash: pr.productHash, promoHash: pr.promoHash, keyword: pr.keyword,
+        cands: pr.cands || [], selected: [...(pr.selected || [])], page: pr.page || 0 } : null,
+      plan: pl.hash ? { hash: pl.hash, options: pl.options || [], chosen: pl.chosen,
+        custom: (($("srcDirCustom") || {}).value) || pl.custom || "", note: pl.note || "", script: pl.script || null } : null,
+      ui: { pick: srcShown("srcPickCard"), promo: srcShown("srcPromoCard"), plan: srcShown("srcPlanCard"), refresh: srcShown("srcRefresh") } };
+    localStorage.setItem(SRC_LS, JSON.stringify(snap));
+  } catch (_) {}
+}
+function srcClearState() { try { localStorage.removeItem(SRC_LS); } catch (_) {} }
+function srcRestoreState() {
+  if (srcRestored) return; srcRestored = true;   // 한 번만(탭 오갈 때 메모리 상태를 덮지 않도록)
+  let snap; try { snap = JSON.parse(localStorage.getItem(SRC_LS) || "null"); } catch (_) { snap = null; }
+  if (!snap || !snap.src || !snap.src.hash) return;
+  srcRestoring = true;
+  try {
+    if (snap.kw && $("srcKeyword")) $("srcKeyword").value = snap.kw;
+    srcState = { hash: snap.src.hash, keyword: snap.src.keyword, cands: snap.src.cands || [],
+      picked: snap.src.picked || null, page: snap.src.page || 0, nonce: "" };
+    if (srcState.cands.length) {
+      srcRenderCards();
+      if (snap.ui && snap.ui.refresh) $("srcRefresh").style.display = "";
+      $("srcStatus").textContent = `이전에 진행하던 발굴 결과 ${srcState.cands.length}개를 복원했습니다 — 이어서 진행하세요.`;
+    }
+    if (snap.ui && snap.ui.pick && srcState.picked) {
+      srcRenderPick();
+      if (snap.aff && $("srcAffiliate")) $("srcAffiliate").value = snap.aff;
+    }
+    if (snap.promo && snap.ui && snap.ui.promo && srcState.picked) {
+      srcShowPromo(srcState.picked, snap.promo.productHash, snap.promo);
+    }
+    if (snap.plan && snap.ui && snap.ui.plan) srcShowPlan(snap.plan.hash, snap.plan);
+  } catch (_) { /* 복원 실패해도 초기화면은 정상 동작 */ }
+  srcRestoring = false;
+  srcSaveState();   // 복원 직후 최신 스냅샷 재기록
+}
 async function srcDispatch(inputs) {
   await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${SRC_WF}/dispatches`, {
     method: "POST", body: JSON.stringify({ ref: BRANCH, inputs }) });
@@ -1649,8 +1700,13 @@ $("srcDiscover").onclick = (ev) => busy(ev.target, async () => {
   const hash = await sha16("src:" + kw);
   const nonce = srcNonce();
   srcState = { hash, keyword: kw, cands: [], picked: null, page: 0, nonce };
+  // 새 발굴이면 이전 ②③④ 진행상태도 초기화(스냅샷 정합성)
+  srcPromoState = { productHash: null, promoHash: null, keyword: "", cands: [], selected: new Set(), page: 0, nonce: "" };
+  srcPlanState = { hash: null, nonce: "", options: [], chosen: null, custom: "", note: "", script: null };
   $("srcCards").innerHTML = ""; $("srcPickCard").style.display = "none"; $("srcRefresh").style.display = "none";
+  $("srcPromoCard").style.display = "none"; $("srcPlanCard").style.display = "none";
   $("srcStatus").textContent = `'${kw}' 틱톡 상품 발굴 중… (약 1분, 완료되면 자동 표시)`;
+  srcSaveState();
   await srcDispatch({ keyword: kw, hash, limit: "5", page: "0", nonce });
   toast("틱톡 발굴 시작 — 약 1분");
   srcPoll(hash, nonce, 0);
@@ -1717,6 +1773,7 @@ function srcRenderCards() {
     el.onclick = () => { srcState.picked = c; srcRenderCards(); srcRenderPick(); };
     box.appendChild(el);
   }
+  srcSaveState();
 }
 function srcRenderPick() {
   const c = srcState.picked; if (!c) { $("srcPickCard").style.display = "none"; return; }
@@ -1759,8 +1816,10 @@ function srcRenderPick() {
     };
   });
   $("srcConfirm").onclick = (ev) => busy(ev.target, srcConfirmProduct);
-  $("srcPickCancel").onclick = () => { srcState.picked = null; srcRenderCards(); $("srcPickCard").style.display = "none"; };
-  $("srcPickCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("srcPickCancel").onclick = () => { srcState.picked = null; srcRenderCards(); $("srcPickCard").style.display = "none"; srcSaveState(); };
+  $("srcAffiliate").oninput = () => srcSaveState();   // 입력 중인 링크도 유지
+  if (!srcRestoring) $("srcPickCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  srcSaveState();
 }
 async function srcConfirmProduct() {
   const c = srcState.picked; if (!c) return;
@@ -1774,6 +1833,7 @@ async function srcConfirmProduct() {
   toast("상품 확정 저장 완료");
   $("srcPickStatus").textContent = "상품이 확정되었습니다. 아래 ③에서 이 상품 홍보영상을 찾으세요.";
   srcShowPromo(c, srcState.hash);   // ③ 홍보영상 찾기 열기
+  srcSaveState();
 }
 
 /* ── ③ 이 상품 홍보영상 찾기 (틱톡 2차 검색, 다중선택) ───────────────────
@@ -1782,10 +1842,12 @@ async function srcConfirmProduct() {
 const srcPromoSelPath = (h) => `${P}/data/sources/promo/${h}.json`;
 let srcPromoState = { productHash: null, promoHash: null, keyword: "", cands: [], selected: new Set(), page: 0, nonce: "" };
 
-function srcShowPromo(product, productHash) {
+function srcShowPromo(product, productHash, restore) {
   const nv = product.naver || {};
-  const name = nv.coupang_title || nv.real_title || product.title_ko || (product.coupang_keywords || [])[0] || "";
-  srcPromoState = { productHash, promoHash: "p_" + productHash, keyword: name, cands: [], selected: new Set(), page: 0, nonce: "" };
+  const name = (restore && restore.keyword) || nv.coupang_title || nv.real_title || product.title_ko || (product.coupang_keywords || [])[0] || "";
+  srcPromoState = { productHash, promoHash: (restore && restore.promoHash) || ("p_" + productHash), keyword: name,
+    cands: (restore && restore.cands) || [], selected: new Set((restore && restore.selected) || []),
+    page: (restore && restore.page) || 0, nonce: "" };
   $("srcPromoBody").innerHTML =
     `<p class="hint">고른 상품을 홍보하는 <b>틱톡 영상</b>을 조회수순으로 찾습니다. 검색어(상품명)를 필요하면 고치고 [홍보영상 찾기]를 누르세요.</p>`
     + `<div class="row2" style="gap:8px; align-items:center"><input id="srcPromoKw" value="${srcEsc(name)}" style="flex:1; min-width:0"><button id="srcPromoFind" class="btn">홍보영상 찾기</button></div>`
@@ -1797,7 +1859,16 @@ function srcShowPromo(product, productHash) {
   $("srcPromoFind").onclick = (ev) => busy(ev.target, () => srcPromoDispatch(0));
   $("srcPromoRefresh").onclick = (ev) => busy(ev.target, () => srcPromoDispatch((srcPromoState.page || 0) + 1));
   $("srcPromoSave").onclick = (ev) => busy(ev.target, srcPromoSave);
-  $("srcPromoCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  if (restore && srcPromoState.cands.length) {   // 복원: 고르던 홍보영상·선택 그대로
+    srcPromoRender();
+    $("srcPromoRefresh").style.display = "";
+    $("srcPromoStatus").textContent = `이전에 고르던 홍보영상 ${srcPromoState.cands.length}개를 복원했습니다.`;
+    if (srcPromoState.selected.size) {
+      $("srcPromoSave").style.display = "";
+      $("srcPromoSave").textContent = `이 영상들로 진행 (${srcPromoState.selected.size}개)`;
+    }
+  }
+  if (!srcRestoring) $("srcPromoCard").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 async function srcPromoDispatch(page) {
   const kw = ($("srcPromoKw").value || "").trim() || srcPromoState.keyword;
@@ -1858,6 +1929,7 @@ function srcPromoRender() {
     };
     box.appendChild(el);
   });
+  srcSaveState();
 }
 async function srcPromoSave() {
   if (!srcPromoState.selected.size) { toast("고른 영상이 없습니다"); return; }
@@ -1869,6 +1941,7 @@ async function srcPromoSave() {
   toast(`홍보영상 ${vids.length}개 저장`);
   $("srcPromoStatus").textContent = `홍보영상 ${vids.length}개 저장됨 — 아래 ④에서 기획 방향을 정하고 대본을 만드세요.`;
   srcShowPlan(srcPromoState.productHash);   // ④ 기획 방향 + 대본
+  srcSaveState();
 }
 
 /* ── ④ 기획 방향(차별점 3안 게이트) + 대본 생성 ───────────────────────────────
@@ -1878,15 +1951,18 @@ async function srcPromoSave() {
 const SRC_PLAN_WF = "shorts-sourcing-plan.yml";
 const srcMechPath = (h) => `${P}/data/mechanism/${h}.json`;
 const srcPlanPath = (h) => `${P}/data/sources/plan/${h}.json`;
-let srcPlanState = { hash: null, nonce: "", options: [], chosen: null, custom: "" };
+let srcPlanState = { hash: null, nonce: "", options: [], chosen: null, custom: "", note: "", script: null };
 
 async function srcPlanDispatch(mode, nonce) {
   await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${SRC_PLAN_WF}/dispatches`, {
     method: "POST", body: JSON.stringify({ ref: BRANCH, inputs: { hash: srcPlanState.hash, mode, nonce } }) });
 }
 
-function srcShowPlan(productHash) {
-  srcPlanState = { hash: productHash, nonce: "", options: [], chosen: null, custom: "" };
+function srcShowPlan(productHash, restore) {
+  srcPlanState = { hash: productHash, nonce: "", options: (restore && restore.options) || [],
+    chosen: (restore && restore.chosen != null) ? restore.chosen : null,
+    custom: (restore && restore.custom) || "", note: (restore && restore.note) || "",
+    script: (restore && restore.script) || null };
   $("srcPlanBody").innerHTML =
     `<p class="hint">이 상품이 <b>다른 제품과 뭐가 다른지(차별점)</b> 3가지 방향을 AI가 뽑아줍니다.
      그중 하나를 고르거나 직접 의견을 적으면, <b>그 방향으로 대본·제목·설명·해시태그</b>를 만듭니다.</p>`
@@ -1896,8 +1972,14 @@ function srcShowPlan(productHash) {
     + `<div id="srcScriptBox" style="margin-top:14px"></div>`;
   $("srcPlanCard").style.display = "";
   $("srcPlanStart").onclick = (ev) => busy(ev.target, () => srcPlanDirections());
-  $("srcPlanCard").scrollIntoView({ behavior: "smooth", block: "start" });
-  srcLoadExistingPlan(productHash);   // 이미 뽑아둔 방향/대본이 있으면 복원
+  if (restore) {   // 복원: 저장된 방향(3안/스텁)·대본을 그대로 다시 그린다(네트워크 불필요)
+    if ((srcPlanState.options || []).length || srcPlanState.note)
+      srcRenderDirections({ options: srcPlanState.options, chosen: srcPlanState.chosen, custom: srcPlanState.custom, note: srcPlanState.note });
+    if (srcPlanState.script) srcRenderScript(srcPlanState.script);
+  } else {
+    srcLoadExistingPlan(productHash);   // 이미 뽑아둔 방향/대본이 있으면 복원
+  }
+  if (!srcRestoring) $("srcPlanCard").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 // 이 상품에 이미 mechanism(방향)·plan(대본)이 있으면 다시 열 때 그대로 보여준다.
@@ -1948,6 +2030,7 @@ function srcRenderDirections(data) {
   srcPlanState.options = opts;
   srcPlanState.chosen = Number.isInteger(data.chosen) ? data.chosen : null;
   srcPlanState.custom = data.custom || "";
+  srcPlanState.note = data.note || "";
   let html = "";
   if (opts.length) {
     html += `<p class="hint" style="margin:10px 0 6px"><b>AI가 뽑은 방향 3안</b> (하나 탭해서 선택)</p><div id="srcDirCards">`;
@@ -1974,8 +2057,10 @@ function srcRenderDirections(data) {
       srcRenderDirections({ options: srcPlanState.options, chosen: srcPlanState.chosen, custom: $("srcDirCustom").value });
     };
   });
+  $("srcDirCustom").oninput = () => { srcPlanState.custom = $("srcDirCustom").value; srcSaveState(); };
   $("srcDirRedo").onclick = (ev) => busy(ev.target, () => srcPlanDirectionsRedo());
   $("srcDirConfirm").onclick = (ev) => busy(ev.target, () => srcConfirmDirection());
+  srcSaveState();
 }
 
 // '3안 다시 뽑기' — 기존 mechanism을 지우고(스텁으로) 재추출 트리거.
@@ -2023,6 +2108,7 @@ async function srcPlanPollScript(nonce, tries, prevPlanSha) {
 }
 
 function srcRenderScript(s) {
+  srcPlanState.script = s;   // 복원용으로 보관
   const tags = (s.hashtags || []).map((t) => srcEsc(t)).join(" ");
   const lines = (s.lines || []).map((l, i) =>
     `<div class="srcline"><span class="srcln">${i + 1}</span>${srcEsc(l.text || "")}</div>`).join("");
@@ -2035,6 +2121,7 @@ function srcRenderScript(s) {
     + `<div class="srcfield"><span class="lbl">해시태그</span><div class="val">${tags}</div></div>`
     + `</div>`
     + `<p class="hint" style="margin-top:8px">다음 단계(④ 영상 구간 지정 · ⑤ 제작)는 준비 중입니다. 대본을 고치고 싶으면 방향을 바꿔 다시 만드세요.</p>`;
+  srcSaveState();
 }
 $("mkProduce").onclick = (ev) => busy(ev.target, async () => {
   const p = mkSelected(); if (!p) return;
@@ -3455,6 +3542,10 @@ $("memeUp").onclick = (ev) => busy(ev.target, async () => {
 // 옛 '만들기' 탭 일시정지(유료 토큰·불필요 호출 방지): 로드 시 makeInit 자동실행 안 함.
 // 연결 확인만 유지(소싱 탭은 PAT만 있으면 동작). 옛 탭을 되살리려면 makeInit() 자동호출을 복구.
 (async () => { await checkConn(); })();
+srcRestoreState();   // 연결과 무관하게 소싱 진행상태 복원(탭 이동·새로고침 초기화 방지)
+// 페이지가 숨겨지거나 언로드되기 직전에 최신 상태 저장(모바일 앱 전환 대비)
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") srcSaveState(); });
+window.addEventListener("pagehide", () => srcSaveState());
 </script>
 </body>
 </html>
