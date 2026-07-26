@@ -304,6 +304,30 @@ function renderHome(){
         '<option value="5">5컷 (전환 4회)</option>'+
         '<option value="6">6컷 (전환 5회 · 빠름)</option>'+
       '</select>'+
+      // ★컷별 구간 직접 지정(운영자 확정): 자동 컷 선택을 완전히 대체한다.
+      //   한 줄이라도 채우면 위의 '컷 전환 수'는 무시되고 여기 지정한 컷만 쓴다.
+      '<div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.12);padding-top:10px">'+
+        '<span class="lbl">컷별 구간 직접 지정 — 원본 영상의 초 단위</span>'+
+        '<div class="hint" style="margin:4px 0 8px">한 줄이라도 채우면 <b>여기 지정한 컷만</b> 사용합니다(자동 컷 선택 안 함). '+
+          '비워둔 줄은 무시됩니다. 컷 순서 = 영상에 나오는 순서.</div>'+
+        [0,1,2,3].map(function(i){return ''+
+          '<div class="row2" style="margin-bottom:6px;align-items:center">'+
+            '<span class="hint" style="min-width:44px">컷 '+(i+1)+'</span>'+
+            '<input id="cs'+i+'a" placeholder="시작(초)" inputmode="decimal" autocomplete="off" style="flex:1">'+
+            '<input id="cs'+i+'b" placeholder="끝(초)" inputmode="decimal" autocomplete="off" style="flex:1">'+
+            '<select id="cs'+i+'x" style="flex:1">'+
+              '<option value="">크롭 자동</option>'+
+              '<option value="0.15">왼쪽</option><option value="0.35">가운데-왼쪽</option>'+
+              '<option value="0.5">정가운데</option><option value="0.65">가운데-오른쪽</option>'+
+              '<option value="0.85">오른쪽</option>'+
+            '</select>'+
+            '<select id="cs'+i+'m" style="flex:1">'+
+              '<option value="">프레이밍 자동</option>'+
+              '<option value="fit">전체 담기</option>'+
+              '<option value="closeup">접사(줌인)</option>'+
+            '</select>'+
+          '</div>';}).join('')+
+      '</div>'+
     '</details>'+
     '<button class="go" id="go">쇼츠 생성 시작</button>'+
     '<div class="banner" id="msg"></div>'+
@@ -369,8 +393,21 @@ function renderHome(){
     for(const [k,id] of [["src_start","srcStart"],["src_end","srcEnd"],["crop_x","cropX"],["cuts","cutsN"]]){
       const val=v(id); if(val) inputs[k]=val;
     }
+    // ★컷별 구간: 시작·끝이 둘 다 채워진 줄만 모아 JSON으로 넘긴다(자동 컷 선택 대체).
+    const specs=[];
+    for(let i=0;i<4;i++){
+      const a=v("cs"+i+"a"), b=v("cs"+i+"b");
+      if(!a||!b) continue;
+      const o={start:parseFloat(a), end:parseFloat(b)};
+      if(!(o.end>o.start)) continue;
+      const cx=v("cs"+i+"x"); if(cx) o.crop_x=parseFloat(cx);
+      const md=v("cs"+i+"m"); if(md) o.mode=md;
+      specs.push(o);
+    }
+    if(specs.length) inputs.cut_specs=JSON.stringify(specs);
     const manualNote=[inputs.src_start||inputs.src_end?("구간 "+(inputs.src_start||"0")+"~"+(inputs.src_end||"끝")+"초"):"",
-                      inputs.crop_x?("크롭 "+inputs.crop_x):"", inputs.cuts?(inputs.cuts+"컷"):""].filter(Boolean).join(" · ");
+                      inputs.crop_x?("크롭 "+inputs.crop_x):"", inputs.cuts?(inputs.cuts+"컷"):"",
+                      specs.length?("컷 직접지정 "+specs.length+"개"):""].filter(Boolean).join(" · ");
     $("#go").disabled=true;banner("생성 요청 중…"+(manualNote?(" ("+manualNote+")"):""));
     try{const r=await fetch(API+"/actions/workflows/"+WF+"/dispatches",{method:"POST",headers:headers(true),
         body:JSON.stringify({ref:BRANCH,inputs})});

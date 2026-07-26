@@ -39,10 +39,15 @@ def main() -> int:
     parser.add_argument("--crop-x", default="",
                         help="9:16 크롭 가로 중심 0.0~1.0 (0=왼쪽·0.5=가운데·1=오른쪽). 비우면 피사체 자동추적")
     parser.add_argument("--cuts", default="", help="컷 전환 수(3~8). 비우면 기본 4")
+    parser.add_argument("--cut-specs", default="",
+                        help='컷별 구간 직접 지정(운영자 확정 방식). 자동 컷 선택을 대체한다. '
+                             '형식 ① 간단표기 "0-6, 20-27, 41-48, 62-70" '
+                             '② JSON [{"start":0,"end":6,"crop_x":0.5,"mode":"closeup"}, ...]')
     args = parser.parse_args()
 
     manual = {k: v for k, v in (("start", args.src_start), ("end", args.src_end),
-                                ("crop_x", args.crop_x), ("cuts", args.cuts))
+                                ("crop_x", args.crop_x), ("cuts", args.cuts),
+                                ("cut_specs", args.cut_specs))
               if str(v).strip()} or None
     if manual:
         logging.info("운영자 수동 지정: %s", manual)

@@ -6,7 +6,9 @@
 """
 from __future__ import annotations
 
+import json
 import logging
+import re
 import subprocess
 from pathlib import Path
 
@@ -725,6 +727,68 @@ def _plan_scene_interleaved(path: str, src_dur: float, scores: list[float],
     return plan
 
 
+def _parse_cut_specs(raw, src_dur: float, target_dur: float) -> list[dict] | None:
+    """운영자가 컷마다 지정한 [{start,end,crop_x,mode}] → 렌더 plan으로 변환.
+
+    ★설계 원칙(운영자 확정): "자동으로 자르지 말고, 컷 구분만 해주고 구간은 내가 정한다."
+      · 길이는 지정한 start~end 비율대로 target_dur에 맞춰 정규화(총 길이 규격 유지).
+      · crop_x가 있으면 그 컷만 가로 중심 고정(없으면 자동 추적).
+      · mode: "fit"(전체 담기) / "closeup"(접사). 미지정이면 첫 컷 closeup, 나머지 fit.
+    형식이 깨졌거나 비어 있으면 None → 기존 자동 경로로 폴백(제작을 막지 않는다)."""
+    if not raw:
+        return None
+    items = raw
+    if isinstance(raw, str):
+        txt = raw.strip()
+        if not txt:
+            return None
+        try:
+            items = json.loads(txt)
+        except Exception:  # noqa: BLE001
+            # "0-5, 12-18, 30-36" 같은 간단 표기도 받는다(운영자 입력 편의)
+            items = []
+            for part in re.split(r"[,\n;]+", txt):
+                part = part.strip()
+                if not part:
+                    continue
+                m = re.match(r"^(\d+(?:\.\d+)?)\s*[-~]\s*(\d+(?:\.\d+)?)$", part)
+                if not m:
+                    return None
+                items.append({"start": float(m.group(1)), "end": float(m.group(2))})
+    if not isinstance(items, list) or not items:
+        return None
+    spans: list[dict] = []
+    for it in items:
+        if not isinstance(it, dict):
+            return None
+        s0 = _f(it.get("start"))
+        e0 = _f(it.get("end"))
+        if s0 is None or e0 is None or e0 <= s0:
+            continue
+        s0 = max(0.0, s0)
+        if src_dur:
+            e0 = min(e0, src_dur)
+        if e0 - s0 < 0.4:          # 너무 짧은 컷은 버린다(렌더 불가)
+            continue
+        spans.append({"s": s0, "e": e0, "crop_x": _f(it.get("crop_x")),
+                      "mode": str(it.get("mode") or "").strip().lower()})
+    if not spans:
+        return None
+    # 지정 구간 비율대로 target_dur 배분(합이 본문 길이와 정확히 맞도록)
+    raw_lens = [sp["e"] - sp["s"] for sp in spans]
+    tot = sum(raw_lens) or 1.0
+    plan: list[dict] = []
+    for i, sp in enumerate(spans):
+        ln = target_dur * raw_lens[i] / tot
+        start = min(sp["s"], max(0.0, (src_dur or target_dur) - ln))
+        mode = sp["mode"] if sp["mode"] in ("fit", "closeup") else ("closeup" if i == 0 else "fit")
+        role = _role_for(i, len(spans))
+        plan.append({"start": start, "len": ln, "mode": mode, "role": role,
+                     "push": _ROLE_PUSH.get(role, 1.03), "crop_x": sp["crop_x"],
+                     "src_start": sp["s"], "src_end": sp["e"]})
+    return plan
+
+
 def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                         work_dir: str, logo_box: tuple | None = None,
                         wide: bool = False, subject_hint: str = "",
@@ -846,7 +910,16 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
         m_cuts = int(str(m_cuts).strip()) if str(m_cuts or "").strip() else None
     except ValueError:
         m_cuts = None
-    if wide:
+    # ★④ 컷별 운영자 지정(`manual.cut_specs`) — 자동 컷 선택을 **완전히 대체**한다.
+    #   운영자가 영상을 직접 보고 컷마다 [시작·끝·크롭위치·프레이밍]을 정하면 그대로 렌더한다.
+    #   (자동은 '제안'일 뿐, 최종 결정은 사람 — 운영자 확정 방침)
+    cut_specs = _parse_cut_specs(man.get("cut_specs"), src_dur, target_dur)
+    if cut_specs:
+        plan = cut_specs
+        log.info("[reframe] 운영자 지정 컷 %d개 사용(자동 컷 선택 미사용): %s", len(plan),
+                 " / ".join(f"{c['start']:.1f}~{c['start'] + c['len']:.1f}s·{c['mode']}"
+                            for c in plan))
+    elif wide:
         n_seg = int(m_cuts) if m_cuts else max(2, min(8, round(target_dur / 5.0)))
         n_seg = max(_MIN_CUTS, min(n_seg, _HARD_MAX_CUTS))
         while n_seg > _MIN_CUTS and target_dur / n_seg < _MIN_CUT_LEN:
@@ -933,6 +1006,11 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
             # 크롭 중심 = 피사체 신호(색 무관 일반 saliency)의 무게중심 = 주인공 위치.
             seg_c = cents[fa:fb] or cents
             fx = _median([c[0] for c in seg_c]); fy = _median([c[1] for c in seg_c])
+            # ★컷별 운영자 크롭 위치: 이 컷만 가로 중심을 지정값으로 고정(자동 추적 무시).
+            _ccx = cut.get("crop_x")
+            if _ccx is not None:
+                fx = max(0.0, min(1.0, float(_ccx)))
+                log.info("[reframe] 컷%d 크롭 가로위치 운영자 지정: %.2f", i, fx)
             # ★단일/다수 판별(_subject_focus의 분산도) — 여러 마리면 전체구도를 남기려 줌을 완화.
             #   (무게중심은 여러 마리일 때 개체 사이를 겨누므로, 넓은 크롭이라야 전원이 화면에 남는다.)
             seg_fr = [str(frames[j]) for j in range(max(0, fa), min(len(frames), fb))] or \
@@ -985,4 +1063,16 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                     "-i", str(concat), "-c", "copy", out_path], check=True)
     log.info("[reframe] 9:16 완성: %s (%d컷 중 전신핏 %d컷 %.0f%%, %.1fs)",
              out_path, len(plan), n_fit, 100.0 * n_fit / max(len(plan), 1), target_dur)
+    # ★컷 계획을 파일로 남긴다(운영자 확정: "컷 구분만 해주고 구간은 내가 정한다").
+    #   대시보드가 이걸 읽어 컷 편집 화면의 **기본값**으로 채우고, 운영자가 고쳐 재제작한다.
+    #   src_start/src_end = 원본 영상에서의 실제 구간(운영자가 그대로 수정해 넣으면 된다).
+    try:
+        (wd / "cut_plan.json").write_text(json.dumps(
+            [{"i": i, "start": round(c["start"], 2),
+              "end": round(c["start"] + c["len"], 2), "len": round(c["len"], 2),
+              "mode": c.get("mode", "fit"), "role": c.get("role", ""),
+              "crop_x": c.get("crop_x")} for i, c in enumerate(plan)],
+            ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as e:  # noqa: BLE001
+        log.warning("[reframe] 컷 계획 기록 생략: %s", e)
     return out_path

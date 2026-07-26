@@ -1606,7 +1606,11 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
     if dim:
         ar = dim[0] / dim[1] if dim[1] else 0
         if not (1.55 <= ar <= 1.95):
-            return _reject(f"종횡비 부적합({dim[0]}x{dim[1]}, AR={ar:.2f})")
+            # ★강등(운영자 확정): 예전엔 여기서 폐기했다. 크롭·구간을 운영자가 직접 정하는
+            #   방식으로 바꾼 뒤로는 종횡비가 어긋나도 운영자가 크롭으로 해결할 수 있다.
+            #   "영상이 있으면 제작은 된다"가 원칙 — 자동 판단으로 제작을 막지 않는다.
+            log.warning("[footage] 종횡비 특이(%dx%d, AR=%.2f) — 그대로 진행(크롭은 운영자 지정)",
+                        dim[0], dim[1], ar)
     # ★인트로/아웃트로 트림(번인 타이틀카드·크레딧 제거): 수동 trim=(앞초,뒤초) + **자동 카드
     #   탐지**를 합쳐 본편만 남긴다. 대다수 NOAA 클립은 수동 trim이 없어도 인트로 카드가 있는데
     #   (예: 심해붉은해파리 Psychedelic Medusa 앞 ~6초), 롱폼 콜드오픈이 이를 `-stream_loop`로
@@ -1639,7 +1643,9 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
     try:
         from src.core import watermark_qc as _wq
         if _wq.is_static_source(str(out), threshold=_MIN_VIDEO_MOTION):
-            return _reject(f"움직임 부족(moving image · <{_MIN_VIDEO_MOTION})")
+            # ★강등: 전체 평균이 낮아도 운영자가 움직이는 구간을 직접 고를 수 있다.
+            log.warning("[footage] 움직임 낮음(<%s) — 그대로 진행(구간은 운영자 지정)",
+                        _MIN_VIDEO_MOTION)
     except Exception as e:  # noqa: BLE001  (검사 실패 시 통과 — 검사 오류로 제작 자체를 막지 않음)
         log.warning("[footage] 움직임 검사 생략(오류): %s", e)
     # ★피사체 가시성 게이트(Step1 · 빈 물/준비 컷 배제): '아무것도 안 보이는' 클립은 버린다.
@@ -1647,7 +1653,10 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
     try:
         vis = subject_visibility(str(out))
         if vis < _MIN_VISIBILITY:
-            return _reject(f"피사체 미검출(빈 물/준비 컷 · 가시성 {vis:.0f}<{_MIN_VISIBILITY:.0f})")
+            # ★강등: 영상 전체 평균이 '빈 물'이어도 피사체가 나오는 구간은 있을 수 있다.
+            #   전체를 근거로 통째 폐기하면 운영자가 그 구간을 고를 기회조차 사라진다.
+            log.warning("[footage] 가시성 낮음(%.0f<%.0f) — 그대로 진행(구간은 운영자 지정)",
+                        vis, _MIN_VISIBILITY)
     except Exception as e:  # noqa: BLE001
         log.warning("[footage] 가시성 검사 생략(오류): %s", e)
     # ★Step2 의미검증(비전 LLM) — ★난파선 전용(하드 리젝트)으로 한정한다(운영자 확정 · 존폐 사고 재발방지).
@@ -1662,7 +1671,8 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
             subj = "the sunken shipwreck structure itself (not only divers, bubbles, or open water)"
             verdict = footage_shows_subject(str(out), subj)
             if verdict is False:
-                return _reject("주제 피사체 미검출(비전 LLM · 난파선: 다이버/빈물)")
+                # ★강등: 운영자가 컷을 직접 고르는 방식이라 최종 판단은 사람이 한다.
+                log.warning("[footage] 난파선 피사체 미검출 의심(비전) — 그대로 진행(운영자 확인)")
         except Exception as e:  # noqa: BLE001
             log.warning("[footage] 난파선 의미검증 생략(오류): %s", e)
     # ★큰 몸꼴(대분류) 일치 검증(생물 · 재발방지: 이프노푸스=심해어로 소싱한 NOAA 클립이 실제 대왕등각류
@@ -1671,7 +1681,9 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
     if not is_wreck:
         try:
             if not _video_taxon_ok(str(out), scientific_name, common_name_en):
-                return _reject("큰 몸꼴 불일치(오종 영상 · 비전)")
+                # ★강등: 오종 의심은 로그로만 알리고 제작은 잇는다. 운영자가 컷을 고르며
+                #   영상을 직접 보므로 오종이면 그 자리에서 걸러진다(자동 폐기보다 안전).
+                log.warning("[footage] 오종 의심(몸꼴 불일치 · 비전) — 그대로 진행(운영자 확인 필요)")
         except Exception as e:  # noqa: BLE001
             log.warning("[footage] 몸꼴 검증 생략(오류): %s", e)
     # ★영상 확정 → URL 캐시(다음부터 검색 없이 그 파일을 바로 받아 분류=제작 일치)

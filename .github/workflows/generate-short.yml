@@ -51,6 +51,10 @@ on:
         description: "컷 전환 수(3~8) — 비우면 기본 4"
         required: false
         default: ""
+      cut_specs:
+        description: '컷별 구간 직접 지정(자동 컷 선택 대체) — 예 "0-6, 20-27, 41-48, 62-70" 또는 JSON'
+        required: false
+        default: ""
   # 대안 트리거: requests/*.json 푸시로도 생성 가능 (원격 자동화·Claude 조작용)
   push:
     branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
@@ -183,7 +187,15 @@ jobs:
           if [ -n "${{ inputs.src_end }}" ];   then MAN_ARGS="$MAN_ARGS --src-end ${{ inputs.src_end }}"; fi
           if [ -n "${{ inputs.crop_x }}" ];    then MAN_ARGS="$MAN_ARGS --crop-x ${{ inputs.crop_x }}"; fi
           if [ -n "${{ inputs.cuts }}" ];      then MAN_ARGS="$MAN_ARGS --cuts ${{ inputs.cuts }}"; fi
-          python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --category "$CAT" $EP_ARG --mode reels $MAN_ARGS 2>&1 | tee work/pipeline.log
+          # ★컷별 구간은 공백·쉼표가 들어가므로 반드시 따옴표로 감싼다(단어 분리 방지).
+          CUT_SPECS='${{ inputs.cut_specs }}'
+          if [ -n "$CUT_SPECS" ]; then
+            python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --category "$CAT" $EP_ARG \
+              --mode reels $MAN_ARGS --cut-specs "$CUT_SPECS" 2>&1 | tee work/pipeline.log
+          else
+            python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --category "$CAT" $EP_ARG \
+              --mode reels $MAN_ARGS 2>&1 | tee work/pipeline.log
+          fi
           VIDEO=$(ls -t output/*.mp4 | head -1)
           META=$(ls -t output/*.json | head -1)
           echo "video=$VIDEO" >> "$GITHUB_OUTPUT"
