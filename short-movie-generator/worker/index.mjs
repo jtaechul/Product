@@ -307,6 +307,20 @@ function renderHome(){
       // ★컷별 구간 직접 지정(운영자 확정): 자동 컷 선택을 완전히 대체한다.
       //   한 줄이라도 채우면 위의 '컷 전환 수'는 무시되고 여기 지정한 컷만 쓴다.
       '<div style="margin-top:12px;border-top:1px solid rgba(255,255,255,.12);padding-top:10px">'+
+        // ★원본 미리보기(운영자 확정 B안): 구간 초를 알려면 원본을 봐야 한다 →
+        //   여기서 바로 재생하고, 재생 위치를 버튼 한 번으로 컷 칸에 넣는다.
+        '<span class="lbl">원본 영상 보기 — 구간을 눈으로 정하세요</span>'+
+        '<div class="row2" style="margin-bottom:6px">'+
+          '<select id="srcPick" style="flex:2"><option value="">불러오는 중…</option></select>'+
+          '<button class="go" id="srcLoad" style="flex:1;margin:0">재생</button>'+
+        '</div>'+
+        '<div id="srcBox" style="display:none;margin-bottom:8px">'+
+          '<video id="srcVid" controls playsinline preload="metadata" '+
+                 'style="width:100%;border-radius:10px;background:#000"></video>'+
+          '<div class="hint" id="srcInfo" style="margin:6px 0"></div>'+
+          '<div class="hint" style="margin:6px 0">영상을 원하는 지점에서 멈춘 뒤, 아래 버튼으로 그 시간을 컷에 넣으세요.</div>'+
+          '<div id="srcMarks"></div>'+
+        '</div>'+
         '<span class="lbl">컷별 구간 직접 지정 — 원본 영상의 초 단위</span>'+
         '<div class="hint" style="margin:4px 0 8px">한 줄이라도 채우면 <b>여기 지정한 컷만</b> 사용합니다(자동 컷 선택 안 함). '+
           '비워둔 줄은 무시됩니다. 컷 순서 = 영상에 나오는 순서.</div>'+
@@ -378,6 +392,86 @@ function renderHome(){
   '</div>'+
   '<div class="card"><span class="lbl">실행 현황 <a href="#" id="refresh" style="color:var(--cy);float:right;text-decoration:none">새로고침</a></span>'+
     '<div class="runs" id="runs"><div class="hint">불러오는 중…</div></div></div>';
+
+  // ── 원본 미리보기(컷 구간을 눈으로 정하기) ────────────────────────────────
+  //   소싱 캐시(_video_cache.json)에 종별 원본 URL이 들어 있다. 그걸 목록으로 띄우고,
+  //   고른 영상을 그대로 재생 → 재생 위치를 버튼으로 컷 칸에 채운다.
+  //   ※ 화면에 보이는 초 = 파이프라인이 쓰는 초와 동일(원본 기준)이라 그대로 넣으면 맞는다.
+  let SRC_CACHE=null;
+  const fmt=t=>{t=Math.max(0,t||0);const m=Math.floor(t/60),sec=t-m*60;
+    return m+":"+(sec<10?"0":"")+sec.toFixed(1);};
+  // ★재생 호환(중요): 커먼스 원본은 대부분 **VP8 webm**이라 iOS 사파리에서 재생이 안 된다.
+  //   커먼스가 자동 생성하는 **480p VP9 트랜스코드**는 iOS 14+에서 재생되고 용량도 훨씬 작다.
+  //   원본: .../commons/5/5e/X.webm → 트랜스코드: .../commons/transcoded/5/5e/X.webm/X.webm.480p.vp9.webm
+  //   실패하면 원본으로 자동 폴백한다(둘 다 안 되면 '원본 링크'로 안내).
+  function transcodeUrl(u){
+    try{
+      if(!/^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\//.test(u)) return "";
+      if(/\/transcoded\//.test(u)) return "";
+      if(!/\.(webm|ogv)$/i.test(u)) return "";
+      const name=u.split("/").pop();
+      return u.replace("/commons/","/commons/transcoded/")+"/"+name+".480p.vp9.webm";
+    }catch(e){return "";}
+  }
+  async function loadSrcList(){
+    const sel=$("#srcPick"); if(!sel) return;
+    try{
+      const t=await fetchRaw("short-movie-generator/src/categories/_video_cache.json", true);
+      SRC_CACHE=t?JSON.parse(t):{};
+    }catch(e){SRC_CACHE={};}
+    const keys=Object.keys(SRC_CACHE||{}).sort();
+    if(!keys.length){sel.innerHTML='<option value="">확보된 원본이 없습니다 — 먼저 소싱하세요</option>';return;}
+    // 입력한 대상과 이름이 겹치는 항목을 맨 위로(그대로 '재생'만 누르면 되게)
+    const q=(($("#query")||{}).value||"").trim().toLowerCase();
+    keys.sort((a,b)=>((q&&b.includes(q))?1:0)-((q&&a.includes(q))?1:0));
+    sel.innerHTML=keys.map(k=>{
+      const v=SRC_CACHE[k]||{};
+      return '<option value="'+esc(k)+'">'+esc(k)+' — '+esc((v.credit||v.source||"").slice(0,40))+'</option>';
+    }).join("");
+  }
+  function renderMarkButtons(){
+    const box=$("#srcMarks"); if(!box) return;
+    box.innerHTML=[0,1,2,3].map(function(i){return ''+
+      '<div class="row2" style="margin-bottom:4px;align-items:center">'+
+        '<span class="hint" style="min-width:44px">컷 '+(i+1)+'</span>'+
+        '<button class="go" data-mk="'+i+'a" style="flex:1;margin:0;padding:8px">여기를 시작으로</button>'+
+        '<button class="go" data-mk="'+i+'b" style="flex:1;margin:0;padding:8px">여기를 끝으로</button>'+
+      '</div>';}).join("");
+    box.querySelectorAll("[data-mk]").forEach(function(btn){
+      btn.onclick=function(){
+        const v=$("#srcVid"); if(!v) return;
+        const t=Math.round((v.currentTime||0)*10)/10;
+        const el=$("#cs"+btn.dataset.mk);
+        if(el){el.value=String(t);
+          banner("컷 "+(parseInt(btn.dataset.mk)+1)+" "+(btn.dataset.mk.endsWith("a")?"시작":"끝")+" = "+t+"초","ok");}
+      };
+    });
+  }
+  const _sl=$("#srcLoad");
+  if(_sl)_sl.onclick=async()=>{
+    const key=(($("#srcPick")||{}).value||"");
+    const rec=(SRC_CACHE||{})[key];
+    if(!rec||!rec.url){banner("원본 URL을 찾지 못했습니다. 먼저 '소싱하기'를 실행하세요.","err");return;}
+    const v=$("#srcVid"), box=$("#srcBox");
+    const tc=transcodeUrl(rec.url);
+    let triedOriginal=!tc;
+    const meta="출처: <b>"+esc(rec.credit||"-")+"</b> · 라이선스 "+esc(rec.license||"-")+
+      ' · <a href="'+esc(rec.url)+'" target="_blank" style="color:var(--cy)">원본 링크</a>';
+    v.src=prox(tc||rec.url); box.style.display="";
+    $("#srcInfo").innerHTML=meta;
+    v.onloadedmetadata=()=>{
+      // ※여기 보이는 초 = 제작 파이프라인이 쓰는 초와 동일(원본 기준 타임라인)이라 그대로 넣으면 맞다.
+      $("#srcInfo").innerHTML=meta+" · 길이 <b>"+fmt(v.duration)+"</b> ("+v.duration.toFixed(1)+"초)";
+    };
+    v.onerror=()=>{
+      if(!triedOriginal){                 // 트랜스코드 실패 → 원본으로 폴백
+        triedOriginal=true; v.src=prox(rec.url); v.load(); return;
+      }
+      banner("이 브라우저가 원본 형식(webm 등)을 재생하지 못합니다. 위 '원본 링크'로 열어 시간을 확인하세요.","err");
+    };
+    renderMarkButtons();
+  };
+  const _ab=$("#advbox"); if(_ab) _ab.addEventListener("toggle",()=>{ if(_ab.open&&!SRC_CACHE) loadSrcList(); });
 
   const _sp=$("#savepat");if(_sp)_sp.onclick=()=>{const v=$("#pat").value.trim();if(!v)return;
     localStorage.setItem("gh_pat",v);$("#pat").value="";const tb=$("#tokbox");if(tb)tb.open=false;banner("토큰 저장 완료. 다시 묻지 않습니다.","ok");};
@@ -1461,7 +1555,9 @@ export { vsLicenseFromUrl, vsCommonsLicense, vsArchiveLicense, vsCleanTitle, vsS
 // (무한 로딩). raw는 공개 리포에 무인증 200 → 어느 기기서든 조회 가능. 허용 경로만(개방 프록시 방지).
 async function pubRead(url){
   const path = url.searchParams.get("path") || "";
-  if(!/^short-movie-generator\/(content\/[\w.\-]+\.json|src\/categories\/deep_sea\/catalog\.json|src\/categories\/[\w\-]+\/[\w\-]+_(candidates|image_only)\.json)$/.test(path))
+  // ★_video_cache.json 추가(원본 미리보기용): 종별 소싱 원본 URL이 여기 있다. 운영자가 컷 구간을
+  //   눈으로 정하려면 원본을 재생해야 하므로 이 파일 읽기를 허용한다(읽기 전용 · 공개 저장소 경로).
+  if(!/^short-movie-generator\/(content\/[\w.\-]+\.json|src\/categories\/_video_cache\.json|src\/categories\/deep_sea\/catalog\.json|src\/categories\/[\w\-]+\/[\w\-]+_(candidates|image_only)\.json)$/.test(path))
     return j({error:"path not allowed"}, 403);
   // ★현행화 지연 수정(운영자 지적: 재생성 완료 텔레그램 받았는데 관리자 페이지가 한참 뒤에 갱신):
   //   raw.githubusercontent.com은 경로 기준 CDN 캐시(~5분)가 있어, 재생성 커밋이 올라와도 옛 JSON을
@@ -1539,13 +1635,25 @@ async function ghUpload(request, url, env){
 // (라이브러리 영상이 검은 화면 + 재생불가 아이콘). 워커가 올바른 타입·inline으로 바꿔 중계하고
 // Range 요청을 그대로 전달해 스트리밍 탐색도 지원한다.
 const MEDIA_PREFIX = "https://github.com/" + OWNER + "/" + REPO + "/releases/download/";
-const MEDIA_TYPES = { mp4: "video/mp4", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png" };
+// ★원본 소스 미리보기(운영자가 컷 구간을 눈으로 정하기 위함): 소싱처 원본을 그대로 재생해야
+//   구간 초를 알 수 있다. 개방 프록시가 되지 않게 **소싱에 실제로 쓰는 호스트만** 허용한다.
+const SOURCE_PREFIXES = [
+  "https://upload.wikimedia.org/",          // Wikimedia Commons(주 소싱처)
+  "https://oceanexplorer.noaa.gov/",        // NOAA Ocean Exploration
+  "https://www.ncei.noaa.gov/",             // NOAA NCEI 비디오 포털
+  "https://sanctuaries.noaa.gov/",          // NOAA 보호구역
+];
+const MEDIA_TYPES = { mp4: "video/mp4", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
+                      webm: "video/webm", mov: "video/quicktime", mkv: "video/x-matroska" };
 
 async function mediaProxy(request, url) {
   const u = url.searchParams.get("u") || "";
   // ★릴리스 허용 판정은 대소문자 무시(github.repository의 정규 케이스가 'Product'/'product'로 달라도
   //   403이 나지 않게 — 저장 버튼이 갑자기 안 되던 사고의 방어). 개방 프록시는 여전히 차단.
-  if (!u.toLowerCase().startsWith(MEDIA_PREFIX.toLowerCase())) return j({ error: "url not allowed" }, 403);
+  const lu = u.toLowerCase();
+  const allowed = lu.startsWith(MEDIA_PREFIX.toLowerCase()) ||
+                  SOURCE_PREFIXES.some(p => lu.startsWith(p));
+  if (!allowed) return j({ error: "url not allowed" }, 403);
   // 확장자 판정 시 캐시버스터(?v=...) 쿼리는 떼고 본다(붙어 있으면 'mp4?v=1'로 오판돼 403 나던 버그).
   const ext = (u.split("?")[0].split(".").pop() || "").toLowerCase();
   const type = MEDIA_TYPES[ext];
