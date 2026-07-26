@@ -17,7 +17,7 @@ from src.sourcing.base import Seed
 from src.sourcing.models import SOURCES_DIR, SourceVideo
 from src.sourcing.naver_shop import find_coupang
 from src.sourcing.tiktok_tikwm import TikwmAdapter
-from src.sourcing.translate import describe_and_keywords_ko, expand_zh_terms
+from src.sourcing.translate import expand_zh_terms, identify_by_image
 
 DISCOVER_DIR = SOURCES_DIR / "discover"
 
@@ -26,6 +26,7 @@ def _candidate(sv: SourceVideo) -> dict:
     """관리자 추천 카드가 쓰는 표시용 dict."""
     return {"id": sv.id, "platform": sv.platform, "title": sv.title,
             "title_ko": sv.title_ko, "coupang_keywords": list(sv.coupang_keywords or []),
+            "zh_terms": list(sv.zh_terms or []),
             "naver": dict(sv.naver or {}),
             "view_count": sv.view_count, "uploader": sv.uploader,
             "duration": sv.duration, "source_url": sv.source_url,
@@ -68,10 +69,13 @@ def discover(keyword: str, limit: int = 10, adapter: TikwmAdapter | None = None,
                 pool[k] = sv
     ordered = sorted(pool.values(), key=lambda s: (s.view_count or 0), reverse=True)
     svs = ordered[page * limit: page * limit + limit]   # page별 다른(조회수순) 슬라이스
-    meta = describe_and_keywords_ko([s.title or "" for s in svs])   # 카드용 한국어 설명 + 쿠팡 검색어
+    # ⭐ 상품 식별을 '제목 텍스트 추측'이 아니라 '썸네일 이미지'로 한다(2026-07-26 오매칭 개선):
+    #   비전이 실제 상품을 보고 정확한 쿠팡 검색어(ko) + 같은상품 중국어어(zh, ③용)를 준다.
+    meta = identify_by_image([{"title": s.title or "", "cover": s.cover or ""} for s in svs])
     for s, m in zip(svs, meta):
         s.title_ko = m["ko"]
         s.coupang_keywords = m["keywords"]
+        s.zh_terms = m.get("zh") or []
     enrich_naver(svs)   # 네이버 쇼핑으로 진짜 상품명 + 쿠팡 판매 여부(키 없으면 스킵)
     return svs
 
@@ -98,9 +102,12 @@ def main(argv=None) -> int:
     ap.add_argument("--limit", type=int, default=10)
     ap.add_argument("--page", type=int, default=0, help="새로고침 배치(0=상위, 1=다음 배치…)")
     ap.add_argument("--nonce", default="", help="폴링 신선도 매칭용(관리자가 넘김)")
+    ap.add_argument("--terms", default="", help="쉼표구분 검색어(주면 한국어→중국어 확장 생략 — ③ 홍보영상: 확정 상품의 중국어어로 직접 검색)")
     a = ap.parse_args(argv)
 
-    terms = expand_zh_terms(a.keyword)   # 한국어 → 중국어 검색어(매니페스트에도 기록)
+    given = [t.strip() for t in (a.terms or "").split(",") if t.strip()]
+    # --terms 주면 그걸 그대로(왕복 번역 없이) — ③ 홍보영상은 ①에서 비전 식별한 '같은 상품' 중국어어로 검색.
+    terms = given or expand_zh_terms(a.keyword)   # 한국어 → 중국어 검색어(매니페스트에도 기록)
     svs = discover(a.keyword, limit=a.limit, terms=terms, page=a.page)
     manifest = build_manifest(a.keyword, a.hash, svs, terms=terms, page=a.page, nonce=a.nonce)
     p = write_manifest(a.hash, manifest)

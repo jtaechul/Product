@@ -1635,7 +1635,7 @@ const srcDiscoverPath = (h) => `${P}/data/sources/discover/${h}.json`;
 const srcProductPath = (h) => `${P}/data/sources/product/${h}.json`;
 // 쿠팡 파트너스 링크생성 검색 딥링크(검색어 프리필) — 여기서 상품 찾아 어필리에이트 링크를 만든다.
 const coupangSearchUrl = (q) => `https://partners.coupang.com/#affiliate/ws/link/0/${encodeURIComponent(q)}`;
-let srcState = { hash: null, keyword: "", cands: [], picked: null, page: 0, nonce: "" };
+let srcState = { hash: null, keyword: "", cands: [], picked: null, pickedNaver: null, affDraft: "", page: 0, nonce: "" };
 function srcEsc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 function srcNonce() { return "n" + Date.now() + Math.floor(Math.random() * 1e6); }
 function sourcingInit() { srcRestoreState(); }   // 진입 시 이전 진행상태 복원(초기화 방지)
@@ -1653,10 +1653,11 @@ function srcSaveState() {
     const pr = srcPromoState || {}, pl = srcPlanState || {};
     const snap = { v: 1,
       kw: (($("srcKeyword") || {}).value) || s.keyword || "",
-      src: { hash: s.hash, keyword: s.keyword, cands: s.cands || [], picked: s.picked || null, page: s.page || 0 },
-      aff: (($("srcAffiliate") || {}).value) || "",
+      src: { hash: s.hash, keyword: s.keyword, cands: s.cands || [], picked: s.picked || null,
+        pickedNaver: (s.pickedNaver == null ? null : s.pickedNaver), page: s.page || 0 },
+      aff: (($("srcAffiliate") || {}).value) || s.affDraft || "",
       promo: pr.productHash ? { productHash: pr.productHash, promoHash: pr.promoHash, keyword: pr.keyword,
-        cands: pr.cands || [], selected: [...(pr.selected || [])], page: pr.page || 0 } : null,
+        zh_terms: pr.zh_terms || [], cands: pr.cands || [], selected: [...(pr.selected || [])], page: pr.page || 0 } : null,
       plan: pl.hash ? { hash: pl.hash, options: pl.options || [], chosen: pl.chosen,
         custom: (($("srcDirCustom") || {}).value) || pl.custom || "", note: pl.note || "", script: pl.script || null } : null,
       ui: { pick: srcShown("srcPickCard"), promo: srcShown("srcPromoCard"), plan: srcShown("srcPlanCard"), refresh: srcShown("srcRefresh") } };
@@ -1672,7 +1673,8 @@ function srcRestoreState() {
   try {
     if (snap.kw && $("srcKeyword")) $("srcKeyword").value = snap.kw;
     srcState = { hash: snap.src.hash, keyword: snap.src.keyword, cands: snap.src.cands || [],
-      picked: snap.src.picked || null, page: snap.src.page || 0, nonce: "" };
+      picked: snap.src.picked || null, pickedNaver: (snap.src.pickedNaver == null ? null : snap.src.pickedNaver),
+      affDraft: snap.aff || "", page: snap.src.page || 0, nonce: "" };
     if (srcState.cands.length) {
       srcRenderCards();
       if (snap.ui && snap.ui.refresh) $("srcRefresh").style.display = "";
@@ -1699,7 +1701,7 @@ $("srcDiscover").onclick = (ev) => busy(ev.target, async () => {
   if (!kw) { toast("검색어를 입력하세요"); return; }
   const hash = await sha16("src:" + kw);
   const nonce = srcNonce();
-  srcState = { hash, keyword: kw, cands: [], picked: null, page: 0, nonce };
+  srcState = { hash, keyword: kw, cands: [], picked: null, pickedNaver: null, affDraft: "", page: 0, nonce };
   // 새 발굴이면 이전 ②③④ 진행상태도 초기화(스냅샷 정합성)
   srcPromoState = { productHash: null, promoHash: null, keyword: "", cands: [], selected: new Set(), page: 0, nonce: "" };
   srcPlanState = { hash: null, nonce: "", options: [], chosen: null, custom: "", note: "", script: null };
@@ -1770,10 +1772,16 @@ function srcRenderCards() {
       `<div class="srcthumb">${cover}<span class="srcbadge">${views} 조회</span><span class="srcpick">${on0 ? "✓" : "+"}</span></div>`
       + `<div class="srcmeta"><div class="srctitle">${srcEsc(descKo)}</div>`
       + `<div class="srcsub">@${srcEsc(c.uploader)} · ${c.duration || "?"}s</div>${kwLine}${coupBadge}</div>`;
-    el.onclick = () => { srcState.picked = c; srcRenderCards(); srcRenderPick(); };
+    el.onclick = () => { srcState.picked = c; srcState.pickedNaver = null; srcRenderCards(); srcRenderPick(); };
     box.appendChild(el);
   }
   srcSaveState();
+}
+// 네이버 후보 목록(이미지 포함) — 신형 candidates 우선, 없으면 옛 단일 coupang_title로 1개 구성.
+function srcNvList(nv) {
+  if (nv.candidates && nv.candidates.length) return nv.candidates;
+  if (nv.coupang_title) return [{ title: nv.coupang_title, image: nv.image, mall: nv.mall, lprice: nv.coupang_lprice, coupang: nv.coupang }];
+  return [];
 }
 function srcRenderPick() {
   const c = srcState.picked; if (!c) { $("srcPickCard").style.display = "none"; return; }
@@ -1781,34 +1789,47 @@ function srcRenderPick() {
   const views = (c.view_count || 0).toLocaleString();
   const cover = c.cover ? `<img src="${srcEsc(c.cover)}" alt="" onerror="this.style.display='none'">` : "";
   const nv = c.naver || {};
-  const coupName = nv.coupang_title || nv.real_title || (kws[0] || "");
-  const naverBox = nv.coupang_title
-    ? `<div class="srcnaver"><div class="nm">${srcEsc(nv.coupang_title || nv.real_title)}</div>`
-      + `<div class="st ${nv.coupang ? "ok" : "maybe"}">`
-      + (nv.coupang
-          ? `쿠팡 판매 확인됨${nv.coupang_lprice ? ` · 최저가 ${Number(nv.coupang_lprice).toLocaleString()}원` : ""}`
-          : "네이버엔 다른 몰만 잡힘 — 쿠팡에서 직접 확인하세요")
-      + `</div>`
-      + `<a class="btn btnfull" style="margin-top:10px" href="${coupangSearchUrl(coupName)}" target="_blank" rel="noopener">쿠팡 파트너스에서 ‘${srcEsc(coupName.slice(0, 22))}’ 검색</a></div>`
-    : "";
+  const nvCands = srcNvList(nv);
+  if (srcState.pickedNaver == null && nvCands.length) srcState.pickedNaver = 0;   // 기본=최상위 후보
+  const sel = (typeof srcState.pickedNaver === "number") ? nvCands[srcState.pickedNaver] : null;
+  const coupName = (sel && sel.title) || nv.coupang_title || nv.real_title || (kws[0] || "");
+  // ⭐ 나란히 확인: 틱톡 썸네일(위)과 같은 상품을 네이버/쿠팡 후보에서 탭해 고른다(오매칭 방지).
+  const nvCards = nvCands.map((it, i) => {
+    const on = srcState.pickedNaver === i;
+    const img = it.image ? `<img loading="lazy" src="${srcEsc(it.image)}" onerror="this.style.display='none'">` : "";
+    const price = it.lprice ? `<div class="srcsub">${Number(it.lprice).toLocaleString()}원</div>` : "";
+    const badge = it.coupang ? `<div class="srccoup ok">쿠팡 판매</div>` : `<div class="srccoup maybe">${srcEsc((it.mall || "타몰").slice(0, 10))}</div>`;
+    return `<div class="srccard${on ? " sel" : ""}" data-nvi="${i}"><div class="srcthumb">${img}<span class="srcpick">${on ? "✓" : "+"}</span></div>`
+      + `<div class="srcmeta"><div class="srctitle">${srcEsc((it.title || "").slice(0, 60))}</div>${price}${badge}</div></div>`;
+  }).join("");
+  const compare = nvCands.length
+    ? `<div style="font-weight:700; margin:12px 0 4px">이 영상 상품이 쿠팡/네이버의 어느 것과 같나요?</div>`
+      + `<p class="hint" style="margin:0 0 8px">위 <b>틱톡 썸네일</b>과 <b>같은 상품</b>을 아래에서 탭하세요. 다르면 아래 검색어로 파트너스에서 직접 확인하세요.</p>`
+      + `<div id="srcNvCands" class="srccards">${nvCards}</div>`
+      + `<a id="srcCoupLink" class="btn btnfull" style="margin-top:10px" href="${coupangSearchUrl(coupName)}" target="_blank" rel="noopener">쿠팡 파트너스에서 ‘${srcEsc(coupName.slice(0, 22))}’ 검색</a>`
+    : `<p class="hint" style="margin:2px 0 10px">네이버 상품확인 결과가 없습니다(키 미설정/미검색) — 아래 검색어로 파트너스에서 직접 확인하세요.</p>`;
   const chips = kws.map((k) =>
     `<span class="srckw"><a href="${coupangSearchUrl(k)}" target="_blank" rel="noopener">${srcEsc(k)}</a>`
     + `<button type="button" data-kw="${srcEsc(k)}">복사</button></span>`).join("");
   $("srcPickBody").innerHTML =
     `<div class="srcpickhero">${cover}<div>`
     + `<div style="font-weight:700; line-height:1.35">${srcEsc(c.title_ko || c.title || "")}</div>`
-    + `<div class="hint" style="margin:4px 0 0">조회수 ${views} · @${srcEsc(c.uploader)}`
+    + `<div class="hint" style="margin:4px 0 0">틱톡 상품 · 조회수 ${views} · @${srcEsc(c.uploader)}`
     + ` · <a href="${srcEsc(c.source_url)}" target="_blank" rel="noopener">틱톡 원본</a></div></div></div>`
-    + (naverBox || `<p class="hint" style="margin:2px 0 10px">네이버 상품확인 결과가 없습니다(키 미설정/미검색) — 아래 검색어로 파트너스에서 직접 확인하세요.</p>`)
-    + `<div style="font-weight:600; margin:2px 0 6px">다른 검색어로 파트너스 열기</div>`
+    + compare
+    + `<div style="font-weight:600; margin:14px 0 6px">다른 검색어로 파트너스 열기</div>`
     + `<div>${chips}</div>`
     + `<label class="hint" style="display:block; margin:14px 0 4px">쿠팡 파트너스 어필리에이트 링크</label>`
-    + `<input id="srcAffiliate" placeholder="https://link.coupang.com/a/..." style="width:100%">`
+    + `<input id="srcAffiliate" value="${srcEsc(srcState.affDraft || "")}" placeholder="https://link.coupang.com/a/..." style="width:100%">`
     + `<div class="row2" style="margin-top:12px; gap:8px">`
     + `<button id="srcConfirm" class="btn">상품 확정</button>`
     + `<button id="srcPickCancel" class="btn sub">취소</button></div>`
     + `<p id="srcPickStatus" class="hint" style="margin-top:8px"></p>`;
   $("srcPickCard").style.display = "";
+  const nvBox = $("srcNvCands");
+  if (nvBox) nvBox.querySelectorAll("[data-nvi]").forEach((el) => {
+    el.onclick = () => { srcState.pickedNaver = parseInt(el.dataset.nvi, 10); srcRenderPick(); };   // 선택 → 재렌더(어필리에이트 유지)
+  });
   $("srcPickBody").querySelectorAll(".srckw button").forEach((b) => {
     b.onclick = async () => {
       try { await navigator.clipboard.writeText(b.dataset.kw); toast("검색어 복사됨"); }
@@ -1816,8 +1837,8 @@ function srcRenderPick() {
     };
   });
   $("srcConfirm").onclick = (ev) => busy(ev.target, srcConfirmProduct);
-  $("srcPickCancel").onclick = () => { srcState.picked = null; srcRenderCards(); $("srcPickCard").style.display = "none"; srcSaveState(); };
-  $("srcAffiliate").oninput = () => srcSaveState();   // 입력 중인 링크도 유지
+  $("srcPickCancel").onclick = () => { srcState.picked = null; srcState.pickedNaver = null; srcRenderCards(); $("srcPickCard").style.display = "none"; srcSaveState(); };
+  $("srcAffiliate").oninput = () => { srcState.affDraft = $("srcAffiliate").value; srcSaveState(); };   // 입력 중 링크 유지
   if (!srcRestoring) $("srcPickCard").scrollIntoView({ behavior: "smooth", block: "start" });
   srcSaveState();
 }
@@ -1825,6 +1846,11 @@ async function srcConfirmProduct() {
   const c = srcState.picked; if (!c) return;
   const aff = ($("srcAffiliate").value || "").trim();
   if (!/^https?:\/\//.test(aff)) { $("srcPickStatus").textContent = "먼저 쿠팡에서 상품을 찾아 어필리에이트 링크를 붙여넣으세요."; return; }
+  // 운영자가 나란히 비교로 고른 '같은 상품' 이름 — ③ 홍보영상 검색·이후 단계의 상품명 기준.
+  const nv = c.naver || {};
+  const nvCands = srcNvList(nv);
+  const selNv = (typeof srcState.pickedNaver === "number") ? nvCands[srcState.pickedNaver] : null;
+  c._confirmed_name = (selNv && selNv.title) || nv.coupang_title || nv.real_title || (c.coupang_keywords || [])[0] || c.title_ko || "";
   const payload = { keyword: srcState.keyword, hash: srcState.hash,
     product: c, coupang: { affiliate_url: aff, confirmed_at: new Date().toISOString() } };
   let sha; try { const ex = await getFile(srcProductPath(srcState.hash), true, true); sha = ex && ex.sha; } catch (_) {}
@@ -1844,8 +1870,10 @@ let srcPromoState = { productHash: null, promoHash: null, keyword: "", cands: []
 
 function srcShowPromo(product, productHash, restore) {
   const nv = product.naver || {};
-  const name = (restore && restore.keyword) || nv.coupang_title || nv.real_title || product.title_ko || (product.coupang_keywords || [])[0] || "";
+  const name = (restore && restore.keyword) || product._confirmed_name || nv.coupang_title || nv.real_title || product.title_ko || (product.coupang_keywords || [])[0] || "";
+  // ⭐ 같은 상품 검색: 비전이 뽑은 중국어어(zh_terms)로 틱톡을 검색 → 한국어→중국어 되돌림 왕복 제거.
   srcPromoState = { productHash, promoHash: (restore && restore.promoHash) || ("p_" + productHash), keyword: name,
+    zh_terms: (restore && restore.zh_terms) || product.zh_terms || [],
     cands: (restore && restore.cands) || [], selected: new Set((restore && restore.selected) || []),
     page: (restore && restore.page) || 0, nonce: "" };
   $("srcPromoBody").innerHTML =
@@ -1877,7 +1905,9 @@ async function srcPromoDispatch(page) {
   srcPromoState.keyword = kw; srcPromoState.nonce = nonce;
   if (page === 0) { srcPromoState.selected = new Set(); srcPromoState.cands = []; $("srcPromoCards").innerHTML = ""; $("srcPromoSave").style.display = "none"; }
   $("srcPromoStatus").textContent = page ? "다른 홍보영상 찾는 중… (약 1분)" : "홍보영상 찾는 중… (약 1분)";
-  await srcDispatch({ keyword: kw, hash: srcPromoState.promoHash, limit: "10", page: String(page), nonce });
+  // 비전이 뽑은 중국어어(zh_terms)가 있으면 그걸로 같은 상품 검색(왕복 번역 없음), 없으면 이름으로.
+  const terms = (srcPromoState.zh_terms || []).join(",");
+  await srcDispatch({ keyword: kw, hash: srcPromoState.promoHash, limit: "10", page: String(page), nonce, terms });
   toast("홍보영상 검색 시작 — 약 1분");
   srcPromoPoll(nonce, 0);
 }

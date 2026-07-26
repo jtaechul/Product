@@ -28,11 +28,15 @@ def _extract_json(txt: str) -> dict:
 
 
 def _gemini_json(prompt: str, system: str, max_tokens: int = 1024,
-                 model: str = GEMINI_MODEL, call=None) -> dict:
-    """Gemini에 JSON 응답을 요청해 파싱한 dict 반환. call 주입 시 그걸로 호출(테스트)."""
+                 model: str = GEMINI_MODEL, call=None, image: tuple | None = None) -> dict:
+    """Gemini에 JSON 응답을 요청해 파싱한 dict 반환. call 주입 시 그걸로 호출(테스트).
+    image=(base64, mime) 주면 비전(이미지+텍스트) 요청 — 영상 '생성'이 아니라 이미지 '입력' 분석(허용)."""
+    parts = [{"text": prompt}]
+    if image:
+        parts.append({"inline_data": {"mime_type": image[1], "data": image[0]}})
     body = {
         "system_instruction": {"parts": [{"text": system}]},
-        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        "contents": [{"role": "user", "parts": parts}],
         "generationConfig": {
             "maxOutputTokens": max_tokens, "temperature": 0.4,
             "responseMimeType": "application/json",
@@ -108,6 +112,79 @@ def describe_and_keywords_ko(titles: list, call=None) -> list:
     except Exception as e:
         print(f"[translate] 설명·검색어 추출 실패: {e} → 원문 폴백")
         return list(fallback)
+
+
+def _fetch_image_b64(url: str, timeout: int = 20) -> tuple | None:
+    """썸네일 URL → (base64 문자열, mime). 실패 시 None. stdlib만."""
+    import base64
+    u = (url or "").strip()
+    if not u:
+        return None
+    try:
+        req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            raw = r.read()
+            ct = (r.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+    except Exception as e:
+        print(f"[vision] 썸네일 다운로드 실패({u[:60]}): {type(e).__name__}")
+        return None
+    if not raw or len(raw) > 6_000_000:   # 6MB 초과는 스킵(썸네일치곤 비정상)
+        return None
+    mime = ct if ct.startswith("image/") else "image/jpeg"
+    return (base64.b64encode(raw).decode("ascii"), mime)
+
+
+_VISION_SYSTEM = (
+    "너는 한국 쇼핑 쇼츠 소싱 도우미다. 틱톡 쇼핑 영상의 '썸네일 이미지'와 제목(주로 중국어)을 함께 보고, "
+    "영상이 실제로 '파는 물건(상품)'이 무엇인지 이미지를 근거로 식별한다. 사람·손·배경·화면 글자·로고는 무시하고 "
+    "화면 중심의 주인공 상품에 집중하라. 브랜드가 불명확하면 '상품 종류 + 핵심 기능'으로 표현하라. JSON만 출력.")
+
+
+def identify_by_image(items: list, call=None, fetch=None) -> list:
+    """[{"title","cover"}] → [{"ko","keywords","zh"}] (개수·순서 보존).
+
+    각 항목의 썸네일을 Gemini Vision으로 '보고' 실제 상품을 식별한다(제목 텍스트만 추측하던 오매칭 개선):
+      - ko       : 한국어 한 줄 상품 설명(카드 표시)
+      - keywords : 쿠팡에서 검색할 한국어 상품 검색어 2~4개(② 네이버·쿠팡 매칭용)
+      - zh       : 틱톡에서 '같은 상품'의 다른 홍보영상을 찾을 중국어 검색어 2~3개(③ — 한국어 되돌림 왕복 제거)
+    이미지가 없거나 비전 실패면 그 항목만 제목 기반(describe_and_keywords_ko)으로 폴백. call/fetch 주입(테스트).
+    """
+    items = list(items or [])
+    if not items:
+        return []
+    titles = [str((it or {}).get("title") or "") for it in items]
+    if call is None and not gemini_key():
+        base = describe_and_keywords_ko(titles)
+        return [{"ko": b["ko"], "keywords": b["keywords"], "zh": []} for b in base]
+    fetch = fetch or _fetch_image_b64
+    out = []
+    for it, title in zip(items, titles):
+        img = None
+        try:
+            img = fetch((it or {}).get("cover") or "")
+        except Exception:
+            img = None
+        if not img:   # 이미지 없음 → 제목 기반 폴백(그 항목만)
+            b = describe_and_keywords_ko([title])[0]
+            out.append({"ko": b["ko"], "keywords": b["keywords"], "zh": []})
+            continue
+        prompt = (f'영상 제목: "{title}"\n'
+                  "이 썸네일 속 '파는 상품'을 식별해 JSON으로 출력:\n"
+                  '{"ko": "한국어 한 줄 설명", "keywords": ["쿠팡 한국어 검색어 2~4개(종류+핵심기능, 짧은 명사구, '
+                  '브랜드·과장·이모지 제외)"], "zh": ["같은 상품을 틱톡에서 찾을 중국어 검색어 2~3개"]}')
+        try:
+            d = _gemini_json(prompt, _VISION_SYSTEM, 512, call=call, image=img)
+            ko = str(d.get("ko") or "").strip() or title
+            kws = [str(k).strip() for k in (d.get("keywords") or []) if str(k).strip()][:4]
+            zh = [str(z).strip() for z in (d.get("zh") or []) if str(z).strip()][:3]
+            if not kws:   # 비전이 검색어를 못 주면 제목 기반 보완
+                kws = describe_and_keywords_ko([title])[0]["keywords"]
+            out.append({"ko": ko, "keywords": kws, "zh": zh})
+        except Exception as e:
+            print(f"[vision] 상품 식별 실패({title[:30]}): {type(e).__name__} → 제목 폴백")
+            b = describe_and_keywords_ko([title])[0]
+            out.append({"ko": b["ko"], "keywords": b["keywords"], "zh": []})
+    return out
 
 
 def translate_titles_ko(titles: list, call=None) -> list:

@@ -3,17 +3,22 @@
 python tests/test_discover.py
 """
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+# 단위 테스트 결정성: 키가 있으면 실네트워크를 타므로 제거(주입 call로만 성공 경로 검증)
+for _k in ("GEMINI_API_KEY", "SHORTS_GEMINI_API_KEY"):
+    os.environ.pop(_k, None)
+
 from src.sourcing.discover import build_manifest, discover, enrich_naver, write_manifest  # noqa: E402
 from src.sourcing.naver_shop import find_coupang, search_shop                   # noqa: E402
 from src.sourcing.tiktok_tikwm import TikwmAdapter, TikwmClient                 # noqa: E402
 from src.sourcing.translate import (                                            # noqa: E402
-    describe_and_keywords_ko, expand_zh_terms, translate_titles_ko)
+    describe_and_keywords_ko, expand_zh_terms, identify_by_image, translate_titles_ko)
 
 _fails = []
 
@@ -110,6 +115,32 @@ def test_describe_and_keywords():
           "개수 부족 → 뒤 항목 원문 폴백")
 
 
+def test_identify_by_image():
+    print("[T9] 비전 상품 식별(썸네일 이미지+제목 주입) → ko·keywords·zh")
+    seen = {}
+
+    def fake_fetch(url):
+        return ("QUJD", "image/jpeg") if url else None   # 가짜 base64 이미지
+
+    def call_vision(body):
+        parts = body["contents"][0]["parts"]
+        seen["has_img"] = any("inline_data" in p for p in parts)   # 이미지 파트 포함 확인
+        payload = ('{"ko":"무선 고압 세척기","keywords":["무선 세척기","고압 물총"],'
+                   '"zh":["无线洗车机","便携高压水枪"]}')
+        return {"candidates": [{"content": {"parts": [{"text": payload}]}}]}
+
+    out = identify_by_image([{"title": "神器洗车", "cover": "http://x/1.jpg"}],
+                            call=call_vision, fetch=fake_fetch)
+    check(seen.get("has_img") is True, "비전 요청에 이미지 파트 포함")
+    check(out[0]["ko"] == "무선 고압 세척기", "비전 한국어 설명")
+    check(out[0]["keywords"] == ["무선 세척기", "고압 물총"], "비전 쿠팡 검색어(이미지 기반)")
+    check(out[0]["zh"] == ["无线洗车机", "便携高压水枪"], "비전 중국어어(③ 같은상품 검색용)")
+
+    # 썸네일 없으면 제목 기반 폴백(zh 빈) — 크래시 없음
+    out2 = identify_by_image([{"title": "挂钩", "cover": ""}], call=call_vision, fetch=lambda u: None)
+    check(out2[0]["zh"] == [] and out2[0]["ko"] == "挂钩", "이미지 없음 → 제목 폴백(zh 빈)")
+
+
 def test_page_slicing():
     print("[T8] page 슬라이스 — 새로고침이 다른(다음) 영상 + 매니페스트 page/nonce")
     ad = _adapter()
@@ -137,6 +168,10 @@ def test_naver_find_coupang():
     check(info.get("real_title") == "다용도 미니 채칼 세트", "top 제목 태그 제거")
     check(info.get("coupang") is True, "쿠팡몰 항목 감지")
     check(info.get("coupang_title") == "휴대용 미니 채칼 쿠팡배송", "쿠팡 등록 상품명 추출")
+    # 나란히 확인용 후보(이미지 포함) — 쿠팡 항목이 앞으로 정렬
+    cand = info.get("candidates") or []
+    check(len(cand) == 2 and cand[0].get("coupang") is True, "candidates 반환 + 쿠팡 항목 우선정렬")
+    check(cand[0].get("image") == "http://ic" and info.get("image") == "http://ic", "쿠팡 항목 이미지 노출")
 
     # 쿠팡 항목 없음 → coupang False, coupang_title=top 폴백
     def http_nocoup(url):
@@ -166,8 +201,8 @@ def test_enrich_naver():
 
 if __name__ == "__main__":
     for fn in [test_discover_terms_and_ko, test_write_manifest, test_empty,
-               test_translate_injected, test_describe_and_keywords, test_page_slicing,
-               test_naver_find_coupang, test_enrich_naver]:
+               test_translate_injected, test_describe_and_keywords, test_identify_by_image,
+               test_page_slicing, test_naver_find_coupang, test_enrich_naver]:
         fn()
     print()
     if _fails:
