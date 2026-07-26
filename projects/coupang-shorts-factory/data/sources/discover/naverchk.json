@@ -6,195 +6,24 @@
     "清洁神器",
     "懒人清洁",
     "居家清洁好物",
-    "卫生间清洁",
-    "厨房清洁用品"
+    "厨房清洁神器",
+    "卫生间清洁神器"
   ],
   "page": 0,
   "nonce": "",
+  "next_cursor": 19,
   "count": 3,
   "candidates": [
     {
-      "id": "sv_0160b8be2652",
-      "platform": "tiktok",
-      "title": "I ❤️ Horow #toilet #tiktok #cleaning #bidet #bathroom ",
-      "title_ko": "자동 물 내림 기능이 있는 스마트 비데 일체형 양변기",
-      "coupang_keywords": [
-        "스마트 비데",
-        "비데 일체형 양변기",
-        "자동 물내림 변기",
-        "자동 세척 변기"
-      ],
-      "zh_terms": [
-        "智能马桶",
-        "一体式智能马桶",
-        "自动冲水马桶"
-      ],
-      "naver": {
-        "query": "스마트 비데",
-        "real_title": "스마트비데 26년형 방수 비데 IPX5 필터없는 비데구입 BL-1000 자가설치",
-        "lprice": "105000",
-        "coupang": false,
-        "coupang_title": "스마트비데 26년형 방수 비데 IPX5 필터없는 비데구입 BL-1000 자가설치",
-        "coupang_lprice": null,
-        "mall": "스마트비데공식몰by비데랜드",
-        "image": "https://shopping-phinf.pstatic.net/main_8231493/82314939310.12.jpg",
-        "candidates": [
-          {
-            "title": "스마트비데 26년형 방수 비데 IPX5 필터없는 비데구입 BL-1000 자가설치",
-            "image": "https://shopping-phinf.pstatic.net/main_8231493/82314939310.12.jpg",
-            "mall": "스마트비데공식몰by비데랜드",
-            "lprice": "105000",
-            "link": "https://smartstore.naver.com/main/products/4770417253",
-            "coupang": false
-          },
-          {
-            "title": "스마트비데 HB-202 자가설치",
-            "image": "https://shopping-phinf.pstatic.net/main_5967660/59676602999.20260415162904.jpg",
-            "mall": "네이버",
-            "lprice": "95000",
-            "link": "https://search.shopping.naver.com/catalog/59676602999",
-            "coupang": false
-          },
-          {
-            "title": "노비타 스마트비데 BD-AC50N",
-            "image": "https://shopping-phinf.pstatic.net/main_8897729/88977292154.jpg",
-            "mall": "노비타쇼핑몰",
-            "lprice": "162000",
-            "link": "https://smartstore.naver.com/main/products/11432781789",
-            "coupang": false
-          },
-          {
-            "title": "노비타 스마트 플러스 비데 BD-AH70T 자가설치",
-            "image": "https://shopping-phinf.pstatic.net/main_6059760/60597601912.20260625102036.jpg",
-            "mall": "네이버",
-            "lprice": "153500",
-            "link": "https://search.shopping.naver.com/catalog/60597601912",
-            "coupang": false
-          },
-          {
-            "title": "노비타 스마트 플러스 비데 BD AE10N 자가설치",
-            "image": "https://shopping-phinf.pstatic.net/main_5380628/53806283849.20250327150014.jpg",
-            "mall": "네이버",
-            "lprice": "135150",
-            "link": "https://search.shopping.naver.com/catalog/53806283849",
-            "coupang": false
-          },
-          {
-            "title": "대림바스 AI스마트 컨트롤 완전 직수 순간온수 방수 비데 DDS-S500 1개",
-            "image": "https://shopping-phinf.pstatic.net/main_5951630/59516305594.20260403093847.jpg",
-            "mall": "네이버",
-            "lprice": "175840",
-            "link": "https://search.shopping.naver.com/catalog/59516305594",
-            "coupang": false
-          }
-        ],
-        "best_match": -1,
-        "match_confidence": "low",
-        "match_reason": "틱톡 영상 속 상품과 동일한 상품을 찾기 어려움."
-      },
-      "view_count": 76955071,
-      "uploader": "horow.bathroom",
-      "duration": 21,
-      "source_url": "https://www.tiktok.com/@horow.bathroom/video/7652013418672557326",
-      "download_url": "https://v45.tiktokcdn-us.com/cbfd2d4a271e815366ef0c91850488b8/6a666c62/video/tos/useast5/tos-useast5-ve-0068c001-tx/oUeAaafIxFOLeJiIQEFu1BAYmeZAdowqGRGxIw/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=658&ft=73kDHDyjNl~VQQUnU~d-sdiRhmZqYl.LQM-~hWLrK&mime_type=video_mp4&rc=aWloPGg5ZztpaWRoZzc5NkBpMzlyb3c5cjpwOzMzZzczNEAvMDVhMTZfNmExNDJeNGMwYSNlX19jMmRzZ2xhLS1kMS9zcw%3D%3D&vvpl=1&l=20260726142133DC6A63F9F5AB69DDEE87&btag=e000bd000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/ow01NLeRIQBQAfxLaieZE3fAGLqUoGI8OAj5Fz~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=0edefc8d&x-expires=1785160800&x-signature=ezmgZhbfLyJKPq2l1F7caFQd9qs%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
-    },
-    {
-      "id": "sv_fc4555bd377a",
-      "platform": "tiktok",
-      "title": "#asmr #asmrvideo #goodthings #unboxing #unboxingvideo #cleaning #CleanTok #storytime #organizedhome #smartgadgets #foryo #fyp #fypシ゚ #tik_tok ",
-      "title_ko": "지문 인식과 비밀번호 입력이 가능한 스마트 도어락",
-      "coupang_keywords": [
-        "스마트 도어락",
-        "지문인식 도어락",
-        "푸시풀 도어락",
-        "현관문 도어락"
-      ],
-      "zh_terms": [
-        "智能门锁",
-        "指纹锁",
-        "密码锁"
-      ],
-      "naver": {
-        "query": "스마트 도어락",
-        "real_title": "코콤 무타공 스마트 도어락 아파트 지문 전자 도어락 터치 즉시잠금 번호키 설치 NP750",
-        "lprice": "108000",
-        "coupang": false,
-        "coupang_title": "코콤 무타공 스마트 도어락 아파트 지문 전자 도어락 터치 즉시잠금 번호키 설치 NP750",
-        "coupang_lprice": null,
-        "mall": "키마켓",
-        "image": "https://shopping-phinf.pstatic.net/main_8782947/87829475809.12.jpg",
-        "candidates": [
-          {
-            "title": "코콤 무타공 스마트 도어락 아파트 지문 전자 도어락 터치 즉시잠금 번호키 설치 NP750",
-            "image": "https://shopping-phinf.pstatic.net/main_8782947/87829475809.12.jpg",
-            "mall": "키마켓",
-            "lprice": "108000",
-            "link": "https://smartstore.naver.com/main/products/10284971969",
-            "coupang": false
-          },
-          {
-            "title": "솔리티 무타공도어락 현관문도어락 즉시잠김 디지털 현관 번호키 설치 교체 700",
-            "image": "https://shopping-phinf.pstatic.net/main_8322765/83227652369.17.jpg",
-            "mall": "문지기닷컴",
-            "lprice": "59800",
-            "link": "https://smartstore.naver.com/main/products/5683154568",
-            "coupang": false
-          },
-          {
-            "title": "링크 지문인식도어락 무타공도어락 현관문 즉시잠김 디지털 푸시풀 번호키 GALAXIA-F",
-            "image": "https://shopping-phinf.pstatic.net/main_8676599/86765993879.7.jpg",
-            "mall": "KMplus",
-            "lprice": "129000",
-            "link": "https://smartstore.naver.com/main/products/9221493556",
-            "coupang": false
-          },
-          {
-            "title": "제니스 무타공도어락 현관문도어락 현관 방화문 디지털 번호키 손잡이 교체 설치 Z700N",
-            "image": "https://shopping-phinf.pstatic.net/main_8339988/83399888386.11.jpg",
-            "mall": "KMplus",
-            "lprice": "55000",
-            "link": "https://smartstore.naver.com/main/products/5855388972",
-            "coupang": false
-          },
-          {
-            "title": "코맥스 지문인식도어락 즉시잠김 현관문도어락 무타공 푸시풀 현관 디지털 번호키 915",
-            "image": "https://shopping-phinf.pstatic.net/main_8929903/89299032527.5.jpg",
-            "mall": "문지기닷컴",
-            "lprice": "154800",
-            "link": "https://smartstore.naver.com/main/products/11754521940",
-            "coupang": false
-          },
-          {
-            "title": "코콤 현관문도어락 푸시풀 현관 도어락 아파트 디지털 번호키 교체 설치 NP850",
-            "image": "https://shopping-phinf.pstatic.net/main_8889742/88897420994.7.jpg",
-            "mall": "진성홈테크",
-            "lprice": "115000",
-            "link": "https://smartstore.naver.com/main/products/11352910642",
-            "coupang": false
-          }
-        ],
-        "best_match": 5,
-        "match_confidence": "high",
-        "match_reason": "색상, 형태, 지문인식 방식 동일"
-      },
-      "view_count": 54540613,
-      "uploader": "Lin Wang",
-      "duration": 320,
-      "source_url": "https://www.tiktok.com/@lin.wang92/video/7527385320061537550",
-      "download_url": "https://v45.tiktokcdn-us.com/b22bba70ebfa1a9be4f7a234bac54ae3/6a666d8c/video/tos/useast5/tos-useast5-ve-0068c001-tx/oM4ytACyqSiUaEIoLdFfDBg41SfiNmQJRDD7EC/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1682&ft=aEKfuqT0m0LPD12P0enI3wUqO1gFMeF~O5&mime_type=video_mp4&rc=PGc7aDdmN2U8aWVkN2U6OEBpanRuaXc5cmpkNDMzZzczNEBhYzM1Y2FgXi4xYF5fYTFhYSNtLy5mMmRrM29hLS1kMS9zcw%3D%3D&vvpl=1&l=20260726142131A5B85991499315F9C55F&btag=e000a5000",
-      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/ogv2BjaaaQg9E4UBNa9k8DpBkirAHBTiIIzgN~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=6eecb22a&x-expires=1785160800&x-signature=%2FIwTDfCo092NCCvvJd2P%2B9G9i9s%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
-    },
-    {
-      "id": "sv_6dab3e5b0500",
+      "id": "sv_6b5573e841da",
       "platform": "tiktok",
       "title": "Kitchen Spray Cleaner and Degreaser,Antibactrial All Purspose Cleaner for Kitchens,Counter tops,Ovens,and Appliances#TikTokshop #TikTokShopDealsforYouDays #FlyCleanse#TikTokShopStockUp#SummerWins",
-      "title_ko": "주방 기름때 제거 및 다용도 세정제",
+      "title_ko": "주방 기름때 제거 및 다목적 세정 스프레이",
       "coupang_keywords": [
-        "주방 세정제",
+        "주방세정제",
         "기름때 제거제",
-        "다용도 클리너",
-        "항균 세정제"
+        "다목적 클리너",
+        "주방 클리너"
       ],
       "zh_terms": [
         "厨房清洁剂",
@@ -202,7 +31,7 @@
         "多功能清洁剂"
       ],
       "naver": {
-        "query": "주방 세정제",
+        "query": "주방세정제",
         "real_title": "은나노스텝 시즌3 다용도 다목적 세정제 클리너 기름때 찌든때 제거 냉장고 전자레인지 오븐 주방 렌지 후드 화장실 인덕션 청소 세척 (550ml 1개 + 1100ml 리필 3개)",
         "lprice": "29790",
         "coupang": false,
@@ -258,18 +87,286 @@
             "lprice": "9900",
             "link": "https://smartstore.naver.com/main/products/10258058050",
             "coupang": false
+          },
+          {
+            "title": "독일산 고농축 주방 오븐 찌든 기름때 제거제 클리너 세제 알레스프로피 1L 만능용 세정제",
+            "image": "https://shopping-phinf.pstatic.net/main_8554478/85544788645.jpg",
+            "mall": "주식회사 빌드림",
+            "lprice": "29800",
+            "link": "https://smartstore.naver.com/main/products/8000288322",
+            "coupang": false
+          },
+          {
+            "title": "은나노스텝 시즌3 다용도 다목적 세정제 클리너 기름때 찌든때 제거 냉장고 전자레인지 오븐 주방 렌지 후드 화장실 인덕션 청소 세척 리필 1100ml 8개",
+            "image": "https://shopping-phinf.pstatic.net/main_8738881/87388810879.3.jpg",
+            "mall": "생활감동 세제맛집",
+            "lprice": "49900",
+            "link": "https://smartstore.naver.com/main/products/9844308606",
+            "coupang": false
+          },
+          {
+            "title": "전자레인지 오븐 청소 1분 스팀블럭 클리너 에어프라이어 가스레인지 기름때 찌든때 세정제",
+            "image": "https://shopping-phinf.pstatic.net/main_9098735/90987355553.jpg",
+            "mall": "오라플",
+            "lprice": "11900",
+            "link": "https://smartstore.naver.com/main/products/13442845201",
+            "coupang": false
+          },
+          {
+            "title": "생활감동 업소용 식당 다목적 다용도 세정제 클리너 기름때 찌든때 제거 전자레인지 냉장고 인덕션 오븐 주방 렌지 후드 화장실 싱크대 청소 세척 대용량 말통 클리너 18.9L 1개",
+            "image": "https://shopping-phinf.pstatic.net/main_8780278/87802780924.2.jpg",
+            "mall": "생활감동 세제맛집",
+            "lprice": "34900",
+            "link": "https://smartstore.naver.com/main/products/10258277201",
+            "coupang": false
           }
         ],
         "best_match": -1,
         "match_confidence": "low",
-        "match_reason": "기준 이미지 상품은 초록색 스프레이 병이지만, 쇼핑 후보 중 동일한 상품은 없음."
+        "match_reason": "기준 이미지의 상품과 일치하는 후보 없음"
       },
-      "view_count": 38571509,
+      "view_count": 38584673,
       "uploader": "Alyssa",
       "duration": 30,
       "source_url": "https://www.tiktok.com/@honey_getvq0z/video/7649586788775759117",
-      "download_url": "https://v45.tiktokcdn-us.com/1fb3c99ce0274648deaa4c9c19192b97/6a666c6d/video/tos/useast5/tos-useast5-ve-0068c002-tx/owpiaPGEIpiZg3oBrMKysoiUBHQ4ojtAEEaz1/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=1639&ft=aEKfuqT0m0LPD12H0enI3wUTJz2FMeF~O5&mime_type=video_mp4&rc=Ojg7ZmllM2c5MzVmNjQ5N0BpajtndHE5cjpmOzMzZzczNEAwLTVeM15fXi8xLy8zXjM2YSNuaWFgMmQ0aGhhLS1kMS9zcw%3D%3D&vvpl=1&l=2026072614213426BBD7585F6012BF863E&btag=e0008d000",
-      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/osfcARXRMqTpQgEGlW1FzEBDBfKqKQRRouSADD~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=896872c8&x-expires=1785160800&x-signature=eM%2BHk2aFVr0FNz5o%2FV2tiL41pZg%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&s=SEARCH&sc=feed_cover&biz_tag=tt_video"
+      "download_url": "https://v45.tiktokcdn-us.com/c88c82e1cc7569d43270afd1d849e7f0/6a6678ee/video/tos/useast5/tos-useast5-ve-0068c002-tx/owpiaPGEIpiZg3oBrMKysoiUBHQ4ojtAEEaz1/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1639&ft=73kDHDyjNdRVQQUnU~d-sdQximZqYltcbh-~hWLrK&mime_type=video_mp4&rc=Ojg7ZmllM2c5MzVmNjQ5N0BpajtndHE5cjpmOzMzZzczNEAwLTVeM15fXi8xLy8zXjM2YSNuaWFgMmQ0aGhhLS1kMS9zcw%3D%3D&vvpl=1&l=20260726151455D682005ABAF772C890DD&btag=e0008d000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/osfcARXRMqTpQgEGlW1FzEBDBfKqKQRRouSADD~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=284c5c7d&x-expires=1785164400&x-signature=uQN5V8%2BNxLolivsZghDHnQwvDmw%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+    },
+    {
+      "id": "sv_7075db769c0f",
+      "platform": "tiktok",
+      "title": "TikTok finds.#fyp #asmr #goodthing #kitchencleaning #CleanTok #kitchencleaningfoam #foamcleaner #greasecleaner #foryou #tiktokmademebuyit ",
+      "title_ko": "강력한 거품 세정제로 녹슨 금속 표면을 깨끗하게 만드는 영상",
+      "coupang_keywords": [
+        "거품 세정제",
+        "녹 제거 스프레이",
+        "금속 세척제",
+        "녹슨 표면 클리너"
+      ],
+      "zh_terms": [
+        "泡沫清洁剂",
+        "除锈喷雾",
+        "金属清洗剂"
+      ],
+      "naver": {
+        "query": "거품 세정제",
+        "real_title": "락퐁 4L + 압축분무기 세트 욕실 화장실 청소세제 세정제 거품 스프레이 폼건",
+        "lprice": "22800",
+        "coupang": false,
+        "coupang_title": "락퐁 4L + 압축분무기 세트 욕실 화장실 청소세제 세정제 거품 스프레이 폼건",
+        "coupang_lprice": null,
+        "mall": "세제몰",
+        "image": "https://shopping-phinf.pstatic.net/main_8985442/89854422492.jpg",
+        "candidates": [
+          {
+            "title": "락퐁 4L + 압축분무기 세트 욕실 화장실 청소세제 세정제 거품 스프레이 폼건",
+            "image": "https://shopping-phinf.pstatic.net/main_8985442/89854422492.jpg",
+            "mall": "세제몰",
+            "lprice": "22800",
+            "link": "https://smartstore.naver.com/main/products/12309911775",
+            "coupang": false
+          },
+          {
+            "title": "버블 폼 변기 세정제 버블 클리너 거품 스프레이 욕실 청소세제 때 제거+세균+냄새 3in1",
+            "image": "https://shopping-phinf.pstatic.net/main_9118178/91181784936.jpg",
+            "mall": "신핑무역 주식회사",
+            "lprice": "16000",
+            "link": "https://smartstore.naver.com/main/products/13637274227",
+            "coupang": false
+          },
+          {
+            "title": "청소신 화장실 클리너 욕실 변기 욕조 타일 찌든때 물때 청소 세제 세정제 거품 스프레이",
+            "image": "https://shopping-phinf.pstatic.net/main_1692993/16929932422.1.jpg",
+            "mall": "청소신",
+            "lprice": "12900",
+            "link": "http://www.chungsosin.com/index.html?branduid=2129822&ref=naver_open",
+            "coupang": false
+          },
+          {
+            "title": "헨켈 브레프 파워 액티브 변기세정제 레몬향 50g x 1개입, 12개",
+            "image": "https://shopping-phinf.pstatic.net/main_5192951/51929518574.20241213221515.jpg",
+            "mall": "네이버",
+            "lprice": "17830",
+            "link": "https://search.shopping.naver.com/catalog/51929518574",
+            "coupang": false
+          },
+          {
+            "title": "홈스타 욕실용 클리너 750ml 4개 코스트코 화장실 거품 청소 곰팡이 욕실용세정제",
+            "image": "https://shopping-phinf.pstatic.net/main_8560311/85603110095.2.jpg",
+            "mall": "서진이아빠",
+            "lprice": "13800",
+            "link": "https://smartstore.naver.com/main/products/8058609772",
+            "coupang": false
+          },
+          {
+            "title": "99% 강력 누런 자국 얼룩 제거 청결 신기 화장실 청소세제 거품 스프레이 욕실 변기세정제",
+            "image": "https://shopping-phinf.pstatic.net/main_9118484/91184843456.jpg",
+            "mall": "소원Mall",
+            "lprice": "14530",
+            "link": "https://smartstore.naver.com/main/products/13640332747",
+            "coupang": false
+          },
+          {
+            "title": "플루이드필름 AS-360 방청윤활제 방청제 양털유 뿌리는구리스 녹제거 스프레이 방청유",
+            "image": "https://shopping-phinf.pstatic.net/main_8244658/82446588615.9.jpg",
+            "mall": "원덕물산",
+            "lprice": "8000",
+            "link": "https://smartstore.naver.com/main/products/4902065040",
+            "coupang": false
+          },
+          {
+            "title": "녹재발을 막는 자동차 차량 녹방지제 녹환원제 녹제거 녹제거제 스프레이",
+            "image": "https://shopping-phinf.pstatic.net/main_8229645/82296452868.5.jpg",
+            "mall": "알케마이",
+            "lprice": "12900",
+            "link": "https://smartstore.naver.com/main/products/4751931155",
+            "coupang": false
+          },
+          {
+            "title": "자동차언더코팅 하부방청 녹제거스프레이 양털유",
+            "image": "https://shopping-phinf.pstatic.net/main_8409074/84090746578.2.jpg",
+            "mall": "18시간",
+            "lprice": "4300",
+            "link": "https://smartstore.naver.com/main/products/6546246245",
+            "coupang": false
+          },
+          {
+            "title": "플루이드필름 선박용 SG-500 방청윤활제 양털유 뿌리는구리스 녹제거 스프레이 방청유",
+            "image": "https://shopping-phinf.pstatic.net/main_8336470/83364704746.7.jpg",
+            "mall": "원덕물산",
+            "lprice": "15000",
+            "link": "https://smartstore.naver.com/main/products/5820205332",
+            "coupang": false
+          }
+        ],
+        "best_match": -1,
+        "match_confidence": "low",
+        "match_reason": "틱톡 영상 속 상품은 스프레이 페인트로 보임."
+      },
+      "view_count": 29727713,
+      "uploader": "Sophie",
+      "duration": 10,
+      "source_url": "https://www.tiktok.com/@sophie.goodthing/video/7199553388034493701",
+      "download_url": "https://v45.tiktokcdn-us.com/3b2cac57ac69bdaefa50487f23f4eef9/6a6678da/video/tos/useast2a/tos-useast2a-pve-0068/osKpQpNDf4IU0C7HAVQUj85eUbLpRnISCnDCge/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1708&ft=73kDHDyjNdRVQQUnU~d-sdQximZqYltcbh-~hWLrK&mime_type=video_mp4&rc=OTU4aWZnaDk5PDw3ZTs4Z0Bpam5taTg6Znh5aTMzNzczM0BjMDBhMzQyNjIxNGJjMTQwYSMucDMycjQwM2hgLS1kMTZzcw%3D%3D&vvpl=1&l=20260726151455D682005ABAF772C890DD&btag=e000b5000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-maliva-p-0068/afdb27ff48174376beab07453ae73d11_1676276659~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=21e8858a&x-expires=1785164400&x-signature=N64Wz%2BdLEtTnfP%2Bc3lX9eLGdCfA%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+    },
+    {
+      "id": "sv_b4addb20ad8e",
+      "platform": "tiktok",
+      "title": "Greenhouses, tiles, pot bottoms, ovens... One bottle takes care of the entire kitchen! #TikTokShop #fyp I #Useful #CleaningTools #SpringCleaning ",
+      "title_ko": "찌든 때 제거용 주방 세척 스프레이",
+      "coupang_keywords": [
+        "주방 세척제",
+        "찌든때 제거제",
+        "기름때 클리너",
+        "만능 세척 스프레이"
+      ],
+      "zh_terms": [
+        "厨房清洁剂",
+        "油污净",
+        "多功能清洁喷雾"
+      ],
+      "naver": {
+        "query": "주방 세척제",
+        "real_title": "애경산업 트리오 항균 주방세제 13.6L, 1개",
+        "lprice": "12110",
+        "coupang": false,
+        "coupang_title": "애경산업 트리오 항균 주방세제 13.6L, 1개",
+        "coupang_lprice": null,
+        "mall": "네이버",
+        "image": "https://shopping-phinf.pstatic.net/main_5192951/51929510430.20241213221153.jpg",
+        "candidates": [
+          {
+            "title": "애경산업 트리오 항균 주방세제 13.6L, 1개",
+            "image": "https://shopping-phinf.pstatic.net/main_5192951/51929510430.20241213221153.jpg",
+            "mall": "네이버",
+            "lprice": "12110",
+            "link": "https://search.shopping.naver.com/catalog/51929510430",
+            "coupang": false
+          },
+          {
+            "title": "암웨이 디쉬 드랍스 식기세정제 1L, 1개",
+            "image": "https://shopping-phinf.pstatic.net/main_5192925/51929251248.20241213210801.jpg",
+            "mall": "네이버",
+            "lprice": "9900",
+            "link": "https://search.shopping.naver.com/catalog/51929251248",
+            "coupang": false
+          },
+          {
+            "title": "멜라루카 레몬 브라이트 주방용 세척제 리필 946ml, 1개",
+            "image": "https://shopping-phinf.pstatic.net/main_5192912/51929124094.20241213204138.jpg",
+            "mall": "네이버",
+            "lprice": "12340",
+            "link": "https://search.shopping.naver.com/catalog/51929124094",
+            "coupang": false
+          },
+          {
+            "title": "엘지생활건강 세이프 천연미네랄 주방세제 리필 1L, 1개",
+            "image": "https://shopping-phinf.pstatic.net/main_5192919/51929191839.20241213204532.jpg",
+            "mall": "네이버",
+            "lprice": "5900",
+            "link": "https://search.shopping.naver.com/catalog/51929191839",
+            "coupang": false
+          },
+          {
+            "title": "1+1 감성리빙 칼슘파우더 과일 세정제 야채 세척제 200g",
+            "image": "https://shopping-phinf.pstatic.net/main_8984936/89849363927.1.jpg",
+            "mall": "감성리빙",
+            "lprice": "12800",
+            "link": "https://smartstore.naver.com/main/products/12304853210",
+            "coupang": false
+          },
+          {
+            "title": "엘지생활건강 퐁퐁 베이킹소다 주방세제 3L, 4개",
+            "image": "https://shopping-phinf.pstatic.net/main_5192958/51929589899.20241213221937.jpg",
+            "mall": "네이버",
+            "lprice": "19900",
+            "link": "https://search.shopping.naver.com/catalog/51929589899",
+            "coupang": false
+          },
+          {
+            "title": "은나노스텝 시즌3 다용도 다목적 세정제 클리너 기름때 찌든때 제거 냉장고 전자레인지 오븐 주방 렌지 후드 화장실 인덕션 청소 세척 (550ml 1개+1100ml리필 1개)",
+            "image": "https://shopping-phinf.pstatic.net/main_8744654/87446542302.3.jpg",
+            "mall": "생활감동 세제맛집",
+            "lprice": "15900",
+            "link": "https://smartstore.naver.com/main/products/9902040029",
+            "coupang": false
+          },
+          {
+            "title": "은나노스텝 시즌3 다용도 다목적 세정제 클리너 기름때 찌든때 제거 냉장고 전자레인지 오븐 주방 렌지 후드 화장실 인덕션 청소 세척 리필 1100ml 8개",
+            "image": "https://shopping-phinf.pstatic.net/main_8738881/87388810879.3.jpg",
+            "mall": "생활감동 세제맛집",
+            "lprice": "49900",
+            "link": "https://smartstore.naver.com/main/products/9844308606",
+            "coupang": false
+          },
+          {
+            "title": "1+1 생활감동 다용도 다목적 세정제 클리너 기름때 찌든때 제거 냉장고 전자레인지 오븐 주방 후드 화장실 인덕션 청소 세척 500ml",
+            "image": "https://shopping-phinf.pstatic.net/main_8780256/87802561773.3.jpg",
+            "mall": "생활감동 세제맛집",
+            "lprice": "9900",
+            "link": "https://smartstore.naver.com/main/products/10258058050",
+            "coupang": false
+          },
+          {
+            "title": "허브크린 요석제거제 변기 세정제 클리너 화장실 청소 세제 물때 남자 소변기 냄새 석회분해제",
+            "image": "https://shopping-phinf.pstatic.net/main_8663272/8663272445.171.jpg",
+            "mall": "호감몰",
+            "lprice": "9700",
+            "link": "https://smartstore.naver.com/main/products/307968075",
+            "coupang": false
+          }
+        ],
+        "best_match": -1,
+        "match_confidence": "low",
+        "match_reason": "기준 이미지 상품과 일치하는 후보 없음"
+      },
+      "view_count": 9693145,
+      "uploader": "vds",
+      "duration": 48,
+      "source_url": "https://www.tiktok.com/@bfsdgbsdf54/video/7633262907412860191",
+      "download_url": "https://v45.tiktokcdn-us.com/632b5b2ec2c6e816d1f558a3c5831d75/6a6678fc/video/tos/useast8/tos-useast8-ve-0068c002-tx2/ocBmReDz7bsfwQkLuB7RVkvEgckFQEpjEIAAGg/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1442&ft=aEKfuqT0m0LPD12PounI3wUF6ISFMeF~O5&mime_type=video_mp4&rc=Zmc7NjtpZWQ5aDdlOzk6NkBpM2pxZGw5cmVmOjMzaTczNEBjYl9eMjYtNWAxNV8xNmNfYSM0MDEtMmRzbGthLS1kMTJzcw%3D%3D&vvpl=1&l=2026072615145258368A274721F4C9E1BC&btag=e0008d000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/o4sBVFDiREEGhQ4v9uEQRwBAzCjAEkeL7pfcgP~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=d289548d&x-expires=1785164400&x-signature=Cb8RHwpCFLF8B7iVTLIh%2Faap%2Fcg%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     }
   ]
 }
