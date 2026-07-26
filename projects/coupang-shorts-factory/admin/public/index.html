@@ -3180,7 +3180,7 @@ $("btnSaveToken").onclick = (ev) => busy(ev.target, async () => {
   if (!v) throw new Error("토큰을 붙여넣은 뒤 저장을 누르세요.");
   localStorage.setItem(LS_KEY, v);
   $("tokenInput").value = "";
-  if (await checkConn()) { toast("연결됐습니다. 이제 모든 기능을 쓸 수 있습니다."); makeInit(); }
+  if (await checkConn()) { toast("연결됐습니다. 이제 모든 기능을 쓸 수 있습니다."); }  // 옛 만들기 탭 일시정지: makeInit 자동호출 제거
 });
 $("btnClearToken").onclick = () => {
   localStorage.removeItem(LS_KEY);
@@ -3266,7 +3266,9 @@ $("memeUp").onclick = (ev) => busy(ev.target, async () => {
 });
 
 /* ── 시작 ────────────────────────────── */
-(async () => { if (await checkConn()) makeInit(); })();
+// 옛 '만들기' 탭 일시정지(유료 토큰·불필요 호출 방지): 로드 시 makeInit 자동실행 안 함.
+// 연결 확인만 유지(소싱 탭은 PAT만 있으면 동작). 옛 탭을 되살리려면 makeInit() 자동호출을 복구.
+(async () => { await checkConn(); })();
 </script>
 </body>
 </html>
