@@ -1612,8 +1612,9 @@ async function srcPoll(hash, tries) {
       const m = JSON.parse(f.text);
       srcState.cands = m.candidates || [];
       srcRenderCards();
+      const terms = (m.search_terms || []).join(", ");
       $("srcStatus").textContent = srcState.cands.length
-        ? `추천 ${srcState.cands.length}개 — 쓸 영상을 눌러 고르세요.`
+        ? `추천 ${srcState.cands.length}개${terms ? ` · 검색어: ${terms}` : ""} — 쓸 영상을 눌러 고르세요.`
         : "결과가 비었습니다(차단/키워드 문제). 다른 키워드로 다시 시도하세요.";
       return;
     } catch (_) {}
@@ -1629,9 +1630,10 @@ function srcRenderCards() {
     el.className = "srccard" + (on0 ? " sel" : "");
     const views = (c.view_count || 0).toLocaleString();
     const cover = c.cover ? `<img loading="lazy" src="${srcEsc(c.cover)}" alt="" onerror="this.style.display='none'">` : "";
+    const descKo = String(c.title_ko || c.title || "").slice(0, 90);
     el.innerHTML =
       `<div class="srcthumb">${cover}<span class="srcbadge">${views} 조회</span><span class="srcpick">${on0 ? "✓" : "+"}</span></div>`
-      + `<div class="srcmeta"><div class="srctitle">${srcEsc(String(c.title || "").slice(0, 52))}</div>`
+      + `<div class="srcmeta"><div class="srctitle">${srcEsc(descKo)}</div>`
       + `<div class="srcsub">@${srcEsc(c.uploader)} · ${c.duration || "?"}s</div></div>`;
     el.onclick = () => {
       const on = !srcState.selected.has(c.id);

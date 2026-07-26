@@ -78,6 +78,7 @@ class SourceVideo:
     source_mode: str = "manual"       # auto | manual (§6)
     status: str = "discovered"        # discovered | downloaded | failed
     title: str | None = None
+    title_ko: str | None = None       # 제목/설명의 한국어 번역(선택 판단용) — 관리자 카드 설명란.
     duration: float | None = None     # 초
     uploader: str | None = None
     sourced_at: str = field(default_factory=_now_iso)
@@ -105,6 +106,7 @@ class SourceVideo:
             source_mode=d.get("source_mode", "manual"),
             status=d.get("status", "discovered"),
             title=d.get("title"),
+            title_ko=d.get("title_ko"),
             duration=d.get("duration"),
             uploader=d.get("uploader"),
             sourced_at=d.get("sourced_at") or _now_iso(),
