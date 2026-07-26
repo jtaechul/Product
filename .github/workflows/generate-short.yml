@@ -88,7 +88,72 @@ permissions:
   actions: write    # ★종 확보 실패 시 나레이션형 워크플로로 자동 전환(디스패치)
 
 jobs:
+  # ★라우팅 잡(운영자 확정 · 실사고 run #167 재발방지): '찾은 영상으로 제작'에서 종·학명이 안 잡히면
+  #   일반 나레이션형으로 넘긴다. 예전엔 이 판별을 generate 잡 **안**의 스텝으로 넣고 파이프라인
+  #   스텝에만 if를 걸었더니, 뒤따르는 릴리스·레코드·텔레그램 스텝이 그대로 실행돼 빈 결과로 터졌다
+  #   (전환은 성공했는데 껍데기 잡이 실패 알림을 보냄). → **잡 단위로 갈라** 구조적으로 막는다.
+  route:
+    runs-on: ubuntu-latest
+    name: 제작 방식 판별
+    outputs:
+      mode: ${{ steps.decide.outputs.mode }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: 최소 의존성(정체성 조회용)
+        run: pip install -q requests
+      - name: 종·학명 확보 여부 판별
+        id: decide
+        working-directory: short-movie-generator
+        env:
+          VURL: ${{ inputs.video_url }}
+          VTITLE: ${{ inputs.video_title }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import os
+          url = (os.environ.get("VURL") or "").strip()
+          if not url:                      # 일반 제작(종 입력/auto) — 기존 경로 그대로
+              print("mode=reels"); raise SystemExit
+          rec = None
+          try:
+              from src.core import discovery
+              rec = discovery.resolve_from_video(url, os.environ.get("VTITLE", ""), "")
+          except Exception as e:
+              print(f"::warning::종 조회 오류 → 나레이션형으로 진행: {e}")
+          print("mode=" + ("reels" if rec else "narrate"))
+          PY
+
+      - name: 종 미확보 → 일반 나레이션형으로 전환
+        if: ${{ steps.decide.outputs.mode == 'narrate' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          echo "::notice::종·학명 미확보 → 일반 나레이션형(narrate-video)으로 전환합니다."
+          gh workflow run narrate-video.yml --ref "${{ github.ref_name }}" \
+            -f video_url="${{ inputs.video_url }}" \
+            -f mode=shorts \
+            -f source_topic="${{ inputs.video_title }}" \
+            -f credit="${{ inputs.video_credit }}" \
+            -f license_id="${{ inputs.video_license }}"
+          # 운영자에게 '실패가 아니라 전환됐다'고 알린다(예전엔 실패 알림만 가서 오해했다).
+          if [ -n "$TG_TOKEN" ]; then
+            MSG=$(printf '%s\n%s\n%s' \
+              "↪ 종·학명이 확인되지 않아 일반 나레이션형으로 제작합니다(실패 아님)." \
+              "대상: ${{ inputs.video_title }}" \
+              "진행: https://github.com/${{ github.repository }}/actions/workflows/narrate-video.yml")
+            for CID in $TG_CHAT; do
+              curl -sS -F chat_id="$CID" -F text="$MSG" \
+                   "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" | head -c 120; echo
+            done
+          fi
+
   generate:
+    needs: route
+    if: ${{ needs.route.outputs.mode == 'reels' }}
     runs-on: ubuntu-latest
     name: 쇼츠 생성
     defaults:
@@ -180,45 +245,7 @@ jobs:
       - name: Install Chromium (HUD 렌더용)
         run: playwright install --with-deps chromium
 
-      # ★자동 판별(운영자 확정): 운영자가 고른 영상에 종·학명이 붙지 않으면 **실패 대신**
-      #   '일반 나레이션형'으로 넘긴다. 고래·심해탐사처럼 특정 종이 아닌 영상도 제작되게 하려는 것.
-      #   여기선 렌더 없이 정체성 조회만 하므로 몇 초면 끝난다.
-      - name: 종·학명 확보 여부 사전 판별(찾은 영상으로 제작할 때만)
-        id: idcheck
-        if: ${{ inputs.video_url != '' }}
-        env:
-          VURL: ${{ inputs.video_url }}
-          VTITLE: ${{ inputs.video_title }}
-        run: |
-          python - <<'PY' >> "$GITHUB_OUTPUT"
-          import os
-          from src.core import discovery
-          rec = None
-          try:
-              rec = discovery.resolve_from_video(os.environ["VURL"], os.environ.get("VTITLE", ""), "")
-          except Exception as e:
-              print(f"::warning::종 조회 오류 → 나레이션형으로 진행: {e}")
-          print("has_species=" + ("true" if rec else "false"))
-          if rec:
-              print("sci=" + rec["species"]["scientific_name"])
-          PY
-
-      - name: 종 미확보 → 일반 나레이션형으로 전환(제작 계속)
-        if: ${{ inputs.video_url != '' && steps.idcheck.outputs.has_species == 'false' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          echo "::notice::종·학명 미확보 → 일반 나레이션형(narrate-video)으로 전환합니다."
-          gh workflow run narrate-video.yml --ref "${{ github.ref_name }}" \
-            -f video_url="${{ inputs.video_url }}" \
-            -f mode=shorts \
-            -f source_topic="${{ inputs.video_title }}" \
-            -f credit="${{ inputs.video_credit }}" \
-            -f license_id="${{ inputs.video_license }}"
-          echo "전환 완료 — 나레이션형 워크플로가 이어서 제작합니다."
-
       - name: Run pipeline
-        if: ${{ inputs.video_url == '' || steps.idcheck.outputs.has_species != 'false' }}
         id: gen
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
