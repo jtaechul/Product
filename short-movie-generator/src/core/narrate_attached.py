@@ -126,6 +126,29 @@ def _sample_frames(video: str, work: Path, n: int = 4) -> list[str]:
     return out
 
 
+def _speech_notes(video: str, work: Path, limit: int = 2400) -> str:
+    """원본 음성을 전사해 **대본 근거 텍스트**로 돌려준다(번역 안 함 — _jp_script가 일본어로 쓴다).
+
+    ★운영자 확정 우선순위: ①원본 음성 ②출처 페이지 설명 ③(최후수단)화면 분석.
+    해설·인터뷰가 있는 영상은 화면만 보는 것보다 훨씬 정확하고 내용이 풍부해 1순위다.
+    무음·음악만·faster-whisper 미설치면 ''(호출부가 다음 근거로 넘어간다)."""
+    try:
+        from src.core import transcribe as _tr
+        tr = _tr.transcribe(video, str(work / "asr"))
+    except Exception as e:  # noqa: BLE001
+        log.info("[narrate] 음성 전사 생략(오류): %s", e)
+        return ""
+    if not tr or not tr.get("segments"):
+        return ""
+    txt = " ".join((sg.get("text") or "").strip() for sg in tr["segments"]).strip()
+    txt = re.sub(r"\s+", " ", txt)
+    if len(txt) < 40:            # 인사말 한두 마디뿐이면 근거로 못 쓴다
+        return ""
+    log.info("[narrate] 음성 전사 확보: %d자(언어=%s · %d문장)",
+             len(txt), tr.get("lang", "?"), len(tr["segments"]))
+    return txt[:limit]
+
+
 def _describe_video(video: str, work: Path) -> str:
     """영상 프레임을 비전 LLM으로 '눈으로 보고' 사실 설명(일본어)을 만든다 → 대본 근거.
     ★날조 금지: 화면에 실제로 보이는 것만 서술(없는 사실·수치·고유명 금지). 키 없으면 ''(폴백)."""
@@ -161,15 +184,24 @@ def _jp_chunks_from_notes(title: str, notes: str, max_chunks: int = 18) -> list[
     return [c for c in chunks if c][:max_chunks]
 
 
-def _jp_script(title: str, notes: str, mode: str) -> list[str]:
-    """일본어 나레이션 대본(청크 리스트) 생성. LLM 우선, 실패 시 결정론 폴백."""
+def _jp_script(title: str, notes: str, mode: str, conservative: bool = False) -> list[str]:
+    """일본어 나레이션 대본(청크 리스트) 생성. LLM 우선, 실패 시 결정론 폴백.
+
+    `conservative=True`(운영자 확정 "최대한 무난하게"): 근거가 **화면 분석뿐**일 때 쓴다.
+    화면만 보고 쓴 대본은 종·행동을 단정하면 그대로 오정보가 되므로, 단정과 구체 주장을 금지하고
+    '보이는 것 + 바다 일반의 정서'로만 무난하게 쓰게 한다."""
     from src.core import llm
     n_hint = "12〜18" if mode == "shorts" else "24〜40"
+    safe = ("\n★この素材は『画面から見えること』しか根拠がありません。"
+            "種名・生態・行動の意図・数値・場所を**断定しないでください**。"
+            "「〜のようです」「〜が広がります」のように見えるままを穏やかに述べ、"
+            "海そのものの静けさ・スケール感で余韻を作ってください。"
+            if conservative else "")
     prompt = (
         "あなたは自然・海洋ドキュメンタリーの日本語ナレーターです。以下の素材情報だけを使い、"
         "落ち着いた敬体（です・ます）で短いナレーションを書いてください。事実の創作は禁止——"
         "与えられた情報にない固有名詞・数値・断定は書かないこと。装飾的な導入で始め、"
-        f"1行に日本語で7〜14文字程度、全体で{n_hint}行。各行は字幕として画面に出ます。\n"
+        f"1行に日本語で7〜14文字程度、全体で{n_hint}行。各行は字幕として画面に出ます。{safe}\n"
         f"【タイトル】{title}\n【内容メモ】{notes}\n"
         "出力は本文のみ。1行1チャンクで、記号や番号は付けないでください。"
     )
@@ -1211,12 +1243,24 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     #   전체 서술(_describe_video)을 생략한다(중복 Gemini 호출 제거). 롱폼은 _build_long_narration이 담당.
     import os
     desc = (source_topic or "").strip()
+    basis_kind = "topic" if desc else ""
     if mode == "shorts":
-        seen = _describe_video(src, work)
-        if seen:
-            desc = (desc + "\n" + seen).strip() if desc else seen
+        # ★대본 근거 우선순위(운영자 확정): ①원본 음성 전사 ②출처 페이지 설명 ③최후수단 화면 분석.
+        #   ①②가 실제 정보라 정확하고 풍부하다. ③은 "무엇이 보인다" 수준이라 마지막에만 쓴다.
+        speech = _speech_notes(src, work)
+        if speech:
+            desc = (f"【原音声の書き起こし】{speech}" + ("\n【出典の説明】" + desc if desc else "")).strip()
+            basis_kind = "audio"
+        if len(desc) < 80:
+            # ①②로 근거가 얇다 → 화면 분석을 최후 수단으로 덧댄다(운영자 확정: "최대한 무난하게").
+            seen = _describe_video(src, work)
+            if seen:
+                desc = (desc + "\n【画面から見える様子】" + seen).strip() if desc else seen
+                basis_kind = basis_kind or "vision"
         if not desc:
-            raise ValueError("영상 내용을 파악하지 못했습니다(GEMINI_API_KEY 또는 소싱 출처 설명 필요).")
+            raise ValueError("영상 내용을 파악하지 못했습니다"
+                             "(원본 음성·출처 설명·화면 분석 모두 확보 실패).")
+        log.info("[narrate] 쇼츠 대본 근거: %s (%d자)", basis_kind or "vision", len(desc))
     else:
         seen = ""   # 롱폼: 전체 서술 생략(구간별 비전이 담당)
         _vision_ok = bool(os.environ.get("GEMINI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY"))
@@ -1247,7 +1291,8 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
         chapters = _condense_chapters(nar.get("chapters") or [], target=4)
         dur = orig_dur
     else:
-        chunks = _jp_script("", desc, mode)
+        # 근거가 화면 분석뿐이면 단정을 막는 '무난 모드'로 쓴다(운영자 확정).
+        chunks = _jp_script("", desc, mode, conservative=(basis_kind in ("", "vision")))
         if not chunks:
             raise ValueError("나레이션 대본을 만들 수 없습니다.")
         nar = narration_sync.synthesize(chunks, str(work))
