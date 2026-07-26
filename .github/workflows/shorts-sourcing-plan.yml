@@ -70,6 +70,8 @@ jobs:
         run: |
           git config user.name "Claude"
           git config user.email "noreply@anthropic.com"
-          git add data/mechanism/*.json data/sources/plan/*.json 2>/dev/null || true
+          # 폴더별로 따로 add — 한 경로(예: 아직 없는 plan 폴더)가 매칭 실패해도 다른 경로 스테이징이 막히지 않게(옛 워크플로 방식).
+          git add -A data/mechanism 2>/dev/null || true
+          git add -A data/sources/plan 2>/dev/null || true
           git diff --cached --quiet || git commit -m "sourcing(plan): ${{ steps.p.outputs.mode }} ${{ steps.p.outputs.hash }} nonce=${{ steps.p.outputs.nonce }} [skip ci]"
           git push || true
