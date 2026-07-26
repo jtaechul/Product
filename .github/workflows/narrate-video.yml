@@ -121,6 +121,8 @@ jobs:
           echo "out=$OUT" >> "$GITHUB_OUTPUT"
           echo "meta=output/${NAME}.meta.json" >> "$GITHUB_OUTPUT"
           echo "thumb=output/${NAME}_thumb.jpg" >> "$GITHUB_OUTPUT"
+          # ★원본 미리보기 mp4(아이폰에서 구간 지정용) — 없으면 이후 스텝이 조용히 건너뛴다
+          echo "srcprev=output/${NAME}_source.mp4" >> "$GITHUB_OUTPUT"
           [ -f "$OUT" ] || { echo "::error::완성본이 생성되지 않았습니다"; exit 1; }
 
       - name: Release 업로드(영구 호스팅)
@@ -145,6 +147,14 @@ jobs:
             echo "thumb_url=$BASE/$(basename "$TH")" >> "$GITHUB_OUTPUT"
             echo "썸네일: $BASE/$(basename "$TH")"
           fi
+          # ★원본 미리보기 mp4(있으면) 업로드 — 관리자 페이지 '구간 다시 잡기'가 이걸 재생한다.
+          #   소싱 원본이 WebM(VP8)이면 아이폰에서 재생이 안 돼 구간을 눈으로 정할 수 없었다.
+          SP="${{ steps.run.outputs.srcprev }}"
+          if [ -f "$SP" ]; then
+            gh release upload "$TAG" "$SP" --clobber
+            echo "source_mp4_url=$BASE/$(basename "$SP")" >> "$GITHUB_OUTPUT"
+            echo "원본 미리보기: $BASE/$(basename "$SP")"
+          fi
 
       - name: 콘텐츠 레코드 기록(제목·설명·해시태그 일/한 — 대시보드 /nv/ 표시용)
         id: rec
@@ -153,6 +163,7 @@ jobs:
           VIDEO_URL: ${{ steps.rel.outputs.url }}
           THUMB_URL: ${{ steps.rel.outputs.thumb_url }}
           SRC_URL: ${{ inputs.video_url }}
+          SRC_MP4_URL: ${{ steps.rel.outputs.source_mp4_url }}
           MODE: ${{ inputs.mode }}
         run: |
           CID="${{ steps.run.outputs.cid }}"
@@ -175,6 +186,7 @@ jobs:
               video_url=os.environ.get("VIDEO_URL", ""),
               thumb_url=os.environ.get("THUMB_URL", ""),
               source_url=os.environ.get("SRC_URL", ""),
+              source_mp4_url=os.environ.get("SRC_MP4_URL", ""),
               transcript=transcript)
           PY
 

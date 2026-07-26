@@ -44,17 +44,24 @@ def test_narrate_attached_e2e(tmp_path, monkeypatch, mode, w, h):
     a = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries",
                         "stream=codec_type", "-of", "csv=p=0", str(out)], capture_output=True, text=True).stdout
     assert "audio" in a
-    # ★오프닝 훅 '영상 카드' 폐지(운영자 확정): 최종 영상 길이는 본문(dur) 그대로 — 옛 ~2.8초 훅 클립이
-    #   더는 앞에 붙지 않는다(썸네일이 이미 훅을 담당하므로 재생 시작에 정지 카드가 끼지 않아야 함).
+    # ★오프닝 훅(운영자 확정 2차): **쇼츠는 훅이 반드시 앞에 붙는다**(도감형과 같은 애니메이션 훅).
+    #   롱폼은 붙이지 않는다(본문이 곧바로 시작 — 원본 전체 길이 유지가 원칙).
+    #   실사고: 훅을 롱폼 기준으로 폐지했다가 쇼츠 시작이 밋밋해졌다("표지만 있고 훅이 없잖아").
     real_dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
                                      "-of", "csv=p=0", str(out)], capture_output=True, text=True).stdout.strip())
-    assert abs(real_dur - res["duration"]) < 1.0
+    from src.core import hook_intro as hi
+    if mode == "shorts" and hi.fonts_available():
+        assert res["opening_hook"], "쇼츠에 오프닝 훅이 붙지 않았습니다"
+        # 오프닝(≈3~5초)만큼 최종이 본문보다 길어야 한다(본문을 잘라 넣지 않는다)
+        assert real_dur > 5.0
+    else:
+        assert not res.get("opening_hook"), "롱폼에는 오프닝 훅을 붙이지 않는다(원본 길이 유지)"
+        assert abs(real_dur - res["duration"]) < 1.0
     # 메타데이터(제목·설명·해시태그·훅, 일/한) 자동 생성 — 폴백이라도 채워짐
     meta = res["meta"]
     assert meta["title_jp"] and meta["desc_jp"] and meta["tags_jp"] and meta["hook_jp"]
     assert Path(res["meta_path"]).exists()
-    # 썸네일: 폰트가 있으면 훅+제목을 얹은 jpg가 나온다(영상에는 붙지 않음)
-    from src.core import hook_intro as hi
+    # 썸네일: 폰트가 있으면 훅+제목을 얹은 jpg가 나온다(유튜브 커스텀 썸네일용 · 레퍼런스 양식)
     if hi.fonts_available():
         assert res["thumb"] and Path(res["thumb"]).exists()
         tw = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",

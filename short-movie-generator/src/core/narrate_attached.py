@@ -128,6 +128,10 @@ def _sample_frames(video: str, work: Path, n: int = 4) -> list[str]:
 
 # 쇼츠 최소 길이(초). 나레이션이 짧아도 여기까지는 원본을 보여준다(원본이 더 짧으면 원본 길이).
 _SHORTS_MIN_S = 30.0
+# ★쇼츠 나레이션 속도(운영자 확정 · "자막이 너무 빠르다" 2차 수정): narration_sync 기본값은
+#   +14%(빠름)라 자막이 1.4초마다 넘어갔다. 보통 속도로 낮춰 한 자막이 오래 머물게 한다.
+#   ※도감형(reels)은 운영자 확정에 따라 기존 속도를 유지한다(나레이션형만 적용).
+_SHORTS_TTS_RATE = "+0%"
 
 _LICENSE_LABEL = {
     "public-domain": "Public Domain", "cc0": "CC0",
@@ -247,7 +251,11 @@ def _jp_script(title: str, notes: str, mode: str, conservative: bool = False) ->
     from src.core import llm
     # ★쇼츠 문장 수(운영자 확정 · 실사고: 22초에 자막 11개 → 2초에 하나씩 넘어가 숨이 찼다).
     #   6~9문장이면 30~40초 영상에서 문장당 4~5초 → 읽히고 여운이 생긴다.
-    n_hint = "6〜9" if mode == "shorts" else "24〜40"
+    # ★쇼츠 문장 수·길이(운영자 확정 2차 · 실사고: 나레이션 12.4초에 자막 9개 = 1.4초마다 교체).
+    #   원인은 ①TTS 속도 +14% ②한 줄 7~14자로 너무 잘게 쪼갬. → 5~7문장 × 12~20자로 굵게 만들고
+    #   속도도 보통(_SHORTS_TTS_RATE)으로 낮춰 자막 하나가 3~4초 머물게 한다.
+    n_hint = "5〜7" if mode == "shorts" else "24〜40"
+    len_hint = "12〜20文字" if mode == "shorts" else "7〜14文字"
     safe = ("\n★この素材は『画面から見えること』しか根拠がありません。"
             "種名・生態・行動の意図・数値・場所を**断定しないでください**。"
             "「〜のようです」「〜が広がります」のように見えるままを穏やかに述べ、"
@@ -257,7 +265,7 @@ def _jp_script(title: str, notes: str, mode: str, conservative: bool = False) ->
         "あなたは自然・海洋ドキュメンタリーの日本語ナレーターです。以下の素材情報だけを使い、"
         "落ち着いた敬体（です・ます）で短いナレーションを書いてください。事実の創作は禁止——"
         "与えられた情報にない固有名詞・数値・断定は書かないこと。装飾的な導入で始め、"
-        f"1行に日本語で7〜14文字程度、全体で{n_hint}行。各行は字幕として画面に出ます。{safe}\n"
+        f"1行に日本語で{len_hint}程度、全体で{n_hint}行。各行は字幕として画面に出ます。{safe}\n"
         f"【タイトル】{title}\n【内容メモ】{notes}\n"
         "出力は本文のみ。1行1チャンクで、記号や番号は付けないでください。"
     )
@@ -266,9 +274,9 @@ def _jp_script(title: str, notes: str, mode: str, conservative: bool = False) ->
         lines = [re.sub(r"^[\s0-9.\-・*]+", "", ln).strip() for ln in txt.splitlines()]
         lines = [ln for ln in lines if ln and not ln.startswith("【")]
         if len(lines) >= 3:
-            cap = 9 if mode == "shorts" else 44
+            cap = 7 if mode == "shorts" else 44
             return lines[:cap]
-    return _jp_chunks_from_notes(title, notes, 9 if mode == "shorts" else 44)
+    return _jp_chunks_from_notes(title, notes, 7 if mode == "shorts" else 44)
 
 
 def _dedup_tags(tags, core_jp, limit: int = 12) -> list[str]:
@@ -783,6 +791,70 @@ def _gradient_glow_lines(im, x0: int, y0: int, lines: list[str], font, line_h: i
     full.paste(grad.resize((W, block_h)), (0, y0))
     im.paste(full, (0, 0), mask)
     return yy
+
+
+def _hook_lines(hook: str) -> tuple[str, str, list[str]]:
+    """훅 한 문장 → 오프닝 애니메이션용 (1행, 2행, 팝인 어절 리스트).
+
+    도감형은 카테고리 COPY에 어절이 손으로 적혀 있지만, 나레이션형은 훅을 LLM이 만들므로
+    여기서 쪼갠다. 일본어 읽기 단위인 「、」·「。」 를 우선 경계로 삼고, 없으면 길이 기준으로
+    자연스러운 두 덩어리로 나눈다(단어 중간 줄바꿈 금지 — 화면 조판 하드룰 #7).
+    """
+    h = re.sub(r"\s+", "", (hook or "").strip())
+    if not h:
+        return "", "", []
+    # ① 구두점 경계로 분할(구두점은 앞 조각에 붙인다 — 읽기 흐름 유지)
+    parts = [p for p in re.split(r"(?<=[、。！？])", h) if p]
+    if len(parts) == 1 and len(h) > 9:
+        # ② 구두점이 없으면 중간 지점의 조사/접속 뒤에서 끊는다(없으면 정중앙)
+        mid = len(h) // 2
+        cut = mid
+        for off in range(0, 4):
+            for c in (mid + off, mid - off):
+                if 3 <= c < len(h) - 2 and h[c - 1] in "はがをにでとへもの":
+                    cut = c
+                    break
+            else:
+                continue
+            break
+        parts = [h[:cut], h[cut:]]
+    parts = [p for p in parts if p][:3]
+    line1 = parts[0]
+    line2 = "".join(parts[1:])
+    return line1, line2, list(parts)
+
+
+def _apply_opening_hook(body_video: str, hook: str, work: Path, hero_image: str = "",
+                        open_bg_video: str = "", subject_video: str = "") -> str:
+    """★쇼츠 오프닝 훅(운영자 확정): 도감형과 **같은 애니메이션 훅**을 본문 앞에 붙인다.
+
+    도감형(reels)의 `hook_intro_stage`를 그대로 재사용한다 — 어절이 순서대로 팝인 + 훅 나레이션
+    (edge-tts) + 스캔/임팩트 사운드. 나레이션형은 종 정보(국명·학명·수심)가 없으므로
+    **수심 스케일과 엔드카드는 끄고**(`show_scale=False` / `include_endcard=False`) 훅만 쓴다.
+    실패하면 원본 본문을 그대로 돌려준다(발행 불정지).
+    """
+    line1, line2, pops = _hook_lines(hook)
+    if not pops:
+        return body_video
+    try:
+        from src.core import hook_intro as hi, hook_intro_stage
+        spec = hi.SpeciesSpec(
+            jp_name="", sci_name="", depth_min=0, depth_max=0,
+            hook_line1=line1, hook_line2=line2, hook_pop_words=pops,
+            feature_line="", feature_glow_word="",
+            corner_label="DEEP SEA · ROV CAM", scale_label="", show_scale=False)
+        out = hook_intro_stage.apply(body_video, spec, hook, str(work / "open"),
+                                     open_bg_video=(open_bg_video or None),
+                                     subject_video=(subject_video or None),
+                                     hero_image=(hero_image or None),
+                                     include_endcard=False)
+        if out and out != body_video and Path(out).exists():
+            log.info("[narrate] 오프닝 훅 적용: %r (%d어절)", hook, len(pops))
+            return out
+        log.warning("[narrate] 오프닝 훅 생성 실패 → 본문 그대로")
+    except Exception as e:  # noqa: BLE001
+        log.warning("[narrate] 오프닝 훅 생략(오류): %s", e)
+    return body_video
 
 
 def _render_hook_and_thumb(bg_path: str, hook: str, title: str, w: int, h: int,
@@ -1353,7 +1425,7 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
         chunks = _jp_script("", desc, mode, conservative=(basis_kind in ("", "vision")))
         if not chunks:
             raise ValueError("나레이션 대본을 만들 수 없습니다.")
-        nar = narration_sync.synthesize(chunks, str(work))
+        nar = narration_sync.synthesize(chunks, str(work), rate=_SHORTS_TTS_RATE)
         # ★쇼츠 길이(운영자 확정): 예전엔 나레이션 길이 = 영상 길이라 22초짜리가 나왔다.
         #   원본이 충분하면 최소 _SHORTS_MIN_S 까지 늘려 영상을 더 보여준다(자막 사이에 숨 쉴 틈).
         dur = float(nar.get("duration") or 0) + 0.6
@@ -1423,26 +1495,33 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     #    ★A안: 소싱 출처 설명(source_topic)도 사실 근거로 함께 넘겨 제목의 내용예측력↑(날조 없음).
     meta = _gen_metadata(chunks, mode, source_topic=source_topic)
 
-    # 7) 유튜브 썸네일 저장(운영자 확정: 오프닝 훅 '영상 카드'는 폐지). 커스텀 썸네일이 이미 훅·제목을
-    #    보여주므로, 영상 시작에 같은 문구를 정지 카드(무음 ~2.8초)로 또 보여주는 건 중복이고 재생 시작
-    #    직후 '아무 일도 안 일어나는' 구간이라 초반 이탈(retention)에도 불리하다 → 본문이 곧바로 시작한다.
-    #    썸네일 렌더(_render_hook_and_thumb)는 그대로 재사용(카드 이미지는 만들되 영상에는 붙이지 않음).
-    #    실패해도 발행 불정지(썸네일만 생략).
+    # 7) 유튜브 썸네일 저장 + ★쇼츠 오프닝 훅(운영자 확정 · 2차 수정).
+    #    예전엔 "썸네일이 훅을 보여주니 영상 앞 카드는 중복"이라 판단해 오프닝을 아예 없앴는데,
+    #    그건 **롱폼 기준**이었다. 운영자 확정: **쇼츠는 오프닝 훅이 반드시 있어야 한다**
+    #    ("일반 나레이션 영상은 앞 표지를 잡고 없애도, 숏폼은 오프닝 훅을 없애면 안 돼").
+    #    방식도 확정: 정지 카드가 아니라 **도감형과 같은 애니메이션 훅**(어절 팝인 + 훅 나레이션 +
+    #    사운드) → 채널 톤 통일. 엔드카드는 나레이션형에 두지 않는다(운영자 기확정).
+    #    실패해도 발행 불정지(오프닝 없이 본문 그대로).
     thumb_path = out_dir / f"{name}_thumb.jpg"
     hook_txt = (meta.get("hook_jp") or "").strip()
     thumb_rendered = False
+    hero = ""
     try:
         from src.core import hook_intro as hi
         if hook_txt and hi.fonts_available():
             hero = _pick_hero_frame(src, work / "hero", w,
                                     subject_hint=(source_topic or meta.get("title_jp", "") or "").strip())
             if hero:
-                card = str(work / "hookcard.png")   # 썸네일과 같은 렌더의 부산물(영상에는 미사용)
+                card = str(work / "hookcard.png")   # 썸네일 렌더의 부산물(영상에는 미사용)
                 thumb_rendered = _render_hook_and_thumb(hero, hook_txt, meta.get("title_jp", ""), w, h,
                                                         card, str(thumb_path))
     except Exception as e:  # noqa: BLE001
         log.info("[narrate] 썸네일 렌더 실패(생략): %s", e)
-    shutil.move(body_final, final)   # 오프닝 훅 영상 카드 없이 본문이 그대로 최종본
+    opened = body_final
+    if mode == "shorts" and hook_txt:
+        opened = _apply_opening_hook(body_final, hook_txt, work, hero_image=hero,
+                                     open_bg_video=body_v, subject_video=src)
+    shutil.move(opened, final)
     thumb_out = str(thumb_path) if thumb_path.exists() else ""
 
     # 8-00) ★저작권 표기(운영자 확정 "캡션에만"): 나레이션형은 엔드카드가 없어 **캡션이 유일한
@@ -1489,9 +1568,20 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     except Exception:  # noqa: BLE001
         pass
 
-    log.info("[narrate] 완성: %s (%s · %.1fs · %d청크 · %d챕터 · 썸=%s) title=%s",
-             final, mode, dur, len(chunks), len(chapters), bool(thumb_out), meta.get("title_jp", ""))
+    # ★원본 미리보기 mp4(운영자 확정): 소싱 원본이 WebM(VP8)이면 아이폰에서 재생이 안 돼
+    #   '구간 다시 잡기'를 쓸 수 없었다 → 480p mp4를 함께 만들어 릴리스에 올린다(타임라인 동일).
+    #   ★자르지 않은 **원본**(vp)을 변환한다 — 여기서 읽은 초가 곧 컷 지정에 쓰는 초여야 한다.
+    from src.core import source_preview
+    src_preview = source_preview.make_preview_mp4(str(vp), str(out_dir / f"{name}_source.mp4"))
+
+    log.info("[narrate] 완성: %s (%s · %.1fs · %d청크 · %d챕터 · 썸=%s · 미리보기=%s) title=%s",
+             final, mode, dur, len(chunks), len(chapters), bool(thumb_out), bool(src_preview),
+             meta.get("title_jp", ""))
     return {"path": final, "duration": dur, "mode": mode, "chunks": chunks,
+            "source_preview": src_preview,
+            # ★쇼츠 오프닝 훅이 실제로 붙었는지(회귀 테스트·운영 로그용). 붙지 않으면 '표지만 있고
+            #   영상 시작에 훅이 없는' 상태가 되므로, 조용히 넘어가지 않게 결과에 남긴다.
+            "opening_hook": bool(opened != body_final),
             "meta": meta, "meta_path": str(meta_path), "description": desc, "chapters": chapters,
             "hooked": thumb_rendered, "thumb": thumb_out, "width": w, "height": h,
             # ★더빙형 검수용: 원문·일본어 대본(전사 편집본). 대시보드에서 수정 후 재제작에 재사용.

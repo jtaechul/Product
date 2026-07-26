@@ -129,6 +129,17 @@ def _grab_frame(video: str, t: float, out_png: str, vf: str | None = None) -> bo
     return r.returncode == 0 and Path(out_png).exists()
 
 
+def _has_audio(path: str) -> bool:
+    """영상에 오디오 트랙이 있는지(없으면 오디오 필터가 [1:a]에서 죽는다)."""
+    try:
+        r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a",
+                            "-show_entries", "stream=codec_type", "-of", "csv=p=0", path],
+                           capture_output=True, text=True, timeout=60)
+        return "audio" in (r.stdout or "")
+    except Exception:  # noqa: BLE001
+        return True     # 확인 실패 시 기존 경로(본문 오디오 사용)를 유지
+
+
 def _duration_of(path: str) -> float:
     """영상 실제 길이(초) = duration − start_time.
 
@@ -443,7 +454,15 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
 
         # 6) 오디오: 훅@0.30 + 붐@온셋 + 본문오디오@OPEN + 엔드카드 타자@BODY_END + (BGM)
         NARR = cfg.narr_start_s
-        inputs = ["-i", hook["mp3"], "-i", body_video, "-i", boom, "-i", tick]
+        # ★본문에 오디오 트랙이 없으면 무음을 만들어 넣는다(재발방지): 필터가 [1:a]를 참조하므로
+        #   무음 본문이 오면 "Stream specifier ':a' matches no streams"로 **오프닝 전체가 통째로
+        #   실패**한다(=훅이 사라진다). 오디오 없는 본문도 오프닝은 붙어야 한다.
+        if _has_audio(body_video):
+            inputs = ["-i", hook["mp3"], "-i", body_video]
+        else:
+            inputs = ["-i", hook["mp3"],
+                      "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=stereo:d={TOTAL}"]
+        inputs += ["-i", boom, "-i", tick]
         af = (f"[0:a]adelay={int(NARR*1000)}|{int(NARR*1000)},volume={cfg.mix_hook}[hk];"
               f"[1:a]adelay={int(OPEN*1000)}|{int(OPEN*1000)},volume={cfg.mix_body}[bd];")
         labels = ["[hk]", "[bd]"]

@@ -395,7 +395,10 @@ def _static_overlay(spec: SpeciesSpec, cfg: HookIntroConfig) -> Image.Image:
             depth = int(round((spec.depth_min + (spec.depth_max - spec.depth_min) * t) / unit) * unit)
             d.line([x - 10, yy, x, yy], fill=col + (190,), width=2)
             d.text((x - 18, yy), f"{depth:,} m", font=_mono(23), fill=col + (215,), anchor="rm")
-    # 하단 종 라벨(국명 + 이탤릭 학명)
+    # 하단 종 라벨(국명 + 이탤릭 학명). ★둘 다 비면 라벨을 아예 그리지 않는다 —
+    #   나레이션형(종 정보가 없는 일반 해양 영상)에서 "  /  " 만 덩그러니 찍히던 문제 방지.
+    if not (spec.jp_name or spec.sci_name):
+        return ov
     jp = f"{spec.jp_name}  /  "
     jw = d.textlength(jp, font=_sans_r(26))
     lxx = W // 2 - (jw + d.textlength(spec.sci_name, font=_sci(26))) / 2

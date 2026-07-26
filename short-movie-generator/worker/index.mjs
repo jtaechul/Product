@@ -754,12 +754,19 @@ async function renderNarrateDetail(id,fresh){
     _cb.addEventListener("toggle",()=>{
       if(!_cb.open) return;
       const v=$("#nvsrc"); if(!v||v.src) return;
-      const tc=nvTranscode(rec.source_url); let tried=!tc;
-      v.src=prox(tc||rec.source_url);
+      // ★재생 후보 순서(운영자 확정 · 아이폰 재생 불가 사고 수정): ①제작 때 만든 **원본 미리보기
+      //   mp4(480p)** ②커먼스 480p 트랜스코드 ③원본. 소싱 원본은 대부분 WebM(VP8)이라 아이폰
+      //   사파리가 아예 재생하지 못했다 → 구간을 눈으로 정할 방법이 없었다. mp4가 있으면 그걸 쓴다.
+      //   (mp4는 원본을 자르지 않고 화질만 낮춘 것이라 **초 단위가 원본과 동일**하다)
+      const cands=[md.source_mp4_url, nvTranscode(rec.source_url), rec.source_url].filter(Boolean);
+      let ci=0;
+      const play=()=>{ v.src=prox(cands[ci]); v.load(); };
+      play();
       v.onloadedmetadata=()=>{$("#nvsrcinfo").innerHTML="원본 길이 <b>"+v.duration.toFixed(1)+"초</b>"+
+        (md.source_mp4_url&&ci===0?" · 미리보기 화질(구간 지정용)":"")+
         ' · <a href="'+esc(rec.source_url)+'" target="_blank" style="color:var(--cy)">원본 링크</a>';};
-      v.onerror=()=>{ if(!tried){tried=true;v.src=prox(rec.source_url);v.load();return;}
-        banner("이 브라우저가 원본 형식을 재생하지 못합니다. '원본 링크'로 시간을 확인하세요.","err");};
+      v.onerror=()=>{ if(ci<cands.length-1){ci++;play();return;}
+        banner("이 브라우저가 원본 형식을 재생하지 못합니다. 원본이 WebM이면 '전체 다시 제작'을 한 번 돌리면 재생용 mp4가 함께 만들어집니다.","err");};
     });
     _cb.querySelectorAll("[data-nvmk]").forEach(b=>{b.onclick=()=>{
       const v=$("#nvsrc"); if(!v) return;
@@ -1047,9 +1054,17 @@ async function produceCandidate(cat,key,btn){
   }catch(e){srcbanner("요청 실패: "+e,"err");if(btn)btn.disabled=false;}
 }
 async function loadRuns(){
+  // ★진행 중 워크플로 조회(토큰 필요)와 완성 목록(무인증 가능)을 **분리**한다(운영자 확정 · 실사고).
+  //   예전엔 둘을 한 try에 묶어, GitHub API가 실패하면 목록 전체가 "현황 조회 실패"로 사라졌다 →
+  //   방금 만든 영상이 관리자 페이지에서 아예 안 보여 수정도 못 하던 문제. 목록은 항상 나와야 한다.
+  let j = {workflow_runs: []}, apiErr = false;
   try{
-    const [r,cat]=await Promise.all([fetchT(API+"/actions/workflows/"+WF+"/runs?per_page=8",{headers:headers(true)}),listContent()]);
-    const j=await r.json();const el=$("#runs");if(!el)return;el.innerHTML="";
+    const r=await fetchT(API+"/actions/workflows/"+WF+"/runs?per_page=8",{headers:headers(true)});
+    j=await r.json();
+  }catch(e){ apiErr=true; }
+  try{
+    const cat=await listContent();
+    const el=$("#runs");if(!el)return;el.innerHTML="";
     (j.workflow_runs||[]).filter(x=>x.status!=="completed").forEach(run=>{
       el.insertAdjacentHTML("beforeend",'<div class="run"><span class="st prog">'+(run.status==="queued"?"대기열":"진행 중")+'</span>'+
         '<a href="'+run.html_url+'" target="_blank">#'+num3(run.run_number)+' 쇼츠 생성(진행상황 보기)</a><span class="t">'+ago(run.created_at)+"</span></div>");});
@@ -1060,9 +1075,12 @@ async function loadRuns(){
       const href=it.href||("/c/"+num3(it.no));
       el.insertAdjacentHTML("beforeend",'<div class="run"><span class="st done">완료</span>'+
         '<a href="'+href+'">'+label+'</a><span class="t">'+esc(it.date||"")+"</span></div>");});
+    if(apiErr)el.insertAdjacentHTML("afterbegin",
+      '<div class="hint">진행 중 작업은 조회하지 못했습니다(토큰·네트워크) — '+
+      '<a href="https://github.com/'+OWNER+'/'+REPO+'/actions" target="_blank">GitHub에서 보기</a>. 완성 목록은 아래 그대로입니다.</div>');
     if(!el.innerHTML)el.innerHTML='<div class="hint">아직 실행 기록이 없습니다.</div>';
     if((j.workflow_runs||[]).some(x=>x.status!=="completed"))setTimeout(loadRuns,20000);
-  }catch(e){const el=$("#runs");if(el)el.innerHTML='<div class="hint">현황 조회 실패 — <a href="https://github.com/'+OWNER+'/'+REPO+'/actions" target="_blank">GitHub</a></div>';}
+  }catch(e){const el=$("#runs");if(el)el.innerHTML='<div class="hint">목록 조회 실패 — <a href="https://github.com/'+OWNER+'/'+REPO+'/actions" target="_blank">GitHub</a></div>';}
 }
 
 // ── 라이브러리: 롱폼 + 쇼츠 콘텐츠 목록 ──

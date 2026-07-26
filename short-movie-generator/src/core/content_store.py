@@ -240,6 +240,7 @@ def write_longform_record(base_dir: str, content_id: str, meta: dict, *,
 def write_narrate_record(base_dir: str, content_id: str, meta: dict, *,
                          mode: str = "shorts", video_url: str = "",
                          thumb_url: str = "", source_url: str = "",
+                         source_mp4_url: str = "",
                          transcript: list | None = None) -> str:
     """첨부 영상 나레이션 결과 레코드 content/<id>.json (kind="narrate").
 
@@ -257,6 +258,10 @@ def write_narrate_record(base_dir: str, content_id: str, meta: dict, *,
         "hashtags": meta.get("tags_jp", []), "hashtags_ko": meta.get("tags_ko", []),
         "media": {"video_url": video_url, "thumb_url": thumb_url},
     }
+    # ★원본 미리보기 mp4(운영자 확정): 소싱 원본이 WebM(VP8)이면 아이폰에서 재생이 안 돼
+    #   '구간 다시 잡기'를 쓸 수 없다 → 제작 때 만든 480p mp4 URL을 함께 보관한다.
+    if source_mp4_url:
+        rec["media"]["source_mp4_url"] = source_mp4_url
     if transcript:
         rec["transcript"] = transcript
     p.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
