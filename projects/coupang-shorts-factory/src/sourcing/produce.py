@@ -152,3 +152,39 @@ def produce(product_hash: str, job_dir, settings: dict, project_root=None,
     except Exception as e:
         print(f"[produce] 포스터 생략({type(e).__name__}: {e})")
     return out
+
+
+def _load_settings(root: Path) -> dict:
+    import yaml
+    return yaml.safe_load((Path(root) / "config" / "settings.yaml").read_text(encoding="utf-8")) or {}
+
+
+def _main(argv=None) -> int:
+    """워크플로 CLI — 확정 홍보영상(promo)+대본(plan)으로 최종 쇼츠 제작 →
+    data/jobs/{job-id}/video.mp4 + poster.jpg + release_meta.json(관리자 ⑥ 검수 목록이 읽음).
+    'PRODUCE_RESULT:' 접두로 결과 JSON을 출력한다(잡 로그·관리자 폴링). 커밋·릴리스는 워크플로가."""
+    import argparse
+    ap = argparse.ArgumentParser(description="소싱 ⑤ 제작")
+    ap.add_argument("--hash", required=True, help="상품 해시(promo/{hash}.json + plan/{hash}.json)")
+    ap.add_argument("--job-id", default="srcprod", help="산출 폴더 이름(data/jobs/{job-id})")
+    ap.add_argument("--no-narration", action="store_true", help="TTS 없이 무음 조립(튜닝용)")
+    args = ap.parse_args(argv)
+    root = PROJECT_ROOT
+    settings = _load_settings(root)
+    job_dir = Path(root) / "data" / "jobs" / args.job_id
+    out = produce(args.hash, job_dir, settings, project_root=root, narrate=not args.no_narration)
+    plan = load_plan(args.hash, root) or {}
+    meta = {"name": (plan.get("product") or plan.get("title") or "쿠팡 쇼츠"),
+            "hash": args.hash, "kind": "sourcing", "title": plan.get("title", ""),
+            "description": plan.get("description", ""), "hashtags": plan.get("hashtags", []),
+            "video": out.name}
+    (job_dir / "release_meta.json").write_text(
+        json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
+    print("PRODUCE_RESULT:", json.dumps(
+        {"status": "ok", "hash": args.hash, "video": str(out)}, ensure_ascii=False))
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(_main(sys.argv[1:]))

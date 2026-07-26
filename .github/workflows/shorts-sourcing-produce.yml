@@ -1,0 +1,115 @@
+name: shorts-sourcing-produce
+
+# 소싱 ⑤ 제작 — 확정 홍보영상(promo/{hash}.json) + 대본(plan/{hash}.json)으로 최종 쇼츠 제작.
+#   선택 클립 다운로드 → 9:16 합성(원음 제거) → 나레이션(TTS) → 카라오케 자막 + 브랜드바 →
+#   video.mp4 + poster.jpg → 릴리스 shorts-src-{hash} 발행(관리자 ⑤/⑥ 검수가 읽음).
+# moviepy(v2) 렌더는 러너에서 실행(로컬엔 moviepy/ffmpeg 없음 — produce_probe로 실증 완료).
+# 이 환경은 dispatch API 권한이 있지만, 없을 때(403) 대비 push 트리거도 지원: requests/sourcing-produce/*.json.
+
+on:
+  workflow_dispatch:
+    inputs:
+      hash:
+        description: "상품 해시(promo/{hash}.json + plan/{hash}.json)"
+        required: true
+      no_narration:
+        description: "나레이션(TTS) 없이 제작 — 화면/자막 튜닝용"
+        type: choice
+        options: ["false", "true"]
+        default: "false"
+      nonce:
+        description: "폴링 신선도 매칭용(관리자가 넘김)"
+        default: ""
+  push:
+    branches: [main, claude/coupang-shorts-phase-0-k42l1i]
+    paths: ["projects/coupang-shorts-factory/requests/sourcing-produce/*.json"]
+
+permissions:
+  contents: write   # 릴리스 발행용
+
+concurrency:
+  group: shorts-sourcing-produce
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: projects/coupang-shorts-factory
+
+jobs:
+  produce:
+    name: "소싱 쇼츠 제작 (합성+나레이션+자막)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: projects/coupang-shorts-factory/requirements.txt
+
+      - name: 의존성 설치 (moviepy 2.2.1 등)
+        run: pip install -q -r requirements.txt
+
+      - name: Whisper 모델 캐시 (타임스탬프 폴백용)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: whisper-small-v1
+
+      - name: 파라미터 결정 (dispatch 입력 / requests/sourcing-produce/*.json)
+        id: p
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            HS='${{ inputs.hash }}'; NN='${{ inputs.no_narration }}'; NC='${{ inputs.nonce }}'
+          else
+            f=$(ls -t requests/sourcing-produce/*.json | head -1)
+            HS=$(jq -r '.hash' "$f"); NN=$(jq -r '.no_narration // "false"' "$f"); NC=$(jq -r '.nonce // ""' "$f")
+          fi
+          { echo "hash=$HS"; echo "nonce=$NC"; } >> "$GITHUB_OUTPUT"
+          case "$NN" in true|True|TRUE|1) echo "nonar=--no-narration" >> "$GITHUB_OUTPUT" ;; *) echo "nonar=" >> "$GITHUB_OUTPUT" ;; esac
+
+      - name: 제작 실행 (TTS 키 있으면 나레이션, 없으면 무음)
+        env:
+          SHORTS_ELEVENLABS_API_KEY: ${{ secrets.SHORTS_ELEVENLABS_API_KEY }}
+          SHORTS_TYPECAST_API_KEY: ${{ secrets.SHORTS_TYPECAST_API_KEY }}
+          SHORTS_CLOVA_CLIENT_ID: ${{ secrets.SHORTS_CLOVA_CLIENT_ID }}
+          SHORTS_CLOVA_CLIENT_SECRET: ${{ secrets.SHORTS_CLOVA_CLIENT_SECRET }}
+        run: |
+          JOB="run${{ github.run_number }}"
+          python -m src.sourcing.produce --hash "${{ steps.p.outputs.hash }}" --job-id "$JOB" ${{ steps.p.outputs.nonar }}
+
+      - name: 결과 영상 릴리스 발행 (shorts-src-{hash} · 관리자 ⑤/⑥ 검수가 읽음)
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          JOB_DIR="data/jobs/run${{ github.run_number }}"
+          META="$JOB_DIR/release_meta.json"
+          if [ ! -f "$JOB_DIR/video.mp4" ] || [ ! -f "$META" ]; then
+            echo "영상/메타 없음 → 릴리스 생략(제작 실패?)"; exit 1
+          fi
+          HS="${{ steps.p.outputs.hash }}"
+          TAG="shorts-src-$HS"
+          NAME=$(python3 -c "import json;print((json.load(open('$META')).get('name') or '소싱 쇼츠')[:90])")
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --title "$NAME" --notes-file "$META" \
+              --target "${{ github.ref_name }}" --latest=false
+          # 재제작 시 기존 자산을 덮어써 같은 태그(=같은 상품) 하나로 유지
+          gh release edit "$TAG" --title "$NAME" --notes-file "$META" 2>/dev/null || true
+          ASSETS="$JOB_DIR/video.mp4"
+          [ -f "$JOB_DIR/poster.jpg" ] && ASSETS="$ASSETS $JOB_DIR/poster.jpg"
+          gh release upload "$TAG" $ASSETS --clobber
+          echo "릴리스 발행: $TAG ($NAME · nonce=${{ steps.p.outputs.nonce }})"
+
+      - name: 산출물 업로드 (video/poster/audio — 아티팩트)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shorts-src-run${{ github.run_number }}
+          path: projects/coupang-shorts-factory/data/jobs/
+          retention-days: 14
+          if-no-files-found: warn
