@@ -6,6 +6,9 @@ HUD 언어(네온 프레임·Orbitron·Pretendard) 그대로 이어받아 본편
 
 렌더: HTML(htmlhud 폰트/프레임) → PNG(우선). 브라우저 불가 시 PIL 폴백(파이프라인 불정지).
 """
+# ★회차 번호 외부 노출 금지(운영자 확정): 도감 번호(No.047 등)는 **내부 관리 전용**이다.
+#   시청자가 몇 번째 영상인지 알 필요가 없고, 번호가 보이면 '연재 진도'처럼 읽혀 신규 유입에
+#   진입장벽이 된다. 화면·캡션·제목 어디에도 찍지 않는다(원장·대시보드에서만 사용).
 from __future__ import annotations
 
 import html as _html
@@ -83,7 +86,7 @@ html,body{{width:720px;height:1280px;overflow:hidden}}
   <div class="brk tl"></div><div class="brk tr"></div><div class="brk bl"></div><div class="brk br"></div>
   <div class="hdr">◉ DATABASE ENTRY</div>
   <div class="series">{e(series_title)}</div>
-  <div class="entry">SPECIMEN LOGGED · ENTRY No.{episode:03d}</div>
+  <div class="entry">SPECIMEN LOGGED</div>
   <div class="hr"></div>
   <div class="tag">▶ SPECIES IDENTIFIED</div>
   <div class="name">{e(name_ko)}</div>
@@ -108,7 +111,7 @@ def _render_png_pil(caption: CaptionData, series_title: str, episode: int,
         d.line([(0, y), (CLIP_W, y)], fill=(3 + int(4 * t), 8 + int(10 * t), 16 + int(14 * t)))
     cx = CLIP_W // 2
     _text_with_stroke(d, (cx, 250), series_title, _font(40), fill=(120, 210, 225), anchor="ma")
-    _text_with_stroke(d, (cx, 310), f"SPECIMEN LOGGED · No.{episode:03d}", _font(26),
+    _text_with_stroke(d, (cx, 310), "SPECIMEN LOGGED", _font(26),
                       fill=(150, 180, 195), anchor="ma")
     name_ko, name_en = _split_name(caption.reveal_name)
     y = 520
@@ -286,7 +289,7 @@ html,body{{width:720px;height:1280px;overflow:hidden;background:transparent}}
 <div class="d">
   <div class="topsc"></div><div class="botsc"></div>
   <div class="frame"></div><div class="brk tl c"></div><div class="brk tr"></div><div class="brk bl"></div><div class="brk br c"></div>
-  <div class="hdr">◉ DATABASE ENTRY · No.{episode:03d}</div>
+  <div class="hdr">◉ DATABASE ENTRY</div>
   <div class="real">ARCHIVE / ACTUAL SPECIMEN<br>{e(series_title)}</div>
   <div class="tag">▶ SPECIES IDENTIFIED</div>
   <div class="name">{e(name_ko)}</div>
@@ -313,7 +316,7 @@ def _dossier_overlay_png(caption: CaptionData, series_title: str, episode: int,
         d = ImageDraw.Draw(img)
         d.rectangle([0, CLIP_H - 640, CLIP_W, CLIP_H], fill=(3, 8, 12, 210))
         name_ko, name_en = _split_name(caption.reveal_name)
-        _text_with_stroke(d, (40, 40), f"DATABASE ENTRY · No.{episode:03d}", _orbitron(20), fill=(67, 200, 218, 255))
+        _text_with_stroke(d, (40, 40), "DATABASE ENTRY", _orbitron(20), fill=(67, 200, 218, 255))
         y = CLIP_H - 360
         for line in _wrap(d, name_ko, _font(64), CLIP_W - 90):
             _text_with_stroke(d, (40, y), line, _font(64), fill=(255, 230, 160, 255)); y += 76

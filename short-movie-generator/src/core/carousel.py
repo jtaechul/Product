@@ -99,8 +99,8 @@ def _cover(info: SpeciesInfo, caption: CaptionData, asset_path: str, episode: in
         photo = ""
     inner = (
         "<div style='position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 20%,#0b1a24,#03080d 70%)'></div>"
-        "<div class='top' style='top:48px'><span class='brand'>◉ " + BRAND + "</span>"
-        f"<span class='no'>No.{episode:03d}</span></div>"
+        # ★회차 번호 외부 노출 금지(운영자 확정): 도감 번호는 내부 관리 전용 → 브랜드만 표시.
+        "<div class='top' style='top:48px'><span class='brand'>◉ " + BRAND + "</span></div>"
         + photo +
         "<div style='position:absolute;left:60px;right:60px;bottom:74px'>"
         "<div class='kicker' style='color:#FFC24D;margin-bottom:14px'>▶ UNIDENTIFIED SPECIMEN</div>"
