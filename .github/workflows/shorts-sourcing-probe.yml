@@ -7,6 +7,11 @@ name: shorts-sourcing-probe
 
 on:
   workflow_dispatch: {}
+  # 이 환경은 dispatch API 권한이 없어(403), push 트리거로도 돌린다.
+  # 전용 경로(requests/probe/*.json) — produce의 requests/*.json 글롭(하위폴더 불매칭)과 충돌 없음.
+  push:
+    branches: [main, claude/coupang-shorts-phase-0-k42l1i]
+    paths: ["projects/coupang-shorts-factory/requests/probe/*.json"]
 
 permissions:
   contents: read
