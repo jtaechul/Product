@@ -215,8 +215,8 @@ ol li{margin:8px 0}
   </div>
   <div id="connMsg" role="alert"></div>
   <nav>
-    <button data-tab="make" class="on">만들기</button>
-    <button data-tab="sourcing">소싱</button>
+    <button data-tab="make" style="display:none">만들기</button>
+    <button data-tab="sourcing" class="on">소싱</button>
     <button data-tab="videos">영상</button>
     <button data-tab="store">스토어</button>
     <button data-tab="setup">설정</button>
@@ -225,7 +225,7 @@ ol li{margin:8px 0}
 <main>
 
 <!-- ───────── 상품 탭 ───────── -->
-<section id="tab-products" class="on" data-group="make" style="order:1">
+<section id="tab-products" data-group="make" style="order:1">
   <div class="card" id="workHeader">
     <h2>현재 작업 상품</h2>
     <p class="hint" id="workProduct" style="margin:0">아직 없습니다 — 아래 <b>새 상품 등록</b>에서 등록하면 곧바로 기획·대본이 자동으로 만들어집니다. 이미 등록한 상품은 아래 <b>② 기획 방향 선택</b>의 <b>기획한 상품 불러오기</b>로 불러오세요.</p>
@@ -289,7 +289,7 @@ ol li{margin:8px 0}
 </section>
 
 <!-- ───────── 제작 탭 ───────── -->
-<section id="tab-run" class="on" data-group="make" style="order:5">
+<section id="tab-run" data-group="make" style="order:5">
   <div class="card">
     <h2>⑤ 제작 · 검수 · 올리기</h2>
     <p class="hint" style="margin:0 0 8px">위에서 자막별 이미지 선택·저장까지 끝났으면 <b>제작하기</b>를
@@ -310,7 +310,7 @@ ol li{margin:8px 0}
 
 <!-- ───────── 기획 (개편: 자동화로 화면에선 생략 — 대본은 자동 생성·저장되어 이미지/제작에 사용) ───────── -->
 <!-- ───────── ② 기획 방향 선택 — '새 상품 등록'과 '자막별 이미지 선택' 사이 독립 메뉴 (2026-07-17 사용자 확정) ───────── -->
-<section id="tab-direction" class="on" data-group="make" style="order:2">
+<section id="tab-direction" data-group="make" style="order:2">
   <div class="card">
     <h2>② 기획 방향 선택 (차별점 3안)</h2>
     <p class="hint" style="margin:0 0 8px">상품 등록 후 <b>‘기획방향 수립’</b>을 누르면 자료(PDF·캡처)에서
@@ -328,7 +328,7 @@ ol li{margin:8px 0}
 </section>
 
 <!-- ───────── ③ 기획·대본 검토 (방향 확정 후 여기 표시 — 이전엔 display:none으로 통째로 숨겨져 있던 버그 수정) ───────── -->
-<section id="tab-plan" class="on" data-group="make" style="order:3">
+<section id="tab-plan" data-group="make" style="order:3">
   <div id="planView"></div>
   <div class="card" id="planActions" style="display:none">
     <button class="btn" id="planApprove">이 기획으로 이미지 찾기 →</button>
@@ -338,7 +338,7 @@ ol li{margin:8px 0}
 </section>
 
 <!-- ───────── 이미지 탭 (자막별 이미지 선택기 #2) ───────── -->
-<section id="tab-images" class="on" data-group="make" style="order:4">
+<section id="tab-images" data-group="make" style="order:4">
   <div class="card">
     <h2>④ 자막별 이미지 선택</h2>
     <p class="hint" style="margin:0 0 8px"><b>상품 기획하기</b>를 누르면 자막(문장)마다 후보 이미지가 여기에
@@ -379,7 +379,7 @@ ol li{margin:8px 0}
 </section>
 
 <!-- ───────── 소싱 탭 (틱톡-우선 상품 발굴, SSOT §6·§2) ───────── -->
-<section id="tab-sourcing" data-group="sourcing">
+<section id="tab-sourcing" class="on" data-group="sourcing">
   <div class="card">
     <h2>① 상품 발굴 — 틱톡에서 신박한 상품 찾기</h2>
     <p class="hint">카테고리(검색어)를 넣으면 틱톡에서 조회수 높은 <b>신박한 상품 상위 5개</b>를 찾아,
@@ -401,6 +401,11 @@ ol li{margin:8px 0}
     있으면 파트너스에서 <b>어필리에이트 링크</b>를 가져와 붙여넣고 <b>[상품 확정]</b>을 누르세요.
     (쿠팡 API 키가 없어 확인·링크는 직접 — 키가 승인되면 자동으로 바뀝니다.)</p>
     <div id="srcPickBody"></div>
+  </div>
+
+  <div class="card" id="srcPromoCard" style="display:none">
+    <h2>③ 이 상품 홍보영상 찾기</h2>
+    <div id="srcPromoBody"></div>
   </div>
 </section>
 
@@ -1748,7 +1753,102 @@ async function srcConfirmProduct() {
   await putFile(srcProductPath(srcState.hash), JSON.stringify(payload, null, 2) + "\n",
     `sourcing(admin): 상품 확정 — ${(c.title_ko || c.title || "").slice(0, 30)}`, sha || undefined);
   toast("상품 확정 저장 완료");
-  $("srcPickStatus").textContent = "상품이 확정되었습니다. 다음 단계(③ 홍보영상 검색 + 대본 생성)에서 이 상품을 씁니다.";
+  $("srcPickStatus").textContent = "상품이 확정되었습니다. 아래 ③에서 이 상품 홍보영상을 찾으세요.";
+  srcShowPromo(c, srcState.hash);   // ③ 홍보영상 찾기 열기
+}
+
+/* ── ③ 이 상품 홍보영상 찾기 (틱톡 2차 검색, 다중선택) ───────────────────
+   확정 상품명으로 틱톡을 조회수순 검색 → 5~10개 다중선택 → data/sources/promo/{productHash}.json
+   (다음: ④ 구간 지정·검수, ⑤ 다운로드·합성). 발굴 매니페스트는 'p_'+productHash 키로 분리. */
+const srcPromoSelPath = (h) => `${P}/data/sources/promo/${h}.json`;
+let srcPromoState = { productHash: null, promoHash: null, keyword: "", cands: [], selected: new Set(), page: 0, nonce: "" };
+
+function srcShowPromo(product, productHash) {
+  const nv = product.naver || {};
+  const name = nv.coupang_title || nv.real_title || product.title_ko || (product.coupang_keywords || [])[0] || "";
+  srcPromoState = { productHash, promoHash: "p_" + productHash, keyword: name, cands: [], selected: new Set(), page: 0, nonce: "" };
+  $("srcPromoBody").innerHTML =
+    `<p class="hint">고른 상품을 홍보하는 <b>틱톡 영상</b>을 조회수순으로 찾습니다. 검색어(상품명)를 필요하면 고치고 [홍보영상 찾기]를 누르세요.</p>`
+    + `<div class="row2" style="gap:8px; align-items:center"><input id="srcPromoKw" value="${srcEsc(name)}" style="flex:1; min-width:0"><button id="srcPromoFind" class="btn">홍보영상 찾기</button></div>`
+    + `<p id="srcPromoStatus" class="hint" style="margin-top:8px"></p>`
+    + `<div id="srcPromoCards" class="srccards"></div>`
+    + `<button id="srcPromoRefresh" class="btn sub" style="display:none; margin-top:12px; width:100%">다른 홍보영상 찾기</button>`
+    + `<button id="srcPromoSave" class="btn" style="display:none; margin-top:10px; width:100%">이 영상들로 진행 (선택 저장)</button>`;
+  $("srcPromoCard").style.display = "";
+  $("srcPromoFind").onclick = (ev) => busy(ev.target, () => srcPromoDispatch(0));
+  $("srcPromoRefresh").onclick = (ev) => busy(ev.target, () => srcPromoDispatch((srcPromoState.page || 0) + 1));
+  $("srcPromoSave").onclick = (ev) => busy(ev.target, srcPromoSave);
+  $("srcPromoCard").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+async function srcPromoDispatch(page) {
+  const kw = ($("srcPromoKw").value || "").trim() || srcPromoState.keyword;
+  if (!kw) { toast("상품명을 입력하세요"); return; }
+  const nonce = srcNonce();
+  srcPromoState.keyword = kw; srcPromoState.nonce = nonce;
+  if (page === 0) { srcPromoState.selected = new Set(); srcPromoState.cands = []; $("srcPromoCards").innerHTML = ""; $("srcPromoSave").style.display = "none"; }
+  $("srcPromoStatus").textContent = page ? "다른 홍보영상 찾는 중… (약 1분)" : "홍보영상 찾는 중… (약 1분)";
+  await srcDispatch({ keyword: kw, hash: srcPromoState.promoHash, limit: "10", page: String(page), nonce });
+  toast("홍보영상 검색 시작 — 약 1분");
+  srcPromoPoll(nonce, 0);
+}
+async function srcPromoPoll(nonce, tries) {
+  if (srcPromoState.nonce !== nonce) return;
+  let f = null;
+  try { f = await getFile(srcDiscoverPath(srcPromoState.promoHash), true, true); } catch (_) {}
+  if (f) {
+    try {
+      const m = JSON.parse(f.text);
+      if (String(m.nonce || "") === String(nonce)) {
+        const cands = m.candidates || [];
+        if (cands.length) {
+          srcPromoState.cands = cands;
+          if (Number.isInteger(m.page)) srcPromoState.page = m.page;
+          srcPromoRender();
+          $("srcPromoRefresh").style.display = "";
+          $("srcPromoStatus").textContent = `홍보영상 ${cands.length}개${srcPromoState.page ? ` (${srcPromoState.page + 1}번째 묶음)` : ""} — 쓸 영상을 여러 개 고르세요.`;
+        } else if (srcPromoState.cands.length) {
+          $("srcPromoStatus").textContent = "더 이상 새 영상이 없어요 — 검색어를 바꿔보세요."; toast("더 이상 새 영상이 없습니다");
+        } else {
+          $("srcPromoStatus").textContent = "결과가 비었습니다. 검색어를 바꿔 다시 시도하세요.";
+        }
+        return;
+      }
+    } catch (_) {}
+  }
+  if (tries > 30) { $("srcPromoStatus").textContent = "아직 결과를 못 받았습니다. 잠시 후 다시 눌러주세요."; return; }
+  setTimeout(() => srcPromoPoll(nonce, tries + 1), 8000);
+}
+function srcPromoRender() {
+  const box = $("srcPromoCards"); box.innerHTML = "";
+  const sel = [...srcPromoState.selected];
+  srcPromoState.cands.forEach((c) => {
+    const order = sel.indexOf(c.id);
+    const on = order >= 0;
+    const el = document.createElement("div");
+    el.className = "srccard" + (on ? " sel" : "");
+    const views = (c.view_count || 0).toLocaleString();
+    const cover = c.cover ? `<img loading="lazy" src="${srcEsc(c.cover)}" onerror="this.style.display='none'">` : "";
+    const descKo = String(c.title_ko || c.title || "").slice(0, 90);
+    el.innerHTML = `<div class="srcthumb">${cover}<span class="srcbadge">${views} 조회</span><span class="srcpick">${on ? (order + 1) : "+"}</span></div>`
+      + `<div class="srcmeta"><div class="srctitle">${srcEsc(descKo)}</div><div class="srcsub">@${srcEsc(c.uploader)} · ${c.duration || "?"}s</div></div>`;
+    el.onclick = () => {
+      if (srcPromoState.selected.has(c.id)) srcPromoState.selected.delete(c.id); else srcPromoState.selected.add(c.id);
+      srcPromoRender();
+      $("srcPromoSave").style.display = srcPromoState.selected.size ? "" : "none";
+      $("srcPromoSave").textContent = `이 영상들로 진행 (${srcPromoState.selected.size}개)`;
+    };
+    box.appendChild(el);
+  });
+}
+async function srcPromoSave() {
+  if (!srcPromoState.selected.size) { toast("고른 영상이 없습니다"); return; }
+  const vids = srcPromoState.cands.filter((c) => srcPromoState.selected.has(c.id));
+  const payload = { product_hash: srcPromoState.productHash, keyword: srcPromoState.keyword, count: vids.length, videos: vids };
+  let sha; try { const ex = await getFile(srcPromoSelPath(srcPromoState.productHash), true, true); sha = ex && ex.sha; } catch (_) {}
+  await putFile(srcPromoSelPath(srcPromoState.productHash), JSON.stringify(payload, null, 2) + "\n",
+    `sourcing(admin): 홍보영상 선택 ${vids.length}개`, sha || undefined);
+  toast(`홍보영상 ${vids.length}개 저장`);
+  $("srcPromoStatus").textContent = `홍보영상 ${vids.length}개 저장됨 — 다음 단계(④ 구간 지정·검수, ⑤ 제작)에서 사용됩니다.`;
 }
 $("mkProduce").onclick = (ev) => busy(ev.target, async () => {
   const p = mkSelected(); if (!p) return;
