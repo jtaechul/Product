@@ -209,15 +209,32 @@ async function fetchManifest(){const t=await fetchRaw(CONTENT_DIR+"/manifest.jso
 async function fetchCatalog(){const t=await fetchRaw(CATALOG_PATH);try{const a=JSON.parse(t);return Array.isArray(a)?a:[];}catch(e){return [];}}
 // 전 콘텐츠 목록: 공개 매니페스트(manifest.json) 우선 → 어느 기기서든 무인증 조회.
 // 인증 가능한 기기에선 디렉토리 API로 매니페스트에 아직 없는 레거시 레코드를 보강(중복 제거).
+// 목록 정렬: 날짜 최신순 → 같은 날은 id 역순. 도감형(3자리)과 나레이션형(nv-…) id가 섞여
+// 문자열 비교만으로는 순서가 뒤엉키므로 날짜를 1순위로 둔다.
+function sortFeed(a){
+  return a.sort((x,y)=>{
+    const d=String(y.date||"").localeCompare(String(x.date||""));
+    return d!==0?d:String(y.no).localeCompare(String(x.no));
+  });
+}
 async function listContent(){
   const man=await fetchManifest();
   const out=man.filter(x=>x&&x.kind!=="longform"&&x.kind!=="narrate").map(x=>({
     no:String(x.id), common_name_ko:x.common_name_ko||x.common_name_en||"종",
     common_name_en:x.common_name_en||"", scientific_name:x.scientific_name||"",
-    date:x.date||"", hasVideo:!!x.has_video}));
+    date:x.date||"", hasVideo:!!x.has_video, kind:"reels", href:"/c/"+num3(x.id)}));
+  // ★나레이션형 쇼츠도 같은 목록에 넣는다(운영자 확정): 종이 없는 영상이라도 결국 '쇼츠'이므로
+  //   실행 현황·라이브러리에서 보여야 한다. 예전엔 목록에서 아예 빠져 텔레그램 링크로만 열 수 있었다.
+  //   ※상세 화면은 다르다(/nv/<id>) → href 를 항목마다 들고 다녀 잘못된 /c/ 로 가지 않게 한다.
+  //     (실사고 nv-29999730295: 잘못 분류돼 /c/ 로 연결되며 "아직 제작 안 됨"만 뜨던 유령 항목)
+  man.filter(x=>x&&x.kind==="narrate"&&(x.mode||"shorts")==="shorts").forEach(x=>out.push({
+    no:String(x.id), common_name_ko:x.yt_title_ko||x.yt_title||"나레이션 쇼츠",
+    common_name_en:x.yt_title||"", scientific_name:"",
+    date:x.date||"", hasVideo:!!x.has_video, kind:"narrate",
+    href:"/nv/"+encodeURIComponent(String(x.id))}));
   // 매니페스트에 모든 레코드가 들어있으므로, 인증 디렉토리 보강은 '인증 가능한 기기(서버모드/토큰)'에서만.
   // 무인증 폰(인앱 웹뷰)에선 api.github.com 요청이 멈추므로 아예 건너뛴다(매니페스트만으로 충분).
-  if(!(SERVER||pat()))return out.sort((a,b)=>(a.no<b.no?1:-1));
+  if(!(SERVER||pat()))return sortFeed(out);
   try{
     const r=await fetchT(API+"/contents/"+CONTENT_DIR+"?ref="+BRANCH,{headers:headers(true)});
     if(r.ok){
@@ -229,18 +246,25 @@ async function listContent(){
         return {no:id, common_name_ko:sp.common_name_ko||sp.common_name_en||"종",
                 common_name_en:sp.common_name_en||"", scientific_name:sp.scientific_name||"",
                 date:String(rec.updated_at||rec.created_at||"").slice(0,10),
-                hasVideo:!!(rec.media&&rec.media.video_url)};
+                hasVideo:!!(rec.media&&rec.media.video_url),
+                kind:"reels", href:"/c/"+num3(id)};
       }));
       out.push(...recs.filter(Boolean));
     }
   }catch(e){}
-  return out.sort((a,b)=>(a.no<b.no?1:-1));
+  return sortFeed(out);
 }
 async function fetchRecord(id,fresh){const t=await fetchRaw(CONTENT_DIR+"/"+id+".json",fresh);try{return JSON.parse(t);}catch(e){return null;}}
 // 롱폼 결과 목록: 공개 매니페스트에서 kind=longform 만.
 async function listLongform(){
   const man=await fetchManifest();
-  return man.filter(x=>x&&x.kind==="longform").sort((a,b)=>(String(a.id)<String(b.id)?1:-1));
+  // ★나레이션형 롱폼도 같은 목록에 넣는다(쇼츠와 같은 이유 — 목록에서 빠져 텔레그램 링크로만
+  //   열 수 있었다). 상세 화면 경로가 다르므로 href 를 항목마다 들고 다닌다(/lf/ vs /nv/).
+  const lf=man.filter(x=>x&&x.kind==="longform")
+              .map(x=>({...x, href:"/lf/"+encodeURIComponent(String(x.id))}));
+  man.filter(x=>x&&x.kind==="narrate"&&x.mode==="longform").forEach(x=>lf.push({
+    ...x, href:"/nv/"+encodeURIComponent(String(x.id))}));
+  return sortFeed(lf.map(x=>({...x, no:String(x.id)})));
 }
 
 // ── 라우팅: 전체 페이지 로드마다 경로로 뷰 결정 (worker가 모든 경로에 앱 셸 서빙) ──
@@ -1029,8 +1053,11 @@ async function loadRuns(){
         '<a href="'+run.html_url+'" target="_blank">#'+num3(run.run_number)+' 쇼츠 생성(진행상황 보기)</a><span class="t">'+ago(run.created_at)+"</span></div>");});
     cat.slice(0,12).forEach(it=>{
       const name=esc(it.common_name_ko||it.common_name_en||"종");
+      // 나레이션형은 회차 번호가 없고 상세도 /nv/ 라 라벨·링크를 따로 만든다.
+      const label=(it.kind==="narrate")?("나레이션 · "+name):("#"+num3(it.no)+"_"+name+" 쇼츠");
+      const href=it.href||("/c/"+num3(it.no));
       el.insertAdjacentHTML("beforeend",'<div class="run"><span class="st done">완료</span>'+
-        '<a href="/c/'+num3(it.no)+'">#'+num3(it.no)+'_'+name+' 쇼츠</a><span class="t">'+esc(it.date||"")+"</span></div>");});
+        '<a href="'+href+'">'+label+'</a><span class="t">'+esc(it.date||"")+"</span></div>");});
     if(!el.innerHTML)el.innerHTML='<div class="hint">아직 실행 기록이 없습니다.</div>';
     if((j.workflow_runs||[]).some(x=>x.status!=="completed"))setTimeout(loadRuns,20000);
   }catch(e){const el=$("#runs");if(el)el.innerHTML='<div class="hint">현황 조회 실패 — <a href="https://github.com/'+OWNER+'/'+REPO+'/actions" target="_blank">GitHub</a></div>';}
@@ -1043,15 +1070,20 @@ async function renderLibrary(){
   const [lf,cat]=await Promise.all([listLongform(),listContent()]);
   const lfel=document.getElementById("lflist");
   lfel.innerHTML=lf.length?lf.map(r=>(
-    '<a class="clitem" href="/lf/'+encodeURIComponent(r.id)+'"><span class="no">'+esc(r.n||0)+'종</span>'+
+    '<a class="clitem" href="'+(r.href||("/lf/"+encodeURIComponent(r.id)))+'">'+
+    '<span class="no">'+(r.kind==="narrate"?"NARR":(esc(r.n||0)+"종"))+'</span>'+
     '<span class="nm">'+esc(r.yt_title||r.id)+'<small>'+esc(r.yt_title_ko||"")+'</small></span>'+
     '<span class="t">'+esc(String(r.date||"").slice(0,10))+'</span></a>'
   )).join(""):'<div class="hint">아직 롱폼이 없습니다.</div>';
   const el=document.getElementById("clist");
   el.innerHTML=cat.length?cat.map(it=>{
-    const id=num3(it.no);
-    return '<a class="clitem" href="/c/'+id+'"><span class="no">#'+id+'</span>'+
-      '<span class="nm">'+esc(it.common_name_ko||"종")+'<small>'+esc(it.common_name_en||"")+" · "+esc(it.scientific_name||"")+'</small></span>'+
+    const href=it.href||("/c/"+num3(it.no));
+    // 나레이션형(종 없는 일반 해양 영상)도 같은 쇼츠 목록에 보이되, 번호 대신 'NARR' 칩으로 구분.
+    const chip=(it.kind==="narrate")?"NARR":("#"+num3(it.no));
+    const sub=(it.kind==="narrate")?esc(it.common_name_en||"")
+                                   :(esc(it.common_name_en||"")+" · "+esc(it.scientific_name||""));
+    return '<a class="clitem" href="'+href+'"><span class="no">'+chip+'</span>'+
+      '<span class="nm">'+esc(it.common_name_ko||"종")+'<small>'+sub+'</small></span>'+
       '<span class="t">'+esc(it.date||"")+'</span></a>';
   }).join(""):'<div class="hint">아직 쇼츠가 없습니다. <a href="/">제작하러 가기</a></div>';
 }
