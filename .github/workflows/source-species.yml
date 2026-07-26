@@ -162,7 +162,7 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
-          MAXN: "6"
+          MAXN: "20"      # 캐시에 있는 원본을 한 번에 다 덮는다(편집기의 사진 띠 재료)
         run: |
           TAG="source-preview"
           gh release view "$TAG" >/dev/null 2>&1 || \
@@ -177,7 +177,8 @@ jobs:
           base, maxn = sys.argv[1], int(sys.argv[2])
           cache = footage._video_cache()
           tmp = Path(tempfile.mkdtemp())
-          made = 0
+          made = 0          # 미리보기 mp4 생성 수(진행량 표시)
+          dirty = False     # ★시트만 만들어져도 캐시를 저장해야 한다(예전엔 mp4가 있어야만 저장돼 시트가 유실)
           for key, ref in list(cache.items()):
               if made >= maxn:
                   break
@@ -201,15 +202,16 @@ jobs:
                   print(sheet.name)
               if ref.get("preview_url") or ref.get("sheet"):
                   cache[key] = ref
+                  dirty = True
               try:
                   raw.unlink(missing_ok=True)
               except Exception:
                   pass
-          if made:
+          if dirty:
               footage._VIDEO_CACHE_PATH.write_text(
                   __import__("json").dumps(cache, ensure_ascii=False, indent=1, sort_keys=True),
                   encoding="utf-8")
-          print(f"# 미리보기 {made}건 생성", file=sys.stderr)
+          print(f"# 미리보기 mp4 {made}건 · 캐시 갱신 {dirty}", file=sys.stderr)
           PY
           if ls work/preview/*.mp4 >/dev/null 2>&1; then
             gh release upload "$TAG" work/preview/*.mp4 --clobber
