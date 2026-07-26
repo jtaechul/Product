@@ -67,6 +67,20 @@ nav button.on{color:var(--accent); border-bottom-color:var(--accent)}
 .srcnaver .st.ok{color:#1a7f3c; font-weight:700}
 .srcnaver .st.maybe{color:#8a5a00}
 .btnfull{display:block; width:100%; text-align:center; text-decoration:none; box-sizing:border-box}
+/* ④ 기획 방향 3안 + 대본 */
+.srcdir{border:1px solid var(--line); border-radius:12px; padding:11px 13px; margin:8px 0; cursor:pointer; background:#fff; transition:outline .1s}
+.srcdir.sel{outline:3px solid var(--accent); outline-offset:-1px; background:#f6faff}
+.srcdirh{display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px}
+.srcdirh .srcpick{position:static; width:22px; height:22px; font-size:12px; background:#c9ced6; flex:none}
+.srcdir.sel .srcdirh .srcpick{background:var(--accent)}
+.srcdirm{font-size:12.5px; color:#5a606a; line-height:1.45; margin-top:6px}
+.srcscript{border:1px solid var(--line); border-radius:12px; overflow:hidden}
+.srcfield{padding:10px 13px; border-top:1px solid var(--line)}
+.srcfield:first-child{border-top:none}
+.srcfield .lbl{display:block; font-size:11px; font-weight:700; color:#8a8f98; margin-bottom:4px}
+.srcfield .val{font-size:14px; line-height:1.5; word-break:break-word}
+.srcline{display:flex; gap:8px; align-items:flex-start; padding:3px 0; font-size:14px; line-height:1.45}
+.srcln{flex:none; width:18px; height:18px; border-radius:50%; background:#eef0f3; color:#6a707a; font-size:11px; display:flex; align-items:center; justify-content:center; margin-top:2px}
 main{max-width:680px; margin:0 auto; padding:16px; display:flex; flex-direction:column}
 section{display:none}
 section.on{display:block}   /* order 속성으로 만들기 탭 내 섹션 순서: 상품→기획→이미지→제작 */
@@ -406,6 +420,11 @@ ol li{margin:8px 0}
   <div class="card" id="srcPromoCard" style="display:none">
     <h2>③ 이 상품 홍보영상 찾기</h2>
     <div id="srcPromoBody"></div>
+  </div>
+
+  <div class="card" id="srcPlanCard" style="display:none">
+    <h2>④ 기획 방향 + 대본 만들기</h2>
+    <div id="srcPlanBody"></div>
   </div>
 </section>
 
@@ -1848,7 +1867,174 @@ async function srcPromoSave() {
   await putFile(srcPromoSelPath(srcPromoState.productHash), JSON.stringify(payload, null, 2) + "\n",
     `sourcing(admin): 홍보영상 선택 ${vids.length}개`, sha || undefined);
   toast(`홍보영상 ${vids.length}개 저장`);
-  $("srcPromoStatus").textContent = `홍보영상 ${vids.length}개 저장됨 — 다음 단계(④ 구간 지정·검수, ⑤ 제작)에서 사용됩니다.`;
+  $("srcPromoStatus").textContent = `홍보영상 ${vids.length}개 저장됨 — 아래 ④에서 기획 방향을 정하고 대본을 만드세요.`;
+  srcShowPlan(srcPromoState.productHash);   // ④ 기획 방향 + 대본
+}
+
+/* ── ④ 기획 방향(차별점 3안 게이트) + 대본 생성 ───────────────────────────────
+   [기획방향 수립] → shorts-sourcing-plan(mode=directions)이 상품·홍보영상 자료로 차별점 3안 추출
+   → data/mechanism/{hash}.json. 운영자가 1·2·3안 선택 또는 직접 의견(4안) → 확정 저장 →
+   mode=script → 방향 확정 시에만 대본 생성 → data/sources/plan/{hash}.json. (⑤ 제작이 이 대본 사용) */
+const SRC_PLAN_WF = "shorts-sourcing-plan.yml";
+const srcMechPath = (h) => `${P}/data/mechanism/${h}.json`;
+const srcPlanPath = (h) => `${P}/data/sources/plan/${h}.json`;
+let srcPlanState = { hash: null, nonce: "", options: [], chosen: null, custom: "" };
+
+async function srcPlanDispatch(mode, nonce) {
+  await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${SRC_PLAN_WF}/dispatches`, {
+    method: "POST", body: JSON.stringify({ ref: BRANCH, inputs: { hash: srcPlanState.hash, mode, nonce } }) });
+}
+
+function srcShowPlan(productHash) {
+  srcPlanState = { hash: productHash, nonce: "", options: [], chosen: null, custom: "" };
+  $("srcPlanBody").innerHTML =
+    `<p class="hint">이 상품이 <b>다른 제품과 뭐가 다른지(차별점)</b> 3가지 방향을 AI가 뽑아줍니다.
+     그중 하나를 고르거나 직접 의견을 적으면, <b>그 방향으로 대본·제목·설명·해시태그</b>를 만듭니다.</p>`
+    + `<button id="srcPlanStart" class="btn" style="width:100%">기획 방향 수립 (3안 뽑기)</button>`
+    + `<p id="srcPlanStatus" class="hint" style="margin-top:8px"></p>`
+    + `<div id="srcDirBox"></div>`
+    + `<div id="srcScriptBox" style="margin-top:14px"></div>`;
+  $("srcPlanCard").style.display = "";
+  $("srcPlanStart").onclick = (ev) => busy(ev.target, () => srcPlanDirections());
+  $("srcPlanCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  srcLoadExistingPlan(productHash);   // 이미 뽑아둔 방향/대본이 있으면 복원
+}
+
+// 이 상품에 이미 mechanism(방향)·plan(대본)이 있으면 다시 열 때 그대로 보여준다.
+async function srcLoadExistingPlan(hash) {
+  try {
+    const f = await getFile(srcMechPath(hash), true, true);
+    if (f) { const d = JSON.parse(f.text); if ((d.options || []).length || d.note) srcRenderDirections(d); }
+  } catch (_) {}
+  try {
+    const f = await getFile(srcPlanPath(hash), true, true);
+    if (f) srcRenderScript(JSON.parse(f.text));
+  } catch (_) {}
+}
+
+async function srcPlanDirections() {
+  const nonce = srcNonce();
+  srcPlanState.nonce = nonce;
+  $("srcDirBox").innerHTML = ""; $("srcScriptBox").innerHTML = "";
+  $("srcPlanStatus").textContent = "차별점 3안 뽑는 중… (약 1분, 완료되면 자동 표시)";
+  await srcPlanDispatch("directions", nonce);
+  toast("기획 방향 수립 시작 — 약 1분");
+  srcPlanPollDir(nonce, 0);
+}
+
+// mechanism 파일이 '내가 트리거한 뒤 새로 커밋'될 때까지 대기 → 3안/스텁 표시.
+async function srcPlanPollDir(nonce, tries) {
+  if (srcPlanState.nonce !== nonce) return;   // 더 최신 요청이 시작됨
+  let f = null;
+  try { f = await getFile(srcMechPath(srcPlanState.hash), true, true); } catch (_) {}
+  if (f) {
+    try {
+      const d = JSON.parse(f.text);
+      if ((d.options || []).length || d.note) {   // 결과 도착(3안 또는 스텁 사유)
+        srcRenderDirections(d);
+        $("srcPlanStatus").textContent = (d.options || []).length
+          ? "방향 3안이 도착했습니다 — 하나를 고르거나 직접 의견을 적으세요."
+          : "자료가 부족해 3안을 못 뽑았습니다 — 직접 의견(4안)으로 방향을 정하세요.";
+        return;
+      }
+    } catch (_) {}
+  }
+  if (tries > 30) { $("srcPlanStatus").textContent = "아직 결과를 못 받았습니다. 잠시 후 [기획 방향 수립]을 다시 눌러주세요."; return; }
+  setTimeout(() => srcPlanPollDir(nonce, tries + 1), 8000);
+}
+
+function srcRenderDirections(data) {
+  const opts = data.options || [];
+  srcPlanState.options = opts;
+  srcPlanState.chosen = Number.isInteger(data.chosen) ? data.chosen : null;
+  srcPlanState.custom = data.custom || "";
+  let html = "";
+  if (opts.length) {
+    html += `<p class="hint" style="margin:10px 0 6px"><b>AI가 뽑은 방향 3안</b> (하나 탭해서 선택)</p><div id="srcDirCards">`;
+    opts.forEach((o, i) => {
+      const on = srcPlanState.chosen === i;
+      html += `<div class="srcdir${on ? " sel" : ""}" data-i="${i}">`
+        + `<div class="srcdirh"><span class="srcpick">${on ? "✓" : (i + 1)}</span> ${srcEsc(o.title || ("방향 " + (i + 1)))}</div>`
+        + `<div class="srcdirm">${srcEsc(o.mechanism || "")}</div></div>`;
+    });
+    html += `</div>`;
+  } else if (data.note) {
+    html += `<p class="hint" style="margin:10px 0; color:#b26">${srcEsc(data.note)}</p>`;
+  }
+  html += `<p class="hint" style="margin:12px 0 4px"><b>또는 직접 의견(4안)</b> — 방향을 직접 적으면 이게 최우선입니다.</p>`
+    + `<textarea id="srcDirCustom" rows="2" placeholder="예: 무선이라 아무데서나 쓰는 점을 세게 밀어줘 / 1·2안 합쳐서" style="width:100%">${srcEsc(srcPlanState.custom)}</textarea>`
+    + `<div class="row2" style="gap:8px; margin-top:10px">`
+    + `<button id="srcDirRedo" class="btn sub" style="flex:1">3안 다시 뽑기</button>`
+    + `<button id="srcDirConfirm" class="btn" style="flex:2">이 방향으로 대본 만들기</button></div>`;
+  $("srcDirBox").innerHTML = html;
+  $("srcDirBox").querySelectorAll(".srcdir").forEach((el) => {
+    el.onclick = () => {
+      const i = parseInt(el.dataset.i, 10);
+      srcPlanState.chosen = (srcPlanState.chosen === i) ? null : i;
+      srcRenderDirections({ options: srcPlanState.options, chosen: srcPlanState.chosen, custom: $("srcDirCustom").value });
+    };
+  });
+  $("srcDirRedo").onclick = (ev) => busy(ev.target, () => srcPlanDirectionsRedo());
+  $("srcDirConfirm").onclick = (ev) => busy(ev.target, () => srcConfirmDirection());
+}
+
+// '3안 다시 뽑기' — 기존 mechanism을 지우고(스텁으로) 재추출 트리거.
+async function srcPlanDirectionsRedo() {
+  const empty = { options: [], chosen: null, custom: ($("srcDirCustom").value || "").trim(), confirmed: false };
+  let sha; try { const ex = await getFile(srcMechPath(srcPlanState.hash), true, true); sha = ex && ex.sha; } catch (_) {}
+  await putFile(srcMechPath(srcPlanState.hash), JSON.stringify(empty, null, 1) + "\n", "sourcing(admin): 방향 재추출 준비", sha || undefined);
+  await srcPlanDirections();
+}
+
+async function srcConfirmDirection() {
+  const custom = ($("srcDirCustom").value || "").trim();
+  const chosen = srcPlanState.chosen;
+  if (chosen === null && !custom) { toast("방향을 하나 고르거나 직접 의견을 적으세요"); return; }
+  // 확정 저장: 번호 선택이면 chosen=번호, 직접 의견만이면 chosen="custom".
+  const data = { options: srcPlanState.options,
+    chosen: (chosen !== null ? chosen : (custom ? "custom" : null)), custom, confirmed: true };
+  let sha; try { const ex = await getFile(srcMechPath(srcPlanState.hash), true, true); sha = ex && ex.sha; } catch (_) {}
+  await putFile(srcMechPath(srcPlanState.hash), JSON.stringify(data, null, 1) + "\n", "sourcing(admin): 기획 방향 확정", sha || undefined);
+  const nonce = srcNonce();
+  srcPlanState.nonce = nonce;
+  $("srcScriptBox").innerHTML = "";
+  $("srcPlanStatus").textContent = "방향 확정 — 대본·제목·설명·해시태그 만드는 중… (약 1~2분)";
+  await srcPlanDispatch("script", nonce);
+  toast("대본 생성 시작 — 약 1~2분");
+  srcPlanPollScript(nonce, 0, sha);   // 대본 파일이 '새로' 커밋될 때까지 대기
+}
+
+async function srcPlanPollScript(nonce, tries, prevPlanSha) {
+  if (srcPlanState.nonce !== nonce) return;
+  let f = null;
+  try { f = await getFile(srcPlanPath(srcPlanState.hash), true, true); } catch (_) {}
+  if (f && f.sha !== prevPlanSha) {   // 새 대본이 커밋됨(옛 sha와 다름)
+    try {
+      const s = JSON.parse(f.text);
+      if (s && s.lines) {
+        srcRenderScript(s);
+        $("srcPlanStatus").textContent = "대본이 완성되었습니다 — 아래에서 확인하세요. (다음 단계: 구간 지정·제작)";
+        return;
+      }
+    } catch (_) {}
+  }
+  if (tries > 40) { $("srcPlanStatus").textContent = "대본이 아직 안 왔습니다. 잠시 후 [이 방향으로 대본 만들기]를 다시 눌러주세요."; return; }
+  setTimeout(() => srcPlanPollScript(nonce, tries + 1, prevPlanSha), 8000);
+}
+
+function srcRenderScript(s) {
+  const tags = (s.hashtags || []).map((t) => srcEsc(t)).join(" ");
+  const lines = (s.lines || []).map((l, i) =>
+    `<div class="srcline"><span class="srcln">${i + 1}</span>${srcEsc(l.text || "")}</div>`).join("");
+  $("srcScriptBox").innerHTML =
+    `<div class="srcscript">`
+    + `<div class="srcfield"><span class="lbl">제목</span><div class="val">${srcEsc(s.title || "")}</div></div>`
+    + (s.headline ? `<div class="srcfield"><span class="lbl">헤드라인</span><div class="val">${srcEsc(s.headline)}</div></div>` : "")
+    + `<div class="srcfield"><span class="lbl">대사(자막)</span><div class="val">${lines}</div></div>`
+    + `<div class="srcfield"><span class="lbl">설명</span><div class="val">${srcEsc(s.description || s.description_body || "")}</div></div>`
+    + `<div class="srcfield"><span class="lbl">해시태그</span><div class="val">${tags}</div></div>`
+    + `</div>`
+    + `<p class="hint" style="margin-top:8px">다음 단계(④ 영상 구간 지정 · ⑤ 제작)는 준비 중입니다. 대본을 고치고 싶으면 방향을 바꿔 다시 만드세요.</p>`;
 }
 $("mkProduce").onclick = (ev) => busy(ev.target, async () => {
   const p = mkSelected(); if (!p) return;

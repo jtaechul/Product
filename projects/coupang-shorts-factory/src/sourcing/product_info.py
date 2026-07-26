@@ -49,6 +49,8 @@ def build_product_info(product_hash: str, base_dir: Path | None = None) -> dict:
 
     return {
         "name": name,
+        # 소싱 이름은 브랜드가 아니라 일반 서술어 → 첫 토큰 브랜드 오탐 제거 방지(sanitize.product_avoid_terms).
+        "no_brand_token": True,
         "category": "",
         "notes": notes,
         "affiliate_url": (prod.get("coupang") or {}).get("affiliate_url") or "",
