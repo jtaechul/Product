@@ -345,5 +345,13 @@
     "mode": "shorts",
     "date": "2026-07-26",
     "has_video": true
+  },
+  {
+    "id": "048",
+    "kind": "reels",
+    "common_name_ko": "Sepia mestus",
+    "common_name_en": "Sepia mestus",
+    "scientific_name": "Sepia mestus",
+    "date": "2026-07-26"
   }
 ]

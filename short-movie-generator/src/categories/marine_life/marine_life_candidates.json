@@ -79,52 +79,6 @@
   },
   {
     "kind": "creature",
-    "key": "sepia mestus",
-    "needs_confirm": false,
-    "title": "File:Red cuttle hunting.webm",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Red_cuttle_hunting.webm",
-    "license": "cc-by-sa",
-    "credit": "John Turnbull · CC BY-SA",
-    "source": "File:Red cuttle hunting.webm",
-    "name": "Sepia mestus",
-    "name_ja": "",
-    "common_name_ko": "Sepia mestus",
-    "common_name_en": "Sepia mestus",
-    "depth": "22",
-    "facts": [
-      "Ascarosepion mestus, also known as the reaper cuttlefish or red cuttlefish, is a species of cuttlefish native to the southwestern Pacific Ocean, specifically Escape Reef off Queensland (15°47′S 145°47′E) to Murrays Beach off Jervis Bay (35°08′S 150°46′E).",
-      "Reports of this species from China and Vietnam are now known to be misidentifications.",
-      "mestus lives at a depth of between 0 and 22 m.",
-      "Ascarosepion mestus exhibits sexual dimorphism.",
-      "Females grow to a mantle length (ML) of 124 millimetres (4.9 in), while males do not exceed 77 mm (3.0 in) ML."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Sepia mestus",
-      "common_name_ko": "Sepia mestus",
-      "common_name_en": "Sepia mestus",
-      "depth_range_m": "22",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Ascarosepion mestus, also known as the reaper cuttlefish or red cuttlefish, is a species of cuttlefish native to the southwestern Pacific Ocean, specifically Escape Reef off Queensland (15°47′S 145°47′E) to Murrays Beach off Jervis Bay (35°08′S 150°46′E).",
-        "Reports of this species from China and Vietnam are now known to be misidentifications.",
-        "mestus lives at a depth of between 0 and 22 m.",
-        "Ascarosepion mestus exhibits sexual dimorphism.",
-        "Females grow to a mantle length (ML) of 124 millimetres (4.9 in), while males do not exceed 77 mm (3.0 in) ML."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Red cuttle hunting.webm)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_sepia_mestus_29330717649.jpg",
-    "video_status": "video",
-    "video_source": "File:Red cuttle hunting.webm"
-  },
-  {
-    "kind": "creature",
     "key": "carcharhinus melanopterus",
     "needs_confirm": false,
     "title": "File:Aerial view of a blacktip reef shark (Carcharhinus melanopterus) at Lady Musgrave Island, Queensland, Australia.webm",
