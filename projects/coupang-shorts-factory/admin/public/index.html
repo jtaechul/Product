@@ -2176,13 +2176,130 @@ function srcRenderScript(s) {
     + `<div class="srcfield"><span class="lbl">설명</span><div class="val">${srcEsc(s.description || s.description_body || "")}</div></div>`
     + `<div class="srcfield"><span class="lbl">해시태그</span><div class="val">${tags}</div></div>`
     + `</div>`
+    + `<button id="srcScriptEdit" class="btn sub btnfull" style="margin-top:8px">대본 수정 (제목·대사·설명·해시태그)</button>`
+    + `<div id="srcSegBox" style="margin-top:14px"></div>`
     + `<button id="srcProduce" class="btn btnfull" style="margin-top:12px">⑤ 이 대본으로 영상 제작하기</button>`
     + `<p class="hint" style="margin-top:6px">확정한 홍보영상들을 9:16으로 이어붙이고, 위 대본을 <b>한국어 나레이션 + 카라오케 자막</b>으로 얹어 완성합니다(약 3~5분).</p>`
     + `<p id="srcProdStatus" class="hint" style="margin-top:6px"></p>`
     + `<div id="srcProdResult" style="margin-top:10px"></div>`;
+  $("srcScriptEdit").onclick = () => srcEditScript();
   $("srcProduce").onclick = (ev) => busy(ev.target, () => srcProduce());
-  srcLoadProduced(srcPlanState.hash);   // 이미 만든 영상이 있으면 바로 보여준다(복원)
+  srcRenderSegments(srcPlanState.hash);   // ④ 영상 구간 지정(선택)
+  srcLoadProduced(srcPlanState.hash);     // 이미 만든 영상이 있으면 바로 보여준다(복원)
   srcSaveState();
+}
+
+// ④ 대본 수정 — 제목·헤드라인·대사·설명·해시태그를 편집해 plan 파일에 저장(제작이 이 파일을 읽음).
+function srcEditScript() {
+  const s = srcPlanState.script; if (!s) return;
+  const lineInputs = (s.lines || []).map((l, i) =>
+    `<div class="row2" style="gap:6px;align-items:center;margin-top:4px"><span class="srcln">${i + 1}</span>`
+    + `<input class="srcEditLine" data-i="${i}" value="${srcEsc(l.text || "")}" style="flex:1;min-width:0"></div>`).join("");
+  $("srcScriptBox").innerHTML =
+    `<div class="srcscript">`
+    + `<label class="lbl">제목</label><input id="srcEdTitle" value="${srcEsc(s.title || "")}" style="width:100%">`
+    + (s.headline != null ? `<label class="lbl" style="display:block;margin-top:8px">헤드라인</label><input id="srcEdHeadline" value="${srcEsc(s.headline || "")}" style="width:100%">` : "")
+    + `<label class="lbl" style="display:block;margin-top:8px">대사(자막) — 한 줄씩</label>${lineInputs}`
+    + `<label class="lbl" style="display:block;margin-top:8px">설명</label><textarea id="srcEdDesc" rows="3" style="width:100%">${srcEsc(s.description || s.description_body || "")}</textarea>`
+    + `<label class="lbl" style="display:block;margin-top:8px">해시태그 (공백으로 구분)</label><input id="srcEdTags" value="${srcEsc((s.hashtags || []).join(" "))}" style="width:100%">`
+    + `</div>`
+    + `<p class="hint" style="margin-top:6px">저장하면 다음 제작부터 이 내용으로 낭독·자막이 나갑니다. (금액·금지어·길이 규격은 제작 단계에서 자동 점검)</p>`
+    + `<div class="row2" style="gap:8px;margin-top:8px"><button id="srcEdCancel" class="btn sub" style="flex:1">취소</button><button id="srcEdSave" class="btn" style="flex:2">저장</button></div>`;
+  $("srcEdCancel").onclick = () => srcRenderScript(s);
+  $("srcEdSave").onclick = (ev) => busy(ev.target, () => srcSaveScript());
+}
+
+async function srcSaveScript() {
+  const s = JSON.parse(JSON.stringify(srcPlanState.script || {}));
+  s.title = ($("srcEdTitle").value || "").trim();
+  if ($("srcEdHeadline")) s.headline = ($("srcEdHeadline").value || "").trim();
+  s.description = ($("srcEdDesc").value || "").trim();
+  s.hashtags = ($("srcEdTags").value || "").split(/\s+/).map((t) => t.trim()).filter(Boolean);
+  const inputs = [...document.querySelectorAll(".srcEditLine")];
+  s.lines = (s.lines || []).map((l, i) => {
+    const inp = inputs.find((x) => Number(x.dataset.i) === i);
+    if (!inp) return l;
+    const text = (inp.value || "").replace(/\s+/g, " ").trim();
+    return { ...l, text, subs: subsBuild(text) };   // 자막 칸도 새 문장 기준 재생성(낭독 타이밍 동기화)
+  });
+  if (s.lines[0] && s.lines[0].is_hook) { s.title = s.lines[0].text; s.thumb_hook = s.lines[0].text; }   // 훅 삼위일체
+  let sha; try { const ex = await getFile(srcPlanPath(srcPlanState.hash), true, true); sha = ex && ex.sha; } catch (_) {}
+  await putFile(srcPlanPath(srcPlanState.hash), JSON.stringify(s, null, 1) + "\n", "sourcing(admin): 대본 수정", sha || undefined);
+  toast("대본 저장됨");
+  srcRenderScript(s);
+}
+
+// ④ 영상 구간 지정 — 홍보영상마다 '쓸 구간'을 골라 segments 파일에 저장(제작이 그 구간만 이어붙임).
+const srcSegPath = (h) => `${P}/data/sources/segments/${h}.json`;
+let srcSegState = { hash: null, videos: [], seg: {} };
+
+async function srcRenderSegments(hash) {
+  const box = $("srcSegBox"); if (!box) return;
+  box.innerHTML = "";
+  let videos = [];
+  try { const f = await getFile(srcPromoSelPath(hash), true, true); if (f) videos = (JSON.parse(f.text).videos) || []; } catch (_) {}
+  let seg = {};
+  try { const f = await getFile(srcSegPath(hash), true, true); if (f) seg = (JSON.parse(f.text).segments) || {}; } catch (_) {}
+  srcSegState = { hash, videos, seg };
+  if (!videos.length) return;
+  box.innerHTML = `<details class="srcseg"><summary style="cursor:pointer;font-weight:600">④ 영상 구간 지정 (선택 — 안 하면 각 영상 전체가 쓰입니다)</summary>`
+    + `<div id="srcSegList" style="margin-top:8px"></div>`
+    + `<button id="srcSegSave" class="btn sub btnfull" style="margin-top:8px">구간 저장</button></details>`;
+  srcSegRenderList();
+  $("srcSegSave").onclick = (ev) => busy(ev.target, () => srcSaveSegments());
+}
+
+function srcSegRenderList() {
+  const list = $("srcSegList"); if (!list) return;
+  list.innerHTML = srcSegState.videos.map((v, vi) => {
+    const ranges = srcSegState.seg[v.id] || [];
+    const chips = ranges.map((r, ri) =>
+      `<span style="display:inline-block;background:#eef;border-radius:12px;padding:2px 8px;margin:2px;font-size:13px">${(+r[0]).toFixed(1)}–${r[1] == null ? "끝" : (+r[1]).toFixed(1)}초 <b data-v="${vi}" data-r="${ri}" class="segdel" style="cursor:pointer;color:#c0392b">×</b></span>`).join("");
+    const title = srcEsc(String(v.title_ko || v.title || "영상").slice(0, 40));
+    const player = v.download_url
+      ? `<video class="segvid" data-v="${vi}" src="${srcEsc(v.download_url)}"${v.cover ? ` poster="${srcEsc(v.cover)}"` : ""} controls muted playsinline preload="none" style="width:100%;max-height:280px;border-radius:10px;background:#000"></video>`
+      : (v.cover ? `<img src="${srcEsc(v.cover)}" style="width:100%;max-height:200px;object-fit:cover;border-radius:10px">` : "");
+    return `<div style="margin-bottom:14px">`
+      + `<div class="srcsub" style="margin-bottom:4px">${vi + 1}. ${title}</div>${player}`
+      + `<div class="row2" style="gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap">`
+      + `<button class="btn sub segnow" data-v="${vi}" data-k="s">지금→시작</button>`
+      + `<input class="segS" data-v="${vi}" type="number" step="0.5" min="0" placeholder="시작초" style="width:74px">`
+      + `<input class="segE" data-v="${vi}" type="number" step="0.5" min="0" placeholder="끝초" style="width:74px">`
+      + `<button class="btn sub segnow" data-v="${vi}" data-k="e">지금→끝</button>`
+      + `<button class="btn segadd" data-v="${vi}">+ 구간</button></div>`
+      + `<div style="margin-top:6px">${chips || `<span class="hint">구간 없음 = 전체 사용</span>`}</div></div>`;
+  }).join("");
+  list.querySelectorAll(".segadd").forEach((b) => b.onclick = () => srcSegAdd(+b.dataset.v));
+  list.querySelectorAll(".segdel").forEach((b) => b.onclick = () => srcSegDel(+b.dataset.v, +b.dataset.r));
+  list.querySelectorAll(".segnow").forEach((b) => b.onclick = () => {
+    const vid = list.querySelector(`.segvid[data-v="${b.dataset.v}"]`);
+    const t = vid ? +(vid.currentTime || 0).toFixed(1) : 0;
+    const inp = list.querySelector(`.${b.dataset.k === "s" ? "segS" : "segE"}[data-v="${b.dataset.v}"]`);
+    if (inp) inp.value = t;
+  });
+}
+
+function srcSegAdd(vi) {
+  const list = $("srcSegList");
+  const s = parseFloat(list.querySelector(`.segS[data-v="${vi}"]`).value);
+  const ev = list.querySelector(`.segE[data-v="${vi}"]`).value;
+  if (isNaN(s)) { toast("시작 초를 입력하세요"); return; }
+  const e = ev === "" ? null : parseFloat(ev);
+  if (e != null && !(e > s)) { toast("끝 초는 시작보다 커야 합니다"); return; }
+  const v = srcSegState.videos[vi];
+  (srcSegState.seg[v.id] = srcSegState.seg[v.id] || []).push([s, e]);
+  srcSegRenderList();
+}
+function srcSegDel(vi, ri) {
+  const v = srcSegState.videos[vi];
+  if (srcSegState.seg[v.id]) { srcSegState.seg[v.id].splice(ri, 1); if (!srcSegState.seg[v.id].length) delete srcSegState.seg[v.id]; }
+  srcSegRenderList();
+}
+async function srcSaveSegments() {
+  const payload = { product_hash: srcSegState.hash, segments: srcSegState.seg };
+  let sha; try { const ex = await getFile(srcSegPath(srcSegState.hash), true, true); sha = ex && ex.sha; } catch (_) {}
+  await putFile(srcSegPath(srcSegState.hash), JSON.stringify(payload, null, 2) + "\n", "sourcing(admin): 영상 구간 지정", sha || undefined);
+  toast("구간 저장됨 — 다음 제작부터 반영");
 }
 
 const SRC_PROD_WF = "shorts-sourcing-produce.yml";
@@ -2243,9 +2360,55 @@ function srcRenderProduced(rel, vid) {
   box.innerHTML =
     `<video controls playsinline preload="metadata" style="width:100%;max-height:70vh;border-radius:12px;background:#000"${poster ? ` poster="${mediaUrl(poster.browser_download_url, poster.updated_at || "")}"` : ""}></video>`
     + `<p class="hint" style="margin-top:6px">완성된 쇼츠입니다. 다시 만들고 싶으면 아래 버튼을 누르세요(같은 상품 영상을 덮어씁니다).</p>`
-    + `<button id="srcProdRedo" class="btn sub btnfull" style="margin-top:6px">영상 다시 제작</button>`;
+    + `<button id="srcProdRedo" class="btn sub btnfull" style="margin-top:6px">영상 다시 제작</button>`
+    + `<div id="srcPubMeta"></div>`;
   box.querySelector("video").src = vurl;
   $("srcProdRedo").onclick = (ev) => busy(ev.target, () => srcProduce());
+  srcRenderPublishMeta();   // ⑥ 발행용 메타(제목·설명·해시태그·링크 복사)
+}
+
+// ⑥ 유튜브 올리기 준비 — 제목·설명(제휴고지 포함)·해시태그·고정댓글을 복사 버튼으로 제공(수동 업로드).
+const AFFILIATE_NOTICE = "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다";
+let srcCopyStore = [];
+async function srcRenderPublishMeta() {
+  const host = $("srcPubMeta"); if (!host) return;
+  srcCopyStore = [];
+  const s = srcPlanState.script || {};
+  let aff = "";
+  try { const f = await getFile(srcProductPath(srcPlanState.hash), true, true);
+    if (f) { const d = JSON.parse(f.text); aff = (d.coupang && d.coupang.affiliate_url) || ""; } } catch (_) {}
+  const tags = (s.hashtags || []).join(" ");
+  const desc = [AFFILIATE_NOTICE, "", (s.description || s.description_body || ""), "",
+    "상품 링크는 프로필/고정 댓글에서 확인하세요.", "", tags].join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  const pin = `${AFFILIATE_NOTICE}\n${aff || "(②에서 쿠팡 링크 입력)"}`;
+  host.innerHTML =
+    `<div class="card" style="margin-top:12px">`
+    + `<h3 style="margin:0 0 8px">⑥ 유튜브 올리기 준비 — 복사해서 붙여넣기</h3>`
+    + `<p class="hint" style="margin-top:0">위 영상을 저장해 유튜브 앱에서 올리고, 아래를 붙여넣으세요. 첫 <b>고정 댓글</b>에 제휴고지+쿠팡 링크를 답니다(비공개로 올리고 스튜디오에서 예약 공개 권장).</p>`
+    + srcCopyRow("제목", s.title || "")
+    + srcCopyRow("설명 (제휴고지 포함)", desc, true)
+    + srcCopyRow("해시태그", tags)
+    + srcCopyRow("고정 댓글 (제휴고지 + 쿠팡 링크)", pin, true)
+    + (aff ? "" : `<p class="hint" style="color:#c0392b">※ 어필리에이트 링크가 없습니다 — ②에서 쿠팡 링크를 입력하면 여기 자동 표시됩니다.</p>`)
+    + `<p class="hint" style="margin-bottom:0">유튜브 <b>자동 업로드</b>는 인증(SHORTS_YT) 등록 후 지원됩니다.</p>`
+    + `</div>`;
+  host.querySelectorAll("[data-copyidx]").forEach((b) => b.onclick = () => srcCopy(srcCopyStore[+b.dataset.copyidx], b));
+}
+function srcCopyRow(label, text, multiline) {
+  const idx = srcCopyStore.push(text) - 1;
+  const enc = srcEsc(text);
+  return `<div style="margin-top:8px"><div class="row2" style="justify-content:space-between;align-items:center">`
+    + `<span class="lbl">${srcEsc(label)}</span><button class="btn sub" data-copyidx="${idx}" style="padding:4px 12px">복사</button></div>`
+    + (multiline
+      ? `<pre style="white-space:pre-wrap;background:#f5f5f7;border-radius:8px;padding:8px;margin:4px 0 0;font-size:13px">${enc}</pre>`
+      : `<div class="val" style="word-break:break-all">${enc}</div>`) + `</div>`;
+}
+async function srcCopy(text, btn) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast("복사됨");
+    if (btn) { const o = btn.textContent; btn.textContent = "복사됨"; setTimeout(() => { btn.textContent = o; }, 1200); }
+  } catch (_) { toast("복사 실패 — 길게 눌러 직접 선택·복사하세요"); }
 }
 $("mkProduce").onclick = (ev) => busy(ev.target, async () => {
   const p = mkSelected(); if (!p) return;
