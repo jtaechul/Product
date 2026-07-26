@@ -60,10 +60,15 @@ def main() -> int:
             sources = root / "data" / "sources"
             (sources / "promo").mkdir(parents=True, exist_ok=True)
             (sources / "plan").mkdir(parents=True, exist_ok=True)
+            (sources / "segments").mkdir(parents=True, exist_ok=True)
             vids = [SourceVideo(platform="tiktok", source_url=f"https://x/{i}",
-                                download_url=f"https://x/{i}.mp4").to_dict() for i in range(2)]
+                                download_url=f"https://x/{i}.mp4", id=f"vid{i}").to_dict()
+                    for i in range(2)]
             (sources / "promo" / f"{h}.json").write_text(
                 json.dumps({"videos": vids}, ensure_ascii=False), encoding="utf-8")
+            # ④ 구간 지정 검증: vid0은 앞 0~1초만, vid1은 지정 없음(전체) — 둘 다 정상 합성돼야 한다.
+            (sources / "segments" / f"{h}.json").write_text(
+                json.dumps({"segments": {"vid0": [[0.0, 1.0]]}}, ensure_ascii=False), encoding="utf-8")
             lines = [
                 {"text": "이거 하나면 끝난다", "subs": ["이거", "하나면", "끝난다"], "is_hook": True},
                 {"text": "매일 쓰던 그 물건인데", "subs": ["매일", "쓰던", "그", "물건인데"]},
