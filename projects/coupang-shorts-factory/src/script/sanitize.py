@@ -310,11 +310,15 @@ def sanitize_script(script: dict, strict_length: bool = True, avoid_terms=None,
 
     # 포맷 v2: 훅 카드 문구(=제목=첫 낭독)는 필수 + 카드에 크게 박히는 길이(공백 포함 8~28자)
     _hk = str(script.get("thumb_hook") or "").strip()
-    if strict_length and not (lines and lines[0].get("is_hook")):
+    if strict_length and not (lines and lines[0].get("is_hook")):   # 레거시(훅 라인 없음): 존재·길이 검사
         if not _hk:
-            problems.append("thumb_hook(훅 카드 문구=제목) 누락 — 12~25자 궁금증 문장으로 반드시 생성")
-        elif not (8 <= len(_hk) <= 28):
-            problems.append(f"thumb_hook 길이 {len(_hk)}자 (공백 포함 12~25자 권장, 8~28자 허용)")
+            problems.append("thumb_hook(훅 카드 문구=제목) 누락 — 12~20자 궁금증 문장으로 반드시 생성")
+        elif not (8 <= len(_hk) <= 25):
+            problems.append(f"thumb_hook 길이 {len(_hk)}자 (공백 포함 12~20자 권장, 8~25자 허용)")
+    # ⭐ 간결 원칙(2026-07-27 사용자 확정): v2(is_hook)든 레거시든 훅이 25자 초과면 재생성 유도 —
+    #   불필요한 수식·부사·중복 동작을 쳐내 한 호흡에 읽히게. (strict_length=False인 승인 대본 로드는 관대)
+    if strict_length and _hk and len(_hk) > 25:
+        problems.append(f"thumb_hook(=제목=첫 낭독) 길이 {len(_hk)}자 — 너무 김. 불필요한 수식·중복 빼고 12~20자로 압축")
 
     if problems:
         if enforce:
