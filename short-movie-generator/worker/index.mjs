@@ -688,6 +688,25 @@ async function renderNarrateDetail(id,fresh){
         '<button class="btn" id="nvdesc">설명 재생성</button>'+
         (rec.source_url?'<button class="btn" id="nvthumb">썸네일만 재생성</button>':'<button class="btn" id="nvthumb" disabled title="원본 URL 없음">썸네일 재생성 불가</button>')+
         (rec.source_url?'<button class="btn" id="nvregen">전체 다시 제작(재생성)</button>':'<button class="btn" id="nvregen" disabled title="원본 URL 없음">재생성 불가</button>')+
+        // ★결과를 보고 구간을 다시 잡는 패널(운영자 확정 "일단 만들고 내가 고치기").
+        //   원본을 여기서 재생하고, 원하는 지점에서 버튼을 눌러 컷 구간을 채운 뒤 재제작한다.
+        (rec.source_url?(
+          '<details class="tok" id="nvcutbox" style="margin-top:10px"><summary>구간 다시 잡기 — 원본 보고 컷 지정</summary>'+
+            '<div class="hint" style="margin:6px 0 8px">원본을 재생해 원하는 지점에서 <b>시작/끝</b> 버튼을 누르면 아래 칸이 채워집니다. '+
+              '한 줄이라도 채우면 <b>지정한 컷만</b> 사용해 다시 만듭니다.</div>'+
+            '<video id="nvsrc" controls playsinline preload="metadata" style="width:100%;border-radius:10px;background:#000"></video>'+
+            '<div class="hint" id="nvsrcinfo" style="margin:6px 0"></div>'+
+            [0,1,2,3].map(function(i){return ''+
+              '<div class="row2" style="margin-bottom:5px;align-items:center">'+
+                '<span class="hint" style="min-width:40px">컷 '+(i+1)+'</span>'+
+                '<input id="nc'+i+'a" placeholder="시작(초)" inputmode="decimal" style="flex:1">'+
+                '<input id="nc'+i+'b" placeholder="끝(초)" inputmode="decimal" style="flex:1">'+
+                '<button class="mini" data-nvmk="'+i+'a" style="flex:1">여기 시작</button>'+
+                '<button class="mini" data-nvmk="'+i+'b" style="flex:1">여기 끝</button>'+
+              '</div>';}).join('')+
+            '<button class="btn save" id="nvcutgo" style="margin-top:8px">이 구간으로 다시 만들기</button>'+
+          '</details>'
+        ):'')+
         '<button class="btn" id="nvdel" style="background:#8b1a1a;color:#fff;grid-column:1/-1">이 영상 삭제 (영구)</button></div>'+
       '<div class="hint" style="margin-top:6px">'+
         '<b>제목 재생성</b>은 대본으로 제목·훅을 다시 만들고 <b>썸네일도 새 제목으로 함께</b> 다시 그립니다(2~5분 · 영상 유지'+(rec.source_url?'':' · 원본 URL이 없어 이 건은 텍스트만 갱신')+'). '+
@@ -705,6 +724,38 @@ async function renderNarrateDetail(id,fresh){
   if(md.thumb_url){const th=document.getElementById("thdl");if(th)th.onclick=()=>saveVideo(prox(md.thumb_url),id+"_thumb.jpg",{btn:"#thdl",hint:"#thhint",mime:"image/jpeg",kind:"이미지"});}
   const rgn=document.getElementById("nvregen");
   if(rgn&&rec.source_url)rgn.onclick=()=>regenNarrate(id,rec.source_url,rec.mode||"shorts");
+  // 구간 다시 잡기: 원본 재생 + 재생위치를 컷 칸에 채우기 + 그 구간으로 재제작
+  const _cb=$("#nvcutbox");
+  if(_cb&&rec.source_url){
+    _cb.addEventListener("toggle",()=>{
+      if(!_cb.open) return;
+      const v=$("#nvsrc"); if(!v||v.src) return;
+      const tc=nvTranscode(rec.source_url); let tried=!tc;
+      v.src=prox(tc||rec.source_url);
+      v.onloadedmetadata=()=>{$("#nvsrcinfo").innerHTML="원본 길이 <b>"+v.duration.toFixed(1)+"초</b>"+
+        ' · <a href="'+esc(rec.source_url)+'" target="_blank" style="color:var(--cy)">원본 링크</a>';};
+      v.onerror=()=>{ if(!tried){tried=true;v.src=prox(rec.source_url);v.load();return;}
+        banner("이 브라우저가 원본 형식을 재생하지 못합니다. '원본 링크'로 시간을 확인하세요.","err");};
+    });
+    _cb.querySelectorAll("[data-nvmk]").forEach(b=>{b.onclick=()=>{
+      const v=$("#nvsrc"); if(!v) return;
+      const t=Math.round((v.currentTime||0)*10)/10;
+      const el=$("#nc"+b.dataset.nvmk); if(el){el.value=String(t);
+        banner("컷 "+(parseInt(b.dataset.nvmk)+1)+" "+(b.dataset.nvmk.endsWith("a")?"시작":"끝")+" = "+t+"초","ok");}
+    };});
+    const go=$("#nvcutgo");
+    if(go)go.onclick=()=>{
+      const specs=[];
+      for(let i=0;i<4;i++){
+        const a=($("#nc"+i+"a")||{}).value, b=($("#nc"+i+"b")||{}).value;
+        if(!a||!b) continue;
+        const o={start:parseFloat(a), end:parseFloat(b)};
+        if(o.end>o.start) specs.push(o);
+      }
+      if(!specs.length){banner("컷을 최소 하나는 지정하세요(시작·끝 모두).","err");return;}
+      regenNarrate(id,rec.source_url,rec.mode||"shorts",JSON.stringify(specs));
+    };
+  }
   const dub=document.getElementById("nvdub");
   if(dub&&rec.source_url)dub.onclick=()=>regenNarrateDub(id,rec.source_url,rec.mode||"longform");
   const nvu=document.getElementById("nvup");if(nvu)nvu.onclick=()=>uploadNarrate(id);
@@ -800,14 +851,26 @@ async function regenNarrateDub(id,sourceUrl,mode){
 
 // 나레이션 영상 재생성: 같은 원본 URL·형태로 narrate-video.yml을 디스패치하되 content_id를 넘겨
 // 같은 레코드(같은 /nv/<id>)를 덮어쓴다(영상·썸네일·메타 갱신).
-async function regenNarrate(id,sourceUrl,mode){
+// 커먼스 webm은 iOS에서 재생이 안 돼 480p VP9 트랜스코드를 우선 시도한다(제작 화면과 동일 규칙).
+function nvTranscode(u){
+  try{
+    if(!/^https:\\/\\/upload\\.wikimedia\\.org\\/wikipedia\\/commons\\//.test(u)) return "";
+    if(/\\/transcoded\\//.test(u)) return "";
+    if(!/\\.(webm|ogv)$/i.test(u)) return "";
+    return u.replace("/commons/","/commons/transcoded/")+"/"+u.split("/").pop()+".480p.vp9.webm";
+  }catch(e){return "";}
+}
+async function regenNarrate(id,sourceUrl,mode,cutSpecs){
   if(!authReady()){banner("재생성에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
   if(!sourceUrl){banner("원본 URL 정보가 없어 재생성할 수 없습니다.","err");return;}
-  if(!confirm("이 나레이션 영상을 같은 원본으로 다시 제작합니다.\\n\\n같은 화면(주소)이 새 결과로 갱신됩니다(5~15분).\\n계속할까요?"))return;
-  banner("재생성 요청 중… (같은 원본으로 다시 제작 · 5~15분)");
+  const note=cutSpecs?"지정한 구간으로 다시 만듭니다.":"같은 원본으로 처음부터 다시 만듭니다.";
+  if(!confirm(note+"\\n\\n같은 화면(주소)이 새 결과로 갱신됩니다(5~15분).\\n계속할까요?"))return;
+  banner("재제작 요청 중… ("+note+" · 5~15분)");
   try{
+    const inputs={video_url:sourceUrl,mode:(mode||"shorts"),content_id:String(id)};
+    if(cutSpecs) inputs.cut_specs=cutSpecs;
     const r=await fetch(API+"/actions/workflows/"+NV_WF+"/dispatches",{method:"POST",headers:headers(true),
-      body:JSON.stringify({ref:BRANCH,inputs:{video_url:sourceUrl,mode:(mode||"shorts"),content_id:String(id)}})});
+      body:JSON.stringify({ref:BRANCH,inputs})});
     if(r.status===204)banner("재생성 시작! 5~15분 뒤 이 화면을 새로고침하면 새 결과가 표시됩니다.","ok");
     else{const t=await r.text();banner("재생성 시작 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
   }catch(e){banner("재생성 오류: "+e,"err");}

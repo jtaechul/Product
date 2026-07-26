@@ -29,6 +29,10 @@ on:
         description: "라이선스(public-domain / cc0 / cc-by / cc-by-sa / kogl-type1)"
         required: false
         default: ""
+      cut_specs:
+        description: '컷별 구간 직접 지정 — 결과를 보고 다시 잡을 때. 예 "0-6, 20-27, 41-48" 또는 JSON'
+        required: false
+        default: ""
       content_id:
         description: "재생성 시 기존 콘텐츠 id(예: nv-123). 비우면 새 nv-<run_id> 생성."
         required: false
@@ -111,6 +115,7 @@ jobs:
             --source-topic "${{ inputs.source_topic }}" \
             --credit "${{ inputs.credit }}" \
             --license-id "${{ inputs.license_id }}" \
+            --cut-specs "${{ inputs.cut_specs }}" \
             --out-name "$NAME" $TRARG)
           echo "출력: $OUT"
           echo "out=$OUT" >> "$GITHUB_OUTPUT"

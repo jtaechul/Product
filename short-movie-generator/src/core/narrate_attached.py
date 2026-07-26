@@ -126,6 +126,9 @@ def _sample_frames(video: str, work: Path, n: int = 4) -> list[str]:
     return out
 
 
+# 쇼츠 최소 길이(초). 나레이션이 짧아도 여기까지는 원본을 보여준다(원본이 더 짧으면 원본 길이).
+_SHORTS_MIN_S = 30.0
+
 _LICENSE_LABEL = {
     "public-domain": "Public Domain", "cc0": "CC0",
     "cc-by": "CC BY", "cc-by-sa": "CC BY-SA", "kogl-type1": "KOGL Type 1",
@@ -147,6 +150,34 @@ def _credit_line(credit: str, license_id: str) -> str:
     if label.replace(" ", "").replace("-", "").upper() in flat:
         return c            # 크레딧에 이미 라이선스가 적혀 있으면 중복 금지
     return f"{c} · {label}"
+
+
+def _trim_intro_outro_cards(video: str, work: Path) -> str:
+    """인트로·아웃트로 브랜딩 카드(로고 화면)를 잘라낸 '본편만' 소스를 만들어 경로를 반환.
+
+    ★실사고: NOAA 'Earth Is Blue' 클립으로 만든 22초 쇼츠에서 **10초가 로고 화면**이었다.
+    도감형(reels)은 footage._auto_trim_cards 로 이미 잘라내고 있었는데 나레이션형엔 없었다.
+    실패하면 원본 경로를 그대로 돌려준다(제작을 막지 않는다)."""
+    try:
+        from src.core import footage as _ft
+        dur = _probe_dur(video)
+        head, tail = _ft._auto_trim_cards(video, dur) if dur else (0.0, 0.0)
+        if head <= 0 and tail <= 0:
+            return video
+        keep = dur - head - tail
+        if keep < 6.0:                     # 다 잘라내면 쓸 게 없다 → 원본 유지
+            log.info("[narrate] 카드 트림 결과가 너무 짧아 원본 사용(%.1fs)", keep)
+            return video
+        out = str(work / "no_cards.mp4")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{head:.2f}",
+                        "-t", f"{keep:.2f}", "-i", video, "-c:v", "libx264", "-preset", "medium",
+                        "-crf", "18", "-c:a", "aac", out], check=True, timeout=1800)
+        log.info("[narrate] 인트로·아웃트로 카드 제거: 앞 %.1fs · 뒤 %.1fs → 본편 %.1fs",
+                 head, tail, keep)
+        return out
+    except Exception as e:  # noqa: BLE001
+        log.warning("[narrate] 카드 트림 생략(오류): %s", e)
+        return video
 
 
 def _speech_notes(video: str, work: Path, limit: int = 2400) -> str:
@@ -214,7 +245,9 @@ def _jp_script(title: str, notes: str, mode: str, conservative: bool = False) ->
     화면만 보고 쓴 대본은 종·행동을 단정하면 그대로 오정보가 되므로, 단정과 구체 주장을 금지하고
     '보이는 것 + 바다 일반의 정서'로만 무난하게 쓰게 한다."""
     from src.core import llm
-    n_hint = "12〜18" if mode == "shorts" else "24〜40"
+    # ★쇼츠 문장 수(운영자 확정 · 실사고: 22초에 자막 11개 → 2초에 하나씩 넘어가 숨이 찼다).
+    #   6~9문장이면 30~40초 영상에서 문장당 4~5초 → 읽히고 여운이 생긴다.
+    n_hint = "6〜9" if mode == "shorts" else "24〜40"
     safe = ("\n★この素材は『画面から見えること』しか根拠がありません。"
             "種名・生態・行動の意図・数値・場所を**断定しないでください**。"
             "「〜のようです」「〜が広がります」のように見えるままを穏やかに述べ、"
@@ -233,9 +266,9 @@ def _jp_script(title: str, notes: str, mode: str, conservative: bool = False) ->
         lines = [re.sub(r"^[\s0-9.\-・*]+", "", ln).strip() for ln in txt.splitlines()]
         lines = [ln for ln in lines if ln and not ln.startswith("【")]
         if len(lines) >= 3:
-            cap = 18 if mode == "shorts" else 44
+            cap = 9 if mode == "shorts" else 44
             return lines[:cap]
-    return _jp_chunks_from_notes(title, notes, 18 if mode == "shorts" else 44)
+    return _jp_chunks_from_notes(title, notes, 9 if mode == "shorts" else 44)
 
 
 def _dedup_tags(tags, core_jp, limit: int = 12) -> list[str]:
@@ -1229,7 +1262,8 @@ def _chapter_block(chapters: list[tuple], offset: float, header: str, titles: li
 def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
                   base_dir: str = ".", out_name: str | None = None,
                   phase: str = "render", transcript: list[dict] | None = None,
-                  credit: str = "", license_id: str = "") -> dict:
+                  credit: str = "", license_id: str = "",
+                  manual: dict | None = None) -> dict:
     """첨부 영상 → 일본어 나레이션·자막 완성본.
 
     ★운영자 확정: 제목·설명은 입력받지 않는다. 영상 내용을 비전으로 '보고' 대본을 만들고,
@@ -1320,15 +1354,29 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
         if not chunks:
             raise ValueError("나레이션 대본을 만들 수 없습니다.")
         nar = narration_sync.synthesize(chunks, str(work))
+        # ★쇼츠 길이(운영자 확정): 예전엔 나레이션 길이 = 영상 길이라 22초짜리가 나왔다.
+        #   원본이 충분하면 최소 _SHORTS_MIN_S 까지 늘려 영상을 더 보여준다(자막 사이에 숨 쉴 틈).
         dur = float(nar.get("duration") or 0) + 0.6
+        _src_dur = _probe_dur(src)
+        if _src_dur > 0:
+            dur = max(dur, min(_SHORTS_MIN_S, _src_dur))
+        log.info("[narrate] 쇼츠 길이: 나레이션 %.1fs → 영상 %.1fs (원본 %.1fs · 자막 %d개)",
+                 float(nar.get("duration") or 0), dur, _src_dur, len(chunks))
     if not nar.get("mp3") or not nar.get("disp"):
         raise ValueError("나레이션 합성 실패(TTS)")
 
-    # 3) 영상 정규화(쇼츠=9:16 추적 리프레임 · 롱폼=16:9 cover, 원본 전체 길이)
+    # 3) 영상 정규화(쇼츠=9:16 리프레임 · 롱폼=16:9 cover, 원본 전체 길이)
     body_v = str(work / "body.mp4")
     if mode == "shorts":
         from src.core import reframe
-        body_v = reframe.reframe_to_vertical(src, body_v, dur, str(work / "rf"), wide=False)
+        # ★①인트로·아웃트로 브랜딩 카드 제거(실사고: 22초 영상의 10초가 NOAA 'earth is blue'
+        #   로고 화면이었다). 도감형(reels)엔 있던 자동 트림이 나레이션형엔 없어 그대로 들어갔다.
+        clean = _trim_intro_outro_cards(src, work)
+        # ★②cover 크롭(실사고: 화면 가운데 얇은 띠로만 보였다). 가로 소스를 9:16에 '전체 담기'로
+        #   넣으면 위아래가 블러 여백이 되는데, 어두운 다큐 영상은 그 여백이 새까매서 띠처럼 보인다.
+        #   → wide=True(=cover)로 화면을 꽉 채운다. 생물 도감형은 기존 '전체 담기'를 유지한다.
+        body_v = reframe.reframe_to_vertical(clean, body_v, dur, str(work / "rf"),
+                                             wide=True, manual=manual)
     else:
         _normalize_landscape(src, body_v, dur, str(work))
         # ★원본 화면의 정적 라벨(종명·수심·타이틀 등)을 딥네이비 박스+일본어로 번역해 얹기(롱폼 전용).

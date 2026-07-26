@@ -39,6 +39,9 @@ def main() -> int:
                     help="저작자 표기 — 캡션 말미 출처 줄. 엔드카드가 없으므로 여기가 유일한 표기다")
     ap.add_argument("--license-id", default="",
                     help="라이선스(public-domain/cc0/cc-by/cc-by-sa/kogl-type1)")
+    ap.add_argument("--cut-specs", default="",
+                    help='컷별 구간 직접 지정(운영자가 결과를 보고 다시 잡을 때). '
+                         '형식 "0-6, 20-27, 41-48" 또는 JSON [{"start":0,"end":6,"crop_x":0.5}]')
     ap.add_argument("--out-name", default="", help="출력 파일명(확장자 제외)")
     ap.add_argument("--base-dir", default=".")
     ap.add_argument("--phase", default="render", choices=["render", "transcribe"],
@@ -74,7 +77,8 @@ def main() -> int:
         res = narrate_video(video, mode=a.mode, source_topic=a.source_topic,
                             base_dir=a.base_dir, out_name=(a.out_name or None),
                             phase=a.phase, transcript=transcript,
-                            credit=a.credit, license_id=a.license_id)
+                            credit=a.credit, license_id=a.license_id,
+                            manual=({"cut_specs": a.cut_specs} if a.cut_specs.strip() else None))
     except Exception as e:  # noqa: BLE001
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
