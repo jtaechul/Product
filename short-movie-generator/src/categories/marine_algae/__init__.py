@@ -62,6 +62,7 @@ class MarineAlgaeCategory(CollectionCategory):
     bgm_filename = "marinealgae_seven_miles_below.mp3"
     corner_label = "MARINE · MICRO CAM"
     show_scale = False           # 미세조류는 '서식수심' 스케일이 무의미
+    jp_topic = "marine_algae"    # COPY 없는 대상 자동 카피의 환경어(심해 아님)
     SUBJECTS = SUBJECTS
     COPY = COPY
     _dir = Path(__file__).resolve().parent

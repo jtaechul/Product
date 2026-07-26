@@ -49,6 +49,13 @@ class CollectionCategory(CategoryModule):
     fixed_hashtag_ko = "#해양생물"
     # 캡션에 학명(学名/학명: …) 표기 여부. 침몰선처럼 실제 학명이 없는 대상은 False로 끈다.
     show_sci_name = True
+    # COPY 시드가 없는 대상의 일본어 카피를 자동 생성할 때 쓸 '서식 환경' 토픽
+    # (deep_sea.hook._TOPICS 키). 얕은 바다 카테고리가 '심해'라고 말하지 않게 하는 안전장치.
+    jp_topic = "marine_life"
+    # COPY가 없을 때 카피를 자동 생성할지. 생물이 **아닌** 카테고리(침몰선)는 False —
+    # 생물용 생성기가 배에 "海に生きる…生きもの" 같은 문구를 붙이면 그 자체가 오정보다.
+    # (침몰선은 소싱 승격 시 copy가 항상 함께 오므로 이 경로가 필요 없다.)
+    auto_copy = True
     SUBJECTS: dict = {}
     COPY: dict = {}
     _dir = Path(__file__).resolve().parent   # 하위 클래스가 __file__로 override
@@ -165,7 +172,15 @@ class CollectionCategory(CategoryModule):
         key = self._key_for(info)
         c = self.COPY.get(key)
         if not c:
-            return None
+            # ★재발방지(실사고 run #164 `sepia mestus` — "일본어 훅 생성 불가"로 즉시 중단):
+            #   소싱→승격된 대상은 species만 오고 copy가 없다(promote_candidate). 그런데 예전엔
+            #   여기서 그냥 None을 돌려줘 파이프라인이 훅 단계에서 죽었다 — 즉 **손으로 COPY를
+            #   써 넣은 대상만 제작 가능**했고, 소싱으로 늘린 대상은 전부 제작 불가였다.
+            #   (__init__ 주석의 "copy 없으면 LLM이 생성"이라는 약속이 구현돼 있지 않았다.)
+            #   deep_sea와 동일한 생성기(시드→LLM→결정론 폴백)를 공유해 절대 None이 안 나오게 한다.
+            c = self._llm_copy(info)
+            if not c:
+                return None
         dmin, dmax = parse_depth(info.depth_range_m)
         sci = (info.scientific_name or "").strip()
         sci = sci[0].upper() + sci[1:] if sci else sci
@@ -181,9 +196,36 @@ class CollectionCategory(CategoryModule):
         bgm = Path(__file__).resolve().parents[2] / "assets" / "audio" / "bgm" / self.bgm_filename
         return (spec, hook_text, str(bgm) if bgm.exists() else None)
 
+    def _llm_copy(self, info: SpeciesInfo) -> dict | None:
+        """COPY 시드가 없는 대상(소싱 승격 등)의 일본어 훅 카피를 생성한다.
+        deep_sea.hook과 같은 체인(시드→LLM→결정론 폴백)을 쓰되, 서식 환경어는 `jp_topic`을
+        따른다 — 얕은 바다 종에 '심해'라고 말하지 않기 위해서다(사실 왜곡 금지)."""
+        if not self.auto_copy:
+            return None
+        try:
+            from src.categories.deep_sea import hook as hook_copy
+            h = hook_copy.build_hook(info, topic=self.jp_topic)
+        except Exception as e:  # noqa: BLE001
+            log.warning("[%s] 훅 카피 생성 실패: %s", self.category_id, e)
+            return None
+        if not h:
+            return None
+        log.info("[%s] COPY 시드 없음 → 훅 카피 자동 생성: %s", self.category_id, info.scientific_name)
+        return h
+
     def reels_body_script(self, info: SpeciesInfo):
         c = self.COPY.get(self._key_for(info))
-        return list(c["body"]) if c and c.get("body") else None
+        if c and c.get("body"):
+            return list(c["body"])
+        # ★COPY 시드가 없어도 본문을 생성해 제작을 잇는다(위 hook_intro_spec과 같은 재발방지).
+        if not self.auto_copy:
+            return None
+        try:
+            from src.categories.deep_sea import hook as hook_copy
+            return hook_copy.build_body_jp(info, topic=self.jp_topic)
+        except Exception as e:  # noqa: BLE001
+            log.warning("[%s] 본문 대본 생성 실패: %s", self.category_id, e)
+            return None
 
     def build_reels_caption(self, info: SpeciesInfo, spec) -> CaptionData:
         from src.core import rich_caption

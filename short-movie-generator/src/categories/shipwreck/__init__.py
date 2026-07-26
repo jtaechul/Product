@@ -151,6 +151,9 @@ class ShipwreckCategory(CollectionCategory):
     # ★규칙(운영자 확정): 침몰선은 생물이 아니라 학명이 없다 → 캡션에 "(学名/학명: …)" 표기 금지.
     #   scientific_name은 'Wreck Aries' 같은 내부 라벨이라 학명처럼 노출하면 오정보가 된다.
     show_sci_name = False
+    # ★생물이 아니므로 생물용 카피 자동 생성을 끈다(배에 "海に生きる生きもの"는 오정보).
+    #   침몰선은 소싱 승격 시 copy가 항상 함께 오므로 이 경로가 필요 없다.
+    auto_copy = False
     SUBJECTS = SUBJECTS
     COPY = COPY
     _dir = Path(__file__).resolve().parent

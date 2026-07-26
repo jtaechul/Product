@@ -17,6 +17,21 @@ from src.core.contracts import SpeciesInfo
 
 log = logging.getLogger(__name__)
 
+# ★서식 환경 토픽(재발방지 · 실사고 run #164 `sepia mestus`):
+#   이 모듈은 원래 deep_sea 전용이라 프롬프트·폴백에 「深海」가 박혀 있었다. 그런데 collection_base
+#   계열(marine_life 등)이 이 생성기를 공유하게 되면서, **얕은 바다에 사는 종에게 '심해'라고
+#   말하는 사실 왜곡**이 생길 수 있다 → 카테고리가 토픽을 지정해 환경어를 바꾼다.
+#   기본값 "deep_sea"는 기존 동작과 100% 동일(회귀 없음).
+_TOPICS = {
+    "deep_sea":     {"topic_jp": "深海生物",     "place_jp": "深海",   "place_ko": "심해"},
+    "marine_life":  {"topic_jp": "海の生き物",   "place_jp": "海",     "place_ko": "바다"},
+    "marine_algae": {"topic_jp": "海の小さな生き物", "place_jp": "海", "place_ko": "바다"},
+}
+
+
+def _topic(name: str | None) -> dict:
+    return _TOPICS.get((name or "deep_sea"), _TOPICS["deep_sea"])
+
 # 대표종 큐레이션 시드(LLM 키 없어도 확정 품질 보장)
 _SEED = {
     "enypniastes eximia": {
@@ -112,11 +127,12 @@ _SEED = {
 }
 
 _PROMPT = """あなたは**登録者1億人のYouTubeショート・アルゴリズムマーケター兼フッキングの達人**です。\
-視聴者が3秒でスワイプを止める深海生物のオープニングフックを作ります。\
+視聴者が3秒でスワイプを止める{topic_jp}のオープニングフックを作ります。\
 次の生物の情報から、JSONのみを出力してください(前後の説明・コードブロック禁止)。
 
 生物: 英名={en} / 学名={sci} / 生息水深={depth}m / 生息域={hab}
 特徴メモ: {facts}
+※この生き物の生息環境は「{place_jp}」です。**事実に反する環境語(例: 浅海の種に「深海」)を使わないこと**。
 
 【最優先=3秒フック】
 - 生物名と、核となる特徴1〜2個だけを使い、視聴者の脳裏に一瞬で刺さる**没入型の一撃**を作る。
@@ -129,7 +145,7 @@ _PROMPT = """あなたは**登録者1億人のYouTubeショート・アルゴリ
 - hook_line1 / hook_line2: 2行のフック。**合計12〜15字**の、ごく短くスピード感のある単文。\
   各行は名詞・体言止め・読点で区切る(例:「頭も、目も、」「骨もない。」)。**種名は出さない**。
 - pop_words: hook_line1+hook_line2を読点/句点で自然に区切った配列(3要素前後)
-- feature_line: 「A・B・C、〜」形式の短い特徴文(例: 「泳ぐ・光る・透ける、深海のナマコ」)
+- feature_line: 「A・B・C、〜」形式の短い特徴文(例: 「泳ぐ・光る・透ける、{place_jp}のナマコ」)
 - feature_glow_word: feature_line内で光・発光に関わる語(なければ最初の語)
 - hook_ko: hook_line1+hook_line2 の自然な**韓国語訳**(運営者の参考用)
 - feature_ko: feature_line の自然な**韓国語訳**
@@ -233,12 +249,13 @@ _BODY_SEED = {
     ],
 }
 
-_BODY_PROMPT = """あなたは深海生物のショート動画ナレーション作家です。次の生物について、\
+_BODY_PROMPT = """あなたは{topic_jp}のショート動画ナレーション作家です。次の生物について、\
 **日本語**で28〜32秒・14〜18個の短い節に分けたナレーションを作ります(★合計160字以内・長くしない)。\
 JSON配列のみ出力(説明禁止)。
 
 生物: 英名={en} / 学名={sci} / 生息水深={depth}m / 生息域={hab}
 特徴: {facts}
+※この生き物の生息環境は「{place_jp}」です。**事実に反する環境語(例: 浅海の種に「深海」)を使わないこと**。
 
 ■ ハウス・トーン(厳守): **「畏敬のドキュメンタリーを背骨に、たまに“淡々としたブラックユーモア”を一匙」**。
 真面目一辺倒だと眠い。近年の動物ドキュメンタリーのように一度クスッとさせるが、笑いは**暗い/過酷な事実を
@@ -275,14 +292,17 @@ def _parse_body_chunks(out: str) -> list[str] | None:
     return chunks if len(chunks) >= 8 else None
 
 
-def build_body_jp(info: SpeciesInfo) -> list[str] | None:
-    """본문 일본어 나레이션 절 리스트. 시드 → LLM(재시도·구제파싱) → None."""
+def build_body_jp(info: SpeciesInfo, topic: str | None = None) -> list[str] | None:
+    """본문 일본어 나레이션 절 리스트. 시드 → LLM(재시도·구제파싱) → 결정론 폴백.
+    `topic`은 카테고리별 서식 환경어(deep_sea/marine_life/…). 미지정 시 deep_sea(기존 동작)."""
     key = (info.scientific_name or "").strip().lower()
     if key in _BODY_SEED:
         return list(_BODY_SEED[key])
+    t = _topic(topic)
     facts = " / ".join((info.fun_facts or [])[:4]) or "-"
     prompt = _BODY_PROMPT.format(en=info.common_name_en, sci=info.scientific_name,
-                                 depth=info.depth_range_m, hab=info.habitat, facts=facts)
+                                 depth=info.depth_range_m, hab=info.habitat, facts=facts,
+                                 topic_jp=t["topic_jp"], place_jp=t["place_jp"])
     # ★재발방지: ①max_tokens 상향(16~22개 일본어 절 배열이 600토큰에 잘려 파싱 실패하던 사고)
     #   ②2회 재시도 ③구제 파싱. 소싱 종은 이 LLM 단계를 반드시 거치므로 견고해야 한다.
     chunks = None
@@ -298,7 +318,7 @@ def build_body_jp(info: SpeciesInfo) -> list[str] | None:
     if not chunks:
         # ★LLM 실패 → 결정론 폴백으로 제작 지속(예전엔 None → 제작 중단 #135 cranchiidae).
         log.info("[deep_sea.hook] 본문 LLM 실패 → 결정론 폴백 사용(제작 지속)")
-        chunks = _fallback_body_jp(info)
+        chunks = _fallback_body_jp(info, topic)
         if not chunks:
             return None
     # 다듬기(polish)가 실패해도 원본 절은 살린다(다듬기 오류로 제작이 죽지 않게).
@@ -310,22 +330,31 @@ def build_body_jp(info: SpeciesInfo) -> list[str] | None:
         return chunks
 
 
-def _fallback_body_jp(info: SpeciesInfo) -> list[str] | None:
-    """★결정론 본문 폴백(敬体 · LLM 실패해도 제작 지속): 실제 수심·서식만 쓰고 일반적 심해 사실만
-    서술한다(날조 금지 — 없는 행동·수치 안 지어냄). 종별 상세는 LLM 경로가 담당, 이건 최후 안전판."""
+def _fallback_body_jp(info: SpeciesInfo, topic: str | None = None) -> list[str] | None:
+    """★결정론 본문 폴백(敬体 · LLM 실패해도 제작 지속): 실제 수심·서식만 쓰고 일반적 사실만
+    서술한다(날조 금지 — 없는 행동·수치 안 지어냄). 종별 상세는 LLM 경로가 담당, 이건 최후 안전판.
+    환경어(深海/海)·수압 서술은 토픽을 따른다 — 얕은 바다 종에 '심해·고수압'을 붙이지 않는다."""
     import re as _re
+    t = _topic(topic)
+    deep = t is _TOPICS["deep_sea"]
+    pj = t["place_jp"]
     if not (info.scientific_name or info.common_name_en or "").strip():
         return None
     nums = [int(x) for x in _re.findall(r"\d+", info.depth_range_m or "")]
     dmax = max(nums) if nums else 0
-    lines = ["深海に、", "ひっそりと生きる、", "一匹の生きものがいます。"]
-    if dmax >= 200:
+    lines = [f"{pj}に、", "ひっそりと生きる、", "一匹の生きものがいます。"]
+    if deep and dmax >= 200:
         lines += [f"水深、およそ{dmax}メートル。", "光の届かない、", "暗く冷たい世界です。"]
+    elif not deep and dmax > 0:
+        lines += [f"水深、およそ{dmax}メートルまで。", "波の光がとどく、", "静かな海です。"]
     else:
         lines += ["光の少ない、", "静かな海の底です。"]
     # ※서식지(habitat)는 데이터가 국문일 수 있어 일본어 본문에 섞지 않는다(언어 혼입 방지).
-    lines += ["高い水圧の中で、", "この生きものは、", "静かに暮らしています。",
-              "厳しい環境に、", "適応してきた姿です。", "深い海には、",
+    if deep:
+        lines += ["高い水圧の中で、", "この生きものは、", "静かに暮らしています。"]
+    else:
+        lines += ["その海の中で、", "この生きものは、", "静かに暮らしています。"]
+    lines += ["厳しい環境に、", "適応してきた姿です。", f"{pj}には、",
               "まだ知られていない、", "命が息づいています。"]
     return lines
 
@@ -406,36 +435,44 @@ def build_reels_caption(info: SpeciesInfo, jp_name: str, sci_name: str,
     return parsed
 
 
-def _fallback_hook(info: SpeciesInfo) -> dict:
+def _fallback_hook(info: SpeciesInfo, topic: str | None = None) -> dict:
     """★결정론 훅 폴백(LLM 파싱 실패해도 제작이 죽지 않게 · 재발방지 실사고 #135 cranchiidae):
-    종 정보(실제 수심·이름)만으로 유효한 일본어 훅을 구성한다. 날조 없음(일반적 심해 사실 + 실제 수심).
-    번역 불가한 일본어명은 영문/학명 표시명으로 대체(제작 완료 우선 · 품질은 LLM 경로가 담당)."""
+    종 정보(실제 수심·이름)만으로 유효한 일본어 훅을 구성한다. 날조 없음(일반 사실 + 실제 수심).
+    번역 불가한 일본어명은 영문/학명 표시명으로 대체(제작 완료 우선 · 품질은 LLM 경로가 담당).
+    환경어(深海/海)는 카테고리 토픽을 따른다 — 얕은 바다 종에 '심해'를 붙이지 않기 위해서다."""
     import re as _re
+    t = _topic(topic)
+    pj, pk = t["place_jp"], t["place_ko"]
     sci = (info.scientific_name or "").strip()
     en = (info.common_name_en or "").strip()
     ko = (info.common_name_ko or "").strip()
-    jp = (en.title() if en else sci) or "深海の生きもの"
+    jp = (en.title() if en else sci) or f"{pj}の生きもの"
     nums = [int(x) for x in _re.findall(r"\d+", info.depth_range_m or "")]
     dmax = max(nums) if nums else 0
-    if dmax >= 200:
+    # 심해 토픽은 기존 기준(200m↑)을 유지하고, 그 외 토픽은 수심 근거가 있으면 그대로 쓴다.
+    show_depth = dmax >= 200 if t is _TOPICS["deep_sea"] else dmax > 0
+    if show_depth:
         pop = [f"水深{dmax}mに、", "潜む姿。"]
         ko_hook = f"수심 {dmax}m에, 숨은 존재."
     else:
-        pop = ["深海に、", "知られざる姿。"]
-        ko_hook = "심해에, 알려지지 않은 존재."
+        pop = [f"{pj}に、", "知られざる姿。"]
+        ko_hook = f"{pk}에, 알려지지 않은 존재."
     return {"jp_name": jp, "hook_line1": pop[0], "hook_line2": pop[1], "pop_words": pop,
-            "feature_line": f"深海に生きる、{jp}", "feature_glow_word": "深海",
-            "hook_ko": ko_hook, "feature_ko": f"심해에 사는, {ko or en or sci}"}
+            "feature_line": f"{pj}に生きる、{jp}", "feature_glow_word": pj,
+            "hook_ko": ko_hook, "feature_ko": f"{pk}에 사는, {ko or en or sci}"}
 
 
-def build_hook(info: SpeciesInfo) -> dict | None:
-    """일본어 훅 카피 dict 반환. 시드 → LLM(2회 재시도) → **결정론 폴백**(절대 None 아님 · 이름 있으면)."""
+def build_hook(info: SpeciesInfo, topic: str | None = None) -> dict | None:
+    """일본어 훅 카피 dict 반환. 시드 → LLM(2회 재시도) → **결정론 폴백**(절대 None 아님 · 이름 있으면).
+    `topic`은 카테고리별 서식 환경어(deep_sea/marine_life/…). 미지정 시 deep_sea(기존 동작)."""
     key = (info.scientific_name or "").strip().lower()
     if key in _SEED:
         return _SEED[key]
+    t = _topic(topic)
     facts = " / ".join((info.fun_facts or [])[:3]) or "-"
     prompt = _PROMPT.format(en=info.common_name_en, sci=info.scientific_name,
-                            depth=info.depth_range_m, hab=info.habitat, facts=facts)
+                            depth=info.depth_range_m, hab=info.habitat, facts=facts,
+                            topic_jp=t["topic_jp"], place_jp=t["place_jp"])
     # ★재시도(재발방지): 한 번의 LLM 응답이 JSON 파싱에 실패하면 제작이 통째로 중단됐다(소싱 종 제작
     #   실패 사고). 일시적 형식 오류·부분 응답에 대비해 2회까지 재시도한다.
     parsed = None
@@ -453,5 +490,5 @@ def build_hook(info: SpeciesInfo) -> dict | None:
     # ★LLM 실패(키 없음·파싱 실패) → 결정론 폴백으로 제작 지속(예전엔 여기서 None → 제작 중단 #135).
     if (info.scientific_name or info.common_name_en or "").strip():
         log.info("[deep_sea.hook] 훅 LLM 실패 → 결정론 폴백 사용(제작 지속)")
-        return _fallback_hook(info)
+        return _fallback_hook(info, topic)
     return None
