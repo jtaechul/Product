@@ -222,7 +222,7 @@ def match_naver_by_image(cover_url: str, candidates: list, call=None, fetch=None
     parts = [{"text": "기준 이미지 0 = 틱톡 영상 속 상품:"},
              {"inline_data": {"mime_type": cover[1], "data": cover[0]}}]
     idx_map = []   # 프롬프트에 실린 후보 순번 → candidates 원래 인덱스
-    for i, c in enumerate(cands[:6]):
+    for i, c in enumerate(cands[:8]):   # 병합 후보 대량 → 상위 8개까지 비전 비교
         img = None
         try:
             img = fetch((c or {}).get("image") or "")

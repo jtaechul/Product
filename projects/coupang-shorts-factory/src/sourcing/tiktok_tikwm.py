@@ -51,10 +51,19 @@ class TikwmClient:
             raise RuntimeError(f"tikwm code={j.get('code')} msg={j.get('msg')}")
         return j.get("data") or {}
 
-    def search(self, keywords: str, count: int = 10) -> list:
-        return (self._api("/api/feed/search",
-                          {"keywords": keywords, "count": count, "cursor": 0, "hd": 1},
-                          post=True).get("videos")) or []
+    def search_page(self, keywords: str, count: int = 20, cursor: int = 0) -> tuple:
+        """검색 한 페이지 → (videos, next_cursor, has_more). cursor를 넘겨 '진짜 다음 영상'을 받는다."""
+        data = self._api("/api/feed/search",
+                         {"keywords": keywords, "count": count, "cursor": int(cursor or 0), "hd": 1},
+                         post=True)
+        try:
+            nxt = int(data.get("cursor") or 0)
+        except (TypeError, ValueError):
+            nxt = 0
+        return (data.get("videos") or [], nxt, bool(data.get("hasMore")))
+
+    def search(self, keywords: str, count: int = 10, cursor: int = 0) -> list:
+        return self.search_page(keywords, count, cursor)[0]
 
     def user_posts(self, unique_id: str, count: int = 10) -> list:
         return (self._api("/api/user/posts",
@@ -103,22 +112,27 @@ class TikwmAdapter(SourceAdapter):
         self.client = client or TikwmClient()
 
     def search(self, seed: Seed, limit: int = 10) -> list:
+        return self.search_page(seed, limit)[0]
+
+    def search_page(self, seed: Seed, limit: int = 20, cursor: int = 0) -> tuple:
+        """(svs, next_cursor, has_more). keyword/hashtag만 커서 페이지네이션, 그 외는 커서 무시."""
+        nxt, more = 0, False
         try:
             if seed.kind in ("keyword", "hashtag"):
-                items = self.client.search(seed.value.lstrip("#"), count=limit)
+                items, nxt, more = self.client.search_page(seed.value.lstrip("#"), count=limit, cursor=cursor)
             elif seed.kind == "creator":
                 items = self.client.user_posts(seed.value.lstrip("@"), count=limit)
             elif seed.kind == "url":
                 items = [self.client.resolve(seed.value)]
             else:
-                return []
+                return [], 0, False
         except Exception as e:
             print(f"[sourcing:tikwm] 검색 실패({seed.kind}:{seed.value}): {e}")
-            return []
+            return [], 0, False
         svs = [_sv_from_item(it, self.client.base) for it in items if it]
         svs = [s for s in svs if s.source_url or s.download_url]
         svs.sort(key=lambda s: (s.view_count or 0), reverse=True)   # 조회수 상위 추천
-        return svs[:limit]
+        return svs[:limit], nxt, more
 
     def download(self, sv: SourceVideo, dest_dir: Path) -> Path | None:
         dest_dir = Path(dest_dir)

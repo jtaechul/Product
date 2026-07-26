@@ -30,16 +30,25 @@ def check(cond, label):
         _fails.append(label)
 
 
-FAKE = {"code": 0, "data": {"videos": [
+_PAGE0 = [
     {"video_id": "1", "title": "适量 적게 본 꿀템", "play_count": 500, "cover": "/c/1.jpg",
      "play": "https://cdn/1.mp4", "author": {"unique_id": "a", "nickname": "A"}},
     {"video_id": "2", "title": "많이 본 꿀템", "play_count": 88000, "origin_cover": "https://cdn/2.jpg",
      "hdplay": "/hd/2.mp4", "author": {"unique_id": "b", "nickname": "B"}},
-]}}
+]
+_PAGE1 = [   # cursor>0 → '진짜 다음' 새 영상(다른 video_id)
+    {"video_id": "3", "title": "다음 페이지 A", "play_count": 700, "cover": "/c/3.jpg",
+     "play": "https://cdn/3.mp4", "author": {"unique_id": "c", "nickname": "C"}},
+    {"video_id": "4", "title": "다음 페이지 B", "play_count": 66000, "origin_cover": "https://cdn/4.jpg",
+     "hdplay": "/hd/4.mp4", "author": {"unique_id": "d", "nickname": "D"}},
+]
 
 
 def fake_http(url, data=None, timeout=60):
-    return json.dumps(FAKE).encode()
+    cur = int((data or {}).get("cursor") or 0)   # 커서에 따라 다른 페이지 반환(진짜 다음 영상)
+    if cur == 0:
+        return json.dumps({"code": 0, "data": {"videos": _PAGE0, "cursor": 10, "hasMore": True}}).encode()
+    return json.dumps({"code": 0, "data": {"videos": _PAGE1, "cursor": 20, "hasMore": False}}).encode()
 
 
 def _adapter():
@@ -49,21 +58,23 @@ def _adapter():
 def test_discover_terms_and_ko():
     print("[T1] 발굴(주입 검색어) → 조회수상위 + title_ko(키없음=원문 폴백)")
     # terms 주입으로 Gemini 확장 우회, 번역은 키 없으면 원문 폴백
-    svs = discover("꿀템", limit=10, adapter=_adapter(), terms=["厨房好物"])
+    svs, cur = discover("꿀템", limit=10, adapter=_adapter(), terms=["厨房好物"])
     check(len(svs) == 2, f"후보 2개 ({len(svs)})")
+    check(cur == 10, f"next_cursor 반환 ({cur})")
     check(svs[0].view_count == 88000, "조회수 상위 먼저")
     check(all(s.title_ko for s in svs), "title_ko 채워짐(폴백이라도)")
     check(all(isinstance(s.coupang_keywords, list) for s in svs), "coupang_keywords 리스트(폴백 빈배열)")
-    m = build_manifest("꿀템", "h", svs, terms=["厨房好物"])
+    m = build_manifest("꿀템", "h", svs, terms=["厨房好物"], next_cursor=cur)
     c0 = m["candidates"][0]
     check("title_ko" in c0 and "coupang_keywords" in c0 and m["search_terms"] == ["厨房好物"],
           "매니페스트에 title_ko·coupang_keywords·search_terms")
+    check(m.get("next_cursor") == 10, "매니페스트에 next_cursor")
 
 
 def test_write_manifest():
     print("[T2] 매니페스트 저장/재로드(검색어 포함)")
     with tempfile.TemporaryDirectory() as td:
-        svs = discover("꿀템", adapter=_adapter(), terms=["x"])
+        svs, _cur = discover("꿀템", adapter=_adapter(), terms=["x"])
         m = build_manifest("꿀템", "h1", svs, terms=["x", "y"])
         p = write_manifest("h1", m, base_dir=Path(td))
         got = json.loads(p.read_text(encoding="utf-8"))
@@ -75,7 +86,7 @@ def test_empty():
     def boom(url, data=None, timeout=60):
         raise RuntimeError("blocked")
     ad = TikwmAdapter(client=TikwmClient(http=boom))
-    svs = discover("x", adapter=ad, terms=["x"])
+    svs, _cur = discover("x", adapter=ad, terms=["x"])
     check(svs == [] and build_manifest("x", "h", svs)["count"] == 0, "빈 후보 안전")
 
 
@@ -166,18 +177,20 @@ def test_match_by_image():
     check(out3["best"] == -1, "같은 상품 없음 → best -1")
 
 
-def test_page_slicing():
-    print("[T8] page 슬라이스 — 새로고침이 다른(다음) 영상 + 매니페스트 page/nonce")
+def test_cursor_pagination():
+    print("[T8] 커서 페이지네이션 — 새로고침이 '진짜 다음' 새 영상 + 이미 본 것 제외")
     ad = _adapter()
-    p0 = discover("꿀템", limit=1, adapter=ad, terms=["x"])            # 상위 1개
-    p1 = discover("꿀템", limit=1, adapter=ad, terms=["x"], page=1)    # 다음 1개
-    p2 = discover("꿀템", limit=1, adapter=ad, terms=["x"], page=2)    # 풀 소진
-    check(len(p0) == 1 and p0[0].view_count == 88000, "page0 = 최고 조회수")
-    check(len(p1) == 1 and p1[0].view_count == 500, "page1 = 다음 영상")
-    check(p0[0].id != p1[0].id, "page0·page1 서로 다른 영상")
-    check(p2 == [], "풀 소진 → 빈 배치")
-    m = build_manifest("꿀템", "h", p1, terms=["x"], page=1, nonce="nX")
-    check(m.get("page") == 1 and m.get("nonce") == "nX", "매니페스트 page·nonce 기록")
+    p0, cur0 = discover("꿀템", limit=2, adapter=ad, terms=["x"], cursor=0)
+    check({s.title for s in p0} == {"많이 본 꿀템", "适量 적게 본 꿀템"}, "cursor0 = 첫 페이지 영상")
+    check(cur0 == 10, f"next_cursor=10 반환 ({cur0})")
+    p1, cur1 = discover("꿀템", limit=2, adapter=ad, terms=["x"], cursor=cur0)
+    check({s.title for s in p1} == {"다음 페이지 A", "다음 페이지 B"}, "cursor>0 = 진짜 다음 새 영상")
+    check({s.source_url for s in p0}.isdisjoint({s.source_url for s in p1}), "page0·page1 서로 다른 영상")
+    seen = [s.source_url for s in p1]
+    p1b, _c = discover("꿀템", limit=2, adapter=ad, terms=["x"], cursor=cur0, exclude=seen)
+    check(p1b == [], "exclude로 이미 본 것 제외 → 빈 결과")
+    m = build_manifest("꿀템", "h", p1, terms=["x"], nonce="nX", next_cursor=cur1)
+    check(m.get("nonce") == "nX" and m.get("next_cursor") == cur1, "매니페스트 nonce·next_cursor 기록")
 
 
 def test_naver_find_coupang():
@@ -214,7 +227,7 @@ def test_naver_find_coupang():
 
 def test_enrich_naver():
     print("[T7] enrich_naver — 후보에 네이버 정보 부착(finder 주입)")
-    svs = discover("꿀템", adapter=_adapter(), terms=["x"])
+    svs, _c = discover("꿀템", adapter=_adapter(), terms=["x"])
     def fake_finder(q):
         return {"real_title": f"진짜 {q}", "coupang": True, "coupang_title": f"쿠팡 {q}"}
     enrich_naver(svs, finder=fake_finder)
@@ -224,7 +237,7 @@ def test_enrich_naver():
           "매니페스트 후보에 naver.coupang_title")
 
     # 후보 이미지가 있으면 비전 대조로 best_match·confidence 부착(matcher 주입)
-    svs2 = discover("꿀템", adapter=_adapter(), terms=["x"])
+    svs2, _c2 = discover("꿀템", adapter=_adapter(), terms=["x"])
     def finder_cand(q):
         return {"coupang": True, "coupang_title": f"쿠팡 {q}",
                 "candidates": [{"title": "c1", "image": "http://i1"}, {"title": "c2", "image": "http://i2"}]}
@@ -235,10 +248,26 @@ def test_enrich_naver():
           "비전 대조 → best_match·confidence 부착")
 
 
+def test_merge_naver():
+    print("[T11] 네이버 다중검색 병합 — 후보 dedup + 쿠팡 보강(진짜 상품 확률↑)")
+    from src.sourcing.discover import _merge_naver
+    a = {"real_title": "A", "coupang": False, "coupang_title": "A",
+         "candidates": [{"title": "c1", "coupang": False}, {"title": "c2", "coupang": False}]}
+    b = {"real_title": "B", "coupang": True, "coupang_title": "쿠팡C", "coupang_lprice": "9000",
+         "candidates": [{"title": "c2", "coupang": False}, {"title": "c3", "coupang": True}]}
+    m = _merge_naver([a, b])
+    check({c["title"] for c in m["candidates"]} == {"c1", "c2", "c3"}, "후보 dedup 병합(c2 중복 제거)")
+    check(m["candidates"][0]["title"] == "c3", "쿠팡 항목 앞으로 정렬")
+    check(m["coupang"] is True and m["coupang_title"] == "쿠팡C", "쿠팡 판매 어느 검색에서든 잡히면 채택")
+    check(m["real_title"] == "A", "real_title=첫 결과")
+    check(_merge_naver([]) == {} and _merge_naver([{}, None]) == {}, "빈 입력 안전")
+
+
 if __name__ == "__main__":
     for fn in [test_discover_terms_and_ko, test_write_manifest, test_empty,
                test_translate_injected, test_describe_and_keywords, test_identify_by_image,
-               test_match_by_image, test_page_slicing, test_naver_find_coupang, test_enrich_naver]:
+               test_match_by_image, test_cursor_pagination, test_naver_find_coupang, test_enrich_naver,
+               test_merge_naver]:
         fn()
     print()
     if _fails:
