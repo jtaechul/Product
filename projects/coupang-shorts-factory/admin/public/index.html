@@ -40,6 +40,18 @@ nav button{
   font-size:15px; font-weight:700; cursor:pointer; border-bottom:3px solid transparent;
 }
 nav button.on{color:var(--accent); border-bottom-color:var(--accent)}
+/* ── 소싱(틱톡 발굴) 추천 카드 ── */
+.srccards{display:grid; grid-template-columns:repeat(auto-fill,minmax(148px,1fr)); gap:10px; margin-top:12px}
+.srccard{border:1px solid var(--line); border-radius:12px; overflow:hidden; cursor:pointer; background:#fff; transition:outline .1s}
+.srccard.sel{outline:3px solid var(--accent); outline-offset:-1px}
+.srcthumb{position:relative; aspect-ratio:9/16; background:#e9ecf1}
+.srcthumb img{width:100%; height:100%; object-fit:cover; display:block}
+.srcbadge{position:absolute; left:6px; bottom:6px; background:rgba(0,0,0,.66); color:#fff; font-size:11px; font-weight:600; padding:2px 7px; border-radius:9px}
+.srcpick{position:absolute; right:6px; top:6px; width:24px; height:24px; border-radius:50%; background:rgba(0,0,0,.45); color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px}
+.srccard.sel .srcpick{background:var(--accent)}
+.srcmeta{padding:6px 8px}
+.srctitle{font-size:12px; font-weight:600; line-height:1.32; max-height:3.1em; overflow:hidden}
+.srcsub{font-size:11px; color:#8a8f98; margin-top:3px}
 main{max-width:680px; margin:0 auto; padding:16px; display:flex; flex-direction:column}
 section{display:none}
 section.on{display:block}   /* order 속성으로 만들기 탭 내 섹션 순서: 상품→기획→이미지→제작 */
@@ -189,6 +201,7 @@ ol li{margin:8px 0}
   <div id="connMsg" role="alert"></div>
   <nav>
     <button data-tab="make" class="on">만들기</button>
+    <button data-tab="sourcing">소싱</button>
     <button data-tab="videos">영상</button>
     <button data-tab="store">스토어</button>
     <button data-tab="setup">설정</button>
@@ -351,6 +364,22 @@ ol li{margin:8px 0}
 </section>
 
 <!-- ───────── 영상 탭 ───────── -->
+<section id="tab-sourcing" data-group="sourcing">
+  <div class="card">
+    <h2>틱톡 소싱 — 영상 발굴 &amp; 선택</h2>
+    <p class="hint">키워드로 틱톡 쇼핑 쇼츠를 찾아 조회수 상위 <b>5~10개를 추천</b>합니다. 마음에 드는 걸 고르면 다음 단계에서 <b>자동 다운로드 → 자동 합성</b>에 씁니다. (무료·계정위험 없음)</p>
+    <div class="row2" style="gap:8px; align-items:center">
+      <input id="srcKeyword" placeholder="예: 주방 꿀템, 창틀 환풍기, 청소 꿀템" style="flex:1; min-width:0">
+      <button id="srcDiscover" class="btn">발굴하기</button>
+    </div>
+    <p id="srcStatus" class="hint" style="margin-top:8px"></p>
+    <div id="srcCards" class="srccards"></div>
+    <div class="row2" style="margin-top:12px">
+      <button id="srcSave" class="btn" style="display:none">선택 저장</button>
+    </div>
+  </div>
+</section>
+
 <section id="tab-videos">
   <div class="card">
     <h2>완성된 영상 <button class="btn mini sub" id="btnReloadVideos" style="float:right">새로고침</button></h2>
@@ -621,6 +650,7 @@ document.querySelectorAll("nav button").forEach((b) => {
     document.querySelectorAll("main section").forEach((s) =>
       s.classList.toggle("on", (s.dataset.group || s.id.replace("tab-", "")) === tab));
     if (tab === "make") makeInit();
+    if (tab === "sourcing") sourcingInit();
     if (tab === "videos") loadVideos();
     if (tab === "store") storeInit();
     if (tab === "setup") { bgmRefresh(); loadMemes(); sfxInit(); }
@@ -1548,6 +1578,82 @@ async function mkDispatch(inputs) {
   await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${WF}/dispatches`, {
     method: "POST", body: JSON.stringify({ ref: BRANCH, inputs }) });
 }
+
+/* ── 소싱(틱톡 발굴) — SSOT §6, 2026-07-26 ─────────────────────────────
+   키워드 → shorts-sourcing.yml 디스패치 → data/sources/discover/{hash}.json 폴링
+   → 추천 카드 다중선택 → data/sources/selection/{hash}.json 저장(다음: 자동 다운로드+합성). */
+const SRC_WF = "shorts-sourcing.yml";
+const srcDiscoverPath = (h) => `${P}/data/sources/discover/${h}.json`;
+const srcSelectionPath = (h) => `${P}/data/sources/selection/${h}.json`;
+let srcState = { hash: null, keyword: "", cands: [], selected: new Set() };
+function srcEsc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function sourcingInit() { /* 진입 시 특별 로드 없음 — 발굴은 버튼으로 시작 */ }
+async function srcDispatch(inputs) {
+  await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${SRC_WF}/dispatches`, {
+    method: "POST", body: JSON.stringify({ ref: BRANCH, inputs }) });
+}
+$("srcDiscover").onclick = (ev) => busy(ev.target, async () => {
+  const kw = ($("srcKeyword").value || "").trim();
+  if (!kw) { toast("키워드를 입력하세요"); return; }
+  const hash = await sha16("src:" + kw);
+  srcState = { hash, keyword: kw, cands: [], selected: new Set() };
+  $("srcCards").innerHTML = ""; $("srcSave").style.display = "none";
+  $("srcStatus").textContent = `'${kw}' 틱톡 발굴 중… (약 1분, 완료되면 자동 표시)`;
+  await srcDispatch({ keyword: kw, hash, limit: "10" });
+  toast("틱톡 발굴 시작 — 약 1분");
+  srcPoll(hash, 0);
+});
+async function srcPoll(hash, tries) {
+  if (srcState.hash !== hash) return;   // 다른 발굴이 시작됨 → 중단
+  let f = null;
+  try { f = await getFile(srcDiscoverPath(hash), true, true); } catch (_) {}
+  if (f) {
+    try {
+      const m = JSON.parse(f.text);
+      srcState.cands = m.candidates || [];
+      srcRenderCards();
+      $("srcStatus").textContent = srcState.cands.length
+        ? `추천 ${srcState.cands.length}개 — 쓸 영상을 눌러 고르세요.`
+        : "결과가 비었습니다(차단/키워드 문제). 다른 키워드로 다시 시도하세요.";
+      return;
+    } catch (_) {}
+  }
+  if (tries > 30) { $("srcStatus").textContent = "아직 결과를 못 받았습니다. 잠시 후 '발굴하기'를 다시 눌러주세요."; return; }
+  setTimeout(() => srcPoll(hash, tries + 1), 8000);
+}
+function srcRenderCards() {
+  const box = $("srcCards"); box.innerHTML = "";
+  for (const c of srcState.cands) {
+    const el = document.createElement("div");
+    const on0 = srcState.selected.has(c.id);
+    el.className = "srccard" + (on0 ? " sel" : "");
+    const views = (c.view_count || 0).toLocaleString();
+    const cover = c.cover ? `<img loading="lazy" src="${srcEsc(c.cover)}" alt="" onerror="this.style.display='none'">` : "";
+    el.innerHTML =
+      `<div class="srcthumb">${cover}<span class="srcbadge">${views} 조회</span><span class="srcpick">${on0 ? "✓" : "+"}</span></div>`
+      + `<div class="srcmeta"><div class="srctitle">${srcEsc(String(c.title || "").slice(0, 52))}</div>`
+      + `<div class="srcsub">@${srcEsc(c.uploader)} · ${c.duration || "?"}s</div></div>`;
+    el.onclick = () => {
+      const on = !srcState.selected.has(c.id);
+      if (on) srcState.selected.add(c.id); else srcState.selected.delete(c.id);
+      el.classList.toggle("sel", on);
+      el.querySelector(".srcpick").textContent = on ? "✓" : "+";
+      $("srcSave").style.display = srcState.selected.size ? "" : "none";
+      $("srcSave").textContent = `선택 저장 (${srcState.selected.size}개)`;
+    };
+    box.appendChild(el);
+  }
+}
+$("srcSave").onclick = (ev) => busy(ev.target, async () => {
+  if (!srcState.hash || !srcState.selected.size) { toast("고른 영상이 없습니다"); return; }
+  const picks = srcState.cands.filter((c) => srcState.selected.has(c.id));
+  const payload = { keyword: srcState.keyword, hash: srcState.hash, count: picks.length, picks };
+  let sha; try { const ex = await getFile(srcSelectionPath(srcState.hash), true, true); sha = ex && ex.sha; } catch (_) {}
+  await putFile(srcSelectionPath(srcState.hash), JSON.stringify(payload, null, 2) + "\n",
+    `sourcing(admin): 틱톡 선택 ${picks.length}개 — ${srcState.keyword}`, sha || undefined);
+  toast(`선택 ${picks.length}개 저장 완료`);
+  $("srcStatus").textContent = `선택 ${picks.length}개 저장됨 — 다음 단계(자동 다운로드+합성)에서 사용됩니다.`;
+});
 $("mkProduce").onclick = (ev) => busy(ev.target, async () => {
   const p = mkSelected(); if (!p) return;
   await mkDispatch({ mode: "produce", row: String(p.row), no_upload: "true" });
