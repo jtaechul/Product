@@ -291,6 +291,21 @@
     여전히 금지 — 미제작만, 테스트 통과분만 승격). NOAA OER·커먼스 소싱으로 후보가 실제 제작 가능해졌으니
     안전. `pipeline.run_reels` auto 분기가 후보 0일 때 호출, 승격 실패 시에만 '소싱하기' 안내로 중단.
     collection_base(marine_life 등)는 훅 COPY가 손작성이라 미적용(별도 과제). 회귀: `test_auto_replenish`.
+  - **★★원장 저장(커밋) 실패 = 중복 제작의 진짜 원인(운영자 확정 · 실사고 · 절대 회귀 금지)**:
+    매일 자동 제작이 `error: cannot rebase: You have unstaged changes`로 5회 재시도 전부 실패해
+    도감 원장에 '만들었음' 기록이 **안 남았고**, 다음날 실행이 같은 대상을 '미제작'으로 판단해
+    **같은 영상(자막만 다름)이 무한 반복**됐다(실사고: bathynomus, run #160·162·163). 원인은 **두 겹**:
+    - ⓐ **`git add`는 매치 안 되는 경로가 하나라도 있으면 전체가 fatal**로 죽어 **아무것도 staged되지
+      않는다**(실측 exit 128 · staged 0건). 기존 코드는 그 실패를 `2>/dev/null || true`로 삼켜
+      "변경 없음"처럼 조용히 지나갔다 → **경로별로 따로 `git add`** 한다(`for p in $PATHS; do git add "$p" ...`).
+      한 파일이 없어져도 나머지는 반드시 저장된다. **다시 `git add $PATHS` 한 줄로 되돌리지 말 것.**
+    - ⓑ 파이프라인이 갱신하는 상태 파일 중 **PATHS에 빠진 것**이 dirty로 남아 rebase가 거부됐다 →
+      누락분(`src/categories/_video_cache.json`(카테고리 폴더 **밖**), `*/*_image_only.json`)을 PATHS에
+      추가하고, **커밋 직후 + 매 rebase 시도 전에 `git checkout -- .`로 워킹트리를 정리**한다
+      (커밋은 이미 끝났으므로 저장할 내용은 잃지 않는 항구적 안전망).
+    검증(실git 시뮬레이션): 옛 방식은 동일 에러로 재현 → 수정본은 **원격 선행 + dirty 동시 상황에서
+    첫 시도에 저장 성공**, 남의 선행 커밋도 보존. 구현: `.github/workflows/generate-short.yml`
+    "Commit ledgers + content records" 스텝.
   - 원장(`catalog.json`)은 반드시 커밋돼야 이 판단이 회차 간 유지된다(워크플로 커밋 스텝 필수). 이 판단은 **커밋된 제작 원장(카테고리별 `*_catalog.json`)**을
   기준으로 하므로, 원장이 커밋되지 않으면 CI가 매번 새 컨테이너로 떠서 "전부 미제작"으로 오판 →
   **항상 첫 대상만 반복 생성**된다(침몰선이 3회 연속 같은 배로 나온 실제 사고). 따라서:

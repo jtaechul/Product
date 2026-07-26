@@ -312,20 +312,41 @@ jobs:
           #   (침몰선 catalog 미커밋 → 매번 같은 배가 나오던 문제 해결). glob으로 전 카테고리 원장 포함.
           # discovered.json = 소싱·승인으로 풀에 추가된 대상 / *_candidates.json = 검토 대기 목록.
           #   둘 다 커밋해야 회차 간 유지 + 중복 방지(제작 시 후보→풀 승격 반영).
-          PATHS="short-movie-generator/src/categories/deep_sea/used_species.json short-movie-generator/src/categories/deep_sea/catalog.json short-movie-generator/src/categories/*/*_catalog.json short-movie-generator/src/categories/*/discovered.json short-movie-generator/src/categories/*/*_candidates.json short-movie-generator/content"
-          git add $PATHS 2>/dev/null || true
+          # ★★저장 실패 재발방지(운영자 확정 · 실사고: 매일 'cannot rebase: You have unstaged
+          #   changes'로 5회 재시도 전부 실패 → 도감 원장에 '만들었음' 기록이 안 남아 다음날 또 같은
+          #   대상을 미제작으로 판단 → 같은 영상 무한 반복). 원인은 두 겹이었다:
+          #   ⓐ 파이프라인이 갱신하는 상태 파일 중 PATHS에 **빠진 것**이 있었다 —
+          #      `_video_cache.json`(영상 URL 캐시 · 카테고리 폴더 '밖')과 `*_image_only.json`.
+          #      기존 glob `src/categories/*/*_candidates.json` 등으로는 둘 다 안 잡힌다.
+          #   ⓑ 그렇게 남은 unstaged 변경이 있으면 git이 rebase를 거부한다.
+          #   → ⓐ PATHS에 두 파일을 추가하고, ⓑ 커밋 뒤 **워킹트리를 깨끗이 정리한 다음** rebase한다
+          #     (커밋 대상 외 산출물이 또 생겨도 저장이 죽지 않도록 하는 항구적 안전망).
+          PATHS="short-movie-generator/src/categories/deep_sea/used_species.json short-movie-generator/src/categories/deep_sea/catalog.json short-movie-generator/src/categories/*/*_catalog.json short-movie-generator/src/categories/*/discovered.json short-movie-generator/src/categories/*/*_candidates.json short-movie-generator/src/categories/*/*_image_only.json short-movie-generator/src/categories/_video_cache.json short-movie-generator/content"
+          # ⚠ `git add A B C`는 **하나라도 매치 안 되면 전체가 fatal**로 죽어 아무것도 staged되지
+          #   않는다(실측: exit 128 · staged 0건). 기존 코드는 그 실패를 `2>/dev/null || true`로
+          #   삼켜 "변경 없음"처럼 조용히 지나갔다 — 파일 하나만 없어져도 원장이 통째로 미저장.
+          #   → 경로별로 따로 add해서 한 경로가 없어도 나머지는 반드시 저장되게 한다.
+          for p in $PATHS; do git add "$p" 2>/dev/null || true; done
           if git diff --cached --quiet; then
             echo "변경 없음"; exit 0
           fi
+          echo "저장 대상:"; git diff --cached --name-only | sed 's/^/  /'
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: 원장·콘텐츠 레코드 갱신 [skip ci]"
+          # ★rebase 전 워킹트리 정리 — 커밋에 담지 않은 추적파일 변경이 남아 있으면 rebase가 거부된다.
+          #   커밋은 위에서 이미 끝났으므로 여기서 되돌려도 저장할 내용은 잃지 않는다.
+          git checkout -- . 2>/dev/null || true
+          if ! git diff --quiet; then
+            echo "::warning::정리 후에도 unstaged 변경이 남음:"; git status --porcelain | head -20
+          fi
           TARGET="${{ github.ref_name }}"
           # 원격이 앞서가 있어도(non-fast-forward) 재정렬 후 재시도 → 레코드가 저장 안 되던 문제 방지
           # ★manifest.json 충돌 자동 복구: manifest는 레코드의 파생물이라 충돌 시 레코드에서
           #   재생성(rebuild_manifest)해 리베이스를 잇는다(같은 충돌 5회 반복 → 런 실패하던 #41 수정).
           for i in 1 2 3 4 5; do
             git fetch origin "$TARGET" || { sleep 3; continue; }
+            git checkout -- . 2>/dev/null || true   # 매 시도 전 정리(unstaged로 인한 rebase 거부 방지)
             if ! git rebase "origin/$TARGET"; then
               if git status --porcelain | grep -q "content/manifest.json"; then
                 (cd short-movie-generator && python -c "from src.core import content_store; content_store.rebuild_manifest('.')")
