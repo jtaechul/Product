@@ -3046,8 +3046,9 @@ export default {
   },
 
   // Cron Trigger — 두 가지 스케줄로 분기한다.
-  //   "0 23 * * *" : 매일 오전 8시(KST=UTC+9) — 일일 자동 캐럿셀 생성(1일 1회)
-  //   "* * * * *"  : 매 1분 — 진행중 파이프라인을 한 단계씩 전진
+  //   "0 23 * * *" : 매일 오전 8시(KST=UTC+9) — 일일 자동 생성. 2026-07 운영 일시중단으로
+  //                  wrangler.toml crons에서 제거됨(분기 코드는 재개 대비 유지).
+  //   "* * * * *"  : 매 1분 — 진행중 파이프라인을 한 단계씩 전진(수동 실행 지원)
   async scheduled(event, env, ctx) {
     if (event.cron === '0 23 * * *') {
       ctx.waitUntil(runDailyAuto(env, 'morning'));
