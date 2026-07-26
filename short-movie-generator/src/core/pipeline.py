@@ -229,6 +229,24 @@ def _cap_body_chunks(chunks: list[str], max_chars: int = _MAX_BODY_CHARS,
     return out
 
 
+# ★구독 유도(나레이션) — 확정 문안. 본문의 감정적 마무리 **뒤에** 한 번만 붙인다.
+#   ·敬体(です・ます) 유지 ·과장·강요 금지 ·댓글 유도는 넣지 않는다(캡션 전용 — rich_caption._CTA_*).
+#   ·자막 카라오케 단위에 맞춰 짧은 절 2개로 쪼갠다.
+_CTA_BODY_JP = ["チャンネル登録で、", "次の深海も、いっしょに。"]
+_CTA_BODY_JP_DOC = ["チャンネル登録で、", "次の物語も、いっしょに。"]
+
+
+def _append_cta(chunks: list[str], doc: bool = False) -> list[str]:
+    """본문 마지막에 구독 유도 절을 덧붙인다(중복이면 그대로). 길이 상한 컷 **이후**에 호출해
+    CTA가 잘려나가지 않게 한다."""
+    cta = _CTA_BODY_JP_DOC if doc else _CTA_BODY_JP
+    if not chunks:
+        return chunks
+    if any(c.strip() in {x.strip() for x in cta} for c in chunks[-3:]):
+        return chunks
+    return list(chunks) + list(cta)
+
+
 def run_reels(
     category_id: str,
     query: str,
@@ -328,7 +346,11 @@ def run_reels(
         chunks = category.reels_body_script(info) if hasattr(category, "reels_body_script") else None
     if not chunks:
         raise PipelineError("script", "본문 일본어 대본 생성 불가(시드/LLM 필요)")
-    chunks = _cap_body_chunks(chunks)   # ★길이 상한(쇼츠 40초 규칙): 과길이 본문을 ~30초로 컷
+    # ★길이 상한(쇼츠 40초 규칙): 과길이 본문을 ~30초로 컷. 뒤에 붙는 구독 유도 절만큼 예산을 미리
+    #   빼두어, CTA를 더해도 총 길이가 규칙(40초 내외)을 넘지 않게 한다.
+    _cta_len = sum(len(c) for c in (_CTA_BODY_JP_DOC if fv.get("doc") else _CTA_BODY_JP))
+    chunks = _cap_body_chunks(chunks, max_chars=_MAX_BODY_CHARS - _cta_len)
+    chunks = _append_cta(chunks, doc=bool(fv.get("doc")))   # 마무리 뒤 구독 유도 1회(댓글 유도 없음)
     nar = narration_sync.synthesize(chunks, str(work_dir))
     if not nar.get("mp3") or not nar.get("disp"):
         raise PipelineError("tts", "나레이션 합성 실패")

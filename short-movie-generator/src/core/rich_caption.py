@@ -51,6 +51,7 @@ _PROMPT = """あなたは日本の海洋生物系メディアの一流ライタ�
   ③生息地(水深{depth}m・分布{dist}・環境{hab})を情景として描く →
   ④「確かな事実」から2〜3個を選び、各事実を**3〜4行**かけて「なぜ・どんな姿・どんな暮らし」を理由や比喩とともに厚く描く →
   ⑤結び2行「心に残ったら保存を」「同じ海を想う誰かへシェアを」の主旨 → ⑥最終行「映像: {credit}」。
+- ★チャンネル登録・コメントへの誘導文は**書かないこと**(システムが確定文言で自動追記します)。
 - 一文の長短にリズムをつけ、専門用語は噛み砕く。
 ■ ko_caption: jp_caption の完全な韓国語訳(日本語を一切残さない、自然で**同じ分量**の韓国語)。**存待말(〜습니다/〜입니다)で統一**、반말禁止。
 ■ hashtags: **その生き物の内容に即した具体的タグを1〜2個**(例: 種の通称・特徴。#深海/#海洋生物/#Shorts 等の汎用・形式タグは不要 — 固定共通タグはシステムが付ける)。 ko_hashtags: その韓国語訳。
@@ -223,6 +224,38 @@ def _evergreen(seed: str, ko: bool, n: int = 2) -> list[str]:
     return out
 
 
+# ★구독·댓글 유도(운영자 확정 · 캡션 전용). 검토 결론: 나레이션(음성)에 댓글 유도를 넣으면
+#   ①대본의 '감정적 마무리' 여운이 광고 멘트로 무너지고 ②쇼츠에서 가장 비싼 마지막 3초를 써서
+#   시청완료율(알고리즘 핵심 지표)을 깎으며 ③초기 채널은 댓글 0개가 '아무도 안 보는 채널' 신호가
+#   된다 → **댓글 유도는 캡션(설명란)에만** 둔다. 구독 유도는 자산 가치가 커서 캡션·나레이션 양쪽.
+#   질문형은 '다음 편 소재 요청형'(운영자 선택) — 답하기 쉽고 달린 댓글이 다음 소재가 되며,
+#   경외 톤을 깨지 않는다. ★논쟁형(귀엽다 vs 무섭다)은 폐기 — 사실 기반 톤과 충돌하고
+#   무해한 종에 '무섭다' 프레임을 씌워 하드룰(사실 왜곡 금지)에도 걸린다.
+_CTA_JP = ("チャンネル登録で、次の深海もいっしょに。",
+           "次はどの生き物が気になりますか。コメントで教えてください。")
+_CTA_KO = ("다음 심해도 함께 보고 싶다면 구독해 주세요.",
+           "다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.")
+
+
+def _with_cta(text: str, ko: bool) -> str:
+    """캡션 말미(크레딧 줄 앞)에 구독·댓글 유도를 삽입. 이미 있으면 넣지 않는다(중복 방지).
+    LLM 캡션·결정론 폴백 **양쪽 모두**에 적용해 문구가 항상 일관되게 들어가도록 한다."""
+    cta = _CTA_KO if ko else _CTA_JP
+    t = text or ""
+    add = [c for c in cta if c not in t]
+    if not add:
+        return t
+    cred_tag = "영상:" if ko else "映像:"
+    lines = t.split("\n")
+    ci = next((k for k, ln in enumerate(lines) if ln.strip().startswith(cred_tag)), len(lines))
+    body = lines[:ci]
+    while body and not body[-1].strip():
+        body.pop()
+    tail = lines[ci:]
+    merged = body + list(add) + ([""] + tail if tail else [])
+    return "\n".join(merged)
+
+
 def _pad_to_floor(text: str, seed: str, ko: bool, credit: str) -> str:
     """캡션이 바닥 분량 미만이면 상시 서술을 크레딧 앞에 끼워 넣어 분량을 채운다(날조 없음)."""
     if len(text or "") >= _CAPTION_FLOOR:
@@ -275,7 +308,7 @@ def _fallback(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
         ko_lines.append(feature_ko + ".")
     ko_lines += ["", "마음이 복잡한 날, 다시 꺼내보고 싶다면 저장해 두세요.",
                  "같은 바다가 궁금한 사람에게 조용히 건네주세요.", "", f"영상: {credit}"]
-    ko = _pad_to_floor("\n".join(ko_lines), sci or jp_name, ko=True, credit=credit)
+    ko = _with_cta(_pad_to_floor("\n".join(ko_lines), sci or jp_name, ko=True, credit=credit), ko=True)
     # 일본어 캡션 — 일본어 요소 + 세계공통 학명·수심으로 서술(분포·서식지는 한국어라 제외)
     jp_lines = [f"{hook_line1}{hook_line2}", "",
                 f"{jp_name}(学名: {sci})。" if show_sci_name else f"{jp_name}。"]
@@ -284,7 +317,7 @@ def _fallback(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
     jp_lines += [f"{feature_line}。",
                 "深い海の底で、たしかに命をつないでいる一種です。", "",
                 "心に残ったら保存を。", "同じ海が気になる人へシェアを。", "", f"映像: {credit}"]
-    jp = _pad_to_floor("\n".join(jp_lines), sci or jp_name, ko=False, credit=credit)
+    jp = _with_cta(_pad_to_floor("\n".join(jp_lines), sci or jp_name, ko=False, credit=credit), ko=False)
     tags_ko = default_tags_ko if default_tags_ko else _ko_tags(default_tags, jp_name, ko_name)
     default_tags = _final_tags(default_tags, jp_name, fixed_tag)
     tags_ko = _final_tags(tags_ko, ko_name, fixed_tag_ko)
@@ -413,6 +446,8 @@ def generate(info: SpeciesInfo, jp_name: str, sci_name: str, feature_line: str,
             tk = _fallback_titles(info, jp_name, f"{hook_line1}{hook_line2}", hook_ko)[1]
         jp_tags = _final_tags(tags, jp_name, fixed_tag)
         ko_final = _final_tags(ko_tags, info.common_name_ko or jp_name, fixed_tag_ko)
+        # ★구독·댓글 유도는 LLM에 맡기지 않고 시스템이 확정 문구로 삽입(문구 일관 + 누락 방지).
+        jp, ko = _with_cta(jp, ko=False), _with_cta(ko, ko=True)
         return {"jp": jp, "ko": ko,
                 "tags": jp_tags, "tags_ko": ko_final,
                 "yt_title": _title_with_tags(tj, jp_tags),

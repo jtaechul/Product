@@ -1328,6 +1328,18 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     shutil.move(body_final, final)   # 오프닝 훅 영상 카드 없이 본문이 그대로 최종본
     thumb_out = str(thumb_path) if thumb_path.exists() else ""
 
+    # 8-0) ★설명란 CTA(구독+댓글) — 챕터 목차보다 **위**에 둔다(목차 아래는 접혀서 안 보임).
+    #      나레이션에는 넣지 않는다(마무리 여운·시청완료율 보호). 문구는 릴스 캡션과 동일 출처.
+    try:
+        from src.core.rich_caption import _CTA_JP as _CJ, _CTA_KO as _CK
+        for _k, _cta in (("desc_jp", _CJ), ("desc_ko", _CK)):
+            _t = (meta.get(_k) or "").strip()
+            _add = [c for c in _cta if c not in _t]
+            if _add:
+                meta[_k] = (_t + ("\n\n" if _t else "") + "\n".join(_add)).strip()
+    except Exception as e:  # noqa: BLE001
+        log.info("[narrate] 설명란 CTA 삽입 생략: %s", e)
+
     # 8) ★설명란에 타임스탬프(구체 챕터) 삽입(롱폼) — 오프닝 훅 영상 폐지로 본문은 항상 0초부터 시작
     if mode == "longform" and chapters:
         titles_jp = [t for _, t in chapters]
