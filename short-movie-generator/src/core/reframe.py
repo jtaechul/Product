@@ -774,6 +774,7 @@ def _parse_cut_specs(raw, src_dur: float, target_dur: float) -> list[dict] | Non
             dropped.append(f"{s0:.1f}~{(_f(it.get('end')) or 0):.1f}s")
             continue
         spans.append({"s": s0, "e": e0, "crop_x": _f(it.get("crop_x")),
+                      "zoom": _f(it.get("zoom")),
                       "mode": str(it.get("mode") or "").strip().lower()})
     if dropped:
         log.warning("[reframe] 지정 컷 %d개가 소스 길이(%.1fs)를 벗어나 제외됨: %s",
@@ -798,6 +799,7 @@ def _parse_cut_specs(raw, src_dur: float, target_dur: float) -> list[dict] | Non
         role = _role_for(i, len(spans))
         plan.append({"start": start, "len": ln, "mode": mode, "role": role,
                      "push": _ROLE_PUSH.get(role, 1.03), "crop_x": sp["crop_x"],
+                     "zoom": sp.get("zoom"),
                      "src_start": sp["s"], "src_end": sp["e"]})
     return plan
 
@@ -893,6 +895,12 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                         "-vf", "fps=5,scale=480:-1", str(fr_dir / "f_%04d.jpg")], check=True)
         frames = sorted(fr_dir.glob("f_*.jpg"))
     cents = [_subject_centroid(str(f)) for f in frames] or [(0.5, 0.5)]
+    # ★②-0 운영자 지정 줌 배율(zoom · 운영자 확정 "줌 범위도 내가 정한다"):
+    #   1.0=원본을 넓게(전체구도) · 1.5~2.0=피사체를 크게 당김. 지정하면 그 컷의 자동 줌 계산
+    #   (점유율 상한·얼굴 중앙 보정·여러마리 완화)을 **전부 무시**하고 이 배율로 고정한다.
+    #   줌을 지정한 컷은 '핏(전체 담기)'이 아니라 **크롭(closeup) 렌더**로 강제해야 배율이 실제로 먹는다.
+    m_zoom = _f(man.get("zoom"))
+
     # ★② 운영자 지정 크롭 위치(crop_x): 피사체 자동 추적을 끄고 가로 중심을 고정한다
     #   (0=왼쪽 끝 · 0.5=가운데 · 1=오른쪽 끝). 추적이 엉뚱한 곳을 잡을 때 운영자가 직접 고정.
     m_cropx = _f(man.get("crop_x"))
@@ -967,6 +975,14 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
     #   나머지 1/3만 완만한 접사(줌인) — 심해생물은 얼굴을 화면 중앙에 두고 크롭.
     n_fit = 0
     for i, cut in enumerate(plan):
+        # ★운영자 지정 줌(컷별 > 전역). 지정되면 그 컷은 반드시 크롭 렌더(closeup)로 간다 —
+        #   '핏' 컷은 원본 전체를 담는 방식이라 배율 개념이 없어 지정이 무시되기 때문이다.
+        cz = _f(cut.get("zoom"))
+        if cz is None:
+            cz = m_zoom
+        if cz is not None:
+            cz = max(1.0, min(2.5, cz))     # 과확대·축소 방지(1.0=원본 넓게 ~ 2.5배)
+            cut["mode"] = "closeup"
         sa = cut["start"]
         seg_len = cut["len"]
         seg_out = wd / f"rf_{i}.mp4"
@@ -1024,6 +1040,31 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
             if _ccx is not None:
                 fx = max(0.0, min(1.0, float(_ccx)))
                 log.info("[reframe] 컷%d 크롭 가로위치 운영자 지정: %.2f", i, fx)
+            if cz is not None:
+                # ★운영자 지정 줌: 아래 자동 보정(점유율 상한·얼굴 중앙·여러마리 완화·리빌 상한)을
+                #   전부 건너뛴다. 사람이 정한 값이 자동 판단보다 우선(운영자 확정).
+                z = cz
+                log.info("[reframe] 컷%d 줌 배율 운영자 지정: %.2f배", i, z)
+                cw = int(round((src_h * W / H) / z)) & ~1
+                ch = int(round(src_h / z)) & ~1
+                cw = min(cw, int(src_w)) & ~1
+                cx = int(min(max(fx * src_w - cw / 2, 0), src_w - cw))
+                cy = int(min(max(fy * src_h - ch / 2, 0), src_h - ch))
+                pre_vf = ""
+                if logo_box:
+                    cx, cy, need_dl = _logo_avoid(cx, cy, cw, ch, fx * src_w, fy * src_h,
+                                                  src_w, src_h, logo_box)
+                    if need_dl:
+                        pre_vf = delogo_vf(src_w, src_h, logo_box) + ","
+                vf = f"{pre_vf}crop={cw}:{ch}:{cx}:{cy},scale={W}:{H},setsar=1,{GRADE}"
+                pv = (_pushin(cut.get("push", 1.0), seg_len) if wide
+                      else _motion_vf(cut.get("role", "detail"), i, seg_len))
+                if pv:
+                    vf = f"{vf},{pv}"
+                cmd += ["-vf", vf, str(seg_out)]
+                subprocess.run(cmd, check=True)
+                lines.append(f"file '{seg_out.name}'")
+                continue
             # ★단일/다수 판별(_subject_focus의 분산도) — 여러 마리면 전체구도를 남기려 줌을 완화.
             #   (무게중심은 여러 마리일 때 개체 사이를 겨누므로, 넓은 크롭이라야 전원이 화면에 남는다.)
             seg_fr = [str(frames[j]) for j in range(max(0, fa), min(len(frames), fb))] or \

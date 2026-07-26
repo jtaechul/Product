@@ -154,10 +154,64 @@ jobs:
           fi
           done
 
+      # ★원본 미리보기 mp4(운영자 확정 "소싱할 때 미리"): 소싱 원본 대다수가 WebM(VP8)이라
+      #   아이폰에서 재생이 안 돼 **구간·줌을 눈으로 정할 수가 없었다**. 소싱 단계에서 480p mp4를
+      #   만들어 릴리스에 올리고, 그 URL을 영상 캐시(_video_cache.json)에 적어 둔다 →
+      #   관리자 상세의 '구간·줌 다시 잡기'가 이 파일을 재생한다(원본과 초가 동일).
+      - name: 원본 미리보기 mp4 생성 + Release 업로드 (아이폰 구간 지정용)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAXN: "6"
+        run: |
+          TAG="source-preview"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --title "Source previews" \
+              --notes "구간·줌 지정용 원본 미리보기(480p mp4·자동)" --target "${{ github.ref_name }}"
+          BASE="${{ github.server_url }}/${{ github.repository }}/releases/download/$TAG"
+          mkdir -p work/preview
+          python - "$BASE" "$MAXN" <<'PY' > work/preview/uploaded.txt
+          import re, sys, tempfile
+          from pathlib import Path
+          from src.core import footage, source_preview
+          base, maxn = sys.argv[1], int(sys.argv[2])
+          cache = footage._video_cache()
+          tmp = Path(tempfile.mkdtemp())
+          made = 0
+          for key, ref in list(cache.items()):
+              if made >= maxn:
+                  break
+              if ref.get("preview_url") or not ref.get("url"):
+                  continue                      # 이미 있으면 건너뜀(매번 새로 만들지 않는다)
+              slug = re.sub(r"[^a-z0-9]+", "_", key.lower()).strip("_") or "src"
+              raw = tmp / f"{slug}_raw"
+              if not footage._download(ref["url"], raw):
+                  continue
+              out = Path("work/preview") / f"srcprev_{slug}.mp4"
+              if source_preview.make_preview_mp4(str(raw), str(out)):
+                  ref["preview_url"] = f"{base}/{out.name}"
+                  cache[key] = ref
+                  made += 1
+                  print(out.name)
+              try:
+                  raw.unlink(missing_ok=True)
+              except Exception:
+                  pass
+          if made:
+              footage._VIDEO_CACHE_PATH.write_text(
+                  __import__("json").dumps(cache, ensure_ascii=False, indent=1, sort_keys=True),
+                  encoding="utf-8")
+          print(f"# 미리보기 {made}건 생성", file=sys.stderr)
+          PY
+          if ls work/preview/*.mp4 >/dev/null 2>&1; then
+            gh release upload "$TAG" work/preview/*.mp4 --clobber
+          fi
+
       - name: 후보 파일 커밋
         run: |
           cd "$GITHUB_WORKSPACE"
           git add short-movie-generator/src/categories/*/*_candidates.json 2>/dev/null || true
+          git add short-movie-generator/src/categories/_video_cache.json 2>/dev/null || true
           if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

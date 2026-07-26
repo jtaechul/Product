@@ -29,6 +29,18 @@ on:
         description: "라이선스(public-domain / cc0 / cc-by / cc-by-sa / kogl-type1)"
         required: false
         default: ""
+      crop_x:
+        description: "크롭 가로 위치 0~1 (0=왼쪽·0.5=가운데·1=오른쪽) — 비우면 자동"
+        required: false
+        default: ""
+      cuts:
+        description: "컷 전환 수(3~8) — 비우면 자동"
+        required: false
+        default: ""
+      zoom:
+        description: "줌 배율 1.0~2.5 (1.0=원본 넓게 · 1.5~2.0=피사체 당김) — 비우면 자동"
+        required: false
+        default: ""
       cut_specs:
         description: '컷별 구간 직접 지정 — 결과를 보고 다시 잡을 때. 예 "0-6, 20-27, 41-48" 또는 JSON'
         required: false
@@ -116,6 +128,9 @@ jobs:
             --credit "${{ inputs.credit }}" \
             --license-id "${{ inputs.license_id }}" \
             --cut-specs "${{ inputs.cut_specs }}" \
+            --crop-x "${{ inputs.crop_x }}" \
+            --cuts "${{ inputs.cuts }}" \
+            --zoom "${{ inputs.zoom }}" \
             --out-name "$NAME" $TRARG)
           echo "출력: $OUT"
           echo "out=$OUT" >> "$GITHUB_OUTPUT"

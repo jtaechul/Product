@@ -715,24 +715,14 @@ async function renderNarrateDetail(id,fresh){
         // ★결과를 보고 구간을 다시 잡는 패널(운영자 확정 "일단 만들고 내가 고치기").
         //   원본을 여기서 재생하고, 원하는 지점에서 버튼을 눌러 컷 구간을 채운 뒤 재제작한다.
         (rec.source_url?(
-          '<details class="tok" id="nvcutbox" style="margin-top:10px"><summary>구간 다시 잡기 — 원본 보고 컷 지정</summary>'+
-            '<div class="hint" style="margin:6px 0 8px">원본을 재생해 원하는 지점에서 <b>시작/끝</b> 버튼을 누르면 아래 칸이 채워집니다. '+
-              '한 줄이라도 채우면 <b>지정한 컷만</b> 사용해 다시 만듭니다.</div>'+
-            '<video id="nvsrc" controls playsinline preload="metadata" style="width:100%;border-radius:10px;background:#000"></video>'+
-            '<div class="hint" id="nvsrcinfo" style="margin:6px 0"></div>'+
-            [0,1,2,3].map(function(i){return ''+
-              '<div class="row2" style="margin-bottom:5px;align-items:center">'+
-                '<span class="hint" style="min-width:40px">컷 '+(i+1)+'</span>'+
-                '<input id="nc'+i+'a" placeholder="시작(초)" inputmode="decimal" style="flex:1">'+
-                '<input id="nc'+i+'b" placeholder="끝(초)" inputmode="decimal" style="flex:1">'+
-                '<button class="mini" data-nvmk="'+i+'a" style="flex:1">여기 시작</button>'+
-                '<button class="mini" data-nvmk="'+i+'b" style="flex:1">여기 끝</button>'+
-              '</div>';}).join('')+
-            '<button class="btn save" id="nvcutgo" style="margin-top:8px">이 구간으로 다시 만들기</button>'+
+          '<details class="tok" id="nvcutbox" style="margin-top:10px"><summary>구간·줌 다시 잡기 — 내가 직접 지정해서 다시 만들기</summary>'+
+            cutEditorHTML("nc")+
+            '<button class="btn save" id="ncgo" style="margin-top:8px">이 설정으로 다시 만들기 (같은 회차 덮어쓰기)</button>'+
           '</details>'
         ):'')+
         '<button class="btn" id="nvdel" style="background:#8b1a1a;color:#fff;grid-column:1/-1">이 영상 삭제 (영구)</button></div>'+
       '<div class="hint" style="margin-top:6px">'+
+        '<b>구간·줌 다시 잡기</b>는 원본을 보며 컷 구간·줌 배율·크롭 위치를 직접 정해 <b>같은 회차에 덮어써</b> 다시 만듭니다(5~15분). '+
         '<b>제목 재생성</b>은 대본으로 제목·훅을 다시 만들고 <b>썸네일도 새 제목으로 함께</b> 다시 그립니다(2~5분 · 영상 유지'+(rec.source_url?'':' · 원본 URL이 없어 이 건은 텍스트만 갱신')+'). '+
         '<b>설명 재생성</b>은 설명·해시태그만 다시 만듭니다(1~2분 · 타임스탬프 목차 유지). '+
         '<b>썸네일만 재생성</b>은 문구는 그대로 두고 배경 장면만 다시 고릅니다(2~5분). '+
@@ -748,44 +738,19 @@ async function renderNarrateDetail(id,fresh){
   if(md.thumb_url){const th=document.getElementById("thdl");if(th)th.onclick=()=>saveVideo(prox(md.thumb_url),id+"_thumb.jpg",{btn:"#thdl",hint:"#thhint",mime:"image/jpeg",kind:"이미지"});}
   const rgn=document.getElementById("nvregen");
   if(rgn&&rec.source_url)rgn.onclick=()=>regenNarrate(id,rec.source_url,rec.mode||"shorts");
-  // 구간 다시 잡기: 원본 재생 + 재생위치를 컷 칸에 채우기 + 그 구간으로 재제작
+  // ★구간·줌 다시 잡기(공용 패널): 미리보기 mp4 → 커먼스 트랜스코드 → 원본 순으로 재생하고,
+  //   지정한 컷·줌·크롭으로 **같은 회차에 덮어써** 다시 만든다(운영자 확정).
   const _cb=$("#nvcutbox");
   if(_cb&&rec.source_url){
     _cb.addEventListener("toggle",()=>{
-      if(!_cb.open) return;
-      const v=$("#nvsrc"); if(!v||v.src) return;
-      // ★재생 후보 순서(운영자 확정 · 아이폰 재생 불가 사고 수정): ①제작 때 만든 **원본 미리보기
-      //   mp4(480p)** ②커먼스 480p 트랜스코드 ③원본. 소싱 원본은 대부분 WebM(VP8)이라 아이폰
-      //   사파리가 아예 재생하지 못했다 → 구간을 눈으로 정할 방법이 없었다. mp4가 있으면 그걸 쓴다.
-      //   (mp4는 원본을 자르지 않고 화질만 낮춘 것이라 **초 단위가 원본과 동일**하다)
-      const cands=[md.source_mp4_url, nvTranscode(rec.source_url), rec.source_url].filter(Boolean);
-      let ci=0;
-      const play=()=>{ v.src=prox(cands[ci]); v.load(); };
-      play();
-      v.onloadedmetadata=()=>{$("#nvsrcinfo").innerHTML="원본 길이 <b>"+v.duration.toFixed(1)+"초</b>"+
-        (md.source_mp4_url&&ci===0?" · 미리보기 화질(구간 지정용)":"")+
-        ' · <a href="'+esc(rec.source_url)+'" target="_blank" style="color:var(--cy)">원본 링크</a>';};
-      v.onerror=()=>{ if(ci<cands.length-1){ci++;play();return;}
-        banner("이 브라우저가 원본 형식을 재생하지 못합니다. 원본이 WebM이면 '전체 다시 제작'을 한 번 돌리면 재생용 mp4가 함께 만들어집니다.","err");};
+      if(!_cb.open||_cb.dataset.ready)return;
+      _cb.dataset.ready="1";
+      bindCutEditor("nc",[md.source_mp4_url, nvTranscode(rec.source_url), rec.source_url],()=>{
+        const inp=cutEditorInputs("nc");
+        if(!Object.keys(inp).length){banner("컷 구간·줌·크롭 중 최소 하나는 지정하세요.","err");return;}
+        regenNarrate(id,rec.source_url,rec.mode||"shorts",inp);
+      });
     });
-    _cb.querySelectorAll("[data-nvmk]").forEach(b=>{b.onclick=()=>{
-      const v=$("#nvsrc"); if(!v) return;
-      const t=Math.round((v.currentTime||0)*10)/10;
-      const el=$("#nc"+b.dataset.nvmk); if(el){el.value=String(t);
-        banner("컷 "+(parseInt(b.dataset.nvmk)+1)+" "+(b.dataset.nvmk.endsWith("a")?"시작":"끝")+" = "+t+"초","ok");}
-    };});
-    const go=$("#nvcutgo");
-    if(go)go.onclick=()=>{
-      const specs=[];
-      for(let i=0;i<4;i++){
-        const a=($("#nc"+i+"a")||{}).value, b=($("#nc"+i+"b")||{}).value;
-        if(!a||!b) continue;
-        const o={start:parseFloat(a), end:parseFloat(b)};
-        if(o.end>o.start) specs.push(o);
-      }
-      if(!specs.length){banner("컷을 최소 하나는 지정하세요(시작·끝 모두).","err");return;}
-      regenNarrate(id,rec.source_url,rec.mode||"shorts",JSON.stringify(specs));
-    };
   }
   const dub=document.getElementById("nvdub");
   if(dub&&rec.source_url)dub.onclick=()=>regenNarrateDub(id,rec.source_url,rec.mode||"longform");
@@ -891,15 +856,91 @@ function nvTranscode(u){
     return u.replace("/commons/","/commons/transcoded/")+"/"+u.split("/").pop()+".480p.vp9.webm";
   }catch(e){return "";}
 }
-async function regenNarrate(id,sourceUrl,mode,cutSpecs){
+// ★★구간·줌 편집 패널(운영자 확정 · 도감형/나레이션형 공용).
+//   운영자 요구: "영상 구간이랑 줌 범위는 내가 직접 정하겠다. 자동으로만 만들어지면 안 된다."
+//   → 결과를 보고 이 패널에서 **컷별 구간 + 크롭 가로위치 + 줌 배율 + 컷 수**를 정한 뒤
+//     같은 회차로 다시 만든다(덮어쓰기). 비워두면 그 항목만 자동.
+function cutEditorHTML(pfx){
+  const rows=[0,1,2,3].map(function(i){return ''+
+    '<div class="row2" style="margin-bottom:5px;align-items:center">'+
+      '<span class="hint" style="min-width:40px">컷 '+(i+1)+'</span>'+
+      '<input id="'+pfx+i+'a" placeholder="시작(초)" inputmode="decimal" style="flex:1">'+
+      '<input id="'+pfx+i+'b" placeholder="끝(초)" inputmode="decimal" style="flex:1">'+
+      '<button class="mini" data-mk="'+pfx+i+'a" style="flex:1">여기 시작</button>'+
+      '<button class="mini" data-mk="'+pfx+i+'b" style="flex:1">여기 끝</button>'+
+    '</div>';}).join('');
+  const sel=(id,label,opts)=>'<span class="lbl">'+label+'</span><select id="'+id+'" style="margin-bottom:6px">'+opts+'</select>';
+  return ''+
+    '<div class="hint" style="margin:6px 0 8px">원본을 재생해 원하는 지점에서 <b>여기 시작 / 여기 끝</b>을 누르면 칸이 채워집니다. '+
+      '한 줄이라도 채우면 <b>지정한 컷만</b> 사용합니다(자동 컷 선택 안 함).</div>'+
+    '<video id="'+pfx+'vid" controls playsinline preload="metadata" style="width:100%;border-radius:10px;background:#000"></video>'+
+    '<div class="hint" id="'+pfx+'info" style="margin:6px 0"></div>'+
+    rows+
+    sel(pfx+'zoom','줌 배율 — 얼마나 당길지',
+        '<option value="">자동</option><option value="1.0">1.0배 (원본 넓게·전체구도)</option>'+
+        '<option value="1.2">1.2배 (살짝 당김)</option><option value="1.5">1.5배 (보통 접사)</option>'+
+        '<option value="1.8">1.8배 (많이 당김)</option><option value="2.2">2.2배 (아주 크게)</option>')+
+    sel(pfx+'crop','크롭 가로 위치 — 세로화면에 담을 좌우 부분',
+        '<option value="">자동 (피사체 추적)</option><option value="0.15">왼쪽</option>'+
+        '<option value="0.35">가운데-왼쪽</option><option value="0.5">정가운데</option>'+
+        '<option value="0.65">가운데-오른쪽</option><option value="0.85">오른쪽</option>')+
+    sel(pfx+'cuts','컷 수 — 구도가 바뀌는 횟수',
+        '<option value="">자동 (기본 4컷)</option><option value="3">3컷</option>'+
+        '<option value="4">4컷</option><option value="5">5컷</option><option value="6">6컷</option>');
+}
+// 편집 패널 값 → 워크플로 inputs(비운 항목은 넣지 않는다 = 그 항목만 자동)
+function cutEditorInputs(pfx){
+  const V=id=>((document.getElementById(id)||{}).value||"").trim();
+  const specs=[], zoom=V(pfx+'zoom'), crop=V(pfx+'crop');
+  for(let i=0;i<4;i++){
+    const a=V(pfx+i+'a'), b=V(pfx+i+'b');
+    if(!a||!b) continue;
+    const o={start:parseFloat(a), end:parseFloat(b)};
+    if(!(o.end>o.start)) continue;
+    if(crop) o.crop_x=parseFloat(crop);
+    if(zoom) o.zoom=parseFloat(zoom);
+    specs.push(o);
+  }
+  const inp={};
+  if(specs.length) inp.cut_specs=JSON.stringify(specs);
+  if(zoom) inp.zoom=zoom;
+  if(crop) inp.crop_x=crop;
+  if(V(pfx+'cuts')) inp.cuts=V(pfx+'cuts');
+  return inp;
+}
+// 원본 재생 배선: 후보 URL을 순서대로 시도(아이폰에서 WebM이 안 되므로 mp4 미리보기 우선)
+function bindCutEditor(pfx, cands, onGo){
+  const v=document.getElementById(pfx+"vid"); if(!v) return;
+  const list=(cands||[]).filter(Boolean); let ci=0;
+  const play=()=>{ if(ci>=list.length){
+      const el=document.getElementById(pfx+"info");
+      if(el)el.innerHTML='이 브라우저가 원본 형식을 재생하지 못합니다(대개 WebM). '+
+        '<b>소싱하기</b>를 한 번 돌리면 재생용 mp4가 만들어집니다.';
+      return; }
+    v.src=prox(list[ci]); v.load(); };
+  v.onloadedmetadata=()=>{const el=document.getElementById(pfx+"info");
+    if(el)el.innerHTML="원본 길이 <b>"+v.duration.toFixed(1)+"초</b> · 이 초를 그대로 컷에 적으세요.";};
+  v.onerror=()=>{ci++;play();};
+  play();
+  document.querySelectorAll("[data-mk^='"+pfx+"']").forEach(b=>{b.onclick=()=>{
+    const t=Math.round((v.currentTime||0)*10)/10;
+    const el=document.getElementById(b.dataset.mk);
+    if(el){el.value=String(t); banner("입력됨: "+t+"초","ok");}
+  };});
+  const go=document.getElementById(pfx+"go"); if(go&&onGo)go.onclick=onGo;
+}
+
+// extra = 편집 패널이 만든 워크플로 inputs(cut_specs·zoom·crop_x·cuts). 없으면 자동 재제작.
+async function regenNarrate(id,sourceUrl,mode,extra){
   if(!authReady()){banner("재생성에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
   if(!sourceUrl){banner("원본 URL 정보가 없어 재생성할 수 없습니다.","err");return;}
-  const note=cutSpecs?"지정한 구간으로 다시 만듭니다.":"같은 원본으로 처음부터 다시 만듭니다.";
+  const hasEx=extra&&Object.keys(extra).length;
+  const note=hasEx?"지정한 구간·줌으로 다시 만듭니다.":"같은 원본으로 처음부터 다시 만듭니다.";
   if(!confirm(note+"\\n\\n같은 화면(주소)이 새 결과로 갱신됩니다(5~15분).\\n계속할까요?"))return;
   banner("재제작 요청 중… ("+note+" · 5~15분)");
   try{
-    const inputs={video_url:sourceUrl,mode:(mode||"shorts"),content_id:String(id)};
-    if(cutSpecs) inputs.cut_specs=cutSpecs;
+    const inputs=Object.assign({video_url:sourceUrl,mode:(mode||"shorts"),content_id:String(id)},
+                               (typeof extra==="string"?{cut_specs:extra}:(extra||{})));
     const r=await fetch(API+"/actions/workflows/"+NV_WF+"/dispatches",{method:"POST",headers:headers(true),
       body:JSON.stringify({ref:BRANCH,inputs})});
     if(r.status===204)banner("재생성 시작! 5~15분 뒤 이 화면을 새로고침하면 새 결과가 표시됩니다.","ok");
@@ -1213,6 +1254,13 @@ async function renderDetail(id){
       '<button class="btn" id="big" style="grid-column:1/3;background:#c13584;color:#fff">인스타 릴스 발행</button>'+
       '<button class="btn" id="bdel" style="grid-column:1/3;background:#8b1a1a;color:#fff">이 제작물 삭제 (영상·기록 영구 삭제)</button>'+
     '</div>'+
+    // ★구간·줌 직접 지정(운영자 확정): 자동으로 만든 결과가 마음에 안 들 때 여기서 잡아 다시 만든다.
+    //   같은 회차에 덮어쓴다(운영자 선택). 비운 항목은 그 항목만 자동.
+    '<details class="tok" id="cutbox" style="margin-top:10px">'+
+      '<summary>구간·줌 다시 잡기 — 내가 직접 지정해서 다시 만들기</summary>'+
+      cutEditorHTML("ce")+
+      '<button class="btn save" id="cego" style="margin-top:8px">이 설정으로 다시 만들기 (같은 회차 덮어쓰기)</button>'+
+    '</details>'+
     postSection(rec.post)+
     '<div class="hint">이미지 출처: '+esc(src.image_credit||"—")+'<br>정보 출처: '+esc((src.info_sources||[]).join(" · ")||"—")+'</div>';
 
@@ -1231,6 +1279,27 @@ async function renderDetail(id){
   $("#bigp").onclick=()=>igPublish(id,true);
   $("#big").onclick=()=>{if(confirm("이 릴스를 인스타그램(@abyss_0cean)에 실제로 발행합니다. 되돌릴 수 없어요. 진행할까요?"))igPublish(id,false);};
   $("#bdel").onclick=()=>deleteContent(id,"reel");
+  // ★구간·줌 편집 패널: 열 때 원본을 찾아 재생(미리보기 mp4 우선 — 아이폰에서 WebM 재생 불가).
+  //   원본 URL은 레코드에 없고 소싱 캐시(_video_cache.json)에 학명 키로 들어 있다.
+  const _cb=document.getElementById("cutbox");
+  if(_cb)_cb.addEventListener("toggle",async()=>{
+    if(!_cb.open||_cb.dataset.ready)return;
+    _cb.dataset.ready="1";
+    let cands=[];
+    try{
+      const txt=await fetchRaw("short-movie-generator/src/categories/_video_cache.json");
+      const cache=JSON.parse(txt||"{}");
+      const key=String(sp.scientific_name||"").trim().toLowerCase();
+      const ref=cache[key]||cache["wreck "+key]||null;
+      if(ref)cands=[ref.preview_url, ref.url].filter(Boolean);
+    }catch(e){}
+    bindCutEditor("ce",cands,()=>{
+      const inp=cutEditorInputs("ce");
+      if(!Object.keys(inp).length){banner("컷 구간·줌·크롭 중 최소 하나는 지정하세요.","err");return;}
+      if(!confirm("지정한 구간·줌으로 이 회차를 다시 만듭니다(같은 번호에 덮어쓰기).\\n진행할까요?"))return;
+      regen(id,"video",inp);
+    });
+  });
   const shBtn=document.getElementById("shup");
   if(shBtn)shBtn.onclick=()=>uploadShort(id);
 }
@@ -1479,13 +1548,13 @@ async function igPublish(id,probe){
   }catch(e){banner("요청 실패: "+e,"err");}
 }
 
-async function regen(id,scope){
+async function regen(id,scope,extra){
   if(!authReady()){banner("재생성에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
   banner("재생성 요청 중… ("+scope+")");
   const viz="panzoom"; // 현 시스템은 reels(실사 재편집·무료) 고정 — Veo 미사용(워크플로가 --mode reels 강제)
   try{
     const r=await fetch(API+"/actions/workflows/"+WF+"/dispatches",{method:"POST",headers:headers(true),
-      body:JSON.stringify({ref:BRANCH,inputs:{content_id:id,scope:scope,visualizer:viz}})});
+      body:JSON.stringify({ref:BRANCH,inputs:Object.assign({content_id:id,scope:scope,visualizer:viz},extra||{})})});
     if(r.status===204)banner("재생성 시작! 완료되면 이 페이지 미디어/캡션이 갱신됩니다(새로고침).","ok");
     else{const t=await r.text();banner("실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
   }catch(e){banner("요청 실패: "+e,"err");}

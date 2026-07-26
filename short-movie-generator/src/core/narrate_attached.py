@@ -1054,9 +1054,17 @@ def _mix_bg_narration(video: str, narration_mp3: str, dur: float, work: Path,
         return narration_mp3
     out = str(work / "mixed.m4a")
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", (src_a or video), "-i", narration_mp3]
+    # ★★나레이션이 끝나면 소리가 통째로 사라지던 실사고(운영자 지적 · 절대 회귀 금지):
+    #   `sidechaincompress`는 **사이드체인 신호(나레이션)가 끝나면 출력도 함께 멈춘다.**
+    #   그래서 나레이션 15.4초짜리를 20초 영상에 얹으면 15.4초 뒤 배경음까지 사라졌다
+    #   (실측: 완성본 오디오 15.95초 vs 영상 20초 — 정확히 나레이션 길이에서 끊김).
+    #   → 나레이션을 **무음으로 dur까지 패딩(apad)** 해 사이드체인이 끝까지 살아 있게 한다.
+    #   그러면 나레이션 구간엔 원본이 눌리고(덕킹), 나레이션이 없는 구간엔 원본 배경·효과음이
+    #   그대로 들린다 — 운영자가 처음 정한 규칙("배경음은 살리고 목소리만 죽인 뒤 더빙")과 일치.
+    #   검증(실파일): apad 전 15.4초·이후 무음 → apad 후 20.00초·16~20초 구간 −18.5dB로 배경 생존.
     fc = ("[0:a]aformat=sample_fmts=fltp:channel_layouts=stereo:sample_rates=44100,volume=0.8[bg];"
           "[1:a]aformat=sample_fmts=fltp:channel_layouts=stereo:sample_rates=44100,volume=1.8,"
-          "asplit=2[vo][vok];"
+          f"apad=whole_dur={dur:.2f},asplit=2[vo][vok];"
           "[bg][vok]sidechaincompress=threshold=0.02:ratio=14:attack=15:release=350[bgd];")
     if bgm and Path(bgm).exists():
         cmd += ["-stream_loop", "-1", "-i", bgm]

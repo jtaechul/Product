@@ -51,6 +51,10 @@ on:
         description: "컷 전환 수(3~8) — 비우면 기본 4"
         required: false
         default: ""
+      zoom:
+        description: "줌 배율 1.0~2.5 (1.0=원본 넓게 · 1.5~2.0=피사체 당김) — 비우면 자동"
+        required: false
+        default: ""
       cut_specs:
         description: '컷별 구간 직접 지정(자동 컷 선택 대체) — 예 "0-6, 20-27, 41-48, 62-70" 또는 JSON'
         required: false
@@ -276,6 +280,7 @@ jobs:
           if [ -n "${{ inputs.src_end }}" ];   then MAN_ARGS="$MAN_ARGS --src-end ${{ inputs.src_end }}"; fi
           if [ -n "${{ inputs.crop_x }}" ];    then MAN_ARGS="$MAN_ARGS --crop-x ${{ inputs.crop_x }}"; fi
           if [ -n "${{ inputs.cuts }}" ];      then MAN_ARGS="$MAN_ARGS --cuts ${{ inputs.cuts }}"; fi
+          if [ -n "${{ inputs.zoom }}" ];      then MAN_ARGS="$MAN_ARGS --zoom ${{ inputs.zoom }}"; fi
           # ★컷별 구간은 공백·쉼표가 들어가므로 반드시 따옴표로 감싼다(단어 분리 방지).
           CUT_SPECS='${{ inputs.cut_specs }}'
           # ★찾은 영상으로 제작: URL·제목·라이선스·크레딧을 그대로 넘긴다(공백 포함 → 반드시 따옴표).
