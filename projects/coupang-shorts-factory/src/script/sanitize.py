@@ -85,8 +85,10 @@ def product_avoid_terms(product) -> list:
     name = str(product.get("name") or "").strip()
     if name:
         terms.append(name)
+        # ⭐ 소싱 상품은 이름이 '브랜드+모델'이 아니라 일반 서술어(예: "무선 충전식 고압 세척기")라,
+        #   첫 토큰을 브랜드로 오탐해 지우면 문장이 깨진다("무선이라"→"이라"). no_brand_token이면 생략.
         toks = [t for t in name.split() if len(t) >= 2]
-        if len(toks) >= 3:
+        if len(toks) >= 3 and not product.get("no_brand_token"):
             terms.append(toks[0])   # 브랜드(첫 토큰)
     extra = product.get("avoid_onscreen") or product.get("avoid_terms") or []
     if isinstance(extra, str):
