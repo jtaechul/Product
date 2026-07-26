@@ -297,6 +297,23 @@
     "youtube_url": "https://youtu.be/K2rwgOQhvPA"
   },
   {
+    "id": "048",
+    "kind": "reels",
+    "common_name_ko": "Sepia mestus",
+    "common_name_en": "Sepia mestus",
+    "scientific_name": "Sepia mestus",
+    "date": "2026-07-26",
+    "youtube_url": "https://youtu.be/J1VWVWmsHSw"
+  },
+  {
+    "id": "049",
+    "kind": "reels",
+    "common_name_ko": "Coelorinchus caelorhincus",
+    "common_name_en": "Coelorinchus caelorhincus",
+    "scientific_name": "Coelorinchus caelorhincus",
+    "date": "2026-07-26"
+  },
+  {
     "id": "lf-3",
     "kind": "longform",
     "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
@@ -336,15 +353,6 @@
     "date": "2026-07-25",
     "has_video": true,
     "youtube_url": "https://youtu.be/-1gfSI8n26Y"
-  },
-  {
-    "id": "048",
-    "kind": "reels",
-    "common_name_ko": "Sepia mestus",
-    "common_name_en": "Sepia mestus",
-    "scientific_name": "Sepia mestus",
-    "date": "2026-07-26",
-    "youtube_url": "https://youtu.be/J1VWVWmsHSw"
   },
   {
     "id": "nv-30200041879",

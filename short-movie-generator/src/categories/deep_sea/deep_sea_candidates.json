@@ -46,47 +46,5 @@
     "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_bathynomus_29755719911.jpg",
     "video_status": "video",
     "video_source": "File:Bathynomus giganteus.webm"
-  },
-  {
-    "kind": "creature",
-    "key": "coelorinchus caelorhincus",
-    "needs_confirm": false,
-    "title": "File:Otolithes de grenadier raton (Coelorinchus caelorhinchus-Coelorhynchus coelorhynchus) (Ifremer 00677-78952 - 31898).jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Otolithes_de_grenadier_raton_%28Coelorinchus_caelorhinchus-Coelorhynchus_coelorhynchus%29_%28Ifremer_00677-78952_-_31898%29.jpg",
-    "license": "cc-by",
-    "credit": "Isabelle Cheret · CC BY",
-    "source": "File:Otolithes de grenadier raton (Coelorinchus caelorhinchus-Coelorhynchus coelorhynchus) (Ifremer 00677-78952 - 31898).jpg",
-    "name": "Coelorinchus caelorhincus",
-    "name_ja": "",
-    "common_name_ko": "Coelorinchus caelorhincus",
-    "common_name_en": "Coelorinchus caelorhincus",
-    "depth": "90-1485",
-    "facts": [
-      "The hollowsnout grenadier (Coelorinchus caelorhincus), also called the blackspot grenadier, is a species of fish in the family Macrouridae.",
-      "The specific name derives from Greek κοῖλος (koilos, \"hollow\") and ῥύγχος (rhynchos, \"snout\")."
-    ],
-    "fact_src": "Wikipedia (en)",
-    "species": {
-      "scientific_name": "Coelorinchus caelorhincus",
-      "common_name_ko": "Coelorinchus caelorhincus",
-      "common_name_en": "Coelorinchus caelorhincus",
-      "depth_range_m": "90-1485",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "The hollowsnout grenadier (Coelorinchus caelorhincus), also called the blackspot grenadier, is a species of fish in the family Macrouridae.",
-        "The specific name derives from Greek κοῖλος (koilos, \"hollow\") and ῥύγχος (rhynchos, \"snout\")."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Otolithes de grenadier raton (Coelorinchus caelorhinchus-Coelorhynchus coelorhynchus) (Ifremer 00677-78952 - 31898).jpg)"
-      ]
-    },
-    "media_kind": "photo",
-    "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Otolithes_de_grenadier_raton_%28Coelorinchus_caelorhinchus-Coelorhynchus_coelorhynchus%29_%28Ifremer_00677-78952_-_31898%29.jpg",
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-deep_sea/thumb_deep_sea_coelorinchus_caelorhincus_29755719911.jpg",
-    "video_status": "video",
-    "video_source": "NOAA OER EX1803 DIVE15 (https://www.ncei.noaa.gov/metadata/granule/geoportal/opensearch)"
   }
 ]
