@@ -18,7 +18,8 @@ from src.sourcing.discover import build_manifest, discover, enrich_naver, write_
 from src.sourcing.naver_shop import find_coupang, search_shop                   # noqa: E402
 from src.sourcing.tiktok_tikwm import TikwmAdapter, TikwmClient                 # noqa: E402
 from src.sourcing.translate import (                                            # noqa: E402
-    describe_and_keywords_ko, expand_zh_terms, identify_by_image, translate_titles_ko)
+    describe_and_keywords_ko, expand_zh_terms, identify_by_image, match_naver_by_image,
+    translate_titles_ko)
 
 _fails = []
 
@@ -141,6 +142,30 @@ def test_identify_by_image():
     check(out2[0]["zh"] == [] and out2[0]["ko"] == "挂钩", "이미지 없음 → 제목 폴백(zh 빈)")
 
 
+def test_match_by_image():
+    print("[T10] 비전 이미지 대조 — 틱톡 썸네일 vs 네이버 후보 이미지 → 같은 상품 자동 선택")
+
+    def fake_fetch(url):
+        return ("IMG", "image/jpeg") if url else None
+
+    def call_match(body):
+        imgs = sum(1 for p in body["contents"][0]["parts"] if "inline_data" in p)
+        assert imgs == 3, f"썸네일1+후보2=3 이미지 기대, 실제 {imgs}"   # 다중 이미지 전송 확인
+        return {"candidates": [{"content": {"parts": [{"text": '{"best":1,"confidence":"high","reason":"같은 만두기"}'}]}}]}
+
+    cands = [{"title": "A", "image": "http://a.jpg"}, {"title": "B", "image": "http://b.jpg"}]
+    out = match_naver_by_image("http://cover.jpg", cands, call=call_match, fetch=fake_fetch)
+    check(out["best"] == 1 and out["confidence"] == "high", "같은 상품 후보 인덱스+확신도(high)")
+
+    out2 = match_naver_by_image("", cands, call=call_match, fetch=lambda u: None)
+    check(out2 == {"best": 0, "confidence": "unknown"}, "썸네일 없음 → best0·unknown(최상위 유지)")
+
+    def call_none(body):
+        return {"candidates": [{"content": {"parts": [{"text": '{"best":-1,"confidence":"low"}'}]}}]}
+    out3 = match_naver_by_image("http://c.jpg", cands, call=call_none, fetch=fake_fetch)
+    check(out3["best"] == -1, "같은 상품 없음 → best -1")
+
+
 def test_page_slicing():
     print("[T8] page 슬라이스 — 새로고침이 다른(다음) 영상 + 매니페스트 page/nonce")
     ad = _adapter()
@@ -198,11 +223,22 @@ def test_enrich_naver():
     check("naver" in c0 and c0["naver"].get("coupang_title", "").startswith("쿠팡 "),
           "매니페스트 후보에 naver.coupang_title")
 
+    # 후보 이미지가 있으면 비전 대조로 best_match·confidence 부착(matcher 주입)
+    svs2 = discover("꿀템", adapter=_adapter(), terms=["x"])
+    def finder_cand(q):
+        return {"coupang": True, "coupang_title": f"쿠팡 {q}",
+                "candidates": [{"title": "c1", "image": "http://i1"}, {"title": "c2", "image": "http://i2"}]}
+    def fake_matcher(cover, cands):
+        return {"best": 1, "confidence": "high", "reason": "같음"}
+    enrich_naver(svs2, finder=finder_cand, matcher=fake_matcher)
+    check(all(s.naver.get("best_match") == 1 and s.naver.get("match_confidence") == "high" for s in svs2),
+          "비전 대조 → best_match·confidence 부착")
+
 
 if __name__ == "__main__":
     for fn in [test_discover_terms_and_ko, test_write_manifest, test_empty,
                test_translate_injected, test_describe_and_keywords, test_identify_by_image,
-               test_page_slicing, test_naver_find_coupang, test_enrich_naver]:
+               test_match_by_image, test_page_slicing, test_naver_find_coupang, test_enrich_naver]:
         fn()
     print()
     if _fails:

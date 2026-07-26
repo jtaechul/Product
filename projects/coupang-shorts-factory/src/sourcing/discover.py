@@ -17,7 +17,7 @@ from src.sourcing.base import Seed
 from src.sourcing.models import SOURCES_DIR, SourceVideo
 from src.sourcing.naver_shop import find_coupang
 from src.sourcing.tiktok_tikwm import TikwmAdapter
-from src.sourcing.translate import expand_zh_terms, identify_by_image
+from src.sourcing.translate import expand_zh_terms, identify_by_image, match_naver_by_image
 
 DISCOVER_DIR = SOURCES_DIR / "discover"
 
@@ -33,9 +33,12 @@ def _candidate(sv: SourceVideo) -> dict:
             "download_url": sv.download_url, "cover": sv.cover}
 
 
-def enrich_naver(svs: list, finder=find_coupang) -> None:
+def enrich_naver(svs: list, finder=find_coupang, matcher=match_naver_by_image) -> None:
     """후보마다 네이버 쇼핑으로 '진짜 상품명 + 쿠팡 판매 여부' 부착(키 없으면 조용히 스킵).
-    검색어는 후보의 첫 쿠팡 검색어(없으면 한국어 설명)를 쓴다. finder 주입 가능(테스트)."""
+    검색어는 후보의 첫 쿠팡 검색어(없으면 한국어 설명)를 쓴다. finder/matcher 주입 가능(테스트).
+
+    ⭐ 비전 자동 대조(2026-07-26 사용자 아이디어): 네이버 후보 이미지들을 틱톡 썸네일과 비교해
+    '같은 상품'을 자동 선택(best_match)하고 확신도(match_confidence)를 붙인다 — 운영자의 ② 기본선택 보조."""
     for s in svs:
         q = (s.coupang_keywords[0] if s.coupang_keywords else None) or s.title_ko or s.title
         if not q:
@@ -46,6 +49,16 @@ def enrich_naver(svs: list, finder=find_coupang) -> None:
             print(f"[discover] 네이버 확인 실패: {e}")
             info = {}
         if info:
+            cands = info.get("candidates") or []
+            if cands and s.cover:
+                try:
+                    m = matcher(s.cover, cands)
+                    info["best_match"] = m.get("best", 0)
+                    info["match_confidence"] = m.get("confidence", "unknown")
+                    if m.get("reason"):
+                        info["match_reason"] = m["reason"]
+                except Exception as e:
+                    print(f"[discover] 이미지 대조 실패: {e}")
             s.naver = info
 
 
