@@ -32,9 +32,20 @@ def load_promo_selection(product_hash: str, base_dir: Path | None = None) -> lis
     return [SourceVideo.from_dict(v) for v in (data.get("videos") or [])]
 
 
+def _default_adapter():
+    """tikwm 어댑터를 확실히 얻는다. get_adapter는 tiktok_tikwm이 import된 뒤에만 채워지는데
+    produce 경로는 그 모듈을 안 불러 레지스트리가 비어 None이 나온다(실동작 E2E로 발견) →
+    없으면 직접 import·생성(부작용으로 register도 실행)."""
+    ad = get_adapter("tiktok_tikwm")
+    if ad is None:
+        from src.sourcing.tiktok_tikwm import TikwmAdapter
+        ad = TikwmAdapter()
+    return ad
+
+
 def download_clips(videos: list, dest_dir, adapter=None) -> list:
     """선택 영상들을 다운로드 → [(SourceVideo, Path)] (실패 영상은 건너뜀). 어댑터 주입 가능(테스트)."""
-    ad = adapter or get_adapter("tiktok_tikwm")
+    ad = adapter or _default_adapter()
     dest_dir = Path(dest_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
     out = []

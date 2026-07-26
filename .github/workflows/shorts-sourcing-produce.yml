@@ -74,6 +74,10 @@ jobs:
 
       - name: 제작 실행 (TTS 키 있으면 나레이션, 없으면 무음)
         env:
+          # ⚠️ settings.yaml tts.provider=gemini(구어체 우수·사용자 확정) → Gemini 키 필수.
+          #    이게 없으면 resolve_provider('gemini')가 예외로 제작 전체가 실패한다(소싱 E2E로 발견).
+          SHORTS_GEMINI_API_KEY: ${{ secrets.SHORTS_GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SHORTS_ELEVENLABS_API_KEY: ${{ secrets.SHORTS_ELEVENLABS_API_KEY }}
           SHORTS_TYPECAST_API_KEY: ${{ secrets.SHORTS_TYPECAST_API_KEY }}
           SHORTS_CLOVA_CLIENT_ID: ${{ secrets.SHORTS_CLOVA_CLIENT_ID }}
