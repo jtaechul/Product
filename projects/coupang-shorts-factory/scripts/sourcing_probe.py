@@ -1,83 +1,96 @@
-"""소싱 실현성 프로브 (SSOT §6.2 — 자동 크롤이 GitHub Actions에서 되는지 판정).
+"""틱톡 소싱 실현성 프로브 (SSOT §6.2 · 2026-07-26 사용자 확정 방향).
 
-GitHub Actions 러너의 데이터센터 IP에서 yt-dlp가 유튜브·틱톡 소싱 소스에 실제로 닿는지
-**메타데이터만** 조회해 확인한다(다운로드·재게시 없음 → 저작권·부하 부담 0).
+사용자 결정: 유튜브 제외, **틱톡만** 소싱·자동 다운로드. GA가 틱톡에 직접 붙는 건 봇차단
+(1차 프로브 확인)이라, '틱톡 다운로더 서비스'(공개 API)를 경유해 우회한다(사용자 제안).
 
-판정:
-- youtube: 검색(ytsearch) + 개별 영상 메타 추출이 되면 VIABLE
-- tiktok : 해시태그 페이지 추출이 되면 VIABLE
-러너 IP 차단은 보통 'Sign in to confirm you're not a bot' / HTTP 429·403으로 드러난다.
+이 프로브는 무료 서비스(tikwm)가 GitHub Actions 러너에서 실제로 되는지 확인한다:
+  1) 검색(발굴): 키워드로 틱톡 쇼츠 목록을 받는가  → 운영자에게 5~10개 추천 가능?
+  2) 취득(다운로드): 무워터마크 재생 URL에서 실제 영상 바이트를 받는가
 
-읽는 법: 잡 로그의 'VERDICT:' 줄과 각 테스트의 [OK]/[FAIL] 을 본다. 항상 exit 0(정보성).
+메타 + 소량(1개) 다운로드만. 항상 exit 0(정보성). 잡 로그의 'VERDICT:' 를 본다.
+비공식 API라 불안정 가능 → 실제 구현은 서비스 교체 가능한 어댑터로 감싼다.
 """
 import json
 import sys
+import urllib.parse
+import urllib.request
 
-BOT_MARKERS = ("sign in to confirm", "not a bot", "http error 429",
-               "http error 403", "captcha", "too many requests", "rate")
+UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
+BASE = "https://www.tikwm.com"
+KEYWORD = "꿀템"
 
 
-def classify(detail: str) -> str:
-    d = (detail or "").lower()
-    if any(m in d for m in BOT_MARKERS):
-        return "IP차단추정(봇체크/429/403)"
-    return "기타오류"
+def http(url, data=None, timeout=45):
+    body = urllib.parse.urlencode(data).encode() if data else None
+    req = urllib.request.Request(url, data=body,
+                                 headers={"User-Agent": UA, "Accept": "*/*"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read()
+
+
+def search(keywords):
+    """tikwm 키워드 검색 — POST 우선, 실패 시 GET. (how, json|err) 반환."""
+    last = None
+    for how in ("post", "get"):
+        try:
+            params = {"keywords": keywords, "count": 6, "cursor": 0, "hd": 1}
+            if how == "post":
+                raw = http(f"{BASE}/api/feed/search", data=params)
+            else:
+                raw = http(f"{BASE}/api/feed/search?" + urllib.parse.urlencode(params))
+            j = json.loads(raw)
+            if j.get("code") == 0:
+                return how, j
+            last = f"code={j.get('code')} msg={j.get('msg')}"
+        except Exception as e:
+            last = f"{type(e).__name__}: {str(e)[:130]}"
+    return None, last
 
 
 def main() -> int:
-    try:
-        import yt_dlp
-    except Exception as e:
-        print(f"[FATAL] yt-dlp 임포트 실패: {e}")
-        print("VERDICT: youtube=UNKNOWN tiktok=UNKNOWN (yt-dlp 미설치)")
-        return 0
+    results = {}
 
-    print(f"[env] yt-dlp {getattr(yt_dlp.version, '__version__', '?')}")
-    results = []
+    print(f"── 틱톡 무료 우회(tikwm) · 키워드='{KEYWORD}' ──")
+    how, j = search(KEYWORD)
+    vids = []
+    if how:
+        vids = ((j.get("data") or {}).get("videos")) or []
+    ok_search = len(vids) > 0
+    first = vids[0] if vids else {}
+    results["search"] = {"ok": ok_search, "how": how, "n": len(vids),
+                         "err": None if how else j,
+                         "first_title": str(first.get("title", ""))[:40],
+                         "first_id": first.get("video_id"),
+                         "first_views": first.get("play_count")}
+    if ok_search:
+        print(f"  [OK  ] 검색({how}): {len(vids)}건 · 첫 제목={str(first.get('title',''))[:34]} · 조회={first.get('play_count')}")
+    else:
+        print(f"  [FAIL] 검색: {j}")
 
-    def run(name, target, flat, search):
-        r = {"name": name, "target": target, "ok": False, "detail": ""}
-        opts = {"quiet": True, "no_warnings": True, "skip_download": True,
-                "noplaylist": True, "socket_timeout": 30, "retries": 2,
-                "extract_flat": bool(flat)}
+    # 취득: 첫 결과의 무워터마크 재생 URL에서 실제 바이트 소량 확인
+    play = first.get("play")
+    if play and not play.startswith("http"):
+        play = BASE + play
+    if play:
         try:
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                info = ydl.extract_info(target, download=False)
-            if search:
-                ents = [e for e in ((info or {}).get("entries") or []) if e]
-                r["ok"] = len(ents) > 0
-                r["detail"] = f"{len(ents)}건" + (f" · 첫제목={str(ents[0].get('title',''))[:34]}" if ents else "")
-                r["_first_id"] = ents[0].get("id") if ents else None
-            else:
-                r["ok"] = bool(info)
-                r["detail"] = f"title={str((info or {}).get('title',''))[:34]} · views={(info or {}).get('view_count')}"
+            data = http(play, timeout=60)
+            n = len(data)
+            ok_dl = n > 100_000 and data[:12] not in (b"", None)   # 100KB+ = 실제 영상
+            results["download"] = {"ok": bool(ok_dl), "bytes": n,
+                                   "head": data[4:12].decode("latin1", "replace")}
+            print(f"  [{'OK  ' if ok_dl else 'FAIL'}] 다운로드: {n:,} bytes (head={data[4:12]!r})")
         except Exception as e:
-            r["detail"] = f"{type(e).__name__}: {str(e)[:180]}"
-            r["cls"] = classify(r["detail"])
-        results.append(r)
-        mark = "OK  " if r["ok"] else "FAIL"
-        extra = "" if r["ok"] else f"  <{r.get('cls','')}>"
-        print(f"  [{mark}] {name}: {r['detail']}{extra}")
-        return r
+            results["download"] = {"ok": False, "err": f"{type(e).__name__}: {str(e)[:150]}"}
+            print(f"  [FAIL] 다운로드: {type(e).__name__}: {str(e)[:150]}")
+    else:
+        results["download"] = {"ok": False, "err": "검색 결과 없음(play URL 없음)"}
+        print("  [SKIP] 다운로드: 검색 결과 없어 건너뜀")
 
-    print("── 유튜브 ──")
-    yt_search = run("youtube_search", "ytsearch3:쇼핑 꿀템 리뷰", flat=True, search=True)
-    yt_full = {"ok": False}
-    if yt_search.get("_first_id"):
-        url = f"https://www.youtube.com/watch?v={yt_search['_first_id']}"
-        yt_full = run("youtube_full_meta", url, flat=False, search=False)
-
-    print("── 틱톡 ──")
-    tk = run("tiktok_tag", "https://www.tiktok.com/tag/꿀템", flat=True, search=True)
-
-    yt_viable = bool(yt_search.get("ok") and yt_full.get("ok"))
-    tk_viable = bool(tk.get("ok"))
-    verdict = f"VERDICT: youtube={'VIABLE' if yt_viable else 'BLOCKED'} tiktok={'VIABLE' if tk_viable else 'BLOCKED'}"
+    viable = bool(results["search"]["ok"] and results["download"]["ok"])
     print()
-    print(verdict)
-    print("SUMMARY_JSON: " + json.dumps(
-        {"youtube_viable": yt_viable, "tiktok_viable": tk_viable, "tests": results},
-        ensure_ascii=False, default=str))
+    print(f"VERDICT: tiktok_free={'VIABLE' if viable else 'BLOCKED'}  (검색+다운로드 모두 성공해야 VIABLE)")
+    print("SUMMARY_JSON: " + json.dumps(results, ensure_ascii=False, default=str))
     return 0
 
 
