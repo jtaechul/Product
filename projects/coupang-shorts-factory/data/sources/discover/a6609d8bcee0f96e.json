@@ -6,28 +6,147 @@
     "帐篷",
     "露营帐篷",
     "户外帐篷",
-    "速开帐篷",
-    "自动帐篷"
+    "自动帐篷",
+    "野营帐篷"
   ],
-  "page": 0,
-  "nonce": "n1785078844642880801",
+  "page": 1,
+  "nonce": "n1785079203802336756",
+  "next_cursor": 25,
   "count": 5,
   "candidates": [
     {
-      "id": "sv_231c504630f1",
+      "id": "sv_a568ac8fc9d3",
+      "platform": "tiktok",
+      "title": "Immersive tram camping girls spend the night in a fully transparent AI tent. Ladies, here I come again~ It's getting cold, remember to wear more clothes~ I also put a sweater on my ideal car, hahahaha It feels so furry~ so cute~ X This time, I also experienced using the parking space to draw a parking space in the wild (os. Why is it a bit difficult to pronounce [tears burst into laughter]), and let the car park itself ~ so cool And this tent. I made the tent that AI imagined for camping. It is pink and tender. Driving a tram allows camping without a fire, which is safe and secure Tell me, do you like it?#carvideos #softcar #homecar #camping #VLog #travel ",
+      "title_ko": "핑크색 헬로키티 캠핑용품 세트와 차량용 텐트",
+      "coupang_keywords": [
+        "헬로키티 캠핑용품",
+        "핑크 캠핑세트",
+        "차량용 텐트",
+        "자동차 텐트"
+      ],
+      "zh_terms": [
+        "凯蒂猫露营套装",
+        "粉色车载帐篷",
+        "汽车帐篷"
+      ],
+      "naver": {
+        "query": "헬로키티 캠핑용품",
+        "real_title": "헬로키티 피크닉 매트",
+        "lprice": "4600",
+        "coupang": true,
+        "coupang_title": "아이두젠 모빌리티 A1 쉘터 차량용 도킹텐트 대",
+        "coupang_lprice": "110000",
+        "mall": "쿠팡",
+        "image": "https://shopping-phinf.pstatic.net/main_6003054/60030546940.jpg",
+        "candidates": [
+          {
+            "title": "아이두젠 모빌리티 A1 쉘터 차량용 도킹텐트 대",
+            "image": "https://shopping-phinf.pstatic.net/main_6003054/60030546940.jpg",
+            "mall": "쿠팡",
+            "lprice": "110000",
+            "link": "https://link.coupang.com/re/PCSNAVERPCSDP?pageKey=0692274293&ctag=0692274293&lptag=l029835267819&itemId=68213975098&vendorItemId=70982374340&spec=10305197",
+            "coupang": true
+          },
+          {
+            "title": "헬로키티 피크닉 매트",
+            "image": "https://shopping-phinf.pstatic.net/main_5686741/56867411953.20250923123526.jpg",
+            "mall": "네이버",
+            "lprice": "4600",
+            "link": "https://search.shopping.naver.com/catalog/56867411953",
+            "coupang": false
+          },
+          {
+            "title": "헬로키티 캠핑카트",
+            "image": "https://shopping-phinf.pstatic.net/main_5938936/59389360225.20260326132156.jpg",
+            "mall": "네이버",
+            "lprice": "68900",
+            "link": "https://search.shopping.naver.com/catalog/59389360225",
+            "coupang": false
+          },
+          {
+            "title": "우진 플라스틱 10mm 키티 클립",
+            "image": "https://shopping-phinf.pstatic.net/main_3567651/35676511016.20260701093428.jpg",
+            "mall": "네이버",
+            "lprice": "3760",
+            "link": "https://search.shopping.naver.com/catalog/35676511016",
+            "coupang": false
+          },
+          {
+            "title": "캠핑 걸이 1P 후크걸리 캠핑후크걸이 캠핑고리 행거용품 캠핑행어",
+            "image": "https://shopping-phinf.pstatic.net/main_9119040/91190408240.jpg",
+            "mall": "부엉키티",
+            "lprice": "1500",
+            "link": "https://smartstore.naver.com/main/products/13645897461",
+            "coupang": false
+          },
+          {
+            "title": "휴대용 캠핑 샤워기 20L 간이샤워기 이동식샤워부스 차박용품",
+            "image": "https://shopping-phinf.pstatic.net/main_9118438/91184388296.jpg",
+            "mall": "부엉키티",
+            "lprice": "15400",
+            "link": "https://smartstore.naver.com/main/products/13639877587",
+            "coupang": false
+          },
+          {
+            "title": "캠핑 서바이벌 팔찌 남성팔찌 캠핑팔찌 러닝팔찌 운동팔찌 비상팔찌",
+            "image": "https://shopping-phinf.pstatic.net/main_9119040/91190408363.jpg",
+            "mall": "부엉키티",
+            "lprice": "3000",
+            "link": "https://smartstore.naver.com/main/products/13645897584",
+            "coupang": false
+          },
+          {
+            "title": "국산 2단 대형 한국 파라솔 야외 카페 낚시 포장마차 캠핑 세트아님 2300기본형 노랑",
+            "image": "https://shopping-phinf.pstatic.net/main_8027367/80273678703.6.jpg",
+            "mall": "더캐노피",
+            "lprice": "69000",
+            "link": "https://smartstore.naver.com/main/products/2775934895",
+            "coupang": false
+          },
+          {
+            "title": "국산 군납업체 군대반합 군용반합 미군 백패킹 라면 코펠 세트 등산 캠핑",
+            "image": "https://shopping-phinf.pstatic.net/main_8853132/88531327166.2.jpg",
+            "mall": "핑크 공장",
+            "lprice": "65500",
+            "link": "https://smartstore.naver.com/main/products/10986821113",
+            "coupang": false
+          },
+          {
+            "title": "픽루나 하이캠핑 접이식 수저 2세트 핑크 캠핑수저 간편한 야외용",
+            "image": "https://shopping-phinf.pstatic.net/main_9092613/90926137870.jpg",
+            "mall": "잼스픽루나",
+            "lprice": "8280",
+            "link": "https://smartstore.naver.com/main/products/13381627534",
+            "coupang": false
+          }
+        ],
+        "best_match": -1,
+        "match_confidence": "low",
+        "match_reason": "같은 상품이 없어 보입니다."
+      },
+      "view_count": 87130709,
+      "uploader": "Makabaka_popcornofc",
+      "duration": 212,
+      "source_url": "https://www.tiktok.com/@makabaka_popcornofc/video/7444879015959203128",
+      "download_url": "https://v19.tiktokcdn-us.com/b407f76bafc1fc776c0486b6daa1d439/6a667af4/video/tos/alisg/tos-alisg-pve-0037c001/ocSLRQkBzAh5Q9kiiizMRAIOCgERvqioJIEkpe/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1339&ft=aEKfuqT0m0LPD12UuunI3wU~1TDFMeF~O5&mime_type=video_mp4&rc=ZThpNDgzPDZkZmZmaTU3O0BpM2psNXM5cnhydzMzNzczM0A1YV8zNGIwNTYxNjViYGAwYSM2NTU0MmRrXzVgLS1kMTZzcw%3D%3D&vvpl=1&l=20260726152031CF2C3CC8F20C09C9DA2C&btag=e000d8000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-maliva-p-0068/oMvIICLOS5et1RJRQmA4INEhoCiggzAMqkBkDi~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=6b25cd9f&x-expires=1785164400&x-signature=1TNc9sKsznllSqvKRatjM7c87l0%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+    },
+    {
+      "id": "sv_11ffa66dee96",
       "platform": "tiktok",
       "title": "#campinglife #LittleSmilesOnTrails #camping #camp #happy #viraltiktokvideo #viral",
       "title_ko": "물 위에 띄울 수 있는 핑크색 텐트가 설치된 수상 캠핑용 에어 매트",
       "coupang_keywords": [
         "수상 텐트",
         "수상 캠핑 텐트",
-        "물놀이 텐트",
-        "에어 매트 텐트"
+        "물놀이 튜브 텐트",
+        "캠핑 에어 매트"
       ],
       "zh_terms": [
         "水上帐篷",
-        "浮动帐篷",
-        "充气浮台帐篷"
+        "水上浮排帐篷",
+        "充气水上平台"
       ],
       "naver": {
         "query": "수상 텐트",
@@ -86,34 +205,183 @@
             "lprice": "131120",
             "link": "https://smartstore.naver.com/main/products/13454728498",
             "coupang": false
+          },
+          {
+            "title": "수상 텐트 에어 플로팅 그늘막 물놀이 여름 캠핑",
+            "image": "https://shopping-phinf.pstatic.net/main_6035904/60359045253.jpg",
+            "mall": "11번가",
+            "lprice": "1337830",
+            "link": "https://www.11st.co.kr/connect/Gateway.tmall?method=Xsite&prdNo=9412476077&tid=1000000061",
+            "coupang": false
+          },
+          {
+            "title": "수상텐트 플로팅 보트 뗏목 에어 그늘막 캠핑 2.5x2.5x1.95m",
+            "image": "https://shopping-phinf.pstatic.net/main_8826409/88264091619.jpg",
+            "mall": "1번가잡화점",
+            "lprice": "1280300",
+            "link": "https://smartstore.naver.com/main/products/10719585697",
+            "coupang": false
+          },
+          {
+            "title": "수상텐트 플로팅 뗏목 보트 낚시배 레저 에어 2.6m",
+            "image": "https://shopping-phinf.pstatic.net/main_8826409/88264093104.jpg",
+            "mall": "1번가잡화점",
+            "lprice": "697700",
+            "link": "https://smartstore.naver.com/main/products/10719587182",
+            "coupang": false
+          },
+          {
+            "title": "수상텐트 물에 떠있는 호수 강가 해양레저스포츠 상업용 워터플로팅 텐트",
+            "image": "https://shopping-phinf.pstatic.net/main_8883635/88836357846.jpg",
+            "mall": "다파나마켓",
+            "lprice": "229900",
+            "link": "https://smartstore.naver.com/main/products/11291847515",
+            "coupang": false
           }
         ],
         "best_match": -1,
         "match_confidence": "low",
-        "match_reason": "같은 상품 없음. 유사한 기능의 상품도 없음."
+        "match_reason": "같은 상품 없음"
       },
-      "view_count": 23667821,
+      "view_count": 23667828,
       "uploader": "Little Smiles On Trails",
       "duration": 303,
       "source_url": "https://www.tiktok.com/@littlesmilesontrails/video/7579691438515014932",
-      "download_url": "https://v45.tiktokcdn-us.com/8f86beec5066eca4d1aedf10fdf7c541/6a6679e1/video/tos/alisg/tos-alisg-pve-0037/okfGeHVcMBBFzvEQiIMVtMAO1ckgXpqIDCVgEZ/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1894&ft=aEKfuqT0m0LPD12VounI3wU9BM3FMeF~O5&mime_type=video_mp4&rc=ZDhkOTk0NjxmNmg1ZWhkNUBpM3Q5NHA5cjg6NzMzODgzNEBfNGMyXl9eXjIxMTUyLjAvYSNlYDBrMmRjZmxhLS1kL2Bzcw%3D%3D&vvpl=1&l=20260726151425376E0BC628B1BBC9975D&btag=e000e5000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/o8BIdpHBcMkEC4FVD1QD9tAczegfEVtgRRMQTD~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=aa72b387&x-expires=1785164400&x-signature=Ujr31xV0InZyUFpG83cR1wjNY1U%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+      "download_url": "https://v16m.tiktokcdn-us.com/b4128c01f4b893df3b0899ab2d8c4630/6a667b4f/video/tos/alisg/tos-alisg-pve-0037/okfGeHVcMBBFzvEQiIMVtMAO1ckgXpqIDCVgEZ/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=1894&ft=aEKfuqT0m0LPD12UuunI3wU~1TDFMeF~O5&mime_type=video_mp4&rc=ZDhkOTk0NjxmNmg1ZWhkNUBpM3Q5NHA5cjg6NzMzODgzNEBfNGMyXl9eXjIxMTUyLjAvYSNlYDBrMmRjZmxhLS1kL2Bzcw%3D%3D&vvpl=1&l=20260726152031CF2C3CC8F20C09C9DA2C&btag=e000e0000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/o8BIdpHBcMkEC4FVD1QD9tAczegfEVtgRRMQTD~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=4a889698&x-expires=1785164400&x-signature=1WAdYGo4O%2BHIBct2ZiJnlDvMHHk%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&sc=feed_cover&biz_tag=tt_video&s=SEARCH"
     },
     {
-      "id": "sv_e54c4942367d",
+      "id": "sv_1fd6010c5faf",
+      "platform": "tiktok",
+      "title": "",
+      "title_ko": "비 오는 날 야외에 주차된 흰색 전기차",
+      "coupang_keywords": [
+        "전기차",
+        "SUV 전기차",
+        "캠핑 전기차"
+      ],
+      "zh_terms": [
+        "电动汽车",
+        "新能源汽车",
+        "露营电动车"
+      ],
+      "naver": {
+        "query": "전기차",
+        "real_title": "일렉하임 사륜 전동스쿠터 노인전동차 어르신 효도 전기자전거 네발 전기차",
+        "lprice": "679800",
+        "coupang": true,
+        "coupang_title": "농촌전동차 4륜 시골 어르신전기차 2인용",
+        "coupang_lprice": "7200000",
+        "mall": "쿠팡",
+        "image": "https://shopping-phinf.pstatic.net/main_3071504/30715046456.9.jpg",
+        "candidates": [
+          {
+            "title": "일렉하임 사륜 전동스쿠터 노인전동차 어르신 효도 전기자전거 네발 전기차",
+            "image": "https://shopping-phinf.pstatic.net/main_9053461/90534613920.2.jpg",
+            "mall": "제이비엘케이",
+            "lprice": "679800",
+            "link": "https://smartstore.naver.com/main/products/12990102828",
+            "coupang": false
+          },
+          {
+            "title": "소형 전기차 사륜 출퇴근 전동차 미니카 미니 1인용 A. 60V, A. 배터리가없는 자동차",
+            "image": "https://shopping-phinf.pstatic.net/main_9059653/90596532840.jpg",
+            "mall": "요기가상사",
+            "lprice": "3941700",
+            "link": "https://smartstore.naver.com/main/products/13052021748",
+            "coupang": false
+          },
+          {
+            "title": "소형 전기차 사륜 미니 전동차 배터리 미니카 레저 단일 상품",
+            "image": "https://shopping-phinf.pstatic.net/main_9043329/90433294651.jpg",
+            "mall": "지연상회",
+            "lprice": "3554200",
+            "link": "https://smartstore.naver.com/main/products/12888783658",
+            "coupang": false
+          },
+          {
+            "title": "초소형 전기차 2인승전기차 실용 성인용 전동 미니카 경제 60V 60V 기본",
+            "image": "https://shopping-phinf.pstatic.net/main_9055622/90556224023.jpg",
+            "mall": "데일리소싱",
+            "lprice": "3162100",
+            "link": "https://smartstore.naver.com/main/products/13011712931",
+            "coupang": false
+          },
+          {
+            "title": "미니전기차 2인승 출퇴근 배달용 A. 작은 크기의 42cm 헤드라이트 한 쌍",
+            "image": "https://shopping-phinf.pstatic.net/main_9059455/90594550793.jpg",
+            "mall": "요기가상사",
+            "lprice": "671300",
+            "link": "https://smartstore.naver.com/main/products/13050039701",
+            "coupang": false
+          },
+          {
+            "title": "할리 스쿠터 전기바이크 전기차 전기 오토바이 배터리",
+            "image": "https://shopping-phinf.pstatic.net/main_9114866/91148668158.jpg",
+            "mall": "글로파마켓",
+            "lprice": "708240",
+            "link": "https://smartstore.naver.com/main/products/13604157746",
+            "coupang": false
+          },
+          {
+            "title": "기아 EV5 전기차 장기렌트 26년형 48개월 에어 롱레인지 2WD 5인승",
+            "image": "https://shopping-phinf.pstatic.net/main_5889209/58892099345.jpg",
+            "mall": "신차장기렌트리스카플렉스",
+            "lprice": "238695",
+            "link": "https://www.car-flex.co.kr/default/review/sub1.php?com_board_basic=read_form&com_board_idx=174",
+            "coupang": false
+          },
+          {
+            "title": "현대 아이오닉5 전기차 장기렌트 25년형 48개월 롱레인지 E라이트 2WD 5인승",
+            "image": "https://shopping-phinf.pstatic.net/main_4650389/46503897767.jpg",
+            "mall": "신차장기렌트리스카플렉스",
+            "lprice": "328440",
+            "link": "https://www.car-flex.co.kr/default/review/sub1.php?com_board_basic=read_form&com_board_idx=59",
+            "coupang": false
+          },
+          {
+            "title": "기아 EV6 전기차 장기렌트 26년형 48개월 라이트 롱레인지 2WD 5인승",
+            "image": "https://shopping-phinf.pstatic.net/main_4650385/46503859477.jpg",
+            "mall": "신차장기렌트리스카플렉스",
+            "lprice": "272976",
+            "link": "https://www.car-flex.co.kr/default/review/sub1.php?com_board_basic=read_form&com_board_idx=62",
+            "coupang": false
+          },
+          {
+            "title": "제네시스 GV60 전기차 장기렌트 27년형 48개월 스탠다드 2WD 5인승",
+            "image": "https://shopping-phinf.pstatic.net/main_4636017/46360175824.jpg",
+            "mall": "신차장기렌트리스카플렉스",
+            "lprice": "511117",
+            "link": "https://www.car-flex.co.kr/default/review/sub1.php?com_board_basic=read_form&com_board_idx=56",
+            "coupang": false
+          }
+        ],
+        "best_match": -1,
+        "match_confidence": "low",
+        "match_reason": "모든 후보가 기준과 다름"
+      },
+      "view_count": 15743456,
+      "uploader": "hyung_18",
+      "duration": 321,
+      "source_url": "https://www.tiktok.com/@mesyaadisty/video/7634519519217683732",
+      "download_url": "https://v45.tiktokcdn-us.com/f54f7effed0bf7debad0477e77b0ae83/6a667b61/video/tos/alisg/tos-alisg-pve-0037c001/oMI2ndjIgDAefRfmFTGA5QWR4CLRPh5GoknxlV/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=2225&ft=aEKfuqT0m0LPD12UuunI3wU~1TDFMeF~O5&mime_type=video_mp4&rc=NmQ5MzxkPGhoOjVkM2RlNkBpM206dW85cmhuOjMzODczNEBeMl8tLmNeNmExMzNjNmNjYSNuNWdeMmQ0MW1hLS1kMWBzcw%3D%3D&vvpl=1&l=20260726152031CF2C3CC8F20C09C9DA2C&btag=e000d5000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/ogoTCmO8IxFLRfiAgASg5QWujR5nGDOVIefgP4~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=aa06592c&x-expires=1785164400&x-signature=dhaUgYYc22kBpggMTs9Ivk2wVcs%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&sc=feed_cover&biz_tag=tt_video&s=SEARCH"
+    },
+    {
+      "id": "sv_5707bce93cc8",
       "platform": "tiktok",
       "title": "沉浸式床车露营女生深夜搭帐篷露营过夜 老婆们~ 今天开着纯电车/床车去雪山脚下露营了! 被我开着暖风机带着五只猫在外面露营造了3天2 晚~ X 毫无电量焦虑#softcar #homecar #cat #VLog #camping #snow",
-      "title_ko": "차량용 팝업 텐트와 휴대용 간이 샤워 텐트",
+      "title_ko": "차량용 텐트와 간이 샤워 텐트가 설치된 야간 설원 캠핑 풍경",
       "coupang_keywords": [
         "차박 텐트",
-        "차량용 팝업 텐트",
-        "캠핑 샤워 텐트",
-        "휴대용 간이 텐트"
+        "차량용 어닝 텐트",
+        "간이 샤워 텐트",
+        "캠핑 샤워 텐트"
       ],
       "zh_terms": [
         "车载帐篷",
-        "露营淋浴帐篷",
-        "户外更衣帐篷"
+        "户外淋浴帐篷",
+        "露营帐篷"
       ],
       "naver": {
         "query": "차박 텐트",
@@ -172,276 +440,168 @@
             "lprice": "299000",
             "link": "https://search.shopping.naver.com/catalog/53733620508",
             "coupang": false
+          },
+          {
+            "title": "270도 사이드어닝 차량용어닝 차량텐트 타프",
+            "image": "https://shopping-phinf.pstatic.net/main_8999493/89994934426.2.jpg",
+            "mall": "한스팩다운",
+            "lprice": "590000",
+            "link": "https://smartstore.naver.com/main/products/12450423679",
+            "coupang": false
+          },
+          {
+            "title": "반다이캠핑 스타리아 카니발 케빈쉘터 어닝 타프룸텐트 타프레일 도킹 지퍼 차박 차량용타프",
+            "image": "https://shopping-phinf.pstatic.net/main_8848911/88489110087.4.jpg",
+            "mall": "반다이캠핑",
+            "lprice": "780000",
+            "link": "https://smartstore.naver.com/main/products/10944604052",
+            "coupang": false
+          },
+          {
+            "title": "270도 어닝 차량용 사이드 차그늘막 텐트 어닝룸 자립형",
+            "image": "https://shopping-phinf.pstatic.net/main_8984009/89840094478.jpg",
+            "mall": "J 글로벌",
+            "lprice": "511110",
+            "link": "https://smartstore.naver.com/main/products/12295583762",
+            "coupang": false
+          },
+          {
+            "title": "캠핑카 카라반 차량용 어닝 가림막 차양막 쉘터 타프 일반형 사이드월 2장",
+            "image": "https://shopping-phinf.pstatic.net/main_8320559/83205597002.24.jpg",
+            "mall": "AIRIS아이리스",
+            "lprice": "199000",
+            "link": "https://smartstore.naver.com/main/products/5661099667",
+            "coupang": false
           }
         ],
         "best_match": -1,
         "match_confidence": "low",
-        "match_reason": "기준 이미지와 형태, 디자인이 모두 다름"
+        "match_reason": "기준 이미지는 돔형 텐트, 후보는 모두 차박 텐트"
       },
       "view_count": 12935646,
       "uploader": "Makabaka_popcornofc",
       "duration": 259,
       "source_url": "https://www.tiktok.com/@makabaka_popcornofc/video/7431922159137737990",
-      "download_url": "https://v19.tiktokcdn-us.com/5b438f26259795a55d52e59dcaa5f05c/6a6679b5/video/tos/alisg/tos-alisg-pve-0037c001/oQFvIBjRgucjAgyiOFRh8rLAIrCGSvefCcCkGf/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1058&ft=aEKfuqT0m0LPD12VounI3wU9BM3FMeF~O5&mime_type=video_mp4&rc=Nmg8ODkzZzo4ZGk7aDY2NkBpanFsOnE5cmpxdjMzNzczM0BgMDUtLjZgNi0xLTIwNGJiYSMxaW0tMmRrb2VgLS1kMTZzcw%3D%3D&vvpl=1&l=20260726151425376E0BC628B1BBC9975D&btag=e000d8000",
-      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-maliva-p-0068/oQxQIKiSILAB7RCgQjWGSFZVvufEucOGHCeeCd~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=0343d92c&x-expires=1785164400&x-signature=XFlgijjwNlmg20a1iuHiz%2BtdO0U%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&s=SEARCH&sc=feed_cover&biz_tag=tt_video"
+      "download_url": "https://v19.tiktokcdn-us.com/9f7c7f70ded70e8e131ed809e4e9ba1e/6a667b23/video/tos/alisg/tos-alisg-pve-0037c001/oQFvIBjRgucjAgyiOFRh8rLAIrCGSvefCcCkGf/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1058&ft=aEKfuqT0m0LPD12UuunI3wU~1TDFMeF~O5&mime_type=video_mp4&rc=Nmg8ODkzZzo4ZGk7aDY2NkBpanFsOnE5cmpxdjMzNzczM0BgMDUtLjZgNi0xLTIwNGJiYSMxaW0tMmRrb2VgLS1kMTZzcw%3D%3D&vvpl=1&l=20260726152031CF2C3CC8F20C09C9DA2C&btag=e000d8000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-maliva-p-0068/oQxQIKiSILAB7RCgQjWGSFZVvufEucOGHCeeCd~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=0343d92c&x-expires=1785164400&x-signature=XFlgijjwNlmg20a1iuHiz%2BtdO0U%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     },
     {
-      "id": "sv_e43f0463d13e",
+      "id": "sv_1ba8cc200d5f",
       "platform": "tiktok",
       "title": "#camping #nature #organize #dailyvlog #goodthing #cooking #asmr #heat #satisfyingvideo ",
-      "title_ko": "캠핑용 에어 텐트와 침대, 그리고 캠핑용 의자와 테이블 세트",
+      "title_ko": "대형 에어텐트 안에 설치된 캠핑용 에어컨과 미니 테이블 및 의자 세트",
       "coupang_keywords": [
-        "캠핑 에어 텐트",
-        "캠핑 에어 침대",
+        "캠핑 에어컨",
+        "캠핑 미니 테이블",
         "캠핑 의자",
-        "캠핑 테이블"
+        "캠핑 에어 텐트"
       ],
       "zh_terms": [
-        "露营充气帐篷",
-        "户外充气床垫",
-        "露营折叠椅"
+        "露营空调",
+        "露营迷你桌椅",
+        "充气帐篷"
       ],
       "naver": {
-        "query": "캠핑 에어 텐트",
-        "real_title": "캠핑 원터치 텐트 그늘막 에어 텐트 경량 5.8",
-        "lprice": "249000",
+        "query": "캠핑 에어컨",
+        "real_title": "인디콘 캠핑에어컨 실외기없는 미니 소형 이동형 휴대용 캠핑용 가정용 차박",
+        "lprice": "318000",
         "coupang": false,
-        "coupang_title": "캠핑 원터치 텐트 그늘막 에어 텐트 경량 5.8",
+        "coupang_title": "인디콘 캠핑에어컨 실외기없는 미니 소형 이동형 휴대용 캠핑용 가정용 차박",
         "coupang_lprice": null,
-        "mall": "코지모해",
-        "image": "https://shopping-phinf.pstatic.net/main_9119953/91199530178.1.jpg",
+        "mall": "일렉스토리",
+        "image": "https://shopping-phinf.pstatic.net/main_8432565/84325650309.6.jpg",
         "candidates": [
           {
-            "title": "캠핑 원터치 텐트 그늘막 에어 텐트 경량 5.8",
-            "image": "https://shopping-phinf.pstatic.net/main_9119953/91199530178.1.jpg",
-            "mall": "코지모해",
-            "lprice": "249000",
-            "link": "https://smartstore.naver.com/main/products/13655019393",
+            "title": "인디콘 캠핑에어컨 실외기없는 미니 소형 이동형 휴대용 캠핑용 가정용 차박",
+            "image": "https://shopping-phinf.pstatic.net/main_8432565/84325650309.6.jpg",
+            "mall": "일렉스토리",
+            "lprice": "318000",
+            "link": "https://smartstore.naver.com/main/products/6781149987",
             "coupang": false
           },
           {
-            "title": "오투라이프캠핑 에어 노크 타프 쉘터 10.0 4인용",
-            "image": "https://shopping-phinf.pstatic.net/main_5103098/51030981618.20260105122649.jpg",
-            "mall": "네이버",
-            "lprice": "590000",
-            "link": "https://search.shopping.naver.com/catalog/51030981618",
+            "title": "웰템 산업용 에어컨 업소용 코끼리 주방 식당 공장 캠핑 이동식 미니 1구",
+            "image": "https://shopping-phinf.pstatic.net/main_8948697/89486978575.6.jpg",
+            "mall": "이지플랜",
+            "lprice": "439000",
+            "link": "https://smartstore.naver.com/main/products/11942467887",
             "coupang": false
           },
           {
-            "title": "벤틱스 제이씨하우스 8.0 에어텐트 면텐트",
-            "image": "https://shopping-phinf.pstatic.net/main_8927888/89278888753.11.jpg",
-            "mall": "Ventix",
-            "lprice": "649000",
-            "link": "https://smartstore.naver.com/main/products/11734378254",
+            "title": "[26년형] 넥스코 이동식에어컨 실외기없는 미니 소형 이동형 가정용 캠핑 작은방 컴팩트형",
+            "image": "https://shopping-phinf.pstatic.net/main_8927573/89275737979.2.jpg",
+            "mall": "넥스코 공식 스토어",
+            "lprice": "327000",
+            "link": "https://smartstore.naver.com/main/products/11731227480",
             "coupang": false
           },
           {
-            "title": "쿠디 에어텐트 8.0",
-            "image": "https://shopping-phinf.pstatic.net/main_4520767/45207679618.20251014113919.jpg",
-            "mall": "네이버",
-            "lprice": "989000",
-            "link": "https://search.shopping.naver.com/catalog/45207679618",
+            "title": "흥신 산업용 에어컨 이동식 실외기없는 공업용 공장 주방 업소용 야외 캠핑 미니 1구",
+            "image": "https://shopping-phinf.pstatic.net/main_8929965/89299659236.23.jpg",
+            "mall": "흥신 본사스토어",
+            "lprice": "490000",
+            "link": "https://smartstore.naver.com/main/products/11755148649",
             "coupang": false
           },
           {
-            "title": "쿠디 에어텐트 5.8",
-            "image": "https://shopping-phinf.pstatic.net/main_5261387/52613874085.20250122172801.jpg",
-            "mall": "네이버",
-            "lprice": "399000",
-            "link": "https://search.shopping.naver.com/catalog/52613874085",
+            "title": "미니아 실외기 없는 에어컨 이동식 일체형 이동형 작은방 아이방 소형 미니 캠핑용",
+            "image": "https://shopping-phinf.pstatic.net/main_8399784/83997840061.6.jpg",
+            "mall": "미니아 스토어",
+            "lprice": "488000",
+            "link": "https://smartstore.naver.com/main/products/6453339728",
             "coupang": false
           },
           {
-            "title": "오투라이프 캠핑 에어노크 13.0T M 오브젝트 3-4인용 에어텐트",
-            "image": "https://shopping-phinf.pstatic.net/main_9116536/91165368558.1.jpg",
-            "mall": "오투라이프캠핑",
-            "lprice": "970000",
-            "link": "https://smartstore.naver.com/main/products/13620858141",
+            "title": "신일 산업용 에어컨 코끼리 이동식 주방 야외 공업용 공장 이동형 일체형 냉방기 미니 1구",
+            "image": "https://shopping-phinf.pstatic.net/main_8607485/86074855710.19.jpg",
+            "mall": "롯데공식판매점",
+            "lprice": "498000",
+            "link": "https://smartstore.naver.com/main/products/8530355387",
+            "coupang": false
+          },
+          {
+            "title": "브리즈문 캠핑 메쉬 접이식 테이블 경량 폴딩 백패킹 보조 미니 사이드 휴대용 탁자 식탁",
+            "image": "https://shopping-phinf.pstatic.net/main_8826330/88263309524.9.jpg",
+            "mall": "BreezeMoon",
+            "lprice": "18300",
+            "link": "https://smartstore.naver.com/main/products/10718803602",
+            "coupang": false
+          },
+          {
+            "title": "라비고 경량 접이식캠핑테이블 미니 원형 사이드 좌식 테이블 심플",
+            "image": "https://shopping-phinf.pstatic.net/main_8734033/87340331157.6.jpg",
+            "mall": "SPIELL",
+            "lprice": "14900",
+            "link": "https://smartstore.naver.com/main/products/9795828884",
+            "coupang": false
+          },
+          {
+            "title": "브리즈문 스테인리스 택티컬 멀티 필드랙 테이블 쿨러 난로 팬히터 쉘프 캠핑 선반",
+            "image": "https://shopping-phinf.pstatic.net/main_9014156/90141560268.jpg",
+            "mall": "BreezeMoon",
+            "lprice": "18800",
+            "link": "https://smartstore.naver.com/main/products/12597049412",
+            "coupang": false
+          },
+          {
+            "title": "브리즈문 원액션 메쉬 미니 캠핑 테이블 좌식 트렁크 차박 백패킹 휴대용 초 경량 식탁",
+            "image": "https://shopping-phinf.pstatic.net/main_8826322/88263228346.5.jpg",
+            "mall": "BreezeMoon",
+            "lprice": "14800",
+            "link": "https://smartstore.naver.com/main/products/10718722424",
             "coupang": false
           }
         ],
         "best_match": -1,
         "match_confidence": "low",
-        "match_reason": "같은 상품으로 보이는 후보 없음."
+        "match_reason": "정확히 일치하는 상품 없음"
       },
-      "view_count": 5309064,
+      "view_count": 5309066,
       "uploader": "Onoe Mitsue",
       "duration": 153,
       "source_url": "https://www.tiktok.com/@onoemitsue/video/7389615560620903686",
-      "download_url": "https://v19.tiktokcdn-us.com/9695aa4dcc0b22dbf3c8957451f36491/6a66794b/video/tos/alisg/tos-alisg-ve-0068c800-sg/oYFNjNTHGemEIMPJCAI743efNiXg8FQDhBSCcl/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=2237&ft=aEKfuqT0m0LPD12VounI3wU9BM3FMeF~O5&mime_type=video_mp4&rc=NWdpPGZoOjg3ODo5ZGZnZ0BpM3Y3dnU5cjZsdDMzNzczM0BiMzMuLzBiXmIxM2EyMTMvYSM0Lm5lMmRjczNgLS1kMTZzcw%3D%3D&vvpl=1&l=20260726151425376E0BC628B1BBC9975D&btag=e00090000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-maliva-p-0068/a29da772336b4798b7aa9133d3b0ace8_1720528954~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=dc3ed93c&x-expires=1785164400&x-signature=zX9901couOz3P%2BHMEMl0TVSHTGw%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
-    },
-    {
-      "id": "sv_3fa658ad9709",
-      "platform": "tiktok",
-      "title": "Underwater Tent Camping! 🌊⛺#camping ",
-      "title_ko": "수중 캠핑용 투명 텐트",
-      "coupang_keywords": [
-        "수중 텐트",
-        "투명 텐트",
-        "수영장 텐트",
-        "캠핑 텐트"
-      ],
-      "zh_terms": [
-        "水下帐篷",
-        "透明帐篷",
-        "水底露营帐篷"
-      ],
-      "naver": {
-        "query": "수중 텐트",
-        "real_title": "2인 물놀이 땅콩 카약 레저용 견인 수상 레저 대형 수상레저 2인용 해수욕장",
-        "lprice": "402400",
-        "coupang": false,
-        "coupang_title": "2인 물놀이 땅콩 카약 레저용 견인 수상 레저 대형 수상레저 2인용 해수욕장",
-        "coupang_lprice": null,
-        "mall": "딜렉세컨",
-        "image": "https://shopping-phinf.pstatic.net/main_9122144/91221444293.jpg",
-        "candidates": [
-          {
-            "title": "2인 물놀이 땅콩 카약 레저용 견인 수상 레저 대형 수상레저 2인용 해수욕장",
-            "image": "https://shopping-phinf.pstatic.net/main_9122144/91221444293.jpg",
-            "mall": "딜렉세컨",
-            "lprice": "402400",
-            "link": "https://smartstore.naver.com/main/products/13676933274",
-            "coupang": false
-          },
-          {
-            "title": "갯바위 낚시텐트 조절형 방한 방풍 경량형 쉘터 바다 수상 밀리터리 레인커버 지상 돔",
-            "image": "https://shopping-phinf.pstatic.net/main_9105342/91053429126.jpg",
-            "mall": "샵디와이",
-            "lprice": "78140",
-            "link": "https://smartstore.naver.com/main/products/13508918774",
-            "coupang": false
-          },
-          {
-            "title": "1인용 낚시텐트 수상 그늘막 경량 야전침대 백패킹 제품",
-            "image": "https://shopping-phinf.pstatic.net/main_8806993/88069937250.jpg",
-            "mall": "으뜸네트워크",
-            "lprice": "191300",
-            "link": "https://smartstore.naver.com/main/products/10525431890",
-            "coupang": false
-          },
-          {
-            "title": "자전거 텐트 백패킹 바이크 주차 수영장 피트니스 수중 운동 아쿠아틱",
-            "image": "https://shopping-phinf.pstatic.net/main_9093605/90936051053.jpg",
-            "mall": "포다직구",
-            "lprice": "2169300",
-            "link": "https://smartstore.naver.com/main/products/13391540717",
-            "coupang": false
-          },
-          {
-            "title": "전동 수상카트 보트 어린이 성인용 물놀이 전기 카트보트",
-            "image": "https://shopping-phinf.pstatic.net/main_9120019/91200196540.jpg",
-            "mall": "픽앤체크",
-            "lprice": "875700",
-            "link": "https://smartstore.naver.com/main/products/13655685755",
-            "coupang": false
-          },
-          {
-            "title": "왕짱몰 수상자전거 워터바이크 카약 수영장",
-            "image": "https://shopping-phinf.pstatic.net/main_9117653/91176533918.jpg",
-            "mall": "왕짱몰",
-            "lprice": "1289800",
-            "link": "https://smartstore.naver.com/main/products/13632023254",
-            "coupang": false
-          }
-        ],
-        "best_match": -1,
-        "match_confidence": "low",
-        "match_reason": "같은 상품이 없어 보임"
-      },
-      "view_count": 2993569,
-      "uploader": "sang_xiaoxiao",
-      "duration": 285,
-      "source_url": "https://www.tiktok.com/@sang_xiaoxiao/video/7657527168951438622",
-      "download_url": "https://v45.tiktokcdn-us.com/e24dd59d8e75a560752aea210c073334/6a6679d1/video/tos/useast8/tos-useast8-ve-0068c004-tx2/oANi8WBhi1SfIAFmCIwiAAgCQ7EIEqQPA1njti/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1522&ft=73kDHDyjNNRVQQUnU~d-sd9ximZqYlfnZY-~hWLrK&mime_type=video_mp4&rc=aDloOjU8aDo7ZzQzNWk1OUBpM2xsO3U5cnlpPDMzaTczNEA0YF9eMWE0Xi8xNC4zYjYwYSNlLWw1MmQ0cC9hLS1kMTJzcw%3D%3D&vvpl=1&l=20260726151427BDECFABA9266D3B73C8F&btag=e0009d000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/osKGGIASgCpDBARcgFK5KULeMEIfAQeftCAGz5~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=cc0c4381&x-expires=1785164400&x-signature=O8Nv99VYt01ZaZCCrNkI7HLX9qI%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
-    },
-    {
-      "id": "sv_d81ff07d3ff1",
-      "platform": "tiktok",
-      "title": "Spending the night in the mountains on a rainy day.☔️🫧🛀#rv #rvlife #rvlifestyle #Outdoors #camp ",
-      "title_ko": "차박용으로 개조된 차량 내부의 침구 세트",
-      "coupang_keywords": [
-        "차박 침구",
-        "차량용 매트리스",
-        "캠핑 침구 세트",
-        "자동차 침대"
-      ],
-      "zh_terms": [
-        "车载床垫",
-        "汽车露营床",
-        "车内睡眠套装"
-      ],
-      "naver": {
-        "query": "차박 침구",
-        "real_title": "극세사 담요 블랭킷 밍크 겨울 쇼파 두꺼운 대형 캠핑 이불 150x200",
-        "lprice": "16900",
-        "coupang": false,
-        "coupang_title": "극세사 담요 블랭킷 밍크 겨울 쇼파 두꺼운 대형 캠핑 이불 150x200",
-        "coupang_lprice": null,
-        "mall": "오토펀",
-        "image": "https://shopping-phinf.pstatic.net/main_8278806/82788063737.39.jpg",
-        "candidates": [
-          {
-            "title": "극세사 담요 블랭킷 밍크 겨울 쇼파 두꺼운 대형 캠핑 이불 150x200",
-            "image": "https://shopping-phinf.pstatic.net/main_8278806/82788063737.39.jpg",
-            "mall": "오토펀",
-            "lprice": "16900",
-            "link": "https://smartstore.naver.com/main/products/5243541270",
-            "coupang": false
-          },
-          {
-            "title": "감성 캠핑 러그 담요 소파 블랭킷 에스닉 차박 거실 이불 대형 블랑캣 노르딕 90×180",
-            "image": "https://shopping-phinf.pstatic.net/main_8259743/82597431378.24.jpg",
-            "mall": "클라시1004",
-            "lprice": "18400",
-            "link": "https://smartstore.naver.com/main/products/5052910157",
-            "coupang": false
-          },
-          {
-            "title": "밍크담요 극세사 담요 밍크이불 두꺼운 쇼파 차박 캠핑블랭킷 곰돌이 중형",
-            "image": "https://shopping-phinf.pstatic.net/main_8553278/85532785138.1.jpg",
-            "mall": "우아홈",
-            "lprice": "19800",
-            "link": "https://smartstore.naver.com/main/products/7988284815",
-            "coupang": false
-          },
-          {
-            "title": "국산 극세사담요 캠핑러그 양털담요 작은블랑캣 보온쇼파담요 후리스블랭킷 중형 100x150",
-            "image": "https://shopping-phinf.pstatic.net/main_8998475/89984758109.jpg",
-            "mall": "누비앤",
-            "lprice": "24800",
-            "link": "https://smartstore.naver.com/main/products/12440247362",
-            "coupang": false
-          },
-          {
-            "title": "국산 군용 모포 담요 캠핑용 차박 화투 고스톱 블랭킷 A1",
-            "image": "https://shopping-phinf.pstatic.net/main_8490287/84902873789.2.jpg",
-            "mall": "리빙지니",
-            "lprice": "12800",
-            "link": "https://smartstore.naver.com/main/products/7358373467",
-            "coupang": false
-          },
-          {
-            "title": "모스코 감성 거실 소파 캠핑 차박 러너 담요 여름 거즈 린넨 블랭킷 블랙 180x230",
-            "image": "https://shopping-phinf.pstatic.net/main_1182626/11826261713.5.jpg",
-            "mall": "미스모네",
-            "lprice": "31900",
-            "link": "https://smartstore.naver.com/main/products/724595594",
-            "coupang": false
-          }
-        ],
-        "best_match": 3,
-        "match_confidence": "high",
-        "match_reason": "색상과 재질, 가장자리가 동일"
-      },
-      "view_count": 2234829,
-      "uploader": "Elina.Voss",
-      "duration": 139,
-      "source_url": "https://www.tiktok.com/@elina.voss93/video/7662301194093694239",
-      "download_url": "https://v19.tiktokcdn-us.com/864b0a5572318844ccad1c912e4e7d26/6a66793d/video/tos/useast8/tos-useast8-ve-0068c003-tx2/o4qSqgqjpQYqI7gIEUfAHYD4F4fgACc6CInrqf/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1720&ft=aEKfuqT0m0LPD12VounI3wU9BM3FMeF~O5&mime_type=video_mp4&rc=ZTQzNjlmPGU0aTk7NWY0OkBpM25uN3Y5cmh5PDMzaTczNEAwLTM0LzJhNjQxLTI1MjM2YSNsZi8zMmQ0YF5hLS1kMTJzcw%3D%3D&vvpl=1&l=20260726151425376E0BC628B1BBC9975D&btag=e00090000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/ooZVdR8J8VPEOlsiXQpwMUA9BBIaRiV2sBPAI~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=e75af5d2&x-expires=1785164400&x-signature=2Gphj%2B%2FGxqr%2BOdW5qFZ%2BJcA0Bgs%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+      "download_url": "https://v45.tiktokcdn-us.com/c49ed78801fab48d9558ed7c7eb6281d/6a667ab9/video/tos/alisg/tos-alisg-ve-0068c800-sg/oYFNjNTHGemEIMPJCAI743efNiXg8FQDhBSCcl/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=2237&ft=aEKfuqT0m0LPD12UuunI3wU~1TDFMeF~O5&mime_type=video_mp4&rc=NWdpPGZoOjg3ODo5ZGZnZ0BpM3Y3dnU5cjZsdDMzNzczM0BiMzMuLzBiXmIxM2EyMTMvYSM0Lm5lMmRjczNgLS1kMTZzcw%3D%3D&vvpl=1&l=20260726152031CF2C3CC8F20C09C9DA2C&btag=e000a5000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-maliva-p-0068/a29da772336b4798b7aa9133d3b0ace8_1720528954~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=15904fc8&x-expires=1785164400&x-signature=WeRwD0NGgQ0cYHyEgpRA96F%2BSf4%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     }
   ]
 }
