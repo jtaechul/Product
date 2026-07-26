@@ -847,6 +847,106 @@ def _rec_to_candidate(r: dict) -> dict:
     return c
 
 
+def _commons_file_meta(url: str) -> tuple[str, str, str, str]:
+    """커먼스 파일 URL → (pageid, 파일제목, 설명, 파일명). 커먼스가 아니거나 조회 실패면 ('','','',fname).
+
+    쓰임: '찾은 영상으로 제작' 경로가 종(P180 depicts)·배 이름을 구조화데이터에서 확보할 때.
+    (transcoded 경로도 원본 파일명을 뽑아낸다 — 480p 재인코딩 URL이 흔하다.)
+    """
+    m = re.search(r"/commons/(?:transcoded/)?[0-9a-f]/[0-9a-f]{2}/([^/?#]+)", url or "")
+    if not m:
+        return "", "", "", ""
+    fname = unquote(m.group(1))
+    try:
+        d = _get(_COMMONS, action="query", prop="imageinfo|info",
+                 titles=f"File:{fname}", iiprop="extmetadata|url")
+        for pid, page in (d.get("query", {}).get("pages", {}) or {}).items():
+            if str(pid).startswith("-"):
+                continue
+            em = (page.get("imageinfo") or [{}])[0].get("extmetadata", {}) or {}
+            return (str(pid), page.get("title", f"File:{fname}"),
+                    _strip(em.get("ImageDescription", {}).get("value", "")), fname)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[discovery] 커먼스 조회 실패(%s): %s", fname, e)
+    return "", "", "", fname
+
+
+def resolve_wreck_from_video(url: str, title: str = "", desc: str = "") -> dict | None:
+    """★운영자가 직접 소싱한 영상이 **침몰선**일 때, 침몰선 형태로 제작하기 위한 정체성 확보.
+
+    운영자 확정: "내가 직접 검색해 소싱한 영상이 침몰선이면 침몰선 형태로 제작해도 된다."
+      · 화면 = **운영자가 고른 그 영상**(자동 소싱 다큐 이미지가 아니라)
+      · 대본·캡션 = **그 배의 자료(dossier)** — 위키백과 제원·요약
+    배 이름을 못 찾거나 그 배 자료가 없으면 **None** → 호출부가 일반 나레이션형으로 폴백한다
+    (운영자 확정 폴백). 없는 역사·톤수·침몰 경위는 절대 지어내지 않는다(날조 금지 하드룰).
+
+    ★자동 소싱의 '아마추어 다이빙 영상 금지' 룰과 충돌하지 않는다 — 그 룰은 **자동으로 아무 영상이나
+      물어오는 것**을 막는 규칙이고, 여기는 운영자가 눈으로 보고 고른 영상이다.
+    반환: discovered.json 스키마({key, kind:"wreck", footage, subject, copy}) + dossier 확인 결과.
+    """
+    title = (title or "").strip()
+    desc = (desc or "").strip()
+    # ① 커먼스면 구조화데이터(depicts→배/난파선) + 파일 설명까지 활용
+    pid, ftitle, fdesc, fname = _commons_file_meta(url)
+    ident = None
+    if pid:
+        desc = desc or fdesc
+        title = title or ftitle
+        ident = _wreck_identity(pid, ftitle, fdesc)
+    # ② 커먼스가 아니거나 실패 → 운영자가 넘긴 제목·설명·파일명에서 배 이름 추출
+    if not ident:
+        blob_title = title or fname.replace("_", " ")
+        nm = _wreck_name_from_title(blob_title, desc)
+        if nm:
+            tm = _WRECK_TYPE.search(f"{blob_title} {desc}")
+            ident = {"name": nm, "name_ja": "", "facts": [], "fact_src": "",
+                     "ship_type": tm.group(0) if tm else "",
+                     "depth": _depth_from_text(blob_title, desc)}
+    if not ident or not (ident.get("name") or "").strip():
+        log.info("[discovery] 배 이름 미확보 → 침몰선 제작 불가(일반 나레이션형으로): %s", title or url)
+        return None
+
+    name = ident["name"].strip()
+    # ③ **그 배 자료(dossier)** 확보 — 대본·캡션의 근거. 화면은 운영자 영상이므로 이미지 장수는
+    #    요구하지 않는다(min_images=0). 제원·요약이 전무하면 None(지어내지 않는다).
+    doss = None
+    try:
+        from src.categories.shipwreck import dossier as _dsr
+        for cand_name in [n for n in (name, re.sub(r"^(SS|RMS|HMS|HMHS|MV|MS|USS|MT|SMS)\s+", "",
+                                                   name, flags=re.I).strip()) if n]:
+            doss = _dsr.build_dossier(cand_name, min_images=0)
+            if doss:
+                name = cand_name
+                break
+    except Exception as e:  # noqa: BLE001
+        log.warning("[discovery] dossier 확보 실패(%s): %s", name, e)
+    if not doss:
+        log.info("[discovery] '%s' 배 자료(제원·요약) 없음 → 침몰선 제작 불가(일반 나레이션형으로)", name)
+        return None
+
+    display = doss.get("display", name)
+    depth = ident.get("depth", "") or ""
+    key = f"wreck {name}".lower()
+    facts = ident.get("facts") or []
+    log.info("[discovery] 영상→침몰선 확보: %s (자료: 제원 %d항목 · 요약 %d자) · 이 영상으로 제작",
+             display, len(doss.get("specs", {}) or {}), len(doss.get("summary", "") or ""))
+    return {
+        "key": key, "kind": "wreck",
+        "footage": {"url": url, "license": "", "credit": "",
+                    "source": title or fname or url,
+                    # ★화면은 이 영상 그대로 쓴다는 표식(자동 다큐 이미지 시퀀스가 아님).
+                    "media_kind": "operator_wreck", "wiki_title": name},
+        "subject": {
+            "scientific_name": f"Wreck {name}", "common_name_ko": f"{display} 난파선",
+            "common_name_en": f"Wreck {display}", "depth_range_m": depth,
+            "distribution": doss.get("sink_region_en", "") or "", "habitat": "침몰선", "diet": [],
+            "fun_facts": facts or [f"{display}는 바다에 가라앉은 배입니다"],
+            "sources": [s for s in doss.get("sources", []) if s]},
+        "copy": _wreck_copy(name, ident.get("name_ja", ""), ident.get("ship_type", ""), depth),
+        "dossier_ok": True,
+    }
+
+
 def resolve_from_video(url: str, title: str = "", desc: str = "") -> dict | None:
     """★운영자가 '영상 찾기'에서 고른 영상 하나로 제작하기 위한 정체성 확보(운영자 확정).
 
@@ -863,25 +963,11 @@ def resolve_from_video(url: str, title: str = "", desc: str = "") -> dict | None
     desc = (desc or "").strip()
     ident = None
     # ① 커먼스 파일이면 pageid를 얻어 구조화데이터·설명까지 활용
-    fname = ""
-    m = re.search(r"/commons/(?:transcoded/)?[0-9a-f]/[0-9a-f]{2}/([^/?#]+)", url or "")
-    if m:
-        fname = unquote(m.group(1))
-        try:
-            d = _get(_COMMONS, action="query", prop="imageinfo|info",
-                     titles=f"File:{fname}", iiprop="extmetadata|url")
-            for pid, page in (d.get("query", {}).get("pages", {}) or {}).items():
-                if str(pid).startswith("-"):
-                    continue
-                em = (page.get("imageinfo") or [{}])[0].get("extmetadata", {}) or {}
-                ftitle = page.get("title", f"File:{fname}")
-                fdesc = _strip(em.get("ImageDescription", {}).get("value", ""))
-                desc = desc or fdesc
-                title = title or ftitle
-                ident = _identity_for(str(pid), ftitle, fdesc)
-                break
-        except Exception as e:  # noqa: BLE001
-            log.warning("[discovery] 커먼스 조회 실패(%s): %s", fname, e)
+    pid, ftitle, fdesc, fname = _commons_file_meta(url)
+    if pid:
+        desc = desc or fdesc
+        title = title or ftitle
+        ident = _identity_for(pid, ftitle, fdesc)
     # ②③ 제목·설명·파일명에서 학명 파싱 → Wikidata
     if not (ident and ident.get("sci")):
         blob = " ".join([title, desc, fname.replace("_", " ")])

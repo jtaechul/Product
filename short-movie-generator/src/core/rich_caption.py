@@ -234,13 +234,13 @@ def _evergreen(seed: str, ko: bool, n: int = 2, deep: bool = True) -> list[str]:
     if deep:
         pool += (_EVERGREEN_DEEP_KO if ko else _EVERGREEN_DEEP_JP)
     h = int(hashlib.md5((seed or "x").encode("utf-8")).hexdigest(), 16)
-    out, i = [], 0
-    while len(out) < min(n, len(pool)):
-        line = pool[(h + i) % len(pool)]
-        if line not in out:
-            out.append(line)
-        i += 1
-    return out
+    # ★시작 인덱스 하나(h % len)만 쓰면 후보 풀이 작을 때 **다른 종이 같은 조합**을 받는다
+    #   (실제로 Rimicaris/Bathynomus가 8개 풀에서 충돌해 문장이 똑같이 나왔다). 해시 전체를 시드로
+    #   준 결정론 셔플로 뽑아 조합이 종마다 갈리게 한다(같은 종은 항상 같은 조합 — 결정론 유지).
+    import random
+    order = list(pool)
+    random.Random(h).shuffle(order)
+    return order[:min(n, len(order))]
 
 
 # ★구독·댓글 유도(운영자 확정 · 캡션 전용). 검토 결론: 나레이션(음성)에 댓글 유도를 넣으면

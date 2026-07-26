@@ -810,6 +810,24 @@
       - 제작 풀에는 유명 난파선 다큐(discovered.json에 `media_kind=wreck_doc`)를 **여러 개 시드**해 둔다
         (Titanic·Lusitania·Britannic·Andrea Doria·Thistlegorm·Empress of Ireland 등) — auto·수동 모두
         신뢰 소스로 제작되게(실패 감소). 회귀 테스트: `test_wreck_no_amateur_video.py`.
+      - **★예외 = 운영자가 직접 소싱한 침몰선 영상(운영자 확정 · 위 금지의 유일한 예외)**: 운영자가
+        '영상 찾기'에서 **눈으로 보고 고른** 영상이 침몰선이면 **침몰선 형태로 제작한다**
+        ("내가 직접 검색해 소싱한 영상의 경우, 침몰선인 경우에는 침몰선 형태로 제작해도 돼").
+        금지 룰의 취지는 **자동 소싱이 아무 다이빙 클립이나 물어오는 것**을 막는 데 있고, 이 경로는
+        사람이 고른 영상이므로 충돌하지 않는다. **자동 소싱(`_discover_wrecks`)에는 여전히 영상 티어를
+        만들지 말 것.**
+        - **구성(운영자 선택)**: **화면 = 그 영상 그대로** / **대본·캡션 = 그 배 자료(dossier)**.
+          자동 다큐(이미지 시퀀스)로 바꾸지 않는다.
+        - **폴백(운영자 선택)**: 배 이름을 못 찾거나 **그 배 자료(위키 제원·요약)가 없으면 제작하지 않고
+          일반 나레이션형으로 전환**한다(실패 아님). 없는 역사·톤수·침몰 경위는 절대 지어내지 않는다.
+        - **자료 요건**: 화면은 내 영상이므로 **이미지 장수 요건 없음**(`build_dossier(min_images=0)`) —
+          필요한 건 제원·요약뿐이다.
+        - **배선**: `discovery.resolve_wreck_from_video` → footage `media_kind="operator_wreck"`
+          (영상 캐시가 이 표식을 보존해야 한다 · `_video_cache_put`) → `footage._fetch_video_footage`가
+          난파선 영상 금지의 예외로 그 영상을 채택하고 `fv["wreck_dossier"]`를 함께 실음 →
+          `pipeline.run_reels`가 **대본·캡션·CTA·스팅어 생략**을 침몰선 쪽으로 분기(`_is_wreck_ep`) →
+          `run_pipeline`이 카테고리를 `shipwreck`으로 전환 → 워크플로 `route` 잡이 `reels|wreck|narrate`
+          3분기. 회귀: `tests/test_operator_wreck.py`.
     - **★오프닝/엔드카드 배경 프레임은 '텍스트 없는·피사체 있는' 프레임 선택(전 카테고리 · 문제 재발방지)**:
       인트로 카드·빈 프레임이 오프닝/엔드카드에 새지 않게, 고정 시각(0.5초) 대신 `_best_subject_frame`
       (피사체 점수 + 번인텍스트 감점 `text_score`)으로 오프닝 배경·엔드카드 피사체 프레임을 고른다.

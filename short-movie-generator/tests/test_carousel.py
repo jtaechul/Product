@@ -35,7 +35,9 @@ def test_slide_html_has_brand_sources_and_keepall():
     assert "정보 출처: NOAA · WoRMS" in src
     assert "word-break:keep-all" in src            # 화면 조판 하드룰
     cov = carousel._cover(_info(), _cap(), "", 7)
-    assert "UNIDENTIFIED SPECIMEN" in cov and "No.007" in cov
+    assert "UNIDENTIFIED SPECIMEN" in cov
+    # ★회차 번호 외부 노출 금지(하드룰 #18 · 운영자 확정): 커버에 'No.007'을 찍지 않는다.
+    assert "No.007" not in cov and "No. 007" not in cov
 
 
 @browser_only

@@ -364,15 +364,21 @@ def run_reels(
     if fv.get("doc"):
         from src.categories.shipwreck import dossier as _dsr
         chunks = _dsr.wreck_body_jp(fv["dossier"])
+    elif fv.get("wreck_dossier"):
+        # ★운영자가 직접 소싱한 침몰선 영상(운영자 확정 "침몰선이면 침몰선 형태로 제작해도 된다"):
+        #   **화면은 그 영상 그대로**(아래 일반 리프레임 경로), **대본만 그 배 자료**로 만든다.
+        from src.categories.shipwreck import dossier as _dsr
+        chunks = _dsr.wreck_body_jp(fv["wreck_dossier"])
     else:
         chunks = category.reels_body_script(info) if hasattr(category, "reels_body_script") else None
     if not chunks:
         raise PipelineError("script", "본문 일본어 대본 생성 불가(시드/LLM 필요)")
     # ★길이 상한(쇼츠 40초 규칙): 과길이 본문을 ~30초로 컷. 뒤에 붙는 구독 유도 절만큼 예산을 미리
     #   빼두어, CTA를 더해도 총 길이가 규칙(40초 내외)을 넘지 않게 한다.
-    _cta_len = sum(len(c) for c in (_CTA_BODY_JP_DOC if fv.get("doc") else _CTA_BODY_JP))
+    _is_wreck_ep = bool(fv.get("doc") or fv.get("wreck_dossier"))   # 침몰선 편(자동 다큐·운영자 영상 공통)
+    _cta_len = sum(len(c) for c in (_CTA_BODY_JP_DOC if _is_wreck_ep else _CTA_BODY_JP))
     chunks = _cap_body_chunks(chunks, max_chars=_MAX_BODY_CHARS - _cta_len)
-    chunks = _append_cta(chunks, doc=bool(fv.get("doc")))   # 마무리 뒤 구독 유도 1회(댓글 유도 없음)
+    chunks = _append_cta(chunks, doc=_is_wreck_ep)   # 마무리 뒤 구독 유도 1회(댓글 유도 없음)
     nar = narration_sync.synthesize(chunks, str(work_dir))
     if not nar.get("mp3") or not nar.get("disp"):
         raise PipelineError("tts", "나레이션 합성 실패")
@@ -528,9 +534,9 @@ def run_reels(
     # 5.5) ★오프닝 지도·수심 하강 스팅어(운영자 확정): 훅 뒤에 '지도→해역 락온→실제 수심 하강'을
     #      ~2.3초 붙인다. 본문 앞에 결합하면 최종 순서가 [훅][스팅어][본문][엔드카드]가 된다.
     #      실패해도 발행 불정지(스팅어 없이 진행). 수심은 종 실제 서식수심(날조 아님).
-    #      ★난파선 다큐(doc)는 제외: '생식해역·수심 하강'은 생물용 프레이밍이라 부적절하고,
-    #        침몰 위치는 본문 안 '지도 컷'(위 doc 분기)이 사고 구간에 이미 정확히 보여준다.
-    if not fv.get("doc"):
+    #      ★난파선 편(doc·운영자 영상 공통)은 제외: '생식해역·수심 하강'은 생물용 프레이밍이라
+    #        부적절하다(자동 다큐는 본문 안 '지도 컷'이 침몰 위치를 대신 보여준다).
+    if not _is_wreck_ep:
         try:
             from src.core import reels_stinger
             st = reels_stinger.build_stinger(info, str(work_dir / "stinger.mp4"),
@@ -603,18 +609,20 @@ def run_reels(
 
     # 7) 캡션(일본어 게시글 + 한국어 참고) + 출력 (캡션 생성 실패해도 발행 불정지)
     try:
-        if fv.get("doc"):
-            # ★침몰선 다큐 전용 캡션(운영자 확정): 생물 관점(生息·서식 등) 배제 → 배의 역사·침몰
+        if fv.get("doc") or fv.get("wreck_dossier"):
+            # ★침몰선 전용 캡션(운영자 확정): 생물 관점(生息·서식 등) 배제 → 배의 역사·침몰
             #   경위·수심·해역·수중 잔해 중심의 스토리 캡션 + 침몰선 해시태그(생물 태그 아님).
+            #   자동 다큐(doc)든 운영자가 고른 영상(wreck_dossier)이든 근거 자료는 같은 dossier다.
             from src.categories.shipwreck import dossier as _dsr
             from src.core.contracts import CaptionData
-            c = _dsr.wreck_caption(fv["dossier"], depth_m=info.depth_range_m or "")
+            _doss = fv.get("dossier") or fv["wreck_dossier"]
+            c = _dsr.wreck_caption(_doss, depth_m=info.depth_range_m or "")
             dep = _dsr._depth_num(info.depth_range_m or "")
             caption = CaptionData(
                 hook_text=spec.hook_line1 + spec.hook_line2,
                 overlay_facts=([f"水深 {dep} m"] if dep else []),
                 caption_body=c["jp"], hashtags=c["tags"],
-                reveal_name=fv["dossier"].get("display", info.scientific_name), reveal_fact="",
+                reveal_name=_doss.get("display", info.scientific_name), reveal_fact="",
                 caption_ko=c["ko"], hook_ko="", hashtags_ko=list(c["tags_ko"]),
                 yt_title=c["yt_title"], yt_title_ko=c["yt_title_ko"])
         elif hasattr(category, "build_reels_caption"):

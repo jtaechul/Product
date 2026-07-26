@@ -67,12 +67,20 @@ def main() -> int:
     if str(args.video_url).strip():
         from src.core import discovery, footage
         rec = discovery.resolve_from_video(args.video_url.strip(), args.video_title, "")
+        wreck = None
         if not rec:
-            logging.error("파이프라인 중단: 이 영상의 종명·학명을 확보하지 못했습니다 "
-                          "(제목에 학명이 없고 커먼스 구조화데이터도 없음). "
-                          "제목에 학명(예: Bathynomus giganteus)을 넣어 다시 시도하세요.")
+            # ★침몰선 경로(운영자 확정 "직접 소싱한 영상이 침몰선이면 침몰선 형태로 제작해도 된다"):
+            #   종이 안 잡히면 배 이름·그 배 자료를 찾아본다. 화면은 이 영상, 대본은 그 배 자료.
+            wreck = discovery.resolve_wreck_from_video(args.video_url.strip(), args.video_title, "")
+        if not rec and not wreck:
+            logging.error("파이프라인 중단: 이 영상의 종명·학명(또는 배 이름·자료)을 확보하지 "
+                          "못했습니다. 제목에 학명(예: Bathynomus giganteus)이나 배 이름을 "
+                          "넣어 다시 시도하세요. (일반 나레이션형으로는 제작 가능합니다)")
             return 1
-        sp = rec["species"]
+        if wreck:
+            args.category = "shipwreck"
+        sp = rec["species"] if rec else wreck["subject"]
+        rec = rec or wreck
         # ★라이선스: 대시보드는 사람이 읽는 라벨("Public Domain / CC0", "CC BY-SA" 등)을 넘긴다.
         #   게이트가 쓰는 식별자로 정규화한다(NC는 _norm_license가 먼저 차단 — 하드룰 #1).
         #   정규화 실패(=허용 라이선스 아님)면 게이트가 뒤에서 막지만, 여기서 먼저 명확히 끊는다.
@@ -92,8 +100,12 @@ def main() -> int:
         cur = [x for x in cur if (x.get("key") or "").strip().lower() != rec["key"]]
         discovery.save_discovered(args.category, cur + [rec])
         query = sp["scientific_name"]
-        logging.info("영상→종 확보: %s (%s / %s) · 이 영상으로 제작합니다",
+        logging.info("영상→대상 확보: %s (%s / %s) · 이 영상으로 제작합니다",
                      sp["scientific_name"], sp["common_name_ko"], sp["common_name_en"])
+        if wreck:
+            # 침몰선은 카테고리가 이미 확정(shipwreck) — 생물용 재분류 로직을 태우지 않는다.
+            logging.info("침몰선 형태로 제작합니다(화면=이 영상 · 대본·캡션=그 배 자료)")
+            return _run(args, query, manual)
         # ★카테고리 자동 라우팅(운영자 확정 "영상이 있으면 제작은 된다"): 고른 종이 그 카테고리에
         #   맞지 않으면(예: 얕은 바다 종을 심해 도감에) **거절하지 말고 맞는 카테고리로 옮겨** 만든다.
         #   심해가 아닌 종을 '심해'로 발행하면 가짜 수심이 되므로 거절도 정답이 아니다 → 재분류가 정답.
@@ -124,6 +136,11 @@ def main() -> int:
         except Exception as e:  # noqa: BLE001
             logging.info("카테고리 적합성 사전확인 생략(%s) — 파이프라인 게이트가 판단합니다", e)
 
+    return _run(args, query, manual)
+
+
+def _run(args, query: str, manual: dict | None) -> int:
+    """확정된 카테고리·질의로 파이프라인 실행 + 결과 출력(종료코드 반환)."""
     try:
         if args.mode == "reels":
             from src.core.pipeline import run_reels

@@ -66,6 +66,11 @@ def _video_cache_put(key: str, cand: dict) -> None:
            "source": cand.get("source", "")}
     if cand.get("trim"):
         ref["trim"] = cand["trim"]
+    # ★소스 종류 표식은 보존한다(예: operator_wreck = 운영자가 고른 침몰선 영상 + 그 배 대본).
+    #   이걸 떨어뜨리면 캐시로 복원됐을 때 '어떤 형태로 만들 영상인지'를 잃는다.
+    for fld in ("media_kind", "wiki_title"):   # ⚠ 루프 변수를 k로 쓰면 캐시 키를 덮어쓴다
+        if cand.get(fld):
+            ref[fld] = cand[fld]
     c = _video_cache()
     if c.get(k) == ref:
         return
@@ -1521,10 +1526,12 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
     is_wreck = key.startswith("wreck ")
     from_cache = False
     cand = _operator_footage(key, common_name_en)   # ★운영자 수동 드롭 최우선(있으면 그 클립 사용)
-    if not cand and not is_wreck:
+    if not cand:
         # ★영상 URL 캐시 우선(NOAA 검색 간헐 실패 우회 · 분류=제작 일치): 한 번 찾은 영상은 그 URL을 바로 받는다.
+        #   난파선은 자동 캐시를 쓰지 않지만(아마추어 영상 금지), **운영자가 직접 고른 영상**
+        #   (operator_wreck)만은 예외로 그대로 쓴다(운영자 확정).
         cref = _video_cache_get(key)
-        if cref:
+        if cref and (not is_wreck or cref.get("media_kind") == "operator_wreck"):
             cand = cref
             from_cache = True
     if not cand:
@@ -1562,7 +1569,11 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
     #   OCR로 못 지우고 ②배는 안 나오고 잠수사만 ③짧은 클립 반복 → 영상 품질을 근본적으로 무너뜨렸다.
     #   따라서 난파선 소스는 (1)유명 난파선 다큐(실제 배 사진 시퀀스) 또는 (2)그 배의 사진 켄번즈만
     #   허용한다. 둘 다 실패하면 raw 영상으로 폴백하지 않고 None → auto 후보 순회가 다음 대상으로.
-    if key.startswith("wreck "):
+    # ★운영자가 직접 고른 침몰선 영상(operator_wreck)은 위 금지의 예외다(운영자 확정).
+    #   금지 룰의 취지는 '자동 소싱이 아무 다이빙 클립이나 물어오는 것'을 막는 데 있고, 여기는
+    #   운영자가 눈으로 보고 고른 영상이다. 화면=이 영상 / 대본·캡션=그 배 자료(dossier).
+    is_op_wreck = is_wreck and cand.get("media_kind") == "operator_wreck"
+    if is_wreck and not is_op_wreck:
         wp = _wreck_photo_footage(scientific_name, common_name_en, dest, key)
         if wp:
             log.info("[footage] 난파선 → 사진 켄번즈(주제 피사체 보장)")
@@ -1687,13 +1698,42 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
         except Exception as e:  # noqa: BLE001
             log.warning("[footage] 몸꼴 검증 생략(오류): %s", e)
     # ★영상 확정 → URL 캐시(다음부터 검색 없이 그 파일을 바로 받아 분류=제작 일치)
-    if not is_wreck:
+    if not is_wreck or is_op_wreck:
         _video_cache_put(key, cand)
     # NOAA 소스는 좌상단 워터마크 영역 정보를 함께 반환(하류에서 회피/제거)
     logo = _NOAA_LOGO_BOX if "noaa" in (cand.get("credit", "") or "").lower() else None
-    return {"path": str(out), "license": cand["license"],
-            "credit": cand["credit"], "source": cand.get("source", ""),
-            "logo_box": logo}
+    fv = {"path": str(out), "license": cand["license"],
+          "credit": cand["credit"], "source": cand.get("source", ""),
+          "logo_box": logo}
+    if is_op_wreck:
+        # ★대본·캡션 근거로 그 배 자료를 함께 싣는다(화면은 위 영상 그대로). 자료를 못 구하면
+        #   싣지 않고 진행 — 파이프라인이 일반(제네릭) 침몰선 카피로 만든다(제작을 막지 않는다).
+        doss = _operator_wreck_dossier(cand, scientific_name)
+        if doss:
+            fv["wreck_dossier"] = doss
+    return fv
+
+
+def _operator_wreck_dossier(cand: dict, scientific_name: str) -> dict | None:
+    """운영자가 고른 침몰선 영상의 **대본용 자료**(위키 제원·요약). 화면용 이미지는 필요 없으므로
+    장수 요건 없이(min_images=0) 제원·요약만 확보한다. 없으면 None(날조 금지)."""
+    try:
+        from src.categories.shipwreck import dossier as _dsr
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] dossier 모듈 로드 실패: %s", e)
+        return None
+    name = (cand.get("wiki_title")
+            or re.sub(r"^wreck\s+", "", scientific_name or "", flags=re.I).strip())
+    if not name:
+        return None
+    try:
+        doss = _dsr.build_dossier(name, min_images=0)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[footage] 배 자료 확보 실패(%s): %s", name, e)
+        return None
+    if not doss:
+        log.info("[footage] '%s' 배 자료 없음 → 일반 침몰선 카피로 진행", name)
+    return doss
 
 
 # ── 실사 사진 다큐(영상 미확보 생물 → 여러 실사 이미지 켄번즈 시퀀스) ────────────────────

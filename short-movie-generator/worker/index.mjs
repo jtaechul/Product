@@ -961,8 +961,10 @@ async function vsShorts(i){
     vsbanner("GitHub 토큰을 먼저 설정하세요(제작 카드 아래 안내).","err");return;}
   const cat=(($("#category")||{}).value||"deep_sea");
   if(!confirm("이 영상으로 쇼츠를 제작합니다.\\n\\n제목: "+(v.title||"")+"\\n카테고리: "+cat+"\\n\\n"+
-              "※ 종명·학명은 제작 시 자동으로 검색·확보합니다. 확보에 실패하면(제목에 학명이 없고 "+
-              "구조화데이터도 없는 경우) 제작이 중단되고 텔레그램으로 사유가 전송됩니다.")) return;
+              "※ 제작 형태는 자동으로 정해집니다.\\n"+
+              "  ① 종명·학명이 확보되면 → 생물 쇼츠\\n"+
+              "  ② 배 이름·그 배 자료가 확보되면 → 침몰선 쇼츠(화면=이 영상, 대본=그 배 자료)\\n"+
+              "  ③ 둘 다 아니면 → 일반 나레이션형으로 전환(실패 아님)")) return;
   vsbanner("제작 요청 중…");
   try{
     const r=await fetch(API+"/actions/workflows/"+WF+"/dispatches",{method:"POST",headers:headers(true),
@@ -972,7 +974,7 @@ async function vsShorts(i){
         video_license:v.license||"", video_credit:v.credit||v.source||"",
       }})});
     if(r.status===204){
-      vsbanner("제작 시작! 종명·학명 확보 후 진행됩니다. 2~5분 뒤 텔레그램 전송 + 라이브러리 등록.","ok");
+      vsbanner("제작 시작! 대상(종 또는 배) 확보 후 진행됩니다. 2~5분 뒤 텔레그램 전송 + 라이브러리 등록.","ok");
       setTimeout(loadRuns,4000); setTimeout(loadRuns,15000);
     }else{const t=await r.text();
       vsbanner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
