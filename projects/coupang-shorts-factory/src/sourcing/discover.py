@@ -49,19 +49,25 @@ def enrich_naver(svs: list, finder=find_coupang) -> None:
 
 
 def discover(keyword: str, limit: int = 10, adapter: TikwmAdapter | None = None,
-             terms: list | None = None) -> list:
-    """한국어 키워드 → (중국어로 확장) → 여러 검색어로 틱톡 검색 → 병합·조회수 상위 → 한국어 설명 번역.
-    terms 주입 시 그 검색어들을 쓴다(없으면 keyword를 중국어로 확장). adapter/terms 주입 가능(테스트)."""
+             terms: list | None = None, page: int = 0) -> list:
+    """한국어 키워드 → (중국어로 확장) → 여러 검색어로 틱톡 검색 → 병합·조회수 정렬 → page 배치 슬라이스.
+
+    page=0은 조회수 상위 limit개, page=1은 그다음 limit개…('새로고침'으로 이미 본 것 말고 다른
+    고조회수 영상을 받기 위함). 한국어 설명·쿠팡 검색어·네이버 확인은 반환하는 슬라이스에만 적용.
+    terms/adapter 주입 가능(테스트)."""
     ad = adapter or TikwmAdapter()
     terms = terms if terms is not None else expand_zh_terms(keyword)
+    page = max(0, int(page or 0))
+    need = (page + 1) * limit + 10   # 이 배치 슬라이스를 덮을 만큼 풀을 넉넉히
     pool = {}   # source_url|id → SourceVideo(최고 조회수 유지)
     for t in terms:
-        for sv in ad.search(Seed(kind="keyword", value=t), limit=max(limit, 15)):
+        for sv in ad.search(Seed(kind="keyword", value=t), limit=max(need, 15)):
             k = sv.source_url or sv.id
             cur = pool.get(k)
             if cur is None or (sv.view_count or 0) > (cur.view_count or 0):
                 pool[k] = sv
-    svs = sorted(pool.values(), key=lambda s: (s.view_count or 0), reverse=True)[:limit]
+    ordered = sorted(pool.values(), key=lambda s: (s.view_count or 0), reverse=True)
+    svs = ordered[page * limit: page * limit + limit]   # page별 다른(조회수순) 슬라이스
     meta = describe_and_keywords_ko([s.title or "" for s in svs])   # 카드용 한국어 설명 + 쿠팡 검색어
     for s, m in zip(svs, meta):
         s.title_ko = m["ko"]
@@ -70,10 +76,11 @@ def discover(keyword: str, limit: int = 10, adapter: TikwmAdapter | None = None,
     return svs
 
 
-def build_manifest(keyword: str, row_hash: str, svs: list, terms: list | None = None) -> dict:
+def build_manifest(keyword: str, row_hash: str, svs: list, terms: list | None = None,
+                   page: int = 0, nonce: str = "") -> dict:
     return {"keyword": keyword, "hash": row_hash, "source": "tiktok_tikwm",
-            "search_terms": terms or [], "count": len(svs),
-            "candidates": [_candidate(s) for s in svs]}
+            "search_terms": terms or [], "page": int(page or 0), "nonce": str(nonce or ""),
+            "count": len(svs), "candidates": [_candidate(s) for s in svs]}
 
 
 def write_manifest(row_hash: str, manifest: dict, base_dir: Path | None = None) -> Path:
@@ -89,13 +96,15 @@ def main(argv=None) -> int:
     ap.add_argument("--keyword", required=True)
     ap.add_argument("--hash", default="manual")
     ap.add_argument("--limit", type=int, default=10)
+    ap.add_argument("--page", type=int, default=0, help="새로고침 배치(0=상위, 1=다음 배치…)")
+    ap.add_argument("--nonce", default="", help="폴링 신선도 매칭용(관리자가 넘김)")
     a = ap.parse_args(argv)
 
     terms = expand_zh_terms(a.keyword)   # 한국어 → 중국어 검색어(매니페스트에도 기록)
-    svs = discover(a.keyword, limit=a.limit, terms=terms)
-    manifest = build_manifest(a.keyword, a.hash, svs, terms=terms)
+    svs = discover(a.keyword, limit=a.limit, terms=terms, page=a.page)
+    manifest = build_manifest(a.keyword, a.hash, svs, terms=terms, page=a.page, nonce=a.nonce)
     p = write_manifest(a.hash, manifest)
-    print(f"[discover] 키워드='{a.keyword}' → 검색어(중국어확장)={terms} → 후보 {len(svs)}개 저장: {p}")
+    print(f"[discover] 키워드='{a.keyword}' · 배치(page)={a.page} → 검색어(중국어확장)={terms} → 후보 {len(svs)}개 저장: {p}")
     for i, c in enumerate(manifest["candidates"], 1):
         kws = " / ".join(c.get("coupang_keywords") or []) or "(검색어 없음)"
         nv = c.get("naver") or {}

@@ -110,6 +110,20 @@ def test_describe_and_keywords():
           "개수 부족 → 뒤 항목 원문 폴백")
 
 
+def test_page_slicing():
+    print("[T8] page 슬라이스 — 새로고침이 다른(다음) 영상 + 매니페스트 page/nonce")
+    ad = _adapter()
+    p0 = discover("꿀템", limit=1, adapter=ad, terms=["x"])            # 상위 1개
+    p1 = discover("꿀템", limit=1, adapter=ad, terms=["x"], page=1)    # 다음 1개
+    p2 = discover("꿀템", limit=1, adapter=ad, terms=["x"], page=2)    # 풀 소진
+    check(len(p0) == 1 and p0[0].view_count == 88000, "page0 = 최고 조회수")
+    check(len(p1) == 1 and p1[0].view_count == 500, "page1 = 다음 영상")
+    check(p0[0].id != p1[0].id, "page0·page1 서로 다른 영상")
+    check(p2 == [], "풀 소진 → 빈 배치")
+    m = build_manifest("꿀템", "h", p1, terms=["x"], page=1, nonce="nX")
+    check(m.get("page") == 1 and m.get("nonce") == "nX", "매니페스트 page·nonce 기록")
+
+
 def test_naver_find_coupang():
     print("[T6] 네이버 쇼핑 → 진짜 상품명 + 쿠팡 판매여부(주입)")
     def http_ok(url):
@@ -152,7 +166,7 @@ def test_enrich_naver():
 
 if __name__ == "__main__":
     for fn in [test_discover_terms_and_ko, test_write_manifest, test_empty,
-               test_translate_injected, test_describe_and_keywords,
+               test_translate_injected, test_describe_and_keywords, test_page_slicing,
                test_naver_find_coupang, test_enrich_naver]:
         fn()
     print()

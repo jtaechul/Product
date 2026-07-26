@@ -391,6 +391,7 @@ ol li{margin:8px 0}
     </div>
     <p id="srcStatus" class="hint" style="margin-top:8px"></p>
     <div id="srcCards" class="srccards"></div>
+    <button id="srcRefresh" class="btn sub" style="display:none; margin-top:12px; width:100%">새로고침 — 다른 영상 찾기 (쿠팡에 없을 때)</button>
   </div>
 
   <div class="card" id="srcPickCard" style="display:none">
@@ -1609,8 +1610,9 @@ const srcDiscoverPath = (h) => `${P}/data/sources/discover/${h}.json`;
 const srcProductPath = (h) => `${P}/data/sources/product/${h}.json`;
 // 쿠팡 파트너스 링크생성 검색 딥링크(검색어 프리필) — 여기서 상품 찾아 어필리에이트 링크를 만든다.
 const coupangSearchUrl = (q) => `https://partners.coupang.com/#affiliate/ws/link/0/${encodeURIComponent(q)}`;
-let srcState = { hash: null, keyword: "", cands: [], picked: null };
+let srcState = { hash: null, keyword: "", cands: [], picked: null, page: 0, nonce: "" };
 function srcEsc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function srcNonce() { return "n" + Date.now() + Math.floor(Math.random() * 1e6); }
 function sourcingInit() { /* 진입 시 특별 로드 없음 — 발굴은 버튼으로 시작 */ }
 async function srcDispatch(inputs) {
   await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${SRC_WF}/dispatches`, {
@@ -1620,31 +1622,53 @@ $("srcDiscover").onclick = (ev) => busy(ev.target, async () => {
   const kw = ($("srcKeyword").value || "").trim();
   if (!kw) { toast("검색어를 입력하세요"); return; }
   const hash = await sha16("src:" + kw);
-  srcState = { hash, keyword: kw, cands: [], picked: null };
-  $("srcCards").innerHTML = ""; $("srcPickCard").style.display = "none";
+  const nonce = srcNonce();
+  srcState = { hash, keyword: kw, cands: [], picked: null, page: 0, nonce };
+  $("srcCards").innerHTML = ""; $("srcPickCard").style.display = "none"; $("srcRefresh").style.display = "none";
   $("srcStatus").textContent = `'${kw}' 틱톡 상품 발굴 중… (약 1분, 완료되면 자동 표시)`;
-  await srcDispatch({ keyword: kw, hash, limit: "5" });
+  await srcDispatch({ keyword: kw, hash, limit: "5", page: "0", nonce });
   toast("틱톡 발굴 시작 — 약 1분");
-  srcPoll(hash, 0);
+  srcPoll(hash, nonce, 0);
 });
-async function srcPoll(hash, tries) {
-  if (srcState.hash !== hash) return;   // 다른 발굴이 시작됨 → 중단
+$("srcRefresh").onclick = (ev) => busy(ev.target, async () => {
+  if (!srcState.hash) { toast("먼저 발굴하세요"); return; }
+  const nextPage = (srcState.page || 0) + 1;
+  const nonce = srcNonce();
+  srcState.nonce = nonce; srcState.picked = null;
+  $("srcPickCard").style.display = "none";
+  $("srcStatus").textContent = "다른 영상 찾는 중… (약 1분)";
+  await srcDispatch({ keyword: srcState.keyword, hash: srcState.hash, limit: "5", page: String(nextPage), nonce });
+  toast("다른 영상 찾는 중 — 약 1분");
+  srcPoll(srcState.hash, nonce, 0);
+});
+async function srcPoll(hash, nonce, tries) {
+  if (srcState.nonce !== nonce) return;   // 더 최신 발굴/새로고침이 시작됨 → 이 폴링 중단
   let f = null;
   try { f = await getFile(srcDiscoverPath(hash), true, true); } catch (_) {}
   if (f) {
     try {
       const m = JSON.parse(f.text);
-      srcState.cands = m.candidates || [];
-      srcRenderCards();
-      const terms = (m.search_terms || []).join(", ");
-      $("srcStatus").textContent = srcState.cands.length
-        ? `상품 ${srcState.cands.length}개 발굴됨${terms ? ` · 검색어: ${terms}` : ""} — 상품 하나를 눌러 고르세요.`
-        : "결과가 비었습니다(차단/검색어 문제). 다른 검색어로 다시 시도하세요.";
-      return;
+      if (String(m.nonce || "") === String(nonce)) {   // 내가 트리거한 결과가 도착
+        const cands = m.candidates || [];
+        const terms = (m.search_terms || []).join(", ");
+        if (cands.length) {
+          srcState.cands = cands;
+          if (Number.isInteger(m.page)) srcState.page = m.page;
+          srcRenderCards();
+          $("srcRefresh").style.display = "";
+          $("srcStatus").textContent = `상품 ${cands.length}개${srcState.page ? ` (${srcState.page + 1}번째 묶음)` : ""} 발굴됨${terms ? ` · 검색어: ${terms}` : ""} — 상품 하나를 눌러 고르세요.`;
+        } else if (srcState.cands.length) {
+          $("srcStatus").textContent = "더 이상 새 영상이 없어요 — 검색어를 바꿔 다시 발굴해 보세요.";
+          toast("더 이상 새 영상이 없습니다");
+        } else {
+          $("srcStatus").textContent = "결과가 비었습니다(차단/검색어 문제). 다른 검색어로 다시 시도하세요.";
+        }
+        return;
+      }
     } catch (_) {}
   }
-  if (tries > 30) { $("srcStatus").textContent = "아직 결과를 못 받았습니다. 잠시 후 '발굴하기'를 다시 눌러주세요."; return; }
-  setTimeout(() => srcPoll(hash, tries + 1), 8000);
+  if (tries > 30) { $("srcStatus").textContent = "아직 결과를 못 받았습니다. 잠시 후 다시 눌러주세요."; return; }
+  setTimeout(() => srcPoll(hash, nonce, tries + 1), 8000);
 }
 function srcCandKws(c) { return (c.coupang_keywords && c.coupang_keywords.length) ? c.coupang_keywords : [srcState.keyword]; }
 function srcRenderCards() {
