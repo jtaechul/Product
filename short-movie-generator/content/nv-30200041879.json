@@ -1,41 +1,31 @@
 {
   "id": "nv-30200041879",
   "kind": "narrate",
-  "created_at": "2026-07-26T11:31:15+00:00",
+  "created_at": "2026-07-26T13:05:12+00:00",
   "status": "published",
   "mode": "shorts",
   "source_url": "https://upload.wikimedia.org/wikipedia/commons/7/7a/First_Look_at_World_War_II_Shipwrecks_Off_NC_Coast.webm",
-  "hook": "深海に眠る、時を超えた記憶",
-  "yt_title": "衝撃！WW2の沈没船、深海の墓標",
-  "yt_title_ko": "충격! 2차 세계 대전 침몰선, 심해의 묘비",
-  "yt_description": "潜水艇が深い海の底へと潜っていきます。そこには第二次世界大戦で沈んだ船が、静かに眠っていました。海藻に覆われた残骸の中を魚たちが泳ぎ抜ける、歴史の記憶が宿る場所です。時を超えた沈黙の風景をぜひご覧ください。\n\n映像: NOAA (US)\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
-  "yt_description_ko": "잠수정이 깊은 바다 속으로 잠수합니다. 그곳에는 2차 세계 대전 때 침몰한 배가 조용히 잠들어 있었습니다. 해초에 뒤덮인 잔해 속을 물고기들이 헤엄쳐 지나가는, 역사의 기억이 깃든 장소입니다. 시간을 초월한 침묵의 풍경을 꼭 시청해주세요.\n\n영상: NOAA (US)\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
+  "hook": "静かな水面が広がります",
+  "yt_title": "静かな水面が広がります",
+  "yt_title_ko": "조용한 수면이 펼쳐집니다",
+  "yt_description": "静かな水面が広がります。小さな潜水艇が浮かんでいます。やがて暗い海へ沈んでいきます。強い光が海底を照らします。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
+  "yt_description_ko": "조용한 수면이 펼쳐집니다. 작은 잠수정이 떠 있습니다. 이윽고 어두운 바다로 가라앉아 갑니다. 강한 빛이 해저를 비춥니다.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
   "hashtags": [
-    "#第二次世界大戦",
-    "#WW2",
-    "#沈没船",
     "#深海",
-    "#水中映像",
-    "#潜水艇",
-    "#海洋探査",
-    "#歴史ロマン",
-    "#遺跡",
-    "#Shorts"
+    "#深海生物",
+    "#海洋生物",
+    "#魚",
+    "#海"
   ],
   "hashtags_ko": [
-    "#2차세계대전",
-    "#WW2",
-    "#침몰선",
     "#심해",
-    "#수중영상",
-    "#잠수정",
-    "#해양탐사",
-    "#역사로망",
-    "#유적",
-    "#Shorts"
+    "#심해생물",
+    "#해양생물",
+    "#물고기",
+    "#바다"
   ],
   "media": {
-    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30200041879.mp4",
-    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30200041879_thumb.jpg"
+    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30203105699.mp4",
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30203105699_thumb.jpg"
   }
 }
