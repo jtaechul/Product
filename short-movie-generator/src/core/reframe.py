@@ -24,6 +24,19 @@ def _probe(path: str, entry: str) -> float:
         return 0.0
 
 
+def _f(v) -> float | None:
+    """운영자 입력(문자열·빈칸·None)을 float으로. 비었거나 숫자가 아니면 None(=자동)."""
+    if v is None:
+        return None
+    s = str(v).strip()
+    if not s:
+        return None
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+
 def _duration(path: str) -> float:
     """실제 길이 = duration − start_time. 일부 NOAA/Commons webm은 타임스탬프가 0에서
     시작하지 않아 duration이 '끝 타임스탬프'로 읽힌다(수 시간대 오판 → 구간 계산 파괴)."""
@@ -463,6 +476,14 @@ _WIDE_ZOOM_CYCLE = [1.00, 1.08, 1.00, 1.10, 1.04, 1.06]
 _ROLE_PUSH = {"reveal": 1.07, "establish": 1.03, "behavior": 1.04,
               "detail": 1.08, "settle": 1.025, "wide": 1.03, "wide_close": 1.07}
 
+# ★컷 전환 횟수(운영자 확정 · "카메라 구도 변경이 너무 어색하니 회차당 3~4회로 제한").
+#   예전 기본값은 컷당 2.2초 고정이라 30초 본문에 14컷이 났다(구도가 쉴 새 없이 바뀜) → 3~4컷으로.
+#   컷이 길어진 만큼 '샷 안 푸시인'(_pushin/_motion_vf)이 정지 슬라이드 느낌을 막는다.
+_DEFAULT_MAX_CUTS = 4     # 기본 컷 수(=전환 3회)
+_MIN_CUTS = 3             # 아무리 짧아도 3컷 미만으로는 안 내린다
+_HARD_MAX_CUTS = 8        # 운영자가 값을 크게 넣어도 이 이상은 금지(어색함 재발 방지)
+_MIN_CUT_LEN = 4.0        # 컷당 최소 길이(초) — 이보다 짧아지면 컷 수를 줄인다
+
 
 def _role_for(k: int, n: int) -> str:
     """컷 인덱스 k(0-based)와 총 컷수 n → 서사 역할. 첫 컷=리빌, 마지막=마무리, 중간은 행동 위주에
@@ -471,6 +492,10 @@ def _role_for(k: int, n: int) -> str:
         return "reveal"
     if n >= 3 and k == n - 1:
         return "settle"
+    # ★적은 컷(3~4컷 · 운영자 확정 전환 제한)에서도 서사가 살도록 압축 배정:
+    #   리빌 → 설정(넓게) → 디테일(접사) → 마무리. 접사·핏이 번갈아 나와 단조로움을 막는다.
+    if n <= 4:
+        return "establish" if k == 1 else "detail"
     if n >= 5 and k == 1:
         return "establish"
     return "detail" if (k % 3 == 0) else "behavior"
@@ -646,21 +671,24 @@ def _pick_windows_in_range(scores: list[float], bad: list[bool], fps: float,
 
 def _plan_scene_interleaved(path: str, src_dur: float, scores: list[float],
                             bad: list[bool], fps: float, target_dur: float,
-                            reveal_start: float | None = None) -> list[dict]:
+                            reveal_start: float | None = None,
+                            max_cuts: int | None = None) -> list[dict]:
     """해양생물 쇼츠용 컷 계획 — 씬 분절 + '서사 아크(다큐멘터리식)' 배정.
 
     ★개선(무작위 far/mid/close 반복 → 서사 흐름): 원본을 N개 씬으로 분절해 컷마다 씬을 로테이션하되
     (공간 다양성 유지), 각 컷의 '역할'을 리빌→설정→행동/디테일→마무리 순으로 배정한다(_role_for).
     · 첫 컷=리빌: 피사체가 가장 또렷한 순간(reveal_start)에서 중간 프레이밍으로 공개(첫 3초 훅).
     · 역할이 렌더 모드(접사/핏)와 '샷 안 푸시인' 강도를 정한다 → 정지 슬라이드 느낌 제거.
-    각 컷은 ≈2.2초로 짧게(지루함 방지)."""
-    cut_len = 2.2
-    n_cuts = max(2, round(target_dur / cut_len))
+
+    ★컷 전환 횟수 제한(운영자 확정 · 어색함 제거): 예전엔 컷당 ≈2.2초로 30초 본문에 **14컷**이
+    쏟아져 카메라 구도가 쉴 새 없이 바뀌어 어색했다 → **1편당 3~4컷**(기본 `_DEFAULT_MAX_CUTS`)으로
+    제한하고, 대신 컷 안의 푸시인(켄번즈)이 움직임을 담당한다. `max_cuts`로 운영자가 재정의 가능."""
+    n_cuts = int(max_cuts) if max_cuts else _DEFAULT_MAX_CUTS
+    n_cuts = max(_MIN_CUTS, min(n_cuts, _HARD_MAX_CUTS))
+    # 본문이 짧으면 컷을 줄여 컷당 최소 길이를 지킨다(짧은 컷 난사 방지)
+    while n_cuts > _MIN_CUTS and target_dur / n_cuts < _MIN_CUT_LEN:
+        n_cuts -= 1
     cut_len = target_dur / n_cuts                   # 평균 컷 길이(창 선택용)
-    if cut_len < 1.8:
-        n_cuts = max(2, int(target_dur // 1.8)); cut_len = target_dur / n_cuts
-    elif cut_len > 2.8:
-        n_cuts = max(2, -(-int(target_dur * 10) // 28)); cut_len = target_dur / n_cuts
     cuts = _detect_scene_cuts(path, src_dur)
     regions = _build_regions(cuts, src_dur, min_len=max(cut_len * 1.3, 2.0))
     N = len(regions)
@@ -686,6 +714,9 @@ def _plan_scene_interleaved(path: str, src_dur: float, scores: list[float],
             starts = region_starts[ri] or [regions[ri][0]]
             sa = starts[min(idx[ri], len(starts) - 1)]
             idx[ri] += 1
+        # ★컷 끝 넘침 방지: 컷이 길어졌으므로(3~4컷 제한) 시작점+길이가 소스를 넘으면 컷이 짧게
+        #   잘려 최종 길이가 모자란다 → 소스 안으로 당긴다(소스가 더 짧으면 상위 loop이 채운다).
+        sa = min(sa, max(0.0, src_dur - lens[k]))
         mode = "closeup" if role in ("reveal", "detail") else "fit"
         plan.append({"start": sa, "len": lens[k], "mode": mode,
                      "role": role, "push": _ROLE_PUSH.get(role, 1.03)})
@@ -696,12 +727,44 @@ def _plan_scene_interleaved(path: str, src_dur: float, scores: list[float],
 
 def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                         work_dir: str, logo_box: tuple | None = None,
-                        wide: bool = False, subject_hint: str = "") -> str:
+                        wide: bool = False, subject_hint: str = "",
+                        manual: dict | None = None) -> str:
     """가로 실사 영상 → 9:16 세로(피사체 추적 줌컷 + 틸 그레이딩), 길이 target_dur.
     logo_box(비율 x,y,w,h)가 오면 워터마크를 프레임 이동으로 회피(2안), 불가 시 delogo(3안).
     wide=True(난파선 등): 줌을 억제해 선체·구조물 전체가 넓게 보이는 원경 프레이밍.
-    subject_hint(학명/일본어명): 리빌 컷에서 피사체 최선명 프레임을 제미나이로 고를 때 힌트(선택·안전)."""
+    subject_hint(학명/일본어명): 리빌 컷에서 피사체 최선명 프레임을 제미나이로 고를 때 힌트(선택·안전).
+
+    ★운영자 수동 지정(운영자 확정 · 관리자 페이지에서 설정): `manual` 딕트로 자동 판단을 덮어쓴다.
+      - `start`/`end`(초): **소스에서 쓸 구간**을 이 범위로 한정한다(그 밖은 아예 쓰지 않음).
+      - `crop_x`(0.0~1.0): 9:16 크롭의 **가로 중심**을 고정(0=왼쪽, 0.5=가운데, 1=오른쪽).
+        지정하면 피사체 자동 추적 대신 이 위치로 고정 → 운영자가 원하는 부분만 담긴다.
+      - `cuts`(정수): 컷 전환 횟수 재정의(미지정 시 `_DEFAULT_MAX_CUTS`).
+      비우면 전부 기존 자동 동작(하위호환)."""
     wd = Path(work_dir); wd.mkdir(parents=True, exist_ok=True)
+    man = manual or {}
+
+    # ★① 운영자 지정 구간(start~end)이 있으면 **먼저 소스를 잘라** 이후 모든 분석·컷 선택이
+    #   그 구간 안에서만 일어나게 한다(가장 확실 · 하류 로직 무변경).
+    m_start = _f(man.get("start"))
+    m_end = _f(man.get("end"))
+    if m_start is not None or m_end is not None:
+        full = _duration(footage_path) or 0.0
+        s0 = max(0.0, m_start or 0.0)
+        e0 = m_end if (m_end is not None and m_end > s0) else (full or 0.0)
+        if full:
+            e0 = min(e0, full)
+        seg = max(0.0, e0 - s0)
+        if seg >= 0.5:
+            trimmed = wd / "manual_span.mp4"
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{s0:.2f}",
+                            "-t", f"{seg:.2f}", "-i", footage_path, "-an",
+                            "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+                            str(trimmed)], check=True)
+            log.info("[reframe] 운영자 지정 구간 적용: %.2fs~%.2fs (%.2fs) → 이 구간만 사용", s0, e0, seg)
+            footage_path = str(trimmed)
+        else:
+            log.warning("[reframe] 운영자 지정 구간이 너무 짧아 무시(%.2fs) → 자동", seg)
+
     src_dur = _duration(footage_path) or target_dur
     src_w = _probe(footage_path, "width") or 1920
     src_h = _probe(footage_path, "height") or 1080
@@ -753,6 +816,13 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                         "-vf", "fps=5,scale=480:-1", str(fr_dir / "f_%04d.jpg")], check=True)
         frames = sorted(fr_dir.glob("f_*.jpg"))
     cents = [_subject_centroid(str(f)) for f in frames] or [(0.5, 0.5)]
+    # ★② 운영자 지정 크롭 위치(crop_x): 피사체 자동 추적을 끄고 가로 중심을 고정한다
+    #   (0=왼쪽 끝 · 0.5=가운데 · 1=오른쪽 끝). 추적이 엉뚱한 곳을 잡을 때 운영자가 직접 고정.
+    m_cropx = _f(man.get("crop_x"))
+    if m_cropx is not None:
+        cx = max(0.0, min(1.0, m_cropx))
+        cents = [(cx, cy) for (_ox, cy) in cents] or [(cx, 0.5)]
+        log.info("[reframe] 운영자 지정 크롭 가로위치 고정: %.2f (자동 추적 미사용)", cx)
     fracs = [_subject_frac(str(f)) for f in frames] or [0.0]
     scores = [subject_score(str(f)) for f in frames] or [0.0]
     # ★번인 텍스트 구간(인트로 자막판·아웃트로 URL 등) 감지 → 컷 선택에서 원천 배제.
@@ -770,8 +840,17 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
     # ── 컷 계획(plan) 수립 ──
     #  · 해양생물(wide=False): 씬 분절 + 라운드로빈 인터리브로 짧게(≈2.2s) 자주 전환(지루함 방지).
     #  · 난파선(wide=True): 기존 방식 유지 — ≈5s 컷, 피사체 최고 창 선택 + 첫 컷 전신 와이드 보장.
+    # ★③ 컷 전환 횟수: 운영자 지정(manual.cuts) > 기본값(_DEFAULT_MAX_CUTS=4).
+    m_cuts = man.get("cuts")
+    try:
+        m_cuts = int(str(m_cuts).strip()) if str(m_cuts or "").strip() else None
+    except ValueError:
+        m_cuts = None
     if wide:
-        n_seg = max(2, min(8, round(target_dur / 5.0)))
+        n_seg = int(m_cuts) if m_cuts else max(2, min(8, round(target_dur / 5.0)))
+        n_seg = max(_MIN_CUTS, min(n_seg, _HARD_MAX_CUTS))
+        while n_seg > _MIN_CUTS and target_dur / n_seg < _MIN_CUT_LEN:
+            n_seg -= 1
         seg_len = target_dur / n_seg
         starts = _pick_windows(scores, fps_trk, seg_len, n_seg, bad=bad) if not loop else None
         if starts:
@@ -788,7 +867,8 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
         # ★리빌 컷: 피사체가 가장 또렷한 순간을 (제미나이 최소 1회·안전 폴백) 골라 첫 컷으로 공개.
         reveal_start = _reveal_start(frames, scores, bad, fps_trk, 2.2, subject_hint) if not loop else None
         plan = _plan_scene_interleaved(footage_path, src_dur, scores, bad, fps_trk,
-                                       target_dur, reveal_start=reveal_start)
+                                       target_dur, reveal_start=reveal_start,
+                                       max_cuts=m_cuts)
 
     concat = wd / "reframe_concat.txt"
     lines = []

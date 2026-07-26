@@ -34,6 +34,23 @@ on:
         type: choice
         options: [all, caption, images, video]
         default: all
+      # ★운영자 수동 지정(관리자 페이지 '고급 설정'). 전부 선택 — 비우면 기존처럼 자동 판단.
+      src_start:
+        description: "소스 구간 시작(초) — 비우면 자동"
+        required: false
+        default: ""
+      src_end:
+        description: "소스 구간 끝(초) — 비우면 자동"
+        required: false
+        default: ""
+      crop_x:
+        description: "크롭 가로위치 0~1 (0=왼쪽·0.5=가운데·1=오른쪽) — 비우면 피사체 자동추적"
+        required: false
+        default: ""
+      cuts:
+        description: "컷 전환 수(3~8) — 비우면 기본 4"
+        required: false
+        default: ""
   # 대안 트리거: requests/*.json 푸시로도 생성 가능 (원격 자동화·Claude 조작용)
   push:
     branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
@@ -159,7 +176,14 @@ jobs:
           # ★실패 사유를 텔레그램 알림에 담기 위해 로그를 파일로도 남긴다(운영자가 이유를 바로 알게).
           set -o pipefail
           mkdir -p work
-          python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --category "$CAT" $EP_ARG --mode reels 2>&1 | tee work/pipeline.log
+          # ★운영자 수동 지정(구간·크롭·컷수) — 비어 있으면 인자 자체를 넘기지 않아 자동 동작.
+          #   ⚠ `[ -n "" ] && ...`는 거짓일 때 exit 1이라 `set -e`에서 스텝이 죽는다 → if 문으로 쓴다.
+          MAN_ARGS=""
+          if [ -n "${{ inputs.src_start }}" ]; then MAN_ARGS="$MAN_ARGS --src-start ${{ inputs.src_start }}"; fi
+          if [ -n "${{ inputs.src_end }}" ];   then MAN_ARGS="$MAN_ARGS --src-end ${{ inputs.src_end }}"; fi
+          if [ -n "${{ inputs.crop_x }}" ];    then MAN_ARGS="$MAN_ARGS --crop-x ${{ inputs.crop_x }}"; fi
+          if [ -n "${{ inputs.cuts }}" ];      then MAN_ARGS="$MAN_ARGS --cuts ${{ inputs.cuts }}"; fi
+          python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --category "$CAT" $EP_ARG --mode reels $MAN_ARGS 2>&1 | tee work/pipeline.log
           VIDEO=$(ls -t output/*.mp4 | head -1)
           META=$(ls -t output/*.json | head -1)
           echo "video=$VIDEO" >> "$GITHUB_OUTPUT"

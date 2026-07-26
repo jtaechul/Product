@@ -278,6 +278,33 @@ function renderHome(){
     '<span class="lbl">또는 특정 대상 직접 입력 (선택)</span>'+
     '<input id="query" placeholder="비워두면 AI가 위 카테고리에서 자동 선택" autocomplete="off">'+
     '<div class="hint" style="margin:4px 0 8px">제작 방식: <b>실사 심해 영상(NOAA·공용도메인) + 일본어 오프닝 훅·엔드카드·전환·임팩트 사운드</b> (팬줌·Veo 미사용)</div>'+
+    // ★운영자 수동 지정(운영자 확정): 소스에서 쓸 구간·크롭 위치·컷 전환 수를 직접 정한다.
+    //   전부 비우면 지금까지처럼 자동. 자동 판단이 엉뚱할 때(빈 바다·피사체 놓침) 여기서 잡는다.
+    '<details class="tok" id="advbox" style="margin-bottom:8px"><summary>고급 설정 — 구간·크롭·컷 직접 지정 (선택)</summary>'+
+      '<div class="hint" style="margin:6px 0 8px">비워두면 <b>자동</b>입니다. 영상이 마음에 안 들 때 값을 넣고 다시 제작하세요.</div>'+
+      '<span class="lbl">소스에서 쓸 구간 (초) — 예: 12 ~ 40</span>'+
+      '<div class="row2" style="margin-bottom:6px">'+
+        '<input id="srcStart" placeholder="시작(초) · 비우면 자동" inputmode="decimal" autocomplete="off">'+
+        '<input id="srcEnd" placeholder="끝(초) · 비우면 자동" inputmode="decimal" autocomplete="off">'+
+      '</div>'+
+      '<span class="lbl">크롭 가로 위치 (세로 화면에 담을 부분)</span>'+
+      '<select id="cropX" style="margin-bottom:6px">'+
+        '<option value="">자동 (피사체 추적)</option>'+
+        '<option value="0.15">왼쪽</option>'+
+        '<option value="0.35">가운데-왼쪽</option>'+
+        '<option value="0.5">정가운데</option>'+
+        '<option value="0.65">가운데-오른쪽</option>'+
+        '<option value="0.85">오른쪽</option>'+
+      '</select>'+
+      '<span class="lbl">컷 전환 수 (구도가 바뀌는 횟수)</span>'+
+      '<select id="cutsN">'+
+        '<option value="">자동 (기본 4컷 = 전환 3회)</option>'+
+        '<option value="3">3컷 (전환 2회 · 가장 차분)</option>'+
+        '<option value="4">4컷 (전환 3회)</option>'+
+        '<option value="5">5컷 (전환 4회)</option>'+
+        '<option value="6">6컷 (전환 5회 · 빠름)</option>'+
+      '</select>'+
+    '</details>'+
     '<button class="go" id="go">쇼츠 생성 시작</button>'+
     '<div class="banner" id="msg"></div>'+
     '<div class="hint">완성 영상은 2~4분 뒤 <b>텔레그램</b>으로 전송되고, <a href="/library">라이브러리</a>에 등록됩니다.</div>'+
@@ -336,9 +363,17 @@ function renderHome(){
     let query=$("#query").value.trim()||$("#species").value;
     if(category!=="deep_sea" && query.startsWith("auto:")) query="auto";
     if(!authReady()){const tb=$("#tokbox");if(tb)tb.open=true;banner("GitHub 토큰을 아래 칸에 붙여넣고 생성을 누르면 이 기기에 저장돼 다시 묻지 않습니다.","err");return;}
-    $("#go").disabled=true;banner("생성 요청 중…");
+    // ★고급 설정(선택): 값이 있는 것만 워크플로 inputs로 넘긴다(빈 값은 백엔드에서 '자동').
+    const v=id=>(($("#"+id)||{}).value||"").trim();
+    const inputs={query,category};
+    for(const [k,id] of [["src_start","srcStart"],["src_end","srcEnd"],["crop_x","cropX"],["cuts","cutsN"]]){
+      const val=v(id); if(val) inputs[k]=val;
+    }
+    const manualNote=[inputs.src_start||inputs.src_end?("구간 "+(inputs.src_start||"0")+"~"+(inputs.src_end||"끝")+"초"):"",
+                      inputs.crop_x?("크롭 "+inputs.crop_x):"", inputs.cuts?(inputs.cuts+"컷"):""].filter(Boolean).join(" · ");
+    $("#go").disabled=true;banner("생성 요청 중…"+(manualNote?(" ("+manualNote+")"):""));
     try{const r=await fetch(API+"/actions/workflows/"+WF+"/dispatches",{method:"POST",headers:headers(true),
-        body:JSON.stringify({ref:BRANCH,inputs:{query,category}})});
+        body:JSON.stringify({ref:BRANCH,inputs})});
       if(r.status===204){banner("생성 시작! 2~4분 뒤 텔레그램 전송 + 라이브러리 등록.","ok");setTimeout(loadRuns,4000);setTimeout(loadRuns,12000);}
       else{const t=await r.text();banner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
     }catch(e){banner("요청 실패: "+e,"err");}

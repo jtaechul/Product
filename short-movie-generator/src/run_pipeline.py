@@ -33,14 +33,26 @@ def main() -> int:
                         help="재생성 범위(기본 all). 관리자 부분 재생성 시 레코드 병합 갱신 표시")
     parser.add_argument("--mode", default="reels", choices=["reels", "narrated", "hud"],
                         help="제작 모드(기본 reels: 실사영상+일본어 오프닝훅/엔드카드 / narrated: 구 나레이션 / hud: 구 ROV)")
+    # ★운영자 수동 지정(관리자 페이지 '고급 설정' → 워크플로 → 여기). 비우면 전부 자동.
+    parser.add_argument("--src-start", default="", help="소스에서 쓸 구간 시작(초). 비우면 자동")
+    parser.add_argument("--src-end", default="", help="소스에서 쓸 구간 끝(초). 비우면 자동")
+    parser.add_argument("--crop-x", default="",
+                        help="9:16 크롭 가로 중심 0.0~1.0 (0=왼쪽·0.5=가운데·1=오른쪽). 비우면 피사체 자동추적")
+    parser.add_argument("--cuts", default="", help="컷 전환 수(3~8). 비우면 기본 4")
     args = parser.parse_args()
+
+    manual = {k: v for k, v in (("start", args.src_start), ("end", args.src_end),
+                                ("crop_x", args.crop_x), ("cuts", args.cuts))
+              if str(v).strip()} or None
+    if manual:
+        logging.info("운영자 수동 지정: %s", manual)
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
     try:
         if args.mode == "reels":
             from src.core.pipeline import run_reels
-            result = run_reels(args.category, args.query, episode=args.episode)
+            result = run_reels(args.category, args.query, episode=args.episode, manual=manual)
         elif args.mode == "narrated":
             from src.core.pipeline import run_narrated
             result = run_narrated(args.category, args.query, args.visualizer, episode=args.episode)

@@ -234,6 +234,7 @@ def run_reels(
     query: str,
     base_dir: str = ".",
     episode: int | None = None,
+    manual: dict | None = None,
 ) -> OutputResult:
     """reels 파이프라인(현행 확정 시스템): 실제 PD 심해 '영상' → 9:16 추적 리프레임 + 틸 그레이딩
     → 일본어 나레이션(edge-tts, 훅/본문) + 카라오케 자막 → 오프닝 훅/엔드카드/전환/임팩트 사운드.
@@ -409,11 +410,14 @@ def run_reels(
         fv = {**fv, "path": clean, "logo_box": None}
 
         # 3) 9:16 추적 리프레임 + 틸 그레이딩(본문 길이)
+        # ★운영자 수동 지정(관리자 페이지): 소스 구간(start/end)·크롭 가로위치(crop_x)·컷 전환 수(cuts).
+        #   비우면 전부 자동(기존 동작). 자동 판단이 엉뚱할 때 운영자가 직접 잡는다.
         body_v = reframe.reframe_to_vertical(fv["path"], str(work_dir / "body_reframed.mp4"),
                                              body_dur, str(work_dir / "rf"),
                                              logo_box=None,
                                              wide=bool(getattr(category, "reframe_wide", False)),
-                                             subject_hint=(info.scientific_name or info.common_name_en or ""))
+                                             subject_hint=(info.scientific_name or info.common_name_en or ""),
+                                             manual=manual)
 
         # 3.5) ★본문 사진 컷어웨이(반복 피로 완화): 소스 영상이 짧아 반복될 때, 같은 대상 고해상 사진
         #      1~2컷을 본문 중반에 짧게 오버레이(디졸브)한다. 자막 번인 '전'에 넣어 자막·오디오는 그대로
