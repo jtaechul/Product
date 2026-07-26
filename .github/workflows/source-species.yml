@@ -158,7 +158,7 @@ jobs:
       #   아이폰에서 재생이 안 돼 **구간·줌을 눈으로 정할 수가 없었다**. 소싱 단계에서 480p mp4를
       #   만들어 릴리스에 올리고, 그 URL을 영상 캐시(_video_cache.json)에 적어 둔다 →
       #   관리자 상세의 '구간·줌 다시 잡기'가 이 파일을 재생한다(원본과 초가 동일).
-      - name: 원본 미리보기 mp4 생성 + Release 업로드 (아이폰 구간 지정용)
+      - name: 원본 미리보기 mp4 + 프레임 사진 시트 생성 + Release 업로드 (구간·크롭 지정용)
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
@@ -181,8 +181,8 @@ jobs:
           for key, ref in list(cache.items()):
               if made >= maxn:
                   break
-              if ref.get("preview_url") or not ref.get("url"):
-                  continue                      # 이미 있으면 건너뜀(매번 새로 만들지 않는다)
+              if (ref.get("preview_url") and ref.get("sheet")) or not ref.get("url"):
+                  continue                      # 둘 다 있으면 건너뜀(매번 새로 만들지 않는다)
               slug = re.sub(r"[^a-z0-9]+", "_", key.lower()).strip("_") or "src"
               raw = tmp / f"{slug}_raw"
               if not footage._download(ref["url"], raw):
@@ -190,9 +190,17 @@ jobs:
               out = Path("work/preview") / f"srcprev_{slug}.mp4"
               if source_preview.make_preview_mp4(str(raw), str(out)):
                   ref["preview_url"] = f"{base}/{out.name}"
-                  cache[key] = ref
                   made += 1
                   print(out.name)
+              # ★프레임 사진 시트(운영자 확정): 재생 없이 손가락으로 구간·크롭을 고르는 재료.
+              sheet = Path("work/preview") / f"sheet_{slug}.jpg"
+              meta = source_preview.make_frame_sheet(str(raw), str(sheet))
+              if meta:
+                  meta["url"] = f"{base}/{sheet.name}"
+                  ref["sheet"] = meta
+                  print(sheet.name)
+              if ref.get("preview_url") or ref.get("sheet"):
+                  cache[key] = ref
               try:
                   raw.unlink(missing_ok=True)
               except Exception:
@@ -205,6 +213,9 @@ jobs:
           PY
           if ls work/preview/*.mp4 >/dev/null 2>&1; then
             gh release upload "$TAG" work/preview/*.mp4 --clobber
+          fi
+          if ls work/preview/*.jpg >/dev/null 2>&1; then
+            gh release upload "$TAG" work/preview/*.jpg --clobber
           fi
 
       - name: 후보 파일 커밋

@@ -21,15 +21,32 @@ _WORKER = Path(__file__).resolve().parents[1] / "worker" / "index.mjs"
 
 
 # ── 백엔드: 줌 배율 ───────────────────────────────────────────────────────────
-def test_cut_specs_accepts_zoom():
-    """컷별 JSON에 zoom을 적으면 plan까지 그대로 전달돼야 한다."""
-    specs = json.dumps([{"start": 0, "end": 6, "zoom": 1.8, "crop_x": 0.5},
-                        {"start": 20, "end": 27}])
-    plan = reframe._parse_cut_specs(specs, src_dur=60.0, target_dur=20.0)
+def test_cut_specs_accepts_box():
+    """컷별 JSON의 사각형(줌+가로+세로)이 plan까지 그대로 전달돼야 한다."""
+    specs = json.dumps([{"start": 0, "end": 6, "zoom": 1.8, "crop_x": 0.5, "crop_y": 0.3},
+                        {"start": 20, "end": 26}])
+    plan = reframe._parse_cut_specs(specs, src_dur=60.0, target_dur=12.0)
     assert plan and len(plan) == 2
-    assert plan[0]["zoom"] == 1.8
-    assert plan[0]["crop_x"] == 0.5
-    assert plan[1]["zoom"] is None      # 지정 안 한 컷은 자동
+    assert plan[0]["zoom"] == 1.8 and plan[0]["crop_x"] == 0.5 and plan[0]["crop_y"] == 0.3
+    assert plan[1]["zoom"] is None and plan[1]["crop_y"] is None   # 지정 안 한 컷은 자동
+
+
+def test_cuts_keep_exact_windows():
+    """★운영자가 자른 구간을 **정확히** 쓴다(운영자 확정 · 절대 회귀 금지).
+    예전엔 지정 길이를 비율로만 쓰고 본문 길이에 맞춰 늘려, 2~8초를 골라도 2~17초가 나갔다."""
+    specs = json.dumps([{"start": 2, "end": 8}, {"start": 12, "end": 18}])
+    # ① 합(12초) = 본문(12초) → 지정 그대로 2컷
+    p12 = reframe._parse_cut_specs(specs, src_dur=120.0, target_dur=12.0)
+    assert [(round(c["start"], 1), round(c["len"], 1)) for c in p12] == [(2.0, 6.0), (12.0, 6.0)]
+    # ② 본문이 더 길면 **지정 컷을 반복**해 채운다(지정 밖 장면은 절대 안 나온다)
+    p30 = reframe._parse_cut_specs(specs, src_dur=120.0, target_dur=30.0)
+    assert abs(sum(c["len"] for c in p30) - 30.0) < 0.05
+    for c in p30:
+        assert c["start"] in (2.0, 12.0), f"지정하지 않은 시작점이 나왔습니다: {c['start']}"
+        assert c["len"] <= 6.01, f"컷이 지정 길이보다 늘어났습니다: {c['len']}"
+    # ③ 본문이 더 짧으면 마지막 컷을 잘라 정확히 맞춘다
+    p9 = reframe._parse_cut_specs(specs, src_dur=120.0, target_dur=9.0)
+    assert abs(sum(c["len"] for c in p9) - 9.0) < 0.05
 
 
 @pytest.mark.parametrize("raw", ["", "  ", None])
@@ -72,20 +89,23 @@ def test_editor_on_both_detail_pages(worker):
     assert worker.count('cutEditorHTML("') >= 2, "두 상세 페이지가 같은 편집 패널을 써야 합니다"
 
 
-def test_editor_controls_cover_all_four(worker):
-    """조절 항목 4종(구간·크롭·줌·컷수)이 모두 UI에 있어야 한다(운영자 선택)."""
+def test_editor_is_box_based_and_per_cut(worker):
+    """★운영자 확정: 줌·크롭을 따로 고르지 않고 **9:16 사각형 하나**로 합치고, **컷마다 개별** 지정.
+    또 영상 재생에 의존하지 않는다(원본 대부분이 WebM이라 아이폰에서 재생 불가 → 0초만 입력됐다)."""
     start = worker.index("function cutEditorHTML(")
-    body = worker[start:start + 3000]
-    for token in ("시작(초)", "끝(초)", "줌 배율", "크롭 가로 위치", "컷 수"):
-        assert token in body, f"편집 항목 누락: {token}"
+    body = worker[start:worker.index("function cutEditorInputs(")]
+    assert "data-cetab" in body, "컷별 탭이 없습니다(컷마다 개별 지정 불가)"
+    assert "strip" in body and "사진" in body, "프레임 사진 스트립이 없습니다"
+    assert "box" in body and "stage" in body, "크롭 사각형이 없습니다"
+    assert "여기 시작" not in body, "재생 위치에 의존하던 옛 버튼이 남아 있습니다"
 
 
-def test_editor_inputs_are_omitted_when_blank(worker):
-    """비워둔 항목은 워크플로 inputs에 넣지 않는다(= 그 항목만 자동)."""
+def test_editor_inputs_are_per_cut_boxes(worker):
+    """각 컷의 사각형이 zoom·crop_x·crop_y로 변환돼 cut_specs에 담겨야 한다."""
     start = worker.index("function cutEditorInputs(")
     body = worker[start:worker.index("function bindCutEditor(")]
-    assert "if(specs.length) inp.cut_specs" in body
-    assert "if(zoom) inp.zoom" in body and "if(crop) inp.crop_x" in body
+    for token in ("zoom:", "crop_x:", "crop_y:", "cut_specs"):
+        assert token in body, f"변환 누락: {token}"
 
 
 def test_regen_forwards_extra_inputs(worker):
@@ -95,10 +115,12 @@ def test_regen_forwards_extra_inputs(worker):
     assert "async function regenNarrate(id,sourceUrl,mode,extra)" in worker
 
 
-def test_preview_mp4_preferred_for_playback(worker):
-    """아이폰에서 WebM이 안 되므로 미리보기 mp4를 첫 후보로 재생해야 한다."""
-    assert "preview_url" in worker, "소싱이 만든 미리보기 URL을 쓰지 않습니다"
-    assert "md.source_mp4_url" in worker
+def test_editor_uses_frame_sheet_not_playback(worker):
+    """★재생 대신 **프레임 사진 시트**를 쓴다(운영자 확정).
+    원본 15/17종이 WebM이라 아이폰에서 재생이 안 돼, 재생 위치를 읽는 방식은 늘 0초였다."""
+    assert "ref.sheet" in worker or "ref&&ref.sheet" in worker, "소싱이 만든 시트를 읽지 않습니다"
+    assert "md.sheet" in worker, "나레이션형 레코드의 시트를 읽지 않습니다"
+    assert "ceLoadSheet" in worker
 
 
 # ── 워크플로: 편집값이 CLI까지 도달하는가 ────────────────────────────────────

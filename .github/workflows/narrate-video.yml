@@ -138,6 +138,7 @@ jobs:
           echo "thumb=output/${NAME}_thumb.jpg" >> "$GITHUB_OUTPUT"
           # ★원본 미리보기 mp4(아이폰에서 구간 지정용) — 없으면 이후 스텝이 조용히 건너뛴다
           echo "srcprev=output/${NAME}_source.mp4" >> "$GITHUB_OUTPUT"
+          echo "sheet=output/${NAME}_sheet.jpg" >> "$GITHUB_OUTPUT"
           [ -f "$OUT" ] || { echo "::error::완성본이 생성되지 않았습니다"; exit 1; }
 
       - name: Release 업로드(영구 호스팅)
@@ -170,6 +171,12 @@ jobs:
             echo "source_mp4_url=$BASE/$(basename "$SP")" >> "$GITHUB_OUTPUT"
             echo "원본 미리보기: $BASE/$(basename "$SP")"
           fi
+          # ★프레임 사진 시트(구간·크롭을 손가락으로 고르는 재료)
+          SH="${{ steps.run.outputs.sheet }}"
+          if [ -f "$SH" ]; then
+            gh release upload "$TAG" "$SH" --clobber
+            echo "sheet_url=$BASE/$(basename "$SH")" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: 콘텐츠 레코드 기록(제목·설명·해시태그 일/한 — 대시보드 /nv/ 표시용)
         id: rec
@@ -179,6 +186,7 @@ jobs:
           THUMB_URL: ${{ steps.rel.outputs.thumb_url }}
           SRC_URL: ${{ inputs.video_url }}
           SRC_MP4_URL: ${{ steps.rel.outputs.source_mp4_url }}
+          SHEET_URL: ${{ steps.rel.outputs.sheet_url }}
           MODE: ${{ inputs.mode }}
         run: |
           CID="${{ steps.run.outputs.cid }}"
@@ -190,6 +198,12 @@ jobs:
           metap, cid = sys.argv[1], sys.argv[2]
           trj = sys.argv[3] if len(sys.argv) > 3 else ""
           m = json.load(open(metap, encoding="utf-8"))
+          # 시트 메타(칸 수·간격)는 제작이 남긴 meta 파일에 있고, URL은 릴리스에서 온다.
+          _sheet = dict(m.get("sheet_meta") or {})
+          if _sheet and os.environ.get("SHEET_URL"):
+              _sheet["url"] = os.environ["SHEET_URL"]
+          else:
+              _sheet = None
           transcript = None
           try:                                   # 더빙형 검수 대본(있으면) 레코드에 보관 → 대시보드 수정·재제작
               if trj and os.path.exists(trj):
@@ -202,6 +216,7 @@ jobs:
               thumb_url=os.environ.get("THUMB_URL", ""),
               source_url=os.environ.get("SRC_URL", ""),
               source_mp4_url=os.environ.get("SRC_MP4_URL", ""),
+              sheet=_sheet,
               transcript=transcript)
           PY
 

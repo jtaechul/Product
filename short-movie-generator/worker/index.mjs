@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-26-3 (구간·줌 편집)";
+const BUILD="v2026-07-26-4 (컷별 사각형 편집)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -752,7 +752,7 @@ async function renderNarrateDetail(id,fresh){
   //   지정한 컷·줌·크롭으로 **같은 회차에 덮어써** 다시 만든다(운영자 확정).
   const _cb=$("#nvcutbox");
   if(_cb&&rec.source_url){
-    bindCutEditor("nc",[md.source_mp4_url, nvTranscode(rec.source_url), rec.source_url],()=>{
+    bindCutEditor("nc", md.sheet || null, ()=>{
       const inp=cutEditorInputs("nc");
       if(!Object.keys(inp).length){banner("컷 구간·줌·크롭 중 최소 하나는 지정하세요.","err");return;}
       regenNarrate(id,rec.source_url,rec.mode||"shorts",inp);
@@ -862,77 +862,129 @@ function nvTranscode(u){
     return u.replace("/commons/","/commons/transcoded/")+"/"+u.split("/").pop()+".480p.vp9.webm";
   }catch(e){return "";}
 }
-// ★★구간·줌 편집 패널(운영자 확정 · 도감형/나레이션형 공용).
-//   운영자 요구: "영상 구간이랑 줌 범위는 내가 직접 정하겠다. 자동으로만 만들어지면 안 된다."
-//   → 결과를 보고 이 패널에서 **컷별 구간 + 크롭 가로위치 + 줌 배율 + 컷 수**를 정한 뒤
-//     같은 회차로 다시 만든다(덮어쓰기). 비워두면 그 항목만 자동.
+// ★★컷 편집기(운영자 확정 · 도감형/나레이션형 공용) — 손가락으로 '잘라낼 사각형'을 정한다.
+//   설계 근거(운영자): "화면 비율이 정해져 있으니 줌과 크롭은 기능을 합쳐도 된다. 캡처 이미지를
+//   보고 어디를 잘라낼지 손가락으로 고르게 해달라." → **9:16 사각형 하나 = 줌(크기) + 크롭(위치)**.
+//   또 "컷마다 줌 비율이 다를 수 있다" → **컷 1~4를 각각 따로** 정한다.
+//   ★영상 재생에 의존하지 않는다: 원본 대부분이 WebM이라 아이폰에서 재생이 안 돼 '여기 시작'
+//     버튼이 0초만 입력되던 문제가 있었다. 그래서 **프레임 사진(스트립)** 을 탭해 구간을 고른다.
+const CUTN=4;
+const _ce={};   // pfx별 상태: {sheet:{url,cols,rows,n,step,tw,th}, cuts:[{s,e,box:{x,y,w}}], sel}
+function ceState(pfx){ return (_ce[pfx] ||= {sheet:null, sel:0,
+  cuts:Array.from({length:CUTN},()=>({s:null,e:null,box:{x:0.5,y:0.5,w:0.6}}))}); }
+
 function cutEditorHTML(pfx){
-  const rows=[0,1,2,3].map(function(i){return ''+
-    '<div class="row2" style="margin-bottom:5px;align-items:center">'+
-      '<span class="hint" style="min-width:40px">컷 '+(i+1)+'</span>'+
-      '<input id="'+pfx+i+'a" placeholder="시작(초)" inputmode="decimal" style="flex:1">'+
-      '<input id="'+pfx+i+'b" placeholder="끝(초)" inputmode="decimal" style="flex:1">'+
-      '<button class="mini" data-mk="'+pfx+i+'a" style="flex:1">여기 시작</button>'+
-      '<button class="mini" data-mk="'+pfx+i+'b" style="flex:1">여기 끝</button>'+
-    '</div>';}).join('');
-  const sel=(id,label,opts)=>'<span class="lbl">'+label+'</span><select id="'+id+'" style="margin-bottom:6px">'+opts+'</select>';
+  const tabs=Array.from({length:CUTN},(_,i)=>
+    '<button class="mini" data-cetab="'+pfx+i+'" style="flex:1">컷 '+(i+1)+'</button>').join('');
   return ''+
-    '<div class="hint" style="margin:6px 0 8px">원본을 재생해 원하는 지점에서 <b>여기 시작 / 여기 끝</b>을 누르면 칸이 채워집니다. '+
-      '한 줄이라도 채우면 <b>지정한 컷만</b> 사용합니다(자동 컷 선택 안 함).</div>'+
-    '<video id="'+pfx+'vid" controls playsinline preload="metadata" style="width:100%;border-radius:10px;background:#000"></video>'+
-    '<div class="hint" id="'+pfx+'info" style="margin:6px 0"></div>'+
-    rows+
-    sel(pfx+'zoom','줌 배율 — 얼마나 당길지',
-        '<option value="">자동</option><option value="1.0">1.0배 (원본 넓게·전체구도)</option>'+
-        '<option value="1.2">1.2배 (살짝 당김)</option><option value="1.5">1.5배 (보통 접사)</option>'+
-        '<option value="1.8">1.8배 (많이 당김)</option><option value="2.2">2.2배 (아주 크게)</option>')+
-    sel(pfx+'crop','크롭 가로 위치 — 세로화면에 담을 좌우 부분',
-        '<option value="">자동 (피사체 추적)</option><option value="0.15">왼쪽</option>'+
-        '<option value="0.35">가운데-왼쪽</option><option value="0.5">정가운데</option>'+
-        '<option value="0.65">가운데-오른쪽</option><option value="0.85">오른쪽</option>')+
-    sel(pfx+'cuts','컷 수 — 구도가 바뀌는 횟수',
-        '<option value="">자동 (기본 4컷)</option><option value="3">3컷</option>'+
-        '<option value="4">4컷</option><option value="5">5컷</option><option value="6">6컷</option>');
+    '<div class="hint" style="margin:6px 0 8px">① <b>컷 탭</b>을 고르고 ② 아래 <b>사진 띠</b>에서 시작·끝 장면을 탭하고 '+
+      '③ <b>사각형을 손가락으로 옮기고/크기를 바꿔</b> 잘라낼 곳을 정하세요. 컷마다 따로 정할 수 있습니다.</div>'+
+    '<div class="row2" style="gap:4px;margin-bottom:6px">'+tabs+'</div>'+
+    '<div id="'+pfx+'range" class="hint" style="margin:2px 0 6px"></div>'+
+    '<div class="hint" style="margin:2px 0">구간 고르기 — 사진을 탭하면 시작, 한 번 더 탭하면 끝</div>'+
+    '<div id="'+pfx+'strip" style="display:flex;overflow-x:auto;gap:4px;padding:4px 0;-webkit-overflow-scrolling:touch">'+
+      '<div class="hint">프레임 사진 불러오는 중…</div></div>'+
+    '<div class="hint" style="margin:8px 0 2px">잘라낼 부분 — 사각형을 끌어 옮기고, 아래 막대로 크기(줌)를 바꿉니다</div>'+
+    '<div id="'+pfx+'stage" style="position:relative;width:100%;background:#000;border-radius:10px;overflow:hidden;touch-action:none">'+
+      '<img id="'+pfx+'frame" style="width:100%;display:block;opacity:.85">'+
+      '<div id="'+pfx+'box" style="position:absolute;border:2px solid var(--cy);box-shadow:0 0 0 9999px rgba(0,0,0,.45);border-radius:4px"></div>'+
+    '</div>'+
+    '<input id="'+pfx+'zoom" type="range" min="30" max="100" value="60" style="width:100%;margin:8px 0">'+
+    '<div class="hint" id="'+pfx+'info" style="margin:2px 0"></div>';
 }
-// 편집 패널 값 → 워크플로 inputs(비운 항목은 넣지 않는다 = 그 항목만 자동)
-function cutEditorInputs(pfx){
-  const V=id=>((document.getElementById(id)||{}).value||"").trim();
-  const specs=[], zoom=V(pfx+'zoom'), crop=V(pfx+'crop');
-  for(let i=0;i<4;i++){
-    const a=V(pfx+i+'a'), b=V(pfx+i+'b');
-    if(!a||!b) continue;
-    const o={start:parseFloat(a), end:parseFloat(b)};
-    if(!(o.end>o.start)) continue;
-    if(crop) o.crop_x=parseFloat(crop);
-    if(zoom) o.zoom=parseFloat(zoom);
-    specs.push(o);
+
+// 프레임 사진 시트(소싱이 만든 contact sheet)를 읽어 스트립을 그린다.
+async function ceLoadSheet(pfx, sheet){
+  const st=ceState(pfx); st.sheet=sheet;
+  const strip=document.getElementById(pfx+"strip"); if(!strip) return;
+  if(!sheet){ strip.innerHTML='<div class="hint">프레임 사진이 아직 없습니다 — <b>소싱하기</b>를 한 번 돌리면 만들어집니다. '+
+    '그동안은 아래 칸에 초를 직접 입력해도 됩니다.</div>'; return; }
+  const cell=Math.round(100/sheet.cols*10)/10;
+  let h='';
+  for(let k=0;k<sheet.n;k++){
+    const cx=k%sheet.cols, cy=Math.floor(k/sheet.cols);
+    h+='<div data-cetile="'+k+'" style="flex:0 0 auto;width:84px;height:'+Math.round(84*sheet.th/sheet.tw)+'px;'+
+       'background-image:url('+prox(sheet.url)+');background-size:'+(sheet.cols*100)+'% '+(sheet.rows*100)+'%;'+
+       'background-position:'+(sheet.cols>1?(cx*100/(sheet.cols-1)):0)+'% '+(sheet.rows>1?(cy*100/(sheet.rows-1)):0)+'%;'+
+       'border-radius:6px;border:2px solid transparent"></div>';
   }
-  const inp={};
-  if(specs.length) inp.cut_specs=JSON.stringify(specs);
-  if(zoom) inp.zoom=zoom;
-  if(crop) inp.crop_x=crop;
-  if(V(pfx+'cuts')) inp.cuts=V(pfx+'cuts');
-  return inp;
+  strip.innerHTML=h;
+  strip.querySelectorAll("[data-cetile]").forEach(el=>{el.onclick=()=>ceTapTile(pfx, parseInt(el.dataset.cetile));});
+  ceShowFrame(pfx);
 }
-// 원본 재생 배선: 후보 URL을 순서대로 시도(아이폰에서 WebM이 안 되므로 mp4 미리보기 우선)
-function bindCutEditor(pfx, cands, onGo){
-  const v=document.getElementById(pfx+"vid"); if(!v) return;
-  const list=(cands||[]).filter(Boolean); let ci=0;
-  const play=()=>{ if(ci>=list.length){
-      const el=document.getElementById(pfx+"info");
-      if(el)el.innerHTML='이 브라우저가 원본 형식을 재생하지 못합니다(대개 WebM). '+
-        '<b>소싱하기</b>를 한 번 돌리면 재생용 mp4가 만들어집니다.';
-      return; }
-    v.src=prox(list[ci]); v.load(); };
-  v.onloadedmetadata=()=>{const el=document.getElementById(pfx+"info");
-    if(el)el.innerHTML="원본 길이 <b>"+v.duration.toFixed(1)+"초</b> · 이 초를 그대로 컷에 적으세요.";};
-  v.onerror=()=>{ci++;play();};
-  play();
-  document.querySelectorAll("[data-mk^='"+pfx+"']").forEach(b=>{b.onclick=()=>{
-    const t=Math.round((v.currentTime||0)*10)/10;
-    const el=document.getElementById(b.dataset.mk);
-    if(el){el.value=String(t); banner("입력됨: "+t+"초","ok");}
-  };});
+function ceTapTile(pfx, k){
+  const st=ceState(pfx), c=st.cuts[st.sel], sec=Math.round(k*st.sheet.step*10)/10;
+  if(c.s===null || c.e!==null){ c.s=sec; c.e=null; } else if(sec>c.s){ c.e=sec; } else { c.s=sec; }
+  ceShowFrame(pfx); ceRender(pfx);
+}
+// 선택한 컷의 시작 장면을 크게 띄우고 사각형을 얹는다.
+function ceShowFrame(pfx){
+  const st=ceState(pfx), c=st.cuts[st.sel], img=document.getElementById(pfx+"frame");
+  if(!img||!st.sheet) return;
+  const k=Math.max(0, Math.min(st.sheet.n-1, Math.round((c.s||0)/st.sheet.step)));
+  const cx=k%st.sheet.cols, cy=Math.floor(k/st.sheet.cols);
+  img.src=""; // 시트를 배경으로 쓰는 대신 stage 배경으로 표시
+  const stage=document.getElementById(pfx+"stage");
+  if(stage){
+    stage.style.backgroundImage="url("+prox(st.sheet.url)+")";
+    stage.style.backgroundSize=(st.sheet.cols*100)+"% "+(st.sheet.rows*100)+"%";
+    stage.style.backgroundPosition=(st.sheet.cols>1?(cx*100/(st.sheet.cols-1)):0)+"% "+
+                                   (st.sheet.rows>1?(cy*100/(st.sheet.rows-1)):0)+"%";
+    stage.style.aspectRatio=(st.sheet.tw+"/"+st.sheet.th);
+    img.style.visibility="hidden";
+  }
+  ceDrawBox(pfx);
+}
+// 9:16 사각형 그리기(폭 w는 원본 가로 대비 비율 → 줌 = 1/w)
+function ceDrawBox(pfx){
+  const st=ceState(pfx), c=st.cuts[st.sel];
+  const stage=document.getElementById(pfx+"stage"), box=document.getElementById(pfx+"box");
+  if(!stage||!box) return;
+  const W=stage.clientWidth||320, H=stage.clientHeight||180;
+  const bw=Math.max(0.15, Math.min(1, c.box.w))*W;
+  const bh=Math.min(H, bw*16/9);
+  const bx=Math.max(0, Math.min(W-bw, c.box.x*W-bw/2));
+  const by=Math.max(0, Math.min(H-bh, c.box.y*H-bh/2));
+  box.style.left=bx+"px"; box.style.top=by+"px"; box.style.width=bw+"px"; box.style.height=bh+"px";
+  const zoom=Math.round((1/Math.max(0.15,c.box.w))*100)/100;
+  const el=document.getElementById(pfx+"info");
+  if(el)el.innerHTML="컷 "+(st.sel+1)+" · 줌 <b>"+zoom.toFixed(2)+"배</b> · 가로 "+c.box.x.toFixed(2)+" · 세로 "+c.box.y.toFixed(2);
+}
+function ceRender(pfx){
+  const st=ceState(pfx);
+  const r=document.getElementById(pfx+"range");
+  if(r)r.innerHTML=st.cuts.map((c,i)=>'<span style="margin-right:10px'+(i===st.sel?';color:var(--cy);font-weight:700':'')+'">'+
+    '컷'+(i+1)+' '+(c.s===null?'—':c.s+'s')+(c.e!==null?('~'+c.e+'s'):'')+'</span>').join('');
+}
+// 편집기 값 → 워크플로 inputs(컷마다 개별 구간·줌·크롭)
+function cutEditorInputs(pfx){
+  const st=ceState(pfx), specs=[];
+  st.cuts.forEach(c=>{
+    if(c.s===null||c.e===null||c.e<=c.s) return;
+    specs.push({start:c.s, end:c.e,
+                zoom:Math.round((1/Math.max(0.15,c.box.w))*100)/100,
+                crop_x:Math.round(c.box.x*100)/100, crop_y:Math.round(c.box.y*100)/100});
+  });
+  return specs.length?{cut_specs:JSON.stringify(specs)}:{};
+}
+// 배선: 탭 전환 + 사각형 드래그 + 줌 슬라이더 + 실행 버튼
+function bindCutEditor(pfx, sheet, onGo){
+  const st=ceState(pfx);
+  document.querySelectorAll("[data-cetab^='"+pfx+"']").forEach(b=>{b.onclick=()=>{
+    st.sel=parseInt(b.dataset.cetab.slice(pfx.length))||0; ceShowFrame(pfx); ceRender(pfx);};});
+  const stage=document.getElementById(pfx+"stage");
+  if(stage){
+    const move=(cx,cy)=>{const r=stage.getBoundingClientRect();
+      const c=st.cuts[st.sel];
+      c.box.x=Math.max(0,Math.min(1,(cx-r.left)/(r.width||1)));
+      c.box.y=Math.max(0,Math.min(1,(cy-r.top)/(r.height||1)));
+      ceDrawBox(pfx);};
+    stage.addEventListener("pointerdown",e=>{stage.setPointerCapture&&stage.setPointerCapture(e.pointerId);move(e.clientX,e.clientY);});
+    stage.addEventListener("pointermove",e=>{if(e.buttons)move(e.clientX,e.clientY);});
+  }
+  const z=document.getElementById(pfx+"zoom");
+  if(z)z.oninput=()=>{st.cuts[st.sel].box.w=Math.max(0.15,Math.min(1,(parseInt(z.value)||60)/100)); ceDrawBox(pfx);};
+  ceLoadSheet(pfx, sheet); ceRender(pfx);
   const go=document.getElementById(pfx+"go"); if(go&&onGo)go.onclick=onGo;
 }
 
@@ -1295,15 +1347,15 @@ async function renderDetail(id){
     if(c&&c.scrollIntoView)c.scrollIntoView({behavior:"smooth",block:"start"});};
   const _cb=document.getElementById("cutbox");
   if(_cb)(async()=>{
-    let cands=[];
+    let sheet=null;
     try{
       const txt=await fetchRaw("short-movie-generator/src/categories/_video_cache.json");
       const cache=JSON.parse(txt||"{}");
       const key=String(sp.scientific_name||"").trim().toLowerCase();
       const ref=cache[key]||cache["wreck "+key]||null;
-      if(ref)cands=[ref.preview_url, ref.url].filter(Boolean);
+      sheet=(ref&&ref.sheet)||null;      // 소싱이 만든 프레임 사진 시트
     }catch(e){}
-    bindCutEditor("ce",cands,()=>{
+    bindCutEditor("ce",sheet,()=>{
       const inp=cutEditorInputs("ce");
       if(!Object.keys(inp).length){banner("컷 구간·줌·크롭 중 최소 하나는 지정하세요.","err");return;}
       if(!confirm("지정한 구간·줌으로 이 회차를 다시 만듭니다(같은 번호에 덮어쓰기).\\n진행할까요?"))return;

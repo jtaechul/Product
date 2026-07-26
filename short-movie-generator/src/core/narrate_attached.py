@@ -1570,23 +1570,30 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
                              "title_ko": (titles_ko[i] if i < len(titles_ko) else titles_jp[i])}
                             for i, (t, _) in enumerate(chapters)]
 
+    # ★원본 미리보기 mp4 + 프레임 사진 시트(운영자 확정): 소싱 원본이 WebM(VP8)이면 아이폰에서
+    #   재생이 안 돼 '구간 다시 잡기'를 쓸 수 없었다. mp4는 재생용, 시트는 **재생 없이** 손가락으로
+    #   구간·크롭을 고르는 재료다. ★자르지 않은 **원본**(vp)을 쓴다 — 여기서 읽은 초가 곧 컷 지정 초.
+    #   ⚠ 메타 파일 **쓰기 전에** 만들어야 시트 정보(sheet_meta)가 메타에 담겨 워크플로가 읽는다.
+    from src.core import source_preview
+    src_preview = source_preview.make_preview_mp4(str(vp), str(out_dir / f"{name}_source.mp4"))
+    sheet_path = out_dir / f"{name}_sheet.jpg"
+    src_sheet = source_preview.make_frame_sheet(str(vp), str(sheet_path))
+    if src_sheet:
+        meta["sheet_meta"] = src_sheet
+
     meta_path = out_dir / f"{name}.meta.json"
     try:
         meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     except Exception:  # noqa: BLE001
         pass
 
-    # ★원본 미리보기 mp4(운영자 확정): 소싱 원본이 WebM(VP8)이면 아이폰에서 재생이 안 돼
-    #   '구간 다시 잡기'를 쓸 수 없었다 → 480p mp4를 함께 만들어 릴리스에 올린다(타임라인 동일).
-    #   ★자르지 않은 **원본**(vp)을 변환한다 — 여기서 읽은 초가 곧 컷 지정에 쓰는 초여야 한다.
-    from src.core import source_preview
-    src_preview = source_preview.make_preview_mp4(str(vp), str(out_dir / f"{name}_source.mp4"))
-
     log.info("[narrate] 완성: %s (%s · %.1fs · %d청크 · %d챕터 · 썸=%s · 미리보기=%s) title=%s",
              final, mode, dur, len(chunks), len(chapters), bool(thumb_out), bool(src_preview),
              meta.get("title_jp", ""))
     return {"path": final, "duration": dur, "mode": mode, "chunks": chunks,
             "source_preview": src_preview,
+            "source_sheet": (str(sheet_path) if src_sheet else ""),
+            "source_sheet_meta": src_sheet or None,
             # ★쇼츠 오프닝 훅이 실제로 붙었는지(회귀 테스트·운영 로그용). 붙지 않으면 '표지만 있고
             #   영상 시작에 훅이 없는' 상태가 되므로, 조용히 넘어가지 않게 결과에 남긴다.
             "opening_hook": bool(opened != body_final),

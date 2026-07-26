@@ -731,8 +731,8 @@ def _parse_cut_specs(raw, src_dur: float, target_dur: float) -> list[dict] | Non
     """운영자가 컷마다 지정한 [{start,end,crop_x,mode}] → 렌더 plan으로 변환.
 
     ★설계 원칙(운영자 확정): "자동으로 자르지 말고, 컷 구분만 해주고 구간은 내가 정한다."
-      · 길이는 지정한 start~end 비율대로 target_dur에 맞춰 정규화(총 길이 규격 유지).
-      · crop_x가 있으면 그 컷만 가로 중심 고정(없으면 자동 추적).
+      · 길이는 **지정한 start~end 그대로**(나레이션 길이는 유지, 모자라면 지정 컷을 반복).
+      · crop_x/crop_y/zoom이 있으면 그 컷만 손으로 그린 사각형대로 고정(없으면 자동).
       · mode: "fit"(전체 담기) / "closeup"(접사). 미지정이면 첫 컷 closeup, 나머지 fit.
     형식이 깨졌거나 비어 있으면 None → 기존 자동 경로로 폴백(제작을 막지 않는다)."""
     if not raw:
@@ -774,33 +774,47 @@ def _parse_cut_specs(raw, src_dur: float, target_dur: float) -> list[dict] | Non
             dropped.append(f"{s0:.1f}~{(_f(it.get('end')) or 0):.1f}s")
             continue
         spans.append({"s": s0, "e": e0, "crop_x": _f(it.get("crop_x")),
-                      "zoom": _f(it.get("zoom")),
+                      "crop_y": _f(it.get("crop_y")), "zoom": _f(it.get("zoom")),
                       "mode": str(it.get("mode") or "").strip().lower()})
     if dropped:
         log.warning("[reframe] 지정 컷 %d개가 소스 길이(%.1fs)를 벗어나 제외됨: %s",
                     len(dropped), src_dur or 0.0, ", ".join(dropped))
     if not spans:
         return None
-    # 지정 구간 비율대로 target_dur 배분(합이 본문 길이와 정확히 맞도록)
-    raw_lens = [sp["e"] - sp["s"] for sp in spans]
-    tot = sum(raw_lens) or 1.0
+    # ★★운영자가 자른 구간을 **정확히 그대로** 쓴다(운영자 확정 · 절대 회귀 금지).
+    #   예전엔 지정 길이를 '비율'로만 쓰고 각 컷을 본문 길이에 맞춰 늘렸다 → 2~8초를 골라도
+    #   나레이션이 30초면 2~17초가 나갔다(운영자가 안 고른 장면이 절반). 지금은:
+    #     · 각 컷은 지정한 **시작~끝 그대로**의 길이로 렌더한다(끝점 존중).
+    #     · 합이 본문보다 짧으면 지정 컷들을 **순서대로 반복**해 채운다(지정 밖 장면은 절대 안 나옴).
+    #     · 합이 본문보다 길면 마지막 컷을 잘라 정확히 맞춘다.
     plan: list[dict] = []
-    for i, sp in enumerate(spans):
-        ln = target_dur * raw_lens[i] / tot
-        # ★시작점 보정(재발방지 · 실사고): 예전엔 무조건 `min(start, src_dur - ln)`으로 당겨서,
-        #   **소스가 본문보다 짧으면 start가 0으로 뭉개졌다**(운영자가 2~9초를 골랐는데 0~22.6초로
-        #   렌더). 컷이 소스 안에 들어갈 때만 당기고, 안 들어가면(루프 재생 구간) 지정 시작점을
-        #   그대로 존중한다 — 렌더러가 `-stream_loop -1`로 부족분을 채운다.
-        if src_dur and ln <= src_dur:
-            start = min(sp["s"], max(0.0, src_dur - ln))
-        else:
-            start = sp["s"]
-        mode = sp["mode"] if sp["mode"] in ("fit", "closeup") else ("closeup" if i == 0 else "fit")
-        role = _role_for(i, len(spans))
-        plan.append({"start": start, "len": ln, "mode": mode, "role": role,
-                     "push": _ROLE_PUSH.get(role, 1.03), "crop_x": sp["crop_x"],
-                     "zoom": sp.get("zoom"),
+    total = 0.0
+    idx = 0
+    while total < target_dur - 0.05 and len(plan) < _HARD_MAX_CUTS * 3:
+        sp = spans[idx % len(spans)]
+        ln = min(sp["e"] - sp["s"], target_dur - total)
+        if ln < 0.4:                       # 남은 자리가 너무 짧으면 앞 컷에 흡수
+            if plan:
+                plan[-1]["len"] += target_dur - total
+            break
+        plan.append({"start": sp["s"], "len": ln, "mode": sp["mode"],
+                     "crop_x": sp["crop_x"], "crop_y": sp.get("crop_y"), "zoom": sp.get("zoom"),
                      "src_start": sp["s"], "src_end": sp["e"]})
+        total += ln
+        idx += 1
+    if not plan:
+        return None
+    # 역할(리빌→설정→…→마무리)은 최종 컷 수가 정해진 뒤 배정한다.
+    n = len(plan)
+    for i, c in enumerate(plan):
+        role = _role_for(i, n)
+        c["role"] = role
+        c["push"] = _ROLE_PUSH.get(role, 1.03)
+        if c["mode"] not in ("fit", "closeup"):
+            c["mode"] = "closeup" if i == 0 else "fit"
+    if idx > len(spans):
+        log.info("[reframe] 지정 컷 %d개(합 %.1fs)로 본문 %.1fs를 채우려 %d컷으로 반복 배치",
+                 len(spans), sum(s["e"] - s["s"] for s in spans), target_dur, n)
     return plan
 
 
@@ -1035,11 +1049,17 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
             # 크롭 중심 = 피사체 신호(색 무관 일반 saliency)의 무게중심 = 주인공 위치.
             seg_c = cents[fa:fb] or cents
             fx = _median([c[0] for c in seg_c]); fy = _median([c[1] for c in seg_c])
-            # ★컷별 운영자 크롭 위치: 이 컷만 가로 중심을 지정값으로 고정(자동 추적 무시).
+            # ★컷별 운영자 크롭 위치: 이 컷만 중심을 지정값으로 고정(자동 추적 무시).
+            #   ★세로(crop_y)도 받는다(운영자 확정 "손가락으로 사각형을 그려 잘라낼 곳을 정한다"):
+            #   화면 비율이 9:16으로 고정이라 **사각형 하나 = 줌(크기) + 크롭(위치)** 이다.
             _ccx = cut.get("crop_x")
             if _ccx is not None:
                 fx = max(0.0, min(1.0, float(_ccx)))
                 log.info("[reframe] 컷%d 크롭 가로위치 운영자 지정: %.2f", i, fx)
+            _ccy = cut.get("crop_y")
+            if _ccy is not None:
+                fy = max(0.0, min(1.0, float(_ccy)))
+                log.info("[reframe] 컷%d 크롭 세로위치 운영자 지정: %.2f", i, fy)
             if cz is not None:
                 # ★운영자 지정 줌: 아래 자동 보정(점유율 상한·얼굴 중앙·여러마리 완화·리빌 상한)을
                 #   전부 건너뛴다. 사람이 정한 값이 자동 판단보다 우선(운영자 확정).
@@ -1125,7 +1145,8 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
             [{"i": i, "start": round(c["start"], 2),
               "end": round(c["start"] + c["len"], 2), "len": round(c["len"], 2),
               "mode": c.get("mode", "fit"), "role": c.get("role", ""),
-              "crop_x": c.get("crop_x")} for i, c in enumerate(plan)],
+              "crop_x": c.get("crop_x"), "crop_y": c.get("crop_y"),
+               "zoom": c.get("zoom")} for i, c in enumerate(plan)],
             ensure_ascii=False, indent=2), encoding="utf-8")
     except Exception as e:  # noqa: BLE001
         log.warning("[reframe] 컷 계획 기록 생략: %s", e)
