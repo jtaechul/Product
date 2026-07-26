@@ -758,6 +758,7 @@ def _parse_cut_specs(raw, src_dur: float, target_dur: float) -> list[dict] | Non
     if not isinstance(items, list) or not items:
         return None
     spans: list[dict] = []
+    dropped: list[str] = []
     for it in items:
         if not isinstance(it, dict):
             return None
@@ -768,10 +769,15 @@ def _parse_cut_specs(raw, src_dur: float, target_dur: float) -> list[dict] | Non
         s0 = max(0.0, s0)
         if src_dur:
             e0 = min(e0, src_dur)
-        if e0 - s0 < 0.4:          # 너무 짧은 컷은 버린다(렌더 불가)
+        if e0 - s0 < 0.4:          # 소스 밖이거나 너무 짧은 컷(렌더 불가)
+            # ★조용히 버리지 않는다(운영자가 '반영됐다'고 오해하지 않게): 사유를 로그로 남긴다.
+            dropped.append(f"{s0:.1f}~{(_f(it.get('end')) or 0):.1f}s")
             continue
         spans.append({"s": s0, "e": e0, "crop_x": _f(it.get("crop_x")),
                       "mode": str(it.get("mode") or "").strip().lower()})
+    if dropped:
+        log.warning("[reframe] 지정 컷 %d개가 소스 길이(%.1fs)를 벗어나 제외됨: %s",
+                    len(dropped), src_dur or 0.0, ", ".join(dropped))
     if not spans:
         return None
     # 지정 구간 비율대로 target_dur 배분(합이 본문 길이와 정확히 맞도록)
@@ -780,7 +786,14 @@ def _parse_cut_specs(raw, src_dur: float, target_dur: float) -> list[dict] | Non
     plan: list[dict] = []
     for i, sp in enumerate(spans):
         ln = target_dur * raw_lens[i] / tot
-        start = min(sp["s"], max(0.0, (src_dur or target_dur) - ln))
+        # ★시작점 보정(재발방지 · 실사고): 예전엔 무조건 `min(start, src_dur - ln)`으로 당겨서,
+        #   **소스가 본문보다 짧으면 start가 0으로 뭉개졌다**(운영자가 2~9초를 골랐는데 0~22.6초로
+        #   렌더). 컷이 소스 안에 들어갈 때만 당기고, 안 들어가면(루프 재생 구간) 지정 시작점을
+        #   그대로 존중한다 — 렌더러가 `-stream_loop -1`로 부족분을 채운다.
+        if src_dur and ln <= src_dur:
+            start = min(sp["s"], max(0.0, src_dur - ln))
+        else:
+            start = sp["s"]
         mode = sp["mode"] if sp["mode"] in ("fit", "closeup") else ("closeup" if i == 0 else "fit")
         role = _role_for(i, len(spans))
         plan.append({"start": start, "len": ln, "mode": mode, "role": role,
