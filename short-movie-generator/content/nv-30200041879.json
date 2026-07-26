@@ -1,15 +1,15 @@
 {
   "id": "nv-30200041879",
   "kind": "narrate",
-  "created_at": "2026-07-26T13:05:12+00:00",
+  "created_at": "2026-07-26T15:06:37+00:00",
   "status": "published",
   "mode": "shorts",
   "source_url": "https://upload.wikimedia.org/wikipedia/commons/7/7a/First_Look_at_World_War_II_Shipwrecks_Off_NC_Coast.webm",
-  "hook": "静かな水面が広がります",
-  "yt_title": "静かな水面が広がります",
-  "yt_title_ko": "조용한 수면이 펼쳐집니다",
-  "yt_description": "静かな水面が広がります。小さな潜水艇が浮かんでいます。やがて暗い海へ沈んでいきます。強い光が海底を照らします。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
-  "yt_description_ko": "조용한 수면이 펼쳐집니다. 작은 잠수정이 떠 있습니다. 이윽고 어두운 바다로 가라앉아 갑니다. 강한 빛이 해저를 비춥니다.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
+  "hook": "遥かなる海原に",
+  "yt_title": "透明なドームに二人の姿が見え",
+  "yt_title_ko": "투명한 돔에 두 사람의 모습이 보이고",
+  "yt_description": "遥かなる海原に。黄色の小さな艇が浮かびます。透明なドームに二人の姿が見え。やがて海底へ、光を放ち調査するようです。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
+  "yt_description_ko": "아득히 먼 바다 위에. 노란색 작은 배가 떠 있습니다. 투명한 돔에 두 사람의 모습이 보입니다. 이윽고 해저로, 빛을 내며 조사하는 듯합니다.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
   "hashtags": [
     "#深海",
     "#深海生物",
@@ -25,7 +25,8 @@
     "#바다"
   ],
   "media": {
-    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30203105699.mp4",
-    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30203105699_thumb.jpg"
+    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30207185880.mp4",
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30207185880_thumb.jpg",
+    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30207185880_source.mp4"
   }
 }
