@@ -198,6 +198,30 @@ def _temporal_foreground_scores(frame_paths: list[str]) -> list[float]:
     return out
 
 
+def _grab_clean_frame(video: str, out_png: str, dur: float, n: int = 8) -> bool:
+    """영상에서 **로고·큰 글씨가 없는** 프레임 1장을 떠서 out_png에 저장(표지용 폴백).
+
+    왜(운영자 지적 · 실사고): 폴백이 '시작 0.5초' 프레임을 그대로 써서 NOAA 브랜딩 슬레이트가
+    오프닝 훅·썸네일 배경이 됐다. 여러 시각(10~85%)을 떠서 글씨 신호가 가장 낮은 것을 고른다.
+    """
+    from src.core import reframe
+    if dur <= 0:
+        return _grab_frame(video, 0.5, out_png)
+    tmp = Path(out_png).parent / "cleanpick"
+    tmp.mkdir(parents=True, exist_ok=True)
+    cands: list[str] = []
+    for i in range(max(2, n)):
+        t = dur * (0.10 + 0.75 * i / (max(2, n) - 1))
+        p = str(tmp / f"cf_{i}.png")
+        if _grab_frame(video, t, p):
+            cands.append(p)
+    if not cands:
+        return _grab_frame(video, min(0.5, dur * 0.1), out_png)
+    best = reframe.pick_clean_frames(cands, keep_if_all_dirty=1)[0]
+    Path(out_png).write_bytes(Path(best).read_bytes())
+    return True
+
+
 def _score_best_frame(video: str, wd: Path, logo_box: tuple | None = None,
                       hint: str = "", n_samples: int = 20) -> tuple[str | None, float]:
     """피사체가 가장 뚜렷한 프레임 후보 경로 + 점수를 돌려준다(임계 판정은 호출부에서).
@@ -235,6 +259,10 @@ def _score_best_frame(video: str, wd: Path, logo_box: tuple | None = None,
             grabbed.append(cand)
     if not grabbed:
         return None, -1.0
+    # ★★로고·큰 글씨가 박힌 프레임은 후보에서 **먼저 제외**한다(운영자 확정 · 실사고):
+    #   NOAA 'Earth is Blue' 브랜딩 카드가 오프닝 훅·썸네일 배경으로 쓰였다. 본문 컷 선택은
+    #   예전부터 번인 텍스트 구간을 배제했는데, **표지 프레임만 이 검사를 안 거치고 있었다**.
+    grabbed = reframe.pick_clean_frames(grabbed)
     # ★Gemini 우선: 후보 중 피사체가 가장 또렷한 프레임을 직접 선택(빈 바다 회피). 키 없으면 None → 휴리스틱.
     try:
         from src.core import vision_subject
@@ -358,6 +386,12 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         # ★#046 최종대책(운영자 확정): 피사체 프레임은 **원본 클립(subject_video)에서** 고른다(리프레임된
         #   body는 이미 피사체를 놓쳤을 수 있음 → 원본엔 피사체가 반드시 나오는 순간이 있다). Gemini가 후보 중
         #   피사체가 또렷한 프레임을 직접 선택(_score_best_frame). 이 한 프레임을 오프닝·엔드카드가 공유(비전 1회).
+        from src.core import reframe as _rf
+        # ★히어로 사진도 같은 잣대로 먼저 검사한다: 위키 사진 중엔 로고·설명 글씨가 박힌 것이 있다.
+        #   (검사를 뒤에 두면 히어로를 버린 뒤 피사체 프레임을 못 골라 '앞부분 폴백'으로 떨어진다.)
+        if hero and _rf.is_logo_frame(hero):
+            log.info("[hook_intro] 히어로 사진에 로고·글씨가 많아 표지에서 제외")
+            hero = ""
         subj_logo = logo_box if (subject_video and src_subj == subject_video) else None
         subj_frame = None
         if not hero:
@@ -369,8 +403,10 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         elif subj_frame and _cover_crop(subj_frame, open_bg, cfg.W, cfg.H):
             log.info("[hook_intro] 오프닝 배경 = 원본 피사체 프레임(비전 선택)")
         else:
+            # ★폴백도 로고 판을 피한다(실사고 지점): 예전엔 **영상 시작 0.5초** 프레임을 그대로 썼는데,
+            #   브랜딩 슬레이트가 바로 거기 있다 → 여러 시각을 떠서 글씨가 없는 프레임을 고른다.
             odur = _duration_of(src_open) or dur
-            if not _grab_frame(src_open, min(0.5, odur * 0.1), open_bg):
+            if not _grab_clean_frame(src_open, open_bg, odur):
                 return body_video
         # 엔드카드 배경: 히어로 사진 > 원본 피사체 프레임 > 고정 시각 폴백
         if hero and _cover_crop(hero, ec_frame, cfg.W, cfg.H):
@@ -378,7 +414,7 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         elif subj_frame:
             Path(ec_frame).write_bytes(Path(subj_frame).read_bytes())
         else:
-            _grab_frame(src_subj, (_duration_of(src_subj) or dur) * 0.55, ec_frame)
+            _grab_clean_frame(src_subj, ec_frame, _duration_of(src_subj) or dur)
         ec_bg = str(wd / "ec_bg.png")
         hi.build_specimen_bg(ec_frame if Path(ec_frame).exists() else open_bg, ec_bg, cfg)
 

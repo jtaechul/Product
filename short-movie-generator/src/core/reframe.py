@@ -282,6 +282,40 @@ def text_score(frame_path: str) -> float:
         return 0.0
 
 
+# ★로고·글씨 판(브랜딩 슬레이트) 절대 임계(실측):
+#   로고 슬레이트 0.053 · 수중 피사체 0.00035 · 밝은 모래 0.000 → 0.010이면 넉넉히 갈린다.
+#   ※ 본문 컷 선택은 소스마다 다른 '상대 임계'(_burned_text_threshold)를 쓰지만, 오프닝 훅·썸네일
+#     **표지 프레임**은 소스가 아무리 더러워도 로고 판을 쓰면 안 되므로 **절대 임계**로 자른다.
+LOGO_FRAME_TH = 0.010
+
+
+def is_logo_frame(frame_path: str, th: float = LOGO_FRAME_TH) -> bool:
+    """이 프레임이 '로고·큰 글씨가 박힌 판'인가(오프닝 훅·썸네일 배경 금지 대상)."""
+    return text_score(frame_path) >= th
+
+
+def pick_clean_frames(paths: list[str], th: float = LOGO_FRAME_TH,
+                      keep_if_all_dirty: int = 3) -> list[str]:
+    """후보 프레임에서 **로고·글씨 판을 제외**한 목록.
+
+    운영자 지적(실사고): NOAA 'Earth is Blue' 브랜딩 카드가 오프닝 훅·썸네일 배경으로 쓰였다.
+    전부 더러우면(브랜딩만 있는 소스) 제작을 막지 않고 **가장 깨끗한 몇 장**만 남긴다.
+    """
+    if not paths:
+        return []
+    ts = [(text_score(p), p) for p in paths]
+    clean = [p for t, p in ts if t < th]
+    if clean:
+        if len(clean) < len(paths):
+            log.info("[reframe] 로고·글씨 프레임 %d/%d장 제외(임계 %.3f)",
+                     len(paths) - len(clean), len(paths), th)
+        return clean
+    ts.sort(key=lambda x: x[0])
+    log.warning("[reframe] 후보 %d장이 모두 로고·글씨 판(최소 %.3f) → 가장 깨끗한 %d장만 사용",
+                len(paths), ts[0][0], keep_if_all_dirty)
+    return [p for _t, p in ts[:max(1, keep_if_all_dirty)]]
+
+
 def _burned_text_threshold(tscores: list[float]) -> float:
     """번인 텍스트 판정 임계값 — 고정 하한 + 영상 기준선 반영.
 
