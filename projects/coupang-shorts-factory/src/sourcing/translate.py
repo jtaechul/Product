@@ -27,13 +27,9 @@ def _extract_json(txt: str) -> dict:
     return json.loads(m.group(0)) if m else {}
 
 
-def _gemini_json(prompt: str, system: str, max_tokens: int = 1024,
-                 model: str = GEMINI_MODEL, call=None, image: tuple | None = None) -> dict:
-    """Gemini에 JSON 응답을 요청해 파싱한 dict 반환. call 주입 시 그걸로 호출(테스트).
-    image=(base64, mime) 주면 비전(이미지+텍스트) 요청 — 영상 '생성'이 아니라 이미지 '입력' 분석(허용)."""
-    parts = [{"text": prompt}]
-    if image:
-        parts.append({"inline_data": {"mime_type": image[1], "data": image[0]}})
+def _gemini_json_parts(parts: list, system: str, max_tokens: int = 1024,
+                       model: str = GEMINI_MODEL, call=None) -> dict:
+    """content parts(텍스트+이미지 혼합)를 그대로 보내 JSON 응답을 파싱. 다중 이미지 비교용."""
     body = {
         "system_instruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": parts}],
@@ -56,9 +52,19 @@ def _gemini_json(prompt: str, system: str, max_tokens: int = 1024,
         with urllib.request.urlopen(req, timeout=90) as r:
             data = json.loads(r.read())
     cands = data.get("candidates") or []
-    parts = ((cands[0].get("content") or {}).get("parts") if cands else []) or []
-    txt = "".join(p.get("text", "") for p in parts)
+    rparts = ((cands[0].get("content") or {}).get("parts") if cands else []) or []
+    txt = "".join(p.get("text", "") for p in rparts)
     return _extract_json(txt)
+
+
+def _gemini_json(prompt: str, system: str, max_tokens: int = 1024,
+                 model: str = GEMINI_MODEL, call=None, image: tuple | None = None) -> dict:
+    """Gemini에 JSON 응답을 요청해 파싱한 dict 반환. call 주입 시 그걸로 호출(테스트).
+    image=(base64, mime) 주면 비전(이미지+텍스트) 요청 — 영상 '생성'이 아니라 이미지 '입력' 분석(허용)."""
+    parts = [{"text": prompt}]
+    if image:
+        parts.append({"inline_data": {"mime_type": image[1], "data": image[0]}})
+    return _gemini_json_parts(parts, system, max_tokens, model, call)
 
 
 def expand_zh_terms(korean_keyword: str, call=None) -> list:
@@ -185,6 +191,65 @@ def identify_by_image(items: list, call=None, fetch=None) -> list:
             b = describe_and_keywords_ko([title])[0]
             out.append({"ko": b["ko"], "keywords": b["keywords"], "zh": []})
     return out
+
+
+_MATCH_SYSTEM = (
+    "너는 상품 이미지 대조 전문가다. 기준 이미지(틱톡 영상 속 상품)와 여러 쇼핑 후보 이미지를 비교해 "
+    "'같은 상품'인 후보를 고른다. 색·형태·기능이 같은지를 본다(각도·배경·워터마크 차이는 무시). "
+    "확실히 같은 게 있으면 confidence=high, 비슷하지만 애매하면 low, 같은 게 없어 보이면 best=-1. JSON만.")
+
+
+def match_naver_by_image(cover_url: str, candidates: list, call=None, fetch=None) -> dict:
+    """틱톡 썸네일 vs 네이버 후보 이미지들을 Gemini Vision으로 비교 → 같은 상품 자동 선택.
+
+    반환 {"best": 후보인덱스(0~), "confidence": "high"|"low"|"unknown", "reason": str}.
+    - best는 입력 candidates의 원래 인덱스. 같은 게 없다고 판단하면 best=-1.
+    - 키 없음/썸네일 없음/후보 이미지 없음 → {"best": 0, "confidence": "unknown"}(기존 최상위 유지).
+    운영자의 최종 확인을 대체하지 않고 '기본 선택 + 확신도'만 제공한다. call/fetch 주입(테스트)."""
+    cands = list(candidates or [])
+    if not cands:
+        return {"best": 0, "confidence": "unknown"}
+    if call is None and not gemini_key():
+        return {"best": 0, "confidence": "unknown"}
+    fetch = fetch or _fetch_image_b64
+    cover = None
+    try:
+        cover = fetch(cover_url or "")
+    except Exception:
+        cover = None
+    if not cover:
+        return {"best": 0, "confidence": "unknown"}
+    parts = [{"text": "기준 이미지 0 = 틱톡 영상 속 상품:"},
+             {"inline_data": {"mime_type": cover[1], "data": cover[0]}}]
+    idx_map = []   # 프롬프트에 실린 후보 순번 → candidates 원래 인덱스
+    for i, c in enumerate(cands[:6]):
+        img = None
+        try:
+            img = fetch((c or {}).get("image") or "")
+        except Exception:
+            img = None
+        if not img:
+            continue
+        parts.append({"text": f"쇼핑후보 {len(idx_map)}: {str((c or {}).get('title', ''))[:40]}"})
+        parts.append({"inline_data": {"mime_type": img[1], "data": img[0]}})
+        idx_map.append(i)
+    if not idx_map:
+        return {"best": 0, "confidence": "unknown"}
+    parts.append({"text": '기준 이미지 0과 같은 상품인 쇼핑후보 번호를 골라라. '
+                          'JSON: {"best": 번호(같은 게 없으면 -1), "confidence": "high|low", "reason": "20자 이내"}'})
+    try:
+        d = _gemini_json_parts(parts, _MATCH_SYSTEM, 300, call=call)
+        raw = d.get("best")
+        b = int(raw) if str(raw).lstrip("-").isdigit() else 0
+        if b < 0:
+            return {"best": -1, "confidence": "low", "reason": str(d.get("reason") or "")[:100]}
+        pos = b if 0 <= b < len(idx_map) else 0
+        conf = str(d.get("confidence") or "").lower()
+        conf = conf if conf in ("high", "low") else "unknown"
+        return {"best": idx_map[pos], "confidence": conf, "reason": str(d.get("reason") or "")[:100]}
+    except Exception as e:
+        print(f"[vision] 이미지 대조 실패: {type(e).__name__} → 최상위 유지")
+        return {"best": 0, "confidence": "unknown"}
 
 
 def translate_titles_ko(titles: list, call=None) -> list:
