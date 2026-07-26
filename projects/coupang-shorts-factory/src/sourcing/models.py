@@ -80,6 +80,7 @@ class SourceVideo:
     title: str | None = None
     title_ko: str | None = None       # 제목/설명의 한국어 번역(선택 판단용) — 관리자 카드 설명란.
     coupang_keywords: list = field(default_factory=list)  # 쿠팡에서 검색할 한국어 상품 검색어(운영자가 §2에서 사용).
+    naver: dict = field(default_factory=dict)  # 네이버 쇼핑 확인 결과(real_title·coupang 판매여부·coupang_title 등).
     duration: float | None = None     # 초
     uploader: str | None = None
     sourced_at: str = field(default_factory=_now_iso)
@@ -109,6 +110,7 @@ class SourceVideo:
             title=d.get("title"),
             title_ko=d.get("title_ko"),
             coupang_keywords=list(d.get("coupang_keywords") or []),
+            naver=dict(d.get("naver") or {}),
             duration=d.get("duration"),
             uploader=d.get("uploader"),
             sourced_at=d.get("sourced_at") or _now_iso(),
