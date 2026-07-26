@@ -1,0 +1,34 @@
+name: shorts-sourcing-probe
+
+# 소싱 실현성 프로브 (미래마켓 개조 §6.2) — 수동 실행 전용.
+# GitHub Actions 러너 IP에서 yt-dlp가 유튜브·틱톡에 닿는지 '메타데이터만' 조회해 확인한다
+# (다운로드·재게시 없음). 자동/반자동 소싱의 주력 경로를 판정하기 위한 1회성 검증.
+# 스케줄·push 트리거 없음(자동 실행 안 함).
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: projects/coupang-shorts-factory
+
+jobs:
+  probe:
+    name: "소싱 실현성 프로브 (메타만)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: yt-dlp 설치 (최신)
+        run: pip install -q -U yt-dlp
+
+      - name: 프로브 실행
+        run: python scripts/sourcing_probe.py
