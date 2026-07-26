@@ -6,23 +6,195 @@
     "清洁神器",
     "懒人清洁",
     "居家清洁好物",
-    "厨房清洁用品",
-    "卫生间清洁神器"
+    "卫生间清洁",
+    "厨房清洁用品"
   ],
   "page": 0,
   "nonce": "",
   "count": 3,
   "candidates": [
     {
-      "id": "sv_a741cfa6757d",
+      "id": "sv_0160b8be2652",
+      "platform": "tiktok",
+      "title": "I ❤️ Horow #toilet #tiktok #cleaning #bidet #bathroom ",
+      "title_ko": "자동 물 내림 기능이 있는 스마트 비데 일체형 양변기",
+      "coupang_keywords": [
+        "스마트 비데",
+        "비데 일체형 양변기",
+        "자동 물내림 변기",
+        "자동 세척 변기"
+      ],
+      "zh_terms": [
+        "智能马桶",
+        "一体式智能马桶",
+        "自动冲水马桶"
+      ],
+      "naver": {
+        "query": "스마트 비데",
+        "real_title": "스마트비데 26년형 방수 비데 IPX5 필터없는 비데구입 BL-1000 자가설치",
+        "lprice": "105000",
+        "coupang": false,
+        "coupang_title": "스마트비데 26년형 방수 비데 IPX5 필터없는 비데구입 BL-1000 자가설치",
+        "coupang_lprice": null,
+        "mall": "스마트비데공식몰by비데랜드",
+        "image": "https://shopping-phinf.pstatic.net/main_8231493/82314939310.12.jpg",
+        "candidates": [
+          {
+            "title": "스마트비데 26년형 방수 비데 IPX5 필터없는 비데구입 BL-1000 자가설치",
+            "image": "https://shopping-phinf.pstatic.net/main_8231493/82314939310.12.jpg",
+            "mall": "스마트비데공식몰by비데랜드",
+            "lprice": "105000",
+            "link": "https://smartstore.naver.com/main/products/4770417253",
+            "coupang": false
+          },
+          {
+            "title": "스마트비데 HB-202 자가설치",
+            "image": "https://shopping-phinf.pstatic.net/main_5967660/59676602999.20260415162904.jpg",
+            "mall": "네이버",
+            "lprice": "95000",
+            "link": "https://search.shopping.naver.com/catalog/59676602999",
+            "coupang": false
+          },
+          {
+            "title": "노비타 스마트비데 BD-AC50N",
+            "image": "https://shopping-phinf.pstatic.net/main_8897729/88977292154.jpg",
+            "mall": "노비타쇼핑몰",
+            "lprice": "162000",
+            "link": "https://smartstore.naver.com/main/products/11432781789",
+            "coupang": false
+          },
+          {
+            "title": "노비타 스마트 플러스 비데 BD-AH70T 자가설치",
+            "image": "https://shopping-phinf.pstatic.net/main_6059760/60597601912.20260625102036.jpg",
+            "mall": "네이버",
+            "lprice": "153500",
+            "link": "https://search.shopping.naver.com/catalog/60597601912",
+            "coupang": false
+          },
+          {
+            "title": "노비타 스마트 플러스 비데 BD AE10N 자가설치",
+            "image": "https://shopping-phinf.pstatic.net/main_5380628/53806283849.20250327150014.jpg",
+            "mall": "네이버",
+            "lprice": "135150",
+            "link": "https://search.shopping.naver.com/catalog/53806283849",
+            "coupang": false
+          },
+          {
+            "title": "대림바스 AI스마트 컨트롤 완전 직수 순간온수 방수 비데 DDS-S500 1개",
+            "image": "https://shopping-phinf.pstatic.net/main_5951630/59516305594.20260403093847.jpg",
+            "mall": "네이버",
+            "lprice": "175840",
+            "link": "https://search.shopping.naver.com/catalog/59516305594",
+            "coupang": false
+          }
+        ],
+        "best_match": -1,
+        "match_confidence": "low",
+        "match_reason": "틱톡 영상 속 상품과 동일한 상품을 찾기 어려움."
+      },
+      "view_count": 76955071,
+      "uploader": "horow.bathroom",
+      "duration": 21,
+      "source_url": "https://www.tiktok.com/@horow.bathroom/video/7652013418672557326",
+      "download_url": "https://v45.tiktokcdn-us.com/cbfd2d4a271e815366ef0c91850488b8/6a666c62/video/tos/useast5/tos-useast5-ve-0068c001-tx/oUeAaafIxFOLeJiIQEFu1BAYmeZAdowqGRGxIw/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=658&ft=73kDHDyjNl~VQQUnU~d-sdiRhmZqYl.LQM-~hWLrK&mime_type=video_mp4&rc=aWloPGg5ZztpaWRoZzc5NkBpMzlyb3c5cjpwOzMzZzczNEAvMDVhMTZfNmExNDJeNGMwYSNlX19jMmRzZ2xhLS1kMS9zcw%3D%3D&vvpl=1&l=20260726142133DC6A63F9F5AB69DDEE87&btag=e000bd000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/ow01NLeRIQBQAfxLaieZE3fAGLqUoGI8OAj5Fz~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=0edefc8d&x-expires=1785160800&x-signature=ezmgZhbfLyJKPq2l1F7caFQd9qs%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+    },
+    {
+      "id": "sv_fc4555bd377a",
+      "platform": "tiktok",
+      "title": "#asmr #asmrvideo #goodthings #unboxing #unboxingvideo #cleaning #CleanTok #storytime #organizedhome #smartgadgets #foryo #fyp #fypシ゚ #tik_tok ",
+      "title_ko": "지문 인식과 비밀번호 입력이 가능한 스마트 도어락",
+      "coupang_keywords": [
+        "스마트 도어락",
+        "지문인식 도어락",
+        "푸시풀 도어락",
+        "현관문 도어락"
+      ],
+      "zh_terms": [
+        "智能门锁",
+        "指纹锁",
+        "密码锁"
+      ],
+      "naver": {
+        "query": "스마트 도어락",
+        "real_title": "코콤 무타공 스마트 도어락 아파트 지문 전자 도어락 터치 즉시잠금 번호키 설치 NP750",
+        "lprice": "108000",
+        "coupang": false,
+        "coupang_title": "코콤 무타공 스마트 도어락 아파트 지문 전자 도어락 터치 즉시잠금 번호키 설치 NP750",
+        "coupang_lprice": null,
+        "mall": "키마켓",
+        "image": "https://shopping-phinf.pstatic.net/main_8782947/87829475809.12.jpg",
+        "candidates": [
+          {
+            "title": "코콤 무타공 스마트 도어락 아파트 지문 전자 도어락 터치 즉시잠금 번호키 설치 NP750",
+            "image": "https://shopping-phinf.pstatic.net/main_8782947/87829475809.12.jpg",
+            "mall": "키마켓",
+            "lprice": "108000",
+            "link": "https://smartstore.naver.com/main/products/10284971969",
+            "coupang": false
+          },
+          {
+            "title": "솔리티 무타공도어락 현관문도어락 즉시잠김 디지털 현관 번호키 설치 교체 700",
+            "image": "https://shopping-phinf.pstatic.net/main_8322765/83227652369.17.jpg",
+            "mall": "문지기닷컴",
+            "lprice": "59800",
+            "link": "https://smartstore.naver.com/main/products/5683154568",
+            "coupang": false
+          },
+          {
+            "title": "링크 지문인식도어락 무타공도어락 현관문 즉시잠김 디지털 푸시풀 번호키 GALAXIA-F",
+            "image": "https://shopping-phinf.pstatic.net/main_8676599/86765993879.7.jpg",
+            "mall": "KMplus",
+            "lprice": "129000",
+            "link": "https://smartstore.naver.com/main/products/9221493556",
+            "coupang": false
+          },
+          {
+            "title": "제니스 무타공도어락 현관문도어락 현관 방화문 디지털 번호키 손잡이 교체 설치 Z700N",
+            "image": "https://shopping-phinf.pstatic.net/main_8339988/83399888386.11.jpg",
+            "mall": "KMplus",
+            "lprice": "55000",
+            "link": "https://smartstore.naver.com/main/products/5855388972",
+            "coupang": false
+          },
+          {
+            "title": "코맥스 지문인식도어락 즉시잠김 현관문도어락 무타공 푸시풀 현관 디지털 번호키 915",
+            "image": "https://shopping-phinf.pstatic.net/main_8929903/89299032527.5.jpg",
+            "mall": "문지기닷컴",
+            "lprice": "154800",
+            "link": "https://smartstore.naver.com/main/products/11754521940",
+            "coupang": false
+          },
+          {
+            "title": "코콤 현관문도어락 푸시풀 현관 도어락 아파트 디지털 번호키 교체 설치 NP850",
+            "image": "https://shopping-phinf.pstatic.net/main_8889742/88897420994.7.jpg",
+            "mall": "진성홈테크",
+            "lprice": "115000",
+            "link": "https://smartstore.naver.com/main/products/11352910642",
+            "coupang": false
+          }
+        ],
+        "best_match": 5,
+        "match_confidence": "high",
+        "match_reason": "색상, 형태, 지문인식 방식 동일"
+      },
+      "view_count": 54540613,
+      "uploader": "Lin Wang",
+      "duration": 320,
+      "source_url": "https://www.tiktok.com/@lin.wang92/video/7527385320061537550",
+      "download_url": "https://v45.tiktokcdn-us.com/b22bba70ebfa1a9be4f7a234bac54ae3/6a666d8c/video/tos/useast5/tos-useast5-ve-0068c001-tx/oM4ytACyqSiUaEIoLdFfDBg41SfiNmQJRDD7EC/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1682&ft=aEKfuqT0m0LPD12P0enI3wUqO1gFMeF~O5&mime_type=video_mp4&rc=PGc7aDdmN2U8aWVkN2U6OEBpanRuaXc5cmpkNDMzZzczNEBhYzM1Y2FgXi4xYF5fYTFhYSNtLy5mMmRrM29hLS1kMS9zcw%3D%3D&vvpl=1&l=20260726142131A5B85991499315F9C55F&btag=e000a5000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/ogv2BjaaaQg9E4UBNa9k8DpBkirAHBTiIIzgN~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=6eecb22a&x-expires=1785160800&x-signature=%2FIwTDfCo092NCCvvJd2P%2B9G9i9s%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+    },
+    {
+      "id": "sv_6dab3e5b0500",
       "platform": "tiktok",
       "title": "Kitchen Spray Cleaner and Degreaser,Antibactrial All Purspose Cleaner for Kitchens,Counter tops,Ovens,and Appliances#TikTokshop #TikTokShopDealsforYouDays #FlyCleanse#TikTokShopStockUp#SummerWins",
-      "title_ko": "주방 기름때 제거 및 다목적 세정제",
+      "title_ko": "주방 기름때 제거 및 다용도 세정제",
       "coupang_keywords": [
         "주방 세정제",
         "기름때 제거제",
-        "다목적 클리너",
-        "주방 클리너"
+        "다용도 클리너",
+        "항균 세정제"
       ],
       "zh_terms": [
         "厨房清洁剂",
@@ -87,180 +259,17 @@
             "link": "https://smartstore.naver.com/main/products/10258058050",
             "coupang": false
           }
-        ]
+        ],
+        "best_match": -1,
+        "match_confidence": "low",
+        "match_reason": "기준 이미지 상품은 초록색 스프레이 병이지만, 쇼핑 후보 중 동일한 상품은 없음."
       },
-      "view_count": 38564707,
+      "view_count": 38571509,
       "uploader": "Alyssa",
       "duration": 30,
       "source_url": "https://www.tiktok.com/@honey_getvq0z/video/7649586788775759117",
-      "download_url": "https://v45.tiktokcdn-us.com/1f5ea0f1da5014d1feca467947ee9d93/6a6666d0/video/tos/useast5/tos-useast5-ve-0068c002-tx/owpiaPGEIpiZg3oBrMKysoiUBHQ4ojtAEEaz1/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1639&ft=73kDHDyjNMRVQQUnU~d-sdOKhmZqYlkj_1-~hWLrK&mime_type=video_mp4&rc=Ojg7ZmllM2c5MzVmNjQ5N0BpajtndHE5cjpmOzMzZzczNEAwLTVeM15fXi8xLy8zXjM2YSNuaWFgMmQ0aGhhLS1kMS9zcw%3D%3D&vvpl=1&l=20260726135737B56B22150904D4B40FC4&btag=e0008d000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/osfcARXRMqTpQgEGlW1FzEBDBfKqKQRRouSADD~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=21a9635e&x-expires=1785157200&x-signature=hs4ZypOHM5okLG6ZZitntB%2FgE8M%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
-    },
-    {
-      "id": "sv_4e0775b2e222",
-      "platform": "tiktok",
-      "title": "Greenhouses, tiles, pot bottoms, ovens... One bottle takes care of the entire kitchen! #TikTokShop #fyp I #Useful #CleaningTools #SpringCleaning ",
-      "title_ko": "찌든 때 제거용 주방 세척 스프레이",
-      "coupang_keywords": [
-        "주방 세척제",
-        "기름때 제거제",
-        "냄비 세척 스프레이",
-        "강력 세정제"
-      ],
-      "zh_terms": [
-        "厨房清洁剂",
-        "油污净",
-        "锅具清洁喷雾"
-      ],
-      "naver": {
-        "query": "주방 세척제",
-        "real_title": "애경산업 트리오 항균 주방세제 13.6L, 1개",
-        "lprice": "12110",
-        "coupang": false,
-        "coupang_title": "애경산업 트리오 항균 주방세제 13.6L, 1개",
-        "coupang_lprice": null,
-        "mall": "네이버",
-        "image": "https://shopping-phinf.pstatic.net/main_5192951/51929510430.20241213221153.jpg",
-        "candidates": [
-          {
-            "title": "애경산업 트리오 항균 주방세제 13.6L, 1개",
-            "image": "https://shopping-phinf.pstatic.net/main_5192951/51929510430.20241213221153.jpg",
-            "mall": "네이버",
-            "lprice": "12110",
-            "link": "https://search.shopping.naver.com/catalog/51929510430",
-            "coupang": false
-          },
-          {
-            "title": "암웨이 디쉬 드랍스 식기세정제 1L, 1개",
-            "image": "https://shopping-phinf.pstatic.net/main_5192925/51929251248.20241213210801.jpg",
-            "mall": "네이버",
-            "lprice": "9900",
-            "link": "https://search.shopping.naver.com/catalog/51929251248",
-            "coupang": false
-          },
-          {
-            "title": "멜라루카 레몬 브라이트 주방용 세척제 리필 946ml, 1개",
-            "image": "https://shopping-phinf.pstatic.net/main_5192912/51929124094.20241213204138.jpg",
-            "mall": "네이버",
-            "lprice": "12340",
-            "link": "https://search.shopping.naver.com/catalog/51929124094",
-            "coupang": false
-          },
-          {
-            "title": "엘지생활건강 세이프 천연미네랄 주방세제 리필 1L, 1개",
-            "image": "https://shopping-phinf.pstatic.net/main_5192919/51929191839.20241213204532.jpg",
-            "mall": "네이버",
-            "lprice": "5900",
-            "link": "https://search.shopping.naver.com/catalog/51929191839",
-            "coupang": false
-          },
-          {
-            "title": "1+1 감성리빙 칼슘파우더 과일 세정제 야채 세척제 200g",
-            "image": "https://shopping-phinf.pstatic.net/main_8984936/89849363927.1.jpg",
-            "mall": "감성리빙",
-            "lprice": "12800",
-            "link": "https://smartstore.naver.com/main/products/12304853210",
-            "coupang": false
-          },
-          {
-            "title": "엘지생활건강 퐁퐁 베이킹소다 주방세제 3L, 4개",
-            "image": "https://shopping-phinf.pstatic.net/main_5192958/51929589899.20241213221937.jpg",
-            "mall": "네이버",
-            "lprice": "19900",
-            "link": "https://search.shopping.naver.com/catalog/51929589899",
-            "coupang": false
-          }
-        ]
-      },
-      "view_count": 9693135,
-      "uploader": "vds",
-      "duration": 48,
-      "source_url": "https://www.tiktok.com/@bfsdgbsdf54/video/7633262907412860191",
-      "download_url": "https://v45.tiktokcdn-us.com/b6e3416c9bd971cd768b8e9c60978379/6a6666e1/video/tos/useast8/tos-useast8-ve-0068c002-tx2/ocBmReDz7bsfwQkLuB7RVkvEgckFQEpjEIAAGg/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1442&ft=aEKfuqT0m0LPD12m5enI3wUKHv3FMeF~O5&mime_type=video_mp4&rc=Zmc7NjtpZWQ5aDdlOzk6NkBpM2pxZGw5cmVmOjMzaTczNEBjYl9eMjYtNWAxNV8xNmNfYSM0MDEtMmRzbGthLS1kMTJzcw%3D%3D&vvpl=1&l=202607261357368651E118C9F502B4F74B&btag=e0008d000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/o4sBVFDiREEGhQ4v9uEQRwBAzCjAEkeL7pfcgP~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=5a25202b&x-expires=1785157200&x-signature=zwS3HEAZR84xSlMypDD8pJBXl9I%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&sc=feed_cover&biz_tag=tt_video&s=SEARCH"
-    },
-    {
-      "id": "sv_6d1736cfbae9",
-      "platform": "tiktok",
-      "title": "Easy to clean kitchen😏#gadgets #coolstuff #coolgadgets #amazonfinds #fyp ",
-      "title_ko": "주방 싱크대 물기 제거용 미니 스크래퍼",
-      "coupang_keywords": [
-        "싱크대 물기 제거기",
-        "미니 스크래퍼",
-        "주방 물기 닦이",
-        "욕실 물기 제거"
-      ],
-      "zh_terms": [
-        "厨房刮水器",
-        "迷你刮板",
-        "台面刮水器"
-      ],
-      "naver": {
-        "query": "싱크대 물기 제거기",
-        "real_title": "3단 롱스퀴지 욕실 유리창청소 창문닦기 스퀴즈 스쿼지 물기제거기 스키지 물끌개 물긁개305",
-        "lprice": "27900",
-        "coupang": false,
-        "coupang_title": "3단 롱스퀴지 욕실 유리창청소 창문닦기 스퀴즈 스쿼지 물기제거기 스키지 물끌개 물긁개305",
-        "coupang_lprice": null,
-        "mall": "홈도가",
-        "image": "https://shopping-phinf.pstatic.net/main_9088827/90888276035.2.jpg",
-        "candidates": [
-          {
-            "title": "3단 롱스퀴지 욕실 유리창청소 창문닦기 스퀴즈 스쿼지 물기제거기 스키지 물끌개 물긁개305",
-            "image": "https://shopping-phinf.pstatic.net/main_9088827/90888276035.2.jpg",
-            "mall": "홈도가",
-            "lprice": "27900",
-            "link": "https://smartstore.naver.com/main/products/13343765703",
-            "coupang": false
-          },
-          {
-            "title": "스텐 욕실스퀴지 유리창청소 창문닦기 스퀴즈 스쿼지 물기제거기 물기제거 스키지 물끌개 물긁개",
-            "image": "https://shopping-phinf.pstatic.net/main_8962590/89625908067.1.jpg",
-            "mall": "홈도가",
-            "lprice": "12900",
-            "link": "https://smartstore.naver.com/main/products/12081397362",
-            "coupang": false
-          },
-          {
-            "title": "욕실 주방 스퀴지 스펀지 물기제거 유리 창문 싱크대 청소 미니 클리너 밀대 걸레",
-            "image": "https://shopping-phinf.pstatic.net/main_8990034/89900347481.1.jpg",
-            "mall": "스탠다드엔",
-            "lprice": "5400",
-            "link": "https://smartstore.naver.com/main/products/12355836764",
-            "coupang": false
-          },
-          {
-            "title": "3세대 스펀지 스퀴지 화장실 욕실 주방 청소 물기제거 유리창문 싱크대클리너 밀대 걸레 빌쓰",
-            "image": "https://shopping-phinf.pstatic.net/main_9117996/91179969554.jpg",
-            "mall": "빌쓰 BILSSEU",
-            "lprice": "2900",
-            "link": "https://smartstore.naver.com/main/products/13635458873",
-            "coupang": false
-          },
-          {
-            "title": "싱크대물기제거기 주방스퀴지 싱크대물기제거 거울스퀴지",
-            "image": "https://shopping-phinf.pstatic.net/main_9062979/90629793773.jpg",
-            "mall": "소온서온",
-            "lprice": "6500",
-            "link": "https://smartstore.naver.com/main/products/13085282681",
-            "coupang": false
-          },
-          {
-            "title": "라미스홈 주방 싱크대 욕실 화장실 청소 정리 미니 스퀴지 물기제거 사각 스퀴지 스퀴즈",
-            "image": "https://shopping-phinf.pstatic.net/main_8186939/81869399466.10.jpg",
-            "mall": "라미스홈",
-            "lprice": "3300",
-            "link": "https://smartstore.naver.com/main/products/4324877533",
-            "coupang": false
-          }
-        ]
-      },
-      "view_count": 6294695,
-      "uploader": "airlandolists",
-      "duration": 10,
-      "source_url": "https://www.tiktok.com/@airlandolists/video/7537701539553496334",
-      "download_url": "https://v16m.tiktokcdn-us.com/37223f409f1bd4f48981d7083d074f80/6a6666bb/video/tos/useast5/tos-useast5-pve-0068-tx/ocgDb5k8jRQ3MkHBCeM2ecXp87VNAAaQkflCII/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=1122&ft=aEKfuqT0m0LPD12m5enI3wUKHv3FMeF~O5&mime_type=video_mp4&rc=NDhoaTdkPDo1NDw3OjM1Z0BpMzR4O3U5cjpuNTMzZzczNEBjNDBiYmM0Xy8xYjYuM141YSNtcm9eMmQ0a2FhLS1kMS9zcw%3D%3D&vvpl=1&l=202607261357368651E118C9F502B4F74B&btag=e000b0000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/ooVHecRbBSjDQ5kIXpAewQQMbANkNceCkr8J9a~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=b3a1bcd4&x-expires=1785157200&x-signature=tsM5tQLPaNIhfsv4UWnv%2BmVL9nw%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+      "download_url": "https://v45.tiktokcdn-us.com/1fb3c99ce0274648deaa4c9c19192b97/6a666c6d/video/tos/useast5/tos-useast5-ve-0068c002-tx/owpiaPGEIpiZg3oBrMKysoiUBHQ4ojtAEEaz1/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=1639&ft=aEKfuqT0m0LPD12H0enI3wUTJz2FMeF~O5&mime_type=video_mp4&rc=Ojg7ZmllM2c5MzVmNjQ5N0BpajtndHE5cjpmOzMzZzczNEAwLTVeM15fXi8xLy8zXjM2YSNuaWFgMmQ0aGhhLS1kMS9zcw%3D%3D&vvpl=1&l=2026072614213426BBD7585F6012BF863E&btag=e0008d000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/osfcARXRMqTpQgEGlW1FzEBDBfKqKQRRouSADD~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=896872c8&x-expires=1785160800&x-signature=eM%2BHk2aFVr0FNz5o%2FV2tiL41pZg%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&s=SEARCH&sc=feed_cover&biz_tag=tt_video"
     }
   ]
 }
