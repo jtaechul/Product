@@ -134,29 +134,41 @@ class TikwmAdapter(SourceAdapter):
         svs.sort(key=lambda s: (s.view_count or 0), reverse=True)   # 조회수 상위 추천
         return svs[:limit], nxt, more
 
-    def download(self, sv: SourceVideo, dest_dir: Path) -> Path | None:
-        dest_dir = Path(dest_dir)
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        url = sv.download_url
-        if not url and sv.source_url:   # 만료·미보유 시 tikwm로 재해석
-            try:
-                r = self.client.resolve(sv.source_url)
-                url = _abs_play(r.get("hdplay") or r.get("play"), self.client.base)
-            except Exception as e:
-                print(f"[sourcing:tikwm] resolve 실패({sv.source_url}): {e}")
-                sv.status = "failed"
-                return None
+    def _try_bytes(self, url: str | None) -> bytes | None:
+        """url에서 mp4 바이트 확보(실패·과소면 None). 재시도 판단은 호출부가 한다."""
         if not url:
-            sv.status = "failed"
             return None
         try:
             data = self.client.download_bytes(url)
         except Exception as e:
             print(f"[sourcing:tikwm] 다운로드 실패({url[:60]}): {e}")
-            sv.status = "failed"
             return None
         if not data or len(data) < _MIN_BYTES:
-            print(f"[sourcing:tikwm] 다운로드 바이트 부족({len(data or b'')}) — 실패 처리")
+            print(f"[sourcing:tikwm] 다운로드 바이트 부족({len(data or b'')})")
+            return None
+        return data
+
+    def _resolve_play(self, source_url: str) -> str | None:
+        """source_url을 tikwm로 재해석해 '새' 무워터마크 재생 URL을 얻는다(저장 URL 만료 대응)."""
+        try:
+            r = self.client.resolve(source_url)
+            return _abs_play(r.get("hdplay") or r.get("play"), self.client.base)
+        except Exception as e:
+            print(f"[sourcing:tikwm] resolve 실패({source_url}): {e}")
+            return None
+
+    def download(self, sv: SourceVideo, dest_dir: Path) -> Path | None:
+        dest_dir = Path(dest_dir)
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        # ① 저장된 download_url을 먼저 시도. ③에서 고른 뒤 ⑤ 제작까지 시간이 지나면 tikwm URL이
+        #    만료되므로, 실패하면 ② source_url을 tikwm로 재해석해 '새' URL로 재시도한다(핵심 폴백).
+        data = self._try_bytes(sv.download_url)
+        if data is None and sv.source_url:
+            fresh = self._resolve_play(sv.source_url)
+            if fresh and fresh != sv.download_url:
+                print(f"[sourcing:tikwm] 저장 URL 만료 추정 → 재해석 재시도: {sv.source_url}")
+                data = self._try_bytes(fresh)
+        if data is None:
             sv.status = "failed"
             return None
         out = dest_dir / f"{sv.id}.mp4"
