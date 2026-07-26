@@ -89,10 +89,21 @@ def rebuild_manifest(base_dir: str) -> int:
             continue
         rid = str(rec.get("id") or p.stem)
         media = rec.get("media") or {}
-        if rec.get("kind") == "longform":
+        kind = rec.get("kind")
+        if kind == "longform":
             e = {"id": rid, "kind": "longform",
                  "yt_title": rec.get("yt_title", ""), "yt_title_ko": rec.get("yt_title_ko", ""),
                  "n": rec.get("n", 0), "total_s": rec.get("total_s", 0),
+                 "date": str(rec.get("created_at", ""))[:10],
+                 "has_video": bool(media.get("video_url"))}
+        elif kind == "narrate":
+            # ★버그 수정(실사고 nv-29999730295): narrate 레코드가 else로 떨어져 kind="reels" ·
+            #   이름 "종"으로 재생성됐다 → 라이브러리 '쇼츠' 목록과 실행 현황에 유령 항목이 뜨고,
+            #   /c/<id> 상세는 3자리 쇼츠 레코드를 찾지 못해 "아직 제작이 완료되지 않았거나…"만 표시.
+            #   upsert_manifest(narrate)와 **같은 형태**로 만들어 재생성해도 형태가 보존되게 한다.
+            e = {"id": rid, "kind": "narrate",
+                 "yt_title": rec.get("yt_title", ""), "yt_title_ko": rec.get("yt_title_ko", ""),
+                 "mode": rec.get("mode", ""),
                  "date": str(rec.get("created_at", ""))[:10],
                  "has_video": bool(media.get("video_url"))}
         else:
