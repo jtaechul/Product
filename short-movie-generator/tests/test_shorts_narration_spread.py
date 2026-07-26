@@ -2,7 +2,12 @@
 
 운영자 지적(실사고): "나레이션이 문장과 문장 사이 간격 없이 빠르게만 나와서 어색하다.
 영상 뒷부분에는 아무 나레이션이 없다." → 문장을 이어붙여 한 번에 읽히던 방식을 폐기하고,
-문장별로 합성해 **영상 끝까지 고르게 배치**한다(쉼은 문장 길이에 비례).
+문장별로 합성해 **영상 끝까지 고르게 배치**한다.
+
+운영자 확정 규칙(절대 회귀 금지):
+  ① 문장 사이는 **무조건 1초 이상** 쉰다.
+  ② **영상 길이에 맞춰 나레이션(문장 수)을 조정**한다 — 억지로 밀어 넣지 않는다.
+  ③ 영상이 끝나기 전에 **구독 유도(자막+나레이션)를 반드시** 넣고, 그 길이를 ②의 계산에 반영한다.
 """
 from pathlib import Path
 
@@ -46,24 +51,43 @@ _CHUNKS = ["深い海の底に、静かな影が広がります。",
            "静けさの奥に、確かな命が息づいています。"]
 
 
-def test_sentences_have_pauses_between(fake_tts, tmp_path):
-    """★핵심: 문장과 문장 사이에 최소 쉼 이상 간격이 있어야 한다(랩처럼 붙여 읽지 않는다)."""
+def _gaps(fake_tts, nar):
+    """실제 배치에서 문장 사이 쉼(초) 목록. parts=[(mp3, anchor)] · 마지막은 구독 유도."""
+    anchors = [a for _mp3, a in fake_tts["parts"]]
+    spoken = list(nar["chunks"]) + [na._SHORTS_CTA_JP]
+    lens = [0.18 * len(c) for c in spoken]
+    return [anchors[i + 1] - (anchors[i] + lens[i]) for i in range(len(anchors) - 1)]
+
+
+def test_gap_between_sentences_is_at_least_one_second(fake_tts, tmp_path):
+    """★① 문장 사이는 무조건 1초 이상(운영자 확정) — 붙여 읽으면 안 된다."""
     nar = na._spread_shorts_narration(_CHUNKS, tmp_path, 30.0)
     assert nar and nar.get("spread")
-    anchors = [a for _mp3, a in fake_tts["parts"]]
-    lens = [0.18 * len(c) for c in _CHUNKS]
-    for i in range(len(anchors) - 1):
-        gap = anchors[i + 1] - (anchors[i] + lens[i])
-        assert gap >= na._SHORTS_GAP_MIN - 1e-6, f"문장 {i+1}→{i+2} 사이 쉼이 없습니다: {gap:.2f}s"
+    assert na._SHORTS_GAP_MIN >= 1.0, "최소 쉼이 1초 아래로 내려갔습니다"
+    for i, gap in enumerate(_gaps(fake_tts, nar)):
+        assert gap >= 1.0 - 1e-6, f"문장 {i+1}→{i+2} 사이 쉼이 1초 미만입니다: {gap:.2f}s"
         assert gap <= na._SHORTS_GAP_MAX + 1e-6, f"쉼이 과도합니다(끊긴 느낌): {gap:.2f}s"
 
 
+def test_subscribe_cta_is_always_appended_at_the_end(fake_tts, tmp_path):
+    """★③ 구독 유도(자막+나레이션)는 영상이 끝나기 전에 **무조건** 들어간다."""
+    nar = na._spread_shorts_narration(_CHUNKS, tmp_path, 30.0)
+    assert nar["disp"][-1][0] == na._SHORTS_CTA_JP, "마지막에 구독 유도 자막이 없습니다"
+    assert fake_tts["parts"][-1][1] > 0, "구독 유도 나레이션이 배치되지 않았습니다"
+    cta_start = fake_tts["parts"][-1][1]
+    cta_end = cta_start + 0.18 * len(na._SHORTS_CTA_JP)
+    assert cta_end <= nar["duration"] + 1e-6, "구독 유도가 영상 밖으로 밀렸습니다"
+    assert cta_end >= nar["duration"] - na._SHORTS_TAIL_S - na._SHORTS_GAP_MAX, (
+        "구독 유도가 영상 끝에서 너무 멀리 떨어져 있습니다")
+    assert na._SHORTS_CTA_JP not in nar["chunks"], "구독 유도가 본문 대본에 섞였습니다"
+
+
 def test_narration_reaches_the_end_of_video(fake_tts, tmp_path):
-    """★핵심: 뒷부분이 통째로 무음이면 안 된다 — 마지막 문장이 영상 끝 근처에서 끝나야 한다."""
+    """★핵심: 뒷부분이 통째로 무음이면 안 된다 — 마지막(구독 유도)이 영상 끝 근처에서 끝나야 한다."""
     target = 30.0
     nar = na._spread_shorts_narration(_CHUNKS, tmp_path, target)
     anchors = [a for _mp3, a in fake_tts["parts"]]
-    end = anchors[-1] + 0.18 * len(_CHUNKS[-1])
+    end = anchors[-1] + 0.18 * len(na._SHORTS_CTA_JP)
     assert end >= target - na._SHORTS_TAIL_S - na._SHORTS_GAP_MAX, (
         f"나레이션이 {end:.1f}s에 끝나 뒤쪽 {target - end:.1f}s가 무음입니다")
     assert end <= target, "나레이션이 영상 끝을 넘었습니다"
@@ -80,33 +104,38 @@ def test_first_sentence_not_at_zero_and_tail_kept(fake_tts, tmp_path):
 def test_longer_sentence_gets_longer_pause(fake_tts, tmp_path):
     """쉼은 문장 길이에 비례한다(긴 문장 뒤엔 더 긴 호흡) — 균등 분배보다 자연스럽다."""
     chunks = ["短い。", "とても長い文章がここに入りますのでたっぷりと余韻が必要です。", "短い。"]
-    na._spread_shorts_narration(chunks, tmp_path, 11.0)   # 쉼이 상한에 걸리지 않는 길이
-    anchors = [a for _mp3, a in fake_tts["parts"]]
-    lens = [0.18 * len(c) for c in chunks]
-    gap1 = anchors[1] - (anchors[0] + lens[0])
-    gap2 = anchors[2] - (anchors[1] + lens[1])
-    assert gap2 > gap1, "긴 문장 뒤의 쉼이 더 길어야 합니다"
+    nar = na._spread_shorts_narration(chunks, tmp_path, 16.0)   # 쉼이 상한에 걸리지 않는 길이
+    gaps = _gaps(fake_tts, nar)
+    assert len(nar["chunks"]) == 3, "이 길이에선 문장을 줄일 필요가 없습니다"
+    assert gaps[1] > gaps[0], "긴 문장 뒤의 쉼이 더 길어야 합니다"
 
 
 def test_subtitles_do_not_overlap_and_follow_speech(fake_tts, tmp_path):
     """자막 창은 발화 시각을 따라가고 서로 겹치지 않아야 한다(쉼 동안 잠깐 머문 뒤 사라짐)."""
     nar = na._spread_shorts_narration(_CHUNKS, tmp_path, 30.0)
     disp = nar["disp"]
-    assert len(disp) == len(_CHUNKS)
+    assert len(disp) == len(nar["chunks"]) + 1        # 본문 + 구독 유도
     for i in range(len(disp) - 1):
         assert disp[i][2] <= disp[i + 1][1] + 1e-6, "자막이 겹칩니다"
         assert disp[i][2] > disp[i][1], "자막 표시 시간이 0 이하입니다"
 
 
-def test_dense_script_falls_back_to_min_gap(fake_tts, tmp_path):
-    """대본이 길어 남는 시간이 없으면 최소 쉼만 두고, 필요한 만큼 길이를 늘려 알린다."""
-    long_chunks = _CHUNKS * 3
-    nar = na._spread_shorts_narration(long_chunks, tmp_path, 20.0)
-    anchors = [a for _mp3, a in fake_tts["parts"]]
-    lens = [0.18 * len(c) for c in long_chunks]
-    gaps = [anchors[i + 1] - (anchors[i] + lens[i]) for i in range(len(anchors) - 1)]
-    assert all(abs(g - na._SHORTS_GAP_MIN) < 1e-6 for g in gaps)
-    assert nar["duration"] > 20.0, "필요 길이를 늘려 돌려주지 않았습니다"
+def test_script_is_trimmed_to_fit_the_video_length(fake_tts, tmp_path):
+    """★② 영상 길이에 맞춰 문장 수를 줄인다 — 1초 쉼과 구독 유도 자리를 지키면서."""
+    long_chunks = _CHUNKS * 3                      # 15문장(짧은 영상에 다 들어갈 수 없다)
+    nar = na._spread_shorts_narration(long_chunks, tmp_path, 30.0)
+    assert len(nar["chunks"]) < len(long_chunks), "긴 대본이 그대로 밀어 넣어졌습니다"
+    for gap in _gaps(fake_tts, nar):
+        assert gap >= 1.0 - 1e-6, "문장을 줄였는데도 쉼이 1초 미만입니다"
+    assert nar["disp"][-1][0] == na._SHORTS_CTA_JP, "줄이는 과정에서 구독 유도가 사라졌습니다"
+
+
+def test_opening_and_closing_sentences_survive_trimming(fake_tts, tmp_path):
+    """줄일 때도 이야기의 처음·끝은 남긴다(중간 문장을 덜어낸다)."""
+    nar = na._spread_shorts_narration(_CHUNKS, tmp_path, 22.0)
+    assert nar["chunks"][0] == _CHUNKS[0]
+    assert nar["chunks"][-1] == _CHUNKS[-1]
+    assert len(nar["chunks"]) >= na._SHORTS_MIN_BODY
 
 
 def test_failure_returns_none_for_safe_fallback(monkeypatch, tmp_path):

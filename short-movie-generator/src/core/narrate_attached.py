@@ -999,10 +999,14 @@ def _mix_delayed(parts: list[tuple], total: float, work: Path) -> str:
 
 # ★쇼츠 나레이션 분배 상수(운영자 확정 · "문장 사이 간격이 없어 어색하다 / 뒷부분은 무음이다").
 _SHORTS_LEAD_S = 0.35      # 첫 문장 전 여유(영상이 먼저 눈에 들어오게)
-_SHORTS_TAIL_S = 1.20      # 마지막 문장 뒤 여운(끊긴 느낌 방지)
-_SHORTS_GAP_MIN = 0.55     # 문장 사이 최소 쉼(숨)
+_SHORTS_TAIL_S = 1.20      # 마지막(구독 유도) 뒤 여운 — 끊긴 느낌 방지
+_SHORTS_GAP_MIN = 1.00     # ★문장 사이 최소 쉼(운영자 확정 "무조건 1초 이상") — 절대 회귀 금지
 _SHORTS_GAP_MAX = 2.60     # 최대 쉼(더 벌리면 '끊긴 영상'처럼 들린다)
 _SHORTS_SUB_HOLD_S = 0.90  # 말이 끝난 뒤 자막이 더 머무는 시간
+_SHORTS_MIN_BODY = 2       # 길이 맞추려 문장을 줄일 때 남겨야 할 본문 최소 문장 수
+# ★구독 유도(운영자 확정 · 필수): 영상이 끝나기 전에 **자막 + 나레이션으로 반드시** 넣는다.
+#   길이 계산에도 이 문장을 먼저 반영한다(본문이 자리를 다 먹어 잘리는 일 방지).
+_SHORTS_CTA_JP = "チャンネル登録して、次の深海も。"   # 약 3.5초 — 본문 자리를 덜 뺏는 길이
 
 
 def _spread_shorts_narration(chunks: list[str], work: Path, target_dur: float,
@@ -1011,54 +1015,91 @@ def _spread_shorts_narration(chunks: list[str], work: Path, target_dur: float,
 
     왜(실사고): 예전엔 문장을 모두 이어붙여 한 번에 읽혀, ①문장 사이에 쉼이 없어 랩처럼 들리고
     ②영상 30초 중 앞 15초에서 나레이션이 끝나 **뒤는 완전 무음**이었다.
-    지금은 문장마다 mp3를 만들고 `_mix_delayed`로 각자의 시각에 배치한다. 쉼은 남는 시간을
-    문장 길이에 비례해 나눠 갖되 [_SHORTS_GAP_MIN, _SHORTS_GAP_MAX]로 제한한다
-    (짧은 문장 뒤엔 짧게, 긴 문장 뒤엔 길게 — 실제 낭독의 호흡).
+    지금은 문장마다 mp3를 만들고 `_mix_delayed`로 각자의 시각에 배치한다.
 
-    반환: {mp3, disp, words, duration, spread:True} · 실패하면 None(호출부가 기존 방식으로 폴백).
+    운영자 확정 규칙(3):
+      ① 문장 사이는 **무조건 1초 이상**(`_SHORTS_GAP_MIN`) 쉰다. 남는 시간은 문장 길이에 비례해
+         더 나눠 갖되 `_SHORTS_GAP_MAX`까지만(더 벌리면 끊긴 영상처럼 들린다).
+      ② **영상 길이에 맞춰 나레이션 길이를 조정**한다 — 1초 쉼을 지키며 다 들어가지 않으면 본문
+         문장을 줄인다(여는 문장·닫는 문장은 지키고 그 사이를 덜어낸다).
+      ③ 영상이 끝나기 전에 **구독 유도(자막+나레이션)를 반드시** 넣고, ②의 계산에 그 길이를
+         먼저 반영한다(구독 유도가 잘려 나가는 일이 없도록).
+
+    반환: {mp3, disp, words, duration, chunks(실제로 읽은 본문), spread:True}
+          실패하면 None(호출부가 기존 방식으로 폴백).
     """
     from src.core import narration_sync
     if not chunks:
         return None
-    parts: list[dict] = []
-    for i, c in enumerate(chunks):
-        d = work / f"nar{i:02d}"
+
+    def _say(text: str, tag: str) -> dict | None:
+        d = work / f"nar_{tag}"
         d.mkdir(parents=True, exist_ok=True)
         try:
-            r = narration_sync.synthesize([c], str(d), rate=rate)
+            r = narration_sync.synthesize([text], str(d), rate=rate)
         except Exception as e:  # noqa: BLE001
-            log.warning("[narrate] 문장 %d 합성 실패 → 분배 취소: %s", i + 1, e)
+            log.warning("[narrate] 문장 합성 실패(%s) → 분배 취소: %s", tag, e)
             return None
         if not r.get("mp3") or not r.get("disp"):
             return None
         # 실제 mp3 길이(단어 경계는 끝의 여운을 빼먹는다) — 겹침 방지를 위해 더 큰 값을 쓴다.
         r["len"] = max(float(r.get("duration") or 0.0), _probe_dur(r["mp3"]))
-        if r["len"] <= 0:
+        return r if r["len"] > 0 else None
+
+    # ③ 구독 유도부터 합성해 '반드시 들어갈 자리'를 먼저 확보한다.
+    cta = _say(_SHORTS_CTA_JP, "cta")
+    if not cta:
+        return None
+    parts: list[dict] = []
+    for i, c in enumerate(chunks):
+        r = _say(c, f"{i:02d}")
+        if not r:
             return None
         parts.append(r)
+
+    # ② 영상 길이에 맞춰 본문 문장 수 조정 — 1초 쉼을 지키며 들어갈 만큼만 남긴다.
+    #    (여는 문장과 닫는 문장은 이야기의 처음·끝이라 지키고, 그 사이 문장을 덜어낸다.)
+    reserve = _SHORTS_LEAD_S + _SHORTS_TAIL_S + cta["len"] + _SHORTS_GAP_MIN
+    kept = list(chunks)                 # parts와 1:1로 함께 줄인다(같은 문장이 겹쳐도 안전)
+    dropped: list[str] = []
+    while len(parts) > _SHORTS_MIN_BODY:
+        need = sum(p["len"] for p in parts) + _SHORTS_GAP_MIN * (len(parts) - 1) + reserve
+        if need <= target_dur:
+            break
+        cut = len(parts) - 2            # 여는 문장·닫는 문장은 지키고 그 앞 문장을 덜어낸다
+        dropped.append(kept.pop(cut))
+        parts.pop(cut)
+    if dropped:
+        log.info("[narrate] 영상 %.1fs에 맞춰 본문 %d문장 → %d문장으로 조정(제외: %s)",
+                 target_dur, len(chunks), len(parts), " / ".join(dropped))
+
+    # ★구독 유도를 '마지막 문장'으로 넣어 본문과 **같은 규칙**으로 배치한다.
+    #   (끝에 못 박아 두면 본문이 짧을 때 그 앞이 4초씩 비어 끊긴 느낌이 났다.)
+    parts.append(cta)
     n = len(parts)
     speech = sum(p["len"] for p in parts)
-    if n == 1:
+    # ① 쉼: 최소 1초 보장 + 남는 시간은 문장 길이에 비례해 배분(최대 _SHORTS_GAP_MAX)
+    usable = max(0.0, target_dur - _SHORTS_LEAD_S - _SHORTS_TAIL_S)
+    free = usable - speech
+    if n <= 1:
         gaps = []
+    elif free / (n - 1) <= _SHORTS_GAP_MIN:
+        gaps = [_SHORTS_GAP_MIN] * (n - 1)
     else:
-        usable = max(0.0, target_dur - _SHORTS_LEAD_S - _SHORTS_TAIL_S)
-        free = usable - speech
-        base = free / (n - 1)
-        if base <= _SHORTS_GAP_MIN:                 # 대본이 길어 남는 시간이 없다 → 최소 쉼만
-            gaps = [_SHORTS_GAP_MIN] * (n - 1)
-        else:
-            # 문장 길이에 비례한 가중치(평균 대비 ±50%) → 합이 free가 되도록 정규화 후 클램프
-            mean = speech / n
-            wts = [0.75 + 0.5 * (parts[i]["len"] / mean if mean else 1.0) for i in range(n - 1)]
-            tot = sum(wts) or 1.0
-            gaps = [max(_SHORTS_GAP_MIN, min(_SHORTS_GAP_MAX, free * w / tot)) for w in wts]
-    # 배치(앵커) 계산
+        mean = speech / n
+        wts = [0.75 + 0.5 * (parts[i]["len"] / mean if mean else 1.0) for i in range(n - 1)]
+        tot = sum(wts) or 1.0
+        raw = [free * w / tot for w in wts]
+        gaps = [max(_SHORTS_GAP_MIN, min(_SHORTS_GAP_MAX, g)) for g in raw]
+
+    # 배치(앵커) 계산 — 본문 → (1초 이상 쉼) → … → 구독 유도 → 여운
     anchors: list[float] = []
     t = _SHORTS_LEAD_S
     for i, p in enumerate(parts):
         anchors.append(t)
         t += p["len"] + (gaps[i] if i < len(gaps) else 0.0)
-    total = max(target_dur, t - (gaps[-1] if gaps else 0.0) + _SHORTS_TAIL_S)
+    cta_at = anchors[-1]
+    total = max(target_dur, cta_at + cta["len"] + _SHORTS_TAIL_S)
     try:
         mp3 = _mix_delayed([(p["mp3"], a) for p, a in zip(parts, anchors)], total, work)
     except Exception as e:  # noqa: BLE001
@@ -1077,10 +1118,12 @@ def _spread_shorts_narration(chunks: list[str], work: Path, target_dur: float,
         for w in p.get("words", []):
             if len(w) >= 3 and isinstance(w[0], (int, float)):
                 words.append((a + w[0], w[1], w[2]))
-    log.info("[narrate] 쇼츠 나레이션 분배: %d문장 · 말 %.1fs / 영상 %.1fs · 쉼 %s초 · 끝 %.1fs",
-             n, speech, total, ", ".join(f"{g:.1f}" for g in gaps),
-             anchors[-1] + parts[-1]["len"])
-    return {"mp3": mp3, "disp": disp, "words": words, "duration": total, "spread": True}
+    log.info("[narrate] 쇼츠 나레이션 분배: 본문 %d문장 + 구독유도 · 말 %.1fs / 영상 %.1fs · "
+             "쉼 %s초 · 구독유도 %.1f~%.1fs",
+             n - 1, speech + cta["len"], total, ", ".join(f"{g:.1f}" for g in gaps),
+             cta_at, cta_at + cta["len"])
+    return {"mp3": mp3, "disp": disp, "words": words, "duration": total,
+            "chunks": kept, "cta": _SHORTS_CTA_JP, "spread": True}
 
 
 def _has_audio(video: str) -> bool:
@@ -1532,6 +1575,8 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
             dur = max(float(nar.get("duration") or 0) + 0.6, target)
         else:
             dur = max(target, float(nar.get("duration") or 0))
+            # 길이에 맞춰 문장이 줄었으면 캡션·설명도 '실제로 읽은 문장'만 쓰게 맞춘다.
+            chunks = list(nar.get("chunks") or chunks)
         log.info("[narrate] 쇼츠 길이: 영상 %.1fs (원본 %.1fs · 자막 %d개 · 분배=%s)",
                  dur, _src_dur, len(chunks), bool(nar.get("spread")))
     if not nar.get("mp3") or not nar.get("disp"):
