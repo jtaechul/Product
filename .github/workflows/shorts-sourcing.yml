@@ -56,6 +56,11 @@ jobs:
         env:
           SHORTS_GEMINI_API_KEY: ${{ secrets.SHORTS_GEMINI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # 네이버 쇼핑 검색(진짜 상품명 + 쿠팡 판매여부). 키 없으면 조용히 스킵.
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          SHORTS_NAVER_CLIENT_ID: ${{ secrets.SHORTS_NAVER_CLIENT_ID }}
+          SHORTS_NAVER_CLIENT_SECRET: ${{ secrets.SHORTS_NAVER_CLIENT_SECRET }}
         run: python -m src.sourcing.discover --keyword "${{ steps.p.outputs.keyword }}" --hash "${{ steps.p.outputs.hash }}" --limit "${{ steps.p.outputs.limit }}"
 
       - name: 추천 매니페스트 커밋 (관리자 카드가 읽음, 실패해도 로그로 확인)

@@ -58,6 +58,15 @@ nav button.on{color:var(--accent); border-bottom-color:var(--accent)}
 .srckw{display:inline-flex; align-items:center; gap:8px; margin:0 8px 8px 0; padding:7px 12px; border:1px solid var(--line); border-radius:22px; font-size:14px; background:#fff}
 .srckw a{color:var(--accent); text-decoration:none; font-weight:700}
 .srckw button{border:none; background:#eef0f3; border-radius:7px; padding:3px 8px; font-size:11px; cursor:pointer; color:#333}
+.srccoup{display:inline-block; margin-top:5px; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:8px}
+.srccoup.ok{background:#e6f6ec; color:#1a7f3c}
+.srccoup.maybe{background:#fdeecf; color:#8a5a00}
+.srcnaver{background:#f4f7ff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin:2px 0 14px}
+.srcnaver .nm{font-weight:700; font-size:15px; line-height:1.35}
+.srcnaver .st{font-size:12.5px; margin-top:5px}
+.srcnaver .st.ok{color:#1a7f3c; font-weight:700}
+.srcnaver .st.maybe{color:#8a5a00}
+.btnfull{display:block; width:100%; text-align:center; text-decoration:none; box-sizing:border-box}
 main{max-width:680px; margin:0 auto; padding:16px; display:flex; flex-direction:column}
 section{display:none}
 section.on{display:block}   /* order 속성으로 만들기 탭 내 섹션 순서: 상품→기획→이미지→제작 */
@@ -1648,10 +1657,13 @@ function srcRenderCards() {
     const descKo = String(c.title_ko || c.title || "").slice(0, 90);
     const kws = srcCandKws(c);
     const kwLine = kws.length ? `<div class="srckws">쿠팡: ${srcEsc(kws.slice(0, 3).join(" · "))}</div>` : "";
+    const nv = c.naver || {};
+    const coupBadge = nv.coupang_title
+      ? `<div class="srccoup ${nv.coupang ? "ok" : "maybe"}">${nv.coupang ? "쿠팡 판매 O" : "쿠팡 미확인"}</div>` : "";
     el.innerHTML =
       `<div class="srcthumb">${cover}<span class="srcbadge">${views} 조회</span><span class="srcpick">${on0 ? "✓" : "+"}</span></div>`
       + `<div class="srcmeta"><div class="srctitle">${srcEsc(descKo)}</div>`
-      + `<div class="srcsub">@${srcEsc(c.uploader)} · ${c.duration || "?"}s</div>${kwLine}</div>`;
+      + `<div class="srcsub">@${srcEsc(c.uploader)} · ${c.duration || "?"}s</div>${kwLine}${coupBadge}</div>`;
     el.onclick = () => { srcState.picked = c; srcRenderCards(); srcRenderPick(); };
     box.appendChild(el);
   }
@@ -1661,6 +1673,17 @@ function srcRenderPick() {
   const kws = srcCandKws(c);
   const views = (c.view_count || 0).toLocaleString();
   const cover = c.cover ? `<img src="${srcEsc(c.cover)}" alt="" onerror="this.style.display='none'">` : "";
+  const nv = c.naver || {};
+  const coupName = nv.coupang_title || nv.real_title || (kws[0] || "");
+  const naverBox = nv.coupang_title
+    ? `<div class="srcnaver"><div class="nm">${srcEsc(nv.coupang_title || nv.real_title)}</div>`
+      + `<div class="st ${nv.coupang ? "ok" : "maybe"}">`
+      + (nv.coupang
+          ? `쿠팡 판매 확인됨${nv.coupang_lprice ? ` · 최저가 ${Number(nv.coupang_lprice).toLocaleString()}원` : ""}`
+          : "네이버엔 다른 몰만 잡힘 — 쿠팡에서 직접 확인하세요")
+      + `</div>`
+      + `<a class="btn btnfull" style="margin-top:10px" href="${coupangSearchUrl(coupName)}" target="_blank" rel="noopener">쿠팡에서 ‘${srcEsc(coupName.slice(0, 22))}’ 검색</a></div>`
+    : "";
   const chips = kws.map((k) =>
     `<span class="srckw"><a href="${coupangSearchUrl(k)}" target="_blank" rel="noopener">${srcEsc(k)}</a>`
     + `<button type="button" data-kw="${srcEsc(k)}">복사</button></span>`).join("");
@@ -1669,7 +1692,8 @@ function srcRenderPick() {
     + `<div style="font-weight:700; line-height:1.35">${srcEsc(c.title_ko || c.title || "")}</div>`
     + `<div class="hint" style="margin:4px 0 0">조회수 ${views} · @${srcEsc(c.uploader)}`
     + ` · <a href="${srcEsc(c.source_url)}" target="_blank" rel="noopener">틱톡 원본</a></div></div></div>`
-    + `<div style="font-weight:600; margin:2px 0 6px">쿠팡 검색어 (탭하면 쿠팡에서 열림)</div>`
+    + (naverBox || `<p class="hint" style="margin:2px 0 10px">네이버 상품확인 결과가 없습니다(키 미설정/미검색) — 아래 검색어로 쿠팡을 직접 확인하세요.</p>`)
+    + `<div style="font-weight:600; margin:2px 0 6px">다른 검색어로 쿠팡 열기</div>`
     + `<div>${chips}</div>`
     + `<label class="hint" style="display:block; margin:14px 0 4px">쿠팡 파트너스 어필리에이트 링크</label>`
     + `<input id="srcAffiliate" placeholder="https://link.coupang.com/a/..." style="width:100%">`

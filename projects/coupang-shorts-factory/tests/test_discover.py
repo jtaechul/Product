@@ -9,7 +9,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.sourcing.discover import build_manifest, discover, write_manifest      # noqa: E402
+from src.sourcing.discover import build_manifest, discover, enrich_naver, write_manifest  # noqa: E402
+from src.sourcing.naver_shop import find_coupang, search_shop                   # noqa: E402
 from src.sourcing.tiktok_tikwm import TikwmAdapter, TikwmClient                 # noqa: E402
 from src.sourcing.translate import (                                            # noqa: E402
     describe_and_keywords_ko, expand_zh_terms, translate_titles_ko)
@@ -109,9 +110,50 @@ def test_describe_and_keywords():
           "개수 부족 → 뒤 항목 원문 폴백")
 
 
+def test_naver_find_coupang():
+    print("[T6] 네이버 쇼핑 → 진짜 상품명 + 쿠팡 판매여부(주입)")
+    def http_ok(url):
+        return {"items": [
+            {"title": "다용도 <b>미니</b> 채칼 세트", "mallName": "스마트스토어",
+             "lprice": "9900", "link": "http://a", "image": "http://i", "productId": "1"},
+            {"title": "휴대용 미니 채칼 쿠팡배송", "mallName": "쿠팡", "lprice": "8500",
+             "link": "http://c", "image": "http://ic", "productId": "2"},
+        ]}
+    info = find_coupang("미니 채칼", http=http_ok)
+    check(info.get("real_title") == "다용도 미니 채칼 세트", "top 제목 태그 제거")
+    check(info.get("coupang") is True, "쿠팡몰 항목 감지")
+    check(info.get("coupang_title") == "휴대용 미니 채칼 쿠팡배송", "쿠팡 등록 상품명 추출")
+
+    # 쿠팡 항목 없음 → coupang False, coupang_title=top 폴백
+    def http_nocoup(url):
+        return {"items": [{"title": "일반 채칼", "mallName": "옥션", "lprice": "5000"}]}
+    info2 = find_coupang("채칼", http=http_nocoup)
+    check(info2.get("coupang") is False and info2.get("coupang_title") == "일반 채칼",
+          "쿠팡 없으면 top 폴백")
+
+    # 검색 실패/빈결과 → {}
+    def http_boom(url):
+        raise RuntimeError("네이버 차단")
+    check(find_coupang("x", http=http_boom) == {}, "실패 → 빈 dict")
+    check(search_shop("", http=http_ok) == [], "빈 쿼리 → []")
+
+
+def test_enrich_naver():
+    print("[T7] enrich_naver — 후보에 네이버 정보 부착(finder 주입)")
+    svs = discover("꿀템", adapter=_adapter(), terms=["x"])
+    def fake_finder(q):
+        return {"real_title": f"진짜 {q}", "coupang": True, "coupang_title": f"쿠팡 {q}"}
+    enrich_naver(svs, finder=fake_finder)
+    check(all(s.naver.get("coupang") for s in svs), "모든 후보에 쿠팡 판매여부")
+    c0 = build_manifest("꿀템", "h", svs)["candidates"][0]
+    check("naver" in c0 and c0["naver"].get("coupang_title", "").startswith("쿠팡 "),
+          "매니페스트 후보에 naver.coupang_title")
+
+
 if __name__ == "__main__":
     for fn in [test_discover_terms_and_ko, test_write_manifest, test_empty,
-               test_translate_injected, test_describe_and_keywords]:
+               test_translate_injected, test_describe_and_keywords,
+               test_naver_find_coupang, test_enrich_naver]:
         fn()
     print()
     if _fails:

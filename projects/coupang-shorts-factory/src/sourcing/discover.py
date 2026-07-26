@@ -15,6 +15,7 @@ from pathlib import Path
 
 from src.sourcing.base import Seed
 from src.sourcing.models import SOURCES_DIR, SourceVideo
+from src.sourcing.naver_shop import find_coupang
 from src.sourcing.tiktok_tikwm import TikwmAdapter
 from src.sourcing.translate import describe_and_keywords_ko, expand_zh_terms
 
@@ -25,9 +26,26 @@ def _candidate(sv: SourceVideo) -> dict:
     """관리자 추천 카드가 쓰는 표시용 dict."""
     return {"id": sv.id, "platform": sv.platform, "title": sv.title,
             "title_ko": sv.title_ko, "coupang_keywords": list(sv.coupang_keywords or []),
+            "naver": dict(sv.naver or {}),
             "view_count": sv.view_count, "uploader": sv.uploader,
             "duration": sv.duration, "source_url": sv.source_url,
             "download_url": sv.download_url, "cover": sv.cover}
+
+
+def enrich_naver(svs: list, finder=find_coupang) -> None:
+    """후보마다 네이버 쇼핑으로 '진짜 상품명 + 쿠팡 판매 여부' 부착(키 없으면 조용히 스킵).
+    검색어는 후보의 첫 쿠팡 검색어(없으면 한국어 설명)를 쓴다. finder 주입 가능(테스트)."""
+    for s in svs:
+        q = (s.coupang_keywords[0] if s.coupang_keywords else None) or s.title_ko or s.title
+        if not q:
+            continue
+        try:
+            info = finder(q)
+        except Exception as e:
+            print(f"[discover] 네이버 확인 실패: {e}")
+            info = {}
+        if info:
+            s.naver = info
 
 
 def discover(keyword: str, limit: int = 10, adapter: TikwmAdapter | None = None,
@@ -48,6 +66,7 @@ def discover(keyword: str, limit: int = 10, adapter: TikwmAdapter | None = None,
     for s, m in zip(svs, meta):
         s.title_ko = m["ko"]
         s.coupang_keywords = m["keywords"]
+    enrich_naver(svs)   # 네이버 쇼핑으로 진짜 상품명 + 쿠팡 판매 여부(키 없으면 스킵)
     return svs
 
 
@@ -79,8 +98,12 @@ def main(argv=None) -> int:
     print(f"[discover] 키워드='{a.keyword}' → 검색어(중국어확장)={terms} → 후보 {len(svs)}개 저장: {p}")
     for i, c in enumerate(manifest["candidates"], 1):
         kws = " / ".join(c.get("coupang_keywords") or []) or "(검색어 없음)"
+        nv = c.get("naver") or {}
         print(f"  {i}. 조회 {(c['view_count'] or 0):>10,} · {str(c.get('title_ko') or c['title'])[:40]} · @{c['uploader']}")
         print(f"      쿠팡 검색어: {kws}")
+        if nv:
+            mark = "쿠팡판매 O" if nv.get("coupang") else "쿠팡판매 미확인"
+            print(f"      네이버: {str(nv.get('coupang_title') or nv.get('real_title'))[:44]} · {mark}")
     if not svs:
         print("[discover] 경고: 후보 0개 (tikwm 응답 없음/차단) — 관리자에서 재시도/다른 키워드 안내.")
     return 0
