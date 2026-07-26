@@ -1,0 +1,12 @@
+{
+  "keyword": "휴대용 세척기",
+  "hash": "_srctest01",
+  "product": {
+    "id": "t1",
+    "title": "portable high pressure cleaner cordless",
+    "title_ko": "무선 휴대용 고압 물총 세척기",
+    "coupang_keywords": ["무선 고압 세척기", "휴대용 세척기", "충전식 물세척기"],
+    "naver": {"coupang_title": "무선 충전식 고압 세척기", "real_title": "휴대용 무선 고압 세척기"}
+  },
+  "coupang": {"affiliate_url": "https://link.coupang.com/a/TESTONLY", "confirmed_at": "2026-07-26T00:00:00Z"}
+}
