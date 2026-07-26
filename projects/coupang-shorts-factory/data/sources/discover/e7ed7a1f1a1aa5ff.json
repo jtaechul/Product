@@ -6,198 +6,286 @@
     "充气帐篷",
     "户外充气帐篷",
     "露营充气帐篷",
-    "速开充气帐篷",
-    "自动充气帐篷"
+    "自动充气帐篷",
+    "速开充气帐篷"
   ],
-  "page": 0,
-  "nonce": "n178507868897540395",
+  "page": 1,
+  "nonce": "n1785078766781266189",
   "count": 5,
   "candidates": [
     {
-      "id": "sv_bbe99e62b6fb",
+      "id": "sv_be4926ed0133",
       "platform": "tiktok",
-      "title": "Ready, Set, Inflate! Your Perfect Campsite Starts Here 🏕️🏕️🏕️ #ipoolgo #ipoolgocamping #portabletent #inflatabletent #tentcamping #airtent #housetent #tentcustom #tentfactory #ipoolgoinflatabletent #glamping #glampinglife #fyp #fypage ",
-      "title_ko": "바퀴 달린 휴대용 에어 텐트 가방",
+      "title": "I inflated a giant emergency hospital structure in seconds.  From a folded tent into a fully working 5-story emergency hospital with real rooms, ER, and operating rooms.   Comment “HOSPITAL” if you want to see the next chrome world.   접혀 있던 천 구조물을 순식간에 초대형 응급 병원으로 팽창시켰습니다. 접수실, 병실, 수술실, 응급실까지 실제로 작동하는 병원이 되어버렸습니다.   다음 크롬 월드를 보고 싶다면 댓글에 “HOSPITAL” 남겨주세요.   #explore #viral #trending #hospitallife #camping",
+      "title_ko": "접이식 천 구조물로 만든 초대형 응급 병원 텐트",
       "coupang_keywords": [
-        "휴대용 에어 텐트",
-        "캠핑 텐트 가방",
-        "바퀴형 텐트 백"
+        "대형 에어 텐트",
+        "이동식 병원 텐트",
+        "재난 구호 텐트",
+        "초대형 팽창식 구조물"
       ],
       "zh_terms": [
-        "充气帐篷收纳袋",
-        "带轮帐篷包",
-        "户外露营帐篷袋"
+        "大型充气帐篷",
+        "移动医院帐篷",
+        "应急救援帐篷"
       ],
       "naver": {
-        "query": "휴대용 에어 텐트",
-        "real_title": "[최신형 국내 당일출고]네이처하이크 6.3 에어텐트 면 텐트 국내AS",
-        "lprice": "411500",
+        "query": "대형 에어 텐트",
+        "real_title": "캠핑 원터치 텐트 그늘막 에어 텐트 경량 5.8",
+        "lprice": "249000",
         "coupang": false,
-        "coupang_title": "[최신형 국내 당일출고]네이처하이크 6.3 에어텐트 면 텐트 국내AS",
+        "coupang_title": "캠핑 원터치 텐트 그늘막 에어 텐트 경량 5.8",
         "coupang_lprice": null,
-        "mall": "BESTBAIT",
-        "image": "https://shopping-phinf.pstatic.net/main_8749862/87498621490.2.jpg",
+        "mall": "코지모해",
+        "image": "https://shopping-phinf.pstatic.net/main_9119953/91199530178.1.jpg",
         "candidates": [
           {
-            "title": "[최신형 국내 당일출고]네이처하이크 6.3 에어텐트 면 텐트 국내AS",
-            "image": "https://shopping-phinf.pstatic.net/main_8749862/87498621490.2.jpg",
-            "mall": "BESTBAIT",
-            "lprice": "411500",
-            "link": "https://smartstore.naver.com/main/products/9954119217",
+            "title": "캠핑 원터치 텐트 그늘막 에어 텐트 경량 5.8",
+            "image": "https://shopping-phinf.pstatic.net/main_9119953/91199530178.1.jpg",
+            "mall": "코지모해",
+            "lprice": "249000",
+            "link": "https://smartstore.naver.com/main/products/13655019393",
             "coupang": false
           },
           {
-            "title": "원터치텐트 쉘터 텐트 그늘막 원터치 알래스카블랙 봄 여름 원터치 오토 이지 해변 그늘",
-            "image": "https://shopping-phinf.pstatic.net/main_9072121/90721211898.1.jpg",
+            "title": "로티 로티캠프 힐하우스 경량 캠핑 대형 에어 텐트 3-4인용",
+            "image": "https://shopping-phinf.pstatic.net/main_5663817/56638170947.20250908190426.jpg",
+            "mall": "네이버",
+            "lprice": "699000",
+            "link": "https://search.shopping.naver.com/catalog/56638170947",
+            "coupang": false
+          },
+          {
+            "title": "에어박스 엔오엠 아틀라스 파빌리온 쉘터 대형 에어텐트 차박텐트 무한도킹",
+            "image": "https://shopping-phinf.pstatic.net/main_9119249/91192491001.2.jpg",
+            "mall": "에어박스 공식스토어",
+            "lprice": "1840000",
+            "link": "https://smartstore.naver.com/main/products/13647980222",
+            "coupang": false
+          },
+          {
+            "title": "에어박스 엔오엠 아틀라스 필다 패밀리 거실형 리빙쉘 3-4인용 텐트 디지털 에어텐트 대형쉘터 5m",
+            "image": "https://shopping-phinf.pstatic.net/main_9118575/91185752632.jpg",
+            "mall": "에어박스 공식스토어",
+            "lprice": "2400000",
+            "link": "https://smartstore.naver.com/main/products/13641241923",
+            "coupang": false
+          },
+          {
+            "title": "쿠디 에어텐트 면텐트 파밀리아 블랙 familia black",
+            "image": "https://shopping-phinf.pstatic.net/main_8767440/87674401350.2.jpg",
+            "mall": "COODY",
+            "lprice": "1990000",
+            "link": "https://smartstore.naver.com/main/products/10129898274",
+            "coupang": false
+          },
+          {
+            "title": "위켄트립 모델K 에어텐트 터널형 리빙쉘 에어 텐트",
+            "image": "https://shopping-phinf.pstatic.net/main_9093361/90933612159.1.jpg",
+            "mall": "위켄트립",
+            "lprice": "1680000",
+            "link": "https://smartstore.naver.com/main/products/13389101823",
+            "coupang": false
+          }
+        ],
+        "best_match": -1,
+        "match_confidence": "low",
+        "match_reason": "영상 속 텐트의 특징이 명확하지 않음"
+      },
+      "view_count": 289261,
+      "uploader": "ZEROWOO",
+      "duration": 12,
+      "source_url": "https://www.tiktok.com/@zerowoo.ai/video/7631138083349613845",
+      "download_url": "https://v16m.tiktokcdn-us.com/55646e8093a6e6754229d576c2f88844/6a667875/video/tos/alisg/tos-alisg-pve-0037/o4fRnT9ABgBEDZgu0cDBUpIF5QG9iQVyzFOCfp/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1937&ft=aEKfuqT0m0LPD12OyunI3wU24XOFMeF~O5&mime_type=video_mp4&rc=NTo6Ojc6NjY5PGQ8NzM1ZUBpajM1b3Q5cnltOjMzODgzNEA0YS9iLTViNjIxXzUuMTAvYSNnbTJfMmRjcmdhLS1kLzFzcw%3D%3D&vvpl=1&l=2026072615131298EF012F4B6EC6BAE433&btag=e000b0000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/o0pjIngCABiFsgiKnPWBfi769BUWeIUXVz5oRB~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=1e2099a4&x-expires=1785164400&x-signature=obXsb8iW9KuOLbRTKTZE3nTPwu8%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&sc=feed_cover&biz_tag=tt_video&s=SEARCH"
+    },
+    {
+      "id": "sv_5ff00909b143",
+      "platform": "tiktok",
+      "title": "La tente gonflable que tout le monde veut cet été ⛺#Recommandé #france #tente #Tentegonflable #camping#out#Outdoors#france #france🇫🇷 ",
+      "title_ko": "자동 팽창식 루프탑 텐트로, 차량 위에 설치하여 사용하는 캠핑용 텐트입니다.",
+      "coupang_keywords": [
+        "루프탑 텐트",
+        "차량용 텐트",
+        "자동 팽창 텐트",
+        "캠핑 텐트"
+      ],
+      "zh_terms": [
+        "车载帐篷",
+        "自动充气帐篷",
+        "车顶帐篷"
+      ],
+      "naver": {
+        "query": "루프탑 텐트",
+        "real_title": "전동 루프탑텐트 하드탑 자율주행 투어 완전 자동 접이식 SUV 탱크 3500",
+        "lprice": "1661880",
+        "coupang": false,
+        "coupang_title": "전동 루프탑텐트 하드탑 자율주행 투어 완전 자동 접이식 SUV 탱크 3500",
+        "coupang_lprice": null,
+        "mall": "옥션",
+        "image": "https://shopping-phinf.pstatic.net/main_5995373/59953730255.jpg",
+        "candidates": [
+          {
+            "title": "전동 루프탑텐트 하드탑 자율주행 투어 완전 자동 접이식 SUV 탱크 3500",
+            "image": "https://shopping-phinf.pstatic.net/main_5995373/59953730255.jpg",
+            "mall": "옥션",
+            "lprice": "1661880",
+            "link": "https://link.auction.co.kr/gate/pcs?item-no=F555362942&sub-id=1&service-code=10000003",
+            "coupang": false
+          },
+          {
+            "title": "파인픽PINEPEAK 초슬림 업그레이드 사계절 원터치 자동 루프탑 텐트 2-3인용 차박 노지 오지 캠핑 라임스포츠",
+            "image": "https://shopping-phinf.pstatic.net/main_8314799/83147992303.10.jpg",
+            "mall": "노꼼수",
+            "lprice": "1090000",
+            "link": "https://smartstore.naver.com/main/products/5603495802",
+            "coupang": false
+          },
+          {
+            "title": "싼타페 MX5 아이캠퍼 스카이캠프 루프탑텐트 무광블랙",
+            "image": "https://shopping-phinf.pstatic.net/main_8929474/89294745742.jpg",
+            "mall": "오토캠프",
+            "lprice": "3680000",
+            "link": "https://smartstore.naver.com/main/products/11750235223",
+            "coupang": false
+          },
+          {
+            "title": "루프탑텐트 하드탑 원터치 알루미늄 슬림 2인용 노지 차박 캠핑 캠프라이드",
+            "image": "https://shopping-phinf.pstatic.net/main_8829229/88292293072.jpg",
+            "mall": "캠프라이드",
+            "lprice": "1590000",
+            "link": "https://smartstore.naver.com/main/products/10747787150",
+            "coupang": false
+          },
+          {
+            "title": "다잡 루프탑텐트 차량용 유압식 반자동 2인용 차위 하드탑 차박 캠핑 쏘렌토 카니발 레이",
+            "image": "https://shopping-phinf.pstatic.net/main_8319967/83199670544.jpg",
+            "mall": "주식회사 다잡",
+            "lprice": "1090000",
+            "link": "https://smartstore.naver.com/main/products/5655173238",
+            "coupang": false
+          },
+          {
+            "title": "[HILLANDER] 힐랜더 차량용텐트 루프탑텐트 노마드1800 (3-4인용)",
+            "image": "https://shopping-phinf.pstatic.net/main_8145873/81458734760.jpg",
+            "mall": "힐랜더",
+            "lprice": "1650000",
+            "link": "https://smartstore.naver.com/main/products/3914214724",
+            "coupang": false
+          }
+        ],
+        "best_match": -1,
+        "match_confidence": "low",
+        "match_reason": "기준 이미지는 팽창식 텐트, 후보는 모두 루프탑 텐트."
+      },
+      "view_count": 228861,
+      "uploader": "tentcamping",
+      "duration": 21,
+      "source_url": "https://www.tiktok.com/@tentcamping77/video/7491998859292331310",
+      "download_url": "https://v45.tiktokcdn-us.com/89496026330d4ecddd9675ebfb19b6e2/6a66787d/video/tos/useast5/tos-useast5-pve-0068-tx/oEvEQQgYif4cWreg2f7xiPeI1KsneMA4V3Kw6A/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=1992&ft=73kDHDyjNkLVQQUnU~d-sd3VimZqYlBgEV-~hWLrK&mime_type=video_mp4&rc=aTM0ZzdnaWg7NTQ4ODg0OUBpajZveWw5cm1oeTMzZzczNEAzYWFeNjZhNV8xNWEvYmJjYSNzX3BrMmRjbHBgLS1kMS9zcw%3D%3D&vvpl=1&l=2026072615131176E82AB8F4D02CE2D8A5&btag=e000bd000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/oAeEOHQYfK7rP6Wsg8J7vAQficV444pAeMQaf3~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=7084b5fb&x-expires=1785164400&x-signature=9EjzI%2FN03VzfM%2Bf9XXQQQzMt4t0%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+    },
+    {
+      "id": "sv_3b83734f59cb",
+      "platform": "tiktok",
+      "title": "Ok, let’s see the @DECATHLON l Quechua bed bases with my @Berghaus SIM’s in action from inflating > setting up > deflating > packing away. @Decathlon @Decathlon UK Limited  I use an @outwelloutdoor Thunderstorm pump for both inflation and deflating and it’s powered by my car’s DC port.  Lot of male accounts commenting that this isn’t real camping, I’m a glamper, what’s the point etc and honestly, why does it bother you so much that I have the option (that works for me) to be comfortable and not sleep on the floor? A good nights sleep is the perfect way to fall in love with camping. I’m warm, cosy & comfy 🫶🏻 It’s up to me if I want to fill up my boot, in my car, with my gear that I bought and camp in whatever comfort level works for me 🤭  What better way to wake up, sit outside the front of your tent with a brew and enjoy the view! I paid for my pitch of grass the same as anyone else and will enjoy it with whatever gear makes me happy 😝 #camping #campinggear #campinglife #solocamping #girlswhocamp ",
+      "title_ko": "텐트 안에서 사용하는 퀸 사이즈 캠핑용 에어 베드",
+      "coupang_keywords": [
+        "캠핑 에어베드",
+        "캠핑 매트",
+        "야외용 침대",
+        "퀸사이즈 에어매트"
+      ],
+      "zh_terms": [
+        "露营气垫床",
+        "户外充气床",
+        "帐篷床垫"
+      ],
+      "naver": {
+        "query": "캠핑 에어베드",
+        "real_title": "심플리 에어매트 캠핑매트 더블 베개 캠핑용 야외 텐트 바닥 이너 매트리스 베드 침대",
+        "lprice": "24900",
+        "coupang": false,
+        "coupang_title": "심플리 에어매트 캠핑매트 더블 베개 캠핑용 야외 텐트 바닥 이너 매트리스 베드 침대",
+        "coupang_lprice": null,
+        "mall": "심플리-Simply",
+        "image": "https://shopping-phinf.pstatic.net/main_8428552/84285529604.9.jpg",
+        "candidates": [
+          {
+            "title": "심플리 에어매트 캠핑매트 더블 베개 캠핑용 야외 텐트 바닥 이너 매트리스 베드 침대",
+            "image": "https://shopping-phinf.pstatic.net/main_8428552/84285529604.9.jpg",
+            "mall": "심플리-Simply",
+            "lprice": "24900",
+            "link": "https://smartstore.naver.com/main/products/6741029282",
+            "coupang": false
+          },
+          {
+            "title": "유니언 에어침대 일반형 더블",
+            "image": "https://shopping-phinf.pstatic.net/main_5890140/58901408708.20260212115954.jpg",
+            "mall": "네이버",
+            "lprice": "58900",
+            "link": "https://search.shopping.naver.com/catalog/58901408708",
+            "coupang": false
+          },
+          {
+            "title": "폴라리스 펌피10 자충 내장형 펌프 캠핑매트 에어매트 싱글",
+            "image": "https://shopping-phinf.pstatic.net/main_8851396/88513969603.19.jpg",
+            "mall": "폴라리스 캠프",
+            "lprice": "109000",
+            "link": "https://smartstore.naver.com/main/products/10969463560",
+            "coupang": false
+          },
+          {
+            "title": "에어박스 캠핑 에어매트 TPU99 포맨 (200x240)",
+            "image": "https://shopping-phinf.pstatic.net/main_8678780/86787808686.5.jpg",
+            "mall": "에어박스 공식스토어",
+            "lprice": "408000",
+            "link": "https://smartstore.naver.com/main/products/9243308363",
+            "coupang": false
+          },
+          {
+            "title": "자충매트 에어매트 캠핑 에어 자충식 매트리스 침대 싱글",
+            "image": "https://shopping-phinf.pstatic.net/main_8988897/89888979630.1.jpg",
             "mall": "헬로우캠핑",
-            "lprice": "73900",
-            "link": "https://smartstore.naver.com/main/products/13176700801",
+            "lprice": "109000",
+            "link": "https://smartstore.naver.com/main/products/12344468913",
             "coupang": false
           },
           {
-            "title": "노스피크 A5 RS 에어텐트 4인용",
-            "image": "https://shopping-phinf.pstatic.net/main_5393931/53939319076.20251210172339.jpg",
-            "mall": "네이버",
-            "lprice": "898000",
-            "link": "https://search.shopping.naver.com/catalog/53939319076",
-            "coupang": false
-          },
-          {
-            "title": "피믹 에어텐트 6.3 업그레이드 신형 확장 국내 당일출고 AS",
-            "image": "https://shopping-phinf.pstatic.net/main_8746606/87466068194.7.jpg",
-            "mall": "BESTBAIT",
-            "lprice": "463000",
-            "link": "https://smartstore.naver.com/main/products/9921565921",
-            "coupang": false
-          },
-          {
-            "title": "에어텐트 6.3 신형 도킹용 국내 당일출고 AS 피믹 에어텐트",
-            "image": "https://shopping-phinf.pstatic.net/main_8759010/87590104819.1.jpg",
-            "mall": "BESTBAIT",
-            "lprice": "463000",
-            "link": "https://smartstore.naver.com/main/products/10045602315",
-            "coupang": false
-          },
-          {
-            "title": "스타피쉬 에어텐트 + 베스티블 패키지",
-            "image": "https://shopping-phinf.pstatic.net/main_8904403/89044030785.3.jpg",
-            "mall": "아이두젠",
-            "lprice": "800000",
-            "link": "https://smartstore.naver.com/main/products/11499520420",
+            "title": "캠핑 에어매트 에어 침대 캠핑 매트 자충 매트 더블 38cm",
+            "image": "https://shopping-phinf.pstatic.net/main_8766899/87668996550.4.jpg",
+            "mall": "코지모해",
+            "lprice": "129000",
+            "link": "https://smartstore.naver.com/main/products/10124493620",
             "coupang": false
           }
         ],
         "best_match": -1,
         "match_confidence": "low",
-        "match_reason": "기준 이미지는 접힌 텐트, 후보는 펼친 텐트."
+        "match_reason": "색상, 형태, 기능 모두 다른 상품들입니다."
       },
-      "view_count": 18208129,
-      "uploader": "Inflatable Pool& Spa factory",
-      "duration": 164,
-      "source_url": "https://www.tiktok.com/@ipoolgo_official/video/7497061229547031838",
-      "download_url": "https://v19.tiktokcdn-us.com/bfe8c843c6f192388de3a3740e751d43/6a6678ba/video/tos/useast8/tos-useast8-ve-0068c003-tx2/oMAQKiX4NBQcB6jpIfEAXtC8Aqi9iEuEJ01UIZ/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=2083&ft=aEKfuqT0m0LPD12hjunI3wUmC4zFMeF~O5&mime_type=video_mp4&rc=ODg3aGc3NDhlPGRnOWU4Z0BpajxrNHY5cnZoMzMzaTczNEBhYjI1Li1jX2IxXjQ0YC0uYSNgYi81MmRjYTJhLS1kMTJzcw%3D%3D&vvpl=1&l=20260726151149ABAFA412B8CAE8B82CAF&btag=e00090000",
-      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/oY81fABBZ6AiZiIU0QJ4NDqCAIJKAECIOC8XiX~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=beffda55&x-expires=1785164400&x-signature=FbRHwDpdBRotNWoIOrNu44bFbbc%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&s=SEARCH&sc=feed_cover&biz_tag=tt_video"
+      "view_count": 207111,
+      "uploader": "Where The Tent Is",
+      "duration": 35,
+      "source_url": "https://www.tiktok.com/@wherethetent_is/video/7643226992728657155",
+      "download_url": "https://v45.tiktokcdn-us.com/b67ae6592f4cbd179218b56c332f266f/6a667889/video/tos/no1a/tos-no1a-ve-0068c001-no/o8AYfADElMAFqFRyq7fjHQkEgIrSB3VEH2qjEi/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1804&ft=73kDHDyjNeRVQQUnU~d-sdXVimZqYlq7V--~hWLrK&mime_type=video_mp4&rc=NmlkNzZpOzw5NWRlM2RoaUBpank4eG85cnI2OzMzbzczNUBgNmFfYTA1XjExYC8tYTZeYSNmL3NiMmRzMDZhLS1kMTFzcw%3D%3D&vvpl=1&l=2026072615131077BCFA6AA06A5ECA4892&btag=e0008d000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-no1a-p-0037-no/osTFQKLf7vIHXfYkLDGAQPJVj3UAZDgINGIleO~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=5347000f&x-expires=1785164400&x-signature=bBNcsl7SYDA6MNKRkhoBXMciCkM%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     },
     {
-      "id": "sv_a862c5fdba6c",
+      "id": "sv_0d63a5656fd7",
       "platform": "tiktok",
-      "title": "#SEAGames2023 #tiktok #户外 #⛺️ #fyp #foryou #上热门 ",
-      "title_ko": "자동 팝업 기능이 있는 대형 캠핑 텐트",
-      "coupang_keywords": [
-        "자동 팝업 텐트",
-        "대형 캠핑 텐트",
-        "간편 설치 텐트"
-      ],
-      "zh_terms": [
-        "自动帐篷",
-        "速开帐篷",
-        "露营帐篷"
-      ],
-      "naver": {
-        "query": "자동 팝업 텐트",
-        "real_title": "팝업텐트 원터치 텐트 그늘막 낚시 캠핑 나들이 야외 3-4인용 자동 타프 천막",
-        "lprice": "23110",
-        "coupang": false,
-        "coupang_title": "팝업텐트 원터치 텐트 그늘막 낚시 캠핑 나들이 야외 3-4인용 자동 타프 천막",
-        "coupang_lprice": null,
-        "mall": "11번가",
-        "image": "https://shopping-phinf.pstatic.net/main_8814556/8814556393.35.jpg",
-        "candidates": [
-          {
-            "title": "팝업텐트 원터치 텐트 그늘막 낚시 캠핑 나들이 야외 3-4인용 자동 타프 천막",
-            "image": "https://shopping-phinf.pstatic.net/main_8814556/8814556393.35.jpg",
-            "mall": "11번가",
-            "lprice": "23110",
-            "link": "https://www.11st.co.kr/connect/Gateway.tmall?method=Xsite&prdNo=12424761&tid=1000000061",
-            "coupang": false
-          },
-          {
-            "title": "블랙독 사각 원터치 자동텐트 4인용",
-            "image": "https://shopping-phinf.pstatic.net/main_5416664/54166640233.20250414113254.jpg",
-            "mall": "네이버",
-            "lprice": "123600",
-            "link": "https://search.shopping.naver.com/catalog/54166640233",
-            "coupang": false
-          },
-          {
-            "title": "ARQ 프리폼 사각 원터치 텐트 3-4인용",
-            "image": "https://shopping-phinf.pstatic.net/main_5025716/50257164620.20251216113052.jpg",
-            "mall": "네이버",
-            "lprice": "38250",
-            "link": "https://search.shopping.naver.com/catalog/50257164620",
-            "coupang": false
-          },
-          {
-            "title": "아웃팅 자동텐트 원터치텐트 팝업텐트 텐트 피크닉텐트",
-            "image": "https://shopping-phinf.pstatic.net/main_5437712/54377122514.2.jpg",
-            "mall": "옥션",
-            "lprice": "39900",
-            "link": "https://link.auction.co.kr/gate/pcs?item-no=B449427018&sub-id=1&service-code=10000003",
-            "coupang": false
-          },
-          {
-            "title": "블랙독 원터치 텐트 캠핑 백패킹 피크닉 한강 그늘막 자동 오토 텐트 블랙코팅",
-            "image": "https://shopping-phinf.pstatic.net/main_8429179/84291791393.4.jpg",
-            "mall": "대륙의선물",
-            "lprice": "83500",
-            "link": "https://smartstore.naver.com/main/products/6747291071",
-            "coupang": false
-          },
-          {
-            "title": "아웃팅 조이마스터 텐트 원터치텐트 팝업텐트 자동텐트",
-            "image": "https://shopping-phinf.pstatic.net/main_5438682/54386820323.2.jpg",
-            "mall": "옥션",
-            "lprice": "53910",
-            "link": "https://link.auction.co.kr/gate/pcs?item-no=B247463319&sub-id=1&service-code=10000003",
-            "coupang": false
-          }
-        ],
-        "best_match": -1,
-        "match_confidence": "low",
-        "match_reason": "같은 상품으로 보이는 후보 없음"
-      },
-      "view_count": 6691945,
-      "uploader": "户外装备专业分享（收学员）",
-      "duration": 189,
-      "source_url": "https://www.tiktok.com/@tk1992695kn/video/7255710624234130689",
-      "download_url": "https://v45.tiktokcdn-us.com/52aff1773029a8d55a45946192ab7541/6a6678d2/video/tos/alisg/tos-alisg-pve-0037c001/oUghgRBkLsi7r8JexE9nXgDEQoBbAAOeXRGODW/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=2149&ft=73kDHDyjNk6VQQUnU~d-sdP~imZqYlLEOd-~hWLrK&mime_type=video_mp4&rc=NWQ8aTNmOTg4MzVpaTplOEBpanRxcmY6ZmpwbDMzODczNEA2MWEzMGJjNTExLzRiLWI0YSMtMXA2cjQwaWxgLS1kMS1zcw%3D%3D&vvpl=1&l=20260726151148A3A038FD2DB963B96EF9&btag=e000d5000",
-      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/f097013cf08044f48958bc4c40e503fe_1689351801~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=049dc856&x-expires=1785164400&x-signature=3ADBpOLqNVZiV%2BsVjm%2B4h4uhRXI%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
-    },
-    {
-      "id": "sv_2cab86bd4779",
-      "platform": "tiktok",
-      "title": "#TikTok #fyp #foryou #shopping #⛺️ #充气帐篷 #上热门 #上推荐 #上推薦",
-      "title_ko": "자동 팽창 에어 텐트",
+      "title": "This Off-Road Mansion Inflates at the Push of a Button.  #aircamper #airtent #camping #glamping #glampingtent #campingsouthafrica #offgrid",
+      "title_ko": "버튼 하나로 펼쳐지는 에어 텐트 트레일러",
       "coupang_keywords": [
         "에어 텐트",
-        "자동 텐트",
-        "캠핑 텐트",
-        "대형 텐트"
+        "캠핑 트레일러",
+        "카라반 텐트",
+        "오프로드 캠핑카"
       ],
       "zh_terms": [
-        "充气帐篷",
-        "自动帐篷",
-        "户外帐篷"
+        "充气帐篷拖车",
+        "露营拖车",
+        "越野露营车"
       ],
       "naver": {
         "query": "에어 텐트",
@@ -260,49 +348,41 @@
         ],
         "best_match": -1,
         "match_confidence": "low",
-        "match_reason": "같은 상품으로 보이는 후보 없음"
+        "match_reason": "기준 이미지는 캠핑카에 연결된 텐트"
       },
-      "view_count": 5218743,
-      "uploader": "户外装备专业分享（收学员）",
-      "duration": 127,
-      "source_url": "https://www.tiktok.com/@tk1992695kn/video/7266267999894621447",
-      "download_url": "https://v45.tiktokcdn-us.com/5cde9405cf3f70b02cde4afa67e2c517/6a667894/video/tos/alisg/tos-alisg-pve-0037/oIBPbAn1yeWBOeVNkoyGjgQCgQ0tBuFI2wTvD1/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1759&ft=73kDHDyjNk6VQQUnU~d-sdP~imZqYlLEOd-~hWLrK&mime_type=video_mp4&rc=NGhnOWQzOGloOzg6NDw3ZUBpanN1ODw6ZmtpbTMzODgzNEAuYTYwXjUzNTAxNS5hX2NeYSNgaWxucjRnZV9gLS1kLy1zcw%3D%3D&vvpl=1&l=20260726151148A3A038FD2DB963B96EF9&btag=e000d5000",
-      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/0b2270d9a51c49969fc3c826eb7093d3_1691809995~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=0f847946&x-expires=1785164400&x-signature=HqoBqz56qoOAHYSREoAzYCmvS00%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+      "view_count": 206766,
+      "uploader": "AlphaGo Outdoor Gear",
+      "duration": 38,
+      "source_url": "https://www.tiktok.com/@alphagooutdoorcampers/video/7571800626171038996",
+      "download_url": "https://v45.tiktokcdn-us.com/67a43898f4b32a57a12068fbdd1eeb16/6a66788e/video/tos/alisg/tos-alisg-pve-0037/osYEm4nTQn8CUVFBzoeDfBEV1rAFgTGgG2gpIK/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=674&ft=73kDHDyjNkLVQQUnU~d-sd3VimZqYlBgEV-~hWLrK&mime_type=video_mp4&rc=ZzpkNGVoO2Q3ZTo8NmlmZUBpM3Nnc3g5cnQ5NzMzODgzNEBeY2AzL2MwXy8xNTI1MS0vYSNlNF42MmRzbl5hLS1kLzFzcw%3D%3D&vvpl=1&l=2026072615131176E82AB8F4D02CE2D8A5&btag=e000cd000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/o0GpBof0ErSFn44ARgCQFEnjV1KmDBC8CfpQzU~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=bb73d5dc&x-expires=1785164400&x-signature=ATCnodychmxRGe7jpuxFWgIAwD8%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     },
     {
-      "id": "sv_0d8c3fc5e971",
+      "id": "sv_ecea69fe53ee",
       "platform": "tiktok",
-      "title": "#感謝訂製歡迎訂購 #出口贸易 #欢迎定制 #露營裝備 #充气帐篷 它又来咯",
-      "title_ko": "대형 야외 행사용 에어 텐트",
+      "title": "#outdoortent #china #factory #camping #camp #tent Hot-selling outdoor camping inflatable tents produced in China.Air pump automatically inflates large-volume vehicle-mounted folding tent.With ventilation window and chimney tuyere, it is suitable for large inflatable tent inflatable house on the beach, forest and seaside.#sell #shopping #Outdoors #camping #inflate #pump ",
+      "title_ko": "대형 야외용 에어 펌프 자동 팽창식 텐트",
       "coupang_keywords": [
-        "에어 텐트",
-        "대형 텐트",
-        "캠핑 텐트",
-        "야외 행사 텐트"
+        "대형 에어텐트",
+        "자동 팽창 텐트",
+        "캠핑 에어텐트",
+        "야외 텐트"
       ],
       "zh_terms": [
-        "充气帐篷",
-        "户外帐篷",
-        "大型帐篷"
+        "户外充气帐篷",
+        "自动充气帐篷",
+        "大型露营帐篷"
       ],
       "naver": {
-        "query": "에어 텐트",
-        "real_title": "벤틱스 제이씨하우스 8.0 에어텐트 면텐트",
-        "lprice": "649000",
+        "query": "대형 에어텐트",
+        "real_title": "캠핑 원터치 텐트 그늘막 에어 텐트 경량 5.8",
+        "lprice": "249000",
         "coupang": false,
-        "coupang_title": "벤틱스 제이씨하우스 8.0 에어텐트 면텐트",
+        "coupang_title": "캠핑 원터치 텐트 그늘막 에어 텐트 경량 5.8",
         "coupang_lprice": null,
-        "mall": "Ventix",
-        "image": "https://shopping-phinf.pstatic.net/main_8927888/89278888753.11.jpg",
+        "mall": "코지모해",
+        "image": "https://shopping-phinf.pstatic.net/main_9119953/91199530178.1.jpg",
         "candidates": [
-          {
-            "title": "벤틱스 제이씨하우스 8.0 에어텐트 면텐트",
-            "image": "https://shopping-phinf.pstatic.net/main_8927888/89278888753.11.jpg",
-            "mall": "Ventix",
-            "lprice": "649000",
-            "link": "https://smartstore.naver.com/main/products/11734378254",
-            "coupang": false
-          },
           {
             "title": "캠핑 원터치 텐트 그늘막 에어 텐트 경량 5.8",
             "image": "https://shopping-phinf.pstatic.net/main_9119953/91199530178.1.jpg",
@@ -312,134 +392,56 @@
             "coupang": false
           },
           {
-            "title": "쿠디 에어텐트 8.0",
-            "image": "https://shopping-phinf.pstatic.net/main_4520767/45207679618.20251014113919.jpg",
+            "title": "로티 로티캠프 힐하우스 경량 캠핑 대형 에어 텐트 3-4인용",
+            "image": "https://shopping-phinf.pstatic.net/main_5663817/56638170947.20250908190426.jpg",
             "mall": "네이버",
-            "lprice": "989000",
-            "link": "https://search.shopping.naver.com/catalog/45207679618",
+            "lprice": "699000",
+            "link": "https://search.shopping.naver.com/catalog/56638170947",
             "coupang": false
           },
           {
-            "title": "쿠디 에어텐트 원터치텐트 경량텐트 웨이브 폴리",
-            "image": "https://shopping-phinf.pstatic.net/main_8804274/88042744642.1.jpg",
+            "title": "에어박스 엔오엠 아틀라스 파빌리온 쉘터 대형 에어텐트 차박텐트 무한도킹",
+            "image": "https://shopping-phinf.pstatic.net/main_9119249/91192491001.2.jpg",
+            "mall": "에어박스 공식스토어",
+            "lprice": "1840000",
+            "link": "https://smartstore.naver.com/main/products/13647980222",
+            "coupang": false
+          },
+          {
+            "title": "에어박스 엔오엠 아틀라스 필다 패밀리 거실형 리빙쉘 3-4인용 텐트 디지털 에어텐트 대형쉘터 5m",
+            "image": "https://shopping-phinf.pstatic.net/main_9118575/91185752632.jpg",
+            "mall": "에어박스 공식스토어",
+            "lprice": "2400000",
+            "link": "https://smartstore.naver.com/main/products/13641241923",
+            "coupang": false
+          },
+          {
+            "title": "쿠디 에어텐트 면텐트 파밀리아 블랙 familia black",
+            "image": "https://shopping-phinf.pstatic.net/main_8767440/87674401350.2.jpg",
             "mall": "COODY",
-            "lprice": "839000",
-            "link": "https://smartstore.naver.com/main/products/10498239290",
+            "lprice": "1990000",
+            "link": "https://smartstore.naver.com/main/products/10129898274",
             "coupang": false
           },
           {
-            "title": "인디언즈 면 에어텐트 8.0 텐트 카키 BB도어 2026년형",
-            "image": "https://shopping-phinf.pstatic.net/main_9028787/90287874698.5.jpg",
-            "mall": "인디언즈 Indians",
-            "lprice": "529000",
-            "link": "https://smartstore.naver.com/main/products/12743363757",
-            "coupang": false
-          },
-          {
-            "title": "쿠디 에어텐트 5.8",
-            "image": "https://shopping-phinf.pstatic.net/main_5261387/52613874085.20250122172801.jpg",
-            "mall": "네이버",
-            "lprice": "399000",
-            "link": "https://search.shopping.naver.com/catalog/52613874085",
+            "title": "위켄트립 모델K 에어텐트 터널형 리빙쉘 에어 텐트",
+            "image": "https://shopping-phinf.pstatic.net/main_9093361/90933612159.1.jpg",
+            "mall": "위켄트립",
+            "lprice": "1680000",
+            "link": "https://smartstore.naver.com/main/products/13389101823",
             "coupang": false
           }
         ],
         "best_match": -1,
         "match_confidence": "low",
-        "match_reason": "색상과 형태가 모두 다름"
+        "match_reason": "모두 다른 형태의 에어 텐트"
       },
-      "view_count": 937765,
-      "uploader": "森与慕白（戶外裝備）",
-      "duration": 25,
-      "source_url": "https://www.tiktok.com/@shero941216/video/7640563752307313938",
-      "download_url": "https://v45.tiktokcdn-us.com/0c5de4baadc91ec629bbaf7e62d0ec92/6a66782e/video/tos/alisg/tos-alisg-pve-0037c001/oQ0BZEgiQ8BLI76UwaQ5ABT5vFAIiEXiVMYPB/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=611&ft=73kDHDyjNk6VQQUnU~d-sdP~imZqYlLEOd-~hWLrK&mime_type=video_mp4&rc=ZmY3Mzs1Z2lpaGhpaTM0OkBpM3M4aHQ5cmVlOzMzODczNEAuLTExLS4uX2IxNDM0Ll4tYSMzM3NsMmQ0bDFhLS1kMWBzcw%3D%3D&vvpl=1&l=20260726151148A3A038FD2DB963B96EF9&btag=e000fd000",
-      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/oUwDhJGGLMkZEeifFjQwACNIDrlgg4FeAUXvmI~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=002c34bd&x-expires=1785164400&x-signature=oE4DDxYGVy9lfMZjTN15VmWAft4%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&s=SEARCH&sc=feed_cover&biz_tag=tt_video"
-    },
-    {
-      "id": "sv_f825d99b1ab2",
-      "platform": "tiktok",
-      "title": "Your Own Personal Bubble - Anytime, Anywhere! This automatic pop-up clear tent gives you instant personal space with zero assembly. Just pop it open, secure it, and enjoy your private bubble at home or in public. The fiberglass pop-up design sets up in seconds and folds down just as easily. Secure it with sandbags or guylines and use it in your backyard, garden, or for small gatherings. Pack it away in the carry case when you're done. #popupbubbltent #cleartent #outdoortent #privacytent #backyardideas   ",
-      "title_ko": "야외 활동 시 개인 공간을 제공하는 투명한 팝업 버블 텐트",
-      "coupang_keywords": [
-        "팝업 버블 텐트",
-        "투명 야외 텐트",
-        "개인 공간 텐트",
-        "자동 설치 텐트"
-      ],
-      "zh_terms": [
-        "透明泡泡帐篷",
-        "户外隐私帐篷",
-        "自动弹出帐篷"
-      ],
-      "naver": {
-        "query": "팝업 버블 텐트",
-        "real_title": "투명 하우스 버블 텐트 이글루 캠 백패킹 큐빅텐트 옥외",
-        "lprice": "333100",
-        "coupang": false,
-        "coupang_title": "투명 하우스 버블 텐트 이글루 캠 백패킹 큐빅텐트 옥외",
-        "coupang_lprice": null,
-        "mall": "차이나모든",
-        "image": "https://shopping-phinf.pstatic.net/main_9120037/91200375320.jpg",
-        "candidates": [
-          {
-            "title": "투명 하우스 버블 텐트 이글루 캠 백패킹 큐빅텐트 옥외",
-            "image": "https://shopping-phinf.pstatic.net/main_9120037/91200375320.jpg",
-            "mall": "차이나모든",
-            "lprice": "333100",
-            "link": "https://smartstore.naver.com/main/products/13655864535",
-            "coupang": false
-          },
-          {
-            "title": "버블 텐트 컴팩트 돔 포장마차천막 버슬 동계 겨울 팝업 버블텐트 야외 투명돔텐트 투명",
-            "image": "https://shopping-phinf.pstatic.net/main_9115124/91151246280.jpg",
-            "mall": "오늘의온도a",
-            "lprice": "241400",
-            "link": "https://smartstore.naver.com/main/products/13606735869",
-            "coupang": false
-          },
-          {
-            "title": "대형 즉석 팝업 버블 텐트 방수 야외 이글루 캠핑 포드 파티오 스크린 추위",
-            "image": "https://shopping-phinf.pstatic.net/main_6018717/60187178390.jpg",
-            "mall": "11번가",
-            "lprice": "112270",
-            "link": "https://www.11st.co.kr/connect/Gateway.tmall?method=Xsite&prdNo=9381189344&tid=1000000061",
-            "coupang": false
-          },
-          {
-            "title": "대형 팝업 버블 텐트 즉석 이형 방수 야외 스크린 하우스 캠핑 파티오용",
-            "image": "https://shopping-phinf.pstatic.net/main_5995353/59953539292.jpg",
-            "mall": "옥션",
-            "lprice": "126330",
-            "link": "https://link.auction.co.kr/gate/pcs?item-no=F555342641&sub-id=1&service-code=10000003",
-            "coupang": false
-          },
-          {
-            "title": "대형 즉석 팝업 버블 텐트 방수 야외 이 특대형 캠핑 포드 파티오 스크린",
-            "image": "https://shopping-phinf.pstatic.net/main_5995352/59953527182.jpg",
-            "mall": "옥션",
-            "lprice": "125790",
-            "link": "https://link.auction.co.kr/gate/pcs?item-no=F555332511&sub-id=1&service-code=10000003",
-            "coupang": false
-          },
-          {
-            "title": "팝업 버블 텐트 피트 투명 파티오 쉘터 PVC 5인용 뒷마당용 내후성",
-            "image": "https://shopping-phinf.pstatic.net/main_9090257/90902570466.jpg",
-            "mall": "데일리팩토리",
-            "lprice": "443520",
-            "link": "https://smartstore.naver.com/main/products/13358060134",
-            "coupang": false
-          }
-        ],
-        "best_match": 2,
-        "match_confidence": "high",
-        "match_reason": "색상, 형태, 기능이 동일합니다."
-      },
-      "view_count": 606517,
-      "uploader": "Hause Accessories",
-      "duration": 113,
-      "source_url": "https://www.tiktok.com/@hauseaccessories/video/7575910435870821687",
-      "download_url": "https://v16m.tiktokcdn-us.com/868c455fe8704d659cba82b4b2e6b7a7/6a66788c/video/tos/useast5/tos-useast5-ve-0068c003-tx/ocAcDEspSETQRRgEiPjfBFCIwDXvhwIfVlW3xg/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=1254&ft=aEKfuqT0m0LPD12FjunI3wUG3.TFMeF~O5&mime_type=video_mp4&rc=NjpoOWRmNDU2Ojs2M2Y5PEBpam93dnk5cjdqNzMzZzczNEAuYC4uLi40XmExY2BjMWNgYSM0YGJkMmRzZWVhLS1kMS9zcw%3D%3D&vvpl=1&l=20260726151153850695078A8E62CB7665&btag=e00090000",
-      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/oYhIr0VxDDCI3SWjEPFggiIERAfhCBTfEXBpLw~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=cd68c988&x-expires=1785164400&x-signature=rTle7d9oEjvtvtcRIiIbdQMzc6M%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+      "view_count": 162193,
+      "uploader": "ChinaShimano Bike Parts",
+      "duration": 30,
+      "source_url": "https://www.tiktok.com/@bikepartsshimano/video/7356168107016064257",
+      "download_url": "https://v45.tiktokcdn-us.com/6e743c922463be0b71cdcc584d3e317b/6a667886/video/tos/alisg/tos-alisg-pve-0037c001/oElwREoj6IJLeRMJDPAXALfeg8buM9QCBAK7ZA/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=1075&ft=73kDHDyjNkLVQQUnU~d-sd3VimZqYlBgEV-~hWLrK&mime_type=video_mp4&rc=ZTszaGczMzZlNDc5OTs7aUBpampocnk5cnE4cjMzODczNEBiNGI0MC0yXmAxNmIuYmFjYSMtMTBjMmRrZl9gLS1kMTFzcw%3D%3D&vvpl=1&l=2026072615131176E82AB8F4D02CE2D8A5&btag=e000cd000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/0fd39c747d5f4a3db9abf9c40fd51db8_1712741365~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=5f17cecd&x-expires=1785164400&x-signature=iW2AMqfOKkf7YF0RH8L4rCWgTJI%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
     }
   ]
 }
