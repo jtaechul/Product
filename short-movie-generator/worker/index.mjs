@@ -406,9 +406,9 @@ function renderHome(){
   //   실패하면 원본으로 자동 폴백한다(둘 다 안 되면 '원본 링크'로 안내).
   function transcodeUrl(u){
     try{
-      if(!/^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\//.test(u)) return "";
-      if(/\/transcoded\//.test(u)) return "";
-      if(!/\.(webm|ogv)$/i.test(u)) return "";
+      if(!/^https:\\/\\/upload\\.wikimedia\\.org\\/wikipedia\\/commons\\//.test(u)) return "";
+      if(/\\/transcoded\\//.test(u)) return "";
+      if(!/\\.(webm|ogv)$/i.test(u)) return "";
       const name=u.split("/").pop();
       return u.replace("/commons/","/commons/transcoded/")+"/"+name+".480p.vp9.webm";
     }catch(e){return "";}
@@ -868,12 +868,12 @@ function renderVsResults(){
 //   확보 실패 시 학명을 지어내지 않고 중단한다(날조 금지). 여기서는 그 사실을 미리 안내한다.
 async function vsShorts(i){
   const v=_vsList[i]; if(!v) return;
-  if(!v.safe && !confirm("이 영상은 라이선스 '"+(v.license||"불명")+"' 로 재사용 가능 여부가 확인되지 않았습니다.\n"+
+  if(!v.safe && !confirm("이 영상은 라이선스 '"+(v.license||"불명")+"' 로 재사용 가능 여부가 확인되지 않았습니다.\\n"+
                           "원본 페이지에서 권리를 직접 확인하셨습니까? 계속하시겠습니까?")) return;
   if(!authReady()){const tb=$("#tokbox");if(tb)tb.open=true;
     vsbanner("GitHub 토큰을 먼저 설정하세요(제작 카드 아래 안내).","err");return;}
   const cat=(($("#category")||{}).value||"deep_sea");
-  if(!confirm("이 영상으로 쇼츠를 제작합니다.\n\n제목: "+(v.title||"")+"\n카테고리: "+cat+"\n\n"+
+  if(!confirm("이 영상으로 쇼츠를 제작합니다.\\n\\n제목: "+(v.title||"")+"\\n카테고리: "+cat+"\\n\\n"+
               "※ 종명·학명은 제작 시 자동으로 검색·확보합니다. 확보에 실패하면(제목에 학명이 없고 "+
               "구조화데이터도 없는 경우) 제작이 중단되고 텔레그램으로 사유가 전송됩니다.")) return;
   vsbanner("제작 요청 중…");
