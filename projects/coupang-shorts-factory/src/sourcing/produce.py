@@ -63,6 +63,32 @@ def _have_tts(settings: dict) -> bool:
         return False
 
 
+def load_segments(product_hash: str, project_root=None) -> dict:
+    """④ 구간 지정 → {video_id: [(start,end), ...]}. 관리자가 영상별로 고른 '쓸 구간'.
+    파일 없으면 {}(→ produce가 전체 클립 사용). end=null이면 끝까지(None)."""
+    p = Path(project_root or PROJECT_ROOT) / "data" / "sources" / "segments" / f"{product_hash}.json"
+    if not p.exists():
+        return {}
+    try:
+        segs = (json.loads(p.read_text(encoding="utf-8")) or {}).get("segments") or {}
+    except Exception as e:
+        print(f"[produce] 구간 파싱 실패({e}) — 전체 클립 사용")
+        return {}
+    out = {}
+    for vid, ranges in segs.items():
+        spans = []
+        for r in (ranges or []):
+            try:
+                s = float(r[0]); e = None if (len(r) < 2 or r[1] is None) else float(r[1])
+            except (TypeError, ValueError, IndexError):
+                continue
+            if e is None or e > s:
+                spans.append((s, e))
+        if spans:
+            out[str(vid)] = spans
+    return out
+
+
 def _stitched_base(clip_paths: list, segments: dict | None, duration: float):
     """클립들을 9:16 무음으로 이어붙이고 duration에 맞춰 루프/트림한 moviepy 클립. moviepy(CI)."""
     from moviepy import concatenate_videoclips
@@ -106,6 +132,9 @@ def produce(product_hash: str, job_dir, settings: dict, project_root=None,
     clip_paths = [p for _, p in pairs]
     if not clip_paths:
         raise RuntimeError("홍보 클립 다운로드 실패(전부) — 다른 영상으로 재시도")
+    # ④ 구간 지정: 영상 id로 저장된 '쓸 구간'을 다운로드된 클립 경로에 매핑(없는 영상은 전체 사용).
+    seg_map = load_segments(product_hash, root)
+    seg_by_path = {str(path): seg_map[sv.id] for sv, path in pairs if sv.id in seg_map}
 
     if narrate and _have_tts(settings):
         from src.audio import tts
@@ -122,7 +151,7 @@ def produce(product_hash: str, job_dir, settings: dict, project_root=None,
     duration = float(audio.duration) + 0.3
     line_windows = _line_windows(lines, words)
 
-    base = _stitched_base(clip_paths, None, duration)   # ④ 구간 지정 전: 전체 클립 루프(자동)
+    base = _stitched_base(clip_paths, seg_by_path or None, duration)   # ④ 구간 있으면 그 구간만, 없으면 전체 클립 루프
     if base is None:
         raise RuntimeError("합성할 클립이 없습니다")
 
