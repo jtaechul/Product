@@ -853,11 +853,43 @@ function renderVsResults(){
           '<button class="mini" onclick="vsUse('+i+')" style="flex:1">나레이션에 사용</button>'+
           '<a class="mini" href="'+esc(v.download)+'" target="_blank" rel="noopener" style="flex:1;text-align:center;text-decoration:none">다운로드</a>'+
         '</div>'+
+        // ★이 영상으로 바로 쇼츠 제작(운영자 확정). 종명·학명은 제작 시 자동 검색·확보한다.
+        '<div style="margin-top:5px"><button class="mini" onclick="vsShorts('+i+')" '+
+          'style="width:100%;border-color:#2e7d8f;color:#8fe3f5">이 영상으로 쇼츠 제작</button></div>'+
         '<div style="margin-top:4px"><a class="hint" href="'+esc(v.page)+'" target="_blank" rel="noopener" style="font-size:10px">원본 페이지 · 권리 확인</a></div>'+
       '</div></div>';
   });
   h+='</div>';
   el.innerHTML=h;
+}
+// ★찾은 영상으로 쇼츠 제작(운영자 확정).
+//   요구사항: 이 경로로 만들 때는 **종명·학명이 추가로 검색·확보**되어야 한다 →
+//   백엔드(run_pipeline --video-url)가 커먼스 구조화데이터·Wikidata로 학명을 확보한 뒤 제작하고,
+//   확보 실패 시 학명을 지어내지 않고 중단한다(날조 금지). 여기서는 그 사실을 미리 안내한다.
+async function vsShorts(i){
+  const v=_vsList[i]; if(!v) return;
+  if(!v.safe && !confirm("이 영상은 라이선스 '"+(v.license||"불명")+"' 로 재사용 가능 여부가 확인되지 않았습니다.\n"+
+                          "원본 페이지에서 권리를 직접 확인하셨습니까? 계속하시겠습니까?")) return;
+  if(!authReady()){const tb=$("#tokbox");if(tb)tb.open=true;
+    vsbanner("GitHub 토큰을 먼저 설정하세요(제작 카드 아래 안내).","err");return;}
+  const cat=(($("#category")||{}).value||"deep_sea");
+  if(!confirm("이 영상으로 쇼츠를 제작합니다.\n\n제목: "+(v.title||"")+"\n카테고리: "+cat+"\n\n"+
+              "※ 종명·학명은 제작 시 자동으로 검색·확보합니다. 확보에 실패하면(제목에 학명이 없고 "+
+              "구조화데이터도 없는 경우) 제작이 중단되고 텔레그램으로 사유가 전송됩니다.")) return;
+  vsbanner("제작 요청 중…");
+  try{
+    const r=await fetch(API+"/actions/workflows/"+WF+"/dispatches",{method:"POST",headers:headers(true),
+      body:JSON.stringify({ref:BRANCH,inputs:{
+        query:"auto", category:cat,
+        video_url:v.download||"", video_title:v.title||"",
+        video_license:v.license||"", video_credit:v.credit||v.source||"",
+      }})});
+    if(r.status===204){
+      vsbanner("제작 시작! 종명·학명 확보 후 진행됩니다. 2~5분 뒤 텔레그램 전송 + 라이브러리 등록.","ok");
+      setTimeout(loadRuns,4000); setTimeout(loadRuns,15000);
+    }else{const t=await r.text();
+      vsbanner("실패("+r.status+"): 토큰 권한(Actions)을 확인하세요.<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");}
+  }catch(e){vsbanner("요청 실패: "+e,"err");}
 }
 // 찾은 영상을 첨부 나레이션 카드에 채우기(URL·제목) + 스크롤
 function vsUse(i){

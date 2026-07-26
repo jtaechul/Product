@@ -55,6 +55,23 @@ on:
         description: '컷별 구간 직접 지정(자동 컷 선택 대체) — 예 "0-6, 20-27, 41-48, 62-70" 또는 JSON'
         required: false
         default: ""
+      # ★'영상 찾기'에서 고른 영상으로 바로 제작. 이 경로는 종명·학명을 추가 확보한 뒤 진행한다.
+      video_url:
+        description: "이 영상으로 제작 — 관리자 '영상 찾기' 결과의 다운로드 URL"
+        required: false
+        default: ""
+      video_title:
+        description: "영상 제목(종 식별 단서 · 학명이 들어있으면 확보 성공률↑)"
+        required: false
+        default: ""
+      video_license:
+        description: "영상 라이선스(예: public-domain, cc-by, cc-by-sa)"
+        required: false
+        default: ""
+      video_credit:
+        description: "영상 크레딧(저작자 표기)"
+        required: false
+        default: ""
   # 대안 트리거: requests/*.json 푸시로도 생성 가능 (원격 자동화·Claude 조작용)
   push:
     branches: ["claude/gemini-shorts-reels-generator-dhjfdt"]
@@ -189,13 +206,20 @@ jobs:
           if [ -n "${{ inputs.cuts }}" ];      then MAN_ARGS="$MAN_ARGS --cuts ${{ inputs.cuts }}"; fi
           # ★컷별 구간은 공백·쉼표가 들어가므로 반드시 따옴표로 감싼다(단어 분리 방지).
           CUT_SPECS='${{ inputs.cut_specs }}'
-          if [ -n "$CUT_SPECS" ]; then
-            python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --category "$CAT" $EP_ARG \
-              --mode reels $MAN_ARGS --cut-specs "$CUT_SPECS" 2>&1 | tee work/pipeline.log
-          else
-            python -m src.run_pipeline "${{ steps.inp.outputs.query }}" --category "$CAT" $EP_ARG \
-              --mode reels $MAN_ARGS 2>&1 | tee work/pipeline.log
+          # ★찾은 영상으로 제작: URL·제목·라이선스·크레딧을 그대로 넘긴다(공백 포함 → 반드시 따옴표).
+          VID_URL='${{ inputs.video_url }}'
+          VID_TITLE='${{ inputs.video_title }}'
+          VID_LIC='${{ inputs.video_license }}'
+          VID_CRED='${{ inputs.video_credit }}'
+          set -- "${{ steps.inp.outputs.query }}" --category "$CAT" --mode reels
+          if [ -n "$EP_ARG" ]; then set -- "$@" $EP_ARG; fi
+          if [ -n "$MAN_ARGS" ]; then set -- "$@" $MAN_ARGS; fi
+          if [ -n "$CUT_SPECS" ]; then set -- "$@" --cut-specs "$CUT_SPECS"; fi
+          if [ -n "$VID_URL" ]; then
+            set -- "$@" --video-url "$VID_URL" --video-title "$VID_TITLE" \
+                        --video-license "$VID_LIC" --video-credit "$VID_CRED"
           fi
+          python -m src.run_pipeline "$@" 2>&1 | tee work/pipeline.log
           VIDEO=$(ls -t output/*.mp4 | head -1)
           META=$(ls -t output/*.json | head -1)
           echo "video=$VIDEO" >> "$GITHUB_OUTPUT"

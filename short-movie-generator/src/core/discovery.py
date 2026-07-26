@@ -24,6 +24,7 @@ import logging
 import re
 import time
 from pathlib import Path
+from urllib.parse import unquote
 
 log = logging.getLogger(__name__)
 
@@ -844,6 +845,77 @@ def _rec_to_candidate(r: dict) -> dict:
         c["media_kind"] = "photo"
         c["image_url"] = fp.get("image_url") or fp["url"]
     return c
+
+
+def resolve_from_video(url: str, title: str = "", desc: str = "") -> dict | None:
+    """★운영자가 '영상 찾기'에서 고른 영상 하나로 제작하기 위한 정체성 확보(운영자 확정).
+
+    요구사항: "찾은 영상으로 쇼츠를 만들되, **종명·학명이 추가로 검색·확보되어야 한다**."
+    → 영상만 있고 종을 모르면 대본·엔드카드·도감이 성립하지 않으므로, 여기서 반드시 확보한다.
+
+    확보 순서(모두 실패하면 None → 제작 중단하고 운영자에게 이유를 알림. 학명 날조 금지):
+      ① 커먼스 파일이면 파일 페이지의 **구조화데이터(P180 depicts)** → Wikidata 분류군
+      ② 파일 제목·설명의 **이명법(학명) 파싱** → Wikidata 검색
+      ③ 운영자가 넘긴 title/desc 문자열에서 같은 방식으로 재시도(커먼스가 아닌 소스 대비)
+    반환: {"key","species":{...},"footage":{...}} — promote_candidate/파이프라인이 그대로 쓰는 형태.
+    """
+    title = (title or "").strip()
+    desc = (desc or "").strip()
+    ident = None
+    # ① 커먼스 파일이면 pageid를 얻어 구조화데이터·설명까지 활용
+    fname = ""
+    m = re.search(r"/commons/(?:transcoded/)?[0-9a-f]/[0-9a-f]{2}/([^/?#]+)", url or "")
+    if m:
+        fname = unquote(m.group(1))
+        try:
+            d = _get(_COMMONS, action="query", prop="imageinfo|info",
+                     titles=f"File:{fname}", iiprop="extmetadata|url")
+            for pid, page in (d.get("query", {}).get("pages", {}) or {}).items():
+                if str(pid).startswith("-"):
+                    continue
+                em = (page.get("imageinfo") or [{}])[0].get("extmetadata", {}) or {}
+                ftitle = page.get("title", f"File:{fname}")
+                fdesc = _strip(em.get("ImageDescription", {}).get("value", ""))
+                desc = desc or fdesc
+                title = title or ftitle
+                ident = _identity_for(str(pid), ftitle, fdesc)
+                break
+        except Exception as e:  # noqa: BLE001
+            log.warning("[discovery] 커먼스 조회 실패(%s): %s", fname, e)
+    # ②③ 제목·설명·파일명에서 학명 파싱 → Wikidata
+    if not (ident and ident.get("sci")):
+        blob = " ".join([title, desc, fname.replace("_", " ")])
+        seen: set[str] = set()
+        for mm in _BINOMIAL.finditer(blob):
+            nm = f"{mm.group(1)} {mm.group(2)}"
+            if nm.lower() in seen:
+                continue
+            seen.add(nm.lower())
+            got = _search_taxon_by_name(nm)
+            if got and got.get("sci"):
+                ident = got
+                break
+    if not (ident and ident.get("sci")):
+        log.warning("[discovery] 종 정체성 확보 실패 — 제작 불가(학명 날조 금지): %s", title or url)
+        return None
+
+    sci = ident["sci"].strip()
+    facts, fact_src = _facts_with_fallback(ident)
+    ko = ident.get("ko") or ident.get("en") or sci
+    en = ident.get("en") or sci
+    depth = _depth_from_text(desc, " ".join(facts))
+    log.info("[discovery] 영상→종 확보: %s (ko=%s en=%s · 수심=%r · 사실 %d건)",
+             sci, ko, en, depth, len(facts))
+    return {
+        "key": sci.lower(), "kind": "creature",
+        "footage": {"url": url, "license": "", "credit": "", "source": title or fname or url},
+        "species": {
+            "scientific_name": sci, "common_name_ko": ko, "common_name_en": en,
+            "depth_range_m": depth, "distribution": "", "habitat": "",
+            "diet": [], "fun_facts": facts,
+            "sources": [x for x in (fact_src, (f"Wikimedia Commons ({title})" if title else "")) if x],
+        },
+    }
 
 
 def discover_candidates(category_id: str, want: int = 6, exclude_keys: set[str] | None = None) -> list[dict]:
