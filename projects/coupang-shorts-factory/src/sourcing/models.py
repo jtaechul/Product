@@ -73,6 +73,7 @@ class SourceVideo:
     view_count: int | None = None
     downloaded_path: str | None = None   # 원본 저장 경로(다운로드 후). 메타엔 경로만.
     download_url: str | None = None       # 무워터마크 재생 URL(예: tikwm). 만료 가능 → download가 재해석 폴백.
+    cover: str | None = None              # 썸네일(커버) 이미지 URL — 관리자 추천 카드용.
     tags: list = field(default_factory=list)
     source_mode: str = "manual"       # auto | manual (§6)
     status: str = "discovered"        # discovered | downloaded | failed
@@ -99,6 +100,7 @@ class SourceVideo:
             view_count=d.get("view_count"),
             downloaded_path=d.get("downloaded_path"),
             download_url=d.get("download_url"),
+            cover=d.get("cover"),
             tags=list(d.get("tags") or []),
             source_mode=d.get("source_mode", "manual"),
             status=d.get("status", "discovered"),

@@ -80,11 +80,13 @@ def _sv_from_item(item: dict, base: str) -> SourceVideo:
     src = (item.get("url")
            or (f"https://www.tiktok.com/@{uniq}/video/{vid}" if uniq and vid else ""))
     play = _abs_play(item.get("hdplay") or item.get("play"), base)
+    cover = _abs_play(item.get("origin_cover") or item.get("cover"), base)
     return SourceVideo(
         platform="tiktok",
         source_url=src or (play or ""),
         view_count=item.get("play_count"),
         download_url=play,
+        cover=cover,
         source_mode="auto",         # 검색 발굴 = 자동 discovery
         status="discovered",
         title=item.get("title"),

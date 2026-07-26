@@ -1,0 +1,65 @@
+name: shorts-sourcing
+
+# 틱톡 발굴 (미래마켓 개조 §6) — 키워드로 틱톡 쇼핑 쇼츠 5~10개를 추천 후보로 뽑는다.
+# 이 환경은 dispatch API 권한이 없어(403) push 트리거도 지원: requests/sourcing/*.json 을 푸시.
+# produce의 requests/*.json 글롭(하위폴더 불매칭)과 충돌 없음.
+
+on:
+  workflow_dispatch:
+    inputs:
+      keyword:
+        description: "틱톡 검색 키워드"
+        required: true
+      hash:
+        description: "상품 row_hash(결과 저장 키)"
+        default: "manual"
+      limit:
+        description: "추천 개수"
+        default: "10"
+  push:
+    branches: [main, claude/coupang-shorts-phase-0-k42l1i]
+    paths: ["projects/coupang-shorts-factory/requests/sourcing/*.json"]
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: projects/coupang-shorts-factory
+
+jobs:
+  discover:
+    name: "틱톡 발굴 (tikwm)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}   # 매니페스트 커밋을 위해 브랜치로 체크아웃(비-detached)
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 파라미터 결정 (dispatch 입력 / requests/sourcing/*.json)
+        id: p
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            KW='${{ inputs.keyword }}'; HS='${{ inputs.hash }}'; LM='${{ inputs.limit }}'
+          else
+            f=$(ls -t requests/sourcing/*.json | head -1)
+            KW=$(jq -r '.keyword' "$f"); HS=$(jq -r '.hash // "manual"' "$f"); LM=$(jq -r '.limit // 10' "$f")
+          fi
+          { echo "keyword=$KW"; echo "hash=$HS"; echo "limit=$LM"; } >> "$GITHUB_OUTPUT"
+
+      - name: 발굴 실행 (stdlib만 — 의존성 설치 불필요)
+        run: python -m src.sourcing.discover --keyword "${{ steps.p.outputs.keyword }}" --hash "${{ steps.p.outputs.hash }}" --limit "${{ steps.p.outputs.limit }}"
+
+      - name: 추천 매니페스트 커밋 (관리자 카드가 읽음, 실패해도 로그로 확인)
+        continue-on-error: true
+        run: |
+          git config user.name "Claude"
+          git config user.email "noreply@anthropic.com"
+          git add data/sources/discover/*.json 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "sourcing: 틱톡 발굴 결과 커밋 [skip ci]"
+          git push || true
