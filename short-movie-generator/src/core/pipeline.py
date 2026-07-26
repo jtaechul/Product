@@ -90,23 +90,32 @@ def _pad_last_frame(video_path: str, target_s: float, work_dir: str) -> str:
     return str(out)
 
 
-def _maybe_apply_hook_intro(category, info, body_video: str, work_dir: str) -> str:
+def _maybe_apply_hook_intro(category, info, body_video: str, work_dir: str) -> tuple[str, float]:
     """카테고리가 hook_intro_spec(info)→(SpeciesSpec, hook_text[, bgm])를 제공하면
-    오프닝 훅/엔드카드/전환/임팩트 사운드 시스템을 적용. 미제공·실패 시 원본 그대로."""
+    오프닝 훅/엔드카드/전환/임팩트 사운드 시스템을 적용. 미제공·실패 시 원본 그대로.
+
+    반환: (영상 경로, **늘어난 길이(초)**).
+    ★늘어난 길이를 돌려주는 이유(실사고): 오프닝(약 4.6초)+엔드카드가 붙어 영상이 길어졌는데
+      QC에 넘기는 '기대 길이'는 본문 기준 그대로였다 → `duration_3cuts` 불일치로 **발행이 차단**됐다.
+      (폰트가 없어 훅이 안 붙던 환경에서만 통과하던 상태 — 정상 환경일수록 실패했다.)"""
     if not hasattr(category, "hook_intro_spec"):
-        return body_video
+        return body_video, 0.0
     try:
         from src.core import hook_intro_stage
         provided = category.hook_intro_spec(info)
         if not provided:
-            return body_video
+            return body_video, 0.0
         spec, hook_text = provided[0], provided[1]
         bgm = provided[2] if len(provided) > 2 else None
-        return hook_intro_stage.apply(body_video, spec, hook_text,
-                                      str(Path(work_dir) / "hook_intro"), bgm=bgm)
+        out = hook_intro_stage.apply(body_video, spec, hook_text,
+                                     str(Path(work_dir) / "hook_intro"), bgm=bgm)
+        if not out or out == body_video:
+            return body_video, 0.0
+        added = hook_intro_stage._duration_of(out) - hook_intro_stage._duration_of(body_video)
+        return out, max(0.0, added)
     except Exception as e:  # noqa: BLE001
         log.warning("[hook_intro] 연결 실패 → 본문 그대로: %s", e)
-        return body_video
+        return body_video, 0.0
 
 
 def run_narrated(
@@ -185,7 +194,8 @@ def run_narrated(
 
     # 오프닝 훅 + 엔드카드 + 전환 + 임팩트 사운드 시스템(카테고리가 hook_intro_spec 제공 시 적용).
     # 미제공/전제 미충족 시 원본 그대로(발행 불정지).
-    with_audio = _maybe_apply_hook_intro(category, info, with_audio, str(work_dir))
+    with_audio, _hook_added = _maybe_apply_hook_intro(category, info, with_audio, str(work_dir))
+    total += _hook_added          # 오프닝·엔드카드만큼 기대 길이도 늘린다(QC 길이 검사 정합)
 
     caption = (category.build_narrated_caption(info)
                if hasattr(category, "build_narrated_caption") else category.build_caption(info))

@@ -257,9 +257,15 @@ def opening_layout(spec: SpeciesSpec, cfg: HookIntroConfig | None = None) -> dic
         f = _serif(size)
         return max(meas.textlength(t, font=f) for t in texts)
 
-    def fit(texts: list[str]) -> int:
+    def fit(texts: list[str], tol: float = 1.0) -> int:
+        """줄 폭에 맞는 글자 크기.
+
+        ★tol(2줄 전용 4%): **확정 디자인**(ユメナマコ 98px·2줄)은 안전영역을 3.5% 넘는 폭인데,
+        그걸 그대로 줄여 94px로 렌더되고 있었다(확정 디자인 훼손). 확정 디자인이 흔들림 여백을
+        조금 쓰는 것이 원래 모습이므로 2줄 경로에서만 4%까지 허용한다.
+        자동 3줄 전환 경로는 tol=1.0(엄격) — 예전에 긴 훅이 화면 밖으로 잘린 실사고가 있었다."""
         w = max_width(texts, cfg.title_size)
-        if w <= safe:
+        if w <= safe * tol:
             return cfg.title_size
         return max(cfg.title_min_size, int(cfg.title_size * safe / w))
 
@@ -269,7 +275,7 @@ def opening_layout(spec: SpeciesSpec, cfg: HookIntroConfig | None = None) -> dic
     #   실제로는 "まるで宇宙深海の"가 렌더돼 넘침). → 2줄일 때도 join 폭 기준으로 맞춘다.
     join1 = "".join(words[:-1]) if len(words) >= 3 else spec.hook_line1
     two_line_texts = [join1, (words[-1] if len(words) >= 3 else spec.hook_line2)]
-    size = fit(two_line_texts)
+    size = fit(two_line_texts, tol=1.04)   # 확정 2줄 디자인은 흔들림 여백 4%까지 허용
     if size >= cfg.title_min_2line or len(words) < 3:
         rows = 2
         f = _serif(size)

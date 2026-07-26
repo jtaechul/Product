@@ -397,7 +397,13 @@ def resolve_key(query: str) -> str | None:
         words = set(key.split()) | set(sp["common_name_en"].lower().split()) | {sp["common_name_ko"]}
         if q in words and len(q) >= 3:
             matches.add(key)
-    return matches.pop() if len(matches) == 1 else None
+    if len(matches) == 1:
+        return matches.pop()
+    # ★모호할 때(예: "dumbo" → 손으로 넣은 'dumbo octopus' + 자동 발굴된 'grimpoteuthis discoveryi')
+    #   자동 발굴 종은 같은 일반명을 공유해 별칭을 통째로 막아버린다. 이럴 땐 **직접 등록한 종**을
+    #   우선하고, 그래도 여럿이면 종전처럼 None(모호)로 둔다.
+    seeded = {k for k in matches if not SPECIES[k].get("_discovered")}
+    return seeded.pop() if len(seeded) == 1 else None
 
 
 def _merge_discovered() -> None:
