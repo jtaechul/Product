@@ -1,0 +1,38 @@
+name: shorts-compose-probe
+
+# 소싱 ⑤ 합성 CI 검증 — 합성용 클립 2개를 9:16으로 이어붙여 결과 규격(1080x1920)을 확인한다
+# (moviepy 2.2.1). 로컬에 moviepy/ffmpeg가 없어 stitch_vertical을 여기서 실증한다.
+# 이 환경은 dispatch API 권한이 없어(403) push 트리거도 지원: requests/compose-probe/*.json.
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main, claude/coupang-shorts-phase-0-k42l1i]
+    paths: ["projects/coupang-shorts-factory/requests/compose-probe/*.json"]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: projects/coupang-shorts-factory
+
+jobs:
+  probe:
+    name: "합성 프로브 (9:16 이어붙이기)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: projects/coupang-shorts-factory/requirements.txt
+
+      - name: 의존성 설치 (moviepy 2.2.1 등)
+        run: pip install -q -r requirements.txt
+
+      - name: 합성 프로브 실행
+        run: python scripts/compose_probe.py
