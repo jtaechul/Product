@@ -90,18 +90,23 @@ def load_segments(product_hash: str, project_root=None) -> dict:
 
 
 def _download_insert_url(url: str, dest_dir: Path, i: int, j: int):
-    """삽입 검색 픽(giphy 등 URL)을 로컬 파일로 내려받는다(제작 시점). 실패 시 None."""
+    """삽입 검색 픽(giphy 움짤 / pexels·pixabay 영상 등 URL)을 로컬 파일로 내려받는다(제작 시점). 실패 시 None.
+    확장자는 응답 Content-Type을 우선(URL 경로에 확장자 없는 영상 대비), 없으면 URL 경로, 최후엔 mp4."""
     from urllib.parse import urlparse
     dest_dir.mkdir(parents=True, exist_ok=True)
-    tail = urlparse(url).path.rsplit("/", 1)[-1]
-    ext = tail.rsplit(".", 1)[-1].lower() if "." in tail else "gif"
-    if ext not in ("gif", "mp4", "webm", "mov", "jpg", "jpeg", "png", "webp"):
-        ext = "gif"
-    out = dest_dir / f"ins_{i}_{j}.{ext}"
     try:
         import requests
         r = requests.get(url, timeout=25, headers={"User-Agent": "Mozilla/5.0"})
         r.raise_for_status()
+        ct = (r.headers.get("Content-Type") or "").lower()
+        ext = ("gif" if "gif" in ct else "mp4" if "mp4" in ct else "webm" if "webm" in ct
+               else "png" if "png" in ct else "webp" if "webp" in ct else "jpg" if "jpeg" in ct else "")
+        if not ext:
+            tail = urlparse(url).path.rsplit("/", 1)[-1]
+            ext = tail.rsplit(".", 1)[-1].lower() if "." in tail else "mp4"
+            if ext not in ("gif", "mp4", "webm", "mov", "jpg", "jpeg", "png", "webp"):
+                ext = "mp4"
+        out = dest_dir / f"ins_{i}_{j}.{ext}"
         out.write_bytes(r.content)
         return out if out.stat().st_size > 200 else None
     except Exception as e:

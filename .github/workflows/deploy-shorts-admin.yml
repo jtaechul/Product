@@ -35,3 +35,19 @@ jobs:
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
+      # 스톡 검색(/stock) 서버키를 워커 시크릿으로 주입 — 관리자 삽입 검색이 브라우저 키 없이 동작.
+      # 키가 없으면 건너뛰고(선택), 실패해도 배포는 성공 처리(set +e · 마지막 true).
+      - name: 워커 시크릿 주입 (Giphy/Pexels/Pixabay)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          SHORTS_GIPHY_API_KEY: ${{ secrets.SHORTS_GIPHY_API_KEY }}
+          SHORTS_PEXELS_API_KEY: ${{ secrets.SHORTS_PEXELS_API_KEY }}
+          SHORTS_PIXABAY_API_KEY: ${{ secrets.SHORTS_PIXABAY_API_KEY }}
+        run: |
+          set +e
+          put() { if [ -n "$2" ]; then printf '%s' "$2" | npx wrangler secret put "$1" 2>&1 | tail -1; else echo "skip $1 (no secret)"; fi; }
+          put SHORTS_GIPHY_API_KEY "$SHORTS_GIPHY_API_KEY"
+          put SHORTS_PEXELS_API_KEY "$SHORTS_PEXELS_API_KEY"
+          put SHORTS_PIXABAY_API_KEY "$SHORTS_PIXABAY_API_KEY"
+          true

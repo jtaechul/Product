@@ -389,13 +389,17 @@ ol li{margin:8px 0}
         <span class="chip done" id="gifModalCount">0개 담김</span>
         <button class="btn mini sub" id="gifModalClose" style="width:auto">닫기</button>
       </div>
+      <div class="row2" style="gap:6px;margin-bottom:6px">
+        <button class="btn mini gifsrcbtn" data-src="giphy" style="width:auto">움짤(GIF)</button>
+        <button class="btn mini sub gifsrcbtn" data-src="pexels" style="width:auto">영상(Pexels)</button>
+        <button class="btn mini sub gifsrcbtn" data-src="pixabay" style="width:auto">영상(Pixabay)</button>
+      </div>
       <div class="gifmodal-search">
-        <input id="gifModalQ" placeholder="GIF 검색 (영어 추천)">
+        <input id="gifModalQ" placeholder="영어로 검색 (예: baby car, cleaning)">
         <button class="btn mini" id="gifModalGo" style="width:auto">검색</button>
       </div>
       <div class="gifmodal-res" id="gifModalRes"></div>
-      <button class="btn mini sub" id="gifModalMore" style="display:none;margin-top:8px">더 보기</button>
-      <div class="gifmodal-foot">담은 GIF는 라인 상단 ‘선택’칸에 남습니다 · Powered By GIPHY</div>
+      <div class="gifmodal-foot">고른 항목은 ‘선택’칸에 남습니다 · Powered by GIPHY / Pexels / Pixabay</div>
     </div>
   </div>
 </section>
@@ -1686,7 +1690,8 @@ function srcSaveState() {
         nextCursor: s.nextCursor || 0, seenIds: (s.seenIds || []).slice(-60) },
       aff: (($("srcAffiliate") || {}).value) || s.affDraft || "",
       promo: pr.productHash ? { productHash: pr.productHash, promoHash: pr.promoHash, keyword: pr.keyword,
-        zh_terms: pr.zh_terms || [], cands: pr.cands || [], selected: [...(pr.selected || [])], page: pr.page || 0 } : null,
+        zh_terms: pr.zh_terms || [], cands: pr.cands || [], selected: [...(pr.selected || [])], page: pr.page || 0,
+        nextCursor: pr.nextCursor || 0, seenUrls: (pr.seenUrls || []).slice(-60) } : null,
       plan: pl.hash ? { hash: pl.hash, options: pl.options || [], chosen: pl.chosen,
         custom: (($("srcDirCustom") || {}).value) || pl.custom || "", note: pl.note || "", script: pl.script || null } : null,
       ui: { pick: srcShown("srcPickCard"), promo: srcShown("srcPromoCard"), plan: srcShown("srcPlanCard"), refresh: srcShown("srcRefresh") } };
@@ -1918,7 +1923,7 @@ async function srcConfirmProduct() {
    확정 상품명으로 틱톡을 조회수순 검색 → 5~10개 다중선택 → data/sources/promo/{productHash}.json
    (다음: ④ 구간 지정·검수, ⑤ 다운로드·합성). 발굴 매니페스트는 'p_'+productHash 키로 분리. */
 const srcPromoSelPath = (h) => `${P}/data/sources/promo/${h}.json`;
-let srcPromoState = { productHash: null, promoHash: null, keyword: "", cands: [], selected: new Set(), page: 0, nonce: "" };
+let srcPromoState = { productHash: null, promoHash: null, keyword: "", cands: [], selected: new Set(), page: 0, nonce: "", nextCursor: 0, seenUrls: [] };
 
 function srcShowPromo(product, productHash, restore) {
   const nv = product.naver || {};
@@ -1927,7 +1932,8 @@ function srcShowPromo(product, productHash, restore) {
   srcPromoState = { productHash, promoHash: (restore && restore.promoHash) || ("p_" + productHash), keyword: name,
     zh_terms: (restore && restore.zh_terms) || product.zh_terms || [],
     cands: (restore && restore.cands) || [], selected: new Set((restore && restore.selected) || []),
-    page: (restore && restore.page) || 0, nonce: "" };
+    page: (restore && restore.page) || 0, nonce: "",
+    nextCursor: (restore && restore.nextCursor) || 0, seenUrls: (restore && restore.seenUrls) || [] };
   $("srcPromoBody").innerHTML =
     `<p class="hint">고른 상품을 홍보하는 <b>틱톡 영상</b>을 조회수순으로 찾습니다. 검색어(상품명)를 필요하면 고치고 [홍보영상 찾기]를 누르세요.</p>`
     + `<div class="row2" style="gap:8px; align-items:center"><input id="srcPromoKw" value="${srcEsc(name)}" style="flex:1; min-width:0"><button id="srcPromoFind" class="btn">홍보영상 찾기</button></div>`
@@ -1955,11 +1961,18 @@ async function srcPromoDispatch(page) {
   if (!kw) { toast("상품명을 입력하세요"); return; }
   const nonce = srcNonce();
   srcPromoState.keyword = kw; srcPromoState.nonce = nonce;
-  if (page === 0) { srcPromoState.selected = new Set(); srcPromoState.cands = []; $("srcPromoCards").innerHTML = ""; $("srcPromoSave").style.display = "none"; }
+  if (page === 0) {   // 새 검색 → 선택·본 목록·커서 초기화
+    srcPromoState.selected = new Set(); srcPromoState.cands = []; srcPromoState.seenUrls = []; srcPromoState.nextCursor = 0;
+    $("srcPromoCards").innerHTML = ""; $("srcPromoSave").style.display = "none";
+  }
+  // ⭐ '다른 홍보영상 찾기'는 ①발굴과 동일하게 tikwm 커서 + 이미 본 영상 제외로 '진짜 다음 영상'을 받는다(중복 방지).
+  const cursor = page ? (srcPromoState.nextCursor || 0) : 0;
+  const exclude = (srcPromoState.seenUrls || []).slice(-40).join(",");
   $("srcPromoStatus").textContent = page ? "다른 홍보영상 찾는 중… (약 1분)" : "홍보영상 찾는 중… (약 1분)";
   // 비전이 뽑은 중국어어(zh_terms)가 있으면 그걸로 같은 상품 검색(왕복 번역 없음), 없으면 이름으로.
   const terms = (srcPromoState.zh_terms || []).join(",");
-  await srcDispatch({ keyword: kw, hash: srcPromoState.promoHash, limit: "10", page: String(page), nonce, terms });
+  await srcDispatch({ keyword: kw, hash: srcPromoState.promoHash, limit: "10", page: String(page), nonce, terms,
+                     cursor: String(cursor), exclude });
   toast("홍보영상 검색 시작 — 약 1분");
   srcPromoPoll(nonce, 0);
 }
@@ -1972,10 +1985,14 @@ async function srcPromoPoll(nonce, tries) {
       const m = JSON.parse(f.text);
       if (String(m.nonce || "") === String(nonce)) {
         const cands = m.candidates || [];
-        // ⭐ '다른 홍보영상 찾기'는 기존 목록에 누적(append+dedup) — 이전에 고른 홍보영상이 초기화되지 않는다.
-        const seen = new Set(srcPromoState.cands.map((c) => c.id));
-        const fresh = cands.filter((c) => c && c.id && !seen.has(c.id));
+        // ⭐ 기존 목록에 누적(append) + source_url 기준 dedup(같은 영상이 다른 id로 와도 걸러냄) → 중복 후보 방지.
+        const key = (c) => c.source_url || c.id;
+        const seen = new Set(srcPromoState.cands.map(key));
+        const fresh = cands.filter((c) => c && key(c) && !seen.has(key(c)));
         if (Number.isInteger(m.page)) srcPromoState.page = m.page;
+        if (Number.isInteger(m.next_cursor)) srcPromoState.nextCursor = m.next_cursor;   // 다음 '다른 영상 찾기'용 커서
+        const urls = cands.map((c) => c.source_url).filter(Boolean);   // 이미 본 영상 누적(다음 exclude)
+        srcPromoState.seenUrls = [...new Set([...(srcPromoState.seenUrls || []), ...urls])].slice(-60);
         if (fresh.length) {
           srcPromoState.cands = srcPromoState.cands.concat(fresh);   // 누적(기존 선택 그대로 유지)
           srcPromoRender();
@@ -2290,7 +2307,7 @@ function srcSegRenderList() {
       `<span style="display:inline-block;background:#eef;border-radius:12px;padding:2px 8px;margin:2px;font-size:13px">${(+r[0]).toFixed(1)}–${r[1] == null ? "끝" : (+r[1]).toFixed(1)}초 <b data-v="${vi}" data-r="${ri}" class="segdel" style="cursor:pointer;color:#c0392b">×</b></span>`).join("");
     const title = srcEsc(String(v.title_ko || v.title || "영상").slice(0, 40));
     const player = v.download_url
-      ? `<video class="segvid" data-v="${vi}" src="${srcEsc(v.download_url)}"${v.cover ? ` poster="${srcEsc(v.cover)}"` : ""} controls muted playsinline preload="none" style="width:100%;max-height:280px;border-radius:10px;background:#000"></video>`
+      ? `<video class="segvid" data-v="${vi}" src="${srcEsc(v.source_url ? tikUrl(v.source_url) : v.download_url)}"${v.cover ? ` poster="${srcEsc(v.cover)}"` : ""} controls muted playsinline preload="none" style="width:100%;max-height:280px;border-radius:10px;background:#000"></video>`
       : (v.cover ? `<img src="${srcEsc(v.cover)}" style="width:100%;max-height:200px;object-fit:cover;border-radius:10px">` : "");
     return `<div style="margin-bottom:14px">`
       + `<div class="srcsub" style="margin-bottom:4px">${vi + 1}. ${title}</div>${player}`
@@ -2350,10 +2367,10 @@ async function srcRenderInserts(hash) {
   let inserts = {};
   try { const f = await getFile(srcInsertPath(hash), true, true); if (f) inserts = (JSON.parse(f.text).inserts) || {}; } catch (_) {}
   srcInsertState = { hash, lines, inserts };
-  box.innerHTML = `<details class="srcseg"><summary style="cursor:pointer;font-weight:600">⑤ 이미지·영상 삽입 (선택 — 특정 대사에 내 이미지/움짤 얹기)</summary>`
-    + `<p class="hint" style="margin:6px 0 0">대사별로 <b>내 파일 올리기</b> 또는 <b>GIF·영상 검색</b>(Giphy)으로 이미지·영상(움짤)을 넣으면, 그 대사가 나오는 동안 소스 영상 위에 <b>꽉 찬 컷</b>으로 덮입니다(여러 개면 순서대로 나눠 보임). 자막·채널명은 그대로 위에 보입니다. (GIF 검색은 설정 탭의 Giphy 키 필요 · 영상 업로드는 짧게)</p>`
+  box.innerHTML = `<details class="srcseg" open><summary style="cursor:pointer;font-weight:600">⑤ 장면 편집 — 대사별로 무엇을 보여줄지</summary>`
+    + `<p class="hint" style="margin:6px 0 0">대사(자막) 한 줄마다 <b>그 말이 나올 때 화면에 뭘 보여줄지</b>를 고릅니다. 기본은 <b>소스 영상</b>이고, 원하면 그 대사 구간만 <b>내 이미지·영상</b>이나 <b>GIF·영상 검색</b> 결과로 덮을 수 있어요(여러 개면 순서대로). 검색은 키 등록 없이 바로 됩니다. 자막·채널명은 항상 위에 보입니다.</p>`
     + `<div id="srcInsertList" style="margin-top:8px"></div>`
-    + `<button id="srcInsertSave" class="btn sub btnfull" style="margin-top:8px">삽입 저장</button></details>`;
+    + `<button id="srcInsertSave" class="btn sub btnfull" style="margin-top:8px">장면 저장</button></details>`;
   srcInsertRenderList();
   $("srcInsertSave").onclick = (ev) => busy(ev.target, () => srcSaveInserts());
 }
@@ -2370,13 +2387,16 @@ function srcInsertRenderList() {
       const name = isObj && it.url ? (it.query || "giphy") : String(ref).split("/").pop();
       return `<span style="display:inline-block;background:#eef;border-radius:12px;padding:2px 8px;margin:2px;font-size:12px">${label} ${srcEsc(String(name).slice(0, 20))} <b data-i="${i}" data-j="${j}" class="insdel" style="cursor:pointer;color:#c0392b">×</b></span>`;
     }).join("");
-    const q = srcEsc(String(l.query || "").trim());
+    const bgkw = ((srcPlanState.script && srcPlanState.script.bg_keywords) || []).join(" ");
+    const q = srcEsc(String(l.query || bgkw || "").trim().slice(0, 40));
+    const has = items.length > 0;
     return `<div style="margin-bottom:10px;border-bottom:1px solid #f0f0f0;padding-bottom:8px">`
       + `<div class="srcsub" style="margin-bottom:4px"><b>${i + 1}.</b> ${srcEsc(String(l.text || "").slice(0, 44))}</div>`
-      + `<div class="row2" style="gap:6px;flex-wrap:wrap">`
-      + `<label class="btn mini sub" style="cursor:pointer;display:inline-block">+ 내 파일 올리기<input type="file" accept="image/*,video/*" hidden class="insup" data-i="${i}"></label>`
+      + `<div class="row2" style="gap:6px;flex-wrap:wrap;align-items:center">`
+      + `<span class="chip" style="background:${has ? "#eef" : "#e8f5e9"};color:${has ? "#333" : "#1a7f37"}">${has ? "삽입 장면" : "소스 영상(기본)"}</span>`
+      + `<label class="btn mini sub" style="cursor:pointer;display:inline-block">+ 내 파일<input type="file" accept="image/*,video/*" hidden class="insup" data-i="${i}"></label>`
       + `<button class="btn mini sub inssearch" data-i="${i}" data-q="${q}">GIF·영상 검색</button></div>`
-      + `<div style="margin-top:4px">${chips || `<span class="hint">삽입 없음 = 소스 영상 그대로</span>`}</div></div>`;
+      + `<div style="margin-top:4px">${chips || `<span class="hint">비우면 이 대사 구간은 소스 영상 그대로 나옵니다</span>`}</div></div>`;
   }).join("");
   list.querySelectorAll(".insdel").forEach((b) => b.onclick = () => srcInsertDel(+b.dataset.i, +b.dataset.j));
   list.querySelectorAll(".insup").forEach((inp) => inp.onchange = (ev) => srcInsertUpload(+inp.dataset.i, ev.target.files && ev.target.files[0]));
@@ -2781,6 +2801,8 @@ const VID_PREFIX = "shorts-run";
 // v: 캐시버스터(선택). 워커는 u만 읽고 v는 무시 → 같은 이름의 릴리스 자산이 새 내용으로
 // 덮어써졌을 때(후보 '다시 찾기') v를 자산 updated_at으로 주면 브라우저·엣지 캐시를 우회해 새 이미지가 뜬다.
 function mediaUrl(u, v) { return "/media?u=" + encodeURIComponent(u) + (v ? "&v=" + encodeURIComponent(v) : ""); }
+// 틱톡 원본 주소 → 워커가 신선한 재생 URL을 받아 인라인 스트리밍(만료·핫링크 해결). 구간 편집기 재생용.
+function tikUrl(srcUrl) { return srcUrl ? ("/tik?u=" + encodeURIComponent(srcUrl)) : ""; }
 function relMeta(rel) { try { return JSON.parse(rel.body || "{}"); } catch (_) { return {}; } }
 // 영상 저장(사진 앱 공유 / 다운로드 폴백) — 모달 버튼과 썸네일 밑 '저장' 버튼 공용
 async function saveVideo(btn, url, rawName) {
@@ -3838,42 +3860,43 @@ function renderImgLines() {
   }
 }
 // ── GIF 검색 모달 (라인 공유 · 열었다/닫았다 · 큰 미리보기 · 담을 때마다 트레이에 유지) ──
-let gifLine = null, gifOffset = 0, gifQuery = "", gifSink = null;
-// gifSink: 소싱 삽입 등 다른 소비자가 Giphy 모달을 재사용할 때의 픽 싱크(null=이미지탭 기본: imgPicks/togglePick).
+let gifLine = null, gifQuery = "", gifSink = null, gifSrc = "giphy";
+// gifSink: 소싱 삽입 등 다른 소비자가 검색 모달을 재사용할 때의 픽 싱크(null=이미지탭 기본: imgPicks/togglePick).
 //   {title, has:(key)=>bool, count:()=>number, onPick:(pick)=>void}
+function gifSrcSync() { document.querySelectorAll(".gifsrcbtn").forEach((b) => b.classList.toggle("sub", b.dataset.src !== gifSrc)); }
 function openGifModal(li, kw, sink) {
   gifSink = sink || null;
-  gifLine = li; gifOffset = 0; gifQuery = "";
-  $("gifModalTitle").textContent = (gifSink && gifSink.title) || `라인 ${li + 1} · GIF 검색`;
+  gifLine = li; gifQuery = ""; gifSrc = "giphy"; gifSrcSync();
+  $("gifModalTitle").textContent = (gifSink && gifSink.title) || `라인 ${li + 1} · 검색`;
   $("gifModalQ").value = (kw || "").trim();
-  $("gifModalRes").innerHTML = ""; $("gifModalMore").style.display = "none";
+  $("gifModalRes").innerHTML = "";
   $("gifModalCount").textContent = (gifSink ? gifSink.count() : (imgPicks[li] || []).length) + "개 담김";
   $("gifModal").style.display = "flex";
   if ($("gifModalQ").value.trim()) gifModalSearch(true); else $("gifModalQ").focus();
 }
 function closeGifModal() { $("gifModal").style.display = "none"; gifLine = null; gifSink = null; }
-async function gifModalSearch(reset) {
-  const gkey = localStorage.getItem("shortsGiphyKey") || "";
-  if (!gkey) { toast("설정 탭에서 Giphy API 키를 먼저 저장하세요(무료, 3분).", 6000); return; }
+// 서버 시크릿 키를 쓰는 워커 /stock 로 검색(브라우저에 별도 키 저장 불필요). src=giphy(움짤)/pexels/pixabay(영상).
+async function gifModalSearch() {
   const q = $("gifModalQ").value.trim();
   if (!q) { toast("검색어를 입력하세요 (영어 추천)."); return; }
   const res = $("gifModalRes"), li = gifLine;
-  if (reset) { res.innerHTML = ""; gifOffset = 0; gifQuery = q; }
-  $("gifModalMore").style.display = "none";
+  gifQuery = q;
+  res.innerHTML = '<p class="empty" style="grid-column:1/-1">검색 중…</p>';
   try {
-    const r = await fetch("https://api.giphy.com/v1/gifs/search?api_key=" + encodeURIComponent(gkey)
-      + "&q=" + encodeURIComponent(q) + "&limit=18&offset=" + gifOffset + "&rating=pg-13");
-    if (!r.ok) throw new Error("Giphy 검색 실패 " + r.status + ((r.status === 401 || r.status === 403) ? " — 설정 탭의 키를 확인하세요" : ""));
-    const list = ((await r.json()).data) || [];
-    gifOffset += list.length;
-    for (const g of list) {
-      const url = ((((g.images || {}).original || {}).url) || "").split("?")[0];
-      const thumbU = (((g.images || {}).fixed_width || {}).url) || url;
-      if (!url) continue;
-      const keyId = "gy:" + g.id;
+    const r = await fetch("/stock?src=" + encodeURIComponent(gifSrc) + "&q=" + encodeURIComponent(q));
+    const data = await r.json().catch(() => ({}));
+    const items = (data && data.items) || [];
+    res.innerHTML = "";
+    if (data && /no .*key/.test(data.error || "")) {
+      res.innerHTML = '<p class="empty" style="grid-column:1/-1">이 소스의 서버 키가 아직 없어요 — 다른 소스 버튼을 눌러보세요.</p>'; return;
+    }
+    for (const it of items) {
+      const keyId = it.id || (gifSrc + ":" + it.url);
+      const thumbU = it.thumb || it.url;
       const t = document.createElement("div"); t.className = "thumb"; t.dataset.key = keyId;
-      const im = document.createElement("img"); im.loading = "lazy"; im.alt = ""; im.src = thumbU; t.appendChild(im);
-      const pick = { url, source: "giphy", query: gifQuery, _key: keyId, _thumb: thumbU };
+      const im = document.createElement("img"); im.loading = "lazy"; im.alt = ""; im.src = thumbU;
+      im.onerror = () => { im.style.opacity = ".25"; }; t.appendChild(im);
+      const pick = { url: it.url, source: gifSrc, query: q, _key: keyId, _thumb: thumbU };
       if (gifSink ? gifSink.has(keyId) : (imgPicks[li] || []).some((x) => x._key === keyId)) t.classList.add("sel");
       t.onclick = () => {
         if (gifSink) { gifSink.onPick(pick); t.classList.toggle("sel", gifSink.has(keyId)); $("gifModalCount").textContent = gifSink.count() + "개 담김"; }
@@ -3882,14 +3905,13 @@ async function gifModalSearch(reset) {
       res.appendChild(t);
     }
     if (!gifSink) renumberThumbs(res, imgPicks[li] || []);
-    $("gifModalMore").style.display = list.length >= 18 ? "" : "none";
-    if (!res.children.length) res.innerHTML = '<p class="empty" style="grid-column:1/-1">결과 없음 — 다른 영어 단어로 검색해 보세요.</p>';
-  } catch (e) { toast(e.message || String(e), 6000); }
+    if (!res.children.length) res.innerHTML = '<p class="empty" style="grid-column:1/-1">결과 없음 — 다른 영어 단어/소스로 검색해 보세요.</p>';
+  } catch (_) { res.innerHTML = '<p class="empty" style="grid-column:1/-1">검색 실패 — 잠시 후 다시 시도하세요.</p>'; }
 }
+document.querySelectorAll(".gifsrcbtn").forEach((b) => b.onclick = () => { gifSrc = b.dataset.src; gifSrcSync(); gifModalSearch(); });
 $("gifModalClose").onclick = closeGifModal;
-$("gifModalGo").onclick = () => gifModalSearch(true);
-$("gifModalQ").onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); gifModalSearch(true); } };
-$("gifModalMore").onclick = () => gifModalSearch(false);
+$("gifModalGo").onclick = () => gifModalSearch();
+$("gifModalQ").onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); gifModalSearch(); } };
 $("gifModal").onclick = (e) => { if (e.target === $("gifModal")) closeGifModal(); };
 $("imgSave").onclick = (ev) => busy(ev.target, async () => {
   if (!imgManifest) { toast("먼저 후보를 불러오세요."); return; }
