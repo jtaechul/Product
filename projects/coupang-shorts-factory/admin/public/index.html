@@ -222,6 +222,11 @@ ol li{margin:8px 0}
 .gifmodal-res .thumb{aspect-ratio:auto; height:150px}
 .gifmodal-res .thumb img{width:100%; height:100%; object-fit:cover}
 .gifmodal-foot{text-align:right; font-size:11px; font-weight:800; letter-spacing:.4px; color:var(--sub); margin-top:6px}
+/* 소싱 탭 카드 접기 — 완료/비활성 단계는 접힘 기본, 현재 단계만 펼침 (2026-07-27) */
+#tab-sourcing .card > h2{cursor:pointer; user-select:none}
+#tab-sourcing .card.srccol > *:not(h2){display:none !important}
+.srcchev{float:right; opacity:.45; font-size:14px; font-weight:normal; transition:opacity .1s}
+#tab-sourcing .card > h2:hover .srcchev{opacity:.8}
 </style>
 </head>
 <body>
@@ -397,7 +402,7 @@ ol li{margin:8px 0}
 
 <!-- ───────── 소싱 탭 (틱톡-우선 상품 발굴, SSOT §6·§2) ───────── -->
 <section id="tab-sourcing" class="on" data-group="sourcing">
-  <div class="card">
+  <div class="card" id="srcDiscoverCard">
     <h2>① 상품 발굴 — 틱톡에서 신박한 상품 찾기</h2>
     <p class="hint">카테고리(검색어)를 넣으면 틱톡에서 조회수 높은 <b>신박한 상품 상위 5개</b>를 찾아,
     각 상품의 <b>한국어 설명 + 쿠팡 검색어</b>를 보여줍니다. 마음에 드는 <b>상품 하나</b>를 고르세요.
@@ -1643,6 +1648,26 @@ function srcEsc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
 function srcNonce() { return "n" + Date.now() + Math.floor(Math.random() * 1e6); }
 function sourcingInit() { srcRestoreState(); }   // 진입 시 이전 진행상태 복원(초기화 방지)
 
+// ── 소싱 단계 카드 접기(감추기) — 완료/비활성 단계는 접힘, 현재 단계만 펼침 (2026-07-27) ──
+const SRC_STEP_CARDS = ["srcDiscoverCard", "srcPickCard", "srcPromoCard", "srcPlanCard"];
+function srcInitCollapse() {
+  SRC_STEP_CARDS.forEach((id) => {
+    const c = $(id); if (!c) return;
+    const h = c.querySelector("h2"); if (!h || h.dataset.col) return;
+    h.dataset.col = "1";
+    const chev = document.createElement("span"); chev.className = "srcchev"; chev.textContent = "▾";
+    h.appendChild(chev);
+    h.addEventListener("click", () => srcToggleCard(id, !c.classList.contains("srccol")));
+  });
+}
+function srcToggleCard(id, collapse) {
+  const c = $(id); if (!c) return;
+  c.classList.toggle("srccol", !!collapse);
+  const ch = c.querySelector(".srcchev"); if (ch) ch.textContent = collapse ? "▸" : "▾";
+}
+// 이 단계만 펼치고 나머지 소싱 단계는 접는다(완료/비활성 감추기 기본).
+function srcActivateStep(id) { SRC_STEP_CARDS.forEach((x) => srcToggleCard(x, x !== id)); }
+
 /* ── 진행상태 유지(2026-07-26 사용자 보고: 탭 이동·닫기 시 초기화됨) ──────────
    모바일은 다른 앱/창으로 나가면 페이지가 언로드돼 메모리 상태(발굴결과·선택·홍보영상·방향·대본)가
    사라진다. 스냅샷을 localStorage에 저장하고 로드/탭진입 시 복원해 진행 단계를 그대로 이어가게 한다. */
@@ -1720,6 +1745,7 @@ async function srcRunDiscover(fromInput) {
   srcState = { hash, keyword: kw, cands: [], picked: null, pickedNaver: null, affDraft: sameKw ? srcState.affDraft : "",
     page: advance ? (srcState.page || 0) + 1 : 0, nonce, nextCursor: cursor, seenIds: seen };
   $("srcCards").innerHTML = ""; $("srcPickCard").style.display = "none"; $("srcRefresh").style.display = "none";
+  srcActivateStep("srcDiscoverCard");   // 발굴 시작 → ① 펼치고 ②③④ 접기
   $("srcStatus").textContent = advance ? "다른(다음) 영상 찾는 중… (약 1~2분)" : `'${kw}' 틱톡 상품 발굴 중… (약 1~2분)`;
   srcSaveState();
   await srcDispatch({ keyword: kw, hash, limit: "5", page: String(srcState.page), nonce,
@@ -1851,7 +1877,7 @@ function srcRenderPick() {
     + `<button id="srcConfirm" class="btn">상품 확정</button>`
     + `<button id="srcPickCancel" class="btn sub">취소</button></div>`
     + `<p id="srcPickStatus" class="hint" style="margin-top:8px"></p>`;
-  $("srcPickCard").style.display = "";
+  $("srcPickCard").style.display = ""; srcActivateStep("srcPickCard");
   const nvBox = $("srcNvCands");
   if (nvBox) nvBox.querySelectorAll("[data-nvi]").forEach((el) => {
     el.onclick = () => { srcState.pickedNaver = parseInt(el.dataset.nvi, 10); srcRenderPick(); };   // 선택 → 재렌더(어필리에이트 유지)
@@ -1909,7 +1935,7 @@ function srcShowPromo(product, productHash, restore) {
     + `<div id="srcPromoCards" class="srccards"></div>`
     + `<button id="srcPromoRefresh" class="btn sub" style="display:none; margin-top:12px; width:100%">다른 홍보영상 찾기</button>`
     + `<button id="srcPromoSave" class="btn" style="display:none; margin-top:10px; width:100%">이 영상들로 진행 (선택 저장)</button>`;
-  $("srcPromoCard").style.display = "";
+  $("srcPromoCard").style.display = ""; srcActivateStep("srcPromoCard");
   $("srcPromoFind").onclick = (ev) => busy(ev.target, () => srcPromoDispatch(0));
   $("srcPromoRefresh").onclick = (ev) => busy(ev.target, () => srcPromoDispatch((srcPromoState.page || 0) + 1));
   $("srcPromoSave").onclick = (ev) => busy(ev.target, srcPromoSave);
@@ -2026,7 +2052,7 @@ function srcShowPlan(productHash, restore) {
     + `<p id="srcPlanStatus" class="hint" style="margin-top:8px"></p>`
     + `<div id="srcDirBox"></div>`
     + `<div id="srcScriptBox" style="margin-top:14px"></div>`;
-  $("srcPlanCard").style.display = "";
+  $("srcPlanCard").style.display = ""; srcActivateStep("srcPlanCard");
   $("srcPlanStart").onclick = (ev) => busy(ev.target, () => srcPlanDirections());
   if (restore) {   // 복원: 저장된 방향(3안/스텁)·대본을 그대로 다시 그린다(네트워크 불필요)
     if ((srcPlanState.options || []).length || srcPlanState.note)
@@ -2178,6 +2204,7 @@ function srcRenderScript(s) {
     + `</div>`
     + `<button id="srcScriptEdit" class="btn sub btnfull" style="margin-top:8px">대본 수정 (제목·대사·설명·해시태그)</button>`
     + `<div id="srcSegBox" style="margin-top:14px"></div>`
+    + `<div id="srcInsertBox" style="margin-top:10px"></div>`
     + `<button id="srcProduce" class="btn btnfull" style="margin-top:12px">⑤ 이 대본으로 영상 제작하기</button>`
     + `<p class="hint" style="margin-top:6px">확정한 홍보영상들을 9:16으로 이어붙이고, 위 대본을 <b>한국어 나레이션 + 카라오케 자막</b>으로 얹어 완성합니다(약 3~5분).</p>`
     + `<p id="srcProdStatus" class="hint" style="margin-top:6px"></p>`
@@ -2185,6 +2212,7 @@ function srcRenderScript(s) {
   $("srcScriptEdit").onclick = () => srcEditScript();
   $("srcProduce").onclick = (ev) => busy(ev.target, () => srcProduce());
   srcRenderSegments(srcPlanState.hash);   // ④ 영상 구간 지정(선택)
+  srcRenderInserts(srcPlanState.hash);    // ⑤ 이미지·영상 삽입(선택)
   srcLoadProduced(srcPlanState.hash);     // 이미 만든 영상이 있으면 바로 보여준다(복원)
   srcSaveState();
 }
@@ -2302,7 +2330,81 @@ async function srcSaveSegments() {
   toast("구간 저장됨 — 다음 제작부터 반영");
 }
 
+// ⑤ 이미지·영상 삽입(컷어웨이) — 특정 대사(라인) 구간에 내 이미지/영상(움짤)을 얹는다.
+//   업로드 파일은 저장소에 커밋(data/sources/inserts_assets/{hash}/), 라인별 매핑은 inserts 파일에 저장.
+//   제작이 그 대사 구간 동안 소스 영상 위에 풀프레임으로 덮는다(자막·브랜드는 위에 유지).
+const srcInsertPath = (h) => `${P}/data/sources/inserts/${h}.json`;
+const srcInsertAssetRel = (h, i, n, ext) => `data/sources/inserts_assets/${h}/L${String(i).padStart(2, "0")}_${n}.${ext}`;
+let srcInsertState = { hash: null, lines: [], inserts: {} };
+
+async function srcRenderInserts(hash) {
+  const box = $("srcInsertBox"); if (!box) return;
+  box.innerHTML = "";
+  const lines = (srcPlanState.script && srcPlanState.script.lines) || [];
+  if (!lines.length) return;
+  let inserts = {};
+  try { const f = await getFile(srcInsertPath(hash), true, true); if (f) inserts = (JSON.parse(f.text).inserts) || {}; } catch (_) {}
+  srcInsertState = { hash, lines, inserts };
+  box.innerHTML = `<details class="srcseg"><summary style="cursor:pointer;font-weight:600">⑤ 이미지·영상 삽입 (선택 — 특정 대사에 내 이미지/움짤 얹기)</summary>`
+    + `<p class="hint" style="margin:6px 0 0">대사별로 내 <b>이미지·영상(움짤)</b>을 올리면, 그 대사가 나오는 동안 소스 영상 위에 <b>꽉 찬 컷</b>으로 덮입니다(여러 개면 순서대로 나눠 보임). 자막·채널명은 그대로 위에 보입니다. 영상은 짧게(수 초) 올리세요.</p>`
+    + `<div id="srcInsertList" style="margin-top:8px"></div>`
+    + `<button id="srcInsertSave" class="btn sub btnfull" style="margin-top:8px">삽입 저장</button></details>`;
+  srcInsertRenderList();
+  $("srcInsertSave").onclick = (ev) => busy(ev.target, () => srcSaveInserts());
+}
+
+function srcInsertRenderList() {
+  const list = $("srcInsertList"); if (!list) return;
+  list.innerHTML = srcInsertState.lines.map((l, i) => {
+    const items = srcInsertState.inserts[String(i)] || [];
+    const chips = items.map((rel, j) => {
+      const isVid = /\.(mp4|mov|webm|gif)$/i.test(rel);
+      const name = String(rel).split("/").pop();
+      return `<span style="display:inline-block;background:#eef;border-radius:12px;padding:2px 8px;margin:2px;font-size:12px">${isVid ? "[영상] " : "[사진] "}${srcEsc(name)} <b data-i="${i}" data-j="${j}" class="insdel" style="cursor:pointer;color:#c0392b">×</b></span>`;
+    }).join("");
+    return `<div style="margin-bottom:10px;border-bottom:1px solid #f0f0f0;padding-bottom:8px">`
+      + `<div class="srcsub" style="margin-bottom:4px"><b>${i + 1}.</b> ${srcEsc(String(l.text || "").slice(0, 44))}</div>`
+      + `<label class="btn mini sub" style="cursor:pointer;display:inline-block">+ 이미지·영상 올리기<input type="file" accept="image/*,video/*" hidden class="insup" data-i="${i}"></label>`
+      + `<div style="margin-top:4px">${chips || `<span class="hint">삽입 없음 = 소스 영상 그대로</span>`}</div></div>`;
+  }).join("");
+  list.querySelectorAll(".insdel").forEach((b) => b.onclick = () => srcInsertDel(+b.dataset.i, +b.dataset.j));
+  list.querySelectorAll(".insup").forEach((inp) => inp.onchange = (ev) => srcInsertUpload(+inp.dataset.i, ev.target.files && ev.target.files[0]));
+}
+
+async function srcInsertUpload(i, file) {
+  if (!file) return;
+  const hash = srcInsertState.hash;
+  const isVid = /^video\//.test(file.type || "") || /\.(mp4|mov|webm|gif)$/i.test(file.name || "");
+  const cap = isVid ? 40 * 1024 * 1024 : 15 * 1024 * 1024;
+  if (file.size > cap) { toast(`${isVid ? "영상은 40MB" : "이미지는 15MB"} 이하만 올릴 수 있어요(짧게/작게)`); return; }
+  const ext = ((file.name || "").split(".").pop() || (isVid ? "mp4" : "jpg")).toLowerCase().replace(/[^a-z0-9]/g, "") || (isVid ? "mp4" : "jpg");
+  const arr = srcInsertState.inserts[String(i)] = srcInsertState.inserts[String(i)] || [];
+  const rel = srcInsertAssetRel(hash, i, arr.length, ext);
+  toast("올리는 중… (크면 몇 초 걸려요)");
+  try {
+    await uploadBlob(`${P}/${rel}`, file, `sourcing(admin): 라인${i + 1} 삽입물 업로드`);
+  } catch (e) { toast("업로드 실패: " + (e && e.message || e)); return; }
+  arr.push(rel);
+  srcInsertRenderList();
+  toast("올렸어요 — 맨 아래 [삽입 저장]을 눌러 확정하세요");
+}
+
+function srcInsertDel(i, j) {
+  const arr = srcInsertState.inserts[String(i)];
+  if (arr) { arr.splice(j, 1); if (!arr.length) delete srcInsertState.inserts[String(i)]; }
+  srcInsertRenderList();
+}
+
+async function srcSaveInserts() {
+  const payload = { product_hash: srcInsertState.hash, inserts: srcInsertState.inserts };
+  let sha; try { const ex = await getFile(srcInsertPath(srcInsertState.hash), true, true); sha = ex && ex.sha; } catch (_) {}
+  await putFile(srcInsertPath(srcInsertState.hash), JSON.stringify(payload, null, 2) + "\n", "sourcing(admin): 이미지·영상 삽입", sha || undefined);
+  toast("삽입 저장됨 — 다음 제작부터 반영");
+}
+
 const SRC_PROD_WF = "shorts-sourcing-produce.yml";
+const SRC_UPLOAD_WF = "shorts-sourcing-upload.yml";
+const srcUploadPath = (h) => `${P}/data/sources/upload/${h}.json`;
 const srcRelTag = (h) => `shorts-src-${h}`;
 
 async function srcReleaseByTag(tag) {
@@ -2390,9 +2492,70 @@ async function srcRenderPublishMeta() {
     + srcCopyRow("해시태그", tags)
     + srcCopyRow("고정 댓글 (제휴고지 + 쿠팡 링크)", pin, true)
     + (aff ? "" : `<p class="hint" style="color:#c0392b">※ 어필리에이트 링크가 없습니다 — ②에서 쿠팡 링크를 입력하면 여기 자동 표시됩니다.</p>`)
-    + `<p class="hint" style="margin-bottom:0">유튜브 <b>자동 업로드</b>는 인증(SHORTS_YT) 등록 후 지원됩니다.</p>`
+    + `<div style="margin-top:14px;border-top:1px solid #eee;padding-top:12px">`
+    + `<button id="srcUploadBtn" class="btn btnfull">유튜브에 올리기 (비공개)</button>`
+    + `<p class="hint" style="margin:6px 0 0">비공개로 올라갑니다 — 유튜브 스튜디오에서 <b>예약 공개</b>하면, 공개되는 순간 제휴고지+쿠팡 링크가 <b>고정 댓글</b>로 자동 등록됩니다.</p>`
+    + `<div id="srcUploadResult" style="margin-top:8px"></div>`
+    + `</div>`
     + `</div>`;
   host.querySelectorAll("[data-copyidx]").forEach((b) => b.onclick = () => srcCopy(srcCopyStore[+b.dataset.copyidx], b));
+  const ub = $("srcUploadBtn");
+  if (ub) ub.onclick = (ev) => busy(ev.target, () => srcUpload());
+  srcUploadRestore();   // 이미 업로드한 적 있으면 유튜브 링크 복원
+}
+// ⑥ 유튜브 자동 업로드 — 완성 릴리스를 shorts-sourcing-upload.yml로 올리고(비공개) 결과 링크를 폴링.
+async function srcUpload() {
+  const hash = srcPlanState.hash;
+  if (!hash) { toast("먼저 대본을 만드세요"); return; }
+  const rel = await srcReleaseByTag(srcRelTag(hash));
+  const vid = rel && (rel.assets || []).find((a) => /video\.mp4$/i.test(a.name));
+  if (!vid) { toast("먼저 ⑤ 영상을 제작하세요"); return; }
+  if (!confirm("이 영상을 유튜브에 '비공개'로 올릴까요?\n(공개 전환·예약은 유튜브 스튜디오에서 직접 하세요)")) return;
+  const nonce = srcNonce();
+  srcPlanState.uploadNonce = nonce;
+  const box = $("srcUploadResult");
+  if (box) box.innerHTML = `<p class="hint">유튜브에 올리는 중… (약 1~3분)</p>`;
+  try {
+    await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${SRC_UPLOAD_WF}/dispatches`, {
+      method: "POST", body: JSON.stringify({ ref: BRANCH, inputs: { hash, privacy: "private", nonce } }) });
+  } catch (e) {
+    if (box) box.innerHTML = `<p class="hint" style="color:#c0392b">업로드 시작 실패: ${srcEsc(String(e && e.message || e))}</p>`;
+    return;
+  }
+  toast("유튜브 업로드 시작 — 약 1~3분");
+  srcUploadPoll(hash, nonce, 0);
+}
+async function srcUploadPoll(hash, nonce, tries) {
+  if (srcPlanState.uploadNonce !== nonce) return;   // 더 최신 업로드가 시작됨
+  let f = null;
+  try { f = await getFile(srcUploadPath(hash), true, true); } catch (_) {}
+  if (f) {
+    try {
+      const m = JSON.parse(f.text);
+      if (String(m.nonce || "") === String(nonce) && m.url) { srcUploadShow(m); toast("유튜브 업로드 완료"); return; }
+    } catch (_) {}
+  }
+  if (tries > 40) {
+    const box = $("srcUploadResult");
+    if (box) box.innerHTML = `<p class="hint" style="color:#c0392b">결과를 아직 못 받았습니다(오래 걸리거나 실패). 잠시 후 다시 누르거나 Actions 로그를 확인하세요.</p>`;
+    return;
+  }
+  setTimeout(() => srcUploadPoll(hash, nonce, tries + 1), 8000);
+}
+// 이미 저장된 업로드 결과가 있으면(다른 기기/재접속) 링크를 그대로 복원.
+async function srcUploadRestore() {
+  const hash = srcPlanState.hash; if (!hash) return;
+  try {
+    const f = await getFile(srcUploadPath(hash), true, true);
+    if (f) { const m = JSON.parse(f.text); if (m && m.url) srcUploadShow(m); }
+  } catch (_) {}
+}
+function srcUploadShow(m) {
+  const box = $("srcUploadResult"); if (!box) return;
+  const vis = m.status === "public" ? "공개" : (m.status === "unlisted" ? "일부공개" : "비공개");
+  box.innerHTML =
+    `<p class="hint" style="margin:0 0 4px;color:#1a7f37">유튜브 업로드 완료 (${srcEsc(vis)}) — 스튜디오에서 예약/공개하세요.</p>`
+    + `<a class="btn sub btnfull" href="${srcEsc(m.url)}" target="_blank" rel="noopener" style="text-align:center">유튜브에서 열기</a>`;
 }
 function srcCopyRow(label, text, multiline) {
   const idx = srcCopyStore.push(text) - 1;
@@ -3829,6 +3992,8 @@ $("memeUp").onclick = (ev) => busy(ev.target, async () => {
 // 옛 '만들기' 탭 일시정지(유료 토큰·불필요 호출 방지): 로드 시 makeInit 자동실행 안 함.
 // 연결 확인만 유지(소싱 탭은 PAT만 있으면 동작). 옛 탭을 되살리려면 makeInit() 자동호출을 복구.
 (async () => { await checkConn(); })();
+srcInitCollapse();   // 소싱 단계 카드 접기 바인딩(현재 단계만 펼침) — 복원보다 먼저 바인딩
+srcActivateStep("srcDiscoverCard");   // 기본: ①만 펼침(②③④는 나타날 때 각자 펼침)
 srcRestoreState();   // 연결과 무관하게 소싱 진행상태 복원(탭 이동·새로고침 초기화 방지)
 // 페이지가 숨겨지거나 언로드되기 직전에 최신 상태 저장(모바일 앱 전환 대비)
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") srcSaveState(); });

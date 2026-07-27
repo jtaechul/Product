@@ -89,6 +89,43 @@ def load_segments(product_hash: str, project_root=None) -> dict:
     return out
 
 
+def load_inserts(product_hash: str, project_root=None) -> dict:
+    """⑤ 삽입물 → {line_index(int): [abs_path, ...]}. 운영자가 특정 대사(라인) 구간에 얹을
+    이미지/영상(움짤). 그 라인 구간 동안 소스 영상 위에 '풀프레임 컷어웨이'로 덮인다.
+    파일 없으면 {}(→ 삽입 없이 소스 클립만). 저장형식: {"inserts": {"0":[relpath,...], "2":[...]}}
+    또는 라인정렬 리스트도 허용. 경로는 저장소 기준 상대경로(업로드로 커밋되어 CI 체크아웃에 존재)."""
+    root = Path(project_root or PROJECT_ROOT)
+    p = root / "data" / "sources" / "inserts" / f"{product_hash}.json"
+    if not p.exists():
+        return {}
+    try:
+        raw = (json.loads(p.read_text(encoding="utf-8")) or {}).get("inserts")
+    except Exception as e:
+        print(f"[produce] 삽입물 파싱 실패({e}) — 삽입 없이 진행")
+        return {}
+    if not raw:
+        return {}
+    items = raw.items() if isinstance(raw, dict) else enumerate(raw)
+    out = {}
+    for k, paths in items:
+        try:
+            i = int(k)
+        except (TypeError, ValueError):
+            continue
+        resolved = []
+        for rel in (paths or []):
+            if not rel:
+                continue
+            fp = Path(rel) if Path(rel).is_absolute() else (root / str(rel))
+            if fp.exists():
+                resolved.append(str(fp))
+            else:
+                print(f"[produce] 삽입 파일 없음 건너뜀: {rel}")
+        if resolved:
+            out[i] = resolved
+    return out
+
+
 def _stitched_base(clip_paths: list, segments: dict | None, duration: float):
     """클립들을 9:16 무음으로 이어붙이고 duration에 맞춰 루프/트림한 moviepy 클립. moviepy(CI)."""
     from moviepy import concatenate_videoclips
@@ -167,7 +204,29 @@ def produce(product_hash: str, job_dir, settings: dict, project_root=None,
                             None, font_path, duration).with_position((0, 0))
     scrim = _scrim(W, 1440, H, duration)   # 하단 자막 스크림
 
-    layers = [base, top_bar, scrim, brand] + list(sub_clips)
+    # ⑤ 삽입물(컷어웨이): 특정 대사 구간 동안 소스 영상 위에 운영자가 고른 이미지/영상(움짤)을
+    #    풀프레임으로 덮는다. 자막·브랜드바는 그 위에 유지(레이어 순서로 보장). 없으면 소스만.
+    insert_map = load_inserts(product_hash, root)
+    insert_clips = []
+    if insert_map:
+        from src.video.render import _expose_image_clip
+        for i, srcs in insert_map.items():
+            if i >= len(line_windows) or not srcs:
+                continue
+            ls, le = float(line_windows[i][0]), min(float(line_windows[i][1]), duration)
+            if le - ls < 0.1:
+                continue
+            span = (le - ls) / len(srcs)
+            for j, src in enumerate(srcs):
+                s = ls + j * span
+                e = min(ls + (j + 1) * span, duration)
+                clip = _expose_image_clip(src, s, e, W, 0, H, [], [], kb_zoom=0.06)   # 풀프레임 컷어웨이
+                if clip is not None:
+                    insert_clips.append(clip)
+        if insert_clips:
+            print(f"[produce] 삽입물 {len(insert_clips)}컷 (라인 {len(insert_map)}개)")
+
+    layers = [base] + insert_clips + [top_bar, scrim, brand] + list(sub_clips)
     final = CompositeVideoClip(layers, size=(W, H)).with_duration(duration)
     final = final.with_audio(audio)
     out = Path(job_dir) / "video.mp4"

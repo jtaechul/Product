@@ -101,7 +101,9 @@
 > ## ⭐⭐ 틱톡 우선 소싱 파이프라인 (2026-07-26 — ①~⑥ 관리자 '소싱' 탭, 라이브)
 > 위 '상품 자료 업로드' 방식과 별개로, **틱톡에서 잘 나가는 상품을 역발굴**해 쿠팡 어필리에이트로
 > 잇는 6단계 협업 파이프라인. 관리자 '소싱' 탭에서 진행하며, 각 단계 산출물은
-> `data/sources/{discover,product,promo,plan,segments}/{hash}.json`(+ mechanism) 에 저장된다.
+> `data/sources/{discover,product,promo,plan,segments,inserts}/{hash}.json`(+ mechanism) 에 저장된다.
+> **소싱 탭 단계 카드는 접기(collapse)**: 현재 단계만 펼치고 완료/비활성 단계는 접힘이 기본
+> (`srcActivateStep`; 헤더 h2 탭으로 접기/펼치기 ▾/▸). 새 단계 진입 시 자동으로 그 카드만 펼침.
 > `src/sourcing/*`(discover·translate·naver_shop·plan·compose·produce) + 워크플로
 > `shorts-sourcing*.yml`. 해시는 `sha16("src:"+검색어)`라 CSV row_hash와 충돌 안 함.
 > - **①발굴**: 한국어 키워드→중국어 확장→tikwm 검색(커서 페이지네이션·새로고침=다음 영상)→
@@ -113,6 +115,9 @@
 >   대본 인라인 수정(대사 편집=subsBuild 자막 동기화) + 홍보영상별 **구간 지정**(segments, 없으면 전체).
 > - **⑤제작**: `src/sourcing/produce.py` — 선택 클립 다운로드→9:16 이어붙이기(원음 제거·구간/전체)→
 >   한국어 나레이션(TTS)+카라오케 자막+브랜드바+포스터 → 릴리스 `shorts-src-{hash}`.
+>   **이미지·영상 삽입(컷어웨이)**: 관리자에서 라인(대사)별로 내 이미지·영상(움짤)을 올리면
+>   (`data/sources/inserts_assets/{hash}/`에 커밋, `inserts/{hash}.json`에 매핑) 그 대사 구간 동안
+>   소스 영상 위에 **풀프레임**으로 덮인다(`load_inserts`+`render._expose_image_clip`, 자막·브랜드는 위 유지).
 >   moviepy는 로컬에 없어 `scripts/produce_probe.py`(shorts-produce-probe.yml)로 CI 실증(produce=OK).
 >   **⭐ 실동작 E2E 검증 완료(2026-07-26)**: 실 틱톡 클립(주방 다지기)+실 대본으로 CI 제작 →
 >   릴리스에 **1080x1920·오디오 有·7.6MB** 영상 확인(실 Gemini 나레이션+자막). 이때 프로브가
@@ -120,10 +125,14 @@
 >   `compose._default_adapter`가 없으면 직접 생성 ⓑ ③선택~⑤제작 사이 tikwm URL 만료 →
 >   `tiktok_tikwm.download`가 저장 URL 실패 시 source_url 재해석 재시도 ⓒ 제작 워크플로에
 >   Gemini TTS 키(SHORTS_GEMINI_API_KEY/GEMINI_API_KEY) 누락 → 추가. **이 3개를 되돌리지 말 것.**
-> - **⑥발행 준비**: 완성 영상 아래 제목·설명(제휴고지 포함)·해시태그·고정댓글 **복사 패널**(수동 유튜브
->   업로드로 수익화 루프 완성). **유튜브 자동 업로드는 SHORTS_YT 인증 등록 후** 붙인다(현재 미검증이라 보류).
-> - **정확도**는 계속 개선 대상(사용자 확정: "정확도는 다음에 또"). 머신은 E2E로 검증됐고, 남은 건
->   상품 매칭 정확도 향상 + ⑥ 유튜브 자동 업로드(인증 후).
+> - **⑥발행**: 완성 영상 아래 제목·설명(제휴고지 포함)·해시태그·고정댓글 **복사 패널** +
+>   **유튜브 자동 업로드 버튼**(SHORTS_YT 인증 완료, 2026-07-27). "유튜브에 올리기(비공개)" →
+>   `shorts-sourcing-upload.yml`이 릴리스 `shorts-src-{hash}`의 video.mp4를 내려받아 검증된
+>   `src.upload.youtube`로 **비공개** 업로드(설명 제휴고지 강제·해시태그 병합·비공개면 고지 댓글 대기열).
+>   결과 `data/sources/upload/{hash}.json`(nonce 신선도)로 폴링→유튜브 링크 표시. 스튜디오에서
+>   예약공개→공개 시 `shorts-comments` cron이 고정댓글 자동 등록. (실 업로드는 실채널로 나가 자동
+>   테스트 불가 → 모듈 import·CLI·워크플로 배선만 검증. 공개 전환은 운영자가 스튜디오에서 수동.)
+> - **정확도**는 계속 개선 대상(사용자 확정: "정확도는 다음에 또"). 남은 건 상품 매칭 정확도 향상.
 
 ## ⭐ 핵심 규칙 — 사용자 노코드 원칙 (항상 적용)
 
