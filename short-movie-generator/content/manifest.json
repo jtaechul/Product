@@ -306,14 +306,6 @@
     "youtube_url": "https://youtu.be/J1VWVWmsHSw"
   },
   {
-    "id": "049",
-    "kind": "reels",
-    "common_name_ko": "Coelorinchus caelorhincus",
-    "common_name_en": "Coelorinchus caelorhincus",
-    "scientific_name": "Coelorinchus caelorhincus",
-    "date": "2026-07-26"
-  },
-  {
     "id": "lf-3",
     "kind": "longform",
     "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
@@ -379,5 +371,14 @@
     "mode": "shorts",
     "date": "2026-07-27",
     "has_video": true
+  },
+  {
+    "id": "049",
+    "kind": "reels",
+    "common_name_ko": "Coelorinchus caelorhincus",
+    "common_name_en": "Coelorinchus caelorhincus",
+    "scientific_name": "Coelorinchus caelorhincus",
+    "date": "2026-07-27",
+    "youtube_url": "https://youtu.be/RH3pySzSLYo"
   }
 ]
