@@ -127,6 +127,26 @@ def discover(keyword: str, limit: int = 10, adapter: TikwmAdapter | None = None,
     return svs, next_cursor
 
 
+def discover_url(url: str, adapter: TikwmAdapter | None = None) -> list:
+    """틱톡 URL 하나 → 그 영상만 소스 후보로(키워드 검색 대신 · 2026-07-27 사용자 요청).
+    tikwm로 URL을 해석해 영상 1건을 받고, 키워드 발굴과 동일한 후처리(비전 식별→쿠팡 검색어→네이버 확인)를 적용."""
+    ad = adapter or TikwmAdapter()
+    try:
+        svs, _n, _m = ad.search_page(Seed(kind="url", value=url), limit=1)
+    except Exception as e:
+        print(f"[discover] URL 해석 실패({url}): {e}")
+        return []
+    svs = [s for s in (svs or []) if s.source_url or s.download_url][:1]
+    if svs:
+        meta = identify_by_image([{"title": s.title or "", "cover": s.cover or ""} for s in svs])
+        for s, m in zip(svs, meta):
+            s.title_ko = m["ko"]
+            s.coupang_keywords = m["keywords"]
+            s.zh_terms = m.get("zh") or []
+        enrich_naver(svs)
+    return svs
+
+
 def build_manifest(keyword: str, row_hash: str, svs: list, terms: list | None = None,
                    page: int = 0, nonce: str = "", next_cursor: int = 0) -> dict:
     return {"keyword": keyword, "hash": row_hash, "source": "tiktok_tikwm",
@@ -144,8 +164,9 @@ def write_manifest(row_hash: str, manifest: dict, base_dir: Path | None = None) 
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="틱톡 발굴 — 키워드로 추천 후보 뽑기")
-    ap.add_argument("--keyword", required=True)
+    ap = argparse.ArgumentParser(description="틱톡 발굴 — 키워드로 추천 후보 뽑기(또는 --url로 그 영상 하나)")
+    ap.add_argument("--keyword", default="", help="틱톡 검색 키워드(--url을 주면 라벨로만 쓰임)")
+    ap.add_argument("--url", default="", help="틱톡 URL(주면 키워드 검색 대신 이 영상 하나만 소스 후보로)")
     ap.add_argument("--hash", default="manual")
     ap.add_argument("--limit", type=int, default=10)
     ap.add_argument("--page", type=int, default=0, help="새로고침 배치 라벨(0=상위, 1=다음…) — 실제 페이지는 --cursor")
@@ -155,6 +176,19 @@ def main(argv=None) -> int:
     ap.add_argument("--terms", default="", help="쉼표구분 검색어(주면 한국어→중국어 확장 생략 — ③ 홍보영상: 확정 상품의 중국어어로 직접 검색)")
     a = ap.parse_args(argv)
 
+    # ⭐ 틱톡 URL 붙여넣기(2026-07-27): 키워드 검색 대신 그 URL의 영상 하나만 소스 후보로 가져온다.
+    if (a.url or "").strip():
+        svs = discover_url(a.url.strip())
+        manifest = build_manifest(a.url.strip(), a.hash, svs, terms=[], page=0, nonce=a.nonce, next_cursor=0)
+        p = write_manifest(a.hash, manifest)
+        print(f"[discover] URL 발굴='{a.url.strip()}' → 후보 {len(svs)}개: {p}")
+        if not svs:
+            print("[discover] 경고: URL에서 영상을 못 받음(잘못된 URL/차단) — 관리자에서 다시 시도 안내.")
+        return 0
+
+    if not (a.keyword or "").strip():
+        print("[discover] 오류: --keyword 또는 --url 중 하나가 필요합니다.")
+        return 2
     given = [t.strip() for t in (a.terms or "").split(",") if t.strip()]
     exclude = [u.strip() for u in (a.exclude or "").split(",") if u.strip()]
     # --terms 주면 그걸 그대로(왕복 번역 없이) — ③ 홍보영상은 ①에서 비전 식별한 '같은 상품' 중국어어로 검색.
