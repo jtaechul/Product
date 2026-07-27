@@ -412,7 +412,7 @@ ol li{margin:8px 0}
     각 상품의 <b>한국어 설명 + 쿠팡 검색어</b>를 보여줍니다. 마음에 드는 <b>상품 하나</b>를 고르세요.
     (중국어로 자동 확장 검색 · 무료 · 계정위험 없음)</p>
     <div class="row2" style="gap:8px; align-items:center">
-      <input id="srcKeyword" placeholder="예: 주방 꿀템, 창틀 환풍기, 청소 꿀템" style="flex:1; min-width:0">
+      <input id="srcKeyword" placeholder="검색어(예: 주방 꿀템) 또는 틱톡 영상 URL 붙여넣기" style="flex:1; min-width:0">
       <button id="srcDiscover" class="btn">발굴하기</button>
     </div>
     <p id="srcStatus" class="hint" style="margin-top:8px"></p>
@@ -1736,9 +1736,10 @@ async function srcDispatch(inputs) {
 async function srcRunDiscover(fromInput) {
   const kw = (fromInput ? ($("srcKeyword").value || "") : (srcState.keyword || "")).trim();
   if (!kw) { toast("검색어를 입력하세요"); return; }
+  const isUrl = /https?:\/\/([\w.-]*\.)?(tiktok\.com|douyin\.com)\//i.test(kw);   // ⭐ 틱톡 URL이면 그 영상만 가져온다
   const hash = await sha16("src:" + kw);
   const sameKw = (hash === srcState.hash);
-  const advance = sameKw && (srcState.nextCursor || 0) > 0;   // 같은 검색어면 이어서
+  const advance = !isUrl && sameKw && (srcState.nextCursor || 0) > 0;   // URL은 커서 이어받기 없음
   const cursor = advance ? (srcState.nextCursor || 0) : 0;
   const seen = sameKw ? (srcState.seenIds || []) : [];   // 새 검색어면 본 목록 초기화
   const nonce = srcNonce();
@@ -1748,13 +1749,15 @@ async function srcRunDiscover(fromInput) {
     $("srcPromoCard").style.display = "none"; $("srcPlanCard").style.display = "none";
   }
   srcState = { hash, keyword: kw, cands: [], picked: null, pickedNaver: null, affDraft: sameKw ? srcState.affDraft : "",
-    page: advance ? (srcState.page || 0) + 1 : 0, nonce, nextCursor: cursor, seenIds: seen };
+    page: advance ? (srcState.page || 0) + 1 : 0, nonce, nextCursor: cursor, seenIds: seen, isUrl };
   $("srcCards").innerHTML = ""; $("srcPickCard").style.display = "none"; $("srcRefresh").style.display = "none";
   srcActivateStep("srcDiscoverCard");   // 발굴 시작 → ① 펼치고 ②③④ 접기
-  $("srcStatus").textContent = advance ? "다른(다음) 영상 찾는 중… (약 1~2분)" : `'${kw}' 틱톡 상품 발굴 중… (약 1~2분)`;
+  $("srcStatus").textContent = isUrl ? "붙여넣은 URL의 영상을 가져오는 중… (약 1분)"
+    : (advance ? "다른(다음) 영상 찾는 중… (약 1~2분)" : `'${kw}' 틱톡 상품 발굴 중… (약 1~2분)`);
   srcSaveState();
-  await srcDispatch({ keyword: kw, hash, limit: "5", page: String(srcState.page), nonce,
-    cursor: String(cursor), exclude: seen.slice(-40).join(",") });
+  await srcDispatch(isUrl
+    ? { keyword: kw, hash, url: kw, limit: "1", page: "0", nonce }
+    : { keyword: kw, hash, limit: "5", page: String(srcState.page), nonce, cursor: String(cursor), exclude: seen.slice(-40).join(",") });
   toast(advance ? "다른 영상 찾는 중 — 약 1~2분" : "틱톡 발굴 시작 — 약 1~2분");
   srcPoll(hash, nonce, 0);
 }
@@ -1779,8 +1782,10 @@ async function srcPoll(hash, nonce, tries) {
           const urls = cands.map((c) => c.source_url).filter(Boolean);   // 본 영상 누적(중복 제외용)
           srcState.seenIds = [...new Set([...(srcState.seenIds || []), ...urls])].slice(-60);
           srcRenderCards();
-          $("srcRefresh").style.display = "";
-          $("srcStatus").textContent = `상품 ${cands.length}개${srcState.page ? ` (${srcState.page + 1}번째 묶음)` : ""} 발굴됨${terms ? ` · 검색어: ${terms}` : ""} — 상품 하나를 눌러 고르세요.`;
+          $("srcRefresh").style.display = srcState.isUrl ? "none" : "";   // URL 모드는 단일 영상 → '다른 영상 찾기' 숨김
+          $("srcStatus").textContent = srcState.isUrl
+            ? "URL 영상 1개를 가져왔어요 — 눌러서 고르세요."
+            : `상품 ${cands.length}개${srcState.page ? ` (${srcState.page + 1}번째 묶음)` : ""} 발굴됨${terms ? ` · 검색어: ${terms}` : ""} — 상품 하나를 눌러 고르세요.`;
         } else if (srcState.cands.length) {
           // 새 배치가 비었지만 이전 결과는 그대로 고를 수 있음 → '끝' 명확히 + 새로고침 숨김
           $("srcRefresh").style.display = "none";
