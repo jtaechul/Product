@@ -306,6 +306,23 @@
     "youtube_url": "https://youtu.be/J1VWVWmsHSw"
   },
   {
+    "id": "049",
+    "kind": "reels",
+    "common_name_ko": "Coelorinchus caelorhincus",
+    "common_name_en": "Coelorinchus caelorhincus",
+    "scientific_name": "Coelorinchus caelorhincus",
+    "date": "2026-07-27",
+    "youtube_url": "https://youtu.be/RH3pySzSLYo"
+  },
+  {
+    "id": "050",
+    "kind": "reels",
+    "common_name_ko": "바티노무스속",
+    "common_name_en": "Bathynomus",
+    "scientific_name": "Bathynomus",
+    "date": "2026-07-27"
+  },
+  {
     "id": "lf-3",
     "kind": "longform",
     "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
@@ -347,23 +364,6 @@
     "youtube_url": "https://youtu.be/-1gfSI8n26Y"
   },
   {
-    "id": "050",
-    "kind": "reels",
-    "common_name_ko": "바티노무스속",
-    "common_name_en": "Bathynomus",
-    "scientific_name": "Bathynomus",
-    "date": "2026-07-27"
-  },
-  {
-    "id": "nv-30223591884",
-    "kind": "narrate",
-    "yt_title": "水底の秘密：幼い日の記憶と沈没船",
-    "yt_title_ko": "물밑의 비밀: 어린 시절의 기억과 침몰선",
-    "mode": "shorts",
-    "date": "2026-07-27",
-    "has_video": true
-  },
-  {
     "id": "nv-30200041879",
     "kind": "narrate",
     "yt_title": "静かな海面を、黄色い船が進んでいきます",
@@ -373,12 +373,12 @@
     "has_video": true
   },
   {
-    "id": "049",
-    "kind": "reels",
-    "common_name_ko": "Coelorinchus caelorhincus",
-    "common_name_en": "Coelorinchus caelorhincus",
-    "scientific_name": "Coelorinchus caelorhincus",
+    "id": "nv-30223591884",
+    "kind": "narrate",
+    "yt_title": "カナダの海で再会。幼い日の沈没船影",
+    "yt_title_ko": "캐나다 바다에서 재회. 어린 날의 침몰선 그림자.",
+    "mode": "shorts",
     "date": "2026-07-27",
-    "youtube_url": "https://youtu.be/RH3pySzSLYo"
+    "has_video": true
   }
 ]
