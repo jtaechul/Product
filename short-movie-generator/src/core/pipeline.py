@@ -859,12 +859,22 @@ def run(
         except Exception as e:  # noqa: BLE001 — 게시물 실패해도 릴스는 유효
             log.warning("게시물(캐러셀) 생성 실패(무시): %s", e)
 
+    # ★자막 스크립트(운영자 요청 · 나레이션형과 동일): 화면에 나가는 자막을 시각·일본어·한국어로 기록.
+    #   완성본 = 오프닝 훅 + 본문 + 엔드카드이므로, **앞에 붙은 오프닝 길이만큼** 본문 자막을 민다.
+    subs_rows: list = []
+    try:
+        from src.core import subs_script
+        _open_off = hook_intro_stage.opening_offset(work_dir / "hook_intro")
+        subs_rows = subs_script.rows_from_disp(nar.get("disp") or [], offset=_open_off)
+    except Exception as e:  # noqa: BLE001 — 자막 기록 실패해도 발행물은 유효
+        log.warning("[reels] 자막 스크립트 기록 실패(무시): %s", e)
+
     # 콘텐츠 영구 레코드(관리자 페이지용): content/<id>.json. 미디어 URL은 CI가 Release 후 패치.
     try:
         content_store.write_record(
             base_dir, f"{int(episode):03d}", info=info, caption=caption, asset=asset,
             visualizer=viz.name, video_file=result.video_path, series_title=series_title,
-            scope=scope, post=post, category=category_id,
+            scope=scope, post=post, category=category_id, subs=subs_rows,
         )
     except Exception as e:  # noqa: BLE001 — 레코드 실패해도 발행물은 유효
         log.warning("콘텐츠 레코드 기록 실패(무시): %s", e)

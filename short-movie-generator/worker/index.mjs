@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-27-2 (표지 직접 고르기)";
+const BUILD="v2026-07-27-3 (모든 쇼츠 자막 표시)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -1002,9 +1002,12 @@ function subsPanel(rec){
   if(!subs.length) return '<div class="card" style="margin-top:12px"><span class="lbl">자막 스크립트</span>'+
     '<div class="hint" style="margin-top:6px">이 회차에는 자막 기록이 없습니다 — '+
     '<b>전체 다시 제작</b>을 한 번 돌리면 이후 회차부터 자막이 여기에 표시됩니다.</div></div>';
-  const cta=(rec.cta_jp||"").trim();
+  // 나레이션형은 rec.cta_jp, 도감형은 대본 끝의 구독 유도 절 → 공통 키워드로 찾는다.
+  const cta=(rec.cta_jp||"チャンネル登録").trim();
+  const isCtaRow=x=>!!cta&&String(x.jp||"").indexOf(cta.slice(0,6))>=0;
+  const hasCta=subs.some(isCtaRow);
   const rows=subs.map((x,i)=>{
-    const isCta=cta&&String(x.jp||"").indexOf(cta.slice(0,6))>=0;
+    const isCta=isCtaRow(x);
     return '<tr style="border-top:1px solid var(--line)'+(isCta?';background:rgba(67,200,218,.10)':'')+'">'+
       '<td style="padding:6px 8px;white-space:nowrap;color:var(--cy);font-variant-numeric:tabular-nums">'+
         mmss(x.s)+'~'+mmss(x.e)+(isCta?'<div class="hint" style="color:var(--cy)">구독 유도</div>':'')+'</td>'+
@@ -1015,7 +1018,7 @@ function subsPanel(rec){
   return '<div class="card" style="margin-top:12px">'+
     '<span class="lbl">자막 스크립트 — 화면에 나가는 문장(시각 · 일본어 · 한국어)</span>'+
     '<div class="hint" style="margin:4px 0 8px">총 '+subs.length+'줄'+
-      (cta?' · 마지막 <b style="color:var(--cy)">구독 유도</b> 포함':' · <b style="color:#ffb84d">구독 유도 없음</b>')+'</div>'+
+      (hasCta?' · <b style="color:var(--cy)">구독 유도</b> 포함':' · <b style="color:#ffb84d">구독 유도 없음</b>')+'</div>'+
     '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:14px">'+rows+'</table></div>'+
     '<textarea id="subsraw" rows="3" style="margin-top:8px">'+esc(plain)+'</textarea>'+
     '<button class="btn" id="subscp" style="margin-top:6px">자막 전체 복사</button></div>';
@@ -1582,6 +1585,8 @@ async function renderDetail(id){
       cutEditorHTML("ce")+
       '<button class="btn save" id="cego" style="margin-top:8px">이 설정으로 다시 만들기 (같은 회차 덮어쓰기)</button>'+
     '</div>'+
+    // ★자막 스크립트(운영자 요청 · 나레이션형과 동일): 시각별 일본어·한국어 자막
+    subsPanel(rec)+
     postSection(rec.post)+
     '<div class="hint">이미지 출처: '+esc(src.image_credit||"—")+'<br>정보 출처: '+esc((src.info_sources||[]).join(" · ")||"—")+'</div>';
 

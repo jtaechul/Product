@@ -1419,30 +1419,10 @@ def _subs_record(disp: list[tuple], offset: float = 0.0) -> list[dict]:
 
     운영자 요청: "자막이 뭐라고 나오는지 관리자 페이지에서 타임스탬프별로 보고 싶다."
     offset: 오프닝 훅이 앞에 붙는 만큼 본문 자막이 뒤로 밀린다 → 완성 영상 기준 시각으로 맞춘다.
-    한국어는 한 번의 LLM 호출로 번역하고, 실패하면 빈 문자열(발행을 막지 않는다).
+    ★도감형(reels)과 **같은 형식**을 쓰도록 공용 모듈(subs_script)에 위임한다.
     """
-    rows = [{"s": round(float(s) + offset, 2), "e": round(float(e) + offset, 2),
-             "jp": str(t).strip()} for t, s, e in (disp or []) if str(t).strip()]
-    if not rows:
-        return []
-    ko: list[str] = []
-    try:
-        from src.core import llm
-        raw = llm.generate_text(
-            "次の日本語字幕リストを自然な韓国語に訳し、**同じ個数**のJSON配列だけを出力してください。\n"
-            + json.dumps([r["jp"] for r in rows], ensure_ascii=False),
-            max_tokens=1200)
-        if raw:
-            m = re.search(r"\[.*\]", raw, re.S)
-            if m:
-                arr = json.loads(m.group(0))
-                if isinstance(arr, list) and len(arr) == len(rows):
-                    ko = [str(x).strip() for x in arr]
-    except Exception as e:  # noqa: BLE001
-        log.info("[narrate] 자막 한국어 번역 생략(%s)", e)
-    for i, r in enumerate(rows):
-        r["ko"] = ko[i] if i < len(ko) else ""
-    return rows
+    from src.core import subs_script
+    return subs_script.rows_from_disp(disp, offset)
 
 
 def _condense_chapters_llm(chapters: list[tuple], target: int) -> list[tuple] | None:

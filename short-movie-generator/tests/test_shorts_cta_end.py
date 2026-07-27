@@ -100,6 +100,32 @@ def test_subtitle_script_is_recorded_for_the_admin_page():
     assert "구독 유도" in worker, "구독 유도 줄 표시가 없습니다"
 
 
+def test_reels_shorts_also_record_subtitles():
+    """★모든 쇼츠(도감형 reels 포함)가 같은 형식으로 자막을 기록해야 한다(운영자 요청).
+
+    나레이션형만 되던 것을 공용 모듈(subs_script)로 모아 도감형에도 적용했는지 확인한다."""
+    from src.core import content_store, pipeline, subs_script
+    assert hasattr(subs_script, "rows_from_disp"), "공용 자막 정리 모듈이 없습니다"
+    pl = Path(pipeline.__file__).read_text(encoding="utf-8")
+    assert "subs_script.rows_from_disp" in pl, "도감형(reels)이 자막을 기록하지 않습니다"
+    assert "opening_offset" in pl, "오프닝 길이만큼 시각을 밀지 않습니다(완성본 기준이 아님)"
+    assert "subs=subs_rows" in pl, "레코드에 자막이 전달되지 않습니다"
+    cs = Path(content_store.__file__).read_text(encoding="utf-8")
+    assert "subs: list | None = None" in cs and 'rec["subs"] = subs' in cs
+    worker = (Path(pipeline.__file__).parents[2] / "worker" / "index.mjs").read_text(encoding="utf-8")
+    assert worker.count("subsPanel(rec)") >= 2, "도감형·나레이션형 두 상세 모두에 표가 있어야 합니다"
+
+
+def test_opening_offset_is_recorded_by_the_stage(tmp_path):
+    """오프닝 길이는 상수로 추정하지 않고 apply()가 남긴 값을 읽는다(훅 길이에 따라 달라진다)."""
+    from src.core import hook_intro_stage as his
+    assert his.opening_offset(tmp_path) == 0.0            # 파일 없으면 0
+    (tmp_path / "open_offset.txt").write_text("5.25", encoding="utf-8")
+    assert his.opening_offset(tmp_path) == 5.25
+    src = Path(his.__file__).read_text(encoding="utf-8")
+    assert 'open_offset.txt' in src and 'OPEN:.3f' in src, "apply()가 오프닝 길이를 남기지 않습니다"
+
+
 def test_subs_record_shifts_by_opening_offset(monkeypatch):
     """오프닝 훅이 앞에 붙는 만큼 자막 시각을 밀어 **완성본 기준**으로 기록한다."""
     monkeypatch.setattr(na, "llm", None, raising=False)

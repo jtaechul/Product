@@ -121,6 +121,14 @@ def _cover_crop(img: str, out_png: str, W: int, H: int) -> bool:
     return r.returncode == 0 and Path(out_png).exists()
 
 
+def opening_offset(work_dir: str | Path) -> float:
+    """apply()가 남긴 오프닝 길이(초). 없으면 0.0(오프닝 미적용)."""
+    try:
+        return float(Path(work_dir).joinpath("open_offset.txt").read_text(encoding="utf-8").strip())
+    except Exception:  # noqa: BLE001
+        return 0.0
+
+
 def parse_cover_spec(raw) -> dict | None:
     """운영자가 지정한 표지(오프닝 훅·썸네일 배경) 설정을 해석.
 
@@ -571,6 +579,12 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         flash = hi.build_flash_png(str(wd / "flash.png"), cfg)
 
         OPEN = cfg.opening_seg_s; END = cfg.endcard_dur_s if include_endcard else 0.0
+        # ★오프닝 길이를 파일로 남긴다: 본문 자막을 **완성본 기준 시각**으로 옮길 때 쓴다
+        #   (관리자 페이지 자막 표). 상수로 추정하면 틀린다 — 훅 나레이션 길이에 따라 늘어나기 때문.
+        try:
+            (wd / "open_offset.txt").write_text(f"{OPEN:.3f}", encoding="utf-8")
+        except Exception:  # noqa: BLE001
+            pass
         BODY_END = OPEN + dur; TOTAL = OPEN + dur + END
         W, H = cfg.W, cfg.H
 
