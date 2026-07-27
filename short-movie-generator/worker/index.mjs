@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-27-5 (표지+구간 통합 실행·설정 저장)";
+const BUILD="v2026-07-27-6 (편집 1·2·3단계 통합 + 컷 전달 수정)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -668,6 +668,9 @@ async function renderNarrateDetail(id,fresh){
     mediaHtml+
     (md.video_url?'<div class="btnrow" style="margin-top:8px"><button class="btn save" id="bdl">비디오 저장하기</button></div><div class="hint" id="dlhint" style="margin-top:6px"></div>':"")+
     thumbHtml+
+    // ★영상 직접 고치기 = 한 카드 1·2·3단계(운영자 확정): 표지·구간·실행이 서로 멀리 떨어져 있어
+    //   불편했다 → **영상 바로 아래**에 하나로 모으고, 실행 버튼은 두 설정 아래(=마지막)에 둔다.
+    (rec.source_url?editStudioHTML((rec.mode||"")==="shorts", rec):'')+
     '<div class="hint" style="margin:10px 0 2px">아래 제목·설명·해시태그는 <b>영상 대본을 근거로 자동 생성</b>된 값입니다(유튜브 업로드용 복사).</div>'+
     '<div class="dual" style="margin-top:8px">'+
       '<div><span class="lbl">제목 · 일본어</span><textarea id="nvtj" readonly rows="2">'+esc(rec.yt_title||"")+'</textarea>'+
@@ -715,9 +718,6 @@ async function renderNarrateDetail(id,fresh){
         '</select></div>'+
         '<button class="btn save" id="nvup">유튜브에 올리기</button></div>'
     ):''))+
-    // ★표지(오프닝 훅·썸네일) 직접 고르기 + **통합 실행 버튼**(표지 + 구간을 한 번에)
-    (rec.source_url?coverEditorHTML():'')+
-    (rec.source_url?applyEditsHTML((rec.mode||"")==="shorts"):'')+
     // ★자막 스크립트(운영자 요청): 화면에 나가는 자막을 시각·일본어·한국어로 확인.
     subsPanel(rec)+
     // ★관리(운영자 확정): 이 나레이션 영상을 원본 그대로 다시 제작(재생성)하거나 영구 삭제.
@@ -728,19 +728,9 @@ async function renderNarrateDetail(id,fresh){
         '<button class="btn" id="nvdesc">설명 재생성</button>'+
         (rec.source_url?'<button class="btn" id="nvthumb">썸네일만 재생성</button>':'<button class="btn" id="nvthumb" disabled title="원본 URL 없음">썸네일 재생성 불가</button>')+
         (rec.source_url?'<button class="btn" id="nvregen">전체 다시 제작(재생성)</button>':'<button class="btn" id="nvregen" disabled title="원본 URL 없음">재생성 불가</button>')+
-        // ★결과를 보고 구간을 다시 잡는 패널(운영자 확정 "일단 만들고 내가 고치기").
-        //   원본을 여기서 재생하고, 원하는 지점에서 버튼을 눌러 컷 구간을 채운 뒤 재제작한다.
-        (rec.source_url?(
-          // ★전체 폭(grid-column:1/-1): 2열 그리드 안이라 절반 폭으로 찌그러져 아이폰에서 글자가
-          //   세로로 쪼개졌다(운영자 지적). 편집 카드는 반드시 한 줄 전체를 차지한다.
-          '<div class="card" id="nvcutbox" style="grid-column:1/-1;margin-top:10px;border:1px solid var(--cy)">'+
-            '<span class="lbl" style="color:var(--cy)">구간·줌 직접 지정 — 내가 정해서 다시 만들기</span>'+
-            cutEditorHTML("nc")+
-          '</div>'
-        ):'')+
         '<button class="btn" id="nvdel" style="background:#8b1a1a;color:#fff;grid-column:1/-1">이 영상 삭제 (영구)</button></div>'+
       '<div class="hint" style="margin-top:6px">'+
-        '<b>구간·줌 다시 잡기</b>는 원본을 보며 컷 구간·줌 배율·크롭 위치를 직접 정해 <b>같은 회차에 덮어써</b> 다시 만듭니다(5~15분). '+
+        '<b>표지·구간 직접 지정</b>은 위쪽 <b>영상 직접 고쳐 만들기</b> 카드에 모아 두었습니다. '+
         '<b>제목 재생성</b>은 대본으로 제목·훅을 다시 만들고 <b>썸네일도 새 제목으로 함께</b> 다시 그립니다(2~5분 · 영상 유지'+(rec.source_url?'':' · 원본 URL이 없어 이 건은 텍스트만 갱신')+'). '+
         '<b>설명 재생성</b>은 설명·해시태그만 다시 만듭니다(1~2분 · 타임스탬프 목차 유지). '+
         '<b>썸네일만 재생성</b>은 문구는 그대로 두고 배경 장면만 다시 고릅니다(2~5분). '+
@@ -761,6 +751,7 @@ async function renderNarrateDetail(id,fresh){
   //   지정한 컷·줌·크롭으로 **같은 회차에 덮어써** 다시 만든다(운영자 확정).
   const _cb=$("#nvcutbox");
   if(_cb&&rec.source_url){
+    _editChanged=()=>editSummary(rec,"nc");   // ★편집기 어디서 값이 바뀌든 요약이 따라온다
     // ★필요한 총 길이: 제작 때 남긴 본문 길이(body_dur)를 쓰고, 옛 회차라 값이 없으면
     //   완성 영상 길이에서 오프닝 훅(약 4.6초)을 빼서 어림값이라도 보여준다(0으로 두지 않는다).
     const _out=document.getElementById("nvout");
@@ -783,16 +774,13 @@ async function renderNarrateDetail(id,fresh){
     if(_ap)_ap.onclick=()=>{
       const inp=allEditInputs("nc");
       if(!Object.keys(inp).length){banner("표지나 구간 중 최소 하나는 지정하세요.","err");return;}
-      if(!confirm("정한 표지·구간 설정으로 이 회차를 다시 만듭니다(5~15분 · 같은 회차 덮어쓰기).\\n진행할까요?"))return;
+      // ★한쪽만 담긴 채로 보내면 "표지만 반영됐다"는 오해가 생긴다 → 보내기 전에 분명히 알린다.
+      let note="";
+      if(!inp.cut_specs) note="\\n\\n※ 구간(2단계)이 비어 있어 구간은 자동으로 잡습니다.";
+      else if(!inp.cover) note="\\n\\n※ 표지(1단계)가 비어 있어 표지는 자동으로 고릅니다.";
+      if(!confirm("정한 표지·구간 설정으로 이 회차를 다시 만듭니다(5~15분 · 같은 회차 덮어쓰기)."+note+"\\n진행할까요?"))return;
       regenNarrate(id,rec.source_url,rec.mode||"shorts",inp);
     };
-    // 값이 바뀔 때마다 '무엇이 반영될지' 요약을 갱신
-    ["cvat","cvzoom"].forEach(x=>{const e=document.getElementById(x);
-      if(e){const prev=e.oninput; e.oninput=(ev)=>{if(prev)prev(ev); editSummary(rec,"nc");};}});
-    for(let i=0;i<CUTN;i++)["a","b"].forEach(f=>{const e=document.getElementById("nc"+i+f);
-      if(e){const prev=e.oninput; e.oninput=(ev)=>{if(prev)prev(ev); editSummary(rec,"nc");};}});
-    const _stg=document.getElementById("cvstage");
-    if(_stg)_stg.addEventListener("pointerup",()=>editSummary(rec,"nc"));
     editSummary(rec,"nc");
   }
   const dub=document.getElementById("nvdub");
@@ -900,8 +888,8 @@ const _cv={};
 //     (슬라이더를 움직여도 아무 변화가 없던 문제) → 높이 기준으로 잡는다. 줌 = 1 / 높이비율.
 function cvState(){ return (_cv.s ||= {sheet:null, at:null, box:{x:0.5,y:0.5,h:1.0}}); }
 function coverEditorHTML(){
-  return '<div class="card" id="coverbox" style="margin-top:12px;border:1px solid var(--cy)">'+
-    '<span class="lbl" style="color:var(--cy)">표지 직접 고르기 — 오프닝 훅 + 썸네일</span>'+
+  return '<div id="coverbox" style="margin-top:4px">'+
+    '<span class="lbl" style="color:var(--cy)">1단계 · 표지 고르기 (오프닝 훅 + 썸네일)</span>'+
     '<div class="hint" style="margin:6px 0 8px">① <b>사진 띠</b>에서 표지로 쓸 장면을 탭하고 '+
       '② 아래 <b>사각형</b>을 손가락으로 옮기고 막대로 크기를 바꿔 잘라낼 곳을 정하세요. '+
       '오프닝 훅과 썸네일이 <b>같은 배경</b>을 쓰므로 한 번만 정하면 둘 다 바뀝니다.</div>'+
@@ -925,13 +913,46 @@ function coverEditorHTML(){
 //   예전엔 카드마다 버튼이 따로라 영상을 두 번 만들어야 했고, 한쪽만 보내니 다른 쪽 지정이 초기화됐다.
 //   쇼츠는 '썸네일만 다시'를 두지 않는다 — 유튜브 쇼츠는 커스텀 썸네일 첨부가 불가하다.
 function applyEditsHTML(isShorts){
-  return '<div class="card" id="applybox" style="margin-top:12px;border:1px solid var(--cy)">'+
-    '<span class="lbl" style="color:var(--cy)">정한 설정으로 다시 만들기</span>'+
+  return '<div id="applybox" style="margin-top:14px;padding-top:10px;border-top:1px solid #24405a">'+
+    '<span class="lbl" style="color:var(--cy)">3단계 · 정한 설정으로 다시 만들기</span>'+
     '<div class="hint" id="applysum" style="margin:6px 0 8px"></div>'+
     '<button class="btn save" id="applyedits">표지 + 구간 설정으로 다시 만들기 (5~15분)</button>'+
     (isShorts?'':'<button class="btn" id="cvthumb" style="margin-top:6px">이 표지로 썸네일만 다시 (2~5분)</button>')+
     '<div class="hint" style="margin-top:6px">정한 값은 <b>저장</b>되어 다음에 이 화면을 열면 그대로 복원됩니다. '+
       '한쪽만 고쳐도 다른 쪽 설정은 유지됩니다.</div></div>';
+}
+// ★한 카드 안에 1(표지)·2(구간·줌)·3(실행) 단계를 순서대로(운영자 확정 · 흩어져 있어 불편했다).
+//   실행 버튼은 반드시 **두 설정 아래**에 둔다 — 위에 있으면 구간을 정하기 전에 누르게 된다.
+function editStudioHTML(isShorts, rec){
+  return '<div class="card" id="editstudio" style="margin-top:12px;border:1px solid var(--cy)">'+
+    '<span class="lbl" style="color:var(--cy);font-size:15px">영상 직접 고쳐 만들기 — 표지 · 구간 · 실행</span>'+
+    '<div class="hint" style="margin:4px 0 10px">아래 <b>1 → 2 → 3</b> 순서로 정하면 <b>한 번의 제작</b>에 모두 반영됩니다.</div>'+
+    appliedSummaryHTML(rec)+
+    coverEditorHTML()+
+    // ★전체 폭(grid-column:1/-1): 예전엔 2열 버튼 그리드 안이라 절반 폭으로 찌그러져 아이폰에서
+    //   글자가 세로로 쪼개졌다(운영자 지적). 이제 그리드 밖이지만 규칙은 그대로 유지한다.
+    '<div id="nvcutbox" style="grid-column:1/-1;margin-top:14px;padding-top:10px;border-top:1px solid #24405a">'+
+      '<span class="lbl" style="color:var(--cy)">2단계 · 구간·줌 직접 지정</span>'+
+      cutEditorHTML("nc")+
+    '</div>'+
+    applyEditsHTML(isShorts)+
+  '</div>';
+}
+// ★실제 반영 내역(운영자 확정): 지정값이 아니라 **완성본에 들어간 값**을 보여준다.
+//   "보냈는데 안 먹었다"를 화면에서 바로 구분하기 위한 근거(레코드 applied).
+function appliedSummaryHTML(rec){
+  const ap=(rec&&rec.applied)||null;
+  if(!ap) return '';
+  const p=[];
+  if(ap.cover) p.push("표지 "+ap.cover.at+"초 · 줌 "+ap.cover.zoom+"배");
+  if(Array.isArray(ap.cuts)&&ap.cuts.length){
+    p.push((ap.cuts_manual?"내가 정한 구간 ":"자동 구간 ")+ap.cuts.length+"컷 ("+
+           ap.cuts.slice(0,4).map(c=>c.start+"~"+c.end+"초").join(" / ")+
+           (ap.cuts.length>4?" …":"")+")");
+  }
+  if(!p.length) return '';
+  return '<div class="hint" style="margin:0 0 10px;padding:8px;border-radius:8px;background:#0e1a26">'+
+    '지금 영상에 <b>실제로 반영된 설정</b>: '+esc(p.join(" · "))+'</div>';
 }
 // 두 편집기의 지정값을 합친다(표지 + 컷). 하나도 없으면 빈 객체.
 function allEditInputs(pfx){
@@ -948,6 +969,7 @@ function restoreEdits(rec, pfx){
       if(Number.isFinite(c.x)) st.box.x=c.x;
       if(Number.isFinite(c.y)) st.box.y=c.y;
       const z=document.getElementById("cvzoom"); if(z)z.value=String(Math.round(st.box.h*100));
+      cvShow(); cvDraw();      // ★복원 뒤 화면·안내문을 반드시 다시 그린다(값만 넣고 끝내지 않는다)
     }
   }catch(e){}
   try{
@@ -961,6 +983,7 @@ function restoreEdits(rec, pfx){
         if(Number.isFinite(c.crop_x))st.cuts[i].box.x=c.crop_x;
         if(Number.isFinite(c.crop_y))st.cuts[i].box.y=c.crop_y;
       });
+      ceRender(pfx||"nc");     // 합계·요약도 함께 갱신(칸만 채우고 끝내지 않는다)
     }
   }catch(e){}
   editSummary(rec, pfx);
@@ -1010,8 +1033,13 @@ function cvDraw(){
   box.style.top=Math.max(0,Math.min(H-bh, st.box.y*H-bh/2))+"px";
   box.style.width=bw+"px"; box.style.height=bh+"px";
   const el=document.getElementById("cvinfo");
-  if(el)el.innerHTML="표지 시각 <b>"+(st.at===null?"—":st.at+"초")+"</b> · 줌 <b>"+
+  // ★안내문은 '실제로 보낼 값'(입력칸)을 그대로 읽는다 — 예전엔 내부 상태만 읽어, 복원 직후
+  //   칸엔 56이 들어 있는데 안내문만 "—"로 남아 운영자가 '안 잡혔다'고 오해했다.
+  const _av=parseFloat(((document.getElementById("cvat")||{}).value||"").trim());
+  const _at=Number.isFinite(_av)?_av:st.at;
+  if(el)el.innerHTML="표지 시각 <b>"+(_at===null||_at===undefined?"—":_at+"초")+"</b> · 줌 <b>"+
     (1/hf).toFixed(2)+"배</b> · 가로 "+st.box.x.toFixed(2)+" · 세로 "+st.box.y.toFixed(2);
+  editChanged();
 }
 function bindCoverEditor(sheet, srcVidId, onThumb, onAll){
   const st=cvState(); st.sheet=sheet;
@@ -1102,6 +1130,11 @@ function nvTranscode(u){
 //   ★영상 재생에 의존하지 않는다: 원본 대부분이 WebM이라 아이폰에서 재생이 안 돼 '여기 시작'
 //     버튼이 0초만 입력되던 문제가 있었다. 그래서 **프레임 사진(스트립)** 을 탭해 구간을 고른다.
 const CUTN=4;
+// ★값이 바뀔 때마다 '무엇이 반영될지' 요약을 다시 그리는 공용 훅(운영자 확정 · 실사고 재발방지).
+//   예전엔 입력칸의 oninput에만 걸어, **사진 띠 탭·버튼·복원처럼 코드가 값을 넣는 경우**엔
+//   요약이 갱신되지 않아 "표지만 잡힌 것처럼" 보였다 → 편집기 내부에서 직접 호출한다.
+let _editChanged=null;
+function editChanged(){ if(typeof _editChanged==="function"){ try{ _editChanged(); }catch(e){} } }
 const _ce={};   // pfx별 상태: {sheet, need, srcDur, cuts:[{box:{x,y,w}}], sel}
 function ceState(pfx){ return (_ce[pfx] ||= {sheet:null, sel:0, need:0, srcDur:0,
   cuts:Array.from({length:CUTN},()=>({box:{x:0.5,y:0.5,w:0.6}}))}); }
@@ -1231,6 +1264,7 @@ function ceRender(pfx){
     if(s===null||e===null||e<=s) continue;
     sum+=e-s; n++;
   }
+  editChanged();                       // ★칸이 채워질 때마다 '반영될 설정' 요약도 같이 갱신
   const el=document.getElementById(pfx+"need");
   if(!el) return;
   const need=st.need||0, sm=Math.round(sum*10)/10;

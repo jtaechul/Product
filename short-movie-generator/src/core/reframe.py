@@ -846,6 +846,64 @@ def _plan_scene_interleaved(path: str, src_dur: float, scores: list[float],
     return plan
 
 
+class CutSpecError(ValueError):
+    """운영자가 지정한 컷 설정을 해석하지 못했다 — **조용히 자동으로 넘어가지 않는다**.
+
+    ★실사고(운영자 확정 · 절대 회귀 금지): 워크플로가 컷 JSON을 큰따옴표 안에 치환해
+      `[{start:1.2,...}]`(따옴표 소실)로 넘겼는데, 예전 파서는 그냥 None을 돌려 **자동 컷으로
+      조용히 폴백**했다 → 운영자는 '표지만 반영되고 구간은 무시된' 영상을 받고도 이유를 몰랐다.
+      이제는 ①망가진 표기까지 최대한 복원해 해석하고 ②그래도 안 되면 이 예외로 제작을 멈춘다.
+    """
+
+
+# 망가진 JSON 복원용: 따옴표 없는 키(`start:`) → `"start":`, 홑따옴표 → 겹따옴표
+_BARE_KEY_RE = re.compile(r'([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:')
+_RANGE_RE = re.compile(r"^(\d+(?:\.\d+)?)\s*[-~]\s*(\d+(?:\.\d+)?)$")
+
+
+def _coerce_cut_items(raw) -> list:
+    """어떤 표기로 와도 [{start,end,...}] 목록으로 되돌린다(해석 실패 최소화).
+
+    받아들이는 형태:
+      · 파이썬 리스트/딕트(이미 구조화된 값)
+      · 정상 JSON `[{"start":1.2,"end":8.4}]`
+      · **따옴표가 소실된 JSON** `[{start:1.2,end:8.4}]` (셸이 먹은 값 — 실사고 형태)
+      · 홑따옴표 JSON `[{'start':1.2}]`
+      · 간단 표기 `"0-6, 20-27, 41-48"`
+    해석 불가하면 CutSpecError.
+    """
+    if isinstance(raw, dict):
+        return [raw]
+    if isinstance(raw, list):
+        return raw
+    txt = str(raw).strip()
+    if not txt:
+        return []
+    for cand in (txt,
+                 _BARE_KEY_RE.sub(r'\1"\2":', txt),                       # 따옴표 소실 복원
+                 _BARE_KEY_RE.sub(r'\1"\2":', txt.replace("'", '"'))):    # 홑따옴표까지 복원
+        try:
+            got = json.loads(cand)
+        except Exception:  # noqa: BLE001
+            continue
+        if cand is not txt:
+            log.warning("[reframe] 컷 지정 표기가 깨져 있어 복원해 해석했습니다(따옴표 소실): %.120s", txt)
+        return [got] if isinstance(got, dict) else (got if isinstance(got, list) else [])
+    # "0-6, 20-27" 같은 간단 표기
+    items = []
+    for part in re.split(r"[,\n;]+", txt):
+        part = part.strip()
+        if not part:
+            continue
+        m = _RANGE_RE.match(part)
+        if not m:
+            raise CutSpecError(f"컷 구간 표기를 이해할 수 없습니다: {part!r} (예: \"0-6, 20-27\")")
+        items.append({"start": float(m.group(1)), "end": float(m.group(2))})
+    if not items:
+        raise CutSpecError(f"컷 구간을 찾지 못했습니다: {txt[:120]!r}")
+    return items
+
+
 def _parse_cut_specs(raw, src_dur: float, target_dur: float) -> list[dict] | None:
     """운영자가 컷마다 지정한 [{start,end,crop_x,mode}] → 렌더 plan으로 변환.
 
@@ -853,34 +911,18 @@ def _parse_cut_specs(raw, src_dur: float, target_dur: float) -> list[dict] | Non
       · 길이는 **지정한 start~end 그대로**(나레이션 길이는 유지, 모자라면 지정 컷을 반복).
       · crop_x/crop_y/zoom이 있으면 그 컷만 손으로 그린 사각형대로 고정(없으면 자동).
       · mode: "fit"(전체 담기) / "closeup"(접사). 미지정이면 첫 컷 closeup, 나머지 fit.
-    형식이 깨졌거나 비어 있으면 None → 기존 자동 경로로 폴백(제작을 막지 않는다)."""
-    if not raw:
+    ★비어 있으면(지정 안 함) None → 자동 경로. **지정했는데 해석 못 하면 CutSpecError**로
+      제작을 멈춘다(조용히 자동으로 넘어가 '반영 안 됨'을 숨기지 않는다)."""
+    if raw is None or (isinstance(raw, str) and not raw.strip()):
         return None
-    items = raw
-    if isinstance(raw, str):
-        txt = raw.strip()
-        if not txt:
-            return None
-        try:
-            items = json.loads(txt)
-        except Exception:  # noqa: BLE001
-            # "0-5, 12-18, 30-36" 같은 간단 표기도 받는다(운영자 입력 편의)
-            items = []
-            for part in re.split(r"[,\n;]+", txt):
-                part = part.strip()
-                if not part:
-                    continue
-                m = re.match(r"^(\d+(?:\.\d+)?)\s*[-~]\s*(\d+(?:\.\d+)?)$", part)
-                if not m:
-                    return None
-                items.append({"start": float(m.group(1)), "end": float(m.group(2))})
-    if not isinstance(items, list) or not items:
+    items = _coerce_cut_items(raw)
+    if not items:
         return None
     spans: list[dict] = []
     dropped: list[str] = []
     for it in items:
         if not isinstance(it, dict):
-            return None
+            raise CutSpecError(f"컷 항목이 올바르지 않습니다: {it!r}")
         s0 = _f(it.get("start"))
         e0 = _f(it.get("end"))
         if s0 is None or e0 is None or e0 <= s0:
@@ -899,7 +941,9 @@ def _parse_cut_specs(raw, src_dur: float, target_dur: float) -> list[dict] | Non
         log.warning("[reframe] 지정 컷 %d개가 소스 길이(%.1fs)를 벗어나 제외됨: %s",
                     len(dropped), src_dur or 0.0, ", ".join(dropped))
     if not spans:
-        return None
+        raise CutSpecError(
+            "지정한 컷 구간이 모두 사용할 수 없는 값입니다(끝이 시작보다 앞이거나, 소스 길이"
+            f"({src_dur:.1f}초) 밖이거나, 0.4초보다 짧습니다). 구간을 다시 정해 주세요.")
     # ★★운영자가 자른 구간을 **정확히 그대로** 쓴다(운영자 확정 · 절대 회귀 금지).
     #   예전엔 지정 길이를 '비율'로만 쓰고 각 컷을 본문 길이에 맞춰 늘렸다 → 2~8초를 골라도
     #   나레이션이 30초면 2~17초가 나갔다(운영자가 안 고른 장면이 절반). 지금은:
@@ -922,7 +966,7 @@ def _parse_cut_specs(raw, src_dur: float, target_dur: float) -> list[dict] | Non
         total += ln
         idx += 1
     if not plan:
-        return None
+        raise CutSpecError("지정한 구간으로는 본문 길이를 채울 컷을 만들지 못했습니다.")
     # 역할(리빌→설정→…→마무리)은 최종 컷 수가 정해진 뒤 배정한다.
     n = len(plan)
     for i, c in enumerate(plan):
@@ -1096,6 +1140,18 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
         plan = _plan_scene_interleaved(footage_path, src_dur, scores, bad, fps_trk,
                                        target_dur, reveal_start=reveal_start,
                                        max_cuts=m_cuts)
+
+    # ★적용 내역 기록(운영자 확정): "내 설정이 정말 반영됐는지" 눈으로 확인할 수 있게
+    #   실제 렌더에 쓰인 컷 목록을 남긴다 → 상위(narrate_attached)가 레코드에 실어 화면에 표시.
+    try:
+        (wd / "applied_cuts.json").write_text(json.dumps(
+            {"manual": bool(cut_specs),
+             "cuts": [{"start": round(float(c["start"]), 1),
+                       "end": round(float(c["start"]) + float(c["len"]), 1),
+                       "zoom": (round(float(c["zoom"]), 2) if _f(c.get("zoom")) else None)}
+                      for c in plan]}, ensure_ascii=False), encoding="utf-8")
+    except Exception:  # noqa: BLE001
+        pass
 
     concat = wd / "reframe_concat.txt"
     lines = []

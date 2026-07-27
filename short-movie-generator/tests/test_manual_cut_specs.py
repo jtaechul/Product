@@ -69,10 +69,32 @@ def test_start_clamped_into_source():
     assert all(c["start"] + c["len"] <= 55.0 + 1e-6 for c in plan)
 
 
-def test_invalid_or_empty_falls_back_to_auto():
-    """형식이 깨졌거나 비면 None → 자동 경로로 폴백(제작을 막지 않는다)."""
-    for bad in ("", None, "  ", "그냥 아무 말", [], "10-5"):
-        assert reframe._parse_cut_specs(bad, src_dur=60.0, target_dur=30.0) is None
+def test_empty_means_auto():
+    """지정을 **안 한** 경우에만 None → 자동 경로(제작을 막지 않는다)."""
+    for empty in ("", None, "  ", []):
+        assert reframe._parse_cut_specs(empty, src_dur=60.0, target_dur=30.0) is None
+
+
+def test_unparseable_spec_raises_instead_of_silently_going_auto():
+    """★실사고(운영자 확정 · 절대 회귀 금지): 지정했는데 해석 못 하면 **조용히 자동으로 넘어가지 않는다**.
+
+    예전엔 None을 돌려 자동 컷으로 폴백했고, 운영자는 '표지만 반영되고 구간은 무시된' 영상을
+    받고도 이유를 알 수 없었다. 이제는 제작을 멈춰 사유를 알린다."""
+    for bad in ("그냥 아무 말", "10-5", '[{"start":"a","end":"b"}]'):
+        with pytest.raises(reframe.CutSpecError):
+            reframe._parse_cut_specs(bad, src_dur=60.0, target_dur=30.0)
+
+
+def test_mangled_json_is_recovered():
+    """★진짜 원인: 워크플로가 큰따옴표 안에 JSON을 치환해 **따옴표가 소실된 값**이 도착했다.
+    (`[{"start":1.2}]` → `[{start:1.2}]`) 전달은 env로 고쳤지만, 파서도 이런 값을 복원해 해석한다."""
+    mangled = "[{start:1.2,end:8.4,zoom:1.67,crop_x:0.5,crop_y:0.5}]"
+    plan = reframe._parse_cut_specs(mangled, src_dur=60.0, target_dur=14.4)
+    assert plan and plan[0]["start"] == pytest.approx(1.2)
+    assert plan[0]["zoom"] == pytest.approx(1.67)
+    assert all(_within(c, 1.2, 8.4) for c in plan)
+    # 홑따옴표 표기도 받는다
+    assert reframe._parse_cut_specs("[{'start':2,'end':9}]", src_dur=60.0, target_dur=7.0)
 
 
 def test_too_short_cut_dropped_but_rest_kept():

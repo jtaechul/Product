@@ -139,19 +139,24 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # 값 안 따옴표 소실 방지 — 셸에 직접 치환하지 않는다(전 워크플로 공통 규칙)
+          IN_VIDEO_URL: ${{ inputs.video_url }}
+          IN_VIDEO_TITLE: ${{ inputs.video_title }}
+          IN_VIDEO_CREDIT: ${{ inputs.video_credit }}
+          IN_VIDEO_LICENSE: ${{ inputs.video_license }}
         run: |
           echo "::notice::종·학명도 배 이름·자료도 미확보 → 일반 나레이션형(narrate-video)으로 전환합니다."
           gh workflow run narrate-video.yml --ref "${{ github.ref_name }}" \
-            -f video_url="${{ inputs.video_url }}" \
+            -f video_url="$IN_VIDEO_URL" \
             -f mode=shorts \
-            -f source_topic="${{ inputs.video_title }}" \
-            -f credit="${{ inputs.video_credit }}" \
-            -f license_id="${{ inputs.video_license }}"
+            -f source_topic="$IN_VIDEO_TITLE" \
+            -f credit="$IN_VIDEO_CREDIT" \
+            -f license_id="$IN_VIDEO_LICENSE"
           # 운영자에게 '실패가 아니라 전환됐다'고 알린다(예전엔 실패 알림만 가서 오해했다).
           if [ -n "$TG_TOKEN" ]; then
             MSG=$(printf '%s\n%s\n%s' \
               "↪ 종·학명이 확인되지 않아 일반 나레이션형으로 제작합니다(실패 아님)." \
-              "대상: ${{ inputs.video_title }}" \
+              "대상: $IN_VIDEO_TITLE" \
               "진행: https://github.com/${{ github.repository }}/actions/workflows/narrate-video.yml")
             for CID in $TG_CHAT; do
               curl -sS -F chat_id="$CID" -F text="$MSG" \
@@ -260,6 +265,12 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # 값 안에 따옴표가 들어갈 수 있는 입력은 env로 받는다(셸 직접 치환 금지 — 따옴표 소실 사고)
+          IN_CUT_SPECS: ${{ inputs.cut_specs }}
+          IN_VIDEO_URL: ${{ inputs.video_url }}
+          IN_VIDEO_TITLE: ${{ inputs.video_title }}
+          IN_VIDEO_LICENSE: ${{ inputs.video_license }}
+          IN_VIDEO_CREDIT: ${{ inputs.video_credit }}
         run: |
           EP_ARG=""
           if [ -n "${{ steps.inp.outputs.episode }}" ]; then EP_ARG="--episode ${{ steps.inp.outputs.episode }}"; fi
@@ -281,13 +292,13 @@ jobs:
           if [ -n "${{ inputs.crop_x }}" ];    then MAN_ARGS="$MAN_ARGS --crop-x ${{ inputs.crop_x }}"; fi
           if [ -n "${{ inputs.cuts }}" ];      then MAN_ARGS="$MAN_ARGS --cuts ${{ inputs.cuts }}"; fi
           if [ -n "${{ inputs.zoom }}" ];      then MAN_ARGS="$MAN_ARGS --zoom ${{ inputs.zoom }}"; fi
-          # ★컷별 구간은 공백·쉼표가 들어가므로 반드시 따옴표로 감싼다(단어 분리 방지).
-          CUT_SPECS='${{ inputs.cut_specs }}'
-          # ★찾은 영상으로 제작: URL·제목·라이선스·크레딧을 그대로 넘긴다(공백 포함 → 반드시 따옴표).
-          VID_URL='${{ inputs.video_url }}'
-          VID_TITLE='${{ inputs.video_title }}'
-          VID_LIC='${{ inputs.video_license }}'
-          VID_CRED='${{ inputs.video_credit }}'
+          # ★컷별 구간·URL 등은 값 안에 따옴표가 들어갈 수 있어 **env로 받는다**(나레이션 워크플로와
+          #   같은 규칙 · 셸에 직접 치환하면 따옴표가 소실돼 지정이 조용히 무시된다 — 실사고).
+          CUT_SPECS="$IN_CUT_SPECS"
+          VID_URL="$IN_VIDEO_URL"
+          VID_TITLE="$IN_VIDEO_TITLE"
+          VID_LIC="$IN_VIDEO_LICENSE"
+          VID_CRED="$IN_VIDEO_CREDIT"
           set -- "${{ steps.inp.outputs.query }}" --category "$CAT" --mode reels
           if [ -n "$EP_ARG" ]; then set -- "$@" $EP_ARG; fi
           if [ -n "$MAN_ARGS" ]; then set -- "$@" $MAN_ARGS; fi

@@ -277,6 +277,9 @@ def write_narrate_record(base_dir: str, content_id: str, meta: dict, *,
     # ★운영자 지정 편집값(표지·컷) 보존 — 다음 편집 때 화면에 복원하고 함께 다시 보낸다.
     if meta.get("edit"):
         rec["edit"] = meta["edit"]
+    # ★실제 반영 내역(표지 시각·컷 목록) — 화면이 "내 설정이 정말 들어갔는지" 보여주는 근거.
+    if meta.get("applied"):
+        rec["applied"] = meta["applied"]
     # ★본문 길이(초) — 운영자가 컷 구간을 고를 때 "총 몇 초가 필요한지" 화면에 보여주기 위한 값.
     try:
         if float(meta.get("body_dur") or 0) > 0:

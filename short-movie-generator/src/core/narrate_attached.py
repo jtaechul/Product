@@ -1762,6 +1762,20 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     #   예전엔 워크플로 입력으로 한 번 쓰고 버려서, 다음에 **컷만 고치면 표지 지정이 초기화**됐다.
     #   화면이 이 값을 다시 불러와 편집기에 채우고, 다시 만들 때 함께 보낸다.
     meta["edit"] = {k: str(v) for k, v in (manual or {}).items() if str(v or "").strip()}
+    # ★적용 내역(운영자 확정): 지정값이 아니라 **실제로 렌더에 쓰인 값**을 남긴다.
+    #   지정만 저장하면 이번 같은 전달 사고("보냈는데 안 먹었다")를 화면에서 구분할 수 없다.
+    applied: dict = {}
+    if cover_spec:
+        applied["cover"] = {k: cover_spec[k] for k in ("at", "zoom", "x", "y")}
+    try:
+        _ac = json.loads((work / "rf" / "applied_cuts.json").read_text(encoding="utf-8"))
+        if _ac.get("cuts"):
+            applied["cuts"] = _ac["cuts"]
+            applied["cuts_manual"] = bool(_ac.get("manual"))
+    except Exception:  # noqa: BLE001
+        pass
+    if applied:
+        meta["applied"] = applied
 
     meta_path = out_dir / f"{name}.meta.json"
     try:
