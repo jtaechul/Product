@@ -2204,6 +2204,7 @@ function srcRenderScript(s) {
     + `</div>`
     + `<button id="srcScriptEdit" class="btn sub btnfull" style="margin-top:8px">대본 수정 (제목·대사·설명·해시태그)</button>`
     + `<div id="srcSegBox" style="margin-top:14px"></div>`
+    + `<div id="srcInsertBox" style="margin-top:10px"></div>`
     + `<button id="srcProduce" class="btn btnfull" style="margin-top:12px">⑤ 이 대본으로 영상 제작하기</button>`
     + `<p class="hint" style="margin-top:6px">확정한 홍보영상들을 9:16으로 이어붙이고, 위 대본을 <b>한국어 나레이션 + 카라오케 자막</b>으로 얹어 완성합니다(약 3~5분).</p>`
     + `<p id="srcProdStatus" class="hint" style="margin-top:6px"></p>`
@@ -2211,6 +2212,7 @@ function srcRenderScript(s) {
   $("srcScriptEdit").onclick = () => srcEditScript();
   $("srcProduce").onclick = (ev) => busy(ev.target, () => srcProduce());
   srcRenderSegments(srcPlanState.hash);   // ④ 영상 구간 지정(선택)
+  srcRenderInserts(srcPlanState.hash);    // ⑤ 이미지·영상 삽입(선택)
   srcLoadProduced(srcPlanState.hash);     // 이미 만든 영상이 있으면 바로 보여준다(복원)
   srcSaveState();
 }
@@ -2326,6 +2328,78 @@ async function srcSaveSegments() {
   let sha; try { const ex = await getFile(srcSegPath(srcSegState.hash), true, true); sha = ex && ex.sha; } catch (_) {}
   await putFile(srcSegPath(srcSegState.hash), JSON.stringify(payload, null, 2) + "\n", "sourcing(admin): 영상 구간 지정", sha || undefined);
   toast("구간 저장됨 — 다음 제작부터 반영");
+}
+
+// ⑤ 이미지·영상 삽입(컷어웨이) — 특정 대사(라인) 구간에 내 이미지/영상(움짤)을 얹는다.
+//   업로드 파일은 저장소에 커밋(data/sources/inserts_assets/{hash}/), 라인별 매핑은 inserts 파일에 저장.
+//   제작이 그 대사 구간 동안 소스 영상 위에 풀프레임으로 덮는다(자막·브랜드는 위에 유지).
+const srcInsertPath = (h) => `${P}/data/sources/inserts/${h}.json`;
+const srcInsertAssetRel = (h, i, n, ext) => `data/sources/inserts_assets/${h}/L${String(i).padStart(2, "0")}_${n}.${ext}`;
+let srcInsertState = { hash: null, lines: [], inserts: {} };
+
+async function srcRenderInserts(hash) {
+  const box = $("srcInsertBox"); if (!box) return;
+  box.innerHTML = "";
+  const lines = (srcPlanState.script && srcPlanState.script.lines) || [];
+  if (!lines.length) return;
+  let inserts = {};
+  try { const f = await getFile(srcInsertPath(hash), true, true); if (f) inserts = (JSON.parse(f.text).inserts) || {}; } catch (_) {}
+  srcInsertState = { hash, lines, inserts };
+  box.innerHTML = `<details class="srcseg"><summary style="cursor:pointer;font-weight:600">⑤ 이미지·영상 삽입 (선택 — 특정 대사에 내 이미지/움짤 얹기)</summary>`
+    + `<p class="hint" style="margin:6px 0 0">대사별로 내 <b>이미지·영상(움짤)</b>을 올리면, 그 대사가 나오는 동안 소스 영상 위에 <b>꽉 찬 컷</b>으로 덮입니다(여러 개면 순서대로 나눠 보임). 자막·채널명은 그대로 위에 보입니다. 영상은 짧게(수 초) 올리세요.</p>`
+    + `<div id="srcInsertList" style="margin-top:8px"></div>`
+    + `<button id="srcInsertSave" class="btn sub btnfull" style="margin-top:8px">삽입 저장</button></details>`;
+  srcInsertRenderList();
+  $("srcInsertSave").onclick = (ev) => busy(ev.target, () => srcSaveInserts());
+}
+
+function srcInsertRenderList() {
+  const list = $("srcInsertList"); if (!list) return;
+  list.innerHTML = srcInsertState.lines.map((l, i) => {
+    const items = srcInsertState.inserts[String(i)] || [];
+    const chips = items.map((rel, j) => {
+      const isVid = /\.(mp4|mov|webm|gif)$/i.test(rel);
+      const name = String(rel).split("/").pop();
+      return `<span style="display:inline-block;background:#eef;border-radius:12px;padding:2px 8px;margin:2px;font-size:12px">${isVid ? "[영상] " : "[사진] "}${srcEsc(name)} <b data-i="${i}" data-j="${j}" class="insdel" style="cursor:pointer;color:#c0392b">×</b></span>`;
+    }).join("");
+    return `<div style="margin-bottom:10px;border-bottom:1px solid #f0f0f0;padding-bottom:8px">`
+      + `<div class="srcsub" style="margin-bottom:4px"><b>${i + 1}.</b> ${srcEsc(String(l.text || "").slice(0, 44))}</div>`
+      + `<label class="btn mini sub" style="cursor:pointer;display:inline-block">+ 이미지·영상 올리기<input type="file" accept="image/*,video/*" hidden class="insup" data-i="${i}"></label>`
+      + `<div style="margin-top:4px">${chips || `<span class="hint">삽입 없음 = 소스 영상 그대로</span>`}</div></div>`;
+  }).join("");
+  list.querySelectorAll(".insdel").forEach((b) => b.onclick = () => srcInsertDel(+b.dataset.i, +b.dataset.j));
+  list.querySelectorAll(".insup").forEach((inp) => inp.onchange = (ev) => srcInsertUpload(+inp.dataset.i, ev.target.files && ev.target.files[0]));
+}
+
+async function srcInsertUpload(i, file) {
+  if (!file) return;
+  const hash = srcInsertState.hash;
+  const isVid = /^video\//.test(file.type || "") || /\.(mp4|mov|webm|gif)$/i.test(file.name || "");
+  const cap = isVid ? 40 * 1024 * 1024 : 15 * 1024 * 1024;
+  if (file.size > cap) { toast(`${isVid ? "영상은 40MB" : "이미지는 15MB"} 이하만 올릴 수 있어요(짧게/작게)`); return; }
+  const ext = ((file.name || "").split(".").pop() || (isVid ? "mp4" : "jpg")).toLowerCase().replace(/[^a-z0-9]/g, "") || (isVid ? "mp4" : "jpg");
+  const arr = srcInsertState.inserts[String(i)] = srcInsertState.inserts[String(i)] || [];
+  const rel = srcInsertAssetRel(hash, i, arr.length, ext);
+  toast("올리는 중… (크면 몇 초 걸려요)");
+  try {
+    await uploadBlob(`${P}/${rel}`, file, `sourcing(admin): 라인${i + 1} 삽입물 업로드`);
+  } catch (e) { toast("업로드 실패: " + (e && e.message || e)); return; }
+  arr.push(rel);
+  srcInsertRenderList();
+  toast("올렸어요 — 맨 아래 [삽입 저장]을 눌러 확정하세요");
+}
+
+function srcInsertDel(i, j) {
+  const arr = srcInsertState.inserts[String(i)];
+  if (arr) { arr.splice(j, 1); if (!arr.length) delete srcInsertState.inserts[String(i)]; }
+  srcInsertRenderList();
+}
+
+async function srcSaveInserts() {
+  const payload = { product_hash: srcInsertState.hash, inserts: srcInsertState.inserts };
+  let sha; try { const ex = await getFile(srcInsertPath(srcInsertState.hash), true, true); sha = ex && ex.sha; } catch (_) {}
+  await putFile(srcInsertPath(srcInsertState.hash), JSON.stringify(payload, null, 2) + "\n", "sourcing(admin): 이미지·영상 삽입", sha || undefined);
+  toast("삽입 저장됨 — 다음 제작부터 반영");
 }
 
 const SRC_PROD_WF = "shorts-sourcing-produce.yml";
