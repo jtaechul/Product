@@ -364,20 +364,20 @@
     "has_video": true
   },
   {
-    "id": "nv-30223591884",
-    "kind": "narrate",
-    "yt_title": "白いブイの先に何が？幼少期から追う沈没船",
-    "yt_title_ko": "하얀 부이 끝엔 뭐가? 어릴 적부터 쫓던 난파선",
-    "mode": "shorts",
-    "date": "2026-07-27",
-    "has_video": true
-  },
-  {
     "id": "050",
     "kind": "reels",
     "common_name_ko": "바티노무스속",
     "common_name_en": "Bathynomus",
     "scientific_name": "Bathynomus",
     "date": "2026-07-27"
+  },
+  {
+    "id": "nv-30223591884",
+    "kind": "narrate",
+    "yt_title": "遠くカナダも見えぬ水平線",
+    "yt_title_ko": "멀리 캐나다도 보이지 않는 수평선",
+    "mode": "shorts",
+    "date": "2026-07-27",
+    "has_video": true
   }
 ]
