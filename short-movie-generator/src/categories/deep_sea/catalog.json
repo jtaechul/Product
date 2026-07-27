@@ -208,5 +208,12 @@
     "common_name_en": "Coelorinchus caelorhincus",
     "scientific_name": "Coelorinchus caelorhincus",
     "date": "2026-07-26"
+  },
+  {
+    "no": 50,
+    "common_name_ko": "바티노무스속",
+    "common_name_en": "Bathynomus",
+    "scientific_name": "Bathynomus",
+    "date": "2026-07-27"
   }
 ]

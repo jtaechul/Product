@@ -371,5 +371,13 @@
     "mode": "shorts",
     "date": "2026-07-27",
     "has_video": true
+  },
+  {
+    "id": "050",
+    "kind": "reels",
+    "common_name_ko": "바티노무스속",
+    "common_name_en": "Bathynomus",
+    "scientific_name": "Bathynomus",
+    "date": "2026-07-27"
   }
 ]

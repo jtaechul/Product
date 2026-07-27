@@ -510,5 +510,37 @@
         "Wikimedia Commons (File:Otolithes de grenadier raton (Coelorinchus caelorhinchus-Coelorhynchus coelorhynchus) (Ifremer 00677-78952 - 31898).jpg)"
       ]
     }
+  },
+  {
+    "key": "bathynomus",
+    "kind": "creature",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/0/09/Bathynomus_%2810.3897-zookeys.947.53906%29_Figure_6.jpg",
+      "license": "cc-by",
+      "credit": "Sidabalok CM, Wong HP-S, Ng PKL (2020) Description of the supergiant isopod Bathynomus raksasa sp. nov. (Crustacea, Isopoda, Cirolanidae) from southern Java, the first record of the genus from Indonesia. ZooKeys 947: 39-52. · CC BY",
+      "source": "File:Bathynomus (10.3897-zookeys.947.53906) Figure 6.jpg",
+      "media_kind": "photo",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/09/Bathynomus_%2810.3897-zookeys.947.53906%29_Figure_6.jpg"
+    },
+    "species": {
+      "scientific_name": "Bathynomus",
+      "common_name_ko": "바티노무스속",
+      "common_name_en": "Bathynomus",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Giant isopods are large marine isopods in the genus Bathynomus.",
+        "They are bottom-dwelling deep-sea scavengers that are abundant in the Atlantic, Pacific, and Indian oceans.",
+        "Bathynomus giganteus, the species upon which the generitype is based, is often considered the largest isopod in the world, though other comparably poorly known species of Bathynomus may reach similar sizes.",
+        "Giant isopods are noted for their resemblance to the much smaller terrestrial woodlice, to which they are related.",
+        "French zoologist Alphonse Milne-Edwards was the first to describe the genus in 1879 after his colleague Alexander Agassiz collected a juvenile male B."
+      ],
+      "sources": [
+        "Wikipedia (en)",
+        "Wikimedia Commons (File:Bathynomus (10.3897-zookeys.947.53906) Figure 6.jpg)"
+      ]
+    }
   }
 ]
