@@ -1,15 +1,15 @@
 {
   "id": "nv-30200041879",
   "kind": "narrate",
-  "created_at": "2026-07-26T15:06:37+00:00",
+  "created_at": "2026-07-27T03:17:10+00:00",
   "status": "published",
   "mode": "shorts",
   "source_url": "https://upload.wikimedia.org/wikipedia/commons/7/7a/First_Look_at_World_War_II_Shipwrecks_Off_NC_Coast.webm",
-  "hook": "遥かなる海原に",
-  "yt_title": "透明なドームに二人の姿が見え",
-  "yt_title_ko": "투명한 돔에 두 사람의 모습이 보이고",
-  "yt_description": "遥かなる海原に。黄色の小さな艇が浮かびます。透明なドームに二人の姿が見え。やがて海底へ、光を放ち調査するようです。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
-  "yt_description_ko": "아득히 먼 바다 위에. 노란색 작은 배가 떠 있습니다. 투명한 돔에 두 사람의 모습이 보입니다. 이윽고 해저로, 빛을 내며 조사하는 듯합니다.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
+  "hook": "静かな海面を",
+  "yt_title": "静かな海面を、黄色い船が進んでいきます",
+  "yt_title_ko": "조용한 바다 위를, 노란 배가 나아갑니다",
+  "yt_description": "静かな海面を、黄色い船が進んでいきます。やがて視界は、深い闇へと沈んでいきます。灯りが、海底の何かを照らし出します。それは沈んだ船の一部のようです。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
+  "yt_description_ko": "조용한 바다 위를, 노란 배가 나아갑니다. 이윽고 시야는, 깊은 어둠 속으로 가라앉아 갑니다. 불빛이, 바다 밑의 무언가를 비춥니다. 그것은 침몰한 배의 일부인 것 같습니다.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
   "hashtags": [
     "#深海",
     "#深海生物",
@@ -25,8 +25,57 @@
     "#바다"
   ],
   "media": {
-    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30207185880.mp4",
-    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30207185880_thumb.jpg",
-    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30207185880_source.mp4"
-  }
+    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30233748230.mp4",
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30233748230_thumb.jpg",
+    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30233748230_source.mp4",
+    "sheet": {
+      "cols": 8,
+      "rows": 8,
+      "n": 62,
+      "step": 2.0,
+      "tw": 240,
+      "th": 135,
+      "url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30233748230_sheet.jpg"
+    }
+  },
+  "subs": [
+    {
+      "s": 3.15,
+      "e": 7.66,
+      "jp": "静かな海面を、黄色い船が進んでいきます",
+      "ko": "고요한 바다 위를, 노란 배가 나아갑니다"
+    },
+    {
+      "s": 8.49,
+      "e": 12.74,
+      "jp": "やがて視界は、深い闇へと沈んでいきます",
+      "ko": "이윽고 시야는, 깊은 어둠 속으로 가라앉습니다"
+    },
+    {
+      "s": 13.57,
+      "e": 17.54,
+      "jp": "灯りが、海底の何かを照らし出します",
+      "ko": "불빛이, 해저의 무언가를 비춥니다"
+    },
+    {
+      "s": 18.35,
+      "e": 21.76,
+      "jp": "それは沈んだ船の一部のようです",
+      "ko": "그것은 침몰한 배의 일부인 것 같습니다"
+    },
+    {
+      "s": 22.49,
+      "e": 27.18,
+      "jp": "その傍らを、魚たちが静かに泳いでいきます",
+      "ko": "그 옆을, 물고기들이 조용히 헤엄쳐 갑니다"
+    },
+    {
+      "s": 28.05,
+      "e": 31.92,
+      "jp": "チャンネル登録して、次の深海も。",
+      "ko": "구독하시고, 다음 심해도 함께 만나보세요."
+    }
+  ],
+  "cta_jp": "チャンネル登録して、次の深海も。",
+  "body_dur": 30.0
 }

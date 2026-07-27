@@ -355,15 +355,6 @@
     "youtube_url": "https://youtu.be/-1gfSI8n26Y"
   },
   {
-    "id": "nv-30200041879",
-    "kind": "narrate",
-    "yt_title": "透明なドームに二人の姿が見え",
-    "yt_title_ko": "투명한 돔에 두 사람의 모습이 보이고",
-    "mode": "shorts",
-    "date": "2026-07-26",
-    "has_video": true
-  },
-  {
     "id": "050",
     "kind": "reels",
     "common_name_ko": "바티노무스속",
@@ -376,6 +367,15 @@
     "kind": "narrate",
     "yt_title": "水底の秘密：幼い日の記憶と沈没船",
     "yt_title_ko": "물밑의 비밀: 어린 시절의 기억과 침몰선",
+    "mode": "shorts",
+    "date": "2026-07-27",
+    "has_video": true
+  },
+  {
+    "id": "nv-30200041879",
+    "kind": "narrate",
+    "yt_title": "静かな海面を、黄色い船が進んでいきます",
+    "yt_title_ko": "조용한 바다 위를, 노란 배가 나아갑니다",
     "mode": "shorts",
     "date": "2026-07-27",
     "has_video": true
