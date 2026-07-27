@@ -1,0 +1,97 @@
+name: shorts-sourcing-upload
+
+# 소싱 ⑥ 유튜브 업로드 — 완성 쇼츠(릴리스 shorts-src-{hash})를 내려받아 유튜브에 올린다.
+#   기본 privacy=private(비공개): 유튜브 스튜디오에서 예약공개 → 공개되면 shorts-comments cron이
+#   고지·링크 고정 댓글을 자동 등록(기존 규칙). 대본(plan) 제목·설명·해시태그 + 어필리에이트 링크 사용.
+# 이 환경은 dispatch API 권한이 있지만, 없을 때(403) 대비 push 트리거도 지원: requests/sourcing-upload/*.json.
+
+on:
+  workflow_dispatch:
+    inputs:
+      hash:
+        description: "상품 해시(plan/{hash}.json + 릴리스 shorts-src-{hash})"
+        required: true
+      privacy:
+        description: "공개 범위 (기본 비공개 — 예약공개 후 자동 고정댓글)"
+        type: choice
+        options: [private, unlisted, public]
+        default: private
+      nonce:
+        description: "폴링 신선도 매칭용(관리자가 넘김)"
+        default: ""
+  push:
+    branches: [main, claude/coupang-shorts-phase-0-k42l1i]
+    paths: ["projects/coupang-shorts-factory/requests/sourcing-upload/*.json"]
+
+permissions:
+  contents: write   # 업로드 결과·고지댓글 대기열 커밋용
+
+concurrency:
+  group: shorts-sourcing-upload
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: projects/coupang-shorts-factory
+
+jobs:
+  upload:
+    name: "소싱 유튜브 업로드 (비공개 기본)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: projects/coupang-shorts-factory/requirements.txt
+
+      - name: 의존성 설치 (google-api-python-client 등)
+        run: pip install -q -r requirements.txt
+
+      - name: 파라미터 결정 (dispatch 입력 / requests/sourcing-upload/*.json)
+        id: p
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            HS='${{ inputs.hash }}'; PV='${{ inputs.privacy }}'; NC='${{ inputs.nonce }}'
+          else
+            f=$(ls -t requests/sourcing-upload/*.json | head -1)
+            HS=$(jq -r '.hash' "$f"); PV=$(jq -r '.privacy // "private"' "$f"); NC=$(jq -r '.nonce // ""' "$f")
+          fi
+          { echo "hash=$HS"; echo "privacy=${PV:-private}"; echo "nonce=$NC"; } >> "$GITHUB_OUTPUT"
+
+      - name: 완성 영상 릴리스에서 내려받기 (shorts-src-{hash})
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          HS="${{ steps.p.outputs.hash }}"
+          mkdir -p data/jobs/upload
+          gh release download "shorts-src-$HS" --pattern "video.mp4" --dir data/jobs/upload --clobber
+          [ -f data/jobs/upload/video.mp4 ] || { echo "::error::완성 영상(shorts-src-$HS/video.mp4)이 없습니다 — ⑤ 제작을 먼저 하세요"; exit 1; }
+
+      - name: 유튜브 업로드 (비공개 기본 · 고지 댓글 대기열)
+        env:
+          SHORTS_YT_CLIENT_ID: ${{ secrets.SHORTS_YT_CLIENT_ID }}
+          SHORTS_YT_CLIENT_SECRET: ${{ secrets.SHORTS_YT_CLIENT_SECRET }}
+          SHORTS_YT_REFRESH_TOKEN: ${{ secrets.SHORTS_YT_REFRESH_TOKEN }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+        run: |
+          python -m src.sourcing.upload --hash "${{ steps.p.outputs.hash }}" \
+            --video data/jobs/upload/video.mp4 --privacy "${{ steps.p.outputs.privacy }}" \
+            --nonce "${{ steps.p.outputs.nonce }}"
+
+      - name: 결과·고지댓글 대기열 커밋 (관리자 폴링이 읽음)
+        if: success()
+        run: |
+          git config user.name "Claude"
+          git config user.email "noreply@anthropic.com"
+          git add -A data/sources/upload 2>/dev/null || true
+          git add -A data/pending_comments.json 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "sourcing(upload): ${{ steps.p.outputs.hash }} nonce=${{ steps.p.outputs.nonce }} [skip ci]"
+          git pull --rebase origin ${{ github.ref_name }} || true
+          git push || true

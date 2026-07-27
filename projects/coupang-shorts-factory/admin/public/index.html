@@ -222,6 +222,11 @@ ol li{margin:8px 0}
 .gifmodal-res .thumb{aspect-ratio:auto; height:150px}
 .gifmodal-res .thumb img{width:100%; height:100%; object-fit:cover}
 .gifmodal-foot{text-align:right; font-size:11px; font-weight:800; letter-spacing:.4px; color:var(--sub); margin-top:6px}
+/* 소싱 탭 카드 접기 — 완료/비활성 단계는 접힘 기본, 현재 단계만 펼침 (2026-07-27) */
+#tab-sourcing .card > h2{cursor:pointer; user-select:none}
+#tab-sourcing .card.srccol > *:not(h2){display:none !important}
+.srcchev{float:right; opacity:.45; font-size:14px; font-weight:normal; transition:opacity .1s}
+#tab-sourcing .card > h2:hover .srcchev{opacity:.8}
 </style>
 </head>
 <body>
@@ -397,7 +402,7 @@ ol li{margin:8px 0}
 
 <!-- ───────── 소싱 탭 (틱톡-우선 상품 발굴, SSOT §6·§2) ───────── -->
 <section id="tab-sourcing" class="on" data-group="sourcing">
-  <div class="card">
+  <div class="card" id="srcDiscoverCard">
     <h2>① 상품 발굴 — 틱톡에서 신박한 상품 찾기</h2>
     <p class="hint">카테고리(검색어)를 넣으면 틱톡에서 조회수 높은 <b>신박한 상품 상위 5개</b>를 찾아,
     각 상품의 <b>한국어 설명 + 쿠팡 검색어</b>를 보여줍니다. 마음에 드는 <b>상품 하나</b>를 고르세요.
@@ -1643,6 +1648,26 @@ function srcEsc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
 function srcNonce() { return "n" + Date.now() + Math.floor(Math.random() * 1e6); }
 function sourcingInit() { srcRestoreState(); }   // 진입 시 이전 진행상태 복원(초기화 방지)
 
+// ── 소싱 단계 카드 접기(감추기) — 완료/비활성 단계는 접힘, 현재 단계만 펼침 (2026-07-27) ──
+const SRC_STEP_CARDS = ["srcDiscoverCard", "srcPickCard", "srcPromoCard", "srcPlanCard"];
+function srcInitCollapse() {
+  SRC_STEP_CARDS.forEach((id) => {
+    const c = $(id); if (!c) return;
+    const h = c.querySelector("h2"); if (!h || h.dataset.col) return;
+    h.dataset.col = "1";
+    const chev = document.createElement("span"); chev.className = "srcchev"; chev.textContent = "▾";
+    h.appendChild(chev);
+    h.addEventListener("click", () => srcToggleCard(id, !c.classList.contains("srccol")));
+  });
+}
+function srcToggleCard(id, collapse) {
+  const c = $(id); if (!c) return;
+  c.classList.toggle("srccol", !!collapse);
+  const ch = c.querySelector(".srcchev"); if (ch) ch.textContent = collapse ? "▸" : "▾";
+}
+// 이 단계만 펼치고 나머지 소싱 단계는 접는다(완료/비활성 감추기 기본).
+function srcActivateStep(id) { SRC_STEP_CARDS.forEach((x) => srcToggleCard(x, x !== id)); }
+
 /* ── 진행상태 유지(2026-07-26 사용자 보고: 탭 이동·닫기 시 초기화됨) ──────────
    모바일은 다른 앱/창으로 나가면 페이지가 언로드돼 메모리 상태(발굴결과·선택·홍보영상·방향·대본)가
    사라진다. 스냅샷을 localStorage에 저장하고 로드/탭진입 시 복원해 진행 단계를 그대로 이어가게 한다. */
@@ -1720,6 +1745,7 @@ async function srcRunDiscover(fromInput) {
   srcState = { hash, keyword: kw, cands: [], picked: null, pickedNaver: null, affDraft: sameKw ? srcState.affDraft : "",
     page: advance ? (srcState.page || 0) + 1 : 0, nonce, nextCursor: cursor, seenIds: seen };
   $("srcCards").innerHTML = ""; $("srcPickCard").style.display = "none"; $("srcRefresh").style.display = "none";
+  srcActivateStep("srcDiscoverCard");   // 발굴 시작 → ① 펼치고 ②③④ 접기
   $("srcStatus").textContent = advance ? "다른(다음) 영상 찾는 중… (약 1~2분)" : `'${kw}' 틱톡 상품 발굴 중… (약 1~2분)`;
   srcSaveState();
   await srcDispatch({ keyword: kw, hash, limit: "5", page: String(srcState.page), nonce,
@@ -1851,7 +1877,7 @@ function srcRenderPick() {
     + `<button id="srcConfirm" class="btn">상품 확정</button>`
     + `<button id="srcPickCancel" class="btn sub">취소</button></div>`
     + `<p id="srcPickStatus" class="hint" style="margin-top:8px"></p>`;
-  $("srcPickCard").style.display = "";
+  $("srcPickCard").style.display = ""; srcActivateStep("srcPickCard");
   const nvBox = $("srcNvCands");
   if (nvBox) nvBox.querySelectorAll("[data-nvi]").forEach((el) => {
     el.onclick = () => { srcState.pickedNaver = parseInt(el.dataset.nvi, 10); srcRenderPick(); };   // 선택 → 재렌더(어필리에이트 유지)
@@ -1909,7 +1935,7 @@ function srcShowPromo(product, productHash, restore) {
     + `<div id="srcPromoCards" class="srccards"></div>`
     + `<button id="srcPromoRefresh" class="btn sub" style="display:none; margin-top:12px; width:100%">다른 홍보영상 찾기</button>`
     + `<button id="srcPromoSave" class="btn" style="display:none; margin-top:10px; width:100%">이 영상들로 진행 (선택 저장)</button>`;
-  $("srcPromoCard").style.display = "";
+  $("srcPromoCard").style.display = ""; srcActivateStep("srcPromoCard");
   $("srcPromoFind").onclick = (ev) => busy(ev.target, () => srcPromoDispatch(0));
   $("srcPromoRefresh").onclick = (ev) => busy(ev.target, () => srcPromoDispatch((srcPromoState.page || 0) + 1));
   $("srcPromoSave").onclick = (ev) => busy(ev.target, srcPromoSave);
@@ -2026,7 +2052,7 @@ function srcShowPlan(productHash, restore) {
     + `<p id="srcPlanStatus" class="hint" style="margin-top:8px"></p>`
     + `<div id="srcDirBox"></div>`
     + `<div id="srcScriptBox" style="margin-top:14px"></div>`;
-  $("srcPlanCard").style.display = "";
+  $("srcPlanCard").style.display = ""; srcActivateStep("srcPlanCard");
   $("srcPlanStart").onclick = (ev) => busy(ev.target, () => srcPlanDirections());
   if (restore) {   // 복원: 저장된 방향(3안/스텁)·대본을 그대로 다시 그린다(네트워크 불필요)
     if ((srcPlanState.options || []).length || srcPlanState.note)
@@ -2303,6 +2329,8 @@ async function srcSaveSegments() {
 }
 
 const SRC_PROD_WF = "shorts-sourcing-produce.yml";
+const SRC_UPLOAD_WF = "shorts-sourcing-upload.yml";
+const srcUploadPath = (h) => `${P}/data/sources/upload/${h}.json`;
 const srcRelTag = (h) => `shorts-src-${h}`;
 
 async function srcReleaseByTag(tag) {
@@ -2390,9 +2418,70 @@ async function srcRenderPublishMeta() {
     + srcCopyRow("해시태그", tags)
     + srcCopyRow("고정 댓글 (제휴고지 + 쿠팡 링크)", pin, true)
     + (aff ? "" : `<p class="hint" style="color:#c0392b">※ 어필리에이트 링크가 없습니다 — ②에서 쿠팡 링크를 입력하면 여기 자동 표시됩니다.</p>`)
-    + `<p class="hint" style="margin-bottom:0">유튜브 <b>자동 업로드</b>는 인증(SHORTS_YT) 등록 후 지원됩니다.</p>`
+    + `<div style="margin-top:14px;border-top:1px solid #eee;padding-top:12px">`
+    + `<button id="srcUploadBtn" class="btn btnfull">유튜브에 올리기 (비공개)</button>`
+    + `<p class="hint" style="margin:6px 0 0">비공개로 올라갑니다 — 유튜브 스튜디오에서 <b>예약 공개</b>하면, 공개되는 순간 제휴고지+쿠팡 링크가 <b>고정 댓글</b>로 자동 등록됩니다.</p>`
+    + `<div id="srcUploadResult" style="margin-top:8px"></div>`
+    + `</div>`
     + `</div>`;
   host.querySelectorAll("[data-copyidx]").forEach((b) => b.onclick = () => srcCopy(srcCopyStore[+b.dataset.copyidx], b));
+  const ub = $("srcUploadBtn");
+  if (ub) ub.onclick = (ev) => busy(ev.target, () => srcUpload());
+  srcUploadRestore();   // 이미 업로드한 적 있으면 유튜브 링크 복원
+}
+// ⑥ 유튜브 자동 업로드 — 완성 릴리스를 shorts-sourcing-upload.yml로 올리고(비공개) 결과 링크를 폴링.
+async function srcUpload() {
+  const hash = srcPlanState.hash;
+  if (!hash) { toast("먼저 대본을 만드세요"); return; }
+  const rel = await srcReleaseByTag(srcRelTag(hash));
+  const vid = rel && (rel.assets || []).find((a) => /video\.mp4$/i.test(a.name));
+  if (!vid) { toast("먼저 ⑤ 영상을 제작하세요"); return; }
+  if (!confirm("이 영상을 유튜브에 '비공개'로 올릴까요?\n(공개 전환·예약은 유튜브 스튜디오에서 직접 하세요)")) return;
+  const nonce = srcNonce();
+  srcPlanState.uploadNonce = nonce;
+  const box = $("srcUploadResult");
+  if (box) box.innerHTML = `<p class="hint">유튜브에 올리는 중… (약 1~3분)</p>`;
+  try {
+    await gh(`/repos/${OWNER}/${REPO}/actions/workflows/${SRC_UPLOAD_WF}/dispatches`, {
+      method: "POST", body: JSON.stringify({ ref: BRANCH, inputs: { hash, privacy: "private", nonce } }) });
+  } catch (e) {
+    if (box) box.innerHTML = `<p class="hint" style="color:#c0392b">업로드 시작 실패: ${srcEsc(String(e && e.message || e))}</p>`;
+    return;
+  }
+  toast("유튜브 업로드 시작 — 약 1~3분");
+  srcUploadPoll(hash, nonce, 0);
+}
+async function srcUploadPoll(hash, nonce, tries) {
+  if (srcPlanState.uploadNonce !== nonce) return;   // 더 최신 업로드가 시작됨
+  let f = null;
+  try { f = await getFile(srcUploadPath(hash), true, true); } catch (_) {}
+  if (f) {
+    try {
+      const m = JSON.parse(f.text);
+      if (String(m.nonce || "") === String(nonce) && m.url) { srcUploadShow(m); toast("유튜브 업로드 완료"); return; }
+    } catch (_) {}
+  }
+  if (tries > 40) {
+    const box = $("srcUploadResult");
+    if (box) box.innerHTML = `<p class="hint" style="color:#c0392b">결과를 아직 못 받았습니다(오래 걸리거나 실패). 잠시 후 다시 누르거나 Actions 로그를 확인하세요.</p>`;
+    return;
+  }
+  setTimeout(() => srcUploadPoll(hash, nonce, tries + 1), 8000);
+}
+// 이미 저장된 업로드 결과가 있으면(다른 기기/재접속) 링크를 그대로 복원.
+async function srcUploadRestore() {
+  const hash = srcPlanState.hash; if (!hash) return;
+  try {
+    const f = await getFile(srcUploadPath(hash), true, true);
+    if (f) { const m = JSON.parse(f.text); if (m && m.url) srcUploadShow(m); }
+  } catch (_) {}
+}
+function srcUploadShow(m) {
+  const box = $("srcUploadResult"); if (!box) return;
+  const vis = m.status === "public" ? "공개" : (m.status === "unlisted" ? "일부공개" : "비공개");
+  box.innerHTML =
+    `<p class="hint" style="margin:0 0 4px;color:#1a7f37">유튜브 업로드 완료 (${srcEsc(vis)}) — 스튜디오에서 예약/공개하세요.</p>`
+    + `<a class="btn sub btnfull" href="${srcEsc(m.url)}" target="_blank" rel="noopener" style="text-align:center">유튜브에서 열기</a>`;
 }
 function srcCopyRow(label, text, multiline) {
   const idx = srcCopyStore.push(text) - 1;
@@ -3829,6 +3918,8 @@ $("memeUp").onclick = (ev) => busy(ev.target, async () => {
 // 옛 '만들기' 탭 일시정지(유료 토큰·불필요 호출 방지): 로드 시 makeInit 자동실행 안 함.
 // 연결 확인만 유지(소싱 탭은 PAT만 있으면 동작). 옛 탭을 되살리려면 makeInit() 자동호출을 복구.
 (async () => { await checkConn(); })();
+srcInitCollapse();   // 소싱 단계 카드 접기 바인딩(현재 단계만 펼침) — 복원보다 먼저 바인딩
+srcActivateStep("srcDiscoverCard");   // 기본: ①만 펼침(②③④는 나타날 때 각자 펼침)
 srcRestoreState();   // 연결과 무관하게 소싱 진행상태 복원(탭 이동·새로고침 초기화 방지)
 // 페이지가 숨겨지거나 언로드되기 직전에 최신 상태 저장(모바일 앱 전환 대비)
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") srcSaveState(); });
