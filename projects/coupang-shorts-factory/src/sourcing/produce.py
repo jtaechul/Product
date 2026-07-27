@@ -89,11 +89,31 @@ def load_segments(product_hash: str, project_root=None) -> dict:
     return out
 
 
-def load_inserts(product_hash: str, project_root=None) -> dict:
+def _download_insert_url(url: str, dest_dir: Path, i: int, j: int):
+    """삽입 검색 픽(giphy 등 URL)을 로컬 파일로 내려받는다(제작 시점). 실패 시 None."""
+    from urllib.parse import urlparse
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    tail = urlparse(url).path.rsplit("/", 1)[-1]
+    ext = tail.rsplit(".", 1)[-1].lower() if "." in tail else "gif"
+    if ext not in ("gif", "mp4", "webm", "mov", "jpg", "jpeg", "png", "webp"):
+        ext = "gif"
+    out = dest_dir / f"ins_{i}_{j}.{ext}"
+    try:
+        import requests
+        r = requests.get(url, timeout=25, headers={"User-Agent": "Mozilla/5.0"})
+        r.raise_for_status()
+        out.write_bytes(r.content)
+        return out if out.stat().st_size > 200 else None
+    except Exception as e:
+        print(f"[produce] 삽입 URL 다운로드 실패({str(url)[:60]}): {type(e).__name__}: {e}")
+        return None
+
+
+def load_inserts(product_hash: str, project_root=None, download_dir=None) -> dict:
     """⑤ 삽입물 → {line_index(int): [abs_path, ...]}. 운영자가 특정 대사(라인) 구간에 얹을
     이미지/영상(움짤). 그 라인 구간 동안 소스 영상 위에 '풀프레임 컷어웨이'로 덮인다.
-    파일 없으면 {}(→ 삽입 없이 소스 클립만). 저장형식: {"inserts": {"0":[relpath,...], "2":[...]}}
-    또는 라인정렬 리스트도 허용. 경로는 저장소 기준 상대경로(업로드로 커밋되어 CI 체크아웃에 존재)."""
+    파일 없으면 {}(→ 삽입 없이 소스 클립만). 저장형식: {"inserts": {"0":[항목,...], "2":[...]}}(리스트도 허용).
+    항목은 ① 문자열/{"file"} = 저장소 상대경로(업로드·커밋본) ② {"url"} = 검색 픽(giphy 등, download_dir에 내려받음)."""
     root = Path(project_root or PROJECT_ROOT)
     p = root / "data" / "sources" / "inserts" / f"{product_hash}.json"
     if not p.exists():
@@ -107,20 +127,29 @@ def load_inserts(product_hash: str, project_root=None) -> dict:
         return {}
     items = raw.items() if isinstance(raw, dict) else enumerate(raw)
     out = {}
-    for k, paths in items:
+    for k, entries in items:
         try:
             i = int(k)
         except (TypeError, ValueError):
             continue
         resolved = []
-        for rel in (paths or []):
-            if not rel:
+        for entry in (entries or []):
+            if not entry:
                 continue
-            fp = Path(rel) if Path(rel).is_absolute() else (root / str(rel))
-            if fp.exists():
-                resolved.append(str(fp))
-            else:
-                print(f"[produce] 삽입 파일 없음 건너뜀: {rel}")
+            rel = entry.get("file") if isinstance(entry, dict) else entry
+            url = entry.get("url") if isinstance(entry, dict) else None
+            if rel:   # 업로드/커밋된 로컬 경로
+                fp = Path(rel) if Path(rel).is_absolute() else (root / str(rel))
+                if fp.exists():
+                    resolved.append(str(fp))
+                else:
+                    print(f"[produce] 삽입 파일 없음 건너뜀: {rel}")
+            elif url and download_dir:   # 검색 픽(URL) → 제작 시점 다운로드
+                dl = _download_insert_url(str(url), Path(download_dir), i, len(resolved))
+                if dl:
+                    resolved.append(str(dl))
+            elif url:
+                print(f"[produce] 삽입 URL 다운로드 경로 없음 건너뜀: {url}")
         if resolved:
             out[i] = resolved
     return out
@@ -195,7 +224,22 @@ def produce(product_hash: str, job_dir, settings: dict, project_root=None,
     font_path = _resolve_font(root, "assets/fonts/GmarketSansBold.ttf")
     sub_s = {"y": 1520, "font_size": 74, "color": "#FFE400",
              "stroke_color": "#000000", "stroke_width": 6, "mode": "karaoke"}
-    sub_clips, _plan = _build_subtitles(words, lines, line_windows, duration, font_path, sub_s, W, H, framed=False)
+    # ④ 오프닝 훅 카드(썸네일용): 첫 라인(훅)은 어절별 가라오케 대신 '문구 전체를 한 번에' 보여주는 큰 카드로.
+    #    쇼츠는 첫 프레임이 그리드 썸네일이 되므로 제목(훅)이 통째로 박힌다. 그동안 소스 영상은 배경으로 계속 재생.
+    hook_clip = None
+    n0 = len(str(lines[0].get("text", "")).split()) if lines else 0
+    use_hook = bool(lines and lines[0].get("is_hook") and n0 and line_windows)
+    if use_hook:
+        hook_end = float(line_windows[1][0]) if len(line_windows) >= 2 else min(2.6, duration)
+        hook_end = max(0.9, min(hook_end, duration))
+        hook_text = (plan.get("thumb_hook") or plan.get("title") or lines[0].get("text") or "").strip()
+        from src.video.render import _thumb_hook_overlay
+        hook_clip = _thumb_hook_overlay(hook_text, W, H, hook_end, font_path, settings)
+        # 훅 라인(0번) 어절 자막은 카드와 겹치므로 제외 — 1번 라인부터 하단 가라오케.
+        sub_clips, _plan = _build_subtitles(words[n0:], lines[1:], line_windows[1:], duration, font_path, sub_s, W, H, framed=False)
+        print(f"[produce] 훅 카드: '{hook_text[:20]}' 0~{hook_end:.1f}s (문구 전체 노출)")
+    else:
+        sub_clips, _plan = _build_subtitles(words, lines, line_windows, duration, font_path, sub_s, W, H, framed=False)
 
     ch = settings.get("channel", {})
     bar_h = 110
@@ -206,7 +250,7 @@ def produce(product_hash: str, job_dir, settings: dict, project_root=None,
 
     # ⑤ 삽입물(컷어웨이): 특정 대사 구간 동안 소스 영상 위에 운영자가 고른 이미지/영상(움짤)을
     #    풀프레임으로 덮는다. 자막·브랜드바는 그 위에 유지(레이어 순서로 보장). 없으면 소스만.
-    insert_map = load_inserts(product_hash, root)
+    insert_map = load_inserts(product_hash, root, download_dir=job_dir / "inserts_dl")
     insert_clips = []
     if insert_map:
         from src.video.render import _expose_image_clip
@@ -227,6 +271,19 @@ def produce(product_hash: str, job_dir, settings: dict, project_root=None,
             print(f"[produce] 삽입물 {len(insert_clips)}컷 (라인 {len(insert_map)}개)")
 
     layers = [base] + insert_clips + [top_bar, scrim, brand] + list(sub_clips)
+    if hook_clip is not None:
+        layers.append(hook_clip)   # 훅 카드는 맨 위 — 첫 구간에 제목(훅) 문구 전체 노출
+
+    # ⑤ 효과음(SFX): 대본 stage/punch에 맞춰 라인 효과음 + 제품 공개(reveal) 효과음을 나레이션 위에 얹는다.
+    try:
+        from src.video.render import _find_reveal_time, _mix_line_sfx, _mix_reveal_sfx
+        reveal_t = _find_reveal_time(lines, line_windows)
+        audio = _mix_reveal_sfx(audio, reveal_t, root, settings, duration)
+        audio = _mix_line_sfx(audio, lines, line_windows, reveal_t, root, settings, duration)
+        print(f"[produce] 효과음 반영 (라인 SFX + 공개 reveal @{reveal_t if reveal_t is None else round(reveal_t,1)})")
+    except Exception as e:
+        print(f"[produce] 효과음 생략({type(e).__name__}: {e})")
+
     final = CompositeVideoClip(layers, size=(W, H)).with_duration(duration)
     final = final.with_audio(audio)
     out = Path(job_dir) / "video.mp4"
