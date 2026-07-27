@@ -265,6 +265,11 @@ def write_narrate_record(base_dir: str, content_id: str, meta: dict, *,
     # ★프레임 사진 시트(구간·크롭 편집용): {url, cols, rows, n, step, tw, th}
     if sheet and sheet.get("url"):
         rec["media"]["sheet"] = sheet
+    # ★자막 스크립트(운영자 요청): [{s,e,jp,ko}] — 관리자 상세에서 타임스탬프별로 확인한다.
+    if meta.get("subs"):
+        rec["subs"] = meta["subs"]
+    if meta.get("cta_jp"):
+        rec["cta_jp"] = meta["cta_jp"]
     # ★본문 길이(초) — 운영자가 컷 구간을 고를 때 "총 몇 초가 필요한지" 화면에 보여주기 위한 값.
     try:
         if float(meta.get("body_dur") or 0) > 0:

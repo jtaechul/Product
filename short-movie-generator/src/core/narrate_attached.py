@@ -1085,6 +1085,11 @@ def _spread_shorts_narration(chunks: list[str], work: Path, target_dur: float,
         gaps = []
     elif free / (n - 1) <= _SHORTS_GAP_MIN:
         gaps = [_SHORTS_GAP_MIN] * (n - 1)
+    elif free / (n - 1) > _SHORTS_GAP_MAX:
+        # ★대본이 짧아 남는 시간이 많은 경우: 상한(_SHORTS_GAP_MAX)을 고집하면 **끝에 몇 초씩 무음**이
+        #   남고 구독 유도도 끝에서 멀어진다(운영자가 지적한 그 문제의 재발). 이럴 땐 상한을 풀고
+        #   **균등하게 벌려 영상 끝까지 채운다** — 마지막(구독 유도)이 영상 끝에 딱 맞게 놓인다.
+        gaps = [free / (n - 1)] * (n - 1)
     else:
         mean = speech / n
         wts = [0.75 + 0.5 * (parts[i]["len"] / mean if mean else 1.0) for i in range(n - 1)]
@@ -1408,6 +1413,37 @@ def _ko_titles(titles: list[str]) -> list[str]:
     return list(titles)
 
 
+def _subs_record(disp: list[tuple], offset: float = 0.0) -> list[dict]:
+    """화면에 나가는 자막을 **시각과 함께** 레코드용으로 정리(일본어 + 한국어 번역).
+
+    운영자 요청: "자막이 뭐라고 나오는지 관리자 페이지에서 타임스탬프별로 보고 싶다."
+    offset: 오프닝 훅이 앞에 붙는 만큼 본문 자막이 뒤로 밀린다 → 완성 영상 기준 시각으로 맞춘다.
+    한국어는 한 번의 LLM 호출로 번역하고, 실패하면 빈 문자열(발행을 막지 않는다).
+    """
+    rows = [{"s": round(float(s) + offset, 2), "e": round(float(e) + offset, 2),
+             "jp": str(t).strip()} for t, s, e in (disp or []) if str(t).strip()]
+    if not rows:
+        return []
+    ko: list[str] = []
+    try:
+        from src.core import llm
+        raw = llm.generate_text(
+            "次の日本語字幕リストを自然な韓国語に訳し、**同じ個数**のJSON配列だけを出力してください。\n"
+            + json.dumps([r["jp"] for r in rows], ensure_ascii=False),
+            max_tokens=1200)
+        if raw:
+            m = re.search(r"\[.*\]", raw, re.S)
+            if m:
+                arr = json.loads(m.group(0))
+                if isinstance(arr, list) and len(arr) == len(rows):
+                    ko = [str(x).strip() for x in arr]
+    except Exception as e:  # noqa: BLE001
+        log.info("[narrate] 자막 한국어 번역 생략(%s)", e)
+    for i, r in enumerate(rows):
+        r["ko"] = ko[i] if i < len(ko) else ""
+    return rows
+
+
 def _condense_chapters_llm(chapters: list[tuple], target: int) -> list[tuple] | None:
     """전체 챕터 후보를 LLM에 보여주고 '진짜 국면 전환' 지점만 고르게 한다. 실패 시 None."""
     from src.core import llm
@@ -1571,8 +1607,12 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
         #   영상 끝까지 고르게 배치한다(쉼은 문장 길이에 비례).
         nar = _spread_shorts_narration(chunks, work, target)
         if not nar:                       # 분배 실패 시 기존 방식으로 안전 폴백(제작 불정지)
-            nar = narration_sync.synthesize(chunks, str(work), rate=_SHORTS_TTS_RATE)
+            # ★폴백에서도 **구독 유도는 반드시 들어간다**(운영자 확정): 예전엔 이 경로로 빠지면
+            #   구독 유도가 통째로 사라졌다. 대본 끝에 붙여 읽히고 자막으로도 나가게 한다.
+            nar = narration_sync.synthesize(chunks + [_SHORTS_CTA_JP], str(work),
+                                            rate=_SHORTS_TTS_RATE)
             dur = max(float(nar.get("duration") or 0) + 0.6, target)
+            log.warning("[narrate] 나레이션 분배 실패 → 이어읽기 폴백(구독 유도는 유지)")
         else:
             dur = max(target, float(nar.get("duration") or 0))
             # 길이에 맞춰 문장이 줄었으면 캡션·설명도 '실제로 읽은 문장'만 쓰게 맞춘다.
@@ -1720,6 +1760,11 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     # ★필요한 총 길이(운영자 확정): "구간을 반복해 채우지 말고, 총 몇 초가 필요한지 알려주면
     #   내가 그만큼 고르겠다." → 본문 길이(=나레이션 길이)를 레코드에 남겨 대시보드가 보여준다.
     meta["body_dur"] = round(float(dur), 1)
+    # ★자막 스크립트(운영자 요청): 화면에 나가는 자막을 시각과 함께 남겨 관리자 페이지에서 확인.
+    #   오프닝 훅이 앞에 붙은 만큼(완성 길이 − 본문 길이) 본문 자막 시각을 밀어 완성본 기준으로 맞춘다.
+    _open_off = max(0.0, _probe_dur(final) - float(dur)) if opened != body_final else 0.0
+    meta["subs"] = _subs_record(nar.get("disp") or [], offset=_open_off)
+    meta["cta_jp"] = _SHORTS_CTA_JP if mode == "shorts" else ""
 
     meta_path = out_dir / f"{name}.meta.json"
     try:

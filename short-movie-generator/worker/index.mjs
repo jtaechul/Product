@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-26-5 (컷 칸 표시·아이폰 폭)";
+const BUILD="v2026-07-27-1 (자막 스크립트 표시)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -713,6 +713,8 @@ async function renderNarrateDetail(id,fresh){
         '</select></div>'+
         '<button class="btn save" id="nvup">유튜브에 올리기</button></div>'
     ):''))+
+    // ★자막 스크립트(운영자 요청): 화면에 나가는 자막을 시각·일본어·한국어로 확인.
+    subsPanel(rec)+
     // ★관리(운영자 확정): 이 나레이션 영상을 원본 그대로 다시 제작(재생성)하거나 영구 삭제.
     '<div class="card" style="margin-top:12px">'+
       '<span class="lbl">이 나레이션 영상 관리</span>'+
@@ -746,6 +748,7 @@ async function renderNarrateDetail(id,fresh){
   B("nvcptj","nvtj","일본어 제목을 복사했어요.");B("nvcptk","nvtk","한국어 제목을 복사했어요.");
   B("nvcpdj","nvdj","일본어 설명을 복사했어요.");B("nvcpdk","nvdk","한국어 설명을 복사했어요.");
   B("nvcphj","nvhj","일본어 해시태그를 복사했어요.");B("nvcphk","nvhk","한국어 해시태그를 복사했어요.");
+  B("subscp","subsraw","자막 스크립트를 복사했어요.");
   if(md.video_url){const bd=document.getElementById("bdl");if(bd)bd.onclick=()=>saveVideo(prox(md.video_url),id+".mp4");}
   if(md.thumb_url){const th=document.getElementById("thdl");if(th)th.onclick=()=>saveVideo(prox(md.thumb_url),id+"_thumb.jpg",{btn:"#thdl",hint:"#thhint",mime:"image/jpeg",kind:"이미지"});}
   const rgn=document.getElementById("nvregen");
@@ -862,6 +865,33 @@ async function regenNarrateDub(id,sourceUrl,mode){
 
 // 나레이션 영상 재생성: 같은 원본 URL·형태로 narrate-video.yml을 디스패치하되 content_id를 넘겨
 // 같은 레코드(같은 /nv/<id>)를 덮어쓴다(영상·썸네일·메타 갱신).
+// ★자막 스크립트 패널(운영자 요청): "자막이 뭐라고 나오는지 타임스탬프별로 보고 싶다."
+//   레코드의 subs=[{s,e,jp,ko}]를 시각순 표로 보여주고, 마지막 구독 유도 줄을 눈에 띄게 표시한다.
+function mmss(t){const s=Math.max(0,Math.floor(t||0));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");}
+function subsPanel(rec){
+  const subs=(rec&&rec.subs)||[];
+  if(!subs.length) return '<div class="card" style="margin-top:12px"><span class="lbl">자막 스크립트</span>'+
+    '<div class="hint" style="margin-top:6px">이 회차에는 자막 기록이 없습니다 — '+
+    '<b>전체 다시 제작</b>을 한 번 돌리면 이후 회차부터 자막이 여기에 표시됩니다.</div></div>';
+  const cta=(rec.cta_jp||"").trim();
+  const rows=subs.map((x,i)=>{
+    const isCta=cta&&String(x.jp||"").indexOf(cta.slice(0,6))>=0;
+    return '<tr style="border-top:1px solid var(--line)'+(isCta?';background:rgba(67,200,218,.10)':'')+'">'+
+      '<td style="padding:6px 8px;white-space:nowrap;color:var(--cy);font-variant-numeric:tabular-nums">'+
+        mmss(x.s)+'~'+mmss(x.e)+(isCta?'<div class="hint" style="color:var(--cy)">구독 유도</div>':'')+'</td>'+
+      '<td style="padding:6px 8px">'+esc(x.jp||"")+
+        '<div class="hint" style="margin-top:2px">'+esc(x.ko||"(번역 없음)")+'</div></td></tr>';
+  }).join("");
+  const plain=subs.map(x=>mmss(x.s)+"~"+mmss(x.e)+"  "+(x.jp||"")+"  /  "+(x.ko||"")).join("\\n");
+  return '<div class="card" style="margin-top:12px">'+
+    '<span class="lbl">자막 스크립트 — 화면에 나가는 문장(시각 · 일본어 · 한국어)</span>'+
+    '<div class="hint" style="margin:4px 0 8px">총 '+subs.length+'줄'+
+      (cta?' · 마지막 <b style="color:var(--cy)">구독 유도</b> 포함':' · <b style="color:#ffb84d">구독 유도 없음</b>')+'</div>'+
+    '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:14px">'+rows+'</table></div>'+
+    '<textarea id="subsraw" rows="3" style="margin-top:8px">'+esc(plain)+'</textarea>'+
+    '<button class="btn" id="subscp" style="margin-top:6px">자막 전체 복사</button></div>';
+}
+
 // 커먼스 webm은 iOS에서 재생이 안 돼 480p VP9 트랜스코드를 우선 시도한다(제작 화면과 동일 규칙).
 function nvTranscode(u){
   try{
