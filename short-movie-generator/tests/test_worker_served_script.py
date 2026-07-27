@@ -69,3 +69,18 @@ def test_dialog_strings_have_no_raw_newline():
         first_line = seg.split("\n", 1)[0]
         # 여는 괄호 줄에서 따옴표 개수가 홀수면 문자열이 줄바꿈으로 끊긴 것
         assert first_line.count('"') % 2 == 0, f"끊긴 문자열: {first_line[:120]}"
+
+
+def test_shorts_have_no_thumbnail_save_menu():
+    """★쇼츠(도감형 전부 · 나레이션형 shorts)는 썸네일 저장 메뉴를 두지 않는다(운영자 확정).
+
+    유튜브 **쇼츠는 커스텀 썸네일 첨부가 불가**하므로 저장해도 쓸 데가 없다.
+    영상 앞에 붙는 오프닝 훅이 그 역할을 하고 그건 영상 안에 이미 들어 있다.
+    ★롱폼의 썸네일 저장은 그대로 유지해야 한다."""
+    src = _WORKER.read_text(encoding='utf-8')
+    assert 'id="ythumb"' not in src, "도감형(쇼츠)에 썸네일 저장 버튼이 남아 있습니다"
+    assert '유튜브 썸네일 저장' not in src, "도감형(쇼츠)에 썸네일 저장 메뉴가 남아 있습니다"
+    i = src.index("const thumbHtml=")
+    seg = src[i:i + 600]
+    assert '!=="shorts"' in seg, "나레이션형 썸네일 카드가 쇼츠에서도 뜹니다"
+    assert 'id="thdl"' in seg, "롱폼 썸네일 저장 버튼까지 사라졌습니다(유지해야 함)"

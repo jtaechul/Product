@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-27-3 (모든 쇼츠 자막 표시)";
+const BUILD="v2026-07-27-4 (쇼츠 썸네일 메뉴 제거)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -653,7 +653,9 @@ async function renderNarrateDetail(id,fresh){
   const md=rec.media||{};
   const mediaHtml=md.video_url?('<video id="nvout" src="'+prox(md.video_url)+'" controls playsinline preload="metadata"></video>'):"";
   const tagsJp=(rec.hashtags||[]).join(" "), tagsKo=(rec.hashtags_ko||[]).join(" ");
-  const thumbHtml=md.thumb_url?(
+  // ★쇼츠는 썸네일 저장 메뉴를 두지 않는다(운영자 확정): 유튜브 **쇼츠는 커스텀 썸네일 첨부가 불가**라
+  //   저장해도 쓸 데가 없다. 쇼츠엔 영상에 들어가는 **오프닝 훅**만 남긴다. 롱폼은 그대로 유지.
+  const thumbHtml=(md.thumb_url && (rec.mode||"")!=="shorts")?(
     '<div style="margin-top:12px"><span class="lbl">유튜브 커스텀 썸네일 (오프닝 훅 자동 생성)</span>'+
     '<img src="'+prox(md.thumb_url)+'" style="width:100%;max-width:480px;border-radius:8px;display:block;margin-top:6px">'+
     '<div class="btnrow" style="margin-top:6px"><button class="btn save" id="thdl">썸네일 저장</button></div><div class="hint" id="thhint"></div></div>'
@@ -1536,11 +1538,9 @@ async function renderDetail(id){
       '<span class="mono" style="color:var(--gy);font-size:12px">'+esc(sp.common_name_en||"")+'</span></div>'+
     mediaHtml+
     (md.video_url?'<div class="btnrow" style="margin-top:8px"><button class="btn save" id="bdl">비디오 저장하기</button></div><div class="hint" id="dlhint" style="margin-top:6px"></div>':"")+
-    // ★유튜브 썸네일(전체 타이틀 노출 오프닝 프레임) — 미리보기 + 저장(유튜브 커스텀 썸네일용)
-    (md.yt_thumb_url?('<div style="margin-top:12px"><span class="lbl">유튜브 썸네일 (오프닝 훅 · 제목 전체 노출)</span>'+
-      '<img src="'+prox(bust(md.yt_thumb_url,md.rev||"r1"))+'" alt="유튜브 썸네일" style="width:150px;border-radius:8px;display:block;margin:6px 0"/>'+
-      '<div class="btnrow"><button class="btn save" id="ythumb">유튜브 썸네일 저장</button></div>'+
-      '<div class="hint" id="ythint" style="margin-top:4px"></div></div>'):"")+
+    // ★도감형은 전부 쇼츠(9:16)다 → 썸네일 저장 메뉴를 두지 않는다(운영자 확정).
+    //   유튜브 쇼츠는 커스텀 썸네일 첨부가 불가하므로 저장해도 쓸 데가 없다.
+    //   영상 앞에 붙는 **오프닝 훅**이 그 역할을 하고, 그건 영상 안에 이미 들어 있다.
     upHtml+
     '<div class="meta" style="margin-top:12px"><b>학명</b> <i>'+esc(sp.scientific_name||"")+'</i> · <b>수심</b> '+esc(sp.depth_range_m||"?")+'m<br>'+
       '<b>서식</b> '+esc(sp.habitat||"?")+' · <b>분포</b> '+esc(sp.distribution||"?")+'</div>'+
@@ -1592,8 +1592,6 @@ async function renderDetail(id){
 
   // 현 시스템은 실사 영상 재편집(무료) — Veo·카드뉴스 이미지 재생성은 구 시스템 유물이라 제거
   if($("#bdl"))$("#bdl").onclick=()=>saveVideo(prox(bust(md.video_url,md.rev||"r1")),esc(id)+"_"+(sp.common_name_ko||"reel")+".mp4");
-  // 유튜브 커스텀 썸네일(오프닝 훅 · 제목 전체 노출 프레임) 저장 — 이미지용 mime/hint/btn 지정
-  if($("#ythumb"))$("#ythumb").onclick=()=>saveVideo(prox(bust(md.yt_thumb_url,md.rev||"r1")),esc(id)+"_"+(sp.common_name_ko||"reel")+"_thumb.jpg",{mime:"image/jpeg",hint:"#ythint",btn:"#ythumb",kind:"이미지"});
   $("#cptjp").onclick=()=>copyText($("#etitlejp").value,"일본어 제목을 복사했어요. 유튜브 쇼츠 제목에 붙여넣기 하세요.");
   $("#cptko").onclick=()=>copyText($("#etitleko").value,"한국어 제목(참고)을 복사했어요.");
   $("#cpjp").onclick=()=>copyText($("#ecapjp").value,"일본어 캡션+해시태그를 복사했어요. 릴스에 붙여넣기 하세요.");
