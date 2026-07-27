@@ -1758,6 +1758,10 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     _open_off = max(0.0, _probe_dur(final) - float(dur)) if opened != body_final else 0.0
     meta["subs"] = _subs_record(nar.get("disp") or [], offset=_open_off)
     meta["cta_jp"] = _SHORTS_CTA_JP if mode == "shorts" else ""
+    # ★운영자 지정값 보존(운영자 확정 · 실사고): 표지(cover)와 컷(cut_specs)을 레코드에 남긴다.
+    #   예전엔 워크플로 입력으로 한 번 쓰고 버려서, 다음에 **컷만 고치면 표지 지정이 초기화**됐다.
+    #   화면이 이 값을 다시 불러와 편집기에 채우고, 다시 만들 때 함께 보낸다.
+    meta["edit"] = {k: str(v) for k, v in (manual or {}).items() if str(v or "").strip()}
 
     meta_path = out_dir / f"{name}.meta.json"
     try:

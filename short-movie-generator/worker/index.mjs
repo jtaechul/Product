@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-27-4 (쇼츠 썸네일 메뉴 제거)";
+const BUILD="v2026-07-27-5 (표지+구간 통합 실행·설정 저장)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -715,8 +715,9 @@ async function renderNarrateDetail(id,fresh){
         '</select></div>'+
         '<button class="btn save" id="nvup">유튜브에 올리기</button></div>'
     ):''))+
-    // ★표지(오프닝 훅·썸네일) 직접 고르기 — 원본이 있을 때만
+    // ★표지(오프닝 훅·썸네일) 직접 고르기 + **통합 실행 버튼**(표지 + 구간을 한 번에)
     (rec.source_url?coverEditorHTML():'')+
+    (rec.source_url?applyEditsHTML((rec.mode||"")==="shorts"):'')+
     // ★자막 스크립트(운영자 요청): 화면에 나가는 자막을 시각·일본어·한국어로 확인.
     subsPanel(rec)+
     // ★관리(운영자 확정): 이 나레이션 영상을 원본 그대로 다시 제작(재생성)하거나 영구 삭제.
@@ -735,7 +736,6 @@ async function renderNarrateDetail(id,fresh){
           '<div class="card" id="nvcutbox" style="grid-column:1/-1;margin-top:10px;border:1px solid var(--cy)">'+
             '<span class="lbl" style="color:var(--cy)">구간·줌 직접 지정 — 내가 정해서 다시 만들기</span>'+
             cutEditorHTML("nc")+
-            '<button class="btn save" id="ncgo" style="margin-top:8px">이 설정으로 다시 만들기 (같은 회차 덮어쓰기)</button>'+
           '</div>'
         ):'')+
         '<button class="btn" id="nvdel" style="background:#8b1a1a;color:#fff;grid-column:1/-1">이 영상 삭제 (영구)</button></div>'+
@@ -768,22 +768,32 @@ async function renderNarrateDetail(id,fresh){
       const st=ceState("nc"); st.need=Math.max(1,Math.round(((_out.duration||0)-4.6)*10)/10); ceRender("nc");};
     bindCutEditor("nc", {sheet: md.sheet||null,
                          srcs: [md.source_mp4_url, nvTranscode(rec.source_url), rec.source_url],
-                         need: rec.body_dur||md.body_dur||0}, ()=>{
-      const inp=cutEditorInputs("nc");
-      if(!Object.keys(inp).length){banner("컷 구간·줌·크롭 중 최소 하나는 지정하세요.","err");return;}
-      regenNarrate(id,rec.source_url,rec.mode||"shorts",inp);
-    });
+                         need: rec.body_dur||md.body_dur||0}, null);   // 실행은 통합 버튼이 담당
   }
-  // ★표지 편집기 배선: 사진 띠(소싱 시트) + '지금 이 장면'(원본 재생 위치) → 썸네일만/전체 재제작
+  // ★표지 편집기 배선 + **통합 실행**(표지 + 구간을 한 버튼으로) + 지난 설정 복원
   if(document.getElementById("coverbox")&&rec.source_url){
     bindCoverEditor(md.sheet||null, "ncvid",
+      // 롱폼 전용 빠른 버튼(쇼츠는 렌더되지 않음): 표지만 바꿔 썸네일 재렌더
       ()=>{ const inp=coverInputs();
             if(!inp.cover){banner("표지로 쓸 시각을 먼저 고르세요(사진을 탭하거나 초 입력).","err");return;}
             regenNarratePartial(id,rec.source_url,rec.mode||"shorts","thumb","cvthumb","썸네일",inp); },
-      ()=>{ const inp=coverInputs();
-            if(!inp.cover){banner("표지로 쓸 시각을 먼저 고르세요(사진을 탭하거나 초 입력).","err");return;}
-            if(!confirm("이 표지로 영상까지 다시 만듭니다(5~15분). 진행할까요?"))return;
-            regenNarrate(id,rec.source_url,rec.mode||"shorts",inp); });
+      null);
+    restoreEdits(rec,"nc");                       // 지난 설정 복원(초기화 방지)
+    const _ap=document.getElementById("applyedits");
+    if(_ap)_ap.onclick=()=>{
+      const inp=allEditInputs("nc");
+      if(!Object.keys(inp).length){banner("표지나 구간 중 최소 하나는 지정하세요.","err");return;}
+      if(!confirm("정한 표지·구간 설정으로 이 회차를 다시 만듭니다(5~15분 · 같은 회차 덮어쓰기).\\n진행할까요?"))return;
+      regenNarrate(id,rec.source_url,rec.mode||"shorts",inp);
+    };
+    // 값이 바뀔 때마다 '무엇이 반영될지' 요약을 갱신
+    ["cvat","cvzoom"].forEach(x=>{const e=document.getElementById(x);
+      if(e){const prev=e.oninput; e.oninput=(ev)=>{if(prev)prev(ev); editSummary(rec,"nc");};}});
+    for(let i=0;i<CUTN;i++)["a","b"].forEach(f=>{const e=document.getElementById("nc"+i+f);
+      if(e){const prev=e.oninput; e.oninput=(ev)=>{if(prev)prev(ev); editSummary(rec,"nc");};}});
+    const _stg=document.getElementById("cvstage");
+    if(_stg)_stg.addEventListener("pointerup",()=>editSummary(rec,"nc"));
+    editSummary(rec,"nc");
   }
   const dub=document.getElementById("nvdub");
   if(dub&&rec.source_url)dub.onclick=()=>regenNarrateDub(id,rec.source_url,rec.mode||"longform");
@@ -909,10 +919,61 @@ function coverEditorHTML(){
     '<div class="hint" style="margin:6px 0 2px">잘라낼 크기 — 오른쪽 끝이 원본 전체, 왼쪽으로 갈수록 크게 확대</div>'+
     '<input id="cvzoom" type="range" min="25" max="100" value="100" style="width:100%;height:44px;margin:4px 0 8px">'+
     '<div class="hint" id="cvinfo" style="margin:2px 0"></div>'+
-    '<div style="display:flex;gap:6px;margin-top:8px">'+
-      '<button class="btn save" id="cvthumb" style="flex:1">이 표지로 썸네일만 다시 (2~5분)</button>'+
-      '<button class="btn" id="cvall" style="flex:1;border-color:var(--cy);color:var(--cy)">영상까지 다시 (5~15분)</button>'+
-    '</div></div>';
+    '</div>';
+}
+// ★통합 실행(운영자 확정): 표지 + 컷 설정을 **한 버튼**으로 한 번에 다시 만든다.
+//   예전엔 카드마다 버튼이 따로라 영상을 두 번 만들어야 했고, 한쪽만 보내니 다른 쪽 지정이 초기화됐다.
+//   쇼츠는 '썸네일만 다시'를 두지 않는다 — 유튜브 쇼츠는 커스텀 썸네일 첨부가 불가하다.
+function applyEditsHTML(isShorts){
+  return '<div class="card" id="applybox" style="margin-top:12px;border:1px solid var(--cy)">'+
+    '<span class="lbl" style="color:var(--cy)">정한 설정으로 다시 만들기</span>'+
+    '<div class="hint" id="applysum" style="margin:6px 0 8px"></div>'+
+    '<button class="btn save" id="applyedits">표지 + 구간 설정으로 다시 만들기 (5~15분)</button>'+
+    (isShorts?'':'<button class="btn" id="cvthumb" style="margin-top:6px">이 표지로 썸네일만 다시 (2~5분)</button>')+
+    '<div class="hint" style="margin-top:6px">정한 값은 <b>저장</b>되어 다음에 이 화면을 열면 그대로 복원됩니다. '+
+      '한쪽만 고쳐도 다른 쪽 설정은 유지됩니다.</div></div>';
+}
+// 두 편집기의 지정값을 합친다(표지 + 컷). 하나도 없으면 빈 객체.
+function allEditInputs(pfx){
+  return Object.assign({}, cutEditorInputs(pfx||"nc"), coverInputs());
+}
+// 저장된 지정값(rec.edit)을 편집기에 복원 — '초기화 되어버리는' 문제의 해결책.
+function restoreEdits(rec, pfx){
+  const ed=(rec&&rec.edit)||{};
+  try{
+    if(ed.cover){
+      const c=JSON.parse(ed.cover), st=cvState();
+      if(Number.isFinite(c.at)){ st.at=c.at; const el=document.getElementById("cvat"); if(el)el.value=String(c.at); }
+      if(Number.isFinite(c.zoom)&&c.zoom>0) st.box.h=Math.max(0.2,Math.min(1,1/c.zoom));
+      if(Number.isFinite(c.x)) st.box.x=c.x;
+      if(Number.isFinite(c.y)) st.box.y=c.y;
+      const z=document.getElementById("cvzoom"); if(z)z.value=String(Math.round(st.box.h*100));
+    }
+  }catch(e){}
+  try{
+    if(ed.cut_specs){
+      const arr=JSON.parse(ed.cut_specs), st=ceState(pfx||"nc");
+      arr.slice(0,CUTN).forEach((c,i)=>{
+        const a=document.getElementById((pfx||"nc")+i+"a"), b=document.getElementById((pfx||"nc")+i+"b");
+        if(a&&Number.isFinite(c.start))a.value=String(c.start);
+        if(b&&Number.isFinite(c.end))b.value=String(c.end);
+        if(Number.isFinite(c.zoom)&&c.zoom>0)st.cuts[i].box.w=Math.max(0.15,Math.min(1,1/c.zoom));
+        if(Number.isFinite(c.crop_x))st.cuts[i].box.x=c.crop_x;
+        if(Number.isFinite(c.crop_y))st.cuts[i].box.y=c.crop_y;
+      });
+    }
+  }catch(e){}
+  editSummary(rec, pfx);
+}
+// 현재 지정 상태 한 줄 요약(무엇이 반영될지 눈으로 확인)
+function editSummary(rec, pfx){
+  const el=document.getElementById("applysum"); if(!el) return;
+  const inp=allEditInputs(pfx);
+  const parts=[];
+  try{ if(inp.cover){const c=JSON.parse(inp.cover); parts.push("표지 "+c.at+"초·줌 "+c.zoom+"배");} }catch(e){}
+  try{ if(inp.cut_specs){const a=JSON.parse(inp.cut_specs); parts.push("구간 "+a.length+"컷");} }catch(e){}
+  el.innerHTML = parts.length ? ("반영될 설정: <b>"+parts.join(" · ")+"</b>")
+    : "아직 지정한 설정이 없습니다 — 위에서 표지나 구간을 정하면 여기에 표시됩니다.";
 }
 // 표지 지정값 → 워크플로 입력(cover). 시각을 안 고르면 빈 값(=자동).
 function coverInputs(){
@@ -991,8 +1052,7 @@ function bindCoverEditor(sheet, srcVidId, onThumb, onAll){
   }
   const z=document.getElementById("cvzoom");
   if(z)z.oninput=()=>{st.box.h=Math.max(0.2,Math.min(1,(parseInt(z.value)||100)/100)); cvDraw();};
-  const bt=document.getElementById("cvthumb"); if(bt&&onThumb)bt.onclick=onThumb;
-  const ba=document.getElementById("cvall"); if(ba&&onAll)ba.onclick=onAll;
+  const bt=document.getElementById("cvthumb"); if(bt&&onThumb)bt.onclick=onThumb;   // 롱폼 전용
   cvShow(); cvDraw();
 }
 

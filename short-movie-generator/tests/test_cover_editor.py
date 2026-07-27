@@ -104,3 +104,39 @@ def test_wired_end_to_end():
         assert token in worker, f"대시보드 표지 편집기 누락: {token}"
     assert "zoom:Math.round((1/hf)*100)/100" in worker, (
         "줌을 높이 비율로 계산하지 않습니다 — 가로 폭 기준이면 16:9 화면에서 슬라이더가 먹지 않습니다")
+
+
+def test_edits_are_saved_and_restored():
+    """★운영자 지적(실사고): 표지를 정해 만든 뒤 **컷만 고쳐 다시 만들면 표지가 초기화**됐다.
+
+    원인은 지정값이 워크플로 입력으로 한 번 쓰이고 **레코드에 저장되지 않은 것**.
+    → 제작이 meta["edit"]에 남기고, 레코드에 보관하고, 화면이 복원한다."""
+    root = Path(his.__file__).parents[2]
+    na = (root / "src" / "core" / "narrate_attached.py").read_text(encoding="utf-8")
+    assert 'meta["edit"] = {k: str(v) for k, v in (manual or {}).items()' in na, "지정값을 메타에 남기지 않습니다"
+    cs = (root / "src" / "core" / "content_store.py").read_text(encoding="utf-8")
+    assert 'rec["edit"] = meta["edit"]' in cs, "레코드에 지정값이 저장되지 않습니다"
+    w = (root / "worker" / "index.mjs").read_text(encoding="utf-8")
+    assert "function restoreEdits(" in w and "restoreEdits(rec" in w, "화면이 지난 설정을 복원하지 않습니다"
+    assert "rec.edit" in w or "(rec&&rec.edit)" in w
+
+
+def test_single_button_sends_both_settings():
+    """★표지와 구간을 **한 버튼**으로 한 번에 제작한다(예전엔 카드마다 버튼이 따로라 2번 제작)."""
+    w = (Path(his.__file__).parents[2] / "worker" / "index.mjs").read_text(encoding="utf-8")
+    assert "function allEditInputs(" in w, "두 설정을 합치는 함수가 없습니다"
+    i = w.index("function allEditInputs(")
+    seg = w[i:i + 300]
+    assert "cutEditorInputs(" in seg and "coverInputs()" in seg, "합치는 대상이 빠졌습니다"
+    assert 'id="applyedits"' in w, "통합 실행 버튼이 없습니다"
+    assert 'id="ncgo"' not in w, "컷 카드의 개별 실행 버튼이 남아 있습니다(2번 제작 원인)"
+    assert 'id="cvall"' not in w, "표지 카드의 개별 실행 버튼이 남아 있습니다"
+
+
+def test_thumbnail_only_button_is_longform_only():
+    """쇼츠는 커스텀 썸네일 첨부가 불가 → '썸네일만 다시'는 롱폼에서만 렌더한다."""
+    w = (Path(his.__file__).parents[2] / "worker" / "index.mjs").read_text(encoding="utf-8")
+    i = w.index("function applyEditsHTML(")
+    seg = w[i:i + 900]
+    assert "isShorts?''" in seg.replace('"', "'"), "쇼츠에서도 썸네일 버튼이 렌더됩니다"
+    assert 'id="cvthumb"' in seg

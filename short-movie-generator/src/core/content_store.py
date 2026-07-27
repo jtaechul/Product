@@ -274,6 +274,9 @@ def write_narrate_record(base_dir: str, content_id: str, meta: dict, *,
         rec["subs"] = meta["subs"]
     if meta.get("cta_jp"):
         rec["cta_jp"] = meta["cta_jp"]
+    # ★운영자 지정 편집값(표지·컷) 보존 — 다음 편집 때 화면에 복원하고 함께 다시 보낸다.
+    if meta.get("edit"):
+        rec["edit"] = meta["edit"]
     # ★본문 길이(초) — 운영자가 컷 구간을 고를 때 "총 몇 초가 필요한지" 화면에 보여주기 위한 값.
     try:
         if float(meta.get("body_dur") or 0) > 0:
