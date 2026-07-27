@@ -1,31 +1,47 @@
 {
   "id": "nv-30223591884",
   "kind": "narrate",
-  "created_at": "2026-07-27T02:54:53+00:00",
+  "created_at": "2026-07-27T03:09:16+00:00",
   "status": "published",
   "mode": "shorts",
   "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Your_Earth_is_Blue-_The_Wreck_of_the_Joseph_S._Fay.webm",
-  "hook": "静かな海岸に、記憶が眠っています",
-  "yt_title": "ジョセフ・エス・ベイ号という船です",
-  "yt_title_ko": "조지프 S. 베이호라는 배입니다",
-  "yt_description": "静かな海岸に、記憶が眠っています。沖には白いブイが浮かびます。それは沈没船の目印です。ジョセフ・エス・ベイ号という船です。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
-  "yt_description_ko": "조용한 해안에 기억이 잠들어 있습니다. 앞바다에는 하얀 부표가 떠 있습니다. 그것은 침몰선의 표식입니다. 조지프 S. 베이호라는 배입니다.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
+  "hook": "幼い日の記憶、水底の船影",
+  "yt_title": "水底の秘密：幼い日の記憶と沈没船",
+  "yt_title_ko": "물밑의 비밀: 어린 시절의 기억과 침몰선",
+  "yt_description": "静かな水面の向こう、視線の先に浮かぶ白いブイの真下には、沈没船の姿が広がります。幼い日、繰り返し潜り、初めてのマスクで見えた忘れられない景色。個人的な記憶と深く結びついた、水底に残る船影を今、見つめています。海の歴史が息づく静寂の世界をどうぞご覧ください。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
+  "yt_description_ko": "잔잔한 수면 너머, 시선 끝에 떠오른 하얀 부이 바로 아래에는 침몰선의 모습이 펼쳐집니다. 어릴 적, 반복해서 잠수하며 처음 마스크를 통해 보았던 잊을 수 없는 풍경. 개인적인 기억과 깊이 연결된, 물밑에 남은 배의 그림자를 지금, 응시합니다. 바다의 역사가 숨 쉬는 고요한 세계를 부디 감상해 주세요.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
   "hashtags": [
     "#沈没船",
-    "#難破船",
-    "#海",
-    "#海洋生物"
+    "#船影",
+    "#水中世界",
+    "#潜水",
+    "#記憶",
+    "#ノスタルジー",
+    "#海の神秘",
+    "#水中映像",
+    "#癒し",
+    "#YouTubeショート",
+    "#shorts",
+    "#水中遺跡"
   ],
   "hashtags_ko": [
     "#침몰선",
-    "#난파선",
-    "#바다",
-    "#해양생물"
+    "#뱃그림자",
+    "#수중세계",
+    "#잠수",
+    "#기억",
+    "#노스탤지어",
+    "#바다의신비",
+    "#수중영상",
+    "#힐링",
+    "#유튜브쇼츠",
+    "#shorts",
+    "#수중유적"
   ],
   "media": {
-    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30233023777.mp4",
-    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30233023777_thumb.jpg",
-    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30233023777_source.mp4",
+    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30233535739.mp4",
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30233535739_thumb.jpg",
+    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30233535739_source.mp4",
     "sheet": {
       "cols": 8,
       "rows": 5,
@@ -33,45 +49,51 @@
       "step": 2.0,
       "tw": 240,
       "th": 135,
-      "url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30233023777_sheet.jpg"
+      "url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30233535739_sheet.jpg"
     }
   },
   "subs": [
     {
-      "s": 4.6,
-      "e": 8.66,
-      "jp": "静かな海岸に、記憶が眠っています",
-      "ko": "조용한 해안에, 기억이 잠들어 있습니다"
+      "s": 4.43,
+      "e": 7.24,
+      "jp": "静かな水面の向こうに",
+      "ko": "고요한 수면 저편으로"
     },
     {
-      "s": 10.21,
-      "e": 13.23,
-      "jp": "沖には白いブイが浮かびます",
-      "ko": "앞바다에는 하얀 부표가 떠 있습니다"
+      "s": 8.15,
+      "e": 11.15,
+      "jp": "視線の先に浮かぶ白いブイ",
+      "ko": "시선 끝에 떠 있는 하얀 부표"
     },
     {
-      "s": 14.59,
-      "e": 17.81,
-      "jp": "それは沈没船の目印です",
-      "ko": "그것은 침몰선의 표시입니다"
+      "s": 12.09,
+      "e": 15.58,
+      "jp": "その真下には沈んだ船の姿",
+      "ko": "그 바로 아래엔 가라앉은 배의 모습"
     },
     {
-      "s": 19.18,
-      "e": 22.67,
-      "jp": "ジョセフ・エス・ベイ号という船です",
-      "ko": "조셉 에스 베이호라는 배입니다"
+      "s": 16.57,
+      "e": 20.33,
+      "jp": "幼い日、繰り返し潜った記憶",
+      "ko": "어린 시절, 반복해서 잠수하던 기억"
     },
     {
-      "s": 24.09,
-      "e": 27.98,
-      "jp": "今もブイの下に、船影が見えます",
-      "ko": "지금도 부표 아래에, 배의 그림자가 보입니다"
+      "s": 21.38,
+      "e": 24.41,
+      "jp": "初めてのマスクで見えた景色",
+      "ko": "처음 마스크로 바라본 풍경"
     },
     {
-      "s": 29.5,
-      "e": 33.37,
+      "s": 25.38,
+      "e": 28.41,
+      "jp": "今も残る船影を見つめて",
+      "ko": "지금도 남아있는 배 그림자를 바라보며"
+    },
+    {
+      "s": 29.33,
+      "e": 33.2,
       "jp": "チャンネル登録して、次の深海も。",
-      "ko": "채널 구독하시고, 다음 심해도 함께해요."
+      "ko": "구독하고, 다음 심해도 함께해요."
     }
   ],
   "cta_jp": "チャンネル登録して、次の深海も。",
