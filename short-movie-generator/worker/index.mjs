@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-27-1 (자막 스크립트 표시)";
+const BUILD="v2026-07-27-2 (표지 직접 고르기)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -713,6 +713,8 @@ async function renderNarrateDetail(id,fresh){
         '</select></div>'+
         '<button class="btn save" id="nvup">유튜브에 올리기</button></div>'
     ):''))+
+    // ★표지(오프닝 훅·썸네일) 직접 고르기 — 원본이 있을 때만
+    (rec.source_url?coverEditorHTML():'')+
     // ★자막 스크립트(운영자 요청): 화면에 나가는 자막을 시각·일본어·한국어로 확인.
     subsPanel(rec)+
     // ★관리(운영자 확정): 이 나레이션 영상을 원본 그대로 다시 제작(재생성)하거나 영구 삭제.
@@ -770,6 +772,17 @@ async function renderNarrateDetail(id,fresh){
       regenNarrate(id,rec.source_url,rec.mode||"shorts",inp);
     });
   }
+  // ★표지 편집기 배선: 사진 띠(소싱 시트) + '지금 이 장면'(원본 재생 위치) → 썸네일만/전체 재제작
+  if(document.getElementById("coverbox")&&rec.source_url){
+    bindCoverEditor(md.sheet||null, "ncvid",
+      ()=>{ const inp=coverInputs();
+            if(!inp.cover){banner("표지로 쓸 시각을 먼저 고르세요(사진을 탭하거나 초 입력).","err");return;}
+            regenNarratePartial(id,rec.source_url,rec.mode||"shorts","thumb","cvthumb","썸네일",inp); },
+      ()=>{ const inp=coverInputs();
+            if(!inp.cover){banner("표지로 쓸 시각을 먼저 고르세요(사진을 탭하거나 초 입력).","err");return;}
+            if(!confirm("이 표지로 영상까지 다시 만듭니다(5~15분). 진행할까요?"))return;
+            regenNarrate(id,rec.source_url,rec.mode||"shorts",inp); });
+  }
   const dub=document.getElementById("nvdub");
   if(dub&&rec.source_url)dub.onclick=()=>regenNarrateDub(id,rec.source_url,rec.mode||"longform");
   const nvu=document.getElementById("nvup");if(nvu)nvu.onclick=()=>uploadNarrate(id);
@@ -783,7 +796,8 @@ async function renderNarrateDetail(id,fresh){
 }
 
 // 나레이션 부분 재생성(영상 유지): scope=meta(제목·설명) | thumb(썸네일) — narrate-video.yml 디스패치.
-async function regenNarratePartial(id,sourceUrl,mode,scope,btnId,label){
+// extra = 표지 지정 등 추가 워크플로 입력(cover). 없으면 기존과 동일(자동).
+async function regenNarratePartial(id,sourceUrl,mode,scope,btnId,label,extra){
   if(!authReady()){banner("재생성에는 GitHub 토큰(Actions: Read and write)이 필요합니다.","err");return;}
   const mins=(scope==="thumb"||scope==="title")?"2~5분":"1~2분";
   if(!confirm(label+"만 다시 만듭니다(영상은 그대로).\\n\\n완료되면 이 화면이 자동으로 갱신됩니다(약 "+mins+").\\n계속할까요?"))return;
@@ -794,8 +808,8 @@ async function regenNarratePartial(id,sourceUrl,mode,scope,btnId,label){
   banner(label+" 재생성을 시작합니다… 완료되면 자동으로 갱신됩니다.");
   try{
     const r=await fetch(API+"/actions/workflows/"+NV_WF+"/dispatches",{method:"POST",headers:headers(true),
-      body:JSON.stringify({ref:BRANCH,inputs:{video_url:(sourceUrl||"-"),mode:(mode||"longform"),
-        content_id:String(id),scope:scope}})});
+      body:JSON.stringify({ref:BRANCH,inputs:Object.assign({video_url:(sourceUrl||"-"),mode:(mode||"longform"),
+        content_id:String(id),scope:scope},extra||{})})});
     if(r.status===204){banner(label+" 재생성 시작! 완료되면 이 화면이 자동으로 갱신됩니다(약 "+mins+").","ok");
       pollNarrateUpdate(id,before,label);}
     else{const t=await r.text();banner("시작 실패("+r.status+")<br><span class='mono' style='font-size:11px'>"+esc(t.slice(0,140))+"</span>","err");
@@ -865,6 +879,121 @@ async function regenNarrateDub(id,sourceUrl,mode){
 
 // 나레이션 영상 재생성: 같은 원본 URL·형태로 narrate-video.yml을 디스패치하되 content_id를 넘겨
 // 같은 레코드(같은 /nv/<id>)를 덮어쓴다(영상·썸네일·메타 갱신).
+// ★★표지(오프닝 훅·썸네일) 직접 지정 패널(운영자 확정): "표지도 구간/줌/구획을 내가 정한다."
+//   오프닝 훅 배경 = 썸네일 배경(오프닝 마지막 프레임)이라 **이 하나로 둘 다** 정해진다.
+//   컷 편집기와 같은 방식: 사진 띠에서 **시각**을 고르고, 그 위 사각형으로 **잘라낼 구획**을 정한다.
+const _cv={};
+// box.h = 잘라낼 **높이 비율**(0.2~1.0). 너비는 9:16로 자동(= 백엔드 계산과 동일: 높이=원본÷줌).
+//   ★가로 폭 기준으로 잡으면 16:9 화면에선 폭 32%만 넘어도 높이에 걸려 **줌이 1.0에 고정**된다
+//     (슬라이더를 움직여도 아무 변화가 없던 문제) → 높이 기준으로 잡는다. 줌 = 1 / 높이비율.
+function cvState(){ return (_cv.s ||= {sheet:null, at:null, box:{x:0.5,y:0.5,h:1.0}}); }
+function coverEditorHTML(){
+  return '<div class="card" id="coverbox" style="margin-top:12px;border:1px solid var(--cy)">'+
+    '<span class="lbl" style="color:var(--cy)">표지 직접 고르기 — 오프닝 훅 + 썸네일</span>'+
+    '<div class="hint" style="margin:6px 0 8px">① <b>사진 띠</b>에서 표지로 쓸 장면을 탭하고 '+
+      '② 아래 <b>사각형</b>을 손가락으로 옮기고 막대로 크기를 바꿔 잘라낼 곳을 정하세요. '+
+      '오프닝 훅과 썸네일이 <b>같은 배경</b>을 쓰므로 한 번만 정하면 둘 다 바뀝니다.</div>'+
+    '<div id="cvstrip" style="display:flex;overflow-x:auto;gap:6px;padding:4px 0;-webkit-overflow-scrolling:touch">'+
+      '<div class="hint">프레임 사진 불러오는 중…</div></div>'+
+    '<div class="row2" style="gap:6px;align-items:center;margin:8px 0">'+
+      '<span class="hint" style="min-width:64px">표지 시각</span>'+
+      '<input id="cvat" placeholder="초(예: 12.3)" inputmode="decimal" style="'+CE_INP+'">'+
+      '<button class="mini" id="cvhere" style="'+CE_BTN+'">지금 이 장면</button>'+
+    '</div>'+
+    '<div id="cvstage" style="position:relative;width:100%;background:#000;border-radius:10px;overflow:hidden;touch-action:none">'+
+      '<img id="cvframe" style="width:100%;display:block;opacity:.85">'+
+      '<div id="cvbox" style="position:absolute;border:2px solid var(--cy);box-shadow:0 0 0 9999px rgba(0,0,0,.45);border-radius:4px"></div>'+
+    '</div>'+
+    '<div class="hint" style="margin:6px 0 2px">잘라낼 크기 — 오른쪽 끝이 원본 전체, 왼쪽으로 갈수록 크게 확대</div>'+
+    '<input id="cvzoom" type="range" min="25" max="100" value="100" style="width:100%;height:44px;margin:4px 0 8px">'+
+    '<div class="hint" id="cvinfo" style="margin:2px 0"></div>'+
+    '<div style="display:flex;gap:6px;margin-top:8px">'+
+      '<button class="btn save" id="cvthumb" style="flex:1">이 표지로 썸네일만 다시 (2~5분)</button>'+
+      '<button class="btn" id="cvall" style="flex:1;border-color:var(--cy);color:var(--cy)">영상까지 다시 (5~15분)</button>'+
+    '</div></div>';
+}
+// 표지 지정값 → 워크플로 입력(cover). 시각을 안 고르면 빈 값(=자동).
+function coverInputs(){
+  const st=cvState();
+  const el=document.getElementById("cvat");
+  const v=parseFloat(((el||{}).value||"").trim());
+  if(!Number.isFinite(v)) return {};
+  const hf=Math.max(0.2,Math.min(1,st.box.h));
+  return {cover: JSON.stringify({at:Math.round(v*10)/10,
+                                 zoom:Math.round((1/hf)*100)/100,   // 줌 = 1 ÷ 높이비율
+                                 x:Math.round(st.box.x*100)/100,
+                                 y:Math.round(st.box.y*100)/100})};
+}
+function cvShow(){
+  const st=cvState(), stage=document.getElementById("cvstage"), img=document.getElementById("cvframe");
+  if(!stage||!st.sheet) return;
+  const k=Math.max(0,Math.min(st.sheet.n-1, Math.round((st.at||0)/st.sheet.step)));
+  const cx=k%st.sheet.cols, cy=Math.floor(k/st.sheet.cols);
+  stage.style.backgroundImage="url("+prox(st.sheet.url)+")";
+  stage.style.backgroundSize=(st.sheet.cols*100)+"% "+(st.sheet.rows*100)+"%";
+  stage.style.backgroundPosition=(st.sheet.cols>1?(cx*100/(st.sheet.cols-1)):0)+"% "+
+                                 (st.sheet.rows>1?(cy*100/(st.sheet.rows-1)):0)+"%";
+  stage.style.aspectRatio=(st.sheet.tw+"/"+st.sheet.th);
+  if(img)img.style.visibility="hidden";
+  cvDraw();
+}
+function cvDraw(){
+  const st=cvState(), stage=document.getElementById("cvstage"), box=document.getElementById("cvbox");
+  if(!stage||!box) return;
+  const W=stage.clientWidth||320, H=stage.clientHeight||180;
+  const hf=Math.max(0.2,Math.min(1,st.box.h));
+  const bh=hf*H, bw=Math.min(W, bh*9/16);          // 9:16 고정(높이 기준)
+  box.style.left=Math.max(0,Math.min(W-bw, st.box.x*W-bw/2))+"px";
+  box.style.top=Math.max(0,Math.min(H-bh, st.box.y*H-bh/2))+"px";
+  box.style.width=bw+"px"; box.style.height=bh+"px";
+  const el=document.getElementById("cvinfo");
+  if(el)el.innerHTML="표지 시각 <b>"+(st.at===null?"—":st.at+"초")+"</b> · 줌 <b>"+
+    (1/hf).toFixed(2)+"배</b> · 가로 "+st.box.x.toFixed(2)+" · 세로 "+st.box.y.toFixed(2);
+}
+function bindCoverEditor(sheet, srcVidId, onThumb, onAll){
+  const st=cvState(); st.sheet=sheet;
+  const strip=document.getElementById("cvstrip");
+  if(strip){
+    if(!sheet){ strip.innerHTML='<div class="hint">프레임 사진이 아직 없습니다 — <b>소싱하기</b>를 한 번 돌리면 만들어집니다. '+
+      '그동안은 위 칸에 초를 직접 적어도 됩니다.</div>'; }
+    else{
+      let h='';
+      for(let k=0;k<sheet.n;k++){
+        const cx=k%sheet.cols, cy=Math.floor(k/sheet.cols);
+        h+='<div data-cvtile="'+k+'" style="flex:0 0 auto;width:84px;height:'+Math.round(84*sheet.th/sheet.tw)+'px;'+
+           'background-image:url('+prox(sheet.url)+');background-size:'+(sheet.cols*100)+'% '+(sheet.rows*100)+'%;'+
+           'background-position:'+(sheet.cols>1?(cx*100/(sheet.cols-1)):0)+'% '+(sheet.rows>1?(cy*100/(sheet.rows-1)):0)+'%;'+
+           'border-radius:6px;border:2px solid transparent"></div>';
+      }
+      strip.innerHTML=h;
+      strip.querySelectorAll("[data-cvtile]").forEach(el=>{el.onclick=()=>{
+        const sec=Math.round(parseInt(el.dataset.cvtile)*sheet.step*10)/10;
+        st.at=sec; const inp=document.getElementById("cvat"); if(inp)inp.value=String(sec);
+        cvShow(); banner("표지 시각 "+sec+"초 선택","ok");};});
+    }
+  }
+  const here=document.getElementById("cvhere");
+  if(here)here.onclick=()=>{const v=document.getElementById(srcVidId);
+    const t=Math.round(((v&&v.currentTime)||0)*10)/10;
+    st.at=t; const inp=document.getElementById("cvat"); if(inp)inp.value=String(t);
+    cvShow(); banner("표지 시각 "+t+"초 입력","ok");};
+  const at=document.getElementById("cvat");
+  if(at)at.oninput=()=>{const v=parseFloat(at.value); if(Number.isFinite(v)){st.at=v; cvShow();}};
+  const stage=document.getElementById("cvstage");
+  if(stage){
+    const move=(cx,cy)=>{const r=stage.getBoundingClientRect();
+      st.box.x=Math.max(0,Math.min(1,(cx-r.left)/(r.width||1)));
+      st.box.y=Math.max(0,Math.min(1,(cy-r.top)/(r.height||1))); cvDraw();};
+    stage.addEventListener("pointerdown",e=>{stage.setPointerCapture&&stage.setPointerCapture(e.pointerId);move(e.clientX,e.clientY);});
+    stage.addEventListener("pointermove",e=>{if(e.buttons)move(e.clientX,e.clientY);});
+  }
+  const z=document.getElementById("cvzoom");
+  if(z)z.oninput=()=>{st.box.h=Math.max(0.2,Math.min(1,(parseInt(z.value)||100)/100)); cvDraw();};
+  const bt=document.getElementById("cvthumb"); if(bt&&onThumb)bt.onclick=onThumb;
+  const ba=document.getElementById("cvall"); if(ba&&onAll)ba.onclick=onAll;
+  cvShow(); cvDraw();
+}
+
 // ★자막 스크립트 패널(운영자 요청): "자막이 뭐라고 나오는지 타임스탬프별로 보고 싶다."
 //   레코드의 subs=[{s,e,jp,ko}]를 시각순 표로 보여주고, 마지막 구독 유도 줄을 눈에 띄게 표시한다.
 function mmss(t){const s=Math.max(0,Math.floor(t||0));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");}

@@ -41,6 +41,10 @@ on:
         description: "줌 배율 1.0~2.5 (1.0=원본 넓게 · 1.5~2.0=피사체 당김) — 비우면 자동"
         required: false
         default: ""
+      cover:
+        description: '표지(오프닝 훅·썸네일) 지정 JSON — {"at":12.3,"zoom":1.6,"x":0.5,"y":0.4} · 비우면 자동'
+        required: false
+        default: ""
       cut_specs:
         description: '컷별 구간 직접 지정 — 결과를 보고 다시 잡을 때. 예 "0-6, 20-27, 41-48" 또는 JSON'
         required: false
@@ -131,6 +135,7 @@ jobs:
             --crop-x "${{ inputs.crop_x }}" \
             --cuts "${{ inputs.cuts }}" \
             --zoom "${{ inputs.zoom }}" \
+            --cover '${{ inputs.cover }}' \
             --out-name "$NAME" $TRARG)
           echo "출력: $OUT"
           echo "out=$OUT" >> "$GITHUB_OUTPUT"
@@ -329,6 +334,7 @@ jobs:
           [ -z "$CID" ] && { echo "::error::content_id 필요(부분 재생성은 기존 콘텐츠 대상)"; exit 1; }
           echo "cid=$CID" >> "$GITHUB_OUTPUT"
           OUT=$(python -m src.narrate_partial --cid "$CID" --scope "${{ inputs.scope }}" \
+                  --cover '${{ inputs.cover }}' \
                 --video-url "${{ inputs.video_url }}" | tail -1)
           echo "out=$OUT"
           echo "thumb=$OUT" >> "$GITHUB_OUTPUT"

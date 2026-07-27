@@ -825,7 +825,8 @@ def _hook_lines(hook: str) -> tuple[str, str, list[str]]:
 
 
 def _apply_opening_hook(body_video: str, hook: str, work: Path, hero_image: str = "",
-                        open_bg_video: str = "", subject_video: str = "") -> str:
+                        open_bg_video: str = "", subject_video: str = "",
+                        cover_spec: dict | None = None) -> str:
     """★쇼츠 오프닝 훅(운영자 확정): 도감형과 **같은 애니메이션 훅**을 본문 앞에 붙인다.
 
     도감형(reels)의 `hook_intro_stage`를 그대로 재사용한다 — 어절이 순서대로 팝인 + 훅 나레이션
@@ -847,7 +848,7 @@ def _apply_opening_hook(body_video: str, hook: str, work: Path, hero_image: str 
                                      open_bg_video=(open_bg_video or None),
                                      subject_video=(subject_video or None),
                                      hero_image=(hero_image or None),
-                                     include_endcard=False)
+                                     include_endcard=False, cover_spec=cover_spec)
         if out and out != body_video and Path(out).exists():
             log.info("[narrate] 오프닝 훅 적용: %r (%d어절)", hook, len(pops))
             return out
@@ -1691,11 +1692,22 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     hook_txt = (meta.get("hook_jp") or "").strip()
     thumb_rendered = False
     hero = ""
+    # ★표지(오프닝 훅·썸네일) 운영자 지정(운영자 확정): {"at":초,"zoom":배율,"x":가로,"y":세로}
+    #   지정이 있으면 자동 선택을 쓰지 않고 **그 시각·그 구획**으로 표지를 만든다.
+    #   썸네일과 오프닝 훅은 같은 배경을 쓰므로 이 하나로 둘 다 정해진다.
+    from src.core import hook_intro_stage as _his
+    cover_spec = _his.parse_cover_spec((manual or {}).get("cover"))
     try:
         from src.core import hook_intro as hi
         if hook_txt and hi.fonts_available():
-            hero = _pick_hero_frame(src, work / "hero", w,
-                                    subject_hint=(source_topic or meta.get("title_jp", "") or "").strip())
+            if cover_spec:
+                _cv = str(work / "cover.png")
+                hero = _cv if _his.make_cover_frame(src, cover_spec, _cv, w, h, work / "cover") else ""
+                if not hero:
+                    log.warning("[narrate] 지정 표지 생성 실패 → 자동 선택으로 폴백")
+            if not hero:
+                hero = _pick_hero_frame(src, work / "hero", w,
+                                        subject_hint=(source_topic or meta.get("title_jp", "") or "").strip())
             if hero:
                 card = str(work / "hookcard.png")   # 썸네일 렌더의 부산물(영상에는 미사용)
                 thumb_rendered = _render_hook_and_thumb(hero, hook_txt, meta.get("title_jp", ""), w, h,
@@ -1705,7 +1717,8 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     opened = body_final
     if mode == "shorts" and hook_txt:
         opened = _apply_opening_hook(body_final, hook_txt, work, hero_image=hero,
-                                     open_bg_video=body_v, subject_video=src)
+                                     open_bg_video=body_v, subject_video=src,
+                                     cover_spec=cover_spec)
     shutil.move(opened, final)
     thumb_out = str(thumb_path) if thumb_path.exists() else ""
 

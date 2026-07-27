@@ -46,6 +46,8 @@ def main() -> int:
     ap.add_argument("--crop-x", default="", help="크롭 가로 중심 0.0~1.0(비우면 자동 추적)")
     ap.add_argument("--cuts", default="", help="컷 전환 수(3~8). 비우면 자동")
     ap.add_argument("--zoom", default="", help="줌 배율 1.0~2.5. 비우면 자동")
+    # ★표지(오프닝 훅·썸네일) 운영자 지정: {"at":초,"zoom":배율,"x":가로중심,"y":세로중심}
+    ap.add_argument("--cover", default="", help='표지 지정 JSON: {"at":12.3,"zoom":1.6,"x":0.5,"y":0.4}')
     ap.add_argument("--out-name", default="", help="출력 파일명(확장자 제외)")
     ap.add_argument("--base-dir", default=".")
     ap.add_argument("--phase", default="render", choices=["render", "transcribe"],
@@ -89,7 +91,7 @@ def main() -> int:
                             credit=a.credit, license_id=a.license_id,
                             manual=({k: v for k, v in (("cut_specs", a.cut_specs),
                                                        ("crop_x", a.crop_x), ("cuts", a.cuts),
-                                                       ("zoom", a.zoom))
+                                                       ("zoom", a.zoom), ("cover", a.cover))
                                      if str(v).strip()} or None))
     except Exception as e:  # noqa: BLE001
         print(f"ERROR: {e}", file=sys.stderr)

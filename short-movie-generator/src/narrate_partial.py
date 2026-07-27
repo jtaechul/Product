@@ -63,8 +63,11 @@ def regen_meta(base_dir: str, cid: str, scope: str = "meta") -> bool:
     return content_store.update_narrate_meta(base_dir, cid, meta, scope=scope)
 
 
-def regen_thumb(base_dir: str, cid: str, video_url: str) -> str:
-    """원본에서 히어로 프레임 재선택(제미나이 우선) → 현재 훅·제목으로 썸네일 재렌더 → 경로 반환."""
+def regen_thumb(base_dir: str, cid: str, video_url: str, cover: str = "") -> str:
+    """원본에서 히어로 프레임 재선택 → 현재 훅·제목으로 썸네일 재렌더 → 경로 반환.
+
+    cover: 운영자가 지정한 표지 JSON({"at":초,"zoom":배율,"x":가로,"y":세로}).
+           지정하면 자동 선택 대신 **그 시각·그 구획**으로 표지를 만든다(운영자 확정)."""
     from src.core import narrate_attached as N
     base = Path(base_dir)
     rec = _load_record(base, cid)
@@ -82,7 +85,16 @@ def regen_thumb(base_dir: str, cid: str, video_url: str) -> str:
         src = str(dst)
     mode = rec.get("mode", "longform")
     w, h = (N.LONG_W, N.LONG_H) if mode == "longform" else (N.SHORTS_W, N.SHORTS_H)
-    hero = N._pick_hero_frame(src, work / "hero", w, subject_hint=rec.get("yt_title", ""))
+    from src.core import hook_intro_stage as _his
+    spec = _his.parse_cover_spec(cover)
+    hero = ""
+    if spec:
+        cv = str(work / "cover.png")
+        hero = cv if _his.make_cover_frame(src, spec, cv, w, h, work / "cov") else ""
+        if not hero:
+            print("WARN: 지정 표지 생성 실패 → 자동 선택으로", file=sys.stderr)
+    if not hero:
+        hero = N._pick_hero_frame(src, work / "hero", w, subject_hint=rec.get("yt_title", ""))
     if not hero:
         raise SystemExit("ERROR: 히어로 프레임 선택 실패")
     hook = (rec.get("hook") or rec.get("yt_title") or "").strip()
@@ -101,6 +113,7 @@ def main() -> int:
     ap.add_argument("--scope", required=True, choices=["meta", "title", "desc", "thumb"])
     ap.add_argument("--video-url", default="", help="thumb/title 스코프: 원본 영상 URL(또는 로컬 경로)")
     ap.add_argument("--base-dir", default=".")
+    ap.add_argument("--cover", default="", help='표지 지정 JSON: {"at":12.3,"zoom":1.6,"x":0.5,"y":0.4}')
     a = ap.parse_args()
     if a.scope in ("meta", "title", "desc"):
         if not regen_meta(a.base_dir, a.cid, scope=a.scope):
@@ -110,13 +123,13 @@ def main() -> int:
         #   제목만 바꾸면 썸네일이 낡는다 → 새 훅·제목으로 재렌더. 원본 URL 없으면 건너뜀(텍스트만).
         if a.scope in ("meta", "title") and a.video_url and a.video_url != "-":
             try:
-                print(regen_thumb(a.base_dir, a.cid, a.video_url))   # 마지막 줄 = 썸네일 경로
+                print(regen_thumb(a.base_dir, a.cid, a.video_url, cover=a.cover))   # 마지막 줄 = 썸네일 경로
                 return 0
             except SystemExit as e:
                 print(f"WARN: 썸네일 갱신 실패(텍스트만 반영): {e}", file=sys.stderr)
         print("META_OK")
         return 0
-    thumb = regen_thumb(a.base_dir, a.cid, a.video_url)
+    thumb = regen_thumb(a.base_dir, a.cid, a.video_url, cover=a.cover)
     print(thumb)                                       # 마지막 줄 = 썸네일 경로(워크플로 파싱)
     return 0
 

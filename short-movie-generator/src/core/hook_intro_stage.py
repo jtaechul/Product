@@ -13,6 +13,7 @@
 """
 from __future__ import annotations
 
+import json
 import logging
 import math
 import re
@@ -118,6 +119,90 @@ def _cover_crop(img: str, out_png: str, W: int, H: int) -> bool:
     r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", img, "-vf", vf,
                         "-frames:v", "1", out_png], capture_output=True, text=True)
     return r.returncode == 0 and Path(out_png).exists()
+
+
+def parse_cover_spec(raw) -> dict | None:
+    """운영자가 지정한 표지(오프닝 훅·썸네일 배경) 설정을 해석.
+
+    형식: {"at": 12.3, "zoom": 1.6, "x": 0.55, "y": 0.40}
+      · at   : 원본에서 표지로 쓸 **시각(초)** — 필수
+      · zoom : 1.0=원본 높이 전체 · 클수록 확대(잘라낼 구획이 작아진다)
+      · x, y : 잘라낼 구획의 **중심**(0~1). 미지정이면 가운데.
+    형식이 깨졌거나 at이 없으면 None → 기존 자동 선택 경로(운영자 지정 없음)."""
+    if not raw:
+        return None
+    d = raw
+    if isinstance(raw, str):
+        try:
+            d = json.loads(raw.strip())
+        except Exception:  # noqa: BLE001
+            return None
+    if not isinstance(d, dict):
+        return None
+    try:
+        at = float(d.get("at"))
+    except (TypeError, ValueError):
+        return None
+    if at < 0:
+        return None
+
+    def _f(v, dflt):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return dflt
+
+    return {"at": at,
+            "zoom": max(1.0, min(6.0, _f(d.get("zoom"), 1.0))),
+            "x": max(0.0, min(1.0, _f(d.get("x"), 0.5))),
+            "y": max(0.0, min(1.0, _f(d.get("y"), 0.5)))}
+
+
+def _cover_crop_rect(img: str, out_png: str, W: int, H: int, spec: dict) -> bool:
+    """원본 프레임에서 **운영자가 정한 구획**만 9:16으로 잘라 표지 배경을 만든다.
+
+    잘라낼 높이 = 원본 높이 ÷ zoom, 너비 = 그 높이 × 9/16(화면비 고정).
+    너비가 원본을 넘으면 너비를 원본에 맞추고 높이를 다시 계산한다(항상 원본 안에서 자른다)."""
+    sw = float(_probe(img, "width") or 0)
+    sh = float(_probe(img, "height") or 0)
+    if sw <= 0 or sh <= 0:
+        return _cover_crop(img, out_png, W, H)
+    z = max(1.0, float(spec.get("zoom") or 1.0))
+    ch = sh / z
+    cw = ch * 9.0 / 16.0
+    if cw > sw:
+        cw = sw
+        ch = min(sh, cw * 16.0 / 9.0)
+    cx = min(max(float(spec.get("x", 0.5)) * sw - cw / 2.0, 0.0), max(0.0, sw - cw))
+    cy = min(max(float(spec.get("y", 0.5)) * sh - ch / 2.0, 0.0), max(0.0, sh - ch))
+    vf = (f"crop={int(cw)}:{int(ch)}:{int(cx)}:{int(cy)},"
+          f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1")
+    r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", img, "-vf", vf,
+                        "-frames:v", "1", out_png], capture_output=True, text=True)
+    return r.returncode == 0 and Path(out_png).exists()
+
+
+def make_cover_frame(video: str, spec: dict, out_png: str, W: int, H: int,
+                     work: Path | None = None) -> bool:
+    """운영자 지정 표지 만들기: 지정 시각의 프레임을 떠서 지정 구획으로 9:16 크롭.
+
+    ★운영자가 눈으로 보고 고른 구획이므로 **로고 게이트로 되돌리지 않는다**(경고만 남긴다).
+    """
+    from src.core import reframe
+    wd = Path(work) if work else Path(out_png).parent
+    wd.mkdir(parents=True, exist_ok=True)
+    raw = str(wd / "cover_src.png")
+    if not _grab_frame(video, float(spec["at"]), raw):
+        log.warning("[hook_intro] 지정 시각(%.1fs) 프레임 추출 실패 → 자동 선택으로", spec["at"])
+        return False
+    why = reframe.cover_reject_reason(raw)
+    if why:
+        log.warning("[hook_intro] 운영자 지정 표지가 자동 판정으론 부적합(%s) — 지정대로 진행합니다", why)
+    ok = _cover_crop_rect(raw, out_png, W, H, spec)
+    if ok:
+        log.info("[hook_intro] 표지 = 운영자 지정(%.1fs · 줌 %.2f · 가로 %.2f · 세로 %.2f)",
+                 spec["at"], spec.get("zoom", 1.0), spec.get("x", 0.5), spec.get("y", 0.5))
+    return ok
 
 
 def _grab_frame(video: str, t: float, out_png: str, vf: str | None = None) -> bool:
@@ -327,7 +412,8 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
           cfg: hi.HookIntroConfig | None = None, bgm: str | None = None,
           open_bg_video: str | None = None, subject_video: str | None = None,
           logo_box: tuple | None = None, hero_image: str | None = None,
-          thumb_out: str | None = None, include_endcard: bool = True) -> str:
+          thumb_out: str | None = None, include_endcard: bool = True,
+          cover_spec: dict | None = None) -> str:
     """본문 영상을 오프닝/엔드카드/전환/사운드로 감싼 완성본 경로 반환.
     전제 미충족 시 원본 body_video를 그대로 반환(발행 불정지).
 
@@ -415,6 +501,13 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         #   여기서 걸러 다음 후보로 넘어간다. 마지막 폴백은 여러 시각 중 가장 나은 장을 고른다.
         odur = _duration_of(src_open) or dur
         _sources = []
+        # ★운영자가 표지를 직접 정했으면 **1순위**로 쓴다(운영자 확정: "표지 구간·줌·구획은 내가 정한다").
+        #   지정 시각은 **원본(잘리기 전) 기준**이므로 원본 영상에서 뜬다.
+        _cov = parse_cover_spec(cover_spec)
+        if _cov:
+            _cover_src = subject_video or src_open
+            _sources.append(("운영자 지정 표지",
+                             lambda: make_cover_frame(_cover_src, _cov, open_bg, cfg.W, cfg.H, wd)))
         if hero:
             _sources.append(("고화소 히어로 사진", lambda: _cover_crop(hero, open_bg, cfg.W, cfg.H)))
         if subj_frame:
@@ -425,7 +518,7 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         for _label, _fn in _sources:
             if not _fn():
                 continue
-            _why = _rf.cover_reject_reason(open_bg)
+            _why = "" if _label == "운영자 지정 표지" else _rf.cover_reject_reason(open_bg)
             if _why:
                 log.warning("[hook_intro] 오프닝 배경 후보(%s)가 표지 부적합(%s) → 다음 후보로", _label, _why)
                 continue
