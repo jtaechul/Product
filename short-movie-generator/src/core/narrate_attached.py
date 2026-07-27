@@ -1774,6 +1774,9 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     # ★적용 내역(운영자 확정): 지정값이 아니라 **실제로 렌더에 쓰인 값**을 남긴다.
     #   지정만 저장하면 이번 같은 전달 사고("보냈는데 안 먹었다")를 화면에서 구분할 수 없다.
     applied: dict = {}
+    _fit = str((manual or {}).get("fit") or "").strip().lower()
+    if _fit in ("square", "full"):
+        applied["fit"] = _fit          # 화면 구성(꽉 채우기 외)을 실제 반영값으로 남긴다
     if cover_spec:
         applied["cover"] = {k: cover_spec[k] for k in ("at", "zoom", "x", "y")}
     try:

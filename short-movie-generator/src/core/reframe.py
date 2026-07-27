@@ -846,6 +846,61 @@ def _plan_scene_interleaved(path: str, src_dur: float, scores: list[float],
     return plan
 
 
+# ★★화면 구성(운영자 확정): "위아래를 꽉 채우거나, 정방형이거나, 원본 좌우를 다 살리거나 —
+#   모두 가능한 편집 도구를 달라." 자막 위치는 바뀌지 않는다(자막은 이 단계 뒤에 얹힌다).
+#     · cover  : 9:16으로 꽉 채움(좌우 잘림) — 기존 동작·기본값
+#     · square : 1:1 정방형을 잘라 화면 가운데 배치(위아래는 같은 화면의 블러 배경)
+#     · full   : 원본 좌우를 100% 살려 폭에 맞춤(위아래는 블러 배경)
+#   운영자가 편집기에서 그린 사각형의 **가로세로 비율**이 곧 이 모드다(그린 대로 잘린다).
+FIT_MODES = ("cover", "square", "full")
+
+
+def fit_aspect(fit: str, src_w: float, src_h: float) -> float:
+    """화면 구성별 '잘라낼 사각형'의 가로:세로 비율."""
+    f = (fit or "cover").strip().lower()
+    if f == "square":
+        return 1.0
+    if f == "full":
+        return max(0.1, float(src_w) / max(1.0, float(src_h)))
+    return W / H            # cover(기본) = 9:16
+
+
+def crop_rect(fit: str, src_w: int, src_h: int, zoom: float,
+              fx: float, fy: float) -> tuple[int, int, int, int]:
+    """화면 구성·줌·중심 → 실제로 잘라낼 사각형 (x, y, w, h).
+
+    ★편집기가 화면에 그리는 사각형과 **같은 식**이어야 한다(운영자 확정 · 절대 회귀 금지).
+      높이 = 원본 높이 ÷ 줌, 너비 = 높이 × 비율. 소스를 넘으면 소스 안으로 줄이고 클램프한다."""
+    ar = fit_aspect(fit, src_w, src_h)
+    ch = min(float(src_h), float(src_h) / max(1.0, float(zoom)))
+    cw = ch * ar
+    if cw > src_w:                      # 폭이 소스를 넘으면 폭 기준으로 다시 맞춘다
+        cw = float(src_w)
+        ch = cw / ar
+    cw = int(round(cw)) & ~1
+    ch = int(round(ch)) & ~1
+    cw = max(2, min(cw, int(src_w) & ~1))
+    ch = max(2, min(ch, int(src_h) & ~1))
+    cx = int(min(max(fx * src_w - cw / 2, 0), src_w - cw))
+    cy = int(min(max(fy * src_h - ch / 2, 0), src_h - ch))
+    return cx, cy, cw, ch
+
+
+def _place_vf(cw: int, ch: int, cx: int, cy: int, grade: str, pre_vf: str = "") -> tuple[str, bool]:
+    """잘라낸 사각형을 9:16 화면에 앉히는 필터. (필터문자열, filter_complex 필요 여부)
+
+    · 9:16 사각형이면 그대로 꽉 채운다(기존과 동일).
+    · 그 밖(정방형·원본 폭 전체)은 **가로에 맞춰 넣고 위아래는 같은 화면의 블러 배경**으로 채운다.
+      → 자막은 이후 단계에서 늘 같은 자리에 얹히므로 **자막 위치는 변하지 않는다**."""
+    if abs((cw / max(1, ch)) - (W / H)) < 0.01:
+        return f"{pre_vf}crop={cw}:{ch}:{cx}:{cy},scale={W}:{H},setsar=1,{grade}", False
+    return (f"[0:v]{pre_vf}crop={cw}:{ch}:{cx}:{cy},split=2[a][b];"
+            f"[a]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
+            f"gblur=sigma=32,eq=brightness=-0.16:saturation=1.02[bg];"
+            f"[b]scale={W}:{H}:force_original_aspect_ratio=decrease,setsar=1[fg];"
+            f"[bg][fg]overlay=(W-w)/2:(H-h)/2,{grade}", True)
+
+
 class CutSpecError(ValueError):
     """운영자가 지정한 컷 설정을 해석하지 못했다 — **조용히 자동으로 넘어가지 않는다**.
 
@@ -1111,6 +1166,12 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
     # ★④ 컷별 운영자 지정(`manual.cut_specs`) — 자동 컷 선택을 **완전히 대체**한다.
     #   운영자가 영상을 직접 보고 컷마다 [시작·끝·크롭위치·프레이밍]을 정하면 그대로 렌더한다.
     #   (자동은 '제안'일 뿐, 최종 결정은 사람 — 운영자 확정 방침)
+    # ★화면 구성(운영자 확정): cover(기본·꽉 채움) / square(정방형) / full(원본 좌우 전체)
+    m_fit = str(man.get("fit") or "cover").strip().lower()
+    if m_fit not in FIT_MODES:
+        m_fit = "cover"
+    if m_fit != "cover":
+        log.info("[reframe] 화면 구성 운영자 지정: %s (좌우를 살리고 위아래는 블러 배경)", m_fit)
     cut_specs = _parse_cut_specs(man.get("cut_specs"), src_dur, target_dur)
     if cut_specs:
         plan = cut_specs
@@ -1180,6 +1241,29 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
             cmd += ["-stream_loop", "-1"]
         cmd += ["-ss", f"{sa:.2f}", "-t", f"{seg_len:.2f}", "-i", footage_path,
                 "-an", "-r", "30", "-c:v", "libx264", "-preset", "medium", "-crf", "20"]
+        # ★화면 구성이 cover가 아니면(정방형·원본 좌우 전체) **모든 컷**을 같은 방식으로 배치한다
+        #   — 운영자가 구간을 안 정한 자동 컷도 고른 화면 구성을 따라야 한다(운영자 확정).
+        if m_fit != "cover":
+            fa5, fb5 = int(sa * fps_trk), int((sa + seg_len) * fps_trk)
+            seg_c = cents[fa5:fb5] or cents
+            ax = _f(cut.get("crop_x"))
+            ay = _f(cut.get("crop_y"))
+            if ax is None:
+                ax = _median([c[0] for c in seg_c]) if seg_c else 0.5
+            if ay is None:
+                ay = _median([c[1] for c in seg_c]) if seg_c else 0.5
+            zz = max(1.0, min(2.5, cz if cz is not None else 1.0))
+            bx, by, bw2, bh2 = crop_rect(m_fit, int(src_w), int(src_h), zz, ax, ay)
+            pre2 = (delogo_vf(src_w, src_h, logo_box) + ",") if logo_box else ""
+            vf2, cx_ok = _place_vf(bw2, bh2, bx, by, GRADE, pre2)
+            pv2 = (_pushin(cut.get("push", 1.0), seg_len) if wide
+                   else _motion_vf(cut.get("role", "behavior"), i, seg_len))
+            if pv2:
+                vf2 = f"{vf2},{pv2}"
+            cmd += (["-filter_complex", vf2] if cx_ok else ["-vf", vf2]) + [str(seg_out)]
+            subprocess.run(cmd, check=True)
+            lines.append(f"file '{seg_out.name}'")
+            continue
         if cut["mode"] != "closeup":
             # 핏 컷: 전신 + 배경 전체가 보이도록 원본 전체를 9:16 안에 맞춤(여백=블러 채움)
             n_fit += 1
@@ -1240,23 +1324,19 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                 #   전부 건너뛴다. 사람이 정한 값이 자동 판단보다 우선(운영자 확정).
                 z = cz
                 log.info("[reframe] 컷%d 줌 배율 운영자 지정: %.2f배", i, z)
-                cw = int(round((src_h * W / H) / z)) & ~1
-                ch = int(round(src_h / z)) & ~1
-                cw = min(cw, int(src_w)) & ~1
-                cx = int(min(max(fx * src_w - cw / 2, 0), src_w - cw))
-                cy = int(min(max(fy * src_h - ch / 2, 0), src_h - ch))
+                cx, cy, cw, ch = crop_rect(m_fit, int(src_w), int(src_h), z, fx, fy)
                 pre_vf = ""
                 if logo_box:
                     cx, cy, need_dl = _logo_avoid(cx, cy, cw, ch, fx * src_w, fy * src_h,
                                                   src_w, src_h, logo_box)
                     if need_dl:
                         pre_vf = delogo_vf(src_w, src_h, logo_box) + ","
-                vf = f"{pre_vf}crop={cw}:{ch}:{cx}:{cy},scale={W}:{H},setsar=1,{GRADE}"
+                vf, complex_ok = _place_vf(cw, ch, cx, cy, GRADE, pre_vf)
                 pv = (_pushin(cut.get("push", 1.0), seg_len) if wide
                       else _motion_vf(cut.get("role", "detail"), i, seg_len))
                 if pv:
                     vf = f"{vf},{pv}"
-                cmd += ["-vf", vf, str(seg_out)]
+                cmd += (["-filter_complex", vf] if complex_ok else ["-vf", vf]) + [str(seg_out)]
                 subprocess.run(cmd, check=True)
                 lines.append(f"file '{seg_out.name}'")
                 continue

@@ -59,6 +59,10 @@ on:
         description: '컷별 구간 직접 지정(자동 컷 선택 대체) — 예 "0-6, 20-27, 41-48, 62-70" 또는 JSON'
         required: false
         default: ""
+      fit:
+        description: "화면 구성 — cover(9:16 꽉 채움·기본) / square(정방형) / full(원본 좌우 전체)"
+        required: false
+        default: ""
       # ★'영상 찾기'에서 고른 영상으로 바로 제작. 이 경로는 종명·학명을 추가 확보한 뒤 진행한다.
       video_url:
         description: "이 영상으로 제작 — 관리자 '영상 찾기' 결과의 다운로드 URL"
@@ -267,6 +271,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           # 값 안에 따옴표가 들어갈 수 있는 입력은 env로 받는다(셸 직접 치환 금지 — 따옴표 소실 사고)
           IN_CUT_SPECS: ${{ inputs.cut_specs }}
+          IN_FIT: ${{ inputs.fit }}
           IN_VIDEO_URL: ${{ inputs.video_url }}
           IN_VIDEO_TITLE: ${{ inputs.video_title }}
           IN_VIDEO_LICENSE: ${{ inputs.video_license }}
@@ -295,6 +300,7 @@ jobs:
           # ★컷별 구간·URL 등은 값 안에 따옴표가 들어갈 수 있어 **env로 받는다**(나레이션 워크플로와
           #   같은 규칙 · 셸에 직접 치환하면 따옴표가 소실돼 지정이 조용히 무시된다 — 실사고).
           CUT_SPECS="$IN_CUT_SPECS"
+          FIT="$IN_FIT"
           VID_URL="$IN_VIDEO_URL"
           VID_TITLE="$IN_VIDEO_TITLE"
           VID_LIC="$IN_VIDEO_LICENSE"
@@ -303,6 +309,7 @@ jobs:
           if [ -n "$EP_ARG" ]; then set -- "$@" $EP_ARG; fi
           if [ -n "$MAN_ARGS" ]; then set -- "$@" $MAN_ARGS; fi
           if [ -n "$CUT_SPECS" ]; then set -- "$@" --cut-specs "$CUT_SPECS"; fi
+          if [ -n "$FIT" ]; then set -- "$@" --fit "$FIT"; fi
           if [ -n "$VID_URL" ]; then
             set -- "$@" --video-url "$VID_URL" --video-title "$VID_TITLE" \
                         --video-license "$VID_LIC" --video-credit "$VID_CRED"

@@ -21,23 +21,22 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT_W, OUT_H = 720, 1280            # 완성본 9:16 (reframe 기본)
 
 
-def _backend_crop(src_w: int, src_h: int, zoom: float, cx: float, cy: float):
-    """reframe의 운영자 지정 줌 경로와 **같은 식**(src/core/reframe.py 참조)."""
-    cw = int(round((src_h * OUT_W / OUT_H) / zoom)) & ~1
-    ch = int(round(src_h / zoom)) & ~1
-    cw = min(cw, src_w) & ~1
-    x = int(min(max(cx * src_w - cw / 2, 0), src_w - cw))
-    y = int(min(max(cy * src_h - ch / 2, 0), src_h - ch))
-    return x, y, cw, ch
+def _backend_crop(src_w: int, src_h: int, zoom: float, cx: float, cy: float, fit: str = "cover"):
+    """제작이 실제로 쓰는 함수를 그대로 호출한다(같은 식임을 우회 없이 보장)."""
+    from src.core import reframe
+    return reframe.crop_rect(fit, src_w, src_h, zoom, cx, cy)
 
 
-def test_backend_formula_matches_reframe_source():
-    """위 계산식이 실제 제작 코드와 같은지(코드가 바뀌면 이 테스트부터 깨지게)."""
-    rf = (ROOT / "src" / "core" / "reframe.py").read_text(encoding="utf-8")
-    assert "cw = int(round((src_h * W / H) / z)) & ~1" in rf
-    assert "ch = int(round(src_h / z)) & ~1" in rf
-    assert "cx = int(min(max(fx * src_w - cw / 2, 0), src_w - cw))" in rf
-    assert "cy = int(min(max(fy * src_h - ch / 2, 0), src_h - ch))" in rf
+def test_fit_modes_have_the_expected_aspect():
+    """화면 구성 3종의 사각형 비율: 꽉 채우기 9:16 · 정방형 1:1 · 좌우 전체=원본 비율."""
+    from src.core import reframe
+    assert abs(reframe.fit_aspect("cover", 1280, 720) - OUT_W / OUT_H) < 1e-6
+    assert abs(reframe.fit_aspect("square", 1280, 720) - 1.0) < 1e-6
+    assert abs(reframe.fit_aspect("full", 1280, 720) - 1280 / 720) < 1e-6
+    assert abs(reframe.fit_aspect("이상한값", 1280, 720) - OUT_W / OUT_H) < 1e-6   # 안전 기본값
+    # 좌우 전체 + 줌 1.0 = 원본 그대로(좌우가 하나도 안 잘림)
+    x, y, w, h = reframe.crop_rect("full", 1280, 720, 1.0, 0.5, 0.5)
+    assert (x, y, w, h) == (0, 0, 1280, 720)
 
 
 @pytest.mark.skipif(not shutil.which("node"), reason="node 없음")
@@ -51,7 +50,8 @@ def test_drawn_box_equals_rendered_crop():
     assert data["cases"], "검사 케이스가 비었습니다"
     for c in data["cases"]:
         d, s = c["drawn"], c["sent"]
-        bx, by, bw, bh = _backend_crop(src_w, src_h, s["zoom"], s["crop_x"], s["crop_y"])
+        bx, by, bw, bh = _backend_crop(src_w, src_h, s["zoom"], s["crop_x"], s["crop_y"],
+                                       s.get("fit", "cover"))
         for name, drew, cut in (("가로위치", d["x"], bx), ("세로위치", d["y"], by),
                                 ("너비", d["w"], bw), ("높이", d["h"], bh)):
             assert abs(drew - cut) <= 4, (
@@ -65,9 +65,12 @@ def test_box_is_really_9_16_and_movable():
     r = subprocess.run(["node", str(ROOT / "worker" / "crop_wysiwyg_check.mjs")],
                        capture_output=True, text=True, timeout=120, cwd=str(ROOT))
     data = json.loads(r.stdout.strip().splitlines()[-1])
+    from src.core import reframe
     for c in data["cases"]:
         d = c["drawn"]
-        assert abs(d["w"] / d["h"] - 9 / 16) < 0.02, f"9:16이 아닙니다: {d}"
+        want = reframe.fit_aspect(c["sent"].get("fit", "cover"), *data["src"])
+        assert abs(d["w"] / d["h"] - want) < 0.02, \
+            f"{c['sent'].get('fit')} 모드의 사각형 비율이 다릅니다: {d}"
     # 높이를 줄인 케이스는 위아래로도 움직일 수 있어야 한다(y가 0에 붙어 있지 않음)
     moved = [c for c in data["cases"] if c["state"]["h"] < 0.99]
     assert any(c["drawn"]["y"] > 0 for c in moved), "상자가 위아래로 움직이지 않습니다"
@@ -87,12 +90,85 @@ def test_cut_editor_is_height_based_like_the_cover_editor():
     """표지 편집기는 이미 높이 기준으로 고쳤는데 컷 편집기만 폭 기준으로 남아 사고가 났다."""
     w = (ROOT / "worker" / "index.mjs").read_text(encoding="utf-8")
     i = w.index("function ceDrawBox(")
-    seg = w[i:i + 900]
-    assert "bh=hf*H" in seg and "bh*9/16" in seg, "컷 사각형이 높이 기준 9:16이 아닙니다"
+    seg = w[i:i + 1200]
+    assert "bh=hf*H" in seg, "컷 사각형이 높이 기준이 아닙니다"
+    assert "bh*ar" in seg, "화면 구성 비율(ar)로 너비를 잡지 않습니다"
     assert "box.w" not in seg, "폭 기준 계산이 남아 있습니다(사고 재발)"
     j = w.index("function cutEditorInputs(")
-    seg2 = w[j:j + 700]
+    seg2 = w[j:j + 800]
     assert "1/hf" in seg2, "줌을 높이 비율의 역수로 보내지 않습니다"
+
+
+def test_frame_mode_tool_is_wired_everywhere():
+    """★운영자 확정: 화면 구성 편집 기능은 **도감형·나레이션형 둘 다** 똑같이 노출·적용된다.
+
+    편집기 HTML은 공용 함수(cutEditorHTML)라 양쪽 화면에 그대로 들어가고, 선택값(fit)이
+    워크플로 → CLI → 제작까지 이어져야 실제로 반영된다."""
+    w = (ROOT / "worker" / "index.mjs").read_text(encoding="utf-8")
+    i = w.index("function cutEditorHTML(")
+    seg = w[i:w.index("async function ceLoadSheet(")]
+    for token in ("data-fit=", "꽉 채우기", "정방형", "좌우 전체"):
+        assert token in seg, f"공용 편집기에 화면 구성 도구가 없습니다: {token}"
+    assert 'cutEditorHTML("nc")' in w and 'cutEditorHTML("ce")' in w, \
+        "나레이션형·도감형 양쪽에 편집기가 붙어 있지 않습니다"
+    j = w.index("function cutEditorInputs(")
+    assert "out.fit=st.fit" in w[j:j + 800], "선택한 화면 구성을 제작에 보내지 않습니다"
+
+    root = ROOT.parent / ".github" / "workflows"
+    for wf in ("narrate-video.yml", "generate-short.yml"):
+        src = (root / wf).read_text(encoding="utf-8")
+        assert "\n      fit:" in src, f"{wf}에 fit 입력이 없습니다"
+        assert "IN_FIT:" in src, f"{wf}가 fit을 env로 넘기지 않습니다"
+    for cli in ("narrate_video.py", "run_pipeline.py"):
+        src = (ROOT / "src" / cli).read_text(encoding="utf-8")
+        assert "--fit" in src and '"fit"' in src, f"{cli}가 화면 구성을 제작에 전달하지 않습니다"
+
+
+@pytest.mark.skipif(not shutil.which("ffmpeg"), reason="ffmpeg 없음")
+def test_full_mode_keeps_both_edges_of_the_source(tmp_path):
+    """★'좌우 전체'는 원본 양쪽 끝이 결과에 남아야 한다(꽉 채우기는 잘려야 정상)."""
+    from PIL import Image, ImageDraw
+
+    from src.core import reframe
+    SW, SH = 1280, 720
+    frames = tmp_path / "f"
+    frames.mkdir()
+    for i in range(36):
+        im = Image.new("RGB", (SW, SH), (16, 44, 64))
+        dr = ImageDraw.Draw(im)
+        dr.rectangle([10, 300, 90, 420], fill=(240, 80, 60))        # 왼쪽 끝
+        dr.rectangle([1190, 300, 1270, 420], fill=(80, 230, 140))   # 오른쪽 끝
+        dr.ellipse([560 + i * 2, 120, 620 + i * 2, 180], fill=(255, 255, 255))
+        im.save(frames / f"f_{i:03d}.png")
+    src = str(tmp_path / "clip.mp4")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", "6",
+                    "-i", str(frames / "f_%03d.png"), "-pix_fmt", "yuv420p", src], check=True)
+
+    def edges(fit):
+        out = str(tmp_path / f"o_{fit}.mp4")
+        reframe.reframe_to_vertical(src, out, 3.0, str(tmp_path / f"w_{fit}"), wide=True,
+                                    manual={"fit": fit, "cut_specs": json.dumps(
+                                        [{"start": 0.5, "end": 5.0, "zoom": 1.0,
+                                          "crop_x": 0.5, "crop_y": 0.5}])})
+        png = str(tmp_path / f"c_{fit}.png")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", "0.05", "-i", out,
+                        "-frames:v", "1", png], check=True)
+        im = Image.open(png).convert("RGB")
+        w2, h2 = im.size
+        seen = {"left": False, "right": False}
+        for y in range(0, h2, 6):
+            for x in range(0, w2, 6):
+                r, g, b = im.getpixel((x, y))
+                if r > 170 and g < 140 and b < 120:
+                    seen["left"] = True
+                if g > 170 and r < 150 and b < 190:
+                    seen["right"] = True
+        return seen
+
+    full = edges("full")
+    assert full["left"] and full["right"], "좌우 전체 모드인데 원본 끝이 잘렸습니다"
+    cover = edges("cover")
+    assert not (cover["left"] and cover["right"]), "꽉 채우기인데 좌우가 안 잘렸습니다(모드가 안 먹음)"
 
 
 @pytest.mark.skipif(not shutil.which("ffmpeg"), reason="ffmpeg 없음")

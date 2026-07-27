@@ -55,14 +55,19 @@ await renderNarrateDetail("nv-test");
 
 // 운영자가 컷1에 구간을 넣고, 사각형을 왼쪽 위로 옮긴 뒤 크기를 줄인 상황
 const cases = [
-  { x: 0.50, y: 0.50, h: 1.00 },   // 높이 전체
-  { x: 0.25, y: 0.50, h: 0.60 },   // 왼쪽 · 중간 크기
-  { x: 0.80, y: 0.30, h: 0.45 },   // 오른쪽 위 · 크게 확대
+  { x: 0.50, y: 0.50, h: 1.00, fit: "cover" },   // 꽉 채우기 · 높이 전체
+  { x: 0.25, y: 0.50, h: 0.60, fit: "cover" },   // 꽉 채우기 · 왼쪽 중간 크기
+  { x: 0.80, y: 0.30, h: 0.45, fit: "cover" },   // 꽉 채우기 · 오른쪽 위 확대
+  { x: 0.50, y: 0.50, h: 1.00, fit: "square" },  // 정방형 · 전체
+  { x: 0.30, y: 0.40, h: 0.70, fit: "square" },  // 정방형 · 왼쪽 위
+  { x: 0.50, y: 0.50, h: 1.00, fit: "full" },    // 좌우 전체
+  { x: 0.50, y: 0.45, h: 0.75, fit: "full" },    // 좌우 전체 · 살짝 확대
 ];
 const out = [];
 for (const c of cases) {
   const st = ceState("nc");
   st.sel = 0;
+  st.fit = c.fit || "cover";
   st.cuts[0].box = { x: c.x, y: c.y, h: c.h };
   ceSet("nc", 0, "a", 2.0); ceSet("nc", 0, "b", 9.0);
   ceDrawBox("nc");
@@ -74,7 +79,8 @@ for (const c of cases) {
     // 화면 사각형 → 원본 좌표(스테이지는 원본 비율이므로 단순 비례)
     drawn: { x: px(b.left) * SRC_W / STAGE_W, y: px(b.top) * SRC_H / STAGE_H,
              w: px(b.width) * SRC_W / STAGE_W, h: px(b.height) * SRC_H / STAGE_H },
-    sent: { zoom: spec.zoom, crop_x: spec.crop_x, crop_y: spec.crop_y },
+    sent: { zoom: spec.zoom, crop_x: spec.crop_x, crop_y: spec.crop_y,
+            fit: cutEditorInputs("nc").fit || "cover" },
   });
 }
 console.log(JSON.stringify({ src: [SRC_W, SRC_H], out: [OUT_W, OUT_H], cases: out }));

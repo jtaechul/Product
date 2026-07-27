@@ -49,6 +49,10 @@ on:
         description: '컷별 구간 직접 지정 — 결과를 보고 다시 잡을 때. 예 "0-6, 20-27, 41-48" 또는 JSON'
         required: false
         default: ""
+      fit:
+        description: "화면 구성 — cover(9:16 꽉 채움·기본) / square(정방형) / full(원본 좌우 전체)"
+        required: false
+        default: ""
       content_id:
         description: "재생성 시 기존 콘텐츠 id(예: nv-123). 비우면 새 nv-<run_id> 생성."
         required: false
@@ -121,6 +125,7 @@ jobs:
           IN_CUTS: ${{ inputs.cuts }}
           IN_ZOOM: ${{ inputs.zoom }}
           IN_COVER: ${{ inputs.cover }}
+          IN_FIT: ${{ inputs.fit }}
           IN_TRANSCRIPT: ${{ inputs.transcript }}
         run: |
           set -e
@@ -140,7 +145,7 @@ jobs:
             echo "검수 편집본 대본 사용(더빙 재제작)"
           fi
           # 운영자 지정값 확인(사고 재발 시 로그로 즉시 판별)
-          echo "지정값 · 컷=[$IN_CUT_SPECS] 표지=[$IN_COVER] 줌=[$IN_ZOOM] 크롭=[$IN_CROP_X] 컷수=[$IN_CUTS]"
+          echo "지정값 · 컷=[$IN_CUT_SPECS] 표지=[$IN_COVER] 화면구성=[$IN_FIT] 줌=[$IN_ZOOM] 크롭=[$IN_CROP_X] 컷수=[$IN_CUTS]"
           OUT=$(python -m src.narrate_video \
             --url "$IN_VIDEO_URL" \
             --mode "$IN_MODE" \
@@ -152,6 +157,7 @@ jobs:
             --cuts "$IN_CUTS" \
             --zoom "$IN_ZOOM" \
             --cover "$IN_COVER" \
+            --fit "$IN_FIT" \
             --out-name "$NAME" $TRARG)
           echo "출력: $OUT"
           echo "out=$OUT" >> "$GITHUB_OUTPUT"

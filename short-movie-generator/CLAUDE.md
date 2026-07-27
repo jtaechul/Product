@@ -1164,6 +1164,22 @@
         불가하다. 오프닝 훅이 그 역할을 하고 영상 안에 이미 들어 있다. **롱폼은 유지**.
       · 회귀: `test_edits_are_saved_and_restored` / `test_single_button_sends_both_settings` /
         `test_thumbnail_only_button_is_longform_only` / `test_shorts_have_no_thumbnail_save_menu`.
+    - **★★화면 구성 편집 도구 — 꽉 채우기 / 정방형 / 좌우 전체(운영자 확정)**: "쇼츠 위아래가 남더라도
+      원본 좌우 전체나 정방형으로도 쓰고 싶다. **모두 가능한 편집 툴**을 만들어달라. **자막 위치는
+      변하지 말고.**" → 편집기에서 회차마다 고른다(`manual["fit"]`).
+      · `cover`(기본·기존 동작): 9:16으로 꽉 채움 — 원본 **폭의 32%만** 남음(16:9 기준).
+      · `square`: 1:1로 잘라 화면 가운데 — 폭의 **56%** 보존.
+      · `full`: 원본 좌우 **100%** 보존, 폭에 맞춰 배치.
+      · cover가 아니면 남는 위아래를 **같은 화면의 블러 배경**으로 채운다(`reframe._place_vf`).
+        **자막은 이 배치 뒤에 얹히므로 위치가 바뀌지 않는다**(운영자 요구).
+      · **고른 모양 = 편집기 사각형의 비율**(`reframe.fit_aspect` ↔ 대시보드 `ceDrawBox`의 `ar`) —
+        그린 대로 잘린다는 계약을 그대로 유지한다.
+      · 운영자가 컷 구간을 안 정해도(자동 컷) 고른 화면 구성은 **모든 컷에 적용**된다.
+      · **도감형·나레이션형 모두 같은 편집기**(`cutEditorHTML`)를 쓰므로 기능이 동일하게 노출된다.
+        배선: 대시보드 → 워크플로 `fit` 입력(env 경유) → `--fit` → `manual["fit"]` → `reframe`.
+      · 회귀: `tests/test_crop_wysiwyg.py`(`test_fit_modes_have_the_expected_aspect` ·
+        `test_frame_mode_tool_is_wired_everywhere` · `test_full_mode_keeps_both_edges_of_the_source`
+        — 실제 렌더로 원본 양끝 보존까지 확인).
     - **★★★잘라낼 사각형은 '높이 기준'으로 통일한다 — 그린 것 = 잘리는 것(운영자 확정 · 절대 회귀
       금지 · 실사고 "지정한 곳과 전혀 다른 곳이 제작된다")**: 제작(`reframe`)은 **높이 기준**으로 자른다
       (`잘라낼 높이 = 원본 높이 ÷ 줌`, 너비 = 높이×9/16, crop_x·crop_y = 사각형 **중심**). 그런데 컷

@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-27-7 (그린 사각형 = 잘리는 사각형 · 높이 기준 통일)";
+const BUILD="v2026-07-27-8 (화면 구성 선택: 꽉 채우기·정방형·좌우 전체)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -944,6 +944,7 @@ function appliedSummaryHTML(rec){
   const ap=(rec&&rec.applied)||null;
   if(!ap) return '';
   const p=[];
+  if(ap.fit) p.push("화면 "+(CE_FITNAME[ap.fit]||ap.fit));
   if(ap.cover) p.push("표지 "+ap.cover.at+"초 · 줌 "+ap.cover.zoom+"배");
   if(Array.isArray(ap.cuts)&&ap.cuts.length){
     p.push((ap.cuts_manual?"내가 정한 구간 ":"자동 구간 ")+ap.cuts.length+"컷 ("+
@@ -973,6 +974,7 @@ function restoreEdits(rec, pfx){
     }
   }catch(e){}
   try{
+    if(ed.fit) ceState(pfx||"nc").fit=String(ed.fit);
     if(ed.cut_specs){
       const arr=JSON.parse(ed.cut_specs), st=ceState(pfx||"nc");
       arr.slice(0,CUTN).forEach((c,i)=>{
@@ -995,6 +997,7 @@ function editSummary(rec, pfx){
   const parts=[];
   try{ if(inp.cover){const c=JSON.parse(inp.cover); parts.push("표지 "+c.at+"초·줌 "+c.zoom+"배");} }catch(e){}
   try{ if(inp.cut_specs){const a=JSON.parse(inp.cut_specs); parts.push("구간 "+a.length+"컷");} }catch(e){}
+  if(inp.fit) parts.push("화면 "+(CE_FITNAME[inp.fit]||inp.fit));
   el.innerHTML = parts.length ? ("반영될 설정: <b>"+parts.join(" · ")+"</b>")
     : "아직 지정한 설정이 없습니다 — 위에서 표지나 구간을 정하면 여기에 표시됩니다.";
 }
@@ -1133,13 +1136,18 @@ const CUTN=4;
 // 제작(reframe)이 줌을 1.0~2.5로 제한하므로 높이 비율 하한은 1/2.5=0.4 — UI에서 미리 지켜
 // '보낸 값이 조용히 잘리는' 일이 없게 한다(실측: 2.78을 보냈다가 2.5로 깎였다).
 const CE_HMIN=0.4;
+const CE_FITNAME={cover:"꽉 채우기", square:"정방형", full:"좌우 전체"};
+const CE_FITDESC={
+  cover:"원본의 좌우를 잘라 화면을 꽉 채웁니다(피사체가 가장 큼).",
+  square:"정방형으로 잘라 화면 가운데 놓고, 위아래는 같은 화면의 흐린 배경으로 채웁니다.",
+  full:"원본 좌우를 100% 살려 폭에 맞추고, 위아래는 같은 화면의 흐린 배경으로 채웁니다."};
 // ★값이 바뀔 때마다 '무엇이 반영될지' 요약을 다시 그리는 공용 훅(운영자 확정 · 실사고 재발방지).
 //   예전엔 입력칸의 oninput에만 걸어, **사진 띠 탭·버튼·복원처럼 코드가 값을 넣는 경우**엔
 //   요약이 갱신되지 않아 "표지만 잡힌 것처럼" 보였다 → 편집기 내부에서 직접 호출한다.
 let _editChanged=null;
 function editChanged(){ if(typeof _editChanged==="function"){ try{ _editChanged(); }catch(e){} } }
 const _ce={};   // pfx별 상태: {sheet, need, srcDur, cuts:[{box:{x,y,w}}], sel}
-function ceState(pfx){ return (_ce[pfx] ||= {sheet:null, sel:0, need:0, srcDur:0,
+function ceState(pfx){ return (_ce[pfx] ||= {sheet:null, sel:0, need:0, srcDur:0, fit:"cover",
   cuts:Array.from({length:CUTN},()=>({box:{x:0.5,y:0.5,h:0.8}}))}); }
 
 // ★아이폰 최적화(운영자 지적 "너무 좁게 표현된다"): 편집 카드가 2열 그리드 안에 들어가 절반 폭으로
@@ -1164,6 +1172,18 @@ function cutEditorHTML(pfx){
       '</div></div>';
   }
   return ''+
+    // ★★화면 구성(운영자 확정): "위아래를 꽉 채우거나, 정방형이거나, 원본 좌우를 다 살리거나 —
+    //   모두 가능한 편집 도구". 고른 모양이 곧 **잘라낼 사각형의 비율**이 된다(그린 대로 잘린다).
+    //   ※자막 위치는 이 선택과 무관하게 늘 같은 자리다(자막은 배치 뒤에 얹힌다).
+    '<div style="margin:6px 0 10px;padding:8px;border-radius:10px;background:#0e1a26">'+
+      '<div class="hint" style="margin-bottom:6px">화면 구성 — 원본을 어떻게 담을지 고르세요 <b>(자막 위치는 그대로)</b></div>'+
+      '<div style="display:flex;gap:6px">'+
+        '<button class="mini" data-fit="'+pfx+':cover"  style="'+CE_BTN+'">꽉 채우기<br><span class="hint">좌우 잘림</span></button>'+
+        '<button class="mini" data-fit="'+pfx+':square" style="'+CE_BTN+'">정방형<br><span class="hint">좌우 절반 보존</span></button>'+
+        '<button class="mini" data-fit="'+pfx+':full"   style="'+CE_BTN+'">좌우 전체<br><span class="hint">원본 그대로</span></button>'+
+      '</div>'+
+      '<div class="hint" id="'+pfx+'fitinfo" style="margin-top:6px"></div>'+
+    '</div>'+
     '<div class="hint" style="margin:6px 0 8px">① 원본을 재생하다가 <b>여기 시작 / 여기 끝</b>을 누르면 그 컷의 칸에 <b>초가 채워집니다</b>(사진 띠를 탭해도 됩니다). '+
       '② <b>잘라낼 곳</b>을 누르면 그 컷의 화면이 아래에 뜹니다 — <b>사각형을 손가락으로 옮기고 크기를 바꿔</b> 잘라낼 부분을 정하세요.</div>'+
     '<video id="'+pfx+'vid" controls playsinline preload="metadata" style="width:100%;border-radius:10px;background:#000"></video>'+
@@ -1251,13 +1271,15 @@ function ceDrawBox(pfx){
   if(!stage||!box) return;
   const W=stage.clientWidth||320, H=stage.clientHeight||180;
   const hf=Math.max(CE_HMIN, Math.min(1, c.box.h));
-  const bh=hf*H, bw=Math.min(W, bh*9/16);          // 9:16 고정(높이 기준 — 백엔드와 동일)
+  // 화면 구성별 사각형 비율(백엔드 reframe.fit_aspect와 동일): 꽉 채우기 9:16 · 정방형 1:1 · 좌우 전체=원본 비율
+  const ar=(st.fit==="square")?1:((st.fit==="full")?(W/H):(9/16));
+  const bh=hf*H, bw=Math.min(W, bh*ar);
   const bx=Math.max(0, Math.min(W-bw, c.box.x*W-bw/2));
   const by=Math.max(0, Math.min(H-bh, c.box.y*H-bh/2));
   box.style.left=bx+"px"; box.style.top=by+"px"; box.style.width=bw+"px"; box.style.height=bh+"px";
   const zoom=Math.round((1/hf)*100)/100;
   const el=document.getElementById(pfx+"box_info");
-  if(el)el.innerHTML="컷 "+(st.sel+1)+" · 줌 <b>"+zoom.toFixed(2)+"배</b> · 가로 "+c.box.x.toFixed(2)+" · 세로 "+c.box.y.toFixed(2);
+  if(el)el.innerHTML="컷 "+(st.sel+1)+" · "+CE_FITNAME[st.fit]+" · 줌 <b>"+zoom.toFixed(2)+"배</b> · 가로 "+c.box.x.toFixed(2)+" · 세로 "+c.box.y.toFixed(2);
 }
 // ★필요한 총 길이 안내(운영자 확정): "30초면 두 구간을 반복할 게 아니라, 내가 30초 이상을 고르면
 //   된다. 총 몇 초가 필요한지만 알려달라." → 본문 길이와 **지금 고른 합**을 항상 같이 보여준다.
@@ -1295,7 +1317,10 @@ function cutEditorInputs(pfx){
                 zoom:Math.round((1/hf)*100)/100,        // 줌 = 1 ÷ 높이비율(백엔드와 동일한 정의)
                 crop_x:Math.round(b.x*100)/100, crop_y:Math.round(b.y*100)/100});
   }
-  return specs.length?{cut_specs:JSON.stringify(specs)}:{};
+  const out={};
+  if(specs.length) out.cut_specs=JSON.stringify(specs);
+  if(st.fit && st.fit!=="cover") out.fit=st.fit;   // 기본(꽉 채우기)은 보내지 않는다(기존 동작 유지)
+  return out;
 }
 // 배선: 원본 재생 + '여기 시작/끝' + 컷 선택 + 사각형 드래그 + 줌 슬라이더 + 실행 버튼
 //   opt = {sheet, srcs:[재생 후보 URL], need:본문 길이(초)}
@@ -1327,6 +1352,21 @@ function bindCutEditor(pfx, opt, onGo){
     st.sel=i; ceSet(pfx,i,f,t); ceShowFrame(pfx);
     banner("컷 "+(i+1)+" "+(f==="a"?"시작":"끝")+" = "+t+"초 입력됨","ok");
   };});
+  // ★화면 구성 고르기(꽉 채우기 / 정방형 / 좌우 전체) — 고르면 사각형 비율이 바로 바뀐다
+  const fitSync=()=>{
+    document.querySelectorAll("[data-fit]").forEach(b=>{
+      const on=String(b.dataset.fit)===pfx+":"+st.fit;
+      b.style.background=on?"var(--cy)":""; b.style.color=on?"#04121c":"";});
+    const fi=document.getElementById(pfx+"fitinfo");
+    if(fi)fi.innerHTML="<b>"+CE_FITNAME[st.fit]+"</b> — "+CE_FITDESC[st.fit];
+    ceDrawBox(pfx); editChanged();
+  };
+  document.querySelectorAll("[data-fit]").forEach(b=>{
+    const v=String(b.dataset.fit||"").split(":");
+    if(v[0]!==pfx) return;
+    b.onclick=()=>{ st.fit=v[1]||"cover"; fitSync(); banner("화면 구성: "+CE_FITNAME[st.fit],"ok"); };
+  });
+  fitSync();
   // 컷 선택(잘라낼 곳): 그 컷의 화면·사각형을 아래 편집기에 띄운다
   document.querySelectorAll("[data-cesel]").forEach(b=>{b.onclick=()=>{
     st.sel=parseInt(b.dataset.cesel)||0;
