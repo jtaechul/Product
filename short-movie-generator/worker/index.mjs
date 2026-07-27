@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-27-6 (편집 1·2·3단계 통합 + 컷 전달 수정)";
+const BUILD="v2026-07-27-7 (그린 사각형 = 잘리는 사각형 · 높이 기준 통일)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -979,7 +979,7 @@ function restoreEdits(rec, pfx){
         const a=document.getElementById((pfx||"nc")+i+"a"), b=document.getElementById((pfx||"nc")+i+"b");
         if(a&&Number.isFinite(c.start))a.value=String(c.start);
         if(b&&Number.isFinite(c.end))b.value=String(c.end);
-        if(Number.isFinite(c.zoom)&&c.zoom>0)st.cuts[i].box.w=Math.max(0.15,Math.min(1,1/c.zoom));
+        if(Number.isFinite(c.zoom)&&c.zoom>0)st.cuts[i].box.h=Math.max(CE_HMIN,Math.min(1,1/c.zoom));
         if(Number.isFinite(c.crop_x))st.cuts[i].box.x=c.crop_x;
         if(Number.isFinite(c.crop_y))st.cuts[i].box.y=c.crop_y;
       });
@@ -1130,6 +1130,9 @@ function nvTranscode(u){
 //   ★영상 재생에 의존하지 않는다: 원본 대부분이 WebM이라 아이폰에서 재생이 안 돼 '여기 시작'
 //     버튼이 0초만 입력되던 문제가 있었다. 그래서 **프레임 사진(스트립)** 을 탭해 구간을 고른다.
 const CUTN=4;
+// 제작(reframe)이 줌을 1.0~2.5로 제한하므로 높이 비율 하한은 1/2.5=0.4 — UI에서 미리 지켜
+// '보낸 값이 조용히 잘리는' 일이 없게 한다(실측: 2.78을 보냈다가 2.5로 깎였다).
+const CE_HMIN=0.4;
 // ★값이 바뀔 때마다 '무엇이 반영될지' 요약을 다시 그리는 공용 훅(운영자 확정 · 실사고 재발방지).
 //   예전엔 입력칸의 oninput에만 걸어, **사진 띠 탭·버튼·복원처럼 코드가 값을 넣는 경우**엔
 //   요약이 갱신되지 않아 "표지만 잡힌 것처럼" 보였다 → 편집기 내부에서 직접 호출한다.
@@ -1137,7 +1140,7 @@ let _editChanged=null;
 function editChanged(){ if(typeof _editChanged==="function"){ try{ _editChanged(); }catch(e){} } }
 const _ce={};   // pfx별 상태: {sheet, need, srcDur, cuts:[{box:{x,y,w}}], sel}
 function ceState(pfx){ return (_ce[pfx] ||= {sheet:null, sel:0, need:0, srcDur:0,
-  cuts:Array.from({length:CUTN},()=>({box:{x:0.5,y:0.5,w:0.6}}))}); }
+  cuts:Array.from({length:CUTN},()=>({box:{x:0.5,y:0.5,h:0.8}}))}); }
 
 // ★아이폰 최적화(운영자 지적 "너무 좁게 표현된다"): 편집 카드가 2열 그리드 안에 들어가 절반 폭으로
 //   찌그러져 한글이 세로로 한 글자씩 쪼개졌다 → 카드는 항상 **전체 폭**(grid-column:1/-1)에 두고,
@@ -1170,12 +1173,12 @@ function cutEditorHTML(pfx){
     '<div id="'+pfx+'strip" style="display:flex;overflow-x:auto;gap:6px;padding:4px 0;-webkit-overflow-scrolling:touch">'+
       '<div class="hint">프레임 사진 불러오는 중…</div></div>'+
     rows+
-    '<div class="hint" style="margin:8px 0 2px">잘라낼 부분 — 사각형을 끌어 옮기고, 아래 막대로 크기(줌)를 바꿉니다</div>'+
+    '<div class="hint" style="margin:8px 0 2px">잘라낼 부분 — <b>사각형 안이 그대로 영상이 됩니다</b>. 끌어서 옮기고, 아래 막대로 크기를 바꾸세요(오른쪽 끝=원본 높이 전체)</div>'+
     '<div id="'+pfx+'stage" style="position:relative;width:100%;background:#000;border-radius:10px;overflow:hidden;touch-action:none">'+
       '<img id="'+pfx+'frame" style="width:100%;display:block;opacity:.85">'+
       '<div id="'+pfx+'box" style="position:absolute;border:2px solid var(--cy);box-shadow:0 0 0 9999px rgba(0,0,0,.45);border-radius:4px"></div>'+
     '</div>'+
-    '<input id="'+pfx+'zoom" type="range" min="30" max="100" value="60" style="width:100%;height:44px;margin:8px 0">'+
+    '<input id="'+pfx+'zoom" type="range" min="40" max="100" value="80" style="width:100%;height:44px;margin:8px 0">'+
     '<div class="hint" id="'+pfx+'box_info" style="margin:2px 0"></div>';
 }
 
@@ -1237,18 +1240,22 @@ function ceShowFrame(pfx){
   }
   ceDrawBox(pfx);
 }
-// 9:16 사각형 그리기(폭 w는 원본 가로 대비 비율 → 줌 = 1/w)
+// ★★9:16 사각형 = **높이 기준**(운영자 확정 · 절대 회귀 금지 · 실사고).
+//   제작(reframe)은 '잘라낼 높이 = 원본 높이 ÷ 줌', 너비 = 높이×9/16 으로 자른다.
+//   예전 편집기는 **가로 폭** 기준으로 줌을 계산해(줌=1/폭), 화면에 그린 사각형과 실제로 잘리는
+//   영역이 완전히 달랐다(실측: 그린 박스 768x720@x256 → 실제 242x430@x519). 표지 편집기는 이미
+//   높이 기준으로 고쳤는데 컷 편집기만 남아 있었다. 다시 폭 기준으로 되돌리지 말 것.
 function ceDrawBox(pfx){
   const st=ceState(pfx), c=st.cuts[st.sel];
   const stage=document.getElementById(pfx+"stage"), box=document.getElementById(pfx+"box");
   if(!stage||!box) return;
   const W=stage.clientWidth||320, H=stage.clientHeight||180;
-  const bw=Math.max(0.15, Math.min(1, c.box.w))*W;
-  const bh=Math.min(H, bw*16/9);
+  const hf=Math.max(CE_HMIN, Math.min(1, c.box.h));
+  const bh=hf*H, bw=Math.min(W, bh*9/16);          // 9:16 고정(높이 기준 — 백엔드와 동일)
   const bx=Math.max(0, Math.min(W-bw, c.box.x*W-bw/2));
   const by=Math.max(0, Math.min(H-bh, c.box.y*H-bh/2));
   box.style.left=bx+"px"; box.style.top=by+"px"; box.style.width=bw+"px"; box.style.height=bh+"px";
-  const zoom=Math.round((1/Math.max(0.15,c.box.w))*100)/100;
+  const zoom=Math.round((1/hf)*100)/100;
   const el=document.getElementById(pfx+"box_info");
   if(el)el.innerHTML="컷 "+(st.sel+1)+" · 줌 <b>"+zoom.toFixed(2)+"배</b> · 가로 "+c.box.x.toFixed(2)+" · 세로 "+c.box.y.toFixed(2);
 }
@@ -1283,8 +1290,9 @@ function cutEditorInputs(pfx){
   for(let i=0;i<CUTN;i++){
     const s=ceVal(pfx,i,"a"), e=ceVal(pfx,i,"b"), b=st.cuts[i].box;
     if(s===null||e===null||e<=s) continue;
+    const hf=Math.max(CE_HMIN, Math.min(1, b.h));
     specs.push({start:s, end:e,
-                zoom:Math.round((1/Math.max(0.15,b.w))*100)/100,
+                zoom:Math.round((1/hf)*100)/100,        // 줌 = 1 ÷ 높이비율(백엔드와 동일한 정의)
                 crop_x:Math.round(b.x*100)/100, crop_y:Math.round(b.y*100)/100});
   }
   return specs.length?{cut_specs:JSON.stringify(specs)}:{};
@@ -1323,7 +1331,7 @@ function bindCutEditor(pfx, opt, onGo){
   document.querySelectorAll("[data-cesel]").forEach(b=>{b.onclick=()=>{
     st.sel=parseInt(b.dataset.cesel)||0;
     const z=document.getElementById(pfx+"zoom");
-    if(z)z.value=String(Math.round(st.cuts[st.sel].box.w*100));
+    if(z)z.value=String(Math.round(st.cuts[st.sel].box.h*100));
     ceShowFrame(pfx); ceRender(pfx);
     const stg=document.getElementById(pfx+"stage");
     if(stg&&stg.scrollIntoView)stg.scrollIntoView({behavior:"smooth",block:"center"});
@@ -1342,7 +1350,7 @@ function bindCutEditor(pfx, opt, onGo){
     stage.addEventListener("pointermove",e=>{if(e.buttons)move(e.clientX,e.clientY);});
   }
   const z=document.getElementById(pfx+"zoom");
-  if(z)z.oninput=()=>{st.cuts[st.sel].box.w=Math.max(0.15,Math.min(1,(parseInt(z.value)||60)/100)); ceDrawBox(pfx);};
+  if(z)z.oninput=()=>{st.cuts[st.sel].box.h=Math.max(CE_HMIN,Math.min(1,(parseInt(z.value)||80)/100)); ceDrawBox(pfx); editChanged();};
   ceLoadSheet(pfx, o.sheet); ceRender(pfx);
   const go=document.getElementById(pfx+"go"); if(go&&onGo)go.onclick=onGo;
 }

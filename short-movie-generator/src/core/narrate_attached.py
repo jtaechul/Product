@@ -1609,7 +1609,16 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
         from src.core import reframe
         # ★①인트로·아웃트로 브랜딩 카드 제거(실사고: 22초 영상의 10초가 NOAA 'earth is blue'
         #   로고 화면이었다). 도감형(reels)엔 있던 자동 트림이 나레이션형엔 없어 그대로 들어갔다.
-        clean = _trim_intro_outro_cards(src, work)
+        # ★★시간 기준을 하나로(운영자 확정 · 절대 회귀 금지): 운영자가 고른 초는 **자르지 않은
+        #   원본** 기준이다(미리보기 mp4·사진 띠가 원본에서 만들어진다). 그런데 아래 카드 트림은
+        #   앞부분을 잘라낸 사본을 만들므로, 트림이 걸리는 순간 지정한 초가 그만큼 밀려 **엉뚱한
+        #   장면**이 나간다. → 구간을 직접 지정한 회차는 트림을 건너뛴다(운영자가 카드 구간을
+        #   피해서 고른 것이므로 안전). 지정이 없을 때만 기존대로 자동 트림.
+        if str((manual or {}).get("cut_specs") or "").strip():
+            clean = src
+            log.info("[narrate] 운영자 구간 지정 → 인트로·아웃트로 자동 트림 건너뜀(시각 기준을 원본으로 고정)")
+        else:
+            clean = _trim_intro_outro_cards(src, work)
         # ★②cover 크롭(실사고: 화면 가운데 얇은 띠로만 보였다). 가로 소스를 9:16에 '전체 담기'로
         #   넣으면 위아래가 블러 여백이 되는데, 어두운 다큐 영상은 그 여백이 새까매서 띠처럼 보인다.
         #   → wide=True(=cover)로 화면을 꽉 채운다. 생물 도감형은 기존 '전체 담기'를 유지한다.
