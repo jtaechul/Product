@@ -69,6 +69,16 @@ def main() -> int:
             # ④ 구간 지정 검증: vid0은 앞 0~1초만, vid1은 지정 없음(전체) — 둘 다 정상 합성돼야 한다.
             (sources / "segments" / f"{h}.json").write_text(
                 json.dumps({"segments": {"vid0": [[0.0, 1.0]]}}, ensure_ascii=False), encoding="utf-8")
+            # ⑤ 삽입물 검증: 라인1=이미지 컷어웨이, 라인2=영상(움짤) 컷어웨이 — 풀프레임 오버레이 합성 확인.
+            ins_dir = sources / "inserts" / h
+            ins_dir.mkdir(parents=True, exist_ok=True)
+            ins_img, ins_vid = ins_dir / "l1_0.jpg", ins_dir / "l2_0.mp4"
+            from PIL import Image
+            Image.new("RGB", (900, 900), (240, 200, 40)).save(ins_img, "JPEG")
+            make_clip(ins_vid, 640, 640, 1.5, (40, 200, 120))
+            (sources / "inserts" / f"{h}.json").write_text(json.dumps({"inserts": {
+                "1": [f"data/sources/inserts/{h}/l1_0.jpg"],
+                "2": [f"data/sources/inserts/{h}/l2_0.mp4"]}}, ensure_ascii=False), encoding="utf-8")
             lines = [
                 {"text": "이거 하나면 끝난다", "subs": ["이거", "하나면", "끝난다"], "is_hook": True},
                 {"text": "매일 쓰던 그 물건인데", "subs": ["매일", "쓰던", "그", "물건인데"]},
@@ -81,6 +91,11 @@ def main() -> int:
 
             settings = {"channel": {"name": "미래에서 온 만물상", "handle": "@miraemarket"},
                         "subtitle": {"font": "assets/fonts/GmarketSansBold.ttf"}}
+            # 삽입물 로더가 이미지·영상 2라인을 정상 인식하는지(경로 해석) 먼저 확인.
+            from src.sourcing.produce import load_inserts
+            ins_map = load_inserts(h, root)
+            ins_ok = set(ins_map.keys()) == {1, 2}
+            print(f"INSERT_LOAD: lines={sorted(ins_map.keys())} ok={ins_ok}")
             job = td / "job"
             out = produce(h, job, settings, project_root=root,
                           adapter=FakeAdapter([c1, c2]), narrate=False)
@@ -91,11 +106,11 @@ def main() -> int:
             has_audio = v.audio is not None
             n = out.stat().st_size
             poster = (job / "poster.jpg").exists()
-            ok = sz == (W, H) and has_audio and v.duration > 2.5 and n > 5000
+            ok = sz == (W, H) and has_audio and v.duration > 2.5 and n > 5000 and ins_ok
             print(f"PRODUCE_PROBE: size={sz} dur={v.duration:.2f}s audio={has_audio} "
-                  f"bytes={n} poster={poster}")
+                  f"bytes={n} poster={poster} inserts={sorted(ins_map.keys())}")
             print(f"VERDICT: produce={'OK' if ok else 'FAIL'} "
-                  f"(기대 {W}x{H} · 오디오 有 · 자막/브랜드 합성 · poster 생성)")
+                  f"(기대 {W}x{H} · 오디오 有 · 자막/브랜드/삽입물 합성 · poster 생성)")
     except Exception as e:
         import traceback
         traceback.print_exc()
