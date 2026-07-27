@@ -105,11 +105,91 @@ async function storeImgProxy(url) {
   return new Response(resp.body, { status: 200, headers: out });
 }
 
+// /tik?u=<tiktok source_url> — 틱톡 원본 주소로 tikwm에서 '매번 신선한 재생 URL'을 받아 인라인 스트리밍.
+// 왜: 관리자가 저장된 tikwm 재생주소를 직접 물리면 ① 만료 ② 핫링크/CORS 차단으로 검은 화면이 된다.
+// 서버(워커)에서 재획득 후 중계하면 만료·차단이 동시에 해결된다(구간 편집기 미리보기 재생).
+async function tikProxy(request, url) {
+  const src = url.searchParams.get("u") || "";
+  if (!/^https?:\/\/([\w.-]+\.)?(tiktok\.com|douyin\.com)\//i.test(src)) return j({ error: "url not allowed" }, 403);
+  let play = "";
+  try {
+    const api = "https://www.tikwm.com/api/?hd=1&url=" + encodeURIComponent(src);
+    const r = await fetch(api, { headers: { "User-Agent": "Mozilla/5.0", "Accept": "application/json" } });
+    const data = ((await r.json()) || {}).data || {};
+    play = data.hdplay || data.play || data.wmplay || "";
+  } catch (_) { return j({ error: "resolve failed" }, 502); }
+  if (!play) return j({ error: "no play url" }, 502);
+  const playUrl = play.startsWith("http") ? play : ("https://www.tikwm.com" + play);
+  const h = { "User-Agent": "Mozilla/5.0", "Referer": "https://www.tikwm.com/" };
+  const range = request.headers.get("Range");
+  if (range) h["Range"] = range;
+  const resp = await fetch(playUrl, { headers: h, redirect: "follow" });
+  if (!resp.ok && resp.status !== 206) return j({ error: "upstream " + resp.status }, 502);
+  const out = new Headers();
+  out.set("Content-Type", "video/mp4");
+  out.set("Content-Disposition", "inline");
+  out.set("Accept-Ranges", "bytes");
+  out.set("Cache-Control", "public, max-age=600");
+  out.set("Access-Control-Allow-Origin", "*");
+  for (const k of ["Content-Length", "Content-Range"]) { const v = resp.headers.get(k); if (v) out.set(k, v); }
+  return new Response(resp.body, { status: resp.status, headers: out });
+}
+
+// /stock?q=<kw>&src=<giphy|pixabay|pexels> — 서버 시크릿 키로 스톡 검색(브라우저가 별도 키를 받을 필요 없음).
+// 반환: {items:[{url,thumb,type,id}]}. url은 produce가 제작 시점에 내려받아 삽입한다.
+async function stockSearch(url, env) {
+  const q = (url.searchParams.get("q") || "").trim();
+  const src = (url.searchParams.get("src") || "giphy").toLowerCase();
+  if (!q) return j({ items: [], error: "no query" });
+  try {
+    if (src === "giphy") {
+      const k = env.SHORTS_GIPHY_API_KEY || env.GIPHY_API_KEY || "";
+      if (!k) return j({ items: [], error: "no giphy key" });
+      const r = await fetch("https://api.giphy.com/v1/gifs/search?api_key=" + encodeURIComponent(k)
+        + "&q=" + encodeURIComponent(q) + "&limit=24&rating=pg-13");
+      const data = ((await r.json()) || {}).data || [];
+      const items = data.map((g) => ({
+        url: ((((g.images || {}).original || {}).url) || "").split("?")[0],
+        thumb: (((g.images || {}).fixed_width || {}).url) || "", type: "gif", id: "gy:" + g.id,
+      })).filter((x) => x.url);
+      return j({ items });
+    }
+    if (src === "pexels") {
+      const k = env.SHORTS_PEXELS_API_KEY || "";
+      if (!k) return j({ items: [], error: "no pexels key" });
+      const r = await fetch("https://api.pexels.com/videos/search?query=" + encodeURIComponent(q) + "&per_page=24&orientation=portrait",
+        { headers: { Authorization: k } });
+      const vids = ((await r.json()) || {}).videos || [];
+      const items = vids.map((v) => {
+        const files = (v.video_files || []).filter((f) => f.file_type === "video/mp4").sort((a, b) => (a.width || 0) - (b.width || 0));
+        const mid = files[Math.min(1, Math.max(0, files.length - 1))] || files[0];
+        return { url: (mid && mid.link) || "", thumb: v.image || "", type: "mp4", id: "pe:" + v.id };
+      }).filter((x) => x.url);
+      return j({ items });
+    }
+    if (src === "pixabay") {
+      const k = env.SHORTS_PIXABAY_API_KEY || "";
+      if (!k) return j({ items: [], error: "no pixabay key" });
+      const r = await fetch("https://pixabay.com/api/videos/?key=" + encodeURIComponent(k)
+        + "&q=" + encodeURIComponent(q) + "&per_page=24&safesearch=true");
+      const hits = ((await r.json()) || {}).hits || [];
+      const items = hits.map((hp) => ({
+        url: (((hp.videos || {}).medium || {}).url) || (((hp.videos || {}).small || {}).url) || "",
+        thumb: "https://i.vimeocdn.com/video/" + hp.picture_id + "_295x166.jpg", type: "mp4", id: "px:" + hp.id,
+      })).filter((x) => x.url);
+      return j({ items });
+    }
+    return j({ items: [], error: "unknown src" });
+  } catch (_) { return j({ items: [], error: "search failed" }); }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/health") return new Response("ok");
     if (url.pathname === "/media") return mediaProxy(request, url);
+    if (url.pathname === "/tik") return tikProxy(request, url);
+    if (url.pathname === "/stock") return stockSearch(url, env);
     if (url.pathname === "/ghup") return ghUploadProxy(request, url);
     if (url.pathname === "/store-img") return storeImgProxy(url);
     // 공개 스토어 페이지: 깔끔한 URL(/store)로 정적 store.html을 서빙(프로필 링크용).
