@@ -1,28 +1,31 @@
 {
   "id": "nv-30223591884",
   "kind": "narrate",
-  "created_at": "2026-07-27T00:53:19+00:00",
+  "created_at": "2026-07-27T02:54:53+00:00",
   "status": "published",
   "mode": "shorts",
   "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Your_Earth_is_Blue-_The_Wreck_of_the_Joseph_S._Fay.webm",
-  "hook": "遠くカナダも見えぬ水平線",
-  "yt_title": "遠くカナダも見えぬ水平線",
-  "yt_title_ko": "멀리 캐나다도 보이지 않는 수평선",
-  "yt_description": "遠くカナダも見えぬ水平線。その先に白いブイが揺れています。沈む船影 ジョセフ・S・フェイ号。幼き日 素潜りで探した記憶。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
-  "yt_description_ko": "멀리 캐나다도 보이지 않는 수평선. 그 너머로 하얀 부표가 흔들리고 있습니다. 가라앉은 배의 그림자, 조셉 S. 페이 호. 어린 시절 맨몸 잠수로 찾던 기억.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
+  "hook": "静かな海岸に、記憶が眠っています",
+  "yt_title": "ジョセフ・エス・ベイ号という船です",
+  "yt_title_ko": "조지프 S. 베이호라는 배입니다",
+  "yt_description": "静かな海岸に、記憶が眠っています。沖には白いブイが浮かびます。それは沈没船の目印です。ジョセフ・エス・ベイ号という船です。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
+  "yt_description_ko": "조용한 해안에 기억이 잠들어 있습니다. 앞바다에는 하얀 부표가 떠 있습니다. 그것은 침몰선의 표식입니다. 조지프 S. 베이호라는 배입니다.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
   "hashtags": [
+    "#沈没船",
+    "#難破船",
     "#海",
-    "#海洋生物",
-    "#自然"
+    "#海洋生物"
   ],
   "hashtags_ko": [
+    "#침몰선",
+    "#난파선",
     "#바다",
     "#해양생물"
   ],
   "media": {
-    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30228165427.mp4",
-    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30228165427_thumb.jpg",
-    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30228165427_source.mp4",
+    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30233023777.mp4",
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30233023777_thumb.jpg",
+    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30233023777_source.mp4",
     "sheet": {
       "cols": 8,
       "rows": 5,
@@ -30,51 +33,45 @@
       "step": 2.0,
       "tw": 240,
       "th": 135,
-      "url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30228165427_sheet.jpg"
+      "url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30233023777_sheet.jpg"
     }
   },
   "subs": [
     {
-      "s": 3.81,
-      "e": 6.92,
-      "jp": "遠くカナダも見えぬ水平線",
-      "ko": "멀리 캐나다도 보이지 않는 수평선"
+      "s": 4.6,
+      "e": 8.66,
+      "jp": "静かな海岸に、記憶が眠っています",
+      "ko": "조용한 해안에, 기억이 잠들어 있습니다"
     },
     {
-      "s": 7.75,
-      "e": 10.97,
-      "jp": "その先に白いブイが揺れています",
-      "ko": "그 너머로 하얀 부표가 흔들리고 있습니다"
+      "s": 10.21,
+      "e": 13.23,
+      "jp": "沖には白いブイが浮かびます",
+      "ko": "앞바다에는 하얀 부표가 떠 있습니다"
     },
     {
-      "s": 11.8,
-      "e": 15.29,
-      "jp": "沈む船影 ジョセフ・S・フェイ号",
-      "ko": "가라앉은 배의 그림자, 조셉 S. 페이호"
+      "s": 14.59,
+      "e": 17.81,
+      "jp": "それは沈没船の目印です",
+      "ko": "그것은 침몰선의 표시입니다"
     },
     {
-      "s": 16.09,
-      "e": 19.44,
-      "jp": "幼き日 素潜りで探した記憶",
-      "ko": "어린 시절 스노클링으로 찾아다니던 기억"
+      "s": 19.18,
+      "e": 22.67,
+      "jp": "ジョセフ・エス・ベイ号という船です",
+      "ko": "조셉 에스 베이호라는 배입니다"
     },
     {
-      "s": 20.31,
-      "e": 23.51,
-      "jp": "マスクを得て 世界が変わりました",
-      "ko": "마스크를 얻고 세상이 달라졌습니다"
+      "s": 24.09,
+      "e": 27.98,
+      "jp": "今もブイの下に、船影が見えます",
+      "ko": "지금도 부표 아래에, 배의 그림자가 보입니다"
     },
     {
-      "s": 24.33,
-      "e": 27.87,
-      "jp": "今もブイの下に 静かに眠る船体",
-      "ko": "지금도 부표 아래 조용히 잠든 선체"
-    },
-    {
-      "s": 28.71,
-      "e": 32.58,
+      "s": 29.5,
+      "e": 33.37,
       "jp": "チャンネル登録して、次の深海も。",
-      "ko": "구독과 함께, 다음 심해도 만나보세요."
+      "ko": "채널 구독하시고, 다음 심해도 함께해요."
     }
   ],
   "cta_jp": "チャンネル登録して、次の深海も。",
