@@ -262,27 +262,40 @@ def _score_best_frame(video: str, wd: Path, logo_box: tuple | None = None,
     # ★★로고·큰 글씨가 박힌 프레임은 후보에서 **먼저 제외**한다(운영자 확정 · 실사고):
     #   NOAA 'Earth is Blue' 브랜딩 카드가 오프닝 훅·썸네일 배경으로 쓰였다. 본문 컷 선택은
     #   예전부터 번인 텍스트 구간을 배제했는데, **표지 프레임만 이 검사를 안 거치고 있었다**.
-    grabbed = reframe.pick_clean_frames(grabbed)
+    #   ※필터는 '고를 후보'만 줄인다. 움직임 점수(fg)는 **원본 후보 전체**로 계산해야 정확하다
+    #     (한두 장만 남기면 시간 평균이 무너져 피사체를 못 가려낸다 — 실제로 그렇게 깨졌다).
+    grabbed_all = list(grabbed)
+    grabbed = reframe.pick_clean_frames(grabbed_all)
     # ★Gemini 우선: 후보 중 피사체가 가장 또렷한 프레임을 직접 선택(빈 바다 회피). 키 없으면 None → 휴리스틱.
     try:
         from src.core import vision_subject
         idx = vision_subject.pick_subject_frame(grabbed, hint)
         if idx is not None and 0 <= idx < len(grabbed):
-            log.info("[hook_intro] 배경 프레임 = Gemini 선택(index %d/%d)", idx, len(grabbed))
-            return grabbed[idx], 999.0        # 비전 확정 → 임계 통과로 취급
+            # ★비전 선택도 표지 게이트를 **반드시** 통과해야 한다(운영자 확정 · 2차 사고).
+            #   예전엔 Gemini가 고르면 999점을 돌려 모든 검사를 건너뛰었다 → 로고 화면이 표지로 나갔다.
+            why = reframe.cover_reject_reason(grabbed[idx])
+            if why:
+                log.warning("[hook_intro] Gemini가 고른 프레임이 표지 부적합(%s) → 휴리스틱으로 재선택", why)
+            else:
+                log.info("[hook_intro] 배경 프레임 = Gemini 선택(index %d/%d)", idx, len(grabbed))
+                return grabbed[idx], 999.0        # 비전 확정 → 임계 통과로 취급
     except Exception:  # noqa: BLE001
         pass
     # 폴백(비전 미가동): 움직이는 피사체(fg) 주신호 + saliency, struct는 미세 타이브레이커(빈 모래 편애 제거)
-    fgs = _temporal_foreground_scores(grabbed)              # ★움직이는 피사체 가려내기(빈 물 배제 핵심)
+    fg_all = _temporal_foreground_scores(grabbed_all)       # ★움직이는 피사체 가려내기(빈 물 배제 핵심)
+    fg_by_path = dict(zip(grabbed_all, fg_all))
     best, best_score = None, -1.0
-    for cand, fg in zip(grabbed, fgs):
+    for cand in grabbed:
+        fg = fg_by_path.get(cand, 0.0)
         try:
             struct = _frame_macro_std(Image.open(cand))
         except Exception:  # noqa: BLE001
             struct = 0.0
         s = 30.0 * reframe.subject_score(cand) + 3.0 * fg + 0.10 * struct
-        if reframe.text_score(cand) >= 0.012:              # 번인 텍스트 프레임 강한 감점
+        if reframe.cover_reject_reason(cand):              # 로고 판·검은 화면은 강한 감점
             s *= 0.02
+        elif reframe.corner_logo_score(cand) >= 0.12:      # 구석 워터마크는 약한 감점(깨끗한 쪽 우선)
+            s *= 0.6
         if s > best_score:
             best, best_score = cand, s
     return best, best_score
@@ -398,16 +411,32 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
             sf, _ = _score_best_frame(src_subj, wd, logo_box=subj_logo, hint=subj_hint)
             subj_frame = sf if sf and Path(sf).exists() else None
         # 오프닝 배경(9:16 커버 크롭): 히어로 사진 > 원본 피사체 프레임 > 앞부분 폴백
-        if hero and _cover_crop(hero, open_bg, cfg.W, cfg.H):
-            log.info("[hook_intro] 오프닝 배경 = 고화소 히어로 사진")
-        elif subj_frame and _cover_crop(subj_frame, open_bg, cfg.W, cfg.H):
-            log.info("[hook_intro] 오프닝 배경 = 원본 피사체 프레임(비전 선택)")
-        else:
-            # ★폴백도 로고 판을 피한다(실사고 지점): 예전엔 **영상 시작 0.5초** 프레임을 그대로 썼는데,
-            #   브랜딩 슬레이트가 바로 거기 있다 → 여러 시각을 떠서 글씨가 없는 프레임을 고른다.
-            odur = _duration_of(src_open) or dur
-            if not _grab_clean_frame(src_open, open_bg, odur):
+        # ★★만든 뒤 **다시 검사**한다(운영자 확정 · 2차 사고 안전망): 앞 단계 판정이 한 번 뚫려도
+        #   여기서 걸러 다음 후보로 넘어간다. 마지막 폴백은 여러 시각 중 가장 나은 장을 고른다.
+        odur = _duration_of(src_open) or dur
+        _sources = []
+        if hero:
+            _sources.append(("고화소 히어로 사진", lambda: _cover_crop(hero, open_bg, cfg.W, cfg.H)))
+        if subj_frame:
+            _sources.append(("원본 피사체 프레임(비전 선택)",
+                             lambda: _cover_crop(subj_frame, open_bg, cfg.W, cfg.H)))
+        _sources.append(("깨끗한 프레임 폴백", lambda: _grab_clean_frame(src_open, open_bg, odur)))
+        _made = False
+        for _label, _fn in _sources:
+            if not _fn():
+                continue
+            _why = _rf.cover_reject_reason(open_bg)
+            if _why:
+                log.warning("[hook_intro] 오프닝 배경 후보(%s)가 표지 부적합(%s) → 다음 후보로", _label, _why)
+                continue
+            log.info("[hook_intro] 오프닝 배경 = %s", _label)
+            _made = True
+            break
+        if not _made:
+            # 어떤 후보도 통과 못 하면(브랜딩만 있는 소스) 제작을 막지 않고 마지막 장으로 진행 + 경고
+            if not Path(open_bg).exists() and not _grab_clean_frame(src_open, open_bg, odur):
                 return body_video
+            log.warning("[hook_intro] 표지로 쓸 깨끗한 프레임을 찾지 못했습니다 — 가장 나은 장으로 진행")
         # 엔드카드 배경: 히어로 사진 > 원본 피사체 프레임 > 고정 시각 폴백
         if hero and _cover_crop(hero, ec_frame, cfg.W, cfg.H):
             log.info("[hook_intro] 엔드카드 배경 = 고화소 히어로 사진")

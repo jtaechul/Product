@@ -282,38 +282,123 @@ def text_score(frame_path: str) -> float:
         return 0.0
 
 
-# ★로고·글씨 판(브랜딩 슬레이트) 절대 임계(실측):
-#   로고 슬레이트 0.053 · 수중 피사체 0.00035 · 밝은 모래 0.000 → 0.010이면 넉넉히 갈린다.
-#   ※ 본문 컷 선택은 소스마다 다른 '상대 임계'(_burned_text_threshold)를 쓰지만, 오프닝 훅·썸네일
-#     **표지 프레임**은 소스가 아무리 더러워도 로고 판을 쓰면 안 되므로 **절대 임계**로 자른다.
-LOGO_FRAME_TH = 0.010
+# ★★표지(오프닝 훅·썸네일) 프레임 판정 — 운영자 확정 · 2차 사고 후 전면 교체.
+#
+# 1차 판정식은 '밝은 획 픽셀 ÷ **전체 화면**'이라, 화면이 새까맣고 로고가 작으면 점수가 희석돼
+# 못 잡았다(실측: NOAA 아웃트로 로고 화면 0.0048 < 임계 0.010 → 그대로 표지로 나갔다).
+# 또 로고가 어두운 청록·남색이면 '밝기 200 이상'만 세던 기준에 걸리지 않았다.
+# → 두 가지를 바꾼다:
+#   ① 분모를 **'검지 않은 픽셀(잉크)'** 로 — 검은 배경일수록 로고가 더 도드라진다.
+#   ② 밝기 하한 200→120, 대비 70→55 — 어두운 로고도 획으로 센다.
+# 실측(문제의 원본 76초, 16프레임): 로고 아웃트로 0.2428 / 정상 프레임 최대 0.0401 → 임계 0.10.
+LOGO_FRAME_TH = 0.10
+# ★거의 검은 화면은 그 자체로 표지 실격(로고 여부와 무관). 실측: 문제 프레임 0.969 / 정상 최대 0.330.
+#   ※임계를 0.92로 둔 이유: **심해 영상은 원래 어둡다**. 스포트라이트에 피사체만 보이는 정상 프레임도
+#     85~90%가 검을 수 있어, 0.85로 자르면 멀쩡한 심해 표지까지 막힌다(과잉 차단).
+COVER_DARK_TH = 0.92
+_COVER_W = 480          # 판정용 축소 폭(속도)
+
+
+def cover_metrics(frame_path: str) -> tuple[float, float]:
+    """표지 판정용 두 지표 (잉크 대비 획비율, 검은 픽셀 비율).
+
+    · 잉크 대비 획비율: 로고·글씨처럼 **또렷한 획**이 '보이는 부분' 중 얼마나 되는가.
+    · 검은 픽셀 비율: 화면이 얼마나 새까만가(표지로 쓸 그림이 없다는 뜻).
+    """
+    try:
+        from PIL import Image
+        im = Image.open(frame_path).convert("L")
+        w, h = im.size
+        if w != _COVER_W:
+            im = im.resize((_COVER_W, max(1, int(h * _COVER_W / w))))
+        px = im.load()
+        W, H = im.size
+        S = 2
+        ink = dark = edge = 0
+        for y in range(H - S):
+            for x in range(W - S):
+                v = px[x, y]
+                if v < 25:
+                    dark += 1
+                else:
+                    ink += 1
+                if v >= 120 and (v - px[x + S, y] > 55 or v - px[x, y + S] > 55
+                                 or v - px[x + S, y + S] > 55):
+                    edge += 1
+        n = max(1, (W - S) * (H - S))
+        return edge / max(1, ink), dark / n
+    except Exception:  # noqa: BLE001
+        return 0.0, 0.0
+
+
+def corner_logo_score(frame_path: str) -> float:
+    """네 모서리(각 25%×25%) 중 '획'이 가장 많은 곳의 비율 — 상시 워터마크 감지용.
+
+    화면 전체가 로고 판은 아니지만 구석에 방송사·기관 워터마크가 박힌 프레임이 있다.
+    표지로는 이런 프레임보다 **구석까지 깨끗한 프레임**이 낫다 → 순위 감점에 쓴다(제외는 아님:
+    소스 전체에 상시 워터마크가 박힌 영상도 많아 제외하면 만들 게 없어진다)."""
+    try:
+        from PIL import Image
+        im = Image.open(frame_path).convert("L")
+        w, h = im.size
+        if w != _COVER_W:
+            im = im.resize((_COVER_W, max(1, int(h * _COVER_W / w))))
+        W, H = im.size
+        px = im.load()
+        cw, ch = W // 4, H // 4
+        S = 2
+        best = 0.0
+        for ox in (0, W - cw):
+            for oy in (0, H - ch):
+                ink = edge = 0
+                for y in range(oy, oy + ch - S):
+                    for x in range(ox, ox + cw - S):
+                        v = px[x, y]
+                        if v >= 25:
+                            ink += 1
+                        if v >= 120 and (v - px[x + S, y] > 55 or v - px[x, y + S] > 55):
+                            edge += 1
+                best = max(best, edge / max(1, ink))
+        return best
+    except Exception:  # noqa: BLE001
+        return 0.0
+
+
+def cover_reject_reason(frame_path: str) -> str:
+    """표지로 쓰면 안 되는 프레임이면 사유 문자열, 괜찮으면 빈 문자열."""
+    ink_edge, dark = cover_metrics(frame_path)
+    if dark >= COVER_DARK_TH:
+        return f"거의 검은 화면(검정 {dark:.0%})"
+    if ink_edge >= LOGO_FRAME_TH:
+        return f"로고·글씨 판(획비율 {ink_edge:.3f})"
+    return ""
 
 
 def is_logo_frame(frame_path: str, th: float = LOGO_FRAME_TH) -> bool:
-    """이 프레임이 '로고·큰 글씨가 박힌 판'인가(오프닝 훅·썸네일 배경 금지 대상)."""
-    return text_score(frame_path) >= th
+    """이 프레임을 표지(오프닝 훅·썸네일 배경)로 쓰면 안 되는가."""
+    return bool(cover_reject_reason(frame_path))
 
 
 def pick_clean_frames(paths: list[str], th: float = LOGO_FRAME_TH,
                       keep_if_all_dirty: int = 3) -> list[str]:
-    """후보 프레임에서 **로고·글씨 판을 제외**한 목록.
+    """후보 프레임에서 **표지 부적합(로고·글씨 판 / 거의 검은 화면)** 을 제외한 목록.
 
-    운영자 지적(실사고): NOAA 'Earth is Blue' 브랜딩 카드가 오프닝 훅·썸네일 배경으로 쓰였다.
-    전부 더러우면(브랜딩만 있는 소스) 제작을 막지 않고 **가장 깨끗한 몇 장**만 남긴다.
+    전부 부적합이면(브랜딩만 있는 소스) 제작을 막지 않고 **가장 나은 몇 장**만 남긴다.
     """
     if not paths:
         return []
-    ts = [(text_score(p), p) for p in paths]
-    clean = [p for t, p in ts if t < th]
+    scored = [(cover_metrics(p), p) for p in paths]
+    clean = [p for (ie, dk), p in scored if dk < COVER_DARK_TH and ie < th]
     if clean:
         if len(clean) < len(paths):
-            log.info("[reframe] 로고·글씨 프레임 %d/%d장 제외(임계 %.3f)",
-                     len(paths) - len(clean), len(paths), th)
+            log.info("[reframe] 표지 부적합 프레임 %d/%d장 제외(획비율≥%.2f 또는 검정≥%.0f%%)",
+                     len(paths) - len(clean), len(paths), th, COVER_DARK_TH * 100)
         return clean
-    ts.sort(key=lambda x: x[0])
-    log.warning("[reframe] 후보 %d장이 모두 로고·글씨 판(최소 %.3f) → 가장 깨끗한 %d장만 사용",
-                len(paths), ts[0][0], keep_if_all_dirty)
-    return [p for _t, p in ts[:max(1, keep_if_all_dirty)]]
+    scored.sort(key=lambda x: (x[0][1], x[0][0]))       # 덜 검고 획이 적은 순
+    log.warning("[reframe] 후보 %d장이 모두 표지 부적합(최소 획비율 %.3f · 검정 %.0f%%) "
+                "→ 가장 나은 %d장만 사용", len(paths), scored[0][0][0],
+                scored[0][0][1] * 100, keep_if_all_dirty)
+    return [p for _m, p in scored[:max(1, keep_if_all_dirty)]]
 
 
 def _burned_text_threshold(tscores: list[float]) -> float:

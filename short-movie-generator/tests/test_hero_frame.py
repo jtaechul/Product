@@ -26,12 +26,18 @@ def _make_sand_creature_video(out: str, work: Path, fps: int = 6, secs: int = 10
     어두운 피사체는 subject_score≈0(색·밝기 saliency 없음) → 오직 움직임(fg)으로만 구분되는 최악 케이스."""
     from PIL import Image, ImageDraw
     W, H = 320, 180
+    # ★결정론적 밝은 질감(높은 국소 분산) = 빈 모래.
+    #   실제 촬영본처럼 **부드러운 노이즈**로 만든다 — 픽셀마다 튀는 톱니 패턴은 실제 영상에 없고,
+    #   표지 판정기가 그걸 '글씨 획'으로 읽는다(합성 이미지가 비현실적이라 생긴 오검출).
+    import random as _rnd
+    from PIL import ImageFilter
+    _rnd.seed(11)
     sand = Image.new("L", (W, H))
     sp = sand.load()
-    for y in range(H):                     # 결정론적 밝은 질감(높은 국소 분산) = 빈 모래
+    for y in range(H):
         for x in range(W):
-            sp[x, y] = ((x * 7 + y * 13) % 96) + 130
-    sand = sand.convert("RGB")
+            sp[x, y] = 175 + _rnd.randint(-28, 28)
+    sand = sand.filter(ImageFilter.GaussianBlur(1.0)).convert("RGB")
     fdir = work / "frames"
     fdir.mkdir(parents=True, exist_ok=True)
     nf = fps * secs
