@@ -1691,7 +1691,7 @@ function srcSaveState() {
       aff: (($("srcAffiliate") || {}).value) || s.affDraft || "",
       promo: pr.productHash ? { productHash: pr.productHash, promoHash: pr.promoHash, keyword: pr.keyword,
         zh_terms: pr.zh_terms || [], cands: pr.cands || [], selected: [...(pr.selected || [])], page: pr.page || 0,
-        nextCursor: pr.nextCursor || 0, seenUrls: (pr.seenUrls || []).slice(-60) } : null,
+        nextCursor: pr.nextCursor || 0, seenUrls: (pr.seenUrls || []).slice(-60), lang: pr.lang || "zh" } : null,
       plan: pl.hash ? { hash: pl.hash, options: pl.options || [], chosen: pl.chosen,
         custom: (($("srcDirCustom") || {}).value) || pl.custom || "", note: pl.note || "", script: pl.script || null } : null,
       ui: { pick: srcShown("srcPickCard"), promo: srcShown("srcPromoCard"), plan: srcShown("srcPlanCard"), refresh: srcShown("srcRefresh") } };
@@ -1928,7 +1928,7 @@ async function srcConfirmProduct() {
    확정 상품명으로 틱톡을 조회수순 검색 → 5~10개 다중선택 → data/sources/promo/{productHash}.json
    (다음: ④ 구간 지정·검수, ⑤ 다운로드·합성). 발굴 매니페스트는 'p_'+productHash 키로 분리. */
 const srcPromoSelPath = (h) => `${P}/data/sources/promo/${h}.json`;
-let srcPromoState = { productHash: null, promoHash: null, keyword: "", cands: [], selected: new Set(), page: 0, nonce: "", nextCursor: 0, seenUrls: [] };
+let srcPromoState = { productHash: null, promoHash: null, keyword: "", cands: [], selected: new Set(), page: 0, nonce: "", nextCursor: 0, seenUrls: [], lang: "zh" };
 
 function srcShowPromo(product, productHash, restore) {
   const nv = product.naver || {};
@@ -1938,15 +1938,22 @@ function srcShowPromo(product, productHash, restore) {
     zh_terms: (restore && restore.zh_terms) || product.zh_terms || [],
     cands: (restore && restore.cands) || [], selected: new Set((restore && restore.selected) || []),
     page: (restore && restore.page) || 0, nonce: "",
-    nextCursor: (restore && restore.nextCursor) || 0, seenUrls: (restore && restore.seenUrls) || [] };
+    nextCursor: (restore && restore.nextCursor) || 0, seenUrls: (restore && restore.seenUrls) || [],
+    lang: (restore && restore.lang) || "zh" };
   $("srcPromoBody").innerHTML =
-    `<p class="hint">고른 상품을 홍보하는 <b>틱톡 영상</b>을 조회수순으로 찾습니다. 검색어(상품명)를 필요하면 고치고 [홍보영상 찾기]를 누르세요.</p>`
+    `<p class="hint">고른 상품을 홍보하는 <b>틱톡 영상</b>을 조회수순으로 찾습니다. <b>검색 언어</b>를 고르고(중국어=본토 원본이 많음 · 한국어=국내 리뷰), 검색어를 필요하면 고쳐 [홍보영상 찾기]를 누르세요.</p>`
+    + `<div class="row2" style="gap:6px; align-items:center; margin-bottom:6px">`
+    + `<span class="hint" style="align-self:center">검색 언어:</span>`
+    + `<button class="btn mini promolang" data-lang="zh" style="width:auto">중국어</button>`
+    + `<button class="btn mini sub promolang" data-lang="ko" style="width:auto">한국어</button></div>`
     + `<div class="row2" style="gap:8px; align-items:center"><input id="srcPromoKw" value="${srcEsc(name)}" style="flex:1; min-width:0"><button id="srcPromoFind" class="btn">홍보영상 찾기</button></div>`
     + `<p id="srcPromoStatus" class="hint" style="margin-top:8px"></p>`
     + `<div id="srcPromoCards" class="srccards"></div>`
     + `<button id="srcPromoRefresh" class="btn sub" style="display:none; margin-top:12px; width:100%">다른 홍보영상 찾기</button>`
     + `<button id="srcPromoSave" class="btn" style="display:none; margin-top:10px; width:100%">이 영상들로 진행 (선택 저장)</button>`;
   $("srcPromoCard").style.display = ""; srcActivateStep("srcPromoCard");
+  srcPromoLangSync();
+  document.querySelectorAll(".promolang").forEach((b) => b.onclick = () => { srcPromoState.lang = b.dataset.lang; srcPromoLangSync(); srcSaveState(); });
   $("srcPromoFind").onclick = (ev) => busy(ev.target, () => srcPromoDispatch(0));
   $("srcPromoRefresh").onclick = (ev) => busy(ev.target, () => srcPromoDispatch((srcPromoState.page || 0) + 1));
   $("srcPromoSave").onclick = (ev) => busy(ev.target, srcPromoSave);
@@ -1961,6 +1968,10 @@ function srcShowPromo(product, productHash, restore) {
   }
   if (!srcRestoring) $("srcPromoCard").scrollIntoView({ behavior: "smooth", block: "start" });
 }
+function srcPromoLangSync() {   // 검색 언어 버튼 하이라이트(선택=진하게)
+  const lang = srcPromoState.lang || "zh";
+  document.querySelectorAll(".promolang").forEach((b) => b.classList.toggle("sub", b.dataset.lang !== lang));
+}
 async function srcPromoDispatch(page) {
   const kw = ($("srcPromoKw").value || "").trim() || srcPromoState.keyword;
   if (!kw) { toast("상품명을 입력하세요"); return; }
@@ -1974,8 +1985,10 @@ async function srcPromoDispatch(page) {
   const cursor = page ? (srcPromoState.nextCursor || 0) : 0;
   const exclude = (srcPromoState.seenUrls || []).slice(-40).join(",");
   $("srcPromoStatus").textContent = page ? "다른 홍보영상 찾는 중… (약 1분)" : "홍보영상 찾는 중… (약 1분)";
-  // 비전이 뽑은 중국어어(zh_terms)가 있으면 그걸로 같은 상품 검색(왕복 번역 없음), 없으면 이름으로.
-  const terms = (srcPromoState.zh_terms || []).join(",");
+  // ⭐ 검색 언어(사용자 선택): 중국어=비전 zh_terms(없으면 백엔드가 상품명→중국어 확장) / 한국어=상품명 그대로 검색.
+  const lang = srcPromoState.lang || "zh";
+  const zh = (srcPromoState.zh_terms || []).filter(Boolean);
+  const terms = lang === "ko" ? kw : (zh.length ? zh.join(",") : "");
   await srcDispatch({ keyword: kw, hash: srcPromoState.promoHash, limit: "10", page: String(page), nonce, terms,
                      cursor: String(cursor), exclude });
   toast("홍보영상 검색 시작 — 약 1분");
