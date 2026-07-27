@@ -1,0 +1,604 @@
+{
+  "keyword": "드론",
+  "hash": "2414198b32f4f989",
+  "source": "tiktok_tikwm",
+  "search_terms": [
+    "无人机",
+    "航拍无人机",
+    "迷你无人机",
+    "儿童无人机",
+    "折叠无人机"
+  ],
+  "page": 0,
+  "nonce": "n17851538141917777",
+  "next_cursor": 25,
+  "count": 5,
+  "candidates": [
+    {
+      "id": "sv_6f5c98123efa",
+      "platform": "tiktok",
+      "title": "Mother creates magical helicopter surprise for cute baby 🚁🎁 #ai #cutebaby #kindness #fyp #fypシ゚viral @TikTok @tiktok creators ",
+      "title_ko": "동전으로 장식된 클래식 자동차 모양 저금통",
+      "coupang_keywords": [
+        "자동차 저금통",
+        "클래식 자동차 저금통",
+        "동전 장식 저금통",
+        "장식용 저금통"
+      ],
+      "zh_terms": [
+        "汽车存钱罐",
+        "复古汽车存钱罐",
+        "硬币装饰存钱罐"
+      ],
+      "naver": {
+        "query": "자동차 저금통",
+        "real_title": "만들기대장 바퀴자동차 저금통",
+        "lprice": "3200",
+        "coupang": true,
+        "coupang_title": "지문인식 비밀번호 자동차 저금통",
+        "coupang_lprice": "26680",
+        "mall": "쿠팡",
+        "image": "https://shopping-phinf.pstatic.net/main_5976798/59767982587.jpg",
+        "candidates": [
+          {
+            "title": "지문인식 비밀번호 자동차 저금통",
+            "image": "https://shopping-phinf.pstatic.net/main_5976798/59767982587.jpg",
+            "mall": "쿠팡",
+            "lprice": "26680",
+            "link": "https://link.coupang.com/re/PCSNAVERPCSDP?pageKey=2956350049&ctag=2956350049&lptag=l23217479049&itemId=3472907941&vendorItemId=74685791556&spec=10305197",
+            "coupang": true
+          },
+          {
+            "title": "만들기대장 바퀴자동차 저금통",
+            "image": "https://shopping-phinf.pstatic.net/main_6043192/60431925623.20260613221912.jpg",
+            "mall": "네이버",
+            "lprice": "3200",
+            "link": "https://search.shopping.naver.com/catalog/60431925623",
+            "coupang": false
+          },
+          {
+            "title": "자동차 금고 저금통",
+            "image": "https://shopping-phinf.pstatic.net/main_3570523/35705238031.20260724070442.jpg",
+            "mall": "네이버",
+            "lprice": "22000",
+            "link": "https://search.shopping.naver.com/catalog/35705238031",
+            "coupang": false
+          },
+          {
+            "title": "만들기대장 나무 자동차 저금통 클레이 만들기 1개",
+            "image": "https://shopping-phinf.pstatic.net/main_6081293/60812930289.20260720071920.jpg",
+            "mall": "네이버",
+            "lprice": "5070",
+            "link": "https://search.shopping.naver.com/catalog/60812930289",
+            "coupang": false
+          },
+          {
+            "title": "나무 자동차 저금통 만들기",
+            "image": "https://shopping-phinf.pstatic.net/main_6078690/60786903190.20260710000300.jpg",
+            "mall": "네이버",
+            "lprice": "1080",
+            "link": "https://search.shopping.naver.com/catalog/60786903190",
+            "coupang": false
+          },
+          {
+            "title": "토단 자동차 저금통",
+            "image": "https://shopping-phinf.pstatic.net/main_5580298/55802980239.20250715204555.jpg",
+            "mall": "네이버",
+            "lprice": "2140",
+            "link": "https://search.shopping.naver.com/catalog/55802980239",
+            "coupang": false
+          },
+          {
+            "title": "클래식한 자동차 모양 저금통 장식",
+            "image": "https://shopping-phinf.pstatic.net/main_3055859/30558594392.20260709073604.jpg",
+            "mall": "네이버",
+            "lprice": "22770",
+            "link": "https://search.shopping.naver.com/catalog/30558594392",
+            "coupang": false
+          },
+          {
+            "title": "클래식한 자동차 양의 다용도 저금통 장식 VM78SN89",
+            "image": "https://shopping-phinf.pstatic.net/main_6099296/60992969015.20260725201746.jpg",
+            "mall": "네이버",
+            "lprice": "45290",
+            "link": "https://search.shopping.naver.com/catalog/60992969015",
+            "coupang": false
+          },
+          {
+            "title": "복고풍 빈티지 클래식카 인테리어 저금통",
+            "image": "https://shopping-phinf.pstatic.net/main_8230748/82307482042.jpg",
+            "mall": "JS 스토어",
+            "lprice": "36500",
+            "link": "https://smartstore.naver.com/main/products/4762960122",
+            "coupang": false
+          },
+          {
+            "title": "클래식한 자동차 모양의 다용도 저금통 장식",
+            "image": "https://shopping-phinf.pstatic.net/main_6101478/61014789641.jpg",
+            "mall": "11번가",
+            "lprice": "33180",
+            "link": "https://www.11st.co.kr/connect/Gateway.tmall?method=Xsite&prdNo=7715879419&tid=1000000061",
+            "coupang": false
+          }
+        ],
+        "best_match": -1,
+        "match_confidence": "low",
+        "match_reason": "틱톡 영상 속 상품은 동전으로 장식된 자동차 저금통임. 후보 중 같은 상품 없음."
+      },
+      "view_count": 5457523,
+      "uploader": "Ai Nusrat",
+      "duration": 20,
+      "source_url": "https://www.tiktok.com/@ai_nusrat/video/7588369844769180948",
+      "download_url": "https://v45-p.tiktokcdn-us.com/c56a5d78d5abb99975279aaaa7ffadb2/6a679da4/video/tos/alisg/tos-alisg-pve-0037c001/oI08sEDuIFA3EPBTfQEcgTEDBi0BfRTPpMj9gX/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=1393&ft=73kDHDyjNb~VQQUnU~d-sdQ40mZqYlkdGk-~hWLrK&mime_type=video_mp4&rc=Omk5Z2YzNDhpNWhoOGU1NkBpamU6NGs5cnVuODMzODczNEAtYDAyX2BfNTAxMS9iMzFjYSNzcGVhMmRrbzRhLS1kMWBzcw%3D%3D&vvpl=1&l=202607271203590E29EC5D0B90D20134AF&btag=e000fd000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-alisg-p-0037/o8X0FD3IfzF0B6ufEgiPMcpjTFR8TA81EITBBV~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=835c2521&x-expires=1785240000&x-signature=O1yj7yqPfL8O9Dz%2FTpZr%2FeyqDvA%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+    },
+    {
+      "id": "sv_a3a645785e15",
+      "platform": "tiktok",
+      "title": "MINI DRON! 🚀 #saesi #aliexpress #productostopaliexpress #dron #minidron #drone #minidrone #tinydrone #dronevideo #dronbarato #luggagedrone #fpv",
+      "title_ko": "여행용 캐리어 모양의 휴대용 미니 드론",
+      "coupang_keywords": [
+        "미니 드론",
+        "휴대용 드론",
+        "접이식 드론",
+        "초소형 드론"
+      ],
+      "zh_terms": [
+        "迷你无人机",
+        "行李箱无人机",
+        "便携式无人机"
+      ],
+      "naver": {
+        "query": "미니 드론",
+        "real_title": "어린이드론 입문용 홀리스톤 HS210 미니 드론 단품 세트",
+        "lprice": "42000",
+        "coupang": false,
+        "coupang_title": "어린이드론 입문용 홀리스톤 HS210 미니 드론 단품 세트",
+        "coupang_lprice": null,
+        "mall": "드론스페이스",
+        "image": "https://shopping-phinf.pstatic.net/main_8200729/82007295621.21.jpg",
+        "candidates": [
+          {
+            "title": "어린이드론 입문용 홀리스톤 HS210 미니 드론 단품 세트",
+            "image": "https://shopping-phinf.pstatic.net/main_8200729/82007295621.21.jpg",
+            "mall": "드론스페이스",
+            "lprice": "42000",
+            "link": "https://smartstore.naver.com/main/products/4462772776",
+            "coupang": false
+          },
+          {
+            "title": "SYMA X5 입문용 어린이 촬영 미니 드론",
+            "image": "https://shopping-phinf.pstatic.net/main_1163453/11634538988.19.jpg",
+            "mall": "OKIO",
+            "lprice": "49800",
+            "link": "https://smartstore.naver.com/main/products/2008445210",
+            "coupang": false
+          },
+          {
+            "title": "플라잉볼UFO 국민미니드론 초보자용 선물용",
+            "image": "https://shopping-phinf.pstatic.net/main_8337710/83377104422.jpg",
+            "mall": "이긴유통",
+            "lprice": "16800",
+            "link": "https://smartstore.naver.com/main/products/5832605008",
+            "coupang": false
+          },
+          {
+            "title": "DJI 네오 2 플라이 모어 콤보 드론",
+            "image": "https://shopping-phinf.pstatic.net/main_5772783/57727838959.20260611104935.jpg",
+            "mall": "네이버",
+            "lprice": "110030",
+            "link": "https://search.shopping.naver.com/catalog/57727838959",
+            "coupang": false
+          },
+          {
+            "title": "어린이드론 미니 입문용 교육용 드론",
+            "image": "https://shopping-phinf.pstatic.net/main_8818383/88183835027.2.jpg",
+            "mall": "어린이드론",
+            "lprice": "39000",
+            "link": "https://smartstore.naver.com/main/products/10639329217",
+            "coupang": false
+          },
+          {
+            "title": "DJI Mini 5 Pro 플라이 모어 콤보 드론",
+            "image": "https://shopping-phinf.pstatic.net/main_5938850/59388500938.20260625070419.jpg",
+            "mall": "네이버",
+            "lprice": "1251300",
+            "link": "https://search.shopping.naver.com/catalog/59388500938",
+            "coupang": false
+          },
+          {
+            "title": "PGmoon 휴대용 드론 케이스",
+            "image": "https://shopping-phinf.pstatic.net/main_5667227/56672277219.20260704101738.jpg",
+            "mall": "네이버",
+            "lprice": "53270",
+            "link": "https://search.shopping.naver.com/catalog/56672277219",
+            "coupang": false
+          },
+          {
+            "title": "DJI 팬텀 M30T 휴대용 드론 하드케이스 백팩 하드쉘 세트",
+            "image": "https://shopping-phinf.pstatic.net/main_5697840/56978405653.20260622151011.jpg",
+            "mall": "네이버",
+            "lprice": "63520",
+            "link": "https://search.shopping.naver.com/catalog/56978405653",
+            "coupang": false
+          },
+          {
+            "title": "DJI NEO2 보호 케이스 neo2 플라이 모어 휴대용 핸드헬드 드론 가방에 적합",
+            "image": "https://shopping-phinf.pstatic.net/main_6027920/60279208765.20260602203459.jpg",
+            "mall": "네이버",
+            "lprice": "17078",
+            "link": "https://search.shopping.naver.com/catalog/60279208765",
+            "coupang": false
+          },
+          {
+            "title": "DJI Tello 휴대용 드론 운반 케이스 듀얼 지퍼 보호 가방",
+            "image": "https://shopping-phinf.pstatic.net/main_5779160/57791602730.20260212051707.jpg",
+            "mall": "네이버",
+            "lprice": "14000",
+            "link": "https://search.shopping.naver.com/catalog/57791602730",
+            "coupang": false
+          }
+        ],
+        "best_match": -1,
+        "match_confidence": "low",
+        "match_reason": "기준 이미지는 드론 케이스로 보임. 쇼핑 후보 중 일치하는 상품 없음."
+      },
+      "view_count": 3979203,
+      "uploader": "saesi 💥",
+      "duration": 20,
+      "source_url": "https://www.tiktok.com/@saesiii/video/7076895963654294790",
+      "download_url": "https://v45.tiktokcdn-us.com/44456a44ab882dfcac9f0fb9e5dfa390/6a679da2/video/tos/useast2a/tos-useast2a-ve-0068c003/4d2e030cfcc441a984b5eaf205f7397b/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=2170&ft=73kDHDyjNdRVQQUnU~d-sd240mZqYlR4nP-~hWLrK&mime_type=video_mp4&rc=aTg0ZGQ3ZjdnNzc2NTs6N0BpM2lraDM6Zmw1OzMzNzczM0BeYy4tYF81NTIxL2MxY2IyYSNvNXFmcjQwcm9gLS1kMTZzcw%3D%3D&vvpl=1&l=202607271203584A9A2E4673C15B0142AD&btag=e000bd000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-maliva-p-0068/6169963c79af4a61a9aef6d3e26b7e50_1647718245~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=313adddf&x-expires=1785240000&x-signature=fvj3i%2BdW1jusCZCsIYPpcPWtSdw%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+    },
+    {
+      "id": "sv_0da6d9c33cca",
+      "platform": "tiktok",
+      "title": "DJI FLYCART 200 #flycam #flycart #dji #djifly #drone ",
+      "title_ko": "대형 화물 운송용 드론",
+      "coupang_keywords": [
+        "산업용 드론",
+        "물류 운송 드론",
+        "농업용 드론",
+        "대형 드론"
+      ],
+      "zh_terms": [
+        "大型载重无人机",
+        "物流无人机",
+        "工业无人机"
+      ],
+      "naver": {
+        "query": "산업용 드론",
+        "real_title": "DJI 매트리스4 E (Matrice 4E) 산업용 측량 드론",
+        "lprice": "7000000",
+        "coupang": false,
+        "coupang_title": "DJI 매트리스4 E (Matrice 4E) 산업용 측량 드론",
+        "coupang_lprice": null,
+        "mall": "아임드론로보틱스",
+        "image": "https://shopping-phinf.pstatic.net/main_5250789/52507898819.jpg",
+        "candidates": [
+          {
+            "title": "DJI 매트리스4 E (Matrice 4E) 산업용 측량 드론",
+            "image": "https://shopping-phinf.pstatic.net/main_5250789/52507898819.jpg",
+            "mall": "아임드론로보틱스",
+            "lprice": "7000000",
+            "link": "https://imdron.com/product/detail.html?product_no=1184&cate_no=24&display_group=1&utm_source=naver&utm_medium=shopping&utm_campaign=knowledge_shopping&mkt_in=Y&ghost_mall_id=naver&ref=naver_open",
+            "coupang": false
+          },
+          {
+            "title": "농약드론 방제용 비료 비행기 살포 산업용 드론 농약살포 입제기 과수원 T50 농업용",
+            "image": "https://shopping-phinf.pstatic.net/main_5477369/54773693386.20251018053734.jpg",
+            "mall": "네이버",
+            "lprice": "4509520",
+            "link": "https://search.shopping.naver.com/catalog/54773693386",
+            "coupang": false
+          },
+          {
+            "title": "패럿 아나피 Ai / 산업용드론 / 인공지능 4G 드론",
+            "image": "https://shopping-phinf.pstatic.net/main_8384423/83844230883.jpg",
+            "mall": "코코드론샵",
+            "lprice": "6380000",
+            "link": "https://smartstore.naver.com/main/products/6299728394",
+            "coupang": false
+          },
+          {
+            "title": "DJI 매트리스 4T (Matrice 4T) 산업용 열화상 드론",
+            "image": "https://shopping-phinf.pstatic.net/main_5240452/52404524420.jpg",
+            "mall": "DJI 정품판매점 드론박스",
+            "lprice": "9250000",
+            "link": "https://www.drone-box.co.kr/goods/goods_view.php?goodsNo=1000001271&inflow=naver",
+            "coupang": false
+          },
+          {
+            "title": "DJI 매트리스 400 RTK Plus combo /Matrice 400 RTK 산업용드론",
+            "image": "https://shopping-phinf.pstatic.net/main_5528627/55286273357.jpg",
+            "mall": "DJI 정품판매점 드론박스",
+            "lprice": "12100000",
+            "link": "https://www.drone-box.co.kr/goods/goods_view.php?goodsNo=1000001318&inflow=naver",
+            "coupang": false
+          },
+          {
+            "title": "DJI Dock3 매트리스 4TD (Matrice 4T) 산업용 드론, 관제시스템",
+            "image": "https://shopping-phinf.pstatic.net/main_5825980/58259806177.jpg",
+            "mall": "DJI 정품판매점 드론박스",
+            "lprice": "9890000",
+            "link": "https://www.drone-box.co.kr/goods/goods_view.php?goodsNo=1000001409&inflow=naver",
+            "coupang": false
+          },
+          {
+            "title": "호환 드론 케이스 운송 연락 운송박스 JY 운송 알루미늄합 맞춤형지원 방수함 카메라",
+            "image": "https://shopping-phinf.pstatic.net/main_9114644/91146448964.jpg",
+            "mall": "물류에세이",
+            "lprice": "282100",
+            "link": "https://smartstore.naver.com/main/products/13601938552",
+            "coupang": false
+          },
+          {
+            "title": "EFT K20 다기능 30kg 프레임 농약 살포 태양광 패널 청소 및 물류 운송에 이상적",
+            "image": "https://shopping-phinf.pstatic.net/main_5950081/59500811281.jpg",
+            "mall": "11번가",
+            "lprice": "1537120",
+            "link": "https://www.11st.co.kr/connect/Gateway.tmall?method=Xsite&prdNo=9240542453&tid=1000000061",
+            "coupang": false
+          },
+          {
+            "title": "신제품 1:18 반합금 무선 조종 장난감 자동차 물류 운송 대형 트럭 컨테이너 후이나 1524",
+            "image": "https://shopping-phinf.pstatic.net/main_9053064/90530647391.jpg",
+            "mall": "시드컴퍼니21",
+            "lprice": "73900",
+            "link": "https://smartstore.naver.com/main/products/12986136299",
+            "coupang": false
+          },
+          {
+            "title": "핫 플라스틱 회전식 박스(뚜껑 포함) 물류 운송 65L 회색 파란색 두꺼운 재질 프레임 직사각형",
+            "image": "https://shopping-phinf.pstatic.net/main_9017917/90179170233.jpg",
+            "mall": "짐덱스",
+            "lprice": "31600",
+            "link": "https://smartstore.naver.com/main/products/12634659327",
+            "coupang": false
+          }
+        ],
+        "best_match": 4,
+        "match_confidence": "high",
+        "match_reason": "색상, 형태, 프로펠러 수가 동일"
+      },
+      "view_count": 3365585,
+      "uploader": "DJI Drone",
+      "duration": 48,
+      "source_url": "https://www.tiktok.com/@djidronevn/video/7650358713395481889",
+      "download_url": "https://v45.tiktokcdn-us.com/92f136e7757141c35c098d4b5cd041ea/6a679dbd/video/tos/useast2a/tos-useast2a-ve-0068c001-euttp/ooKC0kZiavrEXB9YVDIOQAE0r3iQIguABiiBN/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=3598&ft=73kDHDyjNMRVQQUnU~d-sdi40mZqYl4n.2-~hWLrK&mime_type=video_mp4&rc=ZztmZ2RpNzk5ZWQ5aDZkZkBpam48aXE5cjZyOzMzZjczNUBhNDNeXi9gXjExXzZjYmFeYSMtZTUyMmRrZGlhLS1kMTNzcw%3D%3D&vvpl=1&l=20260727120355F6FEA1F339F64F0149F8&btag=e0008d000",
+      "cover": "https://p19-common-sign.tiktokcdn-us.com/tos-useast2a-p-0037-euttp/ocfqZxRMEcDKErgEGiFgOQfNDCG6QQBu4oImVA~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=46cfc1d9&x-expires=1785240000&x-signature=DLlr4GH%2F8%2BoPUMW28DizUHu0sG0%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover&item=7650358713395481889"
+    },
+    {
+      "id": "sv_0ad00441df27",
+      "platform": "tiktok",
+      "title": "Maybe they need to change the batteries... #cartoon #cartoons #cartoonsforkids #babytiktok #kids #baby #nursery #buster #cars #car #funny #kidsoftiktok #kidstiktok #tiktokkids #remotecontrol #control #drone #dronevideo #helicopter",
+      "title_ko": "썸네일 이미지에 상품이 보이지 않습니다.",
+      "coupang_keywords": [
+        "리모컨 자동차",
+        "만화 캐릭터 자동차",
+        "유아 전동차",
+        "무선 조종 자동차"
+      ],
+      "zh_terms": [],
+      "naver": {
+        "query": "리모컨 자동차",
+        "real_title": "입문용 국민RC카 자이언트급 50cm 몬스터트럭 대형 알씨카 오프로드트래커",
+        "lprice": "68000",
+        "coupang": false,
+        "coupang_title": "입문용 국민RC카 자이언트급 50cm 몬스터트럭 대형 알씨카 오프로드트래커",
+        "coupang_lprice": null,
+        "mall": "바이굿초이스",
+        "image": "https://shopping-phinf.pstatic.net/main_8338715/83387154820.1.jpg",
+        "candidates": [
+          {
+            "title": "입문용 국민RC카 자이언트급 50cm 몬스터트럭 대형 알씨카 오프로드트래커",
+            "image": "https://shopping-phinf.pstatic.net/main_8338715/83387154820.1.jpg",
+            "mall": "바이굿초이스",
+            "lprice": "68000",
+            "link": "https://smartstore.naver.com/main/products/5842655406",
+            "coupang": false
+          },
+          {
+            "title": "무선조종자동차 람보르기니 아벤타도르 입문용 RC카 어린이 알씨카",
+            "image": "https://shopping-phinf.pstatic.net/main_1337077/13370774427.7.jpg",
+            "mall": "가가스토어",
+            "lprice": "24800",
+            "link": "https://smartstore.naver.com/main/products/2459093913",
+            "coupang": false
+          },
+          {
+            "title": "무선조종 자동차 RC카 입문용 라스타 오프로드 몬스터트럭 허머 어린이rc카",
+            "image": "https://shopping-phinf.pstatic.net/main_8258315/82583154332.3.jpg",
+            "mall": "지니업",
+            "lprice": "22800",
+            "link": "https://smartstore.naver.com/main/products/5038633272",
+            "coupang": false
+          },
+          {
+            "title": "블버 오프로드 RC카 입문용 디펜더 대형 무선조종자동차",
+            "image": "https://shopping-phinf.pstatic.net/main_8503567/85035677828.7.jpg",
+            "mall": "윈드니",
+            "lprice": "123000",
+            "link": "https://smartstore.naver.com/main/products/7491177506",
+            "coupang": false
+          },
+          {
+            "title": "업그레이드 배터리 더블스프레이 드리프트알씨카 블루 입문용 무선 조종 자동차 장난감 RC카",
+            "image": "https://shopping-phinf.pstatic.net/main_8610153/86101532560.18.jpg",
+            "mall": "쑹이의마켓",
+            "lprice": "38200",
+            "link": "https://smartstore.naver.com/main/products/8557032237",
+            "coupang": false
+          },
+          {
+            "title": "토이게이트 RC카 오프로드 익스트림 드리프트 레이스 그린 입문용 무선조종자동차 알씨카",
+            "image": "https://shopping-phinf.pstatic.net/main_8183867/81838672257.8.jpg",
+            "mall": "T-Gate",
+            "lprice": "42000",
+            "link": "https://smartstore.naver.com/main/products/4294150376",
+            "coupang": false
+          },
+          {
+            "title": "영지 타요 빅 맥스 어린이 만화 캐릭터 자동차 장난감 컨트롤 주차 타워 지게차 디럭스 롱",
+            "image": "https://shopping-phinf.pstatic.net/main_6028551/60285511846.jpg",
+            "mall": "G마켓",
+            "lprice": "80010",
+            "link": "https://link.gmarket.co.kr/gate/pcs?item-no=4644792251&sub-id=1003&service-code=10000003&lcd=100000042",
+            "coupang": false
+          },
+          {
+            "title": "만화캐릭터 변신 구급차 트랙센터",
+            "image": "https://shopping-phinf.pstatic.net/main_6008794/60087940165.20260518200657.jpg",
+            "mall": "네이버",
+            "lprice": "75540",
+            "link": "https://search.shopping.naver.com/catalog/60087940165",
+            "coupang": false
+          },
+          {
+            "title": "퍼피구조대 피규어 12피스 세트 애니메이션 만화 캐릭터 PVC 장식용",
+            "image": "https://shopping-phinf.pstatic.net/main_6099428/60994289932.jpg",
+            "mall": "11번가",
+            "lprice": "9110",
+            "link": "https://www.11st.co.kr/connect/Gateway.tmall?method=Xsite&prdNo=9467812330&tid=1000000061",
+            "coupang": false
+          },
+          {
+            "title": "만화캐릭터 변신 구급차 유아장난감 조카생일선물 유치원장난감 미니어쳐",
+            "image": "https://shopping-phinf.pstatic.net/main_9106905/91069055485.jpg",
+            "mall": "밝은림마켓",
+            "lprice": "99800",
+            "link": "https://smartstore.naver.com/main/products/13524545132",
+            "coupang": false
+          }
+        ],
+        "best_match": -1,
+        "match_confidence": "low",
+        "match_reason": "기준 이미지에 상품 없음"
+      },
+      "view_count": 3215668,
+      "uploader": "Cars and Trucks",
+      "duration": 183,
+      "source_url": "https://www.tiktok.com/@cars.and.trucks.kids/video/7431238019509734688",
+      "download_url": "https://v45.tiktokcdn-us.com/fb07af0193d33ef3e7ec3c911eaa019e/6a679e47/video/tos/useast2a/tos-useast2a-ve-68c810-euttp/o0IzNmdRSAQ6QKPIoIiFkDnBDfiGC8IihBAchE/?a=1233&bti=NTY6QGo0QHM6OjZANDQuYCMucCMxNDNg&&bt=814&ft=73kDHDyjNb~VQQUnU~d-sdQ40mZqYlkdGk-~hWLrK&mime_type=video_mp4&rc=aTs8ZTU3ZjtmaDw7ZWdkPEBpajk3O3Q5cjRqdjMzZjgzM0AwX14yMTEtNTIxLmEvYTYwYSMvMWYxMmRzcWRgLS1kL2Nzcw%3D%3D&vvpl=1&l=202607271203590E29EC5D0B90D20134AF&btag=e0009d000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast2a-p-0037-euttp/o0BRHDIonRAiFiIDAnKG6kfiTdBThAgICB6zIh~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=f9cf73af&x-expires=1785240000&x-signature=utB1FA9GDze9O5FC5O78w905Ras%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&sc=feed_cover&item=7431238019509734688&biz_tag=tt_video&s=SEARCH"
+    },
+    {
+      "id": "sv_767d2b2fa226",
+      "platform": "tiktok",
+      "title": "Remote Control Helicoptar 2 _ toy helicopter unboxing 😱🚀 #ToyTales #BritishToys #ToyReview #KidsToys #ToyTrends2025 ",
+      "title_ko": "리모컨으로 조종하는 미니 헬리콥터 장난감 세트",
+      "coupang_keywords": [
+        "미니 헬리콥터",
+        "RC 헬리콥터",
+        "장난감 헬리콥터",
+        "무선 조종 헬리콥터"
+      ],
+      "zh_terms": [
+        "遥控直升机",
+        "迷你直升机玩具",
+        "儿童遥控飞机"
+      ],
+      "naver": {
+        "query": "미니 헬리콥터",
+        "real_title": "SYMA 미니 RC 헬리콥터",
+        "lprice": "38900",
+        "coupang": false,
+        "coupang_title": "SYMA 미니 RC 헬리콥터",
+        "coupang_lprice": null,
+        "mall": "네이버",
+        "image": "https://shopping-phinf.pstatic.net/main_6032541/60325418844.20260619181032.jpg",
+        "candidates": [
+          {
+            "title": "SYMA 미니 RC 헬리콥터",
+            "image": "https://shopping-phinf.pstatic.net/main_6032541/60325418844.20260619181032.jpg",
+            "mall": "네이버",
+            "lprice": "38900",
+            "link": "https://search.shopping.naver.com/catalog/60325418844",
+            "coupang": false
+          },
+          {
+            "title": "미니 RC 헬리콥터",
+            "image": "https://shopping-phinf.pstatic.net/main_5271642/52716423649.20260702071253.jpg",
+            "mall": "네이버",
+            "lprice": "21840",
+            "link": "https://search.shopping.naver.com/catalog/52716423649",
+            "coupang": false
+          },
+          {
+            "title": "무선헬리콥터 교육용 국민드론 초보자용 3.5채널 미니RC 어린이선물용 국민헬기 실내용",
+            "image": "https://shopping-phinf.pstatic.net/main_8234778/82347786338.jpg",
+            "mall": "이긴유통",
+            "lprice": "24800",
+            "link": "https://smartstore.naver.com/main/products/4803263673",
+            "coupang": false
+          },
+          {
+            "title": "텐바이텐 무선조종 33008 RC헬기 미니 헬리콥터 RC 초보자 입문용 LS222",
+            "image": "https://shopping-phinf.pstatic.net/main_4731060/47310600519.20240426113815.jpg",
+            "mall": "네이버",
+            "lprice": "19900",
+            "link": "https://search.shopping.naver.com/catalog/47310600519",
+            "coupang": false
+          },
+          {
+            "title": "QS5010 방풍 미니 헬리콥터 원격 제어",
+            "image": "https://shopping-phinf.pstatic.net/main_5721894/57218942811.20260710084144.jpg",
+            "mall": "네이버",
+            "lprice": "28990",
+            "link": "https://search.shopping.naver.com/catalog/57218942811",
+            "coupang": false
+          },
+          {
+            "title": "미니 RC 헬기 헬리콥터 장남감 선물 무선 원격 제어",
+            "image": "https://shopping-phinf.pstatic.net/main_4795880/47958808648.20260709003646.jpg",
+            "mall": "네이버",
+            "lprice": "21890",
+            "link": "https://search.shopping.naver.com/catalog/47958808648",
+            "coupang": false
+          },
+          {
+            "title": "대형 RC헬리콥터 3D 헬리콥터 카메라 원격조종 4K 비행",
+            "image": "https://shopping-phinf.pstatic.net/main_5540052/55400525306.20260711091537.jpg",
+            "mall": "네이버",
+            "lprice": "50670",
+            "link": "https://search.shopping.naver.com/catalog/55400525306",
+            "coupang": false
+          },
+          {
+            "title": "rc 헬리콥터 헬기 원격 스파이 드론 제어 비행기 C128 무선조정 항공기 미군 카메라",
+            "image": "https://shopping-phinf.pstatic.net/main_3854517/38545170539.20260211102141.jpg",
+            "mall": "네이버",
+            "lprice": "64220",
+            "link": "https://search.shopping.naver.com/catalog/38545170539",
+            "coupang": false
+          },
+          {
+            "title": "입문 RC 헬기 무선 장애물 배터리 K170 RC헬리콥터 UH60",
+            "image": "https://shopping-phinf.pstatic.net/main_5811861/58118612394.20260719032257.jpg",
+            "mall": "네이버",
+            "lprice": "103750",
+            "link": "https://search.shopping.naver.com/catalog/58118612394",
+            "coupang": false
+          },
+          {
+            "title": "마이스토어 RC헬리콥터 무선조종 호버링 항공기 비행기 제어 자동",
+            "image": "https://shopping-phinf.pstatic.net/main_5930828/59308285935.20260718060223.jpg",
+            "mall": "네이버",
+            "lprice": "57320",
+            "link": "https://search.shopping.naver.com/catalog/59308285935",
+            "coupang": false
+          }
+        ],
+        "best_match": 2,
+        "match_confidence": "high",
+        "match_reason": "색상과 형태, 디자인이 동일함"
+      },
+      "view_count": 2240322,
+      "uploader": "NAZIB KE TOYS",
+      "duration": 68,
+      "source_url": "https://www.tiktok.com/@nazibketoys2/video/7598797960763362573",
+      "download_url": "https://v45.tiktokcdn-us.com/37a1b68cdb8ade4c90eb18ba709b77f4/6a679dd4/video/tos/useast5/tos-useast5-ve-0068c003-tx/oYU6B4fBpIwNIy0CWWgBJu8i0AqAyi0AiQYuEw/?a=1233&bti=NEBzNTY6QGo6OjZALnAjNDQuYCMxNDNg&&bt=2881&ft=73kDHDyjNb~VQQUnU~d-sdQ40mZqYlkdGk-~hWLrK&mime_type=video_mp4&rc=NDlpPDMzN2k5PGY5ZjkzaUBpanY2aGo5cnE4ODMzZzczNEBiNDAyNl9gXy0xNWNhYWIwYSMtMmtfMmRjaG5hLS1kMS9zcw%3D%3D&vvpl=1&l=202607271203590E29EC5D0B90D20134AF&btag=e00095000",
+      "cover": "https://p16-common-sign.tiktokcdn-us.com/tos-useast5-p-0068-tx/oc0y8wzCIIWAop2fwlIB64B0VZBiiBuiAwg0Wu~tplv-tiktokx-shrink-aq:360:360:q75.webp?dr=11731&refresh_token=286d4deb&x-expires=1785240000&x-signature=iiWXr5zW8FwpXXTWJKMBA%2BKYIN0%3D&t=bacd0480&ps=d97f9a4f&shp=d05b14bd&shcp=c1333099&idc=useast5&biz_tag=tt_video&s=SEARCH&sc=feed_cover"
+    }
+  ]
+}
