@@ -1,31 +1,43 @@
 {
   "id": "nv-30223591884",
   "kind": "narrate",
-  "created_at": "2026-07-26T23:55:42+00:00",
+  "created_at": "2026-07-27T00:02:54+00:00",
   "status": "published",
   "mode": "shorts",
   "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Your_Earth_is_Blue-_The_Wreck_of_the_Joseph_S._Fay.webm",
-  "hook": "遠く霞む水平線の向こうへ",
-  "yt_title": "見えないカナダを想いながら",
-  "yt_title_ko": "보이지 않는 캐나다를 그리며",
-  "yt_description": "遠く霞む水平線の向こうへ。見えないカナダを想いながら。沖には白い浮標が揺れています。その下に眠る難破船の記憶。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
-  "yt_description_ko": "멀리 아득한 수평선 너머로. 보이지 않는 캐나다를 그리며. 먼바다에는 하얀 부표가 흔들리고 있습니다. 그 아래 잠든 난파선의 기억.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
+  "hook": "白いブイ、その先に眠る記憶",
+  "yt_title": "白いブイの先に何が？幼少期から追う沈没船",
+  "yt_title_ko": "하얀 부이 끝엔 뭐가? 어릴 적부터 쫓던 난파선",
+  "yt_description": "遠くカナダの海の彼方に、白いブイが一つ浮かんでいます。そのブイの下には、長年探し続けた沈没船『ジョセフ・フェイ』の残骸が眠っています。幼少期から泳いで探した記憶、そして今もカヤックで追うその姿を追いました。海の底に秘められた物語をぜひご覧ください。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
+  "yt_description_ko": "멀리 캐나다 바다 저편에 하얀 부이가 하나 떠 있습니다. 그 부이 아래에는 오랫동안 찾아 헤맨 난파선 '조셉 페이'의 잔해가 잠들어 있습니다. 어린 시절부터 헤엄치며 찾았던 기억, 그리고 지금도 카약을 타고 쫓는 그 모습을 담았습니다. 바다 밑에 숨겨진 이야기를 꼭 확인해 보세요.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
   "hashtags": [
+    "#ジョセフフェイ",
     "#沈没船",
     "#難破船",
     "#海",
-    "#海洋生物"
+    "#水中映像",
+    "#探検",
+    "#冒険",
+    "#カナダ",
+    "#海の歴史",
+    "#Shorts"
   ],
   "hashtags_ko": [
-    "#침몰선",
+    "#조셉페이",
     "#난파선",
+    "#침몰선",
     "#바다",
-    "#해양생물"
+    "#수중영상",
+    "#탐험",
+    "#모험",
+    "#캐나다",
+    "#해양역사",
+    "#Shorts"
   ],
   "media": {
-    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30226038227.mp4",
-    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30226038227_thumb.jpg",
-    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30226038227_source.mp4",
+    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30226172252.mp4",
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30226172252_thumb.jpg",
+    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30226172252_source.mp4",
     "sheet": {
       "cols": 8,
       "rows": 5,
@@ -33,7 +45,7 @@
       "step": 2.0,
       "tw": 240,
       "th": 135,
-      "url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30226038227_sheet.jpg"
+      "url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30226172252_sheet.jpg"
     }
   },
   "body_dur": 30.0
