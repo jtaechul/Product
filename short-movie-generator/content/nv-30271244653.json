@@ -1,45 +1,29 @@
 {
   "id": "nv-30271244653",
   "kind": "narrate",
-  "created_at": "2026-07-27T13:55:57+00:00",
+  "created_at": "2026-07-28T05:03:29+00:00",
   "status": "published",
   "mode": "shorts",
   "source_url": "https://upload.wikimedia.org/wikipedia/commons/6/66/Wk215-deep-sea-octopuses.webm",
-  "hook": "この揺らめくマントル、何",
-  "yt_title": "【深海の底】揺れるマントル、謎の生物が姿を見せた",
-  "yt_title_ko": "【심해 바닥】흔들리는 맨틀, 수수께끼 생물이 모습을 드러냈다",
-  "yt_description": "静かな海の底、光が差す神秘の世界。そこで見つかったのは、小さなマントルを揺らし、くつろぐ謎の生物でした。限られた時間の中の、奇跡的な出会い。深海の生命の神秘に触れてみませんか。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
-  "yt_description_ko": "고요한 바다 밑, 빛이 스며드는 신비로운 세계. 그곳에서 작은 맨틀을 흔들며 편안히 쉬고 있는 수수께끼 생물이 발견되었습니다. 제한된 시간 속, 기적 같은 만남. 심해 생명의 신비를 느껴보세요.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
+  "hook": "深い海の底に、静かな気配が漂います",
+  "yt_title": "なめらかなマントルが",
+  "yt_title_ko": "부드러운 외투막이",
+  "yt_description": "深い海の底に、静かな気配が漂います。ふと水面に、小さな波紋が広がりました。その先に、大きなタコの姿が見えます。なめらかなマントルが、そっと揺れています。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
+  "yt_description_ko": "깊은 바다 밑바닥에 조용한 기운이 감돕니다. 문득 수면에 작은 물결이 번져 갑니다. 그 너머로 커다란 문어의 모습이 보입니다. 부드러운 외투막이 살며시 흔들리고 있습니다.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
   "hashtags": [
-    "#深海",
-    "#深海生物",
-    "#マントル",
-    "#海洋生物",
-    "#海の生き物",
-    "#神秘",
-    "#癒やし",
-    "#水中映像",
-    "#自然",
-    "#発見",
-    "#shorts"
+    "#頭足類",
+    "#海",
+    "#海洋生物"
   ],
   "hashtags_ko": [
-    "#심해",
-    "#심해생물",
-    "#맨틀",
-    "#해양생물",
-    "#바다생물",
-    "#신비",
-    "#힐링",
-    "#수중영상",
-    "#자연",
-    "#발견",
-    "#shorts"
+    "#두족류",
+    "#바다",
+    "#해양생물"
   ],
   "media": {
-    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30271244653/narrated_shorts_30272164118.mp4",
-    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30271244653/narrated_shorts_30272164118_thumb.jpg",
-    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30271244653/narrated_shorts_30272164118_source.mp4",
+    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30271244653/narrated_shorts_30330228667.mp4",
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30271244653/narrated_shorts_30330228667_thumb.jpg",
+    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30271244653/narrated_shorts_30330228667_source.mp4",
     "sheet": {
       "cols": 8,
       "rows": 6,
@@ -47,59 +31,55 @@
       "step": 2.0,
       "tw": 240,
       "th": 135,
-      "url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30271244653/narrated_shorts_30272164118_sheet.jpg"
+      "url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30271244653/narrated_shorts_30330228667_sheet.jpg"
     }
   },
   "subs": [
     {
-      "s": 3.75,
-      "e": 7.21,
-      "jp": "静かな海の底に光が差します",
-      "ko": "고요한 바다 밑바닥에 빛이 비칩니다"
+      "s": 4.85,
+      "e": 9.32,
+      "jp": "深い海の底に、静かな気配が漂います",
+      "ko": "깊은 바다 밑에, 고요한 기운이 감돕니다"
     },
     {
-      "s": 8.06,
-      "e": 10.96,
-      "jp": "小さなマントルが揺れています",
-      "ko": "작은 맨틀이 흔들리고 있습니다"
+      "s": 10.05,
+      "e": 14.26,
+      "jp": "ふと水面に、小さな波紋が広がりました",
+      "ko": "문득 수면에, 작은 물결이 퍼져나갑니다"
     },
     {
-      "s": 11.72,
-      "e": 15.17,
-      "jp": "その動きは波紋のように広がります",
-      "ko": "그 움직임은 물결처럼 퍼져나갑니다"
+      "s": 14.96,
+      "e": 19.11,
+      "jp": "その先に、大きなタコの姿が見えます",
+      "ko": "그 너머로, 커다란 문어의 모습이 보입니다"
     },
     {
-      "s": 16.01,
-      "e": 19.14,
-      "jp": "くつろいだ様子でとどまっています",
-      "ko": "편안한 모습으로 머물러 있습니다"
+      "s": 19.8,
+      "e": 23.75,
+      "jp": "なめらかなマントルが、そっと揺れています",
+      "ko": "매끄러운 외투막이, 살며시 흔들리고 있습니다"
     },
     {
-      "s": 19.94,
-      "e": 23.51,
-      "jp": "外側を向いて姿を見せてくれました",
-      "ko": "바깥쪽을 향해 모습을 보여주었습니다"
+      "s": 24.45,
+      "e": 29.05,
+      "jp": "多くが内向きの中、外を向いている様子です",
+      "ko": "대부분이 안쪽을 향한 가운데, 바깥을 향하고 있는 모습입니다"
     },
     {
-      "s": 24.36,
-      "e": 27.82,
-      "jp": "かぎられた時間の中の贈り物です",
-      "ko": "한정된 시간 속의 선물입니다"
-    },
-    {
-      "s": 28.65,
-      "e": 32.52,
+      "s": 29.78,
+      "e": 33.66,
       "jp": "チャンネル登録して、次の深海も。",
-      "ko": "구독하기, 그리고 다음 심해도 함께."
+      "ko": "채널 구독하시고, 다음 심해도 함께해요."
     }
   ],
   "cta_jp": "チャンネル登録して、次の深海も。",
   "edit": {
-    "cut_specs": "[{\"start\":1.4,\"end\":8.8,\"zoom\":1.25,\"crop_x\":0.09,\"crop_y\":0.79},{\"start\":20.5,\"end\":24.4,\"zoom\":2.78,\"crop_x\":0.64,\"crop_y\":0.72},{\"start\":40.1,\"end\":48.6,\"zoom\":1.75,\"crop_x\":0.98,\"crop_y\":0.62},{\"start\":64.6,\"end\":77.3,\"zoom\":1.69,\"crop_x\":0.91,\"crop_y\":0.7}]",
-    "cover": "{\"at\":34,\"zoom\":1,\"x\":0.36,\"y\":0.75}"
+    "cut_specs": "[{\"start\":1.4,\"end\":8.8,\"zoom\":1.64,\"crop_x\":0.46,\"crop_y\":0.19},{\"start\":20.5,\"end\":24.4,\"zoom\":1.04,\"crop_x\":1,\"crop_y\":0.66},{\"start\":40.1,\"end\":48.6,\"zoom\":1,\"crop_x\":0.98,\"crop_y\":0.62},{\"start\":64.6,\"end\":77.3,\"zoom\":1,\"crop_x\":0.85,\"crop_y\":0.7}]",
+    "cover": "{\"at\":34,\"zoom\":1,\"x\":0.36,\"y\":0.75}",
+    "fit": "square"
   },
   "applied": {
+    "fit": "square",
     "cover": {
       "at": 34.0,
       "zoom": 1.0,
@@ -110,22 +90,22 @@
       {
         "start": 1.4,
         "end": 8.8,
-        "zoom": 1.25
+        "zoom": 1.64
       },
       {
         "start": 20.5,
         "end": 24.4,
-        "zoom": 2.78
+        "zoom": 1.04
       },
       {
         "start": 40.1,
         "end": 48.6,
-        "zoom": 1.75
+        "zoom": 1.0
       },
       {
         "start": 64.6,
         "end": 74.8,
-        "zoom": 1.69
+        "zoom": 1.0
       }
     ],
     "cuts_manual": true
