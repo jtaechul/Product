@@ -364,15 +364,6 @@
     "youtube_url": "https://youtu.be/-1gfSI8n26Y"
   },
   {
-    "id": "nv-30200041879",
-    "kind": "narrate",
-    "yt_title": "静かな海面を、黄色い船が進んでいきます",
-    "yt_title_ko": "조용한 바다 위를, 노란 배가 나아갑니다",
-    "mode": "shorts",
-    "date": "2026-07-27",
-    "has_video": true
-  },
-  {
     "id": "nv-30223591884",
     "kind": "narrate",
     "yt_title": "カナダの海で再会。幼い日の沈没船影",
@@ -389,5 +380,15 @@
     "mode": "shorts",
     "date": "2026-07-28",
     "has_video": true
+  },
+  {
+    "id": "nv-30200041879",
+    "kind": "narrate",
+    "yt_title": "静かな海面を、黄色い船が進んでいきます",
+    "yt_title_ko": "조용한 바다 위를, 노란 배가 나아갑니다",
+    "mode": "shorts",
+    "date": "2026-07-27",
+    "has_video": true,
+    "youtube_url": "https://youtu.be/m2Q5xk-bifo"
   }
 ]

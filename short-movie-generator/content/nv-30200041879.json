@@ -36,7 +36,9 @@
       "tw": 240,
       "th": 135,
       "url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30200041879/narrated_shorts_30233748230_sheet.jpg"
-    }
+    },
+    "youtube_url": "https://youtu.be/m2Q5xk-bifo",
+    "youtube_privacy": "public"
   },
   "subs": [
     {
@@ -77,5 +79,6 @@
     }
   ],
   "cta_jp": "チャンネル登録して、次の深海も。",
-  "body_dur": 30.0
+  "body_dur": 30.0,
+  "updated_at": "2026-07-28T11:12:25+00:00"
 }
