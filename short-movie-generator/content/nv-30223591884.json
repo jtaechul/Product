@@ -6,8 +6,8 @@
   "mode": "shorts",
   "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Your_Earth_is_Blue-_The_Wreck_of_the_Joseph_S._Fay.webm",
   "hook": "静かな水面の向こうに",
-  "yt_title": "静かな水面の向こうに",
-  "yt_title_ko": "조용한 수면 너머로",
+  "yt_title": "\n\nチャンネル登録で",
+  "yt_title_ko": "채널 구독으로",
   "yt_description": "静かな水面の向こうに。視線を送ってみましょう。遠くに白いブイが見えます。沈没船の目印だといいます。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
   "yt_description_ko": "조용한 수면 너머로. 시선을 보내 봅시다. 저 멀리 흰 부표가 보입니다. 침몰선의 표식이라고 합니다.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
   "hashtags": [
@@ -20,7 +20,7 @@
   ],
   "media": {
     "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455870581.mp4",
-    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455870581_thumb.jpg",
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/thumb_30456501943.jpg",
     "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455870581_source.mp4",
     "sheet": {
       "cols": 8,
@@ -114,5 +114,6 @@
     ],
     "cuts_manual": true
   },
-  "body_dur": 30.0
+  "body_dur": 30.0,
+  "updated_at": "2026-07-29T13:34:25+00:00"
 }
