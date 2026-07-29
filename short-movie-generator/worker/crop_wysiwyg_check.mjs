@@ -67,7 +67,7 @@ const out = [];
 for (const c of cases) {
   const st = ceState("nc");
   st.sel = 0;
-  st.fit = c.fit || "cover";
+  st.cuts[0].fit = c.fit || "cover";        // ★화면 구성은 컷마다
   st.cuts[0].box = { x: c.x, y: c.y, h: c.h };
   ceSet("nc", 0, "a", 2.0); ceSet("nc", 0, "b", 9.0);
   ceDrawBox("nc");
@@ -80,7 +80,15 @@ for (const c of cases) {
     drawn: { x: px(b.left) * SRC_W / STAGE_W, y: px(b.top) * SRC_H / STAGE_H,
              w: px(b.width) * SRC_W / STAGE_W, h: px(b.height) * SRC_H / STAGE_H },
     sent: { zoom: spec.zoom, crop_x: spec.crop_x, crop_y: spec.crop_y,
-            fit: cutEditorInputs("nc").fit || "cover" },
+            fit: spec.fit || "cover" },       // 컷 지정 안에 담겨 나가는 값
   });
 }
-console.log(JSON.stringify({ src: [SRC_W, SRC_H], out: [OUT_W, OUT_H], cases: out }));
+// ★컷마다 다른 화면 구성(운영자 확정): 컷1 꽉 채우기 · 컷2 정방형 · 컷3 좌우 전체를 동시에.
+const stx = ceState("nc");
+const mixed = ["cover", "square", "full", "cover"];
+mixed.forEach((f, i) => { stx.cuts[i].fit = f; stx.cuts[i].box = { x: 0.5, y: 0.5, h: 0.8 };
+                          ceSet("nc", i, "a", 1 + i * 5); ceSet("nc", i, "b", 5 + i * 5); });
+const perCut = JSON.parse(cutEditorInputs("nc").cut_specs).map(c => c.fit);
+
+console.log(JSON.stringify({ src: [SRC_W, SRC_H], out: [OUT_W, OUT_H], cases: out,
+                             perCut, perCutWant: mixed }));

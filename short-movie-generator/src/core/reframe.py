@@ -989,8 +989,11 @@ def _parse_cut_specs(raw, src_dur: float, target_dur: float) -> list[dict] | Non
             # ★조용히 버리지 않는다(운영자가 '반영됐다'고 오해하지 않게): 사유를 로그로 남긴다.
             dropped.append(f"{s0:.1f}~{(_f(it.get('end')) or 0):.1f}s")
             continue
+        # ★컷별 화면 구성(운영자 확정): "컷마다 꽉 채우기·정방형·좌우 전체를 따로 고르고 싶다."
+        _cf = str(it.get("fit") or "").strip().lower()
         spans.append({"s": s0, "e": e0, "crop_x": _f(it.get("crop_x")),
                       "crop_y": _f(it.get("crop_y")), "zoom": _f(it.get("zoom")),
+                      "fit": (_cf if _cf in FIT_MODES else ""),
                       "mode": str(it.get("mode") or "").strip().lower()})
     if dropped:
         log.warning("[reframe] 지정 컷 %d개가 소스 길이(%.1fs)를 벗어나 제외됨: %s",
@@ -1017,6 +1020,7 @@ def _parse_cut_specs(raw, src_dur: float, target_dur: float) -> list[dict] | Non
             break
         plan.append({"start": sp["s"], "len": ln, "mode": sp["mode"],
                      "crop_x": sp["crop_x"], "crop_y": sp.get("crop_y"), "zoom": sp.get("zoom"),
+                     "fit": sp.get("fit") or "",
                      "src_start": sp["s"], "src_end": sp["e"]})
         total += ln
         idx += 1
@@ -1177,7 +1181,7 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
         plan = cut_specs
         log.info("[reframe] 운영자 지정 컷 %d개 사용(자동 컷 선택 미사용): %s", len(plan),
                  " / ".join(f"{c['start']:.1f}~{c['start'] + c['len']:.1f}s·{c['mode']}"
-                            for c in plan))
+                            f"·{c.get('fit') or '기본'}" for c in plan))
     elif wide:
         n_seg = int(m_cuts) if m_cuts else max(2, min(8, round(target_dur / 5.0)))
         n_seg = max(_MIN_CUTS, min(n_seg, _HARD_MAX_CUTS))
@@ -1243,7 +1247,11 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                 "-an", "-r", "30", "-c:v", "libx264", "-preset", "medium", "-crf", "20"]
         # ★화면 구성이 cover가 아니면(정방형·원본 좌우 전체) **모든 컷**을 같은 방식으로 배치한다
         #   — 운영자가 구간을 안 정한 자동 컷도 고른 화면 구성을 따라야 한다(운영자 확정).
-        if m_fit != "cover":
+        # ★컷별 화면 구성 > 전체 지정 > 기본(cover). 컷마다 다르게 담을 수 있어야 한다(운영자 확정).
+        cfit = str(cut.get("fit") or "").strip().lower()
+        if cfit not in FIT_MODES:
+            cfit = m_fit
+        if cfit != "cover":
             fa5, fb5 = int(sa * fps_trk), int((sa + seg_len) * fps_trk)
             seg_c = cents[fa5:fb5] or cents
             ax = _f(cut.get("crop_x"))
@@ -1253,7 +1261,7 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
             if ay is None:
                 ay = _median([c[1] for c in seg_c]) if seg_c else 0.5
             zz = max(1.0, min(2.5, cz if cz is not None else 1.0))
-            bx, by, bw2, bh2 = crop_rect(m_fit, int(src_w), int(src_h), zz, ax, ay)
+            bx, by, bw2, bh2 = crop_rect(cfit, int(src_w), int(src_h), zz, ax, ay)
             pre2 = (delogo_vf(src_w, src_h, logo_box) + ",") if logo_box else ""
             vf2, cx_ok = _place_vf(bw2, bh2, bx, by, GRADE, pre2)
             pv2 = (_pushin(cut.get("push", 1.0), seg_len) if wide
@@ -1324,7 +1332,7 @@ def reframe_to_vertical(footage_path: str, out_path: str, target_dur: float,
                 #   전부 건너뛴다. 사람이 정한 값이 자동 판단보다 우선(운영자 확정).
                 z = cz
                 log.info("[reframe] 컷%d 줌 배율 운영자 지정: %.2f배", i, z)
-                cx, cy, cw, ch = crop_rect(m_fit, int(src_w), int(src_h), z, fx, fy)
+                cx, cy, cw, ch = crop_rect(cfit, int(src_w), int(src_h), z, fx, fy)
                 pre_vf = ""
                 if logo_box:
                     cx, cy, need_dl = _logo_avoid(cx, cy, cw, ch, fx * src_w, fy * src_h,

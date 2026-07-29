@@ -112,7 +112,10 @@ def test_frame_mode_tool_is_wired_everywhere():
     assert 'editStudioHTML(true, rec, "ce")' in w and "editStudioHTML((rec.mode" in w, \
         "나레이션형·도감형 양쪽에 편집기가 붙어 있지 않습니다"
     j = w.index("function cutEditorInputs(")
-    assert "out.fit=st.fit" in w[j:j + 800], "선택한 화면 구성을 제작에 보내지 않습니다"
+    seg3 = w[j:j + 900]
+    # 컷마다 실려 나가고(fit:), 구간을 안 정한 자동 컷용 전체 기본값(out.fit)도 보낸다
+    assert 'fit:(st.cuts[i].fit||"cover")' in seg3, "컷별 화면 구성을 제작에 보내지 않습니다"
+    assert "out.fit=f0" in seg3, "자동 컷용 전체 기본값을 보내지 않습니다"
 
     root = ROOT.parent / ".github" / "workflows"
     for wf in ("narrate-video.yml", "generate-short.yml"):
@@ -226,3 +229,85 @@ def test_operator_cuts_use_the_untrimmed_source():
     i = na.index("clean = ")
     seg = na[max(0, i - 900):i + 400]
     assert "cut_specs" in seg, "운영자 구간 지정 시 카드 트림을 건너뛰지 않습니다(시간 기준 어긋남)"
+
+
+@pytest.mark.skipif(not shutil.which("node"), reason="node 없음")
+def test_frame_mode_is_per_cut_in_the_editor():
+    """★운영자 확정: 화면 구성은 **컷마다** 따로 고를 수 있어야 한다.
+    (모든 영상을 한 방식으로 통일하라는 건 말이 안 된다 — 컷1은 꽉 채우기, 컷2는 정방형 …)"""
+    r = subprocess.run(["node", str(ROOT / "worker" / "crop_wysiwyg_check.mjs")],
+                       capture_output=True, text=True, timeout=120, cwd=str(ROOT))
+    assert r.returncode == 0, r.stderr[-800:]
+    data = json.loads(r.stdout.strip().splitlines()[-1])
+    assert data["perCut"] == data["perCutWant"], (
+        f"컷마다 다른 화면 구성이 그대로 전달되지 않습니다: {data['perCut']} != {data['perCutWant']}")
+    # 컷 지정 안에 fit이 실려야 한다(전체 하나로만 보내면 컷별 지정이 불가능)
+    w = (ROOT / "worker" / "index.mjs").read_text(encoding="utf-8")
+    j = w.index("function cutEditorInputs(")
+    assert 'fit:(st.cuts[i].fit||"cover")' in w[j:j + 900], "컷 지정에 화면 구성이 들어가지 않습니다"
+    assert "st.cuts[st.sel].fit=" in w, "화면 구성 버튼이 '선택한 컷'에 적용되지 않습니다"
+    assert "data-fitall=" in w, "'모든 컷에 같게' 버튼이 없습니다"
+
+
+def test_renderer_honours_per_cut_frame_mode():
+    """제작도 컷별 화면 구성을 읽어야 한다(컷에 없으면 전체 지정 → 기본 cover)."""
+    from src.core import reframe
+    plan = reframe._parse_cut_specs(json.dumps([
+        {"start": 0, "end": 4, "fit": "square"},
+        {"start": 6, "end": 10, "fit": "full"},
+        {"start": 12, "end": 16},
+    ]), src_dur=30.0, target_dur=12.0)
+    assert [c.get("fit") for c in plan[:3]] == ["square", "full", ""], \
+        f"컷별 화면 구성이 렌더 계획에 실리지 않습니다: {[c.get('fit') for c in plan[:3]]}"
+    rf = (ROOT / "src" / "core" / "reframe.py").read_text(encoding="utf-8")
+    assert 'cfit = str(cut.get("fit") or "").strip().lower()' in rf, "렌더가 컷별 구성을 읽지 않습니다"
+    assert "crop_rect(cfit," in rf, "컷별 구성으로 자르지 않습니다"
+
+
+@pytest.mark.skipif(not shutil.which("ffmpeg"), reason="ffmpeg 없음")
+def test_real_render_mixes_frame_modes_per_cut(tmp_path):
+    """★실제 렌더: 컷1(꽉 채우기)은 좌우가 잘리고, 컷3(좌우 전체)은 양끝이 남아야 한다."""
+    from PIL import Image, ImageDraw
+
+    from src.core import reframe
+    SW, SH = 1280, 720
+    frames = tmp_path / "f"
+    frames.mkdir()
+    for i in range(90):
+        im = Image.new("RGB", (SW, SH), (16, 44, 64))
+        dr = ImageDraw.Draw(im)
+        dr.rectangle([10, 300, 90, 420], fill=(240, 80, 60))        # 왼쪽 끝
+        dr.rectangle([1190, 300, 1270, 420], fill=(80, 230, 140))   # 오른쪽 끝
+        dr.ellipse([560 + i * 2, 120, 620 + i * 2, 180], fill=(255, 255, 255))
+        im.save(frames / f"f_{i:03d}.png")
+    src = str(tmp_path / "clip.mp4")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", "6",
+                    "-i", str(frames / "f_%03d.png"), "-pix_fmt", "yuv420p", src], check=True)
+    out = str(tmp_path / "o.mp4")
+    reframe.reframe_to_vertical(src, out, 10.5, str(tmp_path / "w"), wide=True,
+                                manual={"cut_specs": json.dumps([
+                                    {"start": 0.5, "end": 4.0, "zoom": 1.0, "crop_x": 0.5,
+                                     "crop_y": 0.5, "fit": "cover"},
+                                    {"start": 5.0, "end": 8.5, "zoom": 1.0, "crop_x": 0.5,
+                                     "crop_y": 0.5, "fit": "square"},
+                                    {"start": 9.5, "end": 13.0, "zoom": 1.0, "crop_x": 0.5,
+                                     "crop_y": 0.5, "fit": "full"}])})
+
+    def edges(t):
+        png = str(tmp_path / f"c_{t}.png")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", str(t), "-i", out,
+                        "-frames:v", "1", png], check=True)
+        im = Image.open(png).convert("RGB")
+        w2, h2 = im.size
+        seen = [False, False]
+        for y in range(0, h2, 6):
+            for x in range(0, w2, 6):
+                r, g, b = im.getpixel((x, y))
+                if r > 170 and g < 140 and b < 120:
+                    seen[0] = True
+                if g > 170 and r < 150 and b < 190:
+                    seen[1] = True
+        return seen
+
+    assert edges(0.3) == [False, False], "컷1(꽉 채우기)인데 좌우가 안 잘렸습니다"
+    assert edges(7.8) == [True, True], "컷3(좌우 전체)인데 원본 양끝이 잘렸습니다"
