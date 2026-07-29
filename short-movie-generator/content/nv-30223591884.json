@@ -1,45 +1,27 @@
 {
   "id": "nv-30223591884",
   "kind": "narrate",
-  "created_at": "2026-07-27T09:59:34+00:00",
+  "created_at": "2026-07-29T13:18:53+00:00",
   "status": "published",
   "mode": "shorts",
   "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Your_Earth_is_Blue-_The_Wreck_of_the_Joseph_S._Fay.webm",
-  "hook": "カナダの海。ブイが示す沈んだ場所",
-  "yt_title": "カナダの海で再会。幼い日の沈没船影",
-  "yt_title_ko": "캐나다 바다에서 재회. 어린 날의 침몰선 그림자.",
-  "yt_description": "遠くカナダの海に浮かぶ白いブイ。それは、幼い頃から探し続けた沈没船の記憶を示す標です。\nカヤックから静かに見下ろす船影には、深い物語が秘められています。\nカナダの壮大な自然の中で、時を超えて語り継がれる船の記憶をご覧ください。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
-  "yt_description_ko": "멀리 캐나다 바다에 떠 있는 하얀 부표. 그것은 어린 시절부터 찾아 헤매던 침몰선의 기억을 보여주는 표식입니다.\n카약에서 조용히 내려다보는 배의 그림자에는 깊은 이야기가 숨겨져 있습니다.\n캐나다의 웅장한 자연 속에서 시간을 초월하여 전해지는 배의 기억을 만나보세요.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
+  "hook": "静かな水平線の彼方に",
+  "yt_title": "マスクを得て",
+  "yt_title_ko": "마스크를 얻고",
+  "yt_description": "静かな水平線の彼方に。小さな白いブイが浮かびます。その下に眠る難破船の印。幼い頃、泳いで探した記憶。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
+  "yt_description_ko": "고요한 수평선 저 너머에. 작은 하얀 부표가 떠 있습니다. 그 아래 잠든 난파선의 표식. 어린 시절, 헤엄쳐 찾아다니던 기억.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
   "hashtags": [
     "#沈没船",
-    "#カナダ",
-    "#水中映像",
-    "#船影",
-    "#海",
-    "#記憶",
-    "#物語",
-    "#ドキュメンタリー",
-    "#自然",
-    "#神秘",
-    "#shorts"
+    "#難破船"
   ],
   "hashtags_ko": [
     "#침몰선",
-    "#캐나다",
-    "#수중영상",
-    "#배그림자",
-    "#바다",
-    "#기억",
-    "#이야기",
-    "#다큐멘터리",
-    "#자연",
-    "#신비",
-    "#shorts"
+    "#난파선"
   ],
   "media": {
-    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30255714833.mp4",
-    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30255714833_thumb.jpg",
-    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30255714833_source.mp4",
+    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455026532.mp4",
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455026532_thumb.jpg",
+    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455026532_source.mp4",
     "sheet": {
       "cols": 8,
       "rows": 5,
@@ -47,51 +29,88 @@
       "step": 2.0,
       "tw": 240,
       "th": 135,
-      "url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30255714833_sheet.jpg"
+      "url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455026532_sheet.jpg"
     }
   },
   "subs": [
     {
-      "s": 4.95,
-      "e": 8.46,
-      "jp": "遠くカナダの水平線を望む場所",
-      "ko": "멀리 캐나다의 수평선이 보이는 곳"
+      "s": 3.57,
+      "e": 6.57,
+      "jp": "静かな水平線の彼方に",
+      "ko": "고요한 수평선 저 너머로"
     },
     {
-      "s": 9.83,
-      "e": 13.03,
-      "jp": "その先に浮かぶ一つの白いブイ",
-      "ko": "그 너머에 떠 있는 하나의 하얀 부표"
+      "s": 7.39,
+      "e": 10.39,
+      "jp": "小さな白いブイが浮かびます",
+      "ko": "작고 하얀 부표가 떠 있습니다"
     },
     {
-      "s": 14.38,
-      "e": 17.59,
-      "jp": "沈む船の記憶を示す標",
-      "ko": "가라앉은 배의 기억을 알리는 표식"
+      "s": 11.21,
+      "e": 14.47,
+      "jp": "その下に眠る難破船の印",
+      "ko": "그 아래 잠든 난파선의 표식"
     },
     {
-      "s": 18.91,
-      "e": 22.75,
-      "jp": "幼い日々、素潜りで探した場所",
-      "ko": "어린 시절, 스노클링으로 찾던 곳"
+      "s": 15.3,
+      "e": 19.0,
+      "jp": "幼い頃、泳いで探した記憶",
+      "ko": "어릴 적, 헤엄쳐 찾아다니던 기억"
     },
     {
-      "s": 24.19,
-      "e": 28.35,
-      "jp": "カヤックで訪れ、静かに見下ろす船影",
-      "ko": "카약을 타고 찾아가 조용히 내려다본 배의 그림자"
+      "s": 19.92,
+      "e": 23.57,
+      "jp": "マスクを得て、世界が変わりました",
+      "ko": "마스크를 얻고, 세상이 달라졌습니다"
     },
     {
-      "s": 29.85,
-      "e": 33.72,
+      "s": 24.48,
+      "e": 27.65,
+      "jp": "今も船影を見つめに行けます",
+      "ko": "지금도 배의 흔적을 보러 갈 수 있습니다"
+    },
+    {
+      "s": 28.47,
+      "e": 32.34,
       "jp": "チャンネル登録して、次の深海も。",
       "ko": "구독하시고, 다음 심해도 함께해요."
     }
   ],
   "cta_jp": "チャンネル登録して、次の深海も。",
   "edit": {
-    "cut_specs": "[{start:14,end:26,zoom:1.19,crop_x:0.1,crop_y:1},{start:32,end:46,zoom:1.22,crop_x:0.21,crop_y:0.97},{start:56,end:58,zoom:1.18,crop_x:0.32,crop_y:0},{start:62,end:66,zoom:1.25,crop_x:0.27,crop_y:0.92}]",
-    "cover": "{\"at\":56,\"zoom\":1,\"x\":0.33,\"y\":0.85}"
+    "cut_specs": "[{\"start\":0,\"end\":2,\"zoom\":1.25,\"crop_x\":0.5,\"crop_y\":0.5,\"fit\":\"cover\"},{\"start\":19,\"end\":27.5,\"zoom\":1,\"crop_x\":0.51,\"crop_y\":1,\"fit\":\"square\"},{\"start\":33,\"end\":47,\"zoom\":1,\"crop_x\":0.5,\"crop_y\":0.86,\"fit\":\"square\"},{\"start\":52.2,\"end\":60,\"zoom\":1,\"crop_x\":0.5,\"crop_y\":0.5,\"fit\":\"square\"}]",
+    "cover": "{\"at\":56,\"zoom\":1,\"x\":0.23,\"y\":0.88}"
+  },
+  "applied": {
+    "cover": {
+      "at": 56.0,
+      "zoom": 1.0,
+      "x": 0.23,
+      "y": 0.88
+    },
+    "cuts": [
+      {
+        "start": 0.0,
+        "end": 2.0,
+        "zoom": 1.25
+      },
+      {
+        "start": 19.0,
+        "end": 27.5,
+        "zoom": 1.0
+      },
+      {
+        "start": 33.0,
+        "end": 47.0,
+        "zoom": 1.0
+      },
+      {
+        "start": 52.2,
+        "end": 57.7,
+        "zoom": 1.0
+      }
+    ],
+    "cuts_manual": true
   },
   "body_dur": 30.0
 }

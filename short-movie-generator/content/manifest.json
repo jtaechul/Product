@@ -364,15 +364,6 @@
     "youtube_url": "https://youtu.be/-1gfSI8n26Y"
   },
   {
-    "id": "nv-30223591884",
-    "kind": "narrate",
-    "yt_title": "カナダの海で再会。幼い日の沈没船影",
-    "yt_title_ko": "캐나다 바다에서 재회. 어린 날의 침몰선 그림자.",
-    "mode": "shorts",
-    "date": "2026-07-27",
-    "has_video": true
-  },
-  {
     "id": "nv-30271244653",
     "kind": "narrate",
     "yt_title": "なめらかなマントルが",
@@ -398,5 +389,14 @@
     "common_name_en": "Anoplodactylus lentus",
     "scientific_name": "Anoplodactylus lentus",
     "date": "2026-07-29"
+  },
+  {
+    "id": "nv-30223591884",
+    "kind": "narrate",
+    "yt_title": "マスクを得て",
+    "yt_title_ko": "마스크를 얻고",
+    "mode": "shorts",
+    "date": "2026-07-29",
+    "has_video": true
   }
 ]
