@@ -159,6 +159,59 @@ _NOAAISH = re.compile(r"NOAA|OCEAN|EXPLOR|OKEANOS|RATION|LORAT|PLORA|\.GOV|OKEA|
                       r"RESEARCH|OFFICE|EXPRESS|SHAKEDOWN|EXPEDITION|FISHERIES", re.IGNORECASE)
 
 
+# ★★delogo는 '진짜 로고·번인 문구'에만 건다(운영자 지적 · 절대 회귀 금지 · 실사고).
+#   실사고: 나레이션 영상에서 글씨가 아닌 곳까지 delogo가 걸려 바다·생물이 뭉개져 나갔다.
+#   원인은 OCR이 수중 질감을 글자로 **지어내는** 것 — 실측(운영자 실제 원본): 화면 정중앙을
+#   'blue'(신뢰도 96) · 'eat'(59)로 읽었다. 여기에 아래 두 구멍이 겹쳤다:
+#     ① `_NOAAISH`의 느슨한 조각(OCEAN·RATION·OFFICE…) 하나만 걸려도 **지속성 검사 없이** 박스가 생김
+#     ② 박스 위치·크기 제한이 전혀 없어 **화면 한가운데 큰 박스**도 그대로 delogo
+#   → 아래 게이트를 반드시 통과한 박스만 delogo 한다.
+#     · 위치: 화면 **가장자리 띠**에만(중앙은 피사체 자리 — 절대 건드리지 않는다)
+#     · 크기: 로고·문구는 작고 얇다(면적·높이 상한)
+#     · 총량: 다 합쳐 화면의 일정 비율을 넘으면 '오탐 폭주'로 보고 **전부 취소**(원본 보존)
+_LOGO_MAX_AREA = 0.06     # 박스 하나가 화면의 6%를 넘으면 로고가 아니다(그림이다)
+_LOGO_MAX_H = 0.16        # 글자 줄은 얇다(높이 16% 초과 = 그림)
+_LOGO_MIN_W = 0.02        # 티끌 잡음 제외
+_LOGO_EDGE_X = 0.30       # 좌우 가장자리 띠(중심 x가 이 밖이면 중앙으로 본다)
+_LOGO_EDGE_Y = 0.25       # 상단 띠
+_LOGO_EDGE_Y2 = 0.70      # 하단 띠(번인 URL은 대개 y≈0.7~0.9)
+_LOGO_TOTAL_MAX = 0.10    # 전체 delogo 면적 상한(넘으면 오탐으로 보고 전부 취소)
+# 지속성 없이도 지울 만큼 **확실한** 토큰(부분 조각이 아니라 고유명사)
+_STRONG_LOGO_RE = re.compile(r"NOAA|OKEANOS|OCEANEXPLORER|OCEANEXPLOR|\.GOV|GOV\b", re.IGNORECASE)
+
+
+def plausible_logo_box(b) -> bool:
+    """이 박스가 '진짜 로고/번인 문구' 자리인가 — 중앙·큰 박스는 그림이므로 거절."""
+    try:
+        x, y, w, h = (float(v) for v in b[:4])
+    except (TypeError, ValueError):
+        return False
+    if w <= 0 or h <= 0 or w < _LOGO_MIN_W:
+        return False
+    if w * h > _LOGO_MAX_AREA or h > _LOGO_MAX_H:
+        return False
+    cx, cy = x + w / 2, y + h / 2
+    return (cx <= _LOGO_EDGE_X or cx >= 1 - _LOGO_EDGE_X
+            or cy <= _LOGO_EDGE_Y or cy >= _LOGO_EDGE_Y2)
+
+
+def filter_logo_boxes(boxes: list[tuple], where: str = "") -> list[tuple]:
+    """delogo 후보 중 '진짜 로고 자리'만 남긴다. 총 면적이 과하면 **전부 취소**(원본 보존)."""
+    keep, drop = [], []
+    for b in boxes or []:
+        (keep if plausible_logo_box(b) else drop).append(b)
+    if drop:
+        log.info("[wm] delogo 제외 %d개(중앙이거나 너무 큼 — 그림으로 판단)%s: %s",
+                 len(drop), f" [{where}]" if where else "",
+                 ", ".join(f"({b[0]:.2f},{b[1]:.2f},{b[2]:.2f}x{b[3]:.2f})" for b in drop[:4]))
+    total = sum(b[2] * b[3] for b in keep)
+    if total > _LOGO_TOTAL_MAX:
+        log.warning("[wm] delogo 총면적 %.0f%% > 상한 %.0f%% → 오탐으로 보고 **전부 취소**(원본 유지)%s",
+                    total * 100, _LOGO_TOTAL_MAX * 100, f" [{where}]" if where else "")
+        return []
+    return keep
+
+
 def _is_slate_second(words: list[dict]) -> bool:
     """크레딧 슬레이트/대형 중앙 문구 판정 — delogo가 아니라 '그 초를 아예 쓰지 않기'로 처리.
 
@@ -330,12 +383,14 @@ def plan(video: str, want_start: float, want_dur: float,
     raw = []
     for s in win:
         for w0 in s["words"]:
-            if _NOAAISH.search(w0["text"]) or counts.get(cell(w0), 0) >= need:
+            # ★지속성 면제는 **확실한 토큰**(NOAA·OKEANOS·.GOV)만. 느슨한 조각(OCEAN·RATION…)은
+            #   수중 질감 오인이 잦아 반드시 '같은 자리 반복'을 요구한다(실사고 재발방지).
+            if _STRONG_LOGO_RE.search(w0["text"]) or counts.get(cell(w0), 0) >= need:
                 raw.append((max(0.0, w0["x"] - pad), max(0.0, w0["y"] - pad),
                             min(1.0, w0["w"] + 2 * pad), min(1.0, w0["h"] + 2 * pad)))
     for b in (extra_boxes or []):
         raw.append(tuple(b))
-    boxes = _merge_boxes(raw)
+    boxes = filter_logo_boxes(_merge_boxes(raw), where="plan")
     # 병합 후에도 5개 초과면 큰 것부터 5개(체인 과다 방지)
     boxes = sorted(boxes, key=lambda b: -(b[2] * b[3]))[:5]
     if best_d > 0:

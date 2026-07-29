@@ -43,8 +43,21 @@ def _probe_wh(video: str) -> tuple[int, int]:
         return 0, 0
 
 
+# delogo 판정 기준(운영자 지적 후 강화): 신뢰도 하한 · '거의 모든 프레임에 반복' 비율
+_WM_MIN_CONF = 70      # OCR 신뢰도(수중 질감 오인은 대개 이 아래)
+_WM_PERSIST = 0.70     # 스캔한 프레임 중 이 비율 이상에서 같은 자리에 나와야 로고
+
+
 def _watermark_boxes(video: str, dur: float) -> list[tuple]:
-    """전 구간 OCR 스캔 → '지속 번인 로고' 박스(정규화). NOAA 계열 토큰 무조건 + 같은 위치 다수 초 지속."""
+    """전 구간 OCR 스캔 → **진짜 번인 로고**만 delogo 박스로(정규화).
+
+    ★실사고(운영자 지적 · 절대 회귀 금지): "글씨가 아닌데 자꾸 delogo가 걸려 바다·생물이 왜곡된다."
+      원인 두 가지 —
+        ① OCR이 수중 질감을 글자로 **지어낸다**(실측: 운영자 원본 정중앙을 'blue' 신뢰도 96으로 인식).
+        ② `_NOAAISH`의 느슨한 조각(OCEAN·RATION·OFFICE…)에 하나만 걸려도 **지속성 검사 없이** 박스 생성.
+      → 이제 ⓐ지속성 면제는 **확실한 토큰**(NOAA·OKEANOS·.GOV)만 ⓑ그 외는 **대다수 프레임에 반복**될 때만
+        ⓒ신뢰도 하한 상향 ⓓ마지막에 `filter_logo_boxes`로 **중앙·큰 박스 제거 + 총면적 상한**을 건다.
+      로고는 화면 구석에 늘 붙어 있고 작다 — 이 조건을 못 넘으면 그건 그림이므로 건드리지 않는다."""
     from src.core import watermark_qc as wq
     fps = max(0.4, min(1.0, 12.0 / max(1.0, dur)))
     secs = wq.scan(video, 0.0, dur, fps=fps)
@@ -53,29 +66,34 @@ def _watermark_boxes(video: str, dur: float) -> list[tuple]:
     cell = lambda w: (int((w["x"] + w["w"] / 2) * 8), int((w["y"] + w["h"] / 2) * 8))  # noqa: E731
     counts: dict = {}
     by_cell: dict = {}
-    noaa: list = []
+    strong: list = []
     for s in secs:
         seen = set()
         for w in s["words"]:
+            # 지속성 판정에 쓰는 단어는 신뢰도가 충분한 것만(수중 질감 오인 억제)
+            if float(w.get("conf") or 0) < _WM_MIN_CONF:
+                continue
             c = cell(w)
             if c not in seen:
                 counts[c] = counts.get(c, 0) + 1
                 seen.add(c)
             by_cell.setdefault(c, []).append(w)
-            if wq._NOAAISH.search(w["text"]):
-                noaa.append(w)
+            if wq._STRONG_LOGO_RE.search(w["text"]):
+                strong.append(w)          # 확실한 토큰만 지속성 면제
     pad = 0.014
-    need = max(2, int(len(secs) * 0.4))
+    # ★번인 로고는 **거의 모든 프레임**에 있다 → 대다수(70%) 반복을 요구한다(예전 40% → 오탐 다발).
+    need = max(3, int(round(len(secs) * _WM_PERSIST)))
     raw: list = []
     def add(w):
         raw.append((max(0.0, w["x"] - pad), max(0.0, w["y"] - pad),
                     min(1.0, w["w"] + 2 * pad), min(1.0, w["h"] + 2 * pad)))
-    for w in noaa:
+    for w in strong:
         add(w)
     for c, n in counts.items():
         if n >= need and by_cell.get(c):
             add(by_cell[c][0])
-    boxes = wq._merge_boxes(raw)
+    # ★마지막 관문: 중앙·큰 박스는 그림이므로 제외하고, 총면적이 과하면 전부 취소(원본 보존).
+    boxes = wq.filter_logo_boxes(wq._merge_boxes(raw), where="narrate")
     return sorted(boxes, key=lambda b: -(b[2] * b[3]))[:5]
 
 
