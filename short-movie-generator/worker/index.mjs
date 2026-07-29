@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-28-3 (표지 편집기 화면이 안 나오던 문제 수정)";
+const BUILD="v2026-07-29-1 (표지도 정방형·좌우 전체 선택 + 재생 중 되감김 수정)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -888,13 +888,26 @@ const _cv={};
 //     (슬라이더를 움직여도 아무 변화가 없던 문제) → 높이 기준으로 잡는다. 줌 = 1 / 높이비율.
 // ★vid: 화면을 떠올 원본 영상 요소 id. 나레이션형=ncvid · 도감형=cevid —
 //   예전엔 "ncvid"로 **고정**돼 있어 도감형에서는 표지 그림이 하나도 안 나왔다(실사고).
-function cvState(){ return (_cv.s ||= {sheet:null, at:null, vid:"ncvid", box:{x:0.5,y:0.5,h:1.0}}); }
+// ★fit: 표지도 본문 컷과 **같은 화면 구성 선택지**를 갖는다(운영자 확정 —
+//   "표지도 정방형·좌우 전체를 똑같이 고를 수 있어야 한다"). cover / square / full.
+function cvState(){ return (_cv.s ||= {sheet:null, at:null, vid:"ncvid", fit:"cover", box:{x:0.5,y:0.5,h:1.0}}); }
 function coverEditorHTML(){
   return '<div id="coverbox" style="margin-top:4px">'+
     '<span class="lbl" style="color:var(--cy)">1단계 · 표지 고르기 (오프닝 훅 + 썸네일)</span>'+
     '<div class="hint" style="margin:6px 0 8px">① <b>사진 띠</b>에서 표지로 쓸 장면을 탭하고 '+
       '② 아래 <b>사각형</b>을 손가락으로 옮기고 막대로 크기를 바꿔 잘라낼 곳을 정하세요. '+
       '오프닝 훅과 썸네일이 <b>같은 배경</b>을 쓰므로 한 번만 정하면 둘 다 바뀝니다.</div>'+
+    // ★표지 화면 구성(운영자 확정): 본문 컷과 **똑같은 3가지**를 표지에도 준다.
+    //   고른 모양이 곧 아래 사각형의 비율이 된다(그린 대로 잘린다). 훅 문구 위치는 그대로.
+    '<div style="margin:2px 0 10px;padding:8px;border-radius:10px;background:#0e1a26">'+
+      '<div class="hint" style="margin-bottom:6px">표지 화면 구성 — <b>훅 문구 위치는 그대로</b>입니다.</div>'+
+      '<div style="display:flex;gap:6px">'+
+        '<button class="mini" data-cvfit="cover"  style="'+CE_BTN+'">꽉 채우기<br><span class="hint">좌우 잘림</span></button>'+
+        '<button class="mini" data-cvfit="square" style="'+CE_BTN+'">정방형<br><span class="hint">좌우 절반 보존</span></button>'+
+        '<button class="mini" data-cvfit="full"   style="'+CE_BTN+'">좌우 전체<br><span class="hint">원본 그대로</span></button>'+
+      '</div>'+
+      '<div class="hint" id="cvfitinfo" style="margin-top:6px"></div>'+
+    '</div>'+
     '<div id="cvstrip" style="display:flex;overflow-x:auto;gap:6px;padding:4px 0;-webkit-overflow-scrolling:touch">'+
       '<div class="hint">프레임 사진 불러오는 중…</div></div>'+
     '<div class="row2" style="gap:6px;align-items:center;margin:8px 0">'+
@@ -951,7 +964,7 @@ function appliedSummaryHTML(rec){
   if(!ap) return '';
   const p=[];
   if(ap.fit) p.push("화면 "+(CE_FITNAME[ap.fit]||ap.fit));
-  if(ap.cover) p.push("표지 "+ap.cover.at+"초 · 줌 "+ap.cover.zoom+"배");
+  if(ap.cover) p.push("표지 "+ap.cover.at+"초 · "+(CE_FITNAME[ap.cover.fit]||"꽉 채우기")+" · 줌 "+ap.cover.zoom+"배");
   if(Array.isArray(ap.cuts)&&ap.cuts.length){
     p.push((ap.cuts_manual?"내가 정한 구간 ":"자동 구간 ")+ap.cuts.length+"컷 ("+
            ap.cuts.slice(0,4).map(c=>c.start+"~"+c.end+"초").join(" / ")+
@@ -975,6 +988,7 @@ function restoreEdits(rec, pfx){
       if(Number.isFinite(c.zoom)&&c.zoom>0) st.box.h=Math.max(0.2,Math.min(1,1/c.zoom));
       if(Number.isFinite(c.x)) st.box.x=c.x;
       if(Number.isFinite(c.y)) st.box.y=c.y;
+      if(c.fit&&CE_FITNAME[c.fit]) st.fit=String(c.fit);      // 표지 화면 구성 복원
       const z=document.getElementById("cvzoom"); if(z)z.value=String(Math.round(st.box.h*100));
       cvShow(); cvDraw();      // ★복원 뒤 화면·안내문을 반드시 다시 그린다(값만 넣고 끝내지 않는다)
     }
@@ -1002,7 +1016,8 @@ function editSummary(rec, pfx){
   const el=document.getElementById("applysum"); if(!el) return;
   const inp=allEditInputs(pfx);
   const parts=[];
-  try{ if(inp.cover){const c=JSON.parse(inp.cover); parts.push("표지 "+c.at+"초·줌 "+c.zoom+"배");} }catch(e){}
+  try{ if(inp.cover){const c=JSON.parse(inp.cover);
+       parts.push("표지 "+c.at+"초·"+(CE_FITNAME[c.fit]||"꽉 채우기")+"·줌 "+c.zoom+"배");} }catch(e){}
   try{ if(inp.cut_specs){const a=JSON.parse(inp.cut_specs); parts.push("구간 "+a.length+"컷");} }catch(e){}
   if(inp.fit) parts.push("화면 "+(CE_FITNAME[inp.fit]||inp.fit));
   el.innerHTML = parts.length ? ("반영될 설정: <b>"+parts.join(" · ")+"</b>")
@@ -1018,7 +1033,8 @@ function coverInputs(){
   return {cover: JSON.stringify({at:Math.round(v*10)/10,
                                  zoom:Math.round((1/hf)*100)/100,   // 줌 = 1 ÷ 높이비율
                                  x:Math.round(st.box.x*100)/100,
-                                 y:Math.round(st.box.y*100)/100})};
+                                 y:Math.round(st.box.y*100)/100,
+                                 fit:st.fit||"cover"})};            // 표지 화면 구성
 }
 function cvShow(){
   const st=cvState(), stage=document.getElementById("cvstage"), img=document.getElementById("cvframe");
@@ -1044,7 +1060,9 @@ function cvDraw(){
   if(!stage||!box) return;
   const W=stage.clientWidth||320, H=stage.clientHeight||180;
   const hf=Math.max(0.2,Math.min(1,st.box.h));
-  const bh=hf*H, bw=Math.min(W, bh*9/16);          // 9:16 고정(높이 기준)
+  // 표지도 컷과 같은 규칙: 꽉 채우기 9:16 · 정방형 1:1 · 좌우 전체=원본 비율(백엔드 reframe.fit_aspect와 동일)
+  const car=(st.fit==="square")?1:((st.fit==="full")?(W/H):(9/16));
+  const bh=hf*H, bw=Math.min(W, bh*car);           // 높이 기준(줌 = 1 ÷ 높이비율)
   box.style.left=Math.max(0,Math.min(W-bw, st.box.x*W-bw/2))+"px";
   box.style.top=Math.max(0,Math.min(H-bh, st.box.y*H-bh/2))+"px";
   box.style.width=bw+"px"; box.style.height=bh+"px";
@@ -1053,8 +1071,11 @@ function cvDraw(){
   //   칸엔 56이 들어 있는데 안내문만 "—"로 남아 운영자가 '안 잡혔다'고 오해했다.
   const _av=parseFloat(((document.getElementById("cvat")||{}).value||"").trim());
   const _at=Number.isFinite(_av)?_av:st.at;
-  if(el)el.innerHTML="표지 시각 <b>"+(_at===null||_at===undefined?"—":_at+"초")+"</b> · 줌 <b>"+
+  if(el)el.innerHTML="표지 시각 <b>"+(_at===null||_at===undefined?"—":_at+"초")+"</b> · <b style='color:var(--cy)'>"+
+    (CE_FITNAME[st.fit]||st.fit)+"</b> · 줌 <b>"+
     (1/hf).toFixed(2)+"배</b> · 가로 "+st.box.x.toFixed(2)+" · 세로 "+st.box.y.toFixed(2);
+  const fi=document.getElementById("cvfitinfo");
+  if(fi)fi.innerHTML="<b>표지 — "+(CE_FITNAME[st.fit]||st.fit)+"</b> · "+(CE_FITDESC[st.fit]||"");
   editChanged();
 }
 function bindCoverEditor(sheet, srcVidId, onThumb, onAll){
@@ -1079,9 +1100,18 @@ function bindCoverEditor(sheet, srcVidId, onThumb, onAll){
         cvShow(); banner("표지 시각 "+sec+"초 선택","ok");};});
     }
   }
-  // 표지 편집기도 프레임 사진이 없으면 재생 화면으로 대체한다(같은 이유)
+  // 표지 화면 구성(꽉 채우기·정방형·좌우 전체) — 고른 모양이 곧 사각형 비율이 된다
+  document.querySelectorAll("[data-cvfit]").forEach(b=>{b.onclick=()=>{
+    st.fit=String(b.dataset.cvfit||"cover");
+    cvDraw(); banner("표지 화면 구성: "+(CE_FITNAME[st.fit]||st.fit),"ok");};});
+  // ★프레임 사진이 없으면 재생 화면으로 대체한다 — 단, **화면만 떠온다(seek 금지)**.
+  //   실사고(운영자 지적 "재생하면 0.5초 구간만 계속 반복된다"): 예전엔 이 자리에서 cvShow()를
+  //   불렀는데 cvShow는 원본을 '표지 시각'으로 되돌린다(seek). 컷 편집기도 같은 영상에 같은
+  //   방식으로 걸려 '컷 시작 시각'으로 되돌렸다 → seeked 이벤트가 서로를 다시 깨워
+  //   두 시각 사이를 무한 왕복(= 짧은 구간 무한 반복)했다. 이벤트에서는 절대 seek 하지 않는다.
   const _sv=document.getElementById(srcVidId);
-  if(_sv&&!sheet)["loadeddata","seeked","pause"].forEach(ev=>_sv.addEventListener(ev,()=>cvShow()));
+  if(_sv&&!sheet)["loadeddata","seeked","pause"].forEach(ev=>_sv.addEventListener(ev,()=>{
+    grabStageFrame(st.vid||srcVidId, "cvstage"); cvDraw();}));
   const here=document.getElementById("cvhere");
   if(here)here.onclick=()=>{const v=document.getElementById(srcVidId);
     const t=Math.round(((v&&v.currentTime)||0)*10)/10;
@@ -1302,11 +1332,13 @@ function grabStageFrame(videoId, stageId){
     return true;
   }catch(e){ return false; }
 }
-function ceShowFrame(pfx){
+// noSeek=true면 원본을 그 시각으로 **옮기지 않는다**(재생 중인 운영자를 끌고 가지 않기 위해).
+function ceShowFrame(pfx, noSeek){
   const st=ceState(pfx), img=document.getElementById(pfx+"frame");
   if(img)img.style.visibility="hidden";
   if(!st.sheet){                       // ★시트 없음 → 재생 중인 원본 화면으로 대체(그래도 화면은 보인다)
-    seekAndGrab(pfx+"vid", pfx+"stage", ceVal(pfx, st.sel, "a"));
+    if(noSeek) grabStageFrame(pfx+"vid", pfx+"stage");
+    else seekAndGrab(pfx+"vid", pfx+"stage", ceVal(pfx, st.sel, "a"));
     ceDrawBox(pfx);
     return;
   }
@@ -1410,8 +1442,13 @@ function bindCutEditor(pfx, opt, onGo){
       const el=document.getElementById(pfx+"info");
       if(el)el.innerHTML="원본 길이 <b>"+(v.duration||0).toFixed(1)+"초</b> · 재생하다가 아래 <b>여기 시작 / 여기 끝</b>을 누르세요.";
       ceShowFrame(pfx);};
-    // ★프레임 사진이 없을 때를 위해, 영상이 준비/이동/멈출 때마다 그 화면을 구획 편집기에 띄운다
-    ["loadeddata","seeked","pause"].forEach(ev=>v.addEventListener(ev,()=>ceShowFrame(pfx)));
+    // ★프레임 사진이 없을 때를 위해, 영상이 준비/이동/멈출 때마다 그 화면을 구획 편집기에 띄운다.
+    //   ★★단 **화면만 떠온다(seek 금지)** — 실사고(운영자 지적 "재생하면 0.5초 구간만 계속 반복"):
+    //     예전엔 ceShowFrame(=컷 시작 시각으로 원본을 되돌림)을 불렀고, 표지 편집기도 같은 영상에
+    //     같은 방식으로 걸려 '표지 시각'으로 되돌렸다 → seeked가 서로를 다시 깨워 두 시각 사이를
+    //     무한 왕복했다(운영자가 어디로 옮겨도 곧바로 끌려옴). 이벤트에서는 절대 seek 하지 않는다.
+    ["loadeddata","seeked","pause"].forEach(ev=>v.addEventListener(ev,()=>{
+      if(!ceState(pfx).sheet){ grabStageFrame(pfx+"vid", pfx+"stage"); ceDrawBox(pfx); }}));
     v.onerror=()=>{ci++;play();};
     play();
   }
@@ -1420,7 +1457,8 @@ function bindCutEditor(pfx, opt, onGo){
     const key=b.dataset.mk.slice(pfx.length);              // 예: "0a"
     const i=parseInt(key)||0, f=key.slice(-1);
     const t=Math.round(((v&&v.currentTime)||0)*10)/10;
-    st.sel=i; ceSet(pfx,i,f,t); ceShowFrame(pfx);
+    // ★재생 중인 원본을 되돌리지 않는다(noSeek) — '여기 끝'을 누르면 컷 시작으로 끌려가던 문제.
+    st.sel=i; ceSet(pfx,i,f,t); ceShowFrame(pfx,true);
     banner("컷 "+(i+1)+" "+(f==="a"?"시작":"끝")+" = "+t+"초 입력됨","ok");
   };});
   // ★화면 구성 고르기(꽉 채우기 / 정방형 / 좌우 전체) — 고르면 사각형 비율이 바로 바뀐다

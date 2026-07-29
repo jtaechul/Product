@@ -1796,7 +1796,7 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
     if _fit in ("square", "full"):
         applied["fit"] = _fit          # 화면 구성(꽉 채우기 외)을 실제 반영값으로 남긴다
     if cover_spec:
-        applied["cover"] = {k: cover_spec[k] for k in ("at", "zoom", "x", "y")}
+        applied["cover"] = {k: cover_spec.get(k) for k in ("at", "zoom", "x", "y", "fit")}
     try:
         _ac = json.loads((work / "rf" / "applied_cuts.json").read_text(encoding="utf-8"))
         if _ac.get("cuts"):

@@ -1220,6 +1220,22 @@
       · 회귀: `tests/test_crop_wysiwyg.py`(`test_fit_modes_have_the_expected_aspect` ·
         `test_frame_mode_tool_is_wired_everywhere` · `test_full_mode_keeps_both_edges_of_the_source`
         — 실제 렌더로 원본 양끝 보존까지 확인).
+      · **★표지(오프닝 훅·썸네일)도 같은 3종을 고른다(운영자 확정)**: "왜 표지는 정방형·좌우 전체를
+        못 고르게 되어 있나 — 똑같이 되게 해달라." → 표지 편집기에 같은 버튼 3개(`data-cvfit`)를 두고,
+        고른 모양이 **표지 사각형의 비율**이 된다(`cvDraw`의 `car` ↔ `reframe.fit_aspect`).
+        값은 표지 JSON에 `fit`으로 실려 `parse_cover_spec` → `_cover_crop_rect`가 **본문 컷과 같은
+        `reframe.crop_rect`** 로 자르고, 9:16이 아니면 같은 블러 배경 레터박스로 앉힌다
+        (**훅 문구·자막 자리는 그대로**). 미지정이면 `cover`(기존 동작). 실측 렌더: `full`은 원본
+        좌우 양끝 보존 · `cover`/`square`는 가운데만. 회귀: `tests/test_cover_fit_and_playback.py`.
+    - **★★원본 재생 중 playhead를 되감지 않는다(운영자 확정 · 절대 회귀 금지 · 실사고)**: 운영자 지적 —
+      "구간 편집 중 원본을 재생하면 다른 버튼을 누르거나 다른 구간으로 옮겨도 **한 구간(0.5초쯤)만 계속
+      반복**된다." 원인: 영상의 `loadeddata/seeked/pause` 이벤트에서 **표지 편집기는 `cvShow()`(표지
+      시각으로 seek)**, **컷 편집기는 `ceShowFrame()`(컷 시작 시각으로 seek)** 를 불렀는데, 두 편집기가
+      **같은 `<video>`** 에 걸려 있어 한쪽의 seek이 낳은 `seeked`가 다른 쪽 seek을 불러 **두 시각 사이를
+      무한 왕복**했다. → 이벤트 처리기에서는 **화면만 떠온다(`grabStageFrame`, seek 금지)**. '여기 끝'
+      버튼도 `ceShowFrame(pfx, true)`(noSeek)로 보던 자리를 지킨다. 실측 A/B(같은 검사기):
+      예전 코드 30초 → **12.5초로 끌려감** / 지금 30초 유지, '여기 끝' 후 42초 유지.
+      검사기 `worker/edit_playback_check.mjs` · 회귀 `tests/test_cover_fit_and_playback.py`.
     - **★★★잘라낼 사각형은 '높이 기준'으로 통일한다 — 그린 것 = 잘리는 것(운영자 확정 · 절대 회귀
       금지 · 실사고 "지정한 곳과 전혀 다른 곳이 제작된다")**: 제작(`reframe`)은 **높이 기준**으로 자른다
       (`잘라낼 높이 = 원본 높이 ÷ 줌`, 너비 = 높이×9/16, crop_x·crop_y = 사각형 **중심**). 그런데 컷

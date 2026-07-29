@@ -132,10 +132,13 @@ def opening_offset(work_dir: str | Path) -> float:
 def parse_cover_spec(raw) -> dict | None:
     """운영자가 지정한 표지(오프닝 훅·썸네일 배경) 설정을 해석.
 
-    형식: {"at": 12.3, "zoom": 1.6, "x": 0.55, "y": 0.40}
+    형식: {"at": 12.3, "zoom": 1.6, "x": 0.55, "y": 0.40, "fit": "square"}
       · at   : 원본에서 표지로 쓸 **시각(초)** — 필수
       · zoom : 1.0=원본 높이 전체 · 클수록 확대(잘라낼 구획이 작아진다)
       · x, y : 잘라낼 구획의 **중심**(0~1). 미지정이면 가운데.
+      · fit  : 화면 구성 — cover(9:16 꽉 채우기·기본) / square(정방형) / full(원본 좌우 전체)
+               ★본문 컷과 **같은 선택지**를 표지에도 준다(운영자 확정). 9:16이 아니면 위아래를
+               같은 화면의 블러 배경으로 채운다 — 훅 문구·자막 자리는 그대로다.
     형식이 깨졌거나 at이 없으면 None → 기존 자동 선택 경로(운영자 지정 없음)."""
     if not raw:
         return None
@@ -160,34 +163,55 @@ def parse_cover_spec(raw) -> dict | None:
         except (TypeError, ValueError):
             return dflt
 
+    from src.core import reframe
+    fit = str(d.get("fit") or "").strip().lower()
+    if fit not in reframe.FIT_MODES:
+        fit = "cover"
+
     return {"at": at,
             "zoom": max(1.0, min(6.0, _f(d.get("zoom"), 1.0))),
             "x": max(0.0, min(1.0, _f(d.get("x"), 0.5))),
-            "y": max(0.0, min(1.0, _f(d.get("y"), 0.5)))}
+            "y": max(0.0, min(1.0, _f(d.get("y"), 0.5))),
+            "fit": fit}
 
 
 def _cover_crop_rect(img: str, out_png: str, W: int, H: int, spec: dict) -> bool:
-    """원본 프레임에서 **운영자가 정한 구획**만 9:16으로 잘라 표지 배경을 만든다.
+    """원본 프레임에서 **운영자가 정한 구획**을 잘라 표지 배경(W×H)을 만든다.
 
-    잘라낼 높이 = 원본 높이 ÷ zoom, 너비 = 그 높이 × 9/16(화면비 고정).
-    너비가 원본을 넘으면 너비를 원본에 맞추고 높이를 다시 계산한다(항상 원본 안에서 자른다)."""
-    sw = float(_probe(img, "width") or 0)
-    sh = float(_probe(img, "height") or 0)
+    ★화면 구성(fit)은 본문 컷과 **완전히 같은 규칙**(운영자 확정 · reframe.crop_rect 공유):
+      · cover  = 9:16 → 화면을 꽉 채운다(기존 동작)
+      · square = 1:1 · full = 원본 좌우 전체 → 위아래 남는 자리는 **같은 화면의 블러 배경**으로 채운다.
+        (훅 문구·자막은 이 배경 위에 늘 같은 자리로 얹히므로 **글자 위치는 변하지 않는다**.)
+    잘라낼 높이 = 원본 높이 ÷ zoom, 너비 = 높이 × (그 fit의 화면비)."""
+    from src.core import reframe
+    sw = int(_probe(img, "width") or 0)
+    sh = int(_probe(img, "height") or 0)
     if sw <= 0 or sh <= 0:
         return _cover_crop(img, out_png, W, H)
-    z = max(1.0, float(spec.get("zoom") or 1.0))
-    ch = sh / z
-    cw = ch * 9.0 / 16.0
-    if cw > sw:
-        cw = sw
-        ch = min(sh, cw * 16.0 / 9.0)
-    cx = min(max(float(spec.get("x", 0.5)) * sw - cw / 2.0, 0.0), max(0.0, sw - cw))
-    cy = min(max(float(spec.get("y", 0.5)) * sh - ch / 2.0, 0.0), max(0.0, sh - ch))
-    vf = (f"crop={int(cw)}:{int(ch)}:{int(cx)}:{int(cy)},"
-          f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1")
-    r = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", img, "-vf", vf,
-                        "-frames:v", "1", out_png], capture_output=True, text=True)
-    return r.returncode == 0 and Path(out_png).exists()
+    fit = str(spec.get("fit") or "cover").strip().lower()
+    if fit not in reframe.FIT_MODES:
+        fit = "cover"
+    cx, cy, cw, ch = reframe.crop_rect(fit, sw, sh,        # 반환 순서 = (x, y, w, h)
+                                       max(1.0, float(spec.get("zoom") or 1.0)),
+                                       float(spec.get("x", 0.5)), float(spec.get("y", 0.5)))
+    crop = f"crop={cw}:{ch}:{cx}:{cy}"
+    if abs((cw / max(1, ch)) - (W / H)) < 0.01:
+        cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", img, "-vf",
+               f"{crop},scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1",
+               "-frames:v", "1", out_png]
+    else:
+        cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", img, "-filter_complex",
+               f"[0:v]{crop},split=2[a][b];"
+               f"[a]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
+               f"gblur=sigma=32,eq=brightness=-0.16:saturation=1.02[bg];"
+               f"[b]scale={W}:{H}:force_original_aspect_ratio=decrease,setsar=1[fg];"
+               f"[bg][fg]overlay=(W-w)/2:(H-h)/2",
+               "-frames:v", "1", out_png]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode != 0:
+        log.warning("[hook_intro] 표지 크롭 실패(%s) → 자동 크롭으로: %s", fit, (r.stderr or "")[-200:])
+        return _cover_crop(img, out_png, W, H)
+    return Path(out_png).exists()
 
 
 def make_cover_frame(video: str, spec: dict, out_png: str, W: int, H: int,
@@ -208,8 +232,9 @@ def make_cover_frame(video: str, spec: dict, out_png: str, W: int, H: int,
         log.warning("[hook_intro] 운영자 지정 표지가 자동 판정으론 부적합(%s) — 지정대로 진행합니다", why)
     ok = _cover_crop_rect(raw, out_png, W, H, spec)
     if ok:
-        log.info("[hook_intro] 표지 = 운영자 지정(%.1fs · 줌 %.2f · 가로 %.2f · 세로 %.2f)",
-                 spec["at"], spec.get("zoom", 1.0), spec.get("x", 0.5), spec.get("y", 0.5))
+        log.info("[hook_intro] 표지 = 운영자 지정(%.1fs · 줌 %.2f · 가로 %.2f · 세로 %.2f · 화면 %s)",
+                 spec["at"], spec.get("zoom", 1.0), spec.get("x", 0.5), spec.get("y", 0.5),
+                 spec.get("fit", "cover"))
     return ok
 
 

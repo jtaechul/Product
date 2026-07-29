@@ -124,5 +124,7 @@ def test_summary_refreshes_on_programmatic_fill():
     assert "function editChanged(" in w
     i = w.index("function ceRender(")
     assert "editChanged()" in w[i:i + 900], "컷 합계 갱신 시 요약이 따라가지 않습니다"
+    # 함수 본문 전체를 본다(글자 수로 자르면 함수가 길어질 때 헛되이 깨진다)
     j = w.index("function cvDraw(")
-    assert "editChanged()" in w[j:j + 1200], "표지 갱신 시 요약이 따라가지 않습니다"
+    body = w[j:w.index("\nfunction ", j + 10)]
+    assert "editChanged()" in body, "표지 갱신 시 요약이 따라가지 않습니다"
