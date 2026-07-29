@@ -16,10 +16,12 @@ from src.core import hook_intro_stage as his
 
 def test_spec_parsing_and_clamping():
     """형식 해석 + 안전 범위 클램프. 깨진 값은 None → 기존 자동 선택으로 폴백(제작 불정지)."""
+    # fit(화면 구성)은 나중에 추가된 값 — 안 적으면 기존 동작인 cover(9:16 꽉 채우기)
     ok = his.parse_cover_spec('{"at":12.3,"zoom":1.6,"x":0.35,"y":0.4}')
-    assert ok == {"at": 12.3, "zoom": 1.6, "x": 0.35, "y": 0.4}
+    assert ok == {"at": 12.3, "zoom": 1.6, "x": 0.35, "y": 0.4, "fit": "cover"}
     assert his.parse_cover_spec({"at": 5, "zoom": 99, "x": -3, "y": 8}) == {
-        "at": 5.0, "zoom": 6.0, "x": 0.0, "y": 1.0}
+        "at": 5.0, "zoom": 6.0, "x": 0.0, "y": 1.0, "fit": "cover"}
+    assert his.parse_cover_spec({"at": 5, "fit": "square"})["fit"] == "square"
     for bad in ("", None, "이상한 값", "{}", {"zoom": 2}, [1, 2]):
         assert his.parse_cover_spec(bad) is None, f"깨진 입력을 통과시켰습니다: {bad!r}"
 
