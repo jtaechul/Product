@@ -390,5 +390,13 @@
     "date": "2026-07-27",
     "has_video": true,
     "youtube_url": "https://youtu.be/m2Q5xk-bifo"
+  },
+  {
+    "id": "051",
+    "kind": "reels",
+    "common_name_ko": "Anoplodactylus lentus",
+    "common_name_en": "Anoplodactylus lentus",
+    "scientific_name": "Anoplodactylus lentus",
+    "date": "2026-07-29"
   }
 ]

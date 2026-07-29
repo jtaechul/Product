@@ -28,5 +28,32 @@
         "Wikimedia Commons (File:Red cuttle hunting.webm)"
       ]
     }
+  },
+  {
+    "key": "anoplodactylus lentus",
+    "kind": "creature",
+    "footage": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/Sea_Spiders.webm",
+      "license": "cc-by",
+      "credit": "NOAA Sanctuaries · CC BY",
+      "source": "File:Sea Spiders.webm"
+    },
+    "species": {
+      "scientific_name": "Anoplodactylus lentus",
+      "common_name_ko": "Anoplodactylus lentus",
+      "common_name_en": "Anoplodactylus lentus",
+      "depth_range_m": "",
+      "distribution": "",
+      "habitat": "",
+      "diet": [],
+      "fun_facts": [
+        "Phoxichilidiidae is a family of sea spiders.",
+        "About 150 species are described, almost all in the genus Anoplodactylus Wilson, 1878."
+      ],
+      "sources": [
+        "Wikipedia (en) · 상위 분류군",
+        "Wikimedia Commons (File:Sea Spiders.webm)"
+      ]
+    }
   }
 ]
