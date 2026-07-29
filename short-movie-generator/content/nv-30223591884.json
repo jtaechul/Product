@@ -1,15 +1,15 @@
 {
   "id": "nv-30223591884",
   "kind": "narrate",
-  "created_at": "2026-07-29T13:18:53+00:00",
+  "created_at": "2026-07-29T13:30:21+00:00",
   "status": "published",
   "mode": "shorts",
   "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Your_Earth_is_Blue-_The_Wreck_of_the_Joseph_S._Fay.webm",
-  "hook": "静かな水平線の彼方に",
-  "yt_title": "マスクを得て",
-  "yt_title_ko": "마스크를 얻고",
-  "yt_description": "静かな水平線の彼方に。小さな白いブイが浮かびます。その下に眠る難破船の印。幼い頃、泳いで探した記憶。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
-  "yt_description_ko": "고요한 수평선 저 너머에. 작은 하얀 부표가 떠 있습니다. 그 아래 잠든 난파선의 표식. 어린 시절, 헤엄쳐 찾아다니던 기억.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
+  "hook": "静かな水面の向こうに",
+  "yt_title": "静かな水面の向こうに",
+  "yt_title_ko": "조용한 수면 너머로",
+  "yt_description": "静かな水面の向こうに。視線を送ってみましょう。遠くに白いブイが見えます。沈没船の目印だといいます。\n\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。",
+  "yt_description_ko": "조용한 수면 너머로. 시선을 보내 봅시다. 저 멀리 흰 부표가 보입니다. 침몰선의 표식이라고 합니다.\n\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.",
   "hashtags": [
     "#沈没船",
     "#難破船"
@@ -19,9 +19,9 @@
     "#난파선"
   ],
   "media": {
-    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455026532.mp4",
-    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455026532_thumb.jpg",
-    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455026532_source.mp4",
+    "video_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455870581.mp4",
+    "thumb_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455870581_thumb.jpg",
+    "source_mp4_url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455870581_source.mp4",
     "sheet": {
       "cols": 8,
       "rows": 5,
@@ -29,70 +29,72 @@
       "step": 2.0,
       "tw": 240,
       "th": 135,
-      "url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455026532_sheet.jpg"
+      "url": "https://github.com/jtaechul/Product/releases/download/narrate-nv-30223591884/narrated_shorts_30455870581_sheet.jpg"
     }
   },
   "subs": [
     {
-      "s": 3.57,
-      "e": 6.57,
-      "jp": "静かな水平線の彼方に",
-      "ko": "고요한 수평선 저 너머로"
+      "s": 3.4,
+      "e": 6.22,
+      "jp": "静かな水面の向こうに",
+      "ko": "고요한 수면 너머로"
     },
     {
-      "s": 7.39,
-      "e": 10.39,
-      "jp": "小さな白いブイが浮かびます",
-      "ko": "작고 하얀 부표가 떠 있습니다"
+      "s": 7.24,
+      "e": 9.96,
+      "jp": "視線を送ってみましょう",
+      "ko": "시선을 던져 볼까요"
     },
     {
-      "s": 11.21,
-      "e": 14.47,
-      "jp": "その下に眠る難破船の印",
-      "ko": "그 아래 잠든 난파선의 표식"
+      "s": 10.91,
+      "e": 13.81,
+      "jp": "遠くに白いブイが見えます",
+      "ko": "저 멀리 하얀 부표가 보입니다"
     },
     {
-      "s": 15.3,
-      "e": 19.0,
-      "jp": "幼い頃、泳いで探した記憶",
-      "ko": "어릴 적, 헤엄쳐 찾아다니던 기억"
+      "s": 14.87,
+      "e": 18.11,
+      "jp": "沈没船の目印だといいます",
+      "ko": "침몰선의 표식이라고 합니다"
     },
     {
-      "s": 19.92,
-      "e": 23.57,
-      "jp": "マスクを得て、世界が変わりました",
-      "ko": "마스크를 얻고, 세상이 달라졌습니다"
+      "s": 19.2,
+      "e": 22.62,
+      "jp": "かつて子供の頃はそこまで泳ぎ",
+      "ko": "예전 어릴 적엔 저기까지 헤엄쳐 갔었죠"
     },
     {
-      "s": 24.48,
-      "e": 27.65,
-      "jp": "今も船影を見つめに行けます",
-      "ko": "지금도 배의 흔적을 보러 갈 수 있습니다"
+      "s": 23.75,
+      "e": 27.15,
+      "jp": "澄んだ水面は今も変わりません",
+      "ko": "맑은 수면은 지금도 그대로입니다"
     },
     {
-      "s": 28.47,
-      "e": 32.34,
+      "s": 28.3,
+      "e": 32.18,
       "jp": "チャンネル登録して、次の深海も。",
-      "ko": "구독하시고, 다음 심해도 함께해요."
+      "ko": "구독해 주시고, 다음 심해도 함께해요."
     }
   ],
   "cta_jp": "チャンネル登録して、次の深海も。",
   "edit": {
-    "cut_specs": "[{\"start\":0,\"end\":2,\"zoom\":1.25,\"crop_x\":0.5,\"crop_y\":0.5,\"fit\":\"cover\"},{\"start\":19,\"end\":27.5,\"zoom\":1,\"crop_x\":0.51,\"crop_y\":1,\"fit\":\"square\"},{\"start\":33,\"end\":47,\"zoom\":1,\"crop_x\":0.5,\"crop_y\":0.86,\"fit\":\"square\"},{\"start\":52.2,\"end\":60,\"zoom\":1,\"crop_x\":0.5,\"crop_y\":0.5,\"fit\":\"square\"}]",
-    "cover": "{\"at\":56,\"zoom\":1,\"x\":0.23,\"y\":0.88}"
+    "cut_specs": "[{\"start\":12.3,\"end\":16.1,\"zoom\":1,\"crop_x\":0.98,\"crop_y\":0.86,\"fit\":\"full\"},{\"start\":19,\"end\":27.5,\"zoom\":1,\"crop_x\":0.51,\"crop_y\":1,\"fit\":\"square\"},{\"start\":33,\"end\":47,\"zoom\":1,\"crop_x\":0.5,\"crop_y\":0.86,\"fit\":\"square\"},{\"start\":56.3,\"end\":60,\"zoom\":1,\"crop_x\":0.5,\"crop_y\":0.5,\"fit\":\"square\"}]",
+    "cover": "{\"at\":56,\"zoom\":1,\"x\":0.23,\"y\":1}",
+    "fit": "full"
   },
   "applied": {
+    "fit": "full",
     "cover": {
       "at": 56.0,
       "zoom": 1.0,
       "x": 0.23,
-      "y": 0.88
+      "y": 1.0
     },
     "cuts": [
       {
-        "start": 0.0,
-        "end": 2.0,
-        "zoom": 1.25
+        "start": 12.3,
+        "end": 16.1,
+        "zoom": 1.0
       },
       {
         "start": 19.0,
@@ -105,8 +107,8 @@
         "zoom": 1.0
       },
       {
-        "start": 52.2,
-        "end": 57.7,
+        "start": 56.3,
+        "end": 60.0,
         "zoom": 1.0
       }
     ],
