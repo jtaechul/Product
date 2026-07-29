@@ -66,7 +66,8 @@ def test_show_frame_does_not_bail_out_without_a_sheet():
     seg = w[i:i + 700]
     assert "if(!img||!st.sheet) return;" not in seg, \
         "시트가 없으면 즉시 빠져나가는 옛 코드가 되살아났습니다(구획 화면이 사라집니다)"
-    assert "grabStageFrame(" in seg, "시트가 없을 때의 대체 경로가 없습니다"
+    # 지금은 seekAndGrab(고른 시각으로 옮긴 뒤 캡처) 경유 — 둘 중 하나면 된다
+    assert ("seekAndGrab(" in seg or "grabStageFrame(" in seg), "시트가 없을 때의 대체 경로가 없습니다"
     j = w.index("function cvShow(")
     seg2 = w[j:j + 700]
     assert "if(!stage||!st.sheet) return;" not in seg2, "표지 편집기도 같은 옛 코드가 남아 있습니다"

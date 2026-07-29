@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-28-2 (화면 구성을 컷별로 지정)";
+const BUILD="v2026-07-28-3 (표지 편집기 화면이 안 나오던 문제 수정)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -886,7 +886,9 @@ const _cv={};
 // box.h = 잘라낼 **높이 비율**(0.2~1.0). 너비는 9:16로 자동(= 백엔드 계산과 동일: 높이=원본÷줌).
 //   ★가로 폭 기준으로 잡으면 16:9 화면에선 폭 32%만 넘어도 높이에 걸려 **줌이 1.0에 고정**된다
 //     (슬라이더를 움직여도 아무 변화가 없던 문제) → 높이 기준으로 잡는다. 줌 = 1 / 높이비율.
-function cvState(){ return (_cv.s ||= {sheet:null, at:null, box:{x:0.5,y:0.5,h:1.0}}); }
+// ★vid: 화면을 떠올 원본 영상 요소 id. 나레이션형=ncvid · 도감형=cevid —
+//   예전엔 "ncvid"로 **고정**돼 있어 도감형에서는 표지 그림이 하나도 안 나왔다(실사고).
+function cvState(){ return (_cv.s ||= {sheet:null, at:null, vid:"ncvid", box:{x:0.5,y:0.5,h:1.0}}); }
 function coverEditorHTML(){
   return '<div id="coverbox" style="margin-top:4px">'+
     '<span class="lbl" style="color:var(--cy)">1단계 · 표지 고르기 (오프닝 훅 + 썸네일)</span>'+
@@ -1023,7 +1025,7 @@ function cvShow(){
   if(!stage) return;
   if(img)img.style.visibility="hidden";
   if(!st.sheet){                       // ★시트 없음 → 원본 재생 화면으로 대체 후에도 사각형은 보인다
-    grabStageFrame("ncvid", "cvstage");
+    seekAndGrab(st.vid || "ncvid", "cvstage", st.at);
     cvDraw();
     return;
   }
@@ -1056,7 +1058,7 @@ function cvDraw(){
   editChanged();
 }
 function bindCoverEditor(sheet, srcVidId, onThumb, onAll){
-  const st=cvState(); st.sheet=sheet;
+  const st=cvState(); st.sheet=sheet; st.vid=srcVidId||"ncvid";   // 페이지별 영상 id 기억
   const strip=document.getElementById("cvstrip");
   if(strip){
     if(!sheet){ strip.innerHTML='<div class="hint">프레임 사진이 아직 없습니다 — <b>소싱하기</b>를 한 번 돌리면 만들어집니다. '+
@@ -1274,6 +1276,18 @@ function ceTapTile(pfx, k){
 // ★프레임 사진(시트)이 없을 때의 대비책: 재생 중인 원본에서 **현재 화면을 그대로 떠서** 스테이지
 //   배경으로 쓴다(영상은 워커 프록시 경유 = 같은 출처라 캔버스 사용 가능). 재생이 안 되는 형식이면
 //   격자 배경 그대로 두고, 사각형은 어떤 경우에도 보이게 한다.
+// 고른 시각(t)의 장면을 스테이지에 띄운다. 원본을 그 지점으로 옮기고(seek) 화면을 뜬다.
+//   · 이미 그 지점이면 바로 뜬다. 옮긴 경우엔 seeked 이벤트가 다시 이 함수를 부른다.
+//   · 재생이 안 되는 형식이면 조용히 실패(격자 배경 유지) — 사각형은 그래도 보인다.
+function seekAndGrab(videoId, stageId, t){
+  const v=document.getElementById(videoId);
+  if(!v) return false;
+  const want=Number(t);
+  if(Number.isFinite(want) && v.duration && Math.abs((v.currentTime||0)-want)>0.15){
+    try{ v.currentTime=Math.max(0, Math.min(v.duration-0.05, want)); }catch(e){}
+  }
+  return grabStageFrame(videoId, stageId);
+}
 function grabStageFrame(videoId, stageId){
   try{
     const v=document.getElementById(videoId), stage=document.getElementById(stageId);
@@ -1292,7 +1306,7 @@ function ceShowFrame(pfx){
   const st=ceState(pfx), img=document.getElementById(pfx+"frame");
   if(img)img.style.visibility="hidden";
   if(!st.sheet){                       // ★시트 없음 → 재생 중인 원본 화면으로 대체(그래도 화면은 보인다)
-    grabStageFrame(pfx+"vid", pfx+"stage");
+    seekAndGrab(pfx+"vid", pfx+"stage", ceVal(pfx, st.sel, "a"));
     ceDrawBox(pfx);
     return;
   }
