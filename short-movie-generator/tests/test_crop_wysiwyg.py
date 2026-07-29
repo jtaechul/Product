@@ -109,7 +109,7 @@ def test_frame_mode_tool_is_wired_everywhere():
     seg = w[i:w.index("async function ceLoadSheet(")]
     for token in ("data-fit=", "꽉 채우기", "정방형", "좌우 전체"):
         assert token in seg, f"공용 편집기에 화면 구성 도구가 없습니다: {token}"
-    assert 'cutEditorHTML("nc")' in w and 'cutEditorHTML("ce")' in w, \
+    assert 'editStudioHTML(true, rec, "ce")' in w and "editStudioHTML((rec.mode" in w, \
         "나레이션형·도감형 양쪽에 편집기가 붙어 있지 않습니다"
     j = w.index("function cutEditorInputs(")
     assert "out.fit=st.fit" in w[j:j + 800], "선택한 화면 구성을 제작에 보내지 않습니다"

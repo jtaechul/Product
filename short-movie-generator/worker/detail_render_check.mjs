@@ -50,22 +50,24 @@ globalThis.fetch = async u => {
 globalThis.localStorage = { getItem: () => null, setItem(){}, removeItem(){} };
 globalThis.setTimeout = () => 0;
 
-const run = new Function(js + "\n; return { renderDetail, BUILD, cutEditorInputs };");
-const { renderDetail, BUILD, cutEditorInputs } = run();
+const run = new Function(js + "\n; return { renderDetail, BUILD, cutEditorInputs, allEditInputs, cvState, cvDraw };");
+const { renderDetail, BUILD, cutEditorInputs, allEditInputs, cvState, cvDraw } = run();
 await renderDetail("048");
 const out = els["dcard"]?.innerHTML || "";
 const has = s => (out.includes(s) ? "있음" : "없음");
 console.log("[배포 예정본 · 도감형 /c/048 실제 렌더]");
 console.log("  빌드 표시            :", BUILD);
-console.log("  버튼그리드 진입버튼  :", has("구간·줌 직접 지정해서 다시 만들기"));
-console.log("  편집 카드(항상 표시) :", has("구간·줌 직접 지정 — 내가 정해서 다시 만들기"));
+console.log("  버튼그리드 진입버튼  :", has("표지·구간 직접 지정해서 다시 만들기"));
+console.log("  편집 카드(항상 표시) :", has("영상 직접 고쳐 만들기"));
+console.log("  1단계 표지 편집기    :", has('id="coverbox"') === "있음" && has('id="cvat"') === "있음" ? "있음" : "없음");
+console.log("  화면 구성 선택       :", has("data-fit="));
 console.log("  컷별 시작·끝 입력칸  :", has('id="ce0a"') === "있음" && has('id="ce3b"') === "있음" ? "있음(4컷)" : "없음");
 console.log("  여기 시작/끝 버튼    :", has("여기 시작"));
 console.log("  필요 총 길이 표시칸  :", has('id="ceneed"'));
 console.log("  프레임 사진 스트립   :", has("사진 띠"));
 console.log("  크롭 사각형          :", has('id="cebox"'));
 console.log("  줌 슬라이더          :", has('type="range"'));
-console.log("  실행 버튼            :", has("이 설정으로 다시 만들기"));
+console.log("  실행 버튼(통합)      :", has('id="applyedits"'));
 console.log("  접힘 여부            :", out.includes('<details class="tok" id="cutbox"') ? "접힘(문제)" : "항상 표시(정상)");
 
 // 비동기 배선(소싱 캐시를 읽은 뒤 bindCutEditor 실행)이 끝나길 기다린다
@@ -85,3 +87,14 @@ console.log("  컷1 시작 칸          :", el("ce0a").value || "(빈칸 · 문�
 console.log("  컷1 끝 칸            :", el("ce0b").value || "(빈칸 · 문제)");
 console.log("  필요 길이 안내       :", (el("ceneed").innerHTML || "").replace(/<[^>]+>/g, ""));
 console.log("  워크플로 입력값      :", JSON.stringify(cutEditorInputs("ce")));
+
+// ── 동작 검사 · 표지(오프닝 훅) + 구간이 **함께** 제작으로 나가는가(도감형)
+const cvat = el("cvat"); cvat.value = "18.5";
+const cst = cvState(); cst.at = 18.5; cst.box = { x: 0.4, y: 0.55, h: 0.7 };
+cvDraw();
+const all = allEditInputs("ce");
+console.log("\n[동작 검사 · 도감형 표지+구간 동시 전달]");
+console.log("  표지                 :", all.cover || "(없음)");
+console.log("  구간                 :", all.cut_specs ? "있음(" + JSON.parse(all.cut_specs).length + "컷)" : "(없음)");
+console.log("  둘 다 전달           :", (all.cover && all.cut_specs) ? "정상" : "★문제");
+console.log("  반영 요약            :", (els["applysum"] || {}).innerHTML?.replace(/<[^>]+>/g, "") || "(없음)");

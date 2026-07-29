@@ -1164,6 +1164,18 @@
         불가하다. 오프닝 훅이 그 역할을 하고 영상 안에 이미 들어 있다. **롱폼은 유지**.
       · 회귀: `test_edits_are_saved_and_restored` / `test_single_button_sends_both_settings` /
         `test_thumbnail_only_button_is_longform_only` / `test_shorts_have_no_thumbnail_save_menu`.
+    - **★★표지(오프닝 훅) 편집은 도감형·나레이션형 **둘 다**(운영자 확정)**: "일반 해양생물·심해생물
+      쇼츠 수정 페이지에서도 오프닝 훅을 설정할 수 있어야 한다." 예전엔 표지 편집기가 나레이션형(/nv)에만
+      있었고, 도감형은 화면도 없고 제작(reels)도 `cover`를 받지 않았다.
+      · 화면: `editStudioHTML(isShorts, rec, pfx)`를 **접두사로 일반화**해 도감형(`ce`)·나레이션형(`nc`)이
+        **같은 카드**(1 표지 → 2 구간·줌 → 3 실행)를 쓴다. 기능이 한쪽에만 생기는 일이 없게 한다.
+      · 제작: `pipeline.run_reels`가 `manual["cover"]`를 `parse_cover_spec` → `hook_intro_stage.apply(
+        cover_spec=)`로 넘긴다. **운영자 지정이 있으면 히어로 사진보다 우선**(hero_image=None).
+      · 배선: 대시보드 → `generate-short.yml` `cover` 입력(env 경유) → `--cover` → `manual["cover"]`.
+      · **운영자가 구간·표지를 지정하면 소스 자동 트림을 건너뛴다**(`fetch_footage(skip_trim=True)`) —
+        미리보기·프레임 사진은 자르지 않은 원본 기준이라, 앞을 자르면 지정 초가 밀린다(나레이션형과 동일 규칙).
+      · 회귀: `tests/test_cover_editor_reels.py`(화면 렌더·표지+구간 동시 전달·배선·트림 건너뛰기 +
+        실렌더로 지정 시각·구획 반영 확인).
     - **★★구획 설정 화면은 프레임 사진이 없어도 반드시 보인다(운영자 지적 · 절대 회귀 금지 · 실사고)**:
       "영상 구획 설정하는 부분이 아예 보여지지가 않아"(IMG_4080). 원인은 스테이지(사각형을 그리는 칸)에
       **높이를 주는 곳이 `ceShowFrame` 하나뿐**이었고, 그 함수가 `if(!img||!st.sheet) return;`으로

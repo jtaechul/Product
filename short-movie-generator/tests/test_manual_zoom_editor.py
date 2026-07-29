@@ -86,7 +86,10 @@ def test_editor_on_both_detail_pages(worker):
     """★도감형(/c)에 편집 메뉴가 없어서 '재생성해도 계속 자동'이던 것이 이번 사고의 핵심 원인."""
     assert 'id="cutbox"' in worker, "도감형 상세에 구간·줌 편집 메뉴가 없습니다"
     assert 'id="nvcutbox"' in worker, "나레이션형 상세에 구간·줌 편집 메뉴가 없습니다"
-    assert worker.count('cutEditorHTML("') >= 2, "두 상세 페이지가 같은 편집 패널을 써야 합니다"
+    # ★두 페이지가 **같은 편집 카드 함수**를 쓴다(접두사만 다르다) — 기능이 갈라지지 않게.
+    assert "cutEditorHTML(pfx)" in worker, "편집 패널이 접두사별로 재사용되지 않습니다"
+    assert 'editStudioHTML(true, rec, "ce")' in worker, "도감형이 공용 편집 카드를 쓰지 않습니다"
+    assert "editStudioHTML((rec.mode" in worker, "나레이션형이 공용 편집 카드를 쓰지 않습니다"
 
 
 def test_editor_is_box_based_and_per_cut(worker):
@@ -202,6 +205,6 @@ def test_detail_render_checker_exists():
     chk = Path(__file__).resolve().parents[1] / "worker" / "detail_render_check.mjs"
     assert chk.exists(), "상세 렌더 검사기가 없습니다"
     body = chk.read_text(encoding="utf-8")
-    assert "renderDetail" in body and "구간·줌 직접 지정" in body
+    assert "renderDetail" in body and "영상 직접 고쳐 만들기" in body
     # ★렌더만 보면 '눌러도 안 채워지는' 사고를 못 잡는다 → 버튼 클릭까지 흉내 내는지 확인
     assert "onclick()" in body and "컷1 시작 칸" in body, "버튼 동작 검사가 빠졌습니다"

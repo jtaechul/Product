@@ -41,6 +41,9 @@ def main() -> int:
     parser.add_argument("--cuts", default="", help="컷 전환 수(3~8). 비우면 기본 4")
     parser.add_argument("--zoom", default="",
                         help="줌 배율 1.0~2.5 (1.0=원본 넓게·1.5~2.0=피사체 당김). 비우면 자동")
+    # ★표지(오프닝 훅) 운영자 지정: {"at":초,"zoom":배율,"x":가로중심,"y":세로중심}
+    parser.add_argument("--cover", default="",
+                        help='표지(오프닝 훅) 지정 JSON: {"at":12.3,"zoom":1.6,"x":0.5,"y":0.4}')
     # ★화면 구성(운영자 확정): cover=9:16 꽉 채움(기본) / square=정방형 / full=원본 좌우 전체
     parser.add_argument("--fit", default="",
                         help="화면 구성 cover(꽉 채움·기본) / square(정방형) / full(원본 좌우 전체)")
@@ -59,7 +62,7 @@ def main() -> int:
     manual = {k: v for k, v in (("start", args.src_start), ("end", args.src_end),
                                 ("crop_x", args.crop_x), ("cuts", args.cuts),
                                 ("zoom", args.zoom), ("cut_specs", args.cut_specs),
-                                ("fit", args.fit))
+                                ("fit", args.fit), ("cover", args.cover))
               if str(v).strip()} or None
     if manual:
         logging.info("운영자 수동 지정: %s", manual)

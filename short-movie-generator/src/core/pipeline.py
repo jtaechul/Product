@@ -362,8 +362,13 @@ def run_reels(
     spec, hook_text, bgm = spec_t
 
     # 1) 실사 심해 영상 소싱 + 라이선스 게이트 (auto는 위 후보 순회에서 이미 확보)
+    # ★운영자가 구간(cut_specs)이나 표지(cover)를 직접 지정했으면 소스를 자르지 않는다 —
+    #   관리자 화면의 미리보기·프레임 사진은 자르지 않은 원본 기준이라, 앞을 자르면 지정 초가 밀린다.
+    _man = manual or {}
+    _op_edit = bool(str(_man.get("cut_specs") or "").strip() or str(_man.get("cover") or "").strip())
     if fv is None:
-        fv = footage.fetch_footage(info.scientific_name, info.common_name_en, str(raw_dir))
+        fv = footage.fetch_footage(info.scientific_name, info.common_name_en, str(raw_dir),
+                                   skip_trim=_op_edit)
     if not fv:
         raise PipelineError("footage", "실사 심해 영상 미확보 → 제작 중단(AI/정지 대체 금지)")
     if (fv["license"] or "").strip().lower() not in ALLOWED_LICENSES:
@@ -595,11 +600,18 @@ def run_reels(
         spec.credit_line = _credit_with_license(fv.get("credit", ""), fv.get("license", ""))
     except Exception as e:  # noqa: BLE001
         log.warning("[reels] 엔드카드 크레딧 주입 실패(기본 문구 사용): %s", e)
+    # ★표지(오프닝 훅) 운영자 지정(운영자 확정: 도감형도 나레이션형과 똑같이 고를 수 있어야 한다).
+    #   지정이 있으면 히어로 사진·자동 선택보다 **우선**해서 그 시각·구획으로 표지를 만든다.
+    _cover = hook_intro_stage.parse_cover_spec(_man.get("cover"))
+    if _cover:
+        log.info("[reels] 운영자 지정 표지 사용: %.1f초 · 줌 %.2f배 (가로 %.2f · 세로 %.2f)",
+                 _cover["at"], _cover["zoom"], _cover["x"], _cover["y"])
     final = hook_intro_stage.apply(body_av, spec, hook_text, str(work_dir / "hook_intro"), bgm=bgm,
                                    open_bg_video=body_v, subject_video=fv["path"],
                                    logo_box=fv.get("logo_box"),
-                                   hero_image=(hero["path"] if hero else None),
-                                   thumb_out=yt_thumb, include_endcard=True)
+                                   hero_image=(None if _cover else (hero["path"] if hero else None)),
+                                   thumb_out=yt_thumb, include_endcard=True,
+                                   cover_spec=_cover)
     # ★재발방지 하드 게이트(기획서 규칙: 모든 영상에 오프닝 훅+엔드카드 필수).
     # 폰트는 이제 항상 폴백 해석되므로 apply()가 본문을 그대로 돌려주는 건 '진짜 실패'뿐 →
     # 조용히 발행하지 않고 큰 오류로 멈춰 CI를 빨간불로 만든다(스펙 위반 영상 발행 원천 차단).

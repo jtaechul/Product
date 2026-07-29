@@ -1513,7 +1513,8 @@ def _wreck_doc_footage(cand: dict, scientific_name: str) -> dict | None:
             "credit": " · ".join(doss.get("credits", []))[:300], "source": "Wikimedia Commons"}
 
 
-def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
+def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: str,
+                         skip_trim: bool = False) -> dict | None:
     """종 실사 **영상만** 확보 → {path, license, credit, source} 또는 None(영상 미확보).
     ★엄격 영상 전용(운영자 확정 · 재발방지): 생물은 절대 photo_doc(이미지 다큐)을 반환하지 않는다.
     사진 다큐 폴백은 상위 래퍼 `fetch_footage`가 담당한다 — 여기서 photo_doc을 돌려주면 '영상 확보'로
@@ -1628,7 +1629,15 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
     #   반복 노출하던 심각한 사고가 있었다 → 자동 탐지로 카드 없는 소스를 강제한다(재발방지).
     trim = cand.get("trim")
     dur = _probe_dur(str(out))
-    auto_head, auto_tail = _auto_trim_cards(str(out), dur) if dur else (0.0, 0.0)
+    # ★★운영자가 구간·표지를 직접 지정한 회차는 **자르지 않는다**(운영자 확정 · 절대 회귀 금지).
+    #   관리자 화면의 미리보기·프레임 사진은 **자르지 않은 원본**으로 만들어지므로, 여기서 앞부분을
+    #   잘라내면 운영자가 고른 초가 그만큼 밀려 **엉뚱한 장면**이 나간다(나레이션형에서 이미 겪은 사고).
+    #   지정 구간에 카드가 들어가지 않게 고르는 것은 운영자가 눈으로 확인한다.
+    if skip_trim:
+        log.info("[footage] 운영자 지정(구간·표지) → 인트로·아웃트로 트림 건너뜀(시각 기준을 원본으로 고정)")
+        trim = None
+    auto_head, auto_tail = (0.0, 0.0) if skip_trim else (
+        _auto_trim_cards(str(out), dur) if dur else (0.0, 0.0))
     m_head, m_tail = (float(trim[0]), float(trim[1])) if trim else (0.0, 0.0)
     head, tail = max(m_head, auto_head), max(m_tail, auto_tail)   # 둘 중 큰 값(카드 확실 제거)
     if head > 0 or tail > 0:
@@ -1910,7 +1919,8 @@ def species_photo_doc(scientific_name: str, common_name_en: str, dest_dir: str) 
             "source": "Wikimedia Commons"}
 
 
-def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> dict | None:
+def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str,
+                  skip_trim: bool = False) -> dict | None:
     """종 실사 소스 확보 → {path|photo_doc, license, credit, source} 또는 None.
 
     ★영상 우선·없으면 이미지(운영자 확정): 실사 영상을 먼저 시도하고, 영상이 없거나 게이트에 탈락하면
@@ -1918,7 +1928,7 @@ def fetch_footage(scientific_name: str, common_name_en: str, dest_dir: str) -> d
     이미지가 Commons에 훨씬 많아(영상 0개인 심해종 다수) 제작 가능 풀이 크게 늘어난다.
     실패 시 상위(파이프라인)는 '실사 미확보'로 판단해 중단/스킵한다(날조 방지).
     """
-    v = _fetch_video_footage(scientific_name, common_name_en, dest_dir)
+    v = _fetch_video_footage(scientific_name, common_name_en, dest_dir, skip_trim=skip_trim)
     if v:
         return v
     # 난파선은 사진 다큐(그 배 전용) 경로가 이미 _fetch_video_footage 안에 있으므로 여기선 생물만.

@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-27-9 (구획 설정 화면이 사라지던 문제 수정)";
+const BUILD="v2026-07-28-1 (도감형에도 표지·오프닝 훅 편집 추가)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -926,7 +926,8 @@ function applyEditsHTML(isShorts){
 }
 // ★한 카드 안에 1(표지)·2(구간·줌)·3(실행) 단계를 순서대로(운영자 확정 · 흩어져 있어 불편했다).
 //   실행 버튼은 반드시 **두 설정 아래**에 둔다 — 위에 있으면 구간을 정하기 전에 누르게 된다.
-function editStudioHTML(isShorts, rec){
+function editStudioHTML(isShorts, rec, pfx){
+  pfx = pfx || "nc";
   return '<div class="card" id="editstudio" style="margin-top:12px;border:1px solid var(--cy)">'+
     '<span class="lbl" style="color:var(--cy);font-size:15px">영상 직접 고쳐 만들기 — 표지 · 구간 · 실행</span>'+
     '<div class="hint" style="margin:4px 0 10px">아래 <b>1 → 2 → 3</b> 순서로 정하면 <b>한 번의 제작</b>에 모두 반영됩니다.</div>'+
@@ -936,7 +937,7 @@ function editStudioHTML(isShorts, rec){
     //   글자가 세로로 쪼개졌다(운영자 지적). 이제 그리드 밖이지만 규칙은 그대로 유지한다.
     '<div id="nvcutbox" style="grid-column:1/-1;margin-top:14px;padding-top:10px;border-top:1px solid #24405a">'+
       '<span class="lbl" style="color:var(--cy)">2단계 · 구간·줌 직접 지정</span>'+
-      cutEditorHTML("nc")+
+      cutEditorHTML(pfx)+
     '</div>'+
     applyEditsHTML(isShorts)+
   '</div>';
@@ -1759,18 +1760,16 @@ async function renderDetail(id){
       '<button class="btn" id="ball" style="grid-column:1/3">전체 재생성 (무료)</button>'+
       '<button class="btn" id="bigp" style="grid-column:1/3;background:#833ab4;color:#fff">인스타 계정 점검 (발행 안 함)</button>'+
       '<button class="btn" id="big" style="grid-column:1/3;background:#c13584;color:#fff">인스타 릴스 발행</button>'+
-      '<button class="btn" id="bcut" style="grid-column:1/3;border-color:var(--cy);color:var(--cy)">구간·줌 직접 지정해서 다시 만들기</button>'+
+      '<button class="btn" id="bcut" style="grid-column:1/3;border-color:var(--cy);color:var(--cy)">표지·구간 직접 지정해서 다시 만들기</button>'+
       '<button class="btn" id="bdel" style="grid-column:1/3;background:#8b1a1a;color:#fff">이 제작물 삭제 (영상·기록 영구 삭제)</button>'+
     '</div>'+
     // ★구간·줌 직접 지정(운영자 확정): 자동으로 만든 결과가 마음에 안 들 때 여기서 잡아 다시 만든다.
     //   같은 회차에 덮어쓴다(운영자 선택). 비운 항목은 그 항목만 자동.
     // ★접어두지 않는다(운영자 지적 "메뉴가 아예 없다"): <details>로 접어두면 모바일에서 한 줄로만
     //   보여 있는지조차 모른다 → **항상 펼쳐진 카드**로 두고 제목을 크게 단다.
-    '<div class="card" id="cutbox" style="margin-top:10px;border:1px solid var(--cy)">'+
-      '<span class="lbl" style="color:var(--cy)">구간·줌 직접 지정 — 내가 정해서 다시 만들기</span>'+
-      cutEditorHTML("ce")+
-      '<button class="btn save" id="cego" style="margin-top:8px">이 설정으로 다시 만들기 (같은 회차 덮어쓰기)</button>'+
-    '</div>'+
+    // ★도감형도 나레이션형과 **똑같은** 편집 카드(운영자 확정): 1 표지(오프닝 훅) → 2 구간·줌 → 3 실행.
+    //   예전엔 도감형에 표지 편집이 아예 없어 오프닝 훅을 손댈 수 없었다.
+    '<div id="cutbox">'+editStudioHTML(true, rec, "ce")+'</div>'+
     // ★자막 스크립트(운영자 요청 · 나레이션형과 동일): 시각별 일본어·한국어 자막
     subsPanel(rec)+
     postSection(rec.post)+
@@ -1805,12 +1804,22 @@ async function renderDetail(id){
       sheet=(ref&&ref.sheet)||null;      // 소싱이 만든 프레임 사진 시트
       if(ref)srcs=[ref.preview_url, nvTranscode(ref.url||""), ref.url];
     }catch(e){}
-    bindCutEditor("ce",{sheet:sheet, srcs:srcs, need:(md.duration||0)},()=>{
-      const inp=cutEditorInputs("ce");
-      if(!Object.keys(inp).length){banner("컷 구간·줌·크롭 중 최소 하나는 지정하세요.","err");return;}
-      if(!confirm("지정한 구간·줌으로 이 회차를 다시 만듭니다(같은 번호에 덮어쓰기).\\n진행할까요?"))return;
+    _editChanged=()=>editSummary(rec,"ce");     // 값이 바뀌면 '반영될 설정' 요약이 따라온다
+    bindCutEditor("ce",{sheet:sheet, srcs:srcs, need:(md.duration||0)}, null);
+    // ★표지(오프닝 훅) 편집기 — 나레이션형과 동일 기능. 쇼츠라 '썸네일만 다시'는 두지 않는다.
+    if(document.getElementById("coverbox"))bindCoverEditor(sheet, "cevid", null, null);
+    restoreEdits(rec,"ce");                      // 지난 설정 복원(초기화 방지)
+    const _ap=document.getElementById("applyedits");
+    if(_ap)_ap.onclick=()=>{
+      const inp=allEditInputs("ce");
+      if(!Object.keys(inp).length){banner("표지나 구간 중 최소 하나는 지정하세요.","err");return;}
+      let note="";
+      if(!inp.cut_specs) note="\\n\\n※ 구간(2단계)이 비어 있어 구간은 자동으로 잡습니다.";
+      else if(!inp.cover) note="\\n\\n※ 표지(1단계)가 비어 있어 표지는 자동으로 고릅니다.";
+      if(!confirm("정한 표지·구간 설정으로 이 회차를 다시 만듭니다(같은 번호 덮어쓰기)."+note+"\\n진행할까요?"))return;
       regen(id,"video",inp);
-    });
+    };
+    editSummary(rec,"ce");
   })();
   const shBtn=document.getElementById("shup");
   if(shBtn)shBtn.onclick=()=>uploadShort(id);
