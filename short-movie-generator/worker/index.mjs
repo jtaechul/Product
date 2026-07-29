@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-27-8 (화면 구성 선택: 꽉 채우기·정방형·좌우 전체)";
+const BUILD="v2026-07-27-9 (구획 설정 화면이 사라지던 문제 수정)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -900,7 +900,10 @@ function coverEditorHTML(){
       '<input id="cvat" placeholder="초(예: 12.3)" inputmode="decimal" style="'+CE_INP+'">'+
       '<button class="mini" id="cvhere" style="'+CE_BTN+'">지금 이 장면</button>'+
     '</div>'+
-    '<div id="cvstage" style="position:relative;width:100%;background:#000;border-radius:10px;overflow:hidden;touch-action:none">'+
+    // 표지 편집기도 같은 이유로 기본 비율·최소 높이를 준다(시트 없어도 화면이 사라지지 않게)
+    '<div id="cvstage" style="position:relative;width:100%;aspect-ratio:16/9;min-height:170px;'+
+      'background:#0b1622 repeating-linear-gradient(45deg,#0e1a26 0 10px,#0b1622 10px 20px);'+
+      'border-radius:10px;overflow:hidden;touch-action:none">'+
       '<img id="cvframe" style="width:100%;display:block;opacity:.85">'+
       '<div id="cvbox" style="position:absolute;border:2px solid var(--cy);box-shadow:0 0 0 9999px rgba(0,0,0,.45);border-radius:4px"></div>'+
     '</div>'+
@@ -1015,7 +1018,13 @@ function coverInputs(){
 }
 function cvShow(){
   const st=cvState(), stage=document.getElementById("cvstage"), img=document.getElementById("cvframe");
-  if(!stage||!st.sheet) return;
+  if(!stage) return;
+  if(img)img.style.visibility="hidden";
+  if(!st.sheet){                       // ★시트 없음 → 원본 재생 화면으로 대체 후에도 사각형은 보인다
+    grabStageFrame("ncvid", "cvstage");
+    cvDraw();
+    return;
+  }
   const k=Math.max(0,Math.min(st.sheet.n-1, Math.round((st.at||0)/st.sheet.step)));
   const cx=k%st.sheet.cols, cy=Math.floor(k/st.sheet.cols);
   stage.style.backgroundImage="url("+prox(st.sheet.url)+")";
@@ -1049,7 +1058,7 @@ function bindCoverEditor(sheet, srcVidId, onThumb, onAll){
   const strip=document.getElementById("cvstrip");
   if(strip){
     if(!sheet){ strip.innerHTML='<div class="hint">프레임 사진이 아직 없습니다 — <b>소싱하기</b>를 한 번 돌리면 만들어집니다. '+
-      '그동안은 위 칸에 초를 직접 적어도 됩니다.</div>'; }
+      '그동안은 위 칸에 초를 직접 적고, <b>원본을 재생해 원하는 장면에서 멈추면</b> 그 화면으로 구획을 정할 수 있습니다.</div>'; }
     else{
       let h='';
       for(let k=0;k<sheet.n;k++){
@@ -1066,6 +1075,9 @@ function bindCoverEditor(sheet, srcVidId, onThumb, onAll){
         cvShow(); banner("표지 시각 "+sec+"초 선택","ok");};});
     }
   }
+  // 표지 편집기도 프레임 사진이 없으면 재생 화면으로 대체한다(같은 이유)
+  const _sv=document.getElementById(srcVidId);
+  if(_sv&&!sheet)["loadeddata","seeked","pause"].forEach(ev=>_sv.addEventListener(ev,()=>cvShow()));
   const here=document.getElementById("cvhere");
   if(here)here.onclick=()=>{const v=document.getElementById(srcVidId);
     const t=Math.round(((v&&v.currentTime)||0)*10)/10;
@@ -1194,7 +1206,12 @@ function cutEditorHTML(pfx){
       '<div class="hint">프레임 사진 불러오는 중…</div></div>'+
     rows+
     '<div class="hint" style="margin:8px 0 2px">잘라낼 부분 — <b>사각형 안이 그대로 영상이 됩니다</b>. 끌어서 옮기고, 아래 막대로 크기를 바꾸세요(오른쪽 끝=원본 높이 전체)</div>'+
-    '<div id="'+pfx+'stage" style="position:relative;width:100%;background:#000;border-radius:10px;overflow:hidden;touch-action:none">'+
+    // ★★기본 비율·최소 높이 필수(운영자 지적 · 절대 회귀 금지 · 실사고): 예전엔 높이를 주는 곳이
+    //   ceShowFrame뿐이었는데 그 함수가 **프레임 사진(시트)이 없으면 그냥 return** 해서, 시트가 없는
+    //   회차에선 이 칸의 높이가 0이 되어 **구획 설정 화면이 통째로 사라졌다**(사각형도 안 보임).
+    '<div id="'+pfx+'stage" style="position:relative;width:100%;aspect-ratio:16/9;min-height:170px;'+
+      'background:#0b1622 repeating-linear-gradient(45deg,#0e1a26 0 10px,#0b1622 10px 20px);'+
+      'border-radius:10px;overflow:hidden;touch-action:none">'+
       '<img id="'+pfx+'frame" style="width:100%;display:block;opacity:.85">'+
       '<div id="'+pfx+'box" style="position:absolute;border:2px solid var(--cy);box-shadow:0 0 0 9999px rgba(0,0,0,.45);border-radius:4px"></div>'+
     '</div>'+
@@ -1207,7 +1224,8 @@ async function ceLoadSheet(pfx, sheet){
   const st=ceState(pfx); st.sheet=sheet;
   const strip=document.getElementById(pfx+"strip"); if(!strip) return;
   if(!sheet){ strip.innerHTML='<div class="hint">프레임 사진이 아직 없습니다 — <b>소싱하기</b>를 한 번 돌리면 만들어집니다. '+
-    '그동안은 아래 칸에 초를 직접 입력해도 됩니다.</div>'; return; }
+    '그동안은 아래 칸에 초를 직접 입력하고, <b>원본을 재생해 원하는 장면에서 멈추면</b> 그 화면이 '+
+    '아래 <b>잘라낼 부분</b>에 뜹니다(구획은 그대로 지정할 수 있습니다).</div>'; return; }
   const cell=Math.round(100/sheet.cols*10)/10;
   let h='';
   for(let k=0;k<sheet.n;k++){
@@ -1243,9 +1261,32 @@ function ceTapTile(pfx, k){
   ceShowFrame(pfx); ceRender(pfx);
 }
 // 선택한 컷의 시작 장면을 크게 띄우고 사각형을 얹는다.
+// ★프레임 사진(시트)이 없을 때의 대비책: 재생 중인 원본에서 **현재 화면을 그대로 떠서** 스테이지
+//   배경으로 쓴다(영상은 워커 프록시 경유 = 같은 출처라 캔버스 사용 가능). 재생이 안 되는 형식이면
+//   격자 배경 그대로 두고, 사각형은 어떤 경우에도 보이게 한다.
+function grabStageFrame(videoId, stageId){
+  try{
+    const v=document.getElementById(videoId), stage=document.getElementById(stageId);
+    if(!v||!stage||!v.videoWidth) return false;
+    const c=document.createElement("canvas");
+    c.width=v.videoWidth; c.height=v.videoHeight;
+    c.getContext("2d").drawImage(v,0,0,c.width,c.height);
+    stage.style.backgroundImage="url("+c.toDataURL("image/jpeg",0.8)+")";
+    stage.style.backgroundSize="100% 100%";
+    stage.style.backgroundPosition="0% 0%";
+    stage.style.aspectRatio=(v.videoWidth+"/"+v.videoHeight);
+    return true;
+  }catch(e){ return false; }
+}
 function ceShowFrame(pfx){
   const st=ceState(pfx), img=document.getElementById(pfx+"frame");
-  if(!img||!st.sheet) return;
+  if(img)img.style.visibility="hidden";
+  if(!st.sheet){                       // ★시트 없음 → 재생 중인 원본 화면으로 대체(그래도 화면은 보인다)
+    grabStageFrame(pfx+"vid", pfx+"stage");
+    ceDrawBox(pfx);
+    return;
+  }
+  if(!img) return;
   const k=Math.max(0, Math.min(st.sheet.n-1, Math.round((ceVal(pfx,st.sel,"a")||0)/st.sheet.step)));
   const cx=k%st.sheet.cols, cy=Math.floor(k/st.sheet.cols);
   img.src=""; // 시트를 배경으로 쓰는 대신 stage 배경으로 표시
@@ -1340,7 +1381,10 @@ function bindCutEditor(pfx, opt, onGo){
       v.src=prox(list[ci]); v.load(); };
     v.onloadedmetadata=()=>{ st.srcDur=v.duration||0;
       const el=document.getElementById(pfx+"info");
-      if(el)el.innerHTML="원본 길이 <b>"+(v.duration||0).toFixed(1)+"초</b> · 재생하다가 아래 <b>여기 시작 / 여기 끝</b>을 누르세요.";};
+      if(el)el.innerHTML="원본 길이 <b>"+(v.duration||0).toFixed(1)+"초</b> · 재생하다가 아래 <b>여기 시작 / 여기 끝</b>을 누르세요.";
+      ceShowFrame(pfx);};
+    // ★프레임 사진이 없을 때를 위해, 영상이 준비/이동/멈출 때마다 그 화면을 구획 편집기에 띄운다
+    ["loadeddata","seeked","pause"].forEach(ev=>v.addEventListener(ev,()=>ceShowFrame(pfx)));
     v.onerror=()=>{ci++;play();};
     play();
   }
