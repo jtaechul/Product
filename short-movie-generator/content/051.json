@@ -1,7 +1,7 @@
 {
   "id": "051",
   "created_at": "2026-07-29T10:53:52+00:00",
-  "updated_at": "2026-07-29T10:53:52+00:00",
+  "updated_at": "2026-07-29T13:47:43+00:00",
   "status": "published",
   "category": "marine_life",
   "series": "海の生き物 図鑑",
@@ -19,24 +19,24 @@
     ]
   },
   "reels": {
-    "hook": "極細の、足だけ骨も、目もない？",
-    "caption": "極細の、足だけ骨も、目もない？\n\nアノプロダクティルスウミグモ(学名: Anoplodactylus lentus)。\n歩く・透明・極細、海のクモ。\n海の中で、たしかに命をつないでいる一種です。\n\n心に残ったら保存を。\n同じ海が気になる人へシェアを。\n\n海には、まだ名前のついていない生き物が数多く暮らしています。\nこの映像は実際の海の観測記録から。演出のための作り物ではありません。\n水の底の世界は、地球でいちばん探索が進んでいない場所のひとつです。\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。\n\n映像: Wikipedia (en) · 상위 분류군",
+    "hook": "まるで、クモ。海を、さまよう足。",
+    "caption": "まるで、クモ。海を、さまよう足。\n\nアノプロダクティルス・レントゥス(学名: Anoplodactylus lentus)。\n細い・長い・足、異形のウミグモ。\n海の中で、たしかに命をつないでいる一種です。\n\n心に残ったら保存を。\n同じ海が気になる人へシェアを。\n\n海には、まだ名前のついていない生き物が数多く暮らしています。\nこの映像は実際の海の観測記録から。演出のための作り物ではありません。\n水の底の世界は、地球でいちばん探索が進んでいない場所のひとつです。\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。\n\n映像: Wikipedia (en) · 상위 분류군",
     "hashtags": [
-      "#アノプロダクティルスウミグモ",
+      "#アノプロダクティルス・レントゥス",
       "#海の生き物"
     ],
-    "reveal_name": "アノプロダクティルスウミグモ / Anoplodactylus lentus",
-    "reveal_fact": "歩く・透明・極細、海のクモ",
+    "reveal_name": "アノプロダクティルス・レントゥス / Anoplodactylus lentus",
+    "reveal_fact": "細い・長い・足、異形のウミグモ",
     "hook_ko": "",
     "caption_ko": "Anoplodactylus lentus, 이름을 들어보셨나요?\n\nAnoplodactylus lentus(학명: Anoplodactylus lentus).\nPhoxichilidiidae is a family of sea spiders.\nAbout 150 species are described, almost all in the genus Anoplodactylus Wilson, 1878.\n\n마음이 복잡한 날, 다시 꺼내보고 싶다면 저장해 두세요.\n같은 바다가 궁금한 사람에게 조용히 건네주세요.\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.\n\n영상: Wikipedia (en) · 상위 분류군",
     "hashtags_ko": [
       "#Anoplodactylus lentus",
       "#해양생물"
     ],
-    "yt_title": "なぜ極細の、足だけ骨も、目もないのか。アノプロダクティルスウミグモ #アノプロダクティルスウミグモ #海の生き物",
+    "yt_title": "なぜまるで、クモ。海を、さまよう足のか。アノプロダクティルス・レントゥス #アノプロダクティルス・レントゥス #海の生き物",
     "yt_title_ko": "Anoplodactylus lentus는 왜? #Anoplodactylus lentus #해양생물",
     "visualizer": "reels",
-    "video_file": "anoplodactylus_lentus_20260729_105351.mp4"
+    "video_file": "anoplodactylus_lentus_20260729_134743.mp4"
   },
   "source": {
     "image_credit": "",
@@ -48,7 +48,7 @@
   },
   "media": {
     "video_url": "https://github.com/jtaechul/Product/releases/download/content-051/reels_051.mp4",
-    "rev": "30444774167",
+    "rev": "30456907602",
     "cover_url": "https://github.com/jtaechul/Product/releases/download/content-051/cover_051.jpg",
     "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-051/ytthumb_051.jpg"
   },

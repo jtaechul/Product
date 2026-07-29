@@ -323,6 +323,14 @@
     "date": "2026-07-27"
   },
   {
+    "id": "051",
+    "kind": "reels",
+    "common_name_ko": "Anoplodactylus lentus",
+    "common_name_en": "Anoplodactylus lentus",
+    "scientific_name": "Anoplodactylus lentus",
+    "date": "2026-07-29"
+  },
+  {
     "id": "lf-3",
     "kind": "longform",
     "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
@@ -364,15 +372,6 @@
     "youtube_url": "https://youtu.be/-1gfSI8n26Y"
   },
   {
-    "id": "nv-30271244653",
-    "kind": "narrate",
-    "yt_title": "なめらかなマントルが",
-    "yt_title_ko": "부드러운 외투막이",
-    "mode": "shorts",
-    "date": "2026-07-28",
-    "has_video": true
-  },
-  {
     "id": "nv-30200041879",
     "kind": "narrate",
     "yt_title": "静かな海面を、黄色い船が進んでいきます",
@@ -383,14 +382,6 @@
     "youtube_url": "https://youtu.be/m2Q5xk-bifo"
   },
   {
-    "id": "051",
-    "kind": "reels",
-    "common_name_ko": "Anoplodactylus lentus",
-    "common_name_en": "Anoplodactylus lentus",
-    "scientific_name": "Anoplodactylus lentus",
-    "date": "2026-07-29"
-  },
-  {
     "id": "nv-30223591884",
     "kind": "narrate",
     "yt_title": "【沈没船】ジョセフ・エス・ベイ：ブイの下",
@@ -399,5 +390,14 @@
     "date": "2026-07-29",
     "has_video": true,
     "youtube_url": "https://youtu.be/I0ayqekAghw"
+  },
+  {
+    "id": "nv-30271244653",
+    "kind": "narrate",
+    "yt_title": "なめらかなマントルが",
+    "yt_title_ko": "부드러운 외투막이",
+    "mode": "shorts",
+    "date": "2026-07-28",
+    "has_video": true
   }
 ]
