@@ -139,7 +139,8 @@ def _now_iso() -> str:
 def write_record(base_dir: str, content_id: str, *, info, caption, asset,
                  visualizer: str, video_file: str, series_title: str = "",
                  scope: str = "all", post: dict | None = None, category: str = "",
-                 subs: list | None = None) -> str:
+                 subs: list | None = None, applied: dict | None = None,
+                 edit: dict | None = None) -> str:
     """제작 성공분을 content/<id>.json에 기록(병합). scope로 갱신 범위 표시(caption/images/video/all).
 
     반환: 기록된 파일 경로(str).
@@ -156,6 +157,14 @@ def write_record(base_dir: str, content_id: str, *, info, caption, asset,
     # ★자막 스크립트(운영자 요청 · 나레이션형과 동일 형식): [{s,e,jp,ko}] — 관리자 상세에서 표로 확인.
     if subs:
         rec["subs"] = subs
+    # ★도감형도 나레이션형과 **같은 근거**를 남긴다(운영자 확정 · 실사고 #050):
+    #   applied = 완성본에 실제로 들어간 표지·컷(화면의 "실제로 반영된 설정")
+    #   edit    = 운영자가 지정한 값(다음에 이 화면을 열면 그대로 복원)
+    #   이게 없으면 "내가 정한 대로 나왔는지"를 화면에서 확인할 방법이 없었다.
+    if applied:
+        rec["applied"] = applied
+    if edit:
+        rec["edit"] = edit
     rec["species"] = {
         "common_name_ko": info.common_name_ko,
         "common_name_en": info.common_name_en,

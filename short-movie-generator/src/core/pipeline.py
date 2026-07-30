@@ -10,6 +10,7 @@
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
 import shutil
@@ -233,6 +234,65 @@ def _probe_duration(path: str) -> float:
         return float(r.stdout.strip())
     except Exception:  # noqa: BLE001
         return 0.0
+
+
+def clean_source(src: str, out: str, body_dur: float, *, op_edit: bool = False,
+                 logo_box=None) -> str:
+    """워터마크 QC를 거친 '깨끗한 소스'를 만든다(도감형 본문의 재료).
+
+    ★★★운영자가 구간(cut_specs)·표지(cover)를 지정했으면 **시간축을 절대 건드리지 않는다**
+      (운영자 확정 · 절대 회귀 금지 · 실사고 "#050 바티노무스: 지정한 표지·구간이 아니라 엉뚱한
+       곳이 나오고, 고르지 않은 구획이 노출된다").
+
+      원인: 이 단계가 워터마크(크레딧 슬레이트) 회피를 위해 원본을
+        **-ss(시작 이동) + -t(앞부분만 남기기)** 로 다시 떠서 '깨끗한 소스'를 만들었고,
+        이후 리프레임·표지·엔드카드가 모두 이 **잘린 파일**을 썼다. 운영자가 관리자 화면에서
+        고른 초는 **자르지 않은 원본** 기준이므로
+          ① 시작 이동(wm.start)만큼 전 구간이 통째로 밀리고
+          ② 지정 초가 남긴 길이(본문+10초) 밖이면 아예 사라져 자동 선택으로 대체됐다
+             (= 고르지도 않은 구획이 화면에 나온 이유).
+        앞서 `fetch_footage(skip_trim=)`로 한 번 막았지만 **여기서 두 번째로** 잘리고 있었다.
+
+      조치: 운영자 지정이 있으면 시작 이동·길이 자르기·강제 16:9 스케일을 모두 생략하고
+        **delogo만** 건다(로고 제거는 시간축을 바꾸지 않는다). 원본 해상도·비율도 그대로 둬
+        '좌우 전체' 구획이 편집기와 같은 비율로 잡히게 한다.
+    """
+    from src.core import watermark_qc as WQ
+    src_dur = _probe_duration(src) or (body_dur + 10)
+    wm = WQ.plan(src, 0.0, (src_dur if op_edit else body_dur + 10),
+                 extra_boxes=[logo_box] if logo_box else None)
+    if op_edit:
+        sw, sh = _probe_wh(src)
+        chain = WQ.delogo_chain(wm["boxes"], sw or 1280, sh or 720)
+        if wm.get("dirty"):
+            log.warning("[reels] 운영자 지정 편집 → 슬레이트 회피(시작 이동)를 생략합니다"
+                        "(지정한 시각을 그대로 지키기 위함): 슬레이트 %d초", len(wm["dirty"]))
+        cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", src]
+        if chain:
+            cmd += ["-vf", chain]
+        cmd += ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-an", out]
+        subprocess.run(cmd, check=True)
+        log.info("[reels] 운영자 지정 편집 → 원본 시간축 유지(길이 %.1f초 · 시작 이동 없음)", src_dur)
+        return out
+    chain = WQ.delogo_chain(wm["boxes"], 1280, 720)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{wm['start']:.2f}",
+                    "-i", src, "-t", f"{body_dur + 10:.2f}",
+                    "-vf", "scale=1280:720,setsar=1" + (("," + chain) if chain else ""),
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-an", out],
+                   check=True)
+    return out
+
+
+def _probe_wh(path: str) -> tuple[int, int]:
+    """원본 가로·세로(픽셀). 실패하면 (0, 0) — 호출부가 기본값으로 대체한다."""
+    r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+                        "stream=width,height", "-of", "csv=s=x:p=0", path],
+                       capture_output=True, text=True)
+    try:
+        w, h = (r.stdout or "").strip().split("x")[:2]
+        return int(w), int(h)
+    except Exception:  # noqa: BLE001
+        return 0, 0
 
 
 # ★쇼츠 길이 규칙(기획서: 40초 내외). 본문 나레이션이 길면 총 길이가 1분을 넘는다(소싱 종 LLM 본문이
@@ -462,16 +522,8 @@ def run_reels(
         # 2.5) ★워터마크 QC(하드룰 #9): 원본을 1초 간격 OCR 스캔 → 크레딧 슬레이트 초는 회피하고
         #      탐지된 로고/URL은 delogo한 '깨끗한 소스'를 먼저 만든다. 이후 모든 단계(리프레임·
         #      오프닝 배경·엔드카드 피사체)는 이 깨끗한 소스만 쓴다(좌표 하드코딩 logo_box 의존 폐기).
-        from src.core import watermark_qc as WQ
-        wm = WQ.plan(fv["path"], 0.0, body_dur + 10,
-                     extra_boxes=[fv["logo_box"]] if fv.get("logo_box") else None)
-        clean = str(work_dir / "footage_clean.mp4")
-        chain = WQ.delogo_chain(wm["boxes"], 1280, 720)
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{wm['start']:.2f}",
-                        "-i", fv["path"], "-t", f"{body_dur + 10:.2f}",
-                        "-vf", "scale=1280:720,setsar=1" + (("," + chain) if chain else ""),
-                        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-an", clean],
-                       check=True)
+        clean = clean_source(fv["path"], str(work_dir / "footage_clean.mp4"),
+                             body_dur, op_edit=_op_edit, logo_box=fv.get("logo_box"))
         fv = {**fv, "path": clean, "logo_box": None}
 
         # 3) 9:16 추적 리프레임 + 틸 그레이딩(본문 길이)
@@ -697,10 +749,28 @@ def run_reels(
         log.warning("[reels] 유튜브 썸네일 배치 생략: %s", e)
     if hasattr(category, "log_catalog"):
         category.log_catalog(episode, info)
+    # ★운영자 지정값(edit)과 **실제 반영 내역**(applied)을 레코드에 남긴다(운영자 확정 · 실사고 #050
+    #   "지정한 표지·구간이 아니라 엉뚱한 곳이 나온다"). 나레이션형과 같은 근거를 도감형에도 둔다:
+    #   applied는 완성본에 들어간 값이라 화면에서 "내 설정이 정말 먹었는지"를 바로 구분할 수 있다.
+    _edit = {k: str(_man.get(k) or "") for k in ("cut_specs", "cover", "fit") if _man.get(k)}
+    _applied: dict = {}
+    if _cover:
+        _applied["cover"] = {k: _cover.get(k) for k in ("at", "zoom", "x", "y", "fit")}
+    _mfit = str(_man.get("fit") or "").strip().lower()
+    if _mfit in ("square", "full"):
+        _applied["fit"] = _mfit
+    try:
+        _ac = json.loads((work_dir / "rf" / "applied_cuts.json").read_text(encoding="utf-8"))
+        if _ac.get("cuts"):
+            _applied["cuts"] = _ac["cuts"]
+            _applied["cuts_manual"] = bool(_ac.get("manual"))
+    except Exception:  # noqa: BLE001
+        pass
     try:
         content_store.write_record(base_dir, f"{int(episode):03d}", info=info, caption=caption,
                                    asset=None, visualizer="reels", video_file=result.video_path,
-                                   series_title=series_title, scope="all", category=category_id)
+                                   series_title=series_title, scope="all", category=category_id,
+                                   applied=_applied or None, edit=_edit or None)
     except Exception as e:  # noqa: BLE001
         log.warning("[reels] 레코드 기록 실패(무시): %s", e)
     return result
