@@ -323,14 +323,6 @@
     "date": "2026-07-27"
   },
   {
-    "id": "051",
-    "kind": "reels",
-    "common_name_ko": "Anoplodactylus lentus",
-    "common_name_en": "Anoplodactylus lentus",
-    "scientific_name": "Anoplodactylus lentus",
-    "date": "2026-07-29"
-  },
-  {
     "id": "lf-3",
     "kind": "longform",
     "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
@@ -399,5 +391,14 @@
     "mode": "shorts",
     "date": "2026-07-28",
     "has_video": true
+  },
+  {
+    "id": "051",
+    "kind": "reels",
+    "common_name_ko": "Anoplodactylus lentus",
+    "common_name_en": "Anoplodactylus lentus",
+    "scientific_name": "Anoplodactylus lentus",
+    "date": "2026-07-30",
+    "youtube_url": "https://youtu.be/qIVVFowq98A"
   }
 ]
