@@ -315,14 +315,6 @@
     "youtube_url": "https://youtu.be/RH3pySzSLYo"
   },
   {
-    "id": "050",
-    "kind": "reels",
-    "common_name_ko": "바티노무스속",
-    "common_name_en": "Bathynomus",
-    "scientific_name": "Bathynomus",
-    "date": "2026-07-27"
-  },
-  {
     "id": "lf-3",
     "kind": "longform",
     "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
@@ -400,5 +392,13 @@
     "scientific_name": "Anoplodactylus lentus",
     "date": "2026-07-30",
     "youtube_url": "https://youtu.be/qIVVFowq98A"
+  },
+  {
+    "id": "050",
+    "kind": "reels",
+    "common_name_ko": "바티노무스속",
+    "common_name_en": "Bathynomus",
+    "scientific_name": "Bathynomus",
+    "date": "2026-07-30"
   }
 ]
