@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-31-1 (확보 영상 목록 화면 추가)";
+const BUILD="v2026-07-31-2 (소싱 인벤토리에 확보 종 표시)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -1676,11 +1676,31 @@ async function loadCandidates(cat,mode){
   const base="short-movie-generator/src/categories/"+cat+"/"+cat+"_";
   el.innerHTML='<div class="hint">목록 확인 중…</div>';
   async function get(sfx){try{const t=await fetchRaw(base+sfx+".json");const a=JSON.parse(t);return Array.isArray(a)?a:[];}catch(e){return [];}}
-  const [vids,imgs]=await Promise.all([get("candidates"),get("image_only")]);
-  const arr=isImg?imgs:vids;
+  // ★확보 완료(제작 가능) 목록도 **같은 인벤토리에** 넣는다(운영자 확정 · 실사고).
+  //   예전엔 승인대기 후보(candidates)만 보여줘, 실제로 **바로 제작 가능한** 종(discovered)이
+  //   화면에 하나도 안 나왔다 → 운영자는 "확보했다는데 어디서 보나?"가 됐고, 별도 메뉴로 빼려던 것도
+  //   잘못이었다. 제작이 실제로 집어가는 목록을 그대로 보여준다.
+  async function getDisc(){
+    try{
+      const t=await fetchRaw("short-movie-generator/src/categories/"+cat+"/discovered.json");
+      const a=JSON.parse(t); return Array.isArray(a)?a:[];
+    }catch(e){ return []; }
+  }
+  const [vids,imgs,disc]=await Promise.all([get("candidates"),get("image_only"),getDisc()]);
+  // discovered → 후보 카드와 같은 모양으로 변환(그대로 한 목록에 섞어 보여준다)
+  const ready=disc.filter(d=>d&&d.footage&&d.footage.url).map(d=>{
+    const sp=d.species||{};
+    return {key:d.key, name:sp.scientific_name||d.key,
+            common_name_ko:sp.common_name_ko||sp.common_name_en||"",
+            depth:String(sp.depth_range_m||"").replace(/[^\d\-~]/g,""),
+            license:d.footage.license||"", facts:sp.fun_facts||[],
+            kind:d.kind||"", _ready:true};
+  });
+  const seen=new Set(vids.map(v=>String(v.key||v.name||"").toLowerCase()));
+  const arr=isImg?imgs:ready.filter(r=>!seen.has(String(r.key).toLowerCase())).concat(vids);
   const tabBtn=(m,label,n,on)=>'<button class="stab" data-mode="'+m+'" style="flex:1;padding:8px 6px;border:1px solid '+(on?'var(--cy)':'#2a3550')+';background:'+(on?'rgba(90,200,245,.14)':'transparent')+';color:'+(on?'var(--cy)':'var(--gy)')+';border-radius:8px;font-weight:'+(on?'700':'500')+';cursor:pointer">'+label+' <b>'+n+'</b></button>';
   const tabs='<div style="display:flex;gap:8px;margin:2px 0 10px">'+
-      tabBtn("video","영상+이미지 확보",vids.length,!isImg)+
+      tabBtn("video","영상+이미지 확보",ready.length+vids.length,!isImg)+
       tabBtn("image","이미지전용(영상없음)",imgs.length,isImg)+'</div>';
   const desc=isImg
     ?'<div class="hint" style="margin:-4px 0 8px">영상이 <b>전혀 없어</b> 사진(4장↑) 다큐로만 만들 수 있는 소스입니다. 자동 제작 풀에서 <b>제외·별도 보관</b> 중이며, 참고·수동 제작용으로만 봅니다.</div>'
@@ -1698,7 +1718,10 @@ async function loadCandidates(cat,mode){
     // 소싱 종류 배지(영상 확보 vs 이미지전용) — 두 그룹을 카드에서도 구분.
     const badge=isImg
       ?'<span style="display:inline-block;background:rgba(240,180,60,.18);color:#f0b43c;border:1px solid #6a5320;border-radius:6px;padding:1px 7px;font-size:11px">이미지전용·영상없음</span>'
-      :'<span style="display:inline-block;background:rgba(90,200,120,.16);color:#5ac878;border:1px solid #2c5a3a;border-radius:6px;padding:1px 7px;font-size:11px">영상 확보</span>';
+      :(c._ready
+        // ★확보 완료 = 실사 영상이 이미 붙어 있어 **지금 바로** 제작 가능한 대상(승인대기 후보와 구분)
+        ?'<span style="display:inline-block;background:rgba(90,200,245,.18);color:var(--cy);border:1px solid #2c5570;border-radius:6px;padding:1px 7px;font-size:11px">확보 완료 · 바로 제작</span>'
+        :'<span style="display:inline-block;background:rgba(90,200,120,.16);color:#5ac878;border:1px solid #2c5a3a;border-radius:6px;padding:1px 7px;font-size:11px">영상 확보</span>');
     const src=isImg
       ?(c.photo_count?('<div class="cmeta" style="font-size:11px">사진 '+esc(String(c.photo_count))+'장 확보'+(c.video_note?(' · '+esc(c.video_note)):'')+'</div>'):'')
       :(c.video_source?('<div class="cmeta" style="font-size:11px;color:var(--gy)">영상: '+esc(String(c.video_source).slice(0,60))+'</div>'):'');
@@ -2417,7 +2440,7 @@ async function pubRead(url){
   //   눈으로 정하려면 원본을 재생해야 하므로 이 파일 읽기를 허용한다(읽기 전용 · 공개 저장소 경로).
   // ★확보된 심해 영상 목록(noaa_clips.json)도 읽기 허용 — 관리자 화면 '확보 영상' 목록의 원본.
   //   파이썬(제작)과 **같은 파일**을 읽으므로 화면에 보이는 것 = 실제로 제작에 쓰이는 것.
-  if(!/^short-movie-generator\/(content\/[\w.\-]+\.json|src\/categories\/_video_cache\.json|src\/categories\/deep_sea\/catalog\.json|src\/data\/noaa_clips\.json|src\/categories\/[\w\-]+\/[\w\-]+_(candidates|image_only)\.json)$/.test(path))
+  if(!/^short-movie-generator\/(content\/[\w.\-]+\.json|src\/categories\/_video_cache\.json|src\/categories\/deep_sea\/catalog\.json|src\/data\/noaa_clips\.json|src\/categories\/[\w\-]+\/discovered\.json|src\/categories\/[\w\-]+\/[\w\-]+_(candidates|image_only)\.json)$/.test(path))
     return j({error:"path not allowed"}, 403);
   // ★현행화 지연 수정(운영자 지적: 재생성 완료 텔레그램 받았는데 관리자 페이지가 한참 뒤에 갱신):
   //   raw.githubusercontent.com은 경로 기준 CDN 캐시(~5분)가 있어, 재생성 커밋이 올라와도 옛 JSON을

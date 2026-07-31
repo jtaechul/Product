@@ -1,546 +1,893 @@
 [
-  {
-    "key": "rimicaris exoculata",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/4/4a/Fond_abyssal_%28Ifremer_00701-81314%29.webm",
-      "license": "cc-by",
-      "credit": "Ifremer · CC BY",
-      "source": "File:Fond abyssal (Ifremer 00701-81314).webm"
-    },
-    "species": {
-      "scientific_name": "Rimicaris exoculata",
-      "common_name_ko": "vent shrimp",
-      "common_name_en": "vent shrimp",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Rimicaris exoculata, commonly known as the 'blind shrimp', is a species of shrimp.",
-        "It thrives on active hydrothermal edifices at deep-sea vents of the Mid-Atlantic Ridge.",
-        "This species belongs to the Alvinocarididae family of shrimp, named after the DSV Alvin, the vessel that collected the original samples described by M.",
-        "Christoffersen in 1986.",
-        "The genus name Rimicaris is composed of rima (Latin for \"rift\" or \"fissure\", referring to the Mid-Atlantic Ridge) + karis (\"shrimp\" in Greek), while the species epithet benign is Latin for \"rendered eyeless\", referring to the highly modified, non-image-forming eyes."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Fond abyssal (Ifremer 00701-81314).webm)"
-      ]
-    }
+ {
+  "key": "rimicaris exoculata",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/4/4a/Fond_abyssal_%28Ifremer_00701-81314%29.webm",
+   "license": "cc-by",
+   "credit": "Ifremer · CC BY",
+   "source": "File:Fond abyssal (Ifremer 00701-81314).webm"
   },
-  {
-    "key": "peltospira smaragdina",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Peltospira_smaragdina_gastropod_assemblage_at_the_Y3_site_in_the_Lucky_Strike_vent_field_%28MAR%29_%28Ifremer_00775-88699%29.webm",
-      "license": "cc-by",
-      "credit": "Jozée Sarrazin / Mathilde Cannat / Pierre-Marie Sarradin · CC BY",
-      "source": "File:Peltospira smaragdina gastropod assemblage at the Y3 site in the Lucky Strike vent field (MAR) (Ifremer 00775-88699).webm"
-    },
-    "species": {
-      "scientific_name": "Peltospira smaragdina",
-      "common_name_ko": "Peltospira smaragdina",
-      "common_name_en": "Peltospira smaragdina",
-      "depth_range_m": "870-3520",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Peltospira smaragdina is a species of sea snail, a marine gastropod mollusk in the family Peltospiridae."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Peltospira smaragdina gastropod assemblage at the Y3 site in the Lucky Strike vent field (MAR) (Ifremer 00775-88699).webm)"
-      ]
-    },
-    "depth": "870-3520"
-  },
-  {
-    "key": "pycnogonida",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/c/c8/Sea_spider_%28Pantopoda_or_pycnogonids%29.webm",
-      "license": "cc-by",
-      "credit": "Denise King · CC BY",
-      "source": "File:Sea spider (Pantopoda or pycnogonids).webm"
-    },
-    "species": {
-      "scientific_name": "Pycnogonida",
-      "common_name_ko": "바다거미목",
-      "common_name_en": "Pycnogonida",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "ウミグモ綱（ウミグモこう、学名: Pycnogonida）は、鋏角類に属する節足動物の分類群（綱）の1つ。構成種はウミグモ（海蜘蛛、ウミグモ類）と総称される。その多くは胴体が小さく、体の大部分が脚という独特な姿をした海棲動物である。名前と大まかな姿が似ているが、クモではない。",
-        "約1,400種を知られ、最古の化石記録はおよそ5億年前のカンブリア紀まで遡る。現生種は皆脚目（かいきゃくもく、Pantopoda）のみからなる。世界中の海域に広く分布するが、その生態と系統に関しては未解明な所が多い。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Sea spider (Pantopoda or pycnogonids).webm)"
-      ]
-    }
-  },
-  {
-    "key": "duobrachium sparksae",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/First_footage_of_Duobrachium_Sparksae.webm",
-      "license": "public-domain",
-      "credit": "NOAA Office of Ocean Exploration and Research",
-      "source": "File:First footage of Duobrachium Sparksae.webm"
-    },
-    "species": {
-      "scientific_name": "Duobrachium sparksae",
-      "common_name_ko": "Duobrachium sparksae",
-      "common_name_en": "Duobrachium sparksae",
-      "depth_range_m": "3910",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Duobrachium is a monotypic genus of comb jellies (Ctenophora) belonging to the order Cydippida, family unknown.",
-        "The only known species is Duobrachium sparksae."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:First footage of Duobrachium Sparksae.webm)"
-      ]
-    },
-    "depth": "3910"
-  },
-  {
-    "key": "crinoidea",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Unidentified_near_Phuket.webm",
-      "license": "cc-by-sa",
-      "credit": "Amada44 · CC BY-SA",
-      "source": "File:Unidentified near Phuket.webm"
-    },
-    "species": {
-      "scientific_name": "Crinoidea",
-      "common_name_ko": "바다나리",
-      "common_name_en": "Crinoidea",
-      "depth_range_m": "6000-9000",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "ウミユリ綱（ウミユリこう、Crinoidea）は棘皮動物門の下位分類群のひとつで、ウミユリ（海百合）やウミシダと呼ばれる海洋性の生物が属する群である。浅海から6,000メートル級の深海まで広く分布する。名称はギリシア語の krinon 'ユリ'＋-oid '〜のようなもの' より。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Unidentified near Phuket.webm)"
-      ]
-    }
-  },
-  {
-    "key": "ridgeia piscesae",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/2/21/Phenotypic-Variation-and-Fitness-in-a-Metapopulation-of-Tubeworms-%28Ridgeia-piscesae-Jones%29-at-pone.0110578.s003.ogv",
-      "license": "cc-by",
-      "credit": "Tunnicliffe V, St. Germain C, Hilario A · CC BY",
-      "source": "File:Phenotypic-Variation-and-Fitness-in-a-Metapopulation-of-Tubeworms-(Ridgeia-piscesae-Jones)-at-pone.0110578.s003.ogv"
-    },
-    "species": {
-      "scientific_name": "Ridgeia piscesae",
-      "common_name_ko": "Ridgeia piscesae",
-      "common_name_en": "Ridgeia piscesae",
-      "depth_range_m": "2190",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "シボグリヌム科 (Siboglinidae) は、環形動物多毛類の科である。ヒゲムシ・ハオリムシ・ホネクイハナムシが属する。以前は有鬚動物（ゆうしゅどうぶつ、Pogonophora）として門の扱いであった（後述）。",
-        "自由生活の左右相称動物でありながら消化管がほぼ完全に欠如しており、栄養は共生細菌より得ている。ハオリムシは浅海や地上の光合成生態系とは独立に、深海底で化学合成に依存する生態系を作り、しかも高密度であることで注目を集める。また、動物分類学の歴史においても興味深い一群で、20世紀初頭の発見当時はシボグリヌム科と名付けられ科の階級に置かれたが、特異な体制が知られるにつれリンネ式分類の階層で3階級引き上げられ、門の地位に置かれた。神経は背側にある解釈で後口動物の1つとされた。しかし、完全な体の発見と分子系統学の研究結果などで環形動物の小グループであることが明らかになり、数十年を経て当初の階級および名称のシボグリヌム科に戻された。背腹も逆に解釈されていたことが判明した。"
-      ],
-      "sources": [
-        "Wikipedia (ja) · 상위 분류군",
-        "Wikimedia Commons (File:Phenotypic-Variation-and-Fitness-in-a-Metapopulation-of-Tubeworms-(Ridgeia-piscesae-Jones)-at-pone.0110578.s003.ogv)"
-      ]
-    }
-  },
-  {
-    "key": "paralomis diomedeae",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/9/99/Methane-Carbon-Flow-into-the-Benthic-Food-Web-at-Cold-Seeps---A-Case-Study-from-the-Costa-Rica-pone.0074894.s001.ogv",
-      "license": "cc-by",
-      "credit": "Niemann H, Linke P, Knittel K, MacPherson E, Boetius A, Bruckmann W, Larvik G, Wallmann K, Schacht U, Omoregie E, Hilton D, Brown K, Rehder G · CC BY",
-      "source": "File:Methane-Carbon-Flow-into-the-Benthic-Food-Web-at-Cold-Seeps---A-Case-Study-from-the-Costa-Rica-pone.0074894.s001.ogv"
-    },
-    "species": {
-      "scientific_name": "Paralomis diomedeae",
-      "common_name_ko": "Paralomis diomedeae",
-      "common_name_en": "Paralomis diomedeae",
-      "depth_range_m": "680-935",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Paralomis diomedeae is a species of king crab.",
-        "It is considered very rare and is known from Peru, the Gulf of Panama, and Costa Rica's Pacific coast at depths of 680–935 m (2,231–3,068 ft)."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Methane-Carbon-Flow-into-the-Benthic-Food-Web-at-Cold-Seeps---A-Case-Study-from-the-Costa-Rica-pone.0074894.s001.ogv)"
-      ]
-    }
-  },
-  {
-    "key": "vampyroteuthis infernalis",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Pu_-_Vampyroteuthis_infernalis_-_2.jpg",
-      "license": "cc-by-sa",
-      "credit": "Emőke Dénes · CC BY-SA",
-      "source": "File:Pu - Vampyroteuthis infernalis - 2.jpg",
-      "media_kind": "photo",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Pu_-_Vampyroteuthis_infernalis_-_2.jpg"
-    },
-    "species": {
-      "scientific_name": "Vampyroteuthis infernalis",
-      "common_name_ko": "흡혈오징어",
-      "common_name_en": "Vampire squid",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "コウモリダコ（蝙蝠蛸、蝙蝠鮹、Vampyroteuthis）は、コウモリダコ目コウモリダコ科に属する、上位分類の定めがたい頭足類。現生するのは V.",
-        "infernalis （ヴァンピロテウティス・インフェルナリス）の1種のみである。",
-        "熱帯・温帯地域の約600mから900mにかけての深海に生息する。体長は約30cm。鰭（ひれ）の付け根には青白い光を発する発光器を4つ備えている。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Pu - Vampyroteuthis infernalis - 2.jpg)"
-      ]
-    }
-  },
-  {
-    "key": "chimaeriformes",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Observation_d%27une_chim%C3%A8re_par_220_m_de_fond_%28Ifremer_00621-73295%29.jpg",
-      "license": "cc-by",
-      "credit": "null · CC BY",
-      "source": "File:Observation d'une chimère par 220 m de fond (Ifremer 00621-73295).jpg",
-      "media_kind": "photo",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Observation_d%27une_chim%C3%A8re_par_220_m_de_fond_%28Ifremer_00621-73295%29.jpg"
-    },
-    "species": {
-      "scientific_name": "Chimaeriformes",
-      "common_name_ko": "은상어목",
-      "common_name_en": "Chimaeriformes",
-      "depth_range_m": "220",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "ギンザメ目（学名：Chimaeriformes）は、軟骨魚綱全頭亜綱（ぜんとうあこう）の下位分類群。3科6属に約50種が含まれ、日本近海には11種が生息している。現在は50種ほどの小さな分類群だが、化石記録によると多様で豊富な分類群であったとされる。板鰓亜綱との共通祖先は約4億年前に存在した。現生種は多くが深海に生息する。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Observation d'une chimère par 220 m de fond (Ifremer 00621-73295).jpg)"
-      ]
-    }
-  },
-  {
-    "key": "pannychia moseleyi",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/4/40/Solaster_feeding_on_Pannychia_moseleyi.jpg",
-      "license": "cc0",
-      "credit": "NOAA/MBARI 2006",
-      "source": "File:Solaster feeding on Pannychia moseleyi.jpg",
-      "media_kind": "photo",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/4/40/Solaster_feeding_on_Pannychia_moseleyi.jpg"
-    },
-    "species": {
-      "scientific_name": "Pannychia moseleyi",
-      "common_name_ko": "Pannychia moseleyi",
-      "common_name_en": "Pannychia moseleyi",
-      "depth_range_m": "400",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Pannychia moseleyi  is a sea cucumber in the family Laetmogonidae.",
-        "It was first described by Johan Hjalmar Théel in 1882.",
-        "It can be up to 200 mm long and 40 mm wide.",
-        "It occurs in the benthic zone at depths greater than 400 m."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Solaster feeding on Pannychia moseleyi.jpg)"
-      ]
-    }
-  },
-  {
-    "key": "grimpoteuthis discoveryi",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Grimpoteuthis_discoveryi.jpg",
-      "license": "public-domain",
-      "credit": "Mike Vecchione, NOAA",
-      "source": "File:Grimpoteuthis discoveryi.jpg",
-      "media_kind": "photo",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Grimpoteuthis_discoveryi.jpg"
-    },
-    "species": {
-      "scientific_name": "Grimpoteuthis discoveryi",
-      "common_name_ko": "Dumbo octopus",
-      "common_name_en": "Dumbo octopus",
-      "depth_range_m": "2600-4870",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Grimpoteuthis discoveryi is a small species of octopus known from more than 50 specimens.",
-        "It was described in 2003, but specimens have been found as early as 1910.",
-        "The type species was found at  49°35'N, 14°01'W, southwest of Ireland."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Grimpoteuthis discoveryi.jpg)"
-      ]
-    }
-  },
-  {
-    "key": "mitsukurina owstoni",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Goblin_shark%2C_Pengo.jpg",
-      "license": "cc-by-sa",
-      "credit": "Wikimedia Commons · CC BY-SA",
-      "source": "File:Goblin shark, Pengo.jpg",
-      "media_kind": "photo",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Goblin_shark%2C_Pengo.jpg"
-    },
-    "species": {
-      "scientific_name": "Mitsukurina owstoni",
-      "common_name_ko": "마귀상어",
-      "common_name_en": "goblin shark",
-      "depth_range_m": "100-2000",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "ミツクリザメ（箕作鮫、学名：Mitsukurina owstoni、英: Goblin shark）は、ネズミザメ目ミツクリザメ科に属するサメ。ミツクリザメ科はミツクリザメ属 Mitsukurina 1属で、本種のみを含む。希少種。日本の東京湾、駿河湾、相模湾などをはじめ、世界各地で散発的に報告されている。表層から水深1,300 m、あるいはそれ以上の深海に生息する。推定全長6m。ブレード状の長い吻が特徴である。写真や図では顎が飛び出した状態のものが多いが、通常遊泳時は奥に引っ込んでいる。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Goblin shark, Pengo.jpg)"
-      ]
-    }
-  },
-  {
-    "key": "spectrunculus grandis",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Spectrunculus_grandis.jpg",
-      "license": "public-domain",
-      "credit": "NOAA/MBARI",
-      "source": "File:Spectrunculus grandis.jpg",
-      "media_kind": "photo",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Spectrunculus_grandis.jpg"
-    },
-    "species": {
-      "scientific_name": "Spectrunculus grandis",
-      "common_name_ko": "Spectrunculus grandis",
-      "common_name_en": "Spectrunculus grandis",
-      "depth_range_m": "1000-6000",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "ソコボウズ（底坊主、学名：Spectrunculus grandis）とは、条鰭綱アシロ目に属する魚類の一種。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Spectrunculus grandis.jpg)"
-      ]
-    }
-  },
-  {
-    "key": "cranchiidae",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/0/07/Huevas_de_calamar_%28Liocranchia_sp.%29%2C_Anilao%2C_Filipinas%2C_2023-08-24%2C_DD_76.jpg",
-      "license": "cc-by-sa",
-      "credit": "Diego Delso · CC BY-SA",
-      "source": "File:Huevas de calamar (Liocranchia sp.), Anilao, Filipinas, 2023-08-24, DD 76.jpg",
-      "media_kind": "photo",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/07/Huevas_de_calamar_%28Liocranchia_sp.%29%2C_Anilao%2C_Filipinas%2C_2023-08-24%2C_DD_76.jpg"
-    },
-    "species": {
-      "scientific_name": "Cranchiidae",
-      "common_name_ko": "악어가죽주머니오징어과",
-      "common_name_en": "Cranchiidae",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "サメハダホウズキイカ科 (Cranchiidae) はイカの科の一つ。約60種を含む。全世界の海洋の表層から中層に生息する。大きさは外套長10cm程度の小型種から、3mに達するダイオウホウズキイカまで様々である。",
-        "英名はGlass squid・cockatoo squid・cranchiid・cranch squid・bathyscaphoid squidなどがある。\"Glass squid\" はほとんどの種で体が透明であることに由来し、\"bathyscaphoid squid\" は浮力調節方法がバチスカーフに似ていることによる。",
-        "他のイカのように、幼生は表層で過ごし、成熟すると深海に降りる。水深2000mにまで降りる種もいる。成長に連れて形態が大きく変化するため、幼生が別種だと思われていたものも多い。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Huevas de calamar (Liocranchia sp.), Anilao, Filipinas, 2023-08-24, DD 76.jpg)"
-      ]
-    }
-  },
-  {
-    "key": "chaunax stigmaeus",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/1/16/Chaunax_stigmaeus_dorsal_view2.jpg",
-      "license": "public-domain",
-      "credit": "Derivate work by Citron from :\n\nDr. Steve Ross, UNC-W. NOAA Office of Ocean Exploration.",
-      "source": "File:Chaunax stigmaeus dorsal view2.jpg",
-      "media_kind": "photo",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/16/Chaunax_stigmaeus_dorsal_view2.jpg"
-    },
-    "species": {
-      "scientific_name": "Chaunax stigmaeus",
-      "common_name_ko": "Redeye gaper",
-      "common_name_en": "Redeye gaper",
-      "depth_range_m": "90-730",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "The redeye gaper, Chaunax stigmaeus, is a sedentary species of anglerfish in the family Chaunacidae.",
-        "It is native to deep waters in the western North Atlantic from the Georges Bank off New England southward to the Blake Plateau off South Carolina.",
-        "The species is found on the outer continental shelf and upper continental slope at a depth of 90–730 m and among dense beds of dead coral (Lophelia pertusa) rubble, their preferred habitat.",
-        "The original type specimen was caught in a trawl off Atlantic City on March 1, 1946, and donated to the Academy of Natural Sciences by Carroll B.",
-        "The name stigmaeus means \"speckled\" in Greek."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Chaunax stigmaeus dorsal view2.jpg)"
-      ]
-    }
-  },
-  {
-    "key": "ipnopidae",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Tripod_fish1.jpg",
-      "license": "public-domain",
-      "credit": "NOAA Okeanos Explorer Program, INDEX-SATAL 2010, NOAA/OER",
-      "source": "File:Tripod fish1.jpg",
-      "media_kind": "photo",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Tripod_fish1.jpg"
-    },
-    "species": {
-      "scientific_name": "Ipnopidae",
-      "common_name_ko": "긴촉수매퉁이과",
-      "common_name_en": "Ipnopidae",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "チョウチンハダカ科（Ipnopidae）は、ヒメ目アオメエソ亜目に所属する魚類の分類群の一つ。イトヒキイワシ・ナガヅエエソなど、底生性の深海魚を中心に5属29種が所属する。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Tripod fish1.jpg)"
-      ]
-    }
-  },
-  {
-    "key": "macrouridae",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/0/0d/Grenadier_%28Macrouridae%29_par_400_m_de_fond_%28Ifremer_00621-73302%29.jpg",
-      "license": "cc-by",
-      "credit": "null · CC BY",
-      "source": "File:Grenadier (Macrouridae) par 400 m de fond (Ifremer 00621-73302).jpg",
-      "media_kind": "photo",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/0d/Grenadier_%28Macrouridae%29_par_400_m_de_fond_%28Ifremer_00621-73302%29.jpg"
-    },
-    "species": {
-      "scientific_name": "Macrouridae",
-      "common_name_ko": "민태과",
-      "common_name_en": "Macrouridae",
-      "depth_range_m": "100-6000",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "ソコダラ科（学名:Macrouridae）は、タラ目ソコダラ亜目に所属する魚類の分類群の一つ。タラ目で最大のグループである。学名の由来は、ギリシャ語の「makros（大きな）」+「oura（尾）」から。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Grenadier (Macrouridae) par 400 m de fond (Ifremer 00621-73302).jpg)"
-      ]
-    }
-  },
-  {
-    "key": "coelorinchus caelorhincus",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Otolithes_de_grenadier_raton_%28Coelorinchus_caelorhinchus-Coelorhynchus_coelorhynchus%29_%28Ifremer_00677-78952_-_31898%29.jpg",
-      "license": "cc-by",
-      "credit": "Isabelle Cheret · CC BY",
-      "source": "File:Otolithes de grenadier raton (Coelorinchus caelorhinchus-Coelorhynchus coelorhynchus) (Ifremer 00677-78952 - 31898).jpg",
-      "media_kind": "photo",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Otolithes_de_grenadier_raton_%28Coelorinchus_caelorhinchus-Coelorhynchus_coelorhynchus%29_%28Ifremer_00677-78952_-_31898%29.jpg"
-    },
-    "species": {
-      "scientific_name": "Coelorinchus caelorhincus",
-      "common_name_ko": "Coelorinchus caelorhincus",
-      "common_name_en": "Coelorinchus caelorhincus",
-      "depth_range_m": "90-1485",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "The hollowsnout grenadier (Coelorinchus caelorhincus), also called the blackspot grenadier, is a species of fish in the family Macrouridae.",
-        "The specific name derives from Greek κοῖλος (koilos, \"hollow\") and ῥύγχος (rhynchos, \"snout\")."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Otolithes de grenadier raton (Coelorinchus caelorhinchus-Coelorhynchus coelorhynchus) (Ifremer 00677-78952 - 31898).jpg)"
-      ]
-    }
-  },
-  {
-    "key": "bathynomus",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/0/09/Bathynomus_%2810.3897-zookeys.947.53906%29_Figure_6.jpg",
-      "license": "cc-by",
-      "credit": "Sidabalok CM, Wong HP-S, Ng PKL (2020) Description of the supergiant isopod Bathynomus raksasa sp. nov. (Crustacea, Isopoda, Cirolanidae) from southern Java, the first record of the genus from Indonesia. ZooKeys 947: 39-52. · CC BY",
-      "source": "File:Bathynomus (10.3897-zookeys.947.53906) Figure 6.jpg",
-      "media_kind": "photo",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/09/Bathynomus_%2810.3897-zookeys.947.53906%29_Figure_6.jpg"
-    },
-    "species": {
-      "scientific_name": "Bathynomus",
-      "common_name_ko": "바티노무스속",
-      "common_name_en": "Bathynomus",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Giant isopods are large marine isopods in the genus Bathynomus.",
-        "They are bottom-dwelling deep-sea scavengers that are abundant in the Atlantic, Pacific, and Indian oceans.",
-        "Bathynomus giganteus, the species upon which the generitype is based, is often considered the largest isopod in the world, though other comparably poorly known species of Bathynomus may reach similar sizes.",
-        "Giant isopods are noted for their resemblance to the much smaller terrestrial woodlice, to which they are related.",
-        "French zoologist Alphonse Milne-Edwards was the first to describe the genus in 1879 after his colleague Alexander Agassiz collected a juvenile male B."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Bathynomus (10.3897-zookeys.947.53906) Figure 6.jpg)"
-      ]
-    }
+  "species": {
+   "scientific_name": "Rimicaris exoculata",
+   "common_name_ko": "vent shrimp",
+   "common_name_en": "vent shrimp",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Rimicaris exoculata, commonly known as the 'blind shrimp', is a species of shrimp.",
+    "It thrives on active hydrothermal edifices at deep-sea vents of the Mid-Atlantic Ridge.",
+    "This species belongs to the Alvinocarididae family of shrimp, named after the DSV Alvin, the vessel that collected the original samples described by M.",
+    "Christoffersen in 1986.",
+    "The genus name Rimicaris is composed of rima (Latin for \"rift\" or \"fissure\", referring to the Mid-Atlantic Ridge) + karis (\"shrimp\" in Greek), while the species epithet benign is Latin for \"rendered eyeless\", referring to the highly modified, non-image-forming eyes."
+   ],
+   "sources": [
+    "Wikipedia (en)",
+    "Wikimedia Commons (File:Fond abyssal (Ifremer 00701-81314).webm)"
+   ]
   }
+ },
+ {
+  "key": "peltospira smaragdina",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Peltospira_smaragdina_gastropod_assemblage_at_the_Y3_site_in_the_Lucky_Strike_vent_field_%28MAR%29_%28Ifremer_00775-88699%29.webm",
+   "license": "cc-by",
+   "credit": "Jozée Sarrazin / Mathilde Cannat / Pierre-Marie Sarradin · CC BY",
+   "source": "File:Peltospira smaragdina gastropod assemblage at the Y3 site in the Lucky Strike vent field (MAR) (Ifremer 00775-88699).webm"
+  },
+  "species": {
+   "scientific_name": "Peltospira smaragdina",
+   "common_name_ko": "Peltospira smaragdina",
+   "common_name_en": "Peltospira smaragdina",
+   "depth_range_m": "870-3520",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Peltospira smaragdina is a species of sea snail, a marine gastropod mollusk in the family Peltospiridae."
+   ],
+   "sources": [
+    "Wikipedia (en)",
+    "Wikimedia Commons (File:Peltospira smaragdina gastropod assemblage at the Y3 site in the Lucky Strike vent field (MAR) (Ifremer 00775-88699).webm)"
+   ]
+  },
+  "depth": "870-3520"
+ },
+ {
+  "key": "pycnogonida",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/c/c8/Sea_spider_%28Pantopoda_or_pycnogonids%29.webm",
+   "license": "cc-by",
+   "credit": "Denise King · CC BY",
+   "source": "File:Sea spider (Pantopoda or pycnogonids).webm"
+  },
+  "species": {
+   "scientific_name": "Pycnogonida",
+   "common_name_ko": "바다거미목",
+   "common_name_en": "Pycnogonida",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "ウミグモ綱（ウミグモこう、学名: Pycnogonida）は、鋏角類に属する節足動物の分類群（綱）の1つ。構成種はウミグモ（海蜘蛛、ウミグモ類）と総称される。その多くは胴体が小さく、体の大部分が脚という独特な姿をした海棲動物である。名前と大まかな姿が似ているが、クモではない。",
+    "約1,400種を知られ、最古の化石記録はおよそ5億年前のカンブリア紀まで遡る。現生種は皆脚目（かいきゃくもく、Pantopoda）のみからなる。世界中の海域に広く分布するが、その生態と系統に関しては未解明な所が多い。"
+   ],
+   "sources": [
+    "Wikipedia (ja)",
+    "Wikimedia Commons (File:Sea spider (Pantopoda or pycnogonids).webm)"
+   ]
+  }
+ },
+ {
+  "key": "duobrachium sparksae",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/First_footage_of_Duobrachium_Sparksae.webm",
+   "license": "public-domain",
+   "credit": "NOAA Office of Ocean Exploration and Research",
+   "source": "File:First footage of Duobrachium Sparksae.webm"
+  },
+  "species": {
+   "scientific_name": "Duobrachium sparksae",
+   "common_name_ko": "Duobrachium sparksae",
+   "common_name_en": "Duobrachium sparksae",
+   "depth_range_m": "3910",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Duobrachium is a monotypic genus of comb jellies (Ctenophora) belonging to the order Cydippida, family unknown.",
+    "The only known species is Duobrachium sparksae."
+   ],
+   "sources": [
+    "Wikipedia (en)",
+    "Wikimedia Commons (File:First footage of Duobrachium Sparksae.webm)"
+   ]
+  },
+  "depth": "3910"
+ },
+ {
+  "key": "crinoidea",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Unidentified_near_Phuket.webm",
+   "license": "cc-by-sa",
+   "credit": "Amada44 · CC BY-SA",
+   "source": "File:Unidentified near Phuket.webm"
+  },
+  "species": {
+   "scientific_name": "Crinoidea",
+   "common_name_ko": "바다나리",
+   "common_name_en": "Crinoidea",
+   "depth_range_m": "6000-9000",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "ウミユリ綱（ウミユリこう、Crinoidea）は棘皮動物門の下位分類群のひとつで、ウミユリ（海百合）やウミシダと呼ばれる海洋性の生物が属する群である。浅海から6,000メートル級の深海まで広く分布する。名称はギリシア語の krinon 'ユリ'＋-oid '〜のようなもの' より。"
+   ],
+   "sources": [
+    "Wikipedia (ja)",
+    "Wikimedia Commons (File:Unidentified near Phuket.webm)"
+   ]
+  }
+ },
+ {
+  "key": "ridgeia piscesae",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/2/21/Phenotypic-Variation-and-Fitness-in-a-Metapopulation-of-Tubeworms-%28Ridgeia-piscesae-Jones%29-at-pone.0110578.s003.ogv",
+   "license": "cc-by",
+   "credit": "Tunnicliffe V, St. Germain C, Hilario A · CC BY",
+   "source": "File:Phenotypic-Variation-and-Fitness-in-a-Metapopulation-of-Tubeworms-(Ridgeia-piscesae-Jones)-at-pone.0110578.s003.ogv"
+  },
+  "species": {
+   "scientific_name": "Ridgeia piscesae",
+   "common_name_ko": "Ridgeia piscesae",
+   "common_name_en": "Ridgeia piscesae",
+   "depth_range_m": "2190",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "シボグリヌム科 (Siboglinidae) は、環形動物多毛類の科である。ヒゲムシ・ハオリムシ・ホネクイハナムシが属する。以前は有鬚動物（ゆうしゅどうぶつ、Pogonophora）として門の扱いであった（後述）。",
+    "自由生活の左右相称動物でありながら消化管がほぼ完全に欠如しており、栄養は共生細菌より得ている。ハオリムシは浅海や地上の光合成生態系とは独立に、深海底で化学合成に依存する生態系を作り、しかも高密度であることで注目を集める。また、動物分類学の歴史においても興味深い一群で、20世紀初頭の発見当時はシボグリヌム科と名付けられ科の階級に置かれたが、特異な体制が知られるにつれリンネ式分類の階層で3階級引き上げられ、門の地位に置かれた。神経は背側にある解釈で後口動物の1つとされた。しかし、完全な体の発見と分子系統学の研究結果などで環形動物の小グループであることが明らかになり、数十年を経て当初の階級および名称のシボグリヌム科に戻された。背腹も逆に解釈されていたことが判明した。"
+   ],
+   "sources": [
+    "Wikipedia (ja) · 상위 분류군",
+    "Wikimedia Commons (File:Phenotypic-Variation-and-Fitness-in-a-Metapopulation-of-Tubeworms-(Ridgeia-piscesae-Jones)-at-pone.0110578.s003.ogv)"
+   ]
+  }
+ },
+ {
+  "key": "paralomis diomedeae",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/9/99/Methane-Carbon-Flow-into-the-Benthic-Food-Web-at-Cold-Seeps---A-Case-Study-from-the-Costa-Rica-pone.0074894.s001.ogv",
+   "license": "cc-by",
+   "credit": "Niemann H, Linke P, Knittel K, MacPherson E, Boetius A, Bruckmann W, Larvik G, Wallmann K, Schacht U, Omoregie E, Hilton D, Brown K, Rehder G · CC BY",
+   "source": "File:Methane-Carbon-Flow-into-the-Benthic-Food-Web-at-Cold-Seeps---A-Case-Study-from-the-Costa-Rica-pone.0074894.s001.ogv"
+  },
+  "species": {
+   "scientific_name": "Paralomis diomedeae",
+   "common_name_ko": "Paralomis diomedeae",
+   "common_name_en": "Paralomis diomedeae",
+   "depth_range_m": "680-935",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Paralomis diomedeae is a species of king crab.",
+    "It is considered very rare and is known from Peru, the Gulf of Panama, and Costa Rica's Pacific coast at depths of 680–935 m (2,231–3,068 ft)."
+   ],
+   "sources": [
+    "Wikipedia (en)",
+    "Wikimedia Commons (File:Methane-Carbon-Flow-into-the-Benthic-Food-Web-at-Cold-Seeps---A-Case-Study-from-the-Costa-Rica-pone.0074894.s001.ogv)"
+   ]
+  }
+ },
+ {
+  "key": "vampyroteuthis infernalis",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Pu_-_Vampyroteuthis_infernalis_-_2.jpg",
+   "license": "cc-by-sa",
+   "credit": "Emőke Dénes · CC BY-SA",
+   "source": "File:Pu - Vampyroteuthis infernalis - 2.jpg",
+   "media_kind": "photo",
+   "image_url": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Pu_-_Vampyroteuthis_infernalis_-_2.jpg"
+  },
+  "species": {
+   "scientific_name": "Vampyroteuthis infernalis",
+   "common_name_ko": "흡혈오징어",
+   "common_name_en": "Vampire squid",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "コウモリダコ（蝙蝠蛸、蝙蝠鮹、Vampyroteuthis）は、コウモリダコ目コウモリダコ科に属する、上位分類の定めがたい頭足類。現生するのは V.",
+    "infernalis （ヴァンピロテウティス・インフェルナリス）の1種のみである。",
+    "熱帯・温帯地域の約600mから900mにかけての深海に生息する。体長は約30cm。鰭（ひれ）の付け根には青白い光を発する発光器を4つ備えている。"
+   ],
+   "sources": [
+    "Wikipedia (ja)",
+    "Wikimedia Commons (File:Pu - Vampyroteuthis infernalis - 2.jpg)"
+   ]
+  }
+ },
+ {
+  "key": "chimaeriformes",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Observation_d%27une_chim%C3%A8re_par_220_m_de_fond_%28Ifremer_00621-73295%29.jpg",
+   "license": "cc-by",
+   "credit": "null · CC BY",
+   "source": "File:Observation d'une chimère par 220 m de fond (Ifremer 00621-73295).jpg",
+   "media_kind": "photo",
+   "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Observation_d%27une_chim%C3%A8re_par_220_m_de_fond_%28Ifremer_00621-73295%29.jpg"
+  },
+  "species": {
+   "scientific_name": "Chimaeriformes",
+   "common_name_ko": "은상어목",
+   "common_name_en": "Chimaeriformes",
+   "depth_range_m": "220",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "ギンザメ目（学名：Chimaeriformes）は、軟骨魚綱全頭亜綱（ぜんとうあこう）の下位分類群。3科6属に約50種が含まれ、日本近海には11種が生息している。現在は50種ほどの小さな分類群だが、化石記録によると多様で豊富な分類群であったとされる。板鰓亜綱との共通祖先は約4億年前に存在した。現生種は多くが深海に生息する。"
+   ],
+   "sources": [
+    "Wikipedia (ja)",
+    "Wikimedia Commons (File:Observation d'une chimère par 220 m de fond (Ifremer 00621-73295).jpg)"
+   ]
+  }
+ },
+ {
+  "key": "pannychia moseleyi",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/4/40/Solaster_feeding_on_Pannychia_moseleyi.jpg",
+   "license": "cc0",
+   "credit": "NOAA/MBARI 2006",
+   "source": "File:Solaster feeding on Pannychia moseleyi.jpg",
+   "media_kind": "photo",
+   "image_url": "https://upload.wikimedia.org/wikipedia/commons/4/40/Solaster_feeding_on_Pannychia_moseleyi.jpg"
+  },
+  "species": {
+   "scientific_name": "Pannychia moseleyi",
+   "common_name_ko": "Pannychia moseleyi",
+   "common_name_en": "Pannychia moseleyi",
+   "depth_range_m": "400",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Pannychia moseleyi  is a sea cucumber in the family Laetmogonidae.",
+    "It was first described by Johan Hjalmar Théel in 1882.",
+    "It can be up to 200 mm long and 40 mm wide.",
+    "It occurs in the benthic zone at depths greater than 400 m."
+   ],
+   "sources": [
+    "Wikipedia (en)",
+    "Wikimedia Commons (File:Solaster feeding on Pannychia moseleyi.jpg)"
+   ]
+  }
+ },
+ {
+  "key": "grimpoteuthis discoveryi",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Grimpoteuthis_discoveryi.jpg",
+   "license": "public-domain",
+   "credit": "Mike Vecchione, NOAA",
+   "source": "File:Grimpoteuthis discoveryi.jpg",
+   "media_kind": "photo",
+   "image_url": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Grimpoteuthis_discoveryi.jpg"
+  },
+  "species": {
+   "scientific_name": "Grimpoteuthis discoveryi",
+   "common_name_ko": "Dumbo octopus",
+   "common_name_en": "Dumbo octopus",
+   "depth_range_m": "2600-4870",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Grimpoteuthis discoveryi is a small species of octopus known from more than 50 specimens.",
+    "It was described in 2003, but specimens have been found as early as 1910.",
+    "The type species was found at  49°35'N, 14°01'W, southwest of Ireland."
+   ],
+   "sources": [
+    "Wikipedia (en)",
+    "Wikimedia Commons (File:Grimpoteuthis discoveryi.jpg)"
+   ]
+  }
+ },
+ {
+  "key": "mitsukurina owstoni",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Goblin_shark%2C_Pengo.jpg",
+   "license": "cc-by-sa",
+   "credit": "Wikimedia Commons · CC BY-SA",
+   "source": "File:Goblin shark, Pengo.jpg",
+   "media_kind": "photo",
+   "image_url": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Goblin_shark%2C_Pengo.jpg"
+  },
+  "species": {
+   "scientific_name": "Mitsukurina owstoni",
+   "common_name_ko": "마귀상어",
+   "common_name_en": "goblin shark",
+   "depth_range_m": "100-2000",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "ミツクリザメ（箕作鮫、学名：Mitsukurina owstoni、英: Goblin shark）は、ネズミザメ目ミツクリザメ科に属するサメ。ミツクリザメ科はミツクリザメ属 Mitsukurina 1属で、本種のみを含む。希少種。日本の東京湾、駿河湾、相模湾などをはじめ、世界各地で散発的に報告されている。表層から水深1,300 m、あるいはそれ以上の深海に生息する。推定全長6m。ブレード状の長い吻が特徴である。写真や図では顎が飛び出した状態のものが多いが、通常遊泳時は奥に引っ込んでいる。"
+   ],
+   "sources": [
+    "Wikipedia (ja)",
+    "Wikimedia Commons (File:Goblin shark, Pengo.jpg)"
+   ]
+  }
+ },
+ {
+  "key": "spectrunculus grandis",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Spectrunculus_grandis.jpg",
+   "license": "public-domain",
+   "credit": "NOAA/MBARI",
+   "source": "File:Spectrunculus grandis.jpg",
+   "media_kind": "photo",
+   "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Spectrunculus_grandis.jpg"
+  },
+  "species": {
+   "scientific_name": "Spectrunculus grandis",
+   "common_name_ko": "Spectrunculus grandis",
+   "common_name_en": "Spectrunculus grandis",
+   "depth_range_m": "1000-6000",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "ソコボウズ（底坊主、学名：Spectrunculus grandis）とは、条鰭綱アシロ目に属する魚類の一種。"
+   ],
+   "sources": [
+    "Wikipedia (ja)",
+    "Wikimedia Commons (File:Spectrunculus grandis.jpg)"
+   ]
+  }
+ },
+ {
+  "key": "cranchiidae",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/0/07/Huevas_de_calamar_%28Liocranchia_sp.%29%2C_Anilao%2C_Filipinas%2C_2023-08-24%2C_DD_76.jpg",
+   "license": "cc-by-sa",
+   "credit": "Diego Delso · CC BY-SA",
+   "source": "File:Huevas de calamar (Liocranchia sp.), Anilao, Filipinas, 2023-08-24, DD 76.jpg",
+   "media_kind": "photo",
+   "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/07/Huevas_de_calamar_%28Liocranchia_sp.%29%2C_Anilao%2C_Filipinas%2C_2023-08-24%2C_DD_76.jpg"
+  },
+  "species": {
+   "scientific_name": "Cranchiidae",
+   "common_name_ko": "악어가죽주머니오징어과",
+   "common_name_en": "Cranchiidae",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "サメハダホウズキイカ科 (Cranchiidae) はイカの科の一つ。約60種を含む。全世界の海洋の表層から中層に生息する。大きさは外套長10cm程度の小型種から、3mに達するダイオウホウズキイカまで様々である。",
+    "英名はGlass squid・cockatoo squid・cranchiid・cranch squid・bathyscaphoid squidなどがある。\"Glass squid\" はほとんどの種で体が透明であることに由来し、\"bathyscaphoid squid\" は浮力調節方法がバチスカーフに似ていることによる。",
+    "他のイカのように、幼生は表層で過ごし、成熟すると深海に降りる。水深2000mにまで降りる種もいる。成長に連れて形態が大きく変化するため、幼生が別種だと思われていたものも多い。"
+   ],
+   "sources": [
+    "Wikipedia (ja)",
+    "Wikimedia Commons (File:Huevas de calamar (Liocranchia sp.), Anilao, Filipinas, 2023-08-24, DD 76.jpg)"
+   ]
+  }
+ },
+ {
+  "key": "chaunax stigmaeus",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/1/16/Chaunax_stigmaeus_dorsal_view2.jpg",
+   "license": "public-domain",
+   "credit": "Derivate work by Citron from :\n\nDr. Steve Ross, UNC-W. NOAA Office of Ocean Exploration.",
+   "source": "File:Chaunax stigmaeus dorsal view2.jpg",
+   "media_kind": "photo",
+   "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/16/Chaunax_stigmaeus_dorsal_view2.jpg"
+  },
+  "species": {
+   "scientific_name": "Chaunax stigmaeus",
+   "common_name_ko": "Redeye gaper",
+   "common_name_en": "Redeye gaper",
+   "depth_range_m": "90-730",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "The redeye gaper, Chaunax stigmaeus, is a sedentary species of anglerfish in the family Chaunacidae.",
+    "It is native to deep waters in the western North Atlantic from the Georges Bank off New England southward to the Blake Plateau off South Carolina.",
+    "The species is found on the outer continental shelf and upper continental slope at a depth of 90–730 m and among dense beds of dead coral (Lophelia pertusa) rubble, their preferred habitat.",
+    "The original type specimen was caught in a trawl off Atlantic City on March 1, 1946, and donated to the Academy of Natural Sciences by Carroll B.",
+    "The name stigmaeus means \"speckled\" in Greek."
+   ],
+   "sources": [
+    "Wikipedia (en)",
+    "Wikimedia Commons (File:Chaunax stigmaeus dorsal view2.jpg)"
+   ]
+  }
+ },
+ {
+  "key": "ipnopidae",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Tripod_fish1.jpg",
+   "license": "public-domain",
+   "credit": "NOAA Okeanos Explorer Program, INDEX-SATAL 2010, NOAA/OER",
+   "source": "File:Tripod fish1.jpg",
+   "media_kind": "photo",
+   "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Tripod_fish1.jpg"
+  },
+  "species": {
+   "scientific_name": "Ipnopidae",
+   "common_name_ko": "긴촉수매퉁이과",
+   "common_name_en": "Ipnopidae",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "チョウチンハダカ科（Ipnopidae）は、ヒメ目アオメエソ亜目に所属する魚類の分類群の一つ。イトヒキイワシ・ナガヅエエソなど、底生性の深海魚を中心に5属29種が所属する。"
+   ],
+   "sources": [
+    "Wikipedia (ja)",
+    "Wikimedia Commons (File:Tripod fish1.jpg)"
+   ]
+  }
+ },
+ {
+  "key": "macrouridae",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/0/0d/Grenadier_%28Macrouridae%29_par_400_m_de_fond_%28Ifremer_00621-73302%29.jpg",
+   "license": "cc-by",
+   "credit": "null · CC BY",
+   "source": "File:Grenadier (Macrouridae) par 400 m de fond (Ifremer 00621-73302).jpg",
+   "media_kind": "photo",
+   "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/0d/Grenadier_%28Macrouridae%29_par_400_m_de_fond_%28Ifremer_00621-73302%29.jpg"
+  },
+  "species": {
+   "scientific_name": "Macrouridae",
+   "common_name_ko": "민태과",
+   "common_name_en": "Macrouridae",
+   "depth_range_m": "100-6000",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "ソコダラ科（学名:Macrouridae）は、タラ目ソコダラ亜目に所属する魚類の分類群の一つ。タラ目で最大のグループである。学名の由来は、ギリシャ語の「makros（大きな）」+「oura（尾）」から。"
+   ],
+   "sources": [
+    "Wikipedia (ja)",
+    "Wikimedia Commons (File:Grenadier (Macrouridae) par 400 m de fond (Ifremer 00621-73302).jpg)"
+   ]
+  }
+ },
+ {
+  "key": "coelorinchus caelorhincus",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Otolithes_de_grenadier_raton_%28Coelorinchus_caelorhinchus-Coelorhynchus_coelorhynchus%29_%28Ifremer_00677-78952_-_31898%29.jpg",
+   "license": "cc-by",
+   "credit": "Isabelle Cheret · CC BY",
+   "source": "File:Otolithes de grenadier raton (Coelorinchus caelorhinchus-Coelorhynchus coelorhynchus) (Ifremer 00677-78952 - 31898).jpg",
+   "media_kind": "photo",
+   "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Otolithes_de_grenadier_raton_%28Coelorinchus_caelorhinchus-Coelorhynchus_coelorhynchus%29_%28Ifremer_00677-78952_-_31898%29.jpg"
+  },
+  "species": {
+   "scientific_name": "Coelorinchus caelorhincus",
+   "common_name_ko": "Coelorinchus caelorhincus",
+   "common_name_en": "Coelorinchus caelorhincus",
+   "depth_range_m": "90-1485",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "The hollowsnout grenadier (Coelorinchus caelorhincus), also called the blackspot grenadier, is a species of fish in the family Macrouridae.",
+    "The specific name derives from Greek κοῖλος (koilos, \"hollow\") and ῥύγχος (rhynchos, \"snout\")."
+   ],
+   "sources": [
+    "Wikipedia (en)",
+    "Wikimedia Commons (File:Otolithes de grenadier raton (Coelorinchus caelorhinchus-Coelorhynchus coelorhynchus) (Ifremer 00677-78952 - 31898).jpg)"
+   ]
+  }
+ },
+ {
+  "key": "bathynomus",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/0/09/Bathynomus_%2810.3897-zookeys.947.53906%29_Figure_6.jpg",
+   "license": "cc-by",
+   "credit": "Sidabalok CM, Wong HP-S, Ng PKL (2020) Description of the supergiant isopod Bathynomus raksasa sp. nov. (Crustacea, Isopoda, Cirolanidae) from southern Java, the first record of the genus from Indonesia. ZooKeys 947: 39-52. · CC BY",
+   "source": "File:Bathynomus (10.3897-zookeys.947.53906) Figure 6.jpg",
+   "media_kind": "photo",
+   "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/09/Bathynomus_%2810.3897-zookeys.947.53906%29_Figure_6.jpg"
+  },
+  "species": {
+   "scientific_name": "Bathynomus",
+   "common_name_ko": "바티노무스속",
+   "common_name_en": "Bathynomus",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Giant isopods are large marine isopods in the genus Bathynomus.",
+    "They are bottom-dwelling deep-sea scavengers that are abundant in the Atlantic, Pacific, and Indian oceans.",
+    "Bathynomus giganteus, the species upon which the generitype is based, is often considered the largest isopod in the world, though other comparably poorly known species of Bathynomus may reach similar sizes.",
+    "Giant isopods are noted for their resemblance to the much smaller terrestrial woodlice, to which they are related.",
+    "French zoologist Alphonse Milne-Edwards was the first to describe the genus in 1879 after his colleague Alexander Agassiz collected a juvenile male B."
+   ],
+   "sources": [
+    "Wikipedia (en)",
+    "Wikimedia Commons (File:Bathynomus (10.3897-zookeys.947.53906) Figure 6.jpg)"
+   ]
+  }
+ },
+ {
+  "key": "liparidae",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2026/01/Seascape-Alaska-Snailfish-1920x1080_1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/ocean-fact/what-is-the-deepest-living-fish/seascape-alaska-snailfish-1920x1080_1/"
+  },
+  "species": {
+   "scientific_name": "Liparidae",
+   "common_name_ko": "꼼치과",
+   "common_name_en": "Liparidae",
+   "depth_range_m": "300",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "クサウオ科（学名：Liparidae）は、ペルカ目に所属する魚類の分類群の一つ。クサウオ・サケビクニンなど、寒冷な海あるいは深海に生息する種類を中心に32属407種が記載される。科名は科のタイプ属 Liparis に科を表す接尾辞「-idae」を付けたもの。属名 Liparis の由来は、ギリシア語の「λιπαρός」（liparos／脂っぽい、オイリーなどの意の形容詞）から。"
+   ]
+  }
+ },
+ {
+  "key": "octocorallia",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2022/03/corals-1920x1080-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/edu-resources-dsd-corals/attachment/16445/"
+  },
+  "species": {
+   "scientific_name": "Octocorallia",
+   "common_name_ko": "Octocorallia",
+   "common_name_en": "Octocorallia",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "八放サンゴ亜綱（はっぽうサンゴあこう、八放珊瑚亜綱、Octocorallia、オクトコラリア亜綱）は、刺胞動物門花虫綱に属する一分類群である。ポリプの胃腔（腔腸）の隔壁数や触手数が8となる。"
+   ]
+  }
+ },
+ {
+  "key": "actiniaria",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2023/07/dive02-anemone-1280x720-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-seascape-alaska-ex2304-gallery-media-dive02-anemone/attachment/15047/"
+  },
+  "species": {
+   "scientific_name": "Actiniaria",
+   "common_name_ko": "말미잘",
+   "common_name_en": "Actiniaria",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "イソギンチャク（磯巾着、菟葵、英: sea anemone）は、刺胞動物門花虫綱六放サンゴ亜綱イソギンチャク目（イソギンチャクもく）に属する動物の総称である。柔らかい無脊椎動物で、口の回りに毒のある触手を持つ。"
+   ]
+  }
+ },
+ {
+  "key": "crossota",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2022/07/ex2205-dive02-jelly-720x480-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-22voyage-to-the-ridge-gallery-media-ex2205-dive02-jelly/attachment/14684/"
+  },
+  "species": {
+   "scientific_name": "Crossota",
+   "common_name_ko": "Crossota",
+   "common_name_en": "Crossota",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Crossota is a genus of hydrozoans of the family Rhopalonematidae.",
+    "The genus comprises five species.",
+    "Unlike most hydromedusae, these do not have a sessile stage.",
+    "Rather, they spend their entire lives in the water column as plankton.",
+    "The genus Crossota is widespread throughout the oceans."
+   ]
+  }
+ },
+ {
+  "key": "aphyonidae",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2018/07/0701-fish-1920x1080-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/video-playlist-ex1605-first-sighting/attachment/15156/"
+  },
+  "species": {
+   "scientific_name": "Aphyonidae",
+   "common_name_ko": "아피오누스과",
+   "common_name_en": "Aphyonidae",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "ソコオクメウオ科（学名：Aphyonidae）は、アシロ目に所属する魚類の分類群の一つ。6属からなり、ミスジオクメウオなど底生性の深海魚のみ23種が含まれる。フサイタチウオ科に含める見解もある。"
+   ]
+  }
+ },
+ {
+  "key": "asteroidea",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2019/07/starfish-1920x1080-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-ex1903-dailyupdates-june29-media-starfish/attachment/14042/"
+  },
+  "species": {
+   "scientific_name": "Asteroidea",
+   "common_name_ko": "불가사리류",
+   "common_name_en": "starfish",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "ヒトデ（海星、人手、海盤車、英: starfish）は、棘皮動物門ヒトデ綱（海星綱、Asteroidea）に所属する動物の総称。",
+    "多くの種は、体が平たい星形（☆）の姿をしている。世界でおよそ2000種、日本近海に限ってもおよそ300種が確認されている。その生息域は、潮間帯から深海、あるいは熱帯域から極帯域に至る世界中の海底だが、一方で淡水や陸上に生息する種はいない。"
+   ]
+  }
+ },
+ {
+  "key": "porifera",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2024/07/sponge-video-1280x720-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/explorations-24pr-usvi-biotech-gallery-media-sponge-video/attachment/13990/"
+  },
+  "species": {
+   "scientific_name": "Porifera",
+   "common_name_ko": "해면동물",
+   "common_name_en": "Porifera",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "海綿動物（かいめんどうぶつ、英: sponge）とは、海綿動物門（羅: Porifera）に属する動物の総称である。海綿、カイメンなどとも表記される。",
+    "熱帯の海を中心に世界中のあらゆる海に生息する。淡水に生息する種も存在する。壺状、扇状、杯状など様々な形態をもつ種が存在し、同種であっても生息環境によって形状が異なる場合もある。大きさは数mmから1mを越すもの（南極海に生息する樽状の海綿 Scolymastra joubini）まで多様である。多細胞生物であるが、細胞間の結合はゆるく、はっきりとした器官等の分化は見られない。細かい網目状の海綿質繊維からなる骨格はスポンジとして化粧用や沐浴用に用いられる。"
+   ]
+  }
+ },
+ {
+  "key": "octopus",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2023/07/dive05-octopus-1280x720-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-seascape-alaska-ex2304-gallery-media-dive05-octopus/attachment/13734/"
+  },
+  "species": {
+   "scientific_name": "Octopus",
+   "common_name_ko": "낙지속",
+   "common_name_en": "Octopus",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "マダコ属（マダコぞく、Octopus）は、タコ目マダコ科に属する軟体動物の属のひとつ。"
+   ]
+  }
+ },
+ {
+  "key": "selachimorpha",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2021/11/dive08-shark-1280x720-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-ex2107-gallery-media-dive08-shark/attachment/15856/"
+  },
+  "species": {
+   "scientific_name": "Selachimorpha",
+   "common_name_ko": "상어",
+   "common_name_en": "shark",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "サメ（鮫）は、軟骨魚綱板鰓亜綱に属する魚類のうち、鰓裂が体の側面に開くものの総称。鰓裂が下面に開くエイとは区別される。2020年11月時点で世界中に9目36科106属553種が存在し、日本近海には9目34科64属130種が認められている。世界中の海洋に広く分布し、オオメジロザメなど一部の種は汽水域、淡水域にも進出する。また、深海性のサメも知られている。",
+    "体の大きさは種によって異なり、最大のジンベエザメ（全長13 - 14メートル）から最小のツラナガコビトザメ（全長22センチメートル）やペリーカラスザメ （全長20センチメートル）までさまざまであるが、平均的には1 - 3メートルのものが多い。サメを意味する言葉として、他にワニ（和邇）やフカ（鱶）が使われることもある。詳細は、下記#神話におけるサメ参照。"
+   ]
+  }
+ },
+ {
+  "key": "rajidae",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2026/03/EX2206-ray-1920x1080-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/news/fish-distribution/ex2206-ray-1920x1080/"
+  },
+  "species": {
+   "scientific_name": "Rajidae",
+   "common_name_ko": "홍어과",
+   "common_name_en": "Rajidae",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "ガンギエイ目、雁木鱝目 (学名：Rajiformes) は、軟骨魚綱板鰓亜綱の下位分類群で、エイのグループのひとつ。",
+    "Nelson (1994) の分類において、このグループはガンギエイ亜目 (Rajoidei) としてエイ目の下に置かれ、ガンギエイ科 (Rajidae) の3科が設置されている。Nelson (2006) の分類ではサメ・エイ2分説が採用され、エイ目はエイ亜区 (Batoidea) になり、ガンギエイ亜目を含む4亜目はそれぞれ目に格上げされている。"
+   ]
+  }
+ },
+ {
+  "key": "chimaera",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2022/07/dive08-chimaera-1280x720-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-22voyage-to-the-ridge-gallery-media-dive08-chimaera/attachment/15983/"
+  },
+  "species": {
+   "scientific_name": "Chimaera",
+   "common_name_ko": "Chimaera",
+   "common_name_en": "Chimaera",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Chimaera is the type genus of the cartilaginous fish family Chimaeridae."
+   ]
+  }
+ },
+ {
+  "key": "scyliorhinidae",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2022/07/dive08-catshark-1280x720-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-22voyage-to-the-ridge-gallery-media-dive08-catshark/attachment/13525/"
+  },
+  "species": {
+   "scientific_name": "Scyliorhinidae",
+   "common_name_ko": "두툽상어과",
+   "common_name_en": "Scyliorhinidae",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "トラザメ科（学名：Scyliorhinidae）は、メジロザメ目に属するサメの科の一つ。"
+   ]
+  }
+ },
+ {
+  "key": "teuthida",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2021/11/dive08-squid-1280x720-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-ex2107-gallery-media-dive08-squid/attachment/13476/"
+  },
+  "species": {
+   "scientific_name": "Teuthida",
+   "common_name_ko": "살오징어목",
+   "common_name_en": "Teuthida",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "ツツイカ目（ツツイカもく、学名：Teuthida）は、かつて十腕形上目に置かれていた目で、閉眼亜目 Myopsina と開眼亜目 Oegopsina を含んでいた。多系統群であることが判明したため、閉眼目 Myopsida および開眼目 Oegopsida に分割された。MolluscaBaseおよびWorld Register of Marine Speciesでは、ツツイカ目を疑問名（nomen dubium）としている。"
+   ]
+  }
+ },
+ {
+  "key": "ctenophora",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2018/05/combjelly_1280x720.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/video-playlist-arctic-comb/attachment/16134/"
+  },
+  "species": {
+   "scientific_name": "Ctenophora",
+   "common_name_ko": "유즐동물",
+   "common_name_en": "Ctenophora",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "有櫛動物（ゆうしつどうぶつ、学名：Ctenophora）は、漂泳性クラゲ型の動物を含む動物の分類群の1つである。クシクラゲ類とも呼ばれる（クラゲ類とは異なる）。英名でコムジェリー(comb jelly)と呼ばれ、和名のクシクラゲと有櫛動物の語源。"
+   ]
+  }
+ },
+ {
+  "key": "myxine glutinosa",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2023/04/ex2301-dive01-hagfish-1280x720-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-express-ex2301-gallery-media-ex2301-dive01-hagfish/attachment/14815/"
+  },
+  "species": {
+   "scientific_name": "Myxine glutinosa",
+   "common_name_ko": "Myxine glutinosa",
+   "common_name_en": "Myxine glutinosa",
+   "depth_range_m": "75",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Myxine glutinosa, also known as the Atlantic hagfish, is a type of jawless fish belonging to the class Myxini."
+   ]
+  }
+ },
+ {
+  "key": "ophidiidae",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2021/11/dive11-cuskeel-1280x720-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/video-playlist-ex2107-eellike/attachment/15553/"
+  },
+  "species": {
+   "scientific_name": "Ophidiidae",
+   "common_name_ko": "첨치과",
+   "common_name_en": "Ophidiidae",
+   "depth_range_m": "370",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "The cusk-eel family, Ophidiidae, is a group of marine bony fishes in the Ophidiiformes order.",
+    "The scientific name is from the Greek ophis meaning \"snake\", and refers to their eel-like appearance.",
+    "True eels diverged from other ray-finned fish during the Jurassic, while cusk-eels are part of the Percomorpha clade, along with tuna, perch, seahorses, and others.",
+    "The oldest fossil cusk-eel is Ampheristus, a highly successful genus with numerous species that existed from the Late Cretaceous (Maastrichtian) to the early Oligocene."
+   ]
+  }
+ }
 ]
