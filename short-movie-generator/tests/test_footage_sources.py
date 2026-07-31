@@ -129,6 +129,9 @@ def test_fetch_video_footage_never_returns_photo_doc(monkeypatch, tmp_path):
     monkeypatch.setattr(F, "_commons_category_videos", lambda *a, **k: None)
     monkeypatch.setattr(F, "_noaa_oer_videos", lambda *a, **k: [])
     monkeypatch.setattr(F, "_archive_org_videos", lambda *a, **k: [])
+    # 검증 완료 NOAA 클립 풀도 '영상 소스'이므로 다른 소스와 똑같이 차단해야 이 테스트가 격리된다
+    # (막지 않으면 실제 클립을 물어 와 캐시 파일까지 건드린다).
+    monkeypatch.setattr(F, "_noaa_curated", lambda *a, **k: None)
     called = {"photodoc": False}
     monkeypatch.setattr(F, "species_photo_doc", lambda *a, **k: called.__setitem__("photodoc", True) or {"photo_doc": True})
     r = F._fetch_video_footage("Testus fishus", "test fish", str(tmp_path))

@@ -1513,6 +1513,28 @@ def _wreck_doc_footage(cand: dict, scientific_name: str) -> dict | None:
             "credit": " · ".join(doss.get("credits", []))[:300], "source": "Wikimedia Commons"}
 
 
+
+def _noaa_curated(scientific_name: str, common_name_en: str) -> dict | None:
+    """검증 완료 NOAA 클립 풀(`src/data/noaa_clips.py`)에서 이 종에 맞는 실사 영상을 고른다.
+
+    ★왜 있나(운영자 지시): 심해 생물 영상 소스를 추가 확보하라는 요구에 맞춰, NOAA 심해탐사의
+      mp4 전량(1,563개)을 훑어 생물 클립만 추리고 **실제로 내려받아** 재생·길이·움직임·크레딧
+      슬레이트를 실측해 두었다. 라이브 검색보다 품질이 보장되고 간헐 실패가 없다.
+    ★종 단정은 하지 않는다: NOAA 파일명은 일반명 수준이라, 일반명 낱말이 겹칠 때만 매칭한다
+      (학명을 임의로 붙이지 않는다 — 사실 날조 금지 규칙). 아래 공통 다운로드·종횡비·정지·
+      워터마크 게이트를 그대로 통과해야 최종 채택된다.
+    """
+    try:
+        from src.data import noaa_clips as _nc
+    except Exception:  # noqa: BLE001
+        return None
+    hits = _nc.find(common_name_en or "", scientific_name or "")
+    if not hits:
+        return None
+    c = hits[0]
+    return {"url": c["url"], "license": _nc.LICENSE, "credit": _nc.CREDIT,
+            "source": c.get("source") or c["url"], "media_kind": "video"}
+
 def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: str,
                          skip_trim: bool = False) -> dict | None:
     """종 실사 **영상만** 확보 → {path, license, credit, source} 또는 None(영상 미확보).
@@ -1546,6 +1568,14 @@ def _fetch_video_footage(scientific_name: str, common_name_en: str, dest_dir: st
         cand = (_commons_search(scientific_name, scientific_name, common_name_en)
                 or _commons_search(common_name_en, scientific_name, common_name_en)
                 or _commons_category_videos(scientific_name, common_name_en))
+    if not cand and not key.startswith("wreck "):
+        # ★①검증 완료 NOAA 클립 풀을 **가장 먼저** 본다(운영자 지시 "심해 생물 영상 추가 확보").
+        #   NOAA 전량(mp4 1,563개)에서 심해 생물 클립을 추려 **실제로 내려받아** 재생·길이·움직임·
+        #   슬레이트까지 실측해 둔 목록이라, 라이브 검색과 달리 품질이 보장되고 간헐 실패도 없다.
+        #   라이선스는 미 연방 저작물 = 퍼블릭도메인(허용 목록).
+        cand = _noaa_curated(scientific_name, common_name_en)
+        if cand:
+            log.info("[footage] 검증 완료 NOAA 클립 채택: %s", cand["url"].rsplit("/", 1)[-1])
     if not cand and not key.startswith("wreck "):
         # ★커먼스에 없으면 자동 확장(운영자 목표): ①NOAA OER(숨은 geoportal API·종명 검색·PD 하이라이트)
         #   ②Internet Archive(안전필터). 아래 공통 다운로드·종횡비·정지·워터마크 게이트를 그대로 통과해야 채택.
