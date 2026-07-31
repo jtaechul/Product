@@ -104,7 +104,7 @@ button:disabled{opacity:.5}
 <body><div class="wrap">
 <header><div class="dot"></div>
   <h1><a href="/">DEEP DIVE <span>LOG</span></a></h1>
-  <div class="nav" id="nav"><a href="/" data-p="home">제작</a><a href="/library" data-p="library">라이브러리</a></div>
+  <div class="nav" id="nav"><a href="/" data-p="home">제작</a><a href="/library" data-p="library">라이브러리</a><a href="/clips" data-p="clips">확보 영상</a></div>
 </header>
 <div id="view"><div class="hint">불러오는 중…</div></div>
 </div>
@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-29-1 (표지도 정방형·좌우 전체 선택 + 재생 중 되감김 수정)";
+const BUILD="v2026-07-31-1 (확보 영상 목록 화면 추가)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -280,6 +280,7 @@ function route(){
   if(m){setNav("library");renderDetail(m[1]);}
   else if(nv){setNav("home");renderNarrateDetail(decodeURIComponent(nv[1]));}
   else if(lm){setNav("home");renderLongformDetail(decodeURIComponent(lm[1]));}
+  else if(path.indexOf("/clips")===0){setNav("clips");renderClips();}
   else if(path.indexOf("/library")===0){setNav("library");renderLibrary();}
   else{setNav("home");renderHome();}
   // ★모든 화면 하단에 빌드 표시 — 화면이 최신인지 눈으로 바로 확인(캐시 혼선 방지).
@@ -288,6 +289,47 @@ function route(){
     if(v)v.insertAdjacentHTML("beforeend",
       '<div class="hint" style="text-align:center;opacity:.55;margin:14px 0 4px;font-size:11px">'+BUILD+'</div>');
   }catch(e){}
+}
+
+// ── 확보 영상: 검증 완료 심해생물 소스 목록(운영자 요청 "확보된 걸 화면에서 보게 해달라") ──
+//   원본은 저장소의 src/data/noaa_clips.json — **제작이 읽는 바로 그 파일**이라 화면과 실제가 어긋나지 않는다.
+//   각 항목은 실제로 내려받아 잰 값(길이·해상도·움직임·크레딧 슬레이트)을 그대로 보여준다.
+async function renderClips(){
+  view().innerHTML='<div class="card"><span class="lbl">확보된 심해 생물 영상</span>'+
+    '<div class="hint" style="margin-top:6px">불러오는 중…</div></div>';
+  let d=null;
+  try{
+    const r=await fetch("/api/pub?path=short-movie-generator/src/data/noaa_clips.json&cb="+Date.now());
+    d=JSON.parse(await r.text());
+  }catch(e){}
+  if(!d||!Array.isArray(d.clips)){
+    view().innerHTML='<div class="card"><span class="lbl">확보된 심해 생물 영상</span>'+
+      '<div class="hint" style="margin-top:6px">목록을 불러오지 못했습니다. 잠시 후 다시 열어주세요.</div></div>';
+    return;
+  }
+  const cl=d.clips.slice().sort((a,b)=>String(a.tags[0]).localeCompare(String(b.tags[0])));
+  let h='<div class="card"><span class="lbl">확보된 심해 생물 영상 — '+cl.length+'건</span>'+
+    '<div class="hint" style="margin:6px 0 4px">모두 <b>'+esc(d.credit)+'</b> · '+
+      '<b>퍼블릭도메인</b>(미 연방정부 저작물)이라 저작권 걱정 없이 씁니다.</div>'+
+    '<div class="hint" style="margin-bottom:8px">아래 값은 <b>실제로 내려받아 잰 것</b>입니다 — '+
+      '길이 · 해상도 · 움직임(정지화면 배제) · 크레딧 화면이 있는 초.</div></div>';
+  cl.forEach((c,i)=>{
+    const name=String(c.url).split("/").pop().replace(/\.mp4$/i,"");
+    h+='<div class="card" style="margin-top:8px">'+
+      '<div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">'+
+        '<b style="font-size:15px;color:var(--cy)">'+esc(c.tags.join(" · "))+'</b>'+
+        '<span class="hint">'+c.dur+'초 · '+c.w+'x'+c.h+'</span>'+
+      '</div>'+
+      '<div class="hint" style="margin:4px 0 6px">움직임 <b>'+c.motion+'</b>'+
+        (c.slate_s?' · 크레딧 화면 <b>'+c.slate_s+'초</b>(제작 때 자동 회피)':' · 크레딧 화면 없음')+
+      '</div>'+
+      '<video id="clipv'+i+'" controls playsinline preload="none" '+
+        'style="width:100%;border-radius:10px;background:#000" src="'+esc(prox(c.url))+'"></video>'+
+      '<div class="hint" style="margin-top:6px;word-break:break-all">'+esc(name)+'</div>'+
+      '<a href="'+esc(c.source||c.url)+'" target="_blank" style="font-size:13px">NOAA 원본 페이지 열기</a>'+
+    '</div>';
+  });
+  view().innerHTML=h;
 }
 
 // ── 홈: 생성 + 실행 현황 ──
@@ -2373,7 +2415,9 @@ async function pubRead(url){
   const path = url.searchParams.get("path") || "";
   // ★_video_cache.json 추가(원본 미리보기용): 종별 소싱 원본 URL이 여기 있다. 운영자가 컷 구간을
   //   눈으로 정하려면 원본을 재생해야 하므로 이 파일 읽기를 허용한다(읽기 전용 · 공개 저장소 경로).
-  if(!/^short-movie-generator\/(content\/[\w.\-]+\.json|src\/categories\/_video_cache\.json|src\/categories\/deep_sea\/catalog\.json|src\/categories\/[\w\-]+\/[\w\-]+_(candidates|image_only)\.json)$/.test(path))
+  // ★확보된 심해 영상 목록(noaa_clips.json)도 읽기 허용 — 관리자 화면 '확보 영상' 목록의 원본.
+  //   파이썬(제작)과 **같은 파일**을 읽으므로 화면에 보이는 것 = 실제로 제작에 쓰이는 것.
+  if(!/^short-movie-generator\/(content\/[\w.\-]+\.json|src\/categories\/_video_cache\.json|src\/categories\/deep_sea\/catalog\.json|src\/data\/noaa_clips\.json|src\/categories\/[\w\-]+\/[\w\-]+_(candidates|image_only)\.json)$/.test(path))
     return j({error:"path not allowed"}, 403);
   // ★현행화 지연 수정(운영자 지적: 재생성 완료 텔레그램 받았는데 관리자 페이지가 한참 뒤에 갱신):
   //   raw.githubusercontent.com은 경로 기준 CDN 캐시(~5분)가 있어, 재생성 커밋이 올라와도 옛 JSON을
