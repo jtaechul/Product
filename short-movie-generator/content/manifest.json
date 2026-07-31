@@ -400,5 +400,13 @@
     "common_name_en": "Bathynomus",
     "scientific_name": "Bathynomus",
     "date": "2026-07-30"
+  },
+  {
+    "id": "052",
+    "kind": "reels",
+    "common_name_ko": "산호상어",
+    "common_name_en": "Grey reef shark",
+    "scientific_name": "Carcharhinus amblyrhynchos",
+    "date": "2026-07-31"
   }
 ]

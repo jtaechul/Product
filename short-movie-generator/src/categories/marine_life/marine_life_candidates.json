@@ -167,46 +167,6 @@
   },
   {
     "kind": "creature",
-    "key": "carcharhinus amblyrhynchos",
-    "needs_confirm": false,
-    "title": "File:Grey reef shark (Carcharhinus amblyrhynchos) near Sipadan.webm",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Grey_reef_shark_%28Carcharhinus_amblyrhynchos%29_near_Sipadan.webm",
-    "license": "cc-by",
-    "credit": "EMMA TOLMIE · CC BY",
-    "source": "File:Grey reef shark (Carcharhinus amblyrhynchos) near Sipadan.webm",
-    "name": "Carcharhinus amblyrhynchos",
-    "name_ja": "",
-    "common_name_ko": "산호상어",
-    "common_name_en": "Grey reef shark",
-    "depth": "",
-    "facts": [
-      "オグロメジロザメ（Carcharhinus amblyrhynchos）はメジロザメ属に属するサメの一種。インド太平洋のサンゴ礁で見られる最も一般的なサメで、特にドロップオフ周辺に多い。典型的なメジロザメ類の体型で、幅広く丸い吻・大きな眼を持つ。第一背鰭を除いた全ての鰭に黒い模様を持つこと（特に尾鰭の後縁）、2基の背鰭の間に隆起線がないことで他種と区別できる。全長1.9m程度。",
-      "泳ぎは速く、夜間に活動的になり硬骨魚や頭足類を食べる。他種に対しては攻撃的だが同種には寛容で、日中には大きな群れを作る。胎生で、2年毎に1-6匹の仔を産む。雌は浅瀬で群れを作り、高水温によって胎児の成長を促す。威嚇行動は非常によく知られており、近づいた他種のサメやダイバーなどに対して、攻撃の前に通常とは異なる姿勢で特殊な行動を取る。人への攻撃も知られ、特に威嚇行動時には注意すべきである。多数の地域で漁獲され、繁殖・移動力が低いために減少しており、IUCNは保全状況を絶滅危惧としている。"
-    ],
-    "fact_src": "Wikipedia (ja)",
-    "species": {
-      "scientific_name": "Carcharhinus amblyrhynchos",
-      "common_name_ko": "산호상어",
-      "common_name_en": "Grey reef shark",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "オグロメジロザメ（Carcharhinus amblyrhynchos）はメジロザメ属に属するサメの一種。インド太平洋のサンゴ礁で見られる最も一般的なサメで、特にドロップオフ周辺に多い。典型的なメジロザメ類の体型で、幅広く丸い吻・大きな眼を持つ。第一背鰭を除いた全ての鰭に黒い模様を持つこと（特に尾鰭の後縁）、2基の背鰭の間に隆起線がないことで他種と区別できる。全長1.9m程度。",
-        "泳ぎは速く、夜間に活動的になり硬骨魚や頭足類を食べる。他種に対しては攻撃的だが同種には寛容で、日中には大きな群れを作る。胎生で、2年毎に1-6匹の仔を産む。雌は浅瀬で群れを作り、高水温によって胎児の成長を促す。威嚇行動は非常によく知られており、近づいた他種のサメやダイバーなどに対して、攻撃の前に通常とは異なる姿勢で特殊な行動を取る。人への攻撃も知られ、特に威嚇行動時には注意すべきである。多数の地域で漁獲され、繁殖・移動力が低いために減少しており、IUCNは保全状況を絶滅危惧としている。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Grey reef shark (Carcharhinus amblyrhynchos) near Sipadan.webm)"
-      ]
-    },
-    "thumbnail_url": "https://github.com/jtaechul/Product/releases/download/sourcing-marine_life/thumb_marine_life_carcharhinus_amblyrhynchos_29330717649.jpg",
-    "video_status": "video",
-    "video_source": "File:Grey reef shark (Carcharhinus amblyrhynchos) near Sipadan.webm"
-  },
-  {
-    "kind": "creature",
     "key": "triaenodon obesus",
     "needs_confirm": false,
     "title": "File:School of whitetip reef sharks (Triaenodon obesus).webm",
