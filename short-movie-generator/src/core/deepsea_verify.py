@@ -103,8 +103,13 @@ def verdict(sci: str, common_en: str, corpus: str) -> DeepSeaVerdict:
     ident = f"{sci or ''} {common_en or ''}"
     blob = f"{ident} {corpus or ''}"
 
-    # 1) 표층·연안 분류군 하드 배제(정어리 등)
-    hit = _SHALLOW.search(ident) or _SHALLOW.search(blob)
+    # 1) 표층·연안 분류군 하드 배제 — ★**대상의 이름(정체성)에만** 적용한다(운영자 확정 · 실사고).
+    #   예전엔 설명 본문(corpus)까지 뒤져서, 본문이 다른 물고기를 **한 번 언급하기만 해도** 차단됐다.
+    #   실사고(run #183 · 커스크일): 위키 본문의 계통 설명 "cusk-eels are part of the Percomorpha
+    #   clade, along with **tuna**, perch, seahorses…" 한 줄 때문에 대표적 심해어 Ophidiidae가
+    #   "표층·연안 분류군(tuna)"으로 제작 차단됐다. 본문은 '무엇을 닮았다·무엇에 먹힌다'처럼 다른 종을
+    #   자주 언급하므로 하드배제 근거가 될 수 없다. 정체성(학명·영문 일반명)으로만 판정한다.
+    hit = _SHALLOW.search(ident)
     if hit:
         return DeepSeaVerdict(False, "", f"표층·연안 분류군({hit.group(0)}) — 심해 부적합")
 

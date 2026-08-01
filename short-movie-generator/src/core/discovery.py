@@ -1372,6 +1372,34 @@ def _wreck_copy(name: str, name_ja: str, ship_type: str, depth: str) -> dict:
             "body": body}
 
 
+
+def _category_for_creature(category_id: str, species: dict) -> str:
+    """이 생물이 들어갈 **올바른 카테고리**를 돌려준다(심해 근거가 없으면 일반 해양생물로).
+
+    ★운영자 확정(실사고 run #183): 심해 근거가 없는 종이 심해 인벤토리에 등록돼 있다가, 제작을
+      누른 뒤에야 "심해 부적합으로 제작 차단"으로 실패했다. 부적합은 **등록 시점에** 갈라야 한다.
+      부적합이라고 버리지는 않는다 — 실제 해양생물이고 영상도 검증됐으므로 marine_life로 보낸다.
+    판정은 제작 직전 게이트와 **같은 함수**(`deepsea_verify.verdict`)를 쓴다(두 곳이 어긋나지 않게).
+    """
+    if category_id != "deep_sea":
+        return category_id
+    try:
+        from src.core import deepsea_verify
+        sci = str(species.get("scientific_name") or "")
+        en = str(species.get("common_name_en") or "")
+        corpus = " ".join([" ".join(species.get("fun_facts") or []),
+                           str(species.get("habitat") or ""),
+                           str(species.get("distribution") or ""),
+                           str(species.get("depth_range_m") or "")])
+        v = deepsea_verify.verdict(sci, en, corpus)
+        if not v.ok:                      # 로컬 사실이 빈약할 수 있어 위키 서식 문헌으로 재확인
+            ident = _search_taxon_by_name(sci) if sci else None
+            if ident:
+                v = deepsea_verify.verdict(sci, en, corpus + " " + _habitat_corpus(ident))
+        return "deep_sea" if v.ok else "marine_life"
+    except Exception:  # noqa: BLE001
+        return category_id            # 판정 불가면 기존 동작(제작 직전 게이트가 여전히 막는다)
+
 def promote_candidate(category_id: str, key: str) -> bool:
     """검토 승인된 후보를 '제작 가능한 풀'로 승격(생물=discovered.json, 침몰선=shipwreck discovered.json).
     승격 후 candidates에서 제거. 이미 풀에 있으면 True(멱등). 없으면 False."""
@@ -1414,6 +1442,19 @@ def promote_candidate(category_id: str, key: str) -> bool:
                 cfp["media_kind"] = "photo"
                 cfp["image_url"] = cand.get("image_url") or cand["url"]
             entry = {"key": key, "kind": "creature", "footage": cfp, "species": cand["species"]}
+            # ★등록 시점 카테고리 적합성 게이트(운영자 확정 · 실사고 run #183 "종이 부적합하면
+            #   해양생물 소스로 옮기거나 삭제해야 될 거 아냐"): 예전엔 부적합 종이 그대로 심해
+            #   인벤토리에 들어가 **제작을 눌러야 비로소** "심해 부적합으로 제작 차단"으로 터졌다.
+            #   → 심해 근거가 없으면 심해에 넣지 않고 **marine_life로 돌린다**(버리지 않는다 —
+            #     실제 해양생물이고 영상도 검증됐다). 제작 직전 게이트는 그대로 유지된다(이중 방어).
+            tgt = _category_for_creature(category_id, cand["species"])
+            if tgt != category_id:
+                log.info("[discovery] %s: %s 부적합 → %s 인벤토리로 등록", category_id, key, tgt)
+                other = load_discovered(tgt)
+                if not any(it.get("key") == key for it in other):
+                    save_discovered(tgt, other + [entry])
+                save_candidates(category_id, [c for c in cands if c["key"] != key])
+                return True
         save_discovered(category_id, disc + [entry])
     save_candidates(category_id, [c for c in cands if c["key"] != key])
     return True

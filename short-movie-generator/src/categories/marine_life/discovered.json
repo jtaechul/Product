@@ -1,86 +1,237 @@
 [
-  {
-    "key": "sepia mestus",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Red_cuttle_hunting.webm",
-      "license": "cc-by-sa",
-      "credit": "John Turnbull · CC BY-SA",
-      "source": "File:Red cuttle hunting.webm"
-    },
-    "species": {
-      "scientific_name": "Sepia mestus",
-      "common_name_ko": "Sepia mestus",
-      "common_name_en": "Sepia mestus",
-      "depth_range_m": "22",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Ascarosepion mestus, also known as the reaper cuttlefish or red cuttlefish, is a species of cuttlefish native to the southwestern Pacific Ocean, specifically Escape Reef off Queensland (15°47′S 145°47′E) to Murrays Beach off Jervis Bay (35°08′S 150°46′E).",
-        "Reports of this species from China and Vietnam are now known to be misidentifications.",
-        "mestus lives at a depth of between 0 and 22 m.",
-        "Ascarosepion mestus exhibits sexual dimorphism.",
-        "Females grow to a mantle length (ML) of 124 millimetres (4.9 in), while males do not exceed 77 mm (3.0 in) ML."
-      ],
-      "sources": [
-        "Wikipedia (en)",
-        "Wikimedia Commons (File:Red cuttle hunting.webm)"
-      ]
-    }
+ {
+  "key": "sepia mestus",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Red_cuttle_hunting.webm",
+   "license": "cc-by-sa",
+   "credit": "John Turnbull · CC BY-SA",
+   "source": "File:Red cuttle hunting.webm"
   },
-  {
-    "key": "anoplodactylus lentus",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/Sea_Spiders.webm",
-      "license": "cc-by",
-      "credit": "NOAA Sanctuaries · CC BY",
-      "source": "File:Sea Spiders.webm"
-    },
-    "species": {
-      "scientific_name": "Anoplodactylus lentus",
-      "common_name_ko": "Anoplodactylus lentus",
-      "common_name_en": "Anoplodactylus lentus",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "Phoxichilidiidae is a family of sea spiders.",
-        "About 150 species are described, almost all in the genus Anoplodactylus Wilson, 1878."
-      ],
-      "sources": [
-        "Wikipedia (en) · 상위 분류군",
-        "Wikimedia Commons (File:Sea Spiders.webm)"
-      ]
-    }
-  },
-  {
-    "key": "carcharhinus amblyrhynchos",
-    "kind": "creature",
-    "footage": {
-      "url": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Grey_reef_shark_%28Carcharhinus_amblyrhynchos%29_near_Sipadan.webm",
-      "license": "cc-by",
-      "credit": "EMMA TOLMIE · CC BY",
-      "source": "File:Grey reef shark (Carcharhinus amblyrhynchos) near Sipadan.webm"
-    },
-    "species": {
-      "scientific_name": "Carcharhinus amblyrhynchos",
-      "common_name_ko": "산호상어",
-      "common_name_en": "Grey reef shark",
-      "depth_range_m": "",
-      "distribution": "",
-      "habitat": "",
-      "diet": [],
-      "fun_facts": [
-        "オグロメジロザメ（Carcharhinus amblyrhynchos）はメジロザメ属に属するサメの一種。インド太平洋のサンゴ礁で見られる最も一般的なサメで、特にドロップオフ周辺に多い。典型的なメジロザメ類の体型で、幅広く丸い吻・大きな眼を持つ。第一背鰭を除いた全ての鰭に黒い模様を持つこと（特に尾鰭の後縁）、2基の背鰭の間に隆起線がないことで他種と区別できる。全長1.9m程度。",
-        "泳ぎは速く、夜間に活動的になり硬骨魚や頭足類を食べる。他種に対しては攻撃的だが同種には寛容で、日中には大きな群れを作る。胎生で、2年毎に1-6匹の仔を産む。雌は浅瀬で群れを作り、高水温によって胎児の成長を促す。威嚇行動は非常によく知られており、近づいた他種のサメやダイバーなどに対して、攻撃の前に通常とは異なる姿勢で特殊な行動を取る。人への攻撃も知られ、特に威嚇行動時には注意すべきである。多数の地域で漁獲され、繁殖・移動力が低いために減少しており、IUCNは保全状況を絶滅危惧としている。"
-      ],
-      "sources": [
-        "Wikipedia (ja)",
-        "Wikimedia Commons (File:Grey reef shark (Carcharhinus amblyrhynchos) near Sipadan.webm)"
-      ]
-    }
+  "species": {
+   "scientific_name": "Sepia mestus",
+   "common_name_ko": "Sepia mestus",
+   "common_name_en": "Sepia mestus",
+   "depth_range_m": "22",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Ascarosepion mestus, also known as the reaper cuttlefish or red cuttlefish, is a species of cuttlefish native to the southwestern Pacific Ocean, specifically Escape Reef off Queensland (15°47′S 145°47′E) to Murrays Beach off Jervis Bay (35°08′S 150°46′E).",
+    "Reports of this species from China and Vietnam are now known to be misidentifications.",
+    "mestus lives at a depth of between 0 and 22 m.",
+    "Ascarosepion mestus exhibits sexual dimorphism.",
+    "Females grow to a mantle length (ML) of 124 millimetres (4.9 in), while males do not exceed 77 mm (3.0 in) ML."
+   ],
+   "sources": [
+    "Wikipedia (en)",
+    "Wikimedia Commons (File:Red cuttle hunting.webm)"
+   ]
   }
+ },
+ {
+  "key": "anoplodactylus lentus",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/Sea_Spiders.webm",
+   "license": "cc-by",
+   "credit": "NOAA Sanctuaries · CC BY",
+   "source": "File:Sea Spiders.webm"
+  },
+  "species": {
+   "scientific_name": "Anoplodactylus lentus",
+   "common_name_ko": "Anoplodactylus lentus",
+   "common_name_en": "Anoplodactylus lentus",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Phoxichilidiidae is a family of sea spiders.",
+    "About 150 species are described, almost all in the genus Anoplodactylus Wilson, 1878."
+   ],
+   "sources": [
+    "Wikipedia (en) · 상위 분류군",
+    "Wikimedia Commons (File:Sea Spiders.webm)"
+   ]
+  }
+ },
+ {
+  "key": "carcharhinus amblyrhynchos",
+  "kind": "creature",
+  "footage": {
+   "url": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Grey_reef_shark_%28Carcharhinus_amblyrhynchos%29_near_Sipadan.webm",
+   "license": "cc-by",
+   "credit": "EMMA TOLMIE · CC BY",
+   "source": "File:Grey reef shark (Carcharhinus amblyrhynchos) near Sipadan.webm"
+  },
+  "species": {
+   "scientific_name": "Carcharhinus amblyrhynchos",
+   "common_name_ko": "산호상어",
+   "common_name_en": "Grey reef shark",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "オグロメジロザメ（Carcharhinus amblyrhynchos）はメジロザメ属に属するサメの一種。インド太平洋のサンゴ礁で見られる最も一般的なサメで、特にドロップオフ周辺に多い。典型的なメジロザメ類の体型で、幅広く丸い吻・大きな眼を持つ。第一背鰭を除いた全ての鰭に黒い模様を持つこと（特に尾鰭の後縁）、2基の背鰭の間に隆起線がないことで他種と区別できる。全長1.9m程度。",
+    "泳ぎは速く、夜間に活動的になり硬骨魚や頭足類を食べる。他種に対しては攻撃的だが同種には寛容で、日中には大きな群れを作る。胎生で、2年毎に1-6匹の仔を産む。雌は浅瀬で群れを作り、高水温によって胎児の成長を促す。威嚇行動は非常によく知られており、近づいた他種のサメやダイバーなどに対して、攻撃の前に通常とは異なる姿勢で特殊な行動を取る。人への攻撃も知られ、特に威嚇行動時には注意すべきである。多数の地域で漁獲され、繁殖・移動力が低いために減少しており、IUCNは保全状況を絶滅危惧としている。"
+   ],
+   "sources": [
+    "Wikipedia (ja)",
+    "Wikimedia Commons (File:Grey reef shark (Carcharhinus amblyrhynchos) near Sipadan.webm)"
+   ]
+  }
+ },
+ {
+  "key": "octocorallia",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2022/03/corals-1920x1080-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/edu-resources-dsd-corals/attachment/16445/"
+  },
+  "species": {
+   "scientific_name": "Octocorallia",
+   "common_name_ko": "Octocorallia",
+   "common_name_en": "Octocorallia",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "八放サンゴ亜綱（はっぽうサンゴあこう、八放珊瑚亜綱、Octocorallia、オクトコラリア亜綱）は、刺胞動物門花虫綱に属する一分類群である。ポリプの胃腔（腔腸）の隔壁数や触手数が8となる。"
+   ]
+  }
+ },
+ {
+  "key": "actiniaria",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2023/07/dive02-anemone-1280x720-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-seascape-alaska-ex2304-gallery-media-dive02-anemone/attachment/15047/"
+  },
+  "species": {
+   "scientific_name": "Actiniaria",
+   "common_name_ko": "말미잘",
+   "common_name_en": "Actiniaria",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "イソギンチャク（磯巾着、菟葵、英: sea anemone）は、刺胞動物門花虫綱六放サンゴ亜綱イソギンチャク目（イソギンチャクもく）に属する動物の総称である。柔らかい無脊椎動物で、口の回りに毒のある触手を持つ。"
+   ]
+  }
+ },
+ {
+  "key": "crossota",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2022/07/ex2205-dive02-jelly-720x480-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-22voyage-to-the-ridge-gallery-media-ex2205-dive02-jelly/attachment/14684/"
+  },
+  "species": {
+   "scientific_name": "Crossota",
+   "common_name_ko": "Crossota",
+   "common_name_en": "Crossota",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Crossota is a genus of hydrozoans of the family Rhopalonematidae.",
+    "The genus comprises five species.",
+    "Unlike most hydromedusae, these do not have a sessile stage.",
+    "Rather, they spend their entire lives in the water column as plankton.",
+    "The genus Crossota is widespread throughout the oceans."
+   ]
+  }
+ },
+ {
+  "key": "octopus",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2023/07/dive05-octopus-1280x720-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-seascape-alaska-ex2304-gallery-media-dive05-octopus/attachment/13734/"
+  },
+  "species": {
+   "scientific_name": "Octopus",
+   "common_name_ko": "낙지속",
+   "common_name_en": "Octopus",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "マダコ属（マダコぞく、Octopus）は、タコ目マダコ科に属する軟体動物の属のひとつ。"
+   ]
+  }
+ },
+ {
+  "key": "chimaera",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2022/07/dive08-chimaera-1280x720-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-22voyage-to-the-ridge-gallery-media-dive08-chimaera/attachment/15983/"
+  },
+  "species": {
+   "scientific_name": "Chimaera",
+   "common_name_ko": "Chimaera",
+   "common_name_en": "Chimaera",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Chimaera is the type genus of the cartilaginous fish family Chimaeridae."
+   ]
+  }
+ },
+ {
+  "key": "scyliorhinidae",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2022/07/dive08-catshark-1280x720-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-22voyage-to-the-ridge-gallery-media-dive08-catshark/attachment/13525/"
+  },
+  "species": {
+   "scientific_name": "Scyliorhinidae",
+   "common_name_ko": "두툽상어과",
+   "common_name_en": "Scyliorhinidae",
+   "depth_range_m": "",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "トラザメ科（学名：Scyliorhinidae）は、メジロザメ目に属するサメの科の一つ。"
+   ]
+  }
+ },
+ {
+  "key": "myxine glutinosa",
+  "footage": {
+   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2023/04/ex2301-dive01-hagfish-1280x720-1.mp4",
+   "license": "public-domain",
+   "credit": "NOAA Ocean Exploration",
+   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-express-ex2301-gallery-media-ex2301-dive01-hagfish/attachment/14815/"
+  },
+  "species": {
+   "scientific_name": "Myxine glutinosa",
+   "common_name_ko": "Myxine glutinosa",
+   "common_name_en": "Myxine glutinosa",
+   "depth_range_m": "75",
+   "distribution": "",
+   "habitat": "",
+   "diet": [],
+   "fun_facts": [
+    "Myxine glutinosa, also known as the Atlantic hagfish, is a type of jawless fish belonging to the class Myxini."
+   ]
+  }
+ }
 ]

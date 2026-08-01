@@ -17,12 +17,19 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DISC = ROOT / "src" / "categories" / "deep_sea" / "discovered.json"
+# ★클립은 적합성에 따라 deep_sea / marine_life로 **나뉘어** 등록된다(심해 근거 없는 종은
+#   marine_life로 이동 — 운영자 확정). 그러니 '확보한 것이 인벤토리에 있는가'는 **둘을 합쳐** 센다.
+DISCS = [ROOT / "src" / "categories" / c / "discovered.json"
+         for c in ("deep_sea", "marine_life")]
 CLIPS = ROOT / "src" / "data" / "noaa_clips.json"
 
 
 def _rows():
-    return json.loads(DISC.read_text(encoding="utf-8"))
+    out = []
+    for p in DISCS:
+        if p.exists():
+            out += json.loads(p.read_text(encoding="utf-8"))
+    return out
 
 
 def _noaa_backed():

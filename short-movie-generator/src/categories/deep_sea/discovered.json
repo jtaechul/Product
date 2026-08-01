@@ -565,73 +565,6 @@
   }
  },
  {
-  "key": "octocorallia",
-  "footage": {
-   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2022/03/corals-1920x1080-1.mp4",
-   "license": "public-domain",
-   "credit": "NOAA Ocean Exploration",
-   "source": "https://oceanexplorer.noaa.gov/multimedia/edu-resources-dsd-corals/attachment/16445/"
-  },
-  "species": {
-   "scientific_name": "Octocorallia",
-   "common_name_ko": "Octocorallia",
-   "common_name_en": "Octocorallia",
-   "depth_range_m": "",
-   "distribution": "",
-   "habitat": "",
-   "diet": [],
-   "fun_facts": [
-    "八放サンゴ亜綱（はっぽうサンゴあこう、八放珊瑚亜綱、Octocorallia、オクトコラリア亜綱）は、刺胞動物門花虫綱に属する一分類群である。ポリプの胃腔（腔腸）の隔壁数や触手数が8となる。"
-   ]
-  }
- },
- {
-  "key": "actiniaria",
-  "footage": {
-   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2023/07/dive02-anemone-1280x720-1.mp4",
-   "license": "public-domain",
-   "credit": "NOAA Ocean Exploration",
-   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-seascape-alaska-ex2304-gallery-media-dive02-anemone/attachment/15047/"
-  },
-  "species": {
-   "scientific_name": "Actiniaria",
-   "common_name_ko": "말미잘",
-   "common_name_en": "Actiniaria",
-   "depth_range_m": "",
-   "distribution": "",
-   "habitat": "",
-   "diet": [],
-   "fun_facts": [
-    "イソギンチャク（磯巾着、菟葵、英: sea anemone）は、刺胞動物門花虫綱六放サンゴ亜綱イソギンチャク目（イソギンチャクもく）に属する動物の総称である。柔らかい無脊椎動物で、口の回りに毒のある触手を持つ。"
-   ]
-  }
- },
- {
-  "key": "crossota",
-  "footage": {
-   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2022/07/ex2205-dive02-jelly-720x480-1.mp4",
-   "license": "public-domain",
-   "credit": "NOAA Ocean Exploration",
-   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-22voyage-to-the-ridge-gallery-media-ex2205-dive02-jelly/attachment/14684/"
-  },
-  "species": {
-   "scientific_name": "Crossota",
-   "common_name_ko": "Crossota",
-   "common_name_en": "Crossota",
-   "depth_range_m": "",
-   "distribution": "",
-   "habitat": "",
-   "diet": [],
-   "fun_facts": [
-    "Crossota is a genus of hydrozoans of the family Rhopalonematidae.",
-    "The genus comprises five species.",
-    "Unlike most hydromedusae, these do not have a sessile stage.",
-    "Rather, they spend their entire lives in the water column as plankton.",
-    "The genus Crossota is widespread throughout the oceans."
-   ]
-  }
- },
- {
   "key": "aphyonidae",
   "footage": {
    "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2018/07/0701-fish-1920x1080-1.mp4",
@@ -697,27 +630,6 @@
   }
  },
  {
-  "key": "octopus",
-  "footage": {
-   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2023/07/dive05-octopus-1280x720-1.mp4",
-   "license": "public-domain",
-   "credit": "NOAA Ocean Exploration",
-   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-seascape-alaska-ex2304-gallery-media-dive05-octopus/attachment/13734/"
-  },
-  "species": {
-   "scientific_name": "Octopus",
-   "common_name_ko": "낙지속",
-   "common_name_en": "Octopus",
-   "depth_range_m": "",
-   "distribution": "",
-   "habitat": "",
-   "diet": [],
-   "fun_facts": [
-    "マダコ属（マダコぞく、Octopus）は、タコ目マダコ科に属する軟体動物の属のひとつ。"
-   ]
-  }
- },
- {
   "key": "selachimorpha",
   "footage": {
    "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2021/11/dive08-shark-1280x720-1.mp4",
@@ -762,48 +674,6 @@
   }
  },
  {
-  "key": "chimaera",
-  "footage": {
-   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2022/07/dive08-chimaera-1280x720-1.mp4",
-   "license": "public-domain",
-   "credit": "NOAA Ocean Exploration",
-   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-22voyage-to-the-ridge-gallery-media-dive08-chimaera/attachment/15983/"
-  },
-  "species": {
-   "scientific_name": "Chimaera",
-   "common_name_ko": "Chimaera",
-   "common_name_en": "Chimaera",
-   "depth_range_m": "",
-   "distribution": "",
-   "habitat": "",
-   "diet": [],
-   "fun_facts": [
-    "Chimaera is the type genus of the cartilaginous fish family Chimaeridae."
-   ]
-  }
- },
- {
-  "key": "scyliorhinidae",
-  "footage": {
-   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2022/07/dive08-catshark-1280x720-1.mp4",
-   "license": "public-domain",
-   "credit": "NOAA Ocean Exploration",
-   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-22voyage-to-the-ridge-gallery-media-dive08-catshark/attachment/13525/"
-  },
-  "species": {
-   "scientific_name": "Scyliorhinidae",
-   "common_name_ko": "두툽상어과",
-   "common_name_en": "Scyliorhinidae",
-   "depth_range_m": "",
-   "distribution": "",
-   "habitat": "",
-   "diet": [],
-   "fun_facts": [
-    "トラザメ科（学名：Scyliorhinidae）は、メジロザメ目に属するサメの科の一つ。"
-   ]
-  }
- },
- {
   "key": "teuthida",
   "footage": {
    "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2021/11/dive08-squid-1280x720-1.mp4",
@@ -842,27 +712,6 @@
    "diet": [],
    "fun_facts": [
     "有櫛動物（ゆうしつどうぶつ、学名：Ctenophora）は、漂泳性クラゲ型の動物を含む動物の分類群の1つである。クシクラゲ類とも呼ばれる（クラゲ類とは異なる）。英名でコムジェリー(comb jelly)と呼ばれ、和名のクシクラゲと有櫛動物の語源。"
-   ]
-  }
- },
- {
-  "key": "myxine glutinosa",
-  "footage": {
-   "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2023/04/ex2301-dive01-hagfish-1280x720-1.mp4",
-   "license": "public-domain",
-   "credit": "NOAA Ocean Exploration",
-   "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-express-ex2301-gallery-media-ex2301-dive01-hagfish/attachment/14815/"
-  },
-  "species": {
-   "scientific_name": "Myxine glutinosa",
-   "common_name_ko": "Myxine glutinosa",
-   "common_name_en": "Myxine glutinosa",
-   "depth_range_m": "75",
-   "distribution": "",
-   "habitat": "",
-   "diet": [],
-   "fun_facts": [
-    "Myxine glutinosa, also known as the Atlantic hagfish, is a type of jawless fish belonging to the class Myxini."
    ]
   }
  },
