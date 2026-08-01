@@ -53,6 +53,12 @@
   "source": "NOAA OER EX1803 DIVE15 (https://www.ncei.noaa.gov/metadata/granule/geoportal/opensearch)",
   "url": "https://www.ncei.noaa.gov/data/oceans/oer/video/EX1803/Video/Compressed/EX1803_VID_20180502_DIVE15_SWIMMING_SQUID_SERENADE_Low.mp4"
  },
+ "liparidae": {
+  "credit": "NOAA Ocean Exploration",
+  "license": "public-domain",
+  "source": "https://oceanexplorer.noaa.gov/ocean-fact/what-is-the-deepest-living-fish/seascape-alaska-snailfish-1920x1080_1/",
+  "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2026/01/Seascape-Alaska-Snailfish-1920x1080_1.mp4"
+ },
  "lithodinae": {
   "credit": "NOAA Office of Ocean Exploration and Research",
   "license": "public-domain",

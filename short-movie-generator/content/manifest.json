@@ -409,5 +409,13 @@
     "scientific_name": "Carcharhinus amblyrhynchos",
     "date": "2026-07-31",
     "youtube_url": "https://youtu.be/SdwskoP25KI"
+  },
+  {
+    "id": "053",
+    "kind": "reels",
+    "common_name_ko": "꼼치과",
+    "common_name_en": "Liparidae",
+    "scientific_name": "Liparidae",
+    "date": "2026-08-01"
   }
 ]
