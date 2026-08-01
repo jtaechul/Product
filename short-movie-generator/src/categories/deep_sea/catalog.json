@@ -229,5 +229,12 @@
     "common_name_en": "Peltospira smaragdina",
     "scientific_name": "Peltospira smaragdina",
     "date": "2026-08-01"
+  },
+  {
+    "no": 55,
+    "common_name_ko": "흡혈오징어",
+    "common_name_en": "Vampire squid",
+    "scientific_name": "Vampyroteuthis infernalis",
+    "date": "2026-08-01"
   }
 ]

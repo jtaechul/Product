@@ -315,6 +315,57 @@
     "youtube_url": "https://youtu.be/RH3pySzSLYo"
   },
   {
+    "id": "050",
+    "kind": "reels",
+    "common_name_ko": "바티노무스속",
+    "common_name_en": "Bathynomus",
+    "scientific_name": "Bathynomus",
+    "date": "2026-07-30"
+  },
+  {
+    "id": "051",
+    "kind": "reels",
+    "common_name_ko": "Anoplodactylus lentus",
+    "common_name_en": "Anoplodactylus lentus",
+    "scientific_name": "Anoplodactylus lentus",
+    "date": "2026-07-30",
+    "youtube_url": "https://youtu.be/qIVVFowq98A"
+  },
+  {
+    "id": "052",
+    "kind": "reels",
+    "common_name_ko": "산호상어",
+    "common_name_en": "Grey reef shark",
+    "scientific_name": "Carcharhinus amblyrhynchos",
+    "date": "2026-07-31",
+    "youtube_url": "https://youtu.be/SdwskoP25KI"
+  },
+  {
+    "id": "053",
+    "kind": "reels",
+    "common_name_ko": "꼼치과",
+    "common_name_en": "Liparidae",
+    "scientific_name": "Liparidae",
+    "date": "2026-08-01",
+    "youtube_url": "https://youtu.be/yL1SbekcHXM"
+  },
+  {
+    "id": "054",
+    "kind": "reels",
+    "common_name_ko": "Peltospira smaragdina",
+    "common_name_en": "Peltospira smaragdina",
+    "scientific_name": "Peltospira smaragdina",
+    "date": "2026-08-01"
+  },
+  {
+    "id": "055",
+    "kind": "reels",
+    "common_name_ko": "흡혈오징어",
+    "common_name_en": "Vampire squid",
+    "scientific_name": "Vampyroteuthis infernalis",
+    "date": "2026-08-01"
+  },
+  {
     "id": "lf-3",
     "kind": "longform",
     "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
@@ -383,48 +434,5 @@
     "mode": "shorts",
     "date": "2026-07-28",
     "has_video": true
-  },
-  {
-    "id": "051",
-    "kind": "reels",
-    "common_name_ko": "Anoplodactylus lentus",
-    "common_name_en": "Anoplodactylus lentus",
-    "scientific_name": "Anoplodactylus lentus",
-    "date": "2026-07-30",
-    "youtube_url": "https://youtu.be/qIVVFowq98A"
-  },
-  {
-    "id": "050",
-    "kind": "reels",
-    "common_name_ko": "바티노무스속",
-    "common_name_en": "Bathynomus",
-    "scientific_name": "Bathynomus",
-    "date": "2026-07-30"
-  },
-  {
-    "id": "052",
-    "kind": "reels",
-    "common_name_ko": "산호상어",
-    "common_name_en": "Grey reef shark",
-    "scientific_name": "Carcharhinus amblyrhynchos",
-    "date": "2026-07-31",
-    "youtube_url": "https://youtu.be/SdwskoP25KI"
-  },
-  {
-    "id": "054",
-    "kind": "reels",
-    "common_name_ko": "Peltospira smaragdina",
-    "common_name_en": "Peltospira smaragdina",
-    "scientific_name": "Peltospira smaragdina",
-    "date": "2026-08-01"
-  },
-  {
-    "id": "053",
-    "kind": "reels",
-    "common_name_ko": "꼼치과",
-    "common_name_en": "Liparidae",
-    "scientific_name": "Liparidae",
-    "date": "2026-08-01",
-    "youtube_url": "https://youtu.be/yL1SbekcHXM"
   }
 ]

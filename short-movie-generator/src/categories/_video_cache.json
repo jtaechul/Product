@@ -112,5 +112,12 @@
   "license": "cc-by-sa",
   "source": "File:Leopard shark (Triakis semifasciata).webm",
   "url": "https://upload.wikimedia.org/wikipedia/commons/2/23/Leopard_shark_%28Triakis_semifasciata%29.webm"
+ },
+ "vampyroteuthis infernalis": {
+  "credit": "NOAA Ocean Exploration",
+  "license": "public-domain",
+  "media_kind": "video",
+  "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-ex2107-gallery-media-dive08-squid/attachment/13476/",
+  "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2021/11/dive08-squid-1280x720-1.mp4"
  }
 }
