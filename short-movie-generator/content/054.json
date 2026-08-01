@@ -1,0 +1,80 @@
+{
+  "id": "054",
+  "created_at": "2026-08-01T04:01:09+00:00",
+  "updated_at": "2026-08-01T04:01:09+00:00",
+  "status": "published",
+  "category": "deep_sea",
+  "series": "심해 도감",
+  "applied": {
+    "cuts": [
+      {
+        "start": 0.0,
+        "end": 10.6,
+        "zoom": null
+      },
+      {
+        "start": 13.4,
+        "end": 23.2,
+        "zoom": null
+      },
+      {
+        "start": 23.0,
+        "end": 29.8,
+        "zoom": null
+      },
+      {
+        "start": 34.4,
+        "end": 44.2,
+        "zoom": null
+      }
+    ],
+    "cuts_manual": false
+  },
+  "species": {
+    "common_name_ko": "Peltospira smaragdina",
+    "common_name_en": "Peltospira smaragdina",
+    "scientific_name": "Peltospira smaragdina",
+    "depth_range_m": "870-3520",
+    "habitat": "",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "Peltospira smaragdina is a species of sea snail, a marine gastropod mollusk in the family Peltospiridae."
+    ]
+  },
+  "reels": {
+    "hook": "深海の闇、生きた、奇妙な螺旋。",
+    "caption": "漆黒の水の中、光もほとんど届かない世界に、小さな殻がひとつ、静かに岩肌へ寄り添っています。潮の流れに揺られながらも、その姿は驚くほど動じません。まるで、深海という職場に何百万年も勤め続ける、無口な古株のように。\n\nその名はペルトスピラ・スマラグディナ(学名: Peltospira smaragdina)。\n\n彼らが暮らす場所は、水深にしてなんと870メートルから3520メートルという、途方もない範囲に広がっています。浅瀬の光景など知らぬまま、太陽の届かない深海の底で一生を終える生き物です。勤務地は「870mから3520mまで、どこでも対応」——そんな辞令が下されたら、人間ならきっと二の句が継げないでしょう。\n\nペルトスピラ・スマラグディナは、私たちが磯で見かけるサザエやタニシと同じ、腹足類と呼ばれる巻貝の仲間です。ただし暮らしぶりはまったく違います。太陽も潮の香りも、寄せては返す波もない場所で、殻ひとつを背負い、ただ静かに岩へ張り付いて生きています。出勤も退勤もなく、昼休みも有給もありません。ただそこに在り続けることが、彼らにとっての仕事のようなものなのかもしれません。\n\n分類上、彼らはペルトスピリダエ科という、深海の巻貝たちの系譜に名を連ねています。名前に隠された「スマラグディナ」はエメラルドを思わせる響きを持ち、まるで暗闇に沈んだ小さな宝石のよう。光の届かぬ場所でこそ、その名にふさわしい静かな輝きを、殻の奥に秘めているのかもしれません。\n\nもしこの物語が心に触れたなら、どうか保存しておいてください。そして、同じ海を想う誰かにも、そっとシェアしてあげてください。\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。\n\n映像: NOAA Ocean Exploration・Public Domain",
+    "hashtags": [
+      "#ペルトスピラスマラグディナ",
+      "#深海生物"
+    ],
+    "reveal_name": "ペルトスピラ・スマラグディナ / Peltospira smaragdina",
+    "reveal_fact": "深海に、生息する、巻貝。",
+    "hook_ko": "지구의 바닥, 설마, 살아있는 조개?",
+    "caption_ko": "칠흑 같은 물속, 빛조차 거의 닿지 않는 세계에서 작은 껍데기 하나가 조용히 바위에 몸을 기대고 있습니다. 조류에 흔들리면서도 그 모습은 놀라울 만큼 흔들림이 없습니다. 마치 심해라는 직장에서 수백만 년을 근속해 온, 말없는 고참 사원처럼요.\n\n그 이름은 펠토스피라 스마라그디나(학명: Peltospira smaragdina)입니다.\n\n이들이 살아가는 곳은 수심 무려 870미터에서 3520미터에 이르는, 상상하기 어려운 넓은 범위입니다. 얕은 바다의 풍경 따위는 알지 못한 채, 태양이 닿지 않는 깊은 바닥에서 생을 마치는 생물입니다. 근무지가 “870m부터 3520m까지, 어디든 대응 가능”이라는 발령이라면, 사람이었다면 말문이 막혔을지도 모릅니다.\n\n펠토스피라 스마라그디나는 우리가 갯바위에서 흔히 보는 소라나 다슬기와 같은, 복족류라 불리는 고둥의 한 종류입니다. 하지만 그 삶의 방식은 전혀 다릅니다. 햇빛도, 짠 내음도, 밀려왔다 밀려가는 파도도 없는 곳에서, 껍데기 하나를 짊어진 채 그저 조용히 바위에 붙어 살아갑니다. 출근도 퇴근도 없고, 점심시간도 유급휴가도 없습니다. 그저 그 자리에 존재하는 것이야말로, 그들에게는 하나의 일과인지도 모릅니다.\n\n분류학적으로 이들은 펠토스피리다에 과라는, 심해에 사는 고둥들의 계보에 이름을 올리고 있습니다. 이름 속에 숨은 ‘스마라그디나’는 에메랄드를 떠올리게 하는 울림을 지니고 있어, 마치 어둠 속에 가라앉은 작은 보석 같습니다. 빛이 닿지 않는 곳이기에 더욱, 그 이름에 어울리는 조용한 광채를 껍데기 속 깊이 품고 있는지도 모릅니다.\n\n이 이야기가 마음에 와닿으셨다면, 부디 저장해 두시기 바랍니다. 그리고 같은 바다를 그리워하는 누군가에게도, 살며시 공유해 주시기 바랍니다.\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.\n\n영상: NOAA Ocean Exploration・Public Domain",
+    "hashtags_ko": [
+      "#ペルトスピラスマラグディナ",
+      "#심해생물"
+    ],
+    "yt_title": "有給ゼロ、深海の巻貝ペルトスピラ・スマラグディナ #ペルトスピラスマラグディナ #深海生物",
+    "yt_title_ko": "유급휴가 없는 심해 고둥, 펠토스피라 스마라그디나 #ペルトスピラスマラグディナ #심해생물",
+    "visualizer": "reels",
+    "video_file": "peltospira_smaragdina_20260801_040109.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Wikipedia (en)",
+      "Wikimedia Commons (File:Peltospira smaragdina gastropod assemblage at the Y3 site in the Lucky Strike vent field (MAR) (Ifremer 00775-88699).webm)"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-054/reels_054.mp4",
+    "rev": "30682498991",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-054/cover_054.jpg",
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-054/ytthumb_054.jpg"
+  },
+  "post": null
+}
