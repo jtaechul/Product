@@ -382,8 +382,21 @@ def run_reels(
             except Exception as e:  # noqa: BLE001
                 log.warning("[reels] auto 자동 승격 실패: %s", e)
         if not cands:
+            # ★마지막 안전망(운영자 확정 "중복에 따른 실패는 앞으로 없도록"): 그래도 후보가 비면
+            #   **이미 만든 종이라도** 실사 영상을 가진 종 전체에서 고른다. 예전엔 여기서 중단해
+            #   "제작 가능한 미제작 대상이 없습니다"로 실패했다 — 이제 중복은 실패 사유가 아니다.
+            try:
+                from src.core import footage as _ft
+                seeded = list(_ft.seeded_keys())
+                cands = [k for k in seeded if not str(k).startswith("wreck ")]
+                if cands:
+                    log.warning("[reels] 미제작 대상이 없어 **이미 만든 종을 다시** 제작합니다"
+                                "(중복 허용 규칙 · 후보 %d종)", len(cands))
+            except Exception as e:  # noqa: BLE001
+                log.warning("[reels] 중복 허용 폴백 실패: %s", e)
+        if not cands:
             raise PipelineError("input",
-                                "제작 가능한 미제작 대상이 없습니다 — 관리자 페이지에서 '소싱하기'로 새 대상을 확보하세요.")
+                                "실사 영상을 가진 대상이 하나도 없습니다 — 관리자 페이지에서 '소싱하기'로 영상을 확보하세요.")
         subject = info = None
         for cand in cands:
             ci = category.get_info(cand)
@@ -398,21 +411,17 @@ def run_reels(
     else:
         subject = category.parse_input(query)
         info = category.get_info(subject)
-        # ★명시 대상명 재발방지(운영자 확정 · 실사고: 대왕등각류가 대시보드 '특정 대상 직접 입력'으로
-        #   여러 날짜에 걸쳐 반복 제작). auto 경로는 footage_candidates()가 원장(catalog)과 대조해
-        #   이미 만든 대상을 걸러내지만, 이 명시-이름 경로는 그 검사를 거치지 않아 같은 대상을 몇 번이든
-        #   새 회차로 다시 만들 수 있었다. episode가 명시(=대시보드 '재생성'이 콘텐츠 id로 그 회차를
-        #   복원해 보낸 것)되지 않은 '신규 제작'일 때만 원장을 대조해 이미 있으면 즉시 중단한다
-        #   (재생성·의도적 덮어쓰기는 episode가 오므로 막지 않음).
+        # ★규칙 전환(운영자 확정 · 이전의 '중복이면 즉시 중단'을 대체): "중복 이슈로 제작이 안 되는데
+        #   영상 중복이더라도 그냥 제작되게 해줘 — 다른 느낌으로 또 될 수도 있잖아. **중복에 따른
+        #   실패는 이제 앞으로 없도록** 해줘." → 막지 않고 **새 회차로 계속 만든다**. 다만 운영자가
+        #   실수로 같은 걸 또 만든 건지 알 수 있게 경고 로그만 남긴다(덮어쓰기가 아니라 새 회차라
+        #   기존 콘텐츠는 그대로 보존된다).
         if episode is None and hasattr(category, "is_already_produced"):
             dup = category.is_already_produced(info)
             if dup:
                 no, made_date = dup
-                raise PipelineError(
-                    "input",
-                    f"이미 제작된 대상입니다 — #{no:03d}({made_date}) {info.common_name_ko or info.common_name_en} "
-                    f"({info.scientific_name}). 중복 제작 방지로 중단합니다. 재생성이 필요하면 관리자 "
-                    f"페이지의 해당 콘텐츠(#{no:03d})에서 '재생성'을 사용하세요.")
+                log.warning("[reels] 이미 만든 대상입니다(#%03d %s) — 중복 허용 규칙에 따라 "
+                            "새 회차로 계속 제작합니다: %s", no, made_date, info.scientific_name)
     _verify_subject_or_raise(category, info)   # ★제작 직전 카테고리 적합성 최종 게이트
     if not hasattr(category, "hook_intro_spec"):
         raise PipelineError("reels", "카테고리가 hook_intro_spec 미제공")

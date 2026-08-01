@@ -448,11 +448,14 @@ class DeepSeaCategory:
         return None
 
     def footage_candidates(self) -> list[str]:
-        """auto 후보 = **아직 제작 안 한 종만**(중복 제작 절대 금지 · 사용자 확정 규칙).
+        """auto 후보 = **미제작 종 먼저, 그다음 이미 만든 종**(운영자 확정 · 규칙 전환).
 
-        ★재탕 금지: 예전엔 풀 소진 시 회차로 순환해 이미 만든 종을 다시 뽑았고(심해붉은해파리
-        중복 사고), 이제 그 순환을 폐지한다. 제작 원장(catalog)에 있는 종은 후보에서 영구 제외.
-        미제작 종이 없으면 빈 리스트를 반환 → 파이프라인이 '전 종 제작 완료'로 중단(중복 대신 정지).
+        ★규칙 전환(운영자 지시 · 이전의 '중복 절대 금지'를 대체한다):
+          "중복 이슈로 제작이 안 되는데, 영상 중복이더라도 그냥 제작되게 해줘. 다른 느낌으로
+           또 만들어질 수도 있잖아. **중복에 따른 실패는 이제 앞으로 없도록** 해줘."
+          → 이미 만든 종도 후보에서 **빼지 않고 뒤로 미룬다**. 미제작이 남아 있으면 그게 먼저이고
+            (다양성 유지), 다 떨어지면 **오래전에 만든 것부터** 다시 만든다(연속 재탕 방지).
+          → 이 목록은 **절대 비지 않는다** → auto가 '미제작 대상 없음'으로 실패하는 일이 사라진다.
         """
         from src.core import footage
         seeded = {k.lower() for k in footage.seeded_keys()}
@@ -461,15 +464,41 @@ class DeepSeaCategory:
         if not pool:
             raise PipelineError("input", "실사 영상 보유 종이 없습니다(시드 필요)")
         made = self._made_set()
-        return [k for k in pool
-                if data.SPECIES[k]["scientific_name"].strip().lower() not in made
-                and (data.SPECIES[k].get("common_name_en", "").strip().lower() not in made)]
+
+        def _is_made(k: str) -> bool:
+            sp = data.SPECIES[k]
+            return (sp["scientific_name"].strip().lower() in made
+                    or sp.get("common_name_en", "").strip().lower() in made)
+
+        fresh = [k for k in pool if not _is_made(k)]
+        # 이미 만든 종은 '가장 오래전에 만든 것' 순으로 뒤에 붙인다(같은 종이 연달아 나오지 않게).
+        order = self._made_order()
+        again = sorted((k for k in pool if _is_made(k)),
+                       key=lambda k: order.get(data.SPECIES[k]["scientific_name"].strip().lower(),
+                                               order.get(data.SPECIES[k].get("common_name_en", "")
+                                                         .strip().lower(), 0)))
+        return fresh + again
+
+    def _made_order(self) -> dict:
+        """종(학명·영문명 소문자) → 마지막 제작 회차 번호. 재제작 순서를 '오래된 것부터'로 정한다."""
+        from src.categories.deep_sea import catalog
+        out: dict = {}
+        try:
+            for it in catalog._load():
+                no = int(it.get("no", 0) or 0)
+                for k in (str(it.get("scientific_name", "")).strip().lower(),
+                          str(it.get("common_name_en", "")).strip().lower()):
+                    if k:
+                        out[k] = max(out.get(k, 0), no)
+        except Exception:  # noqa: BLE001
+            pass
+        return out
 
     def pick_footage_species(self) -> str:
-        """auto 모드: 미제작 종 중 1순위. 전부 제작됐으면 명확히 중단(중복 금지)."""
+        """auto 모드: 미제작 종 우선, 없으면 오래전에 만든 종을 다시(중복 실패 없음)."""
         c = self.footage_candidates()
         if not c:
-            raise PipelineError("input", "전 종 제작 완료 — 중복 방지로 중단(새 종 시드 추가 필요)")
+            raise PipelineError("input", "실사 영상 보유 종이 없습니다(시드 필요)")
         return c[0]
 
     def auto_replenish(self) -> str | None:

@@ -65,8 +65,16 @@ def test_collection_category_is_already_produced(monkeypatch, tmp_path):
     assert cat.is_already_produced(fresh) is None
 
 
-def test_run_reels_blocks_duplicate_explicit_query(monkeypatch):
-    """episode 미지정(신규 제작) + 이미 만든 종을 이름으로 직접 요청 → PipelineError로 즉시 중단."""
+def test_run_reels_allows_duplicate_explicit_query(monkeypatch, caplog):
+    """★규칙 전환(운영자 확정): 이미 만든 종을 이름으로 다시 요청해도 **막지 않는다**.
+
+    운영자 지시: "중복 이슈로 제작이 안 되는데, 영상 중복이더라도 그냥 제작되게 해줘. 다른 느낌으로
+      또 만들어질 수도 있잖아. **중복에 따른 실패는 이제 앞으로 없도록** 해줘."
+    → 예전엔 여기서 PipelineError로 즉시 중단했다(대왕등각류 반복 제작 방지). 이제는 경고만 남기고
+      **새 회차로 계속 만든다**(덮어쓰기가 아니라 새 회차라 기존 콘텐츠는 그대로 보존).
+    """
+    import logging
+
     from src.core import pipeline
 
     made = SpeciesInfo(scientific_name="Bathynomus giganteus", common_name_ko="대왕등각류",
@@ -84,11 +92,14 @@ def test_run_reels_blocks_duplicate_explicit_query(monkeypatch):
             return (8, "2026-07-08")
 
     monkeypatch.setattr(pipeline, "get_category", lambda cid: _Cat())
-    try:
-        pipeline.run_reels("deep_sea", "Giant isopod")
-        assert False, "중복 대상인데 예외가 발생하지 않음"
-    except PipelineError as e:
-        assert "이미 제작된" in str(e) and "#008" in str(e)
+    with caplog.at_level(logging.WARNING):
+        try:
+            pipeline.run_reels("deep_sea", "Giant isopod")
+        except PipelineError as e:
+            # 중복 때문이 아니라 **그 다음 단계**에서 멈춰야 한다(이 더미 카테고리엔 훅 스펙이 없다)
+            assert "이미 제작된" not in str(e), f"중복으로 중단됐습니다: {e}"
+    assert any("중복 허용 규칙" in r.getMessage() for r in caplog.records), \
+        "중복을 허용했다는 기록이 남지 않았습니다"
 
 
 def test_run_reels_allows_explicit_episode_regeneration(monkeypatch):
@@ -118,3 +129,50 @@ def test_run_reels_allows_explicit_episode_regeneration(monkeypatch):
         assert False, "다음 단계까지 도달해야 함"
     except RuntimeError as e:
         assert "reached-next-step" in str(e)
+
+
+# ── auto 경로: 전 종을 이미 만들었어도 **실패하지 않는다**(운영자 확정 규칙) ──────
+def test_auto_never_fails_when_everything_is_already_made():
+    """★"중복에 따른 실패는 이제 앞으로 없도록" — 전 종 제작 완료 상태에서도 후보가 남아야 한다.
+
+    예전엔 이 상황에서 후보가 0건이 되어 "제작 가능한 미제작 대상이 없습니다"로 제작이 멈췄다
+    (운영자가 실제로 이 오류를 텔레그램으로 받았다). 이제는 **오래전에 만든 종부터** 다시 만든다.
+    """
+    from src.categories.deep_sea import data
+    from src.registry import get_category
+
+    cat = get_category("deep_sea")
+    before = cat.footage_candidates()
+    assert before, "정상 상태에서도 후보가 없습니다(시드 문제)"
+
+    everything = {sp["scientific_name"].strip().lower() for sp in data.SPECIES.values()}
+    everything |= {sp.get("common_name_en", "").strip().lower() for sp in data.SPECIES.values()}
+    real = cat._made_set
+    try:
+        cat._made_set = lambda: everything          # 전 종을 이미 만든 상태로 위장
+        after = cat.footage_candidates()
+        assert after, "전 종 제작 완료라고 후보가 0건이 되면 안 됩니다(중복 실패 재발)"
+        assert cat.pick_footage_species(), "auto가 대상을 하나도 못 고릅니다"
+    finally:
+        cat._made_set = real
+
+
+def test_made_species_are_ordered_oldest_first():
+    """다시 만들 때는 **가장 오래전에 만든 것부터** — 같은 종이 연달아 나오지 않게."""
+    from src.registry import get_category
+    cat = get_category("deep_sea")
+    order = cat._made_order()
+    assert isinstance(order, dict), "제작 순서 정보를 만들지 못합니다"
+
+
+def test_no_duplicate_abort_remains_in_source():
+    """소스 계약: 중복을 사유로 제작을 중단하는 코드가 남아 있으면 안 된다."""
+    import re
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    for rel in ("src/core/pipeline.py", "src/categories/deep_sea/module.py"):
+        s = (root / rel).read_text(encoding="utf-8")
+        for m in re.finditer(r"raise PipelineError\([^)]{0,240}", s, re.S):
+            blob = m.group(0)
+            assert "중복" not in blob and "이미 제작된" not in blob, \
+                f"{rel}: 중복으로 제작을 중단하는 코드가 남아 있습니다 — {blob[:110]}"
