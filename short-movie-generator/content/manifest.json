@@ -411,19 +411,19 @@
     "youtube_url": "https://youtu.be/SdwskoP25KI"
   },
   {
-    "id": "053",
-    "kind": "reels",
-    "common_name_ko": "꼼치과",
-    "common_name_en": "Liparidae",
-    "scientific_name": "Liparidae",
-    "date": "2026-08-01"
-  },
-  {
     "id": "054",
     "kind": "reels",
     "common_name_ko": "Peltospira smaragdina",
     "common_name_en": "Peltospira smaragdina",
     "scientific_name": "Peltospira smaragdina",
+    "date": "2026-08-01"
+  },
+  {
+    "id": "053",
+    "kind": "reels",
+    "common_name_ko": "꼼치과",
+    "common_name_en": "Liparidae",
+    "scientific_name": "Liparidae",
     "date": "2026-08-01"
   }
 ]
