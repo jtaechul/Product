@@ -53,6 +53,12 @@
   "source": "NOAA OER EX1803 DIVE15 (https://www.ncei.noaa.gov/metadata/granule/geoportal/opensearch)",
   "url": "https://www.ncei.noaa.gov/data/oceans/oer/video/EX1803/Video/Compressed/EX1803_VID_20180502_DIVE15_SWIMMING_SQUID_SERENADE_Low.mp4"
  },
+ "ctenophora": {
+  "credit": "NOAA Ocean Exploration",
+  "license": "public-domain",
+  "source": "https://oceanexplorer.noaa.gov/multimedia/video-playlist-arctic-comb/attachment/16134/",
+  "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2018/05/combjelly_1280x720.mp4"
+ },
  "liparidae": {
   "credit": "NOAA Ocean Exploration",
   "license": "public-domain",

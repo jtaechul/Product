@@ -236,5 +236,12 @@
     "common_name_en": "Vampire squid",
     "scientific_name": "Vampyroteuthis infernalis",
     "date": "2026-08-01"
+  },
+  {
+    "no": 56,
+    "common_name_ko": "유즐동물",
+    "common_name_en": "Ctenophora",
+    "scientific_name": "Ctenophora",
+    "date": "2026-08-02"
   }
 ]
