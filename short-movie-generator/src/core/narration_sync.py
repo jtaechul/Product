@@ -220,6 +220,41 @@ def _snap_out_of_num(cut: int, start: int, spans: list[tuple]) -> int:
     return cut
 
 
+
+# ★자막 '고아' 판정(운영자 확정 · 절대 회귀 금지): 한 글자나 문장부호만 홀로 한 페이지에 뜨면 안 된다.
+#   실사고(운영자 지적, 재차): "마침표만 그다음 페이지 자막으로 넘어가는 문제가 발생한다."
+#   원인은 두 층이었다 — ⓐ한 줄 조각 나누기(_fit_pieces)의 꼬리 ⓑ**청크 자체가 「。」 하나**인 경우
+#   (조각이 1개뿐이라 기존 꼬리 병합 로직이 손대지 못했다).
+_ORPHANISH = re.compile(r"^[、。，．・「」『』（）〜ー…!?！？\s\-]*$")
+
+
+def _is_orphan(s: str) -> bool:
+    """한 글자 이하이거나 문장부호만으로 이루어진 조각 → 홀로 띄우지 않는다."""
+    t = (s or "").strip()
+    return len(t) <= 1 or bool(_ORPHANISH.match(t))
+
+
+def merge_orphan_chunks(disp: list) -> list:
+    """표시 청크 목록에서 고아 청크를 **앞 청크에 흡수**한다(표시 시간도 이어붙인다).
+
+    앞이 없으면(첫 청크가 고아) 뒤 청크의 앞에 붙인다. 합쳐서 줄이 길어지면 렌더 단계가
+    **글자 크기를 조금 줄여** 한 줄을 유지한다(두 줄 금지 — 운영자 확정).
+    """
+    out: list = []
+    for item in disp or []:
+        ch, st, en = item[0], item[1], item[2]
+        if _is_orphan(ch) and out:
+            pch, pst, _pen = out[-1]
+            out[-1] = (pch + str(ch).strip(), pst, en)      # 앞 청크에 흡수 + 끝시각 연장
+            continue
+        out.append((str(ch), st, en))
+    if len(out) >= 2 and _is_orphan(out[0][0]):             # 첫 청크가 고아면 뒤에 붙인다
+        ch, st, _en = out[0]
+        nch, _nst, nen = out[1]
+        out[1] = (str(ch).strip() + nch, st, nen)
+        out.pop(0)
+    return out
+
 def _fit_pieces(text: str, st: float, en: float, max_px: float, subsz: int) -> list[tuple]:
     """한 자막 청크를 '한 줄에 들어가는 조각'들로 쪼갠다 — 단어(문절) 단위로만, 글자 중간 금지.
 
@@ -265,10 +300,19 @@ def _fit_pieces(text: str, st: float, en: float, max_px: float, subsz: int) -> l
         pieces.append(text[start:cut])
         start = cut
     pieces = [p for p in (s.strip() for s in pieces) if p]
-    # 마지막 조각이 1글자면 앞 조각에 붙여 '한 글자 페이지' 원천 차단(약간 넘쳐도 의미 우선)
-    if len(pieces) >= 2 and len(pieces[-1]) <= 1:
-        pieces[-2] += pieces[-1]
-        pieces.pop()
+    # ★고아 조각(한 글자·문장부호만) 전면 차단 — 마지막뿐 아니라 **중간 조각도** 이웃에 흡수한다.
+    #   조금 길어져도 의미 있는 덩어리가 낫다(넘치면 아래에서 글자를 살짝 줄여 한 줄 유지).
+    i = 0
+    while i < len(pieces):
+        if len(pieces) >= 2 and _is_orphan(pieces[i]):
+            if i > 0:
+                pieces[i - 1] += pieces[i]
+            else:
+                pieces[i + 1] = pieces[i] + pieces[i + 1]
+            pieces.pop(i)
+            i = max(0, i - 1)
+            continue
+        i += 1
     if len(pieces) <= 1:
         return [(text, st, en)]
     total = sum(len(p) for p in pieces) or 1
@@ -278,6 +322,21 @@ def _fit_pieces(text: str, st: float, en: float, max_px: float, subsz: int) -> l
         pe = en if k == len(pieces) - 1 else t + seg
         out.append((p, t, pe)); t = pe
     return out
+
+
+# 고아 병합으로 줄이 길어졌을 때 허용하는 **최소 축소율**(이 아래로는 안 줄인다 — 가독성 바닥).
+_MIN_FS_RATIO = 0.82
+
+
+def fit_font_size(text: str, max_px: float, subsz: int) -> int:
+    """한 줄을 유지하기 위한 글자 크기(px). 넘치지 않으면 기본 크기 그대로.
+
+    ★두 줄로 만들지 않는다(운영자 확정) — 넘치면 **아주 조금 줄여서** 한 줄에 담는다.
+    """
+    w = sum(_char_px(c, subsz) for c in text)
+    if w <= max_px or w <= 0:
+        return subsz
+    return max(int(subsz * _MIN_FS_RATIO), int(subsz * max_px / w))
 
 
 def build_synced_ass(disp: list[tuple], out_path: str, *, font: str = "Noto Sans CJK JP",
@@ -297,6 +356,8 @@ def build_synced_ass(disp: list[tuple], out_path: str, *, font: str = "Noto Sans
                               subsz=subsz, submv=int(h * 0.16),
                               hooksz=int(h * 0.053), hookmv=int(h * 0.234),
                               accent=accent.strip("&") and accent)]
+    # ★고아 청크(「。」 하나 등)를 앞 청크에 흡수한 뒤 렌더한다 — 한 글자/마침표만 뜨는 페이지 차단.
+    disp = merge_orphan_chunks(disp)
     for i, (ch, st, en) in enumerate(disp):
         if hook_first and i == 0:
             tag = (r"{\an8\pos(%d,%d)\fad(200,180)\fscx118\fscy118\t(0,260,\fscx100\fscy100)"
@@ -304,6 +365,9 @@ def build_synced_ass(disp: list[tuple], out_path: str, *, font: str = "Noto Sans
             lines.append(f"Dialogue: 0,{_ts(st)},{_ts(en)},Hook,,0,0,0,,{tag}{ch}")
         else:
             for piece, ps, pe in _fit_pieces(ch, st, en, max_px, subsz):
-                lines.append(f"Dialogue: 0,{_ts(ps)},{_ts(pe)},Sub,,0,0,0,,{{\\fad(70,70)}}{piece}")
+                # 고아 병합으로 줄이 길어졌으면 **글자만 살짝 줄여** 한 줄을 지킨다(두 줄 금지).
+                fs = fit_font_size(piece, max_px, subsz)
+                tag = "{\\fad(70,70)}" if fs >= subsz else ("{\\fad(70,70)\\fs%d}" % fs)
+                lines.append(f"Dialogue: 0,{_ts(ps)},{_ts(pe)},Sub,,0,0,0,,{tag}{piece}")
     Path(out_path).write_text("\n".join(lines), encoding="utf-8")
     return out_path

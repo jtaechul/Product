@@ -295,11 +295,45 @@ def _probe_wh(path: str) -> tuple[int, int]:
         return 0, 0
 
 
-# ★쇼츠 길이 규칙(기획서: 40초 내외). 본문 나레이션이 길면 총 길이가 1분을 넘는다(소싱 종 LLM 본문이
-#   길게 나오던 사고). 시드 종은 27~29초(총 30~39초)로 이미 규칙 내라 안 건드리고, 과길이 본문만
-#   글자수 예산으로 컷한다. 실측 ja-JP edge-tts ≈ 5.4자/초 → 165자 ≈ 30초 본문 → 총 ≈ 40초.
-_MAX_BODY_CHARS = 165
+# ★★쇼츠 길이 규칙(운영자 확정 2026-08-01 · 강화): **40초 초과 절대 금지 · 가급적 35초 이내**.
+#   운영자 지적: "영상이 너무 긴 거 아니야? 오프닝 훅·엔드카드·수심 보여주는 부분을 제외한
+#   나머지(본문) 길이를 줄여서 전체가 절대 40초를 넘지 않게, 가급적 35초 이내로 끝내자."
+#   고정 구간(본문 밖) 실측: 오프닝 훅 4.6초 + 수심 스팅어 ~2.3초 + 엔드카드 2.0초 ≈ 8.9초.
+#   → 본문 예산 = 목표 35초 − 8.9초 ≈ 26초. 실측 ja-JP edge-tts ≈ 5.4자/초 → 약 140자.
+#   ⚠ 글자수는 **합성 전 추정치**일 뿐이라, 합성 후 실제 길이로 한 번 더 검사해 초과분을 잘라낸다
+#     (아래 _fit_body_to_budget — 추정이 빗나가도 40초를 넘기지 않는 최종 관문).
+_OPENING_S = 4.6            # 오프닝 훅(hook_intro.opening_seg_s)
+_STINGER_S = 2.3            # 지도→수심 하강 스팅어(reels_stinger)
+_ENDCARD_S = 2.0            # 엔드카드(hook_intro.endcard_dur_s)
+_FIXED_OVERHEAD_S = _OPENING_S + _STINGER_S + _ENDCARD_S
+_TARGET_TOTAL_S = 35.0      # 가급적 이 안에서 끝낸다(운영자 목표)
+_HARD_MAX_TOTAL_S = 40.0    # 절대 초과 금지(운영자 확정)
+_JP_CPS = 5.4               # 실측 일본어 TTS 속도(자/초)
+_MAX_BODY_CHARS = int((_TARGET_TOTAL_S - _FIXED_OVERHEAD_S) * _JP_CPS)   # ≈ 140자
 _MIN_BODY_CHUNKS = 12
+
+
+def body_budget_s(target: float = _TARGET_TOTAL_S) -> float:
+    """본문(나레이션)에 허용되는 초. 고정 구간(훅·스팅어·엔드카드)은 건드리지 않는다."""
+    return max(8.0, target - _FIXED_OVERHEAD_S)
+
+
+def _fit_body_to_budget(chunks: list[str], dur_s: float) -> list[str]:
+    """합성된 본문이 예산을 넘으면 **뒤 절부터 덜어낸다**(구독 유도 절은 지킨다).
+
+    글자수 예산은 합성 전 추정이라 빗나갈 수 있다. 여기서 실제 길이로 다시 재서
+    총 길이가 40초(하드 상한)를 넘지 않게 맞춘다. 반환이 원본과 같으면 재합성 불필요.
+    """
+    budget = body_budget_s(_HARD_MAX_TOTAL_S)
+    if dur_s <= budget or len(chunks) <= _MIN_BODY_CHUNKS:
+        return chunks
+    cps = (sum(len(c) for c in chunks) / dur_s) if dur_s > 0 else _JP_CPS
+    want_chars = int(body_budget_s(_TARGET_TOTAL_S) * cps)     # 하드가 아니라 목표(35초)로 되맞춘다
+    tail = chunks[-1] if chunks else ""                        # 마지막 절(구독 유도)은 보존
+    head = _cap_body_chunks(chunks[:-1] or chunks,
+                            max_chars=max(40, want_chars - len(tail)))
+    out = head + ([tail] if chunks and tail not in head else [])
+    return out if len(out) >= 3 else chunks
 
 
 def _cap_body_chunks(chunks: list[str], max_chars: int = _MAX_BODY_CHARS,
@@ -466,7 +500,20 @@ def run_reels(
     nar = narration_sync.synthesize(chunks, str(work_dir))
     if not nar.get("mp3") or not nar.get("disp"):
         raise PipelineError("tts", "나레이션 합성 실패")
+    # ★40초 초과 절대 금지(운영자 확정): 글자수 예산은 추정이라 빗나갈 수 있다 → **실제 길이로**
+    #   한 번 더 재서 넘치면 뒤 절을 덜어내고 다시 합성한다(고정 구간은 그대로 두고 본문만 줄인다).
+    _fit = _fit_body_to_budget(chunks, float(nar["duration"]))
+    if _fit is not chunks and _fit != chunks:
+        log.warning("[reels] 본문 %.1f초 → 예산 초과, %d절 → %d절로 줄여 재합성(총 40초 규칙)",
+                    float(nar["duration"]), len(chunks), len(_fit))
+        chunks = _fit
+        nar2 = narration_sync.synthesize(chunks, str(work_dir))
+        if nar2.get("mp3") and nar2.get("disp"):
+            nar = nar2
     body_dur = float(nar["duration"]) + 0.6
+    _proj = body_dur + _FIXED_OVERHEAD_S
+    log.info("[reels] 예상 총 길이 %.1f초 (본문 %.1f + 고정 %.1f) · 목표 %.0f초/상한 %.0f초",
+             _proj, body_dur, _FIXED_OVERHEAD_S, _TARGET_TOTAL_S, _HARD_MAX_TOTAL_S)
 
     cutaway_credits: list[str] = []
     doc_map_start = None      # 난파선 지도 컷 시작 시각(있으면) — 지도 SFX 믹스 타이밍
