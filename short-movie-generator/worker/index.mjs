@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-07-31-2 (소싱 인벤토리에 확보 종 표시)";
+const BUILD="v2026-08-01-1 (인벤토리 접기 + 썸네일 표시)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -1667,7 +1667,11 @@ function vsUse(i){
   nvbanner("영상 URL을 나레이션 카드에 넣었습니다. 형태(숏츠/롱폼)만 고르고 '나레이션 제작'을 누르세요 — 제목·설명·해시태그는 자동 생성됩니다.","ok");
   const card=$("#gonv");if(card&&card.scrollIntoView)card.scrollIntoView({behavior:"smooth",block:"center"});
 }
-let _srcMode="video";   // "video"=영상+이미지 확보(제작 풀) · "image"=이미지전용(영상 없음·별도 보관)
+let _srcMode="video";
+// ★인벤토리 접기(운영자 확정): 기본 **접힘** — 안 쓸 때 스크롤을 잡아먹지 않게 한다.
+//   펼쳐도 _SRC_PAGE개씩만 그리고 '더 보기'로 늘린다(28+18건을 통째로 그리면 화면이 끝없이 길어진다).
+const _SRC_PAGE=6;
+let _srcOpen=false, _srcShown=_SRC_PAGE;   // "video"=영상+이미지 확보(제작 풀) · "image"=이미지전용(영상 없음·별도 보관)
 async function loadCandidates(cat,mode){
   if(mode)_srcMode=mode;mode=_srcMode;
   const el=$("#srccands");if(!el)return;
@@ -1694,7 +1698,11 @@ async function loadCandidates(cat,mode){
             common_name_ko:sp.common_name_ko||sp.common_name_en||"",
             depth:String(sp.depth_range_m||"").replace(/[^\d\-~]/g,""),
             license:d.footage.license||"", facts:sp.fun_facts||[],
-            kind:d.kind||"", _ready:true};
+            kind:d.kind||"", _ready:true,
+            // ★썸네일(운영자 지적 "썸네일 안 뜬다"): discovered 항목엔 thumbnail_url이 없다.
+            //   사진 소스면 그 이미지를, 영상 소스면 **영상 첫 장면**을 미리보기로 쓴다.
+            thumbnail_url:d.footage.image_url||"",
+            _vid:(d.footage.media_kind==="photo"?"":(d.footage.url||""))};
   });
   const seen=new Set(vids.map(v=>String(v.key||v.name||"").toLowerCase()));
   const arr=isImg?imgs:ready.filter(r=>!seen.has(String(r.key).toLowerCase())).concat(vids);
@@ -1705,14 +1713,35 @@ async function loadCandidates(cat,mode){
   const desc=isImg
     ?'<div class="hint" style="margin:-4px 0 8px">영상이 <b>전혀 없어</b> 사진(4장↑) 다큐로만 만들 수 있는 소스입니다. 자동 제작 풀에서 <b>제외·별도 보관</b> 중이며, 참고·수동 제작용으로만 봅니다.</div>'
     :'<div class="hint" style="margin:-4px 0 8px">실사 <b>영상</b>이 확보돼 자동 제작 풀에 있는 소스입니다.</div>';
-  const head='<span class="lbl">소싱 인벤토리 ('+cat+') <a href="#" id="srcref" style="color:var(--cy);float:right;text-decoration:none">새로고침</a></span>';
+  // ★목록 접기(운영자 지적 "안 쓸 때는 감출 수 있어야지, 다 나열하면 스크롤이 너무 길어진다"):
+  //   기본은 **접힘**. 펼쳐도 처음엔 일부만 보이고 '더 보기'로 늘린다(스크롤 폭주 방지).
+  const head='<span class="lbl">소싱 인벤토리 ('+cat+') '+
+    '<a href="#" id="srctgl" style="color:var(--cy);float:right;text-decoration:none">'+
+      (_srcOpen?'접기 ▲':'펼치기 ▼')+'</a>'+
+    '<a href="#" id="srcref" style="color:var(--gy);float:right;text-decoration:none;margin-right:12px">새로고침</a></span>';
   const bindTabs=()=>{el.querySelectorAll(".stab").forEach(b=>{b.onclick=()=>loadCandidates(cat,b.getAttribute("data-mode"));});
-    const rf=$("#srcref");if(rf)rf.onclick=(e)=>{e.preventDefault();loadCandidates(cat);};};
+    const rf=$("#srcref");if(rf)rf.onclick=(e)=>{e.preventDefault();_srcShown=_SRC_PAGE;loadCandidates(cat);};
+    const tg=$("#srctgl");if(tg)tg.onclick=(e)=>{e.preventDefault();_srcOpen=!_srcOpen;_srcShown=_SRC_PAGE;loadCandidates(cat);};
+    const mo=$("#srcmore");if(mo)mo.onclick=(e)=>{e.preventDefault();_srcShown+=_SRC_PAGE;loadCandidates(cat);};};
+  if(!_srcOpen){          // 접힌 상태: 건수 요약 한 줄만(스크롤을 잡아먹지 않는다)
+    el.innerHTML=head+'<div class="hint" style="margin-top:6px">영상 확보 <b>'+(ready.length+vids.length)+
+      '</b>건 · 이미지전용 <b>'+imgs.length+'</b>건 — <b>펼치기</b>를 누르면 목록이 보입니다.</div>';
+    bindTabs(); return;
+  }
   if(!arr.length){el.innerHTML=head+tabs+desc+'<div class="hint">'+(isImg?'이미지전용 소스가 없습니다.':'아직 영상 확보 후보가 없습니다. 위 <b>소싱하기</b>를 눌러 발굴하세요.')+'</div>';bindTabs();return;}
-  el.innerHTML=head+tabs+desc+arr.map(c=>{
+  const shown=arr.slice(0, Math.max(_SRC_PAGE, _srcShown));
+  const more=arr.length>shown.length
+    ?'<div style="text-align:center;margin:10px 0"><a href="#" id="srcmore" style="color:var(--cy)">더 보기 ('+
+      (arr.length-shown.length)+'건 남음) ▼</a></div>':'';
+  el.innerHTML=head+tabs+desc+shown.map(c=>{
     const isW=c.kind==="wreck";
     const title=isW?esc(c.name||c.key):(esc(c.name||"")+(c.common_name_ko?' <i style="color:var(--gy)">'+esc(c.common_name_ko)+'</i>':''));
-    const thumb=c.thumbnail_url?'<img class="cthumb" src="'+prox(c.thumbnail_url)+'" alt="">':'<div class="cthumb noimg">썸네일 생성 중…</div>';
+    // 사진 → <img>, 영상 → <video>(1초 지점 프레임을 미리보기로). 둘 다 없을 때만 안내 문구.
+    const thumb=c.thumbnail_url
+      ?'<img class="cthumb" src="'+prox(c.thumbnail_url)+'" alt="">'
+      :(c._vid
+        ?'<video class="cthumb" muted playsinline preload="metadata" src="'+prox(c._vid)+'#t=1"></video>'
+        :'<div class="cthumb noimg">썸네일 생성 중…</div>');
     const meta=[c.depth?('수심 '+esc(c.depth)+'m'):'',isW&&c.ship_type?('선종 '+esc(c.ship_type)):'',esc(c.license||'')].filter(Boolean).join(' · ');
     const fact=(c.facts&&c.facts[0])?('<div class="cfact">'+esc(String(c.facts[0]).slice(0,90))+'</div>'):(isW?'<div class="cfact warn">※ 배 이름·정보를 영상 확인 후 제작하세요.</div>':'');
     // 소싱 종류 배지(영상 확보 vs 이미지전용) — 두 그룹을 카드에서도 구분.
@@ -1733,7 +1762,7 @@ async function loadCandidates(cat,mode){
     return '<div class="ccard">'+thumb+'<div class="cbody"><div class="ctitle">'+title+' '+badge+' '+warn+'</div>'+
       '<div class="cmeta">'+meta+'</div>'+src+fact+rev+
       '<div class="cmeta" style="color:var(--gy);font-size:11px">'+esc(c.credit||'')+'</div>'+btn+'</div></div>';
-  }).join('');
+  }).join('')+more;
   bindTabs();
   el.querySelectorAll(".cgo").forEach(b=>{b.onclick=()=>produceCandidate(b.getAttribute("data-cat"),b.getAttribute("data-key"),b);});
 }

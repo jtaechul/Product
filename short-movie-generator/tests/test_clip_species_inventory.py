@@ -86,7 +86,11 @@ def test_pipeline_can_pick_them_up():
 # ── 관리자 화면: 인벤토리에 '바로 제작 가능한 종'이 보여야 한다 ──────────
 def test_inventory_screen_lists_ready_subjects():
     """★운영자 지적의 핵심: 확보한 것은 **별도 메뉴가 아니라 소싱 인벤토리**에 있어야 하고,
-    거기서 바로 제작 버튼을 눌러 만들 수 있어야 한다."""
+    거기서 바로 제작 버튼을 눌러 만들 수 있어야 한다.
+
+    ★단, 전부 펼쳐 두면 스크롤이 끝없이 길어진다(운영자 재지적) → **기본은 접힘**,
+      펼쳐도 한 번에 일부만 그리고 '더 보기'로 늘린다. 그래서 '전부 렌더'는 더 이상 계약이 아니다.
+    """
     import shutil
     import subprocess
     if not shutil.which("node"):
@@ -96,11 +100,30 @@ def test_inventory_screen_lists_ready_subjects():
                        capture_output=True, text=True, timeout=180, cwd=str(ROOT))
     assert r.returncode == 0, r.stderr[-600:]
     got = json.loads(r.stdout.strip().splitlines()[-1])
-    assert got["cardsShown"] == got["readyInFile"], \
-        f"제작 가능한 {got['readyInFile']}건 중 {got['cardsShown']}건만 인벤토리에 나옵니다"
-    assert got["readyBadges"] == got["readyInFile"], "'확보 완료 · 바로 제작' 표시가 빠졌습니다"
-    assert got["hasMakeButton"] == got["readyInFile"], "제작 버튼이 없으면 바로 만들 수 없습니다"
-    assert got["tabCount"] == str(got["readyInFile"]), "탭의 건수가 실제와 다릅니다"
+    # 접힘: 카드 0개 + 펼치기 버튼 — 안 쓸 때 화면을 차지하지 않는다
+    assert got["collapsedCards"] == 0, "접힌 상태인데 카드가 그려집니다(스크롤 낭비)"
+    assert got["collapsedHasToggle"], "펼치기 토글이 없습니다"
+    # 펼침: 일부만 + '더 보기'
+    assert 0 < got["cardsShown"] <= 12, f"한 번에 너무 많이 그립니다: {got['cardsShown']}"
+    assert got["hasMoreLink"], "'더 보기'가 없으면 나머지를 볼 수 없습니다"
+    assert got["readyBadges"] == got["cardsShown"], "'확보 완료 · 바로 제작' 표시가 빠졌습니다"
+    assert got["hasMakeButton"] == got["cardsShown"], "제작 버튼이 없으면 바로 만들 수 없습니다"
+    assert got["tabCount"] == str(got["readyInFile"]), "탭의 건수는 **전체**를 보여줘야 합니다"
+
+
+def test_inventory_cards_show_a_thumbnail():
+    """★운영자 지적 "썸네일 안 뜬다": discovered 항목엔 thumbnail_url이 없어 계속 '생성 중'이었다.
+    사진 소스면 그 이미지, 영상 소스면 **영상 첫 장면**을 미리보기로 쓴다."""
+    import shutil
+    import subprocess
+    if not shutil.which("node"):
+        import pytest as _p
+        _p.skip("node 없음")
+    r = subprocess.run(["node", str(ROOT / "worker" / "inventory_check.mjs")],
+                       capture_output=True, text=True, timeout=180, cwd=str(ROOT))
+    got = json.loads(r.stdout.strip().splitlines()[-1])
+    assert got["thumbPlaceholders"] == 0, "'썸네일 생성 중…' 자리표시자가 남아 있습니다"
+    assert got["thumbMedia"] == got["cardsShown"], "카드마다 썸네일이 있어야 합니다"
 
 
 def test_inventory_reads_the_producible_list():
