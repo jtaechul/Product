@@ -350,6 +350,32 @@
     "youtube_url": "https://youtu.be/yL1SbekcHXM"
   },
   {
+    "id": "054",
+    "kind": "reels",
+    "common_name_ko": "Peltospira smaragdina",
+    "common_name_en": "Peltospira smaragdina",
+    "scientific_name": "Peltospira smaragdina",
+    "date": "2026-08-03",
+    "youtube_url": "https://youtu.be/xTzHb0J6e8E"
+  },
+  {
+    "id": "055",
+    "kind": "reels",
+    "common_name_ko": "흡혈오징어",
+    "common_name_en": "Vampire squid",
+    "scientific_name": "Vampyroteuthis infernalis",
+    "date": "2026-08-02",
+    "youtube_url": "https://youtu.be/UadvYH7e5gs"
+  },
+  {
+    "id": "056",
+    "kind": "reels",
+    "common_name_ko": "아피오누스과",
+    "common_name_en": "Aphyonidae",
+    "scientific_name": "Aphyonidae",
+    "date": "2026-08-03"
+  },
+  {
     "id": "lf-3",
     "kind": "longform",
     "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
@@ -418,23 +444,5 @@
     "mode": "shorts",
     "date": "2026-07-28",
     "has_video": true
-  },
-  {
-    "id": "055",
-    "kind": "reels",
-    "common_name_ko": "흡혈오징어",
-    "common_name_en": "Vampire squid",
-    "scientific_name": "Vampyroteuthis infernalis",
-    "date": "2026-08-02",
-    "youtube_url": "https://youtu.be/UadvYH7e5gs"
-  },
-  {
-    "id": "054",
-    "kind": "reels",
-    "common_name_ko": "Peltospira smaragdina",
-    "common_name_en": "Peltospira smaragdina",
-    "scientific_name": "Peltospira smaragdina",
-    "date": "2026-08-03",
-    "youtube_url": "https://youtu.be/xTzHb0J6e8E"
   }
 ]
