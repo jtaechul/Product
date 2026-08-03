@@ -16,6 +16,11 @@ from pathlib import Path
 log = logging.getLogger(__name__)
 
 
+# 수심 미상일 때 하강 모션에 쓸 기준 깊이(초). ★연출 전용 — 화면에 수치로 표시되지 않는다.
+#   (표시는 '?' + 記録なし. 이 값은 눈금이 흐르는 속도·거리를 정하는 용도일 뿐이다.)
+_UNKNOWN_MOTION_DEPTH_M = 2000
+
+
 def _depth_max(depth_range_m: str) -> int | None:
     """서식수심 최댓값(m). 실제 수심 데이터가 없으면 None(→ 스팅어 생략)."""
     nums = [int(x) for x in re.findall(r"\d+", depth_range_m or "")]
@@ -62,11 +67,17 @@ def build_stinger(info, out_mp4: str, work_dir: str) -> dict | None:
     except Exception as e:  # noqa: BLE001
         log.warning("[stinger] motion 로드 실패 → 스팅어 생략: %s", e)
         return None
+    # ★★수심을 몰라도 스팅어를 버리지 않는다(운영자 확정 · 규칙 전환).
+    #   운영자 지시: "수심을 모르면 **위치를 표현해주고**, 수심은 내려오다가 **물음표**를 띄우면 되잖아.
+    #   수심 정보가 없다고 다 안 만드는 게 아니고."
+    #   예전엔 `depth is None`이면 지도(위치)까지 통째로 생략해, 보여줄 수 있는 것까지 버렸다.
+    #   → 이제 **위치(지도·해역 락온)는 그대로** 보여주고, 수심 판독값만 '?'(記録なし)로 띄운다.
+    #     하강 모션용 기준 깊이는 연출 전용이며 **화면에 수치로 나오지 않는다**(날조 아님).
     depth = _depth_max(getattr(info, "depth_range_m", "") or "")
-    if depth is None:
-        # ★수심 위치를 모르는 생물은 지도·수심 하강 스팅어를 생략(운영자 확정 · 날조 방지)
-        log.info("[stinger] 서식수심 데이터 없음 → 지도·수심 스팅어 생략")
-        return None
+    depth_unknown = depth is None
+    if depth_unknown:
+        depth = _UNKNOWN_MOTION_DEPTH_M
+        log.info("[stinger] 서식수심 자료 없음 → 위치는 표시하고 수심은 '?'로 연출")
     wd = Path(work_dir)
     frames_dir = wd / "frames"
     frames_dir.mkdir(parents=True, exist_ok=True)
@@ -81,7 +92,8 @@ def build_stinger(info, out_mp4: str, work_dir: str) -> dict | None:
         log.info("[stinger] 서식해역 표기: %s / %s (%s)", label_jp, label_en, region.reason)
     try:
         spec = motion.MotionSpec(target_depth_m=depth, region_label_jp=label_jp,
-                                 region_label_en=label_en, zones=_zones_for(depth), **region_kw)
+                                 region_label_en=label_en, zones=_zones_for(depth),
+                                 depth_unknown=depth_unknown, **region_kw)
         # 9:16 세로 + 압축 타이밍(총 ~2.3초) + 세로용 map_box
         cfg = motion.MotionConfig(W=720, H=1280, FPS=24, t_map=0.9, t_flash=0.15,
                                   t_desc=1.0, t_hold=0.25, map_box=(70, 300, 650, 820))

@@ -97,6 +97,10 @@ class MotionSpec:
     region_label_en: str = "生息海域"
     locate_label: str = "LOCATING SPECIMEN…"   # 지도 스캔 중 상단 상태문구(난파선은 'LOCATING WRECK…')
     target_depth_m: int = 5000
+    # ★수심 자료가 없는 종(운영자 확정): 스팅어를 통째로 버리지 말고 **위치는 보여주고 수심만 '?'**.
+    #   하강 애니메이션·수층 눈금은 그대로(일반적인 바다 척도라 특정 종에 대한 주장이 아니다),
+    #   **큰 판독값만 물음표**로 띄운다 → 없는 수심을 지어내지 않으면서 연출은 살린다.
+    depth_unknown: bool = False
     creatures: list[Creature] = field(default_factory=list)
     zones: list[tuple] = field(default_factory=lambda: [
         (100, "有光層"), (600, "薄明層"), (2500, "漸深層"), (4600, "深海層")])
@@ -307,7 +311,9 @@ def _descent_frame(dt, boom, spec, cfg):
         if -30 < y < cfg.H + 30:
             major = dep % 1000 == 0
             d.line((ax - (14 if major else 8), y, ax, y), fill=CYAN + (180,), width=2)
-            if major and y > 50:   # 헤더(상단)와 겹침 방지
+            # ★수심 미상이면 눈금의 **숫자는 지운다**(선만 남겨 하강감은 유지).
+            #   연출용 기준 깊이가 "2,000 m"처럼 화면에 새어나오면 없는 수심을 주장하는 꼴이 된다.
+            if major and y > 50 and not spec.depth_unknown:   # 헤더(상단)와 겹침 방지
                 d.text((ax - 20, y), f"{dep:,} m", font=_mono(16), fill=DIM + (230,), anchor="rm")
         dep += step
     for zdep, zname in spec.zones:
@@ -327,8 +333,10 @@ def _descent_frame(dt, boom, spec, cfg):
     ay = centerY + jy
     d.polygon([(cx + jx, ay + 22), (cx + jx - 17, ay - 11), (cx + jx + 17, ay - 11)], fill=MAG + (245,))
     val = int(depth / 10) * 10
+    readout = "?" if spec.depth_unknown else f"{val:,} m"
     s2 = Image.new("RGBA", (860, 180), (0, 0, 0, 0))
-    ImageDraw.Draw(s2).text((10, 10), f"{val:,} m", font=_serif(72), fill=(255, 255, 255, 255), anchor="la")
+    ImageDraw.Draw(s2).text((10, 10), readout, font=_serif(112 if spec.depth_unknown else 72),
+                            fill=(255, 255, 255, 255), anchor="la")
     s2 = s2.crop(s2.getbbox())
     w, h = s2.size
     grad = Image.new("RGB", (w, h))
@@ -340,6 +348,8 @@ def _descent_frame(dt, boom, spec, cfg):
     num = Image.merge("RGBA", (*grad.split(), s2.split()[3]))
     ov.alpha_composite(num, (70, centerY - num.height // 2))
     d.text((70, centerY - num.height // 2 - 30), "DEPTH", font=_mono(18), fill=CYAN + (220,))
+    if spec.depth_unknown:      # 수치를 지어내지 않고 '기록 없음'임을 화면에 밝힌다
+        d.text((70, centerY + num.height // 2 + 10), "記録なし", font=_sansr(22), fill=CYAN + (210,))
     if boom > 0:
         ov.alpha_composite(Image.new("RGBA", (cfg.W, cfg.H), (190, 235, 255, int(235 * boom))))
     _header(d, cfg, "STEP 3 : DESCENT")
