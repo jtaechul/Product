@@ -486,3 +486,36 @@ def update_caption(base_dir: str, content_id: str, *, caption_body: str | None =
     record_path(base_dir, content_id).write_text(
         json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
     return True
+
+
+def produced_species(base_dir: str = ".") -> list[dict]:
+    """실제로 **발행된** 콘텐츠에서 종 정보를 뽑아온다 → [{no, scientific_name, common_name_en}].
+
+    ★왜 필요한가(운영자 확정 · 실사고 #056/#057 아피오누스과 연속 중복):
+      중복 판정은 그동안 **도감 원장(catalog.json) 하나**에만 의존했다. 그런데 원장 기록은
+      `log_catalog`이 실패해도 무시하고 넘어가고(발행 불정지), CI 커밋이 어긋나면 실제 발행분과
+      **따로 놀 수 있다**. 실제로 #056은 콘텐츠 레코드엔 Aphyonidae인데 원장엔 Ctenophora로 적혀
+      Aphyonidae가 '미제작'으로 남았고 → 다음 회차에 **1순위로 다시 뽑혀** 연속 중복이 났다.
+      콘텐츠 레코드는 '발행된 결과물' 그 자체라 이쪽이 더 믿을 수 있다. 둘을 **합쳐서** 본다.
+    """
+    out: list[dict] = []
+    for p in sorted(content_dir(base_dir).glob("*.json")):
+        if p.name == MANIFEST_NAME:
+            continue
+        try:
+            rec = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        if not isinstance(rec, dict):
+            continue
+        sp = rec.get("species") or {}
+        sci = str(sp.get("scientific_name") or "").strip()
+        if not sci:
+            continue
+        try:
+            no = int(str(rec.get("id") or p.stem))
+        except (TypeError, ValueError):
+            no = 0
+        out.append({"no": no, "scientific_name": sci,
+                    "common_name_en": str(sp.get("common_name_en") or "").strip()})
+    return out

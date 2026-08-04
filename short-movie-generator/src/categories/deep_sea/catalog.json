@@ -1,5 +1,12 @@
 [
   {
+    "no": 1,
+    "common_name_ko": "",
+    "common_name_en": "Caribbean reef squid",
+    "scientific_name": "Sepioteuthis sepioidea",
+    "date": ""
+  },
+  {
     "no": 4,
     "common_name_ko": "넓적문어",
     "common_name_en": "Flapjack octopus",
@@ -35,6 +42,20 @@
     "date": "2026-07-08"
   },
   {
+    "no": 9,
+    "common_name_ko": "",
+    "common_name_en": "Diatom",
+    "scientific_name": "Bacillariophyta",
+    "date": ""
+  },
+  {
+    "no": 10,
+    "common_name_ko": "",
+    "common_name_en": "Wreck Aries (cargo ship)",
+    "scientific_name": "Wreck Aries",
+    "date": ""
+  },
+  {
     "no": 11,
     "common_name_ko": "심해붉은해파리",
     "common_name_en": "Deep-sea red medusa",
@@ -54,6 +75,13 @@
     "common_name_en": "Predatory tunicate",
     "scientific_name": "Megalodicopia hians",
     "date": "2026-07-10"
+  },
+  {
+    "no": 15,
+    "common_name_ko": "",
+    "common_name_en": "Wreck U-1277 (WWII German U-boat)",
+    "scientific_name": "Wreck U-1277",
+    "date": ""
   },
   {
     "no": 16,
@@ -84,11 +112,25 @@
     "date": "2026-07-11"
   },
   {
+    "no": 21,
+    "common_name_ko": "",
+    "common_name_en": "Wreck Madeirense (cargo ship)",
+    "scientific_name": "Wreck Madeirense",
+    "date": ""
+  },
+  {
     "no": 22,
     "common_name_ko": "바다거미목",
     "common_name_en": "Pycnogonida",
     "scientific_name": "Pycnogonida",
     "date": "2026-07-12"
+  },
+  {
+    "no": 23,
+    "common_name_ko": "",
+    "common_name_en": "Wreck Raketa",
+    "scientific_name": "Wreck Raketa",
+    "date": ""
   },
   {
     "no": 25,
@@ -124,6 +166,27 @@
     "common_name_en": "Paralomis diomedeae",
     "scientific_name": "Paralomis diomedeae",
     "date": "2026-07-15"
+  },
+  {
+    "no": 30,
+    "common_name_ko": "",
+    "common_name_en": "Wreck Lusitania",
+    "scientific_name": "Wreck Lusitania",
+    "date": ""
+  },
+  {
+    "no": 31,
+    "common_name_ko": "",
+    "common_name_en": "Wreck Empress of Ireland",
+    "scientific_name": "Wreck Empress of Ireland",
+    "date": ""
+  },
+  {
+    "no": 32,
+    "common_name_ko": "",
+    "common_name_en": "Wreck Titanic",
+    "scientific_name": "Wreck Titanic",
+    "date": ""
   },
   {
     "no": 33,
@@ -175,6 +238,13 @@
     "date": "2026-07-21"
   },
   {
+    "no": 41,
+    "common_name_ko": "",
+    "common_name_en": "Wreck Britannic",
+    "scientific_name": "Wreck Britannic",
+    "date": ""
+  },
+  {
     "no": 42,
     "common_name_ko": "악어가죽주머니오징어과",
     "common_name_en": "Cranchiidae",
@@ -196,11 +266,32 @@
     "date": "2026-07-21"
   },
   {
+    "no": 45,
+    "common_name_ko": "",
+    "common_name_en": "Wreck Andrea Doria",
+    "scientific_name": "Wreck Andrea Doria",
+    "date": ""
+  },
+  {
     "no": 46,
     "common_name_ko": "민태과",
     "common_name_en": "Macrouridae",
     "scientific_name": "Macrouridae",
     "date": "2026-07-22"
+  },
+  {
+    "no": 47,
+    "common_name_ko": "",
+    "common_name_en": "Wreck Thistlegorm",
+    "scientific_name": "Wreck Thistlegorm",
+    "date": ""
+  },
+  {
+    "no": 48,
+    "common_name_ko": "",
+    "common_name_en": "Sepia mestus",
+    "scientific_name": "Sepia mestus",
+    "date": ""
   },
   {
     "no": 49,
@@ -215,6 +306,20 @@
     "common_name_en": "Bathynomus",
     "scientific_name": "Bathynomus",
     "date": "2026-07-27"
+  },
+  {
+    "no": 51,
+    "common_name_ko": "",
+    "common_name_en": "Anoplodactylus lentus",
+    "scientific_name": "Anoplodactylus lentus",
+    "date": ""
+  },
+  {
+    "no": 52,
+    "common_name_ko": "",
+    "common_name_en": "Grey reef shark",
+    "scientific_name": "Carcharhinus amblyrhynchos",
+    "date": ""
   },
   {
     "no": 53,

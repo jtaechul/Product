@@ -112,6 +112,12 @@ def _download_image(url: str, dest: Path) -> bool:
         return False
 
 
+# ★재제작 금지 구간(운영자 확정): 최근 이만큼의 회차에 만든 종은 다시 뽑지 않는다.
+#   "중복이어도 실패하지 말라"는 지시는 **풀 소진 시 안전망**이지, 바로 다음 회차에 같은 종을
+#   또 만들라는 뜻이 아니다(실사고 #056·#057 아피오누스과 연속 제작).
+_RECENT_BLOCK = 12
+
+
 class DeepSeaCategory:
     category_id = "deep_sea"
     style_profile = "deep_sea_realism"
@@ -416,16 +422,31 @@ class DeepSeaCategory:
         return str(cands[h % len(cands)])
 
     def _made_set(self) -> set[str]:
-        """제작 원장(catalog)에 이미 있는 종의 학명·영문명(소문자) 집합.
-        `footage_candidates`(auto 경로)와 `is_already_produced`(명시 종명 경로) 공용."""
-        from src.categories.deep_sea import catalog
+        """이미 만든 종의 학명·영문명(소문자) 집합.
+
+        ★★근거를 **둘로 이중화**한다(운영자 확정 · 실사고 #056/#057 아피오누스과 연속 중복):
+          ①도감 원장(catalog.json) ②**실제 발행 레코드**(content/*.json).
+          예전엔 원장 하나만 봤는데, 원장 기록(`log_catalog`)은 실패해도 무시하고 넘어가고
+          (발행 불정지 규칙) CI 커밋이 어긋나면 실제 발행분과 따로 논다. 실제로 #056은
+          레코드엔 Aphyonidae인데 **원장엔 Ctenophora**로 적혀, Aphyonidae가 '미제작'으로 남아
+          바로 다음 회차에 1순위로 다시 뽑혔다 → 연속 중복.
+          레코드는 '발행된 결과물' 그 자체라 더 믿을 수 있다. 하나가 틀려도 다른 하나가 막는다."""
         made: set[str] = set()
         try:
+            from src.categories.deep_sea import catalog
             for it in catalog._load():
                 made.add(str(it.get("scientific_name", "")).strip().lower())
                 made.add(str(it.get("common_name_en", "")).strip().lower())
         except Exception:  # noqa: BLE001
             pass
+        try:
+            from src.core import content_store
+            for it in content_store.produced_species("."):
+                made.add(str(it.get("scientific_name", "")).strip().lower())
+                made.add(str(it.get("common_name_en", "")).strip().lower())
+        except Exception:  # noqa: BLE001
+            pass
+        made.discard("")
         return made
 
     def is_already_produced(self, info: SpeciesInfo) -> tuple[int, str] | None:
@@ -471,25 +492,56 @@ class DeepSeaCategory:
                     or sp.get("common_name_en", "").strip().lower() in made)
 
         fresh = [k for k in pool if not _is_made(k)]
-        # 이미 만든 종은 '가장 오래전에 만든 것' 순으로 뒤에 붙인다(같은 종이 연달아 나오지 않게).
+        # ★재제작 순서(운영자 확정 · 실사고 #056/#057 연속 중복): '가장 오래전에 만든 것'부터.
+        #   ⚠원장에 없는 종은 예전엔 0으로 취급돼 **맨 앞**으로 왔다 → 방금 만든 종이 기록되기 전이면
+        #     곧바로 다시 뽑혔다. 이제 기록이 없으면 **맨 뒤**(무한대)로 보내 재선택되지 않게 한다.
         order = self._made_order()
-        again = sorted((k for k in pool if _is_made(k)),
-                       key=lambda k: order.get(data.SPECIES[k]["scientific_name"].strip().lower(),
-                                               order.get(data.SPECIES[k].get("common_name_en", "")
-                                                         .strip().lower(), 0)))
-        return fresh + again
+
+        def _last_no(k: str) -> float:
+            sp = data.SPECIES[k]
+            for kk in (sp["scientific_name"].strip().lower(),
+                       sp.get("common_name_en", "").strip().lower()):
+                if kk in order:
+                    return float(order[kk])
+            return float("inf")          # 기록이 없으면 판단 불가 → 재제작 후순위
+
+        made_keys = [k for k in pool if _is_made(k)]
+        newest = max((n for n in order.values()), default=0)
+        # ★최근 회차에 만든 종은 재제작 후보에서 **제외**한다(연속 중복 차단).
+        again = sorted((k for k in made_keys if _last_no(k) <= newest - _RECENT_BLOCK),
+                       key=_last_no)
+        if fresh or again:
+            return fresh + again
+        # 전부 최근에 만들었다면(풀이 아주 작을 때) 그래도 멈추지 않는다 — 가장 오래된 것부터.
+        return sorted(made_keys, key=_last_no)
 
     def _made_order(self) -> dict:
-        """종(학명·영문명 소문자) → 마지막 제작 회차 번호. 재제작 순서를 '오래된 것부터'로 정한다."""
-        from src.categories.deep_sea import catalog
+        """종(학명·영문명 소문자) → **마지막 제작 회차 번호**. 재제작 순서를 '오래된 것부터'로 정한다.
+
+        ★원장과 발행 레코드를 **둘 다** 본다(위 `_made_set`과 같은 이유). 한쪽에만 있으면 그 값을 쓴다.
+        """
         out: dict = {}
+
+        def _put(no, *keys):
+            try:
+                n = int(no or 0)
+            except (TypeError, ValueError):
+                return
+            for k in keys:
+                k = str(k or "").strip().lower()
+                if k:
+                    out[k] = max(out.get(k, 0), n)
+
         try:
+            from src.categories.deep_sea import catalog
             for it in catalog._load():
-                no = int(it.get("no", 0) or 0)
-                for k in (str(it.get("scientific_name", "")).strip().lower(),
-                          str(it.get("common_name_en", "")).strip().lower()):
-                    if k:
-                        out[k] = max(out.get(k, 0), no)
+                _put(it.get("no"), it.get("scientific_name"), it.get("common_name_en"))
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            from src.core import content_store
+            for it in content_store.produced_species("."):
+                _put(it.get("no"), it.get("scientific_name"), it.get("common_name_en"))
         except Exception:  # noqa: BLE001
             pass
         return out
