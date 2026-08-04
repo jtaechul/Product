@@ -368,14 +368,6 @@
     "youtube_url": "https://youtu.be/UadvYH7e5gs"
   },
   {
-    "id": "056",
-    "kind": "reels",
-    "common_name_ko": "아피오누스과",
-    "common_name_en": "Aphyonidae",
-    "scientific_name": "Aphyonidae",
-    "date": "2026-08-03"
-  },
-  {
     "id": "lf-3",
     "kind": "longform",
     "yt_title": "深海の奇妙な生き物 TOP6｜シンカイクラゲほか",
@@ -444,5 +436,14 @@
     "mode": "shorts",
     "date": "2026-07-28",
     "has_video": true
+  },
+  {
+    "id": "056",
+    "kind": "reels",
+    "common_name_ko": "아피오누스과",
+    "common_name_en": "Aphyonidae",
+    "scientific_name": "Aphyonidae",
+    "date": "2026-08-04",
+    "youtube_url": "https://youtu.be/EZQ4Na2uBMY"
   }
 ]
