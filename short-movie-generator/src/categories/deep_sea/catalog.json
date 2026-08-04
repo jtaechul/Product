@@ -243,5 +243,12 @@
     "common_name_en": "Ctenophora",
     "scientific_name": "Ctenophora",
     "date": "2026-08-02"
+  },
+  {
+    "no": 57,
+    "common_name_ko": "아피오누스과",
+    "common_name_en": "Aphyonidae",
+    "scientific_name": "Aphyonidae",
+    "date": "2026-08-04"
   }
 ]
