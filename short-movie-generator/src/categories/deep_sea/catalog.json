@@ -355,5 +355,12 @@
     "common_name_en": "Aphyonidae",
     "scientific_name": "Aphyonidae",
     "date": "2026-08-04"
+  },
+  {
+    "no": 58,
+    "common_name_ko": "불가사리류",
+    "common_name_en": "starfish",
+    "scientific_name": "Asteroidea",
+    "date": "2026-08-05"
   }
 ]
