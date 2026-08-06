@@ -362,5 +362,12 @@
     "common_name_en": "starfish",
     "scientific_name": "Asteroidea",
     "date": "2026-08-05"
+  },
+  {
+    "no": 59,
+    "common_name_ko": "흡혈오징어",
+    "common_name_en": "Vampire squid",
+    "scientific_name": "Vampyroteuthis infernalis",
+    "date": "2026-08-06"
   }
 ]
