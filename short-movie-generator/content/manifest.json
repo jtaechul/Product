@@ -462,5 +462,13 @@
     "scientific_name": "Asteroidea",
     "date": "2026-08-05",
     "youtube_url": "https://youtu.be/kjesy3hqer8"
+  },
+  {
+    "id": "059",
+    "kind": "reels",
+    "common_name_ko": "상어",
+    "common_name_en": "shark",
+    "scientific_name": "Selachimorpha",
+    "date": "2026-08-06"
   }
 ]
