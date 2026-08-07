@@ -141,10 +141,10 @@
   },
   {
     "no": 27,
-    "common_name_ko": "vent shrimp",
-    "common_name_en": "vent shrimp",
-    "scientific_name": "Rimicaris exoculata",
-    "date": "2026-07-14"
+    "common_name_ko": "Peltospira smaragdina",
+    "common_name_en": "Peltospira smaragdina",
+    "scientific_name": "Peltospira smaragdina",
+    "date": "2026-07-15"
   },
   {
     "no": 28,
@@ -344,10 +344,10 @@
   },
   {
     "no": 56,
-    "common_name_ko": "유즐동물",
-    "common_name_en": "Ctenophora",
-    "scientific_name": "Ctenophora",
-    "date": "2026-08-02"
+    "common_name_ko": "아피오누스과",
+    "common_name_en": "Aphyonidae",
+    "scientific_name": "Aphyonidae",
+    "date": "2026-08-03"
   },
   {
     "no": 57,
@@ -365,9 +365,9 @@
   },
   {
     "no": 59,
-    "common_name_ko": "흡혈오징어",
-    "common_name_en": "Vampire squid",
-    "scientific_name": "Vampyroteuthis infernalis",
+    "common_name_ko": "상어",
+    "common_name_en": "shark",
+    "scientific_name": "Selachimorpha",
     "date": "2026-08-06"
   },
   {

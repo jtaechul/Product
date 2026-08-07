@@ -36,9 +36,30 @@ def peek_next() -> int:
 
 def log_entry(no: int, common_name_ko: str, common_name_en: str,
               scientific_name: str = "", date: str = "") -> None:
-    """제작 성공분을 원장에 append (같은 no가 이미 있으면 덮어쓰지 않고 무시)."""
+    """제작 성공분을 원장에 기록.
+
+    ★같은 no가 이미 있고 **종이 다르면 실제 제작분으로 고쳐 쓴다**(운영자 확정 · 실사고 수정).
+      예전에는 무조건 무시했다. 그래서 어떤 회차가 A로 기록된 뒤 실제로는 B가 제작되면
+      (앞선 실행이 번호를 먼저 차지한 경우 등) 원장에 **A가 영원히 남고 B는 기록되지 않았다**.
+      실측 어긋남: #27 원장 Rimicaris / 발행 Peltospira, #56 원장 Ctenophora / 발행 Aphyonidae,
+      #59 원장 Vampire squid / 발행 Selachimorpha.
+      결과는 두 가지 사고다 — ①실제로 만든 종이 '미제작'으로 남아 **또 만들어진다**(중복)
+      ②만들지 않은 종이 '제작됨'으로 잠겨 후보에서 빠진다. 원장의 진실은 **발행 레코드**다.
+      같은 종이면 그대로 둔다(중복 호출에 안전).
+    """
     items = _load()
-    if any(int(it.get("no", 0)) == int(no) for it in items):
+    for it in items:
+        if int(it.get("no", 0)) != int(no):
+            continue
+        old = str(it.get("scientific_name", "")).strip().lower()
+        new = str(scientific_name or "").strip().lower()
+        if old == new:
+            return
+        log.warning("[catalog] No.%03d 기록 정정: %s → %s (실제 제작분 기준)",
+                    no, it.get("scientific_name") or "?", scientific_name or "?")
+        it.update({"common_name_ko": common_name_ko or "", "common_name_en": common_name_en or "",
+                   "scientific_name": scientific_name or "", "date": date or it.get("date", "")})
+        CATALOG.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
         return
     items.append({
         "no": int(no),

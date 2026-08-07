@@ -79,3 +79,27 @@ def test_ledger_and_records_agree_on_recent_episodes():
     for r in CS.produced_species(".")[-10:]:
         assert r["scientific_name"].strip().lower() in led_names, \
             f"#{r['no']} {r['scientific_name']}: 발행됐는데 원장에 없습니다(중복 위험)"
+
+
+def test_ledger_corrects_a_wrong_species_at_the_same_number(tmp_path, monkeypatch):
+    """★근본 원인 수정: 같은 회차 번호에 **다른 종**이 이미 적혀 있으면 실제 제작분으로 고쳐 쓴다.
+
+    예전에는 무조건 무시했다. 그래서 앞선 실행이 번호를 먼저 차지하면 실제로 만든 종이
+    원장에 영영 안 들어가고(→ '미제작'으로 남아 **또 만들어짐**), 만들지도 않은 종이
+    '제작됨'으로 잠겼다. 실측 어긋남 3건(#27·#56·#59)이 이 경로로 생겼다.
+    """
+    import json
+
+    from src.categories.deep_sea import catalog as C
+    p = tmp_path / "catalog.json"
+    monkeypatch.setattr(C, "CATALOG", p)
+    C.log_entry(7, "흡혈오징어", "Vampire squid", "Vampyroteuthis infernalis", "2026-08-01")
+    # 같은 번호에 실제로는 다른 종이 제작됐다 → 정정되어야 한다
+    C.log_entry(7, "상어", "shark", "Selachimorpha", "2026-08-06")
+    rows = json.loads(p.read_text(encoding="utf-8"))
+    assert len(rows) == 1, f"번호가 중복 append 됐습니다: {rows}"
+    assert rows[0]["scientific_name"] == "Selachimorpha", \
+        f"실제 제작분으로 정정되지 않았습니다: {rows[0]}"
+    # 같은 종을 다시 기록해도 안전해야 한다(중복 호출)
+    C.log_entry(7, "상어", "shark", "Selachimorpha", "2026-08-06")
+    assert len(json.loads(p.read_text(encoding="utf-8"))) == 1
