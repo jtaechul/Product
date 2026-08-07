@@ -137,6 +137,14 @@ class HookIntroConfig:
     end_sci_size: int = 38
     end_depth_size: int = 54
     end_feature_size: int = 40
+    # ★엔드카드 구독 유도(운영자 확정 2026-08-05 · vidIQ 분석 결과 반영).
+    #   실측: 조회수 35,969에 구독 24명 = **전환율 0.067%**(정상 쇼츠 0.5~2%의 1/10~1/30).
+    #   원인 진단: 엔드카드에 **구독 유도가 시각적으로 아예 없었다** — 종명·학명·수심·특징만 있고,
+    #   구독 문구는 나레이션 음성에만 존재했다. 쇼츠는 마지막 화면의 시각 신호가 전환을 만든다.
+    #   문구는 "왜 구독하는가"를 구체적으로 말한다(막연한 '다음 바다도 함께'로는 이유가 안 된다).
+    end_cta_size: int = 46
+    end_cta_text: str = "深海の生き物を、次も"
+    end_cta_sub: str = "チャンネル登録"
     end_cyan: tuple = (120, 220, 255)
     # 타자기(타이핑) 연출 — 글자별 등장 + 타자 사운드 동기
     type_start_s: float = 0.35          # 첫 줄 타이핑 시작(전환 뒤 여유)
@@ -469,9 +477,23 @@ def render_endcard(bg_path: str, spec: SpeciesSpec, out_path: str,
              CYAN + (255,))
     # 특징문구 — glow 단어 파티클('+' 마크)은 텍스트 주변이 지저분해 보여 삭제(사용자 확정)
     line = spec.feature_line
-    text((W // 2, 1060), line, f_feat, (232, 240, 250, 255))
-    text((W // 2, H - 40), _credit_text(spec),
-         _sans_r(20), (160, 175, 200, 225), shadow=False)
+    text((W // 2, 1035), line, f_feat, (232, 240, 250, 255))
+    # ★구독 유도(마지막 화면의 시각 신호) — 없으면 시청자는 그냥 스와이프한다.
+    #   ①왜 구독하는지 한 줄 ②'チャンネル登録'을 눈에 띄는 알약 배지로.
+    _cta_y = 1118          # 특징문구(1035) 아래 · 배지+크레딧이 화면 안에 들어오는 좌표
+    f_cta = _fit_font(cfg.end_cta_text, cfg.end_cta_size, max_w, _sans_b)
+    text((W // 2, _cta_y), cfg.end_cta_text, f_cta, (236, 244, 252, 255))
+    f_pill = _sans_b(int(cfg.end_cta_size * 0.86))
+    dd = ImageDraw.Draw(bg)
+    _tw = dd.textlength(cfg.end_cta_sub, font=f_pill)
+    _pw, _ph = int(_tw) + 56, int(cfg.end_cta_size * 1.5)
+    _px, _py = (W - _pw) // 2, _cta_y + 34
+    dd.rounded_rectangle([_px, _py, _px + _pw, _py + _ph], radius=_ph // 2,
+                         fill=CYAN + (238,))
+    dd.text((W // 2, _py + _ph // 2), cfg.end_cta_sub, font=f_pill,
+            fill=(6, 20, 34, 255), anchor="mm")
+    text((W // 2, H - 22), _credit_text(spec),
+         _sans_r(18), (150, 166, 192, 210), shadow=False)
     bg.convert("RGB").save(out_path)
     return out_path
 
