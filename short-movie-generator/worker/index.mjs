@@ -1897,20 +1897,15 @@ async function renderDetail(id){
   else if(md.cover_url)mediaHtml='<img src="'+prox(curl)+'">';
   else mediaHtml='<div class="hint">미디어가 아직 업로드되지 않았습니다(제작 직후 잠시 후 반영).</div>';
   // ★유튜브 쇼츠 업로드는 자동으로 하지 않는다 — 위 영상을 확인하고 이상 없으면 버튼으로 직접 올린다.
-  // ★채널 분리: 난파선(shipwreck)은 해양생물 채널이 아니라 '난파선 전용 채널'로 올라간다.
-  const _isWreck=String(rec.category||"").toLowerCase()==="shipwreck";
-  const _chName=_isWreck?"난파선 전용 채널":"해양생물 채널(@abyss_0cean)";
+  // ★채널은 하나만 쓴다(운영자 확정 · 재확인): 한때 난파선을 별도 채널로 보내는 분기가 있었으나 폐기.
   let upHtml="";
   if(md.youtube_url){
-    const _upCh=md.youtube_channel==="wreck"?"난파선 전용 채널":(md.youtube_channel==="main"?"해양생물 채널":"");
     upHtml='<div class="card" style="margin-top:12px;background:#0d2216;border-color:#1c5">'+
-      '<span class="lbl">유튜브 쇼츠 업로드 완료('+esc(md.youtube_privacy||"")+(_upCh?' · '+esc(_upCh):'')+')</span>'+
+      '<span class="lbl">유튜브 쇼츠 업로드 완료('+esc(md.youtube_privacy||"")+')</span>'+
       '<a class="btn save" href="'+esc(md.youtube_url)+'" target="_blank" style="margin-top:8px">유튜브에서 보기 → '+esc(md.youtube_url)+'</a></div>';
   }else if(md.video_url){
     upHtml='<div class="card" style="margin-top:12px">'+
       '<span class="lbl">유튜브 쇼츠 올리기 — 위 영상을 확인하고 이상 없을 때만 누르세요(자동 업로드 안 함)</span>'+
-      '<div class="hint" style="margin-top:6px">올라갈 채널: <b>'+esc(_chName)+'</b>'+
-        (_isWreck?' — 난파선은 주제가 달라 해양생물 채널과 분리해 올립니다(전용 채널 미연결 시 업로드가 중단됩니다).':'')+'</div>'+
       '<div class="btnrow" style="margin-top:8px;align-items:center;gap:8px">'+
         '<select id="shpriv" style="padding:8px;border-radius:8px"><option value="public">공개</option>'+
           '<option value="unlisted">일부공개(링크 아는 사람만)</option>'+
