@@ -115,7 +115,7 @@ const SAVE_WF="save-caption.yml";  // 캡션 저장 전용(Contents PUT 대신 A
 const IG_WF="publish-instagram.yml";  // 인스타 릴스 발행(점검/발행)
 // ★빌드 표시(운영자 확정 · 혼선 방지): "메뉴가 안 바뀌었다"가 배포 문제인지 화면 캐시인지
 //   즉시 구분하려고 화면 하단에 찍는다. 대시보드를 고칠 때마다 이 값을 올린다.
-const BUILD="v2026-08-01-1 (인벤토리 접기 + 썸네일 표시)";
+const BUILD="v2026-08-07-1 (난파선 채널 분리 표시)";
 const CAP_WF="regen-caption.yml";     // 캡션+해시태그만 재생성(영상 유지·저비용)
 const LF_WF="generate-longform.yml";  // 롱폼(랭킹형 TOP N) 제작
 const RGLF_WF="regen-longform-meta.yml"; // 롱폼 제목·설명·해시태그만 재생성(영상 유지·저비용)
@@ -225,7 +225,8 @@ async function listContent(){
   const out=man.filter(x=>x&&x.kind!=="longform"&&x.kind!=="narrate").map(x=>({
     no:String(x.id), common_name_ko:x.common_name_ko||x.common_name_en||"종",
     common_name_en:x.common_name_en||"", scientific_name:x.scientific_name||"",
-    date:x.date||"", hasVideo:!!x.has_video, kind:"reels", href:"/c/"+num3(x.id)}));
+    date:x.date||"", hasVideo:!!x.has_video, kind:"reels", href:"/c/"+num3(x.id),
+    youtube_url:x.youtube_url||""}));
   // ★나레이션형 쇼츠도 같은 목록에 넣는다(운영자 확정): 종이 없는 영상이라도 결국 '쇼츠'이므로
   //   실행 현황·라이브러리에서 보여야 한다. 예전엔 목록에서 아예 빠져 텔레그램 링크로만 열 수 있었다.
   //   ※상세 화면은 다르다(/nv/<id>) → href 를 항목마다 들고 다녀 잘못된 /c/ 로 가지 않게 한다.
@@ -234,7 +235,7 @@ async function listContent(){
     no:String(x.id), common_name_ko:x.yt_title_ko||x.yt_title||"나레이션 쇼츠",
     common_name_en:x.yt_title||"", scientific_name:"",
     date:x.date||"", hasVideo:!!x.has_video, kind:"narrate",
-    href:"/nv/"+encodeURIComponent(String(x.id))}));
+    href:"/nv/"+encodeURIComponent(String(x.id)), youtube_url:x.youtube_url||""}));
   // 매니페스트에 모든 레코드가 들어있으므로, 인증 디렉토리 보강은 '인증 가능한 기기(서버모드/토큰)'에서만.
   // 무인증 폰(인앱 웹뷰)에선 api.github.com 요청이 멈추므로 아예 건너뛴다(매니페스트만으로 충분).
   if(!(SERVER||pat()))return sortFeed(out);
@@ -1808,10 +1809,37 @@ async function loadRuns(){
 }
 
 // ── 라이브러리: 롱폼 + 쇼츠 콘텐츠 목록 ──
+// ── 발행 빈도(운영자 확정 실험: 발행을 줄이고 편당 품질을 올린다) ─────────────
+// 배경: 하루 1편 이상 쏟아내는 동안 주간 평균 조회가 1,560 → 715로 반토막 났다.
+// 여기서는 **막지 않고 보여준다** — 올릴지 말지는 운영자 판단(자동 발행은 원래 없음).
+const PUB_WEEKLY_TARGET=3;
+function cadenceInfo(items){
+  const now=Date.now(), wk=7*864e5;
+  let n=0;
+  (items||[]).forEach(it=>{
+    if(!it||!it.youtube_url||!it.date)return;
+    const t=Date.parse(String(it.date).slice(0,10)+"T00:00:00Z");
+    if(isFinite(t)&&(now-t)<wk)n++;
+  });
+  return {count:n,target:PUB_WEEKLY_TARGET,over:n>=PUB_WEEKLY_TARGET};
+}
+function cadenceCard(items){
+  const c=cadenceInfo(items);
+  const col=c.over?"#3a2410":"#0d2216", bd=c.over?"#a63":"#1c5";
+  return '<div class="card" style="background:'+col+';border-color:'+bd+'">'+
+    '<span class="lbl">최근 7일 발행 '+c.count+'편 · 목표 주 '+c.target+'편</span>'+
+    '<div class="hint" style="margin-top:6px">'+
+      (c.over?'목표를 채웠습니다. 편수를 늘리기보다 <b>한 편의 완성도</b>(대상 선정·훅·자막)에 시간을 쓰는 편이 낫습니다.'
+             :'아직 여유가 있습니다. 남은 '+(c.target-c.count)+'편은 <b>종 단위로 좁은 대상</b>을 골라 만드세요.')+
+    '</div></div>';
+}
+
 async function renderLibrary(){
-  view().innerHTML='<div class="card"><span class="lbl">롱폼 (탭하면 제목·설명 열람)</span><div id="lflist"><div class="hint">불러오는 중…</div></div></div>'+
+  view().innerHTML='<div id="cadence"></div>'+
+    '<div class="card"><span class="lbl">롱폼 (탭하면 제목·설명 열람)</span><div id="lflist"><div class="hint">불러오는 중…</div></div></div>'+
     '<div class="card"><span class="lbl">쇼츠 (탭하면 열람·수정·재생성)</span><div id="clist"><div class="hint">불러오는 중…</div></div></div>';
   const [lf,cat]=await Promise.all([listLongform(),listContent()]);
+  const cd=document.getElementById("cadence"); if(cd)cd.innerHTML=cadenceCard(cat);
   const lfel=document.getElementById("lflist");
   lfel.innerHTML=lf.length?lf.map(r=>(
     '<a class="clitem" href="'+(r.href||("/lf/"+encodeURIComponent(r.id)))+'">'+
@@ -1869,14 +1897,20 @@ async function renderDetail(id){
   else if(md.cover_url)mediaHtml='<img src="'+prox(curl)+'">';
   else mediaHtml='<div class="hint">미디어가 아직 업로드되지 않았습니다(제작 직후 잠시 후 반영).</div>';
   // ★유튜브 쇼츠 업로드는 자동으로 하지 않는다 — 위 영상을 확인하고 이상 없으면 버튼으로 직접 올린다.
+  // ★채널 분리: 난파선(shipwreck)은 해양생물 채널이 아니라 '난파선 전용 채널'로 올라간다.
+  const _isWreck=String(rec.category||"").toLowerCase()==="shipwreck";
+  const _chName=_isWreck?"난파선 전용 채널":"해양생물 채널(@abyss_0cean)";
   let upHtml="";
   if(md.youtube_url){
+    const _upCh=md.youtube_channel==="wreck"?"난파선 전용 채널":(md.youtube_channel==="main"?"해양생물 채널":"");
     upHtml='<div class="card" style="margin-top:12px;background:#0d2216;border-color:#1c5">'+
-      '<span class="lbl">유튜브 쇼츠 업로드 완료('+esc(md.youtube_privacy||"")+')</span>'+
+      '<span class="lbl">유튜브 쇼츠 업로드 완료('+esc(md.youtube_privacy||"")+(_upCh?' · '+esc(_upCh):'')+')</span>'+
       '<a class="btn save" href="'+esc(md.youtube_url)+'" target="_blank" style="margin-top:8px">유튜브에서 보기 → '+esc(md.youtube_url)+'</a></div>';
   }else if(md.video_url){
     upHtml='<div class="card" style="margin-top:12px">'+
       '<span class="lbl">유튜브 쇼츠 올리기 — 위 영상을 확인하고 이상 없을 때만 누르세요(자동 업로드 안 함)</span>'+
+      '<div class="hint" style="margin-top:6px">올라갈 채널: <b>'+esc(_chName)+'</b>'+
+        (_isWreck?' — 난파선은 주제가 달라 해양생물 채널과 분리해 올립니다(전용 채널 미연결 시 업로드가 중단됩니다).':'')+'</div>'+
       '<div class="btnrow" style="margin-top:8px;align-items:center;gap:8px">'+
         '<select id="shpriv" style="padding:8px;border-radius:8px"><option value="public">공개</option>'+
           '<option value="unlisted">일부공개(링크 아는 사람만)</option>'+

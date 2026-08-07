@@ -47,6 +47,10 @@ def main() -> int:
     # ★화면 구성(운영자 확정): cover=9:16 꽉 채움(기본) / square=정방형 / full=원본 좌우 전체
     parser.add_argument("--fit", default="",
                         help="화면 구성 cover(꽉 채움·기본) / square(정방형) / full(원본 좌우 전체)")
+    # ★편당 품질 게이트 우회(운영자 확정): 'shark/Selachimorpha'처럼 과보다 위 분류군은 기본 차단.
+    #   그래도 만들어야 할 때만 켠다.
+    parser.add_argument("--allow-broad", default="",
+                        help="넓은 분류군(강·목·상과 등)도 제작 허용 — 기본은 차단(편당 품질 게이트)")
     parser.add_argument("--cut-specs", default="",
                         help='컷별 구간 직접 지정(운영자 확정 방식). 자동 컷 선택을 대체한다. '
                              '형식 ① 간단표기 "0-6, 20-27, 41-48, 62-70" '
@@ -62,7 +66,8 @@ def main() -> int:
     manual = {k: v for k, v in (("start", args.src_start), ("end", args.src_end),
                                 ("crop_x", args.crop_x), ("cuts", args.cuts),
                                 ("zoom", args.zoom), ("cut_specs", args.cut_specs),
-                                ("fit", args.fit), ("cover", args.cover))
+                                ("fit", args.fit), ("cover", args.cover),
+                                ("allow_broad", args.allow_broad))
               if str(v).strip()} or None
     if manual:
         logging.info("운영자 수동 지정: %s", manual)

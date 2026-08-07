@@ -383,7 +383,7 @@ def run_reels(
     """reels 파이프라인(현행 확정 시스템): 실제 PD 심해 '영상' → 9:16 추적 리프레임 + 틸 그레이딩
     → 일본어 나레이션(edge-tts, 훅/본문) + 카라오케 자막 → 오프닝 훅/엔드카드/전환/임팩트 사운드.
     팬줌·Veo 미사용. 실사 영상·일본어 훅 확보 실패 시 명확 중단(날조 금지)."""
-    from src.core import footage, hook_intro_stage, narration_sync, reframe
+    from src.core import footage, hook_intro_stage, narration_sync, reframe, subject_quality
     from src.core.contracts import ALLOWED_LICENSES
 
     base = Path(base_dir)
@@ -431,20 +431,50 @@ def run_reels(
         if not cands:
             raise PipelineError("input",
                                 "실사 영상을 가진 대상이 하나도 없습니다 — 관리자 페이지에서 '소싱하기'로 영상을 확보하세요.")
+        # ★편당 품질(운영자 확정 "발행 빈도를 줄이고 편당 품질을 올린다"): 'shark/Selachimorpha',
+        #   'starfish/Asteroidea'처럼 **과보다 위 분류군**은 수심·분포를 특정할 수 없어 총론 낭독이
+        #   된다(#058·#059 실사례). auto에서는 **거르고 다음 후보로 넘어간다** — 막아서 실패시키지
+        #   않는다(제작이 교착되면 안 된다는 기존 원칙 유지). 전원 탈락일 때만 경고 후 그대로 진행.
+        _broad_skipped: list[str] = []
         subject = info = None
         for cand in cands:
             ci = category.get_info(cand)
+            _q = subject_quality.assess(ci.scientific_name, ci.common_name_en)
+            if not _q["ok"]:
+                _broad_skipped.append(str(cand))
+                log.warning("[reels] auto 후보 스킵(편당 품질 게이트): %s — %s", cand, _q["reason"])
+                continue
             cf = footage.fetch_footage(ci.scientific_name, ci.common_name_en, str(raw_dir))
             if cf:
                 subject, info, fv = cand, ci, cf
                 log.info("[reels] auto → 실사영상 보유 대상 선택: %s", subject)
                 break
             log.warning("[reels] auto 후보 스킵(실사 미확보/정지 소스): %s", cand)
+        if not fv and _broad_skipped:
+            # 좁은 대상이 하나도 없다 → 제작을 멈추는 대신, 넓은 대상이라도 만들되 크게 경고한다.
+            log.warning("[reels] 좁은 대상(종·과)이 후보에 없습니다 — 넓은 분류군 %d건으로 진행합니다. "
+                        "'소싱하기'로 종 단위 대상을 확보하는 편이 편당 품질에 유리합니다: %s",
+                        len(_broad_skipped), ", ".join(_broad_skipped[:5]))
+            for cand in _broad_skipped:
+                ci = category.get_info(cand)
+                cf = footage.fetch_footage(ci.scientific_name, ci.common_name_en, str(raw_dir))
+                if cf:
+                    subject, info, fv = cand, ci, cf
+                    break
         if not fv:
             raise PipelineError("footage", "auto 후보 전원 실사 영상 미확보 → 제작 중단(날조 금지)")
     else:
         subject = category.parse_input(query)
         info = category.get_info(subject)
+        # ★편당 품질 게이트(지정 제작): 운영자가 직접 지정한 대상이 과보다 위 분류군이면 막는다.
+        #   그래도 만들려면 manual["allow_broad"] (워크플로 입력 allow_broad=true)로 통과시킨다.
+        _q = subject_quality.assess(info.scientific_name, info.common_name_en)
+        if not _q["ok"] and not str((manual or {}).get("allow_broad") or "").strip().lower() \
+                in ("1", "true", "yes", "y"):
+            raise PipelineError(
+                "subject_quality",
+                f"편당 품질 게이트: {_q['reason']}. "
+                f"그래도 제작하려면 allow_broad 옵션을 켜세요.")
         # ★규칙 전환(운영자 확정 · 이전의 '중복이면 즉시 중단'을 대체): "중복 이슈로 제작이 안 되는데
         #   영상 중복이더라도 그냥 제작되게 해줘 — 다른 느낌으로 또 될 수도 있잖아. **중복에 따른
         #   실패는 이제 앞으로 없도록** 해줘." → 막지 않고 **새 회차로 계속 만든다**. 다만 운영자가

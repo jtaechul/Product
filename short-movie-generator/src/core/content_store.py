@@ -442,11 +442,12 @@ def set_longform_youtube(base_dir: str, content_id: str, *, youtube_url: str,
 
 
 def set_short_youtube(base_dir: str, content_id: str, *, youtube_url: str,
-                      privacy: str = "") -> bool:
-    """쇼츠(릴스) 레코드에 유튜브 업로드 결과(URL·공개범위) 기록 + 매니페스트 갱신.
+                      privacy: str = "", channel: str = "") -> bool:
+    """쇼츠(릴스) 레코드에 유튜브 업로드 결과(URL·공개범위·채널) 기록 + 매니페스트 갱신.
 
     운영자가 라이브러리 상세(/c/<id>)에서 '유튜브 쇼츠로 올리기'를 눌러 upload-short.yml 이
     업로드에 성공한 뒤 호출. 대시보드는 이 값을 보고 '이미 업로드됨(재업로드 방지)'을 표시한다.
+    ★channel: "main"(해양생물) / "wreck"(난파선 전용) — 어느 채널에 올렸는지 남긴다.
     """
     rec = load_record(base_dir, content_id)
     if not rec or rec.get("kind") == "longform":
@@ -454,6 +455,8 @@ def set_short_youtube(base_dir: str, content_id: str, *, youtube_url: str,
     media = rec.setdefault("media", {})
     media["youtube_url"] = youtube_url
     media["youtube_privacy"] = privacy
+    if channel:
+        media["youtube_channel"] = channel
     rec["updated_at"] = _now_iso()
     record_path(base_dir, content_id).write_text(
         json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")

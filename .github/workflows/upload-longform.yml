@@ -77,6 +77,10 @@ jobs:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          # ★난파선 전용 채널(채널 정체성 분리) — 미설정이면 난파선은 본 채널로 올리지 않고 중단.
+          YOUTUBE_WRECK_CLIENT_ID: ${{ secrets.YOUTUBE_WRECK_CLIENT_ID }}
+          YOUTUBE_WRECK_CLIENT_SECRET: ${{ secrets.YOUTUBE_WRECK_CLIENT_SECRET }}
+          YOUTUBE_WRECK_REFRESH_TOKEN: ${{ secrets.YOUTUBE_WRECK_REFRESH_TOKEN }}
           PRIVACY: ${{ github.event.inputs.privacy }}
           CID: ${{ github.event.inputs.content_id }}
         run: |
@@ -86,16 +90,21 @@ jobs:
           from src.core import content_store
           cid = os.environ["CID"]
           rec = json.load(open(f"content/{cid}.json", encoding="utf-8"))
-          if not yt.has_credentials():
+          ch = yt.channel_for_category(rec.get("category"))
+          if not yt.has_credentials(ch):
               print("yt_url=")
-              print("::error::YouTube 시크릿(YOUTUBE_CLIENT_ID/SECRET/REFRESH_TOKEN) 미설정 → 업로드 불가")
+              if ch == "wreck":
+                  print("::error::난파선 전용 채널 시크릿(YOUTUBE_WRECK_*) 미설정 → 본 채널로 섞어 "
+                        "올리지 않고 중단합니다. 난파선 채널을 먼저 연결하세요.")
+              else:
+                  print("::error::YouTube 시크릿(YOUTUBE_CLIENT_ID/SECRET/REFRESH_TOKEN) 미설정 → 업로드 불가")
               raise SystemExit(1)
           # 태그 = 레코드 해시태그('#' 제거) 우선, 없으면 기존 기본값(롱폼 하위호환)
           tags = [str(t).lstrip("#").strip() for t in (rec.get("hashtags") or []) if str(t).strip("#").strip()]
           if not tags:
               tags = ["深海", "深海生物", "ランキング", "deep sea"]
           r = yt.upload("work/video.mp4", rec.get("yt_title",""), rec.get("yt_description",""),
-                        tags=tags, privacy=os.environ.get("PRIVACY","public"))
+                        tags=tags, privacy=os.environ.get("PRIVACY","public"), channel=ch)
           # kind에 맞는 레코드 기록(나레이트=/nv, 롱폼=/lf)
           if rec.get("kind") == "narrate":
               content_store.set_narrate_youtube(".", cid, youtube_url=r["url"], privacy=r["privacy"])

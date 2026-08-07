@@ -36,6 +36,10 @@ jobs:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          # ★난파선 전용 채널도 함께 워밍 — 발행 빈도가 낮아 '6개월 미사용 폐기'에 더 취약하다.
+          YOUTUBE_WRECK_CLIENT_ID: ${{ secrets.YOUTUBE_WRECK_CLIENT_ID }}
+          YOUTUBE_WRECK_CLIENT_SECRET: ${{ secrets.YOUTUBE_WRECK_CLIENT_SECRET }}
+          YOUTUBE_WRECK_REFRESH_TOKEN: ${{ secrets.YOUTUBE_WRECK_REFRESH_TOKEN }}
         run: |
           python - <<'PY'
           import os
@@ -43,26 +47,38 @@ jobs:
           def emit(k, v):
               with open(out, "a", encoding="utf-8") as f:
                   f.write(f"{k}={v}\n")
-          need = ("YOUTUBE_CLIENT_ID", "YOUTUBE_CLIENT_SECRET", "YOUTUBE_REFRESH_TOKEN")
-          if not all(os.environ.get(k) for k in need):
-              emit("ok", "skip"); emit("err", "시크릿 미설정")
-              print("::notice::유튜브 시크릿 미설정 → 점검 생략"); raise SystemExit(0)
-          try:
-              import google.auth.transport.requests as R
-              from google.oauth2.credentials import Credentials
-              c = Credentials(
-                  token=None, refresh_token=os.environ["YOUTUBE_REFRESH_TOKEN"],
-                  client_id=os.environ["YOUTUBE_CLIENT_ID"],
-                  client_secret=os.environ["YOUTUBE_CLIENT_SECRET"],
-                  token_uri="https://oauth2.googleapis.com/token",
-                  scopes=["https://www.googleapis.com/auth/youtube.upload"])
-              c.refresh(R.Request())
-              emit("ok", "1" if c.token else "0"); emit("err", "")
-              print("토큰 정상 ✅ (리프레시 성공 — 워밍 완료)")
-          except Exception as e:
-              msg = str(e).replace("\n", " ").replace("\r", " ")[:150]
-              emit("ok", "0"); emit("err", msg)
-              print(f"::warning::토큰 리프레시 실패: {msg}")
+
+          def check(label, prefix):
+              """반환: "skip"(시크릿 없음) · "1"(정상) · 실패 사유 문자열."""
+              need = [f"{prefix}CLIENT_ID", f"{prefix}CLIENT_SECRET", f"{prefix}REFRESH_TOKEN"]
+              if not all(os.environ.get(k) for k in need):
+                  print(f"::notice::{label} 시크릿 미설정 → 점검 생략")
+                  return "skip"
+              try:
+                  import google.auth.transport.requests as R
+                  from google.oauth2.credentials import Credentials
+                  c = Credentials(
+                      token=None, refresh_token=os.environ[need[2]],
+                      client_id=os.environ[need[0]], client_secret=os.environ[need[1]],
+                      token_uri="https://oauth2.googleapis.com/token",
+                      scopes=["https://www.googleapis.com/auth/youtube.upload"])
+                  c.refresh(R.Request())
+                  if not c.token:
+                      return f"{label}: 토큰 없음"
+                  print(f"{label} 토큰 정상 (리프레시 성공 — 워밍 완료)")
+                  return "1"
+              except Exception as e:
+                  msg = str(e).replace("\n", " ").replace("\r", " ")[:150]
+                  print(f"::warning::{label} 토큰 리프레시 실패: {msg}")
+                  return f"{label}: {msg}"
+
+          main = check("해양생물 채널", "YOUTUBE_")
+          wreck = check("난파선 채널", "YOUTUBE_WRECK_")
+          if main == "skip" and wreck == "skip":
+              emit("ok", "skip"); emit("err", "시크릿 미설정"); raise SystemExit(0)
+          bad = [r for r in (main, wreck) if r not in ("1", "skip")]
+          emit("ok", "0" if bad else "1")
+          emit("err", " / ".join(bad))
           PY
 
       - name: Alert on failure (Telegram)

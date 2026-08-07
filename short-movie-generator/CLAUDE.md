@@ -1169,6 +1169,30 @@
     미사용 폐기 예방) + 만료 조짐이면 텔레그램으로 재발급 안내 전송(`youtube_upload.probe()`).
     ③ 토큰 죽으면 텔레그램 메시지에 "직접 업로드하라 + 재발급 절차" 명시.
   - ⚠️ **스케줄 워크플로는 기본 브랜치(main)에 있어야 발동**한다 — `youtube-token-health.yml`은 main에도 둔다.
+- **★채널 정체성 분리 — 난파선은 별도 채널(확정 · 운영자 지시)**: 공개 29편 중 8편이 난파선이었고,
+  한 채널에 '심해 생물'과 '난파선 역사'가 섞이면 구독 이유가 흐려진다(주간 평균 조회 1,560→715, -54%).
+  그래서 **업로드 대상 채널을 카테고리로 가른다**(`youtube_upload.channel_for_category`).
+  - `shipwreck` → **wreck 채널**(시크릿 `YOUTUBE_WRECK_CLIENT_ID/_CLIENT_SECRET/_REFRESH_TOKEN`),
+    생물(`deep_sea`·`marine_life`·`marine_algae`) → **main 채널**(기존 `YOUTUBE_*`).
+  - 유튜브 카테고리도 갈린다: 생물 `15`(Pets & Animals) / 난파선 `27`(Education·역사).
+  - **난파선 채널 시크릿이 없으면 본 채널로 흘려보내지 않고 업로드를 중단**한다
+    (`RuntimeError("no_credentials:wreck")`) — 섞여 올라가면 분리한 의미가 사라지기 때문.
+  - 대시보드 상세(/c/&lt;id&gt;)의 업로드 카드에 **"올라갈 채널"** 을 표기해 운영자가 누르기 전에 확인한다.
+  - `youtube-token-health.yml`은 **두 채널 토큰을 모두 워밍**한다(발행이 뜸한 채널일수록 6개월 폐기에 취약).
+  - 검증: `tests/test_channel_split_wreck.py`(8건) + `worker/channel_split_check.mjs`(실제 렌더 확인).
+- **★편당 품질 게이트 — 한 편 = 한 대상(확정 · 운영자 지시 "발행 빈도 축소 + 편당 품질 상향")**:
+  #058 `starfish/Asteroidea`(불가사리 **강** 전체), #059 `shark/Selachimorpha`(상어 **상목**·553종)
+  처럼 과(family)보다 넓은 분류군은 수심·분포를 특정할 수 없어 총론 낭독이 된다 → **제작 전에 거른다**
+  (`src/core/subject_quality.py` · 네트워크 없이 학명 형태로 판정).
+  - 통과: 이명법(종) · `-idae`/`-inae`/`-ini`(과·아과·족) · 그 외 한 단어(속)
+  - 차단: `-oidea`/`-morpha`/`-formes`/`-phora`/`-poda`/`-zoa` 등(상과·목·강·문) ·
+    영문 통칭(`shark`·`starfish`·`octopus` 등)만 있는 속
+  - **auto = 건너뛰고 다음 후보로**(막아서 제작을 교착시키지 않는다 — 기존 원칙 유지),
+    **지정 제작 = 차단**. 우회는 `--allow-broad` / 워크플로 입력 `allow_broad`.
+  - 검증: `tests/test_subject_quality_and_cadence.py`(8건 · auto 스킵·지정 차단·우회 통과를 실제 실행으로 확인).
+- **★발행 빈도(확정)**: 하루 1편 이상 쏟아내는 동안 주간 평균 조회가 1,560 → 715로 반토막 났다.
+  자동 발행은 원래 없으므로 **강제로 막지 않고**, 라이브러리 상단에 **최근 7일 발행 수 / 목표 주 3편**을
+  보여 판단을 돕는다(`worker/index.mjs` `PUB_WEEKLY_TARGET`·`cadenceCard`).
 - **릴스 + 게시물 동시제작(확정)**: 종 1개 선정 시 릴스(9:16 영상)와 **게시물(인스타 카드뉴스)을 함께 생성**.
   - 게시물 = **도감형 인포그래픽 캐러셀 5장 · 무조건 1:1(1080×1080)** (`src/core/carousel.py`).
     구성: [1]표지(실사 표본 패널+훅) [2]서식·분포(단색 월드맵+수심/수온) [3]표본 데이터(스펙)

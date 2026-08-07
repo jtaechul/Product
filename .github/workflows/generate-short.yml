@@ -67,6 +67,11 @@ on:
         description: '표지(오프닝 훅) 지정 JSON — {"at":12.3,"zoom":1.6,"x":0.5,"y":0.4} · 비우면 자동'
         required: false
         default: ""
+      allow_broad:
+        description: "넓은 분류군(상어·불가사리처럼 강/목 전체)도 제작 허용 — 기본은 차단(편당 품질)"
+        type: boolean
+        required: false
+        default: false
       # ★'영상 찾기'에서 고른 영상으로 바로 제작. 이 경로는 종명·학명을 추가 확보한 뒤 진행한다.
       video_url:
         description: "이 영상으로 제작 — 관리자 '영상 찾기' 결과의 다운로드 URL"
@@ -317,6 +322,7 @@ jobs:
           if [ -n "$CUT_SPECS" ]; then set -- "$@" --cut-specs "$CUT_SPECS"; fi
           if [ -n "$FIT" ]; then set -- "$@" --fit "$FIT"; fi
           if [ -n "$COVER" ]; then set -- "$@" --cover "$COVER"; fi
+          if [ "${{ inputs.allow_broad }}" = "true" ]; then set -- "$@" --allow-broad true; fi
           if [ -n "$VID_URL" ]; then
             set -- "$@" --video-url "$VID_URL" --video-title "$VID_TITLE" \
                         --video-license "$VID_LIC" --video-credit "$VID_CRED"

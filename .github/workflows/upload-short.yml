@@ -77,6 +77,11 @@ jobs:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          # ★난파선 전용 채널(채널 정체성 분리). 미설정이면 난파선 업로드는 '실패'로 막힌다
+          #   — 본 채널(해양생물)로 섞여 올라가는 것을 방지하기 위함.
+          YOUTUBE_WRECK_CLIENT_ID: ${{ secrets.YOUTUBE_WRECK_CLIENT_ID }}
+          YOUTUBE_WRECK_CLIENT_SECRET: ${{ secrets.YOUTUBE_WRECK_CLIENT_SECRET }}
+          YOUTUBE_WRECK_REFRESH_TOKEN: ${{ secrets.YOUTUBE_WRECK_REFRESH_TOKEN }}
           PRIVACY: ${{ github.event.inputs.privacy }}
           CID: ${{ github.event.inputs.content_id }}
         run: |
@@ -88,9 +93,15 @@ jobs:
           rec = json.load(open(f"content/{cid}.json", encoding="utf-8"))
           re = rec.get("reels", {}) or {}
           sp = rec.get("species", {}) or {}
-          if not yt.has_credentials():
+          # ★채널 분리: 난파선(shipwreck)은 해양생물 채널이 아니라 난파선 전용 채널로 간다.
+          ch = yt.channel_for_category(rec.get("category"))
+          if not yt.has_credentials(ch):
               print("yt_url=")
-              print("::error::YouTube 시크릿(YOUTUBE_CLIENT_ID/SECRET/REFRESH_TOKEN) 미설정 → 업로드 불가")
+              if ch == "wreck":
+                  print("::error::난파선 전용 채널 시크릿(YOUTUBE_WRECK_CLIENT_ID/SECRET/REFRESH_TOKEN) "
+                        "미설정 → 본 채널로 섞어 올리지 않고 중단합니다. 난파선 채널을 먼저 연결하세요.")
+              else:
+                  print("::error::YouTube 시크릿(YOUTUBE_CLIENT_ID/SECRET/REFRESH_TOKEN) 미설정 → 업로드 불가")
               raise SystemExit(1)
           # 제목: 일본어 유튜브 제목 → 없으면 종명. ★#Shorts 미부착(형식으로 자동 판정 · 스팸 인상).
           title = (re.get("yt_title") or sp.get("common_name_ko") or sp.get("common_name_en") or "深海生物").strip()[:100]
@@ -102,10 +113,12 @@ jobs:
               desc = (desc + "\n\n" + " ".join(tags)).strip()
           r = yt.upload("work/video.mp4", title, desc,
                         tags=[t.lstrip("#") for t in tags][:15],
-                        privacy=os.environ.get("PRIVACY","public"))
-          content_store.set_short_youtube(".", cid, youtube_url=r["url"], privacy=r["privacy"])
+                        privacy=os.environ.get("PRIVACY","public"), channel=ch)
+          content_store.set_short_youtube(".", cid, youtube_url=r["url"], privacy=r["privacy"],
+                                          channel=r["channel"])
           print(f"yt_url={r['url']}")
           print(f"yt_privacy={r['privacy']}")
+          print(f"yt_channel={r['channel']}")
           PY
 
       - name: 레코드 커밋(유튜브 URL 반영)
