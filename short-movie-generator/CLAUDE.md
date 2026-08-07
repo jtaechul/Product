@@ -1186,7 +1186,10 @@
   (`src/core/subject_quality.py` · 네트워크 없이 학명 형태로 판정).
   - 통과: 이명법(종) · `-idae`/`-inae`/`-ini`(과·아과·족) · 그 외 한 단어(속)
   - 차단: `-oidea`/`-morpha`/`-formes`/`-phora`/`-poda`/`-zoa` 등(상과·목·강·문) ·
-    영문 통칭(`shark`·`starfish`·`octopus` 등)만 있는 속
+    **이름 목록 `_BROAD_NAMES`**(`Porifera`·`Cnidaria`·`Octocorallia`·`Actiniaria` 등 —
+    "fera"·"aria"는 속 이름에도 쓰여 접미사로 넣으면 오탐이라 목록으로 정확히 잡는다. 계기: #060 `Porifera`) ·
+    학명이 영문 통칭과 **같은 말**인 속(`Octopus`/"octopus"). ※학명이 구체적이면 통칭이
+    허술해도 막지 않는다(`Bathynomus`/"isopod"는 통과 — 오탐 방지)
   - **auto = 건너뛰고 다음 후보로**(막아서 제작을 교착시키지 않는다 — 기존 원칙 유지),
     **지정 제작 = 차단**. 우회는 `--allow-broad` / 워크플로 입력 `allow_broad`.
   - 검증: `tests/test_subject_quality_and_cadence.py`(8건 · auto 스킵·지정 차단·우회 통과를 실제 실행으로 확인).

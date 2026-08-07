@@ -31,10 +31,14 @@ def _src(path: Path, seconds: int = 40) -> str:
 
 
 def test_cut_count_defaults_to_three_or_four():
-    """★핵심: 30초 본문이 예전처럼 10컷 이상으로 쪼개지지 않고 3~4컷으로 유지된다."""
+    """★핵심: 30초 본문이 예전처럼 10컷 이상으로 쪼개지지 않고 3~4컷으로 유지된다.
+
+    ★기본값 4 → 3(운영자 확정 · 시청자층 실측): 시청자의 71%가 45세 이상(65+ 만 27%)이라
+    빠른 구도 전환에서 이탈이 크다 → 컷을 하나 더 줄이고 한 컷을 길게 본다.
+    """
     plan = reframe._plan_scene_interleaved.__wrapped__ if hasattr(
         reframe._plan_scene_interleaved, "__wrapped__") else None
-    assert reframe._DEFAULT_MAX_CUTS == 4
+    assert reframe._DEFAULT_MAX_CUTS == 3
     assert reframe._MIN_CUTS == 3
     # 역할 배정: 적은 컷에서도 리빌→설정→(디테일)→마무리 서사가 유지되고 접사/핏이 섞인다
     assert [reframe._role_for(k, 3) for k in range(3)] == ["reveal", "establish", "settle"]

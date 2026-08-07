@@ -172,3 +172,20 @@ def test_cadence_card_counts_only_recent_published():
     assert got["over"] is True and got["underOver"] is False
     assert got["cardShowsCount"], "화면에 발행 수가 안 보입니다"
     assert got["cardWarnsWhenOver"] and got["cardEncouragesWhenUnder"]
+
+
+def test_high_rank_taxa_that_suffix_rules_miss_are_blocked():
+    """★#060이 `Porifera`(해면 **동물문 전체**)로 나갔다 — 접미사 규칙이 못 잡는 문·강·목은
+    이름 목록으로 정확히 막는다("fera"는 속 이름에도 쓰여 접미사로 넣으면 오탐이 난다)."""
+    for n in ("Porifera", "Cnidaria", "Octocorallia", "Actiniaria", "Sepiida",
+              "Mollusca", "Echinodermata", "Anthozoa"):
+        assert not SQ.assess(n, n)["ok"], f"{n}(문·강·목)이 통과했습니다"
+
+
+def test_sloppy_common_name_does_not_block_a_real_genus():
+    """★오탐 방지: 학명이 구체적이면 영문 통칭이 허술해도 막지 않는다.
+    Bathynomus(#050의 그 대상)를 'isopod'라는 통칭 때문에 막으면 좋은 대상이 사라진다."""
+    assert SQ.assess("Bathynomus", "isopod")["ok"], "정상 속(Bathynomus)이 막혔습니다"
+    assert SQ.assess("Octopus vulgaris", "octopus")["ok"], "정상 종이 막혔습니다"
+    # 학명과 통칭이 같은 말일 때만 '대상 미특정'으로 본다
+    assert not SQ.assess("Octopus", "Octopus")["ok"]

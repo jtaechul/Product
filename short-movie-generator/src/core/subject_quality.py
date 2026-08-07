@@ -26,9 +26,35 @@ _OK_SUFFIX = ("idae", "inae", "ini")
 _BROAD_SUFFIX = ("oidea", "morpha", "morphi", "formes", "phora", "poda", "acea",
                  "zoa", "cea", "ida", "ales")
 # 위 접미사에 걸리지만 실제로는 좁은 분류군인 예외(오탐 방지). 필요할 때만 늘린다.
-_BROAD_EXCEPT = {"sepiida"}
+# (Sepiida는 갑오징어 '목'이라 예외가 아니다 — 예전 항목은 오류였다.)
+_BROAD_EXCEPT: set[str] = set()
+
+# ★접미사만으로는 못 잡는 **문·강·목** 이름을 이름 그대로 막는다(오탐 0 · 확실한 방법).
+#   계기: #060이 `Porifera`(해면 **동물문 전체**)로 나갔다 — "fera"는 속 이름에도 쓰여
+#   접미사 규칙에 넣기 위험하므로, 이런 건 목록으로 정확히 잡는다.
+#   기준은 하나다 — **한 편으로 묶으면 수심·분포를 특정할 수 없는 넓이인가.**
+_BROAD_NAMES = {
+    # 문(phylum)
+    "porifera", "cnidaria", "ctenophora", "echinodermata", "mollusca", "arthropoda",
+    "annelida", "chordata", "nematoda", "bryozoa", "brachiopoda", "nemertea",
+    "chaetognatha", "sipuncula", "hemichordata", "priapulida", "placozoa", "rotifera",
+    "foraminifera", "radiolaria", "bacillariophyta", "platyhelminthes",
+    # 강·아강(class·subclass)
+    "anthozoa", "hydrozoa", "scyphozoa", "cubozoa", "octocorallia", "hexacorallia",
+    "asteroidea", "ophiuroidea", "echinoidea", "holothuroidea", "crinoidea",
+    "cephalopoda", "gastropoda", "bivalvia", "polychaeta", "malacostraca",
+    "actinopterygii", "chondrichthyes", "osteichthyes", "elasmobranchii", "holocephali",
+    "pycnogonida", "ascidiacea", "thaliacea", "crustacea", "tunicata",
+    # 상목·목(superorder·order)
+    "selachimorpha", "batoidea", "teleostei", "decapoda", "isopoda", "amphipoda",
+    "copepoda", "euphausiacea", "actiniaria", "scleractinia", "alcyonacea",
+    "pennatulacea", "zoantharia", "corallimorpharia", "teuthida", "octopoda",
+    "sepiida", "myctophiformes", "chimaeriformes", "anguilliformes", "gadiformes",
+}
 
 # 영문 통칭 — 이 단어 하나로는 '어떤 생물'인지 특정되지 않는다(수심·분포를 쓸 수 없다).
+# ★단, 통칭이 '허술한 이름'일 뿐 학명이 구체적인 경우(Bathynomus / "isopod")는 막지 않는다.
+#   학명과 통칭이 **같은 말**일 때만(Octopus / "octopus") 대상이 특정 안 된 것으로 본다.
 _GENERIC_COMMON = {
     "shark", "sharks", "fish", "fishes", "starfish", "sea star", "jellyfish",
     "crab", "crabs", "coral", "corals", "octopus", "squid", "eel", "eels",
@@ -50,6 +76,8 @@ def rank_guess(scientific_name: str) -> str:
     if len(sci.split()) >= 2:
         return "species"
     low = sci.lower()
+    if low in _BROAD_NAMES:      # ★이름으로 확정된 문·강·목이 먼저(접미사 규칙보다 정확)
+        return "broad"
     if low in _BROAD_EXCEPT:
         return "genus"
     if low.endswith(_OK_SUFFIX):
@@ -70,10 +98,10 @@ def assess(scientific_name: str, common_name_en: str = "") -> dict:
                 "reason": f"'{sci}'는 과(family)보다 위 분류군입니다 — 한 편에 담기엔 너무 넓어 "
                           f"수심·분포를 특정할 수 없습니다(종 또는 과 단위로 좁히세요)"}
     common = _norm(common_name_en).lower()
-    if common in _GENERIC_COMMON and rank != "species":
+    if common in _GENERIC_COMMON and rank != "species" and common == sci.lower():
         return {"ok": False, "rank": rank,
-                "reason": f"영문 통칭 '{common}'만으로는 대상이 특정되지 않습니다 — "
-                          f"어떤 종/과인지 좁히세요"}
+                "reason": f"'{sci}'는 영문 통칭 '{common}'과 같은 말이라 대상이 특정되지 "
+                          f"않습니다 — 어떤 종/과인지 좁히세요"}
     return {"ok": True, "rank": rank, "reason": ""}
 
 
