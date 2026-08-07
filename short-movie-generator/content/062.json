@@ -1,0 +1,76 @@
+{
+  "id": "062",
+  "created_at": "2026-08-07T23:46:22+00:00",
+  "updated_at": "2026-08-07T23:46:22+00:00",
+  "status": "published",
+  "category": "marine_life",
+  "series": "海の生き物 図鑑",
+  "applied": {
+    "cuts": [
+      {
+        "start": 23.6,
+        "end": 33.5,
+        "zoom": null
+      },
+      {
+        "start": 9.6,
+        "end": 18.7,
+        "zoom": null
+      },
+      {
+        "start": 19.0,
+        "end": 28.1,
+        "zoom": null
+      }
+    ],
+    "cuts_manual": false
+  },
+  "species": {
+    "common_name_ko": "Crossota",
+    "common_name_en": "Crossota",
+    "scientific_name": "Crossota",
+    "depth_range_m": "",
+    "habitat": "",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "Crossota is a genus of hydrozoans of the family Rhopalonematidae.",
+      "The genus comprises five species.",
+      "Unlike most hydromedusae, these do not have a sessile stage.",
+      "Rather, they spend their entire lives in the water column as plankton.",
+      "The genus Crossota is widespread throughout the oceans."
+    ]
+  },
+  "reels": {
+    "hook": "このクラゲ、一生、泳ぎ続ける。",
+    "caption": "真っ青な海の、深さも定まらぬどこかを、ひとつの透明な傘がゆらゆらと漂っています。風もないのに揺れるそのかたちだけが、そこに命があることを教えてくれます。\n\nその名はクロッソタ(学名: Crossota)。\n\n決まった水深も、決まった住所も持たず、世界中の海という海を、ただ潮に運ばれながら生きているといいます。浅い岩礁のそばであれ、光の届かない深みであれ、行き先を選ぶのはいつも流れ次第。地図に印をつけられるような「棲み処」を、この生き物は最初から持ち合わせていないのです。\n\nクロッソタという名前は、実はひとつの生き物ではなく、5種の仲間たちを束ねた属の名前です。ヒドロ虫の一族、ロパロネマ科に名を連ねる兄弟姉妹たちが、似た顔をしながらも少しずつ違う姿で、同じ海のどこかを漂っています。\n\n多くのクラゲには、岩に根を張って過ごす「定住期」——ポリプという姿があります。ですがクロッソタには、その章がそもそも存在しません。住まいを構える暇もなく、契約も家具も荷物すらも要らない。生まれた瞬間から漂う姿のまま、一生を終えるのです。\n\n根を張らず、留まらず、ただ水に身を委ねて生きる——それがクロッソタの暮らし方。プランクトンという言葉は「漂うもの」を意味します。まさにその名の通り、流れに任せ、海という巨大な水槽の中を、ゆっくりと旅していくのです。\n\nもしこの物語が心に触れたなら、どうか保存しておいてください。そして、同じ海を想う誰かにも、そっとシェアしてあげてください。\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。\n\n映像: Wikimedia Commons",
+    "hashtags": [
+      "#クロッソタ",
+      "#海の生き物"
+    ],
+    "reveal_name": "クロッソタ / Crossota",
+    "reveal_fact": "赤い・泳ぐ・光る、深海クラゲ",
+    "hook_ko": "",
+    "caption_ko": "새파란 바다, 깊이조차 알 수 없는 어딘가를, 투명한 우산 하나가 하늘하늘 떠다니고 있습니다. 바람도 없는데 흔들리는 그 모습만이, 그곳에 생명이 있다는 것을 알려줍니다.\n\n그 이름은 크로소타(학명: Crossota)입니다.\n\n정해진 수심도, 정해진 주소도 없이, 세계 곳곳의 바다를 그저 조류에 실려 살아간다고 합니다. 얕은 암초 곁이든, 빛이 닿지 않는 깊은 곳이든, 갈 곳을 정하는 것은 언제나 해류의 몫입니다. 지도에 표시할 수 있는 '보금자리'를, 이 생물은 처음부터 갖고 있지 않은 것입니다.\n\n크로소타라는 이름은 사실 하나의 생물이 아니라, 5종의 동료들을 묶은 속(屬)의 이름입니다. 히드로충의 한 갈래인 로파로네마과에 이름을 올린 형제자매들이, 비슷한 얼굴을 하고서도 조금씩 다른 모습으로 같은 바다 어딘가를 떠다니고 있습니다.\n\n대부분의 해파리에게는 바위에 뿌리를 내리고 지내는 '정착기'——폴립이라는 단계가 있습니다. 하지만 크로소타에게는 그런 장(章)이 처음부터 존재하지 않습니다. 집을 지을 틈도 없이, 임대 계약도 가구도 짐조차도 필요 없습니다. 태어난 순간부터 떠다니는 모습 그대로, 한평생을 마칩니다.\n\n뿌리내리지 않고, 머무르지 않고, 그저 물살에 몸을 맡기고 살아가는 것——그것이 크로소타의 삶입니다. 플랑크톤이라는 말은 '떠다니는 것'을 뜻합니다. 그 이름 그대로, 흐름에 몸을 맡긴 채 바다라는 거대한 수조 속을, 천천히 여행하는 것입니다.\n\n이 이야기가 마음에 닿았다면, 부디 저장해 두시기 바랍니다. 그리고 같은 바다를 그리워하는 또 다른 누군가에게도, 조용히 공유해 주시기 바랍니다.\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.\n\n영상: Wikimedia Commons",
+    "hashtags_ko": [
+      "#Crossota",
+      "#해양생물"
+    ],
+    "yt_title": "家を持たない一生、クロッソタという生き物 #クロッソタ #海の生き物",
+    "yt_title_ko": "집이 없는 평생, 크로소타라는 생물 #Crossota #해양생물",
+    "visualizer": "reels",
+    "video_file": "crossota_20260807_234621.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-062/reels_062.mp4",
+    "rev": "31227733647",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-062/cover_062.jpg",
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-062/ytthumb_062.jpg"
+  },
+  "post": null
+}

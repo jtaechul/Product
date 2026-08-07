@@ -26,5 +26,12 @@
     "common_name_en": "Grey reef shark",
     "scientific_name": "Carcharhinus amblyrhynchos",
     "date": "2026-07-31"
+  },
+  {
+    "no": 62,
+    "common_name_ko": "Crossota",
+    "common_name_en": "Crossota",
+    "scientific_name": "Crossota",
+    "date": "2026-08-07"
   }
 ]

@@ -488,5 +488,13 @@
     "common_name_en": "vent shrimp",
     "scientific_name": "Rimicaris exoculata",
     "date": "2026-08-07"
+  },
+  {
+    "id": "062",
+    "kind": "reels",
+    "common_name_ko": "Crossota",
+    "common_name_en": "Crossota",
+    "scientific_name": "Crossota",
+    "date": "2026-08-07"
   }
 ]
