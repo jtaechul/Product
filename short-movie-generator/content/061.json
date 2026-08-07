@@ -1,0 +1,79 @@
+{
+  "id": "061",
+  "created_at": "2026-08-07T23:28:35+00:00",
+  "updated_at": "2026-08-07T23:28:35+00:00",
+  "status": "published",
+  "category": "deep_sea",
+  "series": "심해 도감",
+  "applied": {
+    "cuts": [
+      {
+        "start": 29.4,
+        "end": 40.0,
+        "zoom": null
+      },
+      {
+        "start": 10.0,
+        "end": 19.7,
+        "zoom": null
+      },
+      {
+        "start": 20.0,
+        "end": 29.7,
+        "zoom": null
+      }
+    ],
+    "cuts_manual": false
+  },
+  "species": {
+    "common_name_ko": "vent shrimp",
+    "common_name_en": "vent shrimp",
+    "scientific_name": "Rimicaris exoculata",
+    "depth_range_m": "",
+    "habitat": "",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "Rimicaris exoculata, commonly known as the 'blind shrimp', is a species of shrimp.",
+      "It thrives on active hydrothermal edifices at deep-sea vents of the Mid-Atlantic Ridge.",
+      "This species belongs to the Alvinocarididae family of shrimp, named after the DSV Alvin, the vessel that collected the original samples described by M.",
+      "Christoffersen in 1986.",
+      "The genus name Rimicaris is composed of rima (Latin for \"rift\" or \"fissure\", referring to the Mid-Atlantic Ridge) + karis (\"shrimp\" in Greek), while the species epithet benign is Latin for \"rendered eyeless\", referring to the highly modified, non-image-forming eyes."
+    ]
+  },
+  "reels": {
+    "hook": "目がないのに、深海に生息。",
+    "caption": "光の射さない深い海の底、灼熱の煙を噴き上げる岩肌のそばに、小さな影がびっしりと群れています。まるで熱そのものを吸い込むように、無数の体がひしめき合って蠢いているのです。\nその名は熱水エビ(学名: Rimicaris exoculata)。\n住処は大西洋中央海嶺、地球の裂け目とも呼べる場所に口を開けた熱水噴出孔のそば。太陽の光など届くはずもない暗闇の底で、噴き出す熱水の煙突に寄り添うようにして群れをなして暮らしています。\n彼らが属するのはアルビノカリス科という一族。名付け親は、深海探査艇「アルビン号」です。1986年、研究者クリストファーセンが、アルビン号が採取したサンプルをもとに、この生物を初めて記載しました。深海の暗闇に潜む生き物の名前に、探査機の名が刻まれている——それは人間がようやくこの世界に触れた、確かな記録でもあります。\n学名の頭につく「リミカリス」は、ラテン語の「裂け目」とギリシャ語の「エビ」を組み合わせた言葉。住所を記すなら、地図ではなく「割れ目」としか書きようがない——そんな変わった住まいを、名前がそのまま映し取っています。\nそして種小名「エクスオクラータ」は、ラテン語で「目を失った」の意味。実際に彼らの目は、像を結ぶための器官としてはほとんど機能していません。景色を眺める趣味など、そもそも持ち合わせていないのでしょう。光の届かぬ闇の底で、見ることをやめてでも生き延びる道を選んだ——それもまた、進化がたどり着いた答えのひとつなのです。\nもしこの物語が心に触れたなら、どうか保存しておいてください。\nそして、同じ海を想う誰かにも、そっとシェアしてあげてください。\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。\n\n映像: NOAA Ocean Exploration・Public Domain",
+    "hashtags": [
+      "#熱水エビ",
+      "#深海生物"
+    ],
+    "reveal_name": "熱水エビ / Rimicaris exoculata",
+    "reveal_fact": "目なし・熱水・深海、盲目のエビ",
+    "hook_ko": "눈이 없는, 심해의 새우.",
+    "caption_ko": "빛이 닿지 않는 깊은 바다 밑바닥, 뜨거운 연기를 뿜어내는 바위 곁에 작은 그림자들이 빼곡히 모여 있습니다. 마치 열기 그 자체를 삼키듯, 수많은 몸들이 뒤엉켜 꿈틀거리고 있습니다.\n그 이름은 열수 새우(학명: Rimicaris exoculata)입니다.\n서식지는 대서양 중앙 해령, 지구의 갈라진 틈이라 부를 만한 곳에 입을 벌린 열수 분출공 근처입니다. 태양빛이 닿을 리 없는 어둠의 밑바닥에서, 뿜어져 나오는 열수 굴뚝에 몸을 기댄 채 무리를 이루어 살아갑니다.\n이들이 속한 것은 알비노카리스과라는 한 무리입니다. 이름을 지어준 것은 심해 탐사정 '앨빈호'입니다. 1986년, 연구자 크리스토퍼센이 앨빈호가 채집한 표본을 바탕으로 이 모습을 세상에 처음 기록했습니다. 심해의 어둠 속에 숨은 생물의 이름에 탐사선의 이름이 새겨져 있다는 것——그것은 인간이 마침내 이 세계에 닿았던, 확실한 기록이기도 합니다.\n학명 앞에 붙는 '리미카리스'는 라틴어의 '틈'과 그리스어의 '새우'를 합친 말입니다. 주소를 적으라 한다면, 지도가 아니라 '갈라진 틈'이라고밖에 쓸 수 없는——그런 특이한 거처를, 이름이 그대로 담아내고 있습니다.\n그리고 종소명 '엑스오쿨라타'는 라틴어로 '눈을 잃었다'는 뜻입니다. 실제로 이들의 눈은 상을 맺는 기관으로서는 거의 기능하지 않습니다. 풍경을 바라보는 취미 따위는 애초에 가지고 있지 않은 모양입니다. 빛이 닿지 않는 어둠의 밑바닥에서, 보는 것을 포기하면서까지 살아남는 길을 선택한 것——그것 역시 진화가 다다른 하나의 답인 것입니다.\n이 이야기가 마음에 닿았다면, 부디 저장해 두시기 바랍니다.\n그리고 같은 바다를 그리워하는 누군가에게도, 살며시 공유해 주시기 바랍니다.\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.\n\n영상: NOAA Ocean Exploration・Public Domain",
+    "hashtags_ko": [
+      "#vent shrimp",
+      "#심해생물"
+    ],
+    "yt_title": "なぜ目がないのに、深海に生息のか。熱水エビ #熱水エビ #深海生物",
+    "yt_title_ko": "눈을 잃은 새우, 열수 틈새에 모이다 #vent shrimp #심해생물",
+    "visualizer": "reels",
+    "video_file": "vent_shrimp_20260807_232834.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [
+      "Wikipedia (en)",
+      "Wikimedia Commons (File:Fond abyssal (Ifremer 00701-81314).webm)"
+    ],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-061/reels_061.mp4",
+    "rev": "31226772522",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-061/cover_061.jpg",
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-061/ytthumb_061.jpg"
+  },
+  "post": null
+}

@@ -376,5 +376,12 @@
     "common_name_en": "Porifera",
     "scientific_name": "Porifera",
     "date": "2026-08-07"
+  },
+  {
+    "no": 61,
+    "common_name_ko": "vent shrimp",
+    "common_name_en": "vent shrimp",
+    "scientific_name": "Rimicaris exoculata",
+    "date": "2026-08-07"
   }
 ]

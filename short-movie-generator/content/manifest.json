@@ -480,5 +480,13 @@
     "scientific_name": "Porifera",
     "date": "2026-08-07",
     "youtube_url": "https://youtu.be/xuc5ja4g98w"
+  },
+  {
+    "id": "061",
+    "kind": "reels",
+    "common_name_ko": "vent shrimp",
+    "common_name_en": "vent shrimp",
+    "scientific_name": "Rimicaris exoculata",
+    "date": "2026-08-07"
   }
 ]
