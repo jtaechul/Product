@@ -59,7 +59,11 @@ def test_manual_float_parser():
 
 @pytest.mark.skipif(not _ffmpeg(), reason="ffmpeg 없음")
 def test_default_render_is_few_cuts_and_keeps_duration(tmp_path, caplog):
-    """실렌더: 기본 호출이 4컷으로 계획되고 목표 길이(30s)는 그대로 보존된다."""
+    """실렌더: 기본 호출이 3컷으로 계획되고 목표 길이(30s)는 그대로 보존된다.
+
+    ★기본 4컷 → 3컷(운영자 확정 · 시청자의 71%가 45세 이상 → 빠른 구도 전환에서 이탈).
+      중요한 건 '컷을 줄여도 **본문 길이는 그대로**'라는 점이다(짧아지면 내용이 사라진다).
+    """
     import logging
     caplog.set_level(logging.INFO, logger="src.core.reframe")
     src = _src(tmp_path / "src.mp4", 40)
@@ -67,7 +71,8 @@ def test_default_render_is_few_cuts_and_keeps_duration(tmp_path, caplog):
     assert Path(out).exists()
     assert abs(_dur(out) - 30.0) < 0.5, "컷 제한 후에도 본문 길이가 보존돼야 함"
     arc = [r.getMessage() for r in caplog.records if "서사 아크" in str(r.msg)]
-    assert arc and "4컷" in arc[0], f"기본 4컷이어야 함: {arc}"
+    assert arc and f"{reframe._DEFAULT_MAX_CUTS}컷" in arc[0], \
+        f"기본 {reframe._DEFAULT_MAX_CUTS}컷이어야 함: {arc}"
 
 
 @pytest.mark.skipif(not _ffmpeg(), reason="ffmpeg 없음")

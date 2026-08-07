@@ -62,7 +62,9 @@ def test_ass_never_wraps_to_two_lines():
 def test_budget_targets_35_and_caps_40():
     assert P._TARGET_TOTAL_S == 35.0 and P._HARD_MAX_TOTAL_S == 40.0
     # 고정 구간(훅·스팅어·엔드카드)은 줄이지 않는다 — 본문만 줄인다
-    assert 8.0 <= P._FIXED_OVERHEAD_S <= 10.0, f"고정 구간 추정이 어긋납니다: {P._FIXED_OVERHEAD_S}"
+    # ★하한 8.0 → 6.5(초반 이탈 대책): 오프닝을 4.6 → 2.8초로 줄여 고정 구간이 8.9 → 7.1초가 됐다.
+    #   (줄어든 만큼 본문 예산이 늘어난다 — 총 목표 35초는 그대로.)
+    assert 6.5 <= P._FIXED_OVERHEAD_S <= 10.0, f"고정 구간 추정이 어긋납니다: {P._FIXED_OVERHEAD_S}"
     assert P.body_budget_s() + P._FIXED_OVERHEAD_S <= P._TARGET_TOTAL_S + 0.01
 
 
