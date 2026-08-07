@@ -302,8 +302,8 @@ def _probe_wh(path: str) -> tuple[int, int]:
 #   → 본문 예산 = 목표 35초 − 8.9초 ≈ 26초. 실측 ja-JP edge-tts ≈ 5.4자/초 → 약 140자.
 #   ⚠ 글자수는 **합성 전 추정치**일 뿐이라, 합성 후 실제 길이로 한 번 더 검사해 초과분을 잘라낸다
 #     (아래 _fit_body_to_budget — 추정이 빗나가도 40초를 넘기지 않는 최종 관문).
-_OPENING_S = 4.6            # 오프닝 훅(hook_intro.opening_seg_s)
-_STINGER_S = 2.3            # 지도→수심 하강 스팅어(reels_stinger)
+_OPENING_S = 2.8            # 오프닝 훅(hook_intro.opening_seg_s) — 4.6→2.8(초반 이탈 대책)
+_STINGER_S = 2.3            # 지도→수심 하강 스팅어(reels_stinger · 본문 중간 삽입)
 _ENDCARD_S = 2.0            # 엔드카드(hook_intro.endcard_dur_s)
 _FIXED_OVERHEAD_S = _OPENING_S + _STINGER_S + _ENDCARD_S
 _TARGET_TOTAL_S = 35.0      # 가급적 이 안에서 끝낸다(운영자 목표)
@@ -699,8 +699,11 @@ def run_reels(
         except Exception as e:  # noqa: BLE001
             log.warning("[reels] 지도 SFX 믹스 생략(오류): %s", e)
 
-    # 5.5) ★오프닝 지도·수심 하강 스팅어(운영자 확정): 훅 뒤에 '지도→해역 락온→실제 수심 하강'을
-    #      ~2.3초 붙인다. 본문 앞에 결합하면 최종 순서가 [훅][스팅어][본문][엔드카드]가 된다.
+    # 5.5) ★지도·수심 하강 스팅어 — **본문 중간**에 끼워 넣는다(운영자 확정 · 초반 이탈 대책).
+    #      예전에는 훅 바로 뒤에 붙여 [훅 4.6s][스팅어 2.3s][본문] 순서였다. 그러면 시청자가
+    #      생물이 실제로 헤엄치는 장면을 보기까지 **6.9초**가 걸린다 — 실측 유효 조회율 39%
+    #      (=61%가 초반 스와이프). '어디에 사는지'는 흥미가 붙은 **뒤에** 볼 정보다.
+    #      → 본문 나레이션의 **문장 경계**(목표 6.5초 부근)에 끼운다. 말이 잘리지 않는다.
     #      실패해도 발행 불정지(스팅어 없이 진행). 수심은 종 실제 서식수심(날조 아님).
     #      ★난파선 편(doc·운영자 영상 공통)은 제외: '생식해역·수심 하강'은 생물용 프레이밍이라
     #        부적절하다(자동 다큐는 본문 안 '지도 컷'이 침몰 위치를 대신 보여준다).
@@ -709,14 +712,16 @@ def run_reels(
             from src.core import reels_stinger
             st = reels_stinger.build_stinger(info, str(work_dir / "stinger.mp4"),
                                              str(work_dir / "stinger"))
-            if st:
+            at = reels_stinger.pick_insert_point(nar["disp"]) if st else None
+            if st and at is not None:
                 combined = str(work_dir / "body_with_stinger.mp4")
-                # ★전환 효과음: 지도·수심 표시 → 본 영상 경계(=스팅어 길이)에 다이브 후시 SFX
-                if reels_stinger.prepend_to_body(st["path"], body_av, combined,
-                                                 boundary_s=st.get("duration"),
-                                                 work_dir=str(work_dir / "trsfx")):
+                if reels_stinger.insert_into_body(st["path"], body_av, combined, at,
+                                                  stinger_dur=st.get("duration"),
+                                                  work_dir=str(work_dir / "trsfx")):
                     body_av = combined
-                    log.info("[reels] 오프닝 하강 스팅어 결합(%.1fs) + 전환 SFX", st["duration"])
+                    log.info("[reels] 하강 스팅어 본문 %.1fs 삽입(%.1fs) + 복귀 SFX", at, st["duration"])
+            elif st:
+                log.warning("[reels] 삽입할 문장 경계를 못 찾아 스팅어 생략(본문이 너무 짧음)")
         except Exception as e:  # noqa: BLE001
             log.warning("[reels] 스팅어 결합 생략(오류): %s", e)
 

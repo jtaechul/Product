@@ -89,7 +89,11 @@ class HookIntroConfig:
     H: int = 1280
     FPS: int = 30
     # ── 타이밍(시스템) ──
-    opening_seg_s: float = 4.6         # 오프닝 페이지 총 길이(팝+홀드) — 다음 컷 전 여유 확보
+    # ★오프닝 길이 4.6 → 2.8초(운영자 확정 · 초반 이탈 대책). 유효 조회율 39%(=61% 초반 이탈)
+    #   상태에서, 정지 표지 4.6초 + 지도 스팅어 2.3초로 **첫 6.9초 동안 화면이 움직이지 않았다**.
+    #   오프닝을 짧게 줄이고(아래 opening_moving_bg로 배경도 실사 영상으로 바꿈) 스팅어는 본문
+    #   중간으로 옮겨, 첫 프레임부터 생물이 움직이게 한다. 훅 나레이션이 길면 자동으로 늘어난다.
+    opening_seg_s: float = 2.8         # 오프닝 페이지 총 길이(팝+홀드)
     narr_start_s: float = 0.18         # 세그먼트 내 훅 나레이션 시작(리드인 단축 — 문구가 더 빨리 뜸)
     transition_s: float = 0.5          # 오프닝→본문 플래시 전환
     pop_grow_s: float = 0.16           # 어절 확대→축소 시간
@@ -102,7 +106,9 @@ class HookIntroConfig:
     # 확정 디자인(頭も、目も、= 588px @98px)은 safe(608px) 안 → 그대로 유지되고,
     # 더 긴 훅만 자동 축소되거나(≥min_2line) 어절당 1줄(3줄)로 전환된다.
     title_safe_x: int = 60             # 좌우 안전여백(인스타 릴스 UI 겹침 방지 ↑)
-    title_min_size: int = 56           # 축소 하한
+    # ★하한 56 → 68(운영자 확정): 시청자의 71%가 45세 이상(65+ 만 27%)이라 작은 글자는 읽히지
+    #   않는다. 하한을 올리면 긴 훅은 2줄 대신 3줄(어절당 1줄)로 전환돼 글자 크기가 유지된다.
+    title_min_size: int = 68           # 축소 하한
     title_min_2line: int = 76          # 2줄 유지 최소 크기(미만이면 3줄 전환)
     grad_cyan: tuple = (120, 225, 245)
     grad_magenta: tuple = (240, 95, 205)
@@ -317,13 +323,19 @@ def opening_layout(spec: SpeciesSpec, cfg: HookIntroConfig | None = None) -> dic
 
 
 # ─────────────────────────── 오프닝 훅 렌더 ───────────────────────────
-def render_opening_frames(bg_path: str, onsets: dict, spec: SpeciesSpec,
+def render_opening_frames(bg_path: str | list[str], onsets: dict, spec: SpeciesSpec,
                           out_dir: str, cfg: HookIntroConfig | None = None) -> list[str]:
     """오프닝 훅 세그먼트 프레임(PNG) 렌더 → 파일 경로 리스트.
 
     onsets: {어절: 나레이션_로컬_시작초} — narration_sync WordBoundary에서 도출.
             팝인·셰이크·붐 SFX가 이 온셋에 정합된다.
     타이틀 배치는 opening_layout()이 단일 출처로 계산(넘침 원천 차단).
+
+    ★bg_path에 **프레임 경로 리스트**를 주면 배경이 프레임마다 바뀐다 = 오프닝이 '움직인다'
+      (운영자 확정 · 초반 이탈 대책). 예전에는 정지 사진 1장 위에 글자만 움직여, 시청자가
+      생물이 실제로 헤엄치는 장면을 보기까지 6.9초가 걸렸다(유효 조회율 39%).
+      리스트가 프레임 수보다 짧으면 마지막 장을 유지한다(부족해도 렌더는 성공).
+      문자열 1장을 주면 종전과 100% 동일하게 동작한다(폴백 경로).
     """
     cfg = cfg or HookIntroConfig()
     W, H, M = cfg.W, cfg.H, cfg.shake_margin
@@ -339,7 +351,22 @@ def render_opening_frames(bg_path: str, onsets: dict, spec: SpeciesSpec,
         onset = cfg.narr_start_s + list(onsets.values())[i % len(onsets)]
         ph.append((spr, c, onset))
 
-    bg = _grade_teal(Image.open(bg_path), cfg)
+    bg_list = [bg_path] if isinstance(bg_path, (str, bytes)) else list(bg_path)
+    if not bg_list:
+        raise ValueError("오프닝 배경이 비었습니다")
+    moving = len(bg_list) > 1
+    _bg_cache: dict[str, Image.Image] = {}
+
+    def bg_at(idx: int) -> Image.Image:
+        """프레임 인덱스 → 그레이딩된 배경(정지면 항상 같은 장, 움직이면 그 프레임)."""
+        p = bg_list[min(idx, len(bg_list) - 1)]
+        got = _bg_cache.get(p)
+        if got is None:
+            got = _grade_teal(Image.open(p), cfg)
+            _bg_cache.clear() if moving else None   # 움직이면 장당 1회만 쓰므로 캐시를 비운다
+            _bg_cache[p] = got
+        return got
+
     ov = _static_overlay(spec, cfg)
     CW, CH = W + 2 * M, H + 2 * M
     ovm = Image.new("RGBA", (CW, CH), (0, 0, 0, 0)); ovm.alpha_composite(ov, (M, M))
@@ -367,9 +394,11 @@ def render_opening_frames(bg_path: str, onsets: dict, spec: SpeciesSpec,
     N = int(cfg.opening_seg_s * cfg.FPS)
     for fi in range(N):
         t = fi / cfg.FPS
-        z = 1.0 + 0.05 * _smooth(min(1, t / cfg.opening_seg_s))
+        # 배경이 이미 움직이면 켄번즈 줌은 약하게(둘이 겹치면 어지럽다)
+        _kb = 0.02 if moving else 0.05
+        z = 1.0 + _kb * _smooth(min(1, t / cfg.opening_seg_s))
         zw, zh = int(CW * z), int(CH * z)
-        superf = bg.resize((zw, zh), Image.LANCZOS).crop(
+        superf = bg_at(fi).resize((zw, zh), Image.LANCZOS).crop(
             ((zw - CW) // 2, (zh - CH) // 2, (zw - CW) // 2 + CW, (zh - CH) // 2 + CH)).convert("RGBA")
         oa = _smooth(min(1, t / 0.5))
         if oa > 0:

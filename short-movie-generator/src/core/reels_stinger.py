@@ -225,7 +225,11 @@ def _resolve_transition_sfx(work_dir: str) -> str | None:
 
 def prepend_to_body(stinger_path: str, body_video: str, out_video: str,
                     boundary_s: float | None = None, work_dir: str | None = None) -> bool:
-    """스팅어 + 본문영상을 이어붙인다(스케일·오디오 정합 concat, 재인코딩). 성공 시 True.
+    """스팅어 + 본문영상을 **맨 앞에** 이어붙인다(스케일·오디오 정합 concat, 재인코딩). 성공 시 True.
+
+    ⚠️ 쇼츠 파이프라인은 더 이상 이 함수를 쓰지 않는다 — 앞에 붙이면 첫 6.9초 동안 화면이
+       움직이지 않아 초반 이탈이 컸다(실측 유효 조회율 39%). 지금은 `insert_into_body`로
+       **본문 중간**(문장 경계)에 끼운다. 이 함수는 다른 포맷(롱폼 등)을 위해 남겨 둔다.
 
     ★전환 효과음(운영자 확정): 지도·수심 표시 → 본 영상으로 넘어가는 '경계'(=스팅어 길이 지점)에
     다이브 후시 SFX를 얹는다(운영자 파일 우선, 없으면 합성 폴백). boundary_s 미지정 시 스팅어 길이를
@@ -264,3 +268,89 @@ def prepend_to_body(stinger_path: str, body_video: str, out_video: str,
     except Exception as e:  # noqa: BLE001
         log.warning("[stinger] 본문 결합 실패: %s", e)
         return False
+
+
+def insert_into_body(stinger_path: str, body_video: str, out_video: str, at_s: float,
+                     stinger_dur: float | None = None, work_dir: str | None = None) -> bool:
+    """★스팅어(지도→수심)를 본문 **중간**(at_s)에 끼워 넣는다. 성공 시 True.
+
+    왜 앞이 아니라 중간인가(운영자 확정 · 초반 이탈 대책):
+      예전에는 [훅 4.6s][스팅어 2.3s][본문] 순서라, 시청자가 생물이 실제로 헤엄치는 장면을
+      보기까지 **6.9초**가 걸렸다(유효 조회율 39% = 61%가 초반에 스와이프).
+      '어디에 사는지'는 흥미가 붙은 **뒤에** 볼 정보다 → 본문 6~8초 지점으로 옮긴다.
+
+    at_s는 호출부가 **나레이션 문장 경계**로 골라야 한다(문장 한가운데를 끊으면 말이 잘린다).
+    실패하면 False → 호출부는 스팅어 없이 진행한다(발행 불정지).
+    """
+    if at_s is None or at_s <= 0.2:
+        return False
+    if stinger_dur is None:
+        try:
+            pr = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                 "-of", "default=nw=1:nk=1", stinger_path],
+                                capture_output=True, text=True, timeout=30)
+            stinger_dur = float((pr.stdout or "0").strip() or 0) or None
+        except Exception:  # noqa: BLE001
+            stinger_dur = None
+    W, H, F = 720, 1280, 24
+    at = f"{float(at_s):.3f}"
+    fc = (f"[0:v]scale={W}:{H},setsar=1,fps={F},split=2[bv0][bv1];"
+          f"[0:a]asplit=2[ba0][ba1];"
+          f"[bv0]trim=0:{at},setpts=PTS-STARTPTS[v0];"
+          f"[ba0]atrim=0:{at},asetpts=PTS-STARTPTS[a0];"
+          f"[bv1]trim=start={at},setpts=PTS-STARTPTS[v2];"
+          f"[ba1]atrim=start={at},asetpts=PTS-STARTPTS[a2];"
+          f"[1:v]scale={W}:{H},setsar=1,fps={F},setpts=PTS-STARTPTS[v1];"
+          f"[1:a]asetpts=PTS-STARTPTS[a1];"
+          f"[v0][a0][v1][a1][v2][a2]concat=n=3:v=1:a=1[v]")
+    # 본 영상으로 **돌아오는** 순간(스팅어 끝)에 다이브 후시 SFX — 앞에 붙일 때와 같은 연출 의도
+    sfx = _resolve_transition_sfx(work_dir or str(Path(out_video).parent / "trsfx")) \
+        if stinger_dur else None
+    try:
+        if sfx:
+            lead = max(0.0, float(at_s) + float(stinger_dur) - 0.25)
+            ms = max(0, int(lead * 1000))
+            fc += ("[acat];"
+                   f"[2:a]adelay={ms}|{ms},volume=0.85[tr];"
+                   "[acat][tr]amix=inputs=2:duration=first:normalize=0,alimiter=limit=0.95[a]")
+            cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", body_video, "-i", stinger_path,
+                   "-i", sfx, "-filter_complex", fc, "-map", "[v]", "-map", "[a]"]
+        else:
+            fc += "[a]"
+            cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", body_video, "-i", stinger_path,
+                   "-filter_complex", fc, "-map", "[v]", "-map", "[a]"]
+        cmd += ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19",
+                "-c:a", "aac", "-b:a", "192k", out_video]
+        rc = subprocess.run(cmd, timeout=300)
+        ok = rc.returncode == 0 and Path(out_video).exists() and Path(out_video).stat().st_size > 10_000
+        if ok:
+            log.info("[stinger] 본문 %.1fs 지점에 삽입(길이 %.1fs)", float(at_s), float(stinger_dur or 0))
+        return ok
+    except Exception as e:  # noqa: BLE001
+        log.warning("[stinger] 본문 중간 삽입 실패: %s", e)
+        return False
+
+
+# ★스팅어를 끼워 넣을 지점(초) — 본문 나레이션의 '문장 경계' 중 목표 시각에 가장 가까운 곳.
+_INSERT_TARGET_S = 6.5      # 훅이 끝나고 몇 초 뒤에 '어디 사는지'를 보여줄까
+_INSERT_MIN_S = 3.5         # 너무 이르면 훅 직후와 다를 바 없다
+_INSERT_MAX_S = 10.0        # 너무 늦으면 정보가 뒤로 밀려 의미가 없다
+
+
+def pick_insert_point(disp: list, target_s: float = _INSERT_TARGET_S) -> float | None:
+    """나레이션 표시창 [(text, start, end), ...] → 스팅어를 끼울 문장 경계(초).
+
+    문장 한가운데를 끊으면 말이 잘리므로 **경계에서만** 자른다. 허용 구간 안에 경계가
+    하나도 없으면 None → 호출부는 삽입을 포기하고 스팅어 없이 진행한다(발행 불정지).
+    """
+    ends: list[float] = []
+    for row in (disp or []):
+        try:
+            e = float(row[2])
+        except Exception:  # noqa: BLE001
+            continue
+        if _INSERT_MIN_S <= e <= _INSERT_MAX_S:
+            ends.append(e)
+    if not ends:
+        return None
+    return min(ends, key=lambda e: abs(e - float(target_s)))

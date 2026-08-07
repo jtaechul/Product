@@ -121,6 +121,69 @@ def _cover_crop(img: str, out_png: str, W: int, H: int) -> bool:
     return r.returncode == 0 and Path(out_png).exists()
 
 
+def _cover_vf(src_w: int, src_h: int, W: int, H: int, spec: dict | None) -> tuple[str, bool]:
+    """표지와 **똑같은 구획·화면구성**으로 잘라 W×H로 맞추는 필터 문자열.
+
+    반환 (filter, is_complex). is_complex면 filter_complex로 넣어야 한다(블러 레터박스).
+    spec이 없으면 자동 커버 크롭(가운데) — `_cover_crop`과 같은 규칙."""
+    if not spec or src_w <= 0 or src_h <= 0:
+        return (f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1", False)
+    from src.core import reframe
+    fit = str(spec.get("fit") or "cover").strip().lower()
+    if fit not in reframe.FIT_MODES:
+        fit = "cover"
+    cx, cy, cw, ch = reframe.crop_rect(fit, src_w, src_h,
+                                       max(1.0, float(spec.get("zoom") or 1.0)),
+                                       float(spec.get("x", 0.5)), float(spec.get("y", 0.5)))
+    crop = f"crop={cw}:{ch}:{cx}:{cy}"
+    if abs((cw / max(1, ch)) - (W / H)) < 0.01:
+        return (f"{crop},scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1",
+                False)
+    return (f"[0:v]{crop},split=2[a][b];"
+            f"[a]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
+            f"gblur=sigma=32,eq=brightness=-0.16:saturation=1.02[bg];"
+            f"[b]scale={W}:{H}:force_original_aspect_ratio=decrease,setsar=1[fg];"
+            f"[bg][fg]overlay=(W-w)/2:(H-h)/2,setsar=1", True)
+
+
+def opening_bg_frames(video: str, at_s: float, out_dir: str, W: int, H: int,
+                      n: int, fps: int, spec: dict | None = None) -> list[str]:
+    """★움직이는 오프닝 배경: 표지 시점부터 n장을 연속으로 떠 온다(초반 이탈 대책).
+
+    왜: 오프닝이 **정지 사진 1장**이라, 지도 스팅어까지 합쳐 첫 6.9초 동안 화면이 움직이지
+    않았다(유효 조회율 39% = 61%가 초반 이탈). 표지와 **같은 구획**으로 잘라 뽑으므로
+    운영자가 고른 화면 구성이 그대로 유지되고, 글자 자리도 변하지 않는다.
+
+    실패하면 빈 리스트 → 호출부가 기존 정지 배경으로 폴백한다(발행 불정지).
+    """
+    od = Path(out_dir)
+    od.mkdir(parents=True, exist_ok=True)
+    dur = _duration_of(video)
+    if dur <= 0 or n <= 0:
+        return []
+    need = n / float(max(1, fps))
+    start = max(0.0, min(float(at_s), max(0.0, dur - need)))    # 끝에 걸리면 앞으로 당긴다
+    sw, sh = int(_probe(video, "width") or 0), int(_probe(video, "height") or 0)
+    vf, complex_ = _cover_vf(sw, sh, W, H, spec)
+    pat = str(od / "obg_%03d.png")
+    cmd = ["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{start:.3f}", "-i", video]
+    cmd += (["-filter_complex", f"{vf},fps={fps}"] if complex_ else ["-vf", f"{vf},fps={fps}"])
+    cmd += ["-frames:v", str(int(n)), pat]
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+    except Exception as e:  # noqa: BLE001
+        log.warning("[hook_intro] 움직이는 오프닝 배경 추출 실패(%s) → 정지 배경", e)
+        return []
+    got = sorted(str(p) for p in od.glob("obg_*.png"))
+    if r.returncode != 0 or len(got) < 2:
+        log.warning("[hook_intro] 움직이는 오프닝 배경 프레임 부족(%d장) → 정지 배경: %s",
+                    len(got), (r.stderr or "")[-160:])
+        return []
+    log.info("[hook_intro] 오프닝 배경 = **움직이는 실사**(%.1fs부터 %d장 · %dfps)",
+             start, len(got), fps)
+    return got
+
+
 def opening_offset(work_dir: str | Path) -> float:
     """apply()가 남긴 오프닝 길이(초). 없으면 0.0(오프닝 미적용)."""
     try:
@@ -244,7 +307,25 @@ def _grab_frame(video: str, t: float, out_png: str, vf: str | None = None) -> bo
         cmd += ["-vf", vf]
     cmd += ["-frames:v", "1", out_png]
     r = subprocess.run(cmd, capture_output=True, text=True)
-    return r.returncode == 0 and Path(out_png).exists()
+    ok = r.returncode == 0 and Path(out_png).exists()
+    if ok:
+        # ★뜬 시각을 파일 옆에 적어 둔다(.t). 나중에 "이 표지가 원본 몇 초였나"를 되찾아
+        #   **움직이는 오프닝 배경**을 그 시점부터 뽑는 데 쓴다(초반 이탈 대책).
+        try:
+            Path(str(out_png) + ".t").write_text(f"{float(t):.3f}", encoding="utf-8")
+        except Exception:  # noqa: BLE001
+            pass
+    return ok
+
+
+def _time_of(png: str | None) -> float | None:
+    """_grab_frame이 남긴 '.t'(원본 시각). 없으면 None(→ 정지 배경 폴백)."""
+    if not png:
+        return None
+    try:
+        return float(Path(str(png) + ".t").read_text(encoding="utf-8").strip())
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _has_audio(path: str) -> bool:
@@ -337,6 +418,12 @@ def _grab_clean_frame(video: str, out_png: str, dur: float, n: int = 8) -> bool:
         return _grab_frame(video, min(0.5, dur * 0.1), out_png)
     best = reframe.pick_clean_frames(cands, keep_if_all_dirty=1)[0]
     Path(out_png).write_bytes(Path(best).read_bytes())
+    _t = _time_of(best)          # 고른 장의 원본 시각을 함께 옮긴다(움직이는 오프닝 배경용)
+    if _t is not None:
+        try:
+            Path(str(out_png) + ".t").write_text(f"{_t:.3f}", encoding="utf-8")
+        except Exception:  # noqa: BLE001
+            pass
     return True
 
 
@@ -536,18 +623,25 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
         _sources = []
         # ★운영자가 표지를 직접 정했으면 **1순위**로 쓴다(운영자 확정: "표지 구간·줌·구획은 내가 정한다").
         #   지정 시각은 **원본(잘리기 전) 기준**이므로 원본 영상에서 뜬다.
+        # ★후보마다 '움직이는 배경을 어디서 뽑을지'(영상·구획)를 함께 들고 다닌다.
+        #   시각은 후보가 확정된 뒤 `.t` 사이드카에서 읽는다(정지 사진 후보는 움직임 없음 → None).
         _cov = parse_cover_spec(cover_spec)
+        _motion: dict[str, tuple] = {}          # label → (영상경로, 구획spec | None)
         if _cov:
             _cover_src = subject_video or src_open
             _sources.append(("운영자 지정 표지",
                              lambda: make_cover_frame(_cover_src, _cov, open_bg, cfg.W, cfg.H, wd)))
+            _motion["운영자 지정 표지"] = (_cover_src, _cov)
         if hero:
             _sources.append(("고화소 히어로 사진", lambda: _cover_crop(hero, open_bg, cfg.W, cfg.H)))
         if subj_frame:
             _sources.append(("원본 피사체 프레임(비전 선택)",
                              lambda: _cover_crop(subj_frame, open_bg, cfg.W, cfg.H)))
+            _motion["원본 피사체 프레임(비전 선택)"] = (src_subj, None)
         _sources.append(("깨끗한 프레임 폴백", lambda: _grab_clean_frame(src_open, open_bg, odur)))
+        _motion["깨끗한 프레임 폴백"] = (src_open, None)
         _made = False
+        _won = ""
         for _label, _fn in _sources:
             if not _fn():
                 continue
@@ -557,6 +651,7 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
                 continue
             log.info("[hook_intro] 오프닝 배경 = %s", _label)
             _made = True
+            _won = _label
             break
         if not _made:
             # 어떤 후보도 통과 못 하면(브랜딩만 있는 소스) 제작을 막지 않고 마지막 장으로 진행 + 경고
@@ -575,7 +670,23 @@ def apply(body_video: str, spec: hi.SpeciesSpec, hook_text: str, work_dir: str,
 
         # 3) 오프닝/엔드카드 렌더 → mp4
         of_dir = str(wd / "of"); ec_dir = str(wd / "ecf")
-        of_frames = hi.render_opening_frames(open_bg, onsets, spec, of_dir, cfg)
+        # ★★움직이는 오프닝 배경(운영자 확정 · 초반 이탈 대책 ①): 표지와 같은 구획으로 그 시점부터
+        #   연속 프레임을 떠서 배경으로 쓴다 → **첫 프레임부터 생물이 움직인다**.
+        #   히어로 '사진'이 뽑혔거나 시각을 못 찾으면 기존 정지 배경으로 조용히 폴백(발행 불정지).
+        _open_bgs: list[str] | str = open_bg
+        _msrc, _mspec = _motion.get(_won, (None, None))
+        _mat = (_cov["at"] if _won == "운영자 지정 표지" and _cov else
+                _time_of(subj_frame) if _won == "원본 피사체 프레임(비전 선택)" else
+                _time_of(open_bg))
+        if _msrc and _mat is not None:
+            _seq = opening_bg_frames(_msrc, float(_mat), str(wd / "obg"), cfg.W, cfg.H,
+                                     n=int(cfg.opening_seg_s * cfg.FPS) + 2, fps=cfg.FPS,
+                                     spec=_mspec)
+            if _seq:
+                _open_bgs = _seq
+        else:
+            log.info("[hook_intro] 오프닝 배경 움직임 없음(%s) → 정지 표지로 진행", _won or "미확정")
+        of_frames = hi.render_opening_frames(_open_bgs, onsets, spec, of_dir, cfg)
         # ★유튜브 썸네일(운영자 요청): '전체 타이틀이 다 드러난' 오프닝 마지막 홀드 프레임을 저장.
         #   (기본 커버는 t=2s의 애니 도중 프레임이라 제목이 덜 노출됨 → 완전 노출 프레임을 별도 제공.)
         if thumb_out and of_frames:
