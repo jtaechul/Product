@@ -369,5 +369,12 @@
     "common_name_en": "Vampire squid",
     "scientific_name": "Vampyroteuthis infernalis",
     "date": "2026-08-06"
+  },
+  {
+    "no": 60,
+    "common_name_ko": "해면동물",
+    "common_name_en": "Porifera",
+    "scientific_name": "Porifera",
+    "date": "2026-08-07"
   }
 ]
