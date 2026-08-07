@@ -100,3 +100,36 @@ def test_pipeline_rechecks_length_after_synthesis():
     i = s.index("nar = narration_sync.synthesize(chunks")
     assert "_fit_body_to_budget(chunks, float(nar[\"duration\"]))" in s[i:i + 900], \
         "합성 후 실제 길이로 재검사하지 않습니다"
+
+
+def test_length_cap_beats_min_chunk_floor():
+    """★40초 절대 금지가 '최소 절 수'보다 우선한다(운영자 확정).
+
+    예전 구현은 절이 _MIN_BODY_CHUNKS(12) 이하면 예산을 넘어도 그대로 통과시켰다.
+    절이 길면 12절만으로도 본문 ≈31초 + 고정 8.9초 ≈ 40초로 상한을 밀어붙인다.
+    """
+    from src.core import pipeline as P
+    body = [f"深海の底に生きる姿です{i}。" for i in range(40)]
+    cta = sum(len(c) for c in P._CTA_BODY_JP)
+    final = P._append_cta(P._cap_body_chunks(body, max_chars=P._MAX_BODY_CHARS - cta))
+    chars = sum(len(c) for c in final)
+    total_s = chars / P._JP_CPS + P._FIXED_OVERHEAD_S
+    assert total_s <= P._HARD_MAX_TOTAL_S, f"총 길이 추정 {total_s:.1f}초 — 40초 상한 초과"
+    assert total_s <= P._TARGET_TOTAL_S + 0.5, f"목표 35초를 크게 넘습니다: {total_s:.1f}초"
+    assert len(final) >= 4, "본문이 지나치게 잘렸습니다"
+
+
+def test_short_body_is_left_alone():
+    """예산 안이면 손대지 않는다 — 짧은 본문까지 자르면 내용이 사라진다."""
+    from src.core import pipeline as P
+    short = ["深海に、", "影が。", "静かです。"]
+    assert P._cap_body_chunks(short) == short
+
+
+def test_refit_trims_even_when_chunk_count_is_small():
+    """실측 길이 재보정도 '절 수가 적으면 통과'하면 안 된다 — 절이 길면 여전히 넘친다."""
+    from src.core import pipeline as P
+    chunks = ["長い文章がここにあります。" * 2] * 8      # 8절(옛 기준 12 이하 → 그냥 통과했음)
+    out = P._fit_body_to_budget(chunks, 45.0)           # 실측 45초 = 명백한 초과
+    assert len(out) < len(chunks), "예산 초과인데 줄이지 않았습니다"
+    assert len(out) >= 3, "지나치게 잘렸습니다"

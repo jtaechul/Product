@@ -310,7 +310,10 @@ _TARGET_TOTAL_S = 35.0      # 가급적 이 안에서 끝낸다(운영자 목표
 _HARD_MAX_TOTAL_S = 40.0    # 절대 초과 금지(운영자 확정)
 _JP_CPS = 5.4               # 실측 일본어 TTS 속도(자/초)
 _MAX_BODY_CHARS = int((_TARGET_TOTAL_S - _FIXED_OVERHEAD_S) * _JP_CPS)   # ≈ 140자
-_MIN_BODY_CHUNKS = 12
+_MIN_BODY_CHUNKS = 12       # 되도록 이만큼은 남긴다(자막이 너무 뚝뚝 끊기지 않게)
+# ★단, 길이 상한이 최소 절 수보다 **우선**한다(운영자 확정 "40초는 절대 넘지 않는다").
+#   절이 길면 12절만 남겨도 예산을 넘는다 — 그때는 절 수를 더 줄인다. 이 값 아래로는 안 줄인다.
+_HARD_MIN_BODY_CHUNKS = 4
 
 
 def body_budget_s(target: float = _TARGET_TOTAL_S) -> float:
@@ -325,7 +328,9 @@ def _fit_body_to_budget(chunks: list[str], dur_s: float) -> list[str]:
     총 길이가 40초(하드 상한)를 넘지 않게 맞춘다. 반환이 원본과 같으면 재합성 불필요.
     """
     budget = body_budget_s(_HARD_MAX_TOTAL_S)
-    if dur_s <= budget or len(chunks) <= _MIN_BODY_CHUNKS:
+    # ★예전에는 절이 12개 이하면 그대로 통과시켰다 — 절이 길면 12절만으로도 40초를 넘는다.
+    #   40초 하드 상한이 최소 절 수보다 우선하므로, 절 수가 적어도 넘치면 줄인다.
+    if dur_s <= budget or len(chunks) <= _HARD_MIN_BODY_CHUNKS:
         return chunks
     cps = (sum(len(c) for c in chunks) / dur_s) if dur_s > 0 else _JP_CPS
     want_chars = int(body_budget_s(_TARGET_TOTAL_S) * cps)     # 하드가 아니라 목표(35초)로 되맞춘다
@@ -338,17 +343,27 @@ def _fit_body_to_budget(chunks: list[str], dur_s: float) -> list[str]:
 
 def _cap_body_chunks(chunks: list[str], max_chars: int = _MAX_BODY_CHARS,
                      min_chunks: int = _MIN_BODY_CHUNKS) -> list[str]:
-    """본문 절 리스트를 글자수 예산 내로 자른다(온전한 절 단위). 최소 절 수는 보장해 너무 짧아지지 않게.
-    마지막 원본 절(마무리 비트)을 가능하면 포함해 끝맺음이 살아있게 한다."""
-    total = sum(len(c) for c in chunks)
-    if total <= max_chars or len(chunks) <= min_chunks:
+    """본문 절 리스트를 글자수 예산 내로 자른다(온전한 절 단위).
+    마지막 원본 절(마무리 비트)을 가능하면 포함해 끝맺음이 살아있게 한다.
+
+    ★min_chunks는 '되도록'이지 '무조건'이 아니다(운영자 확정 "40초는 절대 넘지 않는다").
+      예전에는 절이 min_chunks 이하면 예산을 넘어도 그대로 통과시켰고, 절이 길면
+      12절 × 14자 = 168자(≈31초 본문 + 고정 8.9초 ≈ 40초)로 상한을 밀어붙였다.
+      → 예산이 우선이고, 절 수는 _HARD_MIN_BODY_CHUNKS까지만 지킨다."""
+    if not chunks:
         return chunks
+    total = sum(len(c) for c in chunks)
+    if total <= max_chars:
+        return chunks
+    floor = min(min_chunks, _HARD_MIN_BODY_CHUNKS)
     out, used = [], 0
     for c in chunks:
-        if used + len(c) > max_chars and len(out) >= min_chunks:
+        if used + len(c) > max_chars and len(out) >= floor:
             break
         out.append(c)
         used += len(c)
+    if not out:
+        out = [chunks[0]]
     # 끝맺음 절 보존: 마지막 원본 절이 빠졌으면 마지막 자리를 그것으로 교체
     if chunks[-1] not in out:
         out[-1] = chunks[-1]
