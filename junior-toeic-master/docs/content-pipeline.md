@@ -1,0 +1,214 @@
+# 콘텐츠 파이프라인 — 문항 저작 · 검수 · 음원 제작
+
+> 원칙: **콘텐츠 제작은 전부 개발 단계의 1회성 배치 작업**이다. 운영(서비스) 중에는 LLM·TTS를
+> 단 한 번도 호출하지 않는다 — 학생이 받는 것은 D1의 문항 데이터와 R2의 정적 MP3뿐이다.
+> 상위 문서: [PRD.md](../PRD.md) · 스키마: [ERD.md](ERD.md)
+
+## 1. 파이프라인 개요
+
+```
+[저작]   Claude Code로 파트별 문항 배치 생성 (개발 단계 · 구독 요금 내 · 1회성)
+   ↓     content/questions/*.json  (아래 2절 스키마, status: draft)
+[검수]   사람이 전 문항 검토 (4절 체크리스트) → 통과 문항만 active 승격
+   ↓
+[TTS]    LC 스크립트 → 배치 TTS (미·영·호 보이스, 5절) → MP3 생성 (1회성)
+   ↓
+[업로드] tools/tts-batch.mjs 산출물 → R2 업로드 (6절 레이아웃)
+   ↓
+[임포트] tools/import.mjs → JSON 검증 → D1 INSERT/UPSERT (7절)
+```
+
+- ⚠️ **저작권 절대 규칙**: 실제 기출문제·공식 교재·시중 문제집의 문장을 복제·번안하지 않는다.
+  시험의 *형식·유형·난이도 감각*만 참고해 소재부터 100% 새로 창작한다.
+- 어휘 수준: 초5~중3 (CEFR A1~A2 중심, 파트 후반 B1 일부).
+
+## 2. 저작 JSON 스키마 (`content/questions/*.json`)
+
+파일 하나에 문항 객체 배열. 두 형태를 지원한다.
+
+### 2-1. 단독 문항형 (`type: "single"`) — L1 · L2 · R1 · R3(단문)
+
+```json
+{
+  "type": "single",
+  "tmp_id": "R1-0001",
+  "section": "RC",
+  "part": "R1",
+  "stem": "The students ______ their homework before dinner every day.",
+  "choices": ["finish", "finishes", "finishing", "to finish"],
+  "answer_idx": 0,
+  "explanation_ko": "주어 The students가 복수이므로 동사원형 finish가 옵니다. every day는 반복되는 습관을 나타내는 현재시제 신호입니다.",
+  "difficulty_label": 2,
+  "tags": ["G.agreement", "G.tense"],
+  "accent": null,
+  "tts_script": null
+}
+```
+
+- LC 단독 문항(L1·L2)은 `tts_script`(성우가 읽을 텍스트)와 `accent`를 필수로 채운다.
+  L1은 `image_prompt`(4컷 그림 생성용 설명) 필드를 추가로 갖는다.
+
+### 2-2. 지문 묶음형 (`type: "set"`) — L3 · L4 · R2 · R3(장문)
+
+```json
+{
+  "type": "set",
+  "tmp_id": "L3-0001",
+  "section": "LC",
+  "part": "L3",
+  "passage": {
+    "kind": "dialogue",
+    "script": "W: Did you watch the soccer game last night?\nM: No, I fell asleep early. Who won?\nW: Our city team! They scored in the last minute.",
+    "accent": "UK",
+    "tts_voices": { "W": "female", "M": "male" }
+  },
+  "questions": [
+    {
+      "stem": "What are the speakers talking about?",
+      "choices": ["A soccer game", "A school test", "A new movie", "A music concert"],
+      "answer_idx": 0,
+      "explanation_ko": "여자가 첫 문장에서 the soccer game last night를 언급하고 대화 전체가 경기 결과 이야기입니다.",
+      "difficulty_label": 2,
+      "tags": ["LS.gist"]
+    },
+    {
+      "stem": "Why did the man miss the game?",
+      "choices": ["He fell asleep", "He studied late", "He was traveling", "He lost his ticket"],
+      "answer_idx": 0,
+      "explanation_ko": "남자가 I fell asleep early라고 직접 말합니다. 세부 정보를 듣는 문제입니다.",
+      "difficulty_label": 3,
+      "tags": ["LS.detail"]
+    }
+  ]
+}
+```
+
+### 2-3. 공통 규칙
+
+| 필드 | 규칙 |
+|---|---|
+| `tmp_id` | 저작 단계 식별자 `{파트}-{4자리}`. 임포트 시 ULID로 치환되고 tmp_id는 매핑 로그에 보존 |
+| `choices` | 기본 4지선다 (TOEIC Bridge 표준). 3지도 허용 — 배열 길이가 곧 보기 수 |
+| `answer_idx` | 0-기반. **정답 분포는 파일 단위로 균등**하게 (한 보기 쏠림 금지, 임포트가 검사) |
+| `explanation_ko` | 한국어, 초등이 읽고 이해할 문장. "왜 정답인지 + 오답 함정 1개" 구조 권장 |
+| `difficulty_label` | 1~5. 시드 목표 분포: 1:5% / 2:30% / 3:40% / 4:20% / 5:5% |
+| `tags` | 3절 카탈로그의 code만 사용 (임포트가 검증). 문항당 1~3개 |
+| `accent` | LC만: US/UK/AU. 시드 전체에서 US 50% / UK 25% / AU 25% 안팎 유지 |
+
+## 3. 개념 태그 카탈로그 초안 (29개)
+
+파트 자체는 `questions.part` 컬럼이 담당하므로, 태그는 **개념·스킬**만 표현한다.
+`exam_weight`는 관련 파트 문항 수 비중에서 도출해 임포트 시드에 포함한다.
+
+| 분류 | code | 이름 |
+|---|---|---|
+| 섹션(의사 태그) | `SEC.LC` / `SEC.RC` | 듣기 전체 / 읽기 전체 — 수축 블렌드·진단용 ([engine.md](engine.md)) |
+| 문법 (RC 중심) | `G.tense` | 시제 |
+| | `G.agreement` | 주어-동사 수일치 |
+| | `G.pos` | 품사 자리 (형용사/부사/명사) |
+| | `G.prep` | 전치사 |
+| | `G.conj` | 접속사·연결어 |
+| | `G.pronoun` | 대명사 |
+| | `G.modal` | 조동사 |
+| | `G.compare` | 비교 표현 |
+| | `G.toinf` | to부정사·동명사 |
+| | `G.passive` | 수동태 기초 |
+| 어휘 | `V.daily` | 일상생활 |
+| | `V.school` | 학교·수업 |
+| | `V.travel` | 여행·교통 |
+| | `V.food` | 음식·주문 |
+| | `V.shopping` | 쇼핑·가격 |
+| | `V.work` | 직장·업무 기초 |
+| | `V.leisure` | 취미·여가·스포츠 |
+| 듣기 스킬 | `LS.photo` | 사진 상황 파악 |
+| | `LS.qr` | 질문 의도 파악 (의문사) |
+| | `LS.detail` | 세부 정보 듣기 (시간·장소·숫자) |
+| | `LS.gist` | 주제·목적 파악 |
+| | `LS.infer` | 화자 의도 추론 |
+| | `LS.accent` | 발음 변형 적응 (미·영·호) |
+| 독해 스킬 | `RS.scan` | 정보 찾기 (공지·문자·메뉴) |
+| | `RS.gist` | 글의 목적·주제 |
+| | `RS.context` | 문맥 완성 (연결어·문장 선택) |
+| | `RS.vocab` | 문맥 속 어휘 의미 |
+| | `RS.infer` | 추론 (다음 행동·화자 관계) |
+
+## 4. 검수 워크플로
+
+- 상태 흐름: `draft`(임포트 직후) → **사람 검수** → `active`(출제 대상) / 폐기는 `retired`.
+- 운영 중 오류 발견 시 즉시 `retired` 처리(세트 생성에서 제외됨) 후 수정본을 새 문항으로 등록.
+- **검수 체크리스트** (문항당):
+  1. 정답이 유일한가? (다른 보기가 정답이 될 여지 없음)
+  2. 해설이 정확하고 초등 눈높이인가?
+  3. 어휘·소재가 연령에 적합한가? (폭력·상표·시사 민감 소재 배제)
+  4. **기출 유사성 자가점검** — 특정 기출·교재 문장이 연상되면 폐기 후 재작성
+  5. LC: 스크립트가 자연스러운 구어인가, 성우 배정(남/녀)·국가가 표기됐는가
+  6. 정답 위치 쏠림 없는가 (파일 단위 분포는 임포트가 자동 검사)
+
+## 5. 배치 TTS (음원 제작 — 1회성)
+
+### 5-1. 제공자 비교
+
+| 옵션 | 비용 | 판단 |
+|---|---|---|
+| **Google Cloud TTS** (1순위) | 뉴럴 보이스 월 100만 자 무료 쿼터 — 시드 규모(수만 자)는 **0원**, 대량 확장 시에도 월 쿼터 내 분할 배치로 0원 유지 가능 | **채택 권고** |
+| Amazon Polly (예비) | 뉴럴 약 $16/100만 자, 1회성 소액 | 일괄 대량 생성이 급할 때 |
+| edge-tts (비상용) | 무료지만 약관 회색지대 | **상용 배포 전 제외 권고** — 프로토타입 실험까지만 |
+
+어느 경우든 생성은 개발 단계 1회 → MP3는 R2에 영구 보관 → **운영 중 TTS 호출 0회**.
+
+### 5-2. 보이스 매핑 (Google 기준 초안)
+
+| 국가 | 남성 | 여성 |
+|---|---|---|
+| US | `en-US-Neural2-A` | `en-US-Neural2-C` |
+| UK | `en-GB-Neural2-B` | `en-GB-Neural2-A` |
+| AU | `en-AU-Neural2-B` | `en-AU-Neural2-A` |
+
+- 말속도: 초등 청취를 고려해 **기본 대비 −5%** (SSML `rate="95%"`), M3에서 실사용 피드백으로 조정.
+- 대화(L3)는 화자별 보이스 분리 합성 후 무음 0.6초 이어붙임(`tts_voices` 매핑 사용).
+- L2(질의응답)는 질문+4개 보기 응답을 하나의 트랙으로 합성(실전 형식).
+- 파일 검수: 생성 후 전수 청취는 시드 120문항 규모에서 1~2시간 — 필수로 수행.
+
+## 6. R2 레이아웃
+
+```
+r2://jtm-assets/
+├── audio/passages/{passage_id}.mp3     # L3·L4 묶음 음원
+├── audio/questions/{question_id}.mp3   # L1·L2 단독 음원
+└── images/{question_id}.webp           # L1 사진 4컷 등
+```
+
+- 공개 읽기 + `Cache-Control: public, max-age=31536000, immutable` (파일은 불변 — 수정 시 새 ID).
+- 클라이언트가 R2 공개 URL을 직접 fetch (Worker 경유 없음 — 서버 부하 분산, R2 이그레스 무료).
+- 파일명이 ID라 정답 유추 불가(내용 정보 없음).
+
+## 7. 임포트 도구 (`tools/import.mjs` — M1 구현)
+
+- 입력: `content/questions/*.json` (+ `content/tags.json`, `content/badges.json` 시드)
+- 검증(실패 시 임포트 중단, 파일·tmp_id 단위 리포트):
+  스키마 필수 필드 / `tags` 코드가 카탈로그에 존재 / `answer_idx` 범위 / 파일 단위 정답 분포
+  (한 보기 40% 초과 시 경고) / LC 문항의 `tts_script`·`accent` 존재 / 묶음형 part 정합
+- 변환: `tmp_id` → ULID 발급(매핑을 `content/.idmap.json`에 보존 — 재실행 시 같은 ULID 재사용
+  → **멱등 UPSERT**), `difficulty_label` → 초기 `rating` 매핑([engine.md](engine.md) 상수표)
+- 출력: `wrangler d1 execute <DB> --file` 로 실행할 SQL 파일 생성 (로컬 `--local` 우선 검증 후 원격 적용)
+- 태그·뱃지 카탈로그도 같은 도구로 시드한다 (마이그레이션과 분리 — [ERD.md](ERD.md)).
+
+## 8. M1 시드 목표 — 120문항
+
+실제 시험 비중(LC 6/20/10/14, RC 15/15/20)을 1.2배 스케일한 배분:
+
+| 파트 | 형태 | 문항 수 | 구성 |
+|---|---|---|---|
+| L1 사진 고르기 | 단독 | 8 | 이미지 4컷 + 음원 |
+| L2 질의응답 | 단독 | 24 | 음원 |
+| L3 짧은 대화 | 묶음 | 12 | 대화 6개 × 2문항 |
+| L4 짧은 담화 | 묶음 | 16 | 담화 8개 × 2문항 |
+| R1 문장 완성 | 단독 | 18 | — |
+| R2 지문 완성 | 묶음 | 18 | 지문 6개 × 3문항 |
+| R3 독해 | 단독·묶음 | 24 | 단문 12 + 세트 6개 × 2문항 |
+| **계** | | **120** | LC 60 · RC 60 |
+
+- 난이도 분포: 라벨 1:5% / 2:30% / 3:40% / 4:20% / 5:5% — 진단(라벨 2·3·4 필요)과 초기
+  세트 생성이 모두 돌아가는 최소 구성.
+- 발음 분포: US 50% / UK 25% / AU 25% 안팎.
+- 이후 확장 목표: M3까지 400문항, 정식 오픈 전 1,000문항+ (같은 파이프라인 반복).
