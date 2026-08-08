@@ -1,0 +1,21 @@
+// 점프리시(Jumplish) Cloudflare Workers 설정
+// - 정적 자산(public/)은 [assets] 바인딩으로 서빙, /api/* 는 worker(Hono)가 처리
+// - D1: 로컬 개발은 placeholder id로 동작(wrangler --local), 원격 배포 시
+//   deploy-jumplish.yml 워크플로가 실제 database_id로 치환한다
+{
+  "name": "jumplish",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-06-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "jumplish-db",
+      "database_id": "REPLACED_AT_DEPLOY",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

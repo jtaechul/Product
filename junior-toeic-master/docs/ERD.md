@@ -121,12 +121,12 @@ CREATE INDEX idx_users_class   ON users(class_id);     -- 반 리포트 조인
 
 ```sql
 CREATE TABLE concept_tags (
-    id          TEXT PRIMARY KEY,
+    id          TEXT PRIMARY KEY,             -- 태그 code를 그대로 id로 사용 (안정적·가독적)
     code        TEXT NOT NULL UNIQUE,         -- 예: G.tense, V.school, LS.gist (2단계 트리 관례)
+    section     TEXT NOT NULL CHECK (section IN ('LC','RC','ALL')),  -- V.* 어휘 태그는 양 섹션 공통(ALL)
     name_ko     TEXT NOT NULL,
-    section     TEXT NOT NULL CHECK (section IN ('LC','RC')),
     part        TEXT,                         -- 파트 전용 태그면 L1~L4·R1~R3, 섹션 공통이면 NULL
-    exam_weight REAL NOT NULL DEFAULT 1.0,    -- 시험 출제 비중 (약점 점수 가중)
+    exam_weight REAL NOT NULL DEFAULT 1.0,    -- 시험 출제 비중 (약점 점수 가중; SEC.* 의사 태그는 0)
     parent_id   TEXT REFERENCES concept_tags(id)
 );
 
@@ -158,6 +158,7 @@ CREATE TABLE questions (
     audio_url        TEXT,                    -- 단독 LC 문항용 (L1·L2)
     image_url        TEXT,                    -- 단독 이미지 문항용 (L1)
     accent           TEXT CHECK (accent IN ('US','UK','AU')),
+    script           TEXT,                    -- LC 단독 문항의 낭독 원문 (검수·음원 준비 전 열람용, 학생 모드에선 음원 재생 시 미노출)
     status           TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','active','retired')),
     created_at       TEXT NOT NULL
 );

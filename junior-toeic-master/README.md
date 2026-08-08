@@ -37,10 +37,35 @@
 
 ## 현재 단계
 
-- **M0 (완료)**: 기획 보완 문서 패키지 (이 폴더)
-- **M1 (예정)**: 스캐폴드(Workers+D1 마이그레이션+웹 골격) + 콘텐츠 도구 + 시드 120문항·음원
-- 이후: M2 학생 학습 루프 → M3 게이미피케이션 → M4 학원 대시보드 → M5 결제·베타
-  (상세: [PRD.md 11절](PRD.md#11-로드맵-m0m5))
+- **M0 (완료)**: 기획 보완 문서 패키지
+- **M1 (완료)**: Workers(Hono)+D1 스캐폴드, 마이그레이션, 문항 열람·풀어보기 웹, 콘텐츠
+  도구(임포트·배치 TTS), **시드 120문항**. 듣기 음원·L1 그림은 키 발급 후 배치 생성
+  ([docs/tts-guide.md](docs/tts-guide.md) — 그 전까지 화면에서 스크립트로 열람)
+- **M2 (예정)**: 학생 코어 루프 (로그인 → 진단 → 오늘의 학습 → 오답노트 SRS)
+- 이후: M3 게이미피케이션 → M4 학원 대시보드 → M5 결제·베타 (상세: [PRD.md 11절](PRD.md#11-로드맵-m0m5))
+
+## 실행 방법 (로컬 개발)
+
+```
+cd junior-toeic-master
+npm install
+npm run db:migrate:local   # 로컬 D1에 스키마 적용
+npm run db:seed:local      # 문항 검증 + 시드 주입
+npm run dev                # http://localhost:8787 접속
+```
+
+## 폴더 구조
+
+```
+junior-toeic-master/
+├── wrangler.jsonc      # Workers 설정 (D1·assets 바인딩)
+├── worker/             # API (Hono) + 엔진 상수
+├── migrations/         # D1 스키마 (docs/ERD.md 기준)
+├── public/             # 웹 (무빌드 ES 모듈, 모바일 우선)
+├── content/            # 문제 은행 원본 JSON (태그·뱃지·문항 120)
+├── tools/              # import.mjs(검증·시드) · tts-batch.mjs(음원 배치)
+└── docs/               # ERD · 엔진 · 콘텐츠 파이프라인 · TTS 가이드
+```
 
 ## 주의 (법률·정책)
 

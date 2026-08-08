@@ -1,0 +1,394 @@
+[
+  {
+    "type": "set",
+    "tmp_id": "L4-0001",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good morning, students. This is your teacher speaking. Sports day is this Friday. Please wear your white gym clothes and bring a water bottle. If it rains, we will play games in the gym instead. Classes will finish early, at one o'clock.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "questions": [
+      {
+        "stem": "What is this announcement about?",
+        "choices": [
+          "A school trip",
+          "A music concert",
+          "Sports day",
+          "An art show"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "선생님이 금요일 운동회에 대해 안내하고 있어요. 소풍이나 음악회 이야기가 아니에요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.school"
+        ]
+      },
+      {
+        "stem": "What should students bring?",
+        "choices": [
+          "A water bottle",
+          "An umbrella",
+          "Their lunch",
+          "A soccer ball"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "물병을 가져오라고 했어요. 비 이야기는 나왔지만 우산을 가져오라는 말은 없었어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.school"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0002",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Here is today's weather. This morning will be sunny and warm, so it's a great time for a walk. But in the afternoon, clouds will move in, and rain will start around four o'clock. Don't forget your umbrella when you leave school today.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "male"
+      }
+    },
+    "questions": [
+      {
+        "stem": "How will the weather be this morning?",
+        "choices": [
+          "Cloudy and cold",
+          "Sunny and warm",
+          "Rainy and windy",
+          "Snowy and icy"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "아침에는 맑고 따뜻하다고 했어요. 비는 오후에 온다고 했으니 헷갈리지 마세요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ]
+      },
+      {
+        "stem": "What will happen around four o'clock?",
+        "choices": [
+          "The sun will come out.",
+          "School will finish.",
+          "It will start to snow.",
+          "It will start to rain."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "오후 4시쯤 비가 내리기 시작한다고 했어요. 눈이 아니라 비예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0003",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hi, Minho. This is Aunt Sora. I'm sorry, but I can't pick you up after your piano lesson today. My car won't start. Please take the number nine bus home, and call me when you arrive. I left some snacks on the kitchen table.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "questions": [
+      {
+        "stem": "Why is the speaker calling?",
+        "choices": [
+          "To wish Minho a happy birthday",
+          "To change the piano lesson",
+          "To ask about Minho's homework",
+          "To say she cannot pick him up"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "이모는 차가 고장 나서 데리러 갈 수 없다고 전화했어요. 피아노 수업을 바꾸려는 것이 아니에요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ]
+      },
+      {
+        "stem": "How should Minho go home?",
+        "choices": [
+          "By taxi",
+          "By bus",
+          "By car",
+          "On foot"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "9번 버스를 타고 집에 가라고 했어요. 이모의 차는 고장 나서 탈 수 없어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0004",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Welcome to the city zoo. Our first stop is the penguin house. The penguins eat fish at eleven o'clock, so you can watch their feeding time soon. Please don't knock on the glass, because loud sounds scare them. After that, we'll visit the elephants.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "male"
+      }
+    },
+    "questions": [
+      {
+        "stem": "Where are the listeners?",
+        "choices": [
+          "At a zoo",
+          "At an aquarium",
+          "At a farm",
+          "At a park"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "'도시 동물원에 오신 것을 환영합니다'라고 했어요. 펭귄이 나와서 수족관 같지만 동물원이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.leisure"
+        ]
+      },
+      {
+        "stem": "What should visitors NOT do?",
+        "choices": [
+          "Watch the feeding time",
+          "Take a rest on a bench",
+          "Knock on the glass",
+          "Visit the elephants"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "큰 소리가 펭귄을 놀라게 해서 유리를 두드리면 안 된다고 했어요. 먹이 시간을 구경하는 것은 괜찮아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.leisure"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0005",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Attention, please. The children's library will close early today, at five o'clock, because we are moving books to the new reading room. If you want to borrow a book, please come to the front desk before four thirty. Thank you, and see you tomorrow.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "questions": [
+      {
+        "stem": "What time will the library close today?",
+        "choices": [
+          "At four o'clock",
+          "At five o'clock",
+          "At six o'clock",
+          "At seven o'clock"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "오늘은 5시에 일찍 문을 닫는다고 했어요. 4시 30분은 책을 빌릴 수 있는 마지막 시간이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ]
+      },
+      {
+        "stem": "What should a person do to borrow a book today?",
+        "choices": [
+          "Go to the front desk before four thirty",
+          "Come back tomorrow morning",
+          "Visit the new reading room",
+          "Call the library at five o'clock"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "책을 빌리려면 4시 30분 전에 앞쪽 데스크로 오라고 했어요. 새 열람실로 가는 것이 아니에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0006",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Welcome back to our school radio show. Here's today's health tip. Do you feel sleepy in class? Try going to bed thirty minutes earlier tonight. Turn off your phone and read a book instead. Your body will thank you in the morning. Now, let's listen to some music.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "male"
+      }
+    },
+    "questions": [
+      {
+        "stem": "What is the speaker's tip about?",
+        "choices": [
+          "Eating healthy food",
+          "Doing morning exercise",
+          "Studying for tests",
+          "Going to bed earlier"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "수업 시간에 졸리면 오늘 밤 30분 일찍 자라는 이야기예요. 음식이나 운동 이야기가 아니에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ]
+      },
+      {
+        "stem": "What does the speaker say to do instead of using a phone?",
+        "choices": [
+          "Listen to music",
+          "Drink warm milk",
+          "Read a book",
+          "Talk with family"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "휴대폰을 끄고 대신 책을 읽으라고 했어요. 음악은 방송에서 틀어 주는 것이지 팁이 아니에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0007",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good morning, everyone. Our bus will arrive at the strawberry farm in twenty minutes. At the farm, you can pick strawberries and put them in your own basket. Lunch is at noon, under the big tent. Please stay with your group all day.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "questions": [
+      {
+        "stem": "Where are the listeners going?",
+        "choices": [
+          "To a strawberry farm",
+          "To an apple farm",
+          "To a big market",
+          "To a mountain park"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "버스가 20분 뒤에 딸기 농장에 도착한다고 했어요. 사과 농장이 아니에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.travel"
+        ]
+      },
+      {
+        "stem": "Who is probably listening to this talk?",
+        "choices": [
+          "Farmers selling strawberries",
+          "A family at home",
+          "Cooks in a kitchen",
+          "Students on a school trip"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "버스로 함께 가고 '자기 조와 함께 다니세요'라고 하니 체험학습을 가는 학생들이에요. 농부에게 하는 말이 아니에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.travel"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0008",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hello, shoppers. Thank you for visiting our market today. For the next thirty minutes only, all bananas are half price on the first floor. Also, if you buy two bottles of milk, you will get one free. The market closes at nine tonight.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "male"
+      }
+    },
+    "questions": [
+      {
+        "stem": "Where can you hear this announcement?",
+        "choices": [
+          "At a bank",
+          "At a school",
+          "At a market",
+          "At a bus station"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "바나나와 우유를 파는 곳이니까 시장(마트)이에요. '쇼핑하시는 분들'이라는 인사말도 힌트예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "V.shopping"
+        ]
+      },
+      {
+        "stem": "A woman buys two bottles of milk. How many bottles will she take home?",
+        "choices": [
+          "Two",
+          "Three",
+          "Four",
+          "Six"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "우유 두 병을 사면 한 병을 공짜로 더 준다고 했어요. 그래서 2+1, 모두 세 병을 가져가요.",
+        "difficulty_label": 5,
+        "tags": [
+          "LS.infer",
+          "V.shopping"
+        ]
+      }
+    ],
+    "status": "active"
+  }
+]

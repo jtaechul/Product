@@ -1,0 +1,619 @@
+[
+  {
+    "type": "set",
+    "tmp_id": "R3-0001",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "NOTICE\nThe school gym will be closed on Monday.\nStudents will have P.E. class in the playground.\nPlease wear your sport shoes."
+    },
+    "questions": [
+      {
+        "stem": "Where will students have P.E. class on Monday?",
+        "choices": [
+          "In the gym",
+          "In the classroom",
+          "In the playground",
+          "In the library"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "안내문에 월요일 체육 수업은 운동장(playground)에서 한다고 했어요. 체육관(gym)은 문을 닫는 곳이니 정답이 아니에요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0002",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "SWIMMING POOL RULES\n1. Take a shower before you swim.\n2. Do not run near the pool.\n3. No food or drinks in the water."
+    },
+    "questions": [
+      {
+        "stem": "What should you do before you swim?",
+        "choices": [
+          "Take a shower",
+          "Eat a snack",
+          "Run to the pool",
+          "Bring a drink"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "규칙 1번에 수영하기 전에 샤워를 하라고 쓰여 있어요. 뛰는 것과 음식은 하면 안 되는 일이니 헷갈리지 마세요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0003",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "[chat] Mina: Are we still meeting at the bus stop at 3?\nJun: Sorry, my piano lesson ends late. Can we meet at 4?\nMina: Sure! See you then."
+    },
+    "questions": [
+      {
+        "stem": "What time will Mina and Jun meet?",
+        "choices": [
+          "At 1 o'clock",
+          "At 2 o'clock",
+          "At 3 o'clock",
+          "At 4 o'clock"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "준이 피아노 수업 때문에 4시에 만나자고 했고, 미나가 좋다고 답했어요. 처음에 말한 3시는 바뀌기 전 시간이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.daily"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0004",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "SUNNY SNACK BAR — MENU\nCheese sandwich ... 3,000 won\nFruit juice ... 2,000 won\nHot dog ... 3,500 won\nIce cream ... 2,500 won"
+    },
+    "questions": [
+      {
+        "stem": "Which item is the cheapest?",
+        "choices": [
+          "Cheese sandwich",
+          "Fruit juice",
+          "Hot dog",
+          "Ice cream"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "과일 주스는 2,000원으로 가장 싸요. 2,500원인 아이스크림과 헷갈리지 않게 가격을 잘 비교해 보세요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.food"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0005",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "FIELD TRIP SCHEDULE — Green Farm\n9:00 Leave school\n10:00 Feed the sheep\n11:30 Make cheese\n12:30 Lunch\n2:00 Return to school"
+    },
+    "questions": [
+      {
+        "stem": "What will students do at 11:30?",
+        "choices": [
+          "Leave school",
+          "Feed the sheep",
+          "Eat lunch",
+          "Make cheese"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "시간표에서 11:30 옆에 '치즈 만들기(Make cheese)'가 있어요. 시간을 잘못 짚으면 다른 활동을 고르게 되니 조심하세요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0006",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "YOU ARE INVITED!\nCome to Dana's 11th birthday party.\nSaturday, May 10, 2 p.m.\nPlace: Happy Pizza House\nPlease tell Dana's mom if you can come."
+    },
+    "questions": [
+      {
+        "stem": "What is this invitation for?",
+        "choices": [
+          "A birthday party",
+          "A school festival",
+          "A pizza cooking class",
+          "A family picnic"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "다나의 열한 번째 생일 파티에 초대하는 글이에요. 장소가 피자 가게일 뿐, 요리 수업 초대가 아니에요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.gist",
+          "V.daily"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0007",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "STAR BOOKSTORE — RECEIPT\nNotebook ... 2,000 won\nColor pens ... 4,000 won\nStory book ... 6,000 won\nMember discount ... -2,000 won\nTotal ... 10,000 won"
+    },
+    "questions": [
+      {
+        "stem": "How much did the customer pay in total?",
+        "choices": [
+          "12,000 won",
+          "14,000 won",
+          "10,000 won",
+          "2,000 won"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "맨 아래 Total(합계)이 10,000원이라고 쓰여 있어요. 할인 전 금액인 12,000원을 고르지 않도록 조심하세요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan",
+          "V.shopping"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0008",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "LIBRARY CARD RULES\nYou can borrow 3 books for 2 weeks.\nBring your card every time.\nIf you lose a book, please tell the librarian."
+    },
+    "questions": [
+      {
+        "stem": "How long can you keep the books?",
+        "choices": [
+          "For 3 days",
+          "For 2 weeks",
+          "For 3 weeks",
+          "For 2 months"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "책은 2주(2 weeks) 동안 빌릴 수 있다고 했어요. '3권'의 숫자 3을 보고 3주로 착각하면 안 돼요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0009",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "LOST DOG\nOur small white dog, Mongsil, ran away near Rose Park on Sunday.\nHe has a red collar.\nIf you see him, please call 010-1234-5678."
+    },
+    "questions": [
+      {
+        "stem": "Why did the writer make this poster?",
+        "choices": [
+          "To sell a small dog",
+          "To show a new park",
+          "To ask people to buy a collar",
+          "To find a lost dog"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "일요일에 잃어버린 강아지 몽실이를 찾으려고 만든 포스터예요. 공원 이름이 나왔지만 공원 안내문은 아니에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.daily"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0010",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "[chat] Sora: Did you see the news? It will rain all day tomorrow.\nMinho: Oh no. Then let's not go to the river park.\nSora: How about the science museum instead?\nMinho: Good idea!"
+    },
+    "questions": [
+      {
+        "stem": "What will Sora and Minho probably do tomorrow?",
+        "choices": [
+          "Visit the science museum",
+          "Play at the river park",
+          "Watch TV news all day",
+          "Swim in the river"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "내일 비가 와서 강 공원 대신 과학관에 가자고 했고, 민호도 좋다고 했어요. 원래 가려던 강 공원을 고르면 안 돼요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.leisure"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0011",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "MOVING SALE\nAll items are 30% off this week!\nOur shop will move to Green Street next month.\nCome and get cheap bags and shoes!"
+    },
+    "questions": [
+      {
+        "stem": "In the sign, the word 'items' means ____.",
+        "choices": [
+          "days of the week",
+          "things in the shop",
+          "people who buy",
+          "new streets"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "'items'는 가게에서 파는 '물건들'이라는 뜻이에요. 이 가게의 가방과 신발 같은 것들이 모두 items예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.shopping"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0012",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "NOTICE TO BUS RIDERS\nFrom next Monday, Bus 7 will not stop at City Library.\nPlease take Bus 12 to go to the library.\nWe are sorry for the trouble."
+    },
+    "questions": [
+      {
+        "stem": "What can you guess from this notice?",
+        "choices": [
+          "Bus 12 will stop running soon",
+          "City Library will close on Monday",
+          "Bus 7 stops at City Library now",
+          "Bus 7 is a new bus"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "'다음 주부터 서지 않는다'는 말은 지금은 7번 버스가 도서관 앞에 선다는 뜻이에요. 도서관이 문을 닫는다는 말은 없어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.travel"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0013",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "To: Emma\nFrom: Jiho\nSubject: My summer plan\n\nHi Emma,\nHow are you? Summer vacation starts next Friday! I will visit my grandmother in Busan for two weeks. She lives near the sea, so I can swim every morning. My little sister is more excited about the night market. She loves the fish cake there.\nMy grandmother has a small orange cat now. I can't wait to meet it! I will send you photos of the sea and the cat.\nWhat will you do this summer? Please write back soon.\nYour friend,\nJiho"
+    },
+    "questions": [
+      {
+        "stem": "How long will Jiho stay in Busan?",
+        "choices": [
+          "For one week",
+          "For two weeks",
+          "For a month",
+          "For two days"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "지호는 부산 할머니 댁에서 2주(two weeks) 동안 지낼 거라고 했어요. 다른 기간과 헷갈리지 않게 본문을 확인하세요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan",
+          "V.travel"
+        ]
+      },
+      {
+        "stem": "What can we learn about Jiho from the email?",
+        "choices": [
+          "Jiho lives in Busan",
+          "Jiho will stay home this summer",
+          "Emma is Jiho's little sister",
+          "Jiho has not met the cat yet"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "고양이를 '빨리 만나고 싶다'고 했으니 아직 만난 적이 없다는 것을 알 수 있어요. 지호는 부산에 사는 게 아니라 놀러 가는 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0014",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "COOKING CLUB NEWS — June\n\nHello, club members!\nLast month, we made vegetable pizza, and everyone loved it. Thank you for your hard work!\nThis month, we will learn to make fruit sandwiches. Our club will meet in the cooking room on Friday, June 12, after lunch. Please bring an apron and wash your hands before class.\nGood news: our club will have a small food market at the school festival in July. We will sell cookies and juice. If you want to help, please tell Ms. Han by June 20.\nSee you on Friday!"
+    },
+    "questions": [
+      {
+        "stem": "What is this newsletter mainly about?",
+        "choices": [
+          "A new school building",
+          "Summer vacation homework",
+          "Cooking club news and plans",
+          "How to make vegetable pizza"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "요리 동아리의 이번 달 모임과 축제 계획을 알리는 소식지예요. 채소 피자는 지난달에 한 일일 뿐이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.school"
+        ]
+      },
+      {
+        "stem": "What should members do by June 20?",
+        "choices": [
+          "Tell Ms. Han if they want to help",
+          "Bring an apron to the festival",
+          "Make fruit sandwiches at home",
+          "Buy cookies and juice"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "축제 음식 시장을 돕고 싶은 사람은 6월 20일까지 한 선생님께 말해야 해요. 앞치마는 금요일 수업에 가져오는 것이니 헷갈리지 마세요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan",
+          "V.food"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0015",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "TOWN NEWS — A New Park Opens\n\nSunhill Town opened a new park last Saturday. The park has a walking road, a basketball court, and a big playground for children. Many families visited on the first day and enjoyed the sunny weather.\nThe most popular spot was the flower garden. Visitors took many photos there. 'I love this place. My kids can play safely now,' said one mother.\nThe park is open every day from 6 a.m. to 10 p.m. Next month, the town will add a small pond with fish."
+    },
+    "questions": [
+      {
+        "stem": "What will the town add to the park next month?",
+        "choices": [
+          "A basketball court",
+          "A flower garden",
+          "A walking road",
+          "A small pond"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "다음 달에 물고기가 사는 작은 연못을 더 만든다고 했어요. 농구장과 꽃밭은 이미 공원에 있는 것들이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ]
+      },
+      {
+        "stem": "In the article, the word 'spot' means ____.",
+        "choices": [
+          "a round mark",
+          "a place",
+          "a game",
+          "a flower"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "여기서 'spot'은 '장소, 곳'이라는 뜻이에요. '점, 얼룩'이라는 다른 뜻도 있지만 이 문장에서는 인기 있는 '장소'를 말해요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0016",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "MY TRAVEL BLOG — Day 2 on Dol Island\n\nToday was my second day on Dol Island with my family. In the morning, we rode bikes along the beach road. The wind was strong, but the sea looked beautiful.\nFor lunch, we ate seafood noodles at a small restaurant. My dad ordered one more bowl because it was so good!\nIn the afternoon, we climbed up to the old lighthouse. From the top, we could see the whole island. My legs hurt after all the walking and riding, but I want to do it all again tomorrow."
+    },
+    "questions": [
+      {
+        "stem": "What did the family do in the morning?",
+        "choices": [
+          "They rode bikes",
+          "They climbed to the lighthouse",
+          "They ate seafood noodles",
+          "They swam in the sea"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "아침에는 바닷가 길을 따라 자전거를 탔다고 했어요. 등대에 올라간 것은 오후에 한 일이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan",
+          "V.travel"
+        ]
+      },
+      {
+        "stem": "How does the writer probably feel about the trip?",
+        "choices": [
+          "Bored because there was nothing to do",
+          "Angry about the strong wind",
+          "Happy and ready for more fun",
+          "Sad because the trip ended today"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "다리가 아파도 '내일 또 다 하고 싶다'고 했으니 여행이 즐겁고 신나는 거예요. 힘들었다는 말만 보고 지루했다고 고르면 안 돼요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.infer",
+          "V.travel"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0017",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Dear Ms. Park,\n\nI am writing this letter to thank you for helping me this year. When I moved to this school in March, I was worried because I didn't know anyone. You asked Somi to show me around, and she became my best friend.\nI also want to thank you for the reading club. At first, English books looked too difficult for me. But you said, 'Read one page a day, and you will improve.' You were right! Now I can read a whole storybook by myself.\nI will keep reading during the vacation. I hope you have a restful summer.\n\nYour student,\nHana"
+    },
+    "questions": [
+      {
+        "stem": "Why did Hana write this letter?",
+        "choices": [
+          "To join the reading club",
+          "To say sorry for being late",
+          "To ask about summer homework",
+          "To thank her teacher for her help"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "하나가 일 년 동안 도와주신 선생님께 고마움을 전하려고 쓴 편지예요. 독서 동아리 이야기는 고마운 일 중 하나일 뿐이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.gist",
+          "V.school"
+        ]
+      },
+      {
+        "stem": "In the letter, the word 'restful' means ____.",
+        "choices": [
+          "quiet and relaxing",
+          "busy and full of work",
+          "short and cold",
+          "difficult to remember"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "'restful'은 '푹 쉴 수 있는, 편안한'이라는 뜻이에요. 'rest(쉬다)'에서 나온 말이라는 걸 떠올리면 쉽게 풀 수 있어요.",
+        "difficulty_label": 5,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0018",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "STUDENT NEWS — Helping Our Town's Animal Home\n\nLast week, the students of Class 5-2 visited the town animal home, where dogs and cats wait for new families. The students cleaned the rooms and washed food bowls. They also made warm blankets from old sweaters instead of throwing them away.\n'At first, some dogs hid from us,' said Yuna, a student. 'But after a few visits, they ran to the door to greet us. That made everything worth it.'\nThe class plans to visit once a month. Their teacher hopes other classes will join them, because the animal home always needs more helping hands."
+    },
+    "questions": [
+      {
+        "stem": "What can we guess about the dogs at the animal home?",
+        "choices": [
+          "They disliked the students until the end",
+          "They became friendly with the students",
+          "They found new families last week",
+          "They made blankets from old sweaters"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "처음에는 숨었던 개들이 나중에는 문까지 달려와 반겼어요. 그러니 개들이 학생들과 친해졌다는 것을 알 수 있어요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.infer",
+          "V.daily"
+        ]
+      },
+      {
+        "stem": "In the article, the words 'helping hands' mean ____.",
+        "choices": [
+          "clean food bowls",
+          "warm blankets",
+          "people who help",
+          "the doors of the rooms"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "'helping hands'는 진짜 손이 아니라 '도와주는 사람들'을 뜻하는 표현이에요. 동물의 집에 도와줄 사람이 늘 필요하다는 말이에요.",
+        "difficulty_label": 5,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ]
+      }
+    ],
+    "status": "active"
+  }
+]

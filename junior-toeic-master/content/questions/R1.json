@@ -1,0 +1,405 @@
+[
+  {
+    "type": "single",
+    "tmp_id": "R1-0001",
+    "section": "RC",
+    "part": "R1",
+    "stem": "This is my sister. ______ name is Sujin.",
+    "choices": [
+      "His",
+      "Her",
+      "She",
+      "Him"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "sister는 여자니까 '그녀의'라는 뜻의 Her를 써요. She는 '그녀는'이라는 뜻이라 이름 앞에 쓸 수 없어요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.pronoun"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0002",
+    "section": "RC",
+    "part": "R1",
+    "stem": "We eat lunch ______ noon.",
+    "choices": [
+      "at",
+      "on",
+      "in",
+      "of"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "정확한 시각이나 noon(정오) 앞에는 at을 써요. on은 요일 앞에, in은 달이나 계절 앞에 써요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.prep",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0003",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My dog ______ very fast.",
+    "choices": [
+      "run",
+      "running",
+      "to run",
+      "runs"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "주어 My dog는 한 마리(3인칭 단수)라서 동사에 s를 붙인 runs를 써요. run은 주어가 여러 명일 때 써요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.agreement"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0004",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Yesterday I ______ my room after dinner.",
+    "choices": [
+      "clean",
+      "cleans",
+      "cleaned",
+      "cleaning"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "Yesterday(어제)가 있으니 과거형 cleaned를 써요. cleans는 지금 하는 일에 쓰는 현재형이라 안 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.tense",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0005",
+    "section": "RC",
+    "part": "R1",
+    "stem": "You ______ wear a helmet when you ride a bike.",
+    "choices": [
+      "should",
+      "have",
+      "want",
+      "need"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'헬멧을 써야 해요'라고 충고할 때는 should를 쓰고, 뒤에 동사원형 wear가 바로 와요. have, want, need는 뒤에 to가 있어야 해요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.modal"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0006",
+    "section": "RC",
+    "part": "R1",
+    "stem": "I like apples, ______ my brother likes bananas.",
+    "choices": [
+      "so",
+      "but",
+      "or",
+      "because"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "앞과 뒤가 서로 다른 내용이니까 '하지만'이라는 뜻의 but이 알맞아요. so(그래서), or(또는)는 뜻이 맞지 않아요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.conj",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0007",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My school is ______ the bank and the park.",
+    "choices": [
+      "on",
+      "at",
+      "under",
+      "between"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "'은행과 공원 사이에' 있다는 뜻이니까 between을 써요. between은 'A and B'와 함께 써서 둘 사이를 나타내요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.prep"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0008",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The singer has a very ______ voice.",
+    "choices": [
+      "beauty",
+      "beautifully",
+      "beautiful",
+      "beautify"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "명사 voice(목소리)를 꾸며 주는 자리니까 형용사 beautiful을 써요. beauty는 명사, beautifully는 부사라서 안 돼요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.pos"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0009",
+    "section": "RC",
+    "part": "R1",
+    "stem": "This box is ______ than that one.",
+    "choices": [
+      "heavy",
+      "heavier",
+      "heaviest",
+      "most heavy"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "뒤에 than(~보다)이 있으니 비교급 heavier를 써요. heavy처럼 짧은 단어는 more를 붙이지 않고 -er을 붙여요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.compare"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0010",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Mina went to the library ______ some books.",
+    "choices": [
+      "borrow",
+      "borrows",
+      "to borrow",
+      "borrowed"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'책을 빌리기 위해' 도서관에 갔다는 목적을 나타내니까 to borrow를 써요. to 뒤에는 동사원형이 와요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.toinf",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0011",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Look! The children ______ in the pool now.",
+    "choices": [
+      "swims",
+      "swam",
+      "swimming",
+      "are swimming"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "Look!(봐!)과 now(지금)가 있으니 지금 하고 있는 중 — 현재진행형 are swimming을 써요. swimming만 쓰면 be동사가 없어서 문장이 안 돼요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.tense"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0012",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Jake lost his umbrella, so I lent him ______.",
+    "choices": [
+      "mine",
+      "my",
+      "me",
+      "I"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'내 것(내 우산)'을 빌려줬다는 뜻이니까 mine을 써요. my는 뒤에 명사가 꼭 있어야 해서 혼자 쓸 수 없어요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.pronoun"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0013",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Tom and his friends ______ basketball after school.",
+    "choices": [
+      "plays",
+      "play",
+      "is playing",
+      "playing"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "주어가 Tom and his friends로 여러 명이니까 동사에 s를 붙이지 않아요. 그래서 play가 맞아요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.agreement",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0014",
+    "section": "RC",
+    "part": "R1",
+    "stem": "______ it was raining, we played soccer inside the gym.",
+    "choices": [
+      "Because",
+      "So",
+      "Or",
+      "But"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "'비가 와서' 체육관 안에서 했다는 이유를 말하니까 Because를 써요. But(하지만)을 쓰면 뜻이 이상해져요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.conj"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0015",
+    "section": "RC",
+    "part": "R1",
+    "stem": "This bridge ______ over one hundred years ago.",
+    "choices": [
+      "built",
+      "is building",
+      "was built",
+      "builds"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "다리는 스스로 짓는 게 아니라 '지어진' 것이니까 수동태 was built를 써요. 100년 전 일이라서 과거형이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.passive",
+      "G.tense"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0016",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My father enjoys ______ mountains on weekends.",
+    "choices": [
+      "climb",
+      "to climb",
+      "climbed",
+      "climbing"
+    ],
+    "answer_idx": 3,
+    "explanation_ko": "enjoy 뒤에는 동사에 -ing를 붙인 climbing이 와요. to climb은 enjoy 뒤에 쓸 수 없어요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.toinf",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0017",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Today is ______ day of the year, so drink lots of water.",
+    "choices": [
+      "hot",
+      "hotter",
+      "the hottest",
+      "most hot"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'일 년 중에서 가장 더운 날'이니까 최상급 the hottest를 써요. 최상급 앞에는 the를 붙이는 것도 잊지 마세요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.compare"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0018",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Emma ______ in Busan since she was seven years old.",
+    "choices": [
+      "lives",
+      "has lived",
+      "is living",
+      "lived"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "since(~부터 지금까지)가 있으니 현재완료 has lived를 써요. 일곱 살 때부터 지금까지 계속 살고 있다는 뜻이에요. lived만 쓰면 그냥 지나간 과거가 돼요.",
+    "difficulty_label": 5,
+    "tags": [
+      "G.tense"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active"
+  }
+]

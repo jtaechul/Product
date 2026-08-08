@@ -1,0 +1,358 @@
+[
+  {
+    "type": "set",
+    "tmp_id": "R2-0001",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Jenny,\nGuess what! My family got a little puppy last week. His name is Bori, and he (1) ______ white and brown. Every morning he waits (2) ______ the door and says hello to me. (3) ______ You can play with him too!\nYour friend,\nSuho"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "is",
+          "are",
+          "am",
+          "be"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "주어 he(강아지 보리)는 하나니까 is를 써요. are는 여러 명일 때, am은 I(나)일 때만 써요.",
+        "difficulty_label": 1,
+        "tags": [
+          "G.agreement"
+        ]
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "on",
+          "at",
+          "in",
+          "to"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "'문에서' 기다린다는 뜻이니까 장소 앞에 쓰는 at이 알맞아요. to는 '~쪽으로 간다'처럼 움직임을 나타낼 때 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.prep"
+        ]
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "I don't like animals very much.",
+          "The weather was cold yesterday.",
+          "My school has a big library.",
+          "Please come to my house this weekend."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "빈칸 뒤에 '너도 같이 놀 수 있어'라고 했으니, 집으로 초대하는 문장이 와야 자연스러워요. 동물을 안 좋아한다는 말은 강아지를 자랑하는 편지 내용과 반대예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0002",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "School Book Fair\nOur book fair will be held in the gym (1) ______ Friday, May 10th. You can buy new books, and you can also (2) ______ your old books with your friends. The fair starts at nine in the morning. (3) ______ Please bring your own bag.\n— Hangang Elementary School"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "in",
+          "at",
+          "on",
+          "by"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "요일(Friday)과 날짜 앞에는 on을 써요. in은 달이나 연도 앞에, at은 시각 앞에 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.prep",
+          "V.school"
+        ]
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "wear",
+          "trade",
+          "climb",
+          "paint"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "친구들과 오래된 책을 '바꾼다'는 뜻이니까 trade가 알맞아요. wear(입다)나 climb(오르다)은 책과 어울리지 않아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.school"
+        ]
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "The fair ends at three in the afternoon.",
+          "My favorite color is yellow.",
+          "Our soccer team lost the game.",
+          "The movie theater was very crowded."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "바로 앞에서 아침 9시에 시작한다고 했으니, 끝나는 시간을 알려 주는 문장이 이어지면 자연스러워요. 나머지는 책 축제와 상관없는 이야기예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.context"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0003",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Saturday, July 12th\nToday my family went to the beach. The water was cold, (1) ______ the weather was warm and sunny. I made a sand castle, and it was (2) ______ than my brother's. (3) ______ I want to go to the beach again soon."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "but",
+          "or",
+          "so",
+          "if"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "물은 차가웠지만 날씨는 따뜻했다 — 반대되는 두 내용을 이어 주는 but을 써요. so(그래서)는 뜻이 맞지 않아요.",
+        "difficulty_label": 1,
+        "tags": [
+          "G.conj"
+        ]
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "tall",
+          "taller",
+          "tallest",
+          "more tall"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "뒤에 than(~보다)이 있으니 비교급 taller를 써요. tall처럼 짧은 단어는 -er을 붙이고, more tall이라고 하지 않아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.compare"
+        ]
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "I stayed home because I was sick.",
+          "My new pencil case is blue.",
+          "The school festival is in October.",
+          "It was the best day of this summer."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "즐거웠던 해변 일기를 마무리하는 문장이 필요해요. '이번 여름 최고의 날'이 다음 문장(또 가고 싶다)과 자연스럽게 이어져요. 아파서 집에 있었다는 말은 일기 내용과 반대예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0004",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Minho,\nI will come home late tonight because I have a meeting. Your dinner is (1) ______ the table. Please (2) ______ your homework before you watch TV. (3) ______ She will bring some fruit for you.\nLove, Mom"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "on",
+          "at",
+          "of",
+          "up"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "저녁밥이 식탁 '위에' 있으니까 on을 써요. on은 '~ 위에 놓여 있다'는 뜻이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.prep",
+          "V.daily"
+        ]
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "drink",
+          "wash",
+          "finish",
+          "fly"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "숙제는 '끝내는' 것이니까 finish가 알맞아요. drink(마시다)나 wash(씻다)는 숙제와 어울리지 않아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.daily"
+        ]
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "Dad washed the car this morning.",
+          "The library was full of students.",
+          "Grandma will visit us at six o'clock.",
+          "Your soccer shoes are very old."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "빈칸 뒤의 She(그녀)는 여자 한 분을 가리켜요. 그래서 할머니가 오신다는 문장이 와야 해요. Dad(아빠)는 She가 아니라 He로 받으니까 답이 될 수 없어요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.context",
+          "G.pronoun"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0005",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Dear Junho,\nHello from Jeju Island! I am here with my family for three days. Yesterday we (1) ______ up a small mountain, and today we will ride bikes by the sea. The food here is (2) ______ than the food at home. (3) ______ See you next week!\nYour cousin, Dana"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "climb",
+          "climbed",
+          "will climb",
+          "climbing"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "Yesterday(어제)가 있으니 과거형 climbed를 써요. will climb은 앞으로 할 일을 말할 때 써요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.tense",
+          "V.travel"
+        ]
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "delicious",
+          "most delicious",
+          "more delicious",
+          "deliciouser"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "뒤에 than이 있으니 비교급이 필요해요. delicious처럼 긴 단어는 -er을 붙이지 않고 앞에 more를 써서 more delicious라고 해요.",
+        "difficulty_label": 4,
+        "tags": [
+          "G.compare",
+          "V.food"
+        ]
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "I was sick and stayed home all week.",
+          "My classroom is on the second floor.",
+          "The math test was very easy.",
+          "I will buy a small gift for you."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "여행지에서 사촌에게 보내는 엽서의 마무리로 '선물을 사 가겠다'는 문장이 자연스러워요. 아파서 집에 있었다는 말은 여행 중이라는 내용과 맞지 않아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context",
+          "V.travel"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0006",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Join the Green Garden Club!\nDo you like flowers and vegetables? Our club meets every Wednesday after school. Members (1) ______ tomatoes and give them to people in town. New members (2) ______ bring anything because we have all the tools. (3) ______ Just come to Room 201 this Wednesday!"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "grows",
+          "grow",
+          "growing",
+          "to grow"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "주어 Members(회원들)가 여러 명이니까 동사에 s를 붙이지 않아요. 그래서 grow가 맞아요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.agreement"
+        ]
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "must",
+          "should",
+          "don't have to",
+          "have to"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "도구가 다 있으니 아무것도 '가져올 필요가 없다'는 뜻의 don't have to가 알맞아요. must(꼭 해야 한다)를 쓰면 뜻이 반대가 돼요.",
+        "difficulty_label": 4,
+        "tags": [
+          "G.modal"
+        ]
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "The club stopped meeting last year.",
+          "Winter vacation starts in December.",
+          "Our school lunch menu changed last week.",
+          "You don't need any gardening experience, either."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "앞에서 '아무것도 안 가져와도 된다'고 했으니, 경험'도' 필요 없다는 문장이 이어져야 자연스러워요. either는 부정문 뒤에서 '~도 (아니에요)'라는 뜻이에요.",
+        "difficulty_label": 5,
+        "tags": [
+          "RS.context"
+        ]
+      }
+    ],
+    "status": "active"
+  }
+]

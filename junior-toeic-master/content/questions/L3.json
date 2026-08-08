@@ -1,0 +1,304 @@
+[
+  {
+    "type": "set",
+    "tmp_id": "L3-0001",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: I want to borrow this dinosaur book.\nM: Sure. Do you have your library card?\nW: Oh no, I left it at home.\nM: That's okay. Just tell me your name and class.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      }
+    },
+    "questions": [
+      {
+        "stem": "Where are the speakers?",
+        "choices": [
+          "At a hospital",
+          "At a library",
+          "At a bakery",
+          "At a swimming pool"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "책을 빌리고 도서관 카드 이야기를 하니까 도서관이에요. 병원이나 빵집에서는 책을 빌리지 않아요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ]
+      },
+      {
+        "stem": "What is the woman's problem?",
+        "choices": [
+          "She lost her dinosaur book.",
+          "She is late for school.",
+          "She forgot her friend's name.",
+          "She left her library card at home."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "여자는 카드를 집에 두고 왔다고 말했어요. 책을 잃어버린 것이 아니라 카드를 안 가져온 거예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0002",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Are you coming to soccer practice on Saturday?\nM: I can't. I'm visiting my grandmother in Busan.\nW: Then can you play in the game on Sunday?\nM: Yes, I'll come back Saturday night.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      }
+    },
+    "questions": [
+      {
+        "stem": "Why can't the man go to soccer practice on Saturday?",
+        "choices": [
+          "He will visit his grandmother.",
+          "He is sick in bed.",
+          "He has too much homework.",
+          "He doesn't like soccer."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "남자는 토요일에 부산에 계신 할머니를 뵈러 간다고 했어요. 아파서 못 가는 것이 아니에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.leisure"
+        ]
+      },
+      {
+        "stem": "When will the man play in the soccer game?",
+        "choices": [
+          "On Friday",
+          "On Saturday",
+          "On Sunday",
+          "On Monday"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "남자는 토요일 밤에 돌아와서 일요일 경기에 나간다고 했어요. 토요일은 연습 날이라서 헷갈리기 쉬워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.leisure"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0003",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: How much are these apples?\nM: They're two thousand won for three.\nW: I'll take six, please. And one bottle of orange juice.\nM: Of course. That's five thousand won all together.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      }
+    },
+    "questions": [
+      {
+        "stem": "What is the woman doing?",
+        "choices": [
+          "Cooking dinner",
+          "Cleaning her room",
+          "Buying some food",
+          "Making orange juice"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "여자는 사과와 주스의 값을 물어보고 사고 있어요. 그러니까 음식을 사는 중이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.shopping",
+          "V.food"
+        ]
+      },
+      {
+        "stem": "How many apples does the woman want?",
+        "choices": [
+          "Two",
+          "Three",
+          "Five",
+          "Six"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "여자는 여섯 개를 달라고 했어요. '세 개에 2천 원'이라는 말과 헷갈리지 않게 조심해요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.shopping"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0004",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Your dog is so cute! What's his name?\nM: His name is Mango. He's three years old.\nW: Can I give him a snack?\nM: Sorry, he can only eat his special dog food.",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      }
+    },
+    "questions": [
+      {
+        "stem": "What are the speakers talking about?",
+        "choices": [
+          "The man's dog",
+          "The woman's cat",
+          "A new snack",
+          "A pet store"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "두 사람은 남자의 강아지 망고에 대해 이야기하고 있어요. 고양이 이야기는 나오지 않았어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ]
+      },
+      {
+        "stem": "Why can't the woman give the dog a snack?",
+        "choices": [
+          "The dog is sleeping now.",
+          "The dog eats only his special food.",
+          "The woman has no snacks.",
+          "The dog is not hungry."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "남자가 강아지는 특별한 사료만 먹을 수 있다고 했어요. 강아지가 자고 있어서가 아니에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0005",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Excuse me, does this bus go to the science museum?\nM: No, you need the number seven bus.\nW: How often does it come?\nM: Every ten minutes. Look, it's coming now.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      }
+    },
+    "questions": [
+      {
+        "stem": "Where does the woman want to go?",
+        "choices": [
+          "To the bus station",
+          "To the art museum",
+          "To the city library",
+          "To the science museum"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "여자는 이 버스가 과학관에 가는지 물었어요. 미술관이 아니라 과학관이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.travel"
+        ]
+      },
+      {
+        "stem": "What will the woman probably do next?",
+        "choices": [
+          "Walk to the museum",
+          "Take the number seven bus",
+          "Ask a police officer",
+          "Go back home"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "여자는 7번 버스를 타야 하는데, 마침 그 버스가 오고 있다고 했어요. 그래서 곧 7번 버스를 탈 거예요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.travel"
+        ]
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L3-0006",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Dad, what are you making? It smells great.\nM: Vegetable soup. Dinner will be ready at six.\nW: Can I help you with anything?\nM: Sure. Please put the spoons and bowls on the table.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      }
+    },
+    "questions": [
+      {
+        "stem": "What is the man doing?",
+        "choices": [
+          "Washing the dishes",
+          "Eating dinner",
+          "Cooking soup",
+          "Setting the table"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "아빠는 야채수프를 만들고 있어요. 식탁을 차리는 일은 딸에게 부탁한 일이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "V.food"
+        ]
+      },
+      {
+        "stem": "What will the woman probably do next?",
+        "choices": [
+          "Set the table",
+          "Make the soup",
+          "Buy some vegetables",
+          "Wash her hands"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "아빠가 숟가락과 그릇을 식탁에 놓아 달라고 했어요. 그것이 바로 식탁을 차리는 일이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.food",
+          "V.daily"
+        ]
+      }
+    ],
+    "status": "active"
+  }
+]
