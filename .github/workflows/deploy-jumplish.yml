@@ -1,0 +1,57 @@
+name: Deploy Jumplish (junior-toeic-master)
+
+on:
+  push:
+    branches: ["claude/junior-toeic-master-planning-322l2t"]
+    paths: ["junior-toeic-master/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: jumplish-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: junior-toeic-master
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Ensure D1 database and inject id
+        run: |
+          set -e
+          get_id() { npx wrangler d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=JSON.parse(s);const m=a.find(x=>x.name==='jumplish-db');process.stdout.write(m?(m.uuid||m.id||''):'')})"; }
+          ID=$(get_id)
+          if [ -z "$ID" ]; then
+            echo "jumplish-db가 없어 새로 만듭니다"
+            npx wrangler d1 create jumplish-db
+            ID=$(get_id)
+          fi
+          if [ -z "$ID" ]; then
+            echo "::error::D1 database id를 확인하지 못했습니다. CF_API_TOKEN에 D1 편집 권한이 있는지 확인하세요."
+            exit 1
+          fi
+          sed -i "s/REPLACED_AT_DEPLOY/$ID/" wrangler.jsonc
+          echo "database_id=$ID"
+
+      - name: Apply migrations (remote)
+        run: npx wrangler d1 migrations apply jumplish-db --remote
+
+      - name: Seed content (remote, idempotent upsert)
+        run: |
+          node tools/import.mjs
+          npx wrangler d1 execute jumplish-db --remote --file tools/out/seed.sql
+
+      - name: Deploy worker
+        run: npx wrangler deploy
