@@ -12,7 +12,8 @@ def test_narration_cta_appended_after_close():
     body = ["深海の底に、", "うずくまる影。", "静かな大食漢です。"]
     out = pipeline._append_cta(body)
     assert out[:3] == body                      # 원본 마무리 보존
-    assert out[-2:] == pipeline._CTA_BODY_JP
+    # ★CTA 절 수는 문안을 바꾸면 달라진다 → 상수를 그대로 참조해 고정값을 박지 않는다.
+    assert out[-len(pipeline._CTA_BODY_JP):] == pipeline._CTA_BODY_JP
 
 
 def test_narration_cta_not_duplicated():
@@ -30,8 +31,10 @@ def test_narration_cta_has_no_comment_inducement():
 
 def test_wreck_doc_cta_variant():
     out = pipeline._append_cta(["静かに眠っています。"], doc=True)
-    assert out[-2:] == pipeline._CTA_BODY_JP_DOC
-    assert "深海" not in out[-1]                 # 침몰선 편은 '次の物語'
+    assert out[-len(pipeline._CTA_BODY_JP_DOC):] == pipeline._CTA_BODY_JP_DOC
+    # 침몰선 편은 '1隻' — 생물용 문안('1種'·図鑑)이 섞이면 안 된다
+    joined = "".join(out[-len(pipeline._CTA_BODY_JP_DOC):])
+    assert "1種" not in joined and "図鑑" not in joined
 
 
 def test_cta_budget_keeps_total_within_shorts_rule():

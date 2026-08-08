@@ -132,7 +132,10 @@ class HookIntroConfig:
     mix_bgm: float = 0.10
     limiter: float = 0.95
     # ── 엔드카드 ──
-    endcard_dur_s: float = 2.0          # 쾅(임팩트) 1회 등장 → 짧게 홀드(기존 5.2 타자기 폐지)
+    # ★2.0 → 3.2초(운영자 지시 "무조건 구독 늘려"). 2초는 구독 버튼을 **누를 시간이 없다** —
+    #   마지막 화면을 보고 손이 올라가기까지가 대략 1초라, 홀드가 짧으면 그대로 다음 영상으로 넘어간다.
+    #   늘어난 1.2초는 본문 예산에서 뺀다(총 목표 35초·하드 40초는 그대로).
+    endcard_dur_s: float = 3.2          # 쾅(임팩트) 1회 등장 → 홀드(구독 누를 시간 확보)
     # 엔드카드 임팩트(쾅+화면 흔들림) 파라미터
     end_impact_at_s: float = 0.12       # 텍스트가 쾅 등장하는 시각
     end_pop_s: float = 0.16             # 등장 스케일 팝 시간
@@ -151,6 +154,16 @@ class HookIntroConfig:
     end_cta_size: int = 46
     end_cta_text: str = "深海の生き物を、次も"
     end_cta_sub: str = "チャンネル登録"
+    # ★엔드카드 y좌표 주의: render_endcard_frames는 흔들림 여백 때문에 **화면 전체를 Z≈1.105배**
+    #   확대해 중앙 크롭한다 → 아래쪽 좌표는 실제로 (y-640)*1.105+640 으로 더 내려간다.
+    #   그래서 배지·크레딧은 '확대 후에도 화면 안'이 되도록 미리 위쪽에 둔다(잘림 실측 후 조정).
+    end_cta_y: int = 1060               # 구독 유도 문구 중심(확대 후 ≈1104)
+    end_cta_pill_dy: int = 65           # 문구 중심 → 배지 중심 간격(확대 후 ≈1176)
+    end_credit_y: int = 1180            # 크레딧(확대 후 ≈1237 · 화면 안)
+    # ★구독 배지 맥동(운영자 지시 "구걸도 해"): 정지한 배지는 배경처럼 읽혀 안 눌린다.
+    #   엔드카드 홀드 동안 배지를 천천히 2회 부풀려 **시선을 붙잡는다**(초당 회전수·최대 확대율).
+    end_cta_pulse_hz: float = 0.9
+    end_cta_pulse_amp: float = 0.10
     end_cyan: tuple = (120, 220, 255)
     # 타자기(타이핑) 연출 — 글자별 등장 + 타자 사운드 동기
     type_start_s: float = 0.35          # 첫 줄 타이핑 시작(전환 뒤 여유)
@@ -681,8 +694,16 @@ def _styled_line(spec: SpeciesSpec, cfg: HookIntroConfig):
         fd = _fit_font(depth_str, cfg.end_depth_size, max_w, _sans_b)
         specs.append(("depth", depth_str, fd, 512, cfg.type_cps_body,
                       solid_layer(depth_str, fd, 512, CYAN + (255,))))
-    specs.append(("feature", spec.feature_line, ff, 1060, cfg.type_cps_body,
-                  solid_layer(spec.feature_line, ff, 1060, (232, 240, 250, 255))))
+    specs.append(("feature", spec.feature_line, ff, 990, cfg.type_cps_body,
+                  solid_layer(spec.feature_line, ff, 990, (232, 240, 250, 255))))
+    # ★★구독 유도(운영자 지시 "무조건 구독 늘려. 구걸도 해."). 실측 근거: 조회 35,969 대비
+    #   구독 24명(0.067%) · 시청시간의 98.9%가 미구독자. 마지막 화면에 **구독하라는 말이
+    #   글자로 있어야** 누른다. ①왜 구독하는지 한 줄 ②'チャンネル登録' 알약 배지.
+    #   ⚠️이 함수(_styled_line)가 **실제 영상에 렌더되는 경로**다 — render_endcard(정지 PNG)는
+    #     릴스 파이프라인이 호출하지 않는다(예전에 그쪽에만 넣어 화면에 안 나왔다).
+    fc = _fit_font(cfg.end_cta_text, cfg.end_cta_size, max_w, _sans_b)
+    specs.append(("cta", cfg.end_cta_text, fc, cfg.end_cta_y, cfg.type_cps_body,
+                  solid_layer(cfg.end_cta_text, fc, cfg.end_cta_y, (236, 244, 252, 255))))
     lines = []
     start = cfg.type_start_s
     for key, txt, font, y, cps, layer in specs:
@@ -692,6 +713,20 @@ def _styled_line(spec: SpeciesSpec, cfg: HookIntroConfig):
                       "bounds": bounds, "start": start, "cps": cps, "layer": layer})
         start += dur + cfg.type_line_gap_s
     return lines
+
+
+def _cta_pill_layer(cfg: HookIntroConfig) -> tuple[Image.Image, tuple[int, int]]:
+    """'チャンネル登録' 알약 배지 레이어 + 중심 좌표. 맥동시키려고 본문과 분리해 그린다."""
+    f_pill = _sans_b(int(cfg.end_cta_size * 0.86))
+    meas = ImageDraw.Draw(Image.new("RGBA", (2, 2)))
+    tw = meas.textlength(cfg.end_cta_sub, font=f_pill)
+    pw, ph = int(tw) + 56, int(cfg.end_cta_size * 1.5)
+    lay = Image.new("RGBA", (pw + 24, ph + 24), (0, 0, 0, 0))
+    d = ImageDraw.Draw(lay)
+    d.rounded_rectangle([12, 12, 12 + pw, 12 + ph], radius=ph // 2, fill=cfg.end_cyan + (238,))
+    d.text(((pw + 24) // 2, 12 + ph // 2), cfg.end_cta_sub, font=f_pill,
+           fill=(6, 20, 34, 255), anchor="mm")
+    return lay, (cfg.W // 2, cfg.end_cta_y + cfg.end_cta_pill_dy)
 
 
 def render_endcard_frames(bg_path: str, spec: SpeciesSpec, out_dir: str,
@@ -713,8 +748,10 @@ def render_endcard_frames(bg_path: str, spec: SpeciesSpec, out_dir: str,
         textimg.alpha_composite(ln["layer"])
     text_alpha = textimg.split()[3]
     credit = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    ImageDraw.Draw(credit).text((W // 2, H - 40), _credit_text(spec),
-                                font=_sans_r(20), fill=(160, 175, 200, 225), anchor="mm")
+    # 크레딧은 구독 배지 아래 · 확대 후에도 화면 안(end_credit_y 주석 참조).
+    ImageDraw.Draw(credit).text((W // 2, cfg.end_credit_y), _credit_text(spec),
+                                font=_sans_r(18), fill=(160, 175, 200, 225), anchor="mm")
+    pill, pill_c = _cta_pill_layer(cfg)
 
     T0 = cfg.end_impact_at_s
     POP = cfg.end_pop_s
@@ -741,6 +778,12 @@ def render_endcard_frames(bg_path: str, spec: SpeciesSpec, out_dir: str,
                 white.putalpha(text_alpha.point(lambda v: int(v * 0.5 * e)))
                 tlayer = Image.alpha_composite(tlayer, white)
             frame.alpha_composite(tlayer)
+            # ★구독 배지 — 본문과 함께 등장한 뒤 홀드 동안 천천히 맥동해 시선을 붙잡는다.
+            ps = 1.0 + cfg.end_cta_pulse_amp * (0.5 - 0.5 * math.cos(
+                2 * math.pi * cfg.end_cta_pulse_hz * max(0.0, dt)))
+            pw2, ph2 = max(1, int(pill.width * ps)), max(1, int(pill.height * ps))
+            pl = pill.resize((pw2, ph2), Image.LANCZOS) if ps > 1.001 else pill
+            frame.alpha_composite(pl, (pill_c[0] - pw2 // 2, pill_c[1] - ph2 // 2))
             frame.alpha_composite(credit)
         # 화면 흔들림(쾅과 동시, 감쇠) — 확대 후 오프셋 크롭(검은 여백 방지)
         dx = dy = 0.0

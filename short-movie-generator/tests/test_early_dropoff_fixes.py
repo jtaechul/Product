@@ -79,7 +79,9 @@ def test_opening_is_shorter():
     from src.core import pipeline as P
     assert HI.HookIntroConfig().opening_seg_s == pytest.approx(2.8)
     assert P._OPENING_S == pytest.approx(2.8)
-    assert P._FIXED_OVERHEAD_S == pytest.approx(2.8 + 2.3 + 2.0)
+    # 고정 구간 = 오프닝 + 스팅어 + 엔드카드. 엔드카드는 구독 시간 확보로 3.2초로 늘렸다.
+    assert P._FIXED_OVERHEAD_S == pytest.approx(P._OPENING_S + P._STINGER_S + P._ENDCARD_S)
+    assert P._ENDCARD_S >= 3.0, "엔드카드가 짧으면 구독 버튼을 누를 시간이 없습니다"
 
 
 def test_still_fallback_still_works():

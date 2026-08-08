@@ -339,9 +339,43 @@ def fit_font_size(text: str, max_px: float, subsz: int) -> int:
     return max(int(subsz * _MIN_FS_RATIO), int(subsz * max_px / w))
 
 
+# ★구독 유도(운영자 지시 "무조건 구독 늘려. 자막에도 넣어."). 실측: 조회 35,969에 구독 24명
+#   (0.067%) · 시청시간의 98.9%가 미구독자. 자막에 구독 문구가 지나가도 **본문과 똑같은 스타일**이면
+#   그냥 대사로 읽히고 만다 → CTA 절만 시안색·굵게·조금 크게 띄워 '눌러야 할 것'으로 보이게 한다.
+_CTA_MARKERS = ("チャンネル登録", "채널 구독", "登録して", "구독")
+# 중간 배지: 본문 도중 한 번, 화면 오른쪽 위에 작게. 상시 노출은 거슬려서 역효과 → 딱 한 번 3초.
+_MID_BADGE_TEXT = "チャンネル登録"
+_MID_BADGE_DUR_S = 3.0
+
+
+def is_cta_line(text: str) -> bool:
+    """이 자막 줄이 구독 유도 문구인가(강조 대상)."""
+    t = str(text or "")
+    return any(k in t for k in _CTA_MARKERS)
+
+
+def pick_mid_badge_at(disp: list[tuple], target_s: float = 10.0) -> float | None:
+    """중간 구독 배지를 띄울 시각(초). 본문이 짧으면 None(띄우지 않는다).
+
+    끝의 CTA와 너무 붙으면 같은 말을 두 번 보는 꼴이라, **마지막 CTA에서 6초 이상 떨어진**
+    지점만 고른다. 본문 전체가 짧으면 배지를 포기한다(중복 노출 방지).
+    """
+    if not disp:
+        return None
+    try:
+        end = float(disp[-1][2])
+    except Exception:  # noqa: BLE001
+        return None
+    at = float(target_s)
+    if at + _MID_BADGE_DUR_S > end - 6.0:
+        return None
+    return at
+
+
 def build_synced_ass(disp: list[tuple], out_path: str, *, font: str = "Noto Sans CJK JP",
                      accent: str = "&H00EAE06F&", hook_first: bool = True,
-                     w: int = 720, h: int = 1280, sub_scale: float = 1.0) -> str:
+                     w: int = 720, h: int = 1280, sub_scale: float = 1.0,
+                     mid_badge: bool = True) -> str:
     """발화 시각에 정합된 disp로 ASS 생성. 청크당 1줄(고정 위치·크기). 첫 청크는 매력형 훅.
 
     accent: ASS 색(&HBBGGRR&). 테마 순환(cyan/gold/coral)을 상위에서 주입.
@@ -364,10 +398,28 @@ def build_synced_ass(disp: list[tuple], out_path: str, *, font: str = "Noto Sans
                    r"\bord4\blur7\3c%s\shad0}" % (w // 2, int(h * 0.28), accent))
             lines.append(f"Dialogue: 0,{_ts(st)},{_ts(en)},Hook,,0,0,0,,{tag}{ch}")
         else:
+            _cta = is_cta_line(ch)
             for piece, ps, pe in _fit_pieces(ch, st, en, max_px, subsz):
                 # 고아 병합으로 줄이 길어졌으면 **글자만 살짝 줄여** 한 줄을 지킨다(두 줄 금지).
                 fs = fit_font_size(piece, max_px, subsz)
-                tag = "{\\fad(70,70)}" if fs >= subsz else ("{\\fad(70,70)\\fs%d}" % fs)
+                if _cta:
+                    # ★구독 유도 절은 시안색·굵게·조금 크게 → 대사가 아니라 '행동 요청'으로 읽히게.
+                    #   넘침 방지를 위해 확대분(1.12배)만큼 다시 맞춰 한 줄을 지킨다.
+                    fs = fit_font_size(piece, max_px, int(subsz * 1.12))
+                    tag = (r"{\fad(70,70)\fs%d\1c&H00FFE9A8&\3c&H00201000&\bord4}" % fs)
+                else:
+                    tag = "{\\fad(70,70)}" if fs >= subsz else ("{\\fad(70,70)\\fs%d}" % fs)
                 lines.append(f"Dialogue: 0,{_ts(ps)},{_ts(pe)},Sub,,0,0,0,,{tag}{piece}")
+    # ★본문 중간 구독 배지(딱 1회 · 오른쪽 위). 끝의 CTA만으로는 **끝까지 본 39%**에게만 닿는다.
+    #   중간에 한 번 더 보여줘 도중 이탈자에게도 구독 신호를 남긴다. 짧게(3초) · 작게 → 거슬림 최소.
+    if mid_badge:
+        _at = pick_mid_badge_at(disp)
+        if _at is not None:
+            _bsz = int(subsz * 0.62)
+            _tag = (r"{\an9\pos(%d,%d)\fad(220,260)\fs%d\1c&H00201000&\3c&H00FFE9A8&\bord6\shad0"
+                    r"\t(0,400,\fscx108\fscy108)\t(400,800,\fscx100\fscy100)}"
+                    % (w - 26, int(h * 0.115), _bsz))
+            lines.append(f"Dialogue: 0,{_ts(_at)},{_ts(_at + _MID_BADGE_DUR_S)},"
+                         f"Sub,,0,0,0,,{_tag}{_MID_BADGE_TEXT}")
     Path(out_path).write_text("\n".join(lines), encoding="utf-8")
     return out_path

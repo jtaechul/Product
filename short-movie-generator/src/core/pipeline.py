@@ -304,7 +304,7 @@ def _probe_wh(path: str) -> tuple[int, int]:
 #     (아래 _fit_body_to_budget — 추정이 빗나가도 40초를 넘기지 않는 최종 관문).
 _OPENING_S = 2.8            # 오프닝 훅(hook_intro.opening_seg_s) — 4.6→2.8(초반 이탈 대책)
 _STINGER_S = 2.3            # 지도→수심 하강 스팅어(reels_stinger · 본문 중간 삽입)
-_ENDCARD_S = 2.0            # 엔드카드(hook_intro.endcard_dur_s)
+_ENDCARD_S = 3.2            # 엔드카드(hook_intro.endcard_dur_s) — 2.0→3.2(구독 누를 시간 확보)
 _FIXED_OVERHEAD_S = _OPENING_S + _STINGER_S + _ENDCARD_S
 _TARGET_TOTAL_S = 35.0      # 가급적 이 안에서 끝낸다(운영자 목표)
 _HARD_MAX_TOTAL_S = 40.0    # 절대 초과 금지(운영자 확정)
@@ -373,8 +373,25 @@ def _cap_body_chunks(chunks: list[str], max_chars: int = _MAX_BODY_CHARS,
 # ★구독 유도(나레이션) — 확정 문안. 본문의 감정적 마무리 **뒤에** 한 번만 붙인다.
 #   ·敬体(です・ます) 유지 ·과장·강요 금지 ·댓글 유도는 넣지 않는다(캡션 전용 — rich_caption._CTA_*).
 #   ·자막 카라오케 단위에 맞춰 짧은 절 2개로 쪼갠다.
-_CTA_BODY_JP = ["チャンネル登録で、", "次の海も、いっしょに。"]
-_CTA_BODY_JP_DOC = ["チャンネル登録で、", "次の物語も、いっしょに。"]
+#   ★문안 강화(운영자 지시 "무조건 구독 늘려. 구걸도 해."): 「次の海も、いっしょに」는
+#     **무엇을 받는지**가 없어 구독할 이유가 안 된다 → "1화 1種"이라는 포맷 약속으로 바꾼다.
+#     (지킬 수 있는 약속만 한다 — 발행 주기는 약속하지 않는다. 빈도를 줄이기로 했으므로.)
+_CTA_BODY_JP = ["1話に、1種。", "深海の図鑑を、", "チャンネル登録で。"]
+_CTA_BODY_JP_DOC = ["1話に、1隻。", "海に眠る物語を、", "チャンネル登録で。"]
+
+# ★호기심 갭(오픈 루프 · 운영자 지시 "호기심도 유발해"): 훅에서 '정체'를 예고하고 본문 끝에서
+#   공개한다. 끝까지 봐야 답을 얻으므로 완주율이 오르고, 완주한 사람만이 구독 화면에 닿는다.
+#   ⚠️거짓 예고 금지 — 이 파이프라인은 실제로 **엔드카드에서 종명·학명을 공개**하므로 사실이다.
+_OPEN_LOOP_JP = "正体は、最後に。"
+
+
+def _prepend_open_loop(chunks: list[str]) -> list[str]:
+    """본문 맨 앞에 '정답은 마지막에' 한 줄을 세운다(중복이면 그대로)."""
+    if not chunks:
+        return chunks
+    if any(_OPEN_LOOP_JP.strip("。") in c for c in chunks[:2]):
+        return chunks
+    return [_OPEN_LOOP_JP] + list(chunks)
 
 
 def _append_cta(chunks: list[str], doc: bool = False) -> list[str]:
@@ -540,7 +557,11 @@ def run_reels(
     #   빼두어, CTA를 더해도 총 길이가 규칙(40초 내외)을 넘지 않게 한다.
     _is_wreck_ep = bool(fv.get("doc") or fv.get("wreck_dossier"))   # 침몰선 편(자동 다큐·운영자 영상 공통)
     _cta_len = sum(len(c) for c in (_CTA_BODY_JP_DOC if _is_wreck_ep else _CTA_BODY_JP))
-    chunks = _cap_body_chunks(chunks, max_chars=_MAX_BODY_CHARS - _cta_len)
+    # 오픈 루프('정답은 마지막에')는 **자를 수 없는 앞줄**이라 예산에서 미리 뺀다.
+    _loop_len = 0 if _is_wreck_ep else len(_OPEN_LOOP_JP)
+    chunks = _cap_body_chunks(chunks, max_chars=_MAX_BODY_CHARS - _cta_len - _loop_len)
+    if not _is_wreck_ep:
+        chunks = _prepend_open_loop(chunks)           # 호기심 갭 — 끝까지 봐야 정체를 안다
     chunks = _append_cta(chunks, doc=_is_wreck_ep)   # 마무리 뒤 구독 유도 1회(댓글 유도 없음)
     nar = narration_sync.synthesize(chunks, str(work_dir))
     if not nar.get("mp3") or not nar.get("disp"):
