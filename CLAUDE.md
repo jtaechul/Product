@@ -118,10 +118,11 @@
 
 ---
 
-## 주니어 토익 학습 플랫폼 (`junior-toeic-master/`) — 기획 & 핵심 규칙
+## 점프리시(Jumplish) — 주니어 토익 학습 플랫폼 (`junior-toeic-master/`) 기획 & 핵심 규칙
 
-> **프로젝트 목표**: 영어학원(B2B) 대상 **TOEIC Bridge 기반 초·중등(초5~중3) 맞춤형 학습
+> **프로젝트 목표**: 영어학원(B2B) 대상 **TOEIC Bridge 기반 초·중등(초3~중3) 맞춤형 학습
 > 플랫폼**. 진단 테스트 → 매일 맞춤 문제 세트 → 오답 자동 복습(SRS)으로 약점을 관리한다.
+> 브랜드명 **"점프리시 (Jumplish)"** 확정(2026-08-08) — 폴더·코드네임은 `junior-toeic-master` 유지.
 > 기준 문서: `junior-toeic-master/PRD.md` (+ `docs/ERD.md`·`docs/engine.md`·`docs/content-pipeline.md`)
 
 - **런타임 외부 API 0회 (절대 규칙)**: 운영 중 LLM·실시간 TTS 호출 금지. 문제·음원(미·영·호
@@ -133,8 +134,8 @@
   로그인ID(`가입코드-순번`) + 6자리 PIN.
 - **스택**: Cloudflare Workers(Hono) + D1(표준 SQL 유지 — PostgreSQL 이전 가능) + R2(음원)
   + `[assets]` 정적 서빙. 저장소 첫 D1 프로젝트.
-- **상표·저작권 주의**: "TOEIC"은 ETS 상표 — 현재 이름은 내부 코드네임, 공개 출시 전 서비스명
-  재검토. 기출 복제 금지, 문항은 100% 자체 창작.
+- **상표·저작권 주의**: "TOEIC"은 ETS 상표 — 브랜드명은 점프리시(Jumplish), 출시 전 KIPRIS
+  정식 상표 검색·도메인 확보. "TOEIC Bridge 대비"는 설명 문구로만. 기출 복제 금지, 100% 자체 창작.
 - 단계: M0 기획(완료) → M1 스캐폴드+시드 120문항 → M2 학생 학습 루프 → M3 게임화 →
   M4 학원 대시보드 → M5 결제. 커밋은 `junior-toeic-master/` 단독(프로젝트 격리 원칙 준수).
 
