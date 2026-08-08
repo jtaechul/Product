@@ -47,6 +47,15 @@ const wallMaskCanvas = Object.assign(document.createElement('canvas'), { width: 
 // 디버그: ?synth → 웹캠/모델 없이 합성 포즈로 게임 흐름·렌더 확인(카메라 없는 미리보기)
 const SYNTH = new URLSearchParams(location.search).has('synth');
 
+// 키오스크 모드: ?kiosk → 무인 매장/행사용. 대기화면 → 사람 감지 자동시작 → 결과 후 자동 복귀.
+// 키보드 입력·난이도 선택 없이 굴러가고, 화면(브라우저 UI)을 잠근다.
+const KIOSK = new URLSearchParams(location.search).has('kiosk');
+const KIOSK_MODE_KEY = 'beginner';   // 키오스크 기본 난이도(운영자가 여기서 변경)
+const ATTRACT_HOLD_SEC = 1.2;        // 전신이 이만큼 감지되면 자동 시작
+const KIOSK_RESULT_HOLD_MS = 6500;   // 결과 화면 후 대기화면 복귀까지
+const attract = { hold: 0 };
+let kioskSeq = 0;                    // 도전자 자동 번호
+
 let state = 'TITLE';
 let players = [];        // {name, score, perfects, walls}
 let modeCfg = MODES.intermediate;  // 현재 난이도 모드
@@ -88,10 +97,14 @@ function buildWalls(cfg) {
   const src = cfg.walls === 'BEGINNER' ? BEGINNER_WALLS : cfg.walls === 'ADVANCED' ? ADVANCED_WALLS : STAGE_WALLS;
   return src.map((w) => ({ ...w, margin: Math.max(0.2, Math.min(0.85, w.margin + cfg.marginAdd)) }));
 }
-function selectMode(cfg) {
+// 모드 수치만 적용(화면 전환 없음) — 일반/키오스크 공용
+function applyMode(cfg) {
   modeCfg = cfg;
   walls = buildWalls(cfg);
   activePractice = { ...PRACTICE_WALL, margin: Math.min(0.85, PRACTICE_WALL.margin + cfg.marginAdd) };
+}
+function selectMode(cfg) {
+  applyMode(cfg);
   sfx.resume(); tryLockLandscape();
   gotoRegister();
 }
@@ -165,16 +178,22 @@ function synthPose(t) {
   return lm;
 }
 
+// 부팅 완료 후 진입 지점: 키오스크면 대기화면, 아니면 타이틀
+function afterBootReady() {
+  if (KIOSK) { enterAttract(); return; }
+  showScreen('title');
+  state = 'TITLE';
+}
+
 async function boot() {
-  if (SYNTH) { showScreen('title'); state = 'TITLE'; return; }
+  if (SYNTH) { afterBootReady(); return; }
   showScreen('loading');
   try {
     $('loadingMsg').textContent = '카메라를 켜는 중…';
     await pose.startCamera();
     $('loadingMsg').textContent = '자세 인식 모델을 불러오는 중…';
     await pose.init();
-    showScreen('title');
-    state = 'TITLE';
+    afterBootReady();
   } catch (e) {
     console.error(e);
     let msg = '알 수 없는 오류가 발생했어요.';
@@ -283,7 +302,42 @@ function updateCalibScan(t, dt) {
 
 function finishCalibration() {
   $('btnCalibSkip').classList.add('hidden');
+  if (KIOSK) { startKioskGame(); return; }  // 키오스크는 연습 없이 바로 본게임
   startPractice();
+}
+
+// ====== 키오스크(무인) 흐름 ======
+// 대기화면 진입: 카메라+스켈레톤만 보이고 "다가와서 서보세요" 안내를 그린다.
+function enterAttract() {
+  clearTimeout(finishPlayer._t);
+  state = 'ATTRACT';
+  current = null;
+  attract.hold = 0;
+  bgmStopAll();
+  setPlayGlow(false);
+  setHud(false);
+  hideAllScreens();
+  $('overlay').style.pointerEvents = 'none';
+}
+
+// 사람이 대기화면에 충분히 서 있으면 자동 시작 → 이름 자동 부여 → 캘리브레이션
+function startKioskPlayer() {
+  kioskSeq++;
+  current = { name: `${kioskSeq}번 도전자`, score: 0, perfects: 0, walls: 0 };
+  applyMode(MODES[KIOSK_MODE_KEY] || MODES.beginner);
+  sfx.resume();
+  beginCalibScan();
+}
+
+// 캘리브레이션 후 곧바로 본게임 시작(연습 생략, 대기줄 고려)
+function startKioskGame() {
+  bgmStart(); setPlayGlow(true);
+  g.practice = false; g.wallIndex = 0;
+  current.life = modeCfg.lives; current.maxLife = modeCfg.lives;
+  current.score = 0; current.combo = 0; current.walls = 0; current.perfects = 0; current.dodgeCombo = 0;
+  setHud(true); updateHud();
+  beginCountdown('시작!');
+  state = 'PLAY';
 }
 
 // ====== 연습 + 본게임 ======
@@ -499,6 +553,12 @@ function finishPlayer(cleared = false) {
     (cleared ? '모든 벽을 완주했어요! 🏁' : `라이프 소진 (벽 ${current.walls})`);
   if (cleared) sfx.fanfare();
   showScreen('result');
+  // 키오스크: 버튼 조작 없이 잠시 후 대기화면으로 자동 복귀
+  if (KIOSK) {
+    $('resultStats').innerHTML += '<br><span class="kiosk-note">잠시 후 대기화면으로 돌아갑니다…</span>';
+    clearTimeout(finishPlayer._t);
+    finishPlayer._t = setTimeout(() => { if (state === 'RESULT') enterAttract(); }, KIOSK_RESULT_HOLD_MS);
+  }
 }
 
 // 최종 순위 화면
@@ -536,24 +596,38 @@ function loop() {
   const dt = Math.min(0.05, t - lastTime);
   lastTime = t;
 
-  landmarks = SYNTH ? synthPose(t) : pose.detect(nowMs);
-  if (SYNTH) window.__hd = { state, phase: g.phase, life: current && current.life, score: current && current.score, mode: modeCfg.key, wallCount: walls.length, holeFrac: g.holeFrac };
+  try {
+    landmarks = SYNTH ? synthPose(t) : pose.detect(nowMs);
+    if (SYNTH) window.__hd = { state, phase: g.phase, life: current && current.life, score: current && current.score, mode: modeCfg.key, wallCount: walls.length, holeFrac: g.holeFrac, attractHold: attract.hold };
 
-  renderer.drawCamera();
+    renderer.drawCamera();
 
-  if (state === 'CALIB_RUN') {
-    renderer.drawSkeleton(landmarks);
-    renderer.drawCalibUI(calib.progress, calib.status, t, groundY, headY);
-    updateCalibScan(t, dt);
-  } else if (state === 'PLAY') {
-    // 인식 후 게임 중에는 뼈대를 그리지 않음(깔끔) — 카메라 영상으로 직접 맞춤
-    updatePlay(t);
-  } else if (state === 'TITLE' || state === 'REGISTER' || state === 'CALIB') {
-    renderer.drawSkeleton(landmarks);
+    if (state === 'CALIB_RUN') {
+      renderer.drawSkeleton(landmarks);
+      renderer.drawCalibUI(calib.progress, calib.status, t, groundY, headY);
+      updateCalibScan(t, dt);
+    } else if (state === 'PLAY') {
+      // 인식 후 게임 중에는 뼈대를 그리지 않음(깔끔) — 카메라 영상으로 직접 맞춤
+      updatePlay(t);
+    } else if (state === 'ATTRACT') {
+      // 키오스크 대기: 스켈레톤 + 안내. 전신 감지가 지속되면 자동 시작.
+      renderer.drawSkeleton(landmarks);
+      if (isFullBodyVisible()) attract.hold += dt;
+      else attract.hold = Math.max(0, attract.hold - dt * 1.5);
+      renderer.drawAttract(t, Math.min(1, attract.hold / ATTRACT_HOLD_SEC));
+      if (attract.hold >= ATTRACT_HOLD_SEC) startKioskPlayer();
+    } else if (state === 'TITLE' || state === 'REGISTER' || state === 'CALIB') {
+      renderer.drawSkeleton(landmarks);
+    }
+
+    renderer.updateEffects(dt);
+    renderer.drawEffects();
+  } catch (e) {
+    // 무인 운영 중 예기치 못한 오류로 멈추지 않게 — 로그 후 다음 프레임 계속.
+    // 키오스크는 대기화면으로 자동 복구(워치독).
+    console.error('loop error', e);
+    if (KIOSK && state !== 'ATTRACT') { try { enterAttract(); } catch (_) {} }
   }
-
-  renderer.updateEffects(dt);
-  renderer.drawEffects();
 
   requestAnimationFrame(loop);
 }
@@ -689,6 +763,19 @@ function judgeDodge(ob) {
     bannerText(`피했다!${cstr} +${pts}`, '#57e389');
   }
   updateHud();
+}
+
+// 키오스크 화면 잠금: 우클릭·선택·드래그 차단 + 탭할 때마다 전체화면 유지, 조작 버튼 숨김
+if (KIOSK) {
+  document.documentElement.classList.add('kiosk');
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener('selectstart', (e) => e.preventDefault());
+  document.addEventListener('dragstart', (e) => e.preventDefault());
+  $('btnNextPlayer').classList.add('hidden');
+  $('btnRetry').classList.add('hidden');
+  $('btnHow').classList.add('hidden');
+  const enterFS = () => { const el = document.documentElement; if (el.requestFullscreen) el.requestFullscreen().catch(() => {}); };
+  window.addEventListener('click', enterFS);
 }
 
 // 시작

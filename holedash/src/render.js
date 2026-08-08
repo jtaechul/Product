@@ -548,6 +548,54 @@ export class Renderer {
     ctx.restore();
   }
 
+  // 키오스크 대기(어트랙트) 화면: 카메라+스켈레톤 위에 "다가와서 서보세요" 안내.
+  // holdFrac 0~1 = 전신이 감지된 채 서 있는 시간(1이면 자동 시작).
+  drawAttract(timeSec, holdFrac = 0) {
+    const ctx = this.ctx, W = this.W, H = this.H, s = Math.min(W, H);
+    ctx.save();
+    // 상·하단만 어둡게(가운데 캐릭터는 잘 보이게)
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, 'rgba(0,0,0,0.6)'); g.addColorStop(0.32, 'rgba(0,0,0,0)');
+    g.addColorStop(0.7, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.66)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const pulse = 0.5 + 0.5 * Math.sin(timeSec * 2.5);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.75)'; ctx.shadowBlur = 16;
+    // 로고
+    ctx.fillStyle = '#fff';
+    ctx.font = `900 ${s * 0.07}px Trebuchet MS, sans-serif`;
+    ctx.fillText('🕳️ HOLE DASH', W / 2, H * 0.12);
+    // 메인 안내(맥동)
+    ctx.globalAlpha = 0.82 + 0.18 * pulse;
+    ctx.font = `900 ${s * 0.058}px Trebuchet MS, sans-serif`;
+    ctx.fillText('카메라 앞에 서보세요!', W / 2, H * 0.23);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#ffe08a';
+    ctx.font = `700 ${s * 0.03}px Trebuchet MS, sans-serif`;
+    ctx.fillText('전신이 다 보이게 · 뒤로 한 걸음 물러나 주세요', W / 2, H * 0.31);
+    // 하단: 감지 상태
+    const by = H * 0.9;
+    if (holdFrac > 0.01) {
+      const bw = W * 0.42, bh = s * 0.028, bx = W / 2 - bw / 2;
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      this._roundFill(ctx, bx, by, bw, bh, bh / 2);
+      ctx.fillStyle = holdFrac >= 1 ? '#ffd23f' : '#57e389';
+      this._roundFill(ctx, bx, by, Math.max(bh, bw * holdFrac), bh, bh / 2);
+      ctx.fillStyle = '#fff';
+      ctx.shadowColor = 'rgba(0,0,0,0.75)'; ctx.shadowBlur = 10;
+      ctx.font = `800 ${s * 0.03}px Trebuchet MS, sans-serif`;
+      ctx.fillText(holdFrac >= 1 ? '시작!' : '인식 중… 그대로 멈춰요', W / 2, by - s * 0.035);
+    } else {
+      ctx.fillStyle = '#fff';
+      ctx.globalAlpha = 0.55 + 0.45 * pulse;
+      ctx.font = `800 ${s * 0.032}px Trebuchet MS, sans-serif`;
+      ctx.fillText('👣 여기 서면 자동으로 시작돼요', W / 2, by);
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+  }
+
   // 포즈 안내(상단)
   drawPoseHint(text) {
     const ctx = this.ctx;
