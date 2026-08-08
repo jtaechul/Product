@@ -67,18 +67,46 @@ def test_candidates_never_empty():
     assert _cat().footage_candidates(), "후보가 비었습니다(중복 실패 재발)"
 
 
-def test_ledger_and_records_agree_on_recent_episodes():
-    """원장과 발행 레코드가 어긋나면 또 같은 사고가 난다 — 최근분은 서로 맞아야 한다."""
+def test_every_published_species_is_in_the_dedup_set():
+    """★중복을 실제로 막는 것은 `_made_set()`이다 — 발행한 종이 **하나라도** 빠지면 또 만들어진다.
+
+    ⚠️예전 판정은 '발행 레코드가 **deep_sea 원장**에 이름으로 있는가'였는데, 회차 번호는
+      **전 카테고리 공용**이라 marine_life 회차(#062 Crossota)가 deep_sea 원장에 없다고
+      거짓 실패했다. 중복을 막는 진짜 계약은 원장이 아니라 **dedup 집합**이므로 그걸 본다
+      (`_made_set`은 원장 + 실제 발행 레코드를 합집합으로 본다).
+    """
+    from src.core import content_store as CS
+    from src.registry import get_category
+    made = get_category("deep_sea")._made_set()
+    missing = [(r["no"], r["scientific_name"]) for r in CS.produced_species(".")
+               if str(r["scientific_name"]).strip().lower()
+               and str(r["scientific_name"]).strip().lower() not in made]
+    assert not missing, f"발행했는데 중복방지 집합에 없습니다(또 만들어집니다): {missing}"
+
+
+def test_deep_sea_ledger_matches_its_own_records():
+    """deep_sea 원장은 **deep_sea 회차**와 종이 일치해야 한다(번호별 대조).
+
+    다른 카테고리(marine_life·shipwreck) 회차는 이 원장에 없는 게 정상이므로 제외한다.
+    """
     import json
     from pathlib import Path
 
     from src.core import content_store as CS
-    led = json.loads((Path(__file__).resolve().parents[1] / "src" / "categories" / "deep_sea"
-                      / "catalog.json").read_text(encoding="utf-8"))
-    led_names = {str(x.get("scientific_name", "")).strip().lower() for x in led}
-    for r in CS.produced_species(".")[-10:]:
-        assert r["scientific_name"].strip().lower() in led_names, \
-            f"#{r['no']} {r['scientific_name']}: 발행됐는데 원장에 없습니다(중복 위험)"
+    root = Path(__file__).resolve().parents[1]
+    led = {int(x["no"]): x for x in
+           json.loads((root / "src" / "categories" / "deep_sea"
+                       / "catalog.json").read_text(encoding="utf-8"))}
+    bad = []
+    for r in CS.produced_species("."):
+        no = int(r["no"])
+        rec = json.loads((root / "content" / f"{no:03d}.json").read_text(encoding="utf-8"))
+        if rec.get("category") != "deep_sea":
+            continue
+        l = led.get(no)
+        if l and str(l["scientific_name"]).strip().lower() != str(r["scientific_name"]).strip().lower():
+            bad.append((no, l["scientific_name"], r["scientific_name"]))
+    assert not bad, f"원장과 발행 레코드가 어긋납니다(원장=, 발행=): {bad}"
 
 
 def test_ledger_corrects_a_wrong_species_at_the_same_number(tmp_path, monkeypatch):
