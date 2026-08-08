@@ -44,6 +44,11 @@
 - **M2 (예정)**: 학생 코어 루프 (로그인 → 진단 → 오늘의 학습 → 오답노트 SRS)
 - 이후: M3 게이미피케이션 → M4 학원 대시보드 → M5 결제·베타 (상세: [PRD.md 11절](PRD.md#11-로드맵-m0m5))
 
+## 배포 주소
+
+- [점프리시 미리보기 열기](https://jumplish.jtaechul.workers.dev) — 지정 브랜치 push 시
+  `.github/workflows/deploy-jumplish.yml`이 Cloudflare Workers로 자동 배포
+
 ## 실행 방법 (로컬 개발)
 
 ```
