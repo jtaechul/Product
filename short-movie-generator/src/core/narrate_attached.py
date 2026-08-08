@@ -1654,8 +1654,11 @@ def narrate_video(video_path: str, mode: str = "shorts", source_topic: str = "",
 
     # 4) 카라오케 자막 번인 — ★자막 크게(쇼츠 1.8 · 롱폼 2.2로 2배 이상)
     sub_scale = 1.8 if mode == "shorts" else 2.2
+    # ★end_badge(쇼츠 전용): 나레이션형은 **엔드카드가 없어**(include_endcard=False) 마지막에
+    #   구독 신호가 화면에 안 나온다 → 자막 레이어로 큰 구독 배지를 띄운다(길이·오디오 불변).
     ass = narration_sync.build_synced_ass(nar["disp"], str(work / "subs.ass"),
-                                          hook_first=False, w=w, h=h, sub_scale=sub_scale)
+                                          hook_first=False, w=w, h=h, sub_scale=sub_scale,
+                                          end_badge=(mode == "shorts"))
     subbed = str(work / "subbed.mp4")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", body_v, "-vf", f"ass={ass}",
                     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "19", "-an", subbed],

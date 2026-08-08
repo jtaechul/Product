@@ -346,6 +346,10 @@ _CTA_MARKERS = ("チャンネル登録", "채널 구독", "登録して", "구�
 # 중간 배지: 본문 도중 한 번, 화면 오른쪽 위에 작게. 상시 노출은 거슬려서 역효과 → 딱 한 번 3초.
 _MID_BADGE_TEXT = "チャンネル登録"
 _MID_BADGE_DUR_S = 3.0
+# ★끝 배지: 나레이션형 쇼츠(nv-*)는 **엔드카드가 없어** 마지막에 구독 신호가 화면에 안 나온다
+#   (도감형은 엔드카드가 담당). 자막 레이어로 큰 구독 배지를 마지막에 띄워 같은 역할을 하게 한다.
+#   영상 길이·오디오를 건드리지 않아 안전하다(엔드카드를 붙이면 자막 오프셋 계산이 틀어진다).
+_END_BADGE_DUR_S = 2.6
 
 
 def is_cta_line(text: str) -> bool:
@@ -375,7 +379,7 @@ def pick_mid_badge_at(disp: list[tuple], target_s: float = 10.0) -> float | None
 def build_synced_ass(disp: list[tuple], out_path: str, *, font: str = "Noto Sans CJK JP",
                      accent: str = "&H00EAE06F&", hook_first: bool = True,
                      w: int = 720, h: int = 1280, sub_scale: float = 1.0,
-                     mid_badge: bool = True) -> str:
+                     mid_badge: bool = True, end_badge: bool = False) -> str:
     """발화 시각에 정합된 disp로 ASS 생성. 청크당 1줄(고정 위치·크기). 첫 청크는 매력형 훅.
 
     accent: ASS 색(&HBBGGRR&). 테마 순환(cyan/gold/coral)을 상위에서 주입.
@@ -421,5 +425,20 @@ def build_synced_ass(disp: list[tuple], out_path: str, *, font: str = "Noto Sans
                     % (w - 26, int(h * 0.115), _bsz))
             lines.append(f"Dialogue: 0,{_ts(_at)},{_ts(_at + _MID_BADGE_DUR_S)},"
                          f"Sub,,0,0,0,,{_tag}{_MID_BADGE_TEXT}")
+    # ★끝 배지 — 엔드카드가 없는 경로(나레이션형 쇼츠)를 위한 마지막 구독 신호.
+    if end_badge and disp:
+        try:
+            _end = float(disp[-1][2])
+        except Exception:  # noqa: BLE001
+            _end = 0.0
+        if _end > _END_BADGE_DUR_S:
+            _st = max(0.0, _end - _END_BADGE_DUR_S)
+            _esz = int(subsz * 1.05)
+            # ★자막 줄(하단 MarginV≈h*0.16)과 **충분히 떨어뜨린다** — 붙여 놨더니 구독 배지와
+            #   구독 자막이 한 덩어리로 뭉쳐 읽혔다(실측 렌더로 확인 후 0.72 → 0.58로 올림).
+            _etag = (r"{\an5\pos(%d,%d)\fad(220,180)\fs%d\1c&H00201000&\3c&H00FFE9A8&\bord8\shad0"
+                     r"\t(0,300,\fscx112\fscy112)\t(300,700,\fscx100\fscy100)}"
+                     % (w // 2, int(h * 0.58), _esz))
+            lines.append(f"Dialogue: 0,{_ts(_st)},{_ts(_end)},Sub,,0,0,0,,{_etag}{_MID_BADGE_TEXT}")
     Path(out_path).write_text("\n".join(lines), encoding="utf-8")
     return out_path

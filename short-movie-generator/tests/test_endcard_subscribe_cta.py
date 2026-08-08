@@ -212,3 +212,77 @@ def test_open_loop_creates_curiosity():
     # 실제로 마지막에 정체가 공개되므로 거짓 예고가 아니다(엔드카드에 종명·학명이 있다)
     cfg = HI.HookIntroConfig()
     assert cfg.end_title_size > 0
+
+
+# ── 나레이션형(nv-*) 쇼츠: 엔드카드가 없는 경로도 구독 신호가 있어야 한다 ──
+def test_narrate_shorts_get_an_end_subscribe_badge(tmp_path):
+    """★검증 중 발견한 구멍: 나레이션형은 include_endcard=False라 **마지막 구독 신호가 없었다**.
+
+    엔드카드를 붙이면 자막 오프셋 계산(_open_off)이 틀어지므로, 길이·오디오를 건드리지 않는
+    **자막 레이어 배지**로 같은 역할을 하게 한다.
+    """
+    from src.core import narration_sync as NS
+    from pathlib import Path
+    disp = [(f"深い海の底です{i}。", i * 1.6, i * 1.6 + 1.6) for i in range(10)]
+    disp.append(("チャンネル登録して、次の深海も。", 16.0, 17.6))
+    ass = Path(NS.build_synced_ass(disp, str(tmp_path / "t.ass"), hook_first=False,
+                                   sub_scale=1.8, end_badge=True))
+    txt = ass.read_text(encoding="utf-8")
+    end = [ln for ln in txt.splitlines() if "\\an5" in ln]
+    assert len(end) == 1, f"끝 구독 배지는 딱 한 번이어야 합니다: {len(end)}"
+    assert "登録" in end[0]
+    # 끝 배지를 안 켜면(도감형) 나오지 않아야 한다 — 엔드카드와 중복되면 지저분하다
+    ass2 = Path(NS.build_synced_ass(disp, str(tmp_path / "t2.ass"), hook_first=False))
+    assert "\\an5" not in ass2.read_text(encoding="utf-8"), \
+        "도감형에도 끝 배지가 붙었습니다(엔드카드와 중복)"
+
+
+def test_narrate_path_actually_passes_end_badge():
+    """배선 계약: 나레이션형 파이프라인이 end_badge를 실제로 넘겨야 한다."""
+    from pathlib import Path
+    a = (Path(__file__).resolve().parents[1] / "src" / "core"
+         / "narrate_attached.py").read_text(encoding="utf-8")
+    assert "end_badge=(mode ==" in a, "나레이션형이 끝 구독 배지를 켜지 않습니다"
+
+
+@pytest.mark.skipif(not shutil.which("ffmpeg"), reason="렌더 환경 없음")
+def test_end_badge_does_not_collide_with_subtitle(tmp_path):
+    """★실측 렌더: 배지와 구독 자막이 붙어 한 덩어리로 뭉치면 안 된다(처음에 실제로 뭉쳤다)."""
+    from PIL import Image
+    from src.core import narration_sync as NS
+    disp = [(f"深い海の底です{i}。", i * 1.6, i * 1.6 + 1.6) for i in range(10)]
+    disp.append(("チャンネル登録して、次の深海も。", 16.0, 17.6))
+    end = float(disp[-1][2])
+    ass = NS.build_synced_ass(disp, str(tmp_path / "t.ass"), hook_first=False,
+                              sub_scale=1.8, end_badge=True)
+    src, out = tmp_path / "v.mp4", tmp_path / "o.mp4"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i",
+                    f"color=c=0x0a2a40:s=720x1280:d={end + 1}:r=24",
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", str(src)], check=True)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(src), "-vf", f"ass={ass}",
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", str(out)], check=True)
+    p = str(tmp_path / "e.png")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", str(end - 1.0), "-i", str(out),
+                    "-frames:v", "1", p], check=True)
+    im = Image.open(p).convert("RGB")
+    BG = (10, 42, 64)
+    rows = [y for y in range(600, 1280)
+            if any(sum(abs(im.getpixel((x, y))[k] - BG[k]) for k in range(3)) > 90
+                   for x in range(60, 660, 8))]
+    groups = []
+    for y in rows:
+        if groups and y - groups[-1][-1] <= 3:
+            groups[-1].append(y)
+        else:
+            groups.append([y])
+    assert len(groups) >= 2, "배지와 자막이 한 덩어리로 뭉쳤습니다"
+    gap = groups[1][0] - groups[0][-1]
+    assert gap >= 80, f"배지와 자막 간격이 너무 좁습니다: {gap}px"
+
+
+def test_seed_hooks_follow_the_reveal_direction():
+    """★시드 훅은 LLM을 안 거쳐 게이트를 **우회**한다 → 시드 자체가 방향을 지켜야 한다."""
+    from src.categories.deep_sea.hook import _SEED, is_abstract_hook
+    bad = [(k, v["hook_line1"] + v["hook_line2"]) for k, v in _SEED.items()
+           if is_abstract_hook(v["hook_line1"] + v["hook_line2"])]
+    assert not bad, f"추상 비유형 시드 훅이 남아 있습니다(게이트를 우회합니다): {bad}"
