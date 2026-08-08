@@ -3,7 +3,9 @@ name: Deploy Jumplish (junior-toeic-master)
 on:
   push:
     branches: ["claude/junior-toeic-master-planning-322l2t"]
-    paths: ["junior-toeic-master/**"]
+    paths:
+      - "junior-toeic-master/**"
+      - ".github/workflows/deploy-jumplish.yml"
   workflow_dispatch:
 
 concurrency:
@@ -31,7 +33,8 @@ jobs:
       - name: Ensure D1 database and inject id
         run: |
           set -e
-          get_id() { npx wrangler d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=JSON.parse(s);const m=a.find(x=>x.name==='jumplish-db');process.stdout.write(m?(m.uuid||m.id||''):'')})"; }
+          # wrangler는 --json 앞에 안내 배너를 붙일 수 있어 '[' 이후만 파싱한다
+          get_id() { npx wrangler d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const a=JSON.parse(s.slice(s.indexOf('[')));const m=a.find(x=>x.name==='jumplish-db');process.stdout.write(m?(m.uuid||m.id||''):'')}catch(e){process.stdout.write('')}})"; }
           ID=$(get_id)
           if [ -z "$ID" ]; then
             echo "jumplish-db가 없어 새로 만듭니다"
