@@ -352,3 +352,7 @@ h2 { font-size: clamp(22px, 5vmin, 36px); margin-bottom: 18px; }
   60% { transform: translate(16px, -10px) rotate(0.6deg); }
   78% { transform: translate(-10px, 6px) rotate(-0.3deg); }
 }
+
+/* 키오스크(무인) 모드 — 커서 숨김 + 안내 문구 */
+html.kiosk, html.kiosk * { cursor: none !important; }
+.kiosk-note { color: #ffd23f; font-weight: 700; opacity: 0.9; }
