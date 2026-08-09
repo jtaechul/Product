@@ -34,6 +34,8 @@ jobs:
           node-version: 22
 
       - name: Fetch CC0 sounds
+        id: fetch
+        continue-on-error: true   # 일부 실패해도 성공분은 커밋한다 (재실행 시 이어서)
         env:
           FREESOUND_API_KEY: ${{ secrets.FREESOUND_API_KEY }}
         run: node tools/sfx-batch.mjs
@@ -51,3 +53,9 @@ jobs:
             -m "generate-sfx.yml 러너에서 다운로드. 출처는 public/sfx/CREDITS.md 기록."
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin HEAD:"${GITHUB_REF_NAME}"
+
+      - name: Fail if fetch incomplete
+        if: steps.fetch.outcome == 'failure'
+        run: |
+          echo "::error::일부 효과음 다운로드 실패 — 다시 실행하면 이어서 받습니다"
+          exit 1

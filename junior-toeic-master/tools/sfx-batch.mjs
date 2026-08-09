@@ -22,18 +22,19 @@ if (!KEY) {
   process.exit(1);
 }
 
-// 역할별 검색어 — 아동 학습 앱 톤: 밝고 짧고 부드럽게 (오답도 기죽지 않는 소리)
+// 역할별 검색어 후보 — 아동 학습 앱 톤. 여러 단어 조합은 CC0 필터와 겹치면
+// 결과가 0건이 되기 쉬워, 넓은 단어로 후보를 여러 개 두고 차례로 시도한다.
 const ROLES = {
-  select: { q: 'ui click pop soft', dur: '[0 TO 1]' },
-  correct: { q: 'correct answer chime bright', dur: '[0 TO 2]' },
-  wrong: { q: 'wrong answer gentle soft buzzer', dur: '[0 TO 2]' },
-  done: { q: 'success fanfare short jingle win', dur: '[0.5 TO 4]' },
+  select: { qs: ['ui click', 'pop click', 'click'], dur: '[0 TO 1]' },
+  correct: { qs: ['correct chime', 'success ding', 'correct', 'chime'], dur: '[0 TO 2.5]' },
+  wrong: { qs: ['wrong buzzer', 'incorrect', 'error buzz', 'buzzer'], dur: '[0 TO 2.5]' },
+  done: { qs: ['success fanfare short jingle win', 'tada', 'level complete'], dur: '[0.5 TO 4]' },
 };
 
-async function searchCC0(query, dur) {
+async function searchOnce(query, filter) {
   const url = 'https://freesound.org/apiv2/search/text/'
     + `?query=${encodeURIComponent(query)}`
-    + `&filter=${encodeURIComponent(`license:"Creative Commons 0" duration:${dur}`)}`
+    + `&filter=${encodeURIComponent(filter)}`
     + '&sort=downloads_desc&page_size=5'
     + '&fields=id,name,username,url,license,previews,avg_rating,num_downloads'
     + `&token=${KEY}`;
@@ -43,16 +44,29 @@ async function searchCC0(query, dur) {
   return results?.[0] || null;  // 다운로드 수 1위
 }
 
+// 검색어 후보 × (시간 제한 → 무제한) 순으로 완화하며 첫 결과를 쓴다
+async function searchCC0(qs, dur) {
+  for (const withDur of [true, false]) {
+    for (const q of qs) {
+      const filter = `license:"Creative Commons 0"` + (withDur ? ` duration:${dur}` : '');
+      const hit = await searchOnce(q, filter);
+      if (hit) return hit;
+      await new Promise((r) => setTimeout(r, 400));
+    }
+  }
+  return null;
+}
+
 mkdirSync(OUT, { recursive: true });
 const credits = ['# 효과음 출처 (Freesound, 전부 CC0 — 저작권 표기 의무 없음)', ''];
 let made = 0, skipped = 0, failed = 0;
 
-for (const [role, { q, dur }] of Object.entries(ROLES)) {
+for (const [role, { qs, dur }] of Object.entries(ROLES)) {
   const file = join(OUT, `${role}.mp3`);
   if (existsSync(file) && statSync(file).size > 1000) { skipped++; continue; }
   try {
-    const hit = await searchCC0(q, dur);
-    if (!hit) throw new Error(`CC0 검색 결과 없음: "${q}"`);
+    const hit = await searchCC0(qs, dur);
+    if (!hit) throw new Error(`CC0 검색 결과 없음: ${qs.join(' / ')}`);
     // preview-hq-mp3는 토큰 없이 받을 수 있는 공개 CDN 주소 (짧은 효과음엔 충분한 음질)
     const mp3 = await fetch(hit.previews['preview-hq-mp3']);
     if (!mp3.ok) throw new Error(`다운로드 실패 ${mp3.status}`);
