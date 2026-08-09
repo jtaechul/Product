@@ -56,21 +56,33 @@ async function get(url, tries = 4) {
   }
 }
 
-// 검색 → 태그 조건을 통과하는 첫 후보. 가로 사진을 먼저 보고, 없으면 방향 제한을 푼다.
-async function findPhoto({ q, need = [], avoid = [] }) {
+// 검색 → 태그 조건을 통과하는 첫 후보.
+//  need   : 하나라도 없으면 탈락 (사물·행동을 함께 넣어야 한다.
+//           'paint'만 넣으면 '캔버스에 그림 그리는 사람'이 걸려든다 — 실제로 겪은 사고)
+//  prefer : 있으면 더 좋은 말. 1차로 need+prefer를 다 갖춘 후보를 찾고, 없으면 need만으로 다시 본다
+//  avoid  : 하나라도 있으면 탈락
+// 가로 사진을 먼저 보고, 없으면 방향 제한을 푼다.
+async function findPhoto({ q, need = [], prefer = [], avoid = [] }) {
+  const pages = [];
   for (const orientation of ['horizontal', 'all']) {
     const url = 'https://pixabay.com/api/?' + new URLSearchParams({
       key: KEY, q, image_type: 'photo', safesearch: 'true', lang: 'en',
       order: 'popular', per_page: '40', orientation,
     });
     const { hits = [] } = await (await get(url)).json();
-    for (const h of hits) {
-      const tags = String(h.tags || '').toLowerCase();
-      if (!need.every((w) => tags.includes(w.toLowerCase()))) continue;
-      if (avoid.some((w) => tags.includes(w.toLowerCase()))) continue;
-      return h;
-    }
+    pages.push(hits);
     await sleep(DELAY);
+  }
+  const passes = (h, extra) => {
+    const tags = String(h.tags || '').toLowerCase();
+    if (avoid.some((w) => tags.includes(w.toLowerCase()))) return false;
+    return [...need, ...extra].every((w) => tags.includes(w.toLowerCase()));
+  };
+  for (const extra of prefer.length ? [prefer, []] : [[]]) {
+    for (const hits of pages) {
+      const hit = hits.find((h) => passes(h, extra));
+      if (hit) return hit;
+    }
   }
   return null;
 }
@@ -79,7 +91,7 @@ mkdirSync(OUT_DIR, { recursive: true });
 
 // 그림 출처가 바뀌면(AI 생성 → 사진) 예전 파일을 전부 지우고 새로 받는다.
 // "이미 있으면 건너뜀" 규칙 때문에 이 장치가 없으면 옛 그림이 영영 남는다.
-const SOURCE = 'pixabay-photo-v1';
+const SOURCE = 'pixabay-photo-v2';   // v1은 need가 느슨해 엉뚱한 사진이 섞였다 — 전량 재수집
 const markerPath = join(OUT_DIR, '.source');
 if (!existsSync(markerPath) || readFileSync(markerPath, 'utf8').trim() !== SOURCE) {
   const stale = readdirSync(OUT_DIR).filter((f) => f.endsWith('.jpg'));

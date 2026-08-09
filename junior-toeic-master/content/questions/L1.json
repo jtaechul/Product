@@ -12,7 +12,7 @@
       "Picture D"
     ],
     "answer_idx": 2,
-    "explanation_ko": "'riding a bicycle'는 자전거를 타고 있다는 뜻이라 자전거 타는 그림이 정답이에요. 공을 차는 그림은 같은 공원이지만 하는 일이 달라서 오답이에요.",
+    "explanation_ko": "'riding a bicycle'는 자전거를 타고 있다는 뜻이라 자전거 타는 사진이 정답이에요. 공을 차는 사진은 하는 일이 달라요.",
     "difficulty_label": 1,
     "tags": [
       "LS.photo",
@@ -26,12 +26,12 @@
       "A boy riding a bicycle on a park path",
       "A boy sitting on a park bench eating ice cream"
     ],
-    "status": "active",
+    "status": "draft",
     "evidence": "riding a bicycle",
     "why_not": {
-      "0": "연을 날리는 그림이에요",
-      "1": "공을 차는 그림이에요",
-      "3": "벤치에서 아이스크림을 먹고 있어요"
+      "0": "연을 날리는 사진이에요",
+      "1": "공을 차는 사진이에요",
+      "3": "아이스크림을 먹는 사진이에요"
     },
     "key_expr": {
       "en": "ride a bicycle",
@@ -39,19 +39,26 @@
     },
     "choice_image_queries": [
       {
-        "q": "child flying kite",
+        "q": "child flying kite park",
         "need": [
           "kite"
         ],
+        "prefer": [
+          "child"
+        ],
         "avoid": [
           "bicycle",
-          "bike"
+          "bike",
+          "silhouette"
         ]
       },
       {
-        "q": "child playing soccer",
+        "q": "child playing soccer ball",
         "need": [
           "soccer"
+        ],
+        "prefer": [
+          "child"
         ],
         "avoid": [
           "bicycle",
@@ -59,9 +66,13 @@
         ]
       },
       {
-        "q": "child riding bicycle",
+        "q": "boy riding bicycle",
         "need": [
-          "bicycle"
+          "bicycle",
+          "riding"
+        ],
+        "prefer": [
+          "boy"
         ],
         "avoid": []
       },
@@ -69,6 +80,9 @@
         "q": "child eating ice cream",
         "need": [
           "ice cream"
+        ],
+        "prefer": [
+          "child"
         ],
         "avoid": [
           "bicycle",
@@ -90,7 +104,7 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'A cat is sleeping'은 고양이가 자고 있다는 뜻이에요. 자고 있는 강아지 그림은 자는 모습만 같고 동물이 달라서 오답이에요.",
+    "explanation_ko": "'A cat is sleeping'은 고양이가 자고 있다는 뜻이에요. 자는 강아지 사진은 자는 모습만 같고 동물이 달라요.",
     "difficulty_label": 1,
     "tags": [
       "LS.photo",
@@ -104,12 +118,12 @@
       "A cat drinking milk from a bowl on the floor",
       "A cat playing with a ball of yarn on a chair"
     ],
-    "status": "active",
+    "status": "draft",
     "evidence": "sleeping on the sofa",
     "why_not": {
       "1": "자는 건 고양이가 아니라 강아지예요",
-      "2": "우유를 마시고 있어요",
-      "3": "실뭉치를 가지고 놀고 있어요"
+      "2": "우유를 마시는 사진이에요",
+      "3": "장난감을 가지고 노는 사진이에요"
     },
     "key_expr": {
       "en": "sleep on the sofa",
@@ -122,6 +136,9 @@
           "cat",
           "sleep"
         ],
+        "prefer": [
+          "sofa"
+        ],
         "avoid": [
           "dog"
         ]
@@ -132,6 +149,7 @@
           "dog",
           "sleep"
         ],
+        "prefer": [],
         "avoid": [
           "cat"
         ]
@@ -142,6 +160,9 @@
           "cat",
           "milk"
         ],
+        "prefer": [
+          "drinking"
+        ],
         "avoid": [
           "sleep"
         ]
@@ -151,6 +172,9 @@
         "need": [
           "cat",
           "play"
+        ],
+        "prefer": [
+          "toy"
         ],
         "avoid": [
           "sleep",
@@ -172,7 +196,7 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'buying apples'는 사과를 사고 있다는 뜻이라 사과 값을 내는 그림이 정답이에요. 꽃을 구경하는 그림은 같은 시장이지만 사과를 사는 모습이 아니에요.",
+    "explanation_ko": "'buying apples'는 사과를 사고 있다는 뜻이라 사과를 사는 사진이 정답이에요. 꽃 사진은 사과와 관계가 없어요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
@@ -186,12 +210,12 @@
       "A woman carrying a basket of bread through a market",
       "A woman handing money to a fruit seller for apples at a market stall"
     ],
-    "status": "active",
+    "status": "draft",
     "evidence": "buying apples at the market",
     "why_not": {
-      "0": "꽃 냄새를 맡고 있어요",
-      "1": "파는 쪽이고 사과가 아니라 생선이에요",
-      "2": "빵 바구니를 들고 걸어가요"
+      "0": "꽃 사진이에요. 사과가 아니에요",
+      "1": "사과가 아니라 생선 가게예요",
+      "2": "빵 바구니 사진이에요"
     },
     "key_expr": {
       "en": "buy apples",
@@ -203,6 +227,9 @@
         "need": [
           "flower"
         ],
+        "prefer": [
+          "woman"
+        ],
         "avoid": [
           "apple"
         ]
@@ -210,17 +237,21 @@
       {
         "q": "fish market stall",
         "need": [
-          "fish"
+          "fish",
+          "market"
         ],
+        "prefer": [],
         "avoid": [
           "apple"
         ]
       },
       {
-        "q": "woman carrying bread basket",
+        "q": "bread basket bakery",
         "need": [
-          "bread"
+          "bread",
+          "basket"
         ],
+        "prefer": [],
         "avoid": [
           "apple"
         ]
@@ -228,8 +259,10 @@
       {
         "q": "woman buying apples market",
         "need": [
-          "apple"
+          "apple",
+          "buying"
         ],
+        "prefer": [],
         "avoid": []
       }
     ]
@@ -247,7 +280,7 @@
       "Picture D"
     ],
     "answer_idx": 1,
-    "explanation_ko": "'building a sandcastle'는 모래성을 만들고 있다는 뜻이에요. 바다에서 수영하는 그림은 같은 바닷가지만 하는 일이 달라서 오답이에요.",
+    "explanation_ko": "'building a sandcastle'는 모래성을 만든다는 뜻이에요. 바다에서 수영하는 사진은 같은 바닷가지만 하는 일이 달라요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
@@ -261,12 +294,12 @@
       "A child collecting seashells in a bucket on the beach",
       "Two children playing with a beach ball on the sand"
     ],
-    "status": "active",
+    "status": "draft",
     "evidence": "building a sandcastle",
     "why_not": {
-      "0": "바다에서 헤엄치고 있어요",
-      "2": "조개를 줍고 있고 한 명이에요",
-      "3": "공놀이를 하고 있어요"
+      "0": "바다에서 헤엄치는 사진이에요",
+      "2": "조개를 줍는 사진이에요",
+      "3": "공놀이를 하는 사진이에요"
     },
     "key_expr": {
       "en": "build a sandcastle",
@@ -278,30 +311,48 @@
         "need": [
           "swim"
         ],
+        "prefer": [
+          "children"
+        ],
         "avoid": [
           "castle"
         ]
       },
       {
-        "q": "children building sandcastle",
+        "q": "children building sand castle beach",
         "need": [
-          "castle"
+          "castle",
+          "sand"
         ],
-        "avoid": []
+        "prefer": [
+          "child"
+        ],
+        "avoid": [
+          "sculpture",
+          "artwork"
+        ]
       },
       {
-        "q": "child collecting seashells beach",
+        "q": "child collecting shells beach",
         "need": [
           "shell"
         ],
+        "prefer": [
+          "child"
+        ],
         "avoid": [
-          "castle"
+          "castle",
+          "wallpaper"
         ]
       },
       {
         "q": "children playing beach ball",
         "need": [
-          "ball"
+          "ball",
+          "beach"
+        ],
+        "prefer": [
+          "children"
         ],
         "avoid": [
           "castle"
@@ -322,7 +373,7 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'painting'은 페인트를 칠하고 있다는 뜻이라 붓으로 울타리를 칠하는 그림이 정답이에요. 울타리에 못을 박는 그림은 울타리만 같고 칠하는 게 아니에요.",
+    "explanation_ko": "'painting a fence'는 울타리를 칠한다는 뜻이라 울타리에 칠하는 사진이 정답이에요. 못을 박는 사진은 칠하는 게 아니에요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
@@ -336,12 +387,12 @@
       "A man hammering nails into a wooden fence",
       "A man watering plants with a hose in a backyard"
     ],
-    "status": "active",
+    "status": "draft",
     "evidence": "painting a wooden fence",
     "why_not": {
-      "1": "잔디를 깎고 있어요",
-      "2": "못을 박고 있어요",
-      "3": "호스로 물을 주고 있어요"
+      "1": "잔디를 깎는 사진이에요",
+      "2": "못을 박는 사진이에요",
+      "3": "호스로 물을 주는 사진이에요"
     },
     "key_expr": {
       "en": "paint a fence",
@@ -349,37 +400,52 @@
     },
     "choice_image_queries": [
       {
-        "q": "man painting fence",
+        "q": "painting wooden fence brush",
         "need": [
+          "fence",
           "paint"
         ],
+        "prefer": [
+          "brush"
+        ],
         "avoid": [
-          "lawn",
-          "mow"
+          "canvas",
+          "artist",
+          "busker"
         ]
       },
       {
         "q": "man mowing lawn",
         "need": [
-          "lawn"
+          "lawn",
+          "mowing"
         ],
+        "prefer": [],
         "avoid": [
           "paint"
         ]
       },
       {
-        "q": "hammer nail wood",
+        "q": "hammering nail wood",
         "need": [
-          "hammer"
+          "hammer",
+          "nail"
+        ],
+        "prefer": [
+          "wood"
         ],
         "avoid": [
-          "paint"
+          "paint",
+          "confused"
         ]
       },
       {
         "q": "watering garden hose",
         "need": [
-          "water"
+          "hose"
+        ],
+        "prefer": [
+          "garden"
         ],
         "avoid": [
           "paint"
@@ -400,7 +466,7 @@
       "Picture D"
     ],
     "answer_idx": 1,
-    "explanation_ko": "'pouring juice'는 주스를 컵에 따르고 있다는 뜻이에요. 주스를 마시는 그림은 컵과 주스가 똑같이 나와서 헷갈리기 쉬운 오답이에요.",
+    "explanation_ko": "'pouring juice'는 주스를 컵에 따른다는 뜻이에요. 주스를 마시는 사진은 컵과 주스가 똑같이 나와서 헷갈리기 쉬워요.",
     "difficulty_label": 3,
     "tags": [
       "LS.photo",
@@ -414,12 +480,12 @@
       "A girl washing a glass at the kitchen sink",
       "A girl cutting an orange on a kitchen cutting board"
     ],
-    "status": "active",
+    "status": "draft",
     "evidence": "pouring juice into a glass",
     "why_not": {
-      "0": "이미 마시고 있는 그림이에요",
-      "2": "컵을 씻고 있어요",
-      "3": "오렌지를 자르고 있어요"
+      "0": "이미 마시고 있는 사진이에요",
+      "2": "설거지를 하는 사진이에요",
+      "3": "오렌지 사진이에요"
     },
     "key_expr": {
       "en": "pour juice",
@@ -429,35 +495,53 @@
       {
         "q": "girl drinking juice glass",
         "need": [
+          "juice",
           "drink"
+        ],
+        "prefer": [
+          "girl"
         ],
         "avoid": [
           "pour"
         ]
       },
       {
-        "q": "pouring juice into glass",
+        "q": "pouring orange juice into glass",
         "need": [
+          "juice",
           "pour"
         ],
-        "avoid": []
+        "prefer": [
+          "glass"
+        ],
+        "avoid": [
+          "oil",
+          "olive"
+        ]
       },
       {
         "q": "washing dishes kitchen sink",
         "need": [
-          "wash"
+          "washing dishes"
+        ],
+        "prefer": [
+          "sink"
         ],
         "avoid": [
           "pour"
         ]
       },
       {
-        "q": "cutting orange fruit",
+        "q": "cutting orange fruit knife",
         "need": [
           "orange"
         ],
+        "prefer": [
+          "knife"
+        ],
         "avoid": [
-          "pour"
+          "pour",
+          "juice"
         ]
       }
     ]
@@ -475,7 +559,7 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'feeding'은 먹이를 주고 있다는 뜻이라 오리에게 빵을 주는 그림이 정답이에요. 벤치에서 샌드위치를 먹는 그림은 자기가 먹는 것이라 달라요.",
+    "explanation_ko": "'feeding'은 먹이를 준다는 뜻이라 오리에게 빵을 주는 사진이 정답이에요. 샌드위치 사진은 자기가 먹는 것이라 달라요.",
     "difficulty_label": 3,
     "tags": [
       "LS.photo",
@@ -489,12 +573,12 @@
       "A boy sailing a toy boat on a pond",
       "A boy throwing pieces of bread to ducks at a pond"
     ],
-    "status": "active",
+    "status": "draft",
     "evidence": "feeding bread to the ducks",
     "why_not": {
-      "0": "사진을 찍고 있어요",
-      "1": "자기가 샌드위치를 먹고 있어요",
-      "2": "장난감 배를 띄우고 있어요"
+      "0": "사진을 찍는 사진이에요",
+      "1": "샌드위치를 먹는 사진이에요",
+      "2": "장난감 배 사진이에요"
     },
     "key_expr": {
       "en": "feed the ducks",
@@ -506,6 +590,9 @@
         "need": [
           "camera"
         ],
+        "prefer": [
+          "photo"
+        ],
         "avoid": [
           "duck"
         ]
@@ -515,24 +602,34 @@
         "need": [
           "sandwich"
         ],
-        "avoid": [
-          "duck"
-        ]
-      },
-      {
-        "q": "toy boat pond",
-        "need": [
-          "boat"
+        "prefer": [
+          "eating"
         ],
         "avoid": [
           "duck"
         ]
       },
       {
-        "q": "feeding ducks bread",
+        "q": "toy boat water",
+        "need": [
+          "boat"
+        ],
+        "prefer": [
+          "toy"
+        ],
+        "avoid": [
+          "duck",
+          "wallpaper"
+        ]
+      },
+      {
+        "q": "boy feeding ducks bread",
         "need": [
           "duck",
-          "feed"
+          "feeding"
+        ],
+        "prefer": [
+          "boy"
         ],
         "avoid": []
       }
@@ -551,7 +648,7 @@
       "Picture D"
     ],
     "answer_idx": 2,
-    "explanation_ko": "'hanging clothes on a line'은 빨랫줄에 옷을 널고 있다는 뜻이에요. 옷을 개는 그림도 빨래하는 모습이지만 너는 것이 아니라서 오답이에요.",
+    "explanation_ko": "'hanging clothes on a line'은 빨랫줄에 옷을 넌다는 뜻이에요. 옷을 개는 사진도 빨래지만 너는 것이 아니에요.",
     "difficulty_label": 4,
     "tags": [
       "LS.photo",
@@ -565,12 +662,12 @@
       "A woman hanging wet clothes on a clothesline in a garden",
       "A woman loading clothes into a washing machine"
     ],
-    "status": "active",
+    "status": "draft",
     "evidence": "hanging wet clothes on a line",
     "why_not": {
-      "0": "마른 빨래를 개고 있어요",
-      "1": "다림질을 하고 있어요",
-      "3": "세탁기에 넣고 있어요"
+      "0": "마른 빨래를 갠 사진이에요",
+      "1": "다림질을 하는 사진이에요",
+      "3": "세탁기 사진이에요"
     },
     "key_expr": {
       "en": "hang wet clothes",
@@ -578,18 +675,24 @@
     },
     "choice_image_queries": [
       {
-        "q": "folding laundry clothes",
+        "q": "folded laundry clothes stack",
         "need": [
-          "fold"
+          "laundry",
+          "folded"
         ],
+        "prefer": [],
         "avoid": [
-          "clothesline"
+          "clothesline",
+          "ironing"
         ]
       },
       {
         "q": "ironing shirt",
         "need": [
-          "iron"
+          "ironing"
+        ],
+        "prefer": [
+          "shirt"
         ],
         "avoid": [
           "clothesline"
@@ -598,6 +701,10 @@
       {
         "q": "hanging laundry clothesline",
         "need": [
+          "clothesline",
+          "hang"
+        ],
+        "prefer": [
           "laundry"
         ],
         "avoid": []
@@ -607,8 +714,12 @@
         "need": [
           "washing machine"
         ],
+        "prefer": [
+          "laundry"
+        ],
         "avoid": [
-          "clothesline"
+          "clothesline",
+          "funny"
         ]
       }
     ]
