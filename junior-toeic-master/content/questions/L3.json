@@ -29,7 +29,16 @@
           "LS.gist",
           "V.daily"
         ],
-        "evidence": "Do you have your library card?"
+        "evidence": "Do you have your library card?",
+        "why_not": {
+          "0": "병원은 책을 빌리는 곳이 아니에요",
+          "2": "빵집에는 도서관 카드가 없어요",
+          "3": "수영장은 책 이야기와 맞지 않아요"
+        },
+        "key_expr": {
+          "en": "borrow a book",
+          "ko": "책을 빌리다"
+        }
       },
       {
         "stem": "What is the woman's problem?",
@@ -46,7 +55,16 @@
           "LS.detail",
           "V.daily"
         ],
-        "evidence": "Oh no, I left it at home."
+        "evidence": "Oh no, I left it at home.",
+        "why_not": {
+          "0": "책이 아니라 카드를 안 가져왔어요",
+          "1": "늦었다는 말은 나오지 않았어요",
+          "2": "이름은 말해 달라고 한 것뿐이에요"
+        },
+        "key_expr": {
+          "en": "leave it at home",
+          "ko": "집에 두고 오다"
+        }
       }
     ],
     "status": "active"
@@ -81,7 +99,16 @@
           "LS.detail",
           "V.leisure"
         ],
-        "evidence": "I'm visiting my grandmother in Busan."
+        "evidence": "I'm visiting my grandmother in Busan.",
+        "why_not": {
+          "1": "아프다는 말은 나오지 않았어요",
+          "2": "숙제 이야기는 나오지 않았어요",
+          "3": "축구를 싫어한다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "visit my grandmother",
+          "ko": "할머니를 뵈러 가다"
+        }
       },
       {
         "stem": "When will the man play in the soccer game?",
@@ -98,7 +125,16 @@
           "LS.detail",
           "V.leisure"
         ],
-        "evidence": "Then can you play in the game on Sunday?"
+        "evidence": "Then can you play in the game on Sunday?",
+        "why_not": {
+          "0": "금요일 이야기는 나오지 않았어요",
+          "1": "토요일에는 할머니 댁에 가요",
+          "3": "월요일 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "come back at night",
+          "ko": "밤에 돌아오다"
+        }
       }
     ],
     "status": "active"
@@ -134,7 +170,16 @@
           "V.shopping",
           "V.food"
         ],
-        "evidence": "How much are these apples?"
+        "evidence": "How much are these apples?",
+        "why_not": {
+          "0": "요리가 아니라 사는 중이에요",
+          "1": "청소 이야기는 나오지 않았어요",
+          "3": "만드는 게 아니라 한 병 사요"
+        },
+        "key_expr": {
+          "en": "How much are these?",
+          "ko": "이거 얼마예요?"
+        }
       },
       {
         "stem": "How many apples does the woman want?",
@@ -151,7 +196,16 @@
           "LS.detail",
           "V.shopping"
         ],
-        "evidence": "I'll take six, please."
+        "evidence": "I'll take six, please.",
+        "why_not": {
+          "0": "두 개가 아니라 여섯 개예요",
+          "1": "세 개는 2천 원짜리 묶음이에요",
+          "2": "5천은 개수가 아니라 값이에요"
+        },
+        "key_expr": {
+          "en": "I'll take six",
+          "ko": "여섯 개 주세요"
+        }
       }
     ],
     "status": "active"
@@ -186,7 +240,16 @@
           "LS.gist",
           "V.daily"
         ],
-        "evidence": "Your dog is so cute!"
+        "evidence": "Your dog is so cute!",
+        "why_not": {
+          "1": "고양이가 아니라 강아지예요",
+          "2": "간식은 잠깐 나온 이야기예요",
+          "3": "가게 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "What's his name?",
+          "ko": "이름이 뭐야?"
+        }
       },
       {
         "stem": "Why can't the woman give the dog a snack?",
@@ -203,7 +266,16 @@
           "LS.detail",
           "V.daily"
         ],
-        "evidence": "he can only eat his special dog food"
+        "evidence": "he can only eat his special dog food",
+        "why_not": {
+          "0": "자고 있다는 말은 없어요",
+          "2": "간식이 없다는 말은 없어요",
+          "3": "배가 안 고프다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "special dog food",
+          "ko": "전용 사료"
+        }
       }
     ],
     "status": "active"
@@ -238,7 +310,16 @@
           "LS.detail",
           "V.travel"
         ],
-        "evidence": "does this bus go to the science museum?"
+        "evidence": "does this bus go to the science museum?",
+        "why_not": {
+          "0": "정류장은 지금 서 있는 곳이에요",
+          "1": "미술관이 아니라 과학관이에요",
+          "2": "도서관 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "science museum",
+          "ko": "과학관"
+        }
       },
       {
         "stem": "What will the woman probably do next?",
@@ -255,7 +336,16 @@
           "LS.infer",
           "V.travel"
         ],
-        "evidence": "you need the number seven bus"
+        "evidence": "you need the number seven bus",
+        "why_not": {
+          "0": "걸어간다는 말은 없어요",
+          "2": "경찰에게 묻는 이야기는 없어요",
+          "3": "집에 간다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "the number seven bus",
+          "ko": "7번 버스"
+        }
       }
     ],
     "status": "active"
@@ -290,7 +380,16 @@
           "LS.gist",
           "V.food"
         ],
-        "evidence": "Vegetable soup."
+        "evidence": "Vegetable soup.",
+        "why_not": {
+          "0": "설거지 이야기는 나오지 않았어요",
+          "1": "아직 먹기 전이에요",
+          "3": "상 차리기는 딸이 할 일이에요"
+        },
+        "key_expr": {
+          "en": "vegetable soup",
+          "ko": "채소 수프"
+        }
       },
       {
         "stem": "What will the woman probably do next?",
@@ -308,7 +407,16 @@
           "V.food",
           "V.daily"
         ],
-        "evidence": "Please put the spoons and bowls on the table."
+        "evidence": "Please put the spoons and bowls on the table.",
+        "why_not": {
+          "1": "수프는 아빠가 만들고 있어요",
+          "2": "장 보러 간다는 말은 없어요",
+          "3": "손 씻기 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "set the table",
+          "ko": "상을 차리다"
+        }
       }
     ],
     "status": "active"

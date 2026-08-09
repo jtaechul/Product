@@ -407,6 +407,50 @@ mark.ev {
   border-radius: 999px; padding: 8px 14px; font-size: .82rem; font-weight: 700;
   min-height: 40px; color: var(--text);
 }
+/* 내가 고른 오답 한 줄 — 고른 보기 기호와 함께 보여야 "내 얘기"가 된다 */
+.why-not {
+  display: flex; align-items: center; gap: 9px;
+  background: var(--surface); border-radius: 11px; padding: 9px 11px;
+  font-size: .88rem; font-weight: 700; color: var(--text);
+}
+.why-letter {
+  flex: none; width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center;
+  background: var(--bad); color: #fff; font-size: .78rem; font-weight: 800;
+}
+
+/* 개념 그림 — 틀렸을 때는 펼쳐서, 맞았을 때는 접어서 보여준다 */
+.concept { background: var(--surface); border-radius: 11px; }
+.concept > summary {
+  list-style: none; cursor: pointer; padding: 10px 12px; min-height: 42px;
+  display: flex; align-items: center; gap: 7px;
+  font-size: .85rem; font-weight: 800; color: var(--text);
+}
+.concept > summary::-webkit-details-marker { display: none; }
+.concept > summary::after {
+  content: ''; margin-left: auto; width: 8px; height: 8px;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg); transition: transform .18s;
+}
+.concept[open] > summary::after { transform: rotate(-135deg); }
+.concept-body { padding: 0 12px 12px; overflow-x: auto; }
+.concept-svg { width: 100%; height: auto; display: block; }
+.concept-svg .c-box { fill: var(--surface-2); stroke: var(--line); stroke-width: 2; }
+.concept-svg .c-ball { fill: var(--primary); }
+.concept-svg .c-bar { fill: var(--surface-2); }
+.concept-svg .c-bar.on { fill: var(--primary-soft); }
+.concept-svg .c-line { stroke: var(--muted); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+.concept-svg .c-line.arrow { stroke: var(--primary); stroke-width: 3; stroke-linejoin: round; }
+.concept-svg .c-en { font-size: 14px; font-weight: 700; fill: var(--text); }
+.concept-svg .c-ko { font-size: 12px; font-weight: 700; fill: var(--muted); }
+
+/* 표현 카드 — 이 문제에서 딱 하나 가져갈 것 */
+.expr-card {
+  background: var(--primary-soft); border-radius: 12px; padding: 11px 12px;
+}
+.expr-cap { font-size: .72rem; font-weight: 800; color: var(--primary); margin-bottom: 2px; }
+.expr-en { font-size: 1rem; font-weight: 800; color: var(--text); }
+.expr-ko { font-size: .86rem; font-weight: 700; color: var(--muted); }
+
 .result { border-radius: 13px; padding: 13px; font-size: .92rem; line-height: 1.65;
   display: flex; flex-direction: column; gap: 8px; }
 .result.ok { background: var(--ok-soft); color: #0f5f3f; }

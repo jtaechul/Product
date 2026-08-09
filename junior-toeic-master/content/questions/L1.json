@@ -27,7 +27,16 @@
       "A boy sitting on a park bench eating ice cream"
     ],
     "status": "active",
-    "evidence": "riding a bicycle"
+    "evidence": "riding a bicycle",
+    "why_not": {
+      "0": "연을 날리는 그림이에요",
+      "1": "공을 차는 그림이에요",
+      "3": "벤치에서 아이스크림을 먹고 있어요"
+    },
+    "key_expr": {
+      "en": "ride a bicycle",
+      "ko": "자전거를 타다"
+    }
   },
   {
     "type": "single",
@@ -57,7 +66,16 @@
       "A cat playing with a ball of yarn on a chair"
     ],
     "status": "active",
-    "evidence": "sleeping on the sofa"
+    "evidence": "sleeping on the sofa",
+    "why_not": {
+      "1": "자는 건 고양이가 아니라 강아지예요",
+      "2": "우유를 마시고 있어요",
+      "3": "실뭉치를 가지고 놀고 있어요"
+    },
+    "key_expr": {
+      "en": "sleep on the sofa",
+      "ko": "소파에서 자다"
+    }
   },
   {
     "type": "single",
@@ -87,7 +105,16 @@
       "A woman handing money to a fruit seller for apples at a market stall"
     ],
     "status": "active",
-    "evidence": "buying apples at the market"
+    "evidence": "buying apples at the market",
+    "why_not": {
+      "0": "꽃 냄새를 맡고 있어요",
+      "1": "파는 쪽이고 사과가 아니라 생선이에요",
+      "2": "빵 바구니를 들고 걸어가요"
+    },
+    "key_expr": {
+      "en": "buy apples",
+      "ko": "사과를 사다"
+    }
   },
   {
     "type": "single",
@@ -117,7 +144,16 @@
       "Two children playing with a beach ball on the sand"
     ],
     "status": "active",
-    "evidence": "building a sandcastle"
+    "evidence": "building a sandcastle",
+    "why_not": {
+      "0": "바다에서 헤엄치고 있어요",
+      "2": "조개를 줍고 있고 한 명이에요",
+      "3": "공놀이를 하고 있어요"
+    },
+    "key_expr": {
+      "en": "build a sandcastle",
+      "ko": "모래성을 쌓다"
+    }
   },
   {
     "type": "single",
@@ -147,7 +183,16 @@
       "A man watering plants with a hose in a backyard"
     ],
     "status": "active",
-    "evidence": "painting a wooden fence"
+    "evidence": "painting a wooden fence",
+    "why_not": {
+      "1": "잔디를 깎고 있어요",
+      "2": "못을 박고 있어요",
+      "3": "호스로 물을 주고 있어요"
+    },
+    "key_expr": {
+      "en": "paint a fence",
+      "ko": "울타리를 칠하다"
+    }
   },
   {
     "type": "single",
@@ -177,7 +222,16 @@
       "A girl cutting an orange on a kitchen cutting board"
     ],
     "status": "active",
-    "evidence": "pouring juice into a glass"
+    "evidence": "pouring juice into a glass",
+    "why_not": {
+      "0": "이미 마시고 있는 그림이에요",
+      "2": "컵을 씻고 있어요",
+      "3": "오렌지를 자르고 있어요"
+    },
+    "key_expr": {
+      "en": "pour juice",
+      "ko": "주스를 따르다"
+    }
   },
   {
     "type": "single",
@@ -207,7 +261,16 @@
       "A boy throwing pieces of bread to ducks at a pond"
     ],
     "status": "active",
-    "evidence": "feeding bread to the ducks"
+    "evidence": "feeding bread to the ducks",
+    "why_not": {
+      "0": "사진을 찍고 있어요",
+      "1": "자기가 샌드위치를 먹고 있어요",
+      "2": "장난감 배를 띄우고 있어요"
+    },
+    "key_expr": {
+      "en": "feed the ducks",
+      "ko": "오리에게 먹이를 주다"
+    }
   },
   {
     "type": "single",
@@ -237,6 +300,15 @@
       "A woman loading clothes into a washing machine"
     ],
     "status": "active",
-    "evidence": "hanging wet clothes on a line"
+    "evidence": "hanging wet clothes on a line",
+    "why_not": {
+      "0": "마른 빨래를 개고 있어요",
+      "1": "다림질을 하고 있어요",
+      "3": "세탁기에 넣고 있어요"
+    },
+    "key_expr": {
+      "en": "hang wet clothes",
+      "ko": "젖은 빨래를 널다"
+    }
   }
 ]

@@ -30,6 +30,8 @@ const HARD_TERMS = [
   '비교급', '최상급', '현재진행', '현재완료', '능동', '수동태', '동사원형', '부정문',
 ];
 const EXPLANATION_MAX = 100;   // 이보다 길면 아이가 끝까지 읽지 않는다
+const WHY_NOT_MAX = 40;        // 오답 이유는 한 줄에 들어와야 한다
+const KEY_EXPR_KO_MAX = 30;    // 표현 카드의 뜻도 한 줄
 
 // ---------- ULID (크록포드 base32, 모노토닉) ----------
 // 같은 실행 안에서 발급 순서 = 사전순이 되도록 시퀀스를 넣는다.
@@ -131,6 +133,37 @@ function checkQuestionCore(it, ctx, part, source = null) {
       err(`${ctx}: evidence "${it.evidence}"를 원문에서 찾지 못했습니다 (철자·부호까지 그대로여야 함)`);
     }
   }
+  // 오답 이유(선택): 아이가 고른 보기에만 한 줄로 뜬다. 정답 자리에는 쓸 수 없다.
+  if (it.why_not !== undefined) {
+    if (typeof it.why_not !== 'object' || it.why_not === null || Array.isArray(it.why_not)) {
+      err(`${ctx}: why_not은 {"보기번호": "이유"} 형태여야 합니다`);
+    } else {
+      for (const [k, v] of Object.entries(it.why_not)) {
+        const i = Number(k);
+        if (!Number.isInteger(i) || i < 0 || i >= (it.choices?.length || 0)) {
+          err(`${ctx}: why_not의 보기번호 "${k}"가 범위를 벗어났습니다`);
+        } else if (i === it.answer_idx) {
+          err(`${ctx}: why_not에 정답 자리(${k})를 넣을 수 없습니다`);
+        }
+        if (typeof v !== 'string' || !v.trim()) err(`${ctx}: why_not[${k}]가 비어 있습니다`);
+        else {
+          const hard = HARD_TERMS.filter((w) => v.includes(w));
+          if (hard.length) err(`${ctx}: why_not[${k}]에 어려운 용어 [${hard.join(', ')}]`);
+          if (v.length > WHY_NOT_MAX) err(`${ctx}: why_not[${k}]가 ${v.length}자 (${WHY_NOT_MAX}자 이하로)`);
+        }
+      }
+    }
+  }
+  // 표현 카드(선택): 이 문제에서 챙겨 갈 표현 1개
+  if (it.key_expr !== undefined) {
+    const k = it.key_expr;
+    if (typeof k !== 'object' || k === null || typeof k.en !== 'string' || !k.en.trim()
+        || typeof k.ko !== 'string' || !k.ko.trim()) {
+      err(`${ctx}: key_expr은 {"en": "영어 표현", "ko": "뜻"} 형태여야 합니다`);
+    } else if (k.ko.length > KEY_EXPR_KO_MAX) {
+      err(`${ctx}: key_expr.ko가 ${k.ko.length}자 (${KEY_EXPR_KO_MAX}자 이하로)`);
+    }
+  }
   if (!Number.isInteger(it.difficulty_label) || it.difficulty_label < 1 || it.difficulty_label > 5) {
     err(`${ctx}: difficulty_label은 1~5 정수`);
   }
@@ -160,6 +193,8 @@ function pushQuestion(part, tmpId, it, passageId, extra = {}) {
     audio_url: extra.audio_url ?? null, image_url: extra.image_url ?? null,
     accent: extra.accent ?? null, script: extra.script ?? null,
     evidence: it.evidence ?? null,
+    why_not: it.why_not ? JSON.stringify(it.why_not) : null,
+    key_expr: it.key_expr ? JSON.stringify(it.key_expr) : null,
     status: extra.status ?? 'active',
   });
   for (const t of new Set(it.tags || [])) qTags.push({ question_id: id, tag_id: t });
@@ -277,11 +312,12 @@ for (const p of passages) {
 }
 for (const it of questions) {
   sql.push(
-    `INSERT INTO questions (id, passage_id, section, part, stem, choices, answer_idx, explanation_ko, difficulty_label, rating, audio_url, image_url, accent, script, evidence, status, created_at) VALUES (` +
+    `INSERT INTO questions (id, passage_id, section, part, stem, choices, answer_idx, explanation_ko, difficulty_label, rating, audio_url, image_url, accent, script, evidence, why_not, key_expr, status, created_at) VALUES (` +
     [q(it.id), q(it.passage_id), q(it.section), q(it.part), q(it.stem), q(it.choices), it.answer_idx,
-     q(it.explanation_ko), it.difficulty_label, it.rating, q(it.audio_url), q(it.image_url), q(it.accent), q(it.script), q(it.evidence), q(it.status), q(now)].join(', ') + `) ` +
+     q(it.explanation_ko), it.difficulty_label, it.rating, q(it.audio_url), q(it.image_url), q(it.accent), q(it.script), q(it.evidence),
+     q(it.why_not), q(it.key_expr), q(it.status), q(now)].join(', ') + `) ` +
     // rating·times_answered·times_correct·created_at은 운영 데이터 — 재임포트 시 보존
-    `ON CONFLICT(id) DO UPDATE SET passage_id=excluded.passage_id, stem=excluded.stem, choices=excluded.choices, answer_idx=excluded.answer_idx, explanation_ko=excluded.explanation_ko, difficulty_label=excluded.difficulty_label, audio_url=excluded.audio_url, image_url=excluded.image_url, accent=excluded.accent, script=excluded.script, evidence=excluded.evidence, status=excluded.status;`
+    `ON CONFLICT(id) DO UPDATE SET passage_id=excluded.passage_id, stem=excluded.stem, choices=excluded.choices, answer_idx=excluded.answer_idx, explanation_ko=excluded.explanation_ko, difficulty_label=excluded.difficulty_label, audio_url=excluded.audio_url, image_url=excluded.image_url, accent=excluded.accent, script=excluded.script, evidence=excluded.evidence, why_not=excluded.why_not, key_expr=excluded.key_expr, status=excluded.status;`
   );
 }
 const qIds = questions.map((x) => q(x.id)).join(', ');

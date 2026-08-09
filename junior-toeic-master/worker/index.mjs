@@ -39,6 +39,26 @@ async function evidenceOf(db, q) {
   return { evidence: q.evidence, evidence_text: text };
 }
 
+const parseJson = (s) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
+
+// 채점 결과에 붙는 "글이 아닌 해설" 묶음.
+//  why_not  : 아이가 고른 보기 하나의 이유만 (다른 오답까지 주면 읽지 않는다)
+//  key_expr : 이 문제에서 챙길 표현 카드
+//  concept  : 개념 그림을 고르는 열쇠 — 문법 태그 우선, 없으면 듣기 전략 태그
+async function feedbackOf(db, q, chosenIdx) {
+  const why = parseJson(q.why_not);
+  const { results: tags } = await db.prepare(
+    'SELECT tag_id FROM question_tags WHERE question_id = ?1'
+  ).bind(q.id).all();
+  const codes = tags.map((t) => t.tag_id);
+  return {
+    ...(await evidenceOf(db, q)),
+    why_not: (why && chosenIdx !== q.answer_idx) ? (why[String(chosenIdx)] ?? null) : null,
+    key_expr: parseJson(q.key_expr),
+    concept: codes.find((t) => t.startsWith('G.')) || codes.find((t) => t === 'LS.qr') || null,
+  };
+}
+
 const groupOf = async (db, user) => {
   const size = (await db.prepare('SELECT set_size FROM classes WHERE id = ?1').bind(user.class_id).first())?.set_size ?? 12;
   return size <= 12 ? 'junior' : 'basic';
@@ -262,7 +282,7 @@ app.post('/api/answers', requireAuth, async (c) => {
     return c.json({ error: 'question_id(문자열), chosen_idx(정수)가 필요합니다' }, 400);
   }
   const q = await c.env.DB.prepare(
-    'SELECT id, passage_id, stem, script, evidence, answer_idx, explanation_ko, rating FROM questions WHERE id = ?1'
+    'SELECT id, passage_id, stem, script, evidence, why_not, key_expr, answer_idx, explanation_ko, rating FROM questions WHERE id = ?1'
   ).bind(question_id).first();
   if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
 
@@ -283,7 +303,7 @@ app.post('/api/answers', requireAuth, async (c) => {
   });
   return c.json({
     correct, graduated, answer_idx: q.answer_idx, explanation_ko: q.explanation_ko,
-    ...(await evidenceOf(c.env.DB, q)),
+    ...(await feedbackOf(c.env.DB, q, chosen_idx)),
   });
 });
 
@@ -447,7 +467,7 @@ app.post('/api/check', async (c) => {
     return c.json({ error: 'question_id(문자열), chosen_idx(정수)가 필요합니다' }, 400);
   }
   const q = await c.env.DB.prepare(
-    'SELECT id, passage_id, stem, script, evidence, answer_idx, explanation_ko FROM questions WHERE id = ?1'
+    'SELECT id, passage_id, stem, script, evidence, why_not, key_expr, answer_idx, explanation_ko FROM questions WHERE id = ?1'
   ).bind(question_id).first();
   if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
 
@@ -458,7 +478,7 @@ app.post('/api/check', async (c) => {
 
   return c.json({
     correct, answer_idx: q.answer_idx, explanation_ko: q.explanation_ko,
-    ...(await evidenceOf(c.env.DB, q)),
+    ...(await feedbackOf(c.env.DB, q, chosen_idx)),
   });
 });
 

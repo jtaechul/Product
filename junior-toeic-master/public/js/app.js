@@ -6,6 +6,8 @@
 // M1은 로그인 전이라 학습 기록을 이 기기(localStorage)에 보관한다.
 // M2에서 계정이 붙으면 서버의 user_skills·SRS 큐로 옮긴다.
 
+import { conceptOf } from './concepts.js';
+
 const view = document.getElementById('view');
 const tabbar = document.getElementById('tabbar');
 
@@ -30,7 +32,7 @@ const todayKey = () => new Date().toLocaleDateString('sv');  // YYYY-MM-DD (로�
 
 // ---------- 학습 기록 ----------
 const KEY = 'jumplish.progress.v1';
-const blank = { parts: {}, wrong: [], days: [], set: null, setDate: null, setIdx: 0 };
+const blank = { parts: {}, wrong: [], days: [], set: null, setDate: null, setIdx: 0, exprs: [] };
 let store;
 try { store = { ...blank, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; }
 catch { store = { ...blank }; }
@@ -47,6 +49,19 @@ function recordAnswer(q, passage, correct) {
 
   const d = todayKey();
   if (!store.days.includes(d)) { store.days.push(d); store.days = store.days.slice(-400); }
+  save();
+}
+
+// 표현 주머니 — 틀린 문제의 표현은 담아 두고, 그 표현을 다시 맞히면 뺀다.
+// 아이가 "내가 아직 모르는 표현"만 모아 보게 하려는 것이다.
+function rememberExpr(q, expr, correct) {
+  const i = store.exprs.findIndex((e) => e.id === q.id);
+  if (correct) { if (i >= 0) store.exprs.splice(i, 1); }
+  else {
+    const item = { id: q.id, part: q.part, en: expr.en, ko: expr.ko, at: Date.now() };
+    if (i >= 0) store.exprs[i] = item; else store.exprs.unshift(item);
+    store.exprs = store.exprs.slice(0, 60);
+  }
   save();
 }
 
@@ -635,7 +650,35 @@ function showDiagResult(r) {
 }
 
 // ---------- 오답 ----------
+// 틀린 문제에서 담아 둔 표현들 — 아직 내 것이 아닌 표현만 모여 있다.
+function exprPocketHtml() {
+  if (!store.exprs.length) return '';
+  const list = store.exprs.map((e) => `
+    <div class="row">
+      <span class="row-ico">${e.part}</span>
+      <span class="row-body">
+        <span class="row-t">${esc(e.en)}</span>
+        <span class="row-s">${esc(e.ko)}</span>
+      </span>
+    </div>`).join('');
+  return `
+    <p class="section-label">표현 주머니 ${store.exprs.length}개</p>
+    <div class="card"><div class="rowlist">${list}</div>
+      <p class="notice">그 문제를 다시 맞히면 주머니에서 빠져요.</p></div>`;
+}
+
 async function showReview() {
+  await renderReview();
+  const pocket = exprPocketHtml();
+  if (pocket) {
+    view.insertAdjacentHTML('beforeend', pocket);
+    view.querySelectorAll('.row-ico').forEach((el) => {
+      el.style.cssText += 'font-size:.74rem;font-weight:700;background:var(--primary-soft);color:var(--primary)';
+    });
+  }
+}
+
+async function renderReview() {
   setTab('review');
   tabbarVisible(true);
   if (auth) {
@@ -1082,12 +1125,35 @@ function renderQuestion() {
         }
         const replay = audioUrl
           ? '<button class="ev-replay" data-replay>천천히 다시 듣기</button>' : '';
+        // 내가 고른 보기만 콕 집어 "왜 아닌지" — 다른 오답까지 늘어놓으면 안 읽는다
+        const whyHtml = r.why_not ? `
+          <div class="why-not">
+            <span class="why-letter">${LETTERS[selected]}</span>
+            <span>${esc(r.why_not)}</span>
+          </div>` : '';
+        // 오늘 챙길 표현 카드 한 장
+        const expr = r.key_expr;
+        const exprHtml = expr ? `
+          <div class="expr-card">
+            <p class="expr-cap">이 문제에서 챙길 표현</p>
+            <p class="expr-en">${esc(expr.en)}</p>
+            <p class="expr-ko">${esc(expr.ko)}</p>
+          </div>` : '';
+        // 개념 그림 — 틀렸으면 펼쳐서, 맞았으면 접어서 (화면이 길어지지 않게)
+        const con = conceptOf(r.concept);
+        const conHtml = con ? `
+          <details class="concept" ${r.correct ? '' : 'open'}>
+            <summary>${esc(con.title)}</summary>
+            <div class="concept-body">${con.svg}</div>
+          </details>` : '';
         block.querySelector('[data-result]').innerHTML = `
           <div class="result ${r.correct ? 'ok' : 'bad'}">
             <p class="verdict">${r.graduated ? '4연승! 이 문제를 봉인 앨범에 박제했어요' : r.correct ? '정답이에요!' : '아쉬워요, 다시 볼까요?'}</p>
-            ${evHtml}${replay}
+            ${whyHtml}${evHtml}${replay}
             <p>${esc(r.explanation_ko)}</p>
+            ${conHtml}${exprHtml}
           </div>`;
+        if (expr) rememberExpr(q, expr, r.correct);
         block.querySelector('[data-replay]')?.addEventListener('click', () => {
           const a = view.querySelector('audio');
           if (!a) return;

@@ -20,7 +20,15 @@
     "accent": "US",
     "tts_script": "What color is your backpack?",
     "status": "active",
-    "evidence": "What color"
+    "evidence": "What color",
+    "why_not": {
+      "0": "어디 있는지 답했어요. 색을 물었어요",
+      "2": "예·아니오로 답할 질문이 아니에요"
+    },
+    "key_expr": {
+      "en": "What color ~?",
+      "ko": "무슨 색이야?"
+    }
   },
   {
     "type": "single",
@@ -43,7 +51,15 @@
     "accent": "UK",
     "tts_script": "How old is your brother?",
     "status": "active",
-    "evidence": "How old"
+    "evidence": "How old",
+    "why_not": {
+      "1": "어디 있는지 답이에요",
+      "2": "나이를 물었으니 예·아니오는 안 돼요"
+    },
+    "key_expr": {
+      "en": "How old ~?",
+      "ko": "몇 살이야?"
+    }
   },
   {
     "type": "single",
@@ -66,7 +82,15 @@
     "accent": "AU",
     "tts_script": "Where is your umbrella?",
     "status": "active",
-    "evidence": "Where"
+    "evidence": "Where",
+    "why_not": {
+      "1": "날씨 이야기예요. 장소를 물었어요",
+      "2": "장소를 물었으니 예·아니오는 안 돼요"
+    },
+    "key_expr": {
+      "en": "Where is ~?",
+      "ko": "~는 어디 있어?"
+    }
   },
   {
     "type": "single",
@@ -89,7 +113,15 @@
     "accent": "US",
     "tts_script": "Do you like bananas?",
     "status": "active",
-    "evidence": "Do you like"
+    "evidence": "Do you like",
+    "why_not": {
+      "0": "색깔을 말했어요",
+      "1": "개수를 말했어요"
+    },
+    "key_expr": {
+      "en": "Do you like ~?",
+      "ko": "~ 좋아해?"
+    }
   },
   {
     "type": "single",
@@ -112,7 +144,15 @@
     "accent": "US",
     "tts_script": "When does the art class begin?",
     "status": "active",
-    "evidence": "When"
+    "evidence": "When",
+    "why_not": {
+      "1": "장소 답이에요. 때를 물었어요",
+      "2": "어땠는지 말했어요"
+    },
+    "key_expr": {
+      "en": "When does it begin?",
+      "ko": "언제 시작해?"
+    }
   },
   {
     "type": "single",
@@ -135,7 +175,15 @@
     "accent": "UK",
     "tts_script": "Who made this delicious cake?",
     "status": "active",
-    "evidence": "Who made"
+    "evidence": "Who made",
+    "why_not": {
+      "0": "언제인지 답했어요",
+      "1": "어디인지 답했어요"
+    },
+    "key_expr": {
+      "en": "Who made ~?",
+      "ko": "누가 만들었어?"
+    }
   },
   {
     "type": "single",
@@ -158,7 +206,15 @@
     "accent": "US",
     "tts_script": "How do you go to school?",
     "status": "active",
-    "evidence": "How do you go"
+    "evidence": "How do you go",
+    "why_not": {
+      "0": "몇 시인지 답했어요",
+      "2": "어디인지 답했어요"
+    },
+    "key_expr": {
+      "en": "How do you go ~?",
+      "ko": "어떻게 가?"
+    }
   },
   {
     "type": "single",
@@ -181,7 +237,15 @@
     "accent": "AU",
     "tts_script": "Whose sneakers are these?",
     "status": "active",
-    "evidence": "Whose"
+    "evidence": "Whose",
+    "why_not": {
+      "0": "크기를 말했어요",
+      "2": "어디인지 답했어요"
+    },
+    "key_expr": {
+      "en": "Whose ~ are these?",
+      "ko": "이거 누구 거야?"
+    }
   },
   {
     "type": "single",
@@ -204,7 +268,15 @@
     "accent": "US",
     "tts_script": "Would you like some more soup?",
     "status": "active",
-    "evidence": "Would you like"
+    "evidence": "Would you like",
+    "why_not": {
+      "1": "어디 있는지 답했어요",
+      "2": "누가 만들었는지 답했어요"
+    },
+    "key_expr": {
+      "en": "Would you like ~?",
+      "ko": "~ 좀 더 드릴까요?"
+    }
   },
   {
     "type": "single",
@@ -227,7 +299,15 @@
     "accent": "UK",
     "tts_script": "Where can I buy stamps?",
     "status": "active",
-    "evidence": "Where can I buy"
+    "evidence": "Where can I buy",
+    "why_not": {
+      "0": "살 때 하는 말이지 장소가 아니에요",
+      "1": "언제인지 답했어요"
+    },
+    "key_expr": {
+      "en": "Where can I buy ~?",
+      "ko": "어디서 살 수 있어?"
+    }
   },
   {
     "type": "single",
@@ -250,7 +330,15 @@
     "accent": "US",
     "tts_script": "What time do you usually get up?",
     "status": "active",
-    "evidence": "What time"
+    "evidence": "What time",
+    "why_not": {
+      "0": "어디인지 답했어요",
+      "1": "시각을 물었으니 예·아니오는 안 돼요"
+    },
+    "key_expr": {
+      "en": "What time ~?",
+      "ko": "몇 시에 ~해?"
+    }
   },
   {
     "type": "single",
@@ -273,7 +361,15 @@
     "accent": "AU",
     "tts_script": "Is the library open on Sundays?",
     "status": "active",
-    "evidence": "Is the library open"
+    "evidence": "Is the library open",
+    "why_not": {
+      "0": "무엇을 했는지 답했어요",
+      "2": "어디인지 답했어요"
+    },
+    "key_expr": {
+      "en": "Is it open on ~?",
+      "ko": "~에 문 열어?"
+    }
   },
   {
     "type": "single",
@@ -296,7 +392,15 @@
     "accent": "US",
     "tts_script": "Why were you late this morning?",
     "status": "active",
-    "evidence": "Why"
+    "evidence": "Why",
+    "why_not": {
+      "0": "몇 시인지 답했어요",
+      "1": "까닭을 물었으니 예·아니오는 안 돼요"
+    },
+    "key_expr": {
+      "en": "Why were you late?",
+      "ko": "왜 늦었어?"
+    }
   },
   {
     "type": "single",
@@ -319,7 +423,15 @@
     "accent": "UK",
     "tts_script": "How much are these oranges?",
     "status": "active",
-    "evidence": "How much"
+    "evidence": "How much",
+    "why_not": {
+      "1": "맛 이야기예요. 값을 물었어요",
+      "2": "개수를 말했어요"
+    },
+    "key_expr": {
+      "en": "How much ~?",
+      "ko": "얼마예요?"
+    }
   },
   {
     "type": "single",
@@ -342,7 +454,15 @@
     "accent": "AU",
     "tts_script": "How long does the train ride take?",
     "status": "active",
-    "evidence": "How long"
+    "evidence": "How long",
+    "why_not": {
+      "1": "얼마나 자주 오는지 답했어요",
+      "2": "어디서 타는지 답했어요"
+    },
+    "key_expr": {
+      "en": "How long does it take?",
+      "ko": "얼마나 걸려?"
+    }
   },
   {
     "type": "single",
@@ -365,7 +485,15 @@
     "accent": "US",
     "tts_script": "Could you close the window, please?",
     "status": "active",
-    "evidence": "Could you"
+    "evidence": "Could you",
+    "why_not": {
+      "0": "부탁에 대한 대답이 아니에요",
+      "2": "어디인지 답했어요"
+    },
+    "key_expr": {
+      "en": "Could you ~, please?",
+      "ko": "~해 주시겠어요?"
+    }
   },
   {
     "type": "single",
@@ -388,7 +516,15 @@
     "accent": "US",
     "tts_script": "This math homework is really difficult.",
     "status": "active",
-    "evidence": "really difficult"
+    "evidence": "really difficult",
+    "why_not": {
+      "1": "수업 시각 이야기로 새요",
+      "2": "갑자기 다른 이야기를 꺼냈어요"
+    },
+    "key_expr": {
+      "en": "ask ~ for help",
+      "ko": "~에게 도움을 청하다"
+    }
   },
   {
     "type": "single",
@@ -411,7 +547,15 @@
     "accent": "UK",
     "tts_script": "Which do you like better, spring or fall?",
     "status": "active",
-    "evidence": "Which do you like better"
+    "evidence": "Which do you like better",
+    "why_not": {
+      "0": "둘 중 하나를 골라 말해야 해요",
+      "1": "날씨 이야기로 새요"
+    },
+    "key_expr": {
+      "en": "Which do you like better?",
+      "ko": "둘 중 뭐가 더 좋아?"
+    }
   },
   {
     "type": "single",
@@ -434,7 +578,15 @@
     "accent": "US",
     "tts_script": "Who's going to water the plants this week?",
     "status": "active",
-    "evidence": "Who's going to"
+    "evidence": "Who's going to",
+    "why_not": {
+      "0": "얼마나 자주인지 답했어요",
+      "2": "잘 자란다는 이야기예요"
+    },
+    "key_expr": {
+      "en": "Who's going to ~?",
+      "ko": "누가 ~할 거야?"
+    }
   },
   {
     "type": "single",
@@ -457,7 +609,15 @@
     "accent": "AU",
     "tts_script": "Have you seen my glasses anywhere?",
     "status": "active",
-    "evidence": "Have you seen my glasses"
+    "evidence": "Have you seen my glasses",
+    "why_not": {
+      "0": "glasses를 물잔으로 잘못 들었어요",
+      "2": "무엇을 했는지 답했어요"
+    },
+    "key_expr": {
+      "en": "Have you seen ~?",
+      "ko": "~ 못 봤어?"
+    }
   },
   {
     "type": "single",
@@ -480,7 +640,15 @@
     "accent": "US",
     "tts_script": "The school bus leaves in five minutes.",
     "status": "active",
-    "evidence": "in five minutes"
+    "evidence": "in five minutes",
+    "why_not": {
+      "0": "어떻게 가는지 답했어요",
+      "1": "five만 같고 뜻이 달라요"
+    },
+    "key_expr": {
+      "en": "leave in five minutes",
+      "ko": "5분 뒤에 떠나다"
+    }
   },
   {
     "type": "single",
@@ -503,7 +671,15 @@
     "accent": "UK",
     "tts_script": "Why don't we practice after lunch instead?",
     "status": "active",
-    "evidence": "Why don't we"
+    "evidence": "Why don't we",
+    "why_not": {
+      "1": "까닭을 묻는 게 아니라 하자는 제안이에요",
+      "2": "지난 일이 아니라 앞으로 할 일이에요"
+    },
+    "key_expr": {
+      "en": "Why don't we ~?",
+      "ko": "우리 ~하는 게 어때?"
+    }
   },
   {
     "type": "single",
@@ -526,7 +702,15 @@
     "accent": "AU",
     "tts_script": "How often does the ferry run in winter?",
     "status": "active",
-    "evidence": "How often"
+    "evidence": "How often",
+    "why_not": {
+      "0": "걸리는 시간을 답했어요",
+      "1": "어디서 타는지 답했어요"
+    },
+    "key_expr": {
+      "en": "How often ~?",
+      "ko": "얼마나 자주?"
+    }
   },
   {
     "type": "single",
@@ -549,6 +733,14 @@
     "accent": "US",
     "tts_script": "Didn't you order the tomato pasta?",
     "status": "active",
-    "evidence": "Didn't you order"
+    "evidence": "Didn't you order",
+    "why_not": {
+      "0": "tomato만 같고 답이 아니에요",
+      "2": "계산 이야기로 새요"
+    },
+    "key_expr": {
+      "en": "Didn't you order ~?",
+      "ko": "~ 시키지 않았어?"
+    }
   }
 ]

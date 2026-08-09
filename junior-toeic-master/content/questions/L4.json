@@ -28,7 +28,16 @@
           "LS.gist",
           "V.school"
         ],
-        "evidence": "Sports day is this Friday."
+        "evidence": "Sports day is this Friday.",
+        "why_not": {
+          "0": "소풍 이야기는 나오지 않았어요",
+          "1": "음악회 이야기는 나오지 않았어요",
+          "3": "전시회 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "Sports day",
+          "ko": "운동회 날"
+        }
       },
       {
         "stem": "What should students bring?",
@@ -45,7 +54,16 @@
           "LS.detail",
           "V.school"
         ],
-        "evidence": "bring a water bottle"
+        "evidence": "bring a water bottle",
+        "why_not": {
+          "1": "비 오면 체육관에서 한다고만 했어요",
+          "2": "점심 이야기는 나오지 않았어요",
+          "3": "공을 가져오라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "bring a water bottle",
+          "ko": "물병을 가져오다"
+        }
       }
     ],
     "status": "active"
@@ -79,7 +97,16 @@
           "LS.detail",
           "V.daily"
         ],
-        "evidence": "This morning will be sunny and warm"
+        "evidence": "This morning will be sunny and warm",
+        "why_not": {
+          "0": "구름은 오후에 온다고 했어요",
+          "2": "비는 오후 4시쯤 시작해요",
+          "3": "눈 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "sunny and warm",
+          "ko": "맑고 따뜻한"
+        }
       },
       {
         "stem": "What will happen around four o'clock?",
@@ -96,7 +123,16 @@
           "LS.detail",
           "V.daily"
         ],
-        "evidence": "rain will start around four o'clock"
+        "evidence": "rain will start around four o'clock",
+        "why_not": {
+          "0": "해가 나는 건 오전이에요",
+          "1": "학교 마치는 시각은 안 나와요",
+          "2": "눈이 아니라 비예요"
+        },
+        "key_expr": {
+          "en": "around four",
+          "ko": "4시쯤"
+        }
       }
     ],
     "status": "active"
@@ -130,7 +166,16 @@
           "LS.gist",
           "V.daily"
         ],
-        "evidence": "I can't pick you up after your piano lesson today"
+        "evidence": "I can't pick you up after your piano lesson today",
+        "why_not": {
+          "0": "생일 이야기는 나오지 않았어요",
+          "1": "피아노 시간을 바꾸는 게 아니에요",
+          "2": "숙제 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "pick you up",
+          "ko": "데리러 가다"
+        }
       },
       {
         "stem": "How should Minho go home?",
@@ -147,7 +192,16 @@
           "LS.detail",
           "V.daily"
         ],
-        "evidence": "Please take the number nine bus home"
+        "evidence": "Please take the number nine bus home",
+        "why_not": {
+          "0": "택시 이야기는 나오지 않았어요",
+          "2": "차는 시동이 안 걸린다고 했어요",
+          "3": "걸어가라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "take the bus home",
+          "ko": "버스 타고 집에 가다"
+        }
       }
     ],
     "status": "active"
@@ -181,7 +235,16 @@
           "LS.gist",
           "V.leisure"
         ],
-        "evidence": "Welcome to the city zoo."
+        "evidence": "Welcome to the city zoo.",
+        "why_not": {
+          "1": "수족관이 아니라 동물원이에요",
+          "2": "농장 이야기는 나오지 않았어요",
+          "3": "공원 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "the city zoo",
+          "ko": "시립 동물원"
+        }
       },
       {
         "stem": "What should visitors NOT do?",
@@ -198,7 +261,16 @@
           "LS.detail",
           "V.leisure"
         ],
-        "evidence": "Please don't knock on the glass"
+        "evidence": "Please don't knock on the glass",
+        "why_not": {
+          "0": "먹이 주는 건 보라고 했어요",
+          "1": "쉬지 말라는 말은 없어요",
+          "3": "코끼리는 다음에 간다고 했어요"
+        },
+        "key_expr": {
+          "en": "don't knock on the glass",
+          "ko": "유리를 두드리지 마세요"
+        }
       }
     ],
     "status": "active"
@@ -232,7 +304,16 @@
           "LS.detail",
           "V.daily"
         ],
-        "evidence": "will close early today, at five o'clock"
+        "evidence": "will close early today, at five o'clock",
+        "why_not": {
+          "0": "4시 30분은 책 빌리는 마감이에요",
+          "2": "6시 이야기는 나오지 않았어요",
+          "3": "7시 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "close early",
+          "ko": "일찍 문을 닫다"
+        }
       },
       {
         "stem": "What should a person do to borrow a book today?",
@@ -249,7 +330,16 @@
           "LS.detail",
           "V.daily"
         ],
-        "evidence": "please come to the front desk before four thirty"
+        "evidence": "please come to the front desk before four thirty",
+        "why_not": {
+          "1": "내일 오라는 말은 없어요",
+          "2": "새 열람실은 책을 옮기는 곳이에요",
+          "3": "5시는 문 닫는 시각이에요"
+        },
+        "key_expr": {
+          "en": "the front desk",
+          "ko": "안내 데스크"
+        }
       }
     ],
     "status": "active"
@@ -283,7 +373,16 @@
           "LS.gist",
           "V.daily"
         ],
-        "evidence": "Try going to bed thirty minutes earlier tonight."
+        "evidence": "Try going to bed thirty minutes earlier tonight.",
+        "why_not": {
+          "0": "음식 이야기는 나오지 않았어요",
+          "1": "운동 이야기는 나오지 않았어요",
+          "2": "시험 공부 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "go to bed earlier",
+          "ko": "더 일찍 자다"
+        }
       },
       {
         "stem": "What does the speaker say to do instead of using a phone?",
@@ -300,7 +399,16 @@
           "LS.detail",
           "V.daily"
         ],
-        "evidence": "Turn off your phone and read a book instead."
+        "evidence": "Turn off your phone and read a book instead.",
+        "why_not": {
+          "0": "음악은 방송 끝에 나와요",
+          "1": "우유 이야기는 나오지 않았어요",
+          "3": "가족과 이야기하라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "read a book instead",
+          "ko": "대신 책을 읽다"
+        }
       }
     ],
     "status": "active"
@@ -334,7 +442,16 @@
           "LS.detail",
           "V.travel"
         ],
-        "evidence": "Our bus will arrive at the strawberry farm in twenty minutes."
+        "evidence": "Our bus will arrive at the strawberry farm in twenty minutes.",
+        "why_not": {
+          "1": "사과가 아니라 딸기예요",
+          "2": "시장 이야기는 나오지 않았어요",
+          "3": "산 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "strawberry farm",
+          "ko": "딸기 농장"
+        }
       },
       {
         "stem": "Who is probably listening to this talk?",
@@ -351,7 +468,16 @@
           "LS.infer",
           "V.travel"
         ],
-        "evidence": "Please stay with your group all day."
+        "evidence": "Please stay with your group all day.",
+        "why_not": {
+          "0": "파는 게 아니라 따러 가요",
+          "1": "집이 아니라 버스로 가는 중이에요",
+          "2": "요리사 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "stay with your group",
+          "ko": "모둠과 함께 있다"
+        }
       }
     ],
     "status": "active"
@@ -385,7 +511,16 @@
           "LS.gist",
           "V.shopping"
         ],
-        "evidence": "Thank you for visiting our market today."
+        "evidence": "Thank you for visiting our market today.",
+        "why_not": {
+          "0": "은행 이야기는 나오지 않았어요",
+          "1": "학교 이야기는 나오지 않았어요",
+          "3": "정류장 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "half price",
+          "ko": "반값"
+        }
       },
       {
         "stem": "A woman buys two bottles of milk. How many bottles will she take home?",
@@ -402,7 +537,16 @@
           "LS.infer",
           "V.shopping"
         ],
-        "evidence": "if you buy two bottles of milk, you will get one free"
+        "evidence": "if you buy two bottles of milk, you will get one free",
+        "why_not": {
+          "0": "두 개 사면 하나를 더 줘요",
+          "2": "하나만 더 주니까 넷은 아니에요",
+          "3": "여섯은 너무 많아요"
+        },
+        "key_expr": {
+          "en": "buy two, get one free",
+          "ko": "두 개 사면 하나 더"
+        }
       }
     ],
     "status": "active"

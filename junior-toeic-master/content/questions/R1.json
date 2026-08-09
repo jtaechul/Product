@@ -20,7 +20,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "my sister"
+    "evidence": "my sister",
+    "why_not": {
+      "0": "남자를 가리키는 말이에요",
+      "2": "'그녀는'이라 이름 앞에 못 와요",
+      "3": "'그를'이라 이름 앞에 못 와요"
+    },
+    "key_expr": {
+      "en": "Her name is ~",
+      "ko": "그녀의 이름은 ~"
+    }
   },
   {
     "type": "single",
@@ -44,7 +53,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "noon"
+    "evidence": "noon",
+    "why_not": {
+      "1": "요일이나 날짜 앞에 써요",
+      "2": "달·계절처럼 긴 때에 써요",
+      "3": "때를 나타내는 말이 아니에요"
+    },
+    "key_expr": {
+      "en": "at noon",
+      "ko": "낮 12시에"
+    }
   },
   {
     "type": "single",
@@ -67,7 +85,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "My dog"
+    "evidence": "My dog",
+    "why_not": {
+      "0": "한 마리일 땐 s를 붙여요",
+      "1": "앞에 is가 있어야 쓸 수 있어요",
+      "2": "여기엔 to를 쓰지 않아요"
+    },
+    "key_expr": {
+      "en": "My dog runs fast",
+      "ko": "우리 개는 빨리 달려"
+    }
   },
   {
     "type": "single",
@@ -91,7 +118,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "Yesterday"
+    "evidence": "Yesterday",
+    "why_not": {
+      "0": "어제 한 일이라 -ed가 붙어요",
+      "1": "I 뒤에는 s를 붙이지 않아요",
+      "3": "앞에 was가 있어야 쓸 수 있어요"
+    },
+    "key_expr": {
+      "en": "Yesterday I cleaned",
+      "ko": "어제 나는 치웠다"
+    }
   },
   {
     "type": "single",
@@ -114,7 +150,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "wear a helmet"
+    "evidence": "wear a helmet",
+    "why_not": {
+      "1": "have to로 써야 뜻이 통해요",
+      "2": "want to wear로 써야 해요",
+      "3": "need to wear로 써야 해요"
+    },
+    "key_expr": {
+      "en": "should wear",
+      "ko": "~하는 게 좋다"
+    }
   },
   {
     "type": "single",
@@ -138,7 +183,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "my brother likes bananas"
+    "evidence": "my brother likes bananas",
+    "why_not": {
+      "0": "앞뒤가 까닭과 결과가 아니에요",
+      "2": "둘 중 하나를 고를 때 써요",
+      "3": "까닭을 말할 때 써요"
+    },
+    "key_expr": {
+      "en": "A, but B",
+      "ko": "A, 하지만 B"
+    }
   },
   {
     "type": "single",
@@ -161,7 +215,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "the bank and the park"
+    "evidence": "the bank and the park",
+    "why_not": {
+      "0": "붙어 있는 위를 뜻해요",
+      "1": "한 지점을 뜻해요",
+      "2": "아래를 뜻해요"
+    },
+    "key_expr": {
+      "en": "between A and B",
+      "ko": "A와 B 사이에"
+    }
   },
   {
     "type": "single",
@@ -184,7 +247,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "voice"
+    "evidence": "voice",
+    "why_not": {
+      "0": "'아름다움'이라는 이름말이에요",
+      "1": "움직임을 꾸밀 때 쓰는 말이에요",
+      "3": "'아름답게 하다'라는 뜻이에요"
+    },
+    "key_expr": {
+      "en": "a beautiful voice",
+      "ko": "아름다운 목소리"
+    }
   },
   {
     "type": "single",
@@ -207,7 +279,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "than"
+    "evidence": "than",
+    "why_not": {
+      "0": "than이 있으면 -er을 붙여요",
+      "2": "셋 이상에서 으뜸일 때 써요",
+      "3": "heavy는 -er만 붙여요"
+    },
+    "key_expr": {
+      "en": "heavier than ~",
+      "ko": "~보다 무거운"
+    }
   },
   {
     "type": "single",
@@ -231,7 +312,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "went to the library"
+    "evidence": "went to the library",
+    "why_not": {
+      "0": "까닭을 말하려면 to가 필요해요",
+      "1": "여기에 이어 붙일 수 없어요",
+      "3": "이미 went로 지난 일을 말했어요"
+    },
+    "key_expr": {
+      "en": "go ~ to borrow",
+      "ko": "빌리러 가다"
+    }
   },
   {
     "type": "single",
@@ -254,7 +344,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "now"
+    "evidence": "now",
+    "why_not": {
+      "0": "아이들이 여럿이라 s를 안 붙여요",
+      "1": "now(지금)와 맞지 않아요",
+      "2": "앞에 are가 있어야 해요"
+    },
+    "key_expr": {
+      "en": "are swimming now",
+      "ko": "지금 헤엄치고 있다"
+    }
   },
   {
     "type": "single",
@@ -277,7 +376,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "Jake lost his umbrella"
+    "evidence": "Jake lost his umbrella",
+    "why_not": {
+      "1": "뒤에 물건 이름이 있어야 해요",
+      "2": "'나를'이라는 뜻이에요",
+      "3": "'내가'라서 빌려준 물건이 될 수 없어요"
+    },
+    "key_expr": {
+      "en": "lent him mine",
+      "ko": "내 것을 빌려줬다"
+    }
   },
   {
     "type": "single",
@@ -301,7 +409,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "Tom and his friends"
+    "evidence": "Tom and his friends",
+    "why_not": {
+      "0": "여럿일 땐 s를 붙이지 않아요",
+      "2": "여럿이면 are를 써요",
+      "3": "앞에 are가 있어야 해요"
+    },
+    "key_expr": {
+      "en": "Tom and his friends play",
+      "ko": "톰과 친구들이 ~한다"
+    }
   },
   {
     "type": "single",
@@ -324,7 +441,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "it was raining"
+    "evidence": "it was raining",
+    "why_not": {
+      "1": "결과를 뒤에 붙일 때 써요",
+      "2": "둘 중 하나일 때 써요",
+      "3": "앞뒤가 반대일 때 써요"
+    },
+    "key_expr": {
+      "en": "Because ~",
+      "ko": "~ 때문에"
+    }
   },
   {
     "type": "single",
@@ -348,7 +474,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "over one hundred years ago"
+    "evidence": "over one hundred years ago",
+    "why_not": {
+      "0": "다리는 지어진 쪽이라 was가 필요해요",
+      "1": "다리가 짓고 있다는 뜻이 돼요",
+      "3": "100년 전 일과 맞지 않아요"
+    },
+    "key_expr": {
+      "en": "was built",
+      "ko": "지어졌다"
+    }
   },
   {
     "type": "single",
@@ -372,7 +507,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "enjoys"
+    "evidence": "enjoys",
+    "why_not": {
+      "0": "enjoy 뒤에는 -ing가 와요",
+      "1": "enjoy는 to와 함께 쓰지 않아요",
+      "2": "enjoy 뒤에 이어 붙일 수 없어요"
+    },
+    "key_expr": {
+      "en": "enjoy climbing",
+      "ko": "오르기를 즐기다"
+    }
   },
   {
     "type": "single",
@@ -395,7 +539,16 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "of the year"
+    "evidence": "of the year",
+    "why_not": {
+      "0": "그냥 더운 날이라는 뜻이 돼요",
+      "1": "둘을 견줄 때 써요",
+      "3": "hot은 -est를 붙여요"
+    },
+    "key_expr": {
+      "en": "the hottest day",
+      "ko": "가장 더운 날"
+    }
   },
   {
     "type": "single",
@@ -418,6 +571,15 @@
     "accent": null,
     "tts_script": null,
     "status": "active",
-    "evidence": "since she was seven years old"
+    "evidence": "since she was seven years old",
+    "why_not": {
+      "0": "since와 함께 쓰지 않아요",
+      "2": "지금 잠깐이라는 느낌이에요",
+      "3": "지금도 사는지 알 수 없어요"
+    },
+    "key_expr": {
+      "en": "has lived since ~",
+      "ko": "~부터 쭉 살고 있다"
+    }
   }
 ]

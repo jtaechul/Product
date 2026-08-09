@@ -24,7 +24,16 @@
           "RS.scan",
           "V.school"
         ],
-        "evidence": "Students will have P.E. class in the playground."
+        "evidence": "Students will have P.E. class in the playground.",
+        "why_not": {
+          "0": "체육관은 문을 닫는 곳이에요",
+          "1": "교실 이야기는 나오지 않았어요",
+          "3": "도서관 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "P.E. class",
+          "ko": "체육 수업"
+        }
       }
     ],
     "status": "active"
@@ -54,7 +63,16 @@
           "RS.scan",
           "V.leisure"
         ],
-        "evidence": "Take a shower before you swim."
+        "evidence": "Take a shower before you swim.",
+        "why_not": {
+          "1": "간식 이야기는 나오지 않았어요",
+          "2": "수영장 옆에서 뛰지 말라고 했어요",
+          "3": "물에서 음료는 안 된다고 했어요"
+        },
+        "key_expr": {
+          "en": "take a shower",
+          "ko": "샤워를 하다"
+        }
       }
     ],
     "status": "active"
@@ -84,7 +102,16 @@
           "RS.scan",
           "V.daily"
         ],
-        "evidence": "Can we meet at 4?"
+        "evidence": "Can we meet at 4?",
+        "why_not": {
+          "0": "1시 이야기는 나오지 않았어요",
+          "1": "2시 이야기는 나오지 않았어요",
+          "2": "3시는 바꾸기 전 약속이에요"
+        },
+        "key_expr": {
+          "en": "Can we meet at 4?",
+          "ko": "4시에 만날까?"
+        }
       }
     ],
     "status": "active"
@@ -114,7 +141,16 @@
           "RS.scan",
           "V.food"
         ],
-        "evidence": "Fruit juice ... 2,000 won"
+        "evidence": "Fruit juice ... 2,000 won",
+        "why_not": {
+          "0": "3,000원이라 주스보다 비싸요",
+          "2": "3,500원으로 가장 비싸요",
+          "3": "2,500원이라 주스보다 비싸요"
+        },
+        "key_expr": {
+          "en": "the cheapest",
+          "ko": "가장 싼"
+        }
       }
     ],
     "status": "active"
@@ -144,7 +180,16 @@
           "RS.scan",
           "V.school"
         ],
-        "evidence": "11:30 Make cheese"
+        "evidence": "11:30 Make cheese",
+        "why_not": {
+          "0": "학교 출발은 9시예요",
+          "1": "양 먹이 주기는 10시예요",
+          "2": "점심은 12시 30분이에요"
+        },
+        "key_expr": {
+          "en": "make cheese",
+          "ko": "치즈를 만들다"
+        }
       }
     ],
     "status": "active"
@@ -174,7 +219,16 @@
           "RS.gist",
           "V.daily"
         ],
-        "evidence": "Come to Dana's 11th birthday party."
+        "evidence": "Come to Dana's 11th birthday party.",
+        "why_not": {
+          "1": "학교 축제 이야기는 없어요",
+          "2": "피자집은 모이는 장소일 뿐이에요",
+          "3": "가족 소풍 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "birthday party",
+          "ko": "생일 잔치"
+        }
       }
     ],
     "status": "active"
@@ -204,7 +258,16 @@
           "RS.scan",
           "V.shopping"
         ],
-        "evidence": "Total ... 10,000 won"
+        "evidence": "Total ... 10,000 won",
+        "why_not": {
+          "0": "할인을 빼기 전 값이에요",
+          "1": "어디에도 없는 값이에요",
+          "3": "2,000원은 공책 값이에요"
+        },
+        "key_expr": {
+          "en": "in total",
+          "ko": "모두 합쳐"
+        }
       }
     ],
     "status": "active"
@@ -234,7 +297,16 @@
           "RS.scan",
           "V.school"
         ],
-        "evidence": "You can borrow 3 books for 2 weeks."
+        "evidence": "You can borrow 3 books for 2 weeks.",
+        "why_not": {
+          "0": "3은 빌릴 수 있는 권수예요",
+          "2": "3주는 안내에 없어요",
+          "3": "2달은 안내에 없어요"
+        },
+        "key_expr": {
+          "en": "borrow for 2 weeks",
+          "ko": "2주 동안 빌리다"
+        }
       }
     ],
     "status": "active"
@@ -264,7 +336,16 @@
           "RS.gist",
           "V.daily"
         ],
-        "evidence": "Our small white dog, Mongsil, ran away near Rose Park on Sunday."
+        "evidence": "Our small white dog, Mongsil, ran away near Rose Park on Sunday.",
+        "why_not": {
+          "0": "파는 게 아니라 찾는 중이에요",
+          "1": "공원은 사라진 자리일 뿐이에요",
+          "2": "목줄은 생김새 설명이에요"
+        },
+        "key_expr": {
+          "en": "lost dog",
+          "ko": "잃어버린 개"
+        }
       }
     ],
     "status": "active"
@@ -294,7 +375,16 @@
           "RS.infer",
           "V.leisure"
         ],
-        "evidence": "How about the science museum instead?"
+        "evidence": "How about the science museum instead?",
+        "why_not": {
+          "1": "비 때문에 가지 말자고 했어요",
+          "2": "뉴스는 비 소식을 본 것뿐이에요",
+          "3": "수영 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "~ instead",
+          "ko": "~ 대신에"
+        }
       }
     ],
     "status": "active"
@@ -324,7 +414,16 @@
           "RS.vocab",
           "V.shopping"
         ],
-        "evidence": "Come and get cheap bags and shoes!"
+        "evidence": "Come and get cheap bags and shoes!",
+        "why_not": {
+          "0": "요일 이야기는 나오지 않았어요",
+          "2": "사는 사람이 아니라 물건이에요",
+          "3": "Green Street는 옮겨 갈 거리예요"
+        },
+        "key_expr": {
+          "en": "items",
+          "ko": "물건들"
+        }
       }
     ],
     "status": "active"
@@ -354,7 +453,16 @@
           "RS.infer",
           "V.travel"
         ],
-        "evidence": "From next Monday, Bus 7 will not stop at City Library."
+        "evidence": "From next Monday, Bus 7 will not stop at City Library.",
+        "why_not": {
+          "0": "12번은 앞으로 타라고 한 버스예요",
+          "1": "도서관이 문 닫는다는 말은 없어요",
+          "3": "새 버스라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "will not stop at ~",
+          "ko": "~에 서지 않는다"
+        }
       }
     ],
     "status": "active"
@@ -384,7 +492,16 @@
           "RS.scan",
           "V.travel"
         ],
-        "evidence": "I will visit my grandmother in Busan for two weeks."
+        "evidence": "I will visit my grandmother in Busan for two weeks.",
+        "why_not": {
+          "0": "1주가 아니라 2주예요",
+          "2": "한 달 이야기는 없어요",
+          "3": "이틀 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "for two weeks",
+          "ko": "2주 동안"
+        }
       },
       {
         "stem": "What can we learn about Jiho from the email?",
@@ -400,7 +517,16 @@
         "tags": [
           "RS.infer"
         ],
-        "evidence": "I can't wait to meet it!"
+        "evidence": "I can't wait to meet it!",
+        "why_not": {
+          "0": "지호는 할머니를 만나러 가는 거예요",
+          "1": "집이 아니라 부산에 가요",
+          "2": "엠마는 편지를 받는 친구예요"
+        },
+        "key_expr": {
+          "en": "I can't wait to ~",
+          "ko": "~가 너무 기다려져"
+        }
       }
     ],
     "status": "active"
@@ -430,7 +556,16 @@
           "RS.gist",
           "V.school"
         ],
-        "evidence": "This month, we will learn to make fruit sandwiches."
+        "evidence": "This month, we will learn to make fruit sandwiches.",
+        "why_not": {
+          "0": "새 건물 이야기는 없어요",
+          "1": "방학 숙제 이야기는 없어요",
+          "3": "채소 피자는 지난달 이야기예요"
+        },
+        "key_expr": {
+          "en": "club news",
+          "ko": "동아리 소식"
+        }
       },
       {
         "stem": "What should members do by June 20?",
@@ -447,7 +582,16 @@
           "RS.scan",
           "V.food"
         ],
-        "evidence": "please tell Ms. Han by June 20"
+        "evidence": "please tell Ms. Han by June 20",
+        "why_not": {
+          "1": "앞치마는 금요일에 가져와요",
+          "2": "집에서 만들라는 말은 없어요",
+          "3": "쿠키는 파는 것이지 사는 게 아니에요"
+        },
+        "key_expr": {
+          "en": "tell ~ by June 20",
+          "ko": "20일까지 말하다"
+        }
       }
     ],
     "status": "active"
@@ -477,7 +621,16 @@
           "RS.scan",
           "V.leisure"
         ],
-        "evidence": "the town will add a small pond with fish"
+        "evidence": "the town will add a small pond with fish",
+        "why_not": {
+          "0": "농구장은 이미 있어요",
+          "1": "꽃밭도 이미 있어요",
+          "2": "산책로도 이미 있어요"
+        },
+        "key_expr": {
+          "en": "add a small pond",
+          "ko": "작은 연못을 만들다"
+        }
       },
       {
         "stem": "In the article, the word 'spot' means ____.",
@@ -494,7 +647,16 @@
           "RS.vocab",
           "RS.context"
         ],
-        "evidence": "The most popular spot was the flower garden."
+        "evidence": "The most popular spot was the flower garden.",
+        "why_not": {
+          "0": "동그란 점이라는 뜻도 있지만 여기선 아니에요",
+          "2": "놀이라는 뜻은 없어요",
+          "3": "꽃밭은 그 자리의 이름이에요"
+        },
+        "key_expr": {
+          "en": "popular spot",
+          "ko": "인기 있는 곳"
+        }
       }
     ],
     "status": "active"
@@ -524,7 +686,16 @@
           "RS.scan",
           "V.travel"
         ],
-        "evidence": "In the morning, we rode bikes along the beach road."
+        "evidence": "In the morning, we rode bikes along the beach road.",
+        "why_not": {
+          "1": "등대는 오후에 올라갔어요",
+          "2": "국수는 점심에 먹었어요",
+          "3": "수영 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "rode bikes",
+          "ko": "자전거를 탔다"
+        }
       },
       {
         "stem": "How does the writer probably feel about the trip?",
@@ -541,7 +712,16 @@
           "RS.infer",
           "V.travel"
         ],
-        "evidence": "I want to do it all again tomorrow."
+        "evidence": "I want to do it all again tomorrow.",
+        "why_not": {
+          "0": "할 게 없다는 말은 없어요",
+          "1": "바람은 셌지만 화내지 않았어요",
+          "3": "내일 또 하고 싶다고 했어요"
+        },
+        "key_expr": {
+          "en": "do it all again",
+          "ko": "또 하고 싶다"
+        }
       }
     ],
     "status": "active"
@@ -571,7 +751,16 @@
           "RS.gist",
           "V.school"
         ],
-        "evidence": "I am writing this letter to thank you for helping me this year."
+        "evidence": "I am writing this letter to thank you for helping me this year.",
+        "why_not": {
+          "0": "이미 독서 모임을 하고 있었어요",
+          "1": "지각 이야기는 나오지 않았어요",
+          "2": "숙제 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "thank you for ~",
+          "ko": "~해 주셔서 고마워요"
+        }
       },
       {
         "stem": "In the letter, the word 'restful' means ____.",
@@ -588,7 +777,16 @@
           "RS.vocab",
           "RS.context"
         ],
-        "evidence": "I hope you have a restful summer."
+        "evidence": "I hope you have a restful summer.",
+        "why_not": {
+          "1": "바쁘다는 뜻은 쉬는 것과 반대예요",
+          "2": "짧고 춥다는 뜻은 없어요",
+          "3": "외우기 어렵다는 뜻은 없어요"
+        },
+        "key_expr": {
+          "en": "a restful summer",
+          "ko": "푹 쉬는 여름"
+        }
       }
     ],
     "status": "active"
@@ -618,7 +816,16 @@
           "RS.infer",
           "V.daily"
         ],
-        "evidence": "But after a few visits, they ran to the door to greet us."
+        "evidence": "But after a few visits, they ran to the door to greet us.",
+        "why_not": {
+          "0": "끝까지 싫어했다면 달려오지 않아요",
+          "2": "새 가족을 찾았다는 말은 없어요",
+          "3": "담요는 학생들이 만들었어요"
+        },
+        "key_expr": {
+          "en": "ran to greet us",
+          "ko": "반기러 달려왔다"
+        }
       },
       {
         "stem": "In the article, the words 'helping hands' mean ____.",
@@ -635,7 +842,16 @@
           "RS.vocab",
           "RS.context"
         ],
-        "evidence": "the animal home always needs more helping hands"
+        "evidence": "the animal home always needs more helping hands",
+        "why_not": {
+          "0": "밥그릇은 씻은 물건이에요",
+          "1": "담요는 만든 물건이에요",
+          "3": "문 이야기는 뜻과 관계없어요"
+        },
+        "key_expr": {
+          "en": "helping hands",
+          "ko": "도와줄 손길"
+        }
       }
     ],
     "status": "active"

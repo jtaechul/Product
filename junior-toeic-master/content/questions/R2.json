@@ -23,7 +23,16 @@
         "tags": [
           "G.agreement"
         ],
-        "evidence": "His name is Bori, and he"
+        "evidence": "His name is Bori, and he",
+        "why_not": {
+          "1": "여럿일 때 쓰는 말이에요",
+          "2": "I(나)일 때만 써요",
+          "3": "그대로는 쓰지 않아요"
+        },
+        "key_expr": {
+          "en": "he is ~",
+          "ko": "그는 ~이다"
+        }
       },
       {
         "stem": "Choose the best answer for (2).",
@@ -39,7 +48,16 @@
         "tags": [
           "G.prep"
         ],
-        "evidence": "the door"
+        "evidence": "the door",
+        "why_not": {
+          "0": "문 위에 있다는 뜻이 돼요",
+          "2": "문 안쪽이라는 뜻이 돼요",
+          "3": "문 쪽으로 간다는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "wait at the door",
+          "ko": "문에서 기다리다"
+        }
       },
       {
         "stem": "Choose the best answer for (3).",
@@ -55,7 +73,16 @@
         "tags": [
           "RS.context"
         ],
-        "evidence": "You can play with him too!"
+        "evidence": "You can play with him too!",
+        "why_not": {
+          "0": "강아지를 자랑하는 편지와 반대예요",
+          "1": "어제 날씨는 앞뒤와 안 이어져요",
+          "2": "도서관 이야기는 갑자기 튀어나와요"
+        },
+        "key_expr": {
+          "en": "come to my house",
+          "ko": "우리 집에 오다"
+        }
       }
     ],
     "status": "active"
@@ -85,7 +112,16 @@
           "G.prep",
           "V.school"
         ],
-        "evidence": "Friday, May 10th"
+        "evidence": "Friday, May 10th",
+        "why_not": {
+          "0": "달이나 해처럼 긴 때에 써요",
+          "1": "시각이나 한 지점에 써요",
+          "3": "'~까지'라는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "on Friday, May 10th",
+          "ko": "5월 10일 금요일에"
+        }
       },
       {
         "stem": "Choose the best answer for (2).",
@@ -102,7 +138,16 @@
           "RS.vocab",
           "V.school"
         ],
-        "evidence": "your old books with your friends"
+        "evidence": "your old books with your friends",
+        "why_not": {
+          "0": "옷을 입는다는 뜻이에요",
+          "2": "오른다는 뜻이에요",
+          "3": "색칠한다는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "trade books with ~",
+          "ko": "~와 책을 바꾸다"
+        }
       },
       {
         "stem": "Choose the best answer for (3).",
@@ -118,7 +163,16 @@
         "tags": [
           "RS.context"
         ],
-        "evidence": "The fair starts at nine in the morning."
+        "evidence": "The fair starts at nine in the morning.",
+        "why_not": {
+          "1": "좋아하는 색은 안내문과 안 맞아요",
+          "2": "축구 경기는 책 행사와 관계없어요",
+          "3": "영화관 이야기는 관계없어요"
+        },
+        "key_expr": {
+          "en": "ends at three",
+          "ko": "3시에 끝나다"
+        }
       }
     ],
     "status": "active"
@@ -147,7 +201,16 @@
         "tags": [
           "G.conj"
         ],
-        "evidence": "the weather was warm and sunny"
+        "evidence": "the weather was warm and sunny",
+        "why_not": {
+          "1": "둘 중 하나를 고를 때 써요",
+          "2": "앞이 까닭일 때 써요",
+          "3": "'만약 ~라면'이라는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "cold, but warm",
+          "ko": "춥지만 따뜻한"
+        }
       },
       {
         "stem": "Choose the best answer for (2).",
@@ -163,7 +226,16 @@
         "tags": [
           "G.compare"
         ],
-        "evidence": "than my brother's"
+        "evidence": "than my brother's",
+        "why_not": {
+          "0": "than이 있으면 -er을 붙여요",
+          "2": "으뜸일 때 the와 함께 써요",
+          "3": "tall은 -er만 붙여요"
+        },
+        "key_expr": {
+          "en": "taller than ~",
+          "ko": "~보다 높은"
+        }
       },
       {
         "stem": "Choose the best answer for (3).",
@@ -179,7 +251,16 @@
         "tags": [
           "RS.context"
         ],
-        "evidence": "I want to go to the beach again soon."
+        "evidence": "I want to go to the beach again soon.",
+        "why_not": {
+          "0": "아파서 집에 있었다는 말은 반대예요",
+          "1": "필통 이야기는 바다와 관계없어요",
+          "2": "학교 축제 이야기는 관계없어요"
+        },
+        "key_expr": {
+          "en": "the best day",
+          "ko": "최고의 날"
+        }
       }
     ],
     "status": "active"
@@ -209,7 +290,16 @@
           "G.prep",
           "V.daily"
         ],
-        "evidence": "the table"
+        "evidence": "the table",
+        "why_not": {
+          "1": "한 지점을 가리킬 때 써요",
+          "2": "자리를 나타내는 말이 아니에요",
+          "3": "식탁과 함께 쓰지 않아요"
+        },
+        "key_expr": {
+          "en": "on the table",
+          "ko": "식탁 위에"
+        }
       },
       {
         "stem": "Choose the best answer for (2).",
@@ -226,7 +316,16 @@
           "RS.vocab",
           "V.daily"
         ],
-        "evidence": "before you watch TV"
+        "evidence": "before you watch TV",
+        "why_not": {
+          "0": "숙제를 마신다는 말이 돼요",
+          "1": "숙제를 씻는다는 말이 돼요",
+          "3": "숙제를 날린다는 말이 돼요"
+        },
+        "key_expr": {
+          "en": "finish your homework",
+          "ko": "숙제를 끝내다"
+        }
       },
       {
         "stem": "Choose the best answer for (3).",
@@ -243,7 +342,16 @@
           "RS.context",
           "G.pronoun"
         ],
-        "evidence": "She will bring some fruit for you."
+        "evidence": "She will bring some fruit for you.",
+        "why_not": {
+          "0": "아빠 이야기라 뒤의 She와 안 맞아요",
+          "1": "도서관 이야기는 관계없어요",
+          "3": "축구화 이야기는 뒤와 안 이어져요"
+        },
+        "key_expr": {
+          "en": "Grandma will visit",
+          "ko": "할머니가 오실 거야"
+        }
       }
     ],
     "status": "active"
@@ -273,7 +381,16 @@
           "G.tense",
           "V.travel"
         ],
-        "evidence": "Yesterday"
+        "evidence": "Yesterday",
+        "why_not": {
+          "0": "어제 일이라 -ed가 붙어요",
+          "2": "앞으로 할 일에 쓰는 말이에요",
+          "3": "앞에 were가 있어야 해요"
+        },
+        "key_expr": {
+          "en": "Yesterday we climbed",
+          "ko": "어제 우리는 올랐다"
+        }
       },
       {
         "stem": "Choose the best answer for (2).",
@@ -290,7 +407,16 @@
           "G.compare",
           "V.food"
         ],
-        "evidence": "than the food at home"
+        "evidence": "than the food at home",
+        "why_not": {
+          "0": "than이 있으면 more가 필요해요",
+          "1": "으뜸일 때 쓰는 말이에요",
+          "3": "이런 말은 없어요"
+        },
+        "key_expr": {
+          "en": "more delicious than ~",
+          "ko": "~보다 더 맛있는"
+        }
       },
       {
         "stem": "Choose the best answer for (3).",
@@ -307,7 +433,16 @@
           "RS.context",
           "V.travel"
         ],
-        "evidence": "See you next week!"
+        "evidence": "See you next week!",
+        "why_not": {
+          "0": "아파서 집에 있었다는 말은 여행과 반대예요",
+          "1": "교실 이야기는 관계없어요",
+          "2": "시험 이야기는 관계없어요"
+        },
+        "key_expr": {
+          "en": "buy a gift for you",
+          "ko": "너에게 줄 선물을 사다"
+        }
       }
     ],
     "status": "active"
@@ -336,7 +471,16 @@
         "tags": [
           "G.agreement"
         ],
-        "evidence": "give them to people in town"
+        "evidence": "give them to people in town",
+        "why_not": {
+          "0": "회원이 여럿이라 s를 안 붙여요",
+          "2": "앞에 are가 있어야 해요",
+          "3": "여기엔 to를 쓰지 않아요"
+        },
+        "key_expr": {
+          "en": "Members grow ~",
+          "ko": "회원들이 ~를 기른다"
+        }
       },
       {
         "stem": "Choose the best answer for (2).",
@@ -352,7 +496,16 @@
         "tags": [
           "G.modal"
         ],
-        "evidence": "because we have all the tools"
+        "evidence": "because we have all the tools",
+        "why_not": {
+          "0": "꼭 해야 한다는 뜻이라 반대예요",
+          "1": "하는 게 좋다는 뜻이라 반대예요",
+          "3": "꼭 해야 한다는 뜻이라 반대예요"
+        },
+        "key_expr": {
+          "en": "don't have to ~",
+          "ko": "~하지 않아도 된다"
+        }
       },
       {
         "stem": "Choose the best answer for (3).",
@@ -368,7 +521,16 @@
         "tags": [
           "RS.context"
         ],
-        "evidence": "Just come to Room 201 this Wednesday!"
+        "evidence": "Just come to Room 201 this Wednesday!",
+        "why_not": {
+          "0": "작년에 그만뒀다는 말은 반대예요",
+          "1": "겨울방학 이야기는 관계없어요",
+          "2": "급식 이야기는 관계없어요"
+        },
+        "key_expr": {
+          "en": "don't need experience",
+          "ko": "해 본 적 없어도 된다"
+        }
       }
     ],
     "status": "active"
