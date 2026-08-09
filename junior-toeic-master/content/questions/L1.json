@@ -373,7 +373,7 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'painting a fence'는 울타리를 칠한다는 뜻이라 울타리에 칠하는 사진이 정답이에요. 못을 박는 사진은 칠하는 게 아니에요.",
+    "explanation_ko": "'painting a fence'는 울타리를 칠한다는 뜻이라 울타리에 칠하는 사진이 정답이에요. 못과 망치 사진은 칠하는 게 아니에요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
@@ -387,11 +387,11 @@
       "A man hammering nails into a wooden fence",
       "A man watering plants with a hose in a backyard"
     ],
-    "status": "active",
+    "status": "draft",
     "evidence": "painting a wooden fence",
     "why_not": {
       "1": "잔디를 깎는 사진이에요",
-      "2": "못을 박는 사진이에요",
+      "2": "못과 망치 사진이에요",
       "3": "호스로 물을 주는 사진이에요"
     },
     "key_expr": {
@@ -400,17 +400,21 @@
     },
     "choice_image_queries": [
       {
-        "q": "painting wooden fence brush",
+        "q": "painting a fence",
         "need": [
           "fence",
           "paint"
         ],
         "prefer": [
-          "brush"
+          "wood"
         ],
         "avoid": [
+          "street",
+          "urban",
+          "pictures",
           "canvas",
           "artist",
+          "easel",
           "busker"
         ]
       },
