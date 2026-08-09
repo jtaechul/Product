@@ -28,6 +28,10 @@
     "key_expr": {
       "en": "What color ~?",
       "ko": "무슨 색이야?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.yesno"
     }
   },
   {
@@ -59,6 +63,10 @@
     "key_expr": {
       "en": "How old ~?",
       "ko": "몇 살이야?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.yesno"
     }
   },
   {
@@ -90,6 +98,10 @@
     "key_expr": {
       "en": "Where is ~?",
       "ko": "~는 어디 있어?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.yesno"
     }
   },
   {
@@ -121,6 +133,10 @@
     "key_expr": {
       "en": "Do you like ~?",
       "ko": "~ 좋아해?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.wrongkind"
     }
   },
   {
@@ -152,6 +168,10 @@
     "key_expr": {
       "en": "When does it begin?",
       "ko": "언제 시작해?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
     }
   },
   {
@@ -183,6 +203,10 @@
     "key_expr": {
       "en": "Who made ~?",
       "ko": "누가 만들었어?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.wrongkind"
     }
   },
   {
@@ -214,6 +238,10 @@
     "key_expr": {
       "en": "How do you go ~?",
       "ko": "어떻게 가?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
     }
   },
   {
@@ -245,6 +273,10 @@
     "key_expr": {
       "en": "Whose ~ are these?",
       "ko": "이거 누구 거야?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
     }
   },
   {
@@ -276,6 +308,10 @@
     "key_expr": {
       "en": "Would you like ~?",
       "ko": "~ 좀 더 드릴까요?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
     }
   },
   {
@@ -307,6 +343,10 @@
     "key_expr": {
       "en": "Where can I buy ~?",
       "ko": "어디서 살 수 있어?"
+    },
+    "miss_type": {
+      "0": "M.swap",
+      "1": "A.wrongkind"
     }
   },
   {
@@ -338,6 +378,10 @@
     "key_expr": {
       "en": "What time ~?",
       "ko": "몇 시에 ~해?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.yesno"
     }
   },
   {
@@ -369,6 +413,10 @@
     "key_expr": {
       "en": "Is it open on ~?",
       "ko": "~에 문 열어?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
     }
   },
   {
@@ -400,6 +448,10 @@
     "key_expr": {
       "en": "Why were you late?",
       "ko": "왜 늦었어?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.yesno"
     }
   },
   {
@@ -431,6 +483,10 @@
     "key_expr": {
       "en": "How much ~?",
       "ko": "얼마예요?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
     }
   },
   {
@@ -462,6 +518,10 @@
     "key_expr": {
       "en": "How long does it take?",
       "ko": "얼마나 걸려?"
+    },
+    "miss_type": {
+      "1": "A.wrongkind",
+      "2": "A.wrongkind"
     }
   },
   {
@@ -493,6 +553,10 @@
     "key_expr": {
       "en": "Could you ~, please?",
       "ko": "~해 주시겠어요?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
     }
   },
   {
@@ -524,6 +588,10 @@
     "key_expr": {
       "en": "ask ~ for help",
       "ko": "~에게 도움을 청하다"
+    },
+    "miss_type": {
+      "1": "F.offtopic",
+      "2": "F.offtopic"
     }
   },
   {
@@ -555,6 +623,10 @@
     "key_expr": {
       "en": "Which do you like better?",
       "ko": "둘 중 뭐가 더 좋아?"
+    },
+    "miss_type": {
+      "0": "A.yesno",
+      "1": "F.offtopic"
     }
   },
   {
@@ -586,6 +658,10 @@
     "key_expr": {
       "en": "Who's going to ~?",
       "ko": "누가 ~할 거야?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "2": "A.wrongkind"
     }
   },
   {
@@ -617,6 +693,10 @@
     "key_expr": {
       "en": "Have you seen ~?",
       "ko": "~ 못 봤어?"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "A.wrongkind"
     }
   },
   {
@@ -648,6 +728,10 @@
     "key_expr": {
       "en": "leave in five minutes",
       "ko": "5분 뒤에 떠나다"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.echo"
     }
   },
   {
@@ -679,6 +763,10 @@
     "key_expr": {
       "en": "Why don't we ~?",
       "ko": "우리 ~하는 게 어때?"
+    },
+    "miss_type": {
+      "1": "M.swap",
+      "2": "M.swap"
     }
   },
   {
@@ -710,6 +798,10 @@
     "key_expr": {
       "en": "How often ~?",
       "ko": "얼마나 자주?"
+    },
+    "miss_type": {
+      "0": "A.wrongkind",
+      "1": "A.wrongkind"
     }
   },
   {
@@ -741,6 +833,10 @@
     "key_expr": {
       "en": "Didn't you order ~?",
       "ko": "~ 시키지 않았어?"
+    },
+    "miss_type": {
+      "0": "A.echo",
+      "2": "F.offtopic"
     }
   }
 ]

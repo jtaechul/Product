@@ -38,6 +38,11 @@
         "key_expr": {
           "en": "borrow a book",
           "ko": "책을 빌리다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
         }
       },
       {
@@ -64,6 +69,11 @@
         "key_expr": {
           "en": "leave it at home",
           "ko": "집에 두고 오다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.swap"
         }
       }
     ],
@@ -108,6 +118,11 @@
         "key_expr": {
           "en": "visit my grandmother",
           "ko": "할머니를 뵈러 가다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
         }
       },
       {
@@ -134,6 +149,11 @@
         "key_expr": {
           "en": "come back at night",
           "ko": "밤에 돌아오다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "3": "M.notsaid"
         }
       }
     ],
@@ -179,6 +199,11 @@
         "key_expr": {
           "en": "How much are these?",
           "ko": "이거 얼마예요?"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.swap"
         }
       },
       {
@@ -205,6 +230,11 @@
         "key_expr": {
           "en": "I'll take six",
           "ko": "여섯 개 주세요"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.number",
+          "2": "M.swap"
         }
       }
     ],
@@ -249,6 +279,11 @@
         "key_expr": {
           "en": "What's his name?",
           "ko": "이름이 뭐야?"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.swap",
+          "3": "M.notsaid"
         }
       },
       {
@@ -275,6 +310,11 @@
         "key_expr": {
           "en": "special dog food",
           "ko": "전용 사료"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
         }
       }
     ],
@@ -319,6 +359,11 @@
         "key_expr": {
           "en": "science museum",
           "ko": "과학관"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "2": "M.notsaid"
         }
       },
       {
@@ -345,6 +390,11 @@
         "key_expr": {
           "en": "the number seven bus",
           "ko": "7번 버스"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
         }
       }
     ],
@@ -389,6 +439,11 @@
         "key_expr": {
           "en": "vegetable soup",
           "ko": "채소 수프"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "3": "M.swap"
         }
       },
       {
@@ -416,6 +471,11 @@
         "key_expr": {
           "en": "set the table",
           "ko": "상을 차리다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
         }
       }
     ],

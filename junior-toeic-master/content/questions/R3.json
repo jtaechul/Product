@@ -33,6 +33,11 @@
         "key_expr": {
           "en": "P.E. class",
           "ko": "체육 수업"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
         }
       }
     ],
@@ -72,6 +77,11 @@
         "key_expr": {
           "en": "take a shower",
           "ko": "샤워를 하다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.opposite",
+          "3": "M.opposite"
         }
       }
     ],
@@ -111,6 +121,11 @@
         "key_expr": {
           "en": "Can we meet at 4?",
           "ko": "4시에 만날까?"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.number"
         }
       }
     ],
@@ -150,6 +165,11 @@
         "key_expr": {
           "en": "the cheapest",
           "ko": "가장 싼"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "2": "M.number",
+          "3": "M.number"
         }
       }
     ],
@@ -189,6 +209,11 @@
         "key_expr": {
           "en": "make cheese",
           "ko": "치즈를 만들다"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.number",
+          "2": "M.number"
         }
       }
     ],
@@ -228,6 +253,11 @@
         "key_expr": {
           "en": "birthday party",
           "ko": "생일 잔치"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
         }
       }
     ],
@@ -267,6 +297,11 @@
         "key_expr": {
           "en": "in total",
           "ko": "모두 합쳐"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.notsaid",
+          "3": "M.number"
         }
       }
     ],
@@ -306,6 +341,11 @@
         "key_expr": {
           "en": "borrow for 2 weeks",
           "ko": "2주 동안 빌리다"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
         }
       }
     ],
@@ -345,6 +385,11 @@
         "key_expr": {
           "en": "lost dog",
           "ko": "잃어버린 개"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.swap",
+          "2": "M.swap"
         }
       }
     ],
@@ -384,6 +429,11 @@
         "key_expr": {
           "en": "~ instead",
           "ko": "~ 대신에"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.swap",
+          "3": "M.notsaid"
         }
       }
     ],
@@ -423,6 +473,11 @@
         "key_expr": {
           "en": "items",
           "ko": "물건들"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.swap"
         }
       }
     ],
@@ -462,6 +517,11 @@
         "key_expr": {
           "en": "will not stop at ~",
           "ko": "~에 서지 않는다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
         }
       }
     ],
@@ -501,6 +561,11 @@
         "key_expr": {
           "en": "for two weeks",
           "ko": "2주 동안"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
         }
       },
       {
@@ -526,6 +591,11 @@
         "key_expr": {
           "en": "I can't wait to ~",
           "ko": "~가 너무 기다려져"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "2": "M.swap"
         }
       }
     ],
@@ -565,6 +635,11 @@
         "key_expr": {
           "en": "club news",
           "ko": "동아리 소식"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.swap"
         }
       },
       {
@@ -591,6 +666,11 @@
         "key_expr": {
           "en": "tell ~ by June 20",
           "ko": "20일까지 말하다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.swap"
         }
       }
     ],
@@ -630,6 +710,11 @@
         "key_expr": {
           "en": "add a small pond",
           "ko": "작은 연못을 만들다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "2": "M.swap"
         }
       },
       {
@@ -656,6 +741,11 @@
         "key_expr": {
           "en": "popular spot",
           "ko": "인기 있는 곳"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "2": "M.notsaid",
+          "3": "M.swap"
         }
       }
     ],
@@ -695,6 +785,11 @@
         "key_expr": {
           "en": "rode bikes",
           "ko": "자전거를 탔다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.swap",
+          "3": "M.notsaid"
         }
       },
       {
@@ -721,6 +816,11 @@
         "key_expr": {
           "en": "do it all again",
           "ko": "또 하고 싶다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "3": "M.opposite"
         }
       }
     ],
@@ -760,6 +860,11 @@
         "key_expr": {
           "en": "thank you for ~",
           "ko": "~해 주셔서 고마워요"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
         }
       },
       {
@@ -786,6 +891,11 @@
         "key_expr": {
           "en": "a restful summer",
           "ko": "푹 쉬는 여름"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
         }
       }
     ],
@@ -825,6 +935,11 @@
         "key_expr": {
           "en": "ran to greet us",
           "ko": "반기러 달려왔다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.swap"
         }
       },
       {
@@ -851,6 +966,11 @@
         "key_expr": {
           "en": "helping hands",
           "ko": "도와줄 손길"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "3": "F.offtopic"
         }
       }
     ],

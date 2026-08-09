@@ -33,6 +33,25 @@ const EXPLANATION_MAX = 100;   // 이보다 길면 아이가 끝까지 읽지 �
 const WHY_NOT_MAX = 40;        // 오답 이유는 한 줄에 들어와야 한다
 const KEY_EXPR_KO_MAX = 30;    // 표현 카드의 뜻도 한 줄
 
+// 실수 유형 — 오답마다 "무슨 실수인지" 딱지 하나. 이유 문장은 읽을 수만 있고 셀 수 없어서,
+// "이 아이가 이 실수를 몇 번 했나"에 답하려면 분류가 필요하다.
+// 처방이 갈리는 지점으로 나눴다 (예: 낱말 뜻을 모르는 것과 문법 단서를 놓친 것은 다른 처방).
+const MISS_TYPES = {
+  'M.notsaid': '나오지 않은 내용을 골랐어요',
+  'M.swap': '나온 정보를 엉뚱한 곳에 붙였어요',
+  'M.number': '숫자를 다른 항목에서 가져왔어요',
+  'M.opposite': '지문에 있는 낱말이지만 뜻이 반대예요',
+  'A.wrongkind': '묻는 말과 다른 종류로 답했어요',
+  'A.yesno': '골라 말해야 하는데 예·아니오로 답했어요',
+  'A.echo': '들린 낱말에 낚였어요',
+  'W.meaning': '낱말 뜻이 그 자리에 안 맞아요',
+  'G.clue': '단서가 되는 낱말을 놓쳤어요',
+  'G.pair': '짝이 되는 말이 빠졌어요',
+  'G.form': '낱말 모양이 안 맞아요',
+  'P.other': '다른 장면 사진이에요',
+  'F.offtopic': '앞뒤와 이어지지 않아요',
+};
+
 // ---------- ULID (크록포드 base32, 모노토닉) ----------
 // 같은 실행 안에서 발급 순서 = 사전순이 되도록 시퀀스를 넣는다.
 // 세트(지문) 내 문항이 저작 순서대로 정렬돼야 하므로(ORDER BY id) 필수.
@@ -154,6 +173,24 @@ function checkQuestionCore(it, ctx, part, source = null) {
       }
     }
   }
+  // 실수 유형(선택이지만 why_not이 있으면 사실상 필수): 오답 자리마다 딱지 하나.
+  // 딱지가 빠지면 그 오답만 통계에서 조용히 사라지므로, 짝이 안 맞으면 막는다.
+  if (it.miss_type !== undefined || it.why_not !== undefined) {
+    const mt = it.miss_type;
+    if (it.why_not && (typeof mt !== 'object' || mt === null || Array.isArray(mt))) {
+      err(`${ctx}: why_not이 있으면 miss_type도 같은 자리마다 필요합니다`);
+    } else if (mt) {
+      for (const [k, v] of Object.entries(mt)) {
+        if (!it.why_not || it.why_not[k] === undefined) {
+          err(`${ctx}: miss_type[${k}]에 대응하는 why_not이 없습니다`);
+        }
+        if (!MISS_TYPES[v]) err(`${ctx}: 모르는 실수 유형 "${v}"`);
+      }
+      for (const k of Object.keys(it.why_not || {})) {
+        if (mt[k] === undefined) err(`${ctx}: 보기 ${k}의 실수 유형이 비었습니다`);
+      }
+    }
+  }
   // 표현 카드(선택): 이 문제에서 챙겨 갈 표현 1개
   if (it.key_expr !== undefined) {
     const k = it.key_expr;
@@ -194,6 +231,7 @@ function pushQuestion(part, tmpId, it, passageId, extra = {}) {
     accent: extra.accent ?? null, script: extra.script ?? null,
     evidence: it.evidence ?? null,
     why_not: it.why_not ? JSON.stringify(it.why_not) : null,
+    miss_type: it.miss_type ? JSON.stringify(it.miss_type) : null,
     key_expr: it.key_expr ? JSON.stringify(it.key_expr) : null,
     status: extra.status ?? 'active',
   });
@@ -326,12 +364,12 @@ for (const p of passages) {
 }
 for (const it of questions) {
   sql.push(
-    `INSERT INTO questions (id, passage_id, section, part, stem, choices, answer_idx, explanation_ko, difficulty_label, rating, audio_url, image_url, accent, script, evidence, why_not, key_expr, status, created_at) VALUES (` +
+    `INSERT INTO questions (id, passage_id, section, part, stem, choices, answer_idx, explanation_ko, difficulty_label, rating, audio_url, image_url, accent, script, evidence, why_not, miss_type, key_expr, status, created_at) VALUES (` +
     [q(it.id), q(it.passage_id), q(it.section), q(it.part), q(it.stem), q(it.choices), it.answer_idx,
      q(it.explanation_ko), it.difficulty_label, it.rating, q(it.audio_url), q(it.image_url), q(it.accent), q(it.script), q(it.evidence),
-     q(it.why_not), q(it.key_expr), q(it.status), q(now)].join(', ') + `) ` +
+     q(it.why_not), q(it.miss_type), q(it.key_expr), q(it.status), q(now)].join(', ') + `) ` +
     // rating·times_answered·times_correct·created_at은 운영 데이터 — 재임포트 시 보존
-    `ON CONFLICT(id) DO UPDATE SET passage_id=excluded.passage_id, stem=excluded.stem, choices=excluded.choices, answer_idx=excluded.answer_idx, explanation_ko=excluded.explanation_ko, difficulty_label=excluded.difficulty_label, audio_url=excluded.audio_url, image_url=excluded.image_url, accent=excluded.accent, script=excluded.script, evidence=excluded.evidence, why_not=excluded.why_not, key_expr=excluded.key_expr, status=excluded.status;`
+    `ON CONFLICT(id) DO UPDATE SET passage_id=excluded.passage_id, stem=excluded.stem, choices=excluded.choices, answer_idx=excluded.answer_idx, explanation_ko=excluded.explanation_ko, difficulty_label=excluded.difficulty_label, audio_url=excluded.audio_url, image_url=excluded.image_url, accent=excluded.accent, script=excluded.script, evidence=excluded.evidence, why_not=excluded.why_not, miss_type=excluded.miss_type, key_expr=excluded.key_expr, status=excluded.status;`
   );
 }
 const qIds = questions.map((x) => q(x.id)).join(', ');

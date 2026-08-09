@@ -47,6 +47,7 @@ const parseJson = (s) => { try { return s ? JSON.parse(s) : null; } catch { retu
 //  concept  : 개념 그림을 고르는 열쇠 — 문법 태그 우선, 없으면 듣기 전략 태그
 async function feedbackOf(db, q, chosenIdx) {
   const why = parseJson(q.why_not);
+  const miss = parseJson(q.miss_type);
   const { results: tags } = await db.prepare(
     'SELECT tag_id FROM question_tags WHERE question_id = ?1'
   ).bind(q.id).all();
@@ -54,6 +55,7 @@ async function feedbackOf(db, q, chosenIdx) {
   return {
     ...(await evidenceOf(db, q)),
     why_not: (why && chosenIdx !== q.answer_idx) ? (why[String(chosenIdx)] ?? null) : null,
+    miss_type: (miss && chosenIdx !== q.answer_idx) ? (miss[String(chosenIdx)] ?? null) : null,
     key_expr: parseJson(q.key_expr),
     concept: codes.find((t) => t.startsWith('G.')) || codes.find((t) => t === 'LS.qr') || null,
   };
@@ -282,7 +284,7 @@ app.post('/api/answers', requireAuth, async (c) => {
     return c.json({ error: 'question_id(문자열), chosen_idx(정수)가 필요합니다' }, 400);
   }
   const q = await c.env.DB.prepare(
-    'SELECT id, passage_id, stem, script, evidence, why_not, key_expr, answer_idx, explanation_ko, rating FROM questions WHERE id = ?1'
+    'SELECT id, passage_id, stem, script, evidence, why_not, miss_type, key_expr, answer_idx, explanation_ko, rating FROM questions WHERE id = ?1'
   ).bind(question_id).first();
   if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
 
@@ -489,7 +491,7 @@ app.post('/api/check', async (c) => {
     return c.json({ error: 'question_id(문자열), chosen_idx(정수)가 필요합니다' }, 400);
   }
   const q = await c.env.DB.prepare(
-    'SELECT id, passage_id, stem, script, evidence, why_not, key_expr, answer_idx, explanation_ko FROM questions WHERE id = ?1'
+    'SELECT id, passage_id, stem, script, evidence, why_not, miss_type, key_expr, answer_idx, explanation_ko FROM questions WHERE id = ?1'
   ).bind(question_id).first();
   if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
 

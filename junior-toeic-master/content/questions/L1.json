@@ -89,7 +89,12 @@
           "bike"
         ]
       }
-    ]
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    }
   },
   {
     "type": "single",
@@ -181,7 +186,12 @@
           "dog"
         ]
       }
-    ]
+    ],
+    "miss_type": {
+      "1": "M.swap",
+      "2": "P.other",
+      "3": "P.other"
+    }
   },
   {
     "type": "single",
@@ -265,7 +275,12 @@
         "prefer": [],
         "avoid": []
       }
-    ]
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "M.swap",
+      "2": "P.other"
+    }
   },
   {
     "type": "single",
@@ -358,7 +373,12 @@
           "castle"
         ]
       }
-    ]
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    }
   },
   {
     "type": "single",
@@ -455,7 +475,12 @@
           "paint"
         ]
       }
-    ]
+    ],
+    "miss_type": {
+      "1": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    }
   },
   {
     "type": "single",
@@ -548,7 +573,12 @@
           "juice"
         ]
       }
-    ]
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "2": "P.other",
+      "3": "P.other"
+    }
   },
   {
     "type": "single",
@@ -637,7 +667,12 @@
         ],
         "avoid": []
       }
-    ]
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "2": "P.other"
+    }
   },
   {
     "type": "single",
@@ -726,6 +761,11 @@
           "funny"
         ]
       }
-    ]
+    ],
+    "miss_type": {
+      "0": "P.other",
+      "1": "P.other",
+      "3": "P.other"
+    }
   }
 ]

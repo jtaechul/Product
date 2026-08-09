@@ -37,6 +37,11 @@
         "key_expr": {
           "en": "Sports day",
           "ko": "운동회 날"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
         }
       },
       {
@@ -63,6 +68,11 @@
         "key_expr": {
           "en": "bring a water bottle",
           "ko": "물병을 가져오다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
         }
       }
     ],
@@ -106,6 +116,11 @@
         "key_expr": {
           "en": "sunny and warm",
           "ko": "맑고 따뜻한"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.swap",
+          "3": "M.notsaid"
         }
       },
       {
@@ -132,6 +147,11 @@
         "key_expr": {
           "en": "around four",
           "ko": "4시쯤"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.swap"
         }
       }
     ],
@@ -175,6 +195,11 @@
         "key_expr": {
           "en": "pick you up",
           "ko": "데리러 가다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.notsaid"
         }
       },
       {
@@ -201,6 +226,11 @@
         "key_expr": {
           "en": "take the bus home",
           "ko": "버스 타고 집에 가다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
         }
       }
     ],
@@ -244,6 +274,11 @@
         "key_expr": {
           "en": "the city zoo",
           "ko": "시립 동물원"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
         }
       },
       {
@@ -270,6 +305,11 @@
         "key_expr": {
           "en": "don't knock on the glass",
           "ko": "유리를 두드리지 마세요"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.swap"
         }
       }
     ],
@@ -313,6 +353,11 @@
         "key_expr": {
           "en": "close early",
           "ko": "일찍 문을 닫다"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
         }
       },
       {
@@ -339,6 +384,11 @@
         "key_expr": {
           "en": "the front desk",
           "ko": "안내 데스크"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.number"
         }
       }
     ],
@@ -382,6 +432,11 @@
         "key_expr": {
           "en": "go to bed earlier",
           "ko": "더 일찍 자다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
         }
       },
       {
@@ -408,6 +463,11 @@
         "key_expr": {
           "en": "read a book instead",
           "ko": "대신 책을 읽다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
         }
       }
     ],
@@ -451,6 +511,11 @@
         "key_expr": {
           "en": "strawberry farm",
           "ko": "딸기 농장"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
         }
       },
       {
@@ -477,6 +542,11 @@
         "key_expr": {
           "en": "stay with your group",
           "ko": "모둠과 함께 있다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.swap",
+          "2": "M.notsaid"
         }
       }
     ],
@@ -520,6 +590,11 @@
         "key_expr": {
           "en": "half price",
           "ko": "반값"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
         }
       },
       {
@@ -546,6 +621,11 @@
         "key_expr": {
           "en": "buy two, get one free",
           "ko": "두 개 사면 하나 더"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "2": "M.number",
+          "3": "M.number"
         }
       }
     ],

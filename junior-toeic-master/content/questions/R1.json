@@ -29,6 +29,11 @@
     "key_expr": {
       "en": "Her name is ~",
       "ko": "그녀의 이름은 ~"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
     }
   },
   {
@@ -62,6 +67,11 @@
     "key_expr": {
       "en": "at noon",
       "ko": "낮 12시에"
+    },
+    "miss_type": {
+      "1": "G.clue",
+      "2": "G.clue",
+      "3": "M.swap"
     }
   },
   {
@@ -94,6 +104,11 @@
     "key_expr": {
       "en": "My dog runs fast",
       "ko": "우리 개는 빨리 달려"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.pair",
+      "2": "G.pair"
     }
   },
   {
@@ -127,6 +142,11 @@
     "key_expr": {
       "en": "Yesterday I cleaned",
       "ko": "어제 나는 치웠다"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.form",
+      "3": "G.pair"
     }
   },
   {
@@ -159,6 +179,11 @@
     "key_expr": {
       "en": "should wear",
       "ko": "~하는 게 좋다"
+    },
+    "miss_type": {
+      "1": "G.pair",
+      "2": "G.pair",
+      "3": "G.pair"
     }
   },
   {
@@ -192,6 +217,11 @@
     "key_expr": {
       "en": "A, but B",
       "ko": "A, 하지만 B"
+    },
+    "miss_type": {
+      "0": "M.swap",
+      "2": "G.clue",
+      "3": "G.clue"
     }
   },
   {
@@ -224,6 +254,11 @@
     "key_expr": {
       "en": "between A and B",
       "ko": "A와 B 사이에"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "1": "W.meaning",
+      "2": "W.meaning"
     }
   },
   {
@@ -256,6 +291,11 @@
     "key_expr": {
       "en": "a beautiful voice",
       "ko": "아름다운 목소리"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.clue",
+      "3": "W.meaning"
     }
   },
   {
@@ -288,6 +328,11 @@
     "key_expr": {
       "en": "heavier than ~",
       "ko": "~보다 무거운"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "2": "G.clue",
+      "3": "G.form"
     }
   },
   {
@@ -321,6 +366,11 @@
     "key_expr": {
       "en": "go ~ to borrow",
       "ko": "빌리러 가다"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.pair",
+      "3": "G.clue"
     }
   },
   {
@@ -353,6 +403,11 @@
     "key_expr": {
       "en": "are swimming now",
       "ko": "지금 헤엄치고 있다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.clue",
+      "2": "G.pair"
     }
   },
   {
@@ -385,6 +440,11 @@
     "key_expr": {
       "en": "lent him mine",
       "ko": "내 것을 빌려줬다"
+    },
+    "miss_type": {
+      "1": "G.pair",
+      "2": "W.meaning",
+      "3": "G.form"
     }
   },
   {
@@ -418,6 +478,11 @@
     "key_expr": {
       "en": "Tom and his friends play",
       "ko": "톰과 친구들이 ~한다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.pair",
+      "3": "G.pair"
     }
   },
   {
@@ -450,6 +515,11 @@
     "key_expr": {
       "en": "Because ~",
       "ko": "~ 때문에"
+    },
+    "miss_type": {
+      "1": "G.clue",
+      "2": "G.clue",
+      "3": "G.clue"
     }
   },
   {
@@ -483,6 +553,11 @@
     "key_expr": {
       "en": "was built",
       "ko": "지어졌다"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.clue",
+      "3": "G.clue"
     }
   },
   {
@@ -516,6 +591,11 @@
     "key_expr": {
       "en": "enjoy climbing",
       "ko": "오르기를 즐기다"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "1": "G.pair",
+      "2": "G.pair"
     }
   },
   {
@@ -548,6 +628,11 @@
     "key_expr": {
       "en": "the hottest day",
       "ko": "가장 더운 날"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.clue",
+      "3": "G.form"
     }
   },
   {
@@ -580,6 +665,11 @@
     "key_expr": {
       "en": "has lived since ~",
       "ko": "~부터 쭉 살고 있다"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "2": "G.clue",
+      "3": "G.clue"
     }
   }
 ]

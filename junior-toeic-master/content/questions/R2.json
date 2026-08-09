@@ -32,6 +32,11 @@
         "key_expr": {
           "en": "he is ~",
           "ko": "그는 ~이다"
+        },
+        "miss_type": {
+          "1": "G.clue",
+          "2": "G.clue",
+          "3": "G.form"
         }
       },
       {
@@ -57,6 +62,11 @@
         "key_expr": {
           "en": "wait at the door",
           "ko": "문에서 기다리다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "2": "W.meaning",
+          "3": "W.meaning"
         }
       },
       {
@@ -82,6 +92,11 @@
         "key_expr": {
           "en": "come to my house",
           "ko": "우리 집에 오다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "F.offtopic",
+          "2": "F.offtopic"
         }
       }
     ],
@@ -121,6 +136,11 @@
         "key_expr": {
           "en": "on Friday, May 10th",
           "ko": "5월 10일 금요일에"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "G.clue",
+          "3": "W.meaning"
         }
       },
       {
@@ -147,6 +167,11 @@
         "key_expr": {
           "en": "trade books with ~",
           "ko": "~와 책을 바꾸다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "2": "W.meaning",
+          "3": "W.meaning"
         }
       },
       {
@@ -172,6 +197,11 @@
         "key_expr": {
           "en": "ends at three",
           "ko": "3시에 끝나다"
+        },
+        "miss_type": {
+          "1": "F.offtopic",
+          "2": "F.offtopic",
+          "3": "F.offtopic"
         }
       }
     ],
@@ -210,6 +240,11 @@
         "key_expr": {
           "en": "cold, but warm",
           "ko": "춥지만 따뜻한"
+        },
+        "miss_type": {
+          "1": "G.clue",
+          "2": "G.clue",
+          "3": "W.meaning"
         }
       },
       {
@@ -235,6 +270,11 @@
         "key_expr": {
           "en": "taller than ~",
           "ko": "~보다 높은"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "2": "G.form",
+          "3": "G.form"
         }
       },
       {
@@ -260,6 +300,11 @@
         "key_expr": {
           "en": "the best day",
           "ko": "최고의 날"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "F.offtopic",
+          "2": "F.offtopic"
         }
       }
     ],
@@ -299,6 +344,11 @@
         "key_expr": {
           "en": "on the table",
           "ko": "식탁 위에"
+        },
+        "miss_type": {
+          "1": "W.meaning",
+          "2": "M.swap",
+          "3": "G.pair"
         }
       },
       {
@@ -325,6 +375,11 @@
         "key_expr": {
           "en": "finish your homework",
           "ko": "숙제를 끝내다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "W.meaning",
+          "3": "W.meaning"
         }
       },
       {
@@ -351,6 +406,11 @@
         "key_expr": {
           "en": "Grandma will visit",
           "ko": "할머니가 오실 거야"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "1": "F.offtopic",
+          "3": "F.offtopic"
         }
       }
     ],
@@ -390,6 +450,11 @@
         "key_expr": {
           "en": "Yesterday we climbed",
           "ko": "어제 우리는 올랐다"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "2": "G.clue",
+          "3": "G.pair"
         }
       },
       {
@@ -416,6 +481,11 @@
         "key_expr": {
           "en": "more delicious than ~",
           "ko": "~보다 더 맛있는"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "G.clue",
+          "3": "M.notsaid"
         }
       },
       {
@@ -442,6 +512,11 @@
         "key_expr": {
           "en": "buy a gift for you",
           "ko": "너에게 줄 선물을 사다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "F.offtopic",
+          "2": "F.offtopic"
         }
       }
     ],
@@ -480,6 +555,11 @@
         "key_expr": {
           "en": "Members grow ~",
           "ko": "회원들이 ~를 기른다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "2": "G.pair",
+          "3": "G.pair"
         }
       },
       {
@@ -505,6 +585,11 @@
         "key_expr": {
           "en": "don't have to ~",
           "ko": "~하지 않아도 된다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.opposite",
+          "3": "M.opposite"
         }
       },
       {
@@ -530,6 +615,11 @@
         "key_expr": {
           "en": "don't need experience",
           "ko": "해 본 적 없어도 된다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "F.offtopic",
+          "2": "F.offtopic"
         }
       }
     ],
