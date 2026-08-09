@@ -560,8 +560,11 @@ async function showReview() {
 async function showRecord() {
   setTab('record');
   tabbarVisible(true);
-  let sealed = null;
-  if (auth) { try { sealed = (await api('/api/me', { headers: authHeaders() })).sealed; } catch { /* 무시 */ } }
+  let sealed = null, rec = null;
+  if (auth) {
+    try { sealed = (await api('/api/me', { headers: authHeaders() })).sealed; } catch { /* 무시 */ }
+    try { rec = await api('/api/records', { headers: authHeaders() }); } catch { /* 무시 */ }
+  }
   const answered = totalAnswered();
   const acc = answered ? Math.round((totalCorrect() / answered) * 100) : 0;
   view.innerHTML = `
@@ -579,6 +582,32 @@ async function showRecord() {
         <span class="card-note">${WEAK_MIN}문항 이상 푼 파트만</span></div>
       ${skillMap()}
     </div>
+    ${rec ? `
+    <div class="card">
+      <div class="card-head"><span class="card-title">내 최고 기록</span>
+        <span class="card-note">어제의 나와 대결</span></div>
+      <div class="rowlist">
+        <div class="row">
+          <span class="row-body">
+            <span class="row-t">연속 정답 ${rec.best_run}개</span>
+            <span class="row-s">${
+              rec.current_run > 0 && rec.best_run >= 3 && rec.current_run >= rec.best_run - 2 && rec.current_run < rec.best_run
+                ? `지금 ${rec.current_run}연속 — 최고 기록까지 ${rec.best_run - rec.current_run}개!`
+                : rec.current_run > 0 && rec.current_run >= rec.best_run && rec.best_run > 0
+                  ? `지금 ${rec.current_run}연속 — 신기록 진행 중!`
+                  : `지금 ${rec.current_run}연속`}</span>
+          </span>
+        </div>
+        <div class="row">
+          <span class="row-body">
+            <span class="row-t">하루 최다 풀이 ${rec.best_day ? rec.best_day.n : 0}문항</span>
+            <span class="row-s">오늘은 ${rec.today_n}문항${
+              rec.best_day && rec.today_n > 0 && rec.today_n >= rec.best_day.n - 3 && rec.today_n < rec.best_day.n
+                ? ` — 기록 갱신까지 ${rec.best_day.n - rec.today_n}문항!` : ''}</span>
+          </span>
+        </div>
+      </div>
+    </div>` : ''}
     ${sealed !== null ? `
     <div class="card row">
       <span class="row-ico" style="background:var(--ok-soft);color:var(--ok)">

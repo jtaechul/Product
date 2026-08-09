@@ -195,6 +195,33 @@ app.post('/api/diagnostic/finish', requireAuth, async (c) => {
   return c.json({ report, group: await groupOf(c.env.DB, u) });
 });
 
+// 개인 최고 기록 (M3-3 '어제의 나와 대결') — 비교 대상은 남이 아니라 과거의 나
+app.get('/api/records', requireAuth, async (c) => {
+  const u = c.get('user');
+  const [{ results: seq }, best, today] = await Promise.all([
+    c.env.DB.prepare(
+      `SELECT is_correct FROM answers WHERE user_id = ?1 ORDER BY answered_at LIMIT 2000`
+    ).bind(u.id).all(),
+    c.env.DB.prepare(
+      `SELECT date(answered_at, '+9 hours') AS d, COUNT(*) AS n FROM answers
+        WHERE user_id = ?1 GROUP BY d ORDER BY n DESC, d LIMIT 1`
+    ).bind(u.id).first(),
+    c.env.DB.prepare(
+      `SELECT COUNT(*) AS n FROM answers WHERE user_id = ?1 AND date(answered_at, '+9 hours') = ?2`
+    ).bind(u.id, kstDate()).first(),
+  ]);
+  // 최장 연속 정답 + 지금 이어지는 연속 (최근 답부터 뒤로)
+  let bestRun = 0, run = 0;
+  for (const r of seq) { run = r.is_correct ? run + 1 : 0; if (run > bestRun) bestRun = run; }
+  let currentRun = 0;
+  for (let i = seq.length - 1; i >= 0 && seq[i].is_correct; i--) currentRun++;
+  return c.json({
+    best_run: bestRun, current_run: currentRun,
+    best_day: best ? { date: best.d, n: best.n } : null,
+    today_n: today.n,
+  });
+});
+
 // 로그인 학생의 오답 복습 목록 — 오늘까지 도래한 SRS 큐 (오래된 순)
 app.get('/api/review', requireAuth, async (c) => {
   const u = c.get('user');
