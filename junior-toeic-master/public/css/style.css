@@ -116,12 +116,25 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .card-title { font-size: .96rem; font-weight: 700; letter-spacing: -.02em; }
 .card-note { font-size: .76rem; color: var(--muted); }
 
-/* ── 실력 지도 (파트별 숙달도) ── */
-.skillgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
-.skill {
+/* ── 실력 지도 (파트별 숙달도) ──
+   듣기 4칸·읽기 3칸을 같은 폭에 나눠 두 줄의 오른쪽 끝을 맞춘다.
+   (듣기 칸이 그만큼 좁아진다) 오른쪽엔 두 줄 높이를 다 쓰는 전체 평균 칸. */
+.skillmap { display: grid; grid-template-columns: 1fr 74px; gap: 7px; align-items: stretch; }
+.skill-rows { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.skill-row { display: grid; gap: 7px; }
+.skill-row.lc { grid-template-columns: repeat(4, 1fr); }
+.skill-row.rc { grid-template-columns: repeat(3, 1fr); }
+.skill, .skill-avg {
   border-radius: 11px; padding: 9px 4px; text-align: center; color: #fff;
   display: flex; flex-direction: column; gap: 1px;
 }
+.skill-avg { justify-content: center; gap: 2px; }
+.skill-avg .code { font-size: .66rem; font-weight: 700; opacity: .9; }
+.skill-avg .val { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.skill-avg.lv-none { background: var(--surface-2); color: var(--muted); }
+.skill-avg.lv-low { background: var(--bad); }
+.skill-avg.lv-mid { background: var(--warn); }
+.skill-avg.lv-high { background: var(--ok); }
 .skill .code { font-size: .68rem; font-weight: 700; opacity: .9; }
 .skill .val { font-size: .95rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .skill.lv-none { background: var(--surface-2); color: var(--muted); }

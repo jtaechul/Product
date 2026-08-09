@@ -137,15 +137,31 @@ async function ensureTodaySet() {
   return data;
 }
 
-function skillGrid() {
+const levelOf = (acc) =>
+  acc === null ? 'lv-none' : acc >= 80 ? 'lv-high' : acc >= 60 ? 'lv-mid' : 'lv-low';
+
+// 듣기 4칸 · 읽기 3칸을 같은 폭에 나눠 두 줄의 오른쪽 끝을 맞추고,
+// 그 옆에 두 줄 높이를 다 쓰는 전체 평균 칸을 세운다.
+function skillMap() {
   const weakest = ranked()[0]?.part;
-  return PARTS.map((p) => {
+  const cell = (p) => {
     const acc = accuracy(p);
-    const lv = acc === null ? 'lv-none' : acc >= 80 ? 'lv-high' : acc >= 60 ? 'lv-mid' : 'lv-low';
     const weak = acc !== null && p === weakest ? ' is-weak' : '';
-    return `<div class="skill ${lv}${weak}">
+    return `<div class="skill ${levelOf(acc)}${weak}">
       <span class="code">${p}</span><span class="val">${acc === null ? '–' : acc}</span></div>`;
-  }).join('');
+  };
+  const answered = totalAnswered();
+  const avg = answered ? Math.round((totalCorrect() / answered) * 100) : null;
+  return `<div class="skillmap">
+    <div class="skill-rows">
+      <div class="skill-row lc">${['L1', 'L2', 'L3', 'L4'].map(cell).join('')}</div>
+      <div class="skill-row rc">${['R1', 'R2', 'R3'].map(cell).join('')}</div>
+    </div>
+    <div class="skill-avg ${levelOf(avg)}">
+      <span class="code">전체 평균</span>
+      <span class="val">${avg === null ? '–' : avg}</span>
+    </div>
+  </div>`;
 }
 
 async function showHome() {
@@ -218,7 +234,7 @@ async function showHome() {
           <span class="card-title">내 실력 지도</span>
           <span class="card-note">${answered ? `${answered}문항 기준` : '아직 기록 없음'}</span>
         </div>
-        <div class="skillgrid">${skillGrid()}</div>
+        ${skillMap()}
       </div>
 
       ${focusCard}
@@ -295,7 +311,7 @@ function showRecord() {
     <div class="card">
       <div class="card-head"><span class="card-title">파트별 숙달도</span>
         <span class="card-note">${WEAK_MIN}문항 이상 푼 파트만</span></div>
-      <div class="skillgrid">${skillGrid()}</div>
+      ${skillMap()}
     </div>
     <div class="card">
       <div class="card-head"><span class="card-title">파트별 상세</span></div>
