@@ -2,8 +2,30 @@
 // 절대 규칙: 문항을 내려주는 어떤 응답에도 answer_idx·explanation_ko를 포함하지 않는다.
 // 채점 엔드포인트만 정답에 접근한다. (docs/engine.md · PRD 6절)
 import { Hono } from 'hono';
-import { verifyPin, makeToken, requireAuth } from './auth.mjs';
-import { recordAnswer, kstDate } from './engine.mjs';
+import { verifyPin, makeToken, requireAuth, verifyToken } from './auth.mjs';
+import { recordAnswer, composeDailySet, kstDate } from './engine.mjs';
+
+// 문항 id 목록 → 학생용 필드(정답·해설·스크립트 미포함) + 지문. 시험 순서(파트 오름차순) 정렬.
+async function hydrate(db, ids) {
+  if (!ids.length) return { questions: [], passages: {} };
+  const qm = ids.map((_, i) => `?${i + 1}`).join(',');
+  const { results: rows } = await db.prepare(
+    `SELECT id, passage_id, section, part, stem, choices, difficulty_label,
+            audio_url, image_url, accent, status
+       FROM questions WHERE id IN (${qm})`
+  ).bind(...ids).all();
+  rows.sort((a, b) => a.part.localeCompare(b.part) || a.id.localeCompare(b.id));
+  const pids = [...new Set(rows.map((q) => q.passage_id).filter(Boolean))];
+  const passages = {};
+  if (pids.length) {
+    const pm = pids.map((_, i) => `?${i + 1}`).join(',');
+    const { results } = await db.prepare(
+      `SELECT id, kind, content, image_url, audio_url, accent FROM passages WHERE id IN (${pm})`
+    ).bind(...pids).all();
+    for (const p of results) passages[p.id] = p;
+  }
+  return { questions: rows.map((q) => ({ ...q, choices: JSON.parse(q.choices) })), passages };
+}
 
 const app = new Hono();
 
@@ -41,6 +63,23 @@ app.get('/api/me', requireAuth, async (c) => {
   return c.json({
     user: { id: u.id, login_id: u.login_id, display_name: u.display_name, role: u.role },
     answered: stats.answered, correct: stats.correct, review_due: due.n,
+  });
+});
+
+// 로그인 학생의 오답 복습 목록 — 오늘까지 도래한 SRS 큐 (오래된 순)
+app.get('/api/review', requireAuth, async (c) => {
+  const u = c.get('user');
+  const { results } = await c.env.DB.prepare(
+    `SELECT question_id, box, due_at FROM review_queue
+      WHERE user_id = ?1 AND graduated_at IS NULL AND due_at <= ?2
+      ORDER BY due_at LIMIT 50`
+  ).bind(u.id, kstDate()).all();
+  const { questions, passages } = await hydrate(c.env.DB, results.map((r) => r.question_id));
+  const boxBy = Object.fromEntries(results.map((r) => [r.question_id, r.box]));
+  return c.json({
+    count: questions.length,
+    questions: questions.map((q) => ({ ...q, srs_box: boxBy[q.id] })),
+    passages,
   });
 });
 
@@ -141,6 +180,28 @@ app.get('/api/questions', async (c) => {
 const SET_COMPOSITION = { L1: 1, L2: 2, L3: 1, L4: 2, R1: 2, R2: 2, R3: 2 }; // 합 12 — 실제 시험 파트 비율 반영
 
 app.get('/api/today', async (c) => {
+  // 로그인 학생: 서버가 복습+약점+신규+유지 슬롯으로 세트를 만든다 (하루 1세트 고정 저장)
+  const m = /^Bearer\s+(.+)$/.exec(c.req.header('Authorization') || '');
+  const user = m ? await verifyToken(c.env.DB, m[1]) : null;
+  if (user) {
+    const today = kstDate();
+    let set = await c.env.DB.prepare(
+      'SELECT question_ids, slots FROM daily_sets WHERE user_id = ?1 AND date = ?2'
+    ).bind(user.id, today).first();
+    if (!set) {
+      const made = await composeDailySet(c.env.DB, user, today);
+      set = { question_ids: JSON.stringify(made.ids), slots: JSON.stringify(made.slots) };
+      await c.env.DB.prepare(
+        `INSERT INTO daily_sets (id, user_id, date, question_ids, slots, generated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+         ON CONFLICT(user_id, date) DO NOTHING`
+      ).bind(crypto.randomUUID(), user.id, today, set.question_ids, set.slots, new Date().toISOString()).run();
+    }
+    const ids = JSON.parse(set.question_ids);
+    const { questions, passages } = await hydrate(c.env.DB, ids);
+    return c.json({ count: questions.length, plan: JSON.parse(set.slots), personalized: true, questions, passages });
+  }
+
   const weak = (c.req.query('weak') || '').split(',').filter((p) => PART_RE.test(p));
   const exclude = (c.req.query('exclude') || '').split(',').filter(Boolean).slice(0, 200);
 

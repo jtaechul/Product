@@ -13,6 +13,73 @@ export const kFor = (attempts) => (attempts < 20 ? 32 : attempts < 50 ? 24 : 16)
 export const kstDate = (ms = Date.now(), plusDays = 0) =>
   new Date(ms + 9 * 3600_000 + plusDays * 86400_000).toISOString().slice(0, 10);
 
+// ── 오늘의 학습 세트 생성 (engine.md 5절) ──
+// 복습(SRS due) + 약점(p 0.55~0.75) + 신규(경험 적은 태그) + 유지(강점 p≥0.8).
+// 문제 은행이 120문항 규모라 후보 전체를 메모리에 놓고 JS로 조합한다.
+const P_WEAK = [0.55, 0.75];
+const NO_REPEAT_DAYS = 14;
+const slotsFor = (size) => (size <= 12
+  ? { review: 4, weak: 5, fresh: 2, keep: 1 }
+  : { review: 6, weak: 8, fresh: 4, keep: 2 });
+
+export async function composeDailySet(db, user, today) {
+  const setSize = (await db.prepare(
+    'SELECT set_size FROM classes WHERE id = ?1'
+  ).bind(user.class_id).first())?.set_size ?? 12;
+  const slots = slotsFor(setSize);
+
+  const [{ results: bank }, { results: qtags }, { results: skills }, { results: due }, { results: recent }] =
+    await Promise.all([
+      db.prepare(`SELECT id, part, rating, passage_id FROM questions WHERE status = 'active'`).all(),
+      db.prepare('SELECT question_id, tag_id FROM question_tags').all(),
+      db.prepare('SELECT tag_id, rating, attempts FROM user_tag_skills WHERE user_id = ?1').bind(user.id).all(),
+      db.prepare(`SELECT question_id FROM review_queue
+                   WHERE user_id = ?1 AND graduated_at IS NULL AND due_at <= ?2
+                   ORDER BY due_at LIMIT ?3`).bind(user.id, today, slots.review).all(),
+      db.prepare(`SELECT DISTINCT question_id FROM answers
+                   WHERE user_id = ?1 AND answered_at >= ?2`)
+        .bind(user.id, new Date(Date.now() - NO_REPEAT_DAYS * 86400_000).toISOString()).all(),
+    ]);
+
+  const tagsBy = {};
+  for (const { question_id, tag_id } of qtags) (tagsBy[question_id] ||= []).push(tag_id);
+  const skillBy = Object.fromEntries(skills.map((s) => [s.tag_id, s]));
+  const recentSet = new Set(recent.map((r) => r.question_id));
+  const picked = [];
+  const pickedSet = new Set();
+  const take = (q) => { picked.push(q.id); pickedSet.add(q.id); };
+
+  // 예상 정답률: 문항 태그 중 가장 약한 태그 레이팅 기준 (약한 고리가 지배)
+  const pOf = (q) => {
+    const rs = (tagsBy[q.id] || []).map((t) => skillBy[t]?.rating ?? DEFAULT_RATING);
+    const r = rs.length ? Math.min(...rs) : DEFAULT_RATING;
+    return 1 / (1 + 10 ** ((q.rating - r) / ELO_SCALE));
+  };
+  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+  // 1) 복습 (14일 제외 규칙의 예외)
+  const bankBy = Object.fromEntries(bank.map((q) => [q.id, q]));
+  for (const { question_id } of due) if (bankBy[question_id]) take(bankBy[question_id]);
+
+  // 2~4) 후보 풀: 최근 노출·기선택 제외
+  const pool = bank.filter((q) => !pickedSet.has(q.id) && !recentSet.has(q.id));
+  const withP = shuffle(pool.map((q) => ({ q, p: pOf(q) })));
+
+  for (const { q } of withP.filter((x) => x.p >= P_WEAK[0] && x.p <= P_WEAK[1]).slice(0, slots.weak)) take(q);
+  // 신규: 경험(시도) 0인 태그를 가진 문항 — 쉬운(p 높은) 것부터
+  const fresh = withP
+    .filter((x) => !pickedSet.has(x.q.id) && (tagsBy[x.q.id] || []).some((t) => (skillBy[t]?.attempts ?? 0) < 3))
+    .sort((a, b) => b.p - a.p);
+  for (const { q } of fresh.slice(0, slots.fresh)) take(q);
+  for (const { q } of withP.filter((x) => !pickedSet.has(x.q.id) && x.p >= 0.8).slice(0, slots.keep)) take(q);
+  // 부족분: 아무 후보로든 채운다 (빈 세트 금지)
+  for (const { q } of withP) {
+    if (picked.length >= setSize) break;
+    if (!pickedSet.has(q.id)) take(q);
+  }
+  return { ids: picked, slots, setSize };
+}
+
 // 채점 결과 하나를 학습 기록에 반영한다.
 // answers INSERT + user_tag_skills(Elo) UPSERT + review_queue(라이트너) UPSERT.
 // D1 batch(단일 트랜잭션)로 묶어 부분 반영을 막는다.

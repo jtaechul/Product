@@ -128,16 +128,31 @@ const tabbarVisible = (on) => {
 };
 
 // ---------- 홈: 오늘의 맞춤 학습 ----------
+const authHeaders = () => (auth ? { Authorization: `Bearer ${auth.token}` } : {});
+
 async function ensureTodaySet() {
-  if (store.set && store.setDate === todayKey()) return store.set;
-  const weak = ranked().slice(0, 2).map((x) => x.part);
-  const strong = ranked().slice(-2).reverse().map((x) => x.part);
-  const qs = new URLSearchParams();
-  if (weak.length) qs.set('weak', weak.join(','));
-  if (strong.length) qs.set('strong', strong.join(','));
-  const data = await api(`/api/today?${qs}`);
+  const owner = auth?.user?.id || 'guest';
+  if (store.set && store.setDate === todayKey() && store.setUser === owner) return store.set;
+  let data;
+  if (auth) {
+    // 서버가 복습+약점+신규 슬롯으로 개인 세트를 만든다 (기기 바꿔도 같은 세트)
+    try {
+      data = await api('/api/today', { headers: authHeaders() });
+    } catch (e) {
+      if (/로그인/.test(e.message)) { saveAuth(null); } else throw e;
+    }
+  }
+  if (!data) {
+    const weak = ranked().slice(0, 2).map((x) => x.part);
+    const strong = ranked().slice(-2).reverse().map((x) => x.part);
+    const qs = new URLSearchParams();
+    if (weak.length) qs.set('weak', weak.join(','));
+    if (strong.length) qs.set('strong', strong.join(','));
+    data = await api(`/api/today?${qs}`);
+  }
   store.set = data;
   store.setDate = todayKey();
+  store.setUser = owner;
   store.setIdx = 0;
   save();
   return data;
@@ -176,6 +191,11 @@ async function showHome() {
   view.innerHTML = '<p class="loading">오늘의 학습을 준비하고 있어요...</p>';
   try {
     const set = await ensureTodaySet();
+    // 다시 볼 문제 수: 로그인은 서버 SRS 큐(오늘 도래분), 게스트는 이 기기 기록
+    let reviewN = store.wrong.length;
+    if (auth) {
+      try { reviewN = (await api('/api/me', { headers: authHeaders() })).review_due; } catch { /* 무시 */ }
+    }
     const total = set.questions.length;
     const doneN = Math.min(store.setIdx, total);
     const left = total - doneN;
@@ -252,8 +272,8 @@ async function showHome() {
       <button class="card row" data-tab-go="review">
         <span class="row-ico"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4"/><path d="M8 4.5v4M8 11.2v.1"/></svg></span>
         <span class="row-body">
-          <span class="row-t">다시 볼 문제 ${store.wrong.length}개</span>
-          <span class="row-s">${store.wrong.length ? '오늘 복습하면 잊지 않아요' : '틀린 문제가 모이면 여기서 복습해요'}</span>
+          <span class="row-t">다시 볼 문제 ${reviewN}개</span>
+          <span class="row-s">${reviewN ? '오늘 복습하면 잊지 않아요' : '틀린 문제가 모이면 여기서 복습해요'}</span>
         </span>
         <svg class="row-arrow" viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
       </button>`;
@@ -311,9 +331,44 @@ function showLogin() {
 }
 
 // ---------- 오답 ----------
-function showReview() {
+async function showReview() {
   setTab('review');
   tabbarVisible(true);
+  if (auth) {
+    view.innerHTML = '<p class="loading">복습할 문제를 찾는 중...</p>';
+    try {
+      const r = await api('/api/review', { headers: authHeaders() });
+      if (!r.count) {
+        view.innerHTML = `<div class="greet"><div><h1 class="greet-title">다시 풀 문제</h1></div></div>
+          <div class="card"><p class="empty">오늘 복습할 문제가 없어요.<br>틀린 문제는 1일 → 3일 → 7일 → 14일 뒤에 다시 나와요.</p></div>`;
+        return;
+      }
+      const list = r.questions.map((q) => `
+        <div class="row">
+          <span class="row-ico">${q.part}</span>
+          <span class="row-body">
+            <span class="row-t">${esc(q.stem || PART_INFO[q.part].name)}</span>
+            <span class="row-s">${PART_INFO[q.part].name} · ${q.srs_box}번째 복습</span>
+          </span>
+        </div>`).join('');
+      view.innerHTML = `
+        <div class="greet"><div>
+          <p class="greet-date">틀린 문제는 다시 만나야 내 것이 돼요</p>
+          <h1 class="greet-title">오늘 복습할 문제 ${r.count}개</h1>
+        </div></div>
+        <button class="btn-hero" style="background:var(--primary);color:#fff" data-review-start>복습 시작</button>
+        <div class="card"><div class="rowlist">${list}</div></div>`;
+      view.querySelectorAll('.row-ico').forEach((el) => {
+        el.style.cssText += 'font-size:.74rem;font-weight:700;background:var(--primary-soft);color:var(--primary)';
+      });
+      view.querySelector('[data-review-start]').addEventListener('click', () =>
+        startSession(r.questions, r.passages, '오답 복습'));
+      return;
+    } catch (e) {
+      if (/로그인/.test(e.message)) saveAuth(null);
+      else return renderError(e.message);
+    }
+  }
   if (!store.wrong.length) {
     view.innerHTML = `<div class="greet"><div><h1 class="greet-title">다시 풀 문제</h1></div></div>
       <div class="card"><p class="empty">아직 틀린 문제가 없어요.<br>오늘의 학습을 풀면 여기에 모입니다.</p></div>`;
