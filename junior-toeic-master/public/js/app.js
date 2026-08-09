@@ -136,26 +136,65 @@ function sfxTone(seq, type = 'triangle', vol = 0.09) {
     }
   } catch { /* 소리는 못 나도 학습엔 지장 없음 */ }
 }
-// 실제 사운드 파일(/sfx/*.mp3 — Freesound CC0, sfx-batch.mjs로 다운로드)이 있으면
-// 그걸 쓰고, 아직 없거나 재생이 막히면 합성음으로 대체한다.
-const SFX_VOL = { select: 0.25, correct: 0.4, wrong: 0.3, done: 0.45 };
-const sfxPlayers = {};
-function playSfx(name, fallback) {
-  if (!pref.sound) return;            // 설정에서 끈 경우
-  let a = sfxPlayers[name];
-  if (a === null) return fallback();          // 파일 없음이 확인된 상태
-  if (!a) {
-    a = sfxPlayers[name] = new Audio(`/sfx/${name}.mp3`);
-    a.preload = 'auto';
-    a.volume = SFX_VOL[name] ?? 0.35;
-  }
-  a.currentTime = 0;
-  a.play().catch(() => { sfxPlayers[name] = null; fallback(); });
+// 실제 사운드 파일(/sfx/*.mp3 — Freesound CC0)을 쓰되, HTML <audio>가 아니라
+// Web Audio로 튼다. <audio>로 틀면 브라우저가 '음악 재생'으로 인식해 화면 위에
+// 미디어 컨트롤이 뜨고, 폰에서는 듣던 음악까지 끊긴다. 효과음은 그러면 안 된다.
+//
+// 파일마다 녹음 음량이 제각각이라(오답음은 최대 5%밖에 안 돼 사실상 안 들렸다)
+// 불러올 때 최대 음량을 재서 1.0으로 맞춘 뒤, 아래 비율을 곱한다.
+const SFX_VOL = { select: 0.10, correct: 0.30, wrong: 0.20, done: 0.35 };
+const sfxBuf = {};     // 이름 → { buf, gain } / null(파일 못 씀)
+let actx = null;
+
+function audio() {
+  actx ||= new (window.AudioContext || window.webkitAudioContext)();
+  if (actx.state === 'suspended') actx.resume().catch(() => { /* 곧 다시 시도된다 */ });
+  return actx;
 }
+
+async function loadSfx(name) {
+  try {
+    const res = await fetch(`/sfx/${name}.mp3`);
+    if (!res.ok) throw new Error('없음');
+    const buf = await audio().decodeAudioData(await res.arrayBuffer());
+    // 최대 음량을 재서 정규화 배수를 구한다 (너무 작게 녹음된 파일 구제)
+    let peak = 0;
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i += 8) { const v = Math.abs(d[i]); if (v > peak) peak = v; }
+    sfxBuf[name] = { buf, gain: peak > 0.01 ? Math.min(12, 1 / peak) : 1 };
+  } catch { sfxBuf[name] = null; }
+}
+
+// 첫 터치에 오디오를 깨우고 파일을 미리 받아 둔다.
+// (모바일은 사용자가 화면을 건드리기 전에는 소리를 못 낸다)
+let sfxReady = false;
+const wakeSfx = () => {
+  if (sfxReady) return;
+  sfxReady = true;
+  audio();
+  for (const n of Object.keys(SFX_VOL)) loadSfx(n);
+};
+addEventListener('pointerdown', wakeSfx, { once: true, capture: true });
+addEventListener('keydown', wakeSfx, { once: true, capture: true });
+
+function playSfx(name, fallback) {
+  if (!pref.sound) return;
+  wakeSfx();
+  const item = sfxBuf[name];
+  if (!item) return fallback();          // 아직 안 받았거나 못 쓰는 파일 → 합성음
+  const ctx = audio();
+  const src = ctx.createBufferSource();
+  const g = ctx.createGain();
+  src.buffer = item.buf;
+  g.gain.value = item.gain * (SFX_VOL[name] ?? 0.3);
+  src.connect(g).connect(ctx.destination);
+  src.start();
+}
+// 파일을 못 쓸 때 대신 낼 합성음. 짧고 부드럽게 — 오답음은 특히 세지 않게.
 const sfx = {
   select: () => playSfx('select', () => sfxTone([[880, 0, 0.05]], 'sine', 0.035)),
   correct: () => playSfx('correct', () => sfxTone([[659.25, 0, 0.12], [987.77, 0.09, 0.22]])),
-  wrong: () => playSfx('wrong', () => sfxTone([[196, 0, 0.2]], 'square', 0.04)),
+  wrong: () => playSfx('wrong', () => sfxTone([[392, 0, 0.09], [294, 0.07, 0.16]], 'sine', 0.05)),
   done: () => playSfx('done', () => sfxTone([[523.25, 0, 0.12], [659.25, 0.1, 0.12], [783.99, 0.2, 0.12], [1046.5, 0.3, 0.3]])),
 };
 
