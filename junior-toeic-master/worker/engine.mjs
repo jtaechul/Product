@@ -73,7 +73,9 @@ export async function composeDailySet(db, user, today) {
                    ORDER BY due_at LIMIT ?3`).bind(user.id, today, slots.review).all(),
       db.prepare(`SELECT DISTINCT question_id FROM answers
                    WHERE user_id = ?1 AND answered_at >= ?2`)
-        .bind(user.id, new Date(Date.now() - NO_REPEAT_DAYS * 86400_000).toISOString()).all(),
+        // 무반복 기준선은 서버의 현재 시각이 아니라 넘겨받은 '오늘'(KST 날짜)에서 센다.
+        // 그래야 이 함수가 입력만으로 결과가 정해져 시뮬레이션·테스트가 가능하다.
+        .bind(user.id, new Date(Date.parse(`${today}T00:00:00+09:00`) - NO_REPEAT_DAYS * 86400_000).toISOString()).all(),
     ]);
 
   const tagsBy = {};
