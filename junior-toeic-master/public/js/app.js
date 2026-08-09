@@ -229,6 +229,10 @@ function showSettings() {
       <p class="card-note">점프리시는 이메일·전화번호를 받지 않아요. 학원에서 받은 아이디와
         비밀번호 6자리, 그리고 문제 푼 기록만 저장합니다.</p>
 
+      <p class="sheet-sect">사진 출처</p>
+      <p class="card-note">듣기 1번의 사진은
+        <a href="https://pixabay.com" target="_blank" rel="noopener">Pixabay</a>에서 가져왔어요.</p>
+
       <div style="display:flex; gap:8px; margin-top:6px">
         <button class="btn-ghost" style="flex:1" data-close>닫기</button>
         <button class="btn-primary" style="flex:1" data-auth-toggle>${auth ? '로그아웃' : '로그인'}</button>
@@ -988,7 +992,7 @@ function renderQuestion() {
     return `
       <div class="qblock${locked ? ' locked' : ''}" data-block="${qi}">
         ${g.items.length > 1 ? `<p class="qnum">문제 ${k + 1}</p>` : ''}
-        ${q.part === 'L1' && !choiceImages ? '<p class="notice">그림 준비 중인 문항이에요.</p>' : ''}
+        ${q.part === 'L1' && !choiceImages ? '<p class="notice">사진 준비 중인 문항이에요.</p>' : ''}
         ${q.stem ? `<p class="stem">${esc(q.stem)}</p>` : ''}
         ${choicesHtml}
         <div data-result>${locked ? '<p class="notice">지난 학습에서 이미 푼 문제예요.</p>' : ''}</div>

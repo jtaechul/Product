@@ -1,7 +1,8 @@
 name: Generate L1 images (Jumplish)
 
-# 점프리시 L1(사진 고르기) 보기 그림 4컷×8문항을 Pollinations.ai(무료)로 생성해
+# 점프리시 L1(사진 고르기) 보기 사진 4컷×8문항을 픽사베이에서 검색·내려받아
 # 브랜치에 커밋한다. 개발 샌드박스는 외부망이 막혀 있어 GitHub 러너에서 실행한다.
+# (AI 생성 그림은 상황이 자주 틀려서 폐기 — 실제 사진 + 태그 검사로 바꿨다)
 # 수동 실행 전용 — 커밋이 푸시되면 deploy-jumplish.yml이 이어서 자동 배포한다.
 
 # 이 저장소의 GitHub 앱 토큰은 workflow_dispatch 호출 권한이 없어(403),
@@ -38,22 +39,26 @@ jobs:
       - name: Validate content
         run: node tools/import.mjs --check
 
-      - name: Generate images (resumable)
+      - name: Fetch photos (resumable)
         id: gen
-        continue-on-error: true   # 일부 실패해도 성공분은 커밋한다 (재실행 시 이어서 생성)
-        run: node tools/img-batch.mjs
+        continue-on-error: true   # 일부 실패해도 성공분은 커밋한다 (재실행 시 이어서 받음)
+        env:
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+        run: |
+          node tools/import.mjs   # ULID 매핑(.idmap.json) 생성 — 파일명이 여기에 달려 있다
+          node tools/img-batch.mjs
 
       - name: Commit & push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/img/l1 content/questions/L1.json
+          git add public/img/l1 content/questions/L1.json content/l1-photos.json
           if git diff --cached --quiet; then
             echo "변경 없음 — 커밋 생략"
             exit 0
           fi
-          git commit -m "junior-toeic-master: L1 보기 그림 생성·활성화 (자동 배치)" \
-            -m "generate-l1-images.yml 러너에서 Pollinations.ai로 생성. 4컷이 모두 갖춰진 문항만 status를 active로 올린다."
+          git commit -m "junior-toeic-master: L1 보기 사진 수집·활성화 (자동 배치)" \
+            -m "generate-l1-images.yml 러너에서 픽사베이 검색으로 수집. 태그 조건(need/avoid)을 통과한 사진만 채택하고, 4컷이 모두 갖춰진 문항만 status를 active로 올린다. 출처는 content/l1-photos.json에 기록."
           # 생성하는 동안 브랜치가 앞서갔을 수 있다 — 리베이스로 얹은 뒤 푸시
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin HEAD:"${GITHUB_REF_NAME}"
@@ -61,5 +66,5 @@ jobs:
       - name: Fail if generation incomplete
         if: steps.gen.outcome == 'failure'
         run: |
-          echo "::error::일부 그림 생성 실패 — 워크플로를 다시 실행하면 이어서 생성합니다"
+          echo "::error::일부 사진 수집 실패 — 검색어를 손보고 다시 실행하면 이어서 받습니다"
           exit 1

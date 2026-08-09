@@ -36,7 +36,46 @@
     "key_expr": {
       "en": "ride a bicycle",
       "ko": "자전거를 타다"
-    }
+    },
+    "choice_image_queries": [
+      {
+        "q": "child flying kite",
+        "need": [
+          "kite"
+        ],
+        "avoid": [
+          "bicycle",
+          "bike"
+        ]
+      },
+      {
+        "q": "child playing soccer",
+        "need": [
+          "soccer"
+        ],
+        "avoid": [
+          "bicycle",
+          "bike"
+        ]
+      },
+      {
+        "q": "child riding bicycle",
+        "need": [
+          "bicycle"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "child eating ice cream",
+        "need": [
+          "ice cream"
+        ],
+        "avoid": [
+          "bicycle",
+          "bike"
+        ]
+      }
+    ]
   },
   {
     "type": "single",
@@ -75,7 +114,50 @@
     "key_expr": {
       "en": "sleep on the sofa",
       "ko": "소파에서 자다"
-    }
+    },
+    "choice_image_queries": [
+      {
+        "q": "cat sleeping sofa",
+        "need": [
+          "cat",
+          "sleep"
+        ],
+        "avoid": [
+          "dog"
+        ]
+      },
+      {
+        "q": "dog sleeping floor",
+        "need": [
+          "dog",
+          "sleep"
+        ],
+        "avoid": [
+          "cat"
+        ]
+      },
+      {
+        "q": "cat drinking milk",
+        "need": [
+          "cat",
+          "milk"
+        ],
+        "avoid": [
+          "sleep"
+        ]
+      },
+      {
+        "q": "kitten playing toy",
+        "need": [
+          "cat",
+          "play"
+        ],
+        "avoid": [
+          "sleep",
+          "dog"
+        ]
+      }
+    ]
   },
   {
     "type": "single",
@@ -114,7 +196,43 @@
     "key_expr": {
       "en": "buy apples",
       "ko": "사과를 사다"
-    }
+    },
+    "choice_image_queries": [
+      {
+        "q": "woman smelling flowers",
+        "need": [
+          "flower"
+        ],
+        "avoid": [
+          "apple"
+        ]
+      },
+      {
+        "q": "fish market stall",
+        "need": [
+          "fish"
+        ],
+        "avoid": [
+          "apple"
+        ]
+      },
+      {
+        "q": "woman carrying bread basket",
+        "need": [
+          "bread"
+        ],
+        "avoid": [
+          "apple"
+        ]
+      },
+      {
+        "q": "woman buying apples market",
+        "need": [
+          "apple"
+        ],
+        "avoid": []
+      }
+    ]
   },
   {
     "type": "single",
@@ -153,7 +271,43 @@
     "key_expr": {
       "en": "build a sandcastle",
       "ko": "모래성을 쌓다"
-    }
+    },
+    "choice_image_queries": [
+      {
+        "q": "children swimming sea",
+        "need": [
+          "swim"
+        ],
+        "avoid": [
+          "castle"
+        ]
+      },
+      {
+        "q": "children building sandcastle",
+        "need": [
+          "castle"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "child collecting seashells beach",
+        "need": [
+          "shell"
+        ],
+        "avoid": [
+          "castle"
+        ]
+      },
+      {
+        "q": "children playing beach ball",
+        "need": [
+          "ball"
+        ],
+        "avoid": [
+          "castle"
+        ]
+      }
+    ]
   },
   {
     "type": "single",
@@ -192,7 +346,46 @@
     "key_expr": {
       "en": "paint a fence",
       "ko": "울타리를 칠하다"
-    }
+    },
+    "choice_image_queries": [
+      {
+        "q": "man painting fence",
+        "need": [
+          "paint"
+        ],
+        "avoid": [
+          "lawn",
+          "mow"
+        ]
+      },
+      {
+        "q": "man mowing lawn",
+        "need": [
+          "lawn"
+        ],
+        "avoid": [
+          "paint"
+        ]
+      },
+      {
+        "q": "hammer nail wood",
+        "need": [
+          "hammer"
+        ],
+        "avoid": [
+          "paint"
+        ]
+      },
+      {
+        "q": "watering garden hose",
+        "need": [
+          "water"
+        ],
+        "avoid": [
+          "paint"
+        ]
+      }
+    ]
   },
   {
     "type": "single",
@@ -231,7 +424,43 @@
     "key_expr": {
       "en": "pour juice",
       "ko": "주스를 따르다"
-    }
+    },
+    "choice_image_queries": [
+      {
+        "q": "girl drinking juice glass",
+        "need": [
+          "drink"
+        ],
+        "avoid": [
+          "pour"
+        ]
+      },
+      {
+        "q": "pouring juice into glass",
+        "need": [
+          "pour"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "washing dishes kitchen sink",
+        "need": [
+          "wash"
+        ],
+        "avoid": [
+          "pour"
+        ]
+      },
+      {
+        "q": "cutting orange fruit",
+        "need": [
+          "orange"
+        ],
+        "avoid": [
+          "pour"
+        ]
+      }
+    ]
   },
   {
     "type": "single",
@@ -270,7 +499,44 @@
     "key_expr": {
       "en": "feed the ducks",
       "ko": "오리에게 먹이를 주다"
-    }
+    },
+    "choice_image_queries": [
+      {
+        "q": "taking photo camera outdoors",
+        "need": [
+          "camera"
+        ],
+        "avoid": [
+          "duck"
+        ]
+      },
+      {
+        "q": "child eating sandwich",
+        "need": [
+          "sandwich"
+        ],
+        "avoid": [
+          "duck"
+        ]
+      },
+      {
+        "q": "toy boat pond",
+        "need": [
+          "boat"
+        ],
+        "avoid": [
+          "duck"
+        ]
+      },
+      {
+        "q": "feeding ducks bread",
+        "need": [
+          "duck",
+          "feed"
+        ],
+        "avoid": []
+      }
+    ]
   },
   {
     "type": "single",
@@ -309,6 +575,42 @@
     "key_expr": {
       "en": "hang wet clothes",
       "ko": "젖은 빨래를 널다"
-    }
+    },
+    "choice_image_queries": [
+      {
+        "q": "folding laundry clothes",
+        "need": [
+          "fold"
+        ],
+        "avoid": [
+          "clothesline"
+        ]
+      },
+      {
+        "q": "ironing shirt",
+        "need": [
+          "iron"
+        ],
+        "avoid": [
+          "clothesline"
+        ]
+      },
+      {
+        "q": "hanging laundry clothesline",
+        "need": [
+          "laundry"
+        ],
+        "avoid": []
+      },
+      {
+        "q": "washing machine laundry",
+        "need": [
+          "washing machine"
+        ],
+        "avoid": [
+          "clothesline"
+        ]
+      }
+    ]
   }
 ]

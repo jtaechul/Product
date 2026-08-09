@@ -221,8 +221,22 @@ for (const file of files) {
         if (typeof it.tts_script !== 'string' || !it.tts_script.trim()) err(`${ctx}: LC 단독 문항은 tts_script 필수`);
         if (!ACCENTS.includes(it.accent)) err(`${ctx}: LC 단독 문항은 accent(US/UK/AU) 필수`);
       }
-      if (part === 'L1' && (!Array.isArray(it.choice_image_prompts) || it.choice_image_prompts.length !== 4)) {
-        err(`${ctx}: L1은 choice_image_prompts 4개 필수`);
+      if (part === 'L1') {
+        if (!Array.isArray(it.choice_image_prompts) || it.choice_image_prompts.length !== 4) {
+          err(`${ctx}: L1은 choice_image_prompts 4개 필수`);
+        }
+        // 사진은 검색해서 가져온다 — 검색어와 함께 "반드시 있어야 할 말"을 못박아,
+        // 엉뚱한 사진이 보기 자리에 들어가는 것을 배치 단계에서 막는다.
+        const qs = it.choice_image_queries;
+        if (!Array.isArray(qs) || qs.length !== 4) {
+          err(`${ctx}: L1은 choice_image_queries 4개 필수 (사진 검색 조건)`);
+        } else {
+          qs.forEach((c, i) => {
+            if (!c || typeof c.q !== 'string' || !c.q.trim()) err(`${ctx}: 보기${i} 검색어(q)가 없습니다`);
+            if (!Array.isArray(c.need) || !c.need.length) err(`${ctx}: 보기${i} need는 1개 이상 필요합니다`);
+            if (c.avoid !== undefined && !Array.isArray(c.avoid)) err(`${ctx}: 보기${i} avoid는 배열이어야 합니다`);
+          });
+        }
       }
       pushQuestion(part, it.tmp_id, it, null, {
         accent: it.accent ?? null, status, audio_url: audioUrlFor('questions', takeId(`q:${it.tmp_id}`)),
