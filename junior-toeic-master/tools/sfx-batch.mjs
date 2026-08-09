@@ -30,7 +30,7 @@ const ROLES = {
   select: { qs: ['cute pop', 'bubble pop', 'water drop pop', 'ui pop'], dur: '[0 TO 0.8]' },
   correct: { qs: ['cute correct', 'kawaii success', 'magic sparkle chime', 'glockenspiel note'], dur: '[0 TO 2]' },
   wrong: { qs: ['cute wrong', 'soft boing', 'cartoon boing', 'toy squeak'], dur: '[0 TO 1.5]' },
-  done: { qs: ['cute win jingle', 'kawaii fanfare', 'game level up cute', 'music box win'], dur: '[0.5 TO 4]' },
+  done: { qs: ['level up', 'win jingle', 'complete', 'fanfare'], dur: '[0.5 TO 4]' },
 };
 
 async function searchOnce(query, filter) {
