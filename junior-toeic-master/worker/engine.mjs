@@ -146,8 +146,15 @@ export async function computeClimb(db, user) {
   const row = await db.prepare('SELECT xp, level FROM user_stats WHERE user_id = ?1').bind(user.id).first();
   const basecamp = Math.max(row?.xp ?? 0, altitude);
 
+  // 점프 점수(0~100): 자체 브랜드 점수. 평균 레이팅 900~1500을 0~100으로 환산한다.
+  // TOEIC 공식 점수 예측이 아니므로 상표·과장광고 소지가 없고, 아이에게는 큰 숫자
+  // 하나가 정답률 %보다 직관적이다. 진단 전(표본 0)에는 null.
+  const jumpScore = skill.n
+    ? Math.max(0, Math.min(100, Math.round(((skill.r - 900) / 600) * 100)))
+    : null;
+
   return {
-    altitude, basecamp,
+    altitude, basecamp, jump_score: jumpScore,
     camp: Math.floor(basecamp / 100) + 1,
     next_camp_at: (Math.floor(basecamp / 100) + 1) * 100,
     breakdown: { days: days.n, day_steps: daySteps, skill_steps: skillSteps, sealed: sealed.n, seal_steps: sealSteps },

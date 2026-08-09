@@ -17,25 +17,33 @@
 }
 
 :root {
-  --primary: #3d5afe;
-  --primary-deep: #2438b8;
-  --primary-soft: #e8ecff;
-  --accent: #ffc400;
-  --accent-soft: #fff6d6;
-  --ok: #17915f;
-  --ok-soft: #e4f5ed;
-  --warn: #a37413;
+  /* 초등 고학년~중학생 취향: 채도 높은 보라-파랑 그라데이션 + 라임 포인트.
+     유아틱한 파스텔은 피하고, 게임 UI처럼 또렷하고 입체감 있게 간다. */
+  --primary: #5b5bf5;
+  --primary-2: #8b5cf6;
+  --primary-deep: #3b32c9;
+  --primary-soft: #eceaff;
+  --grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #a855f7 100%);
+  --grad-warm: linear-gradient(135deg, #fb923c 0%, #f43f5e 100%);
+  --accent: #facc15;
+  --accent-soft: #fef6d8;
+  --lime: #22d3a5;
+  --ok: #12a06a;
+  --ok-soft: #dcf7ec;
+  --warn: #b07d12;
   --warn-soft: #fdf3dd;
-  --bad: #c2434c;
-  --bad-soft: #fdecec;
-  --bg: #f4f6fd;
+  --bad: #e0455a;
+  --bad-soft: #ffe9ec;
+  --bg: #f2f3fb;
   --surface: #ffffff;
-  --surface-2: #eef1fb;
-  --text: #171b2e;
-  --muted: #6b7391;
-  --line: #e3e7f5;
-  --radius: 16px;
-  --tabbar-h: 60px;
+  --surface-2: #f0f1fa;
+  --text: #14162b;
+  --muted: #6b7193;
+  --line: #e6e8f6;
+  --radius: 20px;
+  --tabbar-h: 64px;
+  --shadow-card: 0 1px 2px rgba(20,22,43,.04), 0 10px 24px -14px rgba(20,22,43,.22);
+  --shadow-pop: 0 10px 24px -10px rgba(91,91,245,.55);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -65,6 +73,70 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
   border-radius: var(--radius); padding: 16px; font-size: .94rem;
 }
 
+/* ── 상단 앱바 (브랜드 + 프로필 버튼) ── */
+.appbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-bottom: 2px;
+}
+.appbar-brand { display: flex; align-items: center; gap: 7px; }
+.appbar-mark {
+  width: 30px; height: 30px; border-radius: 9px; background: var(--grad);
+  display: grid; place-items: center; flex: 0 0 auto;
+}
+.appbar-mark svg { width: 17px; height: 17px; fill: #fff; }
+.appbar-name { font-size: 1.02rem; font-weight: 700; letter-spacing: -.03em; }
+.avatar-btn {
+  width: 42px; height: 42px; border-radius: 999px; flex: 0 0 auto;
+  background: var(--surface); border: 1px solid var(--line);
+  display: grid; place-items: center; overflow: hidden; box-shadow: var(--shadow-card);
+}
+.avatar-btn { position: relative; }
+.avatar-btn img { width: 100%; height: 100%; object-fit: contain; position: relative; z-index: 1; background: var(--surface); }
+.avatar-btn svg { position: absolute; width: 21px; height: 21px; fill: none; stroke: var(--muted); stroke-width: 2; }
+
+/* ── 설정 시트 (아래에서 올라오는 패널) ── */
+.sheet-back {
+  position: fixed; inset: 0; background: rgba(20,22,43,.45); z-index: 40;
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: fade .18s ease;
+}
+.sheet {
+  width: 100%; max-width: 560px; background: var(--surface);
+  border-radius: 24px 24px 0 0; padding: 18px 16px calc(20px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 12px; max-height: 86dvh; overflow-y: auto;
+  animation: rise .22s cubic-bezier(.2,.9,.3,1);
+}
+.sheet-grab { width: 40px; height: 4px; border-radius: 99px; background: var(--line); margin: 0 auto 4px; }
+.sheet h2 { font-size: 1.15rem; font-weight: 700; letter-spacing: -.02em; }
+.sheet-sect { font-size: .76rem; font-weight: 700; color: var(--muted); margin-top: 6px; }
+@keyframes fade { from { opacity: 0 } }
+@keyframes rise { from { transform: translateY(24px); opacity: .6 } }
+
+/* 캐릭터 고르기 */
+.char-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.char-pick {
+  background: var(--surface-2); border: 2px solid transparent; border-radius: 16px;
+  padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+.char-pick img { width: 100%; max-width: 62px; aspect-ratio: 1; object-fit: contain; }
+.char-pick span { font-size: .74rem; font-weight: 700; color: var(--muted); }
+.char-pick[aria-pressed="true"] { border-color: var(--primary); background: var(--primary-soft); }
+.char-pick[aria-pressed="true"] span { color: var(--primary); }
+
+/* 설정 스위치 줄 */
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 0; }
+.switch {
+  width: 50px; height: 30px; border-radius: 99px; background: var(--line);
+  position: relative; flex: 0 0 auto; transition: background .18s;
+}
+.switch::after {
+  content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px;
+  border-radius: 50%; background: #fff; transition: transform .18s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.switch[aria-checked="true"] { background: var(--primary); }
+.switch[aria-checked="true"]::after { transform: translateX(20px); }
+
 /* ── 인사 ── */
 .greet { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; }
 .greet-date { font-size: .78rem; color: var(--muted); font-weight: 500; }
@@ -89,28 +161,48 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 
 /* ── 오늘의 학습 (히어로 카드) ── */
 .today {
-  background: var(--primary); color: #fff; border-radius: 20px; padding: 20px 18px;
-  box-shadow: 0 10px 26px -12px rgba(61, 90, 254, .65);
+  background: var(--grad); color: #fff; border-radius: 24px; padding: 20px 18px;
+  box-shadow: var(--shadow-pop);
   display: flex; flex-direction: column; gap: 14px;
+  position: relative; overflow: hidden;
 }
+/* 카드 오른쪽 위에 은은한 빛 — 밋밋한 사각형 느낌을 없앤다 */
+.today::before {
+  content: ''; position: absolute; right: -30px; top: -40px;
+  width: 150px; height: 150px; border-radius: 50%;
+  background: rgba(255,255,255,.14); pointer-events: none;
+}
+.today > * { position: relative; }
 .today-label { font-size: .74rem; font-weight: 700; letter-spacing: .06em; opacity: .85; }
-.today-main { display: flex; align-items: center; gap: 16px; }
+.today-main { display: flex; align-items: center; gap: 14px; }
+.today-figs { flex: 1; min-width: 0; }
+.today-char {
+  width: 74px; height: 74px; object-fit: contain; flex: 0 0 auto;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.28));
+  animation: bob 2.6s ease-in-out infinite;
+}
+@keyframes bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
 .ring { flex: 0 0 auto; width: 68px; height: 68px; }
 .ring text { font-weight: 700; }
 .today-figs .n { font-size: 1.5rem; font-weight: 700; letter-spacing: -.03em; line-height: 1.2; }
 .today-figs .sub { font-size: .82rem; opacity: .9; }
 .btn-hero {
   width: 100%; background: #fff; color: var(--primary-deep);
-  border-radius: 13px; padding: 15px; font-weight: 700; font-size: 1.02rem;
-  min-height: 52px;
+  border-radius: 16px; padding: 15px; font-weight: 700; font-size: 1.05rem;
+  min-height: 54px; box-shadow: 0 3px 0 rgba(0,0,0,.10);
+  transition: transform .12s ease, box-shadow .12s ease;
 }
-.btn-hero:active { transform: translateY(1px); }
+.btn-hero:active { transform: translateY(3px); box-shadow: 0 0 0 rgba(0,0,0,.10); }
+.btn-primary { transition: transform .12s ease, box-shadow .12s ease; }
+.btn-primary:not(:disabled) { box-shadow: 0 3px 0 var(--primary-deep); }
+.btn-primary:not(:disabled):active { transform: translateY(3px); box-shadow: none; }
 
 /* ── 공통 카드 ── */
 .card {
   background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--radius); padding: 15px;
+  border-radius: var(--radius); padding: 16px;
   display: flex; flex-direction: column; gap: 11px;
+  box-shadow: var(--shadow-card);
 }
 .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .card-title { font-size: .96rem; font-weight: 700; letter-spacing: -.02em; }
@@ -130,7 +222,9 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 }
 .skill-avg { justify-content: center; gap: 2px; }
 .skill-avg .code { font-size: .66rem; font-weight: 700; opacity: .9; }
-.skill-avg .val { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.skill-avg .val { font-size: 1.7rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.05; }
+.skill-avg .unit { font-size: .6rem; opacity: .85; font-weight: 700; }
+.jump-score { gap: 0; }
 .skill-avg.lv-none { background: var(--surface-2); color: var(--muted); }
 .skill-avg.lv-low { background: var(--bad); }
 .skill-avg.lv-mid { background: var(--warn); }
@@ -143,15 +237,36 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .skill.lv-high { background: var(--ok); }
 .skill.is-weak { outline: 2px solid var(--bad); outline-offset: 2px; }
 
-/* ── 등반 지도 ── */
-.climb-svg { width: 100%; height: auto; display: block; }
-.climb-figs { display: flex; gap: 8px; }
-.climb-figs > div {
-  flex: 1; background: var(--surface-2); border-radius: 11px; padding: 9px 11px;
-  display: flex; flex-direction: column; gap: 0;
+/* ── 등반 지도 (산 + 캐릭터) ── */
+.climb-head { display: flex; align-items: baseline; justify-content: space-between; }
+.climb-alt { font-size: 1.3rem; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--primary); }
+.climb-alt i { font-size: .78rem; font-style: normal; color: var(--muted); margin-left: 1px; }
+.climb-stage { position: relative; }
+.climb-svg { width: 100%; height: auto; display: block; border-radius: 16px; }
+.climb-char {
+  position: absolute; width: 46px; height: 46px; object-fit: contain;
+  transform: translate(-50%, -78%); opacity: 0;
+  transition: left .5s cubic-bezier(.2,.9,.3,1), top .5s cubic-bezier(.2,.9,.3,1), opacity .3s;
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,.25));
+  pointer-events: none;
 }
-.climb-figs b { font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-.climb-figs span { font-size: .72rem; color: var(--muted); font-weight: 500; }
+.climb-figs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.cf {
+  background: var(--surface-2); border-radius: 13px; padding: 8px 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+}
+.cf svg { width: 15px; height: 15px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cf b { font-size: 1.02rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.cf span { font-size: .66rem; color: var(--muted); font-weight: 700; }
+.cf.next { background: var(--primary-soft); }
+.cf.next b { color: var(--primary); }
+.cf.next span { color: var(--primary); }
+
+/* 진단 유도 카드 */
+.diag-card { background: var(--grad); border: 0; color: #fff; box-shadow: var(--shadow-pop); }
+.diag-card .row-s { color: rgba(255,255,255,.88); }
+.diag-card .row-arrow { stroke: rgba(255,255,255,.8); }
+.diag-ico { background: rgba(255,255,255,.22); color: #fff; }
 
 /* ── 약점 집중 ── */
 .focus { display: flex; flex-direction: column; gap: 10px; }
@@ -231,9 +346,12 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .choices { display: flex; flex-direction: column; gap: 8px; }
 .choice {
   display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
-  background: var(--surface); border: 1.5px solid var(--line); border-radius: 13px;
-  padding: 13px; font-size: .96rem; min-height: 54px; transition: border-color .15s, background .15s;
+  background: var(--surface); border: 2px solid var(--line); border-radius: 16px;
+  padding: 13px; font-size: .96rem; min-height: 56px;
+  transition: border-color .15s, background .15s, transform .12s;
 }
+.choice:not(:disabled):active { transform: scale(.98); }
+.choice.selected { transform: scale(1.01); }
 .choice .letter {
   width: 26px; height: 26px; border-radius: 8px; flex: 0 0 auto;
   display: grid; place-items: center; background: var(--surface-2);
@@ -321,6 +439,10 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 }
 .tab svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
 .tab[aria-current="page"] { color: var(--primary); }
+.tab[aria-current="page"] svg {
+  background: var(--primary-soft); border-radius: 10px; padding: 2px;
+  box-sizing: content-box;
+}
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }

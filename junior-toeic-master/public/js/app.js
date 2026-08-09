@@ -95,6 +95,19 @@ let auth = null;
 try { auth = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch { auth = null; }
 const saveAuth = (a) => { auth = a; try { a ? localStorage.setItem(AUTH_KEY, JSON.stringify(a)) : localStorage.removeItem(AUTH_KEY); } catch { /* 무시 */ } };
 
+// ---------- 개인 설정 (캐릭터·소리) ----------
+const CHARACTERS = [
+  { key: 'squirrel', name: '다람이' }, { key: 'penguin', name: '펭구' },
+  { key: 'cat', name: '나비' }, { key: 'fox', name: '여울' },
+  { key: 'rabbit', name: '토토' }, { key: 'bear', name: '곰곰' },
+];
+const PREF_KEY = 'jumplish.pref.v1';
+let pref = { char: 'squirrel', sound: true };
+try { pref = { ...pref, ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; } catch { /* 기본값 */ }
+const savePref = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify(pref)); } catch { /* 무시 */ } };
+const charSrc = (key = pref.char) => `/img/char/${key}.png`;
+const charName = (key = pref.char) => CHARACTERS.find((c) => c.key === key)?.name || '친구';
+
 // ---------- 효과음 (Web Audio 합성 — 파일·외부 요청 0, 운영비 0원 원칙 유지) ----------
 let audioCtx = null;
 function sfxTone(seq, type = 'triangle', vol = 0.09) {
@@ -120,6 +133,7 @@ function sfxTone(seq, type = 'triangle', vol = 0.09) {
 const SFX_VOL = { select: 0.25, correct: 0.4, wrong: 0.3, done: 0.45 };
 const sfxPlayers = {};
 function playSfx(name, fallback) {
+  if (!pref.sound) return;            // 설정에서 끈 경우
   let a = sfxPlayers[name];
   if (a === null) return fallback();          // 파일 없음이 확인된 상태
   if (!a) {
@@ -148,6 +162,83 @@ const renderError = (msg) => {
   view.innerHTML = `<div class="error-box"><strong>문제가 생겼어요.</strong><br>${esc(msg)}<br>
     <button class="btn-ghost" style="margin-top:10px" onclick="location.reload()">다시 시도</button></div>`;
 };
+
+// ---------- 상단 앱바 + 설정 시트 ----------
+// 다른 학습앱 관행: 좌측 브랜드, 우측 프로필 아바타 → 탭하면 설정 시트가 올라온다.
+function appBar() {
+  return `
+    <div class="appbar">
+      <div class="appbar-brand">
+        <span class="appbar-mark"><svg viewBox="0 0 24 24"><path d="M3 20 L9 6 L13 14 L16 9 L21 20 Z"/></svg></span>
+        <span class="appbar-name">점프리시</span>
+      </div>
+      <button class="avatar-btn" data-profile aria-label="내 정보와 설정">
+        <img src="${charSrc()}" alt="" onerror="this.remove()" />
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="3.6"/><path d="M4.5 20c1.3-3.6 4.1-5.4 7.5-5.4S18.2 16.4 19.5 20"/></svg>
+      </button>
+    </div>`;
+}
+
+function bindAppBar() {
+  view.querySelector('[data-profile]')?.addEventListener('click', showSettings);
+}
+
+function showSettings() {
+  const back = document.createElement('div');
+  back.className = 'sheet-back';
+  back.innerHTML = `
+    <div class="sheet" role="dialog" aria-label="내 정보와 설정">
+      <div class="sheet-grab"></div>
+      <h2>${auth ? esc(auth.user.display_name) + ' 님' : '내 정보'}</h2>
+      <p class="card-note">${auth
+        ? `아이디 ${esc(auth.user.login_id)} · 기록이 서버에 저장돼요`
+        : '로그인하지 않았어요 — 기록이 이 기기에만 남아요'}</p>
+
+      <p class="sheet-sect">내 캐릭터</p>
+      <div class="char-grid">
+        ${CHARACTERS.map((c) => `
+          <button class="char-pick" data-char="${c.key}" aria-pressed="${c.key === pref.char}">
+            <img src="${charSrc(c.key)}" alt="" loading="lazy"
+                 onerror="this.style.visibility='hidden'" />
+            <span>${c.name}</span>
+          </button>`).join('')}
+      </div>
+
+      <p class="sheet-sect">소리</p>
+      <div class="switch-row">
+        <span>효과음 켜기</span>
+        <button class="switch" data-sound role="switch" aria-checked="${pref.sound}" aria-label="효과음 켜기"></button>
+      </div>
+
+      <p class="sheet-sect">개인정보</p>
+      <p class="card-note">점프리시는 이메일·전화번호를 받지 않아요. 학원에서 받은 아이디와
+        비밀번호 6자리, 그리고 문제 푼 기록만 저장합니다.</p>
+
+      <div style="display:flex; gap:8px; margin-top:6px">
+        <button class="btn-ghost" style="flex:1" data-close>닫기</button>
+        <button class="btn-primary" style="flex:1" data-auth-toggle>${auth ? '로그아웃' : '로그인'}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(back);
+  const close = () => back.remove();
+  back.addEventListener('click', (e) => { if (e.target === back) close(); });
+  back.querySelector('[data-close]').addEventListener('click', close);
+  back.querySelectorAll('[data-char]').forEach((b) => b.addEventListener('click', () => {
+    pref.char = b.dataset.char; savePref();
+    back.querySelectorAll('[data-char]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    sfx.select();
+  }));
+  back.querySelector('[data-sound]').addEventListener('click', (e) => {
+    pref.sound = !pref.sound; savePref();
+    e.currentTarget.setAttribute('aria-checked', String(pref.sound));
+    if (pref.sound) sfx.select();
+  });
+  back.querySelector('[data-auth-toggle]').addEventListener('click', () => {
+    close();
+    if (auth) { saveAuth(null); store.set = null; store.setDate = null; save(); setTab('home'); showHome(); }
+    else showLogin();
+  });
+}
 
 // ---------- 탭 ----------
 let currentTab = 'home';
@@ -204,42 +295,85 @@ async function ensureTodaySet() {
 function climbCard(cl) {
   const campBase = (cl.camp - 1) * 100;
   const pct = Math.max(0, Math.min(1, (cl.basecamp - campBase) / 100));
-  const pts = [[14, 88], [54, 88], [54, 74], [94, 74], [94, 60], [134, 60], [134, 46],
-    [174, 46], [174, 34], [214, 34], [214, 24], [254, 24], [254, 16], [306, 16]];
-  const idx = Math.round(pct * (pts.length - 1));
-  const line = (arr) => arr.map((p) => p.join(',')).join(' ');
-  const [mx, my] = pts[idx];
+  // 산의 등산로: 아래(왼쪽)에서 정상(위 가운데)으로 굽이치는 곡선.
+  // 캐릭터는 진행률만큼 이 길 위에 올라선다. 계단보다 아이가 바로 이해한다.
+  const PATH = 'M26 176 C 70 172, 92 150, 104 132 S 128 104, 152 96 S 186 76, 196 44';
   const b = cl.breakdown;
   return `
   <div class="card climb">
-    <div class="card-head">
-      <span class="card-title">등반 지도</span>
-      <span class="card-note">${cl.camp}번 캠프 → ${cl.camp + 1}번 캠프 구간</span>
+    <div class="climb-head">
+      <span class="card-title">${cl.camp}번 산</span>
+      <span class="climb-alt">${cl.basecamp}<i>m</i></span>
     </div>
-    <svg class="climb-svg" viewBox="0 0 320 104" aria-label="베이스캠프 ${cl.basecamp}계단">
-      <polyline points="${line(pts)}" fill="none" stroke="var(--line)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-      <polyline points="${line(pts.slice(0, idx + 1))}" fill="none" stroke="var(--primary)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <line x1="${mx}" y1="${my - 2}" x2="${mx}" y2="${my - 16}" stroke="var(--text)" stroke-width="2"/>
-      <path d="M${mx} ${my - 16} l11 3.5 -11 3.5 Z" fill="var(--accent)"/>
-      <circle cx="${mx}" cy="${my}" r="4.5" fill="var(--primary)" stroke="#fff" stroke-width="2"/>
-      <text x="14" y="101" font-size="9" fill="var(--muted)" font-weight="700">${cl.camp}번 캠프 (${campBase})</text>
-      <text x="306" y="12" font-size="9" fill="var(--muted)" font-weight="700" text-anchor="end">${cl.camp + 1}번 캠프 (${cl.next_camp_at})</text>
-    </svg>
+    <div class="climb-stage">
+      <svg class="climb-svg" viewBox="0 0 240 200" aria-label="현재 높이 ${cl.basecamp}미터">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#cfe6ff"/><stop offset="1" stop-color="#eaf4ff"/>
+          </linearGradient>
+          <linearGradient id="mt" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#7dd3a0"/><stop offset="1" stop-color="#3fa877"/>
+          </linearGradient>
+          <linearGradient id="mt2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#a7e3c1"/><stop offset="1" stop-color="#6cc39a"/>
+          </linearGradient>
+        </defs>
+        <rect width="240" height="200" rx="16" fill="url(#sky)"/>
+        <circle cx="42" cy="34" r="14" fill="#ffe28a"/>
+        <ellipse cx="180" cy="34" rx="26" ry="10" fill="#fff" opacity=".85"/>
+        <ellipse cx="164" cy="38" rx="16" ry="8" fill="#fff" opacity=".85"/>
+        <path d="M0 200 L70 96 L120 200 Z" fill="url(#mt2)"/>
+        <path d="M40 200 L196 30 L240 200 Z" fill="url(#mt)"/>
+        <path d="M196 30 L214 100 L178 100 Z" fill="#fff" opacity=".9"/>
+        <path d="${PATH}" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".55" stroke-dasharray="1 9"/>
+        <path id="climb-path" d="${PATH}" fill="none" stroke="none"/>
+        <g id="climb-flag" transform="translate(196 30)">
+          <path d="M0 0 v-16" stroke="#5b4636" stroke-width="2"/>
+          <path d="M0 -16 l13 4 -13 4 Z" fill="#facc15"/>
+        </g>
+      </svg>
+      <img class="climb-char" src="${charSrc()}" alt="${charName()}" onerror="this.remove()" />
+    </div>
     <div class="climb-figs">
-      <div><b>${cl.basecamp}</b><span>계단 · 베이스캠프</span></div>
-      <div><b>${cl.next_camp_at - cl.basecamp}</b><span>계단 남음</span></div>
+      <div class="cf">
+        <svg viewBox="0 0 24 24"><path d="M4 20h16M7 20V9M12 20V4M17 20v-7"/></svg>
+        <b>${b.days}</b><span>공부한 날</span>
+      </div>
+      <div class="cf">
+        <svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+        <b>${b.skill_steps}</b><span>실력</span>
+      </div>
+      <div class="cf">
+        <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <b>${b.sealed}</b><span>봉인</span>
+      </div>
+      <div class="cf next">
+        <b>${cl.next_camp_at - cl.basecamp}</b><span>정상까지</span>
+      </div>
     </div>
-    <p class="card-note">학습한 날 ${b.days}일 +${b.day_steps} · 실력 성장 +${b.skill_steps} · 봉인 ${b.sealed}개 +${b.seal_steps} —
-      베이스캠프 아래로는 내려가지 않아요.</p>
   </div>`;
 }
+
+// 캐릭터를 등산로 곡선 위 진행률 지점에 올린다 (SVG 경로 좌표 → 화면 좌표)
+function placeClimbChar(root, pct) {
+  const svg = root.querySelector('.climb-svg');
+  const path = root.querySelector('#climb-path');
+  const img = root.querySelector('.climb-char');
+  if (!svg || !path || !img) return;
+  const p = path.getPointAtLength(path.getTotalLength() * pct);
+  const box = svg.getBoundingClientRect();
+  img.style.left = `${(p.x / 240) * box.width}px`;
+  img.style.top = `${(p.y / 200) * box.height}px`;
+  img.style.opacity = '1';
+}
+
 
 const levelOf = (acc) =>
   acc === null ? 'lv-none' : acc >= 80 ? 'lv-high' : acc >= 60 ? 'lv-mid' : 'lv-low';
 
 // 듣기 4칸 · 읽기 3칸을 같은 폭에 나눠 두 줄의 오른쪽 끝을 맞추고,
 // 그 옆에 두 줄 높이를 다 쓰는 전체 평균 칸을 세운다.
-function skillMap() {
+function skillMap(climb) {
   const weakest = ranked()[0]?.part;
   const cell = (p) => {
     const acc = accuracy(p);
@@ -247,19 +381,25 @@ function skillMap() {
     return `<div class="skill ${levelOf(acc)}${weak}">
       <span class="code">${p}</span><span class="val">${acc === null ? '–' : acc}</span></div>`;
   };
+  // 점프 점수: 우리 자체 0~100 점수. 실력(Elo 평균)을 기준으로 환산한다.
+  // TOEIC 공식 점수 예측이 아니므로 상표·과장광고 문제가 없고, 아이에게는
+  // "내 점수"라는 하나의 큰 숫자가 정답률 %보다 직관적이다.
   const answered = totalAnswered();
-  const avg = answered ? Math.round((totalCorrect() / answered) * 100) : null;
+  const score = climb?.jump_score ?? (answered ? Math.round((totalCorrect() / answered) * 100) : null);
+  const lv = score === null ? 'lv-none' : score >= 80 ? 'lv-high' : score >= 60 ? 'lv-mid' : 'lv-low';
   return `<div class="skillmap">
     <div class="skill-rows">
       <div class="skill-row lc">${['L1', 'L2', 'L3', 'L4'].map(cell).join('')}</div>
       <div class="skill-row rc">${['R1', 'R2', 'R3'].map(cell).join('')}</div>
     </div>
-    <div class="skill-avg ${levelOf(avg)}">
-      <span class="code">전체 평균</span>
-      <span class="val">${avg === null ? '–' : avg}</span>
+    <div class="skill-avg jump-score ${lv}">
+      <span class="code">점프 점수</span>
+      <span class="val">${score === null ? '–' : score}</span>
+      <span class="unit">/ 100</span>
     </div>
   </div>`;
 }
+
 
 async function showHome() {
   setTab('home');
@@ -299,6 +439,7 @@ async function showHome() {
       ? `${auth.user.display_name} 님, ${left === 0 ? '오늘 학습을 다 마쳤어요' : '오늘도 점프해볼까요'}`
       : (left === 0 ? '오늘 학습을 다 마쳤어요' : '오늘도 한 번 점프해볼까요');
     view.innerHTML = `
+      ${appBar()}
       <div class="greet">
         <div>
           <p class="greet-date">${new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}</p>
@@ -316,13 +457,13 @@ async function showHome() {
       </div>
 
       ${auth && me && !me.diagnosed ? `
-      <button class="card row" data-diag>
-        <span class="row-ico" style="background:var(--primary-soft);color:var(--primary)">
-          <svg viewBox="0 0 16 16"><path d="M2 13.5h12M4.5 13.5V7M8 13.5V3.5M11.5 13.5V9.5"/></svg>
+      <button class="card row diag-card" data-diag>
+        <span class="row-ico diag-ico">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M15.8 15.8 21 21"/><path d="M11 8.2v3.2l2.2 1.3"/></svg>
         </span>
         <span class="row-body">
-          <span class="row-t">첫 실력 진단 받기</span>
-          <span class="row-s">약 10~15분 · 끝나면 매일 학습이 내 실력에 딱 맞춰져요</span>
+          <span class="row-t">내 실력 알아보기</span>
+          <span class="row-s">문제 몇 개만 풀면 나에게 딱 맞는 학습이 시작돼요 (10분)</span>
         </span>
         <svg class="row-arrow" viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
       </button>` : ''}
@@ -340,9 +481,9 @@ async function showHome() {
           <div class="today-figs">
             <p class="n">${left === 0 ? '전부 완료' : `${left}문항 남음`}</p>
             <p class="sub">듣기 ${set.questions.filter((q) => q.section === 'LC').length} ·
-              읽기 ${set.questions.filter((q) => q.section === 'RC').length}</p>
-            <p class="sub">약 10분</p>
+              읽기 ${set.questions.filter((q) => q.section === 'RC').length} · 약 10분</p>
           </div>
+          <img class="today-char" src="${charSrc()}" alt="${charName()}" onerror="this.remove()" />
         </div>
         <button class="btn-hero" data-start>${
           left === 0 ? '다시 풀어보기' : doneN > 0 ? '이어서 풀기' : '시작하기'}</button>
@@ -355,7 +496,7 @@ async function showHome() {
           <span class="card-title">내 실력 지도</span>
           <span class="card-note">${answered ? `${answered}문항 기준` : '아직 기록 없음'}</span>
         </div>
-        ${skillMap()}
+        ${skillMap(me?.climb)}
       </div>
 
       ${focusCard}
@@ -369,6 +510,13 @@ async function showHome() {
         <svg class="row-arrow" viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
       </button>`;
 
+    bindAppBar();
+    if (me?.climb) {
+      const cl = me.climb;
+      const pct = Math.max(0, Math.min(1, (cl.basecamp - (cl.camp - 1) * 100) / 100));
+      requestAnimationFrame(() => placeClimbChar(view, pct));
+      addEventListener('resize', () => placeClimbChar(view, pct), { once: true });
+    }
     view.querySelector('[data-login]')?.addEventListener('click', showLogin);
     view.querySelector('[data-diag]')?.addEventListener('click', showDiagnostic);
     view.querySelector('[data-start]').addEventListener('click', () => {
@@ -508,12 +656,14 @@ async function showReview() {
           </span>
         </div>`).join('');
       view.innerHTML = `
+        ${appBar()}
         <div class="greet"><div>
           <p class="greet-date">4연승하면 그 문제는 영원히 봉인됩니다</p>
           <h1 class="greet-title">오늘의 리매치 ${r.count}판</h1>
         </div></div>
         <button class="btn-hero" style="background:var(--primary);color:#fff" data-review-start>리매치 시작</button>
         <div class="card"><div class="rowlist">${list}</div></div>`;
+      bindAppBar();
       view.querySelectorAll('.row-ico').forEach((el) => {
         el.style.cssText += 'font-size:.74rem;font-weight:700;background:var(--primary-soft);color:var(--primary)';
       });
@@ -526,7 +676,7 @@ async function showReview() {
     }
   }
   if (!store.wrong.length) {
-    view.innerHTML = `<div class="greet"><div><h1 class="greet-title">다시 풀 문제</h1></div></div>
+    view.innerHTML = `${appBar()}<div class="greet"><div><h1 class="greet-title">다시 풀 문제</h1></div></div>
       <div class="card"><p class="empty">아직 틀린 문제가 없어요.<br>오늘의 학습을 풀면 여기에 모입니다.</p></div>`;
     return;
   }
@@ -568,6 +718,7 @@ async function showRecord() {
   const answered = totalAnswered();
   const acc = answered ? Math.round((totalCorrect() / answered) * 100) : 0;
   view.innerHTML = `
+    ${appBar()}
     <div class="greet"><div>
       <p class="greet-date">지금까지 걸어온 자리</p>
       <h1 class="greet-title">내 발자국</h1>
@@ -638,6 +789,7 @@ async function showRecord() {
         </div>`;
       }).join('')}</div>
     </div>`;
+  bindAppBar();
   view.querySelector('[data-auth-btn]').addEventListener('click', () => {
     if (auth) { saveAuth(null); showRecord(); }
     else showLogin();
@@ -664,6 +816,7 @@ async function showParts() {
       </button>`;
     };
     view.innerHTML = `
+      ${appBar()}
       <div class="greet"><div>
         <p class="greet-date">골라서 더 풀고 싶을 때</p>
         <h1 class="greet-title">연습장</h1>
@@ -672,6 +825,7 @@ async function showParts() {
       <div class="part-grid">${['L1', 'L2', 'L3', 'L4'].map(card).join('')}</div>
       <p class="section-label">읽기 (Reading)</p>
       <div class="part-grid">${['R1', 'R2', 'R3'].map(card).join('')}</div>`;
+    bindAppBar();
     view.querySelectorAll('.part-card[data-part]').forEach((b) =>
       b.addEventListener('click', () => showPartPractice(b.dataset.part)));
   } catch (e) { renderError(e.message); }
