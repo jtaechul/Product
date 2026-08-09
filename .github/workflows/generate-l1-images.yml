@@ -11,7 +11,9 @@ on:
   workflow_dispatch:
   push:
     branches: ["claude/junior-toeic-master-planning-322l2t"]
-    paths: [".github/workflows/generate-l1-images.yml"]
+    paths:
+      - ".github/workflows/generate-l1-images.yml"
+      - "junior-toeic-master/tools/img-batch.mjs"   # 스타일 변경 시 자동 재생성
 
 permissions:
   contents: write

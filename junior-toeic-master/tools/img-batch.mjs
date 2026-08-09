@@ -30,9 +30,11 @@ const l1Path = join(CONTENT, 'questions', 'L1.json');
 const items = JSON.parse(readFileSync(l1Path, 'utf8'));
 
 // 4컷이 같은 화풍으로 나오도록 고정 스타일 접두어를 붙인다.
+// 실제 TOEIC Bridge Part 1은 흑백 선화 일러스트 — 실전과 동일한 룩으로 맞춘다.
 // safe=true: 아동 서비스이므로 세이프 필터 필수. nologo: 워터마크 제거.
-const STYLE = 'Simple flat illustration for a children\'s English picture test, ' +
-  'bright cheerful colors, clean solid light background, one clear subject, no text, no letters';
+const STYLE = 'Simple black and white line drawing illustration, like a standardized English ' +
+  'test picture, clean bold outlines, monochrome, no color, minimal shading, plain white ' +
+  'background, one clear subject, no text, no letters';
 const urlFor = (prompt, seed) =>
   'https://image.pollinations.ai/prompt/' + encodeURIComponent(`${STYLE}. ${prompt}`) +
   `?width=512&height=512&nologo=true&safe=true&seed=${seed}`;
@@ -67,6 +69,20 @@ async function fetchImage(url, tries = 4) {
 }
 
 mkdirSync(OUT_DIR, { recursive: true });
+
+// 스타일이 바뀌면 기존 그림을 전부 지우고 새로 뽑는다 (마커 파일로 감지).
+// "이미 있으면 건너뜀" 규칙 때문에, 이 장치가 없으면 옛 스타일이 영영 남는다.
+const styleHash = (() => { let h = 0; for (const ch of STYLE) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return String(h); })();
+const markerPath = join(OUT_DIR, '.style');
+const oldHash = existsSync(markerPath) ? readFileSync(markerPath, 'utf8').trim() : null;
+if (oldHash !== styleHash) {
+  const { readdirSync, unlinkSync } = await import('node:fs');
+  const stale = readdirSync(OUT_DIR).filter((f) => f.endsWith('.jpg'));
+  for (const f of stale) unlinkSync(join(OUT_DIR, f));
+  if (stale.length) console.log(`스타일 변경 감지 — 기존 ${stale.length}컷 삭제 후 재생성`);
+  writeFileSync(markerPath, styleHash + '\n');
+}
+
 let made = 0, skipped = 0, failed = 0;
 let changed = false;
 
