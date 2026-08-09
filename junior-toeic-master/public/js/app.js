@@ -1,7 +1,13 @@
-// 점프리시 M1 — 문항 열람·풀어보기 (모바일 세로 우선)
-// 정답은 이 앱 어디에도 없다: 보기 선택 시 POST /api/check 가 채점·해설을 반환한다.
+// 점프리시 — 학생 화면 (모바일 세로)
+// 첫 화면은 "무엇을 풀지 고르는 곳"이 아니라 "오늘 뭘 해야 하는지 알려주는 곳"이다.
+// 파트를 직접 고르는 화면은 하단 '파트별' 탭으로 내렸다.
+//
+// 정답은 이 앱 어디에도 없다: 보기를 누르면 POST /api/check 가 채점·해설을 반환한다.
+// M1은 로그인 전이라 학습 기록을 이 기기(localStorage)에 보관한다.
+// M2에서 계정이 붙으면 서버의 user_skills·SRS 큐로 옮긴다.
 
 const view = document.getElementById('view');
+const tabbar = document.getElementById('tabbar');
 
 const PART_INFO = {
   L1: { name: '사진 고르기', desc: '문장을 듣고 알맞은 그림 찾기' },
@@ -12,26 +18,284 @@ const PART_INFO = {
   R2: { name: '지문 완성', desc: '글의 빈칸 3개 채우기' },
   R3: { name: '독해', desc: '글을 읽고 물음에 답하기' },
 };
+const PARTS = Object.keys(PART_INFO);
 const ACCENT_KO = { US: '미국 발음', UK: '영국 발음', AU: '호주 발음' };
 const LETTERS = ['A', 'B', 'C', 'D'];
+const WEAK_MIN = 3;      // 이만큼은 풀어야 실력을 판단한다
+const WRONG_MAX = 30;    // 오답 보관 상한
 
 const esc = (s) => String(s ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const todayKey = () => new Date().toLocaleDateString('sv');  // YYYY-MM-DD (로컬 기준)
 
+// ---------- 학습 기록 ----------
+const KEY = 'jumplish.progress.v1';
+const blank = { parts: {}, wrong: [], days: [], set: null, setDate: null, setIdx: 0 };
+let store;
+try { store = { ...blank, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; }
+catch { store = { ...blank }; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch { /* 저장 실패는 무시 */ } };
+
+function recordAnswer(q, passage, correct) {
+  const p = (store.parts[q.part] ||= { answered: 0, correct: 0 });
+  p.answered += 1;
+  if (correct) p.correct += 1;
+
+  store.wrong = store.wrong.filter((w) => w.q.id !== q.id);
+  if (!correct) store.wrong.unshift({ q, passage: passage || null, at: Date.now() });
+  store.wrong = store.wrong.slice(0, WRONG_MAX);
+
+  const d = todayKey();
+  if (!store.days.includes(d)) { store.days.push(d); store.days = store.days.slice(-400); }
+  save();
+}
+
+function streakDays() {
+  if (!store.days.length) return 0;
+  const set = new Set(store.days);
+  let n = 0;
+  const cur = new Date();
+  if (!set.has(todayKey())) cur.setDate(cur.getDate() - 1);  // 오늘 아직 안 했으면 어제부터 센다
+  for (;;) {
+    if (!set.has(cur.toLocaleDateString('sv'))) break;
+    n += 1;
+    cur.setDate(cur.getDate() - 1);
+  }
+  return n;
+}
+
+const accuracy = (part) => {
+  const p = store.parts[part];
+  return p && p.answered >= WEAK_MIN ? Math.round((p.correct / p.answered) * 100) : null;
+};
+const ranked = () => PARTS.map((p) => ({ part: p, acc: accuracy(p) })).filter((x) => x.acc !== null)
+  .sort((a, b) => a.acc - b.acc);
+const totalAnswered = () => Object.values(store.parts).reduce((n, p) => n + p.answered, 0);
+const totalCorrect = () => Object.values(store.parts).reduce((n, p) => n + p.correct, 0);
+
+// ---------- 통신 ----------
 async function api(path, opts) {
   const res = await fetch(path, opts);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `요청 실패 (${res.status})`);
   return data;
 }
-
-function renderError(msg) {
+const renderError = (msg) => {
   view.innerHTML = `<div class="error-box"><strong>문제가 생겼어요.</strong><br>${esc(msg)}<br>
     <button class="btn-ghost" style="margin-top:10px" onclick="location.reload()">다시 시도</button></div>`;
+};
+
+// ---------- 탭 ----------
+let currentTab = 'home';
+function setTab(name) {
+  currentTab = name;
+  tabbar.querySelectorAll('.tab').forEach((b) => {
+    if (b.dataset.tab === name) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
+}
+tabbar.addEventListener('click', (e) => {
+  const btn = e.target.closest('.tab');
+  if (!btn) return;
+  setTab(btn.dataset.tab);
+  ({ home: showHome, review: showReview, record: showRecord, parts: showParts }[btn.dataset.tab])();
+});
+const tabbarVisible = (on) => {
+  tabbar.style.display = on ? 'flex' : 'none';
+  document.body.classList.toggle('no-tabbar', !on);
+};
+
+// ---------- 홈: 오늘의 맞춤 학습 ----------
+async function ensureTodaySet() {
+  if (store.set && store.setDate === todayKey()) return store.set;
+  const weak = ranked().slice(0, 2).map((x) => x.part);
+  const strong = ranked().slice(-2).reverse().map((x) => x.part);
+  const qs = new URLSearchParams();
+  if (weak.length) qs.set('weak', weak.join(','));
+  if (strong.length) qs.set('strong', strong.join(','));
+  const data = await api(`/api/today?${qs}`);
+  store.set = data;
+  store.setDate = todayKey();
+  store.setIdx = 0;
+  save();
+  return data;
 }
 
-// ---------- 홈: 파트 그리드 ----------
+function skillGrid() {
+  const weakest = ranked()[0]?.part;
+  return PARTS.map((p) => {
+    const acc = accuracy(p);
+    const lv = acc === null ? 'lv-none' : acc >= 80 ? 'lv-high' : acc >= 60 ? 'lv-mid' : 'lv-low';
+    const weak = acc !== null && p === weakest ? ' is-weak' : '';
+    return `<div class="skill ${lv}${weak}">
+      <span class="code">${p}</span><span class="val">${acc === null ? '–' : acc}</span></div>`;
+  }).join('');
+}
+
 async function showHome() {
+  setTab('home');
+  tabbarVisible(true);
+  view.innerHTML = '<p class="loading">오늘의 학습을 준비하고 있어요...</p>';
+  try {
+    const set = await ensureTodaySet();
+    const total = set.questions.length;
+    const doneN = Math.min(store.setIdx, total);
+    const left = total - doneN;
+    const C = 2 * Math.PI * 17;
+    const streak = streakDays();
+    const weak = ranked()[0];
+    const answered = totalAnswered();
+
+    const focusCard = weak
+      ? `<div class="card focus">
+           <div class="focus-head"><span class="dot"></span>
+             <span class="focus-title">가장 약한 곳 — ${weak.part} ${PART_INFO[weak.part].name}</span></div>
+           <p class="focus-desc">${esc(PART_INFO[weak.part].desc)}에서 자주 틀리고 있어요.
+             오늘 학습에 이 파트를 더 넣었습니다.</p>
+           <button class="btn-focus" data-focus="${weak.part}">${weak.part} 집중해서 풀기</button>
+         </div>`
+      : `<div class="card focus">
+           <div class="focus-head"><span class="dot" style="background:var(--primary)"></span>
+             <span class="focus-title">아직 실력을 재는 중이에요</span></div>
+           <p class="focus-desc">${WEAK_MIN}문제 이상 푼 파트부터 점수가 나타나요.
+             오늘의 학습을 마치면 약한 곳을 콕 집어 알려드릴게요.</p>
+         </div>`;
+
+    view.innerHTML = `
+      <div class="greet">
+        <div>
+          <p class="greet-date">${new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}</p>
+          <h1 class="greet-title">${left === 0 ? '오늘 학습을 다 마쳤어요' : '오늘도 한 번 점프해볼까요'}</h1>
+        </div>
+        ${streak > 0 ? `<span class="streak">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1 3.5 8.5h3L5 15l7.5-8.5h-3L11 1H8Z"/></svg>
+          ${streak}일 연속</span>` : ''}
+      </div>
+
+      <div class="today">
+        <p class="today-label">오늘의 학습</p>
+        <div class="today-main">
+          <svg class="ring" viewBox="0 0 42 42" aria-hidden="true">
+            <circle cx="21" cy="21" r="17" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="5"/>
+            <circle cx="21" cy="21" r="17" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"
+                    stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - doneN / total)).toFixed(1)}"
+                    transform="rotate(-90 21 21)"/>
+            <text x="21" y="24" text-anchor="middle" font-size="10" fill="#fff">${doneN}/${total}</text>
+          </svg>
+          <div class="today-figs">
+            <p class="n">${left === 0 ? '전부 완료' : `${left}문항 남음`}</p>
+            <p class="sub">듣기 ${set.questions.filter((q) => q.section === 'LC').length} ·
+              읽기 ${set.questions.filter((q) => q.section === 'RC').length}</p>
+            <p class="sub">약 10분</p>
+          </div>
+        </div>
+        <button class="btn-hero" data-start>${
+          left === 0 ? '다시 풀어보기' : doneN > 0 ? '이어서 풀기' : '시작하기'}</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">내 실력 지도</span>
+          <span class="card-note">${answered ? `${answered}문항 기준` : '아직 기록 없음'}</span>
+        </div>
+        <div class="skillgrid">${skillGrid()}</div>
+      </div>
+
+      ${focusCard}
+
+      <button class="card row" data-tab-go="review">
+        <span class="row-ico"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4"/><path d="M8 4.5v4M8 11.2v.1"/></svg></span>
+        <span class="row-body">
+          <span class="row-t">다시 볼 문제 ${store.wrong.length}개</span>
+          <span class="row-s">${store.wrong.length ? '오늘 복습하면 잊지 않아요' : '틀린 문제가 모이면 여기서 복습해요'}</span>
+        </span>
+        <svg class="row-arrow" viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
+      </button>`;
+
+    view.querySelector('[data-start]').addEventListener('click', () => {
+      if (left === 0) { store.setIdx = 0; save(); }
+      startSession(set.questions, set.passages, '오늘의 학습', { trackToday: true });
+    });
+    view.querySelector('[data-focus]')?.addEventListener('click', (e) => showPartPractice(e.target.dataset.focus));
+    view.querySelector('[data-tab-go]').addEventListener('click', () => { setTab('review'); showReview(); });
+  } catch (e) { renderError(e.message); }
+}
+
+// ---------- 오답 ----------
+function showReview() {
+  setTab('review');
+  tabbarVisible(true);
+  if (!store.wrong.length) {
+    view.innerHTML = `<div class="greet"><div><h1 class="greet-title">오답 노트</h1></div></div>
+      <div class="card"><p class="empty">아직 틀린 문제가 없어요.<br>오늘의 학습을 풀면 여기에 모입니다.</p></div>`;
+    return;
+  }
+  const list = store.wrong.map((w) => `
+    <div class="row">
+      <span class="row-ico">${w.q.part}</span>
+      <span class="row-body">
+        <span class="row-t">${esc(w.q.stem || PART_INFO[w.q.part].name)}</span>
+        <span class="row-s">${PART_INFO[w.q.part].name} · ${new Date(w.at).toLocaleDateString('ko-KR')}</span>
+      </span>
+    </div>`).join('');
+  view.innerHTML = `
+    <div class="greet"><div>
+      <p class="greet-date">틀린 문제는 다시 만나야 내 것이 돼요</p>
+      <h1 class="greet-title">다시 볼 문제 ${store.wrong.length}개</h1>
+    </div></div>
+    <button class="btn-hero" style="background:var(--primary);color:#fff" data-review-start>전부 다시 풀기</button>
+    <div class="card"><div class="rowlist">${list}</div></div>`;
+  view.querySelectorAll('.row-ico').forEach((el) => {
+    el.style.cssText += 'font-size:.74rem;font-weight:700;background:var(--primary-soft);color:var(--primary)';
+  });
+  view.querySelector('[data-review-start]').addEventListener('click', () => {
+    const qs = store.wrong.map((w) => w.q);
+    const ps = {};
+    store.wrong.forEach((w) => { if (w.passage) ps[w.passage.id] = w.passage; });
+    startSession(qs, ps, '오답 복습');
+  });
+}
+
+// ---------- 기록 ----------
+function showRecord() {
+  setTab('record');
+  tabbarVisible(true);
+  const answered = totalAnswered();
+  const acc = answered ? Math.round((totalCorrect() / answered) * 100) : 0;
+  view.innerHTML = `
+    <div class="greet"><div>
+      <p class="greet-date">지금까지의 발자국</p>
+      <h1 class="greet-title">학습 기록</h1>
+    </div></div>
+    <div class="stat-row">
+      <div class="stat"><span class="label">연속 학습</span><span class="value">${streakDays()}일</span></div>
+      <div class="stat"><span class="label">푼 문항</span><span class="value">${answered}</span></div>
+      <div class="stat"><span class="label">정답률</span><span class="value">${answered ? acc + '%' : '–'}</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">파트별 숙달도</span>
+        <span class="card-note">${WEAK_MIN}문항 이상 푼 파트만</span></div>
+      <div class="skillgrid">${skillGrid()}</div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">파트별 상세</span></div>
+      <div class="rowlist">${PARTS.map((p) => {
+        const s = store.parts[p];
+        return `<div class="row">
+          <span class="row-body">
+            <span class="row-t">${p} ${PART_INFO[p].name}</span>
+            <span class="row-s">${s ? `${s.correct} / ${s.answered} 문항` : '아직 풀지 않음'}</span>
+          </span>
+          <span class="progress-num">${accuracy(p) === null ? '–' : accuracy(p) + '%'}</span>
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+}
+
+// ---------- 파트별 연습 (하부 메뉴) ----------
+async function showParts() {
+  setTab('parts');
+  tabbarVisible(true);
   view.innerHTML = '<p class="loading">불러오는 중...</p>';
   try {
     const { parts } = await api('/api/parts');
@@ -40,55 +304,76 @@ async function showHome() {
       const p = byCode[code];
       const info = PART_INFO[code];
       const count = p ? p.total : 0;
-      const meta = p
-        ? `${count}문항${p.total !== p.active ? ` · 준비 중 ${p.total - p.active}` : ''}`
-        : '준비 중';
       return `<button class="part-card" data-part="${code}" ${count ? '' : 'disabled'}>
         <span class="part-code">${code}</span>
         <span class="part-name">${info.name}</span>
-        <span class="part-meta">${info.desc} · ${meta}</span>
+        <span class="part-meta">${info.desc}</span>
+        <span class="part-meta">${count ? `${count}문항` : '준비 중'}</span>
       </button>`;
     };
     view.innerHTML = `
-      <div class="hero">
-        <h1>매일 조금씩, 영어 실력이 점프!</h1>
-        <p>M1 단계 미리보기: 만들어진 문항을 직접 풀어보며 검수할 수 있어요.</p>
-      </div>
+      <div class="greet"><div>
+        <p class="greet-date">특정 파트만 골라서 연습하고 싶을 때</p>
+        <h1 class="greet-title">파트별 연습</h1>
+      </div></div>
       <p class="section-label">듣기 (Listening)</p>
       <div class="part-grid">${['L1', 'L2', 'L3', 'L4'].map(card).join('')}</div>
       <p class="section-label">읽기 (Reading)</p>
       <div class="part-grid">${['R1', 'R2', 'R3'].map(card).join('')}</div>`;
     view.querySelectorAll('.part-card[data-part]').forEach((b) =>
-      b.addEventListener('click', () => showPlayer(b.dataset.part)));
+      b.addEventListener('click', () => showPartPractice(b.dataset.part)));
   } catch (e) { renderError(e.message); }
 }
 
-// ---------- 플레이어 ----------
-const state = { part: null, questions: [], passages: {}, idx: 0 };
-
-async function showPlayer(part) {
+async function showPartPractice(part) {
   view.innerHTML = '<p class="loading">문항을 가져오는 중...</p>';
   try {
     const data = await api(`/api/questions?part=${part}`);
     if (!data.questions.length) return renderError('이 파트에는 아직 문항이 없어요.');
-    Object.assign(state, { part, questions: data.questions, passages: data.passages, idx: 0 });
-    renderQuestion();
+    startSession(data.questions, data.passages, `${part} ${PART_INFO[part].name}`);
   } catch (e) { renderError(e.message); }
 }
 
+// ---------- 문제 풀이 ----------
+const session = { questions: [], passages: {}, idx: 0, title: '', trackToday: false, correct: 0 };
+
+function startSession(questions, passages, title, opts = {}) {
+  Object.assign(session, {
+    questions, passages, title, correct: 0,
+    trackToday: !!opts.trackToday,
+    idx: opts.trackToday ? Math.min(store.setIdx, questions.length - 1) : 0,
+  });
+  tabbarVisible(false);
+  renderQuestion();
+}
+
+function endSession() {
+  tabbarVisible(true);
+  const n = session.questions.length;
+  view.innerHTML = `
+    <div class="done">
+      <div class="done-mark"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></div>
+      <p class="done-title">${session.title} 완료</p>
+      <p class="done-sub">${n}문항 중 ${session.correct}문항 맞혔어요</p>
+    </div>
+    <button class="btn-hero" style="background:var(--primary);color:#fff" data-go-home>홈으로</button>`;
+  view.querySelector('[data-go-home]').addEventListener('click', () => { setTab('home'); showHome(); });
+}
+
 function renderQuestion() {
-  const q = state.questions[state.idx];
-  const passage = q.passage_id ? state.passages[q.passage_id] : null;
+  const q = session.questions[session.idx];
+  const passage = q.passage_id ? session.passages[q.passage_id] : null;
   const info = PART_INFO[q.part];
+  const total = session.questions.length;
 
   const chips = [
     `<span class="chip">${q.part} ${info.name}</span>`,
     `<span class="chip">난이도 ${q.difficulty_label}</span>`,
     q.accent ? `<span class="chip">${ACCENT_KO[q.accent] || q.accent}</span>` : '',
-    q.status === 'draft' ? `<span class="chip warn">초안</span>` : '',
+    q.status === 'draft' ? '<span class="chip warn">초안</span>' : '',
   ].join('');
 
-  // 듣기 자료 영역: 음원이 있으면 플레이어, 없으면 스크립트 열람(검수용)
+  // 듣기 자료: 음원이 있으면 플레이어, 없으면 스크립트 열람(검수용)
   let media = '';
   const audioUrl = q.audio_url || passage?.audio_url;
   const script = q.script || (q.section === 'LC' ? passage?.content : null);
@@ -100,17 +385,17 @@ function renderQuestion() {
       <div class="passage" data-script hidden>${esc(script)}</div>`;
   }
   if (q.part === 'L1' && !q.image_url) {
-    media = `<p class="notice">그림 준비 중인 초안 문항이에요. 아래 스크립트와 그림 설명으로 검수해요.</p>` + media;
+    media = '<p class="notice">그림 준비 중인 문항이에요. 스크립트로 확인해요.</p>' + media;
   }
 
-  // 읽기 지문
   const readingPassage = (q.section === 'RC' && passage)
     ? `<div class="passage">${esc(passage.content)}</div>` : '';
 
   view.innerHTML = `
     <div class="player-head">
-      <button class="btn-ghost" data-home>목록으로</button>
-      <span class="progress">${state.idx + 1} / ${state.questions.length}</span>
+      <button class="btn-ghost" data-back>나가기</button>
+      <div class="progress-track"><div class="progress-fill" style="width:${(session.idx / total) * 100}%"></div></div>
+      <span class="progress-num">${session.idx + 1}/${total}</span>
     </div>
     <div class="qcard">
       <div class="qbadges">${chips}</div>
@@ -123,24 +408,25 @@ function renderQuestion() {
           </button>`).join('')}
       </div>
       <div data-result></div>
-      <div class="nav-row">
-        <button class="btn-primary" data-next disabled>다음 문제</button>
-      </div>
+      <div class="nav-row"><button class="btn-primary" data-next disabled>${
+        session.idx + 1 >= total ? '끝내기' : '다음 문제'}</button></div>
     </div>`;
 
-  view.querySelector('[data-home]').addEventListener('click', showHome);
+  view.querySelector('[data-back]').addEventListener('click', () => { tabbarVisible(true); setTab('home'); showHome(); });
   view.querySelector('[data-toggle]')?.addEventListener('click', (e) => {
     const box = view.querySelector('[data-script]');
     box.hidden = !box.hidden;
     e.target.textContent = box.hidden ? '스크립트 보기' : '스크립트 접기';
   });
+
   const nextBtn = view.querySelector('[data-next]');
   nextBtn.addEventListener('click', () => {
-    if (state.idx + 1 >= state.questions.length) return showHome();
-    state.idx += 1;
+    if (session.idx + 1 >= total) return endSession();
+    session.idx += 1;
+    if (session.trackToday) { store.setIdx = session.idx; save(); }
     renderQuestion();
+    window.scrollTo({ top: 0, behavior: 'instant' });
   });
-  if (state.idx + 1 >= state.questions.length) nextBtn.textContent = '목록으로 돌아가기';
 
   const buttons = [...view.querySelectorAll('.choice')];
   buttons.forEach((btn) => btn.addEventListener('click', async () => {
@@ -161,6 +447,9 @@ function renderQuestion() {
           <p class="verdict">${r.correct ? '정답이에요!' : '아쉬워요, 다시 볼까요?'}</p>
           <p>${esc(r.explanation_ko)}</p>
         </div>`;
+      if (r.correct) session.correct += 1;
+      recordAnswer(q, passage, r.correct);
+      if (session.trackToday) { store.setIdx = session.idx + 1; save(); }
       nextBtn.disabled = false;
       nextBtn.focus();
     } catch (e) {

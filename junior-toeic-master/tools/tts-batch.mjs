@@ -103,9 +103,14 @@ const escXml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/
 // "D. He's ten years old." 처럼 평문으로 두면 TTS가 마침표 붙은 홑글자를 약어로
 // 해석해 엉뚱하게 읽는 사고가 실제로 있었다(영국 성우가 D를 A로 발음).
 // say-as interpret-as="characters"는 글자 이름 그대로 읽도록 강제한다.
+// 기호는 본문보다 느리게 읽는다. 원속도로 읽으면 "에이비씨"처럼 뭉개져
+// 어느 보기를 말하는지 아이가 놓친다.
+const LETTER_RATE = process.env.TTS_LETTER_RATE || '65%';
+const LETTER_GAP = process.env.TTS_LETTER_GAP || '500ms';
 const sayLetter = (letter) => {
   if (!/^[A-Z]$/.test(letter)) throw new Error(`보기 기호가 A~Z 한 글자가 아닙니다: ${letter}`);
-  return `<say-as interpret-as="characters">${letter}</say-as><break time="200ms"/>`;
+  return `<prosody rate="${LETTER_RATE}"><say-as interpret-as="characters">${letter}</say-as></prosody>` +
+    `<break time="${LETTER_GAP}"/>`;
 };
 
 // parts: 문자열(그대로 읽기) / {pause} (쉼) / {letter,text} (보기 기호 + 내용)

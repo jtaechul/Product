@@ -5,26 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>점프리시 — 영어 레벨 점프</title>
   <meta name="description" content="점프리시(Jumplish) — TOEIC Bridge 기반 초·중등 맞춤형 영어 학습" />
+  <meta name="theme-color" content="#3d5afe" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preload" href="/fonts/KoPubWorldDotumMedium.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 18 L10 6 L14 13 L17 9 L20 18 Z" fill="currentColor"/>
-      </svg>
-      <span class="brand-name">점프리시</span>
-      <span class="brand-phase">M1 문항 미리보기</span>
-    </div>
-  </header>
-
-  <main id="view" class="view">
+  <main id="view" class="view" role="main">
     <p class="loading">불러오는 중...</p>
   </main>
 
-  <footer class="foot">
-    <p>점프리시 (Jumplish) · 문항은 100% 자체 창작 콘텐츠입니다</p>
-  </footer>
+  <nav class="tabbar" id="tabbar" aria-label="주요 메뉴">
+    <button class="tab" data-tab="home" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg>
+      <span>홈</span>
+    </button>
+    <button class="tab" data-tab="review">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 5v14"/></svg>
+      <span>오답</span>
+    </button>
+    <button class="tab" data-tab="record">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      <span>기록</span>
+    </button>
+    <button class="tab" data-tab="parts">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>
+      <span>파트별</span>
+    </button>
+  </nav>
 
   <script type="module" src="/js/app.js"></script>
 </body>
