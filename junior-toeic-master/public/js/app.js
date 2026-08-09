@@ -312,8 +312,8 @@ async function showHome() {
       <button class="card row" data-tab-go="review">
         <span class="row-ico"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4"/><path d="M8 4.5v4M8 11.2v.1"/></svg></span>
         <span class="row-body">
-          <span class="row-t">다시 볼 문제 ${reviewN}개</span>
-          <span class="row-s">${reviewN ? '오늘 복습하면 잊지 않아요' : '틀린 문제가 모이면 여기서 복습해요'}</span>
+          <span class="row-t">오늘의 리매치 ${reviewN}판</span>
+          <span class="row-s">${reviewN ? '틀렸던 문제에게 설욕할 시간이에요' : '틀린 문제가 생기면 여기서 다시 만나요'}</span>
         </span>
         <svg class="row-arrow" viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
       </button>`;
@@ -448,8 +448,8 @@ async function showReview() {
     try {
       const r = await api('/api/review', { headers: authHeaders() });
       if (!r.count) {
-        view.innerHTML = `<div class="greet"><div><h1 class="greet-title">다시 풀 문제</h1></div></div>
-          <div class="card"><p class="empty">오늘 복습할 문제가 없어요.<br>틀린 문제는 1일 → 3일 → 7일 → 14일 뒤에 다시 나와요.</p></div>`;
+        view.innerHTML = `<div class="greet"><div><h1 class="greet-title">오늘의 리매치</h1></div></div>
+          <div class="card"><p class="empty">오늘 만날 상대가 없어요.<br>틀린 문제는 1일 → 3일 → 7일 → 14일 뒤에 리매치로 돌아와요.<br>4연승하면 봉인 앨범에 박제됩니다.</p></div>`;
         return;
       }
       const list = r.questions.map((q) => `
@@ -457,21 +457,21 @@ async function showReview() {
           <span class="row-ico">${q.part}</span>
           <span class="row-body">
             <span class="row-t">${esc(q.stem || PART_INFO[q.part].name)}</span>
-            <span class="row-s">${PART_INFO[q.part].name} · ${q.srs_box}번째 복습</span>
+            <span class="row-s">${PART_INFO[q.part].name} · ${q.srs_box}연승째 도전 ${q.srs_box >= 4 ? '(이기면 봉인!)' : ''}</span>
           </span>
         </div>`).join('');
       view.innerHTML = `
         <div class="greet"><div>
-          <p class="greet-date">틀린 문제는 다시 만나야 내 것이 돼요</p>
-          <h1 class="greet-title">오늘 복습할 문제 ${r.count}개</h1>
+          <p class="greet-date">4연승하면 그 문제는 영원히 봉인됩니다</p>
+          <h1 class="greet-title">오늘의 리매치 ${r.count}판</h1>
         </div></div>
-        <button class="btn-hero" style="background:var(--primary);color:#fff" data-review-start>복습 시작</button>
+        <button class="btn-hero" style="background:var(--primary);color:#fff" data-review-start>리매치 시작</button>
         <div class="card"><div class="rowlist">${list}</div></div>`;
       view.querySelectorAll('.row-ico').forEach((el) => {
         el.style.cssText += 'font-size:.74rem;font-weight:700;background:var(--primary-soft);color:var(--primary)';
       });
       view.querySelector('[data-review-start]').addEventListener('click', () =>
-        startSession(r.questions, r.passages, '오답 복습'));
+        startSession(r.questions, r.passages, '리매치'));
       return;
     } catch (e) {
       if (/로그인/.test(e.message)) saveAuth(null);
@@ -510,9 +510,11 @@ async function showReview() {
 }
 
 // ---------- 기록 ----------
-function showRecord() {
+async function showRecord() {
   setTab('record');
   tabbarVisible(true);
+  let sealed = null;
+  if (auth) { try { sealed = (await api('/api/me', { headers: authHeaders() })).sealed; } catch { /* 무시 */ } }
   const answered = totalAnswered();
   const acc = answered ? Math.round((totalCorrect() / answered) * 100) : 0;
   view.innerHTML = `
@@ -530,6 +532,16 @@ function showRecord() {
         <span class="card-note">${WEAK_MIN}문항 이상 푼 파트만</span></div>
       ${skillMap()}
     </div>
+    ${sealed !== null ? `
+    <div class="card row">
+      <span class="row-ico" style="background:var(--ok-soft);color:var(--ok)">
+        <svg viewBox="0 0 16 16"><rect x="3" y="6.5" width="10" height="7" rx="1.6"/><path d="M5.5 6.5V5a2.5 2.5 0 0 1 5 0v1.5"/></svg>
+      </span>
+      <span class="row-body">
+        <span class="row-t">봉인 앨범 ${sealed}문제</span>
+        <span class="row-s">리매치 4연승으로 완전히 이겨낸 문제들</span>
+      </span>
+    </div>` : ''}
     <div class="card row">
       <span class="row-body">
         <span class="row-t">${auth ? esc(`${auth.user.display_name} (${auth.user.login_id})`) : '로그인하지 않았어요'}</span>
@@ -764,10 +776,10 @@ function renderQuestion() {
       });
       view.querySelector('[data-result]').innerHTML = `
         <div class="result ${r.correct ? 'ok' : 'bad'}">
-          <p class="verdict">${r.correct ? '정답이에요!' : '아쉬워요, 다시 볼까요?'}</p>
+          <p class="verdict">${r.graduated ? '4연승! 이 문제를 봉인 앨범에 박제했어요' : r.correct ? '정답이에요!' : '아쉬워요, 다시 볼까요?'}</p>
           <p>${esc(r.explanation_ko)}</p>
         </div>`;
-      (r.correct ? sfx.correct : sfx.wrong)();
+      (r.graduated ? sfx.done : r.correct ? sfx.correct : sfx.wrong)();
       if (r.correct) session.correct += 1;
       recordAnswer(q, passage, r.correct);
       if (session.trackToday) { store.setIdx = session.idx + 1; save(); }

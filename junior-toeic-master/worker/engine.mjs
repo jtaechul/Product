@@ -156,6 +156,7 @@ export async function recordAnswer(db, { user, question, chosenIdx, timeMs, sess
   }
 
   // ── 라이트너 SRS (engine.md 6절) ──
+  let graduated = false;
   if (!correct) {
     // 오답: box=1, 내일 재출제 (이미 있으면 box 1로 리셋·복귀)
     stmts.push(db.prepare(
@@ -170,6 +171,7 @@ export async function recordAnswer(db, { user, question, chosenIdx, timeMs, sess
     ).bind(user.id, question.id).first();
     if (item) {
       if (item.box >= 4) {
+        graduated = true;  // 4연승 졸업 = 봉인
         stmts.push(db.prepare(
           'UPDATE review_queue SET graduated_at = ?1 WHERE user_id = ?2 AND question_id = ?3'
         ).bind(now, user.id, question.id));
@@ -183,5 +185,5 @@ export async function recordAnswer(db, { user, question, chosenIdx, timeMs, sess
   }
 
   await db.batch(stmts);
-  return { correct };
+  return { correct, graduated };
 }

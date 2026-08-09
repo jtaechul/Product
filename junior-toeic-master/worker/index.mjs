@@ -85,12 +85,15 @@ app.get('/api/me', requireAuth, async (c) => {
     `SELECT COUNT(*) AS n FROM review_queue
       WHERE user_id = ?1 AND graduated_at IS NULL AND due_at <= ?2`
   ).bind(u.id, kstDate()).first();
+  const sealed = await c.env.DB.prepare(
+    'SELECT COUNT(*) AS n FROM review_queue WHERE user_id = ?1 AND graduated_at IS NOT NULL'
+  ).bind(u.id).first();
   const diag = await c.env.DB.prepare(
     `SELECT summary FROM sessions WHERE user_id = ?1 AND type = 'diagnostic' AND finished_at IS NOT NULL LIMIT 1`
   ).bind(u.id).first();
   return c.json({
     user: { id: u.id, login_id: u.login_id, display_name: u.display_name, role: u.role },
-    answered: stats.answered, correct: stats.correct, review_due: due.n,
+    answered: stats.answered, correct: stats.correct, review_due: due.n, sealed: sealed.n,
     diagnosed: !!diag, diag_report: diag ? JSON.parse(diag.summary) : null,
   });
 });
@@ -235,10 +238,10 @@ app.post('/api/answers', requireAuth, async (c) => {
     ).bind(session.id, u.id, new Date().toISOString()).run();
   }
 
-  const { correct } = await recordAnswer(c.env.DB, {
+  const { correct, graduated } = await recordAnswer(c.env.DB, {
     user: u, question: q, chosenIdx: chosen_idx, timeMs: time_ms | 0, sessionId: session.id,
   });
-  return c.json({ correct, answer_idx: q.answer_idx, explanation_ko: q.explanation_ko });
+  return c.json({ correct, graduated, answer_idx: q.answer_idx, explanation_ko: q.explanation_ko });
 });
 
 app.get('/api/health', async (c) => {
