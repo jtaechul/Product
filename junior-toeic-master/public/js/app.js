@@ -200,6 +200,40 @@ async function ensureTodaySet() {
   return data;
 }
 
+// 등반 지도 카드 — 고도는 서버 결정적 수식(학습일·실력 성장·봉인), 베이스캠프는 고수위
+function climbCard(cl) {
+  const campBase = (cl.camp - 1) * 100;
+  const pct = Math.max(0, Math.min(1, (cl.basecamp - campBase) / 100));
+  const pts = [[14, 88], [54, 88], [54, 74], [94, 74], [94, 60], [134, 60], [134, 46],
+    [174, 46], [174, 34], [214, 34], [214, 24], [254, 24], [254, 16], [306, 16]];
+  const idx = Math.round(pct * (pts.length - 1));
+  const line = (arr) => arr.map((p) => p.join(',')).join(' ');
+  const [mx, my] = pts[idx];
+  const b = cl.breakdown;
+  return `
+  <div class="card climb">
+    <div class="card-head">
+      <span class="card-title">등반 지도</span>
+      <span class="card-note">${cl.camp}번 캠프 → ${cl.camp + 1}번 캠프 구간</span>
+    </div>
+    <svg class="climb-svg" viewBox="0 0 320 104" aria-label="베이스캠프 ${cl.basecamp}계단">
+      <polyline points="${line(pts)}" fill="none" stroke="var(--line)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="${line(pts.slice(0, idx + 1))}" fill="none" stroke="var(--primary)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="${mx}" y1="${my - 2}" x2="${mx}" y2="${my - 16}" stroke="var(--text)" stroke-width="2"/>
+      <path d="M${mx} ${my - 16} l11 3.5 -11 3.5 Z" fill="var(--accent)"/>
+      <circle cx="${mx}" cy="${my}" r="4.5" fill="var(--primary)" stroke="#fff" stroke-width="2"/>
+      <text x="14" y="101" font-size="9" fill="var(--muted)" font-weight="700">${cl.camp}번 캠프 (${campBase})</text>
+      <text x="306" y="12" font-size="9" fill="var(--muted)" font-weight="700" text-anchor="end">${cl.camp + 1}번 캠프 (${cl.next_camp_at})</text>
+    </svg>
+    <div class="climb-figs">
+      <div><b>${cl.basecamp}</b><span>계단 · 베이스캠프</span></div>
+      <div><b>${cl.next_camp_at - cl.basecamp}</b><span>계단 남음</span></div>
+    </div>
+    <p class="card-note">학습한 날 ${b.days}일 +${b.day_steps} · 실력 성장 +${b.skill_steps} · 봉인 ${b.sealed}개 +${b.seal_steps} —
+      베이스캠프 아래로는 내려가지 않아요.</p>
+  </div>`;
+}
+
 const levelOf = (acc) =>
   acc === null ? 'lv-none' : acc >= 80 ? 'lv-high' : acc >= 60 ? 'lv-mid' : 'lv-low';
 
@@ -313,6 +347,8 @@ async function showHome() {
         <button class="btn-hero" data-start>${
           left === 0 ? '다시 풀어보기' : doneN > 0 ? '이어서 풀기' : '시작하기'}</button>
       </div>
+
+      ${auth && me?.climb ? climbCard(me.climb) : ''}
 
       <div class="card">
         <div class="card-head">

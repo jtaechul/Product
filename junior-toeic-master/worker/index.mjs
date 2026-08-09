@@ -3,7 +3,7 @@
 // 채점 엔드포인트만 정답에 접근한다. (docs/engine.md · PRD 6절)
 import { Hono } from 'hono';
 import { verifyPin, makeToken, requireAuth, verifyToken } from './auth.mjs';
-import { recordAnswer, composeDailySet, kstDate, DIAG, diagBand, pickDiagQuestions } from './engine.mjs';
+import { recordAnswer, composeDailySet, computeClimb, kstDate, DIAG, diagBand, pickDiagQuestions } from './engine.mjs';
 
 // 진단 답안 일괄 채점·기록 (Elo·SRS 미반영 — engine.md 4절)
 async function gradeDiagAnswers(db, user, sessionId, answers) {
@@ -85,15 +85,14 @@ app.get('/api/me', requireAuth, async (c) => {
     `SELECT COUNT(*) AS n FROM review_queue
       WHERE user_id = ?1 AND graduated_at IS NULL AND due_at <= ?2`
   ).bind(u.id, kstDate()).first();
-  const sealed = await c.env.DB.prepare(
-    'SELECT COUNT(*) AS n FROM review_queue WHERE user_id = ?1 AND graduated_at IS NOT NULL'
-  ).bind(u.id).first();
+  const climb = await computeClimb(c.env.DB, u);
   const diag = await c.env.DB.prepare(
     `SELECT summary FROM sessions WHERE user_id = ?1 AND type = 'diagnostic' AND finished_at IS NOT NULL LIMIT 1`
   ).bind(u.id).first();
   return c.json({
     user: { id: u.id, login_id: u.login_id, display_name: u.display_name, role: u.role },
-    answered: stats.answered, correct: stats.correct, review_due: due.n, sealed: sealed.n,
+    answered: stats.answered, correct: stats.correct, review_due: due.n, sealed: climb.breakdown.sealed,
+    climb,
     diagnosed: !!diag, diag_report: diag ? JSON.parse(diag.summary) : null,
   });
 });

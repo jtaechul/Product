@@ -115,6 +115,45 @@ export async function composeDailySet(db, user, today) {
   return { ids: picked, slots, setSize };
 }
 
+// ── 등반 지도 (M3-2, 게임화 '점프 원정대') ──
+// 고도는 전부 결정적 수식 — 강사·학부모에게 그대로 설명 가능.
+//   학습 계단  = 학습한 날 수 × 10        (꾸준함)
+//   실력 계단  = max(0, (평균 레이팅 − 950) / 2)  (진단 하한 950 기준, 실력 성장분)
+//   봉인 계단  = 봉인한 문제 × 5          (약점 극복)
+// 베이스캠프 = 지금까지 도달한 최고 고도(user_stats.xp에 고수위 저장) —
+// 레이팅이 내려가도 베이스캠프 아래로는 떨어지지 않는다(좌절 방지).
+// 캠프는 100계단마다 하나(user_stats.level = 캠프 번호).
+export async function computeClimb(db, user) {
+  const [days, skill, sealed] = await Promise.all([
+    db.prepare(`SELECT COUNT(DISTINCT date(answered_at, '+9 hours')) AS n FROM answers WHERE user_id = ?1`)
+      .bind(user.id).first(),
+    db.prepare('SELECT AVG(rating) AS r, COUNT(*) AS n FROM user_tag_skills WHERE user_id = ?1')
+      .bind(user.id).first(),
+    db.prepare('SELECT COUNT(*) AS n FROM review_queue WHERE user_id = ?1 AND graduated_at IS NOT NULL')
+      .bind(user.id).first(),
+  ]);
+  const daySteps = days.n * 10;
+  const skillSteps = skill.n ? Math.max(0, Math.round((skill.r - 950) / 2)) : 0;
+  const sealSteps = sealed.n * 5;
+  const altitude = daySteps + skillSteps + sealSteps;
+
+  // 고수위(베이스캠프) 갱신 — 읽는 시점에 올려 둔다 (내려가는 일은 없음)
+  const camp = Math.floor(altitude / 100) + 1;
+  await db.prepare(
+    `INSERT INTO user_stats (user_id, xp, level) VALUES (?1, ?2, ?3)
+     ON CONFLICT(user_id) DO UPDATE SET xp = MAX(xp, ?2), level = MAX(level, ?3)`
+  ).bind(user.id, altitude, camp).run();
+  const row = await db.prepare('SELECT xp, level FROM user_stats WHERE user_id = ?1').bind(user.id).first();
+  const basecamp = Math.max(row?.xp ?? 0, altitude);
+
+  return {
+    altitude, basecamp,
+    camp: Math.floor(basecamp / 100) + 1,
+    next_camp_at: (Math.floor(basecamp / 100) + 1) * 100,
+    breakdown: { days: days.n, day_steps: daySteps, skill_steps: skillSteps, sealed: sealed.n, seal_steps: sealSteps },
+  };
+}
+
 // 채점 결과 하나를 학습 기록에 반영한다.
 // answers INSERT + user_tag_skills(Elo) UPSERT + review_queue(라이트너) UPSERT.
 // D1 batch(단일 트랜잭션)로 묶어 부분 반영을 막는다.

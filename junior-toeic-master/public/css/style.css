@@ -143,6 +143,16 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .skill.lv-high { background: var(--ok); }
 .skill.is-weak { outline: 2px solid var(--bad); outline-offset: 2px; }
 
+/* ── 등반 지도 ── */
+.climb-svg { width: 100%; height: auto; display: block; }
+.climb-figs { display: flex; gap: 8px; }
+.climb-figs > div {
+  flex: 1; background: var(--surface-2); border-radius: 11px; padding: 9px 11px;
+  display: flex; flex-direction: column; gap: 0;
+}
+.climb-figs b { font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.climb-figs span { font-size: .72rem; color: var(--muted); font-weight: 500; }
+
 /* ── 약점 집중 ── */
 .focus { display: flex; flex-direction: column; gap: 10px; }
 .focus-head { display: flex; align-items: center; gap: 7px; }
