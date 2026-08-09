@@ -6,6 +6,8 @@ on:
     paths:
       - "book-carousel/**"
       - ".github/workflows/deploy-book-carousel.yml"
+  # 코드 변경 없이도 수동으로 재배포할 수 있게 한다(시크릿 재등록·토큰 교체 후 확인용).
+  workflow_dispatch:
 
 jobs:
   deploy:

@@ -2829,13 +2829,32 @@ export default {
 
           result = { keyInfo, modelsEndpoint: { status: rawStatus, body: rawBody }, resolved };
         }
-        else if (url.pathname === '/api/debug-env') result = {
-          hasApiKey: !!env.ANTHROPIC_API_KEY,
-          hasTelegramToken: !!env.TELEGRAM_BOT_TOKEN,
-          hasTelegramChatId: !!env.TELEGRAM_CHAT_ID,
-          hasPendingPosts: !!env.PENDING_POSTS,
-          pendingPostsType: env.PENDING_POSTS ? typeof env.PENDING_POSTS : 'undefined',
-          hasInstagramToken: !!env.INSTAGRAM_ACCESS_TOKEN,
+        else if (url.pathname === '/api/debug-env') {
+          // 시크릿·바인딩 존재 여부 진단. 값은 절대 노출하지 않는다(불리언·HTTP 상태만).
+          const out = {
+            hasApiKey: !!env.ANTHROPIC_API_KEY,
+            hasTelegramToken: !!env.TELEGRAM_BOT_TOKEN,
+            hasTelegramChatId: !!env.TELEGRAM_CHAT_ID,
+            hasPendingPosts: !!env.PENDING_POSTS,
+            pendingPostsType: env.PENDING_POSTS ? typeof env.PENDING_POSTS : 'undefined',
+            hasInstagramToken: !!env.INSTAGRAM_ACCESS_TOKEN,
+            hasGeminiKey: !!env.GEMINI_API_KEY,
+            hasNaverId: !!env.NAVER_CLIENT_ID,
+            hasNaverSecret: !!env.NAVER_CLIENT_SECRET,
+          };
+          // 네이버 키가 "있는데 안 먹는" 경우(만료·앱 삭제·쿼터 초과)와 "아예 없는" 경우를 구분한다.
+          if (out.hasNaverId && out.hasNaverSecret) {
+            try {
+              const res = await fetch('https://openapi.naver.com/v1/search/book.json?query=' + encodeURIComponent('어린 왕자') + '&display=1', {
+                headers: { 'X-Naver-Client-Id': env.NAVER_CLIENT_ID, 'X-Naver-Client-Secret': env.NAVER_CLIENT_SECRET },
+              });
+              const txt = await res.text();
+              out.naverProbe = { status: res.status, ok: res.ok, body: txt.slice(0, 200) };
+            } catch (e) { out.naverProbe = { error: e.message }; }
+          } else {
+            out.naverProbe = { skipped: '키 없음' };
+          }
+          result = out;
         }
         else if (url.pathname === '/api/suggest') result = await handleSuggest(env, body);
         else if (url.pathname === '/api/analyze') result = await handleAnalyze(env, body);
