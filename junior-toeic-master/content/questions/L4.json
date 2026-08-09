@@ -27,7 +27,8 @@
         "tags": [
           "LS.gist",
           "V.school"
-        ]
+        ],
+        "evidence": "Sports day is this Friday."
       },
       {
         "stem": "What should students bring?",
@@ -43,7 +44,8 @@
         "tags": [
           "LS.detail",
           "V.school"
-        ]
+        ],
+        "evidence": "bring a water bottle"
       }
     ],
     "status": "active"
@@ -76,7 +78,8 @@
         "tags": [
           "LS.detail",
           "V.daily"
-        ]
+        ],
+        "evidence": "This morning will be sunny and warm"
       },
       {
         "stem": "What will happen around four o'clock?",
@@ -92,7 +95,8 @@
         "tags": [
           "LS.detail",
           "V.daily"
-        ]
+        ],
+        "evidence": "rain will start around four o'clock"
       }
     ],
     "status": "active"
@@ -125,7 +129,8 @@
         "tags": [
           "LS.gist",
           "V.daily"
-        ]
+        ],
+        "evidence": "I can't pick you up after your piano lesson today"
       },
       {
         "stem": "How should Minho go home?",
@@ -141,7 +146,8 @@
         "tags": [
           "LS.detail",
           "V.daily"
-        ]
+        ],
+        "evidence": "Please take the number nine bus home"
       }
     ],
     "status": "active"
@@ -174,7 +180,8 @@
         "tags": [
           "LS.gist",
           "V.leisure"
-        ]
+        ],
+        "evidence": "Welcome to the city zoo."
       },
       {
         "stem": "What should visitors NOT do?",
@@ -190,7 +197,8 @@
         "tags": [
           "LS.detail",
           "V.leisure"
-        ]
+        ],
+        "evidence": "Please don't knock on the glass"
       }
     ],
     "status": "active"
@@ -223,7 +231,8 @@
         "tags": [
           "LS.detail",
           "V.daily"
-        ]
+        ],
+        "evidence": "will close early today, at five o'clock"
       },
       {
         "stem": "What should a person do to borrow a book today?",
@@ -239,7 +248,8 @@
         "tags": [
           "LS.detail",
           "V.daily"
-        ]
+        ],
+        "evidence": "please come to the front desk before four thirty"
       }
     ],
     "status": "active"
@@ -272,7 +282,8 @@
         "tags": [
           "LS.gist",
           "V.daily"
-        ]
+        ],
+        "evidence": "Try going to bed thirty minutes earlier tonight."
       },
       {
         "stem": "What does the speaker say to do instead of using a phone?",
@@ -288,7 +299,8 @@
         "tags": [
           "LS.detail",
           "V.daily"
-        ]
+        ],
+        "evidence": "Turn off your phone and read a book instead."
       }
     ],
     "status": "active"
@@ -321,7 +333,8 @@
         "tags": [
           "LS.detail",
           "V.travel"
-        ]
+        ],
+        "evidence": "Our bus will arrive at the strawberry farm in twenty minutes."
       },
       {
         "stem": "Who is probably listening to this talk?",
@@ -337,7 +350,8 @@
         "tags": [
           "LS.infer",
           "V.travel"
-        ]
+        ],
+        "evidence": "Please stay with your group all day."
       }
     ],
     "status": "active"
@@ -370,7 +384,8 @@
         "tags": [
           "LS.gist",
           "V.shopping"
-        ]
+        ],
+        "evidence": "Thank you for visiting our market today."
       },
       {
         "stem": "A woman buys two bottles of milk. How many bottles will she take home?",
@@ -386,7 +401,8 @@
         "tags": [
           "LS.infer",
           "V.shopping"
-        ]
+        ],
+        "evidence": "if you buy two bottles of milk, you will get one free"
       }
     ],
     "status": "active"

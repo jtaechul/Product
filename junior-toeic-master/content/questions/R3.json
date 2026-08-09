@@ -23,7 +23,8 @@
         "tags": [
           "RS.scan",
           "V.school"
-        ]
+        ],
+        "evidence": "Students will have P.E. class in the playground."
       }
     ],
     "status": "active"
@@ -52,7 +53,8 @@
         "tags": [
           "RS.scan",
           "V.leisure"
-        ]
+        ],
+        "evidence": "Take a shower before you swim."
       }
     ],
     "status": "active"
@@ -81,7 +83,8 @@
         "tags": [
           "RS.scan",
           "V.daily"
-        ]
+        ],
+        "evidence": "Can we meet at 4?"
       }
     ],
     "status": "active"
@@ -110,7 +113,8 @@
         "tags": [
           "RS.scan",
           "V.food"
-        ]
+        ],
+        "evidence": "Fruit juice ... 2,000 won"
       }
     ],
     "status": "active"
@@ -139,7 +143,8 @@
         "tags": [
           "RS.scan",
           "V.school"
-        ]
+        ],
+        "evidence": "11:30 Make cheese"
       }
     ],
     "status": "active"
@@ -168,7 +173,8 @@
         "tags": [
           "RS.gist",
           "V.daily"
-        ]
+        ],
+        "evidence": "Come to Dana's 11th birthday party."
       }
     ],
     "status": "active"
@@ -197,7 +203,8 @@
         "tags": [
           "RS.scan",
           "V.shopping"
-        ]
+        ],
+        "evidence": "Total ... 10,000 won"
       }
     ],
     "status": "active"
@@ -226,7 +233,8 @@
         "tags": [
           "RS.scan",
           "V.school"
-        ]
+        ],
+        "evidence": "You can borrow 3 books for 2 weeks."
       }
     ],
     "status": "active"
@@ -255,7 +263,8 @@
         "tags": [
           "RS.gist",
           "V.daily"
-        ]
+        ],
+        "evidence": "Our small white dog, Mongsil, ran away near Rose Park on Sunday."
       }
     ],
     "status": "active"
@@ -284,7 +293,8 @@
         "tags": [
           "RS.infer",
           "V.leisure"
-        ]
+        ],
+        "evidence": "How about the science museum instead?"
       }
     ],
     "status": "active"
@@ -313,7 +323,8 @@
         "tags": [
           "RS.vocab",
           "V.shopping"
-        ]
+        ],
+        "evidence": "Come and get cheap bags and shoes!"
       }
     ],
     "status": "active"
@@ -342,7 +353,8 @@
         "tags": [
           "RS.infer",
           "V.travel"
-        ]
+        ],
+        "evidence": "From next Monday, Bus 7 will not stop at City Library."
       }
     ],
     "status": "active"
@@ -371,7 +383,8 @@
         "tags": [
           "RS.scan",
           "V.travel"
-        ]
+        ],
+        "evidence": "I will visit my grandmother in Busan for two weeks."
       },
       {
         "stem": "What can we learn about Jiho from the email?",
@@ -386,7 +399,8 @@
         "difficulty_label": 3,
         "tags": [
           "RS.infer"
-        ]
+        ],
+        "evidence": "I can't wait to meet it!"
       }
     ],
     "status": "active"
@@ -415,7 +429,8 @@
         "tags": [
           "RS.gist",
           "V.school"
-        ]
+        ],
+        "evidence": "This month, we will learn to make fruit sandwiches."
       },
       {
         "stem": "What should members do by June 20?",
@@ -431,7 +446,8 @@
         "tags": [
           "RS.scan",
           "V.food"
-        ]
+        ],
+        "evidence": "please tell Ms. Han by June 20"
       }
     ],
     "status": "active"
@@ -460,7 +476,8 @@
         "tags": [
           "RS.scan",
           "V.leisure"
-        ]
+        ],
+        "evidence": "the town will add a small pond with fish"
       },
       {
         "stem": "In the article, the word 'spot' means ____.",
@@ -476,7 +493,8 @@
         "tags": [
           "RS.vocab",
           "RS.context"
-        ]
+        ],
+        "evidence": "The most popular spot was the flower garden."
       }
     ],
     "status": "active"
@@ -505,7 +523,8 @@
         "tags": [
           "RS.scan",
           "V.travel"
-        ]
+        ],
+        "evidence": "In the morning, we rode bikes along the beach road."
       },
       {
         "stem": "How does the writer probably feel about the trip?",
@@ -521,7 +540,8 @@
         "tags": [
           "RS.infer",
           "V.travel"
-        ]
+        ],
+        "evidence": "I want to do it all again tomorrow."
       }
     ],
     "status": "active"
@@ -550,7 +570,8 @@
         "tags": [
           "RS.gist",
           "V.school"
-        ]
+        ],
+        "evidence": "I am writing this letter to thank you for helping me this year."
       },
       {
         "stem": "In the letter, the word 'restful' means ____.",
@@ -566,7 +587,8 @@
         "tags": [
           "RS.vocab",
           "RS.context"
-        ]
+        ],
+        "evidence": "I hope you have a restful summer."
       }
     ],
     "status": "active"
@@ -595,7 +617,8 @@
         "tags": [
           "RS.infer",
           "V.daily"
-        ]
+        ],
+        "evidence": "But after a few visits, they ran to the door to greet us."
       },
       {
         "stem": "In the article, the words 'helping hands' mean ____.",
@@ -611,7 +634,8 @@
         "tags": [
           "RS.vocab",
           "RS.context"
-        ]
+        ],
+        "evidence": "the animal home always needs more helping hands"
       }
     ],
     "status": "active"

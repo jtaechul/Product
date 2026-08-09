@@ -26,7 +26,8 @@
       "A boy riding a bicycle on a park path",
       "A boy sitting on a park bench eating ice cream"
     ],
-    "status": "active"
+    "status": "active",
+    "evidence": "riding a bicycle"
   },
   {
     "type": "single",
@@ -55,7 +56,8 @@
       "A cat drinking milk from a bowl on the floor",
       "A cat playing with a ball of yarn on a chair"
     ],
-    "status": "active"
+    "status": "active",
+    "evidence": "sleeping on the sofa"
   },
   {
     "type": "single",
@@ -84,7 +86,8 @@
       "A woman carrying a basket of bread through a market",
       "A woman handing money to a fruit seller for apples at a market stall"
     ],
-    "status": "active"
+    "status": "active",
+    "evidence": "buying apples at the market"
   },
   {
     "type": "single",
@@ -113,7 +116,8 @@
       "A child collecting seashells in a bucket on the beach",
       "Two children playing with a beach ball on the sand"
     ],
-    "status": "active"
+    "status": "active",
+    "evidence": "building a sandcastle"
   },
   {
     "type": "single",
@@ -142,7 +146,8 @@
       "A man hammering nails into a wooden fence",
       "A man watering plants with a hose in a backyard"
     ],
-    "status": "active"
+    "status": "active",
+    "evidence": "painting a wooden fence"
   },
   {
     "type": "single",
@@ -171,7 +176,8 @@
       "A girl washing a glass at the kitchen sink",
       "A girl cutting an orange on a kitchen cutting board"
     ],
-    "status": "active"
+    "status": "active",
+    "evidence": "pouring juice into a glass"
   },
   {
     "type": "single",
@@ -200,7 +206,8 @@
       "A boy sailing a toy boat on a pond",
       "A boy throwing pieces of bread to ducks at a pond"
     ],
-    "status": "active"
+    "status": "active",
+    "evidence": "feeding bread to the ducks"
   },
   {
     "type": "single",
@@ -229,6 +236,7 @@
       "A woman hanging wet clothes on a clothesline in a garden",
       "A woman loading clothes into a washing machine"
     ],
-    "status": "active"
+    "status": "active",
+    "evidence": "hanging wet clothes on a line"
   }
 ]

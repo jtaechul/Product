@@ -27,6 +27,7 @@
   --grad-warm: linear-gradient(135deg, #fb923c 0%, #f43f5e 100%);
   --accent: #facc15;
   --accent-soft: #fef6d8;
+  --hl: #ffe37a;            /* 정답 근거 형광펜 */
   --lime: #22d3a5;
   --ok: #12a06a;
   --ok-soft: #dcf7ec;
@@ -389,10 +390,28 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .choice-img.wrong { box-shadow: 0 0 0 3px var(--bad); }
 .choice-img.dim img { filter: grayscale(.7); }
 
-.result { border-radius: 13px; padding: 13px; font-size: .92rem; line-height: 1.65; }
+/* 정답 근거 형광펜 — 글 해설보다 먼저 눈에 들어오게 (채점 뒤에만 나타남) */
+mark.ev {
+  background-image: linear-gradient(transparent 42%, var(--hl) 42%);
+  background-repeat: no-repeat; background-size: 100% 100%; background-color: transparent;
+  color: inherit; font-weight: 700; border-radius: 3px; padding: 0 2px;
+  animation: evPop .5s ease-out;   /* 형광펜으로 그어지는 느낌 */
+}
+@keyframes evPop { from { background-size: 0 100%; } to { background-size: 100% 100%; } }
+.ev-hint { font-size: .86rem; font-weight: 700; }
+.ev-box { background: var(--surface); border-radius: 11px; padding: 10px 11px; }
+.ev-cap { font-size: .74rem; font-weight: 800; color: var(--muted); margin-bottom: 3px; }
+.ev-text { font-size: .9rem; line-height: 1.7; white-space: pre-wrap; color: var(--text); }
+.ev-replay {
+  align-self: flex-start; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 999px; padding: 8px 14px; font-size: .82rem; font-weight: 700;
+  min-height: 40px; color: var(--text);
+}
+.result { border-radius: 13px; padding: 13px; font-size: .92rem; line-height: 1.65;
+  display: flex; flex-direction: column; gap: 8px; }
 .result.ok { background: var(--ok-soft); color: #0f5f3f; }
 .result.bad { background: var(--bad-soft); color: #8e2f36; }
-.verdict { font-weight: 700; margin-bottom: 3px; }
+.verdict { font-weight: 700; }
 .nav-row { display: flex; gap: 8px; }
 .btn-primary {
   flex: 1; background: var(--primary); color: #fff; border-radius: 13px;

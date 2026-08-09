@@ -878,6 +878,17 @@ function endSession() {
   view.querySelector('[data-go-home]').addEventListener('click', () => { setTab('home'); showHome(); });
 }
 
+// 스크립트의 화자 표시(W:/M:/N:)는 음원 제작용 기호라 아이에게는 우리말로 바꿔 보여준다.
+const SPEAKER_KO = { W: '여자', M: '남자', N: '안내' };
+const readable = (s) => String(s ?? '').replace(/^([WMN]):/gm, (_, k) => `${SPEAKER_KO[k]}:`);
+
+// 원문에서 근거 부분만 형광펜으로 칠한 HTML을 만든다 (나머지는 그대로 이스케이프).
+function markEvidence(text, ev) {
+  const i = text.indexOf(ev);
+  if (i < 0) return esc(text);
+  return esc(text.slice(0, i)) + `<mark class="ev">${esc(ev)}</mark>` + esc(text.slice(i + ev.length));
+}
+
 function renderQuestion() {
   const g = session.groups[session.gidx];
   const total = session.questions.length;
@@ -904,7 +915,7 @@ function renderQuestion() {
   } else if (script) {
     media = `<p class="notice">음원 준비 중 — 지금은 스크립트로 확인해요.</p>
       <button class="script-toggle" data-toggle>스크립트 보기</button>
-      <div class="passage" data-script hidden>${esc(script)}</div>`;
+      <div class="passage" data-script hidden>${esc(readable(script))}</div>`;
   }
   const readingPassage = (first.section === 'RC' && passage)
     ? `<div class="passage">${esc(passage.content)}</div>` : '';
@@ -1049,11 +1060,41 @@ function renderQuestion() {
           else if (i === selected && !r.correct) b.classList.add('wrong');
           else b.classList.add('dim');
         });
+        // ── 근거 보여주기: 글보다 먼저 "어디를 보고 푸는지"를 눈으로 짚어준다 ──
+        // 원문이 이미 화면에 있으면 그 자리를 칠하고, 없으면(듣기 등) 원문째로 보여준다.
+        let evHtml = '';
+        if (r.evidence && r.evidence_text) {
+          const spots = [...view.querySelectorAll('.passage'), ...block.querySelectorAll('.stem')];
+          const spot = spots.find((el) => el.textContent.includes(r.evidence));
+          if (spot) {
+            spot.hidden = false;
+            const toggle = view.querySelector('[data-toggle]');
+            if (toggle) toggle.textContent = '스크립트 접기';
+            spot.innerHTML = markEvidence(spot.textContent, r.evidence);  // 이전 표시는 지워짐
+            // 짧은 근거는 한 번 더 짚어 주고, 긴 문장은 위에 칠한 곳만 가리킨다(중복 방지)
+            evHtml = r.evidence.length <= 20
+              ? `<p class="ev-hint"><mark class="ev">${esc(r.evidence)}</mark> — 여기가 힌트예요</p>`
+              : '<p class="ev-hint">위에 노란색으로 칠한 곳이 힌트예요</p>';
+          } else {
+            evHtml = `<div class="ev-box"><p class="ev-cap">여기가 힌트예요</p>
+              <p class="ev-text">${markEvidence(readable(r.evidence_text), r.evidence)}</p></div>`;
+          }
+        }
+        const replay = audioUrl
+          ? '<button class="ev-replay" data-replay>천천히 다시 듣기</button>' : '';
         block.querySelector('[data-result]').innerHTML = `
           <div class="result ${r.correct ? 'ok' : 'bad'}">
             <p class="verdict">${r.graduated ? '4연승! 이 문제를 봉인 앨범에 박제했어요' : r.correct ? '정답이에요!' : '아쉬워요, 다시 볼까요?'}</p>
+            ${evHtml}${replay}
             <p>${esc(r.explanation_ko)}</p>
           </div>`;
+        block.querySelector('[data-replay]')?.addEventListener('click', () => {
+          const a = view.querySelector('audio');
+          if (!a) return;
+          a.playbackRate = 0.75;   // 천천히 — 안 들리던 부분이 들린다
+          a.currentTime = 0;
+          a.play().catch(() => { /* 자동 재생 차단 시 재생 버튼으로 */ });
+        });
         (r.graduated ? sfx.done : r.correct ? sfx.correct : sfx.wrong)();
         if (r.correct) session.correct += 1;
         recordAnswer(q, passage, r.correct);

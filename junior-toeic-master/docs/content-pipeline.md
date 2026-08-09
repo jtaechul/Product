@@ -38,7 +38,8 @@
   "stem": "The students ______ their homework before dinner every day.",
   "choices": ["finish", "finishes", "finishing", "to finish"],
   "answer_idx": 0,
-  "explanation_ko": "주어 The students가 복수이므로 동사원형 finish가 옵니다. every day는 반복되는 습관을 나타내는 현재시제 신호입니다.",
+  "explanation_ko": "students는 여럿이라 뒤에 s 없는 finish를 써요. every day는 늘 하는 일이라는 뜻이에요.",
+  "evidence": "The students",
   "difficulty_label": 2,
   "tags": ["G.agreement", "G.tense"],
   "accent": null,
@@ -68,7 +69,8 @@
       "stem": "What are the speakers talking about?",
       "choices": ["A soccer game", "A school test", "A new movie", "A music concert"],
       "answer_idx": 0,
-      "explanation_ko": "여자가 첫 문장에서 the soccer game last night를 언급하고 대화 전체가 경기 결과 이야기입니다.",
+      "explanation_ko": "여자가 어젯밤 축구 경기 이야기를 꺼내고, 끝까지 그 경기 이야기예요.",
+      "evidence": "Did you watch the soccer game last night?",
       "difficulty_label": 2,
       "tags": ["LS.gist"]
     },
@@ -76,7 +78,8 @@
       "stem": "Why did the man miss the game?",
       "choices": ["He fell asleep", "He studied late", "He was traveling", "He lost his ticket"],
       "answer_idx": 0,
-      "explanation_ko": "남자가 I fell asleep early라고 직접 말합니다. 세부 정보를 듣는 문제입니다.",
+      "explanation_ko": "남자가 일찍 잠들었다고 직접 말해요. 들은 내용을 그대로 고르면 돼요.",
+      "evidence": "I fell asleep early",
       "difficulty_label": 3,
       "tags": ["LS.detail"]
     }
@@ -91,7 +94,8 @@
 | `tmp_id` | 저작 단계 식별자 `{파트}-{4자리}`. 임포트 시 ULID로 치환되고 tmp_id는 매핑 로그에 보존 |
 | `choices` | **파트별로 개수 고정 (실제 시험 규격)** — L2(질의응답)만 **3개(A~C)**, 나머지 파트는 **4개(A~D)**. `import.mjs`가 어긋나면 임포트를 막는다 |
 | `answer_idx` | 0-기반. **정답 분포는 파일 단위로 균등**하게 (한 보기 쏠림 금지, 임포트가 검사) |
-| `explanation_ko` | 한국어, 초등이 읽고 이해할 문장. "왜 정답인지 + 오답 함정 1개" 구조 권장 |
+| `explanation_ko` | 한국어, 초등 고학년이 그대로 읽고 이해할 문장. "왜 정답인지 + 오답 함정 1개" 구조 권장. **100자 이하**, 문법 용어(주어·동사·3인칭·비교급 등) 금지 — 실제 영어 낱말과 쉬운 우리말로 풀어 쓴다. `import.mjs`가 어려운 용어를 발견하면 임포트를 막는다 |
+| `evidence` | 정답의 근거가 되는 **원문 그대로의 한 부분**(지문·스크립트·문제 문장). 화면이 그 자리를 형광펜으로 칠해 준다. 한 글자라도 다르면 임포트가 막는다. 채점 후에만 학생에게 내려간다 |
 | `difficulty_label` | 1~5. 시드 목표 분포: 1:15% / 2:30% / 3:35% / 4:15% / 5:5% (저학년 포함으로 쉬운 문항 확충) |
 | `tags` | 3절 카탈로그의 code만 사용 (임포트가 검증). 문항당 1~3개 |
 | `accent` | LC만: US/UK/AU. 시드 전체에서 US 50% / UK 25% / AU 25% 안팎 유지 |
@@ -190,7 +194,8 @@ r2://jtm-assets/
 - 입력: `content/questions/*.json` (+ `content/tags.json`, `content/badges.json` 시드)
 - 검증(실패 시 임포트 중단, 파일·tmp_id 단위 리포트):
   스키마 필수 필드 / `tags` 코드가 카탈로그에 존재 / `answer_idx` 범위 / 파일 단위 정답 분포
-  (한 보기 40% 초과 시 경고) / LC 문항의 `tts_script`·`accent` 존재 / 묶음형 part 정합
+  (한 보기 40% 초과 시 경고) / LC 문항의 `tts_script`·`accent` 존재 / 묶음형 part 정합 /
+  **해설 난이도**(문법 용어 사용·100자 초과 차단) / **근거 정합**(`evidence`가 원문에 그대로 있는지)
 - 변환: `tmp_id` → ULID 발급(매핑을 `content/.idmap.json`에 보존 — 재실행 시 같은 ULID 재사용
   → **멱등 UPSERT**), `difficulty_label` → 초기 `rating` 매핑([engine.md](engine.md) 상수표)
 - 출력: `wrangler d1 execute <DB> --file` 로 실행할 SQL 파일 생성 (로컬 `--local` 우선 검증 후 원격 적용)

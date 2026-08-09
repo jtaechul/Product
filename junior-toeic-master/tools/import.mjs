@@ -21,6 +21,16 @@ const ACCENTS = ['US', 'UK', 'AU'];
 // 실제 TOEIC Bridge 규격 — Part 2(질의응답)는 보기 3개, 나머지는 4개
 const CHOICES_BY_PART = { L1: 4, L2: 3, L3: 4, L4: 4, R1: 4, R2: 4, R3: 4 };
 
+// 해설 읽기 쉬움 기준 (초3~중3 대상)
+// 문법 용어는 아이가 모르는 말이다 — 용어 대신 실제 단어를 보여주고 풀어 쓴다.
+// 예) "주어 My dog는 3인칭 단수라서" → "My dog는 한 마리라서"
+const HARD_TERMS = [
+  '3인칭', '인칭', '단수', '복수', '주어', '동사', '명사', '형용사', '부사', '전치사',
+  '관사', '시제', '과거형', '현재형', '수식', '의문사', '조동사', '정오', '목적어',
+  '비교급', '최상급', '현재진행', '현재완료', '능동', '수동태', '동사원형', '부정문',
+];
+const EXPLANATION_MAX = 100;   // 이보다 길면 아이가 끝까지 읽지 않는다
+
 // ---------- ULID (크록포드 base32, 모노토닉) ----------
 // 같은 실행 안에서 발급 순서 = 사전순이 되도록 시퀀스를 넣는다.
 // 세트(지문) 내 문항이 저작 순서대로 정렬돼야 하므로(ORDER BY id) 필수.
@@ -86,7 +96,7 @@ const perPartAnswerPos = {};  // part -> [n0,n1,n2,n3]
 const perPartDifficulty = {}; // part -> {label: n}
 const seenTmp = new Set();
 
-function checkQuestionCore(it, ctx, part) {
+function checkQuestionCore(it, ctx, part, source = null) {
   const section = PARTS[part];
   // 실제 TOEIC Bridge 규격: Part 2(질의응답)만 보기 3개(A~C), 나머지는 4개(A~D).
   // 파트별로 못박아 두어야 저작 중에 보기 수가 실전과 어긋나는 것을 막는다.
@@ -100,6 +110,26 @@ function checkQuestionCore(it, ctx, part) {
   }
   if (typeof it.explanation_ko !== 'string' || it.explanation_ko.trim().length < 5) {
     err(`${ctx}: explanation_ko가 비어있거나 너무 짧습니다`);
+  } else {
+    const hard = HARD_TERMS.filter((w) => it.explanation_ko.includes(w));
+    if (hard.length) {
+      err(`${ctx}: 해설에 어려운 문법 용어 [${hard.join(', ')}] — 아이 말로 풀어 쓰세요`);
+    }
+    if (it.explanation_ko.length > EXPLANATION_MAX) {
+      err(`${ctx}: 해설이 ${it.explanation_ko.length}자 (${EXPLANATION_MAX}자 이하로)`);
+    }
+  }
+  // 근거(선택): 지문·스크립트·문장에서 정답의 실마리가 되는 부분을 "그대로" 적으면
+  // 화면이 그 자리를 형광펜으로 칠해 준다. 글 설명보다 훨씬 빨리 이해된다.
+  // 한 글자라도 다르면 칠할 자리를 못 찾으므로, 원문에 실제로 있는지 여기서 막는다.
+  if (it.evidence !== undefined) {
+    if (typeof it.evidence !== 'string' || !it.evidence.trim()) {
+      err(`${ctx}: evidence는 원문에 그대로 있는 문장(부분)이어야 합니다`);
+    } else if (!source) {
+      err(`${ctx}: 근거를 칠할 원문(지문·스크립트·문제 문장)이 없어 evidence를 쓸 수 없습니다`);
+    } else if (!source.includes(it.evidence)) {
+      err(`${ctx}: evidence "${it.evidence}"를 원문에서 찾지 못했습니다 (철자·부호까지 그대로여야 함)`);
+    }
   }
   if (!Number.isInteger(it.difficulty_label) || it.difficulty_label < 1 || it.difficulty_label > 5) {
     err(`${ctx}: difficulty_label은 1~5 정수`);
@@ -129,6 +159,7 @@ function pushQuestion(part, tmpId, it, passageId, extra = {}) {
     rating: RATING_BY_LABEL[it.difficulty_label],
     audio_url: extra.audio_url ?? null, image_url: extra.image_url ?? null,
     accent: extra.accent ?? null, script: extra.script ?? null,
+    evidence: it.evidence ?? null,
     status: extra.status ?? 'active',
   });
   for (const t of new Set(it.tags || [])) qTags.push({ question_id: id, tag_id: t });
@@ -149,7 +180,8 @@ for (const file of files) {
     if (!['draft', 'active', 'retired'].includes(status)) err(`${ctx}: status 오류`);
 
     if (it.type === 'single') {
-      checkQuestionCore(it, ctx, part);
+      // 단독 문항의 "원문" = LC는 들려주는 문장, RC는 문제 문장 자체
+      checkQuestionCore(it, ctx, part, it.tts_script || it.stem || null);
       if (part === 'L1' || part === 'L2') {
         if (typeof it.tts_script !== 'string' || !it.tts_script.trim()) err(`${ctx}: LC 단독 문항은 tts_script 필수`);
         if (!ACCENTS.includes(it.accent)) err(`${ctx}: LC 단독 문항은 accent(US/UK/AU) 필수`);
@@ -182,7 +214,7 @@ for (const file of files) {
       it.questions.forEach((sub, i) => {
         const subTmp = `${it.tmp_id}#${i + 1}`;
         const subCtx = `${ctx} 문항${i + 1}`;
-        checkQuestionCore(sub, subCtx, part);
+        checkQuestionCore(sub, subCtx, part, content);
         pushQuestion(part, subTmp, sub, passageId, { status, accent: isLC ? p.accent : null });
       });
     } else {
@@ -245,11 +277,11 @@ for (const p of passages) {
 }
 for (const it of questions) {
   sql.push(
-    `INSERT INTO questions (id, passage_id, section, part, stem, choices, answer_idx, explanation_ko, difficulty_label, rating, audio_url, image_url, accent, script, status, created_at) VALUES (` +
+    `INSERT INTO questions (id, passage_id, section, part, stem, choices, answer_idx, explanation_ko, difficulty_label, rating, audio_url, image_url, accent, script, evidence, status, created_at) VALUES (` +
     [q(it.id), q(it.passage_id), q(it.section), q(it.part), q(it.stem), q(it.choices), it.answer_idx,
-     q(it.explanation_ko), it.difficulty_label, it.rating, q(it.audio_url), q(it.image_url), q(it.accent), q(it.script), q(it.status), q(now)].join(', ') + `) ` +
+     q(it.explanation_ko), it.difficulty_label, it.rating, q(it.audio_url), q(it.image_url), q(it.accent), q(it.script), q(it.evidence), q(it.status), q(now)].join(', ') + `) ` +
     // rating·times_answered·times_correct·created_at은 운영 데이터 — 재임포트 시 보존
-    `ON CONFLICT(id) DO UPDATE SET passage_id=excluded.passage_id, stem=excluded.stem, choices=excluded.choices, answer_idx=excluded.answer_idx, explanation_ko=excluded.explanation_ko, difficulty_label=excluded.difficulty_label, audio_url=excluded.audio_url, image_url=excluded.image_url, accent=excluded.accent, script=excluded.script, status=excluded.status;`
+    `ON CONFLICT(id) DO UPDATE SET passage_id=excluded.passage_id, stem=excluded.stem, choices=excluded.choices, answer_idx=excluded.answer_idx, explanation_ko=excluded.explanation_ko, difficulty_label=excluded.difficulty_label, audio_url=excluded.audio_url, image_url=excluded.image_url, accent=excluded.accent, script=excluded.script, evidence=excluded.evidence, status=excluded.status;`
   );
 }
 const qIds = questions.map((x) => q(x.id)).join(', ');

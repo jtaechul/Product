@@ -28,7 +28,8 @@
         "tags": [
           "LS.gist",
           "V.daily"
-        ]
+        ],
+        "evidence": "Do you have your library card?"
       },
       {
         "stem": "What is the woman's problem?",
@@ -44,7 +45,8 @@
         "tags": [
           "LS.detail",
           "V.daily"
-        ]
+        ],
+        "evidence": "Oh no, I left it at home."
       }
     ],
     "status": "active"
@@ -78,7 +80,8 @@
         "tags": [
           "LS.detail",
           "V.leisure"
-        ]
+        ],
+        "evidence": "I'm visiting my grandmother in Busan."
       },
       {
         "stem": "When will the man play in the soccer game?",
@@ -94,7 +97,8 @@
         "tags": [
           "LS.detail",
           "V.leisure"
-        ]
+        ],
+        "evidence": "Then can you play in the game on Sunday?"
       }
     ],
     "status": "active"
@@ -129,7 +133,8 @@
           "LS.gist",
           "V.shopping",
           "V.food"
-        ]
+        ],
+        "evidence": "How much are these apples?"
       },
       {
         "stem": "How many apples does the woman want?",
@@ -145,7 +150,8 @@
         "tags": [
           "LS.detail",
           "V.shopping"
-        ]
+        ],
+        "evidence": "I'll take six, please."
       }
     ],
     "status": "active"
@@ -179,7 +185,8 @@
         "tags": [
           "LS.gist",
           "V.daily"
-        ]
+        ],
+        "evidence": "Your dog is so cute!"
       },
       {
         "stem": "Why can't the woman give the dog a snack?",
@@ -195,7 +202,8 @@
         "tags": [
           "LS.detail",
           "V.daily"
-        ]
+        ],
+        "evidence": "he can only eat his special dog food"
       }
     ],
     "status": "active"
@@ -229,7 +237,8 @@
         "tags": [
           "LS.detail",
           "V.travel"
-        ]
+        ],
+        "evidence": "does this bus go to the science museum?"
       },
       {
         "stem": "What will the woman probably do next?",
@@ -245,7 +254,8 @@
         "tags": [
           "LS.infer",
           "V.travel"
-        ]
+        ],
+        "evidence": "you need the number seven bus"
       }
     ],
     "status": "active"
@@ -279,7 +289,8 @@
         "tags": [
           "LS.gist",
           "V.food"
-        ]
+        ],
+        "evidence": "Vegetable soup."
       },
       {
         "stem": "What will the woman probably do next?",
@@ -296,7 +307,8 @@
           "LS.infer",
           "V.food",
           "V.daily"
-        ]
+        ],
+        "evidence": "Please put the spoons and bowls on the table."
       }
     ],
     "status": "active"

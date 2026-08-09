@@ -18,11 +18,12 @@
           "be"
         ],
         "answer_idx": 0,
-        "explanation_ko": "주어 he(강아지 보리)는 하나니까 is를 써요. are는 여러 명일 때, am은 I(나)일 때만 써요.",
+        "explanation_ko": "he(보리)는 하나라서 is를 써요. are는 여럿일 때, am은 I(나)일 때만 써요.",
         "difficulty_label": 1,
         "tags": [
           "G.agreement"
-        ]
+        ],
+        "evidence": "His name is Bori, and he"
       },
       {
         "stem": "Choose the best answer for (2).",
@@ -37,7 +38,8 @@
         "difficulty_label": 2,
         "tags": [
           "G.prep"
-        ]
+        ],
+        "evidence": "the door"
       },
       {
         "stem": "Choose the best answer for (3).",
@@ -52,7 +54,8 @@
         "difficulty_label": 3,
         "tags": [
           "RS.context"
-        ]
+        ],
+        "evidence": "You can play with him too!"
       }
     ],
     "status": "active"
@@ -81,7 +84,8 @@
         "tags": [
           "G.prep",
           "V.school"
-        ]
+        ],
+        "evidence": "Friday, May 10th"
       },
       {
         "stem": "Choose the best answer for (2).",
@@ -97,7 +101,8 @@
         "tags": [
           "RS.vocab",
           "V.school"
-        ]
+        ],
+        "evidence": "your old books with your friends"
       },
       {
         "stem": "Choose the best answer for (3).",
@@ -112,7 +117,8 @@
         "difficulty_label": 2,
         "tags": [
           "RS.context"
-        ]
+        ],
+        "evidence": "The fair starts at nine in the morning."
       }
     ],
     "status": "active"
@@ -140,7 +146,8 @@
         "difficulty_label": 1,
         "tags": [
           "G.conj"
-        ]
+        ],
+        "evidence": "the weather was warm and sunny"
       },
       {
         "stem": "Choose the best answer for (2).",
@@ -151,11 +158,12 @@
           "more tall"
         ],
         "answer_idx": 1,
-        "explanation_ko": "뒤에 than(~보다)이 있으니 비교급 taller를 써요. tall처럼 짧은 단어는 -er을 붙이고, more tall이라고 하지 않아요.",
+        "explanation_ko": "than(~보다)이 있으니 둘을 견주는 taller를 써요. tall처럼 짧은 말은 more를 붙이지 않아요.",
         "difficulty_label": 3,
         "tags": [
           "G.compare"
-        ]
+        ],
+        "evidence": "than my brother's"
       },
       {
         "stem": "Choose the best answer for (3).",
@@ -166,11 +174,12 @@
           "It was the best day of this summer."
         ],
         "answer_idx": 3,
-        "explanation_ko": "즐거웠던 해변 일기를 마무리하는 문장이 필요해요. '이번 여름 최고의 날'이 다음 문장(또 가고 싶다)과 자연스럽게 이어져요. 아파서 집에 있었다는 말은 일기 내용과 반대예요.",
+        "explanation_ko": "즐거웠던 하루를 마무리하는 문장이 와야 해요. '최고의 날'이 다음 문장(또 가고 싶다)과 이어져요.",
         "difficulty_label": 3,
         "tags": [
           "RS.context"
-        ]
+        ],
+        "evidence": "I want to go to the beach again soon."
       }
     ],
     "status": "active"
@@ -199,7 +208,8 @@
         "tags": [
           "G.prep",
           "V.daily"
-        ]
+        ],
+        "evidence": "the table"
       },
       {
         "stem": "Choose the best answer for (2).",
@@ -215,7 +225,8 @@
         "tags": [
           "RS.vocab",
           "V.daily"
-        ]
+        ],
+        "evidence": "before you watch TV"
       },
       {
         "stem": "Choose the best answer for (3).",
@@ -226,12 +237,13 @@
           "Your soccer shoes are very old."
         ],
         "answer_idx": 2,
-        "explanation_ko": "빈칸 뒤의 She(그녀)는 여자 한 분을 가리켜요. 그래서 할머니가 오신다는 문장이 와야 해요. Dad(아빠)는 She가 아니라 He로 받으니까 답이 될 수 없어요.",
+        "explanation_ko": "빈칸 뒤 She는 여자 한 분을 가리켜요. 그래서 할머니 이야기가 와야 해요. 아빠는 He로 받아요.",
         "difficulty_label": 4,
         "tags": [
           "RS.context",
           "G.pronoun"
-        ]
+        ],
+        "evidence": "She will bring some fruit for you."
       }
     ],
     "status": "active"
@@ -255,12 +267,13 @@
           "climbing"
         ],
         "answer_idx": 1,
-        "explanation_ko": "Yesterday(어제)가 있으니 과거형 climbed를 써요. will climb은 앞으로 할 일을 말할 때 써요.",
+        "explanation_ko": "Yesterday(어제)는 지나간 일이라 climbed예요. will climb은 앞으로 할 일에 써요.",
         "difficulty_label": 3,
         "tags": [
           "G.tense",
           "V.travel"
-        ]
+        ],
+        "evidence": "Yesterday"
       },
       {
         "stem": "Choose the best answer for (2).",
@@ -271,12 +284,13 @@
           "deliciouser"
         ],
         "answer_idx": 2,
-        "explanation_ko": "뒤에 than이 있으니 비교급이 필요해요. delicious처럼 긴 단어는 -er을 붙이지 않고 앞에 more를 써서 more delicious라고 해요.",
+        "explanation_ko": "than이 있으니 둘을 견주는 말이 와요. delicious처럼 긴 말은 앞에 more를 붙여요.",
         "difficulty_label": 4,
         "tags": [
           "G.compare",
           "V.food"
-        ]
+        ],
+        "evidence": "than the food at home"
       },
       {
         "stem": "Choose the best answer for (3).",
@@ -292,7 +306,8 @@
         "tags": [
           "RS.context",
           "V.travel"
-        ]
+        ],
+        "evidence": "See you next week!"
       }
     ],
     "status": "active"
@@ -316,11 +331,12 @@
           "to grow"
         ],
         "answer_idx": 1,
-        "explanation_ko": "주어 Members(회원들)가 여러 명이니까 동사에 s를 붙이지 않아요. 그래서 grow가 맞아요.",
+        "explanation_ko": "Members(회원들)는 여러 명이라 s를 붙이지 않아요. 그래서 grow예요.",
         "difficulty_label": 2,
         "tags": [
           "G.agreement"
-        ]
+        ],
+        "evidence": "give them to people in town"
       },
       {
         "stem": "Choose the best answer for (2).",
@@ -335,7 +351,8 @@
         "difficulty_label": 4,
         "tags": [
           "G.modal"
-        ]
+        ],
+        "evidence": "because we have all the tools"
       },
       {
         "stem": "Choose the best answer for (3).",
@@ -346,11 +363,12 @@
           "You don't need any gardening experience, either."
         ],
         "answer_idx": 3,
-        "explanation_ko": "앞에서 '아무것도 안 가져와도 된다'고 했으니, 경험'도' 필요 없다는 문장이 이어져야 자연스러워요. either는 부정문 뒤에서 '~도 (아니에요)'라는 뜻이에요.",
+        "explanation_ko": "앞에서 '아무것도 안 가져와도 된다'고 했으니 '경험도 필요 없다'가 이어져요. either는 '~도 아니에요'라는 뜻이에요.",
         "difficulty_label": 5,
         "tags": [
           "RS.context"
-        ]
+        ],
+        "evidence": "Just come to Room 201 this Wednesday!"
       }
     ],
     "status": "active"

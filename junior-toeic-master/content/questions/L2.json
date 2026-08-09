@@ -19,7 +19,8 @@
     ],
     "accent": "US",
     "tts_script": "What color is your backpack?",
-    "status": "active"
+    "status": "active",
+    "evidence": "What color"
   },
   {
     "type": "single",
@@ -41,7 +42,8 @@
     ],
     "accent": "UK",
     "tts_script": "How old is your brother?",
-    "status": "active"
+    "status": "active",
+    "evidence": "How old"
   },
   {
     "type": "single",
@@ -63,7 +65,8 @@
     ],
     "accent": "AU",
     "tts_script": "Where is your umbrella?",
-    "status": "active"
+    "status": "active",
+    "evidence": "Where"
   },
   {
     "type": "single",
@@ -85,7 +88,8 @@
     ],
     "accent": "US",
     "tts_script": "Do you like bananas?",
-    "status": "active"
+    "status": "active",
+    "evidence": "Do you like"
   },
   {
     "type": "single",
@@ -107,7 +111,8 @@
     ],
     "accent": "US",
     "tts_script": "When does the art class begin?",
-    "status": "active"
+    "status": "active",
+    "evidence": "When"
   },
   {
     "type": "single",
@@ -129,7 +134,8 @@
     ],
     "accent": "UK",
     "tts_script": "Who made this delicious cake?",
-    "status": "active"
+    "status": "active",
+    "evidence": "Who made"
   },
   {
     "type": "single",
@@ -151,7 +157,8 @@
     ],
     "accent": "US",
     "tts_script": "How do you go to school?",
-    "status": "active"
+    "status": "active",
+    "evidence": "How do you go"
   },
   {
     "type": "single",
@@ -173,7 +180,8 @@
     ],
     "accent": "AU",
     "tts_script": "Whose sneakers are these?",
-    "status": "active"
+    "status": "active",
+    "evidence": "Whose"
   },
   {
     "type": "single",
@@ -195,7 +203,8 @@
     ],
     "accent": "US",
     "tts_script": "Would you like some more soup?",
-    "status": "active"
+    "status": "active",
+    "evidence": "Would you like"
   },
   {
     "type": "single",
@@ -217,7 +226,8 @@
     ],
     "accent": "UK",
     "tts_script": "Where can I buy stamps?",
-    "status": "active"
+    "status": "active",
+    "evidence": "Where can I buy"
   },
   {
     "type": "single",
@@ -239,7 +249,8 @@
     ],
     "accent": "US",
     "tts_script": "What time do you usually get up?",
-    "status": "active"
+    "status": "active",
+    "evidence": "What time"
   },
   {
     "type": "single",
@@ -261,7 +272,8 @@
     ],
     "accent": "AU",
     "tts_script": "Is the library open on Sundays?",
-    "status": "active"
+    "status": "active",
+    "evidence": "Is the library open"
   },
   {
     "type": "single",
@@ -283,7 +295,8 @@
     ],
     "accent": "US",
     "tts_script": "Why were you late this morning?",
-    "status": "active"
+    "status": "active",
+    "evidence": "Why"
   },
   {
     "type": "single",
@@ -297,7 +310,7 @@
       "About five of them."
     ],
     "answer_idx": 0,
-    "explanation_ko": "'How much'는 값을 묻는 말이라 한 봉지에 2달러라는 답이 정답이에요. 'About five of them.'은 개수라서 'How many'에 어울리는 함정이에요.",
+    "explanation_ko": "'How much'는 값을 묻는 말이라 '한 봉지에 2달러'가 정답이에요. 'About five'는 개수라서 함정이에요.",
     "difficulty_label": 3,
     "tags": [
       "LS.qr",
@@ -305,7 +318,8 @@
     ],
     "accent": "UK",
     "tts_script": "How much are these oranges?",
-    "status": "active"
+    "status": "active",
+    "evidence": "How much"
   },
   {
     "type": "single",
@@ -319,7 +333,7 @@
       "From platform three."
     ],
     "answer_idx": 0,
-    "explanation_ko": "'How long'은 걸리는 시간을 묻는 말이라 두 시간쯤이라는 답이 정답이에요. 'Every thirty minutes.'는 얼마나 자주 오는지라 헷갈리기 쉬워요.",
+    "explanation_ko": "'How long'은 걸리는 시간을 묻는 말이에요. 'Every thirty minutes'는 얼마나 자주 오는지라서 달라요.",
     "difficulty_label": 3,
     "tags": [
       "LS.qr",
@@ -327,7 +341,8 @@
     ],
     "accent": "AU",
     "tts_script": "How long does the train ride take?",
-    "status": "active"
+    "status": "active",
+    "evidence": "How long"
   },
   {
     "type": "single",
@@ -349,7 +364,8 @@
     ],
     "accent": "US",
     "tts_script": "Could you close the window, please?",
-    "status": "active"
+    "status": "active",
+    "evidence": "Could you"
   },
   {
     "type": "single",
@@ -371,7 +387,8 @@
     ],
     "accent": "US",
     "tts_script": "This math homework is really difficult.",
-    "status": "active"
+    "status": "active",
+    "evidence": "really difficult"
   },
   {
     "type": "single",
@@ -393,7 +410,8 @@
     ],
     "accent": "UK",
     "tts_script": "Which do you like better, spring or fall?",
-    "status": "active"
+    "status": "active",
+    "evidence": "Which do you like better"
   },
   {
     "type": "single",
@@ -415,7 +433,8 @@
     ],
     "accent": "US",
     "tts_script": "Who's going to water the plants this week?",
-    "status": "active"
+    "status": "active",
+    "evidence": "Who's going to"
   },
   {
     "type": "single",
@@ -429,7 +448,7 @@
       "I watched a movie."
     ],
     "answer_idx": 1,
-    "explanation_ko": "안경을 봤냐고 물었으니 식탁 위에 있다고 알려 주는 답이 자연스러워요. 'Two glasses of water'는 glasses(유리컵)라는 같은 단어를 쓴 함정이에요.",
+    "explanation_ko": "안경을 봤냐고 물었으니 '식탁 위에 있어'가 자연스러워요. 'Two glasses of water'는 같은 말만 따라 한 함정이에요.",
     "difficulty_label": 3,
     "tags": [
       "LS.qr",
@@ -437,7 +456,8 @@
     ],
     "accent": "AU",
     "tts_script": "Have you seen my glasses anywhere?",
-    "status": "active"
+    "status": "active",
+    "evidence": "Have you seen my glasses"
   },
   {
     "type": "single",
@@ -459,7 +479,8 @@
     ],
     "accent": "US",
     "tts_script": "The school bus leaves in five minutes.",
-    "status": "active"
+    "status": "active",
+    "evidence": "in five minutes"
   },
   {
     "type": "single",
@@ -473,7 +494,7 @@
       "No, I didn't practice."
     ],
     "answer_idx": 0,
-    "explanation_ko": "'Why don't we...?'는 이유를 묻는 게 아니라 같이 하자는 제안이에요. 그래서 좋다고 받아들이는 답이 정답이고, 'Because I was hungry.'는 이유를 묻는 줄 착각한 함정이에요.",
+    "explanation_ko": "'Why don't we~?'는 이유를 묻는 게 아니라 '같이 하자'는 제안이에요. 'Because~'는 이유로 착각하게 만드는 함정이에요.",
     "difficulty_label": 4,
     "tags": [
       "LS.qr",
@@ -481,7 +502,8 @@
     ],
     "accent": "UK",
     "tts_script": "Why don't we practice after lunch instead?",
-    "status": "active"
+    "status": "active",
+    "evidence": "Why don't we"
   },
   {
     "type": "single",
@@ -495,7 +517,7 @@
       "Just twice a day."
     ],
     "answer_idx": 2,
-    "explanation_ko": "'How often'은 얼마나 자주인지 묻는 말이라 하루 두 번이라는 답이 정답이에요. 'About forty minutes.'는 걸리는 시간이라 헷갈리기 쉬운 오답이에요.",
+    "explanation_ko": "'How often'은 얼마나 자주인지 묻는 말이에요. 'About forty minutes'는 걸리는 시간이라 달라요.",
     "difficulty_label": 4,
     "tags": [
       "LS.qr",
@@ -503,7 +525,8 @@
     ],
     "accent": "AU",
     "tts_script": "How often does the ferry run in winter?",
-    "status": "active"
+    "status": "active",
+    "evidence": "How often"
   },
   {
     "type": "single",
@@ -517,7 +540,7 @@
       "I'll pay by card."
     ],
     "answer_idx": 1,
-    "explanation_ko": "'Didn't you...?'라고 물어도 시키지 않았으면 No라고 답해요. 그래서 샐러드를 시켰다는 답이 정답이고, 'Yes, tomatoes are red.'는 토마토라는 말만 따라 한 함정이에요.",
+    "explanation_ko": "시키지 않았으면 Didn't you~?에도 No라고 답해요. 'Yes, tomatoes are red'는 토마토라는 말만 따라 한 함정이에요.",
     "difficulty_label": 5,
     "tags": [
       "LS.qr",
@@ -525,6 +548,7 @@
     ],
     "accent": "US",
     "tts_script": "Didn't you order the tomato pasta?",
-    "status": "active"
+    "status": "active",
+    "evidence": "Didn't you order"
   }
 ]

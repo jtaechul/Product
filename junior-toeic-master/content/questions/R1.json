@@ -19,7 +19,8 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "my sister"
   },
   {
     "type": "single",
@@ -34,7 +35,7 @@
       "of"
     ],
     "answer_idx": 0,
-    "explanation_ko": "정확한 시각이나 noon(정오) 앞에는 at을 써요. on은 요일 앞에, in은 달이나 계절 앞에 써요.",
+    "explanation_ko": "시각(noon은 낮 12시) 앞에는 at을 써요. 요일 앞엔 on, 달이나 계절 앞엔 in이에요.",
     "difficulty_label": 1,
     "tags": [
       "G.prep",
@@ -42,7 +43,8 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "noon"
   },
   {
     "type": "single",
@@ -57,14 +59,15 @@
       "runs"
     ],
     "answer_idx": 3,
-    "explanation_ko": "주어 My dog는 한 마리(3인칭 단수)라서 동사에 s를 붙인 runs를 써요. run은 주어가 여러 명일 때 써요.",
+    "explanation_ko": "My dog는 한 마리라서 뒤에 오는 말에 s를 붙여 runs라고 해요. run은 둘 이상일 때 써요.",
     "difficulty_label": 1,
     "tags": [
       "G.agreement"
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "My dog"
   },
   {
     "type": "single",
@@ -79,7 +82,7 @@
       "cleaning"
     ],
     "answer_idx": 2,
-    "explanation_ko": "Yesterday(어제)가 있으니 과거형 cleaned를 써요. cleans는 지금 하는 일에 쓰는 현재형이라 안 돼요.",
+    "explanation_ko": "Yesterday(어제)는 지나간 일이라 cleaned를 써요. cleans는 지금 하는 일에 쓰는 말이에요.",
     "difficulty_label": 2,
     "tags": [
       "G.tense",
@@ -87,7 +90,8 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "Yesterday"
   },
   {
     "type": "single",
@@ -102,14 +106,15 @@
       "need"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'헬멧을 써야 해요'라고 충고할 때는 should를 쓰고, 뒤에 동사원형 wear가 바로 와요. have, want, need는 뒤에 to가 있어야 해요.",
+    "explanation_ko": "'~하는 게 좋아'라고 말할 땐 should를 쓰고 바로 뒤에 wear가 와요. have·want·need는 뒤에 to가 붙어요.",
     "difficulty_label": 2,
     "tags": [
       "G.modal"
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "wear a helmet"
   },
   {
     "type": "single",
@@ -132,7 +137,8 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "my brother likes bananas"
   },
   {
     "type": "single",
@@ -154,7 +160,8 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "the bank and the park"
   },
   {
     "type": "single",
@@ -169,14 +176,15 @@
       "beautify"
     ],
     "answer_idx": 2,
-    "explanation_ko": "명사 voice(목소리)를 꾸며 주는 자리니까 형용사 beautiful을 써요. beauty는 명사, beautifully는 부사라서 안 돼요.",
+    "explanation_ko": "voice(목소리)를 꾸며 주는 자리라 beautiful을 써요. beauty는 아름다움, beautifully는 아름답게라는 뜻이에요.",
     "difficulty_label": 2,
     "tags": [
       "G.pos"
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "voice"
   },
   {
     "type": "single",
@@ -191,14 +199,15 @@
       "most heavy"
     ],
     "answer_idx": 1,
-    "explanation_ko": "뒤에 than(~보다)이 있으니 비교급 heavier를 써요. heavy처럼 짧은 단어는 more를 붙이지 않고 -er을 붙여요.",
+    "explanation_ko": "than(~보다)이 있으면 둘을 견주는 말이 와요. heavy처럼 짧은 말은 more 없이 -er만 붙여 heavier예요.",
     "difficulty_label": 3,
     "tags": [
       "G.compare"
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "than"
   },
   {
     "type": "single",
@@ -213,7 +222,7 @@
       "borrowed"
     ],
     "answer_idx": 2,
-    "explanation_ko": "'책을 빌리기 위해' 도서관에 갔다는 목적을 나타내니까 to borrow를 써요. to 뒤에는 동사원형이 와요.",
+    "explanation_ko": "'책을 빌리려고' 갔다는 뜻이라 to borrow를 써요. to 뒤에는 말이 원래 모양 그대로 와요.",
     "difficulty_label": 3,
     "tags": [
       "G.toinf",
@@ -221,7 +230,8 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "went to the library"
   },
   {
     "type": "single",
@@ -236,14 +246,15 @@
       "are swimming"
     ],
     "answer_idx": 3,
-    "explanation_ko": "Look!(봐!)과 now(지금)가 있으니 지금 하고 있는 중 — 현재진행형 are swimming을 써요. swimming만 쓰면 be동사가 없어서 문장이 안 돼요.",
+    "explanation_ko": "Look!과 now가 있으니 지금 하고 있는 중이에요. 그래서 are swimming이에요. swimming만 있으면 문장이 안 돼요.",
     "difficulty_label": 3,
     "tags": [
       "G.tense"
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "now"
   },
   {
     "type": "single",
@@ -258,14 +269,15 @@
       "I"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'내 것(내 우산)'을 빌려줬다는 뜻이니까 mine을 써요. my는 뒤에 명사가 꼭 있어야 해서 혼자 쓸 수 없어요.",
+    "explanation_ko": "'내 것'이라는 뜻이라 mine을 써요. my는 뒤에 물건 이름이 꼭 따라와야 해서 혼자 못 써요.",
     "difficulty_label": 3,
     "tags": [
       "G.pronoun"
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "Jake lost his umbrella"
   },
   {
     "type": "single",
@@ -280,7 +292,7 @@
       "playing"
     ],
     "answer_idx": 1,
-    "explanation_ko": "주어가 Tom and his friends로 여러 명이니까 동사에 s를 붙이지 않아요. 그래서 play가 맞아요.",
+    "explanation_ko": "Tom and his friends는 여러 명이라 s를 붙이지 않아요. 그래서 play예요.",
     "difficulty_label": 3,
     "tags": [
       "G.agreement",
@@ -288,7 +300,8 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "Tom and his friends"
   },
   {
     "type": "single",
@@ -310,7 +323,8 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "it was raining"
   },
   {
     "type": "single",
@@ -325,7 +339,7 @@
       "builds"
     ],
     "answer_idx": 2,
-    "explanation_ko": "다리는 스스로 짓는 게 아니라 '지어진' 것이니까 수동태 was built를 써요. 100년 전 일이라서 과거형이에요.",
+    "explanation_ko": "다리는 스스로 짓는 게 아니라 '지어진' 거라 was built를 써요. 100년 전 일이라 지나간 말이에요.",
     "difficulty_label": 4,
     "tags": [
       "G.passive",
@@ -333,7 +347,8 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "over one hundred years ago"
   },
   {
     "type": "single",
@@ -348,7 +363,7 @@
       "climbing"
     ],
     "answer_idx": 3,
-    "explanation_ko": "enjoy 뒤에는 동사에 -ing를 붙인 climbing이 와요. to climb은 enjoy 뒤에 쓸 수 없어요.",
+    "explanation_ko": "enjoy 뒤에는 -ing를 붙인 climbing이 와요. to climb은 enjoy 뒤에 쓸 수 없어요.",
     "difficulty_label": 4,
     "tags": [
       "G.toinf",
@@ -356,7 +371,8 @@
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "enjoys"
   },
   {
     "type": "single",
@@ -371,14 +387,15 @@
       "most hot"
     ],
     "answer_idx": 2,
-    "explanation_ko": "'일 년 중에서 가장 더운 날'이니까 최상급 the hottest를 써요. 최상급 앞에는 the를 붙이는 것도 잊지 마세요.",
+    "explanation_ko": "'가장 더운 날'이니까 the hottest를 써요. '가장 ~한'이라고 할 땐 앞에 the를 꼭 붙여요.",
     "difficulty_label": 4,
     "tags": [
       "G.compare"
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "of the year"
   },
   {
     "type": "single",
@@ -393,13 +410,14 @@
       "lived"
     ],
     "answer_idx": 1,
-    "explanation_ko": "since(~부터 지금까지)가 있으니 현재완료 has lived를 써요. 일곱 살 때부터 지금까지 계속 살고 있다는 뜻이에요. lived만 쓰면 그냥 지나간 과거가 돼요.",
+    "explanation_ko": "since는 '그때부터 지금까지'예요. 일곱 살 때부터 계속 살고 있으니 has lived를 써요.",
     "difficulty_label": 5,
     "tags": [
       "G.tense"
     ],
     "accent": null,
     "tts_script": null,
-    "status": "active"
+    "status": "active",
+    "evidence": "since she was seven years old"
   }
 ]

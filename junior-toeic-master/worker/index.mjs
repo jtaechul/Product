@@ -25,6 +25,20 @@ async function gradeDiagAnswers(db, user, sessionId, answers) {
   return graded;
 }
 
+// 채점 뒤에만 내려주는 "정답 근거" — 근거 부분(evidence)과 그것이 들어 있는 원문(text).
+// 화면은 text 안에서 evidence 자리를 형광펜으로 칠한다. 글 해설보다 먼저 눈에 들어온다.
+// 채점 전에는 절대 내려가지 않는다 (스크립트가 곧 답이 되는 LC 문항 보호).
+async function evidenceOf(db, q) {
+  if (!q.evidence) return { evidence: null, evidence_text: null };
+  let text = q.script || q.stem || null;
+  if (!text?.includes(q.evidence) && q.passage_id) {
+    const p = await db.prepare('SELECT content FROM passages WHERE id = ?1').bind(q.passage_id).first();
+    text = p?.content ?? text;
+  }
+  if (!text?.includes(q.evidence)) return { evidence: null, evidence_text: null };
+  return { evidence: q.evidence, evidence_text: text };
+}
+
 const groupOf = async (db, user) => {
   const size = (await db.prepare('SELECT set_size FROM classes WHERE id = ?1').bind(user.class_id).first())?.set_size ?? 12;
   return size <= 12 ? 'junior' : 'basic';
@@ -248,7 +262,7 @@ app.post('/api/answers', requireAuth, async (c) => {
     return c.json({ error: 'question_id(문자열), chosen_idx(정수)가 필요합니다' }, 400);
   }
   const q = await c.env.DB.prepare(
-    'SELECT id, answer_idx, explanation_ko, rating FROM questions WHERE id = ?1'
+    'SELECT id, passage_id, stem, script, evidence, answer_idx, explanation_ko, rating FROM questions WHERE id = ?1'
   ).bind(question_id).first();
   if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
 
@@ -267,7 +281,10 @@ app.post('/api/answers', requireAuth, async (c) => {
   const { correct, graduated } = await recordAnswer(c.env.DB, {
     user: u, question: q, chosenIdx: chosen_idx, timeMs: time_ms | 0, sessionId: session.id,
   });
-  return c.json({ correct, graduated, answer_idx: q.answer_idx, explanation_ko: q.explanation_ko });
+  return c.json({
+    correct, graduated, answer_idx: q.answer_idx, explanation_ko: q.explanation_ko,
+    ...(await evidenceOf(c.env.DB, q)),
+  });
 });
 
 app.get('/api/health', async (c) => {
@@ -430,7 +447,7 @@ app.post('/api/check', async (c) => {
     return c.json({ error: 'question_id(문자열), chosen_idx(정수)가 필요합니다' }, 400);
   }
   const q = await c.env.DB.prepare(
-    'SELECT id, answer_idx, explanation_ko FROM questions WHERE id = ?1'
+    'SELECT id, passage_id, stem, script, evidence, answer_idx, explanation_ko FROM questions WHERE id = ?1'
   ).bind(question_id).first();
   if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
 
@@ -439,7 +456,10 @@ app.post('/api/check', async (c) => {
     'UPDATE questions SET times_answered = times_answered + 1, times_correct = times_correct + ?1 WHERE id = ?2'
   ).bind(correct ? 1 : 0, q.id).run();
 
-  return c.json({ correct, answer_idx: q.answer_idx, explanation_ko: q.explanation_ko });
+  return c.json({
+    correct, answer_idx: q.answer_idx, explanation_ko: q.explanation_ko,
+    ...(await evidenceOf(c.env.DB, q)),
+  });
 });
 
 app.notFound((c) => {
