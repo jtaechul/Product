@@ -26,7 +26,7 @@
       "A boy riding a bicycle on a park path",
       "A boy sitting on a park bench eating ice cream"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "riding a bicycle",
     "why_not": {
       "0": "연을 날리는 사진이에요",
@@ -118,7 +118,7 @@
       "A cat drinking milk from a bowl on the floor",
       "A cat playing with a ball of yarn on a chair"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "sleeping on the sofa",
     "why_not": {
       "1": "자는 건 고양이가 아니라 강아지예요",
@@ -210,7 +210,7 @@
       "A woman carrying a basket of bread through a market",
       "A woman handing money to a fruit seller for apples at a market stall"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "buying apples at the market",
     "why_not": {
       "0": "꽃 사진이에요. 사과가 아니에요",
@@ -294,7 +294,7 @@
       "A child collecting seashells in a bucket on the beach",
       "Two children playing with a beach ball on the sand"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "building a sandcastle",
     "why_not": {
       "0": "바다에서 헤엄치는 사진이에요",
@@ -387,7 +387,7 @@
       "A man hammering nails into a wooden fence",
       "A man watering plants with a hose in a backyard"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "painting a wooden fence",
     "why_not": {
       "1": "잔디를 깎는 사진이에요",
@@ -480,7 +480,7 @@
       "A girl washing a glass at the kitchen sink",
       "A girl cutting an orange on a kitchen cutting board"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "pouring juice into a glass",
     "why_not": {
       "0": "이미 마시고 있는 사진이에요",
@@ -573,7 +573,7 @@
       "A boy sailing a toy boat on a pond",
       "A boy throwing pieces of bread to ducks at a pond"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "feeding bread to the ducks",
     "why_not": {
       "0": "사진을 찍는 사진이에요",
@@ -662,7 +662,7 @@
       "A woman hanging wet clothes on a clothesline in a garden",
       "A woman loading clothes into a washing machine"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "hanging wet clothes on a line",
     "why_not": {
       "0": "마른 빨래를 갠 사진이에요",
