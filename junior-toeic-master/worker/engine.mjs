@@ -13,6 +13,41 @@ export const kFor = (attempts) => (attempts < 20 ? 32 : attempts < 50 ? 24 : 16)
 export const kstDate = (ms = Date.now(), plusDays = 0) =>
   new Date(ms + 9 * 3600_000 + plusDays * 86400_000).toISOString().slice(0, 10);
 
+// ── 진단 테스트 (engine.md 4절) ──
+// 2단계 적응형: 1단계 섹션 정답률로 2단계 난이도를 정한다. 진단 중 Elo 갱신 없음,
+// 종료 시 파트별 정확도 → 대역 → 초기 레이팅으로 결정적 매핑(강사에게 설명 가능).
+export const DIAG = {
+  // 파트 배분 [1단계, 2단계]
+  basic: { L1: [1, 1], L2: [2, 2], L3: [2, 2], L4: [2, 2], R1: [2, 2], R2: [1, 1], R3: [2, 2] },
+  junior: { L1: [1, 1], L2: [1, 2], L3: [1, 1], L4: [1, 1], R1: [1, 2], R2: [1, 0], R3: [2, 1] },
+  stage1Label: { basic: 3, junior: 2 },
+  // 1단계 섹션 정답률 → 2단계 라벨
+  stage2Label: (group, acc) => (group === 'basic'
+    ? (acc >= 2 / 3 ? 4 : acc <= 1 / 3 ? 2 : 3)
+    : (acc >= 2 / 3 ? 3 : acc <= 1 / 3 ? 1 : 2)),
+  bands: [[85, 5, 1450], [70, 4, 1325], [55, 3, 1200], [40, 2, 1075], [0, 1, 950]],
+};
+export const diagBand = (accPct) => DIAG.bands.find(([min]) => accPct >= min);
+
+// 파트·라벨 조건으로 무작위 선정. 후보 부족 시 라벨 무시 → 같은 섹션으로 완화(빈 배분 방지).
+export async function pickDiagQuestions(db, part, label, n, excludeIds) {
+  if (n < 1) return [];
+  const out = [];
+  const tryPick = async (where, binds) => {
+    const excl = [...excludeIds, ...out];
+    const marks = excl.map((_, i) => `?${i + binds.length + 1}`).join(',');
+    const { results } = await db.prepare(
+      `SELECT id FROM questions WHERE status = 'active' AND ${where}
+       ${excl.length ? `AND id NOT IN (${marks})` : ''} ORDER BY RANDOM() LIMIT ${n - out.length}`
+    ).bind(...binds, ...excl).all();
+    out.push(...results.map((r) => r.id));
+  };
+  await tryPick('part = ?1 AND difficulty_label = ?2', [part, label]);
+  if (out.length < n) await tryPick('part = ?1', [part]);
+  if (out.length < n) await tryPick('section = ?1', [part.startsWith('L') ? 'LC' : 'RC']);
+  return out;
+}
+
 // ── 오늘의 학습 세트 생성 (engine.md 5절) ──
 // 복습(SRS due) + 약점(p 0.55~0.75) + 신규(경험 적은 태그) + 유지(강점 p≥0.8).
 // 문제 은행이 120문항 규모라 후보 전체를 메모리에 놓고 JS로 조합한다.

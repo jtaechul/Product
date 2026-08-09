@@ -3,7 +3,32 @@
 // 채점 엔드포인트만 정답에 접근한다. (docs/engine.md · PRD 6절)
 import { Hono } from 'hono';
 import { verifyPin, makeToken, requireAuth, verifyToken } from './auth.mjs';
-import { recordAnswer, composeDailySet, kstDate } from './engine.mjs';
+import { recordAnswer, composeDailySet, kstDate, DIAG, diagBand, pickDiagQuestions } from './engine.mjs';
+
+// 진단 답안 일괄 채점·기록 (Elo·SRS 미반영 — engine.md 4절)
+async function gradeDiagAnswers(db, user, sessionId, answers) {
+  const now = new Date().toISOString();
+  const stmts = [];
+  const graded = [];
+  for (const a of answers) {
+    const q = await db.prepare('SELECT id, part, section, answer_idx FROM questions WHERE id = ?1')
+      .bind(a.question_id).first();
+    if (!q) continue;
+    const correct = a.chosen_idx === q.answer_idx ? 1 : 0;
+    graded.push({ part: q.part, section: q.section, correct });
+    stmts.push(db.prepare(
+      `INSERT INTO answers (id, session_id, user_id, question_id, chosen_idx, is_correct, time_ms, answered_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`
+    ).bind(crypto.randomUUID(), sessionId, user.id, q.id, a.chosen_idx | 0, correct, a.time_ms | 0, now));
+  }
+  if (stmts.length) await db.batch(stmts);
+  return graded;
+}
+
+const groupOf = async (db, user) => {
+  const size = (await db.prepare('SELECT set_size FROM classes WHERE id = ?1').bind(user.class_id).first())?.set_size ?? 12;
+  return size <= 12 ? 'junior' : 'basic';
+};
 
 // 문항 id 목록 → 학생용 필드(정답·해설·스크립트 미포함) + 지문. 시험 순서(파트 오름차순) 정렬.
 async function hydrate(db, ids) {
@@ -60,10 +85,112 @@ app.get('/api/me', requireAuth, async (c) => {
     `SELECT COUNT(*) AS n FROM review_queue
       WHERE user_id = ?1 AND graduated_at IS NULL AND due_at <= ?2`
   ).bind(u.id, kstDate()).first();
+  const diag = await c.env.DB.prepare(
+    `SELECT summary FROM sessions WHERE user_id = ?1 AND type = 'diagnostic' AND finished_at IS NOT NULL LIMIT 1`
+  ).bind(u.id).first();
   return c.json({
     user: { id: u.id, login_id: u.login_id, display_name: u.display_name, role: u.role },
     answered: stats.answered, correct: stats.correct, review_due: due.n,
+    diagnosed: !!diag, diag_report: diag ? JSON.parse(diag.summary) : null,
   });
+});
+
+// ── 진단 테스트 (2단계 적응형) ──
+app.post('/api/diagnostic/start', requireAuth, async (c) => {
+  const u = c.get('user');
+  const done = await c.env.DB.prepare(
+    `SELECT id FROM sessions WHERE user_id = ?1 AND type = 'diagnostic' AND finished_at IS NOT NULL LIMIT 1`
+  ).bind(u.id).first();
+  if (done) return c.json({ done: true });
+  const group = await groupOf(c.env.DB, u);
+  const label = DIAG.stage1Label[group];
+  const ids = [];
+  for (const [part, [n1]] of Object.entries(DIAG[group])) {
+    ids.push(...await pickDiagQuestions(c.env.DB, part, label, n1, ids));
+  }
+  const sessionId = crypto.randomUUID();
+  await c.env.DB.prepare(
+    `INSERT INTO sessions (id, user_id, type, question_ids, started_at) VALUES (?1, ?2, 'diagnostic', ?3, ?4)`
+  ).bind(sessionId, u.id, JSON.stringify(ids), new Date().toISOString()).run();
+  const { questions, passages } = await hydrate(c.env.DB, ids);
+  return c.json({ session_id: sessionId, stage: 1, group, count: questions.length, questions, passages });
+});
+
+// 1단계 답안 제출 → 섹션 정답률로 2단계 난이도 결정, 2단계 문항 반환
+app.post('/api/diagnostic/stage2', requireAuth, async (c) => {
+  const u = c.get('user');
+  const { session_id, answers } = await c.req.json().catch(() => ({}));
+  const sess = await c.env.DB.prepare(
+    `SELECT id, question_ids FROM sessions WHERE id = ?1 AND user_id = ?2 AND type = 'diagnostic' AND finished_at IS NULL`
+  ).bind(String(session_id), u.id).first();
+  if (!sess || !Array.isArray(answers)) return c.json({ error: '진단 세션이 없습니다' }, 400);
+  const graded = await gradeDiagAnswers(c.env.DB, u, sess.id, answers);
+  const accOf = (sec) => {
+    const rows = graded.filter((g) => g.section === sec);
+    return rows.length ? rows.reduce((n, g) => n + g.correct, 0) / rows.length : 0.5;
+  };
+  const group = await groupOf(c.env.DB, u);
+  const labels = { LC: DIAG.stage2Label(group, accOf('LC')), RC: DIAG.stage2Label(group, accOf('RC')) };
+  const prev = JSON.parse(sess.question_ids);
+  const ids = [];
+  for (const [part, [, n2]] of Object.entries(DIAG[group])) {
+    const label = labels[part.startsWith('L') ? 'LC' : 'RC'];
+    ids.push(...await pickDiagQuestions(c.env.DB, part, label, n2, [...prev, ...ids]));
+  }
+  await c.env.DB.prepare('UPDATE sessions SET question_ids = ?1 WHERE id = ?2')
+    .bind(JSON.stringify([...prev, ...ids]), sess.id).run();
+  const { questions, passages } = await hydrate(c.env.DB, ids);
+  return c.json({ session_id: sess.id, stage: 2, count: questions.length, questions, passages });
+});
+
+// 2단계 답안 제출 → 파트별 대역 → 태그 초기 레이팅 기록, 결과 반환
+app.post('/api/diagnostic/finish', requireAuth, async (c) => {
+  const u = c.get('user');
+  const { session_id, answers } = await c.req.json().catch(() => ({}));
+  const sess = await c.env.DB.prepare(
+    `SELECT id FROM sessions WHERE id = ?1 AND user_id = ?2 AND type = 'diagnostic' AND finished_at IS NULL`
+  ).bind(String(session_id), u.id).first();
+  if (!sess || !Array.isArray(answers)) return c.json({ error: '진단 세션이 없습니다' }, 400);
+  await gradeDiagAnswers(c.env.DB, u, sess.id, answers);
+
+  // 세션 전체(1+2단계) 답안으로 파트별 정확도 산출
+  const { results: all } = await c.env.DB.prepare(
+    `SELECT q.part, a.is_correct FROM answers a JOIN questions q ON q.id = a.question_id
+      WHERE a.session_id = ?1`
+  ).bind(sess.id).all();
+  const byPart = {};
+  for (const r of all) {
+    const p = (byPart[r.part] ||= { n: 0, c: 0 });
+    p.n += 1; p.c += r.is_correct;
+  }
+  const now = new Date().toISOString();
+  const stmts = [];
+  const report = [];
+  for (const [part, { n, c: cor }] of Object.entries(byPart)) {
+    const accPct = Math.round((cor / n) * 100);
+    const [, grade, rating] = diagBand(accPct);
+    report.push({ part, grade, acc: accPct, count: n });
+    // 그 파트에서 실제 풀린 문항들의 태그를 초기화 대상으로 삼는다
+    // (concept_tags.part는 어휘 등 공용 태그에서 NULL이라 직접 매핑이 샌다)
+    const { results: tags } = await c.env.DB.prepare(
+      `SELECT DISTINCT qt.tag_id AS id FROM answers a
+         JOIN question_tags qt ON qt.question_id = a.question_id
+         JOIN questions q ON q.id = a.question_id
+        WHERE a.session_id = ?1 AND q.part = ?2`
+    ).bind(sess.id, part).all();
+    for (const { id: tagId } of tags) {
+      stmts.push(c.env.DB.prepare(
+        `INSERT INTO user_tag_skills (user_id, tag_id, rating, attempts, correct, last_practiced_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+         ON CONFLICT(user_id, tag_id) DO UPDATE SET rating = ?3, attempts = ?4, correct = ?5, last_practiced_at = ?6`
+      ).bind(u.id, tagId, rating, n, cor, now));
+    }
+  }
+  report.sort((a, b) => a.part.localeCompare(b.part));
+  stmts.push(c.env.DB.prepare('UPDATE sessions SET finished_at = ?1, summary = ?2 WHERE id = ?3')
+    .bind(now, JSON.stringify(report), sess.id));
+  await c.env.DB.batch(stmts);
+  return c.json({ report, group: await groupOf(c.env.DB, u) });
 });
 
 // 로그인 학생의 오답 복습 목록 — 오늘까지 도래한 SRS 큐 (오래된 순)

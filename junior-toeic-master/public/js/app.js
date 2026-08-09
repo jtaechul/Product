@@ -193,8 +193,9 @@ async function showHome() {
     const set = await ensureTodaySet();
     // 다시 볼 문제 수: 로그인은 서버 SRS 큐(오늘 도래분), 게스트는 이 기기 기록
     let reviewN = store.wrong.length;
+    let me = null;
     if (auth) {
-      try { reviewN = (await api('/api/me', { headers: authHeaders() })).review_due; } catch { /* 무시 */ }
+      try { me = await api('/api/me', { headers: authHeaders() }); reviewN = me.review_due; } catch { /* 무시 */ }
     }
     const total = set.questions.length;
     const doneN = Math.min(store.setIdx, total);
@@ -238,6 +239,18 @@ async function showHome() {
         </div>
       </div>
 
+      ${auth && me && !me.diagnosed ? `
+      <button class="card row" data-diag>
+        <span class="row-ico" style="background:var(--primary-soft);color:var(--primary)">
+          <svg viewBox="0 0 16 16"><path d="M2 13.5h12M4.5 13.5V7M8 13.5V3.5M11.5 13.5V9.5"/></svg>
+        </span>
+        <span class="row-body">
+          <span class="row-t">첫 실력 진단 받기</span>
+          <span class="row-s">약 10~15분 · 끝나면 매일 학습이 내 실력에 딱 맞춰져요</span>
+        </span>
+        <svg class="row-arrow" viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
+      </button>` : ''}
+
       <div class="today">
         <p class="today-label">오늘의 학습</p>
         <div class="today-main">
@@ -279,6 +292,7 @@ async function showHome() {
       </button>`;
 
     view.querySelector('[data-login]')?.addEventListener('click', showLogin);
+    view.querySelector('[data-diag]')?.addEventListener('click', showDiagnostic);
     view.querySelector('[data-start]').addEventListener('click', () => {
       if (left === 0) { store.setIdx = 0; save(); }
       startSession(set.questions, set.passages, '오늘의 학습', { trackToday: true });
@@ -328,6 +342,73 @@ function showLogin() {
   };
   view.querySelector('[data-submit]').addEventListener('click', submit);
   view.querySelector('[data-pin]').addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+}
+
+// ---------- 진단 테스트 ----------
+async function showDiagnostic() {
+  tabbarVisible(false);
+  view.innerHTML = '<p class="loading">진단을 준비하고 있어요...</p>';
+  try {
+    const s1 = await api('/api/diagnostic/start', { method: 'POST', headers: authHeaders() });
+    if (s1.done) { setTab('home'); return showHome(); }
+    runDiagStage(s1);
+  } catch (e) { renderError(e.message); }
+}
+
+function runDiagStage(stage) {
+  Object.assign(session, {
+    questions: stage.questions, passages: stage.passages, idx: 0,
+    title: '실력 진단', correct: 0, trackToday: false,
+    diag: { session_id: stage.session_id, stage: stage.stage, answers: [] },
+  });
+  tabbarVisible(false);
+  renderQuestion();
+}
+
+async function endDiagStage() {
+  const d = session.diag;
+  session.diag = null;
+  view.innerHTML = '<p class="loading">채점하고 있어요...</p>';
+  const body = (o) => ({ method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify(o) });
+  try {
+    if (d.stage === 1) {
+      const s2 = await api('/api/diagnostic/stage2', body({ session_id: d.session_id, answers: d.answers }));
+      view.innerHTML = `
+        <div class="done">
+          <div class="done-mark"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></div>
+          <p class="done-title">절반 왔어요!</p>
+          <p class="done-sub">잘하고 있어요. 이제 ${s2.count}문제만 더 풀면 끝나요.</p>
+        </div>
+        <button class="btn-hero" style="background:var(--primary);color:#fff" data-go>이어서 풀기</button>`;
+      view.querySelector('[data-go]').addEventListener('click', () => runDiagStage(s2));
+    } else {
+      const r = await api('/api/diagnostic/finish', body({ session_id: d.session_id, answers: d.answers }));
+      showDiagResult(r);
+    }
+  } catch (e) { renderError(e.message); }
+}
+
+function showDiagResult(r) {
+  tabbarVisible(true);
+  store.set = null; store.setDate = null; save();  // 새 실력 기준으로 오늘 세트 재생성
+  const rows = r.report.map((x) => `
+    <div class="row">
+      <span class="row-ico" style="background:var(--primary-soft);color:var(--primary)">${x.part}</span>
+      <span class="row-body">
+        <span class="row-t">${PART_INFO[x.part].name}</span>
+        <span class="row-s">${x.count}문항 중 ${Math.round(x.acc * x.count / 100)}개 정답</span>
+      </span>
+      <span class="progress-num">${x.grade}등급</span>
+    </div>`).join('');
+  view.innerHTML = `
+    <div class="done">
+      <div class="done-mark"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></div>
+      <p class="done-title">진단 완료!</p>
+      <p class="done-sub">파트별 등급이에요 (1~5등급, 5가 최고).${r.group === 'junior' ? '<br>문항 수가 적어 참고용이에요.' : ''}</p>
+    </div>
+    <div class="card"><div class="rowlist">${rows}</div></div>
+    <button class="btn-hero" style="background:var(--primary);color:#fff" data-go-home>내 맞춤 학습 시작하기</button>`;
+  view.querySelector('[data-go-home]').addEventListener('click', () => { setTab('home'); showHome(); });
 }
 
 // ---------- 오답 ----------
@@ -600,6 +681,20 @@ function renderQuestion() {
   const buttons = [...view.querySelectorAll('.choice')];
   buttons.forEach((btn) => btn.addEventListener('click', async () => {
     buttons.forEach((b) => (b.disabled = true));
+    if (session.diag) {
+      // 진단: 정오답을 보여주지 않고 다음으로 (서버가 단계 끝에 일괄 채점)
+      session.diag.answers.push({
+        question_id: q.id, chosen_idx: Number(btn.dataset.idx), time_ms: Date.now() - shownAt,
+      });
+      btn.classList.add('dim');
+      setTimeout(() => {
+        if (session.idx + 1 >= session.questions.length) return endDiagStage();
+        session.idx += 1;
+        renderQuestion();
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      }, 200);
+      return;
+    }
     try {
       const payload = JSON.stringify({
         question_id: q.id, chosen_idx: Number(btn.dataset.idx), time_ms: Date.now() - shownAt,
