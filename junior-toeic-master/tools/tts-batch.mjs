@@ -57,13 +57,17 @@ const RATE = '95%';
 const LETTERS = ['A', 'B', 'C', 'D'];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// 실제 TOEIC Bridge 듣기처럼 구간마다 쉼을 둔다. 쉼이 없으면 질문이 끝나자마자
-// 보기가 붙어 나와 아이가 답을 고를 틈이 없다. 초 단위로 조절 가능.
+// 실제 TOEIC Bridge 듣기 진행을 따른다.
+// 실전은 질문과 보기를 거의 붙여서 한 번에 읽고(보기 사이 약 0.5초), 다 읽은 뒤
+// 문항당 약 10초의 답 고르는 시간을 준다. 우리 앱은 학생이 보기를 눌러 바로
+// 넘어가므로 그 10초는 음원에 넣지 않는다(끝에 무음만 남는다).
+// 실전 모의고사 모드가 필요해지면 TTS_PAUSE_ANSWER=10s 로 켠다.
 const PAUSE = {
-  lead: process.env.TTS_PAUSE_LEAD || '1s',        // 음원 시작 → 첫 발화
-  afterStem: process.env.TTS_PAUSE_STEM || '2s',   // 지문·질문 → 보기
-  between: process.env.TTS_PAUSE_BETWEEN || '2s',  // 보기 사이
-  line: process.env.TTS_PAUSE_LINE || '600ms',     // 대화 줄 사이
+  lead: process.env.TTS_PAUSE_LEAD || '1s',          // 음원 시작 → 첫 발화
+  afterStem: process.env.TTS_PAUSE_STEM || '1s',     // 질문 → 첫 보기
+  between: process.env.TTS_PAUSE_BETWEEN || '500ms', // 보기 사이
+  line: process.env.TTS_PAUSE_LINE || '500ms',       // 대화 줄 사이
+  answer: process.env.TTS_PAUSE_ANSWER || '',        // 끝의 답 고르는 시간(기본 없음)
 };
 
 // ---------- 공통: HTTP 호출 (429·5xx 지수 백오프) ----------
@@ -253,6 +257,7 @@ for (const file of files) {
             parts.push(`${LETTERS[i]}. ${c}`);
           });
         }
+        if (PAUSE.answer) parts.push({ pause: PAUSE.answer });
         chars += parts.reduce((n, p) => n + (typeof p === 'string' ? p.length : 0), 0);
         writeAudio(join(OUT, `audio/questions/${id}`), await backend.single(parts, it.accent, 'female'));
       } else {
