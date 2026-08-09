@@ -239,6 +239,13 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .choice.wrong .letter { background: var(--bad); color: #fff; }
 .choice.dim { opacity: .45; }
 
+/* ── 세트 안 문제 블록 (지문·음원 1번 + 문제 연속) ── */
+.qblock { display: flex; flex-direction: column; gap: 11px; border-top: 1px solid var(--line); padding-top: 13px; }
+.qblock:first-of-type { border-top: 0; padding-top: 0; }
+.qnum { font-size: .78rem; font-weight: 700; color: var(--primary); }
+.qblock.locked { opacity: .55; }
+.btn-confirm { width: 100%; }
+
 /* L1 그림 보기 — 2×2 그리드, 기호는 좌상단 오버레이 */
 .choices.img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .choice-img {

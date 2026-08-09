@@ -398,13 +398,9 @@ async function showDiagnostic() {
 }
 
 function runDiagStage(stage) {
-  Object.assign(session, {
-    questions: stage.questions, passages: stage.passages, idx: 0,
-    title: '실력 진단', correct: 0, trackToday: false,
-    diag: { session_id: stage.session_id, stage: stage.stage, answers: [] },
-  });
-  tabbarVisible(false);
-  renderQuestion();
+  startSession(stage.questions, stage.passages, '실력 진단');
+  session.diag = { session_id: stage.session_id, stage: stage.stage, answers: [] };
+  renderQuestion();  // 진단 상태(하단 버튼 숨김·자동 진행)를 반영해 다시 그림
 }
 
 async function endDiagStage() {
@@ -631,9 +627,20 @@ const session = { questions: [], passages: {}, idx: 0, title: '', trackToday: fa
 function startSession(questions, passages, title, opts = {}) {
   Object.assign(session, {
     questions, passages, title, correct: 0,
-    trackToday: !!opts.trackToday,
-    idx: opts.trackToday ? Math.min(store.setIdx, questions.length - 1) : 0,
+    trackToday: !!opts.trackToday, diag: null,
   });
+  // 같은 지문(passage_id)을 잇달아 공유하는 문항을 한 화면(세트)으로 묶는다.
+  // 실전처럼 음원·지문은 세트당 1번, 문제들은 그 아래 연속 배치.
+  session.groups = [];
+  let cur = null;
+  questions.forEach((q, i) => {
+    if (cur && q.passage_id && cur.pid === q.passage_id) cur.items.push(i);
+    else { cur = { pid: q.passage_id || null, items: [i] }; session.groups.push(cur); }
+  });
+  const done = opts.trackToday ? Math.min(store.setIdx, questions.length) : 0;
+  session.doneBase = done;   // 이 앞 번호까지는 지난 접속에서 이미 풂 (잠금 표시)
+  session.gidx = session.groups.findIndex((g) => g.items[g.items.length - 1] >= done);
+  if (session.gidx < 0) session.gidx = session.groups.length - 1;
   tabbarVisible(false);
   renderQuestion();
 }
@@ -653,69 +660,87 @@ function endSession() {
 }
 
 function renderQuestion() {
-  const shownAt = Date.now();  // time_ms 측정 기준 (찍기 판정에 쓰인다)
-  const q = session.questions[session.idx];
-  const passage = q.passage_id ? session.passages[q.passage_id] : null;
-  const info = PART_INFO[q.part];
+  const g = session.groups[session.gidx];
   const total = session.questions.length;
+  const shownAt = Date.now();
+  const lastGroup = session.gidx + 1 >= session.groups.length;
+  const first = session.questions[g.items[0]];
+  const passage = first.passage_id ? session.passages[first.passage_id] : null;
+  const info = PART_INFO[first.part];
+  const graded = new Set(g.items.filter((qi) => qi < session.doneBase && !session.diag));
 
   const chips = [
-    `<span class="chip">${q.part} ${info.name}</span>`,
-    `<span class="chip">난이도 ${q.difficulty_label}</span>`,
-    q.accent ? `<span class="chip">${ACCENT_KO[q.accent] || q.accent}</span>` : '',
-    q.status === 'draft' ? '<span class="chip warn">초안</span>' : '',
+    `<span class="chip">${first.part} ${info.name}</span>`,
+    first.accent ? `<span class="chip">${ACCENT_KO[first.accent] || first.accent}</span>` : '',
+    first.status === 'draft' ? '<span class="chip warn">초안</span>' : '',
   ].join('');
 
-  // 듣기 자료: 음원이 있으면 플레이어, 없으면 스크립트 열람(검수용)
+  // ── 세트 공통 자료 (음원·지문은 세트당 1번) ──
   let media = '';
-  const audioUrl = q.audio_url || passage?.audio_url;
-  const script = q.script || (q.section === 'LC' ? passage?.content : null);
+  const audioUrl = first.audio_url || passage?.audio_url;
+  const script = first.script || (first.section === 'LC' ? passage?.content : null);
   if (audioUrl) {
-    media = `<div class="audio-box"><audio controls preload="none" src="${esc(audioUrl)}"></audio></div>`;
+    media = `<div class="audio-box"><audio controls preload="auto" src="${esc(audioUrl)}"></audio>
+      <p class="notice">음원은 자동으로 1번 나와요. 더 듣고 싶으면 재생 버튼을 누르세요.</p></div>`;
   } else if (script) {
     media = `<p class="notice">음원 준비 중 — 지금은 스크립트로 확인해요.</p>
       <button class="script-toggle" data-toggle>스크립트 보기</button>
       <div class="passage" data-script hidden>${esc(script)}</div>`;
   }
-  // L1: image_url에 보기 4컷 경로 배열(JSON)이 실려 오면 그림 보기로 렌더한다
-  let choiceImages = null;
-  if (q.part === 'L1' && q.image_url?.startsWith('[')) {
-    try { choiceImages = JSON.parse(q.image_url); } catch { choiceImages = null; }
-  }
-  if (q.part === 'L1' && !choiceImages) {
-    media = '<p class="notice">그림 준비 중인 문항이에요. 스크립트로 확인해요.</p>' + media;
-  }
-
-  const readingPassage = (q.section === 'RC' && passage)
+  const readingPassage = (first.section === 'RC' && passage)
     ? `<div class="passage">${esc(passage.content)}</div>` : '';
 
-  view.innerHTML = `
-    <div class="player-head">
-      <button class="btn-ghost" data-back>나가기</button>
-      <div class="progress-track"><div class="progress-fill" style="width:${(session.idx / total) * 100}%"></div></div>
-      <span class="progress-num">${session.idx + 1}/${total}</span>
-    </div>
-    <div class="qcard">
-      <div class="qbadges">${chips}</div>
-      ${readingPassage}${media}
-      ${q.stem ? `<p class="stem">${esc(q.stem)}</p>` : ''}
-      ${choiceImages ? `
+  // ── 문제 블록들 (세트 아래 연속 배치) ──
+  const blocks = g.items.map((qi, k) => {
+    const q = session.questions[qi];
+    let choiceImages = null;
+    if (q.part === 'L1' && q.image_url?.startsWith('[')) {
+      try { choiceImages = JSON.parse(q.image_url); } catch { choiceImages = null; }
+    }
+    const locked = graded.has(qi);
+    const choicesHtml = choiceImages ? `
       <div class="choices img-grid">
         ${choiceImages.map((src, i) => `
-          <button class="choice choice-img" data-idx="${i}" aria-label="보기 ${LETTERS[i]}">
+          <button class="choice choice-img" data-idx="${i}" aria-label="보기 ${LETTERS[i]}" ${locked ? 'disabled' : ''}>
             <img src="${esc(src)}" alt="" loading="lazy" />
             <span class="letter">${LETTERS[i]}</span>
           </button>`).join('')}
       </div>` : `
       <div class="choices">
         ${q.choices.map((c, i) => `
-          <button class="choice" data-idx="${i}">
+          <button class="choice" data-idx="${i}" ${locked ? 'disabled' : ''}>
             <span class="letter">${LETTERS[i]}</span><span>${esc(c)}</span>
           </button>`).join('')}
-      </div>`}
-      <div data-result></div>
-      <div class="nav-row"><button class="btn-primary" data-next disabled>선택 확정</button></div>
+      </div>`;
+    return `
+      <div class="qblock${locked ? ' locked' : ''}" data-block="${qi}">
+        ${g.items.length > 1 ? `<p class="qnum">문제 ${k + 1}</p>` : ''}
+        ${q.part === 'L1' && !choiceImages ? '<p class="notice">그림 준비 중인 문항이에요.</p>' : ''}
+        ${q.stem ? `<p class="stem">${esc(q.stem)}</p>` : ''}
+        ${choicesHtml}
+        <div data-result>${locked ? '<p class="notice">지난 학습에서 이미 푼 문제예요.</p>' : ''}</div>
+        ${locked || session.diag ? '' : ''}
+        ${locked ? '' : `<button class="btn-primary btn-confirm" data-confirm disabled>선택 확정</button>`}
+      </div>`;
+  }).join('');
+
+  view.innerHTML = `
+    <div class="player-head">
+      <button class="btn-ghost" data-back>나가기</button>
+      <div class="progress-track"><div class="progress-fill" style="width:${(g.items[0] / total) * 100}%"></div></div>
+      <span class="progress-num">${g.items[0] + 1}${g.items.length > 1 ? '–' + (g.items[g.items.length - 1] + 1) : ''}/${total}</span>
+    </div>
+    <div class="qcard">
+      <div class="qbadges">${chips}</div>
+      ${readingPassage}${media}
+      ${blocks}
+      ${session.diag ? '' : `<div class="nav-row"><button class="btn-primary" data-next disabled>${
+        lastGroup ? '끝내기' : '다음'}</button></div>`}
     </div>`;
+
+  // 음원 자동 재생 (세트당 1회 — 브라우저가 막으면 재생 버튼으로)
+  const au = view.querySelector('audio');
+  if (au) au.play().catch(() => { /* 수동 재생 안내는 이미 표시됨 */ });
 
   view.querySelector('[data-back]').addEventListener('click', () => { tabbarVisible(true); setTab('home'); showHome(); });
   view.querySelector('[data-toggle]')?.addEventListener('click', (e) => {
@@ -725,89 +750,109 @@ function renderQuestion() {
   });
 
   const nextBtn = view.querySelector('[data-next]');
-  const isLast = session.idx + 1 >= total;
-  const buttons = [...view.querySelectorAll('.choice')];
-  let selected = null;      // 누른 보기 (확정 전엔 바꿀 수 있다)
-  let phase = 'pick';       // pick(고르는 중) → graded(채점 끝)
-
-  // 잘못 누르는 사고 방지: 보기 탭은 '선택'만 하고, 제출은 확정 버튼이 한다
-  buttons.forEach((btn) => btn.addEventListener('click', () => {
-    if (phase !== 'pick') return;
-    selected = Number(btn.dataset.idx);
-    buttons.forEach((b) => b.classList.toggle('selected', b === btn));
-    nextBtn.disabled = false;
-    sfx.select();
-  }));
-
-  const advance = () => {
-    session.idx += 1;
-    if (session.trackToday) { store.setIdx = session.idx; save(); }
+  const advanceGroup = () => {
+    session.gidx += 1;
     renderQuestion();
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
-
-  nextBtn.addEventListener('click', async () => {
-    if (phase !== 'pick') {
-      if (isLast) return endSession();
-      return advance();
+  const refreshNav = () => {
+    const all = g.items.every((qi) => graded.has(qi));
+    if (nextBtn) nextBtn.disabled = !all;
+    if (session.diag && all) {
+      setTimeout(() => {
+        if (session.diag.answers.length >= total) return endDiagStage();
+        advanceGroup();
+      }, 250);
     }
-    if (selected === null) return;
-    nextBtn.disabled = true;
-    buttons.forEach((b) => (b.disabled = true));
+  };
+  nextBtn?.addEventListener('click', () => {
+    if (nextBtn.disabled) return;
+    if (lastGroup) return endSession();
+    advanceGroup();
+  });
 
-    if (session.diag) {
-      // 진단: 정오답을 보여주지 않고 다음으로 (서버가 단계 끝에 일괄 채점)
-      session.diag.answers.push({ question_id: q.id, chosen_idx: selected, time_ms: Date.now() - shownAt });
-      if (session.idx + 1 >= total) return endDiagStage();
-      session.idx += 1;
-      renderQuestion();
-      window.scrollTo({ top: 0, behavior: 'instant' });
-      return;
-    }
+  // ── 블록별 선택→확정 배선 ──
+  g.items.forEach((qi) => {
+    const q = session.questions[qi];
+    const block = view.querySelector(`[data-block="${qi}"]`);
+    if (!block || block.classList.contains('locked')) return;
+    const buttons = [...block.querySelectorAll('.choice')];
+    const confirmBtn = block.querySelector('[data-confirm]');
+    let selected = null;
+    let doneHere = false;
 
-    try {
-      const payload = JSON.stringify({ question_id: q.id, chosen_idx: selected, time_ms: Date.now() - shownAt });
-      let r = null;
-      if (auth) {
-        try {
-          r = await api('/api/answers', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` },
-            body: payload,
-          });
-        } catch (e) {
-          if (/로그인/.test(e.message)) saveAuth(null);
-          else throw e;
-        }
+    buttons.forEach((btn) => btn.addEventListener('click', () => {
+      if (doneHere) return;
+      selected = Number(btn.dataset.idx);
+      buttons.forEach((b) => b.classList.toggle('selected', b === btn));
+      confirmBtn.disabled = false;
+      sfx.select();
+    }));
+
+    confirmBtn.addEventListener('click', async () => {
+      if (selected === null || doneHere) return;
+      doneHere = true;
+      confirmBtn.disabled = true;
+      buttons.forEach((b) => (b.disabled = true));
+
+      if (session.diag) {
+        // 진단: 정오답을 보여주지 않고 기록만 (서버가 단계 끝에 일괄 채점)
+        session.diag.answers.push({ question_id: q.id, chosen_idx: selected, time_ms: Date.now() - shownAt });
+        block.classList.add('locked');
+        confirmBtn.remove();
+        graded.add(qi);
+        refreshNav();
+        block.nextElementSibling?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+        return;
       }
-      r = r || await api('/api/check', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload,
-      });
-      buttons.forEach((b, i) => {
-        b.classList.remove('selected');
-        if (i === r.answer_idx) b.classList.add('correct');
-        else if (i === selected && !r.correct) b.classList.add('wrong');
-        else b.classList.add('dim');
-      });
-      view.querySelector('[data-result]').innerHTML = `
-        <div class="result ${r.correct ? 'ok' : 'bad'}">
-          <p class="verdict">${r.graduated ? '4연승! 이 문제를 봉인 앨범에 박제했어요' : r.correct ? '정답이에요!' : '아쉬워요, 다시 볼까요?'}</p>
-          <p>${esc(r.explanation_ko)}</p>
-        </div>`;
-      (r.graduated ? sfx.done : r.correct ? sfx.correct : sfx.wrong)();
-      if (r.correct) session.correct += 1;
-      recordAnswer(q, passage, r.correct);
-      if (session.trackToday) { store.setIdx = session.idx + 1; save(); }
-      phase = 'graded';
-      nextBtn.textContent = isLast ? '끝내기' : '다음 문제';
-      nextBtn.disabled = false;
-      nextBtn.focus();
-    } catch (e) {
-      buttons.forEach((b) => (b.disabled = false));
-      nextBtn.disabled = false;
-      view.querySelector('[data-result]').innerHTML =
-        `<div class="result bad"><p>${esc(e.message)}</p></div>`;
-    }
+
+      try {
+        const payload = JSON.stringify({ question_id: q.id, chosen_idx: selected, time_ms: Date.now() - shownAt });
+        let r = null;
+        if (auth) {
+          try {
+            r = await api('/api/answers', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` },
+              body: payload,
+            });
+          } catch (e) {
+            if (/로그인/.test(e.message)) saveAuth(null);
+            else throw e;
+          }
+        }
+        r = r || await api('/api/check', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload,
+        });
+        buttons.forEach((b, i) => {
+          b.classList.remove('selected');
+          if (i === r.answer_idx) b.classList.add('correct');
+          else if (i === selected && !r.correct) b.classList.add('wrong');
+          else b.classList.add('dim');
+        });
+        block.querySelector('[data-result]').innerHTML = `
+          <div class="result ${r.correct ? 'ok' : 'bad'}">
+            <p class="verdict">${r.graduated ? '4연승! 이 문제를 봉인 앨범에 박제했어요' : r.correct ? '정답이에요!' : '아쉬워요, 다시 볼까요?'}</p>
+            <p>${esc(r.explanation_ko)}</p>
+          </div>`;
+        (r.graduated ? sfx.done : r.correct ? sfx.correct : sfx.wrong)();
+        if (r.correct) session.correct += 1;
+        recordAnswer(q, passage, r.correct);
+        if (session.trackToday) { store.setIdx = Math.min(total, store.setIdx + 1); save(); }
+        confirmBtn.remove();
+        graded.add(qi);
+        refreshNav();
+        if (!g.items.every((x) => graded.has(x))) {
+          block.nextElementSibling?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+        }
+      } catch (e) {
+        doneHere = false;
+        confirmBtn.disabled = false;
+        buttons.forEach((b) => (b.disabled = false));
+        block.querySelector('[data-result]').innerHTML =
+          `<div class="result bad"><p>${esc(e.message)}</p></div>`;
+      }
+    });
   });
 }
 
