@@ -383,5 +383,12 @@
     "common_name_en": "vent shrimp",
     "scientific_name": "Rimicaris exoculata",
     "date": "2026-08-07"
+  },
+  {
+    "no": 64,
+    "common_name_ko": "홍어과",
+    "common_name_en": "Rajidae",
+    "scientific_name": "Rajidae",
+    "date": "2026-08-09"
   }
 ]

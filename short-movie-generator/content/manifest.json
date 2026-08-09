@@ -506,5 +506,13 @@
     "scientific_name": "Chimaera",
     "date": "2026-08-09",
     "youtube_url": "https://youtu.be/BB6m-F3SQuA"
+  },
+  {
+    "id": "064",
+    "kind": "reels",
+    "common_name_ko": "홍어과",
+    "common_name_en": "Rajidae",
+    "scientific_name": "Rajidae",
+    "date": "2026-08-09"
   }
 ]
