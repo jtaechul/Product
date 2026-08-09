@@ -56,6 +56,7 @@ jobs:
         run: |
           node tools/import.mjs
           npx wrangler d1 execute jumplish-db --remote --file tools/out/seed.sql
+          npx wrangler d1 execute jumplish-db --remote --file tools/demo-org.sql
 
       - name: Deploy worker
         run: npx wrangler deploy

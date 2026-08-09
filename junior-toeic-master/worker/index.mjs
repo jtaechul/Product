@@ -2,10 +2,78 @@
 // 절대 규칙: 문항을 내려주는 어떤 응답에도 answer_idx·explanation_ko를 포함하지 않는다.
 // 채점 엔드포인트만 정답에 접근한다. (docs/engine.md · PRD 6절)
 import { Hono } from 'hono';
+import { verifyPin, makeToken, requireAuth } from './auth.mjs';
+import { recordAnswer, kstDate } from './engine.mjs';
 
 const app = new Hono();
 
 const PART_RE = /^(L[1-4]|R[1-3])$/;
+
+// ── 인증 (M2): 학원 발급 로그인ID + 6자리 PIN ──
+app.post('/api/auth/login', async (c) => {
+  const { login_id, pin } = await c.req.json().catch(() => ({}));
+  if (typeof login_id !== 'string' || !/^\d{6}$/.test(String(pin))) {
+    return c.json({ error: '로그인ID와 6자리 PIN을 입력하세요' }, 400);
+  }
+  const user = await c.env.DB.prepare(
+    'SELECT * FROM users WHERE login_id = ?1'
+  ).bind(login_id.trim().toUpperCase()).first();
+  // 계정 존재 여부를 구분해 알려주지 않는다 (계정 추측 방지)
+  if (!user || !(await verifyPin(String(pin), user.pin_hash))) {
+    return c.json({ error: '로그인ID 또는 PIN이 맞지 않아요' }, 401);
+  }
+  return c.json({
+    token: await makeToken(user),
+    user: { id: user.id, login_id: user.login_id, display_name: user.display_name, role: user.role },
+  });
+});
+
+app.get('/api/me', requireAuth, async (c) => {
+  const u = c.get('user');
+  const stats = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS answered, COALESCE(SUM(is_correct), 0) AS correct
+       FROM answers WHERE user_id = ?1`
+  ).bind(u.id).first();
+  const due = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM review_queue
+      WHERE user_id = ?1 AND graduated_at IS NULL AND due_at <= ?2`
+  ).bind(u.id, kstDate()).first();
+  return c.json({
+    user: { id: u.id, login_id: u.login_id, display_name: u.display_name, role: u.role },
+    answered: stats.answered, correct: stats.correct, review_due: due.n,
+  });
+});
+
+// 로그인 학생의 채점 — 기록·실력 갱신·SRS까지 서버가 처리한다 (M1 /api/check의 상위 호환)
+app.post('/api/answers', requireAuth, async (c) => {
+  const u = c.get('user');
+  const body = await c.req.json().catch(() => ({}));
+  const { question_id, chosen_idx, time_ms } = body;
+  if (typeof question_id !== 'string' || !Number.isInteger(chosen_idx)) {
+    return c.json({ error: 'question_id(문자열), chosen_idx(정수)가 필요합니다' }, 400);
+  }
+  const q = await c.env.DB.prepare(
+    'SELECT id, answer_idx, explanation_ko, rating FROM questions WHERE id = ?1'
+  ).bind(question_id).first();
+  if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
+
+  // 하루 한 세션(daily)에 묶는다 — question_ids 목록은 answers 테이블로 대신한다(M2-1 단순화)
+  const today = kstDate();
+  let session = await c.env.DB.prepare(
+    `SELECT id FROM sessions WHERE user_id = ?1 AND type = 'daily' AND started_at LIKE ?2 || '%'`
+  ).bind(u.id, today).first();
+  if (!session) {
+    session = { id: crypto.randomUUID() };
+    await c.env.DB.prepare(
+      `INSERT INTO sessions (id, user_id, type, question_ids, started_at) VALUES (?1, ?2, 'daily', '[]', ?3)`
+    ).bind(session.id, u.id, new Date().toISOString()).run();
+  }
+
+  const { correct } = await recordAnswer(c.env.DB, {
+    user: u, question: q, chosenIdx: chosen_idx, timeMs: time_ms | 0, sessionId: session.id,
+  });
+  return c.json({ correct, answer_idx: q.answer_idx, explanation_ko: q.explanation_ko });
+});
 
 app.get('/api/health', async (c) => {
   const counts = await c.env.DB.prepare(

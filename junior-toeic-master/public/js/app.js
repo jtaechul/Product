@@ -89,6 +89,12 @@ const ranked = () => PARTS.map((p) => ({ part: p, acc: accuracy(p) })).filter((x
 const totalAnswered = () => Object.values(store.parts).reduce((n, p) => n + p.answered, 0);
 const totalCorrect = () => Object.values(store.parts).reduce((n, p) => n + p.correct, 0);
 
+// ---------- 로그인 (M2: 학원 발급 ID + 6자리 PIN) ----------
+const AUTH_KEY = 'jumplish.auth.v1';
+let auth = null;
+try { auth = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch { auth = null; }
+const saveAuth = (a) => { auth = a; try { a ? localStorage.setItem(AUTH_KEY, JSON.stringify(a)) : localStorage.removeItem(AUTH_KEY); } catch { /* 무시 */ } };
+
 // ---------- 통신 ----------
 async function api(path, opts) {
   const res = await fetch(path, opts);
@@ -192,12 +198,16 @@ async function showHome() {
              오늘의 학습을 마치면 약한 곳을 콕 집어 알려드릴게요.</p>
          </div>`;
 
+    const hello = auth?.user?.display_name
+      ? `${auth.user.display_name} 님, ${left === 0 ? '오늘 학습을 다 마쳤어요' : '오늘도 점프해볼까요'}`
+      : (left === 0 ? '오늘 학습을 다 마쳤어요' : '오늘도 한 번 점프해볼까요');
     view.innerHTML = `
       <div class="greet">
         <div>
           <p class="greet-date">${new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}</p>
-          <h1 class="greet-title">${left === 0 ? '오늘 학습을 다 마쳤어요' : '오늘도 한 번 점프해볼까요'}</h1>
+          <h1 class="greet-title">${esc(hello)}</h1>
         </div>
+        ${auth ? '' : '<button class="btn-ghost" data-login>로그인</button>'}
       </div>
 
       <div class="week" role="group" aria-label="이번 주 학습한 날">
@@ -248,6 +258,7 @@ async function showHome() {
         <svg class="row-arrow" viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
       </button>`;
 
+    view.querySelector('[data-login]')?.addEventListener('click', showLogin);
     view.querySelector('[data-start]').addEventListener('click', () => {
       if (left === 0) { store.setIdx = 0; save(); }
       startSession(set.questions, set.passages, '오늘의 학습', { trackToday: true });
@@ -255,6 +266,48 @@ async function showHome() {
     view.querySelector('[data-focus]')?.addEventListener('click', (e) => showPartPractice(e.target.dataset.focus));
     view.querySelector('[data-tab-go]').addEventListener('click', () => { setTab('review'); showReview(); });
   } catch (e) { renderError(e.message); }
+}
+
+// ---------- 로그인 화면 ----------
+function showLogin() {
+  tabbarVisible(false);
+  view.innerHTML = `
+    <div class="player-head"><button class="btn-ghost" data-back>돌아가기</button></div>
+    <div class="qcard" style="gap:15px">
+      <div>
+        <h1 class="greet-title">학원 로그인</h1>
+        <p class="card-note" style="margin-top:4px">선생님께 받은 아이디와 비밀번호 6자리를 넣어주세요.</p>
+      </div>
+      <label class="field"><span>아이디 (예: JUMP-1)</span>
+        <input data-lid autocapitalize="characters" autocomplete="username" placeholder="가입코드-번호" /></label>
+      <label class="field"><span>비밀번호 (숫자 6자리)</span>
+        <input data-pin type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" placeholder="●●●●●●" /></label>
+      <div data-result></div>
+      <button class="btn-primary" data-submit>로그인</button>
+      <p class="card-note">아직 아이디가 없어도 괜찮아요 — 로그인 없이 풀면 이 기기에만 기록됩니다.</p>
+    </div>`;
+  view.querySelector('[data-back]').addEventListener('click', () => { setTab('home'); showHome(); });
+  const submit = async () => {
+    const login_id = view.querySelector('[data-lid]').value.trim();
+    const pin = view.querySelector('[data-pin]').value.trim();
+    const box = view.querySelector('[data-result]');
+    if (!login_id || !/^\d{6}$/.test(pin)) {
+      box.innerHTML = '<div class="result bad"><p>아이디와 숫자 6자리를 확인해주세요.</p></div>';
+      return;
+    }
+    try {
+      const r = await api('/api/auth/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login_id, pin }),
+      });
+      saveAuth({ token: r.token, user: r.user });
+      setTab('home'); showHome();
+    } catch (e) {
+      box.innerHTML = `<div class="result bad"><p>${esc(e.message)}</p></div>`;
+    }
+  };
+  view.querySelector('[data-submit]').addEventListener('click', submit);
+  view.querySelector('[data-pin]').addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
 }
 
 // ---------- 오답 ----------
@@ -313,6 +366,13 @@ function showRecord() {
         <span class="card-note">${WEAK_MIN}문항 이상 푼 파트만</span></div>
       ${skillMap()}
     </div>
+    <div class="card row">
+      <span class="row-body">
+        <span class="row-t">${auth ? esc(`${auth.user.display_name} (${auth.user.login_id})`) : '로그인하지 않았어요'}</span>
+        <span class="row-s">${auth ? '풀이 기록이 서버에 저장되고 있어요' : '로그인하면 기록이 어느 기기에서나 이어져요'}</span>
+      </span>
+      <button class="btn-ghost" data-auth-btn>${auth ? '로그아웃' : '로그인'}</button>
+    </div>
     <div class="card">
       <div class="card-head"><span class="card-title">파트별 상세</span></div>
       <div class="rowlist">${PARTS.map((p) => {
@@ -326,6 +386,10 @@ function showRecord() {
         </div>`;
       }).join('')}</div>
     </div>`;
+  view.querySelector('[data-auth-btn]').addEventListener('click', () => {
+    if (auth) { saveAuth(null); showRecord(); }
+    else showLogin();
+  });
 }
 
 // ---------- 파트별 연습 (하부 메뉴) ----------
@@ -397,6 +461,7 @@ function endSession() {
 }
 
 function renderQuestion() {
+  const shownAt = Date.now();  // time_ms 측정 기준 (찍기 판정에 쓰인다)
   const q = session.questions[session.idx];
   const passage = q.passage_id ? session.passages[q.passage_id] : null;
   const info = PART_INFO[q.part];
@@ -481,10 +546,27 @@ function renderQuestion() {
   buttons.forEach((btn) => btn.addEventListener('click', async () => {
     buttons.forEach((b) => (b.disabled = true));
     try {
-      const r = await api('/api/check', {
+      const payload = JSON.stringify({
+        question_id: q.id, chosen_idx: Number(btn.dataset.idx), time_ms: Date.now() - shownAt,
+      });
+      let r = null;
+      if (auth) {
+        // 로그인 상태면 서버에 기록(실력 갱신·오답 SRS 포함). 토큰 만료 시 게스트로 강등.
+        try {
+          r = await api('/api/answers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` },
+            body: payload,
+          });
+        } catch (e) {
+          if (/로그인/.test(e.message)) saveAuth(null);
+          else throw e;
+        }
+      }
+      r = r || await api('/api/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question_id: q.id, chosen_idx: Number(btn.dataset.idx) }),
+        body: payload,
       });
       buttons.forEach((b, i) => {
         if (i === r.answer_idx) b.classList.add('correct');

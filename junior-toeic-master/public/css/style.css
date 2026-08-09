@@ -262,6 +262,16 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 }
 .btn-primary:disabled { background: var(--surface-2); color: #a6aec7; }
 
+/* ── 로그인 폼 ── */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field span { font-size: .8rem; font-weight: 700; color: var(--muted); }
+.field input {
+  font: inherit; color: var(--text); background: var(--surface);
+  border: 1.5px solid var(--line); border-radius: 12px; padding: 13px; min-height: 50px;
+  letter-spacing: .04em;
+}
+.field input:focus { outline: none; border-color: var(--primary); }
+
 /* ── 완료 화면 ── */
 .done { text-align: center; padding: 26px 16px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
 .done-mark { width: 58px; height: 58px; border-radius: 999px; background: var(--ok-soft); display: grid; place-items: center; }
