@@ -57,6 +57,15 @@ const RATE = '95%';
 const LETTERS = ['A', 'B', 'C', 'D'];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// 실제 TOEIC Bridge 듣기처럼 구간마다 쉼을 둔다. 쉼이 없으면 질문이 끝나자마자
+// 보기가 붙어 나와 아이가 답을 고를 틈이 없다. 초 단위로 조절 가능.
+const PAUSE = {
+  lead: process.env.TTS_PAUSE_LEAD || '1s',        // 음원 시작 → 첫 발화
+  afterStem: process.env.TTS_PAUSE_STEM || '2s',   // 지문·질문 → 보기
+  between: process.env.TTS_PAUSE_BETWEEN || '2s',  // 보기 사이
+  line: process.env.TTS_PAUSE_LINE || '600ms',     // 대화 줄 사이
+};
+
 // ---------- 공통: HTTP 호출 (429·5xx 지수 백오프) ----------
 async function postJson(url, body, tries = 4) {
   for (let attempt = 1; ; attempt++) {
@@ -85,8 +94,14 @@ const GOOGLE_VOICES = {
   AU: { female: 'en-AU-Neural2-A', male: 'en-AU-Neural2-B', lang: 'en-AU' },
 };
 const escXml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const ssml = (text, tail = '400ms') =>
-  `<speak><prosody rate="${RATE}">${escXml(text)}</prosody><break time="${tail}"/></speak>`;
+
+// parts: 말할 문자열과 {pause:'2s'} 를 섞은 배열 → SSML 한 덩어리
+const buildSsml = (parts, { lead = true } = {}) =>
+  `<speak>${lead ? `<break time="${PAUSE.lead}"/>` : ''}` +
+  parts.map((p) => (typeof p === 'string'
+    ? `<prosody rate="${RATE}">${escXml(p)}</prosody>`
+    : `<break time="${p.pause}"/>`)).join('') +
+  `</speak>`;
 
 async function googleSynth(ssmlText, accent, gender) {
   const v = GOOGLE_VOICES[accent];
@@ -99,15 +114,16 @@ async function googleSynth(ssmlText, accent, gender) {
 }
 
 const googleBackend = {
-  single: (text, accent, gender) => googleSynth(ssml(text), accent, gender),
-  // 화자별로 따로 합성해 이어붙인다 (줄 끝 600ms 쉼)
+  single: (parts, accent, gender) => googleSynth(buildSsml(parts), accent, gender),
+  // 화자별로 따로 합성해 이어붙인다. 시작 쉼은 첫 줄에만 붙인다.
   async dialogue(lines, accent, voiceGenders) {
-    const parts = [];
-    for (const l of lines) {
+    const bufs = [];
+    for (const [i, l] of lines.entries()) {
       const gender = voiceGenders?.[l.speaker] === 'male' ? 'male' : 'female';
-      parts.push(await googleSynth(ssml(l.text, '600ms'), accent, gender));
+      const ssmlText = buildSsml([l.text, { pause: PAUSE.line }], { lead: i === 0 });
+      bufs.push(await googleSynth(ssmlText, accent, gender));
     }
-    return Buffer.concat(parts);
+    return Buffer.concat(bufs);
   },
 };
 
@@ -155,9 +171,13 @@ async function geminiSynth(prompt, speechConfig) {
 }
 
 const geminiBackend = {
-  single(text, accent, gender) {
+  // gemini는 SSML을 못 받으므로 쉼을 프롬프트로 지시한다(정확도는 google보다 낮다).
+  single(parts, accent, gender) {
+    const text = parts.filter((p) => typeof p === 'string').join('\n');
+    const hasPause = parts.some((p) => typeof p !== 'string');
     return geminiSynth(
       `Read the following aloud in ${ACCENT_PROMPT[accent]}, ${PACE}. ` +
+      (hasPause ? 'Leave a clear two-second silence between each line. ' : '') +
       `Read only the text itself, with no extra commentary:\n\n${text}`,
       { voiceConfig: { prebuiltVoiceConfig: { voiceName: GEMINI_VOICES[accent][gender] } } });
   },
@@ -168,7 +188,7 @@ const geminiBackend = {
     // 성우가 "N"을 글자로 읽어버린다 → 라벨을 떼고 단일 화자로 합성한다.
     if (speakers.length < 2) {
       const gender = voiceGenders?.[speakers[0]] === 'male' ? 'male' : 'female';
-      return this.single(lines.map((l) => l.text).join('\n'), accent, gender);
+      return this.single([lines.map((l) => l.text).join('\n')], accent, gender);
     }
     const script = lines.map((l) => `${l.speaker}: ${l.text}`).join('\n');
     return geminiSynth(
@@ -224,13 +244,17 @@ for (const file of files) {
         if (!id) throw new Error('idmap에 없음 — import.mjs 먼저 실행');
         relPath = `audio/questions/${id}.${EXT}`;
         if (existsSync(join(OUT, relPath))) { manifest[it.tmp_id] = relPath; skipped++; continue; }
-        // L1: 문장 1개 / L2: 질문 + 보기 4개 응답을 한 트랙으로
-        let text = it.tts_script;
+        // L1: 문장 1개 / L2: 질문 → (쉼) → 보기 A~D를 쉼으로 끊어 한 트랙으로
+        const parts = [it.tts_script];
         if (it.part === 'L2') {
-          text += '\n\n' + it.choices.map((c, i) => `${LETTERS[i]}. ${c}`).join('\n');
+          parts.push({ pause: PAUSE.afterStem });
+          it.choices.forEach((c, i) => {
+            if (i) parts.push({ pause: PAUSE.between });
+            parts.push(`${LETTERS[i]}. ${c}`);
+          });
         }
-        chars += text.length;
-        writeAudio(join(OUT, `audio/questions/${id}`), await backend.single(text, it.accent, 'female'));
+        chars += parts.reduce((n, p) => n + (typeof p === 'string' ? p.length : 0), 0);
+        writeAudio(join(OUT, `audio/questions/${id}`), await backend.single(parts, it.accent, 'female'));
       } else {
         const id = idmap[`p:${it.tmp_id}`];
         if (!id) throw new Error('idmap에 없음 — import.mjs 먼저 실행');
