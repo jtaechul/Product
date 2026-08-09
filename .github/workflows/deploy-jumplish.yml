@@ -19,7 +19,8 @@ jobs:
       run:
         working-directory: junior-toeic-master
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      # 점프리시 전용 토큰이 있으면 그것을, 없으면 공용 토큰을 사용 (키 분리 가능)
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN_JUMPLISH || secrets.CF_API_TOKEN_JUMPLISH_DEPLOY || secrets.CF_API_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
