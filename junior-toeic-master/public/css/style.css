@@ -113,16 +113,6 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 @keyframes fade { from { opacity: 0 } }
 @keyframes rise { from { transform: translateY(24px); opacity: .6 } }
 
-/* 캐릭터 고르기 */
-.char-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
-.char-pick {
-  background: var(--surface-2); border: 2px solid transparent; border-radius: 16px;
-  padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 3px;
-}
-.char-pick img { width: 100%; max-width: 62px; aspect-ratio: 1; object-fit: contain; }
-.char-pick span { font-size: .74rem; font-weight: 700; color: var(--muted); }
-.char-pick[aria-pressed="true"] { border-color: var(--primary); background: var(--primary-soft); }
-.char-pick[aria-pressed="true"] span { color: var(--primary); }
 
 /* 설정 스위치 줄 */
 .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 0; }
@@ -177,11 +167,6 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .today-label { font-size: .74rem; font-weight: 700; letter-spacing: .06em; opacity: .85; }
 .today-main { display: flex; align-items: center; gap: 14px; }
 .today-figs { flex: 1; min-width: 0; }
-.today-char {
-  width: 74px; height: 74px; object-fit: contain; flex: 0 0 auto;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,.28));
-  animation: bob 2.6s ease-in-out infinite;
-}
 @keyframes bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
 .ring { flex: 0 0 auto; width: 68px; height: 68px; }
 .ring text { font-weight: 700; }
@@ -239,19 +224,6 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .skill.is-weak { outline: 2px solid var(--bad); outline-offset: 2px; }
 
 /* ── 등반 지도 (산 + 캐릭터) ── */
-.climb-head { display: flex; align-items: baseline; justify-content: space-between; }
-.climb-alt { font-size: 1.3rem; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--primary); }
-.climb-alt i { font-size: .78rem; font-style: normal; color: var(--muted); margin-left: 1px; }
-.climb-stage { position: relative; }
-.climb-svg { width: 100%; height: auto; display: block; border-radius: 16px; }
-.climb-char {
-  position: absolute; width: 46px; height: 46px; object-fit: contain;
-  transform: translate(-50%, -78%); opacity: 0;
-  transition: left .5s cubic-bezier(.2,.9,.3,1), top .5s cubic-bezier(.2,.9,.3,1), opacity .3s;
-  filter: drop-shadow(0 3px 4px rgba(0,0,0,.25));
-  pointer-events: none;
-}
-.climb-figs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .cf {
   background: var(--surface-2); border-radius: 13px; padding: 8px 4px;
   display: flex; flex-direction: column; align-items: center; gap: 1px;
@@ -455,6 +427,32 @@ mark.ev {
 .expr-cap { font-size: .72rem; font-weight: 800; color: var(--primary); margin-bottom: 2px; }
 .expr-en { font-size: 1rem; font-weight: 800; color: var(--text); }
 .expr-ko { font-size: .86rem; font-weight: 700; color: var(--muted); }
+
+/* ── 내 실력 지도 (오각형 레이더) ── */
+.radar { width: 100%; height: auto; display: block; margin: 2px 0 6px; }
+.radar .rg { fill: none; stroke: var(--line); stroke-width: 1; }
+.radar .rp-was { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 4; opacity: .7; }
+.radar .rp-now { fill: rgba(91, 91, 245, .16); stroke: var(--primary); stroke-width: 2.5; stroke-linejoin: round; }
+.radar .rd { fill: var(--primary); stroke: var(--surface); stroke-width: 2.5; }
+.radar .rd-off { fill: none; stroke: var(--muted); stroke-width: 2; stroke-dasharray: 3 3; }
+.radar .rl { font-size: 12.5px; font-weight: 800; fill: var(--text); }
+.radar .rl.off { fill: var(--muted); }
+.radar .rv { font-size: 11px; font-weight: 700; fill: var(--muted); }
+.weak-name { font-size: 1.05rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: 2px; }
+
+/* 약한 순서로 정렬한 막대 — 정확한 값은 여기서 읽는다 */
+.sbar { display: flex; align-items: center; gap: 10px; margin-top: 7px; }
+.sbl { flex: none; width: 66px; font-size: .79rem; font-weight: 700; }
+.sbt { flex: 1; height: 8px; border-radius: 999px; background: var(--primary-soft); overflow: hidden; }
+.sbf { display: block; height: 100%; border-radius: 999px; background: var(--primary); }
+.sbn { flex: none; width: 24px; text-align: right; font-size: .79rem; font-weight: 800; color: var(--primary); }
+
+/* 설욕률·푸는 속도 — 레이더에 섞지 않고 옆에 둔다 */
+.duo { display: flex; gap: 10px; margin-bottom: 12px; }
+.duo-c { flex: 1; min-width: 0; background: var(--surface); border-radius: 18px; padding: 13px 14px;
+  box-shadow: 0 2px 14px -8px rgba(20, 22, 43, .18); }
+.duo-n { font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; color: var(--text); }
+.duo-s { font-size: .72rem; font-weight: 700; color: var(--muted); margin-top: 3px; }
 
 /* 이름 바꾸기 — 입력칸과 저장 버튼이 한 줄 */
 .name-row { display: flex; gap: 8px; margin: 4px 0 6px; }
