@@ -95,6 +95,33 @@ let auth = null;
 try { auth = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch { auth = null; }
 const saveAuth = (a) => { auth = a; try { a ? localStorage.setItem(AUTH_KEY, JSON.stringify(a)) : localStorage.removeItem(AUTH_KEY); } catch { /* 무시 */ } };
 
+// ---------- 효과음 (Web Audio 합성 — 파일·외부 요청 0, 운영비 0원 원칙 유지) ----------
+let audioCtx = null;
+function sfxTone(seq, type = 'triangle', vol = 0.09) {
+  try {
+    audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+    const t0 = audioCtx.currentTime;
+    for (const [freq, at, dur] of seq) {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type;
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0, t0 + at);
+      g.gain.linearRampToValueAtTime(vol, t0 + at + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(t0 + at);
+      o.stop(t0 + at + dur + 0.05);
+    }
+  } catch { /* 소리는 못 나도 학습엔 지장 없음 */ }
+}
+const sfx = {
+  select: () => sfxTone([[880, 0, 0.05]], 'sine', 0.035),                                  // 보기 탭: 톡
+  correct: () => sfxTone([[659.25, 0, 0.12], [987.77, 0.09, 0.22]]),                       // 정답: 딩동(E5→B5)
+  wrong: () => sfxTone([[196, 0, 0.2]], 'square', 0.04),                                   // 오답: 낮게 붕
+  done: () => sfxTone([[523.25, 0, 0.12], [659.25, 0.1, 0.12], [783.99, 0.2, 0.12], [1046.5, 0.3, 0.3]]), // 완료: 도미솔도
+};
+
 // ---------- 통신 ----------
 async function api(path, opts) {
   const res = await fetch(path, opts);
@@ -389,6 +416,7 @@ async function endDiagStage() {
 }
 
 function showDiagResult(r) {
+  sfx.done();
   tabbarVisible(true);
   store.set = null; store.setDate = null; save();  // 새 실력 기준으로 오늘 세트 재생성
   const rows = r.report.map((x) => `
@@ -584,6 +612,7 @@ function startSession(questions, passages, title, opts = {}) {
 }
 
 function endSession() {
+  sfx.done();
   tabbarVisible(true);
   const n = session.questions.length;
   view.innerHTML = `
@@ -680,6 +709,7 @@ function renderQuestion() {
     selected = Number(btn.dataset.idx);
     buttons.forEach((b) => b.classList.toggle('selected', b === btn));
     nextBtn.disabled = false;
+    sfx.select();
   }));
 
   const advance = () => {
@@ -737,6 +767,7 @@ function renderQuestion() {
           <p class="verdict">${r.correct ? '정답이에요!' : '아쉬워요, 다시 볼까요?'}</p>
           <p>${esc(r.explanation_ko)}</p>
         </div>`;
+      (r.correct ? sfx.correct : sfx.wrong)();
       if (r.correct) session.correct += 1;
       recordAnswer(q, passage, r.correct);
       if (session.trackToday) { store.setIdx = session.idx + 1; save(); }
