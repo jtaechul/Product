@@ -14,7 +14,8 @@ on:
     branches: ["claude/junior-toeic-master-planning-322l2t"]
     paths:
       - ".github/workflows/generate-l1-images.yml"
-      - "junior-toeic-master/tools/img-batch.mjs"   # 스타일 변경 시 자동 재생성
+      - "junior-toeic-master/tools/img-batch.mjs"          # 수집 방식 변경 시 자동 재수집
+      - "junior-toeic-master/content/questions/L1.json"    # 검색 조건을 고치면 그 컷을 다시 받는다
 
 permissions:
   contents: write
