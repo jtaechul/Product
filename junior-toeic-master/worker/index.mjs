@@ -309,6 +309,26 @@ app.post('/api/answers', requireAuth, async (c) => {
   });
 });
 
+// 화면에 뜰 이름 바꾸기.
+// 개인정보 최소화 원칙상 이름은 '별명'이다 — 실명을 받으면 우리가 안 받겠다고 한 정보를
+// 받는 셈이 된다. 그래서 실명처럼 보이는 걸 막지는 못해도, 화면에서 별명이라고 안내하고
+// 길이·문자·나쁜 말만 서버에서 막는다. 로그인ID(학원 발급)는 바뀌지 않는다.
+const NAME_MAX = 12;
+const NAME_BLOCK = ['씨발', '시발', '병신', '좆', '지랄', 'ㅅㅂ', 'ㅄ', 'fuck', 'shit', 'bitch'];
+app.post('/api/me/name', requireAuth, async (c) => {
+  const u = c.get('user');
+  const { display_name } = await c.req.json().catch(() => ({}));
+  const name = typeof display_name === 'string' ? display_name.replace(/\s+/g, ' ').trim() : '';
+  if (!name) return c.json({ error: '이름을 적어주세요' }, 400);
+  if ([...name].length > NAME_MAX) return c.json({ error: `이름은 ${NAME_MAX}자까지예요` }, 400);
+  if (/[\u0000-\u001f<>]/.test(name)) return c.json({ error: '쓸 수 없는 글자가 있어요' }, 400);
+  const low = name.toLowerCase().replace(/\s/g, '');
+  if (NAME_BLOCK.some((w) => low.includes(w))) return c.json({ error: '다른 이름으로 정해볼까요?' }, 400);
+
+  await c.env.DB.prepare('UPDATE users SET display_name = ?1 WHERE id = ?2').bind(name, u.id).run();
+  return c.json({ ok: true, display_name: name });
+});
+
 // 아이가 막힌 자리 신고 — 로그인 없이도 받는다(테스터가 로그인 전에 막힐 수도 있다).
 // 답을 알려주지도, 아이를 탓하지도 않는다. 그냥 조용히 기록만 남긴다.
 const FEEDBACK_KINDS = ['audio', 'image', 'hard', 'answer', 'etc'];

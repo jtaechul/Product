@@ -209,6 +209,16 @@ function showSettings() {
         ? `아이디 ${esc(auth.user.login_id)} · 기록이 서버에 저장돼요`
         : '로그인하지 않았어요 — 기록이 이 기기에만 남아요'}</p>
 
+      ${auth ? `
+      <p class="sheet-sect">이름</p>
+      <div class="name-row">
+        <input class="name-input" data-name maxlength="12" value="${esc(auth.user.display_name)}"
+               aria-label="화면에 보일 이름" />
+        <button class="btn-primary name-save" data-name-save>저장</button>
+      </div>
+      <p class="card-note" data-name-msg>화면에 보일 별명이에요. 12자까지 쓸 수 있어요.
+        진짜 이름 대신 별명을 쓰는 걸 권해요.</p>` : ''}
+
       <p class="sheet-sect">내 캐릭터</p>
       <div class="char-grid">
         ${CHARACTERS.map((c) => `
@@ -252,6 +262,33 @@ function showSettings() {
     e.currentTarget.setAttribute('aria-checked', String(pref.sound));
     if (pref.sound) sfx.select();
   });
+  const nameSave = back.querySelector('[data-name-save]');
+  if (nameSave) {
+    const input = back.querySelector('[data-name]');
+    const msg = back.querySelector('[data-name-msg]');
+    const submit = async () => {
+      const value = input.value.trim();
+      if (!value || value === auth.user.display_name) return;
+      nameSave.disabled = true;
+      try {
+        const r = await api('/api/me/name', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ display_name: value }),
+        });
+        saveAuth({ ...auth, user: { ...auth.user, display_name: r.display_name } });
+        back.querySelector('h2').textContent = `${r.display_name} 님`;
+        input.value = r.display_name;
+        msg.textContent = '바뀌었어요.';
+        sfx.correct();
+      } catch (e) {
+        msg.textContent = e.message;      // 서버가 이유를 아이 말로 돌려준다
+      } finally { nameSave.disabled = false; }
+    };
+    nameSave.addEventListener('click', submit);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+  }
+
   back.querySelector('[data-auth-toggle]').addEventListener('click', () => {
     close();
     if (auth) { saveAuth(null); store.set = null; store.setDate = null; save(); setTab('home'); showHome(); }

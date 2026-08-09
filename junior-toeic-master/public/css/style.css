@@ -456,6 +456,16 @@ mark.ev {
 .expr-en { font-size: 1rem; font-weight: 800; color: var(--text); }
 .expr-ko { font-size: .86rem; font-weight: 700; color: var(--muted); }
 
+/* 이름 바꾸기 — 입력칸과 저장 버튼이 한 줄 */
+.name-row { display: flex; gap: 8px; margin: 4px 0 6px; }
+.name-input {
+  flex: 1; min-width: 0; border: 2px solid var(--line); border-radius: 13px;
+  padding: 12px 13px; font: inherit; font-size: 1rem; font-weight: 700;
+  background: var(--surface); color: var(--text); min-height: 50px;
+}
+.name-input:focus { outline: none; border-color: var(--primary); }
+.name-save { flex: none; padding: 0 18px; min-height: 50px; }
+
 /* 막힌 자리 신고 — 눈에 띄되 답보다 앞서지 않게 (작고 조용한 글자 버튼) */
 .report-link {
   align-self: flex-start; background: none; border: none; padding: 8px 2px; min-height: 38px;
