@@ -4,8 +4,14 @@ name: Generate L1 images (Jumplish)
 # 브랜치에 커밋한다. 개발 샌드박스는 외부망이 막혀 있어 GitHub 러너에서 실행한다.
 # 수동 실행 전용 — 커밋이 푸시되면 deploy-jumplish.yml이 이어서 자동 배포한다.
 
+# 이 저장소의 GitHub 앱 토큰은 workflow_dispatch 호출 권한이 없어(403),
+# 이 파일 자체가 푸시될 때 실행되게 한다. (러너가 푸시하는 이미지 커밋은
+# GITHUB_TOKEN 푸시라 어떤 워크플로도 다시 깨우지 않는다 — 무한루프 없음)
 on:
   workflow_dispatch:
+  push:
+    branches: ["claude/junior-toeic-master-planning-322l2t"]
+    paths: [".github/workflows/generate-l1-images.yml"]
 
 permissions:
   contents: write
