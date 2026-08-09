@@ -230,6 +230,9 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
   font-size: .8rem; font-weight: 700; color: var(--muted);
 }
 .choice:not(:disabled):active { border-color: var(--primary); background: var(--primary-soft); }
+.choice.selected { border-color: var(--primary); background: var(--primary-soft); }
+.choice.selected .letter { background: var(--primary); color: #fff; }
+.choice-img.selected { box-shadow: 0 0 0 3px var(--primary); }
 .choice.correct { border-color: var(--ok); background: var(--ok-soft); }
 .choice.correct .letter { background: var(--ok); color: #fff; }
 .choice.wrong { border-color: var(--bad); background: var(--bad-soft); }

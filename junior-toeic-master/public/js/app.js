@@ -658,8 +658,7 @@ function renderQuestion() {
           </button>`).join('')}
       </div>`}
       <div data-result></div>
-      <div class="nav-row"><button class="btn-primary" data-next disabled>${
-        session.idx + 1 >= total ? '끝내기' : '다음 문제'}</button></div>
+      <div class="nav-row"><button class="btn-primary" data-next disabled>선택 확정</button></div>
     </div>`;
 
   view.querySelector('[data-back]').addEventListener('click', () => { tabbarVisible(true); setTab('home'); showHome(); });
@@ -670,38 +669,49 @@ function renderQuestion() {
   });
 
   const nextBtn = view.querySelector('[data-next]');
-  nextBtn.addEventListener('click', () => {
-    if (session.idx + 1 >= total) return endSession();
+  const isLast = session.idx + 1 >= total;
+  const buttons = [...view.querySelectorAll('.choice')];
+  let selected = null;      // 누른 보기 (확정 전엔 바꿀 수 있다)
+  let phase = 'pick';       // pick(고르는 중) → graded(채점 끝)
+
+  // 잘못 누르는 사고 방지: 보기 탭은 '선택'만 하고, 제출은 확정 버튼이 한다
+  buttons.forEach((btn) => btn.addEventListener('click', () => {
+    if (phase !== 'pick') return;
+    selected = Number(btn.dataset.idx);
+    buttons.forEach((b) => b.classList.toggle('selected', b === btn));
+    nextBtn.disabled = false;
+  }));
+
+  const advance = () => {
     session.idx += 1;
     if (session.trackToday) { store.setIdx = session.idx; save(); }
     renderQuestion();
     window.scrollTo({ top: 0, behavior: 'instant' });
-  });
+  };
 
-  const buttons = [...view.querySelectorAll('.choice')];
-  buttons.forEach((btn) => btn.addEventListener('click', async () => {
+  nextBtn.addEventListener('click', async () => {
+    if (phase !== 'pick') {
+      if (isLast) return endSession();
+      return advance();
+    }
+    if (selected === null) return;
+    nextBtn.disabled = true;
     buttons.forEach((b) => (b.disabled = true));
+
     if (session.diag) {
       // 진단: 정오답을 보여주지 않고 다음으로 (서버가 단계 끝에 일괄 채점)
-      session.diag.answers.push({
-        question_id: q.id, chosen_idx: Number(btn.dataset.idx), time_ms: Date.now() - shownAt,
-      });
-      btn.classList.add('dim');
-      setTimeout(() => {
-        if (session.idx + 1 >= session.questions.length) return endDiagStage();
-        session.idx += 1;
-        renderQuestion();
-        window.scrollTo({ top: 0, behavior: 'instant' });
-      }, 200);
+      session.diag.answers.push({ question_id: q.id, chosen_idx: selected, time_ms: Date.now() - shownAt });
+      if (session.idx + 1 >= total) return endDiagStage();
+      session.idx += 1;
+      renderQuestion();
+      window.scrollTo({ top: 0, behavior: 'instant' });
       return;
     }
+
     try {
-      const payload = JSON.stringify({
-        question_id: q.id, chosen_idx: Number(btn.dataset.idx), time_ms: Date.now() - shownAt,
-      });
+      const payload = JSON.stringify({ question_id: q.id, chosen_idx: selected, time_ms: Date.now() - shownAt });
       let r = null;
       if (auth) {
-        // 로그인 상태면 서버에 기록(실력 갱신·오답 SRS 포함). 토큰 만료 시 게스트로 강등.
         try {
           r = await api('/api/answers', {
             method: 'POST',
@@ -714,13 +724,12 @@ function renderQuestion() {
         }
       }
       r = r || await api('/api/check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: payload,
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload,
       });
       buttons.forEach((b, i) => {
+        b.classList.remove('selected');
         if (i === r.answer_idx) b.classList.add('correct');
-        else if (b === btn && !r.correct) b.classList.add('wrong');
+        else if (i === selected && !r.correct) b.classList.add('wrong');
         else b.classList.add('dim');
       });
       view.querySelector('[data-result]').innerHTML = `
@@ -731,14 +740,17 @@ function renderQuestion() {
       if (r.correct) session.correct += 1;
       recordAnswer(q, passage, r.correct);
       if (session.trackToday) { store.setIdx = session.idx + 1; save(); }
+      phase = 'graded';
+      nextBtn.textContent = isLast ? '끝내기' : '다음 문제';
       nextBtn.disabled = false;
       nextBtn.focus();
     } catch (e) {
       buttons.forEach((b) => (b.disabled = false));
+      nextBtn.disabled = false;
       view.querySelector('[data-result]').innerHTML =
         `<div class="result bad"><p>${esc(e.message)}</p></div>`;
     }
-  }));
+  });
 }
 
 showHome();
