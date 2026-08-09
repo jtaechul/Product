@@ -235,3 +235,97 @@ export async function recordAnswer(db, { user, question, chosenIdx, timeMs, sess
   await db.batch(stmts);
   return { correct, graduated };
 }
+
+// ── 실력 지도 (레이더 5축 + 옆에 붙는 지표 2개) ──
+// 축은 '능력' 기준으로 잡는다. 시험 파트(L1~R3)로 두면 "L2가 약해요"가 되는데
+// 아이도 부모도 그 말을 못 알아듣는다.
+// 어휘(V.*)는 축에서 뺐다 — 문항 78%에 붙어 있는 '주제 딱지'라 축으로 쓰면
+// 전체 평균이 되어 영원히 안 움직인다. 어휘 약점은 오답 유형(W.meaning)이 잡는다.
+export const SKILL_AXES = [
+  { key: 'listen', name: '듣고 알기', tags: ['LS.photo', 'LS.qr', 'LS.gist', 'LS.accent'] },
+  { key: 'read', name: '읽고 알기', tags: ['RS.gist', 'RS.context', 'RS.vocab'] },
+  { key: 'find', name: '찾아내기', tags: ['LS.detail', 'RS.scan'] },
+  { key: 'grammar', name: '문장 규칙', tags: ['G.tense', 'G.agreement', 'G.pos', 'G.prep', 'G.conj', 'G.pronoun', 'G.modal', 'G.compare', 'G.toinf', 'G.passive'] },
+  // 속뜻(추론)은 하루 1문항 남짓이라 첫 주에는 '재는 중'으로 남는다. 그래도 축으로 둔다 —
+  // 겉으로 드러난 말이 아니라 속뜻을 잡는 힘은 다른 축이 대신 말해주지 못한다.
+  { key: 'infer', name: '속뜻 알기', tags: ['LS.infer', 'RS.infer'] },
+];
+const AXIS_MIN_ATTEMPTS = 3;   // 이보다 적으면 '아직 재는 중' — 3문항으로 실력이라 하면 거짓말이다
+
+// '오늘'(KST 날짜 문자열)에서 며칠 앞뒤로 민 값.
+//  ...ISO는 answered_at(타임스탬프)과 비교용, ...Date는 date 컬럼과 비교용
+const kstMs = (date) => Date.parse(`${date}T00:00:00+09:00`);
+const shiftISO = (date, days) => new Date(kstMs(date) + days * 86400_000).toISOString();
+const shiftDate = (date, days) => kstDate(kstMs(date), days);
+
+// 레이팅(900~1500)을 0~100으로. 점프 점수와 같은 눈금을 쓴다 — 화면에 100점짜리
+// 점수가 둘인데 서로 다르면 아이가 어느 쪽을 믿어야 할지 모른다.
+const toScore = (rating) => Math.max(0, Math.min(100, Math.round(((rating - 900) / 600) * 100)));
+
+export async function computeSkillMap(db, user, today = kstDate()) {
+  const [{ results: skills }, revive, speed, prev] = await Promise.all([
+    db.prepare('SELECT tag_id, rating, attempts, correct FROM user_tag_skills WHERE user_id = ?1')
+      .bind(user.id).all(),
+    // 설욕률 — 전에 틀렸던 문제를 다시 만나 맞힌 비율. 정답률보다 정직하다
+    // (새 문제를 쉬운 걸로만 받아도 정답률은 오르지만, 설욕률은 안 오른다)
+    db.prepare(
+      `SELECT COUNT(*) AS met, COALESCE(SUM(a.is_correct), 0) AS won
+         FROM answers a
+        WHERE a.user_id = ?1
+          AND EXISTS (SELECT 1 FROM answers b
+                       WHERE b.user_id = a.user_id AND b.question_id = a.question_id
+                         AND b.is_correct = 0 AND b.answered_at < a.answered_at)`
+    ).bind(user.id).first(),
+    // 빠르기 — 맞힌 문제만, 찍기(2초 미만)는 뺀다. 최근 7일 vs 그 앞 7일
+    db.prepare(
+      `SELECT
+         AVG(CASE WHEN answered_at >= ?2 THEN time_ms END) AS recent_ms,
+         AVG(CASE WHEN answered_at <  ?2 AND answered_at >= ?3 THEN time_ms END) AS before_ms,
+         COUNT(CASE WHEN answered_at >= ?2 THEN 1 END) AS recent_n
+         FROM answers
+        WHERE user_id = ?1 AND is_correct = 1 AND time_ms >= ?4`
+    ).bind(user.id, shiftISO(today, -7), shiftISO(today, -14), GUESS_MS).first(),
+    db.prepare('SELECT axes FROM user_skill_daily WHERE user_id = ?1 AND date <= ?2 ORDER BY date DESC LIMIT 1')
+      .bind(user.id, shiftDate(today, -13)).first(),
+  ]);
+
+  const by = Object.fromEntries(skills.map((s) => [s.tag_id, s]));
+  const past = (() => { try { return prev ? JSON.parse(prev.axes) : {}; } catch { return {}; } })();
+
+  const axes = SKILL_AXES.map((ax) => {
+    const rows = ax.tags.map((t) => by[t]).filter((s) => s && s.attempts > 0);
+    const attempts = rows.reduce((n, s) => n + s.attempts, 0);
+    if (attempts < AXIS_MIN_ATTEMPTS) {
+      return { key: ax.key, name: ax.name, score: null, attempts, measuring: true, was: past[ax.key] ?? null };
+    }
+    // 많이 푼 태그가 더 크게 반영되도록 시도 횟수로 가중평균
+    const rating = rows.reduce((sum, s) => sum + s.rating * s.attempts, 0) / attempts;
+    return { key: ax.key, name: ax.name, score: toScore(rating), attempts, measuring: false, was: past[ax.key] ?? null };
+  });
+
+  const ready = axes.filter((a) => !a.measuring);
+  const weakest = ready.length ? ready.reduce((m, a) => (a.score < m.score ? a : m)) : null;
+
+  // 오늘 치 스냅샷 남기기 (없을 때만) — 2주 뒤에 '전보다 늘었나'를 그릴 재료
+  if (ready.length) {
+    const snap = Object.fromEntries(ready.map((a) => [a.key, a.score]));
+    await db.prepare(
+      `INSERT INTO user_skill_daily (user_id, date, axes) VALUES (?1, ?2, ?3)
+       ON CONFLICT(user_id, date) DO UPDATE SET axes = excluded.axes`
+    ).bind(user.id, today, JSON.stringify(snap)).run();
+  }
+
+  const round = (v) => (v == null ? null : Math.round(v));
+  return {
+    axes,
+    weakest: weakest ? { key: weakest.key, name: weakest.name, score: weakest.score } : null,
+    revive: revive.met ? { met: revive.met, won: revive.won, rate: Math.round((revive.won / revive.met) * 100) } : null,
+    speed: speed?.recent_n >= 5
+      ? {
+          seconds: Math.round(speed.recent_ms / 100) / 10,
+          before_seconds: speed.before_ms ? Math.round(speed.before_ms / 100) / 10 : null,
+          faster_by: speed.before_ms ? round((speed.before_ms - speed.recent_ms) / 100) / 10 : null,
+        }
+      : null,
+  };
+}

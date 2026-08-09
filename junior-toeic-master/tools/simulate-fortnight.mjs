@@ -5,7 +5,8 @@
 // worker/engine.mjs 의 composeDailySet 을 진짜로 호출하면서 하루씩 앞으로 감는다.
 // 학생은 자기 실력대로 맞히고 틀린다고 가정한다(레이팅 차이 → 정답 확률).
 //
-// 사용: node tools/simulate-fortnight.mjs [일수] [세트크기]
+// 사용: node tools/simulate-fortnight.mjs [일수] [세트크기] [로그인ID]
+//   로그인ID를 주면 그 학생 계정에 기록한다(실력 지도 화면을 실제 데이터로 확인할 때).
 //   예) node tools/simulate-fortnight.mjs 14 12
 //       node tools/simulate-fortnight.mjs 14 20     ← 초5~중3 반
 //
@@ -23,6 +24,7 @@ import { composeDailySet } from '../worker/engine.mjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DAYS = Number(process.argv[2] || 14);
 const SET_SIZE = Number(process.argv[3] || 12);
+const LOGIN_ID = process.argv[4] || null;   // 없으면 가상의 시뮬 학생
 
 const d1Dir = join(ROOT, '.wrangler/state/v3/d1/miniflare-D1DatabaseObject');
 const file = readdirSync(d1Dir).find((f) => f.endsWith('.sqlite') && f !== 'metadata.sqlite');
@@ -48,7 +50,7 @@ const db = {
 };
 
 // ── 가상의 학생 한 명 ──
-const USER = { id: 'SIM-USER', class_id: 'SIM-CLASS', display_name: '시뮬' };
+let USER = { id: 'SIM-USER', class_id: 'SIM-CLASS', display_name: '시뮬' };
 sqlite.exec(`DELETE FROM answers WHERE user_id = 'SIM-USER';
              DELETE FROM review_queue WHERE user_id = 'SIM-USER';
              DELETE FROM user_tag_skills WHERE user_id = 'SIM-USER';
@@ -57,6 +59,14 @@ sqlite.prepare(`INSERT OR REPLACE INTO classes (id, academy_id, name, grade, set
                 VALUES ('SIM-CLASS', 'ACAD-DEMO', '시뮬반', '초5', ?, '2026-01-01T00:00:00Z')`).run(SET_SIZE);
 sqlite.exec(`INSERT OR REPLACE INTO users (id, role, login_id, pin_hash, display_name, academy_id, class_id, created_at)
              VALUES ('SIM-USER', 'student', 'SIM-0', 'x', '시뮬학생', 'ACAD-DEMO', 'SIM-CLASS', '2026-01-01T00:00:00Z')`);
+if (LOGIN_ID) {
+  const row = sqlite.prepare('SELECT id, class_id FROM users WHERE login_id = ?').get(LOGIN_ID.toUpperCase());
+  if (!row) { console.error(`로그인ID ${LOGIN_ID} 계정이 없습니다`); process.exit(1); }
+  USER = { ...row, display_name: LOGIN_ID };
+  console.log(`${LOGIN_ID} 계정에 기록합니다 (기존 기록은 지웁니다)`);
+  for (const t of ['answers', 'review_queue', 'user_tag_skills', 'sessions', 'daily_sets', 'user_skill_daily', 'user_stats'])
+    sqlite.prepare(`DELETE FROM ${t} WHERE user_id = ?`).run(row.id);
+}
 
 const SKILL = 1200;                 // 학생 실력(진단 평균과 같은 눈금)
 // 마지막 날이 '오늘'이 되도록 뒤에서부터 센다 — 14일 무반복 창 안에 전부 들어와야
@@ -79,11 +89,11 @@ for (let day = 0; day < DAYS; day++) {
   const today = dayStr(day);
   // 복습으로 다시 나오는 문항은 재출제가 아니라 설계된 동작 — 미리 구분해 둔다
   const dueIds = new Set(sqlite.prepare(
-    `SELECT question_id FROM review_queue WHERE user_id = 'SIM-USER' AND graduated_at IS NULL AND due_at <= ?`
-  ).all(today).map((r) => r.question_id));
+    `SELECT question_id FROM review_queue WHERE user_id = ? AND graduated_at IS NULL AND due_at <= ?`
+  ).all(USER.id, today).map((r) => r.question_id));
 
   sqlite.prepare(`INSERT OR REPLACE INTO sessions (id, user_id, type, question_ids, started_at)
-                  VALUES (?, 'SIM-USER', 'daily', '[]', ?)`).run(`S-${today}`, `${today}T09:00:00.000Z`);
+                  VALUES (?, ?, 'daily', '[]', ?)`).run(`S-${today}`, USER.id, `${today}T09:00:00.000Z`);
   const { ids } = await composeDailySet(db, USER, today);
   const parts = Object.fromEntries(PARTS.map((p) => [p, 0]));
   let dup = 0;
@@ -100,19 +110,19 @@ for (let day = 0; day < DAYS; day++) {
     const correct = Math.abs(Math.sin((day + 1) * 7919 + id.length * 31 + id.charCodeAt(12))) < p;
     const chosen = correct ? row.answer_idx : (row.answer_idx + 1) % 4;
     sqlite.prepare(`INSERT INTO answers (id, session_id, user_id, question_id, chosen_idx, is_correct, time_ms, answered_at)
-                    VALUES (?, ?, 'SIM-USER', ?, ?, ?, 9000, ?)`)
-      .run(`${today}-${id}`, `S-${today}`, id, chosen, correct ? 1 : 0, `${today}T09:00:00.000Z`);
+                    VALUES (?, ?, ?, ?, ?, ?, 9000, ?)`)
+      .run(`${today}-${id}`, `S-${today}`, USER.id, id, chosen, correct ? 1 : 0, `${today}T09:00:00.000Z`);
     // 틀리면 복습 큐에 (SRS 1일 뒤) — 실제 recordAnswer와 같은 효과만 흉내
     if (!correct) {
       const next = dayStr(day + 1);
       sqlite.prepare(`INSERT INTO review_queue (id, user_id, question_id, box, due_at, created_at)
-                      VALUES (?, 'SIM-USER', ?, 1, ?, ?)
+                      VALUES (?, ?, ?, 1, ?, ?)
                       ON CONFLICT(user_id, question_id) DO UPDATE SET box = 1, due_at = excluded.due_at`)
-        .run(`RQ-${id}`, id, next, `${today}T09:00:00.000Z`);
+        .run(`RQ-${id}`, USER.id, id, next, `${today}T09:00:00.000Z`);
     } else if (dueIds.has(id)) {
       sqlite.prepare(`UPDATE review_queue SET box = box + 1, due_at = ?
-                       WHERE user_id = 'SIM-USER' AND question_id = ?`)
-        .run(dayStr(day + [1, 3, 7, 14][Math.min(3, 1)]), id);
+                       WHERE user_id = ? AND question_id = ?`)
+        .run(dayStr(day + [1, 3, 7, 14][Math.min(3, 1)]), USER.id, id);
     }
   }
 

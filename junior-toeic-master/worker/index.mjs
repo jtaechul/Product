@@ -3,7 +3,7 @@
 // 채점 엔드포인트만 정답에 접근한다. (docs/engine.md · PRD 6절)
 import { Hono } from 'hono';
 import { verifyPin, makeToken, requireAuth, verifyToken } from './auth.mjs';
-import { recordAnswer, composeDailySet, computeClimb, kstDate, DIAG, diagBand, pickDiagQuestions } from './engine.mjs';
+import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions } from './engine.mjs';
 
 // 진단 답안 일괄 채점·기록 (Elo·SRS 미반영 — engine.md 4절)
 async function gradeDiagAnswers(db, user, sessionId, answers) {
@@ -308,6 +308,11 @@ app.post('/api/answers', requireAuth, async (c) => {
     ...(await feedbackOf(c.env.DB, q, chosen_idx)),
   });
 });
+
+// 실력 지도 — 레이더 5축 + 옆에 붙는 설욕률·빠르기.
+// 화면이 어떻게 생기든 숫자는 여기서 나온다.
+app.get('/api/skillmap', requireAuth, async (c) =>
+  c.json(await computeSkillMap(c.env.DB, c.get('user'))));
 
 // 화면에 뜰 이름 바꾸기.
 // 개인정보 최소화 원칙상 이름은 '별명'이다 — 실명을 받으면 우리가 안 받겠다고 한 정보를
