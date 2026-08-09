@@ -18,6 +18,8 @@ const CHECK_ONLY = process.argv.includes('--check');
 const RATING_BY_LABEL = { 1: 900, 2: 1050, 3: 1200, 4: 1350, 5: 1500 };
 const PARTS = { L1: 'LC', L2: 'LC', L3: 'LC', L4: 'LC', R1: 'RC', R2: 'RC', R3: 'RC' };
 const ACCENTS = ['US', 'UK', 'AU'];
+// 실제 TOEIC Bridge 규격 — Part 2(질의응답)는 보기 3개, 나머지는 4개
+const CHOICES_BY_PART = { L1: 4, L2: 3, L3: 4, L4: 4, R1: 4, R2: 4, R3: 4 };
 
 // ---------- ULID (크록포드 base32, 모노토닉) ----------
 // 같은 실행 안에서 발급 순서 = 사전순이 되도록 시퀀스를 넣는다.
@@ -78,9 +80,12 @@ const seenTmp = new Set();
 
 function checkQuestionCore(it, ctx, part) {
   const section = PARTS[part];
-  if (!Array.isArray(it.choices) || it.choices.length < 3 || it.choices.length > 4 ||
+  // 실제 TOEIC Bridge 규격: Part 2(질의응답)만 보기 3개(A~C), 나머지는 4개(A~D).
+  // 파트별로 못박아 두어야 저작 중에 보기 수가 실전과 어긋나는 것을 막는다.
+  const wantChoices = CHOICES_BY_PART[part];
+  if (!Array.isArray(it.choices) || it.choices.length !== wantChoices ||
       !it.choices.every((c) => typeof c === 'string' && c.trim())) {
-    err(`${ctx}: choices는 3~4개의 문자열이어야 합니다`);
+    err(`${ctx}: ${part}의 choices는 정확히 ${wantChoices}개의 문자열이어야 합니다 (실제 시험 규격)`);
   }
   if (!Number.isInteger(it.answer_idx) || it.answer_idx < 0 || it.answer_idx >= (it.choices?.length || 0)) {
     err(`${ctx}: answer_idx 범위 오류`);

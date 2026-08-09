@@ -99,12 +99,23 @@ const GOOGLE_VOICES = {
 };
 const escXml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-// parts: 말할 문자열과 {pause:'2s'} 를 섞은 배열 → SSML 한 덩어리
+// 보기 기호(A/B/C)는 반드시 say-as로 감싼다.
+// "D. He's ten years old." 처럼 평문으로 두면 TTS가 마침표 붙은 홑글자를 약어로
+// 해석해 엉뚱하게 읽는 사고가 실제로 있었다(영국 성우가 D를 A로 발음).
+// say-as interpret-as="characters"는 글자 이름 그대로 읽도록 강제한다.
+const sayLetter = (letter) => {
+  if (!/^[A-Z]$/.test(letter)) throw new Error(`보기 기호가 A~Z 한 글자가 아닙니다: ${letter}`);
+  return `<say-as interpret-as="characters">${letter}</say-as><break time="200ms"/>`;
+};
+
+// parts: 문자열(그대로 읽기) / {pause} (쉼) / {letter,text} (보기 기호 + 내용)
 const buildSsml = (parts, { lead = true } = {}) =>
   `<speak>${lead ? `<break time="${PAUSE.lead}"/>` : ''}` +
-  parts.map((p) => (typeof p === 'string'
-    ? `<prosody rate="${RATE}">${escXml(p)}</prosody>`
-    : `<break time="${p.pause}"/>`)).join('') +
+  parts.map((p) => {
+    if (typeof p === 'string') return `<prosody rate="${RATE}">${escXml(p)}</prosody>`;
+    if (p.pause) return `<break time="${p.pause}"/>`;
+    return `<prosody rate="${RATE}">${sayLetter(p.letter)}${escXml(p.text)}</prosody>`;
+  }).join('') +
   `</speak>`;
 
 async function googleSynth(ssmlText, accent, gender) {
@@ -177,8 +188,10 @@ async function geminiSynth(prompt, speechConfig) {
 const geminiBackend = {
   // gemini는 SSML을 못 받으므로 쉼을 프롬프트로 지시한다(정확도는 google보다 낮다).
   single(parts, accent, gender) {
-    const text = parts.filter((p) => typeof p === 'string').join('\n');
-    const hasPause = parts.some((p) => typeof p !== 'string');
+    const text = parts
+      .filter((p) => typeof p === 'string' || p.letter)
+      .map((p) => (typeof p === 'string' ? p : `${p.letter}. ${p.text}`)).join('\n');
+    const hasPause = parts.some((p) => typeof p === 'object' && p.pause);
     return geminiSynth(
       `Read the following aloud in ${ACCENT_PROMPT[accent]}, ${PACE}. ` +
       (hasPause ? 'Leave a clear two-second silence between each line. ' : '') +
@@ -248,17 +261,17 @@ for (const file of files) {
         if (!id) throw new Error('idmap에 없음 — import.mjs 먼저 실행');
         relPath = `audio/questions/${id}.${EXT}`;
         if (existsSync(join(OUT, relPath))) { manifest[it.tmp_id] = relPath; skipped++; continue; }
-        // L1: 문장 1개 / L2: 질문 → (쉼) → 보기 A~D를 쉼으로 끊어 한 트랙으로
+        // L1: 문장 1개 / L2: 질문 → (쉼) → 보기 A~C를 쉼으로 끊어 한 트랙으로
         const parts = [it.tts_script];
         if (it.part === 'L2') {
           parts.push({ pause: PAUSE.afterStem });
           it.choices.forEach((c, i) => {
             if (i) parts.push({ pause: PAUSE.between });
-            parts.push(`${LETTERS[i]}. ${c}`);
+            parts.push({ letter: LETTERS[i], text: c });
           });
         }
         if (PAUSE.answer) parts.push({ pause: PAUSE.answer });
-        chars += parts.reduce((n, p) => n + (typeof p === 'string' ? p.length : 0), 0);
+        chars += parts.reduce((n, p) => n + (typeof p === 'string' ? p.length : (p.text?.length || 0)), 0);
         writeAudio(join(OUT, `audio/questions/${id}`), await backend.single(parts, it.accent, 'female'));
       } else {
         const id = idmap[`p:${it.tmp_id}`];
