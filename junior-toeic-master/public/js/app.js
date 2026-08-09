@@ -64,6 +64,22 @@ function streakDays() {
   return n;
 }
 
+// 이번 주(월~일) 중 학습한 날. 숫자 배지 대신 요일을 직접 보여준다 —
+// 며칠째인지보다 "이번 주에 어디가 비었는지"가 아이에게 더 와닿는다.
+function weekMarks() {
+  const dayNames = ['월', '화', '수', '목', '금', '토', '일'];
+  const done = new Set(store.days);
+  const now = new Date();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));  // 이번 주 월요일
+  return dayNames.map((label, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const key = d.toLocaleDateString('sv');
+    return { label, done: done.has(key), today: key === todayKey(), future: key > todayKey() };
+  });
+}
+
 const accuracy = (part) => {
   const p = store.parts[part];
   return p && p.answered >= WEAK_MIN ? Math.round((p.correct / p.answered) * 100) : null;
@@ -142,7 +158,6 @@ async function showHome() {
     const doneN = Math.min(store.setIdx, total);
     const left = total - doneN;
     const C = 2 * Math.PI * 17;
-    const streak = streakDays();
     const weak = ranked()[0];
     const answered = totalAnswered();
 
@@ -167,9 +182,14 @@ async function showHome() {
           <p class="greet-date">${new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}</p>
           <h1 class="greet-title">${left === 0 ? '오늘 학습을 다 마쳤어요' : '오늘도 한 번 점프해볼까요'}</h1>
         </div>
-        ${streak > 0 ? `<span class="streak">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1 3.5 8.5h3L5 15l7.5-8.5h-3L11 1H8Z"/></svg>
-          ${streak}일 연속</span>` : ''}
+      </div>
+
+      <div class="week" role="group" aria-label="이번 주 학습한 날">
+        <span class="week-label">이번 주</span>
+        <div class="week-days">${weekMarks().map((d) => `
+          <span class="wd${d.done ? ' is-done' : ''}${d.today ? ' is-today' : ''}${d.future ? ' is-future' : ''}"
+                aria-label="${d.label}요일 ${d.done ? '학습함' : '학습 안 함'}">${d.label}</span>`).join('')}
+        </div>
       </div>
 
       <div class="today">
@@ -226,7 +246,7 @@ function showReview() {
   setTab('review');
   tabbarVisible(true);
   if (!store.wrong.length) {
-    view.innerHTML = `<div class="greet"><div><h1 class="greet-title">오답 노트</h1></div></div>
+    view.innerHTML = `<div class="greet"><div><h1 class="greet-title">다시 풀 문제</h1></div></div>
       <div class="card"><p class="empty">아직 틀린 문제가 없어요.<br>오늘의 학습을 풀면 여기에 모입니다.</p></div>`;
     return;
   }
@@ -264,11 +284,11 @@ function showRecord() {
   const acc = answered ? Math.round((totalCorrect() / answered) * 100) : 0;
   view.innerHTML = `
     <div class="greet"><div>
-      <p class="greet-date">지금까지의 발자국</p>
-      <h1 class="greet-title">학습 기록</h1>
+      <p class="greet-date">지금까지 걸어온 자리</p>
+      <h1 class="greet-title">내 발자국</h1>
     </div></div>
     <div class="stat-row">
-      <div class="stat"><span class="label">연속 학습</span><span class="value">${streakDays()}일</span></div>
+      <div class="stat"><span class="label">이어온 날</span><span class="value">${streakDays()}일</span></div>
       <div class="stat"><span class="label">푼 문항</span><span class="value">${answered}</span></div>
       <div class="stat"><span class="label">정답률</span><span class="value">${answered ? acc + '%' : '–'}</span></div>
     </div>
@@ -313,8 +333,8 @@ async function showParts() {
     };
     view.innerHTML = `
       <div class="greet"><div>
-        <p class="greet-date">특정 파트만 골라서 연습하고 싶을 때</p>
-        <h1 class="greet-title">파트별 연습</h1>
+        <p class="greet-date">골라서 더 풀고 싶을 때</p>
+        <h1 class="greet-title">연습장</h1>
       </div></div>
       <p class="section-label">듣기 (Listening)</p>
       <div class="part-grid">${['L1', 'L2', 'L3', 'L4'].map(card).join('')}</div>

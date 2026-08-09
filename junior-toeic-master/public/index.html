@@ -15,22 +15,37 @@
     <p class="loading">불러오는 중...</p>
   </main>
 
+  <!-- 아이콘은 전부 자체 제작 벡터. '오르막'이라는 브랜드 은유(점프)를 공유하도록
+       오늘=계단 위 현재 위치, 발자국=지나온 자리, 연습장=문제 묶음 으로 그렸다. -->
   <nav class="tabbar" id="tabbar" aria-label="주요 메뉴">
     <button class="tab" data-tab="home" aria-current="page">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg>
-      <span>홈</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 20h4.5v-4.5H12V11h4.5V6.5H21"/>
+        <circle cx="12" cy="11" r="2.3" fill="currentColor" stroke="none"/>
+      </svg>
+      <span>오늘</span>
     </button>
     <button class="tab" data-tab="review">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 5v14"/></svg>
-      <span>오답</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/>
+        <path d="M20.5 4v4.4h-4.4"/>
+        <circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/>
+      </svg>
+      <span>다시풀기</span>
     </button>
     <button class="tab" data-tab="record">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
-      <span>기록</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" stroke="none">
+        <ellipse cx="7.6" cy="16.2" rx="2.5" ry="3.6"/><circle cx="7.6" cy="12.4" r="1.8"/>
+        <ellipse cx="16.4" cy="12.4" rx="2.5" ry="3.6"/><circle cx="16.4" cy="8.6" r="1.8"/>
+      </svg>
+      <span>발자국</span>
     </button>
     <button class="tab" data-tab="parts">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>
-      <span>파트별</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="7.5" width="13" height="12.5" rx="2.5"/>
+        <path d="M8 4.5h9.5A2.5 2.5 0 0 1 20 7v9.5"/>
+      </svg>
+      <span>연습장</span>
     </button>
   </nav>
 
