@@ -24,11 +24,13 @@ if (!KEY) {
 
 // 역할별 검색어 후보 — 아동 학습 앱 톤. 여러 단어 조합은 CC0 필터와 겹치면
 // 결과가 0건이 되기 쉬워, 넓은 단어로 후보를 여러 개 두고 차례로 시도한다.
+// 톤 기준: 초등 저학년도 편한 '귀엽고 말랑한' 소리. 특히 오답음은 게임쇼 부저처럼
+// 세면 아이가 위축되므로, 부드러운 '뽀용/삐빅' 계열만 쓴다(경고음·버저 금지).
 const ROLES = {
-  select: { qs: ['ui click', 'pop click', 'click'], dur: '[0 TO 1]' },
-  correct: { qs: ['correct chime', 'success ding', 'correct', 'chime'], dur: '[0 TO 2.5]' },
-  wrong: { qs: ['wrong buzzer', 'incorrect', 'error buzz', 'buzzer'], dur: '[0 TO 2.5]' },
-  done: { qs: ['success fanfare short jingle win', 'tada', 'level complete'], dur: '[0.5 TO 4]' },
+  select: { qs: ['cute pop', 'bubble pop', 'water drop pop', 'ui pop'], dur: '[0 TO 0.8]' },
+  correct: { qs: ['cute correct', 'kawaii success', 'magic sparkle chime', 'glockenspiel note'], dur: '[0 TO 2]' },
+  wrong: { qs: ['cute wrong', 'soft boing', 'cartoon boing', 'toy squeak'], dur: '[0 TO 1.5]' },
+  done: { qs: ['cute win jingle', 'kawaii fanfare', 'game level up cute', 'music box win'], dur: '[0.5 TO 4]' },
 };
 
 async function searchOnce(query, filter) {
