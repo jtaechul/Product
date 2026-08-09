@@ -60,14 +60,14 @@ if (files.length === 0) { console.error('content/questions/*.json 이 없습니�
 const idmap = existsSync(IDMAP_PATH) ? readJson(IDMAP_PATH) : {};
 const takeId = (key) => (idmap[key] ||= ulid());
 
-// 음원 매니페스트(tts-batch 산출) — 있으면 audio_url을 채운다
-const manifestPath = join(OUT_DIR, 'audio-manifest.json');
-const audioManifest = existsSync(manifestPath) ? readJson(manifestPath) : {};
+// 음원: 커밋된 public/audio 파일 존재 기준으로 채운다.
+// (tts-batch의 manifest는 tools/out/ 소속이라 gitignore — 배포 러너엔 없다.
+//  manifest에 의존하면 원격 seed의 audio_url이 전부 NULL이 되는 사고가 났다.)
 const R2_BASE = (process.env.R2_PUBLIC_BASE || '').replace(/\/$/, '');
-const audioUrlFor = (tmpId) => {
-  const path = audioManifest[tmpId];
-  if (!path) return null;
-  return R2_BASE ? `${R2_BASE}/${path}` : `/${path}`;
+const audioUrlFor = (kind, id) => {
+  const rel = `audio/${kind}/${id}.mp3`;
+  if (!existsSync(join(ROOT, 'public', rel))) return null;
+  return R2_BASE ? `${R2_BASE}/${rel}` : `/${rel}`;
 };
 
 // L1 보기 4컷 (img-batch 산출: public/img/l1/{id}-{0..3}.jpg)
@@ -158,7 +158,7 @@ for (const file of files) {
         err(`${ctx}: L1은 choice_image_prompts 4개 필수`);
       }
       pushQuestion(part, it.tmp_id, it, null, {
-        accent: it.accent ?? null, status, audio_url: audioUrlFor(it.tmp_id),
+        accent: it.accent ?? null, status, audio_url: audioUrlFor('questions', takeId(`q:${it.tmp_id}`)),
         script: it.tts_script ?? null,
         image_url: part === 'L1' ? imageUrlsFor(takeId(`q:${it.tmp_id}`)) : null,
       });
@@ -176,7 +176,7 @@ for (const file of files) {
       passages.push({
         id: passageId, section: PARTS[part], part, kind: p.kind,
         content, image_url: p.image_url ?? null,
-        audio_url: isLC ? audioUrlFor(it.tmp_id) : null,
+        audio_url: isLC ? audioUrlFor('passages', passageId) : null,
         accent: isLC ? p.accent : null,
       });
       it.questions.forEach((sub, i) => {
