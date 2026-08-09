@@ -1,0 +1,72 @@
+{
+  "id": "063",
+  "created_at": "2026-08-09T10:13:42+00:00",
+  "updated_at": "2026-08-09T10:13:42+00:00",
+  "status": "published",
+  "category": "marine_life",
+  "series": "海の生き物 図鑑",
+  "applied": {
+    "cuts": [
+      {
+        "start": 5.6,
+        "end": 14.9,
+        "zoom": null
+      },
+      {
+        "start": 8.2,
+        "end": 16.8,
+        "zoom": null
+      },
+      {
+        "start": 16.3,
+        "end": 24.9,
+        "zoom": null
+      }
+    ],
+    "cuts_manual": false
+  },
+  "species": {
+    "common_name_ko": "Chimaera",
+    "common_name_en": "Chimaera",
+    "scientific_name": "Chimaera",
+    "depth_range_m": "",
+    "habitat": "",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "Chimaera is the type genus of the cartilaginous fish family Chimaeridae."
+    ]
+  },
+  "reels": {
+    "hook": "サメじゃない、古代からの魚。",
+    "caption": "サメじゃない、古代からの魚。\n\nキマイラ(学名: Chimaera)。\n軟骨・細い尾・大きな目、海のキマイラ。\n海の中で、たしかに命をつないでいる一種です。\n\n心に残ったら保存を。\n同じ海が気になる人へシェアを。\n\n見慣れない姿の一つひとつに、その環境を生き抜くための理由があります。\n海の生き物は、私たちがまだ知らない海の広さを教えてくれます。\n海には、まだ名前のついていない生き物が数多く暮らしています。\nこの映像は実際の海の観測記録から。演出のための作り物ではありません。\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。\n\n映像: Wikimedia Commons",
+    "hashtags": [
+      "#キマイラ",
+      "#海の生き物"
+    ],
+    "reveal_name": "キマイラ / Chimaera",
+    "reveal_fact": "軟骨・細い尾・大きな目、海のキマイラ",
+    "hook_ko": "",
+    "caption_ko": "Chimaera, 이름을 들어보셨나요?\n\nChimaera(학명: Chimaera).\nChimaera is the type genus of the cartilaginous fish family Chimaeridae.\n\n마음이 복잡한 날, 다시 꺼내보고 싶다면 저장해 두세요.\n같은 바다가 궁금한 사람에게 조용히 건네주세요.\n\n낯선 생김새 하나하나에는 그 환경을 살아내기 위한 이유가 담겨 있습니다.\n바다의 생물들은 우리가 아직 모르는 바다의 넓이를 알려줍니다.\n바다에는 아직 이름조차 붙지 않은 생물이 수없이 살아가고 있습니다.\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.\n\n영상: Wikimedia Commons",
+    "hashtags_ko": [
+      "#Chimaera",
+      "#해양생물"
+    ],
+    "yt_title": "サメじゃない、古代からの魚…その名はキマイラ #キマイラ #海の生き物",
+    "yt_title_ko": "…그 이름은 Chimaera #Chimaera #해양생물",
+    "visualizer": "reels",
+    "video_file": "chimaera_20260809_101341.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-063/reels_063.mp4",
+    "rev": "31307471527",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-063/cover_063.jpg",
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-063/ytthumb_063.jpg"
+  },
+  "post": null
+}

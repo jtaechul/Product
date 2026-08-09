@@ -59,6 +59,12 @@
   "source": "NOAA OER EX1711 DIVE15 (https://www.ncei.noaa.gov/metadata/granule/geoportal/opensearch)",
   "url": "https://www.ncei.noaa.gov/data/oceans/oer/video/EX1711/Video/Compressed/EX1711_VID_20171218_DIVE15_SWIPE_OF_THE_SWORD_Low.mp4"
  },
+ "chimaera": {
+  "credit": "NOAA Ocean Exploration",
+  "license": "public-domain",
+  "source": "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-22voyage-to-the-ridge-gallery-media-dive08-chimaera/attachment/15983/",
+  "url": "https://oceanexplorer.noaa.gov/wp-content/uploads/2022/07/dive08-chimaera-1280x720-1.mp4"
+ },
  "coelorinchus caelorhincus": {
   "credit": "NOAA Ocean Exploration",
   "license": "public-domain",
