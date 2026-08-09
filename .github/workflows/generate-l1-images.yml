@@ -52,10 +52,8 @@ jobs:
             echo "변경 없음 — 커밋 생략"
             exit 0
           fi
-          git commit -m "junior-toeic-master: L1 보기 그림 생성·활성화 (자동 배치)
-
-generate-l1-images.yml 러너에서 Pollinations.ai로 생성.
-4컷이 모두 갖춰진 문항만 status를 active로 올린다."
+          git commit -m "junior-toeic-master: L1 보기 그림 생성·활성화 (자동 배치)" \
+            -m "generate-l1-images.yml 러너에서 Pollinations.ai로 생성. 4컷이 모두 갖춰진 문항만 status를 active로 올린다."
           # 생성하는 동안 브랜치가 앞서갔을 수 있다 — 리베이스로 얹은 뒤 푸시
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin HEAD:"${GITHUB_REF_NAME}"
