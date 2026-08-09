@@ -115,11 +115,26 @@ function sfxTone(seq, type = 'triangle', vol = 0.09) {
     }
   } catch { /* 소리는 못 나도 학습엔 지장 없음 */ }
 }
+// 실제 사운드 파일(/sfx/*.mp3 — Freesound CC0, sfx-batch.mjs로 다운로드)이 있으면
+// 그걸 쓰고, 아직 없거나 재생이 막히면 합성음으로 대체한다.
+const SFX_VOL = { select: 0.25, correct: 0.4, wrong: 0.3, done: 0.45 };
+const sfxPlayers = {};
+function playSfx(name, fallback) {
+  let a = sfxPlayers[name];
+  if (a === null) return fallback();          // 파일 없음이 확인된 상태
+  if (!a) {
+    a = sfxPlayers[name] = new Audio(`/sfx/${name}.mp3`);
+    a.preload = 'auto';
+    a.volume = SFX_VOL[name] ?? 0.35;
+  }
+  a.currentTime = 0;
+  a.play().catch(() => { sfxPlayers[name] = null; fallback(); });
+}
 const sfx = {
-  select: () => sfxTone([[880, 0, 0.05]], 'sine', 0.035),                                  // 보기 탭: 톡
-  correct: () => sfxTone([[659.25, 0, 0.12], [987.77, 0.09, 0.22]]),                       // 정답: 딩동(E5→B5)
-  wrong: () => sfxTone([[196, 0, 0.2]], 'square', 0.04),                                   // 오답: 낮게 붕
-  done: () => sfxTone([[523.25, 0, 0.12], [659.25, 0.1, 0.12], [783.99, 0.2, 0.12], [1046.5, 0.3, 0.3]]), // 완료: 도미솔도
+  select: () => playSfx('select', () => sfxTone([[880, 0, 0.05]], 'sine', 0.035)),
+  correct: () => playSfx('correct', () => sfxTone([[659.25, 0, 0.12], [987.77, 0.09, 0.22]])),
+  wrong: () => playSfx('wrong', () => sfxTone([[196, 0, 0.2]], 'square', 0.04)),
+  done: () => playSfx('done', () => sfxTone([[523.25, 0, 0.12], [659.25, 0.1, 0.12], [783.99, 0.2, 0.12], [1046.5, 0.3, 0.3]])),
 };
 
 // ---------- 통신 ----------
