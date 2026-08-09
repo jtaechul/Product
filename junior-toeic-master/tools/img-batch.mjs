@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // 점프리시 배치 그림 생성 — L1(사진 고르기) 보기 4컷 (docs/content-pipeline.md 6절)
+// (재실행 트리거 v2 — 흑백 선화)
 // 개발 단계 1회성 실행. 운영 중에는 절대 호출되지 않는다 (정적 이미지만 서빙).
 //
 // Pollinations.ai(무료·키 불필요)로 choice_image_prompts 4개를 각각 그림으로 만든다.

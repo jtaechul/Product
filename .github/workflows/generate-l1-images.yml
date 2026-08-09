@@ -56,7 +56,9 @@ jobs:
 
 generate-l1-images.yml 러너에서 Pollinations.ai로 생성.
 4컷이 모두 갖춰진 문항만 status를 active로 올린다."
-          git push origin HEAD
+          # 생성하는 동안 브랜치가 앞서갔을 수 있다 — 리베이스로 얹은 뒤 푸시
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin HEAD:"${GITHUB_REF_NAME}"
 
       - name: Fail if generation incomplete
         if: steps.gen.outcome == 'failure'
