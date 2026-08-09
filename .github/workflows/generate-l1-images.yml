@@ -1,0 +1,57 @@
+name: Generate L1 images (Jumplish)
+
+# 점프리시 L1(사진 고르기) 보기 그림 4컷×8문항을 Pollinations.ai(무료)로 생성해
+# 브랜치에 커밋한다. 개발 샌드박스는 외부망이 막혀 있어 GitHub 러너에서 실행한다.
+# 수동 실행 전용 — 커밋이 푸시되면 deploy-jumplish.yml이 이어서 자동 배포한다.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jumplish-l1-images
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: junior-toeic-master
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate content
+        run: node tools/import.mjs --check
+
+      - name: Generate images (resumable)
+        id: gen
+        continue-on-error: true   # 일부 실패해도 성공분은 커밋한다 (재실행 시 이어서 생성)
+        run: node tools/img-batch.mjs
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/img/l1 content/questions/L1.json
+          if git diff --cached --quiet; then
+            echo "변경 없음 — 커밋 생략"
+            exit 0
+          fi
+          git commit -m "junior-toeic-master: L1 보기 그림 생성·활성화 (자동 배치)
+
+generate-l1-images.yml 러너에서 Pollinations.ai로 생성.
+4컷이 모두 갖춰진 문항만 status를 active로 올린다."
+          git push origin HEAD
+
+      - name: Fail if generation incomplete
+        if: steps.gen.outcome == 'failure'
+        run: |
+          echo "::error::일부 그림 생성 실패 — 워크플로를 다시 실행하면 이어서 생성합니다"
+          exit 1

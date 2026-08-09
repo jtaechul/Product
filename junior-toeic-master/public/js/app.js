@@ -420,7 +420,12 @@ function renderQuestion() {
       <button class="script-toggle" data-toggle>스크립트 보기</button>
       <div class="passage" data-script hidden>${esc(script)}</div>`;
   }
-  if (q.part === 'L1' && !q.image_url) {
+  // L1: image_url에 보기 4컷 경로 배열(JSON)이 실려 오면 그림 보기로 렌더한다
+  let choiceImages = null;
+  if (q.part === 'L1' && q.image_url?.startsWith('[')) {
+    try { choiceImages = JSON.parse(q.image_url); } catch { choiceImages = null; }
+  }
+  if (q.part === 'L1' && !choiceImages) {
     media = '<p class="notice">그림 준비 중인 문항이에요. 스크립트로 확인해요.</p>' + media;
   }
 
@@ -437,12 +442,20 @@ function renderQuestion() {
       <div class="qbadges">${chips}</div>
       ${readingPassage}${media}
       ${q.stem ? `<p class="stem">${esc(q.stem)}</p>` : ''}
+      ${choiceImages ? `
+      <div class="choices img-grid">
+        ${choiceImages.map((src, i) => `
+          <button class="choice choice-img" data-idx="${i}" aria-label="보기 ${LETTERS[i]}">
+            <img src="${esc(src)}" alt="" loading="lazy" />
+            <span class="letter">${LETTERS[i]}</span>
+          </button>`).join('')}
+      </div>` : `
       <div class="choices">
         ${q.choices.map((c, i) => `
           <button class="choice" data-idx="${i}">
             <span class="letter">${LETTERS[i]}</span><span>${esc(c)}</span>
           </button>`).join('')}
-      </div>
+      </div>`}
       <div data-result></div>
       <div class="nav-row"><button class="btn-primary" data-next disabled>${
         session.idx + 1 >= total ? '끝내기' : '다음 문제'}</button></div>

@@ -70,6 +70,14 @@ const audioUrlFor = (tmpId) => {
   return R2_BASE ? `${R2_BASE}/${path}` : `/${path}`;
 };
 
+// L1 보기 4컷 (img-batch 산출: public/img/l1/{id}-{0..3}.jpg)
+// 4컷이 모두 있을 때만 경로 배열(JSON)을 image_url에 싣는다 — 프런트가 그림 보기로 렌더.
+const imageUrlsFor = (questionId) => {
+  const paths = [0, 1, 2, 3].map((i) => `img/l1/${questionId}-${i}.jpg`);
+  if (!paths.every((p) => existsSync(join(ROOT, 'public', p)))) return null;
+  return JSON.stringify(paths.map((p) => `/${p}`));
+};
+
 // ---------- 검증 + 평탄화 ----------
 const passages = [];  // {id, section, part, kind, content, image_url, audio_url, accent}
 const questions = []; // {id, passage_id, section, part, stem, choices, answer_idx, ...}
@@ -152,6 +160,7 @@ for (const file of files) {
       pushQuestion(part, it.tmp_id, it, null, {
         accent: it.accent ?? null, status, audio_url: audioUrlFor(it.tmp_id),
         script: it.tts_script ?? null,
+        image_url: part === 'L1' ? imageUrlsFor(takeId(`q:${it.tmp_id}`)) : null,
       });
     } else if (it.type === 'set') {
       const p = it.passage;
