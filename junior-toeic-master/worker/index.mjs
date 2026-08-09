@@ -307,6 +307,28 @@ app.post('/api/answers', requireAuth, async (c) => {
   });
 });
 
+// 아이가 막힌 자리 신고 — 로그인 없이도 받는다(테스터가 로그인 전에 막힐 수도 있다).
+// 답을 알려주지도, 아이를 탓하지도 않는다. 그냥 조용히 기록만 남긴다.
+const FEEDBACK_KINDS = ['audio', 'image', 'hard', 'answer', 'etc'];
+app.post('/api/feedback', async (c) => {
+  const { question_id, kind, note, screen } = await c.req.json().catch(() => ({}));
+  if (!FEEDBACK_KINDS.includes(kind)) return c.json({ error: '어떤 점이 불편한지 골라주세요' }, 400);
+  const m = /^Bearer\s+(.+)$/.exec(c.req.header('Authorization') || '');
+  const user = m ? await verifyToken(c.env.DB, m[1]) : null;
+  // 문항 id는 실제로 있는 것만 남긴다 (오타·장난 입력이 외래키로 터지지 않게)
+  const qid = typeof question_id === 'string'
+    ? (await c.env.DB.prepare('SELECT id FROM questions WHERE id = ?1').bind(question_id).first())?.id ?? null
+    : null;
+  await c.env.DB.prepare(
+    `INSERT INTO feedback (id, user_id, question_id, kind, note, screen, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`
+  ).bind(crypto.randomUUID(), user?.id ?? null, qid, kind,
+    typeof note === 'string' ? note.slice(0, 300) : null,
+    typeof screen === 'string' ? screen.slice(0, 40) : null,
+    new Date().toISOString()).run();
+  return c.json({ ok: true });
+});
+
 app.get('/api/health', async (c) => {
   const counts = await c.env.DB.prepare(
     `SELECT

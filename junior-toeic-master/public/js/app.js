@@ -925,6 +925,69 @@ function endSession() {
   view.querySelector('[data-go-home]').addEventListener('click', () => { setTab('home'); showHome(); });
 }
 
+// ── 막힌 자리 신고 ──
+// 아이가 그 화면에서 바로 누르게 한다. 어른이 대신 옮겨 적으면 진짜 이유가 사라진다.
+// 고르는 말은 아이가 실제로 느끼는 말로 적었다("어렵다"가 아니라 "무슨 말인지 모르겠어요").
+const REPORT_KINDS = [
+  ['audio', '소리가 안 들려요'],
+  ['image', '사진이 문제랑 안 맞아요'],
+  ['hard', '무슨 말인지 모르겠어요'],
+  ['answer', '답이 이상해요'],
+  ['etc', '그 밖에'],
+];
+
+function showReport(questionId, screen) {
+  const back = document.createElement('div');
+  back.className = 'sheet-back';
+  back.innerHTML = `
+    <div class="sheet" role="dialog" aria-label="이상한 점 알려주기">
+      <div class="sheet-grab"></div>
+      <h2>어떤 점이 불편했나요?</h2>
+      <p class="card-note">알려주면 고칠게요. 답이 틀린 걸로 기록되지 않아요.</p>
+      <div class="report-list">
+        ${REPORT_KINDS.map(([k, label]) =>
+          `<button class="report-pick" data-kind="${k}">${label}</button>`).join('')}
+      </div>
+      <textarea class="report-note" data-note rows="2" maxlength="300"
+        placeholder="더 하고 싶은 말이 있으면 적어주세요 (안 적어도 돼요)"></textarea>
+      <div style="display:flex; gap:8px; margin-top:6px">
+        <button class="btn-ghost" style="flex:1" data-close>닫기</button>
+        <button class="btn-primary" style="flex:1" data-send disabled>보내기</button>
+      </div>
+    </div>`;
+  document.body.appendChild(back);
+  const close = () => back.remove();
+  let kind = null;
+  const sendBtn = back.querySelector('[data-send]');
+  back.addEventListener('click', (e) => { if (e.target === back) close(); });
+  back.querySelector('[data-close]').addEventListener('click', close);
+  back.querySelectorAll('[data-kind]').forEach((b) => b.addEventListener('click', () => {
+    kind = b.dataset.kind;
+    back.querySelectorAll('[data-kind]').forEach((x) => x.classList.toggle('on', x === b));
+    sendBtn.disabled = false;
+    sfx.select();
+  }));
+  sendBtn.addEventListener('click', async () => {
+    if (!kind) return;
+    sendBtn.disabled = true;
+    try {
+      await api('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ question_id: questionId, kind, screen, note: back.querySelector('[data-note]').value }),
+      });
+      back.querySelector('.sheet').innerHTML =
+        '<div class="sheet-grab"></div><h2>알려줘서 고마워요</h2>' +
+        '<p class="card-note">덕분에 고칠 수 있어요. 계속 풀어볼까요?</p>' +
+        '<button class="btn-primary" data-close2>계속하기</button>';
+      back.querySelector('[data-close2]').addEventListener('click', close);
+    } catch {
+      sendBtn.disabled = false;
+      sendBtn.textContent = '다시 보내기';
+    }
+  });
+}
+
 // 스크립트의 화자 표시(W:/M:/N:)는 음원 제작용 기호라 아이에게는 우리말로 바꿔 보여준다.
 const SPEAKER_KO = { W: '여자', M: '남자', N: '안내' };
 const readable = (s) => String(s ?? '').replace(/^([WMN]):/gm, (_, k) => `${SPEAKER_KO[k]}:`);
@@ -1156,7 +1219,10 @@ function renderQuestion() {
             ${whyHtml}${evHtml}${replay}
             <p>${esc(r.explanation_ko)}</p>
             ${conHtml}${exprHtml}
+            <button class="report-link" data-report>이 문제, 이상해요</button>
           </div>`;
+        block.querySelector('[data-report]').addEventListener('click', () =>
+          showReport(q.id, `문제풀이:${q.part}`));
         if (expr) rememberExpr(q, expr, r.correct);
         block.querySelector('[data-replay]')?.addEventListener('click', () => {
           const a = view.querySelector('audio');
