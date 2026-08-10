@@ -469,6 +469,14 @@ mark.ev {
 .sbt { flex: 1; height: 8px; border-radius: 999px; background: var(--primary-soft); overflow: hidden; }
 .sbf { display: block; height: 100%; border-radius: 999px; background: var(--primary); }
 .sbn { flex: none; width: 24px; text-align: right; font-size: .79rem; font-weight: 800; color: var(--primary); }
+.sbf.weak { background: var(--bad); }
+/* 발자국 탭 파트별 기록 — 이름 아래 막대, 그 아래 문항 수 */
+.prows .row { align-items: center; gap: 12px; }
+/* .sbt 는 원래 가로 flex 안에서 쓰던 것이라 flex:1 이 들어 있다.
+   세로 flex 인 .row-body 안에서는 그 flex 가 '높이 0'이 되어 막대가 사라진다 */
+.prows .sbt { flex: none; height: 8px; margin: 5px 0 4px; max-width: 210px; }
+.row-code { font-size: .68rem; font-weight: 700; color: var(--muted); margin-left: 3px; }
+.progress-num.weak { color: var(--bad); }
 
 /* 설욕률·푸는 속도 — 레이더에 섞지 않고 옆에 둔다 */
 .duo { display: flex; gap: 10px; margin-bottom: 12px; }

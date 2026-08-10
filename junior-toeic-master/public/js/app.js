@@ -418,6 +418,33 @@ async function ensureTodaySet() {
 const levelOf = (acc) =>
   acc === null ? 'lv-none' : acc >= 80 ? 'lv-high' : acc >= 60 ? 'lv-mid' : 'lv-low';
 
+// ── 파트별 기록 (발자국 탭) ──
+// 홈의 레이더가 '능력' 5축이라면 이쪽은 '시험 파트'별 기록이다 — 발자국은 지나온 자리를
+// 파트 단위로 되짚는 화면이라 여기 둔다.
+// 약한 순으로 세워서 맨 위가 곧 "지금 손봐야 할 곳"이 되게 하고, 아직 덜 푼 파트는 아래로 뺀다.
+// 파트 코드(L2)는 아이도 부모도 못 알아들으므로 우리말 이름을 앞세우고 코드는 작게만 남긴다.
+function partMastery() {
+  const rows = PARTS.map((p) => ({ part: p, acc: accuracy(p), s: store.parts[p] }));
+  const measured = rows.filter((x) => x.acc !== null).sort((a, b) => a.acc - b.acc);
+  const rest = rows.filter((x) => x.acc === null);
+  const worst = measured[0]?.part;
+  const line = (x) => {
+    const weak = x.part === worst ? ' weak' : '';
+    const count = x.s?.answered
+      ? `${x.s.correct} / ${x.s.answered} 문항`
+      : '아직 풀지 않음';
+    return `<div class="row">
+      <span class="row-body">
+        <span class="row-t">${esc(PART_INFO[x.part].name)} <span class="row-code">${x.part}</span></span>
+        <span class="sbt"><span class="sbf${weak}" style="width:${x.acc ?? 0}%"></span></span>
+        <span class="row-s">${count}${x.acc === null && x.s?.answered ? ` · ${WEAK_MIN}문항은 풀어야 판단해요` : ''}</span>
+      </span>
+      <span class="progress-num${weak}">${x.acc === null ? '–' : x.acc + '%'}</span>
+    </div>`;
+  };
+  return `<div class="rowlist prows">${[...measured, ...rest].map(line).join('')}</div>`;
+}
+
 // ── 내 실력 지도 (오각형 레이더) ──
 // 시험 파트(L1~R3) 대신 '능력' 5축으로 그린다 — "L2가 약해요"는 아이도 부모도 못 알아듣는다.
 // 점선은 2주 전 내 모습, 흐린 축은 아직 표본이 모자라 값을 못 내는 축이다.
@@ -865,9 +892,9 @@ async function showRecord() {
       <div class="stat"><span class="label">정답률</span><span class="value">${answered ? acc + '%' : '–'}</span></div>
     </div>
     <div class="card">
-      <div class="card-head"><span class="card-title">파트별 숙달도</span>
-        <span class="card-note">${WEAK_MIN}문항 이상 푼 파트만</span></div>
-      ${skillMap()}
+      <div class="card-head"><span class="card-title">파트별 기록</span>
+        <span class="card-note">약한 곳부터</span></div>
+      ${partMastery()}
     </div>
     ${rec ? `
     <div class="card">
@@ -912,19 +939,7 @@ async function showRecord() {
       </span>
       <button class="btn-ghost" data-auth-btn>${auth ? '로그아웃' : '로그인'}</button>
     </div>
-    <div class="card">
-      <div class="card-head"><span class="card-title">파트별 상세</span></div>
-      <div class="rowlist">${PARTS.map((p) => {
-        const s = store.parts[p];
-        return `<div class="row">
-          <span class="row-body">
-            <span class="row-t">${p} ${PART_INFO[p].name}</span>
-            <span class="row-s">${s ? `${s.correct} / ${s.answered} 문항` : '아직 풀지 않음'}</span>
-          </span>
-          <span class="progress-num">${accuracy(p) === null ? '–' : accuracy(p) + '%'}</span>
-        </div>`;
-      }).join('')}</div>
-    </div>`;
+`;
   bindAppBar();
   view.querySelector('[data-auth-btn]').addEventListener('click', () => {
     if (auth) { saveAuth(null); showRecord(); }
