@@ -461,7 +461,18 @@ mark.ev {
 .radar .rl { font-size: 12.5px; font-weight: 800; fill: var(--text); }
 .radar .rl.off { fill: var(--muted); }
 .radar .rv { font-size: 11px; font-weight: 700; fill: var(--muted); }
-.weak-name { font-size: 1.05rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: 2px; }
+/* 요즘 자주 걸리는 실수 — 막대(어디가) 아래에 이유(왜)를 따로 세운다 */
+.misses { margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--line); }
+.miss { display: flex; align-items: center; gap: 9px; margin-top: 8px; }
+.miss-rank {
+  flex: none; width: 19px; height: 19px; border-radius: 999px;
+  background: var(--bad); color: #fff; font-size: .68rem; font-weight: 800;
+  display: grid; place-items: center;
+}
+.miss.sub .miss-rank { background: var(--surface-2); color: var(--muted); }
+.miss-name { flex: 1; min-width: 0; font-size: .84rem; font-weight: 700; letter-spacing: -.01em; }
+.miss.sub .miss-name { font-weight: 500; color: var(--muted); }
+.miss-n { flex: none; font-size: .76rem; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 /* 약한 순서로 정렬한 막대 — 정확한 값은 여기서 읽는다 */
 .sbar { display: flex; align-items: center; gap: 10px; margin-top: 7px; }

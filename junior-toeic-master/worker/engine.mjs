@@ -252,6 +252,45 @@ export const SKILL_AXES = [
 ];
 const AXIS_MIN_ATTEMPTS = 3;   // 이보다 적으면 '아직 재는 중' — 3문항으로 실력이라 하면 거짓말이다
 
+// 실수 유형 딱지 — 오답 보기마다 "왜 그걸 골랐는가"를 문항에 미리 붙여 뒀다(questions.miss_type).
+// 축(레이더)이 '어디가 약한가'라면 이쪽은 '왜 틀리는가'다. 고칠 행동이 바로 나온다.
+// 답안마다 따로 저장하지 않는다 — chosen_idx 와 문항의 딱지를 맞춰 나중에 언제든 다시 뽑는다.
+// (그래서 딱지를 뒤늦게 손봐도 지난 기록까지 새 기준으로 다시 읽힌다)
+export const MISS_KO = {
+  'M.notsaid': '나오지 않은 내용을 골랐어요',
+  'M.swap': '나온 정보를 엉뚱한 곳에 붙였어요',
+  'M.number': '숫자를 다른 항목에서 가져왔어요',
+  'M.opposite': '지문에 있는 낱말이지만 뜻이 반대예요',
+  'A.wrongkind': '묻는 말과 다른 종류로 답했어요',
+  'A.yesno': '골라 말해야 하는데 예·아니오로 답했어요',
+  'A.echo': '들린 낱말에 낚였어요',
+  'W.meaning': '낱말 뜻이 그 자리에 안 맞아요',
+  'G.clue': '단서가 되는 낱말을 놓쳤어요',
+  'G.pair': '짝이 되는 말이 빠졌어요',
+  'G.form': '낱말 모양이 안 맞아요',
+  'P.other': '다른 장면 사진이에요',
+  'F.offtopic': '앞뒤와 이어지지 않아요',
+};
+const MISS_MIN = 3;            // 이만큼은 걸려야 '자주'라고 부를 수 있다
+
+// 최근 오답에서 실수 유형 순위를 뽑는다. miss_type 은 {"보기번호": "코드"} 꼴의 JSON이라
+// SQL로 풀지 않고 여기서 센다 (오답만 읽으므로 양이 적다).
+export function rankMisses(rows, min = MISS_MIN) {
+  const count = new Map();
+  for (const r of rows) {
+    let map;
+    try { map = JSON.parse(r.miss_type); } catch { continue; }
+    const code = map?.[String(r.chosen_idx)];
+    if (!code || !MISS_KO[code]) continue;
+    count.set(code, (count.get(code) ?? 0) + 1);
+  }
+  return [...count.entries()]
+    .filter(([, n]) => n >= min)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([code, n]) => ({ code, name: MISS_KO[code], n }));
+}
+
 // '오늘'(KST 날짜 문자열)에서 며칠 앞뒤로 민 값.
 //  ...ISO는 answered_at(타임스탬프)과 비교용, ...Date는 date 컬럼과 비교용
 const kstMs = (date) => Date.parse(`${date}T00:00:00+09:00`);
@@ -263,7 +302,7 @@ const shiftDate = (date, days) => kstDate(kstMs(date), days);
 const toScore = (rating) => Math.max(0, Math.min(100, Math.round(((rating - 900) / 600) * 100)));
 
 export async function computeSkillMap(db, user, today = kstDate()) {
-  const [{ results: skills }, revive, speed, prev] = await Promise.all([
+  const [{ results: skills }, revive, speed, prev, { results: missRows }] = await Promise.all([
     db.prepare('SELECT tag_id, rating, attempts, correct FROM user_tag_skills WHERE user_id = ?1')
       .bind(user.id).all(),
     // 설욕률 — 전에 틀렸던 문제를 다시 만나 맞힌 비율. 정답률보다 정직하다
@@ -287,6 +326,13 @@ export async function computeSkillMap(db, user, today = kstDate()) {
     ).bind(user.id, shiftISO(today, -7), shiftISO(today, -14), GUESS_MS).first(),
     db.prepare('SELECT axes FROM user_skill_daily WHERE user_id = ?1 AND date <= ?2 ORDER BY date DESC LIMIT 1')
       .bind(user.id, shiftDate(today, -13)).first(),
+    // 실수 유형 — 최근 30일 오답만. 예전 버릇까지 세면 이미 고친 것이 계속 1위로 남는다
+    db.prepare(
+      `SELECT a.chosen_idx, q.miss_type
+         FROM answers a JOIN questions q ON q.id = a.question_id
+        WHERE a.user_id = ?1 AND a.is_correct = 0
+          AND a.answered_at >= ?2 AND q.miss_type IS NOT NULL AND q.miss_type != ''`
+    ).bind(user.id, shiftISO(today, -30)).all(),
   ]);
 
   const by = Object.fromEntries(skills.map((s) => [s.tag_id, s]));
@@ -319,6 +365,7 @@ export async function computeSkillMap(db, user, today = kstDate()) {
   return {
     axes,
     weakest: weakest ? { key: weakest.key, name: weakest.name, score: weakest.score } : null,
+    misses: rankMisses(missRows),
     revive: revive.met ? { met: revive.met, won: revive.won, rate: Math.round((revive.won / revive.met) * 100) } : null,
     speed: speed?.recent_n >= 5
       ? {

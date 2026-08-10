@@ -480,6 +480,23 @@ function radarSvg(axes) {
     <polygon class="rp-now" points="${poly(now)}"/>${dots}${labels}</svg>`;
 }
 
+// ── 요즘 자주 걸리는 실수 ──
+// 레이더는 '어디가' 약한지만 말한다. 이건 '왜' 틀리는지다 —
+// "듣고 알기 49점"보다 "나온 정보를 엉뚱한 곳에 붙였어요 6번"이 훨씬 고치기 쉽다.
+function missHtml(sm) {
+  const list = sm?.misses ?? [];
+  if (!list.length) return '';
+  return `<div class="misses">
+    <p class="card-note">요즘 자주 걸리는 실수</p>
+    ${list.map((m, i) => `
+      <div class="miss${i ? ' sub' : ''}">
+        <span class="miss-rank">${i + 1}</span>
+        <span class="miss-name">${esc(m.name)}</span>
+        <span class="miss-n">${m.n}번</span>
+      </div>`).join('')}
+  </div>`;
+}
+
 function skillCard(sm) {
   const axes = sm?.axes ?? [];
   const ready = axes.filter((a) => a.score != null);
@@ -489,14 +506,15 @@ function skillCard(sm) {
       <span class="sbt"><span class="sbf" style="width:${a.score}%"></span></span>
       <span class="sbn">${a.score}</span>
     </div>`).join('');
-  const head = sm?.weakest
-    ? `<p class="card-note">가장 약한 곳</p><p class="weak-name">${esc(sm.weakest.name)}</p>`
-    : `<p class="card-note">아직 실력을 재는 중이에요 — 문제를 풀면 채워져요</p>`;
+  // 예전엔 여기 "가장 약한 곳"을 적었는데, 바로 아래 첫 막대가 이미 그 축이라 같은 말이었다.
+  // 대신 '왜 틀리는가'(실수 유형)를 카드 아래에 붙인다 — 그림·막대가 못 하는 말이고,
+  // 고칠 행동이 바로 나온다. (그림 → 숫자 → 이유 순서)
+  const empty = ready.length ? '' : `<p class="card-note">아직 실력을 재는 중이에요 — 문제를 풀면 채워져요</p>`;
   return `<div class="card">
     <div class="card-head"><span class="card-title">내 실력 지도</span>
       <span class="card-note">${ready.length ? `${ready.length}/${axes.length}칸 측정` : '측정 전'}</span></div>
     ${radarSvg(axes.length ? axes : SKILL_AXIS_NAMES.map((name) => ({ name, score: null, was: null })))}
-    ${head}${bars}
+    ${empty}${bars}${missHtml(sm)}
   </div>`;
 }
 const SKILL_AXIS_NAMES = ['듣고 알기', '읽고 알기', '찾아내기', '문장 규칙', '속뜻 알기'];
