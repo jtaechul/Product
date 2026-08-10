@@ -308,7 +308,30 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
   background: var(--surface-2); border-radius: 12px; padding: 13px;
   font-size: .92rem; line-height: 1.75; white-space: pre-wrap;
 }
-.audio-box audio { width: 100%; }
+/* 문항 음원 재생기 — 브라우저 기본 플레이어 대신 우리 버튼.
+   재생바를 잡아당겨 건너뛸 수 없게 해서 실전 듣기와 어긋나지 않게 한다. */
+.audio-box {
+  display: flex; align-items: center; gap: 11px;
+  background: var(--surface-2); border-radius: 16px; padding: 11px 13px;
+}
+.play-btn {
+  flex: none; width: 44px; height: 44px; border-radius: 50%;
+  background: var(--primary); display: grid; place-items: center;
+  box-shadow: var(--shadow-pop); transition: transform .12s;
+}
+.play-btn:active { transform: scale(.94); }
+.play-btn svg { width: 20px; height: 20px; fill: #fff; margin-left: 2px; }
+.audio-box.is-playing .play-btn { animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(91,91,245,.14); } }
+.play-body { flex: 1; min-width: 0; }
+.play-track { height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.play-fill { height: 100%; width: 0; border-radius: 999px; background: var(--primary); transition: width .08s linear; }
+.play-body .notice { margin-top: 6px; }
+.play-slow {
+  flex: none; border: 1px solid var(--line); background: var(--surface);
+  border-radius: 999px; padding: 8px 12px; font-size: .78rem; font-weight: 700;
+  color: var(--muted); min-height: 40px;
+}
 .notice { font-size: .82rem; color: var(--muted); }
 .script-toggle {
   align-self: flex-start; border: 1px solid var(--line); border-radius: 9px;

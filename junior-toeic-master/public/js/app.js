@@ -190,6 +190,45 @@ function playSfx(name, fallback) {
   src.connect(g).connect(ctx.destination);
   src.start();
 }
+// ── 문항 음원 재생기 ──
+// <audio>를 쓰면 화면 위에 음악 컨트롤이 뜨고(폰에서는 듣던 음악까지 끊긴다),
+// 재생바를 잡아당겨 원하는 데로 건너뛸 수 있어 실전 듣기와 어긋난다.
+// 그래서 Web Audio로 직접 틀고, 버튼은 '다시 듣기' 하나만 둔다.
+const clipCache = {};                       // 주소 → 디코드된 소리 (한 번만 받는다)
+const loadClip = (url) => (clipCache[url] ||= fetch(url)
+  .then((r) => { if (!r.ok) throw new Error('음원 없음'); return r.arrayBuffer(); })
+  .then((b) => audio().decodeAudioData(b)));
+
+const player = { src: null, url: null, startedAt: 0, rate: 1, buf: null, raf: 0, onTick: null };
+
+function stopClip() {
+  if (player.src) { try { player.src.stop(); } catch { /* 이미 끝남 */ } player.src.onended = null; }
+  player.src = null;
+  cancelAnimationFrame(player.raf);
+  player.raf = 0;
+}
+
+// rate 1 = 보통 속도, 0.75 = 천천히
+async function playClip(url, rate = 1) {
+  const ctx = audio();
+  const buf = await loadClip(url);
+  stopClip();
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.playbackRate.value = rate;
+  src.connect(ctx.destination);
+  src.start();
+  Object.assign(player, { src, url, buf, rate, startedAt: ctx.currentTime });
+  src.onended = () => { if (player.src === src) { stopClip(); player.onTick?.(1, false); } };
+  const tick = () => {
+    if (player.src !== src) return;
+    const p = Math.min(1, ((ctx.currentTime - player.startedAt) * rate) / buf.duration);
+    player.onTick?.(p, true);
+    player.raf = requestAnimationFrame(tick);
+  };
+  tick();
+}
+
 // 파일을 못 쓸 때 대신 낼 합성음. 짧고 부드럽게 — 오답음은 특히 세지 않게.
 const sfx = {
   select: () => playSfx('select', () => sfxTone([[880, 0, 0.05]], 'sine', 0.035)),
@@ -1032,8 +1071,16 @@ function renderQuestion() {
   const audioUrl = first.audio_url || passage?.audio_url;
   const script = first.script || (first.section === 'LC' ? passage?.content : null);
   if (audioUrl) {
-    media = `<div class="audio-box"><audio controls preload="auto" src="${esc(audioUrl)}"></audio>
-      <p class="notice">음원은 자동으로 1번 나와요. 더 듣고 싶으면 재생 버튼을 누르세요.</p></div>`;
+    media = `<div class="audio-box" data-player>
+        <button class="play-btn" data-play aria-label="다시 듣기">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+        </button>
+        <div class="play-body">
+          <div class="play-track"><div class="play-fill" data-fill></div></div>
+          <p class="notice" data-play-note>소리가 한 번 나와요</p>
+        </div>
+        <button class="play-slow" data-slow>천천히</button>
+      </div>`;
   } else if (script) {
     media = `<p class="notice">음원 준비 중 — 지금은 스크립트로 확인해요.</p>
       <button class="script-toggle" data-toggle>스크립트 보기</button>
@@ -1091,10 +1138,27 @@ function renderQuestion() {
     </div>`;
 
   // 음원 자동 재생 (세트당 1회 — 브라우저가 막으면 재생 버튼으로)
-  const au = view.querySelector('audio');
-  if (au) au.play().catch(() => { /* 수동 재생 안내는 이미 표시됨 */ });
+  const playerBox = view.querySelector('[data-player]');
+  if (playerBox && audioUrl) {
+    const fill = playerBox.querySelector('[data-fill]');
+    const note = playerBox.querySelector('[data-play-note]');
+    const btn = playerBox.querySelector('[data-play]');
+    player.onTick = (p, playing) => {
+      fill.style.width = `${(p * 100).toFixed(1)}%`;
+      playerBox.classList.toggle('is-playing', playing);
+      if (!playing) note.textContent = '다시 듣고 싶으면 ▶ 를 누르세요';
+    };
+    const go = (rate) => playClip(audioUrl, rate).catch(() => {
+      note.textContent = '소리를 켜고 ▶ 를 눌러주세요';
+    });
+    btn.addEventListener('click', () => go(1));
+    playerBox.querySelector('[data-slow]').addEventListener('click', () => go(0.75));
+    go(1);
+  }
 
-  view.querySelector('[data-back]').addEventListener('click', () => { tabbarVisible(true); setTab('home'); showHome(); });
+  view.querySelector('[data-back]').addEventListener('click', () => {
+    stopClip(); tabbarVisible(true); setTab('home'); showHome();
+  });
   view.querySelector('[data-toggle]')?.addEventListener('click', (e) => {
     const box = view.querySelector('[data-script]');
     box.hidden = !box.hidden;
@@ -1103,6 +1167,7 @@ function renderQuestion() {
 
   const nextBtn = view.querySelector('[data-next]');
   const advanceGroup = () => {
+    stopClip();                 // 다음 문제로 넘어가면 앞 소리는 끊는다
     session.gidx += 1;
     renderQuestion();
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -1237,11 +1302,7 @@ function renderQuestion() {
           showReport(q.id, `문제풀이:${q.part}`));
         if (expr) rememberExpr(q, expr, r.correct);
         block.querySelector('[data-replay]')?.addEventListener('click', () => {
-          const a = view.querySelector('audio');
-          if (!a) return;
-          a.playbackRate = 0.75;   // 천천히 — 안 들리던 부분이 들린다
-          a.currentTime = 0;
-          a.play().catch(() => { /* 자동 재생 차단 시 재생 버튼으로 */ });
+          if (audioUrl) playClip(audioUrl, 0.75).catch(() => { /* 소리 꺼짐 */ });
         });
         (r.graduated ? sfx.done : r.correct ? sfx.correct : sfx.wrong)();
         if (r.correct) session.correct += 1;
