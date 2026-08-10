@@ -5,7 +5,7 @@ import { Hono } from 'hono';
 import {
   verifyPin, hashPin, makeToken, requireAuth, requireRole, verifyToken,
   loginLockedFor, noteLoginFail, clearLoginFails,
-  isStudentPin, isStaffSecret, STAFF_ROLES,
+  isStudentPin, isStaffSecret, STAFF_ROLES, SECRET_MIN,
 } from './auth.mjs';
 import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions } from './engine.mjs';
 
@@ -413,6 +413,50 @@ app.post('/api/feedback', async (c) => {
 //  지금까지는 계정을 늘리려면 손으로 SQL을 만들어 Cloudflare 콘솔에 붙여넣어야 했다.
 // ══════════════════════════════════════════════════════════════════
 const admin = [requireAuth, requireRole('super')];
+
+// ── 첫 관리자 만들기 (딱 한 번만 열리는 문) ──
+// 관리자 계정을 만드는 곳이 관리자 화면인데, 들어가려면 관리자 계정이 있어야 한다.
+// 그 닭과 달걀을 푸는 문이다. 대신 아래 조건이 아니면 절대 열리지 않는다:
+//   super 계정이 이 세상에 0개일 때만.
+// 하나라도 생기는 순간 이 문은 영구히 닫히고, 그 뒤로는 관리자 화면에서만 계정을 만든다.
+const superCount = async (db) =>
+  (await db.prepare(`SELECT COUNT(*) AS n FROM users WHERE role = 'super'`).first()).n;
+
+app.get('/api/setup/needed', async (c) => c.json({ needed: (await superCount(c.env.DB)) === 0 }));
+
+app.post('/api/setup/admin', async (c) => {
+  if (await superCount(c.env.DB)) {
+    return c.json({ error: '이미 관리자가 있습니다. 관리자 화면에서 로그인하세요.' }, 403);
+  }
+  const body = await c.req.json().catch(() => ({}));
+  const loginId = clean(body.login_id, 32).toUpperCase();
+  const secret = String(body.secret ?? '');
+  if (!/^[A-Z0-9-]{2,32}$/.test(loginId)) {
+    return c.json({ error: '아이디는 영문·숫자 2~32자입니다 (예: ADMIN)' }, 400);
+  }
+  if (!isStaffSecret(secret)) {
+    return c.json({ error: `비밀번호는 ${SECRET_MIN}자 이상이어야 합니다` }, 400);
+  }
+  const taken = await c.env.DB.prepare('SELECT 1 FROM users WHERE login_id = ?1').bind(loginId).first();
+  if (taken) return c.json({ error: '이미 쓰고 있는 아이디입니다' }, 409);
+
+  const id = crypto.randomUUID();
+  // 여기서도 한 번 더 확인한다 — 두 사람이 동시에 눌렀을 때 둘 다 통과하면 안 된다.
+  // D1은 트랜잭션 격리가 약해서, 조건부 INSERT 로 DB가 직접 막게 한다.
+  const r = await c.env.DB.prepare(
+    `INSERT INTO users (id, role, login_id, pin_hash, display_name, academy_id, class_id, created_at)
+     SELECT ?1, 'super', ?2, ?3, '관리자', NULL, NULL, ?4
+      WHERE NOT EXISTS (SELECT 1 FROM users WHERE role = 'super')`
+  ).bind(id, loginId, await hashPin(secret), nowISO()).run();
+  if (!r.meta?.changes) {
+    return c.json({ error: '이미 관리자가 있습니다. 관리자 화면에서 로그인하세요.' }, 403);
+  }
+  const user = await c.env.DB.prepare('SELECT * FROM users WHERE id = ?1').bind(id).first();
+  return c.json({
+    token: await makeToken(user),
+    user: { id: user.id, login_id: user.login_id, display_name: user.display_name, role: user.role },
+  });
+});
 const nowISO = () => new Date().toISOString();
 const clean = (s, max) => String(s ?? '').trim().slice(0, max);
 

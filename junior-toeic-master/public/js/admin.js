@@ -36,9 +36,59 @@ async function api(path, opts = {}) {
 
 // 로그인이 풀리면(토큰 만료·PIN 변경) 조용히 로그인 화면으로 돌려보낸다
 const guard = (e) => {
-  if (/로그인이 필요|권한이 없습니다/.test(e.message)) { saveAuth(null); showLogin(); return true; }
+  if (/로그인이 필요|권한이 없습니다/.test(e.message)) { saveAuth(null); start(); return true; }
   return false;
 };
+
+// 로그인 화면과 '처음 시작하기' 화면 중 맞는 쪽을 고른다
+function start() {
+  view.innerHTML = `<p class="empty">불러오는 중...</p>`;
+  api('/api/setup/needed')
+    .then((r) => (r.needed ? showSetup() : showLogin()))
+    .catch(showLogin);
+}
+
+// ── 처음 시작하기 ──
+// 관리자 계정이 하나도 없을 때만 나오는 화면. 하나 만들어지면 다시는 안 나온다.
+// (계정을 만드는 화면에 들어가려면 계정이 있어야 하는 닭과 달걀을 여기서 푼다)
+function showSetup() {
+  whoEl.textContent = '';
+  view.innerHTML = `
+    <div class="card login">
+      <div class="card-head"><span class="card-title">처음 시작하기</span></div>
+      <p class="card-note">관리자 계정이 아직 없습니다. 지금 만들어주세요.</p>
+      <div class="warn-box" style="margin:12px 0">이 화면은 <b>지금 딱 한 번만</b> 열립니다.
+        계정을 만들면 다시는 나오지 않으니, 다른 사람이 먼저 만들지 않도록 지금 정해주세요.</div>
+      <label class="field"><span>아이디 (영문·숫자)</span>
+        <input data-id value="ADMIN" maxlength="32" autocapitalize="characters" /></label>
+      <label class="field" style="margin-top:10px"><span>비밀번호 (12자 이상)</span>
+        <input data-pw type="password" autocomplete="new-password" placeholder="길게 정해주세요" /></label>
+      <label class="field" style="margin-top:10px"><span>비밀번호 다시</span>
+        <input data-pw2 type="password" autocomplete="new-password" /></label>
+      <p class="card-note" style="margin-top:8px">비밀번호는 서버에 암호로만 저장되어,
+        잃어버리면 아무도 다시 볼 수 없습니다. 비밀번호 관리 앱에 꼭 저장해두세요.</p>
+      <button class="btn" data-go>관리자 계정 만들기</button>
+      <p class="msg" data-msg></p>
+    </div>`;
+  const msg = view.querySelector('[data-msg]');
+  const go = async (e) => {
+    const login_id = view.querySelector('[data-id]').value.trim();
+    const secret = view.querySelector('[data-pw]').value;
+    const again = view.querySelector('[data-pw2]').value;
+    msg.className = 'msg bad';
+    if (secret.length < 12) { msg.textContent = '비밀번호를 12자 이상으로 정해주세요'; return; }
+    if (secret !== again) { msg.textContent = '두 비밀번호가 다릅니다'; return; }
+    e.target.disabled = true;
+    try {
+      const r = await api('/api/setup/admin', { method: 'POST', body: JSON.stringify({ login_id, secret }) });
+      saveAuth(r);           // 만들자마자 로그인 상태로 들어간다
+      showMain();
+    } catch (err) { msg.textContent = err.message; e.target.disabled = false; }
+  };
+  view.querySelector('[data-go]').addEventListener('click', go);
+  view.querySelectorAll('input').forEach((i) =>
+    i.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') go({ target: view.querySelector('[data-go]') }); }));
+}
 
 // ── 로그인 ──
 function showLogin() {
@@ -76,7 +126,7 @@ let pendingN = 0;
 
 async function showMain() {
   whoEl.innerHTML = `${esc(auth.user.login_id)} · <button class="btn ghost small" data-out>로그아웃</button>`;
-  whoEl.querySelector('[data-out]').addEventListener('click', () => { saveAuth(null); showLogin(); });
+  whoEl.querySelector('[data-out]').addEventListener('click', () => { saveAuth(null); start(); });
   view.innerHTML = `<p class="empty">불러오는 중...</p>`;
   try {
     const o = await api('/api/admin/overview');
@@ -366,4 +416,6 @@ async function showFeedback() {
   } catch (e) { if (!guard(e)) view.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; }
 }
 
-auth ? showMain() : showLogin();
+// 이미 로그인돼 있으면 바로 메인. 아니면 관리자가 아예 없는지 먼저 물어보고,
+// 없으면 '처음 시작하기', 있으면 평범한 로그인 화면.
+auth ? showMain() : start();
