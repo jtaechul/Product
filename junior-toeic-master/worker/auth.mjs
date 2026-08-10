@@ -49,11 +49,63 @@ export async function verifyToken(db, token) {
   return sig === want ? user : null;
 }
 
+// ── 로그인 시도 제한 ──
+// PIN이 저엔트로피라(6자리 = 100만 가지) 막지 않으면 스크립트로 다 넣어볼 수 있다.
+// 실패가 쌓일수록 잠금이 길어지고, 한 번 성공하면 0으로 돌아간다.
+// 잠금을 짧게 시작하는 이유: 남의 아이디를 일부러 잠가 괴롭히는 것도 막아야 한다.
+const LOCK_STEPS = [
+  { fails: 20, minutes: 30 },
+  { fails: 10, minutes: 5 },
+  { fails: 5, minutes: 1 },
+];
+const lockMinutes = (fails) => LOCK_STEPS.find((s) => fails >= s.fails)?.minutes ?? 0;
+
+// 지금 잠겨 있으면 남은 초, 아니면 0
+export async function loginLockedFor(db, loginId) {
+  const row = await db.prepare('SELECT locked_until FROM login_attempts WHERE login_id = ?1')
+    .bind(loginId).first();
+  if (!row?.locked_until) return 0;
+  const left = Math.ceil((Date.parse(row.locked_until) - Date.now()) / 1000);
+  return left > 0 ? left : 0;
+}
+
+export async function noteLoginFail(db, loginId) {
+  const row = await db.prepare('SELECT fails FROM login_attempts WHERE login_id = ?1')
+    .bind(loginId).first();
+  const fails = (row?.fails ?? 0) + 1;
+  const mins = lockMinutes(fails);
+  const until = mins ? new Date(Date.now() + mins * 60_000).toISOString() : null;
+  await db.prepare(
+    `INSERT INTO login_attempts (login_id, fails, last_fail_at, locked_until) VALUES (?1, ?2, ?3, ?4)
+     ON CONFLICT(login_id) DO UPDATE SET fails = ?2, last_fail_at = ?3, locked_until = ?4`
+  ).bind(loginId, fails, new Date().toISOString(), until).run();
+  return { fails, lockedSeconds: mins * 60 };
+}
+
+export const clearLoginFails = (db, loginId) =>
+  db.prepare('DELETE FROM login_attempts WHERE login_id = ?1').bind(loginId).run();
+
+// ── 비밀번호 형식 ──
+// 학생은 6자리 숫자 PIN 그대로(아이들이 외워야 한다). 관리자·강사는 계정을 발급할 수 있는
+// 권한이라 6자리로는 부족하다 — 12자 이상 긴 비밀번호를 쓴다.
+// (긴 비밀번호는 엔트로피가 충분해서 지금의 SHA-256 해시로도 오프라인 공격에 견딘다.)
+export const STAFF_ROLES = ['teacher', 'academy_admin', 'super'];
+export const SECRET_MIN = 12;
+export const isStudentPin = (s) => /^\d{6}$/.test(String(s ?? ''));
+export const isStaffSecret = (s) => typeof s === 'string' && s.length >= SECRET_MIN && s.length <= 200;
+
 // Hono 미들웨어 — c.get('user')에 사용자 행을 싣는다
 export const requireAuth = async (c, next) => {
   const m = /^Bearer\s+(.+)$/.exec(c.req.header('Authorization') || '');
   const user = m ? await verifyToken(c.env.DB, m[1]) : null;
   if (!user) return c.json({ error: '로그인이 필요합니다' }, 401);
   c.set('user', user);
+  await next();
+};
+
+// 역할 제한 — requireAuth 뒤에 붙여 쓴다. 권한이 없으면 404가 아니라 403으로 분명히 막는다.
+export const requireRole = (...roles) => async (c, next) => {
+  const u = c.get('user');
+  if (!u || !roles.includes(u.role)) return c.json({ error: '권한이 없습니다' }, 403);
   await next();
 };

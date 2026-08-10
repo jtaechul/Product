@@ -2,7 +2,11 @@
 // 절대 규칙: 문항을 내려주는 어떤 응답에도 answer_idx·explanation_ko를 포함하지 않는다.
 // 채점 엔드포인트만 정답에 접근한다. (docs/engine.md · PRD 6절)
 import { Hono } from 'hono';
-import { verifyPin, makeToken, requireAuth, verifyToken } from './auth.mjs';
+import {
+  verifyPin, hashPin, makeToken, requireAuth, requireRole, verifyToken,
+  loginLockedFor, noteLoginFail, clearLoginFails,
+  isStudentPin, isStaffSecret, STAFF_ROLES,
+} from './auth.mjs';
 import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions } from './engine.mjs';
 
 // 진단 답안 일괄 채점·기록 (Elo·SRS 미반영 — engine.md 4절)
@@ -95,16 +99,41 @@ const PART_RE = /^(L[1-4]|R[1-3])$/;
 // ── 인증 (M2): 학원 발급 로그인ID + 6자리 PIN ──
 app.post('/api/auth/login', async (c) => {
   const { login_id, pin } = await c.req.json().catch(() => ({}));
-  if (typeof login_id !== 'string' || !/^\d{6}$/.test(String(pin))) {
-    return c.json({ error: '로그인ID와 6자리 PIN을 입력하세요' }, 400);
+  // 학생은 6자리 숫자, 관리자·강사는 12자 이상 긴 비밀번호. 둘 다 여기로 들어온다.
+  // 로그인ID 길이도 여기서 막는다 — 실패는 아이디별로 기록하므로, 길이를 안 막으면
+  // 아무 문자열이나 던져 login_attempts 표를 무한히 부풀릴 수 있다.
+  if (typeof login_id !== 'string' || login_id.trim().length < 1 || login_id.trim().length > 32
+      || !(isStudentPin(pin) || isStaffSecret(pin))) {
+    return c.json({ error: '로그인ID와 비밀번호를 확인하세요' }, 400);
   }
+  const id = login_id.trim().toUpperCase();
+
+  // 잠겨 있으면 PIN을 보지도 않는다 — 맞는지 틀리는지조차 알려주면 안 된다
+  const lockLeft = await loginLockedFor(c.env.DB, id);
+  if (lockLeft > 0) {
+    const m = Math.ceil(lockLeft / 60);
+    return c.json({ error: `여러 번 틀려서 잠겼어요. ${m}분 뒤에 다시 해주세요` }, 429);
+  }
+
   const user = await c.env.DB.prepare(
     'SELECT * FROM users WHERE login_id = ?1'
-  ).bind(login_id.trim().toUpperCase()).first();
+  ).bind(id).first();
   // 계정 존재 여부를 구분해 알려주지 않는다 (계정 추측 방지)
+  // — 없는 계정도 실패로 기록한다. 안 그러면 "잠기는 아이디 = 있는 아이디"가 되어 버린다.
   if (!user || !(await verifyPin(String(pin), user.pin_hash))) {
-    return c.json({ error: '로그인ID 또는 PIN이 맞지 않아요' }, 401);
+    const { lockedSeconds } = await noteLoginFail(c.env.DB, id);
+    return c.json({
+      error: lockedSeconds
+        ? `여러 번 틀려서 ${Math.ceil(lockedSeconds / 60)}분 동안 잠겼어요`
+        : '로그인ID 또는 비밀번호가 맞지 않아요',
+    }, lockedSeconds ? 429 : 401);
   }
+  // 학생 계정에 긴 비밀번호로, 관리자 계정에 6자리로 들어오는 일은 없어야 한다
+  if (STAFF_ROLES.includes(user.role) && !isStaffSecret(pin)) {
+    await noteLoginFail(c.env.DB, id);
+    return c.json({ error: '로그인ID 또는 비밀번호가 맞지 않아요' }, 401);
+  }
+  await clearLoginFails(c.env.DB, id);
   return c.json({
     token: await makeToken(user),
     user: { id: user.id, login_id: user.login_id, display_name: user.display_name, role: user.role },
@@ -377,6 +406,175 @@ app.post('/api/feedback', async (c) => {
     typeof screen === 'string' ? screen.slice(0, 40) : null,
     new Date().toISOString()).run();
   return c.json({ ok: true });
+});
+
+// ══════════════════════════════════════════════════════════════════
+//  관리자 API — 전부 super 전용. 학원·반·학생 계정 발급과 신고 확인.
+//  지금까지는 계정을 늘리려면 손으로 SQL을 만들어 Cloudflare 콘솔에 붙여넣어야 했다.
+// ══════════════════════════════════════════════════════════════════
+const admin = [requireAuth, requireRole('super')];
+const nowISO = () => new Date().toISOString();
+const clean = (s, max) => String(s ?? '').trim().slice(0, max);
+
+// 학생 PIN은 서버가 만든다. 사람이 정하면 1234·0000 같은 걸 쓰고, 무엇보다
+// 응답으로 한 번 보여준 뒤로는 아무도(나조차) 다시 볼 수 없어야 한다 — 해시만 남는다.
+function makePin() {
+  const b = new Uint32Array(1);
+  crypto.getRandomValues(b);
+  return String(b[0] % 1_000_000).padStart(6, '0');
+}
+
+// 한눈에 보는 현황
+app.get('/api/admin/overview', ...admin, async (c) => {
+  const [{ results: academies }, pending] = await Promise.all([
+    c.env.DB.prepare(
+      `SELECT a.id, a.name, a.join_code, a.status,
+              (SELECT COUNT(*) FROM classes WHERE academy_id = a.id) AS classes,
+              (SELECT COUNT(*) FROM users WHERE academy_id = a.id AND role = 'student') AS students,
+              (SELECT COUNT(*) FROM answers an JOIN users u ON u.id = an.user_id
+                WHERE u.academy_id = a.id) AS answers
+         FROM academies a ORDER BY a.created_at`
+    ).all(),
+    c.env.DB.prepare('SELECT COUNT(*) AS n FROM feedback WHERE handled_at IS NULL').first(),
+  ]);
+  return c.json({ academies, feedback_pending: pending.n });
+});
+
+// 반 목록 (학원 하나)
+app.get('/api/admin/classes', ...admin, async (c) => {
+  const academyId = c.req.query('academy_id');
+  if (!academyId) return c.json({ error: 'academy_id가 필요합니다' }, 400);
+  const { results } = await c.env.DB.prepare(
+    `SELECT c2.id, c2.name, c2.grade, c2.set_size,
+            (SELECT COUNT(*) FROM users WHERE class_id = c2.id AND role = 'student') AS students
+       FROM classes c2 WHERE c2.academy_id = ?1 ORDER BY c2.created_at`
+  ).bind(academyId).all();
+  return c.json({ classes: results });
+});
+
+// 학생 목록 (반 하나) — PIN은 해시만 있으므로 여기서 볼 수 없다
+app.get('/api/admin/students', ...admin, async (c) => {
+  const classId = c.req.query('class_id');
+  if (!classId) return c.json({ error: 'class_id가 필요합니다' }, 400);
+  const { results } = await c.env.DB.prepare(
+    `SELECT u.id, u.login_id, u.display_name, u.created_at,
+            (SELECT COUNT(*) FROM answers WHERE user_id = u.id) AS answers,
+            (SELECT MAX(date(answered_at, '+9 hours')) FROM answers WHERE user_id = u.id) AS last_day
+       FROM users u WHERE u.class_id = ?1 AND u.role = 'student' ORDER BY u.login_id`
+  ).bind(classId).all();
+  return c.json({ students: results });
+});
+
+app.post('/api/admin/academy', ...admin, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const name = clean(body.name, 40);
+  // 가입코드는 학생 로그인ID의 앞자리가 된다(JUMP-1). 영문 대문자·숫자만 받는다.
+  const code = clean(body.join_code, 12).toUpperCase();
+  if (!name) return c.json({ error: '학원 이름을 입력하세요' }, 400);
+  if (!/^[A-Z0-9]{2,12}$/.test(code)) return c.json({ error: '가입코드는 영문 대문자·숫자 2~12자입니다' }, 400);
+  const dup = await c.env.DB.prepare('SELECT 1 FROM academies WHERE join_code = ?1').bind(code).first();
+  if (dup) return c.json({ error: `가입코드 ${code}는 이미 쓰고 있어요` }, 409);
+  const id = crypto.randomUUID();
+  await c.env.DB.prepare(
+    `INSERT INTO academies (id, name, join_code, status, created_at) VALUES (?1, ?2, ?3, 'active', ?4)`
+  ).bind(id, name, code, nowISO()).run();
+  return c.json({ academy: { id, name, join_code: code } });
+});
+
+app.post('/api/admin/class', ...admin, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const name = clean(body.name, 30);
+  const grade = clean(body.grade, 10) || null;
+  const setSize = Number(body.set_size);
+  const academy = await c.env.DB.prepare('SELECT id FROM academies WHERE id = ?1')
+    .bind(clean(body.academy_id, 40)).first();
+  if (!academy) return c.json({ error: '학원을 찾을 수 없습니다' }, 404);
+  if (!name) return c.json({ error: '반 이름을 입력하세요' }, 400);
+  // 하루 문항 수 — 초3~4는 12문항, 초5~중3은 20문항이 기본값(PRD 4-2)
+  if (!Number.isInteger(setSize) || setSize < 4 || setSize > 40) {
+    return c.json({ error: '하루 문항 수는 4~40 사이입니다' }, 400);
+  }
+  const id = crypto.randomUUID();
+  await c.env.DB.prepare(
+    `INSERT INTO classes (id, academy_id, name, grade, set_size, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
+  ).bind(id, academy.id, name, grade, setSize, nowISO()).run();
+  return c.json({ class: { id, name, grade, set_size: setSize } });
+});
+
+// 학생 일괄 발급 — 이름 목록을 받아 계정을 만들고 PIN을 딱 한 번 돌려준다.
+// 응답을 닫으면 PIN은 어디에도 없다(해시만 저장). 다시 필요하면 재발급해야 한다.
+app.post('/api/admin/students', ...admin, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const names = Array.isArray(body.names) ? body.names.map((n) => clean(n, 12)).filter(Boolean) : [];
+  if (!names.length) return c.json({ error: '학생 이름을 한 명 이상 입력하세요' }, 400);
+  if (names.length > 50) return c.json({ error: '한 번에 50명까지 만들 수 있어요' }, 400);
+
+  const klass = await c.env.DB.prepare(
+    `SELECT c2.id, c2.academy_id, a.join_code FROM classes c2
+       JOIN academies a ON a.id = c2.academy_id WHERE c2.id = ?1`
+  ).bind(clean(body.class_id, 40)).first();
+  if (!klass) return c.json({ error: '반을 찾을 수 없습니다' }, 404);
+
+  // 로그인ID는 가입코드-순번. 이미 쓰던 번호 뒤에서 이어 붙인다 —
+  // 학생이 빠져나가 번호가 비어도 재사용하지 않는다(옛 기록과 헷갈린다).
+  const { results: used } = await c.env.DB.prepare(
+    `SELECT login_id FROM users WHERE academy_id = ?1 AND login_id LIKE ?2`
+  ).bind(klass.academy_id, `${klass.join_code}-%`).all();
+  let next = used.reduce((mx, r) => {
+    const n = Number(String(r.login_id).slice(klass.join_code.length + 1));
+    return Number.isInteger(n) && n > mx ? n : mx;
+  }, 0);
+
+  const created = [];
+  const stmts = [];
+  for (const name of names) {
+    next += 1;
+    const pin = makePin();
+    created.push({ login_id: `${klass.join_code}-${next}`, display_name: name, pin });
+    stmts.push(c.env.DB.prepare(
+      `INSERT INTO users (id, role, login_id, pin_hash, display_name, academy_id, class_id, created_at)
+       VALUES (?1, 'student', ?2, ?3, ?4, ?5, ?6, ?7)`
+    ).bind(crypto.randomUUID(), `${klass.join_code}-${next}`, await hashPin(pin),
+      name, klass.academy_id, klass.id, nowISO()));
+  }
+  await c.env.DB.batch(stmts);   // 한 트랜잭션 — 중간에 끊겨 반만 만들어지는 일이 없다
+  return c.json({ students: created, note: 'PIN은 지금 한 번만 보입니다. 닫으면 다시 볼 수 없어요.' });
+});
+
+// PIN 재발급 — 아이가 잊었을 때. 새 PIN도 이 응답에서 한 번만 보인다.
+app.post('/api/admin/student/:id/pin', ...admin, async (c) => {
+  const u = await c.env.DB.prepare(`SELECT id, login_id FROM users WHERE id = ?1 AND role = 'student'`)
+    .bind(c.req.param('id')).first();
+  if (!u) return c.json({ error: '학생을 찾을 수 없습니다' }, 404);
+  const pin = makePin();
+  await c.env.DB.prepare('UPDATE users SET pin_hash = ?2 WHERE id = ?1')
+    .bind(u.id, await hashPin(pin)).run();
+  // PIN이 바뀌면 그 학생의 기존 토큰은 전부 무효가 된다(토큰 서명 키가 pin_hash라서).
+  await clearLoginFails(c.env.DB, u.login_id);
+  return c.json({ login_id: u.login_id, pin });
+});
+
+// 신고 목록 — 아이가 어느 문항에서 막혔는지. 기본은 아직 안 본 것만.
+app.get('/api/admin/feedback', ...admin, async (c) => {
+  const all = c.req.query('all') === '1';
+  const { results } = await c.env.DB.prepare(
+    `SELECT f.id, f.kind, f.note, f.screen, f.created_at, f.handled_at,
+            f.question_id, q.part, q.stem, u.login_id, u.display_name
+       FROM feedback f
+       LEFT JOIN questions q ON q.id = f.question_id
+       LEFT JOIN users u ON u.id = f.user_id
+      ${all ? '' : 'WHERE f.handled_at IS NULL'}
+      ORDER BY f.created_at DESC LIMIT 200`
+  ).all();
+  return c.json({ feedback: results });
+});
+
+app.post('/api/admin/feedback/:id/handled', ...admin, async (c) => {
+  const done = (await c.req.json().catch(() => ({})))?.done !== false;
+  const r = await c.env.DB.prepare('UPDATE feedback SET handled_at = ?2, handled_by = ?3 WHERE id = ?1')
+    .bind(c.req.param('id'), done ? nowISO() : null, done ? c.get('user').id : null).run();
+  if (!r.meta?.changes) return c.json({ error: '신고를 찾을 수 없습니다' }, 404);
+  return c.json({ ok: true, handled: done });
 });
 
 app.get('/api/health', async (c) => {

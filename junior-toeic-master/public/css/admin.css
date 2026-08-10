@@ -1,0 +1,164 @@
+/* 점프리시 관리자 — 학생 앱과 달리 데스크톱에서 쓴다(원장·운영자가 PC로 계정을 만든다).
+   색·글꼴은 학생 앱과 같은 토큰을 쓰되, 레이아웃은 넓은 화면 기준이다. */
+
+@font-face {
+  font-family: "KoPubWorldDotum";
+  src: url("/fonts/KoPubWorldDotumLight.woff2") format("woff2");
+  font-weight: 300; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "KoPubWorldDotum";
+  src: url("/fonts/KoPubWorldDotumMedium.woff2") format("woff2");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "KoPubWorldDotum";
+  src: url("/fonts/KoPubWorldDotumBold.woff2") format("woff2");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+
+:root {
+  --primary: #5b5bf5;
+  --primary-soft: #eceaff;
+  --grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #a855f7 100%);
+  --ok: #12a06a;
+  --ok-soft: #dcf7ec;
+  --warn: #b07d12;
+  --warn-soft: #fdf3dd;
+  --bad: #e0455a;
+  --bad-soft: #ffe9ec;
+  --bg: #f2f3fb;
+  --surface: #ffffff;
+  --surface-2: #f0f1fa;
+  --text: #171a2b;
+  --muted: #6b7392;
+  --line: #e4e6f2;
+  --radius: 16px;
+  --shadow: 0 2px 18px -10px rgba(20, 22, 43, .3);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "KoPubWorldDotum", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg); color: var(--text); font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+input, select, textarea { font: inherit; color: inherit; }
+
+/* ── 뼈대 ── */
+.top {
+  background: var(--surface); border-bottom: 1px solid var(--line);
+  padding: 0 24px; height: 60px; display: flex; align-items: center; gap: 12px;
+  position: sticky; top: 0; z-index: 10;
+}
+.mark { width: 30px; height: 30px; border-radius: 9px; background: var(--grad); display: grid; place-items: center; }
+.mark svg { width: 18px; height: 13px; }
+.top h1 { font-size: 1.02rem; font-weight: 700; letter-spacing: -.03em; }
+.top .who { margin-left: auto; font-size: .84rem; color: var(--muted); font-weight: 700; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 22px 24px 60px; }
+
+/* ── 탭 ── */
+.tabs { display: flex; gap: 6px; margin-bottom: 18px; }
+.tabs button {
+  padding: 9px 16px; border-radius: 999px; font-size: .88rem; font-weight: 700;
+  color: var(--muted); background: var(--surface);
+  border: 1px solid var(--line);
+}
+.tabs button[aria-current] { background: var(--primary); color: #fff; border-color: var(--primary); }
+.tabs .badge {
+  display: inline-grid; place-items: center; min-width: 19px; height: 19px; padding: 0 5px;
+  margin-left: 6px; border-radius: 999px; background: var(--bad); color: #fff;
+  font-size: .68rem; font-weight: 800;
+}
+.tabs button[aria-current] .badge { background: rgba(255,255,255,.28); }
+
+/* ── 카드 ── */
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 18px; box-shadow: var(--shadow); margin-bottom: 14px;
+}
+.card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.card-title { font-size: .98rem; font-weight: 700; letter-spacing: -.02em; }
+.card-note { font-size: .8rem; color: var(--muted); font-weight: 500; }
+.card-head .card-note { margin-left: auto; }
+
+/* ── 목록 ── */
+.rows { display: flex; flex-direction: column; }
+.row {
+  display: flex; align-items: center; gap: 14px; padding: 11px 0;
+  border-bottom: 1px solid var(--line); text-align: left; width: 100%;
+}
+.row:last-child { border-bottom: 0; }
+button.row:hover { background: var(--surface-2); }
+.row-main { flex: 1; min-width: 0; }
+.row-t { display: block; font-size: .92rem; font-weight: 700; }
+.row-s { display: block; font-size: .78rem; color: var(--muted); margin-top: 2px; }
+.row-num { font-size: .82rem; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chip {
+  font-size: .7rem; font-weight: 800; padding: 3px 8px; border-radius: 999px;
+  background: var(--primary-soft); color: var(--primary); white-space: nowrap;
+}
+.chip.k-audio { background: var(--warn-soft); color: var(--warn); }
+.chip.k-image { background: var(--primary-soft); color: var(--primary); }
+.chip.k-hard  { background: var(--surface-2); color: var(--muted); }
+.chip.k-answer{ background: var(--bad-soft); color: var(--bad); }
+.chip.k-etc   { background: var(--surface-2); color: var(--muted); }
+.chip.done    { background: var(--ok-soft); color: var(--ok); }
+
+/* ── 버튼 ── */
+.btn {
+  padding: 9px 15px; border-radius: 11px; font-size: .86rem; font-weight: 700;
+  background: var(--primary); color: #fff;
+}
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.ghost { background: var(--surface); color: var(--text); border: 1px solid var(--line); }
+.btn.small { padding: 6px 11px; font-size: .8rem; border-radius: 9px; }
+
+/* ── 폼 ── */
+.form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field span { font-size: .76rem; font-weight: 700; color: var(--muted); }
+.field input, .field select, .field textarea {
+  padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--surface); min-width: 150px;
+}
+.field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+.field textarea { min-width: 320px; resize: vertical; }
+.msg { font-size: .84rem; font-weight: 700; margin-top: 10px; }
+.msg.bad { color: var(--bad); }
+.msg.ok { color: var(--ok); }
+.empty { color: var(--muted); font-size: .86rem; padding: 14px 0; text-align: center; }
+
+/* ── 로그인 ── */
+.login { max-width: 380px; margin: 90px auto; }
+.login .field { width: 100%; }
+.login .field input { width: 100%; }
+.login .btn { width: 100%; margin-top: 4px; }
+
+/* ── 발급 결과 (PIN은 여기서 한 번만 보인다) ── */
+.back {
+  position: fixed; inset: 0; background: rgba(16, 18, 34, .5);
+  display: grid; place-items: center; padding: 20px; z-index: 50;
+}
+.modal {
+  background: var(--surface); border-radius: 18px; padding: 22px;
+  width: min(560px, 100%); max-height: 84vh; overflow: auto; box-shadow: 0 20px 60px -20px rgba(0,0,0,.4);
+}
+.modal h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; }
+.warn-box {
+  background: var(--warn-soft); color: var(--warn); border-radius: 11px;
+  padding: 10px 13px; font-size: .82rem; font-weight: 700; margin: 12px 0;
+}
+table.pins { width: 100%; border-collapse: collapse; margin-top: 6px; }
+table.pins th, table.pins td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); font-size: .88rem; }
+table.pins th { font-size: .74rem; color: var(--muted); font-weight: 700; }
+table.pins td.pin { font-variant-numeric: tabular-nums; font-weight: 800; letter-spacing: .06em; }
+.modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+.modal-actions .btn { flex: 1; }
+
+@media (max-width: 640px) {
+  .wrap { padding: 16px 14px 50px; }
+  .field textarea, .field input, .field select { min-width: 0; width: 100%; }
+  .form { flex-direction: column; align-items: stretch; }
+}
