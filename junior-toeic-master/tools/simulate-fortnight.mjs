@@ -52,8 +52,10 @@ const db = {
 // ── 가상의 학생 한 명 ──
 let USER = { id: 'SIM-USER', class_id: 'SIM-CLASS', display_name: '시뮬' };
 sqlite.exec(`DELETE FROM answers WHERE user_id = 'SIM-USER';
+             DELETE FROM daily_sets WHERE user_id = 'SIM-USER';
              DELETE FROM review_queue WHERE user_id = 'SIM-USER';
              DELETE FROM user_tag_skills WHERE user_id = 'SIM-USER';
+             DELETE FROM user_skill_daily WHERE user_id = 'SIM-USER';
              DELETE FROM sessions WHERE user_id = 'SIM-USER';`);
 sqlite.prepare(`INSERT OR REPLACE INTO classes (id, academy_id, name, grade, set_size, created_at)
                 VALUES ('SIM-CLASS', 'ACAD-DEMO', '시뮬반', '초5', ?, '2026-01-01T00:00:00Z')`).run(SET_SIZE);
@@ -64,7 +66,10 @@ if (LOGIN_ID) {
   if (!row) { console.error(`로그인ID ${LOGIN_ID} 계정이 없습니다`); process.exit(1); }
   USER = { ...row, display_name: LOGIN_ID };
   console.log(`${LOGIN_ID} 계정에 기록합니다 (기존 기록은 지웁니다)`);
-  for (const t of ['answers', 'review_queue', 'user_tag_skills', 'sessions', 'daily_sets', 'user_skill_daily', 'user_stats'])
+  // sessions 를 참조하는 표(daily_sets·assignment_targets·answers)를 먼저 지운다 —
+  // 순서를 바꾸면 FOREIGN KEY constraint failed 로 멈춘다
+  for (const t of ['answers', 'daily_sets', 'assignment_targets', 'review_queue',
+                   'user_tag_skills', 'user_skill_daily', 'user_daily_stats', 'user_stats', 'sessions'])
     sqlite.prepare(`DELETE FROM ${t} WHERE user_id = ?`).run(row.id);
 }
 
@@ -77,6 +82,8 @@ const dayStr = (i) => {
   d.setUTCDate(d.getUTCDate() - (DAYS - 1) + i);
   return d.toISOString().slice(0, 10);
 };
+
+const sid = (date) => `S-${USER.id}-${date}`;
 
 const PARTS = ['L1', 'L2', 'L3', 'L4', 'R1', 'R2', 'R3'];
 const seenOn = new Map();           // question_id → 마지막으로 푼 날(인덱스)
@@ -93,7 +100,7 @@ for (let day = 0; day < DAYS; day++) {
   ).all(USER.id, today).map((r) => r.question_id));
 
   sqlite.prepare(`INSERT OR REPLACE INTO sessions (id, user_id, type, question_ids, started_at)
-                  VALUES (?, ?, 'daily', '[]', ?)`).run(`S-${today}`, USER.id, `${today}T09:00:00.000Z`);
+                  VALUES (?, ?, 'daily', '[]', ?)`).run(sid(today), USER.id, `${today}T09:00:00.000Z`);
   const { ids } = await composeDailySet(db, USER, today);
   const parts = Object.fromEntries(PARTS.map((p) => [p, 0]));
   let dup = 0;
@@ -109,16 +116,20 @@ for (let day = 0; day < DAYS; day++) {
     const p = 1 / (1 + 10 ** ((row.rating - SKILL) / 400));
     const correct = Math.abs(Math.sin((day + 1) * 7919 + id.length * 31 + id.charCodeAt(12))) < p;
     const chosen = correct ? row.answer_idx : (row.answer_idx + 1) % 4;
+    // 푸는 시간도 흉내 낸다 — 익숙해질수록 조금씩 빨라지고, 문항마다 들쭉날쭉하다.
+    // 고정값(9초)으로 넣으면 '빠르기' 화면이 늘 "지난주와 같음"이 되어 검증이 안 된다.
+    const jitter = Math.abs(Math.sin((day + 3) * 104729 + id.length * 17)) * 5000 - 2500;
+    const timeMs = Math.max(2200, Math.round(12000 - day * 260 + jitter));
     sqlite.prepare(`INSERT INTO answers (id, session_id, user_id, question_id, chosen_idx, is_correct, time_ms, answered_at)
-                    VALUES (?, ?, ?, ?, ?, ?, 9000, ?)`)
-      .run(`${today}-${id}`, `S-${today}`, USER.id, id, chosen, correct ? 1 : 0, `${today}T09:00:00.000Z`);
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(`${USER.id}-${today}-${id}`, sid(today), USER.id, id, chosen, correct ? 1 : 0, timeMs, `${today}T09:00:00.000Z`);
     // 틀리면 복습 큐에 (SRS 1일 뒤) — 실제 recordAnswer와 같은 효과만 흉내
     if (!correct) {
       const next = dayStr(day + 1);
       sqlite.prepare(`INSERT INTO review_queue (id, user_id, question_id, box, due_at, created_at)
                       VALUES (?, ?, ?, 1, ?, ?)
                       ON CONFLICT(user_id, question_id) DO UPDATE SET box = 1, due_at = excluded.due_at`)
-        .run(`RQ-${id}`, USER.id, id, next, `${today}T09:00:00.000Z`);
+        .run(`RQ-${USER.id}-${id}`, USER.id, id, next, `${today}T09:00:00.000Z`);
     } else if (dueIds.has(id)) {
       sqlite.prepare(`UPDATE review_queue SET box = box + 1, due_at = ?
                        WHERE user_id = ? AND question_id = ?`)
