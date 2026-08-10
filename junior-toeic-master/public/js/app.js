@@ -255,7 +255,11 @@ function appBar() {
   return `
     <div class="appbar">
       <div class="appbar-brand">
-        <span class="appbar-mark"><svg viewBox="0 0 24 24"><path d="M3 20 L9 6 L13 14 L16 9 L21 20 Z"/></svg></span>
+        <span class="appbar-mark"><svg viewBox="0.5 4 23 17" aria-hidden="true">
+          <path d="M1.5 20 L6 13.5 L10.5 20 Z" fill="#fff" opacity=".4"/>
+          <path d="M7 20 L12 10 L17 20 Z" fill="#fff" opacity=".7"/>
+          <path d="M13 20 L18 5.5 L23 20 Z" fill="#fff"/>
+        </svg></span>
         <span class="appbar-name">점프리시</span>
       </div>
       <button class="avatar-btn" data-profile aria-label="내 정보와 설정">
