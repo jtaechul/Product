@@ -336,6 +336,7 @@ function showSettings() {
         back.querySelector('h2').textContent = `${r.display_name} 님`;
         input.value = r.display_name;
         msg.textContent = '바뀌었어요.';
+        rerenderTab();          // 뒤에 깔린 화면의 인사말까지 바로 바꾼다
         sfx.correct();
       } catch (e) {
         msg.textContent = e.message;      // 서버가 이유를 아이 말로 돌려준다
@@ -361,11 +362,15 @@ function setTab(name) {
     else b.removeAttribute('aria-current');
   });
 }
+const TAB_VIEWS = { home: showHome, review: showReview, record: showRecord, parts: showParts };
+// 설정에서 무언가 바꾸면(이름 등) 지금 보고 있는 화면을 다시 그린다.
+// 안 그리면 저장은 됐는데 화면엔 옛 이름이 남아 "안 바뀐다"고 느끼게 된다.
+const rerenderTab = () => TAB_VIEWS[currentTab]?.();
 tabbar.addEventListener('click', (e) => {
   const btn = e.target.closest('.tab');
   if (!btn) return;
   setTab(btn.dataset.tab);
-  ({ home: showHome, review: showReview, record: showRecord, parts: showParts }[btn.dataset.tab])();
+  TAB_VIEWS[btn.dataset.tab]?.();
 });
 const tabbarVisible = (on) => {
   tabbar.style.display = on ? 'flex' : 'none';
@@ -494,7 +499,14 @@ async function showHome() {
     let reviewN = store.wrong.length;
     let me = null, sm = null;
     if (auth) {
-      try { me = await api('/api/me', { headers: authHeaders() }); reviewN = me.review_due; } catch { /* 무시 */ }
+      try {
+        me = await api('/api/me', { headers: authHeaders() });
+        reviewN = me.review_due;
+        // 다른 기기에서 이름을 바꿨을 수 있다 — 서버 값이 다르면 이 기기 것을 맞춘다
+        if (me.user?.display_name && me.user.display_name !== auth.user.display_name) {
+          saveAuth({ ...auth, user: { ...auth.user, display_name: me.user.display_name } });
+        }
+      } catch { /* 무시 */ }
       try { sm = await api('/api/skillmap', { headers: authHeaders() }); } catch { /* 무시 */ }
     }
     const total = set.questions.length;
