@@ -1,0 +1,101 @@
+name: Generate TTS audio (Jumplish)
+
+# 점프리시 듣기 문항의 음원을 배치로 만들어 브랜치에 커밋한다.
+# 개발 샌드박스는 외부망이 막혀 있어 GitHub 러너에서 실행한다 (L1 사진 워크플로와 같은 이유).
+#
+# 왜 필요한가: 듣기 문항은 음원이 있어야 출제된다. import.mjs 가 음원 없는 듣기 문항을
+# draft 로 내리기 때문에, 원고만 써 두면 아이에게 나가지 않는다.
+# 이 워크플로가 음원을 만들어 커밋하면 다음 배포 때 저절로 active 가 된다.
+#
+# 이 저장소의 GitHub 앱 토큰은 workflow_dispatch 호출 권한이 없어(403),
+# 이 파일이나 듣기 원고가 푸시될 때 실행되게 한다.
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/junior-toeic-master-planning-322l2t"]
+    paths:
+      - ".github/workflows/generate-tts.yml"
+      - "junior-toeic-master/tools/tts-batch.mjs"
+      - "junior-toeic-master/content/questions/L1.json"
+      - "junior-toeic-master/content/questions/L2.json"
+      - "junior-toeic-master/content/questions/L3.json"
+      - "junior-toeic-master/content/questions/L4.json"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: jumplish-tts
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: junior-toeic-master
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate content
+        run: node tools/import.mjs --check
+
+      # ⚠ 이미 만든 음원을 먼저 옮겨 둔다.
+      # tts-batch 는 tools/out/audio 에 파일이 있으면 건너뛰는데, 그 폴더는 gitignore라
+      # 러너에는 없다. 이 단계가 없으면 매번 200개를 통째로 다시 만들어 쿼터를 태운다.
+      - name: Seed already-made audio (skip regeneration)
+        run: |
+          mkdir -p tools/out/audio
+          if [ -d public/audio ]; then
+            cp -r public/audio/. tools/out/audio/
+            echo "이미 있는 음원 $(find tools/out/audio -name '*.mp3' | wc -l)개 — 이건 건너뜁니다"
+          fi
+
+      - name: Synthesize (resumable)
+        id: gen
+        continue-on-error: true   # 일부 실패해도 성공분은 커밋한다 (재실행 시 이어서 만듦)
+        env:
+          # 기본은 Gemini — 이 저장소에 이미 등록된 키다.
+          # Google Cloud TTS 키(GOOGLE_TTS_KEY)를 등록하면 미·영·호 발음 구분이 더 또렷해진다.
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_JUMPLISH || secrets.GEMINI_API_KEY }}
+          GOOGLE_TTS_KEY: ${{ secrets.GOOGLE_TTS_KEY }}
+        run: |
+          node tools/import.mjs   # ULID 매핑(.idmap.json) 생성 — 파일명이 여기에 달려 있다
+          if [ -n "$GOOGLE_TTS_KEY" ]; then
+            echo "엔진: google (발음 구분이 또렷함)"
+            TTS_ENGINE=google node tools/tts-batch.mjs
+          else
+            echo "엔진: gemini (GOOGLE_TTS_KEY 미등록 — 발음 구분이 약할 수 있음)"
+            TTS_ENGINE=gemini node tools/tts-batch.mjs
+          fi
+
+      - name: Move new audio into public/
+        run: |
+          mkdir -p public/audio/questions public/audio/passages
+          cp -r tools/out/audio/. public/audio/ 2>/dev/null || true
+          echo "public/audio 총 $(find public/audio -name '*.mp3' | wc -l)개"
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/audio content/.idmap.json
+          if git diff --cached --quiet; then
+            echo "새로 만든 음원 없음 — 커밋 생략"
+            exit 0
+          fi
+          git commit -m "junior-toeic-master: 듣기 음원 생성·활성화 (자동 배치)" \
+            -m "generate-tts.yml 러너에서 배치 TTS로 생성. 음원이 갖춰진 듣기 문항은 다음 배포 때 import.mjs가 draft에서 active로 올린다. 이미 있는 음원은 다시 만들지 않는다."
+          # 만드는 동안 브랜치가 앞서갔을 수 있다 — 리베이스로 얹은 뒤 푸시
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin HEAD:"${GITHUB_REF_NAME}"
+
+      - name: Fail if synthesis incomplete
+        if: steps.gen.outcome == 'failure'
+        run: |
+          echo "::error::일부 음원 생성 실패 — 다시 실행하면 이어서 만듭니다 (이미 만든 건 건너뜀)"
+          exit 1
