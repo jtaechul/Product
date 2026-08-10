@@ -5,7 +5,7 @@ import { Hono } from 'hono';
 import {
   verifyPin, hashPin, makeToken, requireAuth, requireRole, verifyToken,
   loginLockedFor, noteLoginFail, clearLoginFails,
-  isStudentPin, isStaffSecret, STAFF_ROLES, SECRET_MIN,
+  isStudentPin, isStaffSecret, STAFF_ROLES, SECRET_MIN, weakSecretReason,
 } from './auth.mjs';
 import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions } from './engine.mjs';
 
@@ -99,7 +99,7 @@ const PART_RE = /^(L[1-4]|R[1-3])$/;
 // ── 인증 (M2): 학원 발급 로그인ID + 6자리 PIN ──
 app.post('/api/auth/login', async (c) => {
   const { login_id, pin } = await c.req.json().catch(() => ({}));
-  // 학생은 6자리 숫자, 관리자·강사는 12자 이상 긴 비밀번호. 둘 다 여기로 들어온다.
+  // 학생은 6자리 숫자, 관리자·강사는 8자 이상 비밀번호. 둘 다 여기로 들어온다.
   // 로그인ID 길이도 여기서 막는다 — 실패는 아이디별로 기록하므로, 길이를 안 막으면
   // 아무 문자열이나 던져 login_attempts 표를 무한히 부풀릴 수 있다.
   if (typeof login_id !== 'string' || login_id.trim().length < 1 || login_id.trim().length > 32
@@ -434,9 +434,10 @@ app.post('/api/setup/admin', async (c) => {
   if (!/^[A-Z0-9-]{2,32}$/.test(loginId)) {
     return c.json({ error: '아이디는 영문·숫자 2~32자입니다 (예: ADMIN)' }, 400);
   }
-  if (!isStaffSecret(secret)) {
-    return c.json({ error: `비밀번호는 ${SECRET_MIN}자 이상이어야 합니다` }, 400);
-  }
+  // 새로 정하는 자리이므로 길이뿐 아니라 '뻔한 비밀번호'인지도 본다.
+  // 8자는 짧아서, admin1234 같은 걸 쓰면 DB가 유출됐을 때 금방 깨진다.
+  const weak = weakSecretReason(secret, loginId);
+  if (weak) return c.json({ error: weak }, 400);
   const taken = await c.env.DB.prepare('SELECT 1 FROM users WHERE login_id = ?1').bind(loginId).first();
   if (taken) return c.json({ error: '이미 쓰고 있는 아이디입니다' }, 409);
 

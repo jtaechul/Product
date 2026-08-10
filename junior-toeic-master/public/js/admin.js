@@ -61,8 +61,8 @@ function showSetup() {
         계정을 만들면 다시는 나오지 않으니, 다른 사람이 먼저 만들지 않도록 지금 정해주세요.</div>
       <label class="field"><span>아이디 (영문·숫자)</span>
         <input data-id value="ADMIN" maxlength="32" autocapitalize="characters" /></label>
-      <label class="field" style="margin-top:10px"><span>비밀번호 (12자 이상)</span>
-        <input data-pw type="password" autocomplete="new-password" placeholder="길게 정해주세요" /></label>
+      <label class="field" style="margin-top:10px"><span>비밀번호 (8자 이상)</span>
+        <input data-pw type="password" autocomplete="new-password" placeholder="8자 이상, 뻔하지 않게" /></label>
       <label class="field" style="margin-top:10px"><span>비밀번호 다시</span>
         <input data-pw2 type="password" autocomplete="new-password" /></label>
       <p class="card-note" style="margin-top:8px">비밀번호는 서버에 암호로만 저장되어,
@@ -76,7 +76,7 @@ function showSetup() {
     const secret = view.querySelector('[data-pw]').value;
     const again = view.querySelector('[data-pw2]').value;
     msg.className = 'msg bad';
-    if (secret.length < 12) { msg.textContent = '비밀번호를 12자 이상으로 정해주세요'; return; }
+    if (secret.length < 8) { msg.textContent = '비밀번호를 8자 이상으로 정해주세요'; return; }
     if (secret !== again) { msg.textContent = '두 비밀번호가 다릅니다'; return; }
     e.target.disabled = true;
     try {

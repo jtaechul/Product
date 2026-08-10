@@ -87,12 +87,50 @@ export const clearLoginFails = (db, loginId) =>
 
 // ── 비밀번호 형식 ──
 // 학생은 6자리 숫자 PIN 그대로(아이들이 외워야 한다). 관리자·강사는 계정을 발급할 수 있는
-// 권한이라 6자리로는 부족하다 — 12자 이상 긴 비밀번호를 쓴다.
-// (긴 비밀번호는 엔트로피가 충분해서 지금의 SHA-256 해시로도 오프라인 공격에 견딘다.)
+// 권한이라 6자리로는 부족하다 — 8자 이상을 쓴다.
+//
+// 8자면 짧지 않나: 남이 찍어서 맞히는(온라인) 공격은 위 로그인 잠금이 막는다.
+// 남는 위험은 DB가 통째로 유출됐을 때 오프라인으로 돌려보는 경우인데, 8자짜리
+// 뻔한 비밀번호는 그때 금방 깨진다. 그래서 길이만 보지 않고 뻔한 것들을 걸러낸다.
 export const STAFF_ROLES = ['teacher', 'academy_admin', 'super'];
-export const SECRET_MIN = 12;
+export const SECRET_MIN = 8;
 export const isStudentPin = (s) => /^\d{6}$/.test(String(s ?? ''));
-export const isStaffSecret = (s) => typeof s === 'string' && s.length >= SECRET_MIN && s.length <= 200;
+
+// 자주 쓰이는 비밀번호와 그 변형(대소문자·뒤에 붙는 숫자)을 막는다.
+const WEAK = [
+  'password', 'passw0rd', 'admin', 'administrator', 'jumplish', 'jumprish',
+  'qwerty', 'qwertyui', 'asdfasdf', 'iloveyou', 'welcome', 'letmein',
+  'abcd', 'abcdefg', 'test', 'secret', 'master', 'login', 'academy', 'english',
+];
+// 로그인할 때 쓰는 형식 검사 — 길이만 본다.
+// 뻔한 비밀번호 검사(아래 weakSecretReason)를 여기 섞으면 안 된다. 규칙을 나중에 강화했을 때
+// 이미 그 비밀번호로 만들어진 계정이 로그인조차 못 하게 된다.
+export const isStaffSecret = (s) =>
+  typeof s === 'string' && s.length >= SECRET_MIN && s.length <= 200;
+
+// 새로 정할 때만 쓰는 검사 — 문제가 있으면 그 이유를, 없으면 null
+export function weakSecretReason(secret, loginId = '') {
+  const s = String(secret ?? '');
+  if (s.length < SECRET_MIN) return `비밀번호는 ${SECRET_MIN}자 이상이어야 합니다`;
+  if (s.length > 200) return '비밀번호가 너무 깁니다';
+  if (/\s/.test(s)) return '비밀번호에 공백은 쓸 수 없어요';
+  const low = s.toLowerCase();
+  // 숫자만 / 같은 글자 반복 / 연속된 순서 (12345678, aaaaaaaa, abcdefgh)
+  if (/^\d+$/.test(s)) return '숫자만으로는 안 돼요. 글자를 섞어주세요';
+  if (/^(.)\1+$/.test(s)) return '같은 글자만 반복하면 안 돼요';
+  if ('abcdefghijklmnopqrstuvwxyz'.includes(low) || '01234567890'.includes(low)) {
+    return '순서대로 이어지는 글자는 쉽게 뚫려요';
+  }
+  // 뻔한 단어 + 뒤에 붙인 숫자(admin123, password1!) 도 같이 걸러낸다
+  const core = low.replace(/[^a-z]/g, '');
+  if (WEAK.some((w) => core === w || (core.startsWith(w) && core.length - w.length <= 2))) {
+    return '너무 흔한 비밀번호예요. 다른 말로 정해주세요';
+  }
+  if (loginId && core.includes(String(loginId).toLowerCase().replace(/[^a-z]/g, '')) && core.length <= 12) {
+    return '아이디와 너무 비슷해요';
+  }
+  return null;   // 문제 없음
+}
 
 // Hono 미들웨어 — c.get('user')에 사용자 행을 싣는다
 export const requireAuth = async (c, next) => {
