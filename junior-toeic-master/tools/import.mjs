@@ -89,6 +89,28 @@ const audioUrlFor = (kind, id) => {
   return R2_BASE ? `${R2_BASE}/${rel}` : `/${rel}`;
 };
 
+// ⚠ 음원·사진 없는 문항은 절대 내보내지 않는다.
+//
+// 실제로 사고가 났다: 듣기 문항 36개를 새로 쓰고 음원(배치 TTS)을 만들기 전에 배포했더니,
+// 소리가 나지 않는 듣기 문항이 아이들에게 그대로 출제됐다. 문항이 없는 것보다 나쁘다
+// — 아이는 자기가 뭘 잘못한 줄 안다.
+//
+// 그래서 미디어가 없으면 status를 draft 로 내린다. 원고는 미리 써 두되, 음원·사진이
+// 만들어져 public/ 에 들어온 다음에야 저절로 active 가 된다.
+function gateOnMedia(ctx, part, status, audioUrl, imageUrls) {
+  if (status !== 'active') return status;
+  const isLC = PARTS[part] === 'LC';
+  if (isLC && !audioUrl) {
+    warn(`${ctx}: 음원이 아직 없어 draft로 내림 (tts-batch 실행 후 다시 import 하면 active)`);
+    return 'draft';
+  }
+  if (part === 'L1' && !imageUrls) {
+    warn(`${ctx}: 보기 사진 4컷이 아직 없어 draft로 내림 (img-batch 실행 후 다시 import)`);
+    return 'draft';
+  }
+  return status;
+}
+
 // L1 보기 4컷 (img-batch 산출: public/img/l1/{id}-{0..3}.jpg)
 // 4컷이 모두 있을 때만 경로 배열(JSON)을 image_url에 싣는다 — 프런트가 그림 보기로 렌더.
 const imageUrlsFor = (questionId) => {
@@ -264,10 +286,14 @@ for (const file of files) {
           });
         }
       }
+      const qAudio = audioUrlFor('questions', takeId(`q:${it.tmp_id}`));
+      const qImages = part === 'L1' ? imageUrlsFor(takeId(`q:${it.tmp_id}`)) : null;
       pushQuestion(part, it.tmp_id, it, null, {
-        accent: it.accent ?? null, status, audio_url: audioUrlFor('questions', takeId(`q:${it.tmp_id}`)),
+        accent: it.accent ?? null,
+        status: gateOnMedia(ctx, part, status, qAudio, qImages),
+        audio_url: qAudio,
         script: it.tts_script ?? null,
-        image_url: part === 'L1' ? imageUrlsFor(takeId(`q:${it.tmp_id}`)) : null,
+        image_url: qImages,
       });
     } else if (it.type === 'set') {
       const p = it.passage;
@@ -280,17 +306,19 @@ for (const file of files) {
       if (!Array.isArray(it.questions) || it.questions.length < 1) { err(`${ctx}: questions 배열 필요`); continue; }
 
       const passageId = takeId(`p:${it.tmp_id}`);
+      const pAudio = isLC ? audioUrlFor('passages', passageId) : null;
       passages.push({
         id: passageId, section: PARTS[part], part, kind: p.kind,
         content, image_url: p.image_url ?? null,
-        audio_url: isLC ? audioUrlFor('passages', passageId) : null,
+        audio_url: pAudio,
         accent: isLC ? p.accent : null,
       });
+      const setStatus = gateOnMedia(ctx, part, status, pAudio, null);
       it.questions.forEach((sub, i) => {
         const subTmp = `${it.tmp_id}#${i + 1}`;
         const subCtx = `${ctx} 문항${i + 1}`;
         checkQuestionCore(sub, subCtx, part, content);
-        pushQuestion(part, subTmp, sub, passageId, { status, accent: isLC ? p.accent : null });
+        pushQuestion(part, subTmp, sub, passageId, { status: setStatus, accent: isLC ? p.accent : null });
       });
     } else {
       err(`${ctx}: type은 single 또는 set`);
