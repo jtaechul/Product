@@ -234,7 +234,7 @@ app.post('/api/diagnostic/finish', requireAuth, async (c) => {
 // 개인 최고 기록 (M3-3 '어제의 나와 대결') — 비교 대상은 남이 아니라 과거의 나
 app.get('/api/records', requireAuth, async (c) => {
   const u = c.get('user');
-  const [{ results: seq }, best, today] = await Promise.all([
+  const [{ results: seq }, best, today, { results: parts }, { results: days }] = await Promise.all([
     c.env.DB.prepare(
       `SELECT is_correct FROM answers WHERE user_id = ?1 ORDER BY answered_at LIMIT 2000`
     ).bind(u.id).all(),
@@ -245,16 +245,39 @@ app.get('/api/records', requireAuth, async (c) => {
     c.env.DB.prepare(
       `SELECT COUNT(*) AS n FROM answers WHERE user_id = ?1 AND date(answered_at, '+9 hours') = ?2`
     ).bind(u.id, kstDate()).first(),
+    // 파트별 기록 — 예전엔 이 기기(localStorage)에만 있었다. 학원 태블릿을 여러 명이
+    // 돌려 쓰면 기록이 섞이고, 기기를 바꾸면 통째로 사라진다. 그래서 서버에서 센다.
+    c.env.DB.prepare(
+      `SELECT q.part, COUNT(*) AS answered, COALESCE(SUM(a.is_correct), 0) AS correct
+         FROM answers a JOIN questions q ON q.id = a.question_id
+        WHERE a.user_id = ?1 GROUP BY q.part`
+    ).bind(u.id).all(),
+    // 공부한 날짜들 — '이어온 날'(연속)을 세려면 날짜 목록이 필요하다.
+    // climb.breakdown.days 는 '총 며칠'이라 연속이 끊겨도 계속 늘어난다 — 다른 숫자다.
+    c.env.DB.prepare(
+      `SELECT DISTINCT date(answered_at, '+9 hours') AS d FROM answers
+        WHERE user_id = ?1 ORDER BY d DESC LIMIT 400`
+    ).bind(u.id).all(),
   ]);
   // 최장 연속 정답 + 지금 이어지는 연속 (최근 답부터 뒤로)
   let bestRun = 0, run = 0;
   for (const r of seq) { run = r.is_correct ? run + 1 : 0; if (run > bestRun) bestRun = run; }
   let currentRun = 0;
   for (let i = seq.length - 1; i >= 0 && seq[i].is_correct; i--) currentRun++;
+  // 이어온 날(연속) — 오늘 아직 안 했으면 어제부터 센다. 오늘 안 풀었다고 어제까지의
+  // 연속이 0이 되면 아침에 앱을 열자마자 기록이 사라진 것처럼 보인다.
+  const dayset = new Set(days.map((r) => r.d));
+  let streak = 0;
+  const cur = new Date(`${kstDate()}T00:00:00Z`);
+  if (!dayset.has(kstDate())) cur.setUTCDate(cur.getUTCDate() - 1);
+  while (dayset.has(cur.toISOString().slice(0, 10))) { streak += 1; cur.setUTCDate(cur.getUTCDate() - 1); }
+
   return c.json({
     best_run: bestRun, current_run: currentRun,
     best_day: best ? { date: best.d, n: best.n } : null,
     today_n: today.n,
+    streak,
+    parts: Object.fromEntries(parts.map((p) => [p.part, { answered: p.answered, correct: p.correct }])),
   });
 });
 

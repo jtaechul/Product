@@ -102,7 +102,6 @@ const accuracy = (part) => {
 const ranked = () => PARTS.map((p) => ({ part: p, acc: accuracy(p) })).filter((x) => x.acc !== null)
   .sort((a, b) => a.acc - b.acc);
 const totalAnswered = () => Object.values(store.parts).reduce((n, p) => n + p.answered, 0);
-const totalCorrect = () => Object.values(store.parts).reduce((n, p) => n + p.correct, 0);
 
 // ---------- 로그인 (M2: 학원 발급 ID + 6자리 PIN) ----------
 const AUTH_KEY = 'jumplish.auth.v1';
@@ -423,8 +422,13 @@ const levelOf = (acc) =>
 // 파트 단위로 되짚는 화면이라 여기 둔다.
 // 약한 순으로 세워서 맨 위가 곧 "지금 손봐야 할 곳"이 되게 하고, 아직 덜 푼 파트는 아래로 뺀다.
 // 파트 코드(L2)는 아이도 부모도 못 알아들으므로 우리말 이름을 앞세우고 코드는 작게만 남긴다.
-function partMastery() {
-  const rows = PARTS.map((p) => ({ part: p, acc: accuracy(p), s: store.parts[p] }));
+// src 는 파트별 {answered, correct} 묶음 — 로그인하면 서버 기록, 아니면 이 기기 기록.
+function partMastery(src = store.parts) {
+  const accOf = (p) => {
+    const s = src[p];
+    return s && s.answered >= WEAK_MIN ? Math.round((s.correct / s.answered) * 100) : null;
+  };
+  const rows = PARTS.map((p) => ({ part: p, acc: accOf(p), s: src[p] }));
   const measured = rows.filter((x) => x.acc !== null).sort((a, b) => a.acc - b.acc);
   const rest = rows.filter((x) => x.acc === null);
   const worst = measured[0]?.part;
@@ -896,8 +900,14 @@ async function showRecord() {
     try { sealed = (await api('/api/me', { headers: authHeaders() })).sealed; } catch { /* 무시 */ }
     try { rec = await api('/api/records', { headers: authHeaders() }); } catch { /* 무시 */ }
   }
-  const answered = totalAnswered();
-  const acc = answered ? Math.round((totalCorrect() / answered) * 100) : 0;
+  // 로그인했으면 이 화면의 숫자는 전부 서버 기록으로 통일한다.
+  // 위 칸은 서버, 아래 파트 목록은 이 기기 — 이렇게 섞이면 두 숫자가 어긋나 고장으로 보인다.
+  const srv = rec?.parts ?? null;
+  const parts = srv ?? store.parts;
+  const answered = Object.values(parts).reduce((n, p) => n + p.answered, 0);
+  const correct = Object.values(parts).reduce((n, p) => n + p.correct, 0);
+  const acc = answered ? Math.round((correct / answered) * 100) : 0;
+  const streak = srv ? rec.streak : streakDays();
   view.innerHTML = `
     ${appBar()}
     <div class="greet"><div>
@@ -905,14 +915,14 @@ async function showRecord() {
       <h1 class="greet-title">내 발자국</h1>
     </div></div>
     <div class="stat-row">
-      <div class="stat"><span class="label">이어온 날</span><span class="value">${streakDays()}일</span></div>
+      <div class="stat"><span class="label">이어온 날</span><span class="value">${streak}일</span></div>
       <div class="stat"><span class="label">푼 문항</span><span class="value">${answered}</span></div>
       <div class="stat"><span class="label">정답률</span><span class="value">${answered ? acc + '%' : '–'}</span></div>
     </div>
     <div class="card">
       <div class="card-head"><span class="card-title">파트별 기록</span>
         <span class="card-note">약한 곳부터</span></div>
-      ${partMastery()}
+      ${partMastery(parts)}
     </div>
     ${rec ? `
     <div class="card">
