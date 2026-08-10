@@ -40,7 +40,11 @@ export async function makeToken(user) {
 
 // 성공 시 users 행 반환, 실패 시 null
 export async function verifyToken(db, token) {
-  const [userId, expS, sig] = String(token || '').split('.');
+  const parts = String(token || '').split('.');
+  // 학부모 토큰(p.으로 시작)은 여기서 절대 통과시키지 않는다 — 부모가 아이 대신
+  // 문제를 풀거나 이름을 바꾸면 안 된다. 부모 토큰은 verifyParentToken 만 받는다.
+  if (parts.length !== 3) return null;
+  const [userId, expS, sig] = parts;
   const exp = Number(expS);
   if (!userId || !sig || !Number.isFinite(exp) || exp * 1000 < Date.now()) return null;
   const user = await db.prepare('SELECT * FROM users WHERE id = ?1').bind(userId).first();
@@ -48,6 +52,45 @@ export async function verifyToken(db, token) {
   const want = await hmacHex(user.pin_hash, `${userId}.${exp}`);
   return sig === want ? user : null;
 }
+
+// ── 학부모 토큰 ──
+// 형태: p.<자녀id>.<만료초>.<HMAC(key=parent_pin_hash)>
+// 학생 토큰과 조각 수부터 달라서(4개 vs 3개) 서로 섞일 수 없다.
+// 서명 열쇠가 parent_pin_hash 라, 학부모 PIN을 바꾸면 부모 토큰만 무효가 되고
+// 아이 로그인은 그대로다(반대도 마찬가지).
+const P = 'p';
+
+export async function makeParentToken(child) {
+  const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_S;
+  const msg = `${P}.${child.id}.${exp}`;
+  return `${msg}.${await hmacHex(child.parent_pin_hash, msg)}`;
+}
+
+// 성공 시 '자녀' users 행 반환, 실패 시 null
+export async function verifyParentToken(db, token) {
+  const parts = String(token || '').split('.');
+  if (parts.length !== 4 || parts[0] !== P) return null;
+  const [, childId, expS, sig] = parts;
+  const exp = Number(expS);
+  if (!childId || !sig || !Number.isFinite(exp) || exp * 1000 < Date.now()) return null;
+  const child = await db.prepare(
+    `SELECT * FROM users WHERE id = ?1 AND role = 'student' AND parent_pin_hash IS NOT NULL`
+  ).bind(childId).first();
+  if (!child) return null;
+  const want = await hmacHex(child.parent_pin_hash, `${P}.${childId}.${exp}`);
+  return sig === want ? child : null;
+}
+
+// 학부모 전용 미들웨어 — c.get('child')에 자녀 행을 싣는다.
+// 부모는 이 자녀 하나만 볼 수 있다. 다른 아이 id를 URL에 넣어도 소용없도록,
+// 조회는 전부 이 child.id 로만 한다(요청에서 학생 id를 받지 않는다).
+export const requireParent = async (c, next) => {
+  const m = /^Bearer\s+(.+)$/.exec(c.req.header('Authorization') || '');
+  const child = m ? await verifyParentToken(c.env.DB, m[1]) : null;
+  if (!child) return c.json({ error: '로그인이 필요합니다' }, 401);
+  c.set('child', child);
+  await next();
+};
 
 // ── 로그인 시도 제한 ──
 // PIN이 저엔트로피라(6자리 = 100만 가지) 막지 않으면 스크립트로 다 넣어볼 수 있다.

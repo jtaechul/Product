@@ -1,0 +1,44 @@
+/* 학부모 화면 — 학생 앱의 색·글꼴(style.css)을 그대로 쓰고 여기서 몇 가지만 더한다.
+   탭바가 없으므로 아래 여백을 없앤다. */
+body { padding-bottom: env(safe-area-inset-bottom); }
+
+/* 한 줄 요약 — 부모가 가장 먼저(때로는 유일하게) 읽는 문장 */
+.verdict {
+  background: var(--grad); color: #fff; border-radius: var(--radius);
+  padding: 20px 18px; box-shadow: var(--shadow-card);
+}
+.verdict-eyebrow { font-size: .78rem; font-weight: 700; opacity: .82; }
+.verdict-line { font-size: 1.28rem; font-weight: 700; letter-spacing: -.03em; line-height: 1.4; margin-top: 3px; }
+.verdict-sub { font-size: .84rem; opacity: .88; margin-top: 7px; font-weight: 500; }
+
+/* 최근 2주 출석 — 점 14개 */
+.dots { display: flex; gap: 5px; margin-top: 10px; }
+.dot-day {
+  flex: 1; height: 26px; border-radius: 7px; background: var(--surface-2);
+  display: grid; place-items: center; font-size: .6rem; font-weight: 800; color: var(--muted);
+}
+.dot-day.on { background: var(--primary); color: #fff; }
+.dot-day.today { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* 도와주는 법 — 한 줄짜리 행동 지침 */
+.tip { display: flex; gap: 11px; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.tip:last-child { border-bottom: 0; }
+.tip-n {
+  flex: none; width: 21px; height: 21px; border-radius: 999px; margin-top: 1px;
+  background: var(--primary-soft); color: var(--primary);
+  font-size: .72rem; font-weight: 800; display: grid; place-items: center;
+}
+.tip-b { flex: 1; min-width: 0; }
+.tip-t { display: block; font-size: .9rem; font-weight: 700; }
+.tip-s { display: block; font-size: .8rem; color: var(--muted); margin-top: 2px; }
+
+/* 로그인 */
+.p-login { margin-top: 40px; }
+.p-login .field { width: 100%; }
+.p-login .field input { width: 100%; }
+.p-brand { display: flex; align-items: center; gap: 9px; justify-content: center; margin-bottom: 18px; }
+.p-brand .appbar-mark { width: 34px; height: 34px; border-radius: 10px; }
+.p-brand .appbar-mark svg { width: 20px; height: 15px; }
+.p-brand span.t { font-size: 1.06rem; font-weight: 700; letter-spacing: -.03em; }
+.p-out { text-align: center; margin-top: 6px; }
+.p-out button { font-size: .8rem; color: var(--muted); font-weight: 700; text-decoration: underline; }

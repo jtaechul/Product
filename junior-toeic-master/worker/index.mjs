@@ -6,6 +6,7 @@ import {
   verifyPin, hashPin, makeToken, requireAuth, requireRole, verifyToken,
   loginLockedFor, noteLoginFail, clearLoginFails,
   isStudentPin, isStaffSecret, STAFF_ROLES, SECRET_MIN, weakSecretReason,
+  makeParentToken, requireParent,
 } from './auth.mjs';
 import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions } from './engine.mjs';
 
@@ -424,6 +425,94 @@ const superCount = async (db) =>
 
 app.get('/api/setup/needed', async (c) => c.json({ needed: (await superCount(c.env.DB)) === 0 }));
 
+// ══════════════════════════════════════════════════════════════════
+//  학부모 API — 읽기 전용. 자녀 딱 한 명만 보인다.
+//  자녀 아이디 + 학부모용 PIN 으로 들어온다(부모에게 새 개인정보를 받지 않는다).
+// ══════════════════════════════════════════════════════════════════
+
+// 로그인 실패는 학생과 따로 센다. 같은 열쇠로 세면 부모가 PIN을 몇 번 틀렸을 때
+// 아이가 앱에 못 들어가는 일이 생긴다 — 서로의 잠금이 옮겨붙으면 안 된다.
+const parentKey = (loginId) => `P:${loginId}`;
+
+app.post('/api/parent/login', async (c) => {
+  const { login_id, pin } = await c.req.json().catch(() => ({}));
+  if (typeof login_id !== 'string' || login_id.trim().length < 1 || login_id.trim().length > 32
+      || !isStudentPin(pin)) {
+    return c.json({ error: '자녀 아이디와 6자리 PIN을 확인하세요' }, 400);
+  }
+  const id = login_id.trim().toUpperCase();
+  const key = parentKey(id);
+
+  const lockLeft = await loginLockedFor(c.env.DB, key);
+  if (lockLeft > 0) {
+    return c.json({ error: `여러 번 틀려서 잠겼어요. ${Math.ceil(lockLeft / 60)}분 뒤에 다시 해주세요` }, 429);
+  }
+
+  const child = await c.env.DB.prepare(
+    `SELECT * FROM users WHERE login_id = ?1 AND role = 'student'`
+  ).bind(id).first();
+  // 학부모 PIN이 아직 발급 안 된 아이도, 아이디가 아예 없는 것과 똑같이 답한다
+  // (어느 아이가 있는지 / 어느 아이가 부모 연결이 됐는지 흘리지 않는다)
+  if (!child?.parent_pin_hash || !(await verifyPin(String(pin), child.parent_pin_hash))) {
+    const { lockedSeconds } = await noteLoginFail(c.env.DB, key);
+    return c.json({
+      error: lockedSeconds
+        ? `여러 번 틀려서 ${Math.ceil(lockedSeconds / 60)}분 동안 잠겼어요`
+        : '아이디 또는 PIN이 맞지 않아요',
+    }, lockedSeconds ? 429 : 401);
+  }
+  await clearLoginFails(c.env.DB, key);
+  return c.json({
+    token: await makeParentToken(child),
+    child: { display_name: child.display_name, login_id: child.login_id },
+  });
+});
+
+// 자녀 한 명의 요약. 부모는 이것만 본다 — 정답·해설·문항 원문은 내려주지 않는다.
+app.get('/api/parent/overview', requireParent, async (c) => {
+  const child = c.get('child');
+  const today = kstDate();
+  const [stats, { results: parts }, { results: days }, sm, klass] = await Promise.all([
+    c.env.DB.prepare(
+      `SELECT COUNT(*) AS answered, COALESCE(SUM(is_correct), 0) AS correct
+         FROM answers WHERE user_id = ?1`
+    ).bind(child.id).first(),
+    c.env.DB.prepare(
+      `SELECT q.part, COUNT(*) AS answered, COALESCE(SUM(a.is_correct), 0) AS correct
+         FROM answers a JOIN questions q ON q.id = a.question_id
+        WHERE a.user_id = ?1 GROUP BY q.part`
+    ).bind(child.id).all(),
+    c.env.DB.prepare(
+      `SELECT date(answered_at, '+9 hours') AS d, COUNT(*) AS n FROM answers
+        WHERE user_id = ?1 GROUP BY d ORDER BY d DESC LIMIT 21`
+    ).bind(child.id).all(),
+    computeSkillMap(c.env.DB, child, today),
+    c.env.DB.prepare('SELECT name, grade, set_size FROM classes WHERE id = ?1').bind(child.class_id).first(),
+  ]);
+
+  // 이어온 날(연속) — 오늘 아직 안 했으면 어제부터 센다
+  const dayset = new Set(days.map((r) => r.d));
+  let streak = 0;
+  const cur = new Date(`${today}T00:00:00Z`);
+  if (!dayset.has(today)) cur.setUTCDate(cur.getUTCDate() - 1);
+  while (dayset.has(cur.toISOString().slice(0, 10))) { streak += 1; cur.setUTCDate(cur.getUTCDate() - 1); }
+
+  return c.json({
+    child: { display_name: child.display_name, login_id: child.login_id },
+    class: klass ?? null,
+    // 오늘 날짜를 서버가 알려준다 — 화면이 기기 시계로 따로 계산하면 한국이 아닌 곳에서
+    // 보거나 자정~오전 9시 사이에 볼 때 하루가 어긋난다(서버는 한국 시간 기준).
+    today,
+    today_n: days.find((r) => r.d === today)?.n ?? 0,
+    recent_days: days.slice(0, 14).reverse(),   // 최근 2주, 오래된 날부터
+    streak,
+    answered: stats.answered,
+    correct: stats.correct,
+    parts: Object.fromEntries(parts.map((p) => [p.part, { answered: p.answered, correct: p.correct }])),
+    axes: sm.axes, misses: sm.misses, revive: sm.revive, speed: sm.speed,
+  });
+});
+
 app.post('/api/setup/admin', async (c) => {
   if (await superCount(c.env.DB)) {
     return c.json({ error: '이미 관리자가 있습니다. 관리자 화면에서 로그인하세요.' }, 403);
@@ -597,6 +686,20 @@ app.post('/api/admin/student/:id/pin', ...admin, async (c) => {
   // PIN이 바뀌면 그 학생의 기존 토큰은 전부 무효가 된다(토큰 서명 키가 pin_hash라서).
   await clearLoginFails(c.env.DB, u.login_id);
   return c.json({ login_id: u.login_id, pin });
+});
+
+// 학부모용 PIN 발급·재발급. 아이 PIN과 별개의 열쇠라, 이걸 줘도 부모가 아이 앱에
+// 들어가 문제를 풀 수는 없다(반대로 아이가 부모 화면을 볼 수도 없다).
+app.post('/api/admin/student/:id/parent-pin', ...admin, async (c) => {
+  const u = await c.env.DB.prepare(
+    `SELECT id, login_id, display_name FROM users WHERE id = ?1 AND role = 'student'`
+  ).bind(c.req.param('id')).first();
+  if (!u) return c.json({ error: '학생을 찾을 수 없습니다' }, 404);
+  const pin = makePin();
+  await c.env.DB.prepare('UPDATE users SET parent_pin_hash = ?2 WHERE id = ?1')
+    .bind(u.id, await hashPin(pin)).run();
+  await clearLoginFails(c.env.DB, parentKey(u.login_id));
+  return c.json({ login_id: u.login_id, display_name: u.display_name, pin });
 });
 
 // 신고 목록 — 아이가 어느 문항에서 막혔는지. 기본은 아직 안 본 것만.
