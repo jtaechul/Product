@@ -26,7 +26,7 @@ permissions:
 
 concurrency:
   group: jumplish-tts
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   generate:
@@ -59,17 +59,45 @@ jobs:
         id: gen
         continue-on-error: true   # 일부 실패해도 성공분은 커밋한다 (재실행 시 이어서 만듦)
         env:
-          # 기본은 Gemini — 이 저장소에 이미 등록된 키다.
-          # Google Cloud TTS 키(GOOGLE_TTS_KEY)를 등록하면 미·영·호 발음 구분이 더 또렷해진다.
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_JUMPLISH || secrets.GEMINI_API_KEY }}
+          # Google Cloud TTS 를 우선 쓴다(기획서에서 고른 엔진 — 미·영·호 성우가 따로 있어
+          # 발음이 또렷하고 무료 쿼터도 크다). 없을 때만 Gemini 로 넘어간다.
+          # 등록 이름이 조금씩 다를 수 있어 흔한 이름을 모두 받는다.
           GOOGLE_TTS_KEY: ${{ secrets.GOOGLE_TTS_KEY }}
+          GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_CLOUD_TTS_KEY: ${{ secrets.GOOGLE_CLOUD_TTS_KEY }}
+          GCP_TTS_KEY: ${{ secrets.GCP_TTS_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_JUMPLISH || secrets.GEMINI_API_KEY }}
         run: |
           node tools/import.mjs   # ULID 매핑(.idmap.json) 생성 — 파일명이 여기에 달려 있다
-          if [ -n "$GOOGLE_TTS_KEY" ]; then
-            echo "엔진: google (발음 구분이 또렷함)"
-            TTS_ENGINE=google node tools/tts-batch.mjs
+
+          # 어느 이름으로 등록됐는지 찾는다. 값은 절대 찍지 않고 '있다/없다'만 알린다.
+          FOUND=""
+          for NAME in GOOGLE_TTS_KEY GOOGLE_TTS_API_KEY GOOGLE_API_KEY GOOGLE_CLOUD_TTS_KEY GCP_TTS_KEY; do
+            VAL="$(printenv "$NAME" || true)"
+            if [ -n "$VAL" ]; then
+              echo "찾음: $NAME (길이 ${#VAL}자)"
+              FOUND="$VAL"
+              break
+            else
+              echo "없음: $NAME"
+            fi
+          done
+          if [ -z "$FOUND" ]; then
+            echo "::warning::구글 TTS 키를 어느 이름으로도 찾지 못했습니다."
+            echo "::warning::Repository secret 인지(Environment secret 은 이 작업에서 안 보입니다) 확인해 주세요."
+          fi
+
+          if [ -n "$FOUND" ]; then
+            echo "엔진: google — 미·영·호 발음이 성우로 고정됩니다"
+            GOOGLE_TTS_KEY="$FOUND" TTS_ENGINE=google node tools/tts-batch.mjs
           else
-            echo "엔진: gemini (GOOGLE_TTS_KEY 미등록 — 발음 구분이 약할 수 있음)"
+            GEM="$(printenv GEMINI_API_KEY || true)"
+            if [ -z "$GEM" ]; then
+              echo "::error::구글 TTS 키도 Gemini 키도 없습니다 — 음원을 만들 수 없습니다"
+              exit 1
+            fi
+            echo "엔진: gemini (구글 키를 못 찾음 — 느리고 발음 구분이 약합니다)"
             TTS_ENGINE=gemini node tools/tts-batch.mjs
           fi
 
