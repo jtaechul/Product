@@ -671,5 +671,1507 @@
       "2": "G.clue",
       "3": "G.clue"
     }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0019",
+    "section": "RC",
+    "part": "R1",
+    "stem": "That boy is Minho. ______ bag is blue.",
+    "choices": [
+      "Her",
+      "His",
+      "He",
+      "Him"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "Minho는 남자아이니까 '그의'라는 뜻의 His를 써요. He는 '그는'이라 이름 앞에 못 와요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.pronoun"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "That boy",
+    "why_not": {
+      "0": "여자를 가리키는 말이에요",
+      "2": "'그는'이라 가방 앞에 못 와요",
+      "3": "'그를'이라 가방 앞에 못 와요"
+    },
+    "key_expr": {
+      "en": "His bag",
+      "ko": "그의 가방"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0020",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The cat is sleeping ______ the box.",
+    "choices": [
+      "in",
+      "of",
+      "to",
+      "by"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "상자 안에서 자고 있으니 '~ 안에'라는 뜻의 in을 써요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.prep",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "the box",
+    "why_not": {
+      "1": "'~의'라는 뜻이라 자리에 안 맞아요",
+      "2": "'~로'라는 뜻이라 안 맞아요",
+      "3": "'~옆에'라 안에 있는 게 아니에요"
+    },
+    "key_expr": {
+      "en": "in the box",
+      "ko": "상자 안에"
+    },
+    "miss_type": {
+      "1": "W.meaning",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0021",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Sumin ______ to school every morning.",
+    "choices": [
+      "walk",
+      "walks",
+      "walking",
+      "walked"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "Sumin 한 사람이 늘 하는 일이라 walks를 써요. every morning이 '늘 그런다'는 뜻이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.agreement"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "every morning",
+    "why_not": {
+      "0": "한 사람 이야기라 s가 빠졌어요",
+      "2": "혼자서는 문장을 만들 수 없어요",
+      "3": "늘 하는 일이라 지난 일이 아니에요"
+    },
+    "key_expr": {
+      "en": "walk to school",
+      "ko": "걸어서 학교에 가다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.clue"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0022",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Be careful! The soup is very ______.",
+    "choices": [
+      "hot",
+      "hotly",
+      "heat",
+      "hotter"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "국이 어떤지 말하는 자리라 hot을 써요. '조심해'라고 했으니 뜨겁다는 뜻이에요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.pos",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "The soup is very",
+    "why_not": {
+      "1": "이 자리에는 못 오는 모양이에요",
+      "2": "'열'이라는 다른 낱말이에요",
+      "3": "둘을 견주는 말이라 안 맞아요"
+    },
+    "key_expr": {
+      "en": "Be careful!",
+      "ko": "조심해!"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "W.meaning",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0023",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Look at me. I ______ a new hat now.",
+    "choices": [
+      "wear",
+      "wore",
+      "am wearing",
+      "wears"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "now는 '바로 지금'이라는 뜻이라, 지금 하고 있는 일을 말하는 am wearing을 써요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.tense"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "now",
+    "why_not": {
+      "0": "지금 하는 중이라는 느낌이 없어요",
+      "1": "이미 지난 일이 되어 버려요",
+      "3": "I 뒤에는 올 수 없는 모양이에요"
+    },
+    "key_expr": {
+      "en": "wear a hat",
+      "ko": "모자를 쓰다"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.clue",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0024",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Our English class starts ______ nine o'clock.",
+    "choices": [
+      "in",
+      "on",
+      "at",
+      "for"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "몇 시라고 시각을 말할 때는 at을 써요.",
+    "difficulty_label": 1,
+    "tags": [
+      "G.prep",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "nine o'clock",
+    "why_not": {
+      "0": "달이나 해를 말할 때 써요",
+      "1": "날짜나 요일에 써요",
+      "3": "얼마 동안인지 말할 때 써요"
+    },
+    "key_expr": {
+      "en": "at nine o'clock",
+      "ko": "9시에"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0025",
+    "section": "RC",
+    "part": "R1",
+    "stem": "I was very tired, ______ I went to bed early.",
+    "choices": [
+      "so",
+      "but",
+      "or",
+      "because"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "피곤해서 일찍 잤어요. 앞이 까닭이고 뒤가 그 결과라 so를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.conj"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "I was very tired",
+    "why_not": {
+      "1": "'그런데'라 앞뒤가 반대일 때 써요",
+      "2": "둘 중 고를 때 쓰는 말이에요",
+      "3": "뒤에 까닭이 올 때 써요"
+    },
+    "key_expr": {
+      "en": "go to bed early",
+      "ko": "일찍 자다"
+    },
+    "miss_type": {
+      "1": "G.clue",
+      "2": "G.clue",
+      "3": "G.clue"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0026",
+    "section": "RC",
+    "part": "R1",
+    "stem": "You ______ be quiet in the library.",
+    "choices": [
+      "must",
+      "may",
+      "will",
+      "would"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "도서관에서는 반드시 조용히 해야 해요. 꼭 그래야 할 때 must를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.modal",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "in the library",
+    "why_not": {
+      "1": "'~해도 된다'는 허락하는 말이에요",
+      "2": "앞으로 할 일을 말할 때 써요",
+      "3": "'~할 텐데'라는 다른 느낌이에요"
+    },
+    "key_expr": {
+      "en": "be quiet",
+      "ko": "조용히 하다"
+    },
+    "miss_type": {
+      "1": "W.meaning",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0027",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Today is ______ than yesterday.",
+    "choices": [
+      "cold",
+      "colder",
+      "coldest",
+      "more cold"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "than은 '~보다'라는 뜻이에요. 둘을 견주는 자리라 colder를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.compare"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "than yesterday",
+    "why_not": {
+      "0": "견주는 느낌이 없어요",
+      "2": "셋 이상에서 으뜸일 때 써요",
+      "3": "짧은 낱말이라 er만 붙여요"
+    },
+    "key_expr": {
+      "en": "colder than ~",
+      "ko": "~보다 더 추운"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "2": "G.form",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0028",
+    "section": "RC",
+    "part": "R1",
+    "stem": "There ______ many books on the desk.",
+    "choices": [
+      "is",
+      "are",
+      "be",
+      "has"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "many books는 여럿이에요. 여럿이 있다고 할 때는 are를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.agreement"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "many books",
+    "why_not": {
+      "0": "하나만 있을 때 쓰는 말이에요",
+      "2": "이 자리에 그대로 올 수 없어요",
+      "3": "There와 짝이 되지 않아요"
+    },
+    "key_expr": {
+      "en": "There are ~",
+      "ko": "~들이 있다"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "2": "G.form",
+      "3": "G.pair"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0029",
+    "section": "RC",
+    "part": "R1",
+    "stem": "This pencil is not mine. It is ______.",
+    "choices": [
+      "she",
+      "her",
+      "hers",
+      "herself"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "'그녀의 것'이라는 뜻이 필요해요. mine과 짝이 되는 말이 hers예요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.pronoun"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "not mine",
+    "why_not": {
+      "0": "'그녀는'이라 이 자리에 못 와요",
+      "1": "뒤에 물건 이름이 와야 해요",
+      "3": "'그녀 자신'이라는 다른 뜻이에요"
+    },
+    "key_expr": {
+      "en": "It is hers",
+      "ko": "그건 그녀 거예요"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.pair",
+      "3": "W.meaning"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0030",
+    "section": "RC",
+    "part": "R1",
+    "stem": "We will meet ______ Saturday morning.",
+    "choices": [
+      "in",
+      "at",
+      "on",
+      "to"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "무슨 요일이라고 말할 때는 on을 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.prep"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "Saturday morning",
+    "why_not": {
+      "0": "달이나 해에 쓰는 말이에요",
+      "1": "몇 시라고 할 때 써요",
+      "3": "'~로'라는 뜻이라 안 맞아요"
+    },
+    "key_expr": {
+      "en": "on Saturday",
+      "ko": "토요일에"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "3": "W.meaning"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0031",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Last weekend we ______ to the zoo with our cousins.",
+    "choices": [
+      "go",
+      "goes",
+      "went",
+      "going"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "Last weekend는 이미 지나간 때예요. 그래서 went를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.tense",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "Last weekend",
+    "why_not": {
+      "0": "지난 일이라는 느낌이 없어요",
+      "1": "한 사람일 때 쓰는 모양이에요",
+      "3": "혼자서는 문장을 만들 수 없어요"
+    },
+    "key_expr": {
+      "en": "go to the zoo",
+      "ko": "동물원에 가다"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.form",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0032",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My little brother runs very ______ for his age.",
+    "choices": [
+      "fast",
+      "fastly",
+      "faster",
+      "fastest"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "어떻게 달리는지 말하는 자리예요. fast는 '빠르게'라는 뜻으로 그대로 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.pos"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "runs very",
+    "why_not": {
+      "1": "이런 낱말은 쓰지 않아요",
+      "2": "견주는 말이 없어서 안 맞아요",
+      "3": "으뜸이라는 말이 없어요"
+    },
+    "key_expr": {
+      "en": "run fast",
+      "ko": "빠르게 달리다"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "G.clue",
+      "3": "G.clue"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0033",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Jinho went to the store ______ some bread.",
+    "choices": [
+      "buy",
+      "buys",
+      "to buy",
+      "buying"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "가게에 간 까닭을 말해요. '~하러'라는 뜻으로 to buy를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.toinf",
+      "V.shopping"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "went to the store",
+    "why_not": {
+      "0": "'~하러'라는 뜻이 되지 않아요",
+      "1": "한 사람이 늘 하는 일에 쓰는 모양이에요",
+      "3": "까닭을 말하는 자리가 아니에요"
+    },
+    "key_expr": {
+      "en": "to buy bread",
+      "ko": "빵을 사러"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.form",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0034",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Would you like juice ______ water?",
+    "choices": [
+      "and",
+      "or",
+      "so",
+      "but"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "둘 중에 하나를 고르라는 말이에요. 고를 때는 or를 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.conj",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "Would you like",
+    "why_not": {
+      "0": "둘 다 준다는 뜻이 돼요",
+      "2": "까닭과 결과를 이을 때 써요",
+      "3": "앞뒤가 반대일 때 써요"
+    },
+    "key_expr": {
+      "en": "Would you like ~?",
+      "ko": "~ 드릴까요?"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "2": "G.clue",
+      "3": "G.clue"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0035",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My brother ______ like carrots at all.",
+    "choices": [
+      "don't",
+      "doesn't",
+      "isn't",
+      "not"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "My brother는 한 사람이라 doesn't를 써요. at all은 '전혀'라는 뜻이에요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.agreement",
+      "V.food"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "My brother",
+    "why_not": {
+      "0": "여럿일 때 쓰는 말이에요",
+      "2": "like 앞에는 올 수 없어요",
+      "3": "혼자서는 '아니다'가 되지 않아요"
+    },
+    "key_expr": {
+      "en": "not ~ at all",
+      "ko": "전혀 ~ 아니다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.pair",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0036",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Our plane arrived ______ the airport at six.",
+    "choices": [
+      "at",
+      "in",
+      "on",
+      "into"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "공항처럼 어떤 곳에 도착했다고 할 때는 arrive at을 써요.",
+    "difficulty_label": 2,
+    "tags": [
+      "G.prep",
+      "V.travel"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "arrived",
+    "why_not": {
+      "1": "arrive와 짝이 되지 않아요",
+      "2": "'~ 위에'라는 뜻이에요",
+      "3": "안으로 들어간다는 움직임에 써요"
+    },
+    "key_expr": {
+      "en": "arrive at ~",
+      "ko": "~에 도착하다"
+    },
+    "miss_type": {
+      "1": "G.pair",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0037",
+    "section": "RC",
+    "part": "R1",
+    "stem": "When I called her, Yuna ______ dinner with her mom.",
+    "choices": [
+      "cooks",
+      "cooked",
+      "was cooking",
+      "has cooked"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "내가 전화한 그때 한창 요리하고 있었어요. 그때 하는 중이던 일은 was cooking으로 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.tense"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "When I called her",
+    "why_not": {
+      "0": "늘 하는 일이 되어 버려요",
+      "1": "그때 하는 중이라는 느낌이 없어요",
+      "3": "언제인지가 흐려져요"
+    },
+    "key_expr": {
+      "en": "was cooking",
+      "ko": "요리하고 있었다"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.clue",
+      "3": "G.clue"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0038",
+    "section": "RC",
+    "part": "R1",
+    "stem": "This letter ______ by my grandmother in 1985.",
+    "choices": [
+      "wrote",
+      "was written",
+      "writes",
+      "is writing"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "편지는 스스로 쓰지 못해요. 할머니가 쓴 것이니 was written을 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.passive"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "by my grandmother",
+    "why_not": {
+      "0": "편지가 직접 썼다는 말이 돼요",
+      "2": "지금 늘 하는 일이 되어요",
+      "3": "지금 하는 중이라 1985와 안 맞아요"
+    },
+    "key_expr": {
+      "en": "was written by ~",
+      "ko": "~에 의해 쓰였다"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "2": "G.clue",
+      "3": "G.clue"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0039",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Of all my friends, Jimin runs the ______.",
+    "choices": [
+      "fast",
+      "faster",
+      "fastest",
+      "more fast"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "친구들 모두 중에서 으뜸이라는 말이에요. 셋 이상에서 으뜸일 때 fastest를 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.compare"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "Of all my friends",
+    "why_not": {
+      "0": "으뜸이라는 느낌이 없어요",
+      "1": "둘만 견줄 때 쓰는 말이에요",
+      "3": "짧은 낱말이라 est를 붙여요"
+    },
+    "key_expr": {
+      "en": "the fastest",
+      "ko": "가장 빠른"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.clue",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0040",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Everyone in the class brought ______ own lunch box.",
+    "choices": [
+      "his",
+      "their",
+      "our",
+      "them"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "반 아이들 각자 것을 말해요. 요즘 영어는 Everyone 뒤에 their를 씁니다.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.pronoun",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "Everyone in the class",
+    "why_not": {
+      "0": "여자아이는 빠지게 돼요",
+      "2": "말하는 사람까지 들어가 버려요",
+      "3": "뒤에 물건 이름이 못 와요"
+    },
+    "key_expr": {
+      "en": "their own ~",
+      "ko": "각자 자기 ~"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "2": "W.meaning",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0041",
+    "section": "RC",
+    "part": "R1",
+    "stem": "______ you finish your homework, you can play outside.",
+    "choices": [
+      "After",
+      "During",
+      "While",
+      "Since"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "숙제를 끝낸 다음에 놀 수 있다는 말이에요. '~한 뒤에'는 After를 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.conj",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "you can play outside",
+    "why_not": {
+      "1": "뒤에 이런 문장이 올 수 없어요",
+      "2": "'~하는 동안'이라 뜻이 달라요",
+      "3": "'~한 이래로'라는 뜻이에요"
+    },
+    "key_expr": {
+      "en": "After you finish ~",
+      "ko": "~을 끝낸 뒤에"
+    },
+    "miss_type": {
+      "1": "G.form",
+      "2": "W.meaning",
+      "3": "W.meaning"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0042",
+    "section": "RC",
+    "part": "R1",
+    "stem": "It is important ______ enough water every day.",
+    "choices": [
+      "drink",
+      "to drink",
+      "drinking",
+      "drank"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'물을 마시는 것이 중요하다'는 말이에요. It is important 뒤에는 to drink를 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.toinf",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "It is important",
+    "why_not": {
+      "0": "It is 뒤에 그대로 올 수 없어요",
+      "2": "이 자리에는 잘 쓰지 않아요",
+      "3": "지난 일이 되어 버려요"
+    },
+    "key_expr": {
+      "en": "It is important to ~",
+      "ko": "~하는 것이 중요하다"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "2": "G.form",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0043",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My family ______ in this town since 2020.",
+    "choices": [
+      "live",
+      "lived",
+      "has lived",
+      "is living"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "since 2020은 '2020년부터 지금까지'라는 뜻이에요. 그럴 때 has lived를 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.tense"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "since 2020",
+    "why_not": {
+      "0": "지금까지 이어온 느낌이 없어요",
+      "1": "지금은 안 산다는 말이 돼요",
+      "3": "잠깐 지내는 느낌이 돼요"
+    },
+    "key_expr": {
+      "en": "since 2020",
+      "ko": "2020년부터"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.clue",
+      "3": "G.clue"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0044",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The movie was so ______ that I fell asleep.",
+    "choices": [
+      "bored",
+      "boring",
+      "bore",
+      "boredom"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "영화가 지루했다는 말이에요. 영화가 어떤지 말할 때는 boring을 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.pos",
+      "V.leisure"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "I fell asleep",
+    "why_not": {
+      "0": "사람이 지루함을 느낄 때 써요",
+      "2": "이 자리에 그대로 올 수 없어요",
+      "3": "'지루함'이라는 다른 낱말이에요"
+    },
+    "key_expr": {
+      "en": "so ~ that ...",
+      "ko": "너무 ~해서 …하다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "W.meaning"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0045",
+    "section": "RC",
+    "part": "R1",
+    "stem": "I couldn't go to the park ______ I was sick.",
+    "choices": [
+      "because",
+      "so",
+      "but",
+      "though"
+    ],
+    "answer_idx": 0,
+    "explanation_ko": "못 간 까닭이 아팠기 때문이에요. 까닭을 말할 때 because를 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.conj"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "I was sick",
+    "why_not": {
+      "1": "까닭과 결과 자리가 뒤바뀌어요",
+      "2": "앞뒤가 반대일 때 써요",
+      "3": "'~인데도'라 뜻이 반대예요"
+    },
+    "key_expr": {
+      "en": "because ~",
+      "ko": "~하기 때문에"
+    },
+    "miss_type": {
+      "1": "G.clue",
+      "2": "G.clue",
+      "3": "M.opposite"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0046",
+    "section": "RC",
+    "part": "R1",
+    "stem": "This bag is not ______ expensive as that one.",
+    "choices": [
+      "so",
+      "as",
+      "more",
+      "very"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "as ... as는 '~만큼 …한'이라는 짝이에요. 뒤에 as가 있으니 앞에도 as를 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.compare",
+      "V.shopping"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "as that one",
+    "why_not": {
+      "0": "뒤의 as와 짝이 되지 않아요",
+      "2": "than과 짝이 되는 말이에요",
+      "3": "뒤의 as와 짝이 되지 않아요"
+    },
+    "key_expr": {
+      "en": "as ~ as ...",
+      "ko": "…만큼 ~한"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "2": "G.pair",
+      "3": "G.pair"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0047",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Take your umbrella. It ______ rain this afternoon.",
+    "choices": [
+      "must",
+      "might",
+      "should",
+      "can't"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "비가 올지도 모른다는 말이에요. 확실하지 않을 때 might를 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.modal"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "Take your umbrella",
+    "why_not": {
+      "0": "'틀림없이'라 너무 세요",
+      "2": "'~하는 게 좋다'는 권하는 말이에요",
+      "3": "비가 안 온다는 반대 뜻이 돼요"
+    },
+    "key_expr": {
+      "en": "It might rain",
+      "ko": "비가 올지도 몰라"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "2": "W.meaning",
+      "3": "M.opposite"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0048",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Neither of the two boys ______ the answer.",
+    "choices": [
+      "know",
+      "knows",
+      "knowing",
+      "are knowing"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "Neither는 '둘 다 아니다'라는 뜻으로 하나처럼 봐요. 그래서 knows를 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.agreement"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "Neither of the two boys",
+    "why_not": {
+      "0": "여럿일 때 쓰는 모양이에요",
+      "2": "혼자서는 문장을 만들 수 없어요",
+      "3": "이런 말에는 쓰지 않아요"
+    },
+    "key_expr": {
+      "en": "Neither of ~",
+      "ko": "~ 둘 다 아니다"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.form",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0049",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The homework ______ we got today is not easy.",
+    "choices": [
+      "who",
+      "that",
+      "what",
+      "where"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "앞의 homework를 꾸며 주는 말이 필요해요. 물건을 가리킬 때 that을 써요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.pronoun",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "The homework",
+    "why_not": {
+      "0": "사람을 가리킬 때 써요",
+      "2": "앞에 오는 말과 겹쳐 버려요",
+      "3": "장소를 가리킬 때 써요"
+    },
+    "key_expr": {
+      "en": "the homework that ~",
+      "ko": "~한 그 숙제"
+    },
+    "miss_type": {
+      "0": "W.meaning",
+      "2": "G.form",
+      "3": "W.meaning"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0050",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Minji is looking forward ______ her cousin again.",
+    "choices": [
+      "to see",
+      "seeing",
+      "to seeing",
+      "see"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "look forward to 뒤에는 seeing 모양이 와요. 여기서 to는 '~하러'가 아니에요.",
+    "difficulty_label": 3,
+    "tags": [
+      "G.toinf"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "looking forward",
+    "why_not": {
+      "0": "이 짝에서는 쓰지 않는 모양이에요",
+      "1": "to가 빠져 짝이 깨져요",
+      "3": "to가 빠져 짝이 깨져요"
+    },
+    "key_expr": {
+      "en": "look forward to ~ing",
+      "ko": "~을 기대하다"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "1": "G.pair",
+      "3": "G.pair"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0051",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The classroom windows ______ every Friday afternoon.",
+    "choices": [
+      "clean",
+      "cleans",
+      "are cleaned",
+      "cleaning"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "창문은 스스로 닦지 못해요. 누군가 닦아 준다는 뜻으로 are cleaned를 써요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.passive",
+      "V.school"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "The classroom windows",
+    "why_not": {
+      "0": "창문이 직접 닦는다는 말이 돼요",
+      "1": "여럿인데 모양이 맞지 않아요",
+      "3": "혼자서는 문장을 만들 수 없어요"
+    },
+    "key_expr": {
+      "en": "are cleaned",
+      "ko": "닦인다"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "1": "G.form",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0052",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My mom told me ______ the door before leaving.",
+    "choices": [
+      "lock",
+      "to lock",
+      "locking",
+      "locked"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "tell 사람 to ~ 는 '누구에게 ~하라고 말하다'라는 짝이에요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.toinf",
+      "V.daily"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "told me",
+    "why_not": {
+      "0": "told me 뒤에는 to가 있어야 해요",
+      "2": "이 짝에서는 쓰지 않아요",
+      "3": "이 짝에서는 쓰지 않아요"
+    },
+    "key_expr": {
+      "en": "tell someone to ~",
+      "ko": "누구에게 ~하라고 하다"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "2": "G.pair",
+      "3": "G.pair"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0053",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Hana ______ her keys, so she can't open the door.",
+    "choices": [
+      "loses",
+      "lost",
+      "has lost",
+      "was losing"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "잃어버려서 지금도 못 여는 상태예요. 지금까지 이어지는 일은 has lost로 써요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.tense"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "so she can't open the door",
+    "why_not": {
+      "0": "늘 잃어버린다는 말이 돼요",
+      "1": "지금 상태와 이어지는 느낌이 약해요",
+      "3": "잃는 중이라는 이상한 뜻이 돼요"
+    },
+    "key_expr": {
+      "en": "has lost",
+      "ko": "잃어버렸다 (지금도)"
+    },
+    "miss_type": {
+      "0": "G.clue",
+      "1": "G.clue",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0054",
+    "section": "RC",
+    "part": "R1",
+    "stem": "Junho explained the rules ______ than his teacher did.",
+    "choices": [
+      "clear",
+      "clearly",
+      "more clearly",
+      "most clearly"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "than이 있으니 둘을 견주는 자리예요. clearly처럼 긴 낱말은 앞에 more를 붙여요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.compare",
+      "G.pos"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "than his teacher did",
+    "why_not": {
+      "0": "어떻게 했는지 말하는 모양이 아니에요",
+      "1": "견주는 말이 빠졌어요",
+      "3": "으뜸을 말할 때 써요"
+    },
+    "key_expr": {
+      "en": "more clearly than ~",
+      "ko": "~보다 더 또렷하게"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "1": "G.clue",
+      "3": "G.clue"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0055",
+    "section": "RC",
+    "part": "R1",
+    "stem": "______ it was very expensive, he bought the shoes.",
+    "choices": [
+      "Because",
+      "Although",
+      "So",
+      "If"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "비쌌는데도 샀다는 말이에요. 앞뒤가 반대일 때 Although를 써요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.conj",
+      "V.shopping"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "he bought the shoes",
+    "why_not": {
+      "0": "비싸서 샀다는 이상한 말이 돼요",
+      "2": "이 자리에 올 수 없어요",
+      "3": "'만약'이라 실제 일과 안 맞아요"
+    },
+    "key_expr": {
+      "en": "Although ~",
+      "ko": "~인데도"
+    },
+    "miss_type": {
+      "0": "M.opposite",
+      "2": "G.form",
+      "3": "W.meaning"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0056",
+    "section": "RC",
+    "part": "R1",
+    "stem": "If it ______ tomorrow, we will stay home.",
+    "choices": [
+      "rain",
+      "rains",
+      "will rain",
+      "rained"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "If로 시작하는 이런 문장에서는 앞쪽에 will을 쓰지 않아요. 그래서 rains를 써요.",
+    "difficulty_label": 4,
+    "tags": [
+      "G.tense",
+      "G.conj"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "we will stay home",
+    "why_not": {
+      "0": "it 뒤에는 s가 붙어요",
+      "2": "이 자리에는 will을 쓰지 않아요",
+      "3": "지난 일이 되어 버려요"
+    },
+    "key_expr": {
+      "en": "If it rains, ~",
+      "ko": "비가 오면 ~"
+    },
+    "miss_type": {
+      "0": "G.form",
+      "2": "G.pair",
+      "3": "G.form"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0057",
+    "section": "RC",
+    "part": "R1",
+    "stem": "The old bridge ______ when we visited the city last year.",
+    "choices": [
+      "repaired",
+      "was repairing",
+      "was being repaired",
+      "has repaired"
+    ],
+    "answer_idx": 2,
+    "explanation_ko": "그때 다리를 고치는 중이었어요. 다리는 스스로 고치지 못하니 was being repaired를 써요.",
+    "difficulty_label": 5,
+    "tags": [
+      "G.passive",
+      "G.tense"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "when we visited the city last year",
+    "why_not": {
+      "0": "다리가 직접 고쳤다는 말이 돼요",
+      "1": "다리가 고치는 중이라는 뜻이 돼요",
+      "3": "다리가 고쳐 왔다는 말이 돼요"
+    },
+    "key_expr": {
+      "en": "was being repaired",
+      "ko": "고쳐지고 있었다"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "1": "G.pair",
+      "3": "G.pair"
+    }
+  },
+  {
+    "type": "single",
+    "tmp_id": "R1-0058",
+    "section": "RC",
+    "part": "R1",
+    "stem": "My cousin is old enough ______ abroad by himself now.",
+    "choices": [
+      "travel",
+      "to travel",
+      "traveling",
+      "traveled"
+    ],
+    "answer_idx": 1,
+    "explanation_ko": "'~할 만큼 나이가 들었다'는 말이에요. old enough 뒤에는 to travel을 써요.",
+    "difficulty_label": 5,
+    "tags": [
+      "G.toinf",
+      "V.travel"
+    ],
+    "accent": null,
+    "tts_script": null,
+    "status": "active",
+    "evidence": "old enough",
+    "why_not": {
+      "0": "enough 뒤에는 to가 있어야 해요",
+      "2": "이 짝에서는 쓰지 않아요",
+      "3": "이 짝에서는 쓰지 않아요"
+    },
+    "key_expr": {
+      "en": "old enough to ~",
+      "ko": "~할 만큼 나이 든"
+    },
+    "miss_type": {
+      "0": "G.pair",
+      "2": "G.pair",
+      "3": "G.pair"
+    }
   }
 ]
