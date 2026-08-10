@@ -624,5 +624,822 @@
       }
     ],
     "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0007",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Mom,\nI (1) ______ my gym clothes at home again. Can you bring them to school before lunch? My P.E. class starts (2) ______ one o'clock. I am really sorry. (3) ______\nJisoo"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "left",
+          "leave",
+          "leaving",
+          "leaves"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "'또 두고 왔다'는 이미 지난 일이에요. again이 그 힌트예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.tense"
+        ],
+        "evidence": "at home again",
+        "why_not": {
+          "1": "지난 일이라는 느낌이 없어요",
+          "2": "혼자서는 문장을 만들 수 없어요",
+          "3": "늘 그런다는 뜻이 돼요"
+        },
+        "key_expr": {
+          "en": "leave ~ at home",
+          "ko": "~을 집에 두고 오다"
+        },
+        "miss_type": {
+          "1": "G.clue",
+          "2": "G.form",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "in",
+          "at",
+          "on",
+          "for"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "몇 시라고 시각을 말할 때는 at을 써요.",
+        "difficulty_label": 1,
+        "tags": [
+          "G.prep"
+        ],
+        "evidence": "one o'clock",
+        "why_not": {
+          "0": "달이나 해에 쓰는 말이에요",
+          "2": "날짜나 요일에 써요",
+          "3": "얼마 동안인지 말할 때 써요"
+        },
+        "key_expr": {
+          "en": "at one o'clock",
+          "ko": "1시에"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "2": "G.form",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "The gym is very big.",
+          "I forgot my lunch box.",
+          "I will not forget next time.",
+          "See you next year."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "미안하다고 한 뒤에 올 말이에요. 다음엔 안 그러겠다는 약속이 자연스러워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context"
+        ],
+        "evidence": "I am really sorry.",
+        "why_not": {
+          "0": "체육관 크기는 이야기하지 않았어요",
+          "1": "체육복 이야기인데 도시락으로 바뀌어요",
+          "3": "오늘 일인데 내년 인사는 안 맞아요"
+        },
+        "key_expr": {
+          "en": "next time",
+          "ko": "다음번에는"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "F.offtopic",
+          "3": "F.offtopic"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0008",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Library Notice\nThe school library (1) ______ closed next Monday for cleaning. Please return your books (2) ______ Friday. Books returned late will not be counted. (3) ______ if you have any questions.\nThank you,\nMs. Han"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "is being",
+          "was",
+          "has been",
+          "will be"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "next Monday는 아직 오지 않은 날이에요. 그래서 will be를 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.tense"
+        ],
+        "evidence": "next Monday",
+        "why_not": {
+          "0": "지금 닫는 중이라는 뜻이에요",
+          "1": "이미 지난 일이 되어 버려요",
+          "2": "지금까지 닫혀 있었다는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "will be closed",
+          "ko": "닫을 예정이다"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "G.clue",
+          "2": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "until",
+          "since",
+          "during",
+          "from"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "금요일까지 돌려 달라는 말이에요. '~까지'는 until을 써요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.prep"
+        ],
+        "evidence": "return your books",
+        "why_not": {
+          "1": "'~부터 지금까지'라는 뜻이에요",
+          "2": "뒤에 기간이 와야 해요",
+          "3": "'~부터'라 시작을 말해요"
+        },
+        "key_expr": {
+          "en": "until Friday",
+          "ko": "금요일까지"
+        },
+        "miss_type": {
+          "1": "W.meaning",
+          "2": "G.form",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "The gym will also be closed",
+          "Please come to the library office",
+          "We bought new chairs",
+          "Reading is good for you"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "질문이 있으면 어떻게 하라는 안내가 와야 해요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context"
+        ],
+        "evidence": "if you have any questions",
+        "why_not": {
+          "0": "체육관 이야기는 나오지 않았어요",
+          "2": "의자 이야기는 이 글과 안 맞아요",
+          "3": "질문할 곳을 알려주지 않아요"
+        },
+        "key_expr": {
+          "en": "if you have any questions",
+          "ko": "궁금한 점이 있으면"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "F.offtopic",
+          "3": "F.offtopic"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0009",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Tuesday, May 6th\nToday was my first day at swimming class. At first I was (1) ______ because the water looked deep. But my teacher held my hand and counted to three. After twenty minutes, I could float by (2) ______! (3) ______ I can't wait for next week."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "excited",
+          "bored",
+          "scared",
+          "angry"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "물이 깊어 보였다고 했으니 무서웠다는 말이 어울려요. But 뒤에 마음이 바뀐 이야기가 나와요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.context"
+        ],
+        "evidence": "the water looked deep",
+        "why_not": {
+          "0": "무서웠다가 바뀌는 흐름과 안 맞아요",
+          "1": "지루했다는 말은 나오지 않아요",
+          "3": "화가 났다는 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "be scared",
+          "ko": "무서워하다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "me",
+          "my",
+          "mine",
+          "myself"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "'혼자 힘으로'는 by myself라고 해요. 늘 붙어 다니는 짝이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.pronoun"
+        ],
+        "evidence": "I could float by",
+        "why_not": {
+          "0": "by와 짝이 되지 않아요",
+          "1": "뒤에 물건 이름이 와야 해요",
+          "2": "'내 것'이라는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "by myself",
+          "ko": "혼자 힘으로"
+        },
+        "miss_type": {
+          "0": "G.pair",
+          "1": "G.form",
+          "2": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "I felt so proud of myself.",
+          "Swimming is harder than I thought.",
+          "I forgot my swimsuit.",
+          "The pool was closed."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "혼자 뜨는 데 성공했고 다음 주가 기다려진다고 했으니, 뿌듯했다는 말이 자연스러워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "I can't wait for next week.",
+        "why_not": {
+          "1": "기다려진다는 말과 어울리지 않아요",
+          "2": "수영을 했으니 맞지 않아요",
+          "3": "수업을 했으니 맞지 않아요"
+        },
+        "key_expr": {
+          "en": "be proud of ~",
+          "ko": "~이 자랑스럽다"
+        },
+        "miss_type": {
+          "1": "F.offtopic",
+          "2": "M.opposite",
+          "3": "M.opposite"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0010",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Dear Grandma,\nWe arrived in Gyeongju yesterday. The weather is (1) ______ warm, so we walked all day. This morning we visited an old temple and I took many pictures. Tomorrow we (2) ______ ride bicycles around the lake. (3) ______\nLove,\nDaeun"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "much",
+          "very",
+          "too many",
+          "so much"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "warm 앞에서 '아주'라는 뜻을 더할 때는 very를 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.pos"
+        ],
+        "evidence": "warm, so we walked",
+        "why_not": {
+          "0": "이 자리에 혼자 오지 않아요",
+          "2": "셀 수 있는 것 앞에 써요",
+          "3": "이 자리에는 어울리지 않아요"
+        },
+        "key_expr": {
+          "en": "very warm",
+          "ko": "아주 따뜻한"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "2": "G.form",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "went",
+          "have gone",
+          "are going to",
+          "were going"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "Tomorrow는 아직 오지 않은 날이에요. 앞으로 할 일은 are going to로 말해요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.tense"
+        ],
+        "evidence": "Tomorrow",
+        "why_not": {
+          "0": "이미 지난 일이 되어 버려요",
+          "1": "이미 가 버렸다는 뜻이에요",
+          "3": "지난 일 이야기가 돼요"
+        },
+        "key_expr": {
+          "en": "be going to ~",
+          "ko": "~할 예정이다"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "G.clue",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "I did not take any pictures.",
+          "Please send me my homework.",
+          "The temple was closed today.",
+          "I miss you and hope you are well."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "할머니께 보내는 엽서의 마지막 인사예요. 안부를 전하는 말이 알맞아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context"
+        ],
+        "evidence": "Dear Grandma",
+        "why_not": {
+          "0": "사진을 많이 찍었다고 했어요",
+          "1": "여행 엽서에 숙제 부탁은 어울리지 않아요",
+          "2": "절에 다녀왔다고 했어요"
+        },
+        "key_expr": {
+          "en": "I miss you",
+          "ko": "보고 싶어요"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "F.offtopic",
+          "2": "M.opposite"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0011",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Photo Club Members Wanted!\nDo you love taking pictures? Our club meets every Wednesday (1) ______ 4 p.m. in Room 203. You don't need an expensive camera — a phone (2) ______ fine. (3) ______ Just bring a friend and a smile!"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "at",
+          "in",
+          "on",
+          "by"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "4시라고 시각을 말하는 자리라 at을 써요.",
+        "difficulty_label": 1,
+        "tags": [
+          "G.prep"
+        ],
+        "evidence": "4 p.m. in Room 203",
+        "why_not": {
+          "1": "달이나 해에 써요",
+          "2": "요일이나 날짜에 써요",
+          "3": "'~까지'라는 뜻이 돼요"
+        },
+        "key_expr": {
+          "en": "at 4 p.m.",
+          "ko": "오후 4시에"
+        },
+        "miss_type": {
+          "1": "G.form",
+          "2": "G.form",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "work",
+          "works",
+          "working",
+          "worked"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "a phone 하나를 말하니까 works를 써요. '휴대폰이면 충분하다'는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.agreement"
+        ],
+        "evidence": "a phone",
+        "why_not": {
+          "0": "하나일 때는 s가 붙어요",
+          "2": "혼자서는 문장을 만들 수 없어요",
+          "3": "지난 일이 되어 버려요"
+        },
+        "key_expr": {
+          "en": "works fine",
+          "ko": "충분히 잘 된다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "2": "G.form",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "The club meets on Sunday.",
+          "Members must pay ten dollars.",
+          "No experience is needed.",
+          "We only use film cameras."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "비싼 사진기가 없어도 된다고 했으니, 해 본 적 없어도 괜찮다는 말이 이어져요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context"
+        ],
+        "evidence": "You don't need an expensive camera",
+        "why_not": {
+          "0": "수요일에 모인다고 했어요",
+          "1": "돈 이야기는 나오지 않았어요",
+          "3": "휴대폰도 된다고 했어요"
+        },
+        "key_expr": {
+          "en": "No experience is needed.",
+          "ko": "해 본 적 없어도 돼요."
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.opposite"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0012",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Yerin,\nI went to the market. There is soup in the fridge — please heat it (1) ______ you eat. Your brother will come home (2) ______ five. Don't forget to feed the cat. (3) ______\nMom"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "since",
+          "after",
+          "while",
+          "before"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "먹기 전에 데우라는 말이에요. '~하기 전에'는 before를 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.conj"
+        ],
+        "evidence": "please heat it",
+        "why_not": {
+          "0": "'~한 뒤로 죽'이라는 뜻이에요",
+          "1": "먹고 나서 데우면 이상해요",
+          "2": "먹는 동안 데우는 건 어색해요"
+        },
+        "key_expr": {
+          "en": "before you eat",
+          "ko": "먹기 전에"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "M.opposite",
+          "2": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "around",
+          "between",
+          "among",
+          "along"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "'다섯 시쯤'이라는 뜻이에요. 시각 앞에서 '쯤'은 around를 써요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.prep"
+        ],
+        "evidence": "come home",
+        "why_not": {
+          "1": "둘 사이라고 할 때 써요",
+          "2": "여럿 가운데라고 할 때 써요",
+          "3": "길을 따라간다고 할 때 써요"
+        },
+        "key_expr": {
+          "en": "around five",
+          "ko": "다섯 시쯤"
+        },
+        "miss_type": {
+          "1": "W.meaning",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "The cat is at the vet.",
+          "I will be back by six.",
+          "We have no soup today.",
+          "Please go to the market."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "쪽지의 마지막 말이에요. 언제 돌아오는지 알려주는 게 자연스러워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "I went to the market.",
+        "why_not": {
+          "0": "고양이 밥을 주라고 했어요",
+          "2": "국이 냉장고에 있다고 했어요",
+          "3": "엄마가 이미 시장에 갔어요"
+        },
+        "key_expr": {
+          "en": "be back by ~",
+          "ko": "~까지 돌아오다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.swap"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0013",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "You're Invited!\nI am having a birthday party (1) ______ Saturday at my house. We will play games and eat pizza. The party starts at two and (2) ______ at five. (3) ______ I hope you can come!\nFrom, Taeyang"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "at",
+          "in",
+          "on",
+          "of"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "무슨 요일이라고 말할 때는 on을 써요.",
+        "difficulty_label": 1,
+        "tags": [
+          "G.prep"
+        ],
+        "evidence": "Saturday at my house",
+        "why_not": {
+          "0": "몇 시라고 할 때 써요",
+          "1": "달이나 해에 써요",
+          "3": "'~의'라는 뜻이라 안 맞아요"
+        },
+        "key_expr": {
+          "en": "on Saturday",
+          "ko": "토요일에"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "1": "G.form",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "end",
+          "ended",
+          "ending",
+          "ends"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "앞의 starts와 나란히 이어지는 자리예요. 그래서 ends를 써요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.agreement"
+        ],
+        "evidence": "The party starts at two and",
+        "why_not": {
+          "0": "앞의 starts와 모양이 어긋나요",
+          "1": "지난 일이 되어 버려요",
+          "2": "혼자서는 문장을 만들 수 없어요"
+        },
+        "key_expr": {
+          "en": "starts at ~ and ends at ...",
+          "ko": "~에 시작해 …에 끝나다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "1": "G.clue",
+          "2": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "Please tell me by Thursday.",
+          "The party is at the park.",
+          "Bring your swimsuit.",
+          "I will be twelve next year."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "초대장 끝에는 올지 안 올지 알려 달라는 말이 자연스러워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context"
+        ],
+        "evidence": "I hope you can come!",
+        "why_not": {
+          "1": "우리 집에서 한다고 했어요",
+          "2": "수영 이야기는 없었어요",
+          "3": "온다는 답과 이어지지 않아요"
+        },
+        "key_expr": {
+          "en": "tell me by ~",
+          "ko": "~까지 알려줘"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.notsaid",
+          "3": "F.offtopic"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0014",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Lost and Found\nA blue water bottle (1) ______ found in the music room on Monday. It has a small bear sticker on the side. If it is (2) ______, please come to the front office and tell us your name. (3) ______ after two weeks."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "is",
+          "was",
+          "has",
+          "were"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "지난 월요일에 발견된 일이라 was를 써요. 병은 스스로 찾지 못해요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.passive",
+          "G.tense"
+        ],
+        "evidence": "on Monday",
+        "why_not": {
+          "0": "지난 일이라는 느낌이 없어요",
+          "2": "found와 짝이 되지 않아요",
+          "3": "하나인데 여럿에 쓰는 말이에요"
+        },
+        "key_expr": {
+          "en": "was found",
+          "ko": "발견되었다"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "2": "G.pair",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "your",
+          "you",
+          "yours",
+          "yourself"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "'네 것이라면'이라는 뜻이에요. 뒤에 물건 이름이 없으니 yours를 써요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.pronoun"
+        ],
+        "evidence": "If it is",
+        "why_not": {
+          "0": "뒤에 물건 이름이 와야 해요",
+          "1": "'너는'이라 이 자리에 안 맞아요",
+          "3": "'너 자신'이라는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "It is yours.",
+          "ko": "그건 네 거야."
+        },
+        "miss_type": {
+          "0": "G.form",
+          "1": "G.form",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "Classes will start",
+          "The music room will close",
+          "We will buy new bottles",
+          "Items will be given away"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "분실물 안내의 마지막이에요. 2주 뒤에 물건을 어떻게 하는지 알려줘요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "after two weeks",
+        "why_not": {
+          "0": "수업 이야기는 나오지 않았어요",
+          "1": "음악실 이야기는 발견 장소일 뿐이에요",
+          "2": "새로 산다는 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "give away",
+          "ko": "남에게 주다"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      }
+    ]
   }
 ]
