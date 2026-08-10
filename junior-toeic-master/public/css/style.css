@@ -477,6 +477,23 @@ mark.ev {
 .duo-n { font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; color: var(--text); }
 .duo-s { font-size: .72rem; font-weight: 700; color: var(--muted); margin-top: 3px; }
 
+/* 리매치 탭 점수판 — 설욕률을 목록보다 위에 크게 */
+.revive { flex-direction: row; align-items: center; gap: 14px; }
+.revive-l { flex: none; text-align: center; padding-right: 14px; border-right: 1px solid var(--line); }
+.revive-n { font-size: 2rem; font-weight: 800; letter-spacing: -.04em; line-height: 1.05; color: var(--primary); }
+.revive-u { font-size: .95rem; font-weight: 800; margin-left: 1px; }
+.revive-r { flex: 1; min-width: 0; }
+.revive-s { font-size: .82rem; font-weight: 700; color: var(--muted); }
+.revive-s b { color: var(--text); }
+.revive-bar { display: block; height: 7px; margin-top: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.revive-bar span { display: block; height: 100%; border-radius: 999px; background: var(--grad); }
+
+/* 세트를 마친 뒤 보여주는 빠르기 */
+.pace { align-items: center; text-align: center; }
+.pace-n { font-size: 2.1rem; font-weight: 800; letter-spacing: -.04em; line-height: 1.05; color: var(--primary); }
+.pace-u { font-size: 1rem; font-weight: 800; margin-left: 2px; }
+.pace-up { color: var(--ok); }
+
 /* 이름 바꾸기 — 입력칸과 저장 버튼이 한 줄 */
 .name-row { display: flex; gap: 8px; margin: 4px 0 6px; }
 .name-input {

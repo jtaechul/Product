@@ -755,10 +755,28 @@ async function renderReview() {
   if (auth) {
     view.innerHTML = '<p class="loading">복습할 문제를 찾는 중...</p>';
     try {
-      const r = await api('/api/review', { headers: authHeaders() });
+      // 설욕률은 이 탭의 점수판이다 — 여기 오는 이유가 "몇 판 이겼나"이므로 목록보다 위에 둔다.
+      const [r, sm] = await Promise.all([
+        api('/api/review', { headers: authHeaders() }),
+        api('/api/skillmap', { headers: authHeaders() }).catch(() => null),
+      ]);
+      const scoreboard = sm?.revive
+        ? `<div class="card revive">
+             <div class="revive-l">
+               <p class="card-note">설욕률</p>
+               <p class="revive-n">${sm.revive.rate}<span class="revive-u">%</span></p>
+             </div>
+             <div class="revive-r">
+               <p class="revive-s">다시 만난 ${sm.revive.met}판 중 <b>${sm.revive.won}판</b>을 이겼어요</p>
+               <span class="revive-bar"><span style="width:${sm.revive.rate}%"></span></span>
+             </div>
+           </div>`
+        : '';
       if (!r.count) {
-        view.innerHTML = `<div class="greet"><div><h1 class="greet-title">오늘의 리매치</h1></div></div>
+        view.innerHTML = `${appBar()}<div class="greet"><div><h1 class="greet-title">오늘의 리매치</h1></div></div>
+          ${scoreboard}
           <div class="card"><p class="empty">오늘 만날 상대가 없어요.<br>틀린 문제는 1일 → 3일 → 7일 → 14일 뒤에 리매치로 돌아와요.<br>4연승하면 봉인 앨범에 박제됩니다.</p></div>`;
+        bindAppBar();
         return;
       }
       const list = r.questions.map((q) => `
@@ -775,6 +793,7 @@ async function renderReview() {
           <p class="greet-date">4연승하면 그 문제는 영원히 봉인됩니다</p>
           <h1 class="greet-title">오늘의 리매치 ${r.count}판</h1>
         </div></div>
+        ${scoreboard}
         <button class="btn-hero" style="background:var(--primary);color:#fff" data-review-start>리매치 시작</button>
         <div class="card"><div class="rowlist">${list}</div></div>`;
       bindAppBar();
@@ -792,6 +811,7 @@ async function renderReview() {
   if (!store.wrong.length) {
     view.innerHTML = `${appBar()}<div class="greet"><div><h1 class="greet-title">다시 풀 문제</h1></div></div>
       <div class="card"><p class="empty">아직 틀린 문제가 없어요.<br>오늘의 학습을 풀면 여기에 모입니다.</p></div>`;
+    bindAppBar();
     return;
   }
   const list = store.wrong.map((w) => `
@@ -803,12 +823,14 @@ async function renderReview() {
       </span>
     </div>`).join('');
   view.innerHTML = `
+    ${appBar()}
     <div class="greet"><div>
       <p class="greet-date">틀린 문제는 다시 만나야 내 것이 돼요</p>
       <h1 class="greet-title">다시 볼 문제 ${store.wrong.length}개</h1>
     </div></div>
     <button class="btn-hero" style="background:var(--primary);color:#fff" data-review-start>전부 다시 풀기</button>
     <div class="card"><div class="rowlist">${list}</div></div>`;
+  bindAppBar();
   view.querySelectorAll('.row-ico').forEach((el) => {
     el.style.cssText += 'font-size:.74rem;font-weight:700;background:var(--primary-soft);color:var(--primary)';
   });
@@ -955,11 +977,11 @@ async function showPartPractice(part) {
 }
 
 // ---------- 문제 풀이 ----------
-const session = { questions: [], passages: {}, idx: 0, title: '', trackToday: false, correct: 0 };
+const session = { questions: [], passages: {}, idx: 0, title: '', trackToday: false, correct: 0, times: [] };
 
 function startSession(questions, passages, title, opts = {}) {
   Object.assign(session, {
-    questions, passages, title, correct: 0,
+    questions, passages, title, correct: 0, times: [],
     trackToday: !!opts.trackToday, diag: null,
   });
   // 같은 지문(passage_id)을 잇달아 공유하는 문항을 한 화면(세트)으로 묶는다.
@@ -978,18 +1000,49 @@ function startSession(questions, passages, title, opts = {}) {
   renderQuestion();
 }
 
-function endSession() {
+// 이번 판의 '빠르기' — 서버(engine.mjs)와 같은 기준: 맞힌 것만, 2초 미만 찍기는 제외.
+const GUESS_MS = 2000;
+function sessionPace() {
+  const kept = session.times.filter((t) => t.correct && t.ms >= GUESS_MS);
+  if (kept.length < 3) return null;   // 3문항 미만이면 우연이 커서 숫자를 안 보여준다
+  const avg = kept.reduce((s, t) => s + t.ms, 0) / kept.length;
+  return { seconds: Math.round(avg / 100) / 10, n: kept.length };
+}
+
+async function endSession() {
   sfx.done();
   tabbarVisible(true);
   const n = session.questions.length;
+  const pace = sessionPace();
   view.innerHTML = `
     <div class="done">
       <div class="done-mark"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></div>
       <p class="done-title">${session.title} 완료</p>
       <p class="done-sub">${n}문항 중 ${session.correct}문항 맞혔어요</p>
     </div>
+    ${pace ? `<div class="card pace" data-pace>
+      <div class="card-head"><span class="card-title">오늘의 빠르기</span></div>
+      <p class="pace-n">${pace.seconds}<span class="pace-u">초</span></p>
+      <p class="card-note" data-pace-note>맞힌 문제 한 개를 푸는 데 걸린 시간이에요</p>
+    </div>` : ''}
     <button class="btn-hero" style="background:var(--primary);color:#fff" data-go-home>홈으로</button>`;
   view.querySelector('[data-go-home]').addEventListener('click', () => { setTab('home'); showHome(); });
+
+  // 지난주와 견주는 한 줄은 서버 기록이 있어야 나온다 — 늦게 와도 화면은 이미 떠 있다.
+  // 기준선은 '8~14일 전'(before_seconds)이라 방금 푼 이 판이 섞이지 않는다.
+  if (!pace || !auth) return;
+  try {
+    const sm = await api('/api/skillmap', { headers: authHeaders() });
+    const base = sm?.speed?.before_seconds;
+    const note = view.querySelector('[data-pace-note]');
+    if (!base || !note) return;
+    const gap = Math.round((base - pace.seconds) * 10) / 10;
+    note.innerHTML = Math.abs(gap) < 0.5
+      ? '지난주와 비슷한 속도예요'
+      : gap > 0
+        ? `지난주보다 <b class="pace-up">${gap}초 빨라졌어요</b>`
+        : `지난주보다 ${-gap}초 더 걸렸어요 — 천천히 봐도 괜찮아요`;
+  } catch { /* 무시 — 빠르기 숫자만으로도 충분하다 */ }
 }
 
 // ── 막힌 자리 신고 ──
@@ -1240,7 +1293,8 @@ function renderQuestion() {
       }
 
       try {
-        const payload = JSON.stringify({ question_id: q.id, chosen_idx: selected, time_ms: Date.now() - shownAt });
+        const spentMs = Date.now() - shownAt;
+        const payload = JSON.stringify({ question_id: q.id, chosen_idx: selected, time_ms: spentMs });
         let r = null;
         if (auth) {
           try {
@@ -1257,6 +1311,9 @@ function renderQuestion() {
         r = r || await api('/api/check', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload,
         });
+        // 빠르기 재료 — 서버 계산과 같은 기준으로 담는다(맞힌 것만·2초 미만 찍기는 제외).
+        // 기준이 다르면 결과 화면 숫자와 홈 카드 숫자가 어긋나 보인다.
+        session.times.push({ ms: spentMs, correct: !!r.correct });
         buttons.forEach((b, i) => {
           b.classList.remove('selected');
           if (i === r.answer_idx) b.classList.add('correct');
