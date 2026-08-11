@@ -211,6 +211,12 @@ r2://jtm-assets/
 > ```
 - 변환: `tmp_id` → ULID 발급(매핑을 `content/.idmap.json`에 보존 — 재실행 시 같은 ULID 재사용
   → **멱등 UPSERT**), `difficulty_label` → 초기 `rating` 매핑([engine.md](engine.md) 상수표)
+
+> ⭐ **문항을 추가하면 `.idmap.json`도 같은 커밋에 넣는다** (`node tools/import.mjs` 실행 후 커밋).
+> 음원·사진 파일 이름이 이 ULID에서 나오는데, 매핑이 커밋돼 있지 않으면 러너에서 처음 발급된다.
+> 2026-08-11에 L1 12문항을 매핑 없이 올렸다가, 음원 워크플로와 사진 워크플로가 **같은 문항에
+> 서로 다른 ULID를 붙여** 받아 둔 사진 48컷이 문항과 짝을 잃을 뻔했다.
+> 지금은 두 워크플로가 `Check ID map is committed` 단계에서 이 상황을 먼저 잡아 멈춘다.
 - 출력: `wrangler d1 execute <DB> --file` 로 실행할 SQL 파일 생성 (로컬 `--local` 우선 검증 후 원격 적용)
 - 태그·뱃지 카탈로그도 같은 도구로 시드한다 (마이그레이션과 분리 — [ERD.md](ERD.md)).
 
