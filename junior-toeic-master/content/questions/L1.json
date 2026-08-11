@@ -1259,14 +1259,14 @@
       "Picture D"
     ],
     "answer_idx": 1,
-    "explanation_ko": "'snowman'은 눈사람이에요. 눈사람을 만드는 사진을 고르면 돼요.",
+    "explanation_ko": "'snowman'은 눈사람이에요. 눈밭에 눈사람이 서 있는 사진을 고르면 돼요.",
     "difficulty_label": 1,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "AU",
-    "tts_script": "Children are making a snowman.",
+    "tts_script": "A snowman is standing in the snow.",
     "choice_image_prompts": [
       "Children sledding down a hill",
       "Children making a snowman",
@@ -1274,15 +1274,15 @@
       "A child ice skating"
     ],
     "status": "active",
-    "evidence": "making a snowman",
+    "evidence": "A snowman is standing",
     "why_not": {
       "0": "썰매를 타는 사진이에요",
       "2": "스키를 타는 사진이에요",
       "3": "스케이트를 타는 사진이에요"
     },
     "key_expr": {
-      "en": "make a snowman",
-      "ko": "눈사람을 만들다"
+      "en": "a snowman",
+      "ko": "눈사람"
     },
     "miss_type": {
       "0": "P.other",
@@ -1458,7 +1458,7 @@
       "V.daily"
     ],
     "accent": "UK",
-    "tts_script": "A boy is blowing out the birthday candles.",
+    "tts_script": "A girl is blowing out the birthday candles.",
     "choice_image_prompts": [
       "A child opening a gift box",
       "Colorful party balloons",
@@ -1473,7 +1473,7 @@
       "2": "종이꽃가루가 날리는 사진이에요"
     },
     "key_expr": {
-      "en": "blow out the candles",
+      "en": "blow out candles",
       "ko": "촛불을 불어 끄다"
     },
     "miss_type": {
