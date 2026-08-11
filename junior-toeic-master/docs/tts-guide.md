@@ -29,6 +29,11 @@
 2. [Cloud Text-to-Speech API 페이지](https://console.cloud.google.com/apis/library/texttospeech.googleapis.com)
    → **"사용"** 클릭 (상태가 "사용 설정됨"이 되면 완료)
 3. **"사용자 인증 정보 만들기"** → **"API 키"** → `AIza...` 로 시작하는 문자열 복사
+4. 만든 키의 **연필(수정)** → **"API 제한사항"** → **"키 제한"** → **Cloud Text-to-Speech API**
+   하나만 체크 → 저장. (키가 새어나가도 음성 합성 말고는 못 하게 막는 안전장치)
+5. GitHub → [Secrets](https://github.com/jtaechul/Product/settings/secrets/actions) →
+   **Repository secrets** 에 이름 `GOOGLE_TTS_KEY` 로 등록.
+   ⚠️ **Environment secrets 에 넣으면 워크플로가 읽지 못합니다.**
 
 > **"결제 사용 설정 불가 — 프로젝트 수 한도" 오류가 나면?**
 > 결제 계정마다 "결제를 켤 수 있는 프로젝트 수"가 정해져 있고, **삭제 대기 중(30일)인
@@ -40,7 +45,28 @@
 ### gemini 엔진을 쓸 때
 
 [Google AI Studio](https://aistudio.google.com/app/apikey) → **"Create API key"** → 복사.
-TTS 모델은 무료 등급의 분당 요청 수가 매우 낮아 429가 잦습니다 — `TTS_DELAY`를 크게 잡으세요.
+
+> ⚠️ **실측 결과 이 물량에는 사실상 못 씁니다.** 36개를 만드는 데 한 시간이 걸리고
+> 대부분 429(요청 수 초과)로 실패했습니다. 무료 등급의 분당 요청 수가 너무 낮습니다.
+> 그래서 배치 워크플로는 구글 키가 없으면 gemini 로 넘어가지 않고 **바로 멈춥니다**
+> (한 시간 헛돌리느니 1분 만에 알려주는 편이 낫다). 굳이 쓰려면 Actions 화면에서
+> `engine=gemini` 로 수동 실행하세요.
+
+## 1-2단계 자동화 — GitHub Actions
+
+`.github/workflows/generate-tts.yml` 이 위 작업을 대신합니다. 개발 샌드박스는 외부망이
+막혀 있어 러너에서 돌립니다.
+
+- **언제 도나**: 듣기 원고(`content/questions/L*.json`)나 이 워크플로가 푸시될 때
+- **이미 만든 음원은 건너뜁니다** — `public/audio` 를 먼저 옮겨 두고 시작하므로,
+  새로 쓴 문항의 음원만 만듭니다 (쿼터 낭비 없음)
+- 만든 음원을 `public/audio/` 에 커밋합니다. 그러면 다음 배포 때 `import.mjs` 가
+  그 문항을 draft → active 로 올립니다
+- 끝에 **'아직 소리 없는 문항 수'** 를 세어 알려줍니다 (0이면 전부 완료)
+
+> **주의**: 러너가 푸시한 음원 커밋은 GitHub 규칙상 다른 워크플로를 깨우지 않습니다
+> (무한 루프 방지). 즉 **음원이 커밋돼도 배포는 자동으로 걸리지 않습니다** —
+> `junior-toeic-master/` 아래 무엇이든 한 번 더 푸시해야 배포됩니다.
 
 ## 2단계 — 음원 생성 (Claude가 실행)
 
