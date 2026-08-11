@@ -128,6 +128,18 @@ jobs:
           cp -r tools/out/audio/. public/audio/ 2>/dev/null || true
           echo "public/audio 총 $(find public/audio -name '*.mp3' | wc -l)개"
 
+      # 만든 뒤에 실제로 소리가 채워졌는지 센다.
+      # import.mjs 는 음원 없는 듣기 문항을 draft 로 내리므로, 그 경고 수가 곧 '아직 소리 없는 문항 수'다.
+      - name: Check what is still silent
+        run: |
+          LEFT=$(node tools/import.mjs --check 2>&1 | grep -c "draft로 내림" || true)
+          echo "아직 음원이 없어 출제되지 않는 듣기 문항: ${LEFT}개"
+          if [ "$LEFT" -eq 0 ]; then
+            echo "모든 듣기 문항에 음원이 있습니다."
+          else
+            echo "::warning::${LEFT}개는 아직 소리가 없습니다 — 다시 실행하면 이어서 만듭니다"
+          fi
+
       - name: Commit & push
         run: |
           git config user.name "github-actions[bot]"
