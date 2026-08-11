@@ -390,5 +390,12 @@
     "common_name_en": "Rajidae",
     "scientific_name": "Rajidae",
     "date": "2026-08-09"
+  },
+  {
+    "no": 65,
+    "common_name_ko": "첨치과",
+    "common_name_en": "Ophidiidae",
+    "scientific_name": "Ophidiidae",
+    "date": "2026-08-11"
   }
 ]

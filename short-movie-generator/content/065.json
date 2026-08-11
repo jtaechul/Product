@@ -1,0 +1,75 @@
+{
+  "id": "065",
+  "created_at": "2026-08-11T11:23:28+00:00",
+  "updated_at": "2026-08-11T11:23:28+00:00",
+  "status": "published",
+  "category": "deep_sea",
+  "series": "심해 도감",
+  "applied": {
+    "cuts": [
+      {
+        "start": 29.0,
+        "end": 39.2,
+        "zoom": null
+      },
+      {
+        "start": 9.8,
+        "end": 19.3,
+        "zoom": null
+      },
+      {
+        "start": 19.6,
+        "end": 29.1,
+        "zoom": null
+      }
+    ],
+    "cuts_manual": false
+  },
+  "species": {
+    "common_name_ko": "첨치과",
+    "common_name_en": "Ophidiidae",
+    "scientific_name": "Ophidiidae",
+    "depth_range_m": "370",
+    "habitat": "",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "The cusk-eel family, Ophidiidae, is a group of marine bony fishes in the Ophidiiformes order.",
+      "The scientific name is from the Greek ophis meaning \"snake\", and refers to their eel-like appearance.",
+      "True eels diverged from other ray-finned fish during the Jurassic, while cusk-eels are part of the Percomorpha clade, along with tuna, perch, seahorses, and others.",
+      "The oldest fossil cusk-eel is Ampheristus, a highly successful genus with numerous species that existed from the Late Cretaceous (Maastrichtian) to the early Oligocene."
+    ]
+  },
+  "reels": {
+    "hook": "深海のヘビ、正体は魚。",
+    "caption": "深海のヘビ、正体は魚。\n\nアシロ(学名: Ophidiidae)。\n生息水深はおよそ 370 メートル。\nニョロリ・深海・硬骨魚、水深370mの住人。\n深い海の底で、たしかに命をつないでいる一種です。\n\n心に残ったら保存を。\n同じ海が気になる人へシェアを。\n\n見慣れない姿の一つひとつに、その環境を生き抜くための理由があります。\nこの映像は実際の深海・海洋の観測記録から。演出のための作り物ではありません。\nこの映像は実際の海の観測記録から。演出のための作り物ではありません。\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。\n\n映像: NOAA Ocean Exploration・Public Domain",
+    "hashtags": [
+      "#アシロ",
+      "#深海生物"
+    ],
+    "reveal_name": "アシロ / Ophidiidae",
+    "reveal_fact": "ニョロリ・深海・硬骨魚、水深370mの住人",
+    "hook_ko": "장어처럼 보이지만, 심해어.",
+    "caption_ko": "장어처럼 보이지만, 심해어.\n\n첨치과(학명: Ophidiidae).\n수심 약 370m에 살아갑니다.\nThe cusk-eel family, Ophidiidae, is a group of marine bony fishes in the Ophidiiformes order.\nThe scientific name is from the Greek ophis meaning \"snake\", and refers to their eel-like appearance.\nTrue eels diverged from other ray-finned fish during the Jurassic, while cusk-eels are part of the Percomorpha clade, along with tuna, perch, seahorses, and others.\nThe oldest fossil cusk-eel is Ampheristus, a highly successful genus with numerous species that existed from the Late Cretaceous (Maastrichtian) to the early Oligocene.\n바닥을 기는・숨는・뱀 닮은, 수심 370m 심해어.\n\n마음이 복잡한 날, 다시 꺼내보고 싶다면 저장해 두세요.\n같은 바다가 궁금한 사람에게 조용히 건네주세요.\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.\n\n영상: NOAA Ocean Exploration・Public Domain",
+    "hashtags_ko": [
+      "#첨치과",
+      "#심해생물"
+    ],
+    "yt_title": "深海のヘビ、正体は魚——アシロの正体 #アシロ #深海生物",
+    "yt_title_ko": "장어처럼 보이지만, 심해어——첨치과의 정체 #첨치과 #심해생물",
+    "visualizer": "reels",
+    "video_file": "ophidiidae_20260811_112327.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-065/reels_065.mp4",
+    "rev": "31485741279",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-065/cover_065.jpg",
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-065/ytthumb_065.jpg"
+  },
+  "post": null
+}
