@@ -1441,5 +1441,623 @@
         }
       }
     ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0015",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Dear Ms. Park,\nThank you for the reading club. I (1) ______ four books last month.\nMy favorite one was about a boy who lived (2) ______ a lighthouse.\n(3) ______ I hope we can read it together in class.\nSincerely,\nMinji"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "read",
+          "reads",
+          "reading",
+          "am reading"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "지난달에 있었던 일이라 read(읽었다)를 써요. reads·reading은 지난 일을 말할 때 쓰지 않아요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.tense"
+        ],
+        "evidence": "four books last month",
+        "why_not": {
+          "1": "지금 늘 하는 일에 써요",
+          "2": "혼자서는 못 쓰는 모양이에요",
+          "3": "지금 읽는 중이라는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "last month",
+          "ko": "지난달에"
+        },
+        "miss_type": {
+          "1": "G.clue",
+          "2": "G.form",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "on",
+          "in",
+          "at",
+          "of"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "등대 '안에서' 살았다는 뜻이라 in이 알맞아요. on은 위에, at은 한 지점을 가리켜요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.prep"
+        ],
+        "evidence": "a lighthouse",
+        "why_not": {
+          "0": "등대 위라는 뜻이 돼요",
+          "2": "등대라는 한 지점을 가리켜요",
+          "3": "'~의'라는 뜻이에요"
+        },
+        "key_expr": {
+          "en": "live in ~",
+          "ko": "~에서 살다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "I did not like it.",
+          "The library was closed.",
+          "It was a little sad but beautiful.",
+          "I have never read a book."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "앞뒤로 그 책을 좋아했고 같이 읽고 싶다고 했으니, 책이 좋았다는 말이 들어가야 자연스러워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context"
+        ],
+        "evidence": "My favorite one",
+        "why_not": {
+          "0": "가장 좋아한 책이라고 했어요",
+          "1": "도서관 이야기는 없어요",
+          "3": "네 권을 읽었다고 했어요"
+        },
+        "key_expr": {
+          "en": "a little sad",
+          "ko": "조금 슬픈"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "1": "F.offtopic",
+          "3": "F.offtopic"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0016",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "SCHOOL GARDEN CLUB\nDo you like plants? Come and join us!\nWe meet (1) ______ Wednesday after lunch.\nMembers will grow tomatoes and (2) ______ them in autumn.\n(3) ______ Just bring a hat and gloves.\nAsk Mr. Choi in Room 203."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "any",
+          "much",
+          "many",
+          "every"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "'수요일마다'라는 뜻이라 every가 알맞아요. much·many는 '얼마나 많이'를 말할 때 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.pos"
+        ],
+        "evidence": "Wednesday after lunch",
+        "why_not": {
+          "0": "'어떤 ~라도'라는 뜻이에요",
+          "1": "셀 수 없는 것에 써요",
+          "2": "여럿을 셀 때 써요"
+        },
+        "key_expr": {
+          "en": "every Wednesday",
+          "ko": "수요일마다"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "1": "W.meaning",
+          "2": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "pick",
+          "picks",
+          "picked",
+          "picking"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "앞의 grow와 나란히 이어지는 말이라 같은 모양인 pick을 써요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.pos"
+        ],
+        "evidence": "grow tomatoes and",
+        "why_not": {
+          "1": "앞말과 모양이 안 맞아요",
+          "2": "가을에 할 일이에요",
+          "3": "혼자서는 못 쓰는 모양이에요"
+        },
+        "key_expr": {
+          "en": "grow and pick",
+          "ko": "기르고 따다"
+        },
+        "miss_type": {
+          "1": "G.form",
+          "2": "G.form",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "The club is full now.",
+          "You do not need any money.",
+          "We do not grow anything.",
+          "Please bring your own plant."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "바로 뒤에 모자와 장갑만 가져오라고 했으니, 돈이 들지 않는다는 말이 자연스러워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context"
+        ],
+        "evidence": "Just bring a hat and gloves.",
+        "why_not": {
+          "0": "들어오라고 부르는 글이에요",
+          "2": "토마토를 기른다고 했어요",
+          "3": "모자와 장갑만 가져오래요"
+        },
+        "key_expr": {
+          "en": "You do not need ~",
+          "ko": "~는 필요 없어요"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "2": "F.offtopic",
+          "3": "F.offtopic"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0017",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Yesterday my sister and I made pancakes.\nWe were careful, (1) ______ the kitchen still got messy.\nMom laughed and helped us clean (2) ______ .\n(3) ______ Next Saturday we will try cookies."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "because",
+          "so",
+          "but",
+          "or"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "조심했는데도 어질러졌다는, 앞뒤가 반대되는 말이라 but이 알맞아요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.conj"
+        ],
+        "evidence": "We were careful,",
+        "why_not": {
+          "0": "까닭을 말할 때 써요",
+          "1": "앞말 때문에 생긴 일에 써요",
+          "3": "둘 중 하나를 고를 때 써요"
+        },
+        "key_expr": {
+          "en": "careful but messy",
+          "ko": "조심했지만 어질러진"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "G.clue",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "them",
+          "us",
+          "him",
+          "it"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "부엌을 치웠다는 뜻이라 앞에 나온 the kitchen을 가리키는 it이 알맞아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "G.pronoun"
+        ],
+        "evidence": "the kitchen still got messy",
+        "why_not": {
+          "0": "여럿을 가리키는 말이에요",
+          "1": "우리를 가리켜요",
+          "2": "남자 한 사람을 가리켜요"
+        },
+        "key_expr": {
+          "en": "clean it",
+          "ko": "그것을 치우다"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "G.clue",
+          "2": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "The pancakes tasted great.",
+          "We never cook at home.",
+          "Mom was angry with us.",
+          "I do not like sweet food."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "엄마가 웃었고 다음 주에 또 만들자고 했으니, 잘 됐다는 말이 자연스러워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context"
+        ],
+        "evidence": "Mom laughed and helped us",
+        "why_not": {
+          "1": "어제 직접 만들었어요",
+          "2": "엄마는 웃었다고 했어요",
+          "3": "다음엔 쿠키를 만든대요"
+        },
+        "key_expr": {
+          "en": "taste great",
+          "ko": "맛이 아주 좋다"
+        },
+        "miss_type": {
+          "1": "F.offtopic",
+          "2": "F.offtopic",
+          "3": "F.offtopic"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0018",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Daniel,\nI moved to a new town last week. My new house is (1) ______ than the old one,\nbut the garden is lovely. School starts on Monday, and I (2) ______ nervous.\n(3) ______ Please write back soon.\nMiss you,\nHana"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "small",
+          "smaller",
+          "smallest",
+          "more small"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "than과 함께 두 집을 견주는 말이라 smaller를 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.compare"
+        ],
+        "evidence": "than the old one",
+        "why_not": {
+          "0": "견주는 말이 아니에요",
+          "2": "셋 이상에서 가장 ~할 때 써요",
+          "3": "그렇게는 쓰지 않아요"
+        },
+        "key_expr": {
+          "en": "smaller than ~",
+          "ko": "~보다 더 작은"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "2": "G.clue",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "is",
+          "are",
+          "am",
+          "be"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "앞이 I(나)라서 am을 써요. is는 한 사람·한 개, are는 여럿일 때 써요.",
+        "difficulty_label": 1,
+        "tags": [
+          "G.agreement"
+        ],
+        "evidence": "and I",
+        "why_not": {
+          "0": "다른 한 사람에게 써요",
+          "1": "여럿일 때 써요",
+          "3": "혼자서는 못 쓰는 모양이에요"
+        },
+        "key_expr": {
+          "en": "I am nervous",
+          "ko": "나는 떨린다"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "G.clue",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "I already know everyone here.",
+          "My old school was closed.",
+          "I will move again tomorrow.",
+          "I hope I can make friends."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "학교 가는 게 떨린다고 했으니, 친구를 사귀길 바란다는 말이 자연스러워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context"
+        ],
+        "evidence": "and I",
+        "why_not": {
+          "0": "이사 온 지 일주일이에요",
+          "1": "옛 학교 이야기는 없어요",
+          "2": "지난주에 이사했어요"
+        },
+        "key_expr": {
+          "en": "make friends",
+          "ko": "친구를 사귀다"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "1": "F.offtopic",
+          "2": "F.offtopic"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0019",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "LOST\nA brown wallet was lost near the bus stop on Friday.\nThere (1) ______ two library cards inside.\nIf you find it, please (2) ______ it to the school office.\n(3) ______ Thank you!\n— Jiwon, Class 2-4"
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "are",
+          "is",
+          "was",
+          "has"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "카드가 두 장이라 are를 써요. is와 was는 하나일 때 쓰는 말이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.agreement"
+        ],
+        "evidence": "two library cards inside",
+        "why_not": {
+          "1": "하나일 때 써요",
+          "2": "하나일 때 쓰는 지난 일 표현이에요",
+          "3": "여기에는 어울리지 않아요"
+        },
+        "key_expr": {
+          "en": "There are ~",
+          "ko": "~가 있다"
+        },
+        "miss_type": {
+          "1": "G.clue",
+          "2": "G.clue",
+          "3": "W.meaning"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "brings",
+          "bring",
+          "brought",
+          "bringing"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "'~해 주세요'라고 부탁하는 말이라 please 뒤에는 bring을 그대로 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.pos"
+        ],
+        "evidence": "please",
+        "why_not": {
+          "0": "부탁하는 말에는 안 써요",
+          "2": "이미 지난 일에 써요",
+          "3": "혼자서는 못 쓰는 모양이에요"
+        },
+        "key_expr": {
+          "en": "bring it to ~",
+          "ko": "~로 가져다주다"
+        },
+        "miss_type": {
+          "0": "G.form",
+          "2": "G.form",
+          "3": "G.form"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "I found it yesterday.",
+          "The wallet is new and empty.",
+          "My name is written inside.",
+          "I will buy a new bus."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "잃어버린 물건을 찾아 달라는 글이니, 주인을 알아볼 수 있다는 말이 자연스러워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context"
+        ],
+        "evidence": "please",
+        "why_not": {
+          "0": "아직 못 찾았어요",
+          "1": "카드가 들어 있다고 했어요",
+          "3": "버스 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "written inside",
+          "ko": "안에 적혀 있는"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "1": "F.offtopic",
+          "3": "F.offtopic"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R2-0020",
+    "section": "RC",
+    "part": "R2",
+    "passage": {
+      "kind": "text",
+      "content": "Taking Care of a Hamster\nA hamster sleeps during the day, (1) ______ it wakes up at night.\nGive it fresh water every day. It also (2) ______ a clean cage.\n(3) ______ Then your hamster will stay healthy for a long time."
+    },
+    "questions": [
+      {
+        "stem": "Choose the best answer for (1).",
+        "choices": [
+          "so",
+          "if",
+          "because",
+          "and"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "낮에 자고 밤에 깬다는 두 가지를 나란히 잇는 말이라 and가 알맞아요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.conj"
+        ],
+        "evidence": "sleeps during the day,",
+        "why_not": {
+          "0": "앞말 때문에 생긴 일에 써요",
+          "1": "'만약'이라는 뜻이에요",
+          "2": "까닭을 말할 때 써요"
+        },
+        "key_expr": {
+          "en": "sleep during the day",
+          "ko": "낮에 자다"
+        },
+        "miss_type": {
+          "0": "G.clue",
+          "1": "G.clue",
+          "2": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (2).",
+        "choices": [
+          "needs",
+          "need",
+          "needing",
+          "needed"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "It(햄스터) 하나에 대한 늘 그런 일이라 needs를 써요.",
+        "difficulty_label": 2,
+        "tags": [
+          "G.agreement"
+        ],
+        "evidence": "It also",
+        "why_not": {
+          "1": "여럿이거나 나·너일 때 써요",
+          "2": "혼자서는 못 쓰는 모양이에요",
+          "3": "이미 지난 일에 써요"
+        },
+        "key_expr": {
+          "en": "need a clean cage",
+          "ko": "깨끗한 집이 필요하다"
+        },
+        "miss_type": {
+          "1": "G.clue",
+          "2": "G.form",
+          "3": "G.clue"
+        }
+      },
+      {
+        "stem": "Choose the best answer for (3).",
+        "choices": [
+          "Hamsters can swim well.",
+          "Wash the cage once a week.",
+          "Never give it any water.",
+          "Keep it awake all night."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "깨끗한 집이 필요하다고 한 바로 뒤라, 집을 청소하라는 말이 자연스러워요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.context"
+        ],
+        "evidence": "a clean cage",
+        "why_not": {
+          "0": "헤엄 이야기는 없어요",
+          "2": "물을 매일 주라고 했어요",
+          "3": "밤에 스스로 깨어나요"
+        },
+        "key_expr": {
+          "en": "once a week",
+          "ko": "일주일에 한 번"
+        },
+        "miss_type": {
+          "0": "F.offtopic",
+          "2": "F.offtopic",
+          "3": "F.offtopic"
+        }
+      }
+    ],
+    "status": "active"
   }
 ]

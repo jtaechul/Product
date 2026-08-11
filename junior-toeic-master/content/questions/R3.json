@@ -1708,5 +1708,622 @@
         }
       }
     ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0029",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "SWIMMING POOL RULES\n1. Take a shower before you enter the pool.\n2. Do not run beside the pool.\n3. Children under 8 must come with an adult.\nThe pool is open from 9 a.m. to 6 p.m."
+    },
+    "questions": [
+      {
+        "stem": "What must you do before entering the pool?",
+        "choices": [
+          "Buy a ticket",
+          "Bring a towel",
+          "Take a shower",
+          "Call an adult"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "첫 번째 규칙에 들어가기 전 샤워를 하라고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ],
+        "evidence": "Take a shower before you enter the pool.",
+        "why_not": {
+          "0": "표 이야기는 없어요",
+          "1": "수건 이야기는 없어요",
+          "3": "어른은 8살 미만일 때예요"
+        },
+        "key_expr": {
+          "en": "take a shower",
+          "ko": "샤워를 하다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "Who needs to come with an adult?",
+        "choices": [
+          "Everyone",
+          "Only adults",
+          "Children over 8",
+          "Children under 8"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "8살보다 어린 아이는 어른과 함께 와야 한다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "Children under 8 must come with an adult.",
+        "why_not": {
+          "0": "모두는 아니에요",
+          "1": "어른은 혼자 올 수 있어요",
+          "2": "8살보다 어린 아이예요"
+        },
+        "key_expr": {
+          "en": "under 8",
+          "ko": "8살 미만"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.opposite",
+          "2": "M.opposite"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0030",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Emma wanted to give her grandmother a present.\nShe did not have much money, so she decided to make something.\nFor three evenings she painted a picture of her grandmother's cat.\nWhen Grandma opened the gift, she smiled and hugged Emma for a long time."
+    },
+    "questions": [
+      {
+        "stem": "Why did Emma make a present?",
+        "choices": [
+          "She had little money",
+          "She liked painting",
+          "Her cat was sick",
+          "Grandma asked her"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "돈이 넉넉하지 않아서 직접 만들기로 했다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "She did not have much money, so she decided to make something.",
+        "why_not": {
+          "1": "그림은 방법이지 까닭이 아니에요",
+          "2": "고양이가 아프다는 말은 없어요",
+          "3": "할머니가 부탁하지 않았어요"
+        },
+        "key_expr": {
+          "en": "did not have much money",
+          "ko": "돈이 넉넉하지 않았다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "How did Grandma feel about the gift?",
+        "choices": [
+          "Sad",
+          "Happy",
+          "Angry",
+          "Surprised and upset"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "웃으며 오랫동안 안아 주었으니 기뻐한 거예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist"
+        ],
+        "evidence": "she smiled and hugged Emma for a long time",
+        "why_not": {
+          "0": "웃었다고 했어요",
+          "2": "웃으며 안아 주었어요",
+          "3": "속상하다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "hug for a long time",
+          "ko": "오랫동안 안아 주다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0031",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "FIELD TRIP NOTICE\nDate: Friday, October 12\nPlace: City Science Museum\nMeet at the school gate at 8:30 a.m. The bus leaves at 8:45 a.m.\nBring your lunch. You may bring a camera, but not a phone."
+    },
+    "questions": [
+      {
+        "stem": "What time does the bus leave?",
+        "choices": [
+          "8:00 a.m.",
+          "8:30 a.m.",
+          "8:45 a.m.",
+          "9:00 a.m."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "버스는 8시 45분에 떠난다고 했어요. 8시 30분은 모이는 시각이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "The bus leaves at 8:45 a.m.",
+        "why_not": {
+          "0": "그런 시각은 없어요",
+          "1": "모이는 시각이에요",
+          "3": "그런 시각은 없어요"
+        },
+        "key_expr": {
+          "en": "the bus leaves at ~",
+          "ko": "버스는 ~에 떠난다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.number",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can students NOT bring?",
+        "choices": [
+          "Lunch",
+          "A camera",
+          "A notebook",
+          "A phone"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "사진기는 되지만 전화기는 안 된다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "but not a phone",
+        "why_not": {
+          "0": "점심은 가져오라고 했어요",
+          "1": "사진기는 가져와도 돼요",
+          "2": "공책 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "may bring ~, but not ~",
+          "ko": "~는 되고 ~는 안 된다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.opposite",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0032",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Tom,\nSorry, I cannot come to soccer practice on Thursday. I hurt my ankle\nwhile I was running yesterday. The doctor said I should rest for two weeks.\nI will still come and watch the game on Saturday.\nSee you there,\nBen"
+    },
+    "questions": [
+      {
+        "stem": "Why can Ben not come to practice?",
+        "choices": [
+          "He hurt his ankle",
+          "He is busy",
+          "He moved away",
+          "He does not like soccer"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "어제 달리다가 발목을 다쳤다고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "I hurt my ankle",
+        "why_not": {
+          "1": "바쁘다는 말은 없어요",
+          "2": "이사 이야기는 없어요",
+          "3": "토요일에 경기를 보러 와요"
+        },
+        "key_expr": {
+          "en": "hurt my ankle",
+          "ko": "발목을 다치다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "What will Ben do on Saturday?",
+        "choices": [
+          "Play in the game",
+          "Watch the game",
+          "Stay in bed",
+          "See the doctor"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "토요일에는 경기를 보러 가겠다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "watch the game on Saturday",
+        "why_not": {
+          "0": "두 주 쉬어야 해요",
+          "2": "보러 가겠다고 했어요",
+          "3": "의사 이야기는 지난 일이에요"
+        },
+        "key_expr": {
+          "en": "watch the game",
+          "ko": "경기를 보다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0033",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Rain forests are warm and wet all year.\nMany kinds of animals live there, from tiny frogs to large birds.\nTall trees block the sunlight, so the ground stays dark.\nSome plants grow high on the branches to reach the light."
+    },
+    "questions": [
+      {
+        "stem": "What is this passage mainly about?",
+        "choices": [
+          "A famous bird",
+          "How to plant trees",
+          "Life in rain forests",
+          "A rainy day"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "열대우림이 어떤 곳이고 무엇이 사는지를 두루 이야기하고 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist"
+        ],
+        "evidence": "Many kinds of animals live there",
+        "why_not": {
+          "0": "새는 예로 한 번 나와요",
+          "1": "나무 심는 방법은 없어요",
+          "3": "하루 날씨 이야기가 아니에요"
+        },
+        "key_expr": {
+          "en": "rain forest",
+          "ko": "열대우림"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "Why is the ground dark?",
+        "choices": [
+          "It rains at night",
+          "Animals hide the light",
+          "The soil is black",
+          "Tall trees block the light"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "키 큰 나무가 햇빛을 막아서 땅이 어둡다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "Tall trees block the sunlight, so the ground stays dark.",
+        "why_not": {
+          "0": "밤 이야기는 없어요",
+          "1": "동물이 막는 게 아니에요",
+          "2": "흙 색깔 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "block the sunlight",
+          "ko": "햇빛을 막다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does 'block' mean here?",
+        "choices": [
+          "Stop something",
+          "Build something",
+          "Count something",
+          "Sell something"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "햇빛이 땅까지 못 오게 막는다는 뜻이라 '막다'가 알맞아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab"
+        ],
+        "evidence": "block the sunlight",
+        "why_not": {
+          "1": "짓는다는 뜻이 아니에요",
+          "2": "세는 것과 상관없어요",
+          "3": "파는 것과 상관없어요"
+        },
+        "key_expr": {
+          "en": "block",
+          "ko": "막다"
+        },
+        "miss_type": {
+          "1": "W.meaning",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0034",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "BOOK SALE\nSaturday only, 10 a.m. - 4 p.m.\nStory books: 2,000 won\nComic books: 3,000 won\nBuy three books and get one free.\nAll money will help the animal shelter."
+    },
+    "questions": [
+      {
+        "stem": "How much are two comic books?",
+        "choices": [
+          "3,000 won",
+          "6,000 won",
+          "5,000 won",
+          "4,000 won"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "만화책 한 권이 3,000원이니 두 권이면 6,000원이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan",
+          "V.shopping"
+        ],
+        "evidence": "Comic books: 3,000 won",
+        "why_not": {
+          "0": "한 권 값이에요",
+          "2": "그런 값은 없어요",
+          "3": "이야기책 두 권 값이에요"
+        },
+        "key_expr": {
+          "en": "get one free",
+          "ko": "한 권을 덤으로 받다"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "2": "M.notsaid",
+          "3": "M.number"
+        }
+      },
+      {
+        "stem": "Where does the money go?",
+        "choices": [
+          "To the school",
+          "To the writers",
+          "To an animal shelter",
+          "To the students"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "모인 돈은 모두 동물 보호소를 돕는 데 쓴다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "help the animal shelter",
+        "why_not": {
+          "0": "학교 이야기는 없어요",
+          "1": "작가 이야기는 없어요",
+          "3": "학생에게 준다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "animal shelter",
+          "ko": "동물 보호소"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0035",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Last winter our class grew beans in paper cups.\nWe put the cups near the window and gave them water twice a week.\nAt first nothing happened, and some students wanted to stop.\nAfter ten days small green leaves appeared, and everyone cheered."
+    },
+    "questions": [
+      {
+        "stem": "How often did the students water the beans?",
+        "choices": [
+          "Every day",
+          "Only once",
+          "Once a month",
+          "Twice a week"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "일주일에 두 번 물을 주었다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "gave them water twice a week",
+        "why_not": {
+          "0": "날마다는 아니에요",
+          "1": "여러 번 주었어요",
+          "2": "한 달에 한 번이 아니에요"
+        },
+        "key_expr": {
+          "en": "twice a week",
+          "ko": "일주일에 두 번"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.number",
+          "2": "M.number"
+        }
+      },
+      {
+        "stem": "What can we learn from this story?",
+        "choices": [
+          "Waiting can be worth it",
+          "Beans need no water",
+          "Winter is the best season",
+          "Paper cups are cheap"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "아무 일도 없어 그만두려 했지만 기다리니 싹이 났어요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "some students wanted to stop",
+        "why_not": {
+          "1": "물을 주었다고 했어요",
+          "2": "계절을 견주지 않았어요",
+          "3": "컵 값 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "at first",
+          "ko": "처음에는"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0036",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "To: All students\nFrom: The school nurse\nThe weather is getting colder. Please wash your hands before you eat.\nIf you feel sick, come to the health room on the first floor.\nDo not share cups or towels with your friends."
+    },
+    "questions": [
+      {
+        "stem": "Who wrote this message?",
+        "choices": [
+          "A teacher",
+          "The school nurse",
+          "A student",
+          "A parent"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "맨 위에 보건 선생님이 보냈다고 적혀 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "From: The school nurse",
+        "why_not": {
+          "0": "선생님이라고 적혀 있지 않아요",
+          "2": "학생에게 보낸 글이에요",
+          "3": "학부모 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "school nurse",
+          "ko": "보건 선생님"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.opposite",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where is the health room?",
+        "choices": [
+          "Next to the gym",
+          "On the second floor",
+          "On the first floor",
+          "In the office"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "보건실은 1층에 있다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "the health room on the first floor",
+        "why_not": {
+          "0": "체육관 이야기는 없어요",
+          "1": "2층이라는 말은 없어요",
+          "3": "교무실 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "on the first floor",
+          "ko": "1층에"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
   }
 ]
