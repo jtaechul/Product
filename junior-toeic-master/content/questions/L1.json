@@ -795,7 +795,7 @@
       "A child singing into a microphone",
       "A girl playing a violin"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "playing the piano",
     "why_not": {
       "0": "기타를 치는 사진이에요",
@@ -990,7 +990,7 @@
       "A woman sitting on a bench reading",
       "A woman walking her dog on a path"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "walking her dog",
     "why_not": {
       "0": "자전거를 타는 사진이에요",
@@ -1273,7 +1273,7 @@
       "A child skiing on snow",
       "A child ice skating"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "making a snowman",
     "why_not": {
       "0": "썰매를 타는 사진이에요",
@@ -1465,7 +1465,7 @@
       "Confetti falling at a party",
       "A boy blowing out candles on a birthday cake"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "the birthday candles",
     "why_not": {
       "0": "선물을 여는 사진이에요",
@@ -1559,7 +1559,7 @@
       "A person swimming in a lake",
       "A tent at a campsite"
     ],
-    "status": "draft",
+    "status": "active",
     "evidence": "fishing at the lake",
     "why_not": {
       "1": "노를 젓는 사진이에요",
