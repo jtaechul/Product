@@ -795,7 +795,7 @@
       "A child singing into a microphone",
       "A girl playing a violin"
     ],
-    "status": "active",
+    "status": "draft",
     "evidence": "playing the piano",
     "why_not": {
       "0": "기타를 치는 사진이에요",
@@ -825,7 +825,7 @@
         ]
       },
       {
-        "q": "girl playing piano",
+        "q": "girl playing piano keyboard",
         "need": [
           "piano"
         ],
@@ -833,7 +833,13 @@
           "girl"
         ],
         "avoid": [
-          "guitar"
+          "guitar",
+          "guzheng",
+          "zither",
+          "harp",
+          "koto",
+          "organ",
+          "accordion"
         ]
       },
       {
@@ -984,7 +990,7 @@
       "A woman sitting on a bench reading",
       "A woman walking her dog on a path"
     ],
-    "status": "active",
+    "status": "draft",
     "evidence": "walking her dog",
     "why_not": {
       "0": "자전거를 타는 사진이에요",
@@ -1038,7 +1044,7 @@
         ]
       },
       {
-        "q": "woman walking dog",
+        "q": "woman walking dog park path",
         "need": [
           "dog",
           "walking"
@@ -1046,7 +1052,10 @@
         "prefer": [
           "woman"
         ],
-        "avoid": []
+        "avoid": [
+          "couple",
+          "cat"
+        ]
       }
     ]
   },
@@ -1264,7 +1273,7 @@
       "A child skiing on snow",
       "A child ice skating"
     ],
-    "status": "active",
+    "status": "draft",
     "evidence": "making a snowman",
     "why_not": {
       "0": "썰매를 타는 사진이에요",
@@ -1294,14 +1303,19 @@
         ]
       },
       {
-        "q": "children making snowman",
+        "q": "children building snowman winter",
         "need": [
           "snowman"
         ],
         "prefer": [
           "children"
         ],
-        "avoid": []
+        "avoid": [
+          "toy",
+          "decoration",
+          "ornament",
+          "creche"
+        ]
       },
       {
         "q": "child skiing snow",
@@ -1451,7 +1465,7 @@
       "Confetti falling at a party",
       "A boy blowing out candles on a birthday cake"
     ],
-    "status": "active",
+    "status": "draft",
     "evidence": "the birthday candles",
     "why_not": {
       "0": "선물을 여는 사진이에요",
@@ -1509,10 +1523,10 @@
         "q": "child blowing birthday candles cake",
         "need": [
           "birthday",
-          "candle"
+          "child"
         ],
         "prefer": [
-          "cake"
+          "candle"
         ],
         "avoid": []
       }
@@ -1545,7 +1559,7 @@
       "A person swimming in a lake",
       "A tent at a campsite"
     ],
-    "status": "active",
+    "status": "draft",
     "evidence": "fishing at the lake",
     "why_not": {
       "1": "노를 젓는 사진이에요",
@@ -1563,14 +1577,19 @@
     },
     "choice_image_queries": [
       {
-        "q": "man fishing lake",
+        "q": "man fishing rod lake daytime",
         "need": [
           "fishing"
         ],
         "prefer": [
           "lake"
         ],
-        "avoid": []
+        "avoid": [
+          "fishing net",
+          "sunset",
+          "sunrise",
+          "dusk"
+        ]
       },
       {
         "q": "person rowing boat lake",

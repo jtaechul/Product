@@ -62,7 +62,16 @@ async function get(url, tries = 4) {
 //  prefer : 있으면 더 좋은 말. 1차로 need+prefer를 다 갖춘 후보를 찾고, 없으면 need만으로 다시 본다
 //  avoid  : 하나라도 있으면 탈락
 // 가로 사진을 먼저 보고, 없으면 방향 제한을 푼다.
+// 어떤 문항에서든 보기 사진으로 쓰면 안 되는 것들. "실제 장면 사진"이 아니라
+// 인형·조각·그림·합성이면, 아이는 문장을 아는데도 무엇을 고를지 헷갈린다.
+// 2026-08-11 실제로 겪었다 — '눈사람' 자리에 눈사람 장식 인형이, '낚시' 자리에
+// 해질녘 그물 실루엣이 들어왔다. (그리는 행동 자체가 답인 문항이 있으므로
+// paint·drawing 같은 '주제' 낱말은 넣지 않는다 — 여기 있는 건 매체·형태 낱말뿐이다)
+const NEVER = ['figurine', 'doll', 'statue', 'sculpture', 'clipart', 'cartoon', 'anime',
+  'vector', 'render', 'illustration', 'watercolor', 'silhouette', 'ai generated', 'ai-generated'];
+
 async function findPhoto({ q, need = [], prefer = [], avoid = [] }) {
+  avoid = [...avoid, ...NEVER];
   const pages = [];
   for (const orientation of ['horizontal', 'all']) {
     const url = 'https://pixabay.com/api/?' + new URLSearchParams({
