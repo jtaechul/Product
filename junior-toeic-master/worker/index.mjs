@@ -6,7 +6,8 @@ import {
   verifyPin, hashPin, makeToken, requireAuth, requireRole, verifyToken,
   loginLockedFor, noteLoginFail, clearLoginFails,
   isStudentPin, isStaffSecret, STAFF_ROLES, SECRET_MIN, weakSecretReason,
-  makeParentToken, requireParent,
+  makeParentToken, requireParent, requireParentAccount,
+  hashSecret, verifySecret, makeAccountToken,
 } from './auth.mjs';
 import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions } from './engine.mjs';
 
@@ -426,9 +427,162 @@ const superCount = async (db) =>
 app.get('/api/setup/needed', async (c) => c.json({ needed: (await superCount(c.env.DB)) === 0 }));
 
 // ══════════════════════════════════════════════════════════════════
-//  학부모 API — 읽기 전용. 자녀 딱 한 명만 보인다.
-//  자녀 아이디 + 학부모용 PIN 으로 들어온다(부모에게 새 개인정보를 받지 않는다).
+//  학부모 API
+//
+//  들어오는 길이 두 개다.
+//   1) 직접 가입 (B2C 주 경로) — 이메일 + 비밀번호. 학부모가 결제자이자 아이 계정의 주인.
+//   2) 학원 발급 (유통 채널) — 자녀 아이디 + 학부모용 PIN. 기존 가정이 쓰던 방식 그대로.
+//
+//  어느 길로 들어오든 **읽기 전용**이다. 부모는 아이 대신 문제를 풀 수 없다.
 // ══════════════════════════════════════════════════════════════════
+
+// 아이 로그인ID — 헷갈리는 글자(0·O·1·I·5·S)를 뺀 6자리.
+// 아이가 종이에 적힌 걸 보고 직접 입력하기 때문에, 읽기 어려운 글자는 아예 안 쓴다.
+const ID_ALPHA = 'ABCDEFGHJKLMNPQRTUVWXY2346789';
+function makeChildLoginId() {
+  const b = new Uint8Array(6);
+  crypto.getRandomValues(b);
+  return 'JP-' + [...b].map((n) => ID_ALPHA[n % ID_ALPHA.length]).join('');
+}
+
+// 동의서 버전. 문구가 바뀌면 올린다 — 누가 어느 버전에 동의했는지 남겨야
+// 나중에 재동의를 받아야 하는지 판단할 수 있다.
+const CONSENT_VER = '2026-08-11';
+const MAX_CHILDREN = 3;
+
+// 이메일은 형식만 가볍게 본다. 진짜 확인은 나중에 인증 메일로 한다.
+const isEmail = (s) => typeof s === 'string' && s.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
+
+// 새 아이 계정 한 명을 만든다. 로그인ID가 겹치면 몇 번 다시 뽑는다.
+async function createChild(db, { parentId, name, grade }) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const loginId = makeChildLoginId();
+    const dup = await db.prepare('SELECT 1 FROM users WHERE login_id = ?1').bind(loginId).first();
+    if (dup) continue;
+    const pin = makePin();
+    const id = crypto.randomUUID();
+    await db.prepare(
+      `INSERT INTO users (id, role, login_id, pin_hash, display_name, created_at, parent_id)
+       VALUES (?1, 'student', ?2, ?3, ?4, ?5, ?6)`
+    ).bind(id, loginId, await hashPin(pin), name, nowISO(), parentId).run();
+    return { id, login_id: loginId, display_name: name, grade: grade ?? null, pin };
+  }
+  return null;
+}
+
+app.post('/api/parent/signup', async (c) => {
+  const b = await c.req.json().catch(() => ({}));
+  const email = String(b.email ?? '').trim().toLowerCase();
+  const password = String(b.password ?? '');
+  const name = clean(b.name, 12);
+  const childName = clean(b.child_name, 12);
+
+  if (!isEmail(email)) return c.json({ error: '이메일 주소를 확인해주세요' }, 400);
+  const weak = weakSecretReason(password, email.split('@')[0]);
+  if (weak) return c.json({ error: weak }, 400);
+  if (!name) return c.json({ error: '보호자 이름을 입력해주세요' }, 400);
+  if (!childName) return c.json({ error: '아이 이름을 입력해주세요' }, 400);
+  // 만 14세 미만 아이의 계정을 만드는 절차라, 동의 없이는 한 걸음도 나갈 수 없다.
+  if (b.consent !== true) return c.json({ error: '보호자 동의가 필요합니다' }, 400);
+
+  const dup = await c.env.DB.prepare('SELECT 1 FROM parents WHERE email = ?1').bind(email).first();
+  if (dup) return c.json({ error: '이미 가입된 이메일이에요. 로그인해주세요' }, 409);
+
+  const parent = {
+    id: crypto.randomUUID(),
+    email,
+    password_hash: await hashSecret(password),
+    display_name: name,
+  };
+  const now = nowISO();
+  await c.env.DB.prepare(
+    `INSERT INTO parents (id, email, password_hash, display_name, consent_at, consent_ver, created_at)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?5)`
+  ).bind(parent.id, email, parent.password_hash, name, now, CONSENT_VER).run();
+
+  const child = await createChild(c.env.DB, { parentId: parent.id, name: childName, grade: b.grade });
+  if (!child) return c.json({ error: '아이 아이디를 만들지 못했어요. 다시 시도해주세요' }, 500);
+
+  return c.json({
+    token: await makeAccountToken(parent),
+    parent: { email, display_name: name },
+    child,
+    note: '아이 PIN은 지금 한 번만 보입니다. 아이에게 알려주고 창을 닫으세요.',
+  });
+});
+
+app.post('/api/parent/login-email', async (c) => {
+  const b = await c.req.json().catch(() => ({}));
+  const email = String(b.email ?? '').trim().toLowerCase();
+  const password = String(b.password ?? '');
+  if (!isEmail(email) || !password) return c.json({ error: '이메일과 비밀번호를 확인해주세요' }, 400);
+
+  // 잠금 열쇠는 이메일 기준. 아이 로그인·학원 발급 학부모 PIN과 서로 옮겨붙지 않게 접두어를 다르게 둔다.
+  const key = `PE:${email}`;
+  const lockLeft = await loginLockedFor(c.env.DB, key);
+  if (lockLeft > 0) {
+    return c.json({ error: `여러 번 틀려서 잠겼어요. ${Math.ceil(lockLeft / 60)}분 뒤에 다시 해주세요` }, 429);
+  }
+
+  const parent = await c.env.DB.prepare('SELECT * FROM parents WHERE email = ?1').bind(email).first();
+  // 가입 안 된 이메일과 비밀번호가 틀린 경우를 똑같이 답한다(어느 이메일이 가입돼 있는지 흘리지 않는다)
+  if (!parent || !(await verifySecret(password, parent.password_hash))) {
+    const { lockedSeconds } = await noteLoginFail(c.env.DB, key);
+    return c.json({
+      error: lockedSeconds
+        ? `여러 번 틀려서 ${Math.ceil(lockedSeconds / 60)}분 동안 잠겼어요`
+        : '이메일 또는 비밀번호가 맞지 않아요',
+    }, lockedSeconds ? 429 : 401);
+  }
+  await clearLoginFails(c.env.DB, key);
+  return c.json({
+    token: await makeAccountToken(parent),
+    parent: { email: parent.email, display_name: parent.display_name },
+  });
+});
+
+// 내 아이 목록. 아이가 없어도 200으로 빈 목록을 준다(가입 직후 화면이 여기서 시작한다).
+app.get('/api/parent/children', requireParentAccount, async (c) => {
+  const parent = c.get('parent');
+  const { results } = await c.env.DB.prepare(
+    `SELECT id, login_id, display_name, created_at FROM users
+      WHERE parent_id = ?1 AND role = 'student' ORDER BY created_at`
+  ).bind(parent.id).all();
+  return c.json({ parent: { email: parent.email, display_name: parent.display_name }, children: results });
+});
+
+app.post('/api/parent/children', requireParentAccount, async (c) => {
+  const parent = c.get('parent');
+  const b = await c.req.json().catch(() => ({}));
+  const name = clean(b.name, 12);
+  if (!name) return c.json({ error: '아이 이름을 입력해주세요' }, 400);
+
+  const { n } = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM users WHERE parent_id = ?1 AND role = 'student'`
+  ).bind(parent.id).first();
+  if (n >= MAX_CHILDREN) return c.json({ error: `아이는 ${MAX_CHILDREN}명까지 등록할 수 있어요` }, 400);
+
+  const child = await createChild(c.env.DB, { parentId: parent.id, name, grade: b.grade });
+  if (!child) return c.json({ error: '아이 아이디를 만들지 못했어요. 다시 시도해주세요' }, 500);
+  return c.json({ child, note: '아이 PIN은 지금 한 번만 보입니다.' });
+});
+
+// 아이가 PIN을 잊었을 때. 새 PIN도 이 응답에서 한 번만 보인다.
+app.post('/api/parent/children/:id/pin', requireParentAccount, async (c) => {
+  const parent = c.get('parent');
+  const child = await c.env.DB.prepare(
+    `SELECT id, login_id FROM users WHERE id = ?1 AND parent_id = ?2 AND role = 'student'`
+  ).bind(c.req.param('id'), parent.id).first();
+  if (!child) return c.json({ error: '아이를 찾을 수 없습니다' }, 404);
+  const pin = makePin();
+  await c.env.DB.prepare('UPDATE users SET pin_hash = ?2 WHERE id = ?1')
+    .bind(child.id, await hashPin(pin)).run();
+  // PIN이 바뀌면 그 아이의 기존 토큰은 전부 무효가 된다(토큰 서명 키가 pin_hash라서)
+  await clearLoginFails(c.env.DB, child.login_id);
+  return c.json({ login_id: child.login_id, pin });
+});
+
+// ── 아래는 두 경로가 함께 쓰는 조회 API ──
 
 // 로그인 실패는 학생과 따로 센다. 같은 열쇠로 세면 부모가 PIN을 몇 번 틀렸을 때
 // 아이가 앱에 못 들어가는 일이 생긴다 — 서로의 잠금이 옮겨붙으면 안 된다.
@@ -497,8 +651,19 @@ app.get('/api/parent/overview', requireParent, async (c) => {
   if (!dayset.has(today)) cur.setUTCDate(cur.getUTCDate() - 1);
   while (dayset.has(cur.toISOString().slice(0, 10))) { streak += 1; cur.setUTCDate(cur.getUTCDate() - 1); }
 
+  // 직접 가입한 학부모는 아이가 여럿일 수 있다 — 화면에서 바꿔 볼 수 있게 목록을 함께 준다.
+  // 학원 발급 토큰은 아이 하나에 묶여 있어 목록이 없다(null).
+  const parent = c.get('parent');
+  const siblings = parent
+    ? (await c.env.DB.prepare(
+        `SELECT id, display_name FROM users WHERE parent_id = ?1 AND role = 'student' ORDER BY created_at`
+      ).bind(parent.id).all()).results
+    : null;
+
   return c.json({
-    child: { display_name: child.display_name, login_id: child.login_id },
+    child: { id: child.id, display_name: child.display_name, login_id: child.login_id },
+    children: siblings,
+    parent: parent ? { email: parent.email, display_name: parent.display_name } : null,
     class: klass ?? null,
     // 오늘 날짜를 서버가 알려준다 — 화면이 기기 시계로 따로 계산하면 한국이 아닌 곳에서
     // 보거나 자정~오전 9시 사이에 볼 때 하루가 어긋난다(서버는 한국 시간 기준).

@@ -42,12 +42,179 @@ const BRAND = `<div class="p-brand">
     <path d="M13 20 L18 5.5 L23 20 Z" fill="#fff"/>
   </svg></span><span class="t">점프리시</span></div>`;
 
-// ── 로그인 ──
+// ── 들어오는 문 ──
+// 길이 두 개다. 직접 가입한 학부모(이메일)와, 학원에서 아이디를 받은 학부모(자녀 아이디+PIN).
+// 대부분은 앞쪽이므로 그걸 먼저 보여주고, 학원 경로는 아래 작은 링크로 둔다.
+const err = (el, m) => { el.innerHTML = `<div class="result bad"><p>${esc(m)}</p></div>`; };
+
 function showLogin(prefill = '') {
   view.innerHTML = `
     <div class="card p-login">
       ${BRAND}
       <div><h1 class="greet-title" style="font-size:1.15rem">우리 아이 학습 보기</h1>
+        <p class="card-note" style="margin-top:4px">가입하신 <b>이메일</b>과 <b>비밀번호</b>를 넣어주세요.</p></div>
+      <label class="field" style="margin-top:12px"><span>이메일</span>
+        <input data-email type="email" autocapitalize="off" autocomplete="username"
+          inputmode="email" placeholder="parent@example.com" /></label>
+      <label class="field" style="margin-top:10px"><span>비밀번호</span>
+        <input data-pw type="password" autocomplete="current-password" placeholder="••••••••" /></label>
+      <button class="btn-primary" data-go style="margin-top:12px">보기</button>
+      <div data-msg></div>
+      <p class="card-note" style="margin-top:10px">처음이신가요?
+        <button class="p-link" data-signup>무료로 시작하기</button></p>
+      <p class="card-note" style="margin-top:4px">학원에서 아이디를 받으셨다면
+        <button class="p-link" data-academy>이쪽으로</button></p>
+    </div>`;
+  const msg = view.querySelector('[data-msg]');
+  const go = async () => {
+    const email = view.querySelector('[data-email]').value.trim();
+    const password = view.querySelector('[data-pw]').value;
+    if (!email || !password) return err(msg, '이메일과 비밀번호를 넣어주세요.');
+    try {
+      const r = await api('/api/parent/login-email', {
+        method: 'POST', body: JSON.stringify({ email, password }) });
+      saveAuth({ token: r.token, parent: r.parent, kind: 'account' });
+      showHome();
+    } catch (e) { err(msg, e.message); }
+  };
+  view.querySelector('[data-go]').addEventListener('click', go);
+  view.querySelector('[data-signup]').addEventListener('click', showSignup);
+  view.querySelector('[data-academy]').addEventListener('click', () => showAcademyLogin(prefill));
+  view.querySelectorAll('input').forEach((i) =>
+    i.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); }));
+}
+
+// ── 가입 ──
+// 아이 계정을 만드는 절차라 보호자 동의를 여기서 받는다. 동의 없이는 다음으로 못 간다.
+// 아이에게는 이메일도 비밀번호도 만들게 하지 않는다 — 아이 몫은 아이디와 6자리 숫자뿐이다.
+function showSignup() {
+  view.innerHTML = `
+    <div class="card p-login">
+      ${BRAND}
+      <div><h1 class="greet-title" style="font-size:1.15rem">무료로 시작하기</h1>
+        <p class="card-note" style="margin-top:4px">보호자가 먼저 가입하고, 아이 계정을 만들어 주세요.
+          <b>하루 1세트는 계속 무료</b>입니다.</p></div>
+
+      <label class="field" style="margin-top:12px"><span>보호자 이메일</span>
+        <input data-email type="email" autocapitalize="off" autocomplete="username"
+          inputmode="email" placeholder="parent@example.com" /></label>
+      <label class="field" style="margin-top:10px"><span>비밀번호 (8자 이상)</span>
+        <input data-pw type="password" autocomplete="new-password" placeholder="••••••••" /></label>
+      <label class="field" style="margin-top:10px"><span>보호자 이름</span>
+        <input data-name maxlength="12" autocomplete="name" placeholder="예: 김보호" /></label>
+      <label class="field" style="margin-top:10px"><span>아이 이름</span>
+        <input data-child maxlength="12" placeholder="예: 김하늘" /></label>
+
+      <label class="p-consent" style="margin-top:14px">
+        <input type="checkbox" data-consent />
+        <span>만 14세 미만 자녀의 계정을 <b>보호자인 제가</b> 만드는 것에 동의합니다.
+          아이 계정에는 이메일·전화번호를 저장하지 않으며, 학습 기록만 남습니다.</span>
+      </label>
+
+      <button class="btn-primary" data-go style="margin-top:12px">가입하고 아이 계정 만들기</button>
+      <div data-msg></div>
+      <p class="card-note" style="margin-top:10px">이미 가입하셨나요?
+        <button class="p-link" data-back>로그인</button></p>
+    </div>`;
+  const msg = view.querySelector('[data-msg]');
+  const go = async () => {
+    const body = {
+      email: view.querySelector('[data-email]').value.trim(),
+      password: view.querySelector('[data-pw]').value,
+      name: view.querySelector('[data-name]').value.trim(),
+      child_name: view.querySelector('[data-child]').value.trim(),
+      consent: view.querySelector('[data-consent]').checked,
+    };
+    if (!body.consent) return err(msg, '보호자 동의에 체크해주세요.');
+    try {
+      const r = await api('/api/parent/signup', { method: 'POST', body: JSON.stringify(body) });
+      saveAuth({ token: r.token, parent: r.parent, kind: 'account' });
+      showChildCreated(r.child, true);
+    } catch (e) { err(msg, e.message); }
+  };
+  view.querySelector('[data-go]').addEventListener('click', go);
+  view.querySelector('[data-back]').addEventListener('click', () => showLogin());
+}
+
+// 아이디와 PIN을 보여주는 화면. PIN은 해시로만 저장하므로 **여기서 놓치면 다시 볼 수 없다** —
+// 그래서 다음으로 넘어가는 버튼을 하나만 두고, 적었는지 확인하는 문장을 크게 둔다.
+function showChildCreated(child, first) {
+  view.innerHTML = `
+    <div class="card p-login">
+      ${BRAND}
+      <div><h1 class="greet-title" style="font-size:1.15rem">${esc(child.display_name)} 계정이 만들어졌어요</h1>
+        <p class="card-note" style="margin-top:4px">아이가 앱에 들어갈 때 쓰는 아이디와 번호입니다.</p></div>
+      <div class="p-cred">
+        <div><span class="label">아이디</span><span class="value">${esc(child.login_id)}</span></div>
+        <div><span class="label">PIN (숫자 6자리)</span><span class="value">${esc(child.pin)}</span></div>
+      </div>
+      <p class="p-warn">이 번호는 <b>지금 한 번만</b> 보입니다. 아이에게 알려주거나 적어두세요.
+        잊어버려도 이 화면에서 다시 발급할 수 있어요.</p>
+      <button class="btn-primary" data-go style="margin-top:12px">적었어요, 다음으로</button>
+      ${first ? '<p class="card-note" style="margin-top:8px">이제 아이가 앱에서 이 아이디로 들어가면 짧은 진단부터 시작합니다.</p>' : ''}
+    </div>`;
+  view.querySelector('[data-go]').addEventListener('click', showChildren);
+}
+
+// ── 아이 관리 ──
+function showChildren() {
+  view.innerHTML = '<p class="loading">불러오는 중...</p>';
+  api('/api/parent/children').then((d) => {
+    const rows = d.children.map((ch) => `
+      <div class="p-kid">
+        <span class="p-kid-b"><span class="p-kid-n">${esc(ch.display_name)}</span>
+          <span class="p-kid-i">${esc(ch.login_id)}</span></span>
+        <button class="p-link" data-pin="${esc(ch.id)}">PIN 재발급</button>
+      </div>`).join('');
+    view.innerHTML = `
+      ${BRAND}
+      <div class="greet"><div>
+        <p class="greet-date">${esc(d.parent.display_name)}님</p>
+        <h1 class="greet-title">우리 아이</h1>
+      </div></div>
+      <div class="card">
+        ${rows || '<p class="empty">아직 등록한 아이가 없어요.</p>'}
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">아이 추가</span>
+          <span class="card-note">최대 3명</span></div>
+        <label class="field"><span>아이 이름</span>
+          <input data-new maxlength="12" placeholder="예: 김바다" /></label>
+        <button class="btn-primary" data-add style="margin-top:10px">계정 만들기</button>
+        <div data-msg></div>
+      </div>
+      ${d.children.length ? '<p class="p-out"><button data-home>학습 기록 보기</button></p>' : ''}
+      <p class="p-out"><button data-out>로그아웃</button></p>`;
+
+    const msg = view.querySelector('[data-msg]');
+    view.querySelector('[data-add]').addEventListener('click', async () => {
+      const name = view.querySelector('[data-new]').value.trim();
+      if (!name) return err(msg, '아이 이름을 넣어주세요.');
+      try {
+        const r = await api('/api/parent/children', { method: 'POST', body: JSON.stringify({ name }) });
+        showChildCreated(r.child, false);
+      } catch (e) { err(msg, e.message); }
+    });
+    view.querySelectorAll('[data-pin]').forEach((b) => b.addEventListener('click', async () => {
+      try {
+        const r = await api(`/api/parent/children/${b.dataset.pin}/pin`, { method: 'POST' });
+        showChildCreated({ display_name: '', login_id: r.login_id, pin: r.pin }, false);
+      } catch (e) { err(msg, e.message); }
+    }));
+    view.querySelector('[data-home]')?.addEventListener('click', () => showHome());
+    view.querySelector('[data-out]').addEventListener('click', () => { saveAuth(null); showLogin(); });
+  }).catch((e) => {
+    if (/로그인/.test(e.message)) { saveAuth(null); showLogin(); return; }
+    view.innerHTML = `<div class="card"><p class="empty">${esc(e.message)}</p></div>`;
+  });
+}
+
+// ── 학원에서 아이디를 받은 경우 (기존 경로) ──
+function showAcademyLogin(prefill = '') {
+  view.innerHTML = `
+    <div class="card p-login">
+      ${BRAND}
+      <div><h1 class="greet-title" style="font-size:1.15rem">학원에서 받은 아이디로 보기</h1>
         <p class="card-note" style="margin-top:4px">학원에서 받으신 <b>자녀 아이디</b>와
           <b>학부모용 6자리 PIN</b>을 넣어주세요.</p></div>
       <label class="field" style="margin-top:12px"><span>자녀 아이디</span>
@@ -60,22 +227,22 @@ function showLogin(prefill = '') {
       <div data-msg></div>
       <p class="card-note" style="margin-top:6px">아이가 앱에 쓰는 PIN과는 다른 번호입니다.
         이 화면에서는 기록을 보기만 하고, 문제를 풀 수는 없어요.</p>
+      <p class="card-note" style="margin-top:10px">
+        <button class="p-link" data-back>이메일로 로그인</button></p>
     </div>`;
   const msg = view.querySelector('[data-msg]');
   const go = async () => {
     const login_id = view.querySelector('[data-lid]').value.trim();
     const pin = view.querySelector('[data-pin]').value.trim();
-    if (!login_id || !/^\d{6}$/.test(pin)) {
-      msg.innerHTML = '<div class="result bad"><p>아이디와 숫자 6자리를 확인해주세요.</p></div>';
-      return;
-    }
+    if (!login_id || !/^\d{6}$/.test(pin)) return err(msg, '아이디와 숫자 6자리를 확인해주세요.');
     try {
       const r = await api('/api/parent/login', { method: 'POST', body: JSON.stringify({ login_id, pin }) });
-      saveAuth(r);
+      saveAuth({ ...r, kind: 'academy' });
       showHome();
-    } catch (e) { msg.innerHTML = `<div class="result bad"><p>${esc(e.message)}</p></div>`; }
+    } catch (e) { err(msg, e.message); }
   };
   view.querySelector('[data-go]').addEventListener('click', go);
+  view.querySelector('[data-back]').addEventListener('click', () => showLogin());
   view.querySelectorAll('input').forEach((i) =>
     i.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); }));
 }
@@ -125,16 +292,21 @@ function tips(d) {
 
 const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
 
-async function showHome() {
+let currentChildId = null;   // 아이가 여럿일 때 지금 보고 있는 아이
+
+async function showHome(childId = currentChildId) {
   view.innerHTML = '<p class="loading">불러오는 중...</p>';
   let d;
   try {
-    d = await api('/api/parent/overview');
+    d = await api('/api/parent/overview' + (childId ? `?child_id=${encodeURIComponent(childId)}` : ''));
   } catch (e) {
     if (/로그인이 필요/.test(e.message)) { saveAuth(null); showLogin(); return; }
+    // 가입은 했는데 아이를 아직 안 만든 경우 — 막다른 화면 대신 아이 만드는 곳으로 보낸다
+    if (/아이를 먼저/.test(e.message)) { showChildren(); return; }
     view.innerHTML = `<div class="card"><p class="empty">${esc(e.message)}</p></div>`;
     return;
   }
+  currentChildId = d.child.id;
   const v = verdict(d);
   // 오늘이 며칠인지는 서버(한국 시간)를 따른다. 기기 시계로 계산하면 해외에서 보거나
   // 자정~오전 9시 사이에 볼 때 하루가 밀려, 오늘 한 것이 어제 칸에 칠해진다.
@@ -147,7 +319,7 @@ async function showHome() {
     dt.setUTCDate(dt.getUTCDate() - (13 - i));
     const key = dt.toISOString().slice(0, 10);
     const on = (byDay[key] ?? 0) > 0;
-    return `<span class="dot-day${on ? ' on' : ''}${key === today ? ' today' : ''}"
+    return `<span class="dot-day${on ? ' on' : ''}${key === today ? ' is-today' : ''}"
       title="${key} ${byDay[key] ?? 0}문항">${WEEKDAY[dt.getUTCDay()]}</span>`;
   }).join('');
 
@@ -160,8 +332,14 @@ async function showHome() {
       <span class="sbn">${a.score}</span>
     </div>`).join('');
 
+  // 아이가 둘 이상일 때만 고르는 줄을 보여준다. 한 명이면 화면이 그대로다.
+  const tabs = (d.children?.length > 1) ? `<div class="p-kidtabs">${d.children.map((ch) => `
+    <button class="p-kidtab${ch.id === d.child.id ? ' on' : ''}"
+      data-kid="${esc(ch.id)}">${esc(ch.display_name)}</button>`).join('')}</div>` : '';
+
   view.innerHTML = `
     ${BRAND}
+    ${tabs}
     <div class="greet"><div>
       <p class="greet-date">${esc(d.child.display_name)}${d.class ? ` · ${esc(d.class.name)}` : ''}</p>
       <h1 class="greet-title">우리 아이 학습</h1>
@@ -210,11 +388,16 @@ async function showHome() {
         </div>`).join('')}
     </div>` : ''}
 
-    <p class="p-out"><button data-out>다른 아이 보기 / 로그아웃</button></p>`;
+    ${d.parent ? '<p class="p-out"><button data-kids>아이 관리 · PIN 재발급</button></p>' : ''}
+    <p class="p-out"><button data-out>로그아웃</button></p>`;
 
+  view.querySelectorAll('[data-kid]').forEach((b) =>
+    b.addEventListener('click', () => showHome(b.dataset.kid)));
+  view.querySelector('[data-kids]')?.addEventListener('click', showChildren);
   view.querySelector('[data-out]').addEventListener('click', () => {
     const id = auth?.child?.login_id ?? '';
     saveAuth(null);
+    currentChildId = null;
     showLogin(id);
   });
 }

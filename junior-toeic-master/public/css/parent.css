@@ -18,7 +18,9 @@ body { padding-bottom: env(safe-area-inset-bottom); }
   display: grid; place-items: center; font-size: .6rem; font-weight: 800; color: var(--muted);
 }
 .dot-day.on { background: var(--primary); color: #fff; }
-.dot-day.today { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* 이름을 is-today 로 쓰는 이유: style.css 의 .today 는 학생 앱의 큰 '오늘의 학습' 카드다.
+   같은 이름을 쓰면 그 카드의 여백(20px)이 이 작은 점에 그대로 붙어 혼자만 커진다. */
+.dot-day.is-today { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 /* 도와주는 법 — 한 줄짜리 행동 지침 */
 .tip { display: flex; gap: 11px; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid var(--line); }
@@ -42,3 +44,49 @@ body { padding-bottom: env(safe-area-inset-bottom); }
 .p-brand span.t { font-size: 1.06rem; font-weight: 700; letter-spacing: -.03em; }
 .p-out { text-align: center; margin-top: 6px; }
 .p-out button { font-size: .8rem; color: var(--muted); font-weight: 700; text-decoration: underline; }
+
+/* 문장 안에 섞이는 링크형 버튼 (가입 / 로그인 전환) */
+.p-link {
+  font: inherit; color: var(--primary); font-weight: 800;
+  text-decoration: underline; padding: 2px 1px;
+}
+
+/* 보호자 동의 — 아이 계정을 만드는 절차라 눈에 띄어야 하고, 체크 영역이 넉넉해야 한다 */
+.p-consent {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: var(--surface-2); border-radius: 12px; padding: 12px;
+  font-size: .82rem; line-height: 1.55; cursor: pointer;
+}
+.p-consent input { flex: none; width: 20px; height: 20px; margin-top: 1px; }
+
+/* 아이디·PIN을 한 번만 보여주는 상자 — 크고 또렷하게, 눈으로 받아 적기 좋게 */
+.p-cred { margin-top: 14px; display: grid; gap: 10px; }
+.p-cred > div {
+  background: var(--surface-2); border-radius: 12px; padding: 12px 14px;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+}
+.p-cred .label { font-size: .78rem; color: var(--muted); font-weight: 700; }
+.p-cred .value {
+  font-size: 1.3rem; font-weight: 800; letter-spacing: .04em;
+  font-variant-numeric: tabular-nums;
+}
+.p-warn {
+  margin-top: 12px; font-size: .82rem; line-height: 1.55;
+  background: var(--primary-soft); color: var(--primary);
+  border-radius: 12px; padding: 11px 13px; font-weight: 600;
+}
+
+/* 아이 목록 */
+.p-kid { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.p-kid:last-child { border-bottom: 0; }
+.p-kid-b { flex: 1; min-width: 0; }
+.p-kid-n { display: block; font-size: .95rem; font-weight: 700; }
+.p-kid-i { display: block; font-size: .8rem; color: var(--muted); letter-spacing: .04em; margin-top: 2px; }
+
+/* 아이가 둘 이상일 때 위에 뜨는 전환 줄 */
+.p-kidtabs { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; }
+.p-kidtab {
+  flex: none; padding: 9px 16px; border-radius: 999px; font-size: .85rem; font-weight: 700;
+  background: var(--surface-2); color: var(--muted); min-height: 40px;
+}
+.p-kidtab.on { background: var(--primary); color: #fff; }

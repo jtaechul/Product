@@ -24,6 +24,37 @@ export async function verifyPin(pin, stored) {
   return (await sha256Hex(`${salt}:${pin}`)) === hex;
 }
 
+// ── 학부모 비밀번호 해시 (아이 PIN과 다른 방식을 쓴다) ──
+// 아이 PIN은 6자리라 어떤 해시를 써도 오프라인 공격엔 약하고, 대신 로그인 시도 제한으로 막는다.
+// 학부모 비밀번호는 다르다 — 사람들은 비밀번호를 다른 사이트와 돌려쓰기 때문에,
+// DB가 유출되면 우리 서비스 밖에서도 피해가 난다. 그래서 여기만 PBKDF2로 느리게 만든다.
+// 느려도 되는 이유: 토큰이 30일짜리라 학부모가 이 계산을 겪는 건 한 달에 한 번뿐이다.
+const KDF_ITER = 100_000;
+
+export async function hashSecret(secret, salt = crypto.randomUUID().replace(/-/g, '').slice(0, 16)) {
+  const key = await crypto.subtle.importKey('raw', enc.encode(secret), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: enc.encode(salt), iterations: KDF_ITER, hash: 'SHA-256' }, key, 256);
+  const hex = [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return `p2$${KDF_ITER}$${salt}$${hex}`;
+}
+
+export async function verifySecret(secret, stored) {
+  const [v, iterS, salt, hex] = String(stored || '').split('$');
+  if (v !== 'p2' || !salt || !hex) return false;
+  const iter = Number(iterS);
+  if (!Number.isFinite(iter) || iter < 1000 || iter > 1_000_000) return false;
+  const key = await crypto.subtle.importKey('raw', enc.encode(secret), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: enc.encode(salt), iterations: iter, hash: 'SHA-256' }, key, 256);
+  const got = [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  // 길이가 다르면 바로 실패. 같으면 글자를 전부 훑어 비교한다(빨리 끝나는 데서 새는 정보를 막는다)
+  if (got.length !== hex.length) return false;
+  let diff = 0;
+  for (let i = 0; i < got.length; i++) diff |= got.charCodeAt(i) ^ hex.charCodeAt(i);
+  return diff === 0;
+}
+
 async function hmacHex(key, msg) {
   const k = await crypto.subtle.importKey('raw', enc.encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const sig = await crypto.subtle.sign('HMAC', k, enc.encode(msg));
@@ -54,11 +85,14 @@ export async function verifyToken(db, token) {
 }
 
 // ── 학부모 토큰 ──
-// 형태: p.<자녀id>.<만료초>.<HMAC(key=parent_pin_hash)>
-// 학생 토큰과 조각 수부터 달라서(4개 vs 3개) 서로 섞일 수 없다.
-// 서명 열쇠가 parent_pin_hash 라, 학부모 PIN을 바꾸면 부모 토큰만 무효가 되고
-// 아이 로그인은 그대로다(반대도 마찬가지).
+// 두 종류가 공존한다. 앞 글자만 보고 갈라진다.
+//   p.<자녀id>.<만료초>.<HMAC(key=parent_pin_hash)>   학원 발급 (기존, 자녀 1명 고정)
+//   pa.<학부모id>.<만료초>.<HMAC(key=password_hash)>  직접 가입 (B2C, 자녀 여러 명)
+// 학생 토큰은 조각이 3개뿐이라 어느 쪽과도 섞일 수 없다.
+// 서명 열쇠가 각자의 비밀번호 해시라, 비밀번호를 바꾸면 그 토큰만 무효가 되고
+// 아이 로그인은 그대로다.
 const P = 'p';
+const PA = 'pa';
 
 export async function makeParentToken(child) {
   const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_S;
@@ -66,29 +100,83 @@ export async function makeParentToken(child) {
   return `${msg}.${await hmacHex(child.parent_pin_hash, msg)}`;
 }
 
-// 성공 시 '자녀' users 행 반환, 실패 시 null
-export async function verifyParentToken(db, token) {
-  const parts = String(token || '').split('.');
-  if (parts.length !== 4 || parts[0] !== P) return null;
-  const [, childId, expS, sig] = parts;
-  const exp = Number(expS);
-  if (!childId || !sig || !Number.isFinite(exp) || exp * 1000 < Date.now()) return null;
-  const child = await db.prepare(
-    `SELECT * FROM users WHERE id = ?1 AND role = 'student' AND parent_pin_hash IS NOT NULL`
-  ).bind(childId).first();
-  if (!child) return null;
-  const want = await hmacHex(child.parent_pin_hash, `${P}.${childId}.${exp}`);
-  return sig === want ? child : null;
+export async function makeAccountToken(parent) {
+  const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_S;
+  const msg = `${PA}.${parent.id}.${exp}`;
+  return `${msg}.${await hmacHex(parent.password_hash, msg)}`;
 }
 
-// 학부모 전용 미들웨어 — c.get('child')에 자녀 행을 싣는다.
-// 부모는 이 자녀 하나만 볼 수 있다. 다른 아이 id를 URL에 넣어도 소용없도록,
-// 조회는 전부 이 child.id 로만 한다(요청에서 학생 id를 받지 않는다).
+// 성공 시 { kind:'academy', child } 또는 { kind:'account', parent }, 실패 시 null
+export async function verifyParentToken(db, token) {
+  const parts = String(token || '').split('.');
+  if (parts.length !== 4) return null;
+  const [kind, subjectId, expS, sig] = parts;
+  const exp = Number(expS);
+  if (!subjectId || !sig || !Number.isFinite(exp) || exp * 1000 < Date.now()) return null;
+
+  if (kind === PA) {
+    const parent = await db.prepare('SELECT * FROM parents WHERE id = ?1').bind(subjectId).first();
+    if (!parent) return null;
+    const want = await hmacHex(parent.password_hash, `${PA}.${subjectId}.${exp}`);
+    return sig === want ? { kind: 'account', parent } : null;
+  }
+  if (kind === P) {
+    const child = await db.prepare(
+      `SELECT * FROM users WHERE id = ?1 AND role = 'student' AND parent_pin_hash IS NOT NULL`
+    ).bind(subjectId).first();
+    if (!child) return null;
+    const want = await hmacHex(child.parent_pin_hash, `${P}.${subjectId}.${exp}`);
+    return sig === want ? { kind: 'academy', child } : null;
+  }
+  return null;
+}
+
+// 학부모 전용 미들웨어 — c.get('child')에 '지금 보고 있는 자녀' 행을 싣는다.
+//
+// 어느 아이를 볼지는 요청이 정하지만, **그 아이가 이 학부모의 아이인지는 서버가 확인한다.**
+// 남의 아이 id를 넣어도 parent_id 가 안 맞으면 조회 자체가 비어서 돌아온다.
+// 학원 발급 토큰은 애초에 아이 하나에 묶여 있어 고를 여지가 없다.
 export const requireParent = async (c, next) => {
   const m = /^Bearer\s+(.+)$/.exec(c.req.header('Authorization') || '');
-  const child = m ? await verifyParentToken(c.env.DB, m[1]) : null;
-  if (!child) return c.json({ error: '로그인이 필요합니다' }, 401);
+  const got = m ? await verifyParentToken(c.env.DB, m[1]) : null;
+  if (!got) return c.json({ error: '로그인이 필요합니다' }, 401);
+
+  if (got.kind === 'academy') {
+    c.set('child', got.child);
+    c.set('parent', null);
+    return next();
+  }
+
+  const parent = got.parent;
+  const wanted = c.req.query('child_id');
+  const child = await (wanted
+    ? c.env.DB.prepare(`SELECT * FROM users WHERE id = ?1 AND parent_id = ?2 AND role = 'student'`)
+        .bind(wanted, parent.id)
+    : c.env.DB.prepare(
+        `SELECT * FROM users WHERE parent_id = ?1 AND role = 'student' ORDER BY created_at LIMIT 1`)
+        .bind(parent.id)
+  ).first();
+  // 두 경우를 나눠 안내한다. 어느 쪽이든 남의 아이가 있는지 없는지는 알려주지 않는다 —
+  // 없는 id를 넣었을 때와 남의 아이 id를 넣었을 때의 답이 똑같다.
+  if (!child) {
+    return wanted
+      ? c.json({ error: '아이를 찾을 수 없습니다' }, 404)
+      : c.json({ error: '아이를 먼저 등록해주세요', need_child: true }, 404);
+  }
   c.set('child', child);
+  c.set('parent', parent);
+  await next();
+};
+
+// 자녀 등록·PIN 재발급처럼 '아이가 아직 없어도' 되는 화면용.
+// requireParent 는 아이가 없으면 404를 내므로 가입 직후 화면에서는 쓸 수 없다.
+export const requireParentAccount = async (c, next) => {
+  const m = /^Bearer\s+(.+)$/.exec(c.req.header('Authorization') || '');
+  const got = m ? await verifyParentToken(c.env.DB, m[1]) : null;
+  if (got?.kind !== 'account') {
+    return c.json({ error: '학부모 계정으로 로그인해주세요' }, 401);
+  }
+  c.set('parent', got.parent);
   await next();
 };
 
@@ -169,7 +257,11 @@ export function weakSecretReason(secret, loginId = '') {
   if (WEAK.some((w) => core === w || (core.startsWith(w) && core.length - w.length <= 2))) {
     return '너무 흔한 비밀번호예요. 다른 말로 정해주세요';
   }
-  if (loginId && core.includes(String(loginId).toLowerCase().replace(/[^a-z]/g, '')) && core.length <= 12) {
+  // 아이디를 그대로 비밀번호에 넣은 경우를 막는다.
+  // 단, 아이디에서 뽑은 글자가 너무 짧으면 검사 자체가 무의미하다 —
+  // 이메일이 a@b.com 이면 '아이디'가 'a' 한 글자라, a가 들어간 멀쩡한 비밀번호가 전부 막힌다.
+  const idCore = String(loginId).toLowerCase().replace(/[^a-z]/g, '');
+  if (idCore.length >= 4 && core.includes(idCore) && core.length <= 12) {
     return '아이디와 너무 비슷해요';
   }
   return null;   // 문제 없음
