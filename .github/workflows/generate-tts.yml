@@ -11,6 +11,12 @@ name: Generate TTS audio (Jumplish)
 # 이 파일이나 듣기 원고가 푸시될 때 실행되게 한다.
 on:
   workflow_dispatch:
+    inputs:
+      engine:
+        description: "음성 엔진 (auto=구글 우선, gemini=강제)"
+        type: choice
+        options: [auto, gemini]
+        default: auto
   push:
     branches: ["claude/junior-toeic-master-planning-322l2t"]
     paths:
@@ -68,6 +74,7 @@ jobs:
           GOOGLE_CLOUD_TTS_KEY: ${{ secrets.GOOGLE_CLOUD_TTS_KEY }}
           GCP_TTS_KEY: ${{ secrets.GCP_TTS_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_JUMPLISH || secrets.GEMINI_API_KEY }}
+          ENGINE_CHOICE: ${{ inputs.engine || 'auto' }}
         run: |
           node tools/import.mjs   # ULID 매핑(.idmap.json) 생성 — 파일명이 여기에 달려 있다
 
@@ -88,18 +95,32 @@ jobs:
             echo "::warning::Repository secret 인지(Environment secret 은 이 작업에서 안 보입니다) 확인해 주세요."
           fi
 
-          if [ -n "$FOUND" ]; then
+          if [ -n "$FOUND" ] && [ "$ENGINE_CHOICE" != "gemini" ]; then
             echo "엔진: google — 미·영·호 발음이 성우로 고정됩니다"
             GOOGLE_TTS_KEY="$FOUND" TTS_ENGINE=google node tools/tts-batch.mjs
-          else
-            GEM="$(printenv GEMINI_API_KEY || true)"
-            if [ -z "$GEM" ]; then
-              echo "::error::구글 TTS 키도 Gemini 키도 없습니다 — 음원을 만들 수 없습니다"
-              exit 1
-            fi
-            echo "엔진: gemini (구글 키를 못 찾음 — 느리고 발음 구분이 약합니다)"
-            TTS_ENGINE=gemini node tools/tts-batch.mjs
+            exit $?
           fi
+
+          # 구글 키가 없으면 Gemini 로 넘어가지 않고 여기서 멈춘다.
+          # 실측: Gemini 무료 등급은 분당 요청 수가 낮아 36개에 한 시간이 걸리고 대부분 실패한다.
+          # 한 시간을 헛돌리느니 즉시 알려주는 편이 낫다. 정말 Gemini 로 돌리려면
+          # Actions 화면에서 engine=gemini 로 수동 실행하면 된다.
+          if [ "$ENGINE_CHOICE" != "gemini" ]; then
+            echo "::error::구글 TTS 키를 찾지 못했습니다 (위 '없음:' 목록 참고)."
+            echo "::error::GitHub > Settings > Secrets and variables > Actions 의"
+            echo "::error::'Repository secrets' 에 GOOGLE_TTS_KEY 로 등록해 주세요."
+            echo "::error::(Environment secrets 에 넣으면 이 작업에서 보이지 않습니다)"
+            echo "::error::Gemini 로 굳이 돌리려면 이 워크플로를 engine=gemini 로 수동 실행하세요."
+            exit 1
+          fi
+
+          GEM="$(printenv GEMINI_API_KEY || true)"
+          if [ -z "$GEM" ]; then
+            echo "::error::Gemini 키도 없습니다 — 음원을 만들 수 없습니다"
+            exit 1
+          fi
+          echo "엔진: gemini (직접 고르셨습니다 — 느리고 발음 구분이 약합니다)"
+          TTS_ENGINE=gemini node tools/tts-batch.mjs
 
       - name: Move new audio into public/
         run: |
