@@ -19,7 +19,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { composeDailySet } from '../worker/engine.mjs';
+import { composeDailySet, SRS_INTERVALS } from '../worker/engine.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DAYS = Number(process.argv[2] || 14);
@@ -131,9 +131,22 @@ for (let day = 0; day < DAYS; day++) {
                       ON CONFLICT(user_id, question_id) DO UPDATE SET box = 1, due_at = excluded.due_at`)
         .run(`RQ-${USER.id}-${id}`, USER.id, id, next, `${today}T09:00:00.000Z`);
     } else if (dueIds.has(id)) {
-      sqlite.prepare(`UPDATE review_queue SET box = box + 1, due_at = ?
-                       WHERE user_id = ? AND question_id = ?`)
-        .run(dayStr(day + [1, 3, 7, 14][Math.min(3, 1)]), USER.id, id);
+      // 복습을 맞히면 박스가 오르고, 다음 재출제는 그 박스의 간격만큼 뒤로 밀린다.
+      // 4박스에서 맞히면 졸업(봉인)이라 복습 큐에서 빠진다 — recordAnswer와 같은 처리.
+      // 예전엔 무조건 box+1·3일 뒤로 넣어, 45일쯤에서 box 5가 되며 시뮬이 멈추고
+      // 졸업이 없어 복습이 영영 쌓이는 바람에 '며칠 버티나' 숫자도 실제보다 짜게 나왔다.
+      const cur = sqlite.prepare('SELECT box FROM review_queue WHERE user_id = ? AND question_id = ?')
+        .get(USER.id, id);
+      if (cur && cur.box >= 4) {
+        sqlite.prepare(`UPDATE review_queue SET graduated_at = ?
+                         WHERE user_id = ? AND question_id = ?`)
+          .run(`${today}T09:00:00.000Z`, USER.id, id);
+      } else if (cur) {
+        const nextBox = cur.box + 1;
+        sqlite.prepare(`UPDATE review_queue SET box = ?, due_at = ?
+                         WHERE user_id = ? AND question_id = ?`)
+          .run(nextBox, dayStr(day + SRS_INTERVALS[nextBox - 1]), USER.id, id);
+      }
     }
   }
 
