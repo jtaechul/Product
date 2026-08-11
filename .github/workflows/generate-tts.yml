@@ -151,9 +151,17 @@ jobs:
           fi
           git commit -m "junior-toeic-master: 듣기 음원 생성·활성화 (자동 배치)" \
             -m "generate-tts.yml 러너에서 배치 TTS로 생성. 음원이 갖춰진 듣기 문항은 다음 배포 때 import.mjs가 draft에서 active로 올린다. 이미 있는 음원은 다시 만들지 않는다."
-          # 만드는 동안 브랜치가 앞서갔을 수 있다 — 리베이스로 얹은 뒤 푸시
-          git pull --rebase origin "${GITHUB_REF_NAME}"
-          git push origin HEAD:"${GITHUB_REF_NAME}"
+          # 만드는 동안 브랜치가 앞서갔을 수 있다 — 리베이스로 얹은 뒤 푸시.
+          # L1.json 을 고치면 이 워크플로와 L1 사진 워크플로가 함께 돌아 같은 브랜치에 각자 커밋한다.
+          # 둘이 동시에 푸시하면 한쪽이 튕기므로, 튕기면 다시 당겨 얹고 재시도한다.
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            if git push origin HEAD:"${GITHUB_REF_NAME}"; then exit 0; fi
+            echo "다른 작업이 먼저 푸시했습니다 — 다시 얹어 재시도 ${i}/5"
+            sleep $((5 * i))
+          done
+          echo "::error::푸시를 5번 시도했지만 실패했습니다"
+          exit 1
 
       - name: Fail if synthesis incomplete
         if: steps.gen.outcome == 'failure'

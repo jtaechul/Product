@@ -60,9 +60,17 @@ jobs:
           fi
           git commit -m "junior-toeic-master: L1 보기 사진 수집·활성화 (자동 배치)" \
             -m "generate-l1-images.yml 러너에서 픽사베이 검색으로 수집. 태그 조건(need/avoid)을 통과한 사진만 채택하고, 4컷이 모두 갖춰진 문항만 status를 active로 올린다. 출처는 content/l1-photos.json에 기록."
-          # 생성하는 동안 브랜치가 앞서갔을 수 있다 — 리베이스로 얹은 뒤 푸시
-          git pull --rebase origin "${GITHUB_REF_NAME}"
-          git push origin HEAD:"${GITHUB_REF_NAME}"
+          # 생성하는 동안 브랜치가 앞서갔을 수 있다 — 리베이스로 얹은 뒤 푸시.
+          # L1.json 을 고치면 이 워크플로와 TTS 워크플로가 함께 돌아 같은 브랜치에 각자 커밋한다.
+          # 둘이 동시에 푸시하면 한쪽이 튕기므로, 튕기면 다시 당겨 얹고 재시도한다.
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            if git push origin HEAD:"${GITHUB_REF_NAME}"; then exit 0; fi
+            echo "다른 작업이 먼저 푸시했습니다 — 다시 얹어 재시도 ${i}/5"
+            sleep $((5 * i))
+          done
+          echo "::error::푸시를 5번 시도했지만 실패했습니다"
+          exit 1
 
       - name: Fail if generation incomplete
         if: steps.gen.outcome == 'failure'
