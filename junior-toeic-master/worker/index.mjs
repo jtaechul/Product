@@ -6,7 +6,7 @@ import {
   verifyPin, hashPin, makeToken, requireAuth, requireRole, verifyToken,
   loginLockedFor, noteLoginFail, clearLoginFails,
   isStudentPin, isStaffSecret, STAFF_ROLES, SECRET_MIN, weakSecretReason,
-  makeParentToken, requireParent, requireParentAccount,
+  requireParent, requireParentAccount,
   hashSecret, verifySecret, makeAccountToken,
 } from './auth.mjs';
 import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions } from './engine.mjs';
@@ -582,46 +582,6 @@ app.post('/api/parent/children/:id/pin', requireParentAccount, async (c) => {
   return c.json({ login_id: child.login_id, pin });
 });
 
-// ── 아래는 두 경로가 함께 쓰는 조회 API ──
-
-// 로그인 실패는 학생과 따로 센다. 같은 열쇠로 세면 부모가 PIN을 몇 번 틀렸을 때
-// 아이가 앱에 못 들어가는 일이 생긴다 — 서로의 잠금이 옮겨붙으면 안 된다.
-const parentKey = (loginId) => `P:${loginId}`;
-
-app.post('/api/parent/login', async (c) => {
-  const { login_id, pin } = await c.req.json().catch(() => ({}));
-  if (typeof login_id !== 'string' || login_id.trim().length < 1 || login_id.trim().length > 32
-      || !isStudentPin(pin)) {
-    return c.json({ error: '자녀 아이디와 6자리 PIN을 확인하세요' }, 400);
-  }
-  const id = login_id.trim().toUpperCase();
-  const key = parentKey(id);
-
-  const lockLeft = await loginLockedFor(c.env.DB, key);
-  if (lockLeft > 0) {
-    return c.json({ error: `여러 번 틀려서 잠겼어요. ${Math.ceil(lockLeft / 60)}분 뒤에 다시 해주세요` }, 429);
-  }
-
-  const child = await c.env.DB.prepare(
-    `SELECT * FROM users WHERE login_id = ?1 AND role = 'student'`
-  ).bind(id).first();
-  // 학부모 PIN이 아직 발급 안 된 아이도, 아이디가 아예 없는 것과 똑같이 답한다
-  // (어느 아이가 있는지 / 어느 아이가 부모 연결이 됐는지 흘리지 않는다)
-  if (!child?.parent_pin_hash || !(await verifyPin(String(pin), child.parent_pin_hash))) {
-    const { lockedSeconds } = await noteLoginFail(c.env.DB, key);
-    return c.json({
-      error: lockedSeconds
-        ? `여러 번 틀려서 ${Math.ceil(lockedSeconds / 60)}분 동안 잠겼어요`
-        : '아이디 또는 PIN이 맞지 않아요',
-    }, lockedSeconds ? 429 : 401);
-  }
-  await clearLoginFails(c.env.DB, key);
-  return c.json({
-    token: await makeParentToken(child),
-    child: { display_name: child.display_name, login_id: child.login_id },
-  });
-});
-
 // 자녀 한 명의 요약. 부모는 이것만 본다 — 정답·해설·문항 원문은 내려주지 않는다.
 app.get('/api/parent/overview', requireParent, async (c) => {
   const child = c.get('child');
@@ -853,19 +813,8 @@ app.post('/api/admin/student/:id/pin', ...admin, async (c) => {
   return c.json({ login_id: u.login_id, pin });
 });
 
-// 학부모용 PIN 발급·재발급. 아이 PIN과 별개의 열쇠라, 이걸 줘도 부모가 아이 앱에
-// 들어가 문제를 풀 수는 없다(반대로 아이가 부모 화면을 볼 수도 없다).
-app.post('/api/admin/student/:id/parent-pin', ...admin, async (c) => {
-  const u = await c.env.DB.prepare(
-    `SELECT id, login_id, display_name FROM users WHERE id = ?1 AND role = 'student'`
-  ).bind(c.req.param('id')).first();
-  if (!u) return c.json({ error: '학생을 찾을 수 없습니다' }, 404);
-  const pin = makePin();
-  await c.env.DB.prepare('UPDATE users SET parent_pin_hash = ?2 WHERE id = ?1')
-    .bind(u.id, await hashPin(pin)).run();
-  await clearLoginFails(c.env.DB, parentKey(u.login_id));
-  return c.json({ login_id: u.login_id, display_name: u.display_name, pin });
-});
+// (학부모용 PIN 발급은 없앴다 — 학부모는 이메일로 직접 가입하고 아이 계정을 스스로 만든다.
+//  발급해도 들어갈 화면이 없는 PIN을 관리자 화면에 남겨두면 헷갈리기만 한다.)
 
 // 신고 목록 — 아이가 어느 문항에서 막혔는지. 기본은 아직 안 본 것만.
 app.get('/api/admin/feedback', ...admin, async (c) => {

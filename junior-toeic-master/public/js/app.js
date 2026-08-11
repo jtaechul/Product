@@ -103,7 +103,7 @@ const ranked = () => PARTS.map((p) => ({ part: p, acc: accuracy(p) })).filter((x
   .sort((a, b) => a.acc - b.acc);
 const totalAnswered = () => Object.values(store.parts).reduce((n, p) => n + p.answered, 0);
 
-// ---------- 로그인 (M2: 학원 발급 ID + 6자리 PIN) ----------
+// ---------- 로그인 (학부모가 만들어 준 아이디 + 6자리 PIN) ----------
 const AUTH_KEY = 'jumplish.auth.v1';
 let auth = null;
 try { auth = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch { auth = null; }
@@ -300,7 +300,7 @@ function showSettings() {
       </div>
 
       <p class="sheet-sect">개인정보</p>
-      <p class="card-note">점프리시는 이메일·전화번호를 받지 않아요. 학원에서 받은 아이디와
+      <p class="card-note">점프리시는 아이의 이메일·전화번호를 받지 않아요. 부모님께 받은 아이디와
         비밀번호 6자리, 그리고 문제 푼 기록만 저장합니다.</p>
 
       <p class="sheet-sect">사진 출처</p>
@@ -670,11 +670,11 @@ function showLogin() {
     <div class="player-head"><button class="btn-ghost" data-back>돌아가기</button></div>
     <div class="qcard" style="gap:15px">
       <div>
-        <h1 class="greet-title">학원 로그인</h1>
-        <p class="card-note" style="margin-top:4px">선생님께 받은 아이디와 비밀번호 6자리를 넣어주세요.</p>
+        <h1 class="greet-title">로그인</h1>
+        <p class="card-note" style="margin-top:4px">부모님께 받은 아이디와 비밀번호 6자리를 넣어주세요.</p>
       </div>
-      <label class="field"><span>아이디 (예: JUMP-1)</span>
-        <input data-lid autocapitalize="characters" autocomplete="username" placeholder="가입코드-번호" /></label>
+      <label class="field"><span>아이디 (예: JP-ABC123)</span>
+        <input data-lid autocapitalize="characters" autocomplete="username" placeholder="JP-" /></label>
       <label class="field"><span>비밀번호 (숫자 6자리)</span>
         <input data-pin type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" placeholder="●●●●●●" /></label>
       <div data-result></div>

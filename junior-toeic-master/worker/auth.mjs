@@ -85,20 +85,14 @@ export async function verifyToken(db, token) {
 }
 
 // ── 학부모 토큰 ──
-// 두 종류가 공존한다. 앞 글자만 보고 갈라진다.
-//   p.<자녀id>.<만료초>.<HMAC(key=parent_pin_hash)>   학원 발급 (기존, 자녀 1명 고정)
-//   pa.<학부모id>.<만료초>.<HMAC(key=password_hash)>  직접 가입 (B2C, 자녀 여러 명)
-// 학생 토큰은 조각이 3개뿐이라 어느 쪽과도 섞일 수 없다.
-// 서명 열쇠가 각자의 비밀번호 해시라, 비밀번호를 바꾸면 그 토큰만 무효가 되고
+//   pa.<학부모id>.<만료초>.<HMAC(key=password_hash)>
+// 학생 토큰은 조각이 3개뿐이라(이건 4개) 서로 섞일 수 없다.
+// 서명 열쇠가 비밀번호 해시라, 비밀번호를 바꾸면 학부모 토큰만 무효가 되고
 // 아이 로그인은 그대로다.
-const P = 'p';
+//
+// 학원이 발급하던 'p.<자녀id>' 토큰은 없앴다 — 학원 영업을 하지 않기로 하면서
+// 그 화면 자체가 사라졌고, 들어갈 문이 없는 열쇠를 남겨둘 이유가 없다.
 const PA = 'pa';
-
-export async function makeParentToken(child) {
-  const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_S;
-  const msg = `${P}.${child.id}.${exp}`;
-  return `${msg}.${await hmacHex(child.parent_pin_hash, msg)}`;
-}
 
 export async function makeAccountToken(parent) {
   const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_S;
@@ -106,48 +100,28 @@ export async function makeAccountToken(parent) {
   return `${msg}.${await hmacHex(parent.password_hash, msg)}`;
 }
 
-// 성공 시 { kind:'academy', child } 또는 { kind:'account', parent }, 실패 시 null
+// 성공 시 parents 행, 실패 시 null
 export async function verifyParentToken(db, token) {
   const parts = String(token || '').split('.');
-  if (parts.length !== 4) return null;
-  const [kind, subjectId, expS, sig] = parts;
+  if (parts.length !== 4 || parts[0] !== PA) return null;
+  const [, parentId, expS, sig] = parts;
   const exp = Number(expS);
-  if (!subjectId || !sig || !Number.isFinite(exp) || exp * 1000 < Date.now()) return null;
-
-  if (kind === PA) {
-    const parent = await db.prepare('SELECT * FROM parents WHERE id = ?1').bind(subjectId).first();
-    if (!parent) return null;
-    const want = await hmacHex(parent.password_hash, `${PA}.${subjectId}.${exp}`);
-    return sig === want ? { kind: 'account', parent } : null;
-  }
-  if (kind === P) {
-    const child = await db.prepare(
-      `SELECT * FROM users WHERE id = ?1 AND role = 'student' AND parent_pin_hash IS NOT NULL`
-    ).bind(subjectId).first();
-    if (!child) return null;
-    const want = await hmacHex(child.parent_pin_hash, `${P}.${subjectId}.${exp}`);
-    return sig === want ? { kind: 'academy', child } : null;
-  }
-  return null;
+  if (!parentId || !sig || !Number.isFinite(exp) || exp * 1000 < Date.now()) return null;
+  const parent = await db.prepare('SELECT * FROM parents WHERE id = ?1').bind(parentId).first();
+  if (!parent) return null;
+  const want = await hmacHex(parent.password_hash, `${PA}.${parentId}.${exp}`);
+  return sig === want ? parent : null;
 }
 
 // 학부모 전용 미들웨어 — c.get('child')에 '지금 보고 있는 자녀' 행을 싣는다.
 //
 // 어느 아이를 볼지는 요청이 정하지만, **그 아이가 이 학부모의 아이인지는 서버가 확인한다.**
 // 남의 아이 id를 넣어도 parent_id 가 안 맞으면 조회 자체가 비어서 돌아온다.
-// 학원 발급 토큰은 애초에 아이 하나에 묶여 있어 고를 여지가 없다.
 export const requireParent = async (c, next) => {
   const m = /^Bearer\s+(.+)$/.exec(c.req.header('Authorization') || '');
-  const got = m ? await verifyParentToken(c.env.DB, m[1]) : null;
-  if (!got) return c.json({ error: '로그인이 필요합니다' }, 401);
+  const parent = m ? await verifyParentToken(c.env.DB, m[1]) : null;
+  if (!parent) return c.json({ error: '로그인이 필요합니다' }, 401);
 
-  if (got.kind === 'academy') {
-    c.set('child', got.child);
-    c.set('parent', null);
-    return next();
-  }
-
-  const parent = got.parent;
   const wanted = c.req.query('child_id');
   const child = await (wanted
     ? c.env.DB.prepare(`SELECT * FROM users WHERE id = ?1 AND parent_id = ?2 AND role = 'student'`)
@@ -172,11 +146,9 @@ export const requireParent = async (c, next) => {
 // requireParent 는 아이가 없으면 404를 내므로 가입 직후 화면에서는 쓸 수 없다.
 export const requireParentAccount = async (c, next) => {
   const m = /^Bearer\s+(.+)$/.exec(c.req.header('Authorization') || '');
-  const got = m ? await verifyParentToken(c.env.DB, m[1]) : null;
-  if (got?.kind !== 'account') {
-    return c.json({ error: '학부모 계정으로 로그인해주세요' }, 401);
-  }
-  c.set('parent', got.parent);
+  const parent = m ? await verifyParentToken(c.env.DB, m[1]) : null;
+  if (!parent) return c.json({ error: '학부모 계정으로 로그인해주세요' }, 401);
+  c.set('parent', parent);
   await next();
 };
 

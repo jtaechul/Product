@@ -273,7 +273,6 @@ async function showClass(classId, className, academyId, academyName) {
           <span class="row-t">${esc(s.display_name)} <span class="chip">${esc(s.login_id)}</span></span>
           <span class="row-s">푼 문항 ${s.answers}개${s.last_day ? ` · 마지막 학습 ${esc(s.last_day)}` : ' · 아직 시작 안 함'}</span>
         </span>
-        <button class="btn ghost small" data-parentpin="${esc(s.id)}" data-who="${esc(s.display_name)}">학부모 PIN</button>
         <button class="btn ghost small" data-repin="${esc(s.id)}" data-who="${esc(s.display_name)}">PIN 재발급</button>
       </div>`).join('') : `<p class="empty">아직 학생이 없어요.</p>`;
 
@@ -296,20 +295,7 @@ async function showClass(classId, className, academyId, academyName) {
     bindTabs();
     view.querySelector('[data-back]').addEventListener('click', () => showAcademy(academyId, academyName));
 
-    // 학부모용 PIN — 아이 PIN과 다른 열쇠. 부모는 이걸로 '자녀 아이디 + 이 PIN' 으로
-    // 학부모 화면에 들어가 읽기만 한다.
-    view.querySelectorAll('[data-parentpin]').forEach((b) => b.addEventListener('click', async () => {
-      if (!confirm(`${b.dataset.who} 학생의 학부모용 PIN을 새로 만듭니다.\n이미 쓰던 학부모 PIN이 있으면 못 쓰게 됩니다.\n계속할까요?`)) return;
-      b.disabled = true;
-      try {
-        const r = await api(`/api/admin/student/${encodeURIComponent(b.dataset.parentpin)}/parent-pin`, { method: 'POST' });
-        showPins([{ login_id: r.login_id, display_name: `${r.display_name} 학부모`, pin: r.pin }], null, {
-          title: '학부모용 PIN을 만들었어요',
-          note: '부모님은 <b>자녀 아이디 + 이 PIN</b>으로 학부모 화면에 들어갑니다. 아이 앱에는 못 들어가요.',
-        });
-      } catch (e) { if (!guard(e)) alert(e.message); }
-      b.disabled = false;
-    }));
+    // (학부모용 PIN 버튼은 없앴다 — 학부모는 이메일로 직접 가입해 아이 계정을 스스로 만든다.)
 
     view.querySelectorAll('[data-repin]').forEach((b) => b.addEventListener('click', async () => {
       if (!confirm(`${b.dataset.who} 학생의 PIN을 새로 만듭니다.\n지금 쓰던 PIN은 바로 못 쓰게 되고, 로그인도 풀립니다.\n계속할까요?`)) return;

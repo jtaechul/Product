@@ -43,8 +43,8 @@ const BRAND = `<div class="p-brand">
   </svg></span><span class="t">점프리시</span></div>`;
 
 // ── 들어오는 문 ──
-// 길이 두 개다. 직접 가입한 학부모(이메일)와, 학원에서 아이디를 받은 학부모(자녀 아이디+PIN).
-// 대부분은 앞쪽이므로 그걸 먼저 보여주고, 학원 경로는 아래 작은 링크로 둔다.
+// 학부모가 직접 가입하는 길 하나뿐이다. 학원을 거쳐 들어오는 화면은 두지 않는다
+// (학원 영업을 하지 않기로 했다 — 학부모가 고객이다).
 const err = (el, m) => { el.innerHTML = `<div class="result bad"><p>${esc(m)}</p></div>`; };
 
 function showLogin(prefill = '') {
@@ -62,8 +62,6 @@ function showLogin(prefill = '') {
       <div data-msg></div>
       <p class="card-note" style="margin-top:10px">처음이신가요?
         <button class="p-link" data-signup>무료로 시작하기</button></p>
-      <p class="card-note" style="margin-top:4px">학원에서 아이디를 받으셨다면
-        <button class="p-link" data-academy>이쪽으로</button></p>
     </div>`;
   const msg = view.querySelector('[data-msg]');
   const go = async () => {
@@ -79,7 +77,6 @@ function showLogin(prefill = '') {
   };
   view.querySelector('[data-go]').addEventListener('click', go);
   view.querySelector('[data-signup]').addEventListener('click', showSignup);
-  view.querySelector('[data-academy]').addEventListener('click', () => showAcademyLogin(prefill));
   view.querySelectorAll('input').forEach((i) =>
     i.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); }));
 }
@@ -209,43 +206,6 @@ function showChildren() {
   });
 }
 
-// ── 학원에서 아이디를 받은 경우 (기존 경로) ──
-function showAcademyLogin(prefill = '') {
-  view.innerHTML = `
-    <div class="card p-login">
-      ${BRAND}
-      <div><h1 class="greet-title" style="font-size:1.15rem">학원에서 받은 아이디로 보기</h1>
-        <p class="card-note" style="margin-top:4px">학원에서 받으신 <b>자녀 아이디</b>와
-          <b>학부모용 6자리 PIN</b>을 넣어주세요.</p></div>
-      <label class="field" style="margin-top:12px"><span>자녀 아이디</span>
-        <input data-lid value="${esc(prefill)}" autocapitalize="characters"
-          autocomplete="username" placeholder="예: JUMP-1" /></label>
-      <label class="field" style="margin-top:10px"><span>학부모용 PIN (숫자 6자리)</span>
-        <input data-pin type="password" inputmode="numeric" maxlength="6"
-          autocomplete="current-password" placeholder="●●●●●●" /></label>
-      <button class="btn-primary" data-go style="margin-top:12px">보기</button>
-      <div data-msg></div>
-      <p class="card-note" style="margin-top:6px">아이가 앱에 쓰는 PIN과는 다른 번호입니다.
-        이 화면에서는 기록을 보기만 하고, 문제를 풀 수는 없어요.</p>
-      <p class="card-note" style="margin-top:10px">
-        <button class="p-link" data-back>이메일로 로그인</button></p>
-    </div>`;
-  const msg = view.querySelector('[data-msg]');
-  const go = async () => {
-    const login_id = view.querySelector('[data-lid]').value.trim();
-    const pin = view.querySelector('[data-pin]').value.trim();
-    if (!login_id || !/^\d{6}$/.test(pin)) return err(msg, '아이디와 숫자 6자리를 확인해주세요.');
-    try {
-      const r = await api('/api/parent/login', { method: 'POST', body: JSON.stringify({ login_id, pin }) });
-      saveAuth({ ...r, kind: 'academy' });
-      showHome();
-    } catch (e) { err(msg, e.message); }
-  };
-  view.querySelector('[data-go]').addEventListener('click', go);
-  view.querySelector('[data-back]').addEventListener('click', () => showLogin());
-  view.querySelectorAll('input').forEach((i) =>
-    i.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); }));
-}
 
 // ── 한 줄 판정 ──
 // 부모가 이 문장 하나만 읽고 나가도 손해가 없게 쓴다. 점수가 아니라 '요즘 어떤가'다.
