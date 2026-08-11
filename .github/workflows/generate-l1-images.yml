@@ -40,20 +40,34 @@ jobs:
       - name: Validate content
         run: node tools/import.mjs --check
 
+      # 만드는 파일 이름은 문항의 ULID(.idmap.json)에서 나온다. 그 매핑이 원고와 함께
+      # 커밋돼 있지 않으면, 음원 워크플로와 사진 워크플로가 각자 다른 이름을 지어 버린다.
+      # 2026-08-11 실제로 겪었다 — 같은 L1 문항 12개에 두 러너가 서로 다른 ULID를 붙여
+      # 애써 받은 사진 48컷이 문항과 짝을 잃을 뻔했다. 그래서 여기서 먼저 막는다.
+      - name: Check ID map is committed
+        run: |
+          node tools/import.mjs > /dev/null
+          if ! git diff --quiet -- content/.idmap.json; then
+            echo "::error::새 문항의 ULID가 러너에서 처음 만들어졌습니다 — 원고와 함께 커밋돼 있어야 합니다."
+            echo "::error::개발 폴더에서 'node tools/import.mjs' 를 돌린 뒤 content/.idmap.json 을 문항과 같이 커밋해 주세요."
+            exit 1
+          fi
+          echo "ULID 매핑 확인 — 새로 만들어진 항목 없음"
+
       - name: Fetch photos (resumable)
         id: gen
         continue-on-error: true   # 일부 실패해도 성공분은 커밋한다 (재실행 시 이어서 받음)
         env:
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
-        run: |
-          node tools/import.mjs   # ULID 매핑(.idmap.json) 생성 — 파일명이 여기에 달려 있다
-          node tools/img-batch.mjs
+        run: node tools/img-batch.mjs
 
       - name: Commit & push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/img/l1 content/questions/L1.json content/l1-photos.json
+          # .idmap.json 도 함께 담는다. import.mjs 가 이 파일을 다시 쓰기 때문에,
+          # 빼 두면 '커밋 안 된 변경'이 남아 아래 pull --rebase 가 통째로 거부된다.
+          git add public/img/l1 content/questions/L1.json content/l1-photos.json content/.idmap.json
           if git diff --cached --quiet; then
             echo "변경 없음 — 커밋 생략"
             exit 0
