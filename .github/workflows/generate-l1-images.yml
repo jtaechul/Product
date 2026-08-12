@@ -91,3 +91,10 @@ jobs:
         run: |
           echo "::error::일부 사진 수집 실패 — 검색어를 손보고 다시 실행하면 이어서 받습니다"
           exit 1
+
+  # 사진을 커밋했으면 곧바로 배포까지 이어 준다 (generate-tts.yml 과 같은 이유).
+  deploy:
+    needs: generate
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/deploy-jumplish.yml
+    secrets: inherit

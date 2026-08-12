@@ -7,6 +7,10 @@ on:
       - "junior-toeic-master/**"
       - ".github/workflows/deploy-jumplish.yml"
   workflow_dispatch:
+  # 음원·사진 배치(generate-tts / generate-l1-images)가 끝나면 그쪽에서 이 워크플로를 부른다.
+  # 배치는 GITHUB_TOKEN 으로 커밋하는데, 그 푸시는 다른 워크플로를 깨우지 못한다(깃허브 정책).
+  # 그래서 예전에는 새로 만든 음원이 배포되지 않아, 문항이 draft 로 남아 아이에게 안 나갔다.
+  workflow_call:
 
 concurrency:
   group: jumplish-deploy
@@ -23,6 +27,10 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN_JUMPLISH || secrets.CF_API_TOKEN_JUMPLISH_DEPLOY || secrets.CF_API_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # 트리거된 커밋이 아니라 브랜치의 최신 상태를 받는다. 배치가 방금 커밋한
+          # 음원·사진까지 포함해야 import.mjs 가 그 문항을 active 로 올린다.
+          ref: ${{ github.ref_name }}
 
       - uses: actions/setup-node@v4
         with:
