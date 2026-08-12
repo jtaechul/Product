@@ -164,6 +164,7 @@ jobs:
           git add public/audio content/.idmap.json
           if git diff --cached --quiet; then
             echo "새로 만든 음원 없음 — 커밋 생략"
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git commit -m "junior-toeic-master: 듣기 음원 생성·활성화 (자동 배치)" \
