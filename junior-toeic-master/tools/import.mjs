@@ -111,8 +111,47 @@ function gateOnMedia(ctx, part, status, audioUrl, imageUrls) {
   return status;
 }
 
+// ── L1: 읽어 주는 문장이 정답 사진에 실제로 있는 것만 말하는지 ──
+//
+// 문장을 먼저 쓰고 그에 맞는 사진을 찾으면, 사진이 문장을 다 담지 못하는 일이 생긴다.
+// 2026-08-12에 20문항 중 11개가 그랬다 — "두 아이가 모래성을 만든다"인데 사진엔 모래성만
+// 있고, "남자아이가 오리에게 먹이를 준다"인데 사진 속은 여자아이였다.
+//
+// 사진의 태그는 대부분 사실을 말하고 있었다(그 사진 태그에 girl 이 있고 boy 는 없었다).
+// 그래서 **문장이 말하는 사람과 사진 태그가 말하는 사람이 어긋나면 여기서 막는다.**
+// 태그가 못 잡는 것(사람이 아예 안 찍혔는데 태그엔 children 이 있는 경우)은 사람이 봐야 한다.
+const PERSON_WORDS = {
+  boy: ['boy'], boys: ['boys', 'boy'],
+  girl: ['girl'], girls: ['girls', 'girl'],
+  man: ['man'], men: ['men', 'man'],
+  woman: ['woman'], women: ['women', 'woman'],
+  child: ['child', 'kid', 'boy', 'girl', 'toddler'],
+  children: ['children', 'kids', 'boys', 'girls'],
+};
+function checkL1Sentence(ctx, script, tags) {
+  if (!script || !tags) return;              // 사진을 아직 안 받았으면 검사할 게 없다
+  const low = ` ${String(script).toLowerCase().replace(/[^a-z ]/g, ' ')} `;
+  const tagLow = String(tags).toLowerCase();
+  for (const [word, ok] of Object.entries(PERSON_WORDS)) {
+    if (!low.includes(` ${word} `)) continue;
+    if (ok.some((t) => tagLow.includes(t))) continue;
+    warn(`${ctx}: 읽어 주는 문장은 "${word}"라고 하는데 정답 사진에는 그런 사람이 없습니다`
+       + ` (사진 태그: ${tagLow.split(',').slice(0, 6).join(',')}…)`);
+  }
+  // 한 명이라고 했는데 사진 태그가 여럿을 가리키는 경우 (girls·children·kids)
+  const singular = /\b(a|an)\s+(boy|girl|man|woman|child)\b/.test(low);
+  if (singular && /\b(girls|boys|children|kids|sisters|brothers)\b/.test(tagLow)
+      && !/\b(girl|boy|child|man|woman)\b/.test(tagLow.replace(/girls|boys|children|kids/g, ''))) {
+    warn(`${ctx}: 문장은 한 명인데 사진에는 여러 명으로 보입니다 (태그에 girls·children 등)`);
+  }
+}
+
 // L1 보기 4컷 (img-batch 산출: public/img/l1/{id}-{0..3}.jpg)
 // 4컷이 모두 있을 때만 경로 배열(JSON)을 image_url에 싣는다 — 프런트가 그림 보기로 렌더.
+// img-batch 가 남긴 사진 출처 기록 — 어떤 사진을 썼고 태그가 무엇인지 들어 있다
+const l1PhotosPath = join(CONTENT, 'l1-photos.json');
+const l1Photos = existsSync(l1PhotosPath) ? JSON.parse(readFileSync(l1PhotosPath, 'utf8')) : {};
+
 const imageUrlsFor = (questionId) => {
   const paths = [0, 1, 2, 3].map((i) => `img/l1/${questionId}-${i}.jpg`);
   if (!paths.every((p) => existsSync(join(ROOT, 'public', p)))) return null;
@@ -288,6 +327,11 @@ for (const file of files) {
       }
       const qAudio = audioUrlFor('questions', takeId(`q:${it.tmp_id}`));
       const qImages = part === 'L1' ? imageUrlsFor(takeId(`q:${it.tmp_id}`)) : null;
+      if (part === 'L1') {
+        // 정답 컷의 태그와 읽어 주는 문장을 맞춰 본다
+        const ansKey = `${takeId(`q:${it.tmp_id}`)}-${it.answer_idx}`;
+        checkL1Sentence(ctx, it.tts_script, l1Photos[ansKey]?.tags);
+      }
       pushQuestion(part, it.tmp_id, it, null, {
         accent: it.accent ?? null,
         status: gateOnMedia(ctx, part, status, qAudio, qImages),

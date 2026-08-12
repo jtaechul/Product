@@ -206,14 +206,14 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'buying apples'는 사과를 사고 있다는 뜻이라 사과를 사는 사진이 정답이에요. 꽃 사진은 사과와 관계가 없어요.",
+    "explanation_ko": "'buying apples'는 사과를 산다는 뜻이에요. 시장에서 사과를 주고받는 사진이 정답이에요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.shopping"
     ],
     "accent": "US",
-    "tts_script": "A woman is buying apples at the market.",
+    "tts_script": "Someone is buying apples at the market.",
     "choice_image_prompts": [
       "A woman smelling flowers at a market stall",
       "A man selling fish at a market stall",
@@ -221,7 +221,7 @@
       "A woman handing money to a fruit seller for apples at a market stall"
     ],
     "status": "active",
-    "evidence": "buying apples at the market",
+    "evidence": "buying apples",
     "why_not": {
       "0": "꽃 사진이에요. 사과가 아니에요",
       "1": "사과가 아니라 생선 가게예요",
@@ -295,14 +295,14 @@
       "Picture D"
     ],
     "answer_idx": 1,
-    "explanation_ko": "'building a sandcastle'는 모래성을 만든다는 뜻이에요. 바다에서 수영하는 사진은 같은 바닷가지만 하는 일이 달라요.",
+    "explanation_ko": "'sandcastle'은 모래성이에요. 바닷가에 모래성이 있는 사진을 고르면 돼요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "UK",
-    "tts_script": "Two children are building a sandcastle.",
+    "tts_script": "There is a sandcastle on the beach.",
     "choice_image_prompts": [
       "Two children swimming in the sea near the shore",
       "Two children building a sandcastle on a sunny beach",
@@ -310,15 +310,15 @@
       "Two children playing with a beach ball on the sand"
     ],
     "status": "active",
-    "evidence": "building a sandcastle",
+    "evidence": "a sandcastle",
     "why_not": {
       "0": "바다에서 헤엄치는 사진이에요",
       "2": "조개를 줍는 사진이에요",
       "3": "공놀이를 하는 사진이에요"
     },
     "key_expr": {
-      "en": "build a sandcastle",
-      "ko": "모래성을 쌓다"
+      "en": "a sandcastle",
+      "ko": "모래성"
     },
     "choice_image_queries": [
       {
@@ -393,14 +393,14 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'painting a fence'는 울타리를 칠한다는 뜻이라 울타리에 칠하는 사진이 정답이에요. 못과 망치 사진은 칠하는 게 아니에요.",
+    "explanation_ko": "'painting a fence'는 울타리에 페인트를 칠한다는 뜻이에요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.daily"
     ],
     "accent": "AU",
-    "tts_script": "A man is painting a wooden fence.",
+    "tts_script": "A child is painting a fence.",
     "choice_image_prompts": [
       "A man painting a wooden fence with a brush in a backyard",
       "A man mowing the lawn in a backyard",
@@ -408,7 +408,7 @@
       "A man watering plants with a hose in a backyard"
     ],
     "status": "active",
-    "evidence": "painting a wooden fence",
+    "evidence": "painting a fence",
     "why_not": {
       "1": "잔디를 깎는 사진이에요",
       "2": "못과 망치 사진이에요",
@@ -495,14 +495,14 @@
       "Picture D"
     ],
     "answer_idx": 1,
-    "explanation_ko": "'pouring juice'는 주스를 컵에 따른다는 뜻이에요. 주스를 마시는 사진은 컵과 주스가 똑같이 나와서 헷갈리기 쉬워요.",
+    "explanation_ko": "주스가 잔으로 들어가고 있어요. 마시는 사진이 아니라 따르는 사진이 정답이에요.",
     "difficulty_label": 3,
     "tags": [
       "LS.photo",
       "V.food"
     ],
     "accent": "UK",
-    "tts_script": "A girl is pouring juice into a glass.",
+    "tts_script": "Orange juice is going into the glass.",
     "choice_image_prompts": [
       "A girl drinking juice from a glass at a kitchen table",
       "A girl pouring juice from a bottle into a glass at a kitchen table",
@@ -510,15 +510,15 @@
       "A girl cutting an orange on a kitchen cutting board"
     ],
     "status": "active",
-    "evidence": "pouring juice into a glass",
+    "evidence": "into the glass",
     "why_not": {
       "0": "이미 마시고 있는 사진이에요",
       "2": "설거지를 하는 사진이에요",
       "3": "오렌지 사진이에요"
     },
     "key_expr": {
-      "en": "pour juice",
-      "ko": "주스를 따르다"
+      "en": "into the glass",
+      "ko": "잔 속으로"
     },
     "choice_image_queries": [
       {
@@ -593,14 +593,14 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'feeding'은 먹이를 준다는 뜻이라 오리에게 빵을 주는 사진이 정답이에요. 샌드위치 사진은 자기가 먹는 것이라 달라요.",
+    "explanation_ko": "'feeding the ducks'는 오리에게 먹이를 준다는 뜻이에요.",
     "difficulty_label": 3,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "US",
-    "tts_script": "A boy is feeding bread to the ducks.",
+    "tts_script": "A girl is feeding the ducks.",
     "choice_image_prompts": [
       "A boy taking a photo of ducks at a pond",
       "A boy eating a sandwich on a bench near a pond",
@@ -608,7 +608,7 @@
       "A boy throwing pieces of bread to ducks at a pond"
     ],
     "status": "active",
-    "evidence": "feeding bread to the ducks",
+    "evidence": "feeding the ducks",
     "why_not": {
       "0": "사진을 찍는 사진이에요",
       "1": "샌드위치를 먹는 사진이에요",
@@ -687,14 +687,14 @@
       "Picture D"
     ],
     "answer_idx": 2,
-    "explanation_ko": "'hanging clothes on a line'은 빨랫줄에 옷을 넌다는 뜻이에요. 옷을 개는 사진도 빨래지만 너는 것이 아니에요.",
+    "explanation_ko": "빨래가 줄에 널려 마르고 있어요. 널려 있는 옷이 보이는 사진이 정답이에요.",
     "difficulty_label": 4,
     "tags": [
       "LS.photo",
       "V.daily"
     ],
     "accent": "AU",
-    "tts_script": "A woman is hanging wet clothes on a line.",
+    "tts_script": "Clothes are drying on a line.",
     "choice_image_prompts": [
       "A woman folding dry clothes into a basket",
       "A woman ironing a shirt on an ironing board",
@@ -702,15 +702,15 @@
       "A woman loading clothes into a washing machine"
     ],
     "status": "active",
-    "evidence": "hanging wet clothes on a line",
+    "evidence": "drying on a line",
     "why_not": {
       "0": "마른 빨래를 갠 사진이에요",
       "1": "다림질을 하는 사진이에요",
       "3": "세탁기 사진이에요"
     },
     "key_expr": {
-      "en": "hang wet clothes",
-      "ko": "젖은 빨래를 널다"
+      "en": "on a line",
+      "ko": "줄에 널려"
     },
     "choice_image_queries": [
       {
@@ -882,14 +882,14 @@
       "Picture D"
     ],
     "answer_idx": 2,
-    "explanation_ko": "'brushing his teeth'는 이를 닦는다는 뜻이에요. 칫솔이 보이는 사진을 고르면 돼요.",
+    "explanation_ko": "'brushing her teeth'는 이를 닦는다는 뜻이에요. 칫솔이 보이는 사진을 고르면 돼요.",
     "difficulty_label": 1,
     "tags": [
       "LS.photo",
       "V.daily"
     ],
     "accent": "UK",
-    "tts_script": "A boy is brushing his teeth.",
+    "tts_script": "A child is brushing her teeth.",
     "choice_image_prompts": [
       "A child washing hands with soap",
       "A child combing hair",
@@ -897,7 +897,7 @@
       "A child taking a bath"
     ],
     "status": "active",
-    "evidence": "brushing his teeth",
+    "evidence": "brushing her teeth",
     "why_not": {
       "0": "손을 씻는 사진이에요",
       "1": "머리를 빗는 사진이에요",
@@ -1072,14 +1072,14 @@
       "Picture D"
     ],
     "answer_idx": 0,
-    "explanation_ko": "'basketball'은 농구예요. 농구공과 골대가 보이는 사진을 고르면 돼요.",
+    "explanation_ko": "'basketball'은 농구예요. 농구공을 들고 뛰는 사진을 고르면 돼요.",
     "difficulty_label": 1,
     "tags": [
       "LS.photo",
       "V.leisure"
     ],
     "accent": "US",
-    "tts_script": "Two boys are playing basketball.",
+    "tts_script": "Children are playing basketball.",
     "choice_image_prompts": [
       "Boys playing basketball on a court",
       "Boys playing soccer on a field",
@@ -1104,15 +1104,18 @@
     },
     "choice_image_queries": [
       {
-        "q": "boys playing basketball",
+        "q": "kids playing basketball court",
         "need": [
-          "basketball"
+          "basketball",
+          "playing"
         ],
         "prefer": [
-          "boy"
+          "children"
         ],
         "avoid": [
-          "soccer"
+          "soccer",
+          "black and white",
+          "monochrome"
         ]
       },
       {
@@ -1166,14 +1169,14 @@
       "Picture D"
     ],
     "answer_idx": 3,
-    "explanation_ko": "'reading a book in the library'는 도서관에서 책을 읽는다는 뜻이에요.",
+    "explanation_ko": "'reading a book'은 책을 읽는다는 뜻이에요. 책을 펴 든 사진이 정답이에요.",
     "difficulty_label": 2,
     "tags": [
       "LS.photo",
       "V.school"
     ],
     "accent": "UK",
-    "tts_script": "A girl is reading a book in the library.",
+    "tts_script": "A woman is reading a book.",
     "choice_image_prompts": [
       "A child writing at a desk",
       "A student using a computer",
@@ -1188,8 +1191,8 @@
       "2": "그림을 그리는 사진이에요"
     },
     "key_expr": {
-      "en": "in the library",
-      "ko": "도서관에서"
+      "en": "read a book",
+      "ko": "책을 읽다"
     },
     "miss_type": {
       "0": "P.other",
@@ -1642,14 +1645,14 @@
       "Picture D"
     ],
     "answer_idx": 2,
-    "explanation_ko": "'planting'은 심는다는 뜻이에요. 흙에 꽃을 심는 사진이 정답이에요.",
+    "explanation_ko": "'planting'은 심는다는 뜻이에요. 흙에 어린 모종을 심는 사진이 정답이에요.",
     "difficulty_label": 4,
     "tags": [
       "LS.photo",
       "V.daily"
     ],
     "accent": "US",
-    "tts_script": "A girl is planting flowers in the garden.",
+    "tts_script": "Someone is planting a small plant.",
     "choice_image_prompts": [
       "A person watering plants with a watering can",
       "A person raking fallen leaves",
@@ -1657,15 +1660,15 @@
       "A person picking apples from a tree"
     ],
     "status": "active",
-    "evidence": "planting flowers",
+    "evidence": "planting a small plant",
     "why_not": {
       "0": "물을 주는 사진이에요",
       "1": "낙엽을 긁어모으는 사진이에요",
       "3": "사과를 따는 사진이에요"
     },
     "key_expr": {
-      "en": "plant flowers",
-      "ko": "꽃을 심다"
+      "en": "plant a small plant",
+      "ko": "작은 모종을 심다"
     },
     "miss_type": {
       "0": "P.other",
@@ -1742,7 +1745,7 @@
       "V.leisure"
     ],
     "accent": "UK",
-    "tts_script": "A girl is swimming in the pool.",
+    "tts_script": "Two girls are swimming in the pool.",
     "choice_image_prompts": [
       "A child running on a track",
       "A child riding a scooter",
