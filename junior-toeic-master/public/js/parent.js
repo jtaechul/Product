@@ -240,24 +240,56 @@ function showChildren() {
 
 // ── 한 줄 판정 ──
 // 부모가 이 문장 하나만 읽고 나가도 손해가 없게 쓴다. 점수가 아니라 '요즘 어떤가'다.
+const DAY = 86400000;
+const dnum = (s) => Date.parse(`${s}T00:00:00Z`);
+
 function verdict(d) {
-  const done = d.today_n > 0;
-  const week = d.recent_days.filter((r) => r.n > 0).length;   // 최근 2주 중 학습한 날
   if (!d.answered) {
     return { eyebrow: '아직 시작 전', line: '아직 문제를 풀지 않았어요',
       sub: '앱에 처음 들어가면 실력을 재는 짧은 테스트부터 합니다.' };
   }
-  if (d.streak >= 5) {
-    return { eyebrow: '요즘', line: `${d.streak}일 이어서 하고 있어요`,
-      sub: done ? '오늘 몫도 이미 끝냈습니다.' : '오늘 몫은 아직이에요.' };
+
+  // ⚠ 오늘 문제를 푼 아이에게 "한동안 쉬고 있어요"라고 말한 화면이 실제로 나갔다.
+  // 아래 어떤 가지보다 '오늘 했나'를 먼저 본다. 오늘 앉은 아이에게는
+  // 무슨 일이 있어도 쉬고 있다고 하지 않는다.
+  if (d.today_n > 0) {
+    if (d.streak >= 5) {
+      return { eyebrow: '요즘', line: `${d.streak}일 이어서 하고 있어요`,
+        sub: '오늘 몫도 이미 끝냈어요. 칭찬해주세요.' };
+    }
+    if (d.streak >= 2) {
+      return { eyebrow: '오늘', line: `오늘까지 ${d.streak}일 이어서 했어요`,
+        sub: '내일 한 번만 더 하면 습관이 됩니다.' };
+    }
+    return { eyebrow: '오늘', line: '오늘 학습을 마쳤어요',
+      sub: `오늘 ${d.today_n}문제를 풀었어요. 내일도 하면 이어집니다.` };
+  }
+
+  // 여기부터는 오늘 몫이 남은 아이다.
+  // '최근 2주'는 달력 기준 14일 안에 든 날만 센다. recent_days는 '공부한 날'만 담겨 오므로
+  // 그냥 길이를 세면 한 달 전 기록까지 2주 안에 있는 것처럼 부풀려진다.
+  const from = dnum(d.today) - 13 * DAY;
+  const active = d.recent_days.filter((r) => r.n > 0 && dnum(r.d) >= from);
+  const week = active.length;
+  const last = active[active.length - 1];              // 마지막으로 공부한 날(오래된 날부터 정렬돼 옴)
+  const gap = last ? Math.round((dnum(d.today) - dnum(last.d)) / DAY) : null;
+
+  if (gap === 1) {
+    return { eyebrow: '오늘', line: '오늘 몫만 남았어요',
+      sub: d.streak >= 2 ? `어제까지 ${d.streak}일 이어서 했어요. 오늘 하면 이어집니다.`
+        : '어제는 했어요. 오늘 10분이면 이어집니다.' };
   }
   if (week >= 7) {
     return { eyebrow: '요즘', line: '꾸준히 하고 있어요',
-      sub: `최근 2주 중 ${week}일 학습했어요.` };
+      sub: `최근 2주 중 ${week}일 학습했어요. 오늘 몫은 아직이에요.` };
   }
   if (week >= 3) {
     return { eyebrow: '요즘', line: '가끔 하고 있어요',
       sub: `최근 2주 중 ${week}일 학습했어요. 며칠 이어지면 훨씬 빨리 늘어요.` };
+  }
+  if (gap != null && gap <= 4) {
+    return { eyebrow: '요즘', line: `${gap}일째 쉬고 있어요`,
+      sub: '하루 10분이면 충분해요. 오늘 같이 앉아주세요.' };
   }
   return { eyebrow: '요즘', line: '한동안 쉬고 있어요',
     sub: `최근 2주 중 ${week}일 학습했어요. 하루 10분이면 충분합니다.` };
