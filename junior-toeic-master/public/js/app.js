@@ -281,7 +281,9 @@ function showSettings() {
       <div class="sheet-grab"></div>
       <h2>${auth ? esc(auth.user.display_name) + ' 님' : '내 정보'}</h2>
       <p class="card-note">${auth
-        ? `아이디 ${esc(auth.user.login_id)} · 기록이 서버에 저장돼요`
+        // 내부 식별자(JP-XXXXXX)는 보여주지 않는다 — 아이에게 '아이디'는 없다.
+        // 계정 설계가 '이메일 하나, 비밀번호만 사람마다'라서 외울 것은 비밀번호뿐이다.
+        ? '부모님 계정으로 로그인했어요 · 기록이 서버에 저장돼요'
         : '로그인하지 않았어요 — 기록이 이 기기에만 남아요'}</p>
 
       ${auth ? `
