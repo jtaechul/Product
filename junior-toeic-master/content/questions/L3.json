@@ -107,7 +107,8 @@
         "difficulty_label": 2,
         "tags": [
           "LS.detail",
-          "V.leisure"
+          "V.leisure",
+          "LS.infer"
         ],
         "evidence": "I'm visiting my grandmother in Busan.",
         "why_not": {
@@ -856,7 +857,8 @@
         "explanation_ko": "여동생을 돌봐야 했다고 했어요.",
         "difficulty_label": 2,
         "tags": [
-          "LS.detail"
+          "LS.detail",
+          "LS.infer"
         ],
         "evidence": "I had to take care of my little sister",
         "why_not": {

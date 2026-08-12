@@ -101,14 +101,46 @@ export async function composeDailySet(db, user, today) {
   // 2~4) 후보 풀: 최근 노출·기선택 제외
   const pool = bank.filter((q) => !pickedSet.has(q.id) && !recentSet.has(q.id));
   const withP = shuffle(pool.map((q) => ({ q, p: pOf(q) })));
+  // 칸이 정확히 setSize에 맞게 차도록 남은 자리를 매번 본다.
+  // (아래 축 채우기가 한 자리를 쓰기 때문에, 예전처럼 고정 개수로 자르면 정원을 넘긴다)
+  const room = () => setSize - picked.length;
 
-  for (const { q } of withP.filter((x) => x.p >= P_WEAK[0] && x.p <= P_WEAK[1]).slice(0, slots.weak)) take(q);
+  // 2) 축 채우기 — 실력 지도에 아직 '재는 중'으로 남은 축이 있으면 그 축 문항을 하루 한 개 넣는다.
+  // 이게 없으면 문항 수가 적은 축(속뜻 알기: 전체의 8%)은 몇 주가 지나도 3문항을 못 채워
+  // 부모 화면에 영영 빈칸으로 남는다. 실제로 "속뜻 알기만 계속 안 올라온다"는 말을 들었다.
+  // 아래 '신규' 칸이 이 역할을 하리라 봤지만, 그쪽은 쉬운 것부터 담기 때문에
+  // 어려운 축일수록 뒤로 밀려 영원히 차례가 오지 않았다.
+  const axisAttempts = (ax) => ax.tags.reduce((n, t) => n + (skillBy[t]?.attempts ?? 0), 0);
+  // 첫날은 모든 축이 0이라 순서만으로 고르면 늘 맨 앞(듣고 알기)이 뽑힌다. 그 축은
+  // 문항이 많아 가만둬도 저절로 채워지므로 한 자리가 아깝다. 같은 0이면 문항이 가장
+  // 적은 축(= 저절로는 안 나오는 축)에 자리를 준다.
+  const axisBankN = (ax) => {
+    const tagset = new Set(ax.tags);
+    return bank.reduce((n, q) => n + ((tagsBy[q.id] || []).some((t) => tagset.has(t)) ? 1 : 0), 0);
+  };
+  const needAxis = SKILL_AXES
+    .filter((ax) => axisAttempts(ax) < AXIS_MIN_ATTEMPTS)
+    .sort((a, b) => axisAttempts(a) - axisAttempts(b) || axisBankN(a) - axisBankN(b))[0];
+  if (needAxis && room() > 0) {
+    const tagset = new Set(needAxis.tags);
+    const cand = withP.filter((x) => !pickedSet.has(x.q.id)
+      && (tagsBy[x.q.id] || []).some((t) => tagset.has(t)));
+    // 처음 만나는 축이니 쉬운 것부터 — 연달아 틀리면 그 축이 실제 실력보다 낮게 잡힌다
+    cand.sort((a, b) => b.p - a.p);
+    if (cand[0]) take(cand[0].q);
+  }
+
+  // 축 채우기가 먼저 한 개를 집어갔을 수 있으므로 여기서도 이미 고른 것을 걸러야 한다
+  // (예전엔 이 칸이 맨 처음이라 걸를 필요가 없었다 — 같은 문항이 하루에 두 번 나온다)
+  for (const { q } of withP.filter((x) => !pickedSet.has(x.q.id) && x.p >= P_WEAK[0] && x.p <= P_WEAK[1])
+    .slice(0, Math.max(0, Math.min(slots.weak, room())))) take(q);
   // 신규: 경험(시도) 0인 태그를 가진 문항 — 쉬운(p 높은) 것부터
   const fresh = withP
     .filter((x) => !pickedSet.has(x.q.id) && (tagsBy[x.q.id] || []).some((t) => (skillBy[t]?.attempts ?? 0) < 3))
     .sort((a, b) => b.p - a.p);
-  for (const { q } of fresh.slice(0, slots.fresh)) take(q);
-  for (const { q } of withP.filter((x) => !pickedSet.has(x.q.id) && x.p >= 0.8).slice(0, slots.keep)) take(q);
+  for (const { q } of fresh.slice(0, Math.max(0, Math.min(slots.fresh, room())))) take(q);
+  for (const { q } of withP.filter((x) => !pickedSet.has(x.q.id) && x.p >= 0.8)
+    .slice(0, Math.max(0, Math.min(slots.keep, room())))) take(q);
   // 부족분: 아무 후보로든 채운다 (빈 세트 금지)
   for (const { q } of withP) {
     if (picked.length >= setSize) break;

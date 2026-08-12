@@ -374,7 +374,8 @@
         "difficulty_label": 2,
         "tags": [
           "RS.gist",
-          "V.daily"
+          "V.daily",
+          "RS.infer"
         ],
         "evidence": "Our small white dog, Mongsil, ran away near Rose Park on Sunday.",
         "why_not": {
@@ -1103,7 +1104,8 @@
         "explanation_ko": "내일 과학관에 간다는 것과 준비물을 알려주는 글이에요.",
         "difficulty_label": 3,
         "tags": [
-          "RS.gist"
+          "RS.gist",
+          "RS.infer"
         ],
         "evidence": "will visit the science museum",
         "why_not": {
@@ -1835,7 +1837,8 @@
         "explanation_ko": "웃으며 오랫동안 안아 주었으니 기뻐한 거예요.",
         "difficulty_label": 2,
         "tags": [
-          "RS.gist"
+          "RS.gist",
+          "RS.infer"
         ],
         "evidence": "she smiled and hugged Emma for a long time",
         "why_not": {
