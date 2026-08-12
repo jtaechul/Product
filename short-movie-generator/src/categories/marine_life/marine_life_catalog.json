@@ -40,5 +40,12 @@
     "common_name_en": "Chimaera",
     "scientific_name": "Chimaera",
     "date": "2026-08-09"
+  },
+  {
+    "no": 66,
+    "common_name_ko": "두툽상어과",
+    "common_name_en": "Scyliorhinidae",
+    "scientific_name": "Scyliorhinidae",
+    "date": "2026-08-12"
   }
 ]
