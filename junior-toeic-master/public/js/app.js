@@ -300,8 +300,8 @@ function showSettings() {
       </div>
 
       <p class="sheet-sect">개인정보</p>
-      <p class="card-note">점프리시는 아이의 이메일·전화번호를 받지 않아요. 부모님께 받은 아이디와
-        비밀번호 6자리, 그리고 문제 푼 기록만 저장합니다.</p>
+      <p class="card-note">점프리시는 아이의 이메일·전화번호를 받지 않아요. 로그인은 부모님 계정으로 하고,
+        아이에 대해서는 이름과 문제 푼 기록만 저장합니다.</p>
 
       <p class="sheet-sect">사진 출처</p>
       <p class="card-note">듣기 1번의 사진은
@@ -664,6 +664,10 @@ async function showHome() {
 }
 
 // ---------- 로그인 화면 ----------
+// 아이도 **부모님이 가입할 때 쓴 이메일·비밀번호 그대로** 들어온다.
+// 아이 전용 아이디·PIN을 따로 만들지 않는다 — 부모가 여섯 자리 숫자를 옮겨 적어
+// 아이에게 보내야 하는 단계가 생기면, 거기서 가입을 포기한다.
+// 형제가 있으면 로그인한 뒤 이름만 고른다.
 function showLogin() {
   tabbarVisible(false);
   view.innerHTML = `
@@ -671,38 +675,59 @@ function showLogin() {
     <div class="qcard" style="gap:15px">
       <div>
         <h1 class="greet-title">로그인</h1>
-        <p class="card-note" style="margin-top:4px">부모님께 받은 아이디와 비밀번호 6자리를 넣어주세요.</p>
+        <p class="card-note" style="margin-top:4px">부모님이 가입하신 이메일과 비밀번호를 넣어주세요.</p>
       </div>
-      <label class="field"><span>아이디 (예: JP-ABC123)</span>
-        <input data-lid autocapitalize="characters" autocomplete="username" placeholder="JP-" /></label>
-      <label class="field"><span>비밀번호 (숫자 6자리)</span>
-        <input data-pin type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" placeholder="●●●●●●" /></label>
+      <label class="field"><span>이메일</span>
+        <input data-email type="email" autocapitalize="off" inputmode="email"
+          autocomplete="username" placeholder="parent@example.com" /></label>
+      <label class="field"><span>비밀번호</span>
+        <input data-pw type="password" autocomplete="current-password" placeholder="••••••••" /></label>
       <div data-result></div>
       <button class="btn-primary" data-submit>로그인</button>
-      <p class="card-note">아직 아이디가 없어도 괜찮아요 — 로그인 없이 풀면 이 기기에만 기록됩니다.</p>
+      <p class="card-note">아직 가입 전이어도 괜찮아요 — 로그인 없이 풀면 이 기기에만 기록됩니다.</p>
     </div>`;
   view.querySelector('[data-back]').addEventListener('click', () => { setTab('home'); showHome(); });
+  const box = () => view.querySelector('[data-result]');
+
+  const enter = async (email, password, childId) => {
+    const r = await api('/api/family/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, ...(childId ? { child_id: childId } : {}) }),
+    });
+    if (r.choose) { pickChild(email, password, r.children); return; }
+    saveAuth({ token: r.token, user: r.user });
+    setTab('home'); showHome();
+  };
+
+  // 형제가 있을 때만 뜨는 화면. 이름만 누르면 끝이다.
+  const pickChild = (email, password, kids) => {
+    view.innerHTML = `
+      <div class="qcard" style="gap:15px">
+        <div><h1 class="greet-title">누구예요?</h1>
+          <p class="card-note" style="margin-top:4px">이름을 눌러주세요.</p></div>
+        <div class="pick-kids">${kids.map((k) => `
+          <button class="btn-ghost pick-kid" data-kid="${esc(k.id)}">${esc(k.display_name)}</button>`).join('')}</div>
+        <div data-result></div>
+      </div>`;
+    view.querySelectorAll('[data-kid]').forEach((b) => b.addEventListener('click', async () => {
+      try { await enter(email, password, b.dataset.kid); }
+      catch (e) { box().innerHTML = `<div class="result bad"><p>${esc(e.message)}</p></div>`; }
+    }));
+  };
+
   const submit = async () => {
-    const login_id = view.querySelector('[data-lid]').value.trim();
-    const pin = view.querySelector('[data-pin]').value.trim();
-    const box = view.querySelector('[data-result]');
-    if (!login_id || !/^\d{6}$/.test(pin)) {
-      box.innerHTML = '<div class="result bad"><p>아이디와 숫자 6자리를 확인해주세요.</p></div>';
+    const email = view.querySelector('[data-email]').value.trim();
+    const password = view.querySelector('[data-pw]').value;
+    if (!email || !password) {
+      box().innerHTML = '<div class="result bad"><p>이메일과 비밀번호를 넣어주세요.</p></div>';
       return;
     }
-    try {
-      const r = await api('/api/auth/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login_id, pin }),
-      });
-      saveAuth({ token: r.token, user: r.user });
-      setTab('home'); showHome();
-    } catch (e) {
-      box.innerHTML = `<div class="result bad"><p>${esc(e.message)}</p></div>`;
-    }
+    try { await enter(email, password); }
+    catch (e) { box().innerHTML = `<div class="result bad"><p>${esc(e.message)}</p></div>`; }
   };
   view.querySelector('[data-submit]').addEventListener('click', submit);
-  view.querySelector('[data-pin]').addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+  view.querySelectorAll('input').forEach((i) =>
+    i.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); }));
 }
 
 // ---------- 진단 테스트 ----------

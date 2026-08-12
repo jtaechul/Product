@@ -436,8 +436,14 @@ app.get('/api/setup/needed', async (c) => c.json({ needed: (await superCount(c.e
 //  어느 길로 들어오든 **읽기 전용**이다. 부모는 아이 대신 문제를 풀 수 없다.
 // ══════════════════════════════════════════════════════════════════
 
-// 아이 로그인ID — 헷갈리는 글자(0·O·1·I·5·S)를 뺀 6자리.
-// 아이가 종이에 적힌 걸 보고 직접 입력하기 때문에, 읽기 어려운 글자는 아예 안 쓴다.
+// 아이에게 따로 아이디·비밀번호를 만들어 주지 않는다.
+// **아이는 부모가 가입할 때 쓴 이메일·비밀번호 그대로 로그인한다.**
+// 계정이 두 벌이면 부모가 여섯 자리 숫자를 아이에게 옮겨 적어 보내야 하고,
+// 그 한 단계에서 가입을 포기한다. 가족이 하나의 열쇠를 쓰고, 아이가 여럿이면
+// 로그인한 뒤 이름만 고른다.
+//
+// users.login_id 는 표에서 NOT NULL UNIQUE 라 값이 있어야 하므로 내부용으로만 만든다.
+// 화면에 보여주지 않고, 문의가 들어왔을 때 사람을 특정하는 용도로만 쓴다.
 const ID_ALPHA = 'ABCDEFGHJKLMNPQRTUVWXY2346789';
 function makeChildLoginId() {
   const b = new Uint8Array(6);
@@ -459,16 +465,25 @@ async function createChild(db, { parentId, name, grade }) {
     const loginId = makeChildLoginId();
     const dup = await db.prepare('SELECT 1 FROM users WHERE login_id = ?1').bind(loginId).first();
     if (dup) continue;
-    const pin = makePin();
     const id = crypto.randomUUID();
+    // pin_hash 는 표가 NOT NULL 이라 채우지만, 아무도 모르는 무작위 값이다.
+    // 이 아이는 PIN으로 로그인하지 않는다(부모 이메일·비밀번호로 들어온다).
+    // 토큰 서명 열쇠로는 계속 쓰이므로 값 자체는 필요하다.
+    const dead = await hashPin(crypto.randomUUID() + crypto.randomUUID());
     await db.prepare(
       `INSERT INTO users (id, role, login_id, pin_hash, display_name, created_at, parent_id)
        VALUES (?1, 'student', ?2, ?3, ?4, ?5, ?6)`
-    ).bind(id, loginId, await hashPin(pin), name, nowISO(), parentId).run();
-    return { id, login_id: loginId, display_name: name, grade: grade ?? null, pin };
+    ).bind(id, loginId, dead, name, nowISO(), parentId).run();
+    return { id, login_id: loginId, display_name: name, grade: grade ?? null };
   }
   return null;
 }
+
+// 이 가족의 아이 목록 (등록 순)
+const childrenOf = async (db, parentId) => (await db.prepare(
+  `SELECT id, display_name, created_at FROM users
+    WHERE parent_id = ?1 AND role = 'student' ORDER BY created_at`
+).bind(parentId).all()).results;
 
 app.post('/api/parent/signup', async (c) => {
   const b = await c.req.json().catch(() => ({}));
@@ -507,7 +522,6 @@ app.post('/api/parent/signup', async (c) => {
     token: await makeAccountToken(parent),
     parent: { email, display_name: name },
     child,
-    note: '아이 PIN은 지금 한 번만 보입니다. 아이에게 알려주고 창을 닫으세요.',
   });
 });
 
@@ -541,14 +555,52 @@ app.post('/api/parent/login-email', async (c) => {
   });
 });
 
+// ── 아이 앱 로그인 ──
+// 아이도 **부모와 똑같은 이메일·비밀번호**로 들어온다. 따로 발급하는 아이디·PIN은 없다.
+// 아이가 하나면 바로 그 아이로 들어가고, 여럿이면 이름만 고르게 한다.
+app.post('/api/family/login', async (c) => {
+  const b = await c.req.json().catch(() => ({}));
+  const email = String(b.email ?? '').trim().toLowerCase();
+  const password = String(b.password ?? '');
+  if (!isEmail(email) || !password) return c.json({ error: '이메일과 비밀번호를 확인해주세요' }, 400);
+
+  const key = `PE:${email}`;
+  const lockLeft = await loginLockedFor(c.env.DB, key);
+  if (lockLeft > 0) {
+    return c.json({ error: `여러 번 틀려서 잠겼어요. ${Math.ceil(lockLeft / 60)}분 뒤에 다시 해주세요` }, 429);
+  }
+  const parent = await c.env.DB.prepare('SELECT * FROM parents WHERE email = ?1').bind(email).first();
+  if (!parent || !(await verifySecret(password, parent.password_hash))) {
+    const { lockedSeconds } = await noteLoginFail(c.env.DB, key);
+    return c.json({
+      error: lockedSeconds
+        ? `여러 번 틀려서 ${Math.ceil(lockedSeconds / 60)}분 동안 잠겼어요`
+        : '이메일 또는 비밀번호가 맞지 않아요',
+    }, lockedSeconds ? 429 : 401);
+  }
+  await clearLoginFails(c.env.DB, key);
+
+  const kids = await childrenOf(c.env.DB, parent.id);
+  if (!kids.length) return c.json({ error: '아직 등록된 아이가 없어요. 보호자 화면에서 아이를 추가해주세요' }, 404);
+
+  // 아이가 여럿이면 누구인지 고르게 한다. 고른 뒤 다시 여기로 오면 그 아이 토큰을 준다.
+  const pickedId = clean(b.child_id, 40);
+  const child = pickedId ? kids.find((k) => k.id === pickedId) : (kids.length === 1 ? kids[0] : null);
+  if (!child) {
+    return c.json({ choose: true, children: kids.map((k) => ({ id: k.id, display_name: k.display_name })) });
+  }
+  const user = await c.env.DB.prepare('SELECT * FROM users WHERE id = ?1').bind(child.id).first();
+  return c.json({
+    token: await makeToken(user),
+    user: { id: user.id, login_id: user.login_id, display_name: user.display_name, role: user.role },
+  });
+});
+
 // 내 아이 목록. 아이가 없어도 200으로 빈 목록을 준다(가입 직후 화면이 여기서 시작한다).
 app.get('/api/parent/children', requireParentAccount, async (c) => {
   const parent = c.get('parent');
-  const { results } = await c.env.DB.prepare(
-    `SELECT id, login_id, display_name, created_at FROM users
-      WHERE parent_id = ?1 AND role = 'student' ORDER BY created_at`
-  ).bind(parent.id).all();
-  return c.json({ parent: { email: parent.email, display_name: parent.display_name }, children: results });
+  const children = await childrenOf(c.env.DB, parent.id);
+  return c.json({ parent: { email: parent.email, display_name: parent.display_name }, children });
 });
 
 app.post('/api/parent/children', requireParentAccount, async (c) => {
@@ -563,23 +615,8 @@ app.post('/api/parent/children', requireParentAccount, async (c) => {
   if (n >= MAX_CHILDREN) return c.json({ error: `아이는 ${MAX_CHILDREN}명까지 등록할 수 있어요` }, 400);
 
   const child = await createChild(c.env.DB, { parentId: parent.id, name, grade: b.grade });
-  if (!child) return c.json({ error: '아이 아이디를 만들지 못했어요. 다시 시도해주세요' }, 500);
-  return c.json({ child, note: '아이 PIN은 지금 한 번만 보입니다.' });
-});
-
-// 아이가 PIN을 잊었을 때. 새 PIN도 이 응답에서 한 번만 보인다.
-app.post('/api/parent/children/:id/pin', requireParentAccount, async (c) => {
-  const parent = c.get('parent');
-  const child = await c.env.DB.prepare(
-    `SELECT id, login_id FROM users WHERE id = ?1 AND parent_id = ?2 AND role = 'student'`
-  ).bind(c.req.param('id'), parent.id).first();
-  if (!child) return c.json({ error: '아이를 찾을 수 없습니다' }, 404);
-  const pin = makePin();
-  await c.env.DB.prepare('UPDATE users SET pin_hash = ?2 WHERE id = ?1')
-    .bind(child.id, await hashPin(pin)).run();
-  // PIN이 바뀌면 그 아이의 기존 토큰은 전부 무효가 된다(토큰 서명 키가 pin_hash라서)
-  await clearLoginFails(c.env.DB, child.login_id);
-  return c.json({ login_id: child.login_id, pin });
+  if (!child) return c.json({ error: '아이를 등록하지 못했어요. 다시 시도해주세요' }, 500);
+  return c.json({ child });
 });
 
 // 자녀 한 명의 요약. 부모는 이것만 본다 — 정답·해설·문항 원문은 내려주지 않는다.

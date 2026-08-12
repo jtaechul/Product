@@ -600,3 +600,7 @@ mark.ev {
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* 형제가 있을 때 로그인 뒤 이름을 고르는 화면 */
+.pick-kids { display: flex; flex-direction: column; gap: 10px; }
+.pick-kid { width: 100%; min-height: 56px; font-size: 1.05rem; font-weight: 700; }
