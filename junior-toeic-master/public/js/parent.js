@@ -42,6 +42,29 @@ const BRAND = `<div class="p-brand">
     <path d="M13 20 L18 5.5 L23 20 Z" fill="#fff"/>
   </svg></span><span class="t">점프리시</span></div>`;
 
+// 상단바 — 브랜드는 가운데, 왼쪽에 돌아가는 길.
+// 화면이 여러 장인데 돌아갈 버튼이 없으면 사용자는 브라우저 뒤로가기를 누르고,
+// 이 화면은 한 페이지짜리라 그러면 로그인 화면까지 튕겨 나간다.
+const head = (back) => `<div class="p-top">
+  ${back ? '<button class="p-back" data-back>← 뒤로</button>' : '<span class="p-back-sp"></span>'}
+  ${BRAND}
+  <span class="p-back-sp"></span>
+</div>`;
+
+// 지금 누구로 로그인했는지 — 이메일까지 보여준다.
+// 가족이 이메일 하나를 같이 쓰므로, 부모가 "내 계정이 맞나"를 확인할 곳이 필요하다.
+const accountCard = (parent, extra = '') => `
+  <div class="card p-acct">
+    <div class="p-acct-b">
+      <span class="p-acct-n">${esc(parent.display_name)}님</span>
+      <span class="p-acct-e">${esc(parent.email)}</span>
+    </div>
+    <div class="p-acct-btns">
+      ${extra}
+      <button class="btn-ghost small" data-out>로그아웃</button>
+    </div>
+  </div>`;
+
 // ── 들어오는 문 ──
 // 학부모가 직접 가입하는 길 하나뿐이다. 학원을 거쳐 들어오는 화면은 두지 않는다
 // (학원 영업을 하지 않기로 했다 — 학부모가 고객이다).
@@ -154,9 +177,9 @@ function showChildren() {
         <button class="p-link" data-pw="${esc(ch.id)}" data-who="${esc(ch.display_name)}">비밀번호 바꾸기</button>
       </div>`).join('');
     view.innerHTML = `
-      ${BRAND}
+      ${head(d.children.length > 0)}
       <div class="greet"><div>
-        <p class="greet-date">${esc(d.parent.display_name)}님</p>
+        <p class="greet-date">보호자 설정</p>
         <h1 class="greet-title">우리 아이</h1>
       </div></div>
       <div class="card">
@@ -181,8 +204,8 @@ function showChildren() {
         <button class="btn-primary" data-add style="margin-top:10px">아이 추가</button>
         <div data-msg></div>
       </div>`}
-      ${d.children.length ? '<p class="p-out"><button data-home>학습 기록 보기</button></p>' : ''}
-      <p class="p-out"><button data-out>로그아웃</button></p>`;
+      ${accountCard(d.parent,
+        d.children.length ? '<button class="btn-ghost small" data-home>학습 기록 보기</button>' : '')}`;
 
     const msg = view.querySelector('[data-msg]');
     view.querySelector('[data-add]')?.addEventListener('click', async () => {
@@ -206,6 +229,7 @@ function showChildren() {
       } catch (e) { err(msg, e.message); }
     }));
     view.querySelector('[data-home]')?.addEventListener('click', () => showHome());
+    view.querySelector('[data-back]')?.addEventListener('click', () => showHome());
     view.querySelector('[data-out]').addEventListener('click', () => { saveAuth(null); showLogin(); });
   }).catch((e) => {
     if (/로그인/.test(e.message)) { saveAuth(null); showLogin(); return; }
@@ -305,7 +329,7 @@ async function showHome(childId = currentChildId) {
       data-kid="${esc(ch.id)}">${esc(ch.display_name)}</button>`).join('')}</div>` : '';
 
   view.innerHTML = `
-    ${BRAND}
+    ${head(false)}
     ${tabs}
     <div class="greet"><div>
       <p class="greet-date">${esc(d.child.display_name)}${d.class ? ` · ${esc(d.class.name)}` : ''}</p>
@@ -355,8 +379,9 @@ async function showHome(childId = currentChildId) {
         </div>`).join('')}
     </div>` : ''}
 
-    ${d.parent ? '<p class="p-out"><button data-kids>아이 관리 · PIN 재발급</button></p>' : ''}
-    <p class="p-out"><button data-out>로그아웃</button></p>`;
+    ${d.parent
+      ? accountCard(d.parent, '<button class="btn-ghost small" data-kids>아이 관리</button>')
+      : '<p class="p-out"><button data-out>로그아웃</button></p>'}`;
 
   view.querySelectorAll('[data-kid]').forEach((b) =>
     b.addEventListener('click', () => showHome(b.dataset.kid)));

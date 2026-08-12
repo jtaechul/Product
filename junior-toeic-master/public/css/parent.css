@@ -59,26 +59,12 @@ body { padding-bottom: env(safe-area-inset-bottom); }
 }
 .p-consent input { flex: none; width: 20px; height: 20px; margin-top: 1px; }
 
-/* 아이디·PIN을 한 번만 보여주는 상자 — 크고 또렷하게, 눈으로 받아 적기 좋게 */
-.p-cred { margin-top: 14px; display: grid; gap: 10px; }
-.p-cred > div {
-  background: var(--surface-2); border-radius: 12px; padding: 12px 14px;
-  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-}
-.p-cred .label { font-size: .78rem; color: var(--muted); font-weight: 700; }
-.p-cred .value {
-  font-size: 1.3rem; font-weight: 800; letter-spacing: .04em;
-  font-variant-numeric: tabular-nums;
-}
+/* 안내 상자 — 눈에 띄어야 하는 한 줄 */
 .p-warn {
   margin-top: 12px; font-size: .82rem; line-height: 1.55;
   background: var(--primary-soft); color: var(--primary);
   border-radius: 12px; padding: 11px 13px; font-weight: 600;
 }
-
-/* 보내기·복사하기 — 이 화면에서 부모가 실제로 해야 하는 일이라 크게 둔다 */
-.p-share { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
-.p-share button { width: 100%; }
 
 /* 아이 목록 */
 .p-kid { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
@@ -94,3 +80,29 @@ body { padding-bottom: env(safe-area-inset-bottom); }
   background: var(--surface-2); color: var(--muted); min-height: 40px;
 }
 .p-kidtab.on { background: var(--primary); color: #fff; }
+
+/* 상단바 — 브랜드를 가운데 두고 왼쪽에 돌아가는 길을 둔다.
+   양옆에 같은 폭의 빈칸을 둬야 브랜드가 진짜 가운데에 온다. */
+.p-top { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.p-top .p-brand { flex: 1; margin-bottom: 0; }
+.p-back, .p-back-sp { flex: none; width: 64px; }
+.p-back {
+  min-height: 40px; font-size: .85rem; font-weight: 700; color: var(--muted);
+  text-align: left; padding: 0 2px;
+}
+
+/* 계정 카드 — 지금 어느 이메일로 들어와 있는지 확인하는 곳.
+   .card 가 flex-direction:column 이라 여기서 row 를 다시 지정해야 한다
+   (안 하면 이름·이메일·버튼이 세로로 쌓여 가운데 정렬돼 버린다). */
+.p-acct {
+  display: flex; flex-direction: row; align-items: center;
+  gap: 12px; flex-wrap: wrap; text-align: left;
+}
+.p-acct-b { flex: 1; min-width: 0; }
+.p-acct-n { display: block; font-size: .92rem; font-weight: 700; }
+.p-acct-e {
+  display: block; font-size: .8rem; color: var(--muted); margin-top: 2px;
+  overflow-wrap: anywhere;      /* 긴 이메일이 카드를 밀어내지 않게 */
+}
+.p-acct-btns { display: flex; gap: 8px; flex: none; }
+.p-acct-btns .btn-ghost { min-height: 40px; padding: 0 14px; font-size: .82rem; }
