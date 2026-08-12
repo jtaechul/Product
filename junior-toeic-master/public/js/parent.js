@@ -104,7 +104,8 @@ function showSignup() {
       <label class="field" style="margin-top:10px"><span>아이가 쓸 비밀번호 (4자 이상)</span>
         <input data-childpw autocomplete="off" placeholder="아이가 외우기 쉬운 것으로" /></label>
       <p class="card-note" style="margin-top:6px">아이는 <b>같은 이메일</b>에 <b>이 비밀번호</b>로 앱에 들어갑니다.
-        보호자 비밀번호는 아이에게 알려주지 않아도 됩니다.</p>
+        보호자 비밀번호는 아이에게 알려주지 않아도 됩니다.<br>
+        <b>아이가 둘 이상이면</b> 가입한 바로 다음 화면에서 더 추가할 수 있어요 (최대 3명).</p>
 
       <label class="p-consent" style="margin-top:14px">
         <input type="checkbox" data-consent />
@@ -139,9 +140,14 @@ function showSignup() {
 }
 
 // ── 아이 관리 ──
+// 둘째·셋째는 여기서 추가한다. 가입 폼에 여러 명을 넣게 만들면 첫 화면이 길어져
+// 아이 하나인 대다수가 손해를 본다 — 가입 직후 이 화면으로 바로 오므로 흐름이 끊기지 않는다.
+const MAX_KIDS = 3;
+
 function showChildren() {
   view.innerHTML = '<p class="loading">불러오는 중...</p>';
   api('/api/parent/children').then((d) => {
+    const full = d.children.length >= MAX_KIDS;
     const rows = d.children.map((ch) => `
       <div class="p-kid">
         <span class="p-kid-b"><span class="p-kid-n">${esc(ch.display_name)}</span></span>
@@ -159,21 +165,27 @@ function showChildren() {
         <p class="p-warn" style="margin-top:12px">아이는 <b>같은 이메일</b>에 <b>자기 비밀번호</b>로
           앱에 들어갑니다. 보호자 비밀번호는 알려주지 않으셔도 돼요.</p>
       </div>
+      ${full ? `
       <div class="card">
-        <div class="card-head"><span class="card-title">아이 추가</span>
-          <span class="card-note">최대 3명</span></div>
+        <div class="card-head"><span class="card-title">아이 추가</span></div>
+        <p class="empty">아이는 ${MAX_KIDS}명까지 등록할 수 있어요.</p>
+        <div data-msg></div>
+      </div>` : `
+      <div class="card">
+        <div class="card-head"><span class="card-title">${d.children.length ? '아이 더 추가' : '아이 추가'}</span>
+          <span class="card-note">${d.children.length}/${MAX_KIDS}명</span></div>
         <label class="field"><span>아이 이름</span>
           <input data-new maxlength="12" placeholder="예: 김바다" /></label>
         <label class="field" style="margin-top:10px"><span>아이가 쓸 비밀번호 (4자 이상)</span>
           <input data-newpw autocomplete="off" placeholder="아이가 외우기 쉬운 것으로" /></label>
         <button class="btn-primary" data-add style="margin-top:10px">아이 추가</button>
         <div data-msg></div>
-      </div>
+      </div>`}
       ${d.children.length ? '<p class="p-out"><button data-home>학습 기록 보기</button></p>' : ''}
       <p class="p-out"><button data-out>로그아웃</button></p>`;
 
     const msg = view.querySelector('[data-msg]');
-    view.querySelector('[data-add]').addEventListener('click', async () => {
+    view.querySelector('[data-add]')?.addEventListener('click', async () => {
       const name = view.querySelector('[data-new]').value.trim();
       const password = view.querySelector('[data-newpw]').value;
       if (!name) return err(msg, '아이 이름을 넣어주세요.');
