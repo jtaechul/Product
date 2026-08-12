@@ -70,7 +70,7 @@ const accountCard = (parent, extra = '') => `
 // (학원 영업을 하지 않기로 했다 — 학부모가 고객이다).
 const err = (el, m) => { el.innerHTML = `<div class="result bad"><p>${esc(m)}</p></div>`; };
 
-function showLogin(prefill = '') {
+function showLogin() {
   view.innerHTML = `
     <div class="card p-login">
       ${BRAND}
@@ -419,10 +419,9 @@ async function showHome(childId = currentChildId) {
     b.addEventListener('click', () => showHome(b.dataset.kid)));
   view.querySelector('[data-kids]')?.addEventListener('click', showChildren);
   view.querySelector('[data-out]').addEventListener('click', () => {
-    const id = auth?.child?.login_id ?? '';
     saveAuth(null);
     currentChildId = null;
-    showLogin(id);
+    showLogin();
   });
 }
 
