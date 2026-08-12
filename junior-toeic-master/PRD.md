@@ -227,35 +227,17 @@
 | 상세 실력 지도·성장 그래프 | X | O |
 | 아이 계정 수 | 1명 | 최대 3명 |
 
-### 5-2. 학생 CSV 일괄 등록
+### 5-2. ~~학생 CSV 일괄 등록~~ · 5-3. ~~과제~~ · 5-4. ~~반 리포트~~ — 폐기 (2026-08-12)
 
-- 입력 CSV (UTF-8, 헤더 필수): `이름,학년,반` — **개인정보 최소 수집**(연락처·생년월일 없음).
+셋 다 학원(강사)이 쓰는 기능이었다. 학원 영업을 접으면서(§1) 쓸 사람이 없어졌고,
+학생 앱에서 아이디·PIN 로그인이 사라진 뒤로는 일괄 발급한 계정으로 **들어갈 화면
+자체가 없다.** 관리자 화면의 학원·반·학생 발급 UI와 API도 같은 날 지웠다.
 
-```csv
-이름,학년,반
-김하늘,초6,월수금A
-이준서,중1,화목B
-```
-
-- 처리: 반 이름 자동 매칭(미존재 시 생성 확인) → 계정 생성 → 로그인ID·초기 PIN 자동 발급.
-- 출력: `이름,반,로그인ID,초기PIN` CSV 다운로드.
-
-> 이 절은 **테스터 계정을 무더기로 만드는 내부 도구**다(2026-08-11). 일반 사용자는 여기로
-> 들어오지 않는다 — 학부모가 가입하고 아이 이름을 넣으면 끝이다(5-1).
-
-### 5-3. 과제 (Assignment)
-
-- 유형 3종: ① **추천 세트**(반 평균 약점 기반 자동 구성) ② **파트 지정**(예: R1 15문항)
-  ③ **직접 선택**(문항 검색·선택).
-- 흐름: 강사가 세트 **미리보기 → 확정 발행**. 발행 시 문항 목록을 스냅샷으로 고정해
-  학생 간 동일 세트 보장. 마감일 설정 가능.
-- 학생별 이행 현황(미시작/진행/완료·정답률)을 실시간 표시.
-
-### 5-4. 반 리포트
-
-- 지표: 반 평균 정답률 추이(주간), 파트·태그별 취약 순위, 학생별 학습일수·완료율,
-  미완료 학생 목록(독려 대상).
-- 모든 리포트는 **집계 테이블만 조회**(원본 풀이 로그를 스캔하지 않음 — 7절 성능 원칙).
+- **테스터 확보는 가입 흐름 그대로 쓴다**: 지인 학부모에게 `/parent` 주소를 보내면
+  1분 안에 가입이 끝난다(무료). 계정을 대신 만들어 나눠 줄 필요가 없다.
+- academies·classes 표와 `tools/make-testers.mjs`·`tools/demo-org.sql`은 시뮬레이션·
+  시드용 개발 도구로만 남는다(제품 화면에서 접근 불가).
+- 과제·반 리포트가 다시 필요해지는 유일한 경우는 B2B 재개다 — 그때 이 절 이력을 참고.
 
 ---
 
@@ -290,12 +272,18 @@
 | `POST /api/parent/children/:id/password` | 아이 비밀번호 바꾸기 |
 | `GET /api/parent/overview` | 아이 한 명의 학습 요약 (`?child_id=`로 전환) |
 
-### 관리자 API (내부 도구)
+### 관리자 API (내부 도구 · 읽기 전용)
 
 | 메서드·경로 | 기능 |
 |---|---|
-| `POST /api/admin/academy` · `/class` · `/students` | 테스터 계정 발급 |
+| `GET /api/admin/overview` | 가입 가족 현황 (가족·아이·오늘 학습·누적 문항) |
 | `GET /api/admin/feedback` | 아이가 신고한 문항 확인 |
+
+관리자에게는 **발급·재설정 권한이 없다** (2026-08-12). 가입은 학부모가 직접,
+아이 비밀번호 변경은 학부모 화면에서 한다 — 관리자가 남의 가족 비밀번호를 만들 수
+있으면 그 권한이 곧 사고 경로가 된다. 옛 학원·반·학생 발급 API는 지웠다:
+학원 경유 로그인이 사라진 뒤로는 발급한 PIN으로 들어갈 화면 자체가 없었다.
+테스터도 같은 가입 흐름을 쓴다(지인에게 `/parent` 주소를 보내면 끝, 무료).
 
 **원칙**: 문항을 내려주는 모든 응답에서 `answer_idx`·`explanation_ko`는 제외한다.
 채점(`POST /api/answers`)과 진단 제출만이 정답에 접근한다.
@@ -447,6 +435,15 @@ academies·classes 표와 관리자 화면은 남아 있지만, 이제 **테스�
 | **가격** | **월 8,900원** (형제 결합·학기 선결제는 이후 검토) |
 | **하지 않을 것** | 광고 · 아이 대상 인앱결제 · 학습을 막는 페이월 (8절 5항) |
 
+### 확정된 결정 (2026-08-12 — 관리자 화면을 B2C에 맞춤)
+
+| 항목 | 확정 내용 |
+|---|---|
+| **관리자 화면 = 가족 현황 + 신고, 읽기 전용** | 진짜 고객(가입 가족)이 관리자 화면에 하나도 안 보이던 것을 바로잡음. 가족·아이·오늘 학습·누적 문항을 본다 |
+| **학원·반·학생 발급 기능 삭제** | UI와 API 모두 제거. 학원 경유 로그인이 사라진 뒤로는 발급한 PIN으로 들어갈 화면이 없었다(죽은 기능). 5-2~5-4도 폐기 |
+| **관리자에게 계정·비밀번호 권한 없음** | 가입은 학부모가 직접, 아이 비밀번호는 학부모 화면에서. 관리자가 남의 가족 비밀번호를 만들 수 있으면 그 권한이 곧 사고 경로 |
+| **테스터 = 같은 가입 흐름** | 지인 학부모에게 `/parent` 주소를 보낸다(무료). make-testers.mjs·demo-org.sql은 시뮬레이션·시드용 개발 도구로만 |
+
 ### 남은 질문
 
 | # | 질문 | 처리 시점 |
@@ -465,9 +462,10 @@ academies·classes 표와 관리자 화면은 남아 있지만, 이제 **테스�
 | 진단 테스트 | sessions(type=diagnostic), answers, user_tag_skills | /api/diagnostic/start·submit |
 | 오늘의 학습 | daily_sets, sessions(type=daily), questions, user_tag_skills | /api/daily, /api/answers |
 | 오답노트·SRS | review_queue, answers | /api/review, /api/answers |
-| 과제 | assignments, assignment_targets, sessions(type=assignment) | /api/admin/assignments*, /api/answers |
-| CSV 일괄 등록 | users, classes, academies | /api/admin/students/bulk |
-| 반 리포트 | user_daily_stats, user_tag_skills, assignment_targets | /api/admin/class-report |
+| ~~과제~~ (폐기 · 5-3) | assignments, assignment_targets | — (학원 영업 종료) |
+| ~~CSV 일괄 등록~~ (폐기 · 5-2) | users, classes, academies | — (테스터도 가입 흐름 사용) |
+| ~~반 리포트~~ (폐기 · 5-4) | user_daily_stats, assignment_targets | — (학원 영업 종료) |
+| 가족 현황(관리자) | parents, users, answers | /api/admin/overview |
 | 게이미피케이션 | user_stats, badges, user_badges, user_daily_stats | /api/sessions/:id/finish, /api/me |
 | 학생 리포트 | user_tag_skills, user_daily_stats, sessions.summary | /api/report |
 

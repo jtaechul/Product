@@ -781,146 +781,48 @@ app.post('/api/setup/admin', async (c) => {
 const nowISO = () => new Date().toISOString();
 const clean = (s, max) => String(s ?? '').trim().slice(0, max);
 
-// 학생 PIN은 서버가 만든다. 사람이 정하면 1234·0000 같은 걸 쓰고, 무엇보다
-// 응답으로 한 번 보여준 뒤로는 아무도(나조차) 다시 볼 수 없어야 한다 — 해시만 남는다.
-function makePin() {
-  const b = new Uint32Array(1);
-  crypto.getRandomValues(b);
-  return String(b[0] % 1_000_000).padStart(6, '0');
-}
-
-// 한눈에 보는 현황
+// 한눈에 보는 현황 — 고객은 가족이다(2026-08-11 B2C 전환).
+// 관리자 화면은 '읽기 전용'이다: 가족이 얼마나 들어와서 얼마나 쓰는지만 본다.
+// 계정 발급·비밀번호 재설정은 관리자가 못 한다 — 가입은 학부모가 직접 하고,
+// 아이 비밀번호는 학부모 화면에서 학부모가 바꾼다. 관리자가 남의 가족 비밀번호를
+// 만들 수 있으면 그게 곧 사고 경로가 된다.
+//
+// ⚠ 학원 관리(학원·반·학생 발급·PIN 재발급) 엔드포인트는 지웠다(2026-08-12).
+// 학원 영업을 접으면서 학생 앱에서 아이디·PIN 로그인 자체가 사라졌으므로,
+// 관리자가 발급한 PIN은 들어갈 문이 없는 열쇠였다. academies·classes 표는
+// 시뮬레이션·시드(tools/)용 내부 도구로만 남는다.
 app.get('/api/admin/overview', ...admin, async (c) => {
-  const [{ results: academies }, pending] = await Promise.all([
+  const [{ results: parents }, { results: kids }, pending] = await Promise.all([
     c.env.DB.prepare(
-      `SELECT a.id, a.name, a.join_code, a.status,
-              (SELECT COUNT(*) FROM classes WHERE academy_id = a.id) AS classes,
-              (SELECT COUNT(*) FROM users WHERE academy_id = a.id AND role = 'student') AS students,
-              (SELECT COUNT(*) FROM answers an JOIN users u ON u.id = an.user_id
-                WHERE u.academy_id = a.id) AS answers
-         FROM academies a ORDER BY a.created_at`
+      `SELECT id, email, display_name, consent_at, created_at FROM parents ORDER BY created_at DESC LIMIT 500`
+    ).all(),
+    c.env.DB.prepare(
+      `SELECT u.id, u.parent_id, u.display_name, u.created_at,
+              (SELECT COUNT(*) FROM answers WHERE user_id = u.id) AS answers,
+              (SELECT MAX(date(answered_at, '+9 hours')) FROM answers WHERE user_id = u.id) AS last_day
+         FROM users u WHERE u.parent_id IS NOT NULL AND u.role = 'student'`
     ).all(),
     c.env.DB.prepare('SELECT COUNT(*) AS n FROM feedback WHERE handled_at IS NULL').first(),
   ]);
-  return c.json({ academies, feedback_pending: pending.n });
+  const byParent = {};
+  for (const k of kids) (byParent[k.parent_id] ||= []).push(k);
+  const families = parents.map((p) => ({
+    id: p.id, email: p.email, display_name: p.display_name,
+    joined: p.created_at, children: byParent[p.id] ?? [],
+  }));
+  const today = kstDate();
+  return c.json({
+    families,
+    stats: {
+      families: parents.length,
+      children: kids.length,
+      answers: kids.reduce((n, k) => n + k.answers, 0),
+      active_today: kids.filter((k) => k.last_day === today).length,
+    },
+    today,
+    feedback_pending: pending.n,
+  });
 });
-
-// 반 목록 (학원 하나)
-app.get('/api/admin/classes', ...admin, async (c) => {
-  const academyId = c.req.query('academy_id');
-  if (!academyId) return c.json({ error: 'academy_id가 필요합니다' }, 400);
-  const { results } = await c.env.DB.prepare(
-    `SELECT c2.id, c2.name, c2.grade, c2.set_size,
-            (SELECT COUNT(*) FROM users WHERE class_id = c2.id AND role = 'student') AS students
-       FROM classes c2 WHERE c2.academy_id = ?1 ORDER BY c2.created_at`
-  ).bind(academyId).all();
-  return c.json({ classes: results });
-});
-
-// 학생 목록 (반 하나) — PIN은 해시만 있으므로 여기서 볼 수 없다
-app.get('/api/admin/students', ...admin, async (c) => {
-  const classId = c.req.query('class_id');
-  if (!classId) return c.json({ error: 'class_id가 필요합니다' }, 400);
-  const { results } = await c.env.DB.prepare(
-    `SELECT u.id, u.login_id, u.display_name, u.created_at,
-            (SELECT COUNT(*) FROM answers WHERE user_id = u.id) AS answers,
-            (SELECT MAX(date(answered_at, '+9 hours')) FROM answers WHERE user_id = u.id) AS last_day
-       FROM users u WHERE u.class_id = ?1 AND u.role = 'student' ORDER BY u.login_id`
-  ).bind(classId).all();
-  return c.json({ students: results });
-});
-
-app.post('/api/admin/academy', ...admin, async (c) => {
-  const body = await c.req.json().catch(() => ({}));
-  const name = clean(body.name, 40);
-  // 가입코드는 학생 로그인ID의 앞자리가 된다(JUMP-1). 영문 대문자·숫자만 받는다.
-  const code = clean(body.join_code, 12).toUpperCase();
-  if (!name) return c.json({ error: '학원 이름을 입력하세요' }, 400);
-  if (!/^[A-Z0-9]{2,12}$/.test(code)) return c.json({ error: '가입코드는 영문 대문자·숫자 2~12자입니다' }, 400);
-  const dup = await c.env.DB.prepare('SELECT 1 FROM academies WHERE join_code = ?1').bind(code).first();
-  if (dup) return c.json({ error: `가입코드 ${code}는 이미 쓰고 있어요` }, 409);
-  const id = crypto.randomUUID();
-  await c.env.DB.prepare(
-    `INSERT INTO academies (id, name, join_code, status, created_at) VALUES (?1, ?2, ?3, 'active', ?4)`
-  ).bind(id, name, code, nowISO()).run();
-  return c.json({ academy: { id, name, join_code: code } });
-});
-
-app.post('/api/admin/class', ...admin, async (c) => {
-  const body = await c.req.json().catch(() => ({}));
-  const name = clean(body.name, 30);
-  const grade = clean(body.grade, 10) || null;
-  const setSize = Number(body.set_size);
-  const academy = await c.env.DB.prepare('SELECT id FROM academies WHERE id = ?1')
-    .bind(clean(body.academy_id, 40)).first();
-  if (!academy) return c.json({ error: '학원을 찾을 수 없습니다' }, 404);
-  if (!name) return c.json({ error: '반 이름을 입력하세요' }, 400);
-  // 하루 문항 수 — 초3~4는 12문항, 초5~중3은 20문항이 기본값(PRD 4-2)
-  if (!Number.isInteger(setSize) || setSize < 4 || setSize > 40) {
-    return c.json({ error: '하루 문항 수는 4~40 사이입니다' }, 400);
-  }
-  const id = crypto.randomUUID();
-  await c.env.DB.prepare(
-    `INSERT INTO classes (id, academy_id, name, grade, set_size, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
-  ).bind(id, academy.id, name, grade, setSize, nowISO()).run();
-  return c.json({ class: { id, name, grade, set_size: setSize } });
-});
-
-// 학생 일괄 발급 — 이름 목록을 받아 계정을 만들고 PIN을 딱 한 번 돌려준다.
-// 응답을 닫으면 PIN은 어디에도 없다(해시만 저장). 다시 필요하면 재발급해야 한다.
-app.post('/api/admin/students', ...admin, async (c) => {
-  const body = await c.req.json().catch(() => ({}));
-  const names = Array.isArray(body.names) ? body.names.map((n) => clean(n, 12)).filter(Boolean) : [];
-  if (!names.length) return c.json({ error: '학생 이름을 한 명 이상 입력하세요' }, 400);
-  if (names.length > 50) return c.json({ error: '한 번에 50명까지 만들 수 있어요' }, 400);
-
-  const klass = await c.env.DB.prepare(
-    `SELECT c2.id, c2.academy_id, a.join_code FROM classes c2
-       JOIN academies a ON a.id = c2.academy_id WHERE c2.id = ?1`
-  ).bind(clean(body.class_id, 40)).first();
-  if (!klass) return c.json({ error: '반을 찾을 수 없습니다' }, 404);
-
-  // 로그인ID는 가입코드-순번. 이미 쓰던 번호 뒤에서 이어 붙인다 —
-  // 학생이 빠져나가 번호가 비어도 재사용하지 않는다(옛 기록과 헷갈린다).
-  const { results: used } = await c.env.DB.prepare(
-    `SELECT login_id FROM users WHERE academy_id = ?1 AND login_id LIKE ?2`
-  ).bind(klass.academy_id, `${klass.join_code}-%`).all();
-  let next = used.reduce((mx, r) => {
-    const n = Number(String(r.login_id).slice(klass.join_code.length + 1));
-    return Number.isInteger(n) && n > mx ? n : mx;
-  }, 0);
-
-  const created = [];
-  const stmts = [];
-  for (const name of names) {
-    next += 1;
-    const pin = makePin();
-    created.push({ login_id: `${klass.join_code}-${next}`, display_name: name, pin });
-    stmts.push(c.env.DB.prepare(
-      `INSERT INTO users (id, role, login_id, pin_hash, display_name, academy_id, class_id, created_at)
-       VALUES (?1, 'student', ?2, ?3, ?4, ?5, ?6, ?7)`
-    ).bind(crypto.randomUUID(), `${klass.join_code}-${next}`, await hashPin(pin),
-      name, klass.academy_id, klass.id, nowISO()));
-  }
-  await c.env.DB.batch(stmts);   // 한 트랜잭션 — 중간에 끊겨 반만 만들어지는 일이 없다
-  return c.json({ students: created, note: 'PIN은 지금 한 번만 보입니다. 닫으면 다시 볼 수 없어요.' });
-});
-
-// PIN 재발급 — 아이가 잊었을 때. 새 PIN도 이 응답에서 한 번만 보인다.
-app.post('/api/admin/student/:id/pin', ...admin, async (c) => {
-  const u = await c.env.DB.prepare(`SELECT id, login_id FROM users WHERE id = ?1 AND role = 'student'`)
-    .bind(c.req.param('id')).first();
-  if (!u) return c.json({ error: '학생을 찾을 수 없습니다' }, 404);
-  const pin = makePin();
-  await c.env.DB.prepare('UPDATE users SET pin_hash = ?2 WHERE id = ?1')
-    .bind(u.id, await hashPin(pin)).run();
-  // PIN이 바뀌면 그 학생의 기존 토큰은 전부 무효가 된다(토큰 서명 키가 pin_hash라서).
-  await clearLoginFails(c.env.DB, u.login_id);
-  return c.json({ login_id: u.login_id, pin });
-});
-
-// (학부모용 PIN 발급은 없앴다 — 학부모는 이메일로 직접 가입하고 아이 계정을 스스로 만든다.
-//  발급해도 들어갈 화면이 없는 PIN을 관리자 화면에 남겨두면 헷갈리기만 한다.)
 
 // 신고 목록 — 아이가 어느 문항에서 막혔는지. 기본은 아직 안 본 것만.
 app.get('/api/admin/feedback', ...admin, async (c) => {
