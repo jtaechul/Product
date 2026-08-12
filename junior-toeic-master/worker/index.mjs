@@ -171,6 +171,16 @@ app.post('/api/diagnostic/start', requireAuth, async (c) => {
     `SELECT id FROM sessions WHERE user_id = ?1 AND type = 'diagnostic' AND finished_at IS NOT NULL LIMIT 1`
   ).bind(u.id).first();
   if (done) return c.json({ done: true });
+
+  // 아직 안 끝났고 답도 하나 없는 옛 진단 세션은 지운다.
+  // 아이가 진단을 시작만 하고 나가는 일이 반복되면 빈 세션이 계속 쌓인다.
+  // (답이 하나라도 들어간 세션은 건드리지 않는다 — 기록이다)
+  await c.env.DB.prepare(
+    `DELETE FROM sessions
+      WHERE user_id = ?1 AND type = 'diagnostic' AND finished_at IS NULL
+        AND id NOT IN (SELECT DISTINCT session_id FROM answers WHERE user_id = ?1)`
+  ).bind(u.id).run();
+
   const group = await groupOf(c.env.DB, u);
   const label = DIAG.stage1Label[group];
   const ids = [];

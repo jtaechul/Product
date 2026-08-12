@@ -32,7 +32,9 @@ const todayKey = () => new Date().toLocaleDateString('sv');  // YYYY-MM-DD (로�
 
 // ---------- 학습 기록 ----------
 const KEY = 'jumplish.progress.v1';
-const blank = { parts: {}, wrong: [], days: [], set: null, setDate: null, setIdx: 0, exprs: [] };
+// diag: 진단을 푸는 도중의 상태. 진단 답안은 단계가 끝나야 서버로 가기 때문에,
+// 중간에 앱을 닫으면 그때까지 푼 게 통째로 날아간다(실제로 겪은 문제). 여기에 담아 둔다.
+const blank = { parts: {}, wrong: [], days: [], set: null, setDate: null, setIdx: 0, exprs: [], diag: null };
 let store;
 try { store = { ...blank, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; }
 catch { store = { ...blank }; }
@@ -351,7 +353,7 @@ function showSettings() {
 
   back.querySelector('[data-auth-toggle]').addEventListener('click', () => {
     close();
-    if (auth) { saveAuth(null); store.set = null; store.setDate = null; save(); setTab('home'); showHome(); }
+    if (auth) { saveAuth(null); store.set = null; store.setDate = null; store.diag = null; save(); setTab('home'); showHome(); }
     else showLogin();
   });
 }
@@ -611,8 +613,10 @@ async function showHome() {
           <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M15.8 15.8 21 21"/><path d="M11 8.2v3.2l2.2 1.3"/></svg>
         </span>
         <span class="row-body">
-          <span class="row-t">내 실력 알아보기</span>
-          <span class="row-s">문제 몇 개만 풀면 나에게 딱 맞는 학습이 시작돼요 (10분)</span>
+          <span class="row-t">${store.diag?.answers?.length ? '실력 진단 이어서 하기' : '내 실력 알아보기'}</span>
+          <span class="row-s">${store.diag?.answers?.length
+            ? `${store.diag.answers.length}문제까지 풀었어요 — 그 다음부터 이어집니다`
+            : '문제 몇 개만 풀면 나에게 딱 맞는 학습이 시작돼요 (10분)'}</span>
         </span>
         <svg class="row-arrow" viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
       </button>` : ''}
@@ -731,8 +735,27 @@ function showLogin() {
 }
 
 // ---------- 진단 테스트 ----------
+// 푸는 도중의 진단 상태를 기기에 남긴다. 답을 하나 낼 때마다 부른다.
+// 문항·지문까지 같이 담는 이유: 다시 열었을 때 서버에 또 물으면 다른 문제가 나올 수 있고,
+// 그러면 이미 푼 답과 짝이 안 맞는다.
+const saveDiag = () => {
+  const d = session?.diag;
+  store.diag = d ? {
+    session_id: d.session_id, stage: d.stage, answers: d.answers,
+    questions: session.questions, passages: session.passages,
+  } : null;
+  save();
+};
+
 async function showDiagnostic() {
   tabbarVisible(false);
+  // 풀다 만 진단이 있으면 서버에 새로 청하지 않고 그 자리에서 이어간다.
+  if (store.diag?.questions?.length) {
+    const d = store.diag;
+    runDiagStage({ session_id: d.session_id, stage: d.stage, questions: d.questions, passages: d.passages },
+      d.answers);
+    return;
+  }
   view.innerHTML = '<p class="loading">진단을 준비하고 있어요...</p>';
   try {
     const s1 = await api('/api/diagnostic/start', { method: 'POST', headers: authHeaders() });
@@ -741,9 +764,16 @@ async function showDiagnostic() {
   } catch (e) { renderError(e.message); }
 }
 
-function runDiagStage(stage) {
+function runDiagStage(stage, answers = []) {
   startSession(stage.questions, stage.passages, '실력 진단');
-  session.diag = { session_id: stage.session_id, stage: stage.stage, answers: [] };
+  session.diag = { session_id: stage.session_id, stage: stage.stage, answers };
+  // 이어서 여는 경우: 이미 답한 만큼은 잠가 두고 그 다음 문항부터 보여준다.
+  if (answers.length) {
+    session.doneBase = Math.min(answers.length, session.questions.length);
+    session.gidx = session.groups.findIndex((g) => g.items[g.items.length - 1] >= session.doneBase);
+    if (session.gidx < 0) session.gidx = session.groups.length - 1;
+  }
+  saveDiag();
   renderQuestion();  // 진단 상태(하단 버튼 숨김·자동 진행)를 반영해 다시 그림
 }
 
@@ -751,10 +781,13 @@ async function endDiagStage() {
   const d = session.diag;
   session.diag = null;
   view.innerHTML = '<p class="loading">채점하고 있어요...</p>';
+  // 여기서 store.diag 를 미리 지우지 않는다. 제출이 실패하면(전파 끊김 등)
+  // 다시 열었을 때 이어서 낼 수 있어야 하므로, 제출이 성공한 뒤에만 지운다.
   const body = (o) => ({ method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify(o) });
   try {
     if (d.stage === 1) {
       const s2 = await api('/api/diagnostic/stage2', body({ session_id: d.session_id, answers: d.answers }));
+      store.diag = null; save();          // 1단계는 서버에 안전하게 들어갔다
       view.innerHTML = `
         <div class="done">
           <div class="done-mark"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></div>
@@ -765,9 +798,14 @@ async function endDiagStage() {
       view.querySelector('[data-go]').addEventListener('click', () => runDiagStage(s2));
     } else {
       const r = await api('/api/diagnostic/finish', body({ session_id: d.session_id, answers: d.answers }));
+      store.diag = null; save();          // 진단이 끝났다
       showDiagResult(r);
     }
-  } catch (e) { renderError(e.message); }
+  } catch (e) {
+    // 낸 답은 store.diag 에 그대로 있다 — 다시 들어오면 이 자리에서 이어진다
+    session.diag = d;
+    renderError(`${e.message}\n답은 저장돼 있어요. 잠시 뒤 다시 들어오면 이어서 할 수 있어요.`);
+  }
 }
 
 function showDiagResult(r) {
@@ -1196,7 +1234,9 @@ function renderQuestion() {
   const first = session.questions[g.items[0]];
   const passage = first.passage_id ? session.passages[first.passage_id] : null;
   const info = PART_INFO[first.part];
-  const graded = new Set(g.items.filter((qi) => qi < session.doneBase && !session.diag));
+  // 지난 접속에서 이미 푼 문항은 잠가 둔다. 진단도 이어하기가 되므로 똑같이 적용한다
+  // (예전엔 진단만 예외였는데, 그러면 이어서 열었을 때 푼 문제가 다시 열려 두 번 답하게 된다).
+  const graded = new Set(g.items.filter((qi) => qi < session.doneBase));
 
   const chips = [
     `<span class="chip">${first.part} ${info.name}</span>`,
@@ -1353,6 +1393,7 @@ function renderQuestion() {
       if (session.diag) {
         // 진단: 정오답을 보여주지 않고 기록만 (서버가 단계 끝에 일괄 채점)
         session.diag.answers.push({ question_id: q.id, chosen_idx: selected, time_ms: Date.now() - shownAt });
+        saveDiag();          // 여기서 꺼져도 이만큼은 남는다
         block.classList.add('locked');
         confirmBtn.remove();
         graded.add(qi);
