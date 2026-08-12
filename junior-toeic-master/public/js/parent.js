@@ -126,30 +126,95 @@ function showSignup() {
     try {
       const r = await api('/api/parent/signup', { method: 'POST', body: JSON.stringify(body) });
       saveAuth({ token: r.token, parent: r.parent, kind: 'account' });
-      showChildCreated(r.child, true);
+      showChildCreated(r.child, 'new');
     } catch (e) { err(msg, e.message); }
   };
   view.querySelector('[data-go]').addEventListener('click', go);
   view.querySelector('[data-back]').addEventListener('click', () => showLogin());
 }
 
-// 아이디와 PIN을 보여주는 화면. PIN은 해시로만 저장하므로 **여기서 놓치면 다시 볼 수 없다** —
-// 그래서 다음으로 넘어가는 버튼을 하나만 두고, 적었는지 확인하는 문장을 크게 둔다.
-function showChildCreated(child, first) {
+// 아이디와 PIN을 보여주는 화면. PIN은 해시로만 저장하므로 **여기서 놓치면 다시 볼 수 없다**.
+//
+// 그래서 화면의 주인공은 '공유하기'다. 부모가 눈으로 읽고 손으로 옮겨 적게 하면
+// 오타가 나거나 아예 화면을 캡처해 두고 잊어버린다. 폰의 공유 시트를 열어주면
+// 카카오톡·문자로 아이에게 바로 보낼 수 있다.
+// 카카오 SDK를 붙이지 않고 브라우저 기본 기능(navigator.share)만 쓴다 —
+// 운영 중 외부 API를 부르지 않는다는 원칙을 지키면서도 카톡 전송이 된다.
+function shareLines(child) {
+  return [
+    `점프리시 — ${child.display_name || '우리 아이'} 로그인 정보`,
+    '',
+    `아이디: ${child.login_id}`,
+    `비밀번호(숫자 6자리): ${child.pin}`,
+    '',
+    '아래 주소에서 이 아이디로 들어가면 돼요.',
+    location.origin,
+  ].join('\n');
+}
+
+// 클립보드는 https 가 아니면 막힌다. 그럴 때를 위해 옛 방식(execCommand)을 남겨 둔다.
+async function copyText(text) {
+  try {
+    if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(text); return true; }
+  } catch { /* 아래로 */ }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  } catch { return false; }
+}
+
+function showChildCreated(child, mode = 'new') {
+  const made = mode === 'new';
+  const canShare = typeof navigator.share === 'function';
   view.innerHTML = `
     <div class="card p-login">
       ${BRAND}
-      <div><h1 class="greet-title" style="font-size:1.15rem">${esc(child.display_name)} 계정이 만들어졌어요</h1>
-        <p class="card-note" style="margin-top:4px">아이가 앱에 들어갈 때 쓰는 아이디와 번호입니다.</p></div>
+      <div><h1 class="greet-title" style="font-size:1.15rem">${esc(child.display_name)} ${made ? '계정이 만들어졌어요' : '비밀번호를 새로 만들었어요'}</h1>
+        <p class="card-note" style="margin-top:4px">아이에게 이 두 가지를 보내주세요.</p></div>
       <div class="p-cred">
         <div><span class="label">아이디</span><span class="value">${esc(child.login_id)}</span></div>
-        <div><span class="label">PIN (숫자 6자리)</span><span class="value">${esc(child.pin)}</span></div>
+        <div><span class="label">비밀번호 (숫자 6자리)</span><span class="value">${esc(child.pin)}</span></div>
       </div>
-      <p class="p-warn">이 번호는 <b>지금 한 번만</b> 보입니다. 아이에게 알려주거나 적어두세요.
-        잊어버려도 이 화면에서 다시 발급할 수 있어요.</p>
-      <button class="btn-primary" data-go style="margin-top:12px">적었어요, 다음으로</button>
-      ${first ? '<p class="card-note" style="margin-top:8px">이제 아이가 앱에서 이 아이디로 들어가면 짧은 진단부터 시작합니다.</p>' : ''}
+
+      <div class="p-share">
+        ${canShare ? '<button class="btn-primary" data-share>카카오톡·문자로 보내기</button>' : ''}
+        <button class="${canShare ? 'btn-ghost' : 'btn-primary'}" data-copy>복사하기</button>
+      </div>
+      <div data-shared></div>
+
+      <p class="p-warn">비밀번호는 <b>지금 한 번만</b> 보입니다. 지금 보내두세요 —
+        놓쳐도 '아이 관리'에서 새로 만들 수 있어요.</p>
+      <p class="p-out" style="margin-top:14px"><button data-go>보냈어요, 다음으로</button></p>
+      ${made ? '<p class="card-note" style="margin-top:8px">아이가 이 아이디로 들어가면 짧은 진단부터 시작합니다.</p>' : ''}
     </div>`;
+
+  const note = view.querySelector('[data-shared]');
+  const text = shareLines(child);
+
+  view.querySelector('[data-share]')?.addEventListener('click', async () => {
+    try {
+      await navigator.share({ title: '점프리시 로그인 정보', text });
+    } catch (e) {
+      // 사용자가 공유 시트를 그냥 닫은 경우는 알림을 띄우지 않는다(실패가 아니다)
+      if (e?.name !== 'AbortError') {
+        note.innerHTML = '<div class="result bad"><p>보내기가 안 되면 아래 복사하기를 눌러주세요.</p></div>';
+      }
+    }
+  });
+
+  view.querySelector('[data-copy]').addEventListener('click', async () => {
+    const ok = await copyText(text);
+    note.innerHTML = ok
+      ? '<div class="result ok"><p>복사했어요. 카카오톡에 붙여넣기 하세요.</p></div>'
+      : '<div class="result bad"><p>복사가 안 됐어요. 화면의 아이디와 번호를 직접 적어주세요.</p></div>';
+  });
+
   view.querySelector('[data-go]').addEventListener('click', showChildren);
 }
 
@@ -161,7 +226,7 @@ function showChildren() {
       <div class="p-kid">
         <span class="p-kid-b"><span class="p-kid-n">${esc(ch.display_name)}</span>
           <span class="p-kid-i">${esc(ch.login_id)}</span></span>
-        <button class="p-link" data-pin="${esc(ch.id)}">PIN 재발급</button>
+        <button class="p-link" data-pin="${esc(ch.id)}" data-who="${esc(ch.display_name)}">비밀번호 새로 만들기</button>
       </div>`).join('');
     view.innerHTML = `
       ${BRAND}
@@ -189,13 +254,16 @@ function showChildren() {
       if (!name) return err(msg, '아이 이름을 넣어주세요.');
       try {
         const r = await api('/api/parent/children', { method: 'POST', body: JSON.stringify({ name }) });
-        showChildCreated(r.child, false);
+        showChildCreated(r.child, 'new');
       } catch (e) { err(msg, e.message); }
     });
     view.querySelectorAll('[data-pin]').forEach((b) => b.addEventListener('click', async () => {
+      if (!confirm(`${b.dataset.who} 비밀번호를 새로 만듭니다.\n지금 쓰던 번호는 바로 못 쓰게 되고, 아이는 다시 로그인해야 해요.\n계속할까요?`)) return;
       try {
         const r = await api(`/api/parent/children/${b.dataset.pin}/pin`, { method: 'POST' });
-        showChildCreated({ display_name: '', login_id: r.login_id, pin: r.pin }, false);
+        // 이름은 서버 응답에 없다 — 목록에서 눌린 버튼이 알고 있으니 그걸 쓴다.
+        // (이름이 비면 공유 문구가 "우리 아이 로그인 정보"로 나가 누구 것인지 알 수 없다)
+        showChildCreated({ display_name: b.dataset.who, login_id: r.login_id, pin: r.pin }, 'reissue');
       } catch (e) { err(msg, e.message); }
     }));
     view.querySelector('[data-home]')?.addEventListener('click', () => showHome());

@@ -76,6 +76,10 @@ body { padding-bottom: env(safe-area-inset-bottom); }
   border-radius: 12px; padding: 11px 13px; font-weight: 600;
 }
 
+/* 보내기·복사하기 — 이 화면에서 부모가 실제로 해야 하는 일이라 크게 둔다 */
+.p-share { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.p-share button { width: 100%; }
+
 /* 아이 목록 */
 .p-kid { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .p-kid:last-child { border-bottom: 0; }
