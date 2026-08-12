@@ -89,8 +89,8 @@ function showSignup() {
     <div class="card p-login">
       ${BRAND}
       <div><h1 class="greet-title" style="font-size:1.15rem">무료로 시작하기</h1>
-        <p class="card-note" style="margin-top:4px">보호자가 먼저 가입하고, 아이 계정을 만들어 주세요.
-          <b>하루 1세트는 계속 무료</b>입니다.</p></div>
+        <p class="card-note" style="margin-top:4px">이메일 하나로 온 가족이 씁니다. 비밀번호만
+          보호자용·아이용을 따로 정해 주세요. <b>하루 1세트는 계속 무료</b>입니다.</p></div>
 
       <label class="field" style="margin-top:12px"><span>보호자 이메일</span>
         <input data-email type="email" autocapitalize="off" autocomplete="username"
@@ -101,6 +101,10 @@ function showSignup() {
         <input data-name maxlength="12" autocomplete="name" placeholder="예: 김보호" /></label>
       <label class="field" style="margin-top:10px"><span>아이 이름</span>
         <input data-child maxlength="12" placeholder="예: 김하늘" /></label>
+      <label class="field" style="margin-top:10px"><span>아이가 쓸 비밀번호 (4자 이상)</span>
+        <input data-childpw autocomplete="off" placeholder="아이가 외우기 쉬운 것으로" /></label>
+      <p class="card-note" style="margin-top:6px">아이는 <b>같은 이메일</b>에 <b>이 비밀번호</b>로 앱에 들어갑니다.
+        보호자 비밀번호는 아이에게 알려주지 않아도 됩니다.</p>
 
       <label class="p-consent" style="margin-top:14px">
         <input type="checkbox" data-consent />
@@ -120,6 +124,7 @@ function showSignup() {
       password: view.querySelector('[data-pw]').value,
       name: view.querySelector('[data-name]').value.trim(),
       child_name: view.querySelector('[data-child]').value.trim(),
+      child_password: view.querySelector('[data-childpw]').value,
       consent: view.querySelector('[data-consent]').checked,
     };
     if (!body.consent) return err(msg, '보호자 동의에 체크해주세요.');
@@ -140,6 +145,7 @@ function showChildren() {
     const rows = d.children.map((ch) => `
       <div class="p-kid">
         <span class="p-kid-b"><span class="p-kid-n">${esc(ch.display_name)}</span></span>
+        <button class="p-link" data-pw="${esc(ch.id)}" data-who="${esc(ch.display_name)}">비밀번호 바꾸기</button>
       </div>`).join('');
     view.innerHTML = `
       ${BRAND}
@@ -150,14 +156,16 @@ function showChildren() {
       <div class="card">
         <div class="card-head"><span class="card-title">등록한 아이</span></div>
         ${rows || '<p class="empty">아직 등록한 아이가 없어요.</p>'}
-        <p class="p-warn" style="margin-top:12px">아이는 <b>지금 로그인하신 이메일과 비밀번호</b>로
-          앱에 들어갑니다. 아이에게 따로 만들어 줄 아이디는 없어요.</p>
+        <p class="p-warn" style="margin-top:12px">아이는 <b>같은 이메일</b>에 <b>자기 비밀번호</b>로
+          앱에 들어갑니다. 보호자 비밀번호는 알려주지 않으셔도 돼요.</p>
       </div>
       <div class="card">
         <div class="card-head"><span class="card-title">아이 추가</span>
           <span class="card-note">최대 3명</span></div>
         <label class="field"><span>아이 이름</span>
           <input data-new maxlength="12" placeholder="예: 김바다" /></label>
+        <label class="field" style="margin-top:10px"><span>아이가 쓸 비밀번호 (4자 이상)</span>
+          <input data-newpw autocomplete="off" placeholder="아이가 외우기 쉬운 것으로" /></label>
         <button class="btn-primary" data-add style="margin-top:10px">아이 추가</button>
         <div data-msg></div>
       </div>
@@ -167,12 +175,24 @@ function showChildren() {
     const msg = view.querySelector('[data-msg]');
     view.querySelector('[data-add]').addEventListener('click', async () => {
       const name = view.querySelector('[data-new]').value.trim();
+      const password = view.querySelector('[data-newpw]').value;
       if (!name) return err(msg, '아이 이름을 넣어주세요.');
+      if (password.trim().length < 4) return err(msg, '아이 비밀번호를 4자 이상으로 정해주세요.');
       try {
-        await api('/api/parent/children', { method: 'POST', body: JSON.stringify({ name }) });
+        await api('/api/parent/children', { method: 'POST', body: JSON.stringify({ name, password }) });
         showChildren();
       } catch (e) { err(msg, e.message); }
     });
+    view.querySelectorAll('[data-pw]').forEach((b) => b.addEventListener('click', async () => {
+      const password = prompt(`${b.dataset.who}(이)가 쓸 새 비밀번호를 정해주세요 (4자 이상)`);
+      if (password === null) return;                    // 취소
+      if (password.trim().length < 4) return err(msg, '아이 비밀번호를 4자 이상으로 정해주세요.');
+      try {
+        await api(`/api/parent/children/${b.dataset.pw}/password`,
+          { method: 'POST', body: JSON.stringify({ password }) });
+        msg.innerHTML = `<div class="result ok"><p>${esc(b.dataset.who)} 비밀번호를 바꿨어요.</p></div>`;
+      } catch (e) { err(msg, e.message); }
+    }));
     view.querySelector('[data-home]')?.addEventListener('click', () => showHome());
     view.querySelector('[data-out]').addEventListener('click', () => { saveAuth(null); showLogin(); });
   }).catch((e) => {

@@ -459,21 +459,32 @@ const MAX_CHILDREN = 3;
 // 이메일은 형식만 가볍게 본다. 진짜 확인은 나중에 인증 메일로 한다.
 const isEmail = (s) => typeof s === 'string' && s.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
 
+// 아이 비밀번호 검사 — 부모 것보다 훨씬 느슨하다.
+// 부모 비밀번호는 결제 정보를 지키는 열쇠라 8자 이상에 뻔한 것도 막지만,
+// 아이 비밀번호가 지키는 건 자기 학습 기록뿐이다. 아홉 살이 매일 칠 수 있어야 하므로
+// 네 글자 이상이면 통과시킨다. 어렵게 만들면 부모가 대신 외워주다가 결국 부모 것을 쓴다.
+const CHILD_PW_MIN = 4;
+function childPwReason(pw) {
+  const s = String(pw ?? '');
+  if (s.length < CHILD_PW_MIN) return `아이 비밀번호는 ${CHILD_PW_MIN}자 이상으로 해주세요`;
+  if (s.length > 100) return '아이 비밀번호가 너무 깁니다';
+  if (/\s/.test(s)) return '아이 비밀번호에 공백은 쓸 수 없어요';
+  return null;
+}
+
 // 새 아이 계정 한 명을 만든다. 로그인ID가 겹치면 몇 번 다시 뽑는다.
-async function createChild(db, { parentId, name, grade }) {
+async function createChild(db, { parentId, name, password, grade }) {
   for (let attempt = 0; attempt < 5; attempt++) {
     const loginId = makeChildLoginId();
     const dup = await db.prepare('SELECT 1 FROM users WHERE login_id = ?1').bind(loginId).first();
     if (dup) continue;
     const id = crypto.randomUUID();
-    // pin_hash 는 표가 NOT NULL 이라 채우지만, 아무도 모르는 무작위 값이다.
-    // 이 아이는 PIN으로 로그인하지 않는다(부모 이메일·비밀번호로 들어온다).
-    // 토큰 서명 열쇠로는 계속 쓰이므로 값 자체는 필요하다.
-    const dead = await hashPin(crypto.randomUUID() + crypto.randomUUID());
+    // 부모가 정해 준 아이 비밀번호가 여기 들어간다. 부모 것과 같은 이메일을 쓰되
+    // 비밀번호만 다르므로, 아이는 부모 비밀번호를 알 필요가 없다(결제 화면도 못 연다).
     await db.prepare(
       `INSERT INTO users (id, role, login_id, pin_hash, display_name, created_at, parent_id)
        VALUES (?1, 'student', ?2, ?3, ?4, ?5, ?6)`
-    ).bind(id, loginId, dead, name, nowISO(), parentId).run();
+    ).bind(id, loginId, await hashPin(password), name, nowISO(), parentId).run();
     return { id, login_id: loginId, display_name: name, grade: grade ?? null };
   }
   return null;
@@ -491,12 +502,18 @@ app.post('/api/parent/signup', async (c) => {
   const password = String(b.password ?? '');
   const name = clean(b.name, 12);
   const childName = clean(b.child_name, 12);
+  const childPw = String(b.child_password ?? '');
 
   if (!isEmail(email)) return c.json({ error: '이메일 주소를 확인해주세요' }, 400);
   const weak = weakSecretReason(password, email.split('@')[0]);
   if (weak) return c.json({ error: weak }, 400);
   if (!name) return c.json({ error: '보호자 이름을 입력해주세요' }, 400);
   if (!childName) return c.json({ error: '아이 이름을 입력해주세요' }, 400);
+  const childBad = childPwReason(childPw);
+  if (childBad) return c.json({ error: childBad }, 400);
+  // 아이 비밀번호를 부모 것과 똑같이 두면 아이가 결제 화면까지 열 수 있다 — 그럴 거면
+  // 따로 정하는 의미가 없으므로 여기서 막는다.
+  if (childPw === password) return c.json({ error: '아이 비밀번호는 보호자 것과 다르게 정해주세요' }, 400);
   // 만 14세 미만 아이의 계정을 만드는 절차라, 동의 없이는 한 걸음도 나갈 수 없다.
   if (b.consent !== true) return c.json({ error: '보호자 동의가 필요합니다' }, 400);
 
@@ -515,8 +532,9 @@ app.post('/api/parent/signup', async (c) => {
      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?5)`
   ).bind(parent.id, email, parent.password_hash, name, now, CONSENT_VER).run();
 
-  const child = await createChild(c.env.DB, { parentId: parent.id, name: childName, grade: b.grade });
-  if (!child) return c.json({ error: '아이 아이디를 만들지 못했어요. 다시 시도해주세요' }, 500);
+  const child = await createChild(c.env.DB, {
+    parentId: parent.id, name: childName, password: childPw, grade: b.grade });
+  if (!child) return c.json({ error: '아이를 등록하지 못했어요. 다시 시도해주세요' }, 500);
 
   return c.json({
     token: await makeAccountToken(parent),
@@ -556,40 +574,55 @@ app.post('/api/parent/login-email', async (c) => {
 });
 
 // ── 아이 앱 로그인 ──
-// 아이도 **부모와 똑같은 이메일·비밀번호**로 들어온다. 따로 발급하는 아이디·PIN은 없다.
-// 아이가 하나면 바로 그 아이로 들어가고, 여럿이면 이름만 고르게 한다.
+// 이메일은 **부모 것 하나**를 온 가족이 같이 쓰고, **비밀번호만 사람마다 다르다.**
+// 부모가 가입할 때 아이 비밀번호까지 직접 정해 주므로 옮겨 적어 보낼 것이 없고,
+// 아이는 부모 비밀번호를 모른다(= 나중에 붙을 결제 화면을 열 수 없다).
+//
+// 비밀번호가 곧 '누구인지'라서 형제가 있어도 고르는 화면이 뜨지 않는다.
+// 다만 부모가 두 아이에게 같은 비밀번호를 준 경우만 누구인지 물어본다.
 app.post('/api/family/login', async (c) => {
   const b = await c.req.json().catch(() => ({}));
   const email = String(b.email ?? '').trim().toLowerCase();
   const password = String(b.password ?? '');
   if (!isEmail(email) || !password) return c.json({ error: '이메일과 비밀번호를 확인해주세요' }, 400);
 
-  const key = `PE:${email}`;
+  // 잠금은 아이 앱 전용으로 따로 센다. 부모 로그인과 같은 열쇠로 세면
+  // 아이가 비밀번호를 여러 번 틀렸을 때 부모까지 못 들어간다.
+  const key = `FC:${email}`;
   const lockLeft = await loginLockedFor(c.env.DB, key);
   if (lockLeft > 0) {
     return c.json({ error: `여러 번 틀려서 잠겼어요. ${Math.ceil(lockLeft / 60)}분 뒤에 다시 해주세요` }, 429);
   }
-  const parent = await c.env.DB.prepare('SELECT * FROM parents WHERE email = ?1').bind(email).first();
-  if (!parent || !(await verifySecret(password, parent.password_hash))) {
+
+  const fail = async () => {
     const { lockedSeconds } = await noteLoginFail(c.env.DB, key);
     return c.json({
       error: lockedSeconds
         ? `여러 번 틀려서 ${Math.ceil(lockedSeconds / 60)}분 동안 잠겼어요`
         : '이메일 또는 비밀번호가 맞지 않아요',
     }, lockedSeconds ? 429 : 401);
-  }
+  };
+
+  const parent = await c.env.DB.prepare('SELECT id FROM parents WHERE email = ?1').bind(email).first();
+  if (!parent) return fail();
+
+  const { results: kids } = await c.env.DB.prepare(
+    `SELECT * FROM users WHERE parent_id = ?1 AND role = 'student' ORDER BY created_at`
+  ).bind(parent.id).all();
+
+  // 비밀번호가 맞는 아이를 찾는다. 아이마다 다르게 정했다면 한 명만 걸린다.
+  const matched = [];
+  for (const k of kids) if (await verifyPin(password, k.pin_hash)) matched.push(k);
+  if (!matched.length) return fail();
   await clearLoginFails(c.env.DB, key);
 
-  const kids = await childrenOf(c.env.DB, parent.id);
-  if (!kids.length) return c.json({ error: '아직 등록된 아이가 없어요. 보호자 화면에서 아이를 추가해주세요' }, 404);
-
-  // 아이가 여럿이면 누구인지 고르게 한다. 고른 뒤 다시 여기로 오면 그 아이 토큰을 준다.
   const pickedId = clean(b.child_id, 40);
-  const child = pickedId ? kids.find((k) => k.id === pickedId) : (kids.length === 1 ? kids[0] : null);
-  if (!child) {
-    return c.json({ choose: true, children: kids.map((k) => ({ id: k.id, display_name: k.display_name })) });
+  const user = pickedId
+    ? matched.find((k) => k.id === pickedId)
+    : (matched.length === 1 ? matched[0] : null);
+  if (!user) {
+    return c.json({ choose: true, children: matched.map((k) => ({ id: k.id, display_name: k.display_name })) });
   }
-  const user = await c.env.DB.prepare('SELECT * FROM users WHERE id = ?1').bind(child.id).first();
   return c.json({
     token: await makeToken(user),
     user: { id: user.id, login_id: user.login_id, display_name: user.display_name, role: user.role },
@@ -607,16 +640,42 @@ app.post('/api/parent/children', requireParentAccount, async (c) => {
   const parent = c.get('parent');
   const b = await c.req.json().catch(() => ({}));
   const name = clean(b.name, 12);
+  const password = String(b.password ?? '');
   if (!name) return c.json({ error: '아이 이름을 입력해주세요' }, 400);
+  const bad = childPwReason(password);
+  if (bad) return c.json({ error: bad }, 400);
 
   const { n } = await c.env.DB.prepare(
     `SELECT COUNT(*) AS n FROM users WHERE parent_id = ?1 AND role = 'student'`
   ).bind(parent.id).first();
   if (n >= MAX_CHILDREN) return c.json({ error: `아이는 ${MAX_CHILDREN}명까지 등록할 수 있어요` }, 400);
 
-  const child = await createChild(c.env.DB, { parentId: parent.id, name, grade: b.grade });
+  const child = await createChild(c.env.DB, { parentId: parent.id, name, password, grade: b.grade });
   if (!child) return c.json({ error: '아이를 등록하지 못했어요. 다시 시도해주세요' }, 500);
   return c.json({ child });
+});
+
+// 아이가 자기 비밀번호를 잊었을 때 부모가 새로 정해 준다.
+app.post('/api/parent/children/:id/password', requireParentAccount, async (c) => {
+  const parent = c.get('parent');
+  const b = await c.req.json().catch(() => ({}));
+  const password = String(b.password ?? '');
+  const bad = childPwReason(password);
+  if (bad) return c.json({ error: bad }, 400);
+  if (await verifySecret(password, parent.password_hash)) {
+    return c.json({ error: '아이 비밀번호는 보호자 것과 다르게 정해주세요' }, 400);
+  }
+
+  const child = await c.env.DB.prepare(
+    `SELECT id, login_id, display_name FROM users WHERE id = ?1 AND parent_id = ?2 AND role = 'student'`
+  ).bind(c.req.param('id'), parent.id).first();
+  if (!child) return c.json({ error: '아이를 찾을 수 없습니다' }, 404);
+
+  await c.env.DB.prepare('UPDATE users SET pin_hash = ?2 WHERE id = ?1')
+    .bind(child.id, await hashPin(password)).run();
+  // 비밀번호가 바뀌면 그 아이의 기존 토큰은 전부 무효가 된다(토큰 서명 열쇠가 pin_hash라서)
+  await clearLoginFails(c.env.DB, `FC:${parent.email}`);
+  return c.json({ child: { id: child.id, display_name: child.display_name } });
 });
 
 // 자녀 한 명의 요약. 부모는 이것만 본다 — 정답·해설·문항 원문은 내려주지 않는다.
