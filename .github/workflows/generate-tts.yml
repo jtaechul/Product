@@ -37,6 +37,9 @@ concurrency:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    # 실제로 새 파일을 커밋·푸시했을 때만 아래 deploy 를 부른다
+    outputs:
+      pushed: ${{ steps.commit.outputs.pushed }}
     defaults:
       run:
         working-directory: junior-toeic-master
@@ -154,6 +157,7 @@ jobs:
           fi
 
       - name: Commit & push
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -169,7 +173,10 @@ jobs:
           # 둘이 동시에 푸시하면 한쪽이 튕기므로, 튕기면 다시 당겨 얹고 재시도한다.
           for i in 1 2 3 4 5; do
             git pull --rebase origin "${GITHUB_REF_NAME}"
-            if git push origin HEAD:"${GITHUB_REF_NAME}"; then exit 0; fi
+            if git push origin HEAD:"${GITHUB_REF_NAME}"; then
+              echo "pushed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
             echo "다른 작업이 먼저 푸시했습니다 — 다시 얹어 재시도 ${i}/5"
             sleep $((5 * i))
           done
@@ -188,6 +195,6 @@ jobs:
   # 일부 실패로 generate 가 빨간불이어도, 이미 커밋된 음원은 내보내는 게 맞다.
   deploy:
     needs: generate
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && needs.generate.outputs.pushed == 'true' }}
     uses: ./.github/workflows/deploy-jumplish.yml
     secrets: inherit

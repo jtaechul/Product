@@ -27,6 +27,9 @@ concurrency:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    # 실제로 새 파일을 커밋·푸시했을 때만 아래 deploy 를 부른다
+    outputs:
+      pushed: ${{ steps.commit.outputs.pushed }}
     defaults:
       run:
         working-directory: junior-toeic-master
@@ -62,6 +65,7 @@ jobs:
         run: node tools/img-batch.mjs
 
       - name: Commit & push
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -70,6 +74,7 @@ jobs:
           git add public/img/l1 content/questions/L1.json content/l1-photos.json content/.idmap.json
           if git diff --cached --quiet; then
             echo "변경 없음 — 커밋 생략"
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git commit -m "junior-toeic-master: L1 보기 사진 수집·활성화 (자동 배치)" \
@@ -79,7 +84,10 @@ jobs:
           # 둘이 동시에 푸시하면 한쪽이 튕기므로, 튕기면 다시 당겨 얹고 재시도한다.
           for i in 1 2 3 4 5; do
             git pull --rebase origin "${GITHUB_REF_NAME}"
-            if git push origin HEAD:"${GITHUB_REF_NAME}"; then exit 0; fi
+            if git push origin HEAD:"${GITHUB_REF_NAME}"; then
+              echo "pushed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
             echo "다른 작업이 먼저 푸시했습니다 — 다시 얹어 재시도 ${i}/5"
             sleep $((5 * i))
           done
@@ -95,6 +103,6 @@ jobs:
   # 사진을 커밋했으면 곧바로 배포까지 이어 준다 (generate-tts.yml 과 같은 이유).
   deploy:
     needs: generate
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && needs.generate.outputs.pushed == 'true' }}
     uses: ./.github/workflows/deploy-jumplish.yml
     secrets: inherit
