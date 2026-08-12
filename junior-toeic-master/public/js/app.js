@@ -569,6 +569,11 @@ async function showHome() {
     const weak = ranked()[0];
     const answered = totalAnswered();
 
+    // '가장 약한 곳'은 **정말 약한 곳이 나왔을 때만** 띄운다.
+    // 처음 들어온 아이에게 약한 곳이 없는 건 이상한 일이 아니라 당연한 일이다.
+    // 예전엔 데이터가 없을 때 "아직 실력을 재는 중이에요" 카드를 대신 띄웠는데,
+    // 바로 위 실력 지도 카드가 이미 같은 말을 하고 있어 같은 문장이 두 번 보였다.
+    // 진단이나 오늘의 학습으로 한 파트에 WEAK_MIN 문항이 쌓여야 이 카드가 생긴다.
     const focusCard = weak
       ? `<div class="card focus">
            <div class="focus-head"><span class="dot"></span>
@@ -577,12 +582,7 @@ async function showHome() {
              오늘 학습에 이 파트를 더 넣었습니다.</p>
            <button class="btn-focus" data-focus="${weak.part}">${weak.part} 집중해서 풀기</button>
          </div>`
-      : `<div class="card focus">
-           <div class="focus-head"><span class="dot" style="background:var(--primary)"></span>
-             <span class="focus-title">아직 실력을 재는 중이에요</span></div>
-           <p class="focus-desc">${WEAK_MIN}문제 이상 푼 파트부터 점수가 나타나요.
-             오늘의 학습을 마치면 약한 곳을 콕 집어 알려드릴게요.</p>
-         </div>`;
+      : '';
 
     const hello = auth?.user?.display_name
       ? `${auth.user.display_name} 님, ${left === 0 ? '오늘 학습을 다 마쳤어요' : '오늘도 점프해볼까요'}`
@@ -946,7 +946,8 @@ async function showRecord() {
     </div>
     <div class="card">
       <div class="card-head"><span class="card-title">파트별 기록</span>
-        <span class="card-note">약한 곳부터</span></div>
+        <!-- 아직 아무것도 안 풀었으면 '약한 곳부터'는 거짓말이다. 그땐 정렬 기준을 말하지 않는다 -->
+        <span class="card-note">${answered ? '약한 곳부터' : '문제를 풀면 채워져요'}</span></div>
       ${partMastery(parts)}
     </div>
     ${rec ? `
