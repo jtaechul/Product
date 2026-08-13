@@ -1,0 +1,2332 @@
+[
+  {
+    "type": "set",
+    "tmp_id": "R3-0001",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "NOTICE\nThe school gym will be closed on Monday.\nStudents will have P.E. class in the playground.\nPlease wear your sport shoes."
+    },
+    "questions": [
+      {
+        "stem": "Where will students have P.E. class on Monday?",
+        "choices": [
+          "In the gym",
+          "In the classroom",
+          "In the playground",
+          "In the library"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "안내문에 월요일 체육 수업은 운동장(playground)에서 한다고 했어요. 체육관(gym)은 문을 닫는 곳이니 정답이 아니에요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "Students will have P.E. class in the playground.",
+        "why_not": {
+          "0": "체육관은 문을 닫는 곳이에요",
+          "1": "교실 이야기는 나오지 않았어요",
+          "3": "도서관 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "P.E. class",
+          "ko": "체육 수업"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0002",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "SWIMMING POOL RULES\n1. Take a shower before you swim.\n2. Do not run near the pool.\n3. No food or drinks in the water."
+    },
+    "questions": [
+      {
+        "stem": "What should you do before you swim?",
+        "choices": [
+          "Take a shower",
+          "Eat a snack",
+          "Run to the pool",
+          "Bring a drink"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "규칙 1번에 수영하기 전에 샤워를 하라고 쓰여 있어요. 뛰는 것과 음식은 하면 안 되는 일이니 헷갈리지 마세요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ],
+        "evidence": "Take a shower before you swim.",
+        "why_not": {
+          "1": "간식 이야기는 나오지 않았어요",
+          "2": "수영장 옆에서 뛰지 말라고 했어요",
+          "3": "물에서 음료는 안 된다고 했어요"
+        },
+        "key_expr": {
+          "en": "take a shower",
+          "ko": "샤워를 하다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.opposite",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0003",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "[chat] Mina: Are we still meeting at the bus stop at 3?\nJun: Sorry, my piano lesson ends late. Can we meet at 4?\nMina: Sure! See you then."
+    },
+    "questions": [
+      {
+        "stem": "What time will Mina and Jun meet?",
+        "choices": [
+          "At 1 o'clock",
+          "At 2 o'clock",
+          "At 3 o'clock",
+          "At 4 o'clock"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "준이 피아노 수업 때문에 4시에 만나자고 했고, 미나가 좋다고 답했어요. 처음에 말한 3시는 바뀌기 전 시간이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.daily"
+        ],
+        "evidence": "Can we meet at 4?",
+        "why_not": {
+          "0": "1시 이야기는 나오지 않았어요",
+          "1": "2시 이야기는 나오지 않았어요",
+          "2": "3시는 바꾸기 전 약속이에요"
+        },
+        "key_expr": {
+          "en": "Can we meet at 4?",
+          "ko": "4시에 만날까?"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.number"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0004",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "SUNNY SNACK BAR — MENU\nCheese sandwich ... 3,000 won\nFruit juice ... 2,000 won\nHot dog ... 3,500 won\nIce cream ... 2,500 won"
+    },
+    "questions": [
+      {
+        "stem": "Which item is the cheapest?",
+        "choices": [
+          "Cheese sandwich",
+          "Fruit juice",
+          "Hot dog",
+          "Ice cream"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "과일 주스는 2,000원으로 가장 싸요. 2,500원인 아이스크림과 헷갈리지 않게 가격을 잘 비교해 보세요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.food"
+        ],
+        "evidence": "Fruit juice ... 2,000 won",
+        "why_not": {
+          "0": "3,000원이라 주스보다 비싸요",
+          "2": "3,500원으로 가장 비싸요",
+          "3": "2,500원이라 주스보다 비싸요"
+        },
+        "key_expr": {
+          "en": "the cheapest",
+          "ko": "가장 싼"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "2": "M.number",
+          "3": "M.number"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0005",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "FIELD TRIP SCHEDULE — Green Farm\n9:00 Leave school\n10:00 Feed the sheep\n11:30 Make cheese\n12:30 Lunch\n2:00 Return to school"
+    },
+    "questions": [
+      {
+        "stem": "What will students do at 11:30?",
+        "choices": [
+          "Leave school",
+          "Feed the sheep",
+          "Eat lunch",
+          "Make cheese"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "시간표에서 11:30 옆에 '치즈 만들기(Make cheese)'가 있어요. 시간을 잘못 짚으면 다른 활동을 고르게 되니 조심하세요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "11:30 Make cheese",
+        "why_not": {
+          "0": "학교 출발은 9시예요",
+          "1": "양 먹이 주기는 10시예요",
+          "2": "점심은 12시 30분이에요"
+        },
+        "key_expr": {
+          "en": "make cheese",
+          "ko": "치즈를 만들다"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.number",
+          "2": "M.number"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0006",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "YOU ARE INVITED!\nCome to Dana's 11th birthday party.\nSaturday, May 10, 2 p.m.\nPlace: Happy Pizza House\nPlease tell Dana's mom if you can come."
+    },
+    "questions": [
+      {
+        "stem": "What is this invitation for?",
+        "choices": [
+          "A birthday party",
+          "A school festival",
+          "A pizza cooking class",
+          "A family picnic"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "다나의 열한 번째 생일 파티에 초대하는 글이에요. 장소가 피자 가게일 뿐, 요리 수업 초대가 아니에요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.gist",
+          "V.daily"
+        ],
+        "evidence": "Come to Dana's 11th birthday party.",
+        "why_not": {
+          "1": "학교 축제 이야기는 없어요",
+          "2": "피자집은 모이는 장소일 뿐이에요",
+          "3": "가족 소풍 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "birthday party",
+          "ko": "생일 잔치"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0007",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "STAR BOOKSTORE — RECEIPT\nNotebook ... 2,000 won\nColor pens ... 4,000 won\nStory book ... 6,000 won\nMember discount ... -2,000 won\nTotal ... 10,000 won"
+    },
+    "questions": [
+      {
+        "stem": "How much did the customer pay in total?",
+        "choices": [
+          "12,000 won",
+          "14,000 won",
+          "10,000 won",
+          "2,000 won"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "맨 아래 Total(합계)이 10,000원이라고 쓰여 있어요. 할인 전 금액인 12,000원을 고르지 않도록 조심하세요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan",
+          "V.shopping"
+        ],
+        "evidence": "Total ... 10,000 won",
+        "why_not": {
+          "0": "할인을 빼기 전 값이에요",
+          "1": "어디에도 없는 값이에요",
+          "3": "2,000원은 공책 값이에요"
+        },
+        "key_expr": {
+          "en": "in total",
+          "ko": "모두 합쳐"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.notsaid",
+          "3": "M.number"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0008",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "LIBRARY CARD RULES\nYou can borrow 3 books for 2 weeks.\nBring your card every time.\nIf you lose a book, please tell the librarian."
+    },
+    "questions": [
+      {
+        "stem": "How long can you keep the books?",
+        "choices": [
+          "For 3 days",
+          "For 2 weeks",
+          "For 3 weeks",
+          "For 2 months"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "책은 2주(2 weeks) 동안 빌릴 수 있다고 했어요. '3권'의 숫자 3을 보고 3주로 착각하면 안 돼요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "You can borrow 3 books for 2 weeks.",
+        "why_not": {
+          "0": "3은 빌릴 수 있는 권수예요",
+          "2": "3주는 안내에 없어요",
+          "3": "2달은 안내에 없어요"
+        },
+        "key_expr": {
+          "en": "borrow for 2 weeks",
+          "ko": "2주 동안 빌리다"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0009",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "LOST DOG\nOur small white dog, Mongsil, ran away near Rose Park on Sunday.\nHe has a red collar.\nIf you see him, please call 010-1234-5678."
+    },
+    "questions": [
+      {
+        "stem": "Why did the writer make this poster?",
+        "choices": [
+          "To sell a small dog",
+          "To show a new park",
+          "To ask people to buy a collar",
+          "To find a lost dog"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "일요일에 잃어버린 강아지 몽실이를 찾으려고 만든 포스터예요. 공원 이름이 나왔지만 공원 안내문은 아니에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.daily",
+          "RS.infer"
+        ],
+        "evidence": "Our small white dog, Mongsil, ran away near Rose Park on Sunday.",
+        "why_not": {
+          "0": "파는 게 아니라 찾는 중이에요",
+          "1": "공원은 사라진 자리일 뿐이에요",
+          "2": "목줄은 생김새 설명이에요"
+        },
+        "key_expr": {
+          "en": "lost dog",
+          "ko": "잃어버린 개"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.swap",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0010",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "[chat] Sora: Did you see the news? It will rain all day tomorrow.\nMinho: Oh no. Then let's not go to the river park.\nSora: How about the science museum instead?\nMinho: Good idea!"
+    },
+    "questions": [
+      {
+        "stem": "What will Sora and Minho probably do tomorrow?",
+        "choices": [
+          "Visit the science museum",
+          "Play at the river park",
+          "Watch TV news all day",
+          "Swim in the river"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "내일 비가 와서 강 공원 대신 과학관에 가자고 했고, 민호도 좋다고 했어요. 원래 가려던 강 공원을 고르면 안 돼요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.leisure"
+        ],
+        "evidence": "How about the science museum instead?",
+        "why_not": {
+          "1": "비 때문에 가지 말자고 했어요",
+          "2": "뉴스는 비 소식을 본 것뿐이에요",
+          "3": "수영 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "~ instead",
+          "ko": "~ 대신에"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0011",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "MOVING SALE\nAll items are 30% off this week!\nOur shop will move to Green Street next month.\nCome and get cheap bags and shoes!"
+    },
+    "questions": [
+      {
+        "stem": "In the sign, the word 'items' means ____.",
+        "choices": [
+          "days of the week",
+          "things in the shop",
+          "people who buy",
+          "new streets"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "'items'는 가게에서 파는 '물건들'이라는 뜻이에요. 이 가게의 가방과 신발 같은 것들이 모두 items예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab",
+          "V.shopping"
+        ],
+        "evidence": "Come and get cheap bags and shoes!",
+        "why_not": {
+          "0": "요일 이야기는 나오지 않았어요",
+          "2": "사는 사람이 아니라 물건이에요",
+          "3": "Green Street는 옮겨 갈 거리예요"
+        },
+        "key_expr": {
+          "en": "items",
+          "ko": "물건들"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0012",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "NOTICE TO BUS RIDERS\nFrom next Monday, Bus 7 will not stop at City Library.\nPlease take Bus 12 to go to the library.\nWe are sorry for the trouble."
+    },
+    "questions": [
+      {
+        "stem": "What can you guess from this notice?",
+        "choices": [
+          "Bus 12 will stop running soon",
+          "City Library will close on Monday",
+          "Bus 7 stops at City Library now",
+          "Bus 7 is a new bus"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "'다음 주부터 서지 않는다'는 말은 지금은 7번 버스가 도서관 앞에 선다는 뜻이에요. 도서관이 문을 닫는다는 말은 없어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.travel"
+        ],
+        "evidence": "From next Monday, Bus 7 will not stop at City Library.",
+        "why_not": {
+          "0": "12번은 앞으로 타라고 한 버스예요",
+          "1": "도서관이 문 닫는다는 말은 없어요",
+          "3": "새 버스라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "will not stop at ~",
+          "ko": "~에 서지 않는다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0013",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "To: Emma\nFrom: Jiho\nSubject: My summer plan\n\nHi Emma,\nHow are you? Summer vacation starts next Friday! I will visit my grandmother in Busan for two weeks. She lives near the sea, so I can swim every morning. My little sister is more excited about the night market. She loves the fish cake there.\nMy grandmother has a small orange cat now. I can't wait to meet it! I will send you photos of the sea and the cat.\nWhat will you do this summer? Please write back soon.\nYour friend,\nJiho"
+    },
+    "questions": [
+      {
+        "stem": "How long will Jiho stay in Busan?",
+        "choices": [
+          "For one week",
+          "For two weeks",
+          "For a month",
+          "For two days"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "지호는 부산 할머니 댁에서 2주(two weeks) 동안 지낼 거라고 했어요. 다른 기간과 헷갈리지 않게 본문을 확인하세요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan",
+          "V.travel"
+        ],
+        "evidence": "I will visit my grandmother in Busan for two weeks.",
+        "why_not": {
+          "0": "1주가 아니라 2주예요",
+          "2": "한 달 이야기는 없어요",
+          "3": "이틀 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "for two weeks",
+          "ko": "2주 동안"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can we learn about Jiho from the email?",
+        "choices": [
+          "Jiho lives in Busan",
+          "Jiho will stay home this summer",
+          "Emma is Jiho's little sister",
+          "Jiho has not met the cat yet"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "고양이를 '빨리 만나고 싶다'고 했으니 아직 만난 적이 없다는 것을 알 수 있어요. 지호는 부산에 사는 게 아니라 놀러 가는 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "I can't wait to meet it!",
+        "why_not": {
+          "0": "지호는 할머니를 만나러 가는 거예요",
+          "1": "집이 아니라 부산에 가요",
+          "2": "엠마는 편지를 받는 친구예요"
+        },
+        "key_expr": {
+          "en": "I can't wait to ~",
+          "ko": "~가 너무 기다려져"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0014",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "COOKING CLUB NEWS — June\n\nHello, club members!\nLast month, we made vegetable pizza, and everyone loved it. Thank you for your hard work!\nThis month, we will learn to make fruit sandwiches. Our club will meet in the cooking room on Friday, June 12, after lunch. Please bring an apron and wash your hands before class.\nGood news: our club will have a small food market at the school festival in July. We will sell cookies and juice. If you want to help, please tell Ms. Han by June 20.\nSee you on Friday!"
+    },
+    "questions": [
+      {
+        "stem": "What is this newsletter mainly about?",
+        "choices": [
+          "A new school building",
+          "Summer vacation homework",
+          "Cooking club news and plans",
+          "How to make vegetable pizza"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "요리 동아리의 이번 달 모임과 축제 계획을 알리는 소식지예요. 채소 피자는 지난달에 한 일일 뿐이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.school"
+        ],
+        "evidence": "This month, we will learn to make fruit sandwiches.",
+        "why_not": {
+          "0": "새 건물 이야기는 없어요",
+          "1": "방학 숙제 이야기는 없어요",
+          "3": "채소 피자는 지난달 이야기예요"
+        },
+        "key_expr": {
+          "en": "club news",
+          "ko": "동아리 소식"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What should members do by June 20?",
+        "choices": [
+          "Tell Ms. Han if they want to help",
+          "Bring an apron to the festival",
+          "Make fruit sandwiches at home",
+          "Buy cookies and juice"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "축제 음식 시장을 돕고 싶은 사람은 6월 20일까지 한 선생님께 말해야 해요. 앞치마는 금요일 수업에 가져오는 것이니 헷갈리지 마세요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan",
+          "V.food"
+        ],
+        "evidence": "please tell Ms. Han by June 20",
+        "why_not": {
+          "1": "앞치마는 금요일에 가져와요",
+          "2": "집에서 만들라는 말은 없어요",
+          "3": "쿠키는 파는 것이지 사는 게 아니에요"
+        },
+        "key_expr": {
+          "en": "tell ~ by June 20",
+          "ko": "20일까지 말하다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0015",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "TOWN NEWS — A New Park Opens\n\nSunhill Town opened a new park last Saturday. The park has a walking road, a basketball court, and a big playground for children. Many families visited on the first day and enjoyed the sunny weather.\nThe most popular spot was the flower garden. Visitors took many photos there. 'I love this place. My kids can play safely now,' said one mother.\nThe park is open every day from 6 a.m. to 10 p.m. Next month, the town will add a small pond with fish."
+    },
+    "questions": [
+      {
+        "stem": "What will the town add to the park next month?",
+        "choices": [
+          "A basketball court",
+          "A flower garden",
+          "A walking road",
+          "A small pond"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "다음 달에 물고기가 사는 작은 연못을 더 만든다고 했어요. 농구장과 꽃밭은 이미 공원에 있는 것들이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ],
+        "evidence": "the town will add a small pond with fish",
+        "why_not": {
+          "0": "농구장은 이미 있어요",
+          "1": "꽃밭도 이미 있어요",
+          "2": "산책로도 이미 있어요"
+        },
+        "key_expr": {
+          "en": "add a small pond",
+          "ko": "작은 연못을 만들다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "2": "M.swap"
+        }
+      },
+      {
+        "stem": "In the article, the word 'spot' means ____.",
+        "choices": [
+          "a round mark",
+          "a place",
+          "a game",
+          "a flower"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "여기서 'spot'은 '장소, 곳'이라는 뜻이에요. '점, 얼룩'이라는 다른 뜻도 있지만 이 문장에서는 인기 있는 '장소'를 말해요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ],
+        "evidence": "The most popular spot was the flower garden.",
+        "why_not": {
+          "0": "동그란 점이라는 뜻도 있지만 여기선 아니에요",
+          "2": "놀이라는 뜻은 없어요",
+          "3": "꽃밭은 그 자리의 이름이에요"
+        },
+        "key_expr": {
+          "en": "popular spot",
+          "ko": "인기 있는 곳"
+        },
+        "miss_type": {
+          "0": "W.meaning",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0016",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "MY TRAVEL BLOG — Day 2 on Dol Island\n\nToday was my second day on Dol Island with my family. In the morning, we rode bikes along the beach road. The wind was strong, but the sea looked beautiful.\nFor lunch, we ate seafood noodles at a small restaurant. My dad ordered one more bowl because it was so good!\nIn the afternoon, we climbed up to the old lighthouse. From the top, we could see the whole island. My legs hurt after all the walking and riding, but I want to do it all again tomorrow."
+    },
+    "questions": [
+      {
+        "stem": "What did the family do in the morning?",
+        "choices": [
+          "They rode bikes",
+          "They climbed to the lighthouse",
+          "They ate seafood noodles",
+          "They swam in the sea"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "아침에는 바닷가 길을 따라 자전거를 탔다고 했어요. 등대에 올라간 것은 오후에 한 일이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan",
+          "V.travel"
+        ],
+        "evidence": "In the morning, we rode bikes along the beach road.",
+        "why_not": {
+          "1": "등대는 오후에 올라갔어요",
+          "2": "국수는 점심에 먹었어요",
+          "3": "수영 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "rode bikes",
+          "ko": "자전거를 탔다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "How does the writer probably feel about the trip?",
+        "choices": [
+          "Bored because there was nothing to do",
+          "Angry about the strong wind",
+          "Happy and ready for more fun",
+          "Sad because the trip ended today"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "다리가 아파도 '내일 또 다 하고 싶다'고 했으니 여행이 즐겁고 신나는 거예요. 힘들었다는 말만 보고 지루했다고 고르면 안 돼요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.infer",
+          "V.travel"
+        ],
+        "evidence": "I want to do it all again tomorrow.",
+        "why_not": {
+          "0": "할 게 없다는 말은 없어요",
+          "1": "바람은 셌지만 화내지 않았어요",
+          "3": "내일 또 하고 싶다고 했어요"
+        },
+        "key_expr": {
+          "en": "do it all again",
+          "ko": "또 하고 싶다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0017",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Dear Ms. Park,\n\nI am writing this letter to thank you for helping me this year. When I moved to this school in March, I was worried because I didn't know anyone. You asked Somi to show me around, and she became my best friend.\nI also want to thank you for the reading club. At first, English books looked too difficult for me. But you said, 'Read one page a day, and you will improve.' You were right! Now I can read a whole storybook by myself.\nI will keep reading during the vacation. I hope you have a restful summer.\n\nYour student,\nHana"
+    },
+    "questions": [
+      {
+        "stem": "Why did Hana write this letter?",
+        "choices": [
+          "To join the reading club",
+          "To say sorry for being late",
+          "To ask about summer homework",
+          "To thank her teacher for her help"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "하나가 일 년 동안 도와주신 선생님께 고마움을 전하려고 쓴 편지예요. 독서 동아리 이야기는 고마운 일 중 하나일 뿐이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.gist",
+          "V.school"
+        ],
+        "evidence": "I am writing this letter to thank you for helping me this year.",
+        "why_not": {
+          "0": "이미 독서 모임을 하고 있었어요",
+          "1": "지각 이야기는 나오지 않았어요",
+          "2": "숙제 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "thank you for ~",
+          "ko": "~해 주셔서 고마워요"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "In the letter, the word 'restful' means ____.",
+        "choices": [
+          "quiet and relaxing",
+          "busy and full of work",
+          "short and cold",
+          "difficult to remember"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "'restful'은 '푹 쉴 수 있는, 편안한'이라는 뜻이에요. 'rest(쉬다)'에서 나온 말이라는 걸 떠올리면 쉽게 풀 수 있어요.",
+        "difficulty_label": 5,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ],
+        "evidence": "I hope you have a restful summer.",
+        "why_not": {
+          "1": "바쁘다는 뜻은 쉬는 것과 반대예요",
+          "2": "짧고 춥다는 뜻은 없어요",
+          "3": "외우기 어렵다는 뜻은 없어요"
+        },
+        "key_expr": {
+          "en": "a restful summer",
+          "ko": "푹 쉬는 여름"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0018",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "STUDENT NEWS — Helping Our Town's Animal Home\n\nLast week, the students of Class 5-2 visited the town animal home, where dogs and cats wait for new families. The students cleaned the rooms and washed food bowls. They also made warm blankets from old sweaters instead of throwing them away.\n'At first, some dogs hid from us,' said Yuna, a student. 'But after a few visits, they ran to the door to greet us. That made everything worth it.'\nThe class plans to visit once a month. Their teacher hopes other classes will join them, because the animal home always needs more helping hands."
+    },
+    "questions": [
+      {
+        "stem": "What can we guess about the dogs at the animal home?",
+        "choices": [
+          "They disliked the students until the end",
+          "They became friendly with the students",
+          "They found new families last week",
+          "They made blankets from old sweaters"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "처음에는 숨었던 개들이 나중에는 문까지 달려와 반겼어요. 그러니 개들이 학생들과 친해졌다는 것을 알 수 있어요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.infer",
+          "V.daily"
+        ],
+        "evidence": "But after a few visits, they ran to the door to greet us.",
+        "why_not": {
+          "0": "끝까지 싫어했다면 달려오지 않아요",
+          "2": "새 가족을 찾았다는 말은 없어요",
+          "3": "담요는 학생들이 만들었어요"
+        },
+        "key_expr": {
+          "en": "ran to greet us",
+          "ko": "반기러 달려왔다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "In the article, the words 'helping hands' mean ____.",
+        "choices": [
+          "clean food bowls",
+          "warm blankets",
+          "people who help",
+          "the doors of the rooms"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "'helping hands'는 진짜 손이 아니라 '도와주는 사람들'을 뜻하는 표현이에요. 동물의 집에 도와줄 사람이 늘 필요하다는 말이에요.",
+        "difficulty_label": 5,
+        "tags": [
+          "RS.vocab",
+          "RS.context"
+        ],
+        "evidence": "the animal home always needs more helping hands",
+        "why_not": {
+          "0": "밥그릇은 씻은 물건이에요",
+          "1": "담요는 만든 물건이에요",
+          "3": "문 이야기는 뜻과 관계없어요"
+        },
+        "key_expr": {
+          "en": "helping hands",
+          "ko": "도와줄 손길"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "3": "F.offtopic"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0019",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "CITY LIBRARY — OPENING HOURS\nMon-Fri  9:00 a.m. - 8:00 p.m.\nSaturday  10:00 a.m. - 6:00 p.m.\nSunday  CLOSED\nThe reading room on the 3rd floor closes one hour before the library."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What time does the reading room close on Saturday?",
+        "choices": [
+          "5:00 p.m.",
+          "4:00 p.m.",
+          "6:00 p.m.",
+          "7:00 p.m."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "토요일은 6시에 문을 닫고, 3층 읽기방은 그보다 한 시간 일찍 닫아요. 그래서 5시예요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "closes one hour before the library",
+        "why_not": {
+          "1": "두 시간 일찍 계산했어요",
+          "2": "도서관 전체가 닫는 시각이에요",
+          "3": "평일 시각과 헷갈렸어요"
+        },
+        "key_expr": {
+          "en": "one hour before ~",
+          "ko": "~보다 한 시간 먼저"
+        },
+        "miss_type": {
+          "1": "M.number",
+          "2": "M.swap",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "When is the library closed all day?",
+        "choices": [
+          "Monday",
+          "Sunday",
+          "Saturday",
+          "Friday"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "일요일 칸에 CLOSED라고 적혀 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "Sunday  CLOSED",
+        "why_not": {
+          "0": "월요일은 9시부터 열어요",
+          "2": "토요일은 10시부터 열어요",
+          "3": "금요일도 9시부터 열어요"
+        },
+        "key_expr": {
+          "en": "CLOSED",
+          "ko": "문 닫음"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.opposite"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0020",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "CLASS NOTE — Thursday\nDear Parents,\nTomorrow our class will visit the science museum. Students should bring a packed lunch and 2,000 won for the bus. Please do not send any snacks or drinks in glass bottles. We will return to school by 3 p.m."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What should students bring?",
+        "choices": [
+          "A glass bottle",
+          "A science book",
+          "A packed lunch",
+          "A school uniform"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "도시락과 버스비를 가져오라고 했어요. 유리병은 보내지 말라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "bring a packed lunch",
+        "why_not": {
+          "0": "유리병은 보내지 말라고 했어요",
+          "1": "책 이야기는 나오지 않았어요",
+          "3": "옷 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "a packed lunch",
+          "ko": "싸 온 도시락"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Why is this note written?",
+        "choices": [
+          "To ask for more money",
+          "To invite parents to school",
+          "To change the class time",
+          "To tell about a school trip"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "내일 과학관에 간다는 것과 준비물을 알려주는 글이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "RS.infer"
+        ],
+        "evidence": "will visit the science museum",
+        "why_not": {
+          "0": "버스비를 알려준 것뿐이에요",
+          "1": "부모님을 부르는 글이 아니에요",
+          "2": "수업 시간을 바꾼다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "field trip",
+          "ko": "현장 학습"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0021",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "[chat]\nYuna: Did you finish the group poster?\nMinjae: Almost. I still need to add the title.\nYuna: I can print it at my house tonight.\nMinjae: Great. I'll send you the file by 8.\nYuna: Then let's meet at the school gate at 8:30 tomorrow morning."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What will Minjae do tonight?",
+        "choices": [
+          "Send the file",
+          "Print the poster",
+          "Meet Yuna",
+          "Draw a new picture"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "민재가 8시까지 파일을 보내겠다고 했어요. 인쇄는 유나가 해요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "I'll send you the file by 8",
+        "why_not": {
+          "1": "인쇄는 유나가 자기 집에서 해요",
+          "2": "만나는 건 내일 아침이에요",
+          "3": "그림 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "send the file",
+          "ko": "파일을 보내다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0022",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "SCHOOL LUNCH — This Week\nMon  Rice, seaweed soup, fried egg\nTue  Noodles, salad, orange\nWed  Curry rice, pickles, yogurt\nThu  Rice, bean soup, grilled fish\nFri  SPECIAL — pizza and fruit juice\nMilk is served every day."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "On which day can students eat fish?",
+        "choices": [
+          "Monday",
+          "Thursday",
+          "Wednesday",
+          "Tuesday"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "목요일 칸에 grilled fish(구운 생선)가 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan",
+          "V.food"
+        ],
+        "evidence": "Thu  Rice, bean soup, grilled fish",
+        "why_not": {
+          "0": "월요일은 달걀부침이에요",
+          "2": "수요일은 카레예요",
+          "3": "화요일은 국수예요"
+        },
+        "key_expr": {
+          "en": "grilled fish",
+          "ko": "구운 생선"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.swap",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "What do students get every day?",
+        "choices": [
+          "Juice",
+          "Yogurt",
+          "Milk",
+          "Fruit"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "맨 아래에 우유는 날마다 나온다고 적혀 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.food"
+        ],
+        "evidence": "Milk is served every day.",
+        "why_not": {
+          "0": "주스는 금요일에만 나와요",
+          "1": "요구르트는 수요일에만 나와요",
+          "3": "과일은 화·금요일에 나와요"
+        },
+        "key_expr": {
+          "en": "every day",
+          "ko": "날마다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "3": "M.swap"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0023",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "HAPPY LAND — TICKET PRICES\nAdult (19+)  20,000 won\nYouth (13-18)  15,000 won\nChild (4-12)  10,000 won\nUnder 4  FREE\nGroups of 10 or more get 20% off."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "How much does a 10-year-old pay?",
+        "choices": [
+          "Nothing",
+          "20,000 won",
+          "15,000 won",
+          "10,000 won"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "10살은 Child(4-12) 칸에 들어가요. 그래서 10,000원이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "Child (4-12)  10,000 won",
+        "why_not": {
+          "0": "4살 미만만 무료예요",
+          "1": "19살 이상 요금이에요",
+          "2": "13살부터 18살 요금이에요"
+        },
+        "key_expr": {
+          "en": "ticket price",
+          "ko": "입장료"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.number",
+          "2": "M.number"
+        }
+      },
+      {
+        "stem": "Who can get a discount?",
+        "choices": [
+          "A group of twelve people",
+          "People who come early",
+          "Students with a school card",
+          "People who buy online"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "10명 이상이면 20% 깎아 준다고 했어요. 12명은 10명이 넘어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "Groups of 10 or more get 20% off.",
+        "why_not": {
+          "1": "일찍 오는 것과는 상관없어요",
+          "2": "학생증 이야기는 없어요",
+          "3": "인터넷 구매 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "20% off",
+          "ko": "20퍼센트 할인"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0024",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "HOW TO USE THE SCHOOL LOCKER\n1. Turn the dial right to your first number.\n2. Turn it left past zero to your second number.\n3. Turn it right again to your last number and pull the handle.\nIf the door does not open, turn the dial right three times and start again."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What should you do if the locker does not open?",
+        "choices": [
+          "Pull the handle harder",
+          "Turn the dial right three times and start again",
+          "Call a teacher right away",
+          "Use a different locker"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "안 열리면 오른쪽으로 세 번 돌리고 처음부터 다시 하라고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "turn the dial right three times and start again",
+        "why_not": {
+          "0": "손잡이를 세게 당기라는 말은 없어요",
+          "2": "선생님을 부르라는 말은 없어요",
+          "3": "다른 사물함 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "start again",
+          "ko": "처음부터 다시 하다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "In which direction do you turn the dial for the second number?",
+        "choices": [
+          "Right",
+          "Up",
+          "Left",
+          "Down"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "두 번째 숫자는 왼쪽으로 0을 지나 돌리라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "Turn it left past zero to your second number.",
+        "why_not": {
+          "0": "첫 번째와 마지막 숫자에 쓰는 쪽이에요",
+          "1": "위아래로는 돌리지 않아요",
+          "3": "위아래로는 돌리지 않아요"
+        },
+        "key_expr": {
+          "en": "turn left",
+          "ko": "왼쪽으로 돌리다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0025",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "BOOK REVIEW — 'The Paper Boat'\nBy Sohee, Grade 6\nThis book is about a boy who sends letters in paper boats down a river. At first I thought the story would be sad, but it made me laugh many times. The pictures are beautiful too. It took me only two days to finish. I think students who do not like thick books will enjoy this one."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "How did Sohee feel about the book?",
+        "choices": [
+          "It was sad from start to end",
+          "It had no pictures",
+          "It was too long to finish",
+          "It was funnier than she expected"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "슬플 줄 알았는데 여러 번 웃었다고 했어요. 생각보다 재미있었다는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "but it made me laugh many times",
+        "why_not": {
+          "0": "슬플 줄 알았지만 웃었다고 했어요",
+          "1": "그림이 아름답다고 했어요",
+          "2": "이틀 만에 다 읽었다고 했어요"
+        },
+        "key_expr": {
+          "en": "made me laugh",
+          "ko": "나를 웃게 했다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.opposite",
+          "2": "M.opposite"
+        }
+      },
+      {
+        "stem": "Who does Sohee recommend this book to?",
+        "choices": [
+          "Students who do not like thick books",
+          "Students who like thick books",
+          "Students who like drawing",
+          "Students who live near a river"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "두꺼운 책을 안 좋아하는 학생에게 좋겠다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "students who do not like thick books",
+        "why_not": {
+          "1": "그 반대로 말했어요",
+          "2": "그림 그리기 이야기는 없어요",
+          "3": "강 근처 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "recommend ~ to ...",
+          "ko": "…에게 ~을 권하다"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0026",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "RECYCLING DAY\nEvery Wednesday evening, please bring your recycling to the yard.\nPaper and cardboard go in the blue bin.\nPlastic bottles go in the yellow bin — please remove the caps first.\nGlass goes in the green bin. Do not put broken glass in any bin; wrap it in newspaper and give it to the guard."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What must you do before putting a plastic bottle in the bin?",
+        "choices": [
+          "Wash it with hot water",
+          "Take off the cap",
+          "Wrap it in newspaper",
+          "Give it to the guard"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "플라스틱 병은 뚜껑을 먼저 빼라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "please remove the caps first",
+        "why_not": {
+          "0": "씻으라는 말은 없어요",
+          "2": "신문지로 싸는 건 깨진 유리예요",
+          "3": "경비 아저씨께 드리는 건 깨진 유리예요"
+        },
+        "key_expr": {
+          "en": "remove the cap",
+          "ko": "뚜껑을 빼다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "Where does cardboard go?",
+        "choices": [
+          "The green bin",
+          "The yellow bin",
+          "The blue bin",
+          "To the guard"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "종이와 종이상자는 파란 통에 넣으라고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "Paper and cardboard go in the blue bin.",
+        "why_not": {
+          "0": "초록 통은 유리예요",
+          "1": "노란 통은 플라스틱 병이에요",
+          "3": "경비 아저씨는 깨진 유리만 받아요"
+        },
+        "key_expr": {
+          "en": "cardboard",
+          "ko": "종이상자"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "3": "M.swap"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0027",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "AFTER-SCHOOL CLASSES — Fall Term\nGuitar  Mon & Wed  4:00-5:00  (12 seats)\nBaking  Tue  4:00-5:30  (8 seats)\nRobot  Thu & Fri  4:00-5:00  (10 seats)\nSign up online by September 5. Students may choose only one class. If a class is full, your name goes on a waiting list."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "Which class meets for the longest time in one day?",
+        "choices": [
+          "Guitar",
+          "They are all the same",
+          "Robot",
+          "Baking"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "베이킹만 4시부터 5시 30분까지로 한 시간 반이에요. 나머지는 한 시간이에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "Baking  Tue  4:00-5:30",
+        "why_not": {
+          "0": "기타는 한 시간이에요",
+          "1": "베이킹만 더 길어요",
+          "2": "로봇도 한 시간이에요"
+        },
+        "key_expr": {
+          "en": "the longest",
+          "ko": "가장 긴"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.number",
+          "2": "M.number"
+        }
+      },
+      {
+        "stem": "How many classes can one student take?",
+        "choices": [
+          "Only one",
+          "Two",
+          "Three",
+          "As many as they want"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "한 사람은 한 수업만 고를 수 있다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "Students may choose only one class.",
+        "why_not": {
+          "1": "두 개는 고를 수 없어요",
+          "2": "세 개는 고를 수 없어요",
+          "3": "원하는 만큼은 고를 수 없어요"
+        },
+        "key_expr": {
+          "en": "only one",
+          "ko": "오직 하나만"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.opposite"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0028",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "STUDENT NEWS — Our School Garden Grows\nTwo years ago, the space behind the gym was empty and full of weeds. Then the Green Club asked the school for permission to plant vegetables there. Last spring the club harvested tomatoes and lettuce, and the cooking class used them for lunch. This year the club wants to add a small pond for frogs. Anyone can join the club — just come to Room 105 on Friday after school."
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What was behind the gym two years ago?",
+        "choices": [
+          "A pond",
+          "An empty space with weeds",
+          "A garden",
+          "A cooking room"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "2년 전에는 비어 있고 잡초가 가득했다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "the space behind the gym was empty and full of weeds",
+        "why_not": {
+          "0": "연못은 올해 만들고 싶어 하는 거예요",
+          "2": "정원은 그 뒤에 만들어졌어요",
+          "3": "조리실 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "full of weeds",
+          "ko": "잡초가 가득한"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does the club want to do this year?",
+        "choices": [
+          "Move to a new room",
+          "Stop growing vegetables",
+          "Make a small pond",
+          "Sell their tomatoes"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "올해는 개구리를 위한 작은 연못을 만들고 싶다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "wants to add a small pond for frogs",
+        "why_not": {
+          "0": "방을 옮긴다는 말은 없어요",
+          "1": "채소를 그만둔다는 말은 없어요",
+          "3": "판다는 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "add a pond",
+          "ko": "연못을 만들다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "How can a student join the Green Club?",
+        "choices": [
+          "Send an email to the teacher",
+          "Pay a small fee",
+          "Ask the cooking class",
+          "Go to Room 105 on Friday"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "금요일 방과 후에 105호로 오면 된다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "come to Room 105 on Friday after school",
+        "why_not": {
+          "0": "이메일 이야기는 없어요",
+          "1": "돈 이야기는 없어요",
+          "2": "조리 수업은 채소를 쓴 곳이에요"
+        },
+        "key_expr": {
+          "en": "join the club",
+          "ko": "동아리에 들어가다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.swap"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0029",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "SWIMMING POOL RULES\n1. Take a shower before you enter the pool.\n2. Do not run beside the pool.\n3. Children under 8 must come with an adult.\nThe pool is open from 9 a.m. to 6 p.m."
+    },
+    "questions": [
+      {
+        "stem": "What must you do before entering the pool?",
+        "choices": [
+          "Buy a ticket",
+          "Bring a towel",
+          "Take a shower",
+          "Call an adult"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "첫 번째 규칙에 들어가기 전 샤워를 하라고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.leisure"
+        ],
+        "evidence": "Take a shower before you enter the pool.",
+        "why_not": {
+          "0": "표 이야기는 없어요",
+          "1": "수건 이야기는 없어요",
+          "3": "어른은 8살 미만일 때예요"
+        },
+        "key_expr": {
+          "en": "take a shower",
+          "ko": "샤워를 하다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "Who needs to come with an adult?",
+        "choices": [
+          "Everyone",
+          "Only adults",
+          "Children over 8",
+          "Children under 8"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "8살보다 어린 아이는 어른과 함께 와야 한다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "Children under 8 must come with an adult.",
+        "why_not": {
+          "0": "모두는 아니에요",
+          "1": "어른은 혼자 올 수 있어요",
+          "2": "8살보다 어린 아이예요"
+        },
+        "key_expr": {
+          "en": "under 8",
+          "ko": "8살 미만"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.opposite",
+          "2": "M.opposite"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0030",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Emma wanted to give her grandmother a present.\nShe did not have much money, so she decided to make something.\nFor three evenings she painted a picture of her grandmother's cat.\nWhen Grandma opened the gift, she smiled and hugged Emma for a long time."
+    },
+    "questions": [
+      {
+        "stem": "Why did Emma make a present?",
+        "choices": [
+          "She had little money",
+          "She liked painting",
+          "Her cat was sick",
+          "Grandma asked her"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "돈이 넉넉하지 않아서 직접 만들기로 했다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "She did not have much money, so she decided to make something.",
+        "why_not": {
+          "1": "그림은 방법이지 까닭이 아니에요",
+          "2": "고양이가 아프다는 말은 없어요",
+          "3": "할머니가 부탁하지 않았어요"
+        },
+        "key_expr": {
+          "en": "did not have much money",
+          "ko": "돈이 넉넉하지 않았다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "How did Grandma feel about the gift?",
+        "choices": [
+          "Sad",
+          "Happy",
+          "Angry",
+          "Surprised and upset"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "웃으며 오랫동안 안아 주었으니 기뻐한 거예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "RS.infer"
+        ],
+        "evidence": "she smiled and hugged Emma for a long time",
+        "why_not": {
+          "0": "웃었다고 했어요",
+          "2": "웃으며 안아 주었어요",
+          "3": "속상하다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "hug for a long time",
+          "ko": "오랫동안 안아 주다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0031",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "FIELD TRIP NOTICE\nDate: Friday, October 12\nPlace: City Science Museum\nMeet at the school gate at 8:30 a.m. The bus leaves at 8:45 a.m.\nBring your lunch. You may bring a camera, but not a phone."
+    },
+    "questions": [
+      {
+        "stem": "What time does the bus leave?",
+        "choices": [
+          "8:00 a.m.",
+          "8:30 a.m.",
+          "8:45 a.m.",
+          "9:00 a.m."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "버스는 8시 45분에 떠난다고 했어요. 8시 30분은 모이는 시각이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "The bus leaves at 8:45 a.m.",
+        "why_not": {
+          "0": "그런 시각은 없어요",
+          "1": "모이는 시각이에요",
+          "3": "그런 시각은 없어요"
+        },
+        "key_expr": {
+          "en": "the bus leaves at ~",
+          "ko": "버스는 ~에 떠난다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.number",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can students NOT bring?",
+        "choices": [
+          "Lunch",
+          "A camera",
+          "A notebook",
+          "A phone"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "사진기는 되지만 전화기는 안 된다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "but not a phone",
+        "why_not": {
+          "0": "점심은 가져오라고 했어요",
+          "1": "사진기는 가져와도 돼요",
+          "2": "공책 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "may bring ~, but not ~",
+          "ko": "~는 되고 ~는 안 된다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.opposite",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0032",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Tom,\nSorry, I cannot come to soccer practice on Thursday. I hurt my ankle\nwhile I was running yesterday. The doctor said I should rest for two weeks.\nI will still come and watch the game on Saturday.\nSee you there,\nBen"
+    },
+    "questions": [
+      {
+        "stem": "Why can Ben not come to practice?",
+        "choices": [
+          "He hurt his ankle",
+          "He is busy",
+          "He moved away",
+          "He does not like soccer"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "어제 달리다가 발목을 다쳤다고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "I hurt my ankle",
+        "why_not": {
+          "1": "바쁘다는 말은 없어요",
+          "2": "이사 이야기는 없어요",
+          "3": "토요일에 경기를 보러 와요"
+        },
+        "key_expr": {
+          "en": "hurt my ankle",
+          "ko": "발목을 다치다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "What will Ben do on Saturday?",
+        "choices": [
+          "Play in the game",
+          "Watch the game",
+          "Stay in bed",
+          "See the doctor"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "토요일에는 경기를 보러 가겠다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "watch the game on Saturday",
+        "why_not": {
+          "0": "두 주 쉬어야 해요",
+          "2": "보러 가겠다고 했어요",
+          "3": "의사 이야기는 지난 일이에요"
+        },
+        "key_expr": {
+          "en": "watch the game",
+          "ko": "경기를 보다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0033",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Rain forests are warm and wet all year.\nMany kinds of animals live there, from tiny frogs to large birds.\nTall trees block the sunlight, so the ground stays dark.\nSome plants grow high on the branches to reach the light."
+    },
+    "questions": [
+      {
+        "stem": "What is this passage mainly about?",
+        "choices": [
+          "A famous bird",
+          "How to plant trees",
+          "Life in rain forests",
+          "A rainy day"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "열대우림이 어떤 곳이고 무엇이 사는지를 두루 이야기하고 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist"
+        ],
+        "evidence": "Many kinds of animals live there",
+        "why_not": {
+          "0": "새는 예로 한 번 나와요",
+          "1": "나무 심는 방법은 없어요",
+          "3": "하루 날씨 이야기가 아니에요"
+        },
+        "key_expr": {
+          "en": "rain forest",
+          "ko": "열대우림"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      },
+      {
+        "stem": "Why is the ground dark?",
+        "choices": [
+          "It rains at night",
+          "Animals hide the light",
+          "The soil is black",
+          "Tall trees block the light"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "키 큰 나무가 햇빛을 막아서 땅이 어둡다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "Tall trees block the sunlight, so the ground stays dark.",
+        "why_not": {
+          "0": "밤 이야기는 없어요",
+          "1": "동물이 막는 게 아니에요",
+          "2": "흙 색깔 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "block the sunlight",
+          "ko": "햇빛을 막다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does 'block' mean here?",
+        "choices": [
+          "Stop something",
+          "Build something",
+          "Count something",
+          "Sell something"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "햇빛이 땅까지 못 오게 막는다는 뜻이라 '막다'가 알맞아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.vocab"
+        ],
+        "evidence": "block the sunlight",
+        "why_not": {
+          "1": "짓는다는 뜻이 아니에요",
+          "2": "세는 것과 상관없어요",
+          "3": "파는 것과 상관없어요"
+        },
+        "key_expr": {
+          "en": "block",
+          "ko": "막다"
+        },
+        "miss_type": {
+          "1": "W.meaning",
+          "2": "W.meaning",
+          "3": "W.meaning"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0034",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "BOOK SALE\nSaturday only, 10 a.m. - 4 p.m.\nStory books: 2,000 won\nComic books: 3,000 won\nBuy three books and get one free.\nAll money will help the animal shelter."
+    },
+    "questions": [
+      {
+        "stem": "How much are two comic books?",
+        "choices": [
+          "3,000 won",
+          "6,000 won",
+          "5,000 won",
+          "4,000 won"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "만화책 한 권이 3,000원이니 두 권이면 6,000원이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.scan",
+          "V.shopping"
+        ],
+        "evidence": "Comic books: 3,000 won",
+        "why_not": {
+          "0": "한 권 값이에요",
+          "2": "그런 값은 없어요",
+          "3": "이야기책 두 권 값이에요"
+        },
+        "key_expr": {
+          "en": "get one free",
+          "ko": "한 권을 덤으로 받다"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "2": "M.notsaid",
+          "3": "M.number"
+        }
+      },
+      {
+        "stem": "Where does the money go?",
+        "choices": [
+          "To the school",
+          "To the writers",
+          "To an animal shelter",
+          "To the students"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "모인 돈은 모두 동물 보호소를 돕는 데 쓴다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "help the animal shelter",
+        "why_not": {
+          "0": "학교 이야기는 없어요",
+          "1": "작가 이야기는 없어요",
+          "3": "학생에게 준다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "animal shelter",
+          "ko": "동물 보호소"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0035",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Last winter our class grew beans in paper cups.\nWe put the cups near the window and gave them water twice a week.\nAt first nothing happened, and some students wanted to stop.\nAfter ten days small green leaves appeared, and everyone cheered."
+    },
+    "questions": [
+      {
+        "stem": "How often did the students water the beans?",
+        "choices": [
+          "Every day",
+          "Only once",
+          "Once a month",
+          "Twice a week"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "일주일에 두 번 물을 주었다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "gave them water twice a week",
+        "why_not": {
+          "0": "날마다는 아니에요",
+          "1": "여러 번 주었어요",
+          "2": "한 달에 한 번이 아니에요"
+        },
+        "key_expr": {
+          "en": "twice a week",
+          "ko": "일주일에 두 번"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "1": "M.number",
+          "2": "M.number"
+        }
+      },
+      {
+        "stem": "What can we learn from this story?",
+        "choices": [
+          "Waiting can be worth it",
+          "Beans need no water",
+          "Winter is the best season",
+          "Paper cups are cheap"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "아무 일도 없어 그만두려 했지만 기다리니 싹이 났어요.",
+        "difficulty_label": 4,
+        "tags": [
+          "RS.infer"
+        ],
+        "evidence": "some students wanted to stop",
+        "why_not": {
+          "1": "물을 주었다고 했어요",
+          "2": "계절을 견주지 않았어요",
+          "3": "컵 값 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "at first",
+          "ko": "처음에는"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "R3-0036",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "To: All students\nFrom: The school nurse\nThe weather is getting colder. Please wash your hands before you eat.\nIf you feel sick, come to the health room on the first floor.\nDo not share cups or towels with your friends."
+    },
+    "questions": [
+      {
+        "stem": "Who wrote this message?",
+        "choices": [
+          "A teacher",
+          "The school nurse",
+          "A student",
+          "A parent"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "맨 위에 보건 선생님이 보냈다고 적혀 있어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "RS.scan",
+          "V.school"
+        ],
+        "evidence": "From: The school nurse",
+        "why_not": {
+          "0": "선생님이라고 적혀 있지 않아요",
+          "2": "학생에게 보낸 글이에요",
+          "3": "학부모 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "school nurse",
+          "ko": "보건 선생님"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.opposite",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where is the health room?",
+        "choices": [
+          "Next to the gym",
+          "On the second floor",
+          "On the first floor",
+          "In the office"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "보건실은 1층에 있다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.scan"
+        ],
+        "evidence": "the health room on the first floor",
+        "why_not": {
+          "0": "체육관 이야기는 없어요",
+          "1": "2층이라는 말은 없어요",
+          "3": "교무실 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "on the first floor",
+          "ko": "1층에"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  }
+]

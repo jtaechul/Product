@@ -1,0 +1,1253 @@
+[
+  {
+    "type": "set",
+    "tmp_id": "L4-0001",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good morning, students. This is your teacher speaking. Sports day is this Friday. Please wear your white gym clothes and bring a water bottle. If it rains, we will play games in the gym instead. Classes will finish early, at one o'clock.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "questions": [
+      {
+        "stem": "What is this announcement about?",
+        "choices": [
+          "A school trip",
+          "A music concert",
+          "Sports day",
+          "An art show"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "선생님이 금요일 운동회에 대해 안내하고 있어요. 소풍이나 음악회 이야기가 아니에요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.school"
+        ],
+        "evidence": "Sports day is this Friday.",
+        "why_not": {
+          "0": "소풍 이야기는 나오지 않았어요",
+          "1": "음악회 이야기는 나오지 않았어요",
+          "3": "전시회 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "Sports day",
+          "ko": "운동회 날"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What should students bring?",
+        "choices": [
+          "A water bottle",
+          "An umbrella",
+          "Their lunch",
+          "A soccer ball"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "물병을 가져오라고 했어요. 비 이야기는 나왔지만 우산을 가져오라는 말은 없었어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "bring a water bottle",
+        "why_not": {
+          "1": "비 오면 체육관에서 한다고만 했어요",
+          "2": "점심 이야기는 나오지 않았어요",
+          "3": "공을 가져오라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "bring a water bottle",
+          "ko": "물병을 가져오다"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0002",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Here is today's weather. This morning will be sunny and warm, so it's a great time for a walk. But in the afternoon, clouds will move in, and rain will start around four o'clock. Don't forget your umbrella when you leave school today.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "male"
+      }
+    },
+    "questions": [
+      {
+        "stem": "How will the weather be this morning?",
+        "choices": [
+          "Cloudy and cold",
+          "Sunny and warm",
+          "Rainy and windy",
+          "Snowy and icy"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "아침에는 맑고 따뜻하다고 했어요. 비는 오후에 온다고 했으니 헷갈리지 마세요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ],
+        "evidence": "This morning will be sunny and warm",
+        "why_not": {
+          "0": "구름은 오후에 온다고 했어요",
+          "2": "비는 오후 4시쯤 시작해요",
+          "3": "눈 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "sunny and warm",
+          "ko": "맑고 따뜻한"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will happen around four o'clock?",
+        "choices": [
+          "The sun will come out.",
+          "School will finish.",
+          "It will start to snow.",
+          "It will start to rain."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "오후 4시쯤 비가 내리기 시작한다고 했어요. 눈이 아니라 비예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ],
+        "evidence": "rain will start around four o'clock",
+        "why_not": {
+          "0": "해가 나는 건 오전이에요",
+          "1": "학교 마치는 시각은 안 나와요",
+          "2": "눈이 아니라 비예요"
+        },
+        "key_expr": {
+          "en": "around four",
+          "ko": "4시쯤"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0003",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hi, Minho. This is Aunt Sora. I'm sorry, but I can't pick you up after your piano lesson today. My car won't start. Please take the number nine bus home, and call me when you arrive. I left some snacks on the kitchen table.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "questions": [
+      {
+        "stem": "Why is the speaker calling?",
+        "choices": [
+          "To wish Minho a happy birthday",
+          "To change the piano lesson",
+          "To ask about Minho's homework",
+          "To say she cannot pick him up"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "이모는 차가 고장 나서 데리러 갈 수 없다고 전화했어요. 피아노 수업을 바꾸려는 것이 아니에요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ],
+        "evidence": "I can't pick you up after your piano lesson today",
+        "why_not": {
+          "0": "생일 이야기는 나오지 않았어요",
+          "1": "피아노 시간을 바꾸는 게 아니에요",
+          "2": "숙제 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "pick you up",
+          "ko": "데리러 가다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "How should Minho go home?",
+        "choices": [
+          "By taxi",
+          "By bus",
+          "By car",
+          "On foot"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "9번 버스를 타고 집에 가라고 했어요. 이모의 차는 고장 나서 탈 수 없어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ],
+        "evidence": "Please take the number nine bus home",
+        "why_not": {
+          "0": "택시 이야기는 나오지 않았어요",
+          "2": "차는 시동이 안 걸린다고 했어요",
+          "3": "걸어가라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "take the bus home",
+          "ko": "버스 타고 집에 가다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0004",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Welcome to the city zoo. Our first stop is the penguin house. The penguins eat fish at eleven o'clock, so you can watch their feeding time soon. Please don't knock on the glass, because loud sounds scare them. After that, we'll visit the elephants.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "male"
+      }
+    },
+    "questions": [
+      {
+        "stem": "Where are the listeners?",
+        "choices": [
+          "At a zoo",
+          "At an aquarium",
+          "At a farm",
+          "At a park"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "'도시 동물원에 오신 것을 환영합니다'라고 했어요. 펭귄이 나와서 수족관 같지만 동물원이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist",
+          "V.leisure"
+        ],
+        "evidence": "Welcome to the city zoo.",
+        "why_not": {
+          "1": "수족관이 아니라 동물원이에요",
+          "2": "농장 이야기는 나오지 않았어요",
+          "3": "공원 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "the city zoo",
+          "ko": "시립 동물원"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What should visitors NOT do?",
+        "choices": [
+          "Watch the feeding time",
+          "Take a rest on a bench",
+          "Knock on the glass",
+          "Visit the elephants"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "큰 소리가 펭귄을 놀라게 해서 유리를 두드리면 안 된다고 했어요. 먹이 시간을 구경하는 것은 괜찮아요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.leisure"
+        ],
+        "evidence": "Please don't knock on the glass",
+        "why_not": {
+          "0": "먹이 주는 건 보라고 했어요",
+          "1": "쉬지 말라는 말은 없어요",
+          "3": "코끼리는 다음에 간다고 했어요"
+        },
+        "key_expr": {
+          "en": "don't knock on the glass",
+          "ko": "유리를 두드리지 마세요"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0005",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Attention, please. The children's library will close early today, at five o'clock, because we are moving books to the new reading room. If you want to borrow a book, please come to the front desk before four thirty. Thank you, and see you tomorrow.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "questions": [
+      {
+        "stem": "What time will the library close today?",
+        "choices": [
+          "At four o'clock",
+          "At five o'clock",
+          "At six o'clock",
+          "At seven o'clock"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "오늘은 5시에 일찍 문을 닫는다고 했어요. 4시 30분은 책을 빌릴 수 있는 마지막 시간이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ],
+        "evidence": "will close early today, at five o'clock",
+        "why_not": {
+          "0": "4시 30분은 책 빌리는 마감이에요",
+          "2": "6시 이야기는 나오지 않았어요",
+          "3": "7시 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "close early",
+          "ko": "일찍 문을 닫다"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What should a person do to borrow a book today?",
+        "choices": [
+          "Go to the front desk before four thirty",
+          "Come back tomorrow morning",
+          "Visit the new reading room",
+          "Call the library at five o'clock"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "책을 빌리려면 4시 30분 전에 앞쪽 데스크로 오라고 했어요. 새 열람실로 가는 것이 아니에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ],
+        "evidence": "please come to the front desk before four thirty",
+        "why_not": {
+          "1": "내일 오라는 말은 없어요",
+          "2": "새 열람실은 책을 옮기는 곳이에요",
+          "3": "5시는 문 닫는 시각이에요"
+        },
+        "key_expr": {
+          "en": "the front desk",
+          "ko": "안내 데스크"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.swap",
+          "3": "M.number"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0006",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Welcome back to our school radio show. Here's today's health tip. Do you feel sleepy in class? Try going to bed thirty minutes earlier tonight. Turn off your phone and read a book instead. Your body will thank you in the morning. Now, let's listen to some music.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "male"
+      }
+    },
+    "questions": [
+      {
+        "stem": "What is the speaker's tip about?",
+        "choices": [
+          "Eating healthy food",
+          "Doing morning exercise",
+          "Studying for tests",
+          "Going to bed earlier"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "수업 시간에 졸리면 오늘 밤 30분 일찍 자라는 이야기예요. 음식이나 운동 이야기가 아니에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "V.daily"
+        ],
+        "evidence": "Try going to bed thirty minutes earlier tonight.",
+        "why_not": {
+          "0": "음식 이야기는 나오지 않았어요",
+          "1": "운동 이야기는 나오지 않았어요",
+          "2": "시험 공부 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "go to bed earlier",
+          "ko": "더 일찍 자다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What does the speaker say to do instead of using a phone?",
+        "choices": [
+          "Listen to music",
+          "Drink warm milk",
+          "Read a book",
+          "Talk with family"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "휴대폰을 끄고 대신 책을 읽으라고 했어요. 음악은 방송에서 틀어 주는 것이지 팁이 아니에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ],
+        "evidence": "Turn off your phone and read a book instead.",
+        "why_not": {
+          "0": "음악은 방송 끝에 나와요",
+          "1": "우유 이야기는 나오지 않았어요",
+          "3": "가족과 이야기하라는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "read a book instead",
+          "ko": "대신 책을 읽다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0007",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good morning, everyone. Our bus will arrive at the strawberry farm in twenty minutes. At the farm, you can pick strawberries and put them in your own basket. Lunch is at noon, under the big tent. Please stay with your group all day.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "questions": [
+      {
+        "stem": "Where are the listeners going?",
+        "choices": [
+          "To a strawberry farm",
+          "To an apple farm",
+          "To a big market",
+          "To a mountain park"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "버스가 20분 뒤에 딸기 농장에 도착한다고 했어요. 사과 농장이 아니에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.travel"
+        ],
+        "evidence": "Our bus will arrive at the strawberry farm in twenty minutes.",
+        "why_not": {
+          "1": "사과가 아니라 딸기예요",
+          "2": "시장 이야기는 나오지 않았어요",
+          "3": "산 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "strawberry farm",
+          "ko": "딸기 농장"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Who is probably listening to this talk?",
+        "choices": [
+          "Farmers selling strawberries",
+          "A family at home",
+          "Cooks in a kitchen",
+          "Students on a school trip"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "버스로 함께 가고 '자기 조와 함께 다니세요'라고 하니 체험학습을 가는 학생들이에요. 농부에게 하는 말이 아니에요.",
+        "difficulty_label": 4,
+        "tags": [
+          "LS.infer",
+          "V.travel"
+        ],
+        "evidence": "Please stay with your group all day.",
+        "why_not": {
+          "0": "파는 게 아니라 따러 가요",
+          "1": "집이 아니라 버스로 가는 중이에요",
+          "2": "요리사 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "stay with your group",
+          "ko": "모둠과 함께 있다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0008",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hello, shoppers. Thank you for visiting our market today. For the next thirty minutes only, all bananas are half price on the first floor. Also, if you buy two bottles of milk, you will get one free. The market closes at nine tonight.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "male"
+      }
+    },
+    "questions": [
+      {
+        "stem": "Where can you hear this announcement?",
+        "choices": [
+          "At a bank",
+          "At a school",
+          "At a market",
+          "At a bus station"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "바나나와 우유를 파는 곳이니까 시장(마트)이에요. '쇼핑하시는 분들'이라는 인사말도 힌트예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.gist",
+          "V.shopping"
+        ],
+        "evidence": "Thank you for visiting our market today.",
+        "why_not": {
+          "0": "은행 이야기는 나오지 않았어요",
+          "1": "학교 이야기는 나오지 않았어요",
+          "3": "정류장 이야기는 나오지 않았어요"
+        },
+        "key_expr": {
+          "en": "half price",
+          "ko": "반값"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "A woman buys two bottles of milk. How many bottles will she take home?",
+        "choices": [
+          "Two",
+          "Three",
+          "Four",
+          "Six"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "우유 두 병을 사면 한 병을 공짜로 더 준다고 했어요. 그래서 2+1, 모두 세 병을 가져가요.",
+        "difficulty_label": 5,
+        "tags": [
+          "LS.infer",
+          "V.shopping"
+        ],
+        "evidence": "if you buy two bottles of milk, you will get one free",
+        "why_not": {
+          "0": "두 개 사면 하나를 더 줘요",
+          "2": "하나만 더 주니까 넷은 아니에요",
+          "3": "여섯은 너무 많아요"
+        },
+        "key_expr": {
+          "en": "buy two, get one free",
+          "ko": "두 개 사면 하나 더"
+        },
+        "miss_type": {
+          "0": "M.number",
+          "2": "M.number",
+          "3": "M.number"
+        }
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0009",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Attention, swimmers. The big pool will be cleaned this afternoon, so it closes at one o'clock. The small pool stays open all day. Swimming lessons will move to the small pool today. We are sorry for the trouble.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "Why will the big pool close?",
+        "choices": [
+          "For a swimming contest",
+          "For cleaning",
+          "Because of the weather",
+          "Because it is broken"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "오후에 청소를 해서 닫는다고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist"
+        ],
+        "evidence": "will be cleaned this afternoon",
+        "why_not": {
+          "0": "대회 이야기는 없었어요",
+          "2": "날씨 이야기는 없었어요",
+          "3": "고장 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "be cleaned",
+          "ko": "청소되다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where will lessons be held today?",
+        "choices": [
+          "In the big pool",
+          "In the gym",
+          "In the small pool",
+          "They are cancelled"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "수업은 작은 수영장으로 옮긴다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "move to the small pool today",
+        "why_not": {
+          "0": "큰 수영장은 닫아요",
+          "1": "체육관 이야기는 없었어요",
+          "3": "취소가 아니라 옮겨요"
+        },
+        "key_expr": {
+          "en": "move to ~",
+          "ko": "~로 옮기다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.opposite"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0010",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good afternoon, passengers. Because of heavy snow, this flight will leave one hour late. Please stay near the gate. We will serve free drinks in the waiting area. Thank you for your patience.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "Why is the flight late?",
+        "choices": [
+          "Because of rain",
+          "Because of traffic",
+          "Because of a broken engine",
+          "Because of snow"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "폭설 때문에 한 시간 늦게 출발한다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.travel"
+        ],
+        "evidence": "Because of heavy snow",
+        "why_not": {
+          "0": "비가 아니라 눈이에요",
+          "1": "길 막힘 이야기는 없었어요",
+          "2": "고장 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "because of ~",
+          "ko": "~ 때문에"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will passengers get?",
+        "choices": [
+          "Free drinks",
+          "Free meals",
+          "A new ticket",
+          "A hotel room"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "대기실에서 음료를 무료로 준다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "free drinks in the waiting area",
+        "why_not": {
+          "1": "식사 이야기는 없었어요",
+          "2": "새 표 이야기는 없었어요",
+          "3": "호텔 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "free drinks",
+          "ko": "무료 음료"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0011",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hello, class. This is a reminder about our reading project. Choose one book and write one page about your favorite character. Bring it to school by next Wednesday. If you need help choosing a book, ask me during lunch time.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What should students write about?",
+        "choices": [
+          "The writer of the book",
+          "Their favorite character",
+          "The book cover",
+          "A new ending"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "가장 좋아하는 인물에 대해 한 쪽 쓰라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.school"
+        ],
+        "evidence": "write one page about your favorite character",
+        "why_not": {
+          "0": "작가 이야기는 없었어요",
+          "2": "표지 이야기는 없었어요",
+          "3": "결말 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "favorite character",
+          "ko": "가장 좋아하는 인물"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "When is the project due?",
+        "choices": [
+          "This Friday",
+          "Next Monday",
+          "Next Wednesday",
+          "In two weeks"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "다음 주 수요일까지 가져오라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "by next Wednesday",
+        "why_not": {
+          "0": "금요일 이야기는 없었어요",
+          "1": "월요일 이야기는 없었어요",
+          "3": "2주 뒤가 아니에요"
+        },
+        "key_expr": {
+          "en": "by next Wednesday",
+          "ko": "다음 주 수요일까지"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.number"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0012",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Thank you for calling Sunny Dental. Our office is closed today for a holiday. We open again tomorrow at nine in the morning. If this is an emergency, please call the city hospital. Leave your name after the beep.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "Why is the office closed?",
+        "choices": [
+          "They moved",
+          "It is too late",
+          "The doctor is sick",
+          "It is a holiday"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "휴일이라 오늘 문을 닫는다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.gist"
+        ],
+        "evidence": "closed today for a holiday",
+        "why_not": {
+          "0": "이사 이야기는 없었어요",
+          "1": "시간이 늦어서가 아니에요",
+          "2": "의사가 아프다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "closed for a holiday",
+          "ko": "휴일이라 문 닫음"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What should a caller with an emergency do?",
+        "choices": [
+          "Call the city hospital",
+          "Wait until tomorrow",
+          "Leave a message",
+          "Come to the office"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "응급이면 시립병원에 전화하라고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "please call the city hospital",
+        "why_not": {
+          "1": "응급이면 기다리면 안 돼요",
+          "2": "메시지는 보통 경우예요",
+          "3": "오늘은 문을 닫았어요"
+        },
+        "key_expr": {
+          "en": "emergency",
+          "ko": "응급 상황"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.swap",
+          "3": "M.opposite"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0013",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Welcome to the science museum. Today's special show is about volcanoes. It starts at two o'clock in Hall B and lasts thirty minutes. Seats are free, but you must get a ticket at the front desk. Please do not bring food inside.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What is today's show about?",
+        "choices": [
+          "Dinosaurs",
+          "Volcanoes",
+          "Space",
+          "The ocean"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "화산에 대한 특별 공연이라고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist"
+        ],
+        "evidence": "special show is about volcanoes",
+        "why_not": {
+          "0": "공룡 이야기는 없었어요",
+          "2": "우주 이야기는 없었어요",
+          "3": "바다 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "special show",
+          "ko": "특별 공연"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What must visitors do to watch?",
+        "choices": [
+          "Pay for a seat",
+          "Bring their own chair",
+          "Get a ticket at the front desk",
+          "Come at one o'clock"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "자리는 공짜지만 안내데스크에서 표를 받아야 한다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "you must get a ticket at the front desk",
+        "why_not": {
+          "0": "자리는 무료라고 했어요",
+          "1": "의자 이야기는 없었어요",
+          "3": "두 시에 시작해요"
+        },
+        "key_expr": {
+          "en": "get a ticket",
+          "ko": "표를 받다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.number"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0014",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Good evening, listeners. Here is tomorrow's weather. The morning will be cloudy with a light wind. Rain will start around noon and continue until evening. Temperatures will drop to eight degrees at night. Take an umbrella if you go out after lunch.",
+      "accent": "AU",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "When will the rain start?",
+        "choices": [
+          "Early morning",
+          "At night",
+          "In the evening",
+          "Around noon"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "낮 12시쯤 비가 시작된다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "Rain will start around noon",
+        "why_not": {
+          "0": "아침은 흐리기만 해요",
+          "1": "밤은 기온 이야기예요",
+          "2": "저녁까지 이어지는 거예요"
+        },
+        "key_expr": {
+          "en": "around noon",
+          "ko": "낮 12시쯤"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "2": "M.swap"
+        }
+      },
+      {
+        "stem": "What does the speaker advise?",
+        "choices": [
+          "Take an umbrella",
+          "Wear a warm coat",
+          "Stay home all day",
+          "Drive carefully"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "점심 뒤에 나가면 우산을 가져가라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail",
+          "V.daily"
+        ],
+        "evidence": "Take an umbrella if you go out after lunch.",
+        "why_not": {
+          "1": "외투 이야기는 없었어요",
+          "2": "집에 있으라는 말은 없었어요",
+          "3": "운전 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "take an umbrella",
+          "ko": "우산을 가져가다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0015",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Attention, shoppers. The lost child center is on the first floor near the main entrance. A little boy in a yellow jacket is waiting there. His name is Junsu and he is five years old. Will his family please come to the center.",
+      "accent": "US",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "Who is waiting at the center?",
+        "choices": [
+          "A lost dog",
+          "A little boy",
+          "A store worker",
+          "A teacher"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "노란 잠바를 입은 남자아이가 기다리고 있다고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.gist"
+        ],
+        "evidence": "A little boy in a yellow jacket is waiting",
+        "why_not": {
+          "0": "강아지 이야기는 없었어요",
+          "2": "직원 이야기는 없었어요",
+          "3": "선생님 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "lost child center",
+          "ko": "미아 보호소"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where is the center?",
+        "choices": [
+          "Outside the store",
+          "On the second floor",
+          "On the first floor",
+          "Next to the parking lot"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "1층 정문 근처에 있다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "on the first floor",
+        "why_not": {
+          "0": "가게 밖이 아니에요",
+          "1": "2층 이야기는 없었어요",
+          "3": "주차장 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "near the main entrance",
+          "ko": "정문 근처에"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.number",
+          "3": "M.notsaid"
+        }
+      }
+    ]
+  },
+  {
+    "type": "set",
+    "tmp_id": "L4-0016",
+    "section": "LC",
+    "part": "L4",
+    "passage": {
+      "kind": "talk",
+      "script": "N: Hello, campers. Tomorrow we will hike to Blue Rock. Wear comfortable shoes and bring one bottle of water. We leave right after breakfast, so please be at the front gate by eight. Anyone who is late will stay at the camp with Mr. Kim.",
+      "accent": "UK",
+      "tts_voices": {
+        "N": "female"
+      }
+    },
+    "status": "active",
+    "questions": [
+      {
+        "stem": "What should campers bring?",
+        "choices": [
+          "A camera",
+          "A blanket",
+          "A lunch box",
+          "A bottle of water"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "물 한 병을 가져오라고 했어요.",
+        "difficulty_label": 1,
+        "tags": [
+          "LS.detail"
+        ],
+        "evidence": "bring one bottle of water",
+        "why_not": {
+          "0": "사진기 이야기는 없었어요",
+          "1": "담요 이야기는 없었어요",
+          "2": "도시락 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "bring one bottle",
+          "ko": "한 병 가져오다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What happens to campers who arrive late?",
+        "choices": [
+          "They stay at the camp",
+          "They hike alone",
+          "They take a bus",
+          "They start earlier"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "늦는 사람은 김 선생님과 캠프에 남는다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer"
+        ],
+        "evidence": "will stay at the camp with Mr. Kim",
+        "why_not": {
+          "1": "혼자 간다는 말은 없었어요",
+          "2": "버스 이야기는 없었어요",
+          "3": "늦는 것과 반대예요"
+        },
+        "key_expr": {
+          "en": "stay at the camp",
+          "ko": "캠프에 남다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.opposite"
+        }
+      }
+    ]
+  }
+]
