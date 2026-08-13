@@ -1,7 +1,7 @@
 {
   "id": "066",
   "created_at": "2026-08-12T11:41:11+00:00",
-  "updated_at": "2026-08-12T11:41:11+00:00",
+  "updated_at": "2026-08-13T14:23:15+00:00",
   "status": "published",
   "category": "marine_life",
   "series": "海の生き物 図鑑",
@@ -66,7 +66,9 @@
     "video_url": "https://github.com/jtaechul/Product/releases/download/content-066/reels_066.mp4",
     "rev": "31592226126",
     "cover_url": "https://github.com/jtaechul/Product/releases/download/content-066/cover_066.jpg",
-    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-066/ytthumb_066.jpg"
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-066/ytthumb_066.jpg",
+    "youtube_url": "https://youtu.be/9vPxNkr2Rxw",
+    "youtube_privacy": "public"
   },
   "post": null
 }
