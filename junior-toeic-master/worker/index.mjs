@@ -6,7 +6,7 @@ import {
   verifyPin, hashPin, makeToken, requireAuth, requireRole, verifyToken,
   loginLockedFor, noteLoginFail, clearLoginFails,
   isStudentPin, isStaffSecret, STAFF_ROLES, SECRET_MIN, weakSecretReason,
-  requireParent, requireParentAccount,
+  requireParent, requireParentAccount, SUSPENDED_MSG,
   hashSecret, verifySecret, makeAccountToken,
 } from './auth.mjs';
 import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions } from './engine.mjs';
@@ -577,6 +577,9 @@ app.post('/api/parent/login-email', async (c) => {
     }, lockedSeconds ? 429 : 401);
   }
   await clearLoginFails(c.env.DB, key);
+  // 정지 안내는 비밀번호가 맞은 뒤에만 한다 — 먼저 말하면 아무나 이메일만 넣어
+  // '이 집이 정지됐는지'를 알아낼 수 있다.
+  if (parent.status === 'suspended') return c.json({ error: SUSPENDED_MSG }, 403);
   return c.json({
     token: await makeAccountToken(parent),
     parent: { email: parent.email, display_name: parent.display_name },
@@ -613,7 +616,7 @@ app.post('/api/family/login', async (c) => {
     }, lockedSeconds ? 429 : 401);
   };
 
-  const parent = await c.env.DB.prepare('SELECT id FROM parents WHERE email = ?1').bind(email).first();
+  const parent = await c.env.DB.prepare('SELECT id, status FROM parents WHERE email = ?1').bind(email).first();
   if (!parent) return fail();
 
   const { results: kids } = await c.env.DB.prepare(
@@ -625,6 +628,8 @@ app.post('/api/family/login', async (c) => {
   for (const k of kids) if (await verifyPin(password, k.pin_hash)) matched.push(k);
   if (!matched.length) return fail();
   await clearLoginFails(c.env.DB, key);
+  // 정지 안내는 비밀번호가 맞은 뒤에만 (위 학부모 로그인과 같은 이유)
+  if (parent.status === 'suspended') return c.json({ error: SUSPENDED_MSG }, 403);
 
   const pickedId = clean(b.child_id, 40);
   const user = pickedId
@@ -794,7 +799,7 @@ const clean = (s, max) => String(s ?? '').trim().slice(0, max);
 app.get('/api/admin/overview', ...admin, async (c) => {
   const [{ results: parents }, { results: kids }, pending] = await Promise.all([
     c.env.DB.prepare(
-      `SELECT id, email, display_name, consent_at, created_at FROM parents ORDER BY created_at DESC LIMIT 500`
+      `SELECT id, email, display_name, status, consent_at, created_at FROM parents ORDER BY created_at DESC LIMIT 500`
     ).all(),
     c.env.DB.prepare(
       `SELECT u.id, u.parent_id, u.display_name, u.created_at,
@@ -807,7 +812,7 @@ app.get('/api/admin/overview', ...admin, async (c) => {
   const byParent = {};
   for (const k of kids) (byParent[k.parent_id] ||= []).push(k);
   const families = parents.map((p) => ({
-    id: p.id, email: p.email, display_name: p.display_name,
+    id: p.id, email: p.email, display_name: p.display_name, status: p.status,
     joined: p.created_at, children: byParent[p.id] ?? [],
   }));
   const today = kstDate();
@@ -822,6 +827,148 @@ app.get('/api/admin/overview', ...admin, async (c) => {
     today,
     feedback_pending: pending.n,
   });
+});
+
+// ── 가족 관리 (2026-08-12, 사용자 선택: 4종 전부) ──
+// 원칙은 그대로다: 관리자는 비밀번호를 정하거나 볼 수 없다. 여기 있는 건
+// 상세·메모(문의 대응), 정지/해제(어뷰징), 탈퇴(법적 의무), 재설정 링크(잠긴 가족 구조)뿐이고
+// 정지·해제·링크 발급은 메모로 자동 기록되어 감사 흔적이 남는다.
+
+const familyOf = async (db, id) => db.prepare(
+  `SELECT id, email, display_name, status, consent_at, created_at, reset_expires_at
+     FROM parents WHERE id = ?1`
+).bind(clean(id, 40)).first();
+
+// 정지/해제/링크 발급을 메모로 자동 기록 — 몇 달 뒤 "이 집 왜 정지했더라"에 답하는 건 이 줄뿐이다
+const addNote = (db, parentId, body, by) => db.prepare(
+  `INSERT INTO admin_notes (id, parent_id, body, created_by, created_at) VALUES (?1, ?2, ?3, ?4, ?5)`
+).bind(crypto.randomUUID(), parentId, body, by, nowISO()).run();
+
+// 가족 한 팀 자세히 — 문의 전화를 받으며 여는 화면
+app.get('/api/admin/family/:id', ...admin, async (c) => {
+  const fam = await familyOf(c.env.DB, c.req.param('id'));
+  if (!fam) return c.json({ error: '가족을 찾을 수 없습니다' }, 404);
+  const [{ results: children }, { results: notes }, { results: feedback }] = await Promise.all([
+    c.env.DB.prepare(
+      `SELECT u.id, u.display_name, u.created_at,
+              (SELECT COUNT(*) FROM answers WHERE user_id = u.id) AS answers,
+              (SELECT SUM(is_correct) FROM answers WHERE user_id = u.id) AS correct,
+              (SELECT MAX(date(answered_at, '+9 hours')) FROM answers WHERE user_id = u.id) AS last_day
+         FROM users u WHERE u.parent_id = ?1 AND u.role = 'student' ORDER BY u.created_at`
+    ).bind(fam.id).all(),
+    c.env.DB.prepare(
+      `SELECT body, created_by, created_at FROM admin_notes
+        WHERE parent_id = ?1 ORDER BY created_at DESC LIMIT 50`
+    ).bind(fam.id).all(),
+    c.env.DB.prepare(
+      `SELECT f.kind, f.note, f.created_at, f.handled_at, q.part, q.stem, u.display_name
+         FROM feedback f
+         JOIN users u ON u.id = f.user_id AND u.parent_id = ?1
+         LEFT JOIN questions q ON q.id = f.question_id
+        ORDER BY f.created_at DESC LIMIT 20`
+    ).bind(fam.id).all(),
+  ]);
+  return c.json({ family: fam, children, notes, feedback, today: kstDate() });
+});
+
+// 운영 메모 남기기
+app.post('/api/admin/family/:id/note', ...admin, async (c) => {
+  const fam = await familyOf(c.env.DB, c.req.param('id'));
+  if (!fam) return c.json({ error: '가족을 찾을 수 없습니다' }, 404);
+  const body = clean((await c.req.json().catch(() => ({}))).body, 500);
+  if (!body) return c.json({ error: '메모 내용을 적어주세요' }, 400);
+  await addNote(c.env.DB, fam.id, body, c.get('user').login_id);
+  return c.json({ ok: true });
+});
+
+// 일시 정지 / 해제 — 데이터는 그대로 두고 로그인만 막는다.
+// 학부모·아이 로그인, 살아 있던 토큰까지 그 즉시 막힌다(auth.mjs가 status를 본다).
+app.post('/api/admin/family/:id/suspend', ...admin, async (c) => {
+  const fam = await familyOf(c.env.DB, c.req.param('id'));
+  if (!fam) return c.json({ error: '가족을 찾을 수 없습니다' }, 404);
+  const suspend = (await c.req.json().catch(() => ({}))).suspend !== false;
+  await c.env.DB.prepare(`UPDATE parents SET status = ?2 WHERE id = ?1`)
+    .bind(fam.id, suspend ? 'suspended' : 'active').run();
+  await addNote(c.env.DB, fam.id, suspend ? '[정지] 계정을 일시 정지함' : '[해제] 정지를 풀어줌',
+    c.get('user').login_id);
+  return c.json({ ok: true, status: suspend ? 'suspended' : 'active' });
+});
+
+// 비밀번호 재설정 링크 발급 — 잠긴 가족을 구하는 유일한 문.
+// 관리자가 새 비밀번호를 정해 주는 방식은 일부러 안 만들었다: 링크만 만들어 전달하고,
+// 새 비밀번호는 학부모가 그 링크에서 직접 정한다. 관리자는 끝까지 비밀번호를 모른다.
+// 토큰 평문은 이 응답에 딱 한 번 실리고 서버에는 해시만 남는다(PIN과 같은 규칙).
+app.post('/api/admin/family/:id/reset-link', ...admin, async (c) => {
+  const fam = await familyOf(c.env.DB, c.req.param('id'));
+  if (!fam) return c.json({ error: '가족을 찾을 수 없습니다' }, 404);
+  const raw = new Uint8Array(24);
+  crypto.getRandomValues(raw);
+  const secret = btoa(String.fromCharCode(...raw)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const expires = new Date(Date.now() + 24 * 3600_000).toISOString();
+  await c.env.DB.prepare(
+    `UPDATE parents SET reset_token_hash = ?2, reset_expires_at = ?3 WHERE id = ?1`
+  ).bind(fam.id, await hashPin(secret), expires).run();
+  await addNote(c.env.DB, fam.id, '[재설정] 비밀번호 재설정 링크를 발급함 (24시간 유효)',
+    c.get('user').login_id);
+  const url = `${new URL(c.req.url).origin}/parent#reset=${fam.id}.${secret}`;
+  return c.json({ url, expires_at: expires,
+    note: '이 링크는 지금 한 번만 보입니다. 학부모에게 직접 전달하세요.' });
+});
+
+// 탈퇴(삭제) — 개인정보보호법상 삭제 요청은 지체 없이 처리해야 한다.
+// 가족의 모든 행을 지운다(아이 학습 기록·신고·메모·학부모 행까지). 복구는 없다.
+// 실수 방지로 가족 이메일을 그대로 다시 입력받는다.
+app.delete('/api/admin/family/:id', ...admin, async (c) => {
+  const fam = await familyOf(c.env.DB, c.req.param('id'));
+  if (!fam) return c.json({ error: '가족을 찾을 수 없습니다' }, 404);
+  const confirm = String((await c.req.json().catch(() => ({}))).email ?? '').trim().toLowerCase();
+  if (confirm !== fam.email) {
+    return c.json({ error: '확인용 이메일이 다릅니다. 가족의 이메일을 그대로 입력해주세요' }, 400);
+  }
+  const { results: kids } = await c.env.DB.prepare(
+    `SELECT id FROM users WHERE parent_id = ?1`
+  ).bind(fam.id).all();
+  const ids = kids.map((k) => k.id);
+  const stmts = [];
+  if (ids.length) {
+    const marks = ids.map((_, i) => `?${i + 1}`).join(',');
+    // 자식 행(외래키로 얽힌 것)부터 지운다 — 순서가 틀리면 FK 제약에 걸려 중간에 멈춘다
+    for (const t of ['answers', 'daily_sets', 'review_queue', 'user_tag_skills', 'user_skill_daily',
+                     'user_daily_stats', 'user_stats', 'user_badges', 'assignment_targets',
+                     'feedback', 'sessions']) {
+      stmts.push(c.env.DB.prepare(`DELETE FROM ${t} WHERE user_id IN (${marks})`).bind(...ids));
+    }
+    stmts.push(c.env.DB.prepare(`DELETE FROM users WHERE id IN (${marks})`).bind(...ids));
+  }
+  stmts.push(c.env.DB.prepare('DELETE FROM admin_notes WHERE parent_id = ?1').bind(fam.id));
+  stmts.push(c.env.DB.prepare('DELETE FROM login_attempts WHERE login_id IN (?1, ?2)')
+    .bind(`PE:${fam.email}`, `FC:${fam.email}`));
+  stmts.push(c.env.DB.prepare('DELETE FROM parents WHERE id = ?1').bind(fam.id));
+  await c.env.DB.batch(stmts);   // 한 트랜잭션 — 반쯤 지워진 가족을 남기지 않는다
+  return c.json({ ok: true, deleted: { children: ids.length } });
+});
+
+// ── 비밀번호 재설정 (공개 — 링크를 받은 학부모가 쓴다) ──
+// 토큰 = <parentId>.<secret>. 주소의 # 뒤에 실려 서버 로그에도 남지 않는다.
+app.post('/api/parent/reset-password', async (c) => {
+  const b = await c.req.json().catch(() => ({}));
+  const [pid, secret] = String(b.token ?? '').split('.');
+  const password = String(b.password ?? '');
+  const bad = () => c.json({ error: '링크가 만료됐거나 이미 사용됐어요. 새 링크를 요청해주세요' }, 400);
+  if (!pid || !secret) return bad();
+  const parent = await c.env.DB.prepare('SELECT * FROM parents WHERE id = ?1').bind(clean(pid, 40)).first();
+  if (!parent?.reset_token_hash || !parent.reset_expires_at) return bad();
+  if (Date.parse(parent.reset_expires_at) < Date.now()) return bad();
+  if (!(await verifyPin(secret, parent.reset_token_hash))) return bad();
+  const weak = weakSecretReason(password, parent.email.split('@')[0]);
+  if (weak) return c.json({ error: weak }, 400);
+  // 새 해시를 넣으면 기존 학부모 토큰은 전부 무효(토큰 서명 열쇠가 비밀번호 해시).
+  // 토큰도 지워서 한 번만 쓰이게 한다. 아이 로그인은 건드리지 않는다.
+  await c.env.DB.prepare(
+    `UPDATE parents SET password_hash = ?2, reset_token_hash = NULL, reset_expires_at = NULL WHERE id = ?1`
+  ).bind(parent.id, await hashSecret(password)).run();
+  await clearLoginFails(c.env.DB, `PE:${parent.email}`);
+  return c.json({ ok: true, email: parent.email });
 });
 
 // 신고 목록 — 아이가 어느 문항에서 막혔는지. 기본은 아직 안 본 것만.

@@ -70,12 +70,13 @@ const accountCard = (parent, extra = '') => `
 // (학원 영업을 하지 않기로 했다 — 학부모가 고객이다).
 const err = (el, m) => { el.innerHTML = `<div class="result bad"><p>${esc(m)}</p></div>`; };
 
-function showLogin() {
+function showLogin(notice = '') {
   view.innerHTML = `
     <div class="card p-login">
       ${BRAND}
       <div><h1 class="greet-title" style="font-size:1.15rem">우리 아이 학습 보기</h1>
         <p class="card-note" style="margin-top:4px">가입하신 <b>이메일</b>과 <b>비밀번호</b>를 넣어주세요.</p></div>
+      ${notice ? `<div class="result ok" style="margin-top:10px"><p>${esc(notice)}</p></div>` : ''}
       <label class="field" style="margin-top:12px"><span>이메일</span>
         <input data-email type="email" autocapitalize="off" autocomplete="username"
           inputmode="email" placeholder="parent@example.com" /></label>
@@ -425,4 +426,44 @@ async function showHome(childId = currentChildId) {
   });
 }
 
-auth ? showHome() : showLogin();
+// ── 비밀번호 재설정 (관리자가 만들어 준 링크로 들어온다) ──
+// 토큰은 주소의 # 뒤에 실려 있어 서버 기록에도 남지 않는다. 새 비밀번호는
+// 여기서 학부모가 직접 정한다 — 링크를 만들어 준 관리자도 알 수 없다.
+function showReset(token) {
+  view.innerHTML = `
+    <div class="card p-login">
+      ${BRAND}
+      <div><h1 class="greet-title" style="font-size:1.15rem">새 비밀번호 정하기</h1>
+        <p class="card-note" style="margin-top:4px">이 링크는 한 번만 쓸 수 있어요.
+          새 비밀번호는 지금 정하는 분만 알게 됩니다.</p></div>
+      <label class="field" style="margin-top:12px"><span>새 비밀번호 (8자 이상)</span>
+        <input data-pw type="password" autocomplete="new-password" placeholder="8자 이상, 뻔하지 않게" /></label>
+      <label class="field" style="margin-top:10px"><span>새 비밀번호 다시</span>
+        <input data-pw2 type="password" autocomplete="new-password" /></label>
+      <button class="btn-primary" data-go style="margin-top:12px">비밀번호 바꾸기</button>
+      <div data-msg style="margin-top:10px"></div>
+      <p class="card-note" style="margin-top:10px">아이 비밀번호는 그대로예요 —
+        바뀌는 건 보호자 비밀번호뿐입니다.</p>
+    </div>`;
+  const msg = view.querySelector('[data-msg]');
+  const go = async () => {
+    const pw = view.querySelector('[data-pw]').value;
+    const again = view.querySelector('[data-pw2]').value;
+    if (pw.length < 8) return err(msg, '비밀번호를 8자 이상으로 정해주세요.');
+    if (pw !== again) return err(msg, '두 비밀번호가 달라요. 같은 것을 두 번 넣어주세요.');
+    try {
+      await api('/api/parent/reset-password', {
+        method: 'POST', body: JSON.stringify({ token, password: pw }) });
+      history.replaceState(null, '', location.pathname);   // 주소에서 토큰을 지운다
+      saveAuth(null);
+      showLogin('비밀번호를 바꿨어요. 새 비밀번호로 로그인해주세요.');
+    } catch (e) { err(msg, e.message); }
+  };
+  view.querySelector('[data-go]').addEventListener('click', go);
+  view.querySelectorAll('input').forEach((i) =>
+    i.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); }));
+}
+
+const resetToken = /^#reset=(.+)$/.exec(location.hash)?.[1];
+if (resetToken) showReset(resetToken);
+else auth ? showHome() : showLogin();

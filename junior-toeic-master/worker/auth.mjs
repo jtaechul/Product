@@ -78,8 +78,13 @@ export async function verifyToken(db, token) {
   const [userId, expS, sig] = parts;
   const exp = Number(expS);
   if (!userId || !sig || !Number.isFinite(exp) || exp * 1000 < Date.now()) return null;
-  const user = await db.prepare('SELECT * FROM users WHERE id = ?1').bind(userId).first();
-  if (!user) return null;
+  // 가족이 일시 정지되면 아이의 남은 토큰도 그 즉시 죽어야 한다 — 로그인만 막고
+  // 발급된 토큰을 살려두면 정지가 30일(토큰 수명) 늦게 듣는 셈이 된다.
+  const user = await db.prepare(
+    `SELECT u.*, p.status AS parent_status FROM users u
+       LEFT JOIN parents p ON p.id = u.parent_id WHERE u.id = ?1`
+  ).bind(userId).first();
+  if (!user || user.parent_status === 'suspended') return null;
   const want = await hmacHex(user.pin_hash, `${userId}.${exp}`);
   return sig === want ? user : null;
 }
@@ -121,6 +126,7 @@ export const requireParent = async (c, next) => {
   const m = /^Bearer\s+(.+)$/.exec(c.req.header('Authorization') || '');
   const parent = m ? await verifyParentToken(c.env.DB, m[1]) : null;
   if (!parent) return c.json({ error: '로그인이 필요합니다' }, 401);
+  if (parent.status === 'suspended') return c.json({ error: SUSPENDED_MSG }, 403);
 
   const wanted = c.req.query('child_id');
   const child = await (wanted
@@ -148,9 +154,13 @@ export const requireParentAccount = async (c, next) => {
   const m = /^Bearer\s+(.+)$/.exec(c.req.header('Authorization') || '');
   const parent = m ? await verifyParentToken(c.env.DB, m[1]) : null;
   if (!parent) return c.json({ error: '학부모 계정으로 로그인해주세요' }, 401);
+  if (parent.status === 'suspended') return c.json({ error: SUSPENDED_MSG }, 403);
   c.set('parent', parent);
   await next();
 };
+
+// 정지된 가족에게 보여줄 한 문장 — 로그인·토큰 검사 어디서 걸려도 같은 말이 나오게 한곳에 둔다
+export const SUSPENDED_MSG = '계정이 일시 정지되었습니다. 문의를 남겨주시면 확인 후 풀어드릴게요.';
 
 // ── 로그인 시도 제한 ──
 // PIN이 저엔트로피라(6자리 = 100만 가지) 막지 않으면 스크립트로 다 넣어볼 수 있다.

@@ -158,6 +158,7 @@ function bindTabs() {
 // ── 가족 현황 ──
 // 한 가족 = 학부모 한 명(이메일)과 그 아이들. 여기서 보는 질문은 딱 두 가지다:
 // "가입이 늘고 있나" 그리고 "가입한 아이가 실제로 매일 쓰고 있나"(리텐션 = 유료 전환의 바탕).
+// 가족을 누르면 상세 화면 — 문의 대응·메모·정지·탈퇴·재설정 링크는 전부 거기서 한다.
 function renderFamilies(o) {
   const kid = (k) => `
     <span class="row-s">· ${esc(k.display_name)} — ${
@@ -167,13 +168,15 @@ function renderFamilies(o) {
         : '아직 시작 안 함'}</span>`;
 
   const list = o.families.length ? o.families.map((f) => `
-    <div class="row">
+    <button class="row" data-family="${esc(f.id)}">
       <span class="row-main">
-        <span class="row-t">${esc(f.display_name)} <span class="chip">${esc(f.email)}</span></span>
+        <span class="row-t">${esc(f.display_name)} <span class="chip">${esc(f.email)}</span>${
+          f.status === 'suspended' ? ' <span class="chip k-answer">정지됨</span>' : ''}</span>
         <span class="row-s">가입 ${esc(String(f.joined).slice(0, 10))} · 아이 ${f.children.length}명</span>
         ${f.children.map(kid).join('')}
       </span>
-    </div>`).join('')
+      <span class="row-num">열기</span>
+    </button>`).join('')
     : `<p class="empty">아직 가입한 가족이 없어요.<br/>
        지인 테스터에게는 학부모 가입 주소(<b>/parent</b>)를 보내주세요 — 무료입니다.</p>`;
 
@@ -189,13 +192,173 @@ function renderFamilies(o) {
     </div>
     <div class="card">
       <div class="card-head"><span class="card-title">가입한 가족</span>
-        <span class="card-note">최근 가입 순</span></div>
+        <span class="card-note">눌러서 관리 · 최근 가입 순</span></div>
       <div class="rows">${list}</div>
     </div>
-    <p class="card-note" style="margin-top:10px">이 화면은 읽기 전용입니다. 가입·아이 추가·비밀번호
-      변경은 모두 학부모가 학부모 화면에서 직접 합니다 — 비밀번호는 서버에 암호로만 저장되어
-      관리자도 볼 수 없어요.</p>`;
+    <p class="card-note" style="margin-top:10px">비밀번호는 서버에 암호로만 저장되어 관리자도
+      볼 수 없어요. 비밀번호를 잊은 가족에게는 상세 화면에서 <b>재설정 링크</b>를 만들어 보내주세요 —
+      새 비밀번호는 학부모가 직접 정합니다.</p>`;
   bindTabs();
+  view.querySelectorAll('[data-family]').forEach((b) =>
+    b.addEventListener('click', () => showFamily(b.dataset.family)));
+}
+
+// ── 가족 한 팀 상세 — 문의 전화를 받으며 여는 화면 ──
+async function showFamily(id) {
+  view.innerHTML = `<p class="empty">불러오는 중...</p>`;
+  let d;
+  try { d = await api(`/api/admin/family/${encodeURIComponent(id)}`); }
+  catch (e) { if (!guard(e)) view.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; return; }
+  const f = d.family;
+  const suspended = f.status === 'suspended';
+
+  const kids = d.children.length ? d.children.map((k) => `
+    <div class="row"><span class="row-main">
+      <span class="row-t">${esc(k.display_name)}</span>
+      <span class="row-s">${k.answers
+        ? `푼 문항 ${k.answers.toLocaleString()}개 · 정답률 ${Math.round((k.correct ?? 0) / k.answers * 100)}%${
+            k.last_day ? ` · 마지막 학습 ${k.last_day === d.today ? '오늘' : esc(k.last_day)}` : ''}`
+        : '아직 시작 안 함'} · 등록 ${esc(String(k.created_at).slice(0, 10))}</span>
+    </span></div>`).join('') : `<p class="empty">등록된 아이가 없어요.</p>`;
+
+  const notes = d.notes.length ? d.notes.map((n) => `
+    <div class="row"><span class="row-main">
+      <span class="row-t" style="font-weight:600">${esc(n.body)}</span>
+      <span class="row-s">${esc(n.created_by)} · ${esc(String(n.created_at).slice(0, 16).replace('T', ' '))}</span>
+    </span></div>`).join('') : `<p class="empty">아직 메모가 없어요.</p>`;
+
+  const KIND = { audio: '소리가 안 들려요', image: '사진이 안 맞아요', hard: '무슨 말인지 모르겠어요',
+    answer: '답이 이상해요', etc: '그 밖에' };
+  const fb = d.feedback.length ? d.feedback.map((x) => `
+    <div class="row">
+      <span class="chip">${esc(KIND[x.kind] ?? x.kind)}</span>
+      <span class="row-main">
+        <span class="row-t">${esc(x.stem || (x.part ? `${x.part} 문항` : '화면 전체'))}</span>
+        <span class="row-s">${esc(x.display_name)} · ${esc(String(x.created_at).slice(0, 16).replace('T', ' '))}${
+          x.note ? ` · “${esc(x.note)}”` : ''}${x.handled_at ? ' · 확인함' : ''}</span>
+      </span>
+    </div>`).join('') : `<p class="empty">이 가족이 보낸 신고가 없어요.</p>`;
+
+  view.innerHTML = `${tabsHtml()}
+    <button class="btn ghost small" data-back style="margin-bottom:12px">← 가족 목록</button>
+    <div class="card">
+      <div class="card-head"><span class="card-title">${esc(f.display_name)}님 가족${
+        suspended ? ' <span class="chip k-answer">정지됨</span>' : ''}</span></div>
+      <p class="card-note">${esc(f.email)} · 가입 ${esc(String(f.created_at).slice(0, 10))} ·
+        동의 ${esc(String(f.consent_at).slice(0, 10))}</p>
+      <div class="modal-actions" style="margin-top:12px">
+        <button class="btn ghost" data-reset>비밀번호 재설정 링크</button>
+        <button class="btn ghost" data-suspend>${suspended ? '정지 해제' : '일시 정지'}</button>
+      </div>
+      <p class="msg" data-act-msg></p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">아이 ${d.children.length}명</span></div>
+      <div class="rows">${kids}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">운영 메모</span>
+        <span class="card-note">문의·처리 이력을 남겨두세요</span></div>
+      <label class="field" style="width:100%">
+        <textarea data-note rows="2" maxlength="500" placeholder="예: 8/12 비밀번호 문의 → 재설정 링크 발송"></textarea>
+      </label>
+      <div style="margin-top:8px"><button class="btn" data-note-go>메모 남기기</button></div>
+      <div class="rows" style="margin-top:10px">${notes}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">이 가족이 보낸 신고</span></div>
+      <div class="rows">${fb}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">탈퇴 처리</span></div>
+      <p class="card-note">학부모가 탈퇴(삭제)를 요청했을 때만 쓰세요. 아이 학습 기록·신고·메모까지
+        <b>전부 지워지고 되돌릴 수 없습니다.</b> 개인정보 삭제 요청은 법적으로 지체 없이 처리해야 해요.</p>
+      <div style="margin-top:10px"><button class="btn ghost small" data-del style="color:#dc2626">이 가족 탈퇴 처리…</button></div>
+    </div>`;
+  bindTabs();
+  view.querySelector('[data-back]').addEventListener('click', showMain);
+  const msg = view.querySelector('[data-act-msg]');
+
+  // 재설정 링크 — 평문 토큰이 보이는 유일한 순간. 모달로 한 번 보여주고 끝.
+  view.querySelector('[data-reset]').addEventListener('click', async (e) => {
+    if (!confirm(`${f.display_name}님에게 줄 비밀번호 재설정 링크를 만듭니다.\n예전에 만든 링크가 있다면 못 쓰게 됩니다. 계속할까요?`)) return;
+    e.target.disabled = true;
+    try {
+      const r = await api(`/api/admin/family/${encodeURIComponent(f.id)}/reset-link`, { method: 'POST' });
+      showResetLink(f, r);
+    } catch (err2) { if (!guard(err2)) { msg.className = 'msg bad'; msg.textContent = err2.message; } }
+    e.target.disabled = false;
+  });
+
+  view.querySelector('[data-suspend]').addEventListener('click', async (e) => {
+    const q = suspended
+      ? '정지를 풀어줍니다. 가족이 다시 로그인할 수 있게 돼요. 계속할까요?'
+      : '이 가족을 일시 정지합니다.\n학부모·아이 모두 바로 로그인이 막히고, 데이터는 그대로 남아요. 계속할까요?';
+    if (!confirm(q)) return;
+    e.target.disabled = true;
+    try {
+      await api(`/api/admin/family/${encodeURIComponent(f.id)}/suspend`,
+        { method: 'POST', body: JSON.stringify({ suspend: !suspended }) });
+      showFamily(f.id);
+    } catch (err2) {
+      if (!guard(err2)) { msg.className = 'msg bad'; msg.textContent = err2.message; e.target.disabled = false; }
+    }
+  });
+
+  view.querySelector('[data-note-go]').addEventListener('click', async (e) => {
+    const body = view.querySelector('[data-note]').value.trim();
+    if (!body) return;
+    e.target.disabled = true;
+    try {
+      await api(`/api/admin/family/${encodeURIComponent(f.id)}/note`,
+        { method: 'POST', body: JSON.stringify({ body }) });
+      showFamily(f.id);
+    } catch (err2) {
+      if (!guard(err2)) { msg.className = 'msg bad'; msg.textContent = err2.message; e.target.disabled = false; }
+    }
+  });
+
+  view.querySelector('[data-del]').addEventListener('click', async () => {
+    const typed = prompt(
+      `정말 탈퇴 처리하려면 이 가족의 이메일을 그대로 입력하세요.\n\n${f.email}\n\n(아이 학습 기록까지 전부 삭제되며 되돌릴 수 없습니다)`);
+    if (typed === null) return;
+    try {
+      await api(`/api/admin/family/${encodeURIComponent(f.id)}`,
+        { method: 'DELETE', body: JSON.stringify({ email: typed.trim() }) });
+      alert('탈퇴 처리가 끝났습니다. 이 가족의 모든 데이터를 지웠어요.');
+      showMain();
+    } catch (err2) { if (!guard(err2)) alert(err2.message); }
+  });
+}
+
+// 재설정 링크 모달 — 닫으면 다시 볼 수 없다(서버엔 암호만 남는다)
+function showResetLink(f, r) {
+  const back = document.createElement('div');
+  back.className = 'back';
+  back.innerHTML = `
+    <div class="modal" role="dialog" aria-label="비밀번호 재설정 링크">
+      <h2>${esc(f.display_name)}님에게 보낼 링크</h2>
+      <p class="card-note">학부모가 이 링크를 열어 <b>새 비밀번호를 직접 정합니다.</b>
+        관리자는 새 비밀번호를 알 수 없어요.</p>
+      <div class="warn-box">이 창을 닫으면 링크를 다시 볼 수 없습니다.
+        지금 복사해서 학부모에게 직접(문자·카카오톡) 보내주세요. 24시간 뒤엔 못 씁니다.</div>
+      <p style="word-break:break-all; font-size:.85rem; background:var(--line); border-radius:8px; padding:10px; margin-top:10px">${esc(r.url)}</p>
+      <div class="modal-actions">
+        <button class="btn ghost" data-copy>링크 복사</button>
+        <button class="btn" data-close>복사했어요, 닫기</button>
+      </div>
+    </div>`;
+  document.body.appendChild(back);
+  const copyBtn = back.querySelector('[data-copy]');
+  copyBtn.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(r.url); copyBtn.textContent = '복사됨'; }
+    catch { copyBtn.textContent = '길게 눌러 직접 복사하세요'; }
+  });
+  back.querySelector('[data-close]').addEventListener('click', () => { back.remove(); showFamily(f.id); });
 }
 
 // ── 신고 ──
