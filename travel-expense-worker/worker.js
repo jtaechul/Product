@@ -21,6 +21,29 @@ export default {
         headers: { ...cors, 'Content-Type': 'application/json' },
       });
 
+    // ── 지도 타일 중계: 브라우저가 OSM에 직접 못 가는 환경(사내망 등) 대응 ──
+    //   /tile/{z}/{x}/{y} → OpenStreetMap 타일을 서버가 받아 CORS 허용으로 반환
+    if (request.method === 'GET' && url.pathname.startsWith('/tile/')) {
+      const m = url.pathname.match(/^\/tile\/(\d{1,2})\/(\d{1,7})\/(\d{1,7})$/);
+      const tileHdr = {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=604800',
+      };
+      if (!m) return new Response('bad tile', { status: 400, headers: tileHdr });
+      const [, z, tx, ty] = m;
+      try {
+        const r = await fetch(`https://tile.openstreetmap.org/${z}/${tx}/${ty}.png`, {
+          headers: { 'User-Agent': 'KOEM-travel-expense/1.0 (+https://jtaechul.github.io)' },
+          cf: { cacheTtl: 604800, cacheEverything: true },
+        });
+        if (!r.ok) return new Response('tile fail', { status: 502, headers: tileHdr });
+        return new Response(await r.arrayBuffer(), { status: 200, headers: tileHdr });
+      } catch (e) {
+        return new Response('tile err', { status: 502, headers: tileHdr });
+      }
+    }
+
     // ── 카카오 길찾기: 출발→목적지 자동차 경로(거리·소요시간·경로좌표) ──
     if (request.method === 'GET' && url.pathname === '/directions') {
       const dest = url.searchParams.get('dest');

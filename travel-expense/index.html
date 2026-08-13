@@ -1347,7 +1347,7 @@ async function generateRouteEvidence(d, oneWayKm, roundKm, mins) {
     for (let tx = txMin; tx <= txMax; tx++) {
       for (let ty = tyMin; ty <= tyMax; ty++) {
         if (tx < 0 || ty < 0 || tx >= n || ty >= n) continue;
-        jobs.push(loadImage(`https://tile.openstreetmap.org/${z}/${tx}/${ty}.png`)
+        jobs.push(loadImage(`${OPINET_CONFIG_URL}/tile/${z}/${tx}/${ty}`)
           .then(im => ({ im, tx, ty })));
       }
     }
