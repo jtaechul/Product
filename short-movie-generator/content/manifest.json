@@ -533,5 +533,13 @@
     "scientific_name": "Scyliorhinidae",
     "date": "2026-08-13",
     "youtube_url": "https://youtu.be/9vPxNkr2Rxw"
+  },
+  {
+    "id": "067",
+    "kind": "reels",
+    "common_name_ko": "북태평양심해문어",
+    "common_name_en": "Deep-sea octopus",
+    "scientific_name": "Graneledone boreopacifica",
+    "date": "2026-08-14"
   }
 ]
