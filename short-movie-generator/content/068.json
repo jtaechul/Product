@@ -1,0 +1,76 @@
+{
+  "id": "068",
+  "created_at": "2026-08-17T05:12:00+00:00",
+  "updated_at": "2026-08-17T05:12:00+00:00",
+  "status": "published",
+  "category": "marine_life",
+  "series": "海の生き物 図鑑",
+  "applied": {
+    "cuts": [
+      {
+        "start": 28.8,
+        "end": 39.0,
+        "zoom": null
+      },
+      {
+        "start": 9.7,
+        "end": 19.1,
+        "zoom": null
+      },
+      {
+        "start": 19.4,
+        "end": 28.8,
+        "zoom": null
+      }
+    ],
+    "cuts_manual": false
+  },
+  "species": {
+    "common_name_ko": "Crossota",
+    "common_name_en": "Crossota",
+    "scientific_name": "Crossota",
+    "depth_range_m": "",
+    "habitat": "",
+    "distribution": "",
+    "diet": [],
+    "fun_facts": [
+      "Crossota is a genus of hydrozoans of the family Rhopalonematidae.",
+      "The genus comprises five species.",
+      "Unlike most hydromedusae, these do not have a sessile stage.",
+      "Rather, they spend their entire lives in the water column as plankton.",
+      "The genus Crossota is widespread throughout the oceans."
+    ]
+  },
+  "reels": {
+    "hook": "海の宝石、正体は、クラゲ。",
+    "caption": "真っ青な海の中、ゆらり、ゆらりと漂う小さな透明の傘。誰の縄張りにも属さず、ただ潮の流れに身を任せている。\nその名はクロソタ(学名: Crossota)。\n世界中の海に生きる——境界も国境も持たず、ただ静かに漂い続ける、根無し草のような存在です。\nクロソタの仲間には、これまでに5種が知られています。同じ名を持ちながら、それぞれ違う海で、違う姿で暮らしているといいます。兄弟のようでいて、きっと一度も顔を合わせたことはないでしょう。\n多くのクラゲには、岩などに身を固定して過ごす「ポリプ」という定住の時期があります。しかしクロソタには、そんな腰を据える時間がありません。生まれてから死ぬまで、住所を持たない暮らし——引っ越し業者も、家具も、必要ないのです。\n一生のすべてを、水の中を漂うプランクトンとして過ごします。深さも行き先も自分では選べない、まさに旅そのものの人生。それでもその姿は、静かで、透明で、どこか達観しているようにも見えるのです。\nもしこの物語が心に触れたなら、どうか保存しておいてください。\nそして、同じ海を想う誰かにも、そっとシェアしてあげてください。\nチャンネル登録で、次の海もいっしょに。\n次はどの生き物が気になりますか。コメントで教えてください。\n\n映像: Wikimedia Commons",
+    "hashtags": [
+      "#クロソタ",
+      "#海の生き物"
+    ],
+    "reveal_name": "クロソタ / Crossota",
+    "reveal_fact": "泳ぐ・透ける・漂う、海のクラゲ。",
+    "hook_ko": "",
+    "caption_ko": "새파란 바닷속, 살랑살랑 떠다니는 작고 투명한 우산 하나. 그 누구의 영역에도 속하지 않은 채, 그저 조류에 몸을 맡기고 있습니다.\n그 이름은 크로소타(학명: Crossota).\n전 세계 바다——경계도 국경도 없이, 그저 조용히 떠도는, 뿌리 없는 풀 같은 존재입니다.\n크로소타의 무리 중에는 지금까지 5종이 알려져 있습니다. 같은 이름을 가지고 있지만, 저마다 다른 바다에서, 다른 모습으로 살아가고 있다고 합니다. 형제 같으면서도, 어쩌면 단 한 번도 마주친 적이 없을지도 모릅니다.\n대부분의 해파리에게는 바위 등에 붙어 지내는 '폴립'이라는 정착의 시기가 있습니다. 하지만 크로소타에게는 그렇게 자리를 잡는 시간이 없습니다. 태어나서 죽을 때까지, 주소를 갖지 않는 삶——이삿짐센터도, 가구도 필요 없는 것입니다.\n일생의 전부를 물속을 떠다니는 플랑크톤으로 보냅니다. 깊이도 방향도 스스로 선택할 수 없는, 그야말로 여행 그 자체인 삶. 그럼에도 그 모습은 고요하고, 투명하며, 어딘가 초연해 보이기도 합니다.\n이 이야기가 마음에 닿았다면, 부디 저장해 두시기 바랍니다.\n그리고 같은 바다를 그리워하는 누군가에게도, 살며시 공유해 주시기 바랍니다.\n다음 바다도 함께 보고 싶다면 구독해 주세요.\n다음엔 어떤 생물이 궁금하신가요? 댓글로 알려주세요.\n\n영상: Wikimedia Commons",
+    "hashtags_ko": [
+      "#Crossota",
+      "#해양생물"
+    ],
+    "yt_title": "住所を持たぬ透明クラゲ、クロソタの正体 #クロソタ #海の生き物",
+    "yt_title_ko": "주소가 없는 투명 해파리, 크로소타의 정체 #Crossota #해양생물",
+    "visualizer": "reels",
+    "video_file": "crossota_20260817_051200.mp4"
+  },
+  "source": {
+    "image_credit": "",
+    "info_sources": [],
+    "license": ""
+  },
+  "media": {
+    "video_url": "https://github.com/jtaechul/Product/releases/download/content-068/reels_068.mp4",
+    "rev": "31996635612",
+    "cover_url": "https://github.com/jtaechul/Product/releases/download/content-068/cover_068.jpg",
+    "yt_thumb_url": "https://github.com/jtaechul/Product/releases/download/content-068/ytthumb_068.jpg"
+  },
+  "post": null
+}

@@ -541,5 +541,13 @@
     "common_name_en": "Deep-sea octopus",
     "scientific_name": "Graneledone boreopacifica",
     "date": "2026-08-14"
+  },
+  {
+    "id": "068",
+    "kind": "reels",
+    "common_name_ko": "Crossota",
+    "common_name_en": "Crossota",
+    "scientific_name": "Crossota",
+    "date": "2026-08-17"
   }
 ]
