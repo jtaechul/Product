@@ -549,5 +549,13 @@
     "common_name_en": "Crossota",
     "scientific_name": "Crossota",
     "date": "2026-08-17"
+  },
+  {
+    "id": "069",
+    "kind": "reels",
+    "common_name_ko": "넓적문어",
+    "common_name_en": "Flapjack octopus",
+    "scientific_name": "Opisthoteuthis californiana",
+    "date": "2026-08-19"
   }
 ]

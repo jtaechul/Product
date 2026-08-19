@@ -404,5 +404,12 @@
     "common_name_en": "Deep-sea octopus",
     "scientific_name": "Graneledone boreopacifica",
     "date": "2026-08-14"
+  },
+  {
+    "no": 69,
+    "common_name_ko": "넓적문어",
+    "common_name_en": "Flapjack octopus",
+    "scientific_name": "Opisthoteuthis californiana",
+    "date": "2026-08-19"
   }
 ]
