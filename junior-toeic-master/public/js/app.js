@@ -34,7 +34,7 @@ const todayKey = () => new Date().toLocaleDateString('sv');  // YYYY-MM-DD (로�
 const KEY = 'jumplish.progress.v1';
 // diag: 진단을 푸는 도중의 상태. 진단 답안은 단계가 끝나야 서버로 가기 때문에,
 // 중간에 앱을 닫으면 그때까지 푼 게 통째로 날아간다(실제로 겪은 문제). 여기에 담아 둔다.
-const blank = { parts: {}, wrong: [], days: [], set: null, setDate: null, setIdx: 0, exprs: [], diag: null };
+const blank = { parts: {}, wrong: [], days: [], set: null, setDate: null, setIdx: 0, exprs: [], diag: null, words: [] };
 let store;
 
 // 듣기 재생 배속. 서버가 아이의 '듣고 알기' 점수를 보고 정해 /api/me 로 내려준다
@@ -963,6 +963,27 @@ async function renderReview() {
 }
 
 // ---------- 기록 ----------
+// 내 단어장 — 여러 번 누른 낱말일수록 아직 안 외워진 것이라 위로 올린다.
+async function renderMyWords() {
+  const box = view.querySelector('[data-words]');
+  if (!box) return;
+  let list = store.words;
+  if (auth) {
+    try {
+      const r = await api('/api/words', { headers: authHeaders() });
+      list = r.words.map((w) => ({ word: w.word, meaning: w.meaning, times: w.times }));
+    } catch { /* 서버가 안 되면 이 기기 것으로 */ }
+  }
+  if (!list.length) return;
+  const sorted = [...list].sort((a, b) => b.times - a.times).slice(0, 60);
+  box.innerHTML = `<div class="wlist">${sorted.map((w) => `
+    <div class="wrow"><span class="wrow-en">${esc(w.word)}</span>
+      <span class="wrow-ko">${esc(w.meaning)}</span>
+      ${w.times > 1 ? `<span class="wrow-n">${w.times}번</span>` : ''}
+    </div>`).join('')}</div>
+    <p class="card-note" style="margin-top:8px">여러 번 누른 낱말이 위에 있어요 — 그만큼 아직 낯선 말이에요.</p>`;
+}
+
 async function showRecord() {
   setTab('record');
   tabbarVisible(true);
@@ -1032,15 +1053,22 @@ async function showRecord() {
         <span class="row-s">리매치 4연승으로 완전히 이겨낸 문제들</span>
       </span>
     </div>` : ''}
+    <div class="card" data-words-card>
+      <div class="card-head"><span class="card-title">내 단어장</span>
+        <span class="card-note">문제 풀고 눌러 본 낱말</span></div>
+      <div data-words><p class="empty">아직 없어요 — 문제를 풀고 모르는 낱말을 눌러보세요.</p></div>
+    </div>
+
     <div class="card row">
       <span class="row-body">
-        <span class="row-t">${auth ? esc(`${auth.user.display_name} (${auth.user.login_id})`) : '로그인하지 않았어요'}</span>
+        <span class="row-t">${auth ? esc(auth.user.display_name) : '로그인하지 않았어요'}</span>
         <span class="row-s">${auth ? '풀이 기록이 서버에 저장되고 있어요' : '로그인하면 기록이 어느 기기에서나 이어져요'}</span>
       </span>
       <button class="btn-ghost" data-auth-btn>${auth ? '로그아웃' : '로그인'}</button>
     </div>
 `;
   bindAppBar();
+  renderMyWords();
   view.querySelector('[data-auth-btn]').addEventListener('click', () => {
     if (auth) { saveAuth(null); showRecord(); }
     else showLogin();
@@ -1228,6 +1256,102 @@ const SPEAKER_KO = { W: '여자', M: '남자', N: '안내' };
 const readable = (s) => String(s ?? '').replace(/^([WMN]):/gm, (_, k) => `${SPEAKER_KO[k]}:`);
 
 // 원문에서 근거 부분만 형광펜으로 칠한 HTML을 만든다 (나머지는 그대로 이스케이프).
+// ── 낱말 사전 (정답을 고른 뒤에만 쓴다) ──
+// 아이 의견: "답은 풀었는데 모르는 단어가 있어도 뜻이 안 나와 그냥 넘어갔다."
+// 뜻은 개발 단계에 다 적어 두고(content/vocab.json) 정적 파일로 받는다 —
+// 운영 중 사전 API를 부르지 않는다(외부 호출 0회 원칙).
+let vocab = null;
+const loadVocab = async () => {
+  if (vocab) return vocab;
+  try {
+    const r = await fetch('/vocab.json');
+    vocab = await r.json();
+  } catch { vocab = { words: {}, forms: {} }; }   // 못 받아도 학습은 그대로 돌아가야 한다
+  return vocab;
+};
+const meaningOf = (raw) => {
+  if (!vocab) return null;
+  const w = String(raw).toLowerCase().replace(/^['-]+|['-]+$/g, '');
+  if (!w) return null;
+  return vocab.words[w] ?? vocab.words[vocab.forms[w]] ?? null;
+};
+
+// 글 안의 영어 낱말을 누를 수 있는 버튼으로 바꾼다. 뜻이 있는 낱말만 감싼다 —
+// 눌러도 아무것도 안 뜨면 아이는 고장 났다고 생각한다.
+// 이미 만들어진 HTML(근거 하이라이트 <mark> 등)을 망가뜨리지 않도록 텍스트 노드만 손댄다.
+// 낱말 버튼은 문서 한 곳에서 받는다 — 문제 블록을 다시 그려도 계속 동작한다
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('.w');
+  if (b) { e.stopPropagation(); e.preventDefault(); showWordPop(b); return; }
+  if (!e.target.closest('.wpop')) {
+    document.querySelectorAll('.wpop').forEach((x) => x.remove());
+    document.querySelectorAll('.w.on').forEach((x) => x.classList.remove('on'));
+  }
+});
+
+function makeWordsTappable(root) {
+  if (!root || !vocab) return;
+  // 채점이 끝난 보기는 disabled 라 그 안을 눌러도 이벤트가 아예 안 난다.
+  // 다시 고르는 것은 아래 doneHere 가 이미 막고 있으므로, 낱말을 누를 수 있게 풀어 준다.
+  // aria-disabled 를 쓰면 그 표시가 안쪽 낱말까지 덮어 '못 누르는 것'으로 읽힌다.
+  // 보기 자체를 탭 순서에서만 빼고, 다시 고르는 것은 doneHere 가 막게 둔다.
+  root.querySelectorAll('.choice[disabled]').forEach((b) => {
+    b.removeAttribute('disabled');
+    b.setAttribute('tabindex', '-1');
+  });
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const texts = [];
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    // 보기(.choice)도 낱말을 누를 수 있어야 한다 — 아이가 모르는 낱말은 보기에도 있다.
+    // 그래서 낱말을 button 이 아니라 span 으로 만든다(버튼 안에 버튼은 못 넣는다).
+    if (n.parentElement?.closest('.w, .expr-card, .tab, .btn-primary, .btn-ghost')) continue;
+    if (/[A-Za-z]{2}/.test(n.nodeValue)) texts.push(n);
+  }
+  for (const node of texts) {
+    const html = node.nodeValue.replace(/[A-Za-z][A-Za-z'-]*/g, (m) =>
+      (meaningOf(m) ? `<span class="w" role="button" tabindex="0" data-w="${esc(m)}">${esc(m)}</span>` : esc(m)));
+    if (!html.includes('class="w"')) continue;
+    const span = document.createElement('span');
+    span.innerHTML = html;
+    node.parentNode.replaceChild(span, node);
+  }
+}
+
+// 누른 낱말을 모아 둔다. 로그인했으면 서버에(기기를 바꿔도 남게), 아니면 이 기기에.
+function rememberWord(word, meaning) {
+  const w = String(word).toLowerCase();
+  const i = store.words.findIndex((x) => x.word === w);
+  if (i >= 0) { store.words[i].times += 1; store.words[i].at = Date.now(); }
+  else store.words.unshift({ word: w, meaning, times: 1, at: Date.now() });
+  store.words = store.words.slice(0, 200);
+  save();
+  if (auth) {
+    api('/api/words', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ word: w, meaning }) }).catch(() => { /* 다음에 다시 보낸다 */ });
+  }
+}
+
+// 뜻 말풍선 — 누른 낱말 바로 아래에. 한 번에 하나만 떠 있게 한다.
+function showWordPop(btn) {
+  document.querySelectorAll('.wpop').forEach((e) => e.remove());
+  document.querySelectorAll('.w.on').forEach((e) => e.classList.remove('on'));
+  const word = btn.dataset.w;
+  const mean = meaningOf(word);
+  if (!mean) return;
+  btn.classList.add('on');
+  const pop = document.createElement('div');
+  pop.className = 'wpop';
+  pop.innerHTML = `<b>${esc(word)}</b><span>${esc(mean)}</span>`;
+  document.body.appendChild(pop);
+  // 글 흐름을 밀지 않도록 화면 좌표로 띄운다. 낱말 아래가 좁으면 위로 붙인다.
+  const r = btn.getBoundingClientRect();
+  const w = Math.min(pop.offsetWidth, window.innerWidth - 16);
+  const below = window.innerHeight - r.bottom > pop.offsetHeight + 12;
+  pop.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - w - 8))}px`;
+  pop.style.top = below ? `${r.bottom + 6}px` : `${r.top - pop.offsetHeight - 6}px`;
+  rememberWord(word, mean);
+}
+
 function markEvidence(text, ev) {
   const i = text.indexOf(ev);
   if (i < 0) return esc(text);
@@ -1493,6 +1617,23 @@ function renderQuestion() {
           </div>`;
         block.querySelector('[data-report]').addEventListener('click', () =>
           showReport(q.id, `문제풀이:${q.part}`));
+
+        // ── 답을 고른 뒤에야 낱말 뜻을 열어 준다 ──
+        // 풀 때부터 보이면 시험이 아니라 해석 연습이 된다. 다 풀고 나서
+        // "이 단어가 뭐였지"를 그 자리에서 해결하게 하는 게 목적이다.
+        loadVocab().then(() => {
+          makeWordsTappable(block);                          // 문제·보기·해설
+          if (view.querySelector('.passage:not([hidden])')) // 지문·스크립트가 열려 있으면 거기도
+            view.querySelectorAll('.passage:not([hidden])').forEach(makeWordsTappable);
+          block.querySelectorAll('.ev-text, .ev-hint').forEach(makeWordsTappable);
+          if (!block.dataset.wordHint) {
+            block.dataset.wordHint = '1';
+            const hint = document.createElement('p');
+            hint.className = 'w-hint';
+            hint.textContent = '모르는 낱말을 누르면 뜻이 나와요';
+            block.querySelector('[data-result] .result')?.appendChild(hint);
+          }
+        });
         if (expr) rememberExpr(q, expr, r.correct);
         block.querySelector('[data-replay]')?.addEventListener('click', () => {
           if (audioUrl) playClip(audioUrl, 0.75).catch(() => { /* 소리 꺼짐 */ });

@@ -604,3 +604,34 @@ mark.ev {
 /* 형제가 있을 때 로그인 뒤 이름을 고르는 화면 */
 .pick-kids { display: flex; flex-direction: column; gap: 10px; }
 .pick-kid { width: 100%; min-height: 56px; font-size: 1.05rem; font-weight: 700; }
+
+/* ── 낱말 뜻 보기 (정답 후) ────────────────────────────────────────────
+   아이 의견: "모르는 단어가 있어도 뜻이 안 나와 그냥 넘어갔다."
+   글 속 낱말을 누를 수 있게 하되, 읽는 흐름을 해치지 않도록 평소엔 밑줄만 옅게 둔다. */
+.w {
+  border-bottom: 1px dashed var(--primary-soft); cursor: pointer; border-radius: 2px;
+}
+.w:hover, .w.on { background: var(--primary-soft); border-bottom-color: var(--primary); }
+.wpop {
+  position: fixed; z-index: 60; display: flex; flex-direction: column; gap: 2px;
+  padding: 7px 11px; border-radius: 11px;
+  background: var(--text); color: #fff; font-size: .84rem; line-height: 1.4;
+  box-shadow: 0 6px 18px rgba(0,0,0,.18); max-width: 15rem;
+}
+.wpop b { font-weight: 800; font-size: .8rem; opacity: .75; }
+.w-hint { margin-top: 9px; font-size: .8rem; opacity: .7; }
+
+/* 내 단어장 (발자국 탭) */
+.wlist { display: flex; flex-direction: column; }
+.wrow {
+  display: flex; align-items: baseline; gap: 9px;
+  padding: 8px 0; border-bottom: 1px solid var(--line);
+}
+.wrow:last-child { border-bottom: 0; }
+.wrow-en { font-weight: 800; min-width: 5.6rem; }
+.wrow-ko { flex: 1; font-size: .89rem; }
+.wrow-n {
+  flex: none; font-size: .74rem; font-weight: 700;
+  color: var(--primary); background: var(--primary-soft);
+  padding: 2px 7px; border-radius: 999px;
+}

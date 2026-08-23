@@ -387,6 +387,45 @@ for (const part of Object.keys(PARTS)) {
   const total = Object.values(d).reduce((a, b) => a + b, 0);
   console.log(`  ${part}: ${total}문항  난이도 ${[1, 2, 3, 4, 5].map((l) => `${l}:${d[l] || 0}`).join(' ')}`);
 }
+// ── 낱말 사전 (content/vocab.json → public/vocab.json) ──
+// 아이가 정답 화면에서 모르는 낱말을 눌러 뜻을 보는 기능의 재료다.
+// 운영 중 외부 사전 API를 부르지 않는다 — 뜻은 저작 단계에 다 적어 두고 정적 파일로 서빙한다.
+// 여기서 '문항에 나오는데 뜻이 없는 낱말'을 잡는다. 이 검사가 없으면 새 문항을 넣을 때마다
+// 아이가 눌러도 아무것도 안 뜨는 낱말이 조용히 늘어난다.
+{
+  const vocabPath = join(CONTENT, 'vocab.json');
+  if (!existsSync(vocabPath)) {
+    warn('content/vocab.json 이 없습니다 — 단어 뜻 보기가 동작하지 않습니다');
+  } else {
+    const vocab = JSON.parse(readFileSync(vocabPath, 'utf8'));
+    const { words = {}, forms = {} } = vocab;
+    const seen = new Set();
+    const scan = (t) => {
+      for (const raw of String(t ?? '').match(/[A-Za-z][A-Za-z'-]*/g) ?? []) {
+        const w = raw.toLowerCase().replace(/^['-]+|['-]+$/g, '');
+        if (w.length < 2 && w !== 'a' && w !== 'i') continue;
+        if (w) seen.add(forms[w] ?? w);
+      }
+    };
+    // 저작 파일을 그대로 다시 읽는다 — 위 루프의 items 는 파일마다 지역 변수라 여기서 못 본다
+    for (const file of readdirSync(join(CONTENT, 'questions')).filter((f) => f.endsWith('.json'))) {
+      for (const it of (readJson(join(CONTENT, 'questions', file)) ?? [])) {
+        scan(it.tts_script);
+        for (const qq of (it.questions ?? [it])) { scan(qq.stem); scan((qq.choices ?? []).join(' ')); }
+      }
+    }
+    for (const p2 of passages) { scan(p2.tts_script); scan(p2.body); scan(p2.content); }
+    const missing = [...seen].filter((w) => !(w in words)).sort();
+    if (missing.length) {
+      warn(`뜻이 없는 낱말 ${missing.length}개 — content/vocab.json 에 추가하세요: ${missing.slice(0, 15).join(', ')}${missing.length > 15 ? ' …' : ''}`);
+    }
+    if (!CHECK_ONLY) {
+      writeFileSync(join(ROOT, 'public', 'vocab.json'), JSON.stringify(vocab));
+      console.log(`낱말 사전: ${Object.keys(words).length}개 (어형 ${Object.keys(forms).length}개) → public/vocab.json`);
+    }
+  }
+}
+
 if (warns.length) { console.log('\n경고:'); warns.forEach((w) => console.log('  - ' + w)); }
 if (errors.length) {
   console.error(`\n오류 ${errors.length}건 — 임포트 중단:`);

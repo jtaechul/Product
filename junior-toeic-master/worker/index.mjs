@@ -300,6 +300,34 @@ app.post('/api/diagnostic/finish', requireAuth, async (c) => {
   return c.json({ report, group: await groupOf(c.env.DB, u) });
 });
 
+// ── 내 단어장 ──
+// 아이가 정답 화면에서 눌러 본 낱말. 저자가 고른 단어가 아니라 "이 아이가 몰라서 누른" 낱말이라
+// 그 자체가 가장 정직한 약점 신호다. 뜻은 누른 시점 것을 함께 저장한다 — 나중에 사전을
+// 고쳐도 아이가 그때 본 말이 남아야 "내가 봤던 그거"가 된다.
+app.post('/api/words', requireAuth, async (c) => {
+  const u = c.get('user');
+  const b = await c.req.json().catch(() => ({}));
+  const word = String(b.word ?? '').toLowerCase().replace(/[^a-z'-]/g, '').slice(0, 40);
+  const meaning = clean(b.meaning, 80);
+  if (!word || !meaning) return c.json({ error: '낱말과 뜻이 필요합니다' }, 400);
+  const now = nowISO();
+  await c.env.DB.prepare(
+    `INSERT INTO user_words (user_id, word, meaning, times, first_at, last_at)
+     VALUES (?1, ?2, ?3, 1, ?4, ?4)
+     ON CONFLICT(user_id, word) DO UPDATE SET times = times + 1, last_at = ?4, meaning = ?3`
+  ).bind(u.id, word, meaning, now).run();
+  return c.json({ ok: true });
+});
+
+app.get('/api/words', requireAuth, async (c) => {
+  const u = c.get('user');
+  const { results } = await c.env.DB.prepare(
+    `SELECT word, meaning, times, last_at FROM user_words
+      WHERE user_id = ?1 ORDER BY last_at DESC LIMIT 200`
+  ).bind(u.id).all();
+  return c.json({ words: results });
+});
+
 // 개인 최고 기록 (M3-3 '어제의 나와 대결') — 비교 대상은 남이 아니라 과거의 나
 app.get('/api/records', requireAuth, async (c) => {
   const u = c.get('user');
