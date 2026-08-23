@@ -844,10 +844,13 @@ const addNote = (db, parentId, body, by) => db.prepare(
   `INSERT INTO admin_notes (id, parent_id, body, created_by, created_at) VALUES (?1, ?2, ?3, ?4, ?5)`
 ).bind(crypto.randomUUID(), parentId, body, by, nowISO()).run();
 
-// 가족 한 팀 자세히 — 문의 전화를 받으며 여는 화면
+// 가족 한 팀 자세히 — 문의 전화를 받으며 여는 화면.
+// 아이가 여럿이면 **아이마다** 학습률·학습 흐름·능력(실력 지도)을 따로 보여준다.
+// "둘째만 안 하고 있어요" 같은 문의에 아이 단위로 답할 수 있어야 하기 때문이다.
 app.get('/api/admin/family/:id', ...admin, async (c) => {
   const fam = await familyOf(c.env.DB, c.req.param('id'));
   if (!fam) return c.json({ error: '가족을 찾을 수 없습니다' }, 404);
+  const today = kstDate();
   const [{ results: children }, { results: notes }, { results: feedback }] = await Promise.all([
     c.env.DB.prepare(
       `SELECT u.id, u.display_name, u.created_at,
@@ -868,7 +871,32 @@ app.get('/api/admin/family/:id', ...admin, async (c) => {
         ORDER BY f.created_at DESC LIMIT 20`
     ).bind(fam.id).all(),
   ]);
-  return c.json({ family: fam, children, notes, feedback, today: kstDate() });
+
+  // 아이별 심화 — 실력 지도(부모 화면과 같은 엔진 값)와 최근 2주 흐름.
+  // 아이는 가족당 최대 3명이라 순서대로 계산해도 관리자 화면 한 번 열기에 부담이 없다.
+  for (const kid of children) {
+    const [{ results: days }, sm] = await Promise.all([
+      c.env.DB.prepare(
+        `SELECT date(answered_at, '+9 hours') AS d, COUNT(*) AS n FROM answers
+          WHERE user_id = ?1 GROUP BY d ORDER BY d DESC LIMIT 21`
+      ).bind(kid.id).all(),
+      computeSkillMap(c.env.DB, kid, today),
+    ]);
+    // 이어온 날 — 오늘 아직 안 했으면 어제부터 센다 (부모 화면과 같은 규칙)
+    const dayset = new Set(days.map((r) => r.d));
+    let streak = 0;
+    const cur = new Date(`${today}T00:00:00Z`);
+    if (!dayset.has(today)) cur.setUTCDate(cur.getUTCDate() - 1);
+    while (dayset.has(cur.toISOString().slice(0, 10))) { streak += 1; cur.setUTCDate(cur.getUTCDate() - 1); }
+    // '최근 2주 N일'은 달력 14일 안만 센다 — 목록 길이로 세면 옛 기록까지 부풀려진다
+    const from = Date.parse(`${today}T00:00:00Z`) - 13 * 86400_000;
+    kid.week14 = days.filter((r) => r.n > 0 && Date.parse(`${r.d}T00:00:00Z`) >= from).length;
+    kid.streak = streak;
+    kid.axes = sm.axes;
+    kid.misses = sm.misses;
+    kid.revive = sm.revive;
+  }
+  return c.json({ family: fam, children, notes, feedback, today });
 });
 
 // 운영 메모 남기기

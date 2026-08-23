@@ -212,14 +212,44 @@ async function showFamily(id) {
   const f = d.family;
   const suspended = f.status === 'suspended';
 
-  const kids = d.children.length ? d.children.map((k) => `
-    <div class="row"><span class="row-main">
-      <span class="row-t">${esc(k.display_name)}</span>
-      <span class="row-s">${k.answers
-        ? `푼 문항 ${k.answers.toLocaleString()}개 · 정답률 ${Math.round((k.correct ?? 0) / k.answers * 100)}%${
-            k.last_day ? ` · 마지막 학습 ${k.last_day === d.today ? '오늘' : esc(k.last_day)}` : ''}`
-        : '아직 시작 안 함'} · 등록 ${esc(String(k.created_at).slice(0, 10))}</span>
-    </span></div>`).join('') : `<p class="empty">등록된 아이가 없어요.</p>`;
+  // 아이마다 자기 카드 — 학습률(정답률·양), 학습 상황(최근 2주·이어온 날), 능력(실력 지도).
+  // 형제가 있어도 섞이지 않게 아이 단위로 나눠 보여준다. 부모 화면과 같은 엔진 값이라
+  // "부모 화면엔 이렇게 나오는데요" 문의에 같은 숫자로 답할 수 있다.
+  const kidCard = (k) => {
+    const acc = k.answers ? Math.round((k.correct ?? 0) / k.answers * 100) : 0;
+    const bars = (k.axes ?? []).map((a) => a.score != null ? `
+      <div class="sbar">
+        <span class="sbl">${esc(a.name)}</span>
+        <span class="sbt"><span class="sbf" style="width:${a.score}%"></span></span>
+        <span class="sbn">${a.score}</span>
+      </div>` : `
+      <div class="sbar">
+        <span class="sbl">${esc(a.name)}</span>
+        <span class="sbt"></span>
+        <span class="sbn dim">재는 중 ${a.attempts}/3</span>
+      </div>`).join('');
+    const extra = [];
+    if (k.misses?.length) extra.push(`자주 하는 실수: ${k.misses.map((m) => `${esc(m.name)} ${m.n}번`).join(', ')}`);
+    if (k.revive?.met >= 3) extra.push(`틀린 문제 설욕 ${k.revive.won}/${k.revive.met}판`);
+    return `
+    <div class="card">
+      <div class="card-head"><span class="card-title">${esc(k.display_name)}</span>
+        <span class="card-note">등록 ${esc(String(k.created_at).slice(0, 10))}</span></div>
+      ${k.answers ? `
+      <div class="kid-stats">
+        <span><b>${k.answers.toLocaleString()}</b>문항</span>
+        <span>정답률 <b>${acc}%</b></span>
+        <span>최근 2주 <b>${k.week14}</b>일</span>
+        <span>이어서 <b>${k.streak}</b>일</span>
+        <span>마지막 학습 <b>${k.last_day === d.today ? '오늘' : esc(k.last_day ?? '—')}</b></span>
+      </div>
+      <div class="kid-axes">${bars}</div>
+      ${extra.length ? `<p class="card-note" style="margin-top:8px">${extra.join(' · ')}</p>` : ''}`
+      : `<p class="empty" style="padding:8px 0">아직 시작 안 했어요 — 앱에 처음 들어가면 진단부터 합니다.</p>`}
+    </div>`;
+  };
+  const kids = d.children.length ? d.children.map(kidCard).join('')
+    : `<div class="card"><p class="empty">등록된 아이가 없어요.</p></div>`;
 
   const notes = d.notes.length ? d.notes.map((n) => `
     <div class="row"><span class="row-main">
@@ -253,10 +283,7 @@ async function showFamily(id) {
       <p class="msg" data-act-msg></p>
     </div>
 
-    <div class="card">
-      <div class="card-head"><span class="card-title">아이 ${d.children.length}명</span></div>
-      <div class="rows">${kids}</div>
-    </div>
+    ${kids}
 
     <div class="card">
       <div class="card-head"><span class="card-title">운영 메모</span>

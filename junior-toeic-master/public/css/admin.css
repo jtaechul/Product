@@ -162,3 +162,16 @@ table.pins td.pin { font-variant-numeric: tabular-nums; font-weight: 800; letter
   .field textarea, .field input, .field select { min-width: 0; width: 100%; }
   .form { flex-direction: column; align-items: stretch; }
 }
+
+/* ── 가족 상세: 아이별 카드 (2026-08-13) ──
+   아이가 여럿이면 학습률·학습 상황·능력을 아이 단위로 나눠 보여준다.
+   막대 눈금(.sbar 계열)은 학생·부모 화면과 같은 모양 — 세 화면이 같은 숫자를 같은 그림으로 말한다. */
+.kid-stats { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .84rem; color: var(--muted); }
+.kid-stats b { color: var(--text); font-variant-numeric: tabular-nums; }
+.kid-axes { margin-top: 10px; }
+.sbar { display: flex; align-items: center; gap: 10px; margin-top: 7px; }
+.sbl { flex: none; width: 66px; font-size: .79rem; font-weight: 700; }
+.sbt { flex: 1; height: 8px; border-radius: 999px; background: var(--primary-soft); overflow: hidden; }
+.sbf { display: block; height: 100%; border-radius: 999px; background: var(--primary); }
+.sbn { flex: none; text-align: right; font-size: .79rem; font-weight: 800; color: var(--primary); }
+.sbn.dim { font-weight: 600; color: var(--muted); }
