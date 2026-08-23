@@ -34,6 +34,50 @@ body { padding-bottom: env(safe-area-inset-bottom); }
 .tip-t { display: block; font-size: .9rem; font-weight: 700; }
 .tip-s { display: block; font-size: .8rem; color: var(--muted); margin-top: 2px; }
 
+/* 눌러 들어가는 팁·실수 줄 — 오답 상세로 이어진다. 버튼이지만 줄 모양은 그대로 두고
+   오른쪽 화살표로만 "눌린다"를 알린다. */
+.tip-go, .miss-go { width: 100%; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.tip-go:active, .miss-go:active { background: var(--surface-2); }
+.tip-arrow { flex: none; align-self: center; color: var(--muted); font-size: 1.15rem; font-weight: 800; padding-left: 2px; }
+
+/* ── 오답 상세 (wq = wrong question) ── */
+.wq { display: block; }
+.wq-when { font-size: .75rem; font-weight: 700; color: var(--muted); }
+.wq-cap { display: block; font-size: .72rem; font-weight: 800; color: var(--muted); margin-bottom: 4px; }
+.wq-cap.bad-t { color: #8e2f36; }
+.wq-cap.good-t { color: #0f5f3f; }
+.wq-guide p { font-size: .87rem; line-height: 1.6; }
+.wq-passage {
+  background: var(--surface-2); border-radius: 12px; padding: 11px 13px;
+  font-size: .86rem; line-height: 1.62; white-space: pre-wrap; margin-top: 10px;
+}
+.wq-passage .wq-cap { margin-bottom: 6px; }
+.wq-ev { background: var(--hl); border-radius: 4px; padding: 0 2px; font-weight: 700; color: inherit; }
+.wq-stem { font-size: .94rem; font-weight: 700; margin-top: 12px; line-height: 1.5; }
+.wq-choice {
+  display: flex; align-items: center; gap: 9px; padding: 9px 11px;
+  border: 1.5px solid var(--line); border-radius: 12px; margin-top: 8px; font-size: .88rem;
+}
+.wq-choice.good, .wq-img.good { border-color: var(--ok); background: var(--ok-soft); }
+.wq-choice.bad, .wq-img.bad { border-color: var(--bad); background: var(--bad-soft); }
+.wq-letter {
+  flex: none; width: 22px; height: 22px; border-radius: 999px;
+  background: var(--surface-2); color: var(--muted);
+  font-size: .72rem; font-weight: 800; display: grid; place-items: center;
+}
+.wq-text { flex: 1; min-width: 0; line-height: 1.45; }
+.wq-tag { flex: none; font-size: .67rem; font-weight: 800; border-radius: 999px; padding: 3px 8px; color: #fff; }
+.wq-tag.good { background: var(--ok); }
+.wq-tag.bad { background: var(--bad); }
+.wq-imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.wq-img { position: relative; border: 2px solid var(--line); border-radius: 12px; overflow: hidden; }
+.wq-img img { width: 100%; display: block; aspect-ratio: 4 / 3; object-fit: cover; }
+.wq-img .wq-letter { position: absolute; top: 6px; left: 6px; background: rgba(255,255,255,.92); }
+.wq-img .wq-tag { position: absolute; left: 6px; bottom: 6px; }
+.wq-line { margin-top: 11px; }
+.wq-line p { font-size: .86rem; line-height: 1.58; }
+.wq-foot { text-align: center; margin-top: 2px; }
+
 /* 로그인 */
 .p-login { margin-top: 40px; }
 .p-login .field { width: 100%; }

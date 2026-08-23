@@ -300,16 +300,20 @@ function verdict(d) {
     sub: `최근 2주 중 ${week}일 학습했어요. 하루 10분이면 충분합니다.` };
 }
 
-// 부모가 오늘 뭘 하면 되는지 — 데이터에서 나오는 것만 쓴다(빈말 금지)
+// 부모가 오늘 뭘 하면 되는지 — 데이터에서 나오는 것만 쓴다(빈말 금지).
+// 세 번째 칸(go)이 있는 팁은 누를 수 있다 — 그 실수·그 영역의 실제 오답 문제로 이어진다.
+// "5번 틀렸어요"라는 숫자만으로는 부모가 아이에게 해줄 말이 없다. 문제가 보여야 말이 나온다.
 function tips(d) {
   const out = [];
   if (!d.today_n) out.push(['오늘 10분만 같이 앉아주세요', '앱을 열어 "오늘의 학습"만 끝내면 됩니다.']);
   const m = d.misses?.[0];
-  if (m) out.push([`"${m.name}"`, `요즘 ${m.n}번 이렇게 틀렸어요. 문제를 다시 읽어보게 해주세요.`]);
+  if (m) out.push([`"${m.name}"`, `요즘 ${m.n}번 이렇게 틀렸어요. 눌러서 실제 문제를 확인해보세요.`,
+    { miss: m.code, name: m.name }]);
   const ready = (d.axes ?? []).filter((a) => a.score != null);
   if (ready.length) {
     const weak = ready.reduce((x, a) => (a.score < x.score ? a : x));
-    out.push([`${weak.name}가 아직 약해요`, '앱이 이 부분을 매일 조금씩 더 넣어주고 있어요.']);
+    out.push([`${weak.name}가 아직 약해요`, '눌러서 최근에 틀린 문제를 보세요. 앱도 이 부분을 매일 조금씩 더 넣어주고 있어요.',
+      { axis: weak.key, name: weak.name }]);
   }
   if (d.revive && d.revive.rate >= 60) {
     out.push(['틀린 문제를 다시 만나 이기고 있어요', `다시 만난 ${d.revive.met}판 중 ${d.revive.won}판을 맞혔어요. 칭찬해주세요.`]);
@@ -317,6 +321,52 @@ function tips(d) {
   if (!out.length) out.push(['조금 더 풀면 보여드릴 게 많아져요', '며칠 쌓이면 약한 곳과 실수 유형이 나옵니다.']);
   return out.slice(0, 3);
 }
+
+// ── 오답 상세에서 쓰는 붙박이 문구들 ──
+// 파트 이름은 아이 앱(PART_INFO)과 같은 말을 쓴다 — 부모와 아이가 서로 다른 이름으로
+// 부르면 "그게 뭔데?"부터 다시 시작하게 된다.
+const PART_KO = {
+  L1: '듣기 · 사진 고르기', L2: '듣기 · 질의응답', L3: '듣기 · 짧은 대화', L4: '듣기 · 짧은 담화',
+  R1: '읽기 · 문장 완성', R2: '읽기 · 지문 완성', R3: '읽기 · 독해',
+};
+
+// 실수 유형마다 "부모가 어떻게 짚어주면 되는지" — 미리 써 둔 문구다(운영 중 AI 호출 0 원칙).
+// 진단·평가가 아니라 코칭 문장이므로, 아이 탓이 아니라 습관 이야기로만 쓴다.
+const MISS_GUIDE = {
+  'M.notsaid': '글에 없는 이야기를 답으로 고르는 버릇이에요. "그 말이 글 어디에 있어?"라고 물어보고, 손가락으로 짚어보게 해주세요.',
+  'M.swap': '글에 나온 정보를 엉뚱한 사람·물건에 붙여 버려요. "그건 누가 한 거였지?"처럼 주인을 되물어봐 주세요.',
+  'M.number': '숫자는 골랐는데 다른 항목의 숫자예요. 숫자가 나오면 "무엇의 숫자인지"를 옆에 붙여 읽는 연습이 도움돼요.',
+  'M.opposite': '글에 있는 낱말이 들어간 보기라 골랐지만 뜻이 반대예요. 보기 문장을 끝까지 읽고 고르게 해주세요.',
+  'A.wrongkind': '묻는 말(언제·어디서·누가)과 다른 종류로 답해요. 질문의 첫 낱말이 무엇을 묻는지 먼저 말해보게 해주세요.',
+  'A.yesno': '골라서 답해야 하는 질문에 예·아니오로 답해요. "A일까 B일까"를 묻는 질문도 있다는 걸 함께 확인해 주세요.',
+  'A.echo': '들린 낱말이 그대로 있는 보기에 끌려요. "들린 낱말이 있다고 정답은 아니야"를 아래 문제로 같이 확인해 주세요.',
+  'W.meaning': '낱말 뜻을 어렴풋이 알아서 그 자리에 안 맞는 걸 골라요. 보기를 빈칸에 넣어 문장을 소리 내어 읽어보게 해주세요.',
+  'G.clue': '답을 정해 주는 단서 낱말을 지나쳐요. 빈칸 앞뒤 낱말 세 개를 먼저 읽는 습관을 잡아 주세요.',
+  'G.pair': '"between A and B"처럼 꼭 짝으로 다니는 말에서 한쪽을 놓쳐요. 짝꿍 표현을 통째로 소리 내어 읽으면 좋아요.',
+  'G.form': '뜻은 아는데 낱말의 모양이 안 맞는 걸 골라요. 정답 문장을 한 번 따라 써보게 해주세요.',
+  'P.other': '사진과 다른 장면의 문장을 골라요. 사진 속에서 누가 무엇을 하는지 우리말로 먼저 말해보게 해주세요.',
+  'F.offtopic': '앞뒤 흐름과 이어지지 않는 문장을 골라요. 빈칸의 앞 문장과 뒤 문장을 이어서 읽어보게 해주세요.',
+};
+
+// 실력 축마다 부모가 도울 방법 한 줄
+const AXIS_GUIDE = {
+  listen: '소리를 듣고 뜻을 잡는 힘이에요. 아래 "들려준 내용"을 부모님이 천천히 읽어 주고 다시 골라보게 하면 좋아요.',
+  read: '글을 읽고 큰 뜻을 잡는 힘이에요. 지문을 소리 내어 읽고 "무슨 이야기야?"를 우리말로 말해보게 해주세요.',
+  find: '글에서 필요한 정보를 콕 찾아내는 힘이에요. 질문에 나온 낱말을 지문에서 손가락으로 짚어보게 해주세요.',
+  grammar: '문장 규칙(문법) 감각이에요. 아래 정답 문장을 두세 번 소리 내어 읽으면 규칙이 몸에 붙어요.',
+  infer: '겉으로 말하지 않은 속뜻을 짐작하는 힘이에요. "이 사람 기분이 어땠을까?" 같은 질문을 던져 주세요.',
+};
+
+const LETTERS = ['A', 'B', 'C', 'D'];
+const fmtDay = (d) => { const [, m, day] = String(d).split('-'); return `${+m}월 ${+day}일`; };
+
+// 지문·대본 안에서 근거 문장을 형광펜으로. 못 찾으면(따옴표·줄바꿈 차이) 그냥 원문만 보여준다.
+const evMark = (text, ev) => {
+  const t = esc(text);
+  if (!ev) return t;
+  const e = esc(ev);
+  return t.includes(e) ? t.replace(e, `<mark class="wq-ev">${e}</mark>`) : t;
+};
 
 // 학년은 진단 길이와 듣기 속도를 가르는 값이라 꼭 받는다. 부모는 1초에 고르고,
 // 이게 없으면 중3도 초3용 짧은 진단을 받는다(실제로 그렇게 나가고 있었다).
@@ -402,10 +452,14 @@ async function showHome(childId = currentChildId) {
 
     <div class="card">
       <div class="card-head"><span class="card-title">이렇게 도와주세요</span></div>
-      ${tips(d).map(([t, s], i) => `
-        <div class="tip"><span class="tip-n">${i + 1}</span>
-          <span class="tip-b"><span class="tip-t">${esc(t)}</span><span class="tip-s">${esc(s)}</span></span>
-        </div>`).join('')}
+      ${tips(d).map(([t, s, go], i) => {
+        const body = `<span class="tip-n">${i + 1}</span>
+          <span class="tip-b"><span class="tip-t">${esc(t)}</span><span class="tip-s">${esc(s)}</span></span>`;
+        return go
+          ? `<button class="tip tip-go" ${go.miss ? `data-miss="${esc(go.miss)}"` : `data-axis="${esc(go.axis)}"`}
+              data-name="${esc(go.name)}">${body}<span class="tip-arrow">›</span></button>`
+          : `<div class="tip">${body}</div>`;
+      }).join('')}
     </div>
 
     ${ready.length ? `<div class="card">
@@ -420,13 +474,15 @@ async function showHome(childId = currentChildId) {
     </div>` : ''}
 
     ${d.misses?.length ? `<div class="card">
-      <div class="card-head"><span class="card-title">요즘 자주 걸리는 실수</span></div>
+      <div class="card-head"><span class="card-title">요즘 자주 걸리는 실수</span>
+        <span class="card-note">눌러서 문제 보기</span></div>
       ${d.misses.map((m, i) => `
-        <div class="miss${i ? ' sub' : ''}">
+        <button class="miss miss-go${i ? ' sub' : ''}" data-miss="${esc(m.code)}" data-name="${esc(m.name)}">
           <span class="miss-rank">${i + 1}</span>
           <span class="miss-name">${esc(m.name)}</span>
           <span class="miss-n">${m.n}번</span>
-        </div>`).join('')}
+          <span class="tip-arrow">›</span>
+        </button>`).join('')}
     </div>` : ''}
 
     ${d.parent
@@ -435,12 +491,82 @@ async function showHome(childId = currentChildId) {
 
   view.querySelectorAll('[data-kid]').forEach((b) =>
     b.addEventListener('click', () => showHome(b.dataset.kid)));
+  view.querySelectorAll('[data-miss], [data-axis]').forEach((b) =>
+    b.addEventListener('click', () => showWrong({
+      miss: b.dataset.miss, axis: b.dataset.axis, name: b.dataset.name })));
   view.querySelector('[data-kids]')?.addEventListener('click', showChildren);
   view.querySelector('[data-out]').addEventListener('click', () => {
     saveAuth(null);
     currentChildId = null;
     showLogin();
   });
+}
+
+// ── 오답 상세 — "n번 틀렸어요"라는 숫자 뒤의 실제 문제들 ──
+// 부모가 아이에게 다시 설명해줄 수 있게 문제·보기·아이가 고른 답·정답·풀이·근거를 다 편다.
+// 듣기 문제는 들려준 문장을 글(대본)로 보여준다 — 소리를 안 틀어도 설명할 수 있게.
+function wrongCard(it) {
+  const mark = (i) =>
+    i === it.answer_idx ? '<span class="wq-tag good">정답</span>'
+      : i === it.chosen_idx ? '<span class="wq-tag bad">아이가 고른 답</span>' : '';
+  const cls = (i) => (i === it.answer_idx ? ' good' : i === it.chosen_idx ? ' bad' : '');
+  const choices = it.choice_images
+    ? `<div class="wq-imgs">${it.choice_images.map((src, i) => `
+        <div class="wq-img${cls(i)}">
+          <img src="${esc(src)}" alt="보기 ${LETTERS[i]}" loading="lazy" />
+          <span class="wq-letter">${LETTERS[i]}</span>${mark(i)}
+        </div>`).join('')}</div>`
+    : it.choices.map((cc, i) => `
+        <div class="wq-choice${cls(i)}">
+          <span class="wq-letter">${LETTERS[i]}</span>
+          <span class="wq-text">${esc(cc)}</span>${mark(i)}
+        </div>`).join('');
+  // 근거 문장이 지문·대본 안에서 형광펜으로 표시됐으면 따로 한 줄 더 쓰지 않는다
+  const hay = it.script || it.passage || '';
+  const evInline = it.evidence && hay.includes(it.evidence);
+  return `<div class="card wq">
+    <p class="wq-when">${fmtDay(it.when)} · ${esc(PART_KO[it.part] ?? it.part)}${it.times > 1 ? ` · ${it.times}번 틀렸어요` : ''}</p>
+    ${it.script ? `<div class="wq-passage"><span class="wq-cap">들려준 내용</span>${evMark(it.script, it.evidence)}</div>` : ''}
+    ${it.passage ? `<div class="wq-passage"><span class="wq-cap">지문</span>${evMark(it.passage, it.evidence)}</div>` : ''}
+    ${it.stem ? `<p class="wq-stem">${esc(it.stem)}</p>` : ''}
+    ${choices}
+    ${it.why_chosen ? `<div class="wq-line"><span class="wq-cap bad-t">왜 이걸 골랐을까</span>
+      <p>${esc(it.why_chosen)}</p></div>` : ''}
+    <div class="wq-line"><span class="wq-cap good-t">정답 풀이</span><p>${esc(it.explanation_ko)}</p></div>
+    ${it.evidence && !evInline ? `<div class="wq-line"><span class="wq-cap">근거</span><p>${esc(it.evidence)}</p></div>` : ''}
+  </div>`;
+}
+
+async function showWrong(q) {
+  view.innerHTML = `${head(true)}<p class="loading">불러오는 중...</p>`;
+  view.querySelector('[data-back]').addEventListener('click', () => showHome());
+  let d;
+  try {
+    const pick = q.miss ? `miss=${encodeURIComponent(q.miss)}` : `axis=${encodeURIComponent(q.axis)}`;
+    d = await api(`/api/parent/wrong-answers?child_id=${encodeURIComponent(currentChildId ?? '')}&${pick}`);
+  } catch (e) {
+    if (/로그인이 필요/.test(e.message)) { saveAuth(null); showLogin(); return; }
+    view.insertAdjacentHTML('beforeend', `<div class="card"><p class="empty">${esc(e.message)}</p></div>`);
+    view.querySelector('.loading')?.remove();
+    return;
+  }
+  const guide = q.miss ? MISS_GUIDE[d.code] : AXIS_GUIDE[d.code];
+  view.innerHTML = `
+    ${head(true)}
+    <div class="verdict">
+      <p class="verdict-eyebrow">${q.miss ? '자주 걸리는 실수' : '아직 약한 부분'}</p>
+      <p class="verdict-line">${esc(d.name)}</p>
+      <p class="verdict-sub">${d.n
+        ? `최근 30일 동안 ${q.miss ? `${d.n}번 이렇게 틀렸어요` : `이 영역에서 ${d.n}문제를 틀렸어요`}.`
+        : '최근 30일에는 틀린 문제가 없어요.'}</p>
+    </div>
+    ${guide ? `<div class="card wq-guide"><span class="wq-cap">이렇게 짚어주세요</span>
+      <p>${esc(guide)}</p></div>` : ''}
+    ${d.items.length ? d.items.map(wrongCard).join('')
+      : '<div class="card"><p class="empty">최근 30일 안에는 보여드릴 오답이 없어요.</p></div>'}
+    ${d.more ? `<p class="card-note wq-foot">이 밖에 ${d.more}문제가 더 있어요 — 최근 것부터 20개까지 보여드려요.</p>` : ''}
+    ${d.items.some((it) => it.times > 1) ? '<p class="card-note wq-foot">같은 문제를 여러 번 틀리면 카드 하나로 합쳐서 보여드려요.</p>' : ''}`;
+  view.querySelector('[data-back]').addEventListener('click', () => showHome());
 }
 
 // ── 비밀번호 재설정 (관리자가 만들어 준 링크로 들어온다) ──

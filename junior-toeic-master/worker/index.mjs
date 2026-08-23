@@ -9,7 +9,7 @@ import {
   requireParent, requireParentAccount, SUSPENDED_MSG,
   hashSecret, verifySecret, makeAccountToken,
 } from './auth.mjs';
-import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions, audioRateFor, AUDIO_RATES } from './engine.mjs';
+import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions, audioRateFor, AUDIO_RATES, MISS_KO, SKILL_AXES, shiftISO } from './engine.mjs';
 
 // 진단 답안 일괄 채점·기록 (Elo·SRS 미반영 — engine.md 4절)
 async function gradeDiagAnswers(db, user, sessionId, answers) {
@@ -810,6 +810,71 @@ app.get('/api/parent/overview', requireParent, async (c) => {
     correct: stats.correct,
     parts: Object.fromEntries(parts.map((p) => [p.part, { answered: p.answered, correct: p.correct }])),
     axes: sm.axes, misses: sm.misses, revive: sm.revive, speed: sm.speed,
+  });
+});
+
+// 오답 상세 — "5번 틀렸어요"라는 숫자 뒤의 실제 문제를 부모가 본다.
+// ?miss=G.pair (실수 유형) 또는 ?axis=read (실력 축) 중 하나로 고른다.
+// 정답·해설이 나가지만 '이미 푼 문제'만이고 부모 토큰 전용이다 — 앞으로 나올 문제는
+// 여기 없고, 아이 토큰으로는 열리지 않으므로 '정답은 서버에만' 원칙과 부딪히지 않는다.
+app.get('/api/parent/wrong-answers', requireParent, async (c) => {
+  const child = c.get('child');
+  const miss = c.req.query('miss') || null;
+  const ax = SKILL_AXES.find((a) => a.key === c.req.query('axis')) ?? null;
+  if (!(miss && MISS_KO[miss]) && !ax) return c.json({ error: '무엇을 볼지 알 수 없어요' }, 400);
+
+  // 실수 순위(rankMisses)와 같은 창(최근 30일) — 화면의 "n번"과 목록이 같은 것을 세게 한다
+  const since = shiftISO(kstDate(), -30);
+  const tagCond = ax
+    ? ` AND EXISTS (SELECT 1 FROM question_tags t WHERE t.question_id = q.id
+         AND t.tag_id IN (${ax.tags.map((_, i) => `?${i + 3}`).join(',')}))`
+    : '';
+  const { results: rows } = await c.env.DB.prepare(
+    `SELECT a.chosen_idx, date(a.answered_at, '+9 hours') AS d,
+            q.id AS qid, q.part, q.section, q.stem, q.choices, q.answer_idx,
+            q.explanation_ko, q.evidence, q.why_not, q.miss_type, q.script, q.image_url,
+            p.content AS p_content
+       FROM answers a
+       JOIN questions q ON q.id = a.question_id
+       LEFT JOIN passages p ON p.id = q.passage_id
+      WHERE a.user_id = ?1 AND a.is_correct = 0 AND a.answered_at >= ?2${tagCond}
+      ORDER BY a.answered_at DESC LIMIT 200`
+  ).bind(child.id, since, ...(ax ? ax.tags : [])).all();
+
+  // 같은 문제를 두 번 틀렸으면 카드 하나에 "2번"으로 합친다(따로 두 장이면 헷갈린다).
+  // n은 합치기 전 횟수 — 홈 화면의 "n번 틀렸어요"와 같은 수가 되게.
+  const seen = new Map();
+  const items = [];
+  let n = 0;
+  for (const r of rows) {
+    if (miss && (parseJson(r.miss_type) ?? {})[String(r.chosen_idx)] !== miss) continue;
+    n += 1;
+    const got = seen.get(r.qid);
+    if (got) { got.times += 1; continue; }
+    const item = {
+      part: r.part, when: r.d, times: 1,
+      stem: r.stem,
+      choices: parseJson(r.choices) ?? [],
+      choice_images: r.part === 'L1' && r.image_url?.startsWith('[') ? parseJson(r.image_url) : null,
+      chosen_idx: r.chosen_idx,
+      answer_idx: r.answer_idx,
+      why_chosen: (parseJson(r.why_not) ?? {})[String(r.chosen_idx)] ?? null,
+      explanation_ko: r.explanation_ko,
+      evidence: r.evidence ?? null,
+      // 듣기는 들려준 문장(대본)을 글로 준다 — 부모가 소리를 안 틀어도 설명할 수 있게
+      passage: r.section === 'RC' ? (r.p_content ?? null) : null,
+      script: r.section === 'LC' ? (r.script || r.p_content || null) : null,
+    };
+    seen.set(r.qid, item);
+    items.push(item);
+  }
+  return c.json({
+    kind: miss ? 'miss' : 'axis',
+    code: miss ?? ax.key,
+    name: miss ? MISS_KO[miss] : ax.name,
+    n,
+    items: items.slice(0, 20),
+    more: Math.max(0, items.length - 20),
   });
 });
 

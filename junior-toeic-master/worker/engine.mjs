@@ -374,7 +374,7 @@ export function rankMisses(rows, min = MISS_MIN) {
 // '오늘'(KST 날짜 문자열)에서 며칠 앞뒤로 민 값.
 //  ...ISO는 answered_at(타임스탬프)과 비교용, ...Date는 date 컬럼과 비교용
 const kstMs = (date) => Date.parse(`${date}T00:00:00+09:00`);
-const shiftISO = (date, days) => new Date(kstMs(date) + days * 86400_000).toISOString();
+export const shiftISO = (date, days) => new Date(kstMs(date) + days * 86400_000).toISOString();
 const shiftDate = (date, days) => kstDate(kstMs(date), days);
 
 // 레이팅(900~1500)을 0~100으로. 점프 점수와 같은 눈금을 쓴다 — 화면에 100점짜리

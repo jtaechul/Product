@@ -271,6 +271,7 @@
 | `POST /api/parent/children` | 아이 추가 (이름+비밀번호, 최대 3명) |
 | `POST /api/parent/children/:id/password` | 아이 비밀번호 바꾸기 |
 | `GET /api/parent/overview` | 아이 한 명의 학습 요약 (`?child_id=`로 전환) |
+| `GET /api/parent/wrong-answers` | 오답 상세 — `?miss=코드` 또는 `?axis=축`으로 최근 30일 실제 오답 문제·아이 답·정답·풀이·근거 (이미 푼 문제만, 부모 토큰 전용) |
 
 ### 관리자 API (내부 도구)
 
