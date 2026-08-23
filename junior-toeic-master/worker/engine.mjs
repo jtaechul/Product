@@ -127,7 +127,11 @@ export async function composeDailySet(db, user, today) {
       && (tagsBy[x.q.id] || []).some((t) => tagset.has(t)));
     // 처음 만나는 축이니 쉬운 것부터 — 연달아 틀리면 그 축이 실제 실력보다 낮게 잡힌다
     cand.sort((a, b) => b.p - a.p);
-    if (cand[0]) take(cand[0].q);
+    // 모자란 만큼(최대 3문항) 그날 다 넣는다 — 하루 1문항씩 주던 예전 방식은
+    // 이미 수십 문제를 푼 아이에게도 "사흘 더 기다리세요"라고 말하는 셈이었다.
+    // 이 세트 하나만 끝내면 그 축은 오늘 바로 점수가 나온다.
+    const need = Math.min(AXIS_MIN_ATTEMPTS - axisAttempts(needAxis), room(), cand.length);
+    for (const { q } of cand.slice(0, Math.max(0, need))) take(q);
   }
 
   // 축 채우기가 먼저 한 개를 집어갔을 수 있으므로 여기서도 이미 고른 것을 걸러야 한다

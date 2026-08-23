@@ -251,18 +251,25 @@ app.post('/api/diagnostic/finish', requireAuth, async (c) => {
     report.push({ part, grade, acc: accPct, count: n });
     // 그 파트에서 실제 풀린 문항들의 태그를 초기화 대상으로 삼는다
     // (concept_tags.part는 어휘 등 공용 태그에서 NULL이라 직접 매핑이 샌다)
+    //
+    // ⚠ 시도 수는 태그별로 '그 태그가 붙은 문항 수'만 센다. 예전엔 파트 문항 수 n을
+    // 모든 태그에 통째로 복사했는데, 그러면 L3를 4문항 풀 때 그중 속뜻 문항이 0개여도
+    // 다른 태그들이 전부 attempts=4가 된다. 실력 지도가 그 부풀린 숫자로 "측정 완료"라
+    // 말하는 동안, 진단에 안 나온 속뜻만 0으로 남아 몇 날이고 '재는 중'에 갇혔다 —
+    // "30문제를 풀었는데 왜 속뜻만 평가가 안 되냐"는 말이 정확히 이 버그였다.
     const { results: tags } = await c.env.DB.prepare(
-      `SELECT DISTINCT qt.tag_id AS id FROM answers a
+      `SELECT qt.tag_id AS id, COUNT(*) AS n, COALESCE(SUM(a.is_correct), 0) AS c
+         FROM answers a
          JOIN question_tags qt ON qt.question_id = a.question_id
          JOIN questions q ON q.id = a.question_id
-        WHERE a.session_id = ?1 AND q.part = ?2`
+        WHERE a.session_id = ?1 AND q.part = ?2 GROUP BY qt.tag_id`
     ).bind(sess.id, part).all();
-    for (const { id: tagId } of tags) {
+    for (const t of tags) {
       stmts.push(c.env.DB.prepare(
         `INSERT INTO user_tag_skills (user_id, tag_id, rating, attempts, correct, last_practiced_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)
          ON CONFLICT(user_id, tag_id) DO UPDATE SET rating = ?3, attempts = ?4, correct = ?5, last_practiced_at = ?6`
-      ).bind(u.id, tagId, rating, n, cor, now));
+      ).bind(u.id, t.id, rating, t.n, t.c, now));
     }
   }
   report.sort((a, b) => a.part.localeCompare(b.part));
