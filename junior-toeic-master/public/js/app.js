@@ -36,6 +36,11 @@ const KEY = 'jumplish.progress.v1';
 // 중간에 앱을 닫으면 그때까지 푼 게 통째로 날아간다(실제로 겪은 문제). 여기에 담아 둔다.
 const blank = { parts: {}, wrong: [], days: [], set: null, setDate: null, setIdx: 0, exprs: [], diag: null };
 let store;
+
+// 듣기 재생 배속. 서버가 아이의 '듣고 알기' 점수를 보고 정해 /api/me 로 내려준다
+// (0.95 = 약 90% · 1.0 = 95% · 1.05 = 약 100%). 로그인 전이거나 못 받아왔으면 기본 1.
+// 음원을 틀 때마다 서버에 묻지 않는다 — 망이 느린 곳에서 속도가 흔들리면 안 된다.
+let audioRate = 1;
 try { store = { ...blank, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; }
 catch { store = { ...blank }; }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch { /* 저장 실패는 무시 */ } };
@@ -559,6 +564,7 @@ async function showHome() {
       try {
         me = await api('/api/me', { headers: authHeaders() });
         reviewN = me.review_due;
+        if (me.audio_rate) audioRate = me.audio_rate;
         // 다른 기기에서 이름을 바꿨을 수 있다 — 서버 값이 다르면 이 기기 것을 맞춘다
         if (me.user?.display_name && me.user.display_name !== auth.user.display_name) {
           saveAuth({ ...auth, user: { ...auth.user, display_name: me.user.display_name } });
@@ -1331,9 +1337,11 @@ function renderQuestion() {
     const go = (rate) => playClip(audioUrl, rate).catch(() => {
       note.textContent = '소리를 켜고 ▶ 를 눌러주세요';
     });
-    btn.addEventListener('click', () => go(1));
-    playerBox.querySelector('[data-slow]').addEventListener('click', () => go(0.75));
-    go(1);
+    // 기본 재생은 이 아이의 속도로. '천천히'는 거기서 한 번 더 늦춘다 —
+    // 실전 속도를 쓰는 아이도 어려운 한 문항은 느리게 다시 들을 수 있어야 한다.
+    btn.addEventListener('click', () => go(audioRate));
+    playerBox.querySelector('[data-slow]').addEventListener('click', () => go(audioRate * 0.78));
+    go(audioRate);
   }
 
   view.querySelector('[data-back]').addEventListener('click', () => {

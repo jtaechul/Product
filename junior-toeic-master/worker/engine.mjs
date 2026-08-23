@@ -288,6 +288,46 @@ export const SKILL_AXES = [
 ];
 const AXIS_MIN_ATTEMPTS = 3;   // 이보다 적으면 '아직 재는 중' — 3문항으로 실력이라 하면 거짓말이다
 
+// ── 듣기 재생 속도 (2026-08-23) ──
+// TOEIC Bridge는 실전 자체가 일반 토익보다 느리다. 우리 음원 마스터는 거기서 한 번 더
+// 늦춰 **자연 발화의 95%**로 구워져 있다(tools/tts-batch.mjs RATE). 음원은 한 벌만 만들고
+// (운영비 0원 원칙) 재생 배속으로 세 단계를 만든다 — 파일을 세 배로 굽지 않는다.
+//
+//   0.95배 → 실제 말 속도 약 90%   (아직 귀가 안 트인 아이)
+//   1.00배 → 95%  (마스터 그대로 — 기본)
+//   1.05배 → 약 100% (실전 속도에 가깝게)
+//
+// 경계(30·70)는 임의로 고른 값이 아니라 **진단 등급 경계**다. 진단 밴드를 이 눈금으로
+// 환산하면 1급 8 / 2급 29 / 3급 50 / 4급 71 / 5급 92점이라, 30점 미만 = 하위 두 등급,
+// 70점 이상 = 상위 두 등급이 된다. 학부모 화면의 '듣고 알기' 점수와 같은 자를 쓰므로
+// "72점이라 실전 속도예요"라고 그대로 설명할 수 있다.
+export const AUDIO_RATES = { slow: 0.95, normal: 1.0, fast: 1.05 };
+const RATE_UP = 70;     // 이 위로 올라가면 실전 속도
+const RATE_DOWN = 65;   // 내려올 때는 여기까지 떨어져야 기본으로 — 69↔70을 오가며
+                        // 속도가 매일 널뛰면 아이가 "오늘 왜 빨라졌지" 하고 혼란스럽다
+const RATE_SLOW_UP = 35;   // 천천히 → 기본 (올라갈 때)
+const RATE_SLOW_DOWN = 30; // 기본 → 천천히 (내려갈 때)
+
+// 듣기 재생 배속을 정한다. 순수 함수 — 강사·학부모에게 그대로 설명 가능하다.
+//   score    : '듣고 알기' 축 점수(0~100). 아직 측정 전이면 null
+//   group    : 'junior'(초3~4) | 'basic'
+//   current  : 지금 쓰던 배속(있으면 히스테리시스에 쓴다)
+export function audioRateFor(score, group = 'basic', current = null) {
+  // 아직 못 잰 아이는 무조건 기본. 모르는 상태에서 빠르게 틀면 실력이 아니라
+  // 속도 때문에 틀리고, 그 오답이 다시 실력 추정을 끌어내린다.
+  if (score == null) return AUDIO_RATES.normal;
+  const wasFast = current === AUDIO_RATES.fast;
+  const wasSlow = current === AUDIO_RATES.slow;
+  let rate;
+  if (score >= (wasFast ? RATE_DOWN : RATE_UP)) rate = AUDIO_RATES.fast;
+  else if (score >= (wasSlow ? RATE_SLOW_UP : RATE_SLOW_DOWN)) rate = AUDIO_RATES.normal;
+  else rate = AUDIO_RATES.slow;
+  // 초3~4는 잘해도 실전 속도까지 올리지 않는다(기획서 '저학년은 느리게' 원칙).
+  // 아홉 살에게 어른 속도는 실력 문제가 아니라 아직 귀가 못 따라가는 영역이다.
+  if (group === 'junior' && rate === AUDIO_RATES.fast) return AUDIO_RATES.normal;
+  return rate;
+}
+
 // 실수 유형 딱지 — 오답 보기마다 "왜 그걸 골랐는가"를 문항에 미리 붙여 뒀다(questions.miss_type).
 // 축(레이더)이 '어디가 약한가'라면 이쪽은 '왜 틀리는가'다. 고칠 행동이 바로 나온다.
 // 답안마다 따로 저장하지 않는다 — chosen_idx 와 문항의 딱지를 맞춰 나중에 언제든 다시 뽑는다.

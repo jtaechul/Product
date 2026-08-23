@@ -9,7 +9,7 @@ import {
   requireParent, requireParentAccount, SUSPENDED_MSG,
   hashSecret, verifySecret, makeAccountToken,
 } from './auth.mjs';
-import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions } from './engine.mjs';
+import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions, audioRateFor, AUDIO_RATES } from './engine.mjs';
 
 // 진단 답안 일괄 채점·기록 (Elo·SRS 미반영 — engine.md 4절)
 async function gradeDiagAnswers(db, user, sessionId, answers) {
@@ -67,10 +67,28 @@ async function feedbackOf(db, q, chosenIdx) {
   };
 }
 
+// 학년 그룹 — 주니어(초3~4)는 진단이 짧고(16문항) 듣기 속도 상한이 있다.
+// 학년을 직접 저장하기 전에는 반(classes.set_size)으로 갈랐는데, 학부모가 만든 아이는
+// 반이 없어 전원이 주니어로 떨어졌다. 이제 학년을 먼저 보고, 없을 때만 옛 방식으로 넘어간다.
+const JUNIOR_GRADES = new Set(['초3', '초4']);
 const groupOf = async (db, user) => {
+  if (user.grade) return JUNIOR_GRADES.has(user.grade) ? 'junior' : 'basic';
   const size = (await db.prepare('SELECT set_size FROM classes WHERE id = ?1').bind(user.class_id).first())?.set_size ?? 12;
   return size <= 12 ? 'junior' : 'basic';
 };
+
+// 이 아이의 듣기 재생 배속을 정하고, 바뀌었으면 남겨 둔다.
+// 규칙 자체는 engine.audioRateFor 한 곳에만 있다 — 여기서는 값을 물어다 주고 저장만 한다.
+async function audioRateOf(db, user) {
+  const sm = await computeSkillMap(db, user);
+  const listen = sm.axes.find((a) => a.key === 'listen');
+  const group = await groupOf(db, user);
+  const rate = audioRateFor(listen?.score ?? null, group, user.audio_rate ?? null);
+  if (rate !== user.audio_rate) {
+    await db.prepare('UPDATE users SET audio_rate = ?2 WHERE id = ?1').bind(user.id, rate).run();
+  }
+  return rate;
+}
 
 // 문항 id 목록 → 학생용 필드(정답·해설·스크립트 미포함) + 지문. 시험 순서(파트 오름차순) 정렬.
 async function hydrate(db, ids) {
@@ -161,6 +179,9 @@ app.get('/api/me', requireAuth, async (c) => {
     answered: stats.answered, correct: stats.correct, review_due: due.n, sealed: climb.breakdown.sealed,
     climb,
     diagnosed: !!diag, diag_report: diag ? JSON.parse(diag.summary) : null,
+    // 듣기 재생 배속. 앱이 이 값을 들고 있다가 음원을 틀 때 그대로 쓴다 —
+    // 문항마다 서버에 다시 묻지 않는다(오프라인·느린 망에서도 속도가 흔들리지 않게).
+    audio_rate: await audioRateOf(c.env.DB, u),
   });
 });
 
@@ -480,6 +501,11 @@ const isEmail = (s) => typeof s === 'string' && s.length <= 254 && /^[^\s@]+@[^\
 // 부모 비밀번호는 결제 정보를 지키는 열쇠라 8자 이상에 뻔한 것도 막지만,
 // 아이 비밀번호가 지키는 건 자기 학습 기록뿐이다. 아홉 살이 매일 칠 수 있어야 하므로
 // 네 글자 이상이면 통과시킨다. 어렵게 만들면 부모가 대신 외워주다가 결국 부모 것을 쓴다.
+// 학년 — 진단 길이(주니어 16 / 기본 24)와 듣기 속도 상한이 여기서 갈린다.
+// 목록에 없는 값이 들어오면 NULL 로 둔다(추측해서 저학년으로 몰면 잘하는 아이가 손해).
+const GRADES = ['초3', '초4', '초5', '초6', '중1', '중2', '중3'];
+const cleanGrade = (g) => (GRADES.includes(String(g ?? '').trim()) ? String(g).trim() : null);
+
 const CHILD_PW_MIN = 4;
 function childPwReason(pw) {
   const s = String(pw ?? '');
@@ -499,9 +525,9 @@ async function createChild(db, { parentId, name, password, grade }) {
     // 부모가 정해 준 아이 비밀번호가 여기 들어간다. 부모 것과 같은 이메일을 쓰되
     // 비밀번호만 다르므로, 아이는 부모 비밀번호를 알 필요가 없다(결제 화면도 못 연다).
     await db.prepare(
-      `INSERT INTO users (id, role, login_id, pin_hash, display_name, created_at, parent_id)
-       VALUES (?1, 'student', ?2, ?3, ?4, ?5, ?6)`
-    ).bind(id, loginId, await hashPin(password), name, nowISO(), parentId).run();
+      `INSERT INTO users (id, role, login_id, pin_hash, display_name, created_at, parent_id, grade)
+       VALUES (?1, 'student', ?2, ?3, ?4, ?5, ?6, ?7)`
+    ).bind(id, loginId, await hashPin(password), name, nowISO(), parentId, grade ?? null).run();
     return { id, login_id: loginId, display_name: name, grade: grade ?? null };
   }
   return null;
@@ -550,7 +576,7 @@ app.post('/api/parent/signup', async (c) => {
   ).bind(parent.id, email, parent.password_hash, name, now, CONSENT_VER).run();
 
   const child = await createChild(c.env.DB, {
-    parentId: parent.id, name: childName, password: childPw, grade: b.grade });
+    parentId: parent.id, name: childName, password: childPw, grade: cleanGrade(b.child_grade) });
   if (!child) return c.json({ error: '아이를 등록하지 못했어요. 다시 시도해주세요' }, 500);
 
   return c.json({
@@ -672,7 +698,7 @@ app.post('/api/parent/children', requireParentAccount, async (c) => {
   ).bind(parent.id).first();
   if (n >= MAX_CHILDREN) return c.json({ error: `아이는 ${MAX_CHILDREN}명까지 등록할 수 있어요` }, 400);
 
-  const child = await createChild(c.env.DB, { parentId: parent.id, name, password, grade: b.grade });
+  const child = await createChild(c.env.DB, { parentId: parent.id, name, password, grade: cleanGrade(b.grade) });
   if (!child) return c.json({ error: '아이를 등록하지 못했어요. 다시 시도해주세요' }, 500);
   return c.json({ child });
 });
@@ -746,6 +772,9 @@ app.get('/api/parent/overview', requireParent, async (c) => {
     // 오늘 날짜를 서버가 알려준다 — 화면이 기기 시계로 따로 계산하면 한국이 아닌 곳에서
     // 보거나 자정~오전 9시 사이에 볼 때 하루가 어긋난다(서버는 한국 시간 기준).
     today,
+    // 듣기 속도가 아이마다 다르게 나가므로 부모가 알 수 있어야 한다.
+    // "우리 애 소리가 갑자기 빨라졌어요" 문의를 이 한 줄이 막는다.
+    audio_rate: await audioRateOf(c.env.DB, child),
     today_n: days.find((r) => r.d === today)?.n ?? 0,
     recent_days: days.slice(0, 14).reverse(),   // 최근 2주, 오래된 날부터
     streak,

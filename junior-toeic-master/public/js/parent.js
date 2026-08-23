@@ -125,6 +125,7 @@ function showSignup() {
         <input data-name maxlength="12" autocomplete="name" placeholder="예: 김보호" /></label>
       <label class="field" style="margin-top:10px"><span>아이 이름</span>
         <input data-child maxlength="12" placeholder="예: 김하늘" /></label>
+      ${gradeField('data-childgrade')}
       <label class="field" style="margin-top:10px"><span>아이가 쓸 비밀번호 (4자 이상)</span>
         <input data-childpw autocomplete="off" placeholder="아이가 외우기 쉬운 것으로" /></label>
       <p class="card-note" style="margin-top:6px">아이는 <b>같은 이메일</b>에 <b>이 비밀번호</b>로 앱에 들어갑니다.
@@ -149,6 +150,7 @@ function showSignup() {
       password: view.querySelector('[data-pw]').value,
       name: view.querySelector('[data-name]').value.trim(),
       child_name: view.querySelector('[data-child]').value.trim(),
+      child_grade: view.querySelector('[data-childgrade]').value,
       child_password: view.querySelector('[data-childpw]').value,
       consent: view.querySelector('[data-consent]').checked,
     };
@@ -200,6 +202,7 @@ function showChildren() {
           <span class="card-note">${d.children.length}/${MAX_KIDS}명</span></div>
         <label class="field"><span>아이 이름</span>
           <input data-new maxlength="12" placeholder="예: 김바다" /></label>
+        ${gradeField('data-newgrade')}
         <label class="field" style="margin-top:10px"><span>아이가 쓸 비밀번호 (4자 이상)</span>
           <input data-newpw autocomplete="off" placeholder="아이가 외우기 쉬운 것으로" /></label>
         <button class="btn-primary" data-add style="margin-top:10px">아이 추가</button>
@@ -215,7 +218,8 @@ function showChildren() {
       if (!name) return err(msg, '아이 이름을 넣어주세요.');
       if (password.trim().length < 4) return err(msg, '아이 비밀번호를 4자 이상으로 정해주세요.');
       try {
-        await api('/api/parent/children', { method: 'POST', body: JSON.stringify({ name, password }) });
+        const grade = view.querySelector('[data-newgrade]').value;
+        await api('/api/parent/children', { method: 'POST', body: JSON.stringify({ name, password, grade }) });
         showChildren();
       } catch (e) { err(msg, e.message); }
     });
@@ -314,7 +318,17 @@ function tips(d) {
   return out.slice(0, 3);
 }
 
+// 학년은 진단 길이와 듣기 속도를 가르는 값이라 꼭 받는다. 부모는 1초에 고르고,
+// 이게 없으면 중3도 초3용 짧은 진단을 받는다(실제로 그렇게 나가고 있었다).
+const GRADES = ['초3', '초4', '초5', '초6', '중1', '중2', '중3'];
+const gradeField = (attr, sel = '초5') => `<label class="field" style="margin-top:10px"><span>아이 학년</span>
+  <select ${attr}>${GRADES.map((g) => `<option${g === sel ? ' selected' : ''}>${g}</option>`).join('')}</select></label>`;
+
 const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
+
+// 재생 배속을 부모가 읽을 수 있는 말로. 배속(0.95)이 아니라 '실제 말 속도'로 적는다 —
+// 음원 마스터가 이미 자연 발화의 95%라, 0.95배는 실제로 90% 속도가 된다.
+const RATE_KO = { 0.95: '천천히 (약 90% 속도)', 1: '기본 (95% 속도)', 1.05: '실전 (약 100% 속도)' };
 
 let currentChildId = null;   // 아이가 여럿일 때 지금 보고 있는 아이
 
@@ -400,6 +414,9 @@ async function showHome(childId = currentChildId) {
       ${bars}
       <p class="card-note" style="margin-top:10px">100점 만점의 시험 점수가 아니라,
         아이가 지금 어느 쪽에 강하고 약한지를 보여주는 눈금입니다.</p>
+      ${d.audio_rate ? `<p class="card-note" style="margin-top:6px">듣기 음원은 지금
+        <b>${RATE_KO[d.audio_rate] ?? '기본 속도'}</b>로 나가고 있어요 —
+        '듣고 알기'가 늘면 앱이 알아서 조금씩 빠르게 들려줍니다.</p>` : ''}
     </div>` : ''}
 
     ${d.misses?.length ? `<div class="card">
