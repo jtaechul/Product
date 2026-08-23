@@ -118,19 +118,23 @@ export async function composeDailySet(db, user, today) {
     const tagset = new Set(ax.tags);
     return bank.reduce((n, q) => n + ((tagsBy[q.id] || []).some((t) => tagset.has(t)) ? 1 : 0), 0);
   };
-  const needAxis = SKILL_AXES
+  // ⚠ 처음엔 '가장 뒤처진 축 하나'만 채웠다. 그런데 진단이 끝나면 축 두 개(대개
+  // 읽고 알기·속뜻 알기)가 같이 모자라서, 하나가 채워지는 동안 다른 하나는 다음 날까지
+  // 빈 채로 남았다 — "하나씩 실력평가가 빠져 있다"는 말이 정확히 이 동작이었다.
+  // 이제 모자란 축 전부를, 뒤처진 순서대로, 자리가 허락하는 한 그날 다 채운다.
+  const needAxes = SKILL_AXES
     .filter((ax) => axisAttempts(ax) < AXIS_MIN_ATTEMPTS)
-    .sort((a, b) => axisAttempts(a) - axisAttempts(b) || axisBankN(a) - axisBankN(b))[0];
-  if (needAxis && room() > 0) {
-    const tagset = new Set(needAxis.tags);
+    .sort((a, b) => axisAttempts(a) - axisAttempts(b) || axisBankN(a) - axisBankN(b));
+  for (const ax of needAxes) {
+    if (room() <= 0) break;
+    const tagset = new Set(ax.tags);
     const cand = withP.filter((x) => !pickedSet.has(x.q.id)
       && (tagsBy[x.q.id] || []).some((t) => tagset.has(t)));
     // 처음 만나는 축이니 쉬운 것부터 — 연달아 틀리면 그 축이 실제 실력보다 낮게 잡힌다
     cand.sort((a, b) => b.p - a.p);
-    // 모자란 만큼(최대 3문항) 그날 다 넣는다 — 하루 1문항씩 주던 예전 방식은
-    // 이미 수십 문제를 푼 아이에게도 "사흘 더 기다리세요"라고 말하는 셈이었다.
-    // 이 세트 하나만 끝내면 그 축은 오늘 바로 점수가 나온다.
-    const need = Math.min(AXIS_MIN_ATTEMPTS - axisAttempts(needAxis), room(), cand.length);
+    // 모자란 만큼(축당 최대 3문항)만. 앞 축이 집어간 문항이 이 축 태그도 갖고 있으면
+    // 실제로는 덜 필요할 수 있지만, 많아야 문항 몇 개 여분이고 세트는 어차피 공부다.
+    const need = Math.min(AXIS_MIN_ATTEMPTS - axisAttempts(ax), room(), cand.length);
     for (const { q } of cand.slice(0, Math.max(0, need))) take(q);
   }
 
