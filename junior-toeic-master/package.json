@@ -14,6 +14,7 @@
     "hono": "^4.6.0"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
     "wrangler": "^4.0.0"
   }
 }

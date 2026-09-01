@@ -1,0 +1,182 @@
+#!/usr/bin/env node
+// AI 문항 초안 생성 (관리자 화면의 '문제 만들어줘' 주문을 받아 실행)
+//
+// 어디서 도는가: 깃허브 작업실(generate-questions.yml)에서만 돈다. 앱 서버(Workers)에는
+// AI 열쇠를 두지 않는다 — 운영 중 외부 호출 0회 원칙 그대로다. 음원·사진 배치와 같은 자리.
+//
+// 무엇을 하는가: 초안을 받아 **저작 규칙집(worker/authoring.mjs)으로 걸러**, 통과한 것만
+// content/questions/<파트>.json 에 status:"draft" 로 붙인다. 준비 중이므로 사람이 관리자
+// 화면에서 보고 '출제 시작'을 눌러야 아이에게 나간다. 규칙에 걸린 초안은 버리고 이유를 찍는다.
+//
+// 사용: ANTHROPIC_API_KEY=... node tools/gen-questions.mjs --part R3 --count 5 [--tag RS.infer]
+//                                                          [--difficulty 3] [--note "..."]
+
+import Anthropic from '@anthropic-ai/sdk';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  PARTS, PART_LIST, PART_KO, PART_FORM, CHOICES_BY_PART, ACCENTS,
+  EXPLANATION_MAX, WHY_NOT_MAX, KEY_EXPR_KO_MAX, HARD_TERMS,
+  makeUlid, validateItem, MISS_KO,
+} from '../worker/authoring.mjs';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const CONTENT = join(ROOT, 'content');
+
+const arg = (name, dflt = '') => {
+  const i = process.argv.indexOf(`--${name}`);
+  return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : dflt;
+};
+const PART = arg('part');
+const COUNT = Math.max(1, Math.min(20, Number(arg('count', '5')) || 5));
+const TAG = arg('tag');
+const DIFF = arg('difficulty');
+const NOTE = arg('note');
+
+if (!PART_LIST.includes(PART)) {
+  console.error(`--part 는 ${PART_LIST.join(', ')} 중 하나여야 합니다 (받은 값: ${PART || '없음'})`);
+  process.exit(1);
+}
+const KEY = process.env.ANTHROPIC_API_KEY;
+if (!KEY) {
+  console.error('ANTHROPIC_API_KEY 가 필요합니다 (Repository secrets 에 등록)');
+  process.exit(1);
+}
+
+const tags = JSON.parse(readFileSync(join(CONTENT, 'tags.json'), 'utf8'));
+const tagSection = Object.fromEntries(tags.map((t) => [t.code, t.section]));
+const section = PARTS[PART];
+const usable = tags.filter((t) => !t.code.startsWith('SEC.')
+  && (t.section === 'ALL' || t.section === section));
+
+const qFile = join(CONTENT, 'questions', `${PART}.json`);
+const items = existsSync(qFile) ? JSON.parse(readFileSync(qFile, 'utf8')) : [];
+// 이미 있는 문항 몇 개를 예시로 보여 준다 — 형식·말투·난이도를 글로 설명하는 것보다 정확하다.
+const samples = items.slice(-3);
+
+const form = PART_FORM[PART] === 'both' ? 'single' : PART_FORM[PART];
+const isLC = section === 'LC';
+
+const prompt = `당신은 초등 3학년~중학교 3학년 한국 학생을 위한 영어 문제(TOEIC Bridge 대비) 저작자입니다.
+"${PART_KO[PART]}" 문항을 **${COUNT}개** 새로 만들어 주세요.
+
+## 반드시 지킬 규칙
+- 출력은 **JSON 배열 하나만**. 설명·인사말·코드펜스 없이 배열만 출력합니다.
+- 각 원소는 아래 예시와 **완전히 같은 구조**입니다. tmp_id 는 넣지 마세요(시스템이 붙입니다).
+- 보기(choices)는 정확히 ${CHOICES_BY_PART[PART]}개.
+- 정답 위치를 고르게 섞으세요(한 자리에 몰리면 안 됩니다).
+- explanation_ko(해설)는 ${EXPLANATION_MAX}자 이하, **아이 말로** 씁니다.
+  다음 문법 용어는 절대 쓰지 마세요: ${HARD_TERMS.join(', ')}.
+  예) "주어가 3인칭 단수라서" (X) → "My dog는 한 마리라서" (O)
+- why_not: 오답 보기마다 ${WHY_NOT_MAX}자 이하 한 줄 이유. **정답 자리에는 넣지 않습니다.**
+- miss_type: why_not 을 넣은 자리마다 하나씩. 다음 중에서만 고릅니다:
+${Object.entries(MISS_KO).map(([k, v]) => `  ${k} = ${v}`).join('\n')}
+- evidence: 정답의 근거가 되는 부분을 **원문에서 그대로 복사**합니다(철자·부호까지).
+  ${isLC ? '들려줄 대본(script) 안에 있어야 합니다.' : '지문이나 문제 문장 안에 있어야 합니다.'}
+- key_expr: 이 문제에서 챙겨 갈 표현 하나. ko 는 ${KEY_EXPR_KO_MAX}자 이하.
+- tags: 아래 목록에서 1~3개만.
+${usable.map((t) => `  ${t.code} = ${t.name_ko}`).join('\n')}
+- difficulty_label: ${DIFF || '1~5 중 적절히 (쉬운 것 위주로 고르게)'}
+${TAG ? `- **이번 주문은 "${TAG}" 개념 문항입니다.** 모든 문항의 tags 에 ${TAG} 를 넣으세요.` : ''}
+${isLC ? `- 듣기이므로 발음(accent)은 ${ACCENTS.join('/')} 중 하나를 고르게 섞습니다.` : ''}
+${form === 'set' ? '- 지문 묶음형입니다. passage 하나에 문항 2~3개를 답니다.' : ''}
+- 소재는 아이 일상(학교·가족·친구·음식·여행)으로. 폭력·상표·시사 소재는 쓰지 않습니다.
+- 실제 기출을 베끼지 말고 100% 새로 씁니다.
+${NOTE ? `\n## 추가 요청\n${NOTE}` : ''}
+
+## 이 파일에 이미 있는 문항 (형식·말투를 그대로 따르세요)
+${JSON.stringify(samples, null, 1)}`;
+
+console.log(`주문: ${PART_KO[PART]} ${COUNT}문항${TAG ? ` · 개념 ${TAG}` : ''}${DIFF ? ` · 난이도 ${DIFF}` : ''}`);
+
+// 공식 SDK로 호출한다. 출력이 길어(문항 여러 개 + 해설) 스트리밍으로 받아야
+// 요청 시간 제한에 걸리지 않는다. 초안 저작은 판단이 필요한 일이라 적응형 사고를 켠다.
+const client = new Anthropic({ apiKey: KEY });
+let text = '';
+try {
+  const stream = client.messages.stream({
+    model: process.env.GEN_MODEL || 'claude-opus-5',
+    max_tokens: 64000,
+    thinking: { type: 'adaptive' },
+    messages: [{ role: 'user', content: prompt }],
+  });
+  const msg = await stream.finalMessage();
+  if (msg.stop_reason === 'refusal') {
+    console.error('AI가 이 주문을 거절했습니다. 주문 내용을 바꿔 다시 시도해 주세요.');
+    process.exit(1);
+  }
+  text = msg.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
+} catch (e) {
+  // 실패 종류를 나눠 알려 준다 — 열쇠 문제인지, 잠시 막힌 것인지에 따라 할 일이 다르다
+  if (e instanceof Anthropic.AuthenticationError) console.error('ANTHROPIC_API_KEY 가 올바르지 않습니다');
+  else if (e instanceof Anthropic.RateLimitError) console.error('요청이 몰렸습니다 — 잠시 뒤 다시 실행해 주세요');
+  else if (e instanceof Anthropic.APIError) console.error(`AI 호출 실패 (${e.status}): ${e.message}`);
+  else console.error(`AI 호출 실패: ${e.message}`);
+  process.exit(1);
+}
+
+// 앞뒤에 말이 붙어 나와도 배열만 건져낸다
+const start = text.indexOf('[');
+const end = text.lastIndexOf(']');
+if (start < 0 || end < 0) {
+  console.error('AI 응답에서 JSON 배열을 찾지 못했습니다:\n' + text.slice(0, 600));
+  process.exit(1);
+}
+let drafts;
+try { drafts = JSON.parse(text.slice(start, end + 1)); }
+catch (e) { console.error('AI 응답 JSON 을 읽지 못했습니다: ' + e.message); process.exit(1); }
+if (!Array.isArray(drafts) || !drafts.length) { console.error('초안이 비었습니다'); process.exit(1); }
+
+// ── 규칙집으로 거르기 ── 통과 못 한 초안은 버린다. 반쯤 맞는 문항을 사람이 고치는 것보다
+// 다시 주문하는 편이 싸고, 무엇보다 잘못된 문항이 아이에게 갈 길을 아예 막는다.
+const used = new Set(items.map((x) => x.tmp_id));
+let seq = items.length + 1;
+const nextTmp = () => {
+  while (used.has(`${PART}-${String(seq).padStart(4, '0')}`)) seq += 1;
+  const id = `${PART}-${String(seq).padStart(4, '0')}`;
+  used.add(id);
+  return id;
+};
+
+const accepted = [];
+const rejected = [];
+for (const d of drafts) {
+  // 초안이 제 이름표·파트·상태를 지어 왔더라도 여기서 덮어쓴다.
+  // 특히 status 는 언제나 draft — 사람이 확인하기 전에는 아이에게 나가지 않는다.
+  const item = {
+    type: d.type || form,
+    ...d,
+    tmp_id: nextTmp(),
+    section, part: PART, status: 'draft',
+  };
+  const errs = validateItem(item, PART, tagSection);
+  if (errs.length) rejected.push({ item, errs });
+  else accepted.push(item);
+}
+
+console.log(`\n초안 ${drafts.length}개 → 통과 ${accepted.length}개 / 버림 ${rejected.length}개`);
+for (const r of rejected) {
+  console.log(`  버림 (${r.item.tmp_id}):`);
+  for (const m of r.errs) console.log(`    - ${m}`);
+}
+if (!accepted.length) {
+  console.error('\n통과한 문항이 없어 아무것도 저장하지 않았습니다. 주문을 다시 넣어 주세요.');
+  process.exit(1);
+}
+
+// ULID 매핑까지 같이 써 둔다 — 음원 배치가 러너에서 제 이름을 짓지 못하게(generate-tts.yml 검사)
+const idmapPath = join(CONTENT, '.idmap.json');
+const idmap = existsSync(idmapPath) ? JSON.parse(readFileSync(idmapPath, 'utf8')) : {};
+const ulid = makeUlid();
+for (const it of accepted) {
+  const keys = it.type === 'set'
+    ? [`p:${it.tmp_id}`, ...it.questions.map((_, i) => `q:${it.tmp_id}#${i + 1}`)]
+    : [`q:${it.tmp_id}`];
+  for (const k of keys) if (!idmap[k]) idmap[k] = ulid();
+}
+
+writeFileSync(qFile, `${JSON.stringify([...items, ...accepted], null, 2)}\n`);
+writeFileSync(idmapPath, `${JSON.stringify(idmap, null, 2)}\n`);
+console.log(`\n${PART}.json 에 ${accepted.length}개 추가 (준비 중 상태)`);
+console.log(accepted.map((a) => `  ${a.tmp_id}`).join('\n'));

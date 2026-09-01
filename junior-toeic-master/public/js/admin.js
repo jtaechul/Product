@@ -144,6 +144,7 @@ async function showMain() {
 function tabsHtml() {
   return `<div class="tabs">
     <button data-tab="fam" ${tab === 'fam' ? 'aria-current="page"' : ''}>가족</button>
+    <button data-tab="q" ${tab === 'q' ? 'aria-current="page"' : ''}>문항</button>
     <button data-tab="fb" ${tab === 'fb' ? 'aria-current="page"' : ''}>신고${
       pendingN ? `<span class="badge">${pendingN}</span>` : ''}</button>
   </div>`;
@@ -151,7 +152,9 @@ function tabsHtml() {
 function bindTabs() {
   view.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => {
     tab = b.dataset.tab;
-    tab === 'fam' ? showMain() : showFeedback();
+    if (tab === 'fam') showMain();
+    else if (tab === 'q') showQuestions();
+    else showFeedback();
   }));
 }
 
@@ -436,6 +439,519 @@ async function showFeedback() {
       } catch (e) { if (!guard(e)) { alert(e.message); b.disabled = false; } }
     }));
   } catch (e) { if (!guard(e)) view.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; }
+}
+
+// ── 문항 (2026-08-23) ──
+// 하는 일 세 가지 — (1) 무엇이 부족한지 보기 (2) 직접 만들기 (3) AI에게 초안 시키기.
+//
+// 여기서 만든 문항은 저장소의 content/questions/*.json 에 커밋된다. DB에 바로 넣지 않는 이유는
+// 원본을 하나로 두기 위해서다 — 음원·사진 배치와 배포가 모두 그 파일을 보고 돌기 때문에,
+// 파일에 들어가야 듣기 문항에 소리가 붙고 다음 배포에 출제까지 이어진다.
+//
+// 새 문항은 언제나 '준비 중'으로 들어간다. 사람이 보고 '출제 시작'을 눌러야 아이에게 나간다.
+
+let content = null;      // 현황판 자료 (파트·태그·축·신고)
+let qFilter = { status: 'draft' };   // 목록에서 지금 보고 있는 조건
+
+async function showQuestions() {
+  view.innerHTML = `<p class="empty">불러오는 중...</p>`;
+  try {
+    content = await api('/api/admin/content');
+    renderQuestions();
+  } catch (e) { if (!guard(e)) view.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; }
+}
+
+// 축(실력 5칸)이 이 화면의 첫 번째 답이다. 총량이 넉넉해도 한 축이 얇으면
+// 그 축의 실력이 안 재져서 아이 화면에 '재는 중'이 계속 남는다.
+const AXIS_LOW = 40;     // 이보다 적으면 얇다고 본다 (5축 균형 기준)
+
+function renderQuestions() {
+  const c = content;
+  const axes = c.axes.map((a) => {
+    const low = a.n < AXIS_LOW;
+    return `<div class="sbar">
+      <span class="sbl">${esc(a.name)}</span>
+      <span class="sbt"><span class="sbf${low ? ' low' : ''}" style="width:${
+        Math.min(100, Math.round((a.n / 80) * 100))}%"></span></span>
+      <span class="sbn">${a.n}${low ? ' ⚠' : ''}</span>
+    </div>`;
+  }).join('');
+
+  const parts = c.parts.map((p) => `<div class="row">
+    <span class="row-main">
+      <span class="row-t">${esc(c.parts_ko[p.part] ?? p.part)}</span>
+      <span class="row-s">출제중 ${p.active}${p.draft ? ` · 준비중 ${p.draft}` : ''}${
+        p.retired ? ` · 내림 ${p.retired}` : ''}</span>
+    </span>
+    <button class="btn ghost small" data-order="${esc(p.part)}">만들기</button>
+  </div>`).join('');
+
+  // 얇은 개념 6개 — 여기가 다음에 만들 것이다
+  const thin = c.tags.filter((t) => !t.id.startsWith('SEC.')).slice(0, 6).map((t) => `
+    <button class="chip thin" data-order-tag="${esc(t.id)}" data-order-sec="${esc(t.section)}"
+      title="${esc(t.id)}">${esc(t.name_ko)} ${t.n}</button>`).join('');
+
+  const reported = c.reported.length ? c.reported.map((r) => `<div class="row">
+    <span class="chip k-answer">신고 ${r.n}</span>
+    <span class="row-main">
+      <span class="row-t">${esc(r.stem || `${c.parts_ko[r.part] ?? r.part} 문항`)}</span>
+      <span class="row-s">${esc(r.part)} · ${esc(r.kinds || '')}</span>
+    </span>
+    <button class="btn ghost small" data-open="${esc(r.id)}">열기</button>
+  </div>`).join('') : '<p class="empty">신고된 문항이 없어요.</p>';
+
+  const silent = (c.media?.lc_no_audio ?? 0) + (c.media?.l1_no_image ?? 0);
+
+  view.innerHTML = `${tabsHtml()}
+    ${c.repo.ready ? '' : `<div class="warn-box">저장소 연결이 아직 안 됐어요.
+      새 문항을 만들려면 <b>GITHUB_TOKEN</b> 을 등록해야 합니다 (아래 '도움말' 참고).</div>`}
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">지금 문제은행</span>
+        <span class="card-note">전체 ${c.total} · 출제중 ${c.active}</span></div>
+      ${axes}
+      <p class="card-note">막대는 실력 5칸이 각각 몇 문항으로 받쳐지고 있는지예요.
+        <b>⚠ 표시된 칸이 다음에 만들 곳</b>입니다 (${AXIS_LOW}문항 미만).</p>
+      ${silent ? `<p class="card-note">소리·사진이 아직 없어 출제 못 하는 문항 ${silent}개
+        — 음원 만들기 작업이 돌면 저절로 풀립니다.</p>` : ''}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">얇은 개념</span>
+        <span class="card-note">눌러서 그 개념 문제 주문</span></div>
+      <div class="chips">${thin}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">종류별</span>
+        <button class="btn small" data-new>+ 직접 만들기</button></div>
+      <div class="rows">${parts}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">아이들이 신고한 문항</span></div>
+      <div class="rows">${reported}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">문항 찾아보기</span></div>
+      <div class="qfilter">
+        <select data-fstatus>
+          <option value="draft"${qFilter.status === 'draft' ? ' selected' : ''}>준비 중</option>
+          <option value="active"${qFilter.status === 'active' ? ' selected' : ''}>출제 중</option>
+          <option value="retired"${qFilter.status === 'retired' ? ' selected' : ''}>내린 것</option>
+          <option value=""${!qFilter.status ? ' selected' : ''}>전체</option>
+        </select>
+        <select data-fpart>
+          <option value="">모든 종류</option>
+          ${Object.entries(c.parts_ko).map(([k, v]) =>
+            `<option value="${esc(k)}"${qFilter.part === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}
+        </select>
+        <input data-fq placeholder="문장 검색" value="${esc(qFilter.q ?? '')}" />
+        <button class="btn ghost small" data-find>찾기</button>
+      </div>
+      <div class="rows" data-qlist><p class="empty">찾기를 눌러주세요.</p></div>
+    </div>`;
+
+  bindTabs();
+  view.querySelector('[data-new]').addEventListener('click', () => showNewQuestion());
+  view.querySelectorAll('[data-order]').forEach((b) =>
+    b.addEventListener('click', () => showOrder({ part: b.dataset.order })));
+  view.querySelectorAll('[data-order-tag]').forEach((b) =>
+    b.addEventListener('click', () => showOrder({
+      tag: b.dataset.orderTag,
+      part: b.dataset.orderSec === 'LC' ? 'L3' : 'R3',
+    })));
+  view.querySelectorAll('[data-open]').forEach((b) =>
+    b.addEventListener('click', () => showQuestion(b.dataset.open)));
+  view.querySelector('[data-find]').addEventListener('click', findQuestions);
+  view.querySelector('[data-fq]').addEventListener('keydown', (e) => { if (e.key === 'Enter') findQuestions(); });
+  findQuestions();
+}
+
+async function findQuestions() {
+  qFilter = {
+    status: view.querySelector('[data-fstatus]').value,
+    part: view.querySelector('[data-fpart]').value,
+    q: view.querySelector('[data-fq]').value.trim(),
+  };
+  const box = view.querySelector('[data-qlist]');
+  box.innerHTML = '<p class="empty">찾는 중...</p>';
+  const qs = new URLSearchParams(Object.entries(qFilter).filter(([, v]) => v));
+  try {
+    const { items } = await api(`/api/admin/questions?${qs}`);
+    box.innerHTML = items.length ? items.map((it) => {
+      const rate = it.times_answered ? Math.round((it.times_correct / it.times_answered) * 100) : null;
+      return `<div class="row">
+        <span class="chip s-${esc(it.status)}">${
+          { draft: '준비중', active: '출제중', retired: '내림' }[it.status] ?? it.status}</span>
+        <span class="row-main">
+          <span class="row-t">${esc(it.stem || `${content.parts_ko[it.part] ?? it.part} 문항`)}</span>
+          <span class="row-s">${esc(it.part)} · 난이도 ${it.difficulty_label}${
+            rate != null ? ` · 정답률 ${rate}%` : ''}${it.reports ? ` · 신고 ${it.reports}` : ''}${
+            content.parts_ko[it.part]?.startsWith('듣기') && !it.audio_url ? ' · 소리 없음' : ''}</span>
+        </span>
+        <button class="btn ghost small" data-open="${esc(it.id)}">열기</button>
+      </div>`;
+    }).join('') : '<p class="empty">해당하는 문항이 없어요.</p>';
+    box.querySelectorAll('[data-open]').forEach((b) =>
+      b.addEventListener('click', () => showQuestion(b.dataset.open)));
+  } catch (e) { if (!guard(e)) box.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; }
+}
+
+// ── 문항 하나 — 아이가 보는 그대로 + 출제/내리기 ──
+const LETTERS = ['A', 'B', 'C', 'D'];
+
+async function showQuestion(id) {
+  view.innerHTML = `<p class="empty">불러오는 중...</p>`;
+  let d;
+  try { d = await api(`/api/admin/questions/${encodeURIComponent(id)}`); }
+  catch (e) { if (!guard(e)) view.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; return; }
+  const q = d.question;
+  const imgs = Array.isArray(q.image_url) ? q.image_url : null;
+
+  const choices = imgs
+    ? `<div class="qimgs">${imgs.map((src, i) => `<div class="qimg${i === q.answer_idx ? ' good' : ''}">
+        <img src="${esc(src)}" alt="보기 ${LETTERS[i]}" loading="lazy" />
+        <span class="qletter">${LETTERS[i]}</span>${i === q.answer_idx ? '<span class="chip good">정답</span>' : ''}
+      </div>`).join('')}</div>`
+    : q.choices.map((cc, i) => `<div class="qchoice${i === q.answer_idx ? ' good' : ''}">
+        <span class="qletter">${LETTERS[i]}</span><span class="qtext">${esc(cc)}</span>
+        ${i === q.answer_idx ? '<span class="chip good">정답</span>' : ''}
+        ${q.why_not?.[i] ? `<span class="row-s">${esc(q.why_not[i])}</span>` : ''}
+      </div>`).join('');
+
+  const source = q.script || q.p_content || '';
+  const silent = content?.parts_ko[q.part]?.startsWith('듣기') && !q.audio_url;
+
+  view.innerHTML = `
+    <button class="back" data-back>← 문항 목록</button>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">${esc(content?.parts_ko[q.part] ?? q.part)}</span>
+        <span class="chip s-${esc(q.status)}">${
+          { draft: '준비중', active: '출제중', retired: '내림' }[q.status] ?? q.status}</span>
+      </div>
+      ${source ? `<div class="qpassage"><span class="qcap">${
+        q.script ? '들려주는 내용' : '지문'}</span>${esc(source)}</div>` : ''}
+      ${q.audio_url ? `<audio controls src="${esc(q.audio_url)}" style="width:100%;margin-top:8px"></audio>` : ''}
+      ${silent ? '<div class="warn-box">아직 소리가 없어요 — 음원이 만들어져야 출제할 수 있습니다.</div>' : ''}
+      ${q.stem ? `<p class="qstem">${esc(q.stem)}</p>` : ''}
+      ${choices}
+      <div class="qline"><span class="qcap">정답 풀이</span><p>${esc(q.explanation_ko)}</p></div>
+      ${q.evidence ? `<div class="qline"><span class="qcap">근거</span><p>${esc(q.evidence)}</p></div>` : ''}
+      <p class="card-note">난이도 ${q.difficulty_label} · 태그 ${esc(q.tags.join(', '))} · 정답률 ${
+        q.times_answered ? Math.round((q.times_correct / q.times_answered) * 100) + '%' : '아직 없음'}</p>
+    </div>
+
+    ${d.reports.length ? `<div class="card">
+      <div class="card-head"><span class="card-title">이 문항에 온 신고 ${d.reports.length}건</span></div>
+      <div class="rows">${d.reports.map((r) => `<div class="row">
+        <span class="chip k-${esc(r.kind)}">${esc(r.kind)}</span>
+        <span class="row-main"><span class="row-t">${esc(r.note || '(적은 말 없음)')}</span>
+          <span class="row-s">${esc(String(r.created_at).slice(0, 16).replace('T', ' '))}</span></span>
+      </div>`).join('')}</div>
+    </div>` : ''}
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">이 문항을</span></div>
+      <div class="modal-actions">
+        ${q.status !== 'active' ? `<button class="btn" data-st="active"${silent ? ' disabled' : ''}>출제 시작</button>` : ''}
+        ${q.status !== 'retired' ? '<button class="btn ghost" data-st="retired">내리기</button>' : ''}
+        ${q.status === 'retired' ? '<button class="btn ghost" data-st="draft">준비 중으로</button>' : ''}
+      </div>
+      <p class="card-note">‘내리기’는 곧바로 반영돼요 — 다음 세트부터 이 문항이 나오지 않습니다.</p>
+      <div data-stmsg></div>
+    </div>`;
+
+  view.querySelector('[data-back]').addEventListener('click', showQuestions);
+  const msg = view.querySelector('[data-stmsg]');
+  view.querySelectorAll('[data-st]').forEach((b) => b.addEventListener('click', async () => {
+    const to = b.dataset.st;
+    if (to === 'retired' && !confirm('이 문항을 내릴까요? 다음 세트부터 아이에게 나오지 않습니다.')) return;
+    b.disabled = true;
+    try {
+      const r = await api(`/api/admin/questions/${encodeURIComponent(id)}/status`,
+        { method: 'POST', body: JSON.stringify({ status: to }) });
+      msg.innerHTML = `<p class="msg ok">바꿨어요.${
+        r.synced ? '' : ' (저장소에는 반영하지 못해 다음 배포 때 되돌아올 수 있어요)'}</p>`;
+      setTimeout(() => showQuestion(id), 900);
+    } catch (e) { if (!guard(e)) { msg.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; b.disabled = false; } }
+  }));
+}
+
+// ── 직접 만들기 ──
+// 저장을 눌러야 알려주는 대신, 타이핑을 멈추면 바로 검사해서 무엇이 걸리는지 보여준다.
+// 규칙이 까다로운 편이라(해설 100자·어려운 용어 금지·근거는 원문 그대로) 미리 알려주지 않으면
+// 다 쓰고 나서 되돌리는 일이 반복된다.
+function showNewQuestion() {
+  const c = content;
+  // 기본은 R1(문장 완성) — 칸이 가장 적어 처음 쓰는 사람이 끝까지 채울 수 있다.
+  const partOpts = Object.entries(c.parts_ko)
+    .map(([k, v]) => `<option value="${esc(k)}"${k === 'R1' ? ' selected' : ''}>${esc(v)}</option>`).join('');
+  const missOpts = Object.entries(c.miss_types)
+    .map(([k, v]) => `<option value="${esc(k)}">${esc(v)}</option>`).join('');
+
+  view.innerHTML = `
+    <button class="back" data-back>← 문항 목록</button>
+    <div class="card">
+      <div class="card-head"><span class="card-title">새 문제 만들기</span></div>
+      <p class="card-note">만든 문제는 <b>준비 중</b>으로 저장돼요. 확인한 뒤 ‘출제 시작’을
+        눌러야 아이에게 나갑니다.</p>
+
+      <label class="field"><span>종류</span><select data-part>${partOpts}</select></label>
+
+      <div data-lc hidden>
+        <label class="field"><span>들려줄 내용 (영어 대본)</span>
+          <textarea data-script rows="4" placeholder="W: Where is my book?&#10;M: It's on the desk."></textarea></label>
+        <label class="field"><span>발음</span><select data-accent>
+          ${c.accents.map((a) => `<option value="${a}">${
+            { US: '미국', UK: '영국', AU: '호주' }[a]}</option>`).join('')}</select></label>
+      </div>
+      <div data-rcset hidden>
+        <label class="field"><span>지문 (영어)</span>
+          <textarea data-passage rows="5" placeholder="읽을 글을 넣어주세요"></textarea></label>
+      </div>
+      <div data-l1 hidden>
+        <p class="card-note">사진 고르기는 보기 4컷을 <b>사진 검색</b>으로 가져와요.
+          컷마다 <b>검색어</b>와 <b>사진에 꼭 있어야 할 말</b>을 적어주세요
+          (엉뚱한 사진이 들어가는 걸 막아줍니다).</p>
+        <div data-l1rows></div>
+      </div>
+
+      <label class="field"><span>문제 문장</span>
+        <input data-stem placeholder="Where is the book?" /></label>
+
+      <div data-choices class="qform-choices"></div>
+
+      <label class="field"><span>정답 풀이 (한국어, 100자 이내·쉬운 말로)</span>
+        <textarea data-exp rows="2" placeholder="책상 위에 있다고 했어요."></textarea></label>
+      <label class="field"><span>근거 — 원문에서 그대로 복사 (선택)</span>
+        <input data-ev placeholder="It's on the desk." /></label>
+
+      <div class="qform-row">
+        <label class="field"><span>난이도</span><select data-diff>
+          ${[1, 2, 3, 4, 5].map((n) => `<option value="${n}"${n === 2 ? ' selected' : ''}>${n}</option>`).join('')}
+        </select></label>
+        <label class="field"><span>개념 태그 (1~3개)</span><select data-tags multiple size="5">
+          ${c.tags.filter((t) => !t.id.startsWith('SEC.'))
+            .map((t) => `<option value="${esc(t.id)}">${esc(t.name_ko)} (${t.n})</option>`).join('')}
+        </select></label>
+      </div>
+
+      <label class="field"><span>오늘의 표현 (선택)</span>
+        <div class="qform-row">
+          <input data-kexp placeholder="on the desk" />
+          <input data-kko placeholder="책상 위에" />
+        </div></label>
+
+      <div data-check class="qcheck"></div>
+      <div class="modal-actions">
+        <button class="btn" data-save>저장하기</button>
+        <button class="btn ghost" data-back2>그만두기</button>
+      </div>
+      <div data-savemsg></div>
+    </div>
+    <template data-misstpl>${missOpts}</template>`;
+
+  const $ = (s) => view.querySelector(s);
+  const partSel = $('[data-part]');
+
+  // 종류를 고르면 그에 맞는 칸만 보인다 — 듣기면 대본·발음, 지문형이면 지문.
+  function syncForm() {
+    const part = partSel.value;
+    const form = c.part_form[part] === 'both' ? 'single' : c.part_form[part];
+    const isLC = part.startsWith('L');
+    $('[data-lc]').hidden = !isLC;
+    $('[data-rcset]').hidden = !(form === 'set' && !isLC);
+    $('[data-l1]').hidden = part !== 'L1';
+    if (part === 'L1' && !$('[data-l1rows]').children.length) {
+      $('[data-l1rows]').innerHTML = Array.from({ length: 4 }, (_, i) => `
+        <div class="qform-row">
+          <input data-iq="${i}" placeholder="보기 ${LETTERS[i]} 사진 검색어 (영어)" />
+          <input data-in="${i}" placeholder="꼭 있어야 할 말 (쉼표로)" />
+        </div>`).join('');
+    }
+    // 보기 칸은 종류마다 개수가 다르다 (질의응답만 3개)
+    const n = c.choices_by_part[part] ?? 4;
+    $('[data-choices]').innerHTML = Array.from({ length: n }, (_, i) => `
+      <div class="qform-choice">
+        <label class="qform-ans"><input type="radio" name="ans" value="${i}"${i === 0 ? ' checked' : ''} />
+          <span>${LETTERS[i]}</span></label>
+        <input data-c="${i}" placeholder="보기 ${LETTERS[i]}" />
+        <input data-w="${i}" placeholder="이 보기를 고른 아이에게 (40자 이내)" />
+        <select data-m="${i}"><option value="">실수 유형 고르기</option>${missOpts}</select>
+      </div>`).join('');
+    bindLive();
+    check();
+  }
+
+  // 화면의 입력을 저장 형식(JSON)으로 모은다 — 검사와 저장이 같은 것을 본다.
+  function collect() {
+    const part = partSel.value;
+    const form = c.part_form[part] === 'both' ? 'single' : c.part_form[part];
+    const isLC = part.startsWith('L');
+    const n = c.choices_by_part[part] ?? 4;
+    const answer = Number(view.querySelector('input[name="ans"]:checked')?.value ?? 0);
+    const choices = Array.from({ length: n }, (_, i) => $(`[data-c="${i}"]`)?.value.trim() ?? '');
+    const why = {};
+    const miss = {};
+    for (let i = 0; i < n; i++) {
+      if (i === answer) continue;
+      const w = $(`[data-w="${i}"]`)?.value.trim();
+      const m = $(`[data-m="${i}"]`)?.value;
+      if (w) { why[i] = w; if (m) miss[i] = m; }
+    }
+    const tags = [...$('[data-tags]').selectedOptions].map((o) => o.value);
+    const kEn = $('[data-kexp]').value.trim();
+    const kKo = $('[data-kko]').value.trim();
+    const core = {
+      stem: $('[data-stem]').value.trim() || null,
+      choices, answer_idx: answer,
+      explanation_ko: $('[data-exp]').value.trim(),
+      difficulty_label: Number($('[data-diff]').value),
+      tags,
+      ...(($('[data-ev]').value.trim()) ? { evidence: $('[data-ev]').value.trim() } : {}),
+      ...(Object.keys(why).length ? { why_not: why, miss_type: miss } : {}),
+      ...((kEn && kKo) ? { key_expr: { en: kEn, ko: kKo } } : {}),
+    };
+    if (form === 'set') {
+      return {
+        part,
+        item: {
+          type: 'set', part,
+          passage: isLC
+            ? { kind: 'dialogue', script: $('[data-script]').value.trim(), accent: $('[data-accent]').value,
+                tts_voices: { W: 'female', M: 'male' } }
+            : { kind: 'text', content: $('[data-passage]').value.trim() },
+          questions: [core],
+        },
+      };
+    }
+    const l1 = part === 'L1' ? (() => {
+      const qs = Array.from({ length: 4 }, (_, i) => ({
+        q: $(`[data-iq="${i}"]`)?.value.trim() ?? '',
+        need: ($(`[data-in="${i}"]`)?.value ?? '').split(',').map((w) => w.trim()).filter(Boolean),
+      }));
+      return {
+        choice_image_queries: qs,
+        // 사진 설명은 검색어를 그대로 쓴다 — 배치가 사진을 고를 때 참고만 하는 값이다
+        choice_image_prompts: qs.map((x) => x.q),
+      };
+    })() : {};
+    return {
+      part,
+      item: {
+        type: 'single', part, ...core,
+        ...(isLC ? { tts_script: $('[data-script]').value.trim(), accent: $('[data-accent]').value } : {}),
+        ...l1,
+      },
+    };
+  }
+
+  // 타이핑이 멈추면 검사 — 매 글자마다 부르면 서버가 시달린다
+  let timer = null;
+  const check = () => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const box = $('[data-check]');
+      try {
+        const r = await api('/api/admin/questions/validate',
+          { method: 'POST', body: JSON.stringify(collect()) });
+        box.innerHTML = r.ok
+          ? '<p class="msg ok">지금 이대로 저장할 수 있어요.</p>'
+          : `<p class="qcheck-t">아직 이런 게 걸려요</p><ul>${
+            r.errors.map((m) => `<li>${esc(m.replace(/^[^:]*:\s*/, ''))}</li>`).join('')}</ul>`;
+      } catch (e) { if (!guard(e)) box.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; }
+    }, 500);
+  };
+  function bindLive() {
+    view.querySelectorAll('input, textarea, select').forEach((el) => {
+      el.removeEventListener('input', check);
+      el.addEventListener('input', check);
+    });
+  }
+
+  partSel.addEventListener('change', syncForm);
+  $('[data-back]').addEventListener('click', showQuestions);
+  $('[data-back2]').addEventListener('click', showQuestions);
+  $('[data-save]').addEventListener('click', async () => {
+    const btn = $('[data-save]');
+    const msg = $('[data-savemsg]');
+    btn.disabled = true;
+    msg.innerHTML = '<p class="card-note">저장하는 중...</p>';
+    try {
+      const r = await api('/api/admin/questions', { method: 'POST', body: JSON.stringify(collect()) });
+      msg.innerHTML = `<p class="msg ok">${esc(r.next)}<br>이름표: ${esc(r.tmp_id)}</p>`;
+    } catch (e) {
+      if (guard(e)) return;
+      msg.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`;
+      btn.disabled = false;
+    }
+  });
+  syncForm();
+}
+
+// ── AI에게 초안 시키기 ──
+function showOrder(pre = {}) {
+  const c = content;
+  view.innerHTML = `
+    <button class="back" data-back>← 문항 목록</button>
+    <div class="card">
+      <div class="card-head"><span class="card-title">AI에게 초안 맡기기</span></div>
+      <p class="card-note">주문하면 초안을 만들어 <b>준비 중</b>으로 넣어줘요.
+        규칙에 어긋난 초안은 자동으로 버려집니다. 확인은 사람이 합니다.</p>
+
+      <label class="field"><span>종류</span><select data-part>
+        ${Object.entries(c.parts_ko).map(([k, v]) =>
+          `<option value="${esc(k)}"${pre.part === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}
+      </select></label>
+      <label class="field"><span>몇 문항 (1~20)</span>
+        <input data-count type="number" min="1" max="20" value="5" /></label>
+      <label class="field"><span>개념 태그 (비우면 자동)</span><select data-tag>
+        <option value="">자동</option>
+        ${c.tags.filter((t) => !t.id.startsWith('SEC.')).map((t) =>
+          `<option value="${esc(t.id)}"${pre.tag === t.id ? ' selected' : ''}>${esc(t.name_ko)} (${t.n})</option>`).join('')}
+      </select></label>
+      <label class="field"><span>난이도 (비우면 섞어서)</span><select data-diff>
+        <option value="">섞어서</option>
+        ${[1, 2, 3, 4, 5].map((n) => `<option value="${n}">${n}</option>`).join('')}
+      </select></label>
+      <label class="field"><span>추가 요청 (선택)</span>
+        <input data-note placeholder="예: 학교 급식이나 체육대회 소재로" /></label>
+
+      <div class="modal-actions">
+        <button class="btn" data-go>주문하기</button>
+        <button class="btn ghost" data-back2>그만두기</button>
+      </div>
+      <div data-msg></div>
+    </div>`;
+  const $ = (s) => view.querySelector(s);
+  $('[data-back]').addEventListener('click', showQuestions);
+  $('[data-back2]').addEventListener('click', showQuestions);
+  $('[data-go]').addEventListener('click', async () => {
+    const btn = $('[data-go]');
+    const msg = $('[data-msg]');
+    btn.disabled = true;
+    msg.innerHTML = '<p class="card-note">주문을 넣는 중...</p>';
+    try {
+      const r = await api('/api/admin/generate-order', {
+        method: 'POST',
+        body: JSON.stringify({
+          part: $('[data-part]').value,
+          count: Number($('[data-count]').value),
+          tag: $('[data-tag]').value,
+          difficulty: $('[data-diff]').value,
+          note: $('[data-note]').value.trim(),
+        }),
+      });
+      msg.innerHTML = `<p class="msg ok">${esc(r.next)}</p>`;
+    } catch (e) {
+      if (guard(e)) return;
+      msg.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`;
+      btn.disabled = false;
+    }
+  });
 }
 
 // 이미 로그인돼 있으면 바로 메인. 아니면 관리자가 아예 없는지 먼저 물어보고,

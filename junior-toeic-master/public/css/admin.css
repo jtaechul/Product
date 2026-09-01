@@ -175,3 +175,77 @@ table.pins td.pin { font-variant-numeric: tabular-nums; font-weight: 800; letter
 .sbf { display: block; height: 100%; border-radius: 999px; background: var(--primary); }
 .sbn { flex: none; text-align: right; font-size: .79rem; font-weight: 800; color: var(--primary); }
 .sbn.dim { font-weight: 600; color: var(--muted); }
+
+/* ── 문항 탭 (2026-08-23) ── */
+/* 얇은 축은 빨간 막대로 — 이 화면에서 가장 먼저 눈에 들어와야 하는 정보다 */
+.sbf.low { background: var(--bad, #e0455a); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip.thin {
+  cursor: pointer; border: 1px solid var(--line, #e6e8f6);
+  background: var(--surface-2, #f0f1fa); font-weight: 700;
+}
+.chip.thin:hover { border-color: var(--primary, #5b5bf5); color: var(--primary, #5b5bf5); }
+.chip.s-draft   { background: #fdf3dd; color: #8a6412; }
+.chip.s-active  { background: #dcf7ec; color: #0f5f3f; }
+.chip.s-retired { background: #eceef5; color: #6b7193; }
+.chip.good      { background: #12a06a; color: #fff; }
+
+/* 문항 찾아보기 줄 */
+.qfilter { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.qfilter select, .qfilter input {
+  font: inherit; padding: 8px 10px; min-height: 38px;
+  border: 1px solid var(--line, #e6e8f6); border-radius: 9px; background: #fff;
+}
+.qfilter input { flex: 1; min-width: 140px; }
+
+/* 문항 하나 보기 — 아이 화면과 같은 순서로 읽히게 */
+.qpassage {
+  background: var(--surface-2, #f0f1fa); border-radius: 11px; padding: 11px 13px;
+  font-size: .88rem; line-height: 1.62; white-space: pre-wrap; margin-top: 9px;
+}
+.qcap { display: block; font-size: .72rem; font-weight: 800; color: var(--muted, #6b7193); margin-bottom: 4px; }
+.qstem { font-size: .95rem; font-weight: 700; margin-top: 12px; line-height: 1.5; }
+.qchoice {
+  display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  padding: 9px 11px; border: 1.5px solid var(--line, #e6e8f6);
+  border-radius: 11px; margin-top: 7px; font-size: .89rem;
+}
+.qchoice.good, .qimg.good { border-color: #12a06a; background: #dcf7ec; }
+.qletter {
+  flex: none; width: 22px; height: 22px; border-radius: 999px;
+  background: var(--surface-2, #f0f1fa); color: var(--muted, #6b7193);
+  font-size: .72rem; font-weight: 800; display: grid; place-items: center;
+}
+.qtext { flex: 1; min-width: 0; }
+.qimgs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.qimg { position: relative; border: 2px solid var(--line, #e6e8f6); border-radius: 11px; overflow: hidden; }
+.qimg img { width: 100%; display: block; aspect-ratio: 4 / 3; object-fit: cover; }
+.qimg .qletter { position: absolute; top: 6px; left: 6px; background: rgba(255,255,255,.92); }
+.qimg .chip { position: absolute; left: 6px; bottom: 6px; }
+.qline { margin-top: 11px; }
+.qline p { font-size: .87rem; line-height: 1.58; }
+
+/* 만들기 폼 — 보기마다 정답 표시·오답 이유·실수 유형이 한 묶음 */
+.qform-choices { margin-top: 4px; }
+.qform-choice {
+  display: grid; gap: 6px; padding: 10px; margin-top: 8px;
+  border: 1px solid var(--line, #e6e8f6); border-radius: 11px;
+  grid-template-columns: auto 1fr; align-items: center;
+}
+.qform-choice input[data-c], .qform-choice input[data-w], .qform-choice select {
+  grid-column: 2; font: inherit; padding: 8px 10px; min-height: 38px;
+  border: 1px solid var(--line, #e6e8f6); border-radius: 9px; width: 100%;
+}
+.qform-ans { grid-row: 1 / span 3; display: grid; place-items: center; gap: 3px; padding-right: 8px; }
+.qform-ans input { width: 20px; height: 20px; }
+.qform-ans span { font-size: .72rem; font-weight: 800; color: var(--muted, #6b7193); }
+.qform-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.qform-row .field { flex: 1; min-width: 150px; }
+.qform-row input { flex: 1; min-width: 140px; }
+
+/* 저장 전 검사 결과 — 걸린 것을 사람 말로 */
+.qcheck { margin-top: 12px; }
+.qcheck-t { font-size: .8rem; font-weight: 800; color: #8a6412; }
+.qcheck ul { margin: 6px 0 0; padding-left: 18px; }
+.qcheck li { font-size: .82rem; line-height: 1.55; color: #8a6412; }

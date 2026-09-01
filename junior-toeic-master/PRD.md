@@ -284,6 +284,13 @@
 | `POST /api/admin/family/:id/reset-link` | 비밀번호 재설정 링크 발급 (24시간·일회용, 평문은 응답에 한 번만) |
 | `DELETE /api/admin/family/:id` | 탈퇴(전체 삭제) — 이메일 재입력 확인 후 가족의 모든 행 삭제 |
 | `GET /api/admin/feedback` | 아이가 신고한 문항 확인 |
+| `GET /api/admin/content` | 문항 현황판 — 축·태그·난이도별 개수, 신고 문항, 소리 없는 문항 |
+| `GET /api/admin/questions` | 문항 목록 (종류·상태·태그·문장 검색) |
+| `GET /api/admin/questions/:id` | 문항 하나 (아이 화면 그대로 미리보기 + 신고 이력) |
+| `POST /api/admin/questions/validate` | 저장 전 검사만 — 화면이 타이핑 중에 부른다 |
+| `POST /api/admin/questions` | 새 문항 저장 → `content/questions/*.json` + `.idmap.json` 한 커밋 (draft) |
+| `POST /api/admin/questions/:id/status` | 출제 시작/내리기 — D1 즉시 반영 + 파일도 같이 커밋 |
+| `POST /api/admin/generate-order` | AI 초안 주문 → `generate-questions.yml` 실행 (앱 서버엔 AI 열쇠 없음) |
 | (공개) `POST /api/parent/reset-password` | 링크를 받은 학부모가 새 비밀번호를 직접 설정 |
 
 **관리자는 비밀번호를 정하거나 볼 수 없다** (2026-08-12 원칙, 관리 기능을 붙인 뒤에도 유지).

@@ -10,6 +10,11 @@ import {
   hashSecret, verifySecret, makeAccountToken,
 } from './auth.mjs';
 import { recordAnswer, composeDailySet, computeClimb, computeSkillMap, kstDate, DIAG, diagBand, pickDiagQuestions, audioRateFor, AUDIO_RATES, MISS_KO, SKILL_AXES, shiftISO } from './engine.mjs';
+import {
+  PARTS, PART_LIST, PART_KO, PART_FORM, CHOICES_BY_PART, STATUSES, ACCENTS,
+  makeUlid, validateItem,
+} from './authoring.mjs';
+import { GithubRepo } from './github.mjs';
 
 // 진단 답안 일괄 채점·기록 (Elo·SRS 미반영 — engine.md 4절)
 async function gradeDiagAnswers(db, user, sessionId, answers) {
@@ -1149,6 +1154,292 @@ app.post('/api/admin/feedback/:id/handled', ...admin, async (c) => {
     .bind(c.req.param('id'), done ? nowISO() : null, done ? c.get('user').id : null).run();
   if (!r.meta?.changes) return c.json({ error: '신고를 찾을 수 없습니다' }, 404);
   return c.json({ ok: true, handled: done });
+});
+
+// ── 문항 관리 (2026-08-23, 사용자 선택: 현황판 + 직접 저작 + AI 주문 / 저장소 커밋 / 듣기까지) ──
+//
+// 여기서 만든 문항은 **저장소의 content/questions/*.json 에 커밋된다.** DB에 바로 넣지 않는
+// 이유는 원본을 하나로 두기 위해서다 — 음원·사진을 만드는 배치와 배포가 모두 그 파일을 보고
+// 돌기 때문에, 파일에 들어가야 듣기 문항에 소리가 붙고 다음 배포에 출제까지 이어진다.
+//
+// 예외는 '출제 시작/내리기'다. 신고 들어온 문항을 당장 내려야 하는데 배포를 기다릴 수 없으므로
+// DB를 즉시 고치고 파일도 같이 고친다(다음 배포 때 같은 값이 다시 들어와 어긋나지 않는다).
+
+const CONTENT_DIR = 'content/questions';
+const IDMAP_PATH = 'content/.idmap.json';
+
+// 등록된 태그 표 — 검사에 쓸 {코드: 'LC'|'RC'|'ALL'}
+const tagSectionOf = async (db) => {
+  const { results } = await db.prepare('SELECT id, section FROM concept_tags').all();
+  return Object.fromEntries(results.map((t) => [t.id, t.section]));
+};
+
+// 문항 현황 — "무엇을 더 만들어야 하나"에 답하는 화면의 재료.
+// 태그별 개수를 보여주는 이유: 총량이 넉넉해도 특정 개념이 얇으면 그 축의 실력이 안 재진다.
+app.get('/api/admin/content', ...admin, async (c) => {
+  const [{ results: parts }, { results: tags }, { results: diff }, { results: reported }, media] =
+    await Promise.all([
+      c.env.DB.prepare(
+        `SELECT part,
+                COUNT(*) AS total,
+                SUM(CASE WHEN status = 'active'  THEN 1 ELSE 0 END) AS active,
+                SUM(CASE WHEN status = 'draft'   THEN 1 ELSE 0 END) AS draft,
+                SUM(CASE WHEN status = 'retired' THEN 1 ELSE 0 END) AS retired
+           FROM questions GROUP BY part ORDER BY part`).all(),
+      c.env.DB.prepare(
+        `SELECT t.id, t.name_ko, t.section,
+                COUNT(CASE WHEN q.status = 'active' THEN 1 END) AS n
+           FROM concept_tags t
+           LEFT JOIN question_tags qt ON qt.tag_id = t.id
+           LEFT JOIN questions q ON q.id = qt.question_id
+          GROUP BY t.id ORDER BY n ASC`).all(),
+      c.env.DB.prepare(
+        `SELECT difficulty_label AS label, COUNT(*) AS n
+           FROM questions WHERE status = 'active' GROUP BY difficulty_label ORDER BY label`).all(),
+      // 아이들이 신고한 문항 — 고쳐야 할 곳이 여기 있다
+      c.env.DB.prepare(
+        `SELECT q.id, q.part, q.stem, q.status, COUNT(*) AS n,
+                GROUP_CONCAT(DISTINCT f.kind) AS kinds
+           FROM feedback f JOIN questions q ON q.id = f.question_id
+          WHERE f.handled_at IS NULL
+          GROUP BY q.id ORDER BY n DESC LIMIT 20`).all(),
+      c.env.DB.prepare(
+        `SELECT SUM(CASE WHEN q.section = 'LC'
+                         AND COALESCE(q.audio_url, p.audio_url) IS NULL THEN 1 ELSE 0 END) AS lc_no_audio,
+                SUM(CASE WHEN q.part = 'L1' AND q.image_url IS NULL THEN 1 ELSE 0 END)      AS l1_no_image
+           FROM questions q LEFT JOIN passages p ON p.id = q.passage_id
+          WHERE q.status != 'retired'`).first(),
+    ]);
+
+  // 축(실력 5칸)별 문항 수 — 부모·아이 화면의 눈금과 같은 기준으로 센다.
+  // 어느 축이 얇은지가 "무엇을 만들지"의 첫 번째 답이다.
+  const byTag = Object.fromEntries(tags.map((t) => [t.id, t.n]));
+  const axes = SKILL_AXES.map((ax) => ({
+    key: ax.key, name: ax.name,
+    n: ax.tags.reduce((s, t) => s + (byTag[t] ?? 0), 0),
+  }));
+
+  const gh = new GithubRepo(c.env);
+  return c.json({
+    parts, tags, axes,
+    difficulty: diff,
+    reported,
+    media,
+    total: parts.reduce((s, p) => s + p.total, 0),
+    active: parts.reduce((s, p) => s + p.active, 0),
+    // 저장소에 글을 쓸 수 있는 상태인지 — 못 쓰면 화면이 미리 알려준다(저장 눌러 실패하지 않게)
+    repo: { ready: gh.configured, branch: gh.branch, repo: gh.repo },
+    parts_ko: PART_KO, part_form: PART_FORM, choices_by_part: CHOICES_BY_PART,
+    miss_types: MISS_KO, statuses: STATUSES, accents: ACCENTS,
+  });
+});
+
+// 문항 목록 — 고칠 문항을 찾는 곳. 정답·해설은 관리자만 보므로 여기 실어도 된다.
+app.get('/api/admin/questions', ...admin, async (c) => {
+  const part = clean(c.req.query('part') ?? '', 4);
+  const status = clean(c.req.query('status') ?? '', 10);
+  const tag = clean(c.req.query('tag') ?? '', 40);
+  const kw = clean(c.req.query('q') ?? '', 60);
+  const where = ['1=1'];
+  const bind = [];
+  const put = (v) => { bind.push(v); return `?${bind.length}`; };
+  if (PART_LIST.includes(part)) where.push(`q.part = ${put(part)}`);
+  if (STATUSES.includes(status)) where.push(`q.status = ${put(status)}`);
+  if (tag) where.push(`EXISTS (SELECT 1 FROM question_tags t WHERE t.question_id = q.id AND t.tag_id = ${put(tag)})`);
+  if (kw) where.push(`(q.stem LIKE ${put(`%${kw}%`)} OR q.script LIKE ${put(`%${kw}%`)})`);
+  const { results } = await c.env.DB.prepare(
+    `SELECT q.id, q.part, q.status, q.stem, q.difficulty_label, q.image_url,
+            COALESCE(q.audio_url, (SELECT audio_url FROM passages WHERE id = q.passage_id)) AS audio_url,
+            q.times_answered, q.times_correct,
+            (SELECT COUNT(*) FROM feedback f WHERE f.question_id = q.id AND f.handled_at IS NULL) AS reports,
+            (SELECT GROUP_CONCAT(tag_id) FROM question_tags WHERE question_id = q.id) AS tags
+       FROM questions q WHERE ${where.join(' AND ')}
+      ORDER BY q.part, q.id LIMIT 200`).bind(...bind).all();
+  return c.json({ items: results });
+});
+
+// 문항 하나 자세히 — 아이 화면 그대로 미리보기 + 고치기용
+app.get('/api/admin/questions/:id', ...admin, async (c) => {
+  const q = await c.env.DB.prepare(
+    `SELECT q.*, p.content AS p_content, p.kind AS p_kind, p.accent AS p_accent,
+            p.audio_url AS p_audio
+       FROM questions q LEFT JOIN passages p ON p.id = q.passage_id WHERE q.id = ?1`
+  ).bind(clean(c.req.param('id'), 40)).first();
+  if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
+  const [{ results: tags }, { results: reports }] = await Promise.all([
+    c.env.DB.prepare('SELECT tag_id FROM question_tags WHERE question_id = ?1').bind(q.id).all(),
+    c.env.DB.prepare(
+      `SELECT kind, note, created_at, handled_at FROM feedback
+        WHERE question_id = ?1 ORDER BY created_at DESC LIMIT 20`).bind(q.id).all(),
+  ]);
+  return c.json({
+    question: {
+      ...q,
+      choices: parseJson(q.choices) ?? [],
+      why_not: parseJson(q.why_not), miss_type: parseJson(q.miss_type), key_expr: parseJson(q.key_expr),
+      image_url: q.image_url?.startsWith('[') ? parseJson(q.image_url) : q.image_url,
+      // 듣기 묶음(L3·L4)은 소리가 '지문'에 붙어 있다. 문항 것만 보면 멀쩡한 문항이
+      // 소리 없는 것으로 보여, 화면에서 재생도 안 되고 출제도 막힌다.
+      audio_url: q.audio_url || q.p_audio || null,
+      tags: tags.map((t) => t.tag_id),
+    },
+    reports,
+  });
+});
+
+// 저장 전 검사만 — 화면이 타이핑 중에 불러 "지금 이대로 저장되나"를 알려준다.
+app.post('/api/admin/questions/validate', ...admin, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const part = clean(body.part ?? '', 4);
+  const errs = validateItem(body.item ?? {}, part, await tagSectionOf(c.env.DB));
+  return c.json({ ok: errs.length === 0, errors: errs });
+});
+
+// 새 문항 저장 — 저장소의 파트 파일에 붙이고 ULID 매핑까지 한 커밋으로 올린다.
+app.post('/api/admin/questions', ...admin, async (c) => {
+  const gh = new GithubRepo(c.env);
+  if (!gh.configured) {
+    return c.json({ error: '저장소 연결이 아직 설정되지 않았습니다 (GITHUB_TOKEN 등록 필요)' }, 503);
+  }
+  const body = await c.req.json().catch(() => ({}));
+  const part = clean(body.part ?? '', 4);
+  if (!PART_LIST.includes(part)) return c.json({ error: '문제 종류를 골라주세요' }, 400);
+  const item = body.item;
+  if (!item || typeof item !== 'object') return c.json({ error: '문항 내용이 비었습니다' }, 400);
+
+  // 새로 만드는 문항은 언제나 '준비 중'으로 들어간다. 사람이 미리보기로 확인한 뒤
+  // 출제 시작을 눌러야 아이에게 나간다 — 잘못 만든 문항이 바로 나가는 길을 막는다.
+  item.part = part;
+  item.status = 'draft';
+
+  const errs = validateItem(item, part, await tagSectionOf(c.env.DB));
+  if (errs.length) return c.json({ error: '아직 저장할 수 없어요', errors: errs }, 400);
+
+  const file = `${CONTENT_DIR}/${part}.json`;
+  const [cur, idmapFile] = await Promise.all([gh.readFile(file), gh.readFile(IDMAP_PATH)]);
+  let items;
+  try { items = cur ? JSON.parse(cur.text) : []; } catch { return c.json({ error: '저장소의 문항 파일을 읽지 못했습니다' }, 500); }
+  if (!Array.isArray(items)) return c.json({ error: '저장소의 문항 파일 형식이 예상과 다릅니다' }, 500);
+
+  // 이름표(tmp_id)는 그 파트에서 안 쓰인 가장 작은 번호로 — 사람이 읽을 수 있는 R1-0059 꼴.
+  const used = new Set(items.map((x) => x.tmp_id));
+  let n = items.length + 1;
+  while (used.has(`${part}-${String(n).padStart(4, '0')}`)) n += 1;
+  const tmpId = `${part}-${String(n).padStart(4, '0')}`;
+  item.tmp_id = tmpId;
+  item.section = PARTS[part];
+
+  // ULID 를 여기서 발급해 매핑까지 같은 커밋에 넣는다. 이게 빠지면 음원 배치가
+  // 러너에서 제 ULID 를 지어 파일 이름이 어긋난다(generate-tts.yml 이 그 상황을 막고 실패한다).
+  let idmap;
+  try { idmap = idmapFile ? JSON.parse(idmapFile.text) : {}; } catch { idmap = {}; }
+  const ulid = makeUlid();
+  const keys = item.type === 'set'
+    ? [`p:${tmpId}`, ...item.questions.map((_, i) => `q:${tmpId}#${i + 1}`)]
+    : [`q:${tmpId}`];
+  for (const k of keys) if (!idmap[k]) idmap[k] = ulid();
+
+  items.push(item);
+  const label = PART_KO[part] ?? part;
+  const commit = await gh.commitFiles([
+    { path: file, text: `${JSON.stringify(items, null, 2)}\n` },
+    { path: IDMAP_PATH, text: `${JSON.stringify(idmap, null, 2)}\n` },
+  ], `junior-toeic-master: 문항 추가 ${tmpId} (${label}) — 관리자 화면에서 저작\n\n`
+    + `준비 중(draft) 상태로 들어간다. 미리보기로 확인한 뒤 '출제 시작'을 눌러야 아이에게 나간다.`
+    + (PARTS[part] === 'LC' ? '\n듣기 문항이라 음원 배치가 소리를 만든 뒤에야 출제될 수 있다.' : ''));
+
+  return c.json({
+    ok: true, tmp_id: tmpId, commit: commit.url,
+    // 다음에 무슨 일이 일어나는지 화면이 그대로 읽어 준다 — 기다리는 시간이 불안하지 않게
+    next: PARTS[part] === 'LC'
+      ? '저장했어요. 음원을 만드는 작업이 자동으로 돌고(5~10분), 소리가 붙으면 출제할 수 있어요.'
+      : '저장했어요. 2~5분 뒤 배포가 끝나면 미리보기와 출제 시작을 할 수 있어요.',
+  });
+});
+
+// 출제 시작 / 내리기 — DB를 먼저 고쳐 즉시 반영하고, 저장소 파일도 같이 고친다.
+// 신고 들어온 문항을 당장 내리는 일은 배포(2~5분)를 기다릴 수 없기 때문이다.
+app.post('/api/admin/questions/:id/status', ...admin, async (c) => {
+  const id = clean(c.req.param('id'), 40);
+  const body = await c.req.json().catch(() => ({}));
+  const status = clean(body.status ?? '', 10);
+  if (!['active', 'retired', 'draft'].includes(status)) return c.json({ error: '모르는 상태입니다' }, 400);
+
+  // 듣기 묶음(L3·L4)은 소리가 지문 쪽에 있으므로 둘 다 본다 — 문항 것만 보면
+  // 소리가 멀쩡히 있는 문항의 출제를 막아 버린다.
+  const q = await c.env.DB.prepare(
+    `SELECT q.id, q.part, q.section, q.status, q.image_url,
+            COALESCE(q.audio_url, p.audio_url) AS audio_url
+       FROM questions q LEFT JOIN passages p ON p.id = q.passage_id WHERE q.id = ?1`).bind(id).first();
+  if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
+  // 소리 없는 듣기 문항을 출제하면 아이는 자기가 뭘 잘못한 줄 안다 — 그래서 막는다.
+  if (status === 'active' && q.section === 'LC' && !q.audio_url) {
+    return c.json({ error: '아직 소리가 없어 출제할 수 없어요. 음원이 만들어진 뒤 다시 눌러주세요.' }, 400);
+  }
+  if (status === 'active' && q.part === 'L1' && !q.image_url) {
+    return c.json({ error: '아직 보기 사진이 없어 출제할 수 없어요.' }, 400);
+  }
+
+  await c.env.DB.prepare('UPDATE questions SET status = ?2 WHERE id = ?1').bind(id, status).run();
+
+  // 저장소 파일도 같은 값으로 — 안 하면 다음 배포 때 예전 상태가 되돌아온다.
+  const gh = new GithubRepo(c.env);
+  let commit = null;
+  let synced = false;
+  if (gh.configured) {
+    try {
+      const idmapFile = await gh.readFile(IDMAP_PATH);
+      const idmap = idmapFile ? JSON.parse(idmapFile.text) : {};
+      // ULID(=DB의 문항 id)로 이름표를 거꾸로 찾는다
+      const key = Object.keys(idmap).find((k) => idmap[k] === id);
+      const tmpId = key?.startsWith('q:') ? key.slice(2).split('#')[0] : null;
+      if (tmpId) {
+        const file = `${CONTENT_DIR}/${q.part}.json`;
+        const cur = await gh.readFile(file);
+        const items = cur ? JSON.parse(cur.text) : [];
+        const target = items.find((x) => x.tmp_id === tmpId);
+        if (target) {
+          target.status = status;
+          const KO = { active: '출제 시작', retired: '내림', draft: '준비 중으로' };
+          commit = (await gh.commitFiles(
+            [{ path: file, text: `${JSON.stringify(items, null, 2)}\n` }],
+            `junior-toeic-master: 문항 ${tmpId} ${KO[status]} — 관리자 화면에서 변경`)).url;
+          synced = true;
+        }
+      }
+    } catch (e) {
+      // 저장소 반영이 실패해도 DB는 이미 바뀌었다(당장 내리는 게 더 급하다).
+      // 대신 화면에 "다음 배포 때 되돌아올 수 있다"고 알려 준다.
+      commit = null;
+    }
+  }
+  return c.json({ ok: true, status, commit, synced });
+});
+
+// AI 초안 주문 — 실제 생성은 깃허브 작업실이 한다(앱 서버에는 AI 열쇠를 두지 않는다).
+// 음원·사진 배치와 같은 방식이라 새 위험이 생기지 않는다.
+app.post('/api/admin/generate-order', ...admin, async (c) => {
+  const gh = new GithubRepo(c.env);
+  if (!gh.configured) return c.json({ error: '저장소 연결이 아직 설정되지 않았습니다' }, 503);
+  const body = await c.req.json().catch(() => ({}));
+  const part = clean(body.part ?? '', 4);
+  if (!PART_LIST.includes(part)) return c.json({ error: '문제 종류를 골라주세요' }, 400);
+  const count = Math.max(1, Math.min(20, Number(body.count) || 5));
+  const tag = clean(body.tag ?? '', 40);
+  const difficulty = clean(String(body.difficulty ?? ''), 3);
+  const note = clean(body.note ?? '', 300);
+  if (tag) {
+    const ok = await c.env.DB.prepare('SELECT 1 FROM concept_tags WHERE id = ?1').bind(tag).first();
+    if (!ok) return c.json({ error: '모르는 개념 태그입니다' }, 400);
+  }
+  const r = await gh.dispatchWorkflow('generate-questions.yml', {
+    part, count: String(count), tag, difficulty, note,
+  });
+  return c.json({
+    ok: true, url: r.url,
+    next: `${PART_KO[part]} ${count}문항 초안을 만들기 시작했어요. `
+      + '5~15분 뒤 "준비 중" 목록에 올라오면 확인하고 출제 시작을 눌러주세요.',
+  });
 });
 
 app.get('/api/health', async (c) => {

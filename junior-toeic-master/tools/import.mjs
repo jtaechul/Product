@@ -7,10 +7,13 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { randomBytes } from 'node:crypto';
-// 실수 유형 한글 라벨은 앱이 쓰는 것과 같은 표를 그대로 쓴다 —
-// 표를 두 벌 두면 여기서만 유형을 늘렸을 때 앱 화면에서 조용히 사라진다.
-import { MISS_KO as MISS_TYPES } from '../worker/engine.mjs';
+// 검사 규칙·ULID는 관리자 저작 화면과 같은 자를 쓴다 (worker/authoring.mjs).
+// 규칙을 두 벌 두면 화면은 통과시켰는데 여기서 막히는 문항이 생긴다.
+import {
+  PARTS, ACCENTS, RATING_BY_LABEL, CHOICES_BY_PART, HARD_TERMS,
+  EXPLANATION_MAX, WHY_NOT_MAX, KEY_EXPR_KO_MAX,
+  makeUlid, validateQuestionCore,
+} from '../worker/authoring.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CONTENT = join(ROOT, 'content');
@@ -18,45 +21,14 @@ const OUT_DIR = join(ROOT, 'tools', 'out');
 const IDMAP_PATH = join(CONTENT, '.idmap.json');
 const CHECK_ONLY = process.argv.includes('--check');
 
-const RATING_BY_LABEL = { 1: 900, 2: 1050, 3: 1200, 4: 1350, 5: 1500 };
-const PARTS = { L1: 'LC', L2: 'LC', L3: 'LC', L4: 'LC', R1: 'RC', R2: 'RC', R3: 'RC' };
-const ACCENTS = ['US', 'UK', 'AU'];
-// 실제 TOEIC Bridge 규격 — Part 2(질의응답)는 보기 3개, 나머지는 4개
-const CHOICES_BY_PART = { L1: 4, L2: 3, L3: 4, L4: 4, R1: 4, R2: 4, R3: 4 };
 
-// 해설 읽기 쉬움 기준 (초3~중3 대상)
-// 문법 용어는 아이가 모르는 말이다 — 용어 대신 실제 단어를 보여주고 풀어 쓴다.
-// 예) "주어 My dog는 3인칭 단수라서" → "My dog는 한 마리라서"
-const HARD_TERMS = [
-  '3인칭', '인칭', '단수', '복수', '주어', '동사', '명사', '형용사', '부사', '전치사',
-  '관사', '시제', '과거형', '현재형', '수식', '의문사', '조동사', '정오', '목적어',
-  '비교급', '최상급', '현재진행', '현재완료', '능동', '수동태', '동사원형', '부정문',
-];
-const EXPLANATION_MAX = 100;   // 이보다 길면 아이가 끝까지 읽지 않는다
-const WHY_NOT_MAX = 40;        // 오답 이유는 한 줄에 들어와야 한다
-const KEY_EXPR_KO_MAX = 30;    // 표현 카드의 뜻도 한 줄
 
 // 실수 유형 — 오답마다 "무슨 실수인지" 딱지 하나. 이유 문장은 읽을 수만 있고 셀 수 없어서,
 // "이 아이가 이 실수를 몇 번 했나"에 답하려면 분류가 필요하다.
 // 처방이 갈리는 지점으로 나눴다 (예: 낱말 뜻을 모르는 것과 문법 단서를 놓친 것은 다른 처방).
 
-// ---------- ULID (크록포드 base32, 모노토닉) ----------
-// 같은 실행 안에서 발급 순서 = 사전순이 되도록 시퀀스를 넣는다.
-// 세트(지문) 내 문항이 저작 순서대로 정렬돼야 하므로(ORDER BY id) 필수.
-const B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-let ulidSeq = 0;
-function ulid(now = Date.now()) {
-  let time = '';
-  let t = now;
-  for (let i = 0; i < 10; i++) { time = B32[t % 32] + time; t = Math.floor(t / 32); }
-  let seqPart = '';
-  let n = ulidSeq++;
-  for (let i = 0; i < 6; i++) { seqPart = B32[n % 32] + seqPart; n = Math.floor(n / 32); }
-  const rand = randomBytes(10);
-  let out = '';
-  for (let i = 0; i < 10; i++) out += B32[rand[i] % 32];
-  return time + seqPart + out;
-}
+// ULID 생성기는 authoring.mjs 것을 쓴다 (관리자 저작 화면과 같은 형식)
+const ulid = makeUlid();
 
 // ---------- 유틸 ----------
 const errors = [];
@@ -69,7 +41,6 @@ const readJson = (p) => JSON.parse(readFileSync(p, 'utf8'));
 // ---------- 입력 로드 ----------
 const tags = readJson(join(CONTENT, 'tags.json'));
 const badges = readJson(join(CONTENT, 'badges.json'));
-const tagCodes = new Set(tags.map((t) => t.code));
 const tagSection = Object.fromEntries(tags.map((t) => [t.code, t.section]));
 
 const qDir = join(CONTENT, 'questions');
@@ -167,102 +138,9 @@ const perPartDifficulty = {}; // part -> {label: n}
 const seenTmp = new Set();
 
 function checkQuestionCore(it, ctx, part, source = null) {
-  const section = PARTS[part];
-  // 실제 TOEIC Bridge 규격: Part 2(질의응답)만 보기 3개(A~C), 나머지는 4개(A~D).
-  // 파트별로 못박아 두어야 저작 중에 보기 수가 실전과 어긋나는 것을 막는다.
-  const wantChoices = CHOICES_BY_PART[part];
-  if (!Array.isArray(it.choices) || it.choices.length !== wantChoices ||
-      !it.choices.every((c) => typeof c === 'string' && c.trim())) {
-    err(`${ctx}: ${part}의 choices는 정확히 ${wantChoices}개의 문자열이어야 합니다 (실제 시험 규격)`);
-  }
-  if (!Number.isInteger(it.answer_idx) || it.answer_idx < 0 || it.answer_idx >= (it.choices?.length || 0)) {
-    err(`${ctx}: answer_idx 범위 오류`);
-  }
-  if (typeof it.explanation_ko !== 'string' || it.explanation_ko.trim().length < 5) {
-    err(`${ctx}: explanation_ko가 비어있거나 너무 짧습니다`);
-  } else {
-    const hard = HARD_TERMS.filter((w) => it.explanation_ko.includes(w));
-    if (hard.length) {
-      err(`${ctx}: 해설에 어려운 문법 용어 [${hard.join(', ')}] — 아이 말로 풀어 쓰세요`);
-    }
-    if (it.explanation_ko.length > EXPLANATION_MAX) {
-      err(`${ctx}: 해설이 ${it.explanation_ko.length}자 (${EXPLANATION_MAX}자 이하로)`);
-    }
-  }
-  // 근거(선택): 지문·스크립트·문장에서 정답의 실마리가 되는 부분을 "그대로" 적으면
-  // 화면이 그 자리를 형광펜으로 칠해 준다. 글 설명보다 훨씬 빨리 이해된다.
-  // 한 글자라도 다르면 칠할 자리를 못 찾으므로, 원문에 실제로 있는지 여기서 막는다.
-  if (it.evidence !== undefined) {
-    if (typeof it.evidence !== 'string' || !it.evidence.trim()) {
-      err(`${ctx}: evidence는 원문에 그대로 있는 문장(부분)이어야 합니다`);
-    } else if (!source) {
-      err(`${ctx}: 근거를 칠할 원문(지문·스크립트·문제 문장)이 없어 evidence를 쓸 수 없습니다`);
-    } else if (!source.includes(it.evidence)) {
-      err(`${ctx}: evidence "${it.evidence}"를 원문에서 찾지 못했습니다 (철자·부호까지 그대로여야 함)`);
-    }
-  }
-  // 오답 이유(선택): 아이가 고른 보기에만 한 줄로 뜬다. 정답 자리에는 쓸 수 없다.
-  if (it.why_not !== undefined) {
-    if (typeof it.why_not !== 'object' || it.why_not === null || Array.isArray(it.why_not)) {
-      err(`${ctx}: why_not은 {"보기번호": "이유"} 형태여야 합니다`);
-    } else {
-      for (const [k, v] of Object.entries(it.why_not)) {
-        const i = Number(k);
-        if (!Number.isInteger(i) || i < 0 || i >= (it.choices?.length || 0)) {
-          err(`${ctx}: why_not의 보기번호 "${k}"가 범위를 벗어났습니다`);
-        } else if (i === it.answer_idx) {
-          err(`${ctx}: why_not에 정답 자리(${k})를 넣을 수 없습니다`);
-        }
-        if (typeof v !== 'string' || !v.trim()) err(`${ctx}: why_not[${k}]가 비어 있습니다`);
-        else {
-          const hard = HARD_TERMS.filter((w) => v.includes(w));
-          if (hard.length) err(`${ctx}: why_not[${k}]에 어려운 용어 [${hard.join(', ')}]`);
-          if (v.length > WHY_NOT_MAX) err(`${ctx}: why_not[${k}]가 ${v.length}자 (${WHY_NOT_MAX}자 이하로)`);
-        }
-      }
-    }
-  }
-  // 실수 유형(선택이지만 why_not이 있으면 사실상 필수): 오답 자리마다 딱지 하나.
-  // 딱지가 빠지면 그 오답만 통계에서 조용히 사라지므로, 짝이 안 맞으면 막는다.
-  if (it.miss_type !== undefined || it.why_not !== undefined) {
-    const mt = it.miss_type;
-    if (it.why_not && (typeof mt !== 'object' || mt === null || Array.isArray(mt))) {
-      err(`${ctx}: why_not이 있으면 miss_type도 같은 자리마다 필요합니다`);
-    } else if (mt) {
-      for (const [k, v] of Object.entries(mt)) {
-        if (!it.why_not || it.why_not[k] === undefined) {
-          err(`${ctx}: miss_type[${k}]에 대응하는 why_not이 없습니다`);
-        }
-        if (!MISS_TYPES[v]) err(`${ctx}: 모르는 실수 유형 "${v}"`);
-      }
-      for (const k of Object.keys(it.why_not || {})) {
-        if (mt[k] === undefined) err(`${ctx}: 보기 ${k}의 실수 유형이 비었습니다`);
-      }
-    }
-  }
-  // 표현 카드(선택): 이 문제에서 챙겨 갈 표현 1개
-  if (it.key_expr !== undefined) {
-    const k = it.key_expr;
-    if (typeof k !== 'object' || k === null || typeof k.en !== 'string' || !k.en.trim()
-        || typeof k.ko !== 'string' || !k.ko.trim()) {
-      err(`${ctx}: key_expr은 {"en": "영어 표현", "ko": "뜻"} 형태여야 합니다`);
-    } else if (k.ko.length > KEY_EXPR_KO_MAX) {
-      err(`${ctx}: key_expr.ko가 ${k.ko.length}자 (${KEY_EXPR_KO_MAX}자 이하로)`);
-    }
-  }
-  if (!Number.isInteger(it.difficulty_label) || it.difficulty_label < 1 || it.difficulty_label > 5) {
-    err(`${ctx}: difficulty_label은 1~5 정수`);
-  }
-  if (!Array.isArray(it.tags) || it.tags.length < 1 || it.tags.length > 3) {
-    err(`${ctx}: tags는 1~3개`);
-  } else {
-    for (const t of it.tags) {
-      if (!tagCodes.has(t)) err(`${ctx}: 미등록 태그 "${t}"`);
-      else if (tagSection[t] !== 'ALL' && tagSection[t] !== section) {
-        err(`${ctx}: 태그 "${t}"는 ${tagSection[t]} 전용 (${section} 문항에 사용 불가)`);
-      }
-    }
-  }
+  // 규칙 검사는 관리자 저작 화면과 같은 자(worker/authoring.mjs)로 한다.
+  // 여기서는 그 결과를 오류 목록에 옮기고, 파일 단위 통계만 따로 센다.
+  for (const m of validateQuestionCore(it, ctx, part, source, tagSection)) errors.push(m);
   (perPartAnswerPos[part] ||= [0, 0, 0, 0])[it.answer_idx ?? 0]++;
   const d = (perPartDifficulty[part] ||= {});
   d[it.difficulty_label] = (d[it.difficulty_label] || 0) + 1;
