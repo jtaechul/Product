@@ -163,12 +163,16 @@ function bindTabs() {
 // "가입이 늘고 있나" 그리고 "가입한 아이가 실제로 매일 쓰고 있나"(리텐션 = 유료 전환의 바탕).
 // 가족을 누르면 상세 화면 — 문의 대응·메모·정지·탈퇴·재설정 링크는 전부 거기서 한다.
 function renderFamilies(o) {
-  const kid = (k) => `
-    <span class="row-s">· ${esc(k.display_name)} — ${
-      k.answers
-        ? `푼 문항 ${k.answers.toLocaleString()}개${k.last_day ? ` · 마지막 학습 ${
-            k.last_day === o.today ? '오늘' : esc(k.last_day)}` : ''}`
-        : '아직 시작 안 함'}</span>`;
+  // 아이 줄의 첫 정보는 '오늘'이다. 목록을 훑는 이유가 대개 "오늘 누가 했나"이고,
+  // '마지막 학습 = 오늘'만으로는 한 문제만 열어본 아이와 한 세트를 끝낸 아이가 같아 보인다.
+  const kid = (k) => {
+    if (!k.answers) return `<span class="row-s">· ${esc(k.display_name)} — 아직 시작 안 함</span>`;
+    const todayPart = k.today_n
+      ? `<b class="hot">오늘 ${k.today_n}문항</b>`
+      : `오늘 아직${k.last_day ? ` (마지막 ${esc(k.last_day)})` : ''}`;
+    return `<span class="row-s">· ${esc(k.display_name)} — ${todayPart} · 누적 ${
+      k.answers.toLocaleString()}개</span>`;
+  };
 
   const list = o.families.length ? o.families.map((f) => `
     <button class="row" data-family="${esc(f.id)}">
@@ -189,7 +193,8 @@ function renderFamilies(o) {
       <div class="rows">
         <div class="row"><span class="row-main">
           <span class="row-t">가족 ${o.stats.families}팀 · 아이 ${o.stats.children}명</span>
-          <span class="row-s">오늘 학습한 아이 ${o.stats.active_today}명 · 지금까지 푼 문항 ${o.stats.answers.toLocaleString()}개</span>
+          <span class="row-s">오늘 학습한 아이 <b>${o.stats.active_today}명</b> · 오늘 푼 문항 <b>${
+            (o.stats.today_answers ?? 0).toLocaleString()}개</b> · 지금까지 ${o.stats.answers.toLocaleString()}개</span>
         </span></div>
       </div>
     </div>
@@ -240,7 +245,8 @@ async function showFamily(id) {
         <span class="card-note">등록 ${esc(String(k.created_at).slice(0, 10))}</span></div>
       ${k.answers ? `
       <div class="kid-stats">
-        <span><b>${k.answers.toLocaleString()}</b>문항</span>
+        <span class="${k.today_n ? 'hot' : 'dim'}">오늘 <b>${k.today_n ?? 0}</b>문항</span>
+        <span>누적 <b>${k.answers.toLocaleString()}</b>문항</span>
         <span>정답률 <b>${acc}%</b></span>
         <span>최근 2주 <b>${k.week14}</b>일</span>
         <span>이어서 <b>${k.streak}</b>일</span>

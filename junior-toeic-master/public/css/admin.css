@@ -249,3 +249,7 @@ table.pins td.pin { font-variant-numeric: tabular-nums; font-weight: 800; letter
 .qcheck-t { font-size: .8rem; font-weight: 800; color: #8a6412; }
 .qcheck ul { margin: 6px 0 0; padding-left: 18px; }
 .qcheck li { font-size: .82rem; line-height: 1.55; color: #8a6412; }
+
+/* 오늘 학습한 아이는 눈에 띄게, 아직인 아이는 흐리게 */
+.hot { color: var(--primary, #5b5bf5); }
+.kid-stats .dim { color: var(--muted, #6b7193); }

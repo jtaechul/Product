@@ -931,16 +931,22 @@ const clean = (s, max) => String(s ?? '').trim().slice(0, max);
 // 관리자가 발급한 PIN은 들어갈 문이 없는 열쇠였다. academies·classes 표는
 // 시뮬레이션·시드(tools/)용 내부 도구로만 남는다.
 app.get('/api/admin/overview', ...admin, async (c) => {
+  // '오늘'을 먼저 정해 둔다 — 아래 질의가 오늘 푼 문항 수를 세는 데 쓴다(한국 시간 기준)
+  const today = kstDate();
   const [{ results: parents }, { results: kids }, pending] = await Promise.all([
     c.env.DB.prepare(
       `SELECT id, email, display_name, status, consent_at, created_at FROM parents ORDER BY created_at DESC LIMIT 500`
     ).all(),
     c.env.DB.prepare(
+      // '마지막 학습 = 오늘'만으로는 몇 문제를 풀었는지 알 수 없다.
+      // 한 문제만 열어보고 나간 아이와 한 세트를 끝낸 아이가 같아 보이므로 오늘 수를 따로 센다.
       `SELECT u.id, u.parent_id, u.display_name, u.created_at,
               (SELECT COUNT(*) FROM answers WHERE user_id = u.id) AS answers,
+              (SELECT COUNT(*) FROM answers
+                WHERE user_id = u.id AND date(answered_at, '+9 hours') = ?1) AS today_n,
               (SELECT MAX(date(answered_at, '+9 hours')) FROM answers WHERE user_id = u.id) AS last_day
          FROM users u WHERE u.parent_id IS NOT NULL AND u.role = 'student'`
-    ).all(),
+    ).bind(today).all(),
     c.env.DB.prepare('SELECT COUNT(*) AS n FROM feedback WHERE handled_at IS NULL').first(),
   ]);
   const byParent = {};
@@ -949,14 +955,15 @@ app.get('/api/admin/overview', ...admin, async (c) => {
     id: p.id, email: p.email, display_name: p.display_name, status: p.status,
     joined: p.created_at, children: byParent[p.id] ?? [],
   }));
-  const today = kstDate();
   return c.json({
     families,
     stats: {
       families: parents.length,
       children: kids.length,
       answers: kids.reduce((n, k) => n + k.answers, 0),
-      active_today: kids.filter((k) => k.last_day === today).length,
+      active_today: kids.filter((k) => k.today_n > 0).length,
+      // 오늘 몇 문항이 풀렸는지 — '몇 명이 켰나'보다 실제 사용량에 가깝다
+      today_answers: kids.reduce((n, k) => n + k.today_n, 0),
     },
     today,
     feedback_pending: pending.n,
@@ -1025,6 +1032,8 @@ app.get('/api/admin/family/:id', ...admin, async (c) => {
     // '최근 2주 N일'은 달력 14일 안만 센다 — 목록 길이로 세면 옛 기록까지 부풀려진다
     const from = Date.parse(`${today}T00:00:00Z`) - 13 * 86400_000;
     kid.week14 = days.filter((r) => r.n > 0 && Date.parse(`${r.d}T00:00:00Z`) >= from).length;
+    // 오늘 몇 문항 — 날짜별 개수를 이미 받아왔으므로 따로 물어보지 않는다
+    kid.today_n = days.find((r) => r.d === today)?.n ?? 0;
     kid.streak = streak;
     kid.axes = sm.axes;
     kid.misses = sm.misses;

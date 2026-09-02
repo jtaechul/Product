@@ -150,3 +150,7 @@ body { padding-bottom: env(safe-area-inset-bottom); }
 }
 .p-acct-btns { display: flex; gap: 8px; flex: none; }
 .p-acct-btns .btn-ghost { min-height: 40px; padding: 0 14px; font-size: .82rem; }
+
+/* '오늘 푼 문항' — 오늘 한 날은 숫자에 색을 준다.
+   부모가 이 화면에서 가장 먼저 찾는 값이고, 0과 구분이 한눈에 돼야 한다. */
+.stat.on .value { color: var(--primary); }

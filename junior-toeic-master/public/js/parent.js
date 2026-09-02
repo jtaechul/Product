@@ -444,10 +444,12 @@ async function showHome(childId = currentChildId) {
         <span class="card-note">색이 칠해진 날 = 공부한 날</span></div>
       <div class="dots">${dots}</div>
       <div class="stat-row" style="margin-top:12px">
+        <div class="stat${d.today_n ? ' on' : ''}"><span class="label">오늘 푼 문항</span>
+          <span class="value">${d.today_n}</span></div>
         <div class="stat"><span class="label">이어온 날</span><span class="value">${d.streak}일</span></div>
-        <div class="stat"><span class="label">푼 문항</span><span class="value">${d.answered}</span></div>
         <div class="stat"><span class="label">정답률</span><span class="value">${d.answered ? acc + '%' : '–'}</span></div>
       </div>
+      <p class="card-note">지금까지 모두 ${d.answered.toLocaleString()}문항을 풀었어요.</p>
     </div>
 
     <div class="card">
