@@ -398,7 +398,14 @@ ULID 를 지어 파일 이름이 어긋난다(2026-08-11 사고 — `generate-tt
 - 이미 있는 문항 3개를 예시로 함께 보내 형식·말투·난이도를 맞춘다(글로 설명하는 것보다 정확하다).
 - 받은 초안을 **저작 규칙집으로 걸러** 통과한 것만 `status: "draft"` 로 붙인다. 걸린 초안은
   버리고 이유를 로그에 찍는다 — 반쯤 맞는 문항을 사람이 고치는 것보다 다시 주문하는 편이 싸다.
-- 필요 시크릿: `ANTHROPIC_API_KEY` (Repository secrets. Environment secrets 에 넣으면 안 보인다)
+- **엔진은 있는 열쇠로 알아서 고른다** — `ANTHROPIC_API_KEY`(먼저) 또는 `GEMINI_API_KEY`.
+  둘 다 있으면 Anthropic 을 쓰고, `GEN_ENGINE=gemini` 로 강제할 수 있다.
+  Anthropic 을 먼저 보는 이유는 규칙이 까다로워(해설 100자·어려운 용어 금지·근거 원문 그대로)
+  통과율이 곧 결과물의 양이 되기 때문이다. 어느 엔진이든 초안은 **같은 규칙집을 통과해야** 하므로
+  안전 규칙(민감 소재 포함)은 엔진과 무관하게 지켜진다.
+- Gemini 무료 등급이 음원 배치에서 느렸던 것은 요청이 수백 개였기 때문이고, 문항 생성은
+  **주문당 요청 1번**이라 분당 제한에 걸리지 않는다. 이미 음원용 키가 있으면 그대로 쓰인다.
+- 필요 시크릿: 위 둘 중 하나 (Repository secrets. Environment secrets 에 넣으면 안 보인다)
 
 ### 10-5. 필요한 설정 (운영자 작업)
 
@@ -406,7 +413,7 @@ ULID 를 지어 파일 이름이 어긋난다(2026-08-11 사고 — `generate-tt
 |---|---|---|
 | `GITHUB_TOKEN` | Workers 시크릿 (`wrangler secret put`) | 관리자 화면 → 저장소 커밋·워크플로 실행 |
 | `GITHUB_REPO` / `GITHUB_BRANCH` / `GITHUB_DIR` | Workers 변수(선택) | 기본값은 이 저장소·작업 브랜치·`junior-toeic-master` |
-| `ANTHROPIC_API_KEY` | GitHub Repository secrets | AI 초안 생성 |
+| `ANTHROPIC_API_KEY` **또는** `GEMINI_API_KEY` | GitHub Repository secrets | AI 초안 생성 (둘 중 하나만 있으면 됨) |
 
 토큰이 없으면 화면 위에 안내가 뜨고 저장·주문 버튼이 안내와 함께 거절된다(눌러서 실패하지 않게).
 

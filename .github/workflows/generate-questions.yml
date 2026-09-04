@@ -61,14 +61,22 @@ jobs:
       - name: Validate content (before)
         run: node tools/import.mjs --check
 
+      # 열쇠는 둘 중 아무거나 있으면 된다 — 이미 음원 제작에 쓰는 Gemini 키가 있으면
+      # 새로 등록할 것 없이 그대로 쓰인다. 값은 절대 찍지 않고 '있다/없다'만 알린다.
       - name: Generate drafts
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_JUMPLISH || secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_JUMPLISH || secrets.GEMINI_API_KEY }}
         run: |
-          if [ -z "$ANTHROPIC_API_KEY" ]; then
-            echo "::error::ANTHROPIC_API_KEY 를 찾지 못했습니다."
-            echo "::error::GitHub > Settings > Secrets and variables > Actions 의"
-            echo "::error::'Repository secrets' 에 등록해 주세요 (Environment secrets 는 안 보입니다)."
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            echo "AI 열쇠: ANTHROPIC_API_KEY 사용"
+          elif [ -n "$GEMINI_API_KEY" ]; then
+            echo "AI 열쇠: GEMINI_API_KEY 사용 (Anthropic 키가 없어 이쪽으로 갑니다)"
+          else
+            echo "::error::AI 열쇠를 하나도 찾지 못했습니다."
+            echo "::error::GitHub > Settings > Secrets and variables > Actions 의 'Repository secrets' 에"
+            echo "::error::ANTHROPIC_API_KEY 또는 GEMINI_API_KEY 중 하나를 등록해 주세요."
+            echo "::error::(Environment secrets 에 넣으면 이 작업에서 보이지 않습니다)"
             exit 1
           fi
           node tools/gen-questions.mjs \
