@@ -1024,9 +1024,7 @@ async function fetchPrice() {
   //   dateAvgRecentPrice.do?date=YYYYMMDD : 그 날 포함 7일치 일간값(과거일도 조회 가능)
   if (!found) {
     try {
-      const data = await fetchWithProxy(
-        `https://www.opinet.co.kr/api/dateAvgRecentPrice.do?code=${opKey}&out=json&date=${dateFmt}`
-      );
+      const data = await fetchOpinet(`type=daily&date=${dateFmt}`, opKey);
       const picked = pickDailyPrice(data, fuel.opinetCode, dateFmt);
       if (picked) {
         S.price = picked.price;
@@ -1044,9 +1042,7 @@ async function fetchPrice() {
   // 2순위: 최근 7일 일별 평균 (date 미지원 환경 대비) → 출장일 또는 가장 가까운 날
   if (!found) {
     try {
-      const data = await fetchWithProxy(
-        `https://www.opinet.co.kr/api/avgRecentPrice.do?code=${opKey}&out=json`
-      );
+      const data = await fetchOpinet('type=recent', opKey);
       const picked = pickDailyPrice(data, fuel.opinetCode, dateFmt);
       if (picked) {
         S.price = picked.price;
@@ -1061,9 +1057,7 @@ async function fetchPrice() {
   // 3순위: 현재 전국 평균 스냅샷 (일간 데이터가 없을 때 최후)
   if (!found) {
     try {
-      const data = await fetchWithProxy(
-        `https://www.opinet.co.kr/api/avgAllPrice.do?code=${opKey}&out=json`
-      );
+      const data = await fetchOpinet('type=all', opKey);
       const price = parseOilList(data, fuel.opinetCode);
       if (price) {
         S.price = price;
@@ -1109,24 +1103,15 @@ function parseOilList(data, prodcd) {
   return p > 0 ? p : null;
 }
 
-async function fetchWithProxy(url) {
-  const proxies = [
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-    u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
-  ];
-  for (const makeProxy of proxies) {
-    try {
-      const res = await fetch(makeProxy(url), { signal: AbortSignal.timeout(8000) });
-      if (!res.ok) continue;
-      const text = await res.text();
-      try {
-        const json = JSON.parse(text);
-        if (json.contents) return JSON.parse(json.contents);
-        return json;
-      } catch { continue; }
-    } catch { continue; }
-  }
-  throw new Error('모든 프록시 실패');
+// 오피넷 조회 — 우리 Worker 중계 경유 (제3자 CORS 프록시 폐기: 정책변경·다운으로 불가)
+//   Worker가 서버에서 오피넷을 직접 호출해 JSON 반환 → 브라우저는 workers.dev만 호출
+async function fetchOpinet(query, key) {
+  const url = `${OPINET_CONFIG_URL}/opinet?${query}${key ? `&key=${encodeURIComponent(key)}` : ''}`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+  if (!res.ok) throw new Error('opinet relay ' + res.status);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
 }
 
 /* ========================================================

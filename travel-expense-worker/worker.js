@@ -21,6 +21,32 @@ export default {
         headers: { ...cors, 'Content-Type': 'application/json' },
       });
 
+    // ── 오피넷 유가 중계: 제3자 CORS 프록시 대체 (서버가 직접 오피넷 호출) ──
+    //   /opinet?type=daily&date=YYYYMMDD | type=recent | type=all
+    if (request.method === 'GET' && url.pathname === '/opinet') {
+      const opinetKey = url.searchParams.get('key') || await env.CONFIG.get('opinetKey');
+      if (!opinetKey) return json({ error: 'no_opinet_key' }, 400);
+      const type = url.searchParams.get('type') || 'daily';
+      const date = (url.searchParams.get('date') || '').replace(/[^0-9]/g, '');
+      let target;
+      if (type === 'daily' && date.length === 8)
+        target = `https://www.opinet.co.kr/api/dateAvgRecentPrice.do?code=${opinetKey}&out=json&date=${date}`;
+      else if (type === 'recent')
+        target = `https://www.opinet.co.kr/api/avgRecentPrice.do?code=${opinetKey}&out=json`;
+      else if (type === 'all')
+        target = `https://www.opinet.co.kr/api/avgAllPrice.do?code=${opinetKey}&out=json`;
+      else return json({ error: 'bad_type' }, 400);
+      try {
+        const r = await fetch(target);
+        const text = await r.text();
+        let data;
+        try { data = JSON.parse(text); } catch { return json({ error: 'parse_fail', raw: text.slice(0, 200) }, 502); }
+        return json(data);
+      } catch (e) {
+        return json({ error: 'opinet_fetch_fail', detail: String(e).slice(0, 200) }, 502);
+      }
+    }
+
     // ── 지도 타일 중계: 브라우저가 OSM에 직접 못 가는 환경(사내망 등) 대응 ──
     //   /tile/{z}/{x}/{y} → OpenStreetMap 타일을 서버가 받아 CORS 허용으로 반환
     if (request.method === 'GET' && url.pathname.startsWith('/tile/')) {
