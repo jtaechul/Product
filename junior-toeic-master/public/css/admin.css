@@ -253,3 +253,21 @@ table.pins td.pin { font-variant-numeric: tabular-nums; font-weight: 800; letter
 /* 오늘 학습한 아이는 눈에 띄게, 아직인 아이는 흐리게 */
 .hot { color: var(--primary, #5b5bf5); }
 .kid-stats .dim { color: var(--muted, #6b7193); }
+
+/* ── 부족한 문제 채우기 — 이 화면의 주인공 버튼 ── */
+.fill-card { border-color: var(--primary, #5b5bf5); }
+.btn.big {
+  width: 100%; min-height: 52px; font-size: .98rem; font-weight: 800;
+  margin-top: 4px; border-radius: 14px;
+}
+.fill-draft {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line, #e6e8f6);
+  font-size: .86rem;
+}
+.fill-draft > span { flex: 1; min-width: 120px; }
+/* 문장 안에 섞이는 링크형 버튼 (직접 쓰기) */
+.linklike {
+  font: inherit; color: var(--primary, #5b5bf5); font-weight: 800;
+  text-decoration: underline; padding: 2px 1px; background: none; border: 0; cursor: pointer;
+}

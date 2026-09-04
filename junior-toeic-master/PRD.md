@@ -291,6 +291,9 @@
 | `POST /api/admin/questions` | 새 문항 저장 → `content/questions/*.json` + `.idmap.json` 한 커밋 (draft) |
 | `POST /api/admin/questions/:id/status` | 출제 시작/내리기 — D1 즉시 반영 + 파일도 같이 커밋 |
 | `POST /api/admin/generate-order` | AI 초안 주문 → `generate-questions.yml` 실행 (앱 서버엔 AI 열쇠 없음) |
+| `GET /api/admin/fill-gaps` | 지금 무엇이 얼마나 부족한지 계산 (버튼에 적을 문구까지) |
+| `POST /api/admin/fill-gaps` | **버튼 하나** — 얇은 자리를 서버가 골라 자동 주문 (운영자 입력 없음) |
+| `POST /api/admin/questions/activate-drafts` | 준비 중 문항 일괄 출제 (소리·사진 없는 것은 자동 보류) |
 | (공개) `POST /api/parent/reset-password` | 링크를 받은 학부모가 새 비밀번호를 직접 설정 |
 
 **관리자는 비밀번호를 정하거나 볼 수 없다** (2026-08-12 원칙, 관리 기능을 붙인 뒤에도 유지).

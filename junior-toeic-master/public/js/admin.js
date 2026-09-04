@@ -512,6 +512,12 @@ function renderQuestions() {
     ${c.repo.ready ? '' : `<div class="warn-box">저장소 연결이 아직 안 됐어요.
       새 문항을 만들려면 <b>GITHUB_TOKEN</b> 을 등록해야 합니다 (아래 '도움말' 참고).</div>`}
 
+    <!-- 이 화면에서 할 일은 사실상 이 버튼 하나다. 무엇을 만들지 고르는 일은
+         서버가 대신한다(얇은 축 → 그 축의 얇은 태그 → 그 태그가 나오는 파트). -->
+    <div class="card fill-card" data-fillbox>
+      <p class="empty" style="padding:14px 0">부족한 곳을 확인하는 중...</p>
+    </div>
+
     <div class="card">
       <div class="card-head"><span class="card-title">지금 문제은행</span>
         <span class="card-note">전체 ${c.total} · 출제중 ${c.active}</span></div>
@@ -524,13 +530,13 @@ function renderQuestions() {
 
     <div class="card">
       <div class="card-head"><span class="card-title">얇은 개념</span>
-        <span class="card-note">눌러서 그 개념 문제 주문</span></div>
+        <span class="card-note">위 버튼이 여기부터 채웁니다</span></div>
       <div class="chips">${thin}</div>
     </div>
 
     <div class="card">
       <div class="card-head"><span class="card-title">종류별</span>
-        <button class="btn small" data-new>+ 직접 만들기</button></div>
+        <span class="card-note">종류를 콕 집어 주문하려면 '만들기'</span></div>
       <div class="rows">${parts}</div>
     </div>
 
@@ -557,9 +563,13 @@ function renderQuestions() {
         <button class="btn ghost small" data-find>찾기</button>
       </div>
       <div class="rows" data-qlist><p class="empty">찾기를 눌러주세요.</p></div>
-    </div>`;
+    </div>
+
+    <p class="card-note" style="text-align:center;margin-top:10px">
+      AI가 놓친 문제를 손으로 만들고 싶다면 <button class="linklike" data-new>직접 쓰기</button></p>`;
 
   bindTabs();
+  renderFillBox();
   view.querySelector('[data-new]').addEventListener('click', () => showNewQuestion());
   view.querySelectorAll('[data-order]').forEach((b) =>
     b.addEventListener('click', () => showOrder({ part: b.dataset.order })));
@@ -603,6 +613,75 @@ async function findQuestions() {
     box.querySelectorAll('[data-open]').forEach((b) =>
       b.addEventListener('click', () => showQuestion(b.dataset.open)));
   } catch (e) { if (!guard(e)) box.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; }
+}
+
+// ── 버튼 하나로 부족한 문제 채우기 ──
+// 이 화면에서 운영자가 할 일은 사실상 이것뿐이다. 무엇을 몇 개 만들지는 서버가 정한다
+// (얇은 축 → 그 축의 얇은 태그 → 그 태그가 실제로 나오는 파트). 고를 것도, 적을 것도 없다.
+// 버튼에 미리 숫자를 적어 두는 이유: 누르기 전에 무엇이 만들어지는지 보여야 안심하고 누른다.
+async function renderFillBox() {
+  const box = view.querySelector('[data-fillbox]');
+  if (!box) return;
+  let p;
+  try { p = await api('/api/admin/fill-gaps'); }
+  catch (e) { if (!guard(e)) box.innerHTML = `<p class="msg bad">${esc(e.message)}</p>`; return; }
+
+  const draftLine = p.drafts
+    ? `<div class="fill-draft">
+         <span>확인을 기다리는 새 문제 <b>${p.drafts}개</b></span>
+         <button class="btn ghost small" data-seedrafts>보러 가기</button>
+         <button class="btn small" data-activate>전부 출제 시작</button>
+       </div>` : '';
+
+  box.innerHTML = `
+    <div class="card-head"><span class="card-title">문제 늘리기</span></div>
+    ${p.total ? `
+      <p class="card-note">지금 <b>${esc(p.orders.map((o) => o.why).join(' · '))}</b>가 얇아요.
+        아래 버튼을 누르면 앱이 알아서 그 자리를 채웁니다 — 고르실 것 없습니다.</p>
+      <button class="btn big" data-fill${p.ready ? '' : ' disabled'}>${esc(p.label)}</button>
+      ${p.ready ? '' : '<p class="card-note">저장소 연결(GITHUB_TOKEN)을 먼저 등록해주세요.</p>'}`
+    : '<p class="card-note">지금은 모든 칸이 충분해요. 더 만들 곳이 없습니다.</p>'}
+    ${draftLine}
+    <div data-fillmsg></div>`;
+
+  const msg = box.querySelector('[data-fillmsg]');
+  box.querySelector('[data-fill]')?.addEventListener('click', async (e) => {
+    const b = e.currentTarget;
+    b.disabled = true;
+    msg.innerHTML = '<p class="card-note">주문을 넣는 중...</p>';
+    try {
+      const r = await api('/api/admin/fill-gaps', { method: 'POST', body: '{}' });
+      msg.innerHTML = `<p class="msg ok">${esc(r.next)}</p>`;
+    } catch (err) {
+      if (guard(err)) return;
+      msg.innerHTML = `<p class="msg bad">${esc(err.message)}</p>`;
+      b.disabled = false;
+    }
+  });
+  box.querySelector('[data-seedrafts]')?.addEventListener('click', () => {
+    qFilter = { status: 'draft' };
+    view.querySelector('[data-fstatus]').value = 'draft';
+    view.querySelector('[data-fpart]').value = '';
+    view.querySelector('[data-fq]').value = '';
+    findQuestions();
+    view.querySelector('[data-qlist]').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+  box.querySelector('[data-activate]')?.addEventListener('click', async (e) => {
+    if (!confirm('확인을 기다리는 새 문제를 전부 출제할까요?\n소리·사진이 아직 없는 것은 자동으로 남겨둡니다.')) return;
+    const b = e.currentTarget;
+    b.disabled = true;
+    msg.innerHTML = '<p class="card-note">출제하는 중...</p>';
+    try {
+      const r = await api('/api/admin/questions/activate-drafts', { method: 'POST', body: '{}' });
+      msg.innerHTML = `<p class="msg ok">${esc(r.next)}${
+        r.synced ? '' : '<br>(저장소 반영은 못 했어요 — 다음 배포 때 되돌아올 수 있습니다)'}</p>`;
+      setTimeout(showQuestions, 1400);
+    } catch (err) {
+      if (guard(err)) return;
+      msg.innerHTML = `<p class="msg bad">${esc(err.message)}</p>`;
+      b.disabled = false;
+    }
+  });
 }
 
 // ── 문항 하나 — 아이가 보는 그대로 + 출제/내리기 ──

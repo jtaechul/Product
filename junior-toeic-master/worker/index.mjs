@@ -1451,6 +1451,191 @@ app.post('/api/admin/generate-order', ...admin, async (c) => {
   });
 });
 
+// ── 부족한 곳을 서버가 스스로 찾는다 (2026-09-02) ──
+//
+// 운영자에게 "무슨 종류를, 어느 개념으로, 몇 개" 를 묻지 않는다. 그 답은 이미 데이터에 있다 —
+// 실력 5축 중 얇은 축, 그 축을 받치는 태그 중 문항이 적은 것, 그리고 그 태그가 실제로 나올 수
+// 있는 파트. 운영자는 버튼만 누르고, 무엇을 만들지는 아래 계산이 정한다.
+//
+// 왜 축부터 보나: 총 문항이 넉넉해도 한 축이 얇으면 그 축의 실력이 안 재져 아이 화면에
+// '재는 중'이 남는다. 그게 지금 이 제품에서 가장 아픈 구멍이라 여기부터 메운다.
+
+const AXIS_TARGET = 60;   // 축 하나가 이만큼은 받쳐져야 실력이 흔들리지 않고 재진다
+const GAP_BATCH = 6;      // 한 주문에 만들 문항 수 — 검수 부담과 생성 실패율의 절충
+const GAP_MAX_ORDERS = 3; // 한 번 눌렀을 때 최대 주문 수 (너무 많으면 검수가 밀린다)
+
+// 태그가 실제로 출제되는 파트 — 그 태그로 이미 나가고 있는 문항에서 배운다.
+// 표로 못박아 두면 새 태그를 넣을 때마다 여기도 고쳐야 하고, 안 고치면 조용히 틀린다.
+async function partsByTag(db) {
+  const { results } = await db.prepare(
+    `SELECT qt.tag_id AS tag, q.part, COUNT(*) AS n
+       FROM question_tags qt JOIN questions q ON q.id = qt.question_id
+      WHERE q.status = 'active' GROUP BY qt.tag_id, q.part`).all();
+  const by = {};
+  for (const r of results) (by[r.tag] ||= []).push({ part: r.part, n: r.n });
+  for (const t of Object.keys(by)) by[t].sort((a, b) => b.n - a.n);
+  return by;
+}
+
+// 지금 무엇이 모자란지 계산한다. 화면(미리보기)과 실제 주문이 같은 함수를 쓴다 —
+// 버튼에 적힌 말과 실제로 만들어지는 것이 어긋나면 신뢰를 잃는다.
+async function planGaps(db) {
+  const [{ results: tagRows }, byTag] = await Promise.all([
+    db.prepare(
+      `SELECT t.id, t.name_ko, t.section,
+              COUNT(CASE WHEN q.status = 'active' THEN 1 END) AS n
+         FROM concept_tags t
+         LEFT JOIN question_tags qt ON qt.tag_id = t.id
+         LEFT JOIN questions q ON q.id = qt.question_id
+        GROUP BY t.id`).all(),
+    partsByTag(db),
+  ]);
+  const nOf = Object.fromEntries(tagRows.map((t) => [t.id, t.n]));
+  const nameOf = Object.fromEntries(tagRows.map((t) => [t.id, t.name_ko]));
+
+  // 축을 얇은 순으로 — 가장 모자란 축부터 메운다
+  const axes = SKILL_AXES
+    .map((ax) => ({ ...ax, n: ax.tags.reduce((s, t) => s + (nOf[t] ?? 0), 0) }))
+    .filter((ax) => ax.n < AXIS_TARGET)
+    .sort((a, b) => a.n - b.n);
+
+  const orders = [];
+  for (const ax of axes) {
+    if (orders.length >= GAP_MAX_ORDERS) break;
+    // 그 축 안에서도 가장 얇은 태그를 고른다. 축 전체를 뭉뚱그려 주문하면
+    // AI가 만들기 쉬운 태그로만 쏠려 정작 빈 칸은 그대로 남는다.
+    const tag = [...ax.tags]
+      .filter((t) => (byTag[t] ?? []).length)      // 출제될 파트를 아는 태그만
+      .sort((a, b) => (nOf[a] ?? 0) - (nOf[b] ?? 0))[0];
+    if (!tag) continue;
+    orders.push({
+      part: byTag[tag][0].part,        // 그 태그가 가장 많이 나오는 파트에 얹는다
+      tag,
+      count: GAP_BATCH,
+      axis: ax.key,
+      why: `${ax.name} ${ax.n}문항 (${nameOf[tag]} ${nOf[tag] ?? 0}개)`,
+    });
+  }
+  return { orders, total: orders.reduce((s, o) => s + o.count, 0) };
+}
+
+// 버튼에 적을 말 — 누르기 전에 무엇이 만들어지는지 보이게 한다.
+app.get('/api/admin/fill-gaps', ...admin, async (c) => {
+  const plan = await planGaps(c.env.DB);
+  const gh = new GithubRepo(c.env);
+  const draft = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM questions WHERE status = 'draft'`).first();
+  return c.json({
+    ...plan,
+    ready: gh.configured,
+    // 검수를 기다리는 초안 수 — '전부 출제 시작' 버튼을 띄울지 정한다
+    drafts: draft.n,
+    label: plan.total
+      ? `부족한 문제 채우기 (${plan.orders.map((o) => o.why.split(' ')[0]).join('·')} ${plan.total}개)`
+      : '지금은 부족한 곳이 없어요',
+  });
+});
+
+// 버튼 — 무엇을 만들지는 서버가 정하고, 운영자는 누르기만 한다.
+app.post('/api/admin/fill-gaps', ...admin, async (c) => {
+  const gh = new GithubRepo(c.env);
+  if (!gh.configured) return c.json({ error: '저장소 연결이 아직 설정되지 않았습니다' }, 503);
+  const plan = await planGaps(c.env.DB);
+  if (!plan.orders.length) {
+    return c.json({ ok: true, started: 0, next: '지금은 모든 칸이 충분해요. 더 만들 곳이 없습니다.' });
+  }
+  const started = [];
+  for (const o of plan.orders) {
+    // 한 주문이 실패해도 나머지는 보낸다 — 전부 되돌리면 아무것도 안 만들어진다
+    try {
+      await gh.dispatchWorkflow('generate-questions.yml', {
+        part: o.part, count: String(o.count), tag: o.tag, difficulty: '', note: '',
+      });
+      started.push(o);
+    } catch (e) { /* 아래에서 몇 개가 나갔는지로 알린다 */ }
+  }
+  if (!started.length) return c.json({ error: '주문을 넣지 못했어요. 잠시 후 다시 눌러주세요.' }, 502);
+  return c.json({
+    ok: true, started: started.length,
+    total: started.reduce((s, o) => s + o.count, 0),
+    orders: started.map((o) => o.why),
+    next: `${started.reduce((s, o) => s + o.count, 0)}문항을 만들기 시작했어요 — `
+      + `${started.map((o) => o.why.split(' ')[0]).join('·')}. `
+      + '10~15분 뒤 이 화면에 새 문제가 올라오면 훑어보고 한 번에 출제하실 수 있어요.',
+  });
+});
+
+// 준비 중인 문항을 한 번에 출제 — 검수는 사람이 하되, 손은 한 번만 움직인다.
+// 소리·사진이 없어 못 나가는 문항은 자동으로 남겨 둔다(내보내면 아이가 헤맨다).
+app.post('/api/admin/questions/activate-drafts', ...admin, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const ids = Array.isArray(body.ids) ? body.ids.slice(0, 100).map((x) => clean(x, 40)) : null;
+  const where = ids?.length
+    ? `q.status = 'draft' AND q.id IN (${ids.map((_, i) => `?${i + 1}`).join(',')})`
+    : `q.status = 'draft'`;
+  const { results: rows } = await c.env.DB.prepare(
+    `SELECT q.id, q.part, q.section, q.image_url,
+            COALESCE(q.audio_url, p.audio_url) AS audio_url
+       FROM questions q LEFT JOIN passages p ON p.id = q.passage_id
+      WHERE ${where}`).bind(...(ids ?? [])).all();
+
+  const ok = [];
+  const held = [];
+  for (const q of rows) {
+    if (q.section === 'LC' && !q.audio_url) { held.push(q.id); continue; }
+    if (q.part === 'L1' && !q.image_url) { held.push(q.id); continue; }
+    ok.push(q.id);
+  }
+  if (ok.length) {
+    await c.env.DB.batch(ok.map((id) =>
+      c.env.DB.prepare(`UPDATE questions SET status = 'active' WHERE id = ?1`).bind(id)));
+  }
+
+  // 저장소 파일도 같은 값으로 — 안 하면 다음 배포 때 준비 중으로 되돌아온다.
+  // 한 파트에 여러 문항이 걸리므로 파일 단위로 모아 한 커밋에 올린다.
+  const gh = new GithubRepo(c.env);
+  let synced = false;
+  if (ok.length && gh.configured) {
+    try {
+      const idmapFile = await gh.readFile(IDMAP_PATH);
+      const idmap = idmapFile ? JSON.parse(idmapFile.text) : {};
+      const tmpById = {};
+      for (const [k, v] of Object.entries(idmap)) {
+        if (k.startsWith('q:')) tmpById[v] = k.slice(2).split('#')[0];
+      }
+      const byPart = {};
+      for (const q of rows) {
+        if (!ok.includes(q.id)) continue;
+        const tmp = tmpById[q.id];
+        if (tmp) (byPart[q.part] ||= new Set()).add(tmp);
+      }
+      const files = [];
+      for (const [part, tmps] of Object.entries(byPart)) {
+        const path = `${CONTENT_DIR}/${part}.json`;
+        const cur = await gh.readFile(path);
+        if (!cur) continue;
+        const items = JSON.parse(cur.text);
+        let touched = 0;
+        for (const it of items) if (tmps.has(it.tmp_id)) { it.status = 'active'; touched += 1; }
+        if (touched) files.push({ path, text: `${JSON.stringify(items, null, 2)}\n` });
+      }
+      if (files.length) {
+        await gh.commitFiles(files, `junior-toeic-master: 준비 중 문항 ${ok.length}개 출제 시작 — 관리자 화면에서 일괄 확인`);
+        synced = true;
+      }
+    } catch (e) { /* DB는 이미 바뀌었다 — 아래에서 synced=false 로 알린다 */ }
+  }
+
+  return c.json({
+    ok: true, activated: ok.length, held: held.length, synced,
+    next: ok.length
+      ? `${ok.length}문항을 출제하기 시작했어요. 내일 세트부터 아이에게 나갑니다.`
+        + (held.length ? ` (${held.length}개는 소리·사진이 아직 없어 남겨뒀어요)` : '')
+      : held.length ? `${held.length}개 모두 소리·사진을 기다리는 중이에요.`
+        : '출제할 준비 중 문항이 없어요.',
+  });
+});
+
 app.get('/api/health', async (c) => {
   const counts = await c.env.DB.prepare(
     `SELECT
