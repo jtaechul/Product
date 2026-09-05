@@ -2820,5 +2820,917 @@
     ],
     "status": "active",
     "tmp_id": "R3-0042"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Ben's Diary\nSaturday\nToday I got up late. I ran to the bus stop, but the bus was already gone.\nI waited fifteen minutes for the next one.\nWhen I arrived, my soccer team was warming up.\nThe coach smiled and waved at me.",
+      "translation_ko": "벤의 일기\n토요일\n오늘 나는 늦게 일어났어요. 버스 정류장까지 뛰어갔지만 버스는 이미 떠난 뒤였어요.\n다음 버스를 15분 동안 기다렸어요.\n내가 도착했을 때 우리 축구팀은 몸을 풀고 있었어요.\n코치 선생님이 웃으며 내게 손을 흔들어 주셨어요."
+    },
+    "questions": [
+      {
+        "stem": "What can we guess about Ben?",
+        "choices": [
+          "He walked to the park.",
+          "He was late for soccer practice.",
+          "He played the whole game.",
+          "He does not like soccer."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "벤이 왔을 때 팀은 벌써 몸을 풀고 있었어요. 그래서 벤이 늦은 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.leisure"
+        ],
+        "evidence": "When I arrived, my soccer team was warming up.",
+        "why_not": {
+          "0": "걸어갔다는 말은 없어요",
+          "2": "경기 이야기는 나오지 않아요",
+          "3": "축구를 싫어한다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "warm up",
+          "ko": "몸을 풀다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Why did Ben miss the bus?",
+        "choices": [
+          "It was raining.",
+          "The bus was broken.",
+          "He lost his ticket.",
+          "He got up late."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "늦게 일어나서 뛰어갔지만 버스가 이미 떠났어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "RS.scan"
+        ],
+        "evidence": "Today I got up late.",
+        "why_not": {
+          "0": "비 이야기는 없어요",
+          "1": "버스가 고장 났다는 말은 없어요",
+          "2": "표를 잃어버린 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "get up late",
+          "ko": "늦게 일어나다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0043"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "CITY LIBRARY\nThe reading room on the second floor will be painted this week.\nPlease use the first floor tables until Friday.\nThe book return box by the front door is open as usual.\nSorry for the noise!",
+      "translation_ko": "시립 도서관\n2층 열람실은 이번 주에 페인트칠을 합니다.\n금요일까지는 1층 탁자를 이용해 주세요.\n정문 옆 반납함은 평소처럼 열려 있습니다.\n시끄러워서 죄송합니다!"
+    },
+    "questions": [
+      {
+        "stem": "Why should people use the first floor tables?",
+        "choices": [
+          "The second floor room is being painted.",
+          "The second floor is too small.",
+          "The first floor is much quieter.",
+          "The library moved to a new place."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "2층 열람실을 칠하고 있어서 1층 탁자를 쓰라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "RS.scan"
+        ],
+        "evidence": "The reading room on the second floor will be painted this week.",
+        "why_not": {
+          "1": "좁다는 말은 없어요",
+          "2": "조용하다는 말은 없어요",
+          "3": "도서관이 옮겼다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "second floor",
+          "ko": "2층"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can we guess from the notice?",
+        "choices": [
+          "The library is closed all week.",
+          "Books cannot be returned now.",
+          "The library is still open this week.",
+          "The painting starts on Friday."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "반납함도 열려 있고 1층을 쓰라고 하니 도서관은 열려 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "RS.gist"
+        ],
+        "evidence": "The book return box by the front door is open as usual.",
+        "why_not": {
+          "0": "문을 닫는다는 말과는 반대예요",
+          "1": "반납함은 평소처럼 열려 있어요",
+          "3": "금요일은 1층을 쓰는 마지막 날이에요"
+        },
+        "key_expr": {
+          "en": "as usual",
+          "ko": "평소처럼"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.opposite",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0044"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Mina: Dad, I'm at the store. They don't have any brown bread.\nDad: Hmm. Is there white bread?\nMina: Yes, and it's on sale today.\nDad: Then get two loaves. We can make sandwiches for the picnic.\nMina: Okay! I'll be home in ten minutes.",
+      "translation_ko": "미나: 아빠, 저 가게에 있어요. 여기 갈색 빵이 하나도 없어요.\n아빠: 음. 흰 빵은 있니?\n미나: 네, 그리고 오늘 할인해요.\n아빠: 그럼 두 덩이 사 오렴. 소풍 때 샌드위치를 만들면 되겠다.\n미나: 알겠어요! 십 분 뒤에 집에 갈게요."
+    },
+    "questions": [
+      {
+        "stem": "What will Mina probably buy?",
+        "choices": [
+          "Brown bread",
+          "One loaf of white bread",
+          "Two loaves of white bread",
+          "A picnic basket"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "갈색 빵은 없고 흰 빵이 있어서 아빠가 두 덩이 사 오라고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.shopping"
+        ],
+        "evidence": "Then get two loaves.",
+        "why_not": {
+          "0": "갈색 빵은 가게에 없대요",
+          "1": "한 덩이가 아니라 두 덩이예요",
+          "3": "바구니 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "two loaves",
+          "ko": "빵 두 덩이"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.number",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What are they getting ready for?",
+        "choices": [
+          "A birthday party",
+          "A school test",
+          "A cooking class",
+          "A picnic"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "소풍에 가져갈 샌드위치를 만들려고 빵을 사요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "V.food"
+        ],
+        "evidence": "We can make sandwiches for the picnic.",
+        "why_not": {
+          "0": "생일 이야기는 없어요",
+          "1": "시험 이야기는 없어요",
+          "2": "요리 수업 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "make sandwiches",
+          "ko": "샌드위치를 만들다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0045"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "COOKING CLUB\nEvery Wednesday, 4:00 - 5:30 p.m.\nRoom 201\nThis month we will make fruit salad and rice balls.\nBring an apron. All the food is ready in the room.\nOnly ten students can join, so sign up early!",
+      "translation_ko": "요리 동아리\n매주 수요일, 오후 4시 ~ 5시 30분\n201호\n이번 달에는 과일 샐러드와 주먹밥을 만듭니다.\n앞치마를 가져오세요. 음식 재료는 모두 교실에 준비되어 있습니다.\n열 명만 참여할 수 있으니 일찍 신청하세요!"
+    },
+    "questions": [
+      {
+        "stem": "What do students need to bring?",
+        "choices": [
+          "Fruit",
+          "An apron",
+          "Rice",
+          "A cooking book"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "가져올 것은 앞치마 하나예요. 재료는 교실에 다 있어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "V.food"
+        ],
+        "evidence": "Bring an apron.",
+        "why_not": {
+          "0": "재료는 교실에 준비돼 있어요",
+          "2": "쌀도 교실에 준비돼 있어요",
+          "3": "책 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "bring an apron",
+          "ko": "앞치마를 가져오다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can we guess from the poster?",
+        "choices": [
+          "The club meets every day.",
+          "Students must pay for the food.",
+          "Some students may not get a place.",
+          "The club meets in the gym."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "열 명만 들어갈 수 있으니 늦게 신청하면 못 들어갈 수도 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "RS.gist"
+        ],
+        "evidence": "Only ten students can join, so sign up early!",
+        "why_not": {
+          "0": "매주 수요일에만 모여요",
+          "1": "돈 이야기는 없어요",
+          "3": "체육관이 아니라 201호예요"
+        },
+        "key_expr": {
+          "en": "sign up early",
+          "ko": "일찍 신청하다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0046"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "To: Grandma\nFrom: Jiho\nDear Grandma,\nThank you for the warm gloves. I wore them to school today, and my hands were not cold at all.\nMy teacher said they look great.\nMom says we will visit you next month. I can't wait!\nLove, Jiho",
+      "translation_ko": "받는 사람: 할머니\n보낸 사람: 지호\n할머니께,\n따뜻한 장갑 고맙습니다. 오늘 학교에 끼고 갔는데 손이 하나도 안 시렸어요.\n선생님이 장갑이 멋지다고 하셨어요.\n엄마가 다음 달에 할머니를 뵈러 간다고 하셨어요. 정말 기다려져요!\n사랑을 담아, 지호 올림"
+    },
+    "questions": [
+      {
+        "stem": "Why did Jiho write this email?",
+        "choices": [
+          "To say thank you for a gift",
+          "To ask for new gloves",
+          "To invite Grandma to school",
+          "To tell about a test"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "할머니가 주신 장갑이 고마워서 쓴 편지예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "RS.gist"
+        ],
+        "evidence": "Thank you for the warm gloves.",
+        "why_not": {
+          "1": "새 장갑을 달라고 하지 않아요",
+          "2": "학교로 오시라는 말은 없어요",
+          "3": "시험 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "Thank you for ~",
+          "ko": "~해 주셔서 고마워요"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can we guess about the weather today?",
+        "choices": [
+          "It was very hot.",
+          "It rained all day.",
+          "It was warm and sunny.",
+          "It was cold outside."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "장갑을 끼고 나가서 손이 안 시렸다고 하니 밖은 추웠어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.daily"
+        ],
+        "evidence": "I wore them to school today, and my hands were not cold at all.",
+        "why_not": {
+          "0": "덥다는 말은 없어요",
+          "1": "비 이야기는 없어요",
+          "2": "따뜻한 건 날씨가 아니라 장갑이에요"
+        },
+        "key_expr": {
+          "en": "not cold at all",
+          "ko": "하나도 안 추운"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0047"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Tim: This box is too heavy for me.\nMrs. Park: Put it down, Tim. What's inside?\nTim: All the art books from the back shelf.\nMrs. Park: Let's take out half of them. Then we can carry two light boxes.\nTim: Good idea. I'll get another box from the hall.",
+      "translation_ko": "팀: 이 상자는 저한테 너무 무거워요.\n박 선생님: 내려놓으렴, 팀. 안에 뭐가 들었니?\n팀: 뒤쪽 책장에 있던 미술 책 전부요.\n박 선생님: 절반을 꺼내자. 그러면 가벼운 상자 두 개로 옮길 수 있어.\n팀: 좋은 생각이에요. 제가 복도에서 상자를 하나 더 가져올게요."
+    },
+    "questions": [
+      {
+        "stem": "What will Tim do next?",
+        "choices": [
+          "Put the books back on the shelf",
+          "Get another box",
+          "Carry the heavy box alone",
+          "Go home"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "팀이 복도에서 상자를 하나 더 가져오겠다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "V.school"
+        ],
+        "evidence": "I'll get another box from the hall.",
+        "why_not": {
+          "0": "책을 다시 꽂는다는 말은 없어요",
+          "2": "무거워서 나눠 담기로 했어요",
+          "3": "집에 간다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "another box",
+          "ko": "상자 하나 더"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.opposite",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can we guess about Mrs. Park?",
+        "choices": [
+          "She is angry with Tim.",
+          "She wants more art books.",
+          "She is helping Tim.",
+          "She cannot find the shelf."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "무거운 상자를 나눠 담자고 하니 팀을 도와주고 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "RS.gist"
+        ],
+        "evidence": "Let's take out half of them.",
+        "why_not": {
+          "0": "화를 냈다는 말은 없어요",
+          "1": "책을 더 달라고 하지 않아요",
+          "3": "책장을 못 찾는 게 아니에요"
+        },
+        "key_expr": {
+          "en": "take out half",
+          "ko": "절반을 꺼내다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0048"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "CITY LIBRARY - NEW HOURS\nFrom April 1, the library opens at 9:00 a.m. and closes at 8:00 p.m.\nThe reading room on the second floor closes one hour earlier.\nYou may borrow five books for two weeks.\nPlease eat your snacks outside.",
+      "translation_ko": "시립 도서관 - 새로운 이용 시간\n4월 1일부터 도서관은 오전 9시에 열고 오후 8시에 닫습니다.\n2층 열람실은 한 시간 일찍 닫습니다.\n책은 다섯 권까지 2주 동안 빌릴 수 있습니다.\n간식은 밖에서 드세요."
+    },
+    "questions": [
+      {
+        "stem": "What can we guess about the reading room?",
+        "choices": [
+          "It closes at 7:00 p.m.",
+          "It is on the first floor.",
+          "It opens at 8:00 a.m.",
+          "It has only five books."
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "도서관은 8시에 닫는데 열람실은 한 시간 더 일찍 닫으니 7시예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.school"
+        ],
+        "evidence": "The reading room on the second floor closes one hour earlier.",
+        "why_not": {
+          "1": "열람실은 2층에 있어요",
+          "2": "문 여는 시각은 9시예요",
+          "3": "다섯은 빌릴 수 있는 책 수예요"
+        },
+        "key_expr": {
+          "en": "one hour earlier",
+          "ko": "한 시간 더 일찍"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.number",
+          "3": "M.number"
+        }
+      },
+      {
+        "stem": "Why does the notice say \"Please eat your snacks outside\"?",
+        "choices": [
+          "The library sells snacks.",
+          "The snacks are free today.",
+          "Food is not allowed inside.",
+          "The library closes for lunch."
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "밖에서 먹으라고 하는 건 안에서는 먹으면 안 된다는 뜻이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "RS.gist"
+        ],
+        "evidence": "Please eat your snacks outside.",
+        "why_not": {
+          "0": "간식을 판다는 말은 없어요",
+          "1": "공짜라는 말은 없어요",
+          "3": "점심에 닫는다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "eat outside",
+          "ko": "밖에서 먹다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0049"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Mina: Are you coming to my house at 3?\nBen: Sorry, my piano lesson ends at 3:30.\nMina: That's okay. Come after that.\nBen: Great. Should I bring anything?\nMina: Just bring your board game. My mom is making pizza for us.",
+      "translation_ko": "미나: 3시에 우리 집에 올 거야?\n벤: 미안, 내 피아노 수업이 3시 30분에 끝나.\n미나: 괜찮아. 그다음에 와.\n벤: 좋아. 뭐 가져갈까?\n미나: 보드게임만 가져와. 엄마가 우리 먹으라고 피자를 만들어 주실 거야."
+    },
+    "questions": [
+      {
+        "stem": "When will Ben go to Mina's house?",
+        "choices": [
+          "At 2:00",
+          "At 3:00",
+          "At 3:15",
+          "After 3:30"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "피아노 수업이 3시 30분에 끝나고 그다음에 가기로 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "V.daily"
+        ],
+        "evidence": "Sorry, my piano lesson ends at 3:30.",
+        "why_not": {
+          "0": "2시 이야기는 나오지 않아요",
+          "1": "3시에는 아직 수업 중이에요",
+          "2": "3시 15분은 나오지 않아요"
+        },
+        "key_expr": {
+          "en": "come after that",
+          "ko": "그다음에 오다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.number",
+          "2": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will Mina and Ben probably do together?",
+        "choices": [
+          "Practice piano",
+          "Make a pizza",
+          "Play a board game",
+          "Go to school"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "벤이 보드게임을 가져오니까 둘이 같이 놀 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.leisure"
+        ],
+        "evidence": "Just bring your board game.",
+        "why_not": {
+          "0": "피아노는 벤이 혼자 배우는 수업이에요",
+          "1": "피자는 미나 엄마가 만들어요",
+          "3": "학교 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "board game",
+          "ko": "보드게임"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0050"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Dear Sora,\nI will be home late today. Please give Bori his food at six.\nHe already had a long walk this morning, so he only needs fresh water after dinner.\nHis brush is in the small blue box on the kitchen table.\nWash your hands after you feed him. - Mom",
+      "translation_ko": "소라에게,\n엄마는 오늘 늦게 들어갈 거야. 보리 밥은 6시에 주렴.\n보리는 오늘 아침에 이미 산책을 오래 했으니까, 저녁 먹은 뒤에 깨끗한 물만 주면 돼.\n보리 빗은 부엌 식탁 위 작은 파란 상자 안에 있어.\n밥을 준 뒤에는 손을 씻으렴. - 엄마가"
+    },
+    "questions": [
+      {
+        "stem": "What does Sora NOT have to do today?",
+        "choices": [
+          "Take Bori for a walk",
+          "Give Bori food at six",
+          "Give Bori water",
+          "Wash her hands"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "보리는 아침에 이미 산책을 했어요. 그래서 또 안 나가도 돼요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.daily"
+        ],
+        "evidence": "He already had a long walk this morning",
+        "why_not": {
+          "1": "6시에 밥을 주라고 했어요",
+          "2": "저녁 뒤에 물을 주라고 했어요",
+          "3": "밥 준 뒤 손을 씻으라고 했어요"
+        },
+        "key_expr": {
+          "en": "already had a walk",
+          "ko": "이미 산책을 했다"
+        },
+        "miss_type": {
+          "1": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "What can we guess about Mom today?",
+        "choices": [
+          "She is at home now.",
+          "She will come home after six.",
+          "She will not come home at all.",
+          "She is walking Bori now."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "늦게 온다고 하면서 6시 밥을 소라에게 부탁했으니 6시 뒤에 와요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "RS.gist"
+        ],
+        "evidence": "I will be home late today.",
+        "why_not": {
+          "0": "집에 없어서 쪽지를 남겼어요",
+          "2": "늦게라도 집에 와요",
+          "3": "산책은 아침에 이미 끝났어요"
+        },
+        "key_expr": {
+          "en": "be home late",
+          "ko": "집에 늦게 오다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "2": "M.opposite",
+          "3": "M.swap"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0051"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "THIRD GRADE FIELD TRIP\nWhere: Green Farm\nWhen: Friday, May 10\nThe bus leaves school at 8:30 a.m. Please be at the front gate by 8:15.\nWear comfortable shoes. The farm is very muddy.\nLunch is not sold at the farm, so bring your own.",
+      "translation_ko": "3학년 현장 학습\n장소: 그린 농장\n날짜: 5월 10일 금요일\n버스는 오전 8시 30분에 학교에서 출발합니다. 8시 15분까지 정문 앞으로 오세요.\n편한 신발을 신으세요. 농장은 진흙이 아주 많습니다.\n농장에서는 점심을 팔지 않으니 도시락을 가져오세요."
+    },
+    "questions": [
+      {
+        "stem": "Why do students have to bring lunch?",
+        "choices": [
+          "The bus leaves very early.",
+          "No one sells food at the farm.",
+          "The farm is muddy.",
+          "The school kitchen is closed."
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "농장에서는 점심을 팔지 않아요. 그래서 직접 가져가야 해요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "V.food"
+        ],
+        "evidence": "Lunch is not sold at the farm, so bring your own.",
+        "why_not": {
+          "0": "버스 시각은 점심과 관계없어요",
+          "2": "진흙은 신발 이야기예요",
+          "3": "학교 급식실 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "bring your own",
+          "ko": "직접 가져오다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "2": "M.swap",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can we guess about the students' shoes?",
+        "choices": [
+          "They must be new.",
+          "They will stay clean.",
+          "They should be white.",
+          "They may get dirty."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "농장에 진흙이 많다고 했으니 신발이 더러워질 수 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.travel"
+        ],
+        "evidence": "The farm is very muddy.",
+        "why_not": {
+          "0": "새 신발이어야 한다는 말은 없어요",
+          "1": "진흙이 많아 깨끗하기 어려워요",
+          "2": "신발 색깔 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "comfortable shoes",
+          "ko": "편한 신발"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.opposite",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0052"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Sam: Excuse me, does this bus go to the science museum?\nWoman: No, this one goes to the city park. Take bus 12 across the street.\nSam: Thank you. Do you know how long it takes?\nWoman: About twenty minutes. The museum is the last stop, so you can't miss it.",
+      "translation_ko": "샘: 실례합니다, 이 버스가 과학관에 가나요?\n여: 아니요, 이 버스는 시립 공원으로 가요. 길 건너에서 12번 버스를 타세요.\n샘: 고맙습니다. 얼마나 걸리는지 아세요?\n여: 20분쯤 걸려요. 과학관이 마지막 정류장이라서 놓칠 일은 없어요."
+    },
+    "questions": [
+      {
+        "stem": "Where does Sam want to go?",
+        "choices": [
+          "To the science museum",
+          "To the city park",
+          "To school",
+          "To the bus station"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "샘이 처음에 과학관에 가는 버스냐고 물었어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "V.travel"
+        ],
+        "evidence": "does this bus go to the science museum?",
+        "why_not": {
+          "1": "공원은 이 버스가 가는 곳이에요",
+          "2": "학교 이야기는 없어요",
+          "3": "버스 터미널 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "Does this bus go to ~?",
+          "ko": "이 버스가 ~에 가나요?"
+        },
+        "miss_type": {
+          "1": "M.swap",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What will Sam probably do next?",
+        "choices": [
+          "Get on this bus",
+          "Walk to the museum",
+          "Cross the street and take bus 12",
+          "Go back home"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "길 건너에서 12번 버스를 타라고 알려 줬어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.travel"
+        ],
+        "evidence": "Take bus 12 across the street.",
+        "why_not": {
+          "0": "이 버스는 공원으로 가요",
+          "1": "걸어간다는 말은 없어요",
+          "3": "집에 간다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "across the street",
+          "ko": "길 건너에"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0053"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "To: Ms. Green\nFrom: Daniel\nHello Ms. Green,\nI think I left my water bottle in the gym after basketball practice yesterday.\nIt is blue and my name is on the bottom.\nI looked in the lost-and-found box, but it wasn't there.\nCould you please check the storage room? I will come by after class today.\nThank you, Daniel",
+      "translation_ko": "받는 사람: 그린 선생님\n보낸 사람: 다니엘\n안녕하세요, 그린 선생님.\n어제 농구 연습이 끝난 뒤에 체육관에 물병을 두고 온 것 같아요.\n파란색이고 바닥에 제 이름이 적혀 있어요.\n분실물 상자를 봤는데 거기에는 없었어요.\n창고도 확인해 주실 수 있을까요? 오늘 수업이 끝나면 들를게요.\n고맙습니다, 다니엘 올림"
+    },
+    "questions": [
+      {
+        "stem": "Why did Daniel write this email?",
+        "choices": [
+          "To join the basketball team",
+          "To ask for help finding his bottle",
+          "To say sorry for being late",
+          "To buy a new water bottle"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "잃어버린 물병을 찾아 달라고 선생님께 부탁하는 글이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.infer",
+          "RS.gist"
+        ],
+        "evidence": "Could you please check the storage room?",
+        "why_not": {
+          "0": "농구부에 들어간다는 말은 없어요",
+          "2": "늦은 것을 사과하지 않아요",
+          "3": "새로 산다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "Could you check ~?",
+          "ko": "~을 확인해 주시겠어요?"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What can we guess about Daniel?",
+        "choices": [
+          "He already found his bottle.",
+          "He never went to the gym.",
+          "He will visit tomorrow.",
+          "He already looked in one place."
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "분실물 상자를 벌써 찾아봤지만 없었대요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.infer",
+          "V.school"
+        ],
+        "evidence": "I looked in the lost-and-found box, but it wasn't there.",
+        "why_not": {
+          "0": "아직 물병을 못 찾았어요",
+          "1": "어제 체육관에서 연습했어요",
+          "2": "내일이 아니라 오늘 들른다고 했어요"
+        },
+        "key_expr": {
+          "en": "lost-and-found box",
+          "ko": "분실물 상자"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.opposite",
+          "2": "M.opposite"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0054"
   }
 ]
