@@ -2364,5 +2364,461 @@
       }
     ],
     "status": "active"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "READING CLUB\nDo you like stories? Join our reading club!\nWe meet every Friday after school in the library.\nBring one book you love and tell us about it.\nNew members are always welcome.",
+      "translation_ko": "독서 동아리\n이야기를 좋아하나요? 우리 독서 동아리에 들어오세요!\n우리는 금요일마다 방과 후에 도서관에서 만납니다.\n좋아하는 책 한 권을 가져와서 그 책 이야기를 들려주세요.\n새 회원은 언제나 환영합니다."
+    },
+    "questions": [
+      {
+        "stem": "Why was this notice written?",
+        "choices": [
+          "To ask students to join a club",
+          "To sell old books",
+          "To change a class time",
+          "To thank the librarian"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "동아리에 들어오라고 부르는 글이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.school"
+        ],
+        "evidence": "Join our reading club!",
+        "why_not": {
+          "1": "책을 판다는 말은 없어요",
+          "2": "수업 시간 이야기는 없어요",
+          "3": "고맙다는 인사글이 아니에요"
+        },
+        "key_expr": {
+          "en": "New members are always welcome.",
+          "ko": "새 회원은 언제나 환영해요"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "What should members bring?",
+        "choices": [
+          "A notebook",
+          "A book they love",
+          "Some money",
+          "A snack"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "좋아하는 책 한 권을 가져오라고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "RS.scan"
+        ],
+        "evidence": "Bring one book you love",
+        "why_not": {
+          "0": "공책 이야기는 없어요",
+          "2": "돈 이야기는 없어요",
+          "3": "간식 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "after school",
+          "ko": "방과 후에"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0037"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Hi Minji,\nMy family is moving to a new house next month.\nI will still go to the same school, so we can meet every day.\nCan you help me pack my books on Saturday?\nI will buy you ice cream after that.\nJiho",
+      "translation_ko": "안녕, 민지야.\n우리 가족은 다음 달에 새집으로 이사를 가.\n나는 그대로 같은 학교에 다니니까 우리는 날마다 만날 수 있어.\n토요일에 내 책 싸는 것을 도와줄 수 있니?\n끝나고 내가 아이스크림을 사 줄게.\n지호가"
+    },
+    "questions": [
+      {
+        "stem": "Why did Jiho write this email?",
+        "choices": [
+          "To say goodbye forever",
+          "To invite Minji to a party",
+          "To ask for help with packing",
+          "To tell about a new school"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "토요일에 책 싸는 것을 도와달라고 부탁하는 글이에요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "V.daily"
+        ],
+        "evidence": "Can you help me pack my books on Saturday?",
+        "why_not": {
+          "0": "날마다 만날 수 있다고 했어요",
+          "1": "파티 이야기는 없어요",
+          "3": "학교는 그대로 다닌다고 했어요"
+        },
+        "key_expr": {
+          "en": "Can you help me ~?",
+          "ko": "나를 도와줄 수 있니?"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "What will Jiho do for Minji?",
+        "choices": [
+          "Lend her a book",
+          "Carry her bag",
+          "Clean her room",
+          "Buy her ice cream"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "도와주면 아이스크림을 사 주겠다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "RS.scan"
+        ],
+        "evidence": "I will buy you ice cream after that.",
+        "why_not": {
+          "0": "책은 지호가 싸는 거예요",
+          "1": "가방 이야기는 없어요",
+          "2": "방 청소 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "move to a new house",
+          "ko": "새집으로 이사하다"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0038"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Every Sunday I cook with my grandmother.\nLast week we made potato pancakes together.\nI cut the potatoes, and she cooked them in the pan.\nThey were a little burned, but we laughed and ate them all.\nCooking with her is my favorite part of the week.",
+      "translation_ko": "일요일마다 저는 할머니와 함께 요리를 합니다.\n지난주에는 같이 감자전을 만들었습니다.\n저는 감자를 썰었고, 할머니는 팬에 구우셨습니다.\n조금 탔지만 우리는 웃으면서 다 먹었습니다.\n할머니와 요리하는 시간이 제 일주일 중 가장 좋아하는 시간입니다."
+    },
+    "questions": [
+      {
+        "stem": "What is the best title for this story?",
+        "choices": [
+          "How to Grow Potatoes",
+          "My Sunday Cooking Time",
+          "A Trip to the Market",
+          "My Busy School Days"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "일요일마다 할머니와 요리하는 이야기예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "V.food"
+        ],
+        "evidence": "Every Sunday I cook with my grandmother.",
+        "why_not": {
+          "0": "감자 기르는 법은 안 나와요",
+          "2": "시장에 간 이야기는 없어요",
+          "3": "학교 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "my favorite part of the week",
+          "ko": "일주일 중 가장 좋은 시간"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "How did the writer feel about the pancakes?",
+        "choices": [
+          "Angry, because they were burned",
+          "Sad, because the pan was old",
+          "Happy, even though they were burned",
+          "Bored, because Sunday is long"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "조금 탔지만 웃으면서 다 먹었다고 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "RS.infer"
+        ],
+        "evidence": "we laughed and ate them all",
+        "why_not": {
+          "0": "화내지 않고 웃었어요",
+          "1": "팬이 낡았다는 말은 없어요",
+          "3": "가장 좋아하는 시간이라고 했어요"
+        },
+        "key_expr": {
+          "en": "a little burned",
+          "ko": "조금 탄"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.opposite"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0039"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "NOTICE\nDear Class 3 students,\nOur field trip to the science museum will move from Tuesday to Thursday.\nHeavy rain is coming on Tuesday.\nPlease bring your lunch and a water bottle on Thursday.\nMs. Han",
+      "translation_ko": "안내문\n3반 학생들에게,\n과학관 현장 학습이 화요일에서 목요일로 옮겨집니다.\n화요일에는 큰비가 올 예정입니다.\n목요일에 점심 도시락과 물통을 가져오세요.\n한 선생님"
+    },
+    "questions": [
+      {
+        "stem": "What is this notice mainly about?",
+        "choices": [
+          "A new science class",
+          "A change of the trip day",
+          "A lunch menu",
+          "A rainy day game"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "현장 학습 날이 바뀐다는 것을 알려 주는 글이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.school"
+        ],
+        "evidence": "will move from Tuesday to Thursday",
+        "why_not": {
+          "0": "새 수업 이야기는 없어요",
+          "2": "점심 메뉴는 나오지 않아요",
+          "3": "놀이 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "field trip",
+          "ko": "현장 학습"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Why did the day change?",
+        "choices": [
+          "The museum is closed",
+          "The bus is broken",
+          "Ms. Han is sick",
+          "Heavy rain is coming"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "화요일에 큰비가 와서 날을 옮겼어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "RS.scan"
+        ],
+        "evidence": "Heavy rain is coming on Tuesday.",
+        "why_not": {
+          "0": "박물관 문 이야기는 없어요",
+          "1": "버스 이야기는 없어요",
+          "2": "선생님이 아프다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "heavy rain",
+          "ko": "큰비"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0040"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "FOUND\nA blue water bottle was found near the playground on Monday.\nThere is a small bear sticker on it.\nIt is now in the office next to the gym.\nPlease come and get it before Friday.",
+      "translation_ko": "습득물 안내\n월요일에 놀이터 근처에서 파란 물통을 찾았습니다.\n물통에는 작은 곰 스티커가 붙어 있습니다.\n지금은 체육관 옆 사무실에 있습니다.\n금요일 전에 와서 가져가세요."
+    },
+    "questions": [
+      {
+        "stem": "Why was this note written?",
+        "choices": [
+          "To find the owner of a bottle",
+          "To sell water bottles",
+          "To ask for bear stickers",
+          "To close the playground"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "물통 주인에게 와서 가져가라고 알리는 글이에요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.daily"
+        ],
+        "evidence": "Please come and get it before Friday.",
+        "why_not": {
+          "1": "판다는 말은 없어요",
+          "2": "스티커를 달라는 게 아니에요",
+          "3": "놀이터를 닫는다는 말은 없어요"
+        },
+        "key_expr": {
+          "en": "come and get it",
+          "ko": "와서 가져가세요"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where is the bottle now?",
+        "choices": [
+          "At the playground",
+          "In the gym",
+          "In the office",
+          "In the classroom"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "물통은 지금 체육관 옆 사무실에 있어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "RS.scan"
+        ],
+        "evidence": "It is now in the office next to the gym.",
+        "why_not": {
+          "0": "놀이터는 물통을 찾은 곳이에요",
+          "1": "체육관이 아니라 그 옆 사무실이에요",
+          "3": "교실 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "next to the gym",
+          "ko": "체육관 옆에"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.swap",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0041"
+  },
+  {
+    "type": "set",
+    "section": "RC",
+    "part": "R3",
+    "passage": {
+      "kind": "text",
+      "content": "Sumi: Are you free this Saturday?\nTom: Yes. What's up?\nSumi: My dog needs a long walk. Can you come with me to the river park?\nTom: Sounds fun! What time?\nSumi: Let's meet at ten in front of my house.",
+      "translation_ko": "수미: 이번 토요일에 시간 있니?\n톰: 응. 무슨 일이야?\n수미: 우리 강아지를 오래 산책시켜야 해. 나랑 강가 공원에 같이 갈래?\n톰: 재미있겠다! 몇 시에?\n수미: 열 시에 우리 집 앞에서 만나자."
+    },
+    "questions": [
+      {
+        "stem": "What are they mainly talking about?",
+        "choices": [
+          "A school test",
+          "Walking a dog together",
+          "Buying a new pet",
+          "A homework problem"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "토요일에 함께 강아지 산책을 가자는 이야기예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "RS.gist",
+          "V.leisure"
+        ],
+        "evidence": "My dog needs a long walk.",
+        "why_not": {
+          "0": "시험 이야기는 없어요",
+          "2": "새 반려동물을 산다는 말은 없어요",
+          "3": "숙제 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "go for a long walk",
+          "ko": "오래 산책하러 가다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      },
+      {
+        "stem": "Where will they meet?",
+        "choices": [
+          "At the river park",
+          "At school",
+          "In front of Sumi's house",
+          "At a pet shop"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "열 시에 수미네 집 앞에서 만나기로 했어요.",
+        "difficulty_label": 3,
+        "tags": [
+          "RS.gist",
+          "RS.scan"
+        ],
+        "evidence": "Let's meet at ten in front of my house.",
+        "why_not": {
+          "0": "강가 공원은 함께 갈 곳이에요",
+          "1": "학교에서 만난다는 말은 없어요",
+          "3": "가게 이야기는 없어요"
+        },
+        "key_expr": {
+          "en": "in front of",
+          "ko": "~ 앞에서"
+        },
+        "miss_type": {
+          "0": "M.swap",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "status": "draft",
+    "tmp_id": "R3-0042"
   }
 ]

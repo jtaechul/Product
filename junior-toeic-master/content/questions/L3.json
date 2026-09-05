@@ -1159,5 +1159,248 @@
         }
       }
     ]
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Are you coming to the swimming class this afternoon?\nM: I'd love to, but I have to help my sister with her homework.\nW: That's too bad. Maybe next time.\nM: Yes, I'll be there on Thursday for sure.",
+      "accent": "US",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 오늘 오후에 수영 수업에 올 거야?\n남: 가고 싶은데, 동생 숙제를 도와줘야 해.\n여: 아쉽다. 다음에 오면 되지.\n남: 응, 목요일에는 꼭 갈게."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What does the man mean when he says \"I'd love to\"?",
+        "choices": [
+          "He will teach the class",
+          "He cannot come today",
+          "He is already at the pool",
+          "He does not like swimming"
+        ],
+        "answer_idx": 1,
+        "explanation_ko": "가고 싶지만 동생 숙제를 도와줘야 해서 오늘은 못 가요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.leisure"
+        ],
+        "evidence": "I'd love to, but I have to help my sister with her homework.",
+        "why_not": {
+          "0": "가르친다는 말은 없었어요",
+          "2": "수영장에 있다는 말은 없었어요",
+          "3": "가고 싶다고 했어요"
+        },
+        "key_expr": {
+          "en": "I'd love to, but ~",
+          "ko": "그러고 싶지만 ~해요"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "2": "M.notsaid",
+          "3": "M.opposite"
+        }
+      },
+      {
+        "stem": "What will the man probably do on Thursday?",
+        "choices": [
+          "Stay at home",
+          "Do his own homework",
+          "Visit his sister's school",
+          "Go to the swimming class"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "목요일에는 꼭 간다고 했으니 수영 수업에 갈 거예요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "I'll be there on Thursday for sure",
+        "why_not": {
+          "0": "집에 있겠다는 말은 없었어요",
+          "1": "동생 숙제를 도와주는 거예요",
+          "2": "학교에 간다는 말은 없었어요"
+        },
+        "key_expr": {
+          "en": "for sure",
+          "ko": "꼭, 틀림없이"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.swap",
+          "2": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0015"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "M: Did you finish the science poster, Mina?\nW: Almost. I still need to draw the plant pictures.\nM: The teacher collects them at nine tomorrow morning.\nW: Nine? Then I should work on it tonight.",
+      "accent": "UK",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "남: 미나야, 과학 포스터 다 했어?\n여: 거의 다 했어. 아직 식물 그림을 그려야 해.\n남: 선생님이 내일 아침 아홉 시에 걷으신대.\n여: 아홉 시? 그럼 오늘 밤에 해야겠다."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "Why does the woman say \"Nine?\"",
+        "choices": [
+          "She is surprised the time is so early",
+          "She wants to know the room number",
+          "She already gave the poster to the teacher",
+          "She likes drawing nine pictures"
+        ],
+        "answer_idx": 0,
+        "explanation_ko": "아홉 시라는 말에 놀라서 오늘 밤에 하겠다고 해요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.school"
+        ],
+        "evidence": "Nine? Then I should work on it tonight.",
+        "why_not": {
+          "1": "교실 번호 이야기는 없었어요",
+          "2": "아직 그림이 남았다고 했어요",
+          "3": "들린 숫자에 낚였어요"
+        },
+        "key_expr": {
+          "en": "collect them at nine",
+          "ko": "아홉 시에 걷다"
+        },
+        "miss_type": {
+          "1": "M.notsaid",
+          "2": "M.opposite",
+          "3": "A.echo"
+        }
+      },
+      {
+        "stem": "What will the woman probably do tonight?",
+        "choices": [
+          "Print a new poster",
+          "Ask the teacher for more time",
+          "Draw the plant pictures",
+          "Clean the science room"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "식물 그림이 남았고 밤에 하겠다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "LS.detail"
+        ],
+        "evidence": "I still need to draw the plant pictures.",
+        "why_not": {
+          "0": "새로 뽑는다는 말은 없었어요",
+          "1": "더 달라고 하지 않았어요",
+          "3": "청소 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "work on it tonight",
+          "ko": "오늘 밤에 그걸 하다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0016"
+  },
+  {
+    "type": "set",
+    "section": "LC",
+    "part": "L3",
+    "passage": {
+      "kind": "dialogue",
+      "script": "W: Look at those dark clouds. Should we still walk to the park?\nM: Hmm, I left my umbrella at home.\nW: My brother can drive us there.\nM: That sounds much better. Let's ask him now.",
+      "accent": "AU",
+      "tts_voices": {
+        "W": "female",
+        "M": "male"
+      },
+      "translation_ko": "여: 저 먹구름 좀 봐. 그래도 공원까지 걸어갈까?\n남: 음, 나 우산을 집에 두고 왔어.\n여: 우리 오빠가 태워다 줄 수 있어.\n남: 그게 훨씬 낫겠다. 지금 부탁하자."
+    },
+    "status": "draft",
+    "questions": [
+      {
+        "stem": "What does the man mean when he says \"I left my umbrella at home\"?",
+        "choices": [
+          "He wants to buy a new umbrella",
+          "He is going back home to sleep",
+          "He thinks the sky is sunny",
+          "He is worried about the rain"
+        ],
+        "answer_idx": 3,
+        "explanation_ko": "먹구름을 보고 우산이 없다고 하니 비가 걱정된 거예요.",
+        "difficulty_label": 3,
+        "tags": [
+          "LS.infer",
+          "V.daily"
+        ],
+        "evidence": "Hmm, I left my umbrella at home.",
+        "why_not": {
+          "0": "우산을 산다는 말은 없었어요",
+          "1": "집에 간다는 말은 없었어요",
+          "2": "먹구름이 있다고 했어요"
+        },
+        "key_expr": {
+          "en": "leave ~ at home",
+          "ko": "~을 집에 두고 오다"
+        },
+        "miss_type": {
+          "0": "M.notsaid",
+          "1": "M.notsaid",
+          "2": "M.opposite"
+        }
+      },
+      {
+        "stem": "How will they probably go to the park?",
+        "choices": [
+          "On foot",
+          "By bus",
+          "By car",
+          "By bike"
+        ],
+        "answer_idx": 2,
+        "explanation_ko": "오빠가 태워다 준다고 했고 남자도 좋다고 했어요.",
+        "difficulty_label": 2,
+        "tags": [
+          "LS.infer",
+          "V.travel"
+        ],
+        "evidence": "My brother can drive us there.",
+        "why_not": {
+          "0": "걷는 대신 차를 타기로 했어요",
+          "1": "버스 이야기는 없었어요",
+          "3": "자전거 이야기는 없었어요"
+        },
+        "key_expr": {
+          "en": "drive us there",
+          "ko": "우리를 거기까지 태워 주다"
+        },
+        "miss_type": {
+          "0": "M.opposite",
+          "1": "M.notsaid",
+          "3": "M.notsaid"
+        }
+      }
+    ],
+    "tmp_id": "L3-0017"
   }
 ]
