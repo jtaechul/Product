@@ -32,7 +32,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "2": "A.yesno"
-    }
+    },
+    "translation_ko": "네 책가방은 무슨 색이야?"
   },
   {
     "type": "single",
@@ -67,7 +68,8 @@
     "miss_type": {
       "1": "A.wrongkind",
       "2": "A.yesno"
-    }
+    },
+    "translation_ko": "네 남동생(형)은 몇 살이야?"
   },
   {
     "type": "single",
@@ -102,7 +104,8 @@
     "miss_type": {
       "1": "A.wrongkind",
       "2": "A.yesno"
-    }
+    },
+    "translation_ko": "네 우산 어디 있어?"
   },
   {
     "type": "single",
@@ -137,7 +140,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "A.wrongkind"
-    }
+    },
+    "translation_ko": "너 바나나 좋아해?"
   },
   {
     "type": "single",
@@ -172,7 +176,8 @@
     "miss_type": {
       "1": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "미술 수업은 언제 시작해?"
   },
   {
     "type": "single",
@@ -207,7 +212,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "A.wrongkind"
-    }
+    },
+    "translation_ko": "이 맛있는 케이크는 누가 만들었어?"
   },
   {
     "type": "single",
@@ -242,7 +248,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "너는 학교에 어떻게 가?"
   },
   {
     "type": "single",
@@ -277,7 +284,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "이 운동화 누구 거야?"
   },
   {
     "type": "single",
@@ -312,7 +320,8 @@
     "miss_type": {
       "1": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "수프 좀 더 드실래요?"
   },
   {
     "type": "single",
@@ -347,7 +356,8 @@
     "miss_type": {
       "0": "M.swap",
       "1": "A.wrongkind"
-    }
+    },
+    "translation_ko": "우표는 어디서 살 수 있어요?"
   },
   {
     "type": "single",
@@ -382,7 +392,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "A.yesno"
-    }
+    },
+    "translation_ko": "너는 보통 몇 시에 일어나?"
   },
   {
     "type": "single",
@@ -417,7 +428,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "도서관은 일요일에 여나요?"
   },
   {
     "type": "single",
@@ -452,7 +464,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "A.yesno"
-    }
+    },
+    "translation_ko": "너 오늘 아침에 왜 늦었어?"
   },
   {
     "type": "single",
@@ -487,7 +500,8 @@
     "miss_type": {
       "1": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "이 오렌지들 얼마예요?"
   },
   {
     "type": "single",
@@ -522,7 +536,8 @@
     "miss_type": {
       "1": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "기차로 얼마나 걸려요?"
   },
   {
     "type": "single",
@@ -557,7 +572,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "창문 좀 닫아 주시겠어요?"
   },
   {
     "type": "single",
@@ -592,7 +608,8 @@
     "miss_type": {
       "1": "F.offtopic",
       "2": "F.offtopic"
-    }
+    },
+    "translation_ko": "이 수학 숙제 정말 어렵다."
   },
   {
     "type": "single",
@@ -627,7 +644,8 @@
     "miss_type": {
       "0": "A.yesno",
       "1": "F.offtopic"
-    }
+    },
+    "translation_ko": "봄이랑 가을 중에 어느 쪽이 더 좋아?"
   },
   {
     "type": "single",
@@ -662,7 +680,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "이번 주에 누가 화분에 물 줄 거야?"
   },
   {
     "type": "single",
@@ -697,7 +716,8 @@
     "miss_type": {
       "0": "A.echo",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "내 안경 어디서 못 봤어?"
   },
   {
     "type": "single",
@@ -732,7 +752,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "A.echo"
-    }
+    },
+    "translation_ko": "통학 버스가 5분 뒤에 출발해."
   },
   {
     "type": "single",
@@ -767,7 +788,8 @@
     "miss_type": {
       "1": "M.swap",
       "2": "M.swap"
-    }
+    },
+    "translation_ko": "그러지 말고 점심 먹고 연습하는 게 어때?"
   },
   {
     "type": "single",
@@ -802,7 +824,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "A.wrongkind"
-    }
+    },
+    "translation_ko": "겨울에는 배가 얼마나 자주 다녀요?"
   },
   {
     "type": "single",
@@ -837,7 +860,8 @@
     "miss_type": {
       "0": "A.echo",
       "2": "F.offtopic"
-    }
+    },
+    "translation_ko": "너 토마토 파스타 시키지 않았어?"
   },
   {
     "type": "single",
@@ -872,7 +896,8 @@
     "miss_type": {
       "1": "A.wrongkind",
       "2": "A.yesno"
-    }
+    },
+    "translation_ko": "오늘 무슨 요일이야?"
   },
   {
     "type": "single",
@@ -907,7 +932,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "너 어디 살아?"
   },
   {
     "type": "single",
@@ -942,7 +968,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "M.notsaid"
-    }
+    },
+    "translation_ko": "너 수영할 줄 알아?"
   },
   {
     "type": "single",
@@ -977,7 +1004,8 @@
     "miss_type": {
       "1": "M.notsaid",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "너 연필 몇 자루 있어?"
   },
   {
     "type": "single",
@@ -1012,7 +1040,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "2": "A.yesno"
-    }
+    },
+    "translation_ko": "너 지금 뭐 하고 있어?"
   },
   {
     "type": "single",
@@ -1047,7 +1076,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "A.wrongkind"
-    }
+    },
+    "translation_ko": "이번엔 누가 칠판 닦을 차례야?"
   },
   {
     "type": "single",
@@ -1082,7 +1112,8 @@
     "miss_type": {
       "1": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "주말 어땠어?"
   },
   {
     "type": "single",
@@ -1117,7 +1148,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "너 왜 우산을 들고 다녀?"
   },
   {
     "type": "single",
@@ -1152,7 +1184,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "A.wrongkind"
-    }
+    },
+    "translation_ko": "햄이랑 치즈 중에 어떤 샌드위치 먹을래?"
   },
   {
     "type": "single",
@@ -1187,7 +1220,8 @@
     "miss_type": {
       "1": "A.wrongkind",
       "2": "A.echo"
-    }
+    },
+    "translation_ko": "너희 아버지는 무슨 일 하셔?"
   },
   {
     "type": "single",
@@ -1222,7 +1256,8 @@
     "miss_type": {
       "0": "M.notsaid",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "여기서 학교까지 얼마나 멀어?"
   },
   {
     "type": "single",
@@ -1257,7 +1292,8 @@
     "miss_type": {
       "0": "M.notsaid",
       "1": "A.wrongkind"
-    }
+    },
+    "translation_ko": "우리 축구팀에 들어올래?"
   },
   {
     "type": "single",
@@ -1292,7 +1328,8 @@
     "miss_type": {
       "1": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "피아노 레슨은 언제야?"
   },
   {
     "type": "single",
@@ -1327,7 +1364,8 @@
     "miss_type": {
       "0": "M.notsaid",
       "2": "A.echo"
-    }
+    },
+    "translation_ko": "실례합니다, 이 자리 자리 있나요?"
   },
   {
     "type": "single",
@@ -1362,7 +1400,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "M.notsaid"
-    }
+    },
+    "translation_ko": "어떤 사이즈가 필요하세요?"
   },
   {
     "type": "single",
@@ -1397,7 +1436,8 @@
     "miss_type": {
       "1": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "주문하시겠어요?"
   },
   {
     "type": "single",
@@ -1432,7 +1472,8 @@
     "miss_type": {
       "0": "A.echo",
       "2": "M.notsaid"
-    }
+    },
+    "translation_ko": "창문 좀 열어 주시겠어요?"
   },
   {
     "type": "single",
@@ -1467,7 +1508,8 @@
     "miss_type": {
       "0": "M.notsaid",
       "1": "M.opposite"
-    }
+    },
+    "translation_ko": "내 학생증을 못 찾겠어."
   },
   {
     "type": "single",
@@ -1502,7 +1544,8 @@
     "miss_type": {
       "1": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "너는 할머니 할아버지를 얼마나 자주 뵈러 가?"
   },
   {
     "type": "single",
@@ -1537,7 +1580,8 @@
     "miss_type": {
       "0": "A.yesno",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "지하철 탈까, 택시 탈까?"
   },
   {
     "type": "single",
@@ -1572,7 +1616,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "A.echo"
-    }
+    },
+    "translation_ko": "너 오늘 피곤해 보인다."
   },
   {
     "type": "single",
@@ -1607,7 +1652,8 @@
     "miss_type": {
       "1": "A.yesno",
       "2": "A.echo"
-    }
+    },
+    "translation_ko": "화장실이 어디인지 알려 주시겠어요?"
   },
   {
     "type": "single",
@@ -1642,7 +1688,8 @@
     "miss_type": {
       "0": "A.echo",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "학교 끝나고 우리 집에 오지 않을래?"
   },
   {
     "type": "single",
@@ -1677,7 +1724,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "A.yesno"
-    }
+    },
+    "translation_ko": "그 영화 언제 시작하는지 알아?"
   },
   {
     "type": "single",
@@ -1712,7 +1760,8 @@
     "miss_type": {
       "1": "M.notsaid",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "우리 얼마나 더 기다려야 해?"
   },
   {
     "type": "single",
@@ -1747,7 +1796,8 @@
     "miss_type": {
       "0": "F.offtopic",
       "2": "A.echo"
-    }
+    },
+    "translation_ko": "이 신발을 반품하고 싶어요."
   },
   {
     "type": "single",
@@ -1782,7 +1832,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "A.echo"
-    }
+    },
+    "translation_ko": "더 넣고 싶은 거 있어요?"
   },
   {
     "type": "single",
@@ -1817,7 +1868,8 @@
     "miss_type": {
       "1": "A.wrongkind",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "학교 축제는 누가 맡고 있어?"
   },
   {
     "type": "single",
@@ -1852,7 +1904,8 @@
     "miss_type": {
       "0": "M.opposite",
       "2": "A.echo"
-    }
+    },
+    "translation_ko": "프린터가 또 안 되네."
   },
   {
     "type": "single",
@@ -1887,7 +1940,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "G.pair"
-    }
+    },
+    "translation_ko": "너 과학 과제 아직 안 끝냈어?"
   },
   {
     "type": "single",
@@ -1922,7 +1976,8 @@
     "miss_type": {
       "1": "A.yesno",
       "2": "M.notsaid"
-    }
+    },
+    "translation_ko": "창가 자리랑 통로 자리 중에 어디가 좋아?"
   },
   {
     "type": "single",
@@ -1957,7 +2012,8 @@
     "miss_type": {
       "0": "A.echo",
       "2": "M.notsaid"
-    }
+    },
+    "translation_ko": "나는 시험이 금요일인 줄 알았는데."
   },
   {
     "type": "single",
@@ -1992,7 +2048,8 @@
     "miss_type": {
       "0": "A.wrongkind",
       "1": "G.pair"
-    }
+    },
+    "translation_ko": "여기 앉아도 될까요?"
   },
   {
     "type": "single",
@@ -2027,7 +2084,8 @@
     "miss_type": {
       "1": "M.opposite",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "너 이 책 벌써 읽었지, 그렇지?"
   },
   {
     "type": "single",
@@ -2062,7 +2120,8 @@
     "miss_type": {
       "0": "A.echo",
       "2": "A.wrongkind"
-    }
+    },
+    "translation_ko": "너 어제 신청서 내야 하지 않았어?"
   },
   {
     "type": "single",
@@ -2097,6 +2156,7 @@
     "miss_type": {
       "0": "A.echo",
       "1": "A.yesno"
-    }
+    },
+    "translation_ko": "오늘 버스가 왜 이렇게 늦는지 알아?"
   }
 ]

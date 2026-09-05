@@ -34,7 +34,8 @@
       "0": "G.form",
       "2": "G.form",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "이 사람은 내 여동생이야. 그녀의 이름은 수진이야."
   },
   {
     "type": "single",
@@ -72,7 +73,8 @@
       "1": "G.clue",
       "2": "G.clue",
       "3": "M.swap"
-    }
+    },
+    "translation_ko": "우리는 정오에 점심을 먹어요."
   },
   {
     "type": "single",
@@ -109,7 +111,8 @@
       "0": "G.form",
       "1": "G.pair",
       "2": "G.pair"
-    }
+    },
+    "translation_ko": "우리 개는 아주 빨리 달려요."
   },
   {
     "type": "single",
@@ -147,7 +150,8 @@
       "0": "G.clue",
       "1": "G.form",
       "3": "G.pair"
-    }
+    },
+    "translation_ko": "어제 나는 저녁을 먹고 방을 청소했어요."
   },
   {
     "type": "single",
@@ -184,7 +188,8 @@
       "1": "G.pair",
       "2": "G.pair",
       "3": "G.pair"
-    }
+    },
+    "translation_ko": "자전거를 탈 때는 헬멧을 써야 해요."
   },
   {
     "type": "single",
@@ -222,7 +227,8 @@
       "0": "M.swap",
       "2": "G.clue",
       "3": "G.clue"
-    }
+    },
+    "translation_ko": "나는 사과를 좋아하지만, 우리 형은 바나나를 좋아해요."
   },
   {
     "type": "single",
@@ -259,7 +265,8 @@
       "0": "W.meaning",
       "1": "W.meaning",
       "2": "W.meaning"
-    }
+    },
+    "translation_ko": "우리 학교는 은행과 공원 사이에 있어요."
   },
   {
     "type": "single",
@@ -296,7 +303,8 @@
       "0": "G.form",
       "1": "G.clue",
       "3": "W.meaning"
-    }
+    },
+    "translation_ko": "그 가수는 아주 아름다운 목소리를 가지고 있어요."
   },
   {
     "type": "single",
@@ -333,7 +341,8 @@
       "0": "G.clue",
       "2": "G.clue",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "이 상자가 저 상자보다 더 무거워요."
   },
   {
     "type": "single",
@@ -371,7 +380,8 @@
       "0": "G.clue",
       "1": "G.pair",
       "3": "G.clue"
-    }
+    },
+    "translation_ko": "미나는 책을 빌리러 도서관에 갔어요."
   },
   {
     "type": "single",
@@ -408,7 +418,8 @@
       "0": "G.form",
       "1": "G.clue",
       "2": "G.pair"
-    }
+    },
+    "translation_ko": "봐! 아이들이 지금 수영장에서 수영하고 있어."
   },
   {
     "type": "single",
@@ -445,7 +456,8 @@
       "1": "G.pair",
       "2": "W.meaning",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "제이크가 우산을 잃어버려서, 내가 내 것을 빌려줬어요."
   },
   {
     "type": "single",
@@ -483,7 +495,8 @@
       "0": "G.form",
       "2": "G.pair",
       "3": "G.pair"
-    }
+    },
+    "translation_ko": "톰과 친구들은 방과 후에 농구를 해요."
   },
   {
     "type": "single",
@@ -520,7 +533,8 @@
       "1": "G.clue",
       "2": "G.clue",
       "3": "G.clue"
-    }
+    },
+    "translation_ko": "비가 오고 있었기 때문에, 우리는 체육관 안에서 축구를 했어요."
   },
   {
     "type": "single",
@@ -558,7 +572,8 @@
       "0": "G.clue",
       "1": "G.clue",
       "3": "G.clue"
-    }
+    },
+    "translation_ko": "이 다리는 백 년도 더 전에 지어졌어요."
   },
   {
     "type": "single",
@@ -596,7 +611,8 @@
       "0": "G.pair",
       "1": "G.pair",
       "2": "G.pair"
-    }
+    },
+    "translation_ko": "우리 아빠는 주말마다 등산하는 걸 즐기세요."
   },
   {
     "type": "single",
@@ -633,7 +649,8 @@
       "0": "G.clue",
       "1": "G.clue",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "오늘은 올해 가장 더운 날이니까, 물을 많이 마셔요."
   },
   {
     "type": "single",
@@ -670,7 +687,8 @@
       "0": "G.pair",
       "2": "G.clue",
       "3": "G.clue"
-    }
+    },
+    "translation_ko": "엠마는 일곱 살 때부터 부산에 살고 있어요."
   },
   {
     "type": "single",
@@ -707,7 +725,8 @@
       "0": "G.form",
       "2": "G.form",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "저 남자아이는 민호야. 그의 가방은 파란색이야."
   },
   {
     "type": "single",
@@ -745,7 +764,8 @@
       "1": "W.meaning",
       "2": "W.meaning",
       "3": "W.meaning"
-    }
+    },
+    "translation_ko": "고양이가 상자 안에서 자고 있어요."
   },
   {
     "type": "single",
@@ -782,7 +802,8 @@
       "0": "G.form",
       "2": "G.form",
       "3": "G.clue"
-    }
+    },
+    "translation_ko": "수민이는 매일 아침 걸어서 학교에 가요."
   },
   {
     "type": "single",
@@ -820,7 +841,8 @@
       "1": "G.form",
       "2": "W.meaning",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "조심해! 수프가 아주 뜨거워."
   },
   {
     "type": "single",
@@ -857,7 +879,8 @@
       "0": "G.clue",
       "1": "G.clue",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "나를 봐. 나 지금 새 모자를 쓰고 있어."
   },
   {
     "type": "single",
@@ -895,7 +918,8 @@
       "0": "G.form",
       "1": "G.form",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "우리 영어 수업은 9시에 시작해요."
   },
   {
     "type": "single",
@@ -932,7 +956,8 @@
       "1": "G.clue",
       "2": "G.clue",
       "3": "G.clue"
-    }
+    },
+    "translation_ko": "나는 너무 피곤해서 일찍 잠자리에 들었어요."
   },
   {
     "type": "single",
@@ -970,7 +995,8 @@
       "1": "W.meaning",
       "2": "W.meaning",
       "3": "W.meaning"
-    }
+    },
+    "translation_ko": "도서관에서는 조용히 해야 해요."
   },
   {
     "type": "single",
@@ -1007,7 +1033,8 @@
       "0": "G.clue",
       "2": "G.form",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "오늘은 어제보다 더 추워요."
   },
   {
     "type": "single",
@@ -1044,7 +1071,8 @@
       "0": "G.clue",
       "2": "G.form",
       "3": "G.pair"
-    }
+    },
+    "translation_ko": "책상 위에 책이 많이 있어요."
   },
   {
     "type": "single",
@@ -1081,7 +1109,8 @@
       "0": "G.form",
       "1": "G.pair",
       "3": "W.meaning"
-    }
+    },
+    "translation_ko": "이 연필은 내 것이 아니에요. 그것은 그녀의 것이에요."
   },
   {
     "type": "single",
@@ -1118,7 +1147,8 @@
       "0": "G.form",
       "1": "G.form",
       "3": "W.meaning"
-    }
+    },
+    "translation_ko": "우리는 토요일 아침에 만날 거예요."
   },
   {
     "type": "single",
@@ -1156,7 +1186,8 @@
       "0": "G.clue",
       "1": "G.form",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "지난 주말에 우리는 사촌들과 동물원에 갔어요."
   },
   {
     "type": "single",
@@ -1193,7 +1224,8 @@
       "1": "G.form",
       "2": "G.clue",
       "3": "G.clue"
-    }
+    },
+    "translation_ko": "내 남동생은 나이에 비해 아주 빨리 달려요."
   },
   {
     "type": "single",
@@ -1231,7 +1263,8 @@
       "0": "G.form",
       "1": "G.form",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "진호는 빵을 사러 가게에 갔어요."
   },
   {
     "type": "single",
@@ -1269,7 +1302,8 @@
       "0": "W.meaning",
       "2": "G.clue",
       "3": "G.clue"
-    }
+    },
+    "translation_ko": "주스 드실래요, 아니면 물 드실래요?"
   },
   {
     "type": "single",
@@ -1307,7 +1341,8 @@
       "0": "G.form",
       "2": "G.pair",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "우리 형은 당근을 전혀 좋아하지 않아요."
   },
   {
     "type": "single",
@@ -1345,7 +1380,8 @@
       "1": "G.pair",
       "2": "W.meaning",
       "3": "W.meaning"
-    }
+    },
+    "translation_ko": "우리 비행기는 6시에 공항에 도착했어요."
   },
   {
     "type": "single",
@@ -1382,7 +1418,8 @@
       "0": "G.clue",
       "1": "G.clue",
       "3": "G.clue"
-    }
+    },
+    "translation_ko": "내가 전화했을 때, 유나는 엄마와 저녁을 만들고 있었어요."
   },
   {
     "type": "single",
@@ -1419,7 +1456,8 @@
       "0": "G.pair",
       "2": "G.clue",
       "3": "G.clue"
-    }
+    },
+    "translation_ko": "이 편지는 1985년에 우리 할머니가 쓰신 거예요."
   },
   {
     "type": "single",
@@ -1456,7 +1494,8 @@
       "0": "G.clue",
       "1": "G.clue",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "내 친구들 중에서 지민이가 가장 빨리 달려요."
   },
   {
     "type": "single",
@@ -1494,7 +1533,8 @@
       "0": "W.meaning",
       "2": "W.meaning",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "반 아이들 모두가 자기 도시락을 가져왔어요."
   },
   {
     "type": "single",
@@ -1532,7 +1572,8 @@
       "1": "G.form",
       "2": "W.meaning",
       "3": "W.meaning"
-    }
+    },
+    "translation_ko": "숙제를 끝낸 다음에 밖에서 놀아도 돼요."
   },
   {
     "type": "single",
@@ -1570,7 +1611,8 @@
       "0": "G.pair",
       "2": "G.form",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "매일 물을 충분히 마시는 것이 중요해요."
   },
   {
     "type": "single",
@@ -1607,7 +1649,8 @@
       "0": "G.clue",
       "1": "G.clue",
       "3": "G.clue"
-    }
+    },
+    "translation_ko": "우리 가족은 2020년부터 이 동네에 살고 있어요."
   },
   {
     "type": "single",
@@ -1645,7 +1688,8 @@
       "0": "G.form",
       "2": "G.form",
       "3": "W.meaning"
-    }
+    },
+    "translation_ko": "그 영화가 너무 지루해서 나는 잠이 들었어요."
   },
   {
     "type": "single",
@@ -1682,7 +1726,8 @@
       "1": "G.clue",
       "2": "G.clue",
       "3": "M.opposite"
-    }
+    },
+    "translation_ko": "나는 아파서 공원에 갈 수 없었어요."
   },
   {
     "type": "single",
@@ -1720,7 +1765,8 @@
       "0": "G.pair",
       "2": "G.pair",
       "3": "G.pair"
-    }
+    },
+    "translation_ko": "이 가방은 저 가방만큼 비싸지 않아요."
   },
   {
     "type": "single",
@@ -1757,7 +1803,8 @@
       "0": "W.meaning",
       "2": "W.meaning",
       "3": "M.opposite"
-    }
+    },
+    "translation_ko": "우산을 가져가. 오늘 오후에 비가 올지도 몰라."
   },
   {
     "type": "single",
@@ -1794,7 +1841,8 @@
       "0": "G.form",
       "2": "G.form",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "그 두 남자아이 중 아무도 답을 몰라요."
   },
   {
     "type": "single",
@@ -1832,7 +1880,8 @@
       "0": "W.meaning",
       "2": "G.form",
       "3": "W.meaning"
-    }
+    },
+    "translation_ko": "오늘 우리가 받은 숙제는 쉽지 않아요."
   },
   {
     "type": "single",
@@ -1869,7 +1918,8 @@
       "0": "G.pair",
       "1": "G.pair",
       "3": "G.pair"
-    }
+    },
+    "translation_ko": "민지는 사촌을 다시 만나기를 기대하고 있어요."
   },
   {
     "type": "single",
@@ -1907,7 +1957,8 @@
       "0": "G.pair",
       "1": "G.form",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "교실 창문은 매주 금요일 오후에 청소돼요."
   },
   {
     "type": "single",
@@ -1945,7 +1996,8 @@
       "0": "G.pair",
       "2": "G.pair",
       "3": "G.pair"
-    }
+    },
+    "translation_ko": "엄마가 나에게 나가기 전에 문을 잠그라고 하셨어요."
   },
   {
     "type": "single",
@@ -1982,7 +2034,8 @@
       "0": "G.clue",
       "1": "G.clue",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "하나가 열쇠를 잃어버려서, 문을 열 수가 없어요."
   },
   {
     "type": "single",
@@ -2020,7 +2073,8 @@
       "0": "G.form",
       "1": "G.clue",
       "3": "G.clue"
-    }
+    },
+    "translation_ko": "준호는 선생님보다 규칙을 더 알기 쉽게 설명했어요."
   },
   {
     "type": "single",
@@ -2058,7 +2112,8 @@
       "0": "M.opposite",
       "2": "G.form",
       "3": "W.meaning"
-    }
+    },
+    "translation_ko": "아주 비쌌지만, 그는 그 신발을 샀어요."
   },
   {
     "type": "single",
@@ -2096,7 +2151,8 @@
       "0": "G.form",
       "2": "G.pair",
       "3": "G.form"
-    }
+    },
+    "translation_ko": "내일 비가 오면, 우리는 집에 있을 거예요."
   },
   {
     "type": "single",
@@ -2134,7 +2190,8 @@
       "0": "G.pair",
       "1": "G.pair",
       "3": "G.pair"
-    }
+    },
+    "translation_ko": "우리가 작년에 그 도시에 갔을 때 그 오래된 다리는 수리되고 있었어요."
   },
   {
     "type": "single",
@@ -2172,6 +2229,7 @@
       "0": "G.pair",
       "2": "G.pair",
       "3": "G.pair"
-    }
+    },
+    "translation_ko": "내 사촌은 이제 혼자 해외여행을 갈 만큼 컸어요."
   }
 ]

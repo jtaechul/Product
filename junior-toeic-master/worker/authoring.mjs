@@ -293,8 +293,14 @@ export function validateItem(it, part, tagSection) {
   const status = it?.status || 'active';
   if (!STATUSES.includes(status)) err('상태는 준비중(draft)·출제중(active)·내림(retired) 중 하나여야 합니다');
 
+  // 한글 해석은 빠뜨리면 아이가 지문을 못 읽은 채로 넘어간다 — 그래서 필수다.
+  // 단독 문항은 문항에, 지문 묶음은 지문에 붙는다(아래 set 갈래에서 따로 본다).
+  const trOf = (v) => (typeof v === 'string' && v.trim() ? null : '한글 해석이 필요합니다');
+
   if (it?.type === 'single') {
     // 단독 문항의 "원문" = LC는 들려주는 문장, RC는 문제 문장 자체
+    const trErr = trOf(it.translation_ko);
+    if (trErr) err(trErr);
     out.push(...validateQuestionCore(it, ctx, part, it.tts_script || it.stem || null, tagSection));
     if (PARTS[part] === 'LC') {
       if (typeof it.tts_script !== 'string' || !it.tts_script.trim()) err('듣기 문항은 들려줄 문장(대본)이 필요합니다');
@@ -323,6 +329,8 @@ export function validateItem(it, part, tagSection) {
     if (typeof content !== 'string' || !content.trim()) err(isLC ? '들려줄 대본이 필요합니다' : '지문이 필요합니다');
     if (isLC && !ACCENTS.includes(p.accent)) err('듣기 지문은 발음(미국·영국·호주)을 골라야 합니다');
     if (isLC && (!p.tts_voices || typeof p.tts_voices !== 'object')) err('듣기 지문은 성우 배정(tts_voices)이 필요합니다');
+    const trErr = trOf(p.translation_ko);
+    if (trErr) err(`지문의 ${trErr}`);
     if (!Array.isArray(it.questions) || it.questions.length < 1) { err('지문에 딸린 문항이 1개 이상 필요합니다'); return out; }
     it.questions.forEach((sub, i) => {
       out.push(...validateQuestionCore(sub, `${ctx} 문항${i + 1}`, part, content, tagSection));

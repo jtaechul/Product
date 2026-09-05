@@ -40,14 +40,24 @@ async function gradeDiagAnswers(db, user, sessionId, answers) {
 // 화면은 text 안에서 evidence 자리를 형광펜으로 칠한다. 글 해설보다 먼저 눈에 들어온다.
 // 채점 전에는 절대 내려가지 않는다 (스크립트가 곧 답이 되는 LC 문항 보호).
 async function evidenceOf(db, q) {
-  if (!q.evidence) return { evidence: null, evidence_text: null };
+  // 지문 묶음이면 지문 쪽에, 단독 문항이면 문항 쪽에 원문·해석이 있다.
+  // 지문은 한 번만 읽어 근거와 해석에 같이 쓴다.
   let text = q.script || q.stem || null;
-  if (!text?.includes(q.evidence) && q.passage_id) {
-    const p = await db.prepare('SELECT content FROM passages WHERE id = ?1').bind(q.passage_id).first();
-    text = p?.content ?? text;
+  let translation = q.translation_ko ?? null;
+  if (q.passage_id && (!translation || (q.evidence && !text?.includes(q.evidence)))) {
+    const p = await db.prepare(
+      'SELECT content, translation_ko FROM passages WHERE id = ?1').bind(q.passage_id).first();
+    if (p) {
+      translation = translation ?? p.translation_ko ?? null;
+      if (q.evidence && !text?.includes(q.evidence)) text = p.content ?? text;
+    }
   }
-  if (!text?.includes(q.evidence)) return { evidence: null, evidence_text: null };
-  return { evidence: q.evidence, evidence_text: text };
+  // 해석은 '무슨 이야기였는지'를 알려주는 것이라 원문이 함께 있어야 쓸모가 있다.
+  const passage_text = text;
+  if (!q.evidence || !text?.includes(q.evidence)) {
+    return { evidence: null, evidence_text: null, passage_text, translation_ko: translation };
+  }
+  return { evidence: q.evidence, evidence_text: text, passage_text, translation_ko: translation };
 }
 
 const parseJson = (s) => { try { return s ? JSON.parse(s) : null; } catch { return null; } };
@@ -409,7 +419,7 @@ app.post('/api/answers', requireAuth, async (c) => {
     return c.json({ error: 'question_id(문자열), chosen_idx(정수)가 필요합니다' }, 400);
   }
   const q = await c.env.DB.prepare(
-    'SELECT id, passage_id, stem, script, evidence, why_not, miss_type, key_expr, answer_idx, explanation_ko, rating FROM questions WHERE id = ?1'
+    'SELECT id, passage_id, stem, script, evidence, why_not, miss_type, key_expr, translation_ko, answer_idx, explanation_ko, rating FROM questions WHERE id = ?1'
   ).bind(question_id).first();
   if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
 
@@ -838,6 +848,7 @@ app.get('/api/parent/wrong-answers', requireParent, async (c) => {
     `SELECT a.chosen_idx, date(a.answered_at, '+9 hours') AS d,
             q.id AS qid, q.part, q.section, q.stem, q.choices, q.answer_idx,
             q.explanation_ko, q.evidence, q.why_not, q.miss_type, q.script, q.image_url,
+            COALESCE(q.translation_ko, p.translation_ko) AS translation_ko,
             p.content AS p_content
        FROM answers a
        JOIN questions q ON q.id = a.question_id
@@ -869,6 +880,8 @@ app.get('/api/parent/wrong-answers', requireParent, async (c) => {
       // 듣기는 들려준 문장(대본)을 글로 준다 — 부모가 소리를 안 틀어도 설명할 수 있게
       passage: r.section === 'RC' ? (r.p_content ?? null) : null,
       script: r.section === 'LC' ? (r.script || r.p_content || null) : null,
+      // 부모가 아이에게 설명하려면 지문 뜻부터 알아야 한다
+      translation_ko: r.translation_ko ?? null,
     };
     seen.set(r.qid, item);
     items.push(item);
@@ -1301,7 +1314,7 @@ app.get('/api/admin/questions', ...admin, async (c) => {
 app.get('/api/admin/questions/:id', ...admin, async (c) => {
   const q = await c.env.DB.prepare(
     `SELECT q.*, p.content AS p_content, p.kind AS p_kind, p.accent AS p_accent,
-            p.audio_url AS p_audio
+            p.audio_url AS p_audio, p.translation_ko AS p_translation
        FROM questions q LEFT JOIN passages p ON p.id = q.passage_id WHERE q.id = ?1`
   ).bind(clean(c.req.param('id'), 40)).first();
   if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
@@ -1320,6 +1333,7 @@ app.get('/api/admin/questions/:id', ...admin, async (c) => {
       // 듣기 묶음(L3·L4)은 소리가 '지문'에 붙어 있다. 문항 것만 보면 멀쩡한 문항이
       // 소리 없는 것으로 보여, 화면에서 재생도 안 되고 출제도 막힌다.
       audio_url: q.audio_url || q.p_audio || null,
+      translation_ko: q.translation_ko || q.p_translation || null,
       tags: tags.map((t) => t.tag_id),
     },
     reports,
@@ -1819,7 +1833,7 @@ app.post('/api/check', async (c) => {
     return c.json({ error: 'question_id(문자열), chosen_idx(정수)가 필요합니다' }, 400);
   }
   const q = await c.env.DB.prepare(
-    'SELECT id, passage_id, stem, script, evidence, why_not, miss_type, key_expr, answer_idx, explanation_ko FROM questions WHERE id = ?1'
+    'SELECT id, passage_id, stem, script, evidence, why_not, miss_type, key_expr, translation_ko, answer_idx, explanation_ko FROM questions WHERE id = ?1'
   ).bind(question_id).first();
   if (!q) return c.json({ error: '문항을 찾을 수 없습니다' }, 404);
 

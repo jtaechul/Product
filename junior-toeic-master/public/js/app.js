@@ -1600,6 +1600,17 @@ function renderQuestion() {
             <p class="expr-en">${esc(expr.en)}</p>
             <p class="expr-ko">${esc(expr.ko)}</p>
           </div>` : '';
+        // 한글 해석 — 틀렸을 때 펼쳐서 보여준다.
+        // 지문을 못 읽고 찍은 아이에게는 해설보다 이게 먼저다. "무슨 이야기였는지"를
+        // 알아야 다음에 맞힌다. 맞힌 아이에게는 접어 둔다(확인만 하고 넘어가게).
+        const trHtml = r.translation_ko ? `
+          <details class="trans" ${r.correct ? '' : 'open'}>
+            <summary>한글 해석 보기</summary>
+            <div class="trans-body">
+              ${r.passage_text ? `<p class="trans-en">${esc(readable(r.passage_text))}</p>` : ''}
+              <p class="trans-ko">${esc(r.translation_ko)}</p>
+            </div>
+          </details>` : '';
         // 개념 그림 — 틀렸으면 펼쳐서, 맞았으면 접어서 (화면이 길어지지 않게)
         const con = conceptOf(r.concept);
         const conHtml = con ? `
@@ -1612,7 +1623,7 @@ function renderQuestion() {
             <p class="verdict">${r.graduated ? '4연승! 이 문제를 봉인 앨범에 박제했어요' : r.correct ? '정답이에요!' : '아쉬워요, 다시 볼까요?'}</p>
             ${whyHtml}${evHtml}${replay}
             <p>${esc(r.explanation_ko)}</p>
-            ${conHtml}${exprHtml}
+            ${trHtml}${conHtml}${exprHtml}
             <button class="report-link" data-report>이 문제, 이상해요</button>
           </div>`;
         block.querySelector('[data-report]').addEventListener('click', () =>
@@ -1625,7 +1636,7 @@ function renderQuestion() {
           makeWordsTappable(block);                          // 문제·보기·해설
           if (view.querySelector('.passage:not([hidden])')) // 지문·스크립트가 열려 있으면 거기도
             view.querySelectorAll('.passage:not([hidden])').forEach(makeWordsTappable);
-          block.querySelectorAll('.ev-text, .ev-hint').forEach(makeWordsTappable);
+          block.querySelectorAll('.ev-text, .ev-hint, .trans-en').forEach(makeWordsTappable);
           if (!block.dataset.wordHint) {
             block.dataset.wordHint = '1';
             const hint = document.createElement('p');

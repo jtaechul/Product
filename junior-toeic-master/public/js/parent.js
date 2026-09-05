@@ -530,6 +530,8 @@ function wrongCard(it) {
     <p class="wq-when">${fmtDay(it.when)} · ${esc(PART_KO[it.part] ?? it.part)}${it.times > 1 ? ` · ${it.times}번 틀렸어요` : ''}</p>
     ${it.script ? `<div class="wq-passage"><span class="wq-cap">들려준 내용</span>${evMark(it.script, it.evidence)}</div>` : ''}
     ${it.passage ? `<div class="wq-passage"><span class="wq-cap">지문</span>${evMark(it.passage, it.evidence)}</div>` : ''}
+    ${it.translation_ko ? `<div class="wq-passage wq-tr"><span class="wq-cap">한글 해석</span>${
+      esc(it.translation_ko)}</div>` : ''}
     ${it.stem ? `<p class="wq-stem">${esc(it.stem)}</p>` : ''}
     ${choices}
     ${it.why_chosen ? `<div class="wq-line"><span class="wq-cap bad-t">왜 이걸 골랐을까</span>

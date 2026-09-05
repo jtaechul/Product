@@ -6,7 +6,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "NOTICE\nThe school gym will be closed on Monday.\nStudents will have P.E. class in the playground.\nPlease wear your sport shoes."
+      "content": "NOTICE\nThe school gym will be closed on Monday.\nStudents will have P.E. class in the playground.\nPlease wear your sport shoes.",
+      "translation_ko": "알림\n학교 체육관은 월요일에 문을 닫습니다.\n학생들은 운동장에서 체육 수업을 합니다.\n운동화를 신고 오세요."
     },
     "questions": [
       {
@@ -50,7 +51,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "SWIMMING POOL RULES\n1. Take a shower before you swim.\n2. Do not run near the pool.\n3. No food or drinks in the water."
+      "content": "SWIMMING POOL RULES\n1. Take a shower before you swim.\n2. Do not run near the pool.\n3. No food or drinks in the water.",
+      "translation_ko": "수영장 규칙\n1. 수영하기 전에 샤워하세요.\n2. 수영장 근처에서 뛰지 마세요.\n3. 물속에서 음식이나 음료는 안 됩니다."
     },
     "questions": [
       {
@@ -94,7 +96,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "[chat] Mina: Are we still meeting at the bus stop at 3?\nJun: Sorry, my piano lesson ends late. Can we meet at 4?\nMina: Sure! See you then."
+      "content": "[chat] Mina: Are we still meeting at the bus stop at 3?\nJun: Sorry, my piano lesson ends late. Can we meet at 4?\nMina: Sure! See you then.",
+      "translation_ko": "[대화] 미나: 우리 아직 3시에 버스 정류장에서 만나는 거지?\n준: 미안, 피아노 레슨이 늦게 끝나. 4시에 만날 수 있을까?\n미나: 그래! 그때 보자."
     },
     "questions": [
       {
@@ -138,7 +141,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "SUNNY SNACK BAR — MENU\nCheese sandwich ... 3,000 won\nFruit juice ... 2,000 won\nHot dog ... 3,500 won\nIce cream ... 2,500 won"
+      "content": "SUNNY SNACK BAR — MENU\nCheese sandwich ... 3,000 won\nFruit juice ... 2,000 won\nHot dog ... 3,500 won\nIce cream ... 2,500 won",
+      "translation_ko": "써니 분식 — 메뉴\n치즈 샌드위치 ... 3,000원\n과일 주스 ... 2,000원\n핫도그 ... 3,500원\n아이스크림 ... 2,500원"
     },
     "questions": [
       {
@@ -182,7 +186,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "FIELD TRIP SCHEDULE — Green Farm\n9:00 Leave school\n10:00 Feed the sheep\n11:30 Make cheese\n12:30 Lunch\n2:00 Return to school"
+      "content": "FIELD TRIP SCHEDULE — Green Farm\n9:00 Leave school\n10:00 Feed the sheep\n11:30 Make cheese\n12:30 Lunch\n2:00 Return to school",
+      "translation_ko": "현장학습 일정 — 그린 농장\n9:00 학교 출발\n10:00 양에게 먹이 주기\n11:30 치즈 만들기\n12:30 점심\n2:00 학교로 돌아오기"
     },
     "questions": [
       {
@@ -226,7 +231,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "YOU ARE INVITED!\nCome to Dana's 11th birthday party.\nSaturday, May 10, 2 p.m.\nPlace: Happy Pizza House\nPlease tell Dana's mom if you can come."
+      "content": "YOU ARE INVITED!\nCome to Dana's 11th birthday party.\nSaturday, May 10, 2 p.m.\nPlace: Happy Pizza House\nPlease tell Dana's mom if you can come.",
+      "translation_ko": "초대합니다!\n다나의 열한 번째 생일 파티에 오세요.\n5월 10일 토요일 오후 2시\n장소: 해피 피자 하우스\n올 수 있으면 다나 어머니께 알려 주세요."
     },
     "questions": [
       {
@@ -270,7 +276,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "STAR BOOKSTORE — RECEIPT\nNotebook ... 2,000 won\nColor pens ... 4,000 won\nStory book ... 6,000 won\nMember discount ... -2,000 won\nTotal ... 10,000 won"
+      "content": "STAR BOOKSTORE — RECEIPT\nNotebook ... 2,000 won\nColor pens ... 4,000 won\nStory book ... 6,000 won\nMember discount ... -2,000 won\nTotal ... 10,000 won",
+      "translation_ko": "스타 서점 — 영수증\n공책 ... 2,000원\n색펜 ... 4,000원\n이야기책 ... 6,000원\n회원 할인 ... -2,000원\n합계 ... 10,000원"
     },
     "questions": [
       {
@@ -314,7 +321,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "LIBRARY CARD RULES\nYou can borrow 3 books for 2 weeks.\nBring your card every time.\nIf you lose a book, please tell the librarian."
+      "content": "LIBRARY CARD RULES\nYou can borrow 3 books for 2 weeks.\nBring your card every time.\nIf you lose a book, please tell the librarian.",
+      "translation_ko": "도서관 카드 규칙\n2주 동안 책 3권을 빌릴 수 있습니다.\n올 때마다 카드를 가져오세요.\n책을 잃어버리면 사서 선생님께 말씀해 주세요."
     },
     "questions": [
       {
@@ -358,7 +366,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "LOST DOG\nOur small white dog, Mongsil, ran away near Rose Park on Sunday.\nHe has a red collar.\nIf you see him, please call 010-1234-5678."
+      "content": "LOST DOG\nOur small white dog, Mongsil, ran away near Rose Park on Sunday.\nHe has a red collar.\nIf you see him, please call 010-1234-5678.",
+      "translation_ko": "강아지를 찾습니다\n우리 집 작고 하얀 강아지 몽실이가 일요일에 로즈 공원 근처에서 도망갔어요.\n빨간 목줄을 하고 있어요.\n보시면 010-1234-5678로 전화해 주세요."
     },
     "questions": [
       {
@@ -403,7 +412,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "[chat] Sora: Did you see the news? It will rain all day tomorrow.\nMinho: Oh no. Then let's not go to the river park.\nSora: How about the science museum instead?\nMinho: Good idea!"
+      "content": "[chat] Sora: Did you see the news? It will rain all day tomorrow.\nMinho: Oh no. Then let's not go to the river park.\nSora: How about the science museum instead?\nMinho: Good idea!",
+      "translation_ko": "[대화] 소라: 뉴스 봤어? 내일 하루 종일 비 온대.\n민호: 이런. 그럼 강변 공원에 가지 말자.\n소라: 대신 과학관은 어때?\n민호: 좋은 생각이야!"
     },
     "questions": [
       {
@@ -447,7 +457,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "MOVING SALE\nAll items are 30% off this week!\nOur shop will move to Green Street next month.\nCome and get cheap bags and shoes!"
+      "content": "MOVING SALE\nAll items are 30% off this week!\nOur shop will move to Green Street next month.\nCome and get cheap bags and shoes!",
+      "translation_ko": "이전 세일\n이번 주 모든 물건 30% 할인!\n저희 가게는 다음 달에 그린 거리로 옮깁니다.\n오셔서 가방과 신발을 싸게 사 가세요!"
     },
     "questions": [
       {
@@ -491,7 +502,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "NOTICE TO BUS RIDERS\nFrom next Monday, Bus 7 will not stop at City Library.\nPlease take Bus 12 to go to the library.\nWe are sorry for the trouble."
+      "content": "NOTICE TO BUS RIDERS\nFrom next Monday, Bus 7 will not stop at City Library.\nPlease take Bus 12 to go to the library.\nWe are sorry for the trouble.",
+      "translation_ko": "버스 이용객께 알립니다\n다음 주 월요일부터 7번 버스는 시립도서관에 서지 않습니다.\n도서관에 가시려면 12번 버스를 타세요.\n불편을 드려 죄송합니다."
     },
     "questions": [
       {
@@ -535,7 +547,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "To: Emma\nFrom: Jiho\nSubject: My summer plan\n\nHi Emma,\nHow are you? Summer vacation starts next Friday! I will visit my grandmother in Busan for two weeks. She lives near the sea, so I can swim every morning. My little sister is more excited about the night market. She loves the fish cake there.\nMy grandmother has a small orange cat now. I can't wait to meet it! I will send you photos of the sea and the cat.\nWhat will you do this summer? Please write back soon.\nYour friend,\nJiho"
+      "content": "To: Emma\nFrom: Jiho\nSubject: My summer plan\n\nHi Emma,\nHow are you? Summer vacation starts next Friday! I will visit my grandmother in Busan for two weeks. She lives near the sea, so I can swim every morning. My little sister is more excited about the night market. She loves the fish cake there.\nMy grandmother has a small orange cat now. I can't wait to meet it! I will send you photos of the sea and the cat.\nWhat will you do this summer? Please write back soon.\nYour friend,\nJiho",
+      "translation_ko": "받는 사람: 엠마\n보낸 사람: 지호\n제목: 내 여름 계획\n\n엠마에게,\n잘 지내? 여름방학이 다음 주 금요일에 시작해! 나는 부산에 계신 할머니 댁에 2주 동안 갈 거야. 할머니는 바다 근처에 사셔서 매일 아침 수영할 수 있어. 내 여동생은 야시장을 더 기대하고 있어. 거기 어묵을 정말 좋아하거든.\n할머니가 이제 작은 주황색 고양이를 키우셔. 빨리 보고 싶어! 바다랑 고양이 사진을 보내 줄게.\n너는 이번 여름에 뭐 할 거야? 답장 빨리 써 줘.\n너의 친구, 지호가"
     },
     "questions": [
       {
@@ -609,7 +622,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "COOKING CLUB NEWS — June\n\nHello, club members!\nLast month, we made vegetable pizza, and everyone loved it. Thank you for your hard work!\nThis month, we will learn to make fruit sandwiches. Our club will meet in the cooking room on Friday, June 12, after lunch. Please bring an apron and wash your hands before class.\nGood news: our club will have a small food market at the school festival in July. We will sell cookies and juice. If you want to help, please tell Ms. Han by June 20.\nSee you on Friday!"
+      "content": "COOKING CLUB NEWS — June\n\nHello, club members!\nLast month, we made vegetable pizza, and everyone loved it. Thank you for your hard work!\nThis month, we will learn to make fruit sandwiches. Our club will meet in the cooking room on Friday, June 12, after lunch. Please bring an apron and wash your hands before class.\nGood news: our club will have a small food market at the school festival in July. We will sell cookies and juice. If you want to help, please tell Ms. Han by June 20.\nSee you on Friday!",
+      "translation_ko": "요리 동아리 소식 — 6월\n\n회원 여러분, 안녕하세요!\n지난달에는 채소 피자를 만들었는데 모두가 좋아했어요. 열심히 해 주셔서 감사합니다!\n이번 달에는 과일 샌드위치 만드는 법을 배웁니다. 우리 동아리는 6월 12일 금요일 점심 먹고 조리실에서 모입니다. 앞치마를 가져오고 수업 전에 손을 씻어 주세요.\n좋은 소식: 7월 학교 축제에서 우리 동아리가 작은 먹거리 장터를 엽니다. 쿠키와 주스를 팔 거예요. 돕고 싶은 사람은 6월 20일까지 한 선생님께 말해 주세요.\n금요일에 만나요!"
     },
     "questions": [
       {
@@ -684,7 +698,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "TOWN NEWS — A New Park Opens\n\nSunhill Town opened a new park last Saturday. The park has a walking road, a basketball court, and a big playground for children. Many families visited on the first day and enjoyed the sunny weather.\nThe most popular spot was the flower garden. Visitors took many photos there. 'I love this place. My kids can play safely now,' said one mother.\nThe park is open every day from 6 a.m. to 10 p.m. Next month, the town will add a small pond with fish."
+      "content": "TOWN NEWS — A New Park Opens\n\nSunhill Town opened a new park last Saturday. The park has a walking road, a basketball court, and a big playground for children. Many families visited on the first day and enjoyed the sunny weather.\nThe most popular spot was the flower garden. Visitors took many photos there. 'I love this place. My kids can play safely now,' said one mother.\nThe park is open every day from 6 a.m. to 10 p.m. Next month, the town will add a small pond with fish.",
+      "translation_ko": "동네 소식 — 새 공원이 문을 열었습니다\n\n선힐 마을에 지난 토요일 새 공원이 문을 열었습니다. 공원에는 산책로와 농구장, 그리고 아이들을 위한 큰 놀이터가 있습니다. 첫날 많은 가족이 찾아와 화창한 날씨를 즐겼습니다.\n가장 인기 있는 곳은 꽃밭이었습니다. 방문객들은 그곳에서 사진을 많이 찍었습니다. 한 어머니는 '이곳이 정말 좋아요. 이제 우리 아이들이 안전하게 놀 수 있어요.'라고 말했습니다.\n공원은 매일 오전 6시부터 밤 10시까지 엽니다. 다음 달에는 마을에서 물고기가 있는 작은 연못을 만들 예정입니다."
     },
     "questions": [
       {
@@ -759,7 +774,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "MY TRAVEL BLOG — Day 2 on Dol Island\n\nToday was my second day on Dol Island with my family. In the morning, we rode bikes along the beach road. The wind was strong, but the sea looked beautiful.\nFor lunch, we ate seafood noodles at a small restaurant. My dad ordered one more bowl because it was so good!\nIn the afternoon, we climbed up to the old lighthouse. From the top, we could see the whole island. My legs hurt after all the walking and riding, but I want to do it all again tomorrow."
+      "content": "MY TRAVEL BLOG — Day 2 on Dol Island\n\nToday was my second day on Dol Island with my family. In the morning, we rode bikes along the beach road. The wind was strong, but the sea looked beautiful.\nFor lunch, we ate seafood noodles at a small restaurant. My dad ordered one more bowl because it was so good!\nIn the afternoon, we climbed up to the old lighthouse. From the top, we could see the whole island. My legs hurt after all the walking and riding, but I want to do it all again tomorrow.",
+      "translation_ko": "내 여행 블로그 — 돌섬에서의 둘째 날\n\n오늘은 가족과 함께 돌섬에서 보낸 둘째 날이었다. 아침에는 해안 도로를 따라 자전거를 탔다. 바람은 셌지만 바다는 아름다웠다.\n점심으로는 작은 식당에서 해물 국수를 먹었다. 너무 맛있어서 아빠는 한 그릇을 더 시키셨다!\n오후에는 오래된 등대까지 올라갔다. 꼭대기에서는 섬 전체가 보였다. 걷고 자전거를 타느라 다리가 아팠지만, 내일 또 다 하고 싶다."
     },
     "questions": [
       {
@@ -834,7 +850,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "Dear Ms. Park,\n\nI am writing this letter to thank you for helping me this year. When I moved to this school in March, I was worried because I didn't know anyone. You asked Somi to show me around, and she became my best friend.\nI also want to thank you for the reading club. At first, English books looked too difficult for me. But you said, 'Read one page a day, and you will improve.' You were right! Now I can read a whole storybook by myself.\nI will keep reading during the vacation. I hope you have a restful summer.\n\nYour student,\nHana"
+      "content": "Dear Ms. Park,\n\nI am writing this letter to thank you for helping me this year. When I moved to this school in March, I was worried because I didn't know anyone. You asked Somi to show me around, and she became my best friend.\nI also want to thank you for the reading club. At first, English books looked too difficult for me. But you said, 'Read one page a day, and you will improve.' You were right! Now I can read a whole storybook by myself.\nI will keep reading during the vacation. I hope you have a restful summer.\n\nYour student,\nHana",
+      "translation_ko": "박 선생님께,\n\n올해 저를 도와주셔서 감사하다는 말씀을 드리려고 이 편지를 씁니다. 3월에 이 학교로 전학 왔을 때, 아는 사람이 아무도 없어서 걱정했어요. 선생님이 소미에게 저를 안내해 주라고 하셨고, 소미는 제 가장 친한 친구가 되었어요.\n독서 동아리를 만들어 주신 것도 감사드려요. 처음에는 영어책이 저에게 너무 어려워 보였어요. 하지만 선생님께서 '하루에 한 쪽씩 읽으면 늘 거야'라고 말씀하셨죠. 선생님 말씀이 맞았어요! 이제 저는 이야기책 한 권을 혼자 읽을 수 있어요.\n방학 동안에도 계속 읽을게요. 편안한 여름 보내시길 바라요.\n\n선생님의 학생, 하나 올림"
     },
     "questions": [
       {
@@ -909,7 +926,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "STUDENT NEWS — Helping Our Town's Animal Home\n\nLast week, the students of Class 5-2 visited the town animal home, where dogs and cats wait for new families. The students cleaned the rooms and washed food bowls. They also made warm blankets from old sweaters instead of throwing them away.\n'At first, some dogs hid from us,' said Yuna, a student. 'But after a few visits, they ran to the door to greet us. That made everything worth it.'\nThe class plans to visit once a month. Their teacher hopes other classes will join them, because the animal home always needs more helping hands."
+      "content": "STUDENT NEWS — Helping Our Town's Animal Home\n\nLast week, the students of Class 5-2 visited the town animal home, where dogs and cats wait for new families. The students cleaned the rooms and washed food bowls. They also made warm blankets from old sweaters instead of throwing them away.\n'At first, some dogs hid from us,' said Yuna, a student. 'But after a few visits, they ran to the door to greet us. That made everything worth it.'\nThe class plans to visit once a month. Their teacher hopes other classes will join them, because the animal home always needs more helping hands.",
+      "translation_ko": "학생 소식 — 우리 동네 동물 보호소 돕기\n\n지난주에 5학년 2반 학생들이 동네 동물 보호소를 찾아갔습니다. 그곳은 개와 고양이들이 새 가족을 기다리는 곳입니다. 학생들은 방을 청소하고 밥그릇을 씻었습니다. 또 낡은 스웨터를 버리는 대신 따뜻한 담요로 만들었습니다.\n학생인 유나는 '처음에는 몇몇 강아지가 우리를 피해 숨었어요.'라고 말했습니다. '하지만 몇 번 가고 나니까 강아지들이 문으로 달려와 반겨 줬어요. 그것만으로도 다 보람 있었어요.'\n이 반은 한 달에 한 번 찾아갈 계획입니다. 담임 선생님은 다른 반도 함께하길 바란다고 했습니다. 동물 보호소는 늘 도와줄 손길이 더 필요하기 때문입니다."
     },
     "questions": [
       {
@@ -984,7 +1002,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "CITY LIBRARY — OPENING HOURS\nMon-Fri  9:00 a.m. - 8:00 p.m.\nSaturday  10:00 a.m. - 6:00 p.m.\nSunday  CLOSED\nThe reading room on the 3rd floor closes one hour before the library."
+      "content": "CITY LIBRARY — OPENING HOURS\nMon-Fri  9:00 a.m. - 8:00 p.m.\nSaturday  10:00 a.m. - 6:00 p.m.\nSunday  CLOSED\nThe reading room on the 3rd floor closes one hour before the library.",
+      "translation_ko": "시립도서관 — 이용 시간\n월~금  오전 9:00 - 오후 8:00\n토요일  오전 10:00 - 오후 6:00\n일요일  휴관\n3층 열람실은 도서관보다 한 시간 먼저 닫습니다."
     },
     "status": "active",
     "questions": [
@@ -1057,7 +1076,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "CLASS NOTE — Thursday\nDear Parents,\nTomorrow our class will visit the science museum. Students should bring a packed lunch and 2,000 won for the bus. Please do not send any snacks or drinks in glass bottles. We will return to school by 3 p.m."
+      "content": "CLASS NOTE — Thursday\nDear Parents,\nTomorrow our class will visit the science museum. Students should bring a packed lunch and 2,000 won for the bus. Please do not send any snacks or drinks in glass bottles. We will return to school by 3 p.m.",
+      "translation_ko": "학급 알림장 — 목요일\n학부모님께,\n내일 저희 반은 과학관에 갑니다. 학생들은 도시락과 버스비 2,000원을 가져와야 합니다. 유리병에 든 간식이나 음료는 보내지 말아 주세요. 오후 3시까지 학교로 돌아옵니다."
     },
     "status": "active",
     "questions": [
@@ -1132,7 +1152,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "[chat]\nYuna: Did you finish the group poster?\nMinjae: Almost. I still need to add the title.\nYuna: I can print it at my house tonight.\nMinjae: Great. I'll send you the file by 8.\nYuna: Then let's meet at the school gate at 8:30 tomorrow morning."
+      "content": "[chat]\nYuna: Did you finish the group poster?\nMinjae: Almost. I still need to add the title.\nYuna: I can print it at my house tonight.\nMinjae: Great. I'll send you the file by 8.\nYuna: Then let's meet at the school gate at 8:30 tomorrow morning.",
+      "translation_ko": "[대화]\n유나: 모둠 포스터 다 했어?\n민재: 거의. 제목만 넣으면 돼.\n유나: 오늘 밤에 우리 집에서 내가 인쇄할 수 있어.\n민재: 좋아. 8시까지 파일 보낼게.\n유나: 그럼 내일 아침 8시 30분에 학교 정문에서 만나자."
     },
     "status": "active",
     "questions": [
@@ -1175,7 +1196,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "SCHOOL LUNCH — This Week\nMon  Rice, seaweed soup, fried egg\nTue  Noodles, salad, orange\nWed  Curry rice, pickles, yogurt\nThu  Rice, bean soup, grilled fish\nFri  SPECIAL — pizza and fruit juice\nMilk is served every day."
+      "content": "SCHOOL LUNCH — This Week\nMon  Rice, seaweed soup, fried egg\nTue  Noodles, salad, orange\nWed  Curry rice, pickles, yogurt\nThu  Rice, bean soup, grilled fish\nFri  SPECIAL — pizza and fruit juice\nMilk is served every day.",
+      "translation_ko": "학교 급식 — 이번 주\n월  밥, 미역국, 달걀부침\n화  국수, 샐러드, 오렌지\n수  카레라이스, 피클, 요구르트\n목  밥, 콩국, 생선구이\n금  특별식 — 피자와 과일 주스\n우유는 매일 나옵니다."
     },
     "status": "active",
     "questions": [
@@ -1250,7 +1272,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "HAPPY LAND — TICKET PRICES\nAdult (19+)  20,000 won\nYouth (13-18)  15,000 won\nChild (4-12)  10,000 won\nUnder 4  FREE\nGroups of 10 or more get 20% off."
+      "content": "HAPPY LAND — TICKET PRICES\nAdult (19+)  20,000 won\nYouth (13-18)  15,000 won\nChild (4-12)  10,000 won\nUnder 4  FREE\nGroups of 10 or more get 20% off.",
+      "translation_ko": "해피랜드 — 입장료\n어른 (19세 이상)  20,000원\n청소년 (13-18세)  15,000원\n어린이 (4-12세)  10,000원\n4세 미만  무료\n10명 이상 단체는 20% 할인됩니다."
     },
     "status": "active",
     "questions": [
@@ -1323,7 +1346,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "HOW TO USE THE SCHOOL LOCKER\n1. Turn the dial right to your first number.\n2. Turn it left past zero to your second number.\n3. Turn it right again to your last number and pull the handle.\nIf the door does not open, turn the dial right three times and start again."
+      "content": "HOW TO USE THE SCHOOL LOCKER\n1. Turn the dial right to your first number.\n2. Turn it left past zero to your second number.\n3. Turn it right again to your last number and pull the handle.\nIf the door does not open, turn the dial right three times and start again.",
+      "translation_ko": "학교 사물함 사용법\n1. 다이얼을 오른쪽으로 돌려 첫 번째 숫자에 맞추세요.\n2. 왼쪽으로 0을 지나 두 번째 숫자까지 돌리세요.\n3. 다시 오른쪽으로 마지막 숫자에 맞추고 손잡이를 당기세요.\n문이 열리지 않으면 다이얼을 오른쪽으로 세 바퀴 돌린 뒤 다시 시작하세요."
     },
     "status": "active",
     "questions": [
@@ -1396,7 +1420,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "BOOK REVIEW — 'The Paper Boat'\nBy Sohee, Grade 6\nThis book is about a boy who sends letters in paper boats down a river. At first I thought the story would be sad, but it made me laugh many times. The pictures are beautiful too. It took me only two days to finish. I think students who do not like thick books will enjoy this one."
+      "content": "BOOK REVIEW — 'The Paper Boat'\nBy Sohee, Grade 6\nThis book is about a boy who sends letters in paper boats down a river. At first I thought the story would be sad, but it made me laugh many times. The pictures are beautiful too. It took me only two days to finish. I think students who do not like thick books will enjoy this one.",
+      "translation_ko": "독후감 — '종이배'\n6학년 소희\n이 책은 강물에 종이배로 편지를 띄워 보내는 남자아이 이야기입니다. 처음에는 슬픈 이야기일 줄 알았는데, 읽으면서 여러 번 웃었습니다. 그림도 아름답습니다. 다 읽는 데 이틀밖에 안 걸렸습니다. 두꺼운 책을 싫어하는 학생들이 이 책은 재미있게 읽을 것 같습니다."
     },
     "status": "active",
     "questions": [
@@ -1469,7 +1494,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "RECYCLING DAY\nEvery Wednesday evening, please bring your recycling to the yard.\nPaper and cardboard go in the blue bin.\nPlastic bottles go in the yellow bin — please remove the caps first.\nGlass goes in the green bin. Do not put broken glass in any bin; wrap it in newspaper and give it to the guard."
+      "content": "RECYCLING DAY\nEvery Wednesday evening, please bring your recycling to the yard.\nPaper and cardboard go in the blue bin.\nPlastic bottles go in the yellow bin — please remove the caps first.\nGlass goes in the green bin. Do not put broken glass in any bin; wrap it in newspaper and give it to the guard.",
+      "translation_ko": "재활용의 날\n매주 수요일 저녁에 재활용품을 마당으로 가져와 주세요.\n종이와 상자는 파란 통에 넣습니다.\n플라스틱 병은 노란 통에 넣습니다 — 뚜껑은 먼저 빼 주세요.\n유리는 초록 통에 넣습니다. 깨진 유리는 어느 통에도 넣지 말고, 신문지에 싸서 경비 아저씨께 주세요."
     },
     "status": "active",
     "questions": [
@@ -1542,7 +1568,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "AFTER-SCHOOL CLASSES — Fall Term\nGuitar  Mon & Wed  4:00-5:00  (12 seats)\nBaking  Tue  4:00-5:30  (8 seats)\nRobot  Thu & Fri  4:00-5:00  (10 seats)\nSign up online by September 5. Students may choose only one class. If a class is full, your name goes on a waiting list."
+      "content": "AFTER-SCHOOL CLASSES — Fall Term\nGuitar  Mon & Wed  4:00-5:00  (12 seats)\nBaking  Tue  4:00-5:30  (8 seats)\nRobot  Thu & Fri  4:00-5:00  (10 seats)\nSign up online by September 5. Students may choose only one class. If a class is full, your name goes on a waiting list.",
+      "translation_ko": "방과 후 수업 — 가을 학기\n기타  월·수  4:00-5:00  (12자리)\n베이킹  화  4:00-5:30  (8자리)\n로봇  목·금  4:00-5:00  (10자리)\n9월 5일까지 인터넷으로 신청하세요. 학생은 한 수업만 고를 수 있습니다. 정원이 차면 대기자 명단에 이름이 올라갑니다."
     },
     "status": "active",
     "questions": [
@@ -1615,7 +1642,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "STUDENT NEWS — Our School Garden Grows\nTwo years ago, the space behind the gym was empty and full of weeds. Then the Green Club asked the school for permission to plant vegetables there. Last spring the club harvested tomatoes and lettuce, and the cooking class used them for lunch. This year the club wants to add a small pond for frogs. Anyone can join the club — just come to Room 105 on Friday after school."
+      "content": "STUDENT NEWS — Our School Garden Grows\nTwo years ago, the space behind the gym was empty and full of weeds. Then the Green Club asked the school for permission to plant vegetables there. Last spring the club harvested tomatoes and lettuce, and the cooking class used them for lunch. This year the club wants to add a small pond for frogs. Anyone can join the club — just come to Room 105 on Friday after school.",
+      "translation_ko": "학생 소식 — 우리 학교 정원이 자라고 있어요\n2년 전, 체육관 뒤 공간은 비어 있고 잡초로 가득했습니다. 그때 그린 동아리가 학교에 그곳에 채소를 심게 해 달라고 부탁했습니다. 지난봄 동아리는 토마토와 상추를 거뒀고, 요리 수업에서 그것으로 점심을 만들었습니다. 올해 동아리는 개구리를 위한 작은 연못을 만들고 싶어 합니다. 누구나 동아리에 들어올 수 있습니다 — 금요일 방과 후에 105호로 오기만 하면 됩니다."
     },
     "status": "active",
     "questions": [
@@ -1718,7 +1746,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "SWIMMING POOL RULES\n1. Take a shower before you enter the pool.\n2. Do not run beside the pool.\n3. Children under 8 must come with an adult.\nThe pool is open from 9 a.m. to 6 p.m."
+      "content": "SWIMMING POOL RULES\n1. Take a shower before you enter the pool.\n2. Do not run beside the pool.\n3. Children under 8 must come with an adult.\nThe pool is open from 9 a.m. to 6 p.m.",
+      "translation_ko": "수영장 규칙\n1. 수영장에 들어가기 전에 샤워하세요.\n2. 수영장 옆에서 뛰지 마세요.\n3. 8세 미만 어린이는 어른과 함께 와야 합니다.\n수영장은 오전 9시부터 오후 6시까지 엽니다."
     },
     "questions": [
       {
@@ -1792,7 +1821,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "Emma wanted to give her grandmother a present.\nShe did not have much money, so she decided to make something.\nFor three evenings she painted a picture of her grandmother's cat.\nWhen Grandma opened the gift, she smiled and hugged Emma for a long time."
+      "content": "Emma wanted to give her grandmother a present.\nShe did not have much money, so she decided to make something.\nFor three evenings she painted a picture of her grandmother's cat.\nWhen Grandma opened the gift, she smiled and hugged Emma for a long time.",
+      "translation_ko": "엠마는 할머니께 선물을 드리고 싶었습니다.\n돈이 많지 않아서 무언가를 만들기로 했습니다.\n사흘 저녁 동안 엠마는 할머니의 고양이를 그렸습니다.\n할머니는 선물을 열어 보시고 웃으시며 엠마를 오래 안아 주셨습니다."
     },
     "questions": [
       {
@@ -1866,7 +1896,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "FIELD TRIP NOTICE\nDate: Friday, October 12\nPlace: City Science Museum\nMeet at the school gate at 8:30 a.m. The bus leaves at 8:45 a.m.\nBring your lunch. You may bring a camera, but not a phone."
+      "content": "FIELD TRIP NOTICE\nDate: Friday, October 12\nPlace: City Science Museum\nMeet at the school gate at 8:30 a.m. The bus leaves at 8:45 a.m.\nBring your lunch. You may bring a camera, but not a phone.",
+      "translation_ko": "현장학습 안내\n날짜: 10월 12일 금요일\n장소: 시립 과학관\n오전 8시 30분까지 학교 정문에서 모입니다. 버스는 8시 45분에 출발합니다.\n점심을 가져오세요. 카메라는 가져와도 되지만 휴대폰은 안 됩니다."
     },
     "questions": [
       {
@@ -1939,7 +1970,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "Hi Tom,\nSorry, I cannot come to soccer practice on Thursday. I hurt my ankle\nwhile I was running yesterday. The doctor said I should rest for two weeks.\nI will still come and watch the game on Saturday.\nSee you there,\nBen"
+      "content": "Hi Tom,\nSorry, I cannot come to soccer practice on Thursday. I hurt my ankle\nwhile I was running yesterday. The doctor said I should rest for two weeks.\nI will still come and watch the game on Saturday.\nSee you there,\nBen",
+      "translation_ko": "톰에게,\n미안하지만 목요일 축구 연습에 못 갈 것 같아. 어제 달리다가 발목을 다쳤어.\n의사 선생님이 2주 동안 쉬어야 한다고 하셨어.\n그래도 토요일 경기는 보러 갈게.\n거기서 보자,\n벤"
     },
     "questions": [
       {
@@ -2012,7 +2044,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "Rain forests are warm and wet all year.\nMany kinds of animals live there, from tiny frogs to large birds.\nTall trees block the sunlight, so the ground stays dark.\nSome plants grow high on the branches to reach the light."
+      "content": "Rain forests are warm and wet all year.\nMany kinds of animals live there, from tiny frogs to large birds.\nTall trees block the sunlight, so the ground stays dark.\nSome plants grow high on the branches to reach the light.",
+      "translation_ko": "열대우림은 일 년 내내 덥고 습합니다.\n아주 작은 개구리부터 커다란 새까지 많은 종류의 동물이 그곳에 삽니다.\n키 큰 나무들이 햇빛을 가려서 땅은 어둡습니다.\n어떤 식물들은 빛을 받으려고 나뭇가지 높은 곳에서 자랍니다."
     },
     "questions": [
       {
@@ -2115,7 +2148,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "BOOK SALE\nSaturday only, 10 a.m. - 4 p.m.\nStory books: 2,000 won\nComic books: 3,000 won\nBuy three books and get one free.\nAll money will help the animal shelter."
+      "content": "BOOK SALE\nSaturday only, 10 a.m. - 4 p.m.\nStory books: 2,000 won\nComic books: 3,000 won\nBuy three books and get one free.\nAll money will help the animal shelter.",
+      "translation_ko": "책 판매\n토요일 하루만, 오전 10시 - 오후 4시\n이야기책: 2,000원\n만화책: 3,000원\n세 권 사면 한 권을 더 드립니다.\n모든 수익금은 동물 보호소를 돕는 데 쓰입니다."
     },
     "questions": [
       {
@@ -2189,7 +2223,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "Last winter our class grew beans in paper cups.\nWe put the cups near the window and gave them water twice a week.\nAt first nothing happened, and some students wanted to stop.\nAfter ten days small green leaves appeared, and everyone cheered."
+      "content": "Last winter our class grew beans in paper cups.\nWe put the cups near the window and gave them water twice a week.\nAt first nothing happened, and some students wanted to stop.\nAfter ten days small green leaves appeared, and everyone cheered.",
+      "translation_ko": "지난겨울 우리 반은 종이컵에 콩을 길렀습니다.\n컵을 창가에 두고 일주일에 두 번 물을 주었습니다.\n처음에는 아무 일도 일어나지 않아서 그만두고 싶어 하는 학생들도 있었습니다.\n열흘이 지나자 작은 초록 잎이 나왔고, 모두가 환호했습니다."
     },
     "questions": [
       {
@@ -2262,7 +2297,8 @@
     "part": "R3",
     "passage": {
       "kind": "text",
-      "content": "To: All students\nFrom: The school nurse\nThe weather is getting colder. Please wash your hands before you eat.\nIf you feel sick, come to the health room on the first floor.\nDo not share cups or towels with your friends."
+      "content": "To: All students\nFrom: The school nurse\nThe weather is getting colder. Please wash your hands before you eat.\nIf you feel sick, come to the health room on the first floor.\nDo not share cups or towels with your friends.",
+      "translation_ko": "받는 사람: 전교생\n보낸 사람: 보건 선생님\n날씨가 점점 추워지고 있습니다. 밥 먹기 전에 손을 씻으세요.\n몸이 아프면 1층 보건실로 오세요.\n친구와 컵이나 수건을 같이 쓰지 마세요."
     },
     "questions": [
       {

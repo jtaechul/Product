@@ -94,7 +94,8 @@
       "0": "P.other",
       "1": "P.other",
       "3": "P.other"
-    }
+    },
+    "translation_ko": "한 남자아이가 자전거를 타고 있어요."
   },
   {
     "type": "single",
@@ -191,7 +192,8 @@
       "1": "M.swap",
       "2": "P.other",
       "3": "P.other"
-    }
+    },
+    "translation_ko": "고양이 한 마리가 소파에서 자고 있어요."
   },
   {
     "type": "single",
@@ -280,7 +282,8 @@
       "0": "P.other",
       "1": "M.swap",
       "2": "P.other"
-    }
+    },
+    "translation_ko": "누군가 시장에서 사과를 사고 있어요."
   },
   {
     "type": "single",
@@ -378,7 +381,8 @@
       "0": "P.other",
       "2": "P.other",
       "3": "P.other"
-    }
+    },
+    "translation_ko": "해변에 모래성이 하나 있어요."
   },
   {
     "type": "single",
@@ -480,7 +484,8 @@
       "1": "P.other",
       "2": "P.other",
       "3": "P.other"
-    }
+    },
+    "translation_ko": "한 아이가 울타리에 페인트를 칠하고 있어요."
   },
   {
     "type": "single",
@@ -578,7 +583,8 @@
       "0": "P.other",
       "2": "P.other",
       "3": "P.other"
-    }
+    },
+    "translation_ko": "오렌지 주스가 컵 안으로 들어가고 있어요."
   },
   {
     "type": "single",
@@ -672,7 +678,8 @@
       "0": "P.other",
       "1": "P.other",
       "2": "P.other"
-    }
+    },
+    "translation_ko": "한 여자아이가 오리들에게 먹이를 주고 있어요."
   },
   {
     "type": "single",
@@ -766,7 +773,8 @@
       "0": "P.other",
       "1": "P.other",
       "3": "P.other"
-    }
+    },
+    "translation_ko": "빨랫줄에서 옷이 마르고 있어요."
   },
   {
     "type": "single",
@@ -867,7 +875,8 @@
           "piano"
         ]
       }
-    ]
+    ],
+    "translation_ko": "한 여자아이가 피아노를 치고 있어요."
   },
   {
     "type": "single",
@@ -961,7 +970,8 @@
           "toothbrush"
         ]
       }
-    ]
+    ],
+    "translation_ko": "한 아이가 이를 닦고 있어요."
   },
   {
     "type": "single",
@@ -1057,7 +1067,8 @@
           "cat"
         ]
       }
-    ]
+    ],
+    "translation_ko": "한 여자가 강아지를 산책시키고 있어요."
   },
   {
     "type": "single",
@@ -1151,7 +1162,8 @@
           "basketball"
         ]
       }
-    ]
+    ],
+    "translation_ko": "그들은 농구를 하고 있어요."
   },
   {
     "type": "single",
@@ -1244,7 +1256,8 @@
         ],
         "avoid": []
       }
-    ]
+    ],
+    "translation_ko": "한 여자가 책을 읽고 있어요."
   },
   {
     "type": "single",
@@ -1341,7 +1354,8 @@
           "snowman"
         ]
       }
-    ]
+    ],
+    "translation_ko": "눈사람이 눈 속에 서 있어요."
   },
   {
     "type": "single",
@@ -1436,7 +1450,8 @@
           "umbrella"
         ]
       }
-    ]
+    ],
+    "translation_ko": "한 여자가 빗속에서 우산을 들고 있어요."
   },
   {
     "type": "single",
@@ -1530,7 +1545,8 @@
         ],
         "avoid": []
       }
-    ]
+    ],
+    "translation_ko": "한 여자아이가 생일 촛불을 불어서 끄고 있어요."
   },
   {
     "type": "single",
@@ -1627,7 +1643,8 @@
           "fishing"
         ]
       }
-    ]
+    ],
+    "translation_ko": "한 남자가 호수에서 낚시를 하고 있어요."
   },
   {
     "type": "single",
@@ -1720,7 +1737,8 @@
           "planting"
         ]
       }
-    ]
+    ],
+    "translation_ko": "누군가 작은 식물을 심고 있어요."
   },
   {
     "type": "single",
@@ -1815,7 +1833,8 @@
         ],
         "avoid": []
       }
-    ]
+    ],
+    "translation_ko": "여자아이 두 명이 수영장에서 수영하고 있어요."
   },
   {
     "type": "single",
@@ -1910,6 +1929,7 @@
           "laptop"
         ]
       }
-    ]
+    ],
+    "translation_ko": "한 여자가 노트북으로 타자를 치고 있어요."
   }
 ]

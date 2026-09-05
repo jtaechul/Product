@@ -156,6 +156,7 @@ function pushQuestion(part, tmpId, it, passageId, extra = {}) {
     rating: RATING_BY_LABEL[it.difficulty_label],
     audio_url: extra.audio_url ?? null, image_url: extra.image_url ?? null,
     accent: extra.accent ?? null, script: extra.script ?? null,
+    translation_ko: extra.translation_ko ?? it.translation_ko ?? null,
     evidence: it.evidence ?? null,
     why_not: it.why_not ? JSON.stringify(it.why_not) : null,
     miss_type: it.miss_type ? JSON.stringify(it.miss_type) : null,
@@ -234,6 +235,7 @@ for (const file of files) {
         content, image_url: p.image_url ?? null,
         audio_url: pAudio,
         accent: isLC ? p.accent : null,
+        translation_ko: p.translation_ko ?? null,
       });
       const setStatus = gateOnMedia(ctx, part, status, pAudio, null);
       it.questions.forEach((sub, i) => {
@@ -334,19 +336,19 @@ for (const b of badges) {
 }
 for (const p of passages) {
   sql.push(
-    `INSERT INTO passages (id, section, part, kind, content, image_url, audio_url, accent, created_at) VALUES (` +
-    [q(p.id), q(p.section), q(p.part), q(p.kind), q(p.content), q(p.image_url), q(p.audio_url), q(p.accent), q(now)].join(', ') + `) ` +
-    `ON CONFLICT(id) DO UPDATE SET content=excluded.content, image_url=excluded.image_url, audio_url=excluded.audio_url, accent=excluded.accent;`
+    `INSERT INTO passages (id, section, part, kind, content, image_url, audio_url, accent, translation_ko, created_at) VALUES (` +
+    [q(p.id), q(p.section), q(p.part), q(p.kind), q(p.content), q(p.image_url), q(p.audio_url), q(p.accent), q(p.translation_ko), q(now)].join(', ') + `) ` +
+    `ON CONFLICT(id) DO UPDATE SET content=excluded.content, image_url=excluded.image_url, audio_url=excluded.audio_url, accent=excluded.accent, translation_ko=excluded.translation_ko;`
   );
 }
 for (const it of questions) {
   sql.push(
-    `INSERT INTO questions (id, passage_id, section, part, stem, choices, answer_idx, explanation_ko, difficulty_label, rating, audio_url, image_url, accent, script, evidence, why_not, miss_type, key_expr, status, created_at) VALUES (` +
+    `INSERT INTO questions (id, passage_id, section, part, stem, choices, answer_idx, explanation_ko, difficulty_label, rating, audio_url, image_url, accent, script, evidence, why_not, miss_type, key_expr, translation_ko, status, created_at) VALUES (` +
     [q(it.id), q(it.passage_id), q(it.section), q(it.part), q(it.stem), q(it.choices), it.answer_idx,
      q(it.explanation_ko), it.difficulty_label, it.rating, q(it.audio_url), q(it.image_url), q(it.accent), q(it.script), q(it.evidence),
-     q(it.why_not), q(it.miss_type), q(it.key_expr), q(it.status), q(now)].join(', ') + `) ` +
+     q(it.why_not), q(it.miss_type), q(it.key_expr), q(it.translation_ko), q(it.status), q(now)].join(', ') + `) ` +
     // rating·times_answered·times_correct·created_at은 운영 데이터 — 재임포트 시 보존
-    `ON CONFLICT(id) DO UPDATE SET passage_id=excluded.passage_id, stem=excluded.stem, choices=excluded.choices, answer_idx=excluded.answer_idx, explanation_ko=excluded.explanation_ko, difficulty_label=excluded.difficulty_label, audio_url=excluded.audio_url, image_url=excluded.image_url, accent=excluded.accent, script=excluded.script, evidence=excluded.evidence, why_not=excluded.why_not, miss_type=excluded.miss_type, key_expr=excluded.key_expr, status=excluded.status;`
+    `ON CONFLICT(id) DO UPDATE SET passage_id=excluded.passage_id, stem=excluded.stem, choices=excluded.choices, answer_idx=excluded.answer_idx, explanation_ko=excluded.explanation_ko, difficulty_label=excluded.difficulty_label, audio_url=excluded.audio_url, image_url=excluded.image_url, accent=excluded.accent, script=excluded.script, evidence=excluded.evidence, why_not=excluded.why_not, miss_type=excluded.miss_type, key_expr=excluded.key_expr, translation_ko=excluded.translation_ko, status=excluded.status;`
   );
 }
 const qIds = questions.map((x) => q(x.id)).join(', ');

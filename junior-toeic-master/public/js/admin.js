@@ -721,6 +721,9 @@ async function showQuestion(id) {
         q.script ? '들려주는 내용' : '지문'}</span>${esc(source)}</div>` : ''}
       ${q.audio_url ? `<audio controls src="${esc(q.audio_url)}" style="width:100%;margin-top:8px"></audio>` : ''}
       ${silent ? '<div class="warn-box">아직 소리가 없어요 — 음원이 만들어져야 출제할 수 있습니다.</div>' : ''}
+      ${q.translation_ko ? `<div class="qpassage"><span class="qcap">한글 해석</span>${
+        esc(q.translation_ko)}</div>` : `<p class="card-note" style="margin-top:8px">
+        ⚠ 한글 해석이 없는 문항입니다 — 정답 화면에 해석이 안 나갑니다.</p>`}
       ${q.stem ? `<p class="qstem">${esc(q.stem)}</p>` : ''}
       ${choices}
       <div class="qline"><span class="qcap">정답 풀이</span><p>${esc(q.explanation_ko)}</p></div>

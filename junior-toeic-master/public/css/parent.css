@@ -154,3 +154,6 @@ body { padding-bottom: env(safe-area-inset-bottom); }
 /* '오늘 푼 문항' — 오늘 한 날은 숫자에 색을 준다.
    부모가 이 화면에서 가장 먼저 찾는 값이고, 0과 구분이 한눈에 돼야 한다. */
 .stat.on .value { color: var(--primary); }
+
+/* 한글 해석 — 부모가 아이에게 설명하려면 지문 뜻부터 알아야 한다 */
+.wq-tr { background: var(--accent-soft); }

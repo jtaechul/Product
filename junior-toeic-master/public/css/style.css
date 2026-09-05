@@ -635,3 +635,22 @@ mark.ev {
   color: var(--primary); background: var(--primary-soft);
   padding: 2px 7px; border-radius: 999px;
 }
+
+/* ── 한글 해석 (정답 화면) ── */
+/* 지문을 못 읽고 찍은 아이에게는 해설보다 이게 먼저다.
+   틀렸으면 펼친 채로, 맞았으면 접어서 나간다. */
+.trans { margin-top: 12px; border-radius: 13px; background: var(--surface-2); overflow: hidden; }
+.trans > summary {
+  cursor: pointer; padding: 11px 13px; font-size: .84rem; font-weight: 800;
+  color: var(--muted); list-style: none;
+}
+.trans > summary::-webkit-details-marker { display: none; }
+.trans > summary::after { content: ' ▾'; }
+.trans[open] > summary::after { content: ' ▴'; }
+.trans-body { padding: 0 13px 13px; }
+.trans-en {
+  font-size: .86rem; line-height: 1.6; white-space: pre-wrap;
+  color: var(--muted); padding-bottom: 9px; margin-bottom: 9px;
+  border-bottom: 1px solid var(--line);
+}
+.trans-ko { font-size: .9rem; line-height: 1.7; white-space: pre-wrap; }
