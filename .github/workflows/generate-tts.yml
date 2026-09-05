@@ -10,6 +10,12 @@ name: Generate TTS audio (Jumplish)
 # 이 저장소의 GitHub 앱 토큰은 workflow_dispatch 호출 권한이 없어(403),
 # 이 파일이나 듣기 원고가 푸시될 때 실행되게 한다.
 on:
+  # 문항 생성(generate-questions.yml)이 새 듣기 문항을 만든 뒤 음원까지 이어 붙이려고 부른다.
+  # 러너가 GITHUB_TOKEN 으로 한 푸시는 다른 워크플로를 깨우지 못하므로(깃허브 정책)
+  # 아래 push 트리거로는 안 걸린다 — 직접 불릴 수 있어야 한다.
+  # ⚠ 이게 없으면 부르는 쪽 워크플로가 **시작조차 못 하고** 0초 만에 실패한다
+  # (2026-09-05 '부족한 문제 채우기' 첫 실행이 이것 때문에 잡 하나 없이 실패했다).
+  workflow_call:
   workflow_dispatch:
     inputs:
       engine:
