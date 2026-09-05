@@ -271,3 +271,6 @@ table.pins td.pin { font-variant-numeric: tabular-nums; font-weight: 800; letter
   font: inherit; color: var(--primary, #5b5bf5); font-weight: 800;
   text-decoration: underline; padding: 2px 1px; background: none; border: 0; cursor: pointer;
 }
+
+/* 축 막대 옆의 '준비 중' 몫 — 만들어 뒀지만 아직 출제 안 된 수 */
+.sbd { color: var(--primary, #5b5bf5); font-size: .78em; margin-left: 3px; }

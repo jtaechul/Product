@@ -1240,7 +1240,8 @@ app.get('/api/admin/content', ...admin, async (c) => {
            FROM questions GROUP BY part ORDER BY part`).all(),
       c.env.DB.prepare(
         `SELECT t.id, t.name_ko, t.section,
-                COUNT(CASE WHEN q.status = 'active' THEN 1 END) AS n
+                COUNT(CASE WHEN q.status = 'active' THEN 1 END) AS n,
+                COUNT(CASE WHEN q.status = 'draft'  THEN 1 END) AS n_draft
            FROM concept_tags t
            LEFT JOIN question_tags qt ON qt.tag_id = t.id
            LEFT JOIN questions q ON q.id = qt.question_id
@@ -1266,9 +1267,12 @@ app.get('/api/admin/content', ...admin, async (c) => {
   // 축(실력 5칸)별 문항 수 — 부모·아이 화면의 눈금과 같은 기준으로 센다.
   // 어느 축이 얇은지가 "무엇을 만들지"의 첫 번째 답이다.
   const byTag = Object.fromEntries(tags.map((t) => [t.id, t.n]));
+  const draftBy = Object.fromEntries(tags.map((t) => [t.id, t.n_draft ?? 0]));
   const axes = SKILL_AXES.map((ax) => ({
     key: ax.key, name: ax.name,
     n: ax.tags.reduce((s, t) => s + (byTag[t] ?? 0), 0),
+    // 검수를 기다리는 몫도 함께 — 방금 만든 게 왜 숫자에 안 잡히는지 화면에서 바로 보이게
+    draft: ax.tags.reduce((s, t) => s + (draftBy[t] ?? 0), 0),
   }));
 
   const gh = new GithubRepo(c.env);
@@ -1503,8 +1507,9 @@ app.post('/api/admin/generate-order', ...admin, async (c) => {
 // '재는 중'이 남는다. 그게 지금 이 제품에서 가장 아픈 구멍이라 여기부터 메운다.
 
 const AXIS_TARGET = 60;   // 축 하나가 이만큼은 받쳐져야 실력이 흔들리지 않고 재진다
-const GAP_BATCH = 6;      // 한 주문에 만들 문항 수 — 검수 부담과 생성 실패율의 절충
-const GAP_MAX_ORDERS = 3; // 한 번 눌렀을 때 최대 주문 수 (너무 많으면 검수가 밀린다)
+const GAP_BATCH = 6;      // 한 주문에 만들 문항 수 — 한 번에 20개를 시키면 AI가 규칙을 흘려 버림표가 늘고,
+                          // 너무 적으면 주문 수만 늘어난다. 6이 통과율과 속도의 절충.
+const GAP_MAX_ORDERS = 4; // 한 번 눌렀을 때 최대 주문 수 (= 최대 24문항, 실행 12분쯤)
 
 // 태그가 실제로 출제되는 파트 — 그 태그로 이미 나가고 있는 문항에서 배운다.
 // 표로 못박아 두면 새 태그를 넣을 때마다 여기도 고쳐야 하고, 안 고치면 조용히 틀린다.
@@ -1523,40 +1528,57 @@ async function partsByTag(db) {
 // 버튼에 적힌 말과 실제로 만들어지는 것이 어긋나면 신뢰를 잃는다.
 async function planGaps(db) {
   const [{ results: tagRows }, byTag] = await Promise.all([
+    // ⚠ **준비 중(draft)도 센다.** 출제중만 세면, 방금 만들어 검수를 기다리는 문항을 모르고
+    // 같은 자리를 또 주문한다 — 누를 때마다 같은 구멍에 문항이 겹겹이 쌓인다(2026-09-05 실제로 그랬다).
     db.prepare(
       `SELECT t.id, t.name_ko, t.section,
-              COUNT(CASE WHEN q.status = 'active' THEN 1 END) AS n
+              COUNT(CASE WHEN q.status = 'active' THEN 1 END) AS n_active,
+              COUNT(CASE WHEN q.status = 'draft'  THEN 1 END) AS n_draft
          FROM concept_tags t
          LEFT JOIN question_tags qt ON qt.tag_id = t.id
          LEFT JOIN questions q ON q.id = qt.question_id
         GROUP BY t.id`).all(),
     partsByTag(db),
   ]);
-  const nOf = Object.fromEntries(tagRows.map((t) => [t.id, t.n]));
+  const nOf = Object.fromEntries(tagRows.map((t) => [t.id, t.n_active + t.n_draft]));
+  const activeOf = Object.fromEntries(tagRows.map((t) => [t.id, t.n_active]));
   const nameOf = Object.fromEntries(tagRows.map((t) => [t.id, t.name_ko]));
 
   // 축을 얇은 순으로 — 가장 모자란 축부터 메운다
   const axes = SKILL_AXES
-    .map((ax) => ({ ...ax, n: ax.tags.reduce((s, t) => s + (nOf[t] ?? 0), 0) }))
+    .map((ax) => ({
+      ...ax,
+      n: ax.tags.reduce((s, t) => s + (nOf[t] ?? 0), 0),           // 출제중 + 준비중
+      active: ax.tags.reduce((s, t) => s + (activeOf[t] ?? 0), 0),
+    }))
     .filter((ax) => ax.n < AXIS_TARGET)
     .sort((a, b) => a.n - b.n);
 
+  // 가장 얇은 축부터 **모자란 만큼** 묶음을 배정한다. 축당 한 묶음(6개)만 주면
+  // 35개 모자란 자리를 채우는 데 여섯 번을 눌러야 한다 — 버튼 하나로 끝내자는 뜻과 어긋난다.
   const orders = [];
   for (const ax of axes) {
     if (orders.length >= GAP_MAX_ORDERS) break;
     // 그 축 안에서도 가장 얇은 태그를 고른다. 축 전체를 뭉뚱그려 주문하면
     // AI가 만들기 쉬운 태그로만 쏠려 정작 빈 칸은 그대로 남는다.
-    const tag = [...ax.tags]
+    const usable = [...ax.tags]
       .filter((t) => (byTag[t] ?? []).length)      // 출제될 파트를 아는 태그만
-      .sort((a, b) => (nOf[a] ?? 0) - (nOf[b] ?? 0))[0];
-    if (!tag) continue;
-    orders.push({
-      part: byTag[tag][0].part,        // 그 태그가 가장 많이 나오는 파트에 얹는다
-      tag,
-      count: GAP_BATCH,
-      axis: ax.key,
-      why: `${ax.name} ${ax.n}문항 (${nameOf[tag]} ${nOf[tag] ?? 0}개)`,
-    });
+      .sort((a, b) => (nOf[a] ?? 0) - (nOf[b] ?? 0));
+    if (!usable.length) continue;
+    const want = Math.ceil((AXIS_TARGET - ax.n) / GAP_BATCH);      // 이 축에 필요한 묶음 수
+    const take = Math.min(want, GAP_MAX_ORDERS - orders.length);
+    for (let i = 0; i < take; i += 1) {
+      // 묶음이 여럿이면 얇은 태그부터 돌려 가며 — 한 태그에만 몰리지 않게
+      const tag = usable[i % usable.length];
+      orders.push({
+        part: byTag[tag][0].part,      // 그 태그가 가장 많이 나오는 파트에 얹는다
+        tag,
+        count: GAP_BATCH,
+        axis: ax.key,
+        why: `${ax.name} ${ax.active}문항${ax.n > ax.active ? `(+준비중 ${ax.n - ax.active})` : ''}`
+          + ` — ${nameOf[tag]}`,
+      });
+    }
   }
   return { orders, total: orders.reduce((s, o) => s + o.count, 0) };
 }
@@ -1573,7 +1595,7 @@ app.get('/api/admin/fill-gaps', ...admin, async (c) => {
     // 검수를 기다리는 초안 수 — '전부 출제 시작' 버튼을 띄울지 정한다
     drafts: draft.n,
     label: plan.total
-      ? `부족한 문제 채우기 (${plan.orders.map((o) => o.why.split(' ')[0]).join('·')} ${plan.total}개)`
+      ? `부족한 문제 채우기 (${[...new Set(plan.orders.map((o) => o.why.split(' ')[0]))].join('·')} ${plan.total}개)`
       : '지금은 부족한 곳이 없어요',
   });
 });
@@ -1597,7 +1619,7 @@ app.post('/api/admin/fill-gaps', ...admin, async (c) => {
     ok: true, started: plan.orders.length, total: plan.total,
     orders: plan.orders.map((o) => o.why),
     next: `${plan.total}문항을 만들기 시작했어요 — `
-      + `${plan.orders.map((o) => o.why.split(' ')[0]).join('·')}. `
+      + `${[...new Set(plan.orders.map((o) => o.why.split(' ')[0]))].join('·')}. `
       + '10~15분 뒤 이 화면에 새 문제가 올라오면 훑어보고 한 번에 출제하실 수 있어요.',
   });
 });

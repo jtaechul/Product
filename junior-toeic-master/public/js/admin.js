@@ -473,13 +473,15 @@ const AXIS_LOW = 40;     // 이보다 적으면 얇다고 본다 (5축 균형 �
 
 function renderQuestions() {
   const c = content;
+  // 막대는 '출제중'이고, 검수를 기다리는 몫은 옆에 따로 적는다.
+  // 방금 만든 문항이 왜 숫자에 안 잡히는지 화면에서 바로 보여야 한다.
   const axes = c.axes.map((a) => {
     const low = a.n < AXIS_LOW;
     return `<div class="sbar">
       <span class="sbl">${esc(a.name)}</span>
       <span class="sbt"><span class="sbf${low ? ' low' : ''}" style="width:${
         Math.min(100, Math.round((a.n / 80) * 100))}%"></span></span>
-      <span class="sbn">${a.n}${low ? ' ⚠' : ''}</span>
+      <span class="sbn">${a.n}${a.draft ? `<span class="sbd">+${a.draft}</span>` : ''}${low ? ' ⚠' : ''}</span>
     </div>`;
   }).join('');
 
@@ -522,8 +524,9 @@ function renderQuestions() {
       <div class="card-head"><span class="card-title">지금 문제은행</span>
         <span class="card-note">전체 ${c.total} · 출제중 ${c.active}</span></div>
       ${axes}
-      <p class="card-note">막대는 실력 5칸이 각각 몇 문항으로 받쳐지고 있는지예요.
-        <b>⚠ 표시된 칸이 다음에 만들 곳</b>입니다 (${AXIS_LOW}문항 미만).</p>
+      <p class="card-note">막대는 실력 5칸이 각각 <b>출제 중인</b> 문항 수예요.
+        <b>⚠ 표시된 칸이 다음에 만들 곳</b>입니다 (${AXIS_LOW}문항 미만).
+        ${c.axes.some((a) => a.draft) ? '<b class="hot">+숫자</b>는 만들어 두고 <b>확인을 기다리는</b> 몫이라 아직 아이에게 안 나갑니다 — 아래에서 출제 시작을 눌러주세요.' : ''}</p>
       ${silent ? `<p class="card-note">소리·사진이 아직 없어 출제 못 하는 문항 ${silent}개
         — 음원 만들기 작업이 돌면 저절로 풀립니다.</p>` : ''}
     </div>
