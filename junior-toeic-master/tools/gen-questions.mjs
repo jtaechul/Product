@@ -8,7 +8,8 @@
 // content/questions/<파트>.json 에 status:"draft" 로 붙인다. 준비 중이므로 사람이 관리자
 // 화면에서 보고 '출제 시작'을 눌러야 아이에게 나간다. 규칙에 걸린 초안은 버리고 이유를 찍는다.
 //
-// 사용: ANTHROPIC_API_KEY=... node tools/gen-questions.mjs --part R3 --count 5 [--tag RS.infer]
+// 사용: node tools/gen-questions.mjs --request requests/gen-....json   (관리자 화면이 넣은 주문서)
+//   또는 node tools/gen-questions.mjs --part R3 --count 5 [--tag RS.infer]
 //                                                          [--difficulty 3] [--note "..."]
 // 열쇠는 둘 중 아무거나: ANTHROPIC_API_KEY(권장) 또는 GEMINI_API_KEY.
 // 둘 다 있으면 Anthropic 을 쓴다. GEN_ENGINE=gemini 로 강제할 수 있다.
@@ -30,11 +31,24 @@ const arg = (name, dflt = '') => {
   const i = process.argv.indexOf(`--${name}`);
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : dflt;
 };
-const PART = arg('part');
-const COUNT = Math.max(1, Math.min(20, Number(arg('count', '5')) || 5));
-const TAG = arg('tag');
-const DIFF = arg('difficulty');
-const NOTE = arg('note');
+// 주문은 두 갈래로 들어온다.
+//  (1) --request 주문서 파일 — 관리자 화면이 커밋한 것을 워크플로가 넘겨준다(정상 경로)
+//  (2) 낱개 인자 — Actions 화면에서 손으로 돌릴 때
+// 주문서 방식을 쓰는 이유: workflow_dispatch 는 워크플로 파일이 기본 브랜치에 있어야
+// GitHub 이 인식하는데, 이 저장소의 배치들은 전부 작업 브랜치에서만 산다.
+// 그래서 저장소가 이미 쓰고 있는 방식(주문서 푸시 → push 트리거)에 맞춘다.
+const reqPath = arg('request');
+let order = {};
+if (reqPath) {
+  try { order = JSON.parse(readFileSync(reqPath, 'utf8')); }
+  catch (e) { console.error(`주문서를 읽지 못했습니다 (${reqPath}): ${e.message}`); process.exit(1); }
+}
+const pick = (name, dflt = '') => (order[name] ?? '') || arg(name, dflt);
+const PART = pick('part');
+const COUNT = Math.max(1, Math.min(20, Number(pick('count', '5')) || 5));
+const TAG = pick('tag');
+const DIFF = String(pick('difficulty') ?? '');
+const NOTE = pick('note');
 
 if (!PART_LIST.includes(PART)) {
   console.error(`--part 는 ${PART_LIST.join(', ')} 중 하나여야 합니다 (받은 값: ${PART || '없음'})`);

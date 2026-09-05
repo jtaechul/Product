@@ -8,7 +8,16 @@ name: Generate questions (Jumplish)
 #
 # 만든 초안은 **준비 중(draft)** 으로 들어간다. 규칙집(worker/authoring.mjs)을 통과하지 못한
 # 초안은 버린다. 사람이 관리자 화면에서 보고 '출제 시작'을 눌러야 아이에게 나간다.
+# 관리자 화면이 requests/ 에 주문서를 커밋하면 그 푸시로 실행된다.
+#
+# ⚠ workflow_dispatch(API 호출)로 부르지 않는 이유: GitHub 은 워크플로 파일이 **기본 브랜치**에
+# 있어야 그 이름을 인식하는데, 이 저장소의 점프리시 배치들은 전부 작업 브랜치에서만 산다.
+# 그래서 API 로 부르면 404 가 났다(2026-09-02 실제로 버튼이 안 눌린 원인).
+# 저장소가 이미 쓰고 있는 방식(주문서 푸시 → push 트리거)에 맞췄다 — 다른 배치 10개가 같은 방식이다.
 on:
+  push:
+    branches: ["claude/junior-toeic-master-planning-322l2t"]
+    paths: ["junior-toeic-master/requests/gen-*.json"]
   workflow_dispatch:
     inputs:
       part:
@@ -79,12 +88,29 @@ jobs:
             echo "::error::(Environment secrets 에 넣으면 이 작업에서 보이지 않습니다)"
             exit 1
           fi
-          node tools/gen-questions.mjs \
-            --part "${{ inputs.part }}" \
-            --count "${{ inputs.count }}" \
-            --tag "${{ inputs.tag }}" \
-            --difficulty "${{ inputs.difficulty }}" \
-            --note "${{ inputs.note }}"
+          shopt -s nullglob
+          REQS=(requests/gen-*.json)
+          if [ ${#REQS[@]} -gt 0 ]; then
+            echo "주문서 ${#REQS[@]}건을 처리합니다"
+            FAILED=0
+            for f in "${REQS[@]}"; do
+              echo "── $f"
+              cat "$f"
+              # 한 건이 실패해도 나머지는 만든다. 처리한 주문서는 성공·실패와 무관하게 지운다 —
+              # 남겨 두면 다음 푸시 때 같은 주문이 또 돌아 문항이 중복으로 쌓인다.
+              node tools/gen-questions.mjs --request "$f" || { echo "::warning::$f 처리 실패"; FAILED=$((FAILED+1)); }
+              rm -f "$f"
+            done
+            if [ "$FAILED" -gt 0 ]; then echo "::warning::주문 ${FAILED}건이 실패했습니다"; fi
+          else
+            echo "주문서가 없어 입력값으로 한 건 만듭니다"
+            node tools/gen-questions.mjs \
+              --part "${{ inputs.part }}" \
+              --count "${{ inputs.count }}" \
+              --tag "${{ inputs.tag }}" \
+              --difficulty "${{ inputs.difficulty }}" \
+              --note "${{ inputs.note }}"
+          fi
 
       # 붙인 뒤에도 파일 전체가 규칙을 지키는지 다시 본다.
       # 초안 하나하나는 통과해도 파일 단위 검사(중복 이름표 등)는 여기서만 걸린다.
@@ -96,13 +122,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add content/questions content/.idmap.json
+          git add content/questions content/.idmap.json requests
           if git diff --cached --quiet; then
             echo "통과한 초안이 없어 커밋할 것이 없습니다"
             echo "pushed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git commit -m "junior-toeic-master: ${{ inputs.part }} 문항 초안 ${{ inputs.count }}개 생성 (관리자 주문)" \
+          git commit -m "junior-toeic-master: 문항 초안 생성 (관리자 주문)" \
             -m "generate-questions.yml 에서 생성. 저작 규칙집을 통과한 초안만 준비 중(draft)으로 들어간다. 관리자 화면에서 확인하고 '출제 시작'을 눌러야 아이에게 나간다."
           for i in 1 2 3 4 5; do
             git pull --rebase origin "${GITHUB_REF_NAME}"
@@ -118,16 +144,19 @@ jobs:
 
   # 듣기 문항이면 음원이 있어야 출제할 수 있다. 러너가 GITHUB_TOKEN 으로 한 푸시는
   # 다른 워크플로를 깨우지 못하므로(깃허브 정책) 여기서 직접 불러 준다.
+  # 음원은 항상 한 번 돌린다. 주문이 여러 건이면 듣기·읽기가 섞여 들어오고,
+  # 소리가 필요 없으면 tts 배치가 "만들 것 없음"으로 금방 끝나므로 손해가 없다.
+  # (읽기만 만들어졌다면 tts 가 커밋 없이 끝나고, 아래 deploy 가 배포를 맡는다)
   audio:
     needs: generate
-    if: ${{ !cancelled() && needs.generate.outputs.pushed == 'true' && startsWith(inputs.part, 'L') }}
+    if: ${{ !cancelled() && needs.generate.outputs.pushed == 'true' }}
     uses: ./.github/workflows/generate-tts.yml
     secrets: inherit
 
-  # 읽기 문항은 바로 배포하면 관리자 화면에 뜬다.
-  # (듣기는 위 음원 워크플로가 끝나면서 배포까지 이어 준다)
+  # 음원 단계가 끝난 뒤 배포한다. 음원이 새로 생겼으면 그쪽에서 이미 배포하지만,
+  # 읽기만 만들어진 경우엔 여기서만 배포가 일어난다(중복 배포는 concurrency 로 합쳐진다).
   deploy:
-    needs: generate
-    if: ${{ !cancelled() && needs.generate.outputs.pushed == 'true' && startsWith(inputs.part, 'R') }}
+    needs: [generate, audio]
+    if: ${{ !cancelled() && needs.generate.outputs.pushed == 'true' }}
     uses: ./.github/workflows/deploy-jumplish.yml
     secrets: inherit

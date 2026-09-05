@@ -100,14 +100,11 @@ export class GithubRepo {
     return { sha: commit.sha, url: `https://github.com/${this.repo}/commit/${commit.sha}` };
   }
 
-  // 워크플로 실행 요청 (AI 초안 생성 주문)
-  async dispatchWorkflow(file, inputs) {
-    await this.call(`/repos/${this.repo}/actions/workflows/${file}/dispatches`, {
-      method: 'POST',
-      body: JSON.stringify({ ref: this.branch, inputs }),
-    });
-    return { url: `https://github.com/${this.repo}/actions/workflows/${file}` };
-  }
+  // ⚠ 워크플로를 API 로 직접 부르는 메서드는 두지 않는다.
+  // GitHub 은 워크플로 파일이 **기본 브랜치**에 있어야 그 이름을 인식하는데, 이 저장소의
+  // 점프리시 배치들은 전부 작업 브랜치에서만 산다. 그래서 dispatch 는 404 로 떨어진다
+  // (2026-09-02 '부족한 문제 채우기' 버튼이 아무 일도 안 하던 원인).
+  // 대신 requests/ 에 주문서를 커밋해 push 트리거로 돌린다 — 저장소의 다른 배치 10개와 같은 방식.
 }
 
 // UTF-8 문자열 → base64 (btoa 는 바이트만 받으므로 먼저 인코딩해야 한글이 깨지지 않는다)

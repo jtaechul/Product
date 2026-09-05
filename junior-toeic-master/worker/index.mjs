@@ -1176,6 +1176,36 @@ app.post('/api/admin/feedback/:id/handled', ...admin, async (c) => {
 
 const CONTENT_DIR = 'content/questions';
 const IDMAP_PATH = 'content/.idmap.json';
+const REQ_DIR = 'requests';
+
+// AI 주문은 '주문서 파일'을 저장소에 커밋하는 것으로 넣는다.
+//
+// ⚠ 워크플로를 API 로 직접 부르지 않는 이유(2026-09-02): GitHub 은 워크플로 파일이
+// **기본 브랜치**에 있어야 그 이름을 인식하는데, 점프리시 배치들은 전부 작업 브랜치에서만 산다.
+// 그래서 dispatch 호출이 404 로 떨어져 버튼을 눌러도 아무 일이 없었다.
+// 저장소가 이미 쓰고 있는 방식(주문서 푸시 → push 트리거)이 같은 일을 하면서 브랜치를 안 탄다.
+// 덤으로 무엇을 언제 주문했는지가 커밋으로 남는다.
+async function commitOrders(gh, orders) {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const files = orders.map((o, i) => ({
+    path: `${REQ_DIR}/gen-${stamp}-${o.part}-${i + 1}.json`,
+    text: `${JSON.stringify({
+      part: o.part,
+      count: o.count,
+      tag: o.tag ?? '',
+      difficulty: o.difficulty ?? '',
+      note: o.note ?? '',
+      why: o.why ?? '',
+      requested_at: new Date().toISOString(),
+    }, null, 2)}\n`,
+  }));
+  const total = orders.reduce((n, o) => n + o.count, 0);
+  await gh.commitFiles(files,
+    `junior-toeic-master: 문제 만들기 주문 ${orders.length}건 (${total}문항) — 관리자 화면\n\n`
+    + orders.map((o) => `- ${o.part} ${o.count}문항${o.tag ? ` (${o.tag})` : ''}${o.why ? ` — ${o.why}` : ''}`).join('\n')
+    + '\n\n이 파일이 푸시되면 generate-questions.yml 이 읽어 초안을 만들고 주문서를 지운다.');
+  return files.length;
+}
 
 // 등록된 태그 표 — 검사에 쓸 {코드: 'LC'|'RC'|'ALL'}
 const tagSectionOf = async (db) => {
@@ -1441,11 +1471,9 @@ app.post('/api/admin/generate-order', ...admin, async (c) => {
     const ok = await c.env.DB.prepare('SELECT 1 FROM concept_tags WHERE id = ?1').bind(tag).first();
     if (!ok) return c.json({ error: '모르는 개념 태그입니다' }, 400);
   }
-  const r = await gh.dispatchWorkflow('generate-questions.yml', {
-    part, count: String(count), tag, difficulty, note,
-  });
+  await commitOrders(gh, [{ part, count, tag, difficulty, note }]);
   return c.json({
-    ok: true, url: r.url,
+    ok: true,
     next: `${PART_KO[part]} ${count}문항 초안을 만들기 시작했어요. `
       + '5~15분 뒤 "준비 중" 목록에 올라오면 확인하고 출제 시작을 눌러주세요.',
   });
@@ -1544,23 +1572,18 @@ app.post('/api/admin/fill-gaps', ...admin, async (c) => {
   if (!plan.orders.length) {
     return c.json({ ok: true, started: 0, next: '지금은 모든 칸이 충분해요. 더 만들 곳이 없습니다.' });
   }
-  const started = [];
-  for (const o of plan.orders) {
-    // 한 주문이 실패해도 나머지는 보낸다 — 전부 되돌리면 아무것도 안 만들어진다
-    try {
-      await gh.dispatchWorkflow('generate-questions.yml', {
-        part: o.part, count: String(o.count), tag: o.tag, difficulty: '', note: '',
-      });
-      started.push(o);
-    } catch (e) { /* 아래에서 몇 개가 나갔는지로 알린다 */ }
+  // 주문 전부를 한 커밋에 담는다 — 푸시 한 번이 워크플로 한 번이라, 여러 번 나눠 넣는 것보다
+  // 빠르고 실행 기록도 한 줄로 남는다. 실패하면 아무 주문도 안 들어간 상태라 되눌러도 안전하다.
+  try {
+    await commitOrders(gh, plan.orders);
+  } catch (e) {
+    return c.json({ error: `주문을 넣지 못했어요 — ${e.message}` }, 502);
   }
-  if (!started.length) return c.json({ error: '주문을 넣지 못했어요. 잠시 후 다시 눌러주세요.' }, 502);
   return c.json({
-    ok: true, started: started.length,
-    total: started.reduce((s, o) => s + o.count, 0),
-    orders: started.map((o) => o.why),
-    next: `${started.reduce((s, o) => s + o.count, 0)}문항을 만들기 시작했어요 — `
-      + `${started.map((o) => o.why.split(' ')[0]).join('·')}. `
+    ok: true, started: plan.orders.length, total: plan.total,
+    orders: plan.orders.map((o) => o.why),
+    next: `${plan.total}문항을 만들기 시작했어요 — `
+      + `${plan.orders.map((o) => o.why.split(' ')[0]).join('·')}. `
       + '10~15분 뒤 이 화면에 새 문제가 올라오면 훑어보고 한 번에 출제하실 수 있어요.',
   });
 });
