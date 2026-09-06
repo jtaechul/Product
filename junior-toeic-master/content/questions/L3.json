@@ -1417,7 +1417,7 @@
       },
       "translation_ko": "여: 실례합니다, 이 책 세 권을 빌리고 싶어요.\n남: 네. 그런데 미술 책은 도서관 안에서만 읽을 수 있어요.\n여: 아, 그렇군요. 그럼 나머지 두 권만 빌릴게요.\n남: 알겠습니다. 다음 주 금요일까지 돌려주시면 돼요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the woman mean when she says \"Oh, I see\"?",
@@ -1498,7 +1498,7 @@
       },
       "translation_ko": "여: 치킨 수프와 채소 파스타 중에 무엇으로 하시겠어요?\n남: 점심에 이미 수프를 먹었어요.\n여: 그럼 파스타로 하시죠. 따뜻한 빵이 같이 나와요.\n남: 좋아요, 그리고 오렌지 주스 한 잔 주세요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the man mean when he says \"I had soup for lunch already\"?",
@@ -1579,7 +1579,7 @@
       },
       "translation_ko": "남: 축구 경기가 네 시에 시작해. 준비됐어?\n여: 내 신발이 어제 비 때문에 아직 젖어 있어.\n남: 내 가방에 여분 한 켤레가 있어.\n여: 정말? 네가 나를 살렸다!"
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the woman mean when she says \"My shoes are still wet\"?",
@@ -1660,7 +1660,7 @@
       },
       "translation_ko": "여: 올해 미술 동아리에 들어올 거예요?\n남: 저는 수요일에만 시간이 있어요.\n여: 딱 좋아요. 동아리는 매주 수요일 네 시에 모여요.\n남: 그럼 저도 넣어 주세요!"
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the man mean when he says \"I only have time on Wednesdays\"?",
@@ -1741,7 +1741,7 @@
       },
       "translation_ko": "여: 실례합니다, 이 재킷 더 작은 치수도 있나요?\n남: 확인해 볼게요. 작은 치수는 파란색만 있어요.\n여: 파란색도 괜찮아요. 얼마예요?\n남: 오늘은 20달러예요, 원래 가격의 반값이에요."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the woman mean when she says \"Blue is fine\"?",
@@ -1822,7 +1822,7 @@
       },
       "translation_ko": "남: 내일 공원에서 소풍할까?\n여: 일기 예보에서 하루 종일 비가 많이 온대.\n남: 그럼 일요일로 옮기자.\n여: 좋은 생각이야. 내가 샌드위치를 가져올게."
     },
-    "status": "draft",
+    "status": "active",
     "questions": [
       {
         "stem": "What does the woman mean when she says \"The weather report says heavy rain all day\"?",
